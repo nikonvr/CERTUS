@@ -315,6 +315,7 @@ ailleurs — c'est la règle qui empêche les contradictions de revenir.
 | [`QWOT_ET_TURNING_POINT.md`](docs/QWOT_ET_TURNING_POINT.md) | 🔴 **obligatoire** avant d'écrire sur les points tournants |
 | [`FEUILLE_DE_ROUTE.md`](docs/FEUILLE_DE_ROUTE.md) | ce qui est acquis (A1→A25), ce qui est outillé |
 | [`TRAVAUX_A_VENIR.md`](docs/TRAVAUX_A_VENIR.md) | les chantiers du modèle physique, 12.1 à 12.7 |
+| [`SEEL.md`](docs/SEEL.md) | 🆕 extrait de §22 le 2026-08-19 : la définition, la règle de tri, le revirement 0,1 → 0,01 nm et son prix non mesuré, et le code mort de la seconde borne |
 | [`CHANTIERS_OUVERTS.md`](docs/CHANTIERS_OUVERTS.md) | 🆕 extrait de §27 le 2026-08-19 : les deux propositions de 👤 non mesurées, isolation des tests, perf |
 | [`ETAT_IMPLANTATION.md`](docs/ETAT_IMPLANTATION.md) | ce qui est **réellement** implanté, établi contre le CODE |
 | [`COMPOSANTS.md`](docs/COMPOSANTS.md) | les quatre composants d'essai |
@@ -836,7 +837,10 @@ d'empilements, stratégie de dépôt. Application **PyQt6** + noyau **NumPy/SciP
 
 - `certus-optical-suite 26.05.0` — licence propriétaire
 - **Python 3.14.7** — 👤 la seule version retenue à partir du 2026-08-09. Le minimum
-  syntaxique reste 3.14 (PEP 758 : `except A, B:` sans parenthèses, 14 modules).
+  syntaxique reste 3.14 (PEP 758 : `except A, B:` sans parenthèses — **le compte est à
+  l'interdit n° 5, et nulle part ailleurs**). ⚠️ *Cette ligne portait « 14 modules », une
+  COPIE du chiffre de l'interdit ; j'ai corrigé l'un à 18 le 2026-08-19 et pas l'autre. C'est
+  la règle « un fait, un seul endroit » violée en direct, une heure après l'avoir invoquée.*
   ⚠️ **Après un changement de version, les caches numba sont invalidés** : le premier appel
   est lent (Piège 7) **et les derniers chiffres d'un `RESULT` peuvent bouger**. Les repères
   de §21 ont été mesurés sous **3.14.6**. Toute mesure rapportée doit porter sa version
@@ -865,16 +869,19 @@ d'empilements, stratégie de dépôt. Application **PyQt6** + noyau **NumPy/SciP
 ### Architecture
 
 ```
-certus/
-├── physics/   26 fich.  12 703 l.  ← TMM, gradients, colorimétrie, optimiseurs
-├── core/      40 fich.  20 615 l.  ← noyau métier, solveurs, config
-├── domain/    12 fich.   1 006 l.  ← DDD (entities/events/services/value_objects)
-├── spline/    31 fich.  31 010 l.  ← corridors, splines d'indice
-├── workers/   27 fich.  11 956 l.  ← threads Qt, DTO
-├── utils/     34 fich.  17 401 l.  ← helpers, export, badges
+certus/                          <- remesure le 2026-08-19 ; les 8 comptes de FICHIERS
+├── physics/   26 fich.  13 734 l.     etaient exacts, deux comptes de LIGNES avaient
+├── core/      40 fich.  23 874 l.     derive : physics +8,1 %, core +15,8 %
+├── domain/    12 fich.   1 017 l.
+├── spline/    31 fich.  31 067 l.
+├── workers/   27 fich.  12 050 l.
+├── utils/     34 fich.  17 955 l.
 ├── metal/      3 fich.   2 529 l.
-└── ui/       109 fich.  60 747 l.  ← PyQt6
+└── ui/       109 fich.  61 259 l.
 ```
+
+⚠️ **Ces lignes se périment à chaque commit** — ne les cite pas, elles servent à donner
+l'ordre de grandeur relatif des paquets. Le total mesuré est plus haut, dans la fiche.
 
 **Frontières à respecter**
 
@@ -888,9 +895,10 @@ certus/
 
 | Inversion | Nb | Détail |
 |-----------|-----|--------|
-| `utils` → `ui` | 12 | dont 3 au niveau module (`certus/utils/certus_curve_smoother.py:29-30`, `certus/utils/certus_export.py:13`) : importer ces modules charge PyQt6 |
-| `core` → `workers` | 10 | DTO de workers importés par le noyau |
-| `physics` ↔ `core` | 29/22 | cycle |
+| `utils` → `ui` | **11** | dont 3 au niveau module (`certus/utils/certus_curve_smoother.py:29-30`, `certus/utils/certus_export.py:13`) : importer ces modules charge PyQt6. ⚠️ *annonçait 12* |
+| `core` → `workers` | **10** | DTO de workers importés par le noyau. ✅ exact |
+| `physics` → `core` | **23** | 🔴 *la ligne disait « `physics` ↔ `core` \| 29/22 » : les deux chiffres étaient faux ET l'ordre ambigu. Séparés et remesurés par AST le 2026-08-19* |
+| `core` → `physics` | **29** | l'autre sens du cycle |
 
 **Règle : ne jamais créer un nouvel import d'une couche basse vers une couche haute.** Si tu
 en as besoin, c'est que le symbole doit descendre dans `domain/` ou `core/`.
@@ -918,7 +926,7 @@ un `pip install` ne récupérerait aucun sous-module : le projet n'est utilisabl
 
 | Terme | Sens |
 |---|---|
-| **le juge de paix** | Le dichroïque 48 couches, `example/example_strat/JSON-strat-example.json`, passe-court, front à ~545 nm. **Le seul exemple valable.** |
+| **le juge de paix** | Le dichroïque 48 couches, `example/example_strat/JSON-strat-example.json`, passe-court, front à ~545 nm. C'est le **repère de référence**, celui sur lequel le monitoring marche le mieux. ⚠️ *Cette ligne disait « le seul exemple valable » — troisième survivant de la règle que le §8 a **barrée** le 2026-08-16. Le projet a **quatre** composants d'essai, et le random75 existe pour conclure en général.* |
 | **λ de contrôle** | Longueur d'onde à laquelle la machine surveille le dépôt d'une couche. |
 | **bloc** | Groupe de couches consécutives surveillées à la **même** λ. |
 | **point tournant** *(turning point)* | 🔴 L'instant où **l'admittance du système entier devient réelle**, donc où `T` passe par un extremum pendant la croissance. Forme fermée : `tan 2δ = R/Q`. **Ce n'est PAS « la couche atteint 1 QWOT »** — voir la ligne suivante, c'est l'erreur la plus coûteuse du projet. |
@@ -1487,111 +1495,23 @@ ne COÛTE rien.** Ce sont deux questions différentes et le code ne répond qu'�
 est séduisante et sera reproposée. Mesuré : la profondeur ne porte aucun signal, la marge en
 porte un **mais il change de signe** d'un empilement à l'autre. Le détail est dans le dossier.
 
-### 👤 SEEL — l'erreur équivalente par couche, et sa précision de 0,1 nm
+### 👤 SEEL — l'erreur équivalente par couche
+
+📌 **Le dossier est [`docs/SEEL.md`](docs/SEEL.md)** — extrait d'ici le 2026-08-19.
 
 > 👤 *« C'est pour caractériser la performance d'une stratégie donnée. On regarde quel tirage
 > aléatoire donne une erreur spectrale du même niveau, et cela donne une erreur moyenne
-> équivalente par couche. »* — *« SEEL doit être calculé ou donné avec une précision de
-> 0,1 nm, c'est tout. »* (2026-08-10)
+> équivalente par couche. »* (2026-08-10)
 
-**Ce que c'est.** `calculate_seel_analysis` (`certus_strat_service.py:636`) perturbe chaque
-couche du nominal par `N(0, σ)` pour `σ ∈ {0,05 ; 0,1 ; 0,3 ; 0,6 ; 1,2 ; 2,0}` nm, 3 lots de
-50 tirages, et mesure la RMSE spectrale obtenue. On inverse la courbe : **toute RMSE se lit
-alors en nanomètres d'erreur équivalente par couche.** C'est la seule grandeur du projet qu'un
-opérateur de bâti comprenne immédiatement.
+**Ce qu'il faut retenir sans l'ouvrir :**
 
-🔑 **La quantification à 0,1 nm n'est PAS une règle d'affichage — c'est ce qui fait de SEEL un
-critère de classement distinct.**
-
-L'ajustement actuel (`certus_strat_service.py:710`) vaut `fit_k = Σxy/Σx²` avec
-**`fit_alpha = 1.0` figé en dur** : donc `SEEL = k · RMSE`, une simple constante. Trier sur la
-valeur **continue** de SEEL rendrait donc **exactement** l'ordre de la RMSE — un tri qui ne
-trie rien.
-
-**Quantifiée à 0,1 nm, elle crée des paliers.** Deux stratégies séparées de moins de 0,1 nm
-deviennent **ex æquo**, et il faut un **critère secondaire** pour les départager. Le classement
-change réellement, et il change dans le bon sens : *on ne discrimine pas sur un écart qu'on ne
-sait pas mesurer.* C'est déjà la règle du §8, qui interdit de conclure d'un écart d'épaisseur
-sous 0,05 nm.
-
-👤 **Le critère secondaire est le RENDEMENT** (2026-08-10). La règle de tri complète :
-
-```
-1. SEEL arrondi a 0,1 nm          croissant
-2. rendement = 1 - taux de plantage   decroissant   <- departage les ex aequo
-```
-
-*À performance spectrale indiscernable, on prend la stratégie qui va au bout.* C'est
-exactement §15 : *« si 95 % des dépôts fonctionnent, c'est gagné »*, et *« un dépôt qui plante
-et un filtre hors spec sont le même échec »*.
-
-⚠️ **L'arrondi se fait sur SEEL, pas sur la RMSE.** Arrondir la RMSE n'aurait aucun sens
-physique — c'est un nombre sans unité interprétable. L'arrondi ne devient légitime qu'une fois
-la grandeur exprimée en nanomètres, parce que 0,1 nm est une **limite de mesure**, pas une
-convention d'affichage.
-
-#### 🔴 Le pas de 0,1 nm est ABSOLU, le bruit statistique est RELATIF — mesuré le 2026-08-11
-
-Le pas fixe appliqué à une grandeur dont l'incertitude est **proportionnelle** fait dériver la
-largeur de la classe d'équivalence :
-
-| SEEL de la gagnante | demi-largeur du bin | face au bruit de ±6 % (§24-26) |
-|---|---|---|
-| **0,3 nm** | **±19 %** | plus large ✅ regroupe correctement |
-| 0,6 nm | ±7,8 % | limite — le rang 2 est à **+7,3 %**, indiscernable, et il tombe **hors classe** |
-| 1,1 nm | **±4,4 %** | **plus étroit que le bruit** ❌ sépare ce qui n'est pas séparable |
-
-La règle 👤 est donc juste **là où elle a été spécifiée** — près de 0,3 nm, la limite de
-mesure — et devient trop fine quand le SEEL grandit. Le correctif n'en change pas l'intention,
-il ajoute la seconde limite :
-
-```
-demi-largeur de la classe = max( 0,05 nm , 0,06 x SEEL )
-```
-
-*On ne distingue jamais en dessous de la limite de mesure, ni en dessous de la résolution
-statistique.* Ce sont deux bornes de ce qu'on peut savoir : il faut retenir **la plus
-grossière**. À 0,3 nm le 0,05 l'emporte et rien ne change ; à 1,1 nm la classe s'élargit
-comme elle le doit.
-
-⚠️ Le **0,06** vient de §24-26 et vaut pour `N = 150`. Il suit `1/√N` — mesuré exact entre
-N = 32 et N = 128. **Si la profondeur change, remesure-le, ne l'extrapole pas de tête.**
-
-#### 🔴 REVIREMENT DU 2026-08-14 — la quantification passe de 0,1 nm à 0,01 nm
-
-> 👤 *« SEEL à 0,01 nm près partout »* (2026-08-14).
-
-`SEEL_RESOLUTION_NM` vaut désormais **0.005** (`certus_strat_ranking.py:581`) et
-`rank_key_seel_yield_margin` binne à **0,01 nm** (ligne 643). **Tout ce qui précède dans ce
-§22 décrit l'état d'avant** : le pas de 0,1 nm et le `max(0,05 ; 0,06 × SEEL)` sont périmés en
-tant que description du code.
-
-🔴 **Et le prix du revirement n'est pas mesuré.** À SEEL 0,3 nm, un bin de 0,01 nm face à un
-bruit statistique de ±6 % (soit ±0,018 nm) est **près de deux fois plus étroit que le bruit** —
-c'est-à-dire exactement le régime que le tableau ci-dessus déclare fautif, « séparer ce qui
-n'est pas séparable ». **En pratique : traite un écart d'un bin comme une égalité.**
-
-🔴 **La seconde borne n'est PAS appliquée.** `seel_equivalence_half_width`
-(`certus_strat_ranking.py:589`) l'implémente correctement et n'a **aucun appelant en
-production** — seulement `tests/unit/test_strat_ranking_rule.py`. Et
-`rank_key_seel_yield_margin` **reçoit** `score_resolution_rel` sans jamais s'en servir (corps
-ligne 643, bin fixe à `2 × SEEL_RESOLUTION_NM`). La règle « il faut retenir la plus grossière »
-est donc du **code testé et mort** : le classement ne connaît que le pas absolu. C'est le
-premier chantier de §22, avant tout raffinement.
-
-**Ce qu'il reste à faire :**
-
-| # | Action | Note |
-|---|---|---|
-| 1 | **Sortir SEEL de l'interface.** Il n'existe qu'en mémoire (`APP_CONTEXT["seel_data"]`), calculé à l'étape 0, et sert à colorer trois colonnes. **Le banc ne le voit pas** — les 26 runs mesurés sont donc tous en unité abstraite. | Coût : ~1 s de calcul, 900 spectres vectorisés |
-| 2 | L'écrire dans les rapports de sonde à côté de chaque `RESULT`, et dans `analyse_bands.py` | — |
-| 3 | Quantifier à **0,1 nm** partout, affichage compris — le tableau montre aujourd'hui `.3f`, soit 100× la précision utile | 👤 spécifié |
-| 4 | Sélecteur de tri : composite (actuel, dominé par le plantage) ou **SEEL quantifié + départage** | c'est le tri qui change vraiment l'ordre |
-| 5 | **Vérifier que `alpha = 1` est vrai** et non affirmé | les données sont déjà là : 6 σ × 3 lots |
-
----
-
-# PARTIE III — L'ÉTAT DU PROJET
+| | |
+|---|---|
+| **la définition** | `SEEL = 2 × √(RMSE_P95)`, en **nanomètres d'erreur d'épaisseur par couche**. C'est la seule grandeur du projet qu'un opérateur de bâti comprenne immédiatement, et **la seule à rapporter** — jamais le RMSE brut |
+| **la règle de tri de 👤** | SEEL **quantifié**, puis le **rendement** départage les ex æquo. *À performance spectrale indiscernable, on prend la stratégie qui va au bout* |
+| 🔴 **le pas est passé de 0,1 à 0,01 nm** le 2026-08-14 sur instruction de 👤 | **et le prix n'est pas mesuré** : à SEEL 0,3 nm, un bin de 0,01 nm est **deux fois plus étroit que le bruit statistique**. **En pratique : traite un écart d'un bin comme une égalité** |
+| 🔴 **la seconde borne est du code MORT** | `seel_equivalence_half_width` implémente correctement `max(0,05 ; 0,06 × SEEL)` et **n'a aucun appelant en production**. Le classement ne connaît que le pas absolu. C'est le premier chantier du dossier |
+| 🔴 **SEEL n'atteint pas le banc** | il n'existe qu'en mémoire (`APP_CONTEXT["seel_data"]`), calculé à l'étape 0 de l'interface. Les runs mesurés sont donc tous en **unité abstraite**, et le tri de 👤 tourne **dans la sonde**, à côté |
 
 ## 23. 🔴 MULTIPLE TESTGLASS METHODOLOGY — le chantier en cours
 

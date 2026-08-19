@@ -336,6 +336,10 @@ CHIFFRES_PUBLIES = [
     # --- 2026-08-19 00:xx, MATRICE : premiere paire jumelle deep/extreme ---
     ("35c_deep_s042", 1023, 1017, 0.0, 0.482),
     ("35c_deep_s042_large", 1355, 1349, 0.0, 0.479),
+    # --- 2026-08-19 nuit, MATRICE : 48c et 75c a leur fente de reference ---
+    ("48c_deep_s042", 840, 804, 0.0, 0.173),
+    ("48c_deep_s042_large", 1190, 1134, 0.0, 0.170),
+    ("75c_deep_s042", 2547, 852, 0.0, 0.260),
 ]
 
 

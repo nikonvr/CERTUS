@@ -1,7 +1,12 @@
 # CERTUS — document de référence
 
-**C'est le document de référence du projet.** Tout le savoir est ici, et il n'y a rien
-d'autre à lire pour comprendre.
+**C'est le point d'entrée du projet, et la carte de tout le reste.**
+
+⚠️ **Il disait « tout le savoir est ici, il n'y a rien d'autre à lire » — c'est FAUX depuis
+les extractions du 2026-08-16.** Le savoir vit dans **25 fichiers** : ce document porte les
+**directives** et l'**état**, et les dossiers de `docs/` font **autorité** sur leur sujet
+(§1). Le lire seul ne suffit pas ; le lire **en entier** ne sert à rien. **Passe par la carte
+du §3.**
 
 Le code calcule de la **physique réelle** servant à fabriquer de vrais filtres optiques. Une
 erreur silencieuse ne plante pas : elle produit un **résultat faux qui a l'air juste**, et
@@ -13,8 +18,8 @@ quelqu'un fabrique une pièce avec.
 
 | lis d'abord | pourquoi |
 |---|---|
-| **[`docs/REPRENDRE_ICI.md`](docs/REPRENDRE_ICI.md)** | 🔴 **où on s'est arrêté et la commande exacte pour repartir.** Gelé le 2026-08-16 à 08:45 |
-| [`docs/REPRISE.md`](docs/REPRISE.md) | les six chiffres, les cinq pièges, et **ce qui est faux dans les vieux documents** |
+| **[`docs/REPRENDRE_ICI.md`](docs/REPRENDRE_ICI.md)** | 🔴 **où on s'est arrêté et la commande exacte pour repartir.** ⚠️ Ce renvoi annonçait « gelé le 2026-08-16 à 08:45 » : le dossier est **daté dans son en-tête**, et c'est lui qui fait foi — ne recopie pas sa date ici, elle se périme à chaque reprise |
+| [`docs/REPRISE.md`](docs/REPRISE.md) | les chiffres de référence, les cinq pièges, et **ce qui est faux dans les vieux documents** — sa table de correction est la première chose à lire avant de citer un nombre |
 | [`docs/MEMOIRE_PROJET.md`](docs/MEMOIRE_PROJET.md) | 🔴 **le savoir opérationnel qui ne suivait PAS le dépôt** : le hook qui publie, le venv qui charge un autre snapshot, les pièges du banc |
 
 Tout le reste de ce fichier est du référentiel : lis-le **par la carte du §3**, pas
@@ -275,7 +280,7 @@ jamais une durée sans sa machine — c'est ce qui a failli coûter une campagne
 
 | Tu veux… | Va où |
 |---|---|
-| 🚀 **Arriver sur le projet** | **[`docs/REPRISE.md`](docs/REPRISE.md)** — une page : les six chiffres, ce qui tourne, les cinq pièges, ce qui est faux dans les vieux documents |
+| 🚀 **Arriver sur le projet** | **[`docs/REPRISE.md`](docs/REPRISE.md)** — une page : les chiffres de référence, ce qui tourne, les cinq pièges, ce qui est faux dans les vieux documents |
 | Savoir ce qui est interdit | §6 — les onze interdits |
 | Savoir dans quoi tu vas tomber | §7 — les sept pièges |
 | Savoir comment travailler | §9 — la boucle et la règle d'or |
@@ -303,10 +308,9 @@ ailleurs — c'est la règle qui empêche les contradictions de revenir.
 | dossier | quand l'ouvrir |
 |---|---|
 | **[`REPRISE.md`](docs/REPRISE.md)** | 🚀 en arrivant, toujours |
-| [`CHANTIER_MULTITEMOINS.md`](docs/CHANTIER_MULTITEMOINS.md) | 🔴 **le programme courant** — multi-témoins, 12 sous-sections |
+| [`CHANTIER_MULTITEMOINS.md`](docs/CHANTIER_MULTITEMOINS.md) | multi-témoins, 12 sous-sections. ⚠️ **Ce renvoi le disait « le programme courant » — il ne l'est plus depuis le 2026-08-19.** Le chantier vivant est [`CHANTIER_RATE.md`](docs/CHANTIER_RATE.md) ; celui-ci est **acquis et consultable**, pas en cours |
 | [`CHANTIER_RATE.md`](docs/CHANTIER_RATE.md) | 🔑 **employer pleinement le Rate**, et mélanger POEM / niveau absolu / Rate. 📏 Son coût est une **pénalité de SEEL qui CROÎT avec la profondeur** — +1 % à 35 couches, +9 % à 48, +22 % à 75. ⚠️ Le « facteur 175 » d'une rédaction antérieure était un **paradoxe de Simpson**, retiré le 2026-08-19 |
-| [`CHANTIER_PREDICTIBILITE.md`](docs/CHANTIER_PREDICTIBILITE.md) §4quater-bis | 🔴 **`extreme` n'améliore le SEEL sur AUCUNE des 5 configurations testées**, matrice arrêtée le 2026-08-19 sur décision de 👤 |
-| **[`CHANTIER_PREDICTIBILITE.md`](docs/CHANTIER_PREDICTIBILITE.md)** | 🔵 **ouvert par 👤 le 2026-08-17** — *prédire sans tout calculer si un design passe avec un seul verre témoin*. 🔑 À retenir sans l'ouvrir : **le 99c n'est PAS une référence valable** (tout QWOT ⇒ adverse à POEM par construction, réponse plate à 100 % qui ne discrimine rien) · **la série d'échelle du random75 ×0,5/×1/×1,5/×2 est la seule expérience CONTRÔLÉE du projet** · **quatre routes y sont déjà fermées par la mesure** · 🔴 **`search_resolution` était neutralisé dans toute la campagne des intervalles alors que 👤 l'a posé comme prérequis** |
+| **[`CHANTIER_PREDICTIBILITE.md`](docs/CHANTIER_PREDICTIBILITE.md)** | 🔵 **ouvert par 👤 le 2026-08-17** — *prédire sans tout calculer si un design passe avec un seul verre témoin*. 🔑 À retenir sans l'ouvrir : **le 99c n'est PAS une référence valable** (tout QWOT ⇒ adverse à POEM par construction, réponse plate à 100 % qui ne discrimine rien) · **la série d'échelle du random75 ×0,5/×1/×1,5/×2 est la seule expérience CONTRÔLÉE du projet** · **quatre routes y sont déjà fermées par la mesure** · 🔴 **`search_resolution` était neutralisé dans toute la campagne des intervalles alors que 👤 l'a posé comme prérequis** · 🔴 **le mode `extreme` n'améliore le SEEL sur AUCUNE des configurations testées** (§4quater-bis, matrice arrêtée le 2026-08-19 sur décision de 👤 ; `deep` seul fait mieux à un cinquième du coût) |
 | [`PLAN_2026-08-16.md`](docs/PLAN_2026-08-16.md) | le plan de campagnes en cours d'exécution |
 | [`QWOT_ET_TURNING_POINT.md`](docs/QWOT_ET_TURNING_POINT.md) | 🔴 **obligatoire** avant d'écrire sur les points tournants |
 | [`FEUILLE_DE_ROUTE.md`](docs/FEUILLE_DE_ROUTE.md) | ce qui est acquis (A1→A25), ce qui est outillé |
@@ -352,8 +356,15 @@ dir .git\hooks\post-commit*
   et tu en mesures un autre : tout ce que tu constateras sera faux, **sans le moindre message
   d'erreur**. C'est le piège n° 1 du projet et il est invisible. **Arrête-toi.**
   ⚠️ Ce document a longtemps exigé `C:\dev\gemini` ; ce chemin **n'existe plus** et la
-  consigne envoyait vers un dossier fantôme. **Aucune racine n'est écrite en dur**, ici ni
-  ailleurs — c'est délibéré, et `scripts/preflight.py` fait la vérification.
+  consigne envoyait vers un dossier fantôme. **Aucune RACINE DE DÉPÔT n'est écrite en dur**,
+  ici ni ailleurs — c'est délibéré, et `scripts/preflight.py` le vérifie par une propriété
+  (*« `import certus` résout-il dans l'arbre courant ? »*), jamais par un chemin.
+  🔴 **Ne confonds pas avec l'INTERPRÉTEUR, qui lui EST écrit en dur** — `C:\envs\certus`,
+  depuis le 2026-08-19. Ce n'est pas un oubli : une commande doit être **copiable-collable**,
+  et le venv vit hors du dépôt donc aucun chemin relatif ne le désigne. Les deux régimes
+  diffèrent parce que la racine **change à chaque snapshot** alors que le venv est **unique
+  sur la machine**. ⚠️ S'il déménage à son tour, `coherence_md.py` le dira au premier
+  passage : son contrôle E exige que tout interpréteur cité **existe**.
 - 🔴 **Le hook `post-commit` est ARMÉ, et c'est voulu.** 👤 l'a demandé le 2026-08-14.
   **Tout commit pousse vers le dépôt PUBLIC `nikonvr/CERTUS`**, et `--no-verify` ne l'en
   empêche pas. Ce n'est pas un accident : c'est le mode de travail choisi. ⚠️ Vérifie-le
@@ -369,7 +380,7 @@ nu, qui prendrait l'interpréteur système sans les dépendances.
 
 | But | Commande | Durée |
 |---|---|---|
-| Tests du noyau | `C:\envs\certus\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov` | ~4 min |
+| Tests du noyau | `C:\envs\certus\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov` | **216,69 s** mesuré le 2026-08-19 à 15:16, i5-8250U, cache **chaud** — `2451 passed, 5 skipped` à cet instant, soit **deux tests avant l'état actuel**. À cache **froid**, 784 s |
 | Suite complète | `C:\envs\certus\Scripts\python.exe -m pytest tests/ -q --no-cov` | ~1 h 45 |
 | Lint | `C:\envs\certus\Scripts\python.exe -m ruff check .` → `All checks passed!` | ~10 s |
 | Run STRAT complet | `C:\envs\certus\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42` | ~25 min |

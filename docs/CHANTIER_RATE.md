@@ -107,7 +107,7 @@ Et c'est exactement ce que le code ne fait pas — voir la contradiction C.
 
 ### 🔴 A. Le plafond de 3 variantes n'applique ni la consigne qu'il cite, ni son contraire
 
-`RATE_MAX_VARIANTS_PER_STRATEGY = 3` (`certus_strat_robustness.py:506`) porte cette
+`RATE_MAX_VARIANTS_PER_STRATEGY = 3` (`certus_strat_robustness.py:519`) porte cette
 justification :
 
 > *« 👤 asked for the trial "on the 10 best strategies", not on everything: an unbounded

@@ -92,7 +92,7 @@ changements » : c'est la physique seule qui doit le dire.
 | **La pièce** | `sim_thick_batch`, épaisseurs réelles complètes `(n_runs, n_layers)`. Elle n'est **pas** tronquée : la pièce continue d'accumuler toutes les erreurs. C'est exactement la physique voulue. |
 | **Le crochet POEM** | `certus/physics/certus_strat_batch.py:485` — `block_start[i_layer]` est **déjà** un tableau par couche disant au noyau où commence l'historique. Un changement de témoin est un `block_start` forcé, **plus** la troncature de la pile. |
 | **L'écrêtage d'historique** | `certus/physics/certus_strat_growth.py:75` — `MAX_LOOKBACK_VAL = 4`, appliqué en `certus/physics/certus_strat_growth.py:904-908`. L'historique rejoué repart de zéro à le changement de témoin. |
-| **Le seuil de swing** | `certus/physics/certus_strat_growth.py:883` — `SWING_MIN = 0.04`. **Un critère de mort du signal existe donc déjà, chiffré, dans le noyau.** |
+| **Le seuil de swing** | `certus/physics/certus_strat_growth.py:942` — `SWING_MIN = 0.04`. **Un critère de mort du signal existe donc déjà, chiffré, dans le noyau.** |
 
 🔴 **Vérifier ces cinq ancrages avant d'écrire une ligne.** Le document a déjà cité
 `certus/core/certus_strat_growth.py` — **ce fichier n'existe pas**, le module est en
@@ -444,7 +444,7 @@ Pour chaque couche *i* et chaque λ candidate, calculer sur le témoin portant l
 couche. Nominal, aucun tirage, coût négligeable.
 
 La grandeur qui décide : **`swing_max(i) = max sur λ du swing`**. Le seuil existe déjà :
-`SWING_MIN = 0.04` (`certus/physics/certus_strat_growth.py:883`). **Première règle générale candidate : changer de témoin juste
+`SWING_MIN = 0.04` (`certus/physics/certus_strat_growth.py:942`). **Première règle générale candidate : changer de témoin juste
 avant que `swing_max(i)` ne passe sous `SWING_MIN`.**
 
 ⚠️ Cette carte est à produire **par couche et par λ**, pas seulement par couche : une couche

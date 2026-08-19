@@ -44,10 +44,20 @@ ROOT = Path(__file__).resolve().parents[1]
 #: Une ligne portant l'un de ces marqueurs RACONTE une correction : le chiffre qu'elle cite est
 #: celui qu'on retire, pas celui qu'on prescrit. L'ignorer evite un deluge de faux positifs.
 CONTEXTES_DE_CORRECTION = (
-    "périmé", "perime", "retiré", "retire", "faux", "réfuté", "refute", "corrigé", "corrige",
-    "disait", "annonçait", "annoncait", "était", "etait", "ancien", "jusqu'au", "historique",
-    "n'est plus", "ne correspondait", "portait", "avant correctif", "CADUQUE", "SUPPRIMÉE",
-    "obsolète", "obsolete", "~~",
+    # 🔴 « était », « ancien » et « portait » ONT ETE RETIRES le 2026-08-19 : trop generiques.
+    # « était » a fait sauter la ligne « `MAX_LOOKBACK = 4` n'ETAIT documente nulle part ici »,
+    # qui porte pourtant DEUX defauts reels -- mauvais nom de symbole ET mauvais numero de
+    # ligne. Un marqueur de correction doit designer un RECIT de correction, pas n'importe
+    # quelle phrase au passe. Mieux vaut quelques faux positifs a instruire qu'un garde qui
+    # cache des defauts.
+    "périmé", "perime", "retiré", "retire", "réfuté", "refute", "corrigé", "corrige",
+    "disait", "annonçait", "annoncait", "jusqu'au 2026",
+    # 🔴 « historique » retire le 2026-08-19 : dans CE projet c'est un terme METIER
+    # (l'historique de bloc rejoue par POEM), pas un marqueur de recit. Il faisait
+    # sauter la ligne MAX_LOOKBACK, qui portait deux defauts reels.
+    "ligne historique", "bloc historique conserve",
+    "n'est plus", "ne correspondait", "avant correctif", "CADUQUE", "SUPPRIMÉE",
+    "obsolète", "obsolete", "~~", "etait faux", "était faux", "c'est faux", "est FAUX",
     # 🔑 Ajoutes le 2026-08-19 : une ligne qui se DECLARE non comparable, ou qui parle d'un
     # score de REPLI, n'affirme pas une performance. Les deux marqueurs sont poses a la main
     # par l'auteur, ce qui est le bon niveau : l'outil ne devine pas, il obeit a une marque.
@@ -513,7 +523,10 @@ def main() -> int:
     # trouve bien a proximite (+/- 3 lignes) du numero annonce.
     print("\n=== F. UN `fichier.py:N` CITE A COTE D'UN SYMBOLE POINTE-T-IL DESSUS ? ===")
     rx_ref = re.compile(r"`([\w./\\-]+\.py):(\d{1,5})`")
-    rx_sym = re.compile(r"`(_?[A-Za-z][\w]{4,})`")
+    # ⚠️ Le symbole peut etre ecrit SEUL (`NOM`) ou AVEC SA VALEUR (`NOM = 4`). La premiere
+    # version n'attrapait que la premiere forme, et ratait « `MAX_LOOKBACK = 4` ... :526 »,
+    # qui porte pourtant DEUX defauts : mauvais nom de symbole ET mauvais numero de ligne.
+    rx_sym = re.compile(r"`(_?[A-Za-z][\w]{4,})\s*(?:`|=|\()")
     idx: dict[str, list[Path]] = {}
     for q in (ROOT / "certus").rglob("*.py"):
         idx.setdefault(q.name, []).append(q)

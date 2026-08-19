@@ -435,6 +435,52 @@ def test_K_couche_rate_ne_plante_pas() -> None:
             "(donc une couche Rate en TETE d'empilement reste plantable)")
 
 
+def test_L_les_deux_regles_gravees_du_rate() -> None:
+    """L. 🔒 Les deux regles que 👤 a fait GRAVER le 2026-08-19.
+
+    Elles ne vivent pas dans un commentaire : elles sont verifiees mecaniquement, parce que
+    les deux etaient DEJA fausses dans le code alors que la documentation decrivait autre
+    chose. Ce controle est la pour que ce ne puisse pas recommencer.
+
+      1. « rate est interdit sur les 2 premieres couches ! mais absolument pas la derniere »
+      2. « rate ne se calcule qu'avec les couches optiquement deposees »
+    """
+    pbs = []
+    rob = (ROOT / "certus" / "core" / "certus_strat_robustness.py").read_text(encoding="utf-8")
+    gro = (ROOT / "certus" / "physics" / "certus_strat_growth.py").read_text(encoding="utf-8")
+
+    # --- regle 1, cote selection des candidates -----------------------------------------
+    if "RATE_MIN_LAYER: int = 2" not in rob:
+        pbs.append("RATE_MIN_LAYER n'est plus fixe a 2")
+    if "num_layers - 1" in rob:
+        pbs.append("une borne `num_layers - 1` est revenue -- la derniere couche est "
+                   "peut-etre de nouveau exclue")
+    if "range(RATE_MIN_LAYER, num_layers)" not in rob:
+        pbs.append("le balayage par swing ne part plus de RATE_MIN_LAYER, ou reexclut la fin")
+    if "RATE_MIN_LAYER <= last < num_layers" not in rob:
+        pbs.append("la selection par frontiere de bloc a change de bornes")
+
+    # --- regle 1, cote kernel : la garde physique doit rester ----------------------------
+    if "if n_ref > 0:" not in gro:
+        pbs.append("la garde n_ref>0 a disparu du noyau")
+
+    # --- regle 2 : les couches Rate sont exclues des references --------------------------
+    if "prev_rate_flags" not in gro:
+        pbs.append("le noyau ne recoit plus prev_rate_flags : les couches Rate redeviennent "
+                   "references d'elles-memes")
+    bat = (ROOT / "certus" / "physics" / "certus_strat_batch.py").read_text(encoding="utf-8")
+    if "rate_flags,\n            )" not in bat.replace("\r\n", "\n"):
+        pbs.append("le site d'appel ne passe plus le tableau complet rate_flags au noyau")
+    # 🔴 Le commentaire Q3 disait l'inverse de la regle et le code le suivait. S'il revient,
+    # c'est que le correctif a ete defait.
+    if "Rate ones included" in gro:
+        pbs.append("le commentaire Q3 « Rate ones included » est revenu")
+
+    verdict("L. les deux regles gravees du Rate", "FAIL" if pbs else "PASS",
+            " | ".join(pbs) or "RATE_MIN_LAYER=2, derniere couche autorisee aux deux sites, "
+            "garde n_ref>0 en place, prev_rate_flags passe et consomme")
+
+
 def test_I_chiffres_publies() -> None:
     """I. Chaque chiffre publie se re-derive de son artefact."""
     ecarts, absents = [], []
@@ -481,6 +527,7 @@ def main() -> int:
     for t in (test_A_timeout_inerte, test_B_dp_timeout_inutilise, test_C_dp_top_k_atteint_le_calcul,
               test_E_niveau_exploration, test_F_formule_seel, test_G_correlation_offre,
               test_I_chiffres_publies, test_J_queue_rate_falaise,
+              test_L_les_deux_regles_gravees_du_rate,
               test_K_couche_rate_ne_plante_pas,
               test_H_controle_negatif, test_D_modes_existants_inchanges):
         try:

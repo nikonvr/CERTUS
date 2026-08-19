@@ -1270,6 +1270,60 @@ paramètre, et le plan A24 en entier.
 | **le facteur est par couche** | calculé sur les couches **de même nature déposées AVANT** la couche `i`. Donc **`rate(i)` ≠ `rate(j)` même sur un matériau identique** |
 | **actif par défaut** depuis le 2026-08-12 | 👤 : *« le rate est toujours permis, c'est le cas général »*. Une variante Rate est une candidate de plus, jugée sur les mêmes statistiques |
 
+#### 🔒 GRAVÉ DANS LE MARBRE — 👤, 2026-08-19 : où le Rate a le droit d'exister
+
+> 👤 *« attention, rate est interdit sur les 2 premières couches ! mais absolument pas la
+> dernière »* — *« ces interdictions pour rate aux 2 premières couches et autorisation
+> ailleurs doivent être consignées et gravées dans le marbre »*
+
+| couche | Rate | pourquoi |
+|---|---|---|
+| **0 et 1** | 🔴 **INTERDIT** | le facteur de rate se calcule sur les couches de **même parité déposées avant** (`certus_strat_growth.py:634`). Pour `i = 0` et `i = 1` la boucle est **vide** : la machine n'a rien déposé dont elle puisse tirer un rate. **La borne physique vaut exactement 2** |
+| **2 … N−1**, dernière **comprise** | 🟢 **AUTORISÉ** | aucune raison ne justifie d'en exclure une, et surtout pas la dernière |
+
+🔴 **Le code avait les deux bornes à l'envers, et c'est corrigé le 2026-08-19**
+(`RATE_MIN_LAYER = 2`, `certus_strat_robustness.py`) :
+
+| | ce qui se passait avant |
+|---|---|
+| **la dernière couche** était **exclue** (`< num_layers - 1`, deux sites) | 📏 **0 placement sur 24 581** artefacts, alors que **l'avant-dernière est la position la plus choisie de toutes** (2 530). L'exclusion retirait donc le voisin immédiat de l'optimum |
+| **les couches 0 et 1** n'étaient **pas** refusées | le noyau retombait **silencieusement** sur POEM (garde `n_ref > 0`). 📏 La couche 1 a été proposée **2 fois** : deux résultats étiquetés `RATE_L1` avaient en réalité simulé du **POEM pur**. Une étiquette qui ment |
+
+🔑 **Et la mesure du même jour dit pourquoi la dernière couche est le MEILLEUR emplacement** :
+une couche Rate supprime son propre plantage mais lègue son erreur en boucle ouverte à **tout
+ce qui la suit**. La dernière n'a **rien** en aval — c'est le placement le moins cher de
+l'empilement. Voir [`docs/CHANTIER_RATE.md`](docs/CHANTIER_RATE.md).
+
+#### 🔒 GRAVÉ AUSSI — 👤, 2026-08-19 : le rate ne se calcule QUE sur les couches optiques
+
+> 👤 *« rate ne se calcule qu'avec les couches optiquement déposées »*
+
+🔴 **Le noyau faisait l'inverse**, et son commentaire l'assumait : *« it CHAINS: the last
+deposited layer is a reference, Rate ones included »*. Corrigé le 2026-08-19
+(`prev_rate_flags`, `certus_strat_growth.py`).
+
+**Pourquoi ce n'est pas cosmétique.** Une couche Rate sort à `d_réel = d_nom / A` **par
+construction**, donc son propre ratio `d_nom/d_réel` vaut exactement `A` — la moyenne courante
+elle-même. La reprendre en référence ne changeait pas `A` mais **incrémentait `n_ref`** : le
+vivier grossissait d'entrées à **information nulle**, et toute précision annoncée via la loi
+en `1/√n` était surestimée dès qu'une couche Rate y entrait.
+
+⚠️ **La conséquence physique demeure, et elle est maintenant visible au lieu d'être masquée** :
+dans une **queue** de couches Rate, l'estimation se **fige** à sa valeur d'entrée — plus aucune
+couche optique de ce matériau n'est déposée ensuite. **Toutes les couches de la queue héritent
+donc de la MÊME erreur relative, corrélée, qui ne se moyenne jamais.** Une longue queue est
+ainsi pénalisée là où l'ancien code la créditait d'un `n_ref` fictif.
+
+⚠️ **Et l'arrondi à 0,125 nm n'est PAS un argument** — 👤 : *« on ne tient pas compte du round,
+c'est d'un ordre supérieur »*. 0,125 nm sur une couche de ~100 nm vaut 1,2e-3 en relatif,
+contre 2e-2 de dispersion héritée à une seule référence. Le commentaire du noyau prétendait
+qu'il *« EST la loi d'arrêt `U(0 ; 0,125 nm)` du §18-7, apparue sans paramètre à poser »* :
+**c'était une surinterprétation**, retirée.
+
+🔴 **C1** : le vivier de candidates change, donc **toute mesure Rate antérieure au 2026-08-19
+décrit un solveur qui ne pouvait pas utiliser la dernière couche.** Ces runs ne sont plus
+comparables aux nouveaux sur l'axe du Rate.
+
 🔴 **Le critère 3 ne cherche pas les couches qui ont BESOIN du Rate, il cherche celles où il
 ne COÛTE rien.** Ce sont deux questions différentes et le code ne répond qu'à la seconde.
 

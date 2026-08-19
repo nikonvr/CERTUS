@@ -75,7 +75,9 @@ def test_the_candidates_are_the_last_layer_of_each_block_deepest_first():
     the measurement it rested on was a per-STRATEGY quantity used to order LAYERS. See
     the comment in `_rate_candidate_layers`; do not re-derive the rule from those numbers.
     """
-    assert _rate_candidate_layers(_strat([(0, 24), (24, 40), (40, 48)]), 48) == [39, 23]
+    # ⚠️ 2026-08-19 : attendait `[39, 23]` -- la derniere couche du dernier bloc (47) etait
+    # exclue. 👤 a leve l'exclusion, elle entre donc dans la liste, en tete (plus profonde).
+    assert _rate_candidate_layers(_strat([(0, 24), (24, 40), (40, 48)]), 48) == [47, 39, 23]
 
 
 def test_a_degenerate_strategy_yields_no_candidate():
@@ -90,21 +92,51 @@ def test_the_number_of_variants_per_strategy_is_capped():
     bounds = [(0, 8), (8, 16), (16, 24), (24, 32), (32, 40), (40, 48)]
     got = _rate_candidate_layers(_strat(bounds), 48)
     assert len(got) == RATE_MAX_VARIANTS_PER_STRATEGY
-    assert got == [39, 31, 23], "les plus PROFONDES doivent etre gardees"
+    # ⚠️ 2026-08-19 : attendait `[39, 31, 23]`. La derniere couche (47) etant desormais
+    # autorisee (👤), elle entre dans le vivier et, etant la plus PROFONDE, le plafond la
+    # garde et evince la moins profonde. C'est la regle « les plus profondes d'abord » qui
+    # s'applique sans changement -- seul le vivier a change.
+    assert got == [47, 39, 31], "les plus PROFONDES doivent etre gardees"
 
 
-def test_the_final_layer_of_the_stack_is_excluded():
-    """It has no successor, so no downstream cost -- but it is also the LAST chance to
-    correct everything accumulated. The two pull opposite ways, so it gets its own
-    experiment rather than a free ride in this one (A24)."""
-    assert 47 not in _rate_candidate_layers(_strat([(0, 48)]), 48)
+def test_the_final_layer_is_ALLOWED_and_the_first_two_are_NOT():
+    """🔒 GRAVE PAR 👤 le 2026-08-19 -- et ce test a ete RETOURNE, il assertait l'inverse.
+
+    Il s'appelait `test_the_final_layer_of_the_stack_is_excluded` et defendait une exclusion
+    justifiee par « les deux effets tirent en sens opposes ». 🔴 Deux effets contraires non
+    mesures ne justifient pas une exclusion : ils justifient une mesure (Piege 5 de CLAUDE.md
+    -- un test peut avoir tort, et celui-ci avait tort).
+
+    👤 : *« rate est interdit sur les 2 premieres couches ! mais absolument pas la derniere »*.
+
+    Les deux bornes ont des statuts DIFFERENTS et il ne faut pas les confondre :
+
+      couches 0 et 1  -> interdit par la PHYSIQUE. Le facteur de rate se calcule sur les
+                         couches de meme parite deposees avant (`range(i-2, -1, -2)`), et
+                         cette boucle est vide pour i = 0 et i = 1 : n_ref = 0, aucune
+                         reference, aucun rate. La borne vaut exactement 2.
+      derniere couche -> autorisee, et c'est le placement le MOINS CHER de l'empilement :
+                         une couche Rate legue son erreur en boucle ouverte a tout ce qui la
+                         suit, et la derniere n'a rien en aval.
+
+    📏 Ce que l'ancienne borne coutait : 0 placement sur la derniere couche en 24 581
+    placements observes, alors que l'AVANT-derniere etait la position la plus choisie (2 530).
+    """
+    # la derniere couche est desormais candidate
+    assert 47 in _rate_candidate_layers(_strat([(0, 48)]), 48)
+    # et les deux premieres ne le sont jamais, meme quand un bloc s'y termine
+    assert _rate_candidate_layers(_strat([(0, 1), (1, 2), (2, 48)]), 48) == [47]
 
 
 def test_enabling_rate_adds_one_variant_per_boundary():
     strategies = [_strat([(0, 24), (24, 40), (40, 48)], sid=7)]
     out = _expand_with_rate_variants(strategies, {"allow_rate": True}, 48, _Log())
-    assert len(out) == 3                       # the original plus two variants
-    assert [v["rate_layers"] for v in out[1:]] == [[39], [23]]
+    # ⚠️ 2026-08-19 : attendait 3 (l'originale + deux variantes) et `[[39], [23]]`. La
+    # derniere couche etant autorisee (👤), le troisieme bloc rend maintenant sa frontiere
+    # 47, d'ou une variante de plus. Le nombre de variantes suit le nombre de frontieres
+    # admissibles -- c'est ce que le test verifie, et le vivier a grandi de un.
+    assert len(out) == 4                       # the original plus THREE variants
+    assert [v["rate_layers"] for v in out[1:]] == [[47], [39], [23]]
     assert all("RATE_L" in v["origin"] for v in out[1:])
     assert out[0] is strategies[0], "l'originale ne doit pas etre modifiee"
 
@@ -120,12 +152,58 @@ def test_a_variant_carries_exactly_one_rate_layer():
 # 1b. The kernel: a Rate layer deposits a whole number of turns
 # --------------------------------------------------------------------------- #
 
-def _grow(i_layer, history, is_rate):
+def _grow(i_layer, history, is_rate, prev_rate_flags=None, stack=None):
     return simulate_growth_kernel(
-        QWOT_500, i_layer, history, 540.0,
+        QWOT_500 if stack is None else stack, i_layer, history, 540.0,
         2.35 + 0j, 1.46 + 0j, 1.52 + 0j,
         1.0, 0.0, 2.0, 0, 0, 0.0, 0, 0, 0.0,
         1.0, 0.0, 0.0, True, 1, -1.0, -1.0, is_rate,
+        None, 0, False, 0.0, prev_rate_flags,
+    )
+
+
+def test_le_rate_ne_se_calcule_QUE_sur_les_couches_optiquement_deposees():
+    """🔒 👤 2026-08-19 : « rate ne se calcule qu'avec les couches optiquement deposees ».
+
+    🔴 Le noyau faisait l'inverse : son commentaire Q3 disait « it CHAINS: the last deposited
+    layer is a reference, Rate ones included », et elles l'etaient.
+
+    Pourquoi ce n'est pas cosmetique. Une couche Rate sort a `d_real = d_nom / A` PAR
+    CONSTRUCTION, donc son propre ratio `d_nom/d_real` vaut exactement `A` -- la moyenne
+    courante elle-meme. La reprendre comme reference ne change pas la VALEUR de A mais
+    incremente `n_ref` : le vivier grossit d'entrees a information NULLE, et toute precision
+    annoncee via la loi en 1/sqrt(n) etait donc surestimee.
+
+    Le montage : les couches H 0 et 2 sont deposees 5 % trop epaisses, la couche H 4 est en
+    Rate (elle heritera donc de ~5 %), et on demande la couche H 6.
+
+      sans le correctif -> les references sont {0, 2, 4}, dont 4 qui ne mesure rien
+      avec le correctif  -> les references sont {0, 2} seulement
+
+    Les deux rendent ici la MEME epaisseur, parce que la couche 4 porte exactement la moyenne
+    des deux autres : c'est precisement le point -- elle n'apporte rien. Ce que le test
+    verrouille, c'est que la couche 4 soit EXCLUE, et on le montre en la rendant ABERRANTE.
+    """
+    # ⚠️ QWOT_500 ne porte que 6 couches : il faut son propre empilement pour demander la 6.
+    stack = np.array([53.19, 85.62] * 4, dtype=np.float64)      # 8 couches, H aux pairs
+    d_nom_H = stack[0]
+    # 0 et 2 a +5 %, et la couche 4 (Rate) rendue volontairement aberrante a +50 % : si elle
+    # etait prise en reference, la couche 6 s'en ressentirait fortement.
+    hist = np.array([d_nom_H * 1.05, stack[1], d_nom_H * 1.05, stack[3],
+                     d_nom_H * 1.50, stack[5]], dtype=np.float64)
+    flags = np.array([False, False, False, False, True, False, False, False], dtype=np.bool_)
+
+    th_avec = _grow(6, hist, True, flags, stack)[0]   # couche 4 EXCLUE
+    th_sans = _grow(6, hist, True, None, stack)[0]    # couche 4 prise en reference
+
+    attendu = d_nom_H * 1.05
+    assert abs(th_avec - attendu) < 0.35, (
+        f"avec le correctif la couche 6 doit heriter des SEULES couches optiques (+5 %), "
+        f"soit ~{attendu:.2f} nm ; obtenu {th_avec:.2f} nm"
+    )
+    assert abs(th_sans - attendu) > 1.0, (
+        "le montage ne discrimine rien : sans le correctif la couche 6 doit etre visiblement "
+        f"tiree par la couche Rate aberrante ; obtenu {th_sans:.2f} nm contre {th_avec:.2f} nm"
     )
 
 

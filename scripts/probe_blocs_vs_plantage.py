@@ -170,7 +170,14 @@ CRASH_TOL = 0.05
 #: il se retourne.
 #: 📏 Optimum encadre le 2026-08-19 : SEEL 0,689 a i=52, 0,701 a 55, 0,735 a 58, et ECHEC
 #: complet des 61. On resserre autour du point de retournement.
-TAIL_CUTS = [46, 49, 52, 55]
+#: 🔴 SURCHARGEABLE PAR `CERTUS_TAIL_CUTS` -- ajoute le 2026-08-19 apres avoir ECRASE un
+#: artefact. Les coupures etaient une constante de module : changer la liste et relancer
+#: reproduisait le MEME nom de fichier, et la campagne 28-52 a ete perdue ainsi. Le suffixe
+#: du nom porte deja `_tail{min}-{max}`, donc piloter les coupures par l'environnement suffit
+#: a rendre les cellules d'un batch mutuellement non destructrices.
+#:     set CERTUS_TAIL_CUTS=46,49,52,55,58,61,64
+TAIL_CUTS = [int(_c) for _c in os.environ.get("CERTUS_TAIL_CUTS", "46,49,52,55").split(",")
+             if _c.strip()]
 
 #: 🔑 RATE CHIRURGICAL (8e argument = 4). Cibles MESUREES sur x2 a 2 nm : les couches 32, 39 et
 #: 35 portent 73 % des couches critiques, et 100 % de leurs echecs sont « niveau d'arret hors

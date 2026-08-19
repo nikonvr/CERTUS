@@ -518,6 +518,7 @@ def simulate_growth_kernel(
     witness_base_layer: int = 0,
     adaptive_scan: bool = False,
     machine_sampling_dd: float = 0.0,
+    prev_rate_flags: np.ndarray = None,
 ) -> tuple[float, float, float, float, float]:
     """
 
@@ -593,8 +594,26 @@ def simulate_growth_kernel(
     #
     #   Q2  Rate is FORBIDDEN until a layer of this material has been deposited under
     #       photometric control -- without one there is no measured rate at all.
-    #   Q4  the estimate AVERAGES over every previous layer of the material.
-    #   Q3  it CHAINS: the last deposited layer is a reference, Rate ones included.
+    #   Q4  the estimate AVERAGES over every previous OPTICALLY DEPOSITED layer of the
+    #       material.
+    #
+    # 🔴 Q3 SAID THE OPPOSITE AND IT WAS WRONG -- corrected 2026-08-19 on 👤's instruction:
+    # *"rate ne se calcule qu'avec les couches optiquement deposees"*. It used to read
+    # "it CHAINS: the last deposited layer is a reference, Rate ones included", and Rate
+    # layers were indeed counted.
+    #
+    # 🔑 WHY IT MATTERED, AND IT IS NOT COSMETIC. A Rate layer comes out at d_real = d_nom/A
+    # BY CONSTRUCTION, so its own ratio d_nom/d_real is exactly A -- the running average
+    # itself. Feeding it back changed nothing in the VALUE of A while incrementing `n_ref`:
+    # the pool grew with entries carrying ZERO information. Every accuracy claim resting on
+    # the 1/sqrt(n) law was therefore overstated as soon as a Rate layer entered the pool,
+    # and a long Rate tail inflated `n_ref` without improving anything at all.
+    #
+    # ⚠️ The physical consequence stays, and it is the right one: inside a Rate tail the
+    # estimate is FROZEN at its value on entering the tail, because no new optical layer of
+    # that material is ever deposited again. Every layer of the tail inherits the SAME
+    # relative error, correlated, which never averages out. That is now visible in `n_ref`
+    # instead of being hidden by it.
     #
     # 🔑 sigma_rate IS NOT A PARAMETER. The machine compares turns observed against the
     # thickness it BELIEVES it deposited -- the nominal one, since nothing told it
@@ -612,9 +631,17 @@ def simulate_growth_kernel(
     # previous ratios -- so averaging divides the inherited scatter by sqrt(n): 2,0 %
     # at one reference layer, 0,41 % at twenty-four (measured 2026-08-11). The Rate
     # gets steadily more accurate deeper into the stack.
+    # ⚠️ n counts OPTICAL reference layers only (see the Q3 correction above), so in a
+    # Rate tail it stops growing at the tail entry and the 1/sqrt(n) gain stops with it.
     #
-    # 🟢 And the rounding IS 9bis-7's U(0, 0.125 nm) stopping quantisation, appearing
-    # on its own with no parameter to pose: one turn at 0.5 nm/s and 4 Hz is 0.125 nm.
+    # ⚠️ THE ROUNDING IS NEGLIGIBLE AND NOTHING SHOULD BE BUILT ON IT -- 👤 2026-08-19:
+    # *"on ne tient pas compte du round, c'est d'un ordre superieur"*. An earlier version
+    # of this comment claimed the rounding "IS 9bis-7's U(0, 0.125 nm) stopping law,
+    # appearing on its own with no parameter to pose". That was an over-claim: 0.125 nm on
+    # a layer of ~100 nm is 1.2e-3 relative, against an inherited scatter of 2e-2 at one
+    # reference layer -- more than an order of magnitude below, and it does not model the
+    # optical stopping quantisation at all. The rounding is kept because it is what a turn
+    # counter physically does; it is not evidence for anything.
     #
     # ⚠️ C2 is safe BY CONSTRUCTION, and it is worth saying why. A Rate layer reads
     # nothing, so it consumes no reading noise -- and that shifts nothing, because
@@ -632,6 +659,12 @@ def simulate_growth_kernel(
         n_ref = 0
         acc = 0.0
         for j in range(i_layer - 2, -1, -2):        # same parity = same material
+            # 👤 2026-08-19 : « rate ne se calcule qu'avec les couches optiquement
+            # deposees ». Une couche Rate ne porte aucune mesure -- elle a ete posee EN
+            # AVEUGLE d'apres l'estimation courante, donc son ratio vaut cette estimation
+            # elle-meme. La reprendre comme reference, c'est se citer soi-meme.
+            if prev_rate_flags is not None and j < prev_rate_flags.shape[0] and prev_rate_flags[j]:
+                continue
             d_real_j = prev_thicknesses_sim[j]
             d_nom_j = p_thick_nominal[j]
             if d_real_j > 1e-9 and d_nom_j > 1e-9:

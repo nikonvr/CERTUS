@@ -505,3 +505,51 @@ Coût : une cellule, ~35 min en `fast`, ~2 h en `deep`.
 ⚠️ Et le contrôle qui va avec : **`75c` à 2 nm**, où le Rate ne gagne pas. Une action qui
 améliorerait le Rate à 1 nm **et** à 2 nm serait suspecte — elle agirait sur autre chose que le
 mécanisme identifié.
+
+---
+
+## 8. 🔵 LE BATCH DU 2026-08-19 — les prédictions sont écrites AVANT qu'il tourne
+
+👤 : *« je souhaite lancer un batch d'environ 2 h avec du rate sur le 75c ×2 »*, *« je valide
+toutes les décisions que tu prendras »*. Lancé en son absence.
+`scripts/batch_rate_2026-08-19.py`, 3 cellules, ~3 h 15 estimées.
+
+### Pourquoi un rejeu était OBLIGATOIRE en tête
+
+Deux correctifs sont tombés le même jour, tous deux sur instruction de 👤, et tous deux
+touchent le Rate :
+
+1. **la dernière couche devient candidate** (elle était exclue — 0 placement sur 24 581) ;
+2. **le facteur de rate ne se calcule plus que sur les couches optiquement déposées.**
+
+🔴 **C1 : toute mesure Rate antérieure décrit un autre solveur.** Sans la cellule 1, aucune
+comparaison n'est possible — ce serait l'erreur n° 3 du §5 de `CLAUDE.md`, deux choses changées
+à la fois.
+
+### Les trois cellules, et ce que chacune décide
+
+| # | cellule | ce qu'elle tranche |
+|---|---|---|
+| **1** | `fast`, graine 42, coupures **46 → 64** | le correctif **déplace-t-il la falaise** ? La campagne d'avant la situait entre 61 et 58, avec un plateau plat à 4,00 % de 58 à 46 |
+| **2** | `fast`, graine **77**, mêmes coupures | §24-46 : *un verdict sur un intervalle marginal n'est pas déterminé par une graine*. Sans elle, rien de la cellule 1 n'est publiable |
+| **3** | **`premium`**, graine 42, coupures 52 → 58 | le `4,00 %` vaut **2/50** en `fast` : la granularité minimale au-dessus de zéro, **pas une mesure**. À N = 150 il devient 6/150, et le bruit du SEEL tombe d'un facteur √3 — de quoi enfin départager les coupures, ce que `fast` **ne peut pas faire** (écart 52/46 à 1,25 σ) |
+
+### 🔵 La prédiction, posée d'avance et falsifiable
+
+> **L'optimum doit se déplacer vers des queues plus COURTES** (coupure plus tardive).
+
+**Le raisonnement** : le vivier de références ne grossit plus à l'intérieur de la queue, donc
+une longue queue n'améliore plus son estimation de rate — elle fige une erreur unique et la
+fait porter à toutes ses couches. L'ancien code créditait ces couches d'un `n_ref` fictif et
+sous-estimait donc le coût des longues queues.
+
+**Ce qui la réfuterait** : un optimum inchangé à 52, ou déplacé vers 46. Dans ce cas la
+correction ne pèse rien devant le mécanisme de position terminale, et il faudra le dire.
+
+### ⚠️ Ce que ce batch NE fait pas, et pourquoi
+
+| | |
+|---|---|
+| pas de `rate_tail_keep_optical` — la **règle d'exception** de 👤 | trois tentatives ont échoué. Je ne lance pas une quatrième à l'aveugle en son absence : une cellule morte coûte 40 min pour rien. Elle passe après, avec un essai de mise en route court |
+| pas d'autre composant | 👤 a demandé le 75c ×2 |
+| pas de `deep` | à N = 300 une seule cellule mangerait le budget entier |

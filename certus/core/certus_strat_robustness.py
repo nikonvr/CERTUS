@@ -531,6 +531,21 @@ RATE_MIN_LAYERS_PER_BLOCK: float = 3.0
 RATE_SWING_MIN_DEFAULT: float = 0.025
 
 
+#: 👤 2026-08-19 : « rate est interdit sur les 2 premieres couches ! mais absolument pas la
+#: derniere ». Les deux bornes du code etaient FAUSSES, et en sens opposes.
+#:
+#: 🔑 LA BORNE BASSE A UNE RAISON PHYSIQUE, et elle donne exactement 2. Le facteur de rate se
+#: calcule sur les couches de MEME PARITE deposees AVANT la couche i
+#: (`certus_strat_growth.py:634`, `range(i_layer-2, -1, -2)`). Pour i = 0 et i = 1 cette boucle
+#: est vide : `n_ref = 0`, la machine n'a jamais rien depose dont elle puisse tirer un rate.
+#:
+#: 🔴 ET LE NOYAU NE LE REFUSAIT PAS -- il retombait SILENCIEUSEMENT sur POEM (garde `n_ref > 0`,
+#: ligne 640). Une variante etiquetee `RATE_L1` simulait donc du POEM pur. 📏 Mesure du
+#: 2026-08-19 sur 24 581 placements : la couche 1 a bien ete proposee 2 fois. Deux resultats
+#: portaient une etiquette qui mentait sur ce qui avait tourne. On refuse desormais en amont.
+RATE_MIN_LAYER: int = 2
+
+
 def _wl_de_la_couche(strategy: dict[str, Any], layer: int) -> float | None:
     """La lambda que la strategie surveille pour cette couche, ou None hors de tout bloc."""
     for blk in strategy.get("blocks") or []:
@@ -566,7 +581,9 @@ def _rate_swing_candidates(strategy: dict[str, Any], num_layers: int,
             layer_to_wl[layer] = float(wl)
 
     out: list[int] = []
-    for layer in range(num_layers - 1):          # same final-layer exclusion as A24
+    # 👤 2026-08-19 : la derniere couche N'EST PLUS exclue (elle l'etait, « same final-layer
+    # exclusion as A24 »), et les deux premieres le sont desormais explicitement.
+    for layer in range(RATE_MIN_LAYER, num_layers):
         wl = layer_to_wl.get(layer)
         if wl is None:
             continue
@@ -588,10 +605,22 @@ def _rate_candidate_layers(strategy: dict[str, Any], num_layers: int,
     did. 14-10 lists three costs for a Rate layer and a block boundary already pays two
     of them: the lost anchors, and the turning-point count that restarts anyway.
 
-    ⚠️ The last layer of the stack is deliberately EXCLUDED. It has no successor, so the
-    downstream cost is nil there too -- but it is also the last chance to correct
-    everything accumulated since layer 1, and the two pull opposite ways. It deserves
-    its own experiment, not a free ride in this one (A24).
+    🔴 THE FINAL-LAYER EXCLUSION IS GONE -- 👤 2026-08-19: *"rate est interdit sur les 2
+    premieres couches ! mais absolument pas la derniere"*. It had been excluded on the grounds
+    that "the two pull opposite ways", which was never a reason to forbid, only a reason to
+    measure. 📏 And the measurement now says the exclusion was removing the BEST candidate:
+    across 24 581 observed placements the final layer appeared **0 times** while the
+    next-to-last was the single most chosen position (2 530). The mechanism established the
+    same day says why -- a Rate layer removes its own crash but hands its open-loop error to
+    everything DOWNSTREAM; the final layer has no downstream, so it is the cheapest Rate
+    placement in the whole stack.
+
+    ⚠️ Layers 0 and 1 are now refused HERE instead of degrading silently in the kernel --
+    see `RATE_MIN_LAYER`.
+
+    🔴 C1: this CHANGES the candidate pool, so every Rate figure measured before 2026-08-19
+    describes a solver that could not use the last layer. Those runs are not comparable to
+    new ones on the Rate axis.
 
     🔑 `swing_ctx`, added 2026-08-19: when given, NEEDED layers (poor growth-time swing)
     are added to the pool alongside CHEAP layers (block boundaries), before the cap is
@@ -608,7 +637,10 @@ def _rate_candidate_layers(strategy: dict[str, Any], num_layers: int,
         for blk in blocks:
             end = int(blk.get("end", 0))
             last = end - 1                       # last layer of this block
-            if 0 <= last < num_layers - 1:       # excludes the final layer of the stack
+            # 👤 2026-08-19, GRAVE : interdit sur les 2 premieres couches, autorise partout
+            # ailleurs -- la derniere COMPRISE. L'ancienne borne `< num_layers - 1` excluait
+            # la derniere et laissait passer les couches 0 et 1.
+            if RATE_MIN_LAYER <= last < num_layers:
                 out.append(last)
     # 🔴 LES DEUX CRITERES SE PARTAGENT LE PLAFOND, ILS NE S'EVINCENT PAS. Mesure du
     # 2026-08-19 : trier tout le pool par profondeur puis couper a `cap` faisait que des

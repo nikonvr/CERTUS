@@ -496,3 +496,37 @@ def test_le_balayage_de_prefixe_optique_laisse_la_queue_PARFAITE():
     hors = _expand_with_rate_variants(
         [a_blocs], {"allow_rate": True, "optical_prefix_sweep": [20]}, 48, _Log())
     assert not [v for v in hors if "OPT_PREFIX" in str(v.get("origin"))]
+
+
+def test_le_prefixe_optique_survit_a_allow_rate_False():
+    """🔴 CE TEST EXISTE PARCE QUE LE PIEGE A FAILLI COUTER DEUX HEURES DE CALCUL.
+
+    `_expand_with_rate_variants` commence par `if not allow_rate: return strategies`. Le
+    balayage de prefixe etait injecte APRES ce garde -- or la sonde a besoin justement de
+    `allow_rate = False`, sinon des variantes Rate se melangeraient a la population et on
+    mesurerait les deux couts a la fois au lieu d'ISOLER le cout optique.
+
+    Place sous le garde, l'injection rendait ZERO variante EN SILENCE : la sonde aurait
+    tourne deux heures pour rendre une courbe vide. Aucune erreur, aucun message -- le motif
+    exact que CLAUDE.md decrit depuis le debut.
+    """
+    par_couche = _strat([(i, i + 1) for i in range(48)], sid=11)
+    par_couche["n_blocks"] = 48
+    p = {"allow_rate": False, "optical_prefix_sweep": [20, 30, 48]}
+    out = _expand_with_rate_variants([par_couche], p, 48, _Log())
+    pref = [v for v in out if str(v.get("origin", "")).startswith("OPT_PREFIX")]
+    assert len(pref) == 3, (
+        f"allow_rate=False a etouffe le balayage de prefixe : {len(pref)} variantes au lieu "
+        "de 3. C'est le piege que ce test verrouille.")
+    assert not [v for v in out if "RATE_L" in str(v.get("origin", ""))], (
+        "allow_rate=False doit continuer a interdire toute variante Rate")
+
+    # regle d'or : sans balayage, allow_rate=False rend l'objet strategies LUI-MEME
+    strategies = [par_couche]
+    assert _expand_with_rate_variants(strategies, {"allow_rate": False}, 48, _Log()) is strategies
+
+    # et les identifiants ne se marchent pas dessus quand les deux coexistent
+    mixte = _expand_with_rate_variants(
+        [par_couche], {"allow_rate": True, "optical_prefix_sweep": [20, 30]}, 48, _Log())
+    ids = [v["strategy_id"] for v in mixte if v is not par_couche]
+    assert len(ids) == len(set(ids)), f"identifiants en collision : {ids}"

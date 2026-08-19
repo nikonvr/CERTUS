@@ -1116,6 +1116,14 @@ les coups.
 
 **La borne mesurée est donc `1,00 A` à `k = 8` et `N = 800`**, soit **8,5 σ du signal lissé**
 et non 3. ⚠️ Elle dépend de `N` autant que de `k` : **c'est une valeur mesurée, pas une loi.**
+
+⚠️ **ET ELLE A ÉTÉ MESURÉE AVEC UN LISSAGE CENTRÉ, alors que le code lisse de façon CAUSALE**
+(`certus_strat_growth.py:1398`, fenêtre `[i−k+1 … i]` — c'est §24-3). 🟢 **Ce n'est pas
+disqualifiant ici, et voici pourquoi** : le signal propre de cette sonde est **plat**, donc les
+deux lissages rendent le même bruit lissé — même variance `σ/√k`, seule la phase diffère. Le
+décalage de `(k−1)/2` que §24-3 dénonce ne mord que pour **localiser** un extremum sur un signal
+**non plat**, ce que cette mesure ne fait pas. **Mais toute mesure de seuil sur un signal non
+plat devra, elle, être refaite en causal.**
 Si `k` ou la cadence changent, **remesure** — n'extrapole pas, et surtout n'écris pas de
 formule en `ln N` pour boucher le trou.
 
@@ -1141,7 +1149,7 @@ paramètres ont été arrêtés avec le physicien le 2026-08-08 et sont dans le 
 | Cadence d'échantillonnage machine | **4 Hz**, un point tous les **0,125 nm** | §18-1 |
 | Amplitude du bruit de lecture | **±0,05 point**, soit `A = 5e-4` en unités T | §18-2 |
 | `reading_smoothing_window` (`k`) | 🔴 **DEUX VALEURS, ET IL FAUT LES DISTINGUER.** **Valeur du MODÈLE figé : 8** lectures (2 s à 4 Hz, §18-3). **Valeur RETENUE en exploitation : 1, c'est-à-dire INACTIF**, et elle le reste — 👤 : *« on ne sait pas trop les algos de smooth appliqués par Bühler »*, et §18 interdit d'ajouter une structure non mesurée. ⚠️ **Ce document portait ces deux valeurs sur DEUX LIGNES SÉPARÉES de cette même table jusqu'au 2026-08-19** : lue dans l'ordre, elle prescrivait 8 puis 1. Fusionnées. | §18-3 |
-| `tp_hysteresis_factor` | **1,00** — **mesuré**, pas dérivé, à `k = 8` et `N = 800`. 🔴 **Ni 0,354 ni 1,66.** Le `1/√k` = 0,354 est **réfuté** : il laisse **100 %** de points tournants fabriqués. ⚠️ La valeur dépend de `N` autant que de `k` — si l'un bouge, **remesure** | §18-4, A1 |
+| `tp_hysteresis_factor` | 🔴 **DEUX VALEURS, ET LA TABLE N'EN DONNAIT QU'UNE.** **Valeur EN USAGE : 1,66** — c'est ce que portent **les 14 configurations réelles**, vérifié le 2026-08-19. **Valeur CIBLE : 1,00**, mesurée à `k = 8` et `N = 800`. ⚠️ *Cette ligne annonçait « **1,00** — ni 0,354 ni 1,66 », donc elle prescrivait une valeur qu'aucune configuration n'utilise, en niant celle qui tourne réellement. Le §20, lui, disait correctement « vaut 1,66 aujourd'hui, cible 1,00 ».* Le `1/√k` = 0,354 reste **réfuté** (il laisse **100 %** de points tournants fabriqués). 🔴 **Et la cible n'est pas applicable telle quelle** : elle a été mesurée à `k = 8`, or les 14 configurations tournent à `k = 1`. La valeur dépend de `N` autant que de `k` — **remesure avant de l'appliquer** | §18-4, A1 |
 | Retard de déclenchement | **aucun** — ne rien ajouter | §18-5 |
 | `phase_a_level_margin_factor` | **1,66** actuel, **3,33** à évaluer | §18-6 |
 | Quantification de l'arrêt | `U(0 ; 0,125 nm)` | §18-7 |

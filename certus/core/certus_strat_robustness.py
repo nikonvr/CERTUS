@@ -618,9 +618,12 @@ def _rate_candidate_layers(strategy: dict[str, Any], num_layers: int,
     ⚠️ Layers 0 and 1 are now refused HERE instead of degrading silently in the kernel --
     see `RATE_MIN_LAYER`.
 
-    🔴 C1: this CHANGES the candidate pool, so every Rate figure measured before 2026-08-19
-    describes a solver that could not use the last layer. Those runs are not comparable to
-    new ones on the Rate axis.
+    🟠 C1, MEASURED THE SAME DAY -- and the warning was too strong. The pool does change: on
+    r75x2 the native placements go 291 -> 314 and layer 74 goes 0 -> 112, displacing 71. But
+    a full replay of the tail sweep gives a MAXIMUM deviation of 0.03 % over five cuts, and
+    the cliff does not move. Earlier tail campaigns stay readable. See
+    docs/CHANTIER_RATE.md §9 -- and note that the 0.03 % is the ROUNDING order, which is the
+    only residual the arithmetic allows.
 
     🔑 `swing_ctx`, added 2026-08-19: when given, NEEDED layers (poor growth-time swing)
     are added to the pool alongside CHEAP layers (block boundaries), before the cap is

@@ -553,3 +553,84 @@ correction ne pèse rien devant le mécanisme de position terminale, et il faudr
 | pas de `rate_tail_keep_optical` — la **règle d'exception** de 👤 | trois tentatives ont échoué. Je ne lance pas une quatrième à l'aveugle en son absence : une cellule morte coûte 40 min pour rien. Elle passe après, avec un essai de mise en route court |
 | pas d'autre composant | 👤 a demandé le 75c ×2 |
 | pas de `deep` | à N = 300 une seule cellule mangerait le budget entier |
+
+---
+
+## 9. 📏 RÉSULTAT DE LA CELLULE 1 — **MA PRÉDICTION EST RÉFUTÉE**, et je sais pourquoi
+
+`reports/blocs_vs_plantage_r75x2_fast_s042_tail46-64.json`, 40,4 min, `N = 50` **consigné**.
+
+| coupure | 46 | 49 | **52** | 55 | 58 | 61 | 64 | *sans queue* |
+|---|---|---|---|---|---|---|---|---|
+| couches Rate | 29 | 26 | **23** | 20 | 17 | 14 | 11 | 0 |
+| `crash_min` | 4,00 % | 4,00 % | **4,00 %** | 4,00 % | 4,00 % | 100 % | 100 % | 100 % |
+| SEEL | 0,752 | 0,717 | **0,689** | 0,702 | 0,735 | — | — | — |
+
+**Comparaison directe avec l'avant-correctif, coupure par coupure :**
+
+```
+coupure  SEEL avant  SEEL apres     ecart
+     46      0.7517      0.7517    -0.00%
+     49      0.7169      0.7170    +0.00%
+     52      0.6886      0.6885    -0.01%
+     55      0.7014      0.7017    +0.03%
+     58      0.7351      0.7353    +0.02%
+```
+
+🔴 **La prédiction disait « l'optimum doit se déplacer vers des queues plus courtes ». Il n'a
+pas bougé d'un iota, et rien d'autre non plus : l'écart maximal vaut 0,03 %.** La falaise est
+au même endroit, entre 58 et 61.
+
+### 🟢 Le contrôle passe : le correctif ATTEINT bien le calcul
+
+Ce n'est donc pas un correctif inerte qu'on mesurerait sans le savoir (§12, contrôle 4) :
+
+| couche | placements natifs avant | après |
+|---|---|---|
+| **74 (dernière)** | **0** | **112** |
+| 71 | 45 | 19 — évincée, la 74 est plus profonde et le plafond garde les profondes |
+| 0 et 1 | 0 | 0 |
+| **total** | 291 | **314** |
+
+### 🔑 ET LA DÉMONSTRATION ANALYTIQUE — pourquoi l'exclusion des références NE POUVAIT RIEN CHANGER
+
+Une couche Rate sort à `d_réel = d_nom / A` **par construction**. Son propre ratio
+`d_nom/d_réel` vaut donc **exactement `A`**, la moyenne courante. En l'incluant :
+
+```
+A' = (n_opt · A + n_rate · A) / (n_opt + n_rate) = A
+```
+
+**La moyenne est invariante.** L'exclusion ne change que `n_ref` — c'est-à-dire la **précision
+annoncée**, jamais **l'épaisseur simulée**.
+
+🔑 **Le seul résidu possible est donc l'arrondi**, puisque `turns = round(...)` empêche le ratio
+d'être *exactement* `A`. 📏 Et c'est exactement ce qu'on mesure : **0,03 % au maximum**, à
+comparer à 0,125 nm sur ~100 nm, soit 0,12 %. **Le même ordre.** 👤 avait désigné le round le
+même jour comme *« d'un ordre supérieur »* dont on ne tient pas compte : les deux énoncés se
+referment l'un sur l'autre.
+
+⚠️ **Donc le correctif reste juste, et il fallait le faire** — `n_ref` mentait, et toute
+précision annoncée via `1/√n` était surestimée. Mais **il ne corrige pas un chiffre, il corrige
+une affirmation.** C'est une distinction qu'il ne faut pas perdre.
+
+### 🔴 Deux avertissements à corriger, que j'avais écrits trop fort
+
+| ce que j'avais écrit | ce que la mesure dit |
+|---|---|
+| **C1 : « toute mesure Rate antérieure décrit un autre solveur et n'est plus comparable »** | vrai pour le **vivier** (291 → 314 placements natifs), **faux en effet** sur les résultats de queue, identiques à 0,03 %. Les campagnes de queue antérieures restent donc lisibles |
+| *« l'estimation se fige dans la queue »* | **exact, mais ce n'est pas neuf** : le figement existait déjà avant le correctif, puisque les couches Rate reproduisaient `A`. Le correctif ne le crée pas, il cesse de le **masquer** derrière un `n_ref` gonflé |
+
+### ⚠️ Et la dernière couche ne rapporte rien ici
+
+📏 112 variantes portent désormais un Rate sur la couche 74. **Zéro déposable, `crash_min`
+100 %.** Sur `r75x2` la dernière couche n'ouvre donc aucune porte — ce qui ne juge pas la règle
+de 👤, qui est une règle d'**admissibilité** : on ne peut pas mesurer ce qu'on s'interdit
+d'essayer, et il fallait pouvoir l'essayer. Le verdict sur sa **valeur** demande d'autres
+composants, notamment ceux où le Rate gagne déjà (§7 : `75c` à 1 nm).
+
+### 🔑 Ce que la cellule 1 établit VRAIMENT
+
+**Les cinq coupures déposables sont toutes indiscernables à 2 σ** (écart max 1,25 σ). Comme
+avant le correctif, **ce run ne désigne aucun optimum** — et `scripts/lire_batch_rate.py` le
+dit de lui-même, ce qui était tout l'objet de l'écrire.

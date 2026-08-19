@@ -1320,9 +1320,18 @@ contre 2e-2 de dispersion héritée à une seule référence. Le commentaire du 
 qu'il *« EST la loi d'arrêt `U(0 ; 0,125 nm)` du §18-7, apparue sans paramètre à poser »* :
 **c'était une surinterprétation**, retirée.
 
-🔴 **C1** : le vivier de candidates change, donc **toute mesure Rate antérieure au 2026-08-19
-décrit un solveur qui ne pouvait pas utiliser la dernière couche.** Ces runs ne sont plus
-comparables aux nouveaux sur l'axe du Rate.
+🟠 **C1, et l'avertissement a été MESURÉ le jour même — il était trop fort.** Le vivier change
+réellement : sur `r75x2`, les placements natifs passent de **291 à 314**, la couche 74 de **0
+à 112**, et elle évince la 71. **Mais l'effet sur les résultats est nul** : rejeu complet du
+balayage de queue, écart maximal **0,03 %** sur cinq coupures, falaise inchangée. Les
+campagnes de queue antérieures restent donc lisibles.
+
+🔑 **Et c'est démontrable, pas seulement constaté.** Une couche Rate sort à `d_réel = d_nom/A`
+par construction, donc son ratio vaut **exactement `A`** : l'inclure ou l'exclure laisse la
+moyenne **invariante**, `A' = (n_opt·A + n_rate·A)/(n_opt+n_rate) = A`. Le correctif ne change
+donc que `n_ref` — **la précision annoncée, jamais l'épaisseur simulée**. Le seul résidu est
+l'arrondi, et les 0,03 % mesurés sont bien de cet ordre. ⚠️ **Il corrige une affirmation, pas
+un chiffre** — ce qui ne le rend pas facultatif : `n_ref` mentait.
 
 🔴 **Le critère 3 ne cherche pas les couches qui ont BESOIN du Rate, il cherche celles où il
 ne COÛTE rien.** Ce sont deux questions différentes et le code ne répond qu'à la seconde.

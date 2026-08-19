@@ -835,12 +835,51 @@ def _expand_with_rate_variants(
     # DERIVE ACCUMULEE, pas le signal propre de la couche. Franchir la zone en boucle ouverte
     # evite d'y chercher un niveau devenu inatteignable -- c'est le mecanisme teste ici.
     tail_cuts = params.get("rate_tail_sweep") or []
+    # 🔑 RATE CHIRURGICAL -- 👤 2026-08-19 : « si a j+1 on repart en optique et qu'il y a
+    # plusieurs extremums, POEM est efficace non ? ». VERIFIE dans le noyau, et la reponse est
+    # oui : `n_hist = (i_layer - block_start) * NPTS_PREV` ne sert qu'a EMPRUNTER des extrema
+    # aux couches precedentes du bloc. Une couche qui possede ses deux points tournants n'en a
+    # pas besoin -- et POEM lit ses ancres sur le signal REEL, donc il compense la derive amont
+    # par changement de variable (« we thus stop exactly at the desired thickness »).
+    #
+    # 🔴 CONSEQUENCE, ET ELLE INVALIDE LA QUEUE MONOLITHIQUE COMME SEULE FORME. Si l'optique
+    # redemarre pleinement apres une couche Rate, rien n'oblige a passer 23 couches en boucle
+    # ouverte : il suffit de FRANCHIR celles qui echouent. Le cout du Rate croissant avec le
+    # nombre de couches concernees (+1 % a 35 couches, +22 % a 75), 3 couches devraient couter
+    # bien moins que 23.
+    #
+    # 📏 Les cibles ne sont pas choisies : elles sont MESUREES. Sur x2 a 2 nm, trois couches
+    # concentrent 73 % des couches critiques -- 32 (47 %), 39 (16 %), 35 (10 %) -- et 100 % de
+    # ces echecs sont des « niveau d'arret hors d'atteinte », donc de la derive, pas du signal.
+    #
+    # ⚠️ ET C'EST ITERATIF PAR NATURE. Franchir la couche 32 deplacera le point de rupture
+    # ailleurs ; il faudra remesurer les couches critiques et recommencer. C'est la recurrence
+    # que 👤 decrivait des le depart.
+    layer_sets = params.get("rate_layer_sets") or []
     keep_optical = int(params.get("rate_tail_keep_optical", 0) or 0)
 
     variants: list[dict[str, Any]] = []
     skipped = 0
     next_id = STRATEGY_ID_RATE_BASE
     _t0 = time.perf_counter()
+    if layer_sets:
+        for strat in strategies:
+            for jeu in layer_sets:
+                couches = sorted({int(x) for x in jeu if 0 <= int(x) < num_layers})
+                if not couches:
+                    continue
+                v = dict(strat)
+                v["blocks"] = list(strat.get("blocks") or [])
+                v["rate_layers"] = couches
+                v["strategy_id"] = _variant_id(strat.get("strategy_id"), next_id)
+                v["origin"] = (f"RATE_SET{'_'.join(str(x) for x in couches)}"
+                               f"(from {strat.get('strategy_id', '?')})")
+                next_id += 1
+                variants.append(v)
+        logger.info(
+            f"[RATE-SET] {len(variants)} variantes chirurgicales sur {len(strategies)} "
+            f"strategies, {len(layer_sets)} jeux de couches."
+        )
     if tail_cuts:
         for strat in strategies:
             for cut in tail_cuts:

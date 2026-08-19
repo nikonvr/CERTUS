@@ -172,6 +172,21 @@ CRASH_TOL = 0.05
 #: complet des 61. On resserre autour du point de retournement.
 TAIL_CUTS = [46, 49, 52, 55]
 
+#: 🔑 RATE CHIRURGICAL (8e argument = 4). Cibles MESUREES sur x2 a 2 nm : les couches 32, 39 et
+#: 35 portent 73 % des couches critiques, et 100 % de leurs echecs sont « niveau d'arret hors
+#: d'atteinte » -- de la derive accumulee, pas un defaut de signal. On franchit ces couches-la
+#: en boucle ouverte et on laisse POEM se reancrer juste apres, ce que le noyau autorise
+#: pleinement des lors que la couche suivante a ses deux points tournants (verifie le 19/08).
+RATE_SETS = [
+    [32],                        # la dominante seule -- 47 % des couches critiques
+    [32, 35],
+    [32, 35, 39],                # les trois dominantes -- 73 %
+    [31, 32, 33],                # une fenetre courte autour de la dominante
+    [34, 35, 36],
+    [31, 32, 33, 34, 35, 36],    # la zone continue
+    [30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40],
+]
+
 #: PROFIL D'EXPLORATION ELARGIE -- il elargit ce qui est GENERE et RETENU, jamais la profondeur
 #: d'EVALUATION. `robustness_num_runs` et `n_screen_runs` restent intacts : ce sont des
 #: profondeurs de NOTATION, et les changer rendrait les taux de plantage incomparables avec les
@@ -294,7 +309,8 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
         # et la regle d'exception est sautee EN SILENCE. C'est ce qui a fait qu'un run de
         # 56 min a rendu un doublon exact du run sans exception, le 2026-08-19.
         "rate_by_swing": par_swing in (1, 3),
-        "rate_tail_sweep": TAIL_CUTS if par_swing >= 2 else [],
+        "rate_tail_sweep": TAIL_CUTS if par_swing in (2, 3) else [],
+        "rate_layer_sets": RATE_SETS if par_swing == 4 else [],
         "rate_tail_keep_optical": 4 if par_swing == 3 else 0,
         "execution_mode": mode,
     }
@@ -517,7 +533,8 @@ def main() -> int:
                          # 🔴 CE BLOC MENTAIT : il enregistrait `[]` pour par_swing == 3
                          # alors que le run tournait bien avec les coupures (§24-7).
                          "rate_by_swing": par_swing in (1, 3),
-                         "rate_tail_sweep": TAIL_CUTS if par_swing >= 2 else [],
+                         "rate_tail_sweep": TAIL_CUTS if par_swing in (2, 3) else [],
+                         "rate_layer_sets": RATE_SETS if par_swing == 4 else [],
                          "rate_tail_keep_optical": 4 if par_swing == 3 else 0,
                          "elargissement": ({**ELARGISSEMENT, "dp_top_k": 200}
                                            if int(elargi) >= 2 else
@@ -544,6 +561,7 @@ def main() -> int:
                 # 🔴 LES COUPURES ENTRENT DANS LE NOM. Sans elles, changer TAIL_CUTS ecrase
                 # l'artefact precedent : les coupures 28-52 ont ete perdues ainsi.
                 + ("" if not par_swing else "_swing" if par_swing == 1
+                   else "_chirurgical" if par_swing == 4
                    else f"_tail{min(TAIL_CUTS)}-{max(TAIL_CUTS)}"
                         + ("k" if par_swing == 3 else "")))
     out = ROOT / "reports" / f"blocs_vs_plantage_{nom}_{mode}_s{graine:03d}{suffixe}.json"

@@ -841,3 +841,69 @@ sur deux graines et le résultat sera solide des deux côtés.
 🔑 **Note de méthode** : ce contrôle a été conçu pour **tuer** la queue Rate, et il l'a
 confirmée. C'est exactement ce qu'on demande à un contrôle — et c'est la raison pour laquelle
 il fallait le lancer avant d'écrire quoi que ce soit d'autre.
+
+---
+
+## 14. 🔴🔴 LA CELLULE 2 RÉFUTE LE §13 — et ce qui survit est plus fort que ce qui tombe
+
+`reports/blocs_vs_plantage_r75x2_deep_s077.json`, 154,2 min, `N = 300`, **2 231 stratégies**.
+
+### Ce que le §13 affirmait, et qui est FAUX
+
+> *« La queue Rate est, à ce jour, le seul moyen connu de rendre ce design fabricable à la
+> fente nominale. »*
+
+📏 **Réfuté.** À `deep` et 2 nm, **graine 77** :
+
+| | stratégies | déposables | `crash_min` | SEEL | blocs |
+|---|---|---|---|---|---|
+| **graine 42** | 1 617 | **0** | 100,00 % | — | — |
+| **graine 77** | 2 231 | **547** | **1,33 %** | **0,569** | **9** |
+
+**Le pur optique à la fente nominale rend 547 stratégies déposables**, la meilleure à
+**SEEL 0,569 en 9 blocs** — c'est le **meilleur résultat jamais obtenu sur ce composant**,
+meilleur que le 0,625 à 1 nm et que le 0,689 de l'hybride, avec **9 changements de λ au lieu
+de 74**.
+
+⚠️ **Et le §13 avait été écrit sur la SEULE graine 42**, six heures plus tôt, en concluant
+« quadrupler la recherche ne change rien à 2 nm ». C'était vrai à graine 42. **Ce n'était pas
+un fait sur le composant.**
+
+### 🔑 LE TABLEAU COMPLET — et il faut le lire en entier, jamais une ligne seule
+
+| configuration | graine 42 | graine 77 |
+|---|---|---|
+| **2 nm, pur optique**, `deep` | 🔴 **0 déposable**, 100 % | 🟢 **547**, SEEL 0,569, 9 blocs |
+| **1 nm, pur optique**, `deep` élargi | 🟢 **254**, SEEL 0,629 | 🔴 **0 déposable**, 38 % |
+| **2 nm + queue Rate**, `fast` | 🟢 **5**, SEEL 0,689 | 🟢 **5**, SEEL 0,689 |
+
+🔴 **Les deux graines donnent des verdicts OPPOSÉS aux DEUX fentes**, et dans des sens
+contraires : ce qui marche à 42 échoue à 77, et réciproquement. Sur ce composant, **la graine
+ne fait pas varier un score : elle décide de l'existence même d'une solution.**
+
+### 🟢 CE QUI SURVIT, ET QUI SORT RENFORCÉ
+
+**L'hybride est la SEULE configuration qui tienne aux deux graines.** Les deux autres
+échouent complètement, chacune à son tour. Ce n'était qu'une remarque au §13 ; c'est
+maintenant **le seul énoncé qui résiste** :
+
+> **Sur `r75x2`, aucune stratégie purement optique n'est fiable : chaque fente a sa graine qui
+> la tue. La queue Rate rend moins bien — SEEL 0,689 contre 0,569 — mais elle rend TOUJOURS.**
+
+⚠️ **Réserve de protocole, et elle est réelle** : l'hybride est mesuré en `fast`, les deux
+autres en `deep`. La comparaison **entre lignes** mélange donc la profondeur de recherche.
+Ce qui est propre, et qui porte tout le poids, c'est la comparaison **à l'intérieur de chaque
+ligne** — même mode, même fente, seule la graine change. 📌 Un hybride en `deep` reste à
+mesurer avant toute publication.
+
+### 🔑 La leçon de méthode, et elle est chère
+
+📏 **Trois fois aujourd'hui, une conclusion tirée d'une seule graine a été renversée par la
+seconde** : le 254 → 0 à 1 nm ce matin, le mécanisme du Rate cet après-midi, et ce 0 → 547 ce
+soir. §24-46 le disait depuis le 2026-08-17 — *un verdict n'est pas déterminé par une graine* —
+et je l'ai enfreint trois fois en un jour, chaque fois en écrivant la conclusion **avant** que
+la seconde graine ne soit tombée.
+
+🔒 **La règle qui en découle, et elle est plus forte que « lancer deux graines »** : sur un
+composant marginal, **n'écris pas la conclusion tant que la seconde graine n'a pas rendu**.
+Pas « écris-la puis vérifie » — la première rédaction contamine la lecture de la seconde.

@@ -557,8 +557,28 @@ def main() -> int:
     print(f"  {'🟢' if n_ko == 0 else '🔴'} {n_ok} renvoi(s) confirme(s) · {n_ko} qui pointent "
           f"ailleurs · {n_sans} sans symbole cite a cote (non verifiables)")
 
+    # 🔴 DEUX ENTREES DU §24 PORTAIENT LE NUMERO 49. J'ai ajoute la mienne le 2026-08-19 sans
+    # verifier que 49 etait pris, et mon PROPRE controle l'a manque : il collectait les numeros
+    # dans un SET, ou un doublon disparait en silence. Un renvoi « §24-49 » designe alors deux
+    # constats differents, et le lecteur ne peut pas savoir lequel.
+    print("\n=== G. LES ENTREES NUMEROTEES DU §24 SONT-ELLES UNIQUES ? ===")
+    import collections as _c
+    claude = ROOT / "CLAUDE.md"
+    txt = claude.read_text(encoding="utf-8")
+    try:
+        bloc = txt[txt.index("## 24."): txt.index("## 25.")]
+    except ValueError:
+        bloc = ""
+    nums = re.findall(r"^\|\s*(\d+)\s*\|", bloc, re.M)
+    dups = {k: v for k, v in _c.Counter(nums).items() if v > 1}
+    if dups:
+        n_pb += len(dups)
+        print(f"  🔴 numeros en double : {dups} — un renvoi « §24-N » y devient ambigu")
+    else:
+        print(f"  🟢 {len(nums)} entrees, {len(set(nums))} numeros distincts, aucun doublon")
+
     ok, det = _controle_negatif()
-    print("\n=== G. CONTROLE NEGATIF -- l'outil sait-il seulement DETECTER ? ===")
+    print("\n=== H. CONTROLE NEGATIF -- l'outil sait-il seulement DETECTER ? ===")
     if ok:
         print(f"  🟢 contradiction plantee DETECTEE ({det}) -- l'outil mord")
     else:

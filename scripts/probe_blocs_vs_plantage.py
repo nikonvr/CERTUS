@@ -336,11 +336,22 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
 
     _c = app.collect_params
     vus = {"n": 0}
+    # 🔴 §24-7 A NOUVEAU, ET SUR MA PROPRE SONDE. Le bloc `config` consignait les sept reglages
+    # d'exploration et la fente, mais JAMAIS la profondeur Monte-Carlo. Or un `crash_min` ne se
+    # lit qu'avec son N : 4,00 % vaut 2/50 en `fast` et 6/150 en `premium`, et c'est la
+    # granularite minimale au-dessus de zero, pas une mesure. Le nom de fichier porte le mode,
+    # d'ou la profondeur se DEDUIT par une table qui vit dans certus_strat_ui_state.py et qui
+    # peut changer. Une deduction n'est pas une consignation : on enregistre la valeur resolue.
+    profondeur: dict = {}
 
     def collect(*a, **k):
         p = _c(*a, **k)
         p.update(over)
         vus["n"] += 1
+        for _k in ("robustness_num_runs", "n_screen_runs", "dp_top_k", "consensus_num_runs"):
+            _v = p.get(_k)
+            if _v is not None:
+                profondeur[_k] = _v
         return p
 
     app.collect_params = collect
@@ -377,7 +388,8 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
             "resolution_nm": s.get("monochromator_resolution_nm"),
             "resolution_noise_factor": s.get("resolution_noise_factor"),
         })
-    return {"verdict": "OK", "n_strats": len(lignes), "strategies": lignes}
+    return {"verdict": "OK", "n_strats": len(lignes), "strategies": lignes,
+            "profondeur": dict(profondeur)}
 
 
 def par_fente(lignes: list[dict]) -> None:

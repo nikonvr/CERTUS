@@ -174,32 +174,98 @@ mesure**. A24 le dit, elle n'a jamais eu lieu.
 🔒 **L'attribution est propre** : parmi les 1 194, le meilleur plantage **hors variantes de
 queue** reste **100,00 %**. Les 7 déposables sont toutes des queues Rate. Aucune ambiguïté.
 
-### La coupure a un optimum, et il est TARDIF
+### 🔴 CE QUI SUIT A ÉTÉ RÉÉCRIT LE 2026-08-19 — la version d'avant se trompait de mécanisme
 
-| coupure `i` | 28 | 31 | 34 | 37 | 41 | 46 | **52** |
-|---|---|---|---|---|---|---|---|
-| SEEL | 0,814 | 0,767 | 0,814 | 0,757 | 0,749 | 0,752 | **0,689** |
+⚠️ **Ce paragraphe disait** : *« la coupure a un optimum tardif »*, *« sept filtres distincts,
+sept scores distincts »*, et expliquait le gain par *« franchir en boucle ouverte la zone où la
+dérive accumulée tue l'optique »*. 📏 **Les trois sont réfutés par les artefacts eux-mêmes**,
+`reports/blocs_vs_plantage_r75x2_fast_s042_tail.json` et `..._tail46-55.json`, relus le
+2026-08-19. Ce qui suit est ce qu'ils disent réellement.
 
-**Sept filtres distincts, sept scores distincts** — vérifié, ce ne sont pas des doublons. Le SEEL
-s'améliore quand la coupure recule : passer tard en boucle ouverte vaut mieux que passer tôt.
+#### 📏 Ce n'est pas une courbe en U, c'est une FALAISE
 
-🔑 **Cohérent avec la loi de profondeur du §1** : le coût d'une couche Rate croît avec ce qui
-reste en aval. Couper à 52 laisse 23 couches en boucle ouverte, couper à 28 en laisse 47 — et
-l'écart de SEEL entre les deux vaut **+18 %**.
+| coupure `i` | 70 | 67 | 64 | **61** | **58** | 55 | 52 | 49 | 46 | *aucune queue* |
+|---|---|---|---|---|---|---|---|---|---|---|
+| couches Rate | 5 | 8 | 11 | **14** | **17** | 20 | 23 | 26 | 29 | 0 |
+| `crash_min` | 100 % | 100 % | 100 % | **100 %** | **4,00 %** | 4,00 % | 4,00 % | 4,00 % | 4,00 % | 100 % |
+| déposables | 0 | 0 | 0 | **0** | **1** | 1 | 1 | 1 | 1 | 0 |
+| SEEL | — | — | — | — | 0,735 | 0,701 | **0,689** | 0,717 | 0,752 | — |
 
-⚠️ **Mais toutes les coupures rendent `crash_min = 4,00 %`**, soit exactement **2/50 tirages** en
-`fast` : la granularité minimale au-dessus de zéro. Le taux de plantage ne discrimine pas les
-coupures — **seul le SEEL le fait**. Une mesure en `premium` (N = 150) est nécessaire avant de
-citer le 4 %.
+🔑 **Tout bascule entre la coupure 61 et la coupure 58** — trois couches. Et **au-delà, allonger
+la queue ne gagne strictement rien** : `crash_min` reste à 4,00 % de 58 jusqu'à 46, à la
+décimale près. Une explication en « plus on couvre, mieux c'est » est incompatible avec un
+plateau parfaitement plat sur 12 couches.
+
+#### 🔴 Le mécanisme publié était FAUX, et voici ce qui le réfute
+
+L'ancienne version disait que la queue Rate **franchit la zone où la dérive accumulée tue
+l'optique**. Trois faits l'interdisent :
+
+| fait mesuré | ce qu'il tue |
+|---|---|
+| la couche critique de **toutes** les déposables est la **39** | elle est **avant** la coupure, donc **restée optique**. La queue ne l'a jamais couverte |
+| la couche critique dominante de la population est la **32** (48 variantes sur 113), à **toutes** les coupures | reculer la coupure de 55 à 46 ne la couvre pas davantage, et ne change rien |
+| `crash_min` est **plat à 4,00 %** de la coupure 46 à la coupure 55 | couvrir 9 couches de plus ne gagne rien : ce n'est donc pas la couverture qui agit |
+
+#### 🟢 Ce que le code dit, lui — et c'est vérifié ligne à ligne
+
+`certus/physics/certus_strat_growth.py:654` : une couche Rate fait un **retour anticipé** avant
+toute logique de déclenchement, et rend son épaisseur **sans sentinelle de plantage** (les deux
+marges de comptage sortent à `1e18`). **Une couche Rate ne peut donc ni manquer son niveau, ni
+mal compter ses points tournants.**
+
+⚠️ **Sous une condition, ligne 640** : `if n_ref > 0`. S'il n'existe aucune couche de même parité
+déposée avant, le chemin **retombe sur POEM** et la couche redevient plantable. Sans objet pour
+une queue qui commence à 46, à connaître pour une couche Rate placée en tête d'empilement.
+
+#### 🔑 LE MÉCANISME RÉEL : la queue ne répare rien, elle SUPPRIME des occasions de planter
+
+Et il est bien plus étroit que ce que j'avais écrit :
+
+1. Sur `r75x2` à 2 nm, **les 224 stratégies optiques plantent à 100 %**, sans exception.
+2. **Une seule** en réchappe : celle à **75 blocs** — le monitoring **couche par couche** — et
+   **uniquement** quand elle porte une queue Rate atteignant la couche 58.
+3. Les couches **58, 59, 60** sont exactement ce que la coupure 58 couvre et que la coupure 61
+   laisse optique. C'est là qu'elle échoue en boucle fermée.
+4. Le résidu de **4,00 %** est la couche **39**, qu'aucune coupure testée n'atteint. D'où le
+   plateau : une fois 58-60 neutralisées, il ne reste que 39, et rien n'y touche.
+5. Mode de défaillance : **100 % « niveau d'arrêt hors d'atteinte »**, jamais de mécomptage.
+
+#### 🔴 Et « sept filtres distincts » était trompeur
+
+Il n'y a **qu'UNE architecture de monitoring** — la parente `75800`, à 75 blocs — déclinée en
+cinq positions de coupure. Ce sont cinq **recettes** différentes, pas cinq solutions
+indépendantes. ⚠️ La parente `75800` n'apparaît **nulle part dans le classement** : elle n'a
+survécu qu'à travers ses enfants.
+
+#### ⚠️ L'optimum à 52 n'est PAS établi
+
+`crash_min` ne discrimine aucune coupure. Reste le SEEL, et il faut le lire avec son bruit :
+
+| comparaison | écart | en σ | verdict |
+|---|---|---|---|
+| 52 (0,689) contre 46 (0,752) | +9,1 % | **1,25 σ** | indiscernables |
+| 52 (0,689) contre 55 (0,701) | +1,7 % | 0,23 σ | indiscernables |
+
+⚠️ **Ce σ est une extrapolation, pas une mesure.** Le seul chiffre mesuré est celui de §24-26 —
+σ ≈ 6 % du score à N = 150, sur le **48 couches** — reporté ici en `1/√N` à N = 50 (σ ≈ 10,4 %
+du score, donc ≈ 5,2 % du SEEL, donc ≈ 7,3 % sur une différence de deux). **Il n'a jamais été
+mesuré sur `r75x2`.** Le retenir revient quand même à dire : **traite les cinq coupures comme
+équivalentes** tant qu'un `premium` n'a pas tranché.
+
+📌 Les valeurs `0,814 / 0,767 / 0,814 / 0,757 / 0,749` pour les coupures 28 à 41, citées dans la
+version précédente, viennent d'un **artefact que j'ai écrasé** en changeant `TAIL_CUTS` sans
+changer le nom de fichier. **Elles ne sont plus vérifiables et ne doivent plus être citées.**
 
 ### Ce que ça ne dit pas
 
 | | |
 |---|---|
-| 🔴 **une seule parente** | les 7 déposables descendent toutes de la stratégie `75800`, à **75 blocs** — le monitoring couche par couche. Une seule famille supporte la queue Rate |
-| 🔴 **`fast`, une graine** | §8 impose un rejeu `premium` avant publication, et §24-46 une seconde graine |
+| 🔴 **une seule architecture, pas sept** | tout descend de `75800`, à **75 blocs** — le monitoring couche par couche. C'est le vrai résultat : *ce qui sauve le ×2, c'est le monitoring par couche PLUS une queue Rate*, jamais l'un sans l'autre |
+| 🔴 **`fast`, une graine, N non consigné** | §8 impose un rejeu `premium`, §24-46 une seconde graine. Et le bloc `config` de la sonde **n'enregistrait pas la profondeur** — corrigé le 2026-08-19, mais les artefacts existants ne la portent pas : le « 2/50 » est déduit du nom de mode |
 | 🟠 **SEEL 0,689 reste élevé** | à comparer aux 0,625 que `deep` obtient sur le même composant à 1 nm. L'hybride rend fabricable une configuration qui ne l'était pas, il ne bat pas la meilleure connue |
-| 🔴 **la règle d'exception n'est pas testée** | forme pure, sans couches optiques dans la queue. C'est le prochain essai |
+| 🔴 **la règle d'exception n'est pas testée** | forme pure, sans couches optiques dans la queue. Trois tentatives ont échoué |
+| 🔵 **la prédiction à falsifier** | le run *chirurgical* vise 32/35/39 — les couches critiques **de la population**. Si le mécanisme ci-dessus est le bon, il doit rendre **0 déposable** : ces couches ne sont pas celles qui bloquent la seule stratégie viable. C'est le test qui départage, et il tourne |
 
 ---
 

@@ -343,6 +343,98 @@ CHIFFRES_PUBLIES = [
 ]
 
 
+def test_J_queue_rate_falaise() -> None:
+    """J. La queue Rate : la falaise, le plateau, et le mecanisme REFUTE.
+
+    🔴 Ce controle existe parce que j'ai publie un mecanisme FAUX le 2026-08-19 -- « la queue
+    franchit en boucle ouverte la zone ou la derive accumulee tue l'optique ». Les artefacts le
+    refutent : la couche critique des deposables est TOUJOURS avant la coupure, donc restee
+    optique. Ce test verrouille les quatre faits qui l'ont tue, pour qu'ils ne se re-periment pas.
+    """
+    import re as _re
+    S = []
+    for nom in ("tail", "tail46-55"):
+        p = ROOT / "reports" / f"blocs_vs_plantage_r75x2_fast_s042_{nom}.json"
+        if not p.exists():
+            verdict("J. la queue Rate : falaise et plateau", "NON_VERIFIABLE", f"{p.name} manquant -- rien a verifier")
+            return
+        S += json.loads(p.read_text(encoding="utf-8"))["strategies"]
+
+    par_coupure: dict[int, list] = {}
+    for x in S:
+        m = _re.match(r"RATE_TAIL(\d+)\(", str(x.get("origine") or ""))
+        if m:
+            par_coupure.setdefault(int(m.group(1)), []).append(x)
+    cm = {c: min(x["crash_rate"] for x in g) for c, g in par_coupure.items()}
+
+    pbs = []
+    # 1. LA FALAISE : tout plante au-dessus de 61, tout passe a partir de 58.
+    for c in (61, 64, 67, 70):
+        if cm.get(c) != 1.0:
+            pbs.append(f"coupure {c} : crash_min {cm.get(c)} au lieu de 1,0")
+    # 2. LE PLATEAU : de 46 a 58, crash_min IDENTIQUE. C'est lui qui tue « plus on couvre,
+    #    mieux c'est » -- couvrir 12 couches de plus ne gagne rien.
+    plateau = {c: cm[c] for c in (46, 49, 52, 55, 58) if c in cm}
+    if len(set(plateau.values())) != 1:
+        pbs.append(f"le plateau n'est pas plat : {plateau}")
+    elif next(iter(plateau.values())) >= 0.05:
+        pbs.append(f"le plateau n'est pas deposable : {plateau}")
+    # 3. UNE SEULE ARCHITECTURE : toutes les deposables sont a 75 blocs, une seule parente.
+    dep = [x for x in S if x["crash_rate"] < 0.05]
+    if not dep:
+        pbs.append("aucune deposable -- l'artefact ne porte plus le resultat publie")
+    if any(x["n_blocs"] != 75 for x in dep):
+        pbs.append(f"toutes les deposables ne sont plus a 75 blocs : "
+                   f"{sorted({x['n_blocs'] for x in dep})}")
+    parents = {str(x["origine"]).split("from ")[-1].rstrip(")") for x in dep}
+    if len(parents) != 1:
+        pbs.append(f"plusieurs parentes : {parents}")
+    # 4. LE FALSIFICATEUR : la couche critique de chaque deposable est AVANT sa coupure, donc
+    #    restee OPTIQUE. Si un jour elle tombe dans la queue, l'ancien mecanisme redevient
+    #    defendable et ce dossier doit etre rouvert.
+    for x in dep:
+        m = _re.match(r"RATE_TAIL(\d+)\(", str(x.get("origine") or ""))
+        cl = (x.get("critical_layer") or {}).get("layer")
+        if m and cl is not None and int(cl) >= int(m.group(1)):
+            pbs.append(f"couche critique {cl} DANS la queue (coupure {m.group(1)}) -- "
+                       f"le mecanisme « franchir la zone » redevient possible")
+
+    if pbs:
+        verdict("J. la queue Rate : falaise et plateau", "FAIL", " | ".join(pbs))
+    else:
+        verdict("J. la queue Rate : falaise et plateau", "PASS",
+                f"falaise 61->58 (100 % -> {100 * min(plateau.values()):.2f} %), plateau plat sur "
+                f"{len(plateau)} coupures, {len(dep)} deposables toutes a 75 blocs et d'une seule "
+                f"parente, couche critique toujours HORS queue")
+
+
+def test_K_couche_rate_ne_plante_pas() -> None:
+    """K. Le code : une couche Rate rend son epaisseur SANS sentinelle de plantage.
+
+    🔑 C'est le seul fait de mecanisme qui vienne du CODE et non d'un artefact -- donc le seul
+    qui ne depende ni d'une graine ni d'un composant. §16 : un commentaire n'est pas une preuve,
+    on verifie le retour anticipe lui-meme.
+    """
+    src = (ROOT / "certus" / "physics" / "certus_strat_growth.py").read_text(encoding="utf-8")
+    lignes = src.splitlines()
+    i_rate = next((i for i, ln in enumerate(lignes) if ln.strip() == "if is_rate:"), None)
+    if i_rate is None:
+        verdict("K. une couche Rate ne peut pas planter", "FAIL", "le bloc `if is_rate:` a disparu de certus_strat_growth.py")
+        return
+    bloc = "\n".join(lignes[i_rate:i_rate + 30])
+    pbs = []
+    if "CRASH_SENTINEL_UNIT" in bloc:
+        pbs.append("une sentinelle de plantage est apparue dans le chemin Rate")
+    if "return (float(turns * RATE_TURN_NM)" not in bloc:
+        pbs.append("le retour anticipe du chemin Rate a change de forme")
+    if "if n_ref > 0:" not in bloc:
+        pbs.append("la garde `n_ref > 0` a disparu -- une couche Rate sans reference "
+                   "retombe sur POEM et REDEVIENT plantable")
+    verdict("K. une couche Rate ne peut pas planter", "FAIL" if pbs else "PASS",
+            " | ".join(pbs) or "retour anticipe intact, aucune sentinelle, garde n_ref>0 presente "
+            "(donc une couche Rate en TETE d'empilement reste plantable)")
+
+
 def test_I_chiffres_publies() -> None:
     """I. Chaque chiffre publie se re-derive de son artefact."""
     ecarts, absents = [], []
@@ -388,7 +480,8 @@ def test_I_chiffres_publies() -> None:
 def main() -> int:
     for t in (test_A_timeout_inerte, test_B_dp_timeout_inutilise, test_C_dp_top_k_atteint_le_calcul,
               test_E_niveau_exploration, test_F_formule_seel, test_G_correlation_offre,
-              test_I_chiffres_publies,
+              test_I_chiffres_publies, test_J_queue_rate_falaise,
+              test_K_couche_rate_ne_plante_pas,
               test_H_controle_negatif, test_D_modes_existants_inchanges):
         try:
             t()

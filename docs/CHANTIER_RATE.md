@@ -832,7 +832,7 @@ verdict de fabricabilité, lui, est bien reproduit.
 | 🟢 **la queue Rate n'est PAS une voie de garage** | c'est le seul moyen connu à 2 nm, et le seul qui tienne sur deux graines |
 | 🔴 **elle reste chère en atelier** | **74 changements de λ** plus 23 couches en boucle ouverte, contre 5 changements pour la solution à 1 nm. Ce reproche-là **tient toujours** |
 | 🟠 **et son SEEL reste moins bon** | 0,672 en `premium` contre 0,625 à 1 nm — mais on compare une solution qui **existe aux deux graines** à une qui n'existe qu'à une |
-| 🔵 **la vraie question devient donc opératoire** | *préfère-t-on une fente de 1 nm (×2 de bruit de lecture, 5 changements de λ, mais un verdict qui bascule avec le tirage) ou la fente nominale avec une queue Rate (robuste, mais 74 changements) ?* C'est une question pour 👤, pas pour la mesure |
+| 🔵 **la vraie question devient donc opératoire** | *préfère-t-on une fente de **1 nm** (×2 de bruit de lecture, 5 changements de λ, mais un verdict qui bascule avec le tirage) ou la fente nominale de **2 nm** avec une queue Rate (robuste aux deux graines, mais 74 changements) ?* C'est une question pour 👤, pas pour la mesure |
 
 ⚠️ **Ce qui manque encore** : `deep` à 2 nm sur une **seconde graine** — c'est la cellule 2 du
 batch, en cours. Si elle rend aussi 0 déposable, le « 100 % à 2 nm en pur optique » sera établi

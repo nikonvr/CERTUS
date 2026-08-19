@@ -52,6 +52,10 @@ CONTEXTES_DE_CORRECTION = (
     # score de REPLI, n'affirme pas une performance. Les deux marqueurs sont poses a la main
     # par l'auteur, ce qui est le bon niveau : l'outil ne devine pas, il obeit a une marque.
     "non comparable", "score de repli", "non comparables",
+    # Ajoute le 2026-08-19 : une ligne qui dit qu'une chose N'EXISTE PAS ne la
+    # prescrit evidemment pas. Sans ce marqueur, le controle E signalait le recit
+    # de sa propre trouvaille.
+    "n'existe pas", "n'existe **pas**", "inexecutable", "inexecutables",
 )
 
 #: (nom lisible, motif de CONTEXTE, motif de VALEUR, valeur de reference ou None)
@@ -449,8 +453,35 @@ def main() -> int:
     print(f"  {'🟢' if ko_m == 0 else '🔴'} {ok_m} conforme(s) · {ko_m} en desaccord · "
           f"{nc_m} non concluante(s)")
 
+    # 🔴 LE CONTROLE QUI MANQUAIT, ET IL A COUTE LE PLUS CHER. Le 2026-08-19, une relecture
+    # ligne a ligne a trouve que `.venv\\Scripts\\python.exe` -- prescrit par 47 commandes dans
+    # 10 fichiers, dont la TOUTE PREMIERE du demarrage -- n'existait pas : le venv avait
+    # demenage hors du depot. Un agent neuf echouait a son premier geste sans savoir pourquoi.
+    # Aucun outil ne regardait si les commandes documentees s'EXECUTENT.
+    print("\n=== E. LES INTERPRETEURS CITES DANS LES COMMANDES EXISTENT-ILS ? ===")
+    rx_py = re.compile(r"([A-Za-z]:[\\/][^\s`\"']*?python\.exe|\.?[\\/]?[\w.-]*venv[\\/]"
+                       r"[Ss]cripts[\\/]python\.exe)")
+    vus_i: dict[str, list[str]] = {}
+    for f in fichiers:
+        for i, l in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            if _est_correction(l):
+                continue
+            for m in rx_py.finditer(l):
+                vus_i.setdefault(m.group(1).replace("\\\\", "\\"), []).append(f"{f.name}:{i}")
+    ko_i = 0
+    for chemin, ou in sorted(vus_i.items()):
+        existe = Path(chemin.replace("\\", "/")).is_file()
+        if not existe:
+            ko_i += 1
+            n_pb += 1
+            print(f"  🔴 {chemin}  N'EXISTE PAS -- {len(ou)} citation(s), ex. {ou[0]}")
+        else:
+            print(f"  🟢 {chemin}  ({len(ou)} citation(s))")
+    if not vus_i:
+        print("  ·  aucun interpreteur cite")
+
     ok, det = _controle_negatif()
-    print("\n=== E. CONTROLE NEGATIF -- l'outil sait-il seulement DETECTER ? ===")
+    print("\n=== F. CONTROLE NEGATIF -- l'outil sait-il seulement DETECTER ? ===")
     if ok:
         print(f"  🟢 contradiction plantee DETECTEE ({det}) -- l'outil mord")
     else:

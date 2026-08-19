@@ -38,13 +38,13 @@ several points: see §5.
 
 ```bat
 :: 1. Does the venv load the code from here? (a .pth has already pointed elsewhere)
-.venv\Scripts\python.exe -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
+C:\envs\certus\Scripts\python.exe -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
 
 :: 2. Is the auto-push hook to the PUBLIC repository disabled?
 dir .git\hooks\post-commit* :: should show post-commit.disabled
 
 :: 3. Does the oracle pass? (8 sec, 552 tests)
-.venv\Scripts\python.exe -m pytest tests\oracle\ -q --no-cov
+C:\envs\certus\Scripts\python.exe -m pytest tests\oracle\ -q --no-cov
 ```
 
 ### How long does it cost?
@@ -69,7 +69,7 @@ measurement must run in the background.
 Measure a module on its real example — from`cmd`:
 
 ```bat
-.venv\Scripts\python.exe scripts\bench_examples.py strat --auto-yes --sample
+C:\envs\certus\Scripts\python.exe scripts\bench_examples.py strat --auto-yes --sample
 ```
 
 Prove a gain by alternating the two versions —**from Git Bash**, with
@@ -161,7 +161,7 @@ measured before/after.**Three traps put it to the test today:
 ##1. How to measure — the only method that works
 
 ```bat
-.venv\Scripts\python.exe scripts\bench_examples.py <module> --auto-yes [--sample]
+C:\envs\certus\Scripts\python.exe scripts\bench_examples.py <module> --auto-yes [--sample]
 ```
 
 `scripts/bench_examples.py`drives the**real examples of`example/`**by
@@ -614,7 +614,7 @@ INDEX, INDEX_SPLINE, RE, FIELD:`CACHE_CALLS=0`and`NK_CALLS=0`.
 
 ## 7. Environmental reminders
 
-- Venv:`.venv\Scripts\python.exe`. Check what is actually imported:
+- Venv:`C:\envs\certus\Scripts\python.exe`. Check what is actually imported:
   `python -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"`.
 - 🔴`.git/hooks/post-commit`pushes each commit to the**public**repository
   `nikonvr/CERTUS`. Currently renamed to`post-commit.disabled`.`--no-verify`does not

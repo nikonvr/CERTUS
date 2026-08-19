@@ -16,7 +16,7 @@ Trois choses à connaître avant même d'ouvrir `CLAUDE.md`, parce qu'elles inva
 reste si elles sont fausses :
 
 ```bat
-.venv\Scripts\python.exe -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
+C:\envs\certus\Scripts\python.exe -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
 dir .git\hooks\post-commit*
 ```
 

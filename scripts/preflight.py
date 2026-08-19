@@ -120,10 +120,19 @@ check(
          "Record this version next to any number you report.",
     fatal=False,
 )
+# 🔴 CE CONTROLE ETAIT FAUX, ET IL ECHOUAIT SUR LA SEULE CONFIGURATION QUI EXISTE.
+# Il exigeait que le chemin de l'interpreteur contienne `.venv` -- ce qui suppose un venv
+# DANS le depot. Or le venv a demenage hors de l'arbre (`C:\envs\certus`) et il n'y a plus
+# aucun `.venv` ici : le controle rendait donc FAUX pour le bon interpreteur.
+#
+# 🔑 C'est la meme faute que `EXPECTED_ROOT = C:\dev\gemini` corrigee au §2 : coder en dur
+# un CHEMIN au lieu de verifier une PROPRIETE. La propriete d'un venv, c'est qu'un
+# `pyvenv.cfg` se trouve a cote de son interpreteur -- vrai ou qu'il soit pose.
+_venv_cfg = Path(sys.executable).resolve().parent.parent / "pyvenv.cfg"
 check(
-    "running the venv interpreter",
-    "\\.venv\\" in sys.executable or "/.venv/" in sys.executable,
-    sys.executable,
+    "running a venv interpreter (pyvenv.cfg next to it)",
+    _venv_cfg.is_file(),
+    f"{sys.executable}  ->  {_venv_cfg if _venv_cfg.is_file() else 'no pyvenv.cfg found'}",
     fatal=False,
 )
 

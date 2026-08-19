@@ -19,7 +19,7 @@ This document covers**test isolation**, not performance.
 To check that everything is in place:
 
 ```bash
-.venv\Scripts\python.exe -m pytest tests/ -q --no-cov -k "re_or reverse or objectives" -p no:cacheprovider
+C:\envs\certus\Scripts\python.exe -m pytest tests/ -q --no-cov -k "re_or reverse or objectives" -p no:cacheprovider
 ```
 
 Expected:**637 passed, 4 skipped**.
@@ -61,7 +61,7 @@ This is also the cause of**4 failures of`tests/unit/test_certus_ui.py`**: same p
 Minimum repro (failed before, passes after):
 
 ```bash
-.venv\Scripts\python.exe -m pytest tests/headless/test_re.py "tests/ui/test_ui_module_imports.py::test_ui_module_importable[certus.ui.certus_re_state_mixin]" "tests/unit/test_certus_re.py::TestREAppSkeletonLoaders" -q --no-cov -p no:cacheprovider
+C:\envs\certus\Scripts\python.exe -m pytest tests/headless/test_re.py "tests/ui/test_ui_module_imports.py::test_ui_module_importable[certus.ui.certus_re_state_mixin]" "tests/unit/test_certus_re.py::TestREAppSkeletonLoaders" -q --no-cov -p no:cacheprovider
 ```
 
 **Fix**—`tests/ui/test_ui_module_imports.py`: function`_restore_module()`+ block
@@ -85,7 +85,7 @@ Masked by a hot`__pycache__`, therefore invisible on a well-established machine 
 new machine or CI. Reproducible at will:
 
 ```bash
-NUMBA_CACHE_DIR="$(mktemp -d)" .venv/Scripts/python.exe -m pytest tests/unit/test_manual_rmse_grid_integration.py -q --no-cov -p no:cacheprovider
+NUMBA_CACHE_DIR="$(mktemp -d)" C:/envs/certus/Scripts/python.exe -m pytest tests/unit/test_manual_rmse_grid_integration.py -q --no-cov -p no:cacheprovider
 ```
 
 **Fix:**removed the 4 lines`monkeypatch.*env("NUMBA_DISABLE_*")`, replaced

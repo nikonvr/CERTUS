@@ -198,7 +198,7 @@ calcul de ces dix-là, et rien d'autre.
 ```bash
 export CERTUS_BENCH_TIMEOUT_S=5400
 for i in $(seq 0 9); do
-  CERTUS_BENCH_TIMEOUT_S=5400 nohup .venv/Scripts/python.exe scripts/campagne_intervalles.py \
+  CERTUS_BENCH_TIMEOUT_S=5400 nohup C:/envs/certus/Scripts/python.exe scripts/campagne_intervalles.py \
       --vague 2 --hi 99 --mode premium --shard $i/10 > reports/prem_v2_$i.log 2>&1 &
 done
 ```
@@ -217,7 +217,7 @@ d'autres intervalles et le cache ne correspondrait plus.
 **Surveiller :**
 
 ```bash
-.venv/Scripts/python.exe scripts/campagne_intervalles.py --etat
+C:/envs/certus/Scripts/python.exe scripts/campagne_intervalles.py --etat
 ```
 
 ---
@@ -227,7 +227,7 @@ d'autres intervalles et le cache ne correspondrait plus.
 ### 3.1. Le classement à 2 témoins — c'est la question qui a motivé cette campagne
 
 ```bash
-.venv/Scripts/python.exe scripts/classer_partitions.py --mode premium --lo 20 --hi 99
+C:/envs/certus/Scripts/python.exe scripts/classer_partitions.py --mode premium --lo 20 --hi 99
 ```
 
 **La question, et la réponse à battre** : une architecture à **2 témoins** avec de longues
@@ -282,7 +282,7 @@ rester tant que ce n'est pas tranché.
 ```bash
 # pour trancher : rejouer le 35c sur deux graines de plus
 for s in 77 101; do for m in off on; do
-  CERTUS_BENCH_TIMEOUT_S=5400 .venv/Scripts/python.exe scripts/test_margin_ranking.py \
+  CERTUS_BENCH_TIMEOUT_S=5400 C:/envs/certus/Scripts/python.exe scripts/test_margin_ranking.py \
       --composant 35c --mode $m --exec premium &
 done; done; wait
 ```
@@ -323,7 +323,7 @@ l'interpréteur n'est plus dans l'arbre. Substitue partout dans ce fichier :
 | avant | maintenant |
 |---|---|
 | dépôt dans `…/Google Drive/…/CERTUS/1408` | **`C:\certus`** |
-| `.venv/Scripts/python.exe` | **`C:\envs\certus\Scripts\python.exe`** |
+| `C:/envs/certus/Scripts/python.exe` | **`C:\envs\certus\Scripts\python.exe`** |
 
 ```bash
 C:\envs\certus\Scripts\python.exe scripts\preflight.py
@@ -354,9 +354,12 @@ tableau dont l'avertissement est hors de la fenêtre de ±3 lignes)*.
 `3 failed` en 850 s. Deuxième passe, cache chaud : **`0 failed`**. **Relance avant
 de signaler quoi que ce soit** — détail du mécanisme en §2 de `CLAUDE.md`.
 
-⚠️ Le `[BAD] running the venv interpreter` du préflight est un simple test de chaîne
-(`"\.venv\" in sys.executable`, `preflight.py:125`), non fatal. Il vérifie le *nom* du chemin,
-pas la validité de l'interpréteur.
+🟢 **CORRIGÉ le 2026-08-19.** Le `[BAD] running the venv interpreter` du préflight était un
+test de **chaîne** — il exigeait `.venv` dans le chemin de l'interpréteur, ce qui suppose un
+venv **dans** le dépôt. Or le venv a déménagé hors de l'arbre : le contrôle rendait donc FAUX
+pour le **seul** interpréteur correct. Même faute que `EXPECTED_ROOT = C:\dev\gemini` :
+coder en dur un **chemin** au lieu de vérifier une **propriété**. Il teste désormais la
+présence d'un `pyvenv.cfg` à côté de l'interpréteur, ce qui est vrai où qu'il soit posé.
 
 ---
 

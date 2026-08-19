@@ -48,7 +48,7 @@ sous pytest. Toute mesure faite ainsi décrit un code différent de celui qu'on 
 modifier — **sans le moindre message d'erreur**.
 
 ```bash
-.venv/Scripts/python.exe -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
+C:/envs/certus/Scripts/python.exe -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
 ```
 
 Le chemin affiché **doit** être dans le snapshot où tu édites. Vérifié résolu le 2026-08-14,

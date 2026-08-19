@@ -58,7 +58,7 @@ zéro fait qui ne soit pas déjà écrit ici.
 ### 🟢 La cohérence entre dossiers est vérifiée MÉCANIQUEMENT depuis le 2026-08-19
 
 ```bat
-.venv\Scripts\python.exe scripts\coherence_md.py
+C:\envs\certus\Scripts\python.exe scripts\coherence_md.py
 ```
 
 `check_claude_md.py` vérifie **un** fichier ; celui-ci vérifie que **le même fait porte la
@@ -118,7 +118,7 @@ section *contient* et non ce qu'un agent doit en *retenir*.
 **Une seule commande fait les trois premiers points, et elle est à jour :**
 
 ```bat
-.venv\Scripts\python.exe scripts\preflight.py
+C:\envs\certus\Scripts\python.exe scripts\preflight.py
 ```
 
 Elle doit finir par `PREFLIGHT=GO`. Ce qui suit explique **ce qu'elle vérifie et pourquoi**,
@@ -127,11 +127,28 @@ Elle doit finir par `PREFLIGHT=GO`. Ce qui suit explique **ce qu'elle vérifie e
 **1. Vérifie que tu es dans le bon dossier.**
 
 ```bat
-.venv\Scripts\python.exe -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
+C:\envs\certus\Scripts\python.exe -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
 ```
 
 Le chemin affiché **doit être dans l'arbre où tu édites**.
 Si ce n'est pas le cas → **ARRÊTE-TOI. Signale-le. Ne modifie rien.**
+
+🔴 **L'INTERPRÉTEUR N'EST PAS DANS LE DÉPÔT, ET CE DOCUMENT A PRESCRIT PENDANT DES JOURS UNE
+COMMANDE QUI NE S'EXÉCUTE PAS.** 📏 Trouvé le 2026-08-19 en relisant ce fichier ligne à ligne :
+`.venv\Scripts\python.exe` n'existe **pas** — le venv vit à `C:\envs\certus` depuis le
+déménagement hors de Google Drive. **47 commandes réparties sur 10 fichiers** étaient donc
+inexécutables, **à commencer par la toute première de ce §2**. Un agent neuf échouait à son
+premier geste sans savoir pourquoi.
+
+⚠️ **Et `preflight.py` aggravait le cas** : son contrôle exigeait `.venv` **dans le chemin**
+de l'interpréteur, donc il rendait `[BAD]` pour le **seul** interpréteur correct. C'est la
+même faute que `EXPECTED_ROOT` juste en dessous — coder en dur un **chemin** au lieu de
+vérifier une **propriété**. Il teste désormais la présence d'un `pyvenv.cfg` à côté de
+l'interpréteur, ce qui reste vrai où qu'on le pose.
+
+🔑 **Si le venv bouge encore**, ne cherche pas un chemin dans un document : demande-le à
+Python. `python -c "import sys; print(sys.executable)"` depuis l'environnement actif, ou
+`preflight.py` qui le dit et le vérifie.
 
 🔴 **Il n'y a PAS de racine attendue en dur, et c'est délibéré.** Ce document a longtemps
 exigé `C:\dev\gemini` — **un dossier qui n'existe plus**, et la constante `EXPECTED_ROOT`
@@ -195,8 +212,8 @@ au-dessus, la violation est **toujours active**.
 **3. Vérifie que tout est vert avant de toucher à quoi que ce soit.**
 
 ```bat
-.venv\Scripts\python.exe -m ruff check .
-.venv\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
+C:\envs\certus\Scripts\python.exe -m ruff check .
+C:\envs\certus\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
 ```
 
 Attendu : `All checks passed!` puis **zéro échec**.
@@ -210,7 +227,7 @@ chiffres ne survit à l'ajout d'un test**, c'est-à-dire à une journée de trav
 l'ajout de trois tests le même jour — l'écart de 3 est exactement celui des trois ajouts.
 
 ```bat
-.venv\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov --collect-only
+C:\envs\certus\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov --collect-only
 ```
 
 **Le seul critère qui vaut est `0 failed`.** Un compte qui bouge de +3 parce qu'on a fait son
@@ -326,7 +343,7 @@ moteur mathématique** : tout `$...$` y sort en texte brut.
 ## 4. Vérifier l'environnement — une minute, non négociable
 
 ```bat
-.venv\Scripts\python.exe -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
+C:\envs\certus\Scripts\python.exe -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
 dir .git\hooks\post-commit*
 ```
 
@@ -347,18 +364,18 @@ dir .git\hooks\post-commit*
 
 ### Commandes de référence
 
-Toutes depuis la racine du dépôt, toujours avec `.venv\Scripts\python.exe` — jamais `python`
+Toutes depuis la racine du dépôt, toujours avec `C:\envs\certus\Scripts\python.exe` — jamais `python`
 nu, qui prendrait l'interpréteur système sans les dépendances.
 
 | But | Commande | Durée |
 |---|---|---|
-| Tests du noyau | `.venv\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov` | ~4 min |
-| Suite complète | `.venv\Scripts\python.exe -m pytest tests/ -q --no-cov` | ~1 h 45 |
-| Lint | `.venv\Scripts\python.exe -m ruff check .` → `All checks passed!` | ~10 s |
-| Run STRAT complet | `.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42` | ~25 min |
+| Tests du noyau | `C:\envs\certus\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov` | ~4 min |
+| Suite complète | `C:\envs\certus\Scripts\python.exe -m pytest tests/ -q --no-cov` | ~1 h 45 |
+| Lint | `C:\envs\certus\Scripts\python.exe -m ruff check .` → `All checks passed!` | ~10 s |
+| Run STRAT complet | `C:\envs\certus\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42` | ~25 min |
 | Idem, seuil injecté | `... probe_anchor_noise_pipeline.py full 1.0 42 0 2.1` | ~25 min |
-| Sonde noyau rapide | `.venv\Scripts\python.exe scripts\probe_anchor_noise.py` | ~1 min |
-| Banc sur exemples réels | `.venv\Scripts\python.exe scripts\bench_examples.py <module> --auto-yes` | variable |
+| Sonde noyau rapide | `C:\envs\certus\Scripts\python.exe scripts\probe_anchor_noise.py` | ~1 min |
+| Banc sur exemples réels | `C:\envs\certus\Scripts\python.exe scripts\bench_examples.py <module> --auto-yes` | variable |
 
 ⚠️ **N'utilise pas `tests/headless/` pour mesurer** : `test_design.py` et `test_strat.py`
 remplacent le calcul par un mock.
@@ -1255,7 +1272,7 @@ la **classe d'équivalence SEEL** (§22), pas le score.
 
 ```bat
 set CERTUS_BENCH_TIMEOUT_S=5400
-.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42
+C:\envs\certus\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42
 ```
 
 Le plafond était en dur ; il est désormais surchargeable par cette variable d'environnement,

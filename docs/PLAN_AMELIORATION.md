@@ -18,7 +18,7 @@ worth**46 and 82 points**of reflectance, both exact at k=0 therefore invisible t
 test suite then.
 
 ```bash
-.venv/Scripts/python.exe -m pytest tests/oracle/ -q --no-cov # 237 tests, ~2 s
+C:/envs/certus/Scripts/python.exe -m pytest tests/oracle/ -q --no-cov # 237 tests, ~2 s
 ```
 
 Before you touch any optical calculation, run it. Afterwards too.
@@ -272,19 +272,19 @@ clones. To be done at once, in coordination with the user.
 
 ```bash
 #fast,before/afteranyopticalcalculationmodification
-.venv/Scripts/python.exe -m pytest tests/oracle/ -q --no-cov
+C:/envs/certus/Scripts/python.exe -m pytest tests/oracle/ -q --no-cov
 
 #wide, before committing
-.venv/Scripts/python.exe -m pytest tests/core/tests/unit/tests/oracle/ \
+C:/envs/certus/Scripts/python.exe -m pytest tests/core/tests/unit/tests/oracle/ \
     tests/domain/ tests/property/ -q --no-cov
 
 # complete — count ~12 min, launch it in two halves to avoid waiting times
-.venv/Scripts/python.exe -m pytest tests/integration/tests/headless/ \
+C:/envs/certus/Scripts/python.exe -m pytest tests/integration/tests/headless/ \
     tests/ui/ tests/performance/ tests/regression/ tests/utils/ -q --no-cov
 ```
 
 Check what Python actually imports, if in doubt:
 
 ```bash
-.venv/Scripts/python.exe -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
+C:/envs/certus/Scripts/python.exe -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
 ```

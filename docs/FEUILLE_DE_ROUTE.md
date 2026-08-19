@@ -167,7 +167,7 @@ rien** — le pire des trois états.
 
 ```bat
 set CERTUS_BENCH_TIMEOUT_S=5400
-.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42
+C:\envs\certus\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42
 ```
 
 | # | Étape | Attendu |

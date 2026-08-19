@@ -215,15 +215,15 @@ sur 99 plafonnent à 59 chacune — les intervalles longs ne servent qu'aux part
 
 ```bash
 export CERTUS_BENCH_TIMEOUT_S=5400
-.venv/Scripts/python.exe scripts/preflight.py          # verdict GO / STOP
-.venv/Scripts/python.exe scripts/check_claude_md.py    # coherence de la doc
+C:/envs/certus/Scripts/python.exe scripts/preflight.py          # verdict GO / STOP
+C:/envs/certus/Scripts/python.exe scripts/check_claude_md.py    # coherence de la doc
 ```
 
 **Après toute modification de code :**
 
 ```bash
-.venv/Scripts/python.exe -m ruff check .
-.venv/Scripts/python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
+C:/envs/certus/Scripts/python.exe -m ruff check .
+C:/envs/certus/Scripts/python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
 ```
 
 Référence : **`0 failed`**, `ruff` propre. ⚠️ Le « 2450 passed, 5 skipped » qui figurait ici est **retiré** : un compte de tests se périme dès qu'on ajoute un test (2 453 → 2 456 le 2026-08-19). Voir `CLAUDE.md` §2.

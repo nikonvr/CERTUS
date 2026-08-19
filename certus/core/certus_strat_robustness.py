@@ -675,7 +675,7 @@ class _RateSwingContext:
     """
 
     __slots__ = ("p_thick_nominal", "clues_at_wl", "nominal_matrix_cache", "all_wls",
-                "threshold", "_cache", "n_calls")
+                "threshold", "_cache", "n_calls", "n_absents")
 
     def __init__(self, p_thick_nominal, clues_at_wl, nominal_matrix_cache, all_wls,
                 threshold: float) -> None:
@@ -686,6 +686,7 @@ class _RateSwingContext:
         self.threshold = threshold
         self._cache: dict[tuple[int, float], float] = {}
         self.n_calls = 0
+        self.n_absents = 0
 
     def swing_at(self, layer: int, wl: float) -> float:
         key = (layer, round(wl, 6))
@@ -705,15 +706,41 @@ class _RateSwingContext:
         # declenche a CHAQUE appel et n'apprend rien. 📏 Mesure du 2026-08-19 : deux lignes
         # WARNING par appel, soit des dizaines de milliers sur un run reel -- journal
         # inexploitable et cout d'ecriture non nul. On restaure le niveau ensuite.
+        # 🔴 L'ACCES PASSE PAR `_IdxWrapper`, defini ligne 102 DE CE FICHIER. `clues_at_wl`
+        # n'est pas forcement un dict indexable par flottant -- il peut arriver en objet de
+        # memoire partagee ou en sequence indexee. Le wrapper absorbe les deux, et rend None
+        # au lieu de lever. J'ai ecrit deux fois un acces direct avant de m'en apercevoir, et
+        # les deux fois un run complet est mort en cours de route.
+        try:
+            clue = _IdxWrapper(self.clues_at_wl)[float(wl)]
+        except (KeyError, TypeError, IndexError):
+            clue = None
+        if clue is None:
+            # 🔑 DEGRADATION SURE : sans indices, on declare la couche BIEN VUE (swing infini),
+            # donc elle reste optique. Le critere perd de la portee, il ne fabrique pas de
+            # fausse couche Rate -- et le compteur ci-dessous le rend visible dans le journal.
+            self.n_absents += 1
+            self._cache[key] = float("inf")
+            return float("inf")
+        # 🔴 ET ON MUSELLE LE DIAGNOSTIC DE `calculate_dynamics_ULTIMATE` PENDANT L'APPEL.
+        # Il avertit quand `nanstd(dyn_vals)` est nul, ce qui detecte une couche reellement
+        # plate quand on lui passe TOUTE la grille de lambda. Ici on ne lui en passe qu'UNE :
+        # l'ecart-type d'une seule valeur vaut 0 par construction, donc l'avertissement se
+        # declenche a CHAQUE appel et n'apprend rien. 📏 Mesure du 2026-08-19 : deux lignes
+        # WARNING par appel, soit des dizaines de milliers sur un run reel.
         _log_tf = logging.getLogger("ThinFilm")
         _niveau = _log_tf.level
         _log_tf.setLevel(logging.ERROR)
         try:
             dyn = calculate_dynamics_ULTIMATE(
                 np.array([wl], dtype=np.float64), layer, float(self.p_thick_nominal[layer]),
-                {float(wl): self.clues_at_wl[float(wl)]},
-                self.nominal_matrix_cache, self.all_wls,
+                {float(wl): clue}, self.nominal_matrix_cache, self.all_wls,
             )
+        except Exception:                                   # noqa: BLE001
+            # Meme regle : on degrade, on compte, on ne tue pas un run de 25 minutes.
+            self.n_absents += 1
+            self._cache[key] = float("inf")
+            return float("inf")
         finally:
             _log_tf.setLevel(_niveau)
         val = float(dyn[0]["dynamics"]) if dyn else float("inf")
@@ -808,6 +835,19 @@ def _expand_with_rate_variants(
             threshold = float(params.get("dynamics_threshold", RATE_SWING_MIN_DEFAULT))
             swing_ctx = _RateSwingContext(p_thick_nominal, clues_at_wl,
                                           nominal_matrix_cache, all_wls, threshold)
+            # 🔑 AUTO-TEST AVANT LA BOUCLE : une seule evaluation, sur la premiere couche de la
+            # premiere strategie. Si le cablage est rompu, on le sait en une seconde et on le
+            # DIT, au lieu de tuer un run de 25 minutes a mi-parcours -- ce qui est arrive
+            # trois fois le 2026-08-19, pour trois causes differentes.
+            _wl0 = next((_wl_de_la_couche(s, 0) for s in strategies
+                         if _wl_de_la_couche(s, 0) is not None), None)
+            if _wl0 is None or swing_ctx.n_absents or swing_ctx.swing_at(0, _wl0) == float("inf"):
+                logger.warning(
+                    "[RATE] rate_by_swing DESACTIVE : l'auto-test d'evaluation du swing a "
+                    "echoue (lambda de sonde %s, %d acces manques). Le critere ne fabriquera "
+                    "aucune couche Rate.", _wl0, swing_ctx.n_absents,
+                )
+                swing_ctx = None
         else:
             logger.warning(
                 "[RATE] rate_by_swing=true INACTIF : tableaux nominaux absents, ou "

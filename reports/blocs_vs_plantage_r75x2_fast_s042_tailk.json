@@ -4,7 +4,7 @@
   "strategies": [
     {
       "id": 990000000,
-      "origine": "RATE_TAIL55(from 75800)",
+      "origine": "RATE_TAIL55K4(from 75800)",
       "n_blocs": 75,
       "crash_rate": 0.04,
       "score": 0.12300568127032983,
@@ -87,7 +87,7 @@
     },
     {
       "id": 990000001,
-      "origine": "RATE_TAIL58(from 75800)",
+      "origine": "RATE_TAIL58K4(from 75800)",
       "n_blocs": 75,
       "crash_rate": 0.04,
       "score": 0.13509908029805145,
@@ -590,7 +590,7 @@
     },
     {
       "id": 990000004,
-      "origine": "RATE_TAIL67(from 15204)",
+      "origine": "RATE_TAIL67K4(from 15204)",
       "n_blocs": 15,
       "crash_rate": 1.0,
       "score": 0.2927281909659794,
@@ -1781,7 +1781,7 @@
     },
     {
       "id": 990000035,
-      "origine": "RATE_TAIL70(from 900000005)",
+      "origine": "RATE_TAIL70K4(from 900000005)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.29351665531686383,
@@ -2542,7 +2542,7 @@
     },
     {
       "id": 990000014,
-      "origine": "RATE_TAIL61(from 900000018)",
+      "origine": "RATE_TAIL61K4(from 900000018)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.293673885663871,
@@ -2692,7 +2692,7 @@
     },
     {
       "id": 990000020,
-      "origine": "RATE_TAIL61(from 900000001)",
+      "origine": "RATE_TAIL61K4(from 900000001)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.293673885663871,
@@ -2841,7 +2841,7 @@
     },
     {
       "id": 990000009,
-      "origine": "RATE_TAIL64(from 900000017)",
+      "origine": "RATE_TAIL64K4(from 900000017)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.29379593817679134,
@@ -2999,7 +2999,7 @@
     },
     {
       "id": 990000010,
-      "origine": "RATE_TAIL67(from 14206)",
+      "origine": "RATE_TAIL67K4(from 14206)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.2939750880322494,
@@ -3187,7 +3187,7 @@
     },
     {
       "id": 990000052,
-      "origine": "RATE_TAIL67(from 900000031)",
+      "origine": "RATE_TAIL67K4(from 900000031)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.2939750880322494,
@@ -3374,7 +3374,7 @@
     },
     {
       "id": 990000046,
-      "origine": "RATE_TAIL67(from 900000007)",
+      "origine": "RATE_TAIL67K4(from 900000007)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.2939834382909498,
@@ -3731,7 +3731,7 @@
     },
     {
       "id": 990000009,
-      "origine": "RATE_TAIL64(from 14206)",
+      "origine": "RATE_TAIL64K4(from 14206)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.29415499485237,
@@ -3910,7 +3910,7 @@
     },
     {
       "id": 990000051,
-      "origine": "RATE_TAIL64(from 900000031)",
+      "origine": "RATE_TAIL64K4(from 900000031)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.29415499485237,
@@ -4088,7 +4088,7 @@
     },
     {
       "id": 990000015,
-      "origine": "RATE_TAIL64(from 900000021)",
+      "origine": "RATE_TAIL64K4(from 900000021)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.29415499485237,
@@ -4265,7 +4265,7 @@
     },
     {
       "id": 990000039,
-      "origine": "RATE_TAIL64(from 900000040)",
+      "origine": "RATE_TAIL64K4(from 900000040)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.29415499485237,
@@ -4442,7 +4442,7 @@
     },
     {
       "id": 990000015,
-      "origine": "RATE_TAIL64(from 900000016)",
+      "origine": "RATE_TAIL64K4(from 900000016)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.29415499485237,
@@ -4618,7 +4618,7 @@
     },
     {
       "id": 990000021,
-      "origine": "RATE_TAIL64(from 900000008)",
+      "origine": "RATE_TAIL64K4(from 900000008)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.29415499485237,
@@ -5205,7 +5205,7 @@
     },
     {
       "id": 990000023,
-      "origine": "RATE_TAIL70(from 900000033)",
+      "origine": "RATE_TAIL70K4(from 900000033)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.2944135549923853,
@@ -5383,7 +5383,7 @@
     },
     {
       "id": 990000035,
-      "origine": "RATE_TAIL70(from 900000006)",
+      "origine": "RATE_TAIL70K4(from 900000006)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.2944135549923853,
@@ -5560,7 +5560,7 @@
     },
     {
       "id": 990000011,
-      "origine": "RATE_TAIL70(from 900000017)",
+      "origine": "RATE_TAIL70K4(from 900000017)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.29443625576035126,
@@ -5942,7 +5942,7 @@
     },
     {
       "id": 990000035,
-      "origine": "RATE_TAIL70(from 900000046)",
+      "origine": "RATE_TAIL70K4(from 900000046)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.2944817465045352,
@@ -6344,7 +6344,7 @@
     },
     {
       "id": 990000028,
-      "origine": "RATE_TAIL67(from 900000032)",
+      "origine": "RATE_TAIL67K4(from 900000032)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.29463985336926346,
@@ -6529,7 +6529,7 @@
     },
     {
       "id": 990000016,
-      "origine": "RATE_TAIL67(from 900000026)",
+      "origine": "RATE_TAIL67K4(from 900000026)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.29463985336926346,
@@ -6713,7 +6713,7 @@
     },
     {
       "id": 990000040,
-      "origine": "RATE_TAIL67(from 900000030)",
+      "origine": "RATE_TAIL67K4(from 900000030)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.29463985336926346,
@@ -6897,7 +6897,7 @@
     },
     {
       "id": 990000010,
-      "origine": "RATE_TAIL67(from 900000054)",
+      "origine": "RATE_TAIL67K4(from 900000054)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.29463985336926346,
@@ -7080,7 +7080,7 @@
     },
     {
       "id": 990000016,
-      "origine": "RATE_TAIL67(from 900000055)",
+      "origine": "RATE_TAIL67K4(from 900000055)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.29463985336926346,
@@ -7263,7 +7263,7 @@
     },
     {
       "id": 990000022,
-      "origine": "RATE_TAIL67(from 900000016)",
+      "origine": "RATE_TAIL67K4(from 900000016)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.29463985336926346,
@@ -7446,7 +7446,7 @@
     },
     {
       "id": 990000046,
-      "origine": "RATE_TAIL67(from 900000007)",
+      "origine": "RATE_TAIL67K4(from 900000007)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.29463985336926346,
@@ -8423,7 +8423,7 @@
     },
     {
       "id": 990000005,
-      "origine": "RATE_TAIL70(from 12202)",
+      "origine": "RATE_TAIL70K4(from 12202)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.2950992430319784,
@@ -8618,7 +8618,7 @@
     },
     {
       "id": 990000035,
-      "origine": "RATE_TAIL70(from 900000007)",
+      "origine": "RATE_TAIL70K4(from 900000007)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.2950992430319784,
@@ -8812,7 +8812,7 @@
     },
     {
       "id": 990000035,
-      "origine": "RATE_TAIL70(from 900000035)",
+      "origine": "RATE_TAIL70K4(from 900000035)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.2950992430319784,
@@ -9005,7 +9005,7 @@
     },
     {
       "id": 990000024,
-      "origine": "RATE_TAIL55(from 900000024)",
+      "origine": "RATE_TAIL55K4(from 900000024)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.2951100732390413,
@@ -9346,7 +9346,7 @@
     },
     {
       "id": 990000041,
-      "origine": "RATE_TAIL70(from 900000006)",
+      "origine": "RATE_TAIL70K4(from 900000006)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.2952119141917292,
@@ -9543,7 +9543,7 @@
     },
     {
       "id": 990000033,
-      "origine": "RATE_TAIL64(from 900000009)",
+      "origine": "RATE_TAIL64K4(from 900000009)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.29532373979760346,
@@ -10321,7 +10321,7 @@
     },
     {
       "id": 990000034,
-      "origine": "RATE_TAIL67(from 900000046)",
+      "origine": "RATE_TAIL67K4(from 900000046)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.29539119023836025,
@@ -10507,7 +10507,7 @@
     },
     {
       "id": 990000019,
-      "origine": "RATE_TAIL58(from 900000033)",
+      "origine": "RATE_TAIL58K4(from 900000033)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.29547391558252073,
@@ -10649,7 +10649,7 @@
     },
     {
       "id": 990000031,
-      "origine": "RATE_TAIL58(from 900000006)",
+      "origine": "RATE_TAIL58K4(from 900000006)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.29547391558252073,
@@ -11207,7 +11207,7 @@
     },
     {
       "id": 990000022,
-      "origine": "RATE_TAIL67(from 900000012)",
+      "origine": "RATE_TAIL67K4(from 900000012)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.2958422510291609,
@@ -11398,7 +11398,7 @@
     },
     {
       "id": 990000028,
-      "origine": "RATE_TAIL67(from 900000020)",
+      "origine": "RATE_TAIL67K4(from 900000020)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.2958422510291609,
@@ -11798,7 +11798,7 @@
     },
     {
       "id": 990000034,
-      "origine": "RATE_TAIL67(from 900000003)",
+      "origine": "RATE_TAIL67K4(from 900000003)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.29596012283537776,
@@ -13427,7 +13427,7 @@
     },
     {
       "id": 990000033,
-      "origine": "RATE_TAIL64(from 900000046)",
+      "origine": "RATE_TAIL64K4(from 900000046)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.29600567098045966,
@@ -13604,7 +13604,7 @@
     },
     {
       "id": 990000039,
-      "origine": "RATE_TAIL64(from 900000022)",
+      "origine": "RATE_TAIL64K4(from 900000022)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.29600567098045966,
@@ -14159,7 +14159,7 @@
     },
     {
       "id": 990000004,
-      "origine": "RATE_TAIL67(from 14233)",
+      "origine": "RATE_TAIL67K4(from 14233)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.29608449721675634,
@@ -14548,7 +14548,7 @@
     },
     {
       "id": 990000017,
-      "origine": "RATE_TAIL70(from 900000018)",
+      "origine": "RATE_TAIL70K4(from 900000018)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.296200987406219,
@@ -14725,7 +14725,7 @@
     },
     {
       "id": 990000023,
-      "origine": "RATE_TAIL70(from 900000001)",
+      "origine": "RATE_TAIL70K4(from 900000001)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.296200987406219,
@@ -15309,7 +15309,7 @@
     },
     {
       "id": 990000016,
-      "origine": "RATE_TAIL67(from 900000018)",
+      "origine": "RATE_TAIL67K4(from 900000018)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.29632245651858363,
@@ -15477,7 +15477,7 @@
     },
     {
       "id": 990000022,
-      "origine": "RATE_TAIL67(from 900000001)",
+      "origine": "RATE_TAIL67K4(from 900000001)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.29632245651858363,
@@ -16259,7 +16259,7 @@
     },
     {
       "id": 990000028,
-      "origine": "RATE_TAIL67(from 900000014)",
+      "origine": "RATE_TAIL67K4(from 900000014)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.2963924425520058,
@@ -16442,7 +16442,7 @@
     },
     {
       "id": 990000023,
-      "origine": "RATE_TAIL70(from 900000040)",
+      "origine": "RATE_TAIL70K4(from 900000040)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.2964246440247797,
@@ -16856,7 +16856,7 @@
     },
     {
       "id": 990000003,
-      "origine": "RATE_TAIL64(from 12202)",
+      "origine": "RATE_TAIL64K4(from 12202)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.29643398761729306,
@@ -17033,7 +17033,7 @@
     },
     {
       "id": 990000033,
-      "origine": "RATE_TAIL64(from 900000007)",
+      "origine": "RATE_TAIL64K4(from 900000007)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.29643398761729306,
@@ -17209,7 +17209,7 @@
     },
     {
       "id": 990000033,
-      "origine": "RATE_TAIL64(from 900000035)",
+      "origine": "RATE_TAIL64K4(from 900000035)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.29643398761729306,
@@ -17384,7 +17384,7 @@
     },
     {
       "id": 990000016,
-      "origine": "RATE_TAIL67(from 15218)",
+      "origine": "RATE_TAIL67K4(from 15218)",
       "n_blocs": 15,
       "crash_rate": 1.0,
       "score": 0.2964468252149168,
@@ -17557,7 +17557,7 @@
     },
     {
       "id": 990000027,
-      "origine": "RATE_TAIL64(from 900000019)",
+      "origine": "RATE_TAIL64K4(from 900000019)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.29645251236608566,
@@ -17951,7 +17951,7 @@
     },
     {
       "id": 990000040,
-      "origine": "RATE_TAIL67(from 900000006)",
+      "origine": "RATE_TAIL67K4(from 900000006)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.296516856621873,
@@ -18530,7 +18530,7 @@
     },
     {
       "id": 990000003,
-      "origine": "RATE_TAIL64(from 9800)",
+      "origine": "RATE_TAIL64K4(from 9800)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.2967766172214616,
@@ -19091,7 +19091,7 @@
     },
     {
       "id": 990000020,
-      "origine": "RATE_TAIL61(from 900000033)",
+      "origine": "RATE_TAIL61K4(from 900000033)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.2969321981649554,
@@ -19242,7 +19242,7 @@
     },
     {
       "id": 990000032,
-      "origine": "RATE_TAIL61(from 900000006)",
+      "origine": "RATE_TAIL61K4(from 900000006)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.2969321981649554,
@@ -19579,7 +19579,7 @@
     },
     {
       "id": 990000000,
-      "origine": "RATE_TAIL55(from 9800)",
+      "origine": "RATE_TAIL55K4(from 9800)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.29694143232633863,
@@ -19709,7 +19709,7 @@
     },
     {
       "id": 990000020,
-      "origine": "RATE_TAIL61(from 900000009)",
+      "origine": "RATE_TAIL61K4(from 900000009)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.2969530182155199,
@@ -20076,7 +20076,7 @@
     },
     {
       "id": 990000005,
-      "origine": "RATE_TAIL70(from 15204)",
+      "origine": "RATE_TAIL70K4(from 15204)",
       "n_blocs": 15,
       "crash_rate": 1.0,
       "score": 0.29698978501100276,
@@ -20274,7 +20274,7 @@
     },
     {
       "id": 990000011,
-      "origine": "RATE_TAIL70(from 14206)",
+      "origine": "RATE_TAIL70K4(from 14206)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.29698978501100276,
@@ -20471,7 +20471,7 @@
     },
     {
       "id": 990000053,
-      "origine": "RATE_TAIL70(from 900000031)",
+      "origine": "RATE_TAIL70K4(from 900000031)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.29698978501100276,
@@ -20667,7 +20667,7 @@
     },
     {
       "id": 990000032,
-      "origine": "RATE_TAIL61(from 900000018)",
+      "origine": "RATE_TAIL61K4(from 900000018)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.29699442611013566,
@@ -20814,7 +20814,7 @@
     },
     {
       "id": 990000035,
-      "origine": "RATE_TAIL70(from 900000048)",
+      "origine": "RATE_TAIL70K4(from 900000048)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.2970306695795953,
@@ -21006,7 +21006,7 @@
     },
     {
       "id": 990000017,
-      "origine": "RATE_TAIL70(from 900000038)",
+      "origine": "RATE_TAIL70K4(from 900000038)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.2970306695795953,
@@ -21197,7 +21197,7 @@
     },
     {
       "id": 990000029,
-      "origine": "RATE_TAIL70(from 900000039)",
+      "origine": "RATE_TAIL70K4(from 900000039)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.2970306695795953,
@@ -22014,7 +22014,7 @@
     },
     {
       "id": 990000009,
-      "origine": "RATE_TAIL64(from 13210)",
+      "origine": "RATE_TAIL64K4(from 13210)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.29715466245239525,
@@ -22401,7 +22401,7 @@
     },
     {
       "id": 990000030,
-      "origine": "RATE_TAIL55(from 900000058)",
+      "origine": "RATE_TAIL55K4(from 900000058)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.29719755934252995,
@@ -22535,7 +22535,7 @@
     },
     {
       "id": 990000006,
-      "origine": "RATE_TAIL55(from 900000027)",
+      "origine": "RATE_TAIL55K4(from 900000027)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.29719755934252995,
@@ -22668,7 +22668,7 @@
     },
     {
       "id": 990000012,
-      "origine": "RATE_TAIL55(from 900000032)",
+      "origine": "RATE_TAIL55K4(from 900000032)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.29719755934252995,
@@ -22801,7 +22801,7 @@
     },
     {
       "id": 990000018,
-      "origine": "RATE_TAIL55(from 900000005)",
+      "origine": "RATE_TAIL55K4(from 900000005)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.29719755934252995,
@@ -22933,7 +22933,7 @@
     },
     {
       "id": 990000042,
-      "origine": "RATE_TAIL55(from 900000007)",
+      "origine": "RATE_TAIL55K4(from 900000007)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.29719755934252995,
@@ -24602,7 +24602,7 @@
     },
     {
       "id": 990000046,
-      "origine": "RATE_TAIL67(from 900000031)",
+      "origine": "RATE_TAIL67K4(from 900000031)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.29728808631557113,
@@ -24781,7 +24781,7 @@
     },
     {
       "id": 990000025,
-      "origine": "RATE_TAIL58(from 900000024)",
+      "origine": "RATE_TAIL58K4(from 900000024)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.2973204376551062,
@@ -25336,7 +25336,7 @@
     },
     {
       "id": 990000005,
-      "origine": "RATE_TAIL70(from 11222)",
+      "origine": "RATE_TAIL70K4(from 11222)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.2973385116005766,
@@ -26755,7 +26755,7 @@
     },
     {
       "id": 990000041,
-      "origine": "RATE_TAIL70(from 900000040)",
+      "origine": "RATE_TAIL70K4(from 900000040)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.2976010855950144,
@@ -26950,7 +26950,7 @@
     },
     {
       "id": 990000023,
-      "origine": "RATE_TAIL70(from 900000009)",
+      "origine": "RATE_TAIL70K4(from 900000009)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.2976113210352157,
@@ -27966,7 +27966,7 @@
     },
     {
       "id": 990000003,
-      "origine": "RATE_TAIL64(from 10800)",
+      "origine": "RATE_TAIL64K4(from 10800)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.29769370188524624,
@@ -28529,7 +28529,7 @@
     },
     {
       "id": 990000039,
-      "origine": "RATE_TAIL64(from 900000034)",
+      "origine": "RATE_TAIL64K4(from 900000034)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.29774219639105115,
@@ -29749,7 +29749,7 @@
     },
     {
       "id": 990000003,
-      "origine": "RATE_TAIL64(from 2801)",
+      "origine": "RATE_TAIL64K4(from 2801)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.29781584917312615,
@@ -30343,7 +30343,7 @@
     },
     {
       "id": 990000014,
-      "origine": "RATE_TAIL61(from 900000047)",
+      "origine": "RATE_TAIL61K4(from 900000047)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.29784303228997994,
@@ -30934,7 +30934,7 @@
     },
     {
       "id": 990000041,
-      "origine": "RATE_TAIL70(from 900000022)",
+      "origine": "RATE_TAIL70K4(from 900000022)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.2980172276731021,
@@ -32718,7 +32718,7 @@
     },
     {
       "id": 990000038,
-      "origine": "RATE_TAIL61(from 900000021)",
+      "origine": "RATE_TAIL61K4(from 900000021)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.29821345715011116,
@@ -33887,7 +33887,7 @@
     },
     {
       "id": 990000023,
-      "origine": "RATE_TAIL70(from 13205)",
+      "origine": "RATE_TAIL70K4(from 13205)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.2982941620388093,
@@ -34083,7 +34083,7 @@
     },
     {
       "id": 990000029,
-      "origine": "RATE_TAIL70(from 900000099)",
+      "origine": "RATE_TAIL70K4(from 900000099)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.2982941620388093,
@@ -34278,7 +34278,7 @@
     },
     {
       "id": 990000040,
-      "origine": "RATE_TAIL67(from 900000040)",
+      "origine": "RATE_TAIL67K4(from 900000040)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.29832863288699507,
@@ -34865,7 +34865,7 @@
     },
     {
       "id": 990000033,
-      "origine": "RATE_TAIL64(from 900000058)",
+      "origine": "RATE_TAIL64K4(from 900000058)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.2983689887101857,
@@ -35026,7 +35026,7 @@
     },
     {
       "id": 990000009,
-      "origine": "RATE_TAIL64(from 900000027)",
+      "origine": "RATE_TAIL64K4(from 900000027)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.2983689887101857,
@@ -35186,7 +35186,7 @@
     },
     {
       "id": 990000004,
-      "origine": "RATE_TAIL67(from 2801)",
+      "origine": "RATE_TAIL67K4(from 2801)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.2983787095674378,
@@ -35383,7 +35383,7 @@
     },
     {
       "id": 990000010,
-      "origine": "RATE_TAIL67(from 15138)",
+      "origine": "RATE_TAIL67K4(from 15138)",
       "n_blocs": 15,
       "crash_rate": 1.0,
       "score": 0.298455383000504,
@@ -36178,7 +36178,7 @@
     },
     {
       "id": 990000005,
-      "origine": "RATE_TAIL70(from 9800)",
+      "origine": "RATE_TAIL70K4(from 9800)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.29849852999333787,
@@ -38606,7 +38606,7 @@
     },
     {
       "id": 990000040,
-      "origine": "RATE_TAIL67(from 900000021)",
+      "origine": "RATE_TAIL67K4(from 900000021)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.2986530877046984,
@@ -38776,7 +38776,7 @@
     },
     {
       "id": 990000034,
-      "origine": "RATE_TAIL67(from 900000058)",
+      "origine": "RATE_TAIL67K4(from 900000058)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.29867534553257125,
@@ -38946,7 +38946,7 @@
     },
     {
       "id": 990000010,
-      "origine": "RATE_TAIL67(from 900000027)",
+      "origine": "RATE_TAIL67K4(from 900000027)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.29867534553257125,
@@ -39318,7 +39318,7 @@
     },
     {
       "id": 990000007,
-      "origine": "RATE_TAIL58(from 900000017)",
+      "origine": "RATE_TAIL58K4(from 900000017)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.2987350033229828,
@@ -39458,7 +39458,7 @@
     },
     {
       "id": 990000041,
-      "origine": "RATE_TAIL70(from 900000034)",
+      "origine": "RATE_TAIL70K4(from 900000034)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.29874295877667,
@@ -40478,7 +40478,7 @@
     },
     {
       "id": 990000047,
-      "origine": "RATE_TAIL70(from 900000031)",
+      "origine": "RATE_TAIL70K4(from 900000031)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.29881982727175227,
@@ -40868,7 +40868,7 @@
     },
     {
       "id": 990000009,
-      "origine": "RATE_TAIL64(from 12214)",
+      "origine": "RATE_TAIL64K4(from 12214)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.2988407051823423,
@@ -41038,7 +41038,7 @@
     },
     {
       "id": 990000039,
-      "origine": "RATE_TAIL64(from 900000060)",
+      "origine": "RATE_TAIL64K4(from 900000060)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.2988407051823423,
@@ -41207,7 +41207,7 @@
     },
     {
       "id": 990000009,
-      "origine": "RATE_TAIL64(from 11214)",
+      "origine": "RATE_TAIL64K4(from 11214)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.2988407051823423,
@@ -41376,7 +41376,7 @@
     },
     {
       "id": 990000021,
-      "origine": "RATE_TAIL64(from 900000057)",
+      "origine": "RATE_TAIL64K4(from 900000057)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.2988407051823423,
@@ -41545,7 +41545,7 @@
     },
     {
       "id": 990000009,
-      "origine": "RATE_TAIL64(from 900000075)",
+      "origine": "RATE_TAIL64K4(from 900000075)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.2988407051823423,
@@ -41713,7 +41713,7 @@
     },
     {
       "id": 990000027,
-      "origine": "RATE_TAIL64(from 900000073)",
+      "origine": "RATE_TAIL64K4(from 900000073)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.2988407051823423,
@@ -42489,7 +42489,7 @@
     },
     {
       "id": 990000017,
-      "origine": "RATE_TAIL70(from 15218)",
+      "origine": "RATE_TAIL70K4(from 15218)",
       "n_blocs": 15,
       "crash_rate": 1.0,
       "score": 0.29899165202001954,
@@ -42875,7 +42875,7 @@
     },
     {
       "id": 990000016,
-      "origine": "RATE_TAIL67(from 900000021)",
+      "origine": "RATE_TAIL67K4(from 900000021)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.2990229100097474,
@@ -43061,7 +43061,7 @@
     },
     {
       "id": 990000016,
-      "origine": "RATE_TAIL67(from 900000016)",
+      "origine": "RATE_TAIL67K4(from 900000016)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.2990229100097474,
@@ -43246,7 +43246,7 @@
     },
     {
       "id": 990000022,
-      "origine": "RATE_TAIL67(from 900000008)",
+      "origine": "RATE_TAIL67K4(from 900000008)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.2990229100097474,
@@ -43640,7 +43640,7 @@
     },
     {
       "id": 990000034,
-      "origine": "RATE_TAIL67(from 900000009)",
+      "origine": "RATE_TAIL67K4(from 900000009)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.29905630955862217,
@@ -44659,7 +44659,7 @@
     },
     {
       "id": 990000016,
-      "origine": "RATE_TAIL67(from 900000032)",
+      "origine": "RATE_TAIL67K4(from 900000032)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.2990883199380758,
@@ -44828,7 +44828,7 @@
     },
     {
       "id": 990000022,
-      "origine": "RATE_TAIL67(from 900000005)",
+      "origine": "RATE_TAIL67K4(from 900000005)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.2990883199380758,
@@ -44996,7 +44996,7 @@
     },
     {
       "id": 990000035,
-      "origine": "RATE_TAIL70(from 900000017)",
+      "origine": "RATE_TAIL70K4(from 900000017)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.29910702449670296,
@@ -45616,7 +45616,7 @@
     },
     {
       "id": 990000005,
-      "origine": "RATE_TAIL70(from 4801)",
+      "origine": "RATE_TAIL70K4(from 4801)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.2991601349912915,
@@ -46233,7 +46233,7 @@
     },
     {
       "id": 990000002,
-      "origine": "RATE_TAIL61(from 15204)",
+      "origine": "RATE_TAIL61K4(from 15204)",
       "n_blocs": 15,
       "crash_rate": 1.0,
       "score": 0.29919190339072016,
@@ -46404,7 +46404,7 @@
     },
     {
       "id": 990000032,
-      "origine": "RATE_TAIL61(from 900000003)",
+      "origine": "RATE_TAIL61K4(from 900000003)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.29919190339072016,
@@ -46574,7 +46574,7 @@
     },
     {
       "id": 990000038,
-      "origine": "RATE_TAIL61(from 900000006)",
+      "origine": "RATE_TAIL61K4(from 900000006)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.29919190339072016,
@@ -46744,7 +46744,7 @@
     },
     {
       "id": 990000038,
-      "origine": "RATE_TAIL61(from 900000049)",
+      "origine": "RATE_TAIL61K4(from 900000049)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.29919190339072016,
@@ -46913,7 +46913,7 @@
     },
     {
       "id": 990000020,
-      "origine": "RATE_TAIL61(from 900000027)",
+      "origine": "RATE_TAIL61K4(from 900000027)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.29919190339072016,
@@ -47081,7 +47081,7 @@
     },
     {
       "id": 990000044,
-      "origine": "RATE_TAIL61(from 900000029)",
+      "origine": "RATE_TAIL61K4(from 900000029)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.29919190339072016,
@@ -47248,7 +47248,7 @@
     },
     {
       "id": 990000029,
-      "origine": "RATE_TAIL70(from 900000014)",
+      "origine": "RATE_TAIL70K4(from 900000014)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.29924318089954094,
@@ -47840,7 +47840,7 @@
     },
     {
       "id": 990000026,
-      "origine": "RATE_TAIL61(from 900000024)",
+      "origine": "RATE_TAIL61K4(from 900000024)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.299277259747024,
@@ -48629,7 +48629,7 @@
     },
     {
       "id": 990000015,
-      "origine": "RATE_TAIL64(from 900000018)",
+      "origine": "RATE_TAIL64K4(from 900000018)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.29948867484917835,
@@ -48788,7 +48788,7 @@
     },
     {
       "id": 990000021,
-      "origine": "RATE_TAIL64(from 900000001)",
+      "origine": "RATE_TAIL64K4(from 900000001)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.29948867484917835,
@@ -48946,7 +48946,7 @@
     },
     {
       "id": 990000003,
-      "origine": "RATE_TAIL64(from 3801)",
+      "origine": "RATE_TAIL64K4(from 3801)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.299499273079495,
@@ -49339,7 +49339,7 @@
     },
     {
       "id": 990000029,
-      "origine": "RATE_TAIL70(from 900000032)",
+      "origine": "RATE_TAIL70K4(from 900000032)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.2995915480256404,
@@ -49533,7 +49533,7 @@
     },
     {
       "id": 990000017,
-      "origine": "RATE_TAIL70(from 900000026)",
+      "origine": "RATE_TAIL70K4(from 900000026)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.2995915480256404,
@@ -49726,7 +49726,7 @@
     },
     {
       "id": 990000041,
-      "origine": "RATE_TAIL70(from 900000030)",
+      "origine": "RATE_TAIL70K4(from 900000030)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.2995915480256404,
@@ -49919,7 +49919,7 @@
     },
     {
       "id": 990000011,
-      "origine": "RATE_TAIL70(from 900000054)",
+      "origine": "RATE_TAIL70K4(from 900000054)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.2995915480256404,
@@ -50111,7 +50111,7 @@
     },
     {
       "id": 990000017,
-      "origine": "RATE_TAIL70(from 900000055)",
+      "origine": "RATE_TAIL70K4(from 900000055)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.2995915480256404,
@@ -50303,7 +50303,7 @@
     },
     {
       "id": 990000023,
-      "origine": "RATE_TAIL70(from 900000016)",
+      "origine": "RATE_TAIL70K4(from 900000016)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.2995915480256404,
@@ -50495,7 +50495,7 @@
     },
     {
       "id": 990000047,
-      "origine": "RATE_TAIL70(from 900000007)",
+      "origine": "RATE_TAIL70K4(from 900000007)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.2995915480256404,
@@ -51461,7 +51461,7 @@
     },
     {
       "id": 990000026,
-      "origine": "RATE_TAIL61(from 900000020)",
+      "origine": "RATE_TAIL61K4(from 900000020)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.2996547692988316,
@@ -51641,7 +51641,7 @@
     },
     {
       "id": 990000026,
-      "origine": "RATE_TAIL61(from 900000019)",
+      "origine": "RATE_TAIL61K4(from 900000019)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.2996547692988316,
@@ -51820,7 +51820,7 @@
     },
     {
       "id": 990000026,
-      "origine": "RATE_TAIL61(from 900000024)",
+      "origine": "RATE_TAIL61K4(from 900000024)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.2996547692988316,
@@ -52190,7 +52190,7 @@
     },
     {
       "id": 990000032,
-      "origine": "RATE_TAIL61(from 900000006)",
+      "origine": "RATE_TAIL61K4(from 900000006)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.29966472938069794,
@@ -52368,7 +52368,7 @@
     },
     {
       "id": 990000020,
-      "origine": "RATE_TAIL61(from 900000001)",
+      "origine": "RATE_TAIL61K4(from 900000001)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.29966472938069794,
@@ -52545,7 +52545,7 @@
     },
     {
       "id": 990000022,
-      "origine": "RATE_TAIL67(from 900000040)",
+      "origine": "RATE_TAIL67K4(from 900000040)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.2996735594653929,
@@ -52947,7 +52947,7 @@
     },
     {
       "id": 990000012,
-      "origine": "RATE_TAIL55(from 900000047)",
+      "origine": "RATE_TAIL55K4(from 900000047)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.2997440814732395,
@@ -53309,7 +53309,7 @@
     },
     {
       "id": 990000047,
-      "origine": "RATE_TAIL70(from 900000007)",
+      "origine": "RATE_TAIL70K4(from 900000007)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.29975780289502507,
@@ -53486,7 +53486,7 @@
     },
     {
       "id": 990000038,
-      "origine": "RATE_TAIL61(from 900000034)",
+      "origine": "RATE_TAIL61K4(from 900000034)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.29976365112578135,
@@ -54297,7 +54297,7 @@
     },
     {
       "id": 990000035,
-      "origine": "RATE_TAIL70(from 900000018)",
+      "origine": "RATE_TAIL70K4(from 900000018)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.2997945693652017,
@@ -54471,7 +54471,7 @@
     },
     {
       "id": 990000028,
-      "origine": "RATE_TAIL67(from 900000008)",
+      "origine": "RATE_TAIL67K4(from 900000008)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.2997956319715944,
@@ -55662,7 +55662,7 @@
     },
     {
       "id": 990000022,
-      "origine": "RATE_TAIL67(from 13205)",
+      "origine": "RATE_TAIL67K4(from 13205)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.29986417031467427,
@@ -55849,7 +55849,7 @@
     },
     {
       "id": 990000028,
-      "origine": "RATE_TAIL67(from 900000099)",
+      "origine": "RATE_TAIL67K4(from 900000099)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.29986417031467427,
@@ -56241,7 +56241,7 @@
     },
     {
       "id": 990000020,
-      "origine": "RATE_TAIL61(from 900000013)",
+      "origine": "RATE_TAIL61K4(from 900000013)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.2998731618497972,
@@ -56417,7 +56417,7 @@
     },
     {
       "id": 990000034,
-      "origine": "RATE_TAIL67(from 900000048)",
+      "origine": "RATE_TAIL67K4(from 900000048)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.2998781680421164,
@@ -56600,7 +56600,7 @@
     },
     {
       "id": 990000016,
-      "origine": "RATE_TAIL67(from 900000038)",
+      "origine": "RATE_TAIL67K4(from 900000038)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.2998781680421164,
@@ -56782,7 +56782,7 @@
     },
     {
       "id": 990000028,
-      "origine": "RATE_TAIL67(from 900000039)",
+      "origine": "RATE_TAIL67K4(from 900000039)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.2998781680421164,
@@ -57981,7 +57981,7 @@
     },
     {
       "id": 990000032,
-      "origine": "RATE_TAIL61(from 900000005)",
+      "origine": "RATE_TAIL61K4(from 900000005)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.2999409544419388,
@@ -58128,7 +58128,7 @@
     },
     {
       "id": 990000014,
-      "origine": "RATE_TAIL61(from 900000019)",
+      "origine": "RATE_TAIL61K4(from 900000019)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.2999409544419388,
@@ -58688,7 +58688,7 @@
     },
     {
       "id": 990000025,
-      "origine": "RATE_TAIL58(from 900000019)",
+      "origine": "RATE_TAIL58K4(from 900000019)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.29995250439512317,
@@ -59266,7 +59266,7 @@
     },
     {
       "id": 990000033,
-      "origine": "RATE_TAIL64(from 900000018)",
+      "origine": "RATE_TAIL64K4(from 900000018)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.2999958439465464,
@@ -60246,7 +60246,7 @@
     },
     {
       "id": 990000033,
-      "origine": "RATE_TAIL64(from 900000017)",
+      "origine": "RATE_TAIL64K4(from 900000017)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3001435903841612,
@@ -60427,7 +60427,7 @@
     },
     {
       "id": 990000025,
-      "origine": "RATE_TAIL58(from 900000020)",
+      "origine": "RATE_TAIL58K4(from 900000020)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.30016290301226484,
@@ -60598,7 +60598,7 @@
     },
     {
       "id": 990000025,
-      "origine": "RATE_TAIL58(from 900000019)",
+      "origine": "RATE_TAIL58K4(from 900000019)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.30016290301226484,
@@ -60768,7 +60768,7 @@
     },
     {
       "id": 990000025,
-      "origine": "RATE_TAIL58(from 900000024)",
+      "origine": "RATE_TAIL58K4(from 900000024)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.30016290301226484,
@@ -61337,7 +61337,7 @@
     },
     {
       "id": 990000005,
-      "origine": "RATE_TAIL70(from 13131)",
+      "origine": "RATE_TAIL70K4(from 13131)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.30019721603754224,
@@ -61939,7 +61939,7 @@
     },
     {
       "id": 990000021,
-      "origine": "RATE_TAIL64(from 900000012)",
+      "origine": "RATE_TAIL64K4(from 900000012)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.30020839281264583,
@@ -62121,7 +62121,7 @@
     },
     {
       "id": 990000027,
-      "origine": "RATE_TAIL64(from 900000020)",
+      "origine": "RATE_TAIL64K4(from 900000020)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.30020839281264583,
@@ -62302,7 +62302,7 @@
     },
     {
       "id": 990000041,
-      "origine": "RATE_TAIL70(from 900000010)",
+      "origine": "RATE_TAIL70K4(from 900000010)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.30020874295208877,
@@ -62499,7 +62499,7 @@
     },
     {
       "id": 990000001,
-      "origine": "RATE_TAIL58(from 15204)",
+      "origine": "RATE_TAIL58K4(from 15204)",
       "n_blocs": 15,
       "crash_rate": 1.0,
       "score": 0.3002089852903073,
@@ -62661,7 +62661,7 @@
     },
     {
       "id": 990000007,
-      "origine": "RATE_TAIL58(from 14206)",
+      "origine": "RATE_TAIL58K4(from 14206)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.3002089852903073,
@@ -62822,7 +62822,7 @@
     },
     {
       "id": 990000031,
-      "origine": "RATE_TAIL58(from 900000003)",
+      "origine": "RATE_TAIL58K4(from 900000003)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.3002089852903073,
@@ -62983,7 +62983,7 @@
     },
     {
       "id": 990000037,
-      "origine": "RATE_TAIL58(from 900000006)",
+      "origine": "RATE_TAIL58K4(from 900000006)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.3002089852903073,
@@ -63144,7 +63144,7 @@
     },
     {
       "id": 990000037,
-      "origine": "RATE_TAIL58(from 900000049)",
+      "origine": "RATE_TAIL58K4(from 900000049)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3002089852903073,
@@ -63304,7 +63304,7 @@
     },
     {
       "id": 990000049,
-      "origine": "RATE_TAIL58(from 900000031)",
+      "origine": "RATE_TAIL58K4(from 900000031)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3002089852903073,
@@ -63464,7 +63464,7 @@
     },
     {
       "id": 990000001,
-      "origine": "RATE_TAIL58(from 12202)",
+      "origine": "RATE_TAIL58K4(from 12202)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.3002089852903073,
@@ -63623,7 +63623,7 @@
     },
     {
       "id": 990000013,
-      "origine": "RATE_TAIL58(from 900000021)",
+      "origine": "RATE_TAIL58K4(from 900000021)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.3002089852903073,
@@ -63782,7 +63782,7 @@
     },
     {
       "id": 990000019,
-      "origine": "RATE_TAIL58(from 900000027)",
+      "origine": "RATE_TAIL58K4(from 900000027)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.3002089852903073,
@@ -63941,7 +63941,7 @@
     },
     {
       "id": 990000031,
-      "origine": "RATE_TAIL58(from 900000046)",
+      "origine": "RATE_TAIL58K4(from 900000046)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.3002089852903073,
@@ -64100,7 +64100,7 @@
     },
     {
       "id": 990000037,
-      "origine": "RATE_TAIL58(from 900000040)",
+      "origine": "RATE_TAIL58K4(from 900000040)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.3002089852903073,
@@ -64259,7 +64259,7 @@
     },
     {
       "id": 990000013,
-      "origine": "RATE_TAIL58(from 900000016)",
+      "origine": "RATE_TAIL58K4(from 900000016)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.3002089852903073,
@@ -64417,7 +64417,7 @@
     },
     {
       "id": 990000031,
-      "origine": "RATE_TAIL58(from 900000007)",
+      "origine": "RATE_TAIL58K4(from 900000007)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.3002089852903073,
@@ -64575,7 +64575,7 @@
     },
     {
       "id": 990000043,
-      "origine": "RATE_TAIL58(from 900000029)",
+      "origine": "RATE_TAIL58K4(from 900000029)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.3002089852903073,
@@ -64733,7 +64733,7 @@
     },
     {
       "id": 990000019,
-      "origine": "RATE_TAIL58(from 900000008)",
+      "origine": "RATE_TAIL58K4(from 900000008)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.3002089852903073,
@@ -64890,7 +64890,7 @@
     },
     {
       "id": 990000031,
-      "origine": "RATE_TAIL58(from 900000035)",
+      "origine": "RATE_TAIL58K4(from 900000035)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.3002089852903073,
@@ -65047,7 +65047,7 @@
     },
     {
       "id": 990000037,
-      "origine": "RATE_TAIL58(from 900000022)",
+      "origine": "RATE_TAIL58K4(from 900000022)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.3002089852903073,
@@ -65203,7 +65203,7 @@
     },
     {
       "id": 990000039,
-      "origine": "RATE_TAIL64(from 900000043)",
+      "origine": "RATE_TAIL64K4(from 900000043)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.300212450877829,
@@ -65376,7 +65376,7 @@
     },
     {
       "id": 990000027,
-      "origine": "RATE_TAIL64(from 900000024)",
+      "origine": "RATE_TAIL64K4(from 900000024)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.300212450877829,
@@ -65548,7 +65548,7 @@
     },
     {
       "id": 990000039,
-      "origine": "RATE_TAIL64(from 900000005)",
+      "origine": "RATE_TAIL64K4(from 900000005)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.300212450877829,
@@ -66960,7 +66960,7 @@
     },
     {
       "id": 990000020,
-      "origine": "RATE_TAIL61(from 900000012)",
+      "origine": "RATE_TAIL61K4(from 900000012)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.30028431805690353,
@@ -67133,7 +67133,7 @@
     },
     {
       "id": 990000026,
-      "origine": "RATE_TAIL61(from 900000020)",
+      "origine": "RATE_TAIL61K4(from 900000020)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.30028431805690353,
@@ -67305,7 +67305,7 @@
     },
     {
       "id": 990000032,
-      "origine": "RATE_TAIL61(from 900000017)",
+      "origine": "RATE_TAIL61K4(from 900000017)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.30028431805690353,
@@ -67477,7 +67477,7 @@
     },
     {
       "id": 990000044,
-      "origine": "RATE_TAIL61(from 900000031)",
+      "origine": "RATE_TAIL61K4(from 900000031)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.300289434082755,
@@ -68653,7 +68653,7 @@
     },
     {
       "id": 990000030,
-      "origine": "RATE_TAIL55(from 900000005)",
+      "origine": "RATE_TAIL55K4(from 900000005)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.30038074441004053,
@@ -68782,7 +68782,7 @@
     },
     {
       "id": 990000012,
-      "origine": "RATE_TAIL55(from 900000019)",
+      "origine": "RATE_TAIL55K4(from 900000019)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.30038074441004053,
@@ -69108,7 +69108,7 @@
     },
     {
       "id": 990000027,
-      "origine": "RATE_TAIL64(from 900000008)",
+      "origine": "RATE_TAIL64K4(from 900000008)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.3003994046364164,
@@ -70314,7 +70314,7 @@
     },
     {
       "id": 990000043,
-      "origine": "RATE_TAIL58(from 900000033)",
+      "origine": "RATE_TAIL58K4(from 900000033)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.300474606560159,
@@ -70872,7 +70872,7 @@
     },
     {
       "id": 990000004,
-      "origine": "RATE_TAIL67(from 9800)",
+      "origine": "RATE_TAIL67K4(from 9800)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.30051987027629096,
@@ -71038,7 +71038,7 @@
     },
     {
       "id": 990000045,
-      "origine": "RATE_TAIL64(from 900000031)",
+      "origine": "RATE_TAIL64K4(from 900000031)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.3005330803709721,
@@ -73231,7 +73231,7 @@
     },
     {
       "id": 990000001,
-      "origine": "RATE_TAIL58(from 10800)",
+      "origine": "RATE_TAIL58K4(from 10800)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.30065621291021183,
@@ -73369,7 +73369,7 @@
     },
     {
       "id": 990000029,
-      "origine": "RATE_TAIL70(from 900000008)",
+      "origine": "RATE_TAIL70K4(from 900000008)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.30066429955680457,
@@ -73566,7 +73566,7 @@
     },
     {
       "id": 990000002,
-      "origine": "RATE_TAIL61(from 10800)",
+      "origine": "RATE_TAIL61K4(from 10800)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.30067305361784774,
@@ -73713,7 +73713,7 @@
     },
     {
       "id": 990000012,
-      "origine": "RATE_TAIL55(from 900000018)",
+      "origine": "RATE_TAIL55K4(from 900000018)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.30068500369768225,
@@ -73845,7 +73845,7 @@
     },
     {
       "id": 990000018,
-      "origine": "RATE_TAIL55(from 900000001)",
+      "origine": "RATE_TAIL55K4(from 900000001)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.30068500369768225,
@@ -73976,7 +73976,7 @@
     },
     {
       "id": 990000020,
-      "origine": "RATE_TAIL61(from 900000004)",
+      "origine": "RATE_TAIL61K4(from 900000004)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.3006880017899345,
@@ -74373,7 +74373,7 @@
     },
     {
       "id": 990000021,
-      "origine": "RATE_TAIL64(from 13205)",
+      "origine": "RATE_TAIL64K4(from 13205)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3007532577211892,
@@ -74551,7 +74551,7 @@
     },
     {
       "id": 990000027,
-      "origine": "RATE_TAIL64(from 900000099)",
+      "origine": "RATE_TAIL64K4(from 900000099)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.3007532577211892,
@@ -74728,7 +74728,7 @@
     },
     {
       "id": 990000009,
-      "origine": "RATE_TAIL64(from 15138)",
+      "origine": "RATE_TAIL64K4(from 15138)",
       "n_blocs": 15,
       "crash_rate": 1.0,
       "score": 0.30078166991138294,
@@ -74906,7 +74906,7 @@
     },
     {
       "id": 990000008,
-      "origine": "RATE_TAIL61(from 15138)",
+      "origine": "RATE_TAIL61K4(from 15138)",
       "n_blocs": 15,
       "crash_rate": 1.0,
       "score": 0.3007992096672357,
@@ -75075,7 +75075,7 @@
     },
     {
       "id": 990000015,
-      "origine": "RATE_TAIL64(from 900000009)",
+      "origine": "RATE_TAIL64K4(from 900000009)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.300803832882166,
@@ -75660,7 +75660,7 @@
     },
     {
       "id": 990000014,
-      "origine": "RATE_TAIL61(from 900000016)",
+      "origine": "RATE_TAIL61K4(from 900000016)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.300876445354871,
@@ -75838,7 +75838,7 @@
     },
     {
       "id": 990000013,
-      "origine": "RATE_TAIL58(from 900000016)",
+      "origine": "RATE_TAIL58K4(from 900000016)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.30089122821710873,
@@ -76007,7 +76007,7 @@
     },
     {
       "id": 990000023,
-      "origine": "RATE_TAIL70(from 900000012)",
+      "origine": "RATE_TAIL70K4(from 900000012)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.300901223080542,
@@ -76207,7 +76207,7 @@
     },
     {
       "id": 990000029,
-      "origine": "RATE_TAIL70(from 900000020)",
+      "origine": "RATE_TAIL70K4(from 900000020)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.300901223080542,
@@ -76406,7 +76406,7 @@
     },
     {
       "id": 990000013,
-      "origine": "RATE_TAIL58(from 900000018)",
+      "origine": "RATE_TAIL58K4(from 900000018)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.3009028560318805,
@@ -76547,7 +76547,7 @@
     },
     {
       "id": 990000019,
-      "origine": "RATE_TAIL58(from 900000001)",
+      "origine": "RATE_TAIL58K4(from 900000001)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.3009028560318805,
@@ -76895,7 +76895,7 @@
     },
     {
       "id": 990000010,
-      "origine": "RATE_TAIL67(from 6801)",
+      "origine": "RATE_TAIL67K4(from 6801)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.30093303655446896,
@@ -77096,7 +77096,7 @@
     },
     {
       "id": 990000034,
-      "origine": "RATE_TAIL67(from 900000017)",
+      "origine": "RATE_TAIL67K4(from 900000017)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3009761651508349,
@@ -77475,7 +77475,7 @@
     },
     {
       "id": 990000033,
-      "origine": "RATE_TAIL64(from 900000048)",
+      "origine": "RATE_TAIL64K4(from 900000048)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.30098979246556506,
@@ -77649,7 +77649,7 @@
     },
     {
       "id": 990000015,
-      "origine": "RATE_TAIL64(from 900000038)",
+      "origine": "RATE_TAIL64K4(from 900000038)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.30098979246556506,
@@ -77822,7 +77822,7 @@
     },
     {
       "id": 990000021,
-      "origine": "RATE_TAIL64(from 900000040)",
+      "origine": "RATE_TAIL64K4(from 900000040)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.30098979246556506,
@@ -77995,7 +77995,7 @@
     },
     {
       "id": 990000027,
-      "origine": "RATE_TAIL64(from 900000039)",
+      "origine": "RATE_TAIL64K4(from 900000039)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.30098979246556506,
@@ -78168,7 +78168,7 @@
     },
     {
       "id": 990000027,
-      "origine": "RATE_TAIL64(from 900000024)",
+      "origine": "RATE_TAIL64K4(from 900000024)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.3009971441331641,
@@ -78540,7 +78540,7 @@
     },
     {
       "id": 990000004,
-      "origine": "RATE_TAIL67(from 1801)",
+      "origine": "RATE_TAIL67K4(from 1801)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.30102209672082264,
@@ -78734,7 +78734,7 @@
     },
     {
       "id": 990000010,
-      "origine": "RATE_TAIL67(from 13210)",
+      "origine": "RATE_TAIL67K4(from 13210)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3010236710391828,
@@ -78921,7 +78921,7 @@
     },
     {
       "id": 990000046,
-      "origine": "RATE_TAIL67(from 900000004)",
+      "origine": "RATE_TAIL67K4(from 900000004)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.30103816992684546,
@@ -79101,7 +79101,7 @@
     },
     {
       "id": 990000046,
-      "origine": "RATE_TAIL67(from 900000035)",
+      "origine": "RATE_TAIL67K4(from 900000035)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.30103816992684546,
@@ -79280,7 +79280,7 @@
     },
     {
       "id": 990000002,
-      "origine": "RATE_TAIL61(from 9800)",
+      "origine": "RATE_TAIL61K4(from 9800)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.3010573809268266,
@@ -79428,7 +79428,7 @@
     },
     {
       "id": 990000014,
-      "origine": "RATE_TAIL61(from 15218)",
+      "origine": "RATE_TAIL61K4(from 15218)",
       "n_blocs": 15,
       "crash_rate": 1.0,
       "score": 0.30106051151374014,
@@ -79583,7 +79583,7 @@
     },
     {
       "id": 990000011,
-      "origine": "RATE_TAIL70(from 15138)",
+      "origine": "RATE_TAIL70K4(from 15138)",
       "n_blocs": 15,
       "crash_rate": 1.0,
       "score": 0.3011343497946148,
@@ -80187,7 +80187,7 @@
     },
     {
       "id": 990000004,
-      "origine": "RATE_TAIL67(from 12202)",
+      "origine": "RATE_TAIL67K4(from 12202)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.30119745883427823,
@@ -80373,7 +80373,7 @@
     },
     {
       "id": 990000034,
-      "origine": "RATE_TAIL67(from 900000007)",
+      "origine": "RATE_TAIL67K4(from 900000007)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.30119745883427823,
@@ -80558,7 +80558,7 @@
     },
     {
       "id": 990000034,
-      "origine": "RATE_TAIL67(from 900000035)",
+      "origine": "RATE_TAIL67K4(from 900000035)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.30119745883427823,
@@ -80742,7 +80742,7 @@
     },
     {
       "id": 990000037,
-      "origine": "RATE_TAIL58(from 900000021)",
+      "origine": "RATE_TAIL58K4(from 900000021)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.3012499767925307,
@@ -81476,7 +81476,7 @@
     },
     {
       "id": 990000028,
-      "origine": "RATE_TAIL67(from 900000024)",
+      "origine": "RATE_TAIL67K4(from 900000024)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.3012794978190544,
@@ -81645,7 +81645,7 @@
     },
     {
       "id": 990000000,
-      "origine": "RATE_TAIL55(from 11222)",
+      "origine": "RATE_TAIL55K4(from 11222)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.3012815443530239,
@@ -81797,7 +81797,7 @@
     },
     {
       "id": 990000005,
-      "origine": "RATE_TAIL70(from 1801)",
+      "origine": "RATE_TAIL70K4(from 1801)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.30133411721586234,
@@ -82000,7 +82000,7 @@
     },
     {
       "id": 990000025,
-      "origine": "RATE_TAIL58(from 900000008)",
+      "origine": "RATE_TAIL58K4(from 900000008)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.3013406882759547,
@@ -82161,7 +82161,7 @@
     },
     {
       "id": 990000037,
-      "origine": "RATE_TAIL58(from 900000063)",
+      "origine": "RATE_TAIL58K4(from 900000063)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.3014469885543437,
@@ -82938,7 +82938,7 @@
     },
     {
       "id": 990000026,
-      "origine": "RATE_TAIL61(from 900000006)",
+      "origine": "RATE_TAIL61K4(from 900000006)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.30165675680478843,
@@ -83118,7 +83118,7 @@
     },
     {
       "id": 990000008,
-      "origine": "RATE_TAIL61(from 14206)",
+      "origine": "RATE_TAIL61K4(from 14206)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.3016619349004717,
@@ -83288,7 +83288,7 @@
     },
     {
       "id": 990000050,
-      "origine": "RATE_TAIL61(from 900000031)",
+      "origine": "RATE_TAIL61K4(from 900000031)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3016619349004717,
@@ -83457,7 +83457,7 @@
     },
     {
       "id": 990000002,
-      "origine": "RATE_TAIL61(from 12202)",
+      "origine": "RATE_TAIL61K4(from 12202)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.3016619349004717,
@@ -83625,7 +83625,7 @@
     },
     {
       "id": 990000014,
-      "origine": "RATE_TAIL61(from 900000021)",
+      "origine": "RATE_TAIL61K4(from 900000021)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.3016619349004717,
@@ -83793,7 +83793,7 @@
     },
     {
       "id": 990000032,
-      "origine": "RATE_TAIL61(from 900000046)",
+      "origine": "RATE_TAIL61K4(from 900000046)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.3016619349004717,
@@ -83961,7 +83961,7 @@
     },
     {
       "id": 990000038,
-      "origine": "RATE_TAIL61(from 900000040)",
+      "origine": "RATE_TAIL61K4(from 900000040)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.3016619349004717,
@@ -84129,7 +84129,7 @@
     },
     {
       "id": 990000014,
-      "origine": "RATE_TAIL61(from 900000016)",
+      "origine": "RATE_TAIL61K4(from 900000016)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.3016619349004717,
@@ -84296,7 +84296,7 @@
     },
     {
       "id": 990000032,
-      "origine": "RATE_TAIL61(from 900000007)",
+      "origine": "RATE_TAIL61K4(from 900000007)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.3016619349004717,
@@ -84463,7 +84463,7 @@
     },
     {
       "id": 990000020,
-      "origine": "RATE_TAIL61(from 900000008)",
+      "origine": "RATE_TAIL61K4(from 900000008)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.3016619349004717,
@@ -84629,7 +84629,7 @@
     },
     {
       "id": 990000032,
-      "origine": "RATE_TAIL61(from 900000035)",
+      "origine": "RATE_TAIL61K4(from 900000035)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.3016619349004717,
@@ -84795,7 +84795,7 @@
     },
     {
       "id": 990000038,
-      "origine": "RATE_TAIL61(from 900000022)",
+      "origine": "RATE_TAIL61K4(from 900000022)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.3016619349004717,
@@ -85602,7 +85602,7 @@
     },
     {
       "id": 990000027,
-      "origine": "RATE_TAIL64(from 900000032)",
+      "origine": "RATE_TAIL64K4(from 900000032)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.30173537081519863,
@@ -85778,7 +85778,7 @@
     },
     {
       "id": 990000015,
-      "origine": "RATE_TAIL64(from 900000026)",
+      "origine": "RATE_TAIL64K4(from 900000026)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.30173537081519863,
@@ -85953,7 +85953,7 @@
     },
     {
       "id": 990000039,
-      "origine": "RATE_TAIL64(from 900000030)",
+      "origine": "RATE_TAIL64K4(from 900000030)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.30173537081519863,
@@ -86128,7 +86128,7 @@
     },
     {
       "id": 990000009,
-      "origine": "RATE_TAIL64(from 900000054)",
+      "origine": "RATE_TAIL64K4(from 900000054)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.30173537081519863,
@@ -86302,7 +86302,7 @@
     },
     {
       "id": 990000015,
-      "origine": "RATE_TAIL64(from 900000055)",
+      "origine": "RATE_TAIL64K4(from 900000055)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.30173537081519863,
@@ -86476,7 +86476,7 @@
     },
     {
       "id": 990000021,
-      "origine": "RATE_TAIL64(from 900000016)",
+      "origine": "RATE_TAIL64K4(from 900000016)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.30173537081519863,
@@ -86650,7 +86650,7 @@
     },
     {
       "id": 990000027,
-      "origine": "RATE_TAIL64(from 900000014)",
+      "origine": "RATE_TAIL64K4(from 900000014)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.30173537081519863,
@@ -86824,7 +86824,7 @@
     },
     {
       "id": 990000045,
-      "origine": "RATE_TAIL64(from 900000007)",
+      "origine": "RATE_TAIL64K4(from 900000007)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.30173537081519863,
@@ -87431,7 +87431,7 @@
     },
     {
       "id": 990000034,
-      "origine": "RATE_TAIL67(from 900000018)",
+      "origine": "RATE_TAIL67K4(from 900000018)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.301774930200563,
@@ -88227,7 +88227,7 @@
     },
     {
       "id": 990000045,
-      "origine": "RATE_TAIL64(from 900000007)",
+      "origine": "RATE_TAIL64K4(from 900000007)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.30180570434874493,
@@ -88386,7 +88386,7 @@
     },
     {
       "id": 990000032,
-      "origine": "RATE_TAIL61(from 900000048)",
+      "origine": "RATE_TAIL61K4(from 900000048)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.3018378287518641,
@@ -88551,7 +88551,7 @@
     },
     {
       "id": 990000014,
-      "origine": "RATE_TAIL61(from 900000038)",
+      "origine": "RATE_TAIL61K4(from 900000038)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.3018378287518641,
@@ -88715,7 +88715,7 @@
     },
     {
       "id": 990000020,
-      "origine": "RATE_TAIL61(from 900000040)",
+      "origine": "RATE_TAIL61K4(from 900000040)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.3018378287518641,
@@ -88879,7 +88879,7 @@
     },
     {
       "id": 990000026,
-      "origine": "RATE_TAIL61(from 900000039)",
+      "origine": "RATE_TAIL61K4(from 900000039)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.3018378287518641,
@@ -89043,7 +89043,7 @@
     },
     {
       "id": 990000038,
-      "origine": "RATE_TAIL61(from 900000043)",
+      "origine": "RATE_TAIL61K4(from 900000043)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.3018378287518641,
@@ -89207,7 +89207,7 @@
     },
     {
       "id": 990000026,
-      "origine": "RATE_TAIL61(from 900000024)",
+      "origine": "RATE_TAIL61K4(from 900000024)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.3018378287518641,
@@ -89370,7 +89370,7 @@
     },
     {
       "id": 990000032,
-      "origine": "RATE_TAIL61(from 900000009)",
+      "origine": "RATE_TAIL61K4(from 900000009)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.3018378287518641,
@@ -89533,7 +89533,7 @@
     },
     {
       "id": 990000038,
-      "origine": "RATE_TAIL61(from 900000005)",
+      "origine": "RATE_TAIL61K4(from 900000005)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.3018378287518641,
@@ -89696,7 +89696,7 @@
     },
     {
       "id": 990000011,
-      "origine": "RATE_TAIL70(from 13210)",
+      "origine": "RATE_TAIL70K4(from 13210)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3018541728492319,
@@ -89892,7 +89892,7 @@
     },
     {
       "id": 990000041,
-      "origine": "RATE_TAIL70(from 900000021)",
+      "origine": "RATE_TAIL70K4(from 900000021)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.3018699616124043,
@@ -91093,7 +91093,7 @@
     },
     {
       "id": 990000008,
-      "origine": "RATE_TAIL61(from 900000017)",
+      "origine": "RATE_TAIL61K4(from 900000017)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.3019245452136112,
@@ -91242,7 +91242,7 @@
     },
     {
       "id": 990000010,
-      "origine": "RATE_TAIL67(from 12214)",
+      "origine": "RATE_TAIL67K4(from 12214)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.30193042021078714,
@@ -91421,7 +91421,7 @@
     },
     {
       "id": 990000010,
-      "origine": "RATE_TAIL67(from 11214)",
+      "origine": "RATE_TAIL67K4(from 11214)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.30193042021078714,
@@ -91599,7 +91599,7 @@
     },
     {
       "id": 990000022,
-      "origine": "RATE_TAIL67(from 900000057)",
+      "origine": "RATE_TAIL67K4(from 900000057)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.30193042021078714,
@@ -91777,7 +91777,7 @@
     },
     {
       "id": 990000040,
-      "origine": "RATE_TAIL67(from 900000060)",
+      "origine": "RATE_TAIL67K4(from 900000060)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.30193042021078714,
@@ -91955,7 +91955,7 @@
     },
     {
       "id": 990000010,
-      "origine": "RATE_TAIL67(from 900000075)",
+      "origine": "RATE_TAIL67K4(from 900000075)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.30193042021078714,
@@ -92132,7 +92132,7 @@
     },
     {
       "id": 990000028,
-      "origine": "RATE_TAIL67(from 900000073)",
+      "origine": "RATE_TAIL67K4(from 900000073)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.30193042021078714,
@@ -92309,7 +92309,7 @@
     },
     {
       "id": 990000017,
-      "origine": "RATE_TAIL70(from 900000032)",
+      "origine": "RATE_TAIL70K4(from 900000032)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.3019476810854558,
@@ -92487,7 +92487,7 @@
     },
     {
       "id": 990000023,
-      "origine": "RATE_TAIL70(from 900000005)",
+      "origine": "RATE_TAIL70K4(from 900000005)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.3019476810854558,
@@ -92664,7 +92664,7 @@
     },
     {
       "id": 990000004,
-      "origine": "RATE_TAIL67(from 10800)",
+      "origine": "RATE_TAIL67K4(from 10800)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.3019829722621377,
@@ -92829,7 +92829,7 @@
     },
     {
       "id": 990000040,
-      "origine": "RATE_TAIL67(from 900000049)",
+      "origine": "RATE_TAIL67K4(from 900000049)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3019915788862673,
@@ -93016,7 +93016,7 @@
     },
     {
       "id": 990000022,
-      "origine": "RATE_TAIL67(from 900000027)",
+      "origine": "RATE_TAIL67K4(from 900000027)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.3019915788862673,
@@ -93202,7 +93202,7 @@
     },
     {
       "id": 990000046,
-      "origine": "RATE_TAIL67(from 900000029)",
+      "origine": "RATE_TAIL67K4(from 900000029)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.3019915788862673,
@@ -93387,7 +93387,7 @@
     },
     {
       "id": 990000043,
-      "origine": "RATE_TAIL58(from 900000005)",
+      "origine": "RATE_TAIL58K4(from 900000005)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.30201969168237314,
@@ -93555,7 +93555,7 @@
     },
     {
       "id": 990000037,
-      "origine": "RATE_TAIL58(from 900000007)",
+      "origine": "RATE_TAIL58K4(from 900000007)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.30201969168237314,
@@ -93722,7 +93722,7 @@
     },
     {
       "id": 990000005,
-      "origine": "RATE_TAIL70(from 3801)",
+      "origine": "RATE_TAIL70K4(from 3801)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.3020308207004528,
@@ -94314,7 +94314,7 @@
     },
     {
       "id": 990000015,
-      "origine": "RATE_TAIL64(from 900000032)",
+      "origine": "RATE_TAIL64K4(from 900000032)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.3020603087826237,
@@ -94474,7 +94474,7 @@
     },
     {
       "id": 990000021,
-      "origine": "RATE_TAIL64(from 900000005)",
+      "origine": "RATE_TAIL64K4(from 900000005)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.3020603087826237,
@@ -94851,7 +94851,7 @@
     },
     {
       "id": 990000012,
-      "origine": "RATE_TAIL55(from 15218)",
+      "origine": "RATE_TAIL55K4(from 15218)",
       "n_blocs": 15,
       "crash_rate": 1.0,
       "score": 0.30213070422061394,
@@ -96010,7 +96010,7 @@
     },
     {
       "id": 990000014,
-      "origine": "RATE_TAIL61(from 900000008)",
+      "origine": "RATE_TAIL61K4(from 900000008)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.302220156408169,
@@ -96183,7 +96183,7 @@
     },
     {
       "id": 990000002,
-      "origine": "RATE_TAIL61(from 8801)",
+      "origine": "RATE_TAIL61K4(from 8801)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.3022218638689394,
@@ -96940,7 +96940,7 @@
     },
     {
       "id": 990000003,
-      "origine": "RATE_TAIL64(from 15204)",
+      "origine": "RATE_TAIL64K4(from 15204)",
       "n_blocs": 15,
       "crash_rate": 1.0,
       "score": 0.3022665931903797,
@@ -97120,7 +97120,7 @@
     },
     {
       "id": 990000033,
-      "origine": "RATE_TAIL64(from 900000003)",
+      "origine": "RATE_TAIL64K4(from 900000003)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.3022665931903797,
@@ -97299,7 +97299,7 @@
     },
     {
       "id": 990000039,
-      "origine": "RATE_TAIL64(from 900000006)",
+      "origine": "RATE_TAIL64K4(from 900000006)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.3022665931903797,
@@ -97478,7 +97478,7 @@
     },
     {
       "id": 990000039,
-      "origine": "RATE_TAIL64(from 900000049)",
+      "origine": "RATE_TAIL64K4(from 900000049)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3022665931903797,
@@ -97656,7 +97656,7 @@
     },
     {
       "id": 990000021,
-      "origine": "RATE_TAIL64(from 900000027)",
+      "origine": "RATE_TAIL64K4(from 900000027)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.3022665931903797,
@@ -97833,7 +97833,7 @@
     },
     {
       "id": 990000045,
-      "origine": "RATE_TAIL64(from 900000029)",
+      "origine": "RATE_TAIL64K4(from 900000029)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.3022665931903797,
@@ -98220,7 +98220,7 @@
     },
     {
       "id": 990000018,
-      "origine": "RATE_TAIL55(from 900000033)",
+      "origine": "RATE_TAIL55K4(from 900000033)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.3023078635638482,
@@ -98353,7 +98353,7 @@
     },
     {
       "id": 990000030,
-      "origine": "RATE_TAIL55(from 900000006)",
+      "origine": "RATE_TAIL55K4(from 900000006)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.3023078635638482,
@@ -98703,7 +98703,7 @@
     },
     {
       "id": 990000044,
-      "origine": "RATE_TAIL61(from 900000005)",
+      "origine": "RATE_TAIL61K4(from 900000005)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.30234135389409406,
@@ -98880,7 +98880,7 @@
     },
     {
       "id": 990000038,
-      "origine": "RATE_TAIL61(from 900000007)",
+      "origine": "RATE_TAIL61K4(from 900000007)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.30234135389409406,
@@ -99056,7 +99056,7 @@
     },
     {
       "id": 990000004,
-      "origine": "RATE_TAIL67(from 5800)",
+      "origine": "RATE_TAIL67K4(from 5800)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.30234592598786225,
@@ -99448,7 +99448,7 @@
     },
     {
       "id": 990000000,
-      "origine": "RATE_TAIL55(from 15204)",
+      "origine": "RATE_TAIL55K4(from 15204)",
       "n_blocs": 15,
       "crash_rate": 1.0,
       "score": 0.30236739958651,
@@ -99601,7 +99601,7 @@
     },
     {
       "id": 990000024,
-      "origine": "RATE_TAIL55(from 900000008)",
+      "origine": "RATE_TAIL55K4(from 900000008)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.30236739958651,
@@ -99753,7 +99753,7 @@
     },
     {
       "id": 990000030,
-      "origine": "RATE_TAIL55(from 900000003)",
+      "origine": "RATE_TAIL55K4(from 900000003)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.30236739958651,
@@ -99905,7 +99905,7 @@
     },
     {
       "id": 990000036,
-      "origine": "RATE_TAIL55(from 900000006)",
+      "origine": "RATE_TAIL55K4(from 900000006)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.30236739958651,
@@ -100057,7 +100057,7 @@
     },
     {
       "id": 990000036,
-      "origine": "RATE_TAIL55(from 900000049)",
+      "origine": "RATE_TAIL55K4(from 900000049)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.30236739958651,
@@ -100208,7 +100208,7 @@
     },
     {
       "id": 990000018,
-      "origine": "RATE_TAIL55(from 900000027)",
+      "origine": "RATE_TAIL55K4(from 900000027)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.30236739958651,
@@ -100358,7 +100358,7 @@
     },
     {
       "id": 990000042,
-      "origine": "RATE_TAIL55(from 900000029)",
+      "origine": "RATE_TAIL55K4(from 900000029)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.30236739958651,
@@ -100507,7 +100507,7 @@
     },
     {
       "id": 990000003,
-      "origine": "RATE_TAIL64(from 8801)",
+      "origine": "RATE_TAIL64K4(from 8801)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.30240244194176735,
@@ -101291,7 +101291,7 @@
     },
     {
       "id": 990000012,
-      "origine": "RATE_TAIL55(from 900000009)",
+      "origine": "RATE_TAIL55K4(from 900000009)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.30249537533593407,
@@ -102530,7 +102530,7 @@
     },
     {
       "id": 990000002,
-      "origine": "RATE_TAIL61(from 14233)",
+      "origine": "RATE_TAIL61K4(from 14233)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.3025241486009393,
@@ -102693,7 +102693,7 @@
     },
     {
       "id": 990000044,
-      "origine": "RATE_TAIL61(from 900000004)",
+      "origine": "RATE_TAIL61K4(from 900000004)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3025241486009393,
@@ -102855,7 +102855,7 @@
     },
     {
       "id": 990000044,
-      "origine": "RATE_TAIL61(from 900000035)",
+      "origine": "RATE_TAIL61K4(from 900000035)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.3025241486009393,
@@ -103016,7 +103016,7 @@
     },
     {
       "id": 990000033,
-      "origine": "RATE_TAIL64(from 900000006)",
+      "origine": "RATE_TAIL64K4(from 900000006)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.3025799390627432,
@@ -103203,7 +103203,7 @@
     },
     {
       "id": 990000021,
-      "origine": "RATE_TAIL64(from 900000001)",
+      "origine": "RATE_TAIL64K4(from 900000001)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.3025799390627432,
@@ -103591,7 +103591,7 @@
     },
     {
       "id": 990000003,
-      "origine": "RATE_TAIL64(from 11222)",
+      "origine": "RATE_TAIL64K4(from 11222)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.3025858578344488,
@@ -104178,7 +104178,7 @@
     },
     {
       "id": 990000015,
-      "origine": "RATE_TAIL64(from 15218)",
+      "origine": "RATE_TAIL64K4(from 15218)",
       "n_blocs": 15,
       "crash_rate": 1.0,
       "score": 0.30262992939073924,
@@ -104342,7 +104342,7 @@
     },
     {
       "id": 990000014,
-      "origine": "RATE_TAIL61(from 900000032)",
+      "origine": "RATE_TAIL61K4(from 900000032)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.3026387699714067,
@@ -104493,7 +104493,7 @@
     },
     {
       "id": 990000020,
-      "origine": "RATE_TAIL61(from 900000005)",
+      "origine": "RATE_TAIL61K4(from 900000005)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.3026387699714067,
@@ -105464,7 +105464,7 @@
     },
     {
       "id": 990000033,
-      "origine": "RATE_TAIL64(from 900000005)",
+      "origine": "RATE_TAIL64K4(from 900000005)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.3027071675981421,
@@ -105620,7 +105620,7 @@
     },
     {
       "id": 990000015,
-      "origine": "RATE_TAIL64(from 900000019)",
+      "origine": "RATE_TAIL64K4(from 900000019)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.3027071675981421,
@@ -105775,7 +105775,7 @@
     },
     {
       "id": 990000034,
-      "origine": "RATE_TAIL67(from 900000005)",
+      "origine": "RATE_TAIL67K4(from 900000005)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.3027250416366328,
@@ -105940,7 +105940,7 @@
     },
     {
       "id": 990000016,
-      "origine": "RATE_TAIL67(from 900000019)",
+      "origine": "RATE_TAIL67K4(from 900000019)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.3027250416366328,
@@ -106517,7 +106517,7 @@
     },
     {
       "id": 990000035,
-      "origine": "RATE_TAIL70(from 900000009)",
+      "origine": "RATE_TAIL70K4(from 900000009)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.3027418679580887,
@@ -106707,7 +106707,7 @@
     },
     {
       "id": 990000033,
-      "origine": "RATE_TAIL64(from 900000004)",
+      "origine": "RATE_TAIL64K4(from 900000004)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.3027498995215337,
@@ -106910,7 +106910,7 @@
     },
     {
       "id": 990000002,
-      "origine": "RATE_TAIL61(from 1801)",
+      "origine": "RATE_TAIL61K4(from 1801)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.30278851670613827,
@@ -107515,7 +107515,7 @@
     },
     {
       "id": 990000006,
-      "origine": "RATE_TAIL55(from 12214)",
+      "origine": "RATE_TAIL55K4(from 12214)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.30285186576806333,
@@ -107658,7 +107658,7 @@
     },
     {
       "id": 990000006,
-      "origine": "RATE_TAIL55(from 11214)",
+      "origine": "RATE_TAIL55K4(from 11214)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.30285186576806333,
@@ -107800,7 +107800,7 @@
     },
     {
       "id": 990000018,
-      "origine": "RATE_TAIL55(from 900000057)",
+      "origine": "RATE_TAIL55K4(from 900000057)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.30285186576806333,
@@ -107942,7 +107942,7 @@
     },
     {
       "id": 990000036,
-      "origine": "RATE_TAIL55(from 900000060)",
+      "origine": "RATE_TAIL55K4(from 900000060)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.30285186576806333,
@@ -108084,7 +108084,7 @@
     },
     {
       "id": 990000006,
-      "origine": "RATE_TAIL55(from 900000075)",
+      "origine": "RATE_TAIL55K4(from 900000075)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.30285186576806333,
@@ -108225,7 +108225,7 @@
     },
     {
       "id": 990000024,
-      "origine": "RATE_TAIL55(from 900000073)",
+      "origine": "RATE_TAIL55K4(from 900000073)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.30285186576806333,
@@ -109219,7 +109219,7 @@
     },
     {
       "id": 990000047,
-      "origine": "RATE_TAIL70(from 900000004)",
+      "origine": "RATE_TAIL70K4(from 900000004)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.30289559961251794,
@@ -109408,7 +109408,7 @@
     },
     {
       "id": 990000047,
-      "origine": "RATE_TAIL70(from 900000035)",
+      "origine": "RATE_TAIL70K4(from 900000035)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.30289559961251794,
@@ -109996,7 +109996,7 @@
     },
     {
       "id": 990000021,
-      "origine": "RATE_TAIL64(from 900000004)",
+      "origine": "RATE_TAIL64K4(from 900000004)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.3029221080081837,
@@ -110183,7 +110183,7 @@
     },
     {
       "id": 990000019,
-      "origine": "RATE_TAIL58(from 900000004)",
+      "origine": "RATE_TAIL58K4(from 900000004)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.30292822986264706,
@@ -110352,7 +110352,7 @@
     },
     {
       "id": 990000004,
-      "origine": "RATE_TAIL67(from 11222)",
+      "origine": "RATE_TAIL67K4(from 11222)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.30293929933083696,
@@ -110744,7 +110744,7 @@
     },
     {
       "id": 990000005,
-      "origine": "RATE_TAIL70(from 2801)",
+      "origine": "RATE_TAIL70K4(from 2801)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.3029440608300538,
@@ -110950,7 +110950,7 @@
     },
     {
       "id": 990000029,
-      "origine": "RATE_TAIL70(from 900000006)",
+      "origine": "RATE_TAIL70K4(from 900000006)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.3029443072468091,
@@ -111569,7 +111569,7 @@
     },
     {
       "id": 990000003,
-      "origine": "RATE_TAIL64(from 4801)",
+      "origine": "RATE_TAIL64K4(from 4801)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.3030585628809808,
@@ -111971,7 +111971,7 @@
     },
     {
       "id": 990000032,
-      "origine": "RATE_TAIL61(from 900000058)",
+      "origine": "RATE_TAIL61K4(from 900000058)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.3030852594835534,
@@ -112123,7 +112123,7 @@
     },
     {
       "id": 990000008,
-      "origine": "RATE_TAIL61(from 900000027)",
+      "origine": "RATE_TAIL61K4(from 900000027)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.3030852594835534,
@@ -112274,7 +112274,7 @@
     },
     {
       "id": 990000033,
-      "origine": "RATE_TAIL64(from 900000015)",
+      "origine": "RATE_TAIL64K4(from 900000015)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.30308969237291955,
@@ -112465,7 +112465,7 @@
     },
     {
       "id": 990000026,
-      "origine": "RATE_TAIL61(from 900000019)",
+      "origine": "RATE_TAIL61K4(from 900000019)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.3030962358162786,
@@ -112646,7 +112646,7 @@
     },
     {
       "id": 990000040,
-      "origine": "RATE_TAIL67(from 900000045)",
+      "origine": "RATE_TAIL67K4(from 900000045)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.3031263505578986,
@@ -112837,7 +112837,7 @@
     },
     {
       "id": 990000039,
-      "origine": "RATE_TAIL64(from 900000010)",
+      "origine": "RATE_TAIL64K4(from 900000010)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.30313347944888097,
@@ -114113,7 +114113,7 @@
     },
     {
       "id": 990000008,
-      "origine": "RATE_TAIL61(from 8800)",
+      "origine": "RATE_TAIL61K4(from 8800)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.3032966968236718,
@@ -114297,7 +114297,7 @@
     },
     {
       "id": 990000002,
-      "origine": "RATE_TAIL61(from 6800)",
+      "origine": "RATE_TAIL61K4(from 6800)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.3032966968236718,
@@ -114479,7 +114479,7 @@
     },
     {
       "id": 990000008,
-      "origine": "RATE_TAIL61(from 4800)",
+      "origine": "RATE_TAIL61K4(from 4800)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.3032966968236718,
@@ -114659,7 +114659,7 @@
     },
     {
       "id": 990000008,
-      "origine": "RATE_TAIL61(from 3800)",
+      "origine": "RATE_TAIL61K4(from 3800)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.3032966968236718,
@@ -114838,7 +114838,7 @@
     },
     {
       "id": 990000008,
-      "origine": "RATE_TAIL61(from 2800)",
+      "origine": "RATE_TAIL61K4(from 2800)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.3032966968236718,
@@ -115016,7 +115016,7 @@
     },
     {
       "id": 990000008,
-      "origine": "RATE_TAIL61(from 1800)",
+      "origine": "RATE_TAIL61K4(from 1800)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.3032966968236718,
@@ -115193,7 +115193,7 @@
     },
     {
       "id": 990000028,
-      "origine": "RATE_TAIL67(from 900000019)",
+      "origine": "RATE_TAIL67K4(from 900000019)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.3033359189093997,
@@ -115603,7 +115603,7 @@
     },
     {
       "id": 990000004,
-      "origine": "RATE_TAIL67(from 4801)",
+      "origine": "RATE_TAIL67K4(from 4801)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.3033539762908189,
@@ -115802,7 +115802,7 @@
     },
     {
       "id": 990000039,
-      "origine": "RATE_TAIL64(from 900000021)",
+      "origine": "RATE_TAIL64K4(from 900000021)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.3033618096041518,
@@ -115963,7 +115963,7 @@
     },
     {
       "id": 990000013,
-      "origine": "RATE_TAIL58(from 14135)",
+      "origine": "RATE_TAIL58K4(from 14135)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.30336495483001974,
@@ -116129,7 +116129,7 @@
     },
     {
       "id": 990000055,
-      "origine": "RATE_TAIL58(from 900000053)",
+      "origine": "RATE_TAIL58K4(from 900000053)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.30336495483001974,
@@ -116516,7 +116516,7 @@
     },
     {
       "id": 990000013,
-      "origine": "RATE_TAIL58(from 13120)",
+      "origine": "RATE_TAIL58K4(from 13120)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3034335441592854,
@@ -116679,7 +116679,7 @@
     },
     {
       "id": 990000035,
-      "origine": "RATE_TAIL70(from 900000004)",
+      "origine": "RATE_TAIL70K4(from 900000004)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.30346261464267343,
@@ -117504,7 +117504,7 @@
     },
     {
       "id": 990000011,
-      "origine": "RATE_TAIL70(from 12214)",
+      "origine": "RATE_TAIL70K4(from 12214)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.3035470112182637,
@@ -117692,7 +117692,7 @@
     },
     {
       "id": 990000011,
-      "origine": "RATE_TAIL70(from 11214)",
+      "origine": "RATE_TAIL70K4(from 11214)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.3035470112182637,
@@ -117879,7 +117879,7 @@
     },
     {
       "id": 990000023,
-      "origine": "RATE_TAIL70(from 900000057)",
+      "origine": "RATE_TAIL70K4(from 900000057)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.3035470112182637,
@@ -118066,7 +118066,7 @@
     },
     {
       "id": 990000041,
-      "origine": "RATE_TAIL70(from 900000060)",
+      "origine": "RATE_TAIL70K4(from 900000060)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.3035470112182637,
@@ -118253,7 +118253,7 @@
     },
     {
       "id": 990000011,
-      "origine": "RATE_TAIL70(from 900000075)",
+      "origine": "RATE_TAIL70K4(from 900000075)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.3035470112182637,
@@ -118439,7 +118439,7 @@
     },
     {
       "id": 990000029,
-      "origine": "RATE_TAIL70(from 900000073)",
+      "origine": "RATE_TAIL70K4(from 900000073)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.3035470112182637,
@@ -118625,7 +118625,7 @@
     },
     {
       "id": 990000001,
-      "origine": "RATE_TAIL58(from 2801)",
+      "origine": "RATE_TAIL58K4(from 2801)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.303549251078471,
@@ -118795,7 +118795,7 @@
     },
     {
       "id": 990000027,
-      "origine": "RATE_TAIL64(from 900000020)",
+      "origine": "RATE_TAIL64K4(from 900000020)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.3035494957790386,
@@ -118984,7 +118984,7 @@
     },
     {
       "id": 990000027,
-      "origine": "RATE_TAIL64(from 900000019)",
+      "origine": "RATE_TAIL64K4(from 900000019)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.3035494957790386,
@@ -119172,7 +119172,7 @@
     },
     {
       "id": 990000027,
-      "origine": "RATE_TAIL64(from 900000024)",
+      "origine": "RATE_TAIL64K4(from 900000024)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.3035494957790386,
@@ -119359,7 +119359,7 @@
     },
     {
       "id": 990000018,
-      "origine": "RATE_TAIL55(from 900000013)",
+      "origine": "RATE_TAIL55K4(from 900000013)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.3035516319440171,
@@ -119517,7 +119517,7 @@
     },
     {
       "id": 990000037,
-      "origine": "RATE_TAIL58(from 900000034)",
+      "origine": "RATE_TAIL58K4(from 900000034)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.30357877510146547,
@@ -119694,7 +119694,7 @@
     },
     {
       "id": 990000018,
-      "origine": "RATE_TAIL55(from 13205)",
+      "origine": "RATE_TAIL55K4(from 13205)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.30358454289176534,
@@ -119845,7 +119845,7 @@
     },
     {
       "id": 990000024,
-      "origine": "RATE_TAIL55(from 900000099)",
+      "origine": "RATE_TAIL55K4(from 900000099)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.30358454289176534,
@@ -119995,7 +119995,7 @@
     },
     {
       "id": 990000024,
-      "origine": "RATE_TAIL55(from 900000032)",
+      "origine": "RATE_TAIL55K4(from 900000032)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.30358454289176534,
@@ -120144,7 +120144,7 @@
     },
     {
       "id": 990000012,
-      "origine": "RATE_TAIL55(from 900000026)",
+      "origine": "RATE_TAIL55K4(from 900000026)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.30358454289176534,
@@ -120292,7 +120292,7 @@
     },
     {
       "id": 990000036,
-      "origine": "RATE_TAIL55(from 900000030)",
+      "origine": "RATE_TAIL55K4(from 900000030)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.30358454289176534,
@@ -120440,7 +120440,7 @@
     },
     {
       "id": 990000006,
-      "origine": "RATE_TAIL55(from 900000054)",
+      "origine": "RATE_TAIL55K4(from 900000054)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.30358454289176534,
@@ -120587,7 +120587,7 @@
     },
     {
       "id": 990000012,
-      "origine": "RATE_TAIL55(from 900000055)",
+      "origine": "RATE_TAIL55K4(from 900000055)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.30358454289176534,
@@ -120734,7 +120734,7 @@
     },
     {
       "id": 990000018,
-      "origine": "RATE_TAIL55(from 900000016)",
+      "origine": "RATE_TAIL55K4(from 900000016)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.30358454289176534,
@@ -120881,7 +120881,7 @@
     },
     {
       "id": 990000024,
-      "origine": "RATE_TAIL55(from 900000014)",
+      "origine": "RATE_TAIL55K4(from 900000014)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.30358454289176534,
@@ -121028,7 +121028,7 @@
     },
     {
       "id": 990000042,
-      "origine": "RATE_TAIL55(from 900000007)",
+      "origine": "RATE_TAIL55K4(from 900000007)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.30358454289176534,
@@ -121174,7 +121174,7 @@
     },
     {
       "id": 990000031,
-      "origine": "RATE_TAIL58(from 900000018)",
+      "origine": "RATE_TAIL58K4(from 900000018)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.30364792882755043,
@@ -121312,7 +121312,7 @@
     },
     {
       "id": 990000040,
-      "origine": "RATE_TAIL67(from 900000063)",
+      "origine": "RATE_TAIL67K4(from 900000063)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.30366791087385114,
@@ -121944,7 +121944,7 @@
     },
     {
       "id": 990000010,
-      "origine": "RATE_TAIL67(from 900000017)",
+      "origine": "RATE_TAIL67K4(from 900000017)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.3037096040200971,
@@ -122111,7 +122111,7 @@
     },
     {
       "id": 990000023,
-      "origine": "RATE_TAIL70(from 900000004)",
+      "origine": "RATE_TAIL70K4(from 900000004)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.30374202158425617,
@@ -122316,7 +122316,7 @@
     },
     {
       "id": 990000021,
-      "origine": "RATE_TAIL64(from 900000009)",
+      "origine": "RATE_TAIL64K4(from 900000009)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.3037675028084496,
@@ -122505,7 +122505,7 @@
     },
     {
       "id": 990000017,
-      "origine": "RATE_TAIL70(from 900000016)",
+      "origine": "RATE_TAIL70K4(from 900000016)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.3037682523894544,
@@ -122710,7 +122710,7 @@
     },
     {
       "id": 990000029,
-      "origine": "RATE_TAIL70(from 900000019)",
+      "origine": "RATE_TAIL70K4(from 900000019)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.30377187242222287,
@@ -122918,7 +122918,7 @@
     },
     {
       "id": 990000001,
-      "origine": "RATE_TAIL58(from 8801)",
+      "origine": "RATE_TAIL58K4(from 8801)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.30377694937231636,
@@ -123270,7 +123270,7 @@
     },
     {
       "id": 990000041,
-      "origine": "RATE_TAIL70(from 900000043)",
+      "origine": "RATE_TAIL70K4(from 900000043)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.30382473527301157,
@@ -123461,7 +123461,7 @@
     },
     {
       "id": 990000029,
-      "origine": "RATE_TAIL70(from 900000024)",
+      "origine": "RATE_TAIL70K4(from 900000024)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.30382473527301157,
@@ -123651,7 +123651,7 @@
     },
     {
       "id": 990000041,
-      "origine": "RATE_TAIL70(from 900000005)",
+      "origine": "RATE_TAIL70K4(from 900000005)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.30382473527301157,
@@ -124051,7 +124051,7 @@
     },
     {
       "id": 990000007,
-      "origine": "RATE_TAIL58(from 6801)",
+      "origine": "RATE_TAIL58K4(from 6801)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.30385314571551614,
@@ -124225,7 +124225,7 @@
     },
     {
       "id": 990000022,
-      "origine": "RATE_TAIL67(from 900000033)",
+      "origine": "RATE_TAIL67K4(from 900000033)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.3038697135017536,
@@ -124394,7 +124394,7 @@
     },
     {
       "id": 990000034,
-      "origine": "RATE_TAIL67(from 900000006)",
+      "origine": "RATE_TAIL67K4(from 900000006)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.3038697135017536,
@@ -124778,7 +124778,7 @@
     },
     {
       "id": 990000015,
-      "origine": "RATE_TAIL64(from 900000047)",
+      "origine": "RATE_TAIL64K4(from 900000047)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.30389516669010547,
@@ -124966,7 +124966,7 @@
     },
     {
       "id": 990000041,
-      "origine": "RATE_TAIL70(from 900000049)",
+      "origine": "RATE_TAIL70K4(from 900000049)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.30389786574994815,
@@ -125162,7 +125162,7 @@
     },
     {
       "id": 990000017,
-      "origine": "RATE_TAIL70(from 900000021)",
+      "origine": "RATE_TAIL70K4(from 900000021)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.30389786574994815,
@@ -125357,7 +125357,7 @@
     },
     {
       "id": 990000023,
-      "origine": "RATE_TAIL70(from 900000027)",
+      "origine": "RATE_TAIL70K4(from 900000027)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.30389786574994815,
@@ -125552,7 +125552,7 @@
     },
     {
       "id": 990000017,
-      "origine": "RATE_TAIL70(from 900000016)",
+      "origine": "RATE_TAIL70K4(from 900000016)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.30389786574994815,
@@ -125746,7 +125746,7 @@
     },
     {
       "id": 990000047,
-      "origine": "RATE_TAIL70(from 900000029)",
+      "origine": "RATE_TAIL70K4(from 900000029)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.30389786574994815,
@@ -125940,7 +125940,7 @@
     },
     {
       "id": 990000023,
-      "origine": "RATE_TAIL70(from 900000008)",
+      "origine": "RATE_TAIL70K4(from 900000008)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.30389786574994815,
@@ -126133,7 +126133,7 @@
     },
     {
       "id": 990000038,
-      "origine": "RATE_TAIL61(from 900000063)",
+      "origine": "RATE_TAIL61K4(from 900000063)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.30389874438486403,
@@ -126303,7 +126303,7 @@
     },
     {
       "id": 990000017,
-      "origine": "RATE_TAIL70(from 900000019)",
+      "origine": "RATE_TAIL70K4(from 900000019)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.30392293660569936,
@@ -126476,7 +126476,7 @@
     },
     {
       "id": 990000000,
-      "origine": "RATE_TAIL55(from 8801)",
+      "origine": "RATE_TAIL55K4(from 8801)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.3039290148060588,
@@ -126607,7 +126607,7 @@
     },
     {
       "id": 990000046,
-      "origine": "RATE_TAIL67(from 900000033)",
+      "origine": "RATE_TAIL67K4(from 900000033)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.3039324196219446,
@@ -127239,7 +127239,7 @@
     },
     {
       "id": 990000041,
-      "origine": "RATE_TAIL70(from 900000007)",
+      "origine": "RATE_TAIL70K4(from 900000007)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.30394503039762466,
@@ -127442,7 +127442,7 @@
     },
     {
       "id": 990000009,
-      "origine": "RATE_TAIL64(from 8800)",
+      "origine": "RATE_TAIL64K4(from 8800)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.3039675199913894,
@@ -127635,7 +127635,7 @@
     },
     {
       "id": 990000003,
-      "origine": "RATE_TAIL64(from 6800)",
+      "origine": "RATE_TAIL64K4(from 6800)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.3039675199913894,
@@ -127826,7 +127826,7 @@
     },
     {
       "id": 990000009,
-      "origine": "RATE_TAIL64(from 4800)",
+      "origine": "RATE_TAIL64K4(from 4800)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.3039675199913894,
@@ -128015,7 +128015,7 @@
     },
     {
       "id": 990000009,
-      "origine": "RATE_TAIL64(from 3800)",
+      "origine": "RATE_TAIL64K4(from 3800)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.3039675199913894,
@@ -128203,7 +128203,7 @@
     },
     {
       "id": 990000009,
-      "origine": "RATE_TAIL64(from 2800)",
+      "origine": "RATE_TAIL64K4(from 2800)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.3039675199913894,
@@ -128390,7 +128390,7 @@
     },
     {
       "id": 990000009,
-      "origine": "RATE_TAIL64(from 1800)",
+      "origine": "RATE_TAIL64K4(from 1800)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.3039675199913894,
@@ -128788,7 +128788,7 @@
     },
     {
       "id": 990000008,
-      "origine": "RATE_TAIL61(from 13210)",
+      "origine": "RATE_TAIL61K4(from 13210)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.30400074436622876,
@@ -129338,7 +129338,7 @@
     },
     {
       "id": 990000036,
-      "origine": "RATE_TAIL55(from 900000045)",
+      "origine": "RATE_TAIL55K4(from 900000045)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.30403612090700033,
@@ -129930,7 +129930,7 @@
     },
     {
       "id": 990000004,
-      "origine": "RATE_TAIL67(from 3801)",
+      "origine": "RATE_TAIL67K4(from 3801)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.304063722503402,
@@ -130340,7 +130340,7 @@
     },
     {
       "id": 990000019,
-      "origine": "RATE_TAIL58(from 900000012)",
+      "origine": "RATE_TAIL58K4(from 900000012)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.304087278694229,
@@ -130504,7 +130504,7 @@
     },
     {
       "id": 990000025,
-      "origine": "RATE_TAIL58(from 900000020)",
+      "origine": "RATE_TAIL58K4(from 900000020)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.304087278694229,
@@ -130667,7 +130667,7 @@
     },
     {
       "id": 990000031,
-      "origine": "RATE_TAIL58(from 900000017)",
+      "origine": "RATE_TAIL58K4(from 900000017)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.304087278694229,
@@ -131251,7 +131251,7 @@
     },
     {
       "id": 990000015,
-      "origine": "RATE_TAIL64(from 900000016)",
+      "origine": "RATE_TAIL64K4(from 900000016)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.3041825439064795,
@@ -132103,7 +132103,7 @@
     },
     {
       "id": 990000040,
-      "origine": "RATE_TAIL67(from 900000043)",
+      "origine": "RATE_TAIL67K4(from 900000043)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.3042326747840922,
@@ -132285,7 +132285,7 @@
     },
     {
       "id": 990000028,
-      "origine": "RATE_TAIL67(from 900000024)",
+      "origine": "RATE_TAIL67K4(from 900000024)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.3042326747840922,
@@ -132466,7 +132466,7 @@
     },
     {
       "id": 990000040,
-      "origine": "RATE_TAIL67(from 900000005)",
+      "origine": "RATE_TAIL67K4(from 900000005)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.3042326747840922,
@@ -132647,7 +132647,7 @@
     },
     {
       "id": 990000001,
-      "origine": "RATE_TAIL58(from 7800)",
+      "origine": "RATE_TAIL58K4(from 7800)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.30423432993152155,
@@ -132808,7 +132808,7 @@
     },
     {
       "id": 990000045,
-      "origine": "RATE_TAIL64(from 900000033)",
+      "origine": "RATE_TAIL64K4(from 900000033)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.3042370676070936,
@@ -133414,7 +133414,7 @@
     },
     {
       "id": 990000001,
-      "origine": "RATE_TAIL58(from 9800)",
+      "origine": "RATE_TAIL58K4(from 9800)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.3043028756954864,
@@ -133553,7 +133553,7 @@
     },
     {
       "id": 990000007,
-      "origine": "RATE_TAIL58(from 13210)",
+      "origine": "RATE_TAIL58K4(from 13210)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3043072838832078,
@@ -133713,7 +133713,7 @@
     },
     {
       "id": 990000008,
-      "origine": "RATE_TAIL61(from 12214)",
+      "origine": "RATE_TAIL61K4(from 12214)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.30437568248264313,
@@ -133874,7 +133874,7 @@
     },
     {
       "id": 990000008,
-      "origine": "RATE_TAIL61(from 11214)",
+      "origine": "RATE_TAIL61K4(from 11214)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.30437568248264313,
@@ -134034,7 +134034,7 @@
     },
     {
       "id": 990000020,
-      "origine": "RATE_TAIL61(from 900000057)",
+      "origine": "RATE_TAIL61K4(from 900000057)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.30437568248264313,
@@ -134194,7 +134194,7 @@
     },
     {
       "id": 990000038,
-      "origine": "RATE_TAIL61(from 900000060)",
+      "origine": "RATE_TAIL61K4(from 900000060)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.30437568248264313,
@@ -134354,7 +134354,7 @@
     },
     {
       "id": 990000008,
-      "origine": "RATE_TAIL61(from 900000075)",
+      "origine": "RATE_TAIL61K4(from 900000075)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.30437568248264313,
@@ -134513,7 +134513,7 @@
     },
     {
       "id": 990000026,
-      "origine": "RATE_TAIL61(from 900000073)",
+      "origine": "RATE_TAIL61K4(from 900000073)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.30437568248264313,
@@ -134858,7 +134858,7 @@
     },
     {
       "id": 990000028,
-      "origine": "RATE_TAIL67(from 900000020)",
+      "origine": "RATE_TAIL67K4(from 900000020)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.30439078797825175,
@@ -135056,7 +135056,7 @@
     },
     {
       "id": 990000028,
-      "origine": "RATE_TAIL67(from 900000019)",
+      "origine": "RATE_TAIL67K4(from 900000019)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.30439078797825175,
@@ -135253,7 +135253,7 @@
     },
     {
       "id": 990000028,
-      "origine": "RATE_TAIL67(from 900000024)",
+      "origine": "RATE_TAIL67K4(from 900000024)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.30439078797825175,
@@ -136041,7 +136041,7 @@
     },
     {
       "id": 990000034,
-      "origine": "RATE_TAIL67(from 900000015)",
+      "origine": "RATE_TAIL67K4(from 900000015)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.3044456729316265,
@@ -136842,7 +136842,7 @@
     },
     {
       "id": 990000040,
-      "origine": "RATE_TAIL67(from 900000034)",
+      "origine": "RATE_TAIL67K4(from 900000034)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.30449005562136217,
@@ -137046,7 +137046,7 @@
     },
     {
       "id": 990000027,
-      "origine": "RATE_TAIL64(from 900000006)",
+      "origine": "RATE_TAIL64K4(from 900000006)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.3044948053999454,
@@ -138073,7 +138073,7 @@
     },
     {
       "id": 990000016,
-      "origine": "RATE_TAIL67(from 900000016)",
+      "origine": "RATE_TAIL67K4(from 900000016)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.30456866942776567,
@@ -139317,7 +139317,7 @@
     },
     {
       "id": 990000022,
-      "origine": "RATE_TAIL67(from 900000013)",
+      "origine": "RATE_TAIL67K4(from 900000013)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.3046582456087286,
@@ -139511,7 +139511,7 @@
     },
     {
       "id": 990000006,
-      "origine": "RATE_TAIL55(from 14206)",
+      "origine": "RATE_TAIL55K4(from 14206)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.3047223398758529,
@@ -139663,7 +139663,7 @@
     },
     {
       "id": 990000048,
-      "origine": "RATE_TAIL55(from 900000031)",
+      "origine": "RATE_TAIL55K4(from 900000031)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3047223398758529,
@@ -139814,7 +139814,7 @@
     },
     {
       "id": 990000006,
-      "origine": "RATE_TAIL55(from 13210)",
+      "origine": "RATE_TAIL55K4(from 13210)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3047223398758529,
@@ -139965,7 +139965,7 @@
     },
     {
       "id": 990000000,
-      "origine": "RATE_TAIL55(from 12202)",
+      "origine": "RATE_TAIL55K4(from 12202)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.3047223398758529,
@@ -140115,7 +140115,7 @@
     },
     {
       "id": 990000012,
-      "origine": "RATE_TAIL55(from 900000021)",
+      "origine": "RATE_TAIL55K4(from 900000021)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.3047223398758529,
@@ -140265,7 +140265,7 @@
     },
     {
       "id": 990000030,
-      "origine": "RATE_TAIL55(from 900000046)",
+      "origine": "RATE_TAIL55K4(from 900000046)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.3047223398758529,
@@ -140415,7 +140415,7 @@
     },
     {
       "id": 990000036,
-      "origine": "RATE_TAIL55(from 900000040)",
+      "origine": "RATE_TAIL55K4(from 900000040)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.3047223398758529,
@@ -140565,7 +140565,7 @@
     },
     {
       "id": 990000012,
-      "origine": "RATE_TAIL55(from 900000016)",
+      "origine": "RATE_TAIL55K4(from 900000016)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.3047223398758529,
@@ -140714,7 +140714,7 @@
     },
     {
       "id": 990000030,
-      "origine": "RATE_TAIL55(from 900000007)",
+      "origine": "RATE_TAIL55K4(from 900000007)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.3047223398758529,
@@ -140863,7 +140863,7 @@
     },
     {
       "id": 990000018,
-      "origine": "RATE_TAIL55(from 900000008)",
+      "origine": "RATE_TAIL55K4(from 900000008)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.3047223398758529,
@@ -141011,7 +141011,7 @@
     },
     {
       "id": 990000030,
-      "origine": "RATE_TAIL55(from 900000035)",
+      "origine": "RATE_TAIL55K4(from 900000035)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.3047223398758529,
@@ -141159,7 +141159,7 @@
     },
     {
       "id": 990000030,
-      "origine": "RATE_TAIL55(from 900000048)",
+      "origine": "RATE_TAIL55K4(from 900000048)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.3047223398758529,
@@ -141306,7 +141306,7 @@
     },
     {
       "id": 990000036,
-      "origine": "RATE_TAIL55(from 900000022)",
+      "origine": "RATE_TAIL55K4(from 900000022)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.3047223398758529,
@@ -141453,7 +141453,7 @@
     },
     {
       "id": 990000012,
-      "origine": "RATE_TAIL55(from 900000038)",
+      "origine": "RATE_TAIL55K4(from 900000038)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.3047223398758529,
@@ -141599,7 +141599,7 @@
     },
     {
       "id": 990000018,
-      "origine": "RATE_TAIL55(from 900000040)",
+      "origine": "RATE_TAIL55K4(from 900000040)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.3047223398758529,
@@ -141745,7 +141745,7 @@
     },
     {
       "id": 990000024,
-      "origine": "RATE_TAIL55(from 900000039)",
+      "origine": "RATE_TAIL55K4(from 900000039)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.3047223398758529,
@@ -141891,7 +141891,7 @@
     },
     {
       "id": 990000036,
-      "origine": "RATE_TAIL55(from 900000043)",
+      "origine": "RATE_TAIL55K4(from 900000043)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.3047223398758529,
@@ -142037,7 +142037,7 @@
     },
     {
       "id": 990000024,
-      "origine": "RATE_TAIL55(from 900000024)",
+      "origine": "RATE_TAIL55K4(from 900000024)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.3047223398758529,
@@ -142182,7 +142182,7 @@
     },
     {
       "id": 990000030,
-      "origine": "RATE_TAIL55(from 900000009)",
+      "origine": "RATE_TAIL55K4(from 900000009)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.3047223398758529,
@@ -142327,7 +142327,7 @@
     },
     {
       "id": 990000036,
-      "origine": "RATE_TAIL55(from 900000005)",
+      "origine": "RATE_TAIL55K4(from 900000005)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.3047223398758529,
@@ -142472,7 +142472,7 @@
     },
     {
       "id": 990000007,
-      "origine": "RATE_TAIL58(from 12214)",
+      "origine": "RATE_TAIL58K4(from 12214)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.3047259491976088,
@@ -142624,7 +142624,7 @@
     },
     {
       "id": 990000007,
-      "origine": "RATE_TAIL58(from 11214)",
+      "origine": "RATE_TAIL58K4(from 11214)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.3047259491976088,
@@ -142775,7 +142775,7 @@
     },
     {
       "id": 990000019,
-      "origine": "RATE_TAIL58(from 900000057)",
+      "origine": "RATE_TAIL58K4(from 900000057)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.3047259491976088,
@@ -142926,7 +142926,7 @@
     },
     {
       "id": 990000037,
-      "origine": "RATE_TAIL58(from 900000060)",
+      "origine": "RATE_TAIL58K4(from 900000060)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.3047259491976088,
@@ -143077,7 +143077,7 @@
     },
     {
       "id": 990000007,
-      "origine": "RATE_TAIL58(from 900000075)",
+      "origine": "RATE_TAIL58K4(from 900000075)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.3047259491976088,
@@ -143227,7 +143227,7 @@
     },
     {
       "id": 990000025,
-      "origine": "RATE_TAIL58(from 900000073)",
+      "origine": "RATE_TAIL58K4(from 900000073)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.3047259491976088,
@@ -143377,7 +143377,7 @@
     },
     {
       "id": 990000024,
-      "origine": "RATE_TAIL55(from 900000020)",
+      "origine": "RATE_TAIL55K4(from 900000020)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.3047442174525556,
@@ -143539,7 +143539,7 @@
     },
     {
       "id": 990000024,
-      "origine": "RATE_TAIL55(from 900000019)",
+      "origine": "RATE_TAIL55K4(from 900000019)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.3047442174525556,
@@ -143700,7 +143700,7 @@
     },
     {
       "id": 990000024,
-      "origine": "RATE_TAIL55(from 900000024)",
+      "origine": "RATE_TAIL55K4(from 900000024)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.3047442174525556,
@@ -144048,7 +144048,7 @@
     },
     {
       "id": 990000007,
-      "origine": "RATE_TAIL58(from 8800)",
+      "origine": "RATE_TAIL58K4(from 8800)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.3047787908860269,
@@ -144223,7 +144223,7 @@
     },
     {
       "id": 990000001,
-      "origine": "RATE_TAIL58(from 6800)",
+      "origine": "RATE_TAIL58K4(from 6800)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.3047787908860269,
@@ -144396,7 +144396,7 @@
     },
     {
       "id": 990000007,
-      "origine": "RATE_TAIL58(from 4800)",
+      "origine": "RATE_TAIL58K4(from 4800)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.3047787908860269,
@@ -144567,7 +144567,7 @@
     },
     {
       "id": 990000007,
-      "origine": "RATE_TAIL58(from 3800)",
+      "origine": "RATE_TAIL58K4(from 3800)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.3047787908860269,
@@ -144737,7 +144737,7 @@
     },
     {
       "id": 990000007,
-      "origine": "RATE_TAIL58(from 2800)",
+      "origine": "RATE_TAIL58K4(from 2800)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.3047787908860269,
@@ -144906,7 +144906,7 @@
     },
     {
       "id": 990000007,
-      "origine": "RATE_TAIL58(from 1800)",
+      "origine": "RATE_TAIL58K4(from 1800)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.3047787908860269,
@@ -145074,7 +145074,7 @@
     },
     {
       "id": 990000012,
-      "origine": "RATE_TAIL55(from 14135)",
+      "origine": "RATE_TAIL55K4(from 14135)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.30478152608906933,
@@ -145231,7 +145231,7 @@
     },
     {
       "id": 990000054,
-      "origine": "RATE_TAIL55(from 900000053)",
+      "origine": "RATE_TAIL55K4(from 900000053)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.30478152608906933,
@@ -145590,7 +145590,7 @@
     },
     {
       "id": 990000029,
-      "origine": "RATE_TAIL70(from 900000020)",
+      "origine": "RATE_TAIL70K4(from 900000020)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.30482503400267913,
@@ -145797,7 +145797,7 @@
     },
     {
       "id": 990000029,
-      "origine": "RATE_TAIL70(from 900000019)",
+      "origine": "RATE_TAIL70K4(from 900000019)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.30482503400267913,
@@ -146189,7 +146189,7 @@
     },
     {
       "id": 990000003,
-      "origine": "RATE_TAIL64(from 5800)",
+      "origine": "RATE_TAIL64K4(from 5800)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.3048549053358297,
@@ -146371,7 +146371,7 @@
     },
     {
       "id": 990000002,
-      "origine": "RATE_TAIL61(from 7800)",
+      "origine": "RATE_TAIL61K4(from 7800)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.304888380757538,
@@ -146953,7 +146953,7 @@
     },
     {
       "id": 990000003,
-      "origine": "RATE_TAIL64(from 7800)",
+      "origine": "RATE_TAIL64K4(from 7800)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.30493622353916416,
@@ -147550,7 +147550,7 @@
     },
     {
       "id": 990000034,
-      "origine": "RATE_TAIL67(from 900000004)",
+      "origine": "RATE_TAIL67K4(from 900000004)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.3049836052887138,
@@ -147762,7 +147762,7 @@
     },
     {
       "id": 990000005,
-      "origine": "RATE_TAIL70(from 8801)",
+      "origine": "RATE_TAIL70K4(from 8801)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.3050056735904962,
@@ -147938,7 +147938,7 @@
     },
     {
       "id": 990000005,
-      "origine": "RATE_TAIL70(from 14233)",
+      "origine": "RATE_TAIL70K4(from 14233)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.30500890706325373,
@@ -148339,7 +148339,7 @@
     },
     {
       "id": 990000044,
-      "origine": "RATE_TAIL61(from 900000033)",
+      "origine": "RATE_TAIL61K4(from 900000033)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.3050443083918212,
@@ -148740,7 +148740,7 @@
     },
     {
       "id": 990000006,
-      "origine": "RATE_TAIL55(from 15138)",
+      "origine": "RATE_TAIL55K4(from 15138)",
       "n_blocs": 15,
       "crash_rate": 1.0,
       "score": 0.3050603430601219,
@@ -148891,7 +148891,7 @@
     },
     {
       "id": 990000008,
-      "origine": "RATE_TAIL61(from 6801)",
+      "origine": "RATE_TAIL61K4(from 6801)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.30506626789347335,
@@ -149074,7 +149074,7 @@
     },
     {
       "id": 990000001,
-      "origine": "RATE_TAIL58(from 11222)",
+      "origine": "RATE_TAIL58K4(from 11222)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.3050760998520276,
@@ -149235,7 +149235,7 @@
     },
     {
       "id": 990000016,
-      "origine": "RATE_TAIL67(from 900000009)",
+      "origine": "RATE_TAIL67K4(from 900000009)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.30507762570162833,
@@ -149435,7 +149435,7 @@
     },
     {
       "id": 990000004,
-      "origine": "RATE_TAIL67(from 7800)",
+      "origine": "RATE_TAIL67K4(from 7800)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.3050784150243273,
@@ -149623,7 +149623,7 @@
     },
     {
       "id": 990000044,
-      "origine": "RATE_TAIL61(from 900000007)",
+      "origine": "RATE_TAIL61K4(from 900000007)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.3051011489287509,
@@ -149773,7 +149773,7 @@
     },
     {
       "id": 990000047,
-      "origine": "RATE_TAIL70(from 900000047)",
+      "origine": "RATE_TAIL70K4(from 900000047)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.30510758744470473,
@@ -149978,7 +149978,7 @@
     },
     {
       "id": 990000019,
-      "origine": "RATE_TAIL58(from 900000009)",
+      "origine": "RATE_TAIL58K4(from 900000009)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.30510884088982587,
@@ -150744,7 +150744,7 @@
     },
     {
       "id": 990000032,
-      "origine": "RATE_TAIL61(from 900000015)",
+      "origine": "RATE_TAIL61K4(from 900000015)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.3051364110040934,
@@ -150926,7 +150926,7 @@
     },
     {
       "id": 990000036,
-      "origine": "RATE_TAIL55(from 900000034)",
+      "origine": "RATE_TAIL55K4(from 900000034)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.30515217803843625,
@@ -151473,7 +151473,7 @@
     },
     {
       "id": 990000004,
-      "origine": "RATE_TAIL67(from 8801)",
+      "origine": "RATE_TAIL67K4(from 8801)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.305192536920234,
@@ -151640,7 +151640,7 @@
     },
     {
       "id": 990000002,
-      "origine": "RATE_TAIL61(from 3801)",
+      "origine": "RATE_TAIL61K4(from 3801)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.3051963643974668,
@@ -152037,7 +152037,7 @@
     },
     {
       "id": 990000000,
-      "origine": "RATE_TAIL55(from 4801)",
+      "origine": "RATE_TAIL55K4(from 4801)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.3052077868411124,
@@ -152200,7 +152200,7 @@
     },
     {
       "id": 990000042,
-      "origine": "RATE_TAIL55(from 900000047)",
+      "origine": "RATE_TAIL55K4(from 900000047)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.3052719605546763,
@@ -152762,7 +152762,7 @@
     },
     {
       "id": 990000000,
-      "origine": "RATE_TAIL55(from 14233)",
+      "origine": "RATE_TAIL55K4(from 14233)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.30529516611548974,
@@ -152907,7 +152907,7 @@
     },
     {
       "id": 990000042,
-      "origine": "RATE_TAIL55(from 900000004)",
+      "origine": "RATE_TAIL55K4(from 900000004)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.30529516611548974,
@@ -153051,7 +153051,7 @@
     },
     {
       "id": 990000042,
-      "origine": "RATE_TAIL55(from 900000035)",
+      "origine": "RATE_TAIL55K4(from 900000035)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.30529516611548974,
@@ -153194,7 +153194,7 @@
     },
     {
       "id": 990000017,
-      "origine": "RATE_TAIL70(from 900000008)",
+      "origine": "RATE_TAIL70K4(from 900000008)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.305380465541768,
@@ -153394,7 +153394,7 @@
     },
     {
       "id": 990000022,
-      "origine": "RATE_TAIL67(from 900000004)",
+      "origine": "RATE_TAIL67K4(from 900000004)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.3053865848047434,
@@ -154247,7 +154247,7 @@
     },
     {
       "id": 990000035,
-      "origine": "RATE_TAIL70(from 900000058)",
+      "origine": "RATE_TAIL70K4(from 900000058)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.30547467024605346,
@@ -154426,7 +154426,7 @@
     },
     {
       "id": 990000011,
-      "origine": "RATE_TAIL70(from 900000027)",
+      "origine": "RATE_TAIL70K4(from 900000027)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.30547467024605346,
@@ -154604,7 +154604,7 @@
     },
     {
       "id": 990000000,
-      "origine": "RATE_TAIL55(from 7800)",
+      "origine": "RATE_TAIL55K4(from 7800)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.3055071453514071,
@@ -154961,7 +154961,7 @@
     },
     {
       "id": 990000013,
-      "origine": "RATE_TAIL58(from 900000047)",
+      "origine": "RATE_TAIL58K4(from 900000047)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.3055282400097256,
@@ -155131,7 +155131,7 @@
     },
     {
       "id": 990000000,
-      "origine": "RATE_TAIL55(from 3801)",
+      "origine": "RATE_TAIL55K4(from 3801)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.30553032802193225,
@@ -155293,7 +155293,7 @@
     },
     {
       "id": 990000058,
-      "origine": "RATE_TAIL67(from 900000053)",
+      "origine": "RATE_TAIL67K4(from 900000053)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.30554294675540494,
@@ -155885,7 +155885,7 @@
     },
     {
       "id": 990000029,
-      "origine": "RATE_TAIL70(from 900000024)",
+      "origine": "RATE_TAIL70K4(from 900000024)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.3056417228008243,
@@ -156265,7 +156265,7 @@
     },
     {
       "id": 990000017,
-      "origine": "RATE_TAIL70(from 13120)",
+      "origine": "RATE_TAIL70K4(from 13120)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3056608259536579,
@@ -156464,7 +156464,7 @@
     },
     {
       "id": 990000011,
-      "origine": "RATE_TAIL70(from 8800)",
+      "origine": "RATE_TAIL70K4(from 8800)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.30566273720344644,
@@ -156675,7 +156675,7 @@
     },
     {
       "id": 990000005,
-      "origine": "RATE_TAIL70(from 6800)",
+      "origine": "RATE_TAIL70K4(from 6800)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.30566273720344644,
@@ -156884,7 +156884,7 @@
     },
     {
       "id": 990000011,
-      "origine": "RATE_TAIL70(from 4800)",
+      "origine": "RATE_TAIL70K4(from 4800)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.30566273720344644,
@@ -157091,7 +157091,7 @@
     },
     {
       "id": 990000011,
-      "origine": "RATE_TAIL70(from 3800)",
+      "origine": "RATE_TAIL70K4(from 3800)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.30566273720344644,
@@ -157297,7 +157297,7 @@
     },
     {
       "id": 990000011,
-      "origine": "RATE_TAIL70(from 2800)",
+      "origine": "RATE_TAIL70K4(from 2800)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.30566273720344644,
@@ -157502,7 +157502,7 @@
     },
     {
       "id": 990000011,
-      "origine": "RATE_TAIL70(from 1800)",
+      "origine": "RATE_TAIL70K4(from 1800)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.30566273720344644,
@@ -158515,7 +158515,7 @@
     },
     {
       "id": 990000044,
-      "origine": "RATE_TAIL61(from 900000047)",
+      "origine": "RATE_TAIL61K4(from 900000047)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.30574613882980445,
@@ -158693,7 +158693,7 @@
     },
     {
       "id": 990000035,
-      "origine": "RATE_TAIL70(from 900000003)",
+      "origine": "RATE_TAIL70K4(from 900000003)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.30576256845054545,
@@ -159318,7 +159318,7 @@
     },
     {
       "id": 990000040,
-      "origine": "RATE_TAIL67(from 900000022)",
+      "origine": "RATE_TAIL67K4(from 900000022)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.30576955690881485,
@@ -159501,7 +159501,7 @@
     },
     {
       "id": 990000016,
-      "origine": "RATE_TAIL67(from 900000047)",
+      "origine": "RATE_TAIL67K4(from 900000047)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.30581876121372914,
@@ -159698,7 +159698,7 @@
     },
     {
       "id": 990000014,
-      "origine": "RATE_TAIL61(from 900000009)",
+      "origine": "RATE_TAIL61K4(from 900000009)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.30583444884020633,
@@ -159880,7 +159880,7 @@
     },
     {
       "id": 990000018,
-      "origine": "RATE_TAIL55(from 900000009)",
+      "origine": "RATE_TAIL55K4(from 900000009)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.30583965335233126,
@@ -160042,7 +160042,7 @@
     },
     {
       "id": 990000002,
-      "origine": "RATE_TAIL61(from 13131)",
+      "origine": "RATE_TAIL61K4(from 13131)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.30591161576484505,
@@ -160216,7 +160216,7 @@
     },
     {
       "id": 990000041,
-      "origine": "RATE_TAIL70(from 900000045)",
+      "origine": "RATE_TAIL70K4(from 900000045)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.30591258185934733,
@@ -160416,7 +160416,7 @@
     },
     {
       "id": 990000010,
-      "origine": "RATE_TAIL67(from 8800)",
+      "origine": "RATE_TAIL67K4(from 8800)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.30593013713576733,
@@ -160618,7 +160618,7 @@
     },
     {
       "id": 990000004,
-      "origine": "RATE_TAIL67(from 6800)",
+      "origine": "RATE_TAIL67K4(from 6800)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.30593013713576733,
@@ -160818,7 +160818,7 @@
     },
     {
       "id": 990000010,
-      "origine": "RATE_TAIL67(from 4800)",
+      "origine": "RATE_TAIL67K4(from 4800)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.30593013713576733,
@@ -161016,7 +161016,7 @@
     },
     {
       "id": 990000010,
-      "origine": "RATE_TAIL67(from 3800)",
+      "origine": "RATE_TAIL67K4(from 3800)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.30593013713576733,
@@ -161213,7 +161213,7 @@
     },
     {
       "id": 990000010,
-      "origine": "RATE_TAIL67(from 2800)",
+      "origine": "RATE_TAIL67K4(from 2800)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.30593013713576733,
@@ -161409,7 +161409,7 @@
     },
     {
       "id": 990000010,
-      "origine": "RATE_TAIL67(from 1800)",
+      "origine": "RATE_TAIL67K4(from 1800)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.30593013713576733,
@@ -161604,7 +161604,7 @@
     },
     {
       "id": 990000039,
-      "origine": "RATE_TAIL64(from 900000045)",
+      "origine": "RATE_TAIL64K4(from 900000045)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.3059892811183596,
@@ -161786,7 +161786,7 @@
     },
     {
       "id": 990000040,
-      "origine": "RATE_TAIL67(from 900000010)",
+      "origine": "RATE_TAIL67K4(from 900000010)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.30600023270668475,
@@ -161974,7 +161974,7 @@
     },
     {
       "id": 990000037,
-      "origine": "RATE_TAIL58(from 900000010)",
+      "origine": "RATE_TAIL58K4(from 900000010)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.3060310592220446,
@@ -162135,7 +162135,7 @@
     },
     {
       "id": 990000038,
-      "origine": "RATE_TAIL61(from 900000010)",
+      "origine": "RATE_TAIL61K4(from 900000010)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.30604551136167724,
@@ -162962,7 +162962,7 @@
     },
     {
       "id": 990000021,
-      "origine": "RATE_TAIL64(from 900000033)",
+      "origine": "RATE_TAIL64K4(from 900000033)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.3060573046128579,
@@ -163122,7 +163122,7 @@
     },
     {
       "id": 990000033,
-      "origine": "RATE_TAIL64(from 900000006)",
+      "origine": "RATE_TAIL64K4(from 900000006)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.3060573046128579,
@@ -163281,7 +163281,7 @@
     },
     {
       "id": 990000014,
-      "origine": "RATE_TAIL61(from 13120)",
+      "origine": "RATE_TAIL61K4(from 13120)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3060630014772594,
@@ -163453,7 +163453,7 @@
     },
     {
       "id": 990000013,
-      "origine": "RATE_TAIL58(from 15218)",
+      "origine": "RATE_TAIL58K4(from 15218)",
       "n_blocs": 15,
       "crash_rate": 1.0,
       "score": 0.3060646249710625,
@@ -163599,7 +163599,7 @@
     },
     {
       "id": 990000047,
-      "origine": "RATE_TAIL70(from 900000005)",
+      "origine": "RATE_TAIL70K4(from 900000005)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.3060820589174454,
@@ -164005,7 +164005,7 @@
     },
     {
       "id": 990000028,
-      "origine": "RATE_TAIL67(from 900000006)",
+      "origine": "RATE_TAIL67K4(from 900000006)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.3061146385186875,
@@ -164203,7 +164203,7 @@
     },
     {
       "id": 990000036,
-      "origine": "RATE_TAIL55(from 900000010)",
+      "origine": "RATE_TAIL55K4(from 900000010)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.30612166544956326,
@@ -165007,7 +165007,7 @@
     },
     {
       "id": 990000005,
-      "origine": "RATE_TAIL70(from 10800)",
+      "origine": "RATE_TAIL70K4(from 10800)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.3061769345856483,
@@ -165400,7 +165400,7 @@
     },
     {
       "id": 990000045,
-      "origine": "RATE_TAIL64(from 900000047)",
+      "origine": "RATE_TAIL64K4(from 900000047)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.306190156385658,
@@ -165587,7 +165587,7 @@
     },
     {
       "id": 990000030,
-      "origine": "RATE_TAIL55(from 900000015)",
+      "origine": "RATE_TAIL55K4(from 900000015)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.30629075399363287,
@@ -165751,7 +165751,7 @@
     },
     {
       "id": 990000003,
-      "origine": "RATE_TAIL64(from 14233)",
+      "origine": "RATE_TAIL64K4(from 14233)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.3063026420211313,
@@ -165923,7 +165923,7 @@
     },
     {
       "id": 990000045,
-      "origine": "RATE_TAIL64(from 900000004)",
+      "origine": "RATE_TAIL64K4(from 900000004)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3063026420211313,
@@ -166094,7 +166094,7 @@
     },
     {
       "id": 990000045,
-      "origine": "RATE_TAIL64(from 900000035)",
+      "origine": "RATE_TAIL64K4(from 900000035)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.3063026420211313,
@@ -166264,7 +166264,7 @@
     },
     {
       "id": 990000017,
-      "origine": "RATE_TAIL70(from 900000009)",
+      "origine": "RATE_TAIL70K4(from 900000009)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.30631172098775084,
@@ -166473,7 +166473,7 @@
     },
     {
       "id": 990000029,
-      "origine": "RATE_TAIL70(from 900000024)",
+      "origine": "RATE_TAIL70K4(from 900000024)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.30634122167887357,
@@ -166678,7 +166678,7 @@
     },
     {
       "id": 990000019,
-      "origine": "RATE_TAIL58(from 13205)",
+      "origine": "RATE_TAIL58K4(from 13205)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3063700060394908,
@@ -166838,7 +166838,7 @@
     },
     {
       "id": 990000025,
-      "origine": "RATE_TAIL58(from 900000099)",
+      "origine": "RATE_TAIL58K4(from 900000099)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.3063700060394908,
@@ -166997,7 +166997,7 @@
     },
     {
       "id": 990000025,
-      "origine": "RATE_TAIL58(from 900000032)",
+      "origine": "RATE_TAIL58K4(from 900000032)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.3063700060394908,
@@ -167155,7 +167155,7 @@
     },
     {
       "id": 990000013,
-      "origine": "RATE_TAIL58(from 900000026)",
+      "origine": "RATE_TAIL58K4(from 900000026)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.3063700060394908,
@@ -167312,7 +167312,7 @@
     },
     {
       "id": 990000037,
-      "origine": "RATE_TAIL58(from 900000030)",
+      "origine": "RATE_TAIL58K4(from 900000030)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.3063700060394908,
@@ -167469,7 +167469,7 @@
     },
     {
       "id": 990000007,
-      "origine": "RATE_TAIL58(from 900000054)",
+      "origine": "RATE_TAIL58K4(from 900000054)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.3063700060394908,
@@ -167625,7 +167625,7 @@
     },
     {
       "id": 990000013,
-      "origine": "RATE_TAIL58(from 900000055)",
+      "origine": "RATE_TAIL58K4(from 900000055)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.3063700060394908,
@@ -167781,7 +167781,7 @@
     },
     {
       "id": 990000019,
-      "origine": "RATE_TAIL58(from 900000016)",
+      "origine": "RATE_TAIL58K4(from 900000016)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.3063700060394908,
@@ -167937,7 +167937,7 @@
     },
     {
       "id": 990000025,
-      "origine": "RATE_TAIL58(from 900000014)",
+      "origine": "RATE_TAIL58K4(from 900000014)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.3063700060394908,
@@ -168093,7 +168093,7 @@
     },
     {
       "id": 990000043,
-      "origine": "RATE_TAIL58(from 900000007)",
+      "origine": "RATE_TAIL58K4(from 900000007)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.3063700060394908,
@@ -168450,7 +168450,7 @@
     },
     {
       "id": 990000004,
-      "origine": "RATE_TAIL67(from 13131)",
+      "origine": "RATE_TAIL67K4(from 13131)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3063997754831704,
@@ -169509,7 +169509,7 @@
     },
     {
       "id": 990000012,
-      "origine": "RATE_TAIL55(from 13120)",
+      "origine": "RATE_TAIL55K4(from 13120)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3064674665619504,
@@ -170046,7 +170046,7 @@
     },
     {
       "id": 990000002,
-      "origine": "RATE_TAIL61(from 2801)",
+      "origine": "RATE_TAIL61K4(from 2801)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.3065156242587805,
@@ -170225,7 +170225,7 @@
     },
     {
       "id": 990000013,
-      "origine": "RATE_TAIL58(from 900000008)",
+      "origine": "RATE_TAIL58K4(from 900000008)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.3065321517701774,
@@ -170389,7 +170389,7 @@
     },
     {
       "id": 990000013,
-      "origine": "RATE_TAIL58(from 900000009)",
+      "origine": "RATE_TAIL58K4(from 900000009)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.3065711099718807,
@@ -170562,7 +170562,7 @@
     },
     {
       "id": 990000031,
-      "origine": "RATE_TAIL58(from 900000048)",
+      "origine": "RATE_TAIL58K4(from 900000048)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.30658354927990095,
@@ -170718,7 +170718,7 @@
     },
     {
       "id": 990000013,
-      "origine": "RATE_TAIL58(from 900000038)",
+      "origine": "RATE_TAIL58K4(from 900000038)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.30658354927990095,
@@ -170873,7 +170873,7 @@
     },
     {
       "id": 990000019,
-      "origine": "RATE_TAIL58(from 900000040)",
+      "origine": "RATE_TAIL58K4(from 900000040)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.30658354927990095,
@@ -171028,7 +171028,7 @@
     },
     {
       "id": 990000025,
-      "origine": "RATE_TAIL58(from 900000039)",
+      "origine": "RATE_TAIL58K4(from 900000039)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.30658354927990095,
@@ -171183,7 +171183,7 @@
     },
     {
       "id": 990000037,
-      "origine": "RATE_TAIL58(from 900000043)",
+      "origine": "RATE_TAIL58K4(from 900000043)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.30658354927990095,
@@ -171338,7 +171338,7 @@
     },
     {
       "id": 990000025,
-      "origine": "RATE_TAIL58(from 900000024)",
+      "origine": "RATE_TAIL58K4(from 900000024)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.30658354927990095,
@@ -171492,7 +171492,7 @@
     },
     {
       "id": 990000031,
-      "origine": "RATE_TAIL58(from 900000009)",
+      "origine": "RATE_TAIL58K4(from 900000009)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.30658354927990095,
@@ -171646,7 +171646,7 @@
     },
     {
       "id": 990000037,
-      "origine": "RATE_TAIL58(from 900000005)",
+      "origine": "RATE_TAIL58K4(from 900000005)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.30658354927990095,
@@ -172660,7 +172660,7 @@
     },
     {
       "id": 990000023,
-      "origine": "RATE_TAIL70(from 900000001)",
+      "origine": "RATE_TAIL70K4(from 900000001)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.30664642644006945,
@@ -172864,7 +172864,7 @@
     },
     {
       "id": 990000041,
-      "origine": "RATE_TAIL70(from 900000063)",
+      "origine": "RATE_TAIL70K4(from 900000063)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.30670716709332413,
@@ -173060,7 +173060,7 @@
     },
     {
       "id": 990000042,
-      "origine": "RATE_TAIL55(from 900000033)",
+      "origine": "RATE_TAIL55K4(from 900000033)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.30671482642544057,
@@ -173224,7 +173224,7 @@
     },
     {
       "id": 990000024,
-      "origine": "RATE_TAIL55(from 900000019)",
+      "origine": "RATE_TAIL55K4(from 900000019)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.30671482642544057,
@@ -173387,7 +173387,7 @@
     },
     {
       "id": 990000038,
-      "origine": "RATE_TAIL61(from 900000045)",
+      "origine": "RATE_TAIL61K4(from 900000045)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.3067303879722912,
@@ -173560,7 +173560,7 @@
     },
     {
       "id": 990000023,
-      "origine": "RATE_TAIL70(from 900000013)",
+      "origine": "RATE_TAIL70K4(from 900000013)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.30673138267165173,
@@ -174182,7 +174182,7 @@
     },
     {
       "id": 990000017,
-      "origine": "RATE_TAIL70(from 14135)",
+      "origine": "RATE_TAIL70K4(from 14135)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.3067785115150855,
@@ -174384,7 +174384,7 @@
     },
     {
       "id": 990000035,
-      "origine": "RATE_TAIL70(from 900000006)",
+      "origine": "RATE_TAIL70K4(from 900000006)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.30678397814686686,
@@ -174589,7 +174589,7 @@
     },
     {
       "id": 990000032,
-      "origine": "RATE_TAIL61(from 900000004)",
+      "origine": "RATE_TAIL61K4(from 900000004)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.30685912558879985,
@@ -174783,7 +174783,7 @@
     },
     {
       "id": 990000011,
-      "origine": "RATE_TAIL70(from 6801)",
+      "origine": "RATE_TAIL70K4(from 6801)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.30686827047117377,
@@ -174993,7 +174993,7 @@
     },
     {
       "id": 990000009,
-      "origine": "RATE_TAIL64(from 6801)",
+      "origine": "RATE_TAIL64K4(from 6801)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.3069952426865117,
@@ -175624,7 +175624,7 @@
     },
     {
       "id": 990000036,
-      "origine": "RATE_TAIL55(from 900000063)",
+      "origine": "RATE_TAIL55K4(from 900000063)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.30703711891823926,
@@ -175776,7 +175776,7 @@
     },
     {
       "id": 990000001,
-      "origine": "RATE_TAIL58(from 5800)",
+      "origine": "RATE_TAIL58K4(from 5800)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.30704289460836814,
@@ -175940,7 +175940,7 @@
     },
     {
       "id": 990000037,
-      "origine": "RATE_TAIL58(from 900000045)",
+      "origine": "RATE_TAIL58K4(from 900000045)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.307108499936444,
@@ -176104,7 +176104,7 @@
     },
     {
       "id": 990000034,
-      "origine": "RATE_TAIL67(from 900000006)",
+      "origine": "RATE_TAIL67K4(from 900000006)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.30717553763705596,
@@ -176300,7 +176300,7 @@
     },
     {
       "id": 990000022,
-      "origine": "RATE_TAIL67(from 900000001)",
+      "origine": "RATE_TAIL67K4(from 900000001)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.30717553763705596,
@@ -176495,7 +176495,7 @@
     },
     {
       "id": 990000000,
-      "origine": "RATE_TAIL55(from 10800)",
+      "origine": "RATE_TAIL55K4(from 10800)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.30717716026344705,
@@ -176624,7 +176624,7 @@
     },
     {
       "id": 990000012,
-      "origine": "RATE_TAIL55(from 900000016)",
+      "origine": "RATE_TAIL55K4(from 900000016)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.3072280896797996,
@@ -176784,7 +176784,7 @@
     },
     {
       "id": 990000030,
-      "origine": "RATE_TAIL55(from 900000018)",
+      "origine": "RATE_TAIL55K4(from 900000018)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.3073416845791351,
@@ -177339,7 +177339,7 @@
     },
     {
       "id": 990000015,
-      "origine": "RATE_TAIL64(from 13120)",
+      "origine": "RATE_TAIL64K4(from 13120)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.30740790491910774,
@@ -177729,7 +177729,7 @@
     },
     {
       "id": 990000046,
-      "origine": "RATE_TAIL67(from 900000047)",
+      "origine": "RATE_TAIL67K4(from 900000047)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.3074890272217992,
@@ -178322,7 +178322,7 @@
     },
     {
       "id": 990000059,
-      "origine": "RATE_TAIL70(from 900000053)",
+      "origine": "RATE_TAIL70K4(from 900000053)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3075765303998879,
@@ -178958,7 +178958,7 @@
     },
     {
       "id": 990000022,
-      "origine": "RATE_TAIL67(from 900000009)",
+      "origine": "RATE_TAIL67K4(from 900000009)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.30773364089920363,
@@ -179374,7 +179374,7 @@
     },
     {
       "id": 990000017,
-      "origine": "RATE_TAIL70(from 900000047)",
+      "origine": "RATE_TAIL70K4(from 900000047)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.3077876114676428,
@@ -179580,7 +179580,7 @@
     },
     {
       "id": 990000026,
-      "origine": "RATE_TAIL61(from 900000008)",
+      "origine": "RATE_TAIL61K4(from 900000008)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.3078210753697076,
@@ -179750,7 +179750,7 @@
     },
     {
       "id": 990000001,
-      "origine": "RATE_TAIL58(from 13131)",
+      "origine": "RATE_TAIL58K4(from 13131)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3080569819805491,
@@ -179915,7 +179915,7 @@
     },
     {
       "id": 990000007,
-      "origine": "RATE_TAIL58(from 15138)",
+      "origine": "RATE_TAIL58K4(from 15138)",
       "n_blocs": 15,
       "crash_rate": 1.0,
       "score": 0.30808924156888406,
@@ -180075,7 +180075,7 @@
     },
     {
       "id": 990000030,
-      "origine": "RATE_TAIL55(from 900000006)",
+      "origine": "RATE_TAIL55K4(from 900000006)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.308109895720362,
@@ -180235,7 +180235,7 @@
     },
     {
       "id": 990000018,
-      "origine": "RATE_TAIL55(from 900000001)",
+      "origine": "RATE_TAIL55K4(from 900000001)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.308109895720362,
@@ -180605,7 +180605,7 @@
     },
     {
       "id": 990000043,
-      "origine": "RATE_TAIL58(from 900000031)",
+      "origine": "RATE_TAIL58K4(from 900000031)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.3081674960789912,
@@ -180757,7 +180757,7 @@
     },
     {
       "id": 990000021,
-      "origine": "RATE_TAIL64(from 900000013)",
+      "origine": "RATE_TAIL64K4(from 900000013)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.3081960383989307,
@@ -180942,7 +180942,7 @@
     },
     {
       "id": 990000015,
-      "origine": "RATE_TAIL64(from 14135)",
+      "origine": "RATE_TAIL64K4(from 14135)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.30821754747093105,
@@ -181126,7 +181126,7 @@
     },
     {
       "id": 990000057,
-      "origine": "RATE_TAIL64(from 900000053)",
+      "origine": "RATE_TAIL64K4(from 900000053)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.30821754747093105,
@@ -181309,7 +181309,7 @@
     },
     {
       "id": 990000036,
-      "origine": "RATE_TAIL55(from 900000021)",
+      "origine": "RATE_TAIL55K4(from 900000021)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.30825032026722593,
@@ -181656,7 +181656,7 @@
     },
     {
       "id": 990000000,
-      "origine": "RATE_TAIL55(from 1801)",
+      "origine": "RATE_TAIL55K4(from 1801)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.3083246941123786,
@@ -181814,7 +181814,7 @@
     },
     {
       "id": 990000002,
-      "origine": "RATE_TAIL61(from 11222)",
+      "origine": "RATE_TAIL61K4(from 11222)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.30835390592307177,
@@ -181984,7 +181984,7 @@
     },
     {
       "id": 990000016,
-      "origine": "RATE_TAIL67(from 900000008)",
+      "origine": "RATE_TAIL67K4(from 900000008)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.3083699191227903,
@@ -182395,7 +182395,7 @@
     },
     {
       "id": 990000015,
-      "origine": "RATE_TAIL64(from 900000008)",
+      "origine": "RATE_TAIL64K4(from 900000008)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.30838783448578017,
@@ -182784,7 +182784,7 @@
     },
     {
       "id": 990000031,
-      "origine": "RATE_TAIL58(from 900000058)",
+      "origine": "RATE_TAIL58K4(from 900000058)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.30851451596518026,
@@ -182927,7 +182927,7 @@
     },
     {
       "id": 990000007,
-      "origine": "RATE_TAIL58(from 900000027)",
+      "origine": "RATE_TAIL58K4(from 900000027)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.30851451596518026,
@@ -183069,7 +183069,7 @@
     },
     {
       "id": 990000013,
-      "origine": "RATE_TAIL58(from 900000032)",
+      "origine": "RATE_TAIL58K4(from 900000032)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.30851451596518026,
@@ -183211,7 +183211,7 @@
     },
     {
       "id": 990000019,
-      "origine": "RATE_TAIL58(from 900000005)",
+      "origine": "RATE_TAIL58K4(from 900000005)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.30851451596518026,
@@ -183352,7 +183352,7 @@
     },
     {
       "id": 990000043,
-      "origine": "RATE_TAIL58(from 900000007)",
+      "origine": "RATE_TAIL58K4(from 900000007)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.30851451596518026,
@@ -183709,7 +183709,7 @@
     },
     {
       "id": 990000031,
-      "origine": "RATE_TAIL58(from 900000005)",
+      "origine": "RATE_TAIL58K4(from 900000005)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.308549264125637,
@@ -183847,7 +183847,7 @@
     },
     {
       "id": 990000013,
-      "origine": "RATE_TAIL58(from 900000019)",
+      "origine": "RATE_TAIL58K4(from 900000019)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.308549264125637,
@@ -183984,7 +183984,7 @@
     },
     {
       "id": 990000031,
-      "origine": "RATE_TAIL58(from 900000015)",
+      "origine": "RATE_TAIL58K4(from 900000015)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.30857536096656996,
@@ -184157,7 +184157,7 @@
     },
     {
       "id": 990000016,
-      "origine": "RATE_TAIL67(from 14135)",
+      "origine": "RATE_TAIL67K4(from 14135)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.30866041690129997,
@@ -184350,7 +184350,7 @@
     },
     {
       "id": 990000012,
-      "origine": "RATE_TAIL55(from 900000008)",
+      "origine": "RATE_TAIL55K4(from 900000008)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.30866726483525775,
@@ -184505,7 +184505,7 @@
     },
     {
       "id": 990000003,
-      "origine": "RATE_TAIL64(from 1801)",
+      "origine": "RATE_TAIL64K4(from 1801)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.3086693954311968,
@@ -184690,7 +184690,7 @@
     },
     {
       "id": 990000003,
-      "origine": "RATE_TAIL64(from 13131)",
+      "origine": "RATE_TAIL64K4(from 13131)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3086944851460507,
@@ -184873,7 +184873,7 @@
     },
     {
       "id": 990000006,
-      "origine": "RATE_TAIL55(from 6801)",
+      "origine": "RATE_TAIL55K4(from 6801)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.3087468583308422,
@@ -185038,7 +185038,7 @@
     },
     {
       "id": 990000031,
-      "origine": "RATE_TAIL58(from 900000004)",
+      "origine": "RATE_TAIL58K4(from 900000004)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.30875181322366363,
@@ -185223,7 +185223,7 @@
     },
     {
       "id": 990000018,
-      "origine": "RATE_TAIL55(from 900000004)",
+      "origine": "RATE_TAIL55K4(from 900000004)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.3087792981059407,
@@ -185383,7 +185383,7 @@
     },
     {
       "id": 990000039,
-      "origine": "RATE_TAIL64(from 900000063)",
+      "origine": "RATE_TAIL64K4(from 900000063)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.308795440152712,
@@ -185997,7 +185997,7 @@
     },
     {
       "id": 990000002,
-      "origine": "RATE_TAIL61(from 5800)",
+      "origine": "RATE_TAIL61K4(from 5800)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.3089989159372191,
@@ -186170,7 +186170,7 @@
     },
     {
       "id": 990000001,
-      "origine": "RATE_TAIL58(from 4801)",
+      "origine": "RATE_TAIL58K4(from 4801)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.309031430947041,
@@ -186342,7 +186342,7 @@
     },
     {
       "id": 990000047,
-      "origine": "RATE_TAIL70(from 900000033)",
+      "origine": "RATE_TAIL70K4(from 900000033)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.30904472394132326,
@@ -186551,7 +186551,7 @@
     },
     {
       "id": 990000001,
-      "origine": "RATE_TAIL58(from 3801)",
+      "origine": "RATE_TAIL58K4(from 3801)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.30931578627905093,
@@ -186722,7 +186722,7 @@
     },
     {
       "id": 990000019,
-      "origine": "RATE_TAIL58(from 900000013)",
+      "origine": "RATE_TAIL58K4(from 900000013)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.30936774538589273,
@@ -187109,7 +187109,7 @@
     },
     {
       "id": 990000030,
-      "origine": "RATE_TAIL55(from 900000004)",
+      "origine": "RATE_TAIL55K4(from 900000004)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.30941382294037095,
@@ -187506,7 +187506,7 @@
     },
     {
       "id": 990000035,
-      "origine": "RATE_TAIL70(from 900000015)",
+      "origine": "RATE_TAIL70K4(from 900000015)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.30946180059784084,
@@ -187924,7 +187924,7 @@
     },
     {
       "id": 990000020,
-      "origine": "RATE_TAIL61(from 13205)",
+      "origine": "RATE_TAIL61K4(from 13205)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3096487154932137,
@@ -188093,7 +188093,7 @@
     },
     {
       "id": 990000026,
-      "origine": "RATE_TAIL61(from 900000099)",
+      "origine": "RATE_TAIL61K4(from 900000099)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.3096487154932137,
@@ -188261,7 +188261,7 @@
     },
     {
       "id": 990000026,
-      "origine": "RATE_TAIL61(from 900000032)",
+      "origine": "RATE_TAIL61K4(from 900000032)",
       "n_blocs": 11,
       "crash_rate": 1.0,
       "score": 0.3096487154932137,
@@ -188428,7 +188428,7 @@
     },
     {
       "id": 990000014,
-      "origine": "RATE_TAIL61(from 900000026)",
+      "origine": "RATE_TAIL61K4(from 900000026)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.3096487154932137,
@@ -188594,7 +188594,7 @@
     },
     {
       "id": 990000038,
-      "origine": "RATE_TAIL61(from 900000030)",
+      "origine": "RATE_TAIL61K4(from 900000030)",
       "n_blocs": 10,
       "crash_rate": 1.0,
       "score": 0.3096487154932137,
@@ -188760,7 +188760,7 @@
     },
     {
       "id": 990000008,
-      "origine": "RATE_TAIL61(from 900000054)",
+      "origine": "RATE_TAIL61K4(from 900000054)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.3096487154932137,
@@ -188925,7 +188925,7 @@
     },
     {
       "id": 990000014,
-      "origine": "RATE_TAIL61(from 900000055)",
+      "origine": "RATE_TAIL61K4(from 900000055)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.3096487154932137,
@@ -189090,7 +189090,7 @@
     },
     {
       "id": 990000020,
-      "origine": "RATE_TAIL61(from 900000016)",
+      "origine": "RATE_TAIL61K4(from 900000016)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.3096487154932137,
@@ -189255,7 +189255,7 @@
     },
     {
       "id": 990000026,
-      "origine": "RATE_TAIL61(from 900000014)",
+      "origine": "RATE_TAIL61K4(from 900000014)",
       "n_blocs": 9,
       "crash_rate": 1.0,
       "score": 0.3096487154932137,
@@ -189420,7 +189420,7 @@
     },
     {
       "id": 990000044,
-      "origine": "RATE_TAIL61(from 900000007)",
+      "origine": "RATE_TAIL61K4(from 900000007)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.3096487154932137,
@@ -189584,7 +189584,7 @@
     },
     {
       "id": 990000042,
-      "origine": "RATE_TAIL55(from 900000005)",
+      "origine": "RATE_TAIL55K4(from 900000005)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.30968493965804667,
@@ -189743,7 +189743,7 @@
     },
     {
       "id": 990000036,
-      "origine": "RATE_TAIL55(from 900000007)",
+      "origine": "RATE_TAIL55K4(from 900000007)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.30968493965804667,
@@ -189901,7 +189901,7 @@
     },
     {
       "id": 990000005,
-      "origine": "RATE_TAIL70(from 5800)",
+      "origine": "RATE_TAIL70K4(from 5800)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.3096934730034076,
@@ -190101,7 +190101,7 @@
     },
     {
       "id": 990000042,
-      "origine": "RATE_TAIL55(from 900000031)",
+      "origine": "RATE_TAIL55K4(from 900000031)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.30984466474562433,
@@ -190887,7 +190887,7 @@
     },
     {
       "id": 990000025,
-      "origine": "RATE_TAIL58(from 900000006)",
+      "origine": "RATE_TAIL58K4(from 900000006)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.31002173911272635,
@@ -191058,7 +191058,7 @@
     },
     {
       "id": 990000000,
-      "origine": "RATE_TAIL55(from 13131)",
+      "origine": "RATE_TAIL55K4(from 13131)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3101389982479779,
@@ -191214,7 +191214,7 @@
     },
     {
       "id": 990000001,
-      "origine": "RATE_TAIL58(from 1801)",
+      "origine": "RATE_TAIL58K4(from 1801)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.3101794606139731,
@@ -191381,7 +191381,7 @@
     },
     {
       "id": 990000046,
-      "origine": "RATE_TAIL67(from 900000005)",
+      "origine": "RATE_TAIL67K4(from 900000005)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.31020697646663203,
@@ -191576,7 +191576,7 @@
     },
     {
       "id": 990000040,
-      "origine": "RATE_TAIL67(from 900000007)",
+      "origine": "RATE_TAIL67K4(from 900000007)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.31020697646663203,
@@ -191770,7 +191770,7 @@
     },
     {
       "id": 990000018,
-      "origine": "RATE_TAIL55(from 900000012)",
+      "origine": "RATE_TAIL55K4(from 900000012)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.3102569526138167,
@@ -191925,7 +191925,7 @@
     },
     {
       "id": 990000024,
-      "origine": "RATE_TAIL55(from 900000020)",
+      "origine": "RATE_TAIL55K4(from 900000020)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3102569526138167,
@@ -192079,7 +192079,7 @@
     },
     {
       "id": 990000030,
-      "origine": "RATE_TAIL55(from 900000017)",
+      "origine": "RATE_TAIL55K4(from 900000017)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3102569526138167,
@@ -192886,7 +192886,7 @@
     },
     {
       "id": 990000043,
-      "origine": "RATE_TAIL58(from 900000047)",
+      "origine": "RATE_TAIL58K4(from 900000047)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.3103968159885198,
@@ -193266,7 +193266,7 @@
     },
     {
       "id": 990000000,
-      "origine": "RATE_TAIL55(from 5800)",
+      "origine": "RATE_TAIL55K4(from 5800)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.31064627867854877,
@@ -193634,7 +193634,7 @@
     },
     {
       "id": 990000016,
-      "origine": "RATE_TAIL67(from 13120)",
+      "origine": "RATE_TAIL67K4(from 13120)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3106727072510265,
@@ -193824,7 +193824,7 @@
     },
     {
       "id": 990000005,
-      "origine": "RATE_TAIL70(from 7800)",
+      "origine": "RATE_TAIL70K4(from 7800)",
       "n_blocs": 7,
       "crash_rate": 1.0,
       "score": 0.31069344386949155,
@@ -194021,7 +194021,7 @@
     },
     {
       "id": 990000000,
-      "origine": "RATE_TAIL55(from 2801)",
+      "origine": "RATE_TAIL55K4(from 2801)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.3107227511203238,
@@ -194182,7 +194182,7 @@
     },
     {
       "id": 990000006,
-      "origine": "RATE_TAIL55(from 900000017)",
+      "origine": "RATE_TAIL55K4(from 900000017)",
       "n_blocs": 5,
       "crash_rate": 1.0,
       "score": 0.3107861462469093,
@@ -194531,7 +194531,7 @@
     },
     {
       "id": 990000014,
-      "origine": "RATE_TAIL61(from 14135)",
+      "origine": "RATE_TAIL61K4(from 14135)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.3113330395903216,
@@ -194706,7 +194706,7 @@
     },
     {
       "id": 990000056,
-      "origine": "RATE_TAIL61(from 900000053)",
+      "origine": "RATE_TAIL61K4(from 900000053)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.3113330395903216,
@@ -194880,7 +194880,7 @@
     },
     {
       "id": 990000001,
-      "origine": "RATE_TAIL58(from 14233)",
+      "origine": "RATE_TAIL58K4(from 14233)",
       "n_blocs": 14,
       "crash_rate": 1.0,
       "score": 0.31194317768454455,
@@ -195034,7 +195034,7 @@
     },
     {
       "id": 990000043,
-      "origine": "RATE_TAIL58(from 900000004)",
+      "origine": "RATE_TAIL58K4(from 900000004)",
       "n_blocs": 13,
       "crash_rate": 1.0,
       "score": 0.31194317768454455,
@@ -195187,7 +195187,7 @@
     },
     {
       "id": 990000043,
-      "origine": "RATE_TAIL58(from 900000035)",
+      "origine": "RATE_TAIL58K4(from 900000035)",
       "n_blocs": 12,
       "crash_rate": 1.0,
       "score": 0.31194317768454455,
@@ -195339,7 +195339,7 @@
     },
     {
       "id": 990000002,
-      "origine": "RATE_TAIL61(from 4801)",
+      "origine": "RATE_TAIL61K4(from 4801)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.3120074053387421,
@@ -196166,7 +196166,7 @@
     },
     {
       "id": 990000045,
-      "origine": "RATE_TAIL64(from 900000005)",
+      "origine": "RATE_TAIL64K4(from 900000005)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.3126744498118351,
@@ -196352,7 +196352,7 @@
     },
     {
       "id": 990000039,
-      "origine": "RATE_TAIL64(from 900000007)",
+      "origine": "RATE_TAIL64K4(from 900000007)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.3126744498118351,
@@ -197176,7 +197176,7 @@
     },
     {
       "id": 990000031,
-      "origine": "RATE_TAIL58(from 900000006)",
+      "origine": "RATE_TAIL58K4(from 900000006)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.31322259452886386,
@@ -197345,7 +197345,7 @@
     },
     {
       "id": 990000019,
-      "origine": "RATE_TAIL58(from 900000001)",
+      "origine": "RATE_TAIL58K4(from 900000001)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.31322259452886386,
@@ -197726,7 +197726,7 @@
     },
     {
       "id": 990000006,
-      "origine": "RATE_TAIL55(from 8800)",
+      "origine": "RATE_TAIL55K4(from 8800)",
       "n_blocs": 8,
       "crash_rate": 1.0,
       "score": 0.3150614044560308,
@@ -197892,7 +197892,7 @@
     },
     {
       "id": 990000000,
-      "origine": "RATE_TAIL55(from 6800)",
+      "origine": "RATE_TAIL55K4(from 6800)",
       "n_blocs": 6,
       "crash_rate": 1.0,
       "score": 0.3150614044560308,
@@ -198056,7 +198056,7 @@
     },
     {
       "id": 990000006,
-      "origine": "RATE_TAIL55(from 4800)",
+      "origine": "RATE_TAIL55K4(from 4800)",
       "n_blocs": 4,
       "crash_rate": 1.0,
       "score": 0.3150614044560308,
@@ -198218,7 +198218,7 @@
     },
     {
       "id": 990000006,
-      "origine": "RATE_TAIL55(from 3800)",
+      "origine": "RATE_TAIL55K4(from 3800)",
       "n_blocs": 3,
       "crash_rate": 1.0,
       "score": 0.3150614044560308,
@@ -198379,7 +198379,7 @@
     },
     {
       "id": 990000006,
-      "origine": "RATE_TAIL55(from 2800)",
+      "origine": "RATE_TAIL55K4(from 2800)",
       "n_blocs": 2,
       "crash_rate": 1.0,
       "score": 0.3150614044560308,
@@ -198539,7 +198539,7 @@
     },
     {
       "id": 990000006,
-      "origine": "RATE_TAIL55(from 1800)",
+      "origine": "RATE_TAIL55K4(from 1800)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.3150614044560308,
@@ -198912,7 +198912,7 @@
     },
     {
       "id": 990000024,
-      "origine": "RATE_TAIL55(from 900000006)",
+      "origine": "RATE_TAIL55K4(from 900000006)",
       "n_blocs": 1,
       "crash_rate": 1.0,
       "score": 0.3202857327762655,
@@ -199078,7 +199078,7 @@
   "seed": 42,
   "instrument": "9975211",
   "machine": "Intel64 Family 6 Model 142 Stepping 10, GenuineIntel | 8 threads",
-  "stamp": "2026-08-19T13:08:19",
+  "stamp": "2026-08-19T13:08:33",
   "config": {
     "monochromator_resolution_nm": 2.0,
     "search_resolution": false,
@@ -199086,14 +199086,7 @@
     "exploration_elargie": false,
     "exploration_niveau": 0,
     "rate_by_swing": false,
-    "rate_tail_sweep": [
-      55,
-      58,
-      61,
-      64,
-      67,
-      70
-    ],
+    "rate_tail_sweep": [],
     "elargissement": null
   }
 }

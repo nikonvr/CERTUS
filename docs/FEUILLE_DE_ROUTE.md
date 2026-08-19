@@ -22,7 +22,7 @@ La correspondance avec les anciens numéros est donnée en colonne.
 3. **Rien de mesuré avant d'être mesurable isolément** (contrainte C3). C'est pourquoi le
    palier 2 précède le palier 3.
 
-Après **chaque** action : `pytest tests/oracle/ tests/unit/ -q --no-cov` → `2450 passed,
+Après **chaque** action : `pytest tests/oracle/ tests/unit/ -q --no-cov` → `0 failed` (🔴 **ne compare pas à un COMPTE** : il change dès qu'on ajoute un test — 2 453 puis 2 456 dans la seule journée du 2026-08-19. Voir `CLAUDE.md` §2) `#
 5 skipped` · `ruff check .` → `All checks passed!` · commit · et tu écris ce que tu as mesuré,
 sortie collée. **Une action, un commit.**
 

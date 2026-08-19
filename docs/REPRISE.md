@@ -1,7 +1,9 @@
 # REPRISE — lis ce fichier en premier, il fait une page
 
 > Point d'entrée du projet CERTUS pour un agent qui arrive sans contexte.
-> Écrit le **2026-08-16 à 07:45**. `CLAUDE.md` fait 5 400 lignes ; ce fichier dit **quoi y
+> Écrit le **2026-08-16 à 07:45**, revu le **2026-08-19**. ⚠️ *La ligne disait « `CLAUDE.md`
+> fait 5 400 lignes » : il en fait **1 899** depuis les extractions vers `docs/`.* Ce fichier
+> dit **quoi y
 > lire et dans quel ordre**, ce qui est **acquis**, ce qui est **faux dans les vieux
 > documents**, et ce qui tourne en ce moment.
 
@@ -118,7 +120,7 @@ Corrigé, mais des formulations peuvent traîner. **Ne les reprends pas.**
 
 | affirmation | statut |
 |---|---|
-| « le 99c à 3 témoins donne **0,760 nm** » | 🔴 **périmé** — biaisé vers le bas. La même partition rejouée à N = 150 donne **0,858 nm**. Le chiffre est **0,782 nm** à 4 témoins |
+| « le 99c à 3 témoins donne **0,760 nm** » | 🔴 **périmé** — biaisé vers le bas. La même partition rejouée à N = 150 donne **0,858 nm**. ⚠️ **Et cette ligne disait elle-même « le chiffre est 0,782 nm » jusqu'au 2026-08-19** : c'était le résultat de la **seule graine 42**. **Le chiffre est 0,81 nm**, moyenne de trois (0,782 / 0,816 / 0,839) |
 | « la vague à 4 témoins est abandonnée par la donnée » | 🔴 **faux** — en premium c'est une partition à **4 témoins** qui gagne |
 | « au-delà d'une cinquantaine de couches le témoin devient optiquement mort » | 🔴 **réfuté** — 75 couches aléatoires se surveillent à 0 % de plantage |
 | « les espaceurs demi-onde ont un swing optique nul » | 🔴 **réfuté** — ils offrent **65 à 133 λ utilisables** chacun ; **zéro couche muette** sur 99 |
@@ -126,6 +128,10 @@ Corrigé, mais des formulations peuvent traîner. **Ne les reprends pas.**
 | « `[22,78)` est le seul sous-empilement infaisable » | 🔴 **faux** — contredit par `[22,99)` qui a une stratégie déposable |
 | « plus d'extrema ⟹ comptage plus fragile » | 🔴 **réfuté** — le comptage à 64 points est identique à celui de la densité machine |
 | « QWOT = turning point » | 🔴 **faux sauf** couche 1 sur substrat nu, où `R = 0` exactement |
+| « le Rate fait 64 % de l'offre et 0,15 % des déposables, **facteur 175** » | 🔴 **retiré le 2026-08-19** — paradoxe de Simpson, 27 runs hétérogènes poolés. L'analyse **stratifiée** rend **0,99×** : à l'intérieur d'un même run, le Rate est déposable aussi souvent que l'optique |
+| « la queue Rate franchit la zone où la dérive tue l'optique » | 🔴 **réfuté le 2026-08-19** — la couche critique des déposables est **avant** la coupure, donc restée optique. Le mécanisme réel est la **position terminale** : une couche Rate lègue son erreur à tout ce qui la suit |
+| « le mode `extreme` rend le ×2 fabricable » | 🔴 **faux** — `deep` seul rend **277** déposables à SEEL **0,625**, contre 254 à 0,629 pour `extreme`, à cinq fois le coût |
+| un **compte de tests** (`2450 passed`, `2310`, `2 300`…) | 🔴 **aucun ne survit** : il change dès qu'on ajoute un test. Le seul critère est **`0 failed`** |
 
 ---
 
@@ -220,7 +226,7 @@ export CERTUS_BENCH_TIMEOUT_S=5400
 .venv/Scripts/python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
 ```
 
-Référence au 16/08 : **2450 passed, 5 skipped**, `ruff` propre.
+Référence : **`0 failed`**, `ruff` propre. ⚠️ Le « 2450 passed, 5 skipped » qui figurait ici est **retiré** : un compte de tests se périme dès qu'on ajoute un test (2 453 → 2 456 le 2026-08-19). Voir `CLAUDE.md` §2.
 
 ---
 

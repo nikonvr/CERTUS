@@ -1677,9 +1677,12 @@ signifie moins d'occasions pour le bruit de fabriquer un faux point tournant —
 mécanisme**, qui pèse 79 % des plantages mesurés (§24-36). C'est un arbitrage assumé
 vitesse / fidélité, pas un oubli.
 
-### 🪦 Historique — la mesure de 2026-08-08 qui avait déjà tranché dans le même sens
+#### 🪦 La mesure de 2026-08-08 qui avait déjà tranché dans le même sens
 
-### ✅ Tranchée — la grille de balayage à 1 nm, ne la rouvre pas
+⚠️ *Ce bloc portait un titre de section **vide** suivi d'un second titre « Tranchée — la
+grille de balayage à 1 nm », c'est-à-dire **deux sections pour la même décision** dont l'une
+sans contenu. Fusionnés le 2026-08-19 : ceci est l'**antécédent historique** de la décision
+figée ci-dessus, pas une décision de plus.*
 
 `scan_wl_step` est le pas entre λ de contrôle candidates. Deux simulations complètes
 indépendantes, plage identique, seul le pas changeant :
@@ -1712,8 +1715,15 @@ lieu de 4** — moins de changements de λ à exécuter.
 **Aujourd'hui STRAT n'est validé que contre lui-même.** Tout ce qui précède le rendra plus
 cohérent ; **rien ne prouvera qu'il dit vrai.**
 
-👤 Deux décisions du 2026-08-06 ferment les portes de substitution : *« seul le 48 couches
-est un exemple valable »* et *« oublie aussi la séparatrice »*.
+👤 Deux décisions du 2026-08-06 : *« seul le 48 couches est un exemple valable »* et
+*« oublie aussi la séparatrice »*.
+
+⚠️ **La première est CADUQUE depuis le 2026-08-16** — le §8 la barre, le projet a **quatre**
+composants d'essai, et le random75 existe pour conclure en général. C'est la **quatrième**
+survivance de cette règle trouvée le 2026-08-19, après la règle 4 du §11, le vocabulaire du
+§14 et le titre du §23. 🔑 **Mais l'argument de cette section n'en dépend pas** : ce qui
+manque n'est pas un composant de plus en simulation, ce sont des **dépôts réels**. Un
+cinquième empilement simulé ne validerait rien de plus que les quatre existants.
 
 > **Il ne reste qu'un chemin : des dépôts réels du dichroïque 48 couches.** Au moins **deux**
 > stratégies réellement déposées, avec leurs spectres mesurés. Deux suffisent, parce que le
@@ -1787,7 +1797,7 @@ commit `main` : 2026-04-27) : **ces commits n'ont jamais été validés par la C
 
 ## 28. ⚡ FEUILLE DE ROUTE — voir le dossier
 
-📌 **[`docs/FEUILLE_DE_ROUTE.md`](docs/FEUILLE_DE_ROUTE.md)** — 451 lignes : ce qui est
+📌 **[`docs/FEUILLE_DE_ROUTE.md`](docs/FEUILLE_DE_ROUTE.md)** — ce qui est
 **acquis** action par action (A1 à A25), ce qui est **outillé** et ne doit pas être réécrit,
 et les paliers suivants.
 

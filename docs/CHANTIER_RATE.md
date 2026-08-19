@@ -181,6 +181,49 @@ booléen — la même forme que `rate_flags`, qui montre que c'est faisable.
 
 ## 5. Le plan, par valeur décroissante
 
+### 🟢 CE QUE LE CRITERE PAR SWING TROUVE REELLEMENT — mesuré le 2026-08-19, avant le run
+
+`scripts/probe_swing_par_couche.py`, quelques secondes par composant, aucune Phase B.
+
+| composant | couches sous le seuil **à la meilleure λ** | **à la λ réellement retenue** |
+|---|---|---|
+| 35c | 0 / 35 | **0 / 35** |
+| 48c | 0 / 48 | **0 / 48** |
+| **75c** | 0 / 75 | **5 / 75** |
+| 99c | 0 / 99 | **0 / 99** |
+
+🔴 **Première conclusion, et elle réduit la portée du critère.** *Aucune* couche n'est
+indéfendable optiquement : à sa meilleure λ, chaque couche des quatre composants dépasse le
+seuil. Le cas *« cette couche n'a aucun signal exploitable »* — celui que §22 décrit — **ne se
+présente jamais**. `rate_by_swing` est donc **inerte sur 35c, 48c et le 99c**, et un run sur ces
+composants ne mesurerait rien.
+
+### 🔑 POURQUOI 5 COUCHES DU 75c SONT SOUS LE SEUIL — et ce n'est pas un défaut
+
+📏 Vérifié : ces 5 couches ont **178, 119, 132, 33 et 36 candidates survivantes**. Aucun repli,
+la Phase A avait l'embarras du choix. Et **5 sur 5 héritent leur λ** d'un bloc ouvert par la
+couche précédente :
+
+```
+couche 23  bloc ouvert en 22    couche 31  bloc ouvert en 30    couche 33  bloc ouvert en 32
+couche 50  bloc ouvert en 49    couche 52  bloc ouvert en 51
+```
+
+> 🔑 **La Phase A filtre le swing de la couche QUI CHOISIT. Les couches suivantes du bloc
+> héritent d'une λ qui n'a jamais été validée POUR ELLES.** Leur swing peut donc tomber sous le
+> seuil sans qu'aucune règle ne soit violée — c'est structurel.
+
+🟢 **Et c'est exactement la niche du Rate.** Ces couches sont surveillées à une λ choisie pour
+une autre, avec un signal trop pauvre pour un arrêt précis, et sans que rien dans le système ne
+le signale. Ce n'est plus *« placer le Rate où l'optique est mauvaise »* au sens vague : c'est
+**« placer le Rate sur les couches héritières dont la λ du bloc ne convient pas »**, ce qui est
+mesurable et rare — 5 sur 75.
+
+⚠️ **Portée honnête** : 5 couches sur 75, sur un seul composant, une seule graine. Et le critère
+ne capte que ce cas-là — il est aveugle au second motif d'emploi du Rate, celui où c'est le
+**bruit de fente** qui dégrade le signal, puisque le swing est calculé sur le signal nominal
+sans convolution par la fente.
+
 ### 1️⃣ Placer le Rate là où il est NÉCESSAIRE — le levier qui attaque le mécanisme
 
 **L'argument** : le facteur 175 dit que le Rate est coûteux ; la cellule `75c à 1 nm` dit qu'il

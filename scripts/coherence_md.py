@@ -379,6 +379,13 @@ def main() -> int:
                     continue
                 if excl and re.search(excl, l, re.I):
                     continue
+                # 🔑 UNE LIGNE QUI PORTE DEUX VALEURS DU MEME FAIT COMPARE, elle n'affirme
+                # pas. Generalisation de la garde `_un_seul_composant` a tous les faits,
+                # posee le 2026-08-19 apres un faux positif sur « prefere-t-on une fente de
+                # 1 nm ... ou la fente NOMINALE ? ». Sans elle, chaque arbitrage ecrit dans
+                # un dossier ressort comme une contradiction.
+                if len({m.group(0).strip() for m in re.finditer(val, l)}) > 1:
+                    continue
                 for m in re.finditer(val, l):
                     vues.setdefault(m.group(0).strip(), []).append(f"{f.name}:{i}")
         if len(vues) > 1:

@@ -147,9 +147,28 @@ booléen — la même forme que `rate_flags`, qui montre que c'est faisable.
 gagne quand l'optique est mauvaise. Le placer sur les couches à **swing faible** est la seule
 action qui aligne le critère du code sur le mécanisme mesuré.
 
-**Ce qu'il faut écrire** : ajouter aux candidates de `_rate_candidate_layers` les couches dont le
-swing est sous `dynamics_threshold`, en plus des frontières de bloc. La donnée existe déjà —
-`prepare_dynamics_data_kernel` la calcule par couche et par λ.
+**Ce qu'il faut écrire, vérifié dans le code le 2026-08-19** : la donnée n'est PAS déjà
+disponible au bon endroit, contrairement à ce que cette section affirmait initialement. Le swing
+par (couche, λ) est une **variable locale** de `_select_candidates_phase_a`
+(`certus_strat_service.py:892`), calculée par λ candidate puis jetée dès qu'une λ est choisie
+pour le bloc. Rien ne la conserve jusqu'à `_expand_with_rate_variants`, qui s'exécute après la
+Phase B sur des stratégies déjà figées.
+
+🔒 **Le chemin vérifié, empreinte d'UN SEUL FICHIER.** `opti_results` — déjà reçu par la fonction
+appelante de `_expand_with_rate_variants` — porte déjà `nominal_matrix_cache` et `all_wls`
+(`certus_strat_pipeline.py:105-106`), exactement comme il porte déjà `clues_at_wl`, lu à la ligne
+399 de `certus_strat_robustness.py`. Il suffit de les extraire à côté, de les passer à
+`_expand_with_rate_variants`, et d'appeler **la même fonction canonique**
+`calculate_dynamics_ULTIMATE` — interdit 7 respecté, pas de TMM réimplémentée — restreinte à
+**une seule λ** (celle que la stratégie a déjà choisie) au lieu de toute la grille. Aucun
+générateur de variantes ni aucun schéma de stratégie n'a besoin d'être touché.
+
+⚠️ **Le coût n'est pas mesuré.** Contrairement au criblage Phase A, il faut évaluer chaque
+couche de chaque stratégie survivante — pas seulement les frontières de bloc — pour repérer une
+couche à faible swing n'importe où dans le bloc. Sur `75c` (~900 survivants × 75 couches),
+~65 000 évaluations TMM à λ fixe. Probablement de l'ordre de la dizaine de secondes en numba
+compilé, mais **à chronométrer avant d'écrire quoi que ce soit d'autre** — c'est le premier pas,
+pas une supposition.
 
 **Le test qui tranche** : rejouer `75c à 1 nm` — la cellule où le Rate gagne déjà — et compter les
 déposables Rate. **Critère à écrire avant** : le placement par besoin doit faire mieux que

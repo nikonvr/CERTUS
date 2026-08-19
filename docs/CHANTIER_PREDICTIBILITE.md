@@ -728,10 +728,31 @@ cellule qui tourne est en élargi ; un `deep` seul serait le contrôle symétriq
 | ×0,5 *(barrière)* | `deep` trouve 0 | 0 déposable | 0 déposable | — rien débloqué |
 | 99c *(barrière)* | `deep` trouve 0 | 0 déposable | 0 déposable, 96,3 % | — rien débloqué |
 
-**Cinq configurations, zéro amélioration mesurable — et ce ne sont pas cinq points au hasard.**
-Ce sont les deux cas les plus favorables (`deep` trouve déjà des centaines de déposables) **et**
-les deux cas les plus difficiles (`deep` n'en trouve aucun). Si `extreme` devait débloquer
-quelque chose, c'est précisément dans les seconds qu'on l'aurait vu.
+🔴 **CORRECTION DU 2026-08-19 — il n'y a que TROIS vraies paires, pas cinq.** Une comparaison
+`deep` contre `extreme` exige les deux modes **au même composant, à la même fente, à la même
+graine**. Vérifié :
+
+| | paire complète ? |
+|---|---|
+| 35c @ 2 nm, 48c @ 2 nm, ×2 @ 1 nm | 🟢 **oui** — les trois seules |
+| ×0,5, 99c | 🔴 **non** — ces runs sont en `extreme` seul, aucun `deep` jumeau au même réglage |
+
+Les deux cas barrières restent une observation valide — *« l'élargissement n'a rien débloqué »* —
+mais **ce ne sont pas des comparaisons de modes**, et les compter comme telles était une erreur.
+
+📏 **Et en normalisant par la taille de population, un détail apparaît** que le comptage brut
+masquait :
+
+| paire | `deep` | `extreme` |
+|---|---|---|
+| 35c | 1017/1023 = **99,4 %** | 1349/1355 = **99,6 %** |
+| 48c | 804/840 = **95,7 %** | 1134/1190 = **95,3 %** |
+| **×2** | 277/1986 = **13,9 %** | 254/2945 = **8,6 %** |
+
+Sur les composants faciles, `extreme` évalue plus de stratégies **au même taux de réussite** — il
+ne trouve pas mieux, il calcule plus. Sur le cas dur, ses candidates supplémentaires sont
+**disproportionnellement mauvaises** : 8,6 % contre 13,9 %. C'est un argument de plus contre le
+mode, et il est plus précis que « aucune amélioration ».
 
 ### 🔑 Pourquoi la suite de la passe de référence était devenue peu informative
 
@@ -763,7 +784,7 @@ le confond pas avec une réfutation.
 |---|---|
 | 🟢 **35c, SEEL 0,482** *(`deep`)* | premier SEEL mesuré sur ce composant en dehors du repère historique — cohérent avec `deep` ≥ `fast` |
 | 🟢 **48c, SEEL 0,173/0,170** | confirme le repère `0,173 nm` du §21, et donne le point `extreme` jumeau |
-| 🟢 **75c, SEEL 0,260 en `deep`** | **meilleur** que le repère historique `0,272 nm` en `fast` — troisième cas où `deep` seul bat le mode qui a produit le repère publié. Le second volet (`extreme`) n'a pas fini avant l'arrêt |
+| 🟠 **75c, SEEL 0,260 en `deep`** | contre `0,272 nm` en `fast` — **soit 4,4 %, donc DANS le bruit** (σ ≈ 6 %, §24-26). 🔴 La rédaction initiale disait « meilleur » : c'est une sur-lecture, corrigée le 2026-08-19. Et la comparaison est de toute façon confondue, `deep` évaluant 2 547 stratégies contre 662 — un minimum sur une population 4× plus grande est plus bas par construction |
 | 🔴 **×1,75 en `deep`, ×1,5 en `deep`/`extreme`** | non mesurés — arrêtés avant d'écrire |
 
 📌 **Ce que ça suggère pour une prochaine campagne, si elle a lieu** : republier les repères du

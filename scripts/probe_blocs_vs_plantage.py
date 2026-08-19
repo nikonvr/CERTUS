@@ -320,7 +320,7 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
         st = s.get("strategy", {}) or {}
         blocs = st.get("blocks", []) or []
         lignes.append({
-            "id": st.get("id", s.get("id")),
+            "id": st.get("strategy_id", st.get("id", s.get("id"))),
             "origine": st.get("origin", st.get("origin_name")),
             "n_blocs": int(st.get("n_blocks", len(blocs))),
             "crash_rate": float(s.get("crash_rate", 1.0)),

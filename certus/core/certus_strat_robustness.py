@@ -77,6 +77,7 @@ from certus.utils.certus_strat_service import (
     compute_probe_offset_nm_from_ratio,
     select_best_strat_result,
     calculate_RT_normal_real,
+    calculate_dynamics_ULTIMATE,
 )
 
 from certus.core.certus_strat_ranking import (
@@ -466,7 +467,18 @@ def _prepare_robustness_inputs(
     # so 241 candidates stay 241 instead of becoming 3856; the survivors are expanded
     # afterwards. See `run_final_simulation_block`.
     if expand_variants:
-        all_strategies = _expand_with_rate_variants(all_strategies, params, num_layers, logger)
+        # 🔑 `opti_results` already carries these -- `_prepare_robustness_nominal_optics`
+        # reads `clues_at_wl` from it a few lines above in this same module, and the
+        # pipeline (`certus_strat_pipeline.py:105-106`) fills the other two. Nothing new
+        # is computed here; this only makes them reach the one function that needs them
+        # to place Rate candidates by SWING instead of by block boundary alone.
+        all_strategies = _expand_with_rate_variants(
+            all_strategies, params, num_layers, logger,
+            p_thick_nominal=p_thick_nominal,
+            nominal_matrix_cache=opti_results.get("nominal_matrix_cache"),
+            all_wls=opti_results.get("all_wls"),
+            clues_at_wl=opti_results.get("clues_at_wl"),
+        )
         # A18 AFTER the Rate variants, so a Rate layer is evaluated at each slit too: the
         # two degrees of freedom are independent, nothing couples them here.
         all_strategies = _expand_with_resolution_variants(
@@ -511,8 +523,53 @@ RATE_MAX_VARIANTS_PER_STRATEGY: int = 3
 RATE_MIN_LAYERS_PER_BLOCK: float = 3.0
 
 
+#: Below this growth-time swing (T_max - T_min while the layer is deposited), a layer's
+#: own optical signal is judged too poor to trigger a stop precisely -- the SAME physical
+#: quantity `dynamics_threshold` gates in Phase A (`calculate_dynamics_ULTIMATE`), not the
+#: end-state curvature `_calculate_strategy_spectral_resolution` uses for the slit. Kept as
+#: its own name because CLAUDE.md §22 already calls it that: "swing < SWING_MIN".
+RATE_SWING_MIN_DEFAULT: float = 0.025
+
+
+def _rate_swing_candidates(strategy: dict[str, Any], num_layers: int,
+                           swing_ctx: "_RateSwingContext") -> list[int]:
+    """Layers where a Rate is NEEDED: the growth-time swing is below `dynamics_threshold`.
+
+    🔑 2026-08-19, docs/CHANTIER_RATE.md contradiction C: `_rate_swing_candidates` and
+    `_rate_candidate_layers` answer two DIFFERENT questions on purpose --  where a Rate
+    costs nothing (block boundary) versus where it is needed (poor optical signal). Kept
+    SEPARATE, ADDITIVE: this function never removes what the boundary criterion already
+    offers, only widens the pool the cap is applied to afterward.
+
+    ⚠️ Deliberately bypasses `RATE_MIN_LAYERS_PER_BLOCK`. That guard exists because a
+    "boundary" is meaningless once every layer is one (48-block degenerate case,
+    §24-45's sixfold-cost measurement) -- a property of BLOCK STRUCTURE. Swing is a
+    property of the LAYER'S OWN SIGNAL, independent of block structure, so the guard that
+    protects one criterion does not apply to the other. This is what closes contradiction
+    B of the audit: strategies with fine blocks had ZERO Rate candidates of any kind.
+    """
+    layer_to_wl: dict[int, float] = {}
+    for blk in strategy.get("blocks") or []:
+        wl = blk.get("wavelength")
+        if wl is None:
+            continue
+        for layer in range(int(blk.get("start", 0)), int(blk.get("end", 0))):
+            layer_to_wl[layer] = float(wl)
+
+    out: list[int] = []
+    for layer in range(num_layers - 1):          # same final-layer exclusion as A24
+        wl = layer_to_wl.get(layer)
+        if wl is None:
+            continue
+        swing = swing_ctx.swing_at(layer, wl)
+        if swing < swing_ctx.threshold:
+            out.append(layer)
+    return out
+
+
 def _rate_candidate_layers(strategy: dict[str, Any], num_layers: int,
-                           cap: int | None = None) -> list[int]:
+                           cap: int | None = None,
+                           swing_ctx: "_RateSwingContext | None" = None) -> list[int]:
     """Layers where a Rate is CHEAPEST: the last layer of each block.
 
     👤 2026-08-11: *"test the rate on layers i whose control wavelength changes at layer
@@ -526,23 +583,43 @@ def _rate_candidate_layers(strategy: dict[str, Any], num_layers: int,
     downstream cost is nil there too -- but it is also the last chance to correct
     everything accumulated since layer 1, and the two pull opposite ways. It deserves
     its own experiment, not a free ride in this one (A24).
+
+    🔑 `swing_ctx`, added 2026-08-19: when given, NEEDED layers (poor growth-time swing)
+    are added to the pool alongside CHEAP layers (block boundaries), before the cap is
+    applied. `None` by default -- the golden rule holds bit for bit at the default.
     """
     blocks = strategy.get("blocks") or []
-    if not blocks:
-        return []
+    out: list[int] = []
     # 🔴 A "block boundary" only carries information when blocks ARE blocks. Measured
     # 2026-08-11: on a 48-block strategy -- one wavelength per layer -- EVERY layer is a
     # boundary, and the placement degenerates into the exhaustive sweep this was chosen
     # to avoid: 47 variants from a single strategy, 1122 over the reference ranking, a
     # sixfold Monte-Carlo cost. Below this many layers per block the insight is vacuous.
-    if num_layers / len(blocks) < RATE_MIN_LAYERS_PER_BLOCK:
+    if blocks and num_layers / len(blocks) >= RATE_MIN_LAYERS_PER_BLOCK:
+        for blk in blocks:
+            end = int(blk.get("end", 0))
+            last = end - 1                       # last layer of this block
+            if 0 <= last < num_layers - 1:       # excludes the final layer of the stack
+                out.append(last)
+    # 🔴 LES DEUX CRITERES SE PARTAGENT LE PLAFOND, ILS NE S'EVINCENT PAS. Mesure du
+    # 2026-08-19 : trier tout le pool par profondeur puis couper a `cap` faisait que des
+    # couches a faible swing, plus profondes, evincaient TOUTES les frontieres de bloc
+    # (candidates [31,32,33] au lieu de [13,21,29]). Ce n'etait pas l'intention -- le
+    # critere de BESOIN doit s'ajouter a celui de COUT, pas le remplacer. On garde donc la
+    # moitie du plafond a chacun, le reliquat revenant a l'autre s'il n'en a pas l'usage.
+    if swing_ctx is not None:
+        besoin = [x for x in _rate_swing_candidates(strategy, num_layers, swing_ctx)
+                  if x not in out]
+        if besoin:
+            budget = RATE_MAX_VARIANTS_PER_STRATEGY if cap is None else cap
+            besoin.sort(reverse=True)
+            out.sort(reverse=True)
+            part = max(1, budget // 2)
+            garde_cout = out[: budget - min(len(besoin), part)]
+            garde_besoin = besoin[: budget - len(garde_cout)]
+            out = garde_cout + garde_besoin
+    if not out:
         return []
-    out: list[int] = []
-    for blk in blocks:
-        end = int(blk.get("end", 0))
-        last = end - 1                       # last layer of this block
-        if 0 <= last < num_layers - 1:       # excludes the final layer of the stack
-            out.append(last)
     # Deepest first: A24 measured that a Rate layer inherits an error falling as
     # 1/sqrt(n) with the number of reference layers of its material, so it is at its
     # most accurate late in the stack -- which is also where 17-36 measured that every
@@ -578,11 +655,53 @@ def _rate_candidate_layers(strategy: dict[str, Any], num_layers: int,
     return out[:RATE_MAX_VARIANTS_PER_STRATEGY if cap is None else cap]
 
 
+class _RateSwingContext:
+    """Bundles what `calculate_dynamics_ULTIMATE` needs to re-evaluate the growth-time
+    swing of ONE layer at the wavelength a strategy already chose for it.
+
+    🔒 Calls the SAME canonical function Phase A uses (interdit 7) -- restricted to a
+    single wavelength instead of the whole scan grid, and memoized per (layer, wl)
+    because the same block wavelength recurs across the many Rate-boundary candidates of
+    a strategy, and across strategies that share a parent.
+    """
+
+    __slots__ = ("p_thick_nominal", "clues_at_wl", "nominal_matrix_cache", "all_wls",
+                "threshold", "_cache", "n_calls")
+
+    def __init__(self, p_thick_nominal, clues_at_wl, nominal_matrix_cache, all_wls,
+                threshold: float) -> None:
+        self.p_thick_nominal = p_thick_nominal
+        self.clues_at_wl = clues_at_wl
+        self.nominal_matrix_cache = nominal_matrix_cache
+        self.all_wls = all_wls
+        self.threshold = threshold
+        self._cache: dict[tuple[int, float], float] = {}
+        self.n_calls = 0
+
+    def swing_at(self, layer: int, wl: float) -> float:
+        key = (layer, round(wl, 6))
+        cached = self._cache.get(key)
+        if cached is not None:
+            return cached
+        self.n_calls += 1
+        dyn = calculate_dynamics_ULTIMATE(
+            np.array([wl], dtype=np.float64), layer, float(self.p_thick_nominal[layer]),
+            self.clues_at_wl, self.nominal_matrix_cache, self.all_wls,
+        )
+        val = float(dyn[0]["dynamics"]) if dyn else float("inf")
+        self._cache[key] = val
+        return val
+
+
 def _expand_with_rate_variants(
     strategies: list[dict[str, Any]],
     params: dict[str, Any],
     num_layers: int,
     logger: logging.Logger,
+    p_thick_nominal=None,
+    nominal_matrix_cache=None,
+    all_wls=None,
+    clues_at_wl=None,
 ) -> list[dict[str, Any]]:
     """Add Rate variants of each strategy, so the ranking can compare them side by side.
 
@@ -615,6 +734,17 @@ def _expand_with_rate_variants(
     🔴 AND THE FULL COMBINATION IS ALWAYS APPENDED when the multi-layer path is active, cap or
     no cap. It is the cheapest probe of "what if we rate every boundary we may", and it costs
     one variant per strategy.
+
+    ⚠️ SO THE CAP IS EXCEEDED BY EXACTLY ONE on the multi-layer path -- measured 2026-08-19:
+    cap 12 gives 13, cap 24 gives 25, cap 64 gives 65. Deliberate, bounded, and stated here
+    rather than left to be discovered while reading a strategy count that does not add up.
+
+    🔑 `rate_by_swing`, added 2026-08-19, default `False`: places candidates by NEED (growth-
+    time swing below `dynamics_threshold`) in addition to by COST (block boundary), instead
+    of by cost alone. docs/CHANTIER_RATE.md contradiction C. Requires
+    `p_thick_nominal` / `nominal_matrix_cache` / `all_wls` / `clues_at_wl`, threaded in by
+    `_prepare_robustness_inputs` from `opti_results` -- nothing new computed, only reaches a
+    function that did not have them before.
     """
     if not bool(params.get("allow_rate", True)):
         return strategies
@@ -622,14 +752,37 @@ def _expand_with_rate_variants(
     cap = max(1, int(params.get("rate_max_variants_per_strategy",
                                 RATE_MAX_VARIANTS_PER_STRATEGY)
                      or RATE_MAX_VARIANTS_PER_STRATEGY))
+
+    # 🔴 `rate_by_swing`, added 2026-08-19 -- INACTIVE by default, golden rule: at
+    # `False` `swing_ctx` stays `None` and `_rate_candidate_layers` runs its historical
+    # boundary-only path, bit for bit. docs/CHANTIER_RATE.md action 1.
+    #
+    # Placing the Rate where it is NEEDED (poor growth-time swing) rather than only where
+    # it is CHEAPEST (a block boundary) -- contradiction C of the audit. Requires the
+    # arrays Phase A already computed, threaded in by `_prepare_robustness_inputs`.
+    swing_ctx: _RateSwingContext | None = None
+    if bool(params.get("rate_by_swing", False)):
+        if p_thick_nominal is not None and nominal_matrix_cache is not None \
+                and all_wls is not None and clues_at_wl is not None:
+            threshold = float(params.get("dynamics_threshold", RATE_SWING_MIN_DEFAULT))
+            swing_ctx = _RateSwingContext(p_thick_nominal, clues_at_wl,
+                                          nominal_matrix_cache, all_wls, threshold)
+        else:
+            logger.warning(
+                "[RATE] rate_by_swing=true mais les tableaux nominaux (matrice/lambda/"
+                "indices) sont absents -- retombe sur les frontieres de bloc seules."
+            )
+
     variants: list[dict[str, Any]] = []
     skipped = 0
     next_id = STRATEGY_ID_RATE_BASE
+    _t0 = time.perf_counter()
     for strat in strategies:
         # The historical path caps the CANDIDATES at 3; the multi-layer path needs them all
         # before it can combine them, and caps the resulting VARIANTS instead.
         cands = _rate_candidate_layers(strat, num_layers,
-                                       cap=None if max_layers == 1 else 64)
+                                       cap=None if max_layers == 1 else 64,
+                                       swing_ctx=swing_ctx)
         if not cands:
             skipped += 1
             continue
@@ -653,11 +806,17 @@ def _expand_with_rate_variants(
             next_id += 1
             variants.append(v)
     if variants or skipped:
+        _dt = time.perf_counter() - _t0
+        _extra = ""
+        if swing_ctx is not None:
+            _extra = (f" [SWING] seuil {swing_ctx.threshold:g}, {swing_ctx.n_calls} "
+                     f"evaluations TMM a lambda fixe, {_dt:.1f} s au total pour cette "
+                     f"expansion.")
         logger.info(
             f"[RATE] {len(variants)} variantes sur {len(strategies)} strategies, "
-            f"{RATE_MAX_VARIANTS_PER_STRATEGY} au plus chacune, frontieres les plus "
-            f"PROFONDES d'abord. {skipped} strategie(s) ecartee(s) : moins de "
-            f"{RATE_MIN_LAYERS_PER_BLOCK:g} couches par bloc, ou une frontiere ne dit rien."
+            f"{cap} au plus chacune, frontieres les plus PROFONDES d'abord. "
+            f"{skipped} strategie(s) ecartee(s) : aucune frontiere de bloc ni couche a "
+            f"faible swing.{_extra}"
         )
     return strategies + variants
 

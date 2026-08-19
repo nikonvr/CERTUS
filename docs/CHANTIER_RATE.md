@@ -10,44 +10,78 @@ Instrument de l'audit : `scripts/audit_rate.py`, rejouable.
 
 ---
 
-## 1. 🔴 LE CHIFFRE QUI RENVERSE L'ÉNONCÉ — le Rate n'est pas sous-OFFERT
+## 1. 🔴🔴 CORRECTION DU 2026-08-19 — LE « FACTEUR 175 » ÉTAIT UN PARADOXE DE SIMPSON
 
-📏 **Audit du 2026-08-18, 27 artefacts, tout ce qui a été mesuré à ce jour :**
+⚠️ **La première rédaction de ce dossier annonçait :** *« le Rate fait 64 % de l'offre et 0,15 %
+des déposables, une stratégie optique a 175 fois plus de chances d'être déposable »*. **Ce chiffre
+est un artefact d'agrégation et il est retiré.**
+
+📏 **Ce qui l'a produit** : `scripts/audit_rate.py` a **poolé 27 runs hétérogènes** — des runs où
+l'optique réussit et le Rate échoue, mélangés à des runs où les deux échouent à 100 %. Le pool
+était alors dominé par les composants barrières. Les runs `deep` de la nuit du 18 au 19 ont changé
+la composition du pool, et le même calcul rend désormais **5×** au lieu de 175×. **Un chiffre qui
+bouge d'un facteur 35 quand on ajoute des données n'était pas une mesure du Rate.**
+
+📏 **L'analyse STRATIFIÉE, run par run** — la bonne :
 
 ```
-strategies       20 205   dont Rate  12 923   (64,0 %)
-deposables        1 995   dont Rate      20   ( 1,0 %)
-
-taux de deposabilite    Rate  0,15 %     optique  27,12 %
+mediane du ratio de deposabilite optique/Rate, INTRA-run : 0,99x   (n = 7 runs comparables)
 ```
 
-> **Le Rate représente les deux tiers de tout ce qui est évalué, et une stratégie optique a
-> 175 fois plus de chances d'être déposable qu'une variante Rate.**
+**Autrement dit : à l'intérieur d'un même run, le Rate est déposable aussi souvent que l'optique.**
+Sur `35c` et `48c` en `deep`, il l'est même **plus** — 100 % contre 92,8 à 98,9 %.
 
-Il est donc massivement **généré**, puis massivement **éliminé**. L'énoncé *« il est
-sous-employé »* est faux au sens quantitatif — et c'est justement ce qui rend la question
-intéressante, parce qu'il reste vrai au sens qui compte : **il n'est jamais employé là où il
-faudrait.**
+### 🔑 CE QUE LA MESURE DIT VRAIMENT — un coût qui CROÎT AVEC LA PROFONDEUR
 
-### 🟢 La seule cellule où il gagne, et elle est éclairante
+📏 Comparaison du **meilleur SEEL Rate** au **meilleur SEEL optique**, dans chaque run où les deux
+existent :
 
-| cellule | déposables | dont Rate | meilleure stratégie |
+| composant | couches | meilleur optique | meilleur Rate | écart |
+|---|---|---|---|---|
+| **35c** | 35 | 0,482 / 0,479 / 0,525 | 0,488 / 0,485 / 0,528 | **+0,6 à +1,3 %** |
+| **48c** | 48 | 0,173 / 0,170 | 0,192 / 0,183 | **+7,8 à +10,9 %** |
+| **75c** | 75 | 0,260 / 0,272 | 0,316 / 0,333 | **+21,6 à +22,1 %** |
+
+> 🔑 **Le coût du Rate n'est pas constant : il croît avec le nombre de couches.** ~1 % à 35
+> couches, ~9 % à 48, ~22 % à 75. Trois composants, motif monotone.
+
+**Le mécanisme le plus plausible, et il est cohérent avec le reste du dépôt** : une couche Rate
+casse le bloc et fait perdre la compensation POEM pour l'aval. Sur un empilement court, cette
+compensation vaut peu ; sur un empilement long, l'erreur accumulée est grande et la perdre coûte
+cher. C'est la même grandeur que §24-44 décrit quand il parle de « perte de mémoire ».
+
+⚠️ **Trois composants, une graine, et le mécanisme n'est pas démontré** — seulement cohérent. Une
+quatrième profondeur (le 99c, 99 couches) trancherait, mais il ne rend aucun déposable, donc la
+comparaison y est impossible.
+
+### 🟢 La seule cellule où le Rate gagne, et l'écart est nul
+
+| cellule | meilleur optique | meilleur Rate | écart |
 |---|---|---|---|
-| **`75c` à 1 nm** | 12 | **10** | 🟢 **une variante Rate**, SEEL 0,371 |
-| `75c` à 2 nm | 241 | 10 | optique, SEEL 0,272 |
-| `75c` à 5 nm | 289 | 0 | optique, SEEL 0,310 |
-| les 24 autres cellules | — | — | optique |
+| **`75c` à 1 nm** | 0,373 | **0,371** | **−0,3 %** |
 
-**Une sur vingt-sept.** Et c'est celle où la fente fine **double le bruit optique**. Quand le
-signal optique se dégrade, le Rate prend le dessus — mécanisme cohérent, mesuré, et il donne au
-chantier sa direction.
+**Une sur huit comparables**, et l'écart est **très en dessous du bruit statistique** (σ ≈ 6 %,
+§24-26). 🔴 **La rédaction d'hier en faisait un point d'appui — c'était trop.** Ce que cette
+cellule montre reste néanmoins réel : c'est la seule où la fente fine double le bruit optique, et
+la seule où le Rate n'est pas pénalisé. **Direction, pas preuve.**
+
+### 🔴 L'analyse APPARIÉE est impossible avec les artefacts existants
+
+Le test le plus fort serait de comparer chaque variante Rate **à son propre parent** — l'`origin`
+porte bien `RATE_L29(from 900000285)`. 📏 Mais le champ `id` vaut **`None` dans tous les
+artefacts** : la sonde lisait `st.get("id")` alors que le dictionnaire de stratégie porte
+`strategy_id`. **Corrigé le 2026-08-19** ; les artefacts déjà produits restent inexploitables pour
+cet appariement, et il faudra un run neuf.
 
 ---
 
 ## 2. 🔑 LA REFORMULATION QUI CHANGE TOUT
 
-Le facteur 175 est trop grand pour être un artefact de réglage. **Il faut le lire comme une
-vérité physique** : un Rate coûte cher, et le code le sait —
+⚠️ **Cette section était écrite sur le facteur 175, désormais retiré (§1).** Ce qui suit reste
+valide, mais l'échelle a changé : le coût du Rate n'est pas un facteur 175 sur la déposabilité,
+c'est une **pénalité de SEEL de 1 à 22 % qui croît avec la profondeur de l'empilement**. Les trois
+mécanismes ci-dessous restent ceux que le code documente, et le dernier explique pourquoi la
+pénalité croît —
 
 | coût d'une couche Rate | source |
 |---|---|
@@ -58,6 +92,12 @@ vérité physique** : un Rate coûte cher, et le code le sait —
 > 🔑 **Le Rate ne gagne pas en moyenne, et il ne le doit pas. Il gagne là où l'optique est pire
 > que lui. La question n'est donc pas *« comment employer plus de Rate »* mais *« comment
 > identifier les couches où l'optique est perdue »*.**
+
+🔑 **Et le troisième mécanisme explique la pénalité croissante mesurée au §1** : casser le bloc
+fait perdre la compensation pour tout l'aval. Sur 35 couches cette compensation vaut peu (+1 %),
+sur 75 elle vaut beaucoup (+22 %). **C'est un argument DIRECT pour placer le Rate tard dans
+l'empilement**, ce que `_rate_candidate_layers` fait déjà en triant les frontières les plus
+profondes d'abord — une des rares choses que le code fait pour la bonne raison.
 
 Et c'est exactement ce que le code ne fait pas — voir la contradiction C.
 

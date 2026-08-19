@@ -1432,7 +1432,7 @@ dossier :
 | 📏 **le taux réel de l'hybride** | **~3 %** à N = 150 (4/150 et 5/150), sous la cible de 5 %. Le `4,00 %` de `fast` n'était que la granularité **2/50** |
 | 🟢 **la case décisive est tombée le 2026-08-19 au soir** | `deep` à 2 nm : **1 617 stratégies, ZÉRO déposable, 100 % de plantage**. Quadrupler la recherche (404 → 1 617) ne change **rien** : ce n'était donc **pas** la profondeur qui manquait à 2 nm, et **la queue Rate est le seul moyen connu de rendre ce design fabricable à la fente nominale**. ⚠️ Mon analyse contradictoire lui reprochait d'être « dominée par le pur optique à 1 nm » : celui-ci ne tient que sur **1 graine sur 2** (254 → 0 à la graine 77), l'hybride sur **2 sur 2**. Ce qui **reste vrai** du reproche : **74 changements de λ en atelier contre 5**, et SEEL 0,672 contre 0,625 |
 
-📌 **Le dossier historique est dans [`docs/MODE_RATE.md`](docs/MODE_RATE.md)** — 475 lignes : comment la
+📌 **Le dossier historique est dans [`docs/MODE_RATE.md`](docs/MODE_RATE.md)** — : comment la
 machine obtient son rate, pourquoi `sigma_rate` est une grandeur **dérivée** et non un
 paramètre, et le plan A24 en entier.
 
@@ -1814,7 +1814,7 @@ et les paliers suivants.
 
 | | |
 |---|---|
-| **A8 — `machine_sampling_dd` est INATTEIGNABLE** | il existe, il est dans l'interface, il est dans 9 configurations d'exemple, et **aucun des 27 sites d'appel du noyau ne le passe**. Le noyau reçoit toujours `0.0`. |
+| **A8 — `machine_sampling_dd` reste INATTEIGNABLE EN PRATIQUE** | il existe, il est dans l'interface, il est dans 9 configurations d'exemple. 📏 **Recompté par AST le 2026-08-19 : 8 sites d'appel du noyau, dont 1 seul le passe — et il passe la valeur littérale `0.0`** (`certus_strat_batch.py:500`, ajoutée ce jour-là pour atteindre `prev_rate_flags` par position). ⚠️ *La ligne annonçait « aucun des 27 sites » : le compte était faux d'un facteur 3.* **Le noyau reçoit donc toujours `0.0`, et le paramètre de l'interface n'atteint toujours pas le calcul.** |
 | **La marge de comptage ne décide de rien** | `turning_point_margins` la calcule, elle remonte jusqu'à `margin_by_layer` avec le commentaire *« NEEDED FOR RANKING »*, et le câblage n'a été fait que le 2026-08-16, `use_margin_ranking` **off par défaut**. |
 
 ---
@@ -1822,7 +1822,7 @@ et les paliers suivants.
 ## 29. Le travail à venir sur le MODÈLE PHYSIQUE
 
 📌 **Le dossier complet est dans [`docs/TRAVAUX_A_VENIR.md`](docs/TRAVAUX_A_VENIR.md)** —
-741 lignes, une sous-section par chantier, chacune avec le fichier et la fonction exacts, ce
+une sous-section par chantier, chacune avec le fichier et la fonction exacts, ce
 qu'il faut écrire, et le test qui doit ÉCHOUER sur le code d'avant.
 
 **Les trois contraintes qui s'appliquent à TOUTES ces actions** *(elles restent ici parce
@@ -1850,7 +1850,7 @@ qu'elles gouvernent aussi tout le reste du projet)* :
 
 ## 30. 🔴 ÉTAT RÉEL DE L'IMPLANTATION
 
-📌 **[`docs/ETAT_IMPLANTATION.md`](docs/ETAT_IMPLANTATION.md)** — 258 lignes, établi **contre
+📌 **[`docs/ETAT_IMPLANTATION.md`](docs/ETAT_IMPLANTATION.md)** — établi **contre
 le CODE** et jamais contre ce document.
 
 **Les points qui gouvernent, et qu'il faut connaître avant d'écrire quoi que ce soit :**
@@ -1860,13 +1860,13 @@ le CODE** et jamais contre ce document.
 | **le biais de fente est actif par défaut** depuis le 2026-08-11 | tout `RESULT` antérieur décrit une machine à fentes infiniment fines. C'est ce qui périme les anciens repères (§21) |
 | **la moyenne de lecture reste causale** | elle ne regarde pas en avant |
 | **l'arrêt n'est pas quantifié** | la loi `U(0 ; 0,125 nm)` de §18-7 n'est pas appliquée |
-| 🔴 **`machine_sampling_dd` est inatteignable** | 0 des 27 sites d'appel du noyau ne le passe |
+| 🔴 **`machine_sampling_dd` est inatteignable en pratique** | 8 sites d'appel, 1 le passe — et en dur à `0.0`. Le compte est en §28 |
 
 ---
 
 ## 31. ⚡ PERFORMANCE
 
-📌 **[`docs/PERFORMANCE.md`](docs/PERFORMANCE.md)** — 258 lignes, résultats **positifs comme
+📌 **[`docs/PERFORMANCE.md`](docs/PERFORMANCE.md)** — résultats **positifs comme
 négatifs**, et les négatifs comptent autant : trois pistes y sont **fermées par la mesure**.
 
 | | |
@@ -1921,12 +1921,16 @@ pour toujours.
 
 ## 34. 💡 A25, A26, A27 — la réserve
 
-📌 **[`docs/RESERVE_A25_A27.md`](docs/RESERVE_A25_A27.md)** — 146 lignes : pour chacune, le
+📌 **[`docs/RESERVE_A25_A27.md`](docs/RESERVE_A25_A27.md)** — pour chacune, le
 fichier et la fonction exacts, ce qu'il faut écrire, le test qui doit **échouer** sur le code
 d'avant, et les pièges connus.
 
-🔴 **CE N'EST PAS LE PROGRAMME COURANT** — celui-ci est le multi-témoins (§23). Ces trois
-actions sont **valides, utiles et entièrement spécifiées**, et elles attendent.
+🔴 **CE N'EST PAS LE PROGRAMME COURANT** — celui-ci est le **Rate**
+([`CHANTIER_RATE.md`](docs/CHANTIER_RATE.md)). Ces trois actions sont **valides, utiles et
+entièrement spécifiées**, et elles attendent. ⚠️ *Cette ligne désignait le multi-témoins, qui
+est **acquis** depuis le 2026-08-19 — cinquième endroit du document où le programme courant
+n'avait pas été mis à jour, après la carte du §3, le titre du §23, la règle 4 du §11 et le
+vocabulaire du §14.*
 
 | | | pourquoi elle compte |
 |---|---|---|

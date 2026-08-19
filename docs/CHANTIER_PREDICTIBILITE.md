@@ -274,7 +274,7 @@ l'instrumentation, pas une physique nouvelle.
 docstring avant le run** : `res_lim` doit être confortable à ×1, se dégrader à ×1,5, et passer
 sous **0,5 nm** — la résolution la plus fine que la machine offre (§19) — à ×2.
 
-`_calculate_strategy_spectral_resolution` (`certus_strat_robustness.py:1155`) calcule déjà, pour
+`_calculate_strategy_spectral_resolution` (`certus_strat_robustness.py:1168`) calcule déjà, pour
 une stratégie, la résolution la plus large que la courbure tolère :
 
 ```

@@ -238,20 +238,54 @@ cinq positions de coupure. Ce sont cinq **recettes** différentes, pas cinq solu
 indépendantes. ⚠️ La parente `75800` n'apparaît **nulle part dans le classement** : elle n'a
 survécu qu'à travers ses enfants.
 
-#### ⚠️ L'optimum à 52 n'est PAS établi
+#### 🟢 LE BRUIT DU SEEL EST MESURÉ SUR `r75x2` — et deux coupures se séparent, deux non
 
-`crash_min` ne discrimine aucune coupure. Reste le SEEL, et il faut le lire avec son bruit :
+📏 **Mesuré la nuit du 2026-08-19 au 20**, cellules 1 à 3 du batch de nuit. Trois runs
+**identiques en tout**, ne différant que par le triplet de graines de consensus — donc leur
+étendue **est** le bruit du score, et non une extrapolation :
 
-| comparaison | écart | en σ | verdict |
+```
+41,42,43   539 strategies   1 deposable   crash 4,00 %   SEEL 0.6885   75 blocs
+51,52,53   539              1             crash 4,00 %   SEEL 0.6679   75 blocs
+61,62,63   539              1             crash 4,00 %   SEEL 0.6774   75 blocs
+
+etendue 3,10 %  ->  sigma ≈ 1,83 %   (E[etendue]/sigma = 1,693 a n = 3)
+                ->  sur une DIFFERENCE de deux SEEL : sigma√2 ≈ 2,59 %
+```
+
+**Le verdict, coupure par coupure — c'est ce que le critère posé d'avance exigeait :**
+
+| comparaison | écart | en σ | verdict à 2 σ |
 |---|---|---|---|
-| 52 (0,689) contre 46 (0,752) | +9,1 % | **1,25 σ** | indiscernables |
-| 52 (0,689) contre 55 (0,701) | +1,7 % | 0,23 σ | indiscernables |
+| 52 (0,689) contre **46** (0,752) | +9,1 % | **3,53 σ** | 🟢 **séparable** |
+| 52 (0,689) contre **58** (0,735) | +6,7 % | **2,58 σ** | 🟢 séparable, de justesse |
+| 52 (0,689) contre **49** (0,717) | +4,1 % | 1,57 σ | 🔴 non séparable |
+| 52 (0,689) contre **55** (0,702) | +1,9 % | 0,73 σ | 🔴 non séparable |
 
-⚠️ **Ce σ est une extrapolation, pas une mesure.** Le seul chiffre mesuré est celui de §24-26 —
-σ ≈ 6 % du score à N = 150, sur le **48 couches** — reporté ici en `1/√N` à N = 50 (σ ≈ 10,4 %
-du score, donc ≈ 5,2 % du SEEL, donc ≈ 7,3 % sur une différence de deux). **Il n'a jamais été
-mesuré sur `r75x2`.** Le retenir revient quand même à dire : **traite les cinq coupures comme
-équivalentes** tant qu'un `premium` n'a pas tranché.
+🔑 **L'énoncé qui tient, et lui seul : l'INTÉRIEUR de la plage bat les BORDS ; à l'intérieur,
+rien ne se départage.** Les coupures 49, 52 et 55 forment **une seule classe d'équivalence** —
+« l'optimum est à 52 » n'est pas établi et ne doit pas être écrit. Les coupures 46 et 58 sont,
+elles, réellement moins bonnes.
+
+⚠️ **Le σ emprunté était trop PESSIMISTE d'un facteur 2,8.** La version précédente de ce bloc
+reportait le σ ≈ 6 % de §24-26 — mesuré sur le **48 couches**, à N = 150 — jusqu'à 7,3 % sur une
+différence, et concluait que les cinq coupures étaient indiscernables. La mesure directe donne
+2,59 %. **Un bruit emprunté à un autre composant ne vaut rien**, dans un sens comme dans
+l'autre : ici il faisait jeter deux séparations réelles.
+
+⚠️ **Trois réserves, et elles limitent la portée :**
+
+| | |
+|---|---|
+| **trois points ne font pas un écart-type** | l'étendue sur `n = 3` est un estimateur grossier. Le 2,59 % est une **borne indicative**, pas une constante du composant |
+| **les coupures d'un même run PARTAGENT leurs graines de consensus** | c'est un tirage commun : une partie du bruit s'annule dans la comparaison. Le σ√2 ci-dessus est donc **conservateur** — s'il se trompe, c'est en déclarant trop peu de séparations, jamais trop |
+| **mesuré en `fast`, N = 50** | à N = 150 le bruit doit tomber d'un facteur √3. Le `premium` de §11 va dans ce sens : il ne sépare toujours pas 52 de 55 |
+
+🟢 **Et ce qui ne bouge d'AUCUN triplet à l'autre** : le plantage vaut `4,00 %` dans les trois,
+et la gagnante est la stratégie à **75 blocs** dans les trois. Le rescorage de consensus déplace
+le **score** ; il ne touche ni le **verdict de fabricabilité**, ni le **choix de la stratégie**.
+C'est ce qui rend le résultat du chantier — *la queue Rate rend `r75x2` fabricable* — insensible
+à toute cette discussion.
 
 📌 Les valeurs `0,814 / 0,767 / 0,814 / 0,757 / 0,749` pour les coupures 28 à 41, citées dans la
 version précédente, viennent d'un **artefact que j'ai écrasé** en changeant `TAIL_CUTS` sans
@@ -342,7 +376,7 @@ est nette :
 | méthode d'arrêt | granularité actuelle |
 |---|---|
 | **Rate** | 🟢 **par couche** — `rate_layers`, une liste d'indices |
-| **POEM contre niveau absolu** | 🔴 **GLOBAL** — `poem_enabled` est un booléen unique pour tout le run (`certus_strat_robustness.py:2372`, propagé jusqu'à `certus_strat_batch.py:78`) |
+| **POEM contre niveau absolu** | 🔴 **GLOBAL** — `poem_enabled` est un booléen unique pour tout le run (`certus_strat_robustness.py:2385`, propagé jusqu'à `certus_strat_batch.py:78`) |
 
 Il n'existe donc **aucun moyen** d'exprimer *« couche 12 en POEM, couche 13 au niveau absolu,
 couche 14 en Rate »*. Le mélange que 👤 décrit est inexprimable dans la structure de données
@@ -532,7 +566,7 @@ comparaison n'est possible — ce serait l'erreur n° 3 du §5 de `CLAUDE.md`, d
 |---|---|---|
 | **1** | `fast`, graine 42, coupures **46 → 64** | le correctif **déplace-t-il la falaise** ? La campagne d'avant la situait entre 61 et 58, avec un plateau plat à 4,00 % de 58 à 46 |
 | **2** | `fast`, graine **77**, mêmes coupures | §24-46 : *un verdict sur un intervalle marginal n'est pas déterminé par une graine*. Sans elle, rien de la cellule 1 n'est publiable |
-| **3** | **`premium`**, graine 42, coupures 52 → 58 | le `4,00 %` vaut **2/50** en `fast` : la granularité minimale au-dessus de zéro, **pas une mesure**. À N = 150 il devient 6/150, et le bruit du SEEL tombe d'un facteur √3 — de quoi enfin départager les coupures, ce que `fast` **ne peut pas faire** (écart 52/46 à 1,25 σ) |
+| **3** | **`premium`**, graine 42, coupures 52 → 58 | le `4,00 %` vaut **2/50** en `fast` : la granularité minimale au-dessus de zéro, **pas une mesure**. À N = 150 il devient 6/150, et le bruit du SEEL tombe d'un facteur √3 — de quoi enfin départager les coupures, ce que `fast` **ne peut pas faire** (écart 52/46 à 1,25 σ) — 🔴 **cette parenthèse est RÉFUTÉE** : le bruit a été mesuré la nuit du 19 au 20 et vaut 2,59 % sur une différence, pas 7,3 %. L'écart 52/46 est à **3,53 σ** et `fast` le sépare déjà. Voir le §7 |
 
 ### 🔵 La prédiction, posée d'avance et falsifiable
 
@@ -631,9 +665,15 @@ composants, notamment ceux où le Rate gagne déjà (§7 : `75c` à 1 nm).
 
 ### 🔑 Ce que la cellule 1 établit VRAIMENT
 
-**Les cinq coupures déposables sont toutes indiscernables à 2 σ** (écart max 1,25 σ). Comme
-avant le correctif, **ce run ne désigne aucun optimum** — et `scripts/lire_batch_rate.py` le
-dit de lui-même, ce qui était tout l'objet de l'écrire.
+**Ce run ne désigne aucun optimum** — et `scripts/lire_batch_rate.py` le dit de lui-même, ce
+qui était tout l'objet de l'écrire.
+
+🔴 **La phrase qui précédait — *« les cinq coupures sont toutes indiscernables à 2 σ, écart max
+1,25 σ »* — est RÉFUTÉE**, et par une mesure, pas par un raisonnement. Le σ de 7,3 % était
+emprunté au 48 couches ; le σ **mesuré** sur `r75x2` vaut 2,59 % sur une différence (§7). Les
+coupures **46 et 58 se séparent** de la 52, à 3,53 σ et 2,58 σ. Ce qui reste vrai est plus
+faible et plus précis : **49, 52 et 55 sont une seule classe**, et aucune des trois n'est
+l'optimum.
 
 ---
 
@@ -667,7 +707,7 @@ coupure 52 :  0.11852439021077397  (s042)   contre   0.11852439020756476  (s077)
 |---|---|
 | `consensus_seed_list = 41,42,43,44,45`, `consensus_num_seeds = 3` | le consensus tourne sur **[41, 42, 43]** |
 | `_resolve_consensus_seeds` (`certus_strat_consensus.py:132`) | la liste explicite gagne ; **`base_seed` n'est consulté que si elle est vide**. Le consensus n'a donc **jamais vu 77** |
-| le rescoring ne lit que `robustness_score` (`certus_strat_robustness.py:2692`) | il réécrit le **score** des `consensus_top_k = 60` premières, **jamais `crash_rate`** |
+| le rescoring ne lit que `robustness_score` (`certus_strat_robustness.py:2705`) | il réécrit le **score** des `consensus_top_k = 60` premières, **jamais `crash_rate`** |
 | 📏 les déposables sont aux **rangs 0 à 4** | elles sont donc bel et bien rescorées |
 
 **D'où le motif exact qu'on observe : le score est gelé par le consensus, le plantage suit
@@ -688,9 +728,12 @@ PERMISSIF** : il déclare « indiscernable » ce qui ne l'est peut-être pas. L'
 désormais, et pose la limite juste : **il sert à refuser une distinction, jamais à affirmer une
 égalité.**
 
-🔑 **Et la vraie dispersion reste inconnue.** Ce qui la sonderait est un changement de
-**triplet de graines de consensus**, pas de `robustness_seed`. Personne ne l'a jamais fait.
-C'est la mesure qui manque pour pouvoir écrire quoi que ce soit sur l'optimum de la coupure.
+🔑 **Ce qui sonderait la vraie dispersion est un changement de triplet de graines de
+consensus**, pas de `robustness_seed`. ✅ **Fait la nuit du 2026-08-19 au 20** : trois triplets,
+étendue **3,10 %**, soit **2,59 %** sur une différence de deux SEEL. Le σ permissif dénoncé
+juste au-dessus était trop grand d'un facteur **2,8**, et il faisait effectivement ce que ce
+paragraphe redoutait — déclarer indiscernables deux coupures qui ne le sont pas. **Le résultat
+est au §7.**
 
 ---
 

@@ -12,9 +12,24 @@ minimal, le nombre de deposables, le meilleur SEEL, et la couche critique de la 
 Chaque ecart de SEEL est donc rendu EN SIGMA, et les coupures indiscernables sont annoncees
 comme telles.
 
-⚠️ Le sigma employe est une EXTRAPOLATION, pas une mesure sur ce composant. §24-26 mesure
-sigma ≈ 6 % du score a N = 150 sur le 48 couches ; on le reporte en 1/sqrt(N). Il n'a jamais
-ete mesure sur r75x2. C'est dit a chaque affichage, pour qu'on ne l'oublie pas.
+🟢 LE SIGMA EST DESORMAIS MESURE SUR r75x2, et non plus emprunte au 48 couches.
+📏 Nuit du 2026-08-19 au 20, cellules 1 a 3 du batch de nuit : trois runs identiques en tout
+sauf le triplet de graines de CONSENSUS -- le seul levier qui touche reellement le score.
+
+    41,42,43 -> SEEL 0.6885     51,52,53 -> 0.6679     61,62,63 -> 0.6774
+    etendue 3,10 %  ->  sigma ≈ 1,83 %  ->  sur une DIFFERENCE : sigma√2 ≈ 2,59 %
+
+⚠️ L'ancien sigma extrapole du 48 couches valait 7,3 % : trop grand d'un facteur 2,8, donc
+PERMISSIF. Il faisait declarer indiscernables les coupures 46 et 58, qui le sont a 3,53 et
+2,58 sigma. Un bruit emprunte a un autre composant ne vaut rien, dans un sens comme dans
+l'autre.
+
+⚠️ Ce qui reste extrapole, et qu'il faut savoir : (1) la mesure est faite en `fast` (N = 50),
+le report aux autres modes suit 1/sqrt(N) -- loi verifiee exacte sur le 48 couches entre
+N = 32 et 128, jamais sur celui-ci ; (2) trois points font une etendue, pas un ecart-type ;
+(3) les coupures d'un meme run PARTAGENT leur triplet, donc une part du bruit s'annule dans
+la comparaison : le verdict rendu ici est CONSERVATEUR -- s'il se trompe, c'est en refusant
+une separation reelle, jamais en en inventant une.
 """
 
 from __future__ import annotations
@@ -31,9 +46,11 @@ ROOT = Path(__file__).resolve().parents[1]
 RXT = re.compile(r"^RATE_TAIL(\d+)\(")
 CRASH_TOL = 0.05
 
-#: §24-26 : sigma ≈ 6 % du SCORE a N = 150. SEEL = 2*sqrt(score), donc sigma_SEEL ≈ sigma/2
-#: en relatif. La difference de DEUX SEEL porte sqrt(2) de plus.
-SIGMA_SCORE_N150 = 0.06
+#: 📏 MESURE sur r75x2 en `fast` (N = 50) : etendue de 3,10 % sur trois triplets de graines de
+#: consensus, soit sigma ≈ 1,83 % (E[etendue]/sigma = 1,693 a n = 3), soit 2,59 % sur une
+#: DIFFERENCE de deux SEEL. 🔴 Ne remplace PAS ce chiffre par une valeur d'un autre composant.
+SIGMA_SEEL_DIFF_FAST = 0.0259
+N_MESURE = 50
 N_PAR_MODE = {"fast": 50, "premium": 150, "deep": 300}
 
 #: Longueur de chaque composant -- une queue va de la coupure jusqu'a la fin.
@@ -42,10 +59,13 @@ N_COUCHES = {"35c": 35, "48c": 48, "75c": 75, "99c": 99,
 
 
 def sigma_seel_diff(mode: str) -> float:
-    """Ecart-type RELATIF sur la DIFFERENCE de deux SEEL, au mode donne."""
+    """Ecart-type RELATIF sur la DIFFERENCE de deux SEEL, au mode donne.
+
+    Ancre sur la MESURE en `fast`, reportee aux autres modes en 1/sqrt(N). Le report est une
+    hypothese : la loi est verifiee exacte sur le 48 couches (N = 32 a 128), jamais ici.
+    """
     n = N_PAR_MODE.get(mode, 150)
-    s_score = SIGMA_SCORE_N150 * math.sqrt(150.0 / n)
-    return (s_score / 2.0) * math.sqrt(2.0)
+    return SIGMA_SEEL_DIFF_FAST * math.sqrt(N_MESURE / float(n))
 
 
 def lire(p: str) -> None:
@@ -110,15 +130,14 @@ def lire(p: str) -> None:
     # dans le run a graine 42 COMME dans celui a graine 77, et le score y est identique
     # a 2e-11 pres -- l'ordre de la gigue de recompilation, c'est-a-dire RIEN.
     # 📏 Et les deposables sont aux rangs 0 a 4 : elles sont donc bien rescore'ees.
-    print(f"  ⚠️ le sigma ci-dessous vaut {100 * sd:.1f} % et il est bati sur le N du MODE "
-          f"({N_PAR_MODE.get(mode, '?')}).")
-    print("     🔴 C'EST LA MAUVAISE PROFONDEUR si le consensus est actif : il reecrit le score")
-    print("     des 60 premieres sur ses PROPRES graines, a consensus_num_runs tirages. Le")
-    print("     sigma est alors TROP GRAND, donc ce verdict est PERMISSIF -- il declare")
-    print("     « indiscernable » ce qui ne l'est peut-etre pas. Il ne faut donc PAS s'en")
-    print("     servir pour affirmer une egalite, seulement pour refuser une distinction.")
-    print("     🔑 La vraie dispersion -- d'un TRIPLET de graines de consensus a l'autre --")
-    print("     n'a jamais ete mesuree. Changer robustness_seed ne la sonde PAS.")
+    print(f"  🟢 sigma = {100 * sd:.2f} % sur une difference, MESURE sur r75x2 en `fast` "
+          f"(3 triplets de consensus, etendue 3,10 %)")
+    if mode != "fast":
+        print(f"     ⚠️ reporte de N=50 a N={N_PAR_MODE.get(mode, '?')} en 1/sqrt(N) : "
+              f"la loi est verifiee sur le 48 couches, jamais ici.")
+    print("     ⚠️ Trois points font une ETENDUE, pas un ecart-type. Et les coupures d'un meme")
+    print("     run partagent leur triplet, donc une part du bruit s'annule : ce verdict est")
+    print("     CONSERVATEUR -- il refuse peut-etre une separation reelle, il n'en invente pas.")
     print(f"\n  {'coupure':>8}{'SEEL':>9}{'ecart':>9}{'en sigma':>10}   verdict")
     ex_aequo = [c0]
     for c, s, _ in lignes[1:]:

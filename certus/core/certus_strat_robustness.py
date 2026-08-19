@@ -824,7 +824,20 @@ def _optical_prefix_variants(strategies: list[dict[str, Any]], params: Any,
     # est le monitoring COUCHE PAR COUCHE : mesure du 2026-08-19, les 224 strategies a blocs
     # plantent TOUTES a 100 %, et l'unique rescapee est celle a 75 blocs. Balayer 74 valeurs
     # de n sur 110 parentes rendrait en outre 8 000 strategies pour rien.
-    meres = [s for s in strategies if int(s.get("n_blocks", 0) or 0) >= num_layers]
+    # 🔴 `n_blocks` EST SOUVENT ABSENT DU DICTIONNAIRE DE STRATEGIE, et le lire avec un defaut
+    # de 0 faisait echouer le test pour TOUTES les strategies -- donc zero prefixe, en silence.
+    # 📏 Coute 100 minutes de calcul le 2026-08-19 : la sonde a tourne, rendu 682 strategies,
+    # et une courbe VIDE. La preuve etait sous les yeux -- `probe_blocs_vs_plantage.py` lit
+    # `st.get("n_blocks", len(blocks))`, ce qui dit exactement que la cle manque souvent.
+    #
+    # ⚠️ ET MON TEST UNITAIRE POSAIT LA CLE A LA MAIN (`par_couche["n_blocks"] = 48`), donc il
+    # validait mon hypothese au lieu des donnees. Un test ecrit depuis la meme croyance que le
+    # code ne teste rien. Il utilise desormais un dictionnaire de strategie tel qu'il arrive.
+    def _n_blocs(s: dict[str, Any]) -> int:
+        n = s.get("n_blocks")
+        return int(n) if n is not None else len(s.get("blocks") or [])
+
+    meres = [s for s in strategies if _n_blocs(s) >= num_layers]
     if not meres:
         logger.warning(
             "[PREFIX] aucune strategie a surveillance couche par couche : le balayage de "

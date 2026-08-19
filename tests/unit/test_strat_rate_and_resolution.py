@@ -467,8 +467,11 @@ def test_le_balayage_de_prefixe_optique_laisse_la_queue_PARFAITE():
          est conditionnelle au plan de surveillance, et c'est le seul qui survive sur r75x2 ;
       4. inactif par defaut (regle d'or).
     """
+    # 🔴 ON NE POSE PAS `n_blocks` : les strategies reelles ne le portent pas toujours,
+    # et la premiere version de ce test le posait -- validant mon hypothese au lieu
+    # des donnees. Le code doit retomber sur `len(blocks)`. 100 min de calcul perdues
+    # le 2026-08-19 parce que ce test passait sur un cas qui n'existe pas.
     par_couche = _strat([(i, i + 1) for i in range(48)], sid=11)
-    par_couche["n_blocks"] = 48
 
     # 4. inactif par defaut : rien ne doit apparaitre
     sans = _expand_with_rate_variants([par_couche], {"allow_rate": True}, 48, _Log())
@@ -492,7 +495,6 @@ def test_le_balayage_de_prefixe_optique_laisse_la_queue_PARFAITE():
 
     # 3. une strategie a blocs larges n'est pas balayee
     a_blocs = _strat([(0, 24), (24, 48)], sid=12)
-    a_blocs["n_blocks"] = 2
     hors = _expand_with_rate_variants(
         [a_blocs], {"allow_rate": True, "optical_prefix_sweep": [20]}, 48, _Log())
     assert not [v for v in hors if "OPT_PREFIX" in str(v.get("origin"))]
@@ -510,8 +512,11 @@ def test_le_prefixe_optique_survit_a_allow_rate_False():
     tourne deux heures pour rendre une courbe vide. Aucune erreur, aucun message -- le motif
     exact que CLAUDE.md decrit depuis le debut.
     """
+    # 🔴 ON NE POSE PAS `n_blocks` : les strategies reelles ne le portent pas toujours,
+    # et la premiere version de ce test le posait -- validant mon hypothese au lieu
+    # des donnees. Le code doit retomber sur `len(blocks)`. 100 min de calcul perdues
+    # le 2026-08-19 parce que ce test passait sur un cas qui n'existe pas.
     par_couche = _strat([(i, i + 1) for i in range(48)], sid=11)
-    par_couche["n_blocks"] = 48
     p = {"allow_rate": False, "optical_prefix_sweep": [20, 30, 48]}
     out = _expand_with_rate_variants([par_couche], p, 48, _Log())
     pref = [v for v in out if str(v.get("origin", "")).startswith("OPT_PREFIX")]

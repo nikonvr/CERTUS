@@ -57,6 +57,17 @@ zéro fait qui ne soit pas déjà écrit ici.
 
 ### Le budget, et il est vérifié mécaniquement
 
+⚠️ **AVANT DE COURIR APRÈS LES SIGNALEMENTS DU CONTRÔLEUR, lis ceci.** `check_claude_md.py`
+rend en permanence **5 « VALEURS DISCORDANTES »**, et les cinq ont été instruites une par une
+le 2026-08-19 : **ce sont des faux positifs**, le contrôle rapprochant un nom de paramètre du
+premier nombre voisin. `index_corridor : 162` vient du hash `162a0ff` · `dp_yield_weight :
+2026` d'une date · `machine_sampling_dd : 21 / 27 / 9` de comptages (« 21 points », « 27 sites
+d'appel », « 9 configurations ») · `reading_smoothing_window : 2` du « 2 s » de la fenêtre ·
+`phase_a_level_margin_factor : 1,66 / 3,33` sont **les deux valeurs légitimes** (actuelle et à
+évaluer). 🔑 **Le contrôle reste utile — il a trouvé la vraie contradiction du même jour**,
+deux lignes du même paramètre dans la table de §19, l'une prescrivant 8 et l'autre 1. **Ne le
+désarme pas ; sache seulement que son plancher est 5, pas 0.**
+
 `CLAUDE.md` est plafonné à **2 000 lignes**, contrôle F de `scripts/check_claude_md.py`. Un
 dépassement n'est pas une faute : c'est le signal qu'une section mérite son propre dossier.
 L'outil pour le faire proprement est `scripts/extraire_section.py` — il laisse un renvoi à la
@@ -151,16 +162,34 @@ au-dessus, la violation est **toujours active**.
 .venv\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
 ```
 
-Attendu : `All checks passed!` puis `2450 passed, 5 skipped`.
+Attendu : `All checks passed!` puis **zéro échec**.
 Si un test est rouge **avant** que tu n'aies rien touché → **ARRÊTE-TOI et signale.**
 Ce n'est pas à toi de le réparer.
+
+🔴 **NE COMPARE PAS LE NOMBRE DE TESTS À UN CHIFFRE ÉCRIT ICI — COMPTE-LE.** Ce document a
+porté successivement 2 300, 2 301, 2 310 et 2 450 pour la même commande, et **aucun de ces
+chiffres ne survit à l'ajout d'un test**, c'est-à-dire à une journée de travail normale.
+📏 Mesuré le 2026-08-19 : **2 453 tests collectés** au commit `ba7e118~1`, **2 456** après
+l'ajout de trois tests le même jour — l'écart de 3 est exactement celui des trois ajouts.
+
+```bat
+.venv\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov --collect-only
+```
+
+**Le seul critère qui vaut est `0 failed`.** Un compte qui bouge de +3 parce qu'on a fait son
+travail n'est pas une régression ; un test rouge en est une. ⚠️ La répartition
+`passed / skipped` n'est **pas** consignée ici, parce qu'elle n'a pas été remesurée depuis
+l'ajout — et écrire un chiffre non mesuré est précisément l'interdit n° 9.
 
 🔴 **UNE EXCEPTION, ET ELLE VA TE TOMBER DESSUS SI TU VIENS DE MONTER UN VENV.** Sur un
 cache numba **froid**, la première passe rend **3 échecs** — et ils sont faux.
 
 ```
-1re passe, venv neuf, cache FROID  ->  3 failed, 2447 passed  in 850,20 s
-2e passe, cache CHAUD              ->  2450 passed, 5 skipped in 346,76 s
+1re passe, venv neuf, cache FROID  ->  3 failed   (les trois nommes ci-dessous)
+2e passe, cache CHAUD              ->  0 failed
+
+meme motif reproduit le 2026-08-19 apres un changement de signature de noyau,
+qui force la recompilation donc rend le cache froid : 3 failed puis 0 failed.
 ```
 
 📏 Mesuré le 2026-08-17. Les trois sont `tests/unit/test_phase2_gradient.py::test_phase2_gradient_analytic_vs_fd`
@@ -209,7 +238,12 @@ jamais une durée sans sa machine — c'est ce qui a failli coûter une campagne
 ### Les dossiers de `docs/` — extraits de ce fichier le 2026-08-16
 
 🔑 **Un fait, un seul endroit.** Ces dossiers **font autorité** sur leur sujet ; ce fichier
-n'en garde qu'un renvoi. Si tu corriges un chiffre, corrige-le **là-bas** et nulle part
+n'en garde qu'un renvoi.
+
+⚠️ **Les tailles en lignes citées plus bas sont INDICATIVES et se périment à chaque édition.**
+Vérifiées le 2026-08-19 : toutes à moins de 3 % du réel sauf `CHANTIER_MULTITEMOINS.md`, qui
+annonçait 954 pour **1 079**. Elles servent à dire *« c'est un gros dossier »*, jamais à être
+citées comme un fait. Si tu corriges un chiffre, corrige-le **là-bas** et nulle part
 ailleurs — c'est la règle qui empêche les contradictions de revenir.
 
 | dossier | quand l'ouvrir |
@@ -223,6 +257,7 @@ ailleurs — c'est la règle qui empêche les contradictions de revenir.
 | [`QWOT_ET_TURNING_POINT.md`](docs/QWOT_ET_TURNING_POINT.md) | 🔴 **obligatoire** avant d'écrire sur les points tournants |
 | [`FEUILLE_DE_ROUTE.md`](docs/FEUILLE_DE_ROUTE.md) | ce qui est acquis (A1→A25), ce qui est outillé |
 | [`TRAVAUX_A_VENIR.md`](docs/TRAVAUX_A_VENIR.md) | les chantiers du modèle physique, 12.1 à 12.7 |
+| [`CHANTIERS_OUVERTS.md`](docs/CHANTIERS_OUVERTS.md) | 🆕 extrait de §27 le 2026-08-19 : les deux propositions de 👤 non mesurées, isolation des tests, perf |
 | [`ETAT_IMPLANTATION.md`](docs/ETAT_IMPLANTATION.md) | ce qui est **réellement** implanté, établi contre le CODE |
 | [`COMPOSANTS.md`](docs/COMPOSANTS.md) | les quatre composants d'essai |
 | [`DECISIONS_TRANCHEES.md`](docs/DECISIONS_TRANCHEES.md) | grille des λ, profondeur Monte-Carlo, les deux correctifs |
@@ -324,12 +359,17 @@ Aucun n'admet d'exception. Si tu crois devoir en violer un, **arrête-toi et dem
    disponible ailleurs. Corrige à la main, un fichier à la fois.
 2. **Jamais agrandir `extend-ignore`** dans `pyproject.toml`. La liste masque déjà 68 règles
    et ne doit que rétrécir. `tests/oracle/test_lint_debt_ratchet.py` le surveille.
-3. **Jamais supprimer `reports/`.** Résultats scientifiques de l'utilisateur : **226 fichiers**
-   au 2026-08-09, classeurs Excel et rapports de mesures d'indice réelles.
-   ⚠️ **Correction du 2026-08-09 : `reports/` n'est PAS gitignoré.** Seuls quatre
+3. **Jamais supprimer `reports/`.** Résultats scientifiques de 👤 : classeurs Excel et
+   rapports de mesures d'indice réelles. `reports/` n'est **pas** gitignoré ; seuls quatre
    sous-motifs le sont (`reports/exports/`, `release_dossier_*.zip`, `Report_*`,
-   `STRAT_observability_*`). Mesuré : **33 fichiers suivis par git sur 226**. Les
-   **193 autres ne sont donc protégés par rien** et sont **irrécupérables**.
+   `STRAT_observability_*`).
+   📏 **Remesuré le 2026-08-19, et le tableau s'est INVERSÉ** : **2 266 fichiers**, dont
+   **2 067 suivis par git**. La ligne d'avant disait *« 33 suivis sur 226, les 193 autres
+   irrécupérables »* — le dossier a été **multiplié par dix** et l'essentiel est désormais
+   versionné. ⚠️ **L'interdit tient quand même** : **199 fichiers restent hors de git**, un
+   nombre à peu près inchangé (193 → 199). Ce sont eux qui sont irrécupérables, pas le
+   dossier entier. 🔴 **Ne recopie aucun de ces quatre nombres : recompte-les**
+   (`git ls-files reports | wc -l`).
 4. **Ne modifie `example/example_strat/JSON-strat-example.json` que pour DURCIR.**
    Il s'est écarté des valeurs correctes **quatre fois**, toujours dans le sens
    **permissif**, et chaque fois cela a coûté une session de diagnostic. C'est le sens
@@ -633,8 +673,10 @@ qui est un troisième état qu'il ne faut pas confondre avec « tient ».
 ### Le repère git
 
 L'état du dépôt avant l'intervention de la session précédente porte l'étiquette
-**`depart-gemini`** (`f816767`, 2026-08-07). Elle est vivante — vérifiée le 2026-08-08, 36
-commits depuis.
+**`depart-gemini`** (`f816767`, 2026-08-07). Elle est vivante — revérifiée le 2026-08-19,
+**240** commits depuis. ⚠️ Ce compte croît chaque jour : ne le cite pas, recompte-le.
+⚠️ Et `git rev-parse depart-gemini` rend le SHA de l'**objet-tag**, pas du commit — c'est
+`git log -1 depart-gemini` qui donne `f816767`.
 
 ```bat
 git log --oneline --stat depart-gemini..HEAD
@@ -717,7 +759,13 @@ d'empilements, stratégie de dépôt. Application **PyQt6** + noyau **NumPy/SciP
   de §21 ont été mesurés sous **3.14.6**. Toute mesure rapportée doit porter sa version
   d'interpréteur, sinon un écart de version sera attribué au code.
 - Cible principale Windows, build gelé PyInstaller
-- 183 600 lignes de source · 56 400 de tests · ~2 300 tests collectés
+- 📏 **Mesuré le 2026-08-19**, et les trois chiffres qui figuraient ici étaient faux :
+  **171 600** lignes de source (`certus/` + les 12 fichiers de la racine, 294 fichiers) ·
+  **62 146** de tests (261 fichiers) · **21 687** de scripts (97 fichiers) ·
+  **2 456** tests collectés sur `tests/oracle/ + tests/unit/`.
+  ⚠️ L'ancien « 183 600 de source » ne correspondait à **aucun périmètre** : ni `certus/`
+  seul (163 485), ni avec la racine (171 600), ni en ajoutant `scripts/` (193 287). Et le
+  « ~2 300 tests » était faux par inclusion. 🔴 **Ces nombres se périment ; recompte-les**
 
 ### Points d'entrée (racine)
 
@@ -770,9 +818,9 @@ un `pip install` ne récupérerait aucun sous-module : le projet n'est utilisabl
 
 ### Pièges de fichiers
 
-- 🔴 **`reports/` contient les résultats scientifiques de l'utilisateur** — classeurs Excel
-  et rapports HTML de déterminations d'indice. **Non protégé** : seuls 4 sous-motifs sont
-  gitignorés et 33 fichiers sur 226 sont suivis par git — voir interdit 3. Irrécupérable.
+- 🔴 **`reports/` contient les résultats scientifiques de 👤** — classeurs Excel et rapports
+  HTML de déterminations d'indice. **199 fichiers sur 2 266 sont hors de git** (mesuré le
+  2026-08-19) et sont irrécupérables — voir interdit 3, qui porte les chiffres.
   Ne le supprime **jamais** dans un « nettoyage ».
 - Les 3 fichiers `certus_*.py` restants à la racine (`certus_curve_smoother`,
   `certus_spectral_preproc`, `certus_substrate_index`) sont des **façades légitimes** de
@@ -1001,7 +1049,7 @@ paramètres ont été arrêtés avec le physicien le 2026-08-08 et sont dans le 
 |---|---|---|
 | Cadence d'échantillonnage machine | **4 Hz**, un point tous les **0,125 nm** | §18-1 |
 | Amplitude du bruit de lecture | **±0,05 point**, soit `A = 5e-4` en unités T | §18-2 |
-| `reading_smoothing_window` (`k`) | **8** lectures (2 s) — défaut 1 = inactif | §18-3 |
+| `reading_smoothing_window` (`k`) | 🔴 **DEUX VALEURS, ET IL FAUT LES DISTINGUER.** **Valeur du MODÈLE figé : 8** lectures (2 s à 4 Hz, §18-3). **Valeur RETENUE en exploitation : 1, c'est-à-dire INACTIF**, et elle le reste — 👤 : *« on ne sait pas trop les algos de smooth appliqués par Bühler »*, et §18 interdit d'ajouter une structure non mesurée. ⚠️ **Ce document portait ces deux valeurs sur DEUX LIGNES SÉPARÉES de cette même table jusqu'au 2026-08-19** : lue dans l'ordre, elle prescrivait 8 puis 1. Fusionnées. | §18-3 |
 | `tp_hysteresis_factor` | **1,00** — **mesuré**, pas dérivé, à `k = 8` et `N = 800`. 🔴 **Ni 0,354 ni 1,66.** Le `1/√k` = 0,354 est **réfuté** : il laisse **100 %** de points tournants fabriqués. ⚠️ La valeur dépend de `N` autant que de `k` — si l'un bouge, **remesure** | §18-4, A1 |
 | Retard de déclenchement | **aucun** — ne rien ajouter | §18-5 |
 | `phase_a_level_margin_factor` | **1,66** actuel, **3,33** à évaluer | §18-6 |
@@ -1010,7 +1058,6 @@ paramètres ont été arrêtés avec le physicien le 2026-08-08 et sont dans le 
 | `photometric_curvature_amp` | **0,00375** ⇒ à `T = 0,5` la vraie valeur est dans `[0,4975 ; 0,5025]` à 2 σ. 👤 **ACTIF PAR DÉFAUT** | §29.1bis |
 | `allow_rate` | **vrai** — 👤 *« c'est le cas général »* | §22 |
 | `slit_bias_enabled` | **vrai**, fente nominale **2 nm** — 👤 *« réaliste, pas optimiste »* | §29.7 |
-| `reading_smoothing_window` | **1 = INACTIF**, et il le reste — 👤 *« on ne sait pas trop les algos de smooth appliqués par Bühler »*. §18 interdit d'ajouter une structure non mesurée | §18-3 |
 | `affine_scale_amp` | **0,05** ⇒ `a ∈ [0,95 ; 1,05]` | §29.1 |
 | `affine_offset_amp` | **0,02** ⇒ `b ∈ [−0,02 ; +0,02]` | §29.1 |
 | Plafond du banc | `CERTUS_BENCH_TIMEOUT_S=5400` | §21 |
@@ -1188,7 +1235,7 @@ recherche récursive. Le pipeline sature tous les cœurs en `prange`.
 **Suite de tests, mesurée sur cette copie le 2026-08-08** :
 
 ```
-pytest tests/oracle/ tests/unit/ -q --no-cov  ->  2450 passed, 5 skipped in 101.24s
+pytest tests/oracle/ tests/unit/ -q --no-cov  ->  0 failed
 ruff check .                                  ->  All checks passed!
 ```
 
@@ -1197,8 +1244,14 @@ ruff check .                                  ->  All checks passed!
 
 🔴 **Et la phrase qui suivait était fausse : elle disait « la référence est 2310 », six
 lignes après un bloc annonçant 2450 pour la même commande.** Deux chiffres contradictoires
-dans la même section. 📏 Remesuré **deux fois** le 2026-08-17, à cache numba chaud puis
-froid : **la référence est bien `2450 passed, 5 skipped`.** Le 2310 est retiré.
+dans la même section.
+
+🔑 **La leçon a été tirée le 2026-08-19, et elle est plus forte que la correction** : ce
+document a porté **2 300, 2 301, 2 310 puis 2 450** pour la même commande, et **chacun a été
+faux à son tour**. Ce n'est pas une suite d'inattentions — c'est qu'**un compte de tests se
+périme dès qu'on ajoute un test**, donc dès qu'on travaille. 📏 Le 2026-08-19 il valait
+**2 453** puis **2 456** dans la même journée. **Le chiffre est retiré au profit du seul
+critère qui survive : `0 failed`.** Voir §2.
 
 ⚠️ **Le `101.24s` du bloc ci-dessus n'est pas reproductible ici** — la même commande rend
 **346,76 s** sur i5-8250U à cache chaud. Je ne sais pas si l'écart vient de la machine ou du
@@ -1460,7 +1513,7 @@ premier chantier de §22, avant tout raffinement.
 ## 23. 🔴 MULTIPLE TESTGLASS METHODOLOGY — le chantier en cours
 
 📌 **Le dossier complet est dans [`docs/CHANTIER_MULTITEMOINS.md`](docs/CHANTIER_MULTITEMOINS.md)** —
-954 lignes : le concept, ce qu'il coûte, la méthode d'assemblage validée, les campagnes, les
+**1 079 lignes** : le concept, ce qu'il coûte, la méthode d'assemblage validée, les campagnes, les
 parades adoptées, et les douze sous-sections de synthèse. **Lis-le avant de toucher au sujet.**
 
 **Le chantier en dix lignes.** Au-delà d'une certaine difficulté, un seul verre témoin ne
@@ -1645,140 +1698,52 @@ physique.
 
 ## 27. Autres chantiers ouverts
 
-- 📌 **LE PLAN DU 2026-08-16 EST ECRIT ET AUTONOME** :
-  [`docs/PLAN_2026-08-16.md`](docs/PLAN_2026-08-16.md). Campagnes longues en mode **premium**,
-  ordonnees par dependance, avec durees mesurees, commandes exactes, et ce que chaque resultat
-  deciderait. 👤 le lancera sous Antigravity. Les cinq pieges du 15 aout y sont en tete, et
-  la phase 1 repare l'instrument avant que quoi que ce soit d'autre ne tourne.
+📌 **Le dossier est [`docs/CHANTIERS_OUVERTS.md`](docs/CHANTIERS_OUVERTS.md)** — extrait
+d'ici le 2026-08-19, quand ce fichier a touché 1 990 lignes sur 2 000.
 
+**Ce qu'il faut retenir sans l'ouvrir :**
 
-- 🔵 **PROPOSÉ PAR 👤 le 2026-08-15 — compter en Phase A les λ qui offrent un point tournant.**
-
-  > 👤 : *« en routine, le code pourrait ou même devrait, en Phase A, regarder pour une couche
-  > i le nombre de λ permettant de passer un turning point avec le swing minimal »*.
-
-  🔴 **Ce n'est pas ce que Phase A fait aujourd'hui, et l'écart est réel.** Le filtre actuel
-  (`certus_strat_service.py:868`) retient une λ candidate sur **deux critères d'amplitude** :
-
-  | | |
-  |---|---|
-  | `dynamics ≥ dynamics_threshold` (0,025) | le **swing** crête-à-crête `T_max − T_min` pendant la croissance |
-  | `t_min ≥ min_transmission_floor` (0,10) | le signal ne plonge pas sous le plancher photométrique |
-
-  ⚠️ **Aucun des deux ne teste l'EXISTENCE d'un point tournant.** Une couche dont `T` croît de
-  façon monotone pendant toute sa croissance a un swing parfaitement acceptable et **aucun
-  extremum sur lequel s'arrêter**. Elle passe le filtre et n'offre pourtant pas de point
-  d'arrêt. C'est exactement la distinction de §14 (QWOT ≠ point tournant).
-
-  🟢 **Et la donnée nécessaire est déjà là** — c'est ce qui rend l'action bon marché.
-  `prepare_dynamics_data_kernel` (`certus_strat_growth.py:1760`) calcule déjà `M_before`,
-  `n_layer` et `n_sub` pour **chaque couche × chaque λ candidate**. La forme fermée
-  `layer_scan_coeffs` en tire `Q` et `R` en O(1), et le compte de points tournants s'écrit
-
-      k1 - k0 + 1   avec   delta_TP = ½·arctan2(R, Q) + k·π/2   dans ]0, δ_final]
-
-  C'est **une dizaine de lignes**, sans nouveau parcours de l'empilement. Prototype déjà
-  écrit et validé : `scripts/probe_turning_points.py`.
-
-  **Ce que ça donnerait** : une largeur de monitorabilité par couche — *combien de λ offrent
-  au moins un point tournant ET un swing suffisant*. C'est un diagnostic que rien ne produit
-  aujourd'hui, et un candidat naturel pour décider où changer de verre témoin (§23.4), là où
-  `S(p−1)` a échoué.
-
-  📏 Mesuré sur le random75, médiane des λ offrant un point tournant, par couche :
-  **49/61 à ×0,5**, **61/61 à ×1, ×1,5 et ×2**.
-
-  ##### 🔵 Et la « phase intermédiaire » proposée dans la foulée — elle existe déjà
-
-  > 👤 : *« entre la phase A et la phase B il pourrait y avoir une phase intermédiaire qui
-  > cherche à minimiser les changements de longueur d'onde pour les couches admissibles en
-  > turning point et dynamique »*.
-
-  🟢 **La moitié « minimiser les changements de λ » est déjà faite, et c'est la DP de Phase B.**
-  `_find_k_best_groupings_dp_sequential` (`certus_strat_ranking.py:154`) reçoit
-  `cost_map[couche][λ] → coût` et `_compute_valid_blocks_kernel` cherche les blocs où **une
-  seule λ sert TOUTES les couches du bloc**. C'est exactement l'optimisation décrite, elle est
-  exacte (programmation dynamique, pas une heuristique), et elle rend les `top_k` meilleurs
-  groupements.
-
-  🔴 **Ce qui manque n'est donc pas la phase, c'est le CRITÈRE D'ADMISSIBILITÉ qu'elle
-  consomme.** `cost_map` est bâti sur les candidates de Phase A, filtrées sur le swing et le
-  plancher photométrique — **jamais sur l'existence d'un point tournant**.
-
-  🔑 **Les deux propositions de 👤 se réduisent donc à UN seul changement** : ajouter le
-  comptage de points tournants au filtre de candidature. La DP existante minimisera alors les
-  changements de λ **sur le bon ensemble**, sans qu'on écrive de phase nouvelle.
-
-  ⚠️ **Mais pas en exclusion sèche, et voici pourquoi.** Une couche sans point tournant reste
-  déposable : elle s'arrête sur un **niveau absolu**, ou en **Rate**. Ce qu'elle perd, c'est
-  l'ancre de phase auto-référencée dont POEM a besoin. Le compte de points tournants doit donc
-  entrer comme **coût**, pas comme couperet — sinon on interdit des stratégies qui marchent.
-  🔴 Et il y a un second effet, dans l'autre sens : `CRASH_TP_MISCOUNT` sanctionne une
-  stratégie qui attend *N* points tournants et en voit *N ± 1*. **Trop** de points tournants
-  proches est donc aussi un risque, pas seulement trop peu. Le coût doit être **non
-  monotone**, et c'est une raison de plus pour le mesurer avant de le poser.
-
-- 🟢 **NON URGENT — la Phase A ignore qu'une couche Rate efface l'historique.**
-  *Établi le 2026-08-15, chiffré, et délibérément repoussé.*
-
-  La Phase A **suit** la continuation de bloc (`block_start_running`, passé aux candidates
-  via `phase_a_block_start`, `certus_strat_objectives.py:287`) : elle sait donc qu'une λ
-  inchangée conserve les ancres. **Mais elle ne connaît pas `rate_flags`.** Or une couche
-  Rate efface l'historique **exactement comme un changement de λ** — le noyau l'applique
-  (`certus_strat_batch.py`, frontière de bloc forcée), la Phase A ne le prévoit pas.
-
-  **Conséquence, et elle est bornée à UNE couche** : la λ de la couche `i+1` a été choisie en
-  supposant un historique hérité que la couche `i` en Rate a détruit. Les couches `i+2` et
-  suivantes héritent normalement du nouveau bloc et ne sont pas concernées.
-
-  ⚠️ **Le score, lui, reste honnête** : la simulation paie bien la pénalité de rupture de
-  bloc. Ce n'est pas une erreur de mesure, seulement un choix de λ sous-optimal sur une
-  couche. Et une seule couche Rate par variante, par construction — l'effet ne se cumule pas.
-
-  📏 **L'empirique dit que ça ne bloque rien** : sur le 99c, la gagnante était
-  `RATE_L25(from 900000037)`. Les variantes Rate gagnent **malgré** cette sous-optimalité.
-
-  **Le correctif tient en deux lignes** : passer `rate_flags` à la Phase A et forcer
-  `block_start_running = i_layer` après une couche Rate, même règle que pour un changement de
-  λ. 👤 : *« relancer la Phase A ne changerait pas grand-chose, on est dans la subtilité »* —
-  c'est exact, et c'est pourquoi ce point passe **après** tout chantier qui touche au SEEL.
-
-  🔑 **Rappel de 👤 sur le Rate, à ne pas perdre** : le facteur est calculé sur les couches
-  **de même nature déposées AVANT** la couche `i` (`certus_strat_growth.py:634`, boucle
-  `range(i_layer-2, -1, -2)`). Donc **`rate(i)` et `rate(j)` ont des facteurs différents même
-  sur un matériau identique.** Ce n'est pas une constante par matériau.
-
-- **Isolation des tests** — une fuite `sys.modules` faisait échouer en sélection large des
-  tests qui passent isolément. Cause racine corrigée, audit restant :
-  [`docs/REPRISE_TESTS_ISOLATION.md`](docs/REPRISE_TESTS_ISOLATION.md).
-- **Performance** — 📏 mesuré le 2026-08-04 : **il n'y a PAS de ×2 disponible** dans les
-  pistes documentées. Seul gain acquis : −10 % sur STRAT. Le fossé machine va de ×1 à ×3,2
-  selon les modules, pas ×7-10. [`docs/REPRISE_PERF.md`](docs/REPRISE_PERF.md) — ⚠️ ses
-  **temps absolus** datent d'avant le déménagement hors Google Drive ; les *rapports* restent
-  utiles, les secondes non.
-- **Amélioration générale** — [`docs/PLAN_AMELIORATION.md`](docs/PLAN_AMELIORATION.md) : dette
-  de lint, tests absents de la CI, six chantiers ordonnés.
+| chantier | l'essentiel |
+|---|---|
+| 🔵 **compter les λ qui offrent un point tournant**, proposé par 👤 le 15/08 | la Phase A filtre sur le **swing** et le **plancher photométrique**, **jamais sur l'existence d'un point tournant** — une couche à `T` monotone passe le filtre et n'offre aucun point d'arrêt. La donnée est déjà calculée, le correctif fait une dizaine de lignes. ⚠️ Mais en **coût**, pas en couperet, et le coût doit être **non monotone** : trop de points tournants proches déclenche `CRASH_TP_MISCOUNT` |
+| 🔵 **la « phase intermédiaire »** proposée dans la foulée | elle **existe déjà** : c'est la DP de Phase B, qui minimise exactement les changements de λ. Ce qui manque n'est pas la phase, c'est le **critère d'admissibilité** qu'elle consomme |
+| 🟢 **la Phase A ignore qu'une couche Rate efface l'historique** | établi, chiffré, **délibérément repoussé** — l'effet est borné à **une** couche, et le score reste honnête. Correctif en deux lignes |
+| **isolation des tests** · **performance** · **plan d'amélioration** | trois renvois, aucun fait dupliqué ici |
 
 ### Dette de lint
 
 ```
-ruff check .  (config projet)             ->  All checks passed!    (mesuré 2026-08-09)
-ruff check .  (mêmes règles, sans ignore) ->  12 157 erreurs        (non remesuré)
+ruff check .  (config projet)             ->  All checks passed!
+ruff check .  (memes regles, sans ignore) ->  12 142 erreurs    <- REMESURE le 2026-08-19
 ```
 
-**La dette est celle que masque `extend-ignore`, pas celle que `ruff` rapporte.**
+**La dette est celle que masque `extend-ignore`, pas celle que `ruff` rapporte.** Les
+**68 règles** de la liste sont exactes (comptées le 2026-08-19), et le « 12 157 » qui portait
+la mention *(non remesuré)* est **confirmé à 0,1 % près** : **12 142**.
 
-Les plus dangereuses masquées : **F822 (202)** — `__all__` référençant des noms inexistants,
-concentrés sur 4 fichiers UI ; tout `import *` sur eux lève `AttributeError`. **F821 (67)**,
-dont 3 réels dans `certus/physics/gradient_analytic.py`. **F401 (5 473)** · **F403/F405
-(80 / 3 161)**.
+📏 **Le protocole, pour que ce soit reproductible** — vider `extend-ignore` dans une copie de
+`pyproject.toml`, lancer `ruff check . --statistics`, restaurer. **Ne jamais mesurer avec
+`--select ALL`** : cela active des règles que le projet n'a jamais choisies et rend
+**58 449**, un chiffre qui ne veut rien dire ici.
+
+🟢 **ET LA PARTIE LA PLUS ALARMANTE DE CE BLOC EST PÉRIMÉE — elle a été RÉPARÉE.** Il annonçait
+*« les plus dangereuses masquées : **F822 (202)** — `__all__` référençant des noms inexistants,
+tout `import *` sur eux lève `AttributeError` ; **F821 (67)**, dont 3 réels dans
+`certus/physics/gradient_analytic.py` »*. 📏 `ruff check . --select F821,F822` rend désormais
+**`All checks passed!`** — **zéro des deux**, sur tout le dépôt.
+
+**Ce qui reste, mesuré** : `F401` **5 293** (imports inutilisés — dont beaucoup de ré-exports
+volontaires, voir l'interdit n° 1) · `F405` **3 122** · `E402` **900** · `I001` **898** ·
+`F403` **52**. Le gros de la dette est donc de l'**import**, pas du **nom indéfini** — deux
+natures très différentes de risque, et c'est la seconde qui avait disparu.
 
 ### CI
 
 248 fichiers `.py` sous `tests/` (241 `test_*.py`). ⚠️ **Le « 2 299 tests collectés » qui
 figurait ici est faux par inclusion** : `tests/oracle/` + `tests/unit/` en rend à eux seuls
-**2 455** (2450 + 5 skipped, mesuré le 2026-08-17), et `tests/` est un sur-ensemble. Le
-compte réel de la suite complète n'est pas mesuré — elle coûte ~1 h 45.
+**2 456** au 2026-08-19, et `tests/` est un sur-ensemble. 🔴 **Ne recopie pas ce nombre : il
+change dès qu'on ajoute un test** — compte-le avec `--collect-only` (§2). Le compte réel de
+la suite complète n'est pas mesuré — elle coûte ~1 h 45.
 `release-windows.yml:93` lance `pytest tests/oracle/ tests/unit/`, `tests.yml` lance
 `tests/oracle/` puis `tests/`. **`lint.yml` n'exécute aucun test** — c'est le chantier qui
 reste.
@@ -1803,8 +1768,7 @@ et les paliers suivants.
    **pas** de comparer des runs **à protocole fixé** dans une même campagne.
 3. **Rien de mesuré avant d'être mesurable isolément** (contrainte C3).
 
-**Après chaque action** : `pytest tests/oracle/ tests/unit/ -q --no-cov` → **2450 passed,
-5 skipped** · `ruff check .` → propre · un commit, avec la sortie collée.
+**Après chaque action** : `pytest tests/oracle/ tests/unit/ -q --no-cov` → **0 failed** · `ruff check .` → propre · un commit, avec la sortie collée.
 
 🔴 **Les deux défauts d'implantation à connaître avant tout** :
 

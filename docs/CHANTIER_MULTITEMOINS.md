@@ -764,9 +764,9 @@ qui la précèdent quand elles divergent.
 | # | Fait | Preuve |
 |---|---|---|
 | 1 | **Le 99c n'est pas fabricable en une seule campagne.** Les **487** stratégies plantent à **100 %** — pas la retenue, **la meilleure**. Le « 0,86 nm » qui circulait est un **score de repli**, inatteignable. | distribution complète des taux de plantage |
-| 2 | **Le multi-témoins le rend fabricable.** Campagnes à **0 %** de plantage chacune, assemblage à **0,782 nm** *(0,760 nm annoncé le 15/08, corrigé le 16/08 — §23.12)*. 🔑 **Il ne fait pas gagner en précision — il fait passer d'IMPOSSIBLE à POSSIBLE.** | 386 partitions assemblées |
+| 2 | **Le multi-témoins le rend fabricable.** Campagnes à **0 %** de plantage chacune, assemblage à **0,81 nm** *(0,760 nm annoncé le 15/08, 0,782 le 16/08, **0,81 le 17/08** — voir « CORRIGÉ LE 2026-08-17 » plus bas : le 0,782 était le **minimum de trois graines**, jamais une valeur du composant)*. 🔑 **Il ne fait pas gagner en précision — il fait passer d'IMPOSSIBLE à POSSIBLE.** | 386 partitions assemblées |
 | 3 | **Le découpage ne gouverne presque rien.** Étendue **+14,4 %** sur 386 partitions, soit moins de 3 unités de résolution ; **110 partitions à égalité** avec la première. | résolution 5,1 % en SEEL à N=50 |
-| 4 | **Le nombre de témoins ne compte pas.** ⚠️ **Revu le 16/08** : en premium la meilleure est à **4 témoins** (0,782 nm), la meilleure à 3 témoins suit à 0,784 nm — **+0,2 %**, sous la résolution de 3,0 %. Toujours une égalité, mais l'abandon de la vague à 4 témoins n'était **pas** fondé. | §23.12 |
+| 4 | **Le nombre de témoins ne compte pas.** ⚠️ **Revu le 16/08** : en premium la meilleure est à **4 témoins** (0,782 nm **à graine 42**), la meilleure à 3 témoins suit à 0,784 nm **à la même graine** — la comparaison à graine FIXÉE reste valide, c'est la valeur ABSOLUE qui ne l'est pas — **+0,2 %**, sous la résolution de 3,0 %. Toujours une égalité, mais l'abandon de la vague à 4 témoins n'était **pas** fondé. | §23.12 |
 | 5 | **Presque tout sous-empilement est monitorable sur verre nu** : **248 sur 249**. Un seul infaisable, `[22,78)`. | campagne des intervalles |
 | 6 | 🔑 **Ce n'est PAS l'âge du témoin qui gouverne.** Le **dernier** tiers du 99c — là où, en campagne unique, il ne reste qu'**une** λ viable — est le **plus facile** des trois sur verre nu : 156 stratégies déposables sur 163. | A 23/166, B 54/126, C 156/163 |
 | 7 | 🟢 **CONTRÔLE NÉGATIF PASSÉ, sur TROIS composants.** Là où le monitoring marche déjà, **toute** partition dégrade : **+73 à +89 %** sur le 48c (11/11), **+10 à +98 %** sur le 35c (12/12), **+110 %** sur le 75c aléatoire (0,272 → 0,571 nm). **Aucune ne gagne, même par chance.** | 40 sous-empilements |
@@ -819,7 +819,7 @@ aléatoire les départage : soit elle ne mord qu'à **fort contraste**, soit le 
 était une **coïncidence** sur 13 points médians et confondus. Si les quatre points s'alignent
 sur une relation monotone contraste ↔ pouvoir prédictif, la première devient une observation.
 
-**Et le facteur limitant n'est pas là.** 0,782 nm contre **0,300** visés : facteur 2,6, avec
+**Et le facteur limitant n'est pas là.** 0,81 nm contre **0,300** visés : facteur **2,7**, avec
 un écart meilleur/pire presque du bruit. Le levier pour la cible de 👤 **n'est pas le
 découpage** — il est dans l'erreur intrinsèque de chaque campagne.
 
@@ -1001,10 +1001,14 @@ son ampleur se mesure sur **la même partition** passée dans les deux caches :
 | partition | fast (N = 50) | premium (N = 150) |
 |---|---|---|
 | `0-22 / 22-72 / 72-99` — championne du 15/08 | 0,760 nm | 🔴 **0,858 nm** (+12,9 %) |
-| `0-22 / 22-42 / 42-76 / 76-99` — **championne premium** | 0,803 nm | 🟢 **0,782 nm** |
+| `0-22 / 22-42 / 42-76 / 76-99` — **championne premium** | 0,803 nm | 🟢 **0,782 nm** ⚠️ *graine 42 seule* |
 
-🔑 **Le chiffre à citer est désormais 0,782 nm**, à **4 témoins**, partition
-`0-22 / 22-42 / 42-76 / 76-99`. 436 partitions assemblées, **31 à égalité** (δ = 3,0 % à
+🔑 **Le chiffre à citer est `0,81 nm`** — 🔴 **et ce paragraphe disait `0,782 nm` jusqu'au
+2026-08-19.** Le 0,782 est le résultat à la **seule graine 42**, c'est-à-dire le **minimum**
+de trois graines (0,782 / 0,816 / 0,839). Voir « CORRIGÉ LE 2026-08-17 » vingt lignes plus
+bas : le correctif y était écrit, **et cette phrase-ci ne l'avait pas suivi**. C'est très
+exactement le défaut que `CLAUDE.md` §1 décrit — *sept modifications à la main, une oubliée*.
+La partition reste `0-22 / 22-42 / 42-76 / 76-99`, à **4 témoins**. 436 partitions assemblées, **31 à égalité** (δ = 3,0 % à
 N = 150), étendue +11,6 %, 2 partitions rejetées pour plantages cumulés > 5 %.
 
 **Pourquoi le fast surestimait.** À N = 50 la P95 est la 47,5ᵉ statistique d'ordre : mal

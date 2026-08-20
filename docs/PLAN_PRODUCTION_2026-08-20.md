@@ -1190,3 +1190,119 @@ bruit ne serait alors pas en cause, et il faudrait revenir à la portée de la r
 elle tournait déjà quand cette piste est apparue. Modifier le code à ce moment aurait fait
 tourner les cellules 2 à 4 sur un code que le contrôle C1 ne couvre pas — la contrainte C3, et
 exactement le défaut que `CHANTIER_RATE.md` §19 décrit. **Première action après le batch.**
+
+---
+
+## 17. 🟢 L'INSTRUMENT A PARLÉ — et il réfute d'avance DEUX de mes trois cellules
+
+`reports/BATCH_seed42_20260820_235821.md`, cellule `base`, **93 min**, `r75x2 @ 2 nm deep s042`.
+Écrit le 2026-08-21 à 01:50, **pendant que la cellule `cgc95` tourne** : ce qui suit est donc
+une **prédiction posée d'avance**, pas un compte rendu.
+
+### 17.1 ✅ La porte C1 passe, deux fois
+
+```
+REFERENCE 20/08    1617 strategies · 0 deposable · crash_min 100,00 % · ELITE 0
+CELLULE base 21/08 1617 strategies · 0 deposable · crash_min 100,00 % · ELITE 0
+
+compteurs ELITE : engendrees 4226 · retenues 0 · halving 1368 · RMSE 211 · plantage 1116
+                  46 rounds, tous sortie=COMPLETE
+```
+
+**Les compteurs reproduisent la référence au chiffre près.** L'instrument `[ELITE-WL]` est donc
+bien de la journalisation pure, et tout ce qui suit est interprétable.
+
+### 17.2 🔑 ELITE ENGENDRE 685 nm — DEUX FOIS SUR 4226
+
+C'est la lecture que rien ne portait avant, et elle ne tombe dans aucune des deux cases que
+j'avais préparées.
+
+```
+lambda ENGENDREES par ELITE (nombre de candidates qui l'utilisent quelque part) :
+    610:3701  686:3185  689:2769  701:2676  703:2509  690:2454  648:2363  696:2042
+    476:1867  700:1816  691:1638  647:1540   ...
+    685:2                                          <- la lambda des 544 deposables
+```
+
+🔴 **Ce n'est ni « jamais » ni « souvent puis rejetée ».** C'est **2 contre 3185** pour la
+voisine immédiate à 686 nm — un rapport de **1 600 pour 1**. ELITE *effleure* la λ gagnante et
+ne l'explore, en pratique, jamais.
+
+**Le mécanisme, et il explique le chiffre** : ELITE part de ses parents et mute λ ± 1 nm. Depuis
+686 nm, 685 est **atteignable**. Mais la mutation porte sur **un bloc à la fois**, et il faut
+qu'elle tombe sur le bloc qui couvre les couches 33-52 **et** qu'elle choisisse 685 plutôt que
+687. Le plafond de 120 candidates par round échantillonne donc un voisinage bien plus grand
+qu'il ne peut couvrir.
+
+🔴 **Conséquence, et elle réfute ma cellule `reach` d'avance** : porter
+`elite_wl_neighbor_span` à 2 **élargit** le voisinage, donc **dilue** encore la probabilité de
+tomber sur 685 au bon bloc. Doubler `elite_max_candidates` à 240 ferait passer 685 de 2 à ~4
+occurrences. **Aucun des deux ne traite le problème.**
+
+> **Le problème n'est pas la portée d'ELITE, c'est que sa mutation est NON DIRIGÉE.**
+
+### 17.3 🔑 UNE SEULE CANDIDATE SUR 1116 EST DANS LA BANDE OÙ LA PORTE À CONFIANCE AGIT
+
+```
+bandes de plantage des rejets (max sur les trois niveaux de bruit) :
+    score_non_fini/50-99% : 464
+    score_non_fini/25-50% : 389
+    score_non_fini/100%   : 189
+    score_non_fini/10-25% :  73
+    score_non_fini/5-10%  :   1     <-- la seule que la borne de confiance pourrait sauver
+                            -----
+                            1116     (= le compteur, exactement)
+```
+
+À `N = 300`, une borne de confiance basse à 95 % sur 10 % (30/300) vaut encore ≈ 7 %, donc
+au-dessus de la tolérance de 5 %. Sur 25 % et plus, c'est sans espoir.
+
+🔵 **PRÉDICTION, POSÉE PENDANT QUE LA CELLULE TOURNE** : `crash_gate_confidence = 0.95` rendra
+**0 déposable**, comme la référence. Au mieux **une** stratégie de plus entre dans le
+raffinement, et rien ne dit qu'elle survive au round suivant.
+
+**Ce qui la réfuterait** : un déposable, ou même une seule stratégie retenue par ELITE. Cela
+voudrait dire que la borne de confiance agit ailleurs que là où je l'ai lue — par exemple au
+criblage, à `n_screen_runs = 50`, où la granularité est bien plus grossière et où une seule
+occurrence pèse 2 %.
+
+⚠️ **Et c'est une raison sérieuse de laisser la cellule finir** : le criblage est le seul endroit
+où mon raisonnement peut être faux, et il est justement le plus sensible à la granularité. Une
+prédiction qui ne coûte rien à vérifier doit être vérifiée.
+
+### 17.4 🟠 Ce que cela fait au §16 — la piste TIENT, et devient la seule vivante
+
+Les bandes sont des **max sur trois niveaux de bruit**. Une candidate à 50 % sur le pire niveau
+peut très bien être à **0 % au bruit réel**. Donc :
+
+| | |
+|---|---|
+| 🔴 ce que ces bandes ne disent PAS | si ces candidates sont fabricables sur la machine réelle |
+| 🟢 ce qu'elles renforcent | la question du §16 est la bonne, et elle est maintenant la seule qui reste ouverte sur la porte |
+
+**L'instrument du §16 — `crash_rates_by_noise` remonté à côté de `crash_rate` — devient donc
+l'action la plus rentable du plan.** Il transforme une bande « 25-50 % du pire niveau » en trois
+chiffres dont un seul décrit la machine de 👤.
+
+### 17.5 🔵 CE QUI SUIT, ET POURQUOI L'ORDRE DE LA NUIT CHANGE
+
+Ma règle de décision automatique a choisi `cgc95 → reach → nogain` sur le critère « des rejets
+sous 100 % existent » (83,1 % le sont). 🔴 **Le critère était trop grossier** : il fallait
+demander « des rejets dans la bande où la borne agit », et il y en a **un**. Je n'ai pas corrigé
+le script en cours de route — il est celui qui a tourné, et l'ordre ne coûte rien puisque les
+trois cellules tiennent dans le budget.
+
+**Le nouvel ordre, une fois `cgc95` rendu :**
+
+| # | action | pourquoi elle passe devant |
+|---|---|---|
+| **1** | l'instrument du §16, puis **`base` rejoué avec lui** | un seul run rend **et** le contrôle C1 **et** le taux de plantage par niveau. C'est la mesure la plus dense disponible |
+| **2** | selon le résultat : soit la porte se juge au bruit réel, soit il faut une **mutation dirigée** | les deux réparations sont exclusives, et ce run les départage |
+| **3** | `nogain` — gratuit, orthogonal, et jamais mesuré | à 0 retenue le round 1 coupe tout |
+| ~~4~~ | ~~`reach`~~ | 🔴 **retiré** : élargir le voisinage dilue la cible, §17.2 |
+
+🔒 **Et l'injection revient dans le tableau, mais par la bonne porte.** §17.2 dit que la mutation
+d'ELITE n'est pas dirigée. Injecter les 12 plans de la graine 77 **comme parents d'ELITE** — ce
+que `REPRENDRE_ICI.md` §3 proposait déjà — n'est plus un contournement du test de transfert :
+c'est le traitement du mécanisme mesuré. ⚠️ Mais cela reste un **développement**, pas un réglage,
+et il exige la règle d'or.

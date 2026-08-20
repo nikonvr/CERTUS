@@ -1,0 +1,206 @@
+{
+  "composant": "r75x2",
+  "graine_notation": 42,
+  "mode_contexte": "fast",
+  "source_plans": "plans_s077_vers_s042.json",
+  "n_plans": 12,
+  "profondeur": {
+    "robustness_num_runs": 300
+  },
+  "parametres_de_notation": {
+    "poem_anchor_noise": true,
+    "index_corridor": 0.005,
+    "tp_hysteresis_factor": 1.66,
+    "photometric_curvature_amp": 0.00375,
+    "affine_scale_amp": 0.0,
+    "affine_offset_amp": 0.0,
+    "poem_enabled": true,
+    "slit_bias_enabled": true,
+    "monochromator_resolution_nm": 2.0,
+    "allow_rate": true,
+    "phase_a_seed": 42
+  },
+  "stamp": "2026-08-20T16:09:16",
+  "resultats": [
+    {
+      "nom": "RENOTE(s077_ELITE_5_SEEL0.5723_crash1.00)",
+      "score": 0.2954376606292565,
+      "seel": 1.0870835490048711,
+      "crash_rate": 1.0,
+      "n_blocs": 10,
+      "critical_layer": {
+        "layer": 64,
+        "cause": "niveau d'arret hors d'atteinte",
+        "margin_in_A": -1648.964412840639,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 149
+      },
+      "statut": "note"
+    },
+    {
+      "nom": "RENOTE(s077_ELITE_11_SEEL0.5731_crash1.00)",
+      "score": 0.2957275354480185,
+      "seel": 1.0876167255941194,
+      "crash_rate": 1.0,
+      "n_blocs": 11,
+      "critical_layer": {
+        "layer": 64,
+        "cause": "niveau d'arret hors d'atteinte",
+        "margin_in_A": -1634.5709265818712,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 149
+      },
+      "statut": "note"
+    },
+    {
+      "nom": "RENOTE(s077_ELITE_8_SEEL0.5729_crash1.00)",
+      "score": 0.29625875562512605,
+      "seel": 1.0885931391022563,
+      "crash_rate": 1.0,
+      "n_blocs": 11,
+      "critical_layer": {
+        "layer": 69,
+        "cause": "niveau d'arret hors d'atteinte",
+        "margin_in_A": -1626.605669775787,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 149
+      },
+      "statut": "note"
+    },
+    {
+      "nom": "RENOTE(s077_ELITE_10_SEEL0.5730_crash1.00)",
+      "score": 0.29739780411905287,
+      "seel": 1.090683829749122,
+      "crash_rate": 1.0,
+      "n_blocs": 11,
+      "critical_layer": {
+        "layer": 69,
+        "cause": "niveau d'arret hors d'atteinte",
+        "margin_in_A": -1626.605669775787,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 149
+      },
+      "statut": "note"
+    },
+    {
+      "nom": "RENOTE(s077_ELITE_7_SEEL0.5723_crash0.67)",
+      "score": 0.29861386278327584,
+      "seel": 1.0929114562182534,
+      "crash_rate": 1.0,
+      "n_blocs": 11,
+      "critical_layer": {
+        "layer": 64,
+        "cause": "niveau d'arret hors d'atteinte",
+        "margin_in_A": -1628.2131422795965,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 149
+      },
+      "statut": "note"
+    },
+    {
+      "nom": "RENOTE(s077_ELITE_0_SEEL0.5692_crash1.33)",
+      "score": 0.2995674616641695,
+      "seel": 1.094655126812403,
+      "crash_rate": 1.0,
+      "n_blocs": 9,
+      "critical_layer": {
+        "layer": 73,
+        "cause": "niveau d'arret hors d'atteinte",
+        "margin_in_A": -1629.835560671287,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 149
+      },
+      "statut": "note"
+    },
+    {
+      "nom": "RENOTE(s077_ELITE_9_SEEL0.5729_crash0.67)",
+      "score": 0.29957811281863855,
+      "seel": 1.094674586931913,
+      "crash_rate": 1.0,
+      "n_blocs": 11,
+      "critical_layer": {
+        "layer": 64,
+        "cause": "niveau d'arret hors d'atteinte",
+        "margin_in_A": -1628.2131422795965,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 149
+      },
+      "statut": "note"
+    },
+    {
+      "nom": "RENOTE(s077_ELITE_6_SEEL0.5723_crash1.33)",
+      "score": 0.2996329466985805,
+      "seel": 1.0947747653258737,
+      "crash_rate": 1.0,
+      "n_blocs": 10,
+      "critical_layer": {
+        "layer": 64,
+        "cause": "niveau d'arret hors d'atteinte",
+        "margin_in_A": -1597.3023149903315,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 149
+      },
+      "statut": "note"
+    },
+    {
+      "nom": "RENOTE(s077_ELITE_1_SEEL0.5715_crash1.00)",
+      "score": 0.30028199770332115,
+      "seel": 1.0959598490881337,
+      "crash_rate": 1.0,
+      "n_blocs": 9,
+      "critical_layer": {
+        "layer": 64,
+        "cause": "niveau d'arret hors d'atteinte",
+        "margin_in_A": -1634.5709265818712,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 149
+      },
+      "statut": "note"
+    },
+    {
+      "nom": "RENOTE(s077_ELITE_4_SEEL0.5721_crash1.33)",
+      "score": 0.30055897019981914,
+      "seel": 1.096465175370051,
+      "crash_rate": 1.0,
+      "n_blocs": 9,
+      "critical_layer": {
+        "layer": 64,
+        "cause": "niveau d'arret hors d'atteinte",
+        "margin_in_A": -1597.3023149903315,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 149
+      },
+      "statut": "note"
+    },
+    {
+      "nom": "RENOTE(s077_ELITE_2_SEEL0.5715_crash1.33)",
+      "score": 0.3012268149505948,
+      "seel": 1.0976826771897146,
+      "crash_rate": 1.0,
+      "n_blocs": 9,
+      "critical_layer": {
+        "layer": 64,
+        "cause": "niveau d'arret hors d'atteinte",
+        "margin_in_A": -1629.109472624131,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 149
+      },
+      "statut": "note"
+    },
+    {
+      "nom": "RENOTE(s077_ELITE_3_SEEL0.5717_crash0.67)",
+      "score": 0.30123165112829453,
+      "seel": 1.0976914887677585,
+      "crash_rate": 1.0,
+      "n_blocs": 11,
+      "critical_layer": {
+        "layer": 47,
+        "cause": "niveau d'arret hors d'atteinte",
+        "margin_in_A": -1479.5233149116598,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 149
+      },
+      "statut": "note"
+    }
+  ]
+}

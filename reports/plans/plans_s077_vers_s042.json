@@ -1,0 +1,672 @@
+[
+ {
+  "nom": "s077_ELITE_0_SEEL0.5692_crash1.33",
+  "blocs": [
+   {
+    "start": 0,
+    "end": 8,
+    "wavelength": 450.0
+   },
+   {
+    "start": 8,
+    "end": 25,
+    "wavelength": 610.0
+   },
+   {
+    "start": 25,
+    "end": 33,
+    "wavelength": 616.0
+   },
+   {
+    "start": 33,
+    "end": 52,
+    "wavelength": 685.0
+   },
+   {
+    "start": 52,
+    "end": 57,
+    "wavelength": 647.0
+   },
+   {
+    "start": 57,
+    "end": 63,
+    "wavelength": 700.0
+   },
+   {
+    "start": 63,
+    "end": 65,
+    "wavelength": 511.0
+   },
+   {
+    "start": 65,
+    "end": 70,
+    "wavelength": 688.0
+   },
+   {
+    "start": 70,
+    "end": 75,
+    "wavelength": 704.0
+   }
+  ]
+ },
+ {
+  "nom": "s077_ELITE_1_SEEL0.5715_crash1.00",
+  "blocs": [
+   {
+    "start": 0,
+    "end": 8,
+    "wavelength": 450.0
+   },
+   {
+    "start": 8,
+    "end": 25,
+    "wavelength": 610.0
+   },
+   {
+    "start": 25,
+    "end": 33,
+    "wavelength": 616.0
+   },
+   {
+    "start": 33,
+    "end": 53,
+    "wavelength": 685.0
+   },
+   {
+    "start": 53,
+    "end": 57,
+    "wavelength": 647.0
+   },
+   {
+    "start": 57,
+    "end": 64,
+    "wavelength": 701.0
+   },
+   {
+    "start": 64,
+    "end": 65,
+    "wavelength": 511.0
+   },
+   {
+    "start": 65,
+    "end": 70,
+    "wavelength": 688.0
+   },
+   {
+    "start": 70,
+    "end": 75,
+    "wavelength": 703.0
+   }
+  ]
+ },
+ {
+  "nom": "s077_ELITE_2_SEEL0.5715_crash1.33",
+  "blocs": [
+   {
+    "start": 0,
+    "end": 8,
+    "wavelength": 450.0
+   },
+   {
+    "start": 8,
+    "end": 25,
+    "wavelength": 610.0
+   },
+   {
+    "start": 25,
+    "end": 33,
+    "wavelength": 616.0
+   },
+   {
+    "start": 33,
+    "end": 53,
+    "wavelength": 685.0
+   },
+   {
+    "start": 53,
+    "end": 57,
+    "wavelength": 647.0
+   },
+   {
+    "start": 57,
+    "end": 63,
+    "wavelength": 700.0
+   },
+   {
+    "start": 63,
+    "end": 65,
+    "wavelength": 511.0
+   },
+   {
+    "start": 65,
+    "end": 70,
+    "wavelength": 688.0
+   },
+   {
+    "start": 70,
+    "end": 75,
+    "wavelength": 703.0
+   }
+  ]
+ },
+ {
+  "nom": "s077_ELITE_3_SEEL0.5717_crash0.67",
+  "blocs": [
+   {
+    "start": 0,
+    "end": 8,
+    "wavelength": 450.0
+   },
+   {
+    "start": 8,
+    "end": 25,
+    "wavelength": 610.0
+   },
+   {
+    "start": 25,
+    "end": 33,
+    "wavelength": 616.0
+   },
+   {
+    "start": 33,
+    "end": 53,
+    "wavelength": 685.0
+   },
+   {
+    "start": 53,
+    "end": 57,
+    "wavelength": 647.0
+   },
+   {
+    "start": 57,
+    "end": 64,
+    "wavelength": 700.0
+   },
+   {
+    "start": 64,
+    "end": 65,
+    "wavelength": 510.0
+   },
+   {
+    "start": 65,
+    "end": 66,
+    "wavelength": 700.0
+   },
+   {
+    "start": 66,
+    "end": 71,
+    "wavelength": 689.0
+   },
+   {
+    "start": 71,
+    "end": 73,
+    "wavelength": 691.0
+   },
+   {
+    "start": 73,
+    "end": 75,
+    "wavelength": 703.0
+   }
+  ]
+ },
+ {
+  "nom": "s077_ELITE_4_SEEL0.5721_crash1.33",
+  "blocs": [
+   {
+    "start": 0,
+    "end": 8,
+    "wavelength": 450.0
+   },
+   {
+    "start": 8,
+    "end": 25,
+    "wavelength": 610.0
+   },
+   {
+    "start": 25,
+    "end": 33,
+    "wavelength": 616.0
+   },
+   {
+    "start": 33,
+    "end": 52,
+    "wavelength": 685.0
+   },
+   {
+    "start": 52,
+    "end": 57,
+    "wavelength": 647.0
+   },
+   {
+    "start": 57,
+    "end": 63,
+    "wavelength": 700.0
+   },
+   {
+    "start": 63,
+    "end": 65,
+    "wavelength": 511.0
+   },
+   {
+    "start": 65,
+    "end": 71,
+    "wavelength": 688.0
+   },
+   {
+    "start": 71,
+    "end": 75,
+    "wavelength": 704.0
+   }
+  ]
+ },
+ {
+  "nom": "s077_ELITE_5_SEEL0.5723_crash1.00",
+  "blocs": [
+   {
+    "start": 0,
+    "end": 8,
+    "wavelength": 450.0
+   },
+   {
+    "start": 8,
+    "end": 25,
+    "wavelength": 610.0
+   },
+   {
+    "start": 25,
+    "end": 33,
+    "wavelength": 616.0
+   },
+   {
+    "start": 33,
+    "end": 53,
+    "wavelength": 685.0
+   },
+   {
+    "start": 53,
+    "end": 56,
+    "wavelength": 647.0
+   },
+   {
+    "start": 56,
+    "end": 64,
+    "wavelength": 701.0
+   },
+   {
+    "start": 64,
+    "end": 65,
+    "wavelength": 511.0
+   },
+   {
+    "start": 65,
+    "end": 66,
+    "wavelength": 700.0
+   },
+   {
+    "start": 66,
+    "end": 71,
+    "wavelength": 689.0
+   },
+   {
+    "start": 71,
+    "end": 75,
+    "wavelength": 704.0
+   }
+  ]
+ },
+ {
+  "nom": "s077_ELITE_6_SEEL0.5723_crash1.33",
+  "blocs": [
+   {
+    "start": 0,
+    "end": 8,
+    "wavelength": 450.0
+   },
+   {
+    "start": 8,
+    "end": 25,
+    "wavelength": 610.0
+   },
+   {
+    "start": 25,
+    "end": 33,
+    "wavelength": 616.0
+   },
+   {
+    "start": 33,
+    "end": 52,
+    "wavelength": 685.0
+   },
+   {
+    "start": 52,
+    "end": 57,
+    "wavelength": 647.0
+   },
+   {
+    "start": 57,
+    "end": 63,
+    "wavelength": 700.0
+   },
+   {
+    "start": 63,
+    "end": 65,
+    "wavelength": 511.0
+   },
+   {
+    "start": 65,
+    "end": 66,
+    "wavelength": 700.0
+   },
+   {
+    "start": 66,
+    "end": 71,
+    "wavelength": 689.0
+   },
+   {
+    "start": 71,
+    "end": 75,
+    "wavelength": 703.0
+   }
+  ]
+ },
+ {
+  "nom": "s077_ELITE_7_SEEL0.5723_crash0.67",
+  "blocs": [
+   {
+    "start": 0,
+    "end": 8,
+    "wavelength": 450.0
+   },
+   {
+    "start": 8,
+    "end": 25,
+    "wavelength": 610.0
+   },
+   {
+    "start": 25,
+    "end": 33,
+    "wavelength": 616.0
+   },
+   {
+    "start": 33,
+    "end": 53,
+    "wavelength": 685.0
+   },
+   {
+    "start": 53,
+    "end": 57,
+    "wavelength": 647.0
+   },
+   {
+    "start": 57,
+    "end": 64,
+    "wavelength": 700.0
+   },
+   {
+    "start": 64,
+    "end": 65,
+    "wavelength": 511.0
+   },
+   {
+    "start": 65,
+    "end": 66,
+    "wavelength": 700.0
+   },
+   {
+    "start": 66,
+    "end": 71,
+    "wavelength": 689.0
+   },
+   {
+    "start": 71,
+    "end": 73,
+    "wavelength": 690.0
+   },
+   {
+    "start": 73,
+    "end": 75,
+    "wavelength": 703.0
+   }
+  ]
+ },
+ {
+  "nom": "s077_ELITE_8_SEEL0.5729_crash1.00",
+  "blocs": [
+   {
+    "start": 0,
+    "end": 8,
+    "wavelength": 450.0
+   },
+   {
+    "start": 8,
+    "end": 25,
+    "wavelength": 610.0
+   },
+   {
+    "start": 25,
+    "end": 33,
+    "wavelength": 616.0
+   },
+   {
+    "start": 33,
+    "end": 53,
+    "wavelength": 685.0
+   },
+   {
+    "start": 53,
+    "end": 56,
+    "wavelength": 647.0
+   },
+   {
+    "start": 56,
+    "end": 64,
+    "wavelength": 701.0
+   },
+   {
+    "start": 64,
+    "end": 65,
+    "wavelength": 510.0
+   },
+   {
+    "start": 65,
+    "end": 66,
+    "wavelength": 700.0
+   },
+   {
+    "start": 66,
+    "end": 71,
+    "wavelength": 690.0
+   },
+   {
+    "start": 71,
+    "end": 73,
+    "wavelength": 691.0
+   },
+   {
+    "start": 73,
+    "end": 75,
+    "wavelength": 703.0
+   }
+  ]
+ },
+ {
+  "nom": "s077_ELITE_9_SEEL0.5729_crash0.67",
+  "blocs": [
+   {
+    "start": 0,
+    "end": 8,
+    "wavelength": 450.0
+   },
+   {
+    "start": 8,
+    "end": 25,
+    "wavelength": 610.0
+   },
+   {
+    "start": 25,
+    "end": 33,
+    "wavelength": 616.0
+   },
+   {
+    "start": 33,
+    "end": 53,
+    "wavelength": 685.0
+   },
+   {
+    "start": 53,
+    "end": 57,
+    "wavelength": 647.0
+   },
+   {
+    "start": 57,
+    "end": 64,
+    "wavelength": 700.0
+   },
+   {
+    "start": 64,
+    "end": 65,
+    "wavelength": 511.0
+   },
+   {
+    "start": 65,
+    "end": 66,
+    "wavelength": 700.0
+   },
+   {
+    "start": 66,
+    "end": 71,
+    "wavelength": 690.0
+   },
+   {
+    "start": 71,
+    "end": 73,
+    "wavelength": 691.0
+   },
+   {
+    "start": 73,
+    "end": 75,
+    "wavelength": 703.0
+   }
+  ]
+ },
+ {
+  "nom": "s077_ELITE_10_SEEL0.5730_crash1.00",
+  "blocs": [
+   {
+    "start": 0,
+    "end": 8,
+    "wavelength": 450.0
+   },
+   {
+    "start": 8,
+    "end": 25,
+    "wavelength": 610.0
+   },
+   {
+    "start": 25,
+    "end": 33,
+    "wavelength": 616.0
+   },
+   {
+    "start": 33,
+    "end": 53,
+    "wavelength": 685.0
+   },
+   {
+    "start": 53,
+    "end": 56,
+    "wavelength": 647.0
+   },
+   {
+    "start": 56,
+    "end": 64,
+    "wavelength": 701.0
+   },
+   {
+    "start": 64,
+    "end": 65,
+    "wavelength": 510.0
+   },
+   {
+    "start": 65,
+    "end": 66,
+    "wavelength": 700.0
+   },
+   {
+    "start": 66,
+    "end": 71,
+    "wavelength": 690.0
+   },
+   {
+    "start": 71,
+    "end": 73,
+    "wavelength": 690.0
+   },
+   {
+    "start": 73,
+    "end": 75,
+    "wavelength": 703.0
+   }
+  ]
+ },
+ {
+  "nom": "s077_ELITE_11_SEEL0.5731_crash1.00",
+  "blocs": [
+   {
+    "start": 0,
+    "end": 8,
+    "wavelength": 450.0
+   },
+   {
+    "start": 8,
+    "end": 25,
+    "wavelength": 610.0
+   },
+   {
+    "start": 25,
+    "end": 33,
+    "wavelength": 616.0
+   },
+   {
+    "start": 33,
+    "end": 53,
+    "wavelength": 685.0
+   },
+   {
+    "start": 53,
+    "end": 57,
+    "wavelength": 647.0
+   },
+   {
+    "start": 57,
+    "end": 64,
+    "wavelength": 701.0
+   },
+   {
+    "start": 64,
+    "end": 65,
+    "wavelength": 511.0
+   },
+   {
+    "start": 65,
+    "end": 66,
+    "wavelength": 701.0
+   },
+   {
+    "start": 66,
+    "end": 71,
+    "wavelength": 689.0
+   },
+   {
+    "start": 71,
+    "end": 73,
+    "wavelength": 691.0
+   },
+   {
+    "start": 73,
+    "end": 75,
+    "wavelength": 703.0
+   }
+  ]
+ }
+]

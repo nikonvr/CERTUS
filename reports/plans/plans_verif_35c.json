@@ -1,0 +1,97 @@
+[
+ {
+  "nom": "ELITE|crash=0.00%|score=0.068743",
+  "blocs": [
+   {
+    "start": 0,
+    "end": 12,
+    "wavelength": 522.0
+   },
+   {
+    "start": 12,
+    "end": 17,
+    "wavelength": 459.0
+   },
+   {
+    "start": 17,
+    "end": 22,
+    "wavelength": 462.0
+   },
+   {
+    "start": 22,
+    "end": 29,
+    "wavelength": 454.0
+   },
+   {
+    "start": 29,
+    "end": 35,
+    "wavelength": 462.0
+   }
+  ]
+ },
+ {
+  "nom": "ELITE|crash=2.00%|score=0.075848",
+  "blocs": [
+   {
+    "start": 0,
+    "end": 12,
+    "wavelength": 522.0
+   },
+   {
+    "start": 12,
+    "end": 15,
+    "wavelength": 459.0
+   },
+   {
+    "start": 15,
+    "end": 22,
+    "wavelength": 462.0
+   },
+   {
+    "start": 22,
+    "end": 28,
+    "wavelength": 454.0
+   },
+   {
+    "start": 28,
+    "end": 34,
+    "wavelength": 462.0
+   },
+   {
+    "start": 34,
+    "end": 35,
+    "wavelength": 456.0
+   }
+  ]
+ },
+ {
+  "nom": "SMART_MERGE_MIXED (from ID 900000024)|crash=100.00%|score=0.374288",
+  "blocs": [
+   {
+    "start": 0,
+    "end": 35,
+    "wavelength": 522.0
+   }
+  ]
+ },
+ {
+  "nom": "SMART_MERGE_MIXED (from ID 2801)|crash=92.00%|score=0.444782",
+  "blocs": [
+   {
+    "start": 0,
+    "end": 35,
+    "wavelength": 509.0
+   }
+  ]
+ },
+ {
+  "nom": "STRUCTURED_REGULAR_PARTITION|crash=98.00%|score=0.450808",
+  "blocs": [
+   {
+    "start": 0,
+    "end": 35,
+    "wavelength": 586.0
+   }
+  ]
+ }
+]

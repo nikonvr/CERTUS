@@ -124,6 +124,31 @@ def _renoter(opti, params, plans, nom, graine, mode_ctx, fichier, surcharges=Non
     """
     from certus.core.certus_strat_robustness import run_final_simulation_block as vrai
 
+    # 🔴 DIAGNOSTIC DE LA CAPTURE. Trois configurations differentes ont rendu EXACTEMENT les
+    # memes valeurs le 2026-08-20, donc le contexte capture ne porte pas ce qu'on croit.
+    # On regarde ce que les plans EXIGENT et ce que le contexte OFFRE, au lieu de deviner.
+    besoins = sorted({float(b["wavelength"]) for p in plans for b in p["blocks"]})
+    grille = opti.get("full_dynamics_grid") or {}
+    clues = opti.get("clues_at_wl")
+    def _cles(o):
+        try:
+            return {float(k) for k in o.keys()}
+        except Exception:
+            return set()
+    kg, kc = _cles(grille), _cles(clues)
+    print(f"\n  --- CE QUE LE CONTEXTE OFFRE ---", flush=True)
+    print(f"    λ exigees par les plans        : {len(besoins)}  "
+          f"{[round(w) for w in besoins[:10]]}{' …' if len(besoins) > 10 else ''}", flush=True)
+    print(f"    full_dynamics_grid             : {type(grille).__name__}, "
+          f"{len(kg)} λ  -> manquantes pour les plans : "
+          f"{sorted(round(w) for w in set(besoins) - kg)[:12] if kg else 'GRILLE VIDE'}", flush=True)
+    print(f"    clues_at_wl                    : {type(clues).__name__}, "
+          f"{len(kc)} λ  -> manquantes : "
+          f"{sorted(round(w) for w in set(besoins) - kc)[:12] if kc else '(non enumerable)'}",
+          flush=True)
+    print(f"    p_thick_nominal                : {len(opti.get('p_thick_nominal') or [])} couches",
+          flush=True)
+
     opti["all_strategies"] = [
         {"strategy_id": 9_000_000 + i, "n_blocks": len(p["blocks"]),
          "blocks": p["blocks"], "origin": f"RENOTE({p['nom']})",

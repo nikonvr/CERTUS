@@ -1,0 +1,70 @@
+[
+  {
+    "cellule": "1_75c_1nm_graine77",
+    "argv": [
+      "75c",
+      "fast",
+      "0",
+      "0",
+      "1",
+      "0",
+      "77",
+      "2"
+    ],
+    "coupures": "46,52,58,64,70",
+    "code": 0,
+    "minutes": 35.1,
+    "verdict": "OK"
+  },
+  {
+    "cellule": "2_controle_exception",
+    "argv": [
+      "r75x2",
+      "fast",
+      "0",
+      "0",
+      "2",
+      "0",
+      "42",
+      "5"
+    ],
+    "coupures": "46,52,58",
+    "code": 0,
+    "minutes": 33.6,
+    "verdict": "OK"
+  },
+  {
+    "cellule": "3_r75x2_deep_s042",
+    "argv": [
+      "r75x2",
+      "deep",
+      "0",
+      "0",
+      "2",
+      "0",
+      "42",
+      "2"
+    ],
+    "coupures": "49,52,55",
+    "code": 0,
+    "minutes": 114.3,
+    "verdict": "OK"
+  },
+  {
+    "cellule": "4_r75x2_deep_s077",
+    "argv": [
+      "r75x2",
+      "deep",
+      "0",
+      "0",
+      "2",
+      "0",
+      "77",
+      "2"
+    ],
+    "coupures": "49,52,55",
+    "code": 0,
+    "minutes": 175.8,
+    "verdict": "OK"
+  }
+]

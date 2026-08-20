@@ -1,0 +1,105 @@
+[
+  {
+    "cellule": "1_dispersion_cons41-43",
+    "argv": [
+      "r75x2",
+      "fast",
+      "0",
+      "0",
+      "2",
+      "0",
+      "42",
+      "2"
+    ],
+    "coupures": "52",
+    "consensus": "41,42,43",
+    "code": 0,
+    "minutes": 34.2,
+    "verdict": "OK"
+  },
+  {
+    "cellule": "2_dispersion_cons51-53",
+    "argv": [
+      "r75x2",
+      "fast",
+      "0",
+      "0",
+      "2",
+      "0",
+      "42",
+      "2"
+    ],
+    "coupures": "52",
+    "consensus": "51,52,53",
+    "code": 0,
+    "minutes": 33.6,
+    "verdict": "OK"
+  },
+  {
+    "cellule": "3_dispersion_cons61-63",
+    "argv": [
+      "r75x2",
+      "fast",
+      "0",
+      "0",
+      "2",
+      "0",
+      "42",
+      "2"
+    ],
+    "coupures": "52",
+    "consensus": "61,62,63",
+    "code": 0,
+    "minutes": 33.6,
+    "verdict": "OK"
+  },
+  {
+    "cellule": "4_queue_sur_75c_1nm",
+    "argv": [
+      "75c",
+      "fast",
+      "0",
+      "0",
+      "1",
+      "0",
+      "42",
+      "2"
+    ],
+    "coupures": "46,52,58,64,70",
+    "consensus": "",
+    "code": 0,
+    "minutes": 37.4,
+    "verdict": "OK"
+  },
+  {
+    "cellule": "5_regle_exception",
+    "argv": [
+      "r75x2",
+      "fast",
+      "0",
+      "0",
+      "2",
+      "0",
+      "42",
+      "3"
+    ],
+    "coupures": "46,52,58",
+    "consensus": "",
+    "code": 0,
+    "minutes": 35.4,
+    "verdict": "OK"
+  },
+  {
+    "cellule": "6_courbe_SEEL_n",
+    "argv": [
+      "r75x2",
+      "premium",
+      "42"
+    ],
+    "coupures": "-",
+    "consensus": "",
+    "code": 0,
+    "minutes": 45.8,
+    "verdict": "OK"
+  }
+]

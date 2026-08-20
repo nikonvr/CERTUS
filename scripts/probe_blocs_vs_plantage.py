@@ -397,7 +397,20 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
             "n_blocs": int(st.get("n_blocks", len(blocs))),
             "crash_rate": float(s.get("crash_rate", 1.0)),
             "score": float(s.get("robustness_score", 0.0) or 0.0),
-            "lambdas": [b.get("wl") if isinstance(b, dict) else None for b in blocs][:24],
+            # 🔴 LA CLE EST `wavelength`, PAS `wl` -- corrige le 2026-08-20, et l'erreur coutait
+            # LE LIVRABLE. `_build_layer_wavelengths_from_strategy` (certus_strat_robustness.py:
+            # 2855) lit `block["wavelength"]` : c'est le nom qui fait foi. Avec `wl`, le champ
+            # sortait `[None, None, ...]` -- de la BONNE LONGUEUR, donc l'artefact avait l'air
+            # complet. 📏 Trouve en repondant a 👤 « quelle est la meilleure strategie ? » : on
+            # savait son SEEL, son plantage et son nombre de blocs, et on ne pouvait pas dire
+            # A QUELLES LAMBDA surveiller. Tous les artefacts anterieurs sont muets la-dessus.
+            # ⚠️ Plus de troncature a 24 : sur une strategie couche-par-couche elle coupait 51
+            # blocs sur 75, donc rendait le plan inutilisable meme une fois la cle corrigee.
+            "lambdas": [b.get("wavelength", b.get("wl")) if isinstance(b, dict) else None
+                        for b in blocs],
+            "blocs": [{"start": b.get("start"), "end": b.get("end"),
+                       "wavelength": b.get("wavelength", b.get("wl"))}
+                      for b in blocs if isinstance(b, dict)],
             # 🔑 La marge sur la trajectoire ACCUMULEE, en unites de A -- la seule grandeur
             # du projet validee comme predicteur de plantage depuis le signal (§24-41).
             # Sparse : une couche absente a une marge >= 5 A, donc sereine.

@@ -638,10 +638,23 @@ def _apply_elite_refinement_if_enabled(
 
         if not candidates_to_eval:
             # 🔴 LES COMPTEURS SONT EMIS ICI AUSSI, ET C'EST INDISPENSABLE. Cette sortie
-            # precede la ligne de compteurs placee apres l'evaluation complete : dans le
-            # scenario le plus probable -- tout rejete au halving -- le round se terminait
-            # SANS RIEN MESURER. Le defaut a ete trouve par relecture le 2026-08-20, avant
-            # de depenser 120 min de machine sur un instrument muet.
+            # precede la ligne de compteurs placee apres l'evaluation complete : sans cela
+            # le round se terminait SANS RIEN MESURER. Defaut trouve par relecture le
+            # 2026-08-20, avant de depenser 120 min de machine sur un instrument muet.
+            #
+            # 🔑 ET CETTE SORTIE A UN SENS PRECIS, ETABLI PAR ANALYSE DU FLOT -- elle ne
+            # veut PAS dire « tout a ete rejete au halving ». Demonstration :
+            #   `candidates_to_eval` part avec TOUTES les candidates ; dans la boucle,
+            #   soit `stage_results` est vide et on sort par `break` SANS reassigner,
+            #   soit `keep_count = max(elite_max_full_evals, len//2) >= 1` et la tranche
+            #   `stage_results[:keep_count]` est NON VIDE.
+            #   Donc `candidates_to_eval` est vide SI ET SEULEMENT SI `elite_candidates`
+            #   l'etait : **cette sortie signifie que le GENERATEUR n'a rien produit.**
+            #
+            # C'est ce qui rend le diagnostic auto-interpretable :
+            #   sortie=HALVING  ... sur 0 engendrees  -> generateur a sec
+            #   sortie=COMPLETE  score_non_fini eleve -> les candidates plantent
+            #   sortie=COMPLETE  full_rmse eleve      -> le seuil rejette
             ctx.logger.info(
                 f"[ELITE] Round {elite_round}: rejets -- halving={rej_halving} "
                 f"full_rmse={rej_full_rmse} score_non_fini={rej_score_non_fini} "

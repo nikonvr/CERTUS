@@ -691,6 +691,54 @@ seulement). **Aucun ne doit toucher un chiffre.** Le run doit donc rendre exacte
 🔴 **Tout écart signifie qu'une de ces modifications a fui dans le calcul, et le diagnostic est
 à jeter avant même d'être lu.**
 
+### 🔬 PASSE ULTRA-PRÉCISE — quatre moyens croisés, trois défauts de plus
+
+👤 : *« c'est le genre de bug qu'il faut absolument éviter »*. Quatre contrôles indépendants.
+
+| moyen | ce qu'il a donné |
+|---|---|
+| **1. énumération AST des sorties** de la boucle `elite_round` | **6 sorties**, toutes instrumentées et nommées |
+| **2. analyse de dominance** — un compteur peut-il être lu avant d'être créé ? | 🟢 aucun ; et le remise à zéro est bien **par round**, pas cumulée |
+| **3. exécution réelle** sur le 35c en `fast` | **10 lignes de compteurs émises**, gates distingués. `generated` y vaut **120** (le plafond) dans 6 rounds sur 10, jamais 9 |
+| **4. inventaire des écritures** dans `reports/` | 🔴 **13 sondes sur 15 sans garde d'écrasement** |
+
+### 🔴 LE DÉFAUT LE PLUS GRAVE — le run allait DÉTRUIRE sa propre référence
+
+Le diagnostic prévu produisait exactement `blocs_vs_plantage_r75x2_deep_s042.json` — **le nom de
+la référence de 8,26 Mo servant au contrôle C1**. Il l'aurait écrasée **en silence**, détruisant
+la mesure à laquelle on voulait comparer. `reports/` n'est protégé par rien : 193 fichiers sur
+226 sont irrécupérables, et ce dépôt a déjà perdu des artefacts ainsi (*« les coupures 28-52 ont
+été perdues »*).
+
+⚠️ **Et le contrôle 3 a failli le refaire dans la même heure** : le run de vérification sur le
+35c a été lancé **avant** que la garde ne soit posée, et allait écraser **215 Ko** du 19 août.
+Sauvé à la main, de justesse.
+
+✅ **Correctif systémique** : `scripts/_artefact.py`, une aide partagée qui **renomme plutôt que
+d'écraser** — un run de deux heures qui aboutit ne doit pas perdre son résultat parce qu'un
+homonyme existe — et qui **dit** la collision au lieu de la taire. **7 tests**, qui échouent sur
+le code d'avant (le module n'existait pas).
+
+### 🔑 ET LE DIAGNOSTIC EST DEVENU AUTO-INTERPRÉTABLE
+
+En cherchant à exercer la branche `sortie=HALVING`, l'analyse du flot a établi qu'elle a un sens
+**exact** : `candidates_to_eval` part avec toutes les candidates ; soit `stage_results` est vide
+et on sort **sans réassigner**, soit `keep_count ≥ 1` et la tranche est **non vide**. Donc
+`candidates_to_eval` est vide **si et seulement si** `elite_candidates` l'était.
+
+```
+sortie=HALVING   ... sur 0 engendrees   ->  le GENERATEUR est a sec       (recit A)
+sortie=COMPLETE   score_non_fini eleve  ->  les candidates PLANTENT       (recit B)
+sortie=COMPLETE   full_rmse eleve       ->  le SEUIL rejette              (recit A)
+skipped                                 ->  seuil non fini, autre cause
+```
+
+**Les quatre lectures mènent à quatre réparations différentes, et aucune n'est ambiguë.**
+
+⚠️ **Réserve honnête** : la branche `sortie=HALVING` est vérifiée **statiquement** et par analyse
+de flot, **pas dynamiquement** — le contrôle sur le 35c ne l'a pas exercée, puisqu'elle demande
+un générateur à sec. Elle le sera par le diagnostic lui-même.
+
 ### ⚠️ Ce que cette passe n'a PAS pu attaquer
 
 Le récit A et le récit B restent **tous deux vivants**. Le comptage par famille montre qu'ELITE

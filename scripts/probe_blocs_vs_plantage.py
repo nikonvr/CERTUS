@@ -628,6 +628,27 @@ def main() -> int:
                 + ("" if not os.environ.get("CERTUS_CONSENSUS_SEEDS", "").strip()
                    else "_cons" + os.environ["CERTUS_CONSENSUS_SEEDS"].strip().replace(",", "-")))
     out = ROOT / "reports" / f"blocs_vs_plantage_{nom}_{mode}_s{graine:03d}{suffixe}.json"
+
+    # 🔴 CETTE SONDE N'ECRASE PLUS JAMAIS UN ARTEFACT EXISTANT, ET C'EST UN INTERDIT DU
+    # PROJET. `CLAUDE.md` interdit 3 : `reports/` porte les resultats scientifiques, seuls
+    # 33 fichiers sur 226 sont suivis par git, les 193 autres sont IRRECUPERABLES.
+    #
+    # 📏 Le defaut a deja coute des artefacts a ce projet -- « les coupures 28-52 ont ete
+    # perdues ainsi », consigne plus haut dans ce meme fichier a propos de TAIL_CUTS. Et il
+    # a failli recommencer le 2026-08-20 : le run de diagnostic prevu produisait exactement
+    # `blocs_vs_plantage_r75x2_deep_s042.json`, soit le nom de la REFERENCE de 8,26 Mo
+    # servant au controle C1 -- on aurait detruit la mesure a laquelle on voulait comparer,
+    # SANS LE MOINDRE MESSAGE.
+    #
+    # 🔑 Renommer plutot que refuser : un run de deux heures qui aboutit ne doit pas perdre
+    # son resultat parce qu'un homonyme existe. L'horodatage rend la collision impossible,
+    # et la ligne imprimee dit ce qui s'est passe au lieu de le taire.
+    if out.exists():
+        garde = out.with_name(f"{out.stem}_{datetime.now():%Y%m%d_%H%M%S}{out.suffix}")
+        print(f"\n🟠 {out.name} EXISTE DEJA ({out.stat().st_size} octets, "
+              f"{datetime.fromtimestamp(out.stat().st_mtime):%Y-%m-%d %H:%M}).")
+        print(f"   L'artefact precedent est CONSERVE. Le nouveau va dans {garde.name}.")
+        out = garde
     out.write_text(json.dumps(r, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nconsigne dans {out.relative_to(ROOT)}")
     return 0

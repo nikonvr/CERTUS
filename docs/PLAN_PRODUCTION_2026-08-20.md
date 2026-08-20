@@ -584,3 +584,79 @@ question.** Phase A n'était pas dans l'artefact, le journal était tronqué, le
 
 > **Avant de formuler un mécanisme, vérifier que la grandeur qui le prouverait EXISTE quelque
 > part. Si elle n'existe pas, poser l'instrument est la seule action légitime.**
+
+---
+
+## 12. 🔴 PASSE CONTRADICTOIRE SUR LE PLAN D'ACTION — 2026-08-20
+
+👤 : *« refais une passe contradictoire pour être certain que ton plan d'action est le
+meilleur possible »*. Quatre attaques, et deux ont changé le plan.
+
+### ✅ Attaque 1 — « ELITE n'est pas la cause, c'est une conséquence »
+
+**L'objection** : à la graine 42 tout plante à 100 % ; une candidate ELITE planterait aussi.
+ELITE à zéro ne serait alors qu'un symptôme, et le viser serait soigner la fièvre.
+
+📏 **Réfutée par le comptage par famille :**
+
+```
+graine 42   ELITE          0 strategies      0 deposables   plantage min 100,00 %
+            hors ELITE  1617                 0              100,00 %
+graine 77   ELITE        743               547                0,33 %
+            hors ELITE  1488                 0              100,00 %
+```
+
+🔑 **Aux DEUX graines, la population hors ELITE est ENTIÈREMENT à 100 %** — 1617 et 1488
+stratégies, pas une en dessous. À la graine 77, ELITE a donc **créé** 547 déposables à partir
+d'un vivier intégralement mort. Ce n'est pas un symptôme : **c'est le seul étage qui produise
+quoi que ce soit de viable sur ce composant à 2 nm.**
+
+> **Toute la fabricabilité de `r75x2` à 2 nm repose sur l'étage de raffinement ELITE.** La
+> recherche ordinaire — DP, minage, `SYM`, `SMART_MERGE`, `RATE_L` — n'y contribue rien.
+
+### 🔄 Attaque 2 — « le diagnostic coûte 120 min, `premium` en coûterait 60 »
+
+**Fondée en partie.** À `premium` la graine 42 rend aussi 0 déposable à 2 nm, donc le phénomène
+se reproduit, et `elite_rounds = 2` suffit à rendre `stop_on_no_gain` testable.
+
+🔴 **Mais elle est écartée** : la référence à laquelle on compare — les 518 déposables de la
+graine 77 — n'existe qu'en `deep`. Diagnostiquer à `premium` et comparer à `deep` ferait varier
+deux choses. **Une heure économisée contre une comparaison boiteuse : mauvais marché.**
+
+### 🔄 Attaque 3 — « le test de transfert repose sur un outil qui n'existe pas »
+
+**Fondée, et elle réordonne le plan.** Le run à la graine 77 vaut surtout pour les **plans de
+surveillance** des 518 déposables — mais les exploiter demande un outil de **re-notation** qui
+n'est pas écrit. Le construire après coup, c'est risquer de découvrir qu'il est difficile alors
+que 3 h de machine sont déjà dépensées.
+
+✅ **Correctif** : l'outil se construit **pendant** que le diagnostic tourne. Il ne demande pas
+la machine, et le point d'injection existe déjà (`run_final_simulation_block` reçoit
+`opti_results["all_strategies"]`, ce dont le worker se sert pour les `inherited_strategies`).
+
+### 🔄 Attaque 4 — « pourquoi mettre 5 h de machine en file avant d'avoir lu la première ? »
+
+**Fondée.** Le batch prévoyait deux cellules enchaînées, 300 min. Or la seconde n'a de sens que
+selon ce que dit la première : si les compteurs désignent le récit B, ce sont les paramètres de
+bruit qu'il faut relâcher, et les plans de la graine 77 attendront.
+
+✅ **Correctif : le batch tombe à UNE cellule.** On lit, puis on décide.
+
+### 🔵 LE PLAN D'ACTION RÉVISÉ
+
+| # | action | machine | ce qu'elle décide |
+|---|---|---|---|
+| **1** | `r75x2 @ 2 nm deep s042`, **réglages d'origine**, instrumenté | ~120 min | **où ELITE meurt** — la seule chose qui départage les récits A et B |
+| **2** | *pendant le run* : écrire l'outil de **re-notation** d'un plan sous des paramètres donnés | aucune | rend exploitables les plans, et le test de transfert possible |
+| **3** | selon les compteurs : élargir ELITE **ou** relâcher bruit et corridor **en génération** | ~120 min | la première tentative de traitement |
+| **4** | juger au **nominal** ce que la génération relâchée a trouvé | ~15 min | 🔒 la garde qui rend l'exercice honnête |
+
+🔒 **La garde, et elle ne se négocie pas** : relâcher le bruit ou le corridor est légitime pour
+**ENGENDRER**, jamais pour **NOTER**. Sinon on obtient un SEEL flatteur qui ne décrit aucune
+machine. C'est la forme exacte de l'invariant `N` sert à noter, jamais à choisir.
+
+### ⚠️ Ce que cette passe n'a PAS pu attaquer
+
+Le récit A et le récit B restent **tous deux vivants**. Le comptage par famille montre qu'ELITE
+est le bon endroit où regarder ; il ne dit pas s'il échoue faute d'engendrer ou faute d'accepter.
+**Aucune des deux réparations ne doit être écrite comme probable avant les compteurs.**

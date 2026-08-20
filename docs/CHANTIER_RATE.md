@@ -1135,3 +1135,58 @@ mesure du chantier n'a encore fait.
 
 La cellule 1 — `75c` à 1 nm sur la graine **77** — passe en premier parce qu'elle coûte 40 min :
 elle établit la place du coude entre les coupures 58 et 64, que rien n'établit aujourd'hui.
+
+---
+
+## 18. 🔴 CELLULE 5 — LE RÉSULTAT EXISTE, MAIS JE NE PEUX PAS L'ATTRIBUER
+
+`reports/blocs_vs_plantage_r75x2_fast_s042_tail46-58k.json`, **35,4 min**, 784 stratégies.
+
+C'était le test de la règle d'exception de 👤 — *« sauf les couches avec au moins 2 turning
+points qui restent en optique »*.
+
+```
+famille            n  crash_min  depos     SEEL  blocs        reference sans exception
+RATE_TAIL46      113      4.00%      1   0.7408     75          0.752    ->  -1,5 %  (0,6 σ)
+RATE_TAIL52      113      4.00%      1   0.7438     75          0.689    ->  +7,9 %  (3,1 σ)
+RATE_TAIL58      113      4.00%      1   0.7433     75          0.735    ->  +1,1 %  (0,4 σ)
+PUR_OPTIQUE      445    100.00%      0        -      -
+```
+
+### 🔴 Pourquoi ce tableau ne prouve rien, et c'est ma faute
+
+`par_swing = 3` arme **deux** drapeaux — `rate_by_swing` **et** `rate_tail_keep_optical = 4` —
+alors que la référence à laquelle je le compare n'en a **aucun**. **Deux choses changent à la
+fois : c'est l'erreur n° 3 du §5 de `CLAUDE.md`**, et elle est de ma main, dans la conception du
+batch.
+
+📏 **Et je ne peux pas écarter `by_swing` comme inerte** : mesuré sur les artefacts, il ajoute
+**26 origines** à la population de `r75x2` (`RATE_L47(from 3801)`, `RATE_L65(from 900000004)`…).
+Les familles de queue gardent bien **113 variantes** chacune de part et d'autre, mais la
+population dans laquelle elles sont classées, elle, a changé.
+
+⚠️ **Le couplage n'est PAS un caprice de la sonde** : `keep_optical` a besoin du contexte de
+swing pour savoir quelles couches ont deux points tournants. Sans `by_swing`, `swing_ctx` vaut
+`None` et la règle est sautée **en silence** — c'est ce qui avait déjà fait rendre à un run de
+56 min un doublon exact du run sans exception, le 2026-08-19. Le bon contrôle n'est donc pas
+« sans swing », c'est **« avec swing, sans réouverture »**, et la sonde ne savait pas le produire.
+
+### ✅ Ce qui est réparé, et le contrôle qui part cette nuit
+
+`par_swing = 5` est ajouté : **queue + swing, sans réouverture optique**. Il ne diffère de `3`
+que par `keep_optical`, et son artefact porte un suffixe `s` là où `3` porte un `k` — donc aucun
+écrasement. C'est la cellule 2 du batch du 20.
+
+### 🟠 Ce qu'on peut quand même dire, sans attribuer
+
+| | |
+|---|---|
+| la combinaison **ne bat la queue pure nulle part** | le meilleur des trois écarts est −1,5 %, soit 0,6 σ : rien |
+| à la coupure 52 elle **coûte 7,9 %**, soit **3,1 σ** | c'est au-dessus du bruit mesuré, donc réel — mais imputable à l'un ou l'autre des deux drapeaux |
+| 🔑 elle **aplatit la structure des coupures** | `0,7408 / 0,7438 / 0,7433` — une étendue de **0,4 %** là où la queue pure en montre **9,1 %**. Le choix de la coupure, qui était la seule chose que ce composant permettait de discriminer, **cesse d'exister** |
+| le plantage et le nombre de déposables ne bougent pas | `4,00 %` et 1 déposable partout, comme la queue pure |
+
+📌 L'aplatissement est le fait le plus intéressant des quatre, et le seul qui ne demandait pas
+d'attribution pour être vu. Il est cohérent avec la lecture prédite — des couches optiques
+rouvertes au milieu de la queue dominent le résultat et effacent ce que la position de la coupure
+apportait — **mais il reste une observation, pas une explication.**

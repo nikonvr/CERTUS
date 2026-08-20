@@ -315,8 +315,8 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
         # 🔴 par_swing == 3 exige AUSSI le contexte de swing : sans lui `swing_ctx` vaut None
         # et la regle d'exception est sautee EN SILENCE. C'est ce qui a fait qu'un run de
         # 56 min a rendu un doublon exact du run sans exception, le 2026-08-19.
-        "rate_by_swing": par_swing in (1, 3),
-        "rate_tail_sweep": TAIL_CUTS if par_swing in (2, 3) else [],
+        "rate_by_swing": par_swing in (1, 3, 5),
+        "rate_tail_sweep": TAIL_CUTS if par_swing in (2, 3, 5) else [],
         "rate_layer_sets": RATE_SETS if par_swing == 4 else [],
         "rate_tail_keep_optical": 4 if par_swing == 3 else 0,
         "execution_mode": mode,
@@ -544,7 +544,11 @@ def main() -> int:
     res_nm = float(sys.argv[5]) if len(sys.argv) > 5 else 2.0
     elargi = int(sys.argv[6]) if len(sys.argv) > 6 else 0   # 0 / 1 / 2
     graine = int(sys.argv[7]) if len(sys.argv) > 7 else SEED
-    par_swing = int(sys.argv[8]) if len(sys.argv) > 8 else 0   # 0 / 1=swing / 2=queue
+    # 0=rien · 1=swing seul · 2=queue seule · 3=queue+swing+exception · 4=chirurgical
+    # 🔴 5=queue+swing SANS exception -- le CONTROLE de 3, ajoute le 2026-08-20. Sans lui,
+    # comparer 3 a 2 fait varier DEUX drapeaux a la fois (erreur n° 3 du §5), et `by_swing`
+    # n'est pas inerte sur r75x2 : il y ajoute 26 origines (RATE_L47, RATE_L65).
+    par_swing = int(sys.argv[8]) if len(sys.argv) > 8 else 0
     if nom not in COMPOSANTS:
         print(f"composant inconnu : {nom}. Choix : {', '.join(COMPOSANTS)}")
         return 2
@@ -567,8 +571,8 @@ def main() -> int:
                          "exploration_niveau": int(elargi),
                          # 🔴 CE BLOC MENTAIT : il enregistrait `[]` pour par_swing == 3
                          # alors que le run tournait bien avec les coupures (§24-7).
-                         "rate_by_swing": par_swing in (1, 3),
-                         "rate_tail_sweep": TAIL_CUTS if par_swing in (2, 3) else [],
+                         "rate_by_swing": par_swing in (1, 3, 5),
+                         "rate_tail_sweep": TAIL_CUTS if par_swing in (2, 3, 5) else [],
                          "rate_layer_sets": RATE_SETS if par_swing == 4 else [],
                          "rate_tail_keep_optical": 4 if par_swing == 3 else 0,
                          # 🔴 §24-7 : sans lui, deux runs a triplets differents seraient
@@ -603,7 +607,7 @@ def main() -> int:
                 + ("" if not par_swing else "_swing" if par_swing == 1
                    else "_chirurgical" if par_swing == 4
                    else f"_tail{min(TAIL_CUTS)}-{max(TAIL_CUTS)}"
-                        + ("k" if par_swing == 3 else ""))
+                        + ("k" if par_swing == 3 else "s" if par_swing == 5 else ""))
                 # 🔴 LE TRIPLET DE CONSENSUS ENTRE DANS LE NOM, pour la meme raison que les
                 # coupures : trois runs qui ne different QUE par lui s'ecraseraient l'un
                 # l'autre, et la mesure de dispersion -- qui est justement leur objet --

@@ -49,6 +49,25 @@ mesure du chantier n'a encore fait.
 (§13 et §14 du dossier). Il ne rejoue que la queue, a la meme profondeur, pour que la
 comparaison porte enfin sur une seule difference.
 
+### 🔴 CELLULE 2 — LE CONTROLE QUI MANQUAIT A LA REGLE D'EXCEPTION DE 👤
+
+La cellule 5 du batch du 19 a teste la regle d'exception -- *« sauf les couches avec au moins
+2 turning points qui restent en optique »* -- et elle **n'est pas interpretable** : `par_swing=3`
+arme DEUX drapeaux, `rate_by_swing` **et** `rate_tail_keep_optical`, alors que la reference a
+laquelle on la compare n'en a aucun. C'est l'erreur n° 3 du §5, et elle est de ma main.
+
+📏 Et `rate_by_swing` n'est **pas** inerte sur `r75x2` : il y ajoute **26 origines** nouvelles
+(`RATE_L47`, `RATE_L65`). On ne peut donc pas l'ecarter d'un revers de main.
+
+🔑 **`par_swing = 5` est ajoute pour cela** : queue + swing, **sans** reouverture optique. Il ne
+differe de `3` que par `keep_optical`, et son nom de fichier porte un `s` la ou `3` porte un `k`
+-- donc aucun ecrasement possible. **Comparer 5 a 3 isole enfin la regle de 👤.**
+
+🔵 **Prediction, inchangee depuis le 19** : la regle **degrade ou ne change rien**. Rouvrir une
+couche optique au milieu de la queue reintroduit un point de plantage **et** reexpose tout ce qui
+la suit. **Ce qui la refuterait** : un gain, qui signifierait que le re-ancrage POEM paie plus
+que le point de plantage rouvert -- et ce serait un resultat neuf.
+
 ### 🔵 CELLULE 1 — la seconde graine du `75c`, et elle est bon marche
 
 Le resultat du `75c` est a **une seule graine**. Son ecart de 7,4 sigma ne peut pas etre
@@ -86,8 +105,9 @@ SONDE = str(ROOT / "scripts" / "probe_blocs_vs_plantage.py")
 #: par_swing = 2 -> balayage de queue
 CELLULES = [
     ("1_75c_1nm_graine77",  ["75c",   "fast", "0", "0", "1", "0", "77", "2"], "46,52,58,64,70", 40),
-    ("2_r75x2_deep_s042",   ["r75x2", "deep", "0", "0", "2", "0", "42", "2"], "49,52,55", 150),
-    ("3_r75x2_deep_s077",   ["r75x2", "deep", "0", "0", "2", "0", "77", "2"], "49,52,55", 150),
+    ("2_controle_exception", ["r75x2", "fast", "0", "0", "2", "0", "42", "5"], "46,52,58", 40),
+    ("3_r75x2_deep_s042",   ["r75x2", "deep", "0", "0", "2", "0", "42", "2"], "49,52,55", 150),
+    ("4_r75x2_deep_s077",   ["r75x2", "deep", "0", "0", "2", "0", "77", "2"], "49,52,55", 150),
 ]
 
 

@@ -1090,3 +1090,48 @@ aucun basculement de verdict en vue — c'est le régime « confortable » où �
 graine ne décide de rien. **L'écart de 7,4 σ ne peut pas être renversé par une graine.**
 📌 Ce qui reste à confirmer par une seconde graine est le **détail** — la place exacte du coude
 entre 58 et 64 — pas le sens du résultat.
+
+---
+
+## 17. 🔵 BATCH DU 2026-08-20 — l'expérience qui isole la règle DANS UN SEUL COMPOSANT
+
+📌 Le batch est [`scripts/batch_nuit_2026-08-20.py`](../scripts/batch_nuit_2026-08-20.py), et son
+en-tête porte le raisonnement complet. **Écrit et committé avant qu'il ne tourne.**
+
+### 🔴 Le défaut de protocole qu'il répare, et il bloque toute publication
+
+Le résultat phare du chantier — *la queue Rate rend `r75x2` fabricable* — est mesuré en
+**`fast`**, alors que la comparaison pur optique à laquelle on l'oppose est en **`deep`**. Deux
+profondeurs différentes : c'est **l'erreur n° 3 du §5 de `CLAUDE.md`**, deux choses changées à la
+fois. Tant que ce n'est pas réparé, on ne sait pas si c'est la queue qui sauve le composant ou la
+profondeur de recherche qui manquait — c'est-à-dire exactement l'attaque 3 du §12, qu'on croyait
+réfutée par le §13.
+
+### 🔑 Pourquoi cette expérience vaut mieux que toutes les précédentes
+
+La règle « faisabilité contre précision » repose aujourd'hui sur **deux composants différents**,
+donc sur une comparaison qui mélange l'effet de la queue et l'effet du composant. 📏 Or `r75x2`
+en `deep` à 2 nm offre les deux régimes **à lui seul**, selon la graine :
+
+```
+graine 42  ->    0 deposable en pur optique   (l'optique ECHOUE)
+graine 77  ->  547 deposables, SEEL 0,569     (l'optique REUSSIT, et tres bien)
+```
+
+**Même composant, même mode, même fente, même grille de notation. Seule la graine change.** Y
+ajouter la même queue Rate teste la règle *toutes choses égales par ailleurs* — ce qu'aucune
+mesure du chantier n'a encore fait.
+
+### 🔵 La prédiction, posée d'avance
+
+> **À la graine 42 la queue SAUVE (déposables > 0). À la graine 77 elle COÛTE (SEEL nettement
+> au-dessus de 0,569, au-delà de 2 σ, soit > 0,598).**
+
+| ce qui la réfuterait | ce qu'il faudrait en conclure |
+|---|---|
+| graine 42, **0 déposable en `deep`** | 🔴 le résultat phare ne survit pas au changement de profondeur. Les 5 déposables du `fast` étaient un artefact du criblage court, et **la queue ne sauve rien** |
+| graine 77, la queue **égale ou bat** 0,569 | « elle paie en précision » est faux, ou pas général. Le +19 % du `75c` viendrait du composant, pas de la queue |
+| les deux graines se comportent **pareil** | ce n'est plus la faisabilité qui commande, et il faut chercher ailleurs ce que la queue fait vraiment |
+
+La cellule 1 — `75c` à 1 nm sur la graine **77** — passe en premier parce qu'elle coûte 40 min :
+elle établit la place du coude entre les coupures 58 et 64, que rien n'établit aujourd'hui.

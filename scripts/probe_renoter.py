@@ -109,6 +109,88 @@ def _lire_plans(chemin: Path) -> list[dict[str, Any]]:
     return out
 
 
+def _renoter(opti, params, plans, nom, graine, mode_ctx, fichier) -> None:
+    """Note les plans fournis avec la fonction de PRODUCTION, et ecrit AVANT d'afficher."""
+    from certus.core.certus_strat_robustness import run_final_simulation_block as vrai
+
+    opti["all_strategies"] = [
+        {"strategy_id": 9_000_000 + i, "n_blocks": len(p["blocks"]),
+         "blocks": p["blocks"], "origin": f"RENOTE({p['nom']})",
+         "avg_cost": float("inf"), "total_cost": float("inf")}
+        for i, p in enumerate(plans)
+    ]
+    # ⚠️ PIEGE 2 : `params` n'est pas toujours un dictionnaire -- sur certains chemins c'est
+    # un StratParamsDTO. `params["cle"] = v` fonctionne, `params.setdefault(...)` leve.
+    params["robustness_seed"] = graine
+    # 🔴 La profondeur est EXPLICITE et consignee (§24-7). Sans cela l'appel prenait le
+    # defaut de signature -- 150 -- quelle que soit la profondeur voulue, sans le dire.
+    n_runs = int(params.get("robustness_num_runs") or 150)
+    print(f"\n  re-notation de {len(plans)} plan(s) sous la graine {graine}, "
+          f"N = {n_runs} tirages...", flush=True)
+    res = vrai(opti, params, num_runs=n_runs, expand_variants=False)
+    sorties = (res or {}).get("all_strategies_results", []) or []
+
+    # 🔴 ON NE GARDE QUE LES PLANS INJECTES, ET ON DIT CEUX QUI MANQUENT.
+    #
+    # 📏 Mesure du 2026-08-20 : 5 plans injectes, 2 ressortis. Les trois qui plantaient
+    # (100 %, 92 %, 98 %) ont ete ELIMINES par la porte de plantage et ont disparu de la
+    # sortie SANS UN MOT. Et la fonction rend en plus les strategies ELITE qu'elle engendre,
+    # donc 33 resultats pour 5 entrees : sans filtrage, on lirait des chiffres qui ne
+    # concernent pas les plans demandes.
+    #
+    # 🔑 C'EST FATAL POUR LE TEST DE TRANSFERT. Si les strategies de la graine 77 plantent
+    # sous la graine 42, elles s'evanouiraient au lieu d'etre rapportees comme plantant --
+    # et « aucun resultat » ne se distinguerait plus de « l'outil est casse ». Un plan
+    # absent est donc consigne EXPLICITEMENT, avec la seule chose qu'on sache de lui.
+    attendus = {f"RENOTE({p['nom']})" for p in plans}
+    lignes = []
+    vus = set()
+    for s in sorties:
+        st = s.get("strategy", {}) or {}
+        org = str(st.get("origin", "?"))
+        if org not in attendus:
+            continue  # une ELITE engendree par la fonction, pas un plan demande
+        vus.add(org)
+        sc = float(s.get("robustness_score", float("nan")) or float("nan"))
+        seel = 2 * math.sqrt(sc) if math.isfinite(sc) and sc >= 0 else None
+        lignes.append({"nom": org, "score": sc, "seel": seel,
+                       "crash_rate": float(s.get("crash_rate", 1.0)),
+                       "n_blocs": len(st.get("blocks") or []),
+                       "critical_layer": s.get("critical_layer") or {},
+                       "statut": "note"})
+    for manquant in sorted(attendus - vus):
+        lignes.append({"nom": manquant, "score": None, "seel": None, "crash_rate": None,
+                       "n_blocs": None, "critical_layer": {},
+                       "statut": "ELIMINE_PAR_LA_PORTE_DE_PLANTAGE"})
+
+    # 🔑 SAUVER D'ABORD, AFFICHER ENSUITE. L'affichage est un confort, la sauvegarde est le
+    # livrable -- vingt minutes ont ete perdues le 2026-08-20 pour l'ordre inverse.
+    ecrire_json(
+        ROOT / "reports" / f"renotation_{nom}_s{graine:03d}_{fichier.stem}.json",
+        {"composant": nom, "graine_notation": graine, "mode_contexte": mode_ctx,
+         "source_plans": fichier.name, "n_plans": len(plans),
+         "profondeur": {"robustness_num_runs": n_runs},
+         "parametres_de_notation": {
+             k: params.get(k) for k in
+             ("poem_anchor_noise", "index_corridor", "tp_hysteresis_factor",
+              "photometric_curvature_amp", "affine_scale_amp", "affine_offset_amp",
+              "poem_enabled", "slit_bias_enabled", "monochromator_resolution_nm",
+              "allow_rate", "phase_a_seed")},
+         "stamp": datetime.now().isoformat(timespec="seconds"), "resultats": lignes},
+        racine=ROOT,
+    )
+    n_elim = sum(1 for r in lignes if r["statut"] != "note")
+    print(f"\n  {len(lignes) - n_elim} plan(s) note(s), "
+          f"{n_elim} ELIMINE(S) par la porte de plantage", flush=True)
+    print(f"\n  {'plan':<40}{'SEEL':>9}{'crash':>9}{'blocs':>7}   statut", flush=True)
+    for r in lignes:
+        se = f"{r['seel']:.4f}" if r["seel"] else "-"
+        cr = f"{100 * r['crash_rate']:.2f}%" if r["crash_rate"] is not None else "-"
+        nb = str(r["n_blocs"]) if r["n_blocs"] is not None else "-"
+        marq = "" if r["statut"] == "note" else "  🔴 ELIMINE (plantage > tolerance)"
+        print(f"  {r['nom'][:39]:<40}{se:>9}{cr:>9}{nb:>7}{marq}", flush=True)
+
+
 def main() -> int:
     import bench_examples as Bx
 
@@ -146,10 +228,28 @@ def main() -> int:
     vrai = R.run_final_simulation_block
 
     def intercepte(opti_results, params, *a, **k):
-        if "opti" not in capture:
-            capture["opti"] = opti_results
-            capture["params"] = params
-            print(f"  🟢 contexte capture : {sorted(x for x in opti_results if not x.startswith('_'))[:8]}")
+        # 🔴 LA RE-NOTATION SE FAIT ICI, DANS LE CONTEXTE VIVANT — pas apres le workflow.
+        #
+        # 📏 Mesure du 2026-08-20, DEUX essais perdus : appeler
+        # `run_final_simulation_block` depuis le thread principal APRES la fin du worker Qt
+        # tue le processus, SANS trace, sans exception, sans code d'erreur. Le journal
+        # s'arrete net sur la ligne « [SLIT] 5/5 strategies » et il ne reste rien. Ce n'est
+        # pas une erreur Python : c'est un arret brutal, et le diagnostiquer couterait plus
+        # cher que de l'eviter.
+        #
+        # 🔑 Ici, tout est initialise et vivant : on note, on ECRIT, puis on laisse le
+        # workflow continuer. Meme si le processus meurt ensuite, le livrable est sur le
+        # disque -- c'est la meme regle que « sauver avant d'afficher », poussee d'un cran.
+        if "fait" not in capture:
+            capture["fait"] = True
+            print(f"  🟢 contexte capture : "
+                  f"{sorted(x for x in opti_results if not x.startswith('_'))[:8]}", flush=True)
+            try:
+                _renoter(dict(opti_results), params, plans, nom, graine, mode_ctx, fichier)
+            except Exception as e:  # noqa: BLE001 -- on ne doit JAMAIS tuer le run porteur
+                import traceback
+                print(f"  🔴 re-notation en echec : {type(e).__name__}: {e}", flush=True)
+                traceback.print_exc()
         return vrai(opti_results, params, *a, **k)
 
     poses = []
@@ -183,66 +283,10 @@ def main() -> int:
             if getattr(m, "run_final_simulation_block", None) is intercepte:
                 m.run_final_simulation_block = vrai
 
-    if "opti" not in capture:
-        print("🔴 CONTEXTE NON CAPTURE -- `run_final_simulation_block` n'a jamais ete appele.")
+    if "fait" not in capture:
+        print("🔴 RE-NOTATION JAMAIS DECLENCHEE -- `run_final_simulation_block` n'a pas ete "
+              "appele. Verifier que le composant produit bien des strategies.", flush=True)
         return 1
-
-    # ── 2. re-noter les plans fournis, avec la MEME fonction de production ───────────
-    opti = dict(capture["opti"])
-    opti["all_strategies"] = [
-        {"strategy_id": 9_000_000 + i, "n_blocks": len(p["blocks"]),
-         "blocks": p["blocks"], "origin": f"RENOTE({p['nom']})",
-         "avg_cost": float("inf"), "total_cost": float("inf")}
-        for i, p in enumerate(plans)
-    ]
-    # ⚠️ PIEGE 2 du projet : `params` n'est pas toujours un dictionnaire. Sur certains
-    # chemins c'est un `StratParamsDTO` pydantic -- `params["cle"] = v` fonctionne
-    # (`__setitem__`), `params.setdefault(...)` leve. On n'utilise donc que l'affectation.
-    params = capture["params"]
-    params["robustness_seed"] = graine
-
-    # 🔴 LA PROFONDEUR DE NOTATION EST EXPLICITE ET CONSIGNEE. Sans cela l'appel prenait le
-    # defaut de la signature -- `num_runs = 150` -- quelle que soit la profondeur voulue, et
-    # sans que rien ne le dise. C'est §24-7 : un run qui ne consigne pas sa configuration
-    # n'est comparable a rien, et deux artefacts ont deja ete perdus ainsi.
-    n_runs = int(params.get("robustness_num_runs") or 150)
-    print(f"\n  re-notation de {len(plans)} plan(s) sous la graine {graine}, "
-          f"N = {n_runs} tirages...")
-    res = vrai(opti, params, num_runs=n_runs, expand_variants=False)
-    sorties = (res or {}).get("all_strategies_results", []) or []
-
-    lignes = []
-    print(f"\n  {'plan':<34}{'SEEL':>9}{'crash':>9}{'blocs':>7}")
-    for s in sorties:
-        st = s.get("strategy", {}) or {}
-        sc = float(s.get("robustness_score", float("nan")) or float("nan"))
-        seel = 2 * math.sqrt(sc) if math.isfinite(sc) and sc >= 0 else None
-        cr = float(s.get("crash_rate", 1.0))
-        lignes.append({"nom": str(st.get("origin", "?")), "score": sc,
-                       "seel": seel, "crash_rate": cr,
-                       "n_blocs": len(st.get("blocks") or []),
-                       "critical_layer": s.get("critical_layer") or {}})
-        print(f"  {str(st.get('origin', '?'))[:33]:<34}"
-              f"{(f'{seel:.4f}' if seel else '-'):>9}{100 * cr:>8.2f}%"
-              f"{len(st.get('blocks') or []):>7}")
-
-    ecrire_json(
-        ROOT / "reports" / f"renotation_{nom}_s{graine:03d}_{fichier.stem}.json",
-        {"composant": nom, "graine_notation": graine, "mode_contexte": mode_ctx,
-         "source_plans": fichier.name, "n_plans": len(plans),
-         # 🔴 LA CONFIGURATION EFFECTIVE ENTRE DANS L'ARTEFACT (§24-7). Sans elle, une
-         # re-notation n'est comparable a rien -- et c'est precisement la comparaison qui
-         # est l'objet de l'outil.
-         "profondeur": {"robustness_num_runs": n_runs},
-         "parametres_de_notation": {
-             k: params.get(k) for k in
-             ("poem_anchor_noise", "index_corridor", "tp_hysteresis_factor",
-              "photometric_curvature_amp", "affine_scale_amp", "affine_offset_amp",
-              "poem_enabled", "slit_bias_enabled", "monochromator_resolution_nm",
-              "allow_rate", "phase_a_seed")},
-         "stamp": datetime.now().isoformat(timespec="seconds"), "resultats": lignes},
-        racine=ROOT,
-    )
     return 0
 
 

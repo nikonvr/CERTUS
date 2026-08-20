@@ -127,9 +127,21 @@ def main() -> int:
           f"contexte={mode_ctx}")
 
     # ── 1. capturer le contexte de pre-calcul d'un vrai run ──────────────────────────
+    #
+    # 🔴 CINQ MODULES IMPORTENT `run_final_simulation_block`, PAS DEUX. Verifie le
+    # 2026-08-20 : `certus_strat_robustness` (la source), `certus_strat_pipeline`,
+    # `certus_strat_workers`, `certus_strat_workers_external` et
+    # `certus_strat_workers_robustness`. Un `from X import f` cree une liaison PROPRE au
+    # module importateur : patcher la source ne touche PAS les copies deja liees.
+    # N'en patcher que deux, c'est risquer de ne rien capturer selon le chemin emprunte --
+    # et de le decouvrir APRES avoir paye le run.
+    from certus.core import certus_strat_pipeline as P
     from certus.core import certus_strat_robustness as R
     from certus.workers import certus_strat_workers as W
+    from certus.workers import certus_strat_workers_external as WE
+    from certus.workers import certus_strat_workers_robustness as WR
 
+    MODULES = (R, P, W, WE, WR)
     capture: dict[str, Any] = {}
     vrai = R.run_final_simulation_block
 
@@ -140,8 +152,12 @@ def main() -> int:
             print(f"  🟢 contexte capture : {sorted(x for x in opti_results if not x.startswith('_'))[:8]}")
         return vrai(opti_results, params, *a, **k)
 
-    R.run_final_simulation_block = intercepte
-    W.run_final_simulation_block = intercepte
+    poses = []
+    for m in MODULES:
+        if getattr(m, "run_final_simulation_block", None) is not None:
+            m.run_final_simulation_block = intercepte
+            poses.append(m.__name__.rsplit(".", 1)[-1])
+    print(f"  interception posee sur {len(poses)} module(s) : {', '.join(poses)}")
     try:
         Bx.qapp()
         Bx.autoanswer_dialogs(True)
@@ -163,8 +179,9 @@ def main() -> int:
         if getattr(app, "worker", None):
             Bx.wait_for(app.worker)
     finally:
-        R.run_final_simulation_block = vrai
-        W.run_final_simulation_block = vrai
+        for m in MODULES:
+            if getattr(m, "run_final_simulation_block", None) is intercepte:
+                m.run_final_simulation_block = vrai
 
     if "opti" not in capture:
         print("🔴 CONTEXTE NON CAPTURE -- `run_final_simulation_block` n'a jamais ete appele.")
@@ -178,11 +195,20 @@ def main() -> int:
          "avg_cost": float("inf"), "total_cost": float("inf")}
         for i, p in enumerate(plans)
     ]
-    params = dict(capture["params"]) if not hasattr(capture["params"], "model_dump") else capture["params"]
+    # ⚠️ PIEGE 2 du projet : `params` n'est pas toujours un dictionnaire. Sur certains
+    # chemins c'est un `StratParamsDTO` pydantic -- `params["cle"] = v` fonctionne
+    # (`__setitem__`), `params.setdefault(...)` leve. On n'utilise donc que l'affectation.
+    params = capture["params"]
     params["robustness_seed"] = graine
 
-    print(f"\n  re-notation de {len(plans)} plan(s) sous la graine {graine}...")
-    res = vrai(opti, params, expand_variants=False)
+    # 🔴 LA PROFONDEUR DE NOTATION EST EXPLICITE ET CONSIGNEE. Sans cela l'appel prenait le
+    # defaut de la signature -- `num_runs = 150` -- quelle que soit la profondeur voulue, et
+    # sans que rien ne le dise. C'est §24-7 : un run qui ne consigne pas sa configuration
+    # n'est comparable a rien, et deux artefacts ont deja ete perdus ainsi.
+    n_runs = int(params.get("robustness_num_runs") or 150)
+    print(f"\n  re-notation de {len(plans)} plan(s) sous la graine {graine}, "
+          f"N = {n_runs} tirages...")
+    res = vrai(opti, params, num_runs=n_runs, expand_variants=False)
     sorties = (res or {}).get("all_strategies_results", []) or []
 
     lignes = []
@@ -204,6 +230,16 @@ def main() -> int:
         ROOT / "reports" / f"renotation_{nom}_s{graine:03d}_{fichier.stem}.json",
         {"composant": nom, "graine_notation": graine, "mode_contexte": mode_ctx,
          "source_plans": fichier.name, "n_plans": len(plans),
+         # 🔴 LA CONFIGURATION EFFECTIVE ENTRE DANS L'ARTEFACT (§24-7). Sans elle, une
+         # re-notation n'est comparable a rien -- et c'est precisement la comparaison qui
+         # est l'objet de l'outil.
+         "profondeur": {"robustness_num_runs": n_runs},
+         "parametres_de_notation": {
+             k: params.get(k) for k in
+             ("poem_anchor_noise", "index_corridor", "tp_hysteresis_factor",
+              "photometric_curvature_amp", "affine_scale_amp", "affine_offset_amp",
+              "poem_enabled", "slit_bias_enabled", "monochromator_resolution_nm",
+              "allow_rate", "phase_a_seed")},
          "stamp": datetime.now().isoformat(timespec="seconds"), "resultats": lignes},
         racine=ROOT,
     )

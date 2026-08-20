@@ -110,6 +110,14 @@ def check_section_refs(lines: list[str]) -> list[str]:
     out = []
     seen: set[str] = set()
     for i, line in enumerate(lines, 1):
+        # 🔴 UNE LIGNE QUI NOMME UN AUTRE `.md` PORTE UN RENVOI CROISE, pas un renvoi interne.
+        # 📏 Faux positif du 2026-08-20 : `📌 Detail : [CHANTIER_RATE.md](...) §3bis` etait
+        # signale comme fantome parce que CLAUDE.md n'a pas de §3bis -- alors que la ligne
+        # designe explicitement l'autre document. Exactement le meme defaut que le controle I
+        # de `coherence_md.py`, corrige le meme jour : un controle qui crie a tort se fait
+        # ignorer, et un controle ignore ne protege plus de rien.
+        if re.search(r"\w+\.md", line):
+            continue
         for ref in re.findall(r"§\s*(\d+(?:bis|ter)?)", line):
             if ref in existing or ref in seen:
                 continue

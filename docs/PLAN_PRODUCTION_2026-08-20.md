@@ -49,6 +49,45 @@ réalisation traverse le bruit → les choix de Phase A → la population entiè
 
 C'est le pivot du plan : **tout le reste est du raffinement à côté de ça.**
 
+### ✅ CORRIGÉ LE 2026-08-20 — et le trou était dix fois plus large que ce §0 ne le disait
+
+📏 En cherchant à réparer la graine, la même mesure appliquée à **onze** leviers a montré que
+**dix** n'atteignaient pas le calcul :
+
+```
+rate_tail_sweep · rate_by_swing · rate_tail_keep_optical · rate_layer_sets
+require_turning_point · optical_prefix_sweep · elite_min_improvement
+elite_rounds · phase_a_seed · robustness_seed        ->  tous PERDUS
+```
+
+🔑 **Ils n'existaient que par surcharge de sonde.** Tout le savoir des campagnes était donc
+inaccessible depuis l'application — dont `rate_tail_sweep`, **la seule voie connue pour rendre
+`r75x2` déposable à 2 nm**.
+
+✅ **Réparé** (`aad370a`) : les neuf leviers se replient sur `_loaded_config`, comme le
+faisaient déjà onze autres clés. Deux aides ajoutées pour les listes. 🔒 Règle d'or vérifiée —
+sans clé JSON, chacun retrouve sa valeur inactive. **26 tests, dont 24 échouent sur le code
+d'avant.** ⚠️ `elite_rounds` reste fixé par le **mode** et n'est volontairement pas routé :
+le laisser surcharger casserait le contrat des modes.
+
+### ⚠️ ET LE §0 CI-DESSUS DOIT ÊTRE LU AVEC UNE CORRECTION IMPORTANTE
+
+Il dit *« la production ne peut pas trouver la meilleure configuration connue de son propre
+composant »*. 📏 **C'est vrai à 2 nm, et FAUX à 1 nm** — qui est la résolution **native** du
+fichier livré :
+
+```
+r75x2, graine 42, PUR OPTIQUE
+   1,0 nm + deep   ->  277 deposables   SEEL 0.6248   crash 1,00 %   ✅ PASSE
+   1,0 nm + fast   ->    0
+   2,0 nm + tout   ->    0
+```
+
+**Le fichier livré, chargé tel quel, fonctionne** — c'est le sens de son nom `-fabricable`. Ce
+qui ne passe pas à la graine 42 est le **2 nm en pur optique**, et là seule la queue Rate rend
+(SEEL 0,672 en `premium`, plantage 2,67 %). 👤 vise **le niveau de 0,569**, que rien n'atteint
+aujourd'hui à cette graine.
+
 ---
 
 ## 1. Les cinq axes, par valeur décroissante

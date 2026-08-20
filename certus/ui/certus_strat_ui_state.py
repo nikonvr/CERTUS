@@ -1426,12 +1426,32 @@ class CertusStratStateMixin:
         elif mode == "extreme":
             # EXTREME -- for the user who has all the time. Measured 2026-08-18.
             #
-            # WHY THIS MODE EXISTS. On the x2 scale variant of random75, the standard search
-            # returned 404 strategies and NOT ONE was depositable: 100 % crash, flat, on every
-            # block count. The component looked physically impossible to monitor with a single
-            # testglass. Widening the SEARCH -- same design, same seed, same slit -- returned
-            # 2945 strategies of which 254 are depositable, the best crashing 4 times out of
-            # 300 (SEEL 0.629 nm). The wall was the search, not the physics.
+            # 🔴 WHY THIS MODE EXISTS -- AND THE REASON DOES NOT SURVIVE ITS CONTROL RUN.
+            #
+            # The original claim, kept here verbatim because it is what the mode was built on:
+            # on the x2 scale variant of random75 the standard search returned 404 strategies
+            # and NOT ONE was depositable, while widening the search returned 2945 strategies
+            # of which 254 are depositable (SEEL 0.629 nm) -- "the wall was the search, not
+            # the physics".
+            #
+            # 🔴 THAT COMPARISON CHANGED TWO THINGS AT ONCE: the MODE (fast -> deep) and the
+            # widening profile. It is error 3 of CLAUDE.md section 5, and the missing control
+            # reverses the conclusion.
+            #
+            # Measured 2026-08-20, r75x2 at 1 nm, seed 42, the very case that motivated it:
+            #
+            #     deep ALONE (widening off)   1986 strategies   277 depositable   SEEL 0.6248
+            #     deep + widening profile     2945 strategies   254 depositable   SEEL 0.6292
+            #     fast alone                   429 strategies     0 depositable   crash 38 %
+            #
+            # Widening buys +48 % strategies, LOSES 8 % of the depositables (277 -> 254) and
+            # moves SEEL by +0.7 %, i.e. 0.27 sigma against the 2.59 % measured on this
+            # component -- indistinguishable. THE MODE DID ALL THE WORK; the widening did
+            # none of it, at roughly five times the cost of a deep run.
+            #
+            # ⚠️ Attribute nothing to this mode until a case is found where it beats plain
+            # deep. pages/CERTUS_STRAT.html already states this ("Extreme is not what makes
+            # this design manufacturable"); this comment used to contradict the page.
             #
             # WHAT IT CHANGES, AND WHAT IT DELIBERATELY DOES NOT. It widens what is GENERATED
             # and RETAINED. It leaves the EVALUATION depth identical to deep (300 draws), so a

@@ -568,6 +568,21 @@ d'exploration élargi (`ELARGISSEMENT`, `probe_blocs_vs_plantage.py`), graine 42
 |---|---|---|---|---|
 | exploration **standard** (`fast`) | 429 | **0** | 38 % | — *(repli)* |
 | exploration **élargie** (`deep` + profil élargi) | **2 945** | **254** | **1,00 %** | **0,629 nm** |
+| 🔑 **`deep` SEUL, élargissement coupé** — *le contrôle qui manquait* | 1 986 | **277** | **1,00 %** | **0,6248 nm** |
+
+🔴 **CE TABLEAU CHANGEAIT DEUX CHOSES À LA FOIS, et le contrôle renverse la conclusion.** Les
+deux premières lignes diffèrent par le **mode** (`fast` → `deep`) **et** par le profil élargi :
+c'est l'erreur n° 3 du §5 de `CLAUDE.md`, et elle a fondé un mode d'exécution entier.
+
+📏 **Mesuré le 2026-08-20** — `deep` seul rend **277 déposables contre 254**, à un SEEL
+**meilleur** (0,6248 contre 0,6292, écart 0,27 σ, donc indiscernable). **L'élargissement achète
++48 % de stratégies, perd 8 % des déposables, et ne gagne rien sur le score.** C'est le **mode**
+qui a tout fait.
+
+⚠️ **Conséquence pour le mode `extreme`**, dont c'était la justification : *rien ne lui est
+attribuable tant qu'un cas ne le montre pas battre `deep` seul.* La docstring du mode disait
+l'inverse et a été corrigée ; `pages/CERTUS_STRAT.html` le disait déjà correctement — le code
+contredisait la page.
 
 🔑 **×2 était déclaré impossible depuis trois jours — 100 % de plantage sur 404 stratégies à la
 fente nominale.** Il rend aujourd'hui **254 stratégies déposables**, dont la meilleure plante
@@ -589,7 +604,7 @@ changements simultanés ne s'attribuent pas. Ce qui est établi est *« élargir
 bloc, pas lequel de ses sept leviers porte l'effet.
 
 **2. La profondeur d'évaluation a changé aussi — 50 → 300 tirages.** `execution_mode = deep`
-pose `robustness_num_runs = 300` (`certus_strat_ui_state.py:1296`). 📏 Vérifiable dans les
+pose `robustness_num_runs = 300` (`certus_strat_ui_state.py:1419`). 📏 Vérifiable dans les
 données : les cellules `fast` rendent des taux multiples de 2 % (1/50), la gagnante de la phase 2
 plante **4 fois sur 300** et le `crash_min` du run vaut **3/300 = 1,00 %**.
 ✅ **Mais ce biais joue CONTRE le résultat, donc il ne l'explique pas** : à 50 tirages, une

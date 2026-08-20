@@ -602,6 +602,16 @@ section contienne ce qu'on lui prête.*
   `deep`, un mode qui existait déjà.
   🔑 **Le fichier prêt à lancer utilise donc `deep`** :
   `example/example_strat/JSON-strat-random75-x2-fabricable.json`.
+  🟢 **ET LE CONTRÔLE QUI MANQUAIT EST TOMBÉ LE 2026-08-20 — sa justification ne tient pas.**
+  Le mode a été bâti sur *« standard (`fast`) → 0 déposable, élargi (`deep` + profil) → 254 »* :
+  **deux choses changées à la fois**, l'erreur n° 3 du §5. 📏 Contrôle sur `r75x2` @ 1 nm,
+  graine 42 — le cas même qui l'a motivé :
+  `deep` **seul** → **277 déposables**, SEEL **0,6248** · `deep` **+ élargi** → 254, SEEL 0,6292.
+  **Élargir perd 8 % des déposables et ne gagne rien** (0,27 σ), pour ~5× le coût d'un `deep`.
+  🔑 **C'est le MODE qui a tout fait, pas l'élargissement.** La docstring du mode disait
+  l'inverse et a été corrigée ; `pages/CERTUS_STRAT.html` le disait déjà juste — **le code
+  contredisait la page.** 📌 [`CHANTIER_PREDICTIBILITE.md`](docs/CHANTIER_PREDICTIBILITE.md)
+  §4quater.
   🔴 **MATRICE `extreme` ARRÊTÉE LE 2026-08-19, sur décision de 👤 après un point d'étape :**
   cinq configurations testées (×2, 35c, 48c, ×0,5, 99c), **zéro amélioration mesurable sur
   aucune** — y compris les deux configurations barrières (`deep` trouve 0 déposable) où le mode
@@ -1630,6 +1640,10 @@ produits, eux, restent inexploitables — **on ne peut pas les rattraper, il fau
 refaire.**
 
 ### ✅ Fermés — talons conservés parce que le code et ce document y renvoient
+
+| # | Ce qu'il en reste |
+|---|---|
+| 52 | 🔑 **DIX CLÉS SUR ONZE N'ATTEIGNAIENT PAS LE CALCUL DEPUIS LE JSON — corrigé le 2026-08-20 (`aad370a`).** 📏 On charge une configuration portant onze leviers de recherche, on lit `collect_params`, dix ressortent à `None` : `rate_tail_sweep`, `rate_by_swing`, `rate_tail_keep_optical`, `rate_layer_sets`, `require_turning_point`, `optical_prefix_sweep`, `elite_min_improvement`, `elite_rounds`, `phase_a_seed`, `robustness_seed`. **Ils n'existaient que par surcharge de sonde**, donc tout le savoir des campagnes était inaccessible depuis l'application.<br>🔴 **Le cas le plus coûteux : `robustness_seed` valait TOUJOURS 42.** `_get_float_safe` interroge un widget de ce nom, et **il n'en existe aucun** — 0 déclaration dans tout `certus/ui/`. La meilleure configuration connue de `r75x2` (SEEL 0,5692, graine 77) était donc **structurellement hors de portée** de la production.<br>🔑 **La famille du défaut, et c'est elle qu'il faut retenir** : `dp_yield_weight` (§24-33) et `machine_sampling_dd` (§28-A8) sont le même motif — *un réglage visible qui n'agit pas est pire qu'un réglage absent : il fournit une explication fausse pour un résultat, et personne ne va la vérifier.* **Avant d'attribuer quoi que ce soit à un paramètre, vérifier qu'il arrive.**<br>✅ 26 tests posés, dont **24 échouent sur le code d'avant** (`tests/unit/test_strat_config_routing.py`). |
 
 | # | Ce qu'il en reste |
 |---|---|

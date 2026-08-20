@@ -164,6 +164,33 @@ mesure**. A24 le dit, elle n'a jamais eu lieu.
 > 👤 : *« avant les couches i, un filtre le plus parfait possible en tout optique, puis les
 > couches i+1 à 75 en rate. Est-ce naïf ? »*
 
+### 🔴 LA QUEUE RATE EST UNE AFFAIRE DE 2 nm. À 1 nm, LE PUR OPTIQUE LA BAT.
+
+📏 **Mesuré le 2026-08-20, inventaire complet de `r75x2` à la graine 42** :
+
+```
+                            deposables      SEEL      plantage
+1,0 nm  deep   pur optique       277       0.6248      1,00 %   <- LE MEILLEUR
+1,0 nm  fast   pur optique         0          -       38,00 %
+2,0 nm  deep   pur optique         0          -      100,00 %
+2,0 nm  premium  queue Rate        3       0.6717      2,67 %
+2,0 nm  deep     queue Rate        3       0.6859      2,67 %
+2,0 nm  fast     queue Rate        2       0.7014      4,00 %
+```
+
+🔑 **À 1 nm, le pur optique rend 0,6248 — meilleur que TOUTES les queues Rate de ce composant**
+(0,672 à 0,701), avec 277 déposables au lieu de 3. Et 1 nm + `deep` sont la **résolution et le
+mode natifs du fichier livré** : chargé tel quel, il fonctionne. C'est le sens de son nom.
+
+⚠️ **Donc la portée de tout ce dossier se resserre, et il faut le dire** : la queue Rate n'est
+pas *« ce qui rend `r75x2` fabricable »* — elle est **ce qui le rend fabricable À 2 nm**, c'est-
+à-dire à la moitié de la résolution pour laquelle il a été conçu. C'est un résultat réel, sur un
+régime volontairement dur, et ce n'est pas la voie recommandée pour ce composant.
+
+📌 **Ce qui reste entier** : la règle *faisabilité contre précision* (§16, §20), le mécanisme de
+position terminale, la réfutation de la règle d'exception (§21), et le fait que la queue est la
+**seule** configuration à marcher aux deux graines à 2 nm.
+
 ### 🔴 LIS CECI AVANT DE CITER LE MOINDRE CHIFFRE DE CE DOSSIER
 
 📏 **Les deux composants ont été mesurés à la résolution native de L'AUTRE**, par surcharge

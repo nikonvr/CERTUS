@@ -55,9 +55,16 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
+
+
+def _famille(s: dict) -> str:
+    """Nom de famille d'une strategie -- `RATE_TAIL52(from 75800)` -> `RATE_TAIL52`."""
+    st = s.get("strategy") or {}
+    return re.sub(r"\(.*", "", str(st.get("origin") or st.get("origin_name") or "?"))
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 ROOT = Path(__file__).resolve().parents[1]
@@ -155,9 +162,34 @@ def main() -> int:
         "composant": nom, "mode": mode, "seed": graine, "n_couches": n_couches,
         "profondeur": profondeur, "stamp": datetime.now().isoformat(timespec="seconds"),
         "n_strats": len(strats), "courbe": lignes,
+        # 🔴 CE CHAMP EXISTE POUR QU'UN ARTEFACT VIDE SE DENONCE LUI-MEME.
+        "familles_vues": sorted({_famille(s) for s in strats})[:40],
     }, indent=1, ensure_ascii=False), encoding="utf-8")
     print(f"\n  {len(lignes)} points de courbe -> {out.name}")
     print(f"  (sur {len(strats)} strategies evaluees ; profondeur {profondeur})")
+
+    # 🔴 UNE COURBE VIDE N'EST PAS UN RESULTAT, C'EST UNE PANNE -- et elle doit se voir.
+    # 📏 Le 2026-08-19 puis le 2026-08-20, cette sonde a rendu `courbe: []` en 100 min puis
+    # en 45,8 min, EN SORTANT AVEC LE CODE 0. Le pilote de batch a donc affiche « OK » deux
+    # fois pour deux pannes. C'est le motif que `CLAUDE.md` denonce partout : ca ne produit
+    # pas d'erreur, ca produit un resultat plausible.
+    if not lignes:
+        print("\n" + "=" * 92)
+        print("  🔴 COURBE VIDE -- AUCUNE VARIANTE `OPT_PREFIX` DANS LES RESULTATS.")
+        print(f"  {len(strats)} strategies evaluees, familles vues :")
+        for f in sorted({_famille(s) for s in strats})[:14]:
+            print(f"      {f}")
+        print("\n  Ce qu'il faut verifier, DANS CET ORDRE :")
+        print("   1. le journal porte-t-il une ligne `[PREFIX]` ? Ni l'info ni l'avertissement")
+        print("      n'y etaient le 2026-08-20 : `_optical_prefix_variants` sort alors a")
+        print("      `if not sweep: return []`, c'est-a-dire que `optical_prefix_sweep`")
+        print("      N'ATTEINT PAS le calcul. Le DTO le preserve (verifie a part), donc la")
+        print("      perte est ailleurs sur le trajet des parametres.")
+        print("   2. si `[PREFIX] aucune strategie a surveillance couche par couche` apparait,")
+        print("      c'est l'AUTRE cause : la population ne porte aucune strategie a")
+        print("      `n_blocks >= num_layers`, et la courbe est SANS OBJET sur ce plan.")
+        print("=" * 92)
+        return 2
     return 0
 
 

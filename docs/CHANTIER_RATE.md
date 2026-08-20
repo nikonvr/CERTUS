@@ -1190,3 +1190,47 @@ que par `keep_optical`, et son artefact porte un suffixe `s` là où `3` porte u
 d'attribution pour être vu. Il est cohérent avec la lecture prédite — des couches optiques
 rouvertes au milieu de la queue dominent le résultat et effacent ce que la position de la coupure
 apportait — **mais il reste une observation, pas une explication.**
+
+---
+
+## 19. 🔴 CELLULE 6 — LA COURBE `SEEL(n)` A ÉCHOUÉ UNE SECONDE FOIS, ET J'AI LE POINT EXACT
+
+`reports/prefixe_optique_r75x2_premium_s042.json`, **45,8 min**, `courbe: []`.
+**Deuxième artefact vide, après celui de 100 min du 2026-08-19.**
+
+### 🔴 Le pire n'est pas l'échec, c'est qu'il s'est annoncé « OK »
+
+Les deux runs sont sortis avec le **code 0**. Le pilote de batch a donc affiché `OK` pour deux
+pannes, et le bilan de la nuit lisait **6/6 OK**. C'est exactement le motif que `CLAUDE.md`
+dénonce d'un bout à l'autre : *ça ne produit pas d'erreur, ça produit un résultat plausible*.
+
+✅ **Réparé** : la sonde rend désormais **le code 2** sur une courbe vide, imprime les familles
+de stratégies réellement vues, et donne l'ordre de diagnostic. L'artefact porte en plus un champ
+`familles_vues`, pour qu'un artefact vide se dénonce **tout seul** à la relecture.
+
+### 📏 Ce que le diagnostic a établi, et ce qu'il n'a pas établi
+
+| ✅ établi | |
+|---|---|
+| **aucune ligne `[PREFIX]` dans 220 min de journal** | ni l'info, ni l'avertissement. `_optical_prefix_variants` sort donc au seul point muet : `if not sweep: return []` (`certus_strat_robustness.py:820`) |
+| **donc `optical_prefix_sweep` n'atteint pas le calcul** | ce n'est pas « aucune stratégie couche-par-couche » — cette branche-là, elle, journalise |
+| **le DTO n'est pas coupable** | testé à part : `StratParamsDTO(**{...})` conserve la clé dans `model_extra` et `.get()` la rend. `rate_tail_sweep` passe par le même chemin et fonctionne |
+| **le hoist au-dessus du garde `allow_rate` est bien en place** | ligne 935, vérifié — ce n'était donc pas le correctif d'hier qui manquait |
+
+| 🔴 non établi | |
+|---|---|
+| **où la clé se perd** | entre le `collect_params` surchargé de la sonde et le `params` reçu par `_expand_with_rate_variants`. Le compteur de la sonde prouve que la surcharge est appliquée au moins deux fois, mais rien ne prouve que c'est **cet** objet qui descend |
+
+⚠️ **Une inférence que j'ai faite et qui était fausse** : j'ai cru un moment que le run n'avait
+parcouru qu'un seul compteur de blocs, le journal ne montrant que `[Block 1]`. 📏 **La cellule 4,
+qui a parfaitement réussi, n'affiche elle aussi que `[Block 1]`.** Ce marqueur ne désigne pas le
+balayage de blocs. L'hypothèse est retirée.
+
+### ⏭️ Ce qui suit, et pourquoi pas maintenant
+
+L'instrument qui trancherait est une ligne de journal **inconditionnelle** à l'entrée de
+`_expand_with_rate_variants`, disant si `optical_prefix_sweep` est présent dans le `params`
+reçu. C'est trois lignes. 🔴 **Mais elle touche au code de PRODUCTION, et le batch du 20 tourne
+avec les cellules 3 et 4 non démarrées** : elles hériteraient de la modification en cours de
+route, et deux cellules d'une même campagne ne seraient plus comparables. **Reporté à la fin du
+batch.** C'est la contrainte C3 — une chose à la fois — appliquée à l'outillage comme au reste.

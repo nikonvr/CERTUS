@@ -1331,6 +1331,46 @@ class CertusStratStateMixin:
             "elite_min_improvement": _config_float(
                 getattr(self, "_loaded_config", {}), "elite_min_improvement", 0.0
             ),
+            # ── LES CINQ LEVIERS DU RAFFINEMENT ELITE ─────────────────────────────
+            #
+            # 🔑 POURQUOI CEUX-LA EN PARTICULIER. Sur `r75x2` a 2 nm, ELITE est le SEUL
+            # generateur qui produise des strategies deposables : toutes les autres familles
+            # (RATE_L*, SMART_MERGE, SYM, THICKNESS²) en rendent zero, aux deux graines
+            # mesurees. Et il rend 743 strategies a une graine, ZERO a l'autre.
+            #
+            # 📏 Ce que le journal montre, et qui dessine une recherche locale timide :
+            #     elite_wl_neighbor_span = 1     -> on n'essaie que lambda ± 1 nm par bloc
+            #     elite_max_candidates   = 120   -> mais le journal mesure `generated=9`
+            #     elite_stop_on_no_gain  = True  -> UN round sterile arrete TOUT, les
+            #                                        rounds 2 et 3 ne tournent jamais
+            #
+            # ⚠️ AUCUN N'EST ENCORE ETABLI COMME LA CAUSE. Les compteurs de rejets poses
+            # dans `certus_strat_consensus.py` le diront. Les router ne prejuge de rien --
+            # cela rend seulement l'hypothese TESTABLE, ce qu'elle n'etait pas.
+            #
+            # 🔒 Chacun vaut son defaut historique en l'absence de cle JSON : le chemin par
+            # defaut est celui d'avant, au bit. `_config_flag_default` pour le drapeau,
+            # dont l'ABSENCE doit rendre `True` et non `False`.
+            "elite_wl_neighbor_span": int(
+                _config_float(getattr(self, "_loaded_config", {}), "elite_wl_neighbor_span", 1.0)
+            ),
+            "elite_max_candidates": int(
+                _config_float(getattr(self, "_loaded_config", {}), "elite_max_candidates", 120.0)
+            ),
+            "elite_stop_on_no_gain": _config_flag_default(
+                getattr(self, "_loaded_config", {}), "elite_stop_on_no_gain", True
+            ),
+            "elite_max_full_evals": int(
+                _config_float(getattr(self, "_loaded_config", {}), "elite_max_full_evals", 36.0)
+            ),
+            # 🔴 `elite_num_runs` N'EST DELIBEREMENT PAS ROUTE, et c'est la regle d'or qui
+            # l'interdit. Le noyau fait `max(10, params.get("elite_num_runs", min(num_runs,
+            # 80)))` : son defaut DEPEND de `num_runs`, donc du mode -- 80 en `deep`. Le
+            # router avec un defaut de 0 rendrait `max(10, 0) = 10` en l'absence de cle
+            # JSON, soit un HUITIEME de la profondeur historique, et le chemin par defaut
+            # cesserait d'etre celui d'avant. Il faudrait pour cela un sentinelle `None`
+            # traitee cote noyau -- une modification separee, a faire seule si elle est
+            # jugee utile. Les quatre leviers ci-dessus suffisent a tester l'hypothese.
             # ── AXIS 3: the spectral target, routed from the configuration ───
             #
             # 👤 "The most important is the respected spectral target." STRAT ranked

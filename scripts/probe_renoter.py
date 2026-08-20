@@ -204,6 +204,21 @@ def _renoter(opti, params, plans, nom, graine, mode_ctx, fichier, surcharges=Non
         marq = "" if r["statut"] == "note" else "  🔴 ELIMINE (plantage > tolerance)"
         print(f"  {r['nom'][:39]:<40}{se:>9}{cr:>9}{nb:>7}{marq}", flush=True)
 
+    # 🔴 ON S'ARRETE ICI, ET C'EST DELIBERE.
+    #
+    # 📏 Defaut trouve le 2026-08-20 : la re-notation s'execute DANS l'interception, donc
+    # l'artefact est ecrit tot -- puis le workflow porteur continuait jusqu'au bout, pour
+    # RIEN. Chaque re-notation coutait ainsi un run complet au lieu de quelques minutes, et
+    # SIX workflows zombies se sont retrouves a tourner en parallele, se disputant la
+    # machine alors que la regle du projet est « une mesure, une machine » (§11-5).
+    #
+    # 🔑 `os._exit` plutot que `sys.exit` : il ne declenche AUCUN demontage. C'est
+    # exactement le demontage de Qt qui tuait le processus sans trace lors des deux
+    # premiers essais -- on s'en dispense donc, l'artefact etant deja sur le disque.
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(0)
+
 
 def main() -> int:
     import bench_examples as Bx
@@ -227,7 +242,12 @@ def main() -> int:
     if fichier is None or not fichier.is_file():
         raise SystemExit("usage: probe_renoter.py <composant> <plans.json> [graine] "
                          "[mode_contexte] [cle=valeur ...]")
+    # 🔑 UN CHEMIN DE FICHIER EST ACCEPTE COMME COMPOSANT. Cela permet de faire tourner le
+    # contexte sur une configuration ou les reglages voulus sont INSCRITS, au lieu d'etre
+    # surcharges apres coup -- et donc de tester si le chemin de surcharge est en cause.
     cfg = COMPOSANTS.get(nom)
+    if cfg is None and Path(nom).is_file():
+        cfg, nom = nom, Path(nom).stem
     if cfg is None:
         raise SystemExit(f"composant inconnu : {nom} (connus : {sorted(COMPOSANTS)})")
 
@@ -300,6 +320,25 @@ def main() -> int:
         def collect(*a, **k):
             p = _c(*a, **k)
             p["robustness_seed"] = graine
+            # 🔴 LES SURCHARGES DOIVENT ATTEINDRE LE RUN DE CONTEXTE, PAS SEULEMENT LA
+            # NOTATION. C'est le defaut qui a produit DEUX HEURES de conclusions fausses le
+            # 2026-08-20.
+            #
+            # 📏 Le contexte etait bati par un run a la resolution NATIVE du JSON -- 1 nm
+            # pour `r75x2` -- pendant qu'on notait a 2 nm par surcharge. Contexte et
+            # notation decrivaient donc deux machines differentes, et l'outil rendait
+            # 100 % de plantage quoi qu'on lui donne.
+            #
+            # 🔴 LE CONTROLE QUI L'A DEMASQUE, et il aurait du etre le PREMIER : re-noter
+            # les plans de la graine 77 A LA GRAINE 77 elle-meme. Attendu ~1 %, obtenu
+            # 100 % sur les douze. Un outil qui ne reproduit pas sa propre reference ne
+            # mesure rien -- et trois « refutations » en sont sorties avant qu'on ne le
+            # verifie.
+            #
+            # 🔒 REGLE : un outil de comparaison se controle sur son point fixe AVANT de
+            # servir. Comparer A a B sans verifier que B redonne B, c'est mesurer l'outil.
+            for cle, val in (surcharges or {}).items():
+                p[cle] = val
             return p
 
         app.collect_params = collect

@@ -65,6 +65,82 @@ C'est le pivot du plan : **tout le reste est du raffinement à côté de ça.**
 
 ## 2. AXE A — la recherche multi-réalisation
 
+### 🔑 LA GRAINE N'ENTRE PAS PAR UNE PORTE, MAIS PAR TROIS
+
+Poser « plusieurs graines » sans les distinguer reviendrait à payer le prix fort pour n'en
+réparer qu'une.
+
+| porte | ce que la réalisation y décide | état |
+|---|---|---|
+| **1. génération** — Phase A choisit **une** λ par couche, par argmin sur un signal bruité | *quelles candidates naissent* | 🔴 à faire, c'est A2 |
+| **2. élimination** — la porte de plantage compare un taux **estimé** à un seuil **fixe** | *lesquelles survivent* | 🟢 **déjà codé, éteint partout** — c'est A0 |
+| **3. troncature** — la DP garde `dp_top_k` (20 `fast` · 40 `premium` · 100 `deep`) | *lesquelles sont notées* | 🟠 se referme sous A2 |
+
+### A0. 🟢 ARMER LA PORTE DE PLANTAGE À CONFIANCE — une ligne par configuration
+
+`_crash_gate_rejects` (`certus_strat_robustness.py:1744`) porte **déjà** le correctif, avec sa
+mesure du 2026-08-13 dans sa propre docstring :
+
+```
+probabilite qu'une strategie soit REJETEE, selon son VRAI taux
+              N=50     N=150    N=300    N=500
+ 3 % (bonne) 18,9 %    8,3 %    3,9 %    1,0 %   <- rejetee A TORT
+ 7 % (mauvaise) 68,9 % 83,1 %   93,5 %   97,2 %
+```
+
+> *« Un filtre dont le verdict change avec la profondeur n'est pas un filtre, c'est un
+> échantillonneur. »* — le code, ligne 1765.
+
+Le correctif ne rejette que lorsque la **borne de confiance basse** dépasse la tolérance. Trois
+conséquences, toutes voulues : une bonne stratégie n'est jamais éliminée par malchance ; un run
+court rejette peu, ce qui est **honnête** ; la porte se resserre d'elle-même avec la profondeur,
+sans changer de règle. 🔒 **La tolérance de 5 % ne bouge pas** — c'est l'estimateur qui était
+faux, jamais la valeur de 👤.
+
+📏 **Vérifié le 2026-08-20 : `crash_gate_confidence` est ABSENT des 20 JSON livrés.** Il vaut
+donc 0, c'est-à-dire la comparaison historique. Et contrairement à `robustness_seed`, **cette
+clé est bien lue depuis le JSON** (`certus_strat_ui_state.py:1229`).
+
+**Action** : `"crash_gate_confidence": 0.95` dans les configurations. Coût : une ligne. C'est le
+meilleur rapport valeur/risque de tout le plan, et il passe **avant** A1.
+
+⚠️ **C1 s'applique** : la porte change de comportement, donc **toute mesure antérieure devient
+incomparable**. Armer et remesurer, jamais armer au milieu d'une campagne.
+
+### A2bis. 🔴 Les deux détails qui décident du succès de l'union
+
+**(a) Les graines de GÉNÉRATION doivent être disjointes des graines de NOTATION.** Le consensus
+tourne sur `[41,42,43]`. Une stratégie engendrée sous 42 **et** notée sous 42 est avantagée par
+sa propre chance — c'est la malédiction du vainqueur, mesurée à **+12,9 %**. Générer sur
+`{77, 101, 202, 303, 404}`, noter sur `[41,42,43]`.
+
+🔑 **Et le « défaut » §24-47 devient l'outil** : le consensus étant découplé de `robustness_seed`,
+toutes les populations sont **déjà** notées sur la même base. Le socle commun dont l'union a
+besoin existe — il suffit de l'écrire au lieu de le subir.
+
+**(b) `dp_top_k` ne tronque pas sur le coût qu'on croit.** §24-45 : le bonus block-aware
+**écrase** le coût en place (`certus_strat_objectives.py:457`, `cost_raw` contient déjà la
+valeur bonifiée) et court **avant** la normalisation. La troncature porte donc sur un coût
+bonifié, au carré. À savoir avant d'interpréter tout élargissement de `top_k`.
+
+### ⚖️ L'alternative écartée, et pourquoi elle n'est pas écartée gratuitement
+
+On pourrait rendre la **décision** stable au lieu de mettre en commun des décisions : moyenner
+le coût de Phase A sur `m` réalisations avant l'argmin. Bien moins cher.
+
+📏 **Mais §24-28 a mesuré qu'aucun critère connu d'avance ne sélectionne la gagnante** :
+`LOCAL_SEARCH` ne produit **rien** à corridor 0 et produit la gagnante **seule** à 0,001, 0,005
+et 0,010. Moyenner rendrait **une** stratégie de compromis là où c'est la **diversité** qui paie.
+
+📌 **Cela reste une hypothèse, pas une mesure.** L'expérience est courte : Phase A à coût moyenné
+sur `m = 5`, population comparée à l'union des 5. **À mesurer avant de trancher**, pas à décréter.
+
+### A2ter. Combien de graines ? — ne pas poser la valeur
+
+`K = 1 … 8` sur `r75x2 @ 2 nm`, et on trace la **courbe de saturation de l'union** : le `K` utile
+est là où elle plafonne. `CLAUDE.md` §19 — *si tu te trouves en train de choisir une valeur, tu
+t'es trompé.*
+
 ### A1. 🔴 Exposer la graine, et d'abord la RÉPARER (30 min, aucun risque)
 
 Deux lignes dans `certus_strat_ui_state.py:1253-1254` : replier sur `_loaded_config` comme le
@@ -261,3 +337,110 @@ un gros travail passe avant ce travail.* A1 et C1 coûtent 2 h 30 et conditionne
    pas — contrainte C3.
 5. **Aucune conclusion sur une seule graine**, sur un composant marginal —
    `CHANTIER_RATE.md` §14.
+
+---
+
+## 10. 🔴🔴 RÉVISION DU 2026-08-20 — LA PORTE N'EST PAS OÙ JE L'AVAIS MISE
+
+👤 avait une intuition : *« seed 77 passe là où seed 42 ne passe pas car ça doit se jouer à
+rien. Il y a des paramètres de contraintes par couche, par POEM, par dispersion d'indice. Si on
+les diminue un chouia avec seed 42, seed 42 va enfin être débloqué. »*
+
+**L'intuition est juste — il y a bien un seuil binaire, et il décide tout. Mais il n'est pas
+dans les contraintes physiques, et la mesure a corrigé trois choses que j'avais écrites.**
+
+### 📏 Ce qui a été mesuré, dans l'ordre
+
+**(1) Ça ne se joue PAS à rien, au niveau du plantage.**
+
+```
+graine 42 : 1617 strategies, LE PLUS BAS plantage = 100,00 %
+            p05 100 %  mediane 100 %  p95 100 %   sous 20 % : 0 strategie
+graine 77 : 2231 strategies, le plus bas = 0,33 %  ·  p05 1,0 %  ·  sous 20 % : 547
+```
+
+Desserrer la tolérance de 5 % à 20 % ne débloquerait **rien** : il n'y a aucune stratégie entre
+les deux à la graine 42.
+
+**(2) La Phase A est IDENTIQUE aux deux graines.**
+
+```
+75 couches — lambda differentes : 0 / 75      couts differents : 0 / 75
+cout couche 0 : 0.049995809580197205 dans les DEUX
+candidates offertes 152 · interdites 64 · survivantes 86 · min 2
+COUCHES ACCULEES : 0 / 75      best_crash_rate par couche : 0,000 % partout
+```
+
+🔴 **Cause** : `probe_blocs_vs_plantage.py:287` surcharge `robustness_seed` et **jamais
+`phase_a_seed`**, que `collect_params` laisse à 42 faute de widget (§0). **Toutes les
+comparaisons de graines du projet sur `r75x2` n'ont donc fait varier que la Phase B.**
+
+✅ Et cela referme une question : la Phase A n'est pas acculée. §24-37 ne s'applique pas ici,
+c'est §24-48 — *l'échec naît à l'assemblage alors que la Phase A est parfaitement saine* —
+**confirmé sur un second composant.**
+
+**(3) Le plantage d'une stratégie donnée ne dépend pas de la graine.**
+122 stratégies sont présentes dans les deux runs : **les 122 ont un plantage identique.**
+
+**(4) 🔑 TOUT L'ÉCART TIENT À UN SEUL GÉNÉRATEUR.**
+
+```
+                    total   deposables
+graine 42  ELITE        0            0
+graine 77  ELITE      743          547
+   (aucune autre famille ne rend une seule deposable, aux DEUX graines)
+```
+
+### 🔑 LE SEUIL, ET IL NE PEUT PAS ÊTRE DESSERRÉ
+
+`_resolve_elite_nominal_and_target_threshold` (`certus_strat_ranking.py:825`) :
+
+```python
+nominal_threshold = RMSE_p95 de la strategie de RANG 10
+target_threshold  = nominal_threshold - elite_min_improvement
+```
+
+Une candidate n'entre dans le raffinement que si elle **bat la 10ᵉ**. C'est le *« ça se joue à
+rien »* de 👤 — situé à l'admission dans ELITE, pas dans les contraintes par couche.
+
+🔴 **Et le réglage est écrêté** (`certus_strat_consensus.py:208`) :
+
+```python
+elite_min_improvement = max(0.0, float(params.get("elite_min_improvement", 0.0)))
+```
+
+**Le `max(0.0, …)` interdit toute valeur négative : ce paramètre ne peut que DURCIR la porte,
+jamais la desserrer.** Il n'existe aujourd'hui aucun moyen d'essayer ce que 👤 propose.
+
+### ✅ CE QUE CETTE MESURE CHANGE DANS LE PLAN — un ordre de grandeur
+
+| avant | après |
+|---|---|
+| A2 = **K Phases A complètes** (~730 s chacune) puis union | 🟢 **UNE Phase A, partagée**, puis **K passes ELITE** |
+
+La Phase A est déterministe et ne dépend pas de la graine : la diversité vit **entièrement**
+dans les rounds ELITE de Phase B. Le coût du multi-réalisation s'effondre.
+
+### 🔵 A0bis — LEVER L'ÉCRÊTAGE, ET MESURER (l'action la plus rentable du plan)
+
+**Ce qu'il faut écrire** : autoriser une porte ELITE **relâchée** — soit `elite_min_improvement`
+négatif, soit un `elite_accept_ratio` acceptant une candidate à `k × nominal_threshold` avec
+`k > 1`. 🔒 **Inactif par défaut** : à la valeur d'aujourd'hui, chemin d'avant au bit.
+
+🔵 **Prédiction, posée d'avance** : desserrer la porte ELITE à la graine 42 rend **au moins une
+stratégie déposable** sur `r75x2 @ 2 nm`, là où le pipeline entier en rend zéro sur 1617.
+
+**Ce qui la réfuterait** : toujours zéro déposable. Cela voudrait dire qu'ELITE, à la graine 42,
+ne **génère** pas les bonnes candidates — et non qu'il les rejette. Le diagnostic basculerait
+alors du **filtre** vers le **générateur**, et c'est une autre réparation.
+
+⚠️ **Non mesuré à ce jour.** L'hypothèse est désormais précise et testable ; elle ne l'était pas
+il y a une heure. Elle ne doit pas être écrite comme un acquis.
+
+### ⚠️ Les trois affirmations que cette section CORRIGE
+
+| ce qui avait été écrit plus haut dans ce plan | ce que la mesure dit |
+|---|---|
+| « la graine change les choix de Phase A » | 🔴 **faux sur `r75x2`** — `phase_a_seed` y est resté à 42. Vrai sur le 99c (§24-46), pas ici |
+| la porte **1** est en Phase A (génération) | elle est en **Phase B**, dans ELITE |
+| A2 exige K Phases A | **une seule suffit** |

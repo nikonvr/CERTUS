@@ -655,6 +655,42 @@ bruit qu'il faut relâcher, et les plans de la graine 77 attendront.
 **ENGENDRER**, jamais pour **NOTER**. Sinon on obtient un SEEL flatteur qui ne décrit aucune
 machine. C'est la forme exacte de l'invariant `N` sert à noter, jamais à choisir.
 
+### 🔴 DERNIÈRE PASSE — deux défauts trouvés DANS L'INSTRUMENT, avant de dépenser 120 min
+
+👤 : *« une dernière passe sur les diagnostics et plan révisé ? »*. Elle a payé.
+
+**(a) Les compteurs n'auraient rien émis dans le cas le plus probable.** La ligne de journal
+était placée **après** l'évaluation complète. Or si toutes les candidates sont rejetées au
+*successive halving*, le round sort **avant**, sur `if not candidates_to_eval` — et c'est
+précisément le scénario attendu à la graine 42. ✅ Les **trois** sorties du round sont désormais
+instrumentées, et chacune se nomme : `skipped` · `sortie=HALVING` · `sortie=COMPLETE`.
+
+**(b) `rej_halving` compte des rejets qui n'éliminent pas toujours.** Si un étage rejette
+**tout**, la boucle sort sur `break` sans réassigner `candidates_to_eval`, qui garde donc
+l'ensemble de l'étage précédent — et ces candidates passent quand même en évaluation complète.
+C'est un filet de sécurité du code existant, pas un défaut, **mais il faut le savoir pour lire
+le compteur** : un `halving` élevé ne signifie pas « autant de candidates perdues ». Consigné
+dans le code.
+
+**(c) Une erreur de vocabulaire dans le batch, corrigée.** Il annonçait *« `par_swing = 0` →
+pur optique, aucune variante Rate »*. 📏 Faux : l'artefact de référence porte **27 familles
+`RATE_*` et 1198 stratégies sur 1617**, parce que `allow_rate` vaut `True` dans le JSON du
+composant. `par_swing = 0` ne désactive que le balayage de **queue**, le placement par swing et
+les jeux de couches.
+
+### 🔒 Le contrôle C1 est intégré au batch
+
+Trois fichiers ont changé depuis le run de référence : les compteurs (instrumentation pure), le
+routage des treize clés (inerte sans clé JSON), et la clé `wavelength` de la sonde (artefact
+seulement). **Aucun ne doit toucher un chiffre.** Le run doit donc rendre exactement :
+
+```
+1617 strategies · 0 deposable · plantage minimal 100,00 % · ELITE 0 strategie
+```
+
+🔴 **Tout écart signifie qu'une de ces modifications a fui dans le calcul, et le diagnostic est
+à jeter avant même d'être lu.**
+
 ### ⚠️ Ce que cette passe n'a PAS pu attaquer
 
 Le récit A et le récit B restent **tous deux vivants**. Le comptage par famille montre qu'ELITE

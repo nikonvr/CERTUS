@@ -637,6 +637,17 @@ def _apply_elite_refinement_if_enabled(
             candidates_to_eval = [(e_idx, strat) for _val, e_idx, strat in stage_results[:keep_count]]
 
         if not candidates_to_eval:
+            # 🔴 LES COMPTEURS SONT EMIS ICI AUSSI, ET C'EST INDISPENSABLE. Cette sortie
+            # precede la ligne de compteurs placee apres l'evaluation complete : dans le
+            # scenario le plus probable -- tout rejete au halving -- le round se terminait
+            # SANS RIEN MESURER. Le defaut a ete trouve par relecture le 2026-08-20, avant
+            # de depenser 120 min de machine sur un instrument muet.
+            ctx.logger.info(
+                f"[ELITE] Round {elite_round}: rejets -- halving={rej_halving} "
+                f"full_rmse={rej_full_rmse} score_non_fini={rej_score_non_fini} "
+                f"| retenues=0 sur {len(elite_candidates)} engendrees "
+                f"| sortie=HALVING"
+            )
             ctx.logger.info(f"[ELITE] Round {elite_round}: no candidate passed Successive Halving.")
             if elite_stop_on_no_gain:
                 break
@@ -697,10 +708,17 @@ def _apply_elite_refinement_if_enabled(
                 except NUMERICAL_FAULT_EXCEPTIONS as e:
                     ctx.logger.warning(f"[ELITE] Round {elite_round}: full evaluation failed: {e}")
 
+        # ⚠️ `rej_halving` COMPTE DES REJETS QUI N'ELIMINENT PAS TOUJOURS. Si un etage du
+        # halving rejette TOUT, la boucle sort sur `break` (ligne ~631) sans reassigner
+        # `candidates_to_eval`, qui garde donc l'ensemble de l'etage precedent -- et ces
+        # candidates passent quand meme en evaluation complete. C'est un filet de securite
+        # du code existant, pas un defaut, mais il faut le savoir pour lire le compteur :
+        # un `halving` eleve ne signifie pas « autant de candidates perdues ».
         ctx.logger.info(
             f"[ELITE] Round {elite_round}: rejets -- halving={rej_halving} "
             f"full_rmse={rej_full_rmse} score_non_fini={rej_score_non_fini} "
-            f"| retenues={len(elite_added)} sur {len(elite_candidates)} engendrees"
+            f"| retenues={len(elite_added)} sur {len(elite_candidates)} engendrees "
+            f"| sortie=COMPLETE"
         )
         if not elite_added:
             ctx.logger.info(f"[ELITE] Round {elite_round}: no candidate beat nominal threshold.")

@@ -80,6 +80,23 @@ graine 77 **sous le bruit de la graine 42**. S'il tient, la stratégie est bonne
 la recherche est en cause ; s'il plante, le 0,5698 est propre à sa réalisation et aucun
 relâchement ne le récupérera.
 
+## 🔒 LE CONTROLE C1 EST INTEGRE — ce run doit REPRODUIRE la reference
+
+Depuis le run de reference (`blocs_vs_plantage_r75x2_deep_s042.json`, 2026-08-19 19:43), trois
+fichiers ont change :
+
+    certus_strat_consensus.py    compteurs de rejets  -> instrumentation PURE
+    certus_strat_ui_state.py     routage de 13 cles   -> inerte sans cle JSON
+    probe_blocs_vs_plantage.py   cle `wavelength`     -> artefact seulement
+
+**Aucun ne doit toucher un chiffre.** Le run attendu rend donc :
+
+    1617 strategies · 0 deposable · plantage minimal 100,00 % · ELITE 0 strategie
+
+🔴 **Tout ecart est un signal, pas un detail** : cela voudrait dire qu'une de ces trois
+modifications a fui dans le chemin de calcul, et le diagnostic serait a jeter avant meme d'etre
+lu. C'est la contrainte C1 -- un parametre inactif doit rendre les memes bits.
+
 ## Garde-fous
 
 - réglages **d'origine** : aucun levier armé — c'est un diagnostic, pas un traitement
@@ -104,7 +121,12 @@ SONDE = str(ROOT / "scripts" / "probe_blocs_vs_plantage.py")
 
 #: (nom, argv, minutes estimees)
 #: argv = [composant, mode, fente, min_tp, resolution_nm, elargi, graine, par_swing]
-#: par_swing = 0 -> pur optique, aucune variante Rate. On diagnostique la recherche, pas le Rate.
+#: 🔴 `par_swing = 0` NE VEUT PAS DIRE « PUR OPTIQUE ». Verifie sur l'artefact de reference :
+#: il porte 27 familles RATE_* et 1198 strategies sur 1617 -- parce que `allow_rate` vaut True
+#: dans le JSON du composant, ce qui engendre les variantes RATE_L a une couche independamment
+#: de `par_swing`. Ce que `par_swing = 0` desactive, c'est le balayage de QUEUE, le placement
+#: par swing et les jeux de couches. C'est exactement la configuration du run de reference,
+#: ce qui est le but : reproduire, pas varier.
 #
 # 🔴 UNE SEULE CELLULE, ET C'EST LE RESULTAT DE LA PASSE CONTRADICTOIRE DU 2026-08-20.
 # La version precedente en enchainait deux, 300 min. Mais la seconde -- la graine 77, pour

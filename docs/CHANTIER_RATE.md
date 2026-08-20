@@ -159,10 +159,35 @@ mesure**. A24 le dit, elle n'a jamais eu lieu.
 
 ---
 
-## 3bis. 🟢🟢 L'HYBRIDE OPTIQUE-PUIS-RATE REND LE ×2 FABRICABLE — mesuré le 2026-08-19
+## 3bis. 🟢🟢 L'HYBRIDE OPTIQUE-PUIS-RATE REND LE ×2 FABRICABLE **À 2 nm** — 2026-08-19
 
 > 👤 : *« avant les couches i, un filtre le plus parfait possible en tout optique, puis les
 > couches i+1 à 75 en rate. Est-ce naïf ? »*
+
+### 🔴 LIS CECI AVANT DE CITER LE MOINDRE CHIFFRE DE CE DOSSIER
+
+📏 **Les deux composants ont été mesurés à la résolution native de L'AUTRE**, par surcharge
+délibérée de la sonde. Vérifié dans les fichiers de configuration eux-mêmes :
+
+| | résolution NATIVE du fichier | mode natif | résolution **mesurée** dans ce dossier |
+|---|---|---|---|
+| `JSON-strat-random75.json` (`75c`, épaisseurs **simples**) | **2 nm** | `fast` | **1 nm** |
+| `JSON-strat-random75-x2-fabricable.json` (`r75x2`, épaisseurs **doubles**) | **1 nm** | `deep` | **2 nm** |
+
+🔑 **Conséquence, et elle borne tout ce dossier : le ×2 est déjà fabricable en PUR OPTIQUE à sa
+résolution native de 1 nm** — c'est de là que vient le `-fabricable` de son nom, et c'est le
+passage de `fast` à `deep` qui l'avait débloqué (`CLAUDE.md` §27). En le tournant à **2 nm**, on
+le place à la moitié de la résolution pour laquelle il a été construit.
+
+⚠️ **Donc « le ×2 n'est pas fabricable en optique » est FAUX sans sa condition.** Ce qui est
+mesuré est : *à 2 nm, à la graine 42, le pur optique rend 0 déposable.* À 1 nm il en rend, et
+§14 mesure même que cela dépend encore de la graine — 1 nm marche à 42 et pas à 77, 2 nm marche
+à 77 et pas à 42.
+
+📌 Ce n'est pas un défaut de la campagne : mesurer le ×2 à 2 nm est un choix légitime, c'est le
+régime où il est **difficile**, donc celui où une queue Rate a quelque chose à apporter. Mais la
+condition doit voyager avec le chiffre, **surtout vers `pages/CERTUS_STRAT.html`**, où une
+affirmation trop large se réfute en une question.
 
 **Non.** 📏 `r75x2` à 2 nm, `fast`, graine 42, 36 min :
 
@@ -299,7 +324,7 @@ fixe**. L'isolation est totale, ce qui est exactement ce qu'on voulait mesurer.
 dans les trois. Le code disait *« consensus rescoring … only reads `robustness_score` »* — la
 mesure le montre. Le rescorage déplace le **score** ; il ne touche ni le **verdict de
 fabricabilité**, ni le **choix de la stratégie**. C'est ce qui rend le résultat du chantier —
-*la queue Rate rend `r75x2` fabricable* — insensible à toute cette discussion.
+*la queue Rate rend `r75x2` fabricable **à 2 nm*** — insensible à toute cette discussion.
 
 📌 Les valeurs `0,814 / 0,767 / 0,814 / 0,757 / 0,749` pour les coupures 28 à 41, citées dans la
 version précédente, viennent d'un **artefact que j'ai écrasé** en changeant `TAIL_CUTS` sans
@@ -1100,7 +1125,7 @@ en-tête porte le raisonnement complet. **Écrit et committé avant qu'il ne tou
 
 ### 🔴 Le défaut de protocole qu'il répare, et il bloque toute publication
 
-Le résultat phare du chantier — *la queue Rate rend `r75x2` fabricable* — est mesuré en
+Le résultat phare du chantier — *la queue Rate rend `r75x2` fabricable **à 2 nm*** — est mesuré en
 **`fast`**, alors que la comparaison pur optique à laquelle on l'oppose est en **`deep`**. Deux
 profondeurs différentes : c'est **l'erreur n° 3 du §5 de `CLAUDE.md`**, deux choses changées à la
 fois. Tant que ce n'est pas réparé, on ne sait pas si c'est la queue qui sauve le composant ou la
@@ -1269,7 +1294,7 @@ coupure 52,  deep N=300  ->  SEEL 0.6859   crash 2,67 %  (8/300)
 🔑 **Les deux profondeurs donnent le même nombre.** Les 5 déposables du `fast` n'étaient donc
 **pas** un artefact du criblage court — c'est précisément ce que la réfutation aurait signifié.
 L'attaque 3 du §12 est close pour de bon : *ce n'est pas la profondeur de recherche qui manquait,
-c'est bien la queue Rate qui rend ce composant fabricable.*
+c'est bien la queue Rate qui rend ce composant fabricable **à 2 nm**.*
 
 ✅ Et le plantage tombe de 4,00 % à **2,67 %** en passant de 2/50 à 8/300 — même mouvement qu'au
 §11, et **sous la cible de 5 % de 👤**.

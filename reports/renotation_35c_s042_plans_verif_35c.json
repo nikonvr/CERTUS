@@ -1,0 +1,488 @@
+{
+  "composant": "35c",
+  "graine_notation": 42,
+  "mode_contexte": "fast",
+  "source_plans": "plans_verif_35c.json",
+  "n_plans": 5,
+  "profondeur": {
+    "robustness_num_runs": 50
+  },
+  "parametres_de_notation": {
+    "poem_anchor_noise": true,
+    "index_corridor": 0.005,
+    "tp_hysteresis_factor": 1.66,
+    "photometric_curvature_amp": 0.00375,
+    "affine_scale_amp": 0.0,
+    "affine_offset_amp": 0.0,
+    "poem_enabled": true,
+    "slit_bias_enabled": true,
+    "monochromator_resolution_nm": 2.0,
+    "allow_rate": true,
+    "phase_a_seed": 42
+  },
+  "stamp": "2026-08-20T12:58:25",
+  "resultats": [
+    {
+      "nom": "ELITE",
+      "score": 0.06797701834688064,
+      "seel": 0.5214480543520347,
+      "crash_rate": 0.0,
+      "n_blocs": 5,
+      "critical_layer": {
+        "layer": 4,
+        "cause": "point tournant fabrique par le bruit",
+        "margin_in_A": 0.83,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 3
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.06853282238852318,
+      "seel": 0.523575486013328,
+      "crash_rate": 0.0,
+      "n_blocs": 5,
+      "critical_layer": {
+        "layer": 4,
+        "cause": "point tournant fabrique par le bruit",
+        "margin_in_A": 0.83,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 4
+      }
+    },
+    {
+      "nom": "RENOTE(ELITE|crash=2.00%|score=0.075848)",
+      "score": 0.07569629998071889,
+      "seel": 0.5502592115747591,
+      "crash_rate": 0.02,
+      "n_blocs": 6,
+      "critical_layer": {
+        "layer": 32,
+        "cause": "niveau d'arret hors d'atteinte",
+        "margin_in_A": -239.09164337091204,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 8
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.06928843252003662,
+      "seel": 0.5264539201868921,
+      "crash_rate": 0.0,
+      "n_blocs": 5,
+      "critical_layer": {
+        "layer": 4,
+        "cause": "point tournant fabrique par le bruit",
+        "margin_in_A": 0.83,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 4
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.07124578909929383,
+      "seel": 0.533838136889053,
+      "crash_rate": 0.0,
+      "n_blocs": 5,
+      "critical_layer": {
+        "layer": 4,
+        "cause": "point tournant fabrique par le bruit",
+        "margin_in_A": 0.83,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 4
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.07211615625804381,
+      "seel": 0.5370890289627738,
+      "crash_rate": 0.02,
+      "n_blocs": 6,
+      "critical_layer": {
+        "layer": 32,
+        "cause": "niveau d'arret hors d'atteinte",
+        "margin_in_A": -238.74594080625067,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 8
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.07225340151151016,
+      "seel": 0.5375998568136348,
+      "crash_rate": 0.0,
+      "n_blocs": 5,
+      "critical_layer": {
+        "layer": 4,
+        "cause": "point tournant fabrique par le bruit",
+        "margin_in_A": 0.83,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 4
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.07249832004156076,
+      "seel": 0.5385102414682965,
+      "crash_rate": 0.0,
+      "n_blocs": 5,
+      "critical_layer": {
+        "layer": 4,
+        "cause": "point tournant fabrique par le bruit",
+        "margin_in_A": 0.83,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 4
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.07267618535681696,
+      "seel": 0.5391704196515864,
+      "crash_rate": 0.0,
+      "n_blocs": 6,
+      "critical_layer": {
+        "layer": 4,
+        "cause": "point tournant fabrique par le bruit",
+        "margin_in_A": 0.83,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 5
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.07425190579698646,
+      "seel": 0.5449840577374221,
+      "crash_rate": 0.02,
+      "n_blocs": 6,
+      "critical_layer": {
+        "layer": 24,
+        "cause": "niveau d'arret hors d'atteinte",
+        "margin_in_A": -28.5125722517614,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 8
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.06902215552645036,
+      "seel": 0.5254413593406989,
+      "crash_rate": 0.0,
+      "n_blocs": 5,
+      "critical_layer": {
+        "layer": 25,
+        "cause": "niveau d'arret hors d'atteinte",
+        "margin_in_A": 0.7398591296903234,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 5
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.0690612219580749,
+      "seel": 0.5255900377978064,
+      "crash_rate": 0.0,
+      "n_blocs": 5,
+      "critical_layer": {
+        "layer": 11,
+        "cause": "point tournant fabrique par le bruit",
+        "margin_in_A": 0.5318302190861595,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 3
+      }
+    },
+    {
+      "nom": "RENOTE(ELITE|crash=0.00%|score=0.068743)",
+      "score": 0.07168333774139381,
+      "seel": 0.5354748835991986,
+      "crash_rate": 0.0,
+      "n_blocs": 5,
+      "critical_layer": {
+        "layer": 4,
+        "cause": "point tournant fabrique par le bruit",
+        "margin_in_A": 0.83,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 4
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.06978530277678768,
+      "seel": 0.5283381598059624,
+      "crash_rate": 0.0,
+      "n_blocs": 5,
+      "critical_layer": {
+        "layer": 4,
+        "cause": "point tournant fabrique par le bruit",
+        "margin_in_A": 0.83,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 4
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.07096820690840941,
+      "seel": 0.5327971730721154,
+      "crash_rate": 0.0,
+      "n_blocs": 5,
+      "critical_layer": {
+        "layer": 4,
+        "cause": "point tournant fabrique par le bruit",
+        "margin_in_A": 0.83,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 3
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.07124657521039404,
+      "seel": 0.5338410820099706,
+      "crash_rate": 0.02,
+      "n_blocs": 6,
+      "critical_layer": {
+        "layer": 15,
+        "cause": "ondulation trop faible pour etre vue",
+        "margin_in_A": 0.47971202167284077,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 8
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.0715233744180933,
+      "seel": 0.5348770865090158,
+      "crash_rate": 0.02,
+      "n_blocs": 6,
+      "critical_layer": {
+        "layer": 32,
+        "cause": "niveau d'arret hors d'atteinte",
+        "margin_in_A": -239.13308768449969,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 8
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.07238816536910582,
+      "seel": 0.5381009770260813,
+      "crash_rate": 0.0,
+      "n_blocs": 5,
+      "critical_layer": {
+        "layer": 4,
+        "cause": "point tournant fabrique par le bruit",
+        "margin_in_A": 0.83,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 4
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.0723888061827888,
+      "seel": 0.5381033587807784,
+      "crash_rate": 0.0,
+      "n_blocs": 6,
+      "critical_layer": {
+        "layer": 4,
+        "cause": "point tournant fabrique par le bruit",
+        "margin_in_A": 0.83,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 5
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.07247914718224803,
+      "seel": 0.5384390297229502,
+      "crash_rate": 0.0,
+      "n_blocs": 5,
+      "critical_layer": {
+        "layer": 4,
+        "cause": "point tournant fabrique par le bruit",
+        "margin_in_A": 0.83,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 4
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.07290910481605639,
+      "seel": 0.5400337204881058,
+      "crash_rate": 0.0,
+      "n_blocs": 5,
+      "critical_layer": {
+        "layer": 4,
+        "cause": "point tournant fabrique par le bruit",
+        "margin_in_A": 0.83,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 4
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.07318670588565328,
+      "seel": 0.5410608316470645,
+      "crash_rate": 0.02,
+      "n_blocs": 6,
+      "critical_layer": {
+        "layer": 32,
+        "cause": "niveau d'arret hors d'atteinte",
+        "margin_in_A": -425.2179152678854,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 9
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.07337865758053035,
+      "seel": 0.5417699053307792,
+      "crash_rate": 0.02,
+      "n_blocs": 6,
+      "critical_layer": {
+        "layer": 32,
+        "cause": "niveau d'arret hors d'atteinte",
+        "margin_in_A": -351.48610333949716,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 10
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.07427596522207909,
+      "seel": 0.54507234463722,
+      "crash_rate": 0.0,
+      "n_blocs": 5,
+      "critical_layer": {
+        "layer": 4,
+        "cause": "point tournant fabrique par le bruit",
+        "margin_in_A": 0.83,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 3
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.07474246053436577,
+      "seel": 0.5467813476495545,
+      "crash_rate": 0.0,
+      "n_blocs": 5,
+      "critical_layer": {
+        "layer": 4,
+        "cause": "point tournant fabrique par le bruit",
+        "margin_in_A": 0.83,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 4
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.07487285231880278,
+      "seel": 0.5472580828779152,
+      "crash_rate": 0.0,
+      "n_blocs": 5,
+      "critical_layer": {
+        "layer": 4,
+        "cause": "point tournant fabrique par le bruit",
+        "margin_in_A": 0.83,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 4
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.0750873928881559,
+      "seel": 0.548041578306449,
+      "crash_rate": 0.02,
+      "n_blocs": 6,
+      "critical_layer": {
+        "layer": 32,
+        "cause": "niveau d'arret hors d'atteinte",
+        "margin_in_A": -343.58216520731787,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 8
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.0754174514934395,
+      "seel": 0.5492447596233923,
+      "crash_rate": 0.02,
+      "n_blocs": 6,
+      "critical_layer": {
+        "layer": 32,
+        "cause": "niveau d'arret hors d'atteinte",
+        "margin_in_A": -238.74594080625067,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 7
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.07550360072799589,
+      "seel": 0.5495583707960271,
+      "crash_rate": 0.02,
+      "n_blocs": 6,
+      "critical_layer": {
+        "layer": 32,
+        "cause": "niveau d'arret hors d'atteinte",
+        "margin_in_A": -238.30366268419922,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 7
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.07564900526125438,
+      "seel": 0.5500872849330527,
+      "crash_rate": 0.02,
+      "n_blocs": 6,
+      "critical_layer": {
+        "layer": 34,
+        "cause": "niveau d'arret hors d'atteinte",
+        "margin_in_A": -402.66828442936475,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 8
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.07595335115095948,
+      "seel": 0.5511927109494809,
+      "crash_rate": 0.02,
+      "n_blocs": 6,
+      "critical_layer": {
+        "layer": 15,
+        "cause": "ondulation trop faible pour etre vue",
+        "margin_in_A": 0.4790067767650348,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 7
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.07600010075253881,
+      "seel": 0.551362315551358,
+      "crash_rate": 0.02,
+      "n_blocs": 6,
+      "critical_layer": {
+        "layer": 32,
+        "cause": "niveau d'arret hors d'atteinte",
+        "margin_in_A": -33.392693125982476,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 8
+      }
+    },
+    {
+      "nom": "ELITE",
+      "score": 0.09559051068781528,
+      "seel": 0.6183543019590477,
+      "crash_rate": 0.0,
+      "n_blocs": 5,
+      "critical_layer": {
+        "layer": 4,
+        "cause": "point tournant fabrique par le bruit",
+        "margin_in_A": 0.83,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 4
+      }
+    }
+  ]
+}

@@ -109,8 +109,19 @@ def _lire_plans(chemin: Path) -> list[dict[str, Any]]:
     return out
 
 
-def _renoter(opti, params, plans, nom, graine, mode_ctx, fichier) -> None:
-    """Note les plans fournis avec la fonction de PRODUCTION, et ecrit AVANT d'afficher."""
+def _renoter(opti, params, plans, nom, graine, mode_ctx, fichier, surcharges=None) -> None:
+    """Note les plans fournis avec la fonction de PRODUCTION, et ecrit AVANT d'afficher.
+
+    🔴 `surcharges` EXISTE PARCE QUE SON ABSENCE A RUINE UN TEST. Mesure du 2026-08-20 :
+    l'outil chargeait le JSON du composant tel quel, et `r75x2` est NATIVEMENT a 1 nm. On a
+    donc compare une reference mesuree a 2 nm, N = 300, a une re-notation faite a 1 nm,
+    N = 50 -- TROIS variables changees a la fois, sur le composant meme dont la resolution
+    decide tout (277 deposables a 1 nm, ZERO a 2 nm). Le resultat semblait renverser une
+    hypothese majeure ; il ne mesurait rien.
+
+    🟢 C'est le champ `parametres_de_notation`, ajoute le matin meme au nom de §24-7, qui
+    l'a attrape. Un run qui consigne sa configuration se denonce lui-meme.
+    """
     from certus.core.certus_strat_robustness import run_final_simulation_block as vrai
 
     opti["all_strategies"] = [
@@ -122,6 +133,9 @@ def _renoter(opti, params, plans, nom, graine, mode_ctx, fichier) -> None:
     # ⚠️ PIEGE 2 : `params` n'est pas toujours un dictionnaire -- sur certains chemins c'est
     # un StratParamsDTO. `params["cle"] = v` fonctionne, `params.setdefault(...)` leve.
     params["robustness_seed"] = graine
+    for cle, val in (surcharges or {}).items():
+        params[cle] = val
+        print(f"    surcharge : {cle} = {val}", flush=True)
     # 🔴 La profondeur est EXPLICITE et consignee (§24-7). Sans cela l'appel prenait le
     # defaut de signature -- 150 -- quelle que soit la profondeur voulue, sans le dire.
     n_runs = int(params.get("robustness_num_runs") or 150)
@@ -198,8 +212,21 @@ def main() -> int:
     fichier = Path(sys.argv[2]) if len(sys.argv) > 2 else None
     graine = int(sys.argv[3]) if len(sys.argv) > 3 else 42
     mode_ctx = sys.argv[4] if len(sys.argv) > 4 else "fast"
+    # 🔴 SURCHARGES `cle=valeur` -- indispensables pour que la re-notation se fasse dans
+    # LES MEMES CONDITIONS que la mesure a laquelle on compare. Sans elles, le 2026-08-20,
+    # un test a compare 2 nm / N=300 a 1 nm / N=50 et semblait renverser une hypothese.
+    surcharges: dict[str, Any] = {}
+    for arg in sys.argv[5:]:
+        if "=" not in arg:
+            raise SystemExit(f"surcharge malformee : {arg!r} (attendu cle=valeur)")
+        k, _, v = arg.partition("=")
+        try:
+            surcharges[k] = int(v) if v.lstrip("-").isdigit() else float(v)
+        except ValueError:
+            surcharges[k] = {"true": True, "false": False}.get(v.lower(), v)
     if fichier is None or not fichier.is_file():
-        raise SystemExit("usage: probe_renoter.py <composant> <plans.json> [graine] [mode_contexte]")
+        raise SystemExit("usage: probe_renoter.py <composant> <plans.json> [graine] "
+                         "[mode_contexte] [cle=valeur ...]")
     cfg = COMPOSANTS.get(nom)
     if cfg is None:
         raise SystemExit(f"composant inconnu : {nom} (connus : {sorted(COMPOSANTS)})")
@@ -245,7 +272,8 @@ def main() -> int:
             print(f"  🟢 contexte capture : "
                   f"{sorted(x for x in opti_results if not x.startswith('_'))[:8]}", flush=True)
             try:
-                _renoter(dict(opti_results), params, plans, nom, graine, mode_ctx, fichier)
+                _renoter(dict(opti_results), params, plans, nom, graine, mode_ctx, fichier,
+                         surcharges)
             except Exception as e:  # noqa: BLE001 -- on ne doit JAMAIS tuer le run porteur
                 import traceback
                 print(f"  🔴 re-notation en echec : {type(e).__name__}: {e}", flush=True)

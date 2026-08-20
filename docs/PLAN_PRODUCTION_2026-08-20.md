@@ -822,3 +822,83 @@ avec `probe_renoter.py`, écrit pour cela.
 sous relâchement plantent **toutes** une fois rejugées au nominal, alors la région saine
 n'existe pas à cette graine, et le relâchement n'aura fait que déplacer le mur. **Ce n'est pas
 un détail de protocole : c'est le résultat possible le plus probable après celui qu'on espère.**
+
+---
+
+## 14. 🟢🟢 LE PLANTAGE EST UNE PROPRIÉTÉ DE LA STRATÉGIE, PAS DU TIRAGE
+
+`reports/renotation_r75x2_s077_plans_transfert_s042_20260820_131529.json`.
+
+Tout l'espoir de récupérer, à la graine 42, les stratégies que la graine 77 trouve reposait sur
+**une prémisse jamais vérifiée** : que le taux de plantage soit une propriété de la stratégie.
+Elle l'est.
+
+### 📏 Le test, et il est bon marché
+
+On prend les **8 meilleures stratégies pur optique de la graine 42** — toutes à 100 % de
+plantage — et on les rejoue **sous la graine 77**, à conditions appariées.
+
+```
+graine 77 · N = 300 · resolution 2,0 nm · corridor 0,005
+
+  les 8 mesurees a 100,00 % sous la graine 42
+  ->  100,00 % sous la graine 77.  Les huit. Exactement.
+```
+
+⚠️ Les SEEL affichés (0,91 à 1,10) sont des **scores de repli** : ces stratégies plantent. §21
+interdit de les citer comme des performances.
+
+🔑 **Conséquence** : les 518 stratégies déposables de la graine 77 doivent rester déposables
+sous la graine 42. **Elles ne manquent pas à l'espace de recherche — elles manquent à la
+RECHERCHE.** C'est un problème de recherche, pas de physique, et un problème de recherche se
+répare.
+
+### 🔴 LE FAUX DÉPART, ET CE QU'IL A COÛTÉ D'ÉVITER
+
+Le premier essai de ce test a rendu `38 % · 40 % · 40 % · 64 % · 74 % · 98 % · 100 % · 100 %` —
+c'est-à-dire l'exact contraire, et un renversement majeur.
+
+**Il était faux.** L'outil chargeait le JSON du composant tel quel, et `r75x2` est **nativement à
+1 nm**. On comparait donc une référence mesurée à **2 nm, N = 300** à une re-notation faite à
+**1 nm, N = 50** — trois variables changées à la fois, sur le composant même dont la résolution
+décide de tout (277 déposables à 1 nm, **zéro** à 2 nm).
+
+🟢 **C'est le champ `parametres_de_notation` qui l'a démasqué**, ajouté le matin même au nom de
+§24-7 — *« un run qui ne consigne pas sa configuration n'est comparable à rien »*. Il portait
+`monochromator_resolution_nm = 1.0` en toutes lettres.
+
+> **La discipline de consigner la configuration a payé son coût le jour même où elle a été
+> posée.** Sans elle, une conclusion majeure et fausse partait dans les documents.
+
+L'outil accepte désormais des surcharges `clé=valeur`, avec ce récit dans sa docstring.
+
+### ⚠️ CE QUI EST PROUVÉ, ET CE QUI RESTE INFÉRÉ
+
+| | |
+|---|---|
+| 🟢 **prouvé** | une stratégie qui plante **totalement** à une graine plante totalement à l'autre |
+| 🟠 **inféré** | qu'une stratégie **bonne** reste bonne. Un seul sens a été testé |
+
+L'asymétrie est réelle : une stratégie à 100 % est robustement mauvaise, c'est le cas facile.
+Une stratégie à 1 % plante 3 fois sur 300, c'est plus délicat. L'arithmétique tient — pour
+passer de 3 plantages à 300 il faudrait que le vrai taux soit à la fois 1 % et 100 % — mais
+c'est un raisonnement, pas une mesure.
+
+### 🔑 UNE DISTINCTION À NE PAS PERDRE
+
+Même réussi, le transfert donne **deux choses différentes** :
+
+| | |
+|---|---|
+| 🟢 **des stratégies qui marchent à la graine 42** | avec leurs λ par bloc, exploitables en atelier |
+| 🟠 **une production qui sait les TROUVER** | ce n'est pas la même chose, et c'est le but réel de 👤 |
+
+Le transfert livre les premières. La seconde reste un chantier — mais **avec une cible connue** :
+on pourra mesurer pourquoi ELITE les rate à la graine 42, et les lui injecter comme parents pour
+vérifier qu'il sait alors les raffiner.
+
+🔴 **Le scénario défavorable qui subsiste** : les stratégies tiennent, mais **rien dans le code
+exposé ne permet de les atteindre** à la graine 42 — le tirage des parents d'ELITE étant
+arbitraire quand tout plante. On aurait alors les stratégies sans le moyen de les redécouvrir,
+et il faudrait **ajouter** un mécanisme d'injection. Ce ne serait pas un échec, mais un
+développement, pas un réglage.

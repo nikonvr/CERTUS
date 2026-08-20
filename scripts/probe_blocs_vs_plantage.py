@@ -356,6 +356,13 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
         # -- ce qui n'est ni bon ni mauvais a priori, et n'a jamais ete mesure.
         over["dp_top_k"] = 200
 
+    # 🔴 LES SURCHARGES GENERIQUES GAGNENT SUR TOUT LE RESTE, et c'est voulu : elles
+    # sont l'instrument d'essai, le reste est le protocole de reference.
+    _sur, _tag = _surcharges_env()
+    if _sur:
+        over.update(_sur)
+        print(f"  surcharges [{_tag}] : {_sur}", flush=True)
+
 
     _c = app.collect_params
     vus = {"n": 0}
@@ -549,6 +556,59 @@ def synthese(lignes: list[dict]) -> None:
         print(f"  deposables dans la zone : {dep_zone} / {n_zone}")
 
 
+def _surcharges_env() -> tuple[dict, str]:
+    """Surcharges generiques `cle=valeur` par variable d'environnement, plus leur ETIQUETTE.
+
+        set CERTUS_PROBE_OVERRIDES=crash_gate_confidence=0.95,elite_stop_on_no_gain=0
+        set CERTUS_PROBE_TAG=cgc95
+
+    🔑 POURQUOI CE MECANISME. Les leviers qui decident aujourd'hui -- crash_gate_confidence,
+    elite_stop_on_no_gain, elite_wl_neighbor_span, elite_max_candidates -- sont tous ROUTES
+    depuis le JSON (`certus_strat_ui_state.py`) et aucun n'est atteignable par les huit
+    arguments positionnels de cette sonde. Sans cela, chaque essai demanderait un fichier de
+    configuration de plus, et le §24-7 s'appliquerait a chacun.
+
+    🔴 L'ETIQUETTE EST OBLIGATOIRE DES QU'IL Y A UNE SURCHARGE, et la sonde REFUSE de tourner
+    sans elle. Deux runs qui ne differeraient que par une surcharge produiraient sinon le MEME
+    nom de fichier : `scripts/_artefact.py` renommerait plutot que d'ecraser, mais on se
+    retrouverait avec deux artefacts horodates indiscernables sur le fond. Ce depot a deja
+    perdu les coupures 28-52 exactement ainsi.
+
+    Les valeurs sont converties : entier, puis flottant, puis `true`/`false`, sinon chaine.
+    """
+    brut = os.environ.get("CERTUS_PROBE_OVERRIDES", "").strip()
+    tag = os.environ.get("CERTUS_PROBE_TAG", "").strip()
+    if not brut:
+        return {}, ""
+    if not tag:
+        raise SystemExit(
+            "🔴 CERTUS_PROBE_OVERRIDES est pose sans CERTUS_PROBE_TAG. L'etiquette entre dans "
+            "le nom de l'artefact : sans elle, deux configurations differentes rendraient deux "
+            "fichiers indiscernables. Pose une etiquette courte, par exemple cgc95."
+        )
+    if not tag.replace("_", "").replace("-", "").isalnum():
+        raise SystemExit(f"🔴 CERTUS_PROBE_TAG={tag!r} : lettres, chiffres, - et _ seulement.")
+    out: dict = {}
+    for morceau in brut.split(","):
+        morceau = morceau.strip()
+        if not morceau:
+            continue
+        if "=" not in morceau:
+            raise SystemExit(f"🔴 surcharge malformee : {morceau!r} (attendu cle=valeur)")
+        k, _, v = morceau.partition("=")
+        k, v = k.strip(), v.strip()
+        if v.lstrip("-").isdigit():
+            out[k] = int(v)
+        elif v.lower() in ("true", "false"):
+            out[k] = v.lower() == "true"
+        else:
+            try:
+                out[k] = float(v)
+            except ValueError:
+                out[k] = v
+    return out, tag
+
+
 def main() -> int:
     nom = sys.argv[1] if len(sys.argv) > 1 else "99c"
     mode = sys.argv[2] if len(sys.argv) > 2 else "premium"
@@ -593,6 +653,10 @@ def main() -> int:
                          # qu'on cherche a faire.
                          "consensus_seed_list": os.environ.get("CERTUS_CONSENSUS_SEEDS", "")
                                                 or "(defaut du JSON)",
+                         # 🔴 §24-7 : une surcharge non consignee rend le run
+                         # incomparable a quoi que ce soit.
+                         "overrides": _surcharges_env()[0] or None,
+                         "overrides_tag": _surcharges_env()[1] or None,
                          "elargissement": ({**ELARGISSEMENT, "dp_top_k": 200}
                                            if int(elargi) >= 2 else
                                            dict(ELARGISSEMENT) if elargi else None)}})
@@ -612,7 +676,8 @@ def main() -> int:
     print("=" * 74)
     contraintes_communes(r["strategies"])
 
-    suffixe = (("_fente" if fente else "") + (f"_tp{min_tp}" if min_tp else "")
+    _tag_nom = _surcharges_env()[1]
+    suffixe = ((f"_{_tag_nom}" if _tag_nom else "") + ("_fente" if fente else "") + (f"_tp{min_tp}" if min_tp else "")
                 + ("" if res_nm == 2.0 else f"_res{res_nm:g}")
                 + ("" if not elargi else "_large" if int(elargi) == 1 else f"_large{int(elargi)}")
                 # 🔴 LES COUPURES ENTRENT DANS LE NOM. Sans elles, changer TAIL_CUTS ecrase

@@ -49,6 +49,68 @@ def _config_float(config: object, key: str, default: float = 0.0) -> float:
         return default
 
 
+def _config_list_int(config: object, key: str) -> list[int]:
+    """Reads a list of ints from the loaded configuration, without associated widget.
+
+    🔴 WHY THIS EXISTS. Measured 2026-08-20: loading a JSON carrying `rate_tail_sweep`,
+    `rate_layer_sets`, `optical_prefix_sweep` and seven other search levers, then reading
+    `collect_params`, returned `None` for TEN keys out of eleven. Those levers existed
+    only through probe overrides, so every campaign result they produced was
+    unreachable from the application itself.
+
+    Accepts a real list, or the comma-separated string form a JSON editor produces
+    (`"46,52,58"`). 🔒 Absent or unreadable returns `[]` -- exactly what the kernel got
+    when the key existed nowhere, so the default path is unchanged bit for bit.
+    """
+    if not isinstance(config, dict):
+        return []
+    raw = config.get(key, None)
+    if raw is None or raw == "":
+        return []
+    if isinstance(raw, str):
+        raw = [p for p in raw.replace(";", ",").split(",") if p.strip()]
+    if not isinstance(raw, (list, tuple)):
+        return []
+    out: list[int] = []
+    for v in raw:
+        try:
+            out.append(int(float(v)))
+        except (TypeError, ValueError):
+            continue
+    return out
+
+
+def _config_list_of_list_int(config: object, key: str) -> list[list[int]]:
+    """Reads a list of int lists (`rate_layer_sets`), same contract as `_config_list_int`.
+
+    Accepts `[[25, 30], [40]]` and the flat string form `"25-30;40"`. 🔒 Absent returns
+    `[]`, the kernel's historical value.
+    """
+    if not isinstance(config, dict):
+        return []
+    raw = config.get(key, None)
+    if raw is None or raw == "":
+        return []
+    if isinstance(raw, str):
+        groupes = [g for g in raw.split(";") if g.strip()]
+        return [ints for g in groupes
+                if (ints := [int(float(v)) for v in g.replace("-", ",").split(",") if v.strip()])]
+    if not isinstance(raw, (list, tuple)):
+        return []
+    out: list[list[int]] = []
+    for grp in raw:
+        if isinstance(grp, (list, tuple)):
+            ints = []
+            for v in grp:
+                try:
+                    ints.append(int(float(v)))
+                except (TypeError, ValueError):
+                    continue
+            if ints:
+                out.append(ints)
+    return out
+
+
 def _config_flag_default(config: object, key: str, default: bool) -> bool:
     """A boolean whose ABSENCE means the code default, never `False`.
 
@@ -1229,6 +1291,46 @@ class CertusStratStateMixin:
             "crash_gate_confidence": _config_float(
                 getattr(self, "_loaded_config", {}), "crash_gate_confidence", 0.0
             ),
+            # ── LES LEVIERS DE RECHERCHE, ROUTES DEPUIS LA CONFIGURATION ──────────
+            #
+            # 🔴 AUCUN DE CES HUIT N'ARRIVAIT JUSQU'AU CALCUL. Mesure du 2026-08-20 :
+            # on charge un JSON qui les porte tous, on lit `collect_params`, et DIX cles
+            # sur onze ressortent a `None`. Ils n'existaient que par surcharge de sonde --
+            # donc tout le savoir des campagnes etait inaccessible depuis l'application.
+            #
+            # 📏 Le cas qui l'a revele : `rate_tail_sweep` est la SEULE voie connue pour
+            # rendre `r75x2` deposable a 2 nm (SEEL 0,672, plantage 2,67 %, sous la cible
+            # de 5 % de 👤) -- et la production ne pouvait pas l'armer.
+            #
+            # 🔒 REGLE D'OR : chacun vaut sa valeur INACTIVE en l'absence de cle JSON, donc
+            # le chemin par defaut est celui d'avant, au bit. `[]` pour les balayages, 0
+            # pour les entiers, `False` pour les drapeaux -- exactement ce que le noyau
+            # recevait quand la cle n'existait nulle part.
+            "rate_tail_sweep": _config_list_int(
+                getattr(self, "_loaded_config", {}), "rate_tail_sweep"
+            ),
+            "rate_layer_sets": _config_list_of_list_int(
+                getattr(self, "_loaded_config", {}), "rate_layer_sets"
+            ),
+            "rate_by_swing": _config_flag(
+                getattr(self, "_loaded_config", {}), "rate_by_swing", False
+            ),
+            "rate_tail_keep_optical": int(
+                _config_float(getattr(self, "_loaded_config", {}), "rate_tail_keep_optical", 0.0)
+            ),
+            "require_turning_point": int(
+                _config_float(getattr(self, "_loaded_config", {}), "require_turning_point", 0.0)
+            ),
+            "optical_prefix_sweep": _config_list_int(
+                getattr(self, "_loaded_config", {}), "optical_prefix_sweep"
+            ),
+            # ⚠️ `elite_min_improvement` est ECRETE A ZERO par
+            # `certus_strat_consensus.py:208` (`max(0.0, ...)`), donc il ne peut que DURCIR
+            # la porte ELITE, jamais la desserrer. Le router ici le rend au moins reglable ;
+            # lever l'ecretage est une decision separee, a mesurer (plan §10, A0bis).
+            "elite_min_improvement": _config_float(
+                getattr(self, "_loaded_config", {}), "elite_min_improvement", 0.0
+            ),
             # ── AXIS 3: the spectral target, routed from the configuration ───
             #
             # 👤 "The most important is the respected spectral target." STRAT ranked
@@ -1250,8 +1352,27 @@ class CertusStratStateMixin:
             "force_first_layer_same_wl": True,
             "include_secondary_rmse_stats": bool(self._get_float_safe("include_secondary_rmse_stats", 0)),
             "keep_full_mc_top_k": int(self._get_float_safe("keep_full_mc_top_k", 30)),
-            "robustness_seed": int(self._get_float_safe("robustness_seed", 42)),
-            "phase_a_seed": int(self._get_float_safe("phase_a_seed", self._get_float_safe("robustness_seed", 42))),
+            # 🔴 LA GRAINE N'ETAIT PAS LISIBLE DEPUIS LE JSON, et c'est le defaut le plus
+            # couteux trouve le 2026-08-20. `_get_float_safe` cherche un WIDGET de ce nom ;
+            # il n'en existe aucun (0 declaration dans tout certus/ui/), donc elle valait
+            # TOUJOURS 42 quoi que porte la configuration. Onze autres cles se replient
+            # pourtant sur `_loaded_config` deux lignes plus haut -- la graine etait la
+            # grande absente. Consequence mesuree : la meilleure configuration connue de
+            # `r75x2` (SEEL 0,5692, graine 77) etait STRUCTURELLEMENT hors de portee de la
+            # production, qui ne pouvait tirer qu'un seul billet, toujours le meme.
+            # 🔒 Sans widget ET sans cle JSON, la valeur reste 42 : chemin d'avant au bit.
+            "robustness_seed": int(
+                self._get_float_safe("robustness_seed", 0)
+                or _config_float(getattr(self, "_loaded_config", {}), "robustness_seed", 0.0)
+                or 42
+            ),
+            "phase_a_seed": int(
+                self._get_float_safe("phase_a_seed", 0)
+                or _config_float(getattr(self, "_loaded_config", {}), "phase_a_seed", 0.0)
+                or self._get_float_safe("robustness_seed", 0)
+                or _config_float(getattr(self, "_loaded_config", {}), "robustness_seed", 0.0)
+                or 42
+            ),
             "sym_enable": True,
             "sym_weight": self._get_float_safe("sym_weight", SYM_DEFAULT_WEIGHT),
             "sym_same_wl_bonus": self._get_float_safe("sym_same_wl_bonus", SYM_DEFAULT_SAME_WL_BONUS),

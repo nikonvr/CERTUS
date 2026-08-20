@@ -155,7 +155,12 @@ def _sweep_renvois(fichiers, detail: bool = False) -> tuple[int, int, int]:
         if not secs:
             continue
         for i, ligne in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
-            if _RX_SECTION.match(ligne) or re.search(r"CLAUDE\.md|[A-Z_]+\.md\)", ligne):
+            # 🔴 TOUTE mention d'un `.md` fait de la ligne un renvoi CROISE. La premiere version
+            # exigeait `.md)` -- donc une parenthese -- et laissait passer la forme la plus
+            # courante du depot : `` `CHANTIER_RATE.md` §3bis ``, entouree de backticks.
+            # 📏 Faux positif constate le 2026-08-20 sur le plan de production, une heure
+            # apres l'ecriture du controle. Un controle qui crie a tort se fait ignorer.
+            if _RX_SECTION.match(ligne) or re.search(r"\w+\.md", ligne):
                 continue  # un titre, ou un renvoi CROISE qui nomme son document
             for num in sorted(set(_RX_RENVOI.findall(ligne))):
                 vus += 1

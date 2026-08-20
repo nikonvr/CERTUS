@@ -460,7 +460,12 @@ jamais la desserrer.** Il n'existe aujourd'hui aucun moyen d'essayer ce que 👤
 La Phase A est déterministe et ne dépend pas de la graine : la diversité vit **entièrement**
 dans les rounds ELITE de Phase B. Le coût du multi-réalisation s'effondre.
 
-### 🔵 A0bis — LEVER L'ÉCRÊTAGE, ET MESURER (l'action la plus rentable du plan)
+### 🔵 A0bis — LEVER L'ÉCRÊTAGE, ET MESURER
+
+> ⚠️ **Le titre disait « l'action la plus rentable du plan ». C'est corrigé** : `elite_min_improvement`
+> agit sur le seuil de **RMSE**, donc sur **211 rejets (16 %)**, là où la porte de plantage en
+> pèse **1116 (84 %)**. A0bis passe **après** A0. Voir le chaînage au §13.
+
 
 **Ce qu'il faut écrire** : autoriser une porte ELITE **relâchée** — soit `elite_min_improvement`
 négatif, soit un `elite_accept_ratio` acceptant une candidate à `k × nominal_threshold` avec
@@ -624,6 +629,18 @@ graine 77 — n'existe qu'en `deep`. Diagnostiquer à `premium` et comparer à `
 deux choses. **Une heure économisée contre une comparaison boiteuse : mauvais marché.**
 
 ### 🔄 Attaque 3 — « le test de transfert repose sur un outil qui n'existe pas »
+
+> 🔴 **ET L'OUTIL CONSTRUIT EN RÉPONSE EST EN PANNE, AVEC UNE PANNE MAL LOCALISÉE.**
+> `REPRENDRE_ICI.md` §1 l'attribue à une `full_dynamics_grid` vide. 📏 Réfuté le 2026-08-20 au
+> soir, par le code : la grandeur n'est déréférencée qu'à **un seul endroit de tout le dépôt**,
+> `certus/core/certus_strat_robustness.py:2513`, dans un bloc de **journalisation** gardé par
+> `theory_dyn >= 0.0` — grille vide ⇒ `-1.0` ⇒ aucune des deux branches. Et la **Phase B de
+> production tourne toujours avec elle vide** : `minimized_context`
+> (`certus/workers/certus_strat_workers_pipeline.py:146`) ne porte pas la clé, elle part
+> séparément en `dyn_grid=` et n'est jamais transmise à `_parallel_block_worker`. Le contexte que
+> la sonde capture **est** celui de la production. La cause de la panne reste donc **non
+> localisée** — voir §15.
+
 
 **Fondée, et elle réordonne le plan.** Le run à la graine 77 vaut surtout pour les **plans de
 surveillance** des 518 déposables — mais les exploiter demande un outil de **re-notation** qui
@@ -798,6 +815,31 @@ fois que la troncature du journal en est la cause.
 RMSE. Elles sont **trouvées**, elles sont **spectralement bonnes**, et la porte de plantage les
 élimine.
 
+### 🔑🔑 LES 84 % **SONT** LA PORTE DE PLANTAGE — chaînage établi le 2026-08-20 au soir
+
+Le diagnostic disait « le plantage » sans nommer le code. Il est nommé, et il change la structure
+du plan :
+
+```
+_crash_gate_rejects   (certus_strat_robustness.py:2693)  ->  final_score = float("inf")
+                                                        ->  robustness_score = inf
+ELITE : not np.isfinite(full_score)  (certus_strat_consensus.py:792)  ->  rej_score_non_fini
+```
+
+🔑 **Donc §13 et A0 ne sont pas deux actions, c'est la même.** A0 cesse d'être « le meilleur
+rapport valeur/risque du plan » pour devenir **le traitement direct de la cause diagnostiquée** :
+`crash_gate_confidence` remplace exactement la comparaison qui pose cet infini.
+
+📏 **Et le poids des deux portes est mesuré** : sur 1327 candidates évaluées en entier,
+**1116 (84 %) meurent de la porte de plantage** et **211 (16 %) du seuil de RMSE**. Or
+`elite_min_improvement` — l'objet d'A0bis — agit sur `target_threshold`, donc sur les **211**.
+**A0 passe avant A0bis, par le poids mesuré.**
+
+🔴 **Ce qui manque encore pour choisir, et l'instrument est posé** : à quel **taux** plantent ces
+1116 ? Si elles sont juste au-dessus de la tolérance de 5 %, une borne de confiance les récupère
+**sans relâcher aucune physique**. Si elles sont à 100 %, aucun réglage de porte ne les sauve et
+le relâchement est la seule voie. La grandeur était **dans `full_res` et jetée** — voir §15.
+
 ### 🔑 LE MÉCANISME, ET IL EXPLIQUE POURQUOI RELÂCHER PEUT MARCHER
 
 ELITE est une recherche **locale** : λ ± 1 nm autour de ses parents. Toute candidate qui plante
@@ -825,7 +867,26 @@ un détail de protocole : c'est le résultat possible le plus probable après ce
 
 ---
 
-## 14. 🟢🟢 LE PLANTAGE EST UNE PROPRIÉTÉ DE LA STRATÉGIE, PAS DU TIRAGE
+## 14. 🔴 RETIRÉ — « LE PLANTAGE EST UNE PROPRIÉTÉ DE LA STRATÉGIE » (talon conservé)
+
+> 🔴 **CETTE SECTION EST RETIRÉE COMME CONCLUSION, et conservée comme talon.** Elle repose
+> entièrement sur `probe_renoter.py`, dont [`REPRENDRE_ICI.md`](REPRENDRE_ICI.md) §2 invalide
+> **toutes** les sorties : l'outil ne reproduit pas son propre point fixe. Le 8/8 à 100 %
+> n'est donc pas informatif, et **il n'a jamais été montré qu'un taux de plantage soit une
+> propriété de la stratégie**.
+>
+> ⚠️ **La contradiction a vécu deux jours entre deux documents**, et
+> `scripts/coherence_md.py` ne pouvait pas la voir : il rapproche un mot et un nombre, il ne
+> compare pas deux thèses. C'est la limite exacte de son pouvoir de détection, et il faut la
+> connaître avant de s'appuyer sur son « 0 point à instruire ».
+>
+> 🟢 **Ce qui reste vrai et vaut d'être gardé** : la leçon de méthode du faux départ — le champ
+> `parametres_de_notation`, ajouté le matin même, a démasqué une comparaison à trois variables
+> changées, le jour de sa pose. Et le §15 établit par ailleurs que **l'export des 12 plans est
+> exact**, donc la prémisse matérielle de ce test était saine ; c'est l'instrument qui ne l'était
+> pas.
+
+### Le texte d'origine — LE PLANTAGE EST UNE PROPRIÉTÉ DE LA STRATÉGIE, PAS DU TIRAGE
 
 `reports/renotation_r75x2_s077_plans_transfert_s042_20260820_131529.json`.
 
@@ -902,3 +963,142 @@ exposé ne permet de les atteindre** à la graine 42 — le tirage des parents d
 arbitraire quand tout plante. On aurait alors les stratégies sans le moyen de les redécouvrir,
 et il faudrait **ajouter** un mécanisme d'injection. Ce ne serait pas un échec, mais un
 développement, pas un réglage.
+
+---
+
+## 15. 🟢 CE QUE LA LECTURE D'ARTEFACTS DU 2026-08-20 AU SOIR ÉTABLIT — sans une seconde de machine
+
+**Portée : `r75x2` exclusivement**, à 2 nm, `deep`. C'est l'étalon courant. Tout ci-dessous vient
+de la lecture du **code** et des **artefacts déjà au disque** — aucun run, aucune mesure neuve.
+
+### 15.1 🔑 Hors ELITE, il n'y a rien — et c'est vrai AUX DEUX GRAINES
+
+```
+graine 77   hors ELITE  1488 strategies   0 deposable   crash mediane 100,00 %
+            ELITE        743 strategies  547 deposables
+graine 42   hors ELITE  1617 strategies   0 deposable   crash mediane 100,00 %
+            ELITE          0 strategie     0
+```
+
+L'attaque 1 du §12 concluait cela pour la graine 42 par comptage de familles ; c'est désormais
+établi **des deux côtés**. Toute la fabricabilité de ce composant à 2 nm passe par l'étage ELITE,
+et il n'y a aucune voie de contournement dans les générateurs existants.
+
+### 15.2 ✅ L'export des 12 plans est EXACT — la prémisse du §14 était saine
+
+Appariement de `reports/plans/plans_s077_vers_s042.json` à
+`reports/blocs_vs_plantage_r75x2_deep_s077_20260820_160340.json` par **signature exacte de blocs**
+`(start, end, wavelength)` :
+
+```
+12 plans -> 12 apparies, un candidat UNIQUE chacun, 0 introuvable
+crash et SEEL de la reference retrouves exactement, ceux que le NOM du plan porte
+    0,67 % a 1,33 %  ·  SEEL 0,5692 a 0,5731
+```
+
+Et les **547 déposables sont toutes `origine = ELITE`**, toutes `resolution_nm = 2.0`,
+`resolution_noise_factor = 1.0` : **aucune variante Rate, aucune variante de fente**. L'export n'a
+donc perdu **aucun** drapeau — l'hypothèse « l'export a écrit les blocs d'un parent optique » est
+**réfutée**.
+
+### 15.3 🔴 LA FALAISE À 685 nm EXISTE, ET CE N'EST PAS LA CAUSE — piste à ne PAS payer
+
+Les 12 gagnantes partagent le préfixe `(0,8)@450 · (8,25)@610 · (25,33)@616`, et surveillent
+toutes la couche 35 à **685 nm**. 📏 Or la graine 42 ne propose **jamais** 685 nm, à **aucune
+couche** de ses 1617 stratégies : elle campe à **686 nm**, avec 1156 stratégies. Un pas de grille.
+
+🔴 **Et pourtant « forcer 685 nm » ne marcherait pas.** Ventilé par générateur, graine 77,
+couche 35 :
+
+| λ | générateur | n | crash min | médiane | déposables |
+|---|---|---|---|---|---|
+| **685** | ELITE | 740 | 0,33 % | 1,33 % | **544 (73,5 %)** |
+| **685** | non-ELITE | 711 | **100 %** | 100 % | **0** |
+| 686 | ELITE | 3 | 1,00 % | 1,67 % | **3 (100 %)** |
+| 686 | non-ELITE | 228 | 100 % | 100 % | 0 |
+
+**685 nm n'est ni suffisante** — 711 stratégies y plantent toutes — **ni nécessaire** : les 3 ELITE
+à 686 nm sont déposables. La concentration à 685 nm est un **effet de sélection** : ELITE raffine
+autour de ses parents, il s'est donc empilé là où ça marchait déjà. Le discriminant est **le
+générateur, pas la longueur d'onde**, et retourner cette flèche est l'erreur que ce dépôt paie
+depuis le §4quinquies de [`CHANTIER_PREDICTIBILITE.md`](CHANTIER_PREDICTIBILITE.md).
+
+### 15.4 ✅ SIX causes candidates de la panne de `probe_renoter.py`, ÉLIMINÉES
+
+| candidate | verdict |
+|---|---|
+| `full_dynamics_grid` vide | 🔴 **inerte** — un seul déréférencement, `robustness.py:2513`, journalisation gardée par `theory_dyn >= 0.0`. La production tourne avec elle vide |
+| erreur d'unité sur `crash_rate` | ✅ non — le noyau la formate en `:.1%`, c'est une fraction ; le `100 ×` de la sonde est correct |
+| plans malformés | ✅ non — les 9 à 11 blocs pavent `[0,75)` exactement, 0 trou, 0 chevauchement, `end` exclusif comme le noyau le lit |
+| chemin de **surcharge** de résolution | ✅ non — `reports/plans/config_r75x2_natif_2nm.json` écrit 2 nm **dans la configuration**, donc Phase A et contexte entiers à 2 nm : marge **bit-identique** aux runs surchargés (`-1752,8038794937806`) |
+| `expand_variants=False` | ✅ non — le garde ne couvre que la **génération** de variantes ; la base reste, dit le code, « bit-identical to a no-search run » |
+| une clé perdue sur l'objet `strategy` | ✅ non — le noyau n'y lit que `blocks`, `strategy_id`, `monochromator_resolution_nm`, `rate_layers`, `slit_profile`, `witness_reset_layers`, `l0`. Seules les deux dernières manquent à l'injection, et se replient sans effet puisque les plans pavent tout l'empilement |
+
+⚠️ **Deux lectures de la session précédente sont retirées, et deux des miennes aussi** : la marge
+identique au seizième chiffre entre les 12 n'a rien d'impossible — c'est le comportement
+**documenté** à `robustness.py:2805`, les 12 partageant leur préfixe et donc la physique de la
+couche 35 ; et `n_layers_below_2A = 153` somme sur **trois causes**, ce n'est pas un index de
+couche sur un empilement de 75.
+
+🔴 **La cause de la panne reste donc NON LOCALISÉE.** Et la grandeur qui la trancherait — le
+`params` effectif **complet** des deux chemins — n'est dans aucun artefact : la référence consigne
+11 clés de `config`, les re-notations 11 clés de `parametres_de_notation`.
+
+### 15.5 ✅ L'INSTRUMENT POSÉ — `[ELITE-WL]`, deux lectures pour un seul run
+
+`certus/core/certus_strat_consensus.py`. **Instrumentation pure** : aucun chemin de calcul ne
+change. Chaque round ELITE journalise désormais, à **toutes** ses sorties :
+
+```
+[ELITE-WL] Round N exit=... generated                 685:12 686:340 ...
+[ELITE-WL] Round N exit=... rejected_halving          ...
+[ELITE-WL] Round N exit=... rejected_full_rmse        ...
+[ELITE-WL] Round N exit=... rejected_score_non_fini   ...
+[ELITE-WL] Round N exit=... reject_crash_bands        score_non_fini/100%:1116 score_non_fini/5-10%:7 ...
+```
+
+**Ce que chaque lecture décide, et il n'y a pas d'ambiguïté :**
+
+| lecture | ce que ça veut dire | ce qu'il faut réparer |
+|---|---|---|
+| la λ gagnante **absente** des engendrées | ELITE ne regarde jamais là | les **parents** |
+| la λ **présente** et dans un rejet | ELITE regarde et jette | la **porte** |
+| bandes de plantage **juste au-dessus de 5 %** | 🟢 `crash_gate_confidence` les récupère, **sans relâcher aucune physique** | la **règle de décision** |
+| bandes **à 100 %** | 🔴 aucun réglage de porte ne les sauve | seul le relâchement, et le **juge au nominal** doit exister d'abord |
+
+⚠️ **Règle de comptage, à connaître pour lire le journal** : une candidate compte **une fois par λ
+distincte** de ses blocs, donc les comptes somment à **plus** que le nombre de candidates. Un
+compte dit « combien de candidates ont utilisé cette λ », jamais « combien de blocs ».
+
+🔒 **34 tests**, qui échouent sur le code d'avant — `git show HEAD:...` puis `grep -c` rend **0**
+pour les trois symboles. Suite complète **`2520 passed, 5 skipped`**, `ruff` propre.
+
+### 15.6 🔵 L'ORDRE RÉVISÉ — il remplace celui du §7 et celui du §12
+
+Le §7 précède les §10 à §13 et ne connaît donc pas le diagnostic. **Cet ordre-ci fait foi.**
+
+| # | action | machine | ce qu'elle décide |
+|---|---|---|---|
+| **0** | ✅ l'instrument `[ELITE-WL]` — **fait** | 0 | — |
+| **1** | `r75x2 @ 2 nm deep s042`, réglages d'origine, **instrumenté** | ~115 min | 🔑 **porte à confiance, ou relâchement ?** La seule chose qui départage, et elle départage sans ambiguïté |
+| **2** | si les bandes le permettent : `crash_gate_confidence = 0.95` — **une ligne de JSON**, zéro code | ~115 min | le seul levier qui n'exige **aucun** re-jugement au nominal |
+| **3** | sinon : relâcher bruit et corridor **en génération seule** (👤) | ~115 min | 🔒 mais le **juge au nominal** doit exister avant, sinon la mesure ne vaut rien |
+| **4** | `elite_stop_on_no_gain = false` — routé, gratuit | ~115 min | à 0 retenue, le round 1 coupe tout : les rounds 2-3 de `deep` ne tournent **jamais**. Espérance faible, coût nul |
+| **5** | A0bis — l'écrêtage `max(0.0, …)` de `elite_min_improvement` levé | ~115 min | les **211 rejets de RMSE (16 %)**, après les 1116 (84 %) |
+
+🔒 **La garde ne se négocie pas** : relâcher est légitime pour **ENGENDRER**, jamais pour **NOTER**.
+Sinon on obtient un SEEL flatteur qui ne décrit aucune machine.
+
+🔴 **Et ce qu'il faut dire d'avance sur l'étape 3** : si les stratégies trouvées sous relâchement
+plantent **toutes** une fois rejugées au nominal, la région saine n'existe pas à cette graine et le
+relâchement n'aura fait que déplacer le mur. **C'est le résultat le plus probable après celui
+qu'on espère.**
+
+### 15.7 ⚠️ Ce que cette session N'a PAS établi
+
+- **La cause de la panne de `probe_renoter.py`.** Six candidates éliminées, aucune trouvée.
+- **Pourquoi la graine 42 ne propose jamais 685 nm.** La Phase A est identique aux deux graines
+  (§10) et la DP est déterministe ; l'écart naît donc en aval, dans le criblage stochastique et la
+  cascade de parents hérités. **Non mesuré.**
+- **Si les 1116 rejets sont marginaux ou totaux.** C'est l'objet de l'étape 1.
+- **Rien sur un autre composant.** Tout ci-dessus est `r75x2` à 2 nm, `deep`.

@@ -444,3 +444,76 @@ il y a une heure. Elle ne doit pas être écrite comme un acquis.
 | « la graine change les choix de Phase A » | 🔴 **faux sur `r75x2`** — `phase_a_seed` y est resté à 42. Vrai sur le 99c (§24-46), pas ici |
 | la porte **1** est en Phase A (génération) | elle est en **Phase B**, dans ELITE |
 | A2 exige K Phases A | **une seule suffit** |
+
+---
+
+## 11. 🔴 ENQUÊTE ELITE DU 2026-08-20 MATIN — trois hypothèses, trois réfutations
+
+👤 : *« reprends les investigations sur ELITE et SEED »*. Ce qui suit est le compte rendu
+honnête : **l'enquête a produit plus de réfutations que d'acquis**, et le §10 ci-dessus doit
+être lu avec ces corrections.
+
+### 📏 Ce qui reste ÉTABLI, et seulement cela
+
+```
+Phase A                 identique aux 2 graines : 0 lambda differente sur 75, 0 cout different
+strategies communes     122 presentes dans les deux runs, plantage IDENTIQUE au chiffre pres
+familles hors ELITE     0 deposable AUX DEUX graines (RATE_L*, SMART_MERGE, SYM, THICKNESS²)
+ELITE                   0 strategie (gr.42)  contre  743 dont 547 deposables (gr.77)
+graine 42               les 1617 strategies plantent a 100,00 % -- p05, mediane et p95 a 100 %
+`origin: "ELITE"`       pose a UN SEUL endroit du code (certus_strat_consensus.py:1017)
+```
+
+### 🔴 Les trois hypothèses formulées puis abattues, dans l'ordre
+
+| # | hypothèse | ce qui l'a tuée |
+|---|---|---|
+| 1 | *la graine change les choix de Phase A* | 📏 Phase A **identique** — `probe_blocs_vs_plantage.py:287` surcharge `robustness_seed` et **jamais `phase_a_seed`**, que `collect_params` fige à 42 faute de widget |
+| 2 | *ELITE engendre puis rejette, et le journal le dit* | 🔴 **le journal était TRONQUÉ** : les pilotes de batch capturent tout (`capture_output=True`) et n'en impriment que les 30 dernières lignes. Je lisais une queue et j'ai failli en tirer un mécanisme |
+| 3 | *la porte 3 tue les candidates* (`if not isfinite(full_score): continue`) | 📏 **les 1617 scores de la graine 42 sont FINIS**, malgré 100 % de plantage. Le classement remplace l'infini par un repli (`_worst_finite_rmse`), donc un artefact ne porte **que** des scores finis même quand tout plante |
+
+⚠️ **Corollaire du point 3, et il est général** : *un artefact de ce projet ne permet pas de savoir
+si la porte de plantage a mordu.* Le « meilleur » score de la graine 42 vaut **SEEL 0,9233** — un
+**score de repli**, que `CLAUDE.md` §21 interdit précisément de citer comme une performance.
+
+### ✅ Les deux instruments posés en réponse
+
+**(a) Les pilotes gardent leur journal.** `batch_nuit_2026-08-20.py` écrit désormais la sortie
+**complète** dans `reports/journal_<cellule>_<horodatage>.log` avant d'en imprimer la queue.
+🔴 Sans cela, toute analyse de journal sur un run de batch porte sur 30 lignes sur des milliers,
+**sans que rien ne le signale**.
+
+**(b) ELITE compte ses rejets, porte par porte.** `certus_strat_consensus.py` : trois compteurs
+et une ligne de journal par round —
+
+```
+[ELITE] Round N: rejets -- halving=A full_rmse=B score_non_fini=C | retenues=D sur E engendrees
+```
+
+C'est le **contrôle 4 du §12** de `CLAUDE.md` — *« compte les rejets, ne lis pas le code »* — que
+j'ai enfreint trois fois de suite ce matin. 🔒 **Instrumentation pure** : aucun chemin de calcul
+ne change, `ruff` propre, 10 tests de cohérence STRAT passent.
+
+### 🔵 La mesure qui tranchera, et elle est bon marché
+
+Rejouer `r75x2 @ 2 nm` en `deep` aux graines **42 et 77** avec l'instrument, et lire les trois
+compteurs. **Trois issues, trois diagnostics différents :**
+
+| lecture | ce que ça veut dire | ce qu'il faut réparer |
+|---|---|---|
+| `engendrees = 0` à la graine 42 | ELITE **ne génère pas** — ses parents ne mènent nulle part | le **générateur**, pas le filtre |
+| `engendrees > 0`, `halving` ou `full_rmse` élevé | il génère et **rejette sur le RMSE** | le **seuil**, et l'écrêtage `max(0.0, …)` de la ligne 208 devient le levier |
+| `score_non_fini` élevé | il rejette sur le **plantage** | ni l'un ni l'autre : c'est le composant qui ne passe pas à cette graine |
+
+🔴 **Tant que ce compte n'est pas fait, on ne sait pas laquelle de ces trois réparations est la
+bonne — et §10 ne doit pas être lu comme si on le savait.**
+
+### 🔒 La règle de méthode que cette matinée impose
+
+📏 Le 2026-08-19, trois conclusions tirées d'une seule graine ont été renversées dans la journée.
+Le 2026-08-20, trois hypothèses sur ELITE ont été réfutées en une heure. **La cause commune n'est
+pas l'imprudence : c'est d'avoir raisonné sur des artefacts qui ne portaient pas la grandeur en
+question.** Phase A n'était pas dans l'artefact, le journal était tronqué, le score était un repli.
+
+> **Avant de formuler un mécanisme, vérifier que la grandeur qui le prouverait EXISTE quelque
+> part. Si elle n'existe pas, poser l'instrument est la seule action légitime.**

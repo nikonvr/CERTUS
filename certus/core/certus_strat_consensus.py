@@ -570,7 +570,17 @@ def _apply_elite_refinement_if_enabled(
         )
 
         candidates_to_eval = [(int(e_idx), strat) for e_idx, strat in enumerate(elite_candidates)]
-        
+
+        # 🔴 COMPTER LES REJETS, PAS LIRE LE CODE -- controle 4 du §12 de CLAUDE.md.
+        # 📏 Le 2026-08-20, ELITE rend 0 strategie a la graine 42 et 743 a la graine 77 sur
+        # le meme composant, et RIEN dans les artefacts ne dit POURQUOI : ni si les
+        # candidates sont engendrees puis rejetees, ni a laquelle des trois portes. Trois
+        # hypotheses ont ete formulees et refutees l'une apres l'autre faute de ce compte.
+        # Un filtre inerte ne produit pas d'erreur -- il produit un resultat plausible.
+        # ⚠️ Instrumentation PURE : trois compteurs et une ligne de journal. Aucun chemin de
+        # calcul ne change, les resultats restent bit-a-bit ceux d'avant.
+        rej_halving = rej_full_rmse = rej_score_non_fini = 0
+
         # Adaptive Sampling: Successive Halving
         # We progressively eliminate candidates with increasing budget
         halving_budgets = [
@@ -612,6 +622,7 @@ def _apply_elite_refinement_if_enabled(
                         res = future.result()
                         nominal_val = _extract_rmse_p95_for_noise(res, nominal_noise_level)
                         if not np.isfinite(nominal_val) or nominal_val >= target_threshold:
+                            rej_halving += 1
                             continue
                         stage_results.append((float(nominal_val), e_idx, strat))
                     except NUMERICAL_FAULT_EXCEPTIONS as e:
@@ -663,9 +674,17 @@ def _apply_elite_refinement_if_enabled(
                     full_res = future.result()
                     full_nominal = _extract_rmse_p95_for_noise(full_res, nominal_noise_level)
                     if not np.isfinite(full_nominal) or full_nominal >= target_threshold:
+                        rej_full_rmse += 1
                         continue
                     full_score = float(full_res.get("robustness_score", np.inf))
                     if not np.isfinite(full_score):
+                        # 🔑 CETTE PORTE-LA EST INVISIBLE DANS LES ARTEFACTS. Le classement
+                        # remplace ensuite l'infini par un repli (`_worst_finite_rmse`), si
+                        # bien qu'un artefact ne porte QUE des scores finis meme quand tout
+                        # plante a 100 %. Mesure du 2026-08-20 : 1617 scores finis sur 1617,
+                        # crash 100,00 % partout. On ne peut donc pas savoir depuis l'artefact
+                        # si ELITE a bute ici -- d'ou ce compteur.
+                        rej_score_non_fini += 1
                         continue
                     min_res, bad_layer, _curv = _calculate_strategy_spectral_resolution(
                         full_res["strategy"], ctx.p_thick_nominal, ctx.params
@@ -678,6 +697,11 @@ def _apply_elite_refinement_if_enabled(
                 except NUMERICAL_FAULT_EXCEPTIONS as e:
                     ctx.logger.warning(f"[ELITE] Round {elite_round}: full evaluation failed: {e}")
 
+        ctx.logger.info(
+            f"[ELITE] Round {elite_round}: rejets -- halving={rej_halving} "
+            f"full_rmse={rej_full_rmse} score_non_fini={rej_score_non_fini} "
+            f"| retenues={len(elite_added)} sur {len(elite_candidates)} engendrees"
+        )
         if not elite_added:
             ctx.logger.info(f"[ELITE] Round {elite_round}: no candidate beat nominal threshold.")
             if elite_stop_on_no_gain:

@@ -138,6 +138,17 @@ def main() -> int:
         except subprocess.TimeoutExpired:
             code, sortie = -9, "TIMEOUT du pilote"
         dt = (time.time() - t) / 60.0
+        # 🔴 LE JOURNAL COMPLET VA SUR DISQUE, PAS SEULEMENT SA QUEUE.
+        # 📏 Defaut trouve le 2026-08-20 : ce pilote CAPTURE tout le journal
+        # (`capture_output=True`) puis n'en imprimait que les 30 dernieres lignes -- le
+        # reste etait jete. Toute analyse de journal faite sur un run de batch portait donc
+        # sur une queue. C'est ainsi que j'ai lu « ELITE n'a rien ajoute a la graine 77 »
+        # alors que l'artefact porte 743 strategies ELITE : je ne voyais qu'un round sur N,
+        # et j'ai failli en tirer un mecanisme.
+        jrnl = ROOT / "reports" / f"journal_{nom}_{datetime.now():%Y%m%d_%H%M%S}.log"
+        jrnl.write_text(sortie, encoding="utf-8", errors="replace")
+        print(f"  journal complet : {len(sortie.splitlines())} lignes -> {jrnl.name}",
+              flush=True)
         print("\n".join(sortie.splitlines()[-30:]), flush=True)
         print(f"◀ cellule {nom} : code={code} en {dt:.1f} min", flush=True)
         bilan.append({"cellule": nom, "argv": argv, "coupures": coupures,

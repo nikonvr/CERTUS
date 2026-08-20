@@ -10,6 +10,7 @@ Contains:
 - ELITE refinement flow
 """
 
+import collections
 import logging
 import concurrent.futures
 import numpy as np
@@ -504,6 +505,136 @@ def _rank_and_filter_strategies(
     )
     return strategies_results
 
+def _elite_wl_histogram(candidates: list[Any]) -> dict[float, int]:
+    """How many candidates use each control wavelength -- each candidate counted ONCE per wl.
+
+    WHY THIS COUNT EXISTS. Measured 2026-08-20 on `r75x2` at 2 nm: all 547 depositable
+    strategies of seed 77 come from ELITE, and 544 of them monitor layer 35 at 685 nm --
+    a wavelength that NONE of seed 42's 1617 strategies proposes anywhere, at any layer.
+    At seed 42 ELITE generates 4226 candidates, evaluates 1327 in full, and retains NONE.
+
+    The three existing counters say WHICH GATE rejects. They do not say WHICH WAVELENGTHS
+    were on the table, and those two readings separate the only two repairs available:
+
+        wl ABSENT from the generated histogram  -> ELITE never looks there; fix the PARENTS
+        wl PRESENT, and present in a reject     -> ELITE looks and discards; fix the GATE
+
+    Without this the choice between the two stays a guess, and this repository has already
+    paid five times in one day for reasoning on a quantity that did not carry the
+    information sought.
+
+    ⚠️ COUNTING RULE, and it must be known to read the log: a candidate contributes each of
+    its DISTINCT block wavelengths once, so the counts sum to MORE than the number of
+    candidates. A count is "how many candidates used this wl", never "how many blocks".
+
+    Accepts strategy dicts or `(index, strategy)` pairs, which is what the ELITE stage
+    carries at its two rejection sites.
+    """
+    hist: collections.Counter = collections.Counter()
+    for item in candidates:
+        strat = item[1] if isinstance(item, tuple) else item
+        if not isinstance(strat, dict):
+            continue
+        hist.update({
+            float(b["wavelength"])
+            for b in (strat.get("blocks") or [])
+            if isinstance(b, dict) and b.get("wavelength") is not None
+        })
+    return dict(hist)
+
+
+#: Crash-rate buckets for the ELITE reject histogram. The 5 % boundary is 👤's
+#: tolerance, so the buckets straddle it: a reject just above it is a candidate that a
+#: CONFIDENCE-bounded gate could keep, while a reject at 100 % is one that nothing can.
+_CRASH_BUCKETS: tuple[tuple[float, str], ...] = (
+    (0.01, "<=1%"),
+    (0.02, "1-2%"),
+    (0.05, "2-5%"),
+    (0.10, "5-10%"),
+    (0.25, "10-25%"),
+    (0.50, "25-50%"),
+    (0.999, "50-99%"),
+)
+
+
+def _crash_bucket(rate: float | None) -> str:
+    """Name the crash-rate band of a rejected ELITE candidate.
+
+    WHY THIS EXISTS, and it decides which repair is even possible. ELITE's
+    `not np.isfinite(full_score)` reject IS the crash gate: `_crash_gate_rejects`
+    (`certus_strat_robustness.py`) sets `final_score = inf`, and that infinity is what
+    ELITE reads. Measured 2026-08-20 on `r75x2` at 2 nm, seed 42: 1116 of 1327 candidates
+    evaluated in full die there. But the artifacts do NOT say at what RATE they died, and
+    the two answers call for different repairs:
+
+        rejects clustered just ABOVE tolerance -> a confidence-bounded gate keeps them
+        rejects at 100 %                       -> no gate setting recovers them; only
+                                                  relaxing the search itself can, and
+                                                  whatever it finds must then be judged
+                                                  at NOMINAL
+
+    `crash_rate` is written by the robustness evaluation regardless of `final_score`, so
+    the quantity is already there and was simply discarded.
+    """
+    if rate is None:
+        return "unknown"
+    try:
+        r = float(rate)
+    except (TypeError, ValueError):
+        return "unknown"
+    for hi, name in _CRASH_BUCKETS:
+        if r <= hi:
+            return name
+    return "100%"
+
+
+def _format_wl_histogram(hist: dict[float, int], top: int = 14) -> str:
+    """Compact, greppable rendering: heaviest counts first, and the tail is SAID not hidden.
+
+    A silently truncated list reads as complete coverage, which is the failure mode this
+    repository keeps paying for. The number of omitted wavelengths is therefore printed.
+    """
+    if not hist:
+        return "(none)"
+    items = sorted(hist.items(), key=lambda kv: (-kv[1], kv[0]))
+    head = " ".join(f"{wl:g}:{n}" for wl, n in items[:top])
+    omitted = len(items) - top
+    return head + (f" [+{omitted} wl not shown]" if omitted > 0 else "")
+
+
+def _log_elite_wl(
+    logger: logging.Logger,
+    elite_round: int,
+    exit_name: str,
+    generated: dict[float, int],
+    rejects: dict[str, collections.Counter],
+    crash_bands: collections.Counter | None = None,
+) -> None:
+    """Emit the wavelength histograms of one ELITE round, generated and per reject gate.
+
+    Emitted at EVERY exit of the round, for the same reason the three counters are: a round
+    that leaves early was measuring nothing at all before 2026-08-20.
+    """
+    logger.info(
+        f"[ELITE-WL] Round {elite_round} exit={exit_name} generated "
+        f"{_format_wl_histogram(generated)}"
+    )
+    for cause, hist in rejects.items():
+        logger.info(
+            f"[ELITE-WL] Round {elite_round} exit={exit_name} rejected_{cause} "
+            f"{_format_wl_histogram(dict(hist))}"
+        )
+    crash_bands = crash_bands or collections.Counter()
+    if crash_bands:
+        bands = " ".join(
+            f"{cause}/{band}:{n}"
+            for (cause, band), n in sorted(crash_bands.items(), key=lambda kv: -kv[1])
+        )
+        logger.info(
+            f"[ELITE-WL] Round {elite_round} exit={exit_name} reject_crash_bands {bands}"
+        )
+
+
 def _apply_elite_refinement_if_enabled(
     strategies_results: list[dict[str, Any]],
     ctx: RobustnessContext,
@@ -580,6 +711,15 @@ def _apply_elite_refinement_if_enabled(
         # ⚠️ Instrumentation PURE : trois compteurs et une ligne de journal. Aucun chemin de
         # calcul ne change, les resultats restent bit-a-bit ceux d'avant.
         rej_halving = rej_full_rmse = rej_score_non_fini = 0
+        # Same three gates, but WHICH WAVELENGTHS -- see `_elite_wl_histogram`.
+        wl_generated = _elite_wl_histogram(elite_candidates)
+        wl_rejects: dict[str, collections.Counter] = {
+            "halving": collections.Counter(),
+            "full_rmse": collections.Counter(),
+            "score_non_fini": collections.Counter(),
+        }
+        # At WHAT RATE the rejected candidates crash -- see `_crash_bucket`.
+        crash_bands: collections.Counter = collections.Counter()
 
         # Adaptive Sampling: Successive Halving
         # We progressively eliminate candidates with increasing budget
@@ -623,6 +763,7 @@ def _apply_elite_refinement_if_enabled(
                         nominal_val = _extract_rmse_p95_for_noise(res, nominal_noise_level)
                         if not np.isfinite(nominal_val) or nominal_val >= target_threshold:
                             rej_halving += 1
+                            wl_rejects["halving"].update(_elite_wl_histogram([strat]))
                             continue
                         stage_results.append((float(nominal_val), e_idx, strat))
                     except NUMERICAL_FAULT_EXCEPTIONS as e:
@@ -661,6 +802,7 @@ def _apply_elite_refinement_if_enabled(
                 f"| retenues=0 sur {len(elite_candidates)} engendrees "
                 f"| sortie=HALVING"
             )
+            _log_elite_wl(ctx.logger, elite_round, "HALVING", wl_generated, wl_rejects, crash_bands)
             ctx.logger.info(f"[ELITE] Round {elite_round}: no candidate passed Successive Halving.")
             if elite_stop_on_no_gain:
                 break
@@ -699,6 +841,10 @@ def _apply_elite_refinement_if_enabled(
                     full_nominal = _extract_rmse_p95_for_noise(full_res, nominal_noise_level)
                     if not np.isfinite(full_nominal) or full_nominal >= target_threshold:
                         rej_full_rmse += 1
+                        wl_rejects["full_rmse"].update(
+                            _elite_wl_histogram([full_res.get("strategy") or {}])
+                        )
+                        crash_bands[("full_rmse", _crash_bucket(full_res.get("crash_rate")))] += 1
                         continue
                     full_score = float(full_res.get("robustness_score", np.inf))
                     if not np.isfinite(full_score):
@@ -709,6 +855,10 @@ def _apply_elite_refinement_if_enabled(
                         # crash 100,00 % partout. On ne peut donc pas savoir depuis l'artefact
                         # si ELITE a bute ici -- d'ou ce compteur.
                         rej_score_non_fini += 1
+                        wl_rejects["score_non_fini"].update(
+                            _elite_wl_histogram([full_res.get("strategy") or {}])
+                        )
+                        crash_bands[("score_non_fini", _crash_bucket(full_res.get("crash_rate")))] += 1
                         continue
                     min_res, bad_layer, _curv = _calculate_strategy_spectral_resolution(
                         full_res["strategy"], ctx.p_thick_nominal, ctx.params
@@ -733,6 +883,7 @@ def _apply_elite_refinement_if_enabled(
             f"| retenues={len(elite_added)} sur {len(elite_candidates)} engendrees "
             f"| sortie=COMPLETE"
         )
+        _log_elite_wl(ctx.logger, elite_round, "COMPLETE", wl_generated, wl_rejects, crash_bands)
         if not elite_added:
             ctx.logger.info(f"[ELITE] Round {elite_round}: no candidate beat nominal threshold.")
             if elite_stop_on_no_gain:

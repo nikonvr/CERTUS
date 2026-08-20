@@ -1234,3 +1234,103 @@ reçu. C'est trois lignes. 🔴 **Mais elle touche au code de PRODUCTION, et le 
 avec les cellules 3 et 4 non démarrées** : elles hériteraient de la modification en cours de
 route, et deux cellules d'une même campagne ne seraient plus comparables. **Reporté à la fin du
 batch.** C'est la contrainte C3 — une chose à la fois — appliquée à l'outillage comme au reste.
+
+---
+
+## 20. 🟢🟢 LE DÉFAUT DE PROTOCOLE EST RÉPARÉ, ET LE RÉSULTAT PHARE SURVIT
+
+`reports/blocs_vs_plantage_r75x2_deep_s042_tail49-55.json`, **114,3 min**, 2 873 stratégies,
+`N = 300` consigné.
+
+C'était l'objet du batch : le résultat phare était mesuré en **`fast`** et opposé à une
+comparaison pur optique en **`deep`**. Deux profondeurs, donc deux choses changées à la fois.
+
+```
+PUR OPTIQUE, deep, graine 42 :  0 deposable sur 1616, crash_min 100,00 %
+
+ coupure  n_var  crash_min  depos     SEEL  blocs
+      49    419      2.67%      1   0.7175     75
+      52    419      2.67%      1   0.6859     75
+      55    419      3.33%      1   0.7048     75
+```
+
+### 🔵 La prédiction est CONFIRMÉE, et le chiffre est meilleur que ce qu'elle demandait
+
+> *« À la graine 42 la queue SAUVE (déposables > 0). »*
+
+📏 **Elle sauve, et à `N = 300`.** Mais le fait qui compte est ailleurs :
+
+```
+coupure 52,  fast N=50   ->  SEEL 0.6885   crash 4,00 %  (2/50)
+coupure 52,  deep N=300  ->  SEEL 0.6859   crash 2,67 %  (8/300)
+                             ecart de SEEL : +0,38 %  =  0,15 sigma
+```
+
+🔑 **Les deux profondeurs donnent le même nombre.** Les 5 déposables du `fast` n'étaient donc
+**pas** un artefact du criblage court — c'est précisément ce que la réfutation aurait signifié.
+L'attaque 3 du §12 est close pour de bon : *ce n'est pas la profondeur de recherche qui manquait,
+c'est bien la queue Rate qui rend ce composant fabricable.*
+
+✅ Et le plantage tombe de 4,00 % à **2,67 %** en passant de 2/50 à 8/300 — même mouvement qu'au
+§11, et **sous la cible de 5 % de 👤**.
+
+---
+
+## 21. 🟢 LA RÈGLE D'EXCEPTION DE 👤 EST ENFIN ATTRIBUABLE — et elle DÉGRADE
+
+`reports/blocs_vs_plantage_r75x2_fast_s042_tail46-58s.json`, **33,6 min** — le contrôle
+`par_swing = 5` ajouté cette nuit : queue + swing, **sans** réouverture optique.
+
+```
+ coupure     pure   +swing  +except    swing seul      exception seule
+      46   0.7520   0.7517   0.7408    -0,0%  0,0σ     -1,5%  0,6σ
+      52   0.6890   0.6885   0.7438    -0,1%  0,0σ     +8,0%  3,1σ   PIRE
+      58   0.7350   0.7353   0.7433    +0,0%  0,0σ     +1,1%  0,4σ
+```
+
+🔑 **`rate_by_swing` est numériquement inerte sur la queue : 0,0 σ aux trois coupures.** Le
+confusionnement du §18 existait bel et bien — il ajoute 26 origines à la population — mais il ne
+déplace pas le meilleur SEEL de queue. ⚠️ **Cela ne rétrospectivement excuse rien** : on ne
+pouvait pas le savoir sans le mesurer, et c'est le contrôle qui l'établit, pas le raisonnement.
+
+🔵 **La prédiction du 19 est donc CONFIRMÉE, et maintenant proprement** :
+
+> *« la règle d'exception dégrade ou ne change rien. »*
+
+📏 **+8,0 % à la coupure 52, soit 3,1 σ** — au-dessus du bruit mesuré, donc réel. Ailleurs, rien.
+**Elle ne gagne nulle part.** Le mécanisme prédit tient : rouvrir une couche optique au milieu de
+la queue réintroduit un point de plantage **et** réexpose tout ce qui la suit.
+
+📌 L'aplatissement des coupures relevé au §18 s'attribue lui aussi : il vient de la réouverture,
+pas du swing.
+
+---
+
+## 22. 📏 LE COUDE DU `75c` BOUGE AVEC LA GRAINE — la direction tient, la position non
+
+`reports/blocs_vs_plantage_75c_fast_s077_res1_tail46-70.json`, **35,1 min**, graine **77**.
+
+```
+ coupure  Rate     s042           ecart     s077           ecart
+      46    29   0.4420     +19,1% 7,4σ   0.3853      +6,7% 2,6σ
+      52    23   0.4400     +18,6% 7,2σ   0.3617      +0,2% 0,1σ
+      58    17   0.4240     +14,3% 5,5σ   0.3623      +0,4% 0,1σ
+      64    11   0.3720      +0,3% 0,1σ   0.3616      +0,2% 0,1σ
+      70     5   0.3730      +0,5% 0,2σ   0.3616      +0,2% 0,1σ
+```
+
+*(pur optique : `s042` 0,371 · `s077` 0,3610 avec **225 déposables** et 0 % de plantage)*
+
+| ✅ ce qui tient aux deux graines | |
+|---|---|
+| la queue **ne bat jamais** le pur optique | le meilleur écart est +0,2 % |
+| une queue **longue coûte**, une queue courte est gratuite | monotone dans les deux cas |
+
+| 🔴 ce qui ne tient pas | |
+|---|---|
+| **la position du coude** | `s042` : le coût s'installe dès la coupure **58** (17 couches Rate). `s077` : rien avant la coupure **46** (29 couches). Le coude s'est déplacé de **12 couches** |
+
+🔑 **Ce que le §16 annonçait est exactement ce qui est arrivé.** Il disait : *« l'écart de 7,4 σ
+ne peut pas être renversé par une graine — ce qui reste à confirmer est le détail, la place exacte
+du coude. »* Le sens du résultat a tenu, la position a bougé. 📌 **On ne cite donc pas un nombre
+de couches Rate « gratuites » : il dépend de la réalisation.**

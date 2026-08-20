@@ -1386,3 +1386,45 @@ pas du swing.
 ne peut pas être renversé par une graine — ce qui reste à confirmer est le détail, la place exacte
 du coude. »* Le sens du résultat a tenu, la position a bougé. 📌 **On ne cite donc pas un nombre
 de couches Rate « gratuites » : il dépend de la réalisation.**
+
+---
+
+## 23. 🟢🟢 CELLULE 4 — LA RÈGLE EST DÉMONTRÉE DANS UN SEUL COMPOSANT
+
+`reports/blocs_vs_plantage_r75x2_deep_s077_tail49-55.json`, **175,8 min**, 3 506 stratégies,
+`N = 300` consigné.
+
+C'était l'expérience centrale du batch : jusqu'ici, *« la queue Rate achète de la faisabilité et
+la paie en précision »* reposait sur **deux composants différents** (`r75x2` et `75c`), donc sur
+une comparaison qui mélangeait l'effet de la queue et celui du composant.
+
+```
+r75x2 @ 2 nm, deep, graine 77
+  PUR OPTIQUE : 518 deposables sur 2201, SEEL 0.5698, crash 1,00 %, 13 blocs
+
+   coupure  n_var  crash_min  depos     SEEL     vs pur optique
+        49    435      3.67%      1   0.7175    +25,9 %   10,0 σ
+        52    435      3.67%      1   0.6859    +20,4 %    7,9 σ
+        55    435      4.67%      1   0.7048    +23,7 %    9,2 σ
+```
+
+### 🔑 Les deux régimes, à composant, mode, fente et grille IDENTIQUES
+
+| | pur optique | queue Rate |
+|---|---|---|
+| **graine 42** (§20) | 🔴 **0 déposable** sur 1616 | 🟢 **3 déposables**, SEEL 0,6859, crash 2,67 % |
+| **graine 77** (ici) | 🟢 **518 déposables**, SEEL 0,5698 | 🔴 **1 déposable**, +20,4 % soit **7,9 σ** |
+
+> **Seule la réalisation change. Là où l'optique échoue, la queue sauve ; là où elle réussit, la
+> queue coûte huit sigma.** Le confusionnement « deux composants » est éliminé, et la règle
+> *faisabilité contre précision* est démontrée **à l'intérieur d'un composant**.
+
+✅ **Et la prédiction du §17 est confirmée dans ses deux branches** — elle demandait « SEEL
+nettement au-dessus de 0,569, au-delà de 2 σ » à la graine 77 : mesuré **7,9 σ**.
+
+### ⚠️ Deux observations à ne pas perdre
+
+| | |
+|---|---|
+| **le pur optique bouge un peu entre les deux runs** | 0,5698 ici contre 0,5692 dans le run sans queue, et 518 déposables contre 547, la gagnante passant de 9 à 13 blocs. Écart de SEEL **0,1 %, soit 0,04 σ** — dans le bruit. 📌 Mais la cause est réelle : ajouter les variantes de queue change la population que le consensus rescore, donc **la présence d'une famille déplace légèrement le classement d'une autre.** |
+| **le plantage de la queue monte à la graine 77** | 3,67 % et 4,67 % contre 2,67 % à la graine 42. La queue n'est donc pas *plus sûre* ici, elle est seulement *inutile* |

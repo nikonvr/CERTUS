@@ -496,12 +496,40 @@ honnête : **l'enquête a produit plus de réfutations que d'acquis**, et le §1
 
 ```
 Phase A                 identique aux 2 graines : 0 lambda differente sur 75, 0 cout different
-strategies communes     122 presentes dans les deux runs, plantage IDENTIQUE au chiffre pres
+strategies communes     🔴 RETIRE -- voir l'encadre sous ce bloc, la comparaison etait vide
 familles hors ELITE     0 deposable AUX DEUX graines (RATE_L*, SMART_MERGE, SYM, THICKNESS²)
 ELITE                   0 strategie (gr.42)  contre  743 dont 547 deposables (gr.77)
 graine 42               les 1617 strategies plantent a 100,00 % -- p05, mediane et p95 a 100 %
 `origin: "ELITE"`       pose a UN SEUL endroit du code (certus_strat_consensus.py:1017)
 ```
+
+### 🔴 UNE QUATRIÈME RÉFUTATION, ET CELLE-CI EST DE MA MAIN
+
+> *« les 122 stratégies communes aux deux runs ont un plantage identique au chiffre près »*
+
+📏 **Vérifié le 2026-08-20 : cette comparaison ne compare rien.**
+
+```
+paires « communes » par (origine, n_blocs)     : 122
+dont les DEUX cotes sont a 100 % de plantage   : 122   (100 %)
+paires reellement informatives                 :   0
+une « paire » regroupe jusqu'a 12 strategies DIFFERENTES sous une seule cle
+```
+
+Les 122 confrontaient **100 % à 100 %**. La clé d'appariement — `(origine, n_blocs)` — est
+faible, et la population est saturée. 🔴 **Il n'a donc JAMAIS été montré que le plantage d'une
+stratégie est indépendant de la graine.**
+
+✅ **Et l'attente est même l'inverse**, vérifié dans le code : `base_seed`
+(`certus_strat_robustness.py:2282`) alimente `_get_cached_sobol_noise`,
+`_signal_noise_stream_seed`, `_affine_stream_seed` et `_index_stream_seed`. **La graine pilote
+réellement les tirages.**
+
+⚠️ **La cause est la même que pour les trois précédentes** : j'ai lu une grandeur qui ne portait
+pas l'information cherchée. Ici la faute est plus grave, parce que l'artefact **portait** ce
+qu'il fallait — c'est ma clé d'appariement qui l'a détruit. 🔒 *Un appariement doit être vérifié
+sur son pouvoir discriminant AVANT d'être exploité : compter les paires informatives, pas les
+paires.*
 
 ### 🔴 Les trois hypothèses formulées puis abattues, dans l'ordre
 

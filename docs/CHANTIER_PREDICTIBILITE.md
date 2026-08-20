@@ -604,7 +604,7 @@ changements simultanés ne s'attribuent pas. Ce qui est établi est *« élargir
 bloc, pas lequel de ses sept leviers porte l'effet.
 
 **2. La profondeur d'évaluation a changé aussi — 50 → 300 tirages.** `execution_mode = deep`
-pose `robustness_num_runs = 300` (`certus_strat_ui_state.py:1419`). 📏 Vérifiable dans les
+pose `robustness_num_runs = 300` (`certus_strat_ui_state.py:1459`). 📏 Vérifiable dans les
 données : les cellules `fast` rendent des taux multiples de 2 % (1/50), la gagnante de la phase 2
 plante **4 fois sur 300** et le `crash_min` du run vaut **3/300 = 1,00 %**.
 ✅ **Mais ce biais joue CONTRE le résultat, donc il ne l'explique pas** : à 50 tirages, une

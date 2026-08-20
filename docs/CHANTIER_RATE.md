@@ -580,7 +580,7 @@ comparaison n'est possible — ce serait l'erreur n° 3 du §5 de `CLAUDE.md`, d
 |---|---|---|
 | **1** | `fast`, graine 42, coupures **46 → 64** | le correctif **déplace-t-il la falaise** ? La campagne d'avant la situait entre 61 et 58, avec un plateau plat à 4,00 % de 58 à 46 |
 | **2** | `fast`, graine **77**, mêmes coupures | §24-46 : *un verdict sur un intervalle marginal n'est pas déterminé par une graine*. Sans elle, rien de la cellule 1 n'est publiable |
-| **3** | **`premium`**, graine 42, coupures 52 → 58 | le `4,00 %` vaut **2/50** en `fast` : la granularité minimale au-dessus de zéro, **pas une mesure**. À N = 150 il devient 6/150, et le bruit du SEEL tombe d'un facteur √3 — de quoi enfin départager les coupures, ce que `fast` **ne peut pas faire** (écart 52/46 à 1,25 σ) — 🔴 **cette parenthèse est RÉFUTÉE** : le bruit a été mesuré la nuit du 19 au 20 et vaut 2,59 % sur une différence, pas 7,3 %. L'écart 52/46 est à **3,53 σ** et `fast` le sépare déjà. Voir le §7 |
+| **3** | **`premium`**, graine 42, coupures 52 → 58 | le `4,00 %` vaut **2/50** en `fast` : la granularité minimale au-dessus de zéro, **pas une mesure**. À N = 150 il devient 6/150, et le bruit du SEEL tombe d'un facteur √3 — de quoi enfin départager les coupures, ce que `fast` **ne peut pas faire** (écart 52/46 à 1,25 σ) — 🔴 **cette parenthèse est RÉFUTÉE** : le bruit a été mesuré la nuit du 19 au 20 et vaut 2,59 % sur une différence, pas 7,3 %. L'écart 52/46 est à **3,53 σ** et `fast` le sépare déjà. Voir le §3bis |
 
 ### 🔵 La prédiction, posée d'avance et falsifiable
 
@@ -684,7 +684,7 @@ qui était tout l'objet de l'écrire.
 
 🔴 **La phrase qui précédait — *« les cinq coupures sont toutes indiscernables à 2 σ, écart max
 1,25 σ »* — est RÉFUTÉE**, et par une mesure, pas par un raisonnement. Le σ de 7,3 % était
-emprunté au 48 couches ; le σ **mesuré** sur `r75x2` vaut 2,59 % sur une différence (§7). Les
+emprunté au 48 couches ; le σ **mesuré** sur `r75x2` vaut 2,59 % sur une différence (§3bis). Les
 coupures **46 et 58 se séparent** de la 52, à 3,53 σ et 2,58 σ. Ce qui reste vrai est plus
 faible et plus précis : **49, 52 et 55 sont une seule classe**, et aucune des trois n'est
 l'optimum.
@@ -747,7 +747,7 @@ consensus**, pas de `robustness_seed`. ✅ **Fait la nuit du 2026-08-19 au 20** 
 étendue **3,10 %**, soit **2,59 %** sur une différence de deux SEEL. Le σ permissif dénoncé
 juste au-dessus était trop grand d'un facteur **2,8**, et il faisait effectivement ce que ce
 paragraphe redoutait — déclarer indiscernables deux coupures qui ne le sont pas. **Le résultat
-est au §7.**
+est au §3bis.**
 
 ---
 
@@ -971,7 +971,7 @@ Pas « écris-la puis vérifie » — la première rédaction contamine la lectu
 
 🔴 **Écrit le 2026-08-20 à 02:00, pendant que la cellule 4 tourne.** La sonde `SEEL(n)` part
 vers 03:30. Le critère de lecture est donc fixé avant les données — c'est la discipline qui
-vient de payer sur la dispersion (§7), et dont l'absence a coûté trois renversements le 19.
+vient de payer sur la dispersion (§3bis), et dont l'absence a coûté trois renversements le 19.
 
 ### Ce que la sonde mesure exactement
 
@@ -1010,3 +1010,83 @@ coûte 45 min par composant.
 |---|---|
 | **la suite n'est pas emboîtée** | à chaque `n`, la Phase A et la Phase B ré-optimisent sur un problème différent. `SEEL(n+1)` n'est pas `SEEL(n)` plus une couche : c'est une autre stratégie. Une partie de la non-monotonie sera donc du **bruit de sélection**, pas de la physique |
 | **`r75x2` est assis sur la frontière** (§12) | la courbe sera tracée sur **une seule graine**, sur le composant où tout bascule avec la graine. 🔒 Donc, par la règle du §14 : **aucune conclusion n'est écrite tant qu'une seconde graine n'a pas rendu la même forme.** Le premier tracé sert à savoir si la sonde produit quelque chose, pas à trancher |
+
+---
+
+## 16. 🟢 CELLULE 4 — LE MÉCANISME SE GÉNÉRALISE, ET IL RETOURNE SON PROPRE SIGNE
+
+`reports/blocs_vs_plantage_75c_fast_s042_res1_tail46-70.json`, **37,4 min**, 983 stratégies,
+`monochromator_resolution_nm = 1.0` et `robustness_num_runs = 50` **consignés dans l'artefact**.
+
+C'était le test de généralité : tout le mécanisme avait été établi sur `r75x2`, **où rien ne
+marche en optique**. `75c` à 1 nm est le banc inverse — l'optique y marche très bien.
+
+```
+  reference pur optique : SEEL 0.371, 15 deposables sur 416, crash 4,00 %
+
+   coupure  Rate    SEEL    ecart  en sigma   verdict
+        46    29   0.442    19.1%       7.4   PIRE, separable        (11 depos)
+        52    23   0.440    18.6%       7.2   PIRE, separable        (11 depos)
+        58    17   0.424    14.3%       5.5   PIRE, separable        (11 depos)
+        64    11   0.372     0.3%       0.1   indiscernable          ( 2 depos)
+        70     5   0.373     0.5%       0.2   indiscernable          ( 2 depos)
+```
+
+*(σ = 2,59 % sur une différence, **mesuré** au §3bis — c'est lui qui rend ce tableau lisible d'un
+coup d'œil. Avec l'ancien σ emprunté de 7,3 %, les mêmes écarts se lisaient 2,6 σ au lieu de
+7,4 σ : réels mais discutables. **La mesure de la dispersion paie dès son premier usage.**)*
+
+### 🔵 La prédiction est CONFIRMÉE — et elle va plus loin qu'annoncé
+
+> *« si "position terminale" est un mécanisme et non un artefact, une queue tardive doit battre
+> une queue précoce à SEEL comparable. Ce qui la réfuterait : un optimum au milieu, ou aucune
+> structure. »*
+
+📏 **La courbe est monotone et sans optimum intérieur** : `0,442 → 0,440 → 0,424 → 0,372 →
+0,373`. Plus la coupure est tardive, meilleur est le SEEL — exactement la forme prédite, sur un
+composant qui n'a servi à établir aucune partie du mécanisme.
+
+🔑 **Et le cas limite, que la prédiction n'avait pas anticipé, est le plus instructif : la
+meilleure « queue » est l'absence de queue.** La suite converge vers `0,371`, la valeur du pur
+optique, et ne la franchit jamais. **La longueur de queue est un coût pur.**
+
+### 🔑 CE QUE LES DEUX COMPOSANTS DISENT ENSEMBLE
+
+| | `r75x2` @ 2 nm | `75c` @ 1 nm |
+|---|---|---|
+| l'optique seule | 🔴 **0 déposable** aux deux graines | 🟢 15 déposables, SEEL 0,371 |
+| la queue Rate | 🟢 **la rend fabricable**, seule configuration à marcher aux deux graines | 🔴 coûte jusqu'à **+19 %**, soit 7,4 σ |
+
+> **La queue Rate achète de la FAISABILITÉ, et elle la paie en PRÉCISION. Là où il n'y a rien à
+> acheter, il ne reste que la facture.**
+
+✅ **Et c'est la même conclusion, obtenue par un chemin entièrement différent, que le
+multi-témoins** : *outil de faisabilité, jamais d'optimisation*, contrôle négatif passé 3 fois
+sur 3 (§23 de `CLAUDE.md`). Deux mécanismes sans rapport aboutissent à la même règle. C'est le
+genre de convergence qui vaut plus qu'une mesure de plus.
+
+### ⚠️ Une anomalie que je ne sais PAS expliquer, et que je ne comble pas
+
+Le nombre de déposables n'est **pas** monotone en longueur de queue :
+
+```
+pur optique   15 deposables / 416 variantes  =  3,6 %
+queues longues (46-58)   11 / 117            =  9,4 %
+queues courtes (64-70)    2 / 108            =  1,9 %
+```
+
+Une queue **longue** enrichit la proportion de déposables (9,4 % contre 3,6 %) — cohérent avec
+« elle achète de la faisabilité ». Mais une queue **courte** fait **moins bien que le pur
+optique**, tout en ayant un SEEL identique. 🔴 **Je n'ai pas d'explication, et je n'en invente
+pas.** Une piste à mesurer, pas à supposer : 5 à 11 couches Rate en fin d'empilement suffisent
+peut-être à casser les ancres POEM du dernier bloc sans apporter assez de couverture pour le
+compenser. **Ce serait à vérifier par le profil de plantage par couche, pas par le raisonnement.**
+
+### ⚠️ Portée, et elle est plus large qu'au §14 — mais pas illimitée
+
+**Une seule graine.** La règle du §14 impose d'attendre la seconde avant de conclure sur un
+composant **marginal**. `75c` @ 1 nm ne l'est pas : 15 déposables, `crash_min` à 4,00 % partout,
+aucun basculement de verdict en vue — c'est le régime « confortable » où §24-46 a mesuré que la
+graine ne décide de rien. **L'écart de 7,4 σ ne peut pas être renversé par une graine.**
+📌 Ce qui reste à confirmer par une seconde graine est le **détail** — la place exacte du coude
+entre 58 et 64 — pas le sens du résultat.

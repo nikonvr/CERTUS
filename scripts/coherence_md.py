@@ -117,6 +117,62 @@ def _md() -> list[Path]:
     return [f for f in fs if f.exists()]
 
 
+#: 🔴 NE JUGE PAS, MONTRE. Un renvoi `§N` qui pointe sur une section EXISTANTE mais sur le
+#: MAUVAIS sujet est indetectable mecaniquement -- aucun outil ne sait ce que l'auteur voulait
+#: dire. Ce controle rapproche donc le renvoi et le TITRE de sa cible, et laisse lire.
+#:
+#: 📏 Ecrit le 2026-08-20 apres avoir pose CINQ renvois faux vers `§7` dans CHANTIER_RATE.md :
+#: je voulais la dispersion (§3bis) et §7 existe -- c'est « Le banc d'essai naturel ». Aucun
+#: controle ne regardait les renvois INTERNES aux dossiers de docs/ : le controle B ne couvrait
+#: que CLAUDE.md. Cinq renvois faux ont donc passe une verification annoncee comme totale.
+_RX_SECTION = re.compile(r"^##\s+(\d+(?:bis|ter)?)\.\s+(.+?)\s*$")
+_RX_RENVOI = re.compile(r"§(\d+(?:bis|ter)?)(?!\s*[-‑]\s*\d)")
+
+
+def _sections(f: Path) -> dict[str, str]:
+    """Numero de section -> titre, pour un document donne."""
+    out: dict[str, str] = {}
+    for ligne in f.read_text(encoding="utf-8", errors="replace").splitlines():
+        m = _RX_SECTION.match(ligne)
+        if m:
+            out[m.group(1)] = re.sub(r"[#*`🔴🟢🟠🔵🔑⚡📏📌⚠️✅💰🪦]", "", m.group(2)).strip()
+    return out
+
+
+def _sweep_renvois(fichiers, detail: bool = False) -> tuple[int, int, int]:
+    """Pour chaque `§N` INTERNE a un dossier, rapproche le renvoi et le TITRE de sa cible.
+
+    Trois issues, et la nuance compte : un `§N` nu designe tantot une section du document
+    courant, tantot une de CLAUDE.md. C'est une ambiguite REELLE du corpus -- la signaler en
+    rouge noierait le vrai defaut sous le bruit.
+    """
+    morts = ambigus = vus = 0
+    hors = _sections(ROOT / "CLAUDE.md")
+    for f in fichiers:
+        if f.name == "CLAUDE.md":
+            continue  # deja couvert par le controle B, et ses §N sont sa propre numerotation
+        secs = _sections(f)
+        if not secs:
+            continue
+        for i, ligne in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            if _RX_SECTION.match(ligne) or re.search(r"CLAUDE\.md|[A-Z_]+\.md\)", ligne):
+                continue  # un titre, ou un renvoi CROISE qui nomme son document
+            for num in sorted(set(_RX_RENVOI.findall(ligne))):
+                vus += 1
+                if num in secs:
+                    if detail:
+                        print(f"     {f.name}:{i} — §{num} -> « {secs[num][:58]} »")
+                elif num in hors:
+                    ambigus += 1
+                    print(f"  🟠 {f.name}:{i} — §{num} absent d'ici, present dans CLAUDE.md "
+                          f"(« {hors[num][:44]} ») : nomme le document")
+                else:
+                    morts += 1
+                    print(f"  🔴 {f.name}:{i} — §{num} n'existe NI ici NI dans CLAUDE.md "
+                          f"(sections d'ici : {', '.join(sorted(secs))})")
+    return vus, morts, ambigus
+
+
 #: Une ligne qui nomme PLUSIEURS composants COMPARE, elle n'affirme pas une valeur unique.
 #:
 #: 🔴 IL FAUT COMPTER DES COMPOSANTS, PAS DES MOTIFS -- premiere version faite et corrigee le
@@ -599,6 +655,16 @@ def main() -> int:
         print(f"  🔴 numeros en double : {dups} — un renvoi « §24-N » y devient ambigu")
     else:
         print(f"  🟢 {len(nums)} entrees, {len(set(nums))} numeros distincts, aucun doublon")
+
+    print("\n=== I. UN RENVOI `§N` INTERNE POINTE-T-IL SUR LE SUJET QU'IL ANNONCE ? ===")
+    print("  ⚠️ L'outil NE JUGE PAS le sujet. Passe --detail pour voir le TITRE de chaque cible")
+    print("     et relire toi-meme les rapprochements -- c'est ainsi qu'on attrape un renvoi")
+    print("     qui existe mais parle d'autre chose, ce qu'aucun controle ne sait faire.")
+    vus, morts, ambigus = _sweep_renvois(fichiers, detail="--detail" in sys.argv)
+    n_pb += morts
+    etat = "🔴" if morts else ("🟠" if ambigus else "🟢")
+    print(f"  {etat} {vus} renvoi(s) interne(s) · {morts} vers une section INEXISTANTE · "
+          f"{ambigus} ambigu(s) (a nommer)")
 
     ok, det = _controle_negatif()
     print("\n=== H. CONTROLE NEGATIF -- l'outil sait-il seulement DETECTER ? ===")

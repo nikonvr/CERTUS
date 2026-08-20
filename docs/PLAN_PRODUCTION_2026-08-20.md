@@ -1102,3 +1102,91 @@ qu'on espère.**
   cascade de parents hérités. **Non mesuré.**
 - **Si les 1116 rejets sont marginaux ou totaux.** C'est l'objet de l'étape 1.
 - **Rien sur un autre composant.** Tout ci-dessus est `r75x2` à 2 nm, `deep`.
+
+---
+
+## 16. 🔵 PISTE OUVERTE LE 2026-08-21 — la porte de plantage juge au DOUBLE du bruit réel
+
+**Trouvée en lisant l'ordre des deux portes d'ELITE, pendant que la cellule 1 tournait. Non
+mesurée. Elle ne doit pas être écrite comme un acquis.**
+
+### 16.1 Ce que le code fait, et il est cité
+
+```
+certus_strat_robustness.py:2130   crash_rate_max = 0.0   # worst non-terminating deposition
+                                                         # rate ACROSS NOISE LEVELS
+                        :2546   crash_rate_max = max(crash_rate_max, n_crash_run / num_runs)
+                        :2693   if _crash_gate_rejects(crash_count_max, num_runs,
+                                                       crash_rate_max, params):
+                                    final_score = float("inf")
+```
+
+Et `robustness_noise_factors` vaut **`[0.5, 1.0, 2.0]`** dans le JSON de `r75x2`.
+
+> **La tolérance de 5 % de 👤 — « si 95 % des dépôts fonctionnent, c'est gagné » — est donc
+> appliquée au pire de trois niveaux, dont un à DEUX FOIS le bruit de lecture mesuré.**
+
+⚠️ `CLAUDE.md` §21 dit bien que `RESULT` agrège les trois niveaux, et c'est assumé **pour le
+score**. Rien nulle part ne dit que la **porte de plantage** doive faire de même. Le 1× est le
+bruit **mesuré** de la machine (§18-2 : ±0,05 point, `A = 5e-4`) ; le 0,5× et le 2× sont des
+multiplicateurs de robustesse, pas des machines.
+
+### 16.2 🔑 Ce que cela change à la lecture du diagnostic du §13
+
+L'ordre des deux portes d'ELITE (`certus_strat_consensus.py`) est :
+
+```
+1. full_nominal = _extract_rmse_p95_for_noise(full_res, nominal_noise_level)   <- 1x SEUL
+   si non fini OU >= target_threshold           ->  rej_full_rmse
+2. full_score = robustness_score                                               <- AGREGAT
+   si non fini                                  ->  rej_score_non_fini
+```
+
+Or `_extract_rmse_p95_for_noise` (`certus/utils/certus_strat_context.py:627`) lit **le niveau
+nominal seul**, et une déposition qui ne termine pas rend une RMSE énorme mais **finie**.
+
+🔑 **Donc une candidate qui plante AU NOMINAL est comptée dans `rej_full_rmse`, pas dans
+`rej_score_non_fini`.** Et les **1116 rejets de `score_non_fini`** sont des candidates qui :
+
+- ont une RMSE nominale **acceptable** — donc spectralement bonnes,
+- **et** terminent assez bien **au nominal** pour passer la première porte,
+- mais dont le taux de plantage **sur le pire des trois niveaux** dépasse 5 %.
+
+**Ce n'est pas « 84 % des candidates plantent ». C'est « 84 % des candidates sont bonnes au
+nominal et tombent sur l'agrégat ».** Le partage 84/16 du §13 reste juste comme comptage ; sa
+*lecture* était plus grossière que ce que le code fait.
+
+### 16.3 🔴 La grandeur qui trancherait n'existe nulle part
+
+Aucun artefact ne porte le taux de plantage **par niveau de bruit** : les stratégies consignent
+`crash_rate`, qui **est** le max. Vérifié le 2026-08-21 sur l'artefact de la graine 77 — les
+onze clés par stratégie sont `blocs, crash_rate, critical_layer, id, lambdas, margin_by_layer,
+n_blocs, origine, resolution_nm, resolution_noise_factor, score`.
+
+**On ne peut donc pas savoir, sur aucun run existant, si une stratégie rejetée était sous 5 %
+au bruit réel.** C'est le motif habituel : la grandeur est calculée, puis réduite par un `max`,
+et la réduction est irréversible.
+
+### 16.4 🔵 L'instrument à poser, et l'expérience qu'il permet
+
+**L'instrument** : faire remonter `crash_rates_by_noise` dans le résultat, à côté de
+`crash_rate`. La boucle des lignes 2546-2550 le calcule déjà par niveau ; il suffit de ne pas
+jeter le détail. Journalisation et champ d'artefact — **aucun chemin de calcul ne change**.
+
+**L'expérience, une fois l'instrument posé** : compter, parmi les candidates ELITE rejetées à
+la graine 42, celles dont le taux **à 1×** est sous 5 % alors que le max ne l'est pas. Si elles
+existent en nombre, alors la production rejette des stratégies **fabricables sur la machine
+réelle** au motif qu'elles ne survivent pas à un bruit doublé.
+
+🔒 **Et ce serait une décision de 👤, pas une correction de routine.** Juger au pire de trois
+niveaux est peut-être exactement ce qu'il veut — une marge de sécurité assumée. Ce qui n'est pas
+défendable, c'est que **personne ne sache** que la tolérance s'applique là, et que rien ne
+permette de le mesurer.
+
+🔴 **Ce qui la réfuterait** : aucune candidate rejetée n'a un taux à 1× sous 5 %. Le régime de
+bruit ne serait alors pas en cause, et il faudrait revenir à la portée de la recherche.
+
+⚠️ **Pourquoi ce n'est pas dans le batch de la nuit du 21** : la cellule 1 est la porte C1, et
+elle tournait déjà quand cette piste est apparue. Modifier le code à ce moment aurait fait
+tourner les cellules 2 à 4 sur un code que le contrôle C1 ne couvre pas — la contrainte C3, et
+exactement le défaut que `CHANTIER_RATE.md` §19 décrit. **Première action après le batch.**

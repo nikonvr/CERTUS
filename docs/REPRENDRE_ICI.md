@@ -1,4 +1,4 @@
-# 🔴 REPRENDRE ICI — état gelé le 2026-08-20 à 18:05
+# 🔴 REPRENDRE ICI — état gelé le 2026-08-21 à 00:15
 
 > Ce fichier dit **où on s'est arrêté** et **la commande exacte pour repartir**. Il est le
 > premier à lire, avant `CLAUDE.md`.
@@ -8,163 +8,185 @@
 ## 0. ⚡ LA SITUATION EN CINQ LIGNES
 
 👤 veut que **le code de production, à `robustness_seed = 42` définitivement**, trouve sur
-`r75x2` à **2 nm** une stratégie au niveau de **SEEL 0,57** — le niveau que la graine 77
+`r75x2` à **2 nm** une stratégie au niveau de **SEEL 0,5692** — le niveau que la graine 77
 atteint. Aujourd'hui la graine 42 y rend **0 déposable sur 1617**, toutes à 100 % de plantage.
 
-📌 Le plan complet est [`PLAN_PRODUCTION_2026-08-20.md`](PLAN_PRODUCTION_2026-08-20.md).
-Le chantier Rate est [`CHANTIER_RATE.md`](CHANTIER_RATE.md).
+🔴 **UN BATCH TOURNE EN CE MOMENT.** Lancé le 2026-08-20 à **23:58**, pour **9,5 h**, donc
+**fin vers 09:30**. Ne lance rien d'autre : une mesure, une machine. Voir §1.
+
+📌 Le plan est [`PLAN_PRODUCTION_2026-08-20.md`](PLAN_PRODUCTION_2026-08-20.md), dont le **§15**
+est la synthèse la plus récente. Le chantier Rate est [`CHANTIER_RATE.md`](CHANTIER_RATE.md).
 
 ---
 
-## 1. 🔴 LA PREMIÈRE CHOSE À FAIRE — réparer `probe_renoter.py`
-
-**La panne est localisée, la veille de l'arrêt, et elle n'est PAS réparée.**
-
-```
-full_dynamics_grid : dict, 0 λ  ->  GRILLE VIDE
-```
-
-`scripts/probe_renoter.py` capture le contexte de pré-calcul **au premier appel** de
-`run_final_simulation_block` — celui du criblage — où `full_dynamics_grid` **n'est pas encore
-rempli**. La simulation de croissance n'a donc aucune donnée, et **toute stratégie injectée
-plante à 100 %**, quels que soient la graine, la résolution ou le corridor.
-
-**Signature de la panne** : des résultats **identiques au millième** entre trois configurations
-qui n'ont rien à voir. C'est ce qui a mis la puce à l'oreille.
-
-**Pistes de réparation, non testées :**
-
-| | |
-|---|---|
-| capturer à un appel **plus tardif** | le dernier, ou le premier où `full_dynamics_grid` est non vide |
-| abandonner la capture | **recommandé** — voir §3 |
-
-🔒 **Contrôle obligatoire avant de croire une seule sortie de cet outil** : re-noter les plans
-de la graine 77 **à la graine 77 elle-même**. Attendu ~1 % de plantage. Tant qu'il rend 100 %,
-l'outil ne mesure rien.
+## 1. 🔴 LA PREMIÈRE CHOSE À FAIRE — lire le rapport du batch
 
 ```bat
-C:\envs\certus\Scripts\python.exe -u scripts\probe_renoter.py r75x2 ^
-    reports\plans\plans_s077_vers_s042.json 77 fast ^
-    monochromator_resolution_nm=2.0 robustness_num_runs=300
+dir reports\BATCH_seed42_*.md
 ```
+
+Le rapport est **réécrit après chaque cellule**, donc lisible même si la nuit a été coupée.
+Il porte lui-même sa lecture : la porte C1, la décision prise, un tableau par cellule, et ce
+qui a été **sauté** avec son motif.
+
+### La porte C1 — à vérifier AVANT de lire un seul chiffre
+
+La cellule 1 tourne aux **réglages d'origine** et doit rendre **exactement** :
+
+```
+1617 strategies · 0 deposable · crash_min 100,00 % · ELITE 0 strategie
+```
+
+L'instrument `[ELITE-WL]` (commit `5105fc8`) est de la journalisation pure. 🔴 **Tout écart
+signifie qu'il a fui dans le calcul, et toute la nuit est à jeter avant d'être lue.** Le batch
+s'arrête de lui-même dans ce cas et l'écrit en tête du rapport.
+
+### Les quatre cellules, et pourquoi celles-là
+
+| cellule | ce qu'elle change | pourquoi elle est **honnête** |
+|---|---|---|
+| `base` | rien — la référence | c'est la porte C1 |
+| `cgc95` | `crash_gate_confidence=0.95` | la porte compare une **borne de confiance** au lieu d'un taux estimé. La tolérance de 5 % de 👤 **ne bouge pas** : c'est l'estimateur qui était faux |
+| `nogain` | `elite_stop_on_no_gain=false` | à 0 retenue, le round 1 coupait **tout** : les rounds 2 et 3 de `deep` ne tournaient jamais |
+| `reach` | `elite_wl_neighbor_span=2` + `elite_max_candidates=240` | λ ± 2 nm au lieu de ± 1, plafond de 120 → 240. ⚠️ **deux réglages à la fois**, attribution impossible entre eux — assumé, ils forment une seule idée |
+
+🔒 **Aucune ne relâche la physique.** C'est ce qui rend leurs résultats **déjà jugés au
+nominal**, donc directement exploitables.
+
+### 🔒 L'ARBITRAGE PRIS EN AUTONOMIE, ET C'EN EST UN
+
+👤 proposait de **relâcher bruit et dérive** pour laisser passer plus de candidates dans ELITE.
+**C'est la bonne cible** — les 84 %. **Cette cellule n'a PAS tourné, délibérément :**
+
+> Relâcher change **le monde** où vivent les candidates. Tout ce qu'on y trouve doit donc être
+> **re-jugé au nominal**. Or le juge au nominal, `probe_renoter.py`, est en panne et sa cause
+> **n'est pas localisée** (§3). Un résultat de cette forme aurait été inexploitable au matin.
+
+**C'est la première chose à rouvrir avec 👤**, et elle demande d'abord un juge au nominal.
 
 ---
 
-## 2. 🔴 CE QUI A ÉTÉ RETIRÉ — ne pas le recycler
+## 2. 📏 CE QUI EST ÉTABLI — et tout est sur `r75x2` à 2 nm, `deep`
 
-Tout ce qui vient de `probe_renoter.py` **est faux** :
+```
+graine 42 : 1617 strategies,   0 deposable,  toutes a 100,00 %
+graine 77 : 2231 strategies, 547 deposables, meilleure SEEL 0,5692, crash 1,33 %
+```
+
+**1. 🔑 Hors ELITE, il n'y a rien — aux DEUX graines.** 0 déposable sur 1488 (graine 77) et
+0 sur 1617 (graine 42), crash médiane 100 % des deux côtés. Toute la fabricabilité de ce
+composant passe par l'étage ELITE, et il n'existe **aucune** voie de contournement dans les
+générateurs existants.
+
+**2. 🔑 Les 84 % de rejets d'ELITE SONT la porte de plantage.** Chaînage établi :
+
+```
+_crash_gate_rejects (robustness.py:2693)  ->  final_score = float("inf")
+                                          ->  robustness_score = inf
+ELITE : not np.isfinite(full_score) (consensus.py:792)  ->  rej_score_non_fini
+```
+
+Sur 1327 candidates évaluées en entier : **1116 (84 %) meurent de la porte de plantage**,
+**211 (16 %) du seuil de RMSE**. Donc `crash_gate_confidence` est le traitement **direct** de la
+cause, et `elite_min_improvement` — écrêté par `max(0.0, …)`, il ne peut que **durcir** — ne
+touche que les 211.
+
+**3. ✅ L'export des 12 plans de la graine 77 est EXACT.** 12/12 appariés à la référence par
+signature de blocs `(start, end, wavelength)`, un candidat unique chacun. Et les 547 déposables
+sont **toutes `origine = ELITE`**, toutes `resolution_nm = 2.0` : aucune variante Rate, aucune
+variante de fente.
+
+**4. 🔴 La falaise à 685 nm existe et n'est PAS la cause.** 544 des 547 déposables surveillent
+la couche 35 à 685 nm, et la graine 42 ne propose **jamais** cette λ, à aucune couche — elle
+campe à 686 nm avec 1156 stratégies. **Mais ventilé par générateur** : 685 nm hors ELITE = 711
+stratégies, **toutes à 100 %** ; 686 nm dans ELITE = 3 stratégies, **déposables à 100 %**. La λ
+n'est ni suffisante ni nécessaire. C'est un **effet de sélection** — ELITE raffine autour de ses
+parents, il s'est empilé là où ça marchait.
+
+> 🔴 **« Forcer 685 nm » ne marcherait pas. Ne paye pas cette piste.**
+
+---
+
+## 3. 🔴 CE QUI EST RETIRÉ — ne pas le recycler
 
 | affirmation | statut |
 |---|---|
+| « la panne de `probe_renoter` est localisée : `full_dynamics_grid` est vide » | 🔴 **FAUX.** La grandeur n'est déréférencée qu'à **un seul endroit** du dépôt — `robustness.py:2513`, dans un bloc de **journalisation** gardé par `theory_dyn >= 0.0` — et la **Phase B de production tourne toujours avec elle vide** : `minimized_context` (`certus_strat_workers_pipeline.py:146`) ne porte pas la clé. Le contexte que la sonde capture **est** celui de la production |
+| « le plantage est une propriété de la stratégie » (8/8 à 100 %) | 🔴 non informatif — vient de l'outil en panne. Le §14 du plan est passé en **talon** |
 | « les 12 stratégies de la graine 77 plantent à la graine 42 » | 🔴 artefact |
 | « le corridor d'indice n'est pas en cause » | 🔴 artefact |
-| « le plantage est une propriété de la stratégie » (8/8 à 100 %) | 🔴 non informatif |
-| « c'est / ce n'est pas un problème de recherche » | 🔴 **indécidé** |
+| « `elite_min_improvement` est l'action la plus rentable du plan » | 🔴 corrigé — il vise 16 % des rejets, pas 84 % |
 
-⚠️ **Le contrôle du 35c, lui, réussissait** (`0 % → 0 %`, `2 % → 2 %`) — mais **sans surcharge
-et sur un composant où le contexte se trouvait rempli**. Un contrôle qui ne couvre pas le régime
-d'emploi ne protège pas de son régime d'emploi.
+### 🔴 La cause de la panne de `probe_renoter.py` reste NON LOCALISÉE
 
----
+**Six candidates éliminées** le 2026-08-20 au soir, sans une seconde de machine :
 
-## 3. 🔵 CE QUE JE RECOMMANDE DE FAIRE PLUTÔT
-
-**Abandonner la capture de contexte, et injecter par le CODE DE PRODUCTION.**
-
-Le pipeline sait déjà injecter : `certus_strat_workers.py` gère des `inherited_strategies`, et
-`_optical_prefix_variants` (`certus_strat_robustness.py:786`) montre le motif exact d'une clé de
-paramètres qui injecte des variantes, **hoistée au-dessus du garde `allow_rate`**.
-
-**Ajouter une clé `injected_strategies`** — inerte par défaut, routée depuis le JSON comme les
-treize autres (§5) — qui verse une liste de plans dans la population. Les plans sont alors
-évalués **par le chemin de production complet**, sans contexte reconstruit.
-
-| | |
+| candidate | pourquoi elle tombe |
 |---|---|
-| le test devient fiable | même chemin que tout le reste |
-| c'est le mécanisme dont on aura besoin de toute façon | injecter de bons plans comme parents d'ELITE est ce qu'il faudra pour que la production les redécouvre |
+| `full_dynamics_grid` vide | inerte, voir ci-dessus |
+| unité de `crash_rate` | le noyau la formate en `:.1%`, c'est une fraction ; le `100 ×` de la sonde est correct |
+| plans malformés | les 9 à 11 blocs pavent `[0,75)` exactement, 0 trou, 0 chevauchement, `end` exclusif comme le noyau le lit |
+| chemin de **surcharge** de résolution | `config_r75x2_natif_2nm.json` écrit 2 nm **dans la configuration** : marge **bit-identique** aux runs surchargés |
+| `expand_variants=False` | le garde ne couvre que la **génération** de variantes ; la base reste « bit-identical to a no-search run » |
+| une clé perdue sur `strategy` | le noyau n'y lit que `blocks`, `strategy_id`, `monochromator_resolution_nm`, `rate_layers`, `slit_profile`, `witness_reset_layers`, `l0` ; les deux dernières manquent et se replient sans effet |
 
-🔒 Règle d'or : inactif par défaut, chemin d'avant au bit, et **un test qui ÉCHOUE sur le code
-d'avant**.
+🔑 **La grandeur qui trancherait n'existe nulle part** : le `params` effectif **complet** des
+deux chemins. La référence consigne 11 clés de `config`, les re-notations 11 clés de
+`parametres_de_notation`. **Poser cet instrument est la seule action légitime** — c'est la règle
+du projet, et elle s'applique littéralement ici.
 
----
-
-## 4. 📏 LES FAITS ÉTABLIS — tous issus de runs de production complets
-
-```
-r75x2 @ 2 nm, deep
-  graine 42 : 1617 strategies,   0 deposable,  toutes a 100,00 %
-  graine 77 : 2231 strategies, 547 deposables, meilleure SEEL 0,5692, crash 1,33 %, 9 blocs
-
-  plans deposables de la graine 77 presents dans la population de la graine 42 : 0
-  -> les deux recherches explorent des regions ENTIEREMENT DISJOINTES
-```
-
-**Diagnostic ELITE** (`journal_1_diagnostic_s042_20260820_120135.log`, 46 rounds) :
-
-```
-4226 candidates ENGENDREES (plafond de 120 atteint dans 30 rounds sur 46)
-1327 evaluees en entier · 0 RETENUES
-rejets : halving 1368 · RMSE 211 (16 %) · PLANTAGE 1116 (84 %)
-```
-
-🔑 **Le générateur n'est pas à sec. 84 % des candidates meurent de la porte de plantage.** ELITE
-est une recherche **locale** (λ ± 1 nm autour des parents) qui rejette tout ce qui plante : elle
-ne peut donc jamais **traverser** une vallée qui plante. Et `elite_stop_on_no_gain = True` coupe
-après le premier round stérile — les rounds 2 et 3 de `deep` ne tournent **jamais**.
-
-🔑 **ELITE est le SEUL générateur produisant des déposables sur ce composant** : hors ELITE,
-1617 et 1488 stratégies aux deux graines, **zéro déposable**.
+⚠️ **Deux lectures à ne pas refaire** : la marge identique au seizième chiffre entre les 12 plans
+n'a rien d'impossible — comportement **documenté** à `robustness.py:2805`, les 12 partageant leur
+préfixe donc la physique de la couche 35. Et `n_layers_below_2A = 153` somme sur **trois causes**,
+ce n'est pas un index de couche.
 
 ---
 
-## 5. ✅ CE QUI A ÉTÉ PORTÉ DANS LE CODE DE PRODUCTION
+## 4. ✅ CE QUI A ÉTÉ PORTÉ DANS LE CODE
 
 | | commit |
 |---|---|
-| **13 clés** ne franchissaient pas le JSON, dont `robustness_seed` **câblée à 42** | `aad370a` |
+| **13 clés** ne franchissaient pas le JSON, dont `robustness_seed` câblée à 42 | `aad370a` |
 | les **4 leviers ELITE** (`span`, `max_candidates`, `stop_on_no_gain`, `max_full_evals`) | `f9b71ba` |
 | ELITE **compte ses rejets**, 3 sorties nommées | `3151f3a`, `9e23567` |
-| la docstring du mode `extreme` disait le **contraire** de la mesure | `6ca495d` |
+| 🟢 **l'instrument `[ELITE-WL]`** — la **λ** et le **taux** des candidates rejetées. 34 tests, qui échouent sur le code d'avant | `5105fc8` |
+| le plan corrigé : §14 retiré, la panne mal localisée, §15 neuve | `214959e` |
+| surcharges génériques de la sonde (**étiquette obligatoire**) + le pilote de nuit | `1f39cdd` |
+| `coherence_md.py` ne plante plus en console cp1252 | (ce commit) |
 
-⚠️ `elite_num_runs` est **délibérément non routé** : son défaut noyau vaut `min(num_runs, 80)`,
-donc le router avec un défaut de 0 donnerait `max(10, 0) = 10` — un huitième de la profondeur.
-Il faudrait une sentinelle côté noyau.
+⚠️ `elite_num_runs` reste **délibérément non routé** : son défaut noyau vaut
+`min(num_runs, 80)`, donc le router avec un défaut de 0 donnerait `max(10, 0) = 10` — un
+huitième de la profondeur. Il faudrait une sentinelle côté noyau.
 
----
+### Comment essayer un levier sans écrire de fichier de configuration
 
-## 6. 🔒 LES SEPT DÉFAUTS D'INSTRUMENT CORRIGÉS LE 2026-08-20
+```bat
+set CERTUS_PROBE_OVERRIDES=crash_gate_confidence=0.95
+set CERTUS_PROBE_TAG=cgc95
+C:\envs\certus\Scripts\python.exe scripts\probe_blocs_vs_plantage.py r75x2 deep 0 0 2.0 0 42 0
+```
 
-Tous de la même famille : **le calcul se fait, le résultat n'arrive pas — ou n'est pas celui
-qu'on croit.**
-
-1. les compteurs ELITE placés **après** la sortie du round → muets dans le cas attendu
-2. les pilotes de batch jetaient **99 %** du journal (30 lignes sur 15 887)
-3. la sonde écrasait l'artefact précédent **sans message** → `scripts/_artefact.py`, 7 tests
-4. le résultat perdu au **démontage de Qt** → écrire avant d'afficher, `os._exit`
-5. les plans éliminés par la porte de plantage **disparaissaient** de la sortie
-6. la clé `wl` au lieu de `wavelength` → λ à `None` **de la bonne longueur**, donc invisible
-7. six workflows **zombies** en parallèle → l'outil s'arrête dès son artefact écrit
-
-🔒 **La règle que cette journée impose** : *un outil de comparaison se contrôle sur son POINT
-FIXE, et dans son RÉGIME D'EMPLOI, avant de servir. Comparer A à B sans vérifier que B redonne
-B, c'est mesurer l'outil.*
+🔴 **L'étiquette est obligatoire et la sonde refuse de tourner sans elle** : deux runs qui ne
+diffèrent que par une surcharge rendraient sinon deux artefacts indiscernables sur le fond. La
+surcharge **et** l'étiquette entrent dans le bloc `config` de l'artefact et dans le nom du
+fichier.
 
 ---
 
-## 7. Les fichiers à connaître
+## 5. Les fichiers à connaître
 
 | | |
 |---|---|
-| `reports/plans/plans_s077_vers_s042.json` | **les 12 meilleures stratégies de la graine 77**, avec leurs λ. Coût de production : 155 min |
-| `reports/blocs_vs_plantage_r75x2_deep_s077_20260820_160340.json` | les 547 déposables, **avec λ** (les artefacts antérieurs ont des `None`) |
-| `reports/blocs_vs_plantage_r75x2_deep_s042_20260820_120112.json` | le diagnostic, 1617 stratégies, contrôle C1 exact |
-| `reports/journal_1_diagnostic_s042_*.log` | 15 887 lignes, les compteurs ELITE |
+| `reports/BATCH_seed42_*.md` | 🔴 **le rapport de la nuit** — à lire en premier |
+| `reports/batch_seed42_*/journal_*.log` | les journaux **complets** de chaque cellule, non tronqués |
+| `reports/blocs_vs_plantage_r75x2_deep_s042_20260820_120112.json` | la **référence** graine 42, 1617 stratégies — sert au contrôle C1 |
+| `reports/blocs_vs_plantage_r75x2_deep_s077_20260820_160340.json` | les 547 déposables de la graine 77, **avec λ** |
+| `reports/plans/plans_s077_vers_s042.json` | les 12 meilleures de la graine 77, avec leurs λ |
+| `reports/plans/config_r75x2_natif_2nm.json` | 2 nm **écrit** dans la config, sans surcharge |
 
 ---
 
-## 8. ⚡ Repartir
+## 6. ⚡ Repartir
 
 ```bat
 C:\envs\certus\Scripts\python.exe scripts\preflight.py
@@ -172,6 +194,15 @@ C:\envs\certus\Scripts\python.exe scripts\coherence_md.py
 C:\envs\certus\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
 ```
 
-⚠️ **L'interpréteur est `C:\envs\certus\Scripts\python.exe`.** Les vieux documents qui citent
-un interpréteur local au dépôt sont faux — il n'y en a pas. `scripts/coherence_md.py` (contrôle E)
-vérifie mécaniquement que tout interpréteur cité existe.
+Attendu : `PREFLIGHT=GO` · `0 point(s) a instruire` · **`2520 passed, 5 skipped`**.
+
+⚠️ **L'interpréteur est `C:\envs\certus\Scripts\python.exe`.** Il n'y a **pas** de `.venv` dans
+le dépôt ; tout document qui en cite un est faux. `scripts/coherence_md.py` (contrôle E) vérifie
+mécaniquement que tout interpréteur cité existe.
+
+⚠️ **Le compte de tests se périme dès qu'on ajoute un test.** Il valait 2450 le 17/08, 2486 le
+20/08, **2520** depuis l'instrument. Ne t'arrête pas sur l'écart : vérifie qu'il n'y a **aucun
+échec**.
+
+🔴 **Et si le batch tourne encore, ne lance pas la suite de tests** — elle sature les cœurs et
+la règle du projet est *une mesure, une machine*.

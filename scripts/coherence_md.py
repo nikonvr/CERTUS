@@ -39,6 +39,23 @@ import re
 import sys
 from pathlib import Path
 
+# 🔴 LA CONSOLE WINDOWS EST EN cp1252, ET CE SCRIPT ECRIT DES EMOJI.
+#
+# 📏 Mesure du 2026-08-20 : lance tel que `REPRENDRE_ICI.md` §8 le prescrit, ce controle
+# s'arretait sur `UnicodeEncodeError: 'charmap' codec can't encode character '🟢'`
+# des la section A -- donc l'un des deux outils de demarrage du projet etait inutilisable au
+# premier essai, et il fallait deviner `PYTHONIOENCODING=utf-8` pour le voir tourner.
+#
+# 🔑 Un outil de controle qui plante sur son propre affichage ne protege de rien : il apprend
+# a l'ignorer. On reconfigure donc la sortie, plutot que de demander a l'appelant de le faire.
+# `errors="replace"` garantit qu'aucun caractere ne pourra plus interrompre un controle : au
+# pire un glyphe s'affiche mal, ce qui est sans consequence sur le verdict.
+for _flux in (sys.stdout, sys.stderr):
+    try:
+        _flux.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, OSError, ValueError):
+        pass
+
 ROOT = Path(__file__).resolve().parents[1]
 
 #: Une ligne portant l'un de ces marqueurs RACONTE une correction : le chiffre qu'elle cite est

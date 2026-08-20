@@ -744,3 +744,81 @@ un générateur à sec. Elle le sera par le diagnostic lui-même.
 Le récit A et le récit B restent **tous deux vivants**. Le comptage par famille montre qu'ELITE
 est le bon endroit où regarder ; il ne dit pas s'il échoue faute d'engendrer ou faute d'accepter.
 **Aucune des deux réparations ne doit être écrite comme probable avant les compteurs.**
+
+---
+
+## 13. 🟢🟢 LE DIAGNOSTIC A TRANCHÉ — 84 % des candidates meurent du PLANTAGE
+
+`reports/journal_1_diagnostic_s042_20260820_120135.log`, **107,4 min**, 15 887 lignes.
+`r75x2 @ 2 nm`, `deep`, graine 42, **réglages d'origine**.
+
+### ✅ Le contrôle C1 passe exactement
+
+```
+REFERENCE 19/08     1617 strategies · 0 deposable · crash_min 100,00 % · ELITE 0
+DIAGNOSTIC 20/08    1617 strategies · 0 deposable · crash_min 100,00 % · ELITE 0
+```
+
+Les **treize clés routées**, les compteurs et le correctif `wavelength` sont donc **inertes**,
+comme la règle d'or l'exige. Et la garde anti-écrasement a fonctionné : le nouvel artefact a
+pris un suffixe horodaté, **la référence de 8,26 Mo est intacte**.
+
+### 📏 Les compteurs
+
+```
+46 rounds ELITE, tous `sortie=COMPLETE`
+  4226 candidates ENGENDREES (92 par round ; plafond de 120 atteint dans 30 rounds sur 46)
+  1327 evaluees en entier
+     0 RETENUES
+
+  rejets au halving        1368
+  rejets sur le RMSE        211   (16 % des evaluees)
+  rejets sur le PLANTAGE   1116   (84 % des evaluees)
+```
+
+### 🔴 LE RÉCIT A EST RÉFUTÉ
+
+> *« ELITE est trop timide : `span = 1`, et un round stérile arrête tout. »*
+
+**Le générateur n'est pas à sec.** Il atteint son plafond de 120 dans **30 rounds sur 46**, et
+la sortie `HALVING` — qui signalerait un générateur vide — **n'a jamais été empruntée**.
+Élargir `elite_wl_neighbor_span` ou `elite_max_candidates` ne servirait à rien.
+
+⚠️ **Le `generated=9` qui fondait ce récit était un artefact du journal tronqué** : c'était la
+dernière ronde du dernier compteur de blocs, lue dans une queue de 30 lignes. C'est la
+cinquième fois de la journée qu'une conclusion vient d'une grandeur mal lue, et la deuxième
+fois que la troncature du journal en est la cause.
+
+### 🟢 LE RÉCIT B EST CONFIRMÉ — et c'est l'hypothèse de 👤
+
+> 👤 : *« il faut peut-être relâcher des paramètres de contrôle optique (bruit, variation
+> d'indice) pour récupérer les strats de seed 77 »*
+
+📏 **84 % des candidates évaluées en entier sont tuées par le PLANTAGE**, contre 16 % par le
+RMSE. Elles sont **trouvées**, elles sont **spectralement bonnes**, et la porte de plantage les
+élimine.
+
+### 🔑 LE MÉCANISME, ET IL EXPLIQUE POURQUOI RELÂCHER PEUT MARCHER
+
+ELITE est une recherche **locale** : λ ± 1 nm autour de ses parents. Toute candidate qui plante
+est rejetée (`if not np.isfinite(full_score): continue`), donc **la recherche ne peut jamais
+TRAVERSER une vallée qui plante pour atteindre une région saine au-delà**. À la graine 42 elle
+est enfermée dans une région où tout plante.
+
+📌 Détail confirmant : les 46 lignes disent toutes `Round 1`. Avec zéro retenue,
+`elite_stop_on_no_gain` coupe après le premier round **à chaque fois** — les rounds 2 et 3 de
+`deep` ne tournent jamais. Ce n'est pas la cause, mais cela **aggrave** l'enfermement.
+
+> **La porte de plantage n'est pas seulement un filtre de sortie : à l'intérieur d'ELITE, elle
+> est un MUR qui empêche la recherche de se déplacer.**
+
+### 🔵 CE QUI SUIT, ET LA GARDE QUI LE REND HONNÊTE
+
+Relâcher `index_corridor` et `poem_anchor_noise` **pendant la recherche** doit permettre à ELITE
+d'accepter des candidates intermédiaires et de se déplacer. 🔒 **Puis on juge au NOMINAL** —
+avec `probe_renoter.py`, écrit pour cela.
+
+🔴 **Et il faut dire d'avance ce qui ferait échouer cette voie** : si les stratégies trouvées
+sous relâchement plantent **toutes** une fois rejugées au nominal, alors la région saine
+n'existe pas à cette graine, et le relâchement n'aura fait que déplacer le mur. **Ce n'est pas
+un détail de protocole : c'est le résultat possible le plus probable après celui qu'on espère.**

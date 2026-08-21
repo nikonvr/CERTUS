@@ -90,24 +90,35 @@ def main() -> int:
 
     print(f"{'SIMULATION -- rien ne sera ecrit' if not ecrire else 'ECRITURE'}\n")
 
+    # 🔴 LA CORRECTION EST APPLIQUEE A TOUS LES DOCUMENTS, PAS AU SEUL QUE LE CONTROLE NOMME.
+    #
+    # 📏 Mesure du 2026-08-21 : le controle F ne signale qu'UNE occurrence par renvoi perime.
+    # Deux vagues de suite, `certus_strat_ranking.py:410` et `:589` etaient cites dans DEUX
+    # documents chacun, et l'outil n'en corrigeait qu'un -- laissant l'autre a la main, deux
+    # fois. Or la correction `X:vieux -> X:neuf` est vraie PARTOUT ou `X:vieux` apparait :
+    # c'est un fait sur le fichier cible, pas sur le document qui le cite.
     faits = 0
     for m in resolus:
-        doc = ROOT / m.group("doc") if (ROOT / m.group("doc")).is_file() else ROOT / "docs" / m.group("doc")
         vieux = f"{m.group('cible')}:{m.group('vieille')}"
         neuf = f"{m.group('cible')}:{m.group('neuve')}"
-        if not doc.is_file():
-            print(f"  🔴 {m.group('doc')} introuvable sur le disque -- ignore")
+        touches = []
+        for doc in sorted(ROOT.rglob("*.md")):
+            if ".git" in doc.parts:
+                continue
+            txt = doc.read_text(encoding="utf-8")
+            n = txt.count(vieux)
+            if not n:
+                continue
+            touches.append((doc, n))
+            if ecrire:
+                doc.write_text(txt.replace(vieux, neuf), encoding="utf-8")
+            faits += n
+        if not touches:
+            print(f"  🟠 {vieux} deja absent partout -- ignore")
             continue
-        s = doc.read_text(encoding="utf-8")
-        n = s.count(vieux)
-        if n == 0:
-            print(f"  🟠 {doc.name} : {vieux} deja absent -- ignore")
-            continue
-        print(f"  {'✅' if ecrire else '→ '} {doc.name} : {vieux} -> {neuf}"
-              f"   ({n} occurrence(s), symbole {m.group('sym')})")
-        if ecrire:
-            doc.write_text(s.replace(vieux, neuf), encoding="utf-8")
-        faits += n
+        ou = ", ".join(f"{d.name}×{n}" if n > 1 else d.name for d, n in touches)
+        print(f"  {'✅' if ecrire else '→ '} {vieux} -> {neuf}"
+              f"   (symbole {m.group('sym')}) dans {ou}")
 
     if perdus:
         print(f"\n🔴 {len(perdus)} renvoi(s) que le controle n'a PAS su resoudre — "

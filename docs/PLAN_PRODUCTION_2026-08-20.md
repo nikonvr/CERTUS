@@ -1823,3 +1823,97 @@ porte à confiance et la queue Rate, aucun levier de RECHERCHE n'a rendu `r75x2 
 à la graine 42.** Quatre leviers, quatre zéros. Ce n'est pas une preuve que la région saine
 n'existe pas — mais c'est le faisceau le plus lourd en ce sens, et la mesure qui trancherait est
 toujours la même : **injecter les 12 plans de la graine 77 et les juger au nominal.**
+
+---
+
+## 23. 🟢🟢 LA CIBLE EST ATTEINTE À LA GRAINE 42 — et l'attribution est propre
+
+`reports/blocs_vs_plantage_r75x2_deep_s042_inject12s077.json`, terminé à 07:35, **26 min**.
+`r75x2 @ 2 nm deep`, graine **42**, plage 9-11 blocs, `injected_strategies` = les 12 plans de la
+graine 77.
+
+### 23.1 Le résultat, et le contrôle qui l'attribue
+
+```
+plage 9-11, SANS injection   ->   63 strategies ·  0 deposable · crash_min 100,00 %
+plage 9-11, AVEC injection   ->  295 strategies · 72 DEPOSABLES · crash_min   0,33 %
+                                  MEILLEUR SEEL 0,5697   (cible 0,5692, ecart +0,1 %)
+```
+
+🔒 **Une seule chose diffère entre les deux runs : l'injection.** Même graine, même mode, même
+fente, même plage, mêmes réglages. La restriction de plage n'explique **rien** — sans injection
+elle rend zéro. C'est l'attribution que l'erreur n° 3 du §5 réclame, et elle est faite.
+
+📏 Et le contrôle du §18.4 bascule dans le même mouvement : **685 nm passe de 6 à 1177 candidates
+engendrées** entre le contrôle et l'injection. ⚠️ Les deux comptes restent des **planchers**
+(7 et 15 histogrammes tronqués) — mais un facteur ~200 ne tient pas à ce détail.
+
+### 23.2 🔑 LES DEUX GAGNANTES DIFFÈRENT DE DEUX NANOMÈTRES
+
+```
+graine 77          450  610  616  685  647  700  511  688  704    SEEL 0,5692   crash 1,33 %
+graine 42, injectee 450  610  615  685  647  700  511  687  704    SEEL 0,5697   crash 1,00 %
+                             ^^^                      ^^^
+```
+
+**Deux λ d'écart, un nanomètre chacune.** Et la stratégie trouvée à la graine 42 est **meilleure
+au plantage** (1,00 % contre 1,33 %) pour un SEEL indiscernable — l'écart de +0,1 % est très en
+dessous du bruit de 2,59 % mesuré sur une différence de SEEL.
+
+📏 Les **72 déposables surveillent toutes la couche 35 à 685 nm**, et leur préfixe est
+quasi-figé : bloc 0 identique aux 72, bloc 1 en 2 variantes, bloc 2 en 6, bloc 3 en 3. ELITE a
+donc travaillé exactement là où le §18 le prédisait : **dans un voisinage de ±1 nm autour du
+plan de départ.**
+
+### 23.3 🔑 CE QUE ÇA ÉTABLIT, ET CE QUE ÇA N'ÉTABLIT PAS
+
+| | |
+|---|---|
+| 🟢 **la région saine EXISTE à la graine 42** | et elle y est **meilleure** qu'à la graine 77 sur le plantage. La question ouverte depuis deux jours est tranchée |
+| 🟢 **elle est atteignable par ELITE** | à ±1 nm, en déplaçant deux λ sur neuf |
+| 🔴 **les 12 plans injectés ne sont PAS déposables** | ils sont **absents de l'artefact**, donc éliminés. Ce ne sont pas eux qui réussissent, ce sont leurs **descendants** |
+| 🔴 **la recherche de la graine 42 n'y arrive pas seule** | quatre leviers, quatre zéros — dont l'union de cinq criblages |
+
+> **Les stratégies de la graine 77 ne sont pas des solutions transférables : ce sont des RAMPES
+> DE LANCEMENT. Elles plantent, et elles sont assez près d'une région saine pour qu'ELITE, en
+> partant d'elles, l'atteigne en deux nanomètres.**
+
+🔑 **Et c'est exactement le mécanisme que le §18 avait isolé** : la mutation d'ELITE est
+**déterministe, locale et non dirigée**. Tout dépend donc d'**où on la fait partir** — pas de sa
+portée, pas de son plafond, pas du nombre de graines.
+
+### 23.4 ⚠️ CE QUI RESTE OUVERT, ET C'EST LA VRAIE QUESTION DE PRODUCTION
+
+Le multiseed ne suffit pas à trouver la rampe : cinq réalisations explorent **cinq régions
+distinctes** (§22.2, aucune saturation), et **aucune des cinq n'est celle de 685 nm**. La
+diversité donne de la **variété**, pas de la **direction**.
+
+📏 Le fait qui borne tout : **685 nm est absente des 1617 stratégies de la graine 42**, à toutes
+les couches — alors qu'elle est présente dans **711 stratégies non-ELITE** de la graine 77. Or
+la Phase A est **identique** aux deux graines et la DP est **déterministe**. Donc c'est la
+cascade du criblage qui décide qu'on n'ira jamais voir 685 nm, et cinq graines n'ont pas suffi
+à y tomber.
+
+**Trois voies, et elles ne se valent pas :**
+
+| voie | ce qu'elle demande | ce qu'elle vaut |
+|---|---|---|
+| **A — bibliothèque de rampes** | verser des plans connus comme parents, ce que `injected_strategies` fait déjà | 🟢 **marche, mesuré**. Mais il faut d'où venir : ça ne s'auto-amorce pas |
+| **B — comprendre pourquoi 685 nm est inatteignable** | instrumenter le minage et la DP : à quel étage 685 nm cesse-t-elle d'être proposée ? | 🔑 la seule voie qui rende la production **autonome** |
+| **C — beaucoup plus de graines** | K ≫ 5, puisque l'union ne sature pas | 🟠 plausible mais non borné : rien ne dit que 685 nm soit à portée de tirage |
+
+🔵 **B est la prochaine action, et elle est bon marché** : la Phase A calcule un coût par
+(couche × λ) et il est **identique aux deux graines**. Donc 685 nm est **offerte** en Phase A et
+perdue plus loin. Il suffit de compter, par étage, combien de candidates portent 685 nm — minage,
+DP, criblage, héritage. Un compteur par étage, aucune physique touchée.
+
+### 23.5 🔒 Ce qu'il ne faut PAS conclure
+
+- **Pas « le problème est résolu ».** Ce qui est résolu est *« la cible existe et elle est
+  atteignable »*. La production, elle, ne sait toujours pas y aller **seule**.
+- **Pas « il suffit d'injecter ».** L'injection a besoin d'une source de bons plans, et cette
+  source est aujourd'hui... un run à une autre graine. C'est circulaire pour un produit.
+- **Rien hors `r75x2` à 2 nm en `deep`.** Une seule graine de départ, un seul composant.
+- ⚠️ **Et le +0,1 % d'écart au SEEL cible ne veut pas dire « aussi bien »** : il veut dire
+  **indiscernable**, ce qui est plus fort et plus honnête. Le bruit sur une différence de SEEL
+  vaut 2,59 % sur ce composant.

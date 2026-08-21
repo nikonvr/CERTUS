@@ -203,5 +203,5 @@
     "statistique, ce qui est justement le verdict : l'elargissement n'apporte rien de mesurable",
     "et coute plus cher. Ce fichier utilise donc `deep`, un mode standard."
   ],
-  "injected_strategies": "reports/plans/plans_s042_gagnantes_injectees.json"
+  "injected_strategies": "example/example_strat/rampes_r75x2-2nm.json"
 }

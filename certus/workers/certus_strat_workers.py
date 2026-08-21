@@ -844,6 +844,11 @@ def _parallel_block_worker(args) -> dict:
             min_wl_sep_nm=float(
                 params.get("dp_min_wl_separation_nm", DP_DEFAULT_MIN_WL_SEPARATION_NM)
             ),
+            # 🔑 La couverture en λ. Voir `_couverture_wl_groupings` : la Phase A admet une
+            # mediane de 86 λ par couche, la recherche en emploie 14 a 29, et la λ dont les
+            # 72 strategies deposables ont besoin figure dans ZERO des 1617.
+            enable_wl_coverage=bool(params.get("enable_wl_coverage", False)),
+            wl_coverage_top_k=int(params.get("wl_coverage_top_k") or 0),
         )
 
         logger.debug(f"[W{n_blk}] mine_strategies_for_block_count returned {len(strategies_dp)} strategies")

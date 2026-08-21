@@ -47,6 +47,106 @@ from certus.utils.certus_strat_context import (
 
 
 
+#: Decalage de la plage d'identifiants des groupements de COUVERTURE, par origine.
+#: Le plan est `n_blocks * 1000 + offset + rank`, offsets 0/100/200 pour les cartes de cout et
+#: 800 pour les graines structurees : 300/400/500 sont donc libres.
+_COUVERTURE_ID_OFFSET = 300
+#: Largeur de cette plage -- donc plafond dur du budget de couverture, par origine.
+_COUVERTURE_ID_STRIDE = 100
+
+
+def _solution_wls(sol: dict) -> set:
+    """The control wavelengths a DP solution uses. `blocks_info` is `[(start, end, wl), ...]`."""
+    return {float(wl) for _s, _e, wl in (sol.get("blocks_info") or [])}
+
+
+def _couverture_wl_groupings(
+    cost_map: dict[int, dict[float, float]],
+    solutions: list[dict],
+    appel_dp,
+    budget: int,
+    logger,
+) -> list[dict]:
+    """Groupings that USE the admissible wavelengths the k-best never selected.
+
+    🔑 POURQUOI CETTE PASSE EXISTE, ET ELLE EST NEE D'UNE MESURE, PAS D'UNE INTUITION.
+
+    📏 Le 2026-08-21, sur `r75x2` a 2 nm, graine 42 : la Phase A declare une MEDIANE de 86
+    longueurs d'onde admissibles par couche. La recherche en produit **14 a 29** par nombre de
+    blocs, et **65 sur les 301 de la grille** pour l'ensemble de ses 1617 strategies. Elle
+    depense 104 a 160 strategies par nombre de blocs, soit **cinq a sept doublons par λ**.
+
+        Le budget de l'etalement est deja depense -- en redondance.
+
+    🔴 Et le prix de cette redondance est mesure : la famille des 72 strategies deposables
+    exige 685 nm sur le bloc des couches 33-52, et cette λ figure dans **ZERO** des 1617
+    strategies. SIX leviers ont ete essayes sans effet -- plafond ELITE a 480, portee ±2 nm,
+    porte de plantage a borne de confiance, cinq graines au criblage, profil elargi ×3-×4,
+    diversite en λ du vivier de parents. Aucun ne pouvait marcher : ils elargissent la
+    recherche AUTOUR DE CE QUI EXISTE DEJA, et la λ requise n'existe nulle part.
+
+    🟢 CE QUI REND CETTE PASSE POSSIBLE SANS TOUCHER A LA DP. `_find_k_best_groupings_dp_sequential`
+    prend une `cost_map` -- `{couche: {λ: cout}}`. Restreindre UNE couche a une seule λ suffit
+    donc a forcer le bloc qui la contient a l'employer, et la DP rend alors le MEILLEUR
+    groupement COHERENT sous cette contrainte. C'est la difference avec une mutation : ELITE
+    substitue une λ dans un plan par ailleurs inchange, ce qui casse sa coherence ; ici le
+    reste du plan est RE-OPTIMISE autour de la contrainte.
+
+    ⚠️ LA COUCHE FORCEE EST CELLE OU LA λ EST LA MOINS CHERE, et ce n'est pas un reglage :
+    c'est l'endroit ou la Phase A la juge la plus naturelle. Aucun seuil, aucun parametre
+    invente (§19).
+
+    ⚠️ Et l'ordre de traitement est le COUT CROISSANT de la λ, pour que le budget, s'il mord,
+    morde sur les moins prometteuses -- jamais sur les meilleures.
+
+    🔴 UN ECHEC EST DIT. Forcer une couche peut rendre le probleme infaisable au nombre de
+    blocs demande : la DP ne rend alors rien, et on le compte. Un elagage silencieux se lit
+    comme une couverture complete, et c'est le mode de defaillance que ce depot paie depuis
+    le debut.
+    """
+    if budget <= 0:
+        return []
+
+    deja = set()
+    for sol in solutions:
+        deja |= _solution_wls(sol)
+
+    # Toutes les λ admissibles, avec leur meilleur cout et la couche ou il est atteint.
+    meilleur: dict[float, tuple[float, int]] = {}
+    for couche, dico in (cost_map or {}).items():
+        for w, c in (dico or {}).items():
+            w = float(w)
+            if w not in meilleur or float(c) < meilleur[w][0]:
+                meilleur[w] = (float(c), int(couche))
+
+    absentes = sorted((w for w in meilleur if w not in deja), key=lambda w: meilleur[w][0])
+    if not absentes:
+        logger.info("   [WL-COUVERTURE] aucune λ admissible absente des groupements : rien a faire.")
+        return []
+
+    ajoutes: list[dict] = []
+    infaisables = 0
+    for w in absentes:
+        if len(ajoutes) >= budget:
+            break
+        _cout, couche = meilleur[w]
+        carte = dict(cost_map)
+        carte[couche] = {w: _cout}
+        sols = appel_dp(carte, 1)
+        if sols:
+            ajoutes.append(sols[0])
+        else:
+            infaisables += 1
+
+    reste = len(absentes) - len(ajoutes) - infaisables
+    logger.info(
+        f"   [WL-COUVERTURE] {len(deja)} λ deja employees, {len(absentes)} absentes -> "
+        f"{len(ajoutes)} groupement(s) ajoute(s), {infaisables} infaisable(s) au nombre de "
+        f"blocs demande" + (f", {reste} NON TRAITEE(S) faute de budget ({budget})" if reste > 0 else "")
+    )
+    return ajoutes
+
+
 def _convert_solution_to_strategy(sol, num_layers, n_blocks, origin_tag, s_id) -> dict:
     blocks_info = sol.get("blocks_info", [])
     blocks_struct = []
@@ -303,6 +403,11 @@ def mine_strategies_for_block_count(
     sym_scoring_mode: str = SYM_DEFAULT_SCORING_MODE,
     sym_allow_hybrid: bool = False,
     min_wl_sep_nm: float = DP_DEFAULT_MIN_WL_SEPARATION_NM,
+    # 🔑 COUVERTURE EN λ -- inertes par defaut, chemin d'avant AU BIT.
+    # `wl_coverage_top_k = 0` retombe sur `top_k` : autant de groupements pour la COUVERTURE
+    # que pour l'OPTIMALITE. C'est une symetrie, pas un nombre invente (§19).
+    enable_wl_coverage: bool = False,
+    wl_coverage_top_k: int = 0,
 ) -> list[dict[str, Any]]:
     if n_blocks <= 0 or num_layers <= 0:
         return []
@@ -404,11 +509,10 @@ def mine_strategies_for_block_count(
                 f"[DEBUG MINING] Layer {layer_idx}: {len(cost_map[layer_idx])} wavelengths, sample: {wls_sample}"
             )
 
-        solutions = _find_k_best_groupings_dp_sequential(
-            cost_map,
-            n_blocks,
-            num_layers,
-            top_k=top_k,
+        # 🔒 Les reglages de la DP sont rassembles ICI et nulle part ailleurs : la passe de
+        # couverture la rappelle sous contrainte, et deux listes de quatorze arguments qui
+        # doivent rester identiques seraient une divergence programmee.
+        _dp_reglages = dict(
             timeout=30.0,
             force_monolayer=force_monolayer,
             nucleation_wl=nucleation_wl,
@@ -422,21 +526,68 @@ def mine_strategies_for_block_count(
             enable_sym_post_ranking=bool(apply_sym_post and post_sym_enabled),
             min_wl_sep_nm=float(min_wl_sep_nm),
         )
+
+        def _appel_dp(carte, k):
+            return _find_k_best_groupings_dp_sequential(
+                carte, n_blocks, num_layers, top_k=k, **_dp_reglages
+            )
+
+        solutions = _appel_dp(cost_map, top_k)
         logger.debug(f"[DEBUG MINING] {origin_name}: DP returned {len(solutions)} solutions")
 
+        # 🔑 LA COUVERTURE EN λ -- inerte par defaut, chemin d'avant AU BIT.
+        # Voir `_couverture_wl_groupings` pour la mesure qui la motive : la Phase A admet une
+        # mediane de 86 λ par couche, la recherche en emploie 14 a 29, et la λ dont les 72
+        # deposables ont besoin figure dans ZERO strategie.
+        # 🔴 LES GROUPEMENTS DE COUVERTURE ONT LEUR PROPRE PLAGE D'IDENTIFIANTS, et ce n'est
+        # pas de la cosmetique. Le plan est `strategy_id_base + offset_id + rank` avec
+        # `strategy_id_base = n_blocks * 1000`, et les offsets employes sont 0 / 100 / 200 pour
+        # les trois cartes de cout, 800 pour les graines structurees. En mode DEEP `top_k` vaut
+        # **exactement 100** : le plan est SATURE. Allonger `solutions` en place aurait donc
+        # donne au 101e groupement l'identifiant du 1er de la carte suivante -- deux strategies
+        # differentes sous un meme id, et tout ce qui indexe par id (le cache premium, les
+        # rapports, `from 9000000...`) se serait tu.
+        # Les offsets 300 / 400 / 500 sont libres, et 800 borne la plage.
+        couverture: list = []
+        if enable_wl_coverage:
+            _plafond = _COUVERTURE_ID_STRIDE
+            _budget = min(int(wl_coverage_top_k or top_k), _plafond)
+            if int(wl_coverage_top_k or top_k) > _plafond:
+                logger.warning(
+                    f"   [WL-COUVERTURE] budget demande {int(wl_coverage_top_k or top_k)} "
+                    f"ecrete a {_plafond} : c'est la largeur de la plage d'identifiants "
+                    f"reservee par origine, pas un reglage de recherche."
+                )
+            couverture = _couverture_wl_groupings(
+                cost_map, solutions, _appel_dp, _budget, logger
+            )
+
         found = []
-        if solutions:
-            for rank, sol in enumerate(solutions):
-                s_id = strategy_id_base + offset_id + rank
-                strat = _convert_solution_to_strategy(sol, num_layers, n_blocks, origin_name, s_id)
+
+        def _convertir(sols: list, base: int, etiquette: str) -> None:
+            for rank, sol in enumerate(sols):
+                s_id = strategy_id_base + base + rank
+                strat = _convert_solution_to_strategy(sol, num_layers, n_blocks, etiquette, s_id)
                 is_valid, reason = _validate_strategy_blocks_contract(strat, num_layers, expected_n_blocks=n_blocks)
                 if not is_valid:
-                    logger.debug(f"[DEBUG MINING] Dropped invalid strategy {s_id} ({origin_name}): {reason}")
+                    logger.debug(f"[DEBUG MINING] Dropped invalid strategy {s_id} ({etiquette}): {reason}")
                     continue
                 strat["rank_in_group"] = rank + 1
                 smart_tag = f" (Smart Nucl. L1-L{nucleation_size})" if nucleation_wl else ""
-                strat["origin_details"] = f"{origin_name}{smart_tag} (Rank {rank + 1})"
+                strat["origin_details"] = f"{etiquette}{smart_tag} (Rank {rank + 1})"
                 found.append(strat)
+
+        if solutions:
+            _convertir(solutions, offset_id, origin_name)
+        if couverture:
+            # L'origine est DISTINCTE : sans cela on ne saurait pas, en lisant un classement,
+            # si une gagnante vient de l'optimalite ou de la couverture -- et c'est justement
+            # la question que cette passe est censee trancher.
+            _convertir(
+                couverture,
+                offset_id + _COUVERTURE_ID_OFFSET,
+                f"{origin_name}-COUVERTURE",
+            )
         return found
 
     max_workers = 3 if sym_enable else 2

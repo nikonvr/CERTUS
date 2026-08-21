@@ -265,7 +265,7 @@ annoncé : ~1 s, 900 spectres vectorisés.
 
 ### B2. 🔴 Appliquer la SECONDE borne, qui est du code mort
 
-`seel_equivalence_half_width` (`certus_strat_ranking.py:589`) implémente
+`seel_equivalence_half_width` (`certus_strat_ranking.py:742`) implémente
 `max(0,05 nm ; 0,06 × SEEL)` — **et n'a aucun appelant en production**, seulement un test.
 `rank_key_seel_yield_margin` **reçoit** `score_resolution_rel` et ne s'en sert pas.
 
@@ -442,7 +442,7 @@ graine 77  ELITE      743          547
 
 ### 🔑 LE SEUIL, ET IL NE PEUT PAS ÊTRE DESSERRÉ
 
-`_resolve_elite_nominal_and_target_threshold` (`certus_strat_ranking.py:825`) :
+`_resolve_elite_nominal_and_target_threshold` (`certus_strat_ranking.py:967`) :
 
 ```python
 nominal_threshold = RMSE_p95 de la strategie de RANG 10
@@ -2026,3 +2026,74 @@ en λ, et le générateur qui pourrait en créer est nourri d'une seule lignée.
 
 ⚠️ **Ce n'est pas un réglage.** C'est un travail sur la génération, et il demande une décision :
 diversifier sur les λ **change ce que « les dix meilleures » veut dire**, donc change le produit.
+
+---
+
+## 25. 🟢 LA COUVERTURE EN λ — le premier levier qui ne cherche pas AUTOUR de ce qui existe
+
+**Écrit le 2026-08-21, inerte par défaut, `enable_wl_coverage`.** Six leviers ont rendu zéro
+déposable (§24.2) et la §24.3 dit pourquoi : ils élargissent la recherche **autour du même
+point**, et la λ dont la famille gagnante a besoin — 685 nm sur le bloc des couches 33-52 —
+figure dans **zéro** des 1617 stratégies. On ne l'atteint pas en cherchant plus fort là où
+elle n'est pas.
+
+### 25.1 🔑 Ce qui rend la passe possible sans toucher à la DP
+
+`_find_k_best_groupings_dp_sequential` prend une **`cost_map`** — `{couche: {λ: coût}}`.
+
+> **Restreindre UNE couche à une seule λ suffit à forcer le bloc qui la contient à l'employer**,
+> et la DP rend alors le **meilleur groupement COHÉRENT** sous cette contrainte. Aucune ligne de
+> la DP n'est modifiée.
+
+🔑 **Et c'est là toute la différence avec une mutation ELITE.** ELITE substitue une λ dans un
+plan **par ailleurs inchangé**, ce qui casse la cohérence du plan — et §24.3 a mesuré que chaque
+pas intermédiaire plante, donc aucun n'est retenu. Ici le **reste du plan est re-optimisé**
+autour de la contrainte : on ne demande pas « ce plan-là, avec 685 nm en plus », on demande
+« le meilleur plan **qui emploie** 685 nm ».
+
+### 25.2 Ce que la passe fait, exactement
+
+| | |
+|---|---|
+| **quelles λ** | toutes les λ **admissibles** (présentes dans `cost_map`) qu'aucun des `top_k` groupements n'emploie |
+| **quelle couche est forcée** | celle où la λ est **la moins chère**. ⚠️ Ce n'est pas un réglage : c'est l'endroit où la Phase A la juge la plus naturelle. Aucun seuil inventé (§19) |
+| **dans quel ordre** | **coût croissant** de la λ, pour que le budget, s'il mord, morde sur les moins prometteuses |
+| **combien de groupements par λ** | **un** — la DP est rappelée à `top_k = 1`. Sous contrainte, on ne veut que le meilleur |
+| **budget** | `wl_coverage_top_k`, et à défaut `top_k` : autant de groupements pour la **couverture** que pour l'**optimalité**. C'est une symétrie, pas un nombre inventé |
+
+### 25.3 🔴 Le défaut d'identifiants trouvé en l'écrivant — et il était réel
+
+Le plan est `strategy_id_base + offset_id + rang`, avec `strategy_id_base = n_blocks * 1000` et
+les offsets **0 / 100 / 200** pour les trois cartes de coût, **800** pour les graines
+structurées.
+
+```
+mode DEEP  ->  top_k = 100  ->  rangs 0..99  ->  le plan est EXACTEMENT SATURE
+```
+
+Allonger `solutions` en place aurait donc donné au **101ᵉ** groupement l'identifiant du **1ᵉʳ de
+la carte suivante** : deux stratégies différentes sous un même id, et tout ce qui indexe par id
+— le cache premium, les rapports, les `origin = ...(from 9000000…)` — se serait tu.
+
+**La couverture a donc sa propre plage**, offsets **300 / 400 / 500** (libres), largeur 100, et
+le budget est **écrêté** à cette largeur avec un avertissement qui dit que le plafond est la
+plage d'identifiants et **pas** un réglage de recherche. Son `origin` porte le suffixe
+`-COUVERTURE` : sans cela on ne saurait pas, en lisant un classement, si une gagnante vient de
+l'optimalité ou de la couverture — et c'est précisément la question que la passe doit trancher.
+
+### 25.4 🔴 Ce que la passe NE fait PAS, et il faut le dire avant de la mesurer
+
+| | |
+|---|---|
+| **elle ne répare pas le coût de la DP** | §24-48 de `CLAUDE.md` : la Phase A annonce `p = 0,0000` là où le réel vaut 42 %. La couverture **contourne** ce coût aveugle, elle ne le corrige pas |
+| **elle ne garantit pas la faisabilité** | forcer une couche peut rendre le problème infaisable au nombre de blocs demandé. La DP ne rend alors rien, et c'est **compté et journalisé** — un élagage silencieux se lirait comme une couverture complète |
+| **elle ne dit rien du plantage** | elle fait entrer des λ dans la population. Que l'une d'elles survive au criblage est **une mesure à faire**, pas une conséquence |
+| **elle coûte des appels DP** | un par λ absente, à `top_k = 1`, × 3 cartes de coût × chaque nombre de blocs. 👤 a accepté le ralentissement ; **le chiffrer reste à faire** |
+
+### 25.5 Le test qui la garde
+
+`tests/unit/test_wl_coverage.py`, **23 tests**. Ceux qui comptent : le chemin par défaut rend
+les **mêmes identifiants et les mêmes blocs** ; la prémisse « 700 nm est absente sans la passe »
+est **vérifiée et non supposée** ; la couche forcée est bien la moins chère ; la carte d'origine
+n'est **pas** modifiée (sinon la contrainte fuirait dans le k-meilleurs) ; l'infaisable et le
+budget qui mord sont **journalisés** ; et les identifiants ne collisionnent pas.

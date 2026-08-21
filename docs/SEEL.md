@@ -87,7 +87,7 @@ N = 32 et N = 128. **Si la profondeur change, remesure-le, ne l'extrapole pas de
 
 > 👤 *« SEEL à 0,01 nm près partout »* (2026-08-14).
 
-`SEEL_RESOLUTION_NM` vaut désormais **0.005** (`certus_strat_ranking.py:734`) et
+`SEEL_RESOLUTION_NM` vaut désormais **0.005** (`certus_strat_ranking.py:773`) et
 `rank_key_seel_yield_margin` binne à **0,01 nm** (ligne 643). **Tout ce qui précède dans ce
 §22 décrit l'état d'avant** : le pas de 0,1 nm et le `max(0,05 ; 0,06 × SEEL)` sont périmés en
 tant que description du code.
@@ -98,7 +98,7 @@ c'est-à-dire exactement le régime que le tableau ci-dessus déclare fautif, «
 n'est pas séparable ». **En pratique : traite un écart d'un bin comme une égalité.**
 
 🔴 **La seconde borne n'est PAS appliquée.** `seel_equivalence_half_width`
-(`certus_strat_ranking.py:742`) l'implémente correctement et n'a **aucun appelant en
+(`certus_strat_ranking.py:781`) l'implémente correctement et n'a **aucun appelant en
 production** — seulement `tests/unit/test_strat_ranking_rule.py`. Et
 `rank_key_seel_yield_margin` **reçoit** `score_resolution_rel` sans jamais s'en servir (corps
 ligne 643, bin fixe à `2 × SEEL_RESOLUTION_NM`). La règle « il faut retenir la plus grossière »

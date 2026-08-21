@@ -64,7 +64,7 @@ déplacé tel quel.
   > turning point et dynamique »*.
 
   🟢 **La moitié « minimiser les changements de λ » est déjà faite, et c'est la DP de Phase B.**
-  `_find_k_best_groupings_dp_sequential` (`certus_strat_ranking.py:256`) reçoit
+  `_find_k_best_groupings_dp_sequential` (`certus_strat_ranking.py:291`) reçoit
   `cost_map[couche][λ] → coût` et `_compute_valid_blocks_kernel` cherche les blocs où **une
   seule λ sert TOUTES les couches du bloc**. C'est exactement l'optimisation décrite, elle est
   exacte (programmation dynamique, pas une heuristique), et elle rend les `top_k` meilleurs

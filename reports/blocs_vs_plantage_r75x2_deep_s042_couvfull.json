@@ -1,0 +1,26 @@
+{
+  "verdict": "SURCHARGES_NON_APPLIQUEES",
+  "composant": "r75x2",
+  "mode": "deep",
+  "seed": 42,
+  "instrument": "8118721",
+  "machine": "Intel64 Family 6 Model 142 Stepping 10, GenuineIntel | 8 threads",
+  "stamp": "2026-08-21T15:32:56",
+  "config": {
+    "monochromator_resolution_nm": 2.0,
+    "search_resolution": false,
+    "require_turning_point": 0,
+    "exploration_elargie": false,
+    "exploration_niveau": 0,
+    "rate_by_swing": false,
+    "rate_tail_sweep": [],
+    "rate_layer_sets": [],
+    "rate_tail_keep_optical": 0,
+    "consensus_seed_list": "(defaut du JSON)",
+    "overrides": {
+      "enable_wl_coverage": 1
+    },
+    "overrides_tag": "couvfull",
+    "elargissement": null
+  }
+}

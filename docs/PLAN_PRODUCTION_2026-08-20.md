@@ -265,7 +265,7 @@ annoncé : ~1 s, 900 spectres vectorisés.
 
 ### B2. 🔴 Appliquer la SECONDE borne, qui est du code mort
 
-`seel_equivalence_half_width` (`certus_strat_ranking.py:742`) implémente
+`seel_equivalence_half_width` (`certus_strat_ranking.py:781`) implémente
 `max(0,05 nm ; 0,06 × SEEL)` — **et n'a aucun appelant en production**, seulement un test.
 `rank_key_seel_yield_margin` **reçoit** `score_resolution_rel` et ne s'en sert pas.
 
@@ -442,7 +442,7 @@ graine 77  ELITE      743          547
 
 ### 🔑 LE SEUIL, ET IL NE PEUT PAS ÊTRE DESSERRÉ
 
-`_resolve_elite_nominal_and_target_threshold` (`certus_strat_ranking.py:967`) :
+`_resolve_elite_nominal_and_target_threshold` (`certus_strat_ranking.py:1006`) :
 
 ```python
 nominal_threshold = RMSE_p95 de la strategie de RANG 10
@@ -1840,6 +1840,23 @@ plage 9-11, AVEC injection   ->  295 strategies · 72 DEPOSABLES · crash_min   
                                   MEILLEUR SEEL 0,5697   (cible 0,5692, ecart +0,1 %)
 ```
 
+⚠️ **RÉSERVE AJOUTÉE LE 2026-08-21 — ce contrôle négatif est plus MINCE que ses « 63
+stratégies » ne le suggèrent.** 📏 Mesuré en relisant son journal : un run à plage restreinte
+mine **1 à 2 stratégies par nombre de blocs** — `Mining found` vaut 2, 1, 1, 2, 2 sur les blocs
+75, 10, 9, 2, 1 — là où le run à plage complète en mine **601 au bloc 9**. Les 63 stratégies
+sortent donc de **8 groupements minés**, gonflés par les variantes Rate et les expansions ELITE.
+
+🔑 **Ce que la réserve ne retire pas** : la comparaison reste **à une seule variable**, même
+graine, même plage, mêmes réglages — l'attribution à l'injection tient. Ce qui s'affaiblit est
+la force du « 0 déposable » comme énoncé **général** sur la graine 42 : il porte sur une
+recherche étroite, pas sur une recherche large. **L'énoncé large existe par ailleurs** — 0
+déposable sur **1617** stratégies à plage complète — et c'est celui-là qu'il faut citer quand on
+veut dire « la graine 42 n'y arrive pas seule ».
+
+📌 Cause probable de l'écart, non vérifiée : la restriction de plage prive les nombres de blocs
+retenus de tout `inherited_strategies` venant des nombres de blocs voisins, que le run complet
+leur fournit. À instrumenter, pas à supposer.
+
 🔒 **Une seule chose diffère entre les deux runs : l'injection.** Même graine, même mode, même
 fente, même plage, mêmes réglages. La restriction de plage n'explique **rien** — sans injection
 elle rend zéro. C'est l'attribution que l'erreur n° 3 du §5 réclame, et elle est faite.
@@ -1982,13 +1999,34 @@ Distance en pas de grille de 1 nm depuis le parent le plus proche :
 | **615** | 5 (depuis 610) |
 | **450** | **30** (depuis 480) |
 
-Or ELITE mute **une λ d'un bloc, de ±1 pas, par candidate**, ne compose jamais deux mouvements,
-et `elite_stop_on_no_gain` coupe après une ronde stérile — et **chaque pas intermédiaire
-plante**, donc aucun n'est retenu.
+Or ELITE mute **une λ d'un bloc, de ±1 pas, par candidate**, `elite_stop_on_no_gain` coupe
+après une ronde stérile — et **chaque pas intermédiaire plante**, donc aucun n'est retenu.
 
-> **ELITE ne peut pas atteindre la gagnante depuis ses parents. Ce n'est pas improbable, c'est
-> structurellement impossible :** il faudrait introduire trois λ nouvelles dont une à 30 nm, par
-> une marche locale dont chaque pas est rejeté.
+🔴 **CORRECTION DU 2026-08-21 — cette phrase disait aussi « ne compose jamais deux
+mouvements », et c'est FAUX.** Mesuré sur la gagnante de la campagne d'acceptation, contre la
+rampe dont elle descend :
+
+```
+bloc 2 :  rampe (25, 33, 615)  ->  gagnante (25, 33, 616)     UN pas de λ
+bloc 3 :  rampe (33, 53, 685)  ->  gagnante (33, 52, 685)     UN pas de frontiere
+bloc 4 :  rampe (53, 57, 647)  ->  gagnante (52, 57, 647)     (la meme frontiere, vue d'en face)
+```
+
+**Deux mouvements élémentaires, de deux natures différentes.** ELITE n'en fait qu'un par
+candidate — mais elle en **compose à travers les rondes**, et c'est visible dans le journal :
+la barre `rank10_nominal` tombe de **0,268856 à 0,077943** entre la ronde 1 et la ronde 2, donc
+la ronde 1 a retenu un intermédiaire sur lequel la ronde 2 a bâti.
+
+🔑 **La conclusion tient, la raison donnée était mauvaise.** Ce qui ferme la voie n'est pas
+l'impossibilité de composer : c'est que **chaque pas intermédiaire plante**, donc rien n'est
+jamais retenu pour bâtir dessus. La composition existe et elle est même le mécanisme du succès
+— elle a seulement besoin d'un point de départ **déjà déposable**, ce que les rampes fournissent
+et que la recherche native n'atteignait pas.
+
+> **ELITE ne peut pas atteindre la gagnante depuis ses parents NATIFS. Ce n'est pas improbable :**
+> il faudrait introduire trois λ nouvelles dont une à 30 nm, par une marche dont chaque pas
+> intermédiaire est rejeté. **Depuis une rampe déposable, en revanche, deux pas suffisent** —
+> et c'est exactement ce qui a été mesuré.
 
 🔒 **Donc la voie « régler ELITE » est fermée.** Aucun réglage de plafond, de portée, de porte
 ou de nombre de graines ne franchit 30 nm de marche locale.
@@ -2174,10 +2212,34 @@ petit : journaliser la chaîne d'origine complète.
 bruit 0,025 -> 1,67 %      bruit 0,05 -> 0,33 %      bruit 0,1 -> 0,33 %
 ```
 
-C'est le motif du Piège 1. ⚠️ **Mais je ne crie pas à l'artefact** : sur 300 tirages cela fait
-**5 plantages contre 1 et 1**, et avec `σ ≈ √5 ≈ 2,2` l'inversion est à la limite de la
-statistique de comptage. Ce n'est pas une inversion démontrée — c'est une chose à surveiller.
-La porte a pris le **maximum** des trois, soit la lecture conservatrice, donc le verdict tient.
+🔴 **PREMIÈRE LECTURE FAUSSE, RETIRÉE LE MÊME JOUR.** J'avais écarté l'anomalie en disant
+que sur 300 tirages cela faisait « 5 plantages contre 1 et 1 », donc `σ ≈ √5 ≈ 2,2`, donc une
+inversion « à la limite de la statistique de comptage ». **C'était substituer un raisonnement
+sur le bruit au test prescrit** — précisément ce que le Piège 1 dit avoir déjà coûté trois fois
+à ce projet.
+
+📏 **Le comptage sur la population entière tranche, et il tranche contre moi** :
+
+```
+sur les 197 deposables   :  125 DECROISSANTES ·  61 croissantes ·   11 plates
+sur les 1810 strategies  :  532 DECROISSANTES ·  61 croissantes · 1217 plates
+                            ^^^^^^^^^^^^^^^^^^ 8,7 contre 1 dans le mauvais sens
+```
+
+**Ce n'est pas du bruit de comptage, c'est systématique.** Et le corollaire 3 du Piège 1 dit
+qu'une signature qui ne varie pas avec l'amplitude désigne **l'algorithme, pas le phénomène**.
+
+⚠️ **Ce que cela change, exactement, et ce que cela ne change pas.** La porte prend le
+**maximum** des trois niveaux : le `1,67 %` publié vient donc du niveau de bruit **le plus
+faible**, ce qui est la lecture conservatrice — **le verdict « déposable » n'est pas menacé, il
+est pessimiste.** Mais on ne comprend plus le mode d'échec, et cela touche **toute** mesure de
+plantage du projet, murs à 100 % compris.
+
+🔴 **Je n'invente pas le mécanisme.** Un candidat testable : le seuil d'hystérésis vaut
+`tp_hysteresis_factor × A` — si `A` suit le multiplicateur de bruit, le détecteur devient plus
+conservateur quand le bruit croît, et fabrique moins de faux points tournants. Ce serait
+cohérent avec le fait que `TP_MISCOUNT` pèse 79 % des plantages (§24-36 de `CLAUDE.md`). **À
+mesurer par un balayage σ→0, pas à conclure.**
 
 **La couche critique 53 porte une marge de −1370 A et le verdict `PEUT ECHOUER`**, alors que la
 stratégie ne plante que 1,67 % du temps. L'instrument de marge est donc très pessimiste ici, et
@@ -2192,3 +2254,425 @@ Monte-Carlo, et [§24-41 de `CLAUDE.md`](../CLAUDE.md) n'a validé la marge que 
 | **un composant neuf** | le mécanisme `injected_strategies` est générique ; les **12 rampes sont douze stratégies concrètes de cet empilement**. Pour un composant neuf il faut produire ses rampes |
 | **une dépendance à un artefact** | la configuration du composant pointe vers `reports/plans/plans_s042_gagnantes_injectees.json`. Ce n'est plus une description de physique seule, et `reports/` n'est protégé par presque rien (interdit 3). Son absence **lève**, délibérément : une injection muette rendrait un run qui a l'air normal |
 | **la découverte autonome** | non résolue. La **couverture en λ** (§25) est le premier levier qui ne cherche pas autour de l'existant, et elle est **non mesurée** |
+
+---
+
+## 27. 🔴 LES RUNS À PLAGE RESTREINTE ONT UNE DP VIDE — un protocole invalidé, et l'instrument qui l'a montré
+
+**Mesuré le 2026-08-21 à 13:55, premier run où les compteurs de couverture remontent par un
+canal lu.** Ce n'est pas un résultat sur la couverture : c'est un défaut de protocole que rien
+ne signalait.
+
+```
+[Block  9] [WL-COUVERTURE] 0 λ deja employees, 903 absentes
+                           -> 0 ajoutee(s), 903 INFAISABLE(S), 903 appels DP
+[Block  9] Mining found 1 strategies.
+```
+
+🔑 **`0 λ déjà employées` veut dire que la DP n'a rendu AUCUN groupement.** Le compteur ne
+pouvait pas mentir : il énumère les λ des solutions rendues. Le « Mining found 1 » ne vient donc
+pas du solveur mais d'une **graine structurée**.
+
+### 27.1 Ce que cela invalide, et ce que cela n'invalide pas
+
+📏 Le même symptôme est dans le journal du contrôle négatif `ctrl911sansinj` : `Mining found`
+vaut **2, 1, 1, 2, 2** sur les blocs 75, 10, 9, 2, 1 — contre **601** au bloc 9 dans le run à
+plage complète. La cause n'est donc pas l'héritage entre nombres de blocs, comme je l'avais
+supposé : **la DP est vide dès que la plage est restreinte par `iter_divider_start/end`.**
+
+| | |
+|---|---|
+| 🔴 **invalidé** | toute la série de runs à plage 9-11 comme mesure de **la recherche**. Il n'y avait pas de recherche : 8 groupements minés en tout |
+| 🟢 **intact** | la **comparaison** injection oui/non, qui reste à une seule variable — même graine, même plage, mêmes réglages. L'attribution des 72 déposables à l'injection tient |
+| 🟢 **intact** | le **test d'acceptation** (§26), qui tourne à plage COMPLÈTE avec 1810 stratégies et une DP qui produit |
+| 🔴 **affaibli** | le « 0 déposable » de `ctrl911sansinj` comme énoncé général. L'énoncé large est **0 sur 1617 à plage complète**, et c'est celui-là qu'il faut citer |
+
+⚠️ **Pourquoi `iter_divider` vide la DP n'est PAS établi.** Les libellés d'interface disent
+*« Start Divider (Low Complexity) [N / X] »* et *« divides the iteration count »* : ce sont donc
+des diviseurs de complexité, et je les avais employés comme un sélecteur de plage parce que
+`75/8,3333 = 9` et `75/6,8182 = 11` — ce qui *a* bien restreint la plage aux blocs 9 et 10. Que
+cela vide aussi le solveur est un effet que je n'explique pas et que je n'invente pas.
+
+📌 **Conséquence pratique, à appliquer** : toute mesure comparative de la **recherche** se fait à
+plage **complète**. Restreindre la plage économise du temps en détruisant l'objet mesuré.
+
+### 27.2 🔑 CE QUE CET ÉPISODE DIT DES INSTRUMENTS
+
+Trois défauts d'instrument ont rendu un premier run de cinquante minutes **ininterprétable**, et
+aucun n'était dans la physique :
+
+| # | défaut | ce qu'il coûtait |
+|---|---|---|
+| 1 | le logger `ThinFilm` du mineur est **MUET** — sa ligne `info` inconditionnelle apparaît **zéro fois** dans les journaux, alors que le logger `W{n_blk}` du worker passe | impossible de distinguer « la passe n'a pas tourné » de « chaque λ était infaisable ». Piège 6 |
+| 2 | **cp1252** dans `synthese()` | l'artefact d'un run de 50 min **jamais écrit** — la narration précédait l'écriture |
+| 3 | le budget de couverture plafonnait les **ajouts**, pas les **tentatives** | 903 appels DP pour un budget de 100, ~2 min par nombre de blocs jetées |
+
+Le premier est la leçon générale, et c'est celle de §24-37 :
+
+> **Un instrument dont la sortie n'atteint pas le résultat n'est pas un instrument.**
+
+Le balayage a montré que le cp1252 n'était pas trois incidents mais un **champ de mines** : 66
+scripts impriment des caractères inencodables, **62 ne se protégeaient pas**. Chacun pouvait
+tuer une mesure sur son dernier `print`. 🔴 Et mon premier détecteur était **faux**, réfuté par
+son propre contrôle négatif : il comparait à un seuil `ord(c) > 0x2500`, et la flèche `→` vaut
+8594 — donc sous le seuil, et pas davantage encodable. C'était exactement le caractère qui avait
+fait planter `recaler_renvois.py`. **Un seuil devine ; il faut poser la question à l'encodeur.**
+
+---
+
+## 28. 🟢 LA COUVERTURE EN λ FONCTIONNE — le MÉCANISME, mesuré. L'issue reste ouverte.
+
+**Mesuré le 2026-08-21 à 14:09, run `couvfull` : plage de blocs COMPLÈTE, composant `r75x2`
+(le fichier de base, SANS rampes), `enable_wl_coverage=1` pour seule surcharge.**
+
+🔑 Le contrôle est le run à plage complète sans couverture — **0 déposable sur 1617** — et la
+comparaison est donc à **une seule variable**.
+
+```
+[Block 15] [WL-COUVERTURE] 140 λ deja employees, 763 absentes
+                           -> 300 AJOUTEE(S), 0 infaisable(s), 463 hors budget (300 appels DP)
+
+bloc 15, sans couverture :  601 groupements
+bloc 15, avec couverture :  901 groupements      <- +300, exactement les ajouts comptes
+```
+
+**Trois choses sont établies, et ce sont les trois qui manquaient :**
+
+| | |
+|---|---|
+| **forcer une λ est FAISABLE** | **0 infaisable** sur 300 tentatives. La crainte que contraindre une couche rende le problème insoluble au nombre de blocs demandé était infondée — au moins là où la DP produit |
+| **la passe atteint bien le calcul** | la population passe de 601 à 901, soit **exactement** les 300 ajouts comptés. Le contrôle 4 de §12 est satisfait : on compte, on ne lit pas le code |
+| **le coût est mesuré** | 300 appels DP en **1 min 42** au bloc 15, soit ~27 min sur la plage complète. Le budget plafonne le travail depuis le correctif |
+
+📏 Et un chiffre qui corrige une estimation antérieure : les 100 groupements du k-meilleurs
+emploient **140 λ distinctes** au bloc 15, pas les 14 à 29 que j'avais lues sur la population
+*finale*. La redondance se situe donc **en aval** du minage — au criblage et au classement — pas
+dans le minage lui-même. ⚠️ Cela ne change pas le fait qui motive la passe : **763 λ admissibles
+restent inemployées**, et la famille gagnante a besoin de l'une d'elles.
+
+### 28.1 📏 LA COUVERTURE, NOMBRE DE BLOCS PAR NOMBRE DE BLOCS — relevé le 2026-08-21 à 14:42
+
+```
+bloc  75    0 λ deja employees,  903 absentes ->    0 ajoutees, 300 INFAISABLES
+bloc  15  140 λ deja employees,  763 absentes ->  300 ajoutees,   0 infaisable
+bloc  14  109 λ deja employees,  794 absentes ->  300 ajoutees,   0 infaisable
+bloc  13   66 λ deja employees,  837 absentes ->  300 ajoutees,   0 infaisable
+bloc  12   59 λ deja employees,  844 absentes ->  270 ajoutees,  30 INFAISABLES
+bloc  11   54 λ deja employees,  849 absentes ->    6 ajoutees, 294 INFAISABLES   <- effondrement
+```
+
+### 🔴 L'EFFONDREMENT DU BLOC 11 — la contrainte devient infaisable là où on en a besoin
+
+**Le taux de faisabilité chute d'un coup** : 100 %, 100 %, 100 %, 90 %, puis **2 %**. Et il
+chute exactement en descendant vers le bloc 9, celui où vit la famille déposable.
+
+🔑 **L'explication structurelle, cohérente avec la donnée et présentée comme telle — je ne l'ai
+pas mesurée directement.** `_compute_valid_blocks_kernel` exige qu'**une seule λ serve TOUTES les
+couches d'un bloc**, et le nombre de blocs est **exactement** imposé. Forcer une couche `L` à une
+λ rare pousse la DP à isoler `L` dans un bloc court — mais les blocs restants doivent alors
+couvrir les 74 autres couches en `n−1` blocs, donc **s'allonger**. À 15 blocs cela passe ; à
+11 blocs les blocs restants font en moyenne 7,4 couches et presque aucune λ ne sert 7 couches
+consécutives.
+
+> **La couverture élargit la recherche là où elle est déjà large, et se referme là où elle
+> serait décisive.** C'est le contraire de ce qu'on espérait, et c'est mesuré.
+
+⚠️ **Ce que cela ne dit PAS encore** : le bloc 9 n'est pas mesuré à l'heure où ces lignes sont
+écrites. Les 6 ajouts du bloc 11 peuvent suffire — 6 stratégies bien placées valent mieux que
+300 mal placées, et la famille cherchée n'a besoin que d'**une** λ. **Ne conclus pas avant le
+bloc 9.**
+
+📌 **Et si le bloc 9 confirme l'effondrement, la piste suivante est identifiée** : forcer la λ
+sur la couche **où elle est la moins chère** est peut-être le mauvais choix. Il faudrait la
+forcer là où le bloc qui la contient peut rester **court sans allonger les autres** — c'est-à-dire
+tenir compte de la **structure de blocs**, pas seulement du coût par couche. Cela reste à
+spécifier, et surtout à mesurer.
+
+🔑 **Deux tendances nettes, et elles se lisent ensemble.**
+
+**Le nombre de λ que le k-meilleurs emploie s'effondre quand les blocs diminuent** — 140, 109,
+66, 59. C'est mécanique : moins de blocs, moins de λ à placer. Donc **l'élargissement relatif
+que la couverture apporte GRANDIT** à mesure qu'on approche du bloc 9, qui est celui où vit la
+famille à SEEL 0,5676. Au bloc 12, 300 ajouts contre 59 λ employées, c'est un facteur 6 sur
+l'axe des longueurs d'onde.
+
+**En contrepartie, les premières infaisabilités apparaissent au bloc 12** — 30 sur 300. Moins de
+blocs signifie qu'une seule λ doit servir **plus de couches consécutives**, donc la contrainte
+devient plus dure à satisfaire. ⚠️ **Attends-toi à ce que le taux d'infaisabilité monte encore
+aux blocs 11, 10 et 9**, et ne lis pas une infaisabilité élevée comme un défaut de la passe :
+c'est la géométrie du problème.
+
+📌 Le bloc 75 est un cas à part : la DP n'y rend rien (`0 λ déjà employées`), donc les 300
+tentatives partent d'un ensemble vide et échouent toutes. C'est le même symptôme que §27.
+
+### 28.2 🟢 UNE STRATÉGIE DE COUVERTURE A GAGNÉ SON NOMBRE DE BLOCS
+
+Comparaison avec le run d'acceptation, à nombre de blocs égal :
+
+```
+bloc 15   acceptation 0,29611   couvfull 0,29611     identique
+bloc 14   acceptation 0,29482   couvfull 0,29479     <- la couverture gagne
+bloc 13   acceptation 0,29549   couvfull 0,29549     identique
+```
+
+L'écart est **infime** — 1 pour 10 000 — et je ne le présente pas comme une amélioration de
+performance. Ce qu'il établit est autre chose, et c'est ce qui manquait : **une stratégie issue
+de la couverture traverse le criblage Monte-Carlo, le classement, et sort première de son nombre
+de blocs.** La passe ne se contente pas de gonfler la population ; ses produits sont
+compétitifs.
+
+⚠️ **Et les trois restent à 100 % de plantage.** Gagner un nombre de blocs et passer la porte de
+plantage sont deux choses différentes. Aucun de ces nombres de blocs n'est celui où la famille
+déposable vit.
+
+### 🔴 CE QUI N'EST PAS ENCORE RÉPONDU, et ne le sera pas avant le bloc 9
+
+**Faire entrer une λ dans la population et produire une stratégie déposable sont DEUX
+événements**, et le second ne découle pas du premier. Les 300 groupements ajoutés doivent encore
+survivre au criblage Monte-Carlo, puis à la porte de plantage à 5 %.
+
+> **Ne pas lire « la couverture fonctionne » comme « la découverte autonome est résolue ».**
+> La première phrase est mesurée, la seconde ne l'est pas.
+
+Le nombre de blocs qui décide est **9** — c'est là que vit la famille à SEEL 0,5676. Les blocs 15
+à 10 renseignent sur le coût et la faisabilité, pas sur l'issue.
+
+---
+
+## 29. 🔴 LE PLANTAGE DÉCROÎT QUAND LE BRUIT CROÎT — le test du Piège 1, enfin fait
+
+**`scripts/probe_plantage_vs_sigma.py`, écrit et passé le 2026-08-21 sur l'artefact
+d'acceptation.** Il ne relance rien : les trois niveaux de bruit (0,5× / 1× / 2× du nominal)
+sont déjà dans `crash_rates_by_noise`.
+
+⚠️ **J'avais d'abord écarté l'anomalie par un argument de Poisson** — « 5 plantages contre 1 et
+1 sur 300 tirages, donc à la limite de la statistique de comptage ». **Retiré le même jour** :
+c'était substituer un raisonnement sur le bruit au test que le Piège 1 prescrit, et §7 de
+`CLAUDE.md` dit que ce projet a déjà payé trois fois pour cela.
+
+```
+A. LE TAUX MOYEN CROIT-IL AVEC LE BRUIT ?
+      niveau      n    moyenne     median
+       0.025   1810     0.8921     1.0000
+        0.05   1810     0.8916     1.0000
+         0.1   1810     0.8486     1.0000
+  🔴 DECROISSANT, ANOMALIE : 0.8921 (bruit 0.025) -> 0.8486 (bruit 0.1)
+
+B. STRATEGIE PAR STRATEGIE -- les murs a 100 % sont ECARTES
+  murs a 100 % ecartes : 1206
+     DECROISSANT    532  (88.1% des 604 qui varient)
+       croissant     61  (10.1%)
+            plat     11  (1.8%)
+  rapport DECROISSANT / croissant = 8.72
+
+C. ET SUR LES DEPOSABLES SEULES (crash_max <= 5%)
+     DECROISSANT    125  (63.5%)   croissant  61 (31.0%)   plat  11 (5.6%)
+```
+
+**8,72 contre 1 dans le mauvais sens : c'est systématique, pas du comptage.**
+
+### 29.1 🔑 Le fait structurel que le croisement révèle
+
+📏 Les déposables comptent 125 + 61 + 11 = **197**, soit exactement toutes celles qui varient et
+passent la porte. Donc parmi les **407** stratégies qui varient et **ne** passent **pas** la
+porte : **407 décroissantes, ZÉRO croissante.**
+
+> **Les 61 stratégies au comportement attendu — plus de bruit, plus de plantage — sont TOUTES
+> des déposables.** Aucune stratégie non déposable ne se comporte normalement.
+
+C'est un signal fort, et je ne l'explique pas. Une lecture possible : au-delà d'un certain taux
+de base, le mécanisme de plantage n'est plus dominé par le bruit de lecture mais par quelque
+chose qui *diminue* quand le bruit augmente. Un candidat existe et reste **à mesurer** : le seuil
+d'hystérésis vaut `tp_hysteresis_factor × A` ; si `A` suit le multiplicateur de bruit, le
+détecteur devient plus **conservateur** quand le bruit croît, fabrique moins de faux points
+tournants, et `CRASH_TP_MISCOUNT` — **79 %** des plantages mesurés (§24-36 de `CLAUDE.md`) —
+recule. 🔴 **Candidat, pas explication.**
+
+### 29.2 ⚠️ Ce que l'anomalie change, et ce qu'elle ne change pas
+
+| | |
+|---|---|
+| 🟢 **le verdict « déposable » n'est PAS menacé** | la porte prend le **maximum** des trois niveaux, donc un taux publié vient du niveau le plus sévère — lecture conservatrice, et ici c'est souvent le bruit le plus **faible** |
+| 🔴 **on ne comprend plus le mode d'échec** | et cela touche **toute** mesure de plantage du projet, murs à 100 % compris |
+| 🔴 **une comparaison de taux entre niveaux de bruit n'a plus de sens** | jusqu'à ce que la cause soit établie. Ne bâtis aucun raisonnement sur « à 2× le bruit, le taux vaut X » |
+
+📌 **La suite est un balayage de `tp_hysteresis_factor` à bruit fixé**, qui sépare les deux
+lectures : si le taux suit le facteur et non le bruit, le seuil est la cause.
+
+---
+
+## 30. 🔴🔴 LA COUVERTURE VISE LE MAUVAIS GÉNÉRATEUR — la DP ne produit RIEN aux blocs 9 et 10
+
+**Mesuré le 2026-08-21 à 15:10. C'est la réponse à la question de la découverte autonome, et
+c'est une réponse négative avec une cause précise — ce qui vaut bien mieux qu'un échec vague.**
+
+### 30.1 Le fait, sur les deux runs à la fois
+
+```
+                Mining found
+bloc    couvfull (r75x2)   acceptation (r75x2-2nm)
+ 15         901                    601
+ 12         872                    602
+ 11         607                    601
+ 10           1                      1        <- la DP est VIDE
+  9           -                      1        <- la DP est VIDE
+```
+
+Et le compteur de couverture le dit de son côté, indépendamment : `bloc 10 -> 0 λ déjà
+employées, 903 absentes, 0 ajoutée`. **Les λ « déjà employées » sont énumérées depuis les
+solutions rendues : zéro signifie zéro solution.**
+
+### 30.2 🔑 D'où viennent alors les 43 déposables du bloc 9 ?
+
+Origines dans l'artefact d'acceptation :
+
+```
+bloc  9 : 147 strategies -> RATE 78 · ELITE 68 · STRUCTURED 1
+          43 deposables  -> ELITE 43, TOUTES
+          de la DP (THICKNESS / THICKNESS² / SYM) : ZERO
+
+bloc 10 : 104 strategies -> RATE 78 · SMART_MERGE 25 · STRUCTURED 1      de la DP : ZERO
+bloc 11 : 148 strategies -> RATE 111 · SMART_MERGE 25 · SYM 8 · THICKNESS 4
+bloc 12 : 152 strategies -> RATE 114 · SMART_MERGE 25 · SYM 9 · THICKNESS 4
+```
+
+> **Aux nombres de blocs qui décident, la population entière est faite de VARIANTES — Rate,
+> fusions, descendants ELITE. Le solveur exact n'y contribue rien.**
+
+⚠️ Et `INJECTED` n'apparaît nulle part : les rampes elles-mêmes sont éliminées au criblage, seuls
+leurs **descendants ELITE** survivent. C'est cohérent avec §26.1 — les rampes sont des points de
+départ, pas des solutions.
+
+### 30.3 🔴 Pourquoi la couverture ne pouvait pas marcher là
+
+La passe **étend la sortie de la DP** : elle prend les `top_k` groupements rendus, cherche les λ
+admissibles qu'ils n'emploient pas, et rappelle la DP sous contrainte. Aux blocs 9 et 10 il n'y a
+aucun groupement à étendre, et chaque λ forcée est infaisable — 300 tentatives, 300 échecs.
+
+**Le taux de faisabilité par nombre de blocs le montre en dégradé :**
+
+```
+bloc 15  100 %      bloc 12   90 %      bloc 10    0 %   (DP vide)
+bloc 14  100 %      bloc 11    2 %
+bloc 13  100 %
+```
+
+🔑 **L'explication structurelle, cohérente avec la donnée et donnée comme hypothèse** :
+`_compute_valid_blocks_kernel` exige qu'**une seule λ serve TOUTES les couches d'un bloc**, et le
+nombre de blocs est **exactement** imposé. À 9 blocs sur 75 couches, chaque bloc fait en moyenne
+**8,3 couches** — et presque aucune λ ne reste admissible sur 8 couches consécutives de cet
+empilement. Le solveur exact n'a donc **aucune solution** à offrir, et ce n'est pas un défaut de
+réglage : c'est la géométrie du problème.
+
+### 30.4 🔵 CE QUE CELA REDIRIGE — et c'est précis
+
+**L'idée de la couverture reste juste ; elle est branchée sur le mauvais étage.** Ce qu'il faut
+diversifier en λ, c'est ce qui produit réellement les stratégies à bas nombre de blocs :
+
+| étage | ce qu'il produit au bloc 9 | diversifier en λ ? |
+|---|---|---|
+| la **DP** | **rien** | ✅ fait (§25), 🔴 sans effet là où ça compte |
+| les **variantes Rate** | 78 stratégies | 🔵 non exploré |
+| **`SMART_MERGE`** | 25 au bloc 10, 0 au bloc 9 | 🔵 c'est le seul générateur qui **compose** des λ venues de plans différents — §24.4 le désignait déjà |
+| **ELITE** | 68, dont **les 43 déposables** | 🟠 sa marche est locale ±1 pas ; sa diversité vient de ses **parents** |
+
+🔒 **Ce que cela ne dit pas** : que la découverte autonome est impossible. Cela dit que **l'axe
+« élargir la sortie de la DP » est fermé aux blocs 9-10**, pour une raison mesurée. La question
+devient : *d'où viennent les parents d'ELITE quand il n'y a pas de rampe, et peut-on leur donner
+la λ manquante ?*
+
+📌 Et un chiffre à garder : au bloc 11 la DP produit encore (607 minés, 4 THICKNESS et 8 SYM
+classés) et la couverture y ajoute **6** groupements. Six ajouts bien placés valent mieux que
+trois cents mal placés — **la famille cherchée n'a besoin que d'UNE λ.** Le run en cours dira si
+l'un de ces six mène quelque part.
+
+---
+
+## 31. 🔴 `couvfull` A PLANTÉ EN FIN DE VIE — ce qui est sauvé, et la leçon de chaînage
+
+**Le run s'est terminé par une erreur Qt de durée de vie**, et l'artefact ne porte aucune
+stratégie (`verdict = SURCHARGES_NON_APPLIQUEES`, 730 octets).
+
+```
+15:33:15  la chaine voit l'artefact et demarre la mesure suivante (graine 101)
+15:33:22  couvfull : « Critical error in parallel worker for block 3 »
+15:33:25  idem blocs 2 et 1
+          RuntimeError: wrapped C/C++ object of type QThread has been deleted
+          certus/workers/certus_strat_workers_pipeline.py:261  worker.monitor_thread.wait(3000)
+```
+
+🔴 **LA LEÇON DE CHAÎNAGE, ET ELLE EST DE MOI.** Le correctif du même jour fait écrire
+l'artefact **avant** la synthèse, pour qu'un `print` ne puisse plus détruire une mesure. Or ma
+chaîne attendait **l'apparition de cet artefact** comme signal de fin. Le signal est donc devenu
+faux le jour même où je l'ai rendu précoce, et la chaîne a lancé la mesure suivante **10 s avant**
+la fin de la précédente — en violation de *une mesure, une machine*.
+
+⚠️ **La causalité n'est PAS établie** : corrélation temporelle à 7 s, et un plantage Qt de
+teardown peut avoir d'autres causes. **Mais le signal était faux quoi qu'il en soit.** La chaîne
+attend désormais le **marqueur de fin de la chaîne précédente**, écrit après le retour du
+processus. 🔑 *Un correctif qui rend un signal précoce périme tout ce qui s'en servait — et il
+faut chercher ces usages le jour même.*
+
+### 31.1 🟢 Ce que le JOURNAL a sauvé — presque tout
+
+```
+bloc  75 :    0 deja ·  903 absentes ->    0 ajoutees,  300 infaisables   faisabilite   0,0 %
+bloc  15 :  140 deja ·  763 absentes ->  300 ajoutees,    0 infaisables   faisabilite 100,0 %
+bloc  14 :  109 deja ·  794 absentes ->  300 ajoutees,    0 infaisables   faisabilite 100,0 %
+bloc  13 :   66 deja ·  837 absentes ->  300 ajoutees,    0 infaisables   faisabilite 100,0 %
+bloc  12 :   59 deja ·  844 absentes ->  270 ajoutees,   30 infaisables   faisabilite  90,0 %
+bloc  11 :   54 deja ·  849 absentes ->    6 ajoutees,  294 infaisables   faisabilite   2,0 %
+bloc  10 :    0 deja ·  903 absentes ->    0 ajoutees,  300 infaisables   faisabilite   0,0 %
+bloc   9 :    0 deja ·  903 absentes ->    0 ajoutees,  300 infaisables   faisabilite   0,0 %
+bloc   8 :    0 deja ·  903 absentes ->    0 ajoutees,  300 infaisables   faisabilite   0,0 %
+bloc   7 :    0 deja ·  903 absentes ->    0 ajoutees,  300 infaisables   faisabilite   0,0 %
+bloc   6 :    0 deja ·  903 absentes ->    0 ajoutees,  300 infaisables   faisabilite   0,0 %
+```
+
+### 31.2 🔴 CORRECTION DE §30 — la DP n'est pas vide « aux blocs 9 et 10 », elle est vide À 10 ET EN DESSOUS
+
+J'avais écrit *« la DP ne produit rien aux blocs 9 et 10 »* sur la foi de deux nombres de blocs.
+Le relevé complet dit plus, et plus net :
+
+> **La DP ne produit QUE de 11 à 15 blocs. Elle est vide à 10 et en dessous, et à 75.**
+
+Donc **toute la moitié basse de la plage — blocs 1 à 10 — est peuplée exclusivement de
+variantes** : Rate, fusions, descendants ELITE, graines structurées. Et c'est là que vivent les
+197 déposables du run d'acceptation (blocs 5 à 9).
+
+**La faisabilité de la couverture s'effondre de façon monotone** : 100 % · 100 % · 100 % · 90 % ·
+**2 %** · 0 % · 0 % · … Le seuil est entre 12 et 11 blocs, soit entre **6,25** et **6,8** couches
+par bloc en moyenne.
+
+### 31.3 📏 Les scores de tête sans rampes, et l'écart avec les rampes
+
+```
+bloc   sans rampes   avec rampes (acceptation)   rapport
+  9      0,29605          0,08053                 x3,68
+  8      0,29446          0,08166                 x3,61
+  7      0,29664          0,08591                 x3,45
+```
+
+Un facteur **3,5 à 3,7** sur le score, soit **×1,9** sur le SEEL. Sans rampes, aucun de ces
+nombres de blocs n'approche la zone déposable.
+
+### 31.4 🟢 LA QUESTION EN SUSPENS DE §30.4 EST TRANCHÉE — sur l'agrégat
+
+**250 parents journalisés, à onze nombres de blocs différents, ZÉRO sous 100 % de plantage.**
+
+```
+bloc  6 : 22 parents, 0 sous 100 %      bloc 11 : 30 parents, 0 sous 100 %
+bloc  7 : 21 parents, 0 sous 100 %      bloc 12 : 30 parents, 0 sous 100 %
+bloc  8 : 22 parents, 0 sous 100 %      bloc 13 : 30 parents, 0 sous 100 %
+bloc  9 : 21 parents, 0 sous 100 %      bloc 14 : 30 parents, 0 sous 100 %
+bloc 10 : 21 parents, 0 sous 100 %      bloc 15 : 20 parents, 0 sous 100 %
+```
+
+**La falaise est donc intrinsèque à la graine 42 sans rampes, et non un artefact du run avec
+rampes.** ELITE n'a aucune prise, nulle part, à aucun nombre de blocs.
+
+🔴 **CE QUI RESTE OUVERT, et je ne le devine pas** : les parents sont journalisés avec leur
+`crash_rate` **agrégé**. Le détail par niveau de bruit — celui qui avait révélé 407 stratégies à
+gradient caché dans le run d'acceptation — n'est **pas** dans le journal, et l'artefact est vide.
+**Donc on ne sait pas si les blocs 5-9 portent un gradient caché sans rampes.** Il faut refaire
+le run.

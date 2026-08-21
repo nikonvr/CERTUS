@@ -604,7 +604,7 @@ changements simultanés ne s'attribuent pas. Ce qui est établi est *« élargir
 bloc, pas lequel de ses sept leviers porte l'effet.
 
 **2. La profondeur d'évaluation a changé aussi — 50 → 300 tirages.** `execution_mode = deep`
-pose `robustness_num_runs = 300` (`certus_strat_ui_state.py:1527`). 📏 Vérifiable dans les
+pose `robustness_num_runs = 300` (`certus_strat_ui_state.py`, `set_default_values`) — ⚠️ **sans numéro de ligne, et c'est délibéré** : c'est une **clé de dictionnaire**, donc le contrôle F ne sait pas la localiser et le renvoi se périmerait sans que rien ne le rattrape. Même raison qu'en §« `min_resolution` » de [`ETAT_IMPLANTATION.md`](ETAT_IMPLANTATION.md). 📏 Vérifiable dans les
 données : les cellules `fast` rendent des taux multiples de 2 % (1/50), la gagnante de la phase 2
 plante **4 fois sur 300** et le `crash_min` du run vaut **3/300 = 1,00 %**.
 ✅ **Mais ce biais joue CONTRE le résultat, donc il ne l'explique pas** : à 50 tirages, une
@@ -678,7 +678,7 @@ je craignais en montant l'audit — puisque le plafond n'agit nulle part.
 
 | | |
 |---|---|
-| `timeout=30.0` passé à la DP (`certus_strat_ranking.py:261`) | 🟢 **inerte aussi** — la fonction déclare `timeout` et `start_time` dans sa signature et ne les lit jamais dans son corps. Donc **aucun risque de troncature sur la cellule `dp_top_k = 200`** |
+| `timeout=30.0` passé à la DP (`certus_strat_ranking.py:296`) | 🟢 **inerte aussi** — la fonction déclare `timeout` et `start_time` dans sa signature et ne les lit jamais dans son corps. Donc **aucun risque de troncature sur la cellule `dp_top_k = 200`** |
 | `concurrent.futures.wait(futures, timeout=600)` (`certus_strat_workers.py:1402`) | 🟠 n'ampute **pas** les résultats — `shutdown(wait=True)` attend la fin — mais **cesse de journaliser les exceptions** au-delà de 600 s. Sur une cellule de 157 min, une erreur tardive est **muette** |
 
 **Et le fichier prêt à lancer** : `example/example_strat/JSON-strat-random75-x2-fabricable.json`.

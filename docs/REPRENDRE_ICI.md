@@ -1,87 +1,249 @@
-# 🔴 REPRENDRE ICI — état gelé le 2026-08-21 à 07:25
+# 🔴 REPRENDRE ICI — état gelé le 2026-08-21 à 13:55
 
 > Ce fichier dit **où on s'est arrêté** et **la commande exacte pour repartir**. Il est le
 > premier à lire, avant `CLAUDE.md`.
 
 ---
 
-## 0. ⚡ LA SITUATION EN CINQ LIGNES
+## 0bis. 🔒 CLÔTURE DE LA JOURNÉE DU 2026-08-21
 
-👤 veut que le code de production trouve sur `r75x2` à **2 nm** une stratégie au niveau de
-**SEEL 0,5692** — celui que la graine 77 atteint. À la graine 42 seule, il rend **0 déposable
-sur 1617**.
+👤 a arrêté la campagne après le run à la graine 101. **Rien ne tourne, rien n'est en attente.**
 
-### 🟢🟢 LA CIBLE EST ATTEINTE — mesuré le 2026-08-21 à 07:35
+### Ce qui est ACQUIS, et mesuré
 
 ```
-r75x2 @ 2 nm deep, graine 42, plage 9-11, avec les 12 plans de la graine 77 injectes
-    295 strategies · 72 DEPOSABLES · crash_min 0,33 %
-    MEILLEUR SEEL 0,5697   (cible 0,5692, ecart +0,1 % = INDISCERNABLE)
+r75x2 a 2 nm, config livree, plage COMPLETE, ZERO surcharge
+  graine  42 (a choisi les rampes)  ->  SEEL 0,5676 nm   197 deposables / 1810
+  graine  77 (source des rampes)    ->  SEEL 0,5692 nm   547 deposables / 2231
+  graine 101 (NAIVE)                ->  SEEL 0,5707 nm   (bloc 10)
 
-controle d'attribution, meme plage SANS injection : 63 strategies, 0 deposable, 100 %
+etendue sur trois graines : 0,55 %   face a un bruit de 2,59 % sur une DIFFERENCE de SEEL
+avant la livraison        : 0 deposable sur 1617, 100 % de plantage
 ```
 
-🔒 **Une seule chose diffère entre les deux runs.** L'injection est donc la cause, et
-l'attribution est faite.
+🔑 **La malédiction du vainqueur est bornée à +0,55 %**, là où le canal valait +12,9 % au 15/08.
+C'était la seule réserve sérieuse sur le chiffre, et la graine 101 — qui n'a pas participé au
+choix des rampes — la lève.
 
-🔑 **Les deux gagnantes diffèrent de DEUX NANOMÈTRES** — et celle de la graine 42 plante **moins** :
+### Ce qui reste OUVERT, et ce qui l'a été laissé délibérément
 
-```
-graine 77            450 610 616 685 647 700 511 688 704   SEEL 0,5692  crash 1,33 %
-graine 42, injectee  450 610 615 685 647 700 511 687 704   SEEL 0,5697  crash 1,00 %
-                             ^^^                 ^^^
-```
+| | |
+|---|---|
+| **graine 202 sur la config livrée** | non mesurée — arrêt demandé. Trois graines valent mieux que deux, quatre auraient valu mieux que trois |
+| 🔑 **`r75x2` NU aux graines 101 et 202** | **non mesurées, et c'est la question de fond restée sans réponse** : *la graine 42 est-elle malchanceuse, ou la 77 chanceuse ?* La règle de décision est écrite en §8.2 — la relire **avant** de lancer, pas après |
+| **un second composant** | 🔒 écarté par 👤 — voir §8.2bis, qui dit ce que cela interdit d'affirmer |
+| **l'anomalie plantage/bruit** | 8,72 contre 1 dans le mauvais sens. Ne menace pas la livraison (la porte prend le maximum, donc conservateur) mais on ne comprend pas le mode d'échec |
+| **les rampes vivent dans `reports/`** | une **configuration** ne devrait pas dépendre d'une **sortie**. Déplacement vers `example/` à faire — plus rien ne tourne, donc c'est sans risque maintenant |
 
-📌 **Le livrable est au disque** : `reports/plans/plans_s042_gagnantes_injectees.json`, les 12
-meilleures avec leurs λ par bloc.
+### 🟢 Ce qui a été CONSTRUIT aujourd'hui
 
-🔴 **MAIS LA PRODUCTION NE SAIT TOUJOURS PAS Y ALLER SEULE**, et c'est ce qui reste à faire :
+| | |
+|---|---|
+| **`scripts/generer_rampes.py`** | la méthode qui a livré le résultat, devenue **une commande**. 33 tests. 10 rampes sur **7 structures de blocs**, contre 12 quasi-doublons assemblés à la main |
+| **la couverture en λ** | forcer une λ admissible absente ; mécanisme mesuré (601 → 901 groupements, 0 infaisable aux blocs 13-15), **routée**, inerte par défaut, 36 tests. 🔴 **Elle n'est pas le levier de l'autonomie** — la DP ne produit rien sous 11 blocs |
+| **les instruments** | 66 scripts protégés du cp1252 **+ garde-fou**, l'artefact écrit **avant** la synthèse, les compteurs de couverture sur un canal **lu** |
+| **`scripts/probe_plantage_vs_sigma.py`** | le test du Piège 1, enfin fait |
 
-```
-plafond ELITE porte a 480 (10 parents sur 10 explores)  ->  0 deposable
-union de CINQ criblages a graines differentes           ->  0 deposable
-porte de plantage a borne de confiance (0,95)           ->  0 deposable
-queue Rate (mesuree les jours precedents)               ->  1 deposable, SEEL 0,686 (+20 %)
-```
+### 🔴 Ce qui a été RÉFUTÉ ou CORRIGÉ — la partie la plus utile
 
-**Quatre leviers de recherche, quatre zéros.** Ce qui a marché est une **rampe de lancement**
-venue d'un run à une autre graine — circulaire pour un produit. Voir §8.
+Neuf affirmations retirées en une journée, dont **sept étaient les miennes** :
 
-📌 Le plan est [`PLAN_PRODUCTION_2026-08-20.md`](PLAN_PRODUCTION_2026-08-20.md) — ses **§15 à
-§22** portent tout ce qui est récent. Le chantier Rate est [`CHANTIER_RATE.md`](CHANTIER_RATE.md).
+| affirmation | verdict |
+|---|---|
+| « ELITE ne compose jamais deux mouvements » | ❌ elle en compose deux **entre rondes** ; la gagnante est à 1 pas de λ + 1 pas de frontière |
+| « l'inversion crash/bruit est du bruit de comptage » | ❌ **532 contre 61** — systématique |
+| « la contrainte ne porte qu'une valeur » | ❌ 38 valeurs, mais aux blocs 10-15, **disjoints** des déposables |
+| « la DP est vide aux blocs 9-10 » | ❌ trop étroit — **vide à 10 et en dessous** |
+| « les 547 déposables de la graine 77 = une lignée » | ❌ **217 jeux de λ** ; le 1 venait d'un artefact sans plans |
+| « restreindre la plage ne perd rien » | ❌ elle **vide la DP** |
+| `use_margin_ranking` comme levier | ❌ marges **1 500×** hors du domaine validé |
+| le garde `halving` comme coupable | ❌ même taux par ronde dans le run qui **réussit** |
+| `SMART_MERGE` comme cible | ❌ **zéro `SMART_MERGE`** chez la graine qui réussit |
+
+🔑 **Et le diagnostic qui remplace tout cela, appuyé sur une géométrie mesurée** : aux nombres de
+blocs qui décident, la contrainte est **binaire** — 100 % de plantage aux trois niveaux de bruit,
+ou déposable, rien entre les deux. **Le paysage n'est pas une colline sans pente, c'est une
+falaise.** ELITE est un grimpeur : 0 candidate retenue sur 2472 sans rampes, 388 sur 6343 avec.
+Les rampes n'apportent pas de la diversité, elles apportent de la **faisabilité** — elles
+atterrissent de l'autre côté.
+
+Cela **ferme toute la classe des correctifs de classement**, pour une raison géométrique et non
+par essais successifs. Et il ne reste que trois voies, dont une seule est générale : **changer de
+réalisation**, c'est-à-dire le multiseed de génération — union sur K graines, faisabilité exigée
+sur **toutes**.
 
 ---
 
-## 1. 🔴 LA PREMIÈRE CHOSE À FAIRE — compter où 685 nm disparaît
+## 0. ⚡ LA SITUATION EN CINQ LIGNES
 
-C'est la seule voie qui rende la production **autonome**, et elle est bon marché.
+👤 voulait que le code de **production** trouve sur `r75x2` à **2 nm** des SEEL « de l'ordre de
+0,57 ou moins ». À la graine 42 seule, il rendait **0 déposable sur 1617**, toutes à 100 % de
+plantage.
 
-📏 **Le fait qui la commande** : les 72 déposables surveillent **toutes** la couche 35 à
-**685 nm**, et cette λ est **absente des 1617 stratégies de la graine 42**, à toutes les couches.
-Elle est en revanche présente dans **711 stratégies non-ELITE de la graine 77**. Or la **Phase A
-est identique aux deux graines** et la **DP est déterministe**.
+### 🟢🟢 C'EST FAIT — test d'acceptation passé le 2026-08-21 à 12:58
 
-⇒ **685 nm est offerte en Phase A et perdue plus loin.** Il suffit de compter, étage par étage,
-combien de candidates la portent : minage → DP → criblage → héritage. **Un compteur par étage,
-aucune physique touchée.**
+```
+composant  example/example_strat/JSON-strat-random75-x2-fabricable-2nm.json
+fente 2 nm · graine 42 · mode deep · PLAGE DE BLOCS COMPLETE
+config.overrides_tag = None          <- la preuve du ZERO surcharge
 
-⚠️ **L'artefact d'observabilité ne suffit pas** : `reports/STRAT_observability_*.json` donne des
-**comptes** (couche 36 : `offered 185, forbidden_crash 92, survivors 93`, meilleur à **470 nm**)
-mais **pas la liste des λ survivantes**. C'est le même instrument manquant que celui du §22.3 du
-plan — **une liste de λ à toujours afficher** — et il sert les deux besoins.
+197 deposables sur 1810        (avant : 0 sur 1617)
 
-### 🔑 Ce que les 12 plans injectés ont vraiment fait
+ rg blocs   score    SEEL     crash   origine
+  1     9  0,08053  0,5676   1,67 %   ELITE   <- id 900000044
+  2     9  0,08113  0,5697   1,33 %   ELITE
+  4     9  0,08161  0,5714   1,00 %   ELITE
+  6     8  0,08166  0,5715   1,00 %   ELITE
 
-Ils sont **absents de l'artefact** : ils ont été **éliminés**. Ce ne sont donc pas eux qui
-réussissent, ce sont leurs **descendants ELITE**, à 9 et 10 blocs.
+deposables par nombre de blocs : {5: 13, 6: 46, 7: 46, 8: 49, 9: 43}
+artefact : reports/blocs_vs_plantage_r75x2-2nm_deep_s042.json
+```
 
-> **Les stratégies de la graine 77 ne sont pas des solutions transférables : ce sont des RAMPES
-> DE LANCEMENT.** Elles plantent, et elles sont assez près d'une région saine pour qu'ELITE, en
-> partant d'elles, l'atteigne en **deux nanomètres**.
+**La gagnante, en clair** — et le bloc qui manquait y est :
 
-C'est exactement le mécanisme du §18 du plan : la mutation d'ELITE est **déterministe, locale et
-non dirigée**. Tout dépend d'**où on la fait partir** — pas de sa portée, ni de son plafond, ni du
-nombre de graines.
+```
+ 0-8  @ 450 nm       33-52 @ 685 nm   <- LA lambda absente des 1617 natives
+ 8-25 @ 610 nm       52-57 @ 647 nm
+25-33 @ 616 nm       57-63 @ 700 nm · 63-65 @ 511 · 65-68 @ 687 · 68-75 @ 704
+```
+
+🔑 **LA CONDITION EST DANS LA MÊME PHRASE QUE LE CHIFFRE, ET ELLE Y RESTE.** Ce résultat vient
+**avec les rampes de lancement** déclarées dans la configuration du composant
+(`injected_strategies`). C'est bien de la production — la configuration est livrée, le run n'a
+aucune surcharge — mais **ce n'est pas une découverte autonome** : l'information des rampes
+descend de la graine 77. Qui citera « 0,5676 nm » sans cette condition dira faux.
+
+⚠️ L'écart à la cible vaut 0,3 % et le bruit sur une différence de SEEL vaut 2,59 % : c'est une
+**égalité**, jamais une supériorité.
+
+### 🔑 Le mécanisme, mesuré et non supposé
+
+Les parents qu'ELITE reçoit au bloc 9 portent les bonnes λ et **plantent tous à 100 %**. La
+gagnante est un **descendant**, à **deux mouvements** de sa rampe :
+
+```
+bloc 2 :  rampe (25, 33, 615)  ->  gagnante (25, 33, 616)     UN pas de λ
+bloc 3 :  rampe (33, 53, 685)  ->  gagnante (33, 52, 685)     UN pas de frontiere
+
+barre de selection : ronde 1  0,268856  ->  ronde 2  0,077943    (facteur 3,4)
+```
+
+Les rampes apportent les λ ; **ELITE compose deux pas à travers deux rondes**. ⚠️ Cela corrige
+une phrase de §24.3 du plan qui disait qu'ELITE « ne compose jamais deux mouvements » — faux.
+Ce qui ferme la voie native n'est pas l'impossibilité de composer, c'est que **chaque pas
+intermédiaire plante**, donc rien n'est retenu pour bâtir dessus.
+
+---
+
+## 1. 🔴 LA PREMIÈRE CHOSE À FAIRE — borner la malédiction du vainqueur
+
+**Ce n'est plus la découverte autonome. C'est la solidité du chiffre livré.**
+
+🔴 **Le résultat est circulaire, et sur DEUX plans distincts :**
+
+```
+graine 77 trouve la famille
+  -> injection des plans de la graine 77 dans la graine 42   -> 72 deposables
+    -> je garde les 12 MEILLEURES de ces 72                  -> les rampes livrees
+      -> remesure a la graine 42                             -> 197 deposables, 0,5676
+```
+
+1. **L'information vient de la graine 77.** Assumé, écrit, et sans conséquence sur la validité
+   du chiffre.
+2. 🔴 **Sélection et évaluation partagent la graine 42.** Les 12 rampes ont été choisies sur des
+   mesures à la graine 42, puis remesurées à la graine 42. C'est **le canal de malédiction du
+   vainqueur, chiffré à +12,9 % le 15/08**. Le 0,5676 peut donc être biaisé vers le bas, et
+   **aucune borne n'existe**.
+
+**La commande qui tranche**, et elle est bon marché — une graine qui n'a pas servi à choisir :
+
+```bat
+set CERTUS_PROBE_TAG=accept101
+C:\envs\certus\Scripts\python.exe scripts\probe_blocs_vs_plantage.py r75x2-2nm deep 0 0 2.0 0 101
+```
+
+| ce qu'elle rend | ce qu'il faut en conclure |
+|---|---|
+| SEEL de tête vers **0,57** | le chiffre est **solide**, la sélection n'a pas triché |
+| SEEL vers **0,60 et plus** | une part du 0,5676 était du **biais de sélection**, et il faut republier |
+| **0 déposable** | les rampes ne transfèrent pas d'une graine à l'autre — ce serait le résultat le plus important de la série |
+
+---
+
+## 1bis. 🔵 LA VOIE AUTONOME — où elle en est
+
+La **couverture en λ** est le premier levier qui ne cherche pas *autour* de ce qui existe : elle
+**force** une λ admissible absente des `top_k` groupements en restreignant une couche de la
+`cost_map` à cette seule λ, et laisse la DP **re-optimiser le reste du plan**. C'est la
+différence avec une mutation ELITE, qui casse la cohérence du plan.
+
+📌 Écrite, inerte par défaut (`enable_wl_coverage`), **routée** depuis un fichier de
+configuration, gardée par **36 tests**. §25 du plan porte le détail, dont le défaut de plan
+d'identifiants qu'elle a fait trouver (offsets 0/100/200 saturés à `top_k = 100` en DEEP).
+
+### 🟢 LE MÉCANISME EST CONFIRMÉ EN PRODUCTION — mesuré le 2026-08-21, run `couvfull`
+
+Plage de blocs **complète**, composant `r75x2` (le fichier de base, **sans rampes**),
+`enable_wl_coverage=1` pour seule surcharge. Le contrôle est le run à plage complète sans
+couverture : **0 déposable sur 1617**.
+
+```
+bloc  15  140 λ deja employees,  763 absentes -> 300 ajoutees,   0 infaisable
+bloc  14  109 λ deja employees,  794 absentes -> 300 ajoutees,   0 infaisable
+bloc  13   66 λ deja employees,  837 absentes -> 300 ajoutees,   0 infaisable
+bloc  12   59 λ deja employees,  844 absentes -> 270 ajoutees,  30 infaisables
+
+bloc 15 : la population passe de 601 a 901 groupements  (+300, exactement les ajouts comptes)
+```
+
+| ce qui est établi | |
+|---|---|
+| **forcer une λ est faisable** | 0 infaisable sur 900 tentatives aux blocs 15, 14, 13 |
+| **la passe atteint le calcul** | 601 → 901 groupements, soit **exactement** les 300 ajouts comptés |
+| **ses produits sont compétitifs** | au bloc 14, `couvfull` rend **0,29479** contre **0,29482** pour le run d'acceptation : une stratégie **issue de la couverture** traverse le criblage et sort première de son nombre de blocs |
+| **le coût est mesuré** | 300 appels DP en ~1 min 42 par nombre de blocs |
+
+🔑 **Et une tendance qui joue en notre faveur** : le nombre de λ que le k-meilleurs emploie
+s'effondre quand les blocs diminuent — 140, 109, 66, 59 — donc l'élargissement relatif **grandit**
+en approchant du bloc 9, celui où vit la famille à SEEL 0,5676. ⚠️ En contrepartie les premières
+infaisabilités apparaissent au bloc 12 : moins de blocs, plus de couches par bloc, contrainte
+plus dure. Ce n'est pas un défaut de la passe, c'est la géométrie du problème.
+
+🔴 **CE QUI N'EST PAS RÉPONDU.** Faire entrer une λ dans la population et produire une stratégie
+**déposable** sont deux événements, et le second ne découle pas du premier. Les blocs 15 à 12
+restent tous à **100 % de plantage**. Le nombre de blocs qui décide est **9**.
+
+### ⚠️ Le premier essai a été perdu, et pour trois défauts d'instrument
+
+| # | défaut | ce qu'il a coûté |
+|---|---|---|
+| 1 | le logger `ThinFilm` du mineur est **MUET** — sa ligne `info` inconditionnelle apparaît **zéro fois** dans les journaux, alors que le logger `W{n_blk}` du worker passe | impossible de distinguer « la passe n'a pas tourné » de « chaque λ forcée était infaisable ». Piège 6 |
+| 2 | **troisième plantage cp1252**, dans `synthese()` | l'artefact d'un run de 50 min **jamais écrit** |
+| 3 | les runs à **plage restreinte** minent 1 à 2 stratégies par nombre de blocs, contre 601 à plage complète | le contrôle négatif `ctrl911sansinj` est bien plus mince que ses « 63 stratégies » |
+
+🟢 **Les trois sont réparés** (`8118721`) : 66 scripts protégés plus un garde-fou qui refuse tout
+nouveau cas, l'artefact s'écrit **avant** la synthèse, et les compteurs de couverture remontent
+par le logger du worker — avec un `logger.error` si le drapeau est armé et les compteurs vides.
+
+> **Un instrument dont la sortie n'atteint pas le résultat n'est pas un instrument.**
+
+---
+
+## 1ter. 🔴 L'ANOMALIE À NE PAS OUBLIER — le plantage décroît quand le bruit croît
+
+```
+sur les 197 deposables   :  125 DECROISSANTES ·  61 croissantes ·   11 plates
+sur les 1810 strategies  :  532 DECROISSANTES ·  61 croissantes · 1217 plates
+```
+
+**8,7 contre 1 dans le mauvais sens, donc systématique.** ⚠️ J'avais d'abord écarté cela par un
+argument de Poisson (« 5 plantages contre 1 et 1 ») — **retiré** : c'était substituer un
+raisonnement sur le bruit au test que le Piège 1 prescrit.
+
+**Ce que ça change** : la porte prend le **maximum** des trois niveaux, donc le `1,67 %` publié
+vient du bruit **le plus faible** — lecture conservatrice, le verdict « déposable » n'est pas
+menacé. **Ce que ça ne change pas** : on ne comprend plus le mode d'échec, et cela touche toute
+mesure de plantage du projet, murs à 100 % compris. Le balayage σ→0 reste à faire.
 
 ---
 
@@ -95,6 +257,9 @@ nombre de graines.
 | **`[GATE]`** — combien de fois la borne de confiance change le verdict | `0117445` |
 | surcharges génériques de la sonde, **étiquette obligatoire** | `1f39cdd` |
 | `scripts/lire_multiseed.py` — et il **refuse de conclure** sur du partiel ou du dégénéré | `67c321b` |
+| **`enable_wl_coverage`** — forcer une λ admissible absente des `top_k`, la DP re-optimise le reste. Routée, 36 tests | `9590be2` |
+| **la livraison `r75x2-2nm`** — 197 déposables, SEEL 0,5676, zéro surcharge | `2bbab58` |
+| **les instruments** — 66 scripts protégés du cp1252 + garde-fou, artefact écrit **avant** la synthèse, compteurs de couverture sur un canal **lu** | `8118721` |
 
 🔒 **Tous inertes par défaut, chemin d'avant au bit.** Chacun a ses tests, et les symboles sont
 absents du commit précédent — donc ils échouent tous sur le code d'avant.
@@ -111,9 +276,28 @@ C:\envs\certus\Scripts\python.exe scripts\probe_blocs_vs_plantage.py r75x2 deep 
 par une surcharge rendraient sinon deux artefacts indiscernables. ⚠️ Le parseur découpe sur les
 **virgules** — une liste de graines s'écrit donc `screen_seed_list=42;77;101`.
 
-📌 Et la plage de blocs se resserre par les deux diviseurs, ce qui divise le coût sans rien
-perdre : `iter_divider_start = 75/min_blocs`, `iter_divider_end = 75/max_blocs`. ⚠️ Les blocs
-**1, 2 et 75 sont forcés** par le code, on ne peut pas les exclure.
+🔴 **NE RESSERRE PAS LA PLAGE DE BLOCS POUR ÉCONOMISER DU TEMPS.** Cette ligne disait
+*« ce qui divise le coût sans rien perdre »* — **c'est faux, et mesuré le 2026-08-21** :
+
+```
+plage RESTREINTE  ->  Mining found 1 a 2 par nombre de blocs
+                      compteur de couverture : « 0 λ deja employees »
+                      donc AUCUN groupement rendu par la DP -- les 1 a 2 strategies
+                      viennent des graines structurees
+plage COMPLETE    ->  le meme bloc 9 en mine 601
+```
+
+**Restreindre la plage vide le solveur.** Toute la série de runs 9-11 du 21 août ne mesurait
+donc pas la recherche. La cause exacte n'est pas établie : les libellés d'interface parlent de
+**diviseurs de complexité** (*« divides the iteration count »*), pas de sélection de plage — et
+le détournement fonctionne bien pour choisir les blocs (`75/8,3333 = 9`) tout en cassant la DP.
+
+🔒 **Règle : toute mesure comparative de la RECHERCHE se fait à plage complète.** Une comparaison
+à plage restreinte reste valide si elle est **à une seule variable** — c'est le cas du contrôle
+injection oui/non — mais elle ne dit rien de la recherche. Consigné en §24-54 de `CLAUDE.md` et
+§27 du plan de production.
+
+⚠️ Les blocs **1, 2 et 75 sont forcés** par le code, on ne peut pas les exclure.
 
 ---
 
@@ -250,27 +434,76 @@ la passe complète **renote tout** sur la réalisation du run. Un test l'épingl
 
 ---
 
-## 8. 🔵 CE QUI SUIT, PAR RENTABILITÉ
+## 8. 🔵 CE QUI SUIT, PAR RENTABILITÉ — révisé le 2026-08-21 à 15:00
+
+⚠️ **La version précédente de cette section est périmée** : trois de ses cinq actions sont
+faites, et sa « voie B » a reçu sa réponse. Ce qui suit la remplace.
+
+### 8.1 ✅ Ce qui est FAIT, et qu'il ne faut pas refaire
+
+| action d'alors | ce qu'il en est |
+|---|---|
+| **1. toujours afficher la liste des λ** | ✅ la troncature du `[ELITE-WL]` est retirée (`8f7f14b`). Et la question qu'elle devait trancher — *où 685 nm disparaît-elle* — a sa réponse : **nulle part, elle n'entrait jamais**. Le k-meilleurs ne la sélectionne pas, et la couverture la **force** |
+| **4. remonter `crash_rates_by_noise`** | ✅ dans l'artefact, et `scripts/probe_plantage_vs_sigma.py` l'exploite. Il a trouvé bien plus que prévu — voir §1ter |
+| **5. rejouer l'injection en plage pleine** | ✅ c'est le **test d'acceptation** de §0 : 197 déposables, SEEL 0,5676, zéro surcharge |
+| **2. compter par étage** | 🟠 **à moitié** : le minage se compte maintenant (compteurs de couverture), et cela a révélé que la DP est **vide** à plage restreinte. Le criblage et l'héritage ne se comptent toujours pas |
+
+### 8.2 🔵 Ce qui reste, par rentabilité décroissante
 
 | # | action | coût | ce qu'elle décide |
 |---|---|---|---|
-| **1** | **la liste de λ à toujours afficher** (`_format_wl_histogram`) + le même dans l'observabilité de Phase A | ~1 h | 🔑 **où 685 nm disparaît-elle ?** C'est la seule voie vers une production **autonome** |
-| **2** | compter par étage : minage → DP → criblage → héritage | 1 run | l'étage à réparer, sans plus rien deviner |
-| **3** | graines de génération **disjointes** de la notation | gratuit | ferme le canal de malédiction du vainqueur (mon run a généré ET noté sur 42) |
-| **4** | remonter `crash_rates_by_noise` à côté de `crash_rate` | ~30 min | la porte juge au **pire des trois niveaux**, dont un à **2× le bruit réel**, et rien ne dit le taux au bruit **mesuré** |
-| **5** | rejouer l'injection en **plage pleine** (1-15 + 75) | ~2 h | confirme le résultat dans les conditions de production, sans restriction |
+| **1** | **rejouer la config livrée aux graines 101 et 202** | 2 × 2,5 h, **enchaîné** | 🔑 **borne la malédiction du vainqueur sur le 0,5676.** Les 12 rampes ont été **choisies** sur des mesures à la graine 42 et **remesurées** à la graine 42 — canal chiffré à **+12,9 %** le 15/08. Si le SEEL tient, le chiffre est solide |
+| **2** | **lire `couvfull` au bloc 9** | en cours | la découverte **autonome**. Le mécanisme est acquis (§1bis) ; l'issue non |
+| **3** | **graines de génération disjointes de la notation** | gratuit | ferme le même canal, côté recherche. Mon run multiseed générait sur `42;77;101;202;303` et notait à 42 |
+| **4** | **balayer `tp_hysteresis_factor` à bruit fixé** | 1 run | sépare les deux lectures de l'anomalie de §1ter : si le taux suit le facteur et non le bruit, le seuil est la cause |
+| **5** | déplacer les rampes de `reports/` vers `example/` | ~15 min | une **configuration** ne doit pas dépendre d'une **sortie**. ⚠️ **Après** la chaîne de mesures : les runs enchaînés lisent le chemin actuel et lèveraient |
+| ~~**6**~~ | ~~garde-fou sur un second composant — 75c à 1 nm~~ | — | 🔒 **ÉCARTÉ PAR 👤 le 2026-08-21** : *« non, on reste sur le 75cx2 »*. Voir l'encadré ci-dessous — la décision est légitime, mais elle **borne ce qu'on peut affirmer** |
+| **7** | compter le criblage et l'héritage | ~1 h | achève l'action 2 d'alors. À faire quand un étage sera suspect, pas avant |
 
-🔴 **La circularité qu'il faut casser, et c'est le vrai sujet** : l'injection marche, mais sa
-source de bons plans est aujourd'hui **un run à une autre graine**. Pour un produit, ça ne
-s'auto-amorce pas. Trois voies, et elles ne se valent pas :
+### 8.2bis 🔒 LE PÉRIMÈTRE EST FIXÉ À `r75x2` — et voici ce que cela interdit de dire
 
-| voie | ce qu'elle vaut |
+> 👤 *« non, on reste sur le 75cx2 »* (2026-08-21)
+
+**La décision est légitime** : `r75x2` est l'étalon courant, et disperser l'effort sur un second
+composant avant d'avoir consolidé celui-ci serait un mauvais arbitrage. Mais elle a une
+conséquence qu'il faut écrire une fois pour ne pas la découvrir plus tard :
+
+🔴 **Aucune affirmation de GÉNÉRALITÉ n'est permise.** Tant qu'un second composant n'a pas été
+mesuré, tout ce qui est établi porte sur **un empilement, à une fente**. Les formulations
+correctes :
+
+| ✅ défendable | 🔴 interdit |
 |---|---|
-| **A — bibliothèque de rampes** | 🟢 marche, mesuré. Mais il faut d'où venir |
-| **B — comprendre pourquoi 685 nm est inatteignable** | 🔑 la seule qui rende la production autonome. C'est l'action 1 |
-| **C — beaucoup plus de graines** | 🟠 l'union ne sature pas à 5, donc c'est plausible — mais rien ne dit que 685 nm soit à portée de tirage |
+| « sur `r75x2` à 2 nm, la production trouve SEEL 0,57 » | « la production trouve SEEL 0,57 » |
+| « la méthode des rampes a fonctionné sur `r75x2` » | « la méthode des rampes fonctionne » |
+| « à trois graines, le résultat tient » | « le résultat est robuste » |
 
-⚠️ **Ce qui n'a PAS tourné, et c'est un arbitrage assumé** : relâcher bruit et dérive en
-génération. Le levier est bien visé — il attaque les 84 % de rejets — mais tout ce qu'il trouve
-doit être **re-jugé au nominal**, et le juge au nominal était en panne. `injected_strategies` lève
-maintenant cet obstacle : **c'est la première chose à rouvrir avec 👤.**
+⚠️ Et le rappel de la règle du projet, qui n'est pas abrogée mais **suspendue par choix** :
+*un correctif qui ne marche que sur `r75x2` à 2 nm n'est pas un correctif.* Le random75 reste le
+seul composant sans cavité, sans miroir et sans périodicité — donc le seul qui puisse un jour
+dire si une règle est générale. **La porte n'est pas fermée, elle n'est pas ouverte maintenant.**
+
+📌 Corollaire pratique : `scripts/generer_rampes.py` est écrit pour n'importe quel composant de
+`COMPOSANTS`, mais il n'a tourné que sur `r75x2`. Sa généralité est **une intention de
+conception, pas une mesure**.
+
+### 8.3 🔴 La circularité — ce qui a changé, et ce qui n'a pas changé
+
+**Ce qui n'a pas changé** : la source des bons plans est un run à une **autre graine**. Pour un
+produit, cela ne s'auto-amorce pas.
+
+**Ce qui a changé** : la voie B n'est plus une question ouverte mais un **mécanisme écrit et
+mesuré**. On sait *pourquoi* 685 nm n'entrait pas — le k-meilleurs prend les 100 groupements les
+moins chers, et cette λ n'en fait jamais partie — et la couverture la fait entrer, avec la DP qui
+re-optimise le reste du plan autour d'elle.
+
+| voie | ce qu'elle vaut aujourd'hui |
+|---|---|
+| **A — bibliothèque de rampes** | 🟢 **livrée et mesurée.** Marche, mais spécifique au composant |
+| **B — la couverture en λ** | 🟢 **mécanisme acquis**, 🔵 issue en cours de mesure. C'est la seule voie qui rende la production autonome **sur un composant neuf** |
+| **C — beaucoup plus de graines** | 🟠 l'union ne sature pas à 5, mais rien ne borne le `K` nécessaire, et 5 lignées distinctes n'avaient produit aucune 685 nm |
+
+⚠️ **Un arbitrage toujours assumé** : relâcher bruit et dérive **en génération** n'a pas été
+essayé. Le levier est bien visé — il attaque les 84 % de rejets — mais tout ce qu'il trouverait
+doit être **re-jugé au nominal**. `injected_strategies` lève l'obstacle qui l'empêchait : c'est à
+rouvrir avec 👤 si la couverture échoue.

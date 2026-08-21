@@ -25,6 +25,7 @@ from certus.core.certus_strat_ranking import (
     _apply_strategy_ranking,
     _apply_family_diversity_if_enabled,
     _apply_block_diversity_if_enabled,
+    _apply_wl_diversity_if_enabled,
     _resolve_available_wavelengths,
     _resolve_monitoring_wavelength_grid,
     _max_strategy_id,
@@ -499,6 +500,18 @@ def _rank_and_filter_strategies(
         logger=logger,
     )
     strategies_results = _apply_block_diversity_if_enabled(
+        strategies_results=strategies_results,
+        params=params,
+        logger=logger,
+    )
+    # 🔑 LA DIVERSITE EN λ VIENT EN DERNIER, ET C'EST VOULU.
+    #
+    # Les deux passes precedentes diversifient la FAMILLE d'origine et la PARTITION de blocs.
+    # 📏 Mesure du 2026-08-21 : elles laissent passer cinq parents d'ELITE portant UN SEUL jeu
+    # de λ, parce qu'elles diversifient des axes orthogonaux a celui ou ELITE se deplace. La
+    # passe λ agit donc apres elles, sur la tete qu'elles ont deja formee.
+    # 🔒 Inerte par defaut : sans `enable_wl_diversity`, chemin d'avant au bit.
+    strategies_results = _apply_wl_diversity_if_enabled(
         strategies_results=strategies_results,
         params=params,
         logger=logger,

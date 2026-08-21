@@ -593,6 +593,85 @@ def _apply_block_diversity(
     return diversified_head + tail
 
 
+def _wl_set(blocks: list[dict[str, Any]]) -> frozenset:
+    """The distinct control wavelengths a strategy uses. ELITE moves in this space."""
+    return frozenset(
+        float(b["wavelength"])
+        for b in (blocks or [])
+        if isinstance(b, dict) and b.get("wavelength") is not None
+    )
+
+
+def _apply_wl_diversity(
+    ordered_results: list[dict[str, Any]],
+    top_k: int = 10,
+) -> list[dict[str, Any]]:
+    """Spread the head over WAVELENGTH space, greedily, by max-min Jaccard distance.
+
+    WHY THIS EXISTS, AND WHY IT IS NOT `_apply_block_diversity`. Measured 2026-08-21 on
+    `r75x2` at 2 nm, seed 42, with the `[ELITE-PARENTS]` instrument -- the ten strategies
+    ELITE actually starts from, at ten blocks:
+
+        5 parent lines  ->  ONE distinct set of wavelengths
+
+    They were near-duplicates of a single lineage: drop a block, duplicate a block, and that
+    is all. `elite_parent_top_k` bought ten COPIES, not ten DIRECTIONS. `_apply_block_diversity`
+    does not prevent it -- it diversifies the block PARTITION, an orthogonal axis -- and this
+    is the whole reason four widening levers returned zero depositable strategies: a bigger
+    cap, a wider span and five seeds all explore harder AROUND THE SAME POINT.
+
+    📏 And the headroom is measured, on the same run. Phase A declares a MEDIAN of 86
+    admissible wavelengths per layer; the search produces 14 to 29 distinct ones per block
+    count, and 65 of the grid's 301 across its entire 1617-strategy population. It spends
+    104 to 160 strategies per block count on roughly FIVE TO SEVEN DUPLICATES PER WAVELENGTH.
+    So the budget for spread is already being spent -- on redundancy.
+
+    🔑 WHY GREEDY MAX-MIN AND NOT A SIGNATURE QUOTA. A quota keyed on the wavelength set
+    would have kept 9 of those 21 nine-block parents -- better than 21, and still all from
+    one lineage, because they differ by a single wavelength out of nine. Equality does not
+    separate near-duplicates; DISTANCE does. Max-min needs no threshold, so it invents no
+    parameter -- `CLAUDE.md` §19.
+
+    🔒 RANK IS STILL RESPECTED. The best-ranked candidate is taken first and always kept, so
+    the head never loses its leader; each subsequent pick is the candidate FARTHEST from what
+    is already chosen. Everything not picked keeps its original order in the tail, so nothing
+    is lost -- only reordered.
+
+    ⚠️ WHAT THIS DOES NOT DO. It cannot introduce a wavelength the population does not
+    contain. 📏 On this component the winning family needs 450 nm, which appears in ZERO of
+    the 1617 strategies -- so spreading the parents is necessary and NOT sufficient, and
+    saying otherwise would be the mistake this repository keeps paying for.
+    """
+    if top_k <= 0 or len(ordered_results) <= 1:
+        return ordered_results
+    k = min(int(top_k), len(ordered_results))
+
+    sets = [_wl_set((it.get("strategy") or {}).get("blocks", [])) for it in ordered_results]
+
+    def _distance(a: frozenset, b: frozenset) -> float:
+        """Jaccard distance. Two empty sets are identical, not infinitely far apart."""
+        if not a and not b:
+            return 0.0
+        return 1.0 - len(a & b) / len(a | b)
+
+    chosen = [0]                              # le mieux classe, toujours garde
+    restants = set(range(1, len(ordered_results)))
+    while len(chosen) < k and restants:
+        # le candidat le plus LOIN de ce qui est deja pris -- max-min
+        best_idx, best_d = None, -1.0
+        for i in sorted(restants):
+            d = min(_distance(sets[i], sets[j]) for j in chosen)
+            if d > best_d:
+                best_idx, best_d = i, d
+        chosen.append(best_idx)
+        restants.discard(best_idx)
+
+    pris = set(chosen)
+    tete = [ordered_results[i] for i in chosen]
+    queue = [it for i, it in enumerate(ordered_results) if i not in pris]
+    return tete + queue
+
+
 def _blocks_signature(blocks: list[dict[str, Any]]) -> tuple:
     sig = []
     for blk in blocks:

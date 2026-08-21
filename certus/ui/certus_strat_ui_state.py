@@ -1344,6 +1344,36 @@ class CertusStratStateMixin:
             "injected_strategies": str(
                 getattr(self, "_loaded_config", {}).get("injected_strategies", "")
             ),
+            # 🔑 DIVERSITE EN λ DU VIVIER DE PARENTS -- l'axe ou ELITE se deplace.
+            #
+            # 📏 Mesure du 2026-08-21 sur r75x2 a 2 nm, graine 42, avec l'instrument
+            # [ELITE-PARENTS] : les CINQ parents d'ELITE a dix blocs portaient UN SEUL jeu de
+            # λ. C'etaient des quasi-doublons d'une lignee -- on retire un bloc, on en duplique
+            # un, et c'est tout. `elite_parent_top_k` achete dix COPIES, pas dix DIRECTIONS,
+            # et `enable_block_diversity` ne l'empeche pas : il diversifie la PARTITION de
+            # blocs, un axe orthogonal a celui ou ELITE se deplace.
+            #
+            # C'est ce qui explique que quatre leviers d'elargissement aient rendu ZERO
+            # deposable : un plafond plus grand, une portee plus large et cinq graines
+            # cherchent tous plus fort AUTOUR DU MEME POINT.
+            #
+            # 📏 Et le budget de l'etalement est deja depense -- en redondance. La Phase A
+            # declare une MEDIANE de 86 λ admissibles par couche ; la recherche en produit 14
+            # a 29 par nombre de blocs, soit ~5 a 7 strategies PAR λ.
+            #
+            # 🔒 INERTE PAR DEFAUT : sans la cle, chemin d'avant AU BIT.
+            # ⚠️ Et elle ne fabrique rien : elle CHOISIT. Sur ce composant la famille gagnante
+            # exige 450 nm, absente des 1617 strategies -- etaler est necessaire et NON
+            # suffisant.
+            "enable_wl_diversity": _config_flag(
+                getattr(self, "_loaded_config", {}), "enable_wl_diversity", False
+            ),
+            # 🔴 ZERO, JAMAIS None. `params.get(cle, defaut)` rend None quand la cle EXISTE
+            # avec la valeur None -- il ne retombe PAS sur le defaut. Un `int(None)` leverait,
+            # et seulement sur le chemin arme, donc invisible a la suite de tests.
+            "wl_diversity_top_k": int(
+                _config_float(getattr(self, "_loaded_config", {}), "wl_diversity_top_k", 0.0)
+            ),
             "rate_tail_sweep": _config_list_int(
                 getattr(self, "_loaded_config", {}), "rate_tail_sweep"
             ),

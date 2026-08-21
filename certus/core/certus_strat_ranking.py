@@ -39,6 +39,8 @@ from certus.utils.certus_strat_context import (
     _origin_family,
     _apply_family_diversity,
     _apply_block_diversity,
+    _apply_wl_diversity,
+    _wl_set,
     _blocks_signature,
     _extract_rmse_p95_for_noise,
 )
@@ -915,6 +917,40 @@ def _apply_block_diversity_if_enabled(
             max_per_partition=diversity_max_per_partition,
         )
     return strategies_results
+
+
+def _apply_wl_diversity_if_enabled(
+    strategies_results: list[dict[str, Any]],
+    params: dict[str, Any],
+    logger: logging.Logger,
+) -> list[dict[str, Any]]:
+    """Spread the head over WAVELENGTH space. 🔒 INERTE PAR DEFAUT, chemin d'avant au bit.
+
+    Voir `_apply_wl_diversity` pour la mesure qui la motive : les cinq parents d'ELITE a dix
+    blocs portaient UN SEUL jeu de λ, et c'est ce qui explique que quatre leviers
+    d'elargissement aient rendu zero deposable -- ils cherchaient plus fort AUTOUR DU MEME
+    POINT.
+    """
+    if not bool(params.get("enable_wl_diversity", False)):
+        return strategies_results
+    # 🔴 `or` ET NON `get(cle, defaut)`. Une cle presente a None ou a 0 doit retomber sur le
+    # reglage des blocs, et `get` ne le fait pas : il ne retombe que si la cle est ABSENTE.
+    # Ce defaut aurait leve un TypeError uniquement quand la passe est ARMEE -- donc jamais
+    # dans la suite de tests, ou le drapeau est faux par defaut.
+    top_k = int(
+        params.get("wl_diversity_top_k") or params.get("block_diversity_top_k") or 10
+    )
+    avant = len({_wl_set((it.get("strategy") or {}).get("blocks", []))
+                 for it in strategies_results[:top_k]})
+    out = _apply_wl_diversity(strategies_results, top_k=top_k)
+    apres = len({_wl_set((it.get("strategy") or {}).get("blocks", []))
+                 for it in out[:top_k]})
+    # 🔴 CE QUE LA PASSE A CHANGE EST DIT, PAS SUPPOSE. Une passe de diversite qui ne
+    # diversifie rien est exactement le genre de reglage qui cree une fausse explication.
+    logger.info(
+        f"   [WL-DIVERSITE] tete de {top_k} : {avant} jeu(x) de λ distinct(s) -> {apres}"
+    )
+    return out
 
 
 def _filter_valid_robustness_strategies(

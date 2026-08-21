@@ -1702,3 +1702,114 @@ juste — il n'est pas atteint, donc il ne tronque plus rien.
 
 Coût projeté : `53,4 x 4,47 = 239 min` → fin vers **08:15**, marge ~70 min sur l'échéance.
 Artefact : `blocs_vs_plantage_r75x2_deep_s042_ms5cap480b713.json`.
+
+---
+
+## 22. 📏 LA PREMIÈRE CELLULE MULTISEED — le mécanisme marche, il ne débloque pas
+
+`reports/blocs_vs_plantage_r75x2_deep_s042_ms5cap480b713.json`, **134 min**, terminée à 06:27.
+`screen_seed_list = 42;77;101;202;303` · `elite_max_candidates = 480` · plage 7-13 blocs.
+
+### 22.1 Le résultat
+
+```
+1527 strategies · 0 DEPOSABLE · crash_min 100,00 %
+```
+
+🔴 **Le multiseed ne débloque pas la graine 42 sur ce composant.** Aucun SEEL n'est cité : le
+meilleur score est un **repli**, et `CLAUDE.md` §21 interdit de le présenter comme une
+performance.
+
+⚠️ `1527` ne se compare pas au `1617` de la référence — six nombres de blocs manquent par
+construction (§21.4). Ce qui se compare est le compte de déposables, et il vaut zéro des deux
+côtés.
+
+### 22.2 🟢 MAIS LE MÉCANISME FONCTIONNE, ET IL NE SATURE PAS
+
+C'est la lecture posée d'avance au §20.4, et elle est nette :
+
+```
+apport moyen en PLANS NEUFS, sur les 8 nombres de blocs informatifs
+    graine n°1 : 5,88   (total 47)        graine n°4 : 5,25   (total 42)
+    graine n°2 : 5,38   (total 43)        graine n°5 : 4,50   (total 36)
+    graine n°3 : 4,50   (total 36)
+```
+
+🔑 **La cinquième graine apporte autant que la deuxième.** Aucune redondance, aucune saturation :
+les réalisations explorent des régions **réellement distinctes**, et `K` pourrait monter bien
+au-delà de 5 sans gaspillage. C'est la première mesure de ce qu'une graine **apporte**, et elle
+justifie le mécanisme indépendamment de son échec ici.
+
+🔑 **Et la diversité est LOCALISÉE.** Détail par nombre de blocs :
+
+```
+blocs 13, 12, 11 :  10 a 16 plans neufs PAR GRAINE
+blocs 10, 9, 8, 7 :  +1 ou +2 pour la premiere graine,  ZERO pour les quatre autres
+```
+
+Là où la DP rend beaucoup de groupements, le criblage a de quoi trancher différemment et les
+graines divergent. Là où elle en rend peu, les cinq graines voient la même chose. **Le multiseed
+n'a d'effet que là où il y a de quoi choisir** — ce qui est cohérent avec le profil de coût du
+§21.1, où les blocs 11-14 sont les plus chers parce qu'ils sont les plus riches.
+
+### 22.3 🔴 LE CONTRÔLE DU §18.4 EST ILLISIBLE — et c'est mon instrument qui est en cause
+
+Le compte affiché est `685 nm : 5 candidates` contre 2 à la référence. **Il ne veut rien dire.**
+
+`_format_wl_histogram` n'affiche que les **14 λ les plus lourdes** et résume le reste en
+`[+N wl not shown]`. Or 685 nm porte **1 à 2 candidates par ronde** : elle tombe donc presque
+toujours dans cette queue masquée. 📏 **61 histogrammes tronqués** dans ce seul run.
+
+📏 **Et la preuve interne est dans les chiffres eux-mêmes** : 685 nm apparaît **5 fois en
+génération** et **11 fois dans les rejets**. Une candidate ne peut pas être rejetée sans avoir
+été engendrée — donc la vue « generated » en manque **au moins six**.
+
+> **Le compte de 685 nm est un PLANCHER, pas une mesure. Le §18.4 n'est ni confirmé ni réfuté.**
+
+⚠️ C'est exactement le défaut que la docstring de `_format_wl_histogram` prétend éviter — *« une
+liste tronquée en silence se lit comme une couverture complète »*. Elle **dit** le nombre de λ
+omises, ce qui est mieux que rien, mais pas **lesquelles** — et la λ qu'on cherche est par
+construction dans la queue. **Dire qu'on tronque ne suffit pas quand ce qu'on cherche est
+précisément ce qui est tronqué.**
+
+🔵 **Le correctif, trois lignes** : donner à `_format_wl_histogram` une liste de λ à **toujours
+afficher**, quel que soit leur rang. Non fait sur le moment — un run était en vol, et le modifier
+aurait fait tourner la cellule suivante sur un code non contrôlé (C3).
+
+### 22.4 🟢 Le contrôle négatif passe
+
+`lignes [GATE] : 0`. La porte à confiance n'est pas armée dans cette cellule, et l'instrument
+posé au §20.3 reste **muet** — exactement ce qu'il doit faire. Un instrument qui parlerait ici
+serait un instrument à jeter.
+
+### 22.5 🔴 LE CONTRÔLE POSITIF QUI MANQUAIT, ET IL TOURNE
+
+Le « 0 déposable » ci-dessus est **ambigu** tant qu'une question n'est pas tranchée :
+
+> **Ma plage restreinte 7-13 sait-elle retrouver des déposables là où il en existe ?**
+
+Sans cette réponse, le zéro peut venir du composant **ou** de mon protocole. C'est la règle que
+la journée du 20 a imposée — *un outil de comparaison se contrôle dans son RÉGIME D'EMPLOI avant
+de servir* — et je ne l'avais pas appliquée à la restriction de plage.
+
+**Lancé à 06:28** : `r75x2 @ 2 nm deep`, **graine 77**, plage 7-13, **réglages d'origine** (ni
+multiseed ni déplafonnement). Attendu : des déposables, et un SEEL de l'ordre de **0,57**.
+
+| issue | ce qu'elle établit |
+|---|---|
+| des déposables, SEEL ≈ 0,57 | 🟢 le protocole est sain, et le zéro de la graine 42 est **réel** |
+| aucun déposable | 🔴 **la restriction de plage casse quelque chose**, et la cellule du §22.1 est à jeter |
+
+### 22.6 🔑 Ce que cette cellule change pour le but
+
+| | |
+|---|---|
+| le multiseed est **un mécanisme réel**, mesuré, non redondant | il entre en production avec sa mesure, pas avec une intuition |
+| il ne suffit **pas** sur `r75x2 @ 2 nm` à la graine 42 | cinq réalisations explorent cinq régions distinctes, et **elles plantent toutes** |
+| donc la question de fond se déplace, et elle ne bouge plus depuis deux jours | **la région saine existe-t-elle à cette graine ?** C'est le test de transfert, et il attend son juge au nominal |
+
+🔴 **Il faut le dire clairement : après le déplafonnement d'ELITE, le multiseed à 5 graines, la
+porte à confiance et la queue Rate, aucun levier de RECHERCHE n'a rendu `r75x2 @ 2 nm` déposable
+à la graine 42.** Quatre leviers, quatre zéros. Ce n'est pas une preuve que la région saine
+n'existe pas — mais c'est le faisceau le plus lourd en ce sens, et la mesure qui trancherait est
+toujours la même : **injecter les 12 plans de la graine 77 et les juger au nominal.**

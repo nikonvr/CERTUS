@@ -89,8 +89,10 @@ def lire_wl(txt: str) -> dict[str, dict[str, int]]:
         quoi, reste = m.groups()
         if reste.strip() in ("(none)", ""):
             continue
+        tronque = False
         for jeton in reste.split():
             if jeton.startswith("[+"):
+                tronque = True
                 break
             if ":" not in jeton:
                 continue
@@ -99,6 +101,8 @@ def lire_wl(txt: str) -> dict[str, dict[str, int]]:
                 agg[quoi][cle] = agg[quoi].get(cle, 0) + int(n)
             except ValueError:
                 continue
+        if tronque:
+            agg[quoi]["__TRONQUE__"] = agg[quoi].get("__TRONQUE__", 0) + 1
     return agg
 
 
@@ -195,14 +199,36 @@ def main() -> int:
         print("   🔴 aucun histogramme [ELITE-WL] : ELITE n'a pas tourne, ou pas journalise.")
     else:
         n685 = gen.get(LAMBDA_CIBLE, 0) + gen.get(LAMBDA_CIBLE + ".0", 0)
+        n_tronq = gen.pop("__TRONQUE__", 0)
         top = sorted(gen.items(), key=lambda kv: -kv[1])[:10]
         print("   λ les plus engendrees : " + "  ".join(f"{k}:{v}" for k, v in top))
         print(f"   🔑 {LAMBDA_CIBLE} nm : {n685} candidates   "
               f"(reference : {REF_685} sur 4226)")
-        # 🔴 AUCUN VERDICT SUR UN RUN INACHEVE. La reference compte 685 nm sur les 4226
-        # candidates de SES 46 rondes ; comparer a un total partiel n'est pas une mesure, et
-        # ce depot a deja perdu cinq conclusions pour avoir lu une grandeur incomplete.
-        if not fini:
+        # 🔴🔴 LE COMPTE D'UNE λ RARE N'EST PAS LISIBLE DANS CE FORMAT DE JOURNAL.
+        #
+        # `_format_wl_histogram` (`certus_strat_consensus.py`) n'affiche que les 14 λ LES PLUS
+        # LOURDES et resume le reste en « [+N wl not shown] ». Or 685 nm porte 1 a 2
+        # candidates par ronde : elle tombe donc presque toujours dans cette queue masquee, et
+        # le compte ci-dessus est un PLANCHER, pas une mesure.
+        #
+        # 📏 La preuve est dans les chiffres eux-memes : 685 nm apparait 5 fois en GENERATION
+        # et 11 fois dans les REJETS. Une candidate ne peut pas etre rejetee sans avoir ete
+        # engendree -- donc la vue « generated » en manque au moins six.
+        #
+        # ⚠️ C'est exactement le defaut que la docstring de `_format_wl_histogram` pretend
+        # eviter : « une liste tronquee en silence se lit comme une couverture complete ». Elle
+        # DIT le nombre de λ omises, ce qui est mieux que rien, mais pas LESQUELLES -- et la λ
+        # qu'on cherche est par construction dans la queue.
+        #
+        # 🔵 LE CORRECTIF, cote production : donner a `_format_wl_histogram` une liste de λ
+        # a TOUJOURS afficher, quelle que soit leur place au classement. Trois lignes, et il
+        # rend ce controle exploitable. Non fait ici : un run est en vol.
+        if n_tronq:
+            print(f"   🔴 {n_tronq} histogramme(s) TRONQUE(S) a l'affichage : le compte de "
+                  f"{LAMBDA_CIBLE} nm est un PLANCHER, pas une mesure. Aucun verdict possible "
+                  f"sur cette grandeur tant que le format de journal n'affiche pas les λ "
+                  f"rares (correctif : liste de λ toujours affichees).")
+        elif not fini:
             print("   ⏳ RUN INACHEVE : aucun verdict. Le compte ci-dessus est partiel et "
                   "n'est PAS comparable aux 2 sur 4226 de la reference, qui portent sur "
                   "l'integralite de ses rondes.")

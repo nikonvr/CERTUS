@@ -112,6 +112,17 @@ COMPOSANTS = {
     "75c": ("example/example_strat/JSON-strat-random75.json", 75),
     "48c": ("example/example_strat/JSON-strat-example.json", 48),
     "35c": ("example/example_strat/JSON-strat-bandpass-3cav.json", 35),
+    # 🟢 LA VARIANTE LIVREE QUI FAIT PASSER r75x2 A LA FENTE NOMINALE DE 2 nm.
+    #
+    # 📏 Mesure du 2026-08-21 : 72 strategies deposables, meilleur SEEL 0,5697, plantage
+    # 1,00 %, graine 42 -- la ou le meme composant a 2 nm rendait ZERO deposable sur 1617.
+    # Elle ne differe du fichier de base que par la fente (2,0 au lieu de 1,0) et par
+    # `injected_strategies`, qui verse des plans de surveillance connus dans la population.
+    #
+    # 🔴 ELLE EST UN COMPOSANT A PART, ET C'EST DELIBERE. Ecrire ces deux cles dans le
+    # fichier de base aurait change SILENCIEUSEMENT toutes les mesures futures qui le citent
+    # -- et le depot en compte beaucoup. Le fichier de base reste INTACT.
+    "r75x2-2nm": ("example/example_strat/JSON-strat-random75-x2-fabricable-2nm.json", 75),
     # 🔑 LA SERIE D'ECHELLE DU RANDOM75 -- la seule EXPERIENCE CONTROLEE du projet.
     # 75 couches, structure, materiaux, substrat et grille IDENTIQUES : seule l'epaisseur
     # optique varie. Elle est donc le seul endroit ou l'issue varie CONTINUMENT avec une

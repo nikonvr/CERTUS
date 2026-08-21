@@ -2097,3 +2097,98 @@ les **mêmes identifiants et les mêmes blocs** ; la prémisse « 700 nm est abs
 est **vérifiée et non supposée** ; la couche forcée est bien la moins chère ; la carte d'origine
 n'est **pas** modifiée (sinon la contrainte fuirait dans le k-meilleurs) ; l'infaisable et le
 budget qui mord sont **journalisés** ; et les identifiants ne collisionnent pas.
+
+---
+
+## 26. 🟢🟢 LE TEST D'ACCEPTATION EST PASSÉ — la production trouve seule, sur `r75x2` à 2 nm
+
+**Mesuré le 2026-08-21, `reports/blocs_vs_plantage_r75x2-2nm_deep_s042.json`.**
+
+🔑 **La condition est dans la même phrase que le chiffre, et elle y reste** : ce résultat est
+obtenu **avec les rampes de lancement** déclarées dans la configuration du composant. Ce n'est
+pas une découverte autonome, et quiconque citera « 0,5676 nm » sans cette condition dira faux.
+
+```
+composant  example/example_strat/JSON-strat-random75-x2-fabricable-2nm.json
+fente 2 nm · graine 42 · mode deep · plage de blocs COMPLETE
+config.overrides_tag = None          <- la preuve du ZERO surcharge
+profondeur : robustness_num_runs=300 · n_screen_runs=50 · dp_top_k=100 · consensus=300
+
+197 deposables sur 1810        (avant la livraison : 0 sur 1617, 100 % de plantage)
+
+ rg blocs   score    SEEL     crash   origine
+  1     9  0,08053  0,5676   1,67 %   ELITE   <- id 900000044
+  2     9  0,08113  0,5697   1,33 %   ELITE
+  4     9  0,08161  0,5714   1,00 %   ELITE
+  6     8  0,08166  0,5715   1,00 %   ELITE
+
+deposables par nombre de blocs : {5: 13, 6: 46, 7: 46, 8: 49, 9: 43}
+```
+
+**La gagnante, en clair** — et le bloc qui manquait y est :
+
+```
+ 0-8  @ 450 nm       33-52 @ 685 nm   <- LA lambda absente des 1617 natives
+ 8-25 @ 610 nm       52-57 @ 647 nm
+25-33 @ 616 nm       57-63 @ 700 nm · 63-65 @ 511 · 65-68 @ 687 · 68-75 @ 704
+```
+
+**La cible est atteinte** : SEEL **0,5676 nm** contre **0,5692 nm** visé à la graine 77. L'écart
+est de 0,3 %, et le bruit sur une différence de SEEL vaut 2,59 % — donc **égalité**, pas
+supériorité. Le rang 2 tombe d'ailleurs exactement sur 0,5697, la valeur mesurée la veille : la
+cohérence entre les deux campagnes est bonne.
+
+### 26.1 🔑 Le mécanisme se revérifie sans surcharge
+
+Les parents qu'ELITE reçoit au bloc 9 portent les bonnes λ — `450, 610, 616, 685, 647, 700,
+511, 688, 704` — et **plantent tous à 100 %**. La gagnante est un **descendant**, jamais une
+rampe recopiée :
+
+```
+Round 1 : rank10_nominal = 0,268856  ->  36 retenues sur 120
+Round 2 : rank10_nominal = 0,077943  ->   3 retenues        <- la barre saute d'un facteur 3,4
+Round 3 : rank10_nominal = 0,077943  ->   4 retenues
+```
+
+> Les rampes apportent les λ qu'aucune stratégie native ne portait ; **ELITE corrige les
+> frontières de blocs** par sa marche locale, qui est précisément ce qu'elle sait faire.
+
+### 26.2 🟠 L'ESSAIMAGE — un résultat que je n'attendais pas, et que je n'explique PAS
+
+Les blocs **8, 7, 6 et 5** rendent des déposables alors que les rampes n'existent qu'à **9 et
+10** blocs. Le matériau a donc franchi les nombres de blocs.
+
+**Hypothèse, avec sa ligne de preuve** — au bloc 3, un parent porte
+`origin=SMART_MERGE_MIXED (from …) wl=[450, 610, 688]` : `SMART_MERGE` reprend le matériau
+injecté et le recompose ailleurs. C'est exactement ce que §24.4 désignait comme son métier.
+
+🔴 **Mais ce n'est pas établi, et il faut le dire ainsi.** On s'appuie aujourd'hui sur un
+mécanisme qu'on n'a pas nommé, et c'est la définition d'un résultat fragile. Le correctif est
+petit : journaliser la chaîne d'origine complète.
+
+### 26.3 🟠 Deux anomalies que je ne mets pas sous le tapis
+
+**Le plantage de la gagnante décroît quand le bruit croît** :
+
+```
+bruit 0,025 -> 1,67 %      bruit 0,05 -> 0,33 %      bruit 0,1 -> 0,33 %
+```
+
+C'est le motif du Piège 1. ⚠️ **Mais je ne crie pas à l'artefact** : sur 300 tirages cela fait
+**5 plantages contre 1 et 1**, et avec `σ ≈ √5 ≈ 2,2` l'inversion est à la limite de la
+statistique de comptage. Ce n'est pas une inversion démontrée — c'est une chose à surveiller.
+La porte a pris le **maximum** des trois, soit la lecture conservatrice, donc le verdict tient.
+
+**La couche critique 53 porte une marge de −1370 A et le verdict `PEUT ECHOUER`**, alors que la
+stratégie ne plante que 1,67 % du temps. L'instrument de marge est donc très pessimiste ici, et
+je ne l'interprète pas : la marge est calculée sur le signal nominal, le plantage est
+Monte-Carlo, et [§24-41 de `CLAUDE.md`](../CLAUDE.md) n'a validé la marge que sur les marges
+**strictement positives**. Ce cas est hors de son domaine de validation.
+
+### 26.4 🔴 Ce que cette livraison ne règle PAS
+
+| | |
+|---|---|
+| **un composant neuf** | le mécanisme `injected_strategies` est générique ; les **12 rampes sont douze stratégies concrètes de cet empilement**. Pour un composant neuf il faut produire ses rampes |
+| **une dépendance à un artefact** | la configuration du composant pointe vers `reports/plans/plans_s042_gagnantes_injectees.json`. Ce n'est plus une description de physique seule, et `reports/` n'est protégé par presque rien (interdit 3). Son absence **lève**, délibérément : une injection muette rendrait un run qui a l'air normal |
+| **la découverte autonome** | non résolue. La **couverture en λ** (§25) est le premier levier qui ne cherche pas autour de l'existant, et elle est **non mesurée** |

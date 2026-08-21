@@ -1,0 +1,302 @@
+[
+  {
+    "nom": "s042_natif_rang36_d1",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 9,
+        "wavelength": 483.0
+      },
+      {
+        "start": 9,
+        "end": 27,
+        "wavelength": 610.0
+      },
+      {
+        "start": 27,
+        "end": 33,
+        "wavelength": 689.0
+      },
+      {
+        "start": 33,
+        "end": 53,
+        "wavelength": 686.0
+      },
+      {
+        "start": 53,
+        "end": 55,
+        "wavelength": 648.0
+      },
+      {
+        "start": 55,
+        "end": 64,
+        "wavelength": 647.0
+      },
+      {
+        "start": 64,
+        "end": 66,
+        "wavelength": 511.0
+      },
+      {
+        "start": 66,
+        "end": 73,
+        "wavelength": 704.0
+      },
+      {
+        "start": 73,
+        "end": 75,
+        "wavelength": 703.0
+      }
+    ]
+  },
+  {
+    "nom": "s042_natif_rang69_d1",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 9,
+        "wavelength": 483.0
+      },
+      {
+        "start": 9,
+        "end": 27,
+        "wavelength": 610.0
+      },
+      {
+        "start": 27,
+        "end": 33,
+        "wavelength": 689.0
+      },
+      {
+        "start": 33,
+        "end": 53,
+        "wavelength": 686.0
+      },
+      {
+        "start": 53,
+        "end": 55,
+        "wavelength": 648.0
+      },
+      {
+        "start": 55,
+        "end": 64,
+        "wavelength": 701.0
+      },
+      {
+        "start": 64,
+        "end": 66,
+        "wavelength": 700.0
+      },
+      {
+        "start": 66,
+        "end": 71,
+        "wavelength": 690.0
+      },
+      {
+        "start": 71,
+        "end": 75,
+        "wavelength": 703.0
+      }
+    ]
+  },
+  {
+    "nom": "s042_natif_rang281_d1",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 9,
+        "wavelength": 483.0
+      },
+      {
+        "start": 9,
+        "end": 27,
+        "wavelength": 610.0
+      },
+      {
+        "start": 27,
+        "end": 33,
+        "wavelength": 689.0
+      },
+      {
+        "start": 33,
+        "end": 53,
+        "wavelength": 686.0
+      },
+      {
+        "start": 53,
+        "end": 55,
+        "wavelength": 648.0
+      },
+      {
+        "start": 55,
+        "end": 64,
+        "wavelength": 701.0
+      },
+      {
+        "start": 64,
+        "end": 66,
+        "wavelength": 700.0
+      },
+      {
+        "start": 66,
+        "end": 71,
+        "wavelength": 690.0
+      },
+      {
+        "start": 71,
+        "end": 75,
+        "wavelength": 704.0
+      }
+    ]
+  },
+  {
+    "nom": "s042_natif_rang378_d1",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 9,
+        "wavelength": 483.0
+      },
+      {
+        "start": 9,
+        "end": 27,
+        "wavelength": 610.0
+      },
+      {
+        "start": 27,
+        "end": 33,
+        "wavelength": 689.0
+      },
+      {
+        "start": 33,
+        "end": 53,
+        "wavelength": 686.0
+      },
+      {
+        "start": 53,
+        "end": 55,
+        "wavelength": 648.0
+      },
+      {
+        "start": 55,
+        "end": 63,
+        "wavelength": 701.0
+      },
+      {
+        "start": 63,
+        "end": 66,
+        "wavelength": 700.0
+      },
+      {
+        "start": 66,
+        "end": 72,
+        "wavelength": 704.0
+      },
+      {
+        "start": 72,
+        "end": 75,
+        "wavelength": 703.0
+      }
+    ]
+  },
+  {
+    "nom": "s042_natif_rang420_d1",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 9,
+        "wavelength": 483.0
+      },
+      {
+        "start": 9,
+        "end": 27,
+        "wavelength": 610.0
+      },
+      {
+        "start": 27,
+        "end": 33,
+        "wavelength": 689.0
+      },
+      {
+        "start": 33,
+        "end": 53,
+        "wavelength": 686.0
+      },
+      {
+        "start": 53,
+        "end": 55,
+        "wavelength": 648.0
+      },
+      {
+        "start": 55,
+        "end": 64,
+        "wavelength": 647.0
+      },
+      {
+        "start": 64,
+        "end": 66,
+        "wavelength": 511.0
+      },
+      {
+        "start": 66,
+        "end": 73,
+        "wavelength": 704.0
+      },
+      {
+        "start": 73,
+        "end": 75,
+        "wavelength": 703.0
+      }
+    ]
+  },
+  {
+    "nom": "s042_natif_rang422_d1",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 9,
+        "wavelength": 483.0
+      },
+      {
+        "start": 9,
+        "end": 27,
+        "wavelength": 610.0
+      },
+      {
+        "start": 27,
+        "end": 33,
+        "wavelength": 689.0
+      },
+      {
+        "start": 33,
+        "end": 53,
+        "wavelength": 686.0
+      },
+      {
+        "start": 53,
+        "end": 55,
+        "wavelength": 648.0
+      },
+      {
+        "start": 55,
+        "end": 64,
+        "wavelength": 701.0
+      },
+      {
+        "start": 64,
+        "end": 66,
+        "wavelength": 700.0
+      },
+      {
+        "start": 66,
+        "end": 71,
+        "wavelength": 690.0
+      },
+      {
+        "start": 71,
+        "end": 75,
+        "wavelength": 696.0
+      }
+    ]
+  }
+]

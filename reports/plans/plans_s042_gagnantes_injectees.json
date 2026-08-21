@@ -1,0 +1,627 @@
+[
+  {
+    "nom": "s042_INJ_0_SEEL0.5697_crash1.00",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 8,
+        "wavelength": 450.0
+      },
+      {
+        "start": 8,
+        "end": 25,
+        "wavelength": 610.0
+      },
+      {
+        "start": 25,
+        "end": 33,
+        "wavelength": 615.0
+      },
+      {
+        "start": 33,
+        "end": 53,
+        "wavelength": 685.0
+      },
+      {
+        "start": 53,
+        "end": 57,
+        "wavelength": 647.0
+      },
+      {
+        "start": 57,
+        "end": 63,
+        "wavelength": 700.0
+      },
+      {
+        "start": 63,
+        "end": 65,
+        "wavelength": 511.0
+      },
+      {
+        "start": 65,
+        "end": 68,
+        "wavelength": 687.0
+      },
+      {
+        "start": 68,
+        "end": 75,
+        "wavelength": 704.0
+      }
+    ]
+  },
+  {
+    "nom": "s042_INJ_1_SEEL0.5723_crash1.00",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 8,
+        "wavelength": 450.0
+      },
+      {
+        "start": 8,
+        "end": 25,
+        "wavelength": 610.0
+      },
+      {
+        "start": 25,
+        "end": 33,
+        "wavelength": 616.0
+      },
+      {
+        "start": 33,
+        "end": 52,
+        "wavelength": 685.0
+      },
+      {
+        "start": 52,
+        "end": 57,
+        "wavelength": 647.0
+      },
+      {
+        "start": 57,
+        "end": 63,
+        "wavelength": 700.0
+      },
+      {
+        "start": 63,
+        "end": 65,
+        "wavelength": 511.0
+      },
+      {
+        "start": 65,
+        "end": 66,
+        "wavelength": 700.0
+      },
+      {
+        "start": 66,
+        "end": 71,
+        "wavelength": 689.0
+      },
+      {
+        "start": 71,
+        "end": 75,
+        "wavelength": 703.0
+      }
+    ]
+  },
+  {
+    "nom": "s042_INJ_2_SEEL0.5726_crash1.00",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 8,
+        "wavelength": 450.0
+      },
+      {
+        "start": 8,
+        "end": 25,
+        "wavelength": 610.0
+      },
+      {
+        "start": 25,
+        "end": 33,
+        "wavelength": 616.0
+      },
+      {
+        "start": 33,
+        "end": 52,
+        "wavelength": 685.0
+      },
+      {
+        "start": 52,
+        "end": 57,
+        "wavelength": 647.0
+      },
+      {
+        "start": 57,
+        "end": 64,
+        "wavelength": 700.0
+      },
+      {
+        "start": 64,
+        "end": 65,
+        "wavelength": 511.0
+      },
+      {
+        "start": 65,
+        "end": 66,
+        "wavelength": 700.0
+      },
+      {
+        "start": 66,
+        "end": 71,
+        "wavelength": 690.0
+      },
+      {
+        "start": 71,
+        "end": 75,
+        "wavelength": 704.0
+      }
+    ]
+  },
+  {
+    "nom": "s042_INJ_3_SEEL0.5733_crash1.00",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 8,
+        "wavelength": 450.0
+      },
+      {
+        "start": 8,
+        "end": 25,
+        "wavelength": 610.0
+      },
+      {
+        "start": 25,
+        "end": 33,
+        "wavelength": 616.0
+      },
+      {
+        "start": 33,
+        "end": 52,
+        "wavelength": 685.0
+      },
+      {
+        "start": 52,
+        "end": 57,
+        "wavelength": 647.0
+      },
+      {
+        "start": 57,
+        "end": 64,
+        "wavelength": 700.0
+      },
+      {
+        "start": 64,
+        "end": 65,
+        "wavelength": 510.0
+      },
+      {
+        "start": 65,
+        "end": 66,
+        "wavelength": 700.0
+      },
+      {
+        "start": 66,
+        "end": 71,
+        "wavelength": 690.0
+      },
+      {
+        "start": 71,
+        "end": 75,
+        "wavelength": 703.0
+      }
+    ]
+  },
+  {
+    "nom": "s042_INJ_4_SEEL0.5735_crash1.00",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 8,
+        "wavelength": 450.0
+      },
+      {
+        "start": 8,
+        "end": 25,
+        "wavelength": 610.0
+      },
+      {
+        "start": 25,
+        "end": 33,
+        "wavelength": 616.0
+      },
+      {
+        "start": 33,
+        "end": 53,
+        "wavelength": 685.0
+      },
+      {
+        "start": 53,
+        "end": 57,
+        "wavelength": 647.0
+      },
+      {
+        "start": 57,
+        "end": 64,
+        "wavelength": 700.0
+      },
+      {
+        "start": 64,
+        "end": 65,
+        "wavelength": 511.0
+      },
+      {
+        "start": 65,
+        "end": 66,
+        "wavelength": 700.0
+      },
+      {
+        "start": 66,
+        "end": 70,
+        "wavelength": 688.0
+      },
+      {
+        "start": 70,
+        "end": 75,
+        "wavelength": 703.0
+      }
+    ]
+  },
+  {
+    "nom": "s042_INJ_5_SEEL0.5735_crash0.33",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 8,
+        "wavelength": 450.0
+      },
+      {
+        "start": 8,
+        "end": 25,
+        "wavelength": 610.0
+      },
+      {
+        "start": 25,
+        "end": 33,
+        "wavelength": 615.0
+      },
+      {
+        "start": 33,
+        "end": 53,
+        "wavelength": 685.0
+      },
+      {
+        "start": 53,
+        "end": 57,
+        "wavelength": 647.0
+      },
+      {
+        "start": 57,
+        "end": 63,
+        "wavelength": 700.0
+      },
+      {
+        "start": 63,
+        "end": 66,
+        "wavelength": 511.0
+      },
+      {
+        "start": 66,
+        "end": 68,
+        "wavelength": 688.0
+      },
+      {
+        "start": 68,
+        "end": 75,
+        "wavelength": 704.0
+      }
+    ]
+  },
+  {
+    "nom": "s042_INJ_6_SEEL0.5735_crash0.67",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 8,
+        "wavelength": 450.0
+      },
+      {
+        "start": 8,
+        "end": 25,
+        "wavelength": 610.0
+      },
+      {
+        "start": 25,
+        "end": 33,
+        "wavelength": 615.0
+      },
+      {
+        "start": 33,
+        "end": 52,
+        "wavelength": 685.0
+      },
+      {
+        "start": 52,
+        "end": 57,
+        "wavelength": 647.0
+      },
+      {
+        "start": 57,
+        "end": 63,
+        "wavelength": 700.0
+      },
+      {
+        "start": 63,
+        "end": 66,
+        "wavelength": 511.0
+      },
+      {
+        "start": 66,
+        "end": 68,
+        "wavelength": 688.0
+      },
+      {
+        "start": 68,
+        "end": 75,
+        "wavelength": 704.0
+      }
+    ]
+  },
+  {
+    "nom": "s042_INJ_7_SEEL0.5735_crash1.00",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 8,
+        "wavelength": 450.0
+      },
+      {
+        "start": 8,
+        "end": 25,
+        "wavelength": 610.0
+      },
+      {
+        "start": 25,
+        "end": 33,
+        "wavelength": 616.0
+      },
+      {
+        "start": 33,
+        "end": 52,
+        "wavelength": 685.0
+      },
+      {
+        "start": 52,
+        "end": 57,
+        "wavelength": 647.0
+      },
+      {
+        "start": 57,
+        "end": 64,
+        "wavelength": 700.0
+      },
+      {
+        "start": 64,
+        "end": 65,
+        "wavelength": 511.0
+      },
+      {
+        "start": 65,
+        "end": 66,
+        "wavelength": 700.0
+      },
+      {
+        "start": 66,
+        "end": 69,
+        "wavelength": 688.0
+      },
+      {
+        "start": 69,
+        "end": 75,
+        "wavelength": 703.0
+      }
+    ]
+  },
+  {
+    "nom": "s042_INJ_8_SEEL0.5738_crash1.00",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 8,
+        "wavelength": 450.0
+      },
+      {
+        "start": 8,
+        "end": 25,
+        "wavelength": 610.0
+      },
+      {
+        "start": 25,
+        "end": 33,
+        "wavelength": 616.0
+      },
+      {
+        "start": 33,
+        "end": 53,
+        "wavelength": 685.0
+      },
+      {
+        "start": 53,
+        "end": 57,
+        "wavelength": 647.0
+      },
+      {
+        "start": 57,
+        "end": 63,
+        "wavelength": 700.0
+      },
+      {
+        "start": 63,
+        "end": 65,
+        "wavelength": 511.0
+      },
+      {
+        "start": 65,
+        "end": 69,
+        "wavelength": 688.0
+      },
+      {
+        "start": 69,
+        "end": 75,
+        "wavelength": 704.0
+      }
+    ]
+  },
+  {
+    "nom": "s042_INJ_9_SEEL0.5738_crash0.33",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 8,
+        "wavelength": 450.0
+      },
+      {
+        "start": 8,
+        "end": 25,
+        "wavelength": 610.0
+      },
+      {
+        "start": 25,
+        "end": 33,
+        "wavelength": 615.0
+      },
+      {
+        "start": 33,
+        "end": 52,
+        "wavelength": 685.0
+      },
+      {
+        "start": 52,
+        "end": 57,
+        "wavelength": 647.0
+      },
+      {
+        "start": 57,
+        "end": 63,
+        "wavelength": 700.0
+      },
+      {
+        "start": 63,
+        "end": 66,
+        "wavelength": 511.0
+      },
+      {
+        "start": 66,
+        "end": 69,
+        "wavelength": 688.0
+      },
+      {
+        "start": 69,
+        "end": 75,
+        "wavelength": 704.0
+      }
+    ]
+  },
+  {
+    "nom": "s042_INJ_10_SEEL0.5742_crash0.33",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 8,
+        "wavelength": 450.0
+      },
+      {
+        "start": 8,
+        "end": 25,
+        "wavelength": 610.0
+      },
+      {
+        "start": 25,
+        "end": 33,
+        "wavelength": 615.0
+      },
+      {
+        "start": 33,
+        "end": 53,
+        "wavelength": 685.0
+      },
+      {
+        "start": 53,
+        "end": 57,
+        "wavelength": 647.0
+      },
+      {
+        "start": 57,
+        "end": 63,
+        "wavelength": 700.0
+      },
+      {
+        "start": 63,
+        "end": 65,
+        "wavelength": 511.0
+      },
+      {
+        "start": 65,
+        "end": 69,
+        "wavelength": 687.0
+      },
+      {
+        "start": 69,
+        "end": 75,
+        "wavelength": 704.0
+      }
+    ]
+  },
+  {
+    "nom": "s042_INJ_11_SEEL0.5742_crash0.33",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 8,
+        "wavelength": 450.0
+      },
+      {
+        "start": 8,
+        "end": 25,
+        "wavelength": 610.0
+      },
+      {
+        "start": 25,
+        "end": 33,
+        "wavelength": 615.0
+      },
+      {
+        "start": 33,
+        "end": 53,
+        "wavelength": 685.0
+      },
+      {
+        "start": 53,
+        "end": 57,
+        "wavelength": 647.0
+      },
+      {
+        "start": 57,
+        "end": 63,
+        "wavelength": 700.0
+      },
+      {
+        "start": 63,
+        "end": 65,
+        "wavelength": 511.0
+      },
+      {
+        "start": 65,
+        "end": 68,
+        "wavelength": 688.0
+      },
+      {
+        "start": 68,
+        "end": 75,
+        "wavelength": 704.0
+      }
+    ]
+  }
+]

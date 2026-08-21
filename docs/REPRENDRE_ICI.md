@@ -11,7 +11,31 @@
 **SEEL 0,5692** — celui que la graine 77 atteint. À la graine 42 seule, il rend **0 déposable
 sur 1617**.
 
-🔴 **LE FAIT DUR DE LA NUIT DU 20 AU 21 : QUATRE LEVIERS DE RECHERCHE, QUATRE ZÉROS.**
+## 🟢🟢 LA CIBLE EST ATTEINTE — mesuré le 2026-08-21 à 07:35
+
+```
+r75x2 @ 2 nm deep, graine 42, plage 9-11, avec les 12 plans de la graine 77 injectes
+    295 strategies · 72 DEPOSABLES · crash_min 0,33 %
+    MEILLEUR SEEL 0,5697   (cible 0,5692, ecart +0,1 % = INDISCERNABLE)
+
+controle d'attribution, meme plage SANS injection : 63 strategies, 0 deposable, 100 %
+```
+
+🔒 **Une seule chose diffère entre les deux runs.** L'injection est donc la cause, et
+l'attribution est faite.
+
+🔑 **Les deux gagnantes diffèrent de DEUX NANOMÈTRES** — et celle de la graine 42 plante **moins** :
+
+```
+graine 77            450 610 616 685 647 700 511 688 704   SEEL 0,5692  crash 1,33 %
+graine 42, injectee  450 610 615 685 647 700 511 687 704   SEEL 0,5697  crash 1,00 %
+                             ^^^                 ^^^
+```
+
+📌 **Le livrable est au disque** : `reports/plans/plans_s042_gagnantes_injectees.json`, les 12
+meilleures avec leurs λ par bloc.
+
+🔴 **MAIS LA PRODUCTION NE SAIT TOUJOURS PAS Y ALLER SEULE**, et c'est ce qui reste à faire :
 
 ```
 plafond ELITE porte a 480 (10 parents sur 10 explores)  ->  0 deposable
@@ -20,33 +44,44 @@ porte de plantage a borne de confiance (0,95)           ->  0 deposable
 queue Rate (mesuree les jours precedents)               ->  1 deposable, SEEL 0,686 (+20 %)
 ```
 
-Ce n'est pas une preuve que la région saine n'existe pas à la graine 42. C'est le faisceau le
-plus lourd en ce sens, et il déplace la question vers le §1.
+**Quatre leviers de recherche, quatre zéros.** Ce qui a marché est une **rampe de lancement**
+venue d'un run à une autre graine — circulaire pour un produit. Voir §8.
 
 📌 Le plan est [`PLAN_PRODUCTION_2026-08-20.md`](PLAN_PRODUCTION_2026-08-20.md) — ses **§15 à
 §22** portent tout ce qui est récent. Le chantier Rate est [`CHANTIER_RATE.md`](CHANTIER_RATE.md).
 
 ---
 
-## 1. 🔴 LA PREMIÈRE CHOSE À FAIRE — lire le test de transfert
+## 1. 🔴 LA PREMIÈRE CHOSE À FAIRE — compter où 685 nm disparaît
 
-C'est la mesure qui décide si la cible **existe**. Lancée à **07:09**, durée attendue ~40 min.
+C'est la seule voie qui rende la production **autonome**, et elle est bon marché.
 
-```bat
-C:\envs\certus\Scripts\python.exe scripts\lire_multiseed.py ^
-    reports\nuit_multiseed_20260821\journal_inject12s077.log
-```
+📏 **Le fait qui la commande** : les 72 déposables surveillent **toutes** la couche 35 à
+**685 nm**, et cette λ est **absente des 1617 stratégies de la graine 42**, à toutes les couches.
+Elle est en revanche présente dans **711 stratégies non-ELITE de la graine 77**. Or la **Phase A
+est identique aux deux graines** et la **DP est déterministe**.
 
-**Ce qu'elle fait** : les **12 meilleurs plans de la graine 77** sont versés dans la population
-de la graine 42 par `injected_strategies`, et notés par le **chemin de production complet**.
+⇒ **685 nm est offerte en Phase A et perdue plus loin.** Il suffit de compter, étage par étage,
+combien de candidates la portent : minage → DP → criblage → héritage. **Un compteur par étage,
+aucune physique touchée.**
 
-| issue | ce qu'elle établit | ce qu'il faut faire ensuite |
-|---|---|---|
-| les 12 sont **déposables** | 🟢 la région saine **existe** à la graine 42 — ce qui manque est la **recherche** | injecter de bons plans comme **parents d'ELITE**, et mesurer s'il sait raffiner autour |
-| les 12 **plantent** | 🔴 le 0,5692 est **propre à sa réalisation** | arrêter de le poursuivre, et le dire à la page commerciale plutôt que de le chasser |
+⚠️ **L'artefact d'observabilité ne suffit pas** : `reports/STRAT_observability_*.json` donne des
+**comptes** (couche 36 : `offered 185, forbidden_crash 92, survivors 93`, meilleur à **470 nm**)
+mais **pas la liste des λ survivantes**. C'est le même instrument manquant que celui du §22.3 du
+plan — **une liste de λ à toujours afficher** — et il sert les deux besoins.
 
-🔒 **Cherche `origine = INJECTED(...)` dans l'artefact.** Si aucune n'apparaît, l'injection n'a
-rien évalué et le run ne dit **rien** — ce ne serait pas un « ils plantent ».
+### 🔑 Ce que les 12 plans injectés ont vraiment fait
+
+Ils sont **absents de l'artefact** : ils ont été **éliminés**. Ce ne sont donc pas eux qui
+réussissent, ce sont leurs **descendants ELITE**, à 9 et 10 blocs.
+
+> **Les stratégies de la graine 77 ne sont pas des solutions transférables : ce sont des RAMPES
+> DE LANCEMENT.** Elles plantent, et elles sont assez près d'une région saine pour qu'ELITE, en
+> partant d'elles, l'atteigne en **deux nanomètres**.
+
+C'est exactement le mécanisme du §18 du plan : la mutation d'ELITE est **déterministe, locale et
+non dirigée**. Tout dépend d'**où on la fait partir** — pas de sa portée, ni de son plafond, ni du
+nombre de graines.
 
 ---
 
@@ -219,11 +254,21 @@ la passe complète **renote tout** sur la réalisation du run. Un test l'épingl
 
 | # | action | coût | ce qu'elle décide |
 |---|---|---|---|
-| **1** | lire le test de transfert (§1) | fait vers 07:46 | 🔑 **la cible existe-t-elle à la graine 42 ?** Tout le reste en dépend |
-| **2** | si oui : injecter de bons plans comme **parents d'ELITE** | ~1 h de code | ELITE sait-il raffiner autour quand on l'y amène ? |
-| **3** | afficher les λ rares dans `_format_wl_histogram` | 3 lignes | rend le contrôle du §18.4 enfin lisible |
-| **4** | graines de génération **disjointes** de la notation | gratuit | ferme le canal de malédiction du vainqueur |
-| **5** | remonter `crash_rates_by_noise` à côté de `crash_rate` | ~30 min | 🔑 la porte juge au **pire des trois niveaux**, dont un à **2× le bruit réel**, et rien ne dit le taux au bruit **mesuré** |
+| **1** | **la liste de λ à toujours afficher** (`_format_wl_histogram`) + le même dans l'observabilité de Phase A | ~1 h | 🔑 **où 685 nm disparaît-elle ?** C'est la seule voie vers une production **autonome** |
+| **2** | compter par étage : minage → DP → criblage → héritage | 1 run | l'étage à réparer, sans plus rien deviner |
+| **3** | graines de génération **disjointes** de la notation | gratuit | ferme le canal de malédiction du vainqueur (mon run a généré ET noté sur 42) |
+| **4** | remonter `crash_rates_by_noise` à côté de `crash_rate` | ~30 min | la porte juge au **pire des trois niveaux**, dont un à **2× le bruit réel**, et rien ne dit le taux au bruit **mesuré** |
+| **5** | rejouer l'injection en **plage pleine** (1-15 + 75) | ~2 h | confirme le résultat dans les conditions de production, sans restriction |
+
+🔴 **La circularité qu'il faut casser, et c'est le vrai sujet** : l'injection marche, mais sa
+source de bons plans est aujourd'hui **un run à une autre graine**. Pour un produit, ça ne
+s'auto-amorce pas. Trois voies, et elles ne se valent pas :
+
+| voie | ce qu'elle vaut |
+|---|---|
+| **A — bibliothèque de rampes** | 🟢 marche, mesuré. Mais il faut d'où venir |
+| **B — comprendre pourquoi 685 nm est inatteignable** | 🔑 la seule qui rende la production autonome. C'est l'action 1 |
+| **C — beaucoup plus de graines** | 🟠 l'union ne sature pas à 5, donc c'est plausible — mais rien ne dit que 685 nm soit à portée de tirage |
 
 ⚠️ **Ce qui n'a PAS tourné, et c'est un arbitrage assumé** : relâcher bruit et dérive en
 génération. Le levier est bien visé — il attaque les 84 % de rejets — mais tout ce qu'il trouve

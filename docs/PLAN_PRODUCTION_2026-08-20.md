@@ -1593,3 +1593,112 @@ rescore tout **sur la graine du run**. Ce qui en sortira est donc déjà jugé a
 | les lignes `[Block n] graine g : … N PLANS NEUFS` | **la courbe de saturation de l'union** : combien chaque graine apporte réellement, et à partir de quand elle n'apporte plus rien |
 | les occurrences de **685 nm** dans `[ELITE-WL] generated` | le contrôle du §18.4 : le levier **atteint**-il ce qu'il vise ? Attendu : de **2** à plusieurs dizaines |
 | la présence de lignes `[GATE]` | si la porte à confiance agit dans ce régime — elle n'est pas armée ici, donc **le silence est attendu** et sert de contrôle négatif |
+
+---
+
+## 21. 📏 LE PROFIL DE COÛT PAR NOMBRE DE BLOCS — mesuré, et il permet enfin de dimensionner
+
+Personne n'avait ce profil. Il se lit dans les journaux, entre `[Block n] Mining found` et
+`[Block n] Best strategy ready`, et il change la façon de monter une campagne.
+
+### 21.1 Le coût de la référence, bloc par bloc
+
+`r75x2 @ 2 nm deep s042`, réglages d'origine, **87,5 min** au total :
+
+```
+bloc  75 :  1,1 min          bloc   8 :  5,2 min
+bloc  15 :  5,6 min          bloc   7 :  5,2 min
+bloc  14 :  7,9 min          bloc   6 :  5,3 min
+bloc  13 :  8,3 min          bloc   5 :  5,1 min
+bloc  12 :  8,2 min          bloc   4 :  5,1 min
+bloc  11 :  8,2 min          bloc   3 :  5,0 min
+bloc  10 :  5,0 min          bloc   2 :  4,3 min
+bloc   9 :  5,1 min          bloc   1 :  2,8 min
+```
+
+🔑 **Les blocs 11 à 14 coûtent 60 % de plus que les autres** — c'est là que la DP rend le plus de
+groupements. Et les extrêmes sont bon marché : le bloc 75 (une couche par bloc) coûte **1,1 min**.
+
+### 21.2 📏 LE FACTEUR DE RALENTISSEMENT DU MULTISEED, MESURÉ SUR LE MÊME BLOC
+
+Première tentative, `screen_seed_list` à **5 graines** + `elite_max_candidates = 480` :
+
+```
+bloc 75 :  1,1 -> 2,8 min   (x2,5)
+bloc 15 :  5,6 -> 23,6 min  (x4,2)     <- le bloc representatif
+```
+
+Projeté sur les 16 nombres de blocs : `87,5 x 4,2 = 367 min`. Lancé à 03:34, **il aurait fini à
+09:41** — au-delà de l'échéance de la nuit. 🔴 Et la sonde n'écrit son artefact **qu'à la fin** :
+un dépassement n'aurait pas donné un résultat partiel, il aurait donné **rien**. Run coupé à
+04:11.
+
+⚠️ **Aveu de méthode** : j'ai d'abord coupé sur une extrapolation grossière — *« un seul bloc
+terminé en 30 min »* — sans tenir compte de ce que les blocs 75 et 1 sont les moins chers. La
+décision était juste, la justification ne l'était pas. **Le profil ci-dessus est ce qu'il fallait
+mesurer AVANT de trancher**, et il ne coûtait que la lecture de deux journaux.
+
+### 21.3 🔑 LE MODÈLE DE COÛT QUI EN DÉCOULE
+
+De `5 graines + cap 480 = 4,2x` avec `K = 5` et `cap/120 = 4`, en posant que le criblage pèse une
+fraction `s` du temps d'un bloc et ELITE le reste :
+
+```
+facteur(K, cap)  ~=  s.K + (1-s).(cap/120)          avec s ~= 0,47 mesure
+
+    5 graines, cap 480  ->  4,47x        3 graines, cap 240  ->  2,47x
+    5 graines, cap 240  ->  3,41x        3 graines, cap 480  ->  3,53x
+```
+
+> **Le criblage pèse ~47 % du temps d'un nombre de blocs, ELITE ~53 %.** C'est la première fois
+> que ce partage est chiffré, et il dit lequel des deux leviers coûte cher.
+
+### 21.4 ✅ LA RESTRICTION QUI NE COÛTE RIEN — et pourquoi elle est légitime
+
+`_compute_blocks_range_contractual` (`certus/utils/certus_strat_context.py:321`) dérive la plage
+de **deux diviseurs**, tous deux dans les params donc surchargeables :
+
+```
+min_blocks = int(num_layers / iter_divider_start)
+max_blocks = int(num_layers / iter_divider_end)
+selected   = {1, 2, min_blocks, max_blocks, num_layers}  puis range(min, max+1) si dense
+```
+
+🔴 **Les blocs 1, 2 et `num_layers` sont FORCÉS**, écrits en dur dans l'ensemble : on ne peut pas
+les exclure. Mais on peut resserrer le reste :
+
+```
+iter_divider_start = 10,7143   et   iter_divider_end = 5,7692
+    -> [75, 13, 12, 11, 10, 9, 8, 7, 2, 1]      10 nombres de blocs au lieu de 16
+    -> cout de reference : 53,4 min au lieu de 87,5        (-39 %)
+```
+
+🔑 **Et cette restriction ne perd aucune information** : les **547 déposables de la graine 77
+sont TOUTES à 7-13 blocs** (§15.1 et le comptage du 2026-08-20). Les blocs 3-6, 14 et 15 n'ont
+jamais rendu un seul déposable, à aucune des deux graines.
+
+⚠️ **Ce qu'elle coûte quand même, et il faut le dire** : `n_strats` n'est plus comparable au
+`1617` de la référence, puisque six nombres de blocs manquent. La comparaison reste valide sur
+**ce qui décide** — le nombre de déposables et le meilleur SEEL — mais **pas** sur la taille de
+la population. Ne pas lire un `n_strats` plus petit comme un appauvrissement de la recherche.
+
+### 21.5 ✅ LE §18.2 EST CONFIRMÉ AU CHIFFRE PRÈS
+
+Dans le run coupé, la première ronde ELITE avec `elite_max_candidates = 480` :
+
+```
+[ELITE] Round 1/3: generated=424 parents=10
+```
+
+**424 candidates, 10 parents.** Le §18.2 prédisait `10 parents x ~42 = ~420` d'après le seul
+comptage du voisinage (`n_blocs x 2` mutations de λ + `(n_blocs-1) x 2` frontières). 🔑 **Les sept
+parents qui n'étaient jamais explorés le sont maintenant**, et le plafond de 480 est dimensionné
+juste — il n'est pas atteint, donc il ne tronque plus rien.
+
+### 21.6 🔵 Ce qui tourne depuis 04:13
+
+`screen_seed_list = 42;77;101;202;303` · `elite_max_candidates = 480` ·
+`iter_divider_start = 10,7143` · `iter_divider_end = 5,7692`
+
+Coût projeté : `53,4 x 4,47 = 239 min` → fin vers **08:15**, marge ~70 min sur l'échéance.
+Artefact : `blocs_vs_plantage_r75x2_deep_s042_ms5cap480b713.json`.

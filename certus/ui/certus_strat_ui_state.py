@@ -1374,6 +1374,28 @@ class CertusStratStateMixin:
             "wl_diversity_top_k": int(
                 _config_float(getattr(self, "_loaded_config", {}), "wl_diversity_top_k", 0.0)
             ),
+            # 🔑 LA COUVERTURE EN λ. Elle FORCE une λ admissible que les `top_k` groupements
+            # n'emploient pas, en restreignant une couche de la `cost_map` a cette seule λ, et
+            # laisse la DP re-optimiser le reste du plan. C'est la difference avec une mutation
+            # ELITE, qui casse la coherence du plan.
+            # 📏 Mecanisme mesure le 2026-08-21 sur `r75x2` a 2 nm, plage complete, graine 42 :
+            # au bloc 15, 140 λ deja employees, 763 absentes, **300 ajoutees, 0 infaisable**, et
+            # la population passe de 601 a 901 groupements. Forcer une λ est donc faisable, et
+            # la passe atteint bien le calcul.
+            # 🔒 INERTE PAR DEFAUT : sans la cle, chemin d'avant AU BIT.
+            # ⚠️ Elle n'etait atteignable QUE par `CERTUS_PROBE_OVERRIDES` avant ce routage --
+            # mesurable, pas livrable. C'est le motif inverse de `fast_auto_blocks` : la ou
+            # celui-ci est pose et jamais lu, celui-la etait lu et jamais posable.
+            "enable_wl_coverage": _config_flag(
+                getattr(self, "_loaded_config", {}), "enable_wl_coverage", False
+            ),
+            # 🔴 ZERO, JAMAIS None -- meme piege que `wl_diversity_top_k` ci-dessus, et il ne
+            # leverait que sur le chemin arme. A zero, le consommateur retombe sur `dp_top_k`.
+            # ⚠️ Le noyau ECRETE ensuite a la largeur de la plage d'identifiants reservee (100
+            # par origine) et le journalise : le plafond dur n'est pas un reglage de recherche.
+            "wl_coverage_top_k": int(
+                _config_float(getattr(self, "_loaded_config", {}), "wl_coverage_top_k", 0.0)
+            ),
             "rate_tail_sweep": _config_list_int(
                 getattr(self, "_loaded_config", {}), "rate_tail_sweep"
             ),

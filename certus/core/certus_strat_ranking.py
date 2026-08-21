@@ -147,7 +147,15 @@ def _couverture_wl_groupings(
     ajoutes: list[dict] = []
     infaisables = 0
     for w in absentes:
-        if len(ajoutes) >= budget:
+        # 🔴 LE BUDGET PLAFONNE LES TENTATIVES, PAS LES AJOUTS. Premiere version fausse, et
+        # mesuree : elle testait `len(ajoutes) >= budget`, si bien qu'un cas ou TOUT est
+        # infaisable ne consommait aucun budget et payait quand meme chaque appel.
+        # 📏 Le 2026-08-21, sur une configuration ou la DP ne rendait aucun groupement :
+        # « 903 absentes -> 0 ajoutee(s), 903 infaisable(s), 903 appels DP » -- pour un budget
+        # de 100, et environ deux minutes par nombre de blocs jetees.
+        # Les λ etant triees par cout CROISSANT, les `budget` premieres tentatives sont les
+        # plus prometteuses : plafonner le travail ne sacrifie pas les meilleures.
+        if len(ajoutes) + infaisables >= budget:
             break
         _cout, couche = meilleur[w]
         carte = dict(cost_map)

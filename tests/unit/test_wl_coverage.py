@@ -321,3 +321,97 @@ class TestLesCompteursRemontent:
         stats: dict = {}
         _miner(wl_coverage_stats=stats)
         assert stats == {}, stats
+
+
+class TestLeBudgetPlafonneLeTRAVAIL:
+    """Premiere version fausse, et mesuree en production.
+
+    Elle testait `len(ajoutes) >= budget` : un cas ou TOUT est infaisable ne consommait donc
+    aucun budget et payait quand meme chaque appel DP.
+
+        Le 2026-08-21, sur une configuration ou la DP ne rendait aucun groupement :
+        « 903 absentes -> 0 ajoutee(s), 903 infaisable(s), 903 appels DP » pour un budget de
+        100, soit environ deux minutes par nombre de blocs jetees.
+
+    Ce test ECHOUE sur le code d'avant : il y aurait vu 300 appels au lieu de 5.
+    """
+
+    def _carte(self, n: int) -> dict:
+        return {0: {500.0 + i: 1.0 + i for i in range(n)}}
+
+    def test_tout_infaisable_ne_depasse_PAS_le_budget(self):
+        appels = {"n": 0}
+
+        def dp_sterile(carte, k):
+            appels["n"] += 1
+            return []
+
+        stats: dict = {}
+        out = _couverture_wl_groupings(
+            self._carte(300), [], dp_sterile, 5, LOGGER, stats
+        )
+        assert out == []
+        assert appels["n"] == 5, f"{appels['n']} appels DP pour un budget de 5"
+        assert stats["appels_dp"] == 5
+        assert stats["infaisables"] == 5
+        assert stats["non_traitees"] == 295, stats  # 300 absentes - 5 tentees
+
+    def test_le_melange_faisable_infaisable_compte_les_DEUX(self):
+        appels = {"n": 0}
+
+        def dp_alterne(carte, k):
+            appels["n"] += 1
+            return [_sol(700)] if appels["n"] % 2 else []
+
+        stats: dict = {}
+        _couverture_wl_groupings(self._carte(300), [], dp_alterne, 6, LOGGER, stats)
+        assert appels["n"] == 6
+        assert stats["ajoutees"] + stats["infaisables"] == 6, stats
+
+    def test_les_TENTATIVES_suivent_le_cout_croissant(self):
+        """Plafonner le travail ne doit pas sacrifier les lambdas les plus prometteuses."""
+        carte = {0: {500.0: 9.0, 600.0: 1.0, 700.0: 2.0, 800.0: 3.0}}
+        vus = []
+
+        def dp(c, k):
+            (couche,) = [d for d in c.values() if len(d) == 1]
+            vus.append(next(iter(couche)))
+            return []
+
+        _couverture_wl_groupings(carte, [], dp, 2, LOGGER)
+        assert vus == [600.0, 700.0], "les deux moins cheres, dans l'ordre"
+
+
+class TestLeRoutageDepuisUnFichierDeConfiguration:
+    """Sans routage, le levier est MESURABLE mais pas LIVRABLE.
+
+    C'est le motif inverse de `fast_auto_blocks` : la ou celui-ci est pose, journalise et
+    jamais lu, `enable_wl_coverage` etait lu par le noyau et posable par AUCUN fichier de
+    configuration -- seulement par `CERTUS_PROBE_OVERRIDES`. Les deux laissent le levier
+    inutilisable ; celui-ci au moins ne promettait rien a l'utilisateur.
+    """
+
+    def _routage(self, cfg: dict) -> dict:
+        from certus.ui import certus_strat_ui_state as etat
+        src = __import__("inspect").getsource(etat)
+        assert '"enable_wl_coverage"' in src, "la cle n'est pas routee"
+        assert '"wl_coverage_top_k"' in src, "le budget n'est pas route"
+        return cfg
+
+    def test_les_deux_cles_sont_routees(self):
+        self._routage({})
+
+    def test_le_noyau_les_lit_bien_sous_CES_noms(self):
+        """Un routage sous un autre nom que celui que le noyau lit ne servirait a rien."""
+        import inspect
+
+        from certus.workers import certus_strat_workers as w
+        src = inspect.getsource(w)
+        assert 'params.get("enable_wl_coverage"' in src
+        assert 'params.get("wl_coverage_top_k"' in src
+
+    def test_le_budget_route_a_ZERO_retombe_sur_dp_top_k(self):
+        """`int(None)` leverait, et seulement sur le chemin arme -- donc jamais dans la suite."""
+        stats: dict = {}
+        _miner(enable_wl_coverage=True, wl_coverage_top_k=0, wl_coverage_stats=stats)
+        assert stats.get("ajoutees", 0) > 0, stats

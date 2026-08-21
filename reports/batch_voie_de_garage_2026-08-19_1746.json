@@ -1,0 +1,48 @@
+[
+  {
+    "cellule": "1_deep_2nm_s042",
+    "script": "probe_blocs_vs_plantage.py",
+    "argv": [
+      "r75x2",
+      "deep",
+      "0",
+      "0",
+      "2",
+      "0",
+      "42",
+      "0"
+    ],
+    "code": 0,
+    "minutes": 117.4,
+    "verdict": "OK"
+  },
+  {
+    "cellule": "2_deep_2nm_s077",
+    "script": "probe_blocs_vs_plantage.py",
+    "argv": [
+      "r75x2",
+      "deep",
+      "0",
+      "0",
+      "2",
+      "0",
+      "77",
+      "0"
+    ],
+    "code": 0,
+    "minutes": 154.2,
+    "verdict": "OK"
+  },
+  {
+    "cellule": "3_courbe_SEEL_n",
+    "script": "probe_prefixe_optique.py",
+    "argv": [
+      "r75x2",
+      "deep",
+      "42"
+    ],
+    "code": 0,
+    "minutes": 100.1,
+    "verdict": "OK"
+  }
+]

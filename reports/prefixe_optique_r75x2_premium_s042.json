@@ -1,0 +1,14 @@
+{
+ "composant": "r75x2",
+ "mode": "premium",
+ "seed": 42,
+ "n_couches": 75,
+ "profondeur": {
+  "robustness_num_runs": 150,
+  "n_screen_runs": 25,
+  "dp_top_k": 40
+ },
+ "stamp": "2026-08-20T03:44:50",
+ "n_strats": 187,
+ "courbe": []
+}

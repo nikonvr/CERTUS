@@ -1306,3 +1306,112 @@ d'ELITE n'est pas dirigée. Injecter les 12 plans de la graine 77 **comme parent
 que `REPRENDRE_ICI.md` §3 proposait déjà — n'est plus un contournement du test de transfert :
 c'est le traitement du mécanisme mesuré. ⚠️ Mais cela reste un **développement**, pas un réglage,
 et il exige la règle d'or.
+
+---
+
+## 18. 🔴 JE ME SUIS TROMPÉ AU §17.2 — le plafond de 120 laisse SEPT PARENTS SUR DIX INEXPLORÉS
+
+Écrit le 2026-08-21 à 02:10, en lisant `_generate_elite_candidate_strategies` ligne par ligne
+après que 👤 ait retenu l'idée du multi-graines. **La lecture du code renverse ce que j'avais
+écrit une heure plus tôt, et dans le bon sens.**
+
+### 18.1 🔑 LA GÉNÉRATION D'ELITE EST ENTIÈREMENT DÉTERMINISTE
+
+`certus_strat_consensus.py:1176`. Aucun tirage aléatoire, nulle part :
+
+```
+grille de lambda TRIEE  ->  pour chaque PARENT
+                              pour chaque BLOC
+                                pour delta dans [-span, +span]   ->  une candidate
+                              pour chaque FRONTIERE
+                                decalage -1 puis +1              ->  une candidate
+                        et `return` DES QUE len(out) >= max_candidates
+```
+
+🔴 **Conséquence immédiate et il faut la dire : « K passes ELITE à graines de génération
+différentes » ne peut PAS fonctionner tel quel.** K graines rendraient **exactement** les mêmes
+candidates. La diversité observée à la graine 77 ne vient donc **pas** de la génération : elle
+vient des **PARENTS**, qui sont les survivants du criblage Monte-Carlo, eux bien
+dépendants de la graine.
+
+> **L'idée de 👤 est juste sur le fond et mal visée sur la forme : ce ne sont pas K graines de
+> génération qu'il faut, c'est K JEUX DE PARENTS.**
+
+### 18.2 📏 LE COMPTE QUI CHANGE TOUT — et il est arithmétique, pas statistique
+
+Par parent, avec `span = 1` :
+
+| composant du voisinage | nombre de candidates |
+|---|---|
+| mutations de λ | `n_blocs × 2` |
+| décalages de frontière | `(n_blocs − 1) × 2` |
+| **total, pour `n_blocs = 11`** | **42** |
+
+Et l'énumération est **parent par parent**, avec un `return` sec au plafond. Donc à
+`elite_max_candidates = 120` :
+
+```
+120 / 42  =  2,9 parents explores  sur les  10  annonces
+```
+
+📏 **Vérifié dans le journal de la cellule `base`** : `parents=10` dans **28 rounds sur 46**, et
+`generated=120` dans ces mêmes rounds — le plafond est atteint à chaque fois. Pour les
+`n_blocs` de 9 à 13 des gagnantes, le coût par parent va de 34 à 50, donc **2,4 à 3,5 parents
+explorés sur 10**.
+
+🔴 **Sept parents sur dix sont annoncés et jamais touchés.** C'est le motif que ce dépôt
+poursuit depuis le début — *le journal annonce un effet qui n'existe pas* — et il était ici sous
+la forme la plus trompeuse : un compteur juste (`parent_count` vaut bien 10) devant une boucle
+qui n'en consomme que trois.
+
+### 18.3 ✅ CE QUE JE RETIRE DE MON PROPRE §17.2
+
+| ce que j'avais écrit | ce que le code dit |
+|---|---|
+| « doubler `elite_max_candidates` ferait passer 685 de 2 à ~4 occurrences » | 🔴 **faux** — il ne fait pas « plus de la même chose », il **débloque les parents 4 à 10**, qui ne sont aujourd'hui pas explorés du tout |
+| « élargir le voisinage dilue la cible » | 🟢 **juste, et pire que je ne le pensais** : `span = 2` porte le coût par parent de 42 à ~64, donc `240 / 64 ≈ 3,7` parents. La cellule `reach` aggravait la troncature qu'elle prétendait corriger |
+
+🔑 **Le levier bien visé n'est donc pas la portée, c'est le PLAFOND** — et il faut le dimensionner
+sur le compte, pas au doigt : `10 parents × ~42 ≈ 420`, donc **`elite_max_candidates = 480`**.
+
+⚠️ Et ce n'est pas une valeur choisie librement (`CLAUDE.md` §19) : c'est le produit du nombre de
+parents déjà demandé par le défaut `elite_parent_top_k = 10` et du coût mesuré d'un parent.
+**On ne demande rien de neuf, on finit ce que la configuration demandait déjà.**
+
+### 18.4 🔵 LES DEUX LEVIERS, ET LEUR ORDRE
+
+| | levier | nature | coût |
+|---|---|---|---|
+| **A** | `elite_max_candidates = 480` | **déterministe**, aucun développement, une surcharge | un run |
+| **B** | K jeux de **PARENTS** — l'idée de 👤, revisée | un développement | à écrire |
+
+**A passe d'abord, et pas seulement parce qu'il est moins cher** : il décide si B est nécessaire.
+
+- Si A rend des déposables → la famille gagnante était **atteignable** depuis les parents que la
+  graine 42 a déjà, et tout l'écart des deux graines n'était qu'une **troncature d'énumération**.
+  🔑 Ce serait le meilleur résultat possible : ni physique, ni graine, ni développement.
+- Si A n'en rend pas → les parents de la graine 42 ne mènent nulle part, et **B devient la seule
+  voie** : il faut d'autres parents, donc d'autres réalisations en amont d'ELITE.
+
+🔵 **Prédiction, posée avant le run** : A fait passer les occurrences de 685 nm de **2** à
+**plusieurs dizaines** dans les histogrammes `[ELITE-WL] generated`. C'est vérifiable
+indépendamment du résultat en déposables, et c'est le contrôle que le levier **atteint** bien ce
+qu'il vise.
+
+**Ce qui la réfuterait** : 685 reste à 2 ou 3 occurrences. Cela voudrait dire que ce n'est pas la
+troncature qui l'empêche, et qu'il faut regarder les λ des parents eux-mêmes.
+
+### 18.5 🔒 Comment B devra être écrit, quand son tour viendra
+
+```
+une seule Phase A  (elle est IDENTIQUE aux deux graines, §10 -- donc partagee)
+  -> K classements de parents, obtenus a K graines de CRIBLAGE
+    -> K passes ELITE deterministes, une par jeu de parents
+      -> union dedupliquee par SIGNATURE DE PLAN (jamais par strategy_id, §24-51)
+        -> notation commune a la graine 42
+```
+
+🔒 **Trois choses à ne pas manquer :** la notation finale reste **à la graine 42**, donc le
+produit reste déterministe et le juge reste celui de 👤 · la déduplication se fait par
+**signature de plan**, `strategy_id` n'étant pas unique · et le score publié vient de la
+**notation commune seule**, sinon on paie la malédiction du vainqueur mesurée à **+12,9 %**.

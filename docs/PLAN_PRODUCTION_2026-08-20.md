@@ -1415,3 +1415,100 @@ une seule Phase A  (elle est IDENTIQUE aux deux graines, §10 -- donc partagee)
 produit reste déterministe et le juge reste celui de 👤 · la déduplication se fait par
 **signature de plan**, `strategy_id` n'étant pas unique · et le score publié vient de la
 **notation commune seule**, sinon on paie la malédiction du vainqueur mesurée à **+12,9 %**.
+
+
+---
+
+## 19. 🟢 LA CONTRAINTE MONO-GRAINE EST LEVÉE — et la mesure dit OÙ mettre le multiseed
+
+👤, le 2026-08-21 : *« même si le code en production est ralenti, ce sera un gain énorme
+d'inclure des stratégies diverses venant de plusieurs seed »*. Le §0 de ce plan présentait le
+billet unique comme **le** défaut ; il devient un défaut qu'on a le droit de réparer.
+
+### 19.1 📏 LE POINT DE DIVERGENCE, MESURÉ — il n'y a AUCUN préfixe commun
+
+Comparaison des deux populations de `r75x2 @ 2 nm deep` par **signature de plan exacte**
+`(start, end, wavelength)`, par nombre de blocs :
+
+| n_blocs | s042 | s077 | signatures communes | part |
+|---|---|---|---|---|
+| **1** | 15 | 13 | **7** | **46,7 %** |
+| 2 à 6 | ~27 | ~27 | 1 à 2 | 7,4 % |
+| 7 à 10 | ~26 | ~100 | 1 | ~1 % |
+| **11 à 15** | 37-40 | 116-132 | **0** | **0 %** |
+
+🔴 **Dès le bloc 1 — où il n'y a pourtant aucun héritage — la moitié de la population diffère
+déjà.** Puis 7,4 %, puis 1 %, puis **rien**.
+
+**La chaîne, et où elle peut diverger :**
+
+| étage | déterministe ? |
+|---|---|
+| Phase A (coût par couche × λ) | ✅ mesuré identique aux deux graines (§10) |
+| DP k-best + minage | ✅ déterministe **à cost_map et parents donnés** |
+| **criblage `n_screen = 50`** | 🔴 **Monte-Carlo → dépend de la graine** |
+| survivants → `inherited_strategies` du bloc suivant | 🔴 la divergence **se compose** |
+| parents d'ELITE = tête du classement | 🔴 hérite de tout ce qui précède |
+| génération ELITE | ✅ déterministe (§18.1) |
+
+> **Le multiseed va au CRIBLAGE. C'est le seul étage stochastique en amont, et c'est celui dont
+> tout le reste hérite.**
+
+### 19.2 🔵 LA CONCEPTION, et le canal existe déjà en production
+
+```
+une seule Phase A            (identique aux deux graines, §10 -- donc partagee, pas K fois)
+  -> minage                  (deterministe)
+    -> K CRIBLAGES a K graines, n_screen chacun      <- LE POINT DE DIVERGENCE
+      -> UNION des survivants, dedupliquee par SIGNATURE DE PLAN
+        -> inherited_strategies  ET  parents d'ELITE
+          -> passe complete et notation sur une base FIXE
+```
+
+🔑 **Le canal est déjà câblé et testé** : `inherited_strategies`
+(`certus/workers/certus_strat_workers.py:669`). Le multiseed n'ajoute pas un mécanisme, il
+**alimente** celui qui existe — c'est littéralement *« hériter de stratégies prometteuses »*.
+
+**Quatre propriétés qui rendent la chose défendable :**
+
+| | |
+|---|---|
+| le criblage est le Monte-Carlo **le moins cher** de la chaîne | 50 tirages contre 300 pour la passe complète |
+| les scores de graines différentes **ne sont jamais comparés** | l'union ne transporte que les **plans** ; la passe complète rescore tout sur la base fixe |
+| c'est l'invariant du projet appliqué à l'axe de la graine | *la réalisation sert à NOTER, jamais à CHOISIR* — ici elle ne choisit plus seule |
+| règle d'or | liste vide ⇒ **un seul** criblage à la graine courante ⇒ chemin d'avant **au bit** |
+
+⚠️ **Deux choses à dimensionner, pas à choisir** : l'union grossit le jeu de parents, donc
+`elite_max_candidates` doit suivre le compte du §18.2 (~42 par parent) ; et la passe complète à
+`N = 300` tournera sur `K × k_keep` stratégies au lieu de `k_keep`. C'est le ralentissement que
+👤 a explicitement accepté.
+
+### 19.3 🔴 CE QUI RESTE OUVERT, et c'est une décision de 👤
+
+**La notation finale reste-t-elle à une graine fixe ?** Ce n'est pas la même question que la
+génération, et elle ne se tranche pas par commodité :
+
+- un score publié doit être **reproductible** — sinon deux lancements du même fichier rendent
+  deux SEEL, et plus rien n'est comparable d'une version à l'autre ;
+- si la notation tourne sur les **mêmes** graines que la génération, on paie la **malédiction du
+  vainqueur**, mesurée à **+12,9 %** le 2026-08-15.
+
+📌 **Proposition par défaut, en attendant l'arbitrage** : générer sur K graines, **noter sur une
+base fixe et disjointe** des graines de génération. Diversité sans biais, et aucun coût
+supplémentaire.
+
+### 19.4 ⚠️ Ce que le multiseed ne prétend PAS
+
+- **Il ne promet pas de retrouver le 0,5692 de la graine 77.** Il promet de cesser de **rater par
+  construction** ce que d'autres réalisations proposent. Et la cible défendable est la **classe**,
+  pas le chiffre : §24-26 mesure qu'à `N = 150` le top-8 tient dans ~2 σ et que la gagnante
+  alterne d'un run à l'autre.
+- **Il ne dit rien de la physique.** Si les stratégies de la graine 77 plantent réellement sous le
+  bruit de la graine 42, aucune diversité de recherche n'y changera quoi que ce soit. **Le test de
+  transfert reste la mesure qui décide si la cible existe**, et il attend toujours son juge au
+  nominal (§15.4).
+- **Rien hors `r75x2` à 2 nm.** Et sur le même composant à **1 nm**, l'asymétrie **s'inverse** :
+  la graine 42 rend 254 à 277 déposables et la graine 77 en rend **0**
+  ([`CHANTIER_PREDICTIBILITE.md`](CHANTIER_PREDICTIBILITE.md) §4quater-bis). **Aucune des deux
+  graines n'est « bonne »** — ce qui est précisément l'argument le plus fort en faveur du
+  multiseed, et l'argument le plus fort contre l'idée de viser la trajectoire de l'une d'elles.

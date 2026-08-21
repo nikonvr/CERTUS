@@ -6,6 +6,12 @@
 terme de seel et l'implanter sur le code de production »*, avec autonomie totale sur les
 arbitrages pendant une dizaine d'heures.
 
+⚠️ CE BATCH EST ANTERIEUR A UNE DECISION DE 👤. Le 2026-08-21 il a LEVE la contrainte
+mono-graine : *« meme si le code en production est ralenti, ce sera un gain enorme d'inclure
+des strategies diverses venant de plusieurs seed »*. Les quatre cellules ci-dessous cherchent
+donc toutes a debloquer la graine 42 SEULE -- ce qui reste une question valide (§18.4 : le
+levier A decide si le multi-graines est necessaire), mais n'est plus la seule voie autorisee.
+
 ## Le composant est `r75x2` a 2 nm, en `deep`, graine 42. EXCLUSIVEMENT.
 
 C'est l'etalon courant. Rien d'autre ne tourne cette nuit : une mesure, une machine.

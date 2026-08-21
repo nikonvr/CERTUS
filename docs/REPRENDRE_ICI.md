@@ -7,9 +7,16 @@
 
 ## 0. ⚡ LA SITUATION EN CINQ LIGNES
 
-👤 veut que **le code de production, à `robustness_seed = 42` définitivement**, trouve sur
-`r75x2` à **2 nm** une stratégie au niveau de **SEEL 0,5692** — le niveau que la graine 77
-atteint. Aujourd'hui la graine 42 y rend **0 déposable sur 1617**, toutes à 100 % de plantage.
+👤 veut que **le code de production** trouve sur `r75x2` à **2 nm** une stratégie au niveau de
+**SEEL 0,5692** — le niveau que la graine 77 atteint. À la graine 42 seule, il rend **0 déposable
+sur 1617**, toutes à 100 % de plantage.
+
+🔴 **LA CONTRAINTE MONO-GRAINE EST LEVÉE — 👤, 2026-08-21.** Elle disait *« le code de production
+reste à `robustness_seed = 42`, définitivement »*, et elle a gouverné tout le plan jusqu'ici.
+👤 : *« même si le code en production est ralenti, ce sera un gain énorme d'inclure des
+stratégies diverses venant de plusieurs seed »*. **La recherche a donc le droit de tirer
+plusieurs billets.** Ce qui reste à trancher, et qui n'est PAS la même question, est de savoir si
+la **notation finale** reste à une graine fixe — voir §7.
 
 🔴 **UN BATCH TOURNE EN CE MOMENT.** Lancé le 2026-08-20 à **23:58**, pour **9,5 h**, donc
 **fin vers 09:30**. Ne lance rien d'autre : une mesure, une machine. Voir §1.
@@ -206,3 +213,55 @@ mécaniquement que tout interpréteur cité existe.
 
 🔴 **Et si le batch tourne encore, ne lance pas la suite de tests** — elle sature les cœurs et
 la règle du projet est *une mesure, une machine*.
+
+
+---
+
+## 7. 🔵 LA CONTRAINTE MONO-GRAINE EST LEVÉE — ce qui tombe, ce qui reste
+
+👤, le 2026-08-21 : *« même si le code en production est ralenti, ce sera un gain énorme
+d'inclure des stratégies diverses venant de plusieurs seed »*, et *« enlève des fichiers md la
+contrainte que le code sera restreint forcément à un seed 42 »*.
+
+### Ce qui tombe
+
+> ~~« Le code de production reste à `robustness_seed = 42`, définitivement. »~~
+
+Elle gouvernait tout le plan et **elle est retirée**. La recherche a le droit de tirer plusieurs
+billets, et le ralentissement est accepté d'avance.
+
+### 🔴 Ce qui reste à trancher, et ce n'est PAS la même question
+
+| | |
+|---|---|
+| la **RECHERCHE** est multi-réalisation | ✅ **tranché** — c'est la décision du 21 |
+| la **NOTATION** finale reste-t-elle à une graine fixe ? | 🔴 **ouvert**, et c'est une décision de 👤 |
+
+Pourquoi ça compte : le score publié doit être **reproductible**, sinon deux lancements du même
+fichier rendent deux SEEL. Et si la notation tourne sur les mêmes graines que la génération, on
+paie la **malédiction du vainqueur** — mesurée à **+12,9 %** le 2026-08-15.
+
+📌 **Ce que je propose par défaut, en attendant** : générer sur K graines, **noter sur une base
+fixe et disjointe**. C'est le compromis qui donne la diversité sans le biais, et il ne coûte rien
+de plus.
+
+### 🔑 Où le multiseed doit entrer — mesuré, pas supposé
+
+📏 Le 2026-08-21, comparaison des deux populations par **signature de plan exacte**, par nombre
+de blocs :
+
+```
+n_blocs      1      2-6     7-10    11-15
+communes  46,7 %   7,4 %   ~1 %      0 %
+```
+
+**Il n'y a aucun préfixe commun** : dès le bloc 1, où il n'existe pourtant **aucun héritage**, la
+moitié de la population diffère déjà. Puis ça s'effondre à zéro.
+
+⇒ Le point de divergence est le **criblage Monte-Carlo** (`n_screen = 50`), appliqué dès le
+premier nombre de blocs. Ses survivants deviennent les `inherited_strategies` du bloc suivant, et
+l'écart **se compose** jusqu'à ce que les deux recherches n'aient plus rien en commun. Les parents
+d'ELITE héritent de toute cette dérive.
+
+🔑 **C'est donc là que le multiseed va** — pas dans la génération ELITE, qui est **déterministe**
+(§18.1). Le détail de la conception est au **§19 du plan**.

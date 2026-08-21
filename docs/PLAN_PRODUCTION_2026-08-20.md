@@ -1152,7 +1152,7 @@ L'ordre des deux portes d'ELITE (`certus_strat_consensus.py`) est :
    si non fini                                  ->  rej_score_non_fini
 ```
 
-Or `_extract_rmse_p95_for_noise` (`certus/utils/certus_strat_context.py:627`) lit **le niveau
+Or `_extract_rmse_p95_for_noise` (`certus/utils/certus_strat_context.py:706`) lit **le niveau
 nominal seul**, et une déposition qui ne termine pas rend une RMSE énorme mais **finie**.
 
 🔑 **Donc une candidate qui plante AU NOMINAL est comptée dans `rej_full_rmse`, pas dans

@@ -1512,3 +1512,84 @@ supplémentaire.
   ([`CHANTIER_PREDICTIBILITE.md`](CHANTIER_PREDICTIBILITE.md) §4quater-bis). **Aucune des deux
   graines n'est « bonne »** — ce qui est précisément l'argument le plus fort en faveur du
   multiseed, et l'argument le plus fort contre l'idée de viser la trajectoire de l'une d'elles.
+
+---
+
+## 20. 📏 `cgc95` — la prédiction tient sur l'issue et tombe sur la RAISON
+
+Cellule 2 du batch de la nuit, **108 min**, `r75x2 @ 2 nm deep s042`,
+`crash_gate_confidence = 0.95`.
+
+### 20.1 Le résultat, et il est plus net que prévu
+
+```
+base    1617 strategies · 0 deposable · crash_min 100,00 % · ELITE 0
+cgc95   1617 strategies · 0 deposable · crash_min 100,00 % · ELITE 0
+
+compteurs ELITE :  IDENTIQUES AU CHIFFRE PRES des deux cotes
+    halving 1368 · full_rmse 211 · score_non_fini 1116 · retenues 0 · engendrees 4226
+bandes de plantage : IDENTIQUES, seau par seau
+```
+
+🔵 **La prédiction du §17.3 est confirmée** : 0 déposable. ✅ Et la surcharge **est** arrivée —
+le journal l'annonce (`surcharges [cgc95] : {'crash_gate_confidence': 0.95}`) et l'artefact la
+consigne dans `config.overrides`.
+
+### 20.2 🔴 MAIS J'AI D'ABORD MAL LU CE RÉSULTAT, ET LA CORRECTION IMPORTE
+
+Devant des compteurs **byte-identiques**, j'ai écrit que le levier n'atteignait pas le calcul —
+la famille du §24-33, un levier mort. **C'était une inférence, pas une mesure.** Vérifié en
+unitaire, `_crash_gate_rejects` fait exactement ce qui est écrit :
+
+```
+n_crash/300    taux    borne 95%   rejet SANS   rejet AVEC
+        15    5,00 %     3,11 %       True        False
+        21    7,00 %     4,74 %       True        False
+        25    8,33 %     5,86 %       True         True
+```
+
+La borne épargne jusqu'à **~7,3 %**, pas au-delà. Or les bandes ne comptaient **qu'UNE**
+candidate dans le seau `5-10 %` — et si elle était au-dessus de 7,3 %, **un résultat nul est
+exactement ce qu'on doit observer sans aucun défaut.**
+
+> **Le seau était trop grossier pour séparer « levier mort » de « levier vivant sans cible ».
+> Deux réparations opposées, et l'instrument ne les départageait pas.**
+
+### 20.3 ✅ L'instrument qui rend la question sans objet
+
+Une ligne `[GATE]` compte désormais les **désaccords** entre la règle historique et la borne, à
+l'endroit même de la décision (`certus_strat_robustness.py`, porte de plantage) :
+
+```
+[GATE] strat N : la borne de confiance EPARGNE -- plantage 6,00 % (18/300), borne basse 3,91 %
+```
+
+**Une ligne = le levier a agi. Le silence = il n'avait rien à attraper.** Plus rien à inférer,
+et c'est le contrôle 4 du §12 — *compter les rejets, ne pas lire le code* — appliqué à la porte
+elle-même.
+
+### 20.4 🔵 CE QUI TOURNE MAINTENANT — la première cellule multiseed
+
+Lancée le 2026-08-21 à **03:34**. `screen_seed_list = 42;77;101;202;303` **et**
+`elite_max_candidates = 480`.
+
+⚠️ **DEUX leviers dans une seule cellule : l'attribution entre eux sera impossible.** C'est
+assumé, et voici pourquoi ce n'est pas l'erreur n° 3 du §5 :
+
+> §18.2 mesure qu'à `elite_max_candidates = 120`, ELITE n'explore que **~3 des 10 parents**
+> qu'on lui donne. Un multiseed qui élargit le vivier de parents serait donc **tronqué par
+> construction** avant d'avoir servi. Les deux réglages ne sont pas indépendants : l'un ouvre
+> le vivier, l'autre permet de le consommer. Les séparer aurait testé le premier dans le seul
+> régime où son effet est plafonné.
+
+🔒 **Et la garde tient** : aucun de ces deux leviers ne relâche la physique. Le criblage tourne
+à `n_screen` pour chaque graine, l'union ne transporte que des **plans**, et la passe complète
+rescore tout **sur la graine du run**. Ce qui en sortira est donc déjà jugé au nominal.
+
+🔵 **Trois lectures posées d'avance, et elles sont indépendantes du résultat en déposables :**
+
+| lecture | ce qu'elle établit |
+|---|---|
+| les lignes `[Block n] graine g : … N PLANS NEUFS` | **la courbe de saturation de l'union** : combien chaque graine apporte réellement, et à partir de quand elle n'apporte plus rien |
+| les occurrences de **685 nm** dans `[ELITE-WL] generated` | le contrôle du §18.4 : le levier **atteint**-il ce qu'il vise ? Attendu : de **2** à plusieurs dizaines |
+| la présence de lignes `[GATE]` | si la porte à confiance agit dans ce régime — elle n'est pas armée ici, donc **le silence est attendu** et sert de contrôle négatif |

@@ -773,7 +773,7 @@ coupure 52 :  0.11852439021077397  (s042)   contre   0.11852439020756476  (s077)
 |---|---|
 | `consensus_seed_list = 41,42,43,44,45`, `consensus_num_seeds = 3` | le consensus tourne sur **[41, 42, 43]** |
 | `_resolve_consensus_seeds` (`certus_strat_consensus.py:132`) | la liste explicite gagne ; **`base_seed` n'est consulté que si elle est vide**. Le consensus n'a donc **jamais vu 77** |
-| le rescoring ne lit que `robustness_score` (`certus_strat_robustness.py:2705`) | il réécrit le **score** des `consensus_top_k = 60` premières, **jamais `crash_rate`** |
+| le rescoring ne lit que `robustness_score` (`certus_strat_robustness.py:2731`) | il réécrit le **score** des `consensus_top_k = 60` premières, **jamais `crash_rate`** |
 | 📏 les déposables sont aux **rangs 0 à 4** | elles sont donc bel et bien rescorées |
 
 **D'où le motif exact qu'on observe : le score est gelé par le consensus, le plantage suit

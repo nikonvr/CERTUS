@@ -11,7 +11,7 @@
 **SEEL 0,5692** — celui que la graine 77 atteint. À la graine 42 seule, il rend **0 déposable
 sur 1617**.
 
-## 🟢🟢 LA CIBLE EST ATTEINTE — mesuré le 2026-08-21 à 07:35
+### 🟢🟢 LA CIBLE EST ATTEINTE — mesuré le 2026-08-21 à 07:35
 
 ```
 r75x2 @ 2 nm deep, graine 42, plage 9-11, avec les 12 plans de la graine 77 injectes

@@ -2690,8 +2690,34 @@ def _test_strategy_robustness_task(
     # potential spectral gain. Above, straightforward elimination.
     #
     # 🔴 AND THE COMPARISON ITSELF IS THE DEFECT -- see `crash_gate_confidence`.
-    if _crash_gate_rejects(crash_count_max, num_runs, crash_rate_max, params):
+    _gate_rejects = _crash_gate_rejects(crash_count_max, num_runs, crash_rate_max, params)
+    if _gate_rejects:
         final_score = float("inf")
+
+    # WHAT THE CONFIDENCE BOUND ACTUALLY SPARED -- instrumentation only, no path changes.
+    #
+    # Measured 2026-08-21 on `r75x2` at 2 nm, `deep`, seed 42: arming
+    # `crash_gate_confidence = 0.95` produced counters BYTE-IDENTICAL to the reference --
+    # halving 1368, full_rmse 211, score_non_fini 1116, engendrees 4226 -- and 0 depositable
+    # either way. Two readings fit that, and they call for opposite repairs:
+    #
+    #   the key never reached this call  ->  a DEAD lever, the family of 24-33
+    #   the key reached it and spared 0  ->  a live lever with nothing in range
+    #
+    # The crash bands could not separate them: their 5-10 % bucket held exactly ONE
+    # candidate, and the bound only flips below ~7.3 % at N = 300 (21/300 passes, 25/300 does
+    # not), so a single candidate in the upper half of that bucket explains the null result
+    # without any defect. Counting the DISAGREEMENTS settles it directly: a line here means
+    # the lever acted, silence means it had nothing to catch, and neither has to be inferred.
+    if bool(params.get(CRASH_GATE_CONFIDENCE_KEY, 0.0) or 0.0):
+        _hist_rejects = crash_rate_max >= CRASH_RATE_TOLERANCE
+        if _hist_rejects != _gate_rejects:
+            logger.info(
+                f"   [GATE] strat {strategy.get('strategy_id', '?')} : la borne de confiance "
+                f"{'EPARGNE' if _hist_rejects else 'REJETTE EN PLUS'} -- plantage "
+                f"{crash_rate_max:.2%} ({crash_count_max}/{num_runs}), borne basse "
+                f"{crash_rate_lower_bound(crash_count_max, num_runs, float(params.get(CRASH_GATE_CONFIDENCE_KEY))):.2%}"
+            )
 
     # This block is computed AFTER final_score and results_per_noise, on which it
     # does not depend. Yet it is the most expensive in the function: it calls

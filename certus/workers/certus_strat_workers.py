@@ -467,6 +467,141 @@ def find_robust_nucleation_wavelength_adaptive(
 # === WORKER LOGIC ===
 
 
+def _resolve_screen_seeds(params: Any) -> list[int]:
+    """The seeds the SCREENING runs at. Absent or single -> the historical path, bit for bit.
+
+    WHY THE SCREENING AND NOT SOMEWHERE ELSE. Measured 2026-08-21 on `r75x2` at 2 nm, `deep`:
+    comparing the two seeds' populations by exact plan signature, block count by block count,
+    there is NO common prefix at all --
+
+        n_blocks      1      2-6     7-10    11-15
+        in common  46.7 %   7.4 %   ~1 %      0 %
+
+    At block count 1, where no strategy is inherited yet, HALF the population already differs.
+    Walking the pipeline, only one stage upstream of that is stochastic: this screening, whose
+    survivors become the next block count's `inherited_strategies` and ELITE's parents. Phase A
+    is measured identical across seeds, the DP and the mining are deterministic given the cost
+    map, and ELITE's own generation is deterministic too -- it enumerates a sorted neighbourhood.
+
+        The realisation decides WHICH STRATEGIES EXIST, and it decides it here.
+
+    SO THE UNION OF K SCREENINGS IS NOT A SHORTCUT, IT IS THE REPAIR. The project owner,
+    2026-08-21: "meme si le code en production est ralenti, ce sera un gain enorme d'inclure
+    des strategies diverses venant de plusieurs seed."
+
+    AND IT NEVER COMPARES SCORES ACROSS SEEDS. The union carries PLANS; the mandatory full pass
+    downstream rescores every one of them on the run's own seed. This is the project's invariant
+    -- the realisation serves to SCORE, never to CHOOSE -- applied to the seed axis.
+
+    Accepts `screen_seed_list` as a list, or as a comma-separated string, which is how the JSON
+    configurations already carry `consensus_seed_list`. Duplicates are dropped and order is
+    preserved: it is the order the log reports, and a reader must be able to follow it.
+    """
+    try:
+        raw = params.get("screen_seed_list")
+    except AttributeError:
+        raw = None
+    if raw is None or raw == "" or raw == []:
+        return []
+    if isinstance(raw, str):
+        morceaux = [m.strip() for m in raw.replace(";", ",").split(",")]
+    elif isinstance(raw, (list, tuple)):
+        morceaux = [str(m).strip() for m in raw]
+    else:
+        morceaux = [str(raw).strip()]
+    out: list[int] = []
+    for m in morceaux:
+        if not m:
+            continue
+        try:
+            v = int(float(m))
+        except (TypeError, ValueError):
+            continue
+        if v not in out:
+            out.append(v)
+    return out
+
+
+def _screen_with_seeds(
+    strategies: list[dict[str, Any]],
+    pre_calc_data: dict[str, Any],
+    params: Any,
+    n_screen: int,
+    k_keep: int,
+    logger: Any,
+    etiquette: str,
+) -> list[dict[str, Any]]:
+    """Screen `strategies` over one seed (historical) or over K seeds, unioned by plan.
+
+    THE RULE OF GOLD IS THE FIRST THING THIS FUNCTION DOES. With no `screen_seed_list` it runs
+    EXACTLY the single call the code ran before -- same context, same params object untouched,
+    same sort, same slice. There is no second code path that could drift from the first.
+
+    DEDUPLICATED BY PLAN SIGNATURE, NEVER BY `strategy_id`. Measured (24-51): 21 ids out of 79
+    carry two or three DIFFERENT strategies, so deduplicating by id would MERGE distinct plans
+    and silently drop candidates -- the exact failure this union exists to avoid.
+
+    The scores in the returned list come from DIFFERENT seeds and are therefore NOT comparable
+    to one another. That is harmless here and it must stay understood: the caller hands only
+    `r["strategy"]` to the full pass, which rescores everything on the run's seed. Nothing
+    downstream reads these screening scores as a ranking.
+    """
+    seeds = _resolve_screen_seeds(params)
+
+    if len(seeds) <= 1:
+        ctx = pre_calc_data.copy()
+        ctx["all_strategies"] = strategies
+        res = run_final_simulation_block(ctx, params, num_runs=n_screen, expand_variants=False)
+        lst = res.get("all_strategies_results") or []
+        logger.info(f"   [{etiquette}] Screening complete. Results count: {len(lst)}")
+        return sorted(lst, key=lambda x: x["robustness_score"])[:k_keep]
+
+    try:
+        seed_avant = params.get("robustness_seed")
+    except AttributeError:
+        seed_avant = None
+
+    retenus: list[dict[str, Any]] = []
+    vus: set = set()
+    try:
+        for graine in seeds:
+            params["robustness_seed"] = int(graine)
+            ctx_g = pre_calc_data.copy()
+            ctx_g["all_strategies"] = strategies
+            res = run_final_simulation_block(
+                ctx_g, params, num_runs=n_screen, expand_variants=False
+            )
+            lst = res.get("all_strategies_results") or []
+            tete = sorted(lst, key=lambda x: x["robustness_score"])[:k_keep]
+            neufs = 0
+            for r in tete:
+                sig = _strategy_signature(r.get("strategy", {}) or {})
+                if not sig or sig in vus:
+                    continue
+                vus.add(sig)
+                retenus.append(r)
+                neufs += 1
+            # WHAT EACH SEED ADDS IS SAID, NEVER ASSUMED. A seed that brings NO new plan is a
+            # seed paid for nothing, and this column is the only way to know: the saturation
+            # curve of the union is read here, not guessed.
+            logger.info(
+                f"   [{etiquette}] graine {graine} : {len(lst)} notees, {len(tete)} survivantes, "
+                f"{neufs} PLANS NEUFS -> union {len(retenus)}"
+            )
+    finally:
+        # RESTORE, EVEN IF A SEED RAISED. `params` is shared by the whole worker and the full
+        # pass that follows must run on the RUN's seed, not on the last screening seed --
+        # otherwise the scoring would be decided by the order of the list.
+        if seed_avant is not None:
+            params["robustness_seed"] = seed_avant
+
+    logger.info(
+        f"   [{etiquette}] MULTISEED {len(seeds)} graines -> {len(retenus)} plans distincts "
+        f"(plafond theorique {len(seeds) * k_keep})"
+    )
+    return retenus
+
+
 def _parallel_block_worker(args) -> dict:
     """Worker function for the ProcessPoolExecutor - corrected version substrate."""
 
@@ -626,22 +761,18 @@ def _parallel_block_worker(args) -> dict:
         survivors_dp = []
 
         if strategies_dp:
-            screen_context_dp = pre_calc_data.copy()
-
-            screen_context_dp["all_strategies"] = strategies_dp
-
             logger.info(f"   [Block {n_blk}] Running screening on {len(strategies_dp)} strategies...")
 
-            res_dp = run_final_simulation_block(
-                screen_context_dp, params, num_runs=n_screen, expand_variants=False
+            # THE SEEDS DIVERGE HERE, SO THIS IS WHERE THE MULTISEED GOES. Measured 2026-08-21:
+            # the seed 42 and seed 77 populations share NO common prefix -- 46.7 % of plan
+            # signatures at block count 1, and 0 % beyond 11 blocks. This screening is the only
+            # stochastic stage upstream of that, and its survivors become the next block count's
+            # `inherited_strategies` AND ELITE's parents.
+            # Without `screen_seed_list`, this is the single call of before, bit for bit.
+            survivors_dp = _screen_with_seeds(
+                strategies_dp, pre_calc_data, params, n_screen, k_keep, logger,
+                etiquette=f"Block {n_blk}",
             )
-
-            if "all_strategies_results" in res_dp:
-                results_list = res_dp["all_strategies_results"]
-
-                logger.info(f"   [Block {n_blk}] Screening complete. Results count: {len(results_list)}")
-
-                survivors_dp = sorted(results_list, key=lambda x: x["robustness_score"])[:k_keep]
 
         # Inherited Screening
 

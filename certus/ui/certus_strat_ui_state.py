@@ -1306,6 +1306,26 @@ class CertusStratStateMixin:
             # le chemin par defaut est celui d'avant, au bit. `[]` pour les balayages, 0
             # pour les entiers, `False` pour les drapeaux -- exactement ce que le noyau
             # recevait quand la cle n'existait nulle part.
+            # 🔑 LE MULTISEED AU CRIBLAGE -- l'etage ou les graines divergent.
+            #
+            # 📏 Mesure du 2026-08-21 sur `r75x2` a 2 nm, `deep` : les populations des graines
+            # 42 et 77 n'ont AUCUN prefixe commun. Par signature de plan exacte, nombre de
+            # blocs par nombre de blocs -- 46,7 % de signatures communes des le bloc 1, ou rien
+            # n'est pourtant encore herite, puis 7,4 %, puis ~1 %, puis 0 % au-dela de 11 blocs.
+            # Le criblage est le seul etage stochastique en amont, et ses survivants deviennent
+            # les `inherited_strategies` du bloc suivant ET les parents d'ELITE.
+            #
+            # 👤 2026-08-21 : « meme si le code en production est ralenti, ce sera un gain
+            # enorme d'inclure des strategies diverses venant de plusieurs seed ». La contrainte
+            # mono-graine est donc LEVEE, et ce reglage est la porte par laquelle elle le
+            # devient.
+            #
+            # 🔒 Chaine comme `consensus_seed_list`, et pour la meme raison : une liste de
+            # graines se lit et s'ecrit plus surement en « 42,77,101 » qu'en tableau JSON.
+            # Vide ⇒ un seul criblage a la graine du run ⇒ chemin d'avant AU BIT.
+            "screen_seed_list": str(
+                getattr(self, "_loaded_config", {}).get("screen_seed_list", "")
+            ),
             "rate_tail_sweep": _config_list_int(
                 getattr(self, "_loaded_config", {}), "rate_tail_sweep"
             ),

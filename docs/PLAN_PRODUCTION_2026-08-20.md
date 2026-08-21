@@ -117,7 +117,7 @@ réparer qu'une.
 
 ### A0. 🟢 ARMER LA PORTE DE PLANTAGE À CONFIANCE — une ligne par configuration
 
-`_crash_gate_rejects` (`certus_strat_robustness.py:1744`) porte **déjà** le correctif, avec sa
+`_crash_gate_rejects` (`certus_strat_robustness.py:1764`) porte **déjà** le correctif, avec sa
 mesure du 2026-08-13 dans sa propre docstring :
 
 ```

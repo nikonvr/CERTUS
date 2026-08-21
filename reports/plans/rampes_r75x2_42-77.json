@@ -1,0 +1,607 @@
+[
+  {
+    "nom": "s077_SEEL0.5692_crash1.33",
+    "graine_origine": 77,
+    "seel_nm": 0.5692,
+    "crash_rate": 0.013333333333333334,
+    "n_blocs": 9,
+    "origine_dans_le_run": "ELITE",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 8,
+        "wavelength": 450.0
+      },
+      {
+        "start": 8,
+        "end": 25,
+        "wavelength": 610.0
+      },
+      {
+        "start": 25,
+        "end": 33,
+        "wavelength": 616.0
+      },
+      {
+        "start": 33,
+        "end": 52,
+        "wavelength": 685.0
+      },
+      {
+        "start": 52,
+        "end": 57,
+        "wavelength": 647.0
+      },
+      {
+        "start": 57,
+        "end": 63,
+        "wavelength": 700.0
+      },
+      {
+        "start": 63,
+        "end": 65,
+        "wavelength": 511.0
+      },
+      {
+        "start": 65,
+        "end": 70,
+        "wavelength": 688.0
+      },
+      {
+        "start": 70,
+        "end": 75,
+        "wavelength": 704.0
+      }
+    ]
+  },
+  {
+    "nom": "s077_SEEL0.5717_crash0.67",
+    "graine_origine": 77,
+    "seel_nm": 0.5717,
+    "crash_rate": 0.006666666666666667,
+    "n_blocs": 11,
+    "origine_dans_le_run": "ELITE",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 8,
+        "wavelength": 450.0
+      },
+      {
+        "start": 8,
+        "end": 25,
+        "wavelength": 610.0
+      },
+      {
+        "start": 25,
+        "end": 33,
+        "wavelength": 616.0
+      },
+      {
+        "start": 33,
+        "end": 53,
+        "wavelength": 685.0
+      },
+      {
+        "start": 53,
+        "end": 57,
+        "wavelength": 647.0
+      },
+      {
+        "start": 57,
+        "end": 64,
+        "wavelength": 700.0
+      },
+      {
+        "start": 64,
+        "end": 65,
+        "wavelength": 510.0
+      },
+      {
+        "start": 65,
+        "end": 66,
+        "wavelength": 700.0
+      },
+      {
+        "start": 66,
+        "end": 71,
+        "wavelength": 689.0
+      },
+      {
+        "start": 71,
+        "end": 73,
+        "wavelength": 691.0
+      },
+      {
+        "start": 73,
+        "end": 75,
+        "wavelength": 703.0
+      }
+    ]
+  },
+  {
+    "nom": "s077_SEEL0.5723_crash1.00",
+    "graine_origine": 77,
+    "seel_nm": 0.5723,
+    "crash_rate": 0.01,
+    "n_blocs": 10,
+    "origine_dans_le_run": "ELITE",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 8,
+        "wavelength": 450.0
+      },
+      {
+        "start": 8,
+        "end": 25,
+        "wavelength": 610.0
+      },
+      {
+        "start": 25,
+        "end": 33,
+        "wavelength": 616.0
+      },
+      {
+        "start": 33,
+        "end": 53,
+        "wavelength": 685.0
+      },
+      {
+        "start": 53,
+        "end": 56,
+        "wavelength": 647.0
+      },
+      {
+        "start": 56,
+        "end": 64,
+        "wavelength": 701.0
+      },
+      {
+        "start": 64,
+        "end": 65,
+        "wavelength": 511.0
+      },
+      {
+        "start": 65,
+        "end": 66,
+        "wavelength": 700.0
+      },
+      {
+        "start": 66,
+        "end": 71,
+        "wavelength": 689.0
+      },
+      {
+        "start": 71,
+        "end": 75,
+        "wavelength": 704.0
+      }
+    ]
+  },
+  {
+    "nom": "s077_SEEL0.5756_crash1.00",
+    "graine_origine": 77,
+    "seel_nm": 0.5756,
+    "crash_rate": 0.01,
+    "n_blocs": 8,
+    "origine_dans_le_run": "ELITE",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 8,
+        "wavelength": 450.0
+      },
+      {
+        "start": 8,
+        "end": 25,
+        "wavelength": 610.0
+      },
+      {
+        "start": 25,
+        "end": 33,
+        "wavelength": 616.0
+      },
+      {
+        "start": 33,
+        "end": 53,
+        "wavelength": 685.0
+      },
+      {
+        "start": 53,
+        "end": 57,
+        "wavelength": 647.0
+      },
+      {
+        "start": 57,
+        "end": 66,
+        "wavelength": 701.0
+      },
+      {
+        "start": 66,
+        "end": 71,
+        "wavelength": 687.0
+      },
+      {
+        "start": 71,
+        "end": 75,
+        "wavelength": 703.0
+      }
+    ]
+  },
+  {
+    "nom": "s077_SEEL0.5829_crash1.00",
+    "graine_origine": 77,
+    "seel_nm": 0.5829,
+    "crash_rate": 0.01,
+    "n_blocs": 12,
+    "origine_dans_le_run": "ELITE",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 8,
+        "wavelength": 450.0
+      },
+      {
+        "start": 8,
+        "end": 25,
+        "wavelength": 610.0
+      },
+      {
+        "start": 25,
+        "end": 33,
+        "wavelength": 616.0
+      },
+      {
+        "start": 33,
+        "end": 54,
+        "wavelength": 685.0
+      },
+      {
+        "start": 54,
+        "end": 56,
+        "wavelength": 647.0
+      },
+      {
+        "start": 56,
+        "end": 65,
+        "wavelength": 701.0
+      },
+      {
+        "start": 65,
+        "end": 66,
+        "wavelength": 700.0
+      },
+      {
+        "start": 66,
+        "end": 70,
+        "wavelength": 690.0
+      },
+      {
+        "start": 70,
+        "end": 72,
+        "wavelength": 704.0
+      },
+      {
+        "start": 72,
+        "end": 73,
+        "wavelength": 690.0
+      },
+      {
+        "start": 73,
+        "end": 74,
+        "wavelength": 703.0
+      },
+      {
+        "start": 74,
+        "end": 75,
+        "wavelength": 696.0
+      }
+    ]
+  },
+  {
+    "nom": "s077_SEEL0.5840_crash1.33",
+    "graine_origine": 77,
+    "seel_nm": 0.584,
+    "crash_rate": 0.013333333333333334,
+    "n_blocs": 13,
+    "origine_dans_le_run": "ELITE",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 8,
+        "wavelength": 450.0
+      },
+      {
+        "start": 8,
+        "end": 25,
+        "wavelength": 610.0
+      },
+      {
+        "start": 25,
+        "end": 33,
+        "wavelength": 615.0
+      },
+      {
+        "start": 33,
+        "end": 53,
+        "wavelength": 685.0
+      },
+      {
+        "start": 53,
+        "end": 55,
+        "wavelength": 648.0
+      },
+      {
+        "start": 55,
+        "end": 63,
+        "wavelength": 701.0
+      },
+      {
+        "start": 63,
+        "end": 65,
+        "wavelength": 511.0
+      },
+      {
+        "start": 65,
+        "end": 66,
+        "wavelength": 700.0
+      },
+      {
+        "start": 66,
+        "end": 71,
+        "wavelength": 690.0
+      },
+      {
+        "start": 71,
+        "end": 72,
+        "wavelength": 704.0
+      },
+      {
+        "start": 72,
+        "end": 73,
+        "wavelength": 691.0
+      },
+      {
+        "start": 73,
+        "end": 74,
+        "wavelength": 703.0
+      },
+      {
+        "start": 74,
+        "end": 75,
+        "wavelength": 696.0
+      }
+    ]
+  },
+  {
+    "nom": "s077_SEEL0.6084_crash3.33",
+    "graine_origine": 77,
+    "seel_nm": 0.6084,
+    "crash_rate": 0.03333333333333333,
+    "n_blocs": 7,
+    "origine_dans_le_run": "ELITE",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 8,
+        "wavelength": 450.0
+      },
+      {
+        "start": 8,
+        "end": 26,
+        "wavelength": 610.0
+      },
+      {
+        "start": 26,
+        "end": 33,
+        "wavelength": 616.0
+      },
+      {
+        "start": 33,
+        "end": 52,
+        "wavelength": 685.0
+      },
+      {
+        "start": 52,
+        "end": 57,
+        "wavelength": 647.0
+      },
+      {
+        "start": 57,
+        "end": 72,
+        "wavelength": 701.0
+      },
+      {
+        "start": 72,
+        "end": 75,
+        "wavelength": 705.0
+      }
+    ]
+  },
+  {
+    "nom": "s077_SEEL0.5872_crash1.00",
+    "graine_origine": 77,
+    "seel_nm": 0.5872,
+    "crash_rate": 0.01,
+    "n_blocs": 10,
+    "origine_dans_le_run": "ELITE",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 7,
+        "wavelength": 450.0
+      },
+      {
+        "start": 7,
+        "end": 25,
+        "wavelength": 610.0
+      },
+      {
+        "start": 25,
+        "end": 33,
+        "wavelength": 616.0
+      },
+      {
+        "start": 33,
+        "end": 57,
+        "wavelength": 685.0
+      },
+      {
+        "start": 57,
+        "end": 64,
+        "wavelength": 701.0
+      },
+      {
+        "start": 64,
+        "end": 65,
+        "wavelength": 510.0
+      },
+      {
+        "start": 65,
+        "end": 66,
+        "wavelength": 700.0
+      },
+      {
+        "start": 66,
+        "end": 71,
+        "wavelength": 689.0
+      },
+      {
+        "start": 71,
+        "end": 73,
+        "wavelength": 691.0
+      },
+      {
+        "start": 73,
+        "end": 75,
+        "wavelength": 703.0
+      }
+    ]
+  },
+  {
+    "nom": "s077_SEEL0.5911_crash1.33",
+    "graine_origine": 77,
+    "seel_nm": 0.5911,
+    "crash_rate": 0.013333333333333334,
+    "n_blocs": 12,
+    "origine_dans_le_run": "ELITE",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 8,
+        "wavelength": 450.0
+      },
+      {
+        "start": 8,
+        "end": 25,
+        "wavelength": 610.0
+      },
+      {
+        "start": 25,
+        "end": 33,
+        "wavelength": 615.0
+      },
+      {
+        "start": 33,
+        "end": 53,
+        "wavelength": 685.0
+      },
+      {
+        "start": 53,
+        "end": 55,
+        "wavelength": 647.0
+      },
+      {
+        "start": 55,
+        "end": 63,
+        "wavelength": 701.0
+      },
+      {
+        "start": 63,
+        "end": 65,
+        "wavelength": 511.0
+      },
+      {
+        "start": 65,
+        "end": 66,
+        "wavelength": 700.0
+      },
+      {
+        "start": 66,
+        "end": 71,
+        "wavelength": 689.0
+      },
+      {
+        "start": 71,
+        "end": 73,
+        "wavelength": 691.0
+      },
+      {
+        "start": 73,
+        "end": 74,
+        "wavelength": 702.0
+      },
+      {
+        "start": 74,
+        "end": 75,
+        "wavelength": 696.0
+      }
+    ]
+  },
+  {
+    "nom": "s077_SEEL0.5779_crash1.00",
+    "graine_origine": 77,
+    "seel_nm": 0.5779,
+    "crash_rate": 0.01,
+    "n_blocs": 9,
+    "origine_dans_le_run": "ELITE",
+    "blocs": [
+      {
+        "start": 0,
+        "end": 8,
+        "wavelength": 450.0
+      },
+      {
+        "start": 8,
+        "end": 26,
+        "wavelength": 610.0
+      },
+      {
+        "start": 26,
+        "end": 33,
+        "wavelength": 616.0
+      },
+      {
+        "start": 33,
+        "end": 53,
+        "wavelength": 685.0
+      },
+      {
+        "start": 53,
+        "end": 56,
+        "wavelength": 647.0
+      },
+      {
+        "start": 56,
+        "end": 64,
+        "wavelength": 701.0
+      },
+      {
+        "start": 64,
+        "end": 65,
+        "wavelength": 511.0
+      },
+      {
+        "start": 65,
+        "end": 71,
+        "wavelength": 687.0
+      },
+      {
+        "start": 71,
+        "end": 75,
+        "wavelength": 703.0
+      }
+    ]
+  }
+]

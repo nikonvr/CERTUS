@@ -48,6 +48,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PY = sys.executable
 
+# 🔴 La console Windows est en cp1252 et cet outil ecrit des fleches et des pastilles. Sans
+# cette ligne il leve UnicodeEncodeError sur SA PREMIERE LIGNE DE SORTIE -- y compris sur le
+# cas « rien a faire ». 📏 Constate le 2026-08-21 : l'outil avait ete ecrit et jamais vu
+# fonctionner, parce que le seul essai avait ete fait quand il n'y avait rien a recaler... et
+# ce cas-la plantait aussi. Meme defaut, meme correctif que dans `coherence_md.py`.
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 #: La ligne que le controle F emet quand il SAIT ou le symbole se trouve.
 _RE_RESOLU = re.compile(
     r"🔴 (?P<doc>[\w./-]+\.md):(?P<ligne_doc>\d+) — `(?P<cible>[\w./-]+\.py):(?P<vieille>\d+)`"

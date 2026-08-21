@@ -588,18 +588,42 @@ def _crash_bucket(rate: float | None) -> str:
     return "100%"
 
 
-def _format_wl_histogram(hist: dict[float, int], top: int = 14) -> str:
-    """Compact, greppable rendering: heaviest counts first, and the tail is SAID not hidden.
+#: Safety net only. The control grid holds at most ~301 wavelengths, so a full histogram is
+#: one long line and never a runaway. This exists so a pathological input cannot produce a
+#: megabyte-long log entry -- not to trim normal output.
+WL_HISTOGRAM_HARD_CAP: int = 400
 
-    A silently truncated list reads as complete coverage, which is the failure mode this
-    repository keeps paying for. The number of omitted wavelengths is therefore printed.
+
+def _format_wl_histogram(hist: dict[float, int], top: int = WL_HISTOGRAM_HARD_CAP) -> str:
+    """Every wavelength, heaviest first. NO truncation of normal output, and here is why.
+
+    🔴 THIS FUNCTION USED TO SHOW THE 14 HEAVIEST AND SAY « [+N wl not shown] », ON THE
+    THEORY THAT NAMING THE OMISSION WAS ENOUGH. Measured 2026-08-21: it is not, and the
+    failure is exact.
+
+    The whole point of these histograms is to answer « does ELITE ever propose the winning
+    wavelength ? ». On `r75x2` at 2 nm that wavelength is 685 nm, and it carries ONE OR TWO
+    candidates per round -- so it fell into the hidden tail in 61 histograms out of one run,
+    and the count read off the log was a FLOOR, not a measurement.
+
+    📏 The proof was internal and it should have been caught sooner: 685 nm appeared 5 times
+    in `generated` and 11 times in the rejects. A candidate cannot be rejected without having
+    been generated, so the `generated` view was missing at least six.
+
+        Saying « I am truncating » does not help when what you are looking for is, BY
+        CONSTRUCTION, exactly what gets truncated. A rare event is the whole question.
+
+    🔑 So the tail is printed. The cost is a long line -- ~74 distinct wavelengths in
+    practice, ~600 characters -- against a journal that already runs to megabytes. The
+    truncation was an optimisation nobody needed, and it cost a reading all night.
     """
     if not hist:
         return "(none)"
     items = sorted(hist.items(), key=lambda kv: (-kv[1], kv[0]))
     head = " ".join(f"{wl:g}:{n}" for wl, n in items[:top])
     omitted = len(items) - top
-    return head + (f" [+{omitted} wl not shown]" if omitted > 0 else "")
+    # Ne devrait jamais arriver sur la grille reelle ; si cela arrive, on le DIT.
+    return head + (f" [+{omitted} wl OVER HARD CAP {top}]" if omitted > 0 else "")
 
 
 def _log_elite_wl(

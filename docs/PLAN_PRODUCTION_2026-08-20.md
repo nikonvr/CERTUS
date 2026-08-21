@@ -1917,3 +1917,112 @@ DP, criblage, héritage. Un compteur par étage, aucune physique touchée.
 - ⚠️ **Et le +0,1 % d'écart au SEEL cible ne veut pas dire « aussi bien »** : il veut dire
   **indiscernable**, ce qui est plus fort et plus honnête. Le bruit sur une différence de SEEL
   vaut 2,59 % sur ce composant.
+
+---
+
+## 24. 🔴🔴 LA VOIE « FAIRE TROUVER ÇA À ELITE » EST FERMÉE — mesuré, pas supposé
+
+`reports/blocs_vs_plantage_r75x2_deep_s042_elargi911_large.json`, profil **élargi** à 2 nm,
+graine 42, plage 9-11. Et surtout : le premier run à porter l'instrument `[ELITE-PARENTS]`.
+
+### 24.1 Le résultat, et il réfute l'étape 1
+
+```
+profil elargi, 2 nm, graine 42  ->  95 strategies · 0 DEPOSABLE · crash_min 100,00 %
+685 nm quelque part dans la population : NON
+```
+
+Le profil élargi multiplie `phase_a_keep_limit` ×4, `top_k_parents` ×4,
+`max_fusions_per_parent` ×3, `k_keep_survivors` ×1,6, `screening_keep_top_k` ×4. 📏 Il fait
+passer la population de 63 à **95** — ×1,5 — et `SMART_MERGE_MIXED` de 9 à **20**. Dont les λ
+sur la couche 35 sont `{688: 16, 609: 2, 686: 1, 470: 1}` : **toujours aucune à 685**.
+
+🔴 **Le précédent de `CHANTIER_PREDICTIBILITE.md` §4quater — 0 → 254 déposables par
+élargissement — ne se transpose pas à 2 nm.** Il valait à 1 nm.
+
+### 24.2 🔑 CE QUE L'INSTRUMENT DES PARENTS MONTRE, ET QUE RIEN NE DISAIT
+
+Les parents des rondes informatives, tels qu'ELITE les prend :
+
+```
+a 10 blocs :  5 lignes  ->  UN SEUL jeu de λ distinct
+a  9 blocs : 21 lignes  ->  9 jeux distincts, 11 signatures ordonnees
+
+  [483, 610, 610, 609, 688, 686, 739, 687, 483, 690]
+  [483, 610,      609, 688, 686, 739, 687, 483, 690]
+  [483, 610, 610, 609,      686, 739, 687, 483, 690]
+  [483, 610, 610, 609, 688, 686, 739, 687, 483     ]
+```
+
+**Ce sont des quasi-doublons d'une seule lignée** — on retire ou on duplique un bloc, et c'est
+tout. Toutes portent `origin = SMART_MERGE_MIXED(from …)` ou `RATE_L*(from 9000000…)` : **une
+seule ascendance**.
+
+> **`elite_parent_top_k` achète dix COPIES, pas dix DIRECTIONS.** Et `enable_block_diversity`
+> ne l'empêche pas : il diversifie sur la **structure de blocs**, pas sur les **λ**.
+
+Cela explique d'un coup les quatre zéros : élargir le plafond donne plus de candidates **autour
+du même point**, élargir le `span` donne une boule plus grande **autour du même point**, cinq
+graines donnent cinq lignées **chacune unique**, et l'injection marchait parce qu'elle
+introduisait un **point de λ réellement différent**.
+
+### 24.3 🔴 ET LA GAGNANTE EST HORS DE PORTÉE, PAR CONSTRUCTION
+
+```
+λ vues chez TOUS les parents : 480 483 487 609 610 623 658 682 686 687 688 690 705 739
+la gagnante                  : 450  511  610  615  647  685  687  700  704
+λ ABSENTES de tout parent    : 450 · 615 · 685
+```
+
+Distance en pas de grille de 1 nm depuis le parent le plus proche :
+
+| λ à introduire | pas nécessaires |
+|---|---|
+| **685** | 1 (depuis 686) |
+| **615** | 5 (depuis 610) |
+| **450** | **30** (depuis 480) |
+
+Or ELITE mute **une λ d'un bloc, de ±1 pas, par candidate**, ne compose jamais deux mouvements,
+et `elite_stop_on_no_gain` coupe après une ronde stérile — et **chaque pas intermédiaire
+plante**, donc aucun n'est retenu.
+
+> **ELITE ne peut pas atteindre la gagnante depuis ses parents. Ce n'est pas improbable, c'est
+> structurellement impossible :** il faudrait introduire trois λ nouvelles dont une à 30 nm, par
+> une marche locale dont chaque pas est rejeté.
+
+🔒 **Donc la voie « régler ELITE » est fermée.** Aucun réglage de plafond, de portée, de porte
+ou de nombre de graines ne franchit 30 nm de marche locale.
+
+### 24.4 🔵 CE QUI RESTE OUVERT, ET LA DONNÉE LE DÉSIGNE
+
+📏 **La gagnante partage 6 de ses 9 λ avec des parents d'AUTRES nombres de blocs** — 511, 610,
+647, 687, 700, 704. **Le matériau existe dans la population ; il n'est jamais assemblé dans une
+seule stratégie.**
+
+Or assembler des blocs venus de stratégies différentes est **exactement le métier de
+`SMART_MERGE`**. Et c'est lui le seul point d'entrée de 685 nm à la graine 77 (31 sur 115),
+tandis qu'à la graine 42 il produit 9 puis 20 stratégies dans une seule lignée.
+
+🔑 **Le levier n'est donc pas ELITE, c'est la DIVERSITÉ D'ENTRÉE de `SMART_MERGE`.** Il ne
+manque pas de volume — il manque de **matériaux différents à fusionner**.
+
+**Trois pistes, dans l'ordre où la donnée les soutient :**
+
+| piste | ce que la donnée en dit |
+|---|---|
+| **déduplication des parents par SIGNATURE DE λ** | 🟢 la mieux étayée : 5 parents pour 1 jeu de λ à 10 blocs est un gaspillage **mesuré**. Dix directions au lieu de dix copies, sans inventer de paramètre |
+| **diversité d'entrée de `SMART_MERGE`** | 🟢 c'est le seul générateur qui compose des λ, et le seul qui a jamais produit 685 nm |
+| **multiseed avec `K` ≫ 5** | 🟠 l'union ne sature pas, mais cinq lignées distinctes n'ont donné aucune 685 nm : rien ne borne le `K` nécessaire |
+
+### 24.5 🔒 CE QU'IL FAUT DIRE À 👤, SANS L'ARRONDIR
+
+**Ce qui marche aujourd'hui** : `injected_strategies`, mesuré — 72 déposables, SEEL 0,5697.
+Livrer les rampes dans la configuration du composant fait passer `r75x2` à 2 nm **en
+production**, maintenant.
+
+**Ce qui n'est pas résolu** : la découverte autonome. Et la cause est maintenant précise — ce
+n'est ni la physique, ni la graine, ni les portes : **le vivier de parents n'a pas de diversité
+en λ, et le générateur qui pourrait en créer est nourri d'une seule lignée.**
+
+⚠️ **Ce n'est pas un réglage.** C'est un travail sur la génération, et il demande une décision :
+diversifier sur les λ **change ce que « les dix meilleures » veut dire**, donc change le produit.

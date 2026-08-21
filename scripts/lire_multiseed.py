@@ -224,10 +224,18 @@ def main() -> int:
         # a TOUJOURS afficher, quelle que soit leur place au classement. Trois lignes, et il
         # rend ce controle exploitable. Non fait ici : un run est en vol.
         if n_tronq:
-            print(f"   🔴 {n_tronq} histogramme(s) TRONQUE(S) a l'affichage : le compte de "
-                  f"{LAMBDA_CIBLE} nm est un PLANCHER, pas une mesure. Aucun verdict possible "
-                  f"sur cette grandeur tant que le format de journal n'affiche pas les λ "
-                  f"rares (correctif : liste de λ toujours affichees).")
+            # 🔑 DEUX CAUSES POSSIBLES, ET ELLES N'ONT PAS LE MEME SENS.
+            #
+            # Avant le 2026-08-21, `_format_wl_histogram` n'affichait que les 14 λ les plus
+            # lourdes -- donc TOUT journal anterieur porte des comptes qui sont des PLANCHERS
+            # pour les λ rares, et le correctif ne les rattrape pas : il faut rejouer.
+            # Depuis, la troncature ne peut plus venir que du plafond DUR (400 λ), qui ne mord
+            # jamais sur la grille reelle de ~301 -- s'il mord, c'est un defaut a regarder.
+            print(f"   🔴 {n_tronq} histogramme(s) TRONQUE(S) : le compte de {LAMBDA_CIBLE} nm "
+                  f"est un PLANCHER, pas une mesure.")
+            print(f"      Si ce journal precede le 2026-08-21, c'est l'ancienne troncature a "
+                  f"14 λ -- corrigee depuis, mais elle ne se rattrape pas : REJOUER le run. "
+                  f"Sinon le plafond dur a mordu, ce qui ne devrait pas arriver.")
         elif not fini:
             print("   ⏳ RUN INACHEVE : aucun verdict. Le compte ci-dessus est partiel et "
                   "n'est PAS comparable aux 2 sur 4226 de la reference, qui portent sur "

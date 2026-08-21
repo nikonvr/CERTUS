@@ -428,6 +428,11 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
             # meme quand tout plante, et un classement de replis ressemble trait pour trait
             # a un classement -- ce qui a coute deux jours le 2026-08-20.
             "crash_eliminated": bool(s.get("crash_eliminated", False)),
+            # 🔑 Le taux par NIVEAU de bruit. `crash_rate` est le MAX sur les trois, et la
+            # tolerance de 5 % s'y applique -- donc un rejet peut venir du 2x, qui est deux
+            # fois le bruit mesure de la machine. Sans ce champ, aucun artefact ne permet de
+            # savoir si une strategie rejetee etait fabricable au bruit REEL.
+            "crash_rates_by_noise": s.get("crash_rates_by_noise") or {},
             "critical_layer": s.get("critical_layer") or {},
             # 🔑 LA FENTE QUE CETTE STRATEGIE A CHOISIE, et son prix en bruit. Sans ce champ on
             # saurait SI la recherche de fente aide, jamais A QUELLE LARGEUR -- soit la moitie

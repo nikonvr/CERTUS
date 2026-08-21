@@ -76,15 +76,41 @@ class TestFormatWlHistogram:
         out = _format_wl_histogram({610.0: 1, 685.0: 9, 686.0: 1})
         assert out == "685:9 610:1 686:1"
 
-    def test_truncation_is_said_never_silent(self):
-        """A silently truncated list reads as complete coverage. It must announce the tail."""
+    def test_a_RARE_wavelength_is_NEVER_hidden(self):
+        """🔴 LE GARDE QUI COMPTE, ET IL A REMPLACE UN GARDE PLUS FAIBLE LE 2026-08-21.
+
+        L'ancienne version affichait les 14 λ les plus lourdes et DISAIT « [+N wl not shown] ».
+        📏 Mesure : la λ qu'on cherchait -- 685 nm sur `r75x2` -- porte UNE OU DEUX candidates
+        par ronde, donc elle tombait dans cette queue masquee, et 61 histogrammes d'un seul run
+        etaient tronques. Le compte lu au journal etait un PLANCHER, pas une mesure.
+
+        Dire qu'on tronque ne sert a rien quand ce qu'on cherche est, PAR CONSTRUCTION,
+        exactement ce qui est tronque. Un evenement rare est toute la question.
+        """
+        hist = {610.0: 3701, 686.0: 3185, 689.0: 2769}
+        hist.update({float(500 + i): 40 for i in range(70)})   # une longue queue moyenne
+        hist[685.0] = 2                                        # la λ rare, la plus legere
+        out = _format_wl_histogram(hist)
+        assert "685:2" in out, "une λ rare NE DOIT JAMAIS etre masquee par le classement"
+        assert "OVER HARD CAP" not in out, "73 λ tiennent tres largement sous le plafond dur"
+        assert len(out.split()) == len(hist), "toutes les λ doivent etre imprimees"
+
+    def test_the_hard_cap_is_a_safety_net_and_it_SAYS_when_it_bites(self):
+        """Le plafond ne sert qu'a empecher une entree pathologique de produire un mega-octet.
+
+        Sur la grille reelle -- au plus ~301 λ -- il ne mord jamais. S'il mord, il le DIT.
+        """
         hist = {float(600 + i): 1 for i in range(20)}
         out = _format_wl_histogram(hist, top=5)
-        assert "[+15 wl not shown]" in out
+        assert "[+15 wl OVER HARD CAP 5]" in out
         assert len(out.split(" [")[0].split()) == 5
 
-    def test_no_tail_marker_when_everything_fits(self):
-        assert "not shown" not in _format_wl_histogram({685.0: 1}, top=5)
+    def test_the_real_grid_is_never_truncated(self):
+        """301 λ, la grille de controle complete : elle passe entiere."""
+        hist = {float(450 + i): 1 for i in range(301)}
+        out = _format_wl_histogram(hist)
+        assert "OVER HARD CAP" not in out
+        assert "450:1" in out and "750:1" in out
 
 
 class TestLogEliteWl:

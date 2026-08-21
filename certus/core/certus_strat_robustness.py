@@ -2149,6 +2149,22 @@ def _test_strategy_robustness_task(
     results_per_noise = []
     crash_rate_max = 0.0  # worst non-terminating deposition rate across noise levels
     crash_count_max = 0    # ... and the COUNT behind it, which the rate throws away
+    # 🔑 LE TAUX PAR NIVEAU DE BRUIT, ET IL N'EXISTAIT NULLE PART.
+    #
+    # `crash_rate_max` est un MAX sur les trois niveaux (`robustness_noise_factors`, par
+    # defaut [0,5 · 1,0 · 2,0]), et c'est lui que la porte de plantage compare a la
+    # tolerance de 5 % de 👤. Donc la tolerance s'applique au PIRE des trois, dont un a
+    # DEUX FOIS le bruit de lecture mesure (§18-2 : ±0,05 point, A = 5e-4). Le 1x est la
+    # machine ; le 0,5x et le 2x sont des multiplicateurs de robustesse.
+    #
+    # 🔴 Et la reduction par `max` est IRREVERSIBLE : aucun artefact de ce depot ne porte le
+    # taux au bruit REEL, donc on ne peut pas savoir, sur aucun run existant, si une
+    # strategie rejetee etait fabricable sur la machine de 👤. On garde donc le detail.
+    #
+    # 🔒 Ce que cela NE fait PAS : changer la porte. La regle reste le max, et c'est une
+    # decision de 👤 -- juger au pire des trois est peut-etre exactement la marge qu'il veut.
+    # Ce qui n'etait pas defendable, c'est que personne ne puisse le MESURER.
+    crash_rates_by_noise: dict[str, float] = {}
     # Breakdown of crashes by CAUSE, worst case across noise levels.
     crash_rates_by_cause = {
         "p_level_unreachable": 0.0,
@@ -2563,7 +2579,9 @@ def _test_strategy_robustness_task(
         crashed_cells = sim_thick_batch > CRASH_SENTINEL_MIN
         crash_cause = np.where(crashed_cells, np.floor(sim_thick_batch / CRASH_SENTINEL_UNIT), 0.0)
         n_crash_run = int(np.count_nonzero(np.any(crashed_cells, axis=1)))
-        crash_rate_max = max(crash_rate_max, n_crash_run / max(1, num_runs))
+        _taux_ce_niveau = n_crash_run / max(1, num_runs)
+        crash_rates_by_noise[f"{float(noise_val):g}"] = _taux_ce_niveau
+        crash_rate_max = max(crash_rate_max, _taux_ce_niveau)
         # 🔑 KEEP THE COUNT, not only the ratio. A rate of 0.02 says nothing about how
         # well it is known: 1/50 and 6/300 are the same number and not the same evidence.
         # The confidence gate below needs the count; the ratio has already discarded it.
@@ -2807,6 +2825,8 @@ def _test_strategy_robustness_task(
         "results_per_noise": results_per_noise,
         "robustness_score": final_score,
         "crash_rate": crash_rate_max,
+        # Le detail que le `max` ci-dessus jette. Voir le commentaire de `crash_rates_by_noise`.
+        "crash_rates_by_noise": dict(crash_rates_by_noise),
         # The three failure modes, separately. 👤 "If 95% of depositions
         # work, it's a win" — but knowing WHY the 5% fail is what
         # allows correcting the strategy rather than rejecting it.

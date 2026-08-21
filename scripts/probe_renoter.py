@@ -1,5 +1,34 @@
 """RE-NOTER DES PLANS DE SURVEILLANCE DONNES, SOUS DES PARAMETRES DONNES.
 
+🔴🔴 CET OUTIL EST EN PANNE ET SA CAUSE N'EST PAS LOCALISEE. NE PAS S'EN SERVIR.
+
+    Il ne reproduit pas son propre point fixe : re-noter les 12 meilleurs plans de la graine
+    77 SOUS LA GRAINE 77 rend 100 % de plantage la ou la reference en mesure 0,67 a 1,33 %.
+    Toutes ses sorties sont retirees -- voir `docs/REPRENDRE_ICI.md` §3.
+
+    SIX causes candidates ont ete eliminees le 2026-08-20 au soir, sans machine, et AUCUNE
+    n'a ete trouvee : la grille full_dynamics_grid vide (inerte, un seul dereferencement dans
+    un bloc de journalisation), l'unite de crash_rate, des plans malformes, le chemin de
+    surcharge de resolution (le config natif 2 nm rend une marge bit-identique),
+    expand_variants=False, et une cle perdue sur l'objet strategy.
+    ⚠️ L'attribution ecrite dans le commit 80139cf -- « la panne est LOCALISEE,
+    full_dynamics_grid est VIDE » -- est donc FAUSSE.
+
+🟢 CE QUI LE REMPLACE : `injected_strategies`, dans le code de PRODUCTION.
+
+    Les plans entrent par `inherited_strategies` (`certus/workers/certus_strat_workers.py`),
+    un canal qui existe deja et qui est deja teste, et ils traversent exactement le code que
+    toute autre candidate traverse. Il n'y a donc aucun contexte reconstruit, et aucun second
+    chemin sur lequel se tromper -- ce qui est precisement ce qui a coule cet outil-ci.
+
+        set CERTUS_PROBE_OVERRIDES=injected_strategies=reports/plans/plans_s077_vers_s042.json
+        set CERTUS_PROBE_TAG=inject12s077
+        ... scripts\probe_blocs_vs_plantage.py r75x2 deep 0 0 2.0 0 42 0
+
+    Le fichier est conserve pour son historique de methode, qui vaut d'etre lu : c'est le
+    champ `parametres_de_notation`, ajoute le matin meme, qui a demasque une comparaison a
+    trois variables changees -- le jour de sa pose.
+
     C:\\envs\\certus\\Scripts\\python.exe scripts\\probe_renoter.py <composant> <plans.json> [graine] [mode_contexte]
 
 ## 🔑 POURQUOI CET OUTIL EXISTE — il conditionne DEUX questions ouvertes

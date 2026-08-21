@@ -140,8 +140,18 @@ faux, jamais la valeur de 👤.
 donc 0, c'est-à-dire la comparaison historique. Et contrairement à `robustness_seed`, **cette
 clé est bien lue depuis le JSON** (`certus_strat_ui_state.py:1229`).
 
-**Action** : `"crash_gate_confidence": 0.95` dans les configurations. Coût : une ligne. C'est le
-meilleur rapport valeur/risque de tout le plan, et il passe **avant** A1.
+**Action** : `"crash_gate_confidence": 0.95` dans les configurations. Coût : une ligne.
+
+> 🔴 **CETTE SECTION REVENDIQUAIT « le meilleur rapport valeur/risque de tout le plan ». C'EST
+> MESURÉ FAUX — 2026-08-21, cellule `cgc95`, 108 min.** Sur `r75x2 @ 2 nm` à la graine 42, armer
+> la borne rend `1617 strategies · 0 deposable · crash_min 100,00 % · ELITE 0`, et les compteurs
+> ELITE sont **identiques au chiffre près** à la référence. La raison est mesurée : **une seule
+> candidate sur 1116** se trouve dans la bande `5-10 %` où la borne peut agir — elle épargne
+> jusqu'à ~7,3 % à `N = 300`, et les rejets sont à 25-99 %.
+>
+> 🟢 **Le réglage reste JUSTE** — l'estimateur historique est bien faux, et la docstring de
+> `_crash_gate_rejects` le démontre. Ce qui est retiré est la **promesse de rendement** : il
+> corrige une injustice statistique réelle, il ne débloque pas ce composant. Voir §20.
 
 ⚠️ **C1 s'applique** : la porte change de comportement, donc **toute mesure antérieure devient
 incomparable**. Armer et remesurer, jamais armer au milieu d'une campagne.

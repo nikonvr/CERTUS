@@ -115,7 +115,9 @@
                 five-cavity filter — <a href="#sec-10-16">§10.16</a> how multiple-testglass monitoring
                 makes that same filter manufacturable, <a href="#sec-10-17">§10.17</a> a stack that
                 looked impossible and was not, where the limit turned out to be the search rather than
-                the physics, and <a href="#sec-10-13">§10.13</a> what is deliberately <i>not</i>
+                the physics, <a href="#sec-10-18">&sect;10.18</a> the same stack at the nominal 2 nm slit
+                &mdash; and the honest name for what made it work, and
+                <a href="#sec-10-13">&sect;10.13</a> what is deliberately <i>not</i>
                 claimed.
             </div>
         </div>
@@ -5415,7 +5417,95 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     this page.
                 </div>
 
-                <h2 id="sec-11">11. Making It Fast — What the Structure Gives for Free</h2>
+                <h3 id="sec-10-18">10.18 The 2 nm slit on the &times;2 random stack &mdash; and the honest name for what made it work</h3>
+
+        <p>
+            Section 10.17 reported the &times;2 random stack at a <b>1 nm</b> monochromator slit. At the
+            <b>nominal 2 nm</b> slit the same stack behaved differently, and the first measurement was blunt:
+            <b>0 depositable strategies out of 1617</b>, every one crashing in 100 % of draws. Not a degraded
+            score &mdash; nothing manufacturable at all.
+        </p>
+
+        <p>It is now manufacturable, on the production path, with no override of any kind:</p>
+
+        <table style="border-collapse:collapse;margin:0 0 10px;font-size:0.95em;">
+            <tr>
+                <th style="border:1px solid #ccc;padding:4px 8px;">Monte-Carlo seed</th><th style="border:1px solid #ccc;padding:4px 8px;">Best SEEL</th>
+                <th style="border:1px solid #ccc;padding:4px 8px;">Depositable</th><th style="border:1px solid #ccc;padding:4px 8px;">Role of that seed</th>
+            </tr>
+            <tr><td style="border:1px solid #ccc;padding:4px 8px;">42</td><td style="border:1px solid #ccc;padding:4px 8px;"><b>0.5676 nm</b></td><td style="border:1px solid #ccc;padding:4px 8px;">197 / 1810</td>
+                <td style="border:1px solid #ccc;padding:4px 8px;">selected the launch pads</td></tr>
+            <tr><td style="border:1px solid #ccc;padding:4px 8px;">77</td><td style="border:1px solid #ccc;padding:4px 8px;">0.5692 nm</td><td style="border:1px solid #ccc;padding:4px 8px;">547 / 2231</td>
+                <td style="border:1px solid #ccc;padding:4px 8px;">source of the launch pads</td></tr>
+            <tr><td style="border:1px solid #ccc;padding:4px 8px;">101</td><td style="border:1px solid #ccc;padding:4px 8px;">0.5707 nm</td><td style="border:1px solid #ccc;padding:4px 8px;">&mdash;</td>
+                <td style="border:1px solid #ccc;padding:4px 8px;"><b>na&iuml;ve</b> &mdash; took no part in the selection</td></tr>
+        </table>
+
+        <p>
+            Three independent noise realisations span <b>0.55 %</b>, against a <b>2.59 %</b> statistical floor on
+            a <i>difference</i> of SEEL (&sect;10.7). They are therefore indistinguishable, which is exactly the
+            result one wants here: the level is not an artefact of one lucky draw.
+        </p>
+
+        <div class="highlight-box">
+            🔒 <b>WHAT MADE IT WORK, NAMED WITHOUT EUPHEMISM.</b> The configuration declares
+            <code>injected_strategies</code> &mdash; a handful of known monitoring plans poured into the population
+            through the inheritance channel. They are filtered on block count, checked against the strategy
+            contract, screened and scored by exactly the code every other candidate traverses.
+            <b>They are not solutions: they crash, and they are absent from the final ranking.</b> What survives are
+            their <b>ELITE descendants</b>, and the winner sits <b>two elementary moves</b> from its launch pad
+            &mdash; one 1 nm wavelength step and one block-boundary step, composed across two ELITE rounds.
+            <br><br>
+            So the honest statement is: <b>this is not autonomous discovery.</b> The information came from a seed
+            that succeeded on its own. Any figure quoted from this configuration carries that condition in the same
+            sentence, or it is being misquoted.
+        </div>
+
+        <p>
+            <b>Why the search cannot get there by itself &mdash; measured, not assumed.</b> At the block counts
+            where the depositable family lives, the constraint is <b>binary</b>: a strategy either crashes in 100 %
+            of draws at all three noise levels, or it is depositable. Nothing in between. ELITE is a hill-climber,
+            and on this landscape there is no hill &mdash; it retained <b>0 candidates out of 2472</b> without
+            launch pads, where <b>250 parents out of 250</b> crashed at 100 %. With launch pads, 19.7 % of parents
+            crash at 0&ndash;4 % and the retention rate becomes 6.12 %.
+        </p>
+
+        <div class="note">
+            <b>The consequence for anyone reading this as a benchmark.</b> Launch pads do not supply
+            <i>diversity</i>, they supply <i>feasibility</i> &mdash; they land on the far side of the cliff. That is
+            why six widening levers each returned zero depositable strategies: a larger ELITE cap, a wider mutation
+            span, a confidence-bound crash gate, five screening seeds, a &times;3&ndash;&times;4 widened exploration
+            profile, and wavelength diversity in the parent pool all search harder on the <i>near</i> side.
+        </div>
+
+        <div class="highlight-box">
+            🔴 <b>WHAT IS NOT CLAIMED.</b>
+            <ul>
+                <li><b>That this generalises.</b> Everything above is one stack at one slit width. No second
+                    component has been measured under this method, and that scope was fixed deliberately.</li>
+                <li><b>That the launch pads transfer.</b> They are twelve concrete plans for <i>this</i> stack.
+                    <code>scripts/generer_rampes.py</code> scripts the procedure that produces them, but it has only
+                    ever run on this component &mdash; its generality is a design intent, not a measurement.</li>
+                <li><b>That the failure mode is understood.</b> The measured crash rate <i>decreases</i> as the
+                    injected noise grows, 532 strategies against 61 in that direction. The crash gate takes the
+                    <b>maximum</b> over noise levels, so the published rates are conservative and the depositable
+                    verdict stands &mdash; but a mechanism nobody has explained is a mechanism that can surprise
+                    elsewhere.</li>
+            </ul>
+        </div>
+
+        <div class="note">
+            <b>Source.</b> Artefact <code>reports/blocs_vs_plantage_r75x2-2nm_deep_s042.json</code>, probe
+            <code>scripts/probe_blocs_vs_plantage.py</code>, ready-to-run configuration
+            <code>example/example_strat/JSON-strat-random75-x2-fabricable-2nm.json</code> with launch pads in
+            <code>example/example_strat/rampes_r75x2-2nm.json</code>. Full block range, mode <code>deep</code>,
+            300 Monte-Carlo draws, 2026-08-21, 8 threads. The base configuration is untouched: the 2 nm variant
+            differs from it by the slit width and that one key. SEEL $= 2\sqrt{\text{RMSE}_{P95}}$, the same
+            definition used throughout this page. Method, and the nine claims retracted the same day, in
+            <code>docs/PLAN_PRODUCTION_2026-08-20.md</code> &sect;25 to &sect;31.
+        </div>
+
+        <h2 id="sec-11">11. Making It Fast — What the Structure Gives for Free</h2>
 
                 <div class="highlight-box">
                     <b>Where the time actually goes</b>, measured: a fixed <b>~730 s</b>

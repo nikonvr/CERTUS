@@ -1712,6 +1712,26 @@ def _filter_finite_robustness_scores(
     for item in rejected:
         item["robustness_score"] = _worst_finite_rmse(item)
         item["crash_eliminated"] = True
+
+    # 🔴 LE REGIME DEGENERE EST ANNONCE, ET IL NE L'ETAIT PAS.
+    #
+    # Quand TOUTES les strategies sont eliminees, tous les scores rendus sont des REPLIS
+    # (`_worst_finite_rmse`). Le classement qui suit trie donc des valeurs de repli, et le
+    # `crash_rate` est CONSTANT -- les deux premieres cles de tri ne portent aucune
+    # information. Or c'est ce classement qui choisit les PARENTS d'ELITE, dont la mutation
+    # decide de tout.
+    #
+    # 📏 Mesure du 2026-08-21 : sur `r75x2` a 2 nm, graine 42, les 1617 strategies sont dans
+    # ce cas, et RIEN ne le disait. Il a fallu deux jours pour s'en apercevoir -- non pas
+    # parce que c'etait cache, mais parce qu'un artefact ne porte QUE des scores finis meme
+    # quand tout plante, et qu'un classement de replis ressemble trait pour trait a un
+    # classement.
+    logger.warning(
+        f"   [REGIME] 🔴 DEGENERE : les {len(rejected)} strategies rendues portent un score "
+        f"de REPLI, et leur crash_rate est constant. Le classement qui suit -- donc le choix "
+        f"des PARENTS d'ELITE -- ne dispose d'aucun signal dans ses deux premieres cles. "
+        f"`use_margin_ranking` est la seule cle informative dans ce regime."
+    )
     return rejected
 
 

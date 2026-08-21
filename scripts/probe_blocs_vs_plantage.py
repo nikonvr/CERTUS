@@ -422,6 +422,12 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
             # du projet validee comme predicteur de plantage depuis le signal (§24-41).
             # Sparse : une couche absente a une marge >= 5 A, donc sereine.
             "margin_by_layer": s.get("margin_by_layer") or {},
+            # 🔴 LE DRAPEAU QUI MANQUAIT AUX ARTEFACTS. `crash_eliminated` est pose par
+            # `_filter_finite_robustness_scores` sur toute strategie dont le score a ete
+            # REMPLACE par un repli. Sans lui, un artefact ne porte que des scores finis
+            # meme quand tout plante, et un classement de replis ressemble trait pour trait
+            # a un classement -- ce qui a coute deux jours le 2026-08-20.
+            "crash_eliminated": bool(s.get("crash_eliminated", False)),
             "critical_layer": s.get("critical_layer") or {},
             # 🔑 LA FENTE QUE CETTE STRATEGIE A CHOISIE, et son prix en bruit. Sans ce champ on
             # saurait SI la recherche de fente aide, jamais A QUELLE LARGEUR -- soit la moitie

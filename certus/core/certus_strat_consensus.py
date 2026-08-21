@@ -635,6 +635,66 @@ def _log_elite_wl(
         )
 
 
+def _log_elite_parents(
+    logger: logging.Logger,
+    elite_round: int,
+    parents: list[dict[str, Any]],
+) -> None:
+    """The strategies ELITE actually starts from -- and nothing said what they were.
+
+    WHY THIS EXISTS. ELITE's neighbourhood is deterministic, local and one-move-at-a-time:
+    a single block's wavelength shifted by +/- span, or a single boundary shifted by one
+    layer, never both. So the whole outcome is decided by WHERE it starts -- and the parents
+    are simply `strategies_results[:elite_parent_top_k]`, i.e. the head of a list that has
+    been through the ranking and two diversity passes.
+
+    📏 Measured 2026-08-21 on `r75x2` at 2 nm, seed 42: 48 of its own nine-block strategies
+    carry the block `(33, 53) @ 686 nm`, ONE nanometre in wavelength from the block
+    `(33, 53) @ 685 nm` that every one of the 72 depositable strategies carries. A single
+    mutation separates them. Whether any of those 48 was ever a parent decides between two
+    opposite repairs -- fix the parent selection, or fix the gate that rejects the child --
+    and NOTHING in the logs or the artefacts could answer it.
+
+    🔴 AND THE INFERENCE ROUTE IS CLOSED, which is why a log line is the only way. Sorting
+    the final artefact by score does NOT reproduce the parent list: the ranking runs before
+    two diversity passes that reorder it (`enable_family_diversity` and
+    `enable_block_diversity`, both ON by default), and the artefact is post-ELITE anyway.
+    Reading the parents off the artefact is exactly the class of mistake this repository
+    keeps paying for -- a quantity that does not carry the information sought.
+
+    ⚠️ WHAT IS PRINTED, AND WHY EACH FIELD. The wavelength tuple is the strategy's identity
+    for this purpose -- ELITE moves in that space. `crash` and `seel` show what the ranking
+    saw; when every candidate crashes they are a CONSTANT and a FALLBACK respectively, and
+    the line makes that visible instead of leaving it to be deduced. `margin` is the only
+    quantity measured to predict a crash from the signal alone (a factor 22 on the rate),
+    and it is the third sort key -- inert unless `use_margin_ranking` is armed.
+    """
+    import math
+
+    for rank, item in enumerate(parents, start=1):
+        strat = item.get("strategy", {}) or {}
+        wls = [
+            float(b.get("wavelength"))
+            for b in (strat.get("blocks") or [])
+            if isinstance(b, dict) and b.get("wavelength") is not None
+        ]
+        try:
+            score = float(item.get("robustness_score", float("inf")))
+            seel = 2.0 * math.sqrt(score) if math.isfinite(score) and score > 0 else float("nan")
+        except (TypeError, ValueError):
+            seel = float("nan")
+        crash = item.get("crash_rate")
+        cl = item.get("critical_layer") or {}
+        marge = cl.get("margin_in_A")
+        logger.info(
+            f"   [ELITE-PARENTS] Round {elite_round} #{rank:02d} "
+            f"id={strat.get('strategy_id', '?')} n_blocs={len(wls)} "
+            f"crash={'?' if crash is None else f'{100 * float(crash):.2f}%'} "
+            f"seel={seel:.4f} marge={'?' if marge is None else f'{float(marge):.2f}A'} "
+            f"origin={str(strat.get('origin', '?'))[:22]} wl={[int(w) for w in wls]}"
+        )
+
+
 def _apply_elite_refinement_if_enabled(
     strategies_results: list[dict[str, Any]],
     ctx: RobustnessContext,
@@ -684,6 +744,9 @@ def _apply_elite_refinement_if_enabled(
         nominal_threshold, target_threshold = nominal_target_pair
         max_sid = _max_strategy_id(strategies_results)
         existing_signatures = _existing_block_signatures(strategies_results)
+        # 🔑 CE QU'ELITE PREND POUR POINT DE DEPART -- journalisation pure. Sa mutation etant
+        # deterministe, locale et une-a-la-fois, tout le resultat se decide ici.
+        _log_elite_parents(ctx.logger, elite_round, strategies_results[:parent_count])
         elite_candidates, _next_sid = _generate_elite_candidate_strategies(
             parent_results=strategies_results[:parent_count],
             available_wls=available_wls,

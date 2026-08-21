@@ -1326,6 +1326,24 @@ class CertusStratStateMixin:
             "screen_seed_list": str(
                 getattr(self, "_loaded_config", {}).get("screen_seed_list", "")
             ),
+            # 🔑 INJECTER DES PLANS DONNES DANS LA POPULATION -- chemin ou liste de plans.
+            #
+            # 📏 Sur `r75x2` a 2 nm, quatre leviers de RECHERCHE ont rendu zero deposable a la
+            # graine 42 : plafond ELITE a 480, union de cinq criblages, porte a confiance,
+            # queue Rate. Une question ne bouge plus depuis deux jours et aucun levier de
+            # recherche ne peut y repondre -- la region saine existe-t-elle a cette graine ?
+            # Les 12 meilleurs plans de la graine 77 sont au disque avec leurs λ ; les verser
+            # dans la population et laisser le CHEMIN DE PRODUCTION les noter y repond.
+            #
+            # 🔒 Ils entrent par `inherited_strategies`, un canal qui existe deja et qui est
+            # deja teste : filtre sur `n_blocks == n_blk`, verification de contrat, criblage,
+            # notation. Aucun second chemin sur lequel se tromper -- contrairement au contexte
+            # reconstruit de `probe_renoter.py`, qui n'a jamais reproduit son point fixe.
+            #
+            # Vide ⇒ rien n'est ajoute ⇒ chemin d'avant AU BIT.
+            "injected_strategies": str(
+                getattr(self, "_loaded_config", {}).get("injected_strategies", "")
+            ),
             "rate_tail_sweep": _config_list_int(
                 getattr(self, "_loaded_config", {}), "rate_tail_sweep"
             ),

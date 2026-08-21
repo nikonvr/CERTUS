@@ -467,6 +467,99 @@ def find_robust_nucleation_wavelength_adaptive(
 # === WORKER LOGIC ===
 
 
+def _resolve_injected_strategies(params: Any) -> list[dict[str, Any]]:
+    """Plans handed to the search from outside, poured into `inherited_strategies`.
+
+    WHY THIS EXISTS, AND WHAT IT DECIDES. On `r75x2` at 2 nm, seed 77 finds 547 depositable
+    strategies and seed 42 finds none on 1617. Four search levers have been tried against that
+    zero -- ELITE cap raised to 480, five-seed screening union, the confidence-bounded crash
+    gate, the Rate tail -- and all four returned zero. One question has therefore not moved for
+    two days, and no search lever can answer it:
+
+        DOES THE HEALTHY REGION EXIST AT SEED 42 AT ALL?
+
+    The 12 best plans of seed 77 are on disk with their wavelengths, and their export is
+    verified exact -- 12/12 matched to the reference artifact by block signature. Handing them
+    to seed 42 and letting the PRODUCTION path score them answers it directly:
+
+        they hold      ->  the region exists, and what is missing is the SEARCH
+        they crash     ->  the 0.5692 is proper to its own realisation, and chasing it at
+                           seed 42 is chasing a mirage. Better to know than to keep paying.
+
+    HOW, AND WHY NOT A RECONSTRUCTED CONTEXT. `probe_renoter.py` tried to answer this by
+    capturing a pre-calculation context and calling the kernel again. It has never reproduced
+    its own fixed point, and its failure is still unlocated -- six candidate causes eliminated
+    on 2026-08-20 and none found. So this takes the opposite route: the plans enter through
+    `inherited_strategies`, a channel that already exists, is already tested, and is already
+    the one the pipeline uses to carry strategies from one block count to the next. They are
+    filtered on `n_blocks == n_blk`, contract-checked, screened and scored by exactly the code
+    every other candidate goes through. There is no second path to be wrong about.
+
+    ACCEPTS a list of plans, or a PATH to a JSON file holding one -- the artefacts of this
+    repository already carry that shape (`reports/plans/*.json`, a list of `{nom, blocs}`).
+    Both `blocs` and `blocks` are read, and `n_blocks` is derived rather than trusted: a plan
+    whose declared count disagrees with its block list would be silently dropped by the
+    contract check downstream, which is the hardest kind of loss to notice.
+
+    INERT BY DEFAULT: absent or empty gives an empty list, so the caller adds nothing and the
+    path is the one from before, bit for bit.
+    """
+    try:
+        raw = params.get("injected_strategies")
+    except AttributeError:
+        return []
+    if raw is None or raw == "" or raw == []:
+        return []
+
+    plans: Any = raw
+    if isinstance(raw, str):
+        chemin = Path(raw)
+        if not chemin.is_absolute():
+            chemin = Path(__file__).resolve().parents[2] / raw
+        if not chemin.is_file():
+            # 🔴 UN FICHIER MANQUANT LEVE, il ne se tait pas. Une injection silencieusement
+            # vide rendrait un run qui ressemble trait pour trait a un run sans injection, et
+            # on conclurait « les plans plantent » alors qu'aucun n'a ete evalue.
+            raise FileNotFoundError(f"injected_strategies : {chemin} est introuvable")
+        import json
+
+        brut = json.loads(chemin.read_text(encoding="utf-8"))
+        plans = brut.get("plans", brut) if isinstance(brut, dict) else brut
+
+    if not isinstance(plans, (list, tuple)):
+        raise TypeError(f"injected_strategies : attendu une liste, vu {type(plans).__name__}")
+
+    out: list[dict[str, Any]] = []
+    for i, plan in enumerate(plans):
+        if not isinstance(plan, dict):
+            continue
+        blocs = plan.get("blocks") or plan.get("blocs") or []
+        propres = []
+        for b in blocs:
+            if not isinstance(b, dict):
+                continue
+            wl = b.get("wavelength", b.get("wl"))
+            if wl is None or "start" not in b or "end" not in b:
+                continue
+            propres.append({
+                "start": int(b["start"]),
+                "end": int(b["end"]),
+                "wavelength": float(wl),
+            })
+        if not propres:
+            continue
+        nom = str(plan.get("nom") or plan.get("origin") or f"plan_{i}")
+        out.append({
+            "strategy_id": 9_500_000 + i,
+            "n_blocks": len(propres),          # derive, jamais repris du fichier
+            "blocks": propres,
+            "origin": f"INJECTED({nom})",
+            "avg_cost": float("inf"),
+            "total_cost": float("inf"),
+        })
+    return out
+
+
 def _resolve_screen_seeds(params: Any) -> list[int]:
     """The seeds the SCREENING runs at. Absent or single -> the historical path, bit for bit.
 
@@ -617,6 +710,14 @@ def _parallel_block_worker(args) -> dict:
         inherited_strategies,
         nucleation_info,
     ) = args
+
+    # 🔑 LES PLANS INJECTES ENTRENT PAR LE CANAL DE L'HERITAGE, pas par un chemin neuf.
+    # `inherited_strategies` filtre deja sur `n_blocks == n_blk`, verifie le contrat, crible
+    # et note -- donc un plan injecte traverse EXACTEMENT le code que toute autre candidate
+    # traverse. Sans cle `injected_strategies`, la liste est vide et rien ne change.
+    _injectes = _resolve_injected_strategies(params)
+    if _injectes:
+        inherited_strategies = list(inherited_strategies or []) + _injectes
 
     shared_clues = None
 

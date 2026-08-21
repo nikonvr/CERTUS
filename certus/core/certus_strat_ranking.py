@@ -66,6 +66,7 @@ def _couverture_wl_groupings(
     appel_dp,
     budget: int,
     logger,
+    stats: dict | None = None,
 ) -> list[dict]:
     """Groupings that USE the admissible wavelengths the k-best never selected.
 
@@ -103,6 +104,18 @@ def _couverture_wl_groupings(
     blocs demande : la DP ne rend alors rien, et on le compte. Un elagage silencieux se lit
     comme une couverture complete, et c'est le mode de defaillance que ce depot paie depuis
     le debut.
+
+    🔴 ET LES COMPTEURS REMONTENT PAR `stats`, PAS SEULEMENT PAR LE JOURNAL. 📏 Mesure du
+    2026-08-21 : le logger `ThinFilm` de ce module est MUET -- sa ligne `info` inconditionnelle
+    « Mining: n_blocks=... » apparait **zero fois** dans les journaux de campagne, tandis que
+    le logger `W{n_blk}` du worker passe sans probleme. Un premier run de cinquante minutes a
+    donc ete rendu ININTERPRETABLE : impossible de distinguer « la passe n'a pas tourne » de
+    « chaque λ forcee etait infaisable ».
+
+        Un instrument dont la sortie n'atteint pas le resultat n'est pas un instrument.
+
+    C'est exactement le motif de §24-37 -- *« le repli EST journalise par couche, mais rien ne
+    remonte au classement »*. Le journal reste, par commodite ; `stats` est ce qui compte.
     """
     if budget <= 0:
         return []
@@ -121,6 +134,13 @@ def _couverture_wl_groupings(
 
     absentes = sorted((w for w in meilleur if w not in deja), key=lambda w: meilleur[w][0])
     if not absentes:
+        # 🔴 Ce cas se consigne AUSSI. Sans compteur, « aucune λ absente » et « la passe n'a
+        # pas tourne » se lisent exactement pareil dans un artefact -- et c'est la confusion
+        # qui a coute un run de cinquante minutes le 2026-08-21.
+        if stats is not None:
+            stats["deja_employees"] = stats.get("deja_employees", 0) + len(deja)
+            stats["absentes"] = stats.get("absentes", 0)
+            stats["appels_dp"] = stats.get("appels_dp", 0)
         logger.info("   [WL-COUVERTURE] aucune λ admissible absente des groupements : rien a faire.")
         return []
 
@@ -139,6 +159,13 @@ def _couverture_wl_groupings(
             infaisables += 1
 
     reste = len(absentes) - len(ajoutes) - infaisables
+    if stats is not None:
+        stats["deja_employees"] = stats.get("deja_employees", 0) + len(deja)
+        stats["absentes"] = stats.get("absentes", 0) + len(absentes)
+        stats["ajoutees"] = stats.get("ajoutees", 0) + len(ajoutes)
+        stats["infaisables"] = stats.get("infaisables", 0) + infaisables
+        stats["non_traitees"] = stats.get("non_traitees", 0) + max(0, reste)
+        stats["appels_dp"] = stats.get("appels_dp", 0) + len(ajoutes) + infaisables
     logger.info(
         f"   [WL-COUVERTURE] {len(deja)} λ deja employees, {len(absentes)} absentes -> "
         f"{len(ajoutes)} groupement(s) ajoute(s), {infaisables} infaisable(s) au nombre de "
@@ -408,6 +435,10 @@ def mine_strategies_for_block_count(
     # que pour l'OPTIMALITE. C'est une symetrie, pas un nombre invente (§19).
     enable_wl_coverage: bool = False,
     wl_coverage_top_k: int = 0,
+    # 🔴 Rempli sur place, parce que le logger de ce module est MUET (voir
+    # `_couverture_wl_groupings`). C'est le seul canal par lequel l'appelant apprend ce que la
+    # passe a fait -- et « rien a couvrir » doit se distinguer de « pas tourne ».
+    wl_coverage_stats: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     if n_blocks <= 0 or num_layers <= 0:
         return []
@@ -559,7 +590,7 @@ def mine_strategies_for_block_count(
                     f"reservee par origine, pas un reglage de recherche."
                 )
             couverture = _couverture_wl_groupings(
-                cost_map, solutions, _appel_dp, _budget, logger
+                cost_map, solutions, _appel_dp, _budget, logger, wl_coverage_stats
             )
 
         found = []

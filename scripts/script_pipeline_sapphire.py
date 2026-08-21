@@ -40,6 +40,14 @@ from PyQt6.QtCore import QEventLoop, QThread, Qt
 
 from PyQt6.QtWidgets import QApplication
 
+# 🔴 La console Windows est en cp1252 et ce script imprime des fleches. Sans ces deux
+# lignes, UnicodeEncodeError leve A LA FIN -- apres la mesure. 📏 Ce script avait ete
+# MANQUE par un premier balayage a seuil (`ord(c) > 0x2500`) : la fleche `→` vaut 8594,
+# donc sous le seuil, et elle n'est pas encodable en cp1252 pour autant. Le test exact de
+# `tests/unit/test_scripts_console_cp1252.py` ne peut pas faire cette erreur.
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 
 
 #Before CERTUS import: QApplication + strong reference (otherwise QEventLoop without QCoreApplication)

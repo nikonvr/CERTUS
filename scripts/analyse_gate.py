@@ -18,6 +18,14 @@ import json
 import sys
 from pathlib import Path
 
+# 🔴 La console Windows est en cp1252 et ce script imprime des pastilles. Sans ces deux
+# lignes, UnicodeEncodeError leve A LA FIN -- apres la mesure, a l'ecriture de la synthese.
+# 📏 Mesure du 2026-08-21 : trois plantages en une session, dont un qui a perdu
+# l'artefact d'un run de cinquante minutes. `tests/unit/test_scripts_console_cp1252.py`
+# refuse desormais tout nouveau script non protege.
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 ROOT = Path(__file__).resolve().parents[1]
 REPORTS = ROOT / "reports"
 

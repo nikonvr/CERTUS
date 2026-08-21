@@ -822,6 +822,7 @@ def _parallel_block_worker(args) -> dict:
                 pre_calc_data["num_layers"],
             )
 
+        _couv_stats: dict[str, Any] = {}
         strategies_dp = mine_strategies_for_block_count(
             n_blk,
             pre_calc_data["raw_results_thickness"],
@@ -849,7 +850,31 @@ def _parallel_block_worker(args) -> dict:
             # 72 strategies deposables ont besoin figure dans ZERO des 1617.
             enable_wl_coverage=bool(params.get("enable_wl_coverage", False)),
             wl_coverage_top_k=int(params.get("wl_coverage_top_k") or 0),
+            wl_coverage_stats=_couv_stats,
         )
+
+        # 🔴 ON JOURNALISE ICI, PAS DANS LE MINEUR, et ce n'est pas un detail de style.
+        # 📏 Mesure du 2026-08-21 : le logger `ThinFilm` du mineur est MUET -- sa ligne
+        # inconditionnelle « Mining: n_blocks=... » apparait ZERO fois dans les journaux de
+        # campagne, alors que ce logger-ci (`W{n_blk}`) passe. Un run de cinquante minutes a
+        # ete perdu a ne pas pouvoir distinguer « la passe n'a pas tourne » de « chaque λ
+        # forcee etait infaisable ». Piege 6 : un silence ne prouve rien.
+        if _couv_stats:
+            logger.info(
+                f"   [Block {n_blk}] [WL-COUVERTURE] {_couv_stats.get('deja_employees', 0)} λ "
+                f"deja employees, {_couv_stats.get('absentes', 0)} absentes -> "
+                f"{_couv_stats.get('ajoutees', 0)} ajoutee(s), "
+                f"{_couv_stats.get('infaisables', 0)} infaisable(s), "
+                f"{_couv_stats.get('non_traitees', 0)} hors budget "
+                f"({_couv_stats.get('appels_dp', 0)} appels DP)"
+            )
+        elif bool(params.get("enable_wl_coverage", False)):
+            # 🔴 Le drapeau est arme et les compteurs sont VIDES : la passe n'a pas tourne.
+            # C'est un defaut de cablage, pas un resultat -- et il doit crier.
+            logger.error(
+                f"   [Block {n_blk}] 🔴 [WL-COUVERTURE] armee mais AUCUN compteur : la passe "
+                f"n'a pas ete atteinte. Ne lis pas ce run comme une mesure de la couverture."
+            )
 
         logger.debug(f"[W{n_blk}] mine_strategies_for_block_count returned {len(strategies_dp)} strategies")
 

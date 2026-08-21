@@ -252,3 +252,72 @@ class TestDeBoutEnBout:
             _miner(enable_wl_coverage=True, wl_coverage_top_k=_COUVERTURE_ID_STRIDE + 1)
         msg = " ".join(r.getMessage() for r in caplog.records)
         assert "ecrete" in msg, msg
+
+
+class TestLesCompteursRemontent:
+    """Le journal du mineur est MUET -- les compteurs sont le seul canal fiable.
+
+    Mesure du 2026-08-21 : la ligne `info` inconditionnelle du logger `ThinFilm`
+    (« Mining: n_blocks=... ») apparait ZERO fois dans les journaux de campagne, alors que le
+    logger `W{n_blk}` du worker passe. Un run de cinquante minutes a ete rendu ininterpretable :
+    impossible de distinguer « la passe n'a pas tourne » de « chaque lambda etait infaisable ».
+
+        Un instrument dont la sortie n'atteint pas le resultat n'est pas un instrument.
+    """
+
+    def test_ils_comptent_les_ajoutees_et_les_infaisables(self):
+        stats: dict = {}
+        appels = {"n": 0}
+
+        def faux_dp(carte, k):
+            appels["n"] += 1
+            return [_sol(700)] if appels["n"] == 1 else []
+
+        _couverture_wl_groupings(CARTE, [_sol(500)], faux_dp, 10, LOGGER, stats)
+        assert stats["absentes"] == 2, stats
+        assert stats["ajoutees"] == 1, stats
+        assert stats["infaisables"] == 1, stats
+        assert stats["appels_dp"] == 2, stats
+
+    def test_ils_comptent_le_hors_budget(self):
+        carte = {0: {500.0: 1.0, 610.0: 2.0, 620.0: 3.0, 630.0: 4.0}}
+        stats: dict = {}
+        _couverture_wl_groupings(carte, [_sol(500)], lambda c, k: [_sol(610)], 1, LOGGER, stats)
+        assert stats["ajoutees"] == 1 and stats["non_traitees"] == 2, stats
+
+    def test_RIEN_A_COUVRIR_se_distingue_de_PAS_TOURNE(self):
+        """Le coeur du correctif. Ces deux etats se lisaient pareil, et ca a coute un run."""
+        stats: dict = {}
+        _couverture_wl_groupings(CARTE, [_sol(500, 600, 700)], lambda c, k: [], 10, LOGGER, stats)
+        assert stats, "un dictionnaire VIDE veut dire « pas tourne » : il doit etre rempli"
+        assert stats["absentes"] == 0
+        assert stats["appels_dp"] == 0
+        assert stats["deja_employees"] == 3
+
+    def test_sans_dictionnaire_rien_ne_casse(self):
+        """L'argument est optionnel : le chemin d'avant reste intact.
+
+        `CARTE` porte trois lambdas et la solution n'en emploie qu'une : il en reste DEUX
+        absentes, donc deux groupements. (Premiere attente ecrite a 1 -- corrigee par le test.)
+        """
+        out = _couverture_wl_groupings(CARTE, [_sol(500)], lambda c, k: [_sol(700)], 10, LOGGER)
+        assert len(out) == 2
+
+    def test_ils_s_ACCUMULENT_sur_les_trois_cartes_de_cout(self):
+        """Le mineur appelle la passe une fois par carte ; les compteurs somment."""
+        stats: dict = {}
+        for _ in range(3):
+            _couverture_wl_groupings(CARTE, [_sol(500)], lambda c, k: [_sol(700)], 10, LOGGER, stats)
+        assert stats["ajoutees"] == 6, stats
+
+    def test_de_bout_en_bout_le_mineur_les_remplit(self):
+        stats: dict = {}
+        _miner(enable_wl_coverage=True, wl_coverage_stats=stats)
+        assert stats.get("ajoutees", 0) > 0, stats
+        assert stats.get("appels_dp", 0) > 0, stats
+
+    def test_par_DEFAUT_ils_restent_VIDES(self):
+        """Un dictionnaire vide est le signal « la passe n'a pas tourne ». Il doit rester vrai."""
+        stats: dict = {}
+        _miner(wl_coverage_stats=stats)
+        assert stats == {}, stats

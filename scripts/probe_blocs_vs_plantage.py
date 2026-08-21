@@ -100,6 +100,14 @@ from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
+# 🔴 La console Windows est en cp1252 et ce script imprime des pastilles. Sans ces deux
+# lignes, UnicodeEncodeError leve A LA FIN -- apres la mesure, a l'ecriture de la synthese.
+# 📏 Mesure du 2026-08-21 : trois plantages en une session, dont un qui a perdu
+# l'artefact d'un run de cinquante minutes. `tests/unit/test_scripts_console_cp1252.py`
+# refuse desormais tout nouveau script non protege.
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -683,21 +691,19 @@ def main() -> int:
                                            if int(elargi) >= 2 else
                                            dict(ELARGISSEMENT) if elargi else None)}})
 
-    if r["verdict"] != "OK":
-        print(f"\n🔴 {r['verdict']} -- rien a analyser.")
-        return 1
-
-    print(f"\n{r['n_strats']} strategies evaluees.")
-    synthese(r["strategies"])
-    print("\n" + "=" * 74)
-    print("LA FENTE CHANGE-T-ELLE L'ISSUE, ET A QUELLE LARGEUR ?")
-    print("=" * 74)
-    par_fente(r["strategies"])
-    print("\n" + "=" * 74)
-    print("UNE COUCHE RESTE-T-ELLE CONTRAINTE POUR TOUTES LES STRATEGIES ?")
-    print("=" * 74)
-    contraintes_communes(r["strategies"])
-
+    # 🔴 L'ARTEFACT S'ECRIT AVANT LA SYNTHESE, ET C'EST UNE LECON PAYEE.
+    #
+    # 📏 Le 2026-08-21, un print de pastille rouge dans `synthese()` a leve
+    # UnicodeEncodeError sur une console cp1252 -- APRES cinquante minutes de calcul et
+    # AVANT l'ecriture. La mesure a ete perdue en entier, pour un caractere d'affichage.
+    #
+    # 🔑 La regle qui en sort : un AFFICHAGE ne doit jamais pouvoir detruire une MESURE.
+    # L'ordre est donc consigner, PUIS raconter -- et la narration est enveloppee, parce que
+    # la protection de console reduit le risque sans l'annuler : un IndexError dans un
+    # tableau de synthese aurait exactement le meme effet.
+    #
+    # ⚠️ On consigne AUSSI quand le verdict n'est pas OK. Un run rate porte de l'information
+    # -- sa configuration, ses compteurs -- et c'est precisement ce que §24-7 reclamait.
     _tag_nom = _surcharges_env()[1]
     suffixe = ((f"_{_tag_nom}" if _tag_nom else "") + ("_fente" if fente else "") + (f"_tp{min_tp}" if min_tp else "")
                 + ("" if res_nm == 2.0 else f"_res{res_nm:g}")
@@ -738,6 +744,28 @@ def main() -> int:
         out = garde
     out.write_text(json.dumps(r, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nconsigne dans {out.relative_to(ROOT)}")
+
+    # 🔒 La synthese ne peut plus rien couter : l'artefact est deja sur le disque.
+    try:
+        if r["verdict"] != "OK":
+            print(f"\n🔴 {r['verdict']} -- rien a analyser.")
+            return 1
+
+        print(f"\n{r['n_strats']} strategies evaluees.")
+        synthese(r["strategies"])
+        print("\n" + "=" * 74)
+        print("LA FENTE CHANGE-T-ELLE L'ISSUE, ET A QUELLE LARGEUR ?")
+        print("=" * 74)
+        par_fente(r["strategies"])
+        print("\n" + "=" * 74)
+        print("UNE COUCHE RESTE-T-ELLE CONTRAINTE POUR TOUTES LES STRATEGIES ?")
+        print("=" * 74)
+        contraintes_communes(r["strategies"])
+
+    except Exception as exc:  # noqa: BLE001 -- volontaire, voir le bandeau ci-dessus
+        print(f"\n🟠 la synthese a echoue ({type(exc).__name__}: {exc}).")
+        print(f"   🟢 LA MESURE EST SAUVE : {out.relative_to(ROOT)}")
+        print("   Relis-la avec un lecteur d'artefact ; il n'y a rien a relancer.")
     return 0
 
 

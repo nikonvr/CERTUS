@@ -116,6 +116,31 @@ descend de la graine 77. Qui citera « 0,5676 nm » sans cette condition dira fa
 ⚠️ L'écart à la cible vaut 0,3 % et le bruit sur une différence de SEEL vaut 2,59 % : c'est une
 **égalité**, jamais une supériorité.
 
+### 🟠 IL EXISTE DÉJÀ UNE VOIE AUTONOME À 2 nm, ET ELLE COÛTE +18 %
+
+🔴 **Cette ligne avait disparu du document le 2026-08-21, et c'est une régression que j'ai
+introduite en réécrivant §0.** Elle est mesurée depuis le 2026-08-20 et vit dans
+[`CHANTIER_RATE.md`](CHANTIER_RATE.md) §3bis :
+
+```
+2,0 nm  deep     pur optique     0 deposable  ·  100 % de plantage
+2,0 nm  premium  queue Rate      3 deposables ·  SEEL 0,6717 · 2,67 %
+2,0 nm  deep     queue Rate      3 deposables ·  SEEL 0,6859 · 2,67 %
+2,0 nm  fast     queue Rate      2 deposables ·  SEEL 0,7014 · 4,00 %
+```
+
+**La queue Rate trouve seule, sans rampe.** Elle coûte **+18 %** de SEEL par rapport au 0,5676
+des rampes, et elle rend **3** stratégies au lieu de 197 — mais elle n'a besoin d'aucune
+information venue d'une autre graine.
+
+🔑 **Donc la bonne formulation de ce qui manque n'est PAS « aucune voie autonome »** — elle
+existe. C'est : *aucune voie autonome n'atteint le niveau de 0,57 ; la seule qui trouve
+sans rampe plafonne à 0,67-0,69.*
+
+⚠️ Et le pur optique à la résolution **native** de ce fichier (1 nm) rend **277 déposables à
+SEEL 0,6248** : c'est de là que vient le `-fabricable` de son nom. Tout ce qui précède décrit
+donc le composant tourné à **la moitié de la résolution pour laquelle il a été conçu**.
+
 ### 🔑 Le mécanisme, mesuré et non supposé
 
 Les parents qu'ELITE reçoit au bloc 9 portent les bonnes λ et **plantent tous à 100 %**. La
@@ -483,7 +508,7 @@ Elle est écrite d'avance pour ne pas être réinterprétée selon le résultat.
 |---|---|
 | **101 et 202 trouvent** des déposables | la graine 42 est **malchanceuse** → le **multiseed de génération** est la réponse produit : union sur K graines, faisabilité exigée sur **toutes**. K peut être petit |
 | **une seule** trouve | la recherche réussit ~1 fois sur 2 → même conclusion, K plus grand |
-| **aucune** ne trouve | la graine **77 est chanceuse**. La découverte autonome n'est pas atteignable par la recherche sur cet empilement → la réponse produit devient `scripts/generer_rampes.py`, et **ce n'est pas un échec** |
+| **aucune** ne trouve | la graine **77 est chanceuse**. 🔴 **Ne conclus PAS « la découverte autonome est impossible »** — c'est ce que cette case disait, et c'était faux : la **queue Rate** trouve seule à 2 nm, à SEEL 0,67-0,69 (voir §0bis). La conclusion correcte est *aucune voie autonome n'atteint le niveau de 0,57 en pur optique*, et la réponse produit devient `scripts/generer_rampes.py` pour ce niveau, la queue Rate pour un niveau dégradé mais autonome. **Ce n'est pas un échec** |
 
 📌 Rappel du contexte : on n'a que **deux** graines mesurées nues sur `r75x2` à 2 nm — la 77
 trouve 547 déposables, la 42 en trouve **zéro** sur 1617. Deux points ne permettent aucune

@@ -219,6 +219,171 @@ def lire_evenement(ligne: str) -> dict | None:
     return d if isinstance(d, dict) and "evt" in d else None
 
 
+#: Ce que le changement de verre temoin COUTE la ou le monitoring optique fonctionne deja.
+#: Mesure du 2026-08-15, controle negatif passe sur TROIS composants : 48c +73 a +89 %
+#: (11/11 partitions), 35c +10 a +98 % (12/12), 75c aleatoire +110 % (0,272 -> 0,571 nm).
+#: AUCUNE partition ne gagne, meme par chance.
+DEGRADATION_MULTITEMOIN = "+73 a +110 % selon le composant, 3 composants sur 3"
+
+
+def verdict_multitemoin(par_graine: dict[int, list[dict]], graines_essayees: int) -> tuple[bool, str]:
+    """Le multi-temoin est-il UTILE ici ? Rend (utile, la raison, en clair).
+
+    🔑 👤, 2026-08-22 : *« un utilisateur ne sait pas au debut si le multi-temoin sera
+    necessaire, donc il faut le rajouter, avec un critere qui permet de dire que dans ce cas ce
+    n'est pas la peine »*. Voici ce critere, et il est ENTIEREMENT mesure.
+
+    ## LE CRITERE
+
+    Le multi-temoin est un outil de FAISABILITE, jamais d'optimisation. Il ne rend pas plus
+    precis : il *retire* de la compensation d'erreur sans rien restaurer. La ou le monitoring
+    optique fonctionne, il degrade donc TOUJOURS -- controle negatif passe sur trois composants,
+    aucune partition ne gagne.
+
+        au moins UN deposable  ->  le composant se surveille en une campagne.
+                                   Le multi-temoin est INUTILE, et il COUTERAIT.
+        AUCUN deposable        ->  le composant ne se surveille pas d'un bout a l'autre.
+                                   Le multi-temoin est le levier qui reste.
+
+    ## 🔴 ET L'ORDRE EST LA MOITIE DU CRITERE
+
+    Il s'applique APRES le multiseed, JAMAIS avant, et le 2026-08-22 dit pourquoi : sur
+    `r75x2`, les graines 42, 101, 202 et 303 rendent ZERO. A une seule graine, le composant
+    ressemblait trait pour trait a un cas de multi-temoin. Les graines 404 et 505 rendent 372
+    et 311 deposables.
+
+    **Armer le multi-temoin sur la foi d'une graine malchanceuse aurait degrade de ~110 % un
+    composant qui n'avait aucun probleme.** C'est l'erreur que ce critere existe pour empecher.
+    """
+    trouvent = {g: d for g, d in par_graine.items() if d}
+    if trouvent:
+        return False, (
+            f"INUTILE : {len(trouvent)} realisation(s) sur {len(par_graine)} trouvent des "
+            f"strategies deposables, donc le composant se surveille d'un bout a l'autre avec "
+            f"UN SEUL verre temoin. Changer de temoin y degrade toujours ({DEGRADATION_MULTITEMOIN}) "
+            f"-- c'est un outil de faisabilite, jamais d'optimisation."
+        )
+    return True, (
+        f"CANDIDAT : aucune des {graines_essayees} realisation(s) essayees ne rend de strategie "
+        f"deposable. Le composant ne se surveille pas d'un bout a l'autre en une campagne, et le "
+        f"multi-temoin est le levier qui reste. ⚠️ Il ne rendra pas plus PRECIS -- il fait passer "
+        f"d'impossible a possible, en gelant dans la piece l'erreur d'avant chaque coupure."
+    )
+
+
+def partition_temoins(n_couches: int, n_temoins: int) -> list[int]:
+    """Les couches ou un verre temoin NEUF entre, pour `n_temoins` temoins.
+
+    Partition REGULIERE, et c'est un choix appuye sur une mesure : *ou* couper importe peu.
+    Etendue du SEEL de **+14,4 %** sur 440 partitions du 99c et **+15,4 %** sur 18 positions du
+    75c, avec 136 et 11 ex aequo -- l'optimum est PLAT. Chercher la meilleure coupure couterait
+    des heures pour un gain sous le bruit.
+
+    ⚠️ L'index 0 n'est jamais rendu : la couche 0 pousse deja sur verre nu.
+    """
+    if n_temoins < 2 or n_couches < 2:
+        return []
+    pas = n_couches / n_temoins
+    return sorted({c for i in range(1, n_temoins) if 0 < (c := int(round(i * pas))) < n_couches})
+
+
+def _escalade_multitemoin(a, jdir: Path) -> int:
+    """Cherche le MINIMUM de temoins qui rende le composant faisable. 2, puis 3, puis 4...
+
+    🔑 POURQUOI UN MINIMUM, ET PAS UN REGLAGE. 👤, 2026-08-22 : *« cette version doit
+    fonctionner meme avec des coatings a 200 couches, donc clairement en multitemoins »*.
+
+    A cette taille le mono-temoin n'a aucune chance -- le 99c plante deja a 100 % sur ses 487
+    strategies en une seule campagne. Le multi-temoin n'y est donc plus un dernier recours,
+    c'est le mode NORMAL, et la question devient : **combien**.
+
+    🔴 ET LA REPONSE EST « LE MOINS POSSIBLE », POUR UNE RAISON MESUREE. Chaque coupure GELE
+    dans la piece l'erreur accumulee avant elle, definitivement incorrigible. Le multi-temoin
+    ne rend donc pas plus precis : il fait passer d'impossible a possible, en payant. On
+    s'arrete DONC au premier nombre de temoins qui trouve -- pas au meilleur SEEL sur une
+    grille de nombres de temoins, ce qui serait payer deux fois.
+
+    📏 Ce que la mesure dit du reste : *ou* couper importe peu (etendue +14,4 % sur 440
+    partitions du 99c, l'optimum est PLAT), et 2 contre 3 temoins vaut +3,0 %, sous la
+    resolution de 5,1 %. Une partition REGULIERE est donc defendable, et chercher mieux
+    couterait des heures pour un gain sous le bruit.
+    """
+    n = _n_couches(a.composant)
+    if not n:
+        print(f"  🔴 nombre de couches inconnu pour {a.composant} : escalade annulee")
+        return 1
+    for k in range(2, int(a.multitemoin) + 1):
+        print()
+        print(f"  ▶  MULTI-TEMOIN a {k} temoins sur {n} couches")
+        code = _passe_multitemoin(a, jdir, k, n)
+        if code == 0:
+            print(f"  🔑 MINIMUM TROUVE : {k} temoin(s) suffisent. On s'arrete la -- un temoin "
+                  f"de plus gelerait davantage d'erreur pour rien.")
+            return 0
+    print(f"  🔴 aucun nombre de temoins jusqu'a {a.multitemoin} ne rend ce composant faisable.")
+    return 1
+
+
+def _passe_multitemoin(a, jdir: Path, n_temoins: int, n: int) -> int:
+    """Rejoue la premiere graine avec K verres temoins, quand rien n'a ete trouve autrement.
+
+    🔴 CE N'EST PAS UNE OPTIMISATION, ET LE MESSAGE LE DIT A CHAQUE FOIS. Le multi-temoin
+    RETIRE de la compensation d'erreur : le residu d'avant chaque coupure est gele dans la
+    piece, definitivement incorrigible. Il ne s'emploie que la ou le mono-temoin ne rend RIEN.
+
+    ⚠️ Une seule graine, deliberement : si le multi-temoin change quelque chose, cela se voit
+    des la premiere. En rejouer K couterait des heures pour repondre a une question binaire.
+    """
+    graine = int(a.graines[0]) if a.graines else ECHELLE_GRAINES[0]
+    coupures = partition_temoins(n, n_temoins)
+    if not coupures:
+        print(f"  🔴 partition vide pour {n_temoins} temoins sur {n} couches")
+        return 1
+    tag = f"mt{n_temoins}"
+    print(f"     {n} couches · coupures aux couches {coupures} · graine {graine} · etiquette {tag}")
+    _evt("multitemoin_passe", temoins=n_temoins, coupures=coupures, graine=graine)
+    p = _lancer(
+        a.python, a.composant, a.mode, a.resolution, graine,
+        jdir / f"journal_mt{n_temoins}_s{graine:03d}.log",
+        # ⚠️ Le parseur de surcharges decoupe sur les VIRGULES : la liste s'ecrit donc avec des
+        # POINTS-VIRGULES, que `_resolve_witness_resets` accepte.
+        env_sup={
+            "CERTUS_PROBE_OVERRIDES": "witness_reset_layers=" + ";".join(str(c) for c in coupures),
+            "CERTUS_PROBE_TAG": tag,
+        },
+    )
+    p.wait()
+    try:
+        p._certus_journal.close()  # type: ignore[attr-defined]
+    except Exception:  # noqa: BLE001
+        pass
+    art = _lire_artefact(_resoudre_artefact(a.composant, a.mode, graine, tag))
+    dep = _deposables(art) if art else []
+    if not dep:
+        print(f"  ❌ {n_temoins} temoin(s) : aucun deposable.")
+        _evt("multitemoin_resultat", trouve=False, temoins=n_temoins)
+        return 1
+    seel = _seel(dep[0]["score"])
+    print(f"  🟢 {n_temoins} temoin(s) : {len(dep)} deposable(s) · SEEL {seel:.4f} nm · "
+          f"{dep[0]['n_blocs']} blocs · plantage {100 * dep[0]['crash_rate']:.2f} %")
+    print("     ⚠️ Ce SEEL n'est PAS comparable a un SEEL mono-temoin : il decrit une piece "
+          "deposee sous plusieurs verres, dont l'erreur d'avant chaque coupure est gelee.")
+    _evt("multitemoin_resultat", trouve=True, temoins=n_temoins, seel=seel,
+         deposables=len(dep), coupures=coupures)
+    return 0
+
+
+def _n_couches(composant: str) -> int:
+    """Le nombre de couches du composant, lu dans le registre de la sonde."""
+    try:
+        sys.path.insert(0, str(RACINE / "scripts"))
+        from probe_blocs_vs_plantage import COMPOSANTS
+
+        return int(COMPOSANTS[composant][1])
+    except (ImportError, KeyError, TypeError, ValueError):
+        return 0
+
+
 def mode_finalisation_demandee(drapeau: Path) -> str:
     """Le fichier d'arret porte SON MODE dans son contenu. Rend "", "attendre" ou "abandonner".
 
@@ -392,6 +557,11 @@ def main(argv: list[str] | None = None) -> int:
                     help="minutes, pour decider si un lancement rentre. Remplacee par la duree "
                          f"REELLE des le premier run fini. Defaut {DUREE_ATTENDUE_DEFAUT_MIN:g}")
     ap.add_argument("--python", default=os.environ.get("CERTUS_PY", "C:/envs/certus/Scripts/python.exe"))
+    ap.add_argument("--multitemoin", type=int, default=0, metavar="K",
+                    help="si AUCUNE realisation ne trouve, ESCALADER de 2 a K verres temoins "
+                         "et s'arreter au MINIMUM qui rend faisable. 0 = ne pas essayer. "
+                         "⚠️ Le multi-temoin ne rend pas plus PRECIS : il fait passer "
+                         "d'impossible a possible. La ou le monitoring marche, il DEGRADE.")
     ap.add_argument("--evenements", action="store_true",
                     help="emet en plus un flux JSONL prefixe « [ORCH] », pour un pilote "
                          "(le GUI STRAT). Les phrases humaines restent inchangees.")
@@ -614,8 +784,23 @@ def main(argv: list[str] | None = None) -> int:
     if not qui_trouvent:
         print("  Aucune realisation n'a trouve. Ce n'est PAS « c'est impossible » : "
               "c'est « pas dans ce budget, sur ces graines ».")
-        _evt("fin", trouve=False, non_essayees=sorted(set(jamais_lancees)))
+        utile, raison = verdict_multitemoin(par_graine, len(par_graine))
+        print()
+        print(f"  🔬 MULTI-TEMOIN : {raison}")
+        if utile and a.multitemoin:
+            code_mt = _escalade_multitemoin(a, jdir)
+            _evt("fin", trouve=False, multitemoin=True,
+                 non_essayees=sorted(set(jamais_lancees)))
+            return code_mt
+        if utile:
+            print("     Relance avec --multitemoin 3 pour l'essayer.")
+        _evt("fin", trouve=False, multitemoin_utile=utile,
+             non_essayees=sorted(set(jamais_lancees)))
         return 1
+
+    _utile_mt, _raison_mt = verdict_multitemoin(par_graine, len(par_graine))
+    print(f"  🔬 MULTI-TEMOIN : {_raison_mt}")
+    _evt("multitemoin", utile=_utile_mt, raison=_raison_mt)
 
     plans, ecartes = unir_en_tourniquet(qui_trouvent, a.max_plans)
     if ecartes:

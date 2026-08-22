@@ -88,15 +88,35 @@ def test_a_degenerate_strategy_yields_no_candidate():
 
 
 def test_the_number_of_variants_per_strategy_is_capped():
-    """👤 asked for the trial on the ten best, not on everything. The cap must bite."""
+    """Le plafond doit MORDRE quand il y a plus de candidates que lui, et LES PLUS PROFONDES
+    doivent survivre.
+
+    ⚠️ RECRIT LE 2026-08-22, ET LA RAISON VAUT D'ETRE DITE. Ce test assertait
+    `len(got) == RATE_MAX_VARIANTS_PER_STRATEGY` -- il confondait « le plafond est respecte »
+    avec « le plafond est ATTEINT ». Tant que la constante valait 3 et qu'une strategie a six
+    blocs offrait six candidates, les deux se ressemblaient. Le plafond porte a 40 le
+    2026-08-22 (contradiction A) les a separes : six candidates sous un plafond de quarante,
+    c'est un plafond RESPECTE qui ne mord pas -- et il n'a rien a mordre.
+
+    🔑 On teste donc les deux proprietes separement, avec un plafond EXPLICITE pour la premiere.
+    Un test qui n'exerce la coupe que par accident cesse de la tester des que la constante
+    bouge.
+    """
     bounds = [(0, 8), (8, 16), (16, 24), (24, 32), (32, 40), (40, 48)]
-    got = _rate_candidate_layers(_strat(bounds), 48)
-    assert len(got) == RATE_MAX_VARIANTS_PER_STRATEGY
+    strat = _strat(bounds)
+
+    # 1. le plafond MORD, et il garde les plus profondes
+    coupe = _rate_candidate_layers(strat, 48, cap=3)
+    assert len(coupe) == 3
     # ⚠️ 2026-08-19 : attendait `[39, 31, 23]`. La derniere couche (47) etant desormais
     # autorisee (👤), elle entre dans le vivier et, etant la plus PROFONDE, le plafond la
-    # garde et evince la moins profonde. C'est la regle « les plus profondes d'abord » qui
-    # s'applique sans changement -- seul le vivier a change.
-    assert got == [47, 39, 31], "les plus PROFONDES doivent etre gardees"
+    # garde et evince la moins profonde.
+    assert coupe == [47, 39, 31], "les plus PROFONDES doivent etre gardees"
+
+    # 2. au plafond de PRODUCTION, il n'a rien a couper ici -- et il ne coupe donc rien.
+    tout = _rate_candidate_layers(strat, 48)
+    assert len(tout) <= RATE_MAX_VARIANTS_PER_STRATEGY
+    assert tout == [47, 39, 31, 23, 15, 7], "l'ordre profond-d'abord tient sans plafond actif"
 
 
 def test_the_final_layer_is_ALLOWED_and_the_first_two_are_NOT():

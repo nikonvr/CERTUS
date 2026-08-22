@@ -516,7 +516,54 @@ def _prepare_robustness_inputs(
 #: At most this many Rate variants per strategy, and the DEEPEST boundaries win.
 #: 👤 asked for the trial "on the 10 best strategies", not on everything: an unbounded
 #: expansion costs a factor 6 on the whole Monte-Carlo for candidates nobody asked about.
-RATE_MAX_VARIANTS_PER_STRATEGY: int = 3
+def _resolve_witness_resets(raw: Any) -> list[int]:
+    """MULTIPLE-TESTGLASS : accepte une liste, ou une chaine separee par `;` ou `,`.
+
+    🔑 POURQUOI CETTE FORME DE CHAINE EXISTE. 👤, 2026-08-22 : *« un utilisateur ne sait pas au
+    debut si le multi-temoin sera necessaire, donc il faut le rajouter »*. Pour qu'un
+    orchestrateur puisse l'armer sans ecrire un fichier de configuration, il faut qu'il passe
+    par le canal des surcharges -- lequel ne transporte que des SCALAIRES. Une chaine est donc
+    le seul vehicule, et ce resolveur en fait une liste.
+
+    ⚠️ Le separateur `;` est prefere a `,` parce que le parseur de surcharges de
+    `probe_blocs_vs_plantage.py` decoupe deja sur les virgules : une liste ecrite avec des
+    virgules y serait hachee avant meme d'arriver ici. Les deux sont acceptes malgre tout, pour
+    qu'un fichier de configuration ecrit a la main ne surprenne personne.
+
+    🔒 INERTE PAR DEFAUT : absent, vide ou illisible rend `[]`, ce qui reproduit le
+    comportement mono-temoin AU BIT PRES. Ce resolveur ne peut donc pas changer une mesure
+    existante.
+    """
+    if raw is None or raw == "" or raw == []:
+        return []
+    if isinstance(raw, str):
+        morceaux = [m.strip() for m in raw.replace(";", ",").split(",")]
+    elif isinstance(raw, (list, tuple)):
+        morceaux = [str(m).strip() for m in raw]
+    else:
+        morceaux = [str(raw).strip()]
+    out: list[int] = []
+    for m in morceaux:
+        if not m:
+            continue
+        try:
+            v = int(float(m))
+        except (TypeError, ValueError):
+            continue
+        # 🔴 L'index 0 n'a aucun sens et il est ecarte : la couche 0 pousse deja sur verre nu.
+        if v > 0 and v not in out:
+            out.append(v)
+    return sorted(out)
+
+
+#: 🔴 PORTE DE 3 A 40 LE 2026-08-22, avec `RATE_VARIANT_TOP_N_DEFAUT`. Les deux vont
+#: ENSEMBLE : 40 variantes sur 50 parents coutent 2 000 evaluations, contre 12 923 pour
+#: 3 variantes sur tous. On explore treize fois plus profondement pour six fois moins cher.
+RATE_MAX_VARIANTS_PER_STRATEGY: int = 40
+
+#: Combien de strategies, parmi les mieux classees, recoivent des variantes Rate.
+#: `0` = toutes, le comportement d'avant le 2026-08-22.
+RATE_VARIANT_TOP_N_DEFAUT: int = 50
 
 #: Below this many layers per block, a "block boundary" says nothing -- every layer is
 #: one. See the measurement in `_rate_candidate_layers`.
@@ -941,6 +988,27 @@ def _expand_with_rate_variants(
     cap = max(1, int(params.get("rate_max_variants_per_strategy",
                                 RATE_MAX_VARIANTS_PER_STRATEGY)
                      or RATE_MAX_VARIANTS_PER_STRATEGY))
+    # 🔴 CONTRADICTION A DE L'AUDIT, REPAREE LE 2026-08-22. Le plafond citait « l'essai sur
+    # les 10 meilleures » et etendait en fait TOUTES les strategies a 3 variantes -- donc ni
+    # la consigne, ni son contraire.
+    #
+    # 📏 Cout mesure de ce compromis : 12 923 variantes Rate pour 20 deposables. Le dossier
+    # avait deja chiffre la reparation : « un plafond a 40 sur les 50 meilleures couterait
+    # 2 000 variantes au lieu de 12 923, et explorerait chaque parent TREIZE FOIS plus
+    # profondement ». Moins cher ET plus profond -- c'est ce qui fait de la place au critere
+    # par swing sans evincer les frontieres de bloc.
+    #
+    # 🔒 `0` retablit l'ancien comportement : toutes les strategies etendues.
+    top_n = int(params.get("rate_variant_top_n", RATE_VARIANT_TOP_N_DEFAUT) or 0)
+    if top_n > 0 and len(strategies) > top_n:
+        # Les strategies arrivent deja triees par score croissant depuis le criblage.
+        eligibles = set(id(x) for x in list(strategies)[:top_n])
+        logger.info(
+            f"[RATE] expansion limitee aux {top_n} meilleures sur {len(strategies)} "
+            f"(plafond {cap} par strategie)."
+        )
+    else:
+        eligibles = None
 
     # 🔴 `rate_by_swing`, added 2026-08-19 -- INACTIVE by default, golden rule: at
     # `False` `swing_ctx` stays `None` and `_rate_candidate_layers` runs its historical
@@ -949,8 +1017,22 @@ def _expand_with_rate_variants(
     # Placing the Rate where it is NEEDED (poor growth-time swing) rather than only where
     # it is CHEAPEST (a block boundary) -- contradiction C of the audit. Requires the
     # arrays Phase A already computed, threaded in by `_prepare_robustness_inputs`.
+    # 🟢 ARME PAR DEFAUT DEPUIS LE 2026-08-22, sur demande de 👤 : « je cherche a faire une
+    # version aboutie qui n'a pas peur d'introduire du rate et ses subtilites ».
+    #
+    # 🔑 CE QUI REND CE DEFAUT SUR : une variante Rate entre comme COUT, jamais comme
+    # COUPERET (§22, §24-28). Elle S'AJOUTE a un classement qui contient deja les strategies
+    # pur optique ; elle ne peut donc pas degrader le choix final. Le seul canal par lequel
+    # elle le pourrait est le PLAFOND PARTAGE -- et c'est pourquoi la contradiction A est
+    # reparee dans le meme commit : sans cela, les candidates « besoin » evinceraient les
+    # candidates « cout ».
+    #
+    # 🔑 ET CELA REPARE LA CONTRADICTION B PAR EFFET DE BORD : le critere de frontiere est
+    # garde par `RATE_MIN_LAYERS_PER_BLOCK`, le critere de swing NE L'EST PAS. Une strategie
+    # qui surveille couche par couche -- le regime que §24-40 mesure GAGNANT sur 2 graines
+    # sur 5 -- recoit donc enfin des candidates Rate.
     swing_ctx: _RateSwingContext | None = None
-    if bool(params.get("rate_by_swing", False)):
+    if bool(params.get("rate_by_swing", True)):
         # 🔴 `clues_at_wl` N'EST PAS TOUJOURS UN DICTIONNAIRE, et un run complet est mort de
         # cette hypothese le 2026-08-19. Dans le pipeline il arrive sous la forme d'un objet de
         # memoire partagee (`SharedIndicesWorker`) : `calculate_dynamics_ULTIMATE` lui applique
@@ -1122,6 +1204,11 @@ def _expand_with_rate_variants(
             f"{len(strategies)} strategies, coupures {sorted(int(c) for c in tail_cuts)}."
         )
     for strat in strategies:
+        # 🔴 CONTRADICTION A : on etend PROFONDEMENT les meilleures, au lieu d'etendre
+        # PLATEMENT toutes. `eligibles` est None quand `rate_variant_top_n = 0`, et le
+        # chemin d'avant revient alors au bit pres.
+        if eligibles is not None and id(strat) not in eligibles:
+            continue
         # The historical path caps the CANDIDATES at 3; the multi-layer path needs them all
         # before it can combine them, and caps the resulting VARIANTS instead.
         cands = _rate_candidate_layers(strat, num_layers,
@@ -2499,9 +2586,9 @@ def _test_strategy_robustness_task(
         # wins; otherwise the RUN's plan applies to every strategy it evaluates. The
         # second form is what a sweep needs: one cut plan per batch, imposed on all
         # candidates, so two batches differ by the cut and by nothing else.
-        witness_resets = strategy.get("witness_reset_layers")
-        if not witness_resets:
-            witness_resets = params.get("witness_reset_layers") or []
+        witness_resets = _resolve_witness_resets(
+            strategy.get("witness_reset_layers")
+        ) or _resolve_witness_resets(params.get("witness_reset_layers"))
         witness_reset_flags = None
         if witness_resets:
             witness_reset_flags = np.zeros(len(p_thick_nominal), dtype=np.bool_)

@@ -441,6 +441,23 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
             # du projet validee comme predicteur de plantage depuis le signal (§24-41).
             # Sparse : une couche absente a une marge >= 5 A, donc sereine.
             "margin_by_layer": s.get("margin_by_layer") or {},
+            # 🔴 LES COUCHES PILOTEES EN RATE, ET L'ARTEFACT ETAIT MUET DESSUS. 👤 le
+            # 2026-08-22 : « pour le rate, il faut absolument savoir dans quelles couches il a
+            # ete introduit ».
+            #
+            # 🔑 CE N'EST PAS UN CONFORT, C'EST CE QUI REND UN CHIFFRE LISIBLE. Le Rate est ON
+            # PAR DEFAUT depuis le 2026-08-12, donc TOUTE gagnante peut en porter -- et « SEEL
+            # 0,4255 en pur optique » et « SEEL 0,4255 avec une couche au quartz » ne sont pas
+            # la meme promesse pour l'atelier : en mode Rate il n'y a AUCUNE compensation
+            # d'erreur, l'ecart part en boucle ouverte vers la couche suivante.
+            #
+            # 📏 Constate le 2026-08-22 sur `r75x1.5` et `r75x1.75` : impossible de dire si les
+            # gagnantes reposaient sur une couche Rate. Le noyau pose pourtant `rate_layers`
+            # depuis toujours ; il ne franchissait simplement pas la sortie.
+            # « Un instrument dont la sortie n'atteint pas le resultat n'est pas un instrument. »
+            #
+            # Liste VIDE = pur optique. C'est une distinction, pas une absence de donnee.
+            "rate_layers": sorted(int(x) for x in (st.get("rate_layers") or [])),
             # 🔴 LE DRAPEAU QUI MANQUAIT AUX ARTEFACTS. `crash_eliminated` est pose par
             # `_filter_finite_robustness_scores` sur toute strategie dont le score a ete
             # REMPLACE par un repli. Sans lui, un artefact ne porte que des scores finis

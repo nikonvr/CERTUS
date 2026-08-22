@@ -1,0 +1,40 @@
+#!/bin/sh
+# ── PARE-FEU ──────────────────────────────────────────────────────────────────
+# Hook post-commit : push automatique vers GitHub après chaque commit.
+#
+# INSTALLATION -- ET C'EST TOUT LE POINT DE CE FICHIER.
+#
+# 🔴 `.git/hooks/` N'EST PAS VERSIONNE. Un hook qui n'y vit que ne traverse donc NI un clone,
+# NI un changement de machine -- et son absence est SILENCIEUSE : les commits s'empilent en
+# local sans partir, et rien ne le dit. C'est le piege identifie a la bascule du 2026-08-22.
+#
+# Ce fichier-ci EST versionne. Pour l'armer sur une machine neuve, UNE commande :
+#
+#     git config core.hooksPath .githooks
+#
+# ⚠️ L'armement reste DELIBERE, et c'est voulu : `core.hooksPath` est une configuration
+# LOCALE, donc un clone n'arme rien tout seul. Or COMMITTER = PUBLIER sur un depot public
+# (§2 de CLAUDE.md). Personne ne doit se retrouver a pousser sans l'avoir decide.
+#
+# Pour desarmer :   git config --unset core.hooksPath
+#
+# COMPORTEMENT :
+#   - Push la branche courante vers origin en arrière-plan
+#   - Ne bloque PAS le terminal si le push échoue (réseau absent, etc.)
+#   - Log le résultat dans logs/git_auto_push.log
+#
+# DÉSACTIVATION :
+#   Supprimer ou renommer ce fichier pour désactiver l'auto-push.
+# ──────────────────────────────────────────────────────────────────────────────
+
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+LOGFILE="$(git rev-parse --show-toplevel)/logs/git_auto_push.log"
+
+# Créer le dossier logs si nécessaire
+mkdir -p "$(dirname "$LOGFILE")"
+
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Auto-push $BRANCH..." >> "$LOGFILE"
+git push origin "$BRANCH" >> "$LOGFILE" 2>&1 &
+
+# Afficher un message dans le terminal
+echo "🔄 Auto-push vers origin/$BRANCH en cours..."

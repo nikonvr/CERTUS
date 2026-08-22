@@ -44,7 +44,7 @@ indépendant et le mode se justifie.
 
 | # | ce qui ne traverse pas | ce qu'il faut faire |
 |---|---|---|
-| 1 | **le hook `post-commit`** — `.git/hooks/` n'est pas versionné | 🔴 **Sur l'ancienne machine il était ARMÉ et chaque commit poussait vers le dépôt PUBLIC.** Sur la neuve il n'existe pas : **tes commits ne partiront pas tout seuls.** Fais `git push` à la main, ou réarme le hook — et sache lequel tu as choisi |
+| 1 | **le hook `post-commit`** — `.git/hooks/` n'est pas versionné | 🟢 **RÉSOLU le 2026-08-22.** Le hook vit désormais dans **`.githooks/post-commit`**, qui EST versionné. Une commande l'arme : `git config core.hooksPath .githooks`. ⚠️ L'armement reste **délibéré** — `core.hooksPath` est une config **locale**, donc un clone n'arme rien tout seul, et c'est voulu : **committer, c'est publier** sur un dépôt public |
 | 2 | **le chemin de l'interpréteur** | l'ancienne machine avait `C:\envs\certus\Scripts\python.exe`, **pas** `.venv`. Le script accepte une surcharge : `CERTUS_PY=... bash scripts/batch_r75x2_reprenable.sh` |
 | 3 | **le cache numba est FROID** | la **première** passe de `pytest tests/oracle/ tests/unit/` rendra **3 échecs FAUX** (`test_phase2_gradient_analytic_vs_fd` et les deux `TestIRGlobalModelStrategy`). Cause dans numba, pas dans le dépôt — voir `CLAUDE.md` §2. **Relance une seconde fois avant de signaler quoi que ce soit** |
 | 4 | **le cache de profils de fente est froid** | la Phase A du premier run prendra ~30 min au lieu de ~10. Ce n'est pas une régression |
@@ -84,6 +84,18 @@ et le signe qui ne trompe pas : plusieurs mesures qui durent EXACTEMENT le plafo
 dernière minute** — donc en cas de doute sur une machine inconnue, on ne le baisse pas.
 
 ### 0.4 Les trois contrôles avant de toucher à quoi que ce soit
+
+🔑 **Le plus simple est `preflight.py`, qui fait les deux premiers et le NOUVEAU contrôle
+`2bis` :**
+
+```bat
+git fetch origin
+C:\envs\certus\Scripts\python.exe scripts\preflight.py
+```
+
+Le contrôle **2bis** répond à la seule question qui fait perdre du travail : *y a-t-il ici des
+commits que le distant n'a pas ?* Il est vrai **quel que soit** l'état du hook — c'est ce qui le
+rend utile, parce que l'absence de hook est **silencieuse**.
 
 ```bat
 C:\envs\certus\Scripts\python.exe -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"

@@ -114,6 +114,40 @@ if live_hook.exists():
 else:
     print(f"  [OK ] post-commit is disabled: committing stays local (found: {', '.join(found) or '(none)'})")
 
+# 2bis. The hook's STATE is not the danger -- UNPUSHED COMMITS are.
+#
+#    🔴 `.git/hooks/` is not versioned, so a hook armed on one machine does not travel to
+#    another. Measured on 2026-08-22, when 👤 moved to a second machine mid-campaign: the
+#    old machine pushed on every commit, the new one would not have, and NOTHING would have
+#    said so. Commits pile up locally and the terminal looks identical.
+#
+#    🔑 So this check does not ask "is the hook there". It asks the question that actually
+#    matters -- IS ANYTHING SITTING HERE THAT THE REMOTE HAS NOT GOT? That answer is true
+#    whatever the hook does, and it is the one that loses work.
+#
+#    The versioned hook now lives in `.githooks/post-commit`; arming it takes one command,
+#    `git config core.hooksPath .githooks`. Arming stays DELIBERATE because committing
+#    publishes to a public repository (CLAUDE.md §2).
+print("\n2bis. IS ANYTHING UNPUSHED?")
+_, hooks_path = run("git", "config", "core.hooksPath")
+print(f"  [ i ] core.hooksPath = {hooks_path or '(unset -> .git/hooks, NOT versioned)'}")
+_, branch = run("git", "rev-parse", "--abbrev-ref", "HEAD")
+code_ahead, ahead = run("git", "rev-list", "--count", f"origin/{branch}..HEAD")
+if code_ahead != 0 or not ahead.isdigit():
+    print(f"  [ ! ] cannot compare with origin/{branch} -- no upstream, or fetch never ran")
+    warnings.append(
+        f"origin/{branch} unreachable: preflight cannot tell whether work is unpushed. "
+        "Run `git fetch origin` and look again."
+    )
+elif int(ahead) > 0:
+    print(f"  [ ! ] {ahead} commit(s) HERE that origin/{branch} does NOT have")
+    warnings.append(
+        f"{ahead} unpushed commit(s) on {branch}. If this machine has no post-commit hook, "
+        "they will stay local: `git push origin " + branch + "`."
+    )
+else:
+    print(f"  [OK ] nothing unpushed -- local and origin/{branch} agree")
+
 # 3. Python version. PEP 758 `except A, B:` is used in 14 modules and is a
 #    syntax error before 3.14.
 print("\n3. INTERPRETER")

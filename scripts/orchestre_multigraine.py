@@ -439,6 +439,12 @@ def main(argv: list[str] | None = None) -> int:
     _evt("drapeau", chemin=str(drapeau_finaliser))
 
     # --- Reprise : ce qui porte deja une mesure ne se refait pas -------------------------
+    # 🔴 `meilleur_seel` EST HISSE ICI, ET C'EST UNE REPARATION. Il vivait plus bas, dans la
+    # boucle : une campagne dont TOUTES les graines etaient deja mesurees le laissait vide,
+    # donc l'ecart provisoire -> definitif -- le canal de malediction du vainqueur qu'on publie
+    # a chaque campagne -- etait SILENCIEUSEMENT saute. Or le cas de reprise est le plus
+    # frequent : c'est celui de la validation du 2026-08-22.
+    meilleur_seel: float | None = None
     fait: dict[int, dict] = {}
     for g in graines:
         art = _lire_artefact(_resoudre_artefact(a.composant, a.mode, g))
@@ -446,6 +452,10 @@ def main(argv: list[str] | None = None) -> int:
             fait[g] = art
             dep = _deposables(art)
             print(f"  ⏭  graine {g} DEJA MESUREE -- {len(dep)} deposable(s)")
+            if dep:
+                seel_deja = _seel(dep[0]["score"])
+                if meilleur_seel is None or seel_deja < meilleur_seel:
+                    meilleur_seel = seel_deja
             _evt("deja", graine=g, deposables=len(dep),
                  seel=_seel(dep[0]["score"]) if dep else None)
     a_faire = [g for g in graines if g not in fait]
@@ -464,7 +474,6 @@ def main(argv: list[str] | None = None) -> int:
     en_vol: dict[int, tuple[subprocess.Popen, float]] = {}
     jamais_lancees: list[int] = []
     succes = False
-    meilleur_seel: float | None = None
     motif_finalisation = ""
 
     # 🔑 L'ARRET A LA MAIN, ET IL DOIT MARCHER DEPUIS UNE AUTRE FENETRE. 👤 veut pouvoir

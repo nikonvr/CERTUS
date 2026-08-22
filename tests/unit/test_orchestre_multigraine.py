@@ -305,3 +305,44 @@ def test_la_tolerance_de_plantage_est_celle_du_projet() -> None:
     assert OM.TOLERANCE_PLANTAGE == 0.05
     art = {"strategies": [_strat(0.1, 0.049, (0, 5, 500.0)), _strat(0.2, 0.051, (0, 5, 501.0))]}
     assert len(OM._deposables(art)) == 1
+
+
+# ---------------------------------------------------------------------------
+# 6. L'ECART PROVISOIRE -> DEFINITIF NE DOIT PAS SE PERDRE A LA REPRISE
+# ---------------------------------------------------------------------------
+
+def test_le_meilleur_SEEL_est_initialise_AVANT_le_balayage_de_reprise() -> None:
+    """🔴 CE TEST GARDE UNE REPARATION DU 2026-08-22, TROUVEE PAR UNE VRAIE CAMPAGNE.
+
+    `meilleur_seel` vivait dans la boucle de lancement. Une campagne dont TOUTES les graines
+    portaient deja un artefact -- le cas de REPRISE, le plus frequent -- le laissait vide : le
+    programme allait donc jusqu'a la notation finale sans jamais pouvoir publier l'ecart
+    provisoire -> definitif. Or cet ecart EST la mesure du canal de malediction du vainqueur,
+    +12,9 % le 2026-08-15 et +0,55 % le 2026-08-22. Le sauter en silence, c'est cesser de
+    surveiller la seule chose qui rende un score publie faux sans que rien ne le dise.
+
+    La validation de bout en bout du 2026-08-22 est tombee exactement dans ce cas : deux
+    graines deja mesurees, resultat citable 0,5642 nm, et AUCUN ecart publie.
+    """
+    src = (Path(OM.__file__)).read_text(encoding="utf-8")
+    i_init = src.index("meilleur_seel: float | None = None")
+    i_reprise = src.index("--- Reprise")
+    i_boucle = src.index("--- La boucle")
+    assert i_reprise < i_init < i_boucle, (
+        "meilleur_seel doit etre initialise ENTRE l'en-tete de reprise et la boucle : "
+        "sinon une campagne entierement reprise ne publie aucun ecart."
+    )
+    assert src.count("meilleur_seel: float | None = None") == 1, (
+        "deux initialisations : la seconde ecraserait ce que le balayage de reprise a trouve"
+    )
+
+
+def test_le_balayage_de_reprise_MET_A_JOUR_le_meilleur_SEEL() -> None:
+    """Controle de forme : la mise a jour doit vivre dans le balayage, pas seulement dans la
+    boucle. Sans elle, hisser la variable ne servirait a rien."""
+    src = (Path(OM.__file__)).read_text(encoding="utf-8")
+    debut = src.index("--- Reprise")
+    fin = src.index("--- La boucle")
+    assert "seel_deja" in src[debut:fin], (
+        "le balayage de reprise ne met pas a jour meilleur_seel"
+    )

@@ -352,7 +352,32 @@ def test_le_balayage_de_reprise_MET_A_JOUR_le_meilleur_SEEL() -> None:
 # 7. LA BOUCLE PRINCIPALE -- que AUCUN test ne traversait
 # ---------------------------------------------------------------------------
 
-def test_la_BOUCLE_s_execute_reellement_au_moins_une_fois() -> None:
+def _sans_vrai_lancement(monkeypatch, argv: list[str]) -> int:
+    """Traverse la boucle SANS lancer un seul calcul. Rend le code de sortie.
+
+    🔑 Indispensable depuis que « le premier lancement passe malgre le budget » : sans lui, un
+    test unitaire declencherait un run de production de cinquante minutes.
+    """
+
+    class _Faux:
+        returncode = 0
+        pid = 1
+
+        def poll(self):
+            return 0
+
+        def wait(self):
+            return 0
+
+    def _faux(py, composant, mode, res, graine, journal, env_sup=None):
+        f = _Faux()
+        f._certus_journal = type("F", (), {"close": lambda self: None})()
+        return f
+
+    monkeypatch.setattr(OM, "_lancer", _faux)
+    return OM.main(argv)
+
+def test_la_BOUCLE_s_execute_reellement_au_moins_une_fois(monkeypatch: pytest.MonkeyPatch) -> None:
     """🔴 CE TEST EXISTE PARCE QUE LA CAMPAGNE DU 2026-08-22 A PLANTE EN 0 MINUTE.
 
     Un renommage mecanique avait donne le MEME nom a la fonction `motif_finalisation` et a la
@@ -369,18 +394,130 @@ def test_la_BOUCLE_s_execute_reellement_au_moins_une_fois() -> None:
     `_rentre()` faux, donc rien ne demarre, mais la ligne fautive est bien executee. Cout : une
     fraction de seconde.
     """
-    code = OM.main([
+    # ⚠️ LE LANCEUR EST SIMULE, ET C'EST OBLIGATOIRE DEPUIS LE 2026-08-22. Ce test s'appuyait
+    # sur un budget d'une minute pour que RIEN ne parte -- exactement le comportement repare
+    # depuis (« un budget sous-estime doit quand meme lancer la premiere »). Sans simulation il
+    # declencherait desormais un vrai run de cinquante minutes dans la suite unitaire.
+    code = _sans_vrai_lancement(monkeypatch, [
         "r75x1.75", "--budget", "1", "--graines", "909", "--graine-notation", "42",
         "--duree-attendue", "60",
     ])
-    # 1 = « aucune realisation n'a trouve », ce qui est le verdict correct : rien n'a pu etre
-    # lance dans une minute. Ce qui compte est qu'on y arrive SANS exception.
+    # 1 = « aucune realisation n'a trouve » : le faux lanceur n'ecrit aucun artefact. Ce qui
+    # compte est qu'on TRAVERSE la boucle sans exception.
     assert code == 1
 
 
-def test_la_boucle_DIT_ce_qu_elle_n_a_pas_eu_le_temps_d_essayer(capsys: pytest.CaptureFixture) -> None:
-    """Sans cette ligne, « 0 trouve » se lirait « ca ne marche pas »."""
-    OM.main(["r75x1.75", "--budget", "1", "--graines", "909", "1111",
-             "--graine-notation", "42", "--duree-attendue", "60"])
+def test_ce_qui_n_a_PAS_ete_essaye_faute_de_budget_se_DIT(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+) -> None:
+    """🔴 Sans cette ligne, « 0 trouve » se lirait « ca ne marche pas » alors que la verite est
+    « on n'a pas eu le temps ». Les deux menent a des decisions opposees.
+
+    On donne QUATRE graines et un budget d'une minute : la premiere passe (garde du premier
+    lancement), les autres non -- et le programme doit le DIRE.
+    """
+    lances: list[int] = []
+
+    class _Faux:
+        # 🔑 `returncode != 0` DELIBEREMENT : la duree REELLE n'est apprise que sur un run
+        # REUSSI. Avec un faux run instantane et reussi, `duree_reelle` tomberait a 0,08 min
+        # et le budget d'une minute autoriserait legitimement des dizaines de lancements --
+        # le test ne testerait alors plus la garde, mais l'arithmetique. On garde donc la
+        # duree ATTENDUE de 60 min, qui est le cas reel.
+        returncode = 1
+        pid = 1
+
+        def poll(self):
+            return 1
+
+    def _faux(py, composant, mode, res, graine, journal, env_sup=None):
+        lances.append(int(graine))
+        f = _Faux()
+        f._certus_journal = type("F", (), {"close": lambda self: None})()
+        return f
+
+    monkeypatch.setattr(OM, "_lancer", _faux)
+    OM.main(["r75x1.75", "--budget", "1", "--graines", "909", "1111", "1212", "1313",
+             "--graine-notation", "42", "--duree-attendue", "60", "--slots", "1"])
     sortie = capsys.readouterr().out
-    assert "NON LANCEE" in sortie or "NON ESSAYEES" in sortie
+    assert len(lances) < 4, f"le budget n'a borne personne : {lances}"
+    assert "NON LANCEE" in sortie or "NON ESSAYEES" in sortie, (
+        "ce qui n'a pas ete essaye n'est pas dit -- « 0 trouve » se lirait « ca ne marche pas »"
+    )
+
+
+
+def test_un_budget_SOUS_ESTIME_lance_quand_meme_la_premiere(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+) -> None:
+    """🔴 CE TEST A COUTE UNE NUIT DE CALCUL, LE 2026-08-22.
+
+    La campagne de 12 h n'a RIEN lance. Avec `--budget 1h` et une duree attendue de 60 min,
+    `_rentre()` valait `0,001 + 60 <= 60` -- FAUX D'UN CHEVEU. Douze graines declarees « NON
+    LANCEES », zero calcul, et un journal qui avait l'air parfaitement normal.
+
+    🔑 Un budget sous-estime doit rendre UNE mesure et un depassement DIT, jamais zero mesure
+    en silence. C'est le sens d'un budget : borner l'ambition, pas interdire d'essayer.
+
+    Le lanceur est SIMULE : on teste la decision, pas le calcul. Sans cela ce test durerait
+    cinquante minutes et personne ne le lancerait.
+    """
+    lances: list[int] = []
+
+    class _Faux:
+        returncode = 0
+        pid = 4242
+
+        def poll(self):
+            return 0
+
+        def wait(self):
+            return 0
+
+    def _faux_lancer(py, composant, mode, res, graine, journal, env_sup=None):
+        lances.append(int(graine))
+        f = _Faux()
+        f._certus_journal = type("F", (), {"close": lambda self: None})()
+        return f
+
+    monkeypatch.setattr(OM, "_lancer", _faux_lancer)
+    # Budget d'UNE minute, duree attendue de SOIXANTE : le cas exact qui a echoue.
+    OM.main(["r75x1.75", "--budget", "1", "--graines", "909", "--graine-notation", "42",
+             "--duree-attendue", "60"])
+    assert lances, (
+        "aucun lancement avec un budget sous-estime -- c'est la panne du 2026-08-22 : "
+        "douze graines « NON LANCEES » et zero calcul, en silence."
+    )
+    assert lances[0] == 909
+
+
+def test_le_budget_borne_QUAND_MEME_les_lancements_suivants(
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Controle negatif de la reparation : la garde ne doit pas ouvrir les vannes.
+
+    Une seule graine passe malgre le budget ; les suivantes sont refusees, sinon le budget ne
+    bornerait plus rien.
+    """
+    lances: list[int] = []
+
+    class _Faux:
+        returncode = 1  # pas de mesure exploitable -> `fait` reste vide... mais `en_vol` non
+        pid = 1
+
+        def poll(self):
+            return 1
+
+    def _faux_lancer(py, composant, mode, res, graine, journal, env_sup=None):
+        lances.append(int(graine))
+        f = _Faux()
+        f._certus_journal = type("F", (), {"close": lambda self: None})()
+        return f
+
+    monkeypatch.setattr(OM, "_lancer", _faux_lancer)
+    OM.main(["r75x1.75", "--budget", "1", "--graines", "909", "1111", "1212", "1313",
+             "--graine-notation", "42", "--duree-attendue", "60", "--slots", "1"])
+    assert len(lances) < 4, (
+        f"le budget ne borne plus rien : {len(lances)} lancements sur 4 avec un budget d'une "
+        f"minute"
+    )

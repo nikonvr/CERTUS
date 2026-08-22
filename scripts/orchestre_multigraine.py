@@ -643,6 +643,7 @@ def main(argv: list[str] | None = None) -> int:
     duree_reelle: float | None = None
     en_vol: dict[int, tuple[subprocess.Popen, float]] = {}
     jamais_lancees: list[int] = []
+    lances = 0
     succes = False
     raison_finalisation = ""
 
@@ -659,7 +660,24 @@ def main(argv: list[str] | None = None) -> int:
         return (time.monotonic() - t0) / 60.0
 
     def _rentre() -> bool:
-        """🔴 Le budget gouverne les LANCEMENTS. On ne lance jamais ce qui ne rentre pas."""
+        """🔴 Le budget gouverne les LANCEMENTS. On ne lance jamais ce qui ne rentre pas.
+
+        🔴 SAUF LE TOUT PREMIER, ET C'EST UNE REPARATION DU 2026-08-22 QUI A COUTE UNE NUIT.
+        La campagne de 12 h n'a RIEN lance : avec `--budget 1h` et une duree attendue de 60
+        min, le test valait `0,001 + 60 <= 60` -- FAUX D'UN CHEVEU. Douze graines declarees
+        « NON LANCEES », zero calcul, et un journal qui avait l'air normal.
+
+        🔑 La regle corrigee : tant que RIEN n'a tourne et que RIEN ne vole, on lance quand
+        meme. Un budget sous-estime doit rendre UNE mesure et un depassement DIT -- jamais
+        zero mesure en silence. C'est le sens du budget : borner l'ambition, pas interdire
+        d'essayer.
+        """
+        # 🔴 ON COMPTE LES LANCEMENTS, PAS LES SUCCES. Une premiere version gardait sur
+        # `fait` -- or `fait` reste vide quand les runs echouent, et le budget ne bornait
+        # alors plus RIEN : toutes les graines partaient. C'est un test qui l'a trouve, en
+        # simulant des runs qui echouent.
+        if not lances:
+            return True
         attendue = duree_reelle if duree_reelle is not None else a.duree_attendue
         return _minutes() + attendue <= a.budget
 
@@ -685,6 +703,7 @@ def main(argv: list[str] | None = None) -> int:
                 p = _lancer(a.python, a.composant, a.mode, a.resolution, g,
                             jdir / f"journal_s{g:03d}.log")
                 en_vol[g] = (p, time.monotonic())
+                lances += 1
                 print(f"  ▶  graine {g} lancee a {time.strftime('%H:%M:%S')} (pid {p.pid})")
                 _evt("lancee", graine=g, pid=p.pid, ecoulees_min=round(_minutes(), 2))
 

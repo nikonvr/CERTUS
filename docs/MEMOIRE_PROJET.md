@@ -85,7 +85,7 @@ Dans tout tableau, le SEEL en colonne principale, le RMSE en secondaire.
 
 ⚠️ **Les repères que 👤 a en tête ont bougé.** Il jugeait le 99c *« un peu moins performant »*
 à ~0,8 nm ; ce chiffre était un **score de repli** (100 % de plantage). Les repères à jour
-sont au §21 de `CLAUDE.md` et au §2 de [`REPRISE.md`](REPRISE.md).
+sont au §21 de `CLAUDE.md`.
 
 ---
 
@@ -122,7 +122,7 @@ Gains mesurés sur les exemples réels, branche `refactor-corridors-mixins` :
 
 🔴 **Il n'y a PAS de ×2 disponible** dans les pistes documentées. Le fossé entre machines va
 de ×1 à ×3,2 selon les modules, **pas** ×7-10. Détail dans
-[`PERFORMANCE.md`](PERFORMANCE.md) et [`REPRISE_PERF.md`](REPRISE_PERF.md).
+[`PERFORMANCE.md`](PERFORMANCE.md).
 
 ⚠️ `docs/PLAN_OPTIMISATION.md` est cité par d'anciennes notes comme contenant trois
 affirmations fausses — **ce fichier n'existe plus**.

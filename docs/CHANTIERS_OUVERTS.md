@@ -15,7 +15,7 @@ déplacé tel quel.
 ---
 
 - 📌 **LE PLAN DU 2026-08-16 EST ECRIT ET AUTONOME** :
-  [`docs/PLAN_2026-08-16.md`](docs/PLAN_2026-08-16.md). Campagnes longues en mode **premium**,
+  Campagnes longues en mode **premium**,
   ordonnees par dependance, avec durees mesurees, commandes exactes, et ce que chaque resultat
   deciderait. 👤 le lancera sous Antigravity. Les cinq pieges du 15 aout y sont en tete, et
   la phase 1 repare l'instrument avant que quoi que ce soit d'autre ne tourne.
@@ -122,7 +122,7 @@ déplacé tel quel.
   [`docs/REPRISE_TESTS_ISOLATION.md`](docs/REPRISE_TESTS_ISOLATION.md).
 - **Performance** — 📏 mesuré le 2026-08-04 : **il n'y a PAS de ×2 disponible** dans les
   pistes documentées. Seul gain acquis : −10 % sur STRAT. Le fossé machine va de ×1 à ×3,2
-  selon les modules, pas ×7-10. [`docs/REPRISE_PERF.md`](docs/REPRISE_PERF.md) — ⚠️ ses
+  selon les modules, pas ×7-10. ⚠️ Les
   **temps absolus** datent d'avant le déménagement hors Google Drive ; les *rapports* restent
   utiles, les secondes non.
 - **Amélioration générale** — [`docs/PLAN_AMELIORATION.md`](docs/PLAN_AMELIORATION.md) : dette

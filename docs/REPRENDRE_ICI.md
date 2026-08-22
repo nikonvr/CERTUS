@@ -405,7 +405,7 @@ Attendu : `PREFLIGHT=GO` · `0 point(s) a instruire` · **`0 failed`**.
 
 ⚠️ **Ne cite jamais un compte de tests comme référence** — il se périme dès qu'on ajoute un test.
 Il valait 2450 le 17/08 et plus de 2560 le 21/08. **Le seul critère est `0 failed`**, comme
-[`REPRISE.md`](REPRISE.md) le dit déjà.
+c'est écrit plus haut dans ce document, qui est désormais le **seul** document d'arrivée.
 
 ⚠️ **L'interpréteur est `C:\envs\certus\Scripts\python.exe`.** Il n'y a **pas** de `.venv` dans
 le dépôt ; tout document qui en cite un est faux.
@@ -448,17 +448,46 @@ faites, et sa « voie B » a reçu sa réponse. Ce qui suit la remplace.
 | **5. rejouer l'injection en plage pleine** | ✅ c'est le **test d'acceptation** de §0 : 197 déposables, SEEL 0,5676, zéro surcharge |
 | **2. compter par étage** | 🟠 **à moitié** : le minage se compte maintenant (compteurs de couverture), et cela a révélé que la DP est **vide** à plage restreinte. Le criblage et l'héritage ne se comptent toujours pas |
 
-### 8.2 🔵 Ce qui reste, par rentabilité décroissante
+### 8.2 🔵 Ce qui reste, par rentabilité — **révisé à la reprise du 2026-08-22**
+
+⚠️ La version d'hier listait des actions depuis faites, et n'y mettait **pas** la question de
+fond. Voici l'état réel.
+
+**✅ Ce qui est fait, et qu'il ne faut pas relancer :**
+
+| action d'hier | ce qu'il en est |
+|---|---|
+| lire `couvfull` au bloc 9 | ✅ **tranché** : la DP est vide à **10 blocs et en dessous**, donc la couverture n'a rien à étendre là où les déposables vivent. §30 et §31 |
+| rejouer la config livrée à la graine 101 | 🟠 **partiel** : blocs 15 à 8 lus dans le journal, meilleur **SEEL 0,5707 au bloc 10** (crash 0-2 %). Le run a été arrêté à la demande de 👤 et **n'a pas écrit d'artefact** — les chiffres sont donc dans le journal, pas dans un artefact citable |
+
+**🔵 Ce qui reste :**
 
 | # | action | coût | ce qu'elle décide |
 |---|---|---|---|
-| **1** | **rejouer la config livrée aux graines 101 et 202** | 2 × 2,5 h, **enchaîné** | 🔑 **borne la malédiction du vainqueur sur le 0,5676.** Les 12 rampes ont été **choisies** sur des mesures à la graine 42 et **remesurées** à la graine 42 — canal chiffré à **+12,9 %** le 15/08. Si le SEEL tient, le chiffre est solide |
-| **2** | **lire `couvfull` au bloc 9** | en cours | la découverte **autonome**. Le mécanisme est acquis (§1bis) ; l'issue non |
-| **3** | **graines de génération disjointes de la notation** | gratuit | ferme le même canal, côté recherche. Mon run multiseed générait sur `42;77;101;202;303` et notait à 42 |
-| **4** | **balayer `tp_hysteresis_factor` à bruit fixé** | 1 run | sépare les deux lectures de l'anomalie de §1ter : si le taux suit le facteur et non le bruit, le seuil est la cause |
-| **5** | déplacer les rampes de `reports/` vers `example/` | ~15 min | une **configuration** ne doit pas dépendre d'une **sortie**. ⚠️ **Après** la chaîne de mesures : les runs enchaînés lisent le chemin actuel et lèveraient |
-| ~~**6**~~ | ~~garde-fou sur un second composant — 75c à 1 nm~~ | — | 🔒 **ÉCARTÉ PAR 👤 le 2026-08-21** : *« non, on reste sur le 75cx2 »*. Voir l'encadré ci-dessous — la décision est légitime, mais elle **borne ce qu'on peut affirmer** |
-| **7** | compter le criblage et l'héritage | ~1 h | achève l'action 2 d'alors. À faire quand un étage sera suspect, pas avant |
+| **1** | 🔑 **`r75x2` NU (sans rampes) aux graines 101 et 202** | 2 × ~2 h | **la question de fond** : *la graine 42 est-elle malchanceuse, ou la 77 chanceuse ?* Règle de décision en 8.2ter — **à lire avant de lancer** |
+| **2** | déplacer les rampes de `reports/` vers `example/` | ~15 min, zéro CPU | une **configuration** ne doit pas dépendre d'une **sortie**. 🟢 Plus rien ne tourne : c'est sans risque maintenant |
+| **3** | porter le résultat du jour dans `pages/CERTUS_STRAT.html` | ~30 min, zéro CPU | c'est la vitrine, et 👤 la juge *« ultra importante »*. ⚠️ Avec la condition **dans la même phrase que le chiffre**, et vérification de structure par `html.parser` |
+| **4** | terminer l'action 1 d'hier — graine **202** sur la config livrée | ~2 h | une quatrième réalisation. Moins urgent : trois convergent déjà à 0,55 % |
+| **5** | graines de génération **disjointes** de la notation | gratuit | ferme le canal de malédiction du vainqueur côté recherche |
+| **6** | balayer `tp_hysteresis_factor` à bruit fixé | 1 run | sépare les deux lectures de l'anomalie de §1ter |
+| **7** | compter le criblage et l'héritage | ~1 h | à faire quand un étage sera suspect, pas avant |
+
+🔑 **L'ordre qui économise le plus de temps** : lancer **1** d'abord (des heures), puis faire **2**
+et **3** pendant qu'elle tourne — ils ne demandent aucun CPU.
+
+### 8.2ter 🔒 LA RÈGLE DE DÉCISION DE L'ACTION 1 — écrite AVANT la mesure
+
+Elle est écrite d'avance pour ne pas être réinterprétée selon le résultat.
+
+| résultat de `r75x2` nu | décision |
+|---|---|
+| **101 et 202 trouvent** des déposables | la graine 42 est **malchanceuse** → le **multiseed de génération** est la réponse produit : union sur K graines, faisabilité exigée sur **toutes**. K peut être petit |
+| **une seule** trouve | la recherche réussit ~1 fois sur 2 → même conclusion, K plus grand |
+| **aucune** ne trouve | la graine **77 est chanceuse**. La découverte autonome n'est pas atteignable par la recherche sur cet empilement → la réponse produit devient `scripts/generer_rampes.py`, et **ce n'est pas un échec** |
+
+📌 Rappel du contexte : on n'a que **deux** graines mesurées nues sur `r75x2` à 2 nm — la 77
+trouve 547 déposables, la 42 en trouve **zéro** sur 1617. Deux points ne permettent aucune
+probabilité, et c'est précisément pourquoi cette mesure est la plus informative qui reste.
 
 ### 8.2bis 🔒 LE PÉRIMÈTRE EST FIXÉ À `r75x2` — et voici ce que cela interdit de dire
 

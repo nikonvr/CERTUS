@@ -19,7 +19,6 @@ quelqu'un fabrique une pièce avec.
 | lis d'abord | pourquoi |
 |---|---|
 | **[`docs/REPRENDRE_ICI.md`](docs/REPRENDRE_ICI.md)** | 🔴 **où on s'est arrêté et la commande exacte pour repartir.** ⚠️ Ce renvoi annonçait « gelé le 2026-08-16 à 08:45 » : le dossier est **daté dans son en-tête**, et c'est lui qui fait foi — ne recopie pas sa date ici, elle se périme à chaque reprise |
-| [`docs/REPRISE.md`](docs/REPRISE.md) | les chiffres de référence, les cinq pièges, et **ce qui est faux dans les vieux documents** — sa table de correction est la première chose à lire avant de citer un nombre |
 | [`docs/MEMOIRE_PROJET.md`](docs/MEMOIRE_PROJET.md) | 🔴 **le savoir opérationnel qui ne suivait PAS le dépôt** : le hook qui publie, le venv qui charge un autre snapshot, les pièges du banc |
 
 Tout le reste de ce fichier est du référentiel : lis-le **par la carte du §3**, pas
@@ -57,7 +56,7 @@ document unique a atteint **5 413 lignes**, que plus personne ne lisait en entie
 l'avait fait naître a disparu — un agent d'aujourd'hui lit `CLAUDE.md` et les dossiers sans
 qu'on ait à lui pré-mâcher des commandes. 📌 Si un exécutant très contraint revient un jour,
 la bonne forme est un **ordre de mission daté dans `docs/`**, comme
-[`PLAN_2026-08-16.md`](docs/PLAN_2026-08-16.md) : que des commandes, des sorties attendues, et
+`scripts/batch_nuit_2026-08-21.sh` : que des commandes, des sorties attendues, et
 zéro fait qui ne soit pas déjà écrit ici.
 
 ### 🟢 La cohérence entre dossiers est vérifiée MÉCANIQUEMENT depuis le 2026-08-19
@@ -85,8 +84,7 @@ même valeur dans les 25 `.md`** — c'est-à-dire la règle ci-dessus, appliqu�
 | **D** — profondeurs par mode | la table `fast/premium/deep` lue dans l'interface, et les **triplets** `50 / 150 / 300` que les documents écrivent |
 | **E** — contrôle négatif | plante une contradiction et exige de la détecter |
 
-🔑 **Ce qu'il a trouvé le jour de son écriture** : le `facteur 2,5` de `PLAN_2026-08-16.md` —
-dérivé du `0,760 nm` **rétracté** — quand `REPRISE.md` disait **2,7** pour la même grandeur.
+🔑 **Ce qu'il a trouvé le jour de son écriture** : deux dossiers donnaient **2,5** et **2,7** pour la même grandeur, tous deux dérivés du `0,760 nm` **rétracté**. C'est exactement le genre de divergence qu'aucune relecture humaine n'attrape.
 Et **trois défauts de l'outil lui-même**, tous révélés par le contrôle négatif ou par
 l'instruction des signalements : comptage de motifs au lieu de composants, appariement croisé
 de deux triplets sur une même ligne, et distance d'appariement non bornée.
@@ -280,7 +278,7 @@ jamais une durée sans sa machine — c'est ce qui a failli coûter une campagne
 
 | Tu veux… | Va où |
 |---|---|
-| 🚀 **Arriver sur le projet** | **[`docs/REPRISE.md`](docs/REPRISE.md)** — une page : les chiffres de référence, ce qui tourne, les cinq pièges, ce qui est faux dans les vieux documents |
+| 🚀 **Arriver sur le projet** | **[`docs/REPRENDRE_ICI.md`](docs/REPRENDRE_ICI.md)** — l'**unique** document d'arrivée : où on s'est arrêté, les chiffres acquis, ce qui reste ouvert, et la première action avec sa règle de décision |
 | Savoir ce qui est interdit | §6 — les onze interdits |
 | Savoir dans quoi tu vas tomber | §7 — les sept pièges |
 | Savoir comment travailler | §9 — la boucle et la règle d'or |
@@ -307,12 +305,11 @@ ailleurs — c'est la règle qui empêche les contradictions de revenir.
 
 | dossier | quand l'ouvrir |
 |---|---|
-| **[`REPRISE.md`](docs/REPRISE.md)** | 🚀 en arrivant, toujours |
+| **[`REPRENDRE_ICI.md`](docs/REPRENDRE_ICI.md)** | 🚀 en arrivant, toujours — et c'est le **seul** document d'arrivée |
 | [`CHANTIER_MULTITEMOINS.md`](docs/CHANTIER_MULTITEMOINS.md) | multi-témoins, 12 sous-sections. ⚠️ **Ce renvoi le disait « le programme courant » — il ne l'est plus depuis le 2026-08-19.** Le chantier vivant est [`CHANTIER_RATE.md`](docs/CHANTIER_RATE.md) ; celui-ci est **acquis et consultable**, pas en cours |
 | [`CHANTIER_RATE.md`](docs/CHANTIER_RATE.md) | 🔑 **employer pleinement le Rate**, et mélanger POEM / niveau absolu / Rate. 📏 Son coût est une **pénalité de SEEL qui CROÎT avec la profondeur** — +1 % à 35 couches, +9 % à 48, +22 % à 75. ⚠️ Le « facteur 175 » d'une rédaction antérieure était un **paradoxe de Simpson**, retiré le 2026-08-19 |
 | **[`CHANTIER_PREDICTIBILITE.md`](docs/CHANTIER_PREDICTIBILITE.md)** | 🔵 **ouvert par 👤 le 2026-08-17** — *prédire sans tout calculer si un design passe avec un seul verre témoin*. 🔑 À retenir sans l'ouvrir : **le 99c n'est PAS une référence valable** (tout QWOT ⇒ adverse à POEM par construction, réponse plate à 100 % qui ne discrimine rien) · **la série d'échelle du random75 ×0,5/×1/×1,5/×2 est la seule expérience CONTRÔLÉE du projet** · **quatre routes y sont déjà fermées par la mesure** · 🔴 **`search_resolution` était neutralisé dans toute la campagne des intervalles alors que 👤 l'a posé comme prérequis** · 🔴 **le mode `extreme` n'améliore le SEEL sur AUCUNE des configurations testées** (§4quater-bis, matrice arrêtée le 2026-08-19 sur décision de 👤 ; `deep` seul fait mieux à un cinquième du coût) |
 | 🔴 **[`PLAN_PRODUCTION_2026-08-20.md`](docs/PLAN_PRODUCTION_2026-08-20.md)** | **LE PROGRAMME COURANT**, et il n'était cité nulle part dans ce fichier jusqu'au 2026-08-21. Ses **§15 à §24** portent tout ce qui est récent : le multiseed au criblage, l'injection de plans, la fermeture de la voie ELITE, la diversité en λ |
-| ~~[`PLAN_2026-08-16.md`](docs/PLAN_2026-08-16.md)~~ | 🪦 **ARCHIVE.** Ce renvoi le disait « en cours d'exécution » — **faux depuis le 2026-08-20**. Sa campagne multi-témoins est close et le chantier est acquis. Gardé pour ses cinq pièges du 15 août |
 | [`QWOT_ET_TURNING_POINT.md`](docs/QWOT_ET_TURNING_POINT.md) | 🔴 **obligatoire** avant d'écrire sur les points tournants |
 | [`FEUILLE_DE_ROUTE.md`](docs/FEUILLE_DE_ROUTE.md) | ce qui est acquis (A1→A25), ce qui est outillé |
 | [`TRAVAUX_A_VENIR.md`](docs/TRAVAUX_A_VENIR.md) | les chantiers du modèle physique, 12.1 à 12.7 |
@@ -624,12 +621,7 @@ section contienne ce qu'on lui prête.*
   (`certus_strat_ui_worker.py:375`) alors qu'**aucun code ne le lit**. Le journal annonce donc
   un effet qui n'existe pas. Le rebrancher ou le supprimer, mais ne pas le laisser dans le log.
 - **Citer les repères « 0,4 nm / 0,3 nm »** — absents de la thèse Zideluns.
-- ~~**Tirer une conclusion physique d'un empilement autre que le 48 couches.**~~
-  🔴 **SUPPRIMÉE le 2026-08-16.** Le projet a **quatre** composants d'essai et le random75
-  existe précisément pour tirer des conclusions **générales**. La règle était violée par
-  construction. **Ce qui la remplace :** une règle n'est établie que si elle survit sur un
-  empilement **sans structure** — ni cavité, ni miroir, ni périodicité. C'est ce test qui a
-  réfuté « le témoin vieillit et meurt » et qui laisse `S(p−1)` **non validée**.
+- **Établir une règle sur un seul empilement structuré.** Une règle n'est acquise que si elle survit sur un empilement **sans structure** — ni cavité, ni miroir, ni périodicité. C'est ce test qui a réfuté « le témoin vieillit et meurt » et qui laisse `S(p−1)` **non validée**.
 - **Raffiner la grille d'échantillonnage sans corriger le seuil** — voir [`TRAVAUX_A_VENIR.md`](docs/TRAVAUX_A_VENIR.md) §12.2.
 - **Modéliser σ(T), la grenaille ou le bruit multiplicatif** — voir §17.
 
@@ -1727,36 +1719,11 @@ signifie moins d'occasions pour le bruit de fabriquer un faux point tournant —
 mécanisme**, qui pèse 79 % des plantages mesurés (§24-36). C'est un arbitrage assumé
 vitesse / fidélité, pas un oubli.
 
-#### 🪦 La mesure de 2026-08-08 qui avait déjà tranché dans le même sens
+### 🔒 La grille de balayage est FIGÉE à 1 nm — ne la rouvre pas
 
-⚠️ *Ce bloc portait un titre de section **vide** suivi d'un second titre « Tranchée — la
-grille de balayage à 1 nm », c'est-à-dire **deux sections pour la même décision** dont l'une
-sans contenu. Fusionnés le 2026-08-19 : ceci est l'**antécédent historique** de la décision
-figée ci-dessus, pas une décision de plus.*
+👤 *« Enfin on va figer la grille à 1 nm. »* (2026-08-12). Deux campagnes indépendantes, sur deux graines, ont mesuré que le pas de 1 nm gagne d'un facteur ~2 ; le détail de ces mesures est dans `git log`, et il ne sert plus le codage — la décision est prise.
 
-`scan_wl_step` est le pas entre λ de contrôle candidates. Deux simulations complètes
-indépendantes, plage identique, seul le pas changeant :
-
-| graine | pas 1 nm | pas 2 nm | verdict |
-|---|---|---|---|
-| principale | **0,002898** | 0,005283 | 1 nm meilleur, ÷1,82 |
-| 77 | **0,003553** | 0,008400 | 1 nm meilleur, ÷2,36 |
-
-⚠️ **Ces quatre chiffres sont HISTORIQUES** — état du code de 2026-08-08, avant A10 et avant
-la correction d'enveloppe. Ils ne se comparent qu'entre eux, jamais au repère `D0.ref` de
-§21. **Ce qui est acquis, c'est le rapport, pas la valeur** : le pas de 1 nm gagne sur deux
-graines indépendantes, d'un facteur ~2. Ne les cite pas comme des `RESULT` courants.
-
-Le pas de **1 nm** est retenu. Il coûte +9 % de temps et rend une gagnante à **2 blocs au
-lieu de 4** — moins de changements de λ à exécuter.
-
-> ⚠️ **La prédiction inverse avait été avancée** — qu'une grille plus fine gaspillerait le
-> budget en candidates redondantes. La mesure l'a réfutée. **On ne prédit pas un résultat de
-> simulation, on le mesure.**
-
-> ⚠️ **Effet de bord.** `wl_step` valant déjà 1 nm, les deux grilles coïncident. Le bug de
-> confusion entre elles devient **invisible sans avoir disparu**. **Ne supprime pas
-> `_resolve_monitoring_wavelength_grid`** au motif que les grilles sont identiques.
+⚠️ **Effet de bord à connaître** : `wl_step` valant déjà 1 nm, la grille de balayage et la grille d'affichage coïncident, donc le bug de confusion entre elles devient **invisible sans avoir disparu**. **Ne supprime pas `_resolve_monitoring_wavelength_grid`** au motif que les deux grilles sont identiques.
 
 ---
 
@@ -1926,8 +1893,7 @@ négatifs**, et les négatifs comptent autant : trois pistes y sont **fermées p
 | la forme fermée de `T(d)` | **×1,20 mesuré**, et elle est **exacte** — même calcul écrit autrement, vérifié à 5,4e-20 contre le noyau et 3,2e-15 contre l'oracle |
 | le fossé entre machines | ×1 à ×3,2 selon les modules, **pas** ×7-10 |
 
-⚠️ Les **temps absolus** de [`docs/REPRISE_PERF.md`](docs/REPRISE_PERF.md) datent d'avant le
-déménagement hors Google Drive ; les **rapports** restent valides.
+⚠️ **Les mesures de performance antérieures au 2026-08-11 ne se citent plus** : elles précèdent le biais de fente, donc elles répondent à une autre question (§21). Seuls les **rapports** de [`PERFORMANCE.md`](docs/PERFORMANCE.md) restent valides.
 
 ---
 

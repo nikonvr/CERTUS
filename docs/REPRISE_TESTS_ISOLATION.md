@@ -1,10 +1,10 @@
 # RESUME — state leaks between tests (isolation)
 
-**Session of 2026-08-02.**During:`docs/REPRISE_PERF.md`(performance).
+**Session of 2026-08-02**, during the performance campaign.
 This document covers**test isolation**, not performance.
 
 > ✅**This work solves two rows of the “What is already red” table of
-> `docs/REPRISE_PERF.md`**(`TestREAppSkeletonLoaders`and the 4 failures of
+> the performance campaign **(`TestREAppSkeletonLoaders` and the 4 failures of
 > `tests/unit/test_certus_ui.py`). This table has been updated accordingly.
 
 ---
@@ -188,4 +188,4 @@ Only treat if it comes back.
 - The hot Numba cache**hides**compilation bugs. For an honest audit:
   `NUMBA_CACHE_DIR="$(mktemp -d)"`.
 - Confirmed: do not run two pytest sessions in parallel on this repository
-  (see`docs/REPRISE_PERF.md`).
+  (performance campaign).

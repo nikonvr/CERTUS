@@ -346,3 +346,41 @@ def test_le_balayage_de_reprise_MET_A_JOUR_le_meilleur_SEEL() -> None:
     assert "seel_deja" in src[debut:fin], (
         "le balayage de reprise ne met pas a jour meilleur_seel"
     )
+
+
+# ---------------------------------------------------------------------------
+# 7. LA BOUCLE PRINCIPALE -- que AUCUN test ne traversait
+# ---------------------------------------------------------------------------
+
+def test_la_BOUCLE_s_execute_reellement_au_moins_une_fois() -> None:
+    """🔴 CE TEST EXISTE PARCE QUE LA CAMPAGNE DU 2026-08-22 A PLANTE EN 0 MINUTE.
+
+    Un renommage mecanique avait donne le MEME nom a la fonction `motif_finalisation` et a la
+    variable locale qui retient son resultat. La variable masquait la fonction :
+
+        TypeError: 'str' object is not callable
+
+    🔑 ET AUCUN TEST NE L'A VU, POUR UNE RAISON QUI VAUT PLUS QUE LE BUG : tous passaient par
+    `--dry-run`, qui rend la main AVANT la boucle. La boucle principale -- le coeur du
+    programme -- n'etait traversee par rien. Quarante-deux tests verts, et le premier vrai
+    lancement tombe a la premiere ligne.
+
+    Ce test entre DANS la boucle sans lancer le moindre calcul : un budget d'une minute rend
+    `_rentre()` faux, donc rien ne demarre, mais la ligne fautive est bien executee. Cout : une
+    fraction de seconde.
+    """
+    code = OM.main([
+        "r75x1.75", "--budget", "1", "--graines", "909", "--graine-notation", "42",
+        "--duree-attendue", "60",
+    ])
+    # 1 = « aucune realisation n'a trouve », ce qui est le verdict correct : rien n'a pu etre
+    # lance dans une minute. Ce qui compte est qu'on y arrive SANS exception.
+    assert code == 1
+
+
+def test_la_boucle_DIT_ce_qu_elle_n_a_pas_eu_le_temps_d_essayer(capsys: pytest.CaptureFixture) -> None:
+    """Sans cette ligne, « 0 trouve » se lirait « ca ne marche pas »."""
+    OM.main(["r75x1.75", "--budget", "1", "--graines", "909", "1111",
+             "--graine-notation", "42", "--duree-attendue", "60"])
+    sortie = capsys.readouterr().out
+    assert "NON LANCEE" in sortie or "NON ESSAYEES" in sortie

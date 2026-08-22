@@ -474,7 +474,7 @@ def main(argv: list[str] | None = None) -> int:
     en_vol: dict[int, tuple[subprocess.Popen, float]] = {}
     jamais_lancees: list[int] = []
     succes = False
-    motif_finalisation = ""
+    raison_finalisation = ""
 
     # 🔑 L'ARRET A LA MAIN, ET IL DOIT MARCHER DEPUIS UNE AUTRE FENETRE. 👤 veut pouvoir
     # arreter « a tout moment si on lui annonce un SEEL qui lui convient ». Un Ctrl-C ne
@@ -502,8 +502,8 @@ def main(argv: list[str] | None = None) -> int:
     file_attente = list(a_faire)
     try:
         while file_attente or en_vol:
-            motif_finalisation = motif_finalisation or _doit_finaliser()
-            while file_attente and len(en_vol) < slots and not motif_finalisation:
+            raison_finalisation = raison_finalisation or _doit_finaliser()
+            while file_attente and len(en_vol) < slots and not raison_finalisation:
                 if not _rentre():
                     jamais_lancees.extend(file_attente)
                     print(f"  ⏹  budget : {len(file_attente)} graine(s) NON LANCEE(S) -- "
@@ -518,7 +518,7 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  ▶  graine {g} lancee a {time.strftime('%H:%M:%S')} (pid {p.pid})")
                 _evt("lancee", graine=g, pid=p.pid, ecoulees_min=round(_minutes(), 2))
 
-            if motif_finalisation and file_attente:
+            if raison_finalisation and file_attente:
                 jamais_lancees.extend(file_attente)
                 file_attente = []
 
@@ -530,8 +530,8 @@ def main(argv: list[str] | None = None) -> int:
             # non au lancement : le fichier FINALISER porte « abandonner » ou rien. Le drapeau
             # de ligne de commande reste la valeur par defaut pour un lancement sans pilote.
             mode = mode_finalisation_demandee(drapeau_finaliser) or a.runs_en_vol
-            if motif_finalisation and en_vol and mode == "abandonner":
-                print(f"  🛑 {motif_finalisation} -- abandon de {sorted(en_vol)} EN VOL, "
+            if raison_finalisation and en_vol and mode == "abandonner":
+                print(f"  🛑 {raison_finalisation} -- abandon de {sorted(en_vol)} EN VOL, "
                       f"leur travail est PERDU. On passe a l'union et a la notation finale "
                       f"sur ce qui est deja mesure.")
                 _evt("abandon", graines=sorted(en_vol))
@@ -585,11 +585,11 @@ def main(argv: list[str] | None = None) -> int:
                      n_blocs=dep[0]["n_blocs"], crash=dep[0]["crash_rate"],
                      minutes=round(mins, 1), provisoire=True)
 
-            motif_finalisation = motif_finalisation or _doit_finaliser()
+            raison_finalisation = raison_finalisation or _doit_finaliser()
     except KeyboardInterrupt:
         # 🔑 Ctrl-C N'EST PAS UNE PERTE. Ce qui est deja mesure porte un artefact sur disque ;
         # on enchaine donc sur la synthese et la notation finale au lieu de tout jeter.
-        motif_finalisation = motif_finalisation or "Ctrl-C"
+        raison_finalisation = raison_finalisation or "Ctrl-C"
         jamais_lancees.extend(file_attente)
         print(f"\n  🛑 Ctrl-C -- {len(en_vol)} run(s) en vol abandonne(s), "
               f"{len(fait)} mesure(s) conservee(s)")
@@ -597,8 +597,8 @@ def main(argv: list[str] | None = None) -> int:
             p.terminate()
         en_vol.clear()
 
-    if motif_finalisation:
-        print(f"\n  🛑 arret : {motif_finalisation}")
+    if raison_finalisation:
+        print(f"\n  🛑 arret : {raison_finalisation}")
 
     # --- Synthese ------------------------------------------------------------------------
     print()

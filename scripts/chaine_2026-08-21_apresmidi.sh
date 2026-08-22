@@ -23,14 +23,14 @@ attendre "reports/blocs_vs_plantage_r75x2_deep_s042_couvfull.json"
 #    sur des mesures a la graine 42, puis remesurees a la graine 42. Une graine qui n'a pas
 #    servi a choisir est le seul controle possible. Aucune surcharge : tout vient du JSON.
 echo "[chaine] === graine 101 sur la config livree ==="
-CERTUS_BENCH_TIMEOUT_S=5400 "$PY" scripts/probe_blocs_vs_plantage.py \
+CERTUS_BENCH_TIMEOUT_S=38400 "$PY" scripts/probe_blocs_vs_plantage.py \
     r75x2-2nm deep 0 0 2.0 0 101 > "$J/journal_accept101.log" 2>&1
 echo "[chaine] graine 101 terminee, EXIT=$? -- $(date +%H:%M:%S)"
 
 # 3. Et la graine 202, pour que le controle ne repose pas sur UNE graine -- c'est la lecon
 #    de §24-46 : un verdict d'intervalle n'est pas determine par une graine.
 echo "[chaine] === graine 202 sur la config livree ==="
-CERTUS_BENCH_TIMEOUT_S=5400 "$PY" scripts/probe_blocs_vs_plantage.py \
+CERTUS_BENCH_TIMEOUT_S=38400 "$PY" scripts/probe_blocs_vs_plantage.py \
     r75x2-2nm deep 0 0 2.0 0 202 > "$J/journal_accept202.log" 2>&1
 echo "[chaine] graine 202 terminee, EXIT=$? -- $(date +%H:%M:%S)"
 echo "[chaine] CHAINE COMPLETE"

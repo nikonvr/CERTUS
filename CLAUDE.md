@@ -1171,7 +1171,7 @@ paramètres ont été arrêtés avec le physicien le 2026-08-08 et sont dans le 
 | `slit_bias_enabled` | **vrai**, fente nominale **2 nm** — 👤 *« réaliste, pas optimiste »* | [`TRAVAUX_A_VENIR.md`](docs/TRAVAUX_A_VENIR.md) §12.7 |
 | `affine_scale_amp` | **0,05** ⇒ `a ∈ [0,95 ; 1,05]` | [`TRAVAUX_A_VENIR.md`](docs/TRAVAUX_A_VENIR.md) §12.1 |
 | `affine_offset_amp` | **0,02** ⇒ `b ∈ [−0,02 ; +0,02]` | [`TRAVAUX_A_VENIR.md`](docs/TRAVAUX_A_VENIR.md) §12.1 |
-| Plafond du banc | `CERTUS_BENCH_TIMEOUT_S=5400` | §21 |
+| Plafond du banc | `CERTUS_BENCH_TIMEOUT_S = max(5400, 4 × durée attendue)` — 🔴 **5400 est un PLANCHER, pas une valeur** : le prendre pour une valeur a détruit quatre mesures le 2026-08-22 | §21 |
 | Graine de référence | **42**, `scan_wl_step` **1.0** | §21 |
 | `robustness_num_runs` | **300** — 👤 posé le 2026-08-13. ⚠️ **Ce n'est PAS un réglage de précision** : la profondeur commande la sensibilité du filtre de plantage, donc **quelles stratégies existent** | [`DECISIONS_TRANCHEES.md`, enquete 23](docs/DECISIONS_TRANCHEES.md) |
 | `n_screen_runs` | **25**, et 👤 a délégué le choix le 2026-08-13. 🔴 **NE LE DESCENDS PAS À 10** : `1/10 = 10 % ≥ 5 %`, donc **un seul plantage sur dix tue la stratégie** — et depuis le correctif 1 elle est aussi perdue comme **parent**. §24-27 avait mesuré « 10 ne perd rien » **avant** que le criblage ne choisisse les parents : la mesure ne couvre plus le rôle | [`DECISIONS_TRANCHEES.md`, enquete 23ter](docs/DECISIONS_TRANCHEES.md) |
@@ -1339,17 +1339,50 @@ la **classe d'équivalence SEEL** (§22), pas le score.
 **Ce qu'il faut faire avant toute mesure au banc :**
 
 ```bat
-set CERTUS_BENCH_TIMEOUT_S=5400
+set CERTUS_BENCH_TIMEOUT_S=38400
 C:\envs\certus\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42
 ```
 
-Le plafond était en dur ; il est désormais surchargeable par cette variable d'environnement,
-défaut inchangé à 1800 s. **Mets 5400 et laisse finir.**
+Le plafond était en dur ; il est surchargeable par cette variable, **défaut 1800 s**
+(`scripts/bench_examples.py:171` — `DEFAULT_TIMEOUT_MS = CERTUS_BENCH_TIMEOUT_S × 1000`).
 
-⚠️ **Le piège, et il a fonctionné deux fois** : au-delà du plafond le banc ne signale pas
-d'erreur bruyamment. Il émet `RESULT=None` et un tableau de 12 stratégies au lieu de 345 —
-**cela ressemble à un résultat**. Vérifie toujours `WAIT_EXIT` et le nombre de stratégies
-avant de lire un `RESULT`.
+### 🔴 5400 EST UN PLANCHER, PAS UNE VALEUR — et cette ligne a coûté une nuit entière
+
+⚠️ **Ce paragraphe disait « Mets 5400 et laisse finir », sans dire sur QUELLE CHARGE.** C'était
+une durée sans sa machine ni son composant, ce que §11-1 interdit — et le 2026-08-22 elle a
+détruit **quatre mesures de 90 minutes** :
+
+```
+nu_s101  91 min · nu_s202  91 min · livree_s101  90 min · livree_s202  90 min
+         ^^^^^^ quatre fois EXACTEMENT 5400 s
+
+verdicts : SURCHARGES_NON_APPLIQUEES x3 · ECHEC_RESULT_NONE x1
+empreinte : « WAIT_TIMEOUT=5400 s — aucune emission recue »
+```
+
+📏 Elles avaient pourtant fait **13 à 16 nombres de blocs sur 16** : le travail était presque
+fini quand le plafond l'a tranché. Un run pleine plage sur `r75x2` à 2 nm prend **2 h 39 =
+9540 s** (mesuré le 2026-08-21).
+
+🔑 **LA RÈGLE, celle que les pilotes du dépôt appliquent depuis toujours** —
+`batch_nuit_2026-08-19.py:115`, `batch_nuit_2026-08-20.py:137`, `batch_diagnostic_elite.py:164` :
+
+```
+CERTUS_BENCH_TIMEOUT_S = max(5400, 4 x duree_attendue_en_secondes)
+```
+
+**Quatre fois la durée attendue, avec 5400 pour plancher.** Le facteur 4 n'est pas décoratif :
+une graine défavorable peut doubler le nombre de survivants au criblage, donc la durée.
+
+### ⚠️ Le piège, et il a maintenant fonctionné trois fois
+
+Au-delà du plafond le banc ne signale pas d'erreur bruyamment. Il émet `RESULT=None` et un
+tableau de 12 stratégies au lieu de 345 — **cela ressemble à un résultat**. Vérifie toujours
+`WAIT_EXIT` et le nombre de stratégies avant de lire un `RESULT`.
+
+🔑 **Et cherche `WAIT_TIMEOUT=` dans le journal : c'est l'empreinte, elle est sans ambiguïté.**
+Une durée qui vaut *exactement* le plafond pour plusieurs mesures d'affilée l'est aussi — une
+coïncidence à la seconde près n'existe pas.
 
 ⚠️ **Une mesure, une machine.** Ne lance rien d'autre pendant un run : ni tests, ni lint, ni
 recherche récursive. Le pipeline sature tous les cœurs en `prange`.

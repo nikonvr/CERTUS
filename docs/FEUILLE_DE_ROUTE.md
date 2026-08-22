@@ -256,6 +256,9 @@ avant le correctif ne prouve rien. C'est le contrôle le plus rentable de §12.
 ### PALIER 3 — Les mesures qui devaient déjà exister
 
 Toutes au banc, **une machine par run**, `CERTUS_BENCH_TIMEOUT_S=5400`, et le bloc `CONFIG=`
+
+⚠️ 🔴 **`5400` EST UN PLANCHER, PAS UNE VALEUR — corrigé le 2026-08-22.** Le prendre pour une valeur a détruit **quatre mesures de 90 minutes** ce jour-là, avec l'empreinte `WAIT_TIMEOUT=5400 s`. La règle est `max(5400, 4 × durée attendue)` et elle vit dans [`CLAUDE.md`](../CLAUDE.md) §21 — **un fait, un seul endroit** : ne recopie pas la règle ici, va la lire là-bas.
+
 vérifié avant de lire le moindre chiffre.
 
 #### A13 — La paire grille + lissage · *ex-T3 et T4*

@@ -44,9 +44,24 @@ PY="C:/envs/certus/Scripts/python.exe"
 J="reports/nuit_2026-08-21"
 mkdir -p "$J"
 
-# 🔒 Le plafond de la sonde. 1800 s par defaut, et un depassement rend RESULT=None -- ce qui
-# RESSEMBLE a un resultat. 5400 s est la valeur que CLAUDE.md §21 impose pour laisser finir.
-export CERTUS_BENCH_TIMEOUT_S=5400
+# 🔴 LE PLAFOND, ET IL A COUTE UNE NUIT ENTIERE LE 2026-08-21.
+#
+# `bench_examples.py:171` : DEFAULT_TIMEOUT_MS = CERTUS_BENCH_TIMEOUT_S x 1000, defaut 1800 s.
+# Au-dela, `wait_for` ABANDONNE et rend None -- ce qui RESSEMBLE a un resultat.
+#
+# 📏 La premiere version de ce script exportait 5400. Les quatre mesures ont alors dure
+# EXACTEMENT 90 min chacune et rendu SURCHARGES_NON_APPLIQUEES ou ECHEC_RESULT_NONE, avec
+# l'empreinte « WAIT_TIMEOUT=5400 s — aucune emission recue ». Elles avaient pourtant fait
+# 13 a 16 nombres de blocs : le travail etait presque fini quand le plafond l'a coupe.
+#
+# 🔑 5400 EST UN PLANCHER, PAS UNE VALEUR. Les autres pilotes du depot l'ecrivent ainsi
+# depuis toujours -- `max(5400, mn * 60 * 4)` dans batch_nuit_2026-08-19.py, _20.py et
+# batch_diagnostic_elite.py : QUATRE FOIS la duree attendue. C'est CLAUDE.md §21 qui m'a
+# egare en disant « mets 5400 et laisse finir », phrase ecrite pour une charge plus courte.
+#
+# Duree mesuree d'un run pleine plage sur r75x2 a 2 nm : 2 h 39 = 9540 s (2026-08-21).
+# Donc 4 x 160 min = 38400 s.
+export CERTUS_BENCH_TIMEOUT_S=38400
 
 mesure() {   # $1 = composant · $2 = graine · $3 = etiquette lisible
   local comp="$1" graine="$2" nom="$3"

@@ -31,7 +31,7 @@ echo "[soir] chaine de l'apres-midi terminee -- $(date +%H:%M:%S)"
 
 for g in 101 202; do
   echo "[soir] === r75x2 NU a la graine $g ==="
-  CERTUS_BENCH_TIMEOUT_S=5400 "$PY" scripts/probe_blocs_vs_plantage.py \
+  CERTUS_BENCH_TIMEOUT_S=38400 "$PY" scripts/probe_blocs_vs_plantage.py \
       r75x2 deep 0 0 2.0 0 "$g" > "$J/journal_nu_s$g.log" 2>&1
   echo "[soir] graine $g terminee, EXIT=$? -- $(date +%H:%M:%S)"
 done

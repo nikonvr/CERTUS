@@ -2752,3 +2752,85 @@ seulement une famille *faisable* — mais il ne faut pas raconter qu'il y mène.
 📌 Et l'honnêteté sur son statut : **c'est la première voie autonome nouvelle depuis le 21 août**,
 et elle porte déjà une réserve capable de l'annuler. Ce n'est pas une solution, c'est une
 hypothèse avec un plan pour la réfuter.
+
+---
+
+## 33. 🔑 LE VERDICT DU 2026-08-22, ET UNE ERREUR DE RAISONNEMENT QUE JE CORRIGE
+
+### 33.1 📏 La question de fond est tranchée — trois graines nues sur quatre rendent ZÉRO
+
+```
+r75x2 NU (sans rampes), plage COMPLETE, 2 nm, mode deep
+
+  graine  42   1617 strategies ·   0 deposable
+  graine 101   1630 strategies ·   0 deposable    91 min, EXIT=0
+  graine 202   1646 strategies ·   0 deposable    97 min, EXIT=0
+  graine  77   2231 strategies · 547 deposables
+```
+
+La règle écrite **avant** la mesure (§8.2ter de [`REPRENDRE_ICI.md`](REPRENDRE_ICI.md)) tranche
+donc sa troisième branche : **la graine 77 est l'exception, pas la 42 la malchanceuse.**
+
+### 33.2 🔴 L'ERREUR QUE J'AI FAITE, ET ELLE FERMAIT LA MAUVAISE PORTE
+
+J'ai écrit, et dit à 👤 : *« le multiseed ne sauve pas ce cas — trois graines sur quatre rendent
+zéro, donc l'union sur trois graines aurait rendu zéro aussi. »*
+
+**C'est faux.** J'ai évalué *« l'union des trois qui ont échoué »* au lieu de *« l'union de K
+graines tirées »*. La graine 77 **existe** et trouve 547 déposables **nativement** : un balayage
+de K réalisations a donc une vraie chance d'en contenir une comme elle.
+
+```
+si p = 1/4 (une graine sur quatre reussit)
+  K=4 -> 68 %   K=6 -> 82 %   K=8 -> 90 %   de chances qu'au moins une trouve
+```
+
+⚠️ **Et l'honnêteté sur ce `p`** : il est estimé sur **quatre** graines dont une réussit.
+L'intervalle de confiance binomial à 95 % pour 1/4 va grossièrement de **0,01 à 0,7**. Ces
+pourcentages sont donc une **arithmétique conditionnelle**, pas une prédiction. C'est
+exactement le genre de chiffre qu'il faut donner avec son intervalle ou pas du tout.
+
+### 33.3 🔑 Pourquoi cet axe marche là où SIX leviers ont échoué
+
+Les six — plafond ELITE 480, portée ±2 nm, porte à borne de confiance, cinq graines au
+criblage, profil élargi ×3-×4, diversité en λ des parents — élargissaient tous la recherche
+**autour du même point, dans une même réalisation**.
+
+> **Changer de réalisation change la Phase A elle-même, donc QUELLES CANDIDATES EXISTENT.**
+
+C'est le seul axe qui fait entrer les λ manquantes : 685 nm ne figure dans **aucune** des 1617
+stratégies de la graine 42, et elle est **native** chez la 77.
+
+🔴 **Et la graine doit varier au niveau de la GÉNÉRATION, pas du criblage.** 📏 Mesuré : cinq
+graines au **criblage** seul rendent **zéro** déposable, parce que la Phase A reste à 42 et que
+la λ n'entre jamais. C'est pourquoi `screen_seed_list` — qui existe et fonctionne — ne suffit
+pas ici.
+
+### 33.4 Ce que coûterait un mode « multiseed de génération », et ce qui le rend acceptable
+
+| | |
+|---|---|
+| coût brut | `K × 91 min`. Pour K=6, **~9 h** |
+| 👤 l'a déjà accepté | *« même si le code en production est ralenti, ce sera un gain énorme d'inclure des stratégies diverses venant de plusieurs seed »* (2026-08-21) |
+| 🔑 l'économie évidente | **arrêter au premier succès.** Si `p ≈ 1/4`, l'espérance vaut **4 runs** et non 6 — le coût moyen est divisé par deux |
+| la garde anti-triche | noter la gagnante à une graine **qui n'a pas servi à la trouver**. 📏 Ce biais est mesuré : **+0,55 %**, cinq fois sous le bruit. La méthode est saine |
+| ce qui existe déjà | `_strategy_signature` et l'union par signature (`44f352d`), et la surcharge de `robustness_seed`. Le mode est un **pilote**, pas un algorithme neuf |
+
+🔑 **Et c'est la réponse à la demande de 👤** — *« que le code prod, de lui-même, sache trouver
+des solutions à SEEL 0,57 avec 2 nm, sans savoir a priori qu'il faut utiliser des rampes »*.
+Aucune connaissance a priori n'est requise : ni rampes, ni fichier de données, ni opérateur qui
+colle une ligne dans un JSON. Le code fait ce qu'il fait déjà, **K fois**.
+
+### 33.5 La mesure qui dimensionne K, et elle est bon marché
+
+**Trois graines nues de plus : 303, 404, 505.** ~4 h 30, entièrement automatisable par
+`scripts/batch_r75x2_reprenable.sh` étendu.
+
+| résultat | ce qu'il établit |
+|---|---|
+| **au moins une trouve** | `p` est de l'ordre de 1/4 à 1/2 → le multiseed de génération est la réponse, et K se dimensionne à 4-8 |
+| **aucune ne trouve** | `p ≤ 1/7` → il faudrait K ≈ 15 à 20, soit une nuit par composant. Coûteux, mais **toujours autonome** |
+
+🔒 **Dans les deux cas la voie reste ouverte** — seul le prix change. C'est la différence
+essentielle avec ce que je croyais avoir établi le matin même, et c'est pourquoi cette
+correction valait d'être écrite plutôt que glissée.

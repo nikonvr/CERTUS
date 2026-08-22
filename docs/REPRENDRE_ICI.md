@@ -100,7 +100,7 @@ choix des rampes — la lève.
 | | |
 |---|---|
 | **graine 202 sur la config livrée** | non mesurée — arrêt demandé. Trois graines valent mieux que deux, quatre auraient valu mieux que trois |
-| 🔑 **`r75x2` NU aux graines 101 et 202** | **non mesurées, et c'est la question de fond restée sans réponse** : *la graine 42 est-elle malchanceuse, ou la 77 chanceuse ?* La règle de décision est écrite en §8.2 — la relire **avant** de lancer, pas après |
+| ✅ **`r75x2` NU aux graines 101 et 202** | **MESURÉES le 2026-08-22 : 0 déposable chacune.** Trois graines nues sur quatre rendent zéro — la **77 est l'exception**. La règle écrite d'avance a tranché sa troisième branche. Détail en §33 de [`PLAN_PRODUCTION_2026-08-20.md`](PLAN_PRODUCTION_2026-08-20.md) |
 | **un second composant** | 🔒 écarté par 👤 — voir §8.2bis, qui dit ce que cela interdit d'affirmer |
 | **l'anomalie plantage/bruit** | 8,72 contre 1 dans le mauvais sens. Ne menace pas la livraison (la porte prend le maximum, donc conservateur) mais on ne comprend pas le mode d'échec |
 | **les rampes vivent dans `reports/`** | une **configuration** ne devrait pas dépendre d'une **sortie**. Déplacement vers `example/` à faire — plus rien ne tourne, donc c'est sans risque maintenant |
@@ -542,7 +542,7 @@ fond. Voici l'état réel.
 
 | # | action | coût | ce qu'elle décide |
 |---|---|---|---|
-| **1** | 🔑 **`r75x2` NU (sans rampes) aux graines 101 et 202** | 2 × ~2 h | **la question de fond** : *la graine 42 est-elle malchanceuse, ou la 77 chanceuse ?* Règle de décision en 8.2ter — **à lire avant de lancer** |
+| ~~**1**~~ | ✅ ~~`r75x2` NU aux graines 101 et 202~~ | fait | **0 déposable chacune.** La 77 est l'exception. Voir §8.2quater ci-dessous, qui remplace cette action |
 | **2** | déplacer les rampes de `reports/` vers `example/` | ~15 min, zéro CPU | une **configuration** ne doit pas dépendre d'une **sortie**. 🟢 Plus rien ne tourne : c'est sans risque maintenant |
 | **3** | porter le résultat du jour dans `pages/CERTUS_STRAT.html` | ~30 min, zéro CPU | c'est la vitrine, et 👤 la juge *« ultra importante »*. ⚠️ Avec la condition **dans la même phrase que le chiffre**, et vérification de structure par `html.parser` |
 | **4** | terminer l'action 1 d'hier — graine **202** sur la config livrée | ~2 h | une quatrième réalisation. Moins urgent : trois convergent déjà à 0,55 % |
@@ -553,6 +553,39 @@ fond. Voici l'état réel.
 🔑 **L'ordre qui économise le plus de temps** : lancer **1** d'abord (des heures), puis faire **2**
 et **3** pendant qu'elle tourne — ils ne demandent aucun CPU.
 
+### 8.2quater 🔑 LA PREMIÈRE ACTION, RÉVISÉE LE 2026-08-22 — dimensionner K
+
+🔴 **Et elle repose sur une erreur de raisonnement que j'ai faite puis corrigée le même jour.**
+J'avais conclu que *« le multiseed ne sauve pas ce cas : trois graines sur quatre rendent zéro,
+donc l'union sur trois aurait rendu zéro »*. **Faux** — j'évaluais *l'union des trois qui ont
+échoué* au lieu de *l'union de K graines tirées*. La graine 77 existe et trouve **547
+déposables nativement**.
+
+```
+si p = 1/4    K=4 -> 68 %   K=6 -> 82 %   K=8 -> 90 %   qu'au moins une graine trouve
+```
+
+⚠️ `p` est estimé sur **quatre** graines dont une réussit : l'intervalle à 95 % va grossièrement
+de **0,01 à 0,7**. C'est une arithmétique conditionnelle, pas une prédiction.
+
+> 🔑 **Le multiseed de GÉNÉRATION est donc la réponse à la demande de 👤** — *que le code trouve
+> 0,57 à 2 nm sans savoir a priori qu'il faut des rampes.* Aucune connaissance préalable : le
+> code fait ce qu'il fait déjà, **K fois**, et garde l'union.
+
+**L'action, et elle est bon marché :**
+
+| # | action | coût | ce qu'elle décide |
+|---|---|---|---|
+| **1** | **`r75x2` NU aux graines 303, 404, 505** | ~4 h 30 | 🔑 **la valeur de `p`, donc K.** Au moins une qui trouve → K = 4 à 8, le mode est utilisable. Aucune → `p ≤ 1/7`, K ≈ 15-20, coûteux mais **toujours autonome** |
+| **2** | spécifier le mode multiseed de génération | ~2 h, zéro CPU | union par signature, **arrêt au premier succès**, notation à une graine **disjointe** |
+
+🔒 **Dans les deux cas la voie reste ouverte, seul le prix change.** Et la garde anti-triche est
+mesurée : noter à une graine qui n'a pas servi à trouver coûte **+0,55 %**, cinq fois sous le
+bruit.
+
+📌 Les briques existent : `_strategy_signature` et l'union par signature (`44f352d`), plus la
+surcharge de `robustness_seed`. C'est un **pilote**, pas un algorithme neuf.
+
 ### 8.2ter 🔒 LA RÈGLE DE DÉCISION DE L'ACTION 1 — écrite AVANT la mesure
 
 Elle est écrite d'avance pour ne pas être réinterprétée selon le résultat.
@@ -562,6 +595,11 @@ Elle est écrite d'avance pour ne pas être réinterprétée selon le résultat.
 | **101 et 202 trouvent** des déposables | la graine 42 est **malchanceuse** → le **multiseed de génération** est la réponse produit : union sur K graines, faisabilité exigée sur **toutes**. K peut être petit |
 | **une seule** trouve | la recherche réussit ~1 fois sur 2 → même conclusion, K plus grand |
 | **aucune** ne trouve | la graine **77 est chanceuse**. 🔴 **Ne conclus PAS « la découverte autonome est impossible »** — c'est ce que cette case disait, et c'était faux : la **queue Rate** trouve seule à 2 nm, à SEEL 0,67-0,69 (voir §0bis). La conclusion correcte est *aucune voie autonome n'atteint le niveau de 0,57 en pur optique*, et la réponse produit devient `scripts/generer_rampes.py` pour ce niveau, la queue Rate pour un niveau dégradé mais autonome. **Ce n'est pas un échec** |
+
+🟢 **CETTE RÈGLE A TIRÉ LE 2026-08-22, ET C'EST LA TROISIÈME BRANCHE** : les graines 101 et
+202 nues rendent **0 déposable** sur 1630 et 1646 stratégies. La 77 est l'exception. ⚠️ Mais lis
+§8.2quater ci-dessus **avant** d'en conclure quoi que ce soit sur le multiseed — la conclusion
+que j'en avais tirée était fausse.
 
 📌 Rappel du contexte : on n'a que **deux** graines mesurées nues sur `r75x2` à 2 nm — la 77
 trouve 547 déposables, la 42 en trouve **zéro** sur 1617. Deux points ne permettent aucune

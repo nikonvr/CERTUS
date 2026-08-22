@@ -45,6 +45,32 @@ from orchestre_multigraine import (  # noqa: E402
     GRAINE_NOTATION_DEFAUT,
     lire_evenement,
 )
+from probe_blocs_vs_plantage import COMPOSANTS  # noqa: E402
+
+
+def interpreteur_et_script() -> tuple[str | None, str]:
+    """L'interpreteur a lancer et le motif d'un refus. Rend (None, motif) si c'est impossible.
+
+    🔴 EN MODE GELE, RIEN DE TOUT CECI NE MARCHE, ET IL FAUT LE DIRE AU LIEU D'ECHOUER
+    BIZARREMENT. `certus_hub.spec` produit un executable PyInstaller ; dans ce paquet
+    `sys.executable` est `CERTUS_HUB.exe` et non un python, `__file__` pointe dans un dossier
+    d'extraction temporaire, et `scripts/` n'est pas embarque du tout. Lancer
+    `sys.executable scripts/orchestre_multigraine.py` y donnerait une erreur incomprehensible.
+
+    ⚠️ La reparation propre serait d'embarquer le script et de retrouver un interpreteur ; elle
+    n'est pas faite, et elle ne peut pas etre eprouvee sans construire un paquet. On DETECTE
+    donc, et on refuse en disant pourquoi.
+    """
+    if getattr(sys, "frozen", False):
+        return None, (
+            "🔴 la recherche multi-realisation n'est pas disponible dans la version COMPILEE : "
+            "elle lance des processus separes a partir de `scripts/`, qui n'est pas embarque "
+            "dans le paquet. Lance CERTUS depuis les sources pour l'utiliser."
+        )
+    script = RACINE / "scripts" / "orchestre_multigraine.py"
+    if not script.is_file():
+        return None, f"🔴 script introuvable : {script}"
+    return sys.executable, ""
 
 #: Le bruit sur une DIFFERENCE de SEEL, mesure sur ce depot. Sert a dire si un ecart
 #: provisoire -> definitif est significatif ou non.
@@ -166,6 +192,39 @@ class EtatMultigraine:
         )
 
 
+def composant_depuis_fichier(chemin: str | None) -> str | None:
+    """Le nom de composant que la sonde attend, deduit du fichier CHARGE dans l'application.
+
+    🔴 CETTE FONCTION EXISTE PARCE QUE LA PREMIERE VERSION DE L'ONGLET CODAIT « r75x2 » EN DUR.
+    L'utilisateur pouvait charger n'importe quel composant : l'onglet aurait cherche sur un
+    AUTRE, et rendu un SEEL parfaitement plausible portant sur un empilement qui n'est pas
+    celui affiche. C'est la faute que ce depot redoute le plus -- « une erreur silencieuse ne
+    plante pas : elle produit un resultat faux qui a l'air juste, et quelqu'un fabrique une
+    piece avec » (AGENTS.md).
+
+    Rend None si le fichier ne correspond a aucune entree de `COMPOSANTS` -- et l'appelant doit
+    alors REFUSER, jamais choisir a la place de l'utilisateur.
+    """
+    if not chemin:
+        return None
+    try:
+        cible = Path(chemin).resolve()
+    except (OSError, ValueError):
+        return None
+    for nom, (rel, _n) in COMPOSANTS.items():
+        try:
+            if (RACINE / rel).resolve() == cible:
+                return nom
+        except (OSError, ValueError):
+            continue
+    # Repli sur le nom de fichier : un depot clone ailleurs, ou un chemin relatif, ne doit pas
+    # faire perdre la correspondance.
+    for nom, (rel, _n) in COMPOSANTS.items():
+        if Path(rel).name.lower() == cible.name.lower():
+            return nom
+    return None
+
+
 def construire_arguments(
     *,
     composant: str,
@@ -227,6 +286,19 @@ class CertusStratMultigraineMixin:
         # -- reglages ---------------------------------------------------------------------
         carte = CertusCard("Budget et objectif")
         g = QHBoxLayout()
+        # 🔴 LE COMPOSANT EST EXPLICITE, ET SANS VALEUR PAR DEFAUT MUETTE. La premiere version
+        # codait « r75x2 » en dur : l'utilisateur pouvait avoir charge un tout autre
+        # empilement et l'onglet aurait rendu un SEEL plausible portant sur autre chose.
+        self._mg_composant = QComboBox()
+        self._mg_composant.addItem("")
+        self._mg_composant.addItems(sorted(COMPOSANTS))
+        self._mg_composant.setToolTip(
+            "Le composant a chercher. Pre-selectionne sur celui que vous avez charge, quand il "
+            "correspond a une entree connue.\n🔴 Sans choix explicite, la recherche est REFUSEE."
+        )
+        _pre = composant_depuis_fichier(getattr(self, "_last_config_file", None))
+        if _pre:
+            self._mg_composant.setCurrentText(_pre)
         self._mg_budget = QLineEdit("2h")
         self._mg_budget.setToolTip(
             "Duree maximale : 2h · 90m · 1h30 · nuit (10 h).\n"
@@ -253,7 +325,8 @@ class CertusStratMultigraineMixin:
             "Mesure du 2026-08-22 sur 16 threads : deux runs concurrents rendent +29 % de "
             "debit, pas +100 % -- le goulot est la bande passante memoire."
         )
-        for lib, w in (("Budget :", self._mg_budget), ("Objectif :", self._mg_objectif),
+        for lib, w in (("Composant :", self._mg_composant),
+                       ("Budget :", self._mg_budget), ("Objectif :", self._mg_objectif),
                        ("SEEL cible (nm) :", self._mg_cible), ("Slots :", self._mg_slots)):
             g.addWidget(QLabel(lib))
             g.addWidget(w)
@@ -322,14 +395,33 @@ class CertusStratMultigraineMixin:
             self._mg_resume.setText("🔴 SEEL cible ou slots illisible.")
             return
 
+        py, motif = interpreteur_et_script()
+        if py is None:
+            self._mg_resume.setText(motif)
+            return
+
+        composant = self._mg_composant_courant()
+        if composant is None:
+            # 🔴 ON REFUSE, ON NE DEVINE PAS. Chercher sur un composant que 👤 n'a pas designe
+            # rendrait un SEEL parfaitement plausible portant sur un autre empilement.
+            self._mg_resume.setText(
+                "🔴 choisis un COMPOSANT avant de lancer. Aucun defaut n'est applique : "
+                "chercher sur un empilement que tu n'as pas designe rendrait un SEEL "
+                "plausible et faux."
+            )
+            return
+
         args = construire_arguments(
-            composant=self._mg_composant_courant(),
+            composant=composant,
             budget=self._mg_budget.text().strip() or "2h",
             objectif=self._mg_objectif.currentText(),
             seel_cible=cible,
             slots=slots,
         )
+        self._mg_python = py
         self._mg_demarrer_processus(args)
+
+    _mg_python: str = sys.executable
 
     def _mg_demarrer_processus(self, args: list[str]) -> None:
         """La couture. 🔑 Elle existe pour que la chaine ENTIERE -- demarrage, sortie standard,
@@ -345,15 +437,21 @@ class CertusStratMultigraineMixin:
         self._mg_proc.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
         self._mg_proc.readyReadStandardOutput.connect(self._mg_sur_sortie)
         self._mg_proc.finished.connect(self._mg_sur_fin)
-        self._mg_proc.start(sys.executable, args)
+        self._mg_proc.start(self._mg_python, args)
         self._mg_bouton_lancer.setEnabled(False)
         self._mg_bouton_finaliser.setEnabled(True)
         self._mg_bouton_finaliser_vite.setEnabled(True)
         self._mg_rafraichir()
 
-    def _mg_composant_courant(self) -> str:
-        """Le composant que l'onglet doit chercher. Surchargeable par l'application."""
-        return getattr(self, "_composant_courant", "r75x2")
+    def _mg_composant_courant(self) -> str | None:
+        """Le composant a chercher : celui que l'utilisateur a CHOISI dans la liste.
+
+        🔴 Rend None si rien n'est choisi, et l'appelant REFUSE de lancer. Il n'y a
+        deliberement aucune valeur par defaut : chercher sur un composant que l'utilisateur
+        n'a pas designe rendrait un SEEL plausible portant sur un autre empilement.
+        """
+        nom = self._mg_composant.currentText().strip()
+        return nom if nom in COMPOSANTS else None
 
     def _mg_finaliser(self, mode: str = "attendre") -> None:
         """🔑 ON DEPOSE UN FICHIER, ON NE TUE PAS depuis l'interface -- et son CONTENU dit le
@@ -402,6 +500,24 @@ class CertusStratMultigraineMixin:
         self._mg_rafraichir()
 
     def _mg_sur_fin(self) -> None:
+        # 🔴 ON VIDE LE TUYAU AVANT DE CONCLURE. `finished` peut arriver alors qu'un dernier
+        # paquet n'a pas ete lu : sans ce drainage, les evenements `resultat` et `fin` -- donc
+        # LE CHIFFRE CITABLE -- se perdraient, et l'interface afficherait un provisoire comme
+        # s'il etait definitif. C'est le pire sens possible pour une perte.
+        try:
+            self._mg_sur_sortie()
+        except (RuntimeError, AttributeError):
+            pass
+        # ⚠️ Et le reste peut porter PLUSIEURS lignes, dont une derniere sans retour chariot --
+        # un processus tue en ecrivant en laisse une. 📏 Ma premiere version traitait tout le
+        # tampon comme UNE ligne : le JSON devenait illisible et les evenements etaient perdus
+        # tous ensemble. C'est un test qui l'a trouve, pas une relecture.
+        if self._mg_tampon:
+            for ligne in self._mg_tampon.split("\n"):
+                evt = lire_evenement(ligne.strip())
+                if evt is not None:
+                    self._mg_etat.appliquer(evt)
+            self._mg_tampon = ""
         self._mg_etat.en_cours = False
         self._mg_bouton_lancer.setEnabled(True)
         self._mg_bouton_finaliser.setEnabled(False)

@@ -351,3 +351,96 @@ def test_un_contenu_INATTENDU_retombe_sur_le_mode_PRUDENT(tmp_path: Path) -> Non
     f = tmp_path / "FINALISER"
     f.write_text("stop please", encoding="utf-8")
     assert OM.mode_finalisation_demandee(f) == "attendre"
+
+
+# ---------------------------------------------------------------------------
+# 8. LA PASSE CONTRADICTOIRE -- ce que la premiere version rendait FAUX
+# ---------------------------------------------------------------------------
+
+from certus.ui.certus_strat_multigraine_ui import (  # noqa: E402
+    COMPOSANTS,
+    composant_depuis_fichier,
+    interpreteur_et_script,
+)
+
+
+def test_le_composant_est_DEDUIT_du_fichier_charge() -> None:
+    """🔴 La premiere version codait « r75x2 » EN DUR. 👤 pouvait avoir charge un tout autre
+    empilement : l'onglet aurait rendu un SEEL plausible portant sur autre chose. C'est la
+    faute que ce depot redoute le plus."""
+    for nom, (rel, _n) in COMPOSANTS.items():
+        assert composant_depuis_fichier(rel) == nom, f"{rel} ne retrouve pas {nom}"
+
+
+def test_un_fichier_INCONNU_ne_rend_AUCUN_composant() -> None:
+    """🔴 Et surtout PAS un defaut : l'appelant doit refuser."""
+    assert composant_depuis_fichier("example/example_strat/JSON-strat-inexistant.json") is None
+    assert composant_depuis_fichier("") is None
+    assert composant_depuis_fichier(None) is None
+
+
+def test_le_chemin_ABSOLU_du_depot_est_reconnu() -> None:
+    from certus.ui.certus_strat_multigraine_ui import RACINE
+
+    rel, _ = COMPOSANTS["r75x2"]
+    assert composant_depuis_fichier(str(RACINE / rel)) == "r75x2"
+
+
+def test_deux_composants_VOISINS_ne_se_confondent_pas() -> None:
+    """`r75x2` et `r75x2-2nm` sont deux composants DISTINCTS et deliberement proches : l'un
+    porte les rampes, l'autre non. Les confondre inverserait la conclusion du 2026-08-22."""
+    a, _ = COMPOSANTS["r75x2"]
+    b, _ = COMPOSANTS["r75x2-2nm"]
+    assert a != b
+    assert composant_depuis_fichier(a) == "r75x2"
+    assert composant_depuis_fichier(b) == "r75x2-2nm"
+
+
+def test_hors_mode_gele_l_interpreteur_est_trouvable() -> None:
+    py, motif = interpreteur_et_script()
+    assert py is not None and motif == ""
+
+
+def test_en_mode_GELE_on_REFUSE_en_disant_pourquoi(monkeypatch: pytest.MonkeyPatch) -> None:
+    """🔴 `certus_hub.spec` produit un executable PyInstaller. Dans ce paquet `sys.executable`
+    est `CERTUS_HUB.exe`, `__file__` pointe dans un dossier temporaire et `scripts/` n'est pas
+    embarque. Lancer le script y donnerait une erreur incomprehensible."""
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    py, motif = interpreteur_et_script()
+    assert py is None
+    assert "COMPILEE" in motif and "sources" in motif
+
+
+def test_une_derniere_ligne_SANS_retour_chariot_n_est_pas_perdue() -> None:
+    """🔴 Le tampon decoupe sur les lignes COMPLETES. Un dernier paquet sans « \n » y resterait
+    coince -- et ce dernier paquet peut porter `resultat`, donc LE CHIFFRE CITABLE. L'interface
+    afficherait alors un provisoire comme s'il etait definitif : le pire sens de la perte."""
+    # ⚠️ PAS d'application complete ici : `CertusStratApp` demarre un fil de prechauffage
+    # numba qui emet un signal apres coup, sur une fenetre que le GC a emportee. Ce test n'a
+    # besoin que du drainage, donc d'un objet portant le mixin -- rien de plus.
+    from certus.ui.certus_strat_multigraine_ui import CertusStratMultigraineMixin
+
+    class _Bouton:
+        def setEnabled(self, _v: bool) -> None: ...
+
+    class _Stub(CertusStratMultigraineMixin):
+        _mg_bouton_lancer = _Bouton()
+        _mg_bouton_finaliser = _Bouton()
+        _mg_bouton_finaliser_vite = _Bouton()
+
+        def _mg_rafraichir(self) -> None:  # la vue n'est pas le sujet de ce test
+            ...
+
+    fen = _Stub()
+    fen._mg_etat = EtatMultigraine()
+    # un evenement complet, puis un second SANS retour chariot
+    fen._mg_tampon = (
+        OM.PREFIXE_EVT + '{"evt": "union", "plans": 200, "ecartes": 483}\n'
+        + OM.PREFIXE_EVT + '{"evt": "resultat", "seel": 0.5642, "seel_provisoire": 0.5599}'
+    )
+    fen._mg_proc = None
+    fen._mg_sur_fin()
+    assert fen._mg_etat.plans_unis == 200
+    assert fen._mg_etat.seel_final == pytest.approx(0.5642), (
+        "le chiffre citable a ete perdu dans le tampon"
+    )

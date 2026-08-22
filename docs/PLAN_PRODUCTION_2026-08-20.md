@@ -2676,3 +2676,79 @@ rampes.** ELITE n'a aucune prise, nulle part, à aucun nombre de blocs.
 gradient caché dans le run d'acceptation — n'est **pas** dans le journal, et l'artefact est vide.
 **Donc on ne sait pas si les blocs 5-9 portent un gradient caché sans rampes.** Il faut refaire
 le run.
+
+---
+
+## 32. 🔵 LA PISTE OUVERTE LE 2026-08-22 — classer les parents sur le MINIMUM par niveau de bruit
+
+**Née d'une correction de mon propre §30, et je la donne avec la réserve qui la fragilise.**
+
+### 32.1 🔴 D'abord, ce que je corrige : la « falaise » n'est pas une propriété du COMPOSANT
+
+J'avais écrit, et présenté comme une géométrie établie, qu'aux nombres de blocs qui décident *« la
+contrainte est binaire : 100 % de plantage aux trois niveaux, ou déposable, rien entre les deux »*.
+📏 Le run `r75x2` **nu** à la graine 101 le réfute :
+
+```
+                              blocs 5-9 : gradient cache · deposables
+AVEC rampes   (graine  42)          0    ·    197
+SANS rampes   (graine 101)         64    ·      0
+```
+
+**C'était une propriété du run AVEC rampes**, où les blocs 5-9 sont peuplés de descendants ELITE
+— soit bons, soit mauvais. Sans rampes, ces mêmes blocs portent **64 stratégies dont un niveau de
+bruit passe sous 100 %**.
+
+🔴 **Et l'erreur de méthode est exactement celle que je m'étais reprochée la veille** : les
+250 parents étaient à 100 % sur l'**agrégat**, et j'ai conclu sans regarder la source. `crash_rate`
+est un **maximum** sur les trois niveaux ; il sature à 1,0 et écrase l'information.
+
+### 32.2 🟢 Le gradient existe, et il est substantiel
+
+```
+blocs 5-9, graine 101 nue : 528 strategies · 64 a gradient · 464 plates
+minimum par strategie : min 0,1800 · med 0,8367 · max 0,9133 · 17 valeurs DISTINCTES
+```
+
+> **Là où le maximum ne distingue qu'UNE valeur, le minimum en distingue DIX-SEPT.** Et la
+> meilleure des 64 plante à **18 %** à un niveau de bruit — loin des 100 % que le classement voit.
+
+### 32.3 Ce que la piste propose, et ce qu'elle ne touche PAS
+
+| | |
+|---|---|
+| **ce qui change** | le **choix des parents d'ELITE**, et seulement dans le **régime dégénéré** — celui que l'instrument `[REGIME]` détecte déjà (tous les scores sont des replis, `crash_rate` constant) |
+| 🔒 **ce qui ne change PAS** | la **porte de plantage**. Elle continue de prendre le **maximum**, donc la lecture conservatrice. On ne touche pas à la faisabilité, seulement à la **direction de recherche** |
+| **pourquoi ce n'est pas `use_margin_ranking`** | celui-là est réfuté pour une raison précise : ses marges valent −1350 A au mieux, soit **1 500×** hors du domaine où §24-41 l'a validé. Ici la grandeur est un **taux de plantage mesuré**, dans son domaine, non saturé |
+
+### 32.4 🔴 LA RÉSERVE QUI PEUT TUER LA PISTE, et elle est mesurée
+
+```
+quel niveau de bruit porte le minimum ?   {'0.1': 60, '0.05': 4}
+la meilleure des 64 : {'0.025': 1,00 · '0.05': 1,00 · '0.1': 0,18}
+```
+
+**60 des 64 minima viennent du niveau de bruit le plus FORT** — donc du régime de l'anomalie de
+§29, où le plantage **décroît** quand le bruit croît, 8,72 contre 1 et sans explication.
+
+> **Classer sur ce minimum, c'est peut-être classer sur l'anomalie.** Tant que la cause de
+> l'inversion n'est pas établie, un gradient qui vit à 2× le bruit nominal peut ne rien dire du
+> comportement au bruit réel.
+
+⚠️ **Second point contre** : aucune des 528 stratégies des blocs 5-9 ne porte **450, 615 ou
+685 nm** — les λ dont la famille gagnante a besoin. Le gradient ne pointe donc **pas** vers la
+solution connue. Cela ne le condamne pas — ELITE n'a pas besoin d'atteindre la famille *connue*,
+seulement une famille *faisable* — mais il ne faut pas raconter qu'il y mène.
+
+### 32.5 L'ordre dans lequel cette piste doit être instruite
+
+| # | étape | pourquoi cet ordre |
+|---|---|---|
+| 1 | **balayer `tp_hysteresis_factor` à bruit fixé** (§29.2) | 🔑 **avant tout le reste.** Si l'inversion crash/bruit vient du seuil, le gradient du niveau 2× est un artefact et la piste tombe. Une sonde bon marché qui peut invalider un gros travail passe avant lui (§28, règle 1) |
+| 2 | vérifier que le gradient **ordonne** quelque chose | corréler le minimum par bruit avec le devenir des descendants ELITE, sur un run existant. Gratuit |
+| 3 | implanter, **inerte par défaut**, confiné au régime dégénéré | avec un test qui **échoue** sur le code d'avant |
+| 4 | mesurer contre le contrôle négatif : `r75x2` nu, même graine | une seule variable |
+
+📌 Et l'honnêteté sur son statut : **c'est la première voie autonome nouvelle depuis le 21 août**,
+et elle porte déjà une réserve capable de l'annuler. Ce n'est pas une solution, c'est une
+hypothèse avec un plan pour la réfuter.

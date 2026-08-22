@@ -1,7 +1,94 @@
-# 🔴 REPRENDRE ICI — état gelé le 2026-08-21 à 13:55
+# 🔴 REPRENDRE ICI — état gelé le 2026-08-22 à 18:00
 
 > Ce fichier dit **où on s'est arrêté** et **la commande exacte pour repartir**. Il est le
 > premier à lire, avant `CLAUDE.md`.
+
+---
+
+## 00. 🟢🟢 LE 2026-08-22 A RENVERSÉ LA CONCLUSION DE §8.2ter — lis ceci d'abord
+
+⚠️ **Les sections §8.2ter et §8.2quater plus bas portent un raisonnement PÉRIMÉ.** Elles
+concluaient que *« la graine 77 est l'exception »* sur la foi de quatre graines. Trois mesures
+de plus l'ont réfuté.
+
+### Sept graines NUES sur `r75x2` à 2 nm, plage complète, ZÉRO surcharge
+
+```
+graine   strategies  deposables   meilleur SEEL     strats - depos
+   42        1617          0           --                1617
+   77        2231        547        0,5692 nm            1684   ✅
+  101        1630          0           --                1630
+  202        1646          0           --                1646
+  303        1680          0           --                1680
+  404        2016        372        0,5599 nm            1644   ✅
+  505        1995        311        0,6112 nm            1684   ✅
+```
+
+🔑 **`p` n'est plus supposé, il est mesuré : 3 succès sur 7.** Et la 404 rend **0,5599 nm sans
+aucune rampe** — c'est la demande de 👤 satisfaite : *que le code trouve 0,57 à 2 nm sans
+savoir a priori qu'il faut des rampes.*
+
+⚠️ **Formulation qui tient** : 0,5599 contre 0,5676 pour la voie avec rampes, soit −1,4 %,
+**sous le bruit de 2,59 %**. C'est une **égalité**, jamais une supériorité. Et cela vaut sur
+`r75x2` à 2 nm, rien d'autre (§8.2bis).
+
+### Il faut DEUX `p`, et c'est ce qui dimensionne `K`
+
+```
+p(un DEPOSABLE quelconque)   = 3/7 ~ 0,43     K=3 -> 81 %   K=4 -> 89 %
+p(le NIVEAU 0,57)            = 2/7 ~ 0,29     K=4 -> 74 %   K=6 -> 87 %
+```
+
+La 505 trouve du **fabricable**, pas du 0,57 : son 0,6112 est à +7,7 % du 0,5676, bien au-delà
+du bruit. S'arrêter au premier succès peut donc coûter **9,2 %** d'étendue.
+
+### 🔴 La fausse piste, tuée d'avance
+
+On est tenté de voir un prédicteur dans le nombre de stratégies (2016 et 2231 chez celles qui
+trouvent, 1617 à 1680 chez les autres). **C'est le même fait compté deux fois** : en
+retranchant les déposables, la bande est continue — 1617, 1630, 1644, 1646, 1680, 1684, 1684 —
+et les trois succès y sont **intercalés**. Il n'existe aucun signal avant le criblage.
+
+### 📏 Le criblage de graines à budget réduit : FIABLE et NON RENTABLE
+
+Proposition de 👤 : cribler beaucoup de graines à peu de tirages, puis élargir sur les bonnes.
+Mesuré sur les six graines dont on connaît la réponse (`n_screen_runs` 50→12,
+`robustness_num_runs` 300→75, étiquette `mcreduit4x`) :
+
+```
+6/6 classifications correctes -- zero faux positif, zero faux negatif
+   (42, 77, 101, 202, 303, 404 -- la 505 n'a PAS ete criblee a budget reduit)
+MAIS le run n'est que 1,63x plus rapide (25-27 min contre 44)
+
+cribler 7 graines puis rejouer les 3 gagnantes :  321 min
+tout jouer plein                               :  308 min     -> le criblage COUTE
+```
+
+🔑 La raison est structurelle : le partage **criblage 47 % / ELITE 53 %** (§3 point 5) plafonne
+tout gain à ~2×. ⚠️ **Et le résultat du run bon marché n'est pas utilisable** : la 404 y rend
+0,6026 au lieu de 0,5599, à **7 blocs au lieu de 10** — une autre lignée. Élargir les tirages
+veut dire **relancer la graine**, pas renoter les survivantes du run bon marché : les bons
+plans n'y ont jamais été produits.
+
+### 🟢 Ce qui a été CONSTRUIT le 2026-08-22
+
+| | |
+|---|---|
+| **`scripts/orchestre_multigraine.py`** | K graines dans un **budget de temps**, union en tourniquet, notation sur graine **disjointe**. 42 tests |
+| **onglet « Multi-realisation »** dans le GUI STRAT | `certus/ui/certus_strat_multigraine_ui.py`. Il **pilote** le script, ne le réimplémente pas. 32 tests |
+| **`scripts/batch_mc_reduit.sh`** | le test de criblage ci-dessus |
+| 🔴 **`scripts/preflight.py` §2 mentait** | il lisait `.git/hooks/post-commit` en dur ; sous `core.hooksPath` il imprimait `[OK] post-commit is disabled` pendant que le commit **publiait**. Il demande maintenant `git rev-parse --git-path hooks`. Garde : `tests/unit/test_preflight_voit_le_hook.py` |
+| test orphelin retiré | `test_docs_api_examples.py` lisait un document supprimé par `395a3c8` |
+
+### 🔵 Ce qui reste ouvert au 2026-08-22 à 18:00
+
+| | |
+|---|---|
+| **la validation de bout en bout de l'orchestrateur** | lancée à 17:33, encore dans sa notation finale. L'événement `resultat` n'a **jamais** été émis par un vrai run |
+| **le plafond `--max-plans=200`** | écarte **483 plans sur 683**. Signalé, mais à revoir |
+| **`r75x2-2nm` livrée, graine 202** | toujours non mesurée. Non urgente |
+| **l'anomalie plantage/bruit** | §1ter, toujours incomprise |
+| **la RAM tourne à 2133 MHz** | kit Corsair noté 3600 mélangé à un kit G.Skill 3200 → repli JEDEC. Deux runs concurrents ne rendent que **+29 %** de débit et le CPU plafonne à 74 % en solo : le goulot est la **bande passante mémoire**. Le DOCP est gratuit et non fait |
 
 ---
 
@@ -71,6 +158,16 @@ relancer sans réfléchir : il reprend où la campagne s'est arrêtée. Au momen
 🔑 **Donc une seule mesure reste, et le script la trouvera tout seul.** Les trois autres portent
 un artefact `verdict = OK` et seront sautées : `bash scripts/batch_r75x2_reprenable.sh` reprend
 directement `livree_s202`.
+
+📌 **Et depuis le 2026-08-22 à 18:00, il y a mieux que ce batch pour chercher** — voir §00 :
+
+```bat
+python scripts\orchestre_multigraine.py r75x2 --budget nuit --seel-cible 0.57 --objectif meilleur
+```
+
+Il rejoue la recherche sur K réalisations dans un **budget de temps**, saute ce qui porte déjà
+un artefact, unit les plans en tourniquet et note sur une graine **disjointe**. Le même
+mécanisme est dans le GUI STRAT, onglet **« Multi-realisation »**.
 
 ⚠️ **Et elle n'est pas urgente** : elle consolide le 0,5676 avec une quatrième réalisation, elle
 ne peut pas le remettre en cause — trois graines convergent déjà à **0,55 %** d'étendue, sous le
@@ -686,10 +783,19 @@ Elle est écrite d'avance pour ne pas être réinterprétée selon le résultat.
 | **une seule** trouve | la recherche réussit ~1 fois sur 2 → même conclusion, K plus grand |
 | **aucune** ne trouve | la graine **77 est chanceuse**. 🔴 **Ne conclus PAS « la découverte autonome est impossible »** — c'est ce que cette case disait, et c'était faux : la **queue Rate** trouve seule à 2 nm, à SEEL 0,67-0,69 (voir §0bis). La conclusion correcte est *aucune voie autonome n'atteint le niveau de 0,57 en pur optique*, et la réponse produit devient `scripts/generer_rampes.py` pour ce niveau, la queue Rate pour un niveau dégradé mais autonome. **Ce n'est pas un échec** |
 
-🟢 **CETTE RÈGLE A TIRÉ LE 2026-08-22, ET C'EST LA TROISIÈME BRANCHE** : les graines 101 et
-202 nues rendent **0 déposable** sur 1630 et 1646 stratégies. La 77 est l'exception. ⚠️ Mais lis
-§8.2quater ci-dessus **avant** d'en conclure quoi que ce soit sur le multiseed — la conclusion
-que j'en avais tirée était fausse.
+🔴 **CE PARAGRAPHE A ÉTÉ ÉCRIT PUIS RÉFUTÉ LE MÊME JOUR — voir §00 en tête de fichier.** Il
+disait : *« la règle a tiré le 2026-08-22, et c'est la troisième branche : les graines 101 et
+202 nues rendent 0 déposable, la 77 est l'exception. »*
+
+**Faux, et sur trois graines de plus.** Les graines **404 et 505 trouvent nativement** — 372 et
+311 déposables, SEEL 0,5599 et 0,6112 nm. La branche qui a réellement tiré est la **première** :
+*plusieurs graines trouvent → le multiseed de génération est la réponse produit, et `K` peut
+être petit.*
+
+🔑 **La leçon de méthode vaut plus que le résultat** : la règle avait été écrite d'avance pour
+ne pas être réinterprétée selon le résultat, et c'est ce qui a marché — elle a été appliquée
+telle quelle, puis **la mesure suivante l'a fait changer de branche**. Une règle écrite
+d'avance ne protège pas d'un échantillon trop petit. **Quatre graines ne suffisaient pas.**
 
 📌 Rappel du contexte : on n'a que **deux** graines mesurées nues sur `r75x2` à 2 nm — la 77
 trouve 547 déposables, la 42 en trouve **zéro** sur 1617. Deux points ne permettent aucune

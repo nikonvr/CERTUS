@@ -46,9 +46,10 @@ from certus.ui.certus_strat_ui_events import CertusStratEventsMixin
 from certus.ui.certus_strat_ui_worker import CertusStratWorkerMixin
 from certus.ui.certus_strat_ui_plot import CertusStratPlotMixin
 from certus.ui.certus_strat_ui_export import CertusStratExportMixin
+from certus.ui.certus_strat_multigraine_ui import CertusStratMultigraineMixin
 
 
-class CertusStratApp(CertusWindowSpyMixin, CertusStratLayoutMixin, CertusStratStateMixin, CertusStratEventsMixin, CertusStratWorkerMixin, CertusStratPlotMixin, CertusStratExportMixin, CertusBaseApp):
+class CertusStratApp(CertusWindowSpyMixin, CertusStratLayoutMixin, CertusStratStateMixin, CertusStratEventsMixin, CertusStratWorkerMixin, CertusStratPlotMixin, CertusStratExportMixin, CertusStratMultigraineMixin, CertusBaseApp):
     sig_numba_ready = pyqtSignal()
     sig_numba_error = pyqtSignal()
     """Main CERTUS-STRAT Application"""

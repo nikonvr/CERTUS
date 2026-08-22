@@ -166,6 +166,12 @@ class CertusStratLayoutMixin:
 
         self._create_advanced_tab()
 
+        # L'onglet qui rejoue la recherche sur K realisations dans un budget de temps. Il
+        # PILOTE `scripts/orchestre_multigraine.py` au lieu de le reimplementer : la regle de
+        # disjonction des graines, l'union en tourniquet et le plafond de temps n'existent
+        # donc qu'a un seul endroit.
+        self._create_multigraine_tab()
+
         self._create_why_certus_tab()
 
         controls_layout.addStretch()

@@ -316,7 +316,7 @@ ailleurs — c'est la règle qui empêche les contradictions de revenir.
 | [`SEEL.md`](docs/SEEL.md) | 🆕 extrait de §22 le 2026-08-19 : la définition, la règle de tri, le revirement 0,1 → 0,01 nm et son prix non mesuré, et le code mort de la seconde borne |
 | [`CHANTIERS_OUVERTS.md`](docs/CHANTIERS_OUVERTS.md) | 🆕 extrait de §27 le 2026-08-19 : les deux propositions de 👤 non mesurées, isolation des tests, perf |
 | [`ETAT_IMPLANTATION.md`](docs/ETAT_IMPLANTATION.md) | ce qui est **réellement** implanté, établi contre le CODE |
-| [`COMPOSANTS.md`](docs/COMPOSANTS.md) | les quatre composants d'essai |
+| [`COMPOSANTS.md`](docs/COMPOSANTS.md) | les composants d'essai, **et la série d'échelle du random75** dont `r75x2` est la variante ×2 |
 | [`DECISIONS_TRANCHEES.md`](docs/DECISIONS_TRANCHEES.md) | grille des λ, profondeur Monte-Carlo, les deux correctifs |
 | [`PERFORMANCE.md`](docs/PERFORMANCE.md) | ⚡ ce qui a été mesuré, **y compris les pistes fermées** |
 | [`ENONCE_PROBLEME.md`](reports/ENONCE_PROBLEME.md) | énoncé autonome, pour poser le problème à un tiers |

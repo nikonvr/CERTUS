@@ -101,18 +101,37 @@ if tmm_path is not None:
 #    refusing to work. What it must never do is stay silent: a commit that publishes
 #    and a commit that does not look identical in the terminal.
 print("\n2. POST-COMMIT HOOK -- does committing PUBLISH?")
-hooks = ROOT / ".git" / "hooks"
+# 🔴 CE CONTROLE A ETE FAUX ENTRE LE 2026-08-22 ET SA REPARATION LE MEME JOUR, ET IL ETAIT
+# FAUX DANS LE SENS DANGEREUX. Il lisait `.git/hooks/post-commit` EN DUR. Or le hook a
+# demenage dans `.githooks/` (versionne) le 2026-08-22, ou il s'arme par
+# `git config core.hooksPath .githooks`. Sous cette configuration -- celle qui est VOULUE --
+# il n'y a plus rien dans `.git/hooks/`, et le controle imprimait :
+#
+#     [OK ] post-commit is disabled: committing stays local (found: (none))
+#
+# alors que le commit suivant POUSSAIT vers le depot PUBLIC. Un [OK] qui affirme l'etat sur
+# lequel repose « rien de personnel ne doit entrer dans l'index » (CLAUDE.md §2), pendant que
+# l'etat inverse tient.
+#
+# 🔑 C'est la troisieme occurrence de la MEME faute dans ce fichier -- `EXPECTED_ROOT` au §2,
+# le `.venv` code en dur au §3, et celle-ci : coder en dur un CHEMIN au lieu de demander sa
+# valeur EFFECTIVE. La reparation ne recalcule donc pas la resolution de git, elle la lui
+# DEMANDE : `git rev-parse --git-path hooks` rend `.githooks` quand `core.hooksPath` est pose
+# et `.git/hooks` sinon.
+_, hooks_dir_raw = run("git", "rev-parse", "--git-path", "hooks")
+hooks = (ROOT / hooks_dir_raw) if hooks_dir_raw else (ROOT / ".git" / "hooks")
 live_hook = hooks / "post-commit"
 found = sorted(p.name for p in hooks.glob("post-commit*")) if hooks.is_dir() else []
 _, remote = run("git", "remote", "get-url", "origin")
-if live_hook.exists():
+print(f"  [ i ] hooks effectifs: {hooks_dir_raw or '(inconnu)'} (found: {', '.join(found) or '(none)'})")
+if live_hook.is_file():
     print(f"  [ ! ] post-commit is ARMED: every commit PUSHES to {remote or '(unknown remote)'}")
     warnings.append(
         f"post-commit ARMED -- committing publishes to {remote or 'origin'}. "
         "Nothing carrying a personal datum, a credential or a third party's work may be committed."
     )
 else:
-    print(f"  [OK ] post-commit is disabled: committing stays local (found: {', '.join(found) or '(none)'})")
+    print("  [OK ] post-commit is disabled: committing stays local")
 
 # 2bis. The hook's STATE is not the danger -- UNPUSHED COMMITS are.
 #

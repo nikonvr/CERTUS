@@ -13,9 +13,12 @@ resultat. Ce script l'applique mecaniquement.
     les DEUX trouvent   -> la graine 42 est MALCHANCEUSE. Le multiseed de GENERATION est la
                            reponse produit : union sur K graines, faisabilite exigee sur TOUTES.
     UNE SEULE trouve    -> la recherche reussit ~1 fois sur 2. Meme conclusion, K plus grand.
-    AUCUNE ne trouve    -> la graine 77 est CHANCEUSE. La decouverte autonome n'est pas
-                           atteignable par la recherche sur cet empilement, et la reponse
-                           produit devient `scripts/generer_rampes.py`. CE N'EST PAS UN ECHEC.
+    AUCUNE ne trouve    -> la graine 77 est CHANCEUSE. 🔴 Mais NE CONCLUS PAS que la
+                           decouverte autonome est impossible : la QUEUE RATE trouve seule a
+                           2 nm, SEEL 0,67-0,69 (CHANTIER_RATE.md §3bis). L'enonce juste est
+                           « aucune voie autonome n'atteint 0,57 EN PUR OPTIQUE ». Reponse
+                           produit : les rampes pour 0,57, la queue Rate pour un niveau
+                           degrade mais autonome. CE N'EST PAS UN ECHEC.
 
 📌 Le contexte, a garder en tete : sur `r75x2` a 2 nm on ne dispose que de DEUX graines mesurees
 nues -- la 77 rend 547 deposables, la 42 en rend ZERO sur 1617.
@@ -151,11 +154,24 @@ def main() -> int:
         else:
             print("  🔴 AUCUNE DES DEUX NE TROUVE.")
             print("     -> la graine 77 est CHANCEUSE, pas la 42 malchanceuse.")
-            print("     -> la decouverte autonome n'est pas atteignable par la recherche sur")
-            print("        cet empilement a 2 nm.")
-            print("     -> la reponse produit devient `scripts/generer_rampes.py`, et")
-            print("        CE N'EST PAS UN ECHEC : une bibliotheque de rampes plus une")
-            print("        procedure scriptee pour en fabriquer est une reponse legitime.")
+            print()
+            print("     🔴 NE CONCLUS PAS « la decouverte autonome est impossible ».")
+            print("        C'est ce que cette sortie disait, et c'etait FAUX : la QUEUE RATE")
+            print("        trouve seule a 2 nm, SEEL 0,6717 en premium et 0,6859 en deep, sans")
+            print("        aucune rampe (CHANTIER_RATE.md §3bis, mesure du 2026-08-20).")
+            print()
+            print("     La conclusion correcte est :")
+            print("        aucune voie autonome n'atteint le niveau de 0,57 EN PUR OPTIQUE ;")
+            print("        la seule qui trouve sans rampe plafonne a 0,67-0,69, soit +18 %.")
+            print()
+            print("     -> pour le niveau de 0,57 : `scripts/generer_rampes.py`")
+            print("     -> pour un niveau degrade mais AUTONOME : la queue Rate")
+            print("     CE N'EST PAS UN ECHEC : une bibliotheque de rampes plus une procedure")
+            print("     scriptee pour en fabriquer est une reponse produit legitime.")
+            print()
+            print("     ⚠️ Et le contexte qui borne tout : a la resolution NATIVE de ce fichier")
+            print("        (1 nm), le pur optique rend 277 deposables a SEEL 0,6248. Tout ce")
+            print("        travail decrit le composant tourne a LA MOITIE de sa resolution.")
 
     # ── LE CHIFFRE LIVRE, situe parmi les reperes ─────────────────────────
     print()

@@ -19,16 +19,26 @@ bash scripts\batch_r75x2_reprenable.sh
 🔑 **Il SAUTE toute mesure dont l'artefact existe déjà avec `verdict = OK`.** On peut donc le
 relancer sans réfléchir : il reprend où la campagne s'est arrêtée. Au moment de la bascule :
 
-| mesure | état |
+| mesure | état à la bascule du 2026-08-22 à 14h00 |
 |---|---|
 | `r75x2` nu, graine 101 | ✅ **faite** — 1630 stratégies, **0 déposable**, 91 min |
-| `r75x2` nu, graine 202 | 🔄 lancée à 10h27 sur l'ancienne machine, fin attendue ~11h59 |
-| `r75x2-2nm` livrée, graine 101 | ⏳ à faire |
-| `r75x2-2nm` livrée, graine 202 | ⏳ à faire |
+| `r75x2` nu, graine 202 | ✅ **faite** — 1646 stratégies, **0 déposable**, 97 min |
+| `r75x2-2nm` livrée, graine 101 | ✅ **faite** — voir le commit de la bascule |
+| `r75x2-2nm` livrée, graine 202 | ⏳ **la seule qui reste**, ~95 min |
 
-⚠️ **Vérifie d'abord si la graine 202 nue a fini avant la bascule** : `git pull`, puis
-`ls reports/blocs_vs_plantage_r75x2_deep_s202*.json`. Si l'artefact est là, le script la saute ;
-sinon il la refait, et c'est le comportement voulu.
+🔑 **Donc une seule mesure reste, et le script la trouvera tout seul.** Les trois autres portent
+un artefact `verdict = OK` et seront sautées : `bash scripts/batch_r75x2_reprenable.sh` reprend
+directement `livree_s202`.
+
+⚠️ **Et elle n'est pas urgente** : elle consolide le 0,5676 avec une quatrième réalisation, elle
+ne peut pas le remettre en cause — trois graines convergent déjà à **0,55 %** d'étendue, sous le
+bruit de 2,59 %.
+
+🔑 **CE QUI EST URGENT, c'est l'action de §8.2quater** : `r75x2` NU aux graines **303, 404, 505**,
+qui dimensionne `K` pour le multiseed de génération. C'est la seule voie qui réponde à la demande
+de 👤 — *que le code trouve 0,57 à 2 nm sans savoir a priori qu'il faut des rampes*. ~91 min par
+graine, et **une seule suffit pour un signal** : si elle trouve, c'est un second succès
+indépendant et le mode se justifie.
 
 ### 0.2 🔴 CE QUI NE SUIT PAS LE DÉPÔT — les cinq pièges de la machine neuve
 

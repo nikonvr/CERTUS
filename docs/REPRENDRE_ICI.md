@@ -50,6 +50,25 @@ indépendant et le mode se justifie.
 | 4 | **le cache de profils de fente est froid** | la Phase A du premier run prendra ~30 min au lieu de ~10. Ce n'est pas une régression |
 | 5 | 🔴 **les durées mesurées ne valent que sur leur machine** | un run pleine plage prenait **91 min** sur i5-8250U 8 threads. Sur une machine plus puissante ce sera moins — mais **ne baisse PAS `CERTUS_BENCH_TIMEOUT_S` pour autant** |
 
+### 0.2bis 🔑 CE QUE LA MACHINE PLUS PUISSANTE VA — ET NE VA PAS — ACCÉLÉRER
+
+Vérifié dans le code, pas supposé :
+
+| étage | comportement sur une machine plus large |
+|---|---|
+| **notation de robustesse** | 🟢 **s'adapte** — `max_workers = max(1, cpu_count() // 2)` (`certus_strat_robustness.py:1838`). 8 threads → 4 workers ; 32 threads → 16 |
+| **boucle des nombres de blocs** | 🔴 **reste à 1, par conception.** `certus_strat_workers.py:1452` porte `max_workers = 1` avec le commentaire *« FIX: Force max_workers=1 to prevent Numba CPU oversubscription and deadlocks »*. **Ne le remonte pas** sans comprendre ce qu'il évitait |
+| **noyaux numba** | 🟢 `prange` élargit avec les cœurs, à l'intérieur de chaque évaluation |
+
+⚠️ **Donc n'attends PAS un gain linéaire en cœurs.** Le facteur viendra de trois sources
+inégales — plus de workers de notation, un cœur plus rapide, un `prange` plus large — et une
+partie du run reste sérialisée par choix.
+
+🔑 **Et la conséquence pratique : MESURE la durée d'un run avant d'annoncer un ETA.** Le repère
+d'ici est **91 à 97 min** pour un run pleine plage sur i5-8250U, 8 threads. Le premier run sur la
+machine neuve donne le nouveau repère ; tout ce qui est écrit ailleurs dans ce dossier porte
+l'ancien.
+
 ### 0.3 🔴 LE PIÈGE QUI A DÉTRUIT QUATRE MESURES, ET IL EST DANS LE PLAFOND
 
 📏 Le 2026-08-22, `CERTUS_BENCH_TIMEOUT_S=5400` a coupé **quatre mesures de 91 minutes** à

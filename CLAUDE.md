@@ -1194,9 +1194,9 @@ chemin de calcul est celui d'avant, au bit près.
 
 ---
 
-## 21. Points de référence — les quatre repères valides, et ce qui les périme
+## 21. Points de référence — les repères valides, et ce qui les périme
 
-🟢 **LES REPÈRES EXISTENT DEPUIS LE 2026-08-15.** Voici les quatre, tous mesurés **fente
+🟢 **LES REPÈRES EXISTENT DEPUIS LE 2026-08-15.** Les voici, tous mesurés **fente
 2 nm**, donc sous le modèle courant. Ce sont eux qu'on cite, et aucun autre.
 
 | composant | couches | SEEL | plantage | condition |
@@ -1206,6 +1206,9 @@ chemin de calcul est celui d'avant, au bit près.
 | **aléatoire** `JSON-strat-random75` | 75 | **0,272 nm** | 0 % | une seule campagne, 241/662 déposables |
 | passe-bande 5 cavités `JSON-strat-bandpass-5cav-99c` | 99 | **0,81 nm** | 0 % par campagne | 🔴 **4 verres témoins** — 0-22 / 22-42 / 42-76 / 76-99 · ⚠️ moyenne de **trois graines** (0,782 / 0,816 / 0,839) ; ne cite jamais le 0,782 seul |
 | le même, **en une seule campagne** | 99 | *aucun score valide* | **100 %** sur 487 stratégies | non fabricable — §23.8 |
+| **aléatoire ×2** `JSON-strat-random75-x2-fabricable` | 75 | **0,6248 nm** | 0 % | épaisseurs **doublées**, fente **native 1 nm**, pur optique, 277 déposables |
+| le même **à 2 nm**, config livrée | 75 | **0,5676 nm** | 1,67 % | 🔴 **AVEC les rampes** de `example/example_strat/rampes_r75x2-2nm.json`. 3 graines : 0,5676 / 0,5692 / 0,5707, étendue 0,55 %. Ce n'est **pas** une découverte autonome |
+| le même **à 2 nm, SANS rampes** | 75 | *aucun score valide* | **100 %** | 🔴 **3 graines nues sur 4 rendent ZÉRO** (42, 101, 202) ; seule la 77 trouve, 547 déposables. §33 de [`PLAN_PRODUCTION_2026-08-20.md`](docs/PLAN_PRODUCTION_2026-08-20.md) |
 
 🔑 **Lis la troisième et la quatrième ligne ensemble : 75 couches passent, 99 non.** Ce n'est
 donc **pas la longueur** qui met le monitoring optique en échec, c'est la **structure**. Le
@@ -1902,7 +1905,7 @@ négatifs**, et les négatifs comptent autant : trois pistes y sont **fermées p
 📌 **Le dossier est dans [`docs/COMPOSANTS.md`](docs/COMPOSANTS.md)** — la formule, les
 matériaux, la plage spectrale et l'histoire de chaque composant.
 
-**Les quatre, et ce que chacun sert à tester** — les repères chiffrés sont en §21 :
+**Les cinq, et ce que chacun sert à tester** — les repères chiffrés sont en §21 :
 
 | composant | couches | ce qu'il apporte |
 |---|---|---|
@@ -1910,6 +1913,7 @@ matériaux, la plage spectrale et l'histoire de chaque composant.
 | **passe-bande 3 cavités** `JSON-strat-bandpass-3cav` | 35 | une résonance, une bande étroite. Notation sur 60 nm seulement |
 | **aléatoire** `JSON-strat-random75` | 75 | 🔑 **ni cavité, ni miroir, ni périodicité** — le seul qui teste si une règle est **générale**. Graine 2026 |
 | **passe-bande 5 cavités** `-5cav-99c` | 99 | le cas dur. **100 % de plantage** en une campagne |
+| **aléatoire ×2** `-random75-x2-fabricable` | 75 | 🔑 **l'étalon depuis le 2026-08-20.** Le random75 aux épaisseurs **doublées**. Fente native **1 nm** — d'où le `-fabricable` de son nom. Tourné à **2 nm** il est à la moitié de sa résolution de conception, et c'est là que tout le travail se joue |
 
 🔴 **Ils ne sont pas notés sur le même domaine spectral** — 300 / 200 / 60 / 45 nm. Comparer
 leurs SEEL entre eux mélange la difficulté du composant et la largeur de la fenêtre. Les

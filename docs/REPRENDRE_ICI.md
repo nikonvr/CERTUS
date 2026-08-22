@@ -5,6 +5,76 @@
 
 ---
 
+## 0. 🔴 TU ARRIVES SUR UNE MACHINE NEUVE ? LIS CES DIX LIGNES D'ABORD
+
+👤 a basculé de machine le **2026-08-22 vers midi**, en cours de campagne. Le dépôt porte tout
+l'état ; **ce qui suit est ce qui ne le porte PAS.**
+
+### 0.1 ⚡ La commande unique pour reprendre la campagne
+
+```bat
+bash scripts\batch_r75x2_reprenable.sh
+```
+
+🔑 **Il SAUTE toute mesure dont l'artefact existe déjà avec `verdict = OK`.** On peut donc le
+relancer sans réfléchir : il reprend où la campagne s'est arrêtée. Au moment de la bascule :
+
+| mesure | état |
+|---|---|
+| `r75x2` nu, graine 101 | ✅ **faite** — 1630 stratégies, **0 déposable**, 91 min |
+| `r75x2` nu, graine 202 | 🔄 lancée à 10h27 sur l'ancienne machine, fin attendue ~11h59 |
+| `r75x2-2nm` livrée, graine 101 | ⏳ à faire |
+| `r75x2-2nm` livrée, graine 202 | ⏳ à faire |
+
+⚠️ **Vérifie d'abord si la graine 202 nue a fini avant la bascule** : `git pull`, puis
+`ls reports/blocs_vs_plantage_r75x2_deep_s202*.json`. Si l'artefact est là, le script la saute ;
+sinon il la refait, et c'est le comportement voulu.
+
+### 0.2 🔴 CE QUI NE SUIT PAS LE DÉPÔT — les cinq pièges de la machine neuve
+
+| # | ce qui ne traverse pas | ce qu'il faut faire |
+|---|---|---|
+| 1 | **le hook `post-commit`** — `.git/hooks/` n'est pas versionné | 🔴 **Sur l'ancienne machine il était ARMÉ et chaque commit poussait vers le dépôt PUBLIC.** Sur la neuve il n'existe pas : **tes commits ne partiront pas tout seuls.** Fais `git push` à la main, ou réarme le hook — et sache lequel tu as choisi |
+| 2 | **le chemin de l'interpréteur** | l'ancienne machine avait `C:\envs\certus\Scripts\python.exe`, **pas** `.venv`. Le script accepte une surcharge : `CERTUS_PY=... bash scripts/batch_r75x2_reprenable.sh` |
+| 3 | **le cache numba est FROID** | la **première** passe de `pytest tests/oracle/ tests/unit/` rendra **3 échecs FAUX** (`test_phase2_gradient_analytic_vs_fd` et les deux `TestIRGlobalModelStrategy`). Cause dans numba, pas dans le dépôt — voir `CLAUDE.md` §2. **Relance une seconde fois avant de signaler quoi que ce soit** |
+| 4 | **le cache de profils de fente est froid** | la Phase A du premier run prendra ~30 min au lieu de ~10. Ce n'est pas une régression |
+| 5 | 🔴 **les durées mesurées ne valent que sur leur machine** | un run pleine plage prenait **91 min** sur i5-8250U 8 threads. Sur une machine plus puissante ce sera moins — mais **ne baisse PAS `CERTUS_BENCH_TIMEOUT_S` pour autant** |
+
+### 0.3 🔴 LE PIÈGE QUI A DÉTRUIT QUATRE MESURES, ET IL EST DANS LE PLAFOND
+
+📏 Le 2026-08-22, `CERTUS_BENCH_TIMEOUT_S=5400` a coupé **quatre mesures de 91 minutes** à
+**98,9 %** d'avancement. `wait_for` rend alors `None`, ce qui **ressemble à un résultat**.
+
+```
+empreinte a chercher dans un journal :  « WAIT_TIMEOUT=5400 s — aucune emission recue »
+et le signe qui ne trompe pas : plusieurs mesures qui durent EXACTEMENT le plafond
+```
+
+🔑 **La règle est `max(5400, 4 × durée attendue)`**, jamais un nombre recopié. Le script porte
+38400 s. **Un plafond trop grand ne coûte rien ; un plafond trop petit détruit la mesure à la
+dernière minute** — donc en cas de doute sur une machine inconnue, on ne le baisse pas.
+
+### 0.4 Les trois contrôles avant de toucher à quoi que ce soit
+
+```bat
+C:\envs\certus\Scripts\python.exe -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
+dir .git\hooks\post-commit*
+C:\envs\certus\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
+C:\envs\certus\Scripts\python.exe -m ruff check .
+```
+
+Attendus : le chemin **dans l'arbre que tu édites** · l'état du hook **connu** (piège 1) ·
+`2800 passed, 5 skipped` à la **seconde** passe (piège 3) · `All checks passed!`
+
+Et les deux contrôles de cohérence documentaire, qui étaient à **zéro** à la bascule :
+
+```bat
+C:\envs\certus\Scripts\python.exe scripts\coherence_md.py
+C:\envs\certus\Scripts\python.exe scripts\check_claude_md.py
+```
+
+---
+
 ## 0bis. 🔒 CLÔTURE DE LA JOURNÉE DU 2026-08-21
 
 👤 a arrêté la campagne après le run à la graine 101. **Rien ne tourne, rien n'est en attente.**
@@ -74,7 +144,7 @@ sur **toutes**.
 
 ---
 
-## 0. ⚡ LA SITUATION EN CINQ LIGNES
+## 0ter. ⚡ LE RÉSULTAT ACQUIS, ET SA CONDITION
 
 👤 voulait que le code de **production** trouve sur `r75x2` à **2 nm** des SEEL « de l'ordre de
 0,57 ou moins ». À la graine 42 seule, il rendait **0 déposable sur 1617**, toutes à 100 % de
@@ -160,40 +230,23 @@ intermédiaire plante**, donc rien n'est retenu pour bâtir dessus.
 
 ---
 
-## 1. 🔴 LA PREMIÈRE CHOSE À FAIRE — borner la malédiction du vainqueur
+## 1. ✅ LA MALÉDICTION DU VAINQUEUR EST BORNÉE — action close le 2026-08-21
 
-**Ce n'est plus la découverte autonome. C'est la solidité du chiffre livré.**
-
-🔴 **Le résultat est circulaire, et sur DEUX plans distincts :**
+Cette section demandait de rejouer la configuration livrée à une graine **qui n'a pas servi à
+choisir les rampes**. C'est fait, et le résultat est bon :
 
 ```
-graine 77 trouve la famille
-  -> injection des plans de la graine 77 dans la graine 42   -> 72 deposables
-    -> je garde les 12 MEILLEURES de ces 72                  -> les rampes livrees
-      -> remesure a la graine 42                             -> 197 deposables, 0,5676
+graine  42 (a CHOISI les rampes)  ->  SEEL 0,5676 nm
+graine 101 (NAIVE)                ->  SEEL 0,5707 nm   ecart +0,55 %
 ```
 
-1. **L'information vient de la graine 77.** Assumé, écrit, et sans conséquence sur la validité
-   du chiffre.
-2. 🔴 **Sélection et évaluation partagent la graine 42.** Les 12 rampes ont été choisies sur des
-   mesures à la graine 42, puis remesurées à la graine 42. C'est **le canal de malédiction du
-   vainqueur, chiffré à +12,9 % le 15/08**. Le 0,5676 peut donc être biaisé vers le bas, et
-   **aucune borne n'existe**.
+Le canal de biais valait **+12,9 %** au 15/08 ; mesuré ici, il vaut **+0,55 %**, soit **cinq fois
+sous** le bruit de 2,59 % qui pèse sur une différence de SEEL. **Le 0,5676 n'est pas gonflé par la
+sélection.**
 
-**La commande qui tranche**, et elle est bon marché — une graine qui n'a pas servi à choisir :
-
-```bat
-set CERTUS_PROBE_TAG=accept101
-C:\envs\certus\Scripts\python.exe scripts\probe_blocs_vs_plantage.py r75x2-2nm deep 0 0 2.0 0 101
-```
-
-| ce qu'elle rend | ce qu'il faut en conclure |
-|---|---|
-| SEEL de tête vers **0,57** | le chiffre est **solide**, la sélection n'a pas triché |
-| SEEL vers **0,60 et plus** | une part du 0,5676 était du **biais de sélection**, et il faut republier |
-| **0 déposable** | les rampes ne transfèrent pas d'une graine à l'autre — ce serait le résultat le plus important de la série |
-
----
+⚠️ **Ce chiffre vient d'un JOURNAL, pas d'un artefact** : le run a été arrêté avant d'écrire le
+sien. C'est pourquoi la campagne en cours le **refait** (`livree_s101`) — un chiffre publié doit
+être re-dérivable depuis un artefact (§7bis).
 
 ## 1bis. 🔵 LA VOIE AUTONOME — où elle en est
 

@@ -141,7 +141,7 @@ Ne les saute pas : un harnais qui a l'air de marcher sans rien prouver est le pi
 | **Toucher à la fonction objectif** (A21) | 👤 l'a gelée. C'est le chantier le plus rentable, et ce n'est pas à toi de le dégeler |
 | **Chasser l'asymétrie H / L** | **Non mesurable** : le corridor perturbe les deux matériaux ensemble et aucun paramètre ne les sépare |
 | **La convolution spectrale complète** | La part systématique est capturée ; sa modulation tirage à tirage mettrait une intégration **dans la boucle chaude** |
-| **Monter la profondeur** | [`DECISIONS_TRANCHEES.md`, enquete 23](docs/DECISIONS_TRANCHEES.md) : elle achète de la précision sur un nombre déjà précis |
+| **Monter la profondeur** | [`DECISIONS_TRANCHEES.md`, enquete 23](DECISIONS_TRANCHEES.md) : elle achète de la précision sur un nombre déjà précis |
 | **Rouvrir la grille, le lissage ou la cadence** | Tranchés par 👤 le 2026-08-12. Une **mesure** peut les rouvrir, jamais un raisonnement |
 
 ### L'ordre, et la raison

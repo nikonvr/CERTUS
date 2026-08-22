@@ -143,7 +143,14 @@ def _md() -> list[Path]:
 #: controle ne regardait les renvois INTERNES aux dossiers de docs/ : le controle B ne couvrait
 #: que CLAUDE.md. Cinq renvois faux ont donc passe une verification annoncee comme totale.
 _RX_SECTION = re.compile(r"^##\s+(\d+(?:bis|ter)?)\.\s+(.+?)\s*$")
-_RX_RENVOI = re.compile(r"§(\d+(?:bis|ter)?)(?!\s*[-‑]\s*\d)")
+# 🔴 LES DEUX GARDES `(?!\d)` ET `(?!\.\d)` SONT INDISPENSABLES, et la raison est un
+# BACKTRACKING. Sans elles, sur « §24-26 » le moteur essaie `24`, la garde du tiret echoue,
+# il REVIENT EN ARRIERE et matche « §2 » -- puis signale un renvoi vers un §2 qui n'existe
+# pas ici. 📏 Le 2026-08-22, SEPT des quarante-et-un signalements de ce controle etaient de
+# faux positifs de cette forme : « §24-26 », « §24-37 », « §24.3 », « §18.4 », « §2.1 ».
+# ⚠️ Le point n'est exclu que s'il precede un CHIFFRE : « ... voir §2. » en fin de phrase
+# reste un renvoi nu, et doit continuer d'etre signale.
+_RX_RENVOI = re.compile(r"§(\d+(?:bis|ter)?)(?!\d)(?!\.\d)(?!\s*[-‑]\s*\d)")
 
 
 def _sections(f: Path) -> dict[str, str]:

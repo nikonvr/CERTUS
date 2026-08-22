@@ -119,11 +119,11 @@ déplacé tel quel.
 
 - **Isolation des tests** — une fuite `sys.modules` faisait échouer en sélection large des
   tests qui passent isolément. Cause racine corrigée, audit restant :
-  [`docs/REPRISE_TESTS_ISOLATION.md`](docs/REPRISE_TESTS_ISOLATION.md).
+  [`docs/REPRISE_TESTS_ISOLATION.md`](REPRISE_TESTS_ISOLATION.md).
 - **Performance** — 📏 mesuré le 2026-08-04 : **il n'y a PAS de ×2 disponible** dans les
   pistes documentées. Seul gain acquis : −10 % sur STRAT. Le fossé machine va de ×1 à ×3,2
   selon les modules, pas ×7-10. ⚠️ Les
   **temps absolus** datent d'avant le déménagement hors Google Drive ; les *rapports* restent
   utiles, les secondes non.
-- **Amélioration générale** — [`docs/PLAN_AMELIORATION.md`](docs/PLAN_AMELIORATION.md) : dette
+- **Amélioration générale** — [`docs/PLAN_AMELIORATION.md`](PLAN_AMELIORATION.md) : dette
   de lint, tests absents de la CI, six chantiers ordonnés.

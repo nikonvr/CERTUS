@@ -538,7 +538,7 @@ reste déposable en optique ; on ajoute une candidate, on n'impose pas un choix.
 ### 2️⃣ Lever le handicap de la Phase A — bon marché, et honnêtement incertain
 
 **L'argument** : la Phase A ignore `rate_flags`, donc la λ de la couche `i+1` est choisie en
-supposant un historique que la couche Rate `i` a détruit (§27). **64 % de l'offre est jugée avec
+supposant un historique que la couche Rate `i` a détruit (§27 de [`CLAUDE.md`](../CLAUDE.md)). **64 % de l'offre est jugée avec
 un choix de λ qui n'est pas le sien.** Le correctif tient en deux lignes : passer `rate_flags` et
 forcer `block_start_running = i_layer` après une couche Rate.
 

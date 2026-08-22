@@ -16,7 +16,7 @@ Ce dossier fait **autorité** sur ce sujet. `CLAUDE.md` n'en garde qu'un renvoi.
 > ses 4 variantes. »*
 
 **Il a raison, et c'est mécaniquement démontrable.** Les `stack_multipliers` du 99c valent
-**exactement 1 et 2** à `l0 = 633 nm`. Or §14 pose que QWOT et point tournant **coïncident** sur
+**exactement 1 et 2** à `l0 = 633 nm`. Or §14 de [`CLAUDE.md`](../CLAUDE.md) pose que QWOT et point tournant **coïncident** sur
 un empilement entièrement QWOT à λ_mon. Chaque couche finit donc **pile sur un extremum**, et
 POEM — qui vise *un pourcentage de l'amplitude entre les deux derniers extrema* — voit sa plage
 utile se réduire à un point.
@@ -108,7 +108,7 @@ premières rédactions de ce dossier confondaient :
 
 ### 🔴 Et l'explication « ×0,5 échoue faute d'ancre » est FAUSSE — comptage naïf
 
-⚠️ **C'est l'erreur que §14 désigne comme la plus coûteuse du projet, et les premières versions de
+⚠️ **C'est l'erreur que §14 de [`CLAUDE.md`](../CLAUDE.md) désigne comme la plus coûteuse du projet, et les premières versions de
 ce dossier la commettaient** : *« QWOT ≠ point tournant […] se tromper coûte un facteur 59 : sur
 le random75 ×0,5, le comptage naïf annonce 59 couches "sans point d'arrêt", le comptage exact en
 trouve 1 »*.
@@ -272,7 +272,7 @@ l'instrumentation, pas une physique nouvelle.
 
 📏 `scripts/probe_resolution_exigee.py`, 2026-08-17. **Critère de réussite écrit dans le
 docstring avant le run** : `res_lim` doit être confortable à ×1, se dégrader à ×1,5, et passer
-sous **0,5 nm** — la résolution la plus fine que la machine offre (§19) — à ×2.
+sous **0,5 nm** — la résolution la plus fine que la machine offre (§19 de [`CLAUDE.md`](../CLAUDE.md)) — à ×2.
 
 `_calculate_strategy_spectral_resolution` (`certus_strat_robustness.py:1168`) calcule déjà, pour
 une stratégie, la résolution la plus large que la courbure tolère :
@@ -467,7 +467,7 @@ fin de l'histoire — voir §4quater, où l'élargissement de la recherche le re
 ### SEEL — et il n'existe que là où il y a des déposables
 
 🔴 **Ailleurs, le score est un score de REPLI et ne se convertit PAS en SEEL.** C'est ce qui a
-produit le faux « 0,86 nm » du 99c (§21). Sur douze cellules, **quatre** portent un SEEL.
+produit le faux « 0,86 nm » du 99c (§21 de [`CLAUDE.md`](../CLAUDE.md)). Sur douze cellules, **quatre** portent un SEEL.
 
 | variante | fente | SEEL | déposables | plantage min |
 |---|---|---|---|---|
@@ -477,7 +477,7 @@ produit le faux « 0,86 nm » du 99c (§21). Sur douze cellules, **quatre** port
 | ×1,5 | 2 nm | 0,633 nm | 1 | 0 % |
 
 ✅ **La dérivation `SEEL = 2·√(score)` est validée** : ×1 à 2 nm rend **0,272 nm**, exactement le
-repère publié au §21. Les autres valeurs sont donc lisibles sur la même échelle.
+repère publié au §21 de [`CLAUDE.md`](../CLAUDE.md). Les autres valeurs sont donc lisibles sur la même échelle.
 
 ### 🔴 La fente large achète du RENDEMENT et paie de la PRÉCISION
 
@@ -489,7 +489,7 @@ même — *« 289 déposables contre 241, donc 5 nm gagne »*.
 | 5 nm | 0,310 nm | **289** |
 | 2 nm | **0,272 nm** | 241 |
 
-**Les deux colonnes classent à l'envers l'une de l'autre.** La règle de tri du §22 étant *SEEL
+**Les deux colonnes classent à l'envers l'une de l'autre.** La règle de tri du §22 de [`CLAUDE.md`](../CLAUDE.md) étant *SEEL
 d'abord, rendement en départage*, c'est **2 nm qui gagne** — la fente nominale de la machine.
 
 🔴 **MAIS CETTE CONCLUSION N'EST PAS ENCORE CONFIRMÉE EN PREMIUM, et le trou est de ma faute.**
@@ -535,7 +535,7 @@ de repli revient à comparer deux façons d'échouer.
 | 48c | 48 | 0 / 48 | 0,728 … |
 
 Le 99c n'est pas *surtout* quart d'onde : il l'est **entièrement**, et il est **le seul du dépôt
-dans ce cas**. §14 pose que QWOT et point tournant coïncident sur un empilement entièrement QWOT
+dans ce cas**. §14 de [`CLAUDE.md`](../CLAUDE.md) pose que QWOT et point tournant coïncident sur un empilement entièrement QWOT
 à λ_mon ; chaque couche finit donc **pile sur un extremum**, et POEM — qui vise un pourcentage de
 l'amplitude *entre les deux derniers extrema* — voit sa plage utile réduite à un point.
 
@@ -543,7 +543,7 @@ l'amplitude *entre les deux derniers extrema* — voit sa plage utile réduite �
 
 | | |
 |---|---|
-| conclusions **SUR** le 99c | ✅ **légitimes.** Le chantier multi-témoins (§23) porte sur lui : si le 99c devient monitorable à un témoin, c'est **son propre** verdict qui tombe, et la singularité n'y change rien |
+| conclusions **SUR** le 99c | ✅ **légitimes.** Le chantier multi-témoins (§23 de [`CLAUDE.md`](../CLAUDE.md)) porte sur lui : si le 99c devient monitorable à un témoin, c'est **son propre** verdict qui tombe, et la singularité n'y change rien |
 | conclusions **À PARTIR DU** 99c | 🔴 **interdites.** Rien de ce qu'il fera ne s'étend aux autres empilements — ni sur la valeur du mode `extreme`, ni sur le rôle de la fente, ni sur la thèse « la barrière est la recherche » |
 
 ⚠️ **Erreur commise le 2026-08-18** : j'avais proposé la cellule 99c en cours comme *« exactement
@@ -668,7 +668,7 @@ grep -rn strategy_phase_timeout certus/core certus/workers  ->  0
 
 Il est collecté par `collect_params`, affiché dans un widget *« Max Time per Iteration (sec) »*,
 enregistré dans les JSON — et **aucune ligne de calcul ne le lit**. C'est le **quatrième** cas du
-motif §24, après `fast_auto_blocks`, `machine_sampling_dd` et `dp_yield_weight`.
+motif §24 de [`CLAUDE.md`](../CLAUDE.md), après `fast_auto_blocks`, `machine_sampling_dd` et `dp_yield_weight`.
 
 ⚠️ **Conséquence sur l'attribution** : `extreme` ne compte donc que **six** leviers actifs, pas
 sept. Et le contrôle `deep` seul en file n'est **pas** confondu par un plafond différent — ce que
@@ -798,12 +798,12 @@ le confond pas avec une réfutation.
 | | |
 |---|---|
 | 🟢 **35c, SEEL 0,482** *(`deep`)* | premier SEEL mesuré sur ce composant en dehors du repère historique — cohérent avec `deep` ≥ `fast` |
-| 🟢 **48c, SEEL 0,173/0,170** | confirme le repère `0,173 nm` du §21, et donne le point `extreme` jumeau |
+| 🟢 **48c, SEEL 0,173/0,170** | confirme le repère `0,173 nm` du §21 de [`CLAUDE.md`](../CLAUDE.md), et donne le point `extreme` jumeau |
 | 🟠 **75c, SEEL 0,260 en `deep`** | contre `0,272 nm` en `fast` — **soit 4,4 %, donc DANS le bruit** (σ ≈ 6 %, §24-26). 🔴 La rédaction initiale disait « meilleur » : c'est une sur-lecture, corrigée le 2026-08-19. Et la comparaison est de toute façon confondue, `deep` évaluant 2 547 stratégies contre 662 — un minimum sur une population 4× plus grande est plus bas par construction |
 | 🔴 **×1,75 en `deep`, ×1,5 en `deep`/`extreme`** | non mesurés — arrêtés avant d'écrire |
 
 📌 **Ce que ça suggère pour une prochaine campagne, si elle a lieu** : republier les repères du
-§21 en `deep` plutôt qu'en `fast` semble systématiquement gagnant (×2, 75c) — c'est un chantier
+§21 de [`CLAUDE.md`](../CLAUDE.md) en `deep` plutôt qu'en `fast` semble systématiquement gagnant (×2, 75c) — c'est un chantier
 séparé, à coût bien plus faible que celui d'`extreme`, et il n'a pas besoin de la matrice pour
 avancer.
 
@@ -1192,13 +1192,13 @@ remplacées par les termes du §14 de `CLAUDE.md` et du code.
 | « extremum inventé » / « manqué » | **`margin_fabricated`** *(extremum émis par le bruit seul)* · **`margin_missed`** *(swing sous l'hystérésis, extremum non émis)* | code |
 
 ⚠️ **À l'inverse, trois termes que j'avais pris pour des approximations sont l'idiome du projet et
-ne doivent PAS être « corrigés »** : **surveiller / surveillance** (§14 : *« la λ à laquelle la
-machine surveille le dépôt »*), **couche muette** (§21 et les tables de réfutation depuis le
+ne doivent PAS être « corrigés »** : **surveiller / surveillance** (§14 de [`CLAUDE.md`](../CLAUDE.md) : *« la λ à laquelle la
+machine surveille le dépôt »*), **couche muette** (§21 de [`CLAUDE.md`](../CLAUDE.md) et les tables de réfutation depuis le
 15/08), et **pic** (`COMPOSANTS.md` : *« Pic \| T = 0,9966 »*, le pic de transmission de la bande
 passante).
 
 🔴 **Et la précision qui compte le plus n'est pas lexicale, elle est physique : QWOT ≠ point
-tournant.** §14 en fait l'erreur la plus coûteuse du projet, et §2 de ce dossier documente le fait
+tournant.** §14 de [`CLAUDE.md`](../CLAUDE.md) en fait l'erreur la plus coûteuse du projet, et §2 de ce dossier documente le fait
 que je l'ai commise. `scripts/check_claude_md.py` la refuse mécaniquement — **mais son contrôle E
 ne scanne que `CLAUDE.md`**, donc ce dossier y a échappé. C'est un trou du vérificateur, à combler.
 
@@ -1227,7 +1227,7 @@ avaient atteint la page commerciale.
 Un harnais qui rend `PASS` / `FAIL` / `NON_VERIFIABLE` sur chaque affirmation, et **qui porte son
 propre contrôle négatif** : il affirme délibérément une chose fausse (*« `robustness_num_runs`
 n'est lu nulle part »*) et **doit** échouer dessus. Un harnais dont tout passe ne prouve rien —
-c'est le contrôle 4 du §12, appliqué à moi-même.
+c'est le contrôle 4 du §12 de [`CLAUDE.md`](../CLAUDE.md), appliqué à moi-même.
 
 **Ce qu'il vérifie, et comment :**
 
@@ -1259,7 +1259,7 @@ avec `PASS`.
 
 1. 🔴 **Le 99c n'est pas une référence.** Tout QWOT ⇒ adverse à POEM. Ses conclusions ne se
    généralisent pas, et sa réponse plate à 100 % ne discrimine rien.
-2. **Toute grandeur candidate se valide sur la SÉRIE**, pas sur un composant. §22 rappelle qu'un
+2. **Toute grandeur candidate se valide sur la SÉRIE**, pas sur un composant. §22 de [`CLAUDE.md`](../CLAUDE.md) rappelle qu'un
    signal de marge **changeait de signe** d'un empilement à l'autre.
 3. **Jamais un couperet.** Un effet du nombre de blocs, du compte de points tournants ou de la
    fente entre comme **coût**. §24-28 : la règle « celui-là ne gagne jamais » aurait jeté la

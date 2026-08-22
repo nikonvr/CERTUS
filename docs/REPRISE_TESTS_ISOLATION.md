@@ -14,7 +14,7 @@ This document covers**test isolation**, not performance.
 ✅**The fix is ​​applied and committed**to`refactor-corridors-mixins`
 (2**test**files only, no production code):
 `tests/ui/test_ui_module_imports.py`and`tests/unit/test_manual_rmse_grid_integration.py`.
-**Nothing to apply**— directly attack the “remaining to be done” in §2.
+**Nothing to apply**— directly attack the “remaining to be done” in §2 de [`CLAUDE.md`](../CLAUDE.md).
 
 To check that everything is in place:
 

@@ -246,7 +246,7 @@ sélection.**
 
 ⚠️ **Ce chiffre vient d'un JOURNAL, pas d'un artefact** : le run a été arrêté avant d'écrire le
 sien. C'est pourquoi la campagne en cours le **refait** (`livree_s101`) — un chiffre publié doit
-être re-dérivable depuis un artefact (§7bis).
+être re-dérivable depuis un artefact (§7bis de [`CHANTIER_PREDICTIBILITE.md`](CHANTIER_PREDICTIBILITE.md)).
 
 ## 1bis. 🔵 LA VOIE AUTONOME — où elle en est
 
@@ -256,7 +256,7 @@ La **couverture en λ** est le premier levier qui ne cherche pas *autour* de ce 
 différence avec une mutation ELITE, qui casse la cohérence du plan.
 
 📌 Écrite, inerte par défaut (`enable_wl_coverage`), **routée** depuis un fichier de
-configuration, gardée par **36 tests**. §25 du plan porte le détail, dont le défaut de plan
+configuration, gardée par **36 tests**. §25 de [`CLAUDE.md`](../CLAUDE.md) du plan porte le détail, dont le défaut de plan
 d'identifiants qu'elle a fait trouver (offsets 0/100/200 saturés à `top_k = 100` en DEEP).
 
 ### 🟢 LE MÉCANISME EST CONFIRMÉ EN PRODUCTION — mesuré le 2026-08-21, run `couvfull`
@@ -373,7 +373,7 @@ le détournement fonctionne bien pour choisir les blocs (`75/8,3333 = 9`) tout e
 🔒 **Règle : toute mesure comparative de la RECHERCHE se fait à plage complète.** Une comparaison
 à plage restreinte reste valide si elle est **à une seule variable** — c'est le cas du contrôle
 injection oui/non — mais elle ne dit rien de la recherche. Consigné en §24-54 de `CLAUDE.md` et
-§27 du plan de production.
+§27 de [`CLAUDE.md`](../CLAUDE.md) du plan de production.
 
 ⚠️ Les blocs **1, 2 et 75 sont forcés** par le code, on ne peut pas les exclure.
 
@@ -535,7 +535,7 @@ fond. Voici l'état réel.
 
 | action d'hier | ce qu'il en est |
 |---|---|
-| lire `couvfull` au bloc 9 | ✅ **tranché** : la DP est vide à **10 blocs et en dessous**, donc la couverture n'a rien à étendre là où les déposables vivent. §30 et §31 |
+| lire `couvfull` au bloc 9 | ✅ **tranché** : la DP est vide à **10 blocs et en dessous**, donc la couverture n'a rien à étendre là où les déposables vivent. §30 de [`CLAUDE.md`](../CLAUDE.md) et §31 de [`CLAUDE.md`](../CLAUDE.md) |
 | rejouer la config livrée à la graine 101 | 🟠 **partiel** : blocs 15 à 8 lus dans le journal, meilleur **SEEL 0,5707 au bloc 10** (crash 0-2 %). Le run a été arrêté à la demande de 👤 et **n'a pas écrit d'artefact** — les chiffres sont donc dans le journal, pas dans un artefact citable |
 
 **🔵 Ce qui reste :**

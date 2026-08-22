@@ -5,9 +5,9 @@
 
 ---
 
-## 0. 🔴 TU ARRIVES SUR UNE MACHINE NEUVE ? LIS CES DIX LIGNES D'ABORD
+## 0. 🔴 TU ARRIVES SUR UNE MACHINE NEUVE ? COMMENCE ICI
 
-👤 a basculé de machine le **2026-08-22 vers midi**, en cours de campagne. Le dépôt porte tout
+👤 a basculé de machine le **2026-08-22 à 14h15**, en cours de campagne. Le dépôt porte tout
 l'état ; **ce qui suit est ce qui ne le porte PAS.**
 
 ### 0.1 ⚡ La commande unique pour reprendre la campagne
@@ -19,7 +19,7 @@ bash scripts\batch_r75x2_reprenable.sh
 🔑 **Il SAUTE toute mesure dont l'artefact existe déjà avec `verdict = OK`.** On peut donc le
 relancer sans réfléchir : il reprend où la campagne s'est arrêtée. Au moment de la bascule :
 
-| mesure | état à la bascule du 2026-08-22 à 14h00 |
+| mesure | état à la bascule du 2026-08-22 à 14h15 |
 |---|---|
 | `r75x2` nu, graine 101 | ✅ **faite** — 1630 stratégies, **0 déposable**, 91 min |
 | `r75x2` nu, graine 202 | ✅ **faite** — 1646 stratégies, **0 déposable**, 97 min |
@@ -40,7 +40,7 @@ de 👤 — *que le code trouve 0,57 à 2 nm sans savoir a priori qu'il faut des
 graine, et **une seule suffit pour un signal** : si elle trouve, c'est un second succès
 indépendant et le mode se justifie.
 
-### 0.2 🔴 CE QUI NE SUIT PAS LE DÉPÔT — les cinq pièges de la machine neuve
+### 0.2 🔴 CE QUI NE SUIT PAS LE DÉPÔT — quatre pièges, et un cinquième résolu
 
 | # | ce qui ne traverse pas | ce qu'il faut faire |
 |---|---|---|
@@ -48,7 +48,7 @@ indépendant et le mode se justifie.
 | 2 | **le chemin de l'interpréteur** | l'ancienne machine avait `C:\envs\certus\Scripts\python.exe`, **pas** `.venv`. Le script accepte une surcharge : `CERTUS_PY=... bash scripts/batch_r75x2_reprenable.sh` |
 | 3 | **le cache numba est FROID** | la **première** passe de `pytest tests/oracle/ tests/unit/` rendra **3 échecs FAUX** (`test_phase2_gradient_analytic_vs_fd` et les deux `TestIRGlobalModelStrategy`). Cause dans numba, pas dans le dépôt — voir `CLAUDE.md` §2. **Relance une seconde fois avant de signaler quoi que ce soit** |
 | 4 | **le cache de profils de fente est froid** | la Phase A du premier run prendra ~30 min au lieu de ~10. Ce n'est pas une régression |
-| 5 | 🔴 **les durées mesurées ne valent que sur leur machine** | un run pleine plage prenait **91 min** sur i5-8250U 8 threads. Sur une machine plus puissante ce sera moins — mais **ne baisse PAS `CERTUS_BENCH_TIMEOUT_S` pour autant** |
+| 5 | 🔴 **les durées mesurées ne valent que sur leur machine** | et elles **diffèrent selon la famille de run** : un `r75x2` **nu** prend **91 à 97 min**, un `r75x2-2nm` **livré** prend **~115 min** — il porte plus de survivants au criblage. Repère : i5-8250U, 8 threads. Sur une machine plus puissante ce sera moins, mais **ne baisse PAS `CERTUS_BENCH_TIMEOUT_S` pour autant** |
 
 ### 0.2bis 🔑 CE QUE LA MACHINE PLUS PUISSANTE VA — ET NE VA PAS — ACCÉLÉRER
 
@@ -64,10 +64,17 @@ Vérifié dans le code, pas supposé :
 inégales — plus de workers de notation, un cœur plus rapide, un `prange` plus large — et une
 partie du run reste sérialisée par choix.
 
-🔑 **Et la conséquence pratique : MESURE la durée d'un run avant d'annoncer un ETA.** Le repère
-d'ici est **91 à 97 min** pour un run pleine plage sur i5-8250U, 8 threads. Le premier run sur la
-machine neuve donne le nouveau repère ; tout ce qui est écrit ailleurs dans ce dossier porte
-l'ancien.
+🔑 **Et la conséquence pratique : MESURE la durée d'un run avant d'annoncer un ETA.** Les deux
+repères d'ici, sur i5-8250U 8 threads : **91 à 97 min** pour un `r75x2` **nu**, **~115 min**
+pour un `r75x2-2nm` **livré** — l'écart vient du nombre de survivants au criblage, pas de la
+machine. Le premier run sur la machine neuve donne les nouveaux repères ; tout ce qui est
+écrit ailleurs dans ce dossier porte les anciens.
+
+📏 Et la cadence, si tu veux estimer en cours de route : **~9 min par nombre de blocs** sur
+les blocs 15 à 9, puis une queue qui **accélère** — 8 min au bloc 8, 5 min au bloc 4, 3 min
+au bloc 2, plus ~4 min d'ablation et de consensus final. La queue entière vaut **~51 min**.
+⚠️ Extrapoler la cadence des gros blocs sur toute la queue donne un ETA **trop optimiste** —
+je l'ai fait, et je me suis trompé de 17 minutes.
 
 ### 0.3 🔴 LE PIÈGE QUI A DÉTRUIT QUATRE MESURES, ET IL EST DANS LE PLAFOND
 
@@ -83,7 +90,7 @@ et le signe qui ne trompe pas : plusieurs mesures qui durent EXACTEMENT le plafo
 38400 s. **Un plafond trop grand ne coûte rien ; un plafond trop petit détruit la mesure à la
 dernière minute** — donc en cas de doute sur une machine inconnue, on ne le baisse pas.
 
-### 0.4 Les trois contrôles avant de toucher à quoi que ce soit
+### 0.4 Les contrôles avant de toucher à quoi que ce soit
 
 🔑 **Le plus simple est `preflight.py`, qui fait les deux premiers et le NOUVEAU contrôle
 `2bis` :**

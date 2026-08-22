@@ -10,6 +10,48 @@
 👤 a basculé de machine le **2026-08-22 à 14h15**, en cours de campagne. Le dépôt porte tout
 l'état ; **ce qui suit est ce qui ne le porte PAS.**
 
+### 0.0 🔴🔴 OÙ CLONER — et pourquoi PAS dans Google Drive
+
+👤 a demandé le 2026-08-22 : *« me mettre sur le répertoire Drive ? »* **Non.** Et la question
+touche le **piège n° 1** du projet, celui que `CLAUDE.md` §4 décrit comme *« invisible »*.
+
+📏 **Mesuré ce jour-là sur la machine d'origine, où DEUX clones du même dépôt coexistaient :**
+
+```
+C:\Users\...\Google Drive\...\CERTUS\1408    git · origin = nikonvr/CERTUS · 174 COMMITS DE RETARD
+C:\certus                                    git · origin = nikonvr/CERTUS · a jour
+```
+
+**174 commits d'écart, et les deux ressemblent au projet.** C'est littéralement le scénario du
+piège : *« tu modifies un dossier et tu en mesures un autre — tout ce que tu constateras sera
+faux, sans le moindre message d'erreur. »*
+
+🔴 **Et Drive n'est pas seulement risqué, il est INUTILISABLE — mesuré** : un simple
+`du -sh .git` sur la copie Drive **dépasse deux minutes** et se fait tuer. Un dépôt git y fait
+des milliers de petits fichiers que le client de synchronisation relit sans cesse. S'y ajoute
+que Drive peut créer des **copies de conflit à l'intérieur de `.git`** — et un `.git` avec des
+doublons est un dépôt corrompu.
+
+📌 Le déménagement hors Google Drive a **déjà eu lieu une fois** dans ce projet, et c'est
+pourquoi les temps absolus des vieilles campagnes ne valent plus rien.
+
+### ✅ Ce qu'il faut faire sur la machine neuve
+
+```bat
+:: un chemin LOCAL, court, hors de tout dossier synchronise
+git clone https://github.com/nikonvr/CERTUS.git C:\certus
+cd C:\certus
+git checkout refactor-corridors-mixins
+```
+
+⚠️ **`refactor-corridors-mixins` est la branche de travail**, très en avance sur `main` — dont le
+dernier commit date du **2026-04-27**. Rester sur `main` donnerait l'impression d'un projet figé
+depuis des mois.
+
+🔑 **Et le premier contrôle du §0.4 existe précisément pour attraper cette erreur** : il imprime
+le chemin d'où `certus` est importé. **S'il affiche un chemin contenant `Google Drive`, ou un
+chemin qui n'est pas celui que tu édites — ARRÊTE-TOI.**
+
 ### 0.1 ⚡ La commande unique pour reprendre la campagne
 
 ```bat

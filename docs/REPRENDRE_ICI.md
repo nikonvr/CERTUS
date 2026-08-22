@@ -65,7 +65,7 @@ relancer sans réfléchir : il reprend où la campagne s'est arrêtée. Au momen
 |---|---|
 | `r75x2` nu, graine 101 | ✅ **faite** — 1630 stratégies, **0 déposable**, 91 min |
 | `r75x2` nu, graine 202 | ✅ **faite** — 1646 stratégies, **0 déposable**, 97 min |
-| `r75x2-2nm` livrée, graine 101 | ✅ **faite** — voir le commit de la bascule |
+| `r75x2-2nm` livrée, graine 101 | ✅ **faite** — 1840 stratégies, **216 déposables**, meilleur **SEEL 0,5707 nm** au bloc 10, 115 min. 🔑 Confirme au bit ce que le journal d'hier donnait, mais **avec un artefact** : §7bis est satisfait |
 | `r75x2-2nm` livrée, graine 202 | ⏳ **la seule qui reste**, ~95 min |
 
 🔑 **Donc une seule mesure reste, et le script la trouvera tout seul.** Les trois autres portent

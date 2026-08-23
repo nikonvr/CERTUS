@@ -240,7 +240,7 @@ longtemps qu'un appel : à cache par appel, la mesure du 2026-08-11 donnait **28
 | | rendu aujourd'hui |
 |---|---|
 | λ de contrôle par bloc | ✅ |
-| couches en Rate | 🟠 le champ `rate_layers` existe depuis le 2026-08-11, la génération non |
+| couches en Rate | 🟢 **COMPLET DEPUIS LE 2026-08-22.** La ligne disait *« le champ `rate_layers` existe depuis le 2026-08-11, la génération non »* — périmé **deux fois**. La génération existe (📏 24 581 placements mesurés le 19/08), et depuis le 22/08 `rate_layers` est **EXPORTÉ dans l'artefact** : 👤 *« il faut absolument savoir dans quelles couches il a été introduit »*. Avant cet export, on ne pouvait pas dire si un SEEL venait du pur optique ou reposait sur une couche au quartz — et ce ne sont pas les mêmes promesses pour l'atelier, puisqu'en Rate il n'y a **aucune compensation d'erreur**. 📏 Premier usage : sur le `75c`, **1031 des 1790 déposables** portent une couche Rate ; sur `r75x1.5`, `r75x1.75` et `r75x2-2nm`, **zéro sur 1510** |
 ### 🔴 SURVEILLANCE PAR BLOCS DU 35 COUCHES : LE RAYON D'ACTION x20 DÉVERROUILLE LES BLOCS COMPACTS (4 À 6 BLOCS) — 2026-08-14
 
 > 👤 *« Y a-t-il moyen d'augmenter d'un facteur 20 le nombre de stratégies testées par le code nominal sur le 35c ? Peut-être qu'en augmentant le rayon d'action on trouvera des stratégies avec des blocs. »*

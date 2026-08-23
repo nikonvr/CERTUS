@@ -35,8 +35,33 @@ c'est un **proxy** du premier :
 | **3. où le solveur ESSAIE le Rate** | **la dernière couche de chaque bloc** (`_rate_candidate_layers`, `certus_strat_robustness.py:643`). Critère de **coût**, pas de nécessité : à une frontière de bloc, `block_start[i+1] = i+1`, donc les ancres sont perdues de toute façon — le Rate y est gratuit. | implémenté |
 
 🔑 **Le point à ne pas manquer** : le critère 3 ne cherche **pas** les couches qui ont besoin
-du Rate. Il cherche celles où le Rate **ne coûte rien**. Ce sont deux questions différentes et
-le code ne répond aujourd'hui qu'à la seconde.
+du Rate. Il cherche celles où le Rate **ne coûte rien**. Ce sont deux questions différentes.
+
+🟢 **ET LE CODE RÉPOND DÉSORMAIS AUX DEUX — depuis le 2026-08-22.** Cette phrase disait *« le
+code ne répond aujourd'hui qu'à la seconde »*, et c'était vrai pendant trois mois.
+`rate_by_swing` est **armé par défaut** : `_rate_swing_candidates` ajoute les couches dont le
+swing de croissance passe sous `dynamics_threshold`, et **les deux critères se PARTAGENT le
+plafond au lieu de s'évincer** — moitié au besoin, moitié au coût, le reliquat revenant à
+l'autre.
+
+⚠️ **Ce qui rend ce défaut sûr, et il faut le comprendre avant de toucher au réglage** : une
+variante Rate entre comme **COÛT, jamais comme COUPERET**. Elle **s'ajoute** à un classement
+qui contient déjà les stratégies pur optique — elle ne peut donc pas dégrader le choix final.
+Le seul canal par lequel elle le pourrait était le plafond partagé, réparé le même jour
+(contradiction A, plafond porté de 3 à 40 sur les 50 meilleures).
+
+📏 **Ce que l'armement a rendu**, mesuré à une seule variable sur `r75x2` à 2 nm — mêmes
+graines, seul le code change : **+8 à +12 % de déposables** (372 → 403 et 311 → 349) pour un
+SEEL **inchangé** (+0,5 % et −0,1 %, tous deux sous le bruit de 2,59 %). ⚠️ Coût : **+30 à 50 %**
+sur la durée d'un run.
+
+🔑 **Le Rate n'améliore donc pas la PRÉCISION, il élargit le CHOIX.** Et le classement en fait
+un usage très inégal selon le composant : sur le `75c`, **1031 des 1790 déposables** portent une
+couche Rate (58 %, jusqu'à 70 % sur une autre graine) ; sur `r75x1.5`, `r75x1.75` et
+`r75x2-2nm`, **zéro sur 1510** — offert à chaque fois, jamais retenu. ⚠️ Ce contraste **n'est
+pas expliqué** : le 75c est le composant le plus FIN de la série, donc celui dont les couches
+ont le plus de dynamique optique. Ce n'est pas l'intuition qu'on aurait eue, et personne ne l'a
+instruit.
 
 ⚠️ **Un classement par marge a déjà été tenté et annulé le même jour (2026-08-12)** —
 l'hypothèse est séduisante et sera reproposée. Mesuré sur les deux références N=300, gain de

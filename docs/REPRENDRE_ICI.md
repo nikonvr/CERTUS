@@ -1,7 +1,145 @@
-# 🔴 REPRENDRE ICI — état gelé le 2026-08-22 à 18:00
+# 🔴 REPRENDRE ICI — état gelé le 2026-08-23 à 14:00
 
 > Ce fichier dit **où on s'est arrêté** et **la commande exacte pour repartir**. Il est le
 > premier à lire, avant `CLAUDE.md`.
+
+---
+
+## 000. 🟢 LA NUIT DU 22 AU 23 — la série 75 couches en entier, code de production
+
+⚠️ **Les sections `00` et `§8.2ter` plus bas sont antérieures.** Elles restent vraies sur leur
+objet ; celle-ci les complète et corrige trois affirmations qui étaient fausses.
+
+### Ce que la campagne a rendu
+
+Six composants, `deep`, fente **2,0 nm**, plage complète, notation finale sur la graine **42**
+disjointe. Contrôle de cohérence : **0 point à instruire** — même profondeur (50/300), même
+fente, même mode. Journaux dans `reports/nuit75_2026-08-22/`.
+
+```
+composant     citable        deposables  plantage   Rate dans les gagnantes
+  75c         SEEL 0,2407       1790       3,00 %    1031 / 1790   (58 %)
+  r75x1.5     SEEL 0,4552        627       0,33 %       0 /  627
+  r75x1.75    SEEL 0,4651        708       0,67 %       0 /  708
+  r75x2-2nm   SEEL 0,5697        175       1,67 %       0 /  175
+  r75x2       RIEN                 0        100 %        --
+  r75x0.5     RIEN                 0        100 %        --
+```
+
+🔑 **Le SEEL redevient monotone avec l'épaisseur** — 0,2407 → 0,4552 → 0,4651 → 0,56 — et tout
+reste **faisable** sauf les deux extrêmes. Le tableau de référence à une seule graine disait
+`x1,5 → limite (1 déposable)` et `x2 → ÉCHOUE` : ces verdicts décrivaient une **réalisation**,
+pas un empilement.
+
+### 🔑 Le Rate travaille, et de façon très inégale
+
+Armé par défaut le 22/08 (`rate_by_swing`, plafond 40 sur les 50 meilleures). Résultat :
+
+```
+75c   graine 303 :  1744 des 2473 deposables portent une couche Rate   (70 %)
+75c   graine  42 :  1031 des 1790                                       (58 %)
+r75x1.5 / r75x1.75 / r75x2-2nm :  0 sur 1510                            ( 0 %)
+```
+
+Sur le 75c le classement le retient massivement ; sur les trois autres, **jamais** — offert à
+chaque fois, jamais choisi. C'est le comportement voulu : il entre comme **coût**, pas comme
+couperet. ⚠️ Et le contraste n'est **pas expliqué** : le 75c est le composant le plus **fin** de
+la série, donc celui dont les couches ont le plus de dynamique optique. Ce n'est pas l'intuition
+qu'on aurait eue, et personne ne l'a instruit.
+
+📏 Coût mesuré du Rate armé : **+30 à 50 %** sur la durée d'un run (blocs à 4-6 min contre 3 min 45).
+
+### 📏 Le gain du travail Rate, mesuré à UNE SEULE VARIABLE
+
+Mêmes graines, même composant, même fente — seul le code change :
+
+```
+                strategies   deposables       SEEL
+  404   ancien       2016         372       0,5599
+        nouveau     4454         403       0,5629   (+0,5 %, sous le bruit de 2,59 %)
+  505   ancien       1995         311       0,6112
+        nouveau     4551         349       0,6105   (-0,1 %)
+```
+
+🔑 **Le Rate n'améliore pas la PRÉCISION, il élargit le CHOIX** : +8 à +12 % de déposables à
+qualité égale, le SEEL restant sous le bruit de 2,59 %. C'est ce qu'on attend d'un mécanisme
+qui **AJOUTE** des candidates sans en retirer.
+
+### 🔴 Et l'union EFFACE ce gain — mesuré le 2026-08-23 à 14:18
+
+```
+union 404+505, notee sur la graine 42 disjointe :
+
+  ancien code    262 deposables   SEEL 0,5642   8 blocs   0,33 %
+  nouveau code   235 deposables   SEEL 0,5627   7 blocs   0,33 %      -0,27 %
+```
+
+**Sur `r75x2` à 2 nm, le travail Rate du 22/08 coûte ~2× en calcul et ne rend rien** au niveau
+du chiffre citable : −0,27 % est dix fois sous le bruit. Le vivier s'élargit en amont, l'union
+prend les meilleurs plans de chaque graine et les renote — un vivier plus large ne sert que si
+les nouveaux venus sont **meilleurs**, et ici ils ne le sont pas.
+
+📌 Un seul chiffre bouge hors du bruit : la gagnante passe à **7 blocs au lieu de 8**, plus
+simple à déposer à qualité et plantage identiques.
+
+⚠️ **Ne pas généraliser** : le `75c` retient le Rate dans **58 %** de ses déposables. Le
+mécanisme sert quelque part ; pas sur ce composant-ci.
+
+📏 **Et l'écart provisoire → définitif vaut −0,03 %** — le canal de malédiction du vainqueur est
+nul cette fois. Mesuré à **+12,9 %** le 15/08, **+0,55 %** le 22/08, **−0,03 %** aujourd'hui :
+ce n'est décidément pas une constante, et c'est pourquoi on le remesure à chaque campagne.
+
+⚠️ **Et voilà ce qu'il coûte** : la population minée **double** — 2016 → 4454 et 1995 → 4551,
+soit +121 % et +128 % — pour +8 à +12 % de déposables. 📏 Sur la durée d'un run, cela se lit
+**+30 à 50 %** (blocs à 4-6 min contre 3 min 45).
+
+---
+
+## 001. 🔴 LE MULTI-TÉMOIN NE PEUT RIEN POUR `r75x2` NI `r75x0.5` — et voici pourquoi
+
+L'escalade a tourné pour la première fois (2, 3 puis 4 témoins) et n'a rien rendu. En cherchant
+la cause, **sur plans APPARIÉS** :
+
+```
+29 plans communs mono / 2 temoins  ->  plantage INCHANGE sur 28, ameliore sur 1
+26 plans communs mono / 3 temoins  ->  INCHANGE sur 25
+25 plans communs mono / 4 temoins  ->  INCHANGE sur 24
+amorce de defaillance : mediane 6-7 couches, INCHANGEE dans les 80 cas sur 80
+```
+
+**À plan identique, la coupure ne change rien.** Elle n'agit que sur ce qui vient après elle, et
+la défaillance commence dès la couche **7** (médiane) quand la coupure la moins profonde
+possible est à 19.
+
+🔴 **ET LE PIÈGE QUI A COÛTÉ TROIS RUNS** : le champ `critical_layer` de l'artefact rapporte la
+marge la **pire**, donc la plus profonde — médiane **57**. En le lisant, on croit le problème
+profond et une coupure à 38 bien placée. La **première** marge négative est à la couche **7** en
+médiane sur les 8030 stratégies des graines 101 et 202 — et **6** sur les plans appariés
+mono/mt2. ⚠️ Deux ensembles différents, deux chiffres justes : ne pas citer l'un pour l'autre.
+
+🟢 **Garde-fou posé** : `multitemoin_peut_agir` lit l'amorce dans les artefacts déjà écrits et
+refuse l'escalade quand aucune partition ne peut l'atteindre. ⚠️ Il ne dit **pas** que le
+composant est infaisable — `r75x2` rend 251 déposables dès qu'on injecte des plans connus.
+
+### 🔴 Trois affirmations que j'ai faites ce jour-là et qui étaient FAUSSES
+
+| affirmation | ce qu'il en est |
+|---|---|
+| « les coupures font remonter l'amorce de 23 à 6 » | ❌ je comparais deux **populations** (3966 contre 4049 stratégies), pas les mêmes plans |
+| « le multi-témoin entame le mur, 100 % → 56 % » | ❌ **une** stratégie sur 4049 ; le mono est un mur parfait, zéro stratégie sous 100 % |
+| « la coupure doit tomber sur une frontière de bloc » | ❌ testé : l'écart vaut 1 à 3 couches et **change de signe** selon le nombre de témoins |
+
+**Les trois sont tombées dès que j'ai apparié les plans au lieu de comparer des médianes de
+population.** C'est la leçon de méthode de la journée.
+
+### 🔴 Et la partition régulière n'est PAS un choix mesuré
+
+`partition_temoins` la justifiait en citant *« étendue +14,4 % / +15,4 %, l'optimum est PLAT »*.
+Cette étendue porte sur le **SEEL de partitions DÉJÀ DÉPOSABLES** — `classer_partitions.py:178`
+écarte celles qui plantent **avant** de calculer la RMSE — et côté 75c l'artefact ne porte
+**aucun champ de plantage**, sur un composant à 0 % de plantage. Requalifié le 2026-08-23 aux
+quatre endroits qui l'invoquaient. 📏 Indice contraire : **le 99c qui réussit coupe à 0/22/72,
+ce qui n'est pas régulier.**
 
 ---
 

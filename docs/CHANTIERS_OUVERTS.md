@@ -87,8 +87,29 @@ déplacé tel quel.
   proches est donc aussi un risque, pas seulement trop peu. Le coût doit être **non
   monotone**, et c'est une raison de plus pour le mesurer avant de le poser.
 
-- 🟢 **NON URGENT — la Phase A ignore qu'une couche Rate efface l'historique.**
-  *Établi le 2026-08-15, chiffré, et délibérément repoussé.*
+- 🟠 **RELEVÉ EN PRIORITÉ LE 2026-08-23 — la Phase A ignore qu'une couche Rate efface
+  l'historique, ET elle ignore aussi les CHANGEMENTS DE TÉMOIN.**
+  *Établi le 2026-08-15 pour le Rate, chiffré, et délibérément repoussé. Le 2026-08-23 a
+  montré que le même trou vaut pour le multi-témoin, et qu'il y est bien plus lourd.*
+
+  🔴 **Vérifié le 2026-08-23** : le mot `witness` n'apparaît **nulle part** dans
+  `certus/utils/certus_strat_service.py` — le fichier qui contient `_select_candidates_phase_a`
+  et `calculate_dynamics_ULTIMATE`. La Phase A choisit donc les λ sur l'empilement **complet
+  depuis la couche 0**, sans jamais entendre parler des coupures de témoin. Chaque segment neuf
+  hérite de λ choisies pour un objet optique qui n'est pas le sien.
+
+  ⚠️ **Et la portée n'est PAS la même que pour le Rate.** Une couche Rate détruit l'historique
+  sur **une** couche (voir ci-dessous) ; une coupure de témoin le détruit pour **tout le segment
+  qui suit**. Sur 75 couches à 3 témoins, cela peut concerner 25 couches au lieu d'une.
+
+  📌 Voir [`CHANTIER_MULTITEMOINS.md`](CHANTIER_MULTITEMOINS.md) §25.13. ⚠️ **Cela n'explique
+  pourtant PAS l'échec observé sur `r75x2`** : là-bas la défaillance commence dès la couche **7** en médiane, en
+  amont de toute coupure, et à plan identique la coupure ne change **rien** (77 cas sur 80).
+  Le trou de la Phase A reste un défaut réel dont l'effet, ici, n'est pas mesurable.
+
+  ---
+
+  **Ce qui suit concerne le RATE, et reste vrai :**
 
   La Phase A **suit** la continuation de bloc (`block_start_running`, passé aux candidates
   via `phase_a_block_start`, `certus_strat_objectives.py:287`) : elle sait donc qu'une λ

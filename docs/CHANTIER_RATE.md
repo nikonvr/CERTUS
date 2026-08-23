@@ -103,25 +103,48 @@ Et c'est exactement ce que le code ne fait pas — voir la contradiction C.
 
 ---
 
-## 3. Les quatre contradictions relevées
+## 3. Les quatre contradictions relevées — ÉTAT AU 2026-08-23
 
-### 🔴 A. Le plafond de 3 variantes n'applique ni la consigne qu'il cite, ni son contraire
+| | sujet | état |
+|---|---|---|
+| **A** | le plafond de variantes | 🟢 **RÉPARÉE le 22/08** — 40 sur les 50 meilleures |
+| **B** | le couche-par-couche n'a jamais de Rate | 🟢 **RÉPARÉE PAR EFFET DE BORD le 22/08** — voir ci-dessous |
+| **C** | le placement cherche le COÛT, pas le BESOIN | 🟢 **RÉPARÉE le 22/08** — `rate_by_swing` armé par défaut |
+| **D** | la dernière couche exclue sur deux effets opposés | 🟢 réparée le 19/08 — exclusion retirée |
 
-`RATE_MAX_VARIANTS_PER_STRATEGY = 3` (`certus_strat_robustness.py:562`) porte cette
-justification :
+### 🟢 A. RÉPARÉE LE 2026-08-22 — le plafond n'appliquait ni la consigne qu'il citait, ni son contraire
+
+**Ce qui n'allait pas.** `RATE_MAX_VARIANTS_PER_STRATEGY` valait **3**
+(`certus_strat_robustness.py:562`) et portait cette justification :
 
 > *« 👤 asked for the trial "on the 10 best strategies", not on everything: an unbounded
 > expansion costs a factor 6 on the whole Monte-Carlo. »*
 
-Or `_expand_with_rate_variants` étend **toutes** les stratégies, à 3 variantes chacune. Le code
-ne fait donc **ni** l'essai sur les 10 meilleures, **ni** l'expansion complète.
+Or `_expand_with_rate_variants` étendait **toutes** les stratégies, à 3 variantes chacune. Le
+code ne faisait donc **ni** l'essai sur les 10 meilleures, **ni** l'expansion complète.
 
 📏 Le coût mesuré de ce compromis : **12 923 variantes Rate** produites, dont 20 déposables.
-**Un plafond à 40 sur les 50 meilleures coûterait 2 000 variantes au lieu de 12 923, et
-explorerait chaque parent treize fois plus profondément.** Le plafond actuel dépense beaucoup
-pour explorer peu.
 
-### 🔴 B. Le régime où le Rate serait le plus utile est celui où il n'est jamais offert
+**La réparation, et elle est exactement celle que ce paragraphe chiffrait :**
+
+```
+RATE_MAX_VARIANTS_PER_STRATEGY   3 -> 40
+RATE_VARIANT_TOP_N_DEFAUT      (neuf) 50      `rate_variant_top_n`, 0 = toutes
+```
+
+**2 000 évaluations au lieu de 12 923, et chaque parent exploré treize fois plus
+profondément.** Moins cher **et** plus profond — et c'est ce qui fait de la place au critère par
+`swing` (contradiction C) sans qu'il évince les frontières de bloc.
+
+📏 **Ce que la réparation a rendu**, mesuré à une seule variable sur `r75x2` à 2 nm, mêmes
+graines, seul le code change : **+8 à +12 % de déposables** (372 → 403 et 311 → 349) pour un
+SEEL **inchangé** (+0,5 % et −0,1 %, tous deux sous le bruit de 2,59 %). ⚠️ Coût : **+30 à 50 %**
+sur la durée d'un run.
+
+🔑 **Le Rate n'améliore donc pas la PRÉCISION, il élargit le CHOIX** — ce qu'on attend d'un
+mécanisme qui **ajoute** des candidates sans en retirer.
+
+### 🟢 B. RÉPARÉE PAR EFFET DE BORD LE 2026-08-22 — le régime où le Rate serait le plus utile
 
 `RATE_MIN_LAYERS_PER_BLOCK = 3.0` rend **zéro candidate** aux stratégies dont les blocs font
 moins de 3 couches. Une stratégie qui surveille **couche par couche** n'a donc jamais eu une
@@ -137,7 +160,13 @@ stratégie, coût Monte-Carlo ×6. **Ce qu'il faut n'est pas de lever le planche
 remplacer le critère de frontière par un critère qui discrimine encore quand tous les blocs font
 une couche** — voir C.
 
-### 🔴 C. Le placement cherche où le Rate COÛTE le moins, jamais où il est NÉCESSAIRE
+🟢 **ET C'EST EXACTEMENT CE QUI S'EST PASSÉ LE 2026-08-22, SANS TOUCHER AU PLANCHER.** Le
+critère de frontière reste gardé par `RATE_MIN_LAYERS_PER_BLOCK = 3.0` ; le critère de **swing**,
+lui, **ne l'est pas** — `_rate_swing_candidates` s'exécute quel que soit le nombre de couches par
+bloc. Une stratégie qui surveille couche par couche reçoit donc enfin des candidates Rate.
+Le plancher est conservé, et le régime qu'il excluait est servi par l'autre voie.
+
+### 🟢 C. RÉPARÉE LE 2026-08-22 — le placement cherchait où le Rate COÛTE le moins
 
 `_rate_candidate_layers` : *« Layers where a Rate is CHEAPEST: the last layer of each block. »*
 
@@ -147,15 +176,38 @@ CLAUDE.md §22 pose l'autre critère, et le dit déjà en toutes lettres :
 > COÛTE rien. Ce sont deux questions différentes et le code ne répond qu'à la seconde. »*
 
 Le critère de besoin est `swing < SWING_MIN` — une couche dont la dynamique optique est trop
-pauvre pour être surveillée. **Il n'a jamais été essayé comme critère de placement.**
+pauvre pour être surveillée.
 
-### 🟠 D. La dernière couche est exclue sur deux effets opposés, dont aucun n'est mesuré
+🟢 **IL EST ARMÉ PAR DÉFAUT DEPUIS LE 2026-08-22.** Cette phrase disait *« il n'a jamais été
+essayé comme critère de placement »*. `rate_by_swing` vaut désormais `True`, et les deux
+critères **se PARTAGENT le plafond au lieu de s'évincer** — moitié au besoin, moitié au coût.
+
+🔑 **Ce qui rend ce défaut sûr** : une variante Rate entre comme COÛT, jamais comme COUPERET —
+elle s'AJOUTE au classement et ne peut donc pas dégrader le choix final. Le seul canal de
+nuisance était le plafond partagé, réparé dans le même commit (contradiction A).
+
+### 🟢 D. RÉPARÉE LE 2026-08-19 — la dernière couche était exclue sur deux effets opposés
+
+**Ce qui n'allait pas.** L'exclusion se justifiait ainsi :
 
 > *« It has no successor, so the downstream cost is nil there too — but it is also the last chance
 > to correct everything accumulated since layer 1, and the two pull opposite ways. »*
 
 Deux effets contraires non mesurés ne justifient pas une exclusion : **ils justifient une
-mesure**. A24 le dit, elle n'a jamais eu lieu.
+mesure**.
+
+**La réparation.** 👤, 2026-08-19 : *« rate est interdit sur les 2 premières couches ! mais
+absolument pas la dernière »*. 🔴 **Les deux bornes du code étaient fausses, et en sens
+opposés** : `< num_layers - 1` excluait la dernière **et laissait passer les couches 0 et 1**.
+Aujourd'hui `RATE_MIN_LAYER <= last < num_layers` (`certus_strat_robustness.py:693`).
+
+🔑 **Et la borne basse a une raison PHYSIQUE, qui donne exactement 2** : le facteur de rate se
+calcule sur les couches de **même parité** déposées avant la couche `i`. Pour `i = 0` et `i = 1`
+cette boucle est vide, `n_ref = 0`, la machine n'a jamais rien déposé dont elle puisse tirer un
+rate. 🔴 **Et le noyau ne le refusait pas** — il retombait **silencieusement** sur POEM : une
+variante étiquetée `RATE_L1` simulait donc du POEM pur. 📏 Mesuré sur 24 581 placements : la
+couche 1 a bien été proposée **2 fois**. Deux résultats portaient une étiquette qui mentait sur
+ce qui avait tourné.
 
 ---
 
@@ -499,7 +551,19 @@ ne capte que ce cas-là — il est aveugle au second motif d'emploi du Rate, cel
 **bruit de fente** qui dégrade le signal, puisque le swing est calculé sur le signal nominal
 sans convolution par la fente.
 
-### 1️⃣ Placer le Rate là où il est NÉCESSAIRE — le levier qui attaque le mécanisme
+### 1️⃣ 🟢 FAIT LE 2026-08-22 — Placer le Rate là où il est NÉCESSAIRE
+
+> ⚠️ **Cette action est RÉALISÉE.** `rate_by_swing` est armé par défaut, le placement combine
+> désormais le critère de BESOIN (`swing < dynamics_threshold`) et celui de COÛT (frontière de
+> bloc), et les deux **se partagent le plafond** au lieu de s'évincer. Ce qui suit décrit
+> l'argument et le chemin d'implantation, conservés parce qu'ils portent le raisonnement.
+>
+> 📏 **Rendu, mesuré à une seule variable** : +8 à +12 % de déposables sur `r75x2` à 2 nm,
+> SEEL inchangé (sous le bruit de 2,59 %), coût +30 à 50 % sur la durée d'un run.
+>
+> 🔴 **Le critère d'acceptation écrit d'avance n'a PAS été appliqué** : *« rejouer 75c à 1 nm et
+> compter les déposables Rate ; le placement par besoin doit faire mieux que 10/12 »*. On a
+> mesuré sur `r75x2` à 2 nm à la place. **La cellule prescrite reste à faire.**
 
 **L'argument** : le facteur 175 dit que le Rate est coûteux ; la cellule `75c à 1 nm` dit qu'il
 gagne quand l'optique est mauvaise. Le placer sur les couches à **swing faible** est la seule
@@ -554,9 +618,14 @@ ne bouge pas de 0,15 %, le handicap n'est pas la cause et on cesse d'en parler.
 Deux paramètres, **inactifs à leurs valeurs par défaut** :
 
 ```
-rate_max_layers_per_variant     defaut 1   -- chemin historique, bit pour bit
-rate_max_variants_per_strategy  defaut 3   -- RATE_MAX_VARIANTS_PER_STRATEGY
+rate_max_layers_per_variant     defaut 1    -- chemin historique, bit pour bit
+rate_max_variants_per_strategy  defaut 40   -- RATE_MAX_VARIANTS_PER_STRATEGY
+rate_variant_top_n              defaut 50   -- RATE_VARIANT_TOP_N_DEFAUT, 0 = toutes
 ```
+
+⚠️ **Le plafond valait 3 jusqu'au 2026-08-22** ; il vaut **40 sur les 50 meilleures** depuis la
+réparation de la contradiction A ci-dessus. Le multi-Rate, lui, reste inerte à
+`rate_max_layers_per_variant = 1`.
 
 🔒 **Règle d'or vérifiée** : à ces défauts, implicites ou explicites, la fonction rend les mêmes
 variantes, les mêmes identifiants et les mêmes étiquettes `origin` qu'avant.

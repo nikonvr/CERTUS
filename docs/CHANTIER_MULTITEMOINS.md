@@ -1097,3 +1097,84 @@ confortable. Les quatre de la gagnante sont confortables. Voir `CLAUDE.md` §24-
 (exposées le 2026-08-17 ; une graine ≠ 42 écrit **à côté**, suffixe `_sNNN`, sans jamais
 toucher le cache de référence). Contrôle de non-régression : à graine 42 le classement rend
 `0.782`, le même top-3 et la même étendue `+11,6 %` qu'avant l'exposition.
+
+---
+
+### 25.13. 🔴 ÉTAT DE L'OUTILLAGE AU 2026-08-23 — ce qui marche, et les six manques
+
+👤, 2026-08-23 : *« pour le multi témoin, est-on au point ? »* **Non.** Cette section dit
+exactement où on en est, chaque point ayant été **vérifié** au moment de l'écrire, pas supposé.
+
+#### 🟢 Ce qui marche, et c'est réel
+
+Le mécanisme **tourne de bout en bout**, éprouvé en production la nuit du 22 au 23 sur `r75x2`
+et `r75x0.5` : la surcharge est appliquée, **enregistrée dans l'artefact**
+(`config.overrides = {'witness_reset_layers': '25;50'}`), l'escalade se déroule de 2 à 4
+témoins, et un verdict sort. Ce n'était pas acquis — un no-op silencieux aurait produit les
+mêmes « zéro déposable ».
+
+Trois pièces sont en place et testées :
+
+| pièce | rôle |
+|---|---|
+| `verdict_multitemoin` | décide **APRÈS** le multiseed, jamais avant. 📏 Sur `r75x2`, quatre graines rendaient zéro avant que la 404 n'en trouve 372 : l'armer alors aurait dégradé de ~110 % un composant qui n'avait aucun problème |
+| `amorce_defaillance` | lit la **PREMIÈRE** marge `level` négative. 🔴 Pas `critical_layer`, qui rapporte la **pire** — médiane **57** sur `r75x2` contre une amorce à **7** (médiane sur les 8030 stratégies des graines 101 et 202 ; **6** sur les plans appariés mono/mt2 — deux ensembles différents, deux chiffres justes). Cette confusion a coûté trois runs |
+| `multitemoin_peut_agir` | refuse l'escalade quand l'amorce est en amont de la coupure la moins profonde, et **dit combien de témoins il faudrait** |
+
+#### 🔴 Les six manques
+
+**1. Le registre des leviers n'alimente aucune interface.** `certus/core/certus_strat_leviers.py`
+a été écrit comme **source unique** pour un panneau GUI décrivant chaque levier, son défaut réel
+et ce que la mesure en dit. **Le panneau n'existe pas** : aucun fichier de `certus/ui/`
+n'importe le registre. Le test croisé registre↔noyau (`tests/unit/test_strat_leviers.py`)
+protège donc une promesse qui n'est pas tenue.
+
+**2. L'onglet « Multi-realisation » ignore le multi-témoin** — zéro occurrence de `witness` ou
+`temoin` dans `certus/ui/certus_strat_multigraine_ui.py`. Il ne l'expose ni ne l'explique.
+
+**3. 🔴 `_resolve_witness_resets` n'a AUCUN test.** C'est le **seul** chemin par lequel une liste
+de coupures entre dans le noyau (`certus_strat_robustness.py`), écrit le 2026-08-22, et rien ne
+le garde. Un `;` mal traité rendrait `[]` — donc **un run mono-témoin qui se croirait
+multi-témoin**, et dont l'artefact porterait quand même l'étiquette `mt3`. C'est le manque le
+plus dangereux des six : il fabrique une mesure fausse qui a l'air juste.
+
+**4. L'escalade n'est pas emboîtée.** Vérifié :
+
+```
+2 -> [38]    3 -> [25,50]    4 -> [19,38,56]    5 -> [15,30,45,60]
+emboitee ? False
+```
+
+À `k = 3` on **jette** la coupure 38 — la seule qui ait jamais fait bouger quelque chose sur
+`r75x2`. On n'explore donc pas « une coupure de plus », on explore des partitions **sans rapport
+entre elles**. La régression 0,560 → 0,980 → 0,997 ne mesure pas « plus de témoins est pire » :
+elle mesure trois partitions différentes.
+
+**5. Les coupures sont GLOBALES, pas par stratégie.** Le noyau accepte pourtant
+`strategy["witness_reset_layers"]`, qui **prime** sur le paramètre du run
+(`certus_strat_robustness.py`, résolution à deux sources). Une coupure au bon endroit pour une
+stratégie tombe au milieu d'un bloc pour une autre. 📏 Mesuré : à `mt2 [38]`, seules **91
+stratégies sur 4049** (2,2 %) ont leur coupure sur une frontière de bloc.
+
+⚠️ **Et attention à ne pas en tirer trop vite une conclusion** : testé le 2026-08-23, l'écart
+d'amorce entre « coupure sur frontière » et « coupure au milieu d'un bloc » vaut **1 à 3
+couches et CHANGE DE SIGNE** selon le nombre de témoins. L'alignement sur les blocs n'explique
+donc **rien** de l'échec observé. C'est un défaut de conception, pas la cause du problème.
+
+**6. 🔴 JAMAIS VALIDÉ SUR UN CAS OÙ IL DEVRAIT MARCHER.** On ne l'a lancé que sur deux
+composants où il ne peut rien (`r75x2` et `r75x0.5`, amorce de défaillance médiane aux couches **7** et **17**,
+en amont de toute coupure possible). **Le mécanisme n'a donc jamais produit une seule stratégie
+déposable.** Tant que ce n'est pas fait, on sait qu'il *s'exécute* ; on ne sait pas qu'il
+*fonctionne*.
+
+#### L'ordre qui décide
+
+| | quoi | coût | pourquoi à ce rang |
+|---|---|---|---|
+| **1** | tester `_resolve_witness_resets` | ~15 min, zéro CPU | un silence ici invaliderait **toute** mesure future, et l'artefact ne le dirait pas |
+| **2** | 🔑 **le valider sur le 99c** | **un run** | le seul composant où ce dossier atteste qu'il sert (100 % → 0 % à 3 témoins). Sans cette mesure, tout le reste est de la plomberie non éprouvée |
+| **3** | emboîter l'escalade | ~30 min | on ne retire jamais une coupure qui marchait |
+| **4** | le panneau GUI | ~1 h | le registre existe, il ne manque que la vue |
+
+🔑 **Seul le point 2 tranche quelque chose.** Les trois autres sont du travail sûr ; celui-là
+est une **mesure**, et c'est la seule qui puisse dire si l'outil tient sa promesse.

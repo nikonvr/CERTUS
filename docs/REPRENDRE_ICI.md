@@ -1,7 +1,59 @@
-# 🔴 REPRENDRE ICI — état gelé le 2026-08-23 à 14:00
+# 🔴 REPRENDRE ICI — état gelé le 2026-08-23 à 17:50
 
 > Ce fichier dit **où on s'est arrêté** et **la commande exacte pour repartir**. Il est le
 > premier à lire, avant `CLAUDE.md`.
+
+---
+
+## 0000. ⏳ CE QUI TOURNE EN CE MOMENT — lis ceci en premier
+
+**Deux runs sont EN VOL**, lancés à **17:33**, et personne ne les surveille depuis le changement
+de session. Ils écrivent dans `reports/docp_2026-08-23/`.
+
+```bat
+:: voir ou ils en sont
+type reports\docp_2026-08-23\durees.log
+```
+
+| | |
+|---|---|
+| **ce qui tourne** | `probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 404` et `... 505`, en parallèle |
+| **pourquoi** | mesurer ce que le **DOCP** rapporte, à une seule variable |
+| **durée attendue** | ~60 min chacune → fin vers **18:35** |
+| **où** | journaux `reports/docp_2026-08-23/journal_s404.log` et `_s505.log`, durées dans `durees.log` |
+
+### 🔑 LA COMPARAISON EST DÉJÀ POSÉE, IL NE MANQUE QUE LE CHIFFRE
+
+Le **même protocole** a tourné aujourd'hui à **12:41**, machine libre, **même code**, mêmes
+graines : `reports/orchestre_r75x2_20260823_124146/journal_s404.log`. **Seule la mémoire a
+changé entre les deux.**
+
+```
+AVANT   4 barrettes · 48 Go · 2133 MHz · DOUBLE canal   -> 60 min par run
+APRES   2 barrettes · 32 Go · 3600 MHz · DOUBLE canal   -> ?
+
+bande passante relative :  2133 x 2 = 4266   ->   3600 x 2 = 7200     +69 %
+```
+
+⚠️ **Et le premier bloc mesuré va DANS L'AUTRE SENS** : bloc 15 en **3 min 17** contre
+**3 min 08** avant, soit **+5 %** plus lent. Un seul bloc ne prouve rien — le dossier documente
+que j'ai déjà extrapolé trop tôt et que je m'étais trompé de 17 minutes. **Attendre quatre ou
+cinq blocs avant de conclure quoi que ce soit.**
+
+🔑 **Le contrôle qui vaut mieux que `pytest` pour la RAM** : à graine et code identiques, les
+résultats **doivent être identiques au bit**. Comparer l'artefact neuf à
+`reports/blocs_vs_plantage_r75x2_deep_s404.json` — s'ils diffèrent, la mémoire est instable et
+**toute mesure de la journée est suspecte**.
+
+📌 `pytest tests/oracle/ tests/unit/` est passé à **2941, 0 échec** après le remontage, donc
+rien n'indique de corruption pour l'instant.
+
+### 🔴 CE QUI N'EST PAS COMMITÉ
+
+`scripts/orchestre_multigraine.py` et `tests/unit/test_orchestre_multigraine.py` portent des
+modifications **non commitées** — l'alignement des docstrings sur l'amorce de défaillance
+(couche **7** en médiane sur la population, **6** sur les plans appariés). Elles sont testées
+(56 tests verts) et `ruff` est propre. **À commiter.**
 
 ---
 

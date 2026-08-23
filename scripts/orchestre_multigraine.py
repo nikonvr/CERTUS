@@ -232,7 +232,8 @@ def amorce_defaillance(strategies: list[dict]) -> int | None:
     🔑 CE N'EST PAS `critical_layer`, ET LA DIFFERENCE A COUTE TROIS RUNS. Le champ
     `critical_layer` de l'artefact rapporte la marge la PIRE, donc la plus profonde -- mediane
     **57** sur `r75x2`. En le lisant on croit le probleme profond, et une coupure a 38
-    parfaitement placee. 📏 La PREMIERE marge negative, elle, est a la couche **6**.
+    parfaitement placee. 📏 La PREMIERE marge negative, elle, est a la couche **7** (mediane
+    sur 8030 strategies ; 6 sur les plans apparies -- deux ensembles, deux chiffres justes).
 
     On lit donc `margin_by_layer["level"]`, qui porte la marge par couche en Angstroms, et on
     prend le plus petit indice ou elle passe sous zero. Une marge `level` negative signifie que
@@ -259,10 +260,11 @@ def multitemoin_peut_agir(n_couches: int, amorce: int | None, n_temoins_max: int
         29 plans communs mono / 2 temoins  ->  plantage INCHANGE sur 28, ameliore sur 1
         26 plans communs mono / 3 temoins  ->  INCHANGE sur 25
         25 plans communs mono / 4 temoins  ->  INCHANGE sur 24
-        amorce de defaillance : mediane 6-7 couches, INCHANGEE dans les 80 cas sur 80
+        amorce de defaillance : mediane 7 sur la population mono (8030 strategies),
+                                6 sur les plans APPARIES -- INCHANGEE dans les 80 cas sur 80
 
-    Une coupure n'agit que sur ce qui vient APRES elle. Quand la defaillance commence a la
-    couche 6 et que la coupure la moins profonde possible est a `n_couches / n_temoins_max`,
+    Une coupure n'agit que sur ce qui vient APRES elle. Quand la defaillance commence des la
+    couche 7 et que la coupure la moins profonde possible est a `n_couches / n_temoins_max`,
     il n'y a plus rien a sauver -- et cela se lit dans un artefact DEJA ECRIT, sans calcul.
 
     ⚠️ CE QU'IL NE DIT PAS : que le composant est infaisable. Il dit que le MULTI-TEMOIN ne

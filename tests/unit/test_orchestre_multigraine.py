@@ -552,7 +552,9 @@ def test_l_amorce_est_la_PREMIERE_marge_negative_pas_la_pire() -> None:
 
     Le champ `critical_layer` rapporte la marge la PIRE, donc la plus profonde -- mediane 57
     sur `r75x2`. En le lisant on croit le probleme profond et une coupure a 38 bien placee.
-    📏 La PREMIERE marge negative est a la couche 6.
+    📏 La PREMIERE marge negative est a la couche 7 en mediane sur les 8030 strategies des
+    graines 101 et 202 -- et 6 sur les plans APPARIES mono/mt2. Deux ensembles differents,
+    deux chiffres justes : ne pas citer l'un pour l'autre.
     """
     s = _strat_amorce(6, profondeur_pire=57)
     assert OM.amorce_defaillance([s]) == 6

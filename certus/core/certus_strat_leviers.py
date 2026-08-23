@@ -219,8 +219,12 @@ LEVIERS: tuple[Levier, ...] = (
         reserve="🔴 A n'armer que si AUCUNE realisation ne trouve -- et le verdict se prend "
                 "APRES le multiseed, jamais avant. Sur `r75x2`, quatre graines rendaient zero "
                 "avant que la 404 n'en trouve 372 : l'armer alors aurait degrade de ~110 % un "
-                "composant qui n'avait aucun probleme. ⚠️ Ou couper importe peu -- etendue de "
-                "+14,4 % sur 440 partitions du 99c, l'optimum est PLAT.",
+                "composant qui n'avait aucun probleme. ⚠️ OU COUPER N'EST PAS MESURE. Cette "
+                "reserve annoncait « ou couper importe peu, l'optimum est PLAT » jusqu'au "
+                "2026-08-23 : l'etendue de +14,4 % citee porte sur le SEEL de partitions DEJA "
+                "DEPOSABLES (`classer_partitions.py:178` ecarte celles qui plantent avant de "
+                "calculer la RMSE). Elle ne dit donc rien du choix d'une coupure quand le "
+                "critere est le PLANTAGE. La partition reguliere est un defaut, pas un optimum.",
         famille="temoin",
     ),
 )

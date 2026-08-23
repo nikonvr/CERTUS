@@ -352,12 +352,18 @@ def test_le_balayage_de_reprise_MET_A_JOUR_le_meilleur_SEEL() -> None:
 # 7. LA BOUCLE PRINCIPALE -- que AUCUN test ne traversait
 # ---------------------------------------------------------------------------
 
-def _sans_vrai_lancement(monkeypatch, argv: list[str]) -> int:
-    """Traverse la boucle SANS lancer un seul calcul. Rend le code de sortie.
+def _sans_vrai_lancement(monkeypatch, argv: list[str], tmp_path=None) -> int:
+    """Traverse la boucle SANS lancer un seul calcul NI ecrire dans le vrai `reports/`.
 
     🔑 Indispensable depuis que « le premier lancement passe malgre le budget » : sans lui, un
     test unitaire declencherait un run de production de cinquante minutes.
+
+    🔴 ET IL DEPLACE `RACINE`. 📏 Le 2026-08-23, ces tests avaient seme QUARANTE-NEUF dossiers
+    `reports/orchestre_*` vides dans le depot. Un test qui salit l'endroit ou l'on cherche les
+    mesures est un test qui coutera une lecture fausse un jour.
     """
+    if tmp_path is not None:
+        monkeypatch.setattr(OM, "RACINE", tmp_path)
 
     class _Faux:
         returncode = 0
@@ -377,7 +383,9 @@ def _sans_vrai_lancement(monkeypatch, argv: list[str]) -> int:
     monkeypatch.setattr(OM, "_lancer", _faux)
     return OM.main(argv)
 
-def test_la_BOUCLE_s_execute_reellement_au_moins_une_fois(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_la_BOUCLE_s_execute_reellement_au_moins_une_fois(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     """🔴 CE TEST EXISTE PARCE QUE LA CAMPAGNE DU 2026-08-22 A PLANTE EN 0 MINUTE.
 
     Un renommage mecanique avait donne le MEME nom a la fonction `motif_finalisation` et a la
@@ -401,14 +409,14 @@ def test_la_BOUCLE_s_execute_reellement_au_moins_une_fois(monkeypatch: pytest.Mo
     code = _sans_vrai_lancement(monkeypatch, [
         "r75x1.75", "--budget", "1", "--graines", "909", "--graine-notation", "42",
         "--duree-attendue", "60",
-    ])
+    ], tmp_path)
     # 1 = « aucune realisation n'a trouve » : le faux lanceur n'ecrit aucun artefact. Ce qui
     # compte est qu'on TRAVERSE la boucle sans exception.
     assert code == 1
 
 
 def test_ce_qui_n_a_PAS_ete_essaye_faute_de_budget_se_DIT(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture, tmp_path: Path
 ) -> None:
     """🔴 Sans cette ligne, « 0 trouve » se lirait « ca ne marche pas » alors que la verite est
     « on n'a pas eu le temps ». Les deux menent a des decisions opposees.
@@ -437,6 +445,7 @@ def test_ce_qui_n_a_PAS_ete_essaye_faute_de_budget_se_DIT(
         return f
 
     monkeypatch.setattr(OM, "_lancer", _faux)
+    monkeypatch.setattr(OM, "RACINE", tmp_path)  # ne pas salir le vrai reports/
     OM.main(["r75x1.75", "--budget", "1", "--graines", "909", "1111", "1212", "1313",
              "--graine-notation", "42", "--duree-attendue", "60", "--slots", "1"])
     sortie = capsys.readouterr().out
@@ -448,7 +457,7 @@ def test_ce_qui_n_a_PAS_ete_essaye_faute_de_budget_se_DIT(
 
 
 def test_un_budget_SOUS_ESTIME_lance_quand_meme_la_premiere(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture, tmp_path: Path
 ) -> None:
     """🔴 CE TEST A COUTE UNE NUIT DE CALCUL, LE 2026-08-22.
 
@@ -481,6 +490,7 @@ def test_un_budget_SOUS_ESTIME_lance_quand_meme_la_premiere(
         return f
 
     monkeypatch.setattr(OM, "_lancer", _faux_lancer)
+    monkeypatch.setattr(OM, "RACINE", tmp_path)  # ne pas salir le vrai reports/
     # Budget d'UNE minute, duree attendue de SOIXANTE : le cas exact qui a echoue.
     OM.main(["r75x1.75", "--budget", "1", "--graines", "909", "--graine-notation", "42",
              "--duree-attendue", "60"])
@@ -492,7 +502,7 @@ def test_un_budget_SOUS_ESTIME_lance_quand_meme_la_premiere(
 
 
 def test_le_budget_borne_QUAND_MEME_les_lancements_suivants(
-    monkeypatch: pytest.MonkeyPatch
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     """Controle negatif de la reparation : la garde ne doit pas ouvrir les vannes.
 
@@ -515,9 +525,85 @@ def test_le_budget_borne_QUAND_MEME_les_lancements_suivants(
         return f
 
     monkeypatch.setattr(OM, "_lancer", _faux_lancer)
+    monkeypatch.setattr(OM, "RACINE", tmp_path)  # ne pas salir le vrai reports/
     OM.main(["r75x1.75", "--budget", "1", "--graines", "909", "1111", "1212", "1313",
              "--graine-notation", "42", "--duree-attendue", "60", "--slots", "1"])
     assert len(lances) < 4, (
         f"le budget ne borne plus rien : {len(lances)} lancements sur 4 avec un budget d'une "
         f"minute"
     )
+
+
+# ---------------------------------------------------------------------------
+# 8. LE GARDE-FOU : une coupure n'agit que sur ce qui vient APRES elle
+# ---------------------------------------------------------------------------
+
+def _strat_amorce(premiere_negative: int, profondeur_pire: int = 60) -> dict:
+    """Une strategie dont la marge `level` passe sous zero a `premiere_negative`."""
+    lv = {str(i): 3.0 for i in range(0, premiere_negative)}
+    lv[str(premiere_negative)] = -0.5
+    lv[str(profondeur_pire)] = -1800.0
+    return {"margin_by_layer": {"level": lv},
+            "critical_layer": {"layer": profondeur_pire, "cause": "niveau d'arret hors d'atteinte"}}
+
+
+def test_l_amorce_est_la_PREMIERE_marge_negative_pas_la_pire() -> None:
+    """🔴 CETTE DISTINCTION A COUTE TROIS RUNS le 2026-08-23.
+
+    Le champ `critical_layer` rapporte la marge la PIRE, donc la plus profonde -- mediane 57
+    sur `r75x2`. En le lisant on croit le probleme profond et une coupure a 38 bien placee.
+    📏 La PREMIERE marge negative est a la couche 6.
+    """
+    s = _strat_amorce(6, profondeur_pire=57)
+    assert OM.amorce_defaillance([s]) == 6
+    assert s["critical_layer"]["layer"] == 57, "le temoin du piege doit rester dans le test"
+
+
+def test_l_amorce_est_la_MEDIANE_sur_la_population() -> None:
+    lot = [_strat_amorce(4), _strat_amorce(6), _strat_amorce(30)]
+    assert OM.amorce_defaillance(lot) == 6
+
+
+def test_aucune_marge_negative_rend_None() -> None:
+    assert OM.amorce_defaillance([{"margin_by_layer": {"level": {"3": 2.0}}}]) is None
+    assert OM.amorce_defaillance([]) is None
+    assert OM.amorce_defaillance([{}]) is None
+
+
+def test_une_defaillance_EN_AMONT_de_toute_coupure_est_refusee() -> None:
+    """📏 `r75x2` : amorce mediane couche 7, coupure la moins profonde a 4 temoins = couche 19.
+    Verifie sur artefacts, plans APPARIES : 28 plans sur 29 ont un plantage INCHANGE avec
+    coupure, et l'amorce ne bouge dans AUCUN des 80 cas."""
+    peut, pourquoi = OM.multitemoin_peut_agir(75, 7, 4)
+    assert peut is False
+    assert "INUTILE PAR CONSTRUCTION" in pourquoi
+    assert "couche 7" in pourquoi and "couche 19" in pourquoi
+
+
+def test_le_cas_LIMITE_de_r75x0_5_est_refuse_lui_aussi() -> None:
+    """⚠️ Amorce 17 contre une coupure a 19 : DEUX couches d'ecart. Le garde-fou refuse, et
+    c'est le bon sens de l'erreur -- mais il dit combien de temoins il faudrait, pour qu'on
+    puisse en decider."""
+    peut, pourquoi = OM.multitemoin_peut_agir(75, 17, 4)
+    assert peut is False
+    assert "~5 temoins" in pourquoi or "5 temoins" in pourquoi
+
+
+def test_controle_negatif_une_defaillance_PROFONDE_laisse_passer() -> None:
+    """🔴 Un garde-fou qui refuse tout ne garde rien."""
+    peut, pourquoi = OM.multitemoin_peut_agir(75, 45, 4)
+    assert peut is True
+    assert "peut l'atteindre" in pourquoi
+
+
+def test_une_amorce_INCONNUE_ne_bloque_pas() -> None:
+    """En l'absence de donnee, on n'invente pas un refus : on laisse essayer."""
+    peut, _ = OM.multitemoin_peut_agir(75, None, 4)
+    assert peut is True
+
+
+def test_le_garde_fou_ne_dit_PAS_que_le_composant_est_infaisable() -> None:
+    """🔑 Deux affirmations differentes, et `r75x2` le prouve : le meme empilement, la meme
+    graine et la meme fente rendent 251 deposables des qu'on injecte des plans connus."""
+    _, pourquoi = OM.multitemoin_peut_agir(75, 7, 4)
+    assert "ne dit PAS que le composant est infaisable" in pourquoi

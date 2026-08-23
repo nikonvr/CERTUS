@@ -195,7 +195,7 @@ Vérifié dans le code, pas supposé :
 
 | étage | comportement sur une machine plus large |
 |---|---|
-| **notation de robustesse** | 🟢 **s'adapte** — `max_workers = max(1, cpu_count() // 2)` (`certus_strat_robustness.py:1838`). 8 threads → 4 workers ; 32 threads → 16 |
+| **notation de robustesse** | 🟢 **s'adapte** — `max_workers = max(1, cpu_count() // 2)` (`certus_strat_robustness.py:1925`). 8 threads → 4 workers ; 32 threads → 16 |
 | **boucle des nombres de blocs** | 🔴 **reste à 1, par conception.** `certus_strat_workers.py:1452` porte `max_workers = 1` avec le commentaire *« FIX: Force max_workers=1 to prevent Numba CPU oversubscription and deadlocks »*. **Ne le remonte pas** sans comprendre ce qu'il évitait |
 | **noyaux numba** | 🟢 `prange` élargit avec les cœurs, à l'intérieur de chaque évaluation |
 

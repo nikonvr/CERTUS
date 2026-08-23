@@ -107,7 +107,7 @@ Et c'est exactement ce que le code ne fait pas — voir la contradiction C.
 
 ### 🔴 A. Le plafond de 3 variantes n'applique ni la consigne qu'il cite, ni son contraire
 
-`RATE_MAX_VARIANTS_PER_STRATEGY = 3` (`certus_strat_robustness.py:519`) porte cette
+`RATE_MAX_VARIANTS_PER_STRATEGY = 3` (`certus_strat_robustness.py:562`) porte cette
 justification :
 
 > *« 👤 asked for the trial "on the 10 best strategies", not on everything: an unbounded
@@ -442,7 +442,7 @@ est nette :
 | méthode d'arrêt | granularité actuelle |
 |---|---|
 | **Rate** | 🟢 **par couche** — `rate_layers`, une liste d'indices |
-| **POEM contre niveau absolu** | 🔴 **GLOBAL** — `poem_enabled` est un booléen unique pour tout le run (`certus_strat_robustness.py:2421`, propagé jusqu'à `certus_strat_batch.py:78`) |
+| **POEM contre niveau absolu** | 🔴 **GLOBAL** — `poem_enabled` est un booléen unique pour tout le run (`certus_strat_robustness.py:2508`, propagé jusqu'à `certus_strat_batch.py:78`) |
 
 Il n'existe donc **aucun moyen** d'exprimer *« couche 12 en POEM, couche 13 au niveau absolu,
 couche 14 en Rate »*. Le mélange que 👤 décrit est inexprimable dans la structure de données
@@ -773,7 +773,7 @@ coupure 52 :  0.11852439021077397  (s042)   contre   0.11852439020756476  (s077)
 |---|---|
 | `consensus_seed_list = 41,42,43,44,45`, `consensus_num_seeds = 3` | le consensus tourne sur **[41, 42, 43]** |
 | `_resolve_consensus_seeds` (`certus_strat_consensus.py:132`) | la liste explicite gagne ; **`base_seed` n'est consulté que si elle est vide**. Le consensus n'a donc **jamais vu 77** |
-| le rescoring ne lit que `robustness_score` (`certus_strat_robustness.py:2769`) | il réécrit le **score** des `consensus_top_k = 60` premières, **jamais `crash_rate`** |
+| le rescoring ne lit que `robustness_score` (`certus_strat_robustness.py:3322`) | il réécrit le **score** des `consensus_top_k = 60` premières, **jamais `crash_rate`**. ⚠️ Renvoi recalé le 2026-08-23 : il pointait `:2769`, devenu faux après les éditions du 22/08. `recaler_renvois.py` a refusé de le corriger seul — `robustness_score` n'est pas un symbole unique, il apparaît des dizaines de fois — et il a eu raison de laisser une lecture humaine trancher |
 | 📏 les déposables sont aux **rangs 0 à 4** | elles sont donc bel et bien rescorées |
 
 **D'où le motif exact qu'on observe : le score est gelé par le consensus, le plantage suit
@@ -1264,7 +1264,7 @@ de stratégies réellement vues, et donne l'ordre de diagnostic. L'artefact port
 
 | ✅ établi | |
 |---|---|
-| **aucune ligne `[PREFIX]` dans 220 min de journal** | ni l'info, ni l'avertissement. `_optical_prefix_variants` sort donc au seul point muet : `if not sweep: return []` (`certus_strat_robustness.py:820`) |
+| **aucune ligne `[PREFIX]` dans 220 min de journal** | ni l'info, ni l'avertissement. `_optical_prefix_variants` sort donc au seul point muet : `if not sweep: return []` (`certus_strat_robustness.py:833`) |
 | **donc `optical_prefix_sweep` n'atteint pas le calcul** | ce n'est pas « aucune stratégie couche-par-couche » — cette branche-là, elle, journalise |
 | **le DTO n'est pas coupable** | testé à part : `StratParamsDTO(**{...})` conserve la clé dans `model_extra` et `.get()` la rend. `rate_tail_sweep` passe par le même chemin et fonctionne |
 | **le hoist au-dessus du garde `allow_rate` est bien en place** | ligne 935, vérifié — ce n'était donc pas le correctif d'hier qui manquait |

@@ -226,6 +226,75 @@ def lire_evenement(ligne: str) -> dict | None:
 DEGRADATION_MULTITEMOIN = "+73 a +110 % selon le composant, 3 composants sur 3"
 
 
+def amorce_defaillance(strategies: list[dict]) -> int | None:
+    """La couche ou la defaillance COMMENCE, mediane sur les strategies. None si aucune.
+
+    🔑 CE N'EST PAS `critical_layer`, ET LA DIFFERENCE A COUTE TROIS RUNS. Le champ
+    `critical_layer` de l'artefact rapporte la marge la PIRE, donc la plus profonde -- mediane
+    **57** sur `r75x2`. En le lisant on croit le probleme profond, et une coupure a 38
+    parfaitement placee. 📏 La PREMIERE marge negative, elle, est a la couche **6**.
+
+    On lit donc `margin_by_layer["level"]`, qui porte la marge par couche en Angstroms, et on
+    prend le plus petit indice ou elle passe sous zero. Une marge `level` negative signifie que
+    le niveau d'arret, fige sur le nominal, n'est plus dans la bande atteignable du signal reel.
+    """
+    amorces: list[int] = []
+    for s in strategies:
+        lv = (s.get("margin_by_layer") or {}).get("level") or {}
+        negatives = [int(k) for k, v in lv.items() if v is not None and float(v) < 0]
+        if negatives:
+            amorces.append(min(negatives))
+    if not amorces:
+        return None
+    amorces.sort()
+    return amorces[len(amorces) // 2]
+
+
+def multitemoin_peut_agir(n_couches: int, amorce: int | None, n_temoins_max: int) -> tuple[bool, str]:
+    """Une partition peut-elle seulement ATTEINDRE la defaillance ? Rend (peut, pourquoi).
+
+    🔴 CE GARDE-FOU EXISTE PARCE QUE L'ESCALADE A DEPENSE TROIS RUNS POUR RIEN, le 2026-08-23,
+    sur `r75x2` puis sur `r75x0.5`. Verifie ensuite sur les artefacts, plans APPARIES :
+
+        29 plans communs mono / 2 temoins  ->  plantage INCHANGE sur 28, ameliore sur 1
+        26 plans communs mono / 3 temoins  ->  INCHANGE sur 25
+        25 plans communs mono / 4 temoins  ->  INCHANGE sur 24
+        amorce de defaillance : mediane 6-7 couches, INCHANGEE dans les 80 cas sur 80
+
+    Une coupure n'agit que sur ce qui vient APRES elle. Quand la defaillance commence a la
+    couche 6 et que la coupure la moins profonde possible est a `n_couches / n_temoins_max`,
+    il n'y a plus rien a sauver -- et cela se lit dans un artefact DEJA ECRIT, sans calcul.
+
+    ⚠️ CE QU'IL NE DIT PAS : que le composant est infaisable. Il dit que le MULTI-TEMOIN ne
+    peut rien pour lui. Ce sont deux affirmations differentes, et `r75x2` le prouve -- le meme
+    empilement, la meme graine et la meme fente rendent 251 strategies deposables des qu'on
+    injecte des plans de surveillance connus.
+    """
+    if amorce is None:
+        return True, "amorce de defaillance inconnue -- rien ne s'oppose a l'essai"
+    if n_temoins_max < 2 or n_couches < 2:
+        return False, "aucune partition possible"
+    # La coupure la MOINS PROFONDE qu'on s'autorise, tous nombres de temoins confondus : c'est
+    # celle du nombre de temoins MAXIMAL, puisque plus on decoupe, plus la premiere coupure
+    # remonte. Au-dela d'elle, aucune partition de l'escalade n'atteint la defaillance.
+    plus_haute = min(partition_temoins(n_couches, n_temoins_max) or [n_couches])
+    if amorce > plus_haute:
+        return True, (
+            f"la defaillance commence a la couche {amorce}, en aval de la coupure la moins "
+            f"profonde ({plus_haute}) : une partition peut l'atteindre"
+        )
+    # Combien de temoins faudrait-il pour couper AVANT l'amorce ?
+    besoin = n_couches // max(amorce, 1) + 1
+    return False, (
+        f"INUTILE PAR CONSTRUCTION : la defaillance commence des la couche {amorce}, alors que "
+        f"la coupure la moins profonde possible a {n_temoins_max} temoins est a la couche "
+        f"{plus_haute}. Une coupure n'agit que sur ce qui vient APRES elle. Il faudrait ~{besoin} "
+        f"temoins pour couper avant l'amorce -- autant de segments dont l'erreur serait gelee. "
+        f"⚠️ Cela ne dit PAS que le composant est infaisable : cela dit que le multi-temoin ne "
+        f"peut rien pour lui."
+    )
+
+
 def verdict_multitemoin(par_graine: dict[int, list[dict]], graines_essayees: int) -> tuple[bool, str]:
     """Le multi-temoin est-il UTILE ici ? Rend (utile, la raison, en clair).
 
@@ -274,10 +343,33 @@ def verdict_multitemoin(par_graine: dict[int, list[dict]], graines_essayees: int
 def partition_temoins(n_couches: int, n_temoins: int) -> list[int]:
     """Les couches ou un verre temoin NEUF entre, pour `n_temoins` temoins.
 
-    Partition REGULIERE, et c'est un choix appuye sur une mesure : *ou* couper importe peu.
-    Etendue du SEEL de **+14,4 %** sur 440 partitions du 99c et **+15,4 %** sur 18 positions du
-    75c, avec 136 et 11 ex aequo -- l'optimum est PLAT. Chercher la meilleure coupure couterait
-    des heures pour un gain sous le bruit.
+    🔴 PARTITION REGULIERE PAR DEFAUT, ET C'EST UN CHOIX PAR ABSENCE DE MESURE, PAS UN CHOIX
+    MESURE. Cette docstring a affirme le contraire jusqu'au 2026-08-23, en invoquant
+    « etendue +14,4 % sur 440 partitions du 99c / +15,4 % sur 18 positions du 75c, l'optimum
+    est PLAT ». Verification faite, cette etendue ne dit RIEN du choix d'une coupure quand le
+    critere est le PLANTAGE :
+
+      · `docs/CHANTIER_MULTITEMOINS.md:287` intitule la ligne « etendue totale du SEEL ».
+      · `scripts/classer_partitions.py:178` ECARTE les partitions dont le plantage cumule
+        depasse `--max-crash` (defaut 0.05, ligne 107) AVANT de calculer la RMSE. L'etendue
+        est donc CONDITIONNELLE au fait d'avoir deja franchi la porte de plantage : elle
+        decrit la dispersion du SEEL PARMI LES PARTITIONS DEJA DEPOSABLES.
+      · `reports/controle_random75/ASSEMBLAGE_r75.json` ne porte aucun champ de plantage --
+        chaque position n'a que `p`, `seel`, `S_gelee`, `S_gelee_rel`. Le +15,4 % ne
+        transporte donc AUCUNE information de plantage.
+      · Et `scripts/assembler_r75.py:57` mesure sur `JSON-strat-random75.json`, le x1 -- un
+        composant a 0 % de plantage en une seule campagne, donc le cas ou la question ne se
+        pose meme pas.
+
+    🔑 CE QUE LA MESURE ETABLIT : une fois la porte de plantage franchie, PEU IMPORTE OU L'ON
+    COUPE, le SEEL varie peu. CE QU'ELLE N'ETABLIT PAS : quelle coupure fait FRANCHIR cette
+    porte a un composant qui echoue. Les deux questions sont disjointes, et c'est la seconde
+    que l'escalade multi-temoin pose.
+
+    ⚠️ La partition reguliere reste donc un DEFAUT RAISONNABLE -- il faut bien couper quelque
+    part -- mais rien ne l'a mesuree meilleure qu'une autre sur le critere qui nous occupe.
+    📏 Indice contraire, d'ailleurs : le 99c qui REUSSIT coupe a 0/22/72, ce qui n'est pas
+    regulier.
 
     ⚠️ L'index 0 n'est jamais rendu : la couche 0 pousse deja sur verre nu.
     """
@@ -303,10 +395,19 @@ def _escalade_multitemoin(a, jdir: Path) -> int:
     s'arrete DONC au premier nombre de temoins qui trouve -- pas au meilleur SEEL sur une
     grille de nombres de temoins, ce qui serait payer deux fois.
 
-    📏 Ce que la mesure dit du reste : *ou* couper importe peu (etendue +14,4 % sur 440
-    partitions du 99c, l'optimum est PLAT), et 2 contre 3 temoins vaut +3,0 %, sous la
-    resolution de 5,1 %. Une partition REGULIERE est donc defendable, et chercher mieux
-    couterait des heures pour un gain sous le bruit.
+    🔴 CE QUE LA MESURE NE DIT PAS, ET QUE CETTE DOCSTRING A AFFIRME JUSQU'AU 2026-08-23.
+    Elle invoquait « ou couper importe peu, etendue +14,4 %, l'optimum est PLAT » pour
+    justifier la partition reguliere. Cette etendue porte sur le **SEEL de partitions DEJA
+    DEPOSABLES** -- `classer_partitions.py:178` ecarte celles qui plantent avant meme de
+    calculer la RMSE. Elle ne dit donc rien de la question posee ici, qui est de faire
+    FRANCHIR la porte a un composant qui echoue. Voir `partition_temoins` pour le detail.
+
+    📌 De meme, le « 2 contre 3 temoins vaut +3,0 %, sous la resolution de 5,1 % » compare des
+    SEEL, pas des taux de plantage : il ne dit pas quel nombre de temoins rend FAISABLE.
+
+    ⚠️ L'escalade reste donc fondee sur un raisonnement de COUT -- chaque coupure gele de
+    l'erreur, on en prend le moins possible -- et non sur une mesure du meilleur nombre de
+    temoins. C'est defendable, et ce n'est pas la meme chose.
     """
     n = _n_couches(a.composant)
     if not n:
@@ -604,7 +705,13 @@ def main(argv: list[str] | None = None) -> int:
     # trouvait aucun chemin ou ecrire, et le clic ne faisait RIEN, en silence. Un bouton actif
     # qui n'agit pas est pire qu'un bouton grise. Trouve par le test d'integration du GUI.
     drapeau_finaliser = jdir / "FINALISER"
-    jdir.mkdir(parents=True, exist_ok=True)
+    # 🔴 UN DRY-RUN N'ECRIT RIEN, PAS MEME UN DOSSIER VIDE. 📏 Le 2026-08-23, les tests
+    # unitaires -- qui appellent `main` -- avaient seme QUARANTE-NEUF dossiers
+    # `reports/orchestre_*` vides. Un `reports/` illisible n'est pas un detail : c'est
+    # l'endroit ou l'on cherche les mesures, et `coherence_campagne.py` y date le debut d'une
+    # campagne sur la mtime des journaux.
+    if not a.dry_run:
+        jdir.mkdir(parents=True, exist_ok=True)
     print(f"  ⏹  pour FINALISER a tout moment :  touch {drapeau_finaliser.relative_to(RACINE)}")
     _evt("drapeau", chemin=str(drapeau_finaliser))
 
@@ -807,6 +914,21 @@ def main(argv: list[str] | None = None) -> int:
         print()
         print(f"  🔬 MULTI-TEMOIN : {raison}")
         if utile and a.multitemoin:
+            # 🔴 LE GARDE-FOU, AVANT DE DEPENSER TROIS RUNS. Il lit l'amorce de defaillance
+            # dans les artefacts DEJA ECRITS : si elle est en amont de la coupure la moins
+            # profonde possible, aucune partition ne peut l'atteindre.
+            strats = [x for art in fait.values() for x in (art.get("strategies") or [])]
+            amorce = amorce_defaillance(strats)
+            peut, pourquoi = multitemoin_peut_agir(_n_couches(a.composant), amorce,
+                                                   int(a.multitemoin))
+            print(f"  🔬 AMORCE DE DEFAILLANCE : couche {amorce if amorce is not None else '?'} "
+                  f"(mediane sur {len(strats)} strategies)")
+            _evt("amorce", couche=amorce, peut_agir=peut, raison=pourquoi)
+            if not peut:
+                print(f"  ⏹  {pourquoi}")
+                _evt("fin", trouve=False, multitemoin_utile=False,
+                     non_essayees=sorted(set(jamais_lancees)))
+                return 1
             code_mt = _escalade_multitemoin(a, jdir)
             _evt("fin", trouve=False, multitemoin=True,
                  non_essayees=sorted(set(jamais_lancees)))

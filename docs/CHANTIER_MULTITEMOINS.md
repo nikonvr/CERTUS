@@ -288,9 +288,29 @@ composants et indépendamment de leur structure.
 | à égalité avec la première (δ = 5,1 %) | 136 | **11 sur 18** |
 
 C'est **la seule régularité qui traverse une structure et une absence de structure**.
-L'optimum est **plat**, ce qui explique à la fois pourquoi l'intuition des expérimentateurs
-est difficile à prendre en défaut, et pourquoi elle est peu discriminante en pratique :
-sur un plateau, presque toute position raisonnable convient.
+
+🔴 **L'optimum DU SEEL est plat PARMI LES PARTITIONS QUI PASSENT DÉJÀ LA PORTE DE PLANTAGE** —
+et cette qualification n'est pas une précaution de style, c'est ce que la mesure fait.
+`scripts/classer_partitions.py:178` **écarte** les partitions dont le plantage cumulé dépasse
+`--max-crash` (défaut 0,05, ligne 107) **avant** d'appeler `compute_batch_rmse`. L'étendue
+décrit donc la dispersion du SEEL **à l'intérieur du club des déposables**. ⚠️ Et côté 75c
+c'est encore plus net : `reports/controle_random75/ASSEMBLAGE_r75.json` ne porte **aucun champ
+de plantage** (chaque position n'a que `p`, `seel`, `S_gelee`, `S_gelee_rel`), et
+`scripts/assembler_r75.py:57` mesure sur `JSON-strat-random75.json` — le **x1**, un composant à
+**0 % de plantage en une seule campagne**, donc le cas où la question ne se pose même pas.
+
+🔴 **CELA NE DIT DONC RIEN DE LA PARTITION QUI FERAIT FRANCHIR LA PORTE À UN COMPOSANT QUI
+ÉCHOUE.** Les deux questions sont disjointes — *« quelle coupure donne le meilleur SEEL une
+fois déposable »* et *« quelle coupure rend déposable »* — et les confondre a été fait le
+2026-08-22 dans `partition_temoins` (`scripts/orchestre_multigraine.py`), qui justifiait une
+partition **régulière** en citant cette étendue. Requalifié le 2026-08-23.
+
+📏 Indice qui va d'ailleurs dans l'autre sens et qu'il faut garder en tête : **le 99c qui
+réussit coupe à 0/22/72, ce qui n'est pas régulier.**
+
+Ce qui reste vrai, et c'est déjà utile : cela explique pourquoi l'intuition des expérimentateurs
+est difficile à prendre en défaut, et pourquoi elle est peu discriminante en pratique **une fois
+la faisabilité acquise** : sur ce plateau-là, presque toute position raisonnable convient.
 
 📏 Reproduction : `scripts/assembler_r75.py`, sortie
 `reports/controle_random75/ASSEMBLAGE_r75.json`, log `reports/assemblage_r75.log`.

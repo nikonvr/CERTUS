@@ -32,7 +32,7 @@ c'est un **proxy** du premier :
 |---|---|---|
 | **1. quand le Rate est NÉCESSAIRE** | `swing < SWING_MIN` — 🔴 **pas** un seuil d'épaisseur. Point 1 ci-dessus le dit explicitement : *une couche de 30 nm à très faible contraste d'indice a une dynamique aussi pauvre qu'une ultrafine.* | implémenté |
 | **2. l'intuition de 👤** | **couche fine.** Corrélée au critère 1 — une couche fine parcourt peu de chemin optique, donc produit peu de swing — mais **elle n'est pas équivalente** : le contraste d'indice et la λ de contrôle entrent aussi. | 🔵 non implémentée, et **elle n'a pas à l'être** : le code applique la grandeur exacte dont « fine » est l'approximation. |
-| **3. où le solveur ESSAIE le Rate** | **la dernière couche de chaque bloc** (`_rate_candidate_layers`, `certus_strat_robustness.py:596`). Critère de **coût**, pas de nécessité : à une frontière de bloc, `block_start[i+1] = i+1`, donc les ancres sont perdues de toute façon — le Rate y est gratuit. | implémenté |
+| **3. où le solveur ESSAIE le Rate** | **la dernière couche de chaque bloc** (`_rate_candidate_layers`, `certus_strat_robustness.py:643`). Critère de **coût**, pas de nécessité : à une frontière de bloc, `block_start[i+1] = i+1`, donc les ancres sont perdues de toute façon — le Rate y est gratuit. | implémenté |
 
 🔑 **Le point à ne pas manquer** : le critère 3 ne cherche **pas** les couches qui ont besoin
 du Rate. Il cherche celles où le Rate **ne coûte rien**. Ce sont deux questions différentes et

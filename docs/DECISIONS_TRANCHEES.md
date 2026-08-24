@@ -194,7 +194,7 @@ héritage.** Ce n'est écrit nulle part et personne ne l'avait vu.
 
 #### Maillon 2 — le filtre de plantage compare un taux ESTIMÉ à un seuil FIXE
 
-`certus_strat_robustness.py:2018` :
+`certus_strat_robustness.py:2055` :
 
 ```python
 if crash_rate_max >= CRASH_RATE_TOLERANCE:   # 0,05
@@ -300,7 +300,7 @@ classement. **Si un bras en retire, c'est un défaut, pas un résultat.**
 
 ### Le défaut, en une ligne
 
-`certus_strat_robustness.py:2018` compare une **estimation bruitée** à un **seuil dur** :
+`certus_strat_robustness.py:2055` compare une **estimation bruitée** à un **seuil dur** :
 
 ```python
 if crash_rate_max >= CRASH_RATE_TOLERANCE:   # 0,05

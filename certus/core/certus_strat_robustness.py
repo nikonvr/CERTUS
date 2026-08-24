@@ -1773,10 +1773,21 @@ def _filter_finite_robustness_scores(
             filtered_results.append(item)
         else:
             rejected.append(item)
-            logger.warning(
-                f"[ROBUSTNESS] Dropped non-finite score for strategy "
-                f"{item.get('strategy', {}).get('strategy_id', '?')}: {score}"
-            )
+
+    # 🔴 CETTE LIGNE ETAIT EMISE PAR STRATEGIE, ET ELLE A TIRE 11 028 FOIS SUR UN SEUL RUN
+    # (mesure du 2026-08-24, `reports/hysteresis05_2026-08-24/`). Elle est desormais AGREGEE.
+    #
+    # 🔑 POURQUOI AGREGER ICI, ET SEUILLER PLUS BAS -- ce n'est pas le meme cas. Quand il
+    # reste des survivants, la fonction ne rend QUE `filtered_results` : les strategies a
+    # score non fini sont ecartees et n'atteignent JAMAIS l'artefact. Leur nombre n'est donc
+    # recuperable nulle part ailleurs, et un seuil le perdrait pour de bon. Une ligne par
+    # appel le conserve en entier.
+    if rejected:
+        ids = [str(it.get("strategy", {}).get("strategy_id", "?")) for it in rejected[:5]]
+        logger.warning(
+            f"[ROBUSTNESS] {len(rejected)} strategie(s) ecartee(s) pour score NON FINI"
+            f" -- ids : {', '.join(ids)}{' ...' if len(rejected) > 5 else ''}"
+        )
 
     if filtered_results or not rejected:
         return filtered_results
@@ -1788,14 +1799,36 @@ def _filter_finite_robustness_scores(
 
     rejected.sort(key=_fallback_key)
     best_crash = float(rejected[0].get("crash_rate", 1.0))
-    logger.error(
-        f"[ROBUSTNESS] 🔴 NONE of the {len(rejected)} strategies holds under "
-        f"{CRASH_RATE_TOLERANCE:.0%} of non-terminating depositions. The rate compounds "
-        f"over the height of the stack: the best candidate crashes in "
-        f"{best_crash:.1%} of the draws. We still return the ranking by increasing "
-        f"risk — but NONE of these strategies is usable as is, and "
-        f"the component likely requires another monitoring paradigm."
-    )
+
+    # 🔴 CES DEUX MESSAGES PARLENT D'UN CLASSEMENT PRIVE DE SIGNAL. Un classement d'UN SEUL
+    # element n'est pas un classement : sur `len(rejected) == 1` l'affirmation est vraie par
+    # vacuite et ne dit rien. Le seuil n'est donc pas un chiffre choisi, c'est la definition
+    # de ce dont le message parle.
+    #
+    # 📏 Mesure du 2026-08-24 sur un run entier (`reports/hysteresis05_2026-08-24/`) :
+    #
+    #     2400 emissions sur n = 1   ·   7 sur n = 2   ·   3 sur n = 601   ·   3 ailleurs
+    #
+    # soit 2400 lignes ERROR sur 2440 qui portaient sur une population d'UNE strategie, et
+    # TROIS lignes informatives noyees dedans. Un `grep ERROR` n'y rendait plus rien -- ce
+    # qui neutralisait aussi les gardes poses ailleurs, dont celui de la malediction du
+    # vainqueur (`certus_strat_workers.py`).
+    #
+    # 🔑 ET ON NE PERD RIEN : le cas n = 1 est deja consigne par strategie dans l'artefact,
+    # via `crash_eliminated` pose juste en dessous -- 4051 sur 4454 dans
+    # `blocs_vs_plantage_r75x2_deep_s404.json`. La ligne dupliquait une donnee durable.
+    # C'est aussi ce qui ecarte le compteur agrege ici : il rendrait `sum(crash_eliminated)`,
+    # un nombre deja calculable.
+    parle = len(rejected) >= 2
+    if parle:
+        logger.error(
+            f"[ROBUSTNESS] 🔴 NONE of the {len(rejected)} strategies holds under "
+            f"{CRASH_RATE_TOLERANCE:.0%} of non-terminating depositions. The rate compounds "
+            f"over the height of the stack: the best candidate crashes in "
+            f"{best_crash:.1%} of the draws. We still return the ranking by increasing "
+            f"risk — but NONE of these strategies is usable as is, and "
+            f"the component likely requires another monitoring paradigm."
+        )
     for item in rejected:
         item["robustness_score"] = _worst_finite_rmse(item)
         item["crash_eliminated"] = True
@@ -1813,12 +1846,16 @@ def _filter_finite_robustness_scores(
     # parce que c'etait cache, mais parce qu'un artefact ne porte QUE des scores finis meme
     # quand tout plante, et qu'un classement de replis ressemble trait pour trait a un
     # classement.
-    logger.warning(
-        f"   [REGIME] 🔴 DEGENERE : les {len(rejected)} strategies rendues portent un score "
-        f"de REPLI, et leur crash_rate est constant. Le classement qui suit -- donc le choix "
-        f"des PARENTS d'ELITE -- ne dispose d'aucun signal dans ses deux premieres cles. "
-        f"`use_margin_ranking` est la seule cle informative dans ce regime."
-    )
+    #
+    # 🔑 MEME SEUIL QUE CI-DESSUS, ET POUR LA MEME RAISON : ce message decrit un CLASSEMENT
+    # sans signal. Sur une seule strategie il n'y a pas de classement, donc rien a annoncer.
+    if parle:
+        logger.warning(
+            f"   [REGIME] 🔴 DEGENERE : les {len(rejected)} strategies rendues portent un score "
+            f"de REPLI, et leur crash_rate est constant. Le classement qui suit -- donc le choix "
+            f"des PARENTS d'ELITE -- ne dispose d'aucun signal dans ses deux premieres cles. "
+            f"`use_margin_ranking` est la seule cle informative dans ce regime."
+        )
     return rejected
 
 

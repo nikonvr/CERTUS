@@ -641,7 +641,7 @@ Vérifié dans le code, pas supposé :
 
 | étage | comportement sur une machine plus large |
 |---|---|
-| **notation de robustesse** | 🟢 **s'adapte** — `max_workers = max(1, cpu_count() // 2)` (`certus_strat_robustness.py:1925`). 8 threads → 4 workers ; 32 threads → 16 |
+| **notation de robustesse** | 🟢 **s'adapte** — `max_workers = max(1, cpu_count() // 2)` (`certus_strat_robustness.py:1962`). 8 threads → 4 workers ; 32 threads → 16 |
 | **boucle des nombres de blocs** | 🔴 **reste à 1, par conception.** `certus_strat_workers.py:1452` porte `max_workers = 1` avec le commentaire *« FIX: Force max_workers=1 to prevent Numba CPU oversubscription and deadlocks »*. **Ne le remonte pas** sans comprendre ce qu'il évitait |
 | **noyaux numba** | 🟢 `prange` élargit avec les cœurs, à l'intérieur de chaque évaluation |
 
@@ -994,7 +994,7 @@ place de monter, **623 sur 623 descendent**. Ce n'est pas de la régression vers
 bash scripts\enchainer_hysteresis.sh hysteresis_2026-08-24 404
 ```
 
-🔑 **Le mécanisme candidat n'est pas supposé, il est DANS LE CODE** — `certus_strat_robustness.py:2489-2495` :
+🔑 **Le mécanisme candidat n'est pas supposé, il est DANS LE CODE** — `certus_strat_robustness.py:2526-2532` :
 
 ```
 tp_hysteresis = tp_hysteresis_factor * A * noise_val
@@ -1047,7 +1047,7 @@ hysteresis = 0     ->  100 % de plantage partout,  0 deposable
 hysteresis = 1,66  ->  403 deposables
 
 donc  plantage DECROIT quand l'hysteresis CROIT.
-et    hysteresis  CROIT avec le bruit  (`certus_strat_robustness.py:2493`)
+et    hysteresis  CROIT avec le bruit  (`certus_strat_robustness.py:2530`)
 donc  plantage DECROIT quand le bruit CROIT      <- exactement l'anomalie observee
 ```
 
@@ -1355,6 +1355,7 @@ fond. Voici l'état réel.
 | ~~**2**~~ | ✅ ~~déplacer les rampes de `reports/` vers `example/`~~ | fait | commit `b13694b`. Vérifié le 2026-08-24 : plus aucune dépendance vivante de `example/` vers `reports/`, seulement des notes `_reproduit` |
 | **3** | porter le résultat du jour dans `pages/CERTUS_STRAT.html` | ~30 min, zéro CPU | c'est la vitrine, et 👤 la juge *« ultra importante »*. ⚠️ Avec la condition **dans la même phrase que le chiffre**, et vérification de structure par `html.parser` |
 | **4** | terminer l'action 1 d'hier — graine **202** sur la config livrée | ~2 h | une quatrième réalisation. Moins urgent : trois convergent déjà à 0,55 % |
+| **8** | 🟢 **FAIT le 2026-08-24 — le journal était devenu illisible** | testé | 📏 Sur un run entier, **2440 lignes `ERROR`**, dont **2400 sur une population d'UNE stratégie** et **3** seulement sur une vraie population de 601. Rapport signal/bruit : **0,12 %**. Plus **11 028 `WARNING`** de score non fini, un par stratégie. 🔴 Un `grep ERROR` ne rendait plus rien — ce qui **neutralisait aussi le garde-fou de la malédiction du vainqueur** posé le matin même. 🔑 **Deux remèdes différents, et c'est le cœur** : seuil `n ≥ 2` pour les deux gros messages (ils décrivent un **classement** sans signal, et un classement d'un élément n'en est pas un — et le cas `n = 1` est déjà dans l'artefact via `crash_eliminated`, 4051/4454) ; **agrégation** pour le score non fini (ces stratégies sont écartées et **n'atteignent jamais l'artefact**, donc un seuil perdrait le compte pour de bon). ⚠️ Mesuré sur **quatre** journaux, tous `r75x2` : le correctif ne dépend pas du composant, les chiffres si. 9 tests, dont un **contrôle négatif** vérifié — contre l'ancien code, exactement les 2 tests du correctif échouent |
 | ~~**5**~~ | ✅ ~~graines de génération **disjointes** de la notation~~ | fait le 2026-08-24 | 🟢 **Le garde-fou est posé, et il n'interdit rien** : `_screen_with_seeds` connaissait déjà les deux graines au même endroit (`certus_strat_workers.py:653`) et ne les comparait jamais. Il crie maintenant en `ERROR` quand la graine de **notation** figure dans les graines de **génération**. ⚠️ **Il avertit, il ne refuse pas** — refuser tuerait une mesure de plusieurs heures à son premier bloc, et le chevauchement est légitime quand on reproduit délibérément un vieux run. Ce qui n'est pas acceptable, c'est qu'il passe en **silence**. 4 tests, dont un qui vérifie qu'il **se tait** sur le cas correct et un qui vérifie qu'il ne **change rien** au résultat |
 | **6** | balayer `tp_hysteresis_factor` à bruit fixé | 1 run | sépare les deux lectures de l'anomalie de §1ter |
 | **7** | compter le criblage et l'héritage | ~1 h | à faire quand un étage sera suspect, pas avant |

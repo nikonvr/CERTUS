@@ -23,7 +23,7 @@
 🔴 **ÉTABLI LE 2026-08-15, ET C'EST PIRE QUE « MOINS BON » : SUR LE 99 COUCHES, RIEN NE
 SURVIT.** La référence sans changement de témoin rend **`crash_rate = 100 %`**, en PREMIUM comme en FAST.
 Or une stratégie dont le plantage dépasse 5 % reçoit un score **infini** et **sort du
-classement** (`certus_strat_robustness.py:2125`). Les 785 candidates en sont donc sorties, et
+classement** (`certus_strat_robustness.py:2162`). Les 785 candidates en sont donc sorties, et
 ce qui revient vient du **repli sans survivant** (`:1152-1166`) : le solveur reclasse les
 éliminées par risque croissant et rend la moins mauvaise avec la **pire RMSE finie**.
 
@@ -570,7 +570,7 @@ et il faut les deux parce qu'elles se contrôlent mutuellement.
 
 **Voie A — la MARGE, qui existe déjà et n'est pas saturée.** Le noyau rend par couche
 `m_level`, `m_missed`, `m_fab` (`certus/physics/certus_strat_batch.py:393-395`), remontés en
-profil (`certus/core/certus_strat_robustness.py:2243`). **A23 a mesuré que la marge prédit
+profil (`certus/core/certus_strat_robustness.py:2280`). **A23 a mesuré que la marge prédit
 le plantage d'un facteur 22, validée non circulairement.** Objectif de substitution pendant
 la saturation : le **nombre de couches à marge insuffisante**, et la **pire marge**. Ces deux
 nombres bougent quand le plantage ne bouge plus.
@@ -688,7 +688,7 @@ bonne — c'est ce que le pavage doit chercher.
 | # | Règle | Pourquoi, et ce qu'elle évite |
 |---|---|---|
 | 1 | **Aucun tirage n'est refait** | On concatène les épaisseurs **réellement simulées** de chaque campagne. Refaire un tirage introduirait un aléa neuf et détruirait ce qu'on mesure : les erreurs *commises*, sans compensation croisée. |
-| 2 | **Même graine pour les trois campagnes** | `index_seed` est une **fonction pure de la graine** (`certus_strat_robustness.py:2376`), donc les trois partagent la réalisation du corridor d'indice — la physique d'**un seul dépôt**, où seul le monitoring repart à zéro. 🔴 Trois graines indépendantes **moyenneraient** une erreur systématique commune aux 99 couches et rendraient un SEEL **trop beau**. |
+| 2 | **Même graine pour les trois campagnes** | `index_seed` est une **fonction pure de la graine** (`certus_strat_robustness.py:2413`), donc les trois partagent la réalisation du corridor d'indice — la physique d'**un seul dépôt**, où seul le monitoring repart à zéro. 🔴 Trois graines indépendantes **moyenneraient** une erreur systématique commune aux 99 couches et rendraient un SEEL **trop beau**. |
 | 3 | **On note avec le code de production** | `compute_batch_rmse` reçoit les épaisseurs concaténées : l'assemblage est jugé par la fonction qui juge toutes les stratégies du dépôt. Aucune physique réimplantée, aucune surface de bug nouvelle. ⚠️ Son 7ᵉ argument n'est **pas** un tableau de parité mais la **matrice des indices par couche et par λ**, et `nH`/`nL` s'y passent **vides** (`:2460-2467`). |
 | 4 | **Faisabilité et spectre sont DEUX mesures** | La faisabilité s'établit **campagne par campagne** — chacune sous 5 % de plantage. Le spectre s'établit **sur l'assemblage**, qui ne porte aucun taux de plantage puisqu'aucun monitoring n'y tourne. Les confondre est l'erreur qui a coûté la journée du 2026-08-15. |
 | 5 | **On prend la stratégie DÉPOSABLE, pas `strats[0]`** | Sur le sous-empilement B, la mieux notée plante à **98 %** alors que **54** ne plantent jamais. On retient la mieux notée **parmi celles sous 5 %** — ce qu'un opérateur choisirait. |
@@ -973,7 +973,7 @@ l'assemblage. Sur 440 partitions, **2 ont une P95 contaminée**. 🔑 **La gagna
 tirage — `margin_missed` (un extremum à un cheveu de ne pas être vu) et `margin_fab` (à un
 cheveu d'être inventé). Elles remontent en `all_m_missed` / `all_m_fab`
 (`certus_strat_batch.py:542`), sont réduites en `margin_profile`
-(`certus_strat_robustness.py:2036`) et exposées en `critical_layer` et `margin_by_layer`. Le
+(`certus_strat_robustness.py:2073`) et exposées en `critical_layer` et `margin_by_layer`. Le
 code porte ce commentaire :
 
 > 🔴 **NEEDED FOR RANKING**

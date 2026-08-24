@@ -117,7 +117,7 @@ réparer qu'une.
 
 ### A0. 🟢 ARMER LA PORTE DE PLANTAGE À CONFIANCE — une ligne par configuration
 
-`_crash_gate_rejects` (`certus_strat_robustness.py:1851`) porte **déjà** le correctif, avec sa
+`_crash_gate_rejects` (`certus_strat_robustness.py:1888`) porte **déjà** le correctif, avec sa
 mesure du 2026-08-13 dans sa propre docstring :
 
 ```
@@ -289,7 +289,7 @@ celle qui va le plus souvent au bout » — au lieu d'un premier rang qui est un
 📏 Trouvé le 2026-08-20 en répondant à *« quelle est la meilleure stratégie ? »* : on savait son
 SEEL, son plantage et son nombre de blocs, et **on ne pouvait pas dire à quelles λ surveiller**.
 La sonde lisait `b.get("wl")` là où le noyau écrit `block["wavelength"]`
-(`certus_strat_robustness.py:2855`), et le champ sortait `[None, …]` **de la bonne longueur** —
+(`certus_strat_robustness.py:2892`), et le champ sortait `[None, …]` **de la bonne longueur** —
 donc l'artefact avait l'air complet. Corrigé côté sonde (`2b2901c`).
 
 **Ce qui reste à faire en production** : un export « ordre de fabrication » — par couche, la λ
@@ -536,7 +536,7 @@ faible, et la population est saturée. 🔴 **Il n'a donc JAMAIS été montré q
 stratégie est indépendant de la graine.**
 
 ✅ **Et l'attente est même l'inverse**, vérifié dans le code : `base_seed`
-(`certus_strat_robustness.py:2282`) alimente `_get_cached_sobol_noise`,
+(`certus_strat_robustness.py:2319`) alimente `_get_cached_sobol_noise`,
 `_signal_noise_stream_seed`, `_affine_stream_seed` et `_index_stream_seed`. **La graine pilote
 réellement les tirages.**
 
@@ -643,7 +643,7 @@ deux choses. **Une heure économisée contre une comparaison boiteuse : mauvais 
 > 🔴 **ET L'OUTIL CONSTRUIT EN RÉPONSE EST EN PANNE, AVEC UNE PANNE MAL LOCALISÉE.**
 > `REPRENDRE_ICI.md` §1 l'attribue à une `full_dynamics_grid` vide. 📏 Réfuté le 2026-08-20 au
 > soir, par le code : la grandeur n'est déréférencée qu'à **un seul endroit de tout le dépôt**,
-> `certus/core/certus_strat_robustness.py:2513`, dans un bloc de **journalisation** gardé par
+> `certus/core/certus_strat_robustness.py:2550`, dans un bloc de **journalisation** gardé par
 > `theory_dyn >= 0.0` — grille vide ⇒ `-1.0` ⇒ aucune des deux branches. Et la **Phase B de
 > production tourne toujours avec elle vide** : `minimized_context`
 > (`certus/workers/certus_strat_workers_pipeline.py:146`) ne porte pas la clé, elle part
@@ -831,7 +831,7 @@ Le diagnostic disait « le plantage » sans nommer le code. Il est nommé, et il
 du plan :
 
 ```
-_crash_gate_rejects   (certus_strat_robustness.py:2693)  ->  final_score = float("inf")
+_crash_gate_rejects   (certus_strat_robustness.py:2730)  ->  final_score = float("inf")
                                                         ->  robustness_score = inf
 ELITE : not np.isfinite(full_score)  (certus_strat_consensus.py:792)  ->  rej_score_non_fini
 ```
@@ -1123,7 +1123,7 @@ mesurée. Elle ne doit pas être écrite comme un acquis.**
 ### 16.1 Ce que le code fait, et il est cité
 
 ```
-certus_strat_robustness.py:2130   crash_rate_max = 0.0   # worst non-terminating deposition
+certus_strat_robustness.py:2167   crash_rate_max = 0.0   # worst non-terminating deposition
                                                          # rate ACROSS NOISE LEVELS
                         :2546   crash_rate_max = max(crash_rate_max, n_crash_run / num_runs)
                         :2693   if _crash_gate_rejects(crash_count_max, num_runs,
@@ -2254,7 +2254,7 @@ mesurer par un balayage σ→0, pas à conclure.**
 >
 > 🔑 **L'anomalie ne faiblit pas quand on baisse le facteur : elle CHANGE DE SIGNE.** À 0,5 le
 > sens est le sens physique — plus de bruit, plus de plantage. `tp_hysteresis_factor` porte
-> donc la **direction**, et `certus_strat_robustness.py:2489-2495` montre pourquoi : le seuil
+> donc la **direction**, et `certus_strat_robustness.py:2526-2532` montre pourquoi : le seuil
 > est multiplié par `noise_val`.
 >
 > **Le plantage ne décroît pas parce que l'empilement résiste mieux. Il décroît parce que le

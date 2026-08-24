@@ -263,3 +263,83 @@ class TestPiege2ParamsNotADict:
         assert vues == [42, 77]
         assert dto.get("robustness_seed") == 42
         assert len(out) == 2
+
+
+class TestTheScoringSeedInsideTheGenerationSeeds:
+    """THE WINNER'S CURSE CHANNEL MUST NOT PASS IN SILENCE.
+
+    Generating on K seeds and then SCORING on one of those same K means the plans that reach
+    the full pass were partly selected on the realisation that grades them. The cost of that
+    channel is MEASURED and it is not a constant -- +12.9 % (2026-08-15), +0.55 % (2026-08-22),
+    -0.03 % (2026-08-23). A run may legitimately pay it, deliberately; what it may not do is
+    pay it without saying so. The night run of 2026-08-21 generated on 42;77;101;202;303 and
+    scored on 42, and the overlap was found months later by rereading a command line.
+
+    These tests pin the three properties that make the guard trustworthy: it fires when it
+    must, it stays QUIET when it must not (a guard that cries wolf gets ignored), and it
+    changes NOTHING to what the function returns.
+    """
+
+    @staticmethod
+    def _faux(vues):
+        def faux(ctx, params, num_runs=None, expand_variants=None):
+            vues.append(params.get("robustness_seed"))
+            return {"all_strategies_results": [_res(_plan(600.0 + len(vues)), 0.1)]}
+        return faux
+
+    def test_it_says_so_when_the_scoring_seed_generates_too(self, monkeypatch, caplog):
+        vues = []
+        monkeypatch.setattr(
+            "certus.workers.certus_strat_workers.run_final_simulation_block", self._faux(vues)
+        )
+        params = {"robustness_seed": 42, "screen_seed_list": "42,77,101"}
+        with caplog.at_level(logging.ERROR, logger=LOGGER.name):
+            _screen_with_seeds([_plan(600.0)], {}, params, 50, 5, LOGGER, "T")
+
+        fautifs = [r for r in caplog.records if r.levelno >= logging.ERROR]
+        assert len(fautifs) == 1, "exactly one alert, never a stream"
+        message = fautifs[0].getMessage()
+        # BOTH numbers must be in the line: a reader who greps the journal must not have to
+        # go and fetch the other half of the fact somewhere else.
+        assert "42" in message and "77" in message
+        assert "malediction" in message.lower()
+
+    def test_it_stays_quiet_when_the_seeds_are_disjoint(self, monkeypatch, caplog):
+        """A guard that fires on the CORRECT case is a guard that gets ignored."""
+        vues = []
+        monkeypatch.setattr(
+            "certus.workers.certus_strat_workers.run_final_simulation_block", self._faux(vues)
+        )
+        params = {"robustness_seed": 42, "screen_seed_list": "77,101,202"}
+        with caplog.at_level(logging.ERROR, logger=LOGGER.name):
+            _screen_with_seeds([_plan(600.0)], {}, params, 50, 5, LOGGER, "T")
+
+        assert [r for r in caplog.records if r.levelno >= logging.ERROR] == []
+
+    def test_it_changes_nothing_to_the_result(self, monkeypatch):
+        """The guard is an INSTRUMENT. It observes; it must not touch the union."""
+        sorties = []
+        for liste in ("42,77", "77,42"):
+            vues = []
+            monkeypatch.setattr(
+                "certus.workers.certus_strat_workers.run_final_simulation_block",
+                self._faux(vues),
+            )
+            params = {"robustness_seed": 42, "screen_seed_list": liste}
+            out = _screen_with_seeds([_plan(600.0)], {}, params, 50, 5, LOGGER, "T")
+            sorties.append(([r["robustness_score"] for r in out], vues))
+            assert params["robustness_seed"] == 42, "the run's seed comes back untouched"
+
+        # Same plans, same scores, whatever the order -- the alert has no side effect.
+        assert sorties[0][0] == sorties[1][0]
+
+    @pytest.mark.parametrize("graine", [None, "quarante-deux", float("nan")])
+    def test_an_unusable_scoring_seed_never_raises(self, monkeypatch, graine):
+        """A guard that crashes the run it protects is worse than no guard at all."""
+        vues = []
+        monkeypatch.setattr(
+            "certus.workers.certus_strat_workers.run_final_simulation_block", self._faux(vues)
+        )
+        params = {"robustness_seed": graine, "screen_seed_list": "42,77"}
+        out = _screen_with_seeds([_plan(600.0)], {}, params, 50, 5, LOGGER, "T")
+        assert len(out) == 2

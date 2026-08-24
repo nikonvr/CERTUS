@@ -1,4 +1,16 @@
-# 🔴 REPRENDRE ICI — état gelé le 2026-08-23 à 17:50
+# 🔴 REPRENDRE ICI — état gelé le 2026-08-24 à 15:30
+
+> ⏳ **UN RUN TOURNE** : `bash scripts/enchainer_hysteresis.sh hysteresis_2026-08-24 404`,
+> lancé à **15:20**, fin vers **16:00**. Il tranche l'anomalie du §1ter — voir la fin du §0000.
+> 🔑 Il mesure des **taux de plantage**, pas des durées : travailler sur la machine pendant
+> qu'il tourne ne fausse **que son horloge**.
+>
+> 🟢 `pytest tests/oracle/ tests/unit/` : **2949 passed, 5 skipped, 0 échec** (15:19).
+> `ruff` propre. `coherence_md.py` : **1 point**, le faux positif instruit.
+>
+> ⚠️ **Rien n'est commité** — les mesures des 23 et 24/08, les quatre nouveaux scripts et
+> toutes les corrections de ce fichier vivent uniquement dans l'arbre de travail. Committer
+> **publie** (`core.hooksPath` armé sur `.githooks`, dépôt public) : décision de 👤.
 
 > Ce fichier dit **où on s'est arrêté** et **la commande exacte pour repartir**. Il est le
 > premier à lire, avant `CLAUDE.md`.
@@ -7,53 +19,297 @@
 
 ## 0000. ⏳ CE QUI TOURNE EN CE MOMENT — lis ceci en premier
 
-**Deux runs sont EN VOL**, lancés à **17:33**, et personne ne les surveille depuis le changement
-de session. Ils écrivent dans `reports/docp_2026-08-23/`.
+**Deux runs sont EN VOL**, lancés à **17:33**. Ils écrivent dans `reports/docp_2026-08-23/`.
+🟢 **Relevés à 18:01 : vivants, au bloc 10, et la réponse est déjà tombée — voir plus bas.**
+
+🔴 **`durees.log` n'est écrit QU'À LA FIN du run.** Il est vide pendant toute la mesure et cela
+**ressemble à une panne**. L'avancement réel se lit dans les journaux :
 
 ```bat
-:: voir ou ils en sont
-type reports\docp_2026-08-23\durees.log
+findstr /C:"Best strategy ready" reports\docp_2026-08-23\journal_s404.log
 ```
 
 | | |
 |---|---|
 | **ce qui tourne** | `probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 404` et `... 505`, en parallèle |
 | **pourquoi** | mesurer ce que le **DOCP** rapporte, à une seule variable |
-| **durée attendue** | ~60 min chacune → fin vers **18:35** |
+| **durée attendue** | ~60 min chacune → fin recalculée sur la cadence réelle : **~18:34** |
 | **où** | journaux `reports/docp_2026-08-23/journal_s404.log` et `_s505.log`, durées dans `durees.log` |
 
-### 🔑 LA COMPARAISON EST DÉJÀ POSÉE, IL NE MANQUE QUE LE CHIFFRE
+### 📏 LE RUN SEUL A TOURNÉ — 1,23× de débit à deux runs, mesuré le 2026-08-23 à 19:17
 
-Le **même protocole** a tourné aujourd'hui à **12:41**, machine libre, **même code**, mêmes
-graines : `reports/orchestre_r75x2_20260823_124146/journal_s404.log`. **Seule la mémoire a
-changé entre les deux.**
-
-```
-AVANT   4 barrettes · 48 Go · 2133 MHz · DOUBLE canal   -> 60 min par run
-APRES   2 barrettes · 32 Go · 3600 MHz · DOUBLE canal   -> ?
-
-bande passante relative :  2133 x 2 = 4266   ->   3600 x 2 = 7200     +69 %
+```bat
+bash scripts\mesure_solo_vs_parallele.sh solo_2026-08-23 404
 ```
 
-⚠️ **Et le premier bloc mesuré va DANS L'AUTRE SENS** : bloc 15 en **3 min 17** contre
-**3 min 08** avant, soit **+5 %** plus lent. Un seul bloc ne prouve rien — le dossier documente
-que j'ai déjà extrapolé trop tôt et que je m'étais trompé de 17 minutes. **Attendre quatre ou
-cinq blocs avant de conclure quoi que ce soit.**
+Même graine, mêmes arguments que les runs en vol, **seul** sur la machine. Journal dans
+`reports/solo_2026-08-23/`, contexte de concurrence dans son `CONTEXTE.txt`.
+
+```
+16 blocs, TOUS identiques au bit (RMSE et populations minees)
+
+               a DEUX     SEUL      ecart
+ cumul 75->1   57:46     35:36     -38,4 %
+
+ debit a deux runs = 1,23x celui d'un run seul     (2,00 = parfait, 1,00 = nul)
+ repere du 22/08 a 2133 MHz        = 1,29x
+```
+
+🔑 **LA MÉMOIRE EST ÉCARTÉE UNE SECONDE FOIS, ET PAR UN AUTRE CHEMIN.** Le passage à l'échelle
+vaut **1,23×** à 3600 MHz contre **1,29×** à 2133 : la bande passante ne change pas davantage la
+*concurrence* qu'elle ne changeait la *durée*. Deux mesures indépendantes, même verdict.
+
+🔑 **Et le rapport des durées suffit à dire pourquoi** : si un run seul occupe une fraction `f`
+de la machine, deux runs en demandent `2f` et ralentissent d'autant, donc
+`f = (T_à_deux / T_seul) / 2 = 1,62 / 2 =` **81 %**.
+
+> **Un seul run occupe déjà 81 % de la machine.** Le second n'a presque plus rien à prendre.
+
+📌 **Il n'y a donc pas de goulot exotique à trouver — la machine est simplement PLEINE**, et le
+repère indépendant du 22/08 (*« le CPU plafonne à 74 % en solo »*) dit la même chose à 7 points
+près. Le levier est le **nombre de cœurs**, pas le cache.
+
+### 🔴 ET LA PREMIÈRE VERSION DE `lire_solo_vs_parallele.py` CONCLUAIT LE CONTRAIRE
+
+Elle lisait *« facteur bas → quelque chose de PARTAGÉ sature → le L3 de 16 Mo → acheter un CPU à
+gros cache »*. **Elle sautait par-dessus l'explication la plus simple, qui suffit** : une machine
+pleine produit ce facteur toute seule, sans aucune contention de cache.
+
+⚠️ **C'est exactement la faute de *« le goulot est la bande passante mémoire »*** — nommer un
+coupable sans avoir éliminé le trivial. Corrigée dans l'outil, qui déduit et affiche maintenant
+l'occupation avant de désigner quoi que ce soit.
+
+### 🔴 NE CONTRÔLE PAS LES ARTEFACTS PAR `sha256` — il crie pour rien
+
+Les trois artefacts de la graine 404 (12:41 à 2133, 18:33 à 3600, 19:16 seul) ont **trois
+empreintes différentes** pour une **taille identique à l'octet**. Comparés champ par champ :
+
+```
+seuls  stamp  et  instrument  different -- tout le contenu scientifique est IDENTIQUE
+```
+
+`instrument` vaut `656fbf6` pour le run de 12:41 et `e577221` pour les deux autres : du code de
+production **a** changé entre les deux. Vérifié — c'est une chaîne `reserve=` de
+`certus_strat_leviers.py`, du texte de documentation, inerte. 🔑 **Et les artefacts le
+prouvent mieux que la lecture du diff** : à code « différent », résultats identiques.
+
+📌 Le bon contrôle est donc **champ par champ en excluant `stamp` et `instrument`**, jamais un
+hachage du fichier entier.
+
+### 🔵 CE QUI RESTE NON MESURÉ, ET QUI DÉCIDERAIT UN ACHAT
+
+| | |
+|---|---|
+| **le CPU % réellement consommé par un run seul** | l'occupation de 81 % est **déduite** des durées, pas observée. Si le CPU réel est nettement plus bas, l'écart est de la contention — et là seulement le cache redevient suspect |
+| **la dispersion de run à run** | toujours `n = 1` dans chaque condition. C'est elle qui dit si les ±5 % du DOCP sont seulement lisibles |
+| 🔒 **le prix caché** | ni les CPU à gros cache ni ceux à beaucoup de cœurs n'ont d'iGPU, et cette machine n'a **pas de carte graphique** (`Win32_VideoController` ne rend que le Radeon intégré). L'addition en comprend une |
+
+### 🔴🔴 LE DOCP NE RAPPORTE RIEN — et le « ~5 % » qu'il semblait coûter est DANS LE BRUIT
+
+> ⚠️ **Ce titre disait « IL COÛTE ~5 % » jusqu'au 2026-08-24.** La dispersion de run à run a
+> été mesurée depuis : elle vaut **2,2 à 3,7 %**, du même ordre que l'écart attribué au DOCP.
+> Le sous-titre de la sous-section suivante porte le compte. Ce qui reste vrai, et c'était la
+> question posée : **aucun gain.**
+
+Le **même protocole** a tourné aujourd'hui à **12:41**, **même code**, mêmes graines :
+`reports/orchestre_r75x2_20260823_124146/`. **Seule la mémoire a changé entre les deux.**
+
+```
+AVANT   4 barrettes · 48 Go · 2133 MHz · DOUBLE canal
+APRES   2 barrettes · 32 Go · 3600 MHz · DOUBLE canal
+
+bande passante relative :  2133 x 2 = 4266   ->   3600 x 2 = 7200     +69 % ATTENDUS
+mesure sur six blocs, deux graines                                    -4,7 % RENDUS
+```
+
+📏 **Durée par nombre de blocs** (`Mining found` → `Best strategy ready`) :
+
+```
+              seed 404                            seed 505
+bloc     AVANT    APRES    ecart          bloc     AVANT    APRES    ecart
+ 75       22 s     22 s     0,0 %          75       22 s     21 s    -4,5 %
+ 15      3:04     3:12     +4,3 %          15      3:05     3:11    +3,2 %
+ 14      5:14     5:11     -1,0 %          14      5:16     5:22    +1,9 %
+ 13      5:08     5:11     +1,0 %          13      5:07     5:08    +0,3 %
+ 12      6:09     6:38     +7,9 %          12      5:48     6:32   +12,6 %
+ 11      5:56     6:31     +9,8 %          11      6:23     6:46    +6,0 %
+
+cumul 15->11   25:50 -> 27:04   +4,8 %     cumul   26:04 -> 27:18   +4,7 %
+```
+
+**Les deux graines donnent +4,7 % et +4,8 %**, à la dixième de pour-cent près.
+
+🔴 **ET J'AI D'ABORD PRÉSENTÉ CETTE CONCORDANCE COMME UNE CONFIRMATION. C'EST FAUX, et c'est
+encore l'erreur de §001.** Les deux graines ont tourné **en même temps, sur la même machine, dans
+le même état thermique, avec les mêmes processus voisins**. Elles ne sont pas deux répétitions de
+la condition MATÉRIELLE : elles partagent tous ses facteurs. Leur accord démontre que **la charge
+est reproductible**, pas que l'écart matériel est réel.
+
+🔑 **Sur la question posée — 2133 contre 3600 — l'expérience compte n = 1, pas n = 2.** Le
+protocole n'a tourné qu'**une fois** dans chaque configuration, et rien ne dit ce que deux runs
+de configuration IDENTIQUE écarteraient entre eux. ⚠️ Tant que cette dispersion-là n'est pas
+mesurée, **+4,7 % n'est pas distinguable du bruit de run à run**, et il ne justifie aucune
+décision matérielle.
+
+📌 Le contrôle qui trancherait est bon marché : **rejouer le même protocole une seconde fois dans
+la configuration actuelle** (~1 h). Si deux runs identiques s'écartent déjà de ~5 %, l'écart
+DOCP disparaît ; s'ils s'écartent de 0,5 %, il devient réel et il faut comprendre pourquoi.
+
+🔑 **Et le DOCP est bien ACTIF — vérifié, pas supposé :**
+
+```
+DIMM_A2  Corsair CMK32GX4M2Z3600C18  16 Go  Speed 3600  ConfiguredClockSpeed 3600
+DIMM_B2  Corsair CMK32GX4M2Z3600C18  16 Go  Speed 3600  ConfiguredClockSpeed 3600
+Ryzen 7 5700G · 8 coeurs / 16 threads · 11,6 Go libres sur 31,3 -> aucun swap
+```
+
+```bat
+powershell -NoProfile -Command "Get-CimInstance Win32_PhysicalMemory | Select-Object DeviceLocator,PartNumber,Speed,ConfiguredClockSpeed"
+```
+
+🔴 **DONC LA BANDE PASSANTE MÉMOIRE N'EST PAS LE GOULOT.** L'hypothèse portée par la dernière
+ligne du tableau « ce qui reste ouvert » de §00 — *« le CPU plafonne à 74 % en solo : le goulot
+est la bande passante mémoire »* — est **réfutée par la mesure**. Le DOCP était gratuit ; il est
+fait ; il ne rend rien.
+
+⚠️ **Deux réserves à citer avec le chiffre, sous peine de dire faux :**
+
+- la config est passée de **4 barrettes à 2** en même temps que la fréquence montait : le nombre
+  de **rangs** a été divisé par deux, et l'entrelacement de rangs travaillait pour l'ancienne.
+  On ne mesure donc pas « 2133 contre 3600 », on mesure **« 4×2133 contre 2×3600 »** ;
+- les blocs **12 et 11** portent l'essentiel de la perte (+6 à +12,6 %) alors que 15, 14 et 13
+  sont à ±2 %. La perte n'est pas uniforme et **on ne sait pas pourquoi**.
+
+📌 **Ce que cela dit du reste** : si la mémoire n'est pas le goulot, la piste qui reste pour
+accélérer est celle du §0.2bis — `certus_strat_workers.py:1452` force `max_workers = 1` sur la
+boucle des nombres de blocs. ⚠️ Et le commentaire qui l'accompagne dit ce qu'il évitait
+(*oversubscription* Numba, blocages) : **ne pas le remonter sans comprendre.**
+
+### 📏 LA DISPERSION EST MESURÉE — 2,2 à 3,7 %, et elle AVALE l'effet du DOCP
+
+**Mesuré le 2026-08-24 à 15:16**, à la demande de 👤 : la **même paire** de runs, dans la
+**même** configuration 3600 MHz, machine propre. `reports/docp_propre_2026-08-24/`. Les 16 blocs
+sont identiques au bit à ceux de la veille — seule la journée change.
+
+```
+                                    s404      s505
+ run complet                       +6,1 %    +6,4 %
+ hors chauffe (blocs 14 a 1)       +3,7 %    +3,7 %
+ hors chauffe ET hors bloc 8       +2,2 %    +2,2 %
+
+ pour memoire, « l'effet DOCP »    +4,9 %    +5,0 %
+```
+
+🔑 **L'effet du DOCP vaut 1,3 à 2,3 fois la dispersion de la machine. Il n'en est pas séparé.**
+Avec `n = 1` dans chaque configuration, on ne peut affirmer ni que le 3600 MHz est plus lent, ni
+qu'il est plus rapide. 🔒 **Ce qui reste établi, et c'était la question : aucun gain.** La
+question mémoire est **close** — rien à racheter, rien à remonter.
+
+📌 Et elle ne se rouvrira pas : remesurer le 2133 MHz demanderait de redémonter la machine.
+
+### 🔴 DEUX PIÈGES DE MÉTHODE, PAYÉS LE MÊME JOUR
+
+**1. LE DÉMARRAGE À FROID.** Windows avait redémarré la veille à **19:38**, 21 min après la
+dernière mesure. Le premier run du lendemain partait donc sur des caches de fichiers **froids** :
+
+```
+bloc 75   0:22  ->  1:07   +204 %        \
+bloc 15   3:12  ->  3:57    +23 %         >  transitoire, il s'effondre
+bloc 14   5:11  ->  5:31    +6,4 %       /
+```
+
+⚠️ **Les blocs 75 et 15 sortent de tout calcul de durée.** 🔑 Et il a fallu **déduire** la
+chauffe d'une courbe décroissante, faute d'un champ qui la dise : `CONTEXTE.txt` porte
+maintenant `demarrage_windows`. 📌 La mesure DOCP de la veille n'est **pas** touchée — les deux
+runs comparés suivaient des heures d'activité, tous deux chauds.
+
+**2. L'ÉCHANTILLONNEUR A DONNÉ UN FEU VERT FAUX.** `max_autres_python = 0` alors que la mesure
+**était** polluée : des analyses lancées à la main pendant le run font sauter le **bloc 8** de
+**+20,4 % et +21,4 %**, sur les deux graines, à la même minute. Le compteur relevait toutes les
+120 s ; des commandes de quelques secondes passent entre les gouttes. Ramené à **20 s**, et le
+champ est désormais étiqueté **PLANCHER**.
+
+> 🔑 **Le vrai détecteur n'est pas le compteur, c'est la SIMULTANÉITÉ.** Une contamination
+> extérieure frappe les deux graines à la même minute ; le bruit propre au calcul ne se
+> synchronise pas. C'est le tableau des durées qui a trahi la pollution, pas l'instrument
+> chargé de la voir.
+
+🔒 **Et la règle qui en découle** : on ne fait **aucune analyse sur la machine qui mesure une
+durée**. Une mesure de taux de plantage, elle, s'en moque — seule son horloge en souffre.
+
+### 🟢 LE CONTRÔLE D'INTÉGRITÉ PASSE — six blocs, deux graines, identiques au bit
 
 🔑 **Le contrôle qui vaut mieux que `pytest` pour la RAM** : à graine et code identiques, les
-résultats **doivent être identiques au bit**. Comparer l'artefact neuf à
-`reports/blocs_vs_plantage_r75x2_deep_s404.json` — s'ils diffèrent, la mémoire est instable et
-**toute mesure de la journée est suspecte**.
+résultats **doivent être identiques au bit**. 📌 **Et il n'est pas nécessaire d'attendre
+l'artefact de fin de run** — le journal le porte bloc par bloc, donc il se fait **pendant** :
 
-📌 `pytest tests/oracle/ tests/unit/` est passé à **2941, 0 échec** après le remontage, donc
-rien n'indique de corruption pour l'instant.
+```
+                     AVANT (12:41)      APRES (17:33, 3600 MHz)
+RMSE par bloc        identiques a la 5e decimale, s404 ET s505
+Mining found         601 / 601 / 601 / 602 / 601      identiques
+Screening results    601 / 601 / 601 / 666 / 601      identiques
+Full pass survivors   16 /  35 /  36 /  37            identiques
+```
 
-### 🔴 CE QUI N'EST PAS COMMITÉ
+**Aucun écart.** La mémoire est stable, aucune mesure de la journée n'est suspecte, et la
+comparaison de durées ci-dessus porte bien sur **exactement le même travail**.
 
-`scripts/orchestre_multigraine.py` et `tests/unit/test_orchestre_multigraine.py` portent des
-modifications **non commitées** — l'alignement des docstrings sur l'amorce de défaillance
-(couche **7** en médiane sur la population, **6** sur les plans appariés). Elles sont testées
-(56 tests verts) et `ruff` est propre. **À commiter.**
+🟢 **Et la référence ne risque rien — vérifié dans le code, pas espéré.** Les deux runs en vol
+produisent le nom `blocs_vs_plantage_r75x2_deep_s404.json`, qui est **exactement** celui de la
+référence de 12:41. `probe_blocs_vs_plantage.py:756-761` voit la collision, **conserve
+l'ancien** et horodate le **nouveau** :
+
+```
+reports/blocs_vs_plantage_r75x2_deep_s404.json                  <- REFERENCE 12:41, intacte
+reports/blocs_vs_plantage_r75x2_deep_s404_20260823_1834xx.json  <- le run DOCP
+```
+
+📌 **Donc cherche l'artefact neuf sous le nom HORODATÉ**, pas sous le nom nu. Et la ligne
+`🟠 ... EXISTE DEJA` en fin de journal dit lequel est lequel.
+
+📌 `pytest tests/oracle/ tests/unit/` est passé à **2941, 0 échec** après le remontage.
+
+### ✅ CE QUI ÉTAIT « NON COMMITÉ » L'EST — corrigé le 2026-08-23 à 18:05
+
+⚠️ **Cette section annonçait `scripts/orchestre_multigraine.py` et son test comme non
+commités. C'était vrai à 17:49 et faux une minute plus tard** : ils sont entrés dans `e577221`
+à 17:50, dans le commit même qui écrivait cet avertissement. `git log origin/<branche>..HEAD`
+est **vide** — rien en attente de push.
+
+📌 ✅ `scripts/_toc.py`, patch **jetable** du 2026-08-23 à 14:48 dont le travail était déjà dans
+`3a9e097`, a été **supprimé le 2026-08-24**.
+
+🔑 **La leçon d'instrument** : un état écrit dans un document se périme **à la seconde où on le
+committe**. Le seul état qui ne ment pas est celui que `git status` rend.
+
+### ⚠️ `coherence_md.py` rend « 1 point à instruire » — INSTRUIT, et il faut le LAISSER
+
+```
+RATE_MAX_VARIANTS_PER_STRATEGY   code = 40 | 1 ecart : CHANTIER_RATE.md:117 dit 3
+```
+
+**Ce signalement est un FAUX POSITIF, et la phrase visée doit rester telle quelle.**
+`CHANTIER_RATE.md:117` écrit *« `RATE_MAX_VARIANTS_PER_STRATEGY` **valait** 3 »* — c'est le
+récit de la contradiction A, réparée le 22/08. L'outil rapproche un mot et un nombre, il ne sait
+pas lire un **passé composé**. 🔴 **Ne « corrige » pas cette ligne** : on effacerait l'histoire
+d'une réparation pour faire plaisir à un script.
+
+📌 Donc l'attendu du §0.4 et du §6 n'est plus `0 point(s) a instruire` mais **`1 point`, celui-ci
+et lui seul**. Tout point supplémentaire est neuf et se lit.
+
+🔑 **ET L'OUTIL A MANQUÉ LE VRAI DÉFAUT — parce qu'il ne lit que les `.md`.** La même constante
+était citée périmée **dans le code de production** :
+
+```
+certus/core/certus_strat_robustness.py:562   RATE_MAX_VARIANTS_PER_STRATEGY = 40
+certus/core/certus_strat_leviers.py:128      defaut=40
+certus/core/certus_strat_robustness.py:956   docstring : « default 3 »     <- FAUX
+```
+
+La docstring décrivait le paramètre au public alors que le `params.get(...)` juste en dessous
+(`:988`) retombe sur la constante, donc **40**. 🟢 **Corrigé le 2026-08-23.** ⚠️ Et la leçon
+porte plus loin que la ligne : **`coherence_md.py` ne contrôle que les documents, jamais les
+docstrings** — une valeur périmée y survit sans qu'aucun garde ne bronche.
 
 ---
 
@@ -278,7 +534,7 @@ plans n'y ont jamais été produits.
 | **le plafond `--max-plans=200`** | écarte **483 plans sur 683**. Signalé, mais à revoir |
 | **`r75x2-2nm` livrée, graine 202** | toujours non mesurée. Non urgente |
 | **l'anomalie plantage/bruit** | §1ter, toujours incomprise |
-| **la RAM tourne à 2133 MHz** | kit Corsair noté 3600 mélangé à un kit G.Skill 3200 → repli JEDEC. Deux runs concurrents ne rendent que **+29 %** de débit et le CPU plafonne à 74 % en solo : le goulot est la **bande passante mémoire**. Le DOCP est gratuit et non fait |
+| ~~**la RAM tourne à 2133 MHz**~~ | 🔴 **CLOS ET RÉFUTÉ le 2026-08-23 — voir §0000.** Le kit G.Skill a été retiré, le DOCP est actif à **3600 MHz** vérifié dans `Win32_PhysicalMemory`… et le run est **4,7 % PLUS LENT**, sur six blocs et deux graines. La conclusion *« le goulot est la bande passante mémoire »* était **fausse** : elle déduisait un goulot d'un plafond de CPU sans jamais faire varier la mémoire. ⚠️ Le **+29 %** de débit à deux runs concurrents, lui, reste mesuré et inexpliqué |
 
 ---
 
@@ -443,7 +699,9 @@ C:\envs\certus\Scripts\python.exe -m ruff check .
 Attendus : le chemin **dans l'arbre que tu édites** · l'état du hook **connu** (piège 1) ·
 `2800 passed, 5 skipped` à la **seconde** passe (piège 3) · `All checks passed!`
 
-Et les deux contrôles de cohérence documentaire, qui étaient à **zéro** à la bascule :
+Et les deux contrôles de cohérence documentaire. ⚠️ **L'attendu n'est plus « zéro »** : depuis
+le 2026-08-23 `coherence_md.py` rend **1 point, et c'est un faux positif instruit** — voir la
+fin du §0000. Un **second** point serait neuf.
 
 ```bat
 C:\envs\certus\Scripts\python.exe scripts\coherence_md.py
@@ -480,7 +738,7 @@ choix des rampes — la lève.
 | ✅ **`r75x2` NU aux graines 101 et 202** | **MESURÉES le 2026-08-22 : 0 déposable chacune.** Trois graines nues sur quatre rendent zéro — la **77 est l'exception**. La règle écrite d'avance a tranché sa troisième branche. Détail en §33 de [`PLAN_PRODUCTION_2026-08-20.md`](PLAN_PRODUCTION_2026-08-20.md) |
 | **un second composant** | 🔒 écarté par 👤 — voir §8.2bis, qui dit ce que cela interdit d'affirmer |
 | **l'anomalie plantage/bruit** | 8,72 contre 1 dans le mauvais sens. Ne menace pas la livraison (la porte prend le maximum, donc conservateur) mais on ne comprend pas le mode d'échec |
-| **les rampes vivent dans `reports/`** | une **configuration** ne devrait pas dépendre d'une **sortie**. Déplacement vers `example/` à faire — plus rien ne tourne, donc c'est sans risque maintenant |
+| ~~**les rampes vivent dans `reports/`**~~ | ✅ **FAIT, et depuis plus longtemps que ce tableau ne le croyait** — commit `b13694b` *« les rampes sortent de reports/ »*. `injected_strategies` pointe sur `example/example_strat/rampes_r75x2-2nm.json`, **suivi par git**. Constaté le 2026-08-24. ⚠️ La configuration cite encore `reports/…` dans son champ `_reproduit`, et **c'est légitime** : une note de provenance n'est pas une dépendance |
 
 ### 🟢 Ce qui a été CONSTRUIT aujourd'hui
 
@@ -700,6 +958,60 @@ vient du bruit **le plus faible** — lecture conservatrice, le verdict « dépo
 menacé. **Ce que ça ne change pas** : on ne comprend plus le mode d'échec, et cela touche toute
 mesure de plantage du projet, murs à 100 % compris. Le balayage σ→0 reste à faire.
 
+### 📏 L'ANOMALIE EST BIEN PLUS NETTE QUE « 8,7 CONTRE 1 » — mesuré le 2026-08-24
+
+Sur la graine **404** (`blocs_vs_plantage_r75x2_deep_s404.json`), en classant par le niveau de
+plantage **de départ** au lieu de tout mélanger :
+
+```
+plantage de depart |   croit  DECROIT
+             0-5 % |     402       86
+            5-25 % |       0        1
+           25-50 % |       0       28
+           50-75 % |       0      623
+           75-95 % |       0      337
+          95-100 % |       0      502
+```
+
+🔑 **Au-dessus de 5 % de plantage de départ : 1491 décroissantes, ZÉRO croissante.** Le rapport
+global de 3,92 masquait une séparation **parfaite**. Toutes les croissantes sont sous 5 %.
+
+🔴 **Et l'explication paresseuse est RÉFUTÉE.** On pense d'abord à un effet de plafond — une
+stratégie déjà à 90 % ne peut que descendre. Non : dans la bande **50-75 %**, où il y a toute la
+place de monter, **623 sur 623 descendent**. Ce n'est pas de la régression vers la moyenne.
+
+### ⏳ LE TEST QUI TRANCHE TOURNE — `tp_hysteresis_factor = 0`, lancé le 2026-08-24 à 15:20
+
+```bat
+bash scripts\enchainer_hysteresis.sh hysteresis_2026-08-24 404
+```
+
+🔑 **Le mécanisme candidat n'est pas supposé, il est DANS LE CODE** — `certus_strat_robustness.py:2489-2495` :
+
+```
+tp_hysteresis = tp_hysteresis_factor * A * noise_val
+```
+
+Le seuil du détecteur de points tournants **suit le niveau de bruit**. Plus de bruit → seuil plus
+grand → détecteur plus **conservateur** → moins de faux points tournants → moins de
+`TP_MISCOUNT`, qui pèse **79 %** des plantages. Cela produirait exactement le sens observé, et
+seulement au-dessus du plancher — ce que le tableau ci-dessus montre.
+
+📌 **Un seul point au lieu du balayage à trois** que demandait l'action 6 : le garde
+`if tp_hysteresis_factor > 0.0` coupe **toute** la dépendance au bruit, donc l'extrême répond
+dans les deux sens pour **36 min** au lieu de 1 h 50.
+
+```
+rapport ~ 1,0   ->  l'hysteresis EXPLIQUE l'anomalie, le §1ter est clos
+rapport ~ 3,9   ->  elle n'y est pour RIEN, chercher ailleurs
+entre les deux  ->  elle en explique une PART, et la seulement le balayage complet se justifie
+```
+
+⚠️ **Risque assumé** : sans hystérésis, le détecteur peut faire **saturer** les taux à 100 % et
+la sonde n'aurait plus rien à classer. Ce serait un résultat aussi — il voudrait dire que
+l'hystérésis ne biaise pas le détecteur, elle le rend **utilisable**. Le journal le dira par
+l'explosion de la ligne « murs à 100 % écartés ».
+
 ---
 
 ## 2. ✅ CE QUI EST EN PRODUCTION DEPUIS CETTE NUIT
@@ -833,6 +1145,11 @@ code de production, sans contexte reconstruit. La docstring de la sonde porte l'
 - **Les graines de génération ne doivent pas contenir la graine de NOTATION.** Le run de la nuit
   a généré sur `42;77;101;202;303` et noté à **42** : canal de **malédiction du vainqueur**,
   mesurée à +12,9 % le 15/08. Générer sur `{77,101,202,303}`, noter sur une base disjointe.
+  🟢 **Ce n'est plus une discipline mais un garde-fou depuis le 2026-08-24** — `[GRAINE DE
+  NOTATION ... PRESENTE]` en `ERROR` dans le journal. ⚠️ Il **avertit** sans refuser : un run
+  peut payer ce canal délibérément, il ne peut plus le payer sans le dire. 🔑 Le défaut n'était
+  pas une ignorance mais un **silence** : le chevauchement du 21/08 a été trouvé des semaines
+  plus tard en relisant une ligne de commande.
 
 ---
 
@@ -856,7 +1173,8 @@ C:\envs\certus\Scripts\python.exe scripts\coherence_md.py
 C:\envs\certus\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
 ```
 
-Attendu : `PREFLIGHT=GO` · `0 point(s) a instruire` · **`0 failed`**.
+Attendu : `PREFLIGHT=GO` · **`1 point(s) a instruire`** (le faux positif instruit en fin de
+§0000, et lui seul) · **`0 failed`**.
 
 ⚠️ **Ne cite jamais un compte de tests comme référence** — il se périme dès qu'on ajoute un test.
 Il valait 2450 le 17/08 et plus de 2560 le 21/08. **Le seul critère est `0 failed`**, comme
@@ -920,10 +1238,10 @@ fond. Voici l'état réel.
 | # | action | coût | ce qu'elle décide |
 |---|---|---|---|
 | ~~**1**~~ | ✅ ~~`r75x2` NU aux graines 101 et 202~~ | fait | **0 déposable chacune.** La 77 est l'exception. Voir §8.2quater ci-dessous, qui remplace cette action |
-| **2** | déplacer les rampes de `reports/` vers `example/` | ~15 min, zéro CPU | une **configuration** ne doit pas dépendre d'une **sortie**. 🟢 Plus rien ne tourne : c'est sans risque maintenant |
+| ~~**2**~~ | ✅ ~~déplacer les rampes de `reports/` vers `example/`~~ | fait | commit `b13694b`. Vérifié le 2026-08-24 : plus aucune dépendance vivante de `example/` vers `reports/`, seulement des notes `_reproduit` |
 | **3** | porter le résultat du jour dans `pages/CERTUS_STRAT.html` | ~30 min, zéro CPU | c'est la vitrine, et 👤 la juge *« ultra importante »*. ⚠️ Avec la condition **dans la même phrase que le chiffre**, et vérification de structure par `html.parser` |
 | **4** | terminer l'action 1 d'hier — graine **202** sur la config livrée | ~2 h | une quatrième réalisation. Moins urgent : trois convergent déjà à 0,55 % |
-| **5** | graines de génération **disjointes** de la notation | gratuit | ferme le canal de malédiction du vainqueur côté recherche |
+| ~~**5**~~ | ✅ ~~graines de génération **disjointes** de la notation~~ | fait le 2026-08-24 | 🟢 **Le garde-fou est posé, et il n'interdit rien** : `_screen_with_seeds` connaissait déjà les deux graines au même endroit (`certus_strat_workers.py:653`) et ne les comparait jamais. Il crie maintenant en `ERROR` quand la graine de **notation** figure dans les graines de **génération**. ⚠️ **Il avertit, il ne refuse pas** — refuser tuerait une mesure de plusieurs heures à son premier bloc, et le chevauchement est légitime quand on reproduit délibérément un vieux run. Ce qui n'est pas acceptable, c'est qu'il passe en **silence**. 4 tests, dont un qui vérifie qu'il **se tait** sur le cas correct et un qui vérifie qu'il ne **change rien** au résultat |
 | **6** | balayer `tp_hysteresis_factor` à bruit fixé | 1 run | sépare les deux lectures de l'anomalie de §1ter |
 | **7** | compter le criblage et l'héritage | ~1 h | à faire quand un étage sera suspect, pas avant |
 

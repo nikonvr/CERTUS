@@ -953,7 +953,7 @@ def _expand_with_rate_variants(
     behind a strategy with several Rate layers? Attribution is not required to answer it.
 
         rate_max_layers_per_variant     default 1  -- historical path, bit for bit
-        rate_max_variants_per_strategy  default 3  -- RATE_MAX_VARIANTS_PER_STRATEGY
+        rate_max_variants_per_strategy  default 40 -- RATE_MAX_VARIANTS_PER_STRATEGY
 
     At `rate_max_layers_per_variant = 1` this function walks exactly the same singletons, in
     the same order, with the same ids and the same `origin` strings as before.

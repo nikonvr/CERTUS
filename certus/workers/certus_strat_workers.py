@@ -654,6 +654,28 @@ def _screen_with_seeds(
     except AttributeError:
         seed_avant = None
 
+    # THE WINNER'S CURSE CHANNEL IS SILENT, WHICH IS THE ONLY REASON THIS EXISTS. When the
+    # run's SCORING seed is also one of the GENERATION seeds, the plans that reach the full
+    # pass were partly selected ON the realisation that will then grade them. Measured cost of
+    # that channel: +12.9 % on 2026-08-15, +0.55 % on 2026-08-22, -0.03 % on 2026-08-23 -- it
+    # is not a constant, and that is precisely why a run must declare whether it paid it.
+    #
+    # IT WARNS, IT DOES NOT REFUSE. Refusing would kill a measurement of several hours at its
+    # first block over a methodological preference, and the overlap is legitimate when one
+    # deliberately reproduces an older run. What is not acceptable is that it happen in
+    # SILENCE: the night run of 2026-08-21 generated on 42;77;101;202;303 and scored on 42,
+    # and nothing in its journal said so -- the bias was found by rereading a command line.
+    try:
+        seed_note = int(seed_avant) if seed_avant is not None else None
+    except (TypeError, ValueError):
+        seed_note = None
+    if seed_note is not None and seed_note in seeds:
+        logger.error(
+            f"   [{etiquette}] 🔴 GRAINE DE NOTATION {seed_note} PRESENTE DANS LES GRAINES DE "
+            f"GENERATION {seeds} -- canal de malediction du vainqueur OUVERT. Le chiffre de ce "
+            f"run n'est pas comparable a un run note sur une graine DISJOINTE."
+        )
+
     retenus: list[dict[str, Any]] = []
     vus: set = set()
     try:

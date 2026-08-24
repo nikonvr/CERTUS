@@ -120,7 +120,9 @@
                 <a href="#sec-10-19">&sect;10.19</a> the launch pads dropped &mdash; the same figure
                 reached with nothing told to the code in advance,
                 <a href="#sec-10-20">&sect;10.20</a> the thickness-scale series re-measured, where three
-                verdicts turned out to describe a realisation and not a stack, and
+                verdicts turned out to describe a realisation and not a stack,
+                <a href="#sec-10-21">&sect;10.21</a> the crash rate that <i>falls</i> when the noise rises
+                &mdash; and the detector of our own that turned out to cause it, and
                 <a href="#sec-10-13">&sect;10.13</a> what is deliberately <i>not</i>
                 claimed.
             </div>
@@ -5627,6 +5629,80 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
             coherence check <code>scripts/coherence_campagne.py</code> &mdash; 0 points to instruct: one commit,
             one Monte-Carlo depth 50/300, one slit and one mode across every artefact. Method, and the three
             claims retracted the same day, in <code>docs/REPRENDRE_ICI.md</code> &sect;000 and &sect;001.
+        </div>
+
+        <h3 id="sec-10-21">10.21 The crash rate falls when the noise rises &mdash; and the culprit is our own detector</h3>
+
+        <p>
+            Every crash rate in this report is the <b>worst of three noise levels</b>
+            (<code>0.5&times;</code>, <code>1&times;</code>, <code>2&times;</code> the measured noise). While auditing
+            that gate, a result appeared that should not exist: across 1979 strategies whose rate varies at all,
+            <b>1577 crash LESS as the noise grows</b> and only 402 crash more &mdash; a ratio of <b>3.92</b> in
+            the wrong direction.
+        </p>
+
+        <p>
+            Sorted by the strategy&rsquo;s <i>baseline</i> crash level, the split is not a tendency, it is total:
+        </p>
+
+        <table style="border-collapse:collapse;margin:12px 0;">
+            <tr><th style="border:1px solid #ccc;padding:4px 8px;">Baseline crash</th><th style="border:1px solid #ccc;padding:4px 8px;">rises with noise</th><th style="border:1px solid #ccc;padding:4px 8px;">FALLS with noise</th></tr>
+            <tr><td style="border:1px solid #ccc;padding:4px 8px;">0&ndash;5 %</td><td style="border:1px solid #ccc;padding:4px 8px;">402</td><td style="border:1px solid #ccc;padding:4px 8px;">86</td></tr>
+            <tr><td style="border:1px solid #ccc;padding:4px 8px;">5&ndash;50 %</td><td style="border:1px solid #ccc;padding:4px 8px;"><b>0</b></td><td style="border:1px solid #ccc;padding:4px 8px;">29</td></tr>
+            <tr><td style="border:1px solid #ccc;padding:4px 8px;">50&ndash;75 %</td><td style="border:1px solid #ccc;padding:4px 8px;"><b>0</b></td><td style="border:1px solid #ccc;padding:4px 8px;">623</td></tr>
+            <tr><td style="border:1px solid #ccc;padding:4px 8px;">75&ndash;100 %</td><td style="border:1px solid #ccc;padding:4px 8px;"><b>0</b></td><td style="border:1px solid #ccc;padding:4px 8px;">839</td></tr>
+        </table>
+
+        <p>
+            The comfortable explanation is a ceiling effect &mdash; a strategy already at 90 % has nowhere to go but
+            down. <b>It is refuted by the table itself</b>: in the 50&ndash;75 % band, where there is ample room to
+            rise, <b>623 out of 623 fall</b>. That is not regression to the mean.
+        </p>
+
+        <p>
+            The cause is in our own code. The turning-point detector carries a hysteresis threshold
+            <code>tp_hysteresis_factor &times; A &times; noise_val</code> &mdash; it <b>scales with the noise
+            level</b>. More noise therefore makes the detector <i>more conservative</i>, so it invents fewer false
+            turning points, and the dominant failure mode recedes faster than the noise adds to it. Sweeping that
+            single factor, at identical component and seed:
+        </p>
+
+        <table style="border-collapse:collapse;margin:12px 0;">
+            <tr><th style="border:1px solid #ccc;padding:4px 8px;">tp_hysteresis_factor</th><th style="border:1px solid #ccc;padding:4px 8px;">100 % walls</th><th style="border:1px solid #ccc;padding:4px 8px;">depositable</th><th style="border:1px solid #ccc;padding:4px 8px;">falls / rises</th></tr>
+            <tr><td style="border:1px solid #ccc;padding:4px 8px;">0</td><td style="border:1px solid #ccc;padding:4px 8px;">2929 of 2929</td><td style="border:1px solid #ccc;padding:4px 8px;">0</td><td style="border:1px solid #ccc;padding:4px 8px;">nothing left to classify</td></tr>
+            <tr><td style="border:1px solid #ccc;padding:4px 8px;">0.5</td><td style="border:1px solid #ccc;padding:4px 8px;">4176</td><td style="border:1px solid #ccc;padding:4px 8px;">642</td><td style="border:1px solid #ccc;padding:4px 8px;">2 / 642 &rarr; <b>0.003</b></td></tr>
+            <tr><td style="border:1px solid #ccc;padding:4px 8px;">1.66 (delivered)</td><td style="border:1px solid #ccc;padding:4px 8px;">2475</td><td style="border:1px solid #ccc;padding:4px 8px;">403</td><td style="border:1px solid #ccc;padding:4px 8px;">1577 / 402 &rarr; <b>3.92</b></td></tr>
+        </table>
+
+        <p>
+            <b>The anomaly does not weaken as the factor drops &mdash; it changes sign.</b> At 0.5 the direction is
+            the physical one. So the crash rate does not fall because the stack resists noise better; it falls
+            because <b>the detector becomes more forgiving as the noise grows</b>.
+        </p>
+
+        <div class="highlight-box">
+            <b>This is not a setting to exploit.</b> The 642 depositable strategies at 0.5 beat the 403 at the
+            delivered value, and that is a trap: <code>OMS5100_DEFAULT_5_SIGMA_FACTOR = 1.66</code> is a
+            <b>hardware specification</b> of the Bühler Leybold Optics OMS 5100, not a solver knob. Lowering it
+            models an instrument that does not exist.
+        </div>
+
+        <p>
+            <b>What it changes for the published figures: nothing.</b> The gate still takes the maximum over the
+            three levels, so every quoted crash rate stays the conservative reading and no
+            &ldquo;depositable&rdquo; verdict is affected. What changes is that the failure mode is now
+            <i>understood</i> rather than merely bounded. &#9888; Two limits stay on the record: the channel is not
+            <i>proven</i> to be the miscounted-turning-point path &mdash; the 79 % figure comes from an earlier
+            count on a different population &mdash; and the three populations are not paired (4820 / 4454 / 2929
+            strategies mined), so the ratios compare and the absolute counts much less.
+        </p>
+
+        <div style="background:#f6f6f6;border-left:3px solid #999;padding:8px 12px;margin:12px 0;">
+            <b>Source.</b> Artefacts <code>reports/blocs_vs_plantage_r75x2_deep_s404{,_hyst0,_hyst05}.json</code>,
+            probe <code>scripts/probe_plantage_vs_sigma.py</code>, sweep
+            <code>scripts/enchainer_hysteresis.sh</code>, mechanism at
+            <code>certus/core/certus_strat_robustness.py:2489-2495</code>. Reading rule written <i>before</i> the
+            result, in <code>docs/REPRENDRE_ICI.md</code> &sect;1ter.
         </div>
 
         <h2 id="sec-11">11. Making It Fast — What the Structure Gives for Free</h2>

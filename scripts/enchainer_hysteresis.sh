@@ -49,9 +49,14 @@ set -u
 PY="${CERTUS_PY:-C:/envs/certus/Scripts/python.exe}"
 ETIQ="${1:-hysteresis_2026-08-24}"
 G="${2:-404}"
+# 🔴 LE FACTEUR EST UN ARGUMENT, ET IL ENTRE DANS L'ETIQUETTE. La premiere version le codait
+# en dur et le document invitait a « remplacer 0 par 0.5 avant de relancer » : une edition
+# manuelle avant chaque mesure, donc une occasion de se tromper a chaque fois -- et deux runs
+# a facteurs differents auraient rendu deux artefacts au MEME nom.
+FACTEUR="${3:-0}"
 J="reports/${ETIQ}"
 TEMOIN="reports/blocs_vs_plantage_r75x2_deep_s${G}.json"
-TAG="hyst0"
+TAG="hyst$(echo "$FACTEUR" | tr -d '.')"
 LOG="$J/journal_s${G}.log"
 
 [ -e "$LOG" ] && { echo "🔴 $LOG existe deja -- refus d'ecraser." >&2; exit 3; }
@@ -76,10 +81,10 @@ while [ "$vide" -lt 3 ]; do
   sleep 60
 done
 
-echo "[$ETIQ] demarrage, hysteresis COUPEE, graine ${G}, a $(date '+%H:%M:%S')"
+echo "[$ETIQ] demarrage, tp_hysteresis_factor=${FACTEUR} (etiquette ${TAG}), graine ${G}, a $(date '+%H:%M:%S')"
 t0=$(date +%s)
 CERTUS_BENCH_TIMEOUT_S=38400 \
-CERTUS_PROBE_OVERRIDES="tp_hysteresis_factor=0" \
+CERTUS_PROBE_OVERRIDES="tp_hysteresis_factor=${FACTEUR}" \
 CERTUS_PROBE_TAG="$TAG" \
   "$PY" scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 "$G" > "$LOG" 2>&1
 code=$?
@@ -101,7 +106,7 @@ echo
 echo "################ TEMOIN -- hysteresis PAR DEFAUT (1,66)"
 "$PY" scripts/probe_plantage_vs_sigma.py "$TEMOIN" 2>&1 | sed -n '/murs a 100/,/rapport DECROISSANT/p'
 echo
-echo "################ ESSAI -- hysteresis COUPEE (0)"
+echo "################ ESSAI -- tp_hysteresis_factor = ${FACTEUR}"
 [ -n "$NEUF" ] && [ -e "$NEUF" ] \
   && "$PY" scripts/probe_plantage_vs_sigma.py "$NEUF" 2>&1 | sed -n '/murs a 100/,/rapport DECROISSANT/p' \
   || echo "⚠️ artefact neuf illisible -- lance la sonde a la main sur le fichier cite plus haut."

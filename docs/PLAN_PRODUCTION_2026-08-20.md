@@ -2241,6 +2241,37 @@ conservateur quand le bruit croît, et fabrique moins de faux points tournants. 
 cohérent avec le fait que `TP_MISCOUNT` pèse 79 % des plantages (§24-36 de `CLAUDE.md`). **À
 mesurer par un balayage σ→0, pas à conclure.**
 
+> ## 🟢🟢 MESURÉ LE 2026-08-24 — LE CANDIDAT CI-DESSUS EST LE BON
+>
+> Le facteur a été balayé sur la graine 404, à composant et graine identiques :
+>
+> ```
+>  facteur    n_strats   murs 100%   deposables    DECROISSANT / croissant
+>    0          2929        2929          0        -- (tout est mur, rien a classer)
+>    0,5        4820        4176        642              2 / 642   =  0,003
+>    1,66       4454        2475        403           1577 / 402   =  3,92
+> ```
+>
+> 🔑 **L'anomalie ne faiblit pas quand on baisse le facteur : elle CHANGE DE SIGNE.** À 0,5 le
+> sens est le sens physique — plus de bruit, plus de plantage. `tp_hysteresis_factor` porte
+> donc la **direction**, et `certus_strat_robustness.py:2489-2495` montre pourquoi : le seuil
+> est multiplié par `noise_val`.
+>
+> **Le plantage ne décroît pas parce que l'empilement résiste mieux. Il décroît parce que le
+> détecteur devient plus conservateur quand le bruit monte.**
+>
+> 🔴 **Et ce n'est PAS un réglage à exploiter.** Les 642 déposables de `0,5` battent les 403 du
+> défaut, mais `OMS5100_DEFAULT_5_SIGMA_FACTOR = 1.66`
+> (`certus/physics/certus_strat_machine.py:16`) est une **spécification matérielle** de
+> l'OMS 5100. Le baisser modélise **un instrument qui n'existe pas**.
+>
+> ⚠️ Reste non prouvé : que le canal soit précisément `TP_MISCOUNT` — les 79 % viennent d'un
+> comptage antérieur, sur une autre population. Et les populations ne sont pas appariées
+> (4820 / 4454 / 2929) : les **rapports** se comparent, les comptes absolus beaucoup moins.
+>
+> 🟢 Acquis secondaire : la falaise est entre **0 et 0,5**. Le 1,66 livré n'est pas au bord d'un
+> précipice.
+
 **La couche critique 53 porte une marge de −1370 A et le verdict `PEUT ECHOUER`**, alors que la
 stratégie ne plante que 1,67 % du temps. L'instrument de marge est donc très pessimiste ici, et
 je ne l'interprète pas : la marge est calculée sur le signal nominal, le plantage est
@@ -2488,12 +2519,20 @@ détecteur devient plus **conservateur** quand le bruit croît, fabrique moins d
 tournants, et `CRASH_TP_MISCOUNT` — **79 %** des plantages mesurés (§24-36 de `CLAUDE.md`) —
 recule. 🔴 **Candidat, pas explication.**
 
+🟢 **MESURÉ LE 2026-08-24 : le candidat est le bon, et il n'est plus un candidat.** Balayé à
+`0`, `0,5` et `1,66` sur la graine 404, il **inverse** le sens de l'anomalie — encadré du §28.
+📏 Et la « lecture possible » ci-dessus se vérifie sur la graine 404 avec une netteté que le
+rapport global masquait : **au-dessus de 5 % de plantage de départ, 1491 décroissantes et ZÉRO
+croissante.** ⚠️ L'explication paresseuse — un effet de plafond, une stratégie déjà haute ne
+pouvant que descendre — est **réfutée** : dans la bande 50-75 %, où il y a toute la place de
+monter, **623 sur 623 descendent**.
+
 ### 29.2 ⚠️ Ce que l'anomalie change, et ce qu'elle ne change pas
 
 | | |
 |---|---|
 | 🟢 **le verdict « déposable » n'est PAS menacé** | la porte prend le **maximum** des trois niveaux, donc un taux publié vient du niveau le plus sévère — lecture conservatrice, et ici c'est souvent le bruit le plus **faible** |
-| 🔴 **on ne comprend plus le mode d'échec** | et cela touche **toute** mesure de plantage du projet, murs à 100 % compris |
+| ~~🔴 **on ne comprend plus le mode d'échec**~~ | 🟢 **COMPRIS le 2026-08-24** — c'est le seuil d'hystérésis du détecteur, qui **suit le niveau de bruit**. Baisser `tp_hysteresis_factor` de 1,66 à 0,5 **inverse** le sens de l'anomalie (1577/402 → 2/642). Le plantage décroît parce que le détecteur devient plus conservateur, pas parce que l'empilement résiste. Voir l'encadré du §28 |
 | 🔴 **une comparaison de taux entre niveaux de bruit n'a plus de sens** | jusqu'à ce que la cause soit établie. Ne bâtis aucun raisonnement sur « à 2× le bruit, le taux vaut X » |
 
 📌 **La suite est un balayage de `tp_hysteresis_factor` à bruit fixé**, qui sépare les deux

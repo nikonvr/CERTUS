@@ -533,7 +533,7 @@ plans n'y ont jamais été produits.
 | **la validation de bout en bout de l'orchestrateur** | lancée à 17:33, encore dans sa notation finale. L'événement `resultat` n'a **jamais** été émis par un vrai run |
 | **le plafond `--max-plans=200`** | écarte **483 plans sur 683**. Signalé, mais à revoir |
 | **`r75x2-2nm` livrée, graine 202** | toujours non mesurée. Non urgente |
-| **l'anomalie plantage/bruit** | §1ter, toujours incomprise |
+| ~~**l'anomalie plantage/bruit**~~ | 🟢 **EXPLIQUÉE le 2026-08-24** — c'est le seuil d'hystérésis du détecteur, qui suit le niveau de bruit. Voir §1ter |
 | ~~**la RAM tourne à 2133 MHz**~~ | 🔴 **CLOS ET RÉFUTÉ le 2026-08-23 — voir §0000.** Le kit G.Skill a été retiré, le DOCP est actif à **3600 MHz** vérifié dans `Win32_PhysicalMemory`… et le run est **4,7 % PLUS LENT**, sur six blocs et deux graines. La conclusion *« le goulot est la bande passante mémoire »* était **fausse** : elle déduisait un goulot d'un plafond de CPU sans jamais faire varier la mémoire. ⚠️ Le **+29 %** de débit à deux runs concurrents, lui, reste mesuré et inexpliqué |
 
 ---
@@ -737,7 +737,7 @@ choix des rampes — la lève.
 | **graine 202 sur la config livrée** | non mesurée — arrêt demandé. Trois graines valent mieux que deux, quatre auraient valu mieux que trois |
 | ✅ **`r75x2` NU aux graines 101 et 202** | **MESURÉES le 2026-08-22 : 0 déposable chacune.** Trois graines nues sur quatre rendent zéro — la **77 est l'exception**. La règle écrite d'avance a tranché sa troisième branche. Détail en §33 de [`PLAN_PRODUCTION_2026-08-20.md`](PLAN_PRODUCTION_2026-08-20.md) |
 | **un second composant** | 🔒 écarté par 👤 — voir §8.2bis, qui dit ce que cela interdit d'affirmer |
-| **l'anomalie plantage/bruit** | 8,72 contre 1 dans le mauvais sens. Ne menace pas la livraison (la porte prend le maximum, donc conservateur) mais on ne comprend pas le mode d'échec |
+| ~~**l'anomalie plantage/bruit**~~ | 8,72 contre 1 dans le mauvais sens. N'a jamais menacé la livraison (la porte prend le maximum, donc conservateur). 🟢 **Le mode d'échec est COMPRIS depuis le 2026-08-24** : le seuil d'hystérésis du détecteur suit le niveau de bruit — voir §1ter |
 | ~~**les rampes vivent dans `reports/`**~~ | ✅ **FAIT, et depuis plus longtemps que ce tableau ne le croyait** — commit `b13694b` *« les rampes sortent de reports/ »*. `injected_strategies` pointe sur `example/example_strat/rampes_r75x2-2nm.json`, **suivi par git**. Constaté le 2026-08-24. ⚠️ La configuration cite encore `reports/…` dans son champ `_reproduit`, et **c'est légitime** : une note de provenance n'est pas une dépendance |
 
 ### 🟢 Ce qui a été CONSTRUIT aujourd'hui
@@ -942,7 +942,13 @@ par le logger du worker — avec un `logger.error` si le drapeau est armé et le
 
 ---
 
-## 1ter. 🔴 L'ANOMALIE À NE PAS OUBLIER — le plantage décroît quand le bruit croît
+## 1ter. 🟢 L'ANOMALIE EST EXPLIQUÉE le 2026-08-24 — c'est le détecteur, pas l'empilement
+
+> **Ouverte le 2026-08-21, close le 2026-08-24.** Le taux de plantage décroît quand le bruit
+> croît parce que le seuil d'hystérésis du détecteur de points tournants **suit le niveau de
+> bruit** : plus de bruit → détecteur plus conservateur → moins de faux points tournants.
+> Démontré en faisant varier le facteur, qui **inverse** le sens. Détail à la fin de la section.
+> ⚠️ Ce qui suit décrit l'anomalie telle qu'elle a été trouvée, et reste vrai.
 
 ```
 sur les 197 deposables   :  125 DECROISSANTES ·  61 croissantes ·   11 plates
@@ -955,8 +961,10 @@ raisonnement sur le bruit au test que le Piège 1 prescrit.
 
 **Ce que ça change** : la porte prend le **maximum** des trois niveaux, donc le `1,67 %` publié
 vient du bruit **le plus faible** — lecture conservatrice, le verdict « déposable » n'est pas
-menacé. **Ce que ça ne change pas** : on ne comprend plus le mode d'échec, et cela touche toute
-mesure de plantage du projet, murs à 100 % compris. Le balayage σ→0 reste à faire.
+menacé. ~~**Ce que ça ne change pas** : on ne comprend plus le mode d'échec, et cela touche
+toute mesure de plantage du projet, murs à 100 % compris. Le balayage σ→0 reste à faire.~~
+🟢 **Le mode d'échec est compris depuis le 2026-08-24** — et par un balayage du **facteur
+d'hystérésis**, pas de σ. Voir la fin de cette section.
 
 ### 📏 L'ANOMALIE EST BIEN PLUS NETTE QUE « 8,7 CONTRE 1 » — mesuré le 2026-08-24
 
@@ -1011,6 +1019,112 @@ entre les deux  ->  elle en explique une PART, et la seulement le balayage compl
 la sonde n'aurait plus rien à classer. Ce serait un résultat aussi — il voudrait dire que
 l'hystérésis ne biaise pas le détecteur, elle le rend **utilisable**. Le journal le dira par
 l'explosion de la ligne « murs à 100 % écartés ».
+
+### 🔴🔴 RÉSULTAT — c'est la branche « saturation », et elle dit plus que la question posée
+
+**Mesuré le 2026-08-24 à 16:00.** `reports/blocs_vs_plantage_r75x2_deep_s404_hyst0.json` :
+
+```
+                    n_strats   murs a 100 %   deposables
+ TEMOIN  hyst=1,66     4454         2475          403
+ ESSAI   hyst=0        2929         2929            0
+```
+
+🔑 **À hystérésis nulle, les 2929 stratégies sont des murs à 100 %. AUCUNE n'est déposable.**
+
+> **`tp_hysteresis_factor` n'est pas un réglage, c'est une pièce porteuse.** La notion même de
+> « déposable » en dépend : 403 → 0. On croyait tester un biais du détecteur ; on a découvert
+> qu'il ne fonctionne pas du tout sans lui.
+
+🔵 **La question du §1ter reste ouverte** — il ne reste rien à classer, donc aucun rapport
+DÉCROISSANT/croissant n'est calculable. C'était le risque écrit d'avance, et c'est la branche
+qui a tiré.
+
+🔑 **Mais le mécanisme candidat en sort RENFORCÉ, et par une chaîne monotone maintenant visible :**
+
+```
+hysteresis = 0     ->  100 % de plantage partout,  0 deposable
+hysteresis = 1,66  ->  403 deposables
+
+donc  plantage DECROIT quand l'hysteresis CROIT.
+et    hysteresis  CROIT avec le bruit  (`certus_strat_robustness.py:2493`)
+donc  plantage DECROIT quand le bruit CROIT      <- exactement l'anomalie observee
+```
+
+⚠️ **Deux points ne font pas une courbe, et le mécanisme n'est établi qu'en SENS, pas en
+ampleur.** ⚠️ Et les populations diffèrent (4454 contre 2929) : quand tout plante, le criblage
+ne retient pas les mêmes effectifs, donc ce n'est **pas** une comparaison appariée.
+
+📌 **La suite, telle que la règle écrite d'avance la prescrit** : refaire à
+`tp_hysteresis_factor = 0.5`, puis `1.0` si nécessaire. Un point intermédiaire où il reste des
+déposables rendrait un rapport calculable **et** un troisième point de la courbe.
+
+```bat
+bash scripts\enchainer_hysteresis.sh hysteresis05_2026-08-24 404 0.5
+```
+
+🔑 **Le facteur est le troisième argument et il entre dans l'étiquette de l'artefact.** La
+première version le codait en dur : il aurait fallu éditer le script avant chaque mesure — une
+occasion de se tromper à chaque fois, et deux facteurs différents auraient rendu deux artefacts
+au **même nom**.
+
+#### ⏳ LANCÉE à 15:59, et voici la règle de lecture, ÉCRITE AVANT LE RÉSULTAT
+
+| ce que rend `hyst=0.5` | ce qu'on en conclut |
+|---|---|
+| **des déposables et un rapport calculable** | 🟢 troisième point de la courbe. Si le rapport DÉCROISSANT/croissant **baisse** franchement sous les 3,92 du témoin, l'ampleur de l'anomalie suit le facteur et le §1ter est **expliqué**. S'il reste à ~3,9, l'hystérésis fixe le **niveau** de plantage sans porter la **direction** — et il faut chercher le sens ailleurs |
+| **encore 100 % de murs, 0 déposable** | 🔵 le seuil d'utilisabilité est entre **0,5 et 1,66**. Refaire à `1.0`. On aura appris que la marge est étroite, ce qui est en soi un fait sur la robustesse du détecteur |
+
+🔴 **Ce qu'aucun de ces résultats ne dira** : si le canal `TP_MISCOUNT` est bien celui qui
+transporte l'effet. Les 79 % viennent d'un comptage antérieur, sur une autre population.
+
+#### 🟢🟢 RÉSULTAT — le §1ter EST EXPLIQUÉ. L'anomalie ne faiblit pas, elle S'INVERSE
+
+**Mesuré le 2026-08-24 à 16:42.** La règle ci-dessus prévoyait « si le rapport baisse
+franchement, le §1ter est expliqué ». Il ne baisse pas : **il change de signe.**
+
+```
+ facteur    n_strats   murs 100%   deposables    DECROISSANT / croissant
+   0          2929        2929          0        -- (rien a classer)
+   0,5        4820        4176        642              2 / 642   =  0,003
+   1,66       4454        2475        403           1577 / 402   =  3,92
+```
+
+🔑 **À 0,5 le sens est le sens PHYSIQUE** — plus de bruit, plus de plantage, 642 contre 2. À
+1,66 il est inversé, 1577 contre 402. **C'est donc bien `tp_hysteresis_factor` qui porte la
+direction**, et le mécanisme du code (`:2493`, le seuil suit `noise_val`) rend compte de
+l'anomalie du §1ter dans son sens comme dans son existence.
+
+> Le taux de plantage ne décroît pas parce que l'empilement résiste mieux au bruit. Il décroît
+> parce que **le détecteur devient plus conservateur quand le bruit monte**, et qu'il rate alors
+> moins de points tournants qu'il n'en fabriquait.
+
+### 🔴 ET NON, ON N'A PAS TROUVÉ « PLUS DE DÉPOSABLES »
+
+Le compte est **non monotone** — 0, puis **642**, puis 403 — et 642 à `0,5` est supérieur aux
+403 du défaut. La tentation est de conclure qu'on tient un réglage rentable. **Non.**
+
+🔒 **`tp_hysteresis_factor` est une SPÉCIFICATION MATÉRIELLE, pas un levier de solveur.**
+`certus/physics/certus_strat_machine.py:16` — `OMS5100_DEFAULT_5_SIGMA_FACTOR = 1.66`, dans un
+fichier dont l'en-tête dit *« Centralized hardware specifications […] Bühler Leybold Optics
+OMS 5100 »*. Le baisser ne rend pas le procédé meilleur : cela **modélise un instrument qui
+n'existe pas**. Les 642 déposables décrivent une machine que 👤 ne possède pas.
+
+📌 **Ce que ça change en pratique : rien sur les chiffres publiés.** La porte prend toujours le
+**maximum** des trois niveaux, donc la lecture reste conservatrice. Ce qui change, c'est qu'on
+**comprend** enfin le mode d'échec — il était ouvert depuis le 2026-08-21.
+
+⚠️ **Ce qui reste non prouvé, et qui était écrit d'avance** : que le canal soit précisément
+`TP_MISCOUNT`. Les 79 % viennent d'un comptage antérieur sur une autre population, et je ne les
+recycle pas comme une preuve.
+
+⚠️ **Et les populations ne sont pas appariées** — 4820, 4454, 2929 stratégies minées. Quand le
+détecteur change, le criblage ne retient pas les mêmes effectifs. Les rapports se comparent, les
+comptes absolus beaucoup moins.
+
+🟢 **Un acquis secondaire, sur la robustesse** : la falaise est entre **0 et 0,5**, pas près du
+défaut. À 0,5 le détecteur est déjà pleinement fonctionnel. Le 1,66 livré n'est **pas** posé au
+bord d'un précipice — ce n'était pas su.
 
 ---
 

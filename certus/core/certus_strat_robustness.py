@@ -1784,10 +1784,15 @@ def _filter_finite_robustness_scores(
     # appel le conserve en entier.
     if rejected:
         ids = [str(it.get("strategy", {}).get("strategy_id", "?")) for it in rejected[:5]]
-        logger.warning(
-            f"[ROBUSTNESS] {len(rejected)} strategie(s) ecartee(s) pour score NON FINI"
-            f" -- ids : {', '.join(ids)}{' ...' if len(rejected) > 5 else ''}"
-        )
+        if len(strategies_results) == 1:
+            logger.debug(
+                f"[ROBUSTNESS] 1 strategie ecartee pour score NON FINI -- id : {ids[0]}"
+            )
+        else:
+            logger.warning(
+                f"[ROBUSTNESS] {len(rejected)} strategie(s) ecartee(s) pour score NON FINI"
+                f" -- ids : {', '.join(ids)}{' ...' if len(rejected) > 5 else ''}"
+            )
 
     if filtered_results or not rejected:
         return filtered_results
@@ -1960,9 +1965,14 @@ def _execute_robustness_tasks(
     import multiprocessing
 
     max_workers = max(1, multiprocessing.cpu_count() // 2)
-    logger.info(
-        f"Running robustness tests on {len(all_strategies)} strategies (ThreadPoolExecutor with {max_workers} workers)..."
-    )
+    if len(all_strategies) > 1:
+        logger.info(
+            f"Running robustness tests on {len(all_strategies)} strategies (ThreadPoolExecutor with {max_workers} workers)..."
+        )
+    else:
+        logger.debug(
+            f"Running robustness tests on 1 strategy (ThreadPoolExecutor with {max_workers} workers)..."
+        )
 
     num_layers = len(p_thick_nominal)
     if n_layers_matrix_precomp is None:

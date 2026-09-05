@@ -23,6 +23,7 @@ from certus.core.certus_core import (
 )
 from certus.utils.certus_data import generate_html_report
 from certus.ui.certus_ui import install_standard_shortcuts
+from certus.ui.certus_overview_tab import PLACEHOLDER, CertusKpiBanner, build_synthesis_tab
 from certus.utils.certus_index_utils import (
     DataType,
     analyze_loaded_data,
@@ -135,6 +136,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+
 class CertusIndexWorkerMixin:
     def _warmup_numba(self) -> None:
         """JIT precompilation via background thread"""
@@ -146,12 +148,14 @@ class CertusIndexWorkerMixin:
         self.sig_numba_ready.connect(self._on_numba_ready_ui)
         self.sig_numba_error.connect(self._on_numba_error_ui)
         import threading
+
         self.lbl_status.setText("System warming up (compiling JIT)...")
         threading.Thread(target=self._warmup_numba_thread_runner, daemon=True).start()
 
     def _warmup_numba_thread_runner(self) -> None:
         try:
             from certus.core.certus_index_objectives import warmup_index_objectives
+
             warmup_index_objectives(silent=True)
 
             wls = np.array([500.0, 600.0], dtype=np.float64)
@@ -163,7 +167,6 @@ class CertusIndexWorkerMixin:
             n_test = np.array([1.5, 1.5])
 
             k_test = np.array([0.0, 0.0])
-
 
             calculate_RT_single_layer_backside_array(wls, n_test, k_test, 100.0, n_test)
 
@@ -220,11 +223,17 @@ class CertusIndexWorkerMixin:
                 np.array([False, False]),
             )
 
-            self.sig_numba_ready.emit()
+            try:
+                self.sig_numba_ready.emit()
+            except RuntimeError, AttributeError:
+                return
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f" Numba warmup failed: {e}", exc_info=True)
-            self.sig_numba_error.emit()
+            try:
+                self.sig_numba_error.emit()
+            except RuntimeError, AttributeError:
+                return
 
     @pyqtSlot()
     def _on_numba_ready_ui(self) -> None:
@@ -396,7 +405,7 @@ class CertusIndexWorkerMixin:
                 "Range Error",
                 f"No spectral points found in the range [{self.sb_lmin.value():.1f}, {effective_lambda_max:.1f}] nm.\n"
                 "Please widen the wavelength range.",
-                level="warning"
+                level="warning",
             )
             self.btn_run.setEnabled(True)
             self.btn_stop.setEnabled(False)
@@ -884,7 +893,25 @@ class CertusIndexWorkerMixin:
             extra_info=rmse_str,
         )
 
+    def _refresh_synthesis_kpis(self, rmse, thickness, eg_val, eps_val) -> None:
+        """Push the freshly extracted figures into the Synthesis tab banner."""
+        banner = getattr(self, "kpi_banner", None)
+        if banner is None:
+            return
+        try:
+            banner.set_value("rmse", f"{float(rmse):.5f}", "good")
+            banner.set_value("thickness", f"{float(thickness):.2f} nm")
+            banner.set_value("eg", f"{float(eg_val):.3f} eV" if eg_val else PLACEHOLDER)
+            banner.set_value("eps", f"{float(eps_val):.3f}" if eps_val else PLACEHOLDER)
+            banner.set_value("status", "Fit complete", "good")
+        except ValueError, TypeError, RuntimeError, AttributeError:
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+
     def _on_error(self, error_msg: str) -> None:
+
+        banner = getattr(self, "kpi_banner", None)
+        if banner is not None:
+            banner.set_value("status", "Error", "bad")
 
         self.lbl_status.setText(" Error")
 
@@ -1096,6 +1123,8 @@ class CertusIndexWorkerMixin:
 
         self.recap_widget.update_results(res.optimal_thickness, final_rmse, eg_val, eps_val)
 
+        self._refresh_synthesis_kpis(final_rmse, res.optimal_thickness, eg_val, eps_val)
+
         # Update graphs (target + fit according to use_normalized) BEFORE HTML export:
 
         # generate_html_report performs a grab() of the widget; if the export precedes this plot,
@@ -1217,4 +1246,3 @@ class CertusIndexWorkerMixin:
         self._thread2.finished.connect(self._on_thread_finished)
 
         self._thread2.start()
-

@@ -673,7 +673,10 @@ class Step4MeshOptimizerBuilder:
 
         row_cor_v25 = QHBoxLayout()
 
-        app.chk_corr_sigma_hetero = QCheckBox("sigma(lambda) residual (LR + param. boot.)")
+        app.chk_corr_sigma_hetero = QCheckBox("sigma(lambda) residual")
+        app.chk_corr_sigma_hetero.setToolTip(
+            "Heteroscedastic residual model: local regression plus parametric bootstrap."
+        )
 
         app.chk_corr_sigma_hetero.setChecked(False)
 
@@ -702,7 +705,8 @@ class Step4MeshOptimizerBuilder:
 
         row_cor_v25.addWidget(app.sp_corr_hetero_scale)
 
-        app.chk_corr_boot_refit = QCheckBox("fast bootstrap refit (parametric)")
+        app.chk_corr_boot_refit = QCheckBox("Fast bootstrap refit")
+        app.chk_corr_boot_refit.setToolTip("Parametric bootstrap: refit each resample instead of reusing the fit.")
 
         app.chk_corr_boot_refit.setChecked(False)
 

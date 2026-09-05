@@ -1370,7 +1370,7 @@ class _CorridorWorkerMixin:
         row_generate_grid.addWidget(self.sp_corridor_partial_delta_nm)
 
         self.btn_corridor_generate_from_partial_grid = create_styled_button(
-            "Generate corridor from partial grid", "primary", parent=self
+            "Corridor from partial grid", "primary", parent=self
         )
         self.btn_corridor_generate_from_partial_grid.setEnabled(False)
         self.btn_corridor_generate_from_partial_grid.setToolTip(
@@ -1381,7 +1381,7 @@ class _CorridorWorkerMixin:
         row_generate_grid.addWidget(self.btn_corridor_generate_from_partial_grid)
 
         self.btn_corridor_generate_auto_smart_grid = create_styled_button(
-            "Calculate auto smart corridor from this grid", "primary", parent=self
+            "Auto smart corridor", "primary", parent=self
         )
         self.btn_corridor_generate_auto_smart_grid.setEnabled(False)
         self.btn_corridor_generate_auto_smart_grid.setToolTip(

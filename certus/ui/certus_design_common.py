@@ -235,6 +235,7 @@ from certus.ui.certus_ui import (
     open_documentation,
     plot_widget_plot_finite,
 )
+from certus.ui.certus_overview_tab import PLACEHOLDER, CertusKpiBanner, build_synthesis_tab
 from certus.core.certus_metrology import ValidationStatus
 from certus.utils.certus_services import IndexFitRequest, IndexFitService
 
@@ -316,10 +317,11 @@ calc_spectrum_full_exact = calc_spectrum_full_exact_wrapper
 from certus.workers.certus_design_workers import ColorWorker, NeedleWorker, OptimWorker
 
 
-
 class _LazyCertusDesignApp:
     def __getattr__(self, name):
         from certus.ui.certus_design_ui import CertusDesignApp
+
         return getattr(CertusDesignApp, name)
+
 
 CertusDesignApp = _LazyCertusDesignApp()

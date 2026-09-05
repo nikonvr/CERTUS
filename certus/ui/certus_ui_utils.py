@@ -66,6 +66,10 @@ __all__ = [
     "remove_skeleton_loader",
     "apply_os_window_effects",
     "install_standard_shortcuts",
+    "install_unique_shortcut",
+    "claim_shortcut_for_action",
+    "shortcut_owner",
+    "normalized_shortcut",
     "enable_file_drop",
     "show_toast",
     "attach_numeric_validator",
@@ -173,7 +177,7 @@ from PyQt6.QtCore import (
 )
 
 
-from PyQt6.QtGui import QColor, QFont, QIcon, QKeySequence, QPalette, QShortcut
+from PyQt6.QtGui import QAction, QColor, QFont, QIcon, QKeySequence, QPalette, QShortcut
 
 
 if TYPE_CHECKING:
@@ -303,6 +307,15 @@ def apply_certus_theme(
 
     """
 
+    # Apply the PERSISTED preference before building the stylesheet. Measured
+    # 2026-09-04: load_theme_config() returned "dark" and all eleven windows
+    # opened in light, because the preference reached only apply_os_window_effects
+    # below (the OS title bar) and the plot palette - never CertusTheme itself.
+    # The operator got a dark title bar around a light interface.
+    # Read once and reuse: two reads could disagree if the file changes between.
+    _persisted_mode = load_theme_config()
+    CertusTheme.configure(_persisted_mode)
+
     # U1: append premium overrides (additive, opt-in via objectName).
     premium_css = ""
     if premium:
@@ -317,8 +330,7 @@ def apply_certus_theme(
     window.setStyleSheet(get_standard_stylesheet() + premium_css + (overrides or ""))
 
     if hasattr(window, "isWindow") and window.isWindow():
-        dark_mode = load_theme_config() == "dark"
-        apply_os_window_effects(window, dark_mode)
+        apply_os_window_effects(window, _persisted_mode == "dark")
 
     if plots:
         bg = CertusTheme.BACKGROUND
@@ -422,6 +434,68 @@ def open_documentation(module_name: str) -> None:
             webbrowser.open(QUrl.fromLocalFile(fallback).toString())
             return
 
+def normalized_shortcut(seq: str | QKeySequence) -> str:
+    """Canonical string representation of a key sequence."""
+    return QKeySequence(seq).toString()
+
+
+def shortcut_owner(window: QWidget, sequence: str) -> str | None:
+    """Return a descriptive label of the existing window-level binding, or None."""
+    target = normalized_shortcut(sequence)
+    if not target:
+        return None
+    for sc in window.findChildren(QShortcut):
+        if sc.context() in (
+            Qt.ShortcutContext.WindowShortcut,
+            Qt.ShortcutContext.ApplicationShortcut,
+        ) and normalized_shortcut(sc.key()) == target:
+            return f"QShortcut({target})"
+    for act in window.findChildren(QAction):
+        for ks in act.shortcuts():
+            if normalized_shortcut(ks) == target:
+                return f"QAction({act.text() or target})"
+    return None
+
+
+def install_unique_shortcut(window: QWidget, sequence: str, callback) -> QShortcut | None:
+    """Install a QShortcut only if the sequence is valid and not yet claimed on window."""
+    target = normalized_shortcut(sequence)
+    if not target:
+        return None
+    existing = shortcut_owner(window, target)
+    if existing is not None:
+        logging.getLogger("CERTUS").debug(
+            "Shortcut %s already claimed by %s on %s - skipping",
+            target,
+            existing,
+            type(window).__name__,
+        )
+        return None
+    sc = QShortcut(QKeySequence(target), window)
+    sc.setContext(Qt.ShortcutContext.WindowShortcut)
+    sc.activated.connect(callback)
+    return sc
+
+
+def claim_shortcut_for_action(action: QAction, sequence: str, window: QWidget | None = None) -> bool:
+    """Assign sequence to action if not already claimed at window level."""
+    target = normalized_shortcut(sequence)
+    if not target:
+        return False
+    if window is not None:
+        existing = shortcut_owner(window, target)
+        if existing is not None:
+            logging.getLogger("CERTUS").debug(
+                "Shortcut %s already claimed by %s on %s - skipping action shortcut",
+                target,
+                existing,
+                type(window).__name__,
+            )
+            return False
+    action.setShortcut(QKeySequence(target))
+    return True
+
+
 def install_standard_shortcuts(
     window: QWidget,
     save=None,
@@ -459,11 +533,9 @@ def install_standard_shortcuts(
     for name, (seq, cb) in mapping.items():
         if cb is None:
             continue
-        for candidate in (seq,):
-            sc = QShortcut(QKeySequence(candidate), window)
-            sc.setContext(Qt.ShortcutContext.WindowShortcut)
-            sc.activated.connect(cb)
-            installed[f"{name}:{candidate}"] = sc
+        sc = install_unique_shortcut(window, seq, cb)
+        if sc is not None:
+            installed[f"{name}:{seq}"] = sc
     # Also register legacy / platform-friendly variants so zoom feels native.
     alias_map = {
         "zoom_in": ("Ctrl++", "Ctrl+=", "Ctrl+Shift+=", "Ctrl+Equal"),
@@ -475,21 +547,16 @@ def install_standard_shortcuts(
         if cb is None:
             continue
         for candidate in candidates:
-            try:
-                sc = QShortcut(QKeySequence(candidate), window)
-                sc.setContext(Qt.ShortcutContext.WindowShortcut)
-                sc.activated.connect(cb)
+            sc = install_unique_shortcut(window, candidate, cb)
+            if sc is not None:
                 installed[f"{name}:{candidate}"] = sc
-            except (TypeError, RuntimeError, ValueError):
-                logging.getLogger("CERTUS").debug("Invalid shortcut %s", candidate, exc_info=True)
     if extra:
         for seq, cb in extra.items():
             if cb is None:
                 continue
-            sc = QShortcut(QKeySequence(seq), window)
-            sc.setContext(Qt.ShortcutContext.WindowShortcut)
-            sc.activated.connect(cb)
-            installed[seq] = sc
+            sc = install_unique_shortcut(window, seq, cb)
+            if sc is not None:
+                installed[seq] = sc
     return installed
 
 class _CertusDropFilter(QObject):

@@ -147,6 +147,11 @@ def _build_widget_class():
                 btn = QPushButton(action_label, self)
                 btn.setObjectName("empty-cta")
                 btn.setAccessibleName("Empty state action")
+                # The description above the button explains what it does; without
+                # it here the button is the only one in the window with no
+                # tooltip. Measured 2026-09-04: wiring the empty states into RE
+                # took its btn_no_tooltip from 0 to 1, and the ratchet caught it.
+                btn.setToolTip(description or action_label)
                 btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
                 btn.setMinimumWidth(180)
                 btn.clicked.connect(self._emit_action)

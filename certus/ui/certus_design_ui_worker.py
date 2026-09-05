@@ -1,9 +1,11 @@
 from __future__ import annotations
 from certus.ui.certus_design_common import *
 
+
 class WorkerManager:
     def __init__(self, ui):
         self.ui = ui
+
     def run_eval(self) -> None:
         """
 
@@ -142,7 +144,9 @@ class WorkerManager:
                 title = f"Spectrum ({self.ui.front_table.rowCount()} layers) | {src_name} | Points/Target: {n_points} ({n_total} total)"
 
             else:
-                title = f"Spectrum ({self.ui.front_table.rowCount()} layers) | Points/Target: {n_points} ({n_total} total)"
+                title = (
+                    f"Spectrum ({self.ui.front_table.rowCount()} layers) | Points/Target: {n_points} ({n_total} total)"
+                )
 
         except NUMERICAL_FAULT_EXCEPTIONS:
             title = f"Spectrum ({self.ui.front_table.rowCount()} layers) | Points/Target: {n_points} ({n_total} total)"
@@ -163,7 +167,9 @@ class WorkerManager:
 
         self.ui._plot_nk()
 
-        logging.info("[DESIGN._on_eval_finished] completed callback | elapsed_ms=%.1f", (time.time() - _finish_start) * 1000)
+        logging.info(
+            "[DESIGN._on_eval_finished] completed callback | elapsed_ms=%.1f", (time.time() - _finish_start) * 1000
+        )
 
         self.ui.log(
             f"Evaluation OK. RMSE: {optim_rmse_display_string(rmse)}"
@@ -187,6 +193,29 @@ class WorkerManager:
                 self.ui._workflow_best_rmse = rmse
                 if hasattr(self.ui, "best_rmse_label"):
                     self.ui.best_rmse_label.setText(f"Best RMSE: {rmse:.6f}")
+
+        self._refresh_synthesis_kpis(rmse, data_for_display.get("ep"))
+
+    def _refresh_synthesis_kpis(self, rmse, ep) -> None:
+        """Push the freshly evaluated figures into the Synthesis tab banner."""
+        banner = getattr(self.ui, "kpi_banner", None)
+        if banner is None:
+            return
+        try:
+            valid = optim_rmse_is_valid_for_log(rmse)
+            banner.set_value(
+                "rmse",
+                optim_rmse_display_string(rmse) if valid else PLACEHOLDER,
+                "good" if valid else "neutral",
+            )
+            banner.set_value("layers", str(self.ui.front_table.rowCount()))
+            total_nm = float(np.sum(ep)) if ep is not None and len(ep) else 0.0
+            banner.set_value("thickness", f"{total_nm:.1f} nm" if total_nm else PLACEHOLDER)
+            best = getattr(self.ui, "_workflow_best_rmse", float("inf"))
+            banner.set_value("best", f"{best:.6f}" if best != float("inf") else PLACEHOLDER)
+            banner.set_value("status", "Evaluated" if valid else "No valid RMSE", "good" if valid else "warn")
+        except (*NUMERICAL_FAULT_EXCEPTIONS, AttributeError, TypeError):
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
     @safe_ui_action
     def run_optim(self, mode: str, keep_history: bool = False, **kwargs) -> None:
@@ -276,7 +305,9 @@ class WorkerManager:
         # Logging start
 
         active_mode = "oblique" if self.ui.oblique_mode else "normal"
-        active_targets = [t for t in (self.ui._get_oblique_tgts() if self.ui.oblique_mode else self.ui._get_tgts()) if t.valid()]
+        active_targets = [
+            t for t in (self.ui._get_oblique_tgts() if self.ui.oblique_mode else self.ui._get_tgts()) if t.valid()
+        ]
 
         logging.info(
             "[DESIGN.start_optimization] starting optimization | mode=%s | keep_history=%s | active_targets=%d | samples_per_iter=%s | max_iterations=%s",
@@ -312,7 +343,9 @@ class WorkerManager:
 
         else:
             self.ui.log(f"Continuing optimization ({mode})...", "INFO")
-            if getattr(self.ui.orchestrator, "_healing_phase", None) is None and not hasattr(self.ui.orchestrator, "_needle_cycle_step"):
+            if getattr(self.ui.orchestrator, "_healing_phase", None) is None and not hasattr(
+                self.ui.orchestrator, "_needle_cycle_step"
+            ):
                 self.ui._post_optim_start_time = None
 
         stack, mats, active, ep0, wls = self.ui._collect_run_optim_inputs()
@@ -495,7 +528,7 @@ class WorkerManager:
             try:
                 gen_info = msg.split("|")[0].strip()
 
-            except NUMERICAL_FAULT_EXCEPTIONS :
+            except NUMERICAL_FAULT_EXCEPTIONS:
                 pass
 
         # Update progress widget
@@ -562,7 +595,7 @@ class WorkerManager:
             self.ui.stats_label.setText("|".join(parts))
 
     def _on_optim_done(self, d) -> None:
-        return getattr(self.ui, 'orchestrator', self.ui)._on_optim_done(d)
+        return getattr(self.ui, "orchestrator", self.ui)._on_optim_done(d)
 
     @safe_ui_action
     def run_colorimetry(self) -> None:
@@ -680,7 +713,7 @@ class WorkerManager:
 
     def _on_col_done(self, d: Dict) -> None:
         """Callback after colorimetric analysis"""
-        
+
         if hasattr(self, "progress_widget"):
             self.ui.progress_widget.stop("Done")
 
@@ -782,7 +815,9 @@ class WorkerManager:
         # Clean ALL workflow state on user stop
 
         if getattr(self.ui.orchestrator, "_overshoot_active", False):
-            self.ui._target_layer_count = getattr(self.ui.orchestrator, "_original_target_count", self.ui._target_layer_count)
+            self.ui._target_layer_count = getattr(
+                self.ui.orchestrator, "_original_target_count", self.ui._target_layer_count
+            )
 
             self.ui.orchestrator._overshoot_active = False
 
@@ -818,7 +853,6 @@ class WorkerManager:
         except Exception:
             pass
 
-
         for attr in (
             "_needle_cycle_step",
             "_needle_merit_before",
@@ -839,4 +873,3 @@ class WorkerManager:
         # We force UI idle here to avoid sticky "Computing..." state.
 
         self.ui._force_idle()
-

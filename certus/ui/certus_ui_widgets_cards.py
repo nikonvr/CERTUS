@@ -134,6 +134,11 @@ class CertusCard(QFrame):
         if getattr(self, "_intro_fade_started", False):
             return
         self._intro_fade_started = True
+        parent = self.parentWidget()
+        while parent is not None:
+            if isinstance(parent, CertusCard) or (hasattr(parent, "graphicsEffect") and parent.graphicsEffect() is not None):
+                return
+            parent = parent.parentWidget()
         try:
             from certus.ui.certus_animations import fade_in
 

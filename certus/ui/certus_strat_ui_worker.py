@@ -2,6 +2,7 @@ from __future__ import annotations
 from certus.ui.certus_strat_common import *
 from certus.core.certus_strat_config import _SPECTRUM_COUNTER
 
+
 class CertusStratWorkerMixin:
     def _request_stop(self) -> None:
         """Called by reset framework before stopping workers. Sets stop flag so worker loop exits when in a run."""
@@ -26,6 +27,7 @@ class CertusStratWorkerMixin:
         self.sig_numba_ready.connect(self._on_numba_ready_ui)
         self.sig_numba_error.connect(self._on_numba_error_ui)
         import threading
+
         if hasattr(self, "status_label"):
             self.status_label.setText("System warming up (compiling JIT)...")
         t = threading.Thread(target=self._warmup_numba_thread_runner, daemon=True)
@@ -124,16 +126,26 @@ class CertusStratWorkerMixin:
 
             _log.info("[JIT-WARMUP] all kernels compiled OK")
             self.numba_ready = True
-            self.sig_numba_ready.emit()
+            try:
+                self.sig_numba_ready.emit()
+            except RuntimeError, AttributeError:
+                return
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.warning(f"Numba warmup warning: {e}")
             self.numba_ready = True
-            self.sig_numba_ready.emit()
+            try:
+                self.sig_numba_ready.emit()
+            except RuntimeError, AttributeError:
+                return
 
         except Exception as e:
             self.logger.error(f"Numba warmup failed: {e}", exc_info=True)
-            self.sig_numba_error.emit()
+            self.numba_ready = True
+            try:
+                self.sig_numba_ready.emit()
+            except RuntimeError, AttributeError:
+                return
 
     @pyqtSlot()
     def _on_numba_ready_ui(self) -> None:
@@ -197,7 +209,7 @@ class CertusStratWorkerMixin:
                     self.logger.warning("[STRAT-UI] Active render thread did not stop within %sms.", timeout_ms)
                     active_thread.requestInterruption()
                     active_thread.wait(min(timeout_ms, 1000))
-        except (RuntimeError, AttributeError):
+        except RuntimeError, AttributeError:
             pass
         finally:
             if active_thread is not None and not self._thread_is_running_safe(active_thread):
@@ -220,7 +232,7 @@ class CertusStratWorkerMixin:
                     self.logger.warning("[STRAT-UI] Worker thread did not stop within %sms.", timeout_ms)
                     worker.requestInterruption()
                     worker.wait(min(timeout_ms, 1000))
-        except (RuntimeError, AttributeError):
+        except RuntimeError, AttributeError:
             pass
         finally:
             if worker is not None and not self._thread_is_running_safe(worker):
@@ -267,7 +279,7 @@ class CertusStratWorkerMixin:
                 self._stopping_threads.append(thread)
                 if self._thread_is_running_safe(thread):
                     thread.deleteLater()
-        except (RuntimeError, AttributeError, ValueError):
+        except RuntimeError, AttributeError, ValueError:
             pass
 
     def _stop_all_worker_threads(self, timeout_ms: int = 5000) -> None:
@@ -282,7 +294,7 @@ class CertusStratWorkerMixin:
                 if self._thread_is_running_safe(thread):
                     self.logger.debug("[STRAT-UI] -> quitting worker thread id=%s", id(thread))
                     thread.quit()
-            except (RuntimeError, AttributeError):
+            except RuntimeError, AttributeError:
                 continue
         deadline = time.time() + (timeout_ms / 1000.0)
         for thread in threads:
@@ -291,7 +303,7 @@ class CertusStratWorkerMixin:
                 if self._thread_is_running_safe(thread) and remaining > 0:
                     if not thread.wait(remaining):
                         self.logger.warning("[STRAT-UI] Worker thread did not stop in time id=%s", id(thread))
-            except (RuntimeError, AttributeError):
+            except RuntimeError, AttributeError:
                 continue
         self._active_worker_threads = [t for t in self._active_worker_threads if self._thread_is_running_safe(t)]
 
@@ -404,7 +416,7 @@ class CertusStratWorkerMixin:
             try:
                 self.live_monitor_window.user_hidden = False
 
-            except (RuntimeError, AttributeError):
+            except RuntimeError, AttributeError:
                 logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         for btn in [
@@ -444,11 +456,12 @@ class CertusStratWorkerMixin:
         elif hasattr(params, "__dict__") and not isinstance(params, dict):
             # In case it's a dataclass or other object without model_dump
             import dataclasses
+
             if dataclasses.is_dataclass(params):
                 params_dict = dataclasses.asdict(params)
             else:
                 params_dict = vars(params)
-                
+
         self.worker = WorkerThread(
             step=task,
             params=params_dict,
@@ -470,7 +483,7 @@ class CertusStratWorkerMixin:
 
         try:
             self.worker.signals.show_strategies_table.disconnect(self.on_show_strategies_table)
-        except (TypeError, RuntimeError):
+        except TypeError, RuntimeError:
             pass
         self.worker.signals.show_strategies_table.connect(self.on_show_strategies_table)
 
@@ -478,10 +491,26 @@ class CertusStratWorkerMixin:
 
         _SPECTRUM_COUNTER.reset()
 
+        if hasattr(self, "stack_progress_widget"):
+            try:
+                table = self.widgets.get("stack_table")
+                if table and table.rowCount() > 0:
+                    l0 = float(self._get_float_safe("l0", 550.0))
+                    h_mat = self.widgets["h_material_file"].currentText() or "H"
+                    l_mat = self.widgets["l_material_file"].currentText() or "L"
+                    self.stack_progress_widget.init_stack_from_table(table, l0, h_mat, l_mat)
+                    if hasattr(self, "plot_stack"):
+                        self.plot_stack.setCurrentWidget(self.stack_progress_widget)
+            except Exception:
+                pass
+
         self.worker.start()
 
     def on_workflow_finished(self, results) -> None:
-        self.logger.info("[DEBUG-UI] on_workflow_finished started. Results keys: %s", list(results.keys()) if isinstance(results, dict) else "not a dict")
+        self.logger.info(
+            "[DEBUG-UI] on_workflow_finished started. Results keys: %s",
+            list(results.keys()) if isinstance(results, dict) else "not a dict",
+        )
 
         if "opti_results" in results:
             self.opti_results = results["opti_results"]
@@ -496,7 +525,9 @@ class CertusStratWorkerMixin:
             try:
                 final_strategies = list((self.final_results or {}).get("all_strategies_results", []) or [])
                 if not final_strategies:
-                    raise RuntimeError("CERTUS-STRAT-E-FINAL-TABLE-MISSING: no strategies available for final ranking display")
+                    raise RuntimeError(
+                        "CERTUS-STRAT-E-FINAL-TABLE-MISSING: no strategies available for final ranking display"
+                    )
                 self.logger.debug(
                     "[STRAT-UI] Forcing final ranking table display: count=%d",
                     len(final_strategies),
@@ -534,13 +565,70 @@ class CertusStratWorkerMixin:
 
         self.progress_bar.stop(final_message="Done")
 
+        self._refresh_synthesis_kpis()
+
         # Self-export (Excel + HTML) if enabled via HUB
 
         if get_export_config() and self.opti_results:
             self.logger.info("[DEBUG-UI] Scheduling auto-export results in 500ms.")
             QTimer.singleShot(500, self._auto_export_results)
         else:
-            self.logger.info("[DEBUG-UI] Auto-export not scheduled (config=%s, opti_results=%s).", get_export_config(), bool(self.opti_results))
+            self.logger.info(
+                "[DEBUG-UI] Auto-export not scheduled (config=%s, opti_results=%s).",
+                get_export_config(),
+                bool(self.opti_results),
+            )
+
+        # Activation des échelles automatiques sur tous les graphiques actifs à la fin du workflow
+        try:
+            for win in getattr(self, "transmission_windows", []):
+                if hasattr(win, "plot_widget") and win.plot_widget:
+                    win.plot_widget.enableAutoRange(axis=pg.ViewBox.XYAxes, enable=True)
+                    win.plot_widget.autoRange()
+            if hasattr(self, "live_monitor_window") and self.live_monitor_window:
+                if hasattr(self.live_monitor_window, "plot_widget") and self.live_monitor_window.plot_widget:
+                    self.live_monitor_window.plot_widget.enableAutoRange(axis=pg.ViewBox.XYAxes, enable=True)
+                    self.live_monitor_window.plot_widget.autoRange()
+        except Exception as auto_err:
+            self.logger.debug("on_workflow_finished autoRange skipped: %s", auto_err)
+
+    def _refresh_synthesis_kpis(self) -> None:
+        """Fill the KPI strip from the winning strategy of the finished run.
+
+        Keys are the ones the solver really emits - ``robustness_score``,
+        ``crash_rate`` and ``n_blocks`` (see certus_strat_robustness). SEEL is
+        deliberately absent: it never reaches these results, it is computed in
+        the UI at step 0.
+        """
+        banner = getattr(self, "kpi_banner", None)
+        if banner is None:
+            return
+        try:
+            strategies = list((self.final_results or {}).get("all_strategies_results", []) or [])
+            if not strategies:
+                banner.set_value("status", "No strategy ranked", "warn")
+                return
+
+            best = strategies[0]
+            score = best.get("robustness_score")
+            crash = best.get("crash_rate")
+            blocks = best.get("n_blocks")
+
+            banner.set_value("score", f"{float(score):.6f}" if score is not None else PLACEHOLDER)
+            if crash is None:
+                banner.set_value("crash", PLACEHOLDER, "neutral")
+            else:
+                # The physicist's target is a 95 % yield, i.e. at most 5 % crashes.
+                banner.set_value(
+                    "crash",
+                    f"{float(crash) * 100:.2f} %",
+                    "good" if float(crash) <= 0.05 else "bad",
+                )
+            banner.set_value("blocks", str(blocks) if blocks is not None else PLACEHOLDER)
+            banner.set_value("ranked", str(len(strategies)))
+            banner.set_value("status", "Run complete", "good")
+        except ValueError, TypeError, KeyError, AttributeError, RuntimeError:
+            logging.getLogger("CERTUS").debug("KPI refresh skipped", exc_info=True)
 
     def on_workflow_error(self, exc_info) -> None:
 
@@ -573,6 +661,30 @@ class CertusStratWorkerMixin:
 
         self.status_label.setText(message)
 
+        if hasattr(self, "stack_progress_widget"):
+            if "Computing Layer" in message:
+                try:
+                    parts = message.split("Computing Layer")[-1].strip().split("/")
+                    if len(parts) == 2:
+                        cur_layer = int(parts[0].strip())
+                        tot_layers = int(parts[1].strip())
+                        self.stack_progress_widget.update_progress(cur_layer, tot_layers, value)
+                        if (
+                            hasattr(self, "plot_stack")
+                            and self.plot_stack.currentWidget() != self.stack_progress_widget
+                        ):
+                            self.plot_stack.setCurrentWidget(self.stack_progress_widget)
+                except Exception:
+                    pass
+            elif "Phase B" in message:
+                try:
+                    if hasattr(self, "phase_b_live_widget"):
+                        self.phase_b_live_widget.set_status_text(message, value)
+                        if hasattr(self, "plot_stack") and self.plot_stack.currentWidget() != self.phase_b_live_widget:
+                            self.plot_stack.setCurrentWidget(self.phase_b_live_widget)
+                except Exception:
+                    pass
+
     def _stop_all_threads_parallel(self, timeout_ms: int = 10000) -> None:
         """Stop main worker, active render thread, and auxiliary threads in parallel."""
         thread_worker_pairs = []
@@ -583,7 +695,7 @@ class CertusStratWorkerMixin:
             try:
                 if hasattr(main_worker, "params") and isinstance(main_worker.params, dict):
                     main_worker.params["stop_requested"] = True
-            except (RuntimeError, AttributeError):
+            except RuntimeError, AttributeError:
                 pass
 
         render_thread = getattr(self, "_active_render_thread", None)
@@ -616,7 +728,9 @@ class CertusStratWorkerMixin:
                 remaining = max(0, int((deadline - time.time()) * 1000))
                 if self._thread_is_running_safe(t) and remaining > 0:
                     if not t.wait(remaining):
-                        self.logger.warning("[STRAT-UI] Thread id=%s did not stop in time, requesting interruption...", id(t))
+                        self.logger.warning(
+                            "[STRAT-UI] Thread id=%s did not stop in time, requesting interruption...", id(t)
+                        )
                         t.requestInterruption()
                         t.wait(min(remaining, 1000))
             except RuntimeError:
@@ -626,5 +740,6 @@ class CertusStratWorkerMixin:
             self.worker = None
         if render_thread is not None and not self._thread_is_running_safe(render_thread):
             self._active_render_thread = None
-        self._active_worker_threads = [t for t in getattr(self, "_active_worker_threads", []) if self._thread_is_running_safe(t)]
-
+        self._active_worker_threads = [
+            t for t in getattr(self, "_active_worker_threads", []) if self._thread_is_running_safe(t)
+        ]

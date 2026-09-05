@@ -5,7 +5,7 @@ class CertusFieldStateMixin:
     """CertusFieldStateMixin."""
 
     def _get_default_splitter_sizes(self) -> list[int]:
-        return [380, 1000]
+        return [520, 1380]
 
 
 
@@ -856,6 +856,10 @@ class CertusFieldStateMixin:
         p_lay.addWidget(lbl)
 
         self.pareto_table = QTableWidget(0, 8)
+        self.pareto_table.setSortingEnabled(True)
+        _hdr_pareto = self.pareto_table.horizontalHeader()
+        if _hdr_pareto is not None:
+            _hdr_pareto.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         self.pareto_table.setHorizontalHeaderLabels([
             "N Layers", "Best Cost", "d_min Cost",
             "Best MC", "d_min MC", "Best Fab", "d_min Fab",
@@ -982,13 +986,29 @@ class CertusFieldStateMixin:
                     emp_factors.append(self._safe_float_from_item(qwot_item, 0.0))
                     layer_types.append(0 if self._normalize_layer_material(r) == "H" else 1)
         else:
+            # layer_types says which layer is high-index and which is low. This
+            # used to answer both failures with [i % 2 ...] - a perfectly
+            # alternating H/L stack that does not exist - and the cost computed
+            # from it was then stored in pareto_history and displayed beside the
+            # real points, with nothing marking it apart. Measured 2026-09-04:
+            # four thicknesses against two materials produced a record carrying
+            # type_rmse [0, 1, 0, 1] and dmin 53.19 nm, all of it invented.
+            # Refusing the point is an outcome this function already has.
             try:
                 params = self._get_params()
-                layer_types = params.layer_types
-                if len(layer_types) != len(emp_factors):
-                    layer_types = [i % 2 for i in range(len(emp_factors))]
-            except Exception:
-                layer_types = [i % 2 for i in range(len(emp_factors))]
+                layer_types = list(params.layer_types)
+            except (AttributeError, RuntimeError, TypeError, ValueError):
+                logging.getLogger("CERTUS").warning(
+                    "Pareto point skipped: the stack materials could not be read", exc_info=True
+                )
+                return
+            if len(layer_types) != len(emp_factors):
+                logging.getLogger("CERTUS").warning(
+                    "Pareto point skipped: %d thicknesses for %d materials",
+                    len(emp_factors),
+                    len(layer_types),
+                )
+                return
 
         if not emp_factors:
             return
@@ -1007,7 +1027,13 @@ class CertusFieldStateMixin:
                 params.n1_rs[0], params.n2_rs[0], emp_factors, layer_types, params.l0
             )
             dmin = float(np.min(ep_physical)) if len(ep_physical) > 0 else 0.0
-        except Exception:
+        except (AttributeError, IndexError, RuntimeError, TypeError, ValueError):
+            # 0.0 is honest here - the table renders a non-positive dmin as "-",
+            # so nothing invented reaches the operator. What was wrong is that a
+            # bare `except Exception` swallowed the reason in silence.
+            logging.getLogger("CERTUS").warning(
+                "Pareto point recorded without a minimum thickness", exc_info=True
+            )
             dmin = 0.0
             ep_physical = np.array([])
 

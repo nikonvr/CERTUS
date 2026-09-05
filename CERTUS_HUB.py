@@ -140,6 +140,7 @@ from certus.core.certus_core import get_export_config, get_resource_path, save_e
 
 
 from certus.ui.certus_ui import (
+    claim_shortcut_for_action,
     SVG_AVAILABLE,
     CertusTheme,
     CertusThemeToggle,
@@ -549,6 +550,22 @@ class CertusHub(QMainWindow):
 
         self._apply_theme()
 
+        # A launcher should accept a dropped file and open the module that can
+        # read it - see dragEnterEvent / dropEvent below.
+        self.setAcceptDrops(True)
+
+        # The hub is the first window opened every session, and the only one in
+        # the suite that forgets its size and position: it does not inherit
+        # CertusBaseApp, so it never had _qs_restore.
+        try:
+            from PyQt6.QtCore import QSettings
+
+            _geom = QSettings("CERTUS", "CERTUS-HUB").value("window/geometry")
+            if _geom is not None:
+                self.restoreGeometry(_geom)
+        except (RuntimeError, TypeError):
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+
     def _apply_theme(self) -> None:
         """Apply global theme styles including Premium UI"""
 
@@ -741,6 +758,13 @@ class CertusHub(QMainWindow):
 
     def closeEvent(self, event) -> None:
         """Stop child processes cleanly before the hub is destroyed."""
+        try:
+            from PyQt6.QtCore import QSettings
+
+            QSettings("CERTUS", "CERTUS-HUB").setValue("window/geometry", self.saveGeometry())
+        except (RuntimeError, TypeError):
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+
         import time
 
         start_time = time.time()
@@ -799,11 +823,12 @@ class CertusHub(QMainWindow):
             ("Ctrl+I", "CERTUS_INDEX.py", "Launch INDEX"),
             ("Ctrl+M", "CERTUS_METAL_SINGLE.py", "Launch METAL"),
             ("Ctrl+F", "CERTUS_FIELD.py", "Launch FIELD"),
-            ("Ctrl+Plus", None, "Zoom in"),
-            ("Ctrl+Minus", None, "Zoom out"),
-            ("Ctrl+0", None, "Reset zoom"),
-            ("F1", None, "Open Documentation"),
         ]
+        # Zoom and F1 are NOT declared here: the Help menu owns them as QAction,
+        # which also displays them. Binding both made Qt emit
+        # activatedAmbiguously and run NEITHER handler. "Ctrl+Plus" /
+        # "Ctrl+Minus" were dead anyway - Qt 6 resolves them to an EMPTY
+        # QKeySequence.
 
         for key, script, desc in shortcuts:
             shortcut = QShortcut(QKeySequence(key), self)
@@ -885,6 +910,56 @@ class CertusHub(QMainWindow):
 
     # =========================================================================
 
+    #: Which module opens a dropped file. Spectral measurements go to INDEX;
+    #: a JSON configuration goes to the module its name refers to, and to DESIGN
+    #: otherwise since a bare stack description is a design.
+    DROP_EXTENSIONS = (".json", ".csv", ".dat", ".txt", ".xlsx")
+
+    def _module_for_dropped_file(self, path: str) -> str:
+        """Pick the launcher entry that can read ``path``."""
+        name = Path(path).name.lower()
+        if name.endswith(".json"):
+            for token, script in (
+                ("strat", "CERTUS_STRAT.py"),
+                ("field", "CERTUS_FIELD.py"),
+                ("spline", "CERTUS_INDEX_SPLINE.py"),
+                ("metal", "CERTUS_METAL_SINGLE.py"),
+                ("index", "CERTUS_INDEX.py"),
+            ):
+                if token in name:
+                    return script
+            return "CERTUS_DESIGN.py"
+        return "CERTUS_INDEX.py"
+
+    def _dropped_paths(self, event) -> list[str]:
+        md = event.mimeData()
+        if md is None or not md.hasUrls():
+            return []
+        return [
+            p
+            for p in (u.toLocalFile() for u in md.urls())
+            if p and p.lower().endswith(self.DROP_EXTENSIONS)
+        ]
+
+    def dragEnterEvent(self, event) -> None:
+        """Accept a drop when at least one file is of a type CERTUS can read."""
+        if self._dropped_paths(event):
+            event.acceptProposedAction()
+            return
+        super().dragEnterEvent(event)
+
+    def dropEvent(self, event) -> None:
+        """Open the module able to read the dropped file."""
+        paths = self._dropped_paths(event)
+        if not paths:
+            super().dropEvent(event)
+            return
+        event.acceptProposedAction()
+        target = paths[0]
+        script = self._module_for_dropped_file(target)
+        self._log_message(f"Dropped {Path(target).name} -> launching {Path(script).stem}")
+        self.launch_module(script)
+
     def _install_help_menu(self) -> None:
         """Create the standard Help menu: Shortcuts, Docs, About."""
 
@@ -893,23 +968,20 @@ class CertusHub(QMainWindow):
 
             help_menu = mb.addMenu("&Help")
 
-            act_shortcuts = help_menu.addAction("Keyboard shortcuts…")
+            def _menu_action(label: str, seq: str | None, slot):
+                act = help_menu.addAction(label)
+                if seq:
+                    # Assigns the sequence only if no QShortcut already owns it:
+                    # binding one sequence twice makes Qt emit
+                    # activatedAmbiguously and run NEITHER handler.
+                    claim_shortcut_for_action(act, seq, self)
+                act.triggered.connect(slot)
+                return act
 
-            act_shortcuts.setShortcut("F1")
-
-            act_shortcuts.triggered.connect(self._open_shortcuts_overlay)
-
-            act_zoom_in = help_menu.addAction("Zoom in")
-            act_zoom_in.setShortcut("Ctrl+Plus")
-            act_zoom_in.triggered.connect(lambda: self._log_message("Zoom in is handled in child windows"))
-
-            act_zoom_out = help_menu.addAction("Zoom out")
-            act_zoom_out.setShortcut("Ctrl+Minus")
-            act_zoom_out.triggered.connect(lambda: self._log_message("Zoom out is handled in child windows"))
-
-            act_zoom_reset = help_menu.addAction("Reset zoom")
-            act_zoom_reset.setShortcut("Ctrl+0")
-            act_zoom_reset.triggered.connect(lambda: self._log_message("Reset zoom is handled in child windows"))
+            _menu_action("Keyboard shortcuts…", "F1", self._open_shortcuts_overlay)
+            _menu_action("Zoom in", "Ctrl++", lambda: self._log_message("Zoom in is handled in child windows"))
+            _menu_action("Zoom out", "Ctrl+-", lambda: self._log_message("Zoom out is handled in child windows"))
+            _menu_action("Reset zoom", "Ctrl+0", lambda: self._log_message("Reset zoom is handled in child windows"))
 
             help_menu.addSeparator()
 

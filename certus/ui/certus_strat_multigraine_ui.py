@@ -268,7 +268,7 @@ class CertusStratMultigraineMixin:
     def _create_multigraine_tab(self) -> None:
         from PyQt6.QtCore import QProcess
         from PyQt6.QtWidgets import (
-            QComboBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QPushButton,
+            QComboBox, QGridLayout, QHeaderView, QLabel, QLineEdit, QPushButton,
             QTableWidget, QVBoxLayout, QWidget,
         )
         from certus.ui.certus_ui_widgets_cards import CertusCard
@@ -285,7 +285,6 @@ class CertusStratMultigraineMixin:
 
         # -- reglages ---------------------------------------------------------------------
         carte = CertusCard("Budget et objectif")
-        g = QHBoxLayout()
         # 🔴 LE COMPOSANT EST EXPLICITE, ET SANS VALEUR PAR DEFAUT MUETTE. La premiere version
         # codait « r75x2 » en dur : l'utilisateur pouvait avoir charge un tout autre
         # empilement et l'onglet aurait rendu un SEEL plausible portant sur autre chose.
@@ -325,45 +324,55 @@ class CertusStratMultigraineMixin:
             "Mesure du 2026-08-22 sur 16 threads : deux runs concurrents rendent +29 % de "
             "debit, pas +100 % -- le goulot est la bande passante memoire."
         )
-        for lib, w in (("Composant :", self._mg_composant),
-                       ("Budget :", self._mg_budget), ("Objectif :", self._mg_objectif),
-                       ("SEEL cible (nm) :", self._mg_cible), ("Slots :", self._mg_slots)):
-            g.addWidget(QLabel(lib))
-            g.addWidget(w)
+        # QGridLayout 2 colonnes (label | widget) : évite le minimum ~870 px du QHBoxLayout
+        # 5-paires-en-ligne, ce qui causait un défilement horizontal à 1366×768.
+        g = QGridLayout()
+        g.setColumnStretch(1, 1)
+        for _row, (lib, w) in enumerate((("Composant :", self._mg_composant),
+                                         ("Budget :", self._mg_budget),
+                                         ("Objectif :", self._mg_objectif),
+                                         ("SEEL cible (nm) :", self._mg_cible),
+                                         ("Slots :", self._mg_slots))):
+            g.addWidget(QLabel(lib), _row, 0)
+            g.addWidget(w, _row, 1)
         carte.body.addLayout(g)
         v.addWidget(carte)
 
         # -- boutons ----------------------------------------------------------------------
-        barre = QHBoxLayout()
-        self._mg_bouton_lancer = QPushButton("Lancer la recherche multi-realisation")
+        # QVBoxLayout : les trois labels sont trop longs pour coexister en une ligne sans
+        # imposer un minimum ~825 px au panneau.
+        barre = QVBoxLayout()
+        self._mg_bouton_lancer = QPushButton("Lancer la recherche")
+        self._mg_bouton_lancer.setToolTip(
+            "Rejoue la recherche sur plusieurs réalisations (graines) dans un budget de temps donné."
+        )
         self._mg_bouton_lancer.clicked.connect(self._mg_lancer)
         # 🔑 LE MOT EST « FINALISER », PAS « ARRETER », ET C'EST 👤 QUI L'A TROUVE :
         # « plutot que arreter, le vrai mot serait finaliser ». « Arreter » dit ce qu'on
         # QUITTE et se lit « tout annuler » ; or les deux boutons produisent le chiffre
         # citable -- ils ne different que par le sort des realisations EN VOL. Le mot juste
         # dit ce qu'on OBTIENT.
-        self._mg_bouton_finaliser = QPushButton("Finaliser — laisser finir les realisations en vol")
+        self._mg_bouton_finaliser = QPushButton("Finaliser (laisser finir)")
         self._mg_bouton_finaliser.setEnabled(False)
         self._mg_bouton_finaliser.setToolTip(
-            "Cesse de LANCER de nouvelles realisations, LAISSE FINIR celles qui tournent, puis "
+            "Cesse de LANCER de nouvelles réalisations, LAISSE FINIR celles qui tournent, puis "
             "enchaine sur l'union et la notation finale.\nRien n'est gaspille — mais il faut "
             "attendre la fin des runs en vol."
         )
         self._mg_bouton_finaliser.clicked.connect(lambda: self._mg_finaliser("attendre"))
 
-        self._mg_bouton_finaliser_vite = QPushButton("Finaliser tout de suite — abandonner ce qui vole")
+        self._mg_bouton_finaliser_vite = QPushButton("Finaliser tout de suite")
         self._mg_bouton_finaliser_vite.setEnabled(False)
         self._mg_bouton_finaliser_vite.setToolTip(
             "Passe a l'union et a la notation finale IMMEDIATEMENT, sur ce qui est deja mesure.\n"
-            "⚠️ Les realisations en vol sont tuees et leur travail est PERDU — quatre mesures "
-            "de 91 min l'ont ete ainsi le 2026-08-22, coupees a 98,9 % d'avancement."
+            "⚠️ Les réalisations en vol sont tuées et leur travail est PERDU — quatre mesures "
+            "de 91 min l'ont été ainsi le 2026-08-22, coupées à 98,9 % d'avancement."
         )
         self._mg_bouton_finaliser_vite.clicked.connect(lambda: self._mg_finaliser("abandonner"))
 
         barre.addWidget(self._mg_bouton_lancer)
         barre.addWidget(self._mg_bouton_finaliser)
         barre.addWidget(self._mg_bouton_finaliser_vite)
-        barre.addStretch(1)
         v.addLayout(barre)
 
         # -- tableau vivant ---------------------------------------------------------------

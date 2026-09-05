@@ -12,8 +12,6 @@ from certus.ui.certus_design_ui_layout import LayoutManager
 
 
 class CertusDesignApp(
-    
-    
     CertusBaseApp,
 ):
     """Main Application CERTUS-DESIGN"""
@@ -75,6 +73,7 @@ class CertusDesignApp(
 
         super().__init__()
         from certus.core.certus_design_orchestrator import DesignOrchestrator
+
         self.orchestrator = DesignOrchestrator(self)
         self.export_manager = ExportManager(self)
         self.optimization_manager = OptimizationManager(self)
@@ -195,6 +194,19 @@ class CertusDesignApp(
 
         self._load_defaults()
 
+        # DESIGN does not call _finalize_init (it owns its warmup and timers),
+        # so restore the persisted geometry / splitters explicitly. closeEvent
+        # already calls _qs_save: without this the preferences were written at
+        # every exit and never read back.
+        self._qs_restore()
+
+        # This module skips _finalize_init, so the cross-cutting affordances it
+        # installs have to be requested explicitly: command palette, shortcuts
+        # overlay, Help menu, empty states and accessible names. Measured
+        # 2026-09-04: without this call the window had no Ctrl+K, no Help menu
+        # and not one input field with an accessible name.
+        self.install_common_affordances()
+
         # Warmup JIT (DESIGN uses its own WarmupWorker)
 
         self.status_label.setText("Compiling JIT kernels…")
@@ -204,7 +216,6 @@ class CertusDesignApp(
         self.warmup_worker.finished.connect(self._on_warmup_done)
 
         self.warmup_worker.start()
-
 
     @safe_ui_action
     def export_results(self) -> None:
@@ -274,8 +285,6 @@ class CertusDesignApp(
     def _toggle_back_stack(self, state: int) -> None:
         self.events_manager._toggle_back_stack(state)
 
-
-
     # PlotManager Proxies
     def init_plot_elements(self) -> None:
         self.plot_manager.init_plot_elements()
@@ -289,8 +298,12 @@ class CertusDesignApp(
     def update_target_scatter(self) -> None:
         self.plot_manager.update_target_scatter()
 
-    def _update_scatter(self, plot_item, x_data, y_data, w_data, is_active, brush_active, brush_inactive, is_oblique=False):
-        return self.plot_manager._update_scatter(plot_item, x_data, y_data, w_data, is_active, brush_active, brush_inactive, is_oblique)
+    def _update_scatter(
+        self, plot_item, x_data, y_data, w_data, is_active, brush_active, brush_inactive, is_oblique=False
+    ):
+        return self.plot_manager._update_scatter(
+            plot_item, x_data, y_data, w_data, is_active, brush_active, brush_inactive, is_oblique
+        )
 
     def update_envelope_plot(self, env_top: np.ndarray, env_bot: np.ndarray) -> None:
         self.plot_manager.update_envelope_plot(env_top, env_bot)
@@ -304,7 +317,15 @@ class CertusDesignApp(
     def reset_target_scatter(self) -> None:
         self.plot_manager.reset_target_scatter()
 
-    def draw_crosshair(self, p: QPointF, plot_item: pg.PlotItem, v_line: pg.InfiniteLine, h_line: pg.InfiniteLine, label: pg.TextItem, label_format: str) -> None:
+    def draw_crosshair(
+        self,
+        p: QPointF,
+        plot_item: pg.PlotItem,
+        v_line: pg.InfiniteLine,
+        h_line: pg.InfiniteLine,
+        label: pg.TextItem,
+        label_format: str,
+    ) -> None:
         self.plot_manager.draw_crosshair(p, plot_item, v_line, h_line, label, label_format)
 
     def update_color_display(self, L: float, a: float, b: float) -> None:
@@ -417,42 +438,17 @@ class CertusDesignApp(
 
     # =========================================================================
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     # =========================================================================
 
     # HELPERS UI
 
     # =========================================================================
 
-
-
-
-
     # =========================================================================
 
     # LAYER MANAGEMENT
 
     # =========================================================================
-
-
-
-
-
 
     def _add_back_row(self, mat: str, qwot: float) -> None:
         """Adds a row to back layer table"""
@@ -468,6 +464,7 @@ class CertusDesignApp(
         self.back_table.setCellWidget(row, 0, cb)
 
         sb = self._create_spin(qwot, dec=3)
+        sb.setToolTip("Back layer optical thickness in QWOT (Quarter-Wave Optical Thickness).")
 
         sb.valueChanged.connect(self._on_schedule_eval_signal)
 
@@ -479,25 +476,11 @@ class CertusDesignApp(
 
         self.back_table.setItem(row, 2, it)
 
-
-
-
-
-
-
-
-
     # =========================================================================
 
     # TARGET MANAGEMENT
 
     # =========================================================================
-
-
-
-
-
-
 
     # =========================================================================
 
@@ -505,19 +488,11 @@ class CertusDesignApp(
 
     # =========================================================================
 
-
-
-
-
     # =========================================================================
 
     # EVALUATION
 
     # =========================================================================
-
-
-
-
 
     # =========================================================================
 
@@ -525,74 +500,11 @@ class CertusDesignApp(
 
     # =========================================================================
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     # =====================================================================
 
     # PARETO DECIMATION: remove thinnest -> merge -> re-polish -> record -> loop
 
     # =====================================================================
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     # =========================================================================
 
@@ -600,33 +512,11 @@ class CertusDesignApp(
 
     # =========================================================================
 
-
-
-
-
-
-
-
-
-
-
-
     # =========================================================================
 
     # NEEDLE ALGORITHM
 
     # =========================================================================
-
-
-
-
-
-
-
-
-
-
-
 
     # =========================================================================
 
@@ -634,20 +524,11 @@ class CertusDesignApp(
 
     # =========================================================================
 
-
-
     # =========================================================================
 
     # SELF-EXPORT (Excel + HTML)
 
     # =========================================================================
-
-
-
-
-
-
-
 
     # =========================================================================
 
@@ -661,33 +542,17 @@ class CertusDesignApp(
 
     # --- Lot C helpers ---
 
-
-
-
-
-
-
-
-
-
-
-
-
     # =========================================================================
 
     # UTILITAIRES
 
     # =========================================================================
 
+    # =============================================================================
 
+    # ENTRY POINT
 
-
-# =============================================================================
-
-# ENTRY POINT
-
-# =============================================================================
-
+    # =============================================================================
 
     # --- OptimizationManager Proxies ---
     def _handle_stopped_workflow_result(self, *args, **kwargs):
@@ -819,7 +684,6 @@ class CertusDesignApp(
     def start_needle_worker(self, *args, **kwargs):
         return self.optimization_manager.start_needle_worker(*args, **kwargs)
 
-
     # --- CoreManager Proxies ---
     def _get_default_splitter_sizes(self, *args, **kwargs):
         return self.core_manager._get_default_splitter_sizes(*args, **kwargs)
@@ -898,4 +762,3 @@ class CertusDesignApp(
 
     def _update_busy_ui(self, *args, **kwargs):
         return self.core_manager._update_busy_ui(*args, **kwargs)
-

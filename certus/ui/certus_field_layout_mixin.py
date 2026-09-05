@@ -1,24 +1,20 @@
 from __future__ import annotations
 from certus.ui.certus_field_common import *
 
+
 class CertusFieldLayoutMixin:
     """CertusFieldLayoutMixin."""
 
     def _build_left_panel(self) -> QWidget:
         left_panel = QWidget()
-        left_panel.setMinimumWidth(360)
+        left_panel.setMinimumWidth(380)
         # left_panel.setMaximumWidth(420)  # Removed to free the splitter
         left_layout = QVBoxLayout(left_panel)
         left_layout.setContentsMargins(0, 0, 0, 0)
         left_layout.setSpacing(0)
 
         # 1. Header (Logo)
-        header_widget = create_header_logo_widget(
-            "FIELD",
-            self.APP_TITLE,
-            logo_width=160,
-            module_name="CERTUS_FIELD"
-        )
+        header_widget = create_header_logo_widget("FIELD", self.APP_TITLE, logo_width=160, module_name="CERTUS_FIELD")
         self.btn_theme = CertusThemeToggle(header_widget)
         header_widget.layout().addWidget(self.btn_theme)
         left_layout.addWidget(header_widget)
@@ -26,9 +22,10 @@ class CertusFieldLayoutMixin:
         # 2. Action Bar with log toggle
         self.toggle_details_btn = QPushButton("Show Details")
         self.toggle_details_btn.setCheckable(True)
+        self.toggle_details_btn.setMinimumHeight(28)  # click-target floor
         self.toggle_details_btn.setToolTip("Toggle the visibility of the application logs panel")
         self.toggle_details_btn.toggled.connect(self.on_toggle_details)
-        
+
         self.btn_screenshot = create_styled_button("📸 Capture", variant="secondary")
         self.btn_screenshot.setToolTip("Save a screenshot of the electric field profile (PNG)")
         self.btn_screenshot.clicked.connect(self.export_png)
@@ -36,15 +33,24 @@ class CertusFieldLayoutMixin:
         self.btn_copy_log = create_styled_button("Copy Log", variant="secondary", icon=certus_icon("copy"))
         self.btn_copy_log.setToolTip("Copy the application logs to the clipboard")
         self.btn_copy_log.clicked.connect(self.copy_logs_to_clipboard)
-        
+
         action_bar = create_top_actions_bar(self, self.save_config, self.load_config, self.export_data, self.open_help)
-        action_bar.layout().addWidget(self.btn_screenshot)
-        action_bar.layout().addWidget(self.toggle_details_btn)
-        action_bar.layout().addWidget(self.btn_copy_log)
-        
         left_layout.addWidget(action_bar)
 
+        # Secondary actions on their own row. Appended to the main bar they made
+        # seven buttons share one line, which alone forced the control panel to
+        # 846 px - wider than the splitter ever grants it (measured 2026-09-03).
+        secondary_bar = QWidget()
+        secondary_layout = QHBoxLayout(secondary_bar)
+        secondary_layout.setContentsMargins(6, 0, 6, 0)
+        secondary_layout.setSpacing(6)
+        secondary_layout.addWidget(self.btn_screenshot)
+        secondary_layout.addWidget(self.toggle_details_btn)
+        secondary_layout.addWidget(self.btn_copy_log)
+        left_layout.addWidget(secondary_bar)
+
         from certus.utils.certus_reset_framework import create_reset_button
+
         self.clear_btn = create_reset_button(self, use_app_reset=True)
         left_layout.addWidget(self.clear_btn)
 
@@ -60,12 +66,12 @@ class CertusFieldLayoutMixin:
         # -- Card: Optics
         card_optics = CertusCard("🔭 Optical Parameters", "Materials & Wavelengths")
         self.optics_panel = OpticsPanelWidget(self.material_list)
-        
+
         # Connect to main app
         self.optics_panel.thickness_update_requested.connect(self._update_thicknesses)
         self.optics_panel.mat_h_changed.connect(self._on_mat_h_changed)
         self.optics_panel.mat_l_changed.connect(self._on_mat_l_changed)
-        
+
         # Aliases for convenience during refactoring
         self.combo_mat_H = self.optics_panel.combo_mat_H
         self.combo_mat_L = self.optics_panel.combo_mat_L
@@ -75,27 +81,27 @@ class CertusFieldLayoutMixin:
         self.edit_lcalc = self.optics_panel.edit_lcalc
         self.edit_angle = self.optics_panel.edit_angle
         self.combo_pol = self.optics_panel.combo_pol
-        
+
         card_optics.body.addWidget(self.optics_panel)
         scroll_layout.addWidget(CertusCollapsible("1  Materials Config", card_optics, expanded=True))
 
         # -- Card: Structure
         self.card_stack = CertusCard("🥞 Stack Structure", "Layers & Thicknesses")
         self.stack_panel = StackPanelWidget()
-        
+
         self.stack_panel.table_item_changed.connect(self._on_table_item_changed)
         self.stack_panel.structure_changed.connect(self._update_thicknesses)
         self.stack_panel.import_requested.connect(self.on_import_design)
         self.stack_panel.pareto_requested.connect(self._show_pareto_window)
-        
+
         btn_load_layout = QHBoxLayout()
         self.btn_detach_stack = create_styled_button("⬡ Detach Stack", variant="secondary")
         self.btn_detach_stack.setToolTip("Open the stack editor in a floating panel")
         self.btn_detach_stack.clicked.connect(self.toggle_detach_stack)
         btn_load_layout.addWidget(self.btn_detach_stack)
-        
+
         self.table_layers = self.stack_panel.table_layers
-        
+
         self.card_stack.body.addWidget(self.stack_panel)
         self.card_stack.body.addLayout(btn_load_layout)
         scroll_layout.addWidget(CertusCollapsible("2  Stack", self.card_stack, expanded=True))
@@ -103,11 +109,11 @@ class CertusFieldLayoutMixin:
         # -- Card: Optimisation
         card_opt = CertusCard("⚡ Optimization", "Weights & Controls")
         self.opt_panel = OptimizationPanelWidget()
-        
+
         self.opt_panel.calc_requested.connect(self.on_calc_clicked)
         self.opt_panel.opt_requested.connect(self.on_opt_clicked)
         self.opt_panel.mc_requested.connect(self.on_mc_clicked)
-        
+
         self.edit_seuil1 = self.opt_panel.edit_seuil1
         self.edit_seuil2 = self.opt_panel.edit_seuil2
         self.edit_alpha = self.opt_panel.edit_alpha
@@ -121,7 +127,7 @@ class CertusFieldLayoutMixin:
         self.btn_calc = self.opt_panel.btn_calc
         self.btn_opt = self.opt_panel.btn_opt
         self.btn_mc = self.opt_panel.btn_mc
-        
+
         card_opt.body.addWidget(self.opt_panel)
         scroll_layout.addWidget(CertusCollapsible("3  Action", card_opt, expanded=True))
 
@@ -145,7 +151,7 @@ class CertusFieldLayoutMixin:
         self.btn_open_reports.setToolTip("Open the folder containing exported reports in File Explorer")
         self.btn_open_reports.clicked.connect(self.on_open_reports_clicked)
         rep_layout.addWidget(self.btn_open_reports)
-        
+
         card_reports.body.addWidget(rep_layout_w)
         scroll_layout.addWidget(card_reports)
 
@@ -277,6 +283,11 @@ class CertusFieldLayoutMixin:
         design_res_tb.addStretch(1)
         design_res_layout.addLayout(design_res_tb)
         self.table_design_res = ExcelTableWidget()
+        # Row order IS the stack: certus_field_plot_mixin fills it with
+        # "0 (Superstrate)", the layers in deposition order, then the substrate.
+        # A text sort reads 0, 1, 10 (Substrate), 2, 3 ... and puts the substrate
+        # between layer 1 and layer 2.
+        self.table_design_res.certus_lock_row_order()
         self.table_design_res.setEditTriggers(ExcelTableWidget.EditTrigger.NoEditTriggers)
         design_res_layout.addWidget(self.table_design_res, 1)
         self.tab_widget.addTab(design_res_container, "Design Result")

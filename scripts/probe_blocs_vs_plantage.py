@@ -107,9 +107,6 @@ from pathlib import Path
 # refuse desormais tout nouveau script non protege.
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-
-os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-
 ROOT = Path(__file__).resolve().parents[1]
 os.chdir(ROOT)
 sys.path.insert(0, str(ROOT))
@@ -787,4 +784,5 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     sys.exit(main())

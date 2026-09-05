@@ -126,6 +126,7 @@ from certus_physics import (
     get_nk_from_spline,
 )
 
+from certus.ui.certus_overview_tab import CertusKpiBanner, build_synthesis_tab
 from certus.ui.certus_ui import (
     CertusCard,
     CertusScientificPlot,
@@ -1202,6 +1203,23 @@ class CertusMetalSingleApp(MetalBaseApp):
             [], [], pen=pg.mkPen(CertusTheme.WARNING, width=2), name="Calc Rb"
         )
 
+        # Synthesis tab first: METAL exposed its figures only through the plot
+        # titles and the status bar. Shared cockpit widget, same as DESIGN/INDEX.
+        self.kpi_banner = CertusKpiBanner(
+            [
+                ("rmse", "FINAL RMSE"),
+                ("iterations", "ITERATIONS"),
+                ("status", "FIT STATUS"),
+            ]
+        )
+        self.tabs.addTab(
+            build_synthesis_tab(
+                self.kpi_banner,
+                "Optical-constants synthesis — refreshed when an optimization completes.",
+            ),
+            "✦ Synthesis",
+        )
+
         self.tabs.addTab(self.reflectance_plot, "Reflectance")
 
         setup_common_metal_plots(self)
@@ -1231,7 +1249,7 @@ class CertusMetalSingleApp(MetalBaseApp):
         ]
         for idx, card in enumerate(cards):
             perf_layout.addWidget(card, idx // 2, idx % 2)
-        self.tabs.addTab(self.perf_tab, "About")
+        # "About" marketing content moved out of scientific plot tabs (Option A)
 
     def _warmup_numba(self) -> None:
         """JIT precompilation via background thread"""
@@ -1264,11 +1282,17 @@ class CertusMetalSingleApp(MetalBaseApp):
             nSub = np.array([1.45 + 0j, 1.45 + 0j], dtype=np.complex128)
             calculate_RTRback_incoherent_vectorized(eM, nM_complex_2d, nSub, wls)
 
-            self.sig_numba_ready.emit()
+            try:
+                self.sig_numba_ready.emit()
+            except (RuntimeError, AttributeError):
+                return
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"✗ Numba warmup failed: {e}", exc_info=True)
-            self.sig_numba_error.emit()
+            try:
+                self.sig_numba_error.emit()
+            except (RuntimeError, AttributeError):
+                return
 
     @pyqtSlot()
     def _on_numba_ready_ui(self) -> None:
@@ -1834,6 +1858,17 @@ class CertusMetalSingleApp(MetalBaseApp):
                     },
                     final=True,
                 )
+
+        banner = getattr(self, "kpi_banner", None)
+        if banner is not None:
+            try:
+                _res = results.get("result")
+                _mse = float(getattr(_res, "fun", float("nan")))
+                banner.set_value("rmse", f"{np.sqrt(max(_mse, 0.0)):.6f}", "good")
+                banner.set_value("iterations", str(iteration_count))
+                banner.set_value("status", "Optimization complete", "good")
+            except (ValueError, TypeError, AttributeError, RuntimeError):
+                logging.getLogger("CERTUS").debug("KPI refresh skipped", exc_info=True)
 
         self.final_results = results
 

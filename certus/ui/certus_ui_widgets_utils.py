@@ -41,6 +41,7 @@ from PyQt6.QtWidgets import (
     QFileDialog,
     QFrame,
     QGraphicsDropShadowEffect,
+    QHeaderView,
     QGridLayout,
     QHBoxLayout,
     QLabel,
@@ -171,7 +172,13 @@ class CertusThemeToggle(QPushButton):
 
         mode = load_theme_config()
 
-        self.setText("" if mode == "light" else "")
+        # Both branches used to be the empty string, so this 32x32 round button
+        # rendered as an empty circle in all eleven windows. U+25D0/U+25D1 stay
+        # inside the BMP: an emoji outside it renders as a tofu box depending on
+        # the installed font.
+        self.setText("◐" if mode == "light" else "◑")
+
+        self.setToolTip("Switch to dark theme" if mode == "light" else "Switch to light theme")
 
         self.setStyleSheet(f"""
             QPushButton {{
@@ -342,7 +349,57 @@ class CertusLogPanel(QWidget):
         self._on_copy()
 
 class ExcelTableWidget(QTableWidget):
-    """Table with copy-paste"""
+    """Table with copy-paste, sortable columns and draggable column borders."""
+
+    #: Subclasses holding an ordered stack (where row order IS the physics) set
+    #: this to False so the operator cannot scramble the layer sequence.
+    CERTUS_ALLOW_SORTING = True
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        # Measured 2026-09-03: none of the suite's 32 main-window tables could be
+        # sorted, and most had no draggable column border either.
+        if self.CERTUS_ALLOW_SORTING:
+            self.setSortingEnabled(True)
+        header = self.horizontalHeader()
+        if header is not None:
+            header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+            header.setStretchLastSection(True)
+
+    def setRowCount(self, rows: int) -> None:
+        """Suspend sorting while the table is being refilled.
+
+        With sorting live, inserting rows one by one reorders them mid-flight and
+        the displayed table stops matching the model. Callers clear the table with
+        setRowCount(0) before repopulating, so that is where we disarm it.
+
+        Re-arming is automatic: population is synchronous, so a zero-delay timer
+        fires once the caller is done. No call site has to change.
+        """
+        if rows == 0 and self.isSortingEnabled():
+            self._certus_sorting_suspended = True
+            self.setSortingEnabled(False)
+            QTimer.singleShot(0, self.certus_finish_population)
+        super().setRowCount(rows)
+
+    def certus_finish_population(self) -> None:
+        """Re-enable sorting after a refill. Safe to call when it was never off."""
+        if getattr(self, "_certus_sorting_suspended", False):
+            self._certus_sorting_suspended = False
+            if self.CERTUS_ALLOW_SORTING:
+                try:
+                    self.setSortingEnabled(True)
+                except RuntimeError:  # table already destroyed
+                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+
+    def certus_lock_row_order(self) -> None:
+        """Forbid sorting on this instance: its row order carries meaning.
+
+        Call it on any table holding an optical STACK. Re-ordering layers there
+        would silently describe a different filter - the row order IS the physics.
+        """
+        self.CERTUS_ALLOW_SORTING = False
+        self.setSortingEnabled(False)
 
     def keyPressEvent(self, e) -> None:
 
@@ -479,6 +536,17 @@ class DetachedPlotWindow(QMainWindow):
 
         self.setMinimumSize(520, 380)
 
+        # Detached windows are reopened constantly during a session; remember
+        # where the operator put them instead of recentring every time. Keyed on
+        # the title so each chart keeps its own place.
+        self._qs_geometry_key = f"detached/{title}/geometry"
+        try:
+            saved = QSettings("CERTUS", "DetachedPlots").value(self._qs_geometry_key)
+            if saved is not None:
+                self.restoreGeometry(saved)
+        except (RuntimeError, TypeError):
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+
         self.plot_widget = plot_widget
 
         # Central widget container
@@ -516,6 +584,11 @@ class DetachedPlotWindow(QMainWindow):
         set_certus_window_icon(self)
 
     def closeEvent(self, e) -> None:
+
+        try:
+            QSettings("CERTUS", "DetachedPlots").setValue(self._qs_geometry_key, self.saveGeometry())
+        except (RuntimeError, TypeError, AttributeError):
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         self.closed_signal.emit()
 

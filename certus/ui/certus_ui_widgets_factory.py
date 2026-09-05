@@ -54,6 +54,8 @@ __all__ = [
     "open_documentation",
     "create_flashy_grid",
     "create_log_widget",
+    "SplitterCapper",
+    "attach_splitter_capper",
     # Pro UX Design System components
     # Threading
     # App Base
@@ -132,6 +134,7 @@ import pyqtgraph.exporters  # pylint: disable=unused-import
 
 
 from PyQt6.QtCore import (
+    QEvent,
     QObject,
     QSize,
     Qt,
@@ -344,6 +347,7 @@ def create_header_logo_widget(
         btn_help = QToolButton()
 
         btn_help.setText("Help")
+        btn_help.setToolTip(f"Open documentation for {module_name} (F1)")
 
         btn_help.setIcon(QApplication.style().standardIcon(QStyle.StandardPixmap.SP_MessageBoxQuestion))
 
@@ -547,6 +551,7 @@ def create_top_actions_bar(
         btn.clicked.connect(func)
 
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        btn.setMinimumWidth(60)
 
         btn.setStyleSheet(f"""
             QPushButton {{
@@ -602,3 +607,35 @@ def create_top_actions_bar(
     layout.addStretch()
 
     return container
+
+
+class SplitterCapper(QObject):
+    """Caps the left control panel of a horizontal QSplitter at a relative fraction of the window."""
+
+    def __init__(self, splitter: QSplitter, max_ratio: float = 0.34, parent: QObject | None = None) -> None:
+        super().__init__(parent or splitter)
+        self.splitter = splitter
+        self.max_ratio = max_ratio
+
+    def eventFilter(self, obj: QObject, event: Any) -> bool:
+        if obj is self.splitter and event.type() in (QEvent.Type.Paint, QEvent.Type.LayoutRequest):
+            win = self.splitter.window()
+            if getattr(win, "_layout_restored_from_settings", False):
+                return False
+            sizes = self.splitter.sizes()
+            total = sum(sizes)
+            if total > 0:
+                cap = int(total * self.max_ratio)
+                lp = self.splitter.widget(0)
+                floor = max(lp.minimumSizeHint().width(), 0) if lp is not None else 0
+                target = max(cap, floor)
+                if sizes and sizes[0] > target:
+                    self.splitter.setSizes([target, total - target])
+        return False
+
+
+def attach_splitter_capper(splitter: QSplitter, max_ratio: float = 0.34) -> SplitterCapper:
+    """Installs a SplitterCapper on the given splitter to enforce plot area >= 65% on compact displays."""
+    capper = SplitterCapper(splitter, max_ratio=max_ratio, parent=splitter)
+    splitter.installEventFilter(capper)
+    return capper

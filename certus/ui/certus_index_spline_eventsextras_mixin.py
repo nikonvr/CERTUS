@@ -30,11 +30,16 @@ class CertusIndexSplineEventsExtrasMixin:
         try:
             import time
             time.sleep(0.5)  # Minimal UI wait to display the toast and ensure base app is ready
-            self.sig_numba_ready.emit()
+            try:
+                self.sig_numba_ready.emit()
+            except (RuntimeError, AttributeError):
+                return
         except Exception as e:
-            from PyQt6.QtCore import QMetaObject, Qt
             self.logger.error(f" Numba warmup failed: {e}", exc_info=True)
-            self.sig_numba_error.emit()
+            try:
+                self.sig_numba_error.emit()
+            except (RuntimeError, AttributeError):
+                return
 
     @pyqtSlot()
     def _on_numba_ready_ui(self) -> None:
@@ -587,33 +592,40 @@ class CertusIndexSplineEventsExtrasMixin:
         self._stack_box4_adv.setCurrentIndex(0 if epure else 1)
 
     def _build_tab_spectrum(self) -> QWidget:
-        # Controls are moved to the context_stack on the right
-        ctx_w = QWidget()
-        ctx_lay = QVBoxLayout(ctx_w)
-        ctx_lay.setContentsMargins(0, 0, 0, 0)
-
-        row_axis = QHBoxLayout()
-        row_axis.addWidget(QLabel("X Axis:"))
-        self.cb_spectrum_xmode = QComboBox()
-        self.cb_spectrum_xmode.addItem("Lambda (nm)", "lambda")
-        self.cb_spectrum_xmode.addItem("Sigma (nm?1)", "sigma")
-        self.cb_spectrum_xmode.addItem("Sigma2 (nm?2)", "sigma2")
-        self.cb_spectrum_xmode.currentIndexChanged.connect(self._on_spectrum_x_mode_changed)
-        row_axis.addWidget(self.cb_spectrum_xmode)
-        row_axis.addStretch(1)
-        ctx_lay.addLayout(row_axis)
-        ctx_lay.addStretch(1)
-        self._add_context_page(ctx_w)
-
         panel = QWidget()
         lay = QVBoxLayout(panel)
         lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(2)
+
+        # Toolbar directly integrated above the spectrum plot
+        top_bar = QWidget()
+        top_bar.setStyleSheet(f"background: {CertusTheme.SURFACE}; border-bottom: 1px solid {CertusTheme.BORDER};")
+        tb_lay = QHBoxLayout(top_bar)
+        tb_lay.setContentsMargins(8, 2, 8, 2)
+
+        lbl = QLabel("Mode Axe X :")
+        lbl.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px; font-weight: bold;")
+        tb_lay.addWidget(lbl)
+
+        self.cb_spectrum_xmode = QComboBox()
+        self.cb_spectrum_xmode.setFixedHeight(24)
+        self.cb_spectrum_xmode.addItem("Longueur d'onde lambda (nm)", "lambda")
+        self.cb_spectrum_xmode.addItem("Nombre d'onde sigma = 1/lambda (nm-1)", "sigma")
+        self.cb_spectrum_xmode.addItem("Dispersion sigma2 (nm-2)", "sigma2")
+        self.cb_spectrum_xmode.currentIndexChanged.connect(self._on_spectrum_x_mode_changed)
+        tb_lay.addWidget(self.cb_spectrum_xmode)
+        tb_lay.addStretch(1)
+
+        lay.addWidget(top_bar)
 
         self.plot_T = CertusScientificPlot(title="Spectrum", y_label="T, R or T/T_sub", x_label="lambda (nm)")
         self.plot_T.showGrid(x=True, y=True, alpha=0.25)
         self.plot_T._certus_context_menu_augment_fn = self._spectrum_plot_context_menu_augment
         self.plot_T._certus_crosshair_label_fn = self._spectrum_T_crosshair_formatter
         lay.addWidget(wrap_scientific_plot_with_toolbar(self, self.plot_T), 1)
+
+        # Empty context page so sync logic collapses the bottom panel
+        self._add_context_page(self._create_empty_context_widget("Spectre T / R"))
 
         return panel
 

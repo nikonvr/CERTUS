@@ -82,6 +82,7 @@ from certus.ui.certus_plot import (
     ScientificPlotRefined,
 )
 
+
 class CertusSectionHeader(QWidget):
     """Lightweight section divider: bold title + optional muted caption."""
 
@@ -106,6 +107,7 @@ class CertusSectionHeader(QWidget):
         sep.setStyleSheet(f"color: {CertusTheme.BORDER};")
         lay.addWidget(sep)
 
+
 class CertusStepper(QWidget):
     """Compact vertical stepper. step_activated(int) emitted on click."""
 
@@ -127,12 +129,14 @@ class CertusStepper(QWidget):
                 row.setSpacing(6)
                 # Circle badge
                 badge = QPushButton(str(i + 1))
-                badge.setFixedSize(22, 22)
+                badge.setToolTip(f"Step {i + 1}: {label}")
+                badge.setFixedSize(24, 24)
                 badge.setEnabled(False)
                 badge.setObjectName(f"StepBadge_{i}")
                 badge.setStyleSheet(self._badge_style(i))
                 # Label
                 btn = QPushButton(label)
+                btn.setToolTip(f"Go to step {i + 1}: {label}")
                 btn.setFlat(True)
                 btn.setCursor(Qt.CursorShape.PointingHandCursor)
                 btn.setObjectName(f"StepBtn_{i}")
@@ -170,11 +174,13 @@ class CertusStepper(QWidget):
                 cell = QHBoxLayout()
                 cell.setSpacing(6)
                 badge = QPushButton(str(i + 1))
-                badge.setFixedSize(22, 22)
+                badge.setToolTip(f"Step {i + 1}: {label}")
+                badge.setFixedSize(24, 24)
                 badge.setEnabled(False)
                 badge.setObjectName(f"StepBadge_{i}")
                 badge.setStyleSheet(self._badge_style(i))
                 btn = QPushButton(label)
+                btn.setToolTip(f"Go to step {i + 1}: {label}")
                 btn.setFlat(True)
                 btn.setCursor(Qt.CursorShape.PointingHandCursor)
                 btn.setObjectName(f"StepBtn_{i}")
@@ -215,10 +221,12 @@ class CertusStepper(QWidget):
             color, weight = CertusTheme.TEXT_SUB, "500"
         else:
             color, weight = CertusTheme.TEXT_SUB, "400"
+        # 24 px is the click-target floor. At the previous 16 px these step
+        # labels were the smallest interactive elements of the whole suite.
         return (
             f"QPushButton {{ background: transparent; border: none; color: {color}; "
-            f"font-weight: {weight}; font-size: 11px; text-align: left; padding: 0; "
-            f"min-height: 16px; }}"
+            f"font-weight: {weight}; font-size: 11px; text-align: left; padding: 2px 0; "
+            f"min-height: 24px; }}"
         )
 
     def _on_click(self, idx: int) -> None:
@@ -233,6 +241,7 @@ class CertusStepper(QWidget):
             btn.setStyleSheet(self._btn_style(i))
             if i < len(self._badges):
                 self._badges[i].setStyleSheet(self._badge_style(i))
+
 
 class CertusCollapsible(QWidget):
     """Collapsible section: chevron header + body widget. Toggles on click."""
@@ -253,7 +262,7 @@ class CertusCollapsible(QWidget):
         self._hdr.clicked.connect(self._toggle)
         self._hdr.setStyleSheet(
             f"QPushButton {{ background: {CertusTheme.SURFACE_HOVER}; border: none; "
-            f"border-radius: 6px; padding: 6px 10px; font-weight: 600; font-size: 11px; "
+            f"border-radius: 6px; padding: 6px 10px; font-weight: 600; font-size: 11px; min-height: 24px; "
             f"color: {CertusTheme.TEXT_MAIN}; text-align: left; }}"
             f"QPushButton:hover {{ background: {CertusTheme.BORDER}; }}"
         )
@@ -274,7 +283,7 @@ class CertusCollapsible(QWidget):
                 fade_in(self._content, duration_ms=180)
             else:
                 fade_out(self._content, duration_ms=150, hide_on_finish=True)
-        except (ImportError, ModuleNotFoundError, AttributeError, RuntimeError):
+        except ImportError, ModuleNotFoundError, AttributeError, RuntimeError:
             # Animation module/function failed - fallback to direct visibility change
             self._content.setVisible(visible)
         self._update_label()
@@ -282,6 +291,8 @@ class CertusCollapsible(QWidget):
     def _update_label(self) -> None:
         arrow = "▾" if self._content.isVisible() else "▸"
         self._hdr.setText(f"{arrow}  {self._title}")
+        action = "Collapse" if self._content.isVisible() else "Expand"
+        self._hdr.setToolTip(f"{action} {self._title} section")
 
     def is_expanded(self) -> bool:
         return bool(self._content.isVisible())
@@ -294,6 +305,7 @@ class CertusCollapsible(QWidget):
             return
         self._hdr.setChecked(want)
         self._toggle()
+
 
 class CertusActionBar(QWidget):
     """Compact horizontal action bar: Run / Stop + optional toggles in a styled container."""
@@ -314,4 +326,3 @@ class CertusActionBar(QWidget):
 
     def add_stretch(self) -> None:
         self._layout.addStretch(1)
-

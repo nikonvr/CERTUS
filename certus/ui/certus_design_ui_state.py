@@ -481,5 +481,6 @@ class StateManager:
 
         from certus.utils.certus_reset_framework import reset_app_to_defaults
 
-        return reset_app_to_defaults(self)
+        return reset_app_to_defaults(self.ui)
+
 

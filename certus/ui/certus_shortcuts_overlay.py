@@ -58,7 +58,7 @@ class ShortcutEntry:
 def _q_shortcut_key(sc) -> str:
     try:
         return sc.key().toString()
-    except (AttributeError, RuntimeError, TypeError):
+    except AttributeError, RuntimeError, TypeError:
         return ""
 
 
@@ -73,7 +73,7 @@ _STANDARD_LABELS = {
     "Ctrl+K": "Open command palette",
     "Ctrl+Shift+P": "Open command palette",
     "Ctrl+Shift+C": "Copy to Excel (plots)",
-    "Ctrl+Shift+P ": "Copy plot (publication quality)",
+    "Ctrl+Shift+B": "Copy plot (publication quality)",
     "Ctrl+Shift+D": "Detach plot window",
     "Ctrl+W": "Close window",
     "Shift+?": "Show shortcuts",
@@ -121,7 +121,7 @@ def collect_window_shortcuts(window) -> list[ShortcutEntry]:
             try:
                 if not isinstance(child, QShortcut):
                     continue
-            except (RuntimeError, TypeError, ValueError):
+            except RuntimeError, TypeError, ValueError:
                 continue
             seq = _q_shortcut_key(child)
             if not seq:
@@ -139,7 +139,7 @@ def collect_window_shortcuts(window) -> list[ShortcutEntry]:
                     source="shortcut",
                 )
             )
-    except (ImportError, AttributeError, RuntimeError, TypeError, ValueError):
+    except ImportError, AttributeError, RuntimeError, TypeError, ValueError:
         # No Qt / no children / deleted wrappers: skip safely.
         pass
 
@@ -154,7 +154,7 @@ def _get_window_commands(window) -> list:
         # Build defaults if available without mutating the window.
         try:
             cmds = window._default_commands()  # type: ignore[attr-defined]
-        except (AttributeError, RuntimeError, TypeError):
+        except AttributeError, RuntimeError, TypeError:
             cmds = []
     return list(cmds or [])
 

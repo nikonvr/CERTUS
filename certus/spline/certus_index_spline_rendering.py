@@ -7,6 +7,7 @@ Contains _PlotMixin and _UIBuilderMixin.
 
 from __future__ import annotations
 import logging
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -36,7 +37,11 @@ from certus.ui.certus_ui import (
     plot_widget_plot_finite,
     EnhancedProgressWidget,
     CertusCollapsible,
-    CertusLogPanel
+    CertusLogPanel,
+    install_standard_shortcuts,
+    enable_file_drop,
+    show_toast,
+    open_documentation,
 )
 from certus.utils.certus_ux import OBJ
 from certus.utils.certus_reset_framework import create_reset_button
@@ -1133,7 +1138,7 @@ class _UIBuilderMixin:
         self.ctrl_tabs.setDocumentMode(True)
         self.ctrl_tabs.setToolTip("Steps 2-4 in order: substrate, targets, mesh.")
         self.ctrl_tabs.addTab(self._build_controls_basic_panel(), "Basic (2 → 4)")
-        self.params_collapsible = CertusCollapsible("2-4  Parameters", self.ctrl_tabs, expanded=False)
+        self.params_collapsible = CertusCollapsible("2-4  Parameters", self.ctrl_tabs, expanded=True)
         self.params_collapsible._hdr.setStyleSheet(
             f"QPushButton {{ background: {CertusTheme.SURFACE_HOVER}; border: none; "
             f"border-radius: 6px; padding: 4px 8px; font-weight: 600; font-size: 11px; "
@@ -1148,33 +1153,33 @@ class _UIBuilderMixin:
         action_card.body.setSpacing(4)
 
         self.btn_run = QPushButton("▶  Run Optimization")
-        self.btn_run.setObjectName(OBJ.PRIMARY_BUTTON)
+        self.btn_run.setObjectName(OBJ.FEATURED_BUTTON)
         self.btn_run.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_run.setMinimumHeight(26)
-        self.btn_run.setToolTip("Start global optimization (Smart Init).")
+        self.btn_run.setFixedHeight(38)
+        self.btn_run.setToolTip("Start global optimization (Smart Init). Raccourci : F5.")
         self.btn_run.clicked.connect(self._on_run)
 
         self.btn_stop = QPushButton("■  Stop")
         self.btn_stop.setObjectName(OBJ.DANGER_BUTTON)
         self.btn_stop.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_stop.setMinimumHeight(26)
-        self.btn_stop.setToolTip("Stop and keep best result found so far.")
+        self.btn_stop.setFixedHeight(38)
+        self.btn_stop.setToolTip("Stop and keep best result found so far. Raccourci : Échap.")
         self.btn_stop.setEnabled(False)
         self.btn_stop.clicked.connect(self._on_stop)
 
         run_row = QHBoxLayout()
-        run_row.setSpacing(4)
+        run_row.setSpacing(6)
         run_row.addWidget(self.btn_run, 2)
         run_row.addWidget(self.btn_stop, 1)
         action_card.body.addLayout(run_row)
 
         post_row = QHBoxLayout()
-        post_row.setSpacing(4)
+        post_row.setSpacing(6)
 
         self.btn_manual_knots_toggle = QPushButton("◆  Manual knots")
         self.btn_manual_knots_toggle.setObjectName(OBJ.PRIMARY_BUTTON)
         self.btn_manual_knots_toggle.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_manual_knots_toggle.setMinimumHeight(26)
+        self.btn_manual_knots_toggle.setFixedHeight(32)
         self.btn_manual_knots_toggle.setToolTip(
             "Priority action after optimization: automatic removal + manual knot insertion."
         )
@@ -1183,7 +1188,7 @@ class _UIBuilderMixin:
         self.btn_corridor_toggle = QPushButton("◈  Corridors / RMSE(d)")
         self.btn_corridor_toggle.setObjectName(OBJ.PRIMARY_BUTTON)
         self.btn_corridor_toggle.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_corridor_toggle.setMinimumHeight(26)
+        self.btn_corridor_toggle.setFixedHeight(32)
         self.btn_corridor_toggle.setToolTip(
             "Priority action: launches corridors and RMSE(d) workflow from the latest optimized result."
         )
@@ -1281,9 +1286,9 @@ class _UIBuilderMixin:
             self.main_split.setCollapsible(0, True)
         if nc >= 2:
             self.main_split.setCollapsible(1, True)
-        self.main_split.setStretchFactor(0, 3)
-        self.main_split.setStretchFactor(1, 2)
-        self.main_split.setSizes([960, 640])
+        self.main_split.setStretchFactor(0, 1)
+        self.main_split.setStretchFactor(1, 3)
+        self.main_split.setSizes([380, 1000])
         self._enforce_main_splitter_ratio_bounds(persist=False)
         self.main_split.splitterMoved.connect(self._on_main_splitter_moved)
         self.info_split.splitterMoved.connect(self._persist_splitter_states)
@@ -1293,6 +1298,20 @@ class _UIBuilderMixin:
         self._sync_context_panel_to_current_tab()
         self._refresh_corridors_gui_state_labels()
         self._refresh_post_optimization_option_controls()
+
+        install_standard_shortcuts(
+            self,
+            run=self._on_run,
+            stop=self._on_stop,
+            help=lambda: open_documentation("CERTUS_INDEX_SPLINE"),
+        )
+
+        def _on_spline_file_dropped(paths) -> None:
+            if paths and hasattr(self, "_on_load"):
+                self._on_load(paths[0])
+                show_toast(self, f"Fichier chargé : {Path(paths[0]).name}", "success")
+
+        enable_file_drop(self, _on_spline_file_dropped, extensions=("csv", "xlsx", "xls", "txt", "dat"))
 
     def _on_stepper_activated(self, step_index: int) -> None:
         idx = int(max(0, min(step_index, 6)))
@@ -1391,7 +1410,8 @@ class _UIBuilderMixin:
         g3.addWidget(self.chk_t, r3, 0, 1, 2)
 
         r3 += 1
-        self.chk_trel = QCheckBox("T = T_film / T_substrate (ratio, e.g. % -> fraction)")
+        self.chk_trel = QCheckBox("T ratio (film / substrate)")
+        self.chk_trel.setToolTip("Input T is the film/substrate ratio, e.g. % converted to a fraction.")
         self.chk_trel.setChecked(True)
         self.chk_trel.setToolTip(
             "Checked (usual case): T column is T_film / bare-substrate T ratio (backside included), same for R. "
@@ -1403,7 +1423,8 @@ class _UIBuilderMixin:
         g3.addWidget(self.chk_trel, r3, 0, 1, 2)
 
         r3 += 1
-        self.chk_r = QCheckBox("Fit reflection R (if R column exists)")
+        self.chk_r = QCheckBox("Fit reflection R")
+        self.chk_r.setToolTip("Include reflectance in the fit when the data carries an R column.")
         self.chk_r.setToolTip("Requires an R column; combines T and R if both are enabled and wR > 0.")
         g3.addWidget(self.chk_r, r3, 0, 1, 2)
 
@@ -1485,7 +1506,7 @@ class _UIBuilderMixin:
         row_manual.addWidget(self.btn_corridor_manual_robust)
 
         self.btn_generate_manual_corridor = create_styled_button(
-            "Generate corridor from selected interval", "primary", parent=self
+            "Corridor from interval", "primary", parent=self
         )
         self.btn_generate_manual_corridor.setEnabled(False)
         self.btn_generate_manual_corridor.setToolTip(
@@ -1701,12 +1722,82 @@ class _UIBuilderMixin:
         g2.setColumnStretch(1, 1)
         parent_layout.addWidget(box2)
 
+    def _build_tab_overview(self) -> QWidget:
+        """Overview Synthesis Cockpit (inspired by CompleteEASE / OptiChar):
+        Side-by-side photometric fit + dielectric constants + real-time KPI banner.
+        """
+        panel = QWidget()
+        lay = QVBoxLayout(panel)
+        lay.setContentsMargins(6, 6, 6, 6)
+        lay.setSpacing(6)
+
+        # 1. Main Horizontal Splitter (50% Spectrophotometry | 50% Optical Constants)
+        spl = QSplitter(Qt.Orientation.Horizontal)
+        spl.setChildrenCollapsible(False)
+        spl.setHandleWidth(8)
+
+        # Left: Spectrum Fit
+        self.plot_ov_T = CertusScientificPlot(
+            title="Spectre Photométrique (Mesure vs Modèle)",
+            y_label="T / R (%)",
+            x_label="Longueur d'onde lambda (nm)",
+        )
+        self.plot_ov_T.showGrid(x=True, y=True, alpha=0.25)
+        spl.addWidget(wrap_scientific_plot_with_toolbar(self, self.plot_ov_T))
+
+        # Right: Extracted n & k
+        self.plot_ov_nk = CertusScientificPlot(
+            title="Constantes Optiques Extraites n(lambda)",
+            y_label="Indice de Réfraction (n)",
+            x_label="Longueur d'onde lambda (nm)",
+        )
+        self.plot_ov_nk.showGrid(x=True, y=True, alpha=0.25)
+        spl.addWidget(wrap_scientific_plot_with_toolbar(self, self.plot_ov_nk))
+
+        spl.setSizes([600, 600])
+        lay.addWidget(spl, 1)
+
+        # 2. Key Performance Indicators (KPI) Summary Banner (CompleteEASE style)
+        kpi_bar = QWidget()
+        kpi_bar.setFixedHeight(54)
+        kpi_bar.setStyleSheet(
+            f"background: {CertusTheme.SURFACE}; border: 1px solid {CertusTheme.BORDER}; border-radius: 8px;"
+        )
+        kpi_lay = QHBoxLayout(kpi_bar)
+        kpi_lay.setContentsMargins(16, 4, 16, 4)
+        kpi_lay.setSpacing(20)
+
+        def _make_kpi(label_text: str, default_val: str, color_hex: str):
+            box = QVBoxLayout()
+            box.setSpacing(1)
+            lbl_title = QLabel(label_text)
+            lbl_title.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 10px; font-weight: bold;")
+            lbl_val = QLabel(default_val)
+            lbl_val.setStyleSheet(f"color: {color_hex}; font-size: 13px; font-weight: 700;")
+            box.addWidget(lbl_title)
+            box.addWidget(lbl_val)
+            kpi_lay.addLayout(box)
+            return lbl_val
+
+        self.kpi_rmse = _make_kpi("RMSE GLOBALE", "—", CertusTheme.CHART_PRIMARY)
+        self.kpi_d = _make_kpi("ÉPAISSEUR d", "—", CertusTheme.PRIMARY)
+        self.kpi_n550 = _make_kpi("INDICE n (550 nm)", "—", "#0057ff")
+        self.kpi_k550 = _make_kpi("EXTINCTION k (550 nm)", "—", CertusTheme.CHART_DANGER)
+        self.kpi_status = _make_kpi("STATUT AJUSTEMENT", "Prêt pour calcul", CertusTheme.SUCCESS)
+        kpi_lay.addStretch(1)
+
+        lay.addWidget(kpi_bar)
+
+        self._add_context_page(self._create_empty_context_widget("Vue de Synthèse Complète"))
+        return panel
+
     def _build_plot_tabs_panel(self) -> QWidget:
         """Right panel (Swanepoel type): detach bar + graphical tabs."""
         self.tabs_main = QTabWidget()
         self._tab_context_widgets: dict[QWidget, QWidget] = {}
         self._pending_context_page: QWidget | None = None
 
+        self._idx_tab_overview = self._add_plot_tab(self._build_tab_overview(), "✦ Synthèse (Overview)")
         self._add_plot_tab(self._build_tab_spectrum(), "Spectrum T / R")
         self._idx_tab_indices = self._add_plot_tab(self._build_tab_indices(), "n & k")
         self._tab_corridor_panel = self._build_tab_corridor()
@@ -1716,14 +1807,6 @@ class _UIBuilderMixin:
         self._add_plot_tab(self._build_tab_data(), "Data")
         self._add_plot_tab(self._build_tab_data_th(), "Data TH")
         self._add_plot_tab(self._build_tab_data_corridor(), "Data Corridor")
-
-        self._add_plot_tab(
-            self._build_tab_log(),
-            "Log",
-            context_widget=self._add_context_page(
-                self._create_empty_context_widget("Optimization log and real-time computation diagnostics.")
-            ),
-        )
 
         self._add_plot_tab(
             self._build_tab_why(),
@@ -1784,6 +1867,15 @@ class _UIBuilderMixin:
         ctx = getattr(self, "_tab_context_widgets", {}).get(current_tab)
         if isinstance(ctx, QWidget):
             self.context_stack.setCurrentWidget(ctx)
+            if hasattr(self, "info_split"):
+                has_active_controls = any(
+                    isinstance(c, (QCheckBox, QSpinBox, QDoubleSpinBox, QComboBox, QSlider, QPushButton))
+                    for c in ctx.findChildren(QWidget)
+                )
+                if has_active_controls:
+                    self.info_split.setSizes([720, 180])
+                else:
+                    self.info_split.setSizes([900, 0])
 
     def _build_corridor_labels(self, ctx_lay: "QVBoxLayout") -> None:
         hint = QLabel(
@@ -1793,6 +1885,7 @@ class _UIBuilderMixin:
             "<span style='color:#7a3cff;'>&#9646;</span> = local robust interval | "
             "<span style='color:#ff4d4f;'>&#9646;</span> = manual selection."
         )
+        hint.setWordWrap(True)
         hint.setStyleSheet(CertusTheme.get_hint_text_style())
         ctx_lay.addWidget(hint)
 

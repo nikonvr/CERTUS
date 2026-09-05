@@ -45,6 +45,14 @@ class CertusTheme:
     TEXT_DISABLED = "#94a3b8"
 
     PRIMARY = "#0f62fe"
+    PRIMARY_TEXT = "#ffffff"
+    PRIMARY_HOVER = "#0353e9"
+    #: Label ON the solid DANGER fill. NOT DANGER_TEXT, which is the text of a
+    #: light DANGER_BG badge (#b91c1c on #fee2e2) and would be illegible here.
+    #: Measured 2026-09-04: white on the dark-mode DANGER #f87171 is 2.77:1,
+    #: below AA 4.5:1; #0f172a reaches 6.45:1.
+    DANGER_LABEL = "#ffffff"
+    DANGER_HOVER = "#b02a37"
 
     SECONDARY = "#334155"
 
@@ -108,7 +116,7 @@ class CertusTheme:
 
                 background-color: {CertusTheme.PRIMARY};
 
-                color: #ffffff;
+                color: {CertusTheme.PRIMARY_TEXT};
 
                 border: none;
 
@@ -124,7 +132,7 @@ class CertusTheme:
 
             }}
 
-            QPushButton:hover {{ background-color: #0353e9; }}
+            QPushButton:hover {{ background-color: {CertusTheme.PRIMARY_HOVER}; }}
 
             QPushButton:pressed {{
 
@@ -154,7 +162,7 @@ class CertusTheme:
 
                 background-color: {CertusTheme.DANGER};
 
-                color: #ffffff;
+                color: {CertusTheme.DANGER_LABEL};
 
                 border: none;
 
@@ -170,7 +178,7 @@ class CertusTheme:
 
             }}
 
-            QPushButton:hover {{ background-color: #b02a37; }}
+            QPushButton:hover {{ background-color: {CertusTheme.DANGER_HOVER}; }}
 
             QPushButton:pressed {{
 
@@ -349,10 +357,14 @@ class CertusTheme:
             cls.TEXT_SUB = "#94a3b8"
             cls.TEXT_DISABLED = "#4a5568"
             cls.PRIMARY = "#60a5fa"
+            cls.PRIMARY_TEXT = "#0f172a"
+            cls.PRIMARY_HOVER = "#93c5fd"
             cls.SECONDARY = "#94a3b8"
             cls.SUCCESS = "#34d399"
             cls.WARNING = "#fbbf24"
             cls.DANGER = "#f87171"
+            cls.DANGER_LABEL = "#0f172a"
+            cls.DANGER_HOVER = "#fca5a5"
             cls.INFO = "#60a5fa"
         else:
             cls.DARK_MODE = False
@@ -364,10 +376,14 @@ class CertusTheme:
             cls.TEXT_SUB = "#475569"
             cls.TEXT_DISABLED = "#94a3b8"
             cls.PRIMARY = "#0f62fe"
+            cls.PRIMARY_TEXT = "#ffffff"
+            cls.PRIMARY_HOVER = "#0353e9"
             cls.SECONDARY = "#334155"
             cls.SUCCESS = "#15803d"
             cls.WARNING = "#b45309"
             cls.DANGER = "#dc2626"
+            cls.DANGER_LABEL = "#ffffff"
+            cls.DANGER_HOVER = "#b02a37"
             cls.INFO = "#0369a1"
 
         # Synchronize backward compatibility aliases and derivatives
@@ -556,7 +572,7 @@ class CertusTheme:
     def get_button_style(cls, variant: str = "primary") -> str:
 
         colors = {
-            "primary": (cls.PRIMARY, "#ffffff"),
+            "primary": (cls.PRIMARY, cls.PRIMARY_TEXT),
             "secondary": (cls.SECONDARY, "#ffffff"),
             "info": (cls.INFO, "#000000"),
             "success": (cls.SUCCESS, "#ffffff"),

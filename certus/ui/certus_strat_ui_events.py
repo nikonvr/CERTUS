@@ -1,6 +1,7 @@
 from __future__ import annotations
 from certus.ui.certus_strat_common import *
 
+
 class CertusStratEventsMixin:
     def _init_global_shortcuts(self) -> None:
         """Global UX Hotkeys (Pro 2026 Theme)."""
@@ -17,10 +18,11 @@ class CertusStratEventsMixin:
 
         run_opti_alt.activated.connect(lambda: self.run_workflow(2) if self.run_step2_btn.isEnabled() else None)
 
-        QShortcut(QKeySequence("Esc"), self).activated.connect(self.close_all_auxiliary_windows)
+        QShortcut(QKeySequence("Ctrl+W"), self).activated.connect(self.close_all_auxiliary_windows)
 
         install_standard_shortcuts(
             self,
+            stop=self.request_stop_optimization,
             help=lambda: open_documentation("CERTUS_STRAT"),
             toggle_logs=lambda: self.toggle_details_btn.setChecked(not self.toggle_details_btn.isChecked()),
             zoom_in=getattr(self, "zoom_in_ui", None),
@@ -81,7 +83,7 @@ class CertusStratEventsMixin:
                 try:
                     win.close()
 
-                except (RuntimeError, AttributeError):
+                except RuntimeError, AttributeError:
                     # Window may already be closed or destroyed
 
                     pass
@@ -100,7 +102,7 @@ class CertusStratEventsMixin:
             if win:
                 try:
                     win.close()
-                except (RuntimeError, AttributeError):
+                except RuntimeError, AttributeError:
                     pass
 
     def copy_logs_to_clipboard(self) -> None:
@@ -243,6 +245,11 @@ class CertusStratEventsMixin:
     def closeEvent(self, event) -> None:
 
         try:
+            # This override never chains to CertusBaseApp.closeEvent, so the
+            # persistence call has to be explicit: without it STRAT saved
+            # nothing at all and reopened on the default layout every time.
+            self._qs_save()
+
             # Stop all running computation/render threads in parallel to avoid sequential timeouts on exit
             self._stop_all_threads_parallel(timeout_ms=10000)
 
@@ -259,9 +266,8 @@ class CertusStratEventsMixin:
 
             self.logger.info("Application closed.")
 
-        except (RuntimeError, AttributeError):
+        except RuntimeError, AttributeError:
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         finally:
             event.accept()
-

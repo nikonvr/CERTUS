@@ -26,10 +26,15 @@ def _make_mock_app(
     has_cleanup_worker=False,
     has_widgets=False,
     has_stack_table=False,
+    as_widget=False,
 ):
     """Creates a fake app for manager tests."""
-    class FakeCertusApp:
-        pass
+    if as_widget and QT_AVAILABLE:
+        class FakeCertusApp(QWidget):
+            pass
+    else:
+        class FakeCertusApp:
+            pass
     app = FakeCertusApp()
     app.log_text = Mock()
     app.log_text.clear = Mock()
@@ -158,27 +163,27 @@ class TestCreateResetButton:
     """Tests for create_reset_button."""
 
     def test_create_reset_button_returns_button(self, qapp):
-        app = _make_mock_app()
+        app = _make_mock_app(as_widget=True)
         btn = create_reset_button(app)
         assert btn is not None
         assert btn.text() == "🔄  Clear / Reset"
         assert "Reset" in btn.toolTip() or "reset" in btn.toolTip().lower()
 
     def test_create_reset_button_without_use_app_reset_uses_manager(self, qapp):
-        app = _make_mock_app()
+        app = _make_mock_app(as_widget=True)
         btn = create_reset_button(app, use_app_reset=False)
         assert btn is not None
         assert "Clear" in btn.text() or "Reset" in btn.text()
 
     def test_create_reset_button_with_use_app_reset_connects_to_app_reset_to_defaults(self, qapp):
-        app = _make_mock_app()
+        app = _make_mock_app(as_widget=True)
         app.reset_to_defaults = Mock()
         btn = create_reset_button(app, use_app_reset=True)
         btn.clicked.emit()
         app.reset_to_defaults.assert_called_once()
 
     def test_create_reset_button_use_app_reset_false_when_app_has_no_reset_to_defaults(self, qapp):
-        class AppWithoutReset:
+        class AppWithoutReset(QWidget):
             pass
         app = AppWithoutReset()
         assert not hasattr(app, "reset_to_defaults")

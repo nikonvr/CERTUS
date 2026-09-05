@@ -25,37 +25,102 @@ from typing import Any, List, Dict
 import numpy as np
 import pyqtgraph as pg
 
-from certus.core.certus_core import certus_timestamp_display, setup_logging, CFG, create_module_environment, NUMERICAL_FAULT_EXCEPTIONS, get_resource_path, certus_timestamp_file
+from certus.core.certus_core import (
+    certus_timestamp_display,
+    setup_logging,
+    CFG,
+    create_module_environment,
+    NUMERICAL_FAULT_EXCEPTIONS,
+    get_resource_path,
+    certus_timestamp_file,
+)
+from certus.ui.certus_overview_tab import CertusKpiBanner, build_synthesis_tab
 
 from certus.ui.certus_qt_widgets import (
-    QAbstractItemView, QAbstractSpinBox, QApplication, QButtonGroup, QCheckBox,
-    QColor, QComboBox, QDialog, QDoubleSpinBox, QFileDialog, QFont, QFrame,
-    QGridLayout, QHBoxLayout, QHeaderView, QKeySequence, QLabel, QMessageBox,
-    QPushButton, QRadioButton, QScrollArea, QShortcut, QSplitter, QStackedWidget,
-    QStatusBar, QTableWidgetItem, QTabWidget, QTextEdit, QTimer, Qt, QVBoxLayout,
+    QAbstractItemView,
+    QAbstractSpinBox,
+    QApplication,
+    QButtonGroup,
+    QCheckBox,
+    QColor,
+    QComboBox,
+    QDialog,
+    QDoubleSpinBox,
+    QFileDialog,
+    QFont,
+    QFrame,
+    QGridLayout,
+    QHBoxLayout,
+    QHeaderView,
+    QKeySequence,
+    QLabel,
+    QMessageBox,
+    QPushButton,
+    QRadioButton,
+    QScrollArea,
+    QShortcut,
+    QSplitter,
+    QStackedWidget,
+    QStatusBar,
+    QTableWidgetItem,
+    QTabWidget,
+    QTextEdit,
+    QTimer,
+    Qt,
+    QVBoxLayout,
     QWidget,
 )
 
-from certus_physics import Layer, ObliqueTarget, init_thickness, calc_spectrum_front_wrapper, calc_spectrum_full_exact_wrapper
+from certus_physics import (
+    Layer,
+    ObliqueTarget,
+    init_thickness,
+    calc_spectrum_front_wrapper,
+    calc_spectrum_full_exact_wrapper,
+)
 
 from certus.workers.certus_spectral_workers import EvalWorker, WarmupWorker
 
 from certus.ui.certus_spectrum_eval_ui import (
-    spectrum_eval_apply_axes_legend_scale, spectrum_eval_build_worker_cfg,
-    spectrum_eval_on_finished_prepare_display, spectrum_eval_plot_curves,
-    spectrum_eval_run_preamble, spectrum_eval_start_worker,
+    spectrum_eval_apply_axes_legend_scale,
+    spectrum_eval_build_worker_cfg,
+    spectrum_eval_on_finished_prepare_display,
+    spectrum_eval_plot_curves,
+    spectrum_eval_run_preamble,
+    spectrum_eval_start_worker,
 )
 
 from certus.ui.certus_ui import (
-    attach_excel_clipboard_context_menu, CertusBaseApp, CertusCard, CertusCollapsible,
-    CertusScientificPlot, CertusStatusPill, CertusTheme, CertusThemeToggle,
-    enable_file_drop, EnhancedProgressWidget, ExcelTableWidget, FlashyCard,
-    get_certus_last_dir, install_standard_shortcuts, safe_ui_action,
-    set_certus_last_dir, show_toast, WelcomeGuideWidget, create_flashy_grid,
-    create_header_logo_widget, create_styled_button, create_styled_label,
-    create_top_actions_bar, init_certus_app, set_certus_window_icon,
-    install_skeleton_loader, remove_skeleton_loader, wrap_scientific_plot_with_toolbar,
-    open_documentation, confirm_stop_with_timeout,
+    attach_excel_clipboard_context_menu,
+    CertusBaseApp,
+    CertusCard,
+    CertusCollapsible,
+    CertusScientificPlot,
+    CertusStatusPill,
+    CertusTheme,
+    CertusThemeToggle,
+    enable_file_drop,
+    EnhancedProgressWidget,
+    ExcelTableWidget,
+    FlashyCard,
+    get_certus_last_dir,
+    install_standard_shortcuts,
+    safe_ui_action,
+    set_certus_last_dir,
+    show_toast,
+    WelcomeGuideWidget,
+    create_flashy_grid,
+    create_header_logo_widget,
+    create_styled_button,
+    create_styled_label,
+    create_top_actions_bar,
+    init_certus_app,
+    set_certus_window_icon,
+    install_skeleton_loader,
+    remove_skeleton_loader,
+    wrap_scientific_plot_with_toolbar,
+    open_documentation,
+    confirm_stop_with_timeout,
 )
 
 from certus.utils.certus_ux import build_premium_overrides, OBJ
@@ -104,6 +169,7 @@ from certus.utils.certus_re_helpers import (
     TabularMaterial,
     ParsedREColumn,
 )
+
 calc_spectrum_front = calc_spectrum_front_wrapper
 calc_spectrum_full_exact = calc_spectrum_full_exact_wrapper
 
@@ -114,7 +180,7 @@ class CertusRELayoutMixin:
     def _get_default_splitter_sizes(self) -> list[int]:
         """RE specific splitter sizes."""
 
-        return [380, 1060]
+        return [500, 1400]
 
     def _build_left_panel(self) -> QWidget:
         """Left panel: RE workflow, options, Excel data, display, actions."""
@@ -376,7 +442,10 @@ class CertusRELayoutMixin:
 
         lay.addLayout(row)
 
-        self.re_qwot_penalty_chk = QCheckBox("Enable QWOT penalty in objective (RMSE)")
+        # Short label, full explanation in the tooltip: at 533 px this single
+        # caption used to dictate the whole control panel's width.
+        self.re_qwot_penalty_chk = QCheckBox("QWOT penalty")
+        self.re_qwot_penalty_chk.setToolTip("Add a QWOT penalty term to the RMSE objective.")
 
         self.re_qwot_penalty_chk.setChecked(bool(self.cfg.get("re_enable_qwot_penalty", True)))
 
@@ -448,46 +517,31 @@ class CertusRELayoutMixin:
 
         lay.addWidget(self._re_readout_backside_lbl)
 
+        fit_label = QLabel("RE fit lambda window:")
+        lay.addWidget(fit_label)
+
         fit_row = QHBoxLayout()
-
         fit_row.setContentsMargins(0, 0, 0, 0)
-
-        fit_row.setSpacing(12)
-
-        fit_row.addWidget(QLabel("RE fit lambda window:"))
+        fit_row.setSpacing(8)
 
         self.re_fit_lambda_min_spin = QDoubleSpinBox()
-
         self.re_fit_lambda_min_spin.setRange(200.0, 20000.0)
-
         self.re_fit_lambda_min_spin.setDecimals(1)
-
         self.re_fit_lambda_min_spin.setSingleStep(10.0)
-
         self.re_fit_lambda_min_spin.setSuffix(" nm")
-
         self.re_fit_lambda_min_spin.setToolTip("Ignore all RE measurement points with lambda below this minimum.")
-
         self.re_fit_lambda_min_spin.valueChanged.connect(self._on_re_fit_window_changed)
-
         fit_row.addWidget(self.re_fit_lambda_min_spin)
 
         fit_row.addWidget(QLabel("->"))
 
         self.re_fit_lambda_max_spin = QDoubleSpinBox()
-
         self.re_fit_lambda_max_spin.setRange(200.0, 20000.0)
-
         self.re_fit_lambda_max_spin.setDecimals(1)
-
         self.re_fit_lambda_max_spin.setSingleStep(10.0)
-
         self.re_fit_lambda_max_spin.setSuffix(" nm")
-
         self.re_fit_lambda_max_spin.setToolTip("Ignore all RE measurement points with lambda above this maximum.")
-
         self.re_fit_lambda_max_spin.valueChanged.connect(self._on_re_fit_window_changed)
-
         fit_row.addWidget(self.re_fit_lambda_max_spin)
 
         fit_row.addStretch()
@@ -551,9 +605,7 @@ class CertusRELayoutMixin:
 
         self.back_check.setText("Substrate back face (Fresnel)")
 
-        self.back_check.setToolTip(
-            "Back side substrate after RE loading, fixed by <b>measurement</b> headers."
-        )
+        self.back_check.setToolTip("Back side substrate after RE loading, fixed by <b>measurement</b> headers.")
 
         self.back_check.stateChanged.connect(self._on_schedule_eval_instant_signal)
 
@@ -740,6 +792,23 @@ class CertusRELayoutMixin:
 
         plot_container_layout.addWidget(self.plot_tabs)
 
+        # Synthesis tab first (matching DESIGN / INDEX / METAL style)
+        self.kpi_banner = CertusKpiBanner(
+            [
+                ("rmse", "RMSE"),
+                ("layers", "LAYERS"),
+                ("thickness", "TOTAL THICKNESS"),
+                ("status", "STATUS"),
+            ]
+        )
+        self.plot_tabs.addTab(
+            build_synthesis_tab(
+                self.kpi_banner,
+                "Reverse engineering synthesis — figures refresh after each evaluation.",
+            ),
+            "✦ Synthesis",
+        )
+
         self.plot_tabs.addTab(self.spectrum_plot, "Spectrum (T)")
 
         self.plot_tabs.addTab(self.profile_plot, "Index profile")
@@ -771,8 +840,7 @@ class CertusRELayoutMixin:
         )
 
         self.perf_tab = create_flashy_grid([c1, c2, c3, c4])
-
-        self.plot_tabs.addTab(self.perf_tab, "Why CERTUS-RE?")
+        # "Why CERTUS-RE?" marketing content moved out of scientific plot tabs (Option A)
 
         v_lay.addWidget(plot_container)
 
@@ -783,6 +851,7 @@ class CertusRELayoutMixin:
         # Table Area
 
         bottom_splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.bottom_splitter = bottom_splitter
 
         bottom_splitter.addWidget(self._build_front_table_widget())
 
@@ -849,7 +918,10 @@ class CertusRELayoutMixin:
         f_lay.addLayout(f_head)
 
         self.front_table = ExcelTableWidget()
-
+        # Row order IS the layer order here: certus_re_table_mixin writes the
+        # fitted thicknesses back by row index. Sorting would silently describe
+        # a different stack than the one on screen.
+        self.front_table.certus_lock_row_order()
         self.front_table.setColumnCount(5)
 
         self.front_table.setRowCount(0)
@@ -902,6 +974,10 @@ class CertusRELayoutMixin:
         # Table with adaptive columns by mode
 
         self.target_table = ExcelTableWidget()
+        # Every cell here is a widget (certus_re_table_mixin.py:474-578: checkbox,
+        # combos, spinboxes). Qt does not move cell widgets when sorting, so a
+        # sort would pair one target's widgets with another target's data.
+        self.target_table.certus_lock_row_order()
 
         self.target_table.setColumnCount(6)
 
@@ -1762,6 +1838,6 @@ class CertusRELayoutMixin:
             re_rmse_phase1=re_rmse_phase1,
             re_rmse_final=re_rmse_final,
             initial_stack=initial_stack,
-            announce_in_log=announce_in_log
+            announce_in_log=announce_in_log,
         )
         dlg.exec()

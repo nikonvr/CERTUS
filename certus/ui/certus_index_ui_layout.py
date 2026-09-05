@@ -24,6 +24,8 @@ from certus.core.certus_core import (
 )
 from certus.utils.certus_data import generate_html_report
 from certus.ui.certus_ui import install_standard_shortcuts
+from certus.ui.certus_ui_widgets_factory import attach_splitter_capper
+from certus.ui.certus_overview_tab import PLACEHOLDER, CertusKpiBanner, build_synthesis_tab
 from certus.utils.certus_index_utils import DataType, analyze_loaded_data, normalize_index_config
 from certus_physics import (
     epsilon2_TLU_array,
@@ -128,6 +130,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+
 class ResultRecapWidget(QWidget):
     """UX-1: Modern Dashboard for optimization results."""
 
@@ -175,6 +178,7 @@ class ResultRecapWidget(QWidget):
         self.card_inf.update_value(f"{eps_inf:.2f}", inf_status, "Dielectric background")
 
         self.setVisible(True)
+
 
 class CertusIndexLayoutMixin:
     def _apply_theme(self) -> None:
@@ -241,6 +245,7 @@ class CertusIndexLayoutMixin:
         # Main Splitter instead of HBoxLayout
 
         self.main_splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.main_split = self.main_splitter
 
         self.setCentralWidget(self.main_splitter)
 
@@ -322,6 +327,7 @@ class CertusIndexLayoutMixin:
         # Tabs
         self.tabs = QTabWidget()
         self.right_splitter = QSplitter(Qt.Orientation.Vertical)
+        self.bottom_split = self.right_splitter
 
         # Buttons (Run/Stop/Beam)
         self._add_main_control_buttons(left_layout)
@@ -332,6 +338,25 @@ class CertusIndexLayoutMixin:
 
         self.plot_spectrum = CertusScientificPlot(
             self, "Transmission / Reflection Spectrum", "T/R (%)", "Wavelength (nm)"
+        )
+
+        # Synthesis tab first: the extracted figures used to live only in the
+        # status bar and the recap widget. Same cockpit idea as INDEX-SPLINE.
+        self.kpi_banner = CertusKpiBanner(
+            [
+                ("rmse", "FINAL RMSE"),
+                ("thickness", "THICKNESS d"),
+                ("eg", "GAP Eg"),
+                ("eps", "EPS_INF"),
+                ("status", "FIT STATUS"),
+            ]
+        )
+        self.tabs.addTab(
+            build_synthesis_tab(
+                self.kpi_banner,
+                "Dielectric extraction synthesis — refreshed when a fit completes.",
+            ),
+            "✦ Synthesis",
         )
 
         self.tabs.addTab(wrap_scientific_plot_with_toolbar(self, self.plot_spectrum), "Spectrum")
@@ -472,8 +497,7 @@ class CertusIndexLayoutMixin:
         perf_layout.addWidget(c3, 1, 0)
 
         perf_layout.addWidget(c4, 1, 1)
-
-        self.tabs.addTab(self.perf_tab, "Why CERTUS?")
+        # "Why CERTUS?" marketing content moved out of scientific plot tabs (Option A)
 
         # Spectrum Tab (0): visible by default to see T/R and n,k after optimization.
         self.tabs.setCurrentIndex(0)
@@ -488,7 +512,11 @@ class CertusIndexLayoutMixin:
         self.right_splitter.setSizes([800, 250])
 
         self.main_splitter.addWidget(self.right_splitter)
-        self.main_splitter.setSizes([350, 700])  # Initial ratio
+        # Left panel keeps its requested width, all surplus goes to the plots.
+        self.main_splitter.setStretchFactor(0, 0)
+        self.main_splitter.setStretchFactor(1, 1)
+        self.main_splitter.setSizes([545, 1355])  # >= the panel's minimumSizeHint
+        attach_splitter_capper(self.main_splitter, max_ratio=0.34)
 
     def _add_main_control_buttons(self, left_layout: QVBoxLayout) -> None:
         """Create and add main control buttons to the left panel."""
@@ -668,7 +696,10 @@ class CertusIndexLayoutMixin:
             "Use for transparent substrates (SiO2, BK7, D263T, B270i).\nBoth T and R data are used for fitting."
         )
 
-        self.rb_frosted_glass = QRadioButton("Frosted Glass (infinite substrate, R only)")
+        # Short label, full explanation in the tooltip: at 572 px this single
+        # caption used to dictate the whole control panel's width.
+        self.rb_frosted_glass = QRadioButton("Frosted glass")
+        self.rb_frosted_glass.setToolTip("Infinite-substrate model, reflectance only.")
 
         self.rb_frosted_glass.setToolTip(
             "Use for opaque / frosted glass substrates where only reflectance (R) is measured.\n"
@@ -1111,4 +1142,3 @@ class CertusIndexLayoutMixin:
         """Return log widget for CertusBaseApp log processing."""
 
         return self.log_text
-

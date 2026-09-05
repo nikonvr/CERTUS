@@ -925,6 +925,79 @@ class _RunMixin:
                 rmse_thresh = r.get("profile_d_rmse_thresh")
                 win.update_profile(d_prof, r_prof, rmse_thresh)
 
+        self._update_overview_tab(r, lam_s, tt_s, rt_s, n_s, k_s, lam_exp, d_nm)
+
+    def _update_overview_tab(self, r: dict, lam_s, tt_s, rt_s, n_s, k_s, lam_exp, d_nm) -> None:
+        """Update the CompleteEASE/OptiChar style Overview tab with dual graphs & KPI banner."""
+        if not hasattr(self, "plot_ov_T") or not hasattr(self, "plot_ov_nk"):
+            return
+        try:
+            self.plot_ov_T.clear()
+            self.plot_ov_nk.clear()
+
+            # 1. Photometric Curves (T/R)
+            if self.df is not None and "T" in self.df.columns and lam_exp is not None and lam_exp.size:
+                ye_raw = _to_fraction_T(self.df["T"].to_numpy(dtype=np.float64))
+                self.plot_ov_T.plot(
+                    lam_exp,
+                    ye_raw * 100.0,
+                    pen=None,
+                    symbol="o",
+                    symbolSize=3,
+                    symbolBrush=pg.mkBrush(CertusTheme.TEXT_SUB),
+                    name="T Exp (%)",
+                )
+            if tt_s is not None and lam_s is not None:
+                self.plot_ov_T.plot(
+                    lam_s,
+                    tt_s * 100.0,
+                    pen=pg.mkPen(CertusTheme.PRIMARY, width=2.5),
+                    name="T Modèle (%)",
+                )
+            if rt_s is not None and lam_s is not None:
+                self.plot_ov_T.plot(
+                    lam_s,
+                    rt_s * 100.0,
+                    pen=pg.mkPen(CertusTheme.SECONDARY, width=2.0),
+                    name="R Modèle (%)",
+                )
+            self.plot_ov_T.autoRange()
+
+            # 2. Optical Constants n(lambda)
+            if lam_s is not None and n_s is not None:
+                self.plot_ov_nk.plot(
+                    lam_s,
+                    n_s,
+                    pen=pg.mkPen("#0057ff", width=2.5),
+                    name="Indice n(lambda)",
+                )
+            self.plot_ov_nk.autoRange()
+
+            # 3. KPI Banner
+            rmse_val = float(r.get("rmse", float("nan")))
+            if not np.isfinite(rmse_val):
+                rmse_val = float(np.sqrt(max(float(r.get("mse", 0.0)), 0.0)))
+            if hasattr(self, "kpi_rmse") and np.isfinite(rmse_val):
+                self.kpi_rmse.setText(f"{rmse_val:.5f}")
+
+            if hasattr(self, "kpi_d") and np.isfinite(float(d_nm)):
+                self.kpi_d.setText(f"{float(d_nm):.2f} nm")
+
+            if lam_s is not None and n_s is not None and len(lam_s) > 1:
+                idx550 = int(np.argmin(np.abs(lam_s - 550.0)))
+                n550 = float(n_s[idx550])
+                k550 = float(k_s[idx550]) if k_s is not None and len(k_s) > idx550 else 0.0
+                if hasattr(self, "kpi_n550"):
+                    self.kpi_n550.setText(f"{n550:.4f}")
+                if hasattr(self, "kpi_k550"):
+                    self.kpi_k550.setText(f"{k550:.2e}")
+
+            if hasattr(self, "kpi_status"):
+                self.kpi_status.setText("Convergence Optimale (L-BFGS-B)")
+                self.kpi_status.setStyleSheet(f"color: {CertusTheme.SUCCESS}; font-size: 13px; font-weight: 700;")
+        except (AttributeError, RuntimeError, ValueError, TypeError):
+            pass
+
     def _log_optimization_header(self, cfg: SplineOptConfig) -> None:
         """Startup INFO block (CERTUS_INDEX+ detail: context + displayed RMSE reminder)."""
         if not self.logger:

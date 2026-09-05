@@ -165,6 +165,7 @@ from PyQt6.QtGui import QColor, QFont, QIcon, QKeySequence, QPalette, QShortcut
 
 
 from PyQt6.QtWidgets import (
+    QAbstractSpinBox,
     QApplication,
     QCheckBox,
     QDoubleSpinBox,
@@ -236,11 +237,12 @@ from certus.ui.certus_ui_utils import (
     set_certus_window_icon,
     copy_app_logs_to_clipboard,
     install_standard_shortcuts,
+    install_unique_shortcut,
     _CertusDropFilter,
     update_global_plot_config,
     apply_certus_theme,
 )
-from certus.ui.certus_ui_widgets_factory import create_log_widget, create_top_actions_bar
+from certus.ui.certus_ui_widgets_factory import attach_splitter_capper, create_log_widget, create_top_actions_bar
 from certus.ui.certus_ui_widgets_utils import CertusLogPanel
 from certus.ui.certus_theme import CertusTheme, get_standard_stylesheet
 import certus.ui.certus_io_ui as certus_io_ui
@@ -512,25 +514,52 @@ class CertusBaseApp(
 
         self._log_timer_id = self.startTimer(self.LOG_TIMER_MS)
 
-        # U3: install Ctrl+K / Ctrl+Shift+P for the command palette.
-        for seq in ("Ctrl+K", "Ctrl+Shift+P"):
-            try:
-                sc = QShortcut(QKeySequence(seq), self)
-                sc.setContext(Qt.ShortcutContext.WindowShortcut)
-                sc.activated.connect(self.open_command_palette)
-                self._command_palette_shortcuts.append(sc)
-            except TypeError, RuntimeError:
-                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+        self.install_common_affordances()
 
+        # P2.2 - Trigger the onboarding tour on first launch (non-blocking).
+        # The tour skips itself silently if the user already finished/skipped
+        # it or if no step targets are resolvable. 600 ms gives the window
+        # time to be fully laid out before the spotlight is positioned.
+        QTimer.singleShot(600, self._maybe_run_first_time_tour)
+
+        # Trigger Numba warmup after a short delay
+
+        QTimer.singleShot(100, self._warmup_numba)
+
+    def install_common_affordances(self) -> None:
+        """Install everything a CERTUS window owes its user, independently of timers.
+
+        Split out of _finalize_init on 2026-09-04. DESIGN, STRAT and RE
+        deliberately skip _finalize_init because they own their warmup and
+        timers - and in doing so they silently lost the command palette, the
+        shortcuts overlay, the Help menu, the empty-state overlays and every
+        accessible name. Measured that day, one process per module:
+
+            module   Ctrl+K   Help menu   named fields
+            DESIGN     no        no          0 / 58
+            STRAT      no        no          0 / 59
+            RE         no        no          0 /  6
+            INDEX      yes       yes        18 / 18
+            FIELD      yes       yes        21 / 21
+
+        Idempotent: install_unique_shortcut skips a sequence already claimed, the
+        Help menu checks for itself first, and the other calls overwrite nothing.
+        Safe to call from a subclass that also reaches _finalize_init.
+        """
+        # U3: install Ctrl+K / Ctrl+Shift+P for the command palette.
         # U4: install F1 / Shift+? to open the keyboard-shortcuts overlay.
-        for seq in ("F1", "Shift+?"):
-            try:
-                sc = QShortcut(QKeySequence(seq), self)
-                sc.setContext(Qt.ShortcutContext.WindowShortcut)
-                sc.activated.connect(self.open_shortcuts_overlay)
+        # install_unique_shortcut skips a sequence already claimed by another
+        # QShortcut or by a menu QAction: binding one twice makes Qt emit
+        # activatedAmbiguously and run NEITHER handler.
+        for seq, slot in (
+            ("Ctrl+K", self.open_command_palette),
+            ("Ctrl+Shift+P", self.open_command_palette),
+            ("F1", self.open_shortcuts_overlay),
+            ("Shift+?", self.open_shortcuts_overlay),
+        ):
+            sc = install_unique_shortcut(self, seq, slot)
+            if sc is not None:
                 self._command_palette_shortcuts.append(sc)
-            except TypeError, RuntimeError:
-                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         # U5: install global zoom shortcuts for a more premium 2026 layout.
         try:
@@ -567,15 +596,11 @@ class CertusBaseApp(
         # P4 - Fill missing accessibility metadata on input widgets.
         self._apply_accessibility_defaults()
 
-        # P2.2 - Trigger the onboarding tour on first launch (non-blocking).
-        # The tour skips itself silently if the user already finished/skipped
-        # it or if no step targets are resolvable. 600 ms gives the window
-        # time to be fully laid out before the spotlight is positioned.
-        QTimer.singleShot(600, self._maybe_run_first_time_tour)
-
-        # Trigger Numba warmup after a short delay
-
-        QTimer.singleShot(100, self._warmup_numba)
+        # U6 - Support universel du glisser-déposer de fichiers
+        try:
+            self.setAcceptDrops(True)
+        except TypeError, RuntimeError:
+            pass
 
     def _maybe_run_first_time_tour(self) -> None:
         """Best-effort: run the onboarding tour the first time only."""
@@ -612,6 +637,50 @@ class CertusBaseApp(
     def _qs_key(self, suffix: str) -> str:
         return f"window/{self.APP_NAME}/{suffix}"
 
+    def _iter_persistable_tables(self):
+        """Yield ``(stable_name, table)`` for every table held as an attribute.
+
+        The attribute name is the identifier: most CERTUS tables carry no
+        objectName, but ``self.front_table`` keeps its name across launches,
+        which ``findChildren`` ordering would not.
+        """
+        from PyQt6.QtWidgets import QTableView, QTableWidget
+
+        seen: set[int] = set()
+        holders = [self]
+        ui = getattr(self, "ui", None)
+        if ui is not None and ui is not self:
+            holders.append(ui)
+        for holder in holders:
+            for attr, obj in list(vars(holder).items()):
+                if attr.startswith("__") or not isinstance(obj, (QTableWidget, QTableView)):
+                    continue
+                if id(obj) in seen:
+                    continue
+                seen.add(id(obj))
+                yield attr, obj
+
+    def _qs_save_table_headers(self, qs: QSettings) -> None:
+        for attr, table in self._iter_persistable_tables():
+            try:
+                header = table.horizontalHeader()
+                if header is not None and header.count() > 0:
+                    qs.setValue(self._qs_key(f"table/{attr}"), header.saveState())
+            except RuntimeError, AttributeError:
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+
+    def _qs_restore_table_headers(self, qs: QSettings) -> None:
+        for attr, table in self._iter_persistable_tables():
+            state = qs.value(self._qs_key(f"table/{attr}"))
+            if state is None:
+                continue
+            try:
+                header = table.horizontalHeader()
+                if header is not None and header.count() > 0:
+                    header.restoreState(state)
+            except RuntimeError, AttributeError:
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+
     def _qs_restore(self) -> None:
         qs = QSettings("CERTUS", self.APP_NAME)
         geom = qs.value(self._qs_key("geometry"))
@@ -623,8 +692,19 @@ class CertusBaseApp(
         splitter_state = qs.value(self._qs_key("mainSplitter"))
         if splitter_state is not None:
             sp = getattr(self, "main_split", None)
-            if sp is not None:
-                sp.restoreState(splitter_state)
+            if sp is not None and sp.restoreState(splitter_state):
+                # Tells apply_default_layout() not to overwrite what the user set.
+                self._layout_restored_from_settings = True
+        bottom_state = qs.value(self._qs_key("bottomSplitter"))
+        if bottom_state is not None:
+            bsp = (
+                getattr(self, "bottom_split", None)
+                or getattr(self, "bottom_splitter", None)
+                or getattr(getattr(self, "ui", None), "bottom_splitter", None)
+            )
+            if bsp is not None:
+                bsp.restoreState(bottom_state)
+        self._qs_restore_table_headers(qs)
 
     def _qs_save(self) -> None:
         qs = QSettings("CERTUS", self.APP_NAME)
@@ -633,6 +713,14 @@ class CertusBaseApp(
         sp = getattr(self, "main_split", None)
         if sp is not None:
             qs.setValue(self._qs_key("mainSplitter"), sp.saveState())
+        bsp = (
+            getattr(self, "bottom_split", None)
+            or getattr(self, "bottom_splitter", None)
+            or getattr(getattr(self, "ui", None), "bottom_splitter", None)
+        )
+        if bsp is not None:
+            qs.setValue(self._qs_key("bottomSplitter"), bsp.saveState())
+        self._qs_save_table_headers(qs)
 
     def _setup_logger(self, name: str) -> Any:
         """
@@ -1133,6 +1221,9 @@ class CertusBaseApp(
 
         sb.setValue(val)
 
+        _orig_st = sb.setToolTip
+        sb.setToolTip = lambda t: (_orig_st(t), sb.lineEdit().setToolTip(t) if sb.lineEdit() else None)  # type: ignore[assignment]
+
         return sb
 
     def _add_front_row(self, mat: str, qwot: float, var: bool, del_checked: bool = False) -> None:
@@ -1149,6 +1240,7 @@ class CertusBaseApp(
         self.front_table.setCellWidget(row, 0, cb)
 
         sb = self._create_spin(qwot, dec=6)
+        sb.setToolTip("Layer optical thickness in QWOT (Quarter-Wave Optical Thickness).")
 
         def _on_front_qwot_changed(*_args) -> None:
             self._schedule_eval()
@@ -1743,7 +1835,14 @@ class CertusBaseApp(
 
         # Initial sizes (Hook)
 
+        # The control panel keeps the width it asks for; every extra pixel goes
+        # to the plots. Without these two lines Qt splits the surplus evenly,
+        # which cost CERTUS-INDEX 20 points of plot area (58.0 % -> 78.1 %,
+        # measured 2026-09-03).
+        main_splitter.setStretchFactor(0, 0)
+        main_splitter.setStretchFactor(1, 1)
         main_splitter.setSizes(self._get_default_splitter_sizes())
+        attach_splitter_capper(main_splitter, max_ratio=0.34)
 
         # Status bar
 
@@ -1752,6 +1851,12 @@ class CertusBaseApp(
         # Initial theme application (Hook)
 
         self._apply_theme()
+
+        # Propagate tooltips from spinboxes to inner lineEdits for complete accessibility coverage
+        for _sb in self.findChildren(QAbstractSpinBox):
+            _tt = _sb.toolTip()
+            if _tt and _sb.lineEdit() and not _sb.lineEdit().toolTip():
+                _sb.lineEdit().setToolTip(_tt)
 
     def _get_default_splitter_sizes(self) -> list[int]:
         """Hook for initial splitter sizes."""
@@ -1992,7 +2097,12 @@ class CertusBaseApp(
     def eventFilter(self, obj, event) -> Any:
         """Filters events to handle Excel copy/paste"""
 
-        if obj == self.front_table and event.type() == event.Type.KeyPress:
+        # Not every subclass owns a front_table: the two METAL windows do not.
+        # This raised AttributeError the first time an event filter was installed
+        # on them (2026-09-04), and Qt reported it as an uncaught exception on
+        # every single resize event.
+        front_table = getattr(self, "front_table", None)
+        if front_table is not None and obj == front_table and event.type() == event.Type.KeyPress:
             if event.key() == Qt.Key.Key_V and event.modifiers() == Qt.KeyboardModifier.ControlModifier:
                 self._paste_from_excel()
 
@@ -2180,6 +2290,55 @@ class CertusBaseApp(
 
         super().closeEvent(event)
 
+    def dragEnterEvent(self, event) -> None:
+        """Accepter le glisser-déposer de fichiers de configuration ou de mesure."""
+        if event.mimeData().hasUrls():
+            urls = event.mimeData().urls()
+            if any(url.toLocalFile().lower().endswith((".json", ".csv", ".dat", ".txt", ".xlsx")) for url in urls):
+                event.acceptProposedAction()
+                return
+        super().dragEnterEvent(event)
+
+    def dropEvent(self, event) -> None:
+        """Charger automatiquement le fichier déposé sur l'interface."""
+        if event.mimeData().hasUrls():
+            urls = event.mimeData().urls()
+            valid_files = [
+                url.toLocalFile()
+                for url in urls
+                if url.toLocalFile().lower().endswith((".json", ".csv", ".dat", ".txt", ".xlsx"))
+            ]
+            if valid_files:
+                target_file = valid_files[0]
+                event.acceptProposedAction()
+                self._handle_dropped_file(target_file)
+                return
+        super().dropEvent(event)
+
+    def _handle_dropped_file(self, file_path: str) -> None:
+        """Routeur universel pour le chargement d'un fichier déposé."""
+        from pathlib import Path
+
+        name = Path(file_path).name
+        try:
+            if hasattr(self, "load_configuration") and callable(self.load_configuration):
+                self.load_configuration(file_path)
+            elif hasattr(self, "load_config") and callable(self.load_config):
+                self.load_config(file_path)
+            elif hasattr(self, "load_design") and callable(self.load_design):
+                self.load_design(file_path)
+            elif hasattr(self, "_on_load") and callable(self._on_load):
+                self._on_load(file_path)
+            elif hasattr(self, "load_file") and callable(self.load_file):
+                self.load_file(file_path)
+            else:
+                return
+            show_toast(self, f"Fichier chargé : {name}", "success")
+        except Exception as exc:
+            if hasattr(self, "logger") and self.logger:
+                self.logger.error("Erreur chargement Drag & Drop: %s", exc)
+            show_toast(self, f"Erreur de chargement: {name}", "error")
+
     def _set_busy(self, b: bool) -> None:
         """Sets busy state with reference counting."""
 
@@ -2224,9 +2383,11 @@ class CertusBaseApp(
             self.status_label.setText("Ready")
 
         if hasattr(self, "progress_bar") and self.progress_bar:
-            self.progress_bar.setRange(0, 100)
-
-            self.progress_bar.setValue(0)
+            if hasattr(self.progress_bar, "reset"):
+                self.progress_bar.reset()
+            elif hasattr(self.progress_bar, "setRange"):
+                self.progress_bar.setRange(0, 100)
+                self.progress_bar.setValue(0)
 
     def _on_error(self, error_msg: object, generation_id: int | None = None) -> None:
         """Slot for ``WorkerSignals.error`` (EvalWorker, REWorker, DESIGN optimization, etc.)."""

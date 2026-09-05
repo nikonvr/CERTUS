@@ -228,9 +228,14 @@ def _build_overlay_class():
             # Buttons
             row = QHBoxLayout()
             self.btn_skip = QPushButton("Skip", self)
+            self.btn_skip.setToolTip("Skip the guided tour")
             self.btn_back = QPushButton("Back", self)
+            self.btn_back.setToolTip("Go back to previous step")
             self.btn_back.setEnabled(index > 0)
             self.btn_next = QPushButton("Finish" if index == total - 1 else "Next", self)
+            self.btn_next.setToolTip("Complete tour" if index == total - 1 else "Go to next step")
+            for _b in (self.btn_skip, self.btn_back, self.btn_next):
+                _b.setMinimumHeight(24)
             row.addWidget(self.btn_skip)
             row.addStretch(1)
             row.addWidget(self.btn_back)

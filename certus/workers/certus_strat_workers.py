@@ -1482,6 +1482,14 @@ def _run_phaseB_parallel_execution(
                 logger.warning(f"🛑 Stopping Optimization at {n_blk} blocks...")
                 break
 
+            current_done = completed_blocks_count[0]
+            pct = int((current_done / total_blocks) * 55) + 40
+            if hasattr(signals, "progress") and signals.progress:
+                signals.progress.emit(
+                    pct,
+                    f"Phase B: Optimizing block {n_blk} ({current_done}/{total_blocks} blocks completed)",
+                )
+
             logger.debug(f"[SPY-WORKER] Starting loop iteration for block {n_blk}")
             args = (
                 n_blk,
@@ -1640,7 +1648,12 @@ def _run_phaseB_parallel_execution(
                 with completed_blocks_lock:
                     completed_blocks_count[0] += 1
                     current_completed = completed_blocks_count[0]
-                progress_pct = int((current_completed / total_blocks) * 90) + 5
+                progress_pct = int((current_completed / total_blocks) * 55) + 40
+                if hasattr(signals, "progress") and signals.progress:
+                    signals.progress.emit(
+                        progress_pct,
+                        f"Phase B: Block {n_blk} completed ({current_completed}/{total_blocks} blocks completed)",
+                    )
                 signals.progress_snapshot.emit(
                     build_progress_snapshot(
                         message=f"Optimizing ({n_blk} blocks)",

@@ -141,17 +141,24 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+
 class CertusIndexEventsMixin:
     def _setup_shortcuts(self) -> None:
         """Install premium cross-window shortcuts."""
         try:
             install_standard_shortcuts(
                 self,
+                # F5 / Esc were missing entirely: INDEX declared no QShortcut at
+                # all, so the operator had no keyboard way to start or abort a run.
+                run=getattr(self, "run_optimization", None),
+                stop=getattr(self, "stop_optimization", None),
+                save=getattr(self, "save_config", None),
+                load=getattr(self, "load_config", None),
                 zoom_in=getattr(self, "zoom_in_ui", None),
                 zoom_out=getattr(self, "zoom_out_ui", None),
                 reset_zoom=getattr(self, "reset_ui_zoom", None),
             )
-        except (RuntimeError, AttributeError, TypeError, ValueError):
+        except RuntimeError, AttributeError, TypeError, ValueError:
             self._core_logger.debug("Shortcut installation failed", exc_info=True)
 
     def _update_zoom_status(self, factor: float | None = None) -> None:
@@ -787,7 +794,7 @@ class CertusIndexEventsMixin:
                         ),
                         (
                             "Potential unit conversion applied (% -> fraction): "
-                            f"{'yes' if (((parsed_data['T'] is not None and np.size(parsed_data['T']) > 0 and np.nanmax(parsed_data['T']) > 1.5) or (parsed_data['R'] is not None and np.size(parsed_data['R']) > 0 and np.nanmax(parsed_data['R']) > 1.5))) else 'no'}",
+                            f"{'yes' if ((parsed_data['T'] is not None and np.size(parsed_data['T']) > 0 and np.nanmax(parsed_data['T']) > 1.5) or (parsed_data['R'] is not None and np.size(parsed_data['R']) > 0 and np.nanmax(parsed_data['R']) > 1.5)) else 'no'}",
                             False,
                         ),
                     ],
@@ -1185,10 +1192,9 @@ class CertusIndexEventsMixin:
         try:
             self.killTimer(self._log_timer_id)
 
-        except (AttributeError, TypeError):
+        except AttributeError, TypeError:
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         self.logger.info("[INDEX.STATE] application closed")
 
         super().closeEvent(event)
-

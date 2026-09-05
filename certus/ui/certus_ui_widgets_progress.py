@@ -559,6 +559,16 @@ class DualStageProgressWidget(QWidget):
         self.info_label.setText("")
         self.detail_label.setText(self._build_detail_status(status="idle", next_action="start run"))
 
+    def setRange(self, minimum: int, maximum: int) -> None:
+        """Compatibilité avec QProgressBar."""
+        if hasattr(self.progress_bar, "setRange"):
+            self.progress_bar.setRange(minimum, maximum)
+
+    def setValue(self, value: int) -> None:
+        """Compatibilité avec QProgressBar."""
+        if hasattr(self.progress_bar, "setValue"):
+            self.progress_bar.setValue(value)
+
     def _build_detail_status(
         self,
         status: str,

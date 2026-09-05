@@ -9,7 +9,7 @@ class EventsManager:
 
         QShortcut(QKeySequence("Ctrl+E"), self.ui, lambda: self.ui._schedule_eval(True))
 
-        QShortcut(QKeySequence("Ctrl+O"), self.ui, lambda: self.ui.run_optim("local"))
+        QShortcut(QKeySequence("Ctrl+Shift+G"), self.ui, lambda: self.ui.run_optim("local"))
 
         QShortcut(QKeySequence("Ctrl+G"), self.ui, lambda: self.ui.run_optim("global"))
 
@@ -19,19 +19,21 @@ class EventsManager:
 
         install_standard_shortcuts(
             self.ui,
+            load=self.ui.load_config,
+            save=self.ui.save_config,
             run=lambda: self.ui.run_optim("global"),
             stop=self.ui.stop_optim,
             help=self.open_help,
-            zoom_in=getattr(self, "zoom_in_ui", None),
-            zoom_out=getattr(self, "zoom_out_ui", None),
-            reset_zoom=getattr(self, "reset_ui_zoom", None),
-            extra={"Ctrl+L": lambda: getattr(self, "toggle_logs", lambda: None)()},
+            zoom_in=getattr(self.ui, "zoom_in_ui", None),
+            zoom_out=getattr(self.ui, "zoom_out_ui", None),
+            reset_zoom=getattr(self.ui, "reset_ui_zoom", None),
+            extra={"Ctrl+L": lambda: getattr(self.ui, "toggle_logs", lambda: None)()},
         )
 
         def _on_spectrum_drop(paths) -> None:
-            if paths and hasattr(self, "load_config"):
+            if paths and hasattr(self.ui, "load_config"):
                 self.ui.load_config(paths[0])
-                show_toast(self, f"Loaded: {Path(paths[0]).name}", "success")
+                show_toast(self.ui, f"Loaded: {Path(paths[0]).name}", "success")
 
         enable_file_drop(self.ui, _on_spectrum_drop, extensions=("json", "csv", "xlsx", "xls"))
 

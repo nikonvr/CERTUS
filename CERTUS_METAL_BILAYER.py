@@ -115,6 +115,7 @@ from certus_physics import (
 )
 
 
+from certus.ui.certus_overview_tab import CertusKpiBanner, build_synthesis_tab
 from certus.ui.certus_ui import (
     CertusCard,
     CertusScientificPlot,
@@ -1414,11 +1415,17 @@ class CertusMetalBilayerApp(MetalBaseApp):
             c_arr = np.array([1.5 + 0.0j, 1.5 + 0.0j], dtype=np.complex128)
             calculate_reflectance_bilayer_vectorized(wls, c_arr, 10.0, 10.0, c_arr, c_arr)
 
-            self.sig_numba_ready.emit()
+            try:
+                self.sig_numba_ready.emit()
+            except (RuntimeError, AttributeError):
+                return
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"✗ Numba warmup failed: {e}", exc_info=True)
-            self.sig_numba_error.emit()
+            try:
+                self.sig_numba_error.emit()
+            except (RuntimeError, AttributeError):
+                return
 
     @pyqtSlot()
     def _on_numba_ready_ui(self) -> None:
@@ -1682,6 +1689,23 @@ class CertusMetalBilayerApp(MetalBaseApp):
             [], [], pen=pg.mkPen(CertusTheme.CHART_PRIMARY, width=2), name="Calculated"
         )
 
+        # Synthesis tab first: METAL exposed its figures only through the plot
+        # titles and the status bar. Shared cockpit widget, same as DESIGN/INDEX.
+        self.kpi_banner = CertusKpiBanner(
+            [
+                ("rmse", "FINAL RMSE"),
+                ("iterations", "ITERATIONS"),
+                ("status", "FIT STATUS"),
+            ]
+        )
+        self.tabs.addTab(
+            build_synthesis_tab(
+                self.kpi_banner,
+                "Optical-constants synthesis — refreshed when an optimization completes.",
+            ),
+            "✦ Synthesis",
+        )
+
         self.tabs.addTab(self.reflectance_plot, "Reflectance")
 
         setup_common_metal_plots(self)
@@ -1720,7 +1744,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
         ]
         for idx, card in enumerate(cards):
             perf_layout.addWidget(card, idx // 2, idx % 2)
-        self.tabs.addTab(self.perf_tab, "About")
+        # "About" marketing content moved out of scientific plot tabs (Option A)
 
     def on_file_loaded(self, data):
         """Process loaded data (Hook from MetalBaseApp)"""
@@ -1908,6 +1932,17 @@ class CertusMetalBilayerApp(MetalBaseApp):
         if getattr(self, "_auto_batch_mode", False):
             if hasattr(self, "_write_auto_batch_result"):
                 self._write_auto_batch_result(results, iteration_count)
+
+        banner = getattr(self, "kpi_banner", None)
+        if banner is not None:
+            try:
+                _res = results.get("result")
+                _mse = float(getattr(_res, "fun", float("nan")))
+                banner.set_value("rmse", f"{np.sqrt(max(_mse, 0.0)):.6f}", "good")
+                banner.set_value("iterations", str(iteration_count))
+                banner.set_value("status", "Optimization complete", "good")
+            except (ValueError, TypeError, AttributeError, RuntimeError):
+                logging.getLogger("CERTUS").debug("KPI refresh skipped", exc_info=True)
 
         self.final_results = results
 
@@ -2637,12 +2672,14 @@ class CertusMetalBilayerApp(MetalBaseApp):
         layout.setSpacing(5)
 
         lbl = QLabel(label_text)
+        if tooltip_text:
+            lbl.setToolTip(tooltip_text)
+            widget.setToolTip(tooltip_text)
 
         layout.addWidget(lbl)
 
         if tooltip_text:
             info_btn = create_info_icon(tooltip_text)
-
             layout.addWidget(info_btn)
 
         layout.addStretch()

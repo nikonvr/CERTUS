@@ -5,6 +5,9 @@ from certus.ui.certus_strat_heatmap_ui import InteractiveHeatmapWindow
 from certus.ui.certus_strat_table_ui import StrategiesTableWindow
 from certus.ui.certus_strat_indices_ui import InteractiveIndicesWindow
 from certus.ui.certus_strat_monitor_ui import LiveMonitorWindow
+from certus.ui.certus_strat_thickness_ui import TransmissionVsThicknessWindow
+from certus.ui.certus_strat_spectrum_ui import InteractiveSpectrumWindow
+from certus.ui.certus_strat_performance_ui import StrategySpectralPerformanceWindow
 
 class CertusStratPlotMixin:
     def on_plot_ready(self, fig: Any, fig_type: str) -> None:
@@ -314,19 +317,6 @@ class CertusStratPlotMixin:
 
             self.logger.info(f"[STRAT-UI] Block {block_number}: best strategy ready. Robustness score: {float(best_score):.6f}")
 
-            if self.live_monitor_window is None:
-                self.live_monitor_window = LiveMonitorWindow(None)  # No parent to avoid sub-window rendering
-                set_certus_window_icon(self.live_monitor_window)
-
-            # Respect explicit user close: do not auto-reopen during current run.
-            if getattr(self.live_monitor_window, "user_hidden", False):
-                return
-
-            if not self.live_monitor_window.isVisible():
-                self.live_monitor_window.show()
-                self.live_monitor_window.raise_()
-                self.live_monitor_window.activateWindow()
-
             strategy = best_strategy
             blocks = strategy.get("blocks", [])
 
@@ -341,13 +331,19 @@ class CertusStratPlotMixin:
             bounds = np.array(growth_data["boundaries"])
             score = float(best_score)
 
-            self.live_monitor_window.update_monitor(
-                x,
-                y,
-                bounds,
-                f"LIVE MONITORING: {strategy.get('n_blocks')} BLOCKS | Robustness: {score:.5f}",
-                blocks,
-            )
+            info_msg = f"PHASE B : {strategy.get('n_blocks')} BLOCS | Score de robustesse (RMSE): {score:.5f}"
+
+            # 1. Mise à jour du panneau central intégré de l'application
+            if hasattr(self, "phase_b_live_widget"):
+                self.phase_b_live_widget.update_monitor(x, y, bounds, info_msg, blocks)
+                if hasattr(self, "plot_stack") and self.plot_stack.currentWidget() != self.phase_b_live_widget:
+                    self.plot_stack.setCurrentWidget(self.phase_b_live_widget)
+
+            # 2. Mise à jour de la fenêtre satellite (si non fermée par l'utilisateur)
+            if self.live_monitor_window is not None and not getattr(self.live_monitor_window, "user_hidden", False):
+                if not self.live_monitor_window.isVisible():
+                    self.live_monitor_window.show()
+                self.live_monitor_window.update_monitor(x, y, bounds, info_msg, blocks)
 
         except Exception as e:
             self.logger.error(f"[GUI] Error in on_live_growth_update: {e}", exc_info=True)

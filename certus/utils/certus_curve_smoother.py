@@ -17,6 +17,7 @@ from PyQt6.QtCore import Qt, QSettings
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
+    QFileDialog,
     QFrame,
     QHBoxLayout,
     QMainWindow,
@@ -279,7 +280,11 @@ class CurveSmootherGUI(QMainWindow):
             self.combo_mode.setEnabled(True)
             self.auto_tune()
             logger.info("Loaded %s successfully.", path)
-        except NUMERICAL_FAULT_EXCEPTIONS as e:
+        # OSError is not in NUMERICAL_FAULT_EXCEPTIONS, and the commonest failure
+        # of all is an OSError: the operator still has the workbook open in Excel,
+        # which raises PermissionError. The save path already covers it (see the
+        # writer below); without it here, that case escaped as a raw traceback.
+        except (*NUMERICAL_FAULT_EXCEPTIONS, OSError) as e:
             logger.error("Failed to load measurement sheet: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to load measurement sheet:\n{e}")
 
@@ -358,24 +363,54 @@ class CurveSmootherGUI(QMainWindow):
                 f"Auto smoothing -> level={info.get('level')} | base={info.get('window_base')} | heavy={info.get('window_heavy')} | period_k={info.get('estimated_period_k'):.6g} | noise={info.get('noise_level'):.6g}",
                 "INFO",
             )
-            if self.file_path.endswith(".xls"):
-                save_path = self.file_path + "x"
-                all_sheets = pd.read_excel(self.file_path, sheet_name=None)
-                with pd.ExcelWriter(save_path, engine="openpyxl") as writer:
-                    for s_name, s_df in all_sheets.items():
-                        if s_name.lower() != "clean_measurements":
-                            s_df.to_excel(writer, sheet_name=s_name, index=False)
-                    df_clean.to_excel(writer, sheet_name="clean_measurements", index=False)
+            src_p = Path(self.file_path)
+            default_target = src_p.with_name(f"{src_p.stem}_clean.xlsx")
+            save_path, _ = QFileDialog.getSaveFileName(
+                self,
+                "Save Clean Data",
+                str(default_target),
+                "Excel Files (*.xlsx);;All Files (*)",
+            )
+            if not save_path:
+                return
+
+            target_p = Path(save_path).resolve()
+            is_same_file = (target_p == src_p.resolve())
+
+            if is_same_file:
+                ans = QMessageBox.question(
+                    self,
+                    "Confirm Overwrite",
+                    f"You are about to modify the original file:\n{src_p.name}\n\n"
+                    "This will add/update the 'clean_measurements' sheet. Continue?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No,
+                )
+                if ans != QMessageBox.StandardButton.Yes:
+                    return
+
+            if is_same_file:
+                if self.file_path.endswith(".xls"):
+                    save_path = str(target_p.with_suffix(".xlsx"))
+                    all_sheets = pd.read_excel(self.file_path, sheet_name=None)
+                    with pd.ExcelWriter(save_path, engine="openpyxl") as writer:
+                        for s_name, s_df in all_sheets.items():
+                            if s_name.lower() != "clean_measurements":
+                                s_df.to_excel(writer, sheet_name=s_name, index=False)
+                        df_clean.to_excel(writer, sheet_name="clean_measurements", index=False)
+                else:
+                    with pd.ExcelWriter(save_path, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
+                        df_clean.to_excel(writer, sheet_name="clean_measurements", index=False)
             else:
-                save_path = self.file_path
-                with pd.ExcelWriter(save_path, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
+                with pd.ExcelWriter(save_path, engine="openpyxl") as writer:
                     df_clean.to_excel(writer, sheet_name="clean_measurements", index=False)
+
             QMessageBox.information(
                 self,
                 "Success",
                 f"Saved to clean_measurements sheet in:\n{Path(save_path).name}",
             )
-        except NUMERICAL_FAULT_EXCEPTIONS as e:
+        except (*NUMERICAL_FAULT_EXCEPTIONS, OSError) as e:
             logger.error("Failed to save %s: %s", self.file_path, e)
             QMessageBox.critical(self, "Error", f"Failed to save:\n{e}")
 

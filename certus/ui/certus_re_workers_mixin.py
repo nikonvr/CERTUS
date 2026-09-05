@@ -349,6 +349,23 @@ class CertusREWorkersMixin:
 
         self._plot_nk()
 
+        if hasattr(self, "kpi_banner") and self.kpi_banner is not None:
+            from certus.ui.certus_overview_tab import PLACEHOLDER
+
+            try:
+                self.kpi_banner.set_value(
+                    "rmse",
+                    f"{rmse:.6f}" if (rmse is not None and np.isfinite(rmse)) else PLACEHOLDER,
+                    "good" if (rmse is not None and np.isfinite(rmse) and rmse <= 0.05) else "bad",
+                )
+                self.kpi_banner.set_value("layers", str(self.front_table.rowCount()))
+                th = getattr(self, "total_thickness_nm", None)
+                if th is not None:
+                    self.kpi_banner.set_value("thickness", f"{th:.1f} nm")
+                self.kpi_banner.set_value("status", "Ready", "good")
+            except (RuntimeError, TypeError, ValueError, AttributeError):
+                pass
+
         logging.info(f"[EVAL] _on_eval_finished complete in {(time.time() - _finish_start) * 1000:.1f}ms")
 
         self._update_status_bar_stats()

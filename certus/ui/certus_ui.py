@@ -269,32 +269,73 @@ from certus.utils.certus_data import read_data_file_robust
 # =============================================================================
 
 
-
 from certus.ui.certus_ui_widgets_cards import CertusCard, FlashyCard, CertusDashboardCard
-from certus.ui.certus_ui_widgets_utils import CertusToast, CertusStatusPill, CertusThemeToggle, AutoShrinkTitleLabel, CertusLogPanel, ExcelTableWidget, NumericTableWidgetItem, DetachedPlotWindow, SkeletonLoaderWidget
+from certus.ui.certus_ui_widgets_utils import (
+    CertusToast,
+    CertusStatusPill,
+    CertusThemeToggle,
+    AutoShrinkTitleLabel,
+    CertusLogPanel,
+    ExcelTableWidget,
+    NumericTableWidgetItem,
+    DetachedPlotWindow,
+    SkeletonLoaderWidget,
+)
 from certus.ui.certus_theme import CertusTheme, get_standard_stylesheet
-from certus.ui.certus_plot import CertusScientificPlot, clone_plot_widget, wrap_scientific_plot_with_toolbar, ScientificPlotRefined, sanitize_xy_for_plot, plot_widget_plot_finite
+from certus.ui.certus_plot import (
+    CertusScientificPlot,
+    clone_plot_widget,
+    wrap_scientific_plot_with_toolbar,
+    ScientificPlotRefined,
+    sanitize_xy_for_plot,
+    plot_widget_plot_finite,
+)
 from certus.ui.certus_ui_widgets_layout import CertusCollapsible, CertusSectionHeader, CertusStepper, CertusActionBar
 from certus.ui.certus_ui_widgets_progress import DualStageProgressWidget, EnhancedProgressWidget, ProgressDialog
 from certus.ui.certus_ui_widgets_welcome import WelcomeGuideWidget
 from certus.workers.certus_base_workers import WorkerSignals, GenericWorker, CertusWorkerBase
 from certus.ui.certus_base_app import CertusBaseApp, CertusAppLogsMixin, StatsCounter
 from certus.ui.certus_ui_widgets_factory import (
-    create_flashy_grid, create_log_widget, create_header_logo_widget,
-    create_styled_button, create_info_icon, create_help_button,
-    create_styled_label, create_colored_label, create_top_actions_bar
+    create_flashy_grid,
+    create_log_widget,
+    create_header_logo_widget,
+    create_styled_button,
+    create_info_icon,
+    create_help_button,
+    create_styled_label,
+    create_colored_label,
+    create_top_actions_bar,
 )
 from certus.ui.certus_ui_utils import (
-    set_certus_window_icon, apply_certus_theme, update_global_plot_config,
-    open_documentation, install_standard_shortcuts, enable_file_drop,
-    show_toast, show_status_feedback, attach_numeric_validator, get_export_settings,
-    open_file_explorer, process_log_queue_standard, init_certus_app,
-    setup_pyqtgraph_defaults, setup_gui_exception_handling, safe_ui_action,
-    confirm_stop_with_timeout, format_count_kmg, stop_worker_and_thread,
-    confirm_and_stop, copy_app_logs_to_clipboard, install_skeleton_loader,
-    remove_skeleton_loader, apply_os_window_effects
+    set_certus_window_icon,
+    apply_certus_theme,
+    update_global_plot_config,
+    open_documentation,
+    install_standard_shortcuts,
+    install_unique_shortcut,
+    claim_shortcut_for_action,
+    shortcut_owner,
+    normalized_shortcut,
+    enable_file_drop,
+    show_toast,
+    show_status_feedback,
+    attach_numeric_validator,
+    get_export_settings,
+    open_file_explorer,
+    process_log_queue_standard,
+    init_certus_app,
+    setup_pyqtgraph_defaults,
+    setup_gui_exception_handling,
+    safe_ui_action,
+    confirm_stop_with_timeout,
+    format_count_kmg,
+    stop_worker_and_thread,
+    confirm_and_stop,
+    copy_app_logs_to_clipboard,
+    install_skeleton_loader,
+    remove_skeleton_loader,
+    apply_os_window_effects,
 )
-
 
 
 _LAZY_REEXPORTS: dict[str, tuple[str, str]] = {
@@ -308,7 +349,6 @@ _LAZY_REEXPORTS: dict[str, tuple[str, str]] = {
     "DATA_FILE_FILTER": ("certus.ui.certus_io_ui", "DATA_FILE_FILTER"),
     "DATA_FILES_FILTER_EXTENDED": ("certus.ui.certus_io_ui", "DATA_FILES_FILTER_EXTENDED"),
     "CERTUS_UI_STRINGS": ("certus.ui.certus_io_ui", "CERTUS_UI_STRINGS"),
-
     "apply_certus_plot_style": ("certus.ui.certus_plot", "apply_certus_plot_style"),
     "apply_theme_to_plots": ("certus.ui.certus_plot", "apply_theme_to_plots"),
     "iter_plot_data_series": ("certus.utils.certus_export", "iter_plot_data_series"),
@@ -317,6 +357,7 @@ _LAZY_REEXPORTS: dict[str, tuple[str, str]] = {
     "copy_plot_to_clipboard_excel": ("certus.utils.certus_export", "copy_plot_to_clipboard_excel"),
     "attach_excel_clipboard_context_menu": ("certus.utils.certus_export", "attach_excel_clipboard_context_menu"),
 }
+
 
 def __getattr__(name: str):
     entry = _LAZY_REEXPORTS.get(name)
@@ -339,6 +380,7 @@ original_get_open_file_name = QFileDialog.getOpenFileName
 original_get_save_file_name = QFileDialog.getSaveFileName
 original_get_open_file_names = QFileDialog.getOpenFileNames
 
+
 def _get_filter_and_parent(*args, **kwargs) -> tuple[str | None, Any]:
     file_filter = kwargs.get("filter")
     if file_filter is None and len(args) > 3:
@@ -348,12 +390,14 @@ def _get_filter_and_parent(*args, **kwargs) -> tuple[str | None, Any]:
         parent = args[0]
     return file_filter, parent
 
+
 def secure_get_open_file_name(*args, **kwargs):
     path, sel_filter = original_get_open_file_name(*args, **kwargs)
     if path:
         file_filter, parent = _get_filter_and_parent(*args, **kwargs)
         from certus.utils.certus_validation import PathValidator
         from certus.ui.certus_io_ui import extract_extensions_from_filter
+
         allowed = extract_extensions_from_filter(file_filter)
         try:
             PathValidator.validate_path(path, allowed_extensions=allowed)
@@ -361,6 +405,7 @@ def secure_get_open_file_name(*args, **kwargs):
             QMessageBox.warning(parent, "Security Alert", f"Invalid File Selected:\n{e}")
             return "", ""
     return path, sel_filter
+
 
 def secure_get_save_file_name(*args, **kwargs):
     path, sel_filter = original_get_save_file_name(*args, **kwargs)
@@ -368,6 +413,7 @@ def secure_get_save_file_name(*args, **kwargs):
         file_filter, parent = _get_filter_and_parent(*args, **kwargs)
         from certus.utils.certus_validation import PathValidator
         from certus.ui.certus_io_ui import extract_extensions_from_filter
+
         allowed = extract_extensions_from_filter(file_filter)
         try:
             PathValidator.validate_path(path, allowed_extensions=allowed)
@@ -376,12 +422,14 @@ def secure_get_save_file_name(*args, **kwargs):
             return "", ""
     return path, sel_filter
 
+
 def secure_get_open_file_names(*args, **kwargs):
     paths, sel_filter = original_get_open_file_names(*args, **kwargs)
     if paths:
         file_filter, parent = _get_filter_and_parent(*args, **kwargs)
         from certus.utils.certus_validation import PathValidator
         from certus.ui.certus_io_ui import extract_extensions_from_filter
+
         allowed = extract_extensions_from_filter(file_filter)
         validated_paths = []
         for path in paths:
@@ -393,6 +441,7 @@ def secure_get_open_file_names(*args, **kwargs):
                 return [], ""
         return validated_paths, sel_filter
     return paths, sel_filter
+
 
 # Assign to static/class methods
 QFileDialog.getOpenFileName = secure_get_open_file_name

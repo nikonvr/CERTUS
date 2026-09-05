@@ -33,9 +33,10 @@ CERTUS-RE.py - Reverse Engineering & Drift Correction
 """
 
 from __future__ import annotations
-#Numba configuration BEFORE any import pulling @njit (see CERTUS_HUB.py).
-#Without this call, NUMBA_CACHE_DIR is not defined and the JIT cache is written next to it
-#sources, in the cloud synchronized folder -> repeated recompilations.
+
+# Numba configuration BEFORE any import pulling @njit (see CERTUS_HUB.py).
+# Without this call, NUMBA_CACHE_DIR is not defined and the JIT cache is written next to it
+# sources, in the cloud synchronized folder -> repeated recompilations.
 from certus.core.certus_core import configure_numba_env as _configure_numba_env
 
 _configure_numba_env()
@@ -287,13 +288,13 @@ calc_spectrum_full_exact = calc_spectrum_full_exact_wrapper
 from certus.ui.certus_re_ui import CertusREResultsDialog
 
 
-
 from certus.ui.certus_re_layout_mixin import CertusRELayoutMixin
 from certus.ui.certus_re_state_mixin import CertusREStateMixin
 from certus.ui.certus_re_table_mixin import CertusRETableMixin
 from certus.ui.certus_re_plot_mixin import CertusREPlotMixin
 from certus.ui.certus_re_excel_mixin import CertusREExcelMixin
 from certus.ui.certus_re_workers_mixin import CertusREWorkersMixin
+
 
 class CertusREApp(
     CertusRELayoutMixin,
@@ -450,13 +451,23 @@ class CertusREApp(
 
         self._load_defaults()
 
-    def _get_optim_wls(self) -> np.ndarray:
-        if self._re_targets and len(self._re_targets) > 0:
-            return self._re_targets[0].wls
-        return np.array([])
+        # RE does not call _finalize_init, so restore the persisted geometry /
+        # splitters explicitly. closeEvent already calls _qs_save: without this
+        # the preferences were written at every exit and never read back.
+        self._qs_restore()
 
-        # Warmup JIT
+        # This module skips _finalize_init, so the cross-cutting affordances it
+        # installs have to be requested explicitly: command palette, shortcuts
+        # overlay, Help menu, empty states and accessible names. Measured
+        # 2026-09-04: without this call the window had no Ctrl+K, no Help menu
+        # and not one input field with an accessible name.
+        self.install_common_affordances()
 
+        # Warmup JIT.
+        # These five lines used to sit AFTER the `return` of _get_optim_wls,
+        # i.e. they were unreachable: RE performed no JIT warmup at all and the
+        # status bar never showed the compiling message. The first evaluation
+        # paid the full Numba compilation instead.
         self.status_label.setText("Compiling JIT kernels...")
 
         self.warmup_worker = WarmupWorker()
@@ -464,6 +475,11 @@ class CertusREApp(
         self.warmup_worker.finished.connect(self._on_warmup_done)
 
         self.warmup_worker.start()
+
+    def _get_optim_wls(self) -> np.ndarray:
+        if self._re_targets and len(self._re_targets) > 0:
+            return self._re_targets[0].wls
+        return np.array([])
 
 
 def main():
@@ -478,8 +494,10 @@ def main():
         sys.exit(app.exec())
     except Exception as e:
         import traceback
+
         print(f"Exception during execution: {e}")
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     main()

@@ -194,6 +194,7 @@ def _build_toast_class():
             # Close button
             close_btn = QPushButton("✕", self)
             close_btn.setObjectName("toast-close")
+            close_btn.setToolTip("Dismiss notification")
             close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
             close_btn.setFixedSize(22, 22)
             close_btn.clicked.connect(self._dismiss)

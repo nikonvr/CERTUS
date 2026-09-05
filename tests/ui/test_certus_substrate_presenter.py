@@ -66,3 +66,37 @@ def test_substrate_presenter_headless_invalid_input():
     assert mock_view.stop_progress.called
     assert "Invalid input" in mock_view.stop_progress.call_args[0][0]
     assert not mock_view.display_results.called
+
+
+def test_substrate_index_gui_lifecycle_and_attributes(qapp):
+    """Guardrail for SubstrateIndexGUI lifecycle (filter attributes, proxy properties, preview)."""
+    from certus.ui.certus_substrate_ui import SubstrateIndexGUI
+
+    window = SubstrateIndexGUI()
+
+    # 1. Smoothing filter attributes
+    assert hasattr(window, "current_window")
+    assert hasattr(window, "current_poly")
+    assert hasattr(window, "current_heavy")
+    assert window.current_window == 15
+    assert window.current_poly == 2
+    assert window.current_heavy is False
+
+    # 2. Presenter proxy properties
+    assert hasattr(window, "last_run_manifest")
+    assert hasattr(window, "validation_status")
+    assert window.last_run_manifest is None
+    assert window.validation_status == "OK"
+
+    # 3. Preview plot doesn't crash on missing attributes
+    df = pd.DataFrame({
+        "Wavelength": [400.0, 450.0, 500.0, 550.0, 600.0, 650.0, 700.0],
+        "T 7157 sapphire_nu_2f": [90.0, 91.0, 92.0, 93.0, 93.5, 94.0, 94.5],
+    })
+    window.df = df
+    window.preview_plot()
+
+    # 4. _set_busy doesn't crash on missing attributes
+    window._set_busy(True)
+    window._set_busy(False)
+

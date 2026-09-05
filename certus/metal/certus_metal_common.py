@@ -32,7 +32,7 @@ import pyqtgraph as pg
 
 from scipy.optimize import OptimizeResult
 
-from PyQt6.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import QEvent, QObject, Qt, QThread, pyqtSignal, pyqtSlot
 
 from PyQt6.QtWidgets import (
     QComboBox,
@@ -1085,7 +1085,7 @@ class MetalBaseApp(CertusBaseApp):
         scroll_area.setWidgetResizable(True)
         scroll_area.setFrameShape(QScrollArea.Shape.NoFrame)
         scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        left_panel_outer.addWidget(scroll_area)
+        left_panel_outer.addWidget(scroll_area, 1)
 
         left_panel = QWidget()
         scroll_area.setWidget(left_panel)
@@ -1106,11 +1106,13 @@ class MetalBaseApp(CertusBaseApp):
         self.params_layout.setHorizontalSpacing(10)
         self.params_layout.setVerticalSpacing(10)
         self._setup_parameter_grid(self.params_layout)
+        self._install_parameter_grid_reflow()
 
         params_card = CertusCard("Parameters")
         params_card.body.setContentsMargins(10, 8, 10, 10)
         params_card.body.addWidget(self.params_widget)
         left_layout.addWidget(params_card)
+        left_layout.addStretch()
 
         actions_card = CertusCard("Actions")
         actions_card.body.setContentsMargins(10, 8, 10, 10)
@@ -1118,7 +1120,7 @@ class MetalBaseApp(CertusBaseApp):
         actions_layout.setContentsMargins(0, 0, 0, 0)
         self._create_action_buttons(actions_layout)
         actions_card.body.addLayout(actions_layout)
-        left_layout.addWidget(actions_card)
+        left_panel_outer.addWidget(actions_card, 0)
 
         self.main_splitter.addWidget(left_panel_widget)
 
@@ -1159,6 +1161,9 @@ class MetalBaseApp(CertusBaseApp):
         self.right_splitter.setSizes([900, 0])
         self.right_splitter.setCollapsible(0, False)
         self.main_splitter.addWidget(self.right_splitter)
+        # NO stretch factor here, deliberately: pinning the left panel makes it
+        # claim its full minimumSizeHint (442-453 px) at 1366x768, which costs
+        # 3 points of plot area. Measured 2026-09-04 against tests/ui/ux_baseline_1366.json.
         self.main_splitter.setSizes([440, 1080])
 
         self._create_status_bar()
@@ -1204,6 +1209,145 @@ class MetalBaseApp(CertusBaseApp):
         """Override to add param groups"""
 
         pass
+
+    def _install_parameter_grid_reflow(self) -> None:
+        """Stack the parameter cards in one column when the panel is too narrow.
+
+        The grid is built two cards wide (Physical | Material, Output | Live).
+        That fits the 554 px panel of a 1920 px window and does NOT fit the
+        384 px it gets at 1366x768. Measured 2026-09-04 at that size: the grid
+        demanded 469 px, so 143 px of METAL_SINGLE and 24 px of METAL_BILAYER
+        sat outside the viewport - and since the scroll area sets
+        ScrollBarAlwaysOff, nothing on screen said the content was there.
+
+        Re-adding the same widgets in one column costs vertical space, which the
+        panel already scrolls, and costs nothing horizontally.
+        """
+        # BILAYER nests its own QGridLayout inside params_layout via addLayout,
+        # so the cards are not direct children of params_layout. Take whichever
+        # grid actually holds them.
+        grid = self._find_parameter_grid(self.params_layout)
+        self._param_grid = grid
+        items = []
+        if grid is not None:
+            for i in range(grid.count()):
+                widget = grid.itemAt(i).widget()
+                if widget is not None:
+                    row, col, row_span, col_span = grid.getItemPosition(i)
+                    items.append((widget, row, col, row_span, col_span))
+        self._param_grid_items = items
+        self._param_grid_columns = 2
+        self._param_grid_two_col_min = 0
+        self._param_grid_reflowing = False
+        self.params_widget.installEventFilter(self)
+
+    @staticmethod
+    def _find_parameter_grid(layout, _depth: int = 0):
+        """The QGridLayout holding the parameter cards, however it was nested.
+
+        SINGLE adds the cards straight into params_layout. BILAYER builds its own
+        QGridLayout, wraps it in a bare QWidget and adds THAT, so the grid is a
+        child widget's layout rather than a sub-layout - searching only
+        sub-layouts found nothing and the reflow stayed inert.
+        """
+        from PyQt6.QtWidgets import QGridLayout
+
+        if layout is None or _depth > 4:
+            return None
+        if isinstance(layout, QGridLayout) and sum(
+            1 for i in range(layout.count()) if layout.itemAt(i).widget() is not None
+        ) >= 2:
+            return layout
+        for i in range(layout.count()):
+            item = layout.itemAt(i)
+            found = MetalBaseApp._find_parameter_grid(item.layout(), _depth + 1)
+            if found is not None:
+                return found
+            widget = item.widget()
+            if widget is not None:
+                found = MetalBaseApp._find_parameter_grid(widget.layout(), _depth + 1)
+                if found is not None:
+                    return found
+        return None
+
+    def _parameter_panel_overflow(self) -> int:
+        """How many pixels of the panel sit outside its viewport, if any."""
+        from PyQt6.QtWidgets import QScrollArea
+
+        node = self.params_widget.parentWidget()
+        while node is not None:
+            if isinstance(node, QScrollArea):
+                bar = node.horizontalScrollBar()
+                return int(bar.maximum()) if bar is not None else 0
+            node = node.parentWidget()
+        return 0
+
+    def _parameter_panel_viewport_width(self) -> int:
+        """Width the cards actually get, i.e. the scroll area's viewport."""
+        from PyQt6.QtWidgets import QScrollArea
+
+        node = self.params_widget.parentWidget()
+        while node is not None:
+            if isinstance(node, QScrollArea):
+                return node.viewport().width()
+            node = node.parentWidget()
+        return self.params_widget.width()
+
+    def eventFilter(self, obj, event) -> bool:
+        """Reflow the parameter grid when its own width changes."""
+        if obj is getattr(self, "params_widget", None) and event.type() == QEvent.Type.Resize:
+            self._reflow_parameter_grid()
+        return super().eventFilter(obj, event)
+
+    def _reflow_parameter_grid(self) -> None:
+        items = getattr(self, "_param_grid_items", None)
+        if not items or self._param_grid_reflowing:
+            return
+
+        # Remember what two columns actually demand; it is only observable while
+        # the grid IS in two columns.
+        grid = self._param_grid
+        if grid is None:
+            return
+
+        # Drive this from the overflow the panel ACTUALLY has, not from the
+        # grid's own minimum: on BILAYER the grid asks 350 px inside a 384 px
+        # viewport - it "fits" - while the card margins around it push the panel
+        # 24 px past the edge. The scrollbar's maximum is the only figure that
+        # accounts for every margin between the cards and the viewport.
+        viewport = self._parameter_panel_viewport_width()
+        overflow = self._parameter_panel_overflow()
+        if self._param_grid_columns == 2:
+            if overflow > 0:
+                # Remember the width at which two columns stopped fitting, so the
+                # way back is a measurement rather than a guessed threshold.
+                self._param_grid_two_col_min = viewport + overflow
+                wanted = 1
+            else:
+                wanted = 2
+        else:
+            needed = self._param_grid_two_col_min
+            wanted = 2 if (needed > 0 and viewport >= needed) else 1
+        if wanted == self._param_grid_columns:
+            return
+
+        self._param_grid_reflowing = True
+        try:
+            while grid.count():
+                grid.takeAt(0)
+            if wanted == 2:
+                for widget, row, col, row_span, col_span in items:
+                    grid.addWidget(widget, row, col, row_span, col_span)
+                grid.setColumnStretch(0, 1)
+                grid.setColumnStretch(1, 1)
+            else:
+                for index, (widget, *_position) in enumerate(items):
+                    grid.addWidget(widget, index, 0, 1, 1)
+                grid.setColumnStretch(0, 1)
+                grid.setColumnStretch(1, 0)
+            self._param_grid_columns = wanted
+        finally:
+            self._param_grid_reflowing = False
 
     def _setup_plots(self) -> None:
         """Override to add tabs"""

@@ -40,7 +40,7 @@ import pyqtgraph as pg
 
 from pyqtgraph.exporters import ImageExporter, SVGExporter
 
-from certus.ui.certus_ui import setup_pyqtgraph_defaults
+from certus.ui.certus_ui import setup_pyqtgraph_defaults, CertusScientificPlot
 
 # Conditional import of Svg for the logo
 

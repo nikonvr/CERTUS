@@ -129,7 +129,13 @@ class StrategySpectralPerformanceWindow(CertusWindowSpyMixin, QMainWindow):
             )
 
             self.plot_widget.setXRange(wl_min, wl_max)
-            self.plot_widget.setYRange(0, 1.0)
+
+            # Activation de l'échelle automatique sur les axes à la fin du tracé
+            try:
+                self.plot_widget.enableAutoRange(axis=pg.ViewBox.XYAxes, enable=True)
+                self.plot_widget.autoRange()
+            except Exception as auto_err:
+                logging.debug("autoRange skipped: %s", auto_err)
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             logging.error(f"Error plotting spectral performance: {e}")

@@ -1,22 +1,54 @@
 from __future__ import annotations
 from certus.ui.certus_strat_common import *
 from certus.ui.certus_ui import WelcomeGuideWidget, EnhancedProgressWidget
+from certus.ui.certus_strat_stack_progress_widget import CertusStratStackProgressWidget
+from certus.ui.certus_strat_monitor_ui import CertusStratGrowthWidget
+from certus.ui.certus_overview_tab import PLACEHOLDER, CertusKpiBanner
+
 
 class CertusStratLayoutMixin:
     def apply_default_layout(self) -> None:
+        """Give the plots ~71 % of the width, unless the user has a saved layout.
 
+        This used to force a flat 50/50 unconditionally, from a
+        ``QTimer.singleShot(0, ...)``, which both starved the scientific area
+        and overwrote whatever ``_qs_restore`` had put back. The left panel only
+        declares ``setMinimumWidth(280)``, so nothing required half the window.
+        """
         main_splitter = self.centralWidget()
 
-        if isinstance(main_splitter, QSplitter):
-            total_width = self.width()
+        if not isinstance(main_splitter, QSplitter):
+            return
 
-            main_splitter.setSizes([int(total_width / 2), int(total_width / 2)])
+        if getattr(self, "_layout_restored_from_settings", False):
+            return
+
+        # Left panel keeps its requested width, all surplus goes to the plots.
+        main_splitter.setStretchFactor(0, 0)
+        main_splitter.setStretchFactor(1, 1)
+
+        total_width = max(int(self.width()), main_splitter.count() * 200)
+        # Never ask for less than the panel can actually render, otherwise its
+        # controls are clipped: STRAT needs ~622 px where 29 % of 1920 is 556.
+        left_panel = main_splitter.widget(0)
+        sa = left_panel.findChild(QScrollArea) if left_panel is not None else None
+        cw = sa.widget() if sa is not None else None
+        cw_hint = (cw.sizeHint().width() + 16) if cw is not None else 0
+        floor = (
+            max(left_panel.minimumSizeHint().width(), left_panel.sizeHint().width(), cw_hint)
+            if left_panel is not None
+            else 0
+        )
+        left = max(int(total_width * 0.29), floor)
+        main_splitter.setSizes([left, total_width - left])
 
     def _apply_theme(self) -> None:
 
-        font = CertusTheme.get_font(9)
-
-        QApplication.instance().setFont(font)
+        # Applied to THIS window, not to QApplication: children inherit it, so the
+        # look is unchanged, but STRAT no longer resizes the fonts of every other
+        # CERTUS window sharing the process. It was the only module doing so, and
+        # it left the suite at 9 pt where the others use 10 pt.
+        self.setFont(CertusTheme.get_font(9))
 
         QApplication.instance().setStyle("Fusion")
 
@@ -149,16 +181,8 @@ class CertusStratLayoutMixin:
         controls_layout.addWidget(workflow_card)
 
         self.tabs = QTabWidget()
-
         self.tabs.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-
-        tabs_card = CertusCard("Controls")
-
-        tabs_card.body.setContentsMargins(0, 0, 0, 0)
-
-        tabs_card.body.addWidget(self.tabs)
-
-        controls_layout.addWidget(tabs_card)
+        controls_layout.addWidget(self.tabs)
 
         self._create_design_tab()
 
@@ -172,9 +196,25 @@ class CertusStratLayoutMixin:
         # donc qu'a un seul endroit.
         self._create_multigraine_tab()
 
-        self._create_why_certus_tab()
+        # "Why CERTUS?" marketing content moved out of scientific plot tabs (Option A)
 
         controls_layout.addStretch()
+
+        # 4. Pinned Actions Bar at bottom of Left Panel (Always visible across all tabs)
+        footer_card = CertusCard("Workflow Actions")
+        footer_card.body.setContentsMargins(10, 8, 10, 10)
+        fc_layout = QVBoxLayout()
+        fc_layout.setContentsMargins(0, 0, 0, 0)
+        fc_layout.setSpacing(6)
+
+        btn_row = QHBoxLayout()
+        btn_row.addWidget(self.run_full_btn, 3)
+        btn_row.addWidget(self.stop_step2_btn, 2)
+        fc_layout.addLayout(btn_row)
+        fc_layout.addWidget(self.clear_btn)
+
+        footer_card.body.addLayout(fc_layout)
+        left_panel_layout.addWidget(footer_card)
 
         right_splitter = QSplitter(Qt.Orientation.Vertical)
 
@@ -196,7 +236,35 @@ class CertusStratLayoutMixin:
 
         self.plot_stack.addWidget(self.main_plot_widget)
 
-        right_splitter.addWidget(self.plot_stack)
+        self.stack_progress_widget = CertusStratStackProgressWidget(self)
+
+        self.plot_stack.addWidget(self.stack_progress_widget)
+
+        self.phase_b_live_widget = CertusStratGrowthWidget(self)
+
+        self.plot_stack.addWidget(self.phase_b_live_widget)
+
+        # Permanent KPI strip above the plots. STRAT runs for 25 min to 2 h 39 and
+        # had nowhere to read the outcome at a glance; a banner beats a tab here
+        # because the plot area is a QStackedWidget, not a QTabWidget.
+        plots_with_kpi = QWidget()
+        plots_with_kpi_layout = QVBoxLayout(plots_with_kpi)
+        plots_with_kpi_layout.setContentsMargins(0, 0, 0, 0)
+        plots_with_kpi_layout.setSpacing(6)
+
+        self.kpi_banner = CertusKpiBanner(
+            [
+                ("score", "ROBUSTNESS SCORE"),
+                ("crash", "CRASH RATE"),
+                ("blocks", "BLOCKS"),
+                ("ranked", "STRATEGIES RANKED"),
+                ("status", "RUN STATUS"),
+            ]
+        )
+        plots_with_kpi_layout.addWidget(self.kpi_banner)
+        plots_with_kpi_layout.addWidget(self.plot_stack, 1)
+
+        right_splitter.addWidget(plots_with_kpi)
 
         log_widget = self._build_log_container()
 
@@ -211,9 +279,7 @@ class CertusStratLayoutMixin:
         self.status_bar.setSizeGripEnabled(False)
 
         self.zoom_label = QLabel("Zoom 100%")
-        self.zoom_label.setStyleSheet(
-            f"color: {CertusTheme.TEXT_SUB}; font-weight: 600; padding: 0 8px;"
-        )
+        self.zoom_label.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-weight: 600; padding: 0 8px;")
 
         self.toggle_details_btn = QPushButton("Show Details")
 
@@ -247,6 +313,9 @@ class CertusStratLayoutMixin:
         self.status_bar.addPermanentWidget(self.stats_label)
 
         self.progress_bar = EnhancedProgressWidget(main_label="STRAT Execution")
+        # Alias: every other module exposes its progress indicator as
+        # `progress_widget`. Shared code and audits can then find it everywhere.
+        self.progress_widget = self.progress_bar
         self.status_bar.addPermanentWidget(self.progress_bar)
 
         if getattr(self, "_log_panel", None):
@@ -266,9 +335,9 @@ class CertusStratLayoutMixin:
 
         materials_container = CertusCard("Material Refractive Indices")
 
-        materials_layout = QHBoxLayout()
+        materials_layout = QVBoxLayout()
 
-        materials_layout.setSpacing(10)
+        materials_layout.setSpacing(8)
 
         materials_layout.setContentsMargins(5, 12, 5, 5)
 
@@ -282,19 +351,19 @@ class CertusStratLayoutMixin:
 
         self._create_material_group(layout_l, "Low-Index (L)", "l", "L", _is_compact=True)
 
-        materials_layout.addLayout(layout_h, 1)
+        materials_layout.addLayout(layout_h)
 
-        materials_layout.addLayout(layout_l, 1)
+        materials_layout.addLayout(layout_l)
 
         self.design_layout.addWidget(materials_container)
 
         top_settings_widget = QWidget()
 
-        top_settings_layout = QHBoxLayout(top_settings_widget)
+        top_settings_layout = QVBoxLayout(top_settings_widget)
 
         top_settings_layout.setContentsMargins(0, 5, 0, 5)
 
-        top_settings_layout.setSpacing(10)
+        top_settings_layout.setSpacing(6)
 
         gb_sub = CertusCard("substrate_Base Wavelength")
 
@@ -385,7 +454,7 @@ class CertusStratLayoutMixin:
 
         cockpit_layout.setContentsMargins(5, 15, 5, 5)
 
-        cockpit_layout.setSpacing(80)
+        cockpit_layout.setSpacing(12)
 
         tools_widget = QWidget()
 
@@ -548,50 +617,40 @@ class CertusStratLayoutMixin:
         QApplication.restoreOverrideCursor()
 
         self.stop_step2_btn.setEnabled(False)
-
         self.stop_step2_btn.clicked.connect(self.request_stop_optimization)
-
-        tools_grid.addWidget(self.stop_step2_btn, 5, 1)
 
         self.run_full_btn = QPushButton(" RUN FULL WORKFLOW")
         self.run_full_btn.setObjectName(OBJ.FEATURED_BUTTON)
         self.run_full_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-
         self.run_full_btn.setFixedHeight(42)
-
         set_std_icon(self.run_full_btn, QStyle.StandardPixmap.SP_MediaPlay)
-
         self.run_full_btn.setToolTip(
             "Run the complete workflow in one click:\n"
             "Step 2 (DP Strategy Search) -> Step 3 (Monte Carlo Robustness Validation).\n"
             "Equivalent to pressing Step 2 then Step 3 sequentially."
         )
-
         self.run_full_btn.clicked.connect(functools.partial(self.run_workflow, 23))
 
-        tools_grid.addWidget(self.run_full_btn, 6, 0, 1, 2)
-
         # Clear / Reset button
-
         from certus.utils.certus_reset_framework import create_reset_button
 
         self.clear_btn = create_reset_button(self)
-
         self.clear_btn.setFixedHeight(32)
 
-        tools_grid.addWidget(self.clear_btn, 7, 0, 1, 2)
-
-        tools_grid.setRowStretch(8, 1)
+        tools_grid.setRowStretch(6, 1)
 
         cockpit_layout.addWidget(tools_widget)
 
         self.widgets["stack_table"] = ExcelTableWidget()
-
+        # Row order IS the layer order here: collect_params builds the stack
+        # string from row indices, and save_config persists them the same way.
+        # Sorting would run a different filter than the one on screen.
+        self.widgets["stack_table"].certus_lock_row_order()
         self.widgets["stack_table"].setColumnCount(3)
 
         self.widgets["stack_table"].setHorizontalHeaderLabels(["#", "Mat.", "Mult."])
 
-        self.widgets["stack_table"].setFixedWidth(200)
+        self.widgets["stack_table"].setFixedWidth(135)
 
         # Column header tooltips
 
@@ -600,8 +659,6 @@ class CertusStratLayoutMixin:
             1: "Material type: H (high-index) or L (low-index).",
             2: "Thickness multiplier relative to QWOT (lambda₀/4n). E.g. 1.0 = 1 QWOT, 0.5 = half-wave.",
         }
-
-
 
         for _col, _tip in _stack_col_tips.items():
             _item = self.widgets["stack_table"].horizontalHeaderItem(_col)
@@ -1178,7 +1235,8 @@ class CertusStratLayoutMixin:
 
         layout.setContentsMargins(4, 12, 4, 4)
 
-        radio_layout = QHBoxLayout()
+        radio_layout = QVBoxLayout()
+        radio_layout.setSpacing(4)
 
         self.widgets[f"{prefix}_type_custom"] = QRadioButton("Custom (Constant)")
 
@@ -1198,43 +1256,40 @@ class CertusStratLayoutMixin:
 
         radio_layout.addWidget(self.widgets[f"{prefix}_type_file"])
 
-        radio_layout.addStretch()
-
         layout.addLayout(radio_layout)
 
-        combined_layout = QHBoxLayout()
+        n_layout = QHBoxLayout()
 
         self.widgets[f"n{label}_r"] = QLineEdit()
-
         self.widgets[f"n{label}_r"].setPlaceholderText("e.g. 2.3")
-
         self.widgets[f"n{label}_r"].setFixedWidth(50)
-
         self.widgets[f"n{label}_r"].setToolTip(
             "Fixed real part of the refractive index n (constant, wavelength-independent).\n"
             "Active only in 'Custom' mode."
         )
 
-        combined_layout.addWidget(QLabel("n (real):"))
+        n_layout.addWidget(QLabel("n (real):"))
+        n_layout.addWidget(self.widgets[f"n{label}_r"])
+        n_layout.addStretch()
+        layout.addLayout(n_layout)
 
-        combined_layout.addWidget(self.widgets[f"n{label}_r"])
-
-        combined_layout.addSpacing(10)
+        file_layout = QHBoxLayout()
 
         self.widgets[f"{prefix}_material_file"] = QComboBox()
-
+        self.widgets[f"{prefix}_material_file"].setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
+        )
+        self.widgets[f"{prefix}_material_file"].setMinimumContentsLength(12)
         self.widgets[f"{prefix}_material_file"].addItems(self.material_list)
-
         self.widgets[f"{prefix}_material_file"].setToolTip(
             "Dispersive material file from the clues database (wavelength-dependent n & k).\n"
             "Active only in 'Dispersive (File)' mode."
         )
 
-        combined_layout.addWidget(QLabel("Material File:"))
+        file_layout.addWidget(QLabel("Material File:"))
+        file_layout.addWidget(self.widgets[f"{prefix}_material_file"], 1)
 
-        combined_layout.addWidget(self.widgets[f"{prefix}_material_file"], 1)
-
-        layout.addLayout(combined_layout)
+        layout.addLayout(file_layout)
 
         # Connect toggle signals to enable/disable widgets
 
@@ -1275,11 +1330,13 @@ class CertusStratLayoutMixin:
             w = self.widgets.get(key)
             raw = (w.text() if w is not None else "").strip()
             if not raw:
-                bad.append(label); continue
+                bad.append(label)
+                continue
             try:
                 val = float(raw)
             except ValueError:
-                bad.append(label); continue
+                bad.append(label)
+                continue
             (off if val == neutral else on).append(label)
         slit = self.widgets.get("monochromator_resolution_nm")
         slit_txt = (slit.text().strip() if slit is not None else "") or "?"
@@ -1291,14 +1348,13 @@ class CertusStratLayoutMixin:
         if bad:
             parts.append("ILLISIBLE : " + ", ".join(bad))
         self.machine_status.setText("   |   ".join(parts))
-        colour = CertusTheme.DANGER if bad else (
-            CertusTheme.SUCCESS if len(on) >= 5 else CertusTheme.WARNING)
+        colour = CertusTheme.DANGER if bad else (CertusTheme.SUCCESS if len(on) >= 5 else CertusTheme.WARNING)
         self.machine_status.setStyleSheet(
             f"QLabel {{ color: {colour}; font-family: monospace; padding: 6px; "
             f"border: 1px solid {colour}; border-radius: 4px; }}"
         )
 
-    def _create_line_edits(self, layout, items, columns=2) -> None:
+    def _create_line_edits(self, layout, items, columns=1) -> None:
 
         grid = QGridLayout()
 
@@ -1316,6 +1372,7 @@ class CertusStratLayoutMixin:
             lbl = QLabel(label_text)
 
             edit = QLineEdit()
+            edit.setMaximumWidth(70)
 
             self.widgets[key] = edit
 
@@ -1332,4 +1389,3 @@ class CertusStratLayoutMixin:
         """Return log widget for CertusBaseApp log processing."""
 
         return self.log_text
-

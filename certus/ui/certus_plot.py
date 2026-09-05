@@ -6,7 +6,17 @@ import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 import pyqtgraph.exporters
-from PyQt6.QtWidgets import QApplication, QWidget, QMenu, QMessageBox, QToolBar, QVBoxLayout, QFileDialog, QMainWindow, QToolButton
+from PyQt6.QtWidgets import (
+    QApplication,
+    QWidget,
+    QMenu,
+    QMessageBox,
+    QToolBar,
+    QVBoxLayout,
+    QFileDialog,
+    QMainWindow,
+    QToolButton,
+)
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtCore import Qt, QTimer
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
@@ -157,7 +167,11 @@ class CertusScientificPlot(pg.PlotWidget):
         self._copy_excel_shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
         self._copy_excel_shortcut.activated.connect(self._on_copy_excel_shortcut)
 
-        self._copy_pub_shortcut = QShortcut(QKeySequence("Ctrl+Shift+P"), self)
+        # Ctrl+Shift+B, not Ctrl+Shift+P: the latter is the suite-wide command
+        # palette (CertusBaseApp._finalize_init). Two shortcuts sharing one
+        # sequence make Qt emit activatedAmbiguously and run NEITHER, so while
+        # the focus sat inside a plot both the palette and this export were dead.
+        self._copy_pub_shortcut = QShortcut(QKeySequence("Ctrl+Shift+B"), self)
         self._copy_pub_shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
         self._copy_pub_shortcut.activated.connect(self._on_copy_publication_shortcut)
 
@@ -192,6 +206,17 @@ class CertusScientificPlot(pg.PlotWidget):
 
     def setXRange(self, *args, **kwargs) -> None:
         self._custom_setXRange(*args, **kwargs)
+
+    def mouseDoubleClickEvent(self, event) -> None:
+        """Double-clic gauche pour réinitialiser instantanément l'échelle (autoRange)."""
+        if event.button() == Qt.MouseButton.LeftButton:
+            try:
+                self.plotItem.autoRange()
+                event.accept()
+                return
+            except Exception:
+                pass
+        super().mouseDoubleClickEvent(event)
 
     def setYRange(self, *args, **kwargs) -> None:
         self._custom_setYRange(*args, **kwargs)
@@ -262,7 +287,7 @@ class CertusScientificPlot(pg.PlotWidget):
         act_copy = menu.addAction(CERTUS_UI_STRINGS["copy_excel_tsv"])
         act_copy.setToolTip("Ctrl+Shift+C - TSV for Excel")
         act_copy_pub = menu.addAction(CERTUS_UI_STRINGS["copy_pub_tsv"])
-        act_copy_pub.setToolTip("Ctrl+Shift+P - fixed-point TSV for publication tables")
+        act_copy_pub.setToolTip("Ctrl+Shift+B - fixed-point TSV for publication tables")
         menu.addSeparator()
         act_csv = menu.addAction("Export CSV")
         act_tsv = menu.addAction("Export TSV")
@@ -403,7 +428,7 @@ class CertusScientificPlot(pg.PlotWidget):
         self.plotItem.setXRange(0.0, 1.0, padding=padding)
         try:
             y_log = self.plotItem.ctrl.logYCheck.isChecked()
-        except NUMERICAL_FAULT_EXCEPTIONS :
+        except NUMERICAL_FAULT_EXCEPTIONS:
             y_log = False
         if y_log:
             self.plotItem.setYRange(1e-6, 1e-2, padding=padding)
@@ -438,7 +463,7 @@ class CertusScientificPlot(pg.PlotWidget):
             if callable(w):
                 return int(w())
             return int(w or 1)
-        except NUMERICAL_FAULT_EXCEPTIONS :
+        except NUMERICAL_FAULT_EXCEPTIONS:
             return 1
 
     def _y_snap_crosshair(self, x: float, y_mouse: float) -> float | None:
@@ -503,7 +528,7 @@ class CertusScientificPlot(pg.PlotWidget):
                                 padding: 6px 10px; 
                                 font-family: {font_family}; 
                                 font-size: 9pt;">
-                        {custom_text.replace(chr(10), '<br/>')}
+                        {custom_text.replace(chr(10), "<br/>")}
                     </div>
                     """
             else:
@@ -514,13 +539,15 @@ class CertusScientificPlot(pg.PlotWidget):
                         x_data, y_data = curve.getData()
                     else:
                         x_data, y_data = getattr(curve, "xData", None), getattr(curve, "yData", None)
-                    
+
                     if x_data is not None and y_data is not None and len(x_data) > 1:
                         y_val = self._interp_y_sorted_curve(x_data, y_data, x)
                         if y_val is not None:
                             unit = item.get("unit", "")
                             unit_str = f" {unit}" if unit else ""
-                            tracked_infos.append(f"<b>{item['name']}:</b> <span style='color: {primary_color}; font-weight: bold;'>{y_val:.4f}</span>{unit_str}")
+                            tracked_infos.append(
+                                f"<b>{item['name']}:</b> <span style='color: {primary_color}; font-weight: bold;'>{y_val:.4f}</span>{unit_str}"
+                            )
 
                 if not tracked_infos:
                     if y_show is not None:
@@ -551,7 +578,7 @@ class CertusScientificPlot(pg.PlotWidget):
                 yr = self.plotItem.vb.viewRange()[1]
                 x_lo, x_hi = float(xr[0]), float(xr[1])
                 y_lo, y_hi = float(yr[0]), float(yr[1])
-                
+
                 x_anchor = 1.15 if (x > x_lo + 0.75 * (x_hi - x_lo)) else -0.15
                 y_anchor = -0.15 if (label_y > y_lo + 0.75 * (y_hi - y_lo)) else 1.15
                 self.info_label.setAnchor((x_anchor, y_anchor))
@@ -585,6 +612,7 @@ class CertusScientificPlot(pg.PlotWidget):
                 logging.warning(f"add_curve: no finite points for {name}")
                 return None
             from PyQt6.QtGui import QPen
+
             if isinstance(color, QPen):
                 pen = color
             else:
@@ -643,7 +671,7 @@ class CertusScientificPlot(pg.PlotWidget):
                     curve.setData(x[:end], y[:end], pen=pen)
                     idx_state["i"] = i + 1
                     QTimer.singleShot(16, _step)
-                except (RuntimeError, AttributeError, ValueError, TypeError):
+                except RuntimeError, AttributeError, ValueError, TypeError:
                     pass
 
             QTimer.singleShot(0, _step)
@@ -719,7 +747,7 @@ class CertusScientificPlot(pg.PlotWidget):
         act_copy.triggered.connect(self._on_copy_excel_shortcut)
 
         act_copy_pub = menu.addAction(CERTUS_UI_STRINGS["copy_pub_tsv"])
-        act_copy_pub.setToolTip("Ctrl+Shift+P - fixed-point TSV for publication tables")
+        act_copy_pub.setToolTip("Ctrl+Shift+B - fixed-point TSV for publication tables")
         act_copy_pub.triggered.connect(self._on_copy_publication_shortcut)
 
         export_btn.setMenu(menu)

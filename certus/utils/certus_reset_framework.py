@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from PyQt6.QtCore import QRunnable, QThreadPool, pyqtSlot
-from PyQt6.QtWidgets import QMessageBox, QPlainTextEdit, QTextEdit, QPushButton
+from PyQt6.QtWidgets import QMessageBox, QPlainTextEdit, QTextEdit, QPushButton, QWidget
 
 from certus.utils.errors import NUMERICAL_FAULT_EXCEPTIONS
 
@@ -474,6 +474,11 @@ def create_reset_button(app_instance, use_app_reset: bool = False) -> "QPushButt
     Returns:
         QPushButton: Configured reset button
     """
+    if not isinstance(app_instance, QWidget):
+        raise TypeError(
+            f"app_instance must be a QWidget to host dialogs safely, got {type(app_instance).__name__}"
+        )
+
     from PyQt6.QtWidgets import QPushButton, QStyle
 
     # Create button

@@ -2,9 +2,11 @@ from __future__ import annotations
 from certus.ui.certus_design_common import *
 from certus.utils.certus_ux import OBJ
 
+
 class LayoutManager:
     def __init__(self, ui):
         self.ui = ui
+
     def _build_left_panel(self) -> QWidget:
         """Constructs left control panel"""
 
@@ -39,7 +41,9 @@ class LayoutManager:
 
         # 2. Action Bar (Shared)
 
-        action_bar = create_top_actions_bar(self.ui, self.ui.save_config, self.ui.load_config, self.ui.export_excel, self.ui.open_help)
+        action_bar = create_top_actions_bar(
+            self.ui, self.ui.save_config, self.ui.load_config, self.ui.export_excel, self.ui.open_help
+        )
 
         left_layout.addWidget(action_bar)
 
@@ -473,7 +477,9 @@ class LayoutManager:
 
         logger = getattr(self, "logger", None)
         if logger:
-            logger.info("DESIGN UI: building action buttons | has_functools=%s", bool(getattr(functools, "partial", None)))
+            logger.info(
+                "DESIGN UI: building action buttons | has_functools=%s", bool(getattr(functools, "partial", None))
+            )
 
         # Evaluate
 
@@ -593,7 +599,7 @@ class LayoutManager:
 
         from certus.utils.certus_reset_framework import create_reset_button
 
-        self.ui.clear_btn = create_reset_button(self, use_app_reset=True)
+        self.ui.clear_btn = create_reset_button(self.ui, use_app_reset=True)
 
         action_layout.addWidget(self.ui.clear_btn)
 
@@ -670,6 +676,27 @@ class LayoutManager:
 
         plot_container_layout.addWidget(self.ui.plot_tabs)
 
+        # Synthesis tab first: the operator must be able to validate a run at a
+        # glance instead of reading the plot title and the status bar. Same idea
+        # as the CERTUS-INDEX-SPLINE cockpit, shared through certus_overview_tab.
+        # Values are pushed by _refresh_synthesis_kpis (certus_design_ui_worker).
+        self.ui.kpi_banner = CertusKpiBanner(
+            [
+                ("rmse", "RMSE"),
+                ("layers", "LAYERS"),
+                ("thickness", "TOTAL THICKNESS"),
+                ("best", "BEST RMSE (SESSION)"),
+                ("status", "STATUS"),
+            ]
+        )
+        self.ui.plot_tabs.addTab(
+            build_synthesis_tab(
+                self.ui.kpi_banner,
+                "Design synthesis — the figures below refresh after every evaluation.",
+            ),
+            "✦ Synthesis",
+        )
+
         self.ui.plot_tabs.addTab(self.ui.spectrum_plot, "Spectrum (T)")
 
         self.ui.plot_tabs.addTab(self.ui.profile_plot, "Profile")
@@ -729,10 +756,15 @@ class LayoutManager:
         # Table Area
 
         bottom_splitter = QSplitter(Qt.Orientation.Horizontal)
+        # Exposed on the app: CertusBaseApp._qs_save / _qs_restore look this
+        # attribute up by name to persist the table area across sessions.
+        self.ui.bottom_splitter = bottom_splitter
 
         bottom_splitter.addWidget(self._build_front_table_widget())
 
         bottom_splitter.addWidget(self._build_target_table_widget())
+
+        bottom_splitter.setSizes([420, 380])
 
         right_splitter.addWidget(bottom_splitter)
 
@@ -860,8 +892,6 @@ class LayoutManager:
             "Open the Pareto Front window: trade-off between RMSE and number of layers N.\n"
             "Double-click a row to load the corresponding design."
         )
-
-
 
         self.ui.pareto_btn.clicked.connect(self.ui._show_pareto_window)
 
@@ -992,8 +1022,6 @@ class LayoutManager:
 
         self.ui.log_btn.clicked.connect(self.ui.toggle_logs)
 
-
-
         self.ui.status_bar.addWidget(self.ui.log_btn)
 
         self.ui.status_bar.addWidget(self.ui.status_label)
@@ -1004,4 +1032,3 @@ class LayoutManager:
         self.ui.status_bar.addPermanentWidget(self.ui.best_rmse_label)
 
         self.ui.status_bar.addPermanentWidget(self.ui.progress_widget)
-

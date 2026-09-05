@@ -15,7 +15,6 @@ from certus.ui.certus_strat_monitor_ui import LiveMonitorWindow
 from certus.ui.certus_strat_welcome_ui import WelcomeGuideWidget
 
 
-
 # =========================================================================================
 
 # [MONOLITHIC BLOCK] GUI CLASSES
@@ -25,14 +24,6 @@ from certus.ui.certus_strat_welcome_ui import WelcomeGuideWidget
 # =========================================================================================
 
 # === GUI CLASSES (RECONSTITUTION STYLE VERSION D) ===
-
-
-
-
-
-
-
-
 
 
 # QueueHandler and setup_gui_logger are imported from certus.ui.certus_ui
@@ -49,7 +40,17 @@ from certus.ui.certus_strat_ui_export import CertusStratExportMixin
 from certus.ui.certus_strat_multigraine_ui import CertusStratMultigraineMixin
 
 
-class CertusStratApp(CertusWindowSpyMixin, CertusStratLayoutMixin, CertusStratStateMixin, CertusStratEventsMixin, CertusStratWorkerMixin, CertusStratPlotMixin, CertusStratExportMixin, CertusStratMultigraineMixin, CertusBaseApp):
+class CertusStratApp(
+    CertusWindowSpyMixin,
+    CertusStratLayoutMixin,
+    CertusStratStateMixin,
+    CertusStratEventsMixin,
+    CertusStratWorkerMixin,
+    CertusStratPlotMixin,
+    CertusStratExportMixin,
+    CertusStratMultigraineMixin,
+    CertusBaseApp,
+):
     sig_numba_ready = pyqtSignal()
     sig_numba_error = pyqtSignal()
     """Main CERTUS-STRAT Application"""
@@ -156,97 +157,32 @@ class CertusStratApp(CertusWindowSpyMixin, CertusStratLayoutMixin, CertusStratSt
 
         self._warmup_numba()
 
+        # Global hotkeys (F5 run, Esc stop, Ctrl+S/Ctrl+O, drag & drop).
+        # They used to be installed only from _load_defaults(), which __init__
+        # never calls: a freshly opened STRAT answered to none of them.
+        self._init_global_shortcuts()
+
+        # STRAT does not call _finalize_init, so restore the persisted geometry
+        # explicitly. Must run BEFORE apply_default_layout, which checks the
+        # _layout_restored_from_settings flag that _qs_restore sets.
+        self._qs_restore()
+
+        # This module skips _finalize_init, so the cross-cutting affordances it
+        # installs have to be requested explicitly: command palette, shortcuts
+        # overlay, Help menu, empty states and accessible names. Measured
+        # 2026-09-04: without this call the window had no Ctrl+K, no Help menu
+        # and not one input field with an accessible name.
+        self.install_common_affordances()
+
         # Post-init setup
 
         QTimer.singleShot(100, lambda: self._init_undo_shortcut())
 
         QTimer.singleShot(0, self.apply_default_layout)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     # === OPTIMIZATION: Hashed & Async Plot Update ===
 
-
-
-
-
-
     # ===============================================
-
-
-
 
 
 # Backward-compatible alias kept for existing callers/tests.
@@ -281,7 +217,6 @@ if __name__ == "__main__":
     from certus.ui.certus_splash import create_splash
 
     splash = create_splash("Initializing CERTUS STRAT...")
-
 
     # ROBUST MATERIAL DATABASE FIX: canonical indices.xlsx in example/database_index
 
@@ -326,7 +261,7 @@ if __name__ == "__main__":
     try:
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("certus.strat.2.0")
 
-    except (OSError, AttributeError, ImportError):
+    except OSError, AttributeError, ImportError:
         # Windows-specific API, may fail on other platforms or if unavailable
 
         pass

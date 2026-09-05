@@ -7,7 +7,7 @@ class CoreManager:
     def _get_default_splitter_sizes(self) -> list[int]:
         """DESIGN specific splitter sizes."""
 
-        return [450, 1150]
+        return [500, 1400]
 
     def _get_substrate_info_display(self) -> tuple[str, str]:
         """Provides substrate-specific info for DESIGN."""

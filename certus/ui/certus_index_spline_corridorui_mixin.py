@@ -163,7 +163,12 @@ class CertusIndexSplineCorridorUIMixin:
 
         self._apply_corridor_preset_auto_robust()
         ctx_lay.addStretch(1)
-        self._add_context_page(ctx_w)
+        sa_ctx = QScrollArea()
+        sa_ctx.setWidgetResizable(True)
+        sa_ctx.setFrameShape(QFrame.Shape.NoFrame)
+        sa_ctx.setStyleSheet("background: transparent;")
+        sa_ctx.setWidget(ctx_w)
+        self._add_context_page(sa_ctx)
 
         return panel
 

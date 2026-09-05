@@ -820,6 +820,11 @@ class SubstrateIndexGUI(QMainWindow):
         self._last_loaded_measurement_path: str = ""
         self._last_quality_summary: str = "n/a"
 
+        # Spectral smoothing filter parameters (Savitzky-Golay)
+        self.current_window: int = 15
+        self.current_poly: int = 2
+        self.current_heavy: bool = False
+
         self._attach_ui_log_handler()
 
         self.settings = QSettings("SFL", "CERTUS_SUBSTRATE_INDEX")
@@ -827,6 +832,16 @@ class SubstrateIndexGUI(QMainWindow):
 
         self._setup_ui()
         self.resize(1100, 850)
+
+    @property
+    def last_run_manifest(self) -> dict | None:
+        """Presenter-backed manifest of the latest Sellmeier fit."""
+        return getattr(self.presenter, "last_run_manifest", None)
+
+    @property
+    def validation_status(self) -> str:
+        """Presenter-backed validation status string."""
+        return getattr(self.presenter, "validation_status", "OK")
 
     # --- View Interface Implementations ---
     def is_cancel_requested(self) -> bool:

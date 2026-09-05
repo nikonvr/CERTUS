@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_strat_common import *
+from certus.ui.certus_ui import CertusScientificPlot
 
 class TransmissionVsThicknessWindow(CertusWindowSpyMixin, QMainWindow):
     """Interactive analysis window: T(λ) vs cumulative thickness for a single strategy.
@@ -380,6 +381,16 @@ class TransmissionVsThicknessWindow(CertusWindowSpyMixin, QMainWindow):
                     txt_pct.setZValue(20)
 
                     self.p1.addItem(txt_pct)
+
+            # Activation de l'échelle automatique sur tous les axes à la fin du tracé
+            try:
+                self.p1.enableAutoRange(axis=pg.ViewBox.XYAxes, enable=True)
+                self.p1.autoRange()
+                if hasattr(self, "p2") and self.p2:
+                    self.p2.enableAutoRange(axis=pg.ViewBox.YAxis, enable=True)
+                    self.p2.autoRange()
+            except Exception as auto_err:
+                logging.getLogger("CERTUS").debug("autoRange skipped: %s", auto_err)
         except Exception as e:
             logging.getLogger("CERTUS").error(f"[STRAT-UI] Error drawing complete graph: {e}", exc_info=True)
 

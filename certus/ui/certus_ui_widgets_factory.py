@@ -348,6 +348,13 @@ def create_header_logo_widget(
 
         btn_help.setText("Help")
         btn_help.setToolTip(f"Open documentation for {module_name} (F1)")
+        # Window chrome must not hold the keyboard focus. Measured 2026-09-05:
+        # this button was the FIRST focusable widget of every window, so pressing
+        # Space on a freshly opened module opened the documentation, and the tab
+        # chain started here instead of at the first field. F1 and the mouse
+        # still reach it.
+        btn_help.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        btn_help.setProperty("certus_chrome", True)
 
         btn_help.setIcon(QApplication.style().standardIcon(QStyle.StandardPixmap.SP_MessageBoxQuestion))
 
@@ -450,6 +457,11 @@ def create_help_button(module_name: str) -> QToolButton:
 
     btn.setText("?")
 
+    # Chrome, like the "Help" button above: reachable by F1 and by the mouse,
+    # never by default focus.
+    btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+    btn.setProperty("certus_chrome", True)
+
     btn.setFixedSize(24, 24)
 
     btn.setStyleSheet(f"""
@@ -551,6 +563,13 @@ def create_top_actions_bar(
         btn.clicked.connect(func)
 
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        # Chrome, like the help button and the theme toggle. Measured 2026-09-05:
+        # once Help stopped taking the focus, it fell on THIS bar - 'Save' in
+        # DESIGN and FIELD, 'Export' in RE - so Space still fired an action the
+        # operator had not chosen. Ctrl+S / Ctrl+O / Ctrl+E and the mouse reach
+        # these; the tab chain should start at the first field instead.
+        btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        btn.setProperty("certus_chrome", True)
         btn.setMinimumWidth(60)
 
         btn.setStyleSheet(f"""

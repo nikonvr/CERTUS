@@ -243,8 +243,16 @@ def apply_accessibility_defaults(
                     touched += 1
                 except (AttributeError, RuntimeError, TypeError, ValueError):
                     pass
-            # Focus policy
+            # Focus policy. A control that asked for NoFocus ON PURPOSE says so
+            # with the certus_chrome property: help buttons, theme toggles and
+            # the Save/Load/Export bar. Without this exception, this pass undid
+            # step 2.23 - it restored the focus to the chrome, so Space on a
+            # freshly opened window still fired an action nobody chose. Two steps
+            # of the same plan pulling in opposite directions; measured
+            # 2026-09-05.
             try:
+                if bool(w.property("certus_chrome")):
+                    continue
                 if w.focusPolicy() == Qt.FocusPolicy.NoFocus:
                     w.setFocusPolicy(fp_target)
             except (AttributeError, RuntimeError, TypeError):

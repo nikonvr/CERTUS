@@ -162,6 +162,11 @@ class CertusThemeToggle(QPushButton):
 
         self.setFixedSize(32, 32)
 
+        # Chrome: the theme toggle sits second in the tab chain, right after the
+        # help button, and neither belongs before the operator's first field.
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.setProperty("certus_chrome", True)
+
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
         self.clicked.connect(self.toggle)

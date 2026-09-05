@@ -1072,7 +1072,10 @@ class CertusRELayoutMixin:
             # Not export=: that would ask for the taken Ctrl+E and warn at every
             # launch. Ctrl+Shift+E is the export here, and the F1 overlay derives
             # itself from the real bindings, so it shows that and not a promise.
-            extra={"Ctrl+L": self.toggle_logs, "Ctrl+Shift+E": self.export_excel},
+            # Ctrl+Z: RE owns the whole undo machinery (front_table,
+            # _get_front_stack, _add_front_row, _trigger_post_undo_action) and had
+            # no key to reach it. Measured 2026-09-05.
+            extra={"Ctrl+L": self.toggle_logs, "Ctrl+Shift+E": self.export_excel, "Ctrl+Z": self._undo},
         )
         self._zoom_factor = getattr(self, "_zoom_factor", 1.0)
         self._update_zoom_label(self._zoom_factor)

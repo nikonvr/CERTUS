@@ -714,6 +714,59 @@ implémenter est le comportement correct**, pas un travail à moitié fait.
 Garde-fou `tests/ui/test_ux_re_stop_when_idle.py`, **1 failed → 6 passed**, dont un test qui
 vérifie qu'une fenêtre **sans** sonde conserve bien son dialogue.
 
+### ✅ 2.13 — une seule garde neutralisait TOUTE la machinerie d'annulation de RE
+
+📏 Balayage des capacités, mesuré le 2026-09-05 :
+
+```
+module        undo_stack  undo_btn  front_table  _add_front_row  _get_front_stack  _undo
+RE                O          .           O             O               O            O
+DESIGN            O          O           O             O               O            O
+FIELD             O          .           .             O               O            O
+INDEX             O          .           .             O               O            O
+INDEX SPLINE      O          .           .             O               O            O
+METAL SINGLE      O          .           .             O               O            O
+```
+
+🔑 **Le discriminant réel est `front_table`, et lui seul** : `undo_stack`,
+`_get_front_stack`, `_add_front_row` et `_undo` sont hérités par **les six** et ne
+distinguent rien. Or `_save_undo_state` gardait sur `hasattr(self, "undo_btn")` — que seul
+DESIGN possède — donc RE, qui a **toute** la machinerie, n'empilait jamais rien : `Ctrl+Z`
+n'avait rien à dépiler.
+
+⚠️ **Le piège symétrique, que l'étape elle-même s'était trompée à recommander** : câbler
+`Ctrl+Z` sur FIELD lèverait `AttributeError` au premier appui, `_undo` rejouant à travers
+`self.front_table`. La garde porte donc sur `front_table`, le bouton devient facultatif, et le
+test vérifie **les deux sens**. `Ctrl+Z` est câblé sur RE. **2 failed → 4 passed.**
+La docstring de SPLINE qui promettait un `Ctrl+Z` inexistant dit maintenant la vérité.
+
+### ✅ 2.23 — `Espace` déclenchait une action dans TOUTES les fenêtres
+
+📏 Mesuré sur fenêtres réellement affichées : le focus initial était le bouton **Help**, dans
+tous les modules. Puis, à mesure que je retirais le chrome de la chaîne, la mesure a montré
+le défaut **se déplacer** au lieu de disparaître :
+
+```
+depart                     -> QToolButton 'Help'
+Help exclu                 -> QPushButton 'Save' / 'Export'   (la barre d'actions)
+barre d'actions exclue     -> QPushButton 'Capture'  (FIELD)
+focus pose sur un champ    -> QDoubleSpinBox '400.0' · QComboBox · QLineEdit '2.3'
+```
+
+🔴 **Et deux étapes du même plan se contredisaient.** `_apply_accessibility_defaults`, que le
+§2.18 a justement généralisé, **réécrivait `NoFocus` en focalisable** pour toute classe
+d'entrée : il défaisait le §2.23 à chaque ouverture. L'intention d'accessibilité est
+légitime — elle était simplement trop large. Le chrome porte désormais une propriété
+`certus_chrome`, et le balayage la respecte **sans cesser de poser les noms accessibles**.
+
+Le focus initial est déplacé sur le premier champ réel, **et seulement si un BOUTON le
+détient** : une fenêtre qui a placé son focus délibérément est laissée tranquille.
+**6 failed → 6 passed.**
+
+⚠️ *Mon premier critère de test était faux : il comparait des LIBELLÉS, et laissait donc
+passer une fenêtre focalisée sur « Capture ». Ce qui compte est le GENRE — `Espace` sur un
+bouton exécute, sur une zone de défilement fait défiler, dans un champ écrit.*
+
 ### 🟠 Et un piège de mesure trouvé au passage, sans rapport avec le tri
 
 📏 **597 fichiers `.pyc` du dépôt portent le chemin `D:\certus0309`**, qui **n'existe pas sur

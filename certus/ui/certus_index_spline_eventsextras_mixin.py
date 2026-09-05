@@ -436,7 +436,15 @@ class CertusIndexSplineEventsExtrasMixin:
             logger.debug("_update_persistent_nk_monitor failed", exc_info=True)
 
     def _save_undo_state(self) -> None:
-        """Store current state before computation in undo stack (Ctrl+Z via CertusBaseApp)."""
+        """Store current state before computation in undo stack.
+
+        NOT reachable by Ctrl+Z, whatever this docstring used to claim. SPLINE
+        owns no front_table, and CertusBaseApp._undo replays through it, so the
+        stack this fills has no consumer. Measured 2026-09-05: it is the only
+        module that WRITES an undo state and never reads one back. Either write
+        the consumer or drop the writer - but do not promise a key that does
+        nothing (step 2.13).
+        """
 
         if not hasattr(self, "undo_stack"):
             return

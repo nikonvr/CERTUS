@@ -602,6 +602,33 @@ class CertusBaseApp(
         except TypeError, RuntimeError:
             pass
 
+        # The keyboard must not open on an action. Measured 2026-09-05: every
+        # window opened with the focus on a button - "Help", then "Save" once
+        # Help was excluded, then FIELD's "Capture" - so Space fired something
+        # nobody had chosen. Deferred, because the tab order is only settled once
+        # the deferred layout timers have run.
+        QTimer.singleShot(0, self._focus_first_input)
+
+    def _focus_first_input(self) -> None:
+        """Move the focus off any button and onto the first real input.
+
+        Only acts when a BUTTON holds the focus: a window that placed the focus
+        deliberately, or that legitimately starts on a scroll area, is left
+        alone. Space on a scroll area scrolls; Space on a button runs something.
+        """
+        from PyQt6.QtWidgets import QAbstractButton, QAbstractSpinBox, QComboBox, QLineEdit
+
+        try:
+            focused = self.focusWidget()
+            if focused is not None and not isinstance(focused, QAbstractButton):
+                return
+            for candidate in self.findChildren((QLineEdit, QAbstractSpinBox, QComboBox)):
+                if candidate.isVisible() and candidate.isEnabled() and candidate.focusPolicy() != Qt.FocusPolicy.NoFocus:
+                    candidate.setFocus(Qt.FocusReason.OtherFocusReason)
+                    return
+        except RuntimeError, AttributeError, TypeError:  # pragma: no cover - window already gone
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+
     def _maybe_run_first_time_tour(self) -> None:
         """Best-effort: run the onboarding tour the first time only."""
         try:
@@ -1760,7 +1787,15 @@ class CertusBaseApp(
     def _save_undo_state(self, force: bool = False) -> None:
         """Saves current state for undo"""
 
-        if not hasattr(self, "undo_stack") or not hasattr(self, "undo_btn"):
+        # Guard on the CAPABILITY to replay, not on the presence of a button.
+        # Measured 2026-09-05: undo_stack, _get_front_stack, _add_front_row and
+        # _undo are inherited by ALL six modules, so none of them discriminates;
+        # front_table is owned only by RE and DESIGN. RE owns the entire undo
+        # machinery and this single `hasattr(self, "undo_btn")` neutralised it -
+        # nothing was ever pushed, so Ctrl+Z had nothing to pop. Conversely,
+        # pushing on FIELD or INDEX would build a stack whose replay raises on
+        # self.front_table at the first press.
+        if not hasattr(self, "undo_stack") or not hasattr(self, "front_table"):
             return
 
         stack = self._get_front_stack()
@@ -1768,7 +1803,10 @@ class CertusBaseApp(
         if stack or force:
             self.undo_stack.append(stack)
 
-            self.undo_btn.setEnabled(True)
+            # DESIGN is the only module with the button; the rest reach undo by
+            # keyboard alone.
+            if getattr(self, "undo_btn", None) is not None:
+                self.undo_btn.setEnabled(True)
 
             self.log(f"State saved (Undo stack: {len(self.undo_stack)})", "INFO")
 
@@ -1776,6 +1814,11 @@ class CertusBaseApp(
         """Undoes last action"""
 
         if not hasattr(self, "undo_stack") or not self.undo_stack:
+            return
+
+        # Same capability test as _save_undo_state: everything below addresses
+        # self.front_table, which four of the six modules do not own.
+        if not hasattr(self, "front_table"):
             return
 
         self.log("Undo...", "INFO")
@@ -1795,7 +1838,7 @@ class CertusBaseApp(
 
         self._update_layer_count()
 
-        if not self.undo_stack:
+        if not self.undo_stack and getattr(self, "undo_btn", None) is not None:
             self.undo_btn.setEnabled(False)
 
         self._trigger_post_undo_action()

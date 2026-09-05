@@ -182,9 +182,14 @@ courant ? »*
 **2. Sais-tu si committer PUBLIE ?**
 
 ```bat
-dir .git\hooks\post-commit*
+git config --get core.hooksPath
 git remote get-url origin
 ```
+
+🔴 **C'est `core.hooksPath` qu'il faut interroger, PAS `dir .git\hooks\`.** Ce document
+prescrivait le second pendant des semaines, et **il peut répondre « rien » alors que le hook
+est armé** : quand `core.hooksPath` pointe sur `.githooks`, git n'utilise plus `.git/hooks/`
+du tout. Une commande qui rassure à tort sur une publication est pire que pas de commande.
 
 👤 a demandé le **2026-08-14** que le push soit **armé**. Le hook vit dans
 **`.githooks/post-commit`**, qui **est versionné**, et il ne s'arme que par
@@ -393,7 +398,7 @@ moteur mathématique** : tout `$...$` y sort en texte brut.
 
 ```bat
 C:\envs\certus\Scripts\python.exe -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
-dir .git\hooks\post-commit*
+git config --get core.hooksPath
 ```
 
 - Le chemin affiché **doit** être dans le dépôt que tu as ouvert. 🔴 **Plusieurs copies de

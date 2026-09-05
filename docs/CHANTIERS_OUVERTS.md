@@ -146,5 +146,16 @@ déplacé tel quel.
   selon les modules, pas ×7-10. ⚠️ Les
   **temps absolus** datent d'avant le déménagement hors Google Drive ; les *rapports* restent
   utiles, les secondes non.
-- **Amélioration générale** — [`docs/PLAN_AMELIORATION.md`](PLAN_AMELIORATION.md) : dette
-  de lint, tests absents de la CI, six chantiers ordonnés.
+- **Amélioration générale** — [`docs/PLAN_AMELIORATION.md`](PLAN_AMELIORATION.md), document
+  de reprise du **2026-08-02**, en anglais. 🔴 **Audité le 2026-09-06, et il en reste moins
+  qu'annoncé** : sur les six constats de son lot A, **cinq sont clos dans le code** — graines
+  Sobol (le hash est en place), base spline (mise en cache), et la politique f32/c64 **mesurée
+  puis rétablie en double précision**, 1,1 % plus lente pour huit ordres de grandeur de
+  précision. **Ce qui reste ouvert** : le cycle `physics ↔ core`, l'oracle des gradients, la
+  CI, et l'hygiène d'imports F401/F403/F405 — **F822 et F821 sont à zéro depuis le
+  2026-08-19**, donc sa première étape n'a plus d'objet.
+  ⚠️ **Ne lis pas son §0 comme une consigne** : il recopiait des règles de `CLAUDE.md`, dont
+  le compte de la suite oracle *« 237 tests, ~2 s »* que le §16 documente comme **réfuté**
+  (563 en 89,72 s). Et ses trois « pièges » — hook de publication, `reports/` gitignoré,
+  `git gc` cassé — **sont faux tous les trois** sur ce snapshot, mesuré. Les annotations sont
+  posées dans le document.

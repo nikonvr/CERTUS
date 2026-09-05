@@ -222,21 +222,29 @@ def check_qwot_vs_tp(lines: list[str]) -> list[str]:
 #: le MEME FAIT etait enonce a plusieurs endroits. Corriger le SEEL du 99c a demande SEPT
 #: modifications a la main, et une avait ete oubliee.
 #:
-#: Le fichier est passe de 5413 a ~1780 lignes par extraction vers docs/. Ce controle existe
-#: pour que ca ne regonfle pas en silence : au-dela du plafond, on ARBITRE, on ne reporte pas.
-#: Un depassement n'est pas une faute morale -- c'est le signal qu'une section merite son
-#: propre dossier dans docs/, avec un renvoi ici.
-MAX_LIGNES = 2000
+#: Le fichier est passe de 5413 a ~1780 lignes par extraction vers docs/.
+#:
+#: 🔴 LE PLAFOND CHIFFRE EST RETIRE LE 2026-09-06, sur decision de 👤. Il valait 2000 lignes
+#: et faisait ECHOUER le controle au depassement. Ce que la cause racine designait n'a jamais
+#: ete la longueur : c'est que le MEME FAIT etait enonce a plusieurs endroits -- et CA, c'est
+#: coherence_md.py qui le mesure, sur les 25 .md a la fois. Un plafond de lignes est un proxy,
+#: et un proxy qui echoue force a extraire une section pour tenir un nombre, pas parce que la
+#: section merite son dossier.
+#:
+#: Le controle SUBSISTE en INFORMATIF : il rapporte la taille sans jamais compter comme une
+#: faute. Un fichier qui grossit reste un signal a lire -- il n'est plus un verdict.
+SEUIL_INFORMATIF = 2000
 
 
 def check_taille(lines: list[str]) -> list[str]:
-    """F -- le fichier tient-il dans son budget ?"""
+    """F -- rapporte la taille du fichier. INFORMATIF : ne compte jamais comme une faute."""
     n = len(lines)
-    if n <= MAX_LIGNES:
+    if n <= SEUIL_INFORMATIF:
         return []
     return [
-        f"CLAUDE.md fait {n} lignes, plafond {MAX_LIGNES}. Extrais une section vers docs/ "
-        f"et laisse un renvoi -- voir scripts/extraire_section.py."
+        f"CLAUDE.md fait {n} lignes (repere indicatif : {SEUIL_INFORMATIF}). Ce n'est PAS une "
+        f"erreur. Si une section merite son propre dossier, scripts/extraire_section.py le "
+        f"fait proprement -- mais extraire pour tenir un nombre n'ameliore rien."
     ]
 
 
@@ -248,7 +256,7 @@ def main() -> int:
         ("C. VALEURS DISCORDANTES", check_param_values(lines), True),
         ("D. NOMBRES RECOPIES (a relire, pas forcement faux)", check_dup_numbers(lines), False),
         ("E. CONFUSION QWOT / TURNING POINT", check_qwot_vs_tp(lines), True),
-        (f"F. BUDGET DE TAILLE (plafond {MAX_LIGNES} lignes)", check_taille(lines), True),
+        (f"F. TAILLE DU FICHIER (repere {SEUIL_INFORMATIF} lignes, INFORMATIF)", check_taille(lines), False),
     ]
     faults = 0
     for title, items, counts in blocks:

@@ -49,7 +49,7 @@ MODULES: dict[str, tuple[str, str]] = {
     "CERTUS_METAL_BILAYER": ("CERTUS_METAL_BILAYER", "CertusMetalBilayerApp"),
 }
 
-# Acceptance thresholds - see docs/TODO_UX_2026-09-03.md
+# Acceptance thresholds - see docs/GEMINI_UX_TOP1_2026-09-04.md
 PLOT_PCT_MIN = 65.0
 PLOT_PCT_MAX = 80.0
 BUTTON_MIN_W = 60  # px, for a button carrying a text label

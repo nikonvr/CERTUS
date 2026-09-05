@@ -108,11 +108,22 @@ d'appel », « 9 configurations ») · `reading_smoothing_window : 2` du « 2 s 
 deux lignes du même paramètre dans la table de §19, l'une prescrivant 8 et l'autre 1. **Ne le
 désarme pas ; sache seulement que son plancher est 5, pas 0.**
 
-`CLAUDE.md` est plafonné à **2 000 lignes**, contrôle F de `scripts/check_claude_md.py`. Un
-dépassement n'est pas une faute : c'est le signal qu'une section mérite son propre dossier.
-L'outil pour le faire proprement est `scripts/extraire_section.py` — il laisse un renvoi à la
-place et **refuse de résumer tout seul**, parce qu'un résumé mécanique dirait ce que la
-section *contient* et non ce qu'un agent doit en *retenir*.
+🔴 **`CLAUDE.md` N'EST PLUS PLAFONNÉ — la contrainte des 2 000 lignes est retirée le
+2026-09-06, sur décision de 👤.** Le contrôle F subsiste, mais **informatif** : il rapporte la
+taille et ne compte plus jamais comme une faute.
+
+🔑 **Pourquoi c'est cohérent avec ce qui a motivé le plafond.** La cause racine désignée en
+2026-08-16 n'a jamais été la longueur : c'était que **le même fait était énoncé à plusieurs
+endroits**. Or cela, c'est `coherence_md.py` qui le mesure — sur les 25 `.md` à la fois, et
+avec un contrôle négatif qui prouve qu'il mord. Un nombre de lignes n'en est qu'un **proxy**,
+et un proxy qui *échoue* pousse à extraire une section **pour tenir un chiffre**, pas parce
+qu'elle mérite son dossier.
+
+⚠️ **Ce qui ne change pas** : un fichier qui grossit reste un signal à lire, et la règle
+« un fait, un seul endroit » reste la vraie contrainte. Quand une section mérite vraiment son
+dossier, `scripts/extraire_section.py` le fait proprement — il laisse un renvoi à la place et
+**refuse de résumer tout seul**, parce qu'un résumé mécanique dirait ce que la section
+*contient* et non ce qu'un agent doit en *retenir*.
 
 ---
 
@@ -322,7 +333,8 @@ ailleurs — c'est la règle qui empêche les contradictions de revenir.
 | [`CHANTIER_MULTITEMOINS.md`](docs/CHANTIER_MULTITEMOINS.md) | multi-témoins, 12 sous-sections. ⚠️ **Ce renvoi le disait « le programme courant » — il ne l'est plus depuis le 2026-08-19.** Le chantier vivant est [`CHANTIER_RATE.md`](docs/CHANTIER_RATE.md) ; celui-ci est **acquis et consultable**, pas en cours |
 | [`CHANTIER_RATE.md`](docs/CHANTIER_RATE.md) | 🔑 **employer pleinement le Rate**, et mélanger POEM / niveau absolu / Rate. 📏 Son coût est une **pénalité de SEEL qui CROÎT avec la profondeur** — +1 % à 35 couches, +9 % à 48, +22 % à 75. ⚠️ Le « facteur 175 » d'une rédaction antérieure était un **paradoxe de Simpson**, retiré le 2026-08-19 |
 | **[`CHANTIER_PREDICTIBILITE.md`](docs/CHANTIER_PREDICTIBILITE.md)** | 🔵 **ouvert par 👤 le 2026-08-17** — *prédire sans tout calculer si un design passe avec un seul verre témoin*. 🔑 À retenir sans l'ouvrir : **le 99c n'est PAS une référence valable** (tout QWOT ⇒ adverse à POEM par construction, réponse plate à 100 % qui ne discrimine rien) · **la série d'échelle du random75 ×0,5/×1/×1,5/×2 est la seule expérience CONTRÔLÉE du projet** · **quatre routes y sont déjà fermées par la mesure** · 🔴 **`search_resolution` était neutralisé dans toute la campagne des intervalles alors que 👤 l'a posé comme prérequis** · 🔴 **le mode `extreme` n'améliore le SEEL sur AUCUNE des configurations testées** (§4quater-bis, matrice arrêtée le 2026-08-19 sur décision de 👤 ; `deep` seul fait mieux à un cinquième du coût) |
-| 🔴 **[`PLAN_PRODUCTION_2026-08-20.md`](docs/PLAN_PRODUCTION_2026-08-20.md)** | **LE PROGRAMME COURANT**, et il n'était cité nulle part dans ce fichier jusqu'au 2026-08-21. Ses **§15 à §24** portent tout ce qui est récent : le multiseed au criblage, l'injection de plans, la fermeture de la voie ELITE, la diversité en λ |
+| 🔴 **[`PLAN_PRODUCTION_2026-08-20.md`](docs/PLAN_PRODUCTION_2026-08-20.md)** | **LE PROGRAMME COURANT DU CALCUL.** Ses **§15 à §24** portent tout ce qui est récent : le multiseed au criblage, l'injection de plans, la fermeture de la voie ELITE, la diversité en λ |
+| 🔴 **[`GEMINI_UX_TOP1_2026-09-04.md`](docs/GEMINI_UX_TOP1_2026-09-04.md)** | **LE PROGRAMME COURANT DE L'INTERFACE**, ouvert le 2026-09-03. **Phases 0, 1 et 2 closes le 2026-09-05** (24 étapes sur 24) ; **3 à 6 entières**. Son **§0ter** porte tout ce qui est récent. 🔑 À retenir sans l'ouvrir : le périmètre de validation est **`tests/ui/ + tests/unit/`**, jamais `tests/ui/` seul — un test cassé a été publié pour l'avoir oublié · **cinq affirmations du plan ont été démenties par la mesure**, dont « SUBSTRATE INDEX est cassé » et « Clear/Reset ne fait rien » · ⚠️ son prédécesseur `TODO_UX_2026-09-03.md` a été **supprimé le 2026-09-06** — ses chiffres avaient été mesurés avec un harnais sans polices, faux jusqu'à 28 % ; `git log` le garde |
 | [`QWOT_ET_TURNING_POINT.md`](docs/QWOT_ET_TURNING_POINT.md) | 🔴 **obligatoire** avant d'écrire sur les points tournants |
 | [`FEUILLE_DE_ROUTE.md`](docs/FEUILLE_DE_ROUTE.md) | ce qui est acquis (A1→A25), ce qui est outillé |
 | [`TRAVAUX_A_VENIR.md`](docs/TRAVAUX_A_VENIR.md) | les chantiers du modèle physique, 12.1 à 12.7 |

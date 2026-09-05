@@ -1,13 +1,41 @@
 # ORDRE DE MISSION — porter les 10 modules CERTUS au premier centile mondial
 
 **Daté du 2026-09-04. Destiné à un exécutant contraint (Gemini).**
-**Auteur de l'audit : session Claude du 2026-09-03/04. Aucune ligne de code n'a été modifiée.**
+**Auteur de l'audit : session Claude du 2026-09-03/04.**
+⚠️ *L'en-tête disait « aucune ligne de code n'a été modifiée » : c'était vrai à la rédaction,
+et ça ne l'est plus depuis l'exécution des 2026-09-04 et 05.*
+
+---
+
+## 📊 OÙ EN EST CE PLAN — état au 2026-09-05
+
+| phase | état |
+|---|---|
+| **0 — réparer le juge** | ✅ **close**, son dernier correctif ouvert compris (le garde-fou hscroll testait `isVisible()` au lieu de `maximum() > 0`) |
+| **1 — poser le cliquet** | ✅ **close**, et les garde-fous sont **déterministes** : les deux tests de police mesuraient l'ordre d'exécution, le squelette déclarait « stable » une fenêtre bloquée en compilation |
+| **2 — défauts bloquants** | ✅ **24 étapes sur 24** |
+| **3 à 6** | 🔴 **entières** — système visuel, modules orphelins, ergonomie métier, finition |
+
+```
+tests/ui/ + tests/unit/   2897 passed, 16 skipped, 5 xfailed, 0 failed
+ruff check .              All checks passed!
+```
+
+🔴 **LE PÉRIMÈTRE DE VALIDATION EST `tests/ui/ + tests/unit/`, JAMAIS `tests/ui/` SEUL.** Une
+journée entière de validations a porté sur le périmètre restreint, et **un test cassé a été
+publié** sans que rien ne le signale.
+
+🔑 **Cinq affirmations de ce plan ont été démenties par la mesure**, et chacune est instruite
+au §0ter : §2.14 « SUBSTRATE INDEX est cassé » · §2.17 « Clear/Reset ne fait rien » · §2.8 ·
+§2.3 « six modules sous 65 % » · §0bis « le squelette a perdu du code ». **Lis le §0ter avant
+d'exécuter une étape** : plusieurs sont sans objet, et deux se contredisaient entre elles.
 
 ---
 
 ## ⚠️ LIS CECI EN PREMIER, C'EST LA RAISON D'ÊTRE DE CE DOCUMENT
 
-Une mission précédente — [`docs/TODO_UX_2026-09-03.md`](TODO_UX_2026-09-03.md) — a été
+Une mission précédente — `docs/TODO_UX_2026-09-03.md`, **supprimée le 2026-09-06, retrouvable
+dans `git log`** — avait été
 déclarée « MISSION ACCOMPLIE (T1 à T12 terminés) » avec un tableau de mesures à l'appui.
 
 🔴 **Ces mesures sont fausses, et elles le sont par construction.** Le harnais qui les a
@@ -38,7 +66,7 @@ offscreen + QT_QPA_FONTDIR         78 px    <- polices chargees, mais famille pa
 plateforme windows reelle         115 px    <- la verite
 ```
 
-**Conséquence : tu ne dois croire aucun chiffre de `TODO_UX_2026-09-03.md`, et tu ne dois
+**Conséquence : tu ne dois croire aucun chiffre de cette mission précédente, et tu ne dois
 lancer aucune mesure avant d'avoir réparé le juge.** C'est l'objet de la phase 0, et elle est
 non négociable.
 
@@ -1132,7 +1160,7 @@ censé être appliqué partout depuis T8.
 
 ## 3. LES SIX DÉFAUTS DU JUGE — à corriger avant de toucher à l'interface
 
-Chacun est mesuré. Chacun rend une conclusion de `TODO_UX_2026-09-03.md` inexploitable.
+Chacun est mesuré. Chacun rend une conclusion de la mission précédente inexploitable.
 
 | # | Défaut | Preuve | Ce que ça a faussé |
 |---|---|---|---|
@@ -1501,7 +1529,7 @@ python scripts/audit_ux_certus.py --json | python -c "import json,sys; r=json.lo
 **Attendu** : `font_resolved` vaut `True` pour les onze modules.
 
 **Risque de régression.** Les largeurs vont **toutes bouger** — c'est le but. Toute valeur de
-`TODO_UX_2026-09-03.md` devient caduque à cet instant. Ne compare rien à l'ancien.
+toute valeur de la mission précédente devient caduque à cet instant. Ne compare rien à l'ancien.
 ⚠️ `QT_QPA_FONTDIR` est un chemin Windows : si la CI tourne ailleurs, le contrôle du point 2
 doit lever plutôt que mesurer faux. **C'est voulu : mieux vaut pas de mesure qu'une fausse.**
 

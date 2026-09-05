@@ -1,19 +1,48 @@
-# 🔴 REPRENDRE ICI — état gelé le 2026-08-24 à 15:30
-
-> ⏳ **UN RUN TOURNE** : `bash scripts/enchainer_hysteresis.sh hysteresis_2026-08-24 404`,
-> lancé à **15:20**, fin vers **16:00**. Il tranche l'anomalie du §1ter — voir la fin du §0000.
-> 🔑 Il mesure des **taux de plantage**, pas des durées : travailler sur la machine pendant
-> qu'il tourne ne fausse **que son horloge**.
->
-> 🟢 `pytest tests/oracle/ tests/unit/` : **2949 passed, 5 skipped, 0 échec** (15:19).
-> `ruff` propre. `coherence_md.py` : **1 point**, le faux positif instruit.
->
-> ⚠️ **Rien n'est commité** — les mesures des 23 et 24/08, les quatre nouveaux scripts et
-> toutes les corrections de ce fichier vivent uniquement dans l'arbre de travail. Committer
-> **publie** (`core.hooksPath` armé sur `.githooks`, dépôt public) : décision de 👤.
+# 🔴 REPRENDRE ICI — état au 2026-09-05
 
 > Ce fichier dit **où on s'est arrêté** et **la commande exacte pour repartir**. Il est le
 > premier à lire, avant `CLAUDE.md`.
+
+## 🟢 LE CHANTIER COURANT EST L'ERGONOMIE, ET SES PHASES 0, 1 ET 2 SONT CLOSES
+
+📌 **Le dossier fait autorité : [`GEMINI_UX_TOP1_2026-09-04.md`](GEMINI_UX_TOP1_2026-09-04.md).**
+Son **§0ter** porte tout ce qui est récent ; les phases **3 à 6** restent entières.
+
+```
+tests/ui/ + tests/unit/   2897 passed, 16 skipped, 5 xfailed, 0 failed
+ruff check .              All checks passed!
+```
+
+🔴 **Le périmètre de validation est `tests/ui/ + tests/unit/`, pas `tests/ui/` seul.** Toutes
+les validations d'une journée ont porté sur un périmètre restreint, et **un test cassé a été
+publié** sans que rien ne le signale.
+
+🟢 **Tout est commité ET poussé** — onze commits, de `bdfe2f9` à `2b729eb`, sur
+`refactor-corridors-mixins`. ⚠️ **Deux choses restent volontairement hors de git** : les deux
+PDF `Selenium_Optical_Constants*.pdf` et `studies/` — l'étude sélénium, un travail séparé à
+commiter délibérément.
+
+⚠️ **CE FICHIER A LONGTEMPS AFFIRMÉ QUE COMMITTER PUBLIE. C'EST FAUX PAR DÉFAUT.** Le hook vit
+dans `.githooks/post-commit`, versionné, et ne s'arme que si `core.hooksPath` pointe dessus —
+une configuration **locale**, jamais héritée d'un clone ni d'une copie de snapshot. 📏 Mesuré
+le 2026-09-05 : `core.hooksPath` **non défini**, `.git/hooks/` ne contient que des `.sample`,
+et un commit est resté `[ahead 1]` jusqu'à un `git push` explicite. **Vérifie, ne suppose
+pas :**
+
+```bat
+git config --get core.hooksPath
+git status -sb
+```
+
+🔑 **Ce qui reste vrai et permanent : le dépôt est PUBLIC.** Que la publication vienne du hook
+ou d'un push à la main, rien de personnel, aucun secret, aucune œuvre de tiers ne doit entrer
+dans l'index.
+
+⚠️ **L'état de la campagne PHYSIQUE ci-dessous est gelé au 2026-08-24** et n'a pas bougé
+depuis : les runs qui y sont décrits comme « en vol » sont terminés depuis longtemps. Lis-le
+comme une archive, pas comme un état courant.
+
+---
 
 ---
 

@@ -3148,9 +3148,21 @@ python -m ruff check .
 **Attendu** : `All checks passed!`
 
 ```bash
-python -m pytest tests/ui/ tests/unit/test_gui_apps_smoke.py tests/unit/test_gui_apps_reset_lifecycle.py tests/unit/test_crash_watchdog.py tests/unit/test_example_json_integrity.py tests/unit/test_export_utf8_encoding_guardrail.py -q --no-cov
+C:\envs\certus\Scripts\python.exe -m pytest tests/ui/ tests/unit/ -q --no-cov
 ```
 **Attendu** : `0 failed`. **Le nombre de tests n'est pas un critère.**
+
+🔴 **CETTE COMMANDE SE CONTREDISAIT AVEC LE §0ter DU MÊME DOCUMENT, jusqu'au 2026-09-06.**
+Elle nommait `tests/ui/` plus **cinq fichiers** de `tests/unit/`, c'est-à-dire exactement le
+périmètre restreint que le §0ter interdit en rouge — *« LE PÉRIMÈTRE DE VALIDATION EST
+`tests/ui/ + tests/unit/`, JAMAIS `tests/ui/` SEUL »* — et qui a **publié un test cassé**
+dans `bdfe2f9`. La leçon était écrite dans le document ; **la commande que l'on exécute
+réellement, elle, ne l'avait pas suivie.** C'est le motif que ce dépôt paie sans cesse : *un
+fait corrigé à un endroit et pas à l'autre.*
+
+⚠️ **Compte le temps** : le périmètre complet dure **de 33 à 53 min** sur i5-8250U à cache
+chaud, contre ~4 min pour `tests/ui/` seule. Ce n'est pas une commande qu'on lance entre deux
+éditions — c'est celle qui décide qu'une phase est finie.
 
 ```bash
 python scripts/audit_ux_certus.py
@@ -3170,9 +3182,33 @@ python scripts/audit_ux_certus.py --width 1366 --height 768
 | fenêtres auditées en détail | 0 / 11 | **11 / 11** ✅ *fait* |
 | panneaux cachant du contenu derrière une barre horizontale | 2 (340 px, 444 px) | **0** |
 | modules sous 65 % de zone graphique à **1920** | 0 / 8 | **0** |
-| modules sous 65 % de zone graphique à **1366** | **6 / 8** | **0** |
+| modules sous 65 % de zone graphique à **1366** | **6 / 8** | 🔴 **1, pas 0 — voir ci-dessous** |
 | paires WCAG en échec, mode clair | 1 | **0** |
 | paires WCAG en échec, mode sombre | 2 | **0** |
+
+### 🔴 La cible « 0 à 1366 » est INATTEIGNABLE PAR REDIMENSIONNEMENT — ne la rechasse pas
+
+📏 Mesuré le 2026-09-05. **Sept modules sur huit passent la barre aux deux tailles.** Le
+dernier est STRAT, et l'expérience a été faite :
+
+```
+STRAT  1920x1080   panneau 556   graphes 1358   71,0 %
+STRAT  1366x768    panneau 549   graphes  811   59,6 %
+```
+
+**Plafonner son panneau à 450 px porte bien les graphes à 66,9 % — et pousse 93 px du contenu
+du panneau HORS DU VIEWPORT.** Ce sont des contrôles cachés, c'est-à-dire précisément ce que
+`test_ux_no_horizontal_scroll` existe pour interdire. **Des contrôles atteignables valent
+mieux qu'une zone graphique plus grande** : le plafond a été retiré, et l'état est consigné en
+`xfail(strict=True)` dans `tests/ui/test_ux_plot_area_share.py` — donc si quelqu'un y arrive
+un jour, **le test échouera pour le signaler**.
+
+🔑 **Ce qu'il faut pour atteindre 0 est une RÉORGANISATION du panneau STRAT, pas un
+redimensionnement.** Tant qu'elle n'est pas faite, la cible honnête est **1**.
+
+⚠️ **Défaut J3, découvert par cette tentative et resté ouvert** : `minimumSizeHint()`
+sous-estime le besoin — **446 px annoncés pour un contenu qui en veut ~543** — parce que la
+`QScrollArea` absorbe la largeur de son enfant et que l'indice ne voit pas à travers.
 | jetons sémantiques identiques en clair et en sombre | 8 | **0** |
 | modules demandant une police absente | 2 | **0** |
 | tailles de police distinctes codées en dur | 23 | **≤ 6** (l'échelle) |

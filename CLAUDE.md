@@ -320,7 +320,19 @@ nom contient `certus_core`).
 8 threads, 7,9 Go. La ligne précédente annonçait « 7 min » sans dire sur quoi. Ne compare
 jamais une durée sans sa machine — c'est ce qui a failli coûter une campagne le 2026-08-17.
 
-**4. Lis §29 et choisis UNE action. Une seule.**
+**4. Va à la CARTE DU §3, prends-y le programme courant, et choisis UNE action. Une seule.**
+
+🔴 **Cette étape disait « Lis §29 », et elle envoyait au mauvais endroit.** Le §29 est *le
+travail à venir sur le **modèle physique*** — un carnet de chantiers valides qui **n'est pas
+le programme courant**. Un agent neuf qui exécutait les quatre étapes de démarrage dans
+l'ordre atterrissait donc dans la file physique, pendant que la campagne réellement en cours
+était ailleurs. ⚠️ **C'est la cinquième fois que ce document retarde sur « quel est le
+programme courant »**, après la carte du §3, le titre du §23, la règle 4 du §11 et le
+vocabulaire du §14 — et le §34 énonce précisément la parade : *quel EST le programme courant
+se lit à **un seul endroit**, la carte du §3.* Trouvé le 2026-09-06.
+
+⚠️ **Et « une seule action » n'est pas une formule de style** : c'est l'erreur n° 3 du §5.
+Deux changements simultanés ne s'attribuent pas.
 
 ---
 

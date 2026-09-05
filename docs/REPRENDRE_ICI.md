@@ -1,4 +1,4 @@
-# 🔴 REPRENDRE ICI — état au 2026-09-05
+# 🔴 REPRENDRE ICI — état au 2026-09-06
 
 > Ce fichier dit **où on s'est arrêté** et **la commande exacte pour repartir**. Il est le
 > premier à lire, avant `CLAUDE.md`.
@@ -26,9 +26,21 @@ test. **Le seul critère qui survive est `0 failed`.**
 les validations d'une journée ont porté sur un périmètre restreint, et **un test cassé a été
 publié** sans que rien ne le signale.
 
-🟢 **Tout est commité ET poussé** — onze commits, de `bdfe2f9` à `2b729eb`, sur
-`refactor-corridors-mixins`. ⚠️ **Deux choses restent volontairement hors de git** : les deux
-PDF `Selenium_Optical_Constants*.pdf` et `studies/` — l'étude sélénium, un travail séparé à
+🟢 **Tout est commité ET poussé** sur `refactor-corridors-mixins`, la campagne partant de
+`bdfe2f9`. 🔴 **Aucun compte de commits n'est écrit ici — compte-le**, c'est la même règle que
+pour les tests trois lignes plus haut :
+
+```bat
+git log --oneline bdfe2f9~1..HEAD
+git status -sb
+```
+
+⚠️ *Cette ligne annonçait « onze commits, de `bdfe2f9` à `2b729eb` ». Il y en avait **quinze**
+le 2026-09-06, se terminant à `f7d2416` — le compte s'était périmé en un jour, dans le
+paragraphe même qui explique pourquoi les comptes se périment.*
+
+⚠️ **Deux choses restent volontairement hors de git** : les deux PDF
+`Selenium_Optical_Constants*.pdf` et `studies/` — l'étude sélénium, un travail séparé à
 commiter délibérément.
 
 ⚠️ **CE FICHIER A LONGTEMPS AFFIRMÉ QUE COMMITTER PUBLIE. C'EST FAUX PAR DÉFAUT.** Le hook vit

@@ -525,8 +525,11 @@ def install_standard_shortcuts(
         "toggle_logs": ("Ctrl+L", toggle_logs),
         # Zoom shortcuts are intentionally duplicated to match the behavior users
         # expect across Qt apps, browsers and pro desktop tools.
-        "zoom_in": ("Ctrl+Plus", zoom_in),
-        "zoom_out": ("Ctrl+Minus", zoom_out),
+        # NOT "Ctrl+Plus" / "Ctrl+Minus": QKeySequence resolves both to an EMPTY
+        # sequence on Qt 6, so those entries bound nothing at all. Zoom only
+        # worked through the alias_map below. Measured 2026-09-05.
+        "zoom_in": ("Ctrl++", zoom_in),
+        "zoom_out": ("Ctrl+-", zoom_out),
         "reset_zoom": ("Ctrl+0", reset_zoom),
     }
     installed: dict = {}
@@ -536,6 +539,19 @@ def install_standard_shortcuts(
         sc = install_unique_shortcut(window, seq, cb)
         if sc is not None:
             installed[f"{name}:{seq}"] = sc
+        else:
+            # install_unique_shortcut declines a sequence already claimed - on
+            # purpose, since binding one twice makes Qt emit activatedAmbiguously
+            # and run NEITHER handler. But declining in SILENCE is how RE lost
+            # its Excel export: it bound Ctrl+E to evaluate first, then asked for
+            # export on the same key and never learned that nothing happened.
+            logging.getLogger("CERTUS").warning(
+                "%s: shortcut %r requested for %r but already claimed by %s - not installed",
+                type(window).__name__,
+                seq,
+                name,
+                shortcut_owner(window, seq),
+            )
     # Also register legacy / platform-friendly variants so zoom feels native.
     alias_map = {
         "zoom_in": ("Ctrl++", "Ctrl+=", "Ctrl+Shift+=", "Ctrl+Equal"),

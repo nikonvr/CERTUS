@@ -1052,20 +1052,27 @@ class CertusRELayoutMixin:
     def _setup_shortcuts(self):
         """Configures keyboard shortcuts"""
 
+        # RE reads Ctrl+E as "evaluate", like DESIGN, and that predates the
+        # suite-wide map where Ctrl+E means "export". Asking for export= as well
+        # did NOT produce a second binding: install_unique_shortcut declines a
+        # sequence already claimed, and used to decline in silence, so the Excel
+        # export simply had no keyboard access. Measured 2026-09-05.
         QShortcut(QKeySequence("Ctrl+E"), self, lambda: self._schedule_eval(True))
 
         install_standard_shortcuts(
             self,
             save=getattr(self, "save_config", None),
             load=getattr(self, "load_config", None),
-            export=self.export_excel,
             run=self.run_eval,
             stop=self.stop_optim,
             help=self.open_help,
             zoom_in=getattr(self, "zoom_in_ui", None),
             zoom_out=getattr(self, "zoom_out_ui", None),
             reset_zoom=getattr(self, "reset_ui_zoom", None),
-            extra={"Ctrl+L": self.toggle_logs},
+            # Not export=: that would ask for the taken Ctrl+E and warn at every
+            # launch. Ctrl+Shift+E is the export here, and the F1 overlay derives
+            # itself from the real bindings, so it shows that and not a promise.
+            extra={"Ctrl+L": self.toggle_logs, "Ctrl+Shift+E": self.export_excel},
         )
         self._zoom_factor = getattr(self, "_zoom_factor", 1.0)
         self._update_zoom_label(self._zoom_factor)

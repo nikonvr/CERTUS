@@ -521,6 +521,31 @@ processus qui meurt. La garde ne consulte donc plus que les inscriptions du
 test d'ergonomie : `tests/unit/test_gui_apps_smoke.py`, qui se contente d'ouvrir et de fermer
 les fenêtres.
 
+### ✅ 2.20 (d) — l'export de RE n'avait AUCUN accès clavier, et rien ne le disait
+
+`install_standard_shortcuts` définit la convention de la suite : `"export" → Ctrl+E`. Or RE
+lie `Ctrl+E` à *évaluer* **avant** l'appel, puis demande `export=self.export_excel`.
+`install_unique_shortcut` **décline une séquence déjà prise** — à raison : lier deux fois la
+même fait émettre `activatedAmbiguously` à Qt, qui n'exécute **ni l'un ni l'autre**. Mais il
+déclinait **en silence**, donc l'export Excel de RE n'était joignable par aucune touche.
+
+🔑 **Le correctif qui compte n'est pas le déplacement, c'est la fin du silence.** Un binding
+demandé et non installé produit désormais un avertissement nommant la séquence, l'action, et
+**qui détient déjà la touche**. L'export de RE passe sur `Ctrl+Shift+E`, et le §2.20(e) fait
+que l'aide affiche cette touche-là et non une promesse.
+
+🔴 **ET LE MÊME FICHIER PORTAIT LA SÉQUENCE MORTE DU (f), UTILISÉE COMME VRAI BINDING.** La
+table principale déclarait `"zoom_in": ("Ctrl+Plus", …)` et `"zoom_out": ("Ctrl+Minus", …)` —
+les deux séquences que Qt 6 résout à **vide**. Ces entrées ne liaient donc **rien** ; le zoom
+ne fonctionnait que par l'`alias_map` posée dix lignes plus bas, qui installe `Ctrl++` et
+`Ctrl+-`. Corrigées à la source. Garde-fou `tests/ui/test_ux_standard_shortcuts.py`,
+**3 failed → 3 passed**, dont un contrôle qui balaie **toute** la table et refuse n'importe
+quelle séquence non résoluble.
+
+⚠️ *Mon premier test échouait pour une mauvaise raison : il lisait `record.message`, qui
+contient le gabarit `"%s … %r"` et non le texte interpolé — le journal formate paresseusement.
+`getMessage()` corrige. C'était mon test qui avait tort, pas le code.*
+
 ### 🟠 Et un piège de mesure trouvé au passage, sans rapport avec le tri
 
 📏 **597 fichiers `.pyc` du dépôt portent le chemin `D:\certus0309`**, qui **n'existe pas sur

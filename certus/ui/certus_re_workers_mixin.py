@@ -561,6 +561,18 @@ class CertusREWorkersMixin:
     def stop_optim(self):
         """Stop spectral evaluation or the RE worker."""
 
+        # Ask nothing when there is nothing to stop. Esc is bound to stop in every
+        # module and it is a reflex key, so pressing it on an idle window opened a
+        # box counting down the interruption of nothing, and then answering
+        # itself. The information was already here: three lines below, this
+        # function computes the same test - it was simply used too late.
+        # BOTH workers, because stop_optim stops both: gating on _re_worker alone
+        # would have made a running evaluation unstoppable.
+        _rw = getattr(self, "_re_worker", None)
+        _ev = getattr(self, "eval_worker", None)
+        if not ((_rw is not None and _rw.isRunning()) or (_ev is not None and _ev.isRunning())):
+            return
+
         if not confirm_stop_with_timeout(self):
             return
 

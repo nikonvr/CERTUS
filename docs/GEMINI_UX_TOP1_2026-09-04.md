@@ -683,6 +683,37 @@ hauteur** — `btn_short` reste à 0. Je n'ai pas touché au seuil du harnais po
 chiffre : ce serait « corriger en remontant le seuil », ce que le §0.5 interdit. Le chiffre est
 consigné pour ce qu'il est.
 
+### ✅ 2.12 — la boîte d'arrêt s'ouvrait alors que rien ne tournait
+
+Les points **2 et 3** de l'étape (habillage en question, faute *« to continuous
+optimization »*) étaient déjà éteints par la réécriture du dialogue d'arrêt. Restait le **1**.
+
+`stop_optim()` commençait par `if not confirm_stop_with_timeout(self)` **avant tout test
+d'exécution**. `Esc` étant lié à l'arrêt et étant une touche réflexe, une pression sur une
+fenêtre au repos ouvrait une boîte qui décomptait l'interruption de **rien**, puis se
+répondait toute seule. 🔑 **L'information était déjà dans la fonction** : trois lignes plus
+bas elle calcule `re_was_running`. Elle était simplement utilisée trop tard.
+
+⚠️ **Et RE pilote DEUX workers** — `_re_worker` et `eval_worker`, tous deux arrêtés par cette
+méthode. Une garde posée sur le seul `_re_worker` aurait rendu **une évaluation en cours
+inarrêtable**, ce qui est pire que le défaut corrigé. Le garde-fou teste donc les deux sens,
+pour chacun des deux workers.
+
+🔑 **Pour les quatre autres modules, j'ai choisi un point d'accroche OPT-IN plutôt que quatre
+gardes sur mesure.** `confirm_stop_with_timeout` consulte `has_running_computation()` et ne se
+tait que sur un **`False` explicite** : une fenêtre qui ne l'implémente pas, ou qui ne peut pas
+répondre avec certitude, **garde son dialogue**. La raison est une asymétrie de risque — une
+garde qui déborde rend un calcul **inarrêtable**, et l'opérateur perd le contrôle de sa
+machine.
+
+**Implémenté pour STRAT seulement**, parce que `_active_worker_threads` est par construction
+le registre complet. ⚠️ **Pas pour METAL, INDEX ni DESIGN** : METAL parle de *« optimization
+**and beam analysis** workers »* et INDEX nomme son premier arrêt `ok_main`, deux indices d'un
+second fil que je n'ai pas énuméré. **Tant que je ne peux pas les énumérer tous, ne pas
+implémenter est le comportement correct**, pas un travail à moitié fait.
+Garde-fou `tests/ui/test_ux_re_stop_when_idle.py`, **1 failed → 6 passed**, dont un test qui
+vérifie qu'une fenêtre **sans** sonde conserve bien son dialogue.
+
 ### 🟠 Et un piège de mesure trouvé au passage, sans rapport avec le tri
 
 📏 **597 fichiers `.pyc` du dépôt portent le chemin `D:\certus0309`**, qui **n'existe pas sur

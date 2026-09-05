@@ -1118,6 +1118,22 @@ def confirm_stop_with_timeout(parent, timeout_sec=10) -> bool:
 
     """
 
+    # Ask nothing when the window says nothing is running. Esc is bound to stop
+    # in every module and it is a reflex key: on an idle window this used to open
+    # a box counting down the interruption of nothing, then answer itself.
+    #
+    # OPT-IN on purpose. A window that does not implement the probe, or that
+    # cannot answer for sure, keeps the dialog: an over-reaching guard would make
+    # a RUNNING computation unstoppable, which is worse than the defect. Only an
+    # explicit False silences it.
+    probe = getattr(parent, "has_running_computation", None)
+    if callable(probe):
+        try:
+            if probe() is False:
+                return False
+        except RuntimeError, AttributeError, TypeError:
+            logging.getLogger("CERTUS").debug("has_running_computation failed", exc_info=True)
+
     msg = QMessageBox(parent)
 
     msg.setWindowTitle("Stop Confirmation")

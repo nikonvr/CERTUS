@@ -238,6 +238,18 @@ class CertusStratWorkerMixin:
             if worker is not None and not self._thread_is_running_safe(worker):
                 self.worker = None
 
+    def has_running_computation(self) -> bool:
+        """Whether a STRAT computation is under way, for the stop dialog.
+
+        _active_worker_threads is the complete registry by construction - every
+        worker thread is appended to it when started - so this can answer with
+        certainty, which is what confirm_stop_with_timeout requires before it
+        agrees to stay silent. A window that cannot answer for sure must not
+        implement this: an over-reaching guard would make a running computation
+        unstoppable.
+        """
+        return any(self._thread_is_running_safe(t) for t in getattr(self, "_active_worker_threads", []))
+
     def _thread_is_running_safe(self, candidate: QThread | None) -> bool:
         if candidate is None:
             return False

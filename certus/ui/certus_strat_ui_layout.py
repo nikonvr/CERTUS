@@ -42,6 +42,18 @@ class CertusStratLayoutMixin:
         left = max(int(total_width * 0.29), floor)
         main_splitter.setSizes([left, total_width - left])
 
+        # NOT capped to reach the 65 % plot target at 1366x768, and the reason is
+        # measured. Capping the panel at 450 px did lift the plots from 59.6 % to
+        # 66.9 %, and it pushed 93 px of the panel's own content out of the
+        # viewport - hidden controls, which the horizontal-scroll guard exists to
+        # forbid. Trading reachable controls for plot area is the wrong way round.
+        #
+        # It also shows minimumSizeHint() understating the need: it answers
+        # 446 px while the content really wants ~543. That is defect J3 - the
+        # QScrollArea absorbs its child's width, so the hint cannot see through
+        # it. STRAT reaching 65 % at 1366 requires REORGANISING this panel, not
+        # resizing it. Measured 2026-09-05.
+
     def _apply_theme(self) -> None:
 
         # Applied to THIS window, not to QApplication: children inherit it, so the

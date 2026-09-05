@@ -822,6 +822,46 @@ remontée par `self.window()`. Garde-fou `tests/ui/test_ux_destructive_confirmat
 contenterait de constater l'ouverture du dialogue passerait sur un dialogue dont la réponse
 est ignorée.
 
+### ✅ 2.16 volet vertical — les deux constats sont RÉSOLUS, et verrouillés
+
+📏 Mesuré le 2026-09-05 à 1366×768 :
+
+```
+BILAYER   Run  y=584  bas=628  hors ecran=0 px   champs 15/15 peints
+SINGLE    Run  y=584  bas=628  hors ecran=0 px   champs 10/10 peints
+```
+
+L'étape annonçait le bouton **469 px sous le bas de la fenêtre** et **13 champs sur 15
+invisibles** sur BILAYER. Les deux ont disparu — le premier parce que la carte « Actions » est
+posée **hors** de la zone de défilement, le second avec le reflux du volet horizontal.
+Garde-fou `tests/ui/test_ux_metal_reachability.py`, **4 passed**, à 1366 explicitement : à
+1920 aucun des deux défauts n'apparaît, ce qui est le défaut J4 en action.
+
+### 🟠 2.3 — sept modules sur huit, et le huitième est un ARBITRAGE assumé
+
+Garde-fou neuf sur **les huit modules × les deux résolutions**, seuil lu dans le harnais
+(`PLOT_PCT_MIN`) plutôt que recopié : **16 cas, 15 passent.**
+
+🔴 **STRAT à 1366 ne passe pas, et j'ai annulé ma propre correction.** Le plancher de largeur
+vient de `sizeHint()` — la largeur **préférée** (549 px) — au lieu de `minimumSizeHint()`
+(446). Le plafonner à 450 px **a bien** porté le graphe de 59,6 % à 66,9 %… et poussé **93 px
+du panneau hors du viewport** :
+
+```
+avant plafond : plot 59.6 %   panel_hscroll_px = 0
+apres plafond : plot 66.9 %   panel_hscroll_px = 93   [PIRE]
+```
+
+🔑 **Des contrôles cachés valent moins qu'un graphe plus petit** — c'est exactement ce que le
+garde-fou hscroll existe pour interdire, et je l'aurais contourné par une autre porte.
+Revenu en arrière, la limite est consignée en `xfail(strict=True)` : elle ne peut ni être
+oubliée, ni se « réparer » en silence.
+
+⚠️ **Et la tentative a exposé autre chose** : `minimumSizeHint()` répond **446 px** pour un
+contenu qui en veut **~543**. C'est le défaut **J3** — le `QScrollArea` absorbe la largeur de
+son enfant, donc l'indice ne voit pas à travers. **STRAT atteindra 65 % à 1366 en
+RÉORGANISANT son panneau, pas en le redimensionnant.**
+
 ### 🟠 Et un piège de mesure trouvé au passage, sans rapport avec le tri
 
 📏 **597 fichiers `.pyc` du dépôt portent le chemin `D:\certus0309`**, qui **n'existe pas sur

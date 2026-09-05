@@ -2,7 +2,7 @@
   {
     "app": "CERTUS_HUB",
     "skeleton_stable": true,
-    "skeleton_settle_s": 3.08,
+    "skeleton_settle_s": 3.01,
     "skeleton_confirm_delta": 0,
     "window": "1920x1080",
     "qpa_platform": "offscreen",
@@ -221,7 +221,7 @@
   {
     "app": "CERTUS_STRAT",
     "skeleton_stable": true,
-    "skeleton_settle_s": 3.06,
+    "skeleton_settle_s": 3.05,
     "skeleton_confirm_delta": 0,
     "window": "1920x1080",
     "qpa_platform": "offscreen",
@@ -299,7 +299,7 @@
   {
     "app": "CERTUS_RE",
     "skeleton_stable": true,
-    "skeleton_settle_s": 3.02,
+    "skeleton_settle_s": 3.05,
     "skeleton_confirm_delta": 0,
     "window": "1920x1080",
     "qpa_platform": "offscreen",
@@ -329,9 +329,9 @@
     "n_tables": 2,
     "tables_sortable": 0,
     "tables_resizable": 0,
-    "n_shortcuts": 19,
+    "n_shortcuts": 20,
     "missing_vital_keys": [],
-    "has_undo_key": false,
+    "has_undo_key": true,
     "has_undo_stack": true,
     "long_labels": [],
     "n_long_labels": 0,
@@ -380,7 +380,7 @@
   {
     "app": "CERTUS_INDEX",
     "skeleton_stable": true,
-    "skeleton_settle_s": 3.07,
+    "skeleton_settle_s": 3.03,
     "skeleton_confirm_delta": 0,
     "window": "1920x1080",
     "qpa_platform": "offscreen",
@@ -477,7 +477,7 @@
   {
     "app": "CERTUS_INDEX_SPLINE",
     "skeleton_stable": true,
-    "skeleton_settle_s": 3.08,
+    "skeleton_settle_s": 3.03,
     "skeleton_confirm_delta": 0,
     "window": "1920x1080",
     "qpa_platform": "offscreen",
@@ -594,7 +594,7 @@
   {
     "app": "CERTUS_FIELD",
     "skeleton_stable": true,
-    "skeleton_settle_s": 3.02,
+    "skeleton_settle_s": 3.05,
     "skeleton_confirm_delta": 0,
     "window": "1920x1080",
     "qpa_platform": "offscreen",
@@ -699,7 +699,7 @@
   {
     "app": "CERTUS_SMOOTHER",
     "skeleton_stable": true,
-    "skeleton_settle_s": 3.03,
+    "skeleton_settle_s": 3.05,
     "skeleton_confirm_delta": 0,
     "window": "1920x1080",
     "qpa_platform": "offscreen",
@@ -759,7 +759,7 @@
   {
     "app": "CERTUS_SUBSTRATE_INDEX",
     "skeleton_stable": true,
-    "skeleton_settle_s": 3.04,
+    "skeleton_settle_s": 3.03,
     "skeleton_confirm_delta": 0,
     "window": "1920x1080",
     "qpa_platform": "offscreen",
@@ -828,7 +828,7 @@
   {
     "app": "CERTUS_METAL_SINGLE",
     "skeleton_stable": true,
-    "skeleton_settle_s": 3.05,
+    "skeleton_settle_s": 3.06,
     "skeleton_confirm_delta": 0,
     "window": "1920x1080",
     "qpa_platform": "offscreen",
@@ -910,7 +910,7 @@
   {
     "app": "CERTUS_METAL_BILAYER",
     "skeleton_stable": true,
-    "skeleton_settle_s": 3.02,
+    "skeleton_settle_s": 3.04,
     "skeleton_confirm_delta": 0,
     "window": "1920x1080",
     "qpa_platform": "offscreen",

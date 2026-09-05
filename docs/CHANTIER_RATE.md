@@ -114,8 +114,9 @@ Et c'est exactement ce que le code ne fait pas — voir la contradiction C.
 
 ### 🟢 A. RÉPARÉE LE 2026-08-22 — le plafond n'appliquait ni la consigne qu'il citait, ni son contraire
 
-**Ce qui n'allait pas.** `RATE_MAX_VARIANTS_PER_STRATEGY` valait **3**
-(`certus_strat_robustness.py:562`) et portait cette justification :
+**Ce qui n'allait pas.** **Avant correctif**, `RATE_MAX_VARIANTS_PER_STRATEGY` valait **3**
+(`certus_strat_robustness.py:562`) et portait cette justification — la valeur en vigueur
+aujourd'hui est **40**, lue dans le code par `coherence_md.py` :
 
 > *« 👤 asked for the trial "on the 10 best strategies", not on everything: an unbounded
 > expansion costs a factor 6 on the whole Monte-Carlo. »*
@@ -494,7 +495,7 @@ est nette :
 | méthode d'arrêt | granularité actuelle |
 |---|---|
 | **Rate** | 🟢 **par couche** — `rate_layers`, une liste d'indices |
-| **POEM contre niveau absolu** | 🔴 **GLOBAL** — `poem_enabled` est un booléen unique pour tout le run (`certus_strat_robustness.py:2545`, propagé jusqu'à `certus_strat_batch.py:78`) |
+| **POEM contre niveau absolu** | 🔴 **GLOBAL** — `poem_enabled` est un booléen unique pour tout le run (`certus_strat_robustness.py:2555`, propagé jusqu'à `certus_strat_batch.py:78`) |
 
 Il n'existe donc **aucun moyen** d'exprimer *« couche 12 en POEM, couche 13 au niveau absolu,
 couche 14 en Rate »*. Le mélange que 👤 décrit est inexprimable dans la structure de données

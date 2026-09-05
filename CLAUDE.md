@@ -100,13 +100,20 @@ cohérent ».**
 ⚠️ **AVANT DE COURIR APRÈS LES SIGNALEMENTS DU CONTRÔLEUR, lis ceci.** `check_claude_md.py`
 rend en permanence **5 « VALEURS DISCORDANTES »**, et les cinq ont été instruites une par une
 le 2026-08-19 : **ce sont des faux positifs**, le contrôle rapprochant un nom de paramètre du
-premier nombre voisin. `index_corridor : 162` vient du hash `162a0ff` · `dp_yield_weight :
-2026` d'une date · `machine_sampling_dd : 21 / 27 / 9` de comptages (« 21 points », « 27 sites
-d'appel », « 9 configurations ») · `reading_smoothing_window : 2` du « 2 s » de la fenêtre ·
+premier nombre voisin. `index_corridor` attrape le hash `162a0ff` · `dp_yield_weight` une
+**date**, 2026 · `machine_sampling_dd` des **comptages** (« 21 points », « 27 sites d'appel »,
+« 8 sites du noyau ») · `reading_smoothing_window` le « **2 s** » de la fenêtre ·
 `phase_a_level_margin_factor : 1,66 / 3,33` sont **les deux valeurs légitimes** (actuelle et à
-évaluer). 🔑 **Le contrôle reste utile — il a trouvé la vraie contradiction du même jour**,
-deux lignes du même paramètre dans la table de §19, l'une prescrivant 8 et l'autre 1. **Ne le
-désarme pas ; sache seulement que son plancher est 5, pas 0.**
+évaluer).
+
+⚠️ **Vérifie les NOMS, pas les nombres.** Ce paragraphe listait des valeurs précises
+(« 21 / 27 / 9 ») qui se périment dès qu'une phrase voisine change — le 9 valait déjà 8 le
+2026-09-06. Ce qui identifie un faux positif est **le paramètre concerné** ; si un **sixième
+nom** apparaît, il n'est pas couvert par ce paragraphe et doit être instruit.
+
+🔑 **Le contrôle reste utile — il a trouvé la vraie contradiction du même jour**, deux lignes
+du même paramètre dans la table de §19, l'une prescrivant 8 et l'autre 1. **Ne le désarme
+pas ; sache seulement que son plancher est 5, pas 0.**
 
 🔴 **`CLAUDE.md` N'EST PLUS PLAFONNÉ — la contrainte des 2 000 lignes est retirée le
 2026-09-06, sur décision de 👤.** Le contrôle F subsiste, mais **informatif** : il rapporte la
@@ -246,6 +253,20 @@ C:\envs\certus\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-co
 Attendu : `All checks passed!` puis **zéro échec**.
 Si un test est rouge **avant** que tu n'aies rien touché → **ARRÊTE-TOI et signale.**
 Ce n'est pas à toi de le réparer.
+
+🔴 **CETTE COMMANDE NE COUVRE PAS L'INTERFACE — ajoute `tests/ui/` si tu y touches.**
+`tests/oracle/ + tests/unit/` ignore entièrement `tests/ui/`, qui porte les garde-fous
+d'ergonomie. 📏 Le 2026-09-05, une journée de validations menées sur un périmètre trop étroit
+a **publié un test cassé** sans que rien ne le signale — il vivait dans `tests/unit/`, exclu
+d'un périmètre restreint à `tests/ui/`. **La leçon vaut dans les deux sens :**
+
+```bat
+C:\envs\certus\Scripts\python.exe -m pytest tests/ui/ tests/unit/ -q --no-cov
+```
+
+⚠️ **Compte le temps** : cette passe dure **de 33 à 53 min** sur i5-8250U à cache chaud, contre
+~4 min pour `tests/ui/` seule. Ce n'est pas une commande qu'on lance entre deux éditions —
+c'est celle qui décide qu'un travail est fini.
 
 🔴 **NE COMPARE PAS LE NOMBRE DE TESTS À UN CHIFFRE ÉCRIT ICI — COMPTE-LE.** Ce document a
 porté successivement 2 300, 2 301, 2 310 et 2 450 pour la même commande, et **aucun de ces
@@ -663,8 +684,9 @@ section contienne ce qu'on lui prête.*
 Pour **chaque** action, dans cet ordre, sans en sauter :
 
 1. **Lis l'action dans son dossier** — [`CHANTIER_RATE.md`](docs/CHANTIER_RATE.md) pour le
-   chantier vivant, [`TRAVAUX_A_VENIR.md`](docs/TRAVAUX_A_VENIR.md) pour le modèle physique,
-   [`CHANTIERS_OUVERTS.md`](docs/CHANTIERS_OUVERTS.md) et
+   chantier vivant **du calcul**, [`GEMINI_UX_TOP1_2026-09-04.md`](docs/GEMINI_UX_TOP1_2026-09-04.md)
+   pour celui **de l'interface**, [`TRAVAUX_A_VENIR.md`](docs/TRAVAUX_A_VENIR.md) pour le
+   modèle physique, [`CHANTIERS_OUVERTS.md`](docs/CHANTIERS_OUVERTS.md) et
    [`RESERVE_A25_A27.md`](docs/RESERVE_A25_A27.md) pour le reste. Si quelque chose est ambigu,
    **arrête-toi et demande.** Un plan ambigu est un défaut du plan, pas une invitation à
    inventer. ⚠️ *Ce point renvoyait à « §17 », qui est la fiche de la machine réelle et n'a
@@ -1491,8 +1513,10 @@ décrit comment la machine **lit**, et se **dérive** du bruit mesuré.
 
 ### Le mode « Rate » (Quartz / Chrono)
 
-📌 **Le chantier VIVANT est [`docs/CHANTIER_RATE.md`](docs/CHANTIER_RATE.md)**, et
-c'est lui qui fait autorité depuis le 2026-08-19. Les quatre acquis du jour, sans ouvrir le
+📌 **Le chantier vivant DU CALCUL est [`docs/CHANTIER_RATE.md`](docs/CHANTIER_RATE.md)**, et
+c'est lui qui fait autorité depuis le 2026-08-19. ⚠️ *« Le chantier vivant » tout court était
+ambigu : celui de l'interface est ouvert depuis le 2026-09-03 et n'a rien à voir. Les deux
+sont nommés dans la carte du §3.* Les quatre acquis du jour, sans ouvrir le
 dossier :
 
 | | |
@@ -1612,8 +1636,8 @@ le concept, ce qu'il coûte, la méthode d'assemblage validée, les campagnes, l
 et les douze sous-sections de synthèse. **Lis-le avant de toucher au sujet.**
 
 ⚠️ **Ce titre disait « le chantier EN COURS » jusqu'au 2026-08-19** — il ne l'est plus. Le
-chantier vivant est [`CHANTIER_RATE.md`](docs/CHANTIER_RATE.md) ; celui-ci est **acquis et
-consultable**. Deux sections du même document se déclaraient « courantes », ce que la carte du
+chantier vivant du calcul est [`CHANTIER_RATE.md`](docs/CHANTIER_RATE.md) ; celui-ci est
+**acquis et consultable**. Deux sections du même document se déclaraient « courantes », ce que la carte du
 §3 a corrigé le matin sans que ce titre-ci suive.
 
 **Le chantier en dix lignes.** Au-delà d'une certaine difficulté, un seul verre témoin ne
@@ -1976,12 +2000,16 @@ pour toujours.
 fichier et la fonction exacts, ce qu'il faut écrire, le test qui doit **échouer** sur le code
 d'avant, et les pièges connus.
 
-🔴 **CE N'EST PAS LE PROGRAMME COURANT** — celui-ci est le **Rate**
-([`CHANTIER_RATE.md`](docs/CHANTIER_RATE.md)). Ces trois actions sont **valides, utiles et
-entièrement spécifiées**, et elles attendent. ⚠️ *Cette ligne désignait le multi-témoins, qui
-est **acquis** depuis le 2026-08-19 — cinquième endroit du document où le programme courant
-n'avait pas été mis à jour, après la carte du §3, le titre du §23, la règle 4 du §11 et le
-vocabulaire du §14.*
+🔴 **CE N'EST PAS LE PROGRAMME COURANT.** Ces trois actions sont **valides, utiles et
+entièrement spécifiées**, et elles attendent.
+
+🔑 **Quel EST le programme courant se lit à UN SEUL ENDROIT : la carte du §3.** Cette ligne
+ne le nomme plus, et c'est délibéré. ⚠️ Elle a successivement désigné le multi-témoins (acquis
+depuis le 2026-08-19) puis le Rate, et le 2026-09-06 elle ignorait encore la campagne
+d'ergonomie ouverte trois jours plus tôt. **Un fait recopié est un fait qui se périme** :
+c'était déjà le cinquième endroit du document à retarder, après la carte du §3, le titre du
+§23, la règle 4 du §11 et le vocabulaire du §14. Le nommer ici une sixième fois n'aurait fait
+que préparer le sixième retard.
 
 | | | pourquoi elle compte |
 |---|---|---|

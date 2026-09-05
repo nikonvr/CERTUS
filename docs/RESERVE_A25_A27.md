@@ -7,8 +7,11 @@
 ---
 
 
-🔴 **CE N'EST PAS LE PROGRAMME COURANT.** Le programme courant est **§23, la multiple
-testglass methodology**. Cette section était intitulée *« les trois actions suivantes »* et ne
+🔴 **CE N'EST PAS LE PROGRAMME COURANT.** 🔑 **Lequel l'est se lit dans la carte du §3 de
+[`CLAUDE.md`](../CLAUDE.md), et nulle part ailleurs.** ⚠️ *Cette ligne annonçait « §23, la
+multiple testglass methodology », **acquise depuis le 2026-08-19** — elle avait donc plus de
+deux semaines de retard le 2026-09-06. C'est exactement pourquoi le nom du programme courant
+ne se recopie plus.* Cette section était intitulée *« les trois actions suivantes »* et ne
 l'était plus : requalifiée en **réserve** le 2026-08-15. Ces trois actions restent **valides,
 utiles et entièrement spécifiées** — chacune donne son fichier, sa fonction, ce qu'il faut
 écrire et le test qui doit échouer sur le code d'avant. Elles attendent, elles ne sont pas

@@ -16,10 +16,16 @@ et ça ne l'est plus depuis l'exécution des 2026-09-04 et 05.*
 | **2 — défauts bloquants** | ✅ **24 étapes sur 24** |
 | **3 à 6** | 🔴 **entières** — système visuel, modules orphelins, ergonomie métier, finition |
 
+```bat
+python -m pytest tests/ui/ tests/unit/ -q --no-cov     ->  0 failed
+python -m ruff check .                                 ->  All checks passed!
 ```
-tests/ui/ + tests/unit/   2897 passed, 16 skipped, 5 xfailed, 0 failed
-ruff check .              All checks passed!
-```
+
+🔴 **Le compte de tests n'est PAS écrit ici, et c'est la règle du §2 du `CLAUDE.md`** : il a
+porté 2300, 2301, 2310 puis 2450 pour la même commande, tous faux à leur tour. Un compte se
+périme dès qu'on ajoute un test — donc dès qu'on travaille. **`0 failed` est le seul critère
+qui survive.** Les comptes qui apparaissent plus bas dans ce dossier sont des **relevés
+datés** d'une mesure précise, pas l'état courant.
 
 🔴 **LE PÉRIMÈTRE DE VALIDATION EST `tests/ui/ + tests/unit/`, JAMAIS `tests/ui/` SEUL.** Une
 journée entière de validations a porté sur le périmètre restreint, et **un test cassé a été
@@ -250,7 +256,7 @@ L'écriture était déjà corrigée : dialogue de destination, comparaison à la
 confirmation nommant le fichier, et `except (*NUMERICAL_FAULT_EXCEPTIONS, OSError)` (`:409`).
 
 🔴 **Mais le chargement (`:283`) ne captait que `NUMERICAL_FAULT_EXCEPTIONS`** — un tuple de
-six fautes **numériques**, sans `OSError` (`certus/core/certus_core.py:993`). Le cas le plus
+six fautes **numériques** — `NUMERICAL_FAULT_EXCEPTIONS`, `certus/core/certus_core.py:993` — où `OSError` ne figure pas. Le cas le plus
 fréquent de tous — le classeur encore ouvert dans Excel, donc `PermissionError` — sortait en
 **trace Python brute**. Corrigé, garde-fou `tests/ui/test_ux_smoother_load_errors.py`
 (3 cas : `PermissionError`, `FileNotFoundError`, `OSError`), **3 failed → 3 passed**.
@@ -264,7 +270,8 @@ fréquent de tous — le classeur encore ouvert dans Excel, donc `PermissionErro
 restent dans le BMP.
 
 🔴 **L'application de la préférence au démarrage n'est PAS faite, et je me suis arrêté.**
-`load_theme_config()` n'alimente que le cadre de fenêtre (`certus_ui_utils.py:324`) et les
+🟢 **CORRIGÉ le 2026-09-05, §0ter — ce paragraphe décrit l'état d'avant.**
+`load_theme_config()` n'alimentait que le cadre de fenêtre (`apply_os_window_effects`) et les
 graphes (`:937`) ; aucun `CertusTheme.configure(mode)`. Deux raisons de ne pas le faire seul :
 
 1. **Le placer dans `apply_certus_theme` écraserait le mode clair que le harnais force**
@@ -1040,8 +1047,8 @@ Les cinq échecs, et leur cause :
 | `test_ux_skeleton[CERTUS_DESIGN]` | la perte de 12:43 — **c'est le garde-fou qui fonctionne** |
 | `test_certus_ux_battery::test_design_and_re_splitter_persistence` | la même perte |
 | `test_ux_design_system::test_font_point_size_is_uniform` | `XPASS(strict)` non déterministe, décrit ci-dessus |
-| `test_certus_shortcut_uniqueness[CERTUS_HUB]` | 🔴 **Ce n'est PAS une régression : c'est un défaut préexistant que le test neuf révèle.** `F1` et `Ctrl+0` sont chacun liés **deux fois** au niveau fenêtre — `CERTUS_HUB.py:809` (boucle `QShortcut` brute) contre `:898` et `:911` (`QAction.setShortcut`). Qt n'exécute alors **ni l'un ni l'autre**. Mesuré au clavier réel : `F1 → activated=[] ambiguous=['F1']`. **Sur la première fenêtre que voit un évaluateur, F1 n'ouvre rien.** Correctif : passer les trois sites par `install_unique_shortcut` / `claim_shortcut_for_action` (`certus/ui/certus_ui_utils.py:452` et `:472`), qui existent exactement pour ça |
-| `test_certus_ux_drag_and_drop::test_hub_shortcuts_and_drag_drop` | 🔴 **Cause exacte, une ligne** : `class CertusHub(QMainWindow)` — `CERTUS_HUB.py:182`. Le HUB est la **seule fenêtre qui n'hérite pas de `CertusBaseApp`**, or `dragEnterEvent`/`dropEvent` ne sont définis que là (`certus/ui/certus_base_app.py:2266` et `:2275`, seules définitions du dépôt). ⚠️ La première assertion du test, `assert hub.acceptDrops() is True`, **passe pour n'importe quel `QMainWindow`** : elle ne teste rien |
+| `test_certus_shortcut_uniqueness[CERTUS_HUB]` | 🔴 **Ce n'est PAS une régression : c'est un défaut préexistant que le test neuf révèle.** `F1` et `Ctrl+0` sont chacun liés **deux fois** au niveau fenêtre — `CERTUS_HUB.py:809` (boucle `QShortcut` brute) contre `:898` et `:911` (`QAction.setShortcut`). Qt n'exécute alors **ni l'un ni l'autre**. Mesuré au clavier réel : `F1 → activated=[] ambiguous=['F1']`. **Sur la première fenêtre que voit un évaluateur, F1 n'ouvre rien.** Correctif : passer les trois sites par `install_unique_shortcut` / `claim_shortcut_for_action` (`certus/ui/certus_ui_utils.py:460` et `:472`), qui existent exactement pour ça |
+| `test_certus_ux_drag_and_drop::test_hub_shortcuts_and_drag_drop` | 🔴 **Cause exacte, une ligne** : `class CertusHub(QMainWindow)` — `CERTUS_HUB.py:182`. Le HUB est la **seule fenêtre qui n'hérite pas de `CertusBaseApp`**, or `dragEnterEvent`/`dropEvent` ne sont définis que là (`certus/ui/certus_base_app.py:2390` et `:2275`, seules définitions du dépôt). ⚠️ La première assertion du test, `assert hub.acceptDrops() is True`, **passe pour n'importe quel `QMainWindow`** : elle ne teste rien |
 
 ### ➡️ L'ordre de marche
 
@@ -1056,7 +1063,7 @@ il a révélé trois défauts **fonctionnels**, qu'aucune considération d'ergon
 | **4** | **DESIGN : le bouton « Clear / Reset » ne fait rien**, en silence — reproduit : 4 lignes avant, 4 après | **2.17** |
 | **5** | **`Esc` ne stoppe pas STRAT** (le seul module à 2 h 39 de run) et **`Ctrl+O` lance une optimisation dans DESIGN** alors que l'aide annonce « Load configuration » | **2.20 a et b** |
 | **6** | **Fermer la fenêtre pendant un run tue le calcul sans une question**, dans tous les modules | **2.20 c** |
-| **7** | **Deux `except` fabriquent un empilement optique faux** au lieu de signaler l'erreur (`certus_field_state_mixin.py:995` et `:1015`) — l'interdit n° 9 réalisé dans l'interface | **2.22** |
+| **7** | **Deux `except` fabriquent un empilement optique faux** au lieu de signaler l'erreur (`certus_field_state_mixin.py`, `_update_pareto_record`) — l'interdit n° 9 réalisé dans l'interface. 🟢 **corrigé le 2026-09-05** | **2.22** |
 
 🔑 **Puis l'action au meilleur rapport résultat/effort de tout le plan** : rebrancher
 `_finalize_init` sur **DESIGN, STRAT et RE**, qui le court-circuitent tous les trois. Un seul
@@ -2251,7 +2258,7 @@ def test_tables_holding_cell_widgets_are_not_sortable() -> None:
 ```
 
 **Risque de régression.** Aucun test n'assère `setSortingEnabled` (0 occurrence dans
-`tests/`). ⚠️ `_qs_restore_table_headers` (`certus_base_app.py:650`) restaure l'état
+`tests/`). ⚠️ `_qs_restore_table_headers` (`certus_base_app.py:699`) restaure l'état
 d'en-tête persisté : vérifie qu'il ne réactive pas le tri.
 
 ---
@@ -2841,8 +2848,8 @@ INDEX, STRAT et METAL en même temps** — c'est voulu, mais annonce-le.
 
 **Axe** A4/A5 · **Effort** M
 
-🔑 **`confirm_destructive` (`certus/ui/mixins/certus_base_core_mixins.py:769`) et
-`confirm_and_stop` (`certus/ui/certus_ui_utils.py:1204`) n'ont AUCUN appelant en production.**
+🔑 **`confirm_destructive` (`certus/ui/mixins/certus_base_core_mixins.py:792`) et
+`confirm_and_stop` (`certus/ui/certus_ui_utils.py:1270`) n'ont AUCUN appelant en production.**
 Seules références : des tests. C'est le motif `fast_auto_blocks` / `strategy_phase_timeout` du
 `CLAUDE.md` §24-50, transposé à l'ergonomie — *la facilité existe, on l'a testée, personne ne
 s'en sert.*
@@ -3088,7 +3095,7 @@ info-bulle et signale-le. Une info-bulle fausse est bien pire qu'une absente : e
 | étape | objet | preuve |
 |---|---|---|
 | 5.1 | **STRAT affiche le mauvais indicateur de tête.** Le bandeau KPI montre `ROBUSTNESS SCORE` (`certus_strat_ui_layout.py:256`), alors que `CLAUDE.md` §22 pose le **SEEL** comme « la seule grandeur à rapporter — jamais le RMSE brut ». Le SEEL est calculé dans `APP_CONTEXT["seel_data"]` à l'étape 0 de l'interface | code + `CLAUDE.md` §22 |
-| 5.2 | **Identifiants techniques exposés.** `CertusCard("substrate_Base Wavelength")` (`certus_strat_ui_layout.py:367`) · en-têtes `lambdamin` / `lambdamax` sans unité (`certus_base_app.py:2045`) · `n(lambda)` en titre d'onglet DESIGN alors que FIELD écrit « Center λ » | captures + code |
+| 5.2 | **Identifiants techniques exposés.** `CertusCard("substrate_Base Wavelength")` (`certus_strat_ui_layout.py:380`) · en-têtes `lambdamin` / `lambdamax` sans unité (`certus_base_app.py:2111`) · `n(lambda)` en titre d'onglet DESIGN alors que FIELD écrit « Center λ » | captures + code |
 | 5.3 | **Booléens en champs texte libres.** « Slit bias (0/1) », « Search the slit (0/1) », « Allow Rate mode (0/1) », « Enable SYM (0/1) »… — sept clés (`certus_strat_ui_layout.py:979-987`, `:1115-1122`) | code |
 | 5.4 | **59 champs numériques sur 59 sans validateur**, dont deux livrés vides (`thickness_tolerance_nm`, `mse_tolerance_limit_pct`) | sonde Qt |
 | 5.5 | **Précisions numériques incohérentes** dans une même vue DESIGN : RMSE 6 décimales, épaisseur 1, indice 3, QWOT 5, poids 1 | capture |

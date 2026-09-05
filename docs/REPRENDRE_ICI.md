@@ -3,15 +3,24 @@
 > Ce fichier dit **où on s'est arrêté** et **la commande exacte pour repartir**. Il est le
 > premier à lire, avant `CLAUDE.md`.
 
-## 🟢 LE CHANTIER COURANT EST L'ERGONOMIE, ET SES PHASES 0, 1 ET 2 SONT CLOSES
+## 🟢 LE CHANTIER COURANT DE L'INTERFACE — phases 0, 1 et 2 closes
+
+⚠️ **Deux chantiers courants coexistent, et ils ne se recouvrent pas** : celui du **calcul**
+est le Rate ([`CHANTIER_RATE.md`](CHANTIER_RATE.md)), celui de l'**interface** est ci-dessous.
+La carte du §3 de [`CLAUDE.md`](../CLAUDE.md) est le seul endroit qui les nomme tous les deux.
 
 📌 **Le dossier fait autorité : [`GEMINI_UX_TOP1_2026-09-04.md`](GEMINI_UX_TOP1_2026-09-04.md).**
 Son **§0ter** porte tout ce qui est récent ; les phases **3 à 6** restent entières.
 
+```bat
+python -m pytest tests/ui/ tests/unit/ -q --no-cov
+python -m ruff check .
 ```
-tests/ui/ + tests/unit/   2897 passed, 16 skipped, 5 xfailed, 0 failed
-ruff check .              All checks passed!
-```
+
+**Attendu : `0 failed` et `All checks passed!`.** 🔴 **Aucun compte de tests n'est écrit ici,
+et c'est délibéré** — le `CLAUDE.md` §2 a porté 2300, 2301, 2310 puis 2450 pour la même
+commande, et chacun a été faux à son tour, parce qu'un compte se périme dès qu'on ajoute un
+test. **Le seul critère qui survive est `0 failed`.**
 
 🔴 **Le périmètre de validation est `tests/ui/ + tests/unit/`, pas `tests/ui/` seul.** Toutes
 les validations d'une journée ont porté sur un périmètre restreint, et **un test cassé a été
@@ -670,7 +679,7 @@ Vérifié dans le code, pas supposé :
 
 | étage | comportement sur une machine plus large |
 |---|---|
-| **notation de robustesse** | 🟢 **s'adapte** — `max_workers = max(1, cpu_count() // 2)` (`certus_strat_robustness.py:1962`). 8 threads → 4 workers ; 32 threads → 16 |
+| **notation de robustesse** | 🟢 **s'adapte** — `max_workers = max(1, cpu_count() // 2)` (`certus_strat_robustness.py:1967`). 8 threads → 4 workers ; 32 threads → 16 |
 | **boucle des nombres de blocs** | 🔴 **reste à 1, par conception.** `certus_strat_workers.py:1452` porte `max_workers = 1` avec le commentaire *« FIX: Force max_workers=1 to prevent Numba CPU oversubscription and deadlocks »*. **Ne le remonte pas** sans comprendre ce qu'il évitait |
 | **noyaux numba** | 🟢 `prange` élargit avec les cœurs, à l'intérieur de chaque évaluation |
 

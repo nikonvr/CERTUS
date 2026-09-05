@@ -12,6 +12,15 @@ La carte du §3 de [`CLAUDE.md`](../CLAUDE.md) est le seul endroit qui les nomme
 📌 **Le dossier fait autorité : [`GEMINI_UX_TOP1_2026-09-04.md`](GEMINI_UX_TOP1_2026-09-04.md).**
 Son **§0ter** porte tout ce qui est récent ; les phases **3 à 6** restent entières.
 
+🔑 **Si tu attaques la phase 3, lis son encadré `3-AUDIT` d'abord.** Elle se présente comme un
+bloc homogène et n'en est pas un : **six étapes sont sûres et déjà outillées** (jetons de
+thème, garde-fous de contraste existants), **deux sont longues et bénignes** (187 tailles de
+police, 409 hexadécimaux), et **deux sont dangereuses** — celles qui touchent aux chaînes
+visibles, parce que `tests/ui/ux_skeleton.json` **stocke le texte littéral des libellés** :
+**65 entrées sur 487, soit 13 %**, sont à régénérer, et 37 assertions de texte exact vivent
+dans 9 fichiers de tests. **L'ordre recommandé est dans l'encadré ; ne prends pas la phase par
+son numéro d'étape.**
+
 ```bat
 python -m pytest tests/ui/ tests/unit/ -q --no-cov
 python -m ruff check .

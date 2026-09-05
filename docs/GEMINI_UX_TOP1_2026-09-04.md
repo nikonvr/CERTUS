@@ -2932,10 +2932,120 @@ d'outils avant d'atteindre le premier champ métier.
 
 ## PHASE 3 — LE SYSTÈME VISUEL
 
-C'est la phase qui fait passer de « propre » à « premier centile ». Elle est **entièrement
-mécanisable et entièrement verrouillable** par les tests statiques de l'étape 1.3.
+C'est la phase qui fait passer de « propre » à « premier centile ».
+
+⚠️ **Cette ligne annonçait la phase « entièrement mécanisable et entièrement verrouillable par
+les tests statiques de l'étape 1.3 ». C'est vrai pour six étapes sur onze, et FAUX pour les
+deux qui touchent aux chaînes visibles** — parce que le verrou stocke précisément les chaînes
+qu'elles modifient. Voir l'encadré ci-dessous.
 
 ---
+
+### 🔴 3-AUDIT — CE QUE COÛTE VRAIMENT LA PHASE 3, mesuré le 2026-09-06
+
+**La phase n'est pas une chose, c'en est trois, et leurs risques sont opposés.** Ne la
+planifie pas comme un bloc.
+
+#### Le tiers DANGEREUX — tout ce qui touche une chaîne visible (3.0, 3.5)
+
+🔑 **La raison n'est pas celle qu'annonce l'étape 3.0.** Elle invoque des tests qui assèrent
+des libellés ; le vrai multiplicateur est que **`tests/ui/ux_skeleton.json` stocke le texte
+littéral**, sous la forme `'QPushButton|⬡  Detach plot'`. Le cliquet du squelette est donc
+**détruit par toute correction de libellé**, et c'est le garde-fou même de l'étape 1.3.
+
+| | mesuré 2026-09-06 |
+|---|---|
+| entrées de squelette au total | **487** |
+| touchées par 3.0 (double espace) | 4 |
+| touchées par 3.0 (`lambda`) | 3 |
+| touchées par 3.5 (emoji) | **60** |
+| **union — entrées à régénérer** | **65, soit 13 % du squelette** |
+| assertions de texte exact dans `tests/` | **37**, sur **9 fichiers** |
+
+```bash
+grep -rEn "\.text\(\)\s*==|\.windowTitle\(\)\s*==|\.toolTip\(\)\s*==|tabText\([0-9]+\)\s*==" tests/ --include=*.py | wc -l
+```
+
+⚠️ **Et l'étape 3.0 est le seul endroit du plan qui autorise à modifier un test.** C'est
+défendable — le test verrouille la chaîne que l'étape corrige — mais il faut en voir la
+conséquence : **à ce moment précis, plus rien ne protège des 11 fenêtres d'une faute de
+frappe.** Régénère le squelette **dans le même changement**, et colle le diff de métriques
+(règle 0.15) : une régénération sans diff transforme le cliquet en presse-bouton.
+
+🔴 **UN DES « DÉFAUTS COSMÉTIQUES » A DÉTRUIT DU SENS, et cela requalifie l'étape.**
+`certus/metal/certus_metal_common.py:1492` porte aujourd'hui :
+
+```
+'... [Rback]  percentage or 01 scale accepted.'
+```
+
+**« 01 scale » ne veut rien dire** ; la lecture évidente est `0–1 scale`, le tiret ayant été
+effacé avec les autres séparateurs. 📌 **C'est une lecture, pas une mesure** — la forme
+d'origine n'a **pas** été retrouvée dans `git log -S"scale accepted"`, la mutilation étant
+antérieure à l'historique de cette chaîne. Mais la conséquence tient quelle que soit
+l'origine : **une consigne fausse est affichée à l'utilisateur**, et 3.0 n'est donc pas une
+étape de confort.
+
+#### Le tiers SÛR — les jetons de thème (3.3, 3.4, 3.6, 3.7, 3.8, 3.9)
+
+Confiné à `certus_theme.py`, **et déjà outillé** : `tests/ui/test_ux_button_contrast.py`,
+`test_a11y.py`, `test_ux_theme_toggle.py`, `test_ux_theme_startup.py`. Les critères sont
+**objectifs** — un rapport de contraste se mesure, il ne se discute pas.
+🟢 **3.6 est purement additif** : il n'existe **aucune** règle `QPushButton:focus` dans les
+deux couches QSS, donc il n'y a rien à casser.
+
+#### Le tiers LONG mais bénin (3.1, 3.10)
+
+| | plan, 2026-09-04 | **remesuré 2026-09-06** |
+|---|---|---|
+| tailles de police en dur | 170 | **187** |
+| hexadécimaux en dur | 314 | **409**, sur **45** fichiers |
+| `setStyleSheet(` | 314 | **315** |
+
+```bash
+grep -rEo "#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b" certus/ CERTUS_*.py --include=*.py | wc -l
+grep -rEo "font-size:\s*[0-9]+(px|pt)|setPointSize\([0-9]+\)|QFont\([^)]*,\s*[0-9]+" certus/ CERTUS_*.py --include=*.py | wc -l
+```
+
+Ce n'est pas risqué, c'est **long**. Le plan a déjà la bonne forme — fichier par fichier,
+cliquet à chaque passe — et c'est une campagne **interruptible à tout moment**, donc la bonne
+chose à faire quand la machine n'est pas libre pour un run.
+
+#### ⚠️ Le piège de mesure, et c'est le plus vicieux de la phase
+
+**3.2 est marquée « NON FAITE malgré les apparences »** : le harnais annonce `Segoe UI @10 pt`
+partout parce qu'il **épingle** cette police depuis le correctif 0.1. **L'instrument masque le
+défaut qu'il mesure.** Un harnais vert ne prouve donc rien sur la typographie tant que
+l'épinglage est en place — c'est l'erreur n° 4 du §5 de `CLAUDE.md` sous une autre forme :
+*une grandeur qui ne varie pas avec ce qui devrait la faire varier est un artefact.*
+
+#### L'ordre recommandé
+
+| | quoi | pourquoi ici |
+|---|---|---|
+| 1 | **3.6, 3.8, 3.3** | additifs ou confinés, garde-fous existants, gain visible immédiat |
+| 2 | **3.4, 3.7, 3.9** | même zone, même filet |
+| 3 | **3.1 puis 3.10** | le grind, par tranches, interruptible |
+| 4 | **3.0 et 3.5, EN DERNIER ET SEULES** | un changement, une relecture du squelette, puis `tests/ui/ + tests/unit/` en entier (33 à 53 min). C'est là qu'il faut la machine pour soi |
+
+#### ⚠️ Écart avec les chiffres de l'étape 3.0, dit honnêtement
+
+Mes comptes diffèrent de ceux du plan : **12 doubles espaces sur 7 fichiers** contre 30 sur
+11, et **53 `lambda` sur 19 fichiers** contre 38 sur 13. Deux causes, et elles ne se
+compensent pas :
+
+- **méthodologie** — j'ai compté **par AST**, en ne retenant que les chaînes littérales
+  passées à un puits Qt (`setText`, `setToolTip`, `addItem`, `addTab`, `setTitle`,
+  `setPlaceholderText`, `setHorizontalHeaderLabels`, `setWindowTitle`, … et les
+  constructeurs `QLabel`/`QPushButton`/`QCheckBox`/`QGroupBox`/`CertusCard`). C'est **plus
+  étroit** que « chaînes visibles » : un libellé construit par f-string ou concaténation
+  m'échappe ;
+- **dérive du code** depuis le 2026-09-04.
+
+🔴 **Recompte avant d'attaquer, ne pars d'aucun de ces deux jeux de chiffres.**
+⚠️ **La sonde AST n'est PAS dans `scripts/`** — elle a été écrite pour cette mesure et jetée.
+La reposer proprement est un préalable bon marché à 3.0, et c'est la seule façon de rendre le
+« 0 » du garde-fou vérifiable au lieu d'affirmé.
 
 ### Étape 3.0 — 🔑 UNE SEULE CAUSE RACINE EXPLIQUE UNE DIZAINE DE DÉFAUTS VISIBLES
 
@@ -2946,8 +3056,8 @@ sans les remplacer. Elle a laissé trois signatures, toutes mesurées le 2026-09
 
 | signature | compte | exemples |
 |---|---|---|
-| **double espace interne** là où un séparateur a été retiré | **30 chaînes, 11 fichiers** | `'1␣␣Materials'` · `'2-4␣␣Parameters'` · `'CERTUS␣␣Index Spline Optimization'` · `'Optical Profiles␣␣n(lambda) and ln k(lambda)'` · `'Smart Init␣␣PWL n and k (…)'` |
-| **`lambda` écrit en toutes lettres** au lieu de `λ` | **38 chaînes, 13 fichiers** | `"lambda (nm)"` · `"n(lambda)"` · `"Min. Deltalambda/lambda step (sigma mesh) :"` — c'est `Δλ/λ` désarticulé |
+| **double espace interne** là où un séparateur a été retiré | **30 chaînes, 11 fichiers** ⚠️ *AST 2026-09-06 : **12 sur 7** — voir l'écart de méthode en 3-AUDIT* | `'1␣␣Materials'` · `'2-4␣␣Parameters'` · `'CERTUS␣␣Index Spline Optimization'` · `'Optical Profiles␣␣n(lambda) and ln k(lambda)'` · `'Smart Init␣␣PWL n and k (…)'` |
+| **`lambda` écrit en toutes lettres** au lieu de `λ` | **38 chaînes, 13 fichiers** ⚠️ *AST 2026-09-06 : **53 sur 19*** | `"lambda (nm)"` · `"n(lambda)"` · `"Min. Deltalambda/lambda step (sigma mesh) :"` — c'est `Δλ/λ` désarticulé |
 | **caractère remplacé par `?`** | plusieurs | `certus_index_spline_managers_ui.py:265` — `addItem("Heuristic (alpha?RMSE_opt)", "alpha")` : le `?` occupe la place d'un opérateur |
 | **ternaire dégénéré** dont les deux branches sont devenues vides | 1, mais visible dans les **11 fenêtres** | `certus_ui_widgets_utils.py:179` — le basculeur de thème est un cercle vide (traité en 2.5) |
 
@@ -2972,6 +3082,12 @@ la source.
 
 🔑 **Comment distinguer les deux cas, mécaniquement** : si la source porte un `&` à
 l'emplacement du trou, c'est un mnémonique ; sinon, c'est un séparateur effacé.
+
+📏 **Et le partage est mesuré, 2026-09-06 — les deux cas sont du même ordre de grandeur, donc
+tu ne peux pas en négliger un** : **26 chaînes visibles sur 12 fichiers portent un `&`**
+(mnémonique, correctif = doubler l'esperluette) contre **12 doubles espaces sur 7 fichiers**
+(séparateur effacé, correctif = rétablir le séparateur). ⚠️ **Traiter les 38 de la même façon
+donnerait 26 corrections fausses.**
 
 **Deux correctifs différents :**
 
@@ -3043,16 +3159,16 @@ c'est ce qui arrivera sur une machine dépourvue de police à emoji.
 
 | étape | objet | mesure de départ |
 |---|---|---|
-| 3.1 | **Échelle typographique** : ajouter `FONT_SIZE_XS/SM/BASE/LG/XL/DISPLAY` à `CertusTheme` et router les 170 tailles codées en dur | 23 tailles distinctes, px et pt mélangés |
+| 3.1 | **Échelle typographique** : ajouter `FONT_SIZE_XS/SM/BASE/LG/XL/DISPLAY` à `CertusTheme` et router les tailles codées en dur | 23 tailles distinctes, px et pt mélangés · **187 sites remesurés le 2026-09-06**, contre 170 annoncés |
 | 3.2 | **Police unique et installée** : une seule famille, une seule taille de base pour les 11 fenêtres ; refuser au démarrage une famille absente. 🔴 **NON FAITE, malgré les apparences** — le harnais annonce `Segoe UI @10 pt` partout parce qu'il **épingle** cette police depuis le correctif 0.1. Remesuré sans épinglage : rien n'a changé. Et les deux tests censés le garder sont inexploitables — l'un dépend de l'ordre d'exécution, l'autre teste la machine. Détail au §0bis | DESIGN et RE demandent « Open Sans », absente ; base 9 pt vs 10 pt — **inchangé au 2026-09-04 soir** |
 | 3.3 | **Bordures visibles** : porter `BORDER` à ≥ 3:1 sur `SURFACE` dans les deux modes | 1,35 (clair) et 1,48 (sombre), exigé 3,0 |
 | 3.4 | **Palette sombre complète** : donner des variantes sombres aux 8 jetons sémantiques identiques dans les deux modes ; supprimer les jetons morts `DARK_*` | 8 jetons identiques, 6 jetons morts |
-| 3.5 | **Iconographie** : remplacer les 36 emoji visibles par le jeu d'icônes déjà présent (`certus/ui/certus_icons.py`) ; donner une icône distincte à METAL SINGLE et METAL BILAYER, qui partagent le même bouclier | 36 occurrences, 15 fichiers, 2 doublons |
+| 3.5 | **Iconographie** : remplacer les emoji **visibles** par le jeu d'icônes déjà présent (`certus/ui/certus_icons.py`) ; donner une icône distincte à METAL SINGLE et METAL BILAYER, qui partagent le même bouclier | annoncé 36 occurrences / 15 fichiers, 2 doublons. 🔴 **Remesuré le 2026-09-06 : 236 chaînes à emoji sur 52 fichiers — mais SEULES 60 atteignent un widget** (entrées du squelette). L'écart est du **journal**, pas de l'écran : `certus_strat_leviers.py` (20), `certus_strat_workers.py` (13)… **`certus/core/` et `certus/workers/` sont HORS PÉRIMÈTRE de cette étape** — n'y touche pas au motif du compte |
 | 3.6 | **Indicateur de focus** : ajouter `QPushButton:focus` — il n'en existe **aucune** dans les deux couches QSS | 0 règle |
 | 3.7 | **Cases à cocher** : 14 px et état coché par la couleur seule, sans coche | échec WCAG 1.4.1 |
 | 3.8 | **Chevron des combos** : `image: none` (`certus_theme.py:655`) efface la flèche sans rien mettre à la place — les sélecteurs ressemblent à des champs de saisie | 6 combos dans DESIGN seul |
 | 3.9 | **Couleurs de marque** : ajouter un jeton pour RE, FIELD, SMOOTHER, SUBSTRATE et faire suivre la couleur des tuiles du HUB à `category`, pas à un module voisin | RE peint avec la couleur de STRAT, FIELD avec celle de DESIGN |
-| 3.10 | **Les 314 hexadécimaux et 314 `setStyleSheet`** : campagne de réduction, fichier par fichier, cliquet à chaque passe | 314 / 314 |
+| 3.10 | **Les hexadécimaux et les `setStyleSheet`** : campagne de réduction, fichier par fichier, cliquet à chaque passe | annoncé 314 / 314 · **remesuré le 2026-09-06 : 409 hex sur 45 fichiers, 315 `setStyleSheet`**. 🔴 Le compte d'hex avait dérivé de **+30 %** — recompte, ne cite ni l'un ni l'autre |
 
 🔴 **Règle pour toute la phase 3 : une étape = un jeton ou une famille de jetons.** Ne
 regroupe pas. Le cliquet de l'étape 1.3 est ton filet.

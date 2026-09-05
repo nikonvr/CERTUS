@@ -724,6 +724,28 @@ class CertusEmptyStateMixin:
             except RuntimeError, AttributeError, TypeError, ValueError:
                 pass
 
+        # _EMPTY_STATE_HINTS knows six attribute NAMES, and only DESIGN and RE
+        # own any of them - so INDEX, FIELD and SPLINE showed blank tables with
+        # no word of explanation. Measured 2026-09-05, before this sweep:
+        # DESIGN 3/3 and RE 2/2 overlays, INDEX 0/2, FIELD 0/4, SPLINE 0/3.
+        #
+        # Sweep every persistable table instead, and let the registry above keep
+        # its role: OVERRIDING the wording where a specific message exists. That
+        # is what stops the coverage from expiring at the next rename.
+        try:
+            already = {id(getattr(self, attr, None)) for attr in self._EMPTY_STATE_HINTS}
+            for name, table in self._iter_persistable_tables():
+                if id(table) in already or not hasattr(table, "model"):
+                    continue
+                attach_empty_state_to(
+                    table,
+                    icon_name="table",
+                    title="Nothing to show yet",
+                    description=f"This table ({name}) fills in once a run or an import produces data.",
+                )
+        except RuntimeError, AttributeError, TypeError, ValueError:
+            pass
+
 
 class CertusRecentsMixin:
     """Provides recent files management."""

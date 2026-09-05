@@ -283,6 +283,29 @@ def attach_empty_state_to(
             self._view = v
             self._overlay = ov
             v.installEventFilter(self)
+
+            # Follow the MODEL, not the window size. Resize was the only trigger,
+            # so between two resizes the overlay said whatever it last said.
+            # Measured 2026-09-04, and the first line is the serious one:
+            #     attach (0 row)  -> overlay visible = True
+            #     setRowCount(5)  -> overlay visible = True   <- HIDES the data
+            #     a resize        -> overlay visible = False
+            #     setRowCount(0)  -> overlay visible = False  <- should return
+            # A panel just filled with results stayed covered by a card saying
+            # there was nothing to show.
+            try:
+                model = v.model()
+                if model is not None:
+                    model.rowsInserted.connect(self._sync)
+                    model.rowsRemoved.connect(self._sync)
+                    model.modelReset.connect(self._sync)
+                    model.layoutChanged.connect(self._sync)
+            except (AttributeError, RuntimeError, TypeError):
+                # A view without a usable model keeps the resize-only behaviour.
+                # This module imports no logger, and adding one for a defensive
+                # branch would be more noise than signal.
+                pass
+
             self._sync()
 
         def eventFilter(self, obj, event):
@@ -292,15 +315,29 @@ def attach_empty_state_to(
             return False
 
         def _sync(self):
-            model = self._view.model() if self._view is not None else None
+            # Connecting to the model's signals means this slot can fire AFTER
+            # the view is destroyed: Qt keeps the connection alive through the
+            # model. Reading self._view.model() then raises
+            # "wrapped C/C++ object ... has been deleted", which Qt prints as an
+            # unhandled traceback on every teardown. Found 2026-09-05, caused by
+            # the very connections added just above.
+            try:
+                model = self._view.model() if self._view is not None else None
+            except RuntimeError:
+                return
             empty = True
             try:
                 empty = (model is None) or model.rowCount() == 0
             except (AttributeError, RuntimeError, TypeError):
                 empty = True
-            self._overlay.setVisible(bool(empty))
-            if empty:
-                self._overlay.raise_()
+            # Same reasoning as the model read above: the overlay can be gone
+            # before its watcher stops being called.
+            try:
+                self._overlay.setVisible(bool(empty))
+                if empty:
+                    self._overlay.raise_()
+            except RuntimeError:
+                return
 
     watcher = _Watcher(view, overlay)
     _OVERLAYS[id(view)] = (overlay, watcher)

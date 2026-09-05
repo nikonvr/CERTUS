@@ -289,6 +289,21 @@ class StackPanelWidget(QWidget):
 
         def safe_clear() -> None:
             try:
+                # setRowCount(0) with no confirmation and no undo. FIELD owns no
+                # undo machinery (step 2.13), so the stack was unrecoverable.
+                # StackPanelWidget is a plain QWidget, hence the walk up to the
+                # window that carries confirm_destructive.
+                _rows = self.table_layers.rowCount()
+                if _rows:
+                    _confirm = getattr(self.window(), "confirm_destructive", None)
+                    if callable(_confirm) and not _confirm(
+                        "Clear the stack?",
+                        f"This removes all {_rows} layers from the table.",
+                        detail="There is no undo for this table.",
+                        confirm_label="Clear",
+                        cancel_label="Cancel",
+                    ):
+                        return
                 self.is_updating_table = True
                 self.table_layers.setRowCount(0)
                 self.is_updating_table = False

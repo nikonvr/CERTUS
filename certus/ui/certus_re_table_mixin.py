@@ -790,7 +790,20 @@ class CertusRETableMixin:
                 start_row = current_row
 
             else:
-                # Clear table and paste from start
+                # Clear table and paste from start.
+                # With no row selected this REPLACES the whole stack, and nothing
+                # said so. RE's undo stack was never filled either (step 2.13),
+                # so the previous stack was simply gone. Measured 2026-09-05:
+                # 24 destructive methods in the suite, 0 confirmations.
+                _rows = self.front_table.rowCount()
+                if _rows and not self.confirm_destructive(
+                    "Replace the whole stack?",
+                    f"No row is selected, so pasting replaces all {_rows} layers.",
+                    detail="Select a row first to paste from there instead.",
+                    confirm_label="Replace",
+                    cancel_label="Cancel",
+                ):
+                    return
 
                 self.front_table.blockSignals(True)
 

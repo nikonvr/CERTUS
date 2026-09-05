@@ -767,6 +767,61 @@ détient** : une fenêtre qui a placé son focus délibérément est laissée tr
 passer une fenêtre focalisée sur « Capture ». Ce qui compte est le GENRE — `Espace` sur un
 bouton exécute, sur une zone de défilement fait défiler, dans un champ écrit.*
 
+### ✅ 2.19 — l'overlay d'état vide MASQUAIT les données, et ne couvrait que deux modules
+
+**Le volet grave d'abord.** `_Watcher` ne se resynchronisait que sur `QEvent.Type.Resize`, donc
+entre deux redimensionnements l'overlay disait ce qu'il avait dit la dernière fois :
+
+```
+attache (0 ligne)   -> overlay visible = True
+setRowCount(5)      -> overlay visible = True    <- il MASQUE les donnees
+un redimensionnement-> overlay visible = False
+setRowCount(0)      -> overlay visible = False   <- il devrait revenir
+```
+
+La première ligne est la sérieuse : **un panneau qu'on vient de remplir de résultats restait
+couvert par une carte disant qu'il n'y a rien à montrer.** Le veilleur suit désormais
+`rowsInserted`, `rowsRemoved`, `modelReset` et `layoutChanged`.
+
+⚠️ *Mon premier test passait pour une mauvaise raison* : il lisait `isVisible()`, qui rend
+`False` dès qu'un ancêtre n'est pas affiché — donc il validait n'importe quoi. `isVisibleTo()`
+ignore les ancêtres, et le défaut est apparu.
+
+**Puis la couverture.** `_EMPTY_STATE_HINTS` connaît six **noms d'attributs**, que seuls
+DESIGN et RE portent :
+
+```
+avant : DESIGN 3/3   RE 2/2   INDEX 0/2   FIELD 0/4   SPLINE 0/3
+apres : DESIGN 4/3   RE 2/2   INDEX 2/2   FIELD 4/4   SPLINE 3/3
+```
+
+Le balayage passe par `_iter_persistable_tables()`, déjà écrit ; le registre garde son rôle —
+**surcharger** le libellé là où un message spécifique existe — ce qui empêche la couverture de
+re-périmer au prochain renommage.
+
+🔴 **Et j'ai introduit un défaut en corrigeant, trouvé par le test suivant** : connecter le
+veilleur aux signaux du modèle le fait vivre **après** la destruction de la vue, Qt gardant la
+connexion via le modèle. `self._view.model()` levait alors *« wrapped C/C++ object has been
+deleted »*, que Qt imprime en trace non gérée **à chaque fermeture**. Les deux accès sont
+maintenant protégés.
+
+### ✅ 2.21 — 24 méthodes destructrices, 0 confirmation
+
+`confirm_destructive` existe, est testée, et n'avait **aucun appelant en production** — le
+motif `fast_auto_blocks` du `CLAUDE.md` §24-50 transposé à l'ergonomie. Deux actions détruisent
+un empilement optique, et **aucun des deux modules ne sait annuler** :
+
+- **RE** — coller depuis Excel **sans ligne sélectionnée remplace tout l'empilement**, et le
+  stack d'annulation de RE n'était jamais rempli (§2.13) ;
+- **FIELD** — `safe_clear()` fait `setRowCount(0)` sur `table_layers`, et FIELD n'a aucune
+  machinerie d'annulation.
+
+⚠️ `StackPanelWidget` est un simple `QWidget` : il ne porte pas `confirm_destructive`, d'où la
+remontée par `self.window()`. Garde-fou `tests/ui/test_ux_destructive_confirmations.py`, qui
+**refuse** la confirmation et vérifie que les lignes sont toujours là — un test qui se
+contenterait de constater l'ouverture du dialogue passerait sur un dialogue dont la réponse
+est ignorée.
+
 ### 🟠 Et un piège de mesure trouvé au passage, sans rapport avec le tri
 
 📏 **597 fichiers `.pyc` du dépôt portent le chemin `D:\certus0309`**, qui **n'existe pas sur

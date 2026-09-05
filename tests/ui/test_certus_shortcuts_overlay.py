@@ -41,17 +41,34 @@ def test_u4_group_entries_sorts_and_preserves_categories():
     ]
 
 
-def test_u4_collect_window_shortcuts_uses_commands():
-    """Duck-typed window with a ``_commands`` registry produces entries."""
+def test_u4_collect_window_shortcuts_uses_commands(qapp):
+    """A window's registered commands produce entries - when the keys are BOUND.
+
+    CONTRACT CHANGED 2026-09-05, and this test asserted the old one. It used a
+    duck-typed window whose findChildren() returned [], i.e. a window owning no
+    shortcut at all, and still expected the overlay to advertise F5 and Ctrl+S.
+    That is precisely the defect step 2.20(e) describes: CommandAction.shortcut
+    is a documentation string, not a binding, and the overlay copied it blindly.
+    Measured that day, announced but unbound: METAL x2 promised Ctrl+O "Load
+    configuration" and Ctrl+S "Save configuration", DESIGN and four others
+    promised Ctrl+R and Ctrl+W.
+
+    So the window here now BINDS what it advertises, and the assertions keep the
+    part of the intent that was always right: a command carrying no shortcut
+    contributes nothing.
+    """
+    from PyQt6.QtGui import QKeySequence, QShortcut
+    from PyQt6.QtWidgets import QWidget
+
     from certus.utils.certus_command_palette import CommandAction
     from certus.ui.certus_shortcuts_overlay import collect_window_shortcuts
 
-    class _FakeWindow:
-        def __init__(self, cmds):
-            self._commands = cmds
-
-        def findChildren(self, _cls):  # emulate Qt API
-            return []
+    def _FakeWindow(cmds):
+        win = QWidget()
+        win._commands = cmds
+        QShortcut(QKeySequence("F5"), win)
+        QShortcut(QKeySequence("Ctrl+S"), win)
+        return win
 
     cmds = [
         CommandAction(
@@ -76,9 +93,11 @@ def test_u4_collect_window_shortcuts_uses_commands():
     ]
     entries = collect_window_shortcuts(_FakeWindow(cmds))
     seqs = [e.sequence for e in entries]
-    # Only entries with a shortcut are returned
+    labels = [e.label for e in entries]
+    # Bound sequences are advertised...
     assert "F5" in seqs and "Ctrl+S" in seqs
-    assert len(entries) == 2
+    # ...and a command with no shortcut contributes nothing.
+    assert "Internal command" not in labels
 
 
 def test_u4_collect_window_shortcuts_dedup_qshortcut_vs_command():

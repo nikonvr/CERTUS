@@ -168,15 +168,28 @@ dir .git\hooks\post-commit*
 git remote get-url origin
 ```
 
-👤 a demandé le **2026-08-14** que le push soit **armé**. Donc `post-commit` sans suffixe est
-l'état **voulu** : chaque commit pousse vers `github.com/nikonvr/CERTUS`, un dépôt **public**.
-`--no-verify` ne l'arrête pas — il ne saute que `pre-commit` et `commit-msg`.
+👤 a demandé le **2026-08-14** que le push soit **armé**. Le hook vit dans
+**`.githooks/post-commit`**, qui **est versionné**, et il ne s'arme que par
+`git config core.hooksPath .githooks` — une configuration **locale**, donc **jamais héritée
+d'un clone ni d'une copie de snapshot**. `--no-verify` ne l'arrêterait pas : il ne saute que
+`pre-commit` et `commit-msg`.
 
-🔴 **Conséquence, et elle est permanente : commiter, c'est publier.** Rien qui porte une
+⚠️ **Ce paragraphe a longtemps conclu « commiter, c'est publier ». C'est FAUX dès que
+`core.hooksPath` n'est pas réglé, ce qui est le cas par défaut.** 📏 Mesuré le 2026-09-05 sur
+ce snapshot : `core.hooksPath` **non défini**, `.git/hooks/` ne contient que des `.sample`, et
+un commit est resté `[ahead 1]` jusqu'à un `git push` explicite. **Vérifie l'état, ne le
+suppose pas :**
+
+```bat
+git config --get core.hooksPath
+dir .githooks
+```
+
+🔴 **Ce qui reste vrai et permanent, et c'est le seul point qui compte : le dépôt est
+PUBLIC.** Que la publication vienne du hook ou d'un `git push` à la main, rien qui porte une
 donnée personnelle, un secret, ou l'œuvre d'un tiers ne doit entrer dans l'index. Le
 2026-08-14 le dépôt portait encore un nom civil dans six fichiers Excel, un nom de session
-dans 114 lignes de journaux, et le texte intégral d'une thèse tierce. Si 👤 demande un commit
-**sans** pousser, désactive le hook **avant**, pas après.
+dans 114 lignes de journaux, et le texte intégral d'une thèse tierce.
 
 🔴 **ET CE N'EST PAS RÉGLÉ — le nettoyage du 2026-08-14 n'a nettoyé que l'ARBRE DE TRAVAIL.**
 📏 Mesuré le 2026-08-17 :
@@ -364,13 +377,19 @@ dir .git\hooks\post-commit*
   diffèrent parce que la racine **change à chaque snapshot** alors que le venv est **unique
   sur la machine**. ⚠️ S'il déménage à son tour, `coherence_md.py` le dira au premier
   passage : son contrôle E exige que tout interpréteur cité **existe**.
-- 🔴 **Le hook `post-commit` est ARMÉ, et c'est voulu.** 👤 l'a demandé le 2026-08-14.
-  **Tout commit pousse vers le dépôt PUBLIC `nikonvr/CERTUS`**, et `--no-verify` ne l'en
-  empêche pas. Ce n'est pas un accident : c'est le mode de travail choisi. ⚠️ Vérifie-le
-  avant de committer quoi que ce soit de sensible.
-  Le fichier `post-commit.DESACTIVE` est l'ancienne version inerte, gardée à côté.
-  ⚠️ Ce paragraphe ordonnait l'inverse — *« ne le réactive jamais »* — jusqu'au 2026-08-16 :
-  il décrivait un état contraire au réel depuis deux jours.
+- 🔴 **Le hook `post-commit` est ARMABLE, pas armé — et la différence se MESURE, elle ne se
+  suppose pas.** 👤 a demandé le 2026-08-14 que le push soit armé, et le hook vit depuis dans
+  `.githooks/post-commit`, versionné. Mais il ne s'active que si `core.hooksPath` pointe sur
+  ce dossier, et **c'est une configuration locale : ni un clone ni une copie de snapshot ne
+  l'hérite**.
+  📏 Mesuré le 2026-09-05 sur ce snapshot : `core.hooksPath` **non défini**, `.git/hooks/` ne
+  contient que des `.sample`, et un commit est resté `[ahead 1]` jusqu'à un `git push`
+  explicite. **Deux commandes tranchent, lance-les au lieu de croire ce paragraphe :**
+  `git config --get core.hooksPath` et `git status -sb`.
+  ⚠️ Ce paragraphe a successivement ordonné *« ne le réactive jamais »* (jusqu'au 2026-08-16)
+  puis affirmé *« tout commit pousse »* (jusqu'au 2026-09-05). **Les deux ont décrit un état
+  contraire au réel.** Le fait stable n'est pas l'état du hook, c'est que **le dépôt est
+  public** : voir §2, point 2.
 
 ### Commandes de référence
 

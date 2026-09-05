@@ -202,7 +202,7 @@ class CertusCommandPaletteMixin:
                     id="view.zoom_in",
                     title="Zoom in",
                     subtitle="Increase the interface scale for readability",
-                    shortcut="Ctrl+Plus",
+                    shortcut="Ctrl++",
                     category="View",
                     icon_name="search-plus",
                     keywords=("zoom", "scale", "larger", "readability"),
@@ -214,7 +214,7 @@ class CertusCommandPaletteMixin:
                     id="view.zoom_out",
                     title="Zoom out",
                     subtitle="Reduce the interface scale for denser layouts",
-                    shortcut="Ctrl+Minus",
+                    shortcut="Ctrl+-",
                     category="View",
                     icon_name="search-minus",
                     keywords=("zoom", "scale", "smaller", "density"),
@@ -477,7 +477,9 @@ class CertusCommandPaletteMixin:
             # assigns the sequence to the menu entry ONLY when no QShortcut already
             # owns it on this window, so the two never compete.
             # Note: "Ctrl+Plus" / "Ctrl+Minus" resolve to an EMPTY QKeySequence on
-            # Qt 6 - the menu entry would display no shortcut at all.
+            # Qt 6 - the menu entry would display no shortcut at all. The command
+            # palette declared exactly those two until 2026-09-05 and printed them
+            # verbatim, so it advertised a key the operator cannot type.
             def _menu_action(label: str, seq: str | None, slot) -> None:
                 act = help_menu.addAction(label)
                 if seq:

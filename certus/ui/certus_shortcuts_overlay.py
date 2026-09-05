@@ -94,11 +94,26 @@ def collect_window_shortcuts(window) -> list[ShortcutEntry]:
     entries: list[ShortcutEntry] = []
     seen: set[tuple[str, str]] = set()
 
+    # CommandAction.shortcut is a documentation string, not a binding. Copying it
+    # into the overlay without checking made the help promise keys that do
+    # nothing. Measured 2026-09-05, announced but unbound: METAL x2 offered
+    # Ctrl+O "Load configuration" and Ctrl+S "Save configuration", DESIGN and
+    # four others offered Ctrl+R and Ctrl+W. An operator who presses them learns
+    # that the help lies, which is worse than no help. Derive it from reality.
+    try:
+        from certus.ui.certus_ui_utils import shortcut_owner
+    except ImportError:  # pragma: no cover - defensive, the overlay must still open
+
+        def shortcut_owner(_win, _seq):
+            return "unchecked"
+
     # 1) Commands registered in the palette (richer metadata) take priority.
     cmds = _get_window_commands(window)
     for cmd in cmds:
         seq = getattr(cmd, "shortcut", "") or ""
         if not seq:
+            continue
+        if shortcut_owner(window, seq) is None:
             continue
         key = (seq.lower(), cmd.title.lower())
         if key in seen:

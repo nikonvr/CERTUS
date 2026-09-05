@@ -422,6 +422,48 @@ conservé (`dmin = 0.0` s'affiche « - », donc rien d'inventé n'atteint l'opé
 **cesse d'être muet** : exceptions nommées et avertissement journalisé.
 Garde-fou `tests/ui/test_ux_field_pareto_honesty.py`, **2 failed → 2 passed**.
 
+### ✅ 2.20 — (a), (b), (e) et (f) sont clos ; (c) et (d) restent
+
+**(a) et (b) étaient déjà appliqués**, vérifié dans le code : `close_all_auxiliary_windows`
+est passé sur `Ctrl+W` et `stop=self.request_stop_optimization` est bien fourni, donc **`Esc`
+stoppe STRAT** ; l'optimisation locale de DESIGN est sur `Ctrl+Shift+G` et `load=` est fourni,
+donc **`Ctrl+O` charge une configuration**.
+
+**(f).** 📏 Mesuré avec Qt 6.11 :
+
+```
+QKeySequence("Ctrl+Plus").toString()   ->  ''        ne se resout a RIEN
+QKeySequence("Ctrl+Minus").toString()  ->  ''        ne se resout a RIEN
+QKeySequence("Ctrl++").toString()      ->  'Ctrl++'
+QKeySequence("Ctrl+-").toString()      ->  'Ctrl+-'
+```
+
+La palette annonçait `Ctrl+Plus` / `Ctrl+Minus` et les imprimait **tels quels** : un raccourci
+que l'opérateur ne peut pas taper. 🔑 **Le menu Help voisin utilisait déjà les bonnes
+séquences et portait même un commentaire expliquant pourquoi** — la palette n'avait jamais
+suivi. Garde-fou général posé (*toute séquence annoncée doit se résoudre*) :
+**3 failed → 3 passed.**
+
+**(e) — l'aide dérive maintenant du RÉEL.** 📏 Mesuré, annoncé contre réellement lié :
+
+```
+CERTUS_DESIGN         20 annonces / 21 lies    fantomes : Ctrl+R, Ctrl+W
+CERTUS_STRAT          17 annonces / 20 lies    fantomes : aucun
+CERTUS_METAL_SINGLE   16 annonces / 15 lies    fantomes : Ctrl+O "Load configuration...",
+                                                          Ctrl+S "Save configuration...",
+                                                          Ctrl+R, Ctrl+W
+```
+
+`collect_window_shortcuts` écarte désormais toute entrée dont `shortcut_owner(window, seq)`
+rend `None`. Garde-fou `tests/ui/test_ux_help_matches_reality.py` : **6 failed → 7 passed**.
+
+⚠️ **Un test existant encodait l'ANCIEN contrat et a dû être retourné** — c'est le piège 5 du
+`CLAUDE.md`, pas un ajustement de complaisance. `test_u4_collect_window_shortcuts_uses_commands`
+utilisait une fenêtre factice dont `findChildren()` rendait `[]` — donc une fenêtre ne
+possédant **aucun** raccourci — et exigeait quand même que l'aide annonce `F5` et `Ctrl+S`.
+**C'est exactement le défaut que (e) corrige.** La fenêtre y **lie** désormais ce qu'elle
+annonce, et le docstring dit pourquoi le contrat a changé.
+
 ### 🟠 Et un piège de mesure trouvé au passage, sans rapport avec le tri
 
 📏 **597 fichiers `.pyc` du dépôt portent le chemin `D:\certus0309`**, qui **n'existe pas sur

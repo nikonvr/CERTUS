@@ -602,6 +602,87 @@ depuis `stash@{0}^3` (PDF à 682 644 octets chacun, 22 fichiers, remis hors de l
 `_update_overview_tab` répondait en une seconde et sans toucher au disque. **Ne remise jamais
 des fichiers non suivis pour instruire une question à laquelle la lecture répond.**
 
+### ✅ 2.11 — INDEX détachait le mauvais graphe, et le faisait PLANTER sur n & k
+
+📏 Ordre réel mesuré le 2026-09-05, confirmant le dossier :
+
+```
+index 0 -> 'Data'            index 3 -> 'n & k'
+index 1 -> '✦ Synthesis'     index 4 -> 'Convergence ↘'
+index 2 -> 'Spectrum'        index 5 -> 'Final Equations'
+```
+
+Le gestionnaire aiguillait sur des **index en dur** en supposant `0 = Spectrum`. 🔑 **Le
+garde-fou a montré que c'est pire que décrit : les QUATRE cas échouaient**, y compris l'onglet
+*Data* dont une rustine textuelle (`or tabText(...) == "Data"`) était masquée par la branche
+`index == 0` placée avant elle. Traiter le symptôme avait caché la cause.
+
+L'aiguillage se fait désormais par **appartenance du widget** (`isAncestorOf`), qui survit à
+n'importe quel réordonnancement futur. Vérifié : `plot_spectrum → 'Spectrum'`,
+`plot_nk → 'n & k'`, `table_res → 'Data'`.
+
+🔴 **Et un plantage que personne n'avait vu, révélé par le test** : détacher l'onglet n & k
+sur une fenêtre fraîche levait `AttributeError: 'NoneType' object has no attribute
+'addedItems'`. La garde était `if hasattr(self, "_vb_k")` — or **`hasattr` rend `True` pour un
+attribut valant `None`**, et `_vb_k` est `None` tant qu'aucun calcul n'a produit de données k.
+`getattr(..., None) is not None` désormais.
+
+**Le second défaut s'éteint avec le premier**, comme le dossier l'annonçait : le module
+s'ouvrait sur *Data*, un onglet vide, alors que le commentaire disait « Spectrum Tab (0) ».
+L'onglet de départ est résolu par son **titre**. Garde-fou `tests/ui/test_ux_index_detach.py` :
+**4 failed → 4 passed.**
+
+⚠️ **Mon avertissement du commit précédent criait pour rien, je l'ai rendu précis.** INDEX
+demande le zoom **deux fois** (son `_setup_shortcuts` et `install_common_affordances`) : la
+touche fonctionne, il n'y a rien à corriger. Un avertissement qui crie pour rien apprend à
+ignorer les avertissements. Il ne se déclenche plus que si une action **différente** détient
+déjà la séquence — le cas de l'export de RE. Sur INDEX : **3 avertissements → 0**.
+
+### ✅ 2.8 — sans objet
+
+`_mg_table` est un `QTableWidget` **brut** (`certus_strat_multigraine_ui.py:379`) et le fichier
+ne contient **aucun** `setSortingEnabled`. La table n'est donc pas triable et rien ne peut la
+réordonner pendant son remplissage. L'étape citait une ligne `:394` qui n'existe plus.
+
+### 📏 CE QUE LE CHANGEMENT D'ONGLET A RÉVÉLÉ — diff des références, règle 0.15
+
+Ouvrir INDEX sur *Spectrum* au lieu de *Data* change **ce que le harnais voit** : il ne mesure
+que les widgets **visibles**. Diff du squelette, `47 → 51` :
+
+```
+RETIRE : QPushButton| Copy n,k          <- existent toujours, mais sur l'onglet Data
+RETIRE : QPushButton| Copy Parameters
+AJOUTE : QToolButton|Reset · Detach · Copy data · Pub copy · CSV · Export
+```
+
+Diff du cliquet :
+
+```
+CERTUS_INDEX            btn_narrow      2 -> 5   [PIRE]
+CERTUS_INDEX            btn_no_tooltip  0 -> 1   [PIRE]
+```
+
+🔑 **Aucune des deux n'est une régression : ce sont des boutons PRÉEXISTANTS devenus
+mesurables.** Ils étaient sur un onglet que le harnais ne regardait jamais.
+
+**`btn_no_tooltip` a été corrigé à la source**, pas absorbé par une régénération : le seul
+bouton nu était le `QToolButton " Export"` de la barre d'outils des graphes
+(`certus_plot.py:731`). Et comme cette barre est **partagée**, le correctif a porté ailleurs :
+
+```
+CERTUS_INDEX_SPLINE     btn_no_tooltip  2 -> 0   [MIEUX]
+CERTUS_SMOOTHER         btn_no_tooltip  5 -> 4   [MIEUX]
+CERTUS_SUBSTRATE_INDEX  btn_no_tooltip  3 -> 2   [MIEUX]
+CERTUS_RE               n_shortcuts    18 -> 19  [MIEUX]   (l'export Ctrl+Shift+E)
+```
+
+⚠️ **`btn_narrow 2 → 5` est enregistré tel quel, et voici pourquoi, nommément** : les trois
+boutons sont `Reset` (52 px), `Detach` (59 px) et `CSV` (42 px), tous dans la barre d'outils
+compacte des graphes, **tous pourvus d'une info-bulle**, et **tous au-dessus du plancher de
+hauteur** — `btn_short` reste à 0. Je n'ai pas touché au seuil du harnais pour faire baisser le
+chiffre : ce serait « corriger en remontant le seuil », ce que le §0.5 interdit. Le chiffre est
+consigné pour ce qu'il est.
+
 ### 🟠 Et un piège de mesure trouvé au passage, sans rapport avec le tri
 
 📏 **597 fichiers `.pyc` du dépôt portent le chemin `D:\certus0309`**, qui **n'existe pas sur

@@ -499,8 +499,15 @@ class CertusIndexLayoutMixin:
         perf_layout.addWidget(c4, 1, 1)
         # "Why CERTUS?" marketing content moved out of scientific plot tabs (Option A)
 
-        # Spectrum Tab (0): visible by default to see T/R and n,k after optimization.
-        self.tabs.setCurrentIndex(0)
+        # Spectrum tab visible by default, to see T/R and n,k after optimization.
+        # Resolved by TITLE, not by index: _add_main_control_buttons inserts the
+        # "Data" tab before these addTab calls, so index 0 is Data and the module
+        # opened on an empty tab while this very comment claimed otherwise.
+        # Measured 2026-09-05.
+        for _i in range(self.tabs.count()):
+            if "spectrum" in self.tabs.tabText(_i).lower():
+                self.tabs.setCurrentIndex(_i)
+                break
 
         # Add plot container instead of tabs directly
         self.right_splitter.addWidget(plot_container)

@@ -537,8 +537,24 @@ def install_standard_shortcuts(
         if cb is None:
             continue
         sc = install_unique_shortcut(window, seq, cb)
+        claimed_by = getattr(window, "_certus_shortcut_actions", None)
+        if claimed_by is None:
+            claimed_by = {}
+            window._certus_shortcut_actions = claimed_by
         if sc is not None:
             installed[f"{name}:{seq}"] = sc
+            claimed_by[normalized_shortcut(seq)] = name
+        elif claimed_by.get(normalized_shortcut(seq)) == name:
+            # Same action asked twice - INDEX, for one, wires zoom from both its
+            # own _setup_shortcuts and install_common_affordances. The key works;
+            # there is nothing for anyone to fix, so this must not shout. A
+            # warning that cries for nothing teaches people to ignore warnings.
+            logging.getLogger("CERTUS").debug(
+                "%s: shortcut %r for %r was already installed by an earlier call",
+                type(window).__name__,
+                seq,
+                name,
+            )
         else:
             # install_unique_shortcut declines a sequence already claimed - on
             # purpose, since binding one twice makes Qt emit activatedAmbiguously

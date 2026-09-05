@@ -994,11 +994,18 @@ class CertusIndexEventsMixin:
         if current_widget is None:
             return
 
-        current_index = self.tabs.currentIndex()
+        # Never address a tab by its index. _add_main_control_buttons inserts the
+        # "Data" tab BEFORE the other addTab calls, so the indices this handler
+        # assumed drifted by TWO: measured 2026-09-05, index 0 is 'Data' and
+        # index 2 is 'Spectrum', so pressing Detach Plot on Data detached the
+        # spectrum. One branch had been patched with `or tabText(...) == "Data"`,
+        # which treats the symptom. Ownership survives any future reordering.
+        def _tab_owns(widget) -> bool:
+            return widget is not None and (widget is current_widget or current_widget.isAncestorOf(widget))
 
-        # 1. OPTION : TAB SPECTRUM (Index 0)
+        # 1. OPTION : TAB SPECTRUM
 
-        if current_index == 0:
+        if _tab_owns(getattr(self, "plot_spectrum", None)):
             plot_name = "spectrum"
 
             plot_title = "Transmission / Reflection Spectrum"
@@ -1019,9 +1026,9 @@ class CertusIndexEventsMixin:
 
                 detached_window.show()
 
-        # 2. OPTION : TAB N_K (Index 1) -> Split into two windows!
+        # 2. OPTION : TAB N_K -> Split into two windows!
 
-        elif current_index == 1:
+        elif _tab_owns(getattr(self, "plot_nk", None)):
             screen = QApplication.primaryScreen().availableGeometry()
 
             win_w = screen.width() // 2 - 10
@@ -1059,7 +1066,12 @@ class CertusIndexEventsMixin:
                     axisItems={"left": KLogAxisItem(orientation="left")},
                 )
 
-                if hasattr(self, "_vb_k"):
+                # hasattr() is True for an attribute set to None, and _vb_k IS
+                # None until a run has produced k data - so detaching the n & k
+                # tab on a fresh window raised
+                # "AttributeError: 'NoneType' object has no attribute 'addedItems'".
+                # Measured 2026-09-05.
+                if getattr(self, "_vb_k", None) is not None:
                     for item in self._vb_k.addedItems:
                         if isinstance(item, pg.PlotCurveItem):
                             x, y = item.getData()
@@ -1084,9 +1096,9 @@ class CertusIndexEventsMixin:
             else:
                 self.detached_plot_windows["nk_k"].raise_()
 
-        # 3. OPTION : TAB DATA (Index 3)
+        # 3. OPTION : TAB DATA
 
-        elif current_index == 3 or self.tabs.tabText(current_index) == "Data":
+        elif _tab_owns(getattr(self, "table_res", None)):
             plot_name = "data_table"
 
             if plot_name in self.detached_plot_windows and self.detached_plot_windows[plot_name].isVisible():

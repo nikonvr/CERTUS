@@ -729,6 +729,10 @@ class CertusScientificPlot(pg.PlotWidget):
 
         export_btn = QToolButton()
         export_btn.setText(" Export")
+        # The only button of this toolbar without one. It went unnoticed because
+        # the harness measures VISIBLE widgets and INDEX opened on a tab that
+        # hid the whole plot toolbar (step 2.11). Measured 2026-09-05.
+        export_btn.setToolTip("Export the plot or its data: PNG, SVG, CSV or TSV.")
         export_btn.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         menu = QMenu(export_btn)
         act_png = menu.addAction(" PNG")

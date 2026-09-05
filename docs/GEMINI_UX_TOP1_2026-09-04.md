@@ -492,6 +492,35 @@ keeps the optimization running »*). Garde-fou `tests/ui/test_ux_stop_confirmati
 ⚠️ **Cela change le comportement de cinq modules à la fois, et c'est annoncé** — le §2.20 le
 demandait. Vérifié qu'aucun test existant ne s'appuyait sur l'ancienne sémantique.
 
+### ✅ 2.20 (c) — fermer pendant un run demande enfin quelque chose
+
+📏 Mesuré le 2026-09-05 : `CertusBaseApp.closeEvent` appelait `_stop_all_workers()` **sans
+rien demander**, et STRAT — qui **ne chaîne jamais** vers la classe de base, son propre
+commentaire le dit — finissait par `finally: event.accept()`. Cliquer la croix pendant un run
+de 2 h 39 le jetait, sans question et sans retour.
+
+`confirm_close_during_run` demande désormais, dans les deux chemins, et `confirm_destructive`
+a déjà « annuler » pour bouton par défaut. Garde-fou `tests/ui/test_ux_close_during_run.py` :
+**2 failed → 4 passed**, avec un test dans **chaque sens** — refuser doit laisser la fenêtre
+ouverte, **et** ne rien avoir en cours ne doit poser aucune question.
+
+🔴 **ET MA PREMIÈRE IMPLANTATION A FAIT PLANTER L'INTERPRÉTEUR — à consigner, parce que
+l'erreur est tentante.** Pour être précis plutôt que prudent, je comptais les threads en vie
+en balayant **aussi** `self.findChildren(QThread)`. Cette traversée atteint, pendant la
+destruction, des objets dont le **côté C++ est déjà libéré** :
+
+```
+sans mon changement : 5 passed in 4.07s   (deux essais)
+avec findChildren   : Windows fatal exception: access violation
+apres retrait       : 5 passed in 4.10s   (deux essais)
+```
+
+🔑 **Aucune clause `except` ne rattrape ça** : ce n'est pas une exception Python, c'est le
+processus qui meurt. La garde ne consulte donc plus que les inscriptions du
+`worker_manager`. ⚠️ **Et c'est le test le plus banal de la suite qui l'a attrapé**, pas un
+test d'ergonomie : `tests/unit/test_gui_apps_smoke.py`, qui se contente d'ouvrir et de fermer
+les fenêtres.
+
 ### 🟠 Et un piège de mesure trouvé au passage, sans rapport avec le tri
 
 📏 **597 fichiers `.pyc` du dépôt portent le chemin `D:\certus0309`**, qui **n'existe pas sur

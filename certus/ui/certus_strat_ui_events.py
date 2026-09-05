@@ -244,6 +244,12 @@ class CertusStratEventsMixin:
 
     def closeEvent(self, event) -> None:
 
+        # This override never chains to CertusBaseApp.closeEvent (see below), so
+        # the "are you sure, a run is going" guard has to be requested here too.
+        # STRAT is the module where it matters most: its runs reach 2 h 39.
+        if not self.confirm_close_during_run(event):
+            return
+
         try:
             # This override never chains to CertusBaseApp.closeEvent, so the
             # persistence call has to be explicit: without it STRAT saved

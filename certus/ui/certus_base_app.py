@@ -2274,8 +2274,62 @@ class CertusBaseApp(
 
         self._schedule_eval(True)
 
+    def running_worker_count(self) -> int:
+        """Background threads ACTUALLY running right now.
+
+        worker_manager.active_count() counts REGISTRATIONS, and a worker that has
+        finished may still be registered. The close guard has to be precise
+        rather than merely cautious: a false positive freezes a window with
+        nothing to lose, and tests/unit/test_gui_apps_smoke.py closes eleven.
+        """
+        # Only the manager's own registrations. An earlier version also walked
+        # findChildren(QThread): that traversal reached objects whose C++ side was
+        # already gone during teardown and crashed the interpreter outright -
+        # "Windows fatal exception: access violation", which no except clause can
+        # catch. Measured 2026-09-05: tests/unit/test_gui_apps_smoke.py went from
+        # 5 passed in 4 s to a hard crash, and back once the traversal was
+        # dropped.
+        manager = getattr(self, "worker_manager", None)
+        workers = getattr(manager, "_active_workers", None) or []
+
+        running = 0
+        for candidate in list(workers):
+            try:
+                if candidate.isRunning():
+                    running += 1
+            except RuntimeError, AttributeError:  # wrapper outlived the C++ object
+                continue
+        return running
+
+    def confirm_close_during_run(self, event) -> bool:
+        """Ask before a close throws a running computation away.
+
+        Until 2026-09-05 closeEvent called _stop_all_workers() and never asked,
+        and STRAT's own override ended with `finally: event.accept()`. Clicking
+        the window's X during a STRAT run - up to 2 h 39 - discarded it with no
+        question and no undo.
+
+        Returns True when the close may proceed.
+        """
+        running = self.running_worker_count()
+        if not running:
+            return True
+        if self.confirm_destructive(
+            "Close while a computation is running?",
+            f"{running} background task(s) are still running in this window.",
+            detail="Closing now discards the current run. A STRAT run takes up to 2 h 39.",
+            confirm_label="Close and discard",
+            cancel_label="Keep running",
+        ):
+            return True
+        event.ignore()
+        return False
+
     def closeEvent(self, event) -> None:
         """Clean up on close."""
+
+        if not self.confirm_close_during_run(event):
+            return
 
         self._qs_save()
 

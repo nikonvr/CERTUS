@@ -2956,11 +2956,13 @@ littéral**, sous la forme `'QPushButton|⬡  Detach plot'`. Le cliquet du squel
 | | mesuré 2026-09-06 |
 |---|---|
 | entrées de squelette au total | **487** |
-| touchées par 3.0 (double espace) | 4 |
+| touchées par 3.0 (double espace) | 17 |
 | touchées par 3.0 (`lambda`) | 3 |
 | touchées par 3.5 (emoji) | **60** |
-| **union — entrées à régénérer** | **65, soit 13 % du squelette** |
+| **union — entrées à régénérer** | **67, soit 14 % du squelette** |
 | assertions de texte exact dans `tests/` | **37**, sur **9 fichiers** |
+
+*(union < somme : une même entrée peut porter deux défauts — contrôle E de la sonde)*
 
 ```bash
 grep -rEn "\.text\(\)\s*==|\.windowTitle\(\)\s*==|\.toolTip\(\)\s*==|tabText\([0-9]+\)\s*==" tests/ --include=*.py | wc -l
@@ -3028,24 +3030,55 @@ l'épinglage est en place — c'est l'erreur n° 4 du §5 de `CLAUDE.md` sous un
 | 3 | **3.1 puis 3.10** | le grind, par tranches, interruptible |
 | 4 | **3.0 et 3.5, EN DERNIER ET SEULES** | un changement, une relecture du squelette, puis `tests/ui/ + tests/unit/` en entier (33 à 53 min). C'est là qu'il faut la machine pour soi |
 
-#### ⚠️ Écart avec les chiffres de l'étape 3.0, dit honnêtement
+#### 🟢 LA SONDE EXISTE — `scripts/sonde_libelles_visibles.py`, posée le 2026-09-06
 
-Mes comptes diffèrent de ceux du plan : **12 doubles espaces sur 7 fichiers** contre 30 sur
-11, et **53 `lambda` sur 19 fichiers** contre 38 sur 13. Deux causes, et elles ne se
-compensent pas :
+**Ne recompte pas à la main : lance-la.** C'est elle qui fait autorité sur les chiffres de
+3.0 et 3.5, et elle rend le « 0 » du garde-fou **vérifiable** au lieu d'affirmé.
 
-- **méthodologie** — j'ai compté **par AST**, en ne retenant que les chaînes littérales
-  passées à un puits Qt (`setText`, `setToolTip`, `addItem`, `addTab`, `setTitle`,
-  `setPlaceholderText`, `setHorizontalHeaderLabels`, `setWindowTitle`, … et les
-  constructeurs `QLabel`/`QPushButton`/`QCheckBox`/`QGroupBox`/`CertusCard`). C'est **plus
-  étroit** que « chaînes visibles » : un libellé construit par f-string ou concaténation
-  m'échappe ;
-- **dérive du code** depuis le 2026-09-04.
+```bash
+C:\envs\certus\Scripts\python.exe scripts\sonde_libelles_visibles.py
+C:\envs\certus\Scripts\python.exe scripts\sonde_libelles_visibles.py --detail
+```
 
-🔴 **Recompte avant d'attaquer, ne pars d'aucun de ces deux jeux de chiffres.**
-⚠️ **La sonde AST n'est PAS dans `scripts/`** — elle a été écrite pour cette mesure et jetée.
-La reposer proprement est un préalable bon marché à 3.0, et c'est la seule façon de rendre le
-« 0 » du garde-fou vérifiable au lieu d'affirmé.
+📏 **Sortie du 2026-09-06** — et ces nombres **remplacent** ceux du plan comme ceux de mes
+premiers relevés à la main, qui étaient faux sur le partage A/B :
+
+| contrôle | mesure |
+|---|---|
+| **A** séparateur effacé | **20** chaînes, 10 fichiers |
+| **B** esperluette mangée par Qt | **23** chaînes, 11 fichiers |
+| **C** `lambda` en toutes lettres | **53** chaînes, 19 fichiers |
+| **D** emoji atteignant un widget | **48** chaînes, 20 fichiers |
+| **E** recouvrement du cliquet | **67 / 487, soit 14 %** |
+| **F** angle mort | **256** arguments non littéraux |
+| **total à corriger pour 3.0** | **73** (A + C ; B a un autre correctif) |
+
+**Code de sortie : `1` tant qu'il reste du travail, `0` quand 3.0 est faite, `2` si le
+contrôle négatif interne ne mord plus** — ce troisième cas existe pour qu'on ne prenne jamais
+le silence de la sonde pour un résultat.
+
+🔴 **Elle affiche son propre angle mort, contrôle F : 256 arguments non littéraux** (f-string
+ou concaténation) passent par les mêmes puits Qt et lui échappent. **Il y a donc plus de
+chaînes qu'elle ne voit pas que de défauts qu'elle trouve.** Un « 0 » en A et C ne vaudra que
+*pour les littéraux*, et c'est écrit dans sa sortie plutôt que caché.
+
+🔑 **Sa première version était FAUSSE, et son contrôle négatif l'a attrapée au premier
+lancement** — sortie 2. Elle cherchait le double espace d'un mnémonique **dans la source**,
+où il n'est pas : `"(n) & layer"` s'écrit avec des espaces **simples**, et c'est Qt qui creuse
+le trou au rendu en retirant le `&`. Elle aurait donc prescrit de rétablir un tiret là où il
+faut **doubler l'esperluette** — des corrections fausses, produites par un outil vert. La
+logique de détection est verrouillée par `tests/unit/test_sonde_libelles_visibles.py`
+(16 tests), dont le cas décisif **échoue sur l'ancienne logique** :
+
+```
+chaine                            ANCIEN        NOUVEAU      attendu
+'Substrate (n) & layer thickness' None          mnemonique   mnemonique   FAUX
+```
+
+⚠️ **Ce fichier de tests n'assère AUCUN compte, délibérément** : un compte se périme à chaque
+libellé corrigé, donc l'y figer obligerait à modifier le test à chaque pas de 3.0. Les tests
+de comptage que 3.0 décrit s'écriront **quand elle sera faite** — aujourd'hui ils échoueraient,
+et c'est leur preuve d'utilité.
 
 ### Étape 3.0 — 🔑 UNE SEULE CAUSE RACINE EXPLIQUE UNE DIZAINE DE DÉFAUTS VISIBLES
 
@@ -3056,8 +3089,8 @@ sans les remplacer. Elle a laissé trois signatures, toutes mesurées le 2026-09
 
 | signature | compte | exemples |
 |---|---|---|
-| **double espace interne** là où un séparateur a été retiré | **30 chaînes, 11 fichiers** ⚠️ *AST 2026-09-06 : **12 sur 7** — voir l'écart de méthode en 3-AUDIT* | `'1␣␣Materials'` · `'2-4␣␣Parameters'` · `'CERTUS␣␣Index Spline Optimization'` · `'Optical Profiles␣␣n(lambda) and ln k(lambda)'` · `'Smart Init␣␣PWL n and k (…)'` |
-| **`lambda` écrit en toutes lettres** au lieu de `λ` | **38 chaînes, 13 fichiers** ⚠️ *AST 2026-09-06 : **53 sur 19*** | `"lambda (nm)"` · `"n(lambda)"` · `"Min. Deltalambda/lambda step (sigma mesh) :"` — c'est `Δλ/λ` désarticulé |
+| **double espace interne** là où un séparateur a été retiré | **30 chaînes, 11 fichiers** ⚠️ *sonde 2026-09-06 : **20 sur 10*** | `'1␣␣Materials'` · `'2-4␣␣Parameters'` · `'CERTUS␣␣Index Spline Optimization'` · `'Optical Profiles␣␣n(lambda) and ln k(lambda)'` · `'Smart Init␣␣PWL n and k (…)'` |
+| **`lambda` écrit en toutes lettres** au lieu de `λ` | **38 chaînes, 13 fichiers** ⚠️ *sonde 2026-09-06 : **53 sur 19*** | `"lambda (nm)"` · `"n(lambda)"` · `"Min. Deltalambda/lambda step (sigma mesh) :"` — c'est `Δλ/λ` désarticulé |
 | **caractère remplacé par `?`** | plusieurs | `certus_index_spline_managers_ui.py:265` — `addItem("Heuristic (alpha?RMSE_opt)", "alpha")` : le `?` occupe la place d'un opérateur |
 | **ternaire dégénéré** dont les deux branches sont devenues vides | 1, mais visible dans les **11 fenêtres** | `certus_ui_widgets_utils.py:179` — le basculeur de thème est un cercle vide (traité en 2.5) |
 
@@ -3084,10 +3117,14 @@ la source.
 l'emplacement du trou, c'est un mnémonique ; sinon, c'est un séparateur effacé.
 
 📏 **Et le partage est mesuré, 2026-09-06 — les deux cas sont du même ordre de grandeur, donc
-tu ne peux pas en négliger un** : **26 chaînes visibles sur 12 fichiers portent un `&`**
-(mnémonique, correctif = doubler l'esperluette) contre **12 doubles espaces sur 7 fichiers**
-(séparateur effacé, correctif = rétablir le séparateur). ⚠️ **Traiter les 38 de la même façon
-donnerait 26 corrections fausses.**
+tu ne peux pas en négliger un** : **23 chaînes visibles sur 11 fichiers portent un `&`**
+(mnémonique, correctif = doubler l'esperluette) contre **20 doubles espaces sur 10 fichiers**
+(séparateur effacé, correctif = rétablir le séparateur). ⚠️ **Traiter les 43 de la même façon
+donnerait 23 corrections fausses.**
+
+🔑 **Et le partage ne se lit PAS dans la source** : celle d'un mnémonique n'a que des espaces
+simples, le trou naissant au rendu. C'est `scripts/sonde_libelles_visibles.py` qui tranche,
+contrôles A et B — et sa première version s'était trompée exactement là.
 
 **Deux correctifs différents :**
 

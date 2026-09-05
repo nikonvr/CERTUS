@@ -1068,15 +1068,21 @@ def safe_ui_action(func):
 def confirm_stop_with_timeout(parent, timeout_sec=10) -> bool:
     """
 
-    Shows a confirmation dialog with a countdown.
+    Shows a confirmation dialog with a countdown, and INACTION KEEPS THE RUN.
 
-    Stops automatically after timeout if no action is taken.
+    Until 2026-09-05 this stopped the optimisation on three kinds of inaction:
+    the destructive button held the focus, the countdown clicked it after
+    ``timeout_sec``, and the fall-through read "no button clicked" - which is
+    what closing the dialog with Escape or the X produces - as a confirmation.
+    Esc is bound to stop in every module (step 2.20a) and it is a reflex key, so
+    one unmeant press followed by walking away cost a run that takes 2 h 39 on
+    STRAT.
 
     Returns:
 
-        True: Stop confirmed (timeout or 'Stop Now' clicked).
+        True: the operator CLICKED 'Stop Now'. Nothing else returns True.
 
-        False: Stop cancelled (User clicked 'Cancel').
+        False: cancelled, dismissed, or the countdown expired - keep running.
 
     """
 
@@ -1088,15 +1094,20 @@ def confirm_stop_with_timeout(parent, timeout_sec=10) -> bool:
 
     # text will be updated by timer
 
-    msg.setText(f"Stopping optimization in {timeout_sec} seconds...")
+    msg.setText(f"Stop the optimization? Resuming in {timeout_sec} seconds...")
 
-    msg.setInformativeText("Current best result will be saved.\nClick 'Cancel' to continuous optimization.")
+    msg.setInformativeText(
+        "Click 'Stop Now' to stop; the current best result will be saved.\n"
+        "Doing nothing keeps the optimization running."
+    )
 
     btn_stop = msg.addButton("Stop Now", QMessageBox.ButtonRole.AcceptRole)
 
-    btn_cancel = msg.addButton("Cancel", QMessageBox.ButtonRole.RejectRole)
+    btn_cancel = msg.addButton("Keep running", QMessageBox.ButtonRole.RejectRole)
 
-    msg.setDefaultButton(btn_stop)
+    # The focused button must be the one that loses nothing: Enter or Space on a
+    # dialog the operator has not read must not end a two-hour run.
+    msg.setDefaultButton(btn_cancel)
 
     remaining = timeout_sec
 
@@ -1107,12 +1118,12 @@ def confirm_stop_with_timeout(parent, timeout_sec=10) -> bool:
         remaining -= 1
 
         if remaining <= 0:
-            msg.setText("Stopping...")
-
-            btn_stop.animateClick()
+            # Close WITHOUT clicking: a countdown may cancel by itself, it may
+            # never destroy by itself.
+            msg.reject()
 
         else:
-            msg.setText(f"Stopping optimization in {remaining} seconds...")
+            msg.setText(f"Stop the optimization? Resuming in {remaining} seconds...")
 
     timer = QTimer(msg)
 
@@ -1124,10 +1135,9 @@ def confirm_stop_with_timeout(parent, timeout_sec=10) -> bool:
 
     timer.stop()
 
-    if msg.clickedButton() == btn_cancel:
-        return False
-
-    return True
+    # Only an explicit click on the destructive button confirms. Dismissing the
+    # dialog leaves clickedButton() at None, which the old code read as "stop".
+    return msg.clickedButton() is btn_stop
 
 def format_count_kmg(val) -> str:
     """Format a counter value as a short K/M/G string.

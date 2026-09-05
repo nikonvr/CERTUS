@@ -464,6 +464,34 @@ possédant **aucun** raccourci — et exigeait quand même que l'aide annonce `F
 **C'est exactement le défaut que (e) corrige.** La fenêtre y **lie** désormais ce qu'elle
 annonce, et le docstring dit pourquoi le contrat a changé.
 
+### ✅ LE DIALOGUE D'ARRÊT ARRÊTAIT SUR **TROIS** FORMES D'INACTION — le dossier n'en voyait que deux
+
+`confirm_stop_with_timeout` garde **tous** les chemins d'arrêt de la suite : DESIGN, INDEX,
+RE, STRAT et les deux METAL. 📏 Mesuré le 2026-09-05, il arrêtait le calcul sur :
+
+```
+msg.setDefaultButton(btn_stop)   le bouton destructeur avait le FOCUS
+btn_stop.animateClick()          le compte a rebours le cliquait apres 10 s
+return True                      le repli : fermer par Echap ou par la croix ne
+                                 clique RIEN, donc clickedButton() vaut None --
+                                 et l'ancien code lisait ca comme "arreter"
+```
+
+🔑 **La troisième n'était pas dans le §2.20, et c'est la pire** : elle ne demande aucune
+attente. Et elle compose avec le §2.20(a) que ce même dossier prescrit — **`Esc` est
+désormais lié à l'arrêt dans tous les modules, or `Esc` est une touche réflexe**. Un premier
+`Esc` involontaire ouvre le dialogue, un second le referme : le run de 2 h 39 est perdu **en
+deux réflexes**, sans qu'aucune décision n'ait été prise.
+
+**Règle appliquée : l'inaction ne détruit jamais.** `True` n'est rendu que si l'opérateur a
+**cliqué** « Stop Now ». Le bouton par défaut devient « Keep running », le compte à rebours
+**referme sans cliquer**, et le libellé dit la vérité (*« Resuming in N seconds… Doing nothing
+keeps the optimization running »*). Garde-fou `tests/ui/test_ux_stop_confirmation.py` :
+**4 failed → 4 passed.**
+
+⚠️ **Cela change le comportement de cinq modules à la fois, et c'est annoncé** — le §2.20 le
+demandait. Vérifié qu'aucun test existant ne s'appuyait sur l'ancienne sémantique.
+
 ### 🟠 Et un piège de mesure trouvé au passage, sans rapport avec le tri
 
 📏 **597 fichiers `.pyc` du dépôt portent le chemin `D:\certus0309`**, qui **n'existe pas sur

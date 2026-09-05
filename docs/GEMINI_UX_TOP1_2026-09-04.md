@@ -546,6 +546,62 @@ quelle séquence non résoluble.
 contient le gabarit `"%s … %r"` et non le texte interpolé — le journal formate paresseusement.
 `getMessage()` corrige. C'était mon test qui avait tort, pas le code.*
 
+### ✅ 2.10 — les colonnes de nombres se triaient comme du texte
+
+L'étape annonçait que ce défaut **reviendrait dès la restauration du tri**. Il est revenu.
+📏 Mesuré le 2026-09-05, avant correctif :
+
+```
+inseres   ['300.0', '1000.0', '450.0', '-12,5', 'n/a']
+tries     ['1000.0', '-12,5', '300.0', '450.0', 'n/a']
+```
+
+**1000 nm avant 300 nm — et la colonne a l'air triée.** 🔑 **Le dossier avait déjà essayé le
+correctif évident et mesuré son échec**, ce qui m'a fait gagner l'erreur : écrire la valeur
+dans `EditRole` ne trie pas (`QTableWidgetItem` compare le `DisplayRole`) **et corrompt
+l'affichage** — sur cette classe Qt confond les deux rôles, et `-12,5` se met à s'afficher
+`-12.5`, virgule décimale française perdue.
+
+`NumericAwareItem` surcharge donc `__lt__`, la seule voie qui marche.
+
+⚠️ **Mais ajouter la classe ne corrige rien à lui seul** : les tables sont peuplées de
+`QTableWidgetItem` ordinaires dans toute la suite. `ExcelTableWidget.setItem` **élève** donc un
+item **exactement** de ce type — pas une sous-classe, qui porterait un comportement à ne pas
+perdre — en recopiant drapeaux, alignement, info-bulle, couleurs, police et données
+utilisateur. Garde-fou `tests/ui/test_ux_numeric_sorting.py`, **1 failed → 3 passed**, avec
+les deux familles d'assertion que le dossier réclamait : **l'ordre** devient numérique **et le
+texte affiché reste intact**, virgule comprise.
+
+### 🔴 MON PÉRIMÈTRE DE VALIDATION ÉTAIT TROP ÉTROIT — un test cassé a été publié
+
+📏 Toutes mes validations jusqu'au 2026-09-05 portaient sur `tests/ui/` plus **deux** fichiers
+de `tests/unit/`. La première passe sur **`tests/unit/` en entier** a rendu :
+
+```
+1 failed, 2851 passed, 16 skipped, 4 xfailed in 2367.75s (0:39:27)
+FAILED tests/unit/test_spectral_knot_markers.py::test_plot_result_adds_large_t_knot_markers
+AttributeError: 'SimpleNamespace' object has no attribute '_update_overview_tab'
+```
+
+🔑 **Ce n'était pas moi, et je l'ai vérifié sans supposer** : `_update_overview_tab` vit dans
+`certus/spline/certus_index_spline_execution.py:928`, qui ne figure dans aucun de mes
+fichiers modifiés. C'est la campagne UX qui a ajouté ce collaborateur en câblant l'onglet
+Synthèse, **sans mettre à jour le stub `SimpleNamespace` du test**. ⚠️ **Mais je l'ai publié
+dans `bdfe2f9` en croyant la suite verte** — parce que je ne mesurais pas le bon périmètre.
+Le stub reçoit le collaborateur manquant, en no-op comme ses voisins : ce test porte sur les
+marqueurs de nœuds, pas sur l'onglet.
+
+**`tests/ui/ + tests/unit/` est désormais le périmètre de validation.**
+
+⚠️ **Et un incident de manipulation à consigner, parce qu'il a failli coûter du travail.**
+Pour savoir si l'échec préexistait, j'ai lancé `git stash push --include-untracked`. Le stash
+a **emporté puis supprimé** les deux PDF de l'étude sélénium et les 22 fichiers de `studies/`,
+avant d'échouer sur une permission et de laisser l'arbre à moitié défait. Tout a été récupéré
+depuis `stash@{0}^3` (PDF à 682 644 octets chacun, 22 fichiers, remis hors de l'index).
+🔑 **La bonne réponse ne demandait aucun stash** : un `grep` sur l'appelant de
+`_update_overview_tab` répondait en une seconde et sans toucher au disque. **Ne remise jamais
+des fichiers non suivis pour instruire une question à laquelle la lecture répond.**
+
 ### 🟠 Et un piège de mesure trouvé au passage, sans rapport avec le tri
 
 📏 **597 fichiers `.pyc` du dépôt portent le chemin `D:\certus0309`**, qui **n'existe pas sur

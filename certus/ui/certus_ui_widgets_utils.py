@@ -348,6 +348,35 @@ class CertusLogPanel(QWidget):
 
         self._on_copy()
 
+class NumericAwareItem(QTableWidgetItem):
+    """Sorts numerically when both cells hold a number, alphabetically otherwise.
+
+    Overriding __lt__ is the only approach that works. QTableWidgetItem compares
+    the DisplayRole, so writing the value into Qt.ItemDataRole.EditRole does not
+    change the order - and it is not even harmless: on this class Qt treats
+    EditRole and DisplayRole as the SAME value, so the float silently rewrites
+    what the operator sees. Measured 2026-09-04: "-12,5" started displaying as
+    "-12.5", the French decimal comma gone from the screen.
+
+    The comma is accepted on input for the same reason: CERTUS shows French
+    decimals in several tables.
+    """
+
+    @staticmethod
+    def _as_number(item):
+        try:
+            return float(item.text().strip().replace(",", "."))
+        except (ValueError, AttributeError):
+            return None
+
+    def __lt__(self, other) -> bool:
+        mine = self._as_number(self)
+        theirs = self._as_number(other)
+        if mine is None or theirs is None:
+            return super().__lt__(other)
+        return mine < theirs
+
+
 class ExcelTableWidget(QTableWidget):
     """Table with copy-paste, sortable columns and draggable column borders."""
 
@@ -365,6 +394,34 @@ class ExcelTableWidget(QTableWidget):
         if header is not None:
             header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
             header.setStretchLastSection(True)
+
+    def setItem(self, row: int, column: int, item) -> None:
+        """Upgrade a plain item so the column sorts by value, not by spelling.
+
+        Call sites build ordinary QTableWidgetItem all over the suite, and
+        changing every one of them would be a large diff for a property that
+        belongs to the table. Only an EXACT QTableWidgetItem is replaced: a
+        subclass carries behaviour we must not drop.
+
+        Everything the caller set is carried over, and the new item is returned
+        to nobody - so a caller holding a reference to the original would be
+        modifying a detached item. That is why the upgrade happens here, before
+        the item is ever shown, and why the copy is exhaustive.
+        """
+        if type(item) is QTableWidgetItem:
+            upgraded = NumericAwareItem(item.text())
+            upgraded.setFlags(item.flags())
+            upgraded.setTextAlignment(item.textAlignment())
+            upgraded.setToolTip(item.toolTip())
+            upgraded.setForeground(item.foreground())
+            upgraded.setBackground(item.background())
+            upgraded.setFont(item.font())
+            for role in (Qt.ItemDataRole.UserRole, Qt.ItemDataRole.UserRole + 1):
+                value = item.data(role)
+                if value is not None:
+                    upgraded.setData(role, value)
+            item = upgraded
+        super().setItem(row, column, item)
 
     def setRowCount(self, rows: int) -> None:
         """Suspend sorting while the table is being refilled.

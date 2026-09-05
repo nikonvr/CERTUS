@@ -129,6 +129,13 @@ def test_plot_result_adds_large_t_knot_markers(monkeypatch) -> None:
         _apply_spectrum_x_axis_label=lambda *_args, **_kwargs: None,
         _apply_spectrum_plot_title=lambda *_args, **_kwargs: None,
         _update_rmse_fit_region_overlay=lambda *_args, **_kwargs: None,
+        # Added 2026-09-05. _plot_result gained this collaborator when the UX
+        # campaign wired the Synthesis/Overview tab (certus_index_spline_execution.py:928)
+        # and this stub was not updated, so the test died on
+        # "SimpleNamespace object has no attribute '_update_overview_tab'".
+        # It is a no-op here for the same reason as its neighbours: this test is
+        # about the knot markers drawn on plot_T, not about the overview tab.
+        _update_overview_tab=lambda *_args, **_kwargs: None,
         _corridor_rmse_profile_win=None,
     )
     result = {

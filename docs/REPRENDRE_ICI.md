@@ -1,21 +1,70 @@
-# 🔴 REPRENDRE ICI — état au 2026-09-06
+# 🔴 REPRENDRE ICI — état au 2026-09-07
 
 > Ce fichier dit **où on s'est arrêté** et **la commande exacte pour repartir**. Il est le
 > premier à lire, avant `CLAUDE.md`.
 
-## 🟢 LE CHANTIER COURANT DE L'INTERFACE — phases 0, 1 et 2 closes
+## 🟢 LE CHANTIER COURANT DE L'INTERFACE — phases 0, 1, 2 closes · phase 3 aux deux tiers
+
+### Phase 3 — ce qui est fait dans la nuit du 2026-09-06 au 07
+
+| | étape | l'essentiel |
+|---|---|---|
+| ✅ | **3.1** | échelle typographique — **premier incrément.** Elle **existait déjà** dans `certus_ux.Typography`, inutilisée ; les jetons demandés en sont des **vues**. 5 routées, feuilles **identiques au caractère**. Cliquet 173 → 157 |
+| 🟠 | **3.2** | le téléchargement de police au démarrage est retiré — **URL morte, à chaque lancement.** Le reste de l'étape est ouvert |
+| ✅ | **3.3** | bordure visible — **par un second jeton `BORDER_STRONG`**, pas en relevant `BORDER`, qui est aussi le **fond des contrôles désactivés** |
+| ✅ | **3.4** | palette sombre des badges. Ce n'était **pas** un défaut de contraste : la puce trouait l'écran à 16:1 |
+| ✅ | **3.6** | anneau de focus — il n'en existait **aucun** sur un bouton. Marge compensée : le focus ne déplace rien |
+| ✅ | **3.7** | la coche des cases **n'avait jamais été dessinée** — Qt ne résout pas les data-URL en QSS |
+| ✅ | **3.8** | chevron des combos rétabli |
+| ✅ | **3.9** | couleurs de marque — SMOOTHER était peint avec le jeton **SUCCESS**. Source unique descendue dans `core` |
+| ⬜ | **3.0 · 3.5 · 3.10** | ouvertes. **3.0 et 3.5 sont les dangereuses** — voir ci-dessous |
+
+📏 **Périmètre complet `tests/ui/ + tests/unit/` : `3000 passed, 0 failed`** au dernier
+relevé avant 3.1. ⚠️ **Ne recopie pas ce compte** — il bouge dès qu'on ajoute un test ; le
+seul critère est `0 failed`.
+
+🔑 **Chaque étape porte son garde-fou, et chacun a été vérifié ÉCHOUANT sur le code d'avant.**
+C'est ce qui remplace l'attribution par commit là où plusieurs étapes partagent un fichier.
+
+### 🔴 LA PASSE COMPLÈTE N'EST PAS DÉTERMINISTE — mesuré sur 5 passes
+
+**Trois échecs distincts, sur trois tests différents, chacun passant ISOLÉMENT :**
+
+```
+passe 1   test_ux_common_affordances[CERTUS_RE]
+passe 2   test_ux_no_horizontal_scroll[INDEX @ 1366x768]
+passe 5   test_ux_help_matches_reality[CERTUS_RE]
+```
+
+Les huit fichiers concernés ont un point commun : ils lancent un **sous-processus** qui
+construit une fenêtre Qt entière.
+
+🔑 **La signature est `assert []` avec un stderr VIDE.** Une exception Python écrirait sur
+stderr ; ne rien écrire du tout désigne un **arrêt natif** du processus. Or le dépôt
+documente déjà exactement ce mode de défaillance sur cette plateforme :
+`certus/ui/certus_icons.py::_qsvg_stack_known_unstable` — *« PyQt6 `QSvgRenderer` on
+**Windows + CPython 3.14+** can abort the process while painting »*. **C'est l'hypothèse de
+tête, et elle n'est PAS démontrée.**
+
+⚠️ **Ce n'est PAS une saturation mémoire** — j'avais d'abord écrit « machine à 7,9 Go », ce
+qui est la machine de **référence** du `CLAUDE.md` et non celle-ci : **33,6 Go mesurés**.
+
+**Conséquence pratique, et elle est gênante** : `0 failed` sur la passe complète n'est pas
+reproductible à coup sûr, alors que c'est le seul critère sur lequel le projet s'appuie.
+**Vérifie isolément avant de conclure à une régression** — les trois fois, c'en était une
+fausse.
 
 ⚠️ **Deux chantiers courants coexistent, et ils ne se recouvrent pas** : celui du **calcul**
 est le Rate ([`CHANTIER_RATE.md`](CHANTIER_RATE.md)), celui de l'**interface** est ci-dessous.
 La carte du §3 de [`CLAUDE.md`](../CLAUDE.md) est le seul endroit qui les nomme tous les deux.
 
 📌 **Le dossier fait autorité : [`GEMINI_UX_TOP1_2026-09-04.md`](GEMINI_UX_TOP1_2026-09-04.md).**
-Son **§0ter** porte tout ce qui est récent ; les phases **3 à 6** restent entières.
+Son **§0ter** porte tout ce qui est récent ; les phases **4 à 6** restent entières, et la **3 est aux deux tiers**.
 
 🔑 **Si tu attaques la phase 3, lis son encadré `3-AUDIT` d'abord.** Elle se présente comme un
 bloc homogène et n'en est pas un : **six étapes sont sûres et déjà outillées** (jetons de
-thème, garde-fous de contraste existants), **deux sont longues et bénignes** (187 tailles de
-police, 409 hexadécimaux), et **deux sont dangereuses** — celles qui touchent aux chaînes
+thème, garde-fous de contraste existants), **deux sont longues et bénignes** (les tailles de
+police et les hexadécimaux — comptes dans le dossier, ils bougent), et **deux sont dangereuses** — celles qui touchent aux chaînes
 visibles, parce que `tests/ui/ux_skeleton.json` **stocke le texte littéral des libellés** :
 **65 entrées sur 487, soit 13 %**, sont à régénérer, et 37 assertions de texte exact vivent
 dans 9 fichiers de tests. **L'ordre recommandé est dans l'encadré ; ne prends pas la phase par

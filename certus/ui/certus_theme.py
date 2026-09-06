@@ -470,57 +470,60 @@ class CertusTheme:
 
     @classmethod
     def load_inter_font(cls) -> str:
-        """
-        Attempts to load Inter font. First checks if already registered.
-        If not, attempts to load from cached font files or downloads them dynamically.
+        """Resolve the Inter family from what is INSTALLED. Never touches the network.
+
+        Step 3.2. This method used to DOWNLOAD two TTF files from github.com, with a
+        2 s timeout each, on every call -- and `apply_to_app()` calls it unconditionally
+        at the start of every window.
+
+        Measured 2026-09-06, and every part of it had stopped working:
+
+            %APPDATA%/certus_fonts   exists, and is EMPTY (created 2026-09-04)
+            both GitHub URLs         HTTP 404 -- they are dead
+
+        So the download failed every time, nothing was ever cached, and it was retried at
+        each launch. The cost falls on the machine most likely to be offline: a coating
+        bench in the shop, where each of the eleven windows would stall up to 2 s per file
+        before giving up. On a connected machine DNS resolves and the error comes back in
+        0.11 s, which is precisely why nobody noticed.
+
+        A production scientific tool must not depend on a third-party repository to draw
+        its own interface. The fallback chain is now explicit and local:
+
+            1. Inter already installed on the system            -> "Inter"
+            2. TTFs dropped by hand into the cache directory    -> "Inter"
+            3. otherwise                                        -> "Segoe UI"
+
+        Case 2 is kept on purpose: an operator on an offline bench can still install the
+        family by copying two files, which is the supported way to get Inter now.
         """
         from PyQt6.QtGui import QFontDatabase
-        families = QFontDatabase.families()
-        if "Inter" in families:
+
+        if "Inter" in QFontDatabase.families():
             return "Inter"
 
         import os
-        import urllib.request
         from pathlib import Path
 
-        # Store in user's AppData/Temp dir
         try:
             cache_dir = Path(os.environ.get("APPDATA", "")) / "certus_fonts"
-            cache_dir.mkdir(parents=True, exist_ok=True)
-        except Exception:
+        except (OSError, ValueError):
             import tempfile
+
             cache_dir = Path(tempfile.gettempdir()) / "certus_fonts"
-            cache_dir.mkdir(parents=True, exist_ok=True)
 
-        regular_path = cache_dir / "Inter-Regular.ttf"
-        bold_path = cache_dir / "Inter-Bold.ttf"
-
-        urls = {
-            regular_path: "https://github.com/rsms/inter/raw/master/docs/font-files/Inter-Regular.ttf",
-            bold_path: "https://github.com/rsms/inter/raw/master/docs/font-files/Inter-Bold.ttf"
-        }
-
-        font_loaded = False
-        for path, url in urls.items():
+        loaded = False
+        for name in ("Inter-Regular.ttf", "Inter-Bold.ttf"):
+            path = cache_dir / name
             if not path.exists():
-                try:
-                    # Low timeout to prevent blocking app startup
-                    with urllib.request.urlopen(url, timeout=2) as response:
-                        path.write_bytes(response.read())
-                except Exception:
-                    pass
+                continue
+            try:
+                if QFontDatabase.addApplicationFont(str(path)) != -1:
+                    loaded = True
+            except (OSError, RuntimeError):
+                pass
 
-            if path.exists():
-                try:
-                    font_id = QFontDatabase.addApplicationFont(str(path))
-                    if font_id != -1:
-                        font_loaded = True
-                except Exception:
-                    pass
-
-        if font_loaded:
-            return "Inter"
-        return "Segoe UI"
+        return "Inter" if loaded else "Segoe UI"
 
     @classmethod
     def apply_to_app(cls, app: QApplication, dark_mode: bool = False) -> None:

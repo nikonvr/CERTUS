@@ -220,7 +220,22 @@ def build_premium_overrides(_theme: str | None = None) -> str:
     success_pressed = _darken_color(success, 0.16)
     secondary = T.SECONDARY
     border = T.BORDER
+    # Step 3.3 - border of a control whose OUTLINE IS the affordance (>= 3:1).
+    # `border` stays the DECORATIVE token, and the fill of disabled controls.
+    border_strong = getattr(T, "BORDER_STRONG", T.BORDER)
     surface = T.SURFACE
+
+    # Step 3.7 - glyphs for checked indicators, painted with QPainter and served by
+    # PATH. Returns "" when the write fails or no QApplication exists; the property is
+    # then OMITTED rather than emitted empty.
+    from certus.utils.certus_qss_icons import glyph_path
+
+    # The glyph sits ON the primary fill, so its colour is the on-primary label token --
+    # not a literal white. In dark mode PRIMARY is a light blue and PRIMARY_TEXT is dark,
+    # so a hardcoded white tick would have been nearly invisible exactly there.
+    def _image_rule(glyph: str) -> str:
+        path = glyph_path(glyph, T.PRIMARY_TEXT, 16)
+        return f'image: url("{path}");' if path else ""
     surface_hover = T.SURFACE_HOVER
     text_main = T.TEXT_MAIN
     text_sub = T.TEXT_SUB
@@ -251,6 +266,50 @@ QTextEdit:focus {{
     /* Qt does not honor box-shadow; we emulate a ring via padding + margin */
     selection-background-color: {primary};
     selection-color: #ffffff;
+}}
+
+/* -- Focus ring on BUTTONS (step 3.6) ----------------------------------
+ * Measured 2026-09-06: before this block there was NOT ONE :focus rule on a
+ * button, in either QSS layer. A keyboard user could not see where focus was.
+ *
+ * THE RING COLOUR DIFFERS PER FAMILY, and that is not decoration -- no single
+ * colour clears 3:1 in both themes. Measured with certus_a11y.contrast_ratio:
+ *
+ *   default button   ring {{primary}} against SURFACE   5.00:1 light  6.98:1 dark
+ *   filled variants  ring {{surface}} against the fill  4.83:1 .. 9.29:1 both
+ *
+ * Two candidates were measured and REJECTED: a {{primary}} ring vanishes on a
+ * PRIMARY fill (1:1), and a {{text_main}} ring falls to 1.56:1 on SUCCESS in
+ * dark mode -- because dark-mode text is light and so are the dark-mode fills.
+ *
+ * On a filled button the ring reads as an inset gap biting into the fill; it is
+ * perceived against the fill, which is the pair measured above.
+ *
+ * 🔑 PADDING IS COMPENSATED so that taking focus NEVER reflows the layout. The
+ * border grows by 1px (default, which already had 1px) or 2px (variants, which
+ * declare `border: none`); the padding shrinks by exactly as much, so the outer
+ * size is unchanged. A focus ring that moved its neighbours would be worse than
+ * no focus ring at all.
+ *
+ * QToolButton is deliberately OUT OF SCOPE: this sheet sets it no padding, so
+ * there is nothing to compensate against, and the chrome ones already carry
+ * NoFocus. Giving them a ring is a separate change with its own measurement.
+ */
+QPushButton:focus {{
+    border: 2px solid {primary};
+    padding: {sp_sm - 1}px {sp_lg - 1}px;
+}}
+
+QPushButton#{OBJ.PRIMARY_BUTTON}:focus,
+QPushButton#{OBJ.DANGER_BUTTON}:focus,
+QPushButton#{OBJ.SUCCESS_BUTTON}:focus {{
+    border: 2px solid {surface};
+    padding: {sp_sm - 2}px {sp_lg - 2}px;
+}}
+
+QPushButton#{OBJ.FEATURED_BUTTON}:focus {{
+    border: 2px solid {surface};
+    padding: {sp_sm}px {sp_lg * 1.5 - 2}px;
 }}
 
 /* -- Elevated card (opt-in via objectName="{OBJ.CARD}") --------------- */
@@ -284,10 +343,14 @@ QWidget#{OBJ.SURFACE_RAISED} {{
 }}
 
 /* -- Default QPushButton style (global fallback for entire suite) ------ */
+/* Step 3.3 — border at >= 3:1. On a flat button with no fill, the outline is the
+ * ONLY thing that says this is a button. The fill of that same button when
+ * DISABLED stays on the softer `border`, and that is deliberate: WCAG exempts
+ * disabled elements, and an inactive control must stay recessive. */
 QPushButton {{
     background-color: {surface};
     color: {text_main};
-    border: 1px solid {border};
+    border: 1px solid {border_strong};
     border-radius: {r_md}px;
     padding: {sp_sm}px {sp_lg}px;
     font-weight: 500;
@@ -649,15 +712,33 @@ QCheckBox::indicator:hover, QRadioButton::indicator:hover {{
     border-color: {primary};
     background-color: {surface_hover};
 }}
+/* -- Step 3.7 — the two rules below carried an SVG data-URL, and they NEVER displayed
+ * anything. Measured at the pixel on 2026-09-06: a checked box rendered as a flat fill
+ * of the primary colour, without a single pixel of tick, so the checked state rested on
+ * hue alone — a WCAG 1.4.1 failure, on a stylesheet that looked correct.
+ *
+ * Cause isolated by experiment, not guessed:
+ *     SVG data-URL    36 light px in the indicator   (background noise)
+ *     PNG data-URL    36                             (identical)
+ *     PNG as a FILE   76                             (the glyph appears)
+ * Qt does not resolve data URLs inside a QSS `url()`.
+ *
+ * ⚠️ This is NOT the QtSvg instability guarded by `is_svg_icon_rendering_disabled()`:
+ * the process survived every trial. Two distinct defects share one symptom.
+ *
+ * The glyphs are now painted with QPainter — no SVG anywhere on this path — and written
+ * once to the temp directory. If the write fails, `glyph_path` returns an empty string
+ * and the `image` property is OMITTED: an `image: url("")` would hide the native glyph
+ * Qt would otherwise draw, which is worse than having no rule at all. */
 QCheckBox::indicator:checked {{
     background-color: {primary};
     border-color: {primary};
-    image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'></polyline></svg>");
+    {_image_rule("check")}
 }}
 QRadioButton::indicator:checked {{
     background-color: {primary};
     border-color: {primary};
-    image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'><circle cx='12' cy='12' r='5'></circle></svg>");
+    {_image_rule("dot")}
 }}
 
 /* -- Sliders (QSlider) ------------------------------------------------- */

@@ -37,6 +37,24 @@ class CertusTheme:
 
     BORDER = "#d7dfe8"
 
+    #: Step 3.3 - the border of a control whose OUTLINE IS THE AFFORDANCE.
+    #:
+    #: Measured 2026-09-06: `BORDER` sits at **1.35:1** on SURFACE in light mode and
+    #: **1.48:1** in dark, where WCAG 1.4.11 requires **3.0** for the boundary of a user
+    #: interface component. An input field was therefore delimited by nothing perceptible.
+    #:
+    #: WHY A SECOND TOKEN RATHER THAN RAISING `BORDER`. `BORDER` has **122 usages**, and it
+    #: serves as the FILL -- not the border -- of DISABLED buttons, of menu separators and
+    #: of scrollbar handles. Raising it wholesale would have made a disabled control darker,
+    #: hence more present, than an active one: a usability regression dressed up as an
+    #: accessibility gain. It would also have over-applied the rule, since WCAG **explicitly
+    #: exempts** disabled elements from any contrast requirement.
+    #:
+    #: Hue and saturation are those of `BORDER`; only lightness changes.
+    #: Measured: 3.58:1 on SURFACE and 3.18:1 on BACKGROUND in light mode, 3.19 and 3.21 in
+    #: dark. BOTH backgrounds matter, as a field may sit on either one.
+    BORDER_STRONG = "#6d8aab"
+
     TEXT_MAIN = "#0f172a"
     TEXT = TEXT_MAIN  # Backward compatibility alias
 
@@ -353,6 +371,7 @@ class CertusTheme:
             cls.SURFACE = "#111827"
             cls.SURFACE_HOVER = "#1f2937"
             cls.BORDER = "#2d3748"
+            cls.BORDER_STRONG = "#566989"
             cls.TEXT_MAIN = "#e2e8f0"
             cls.TEXT_SUB = "#94a3b8"
             cls.TEXT_DISABLED = "#4a5568"
@@ -372,6 +391,7 @@ class CertusTheme:
             cls.SURFACE = "#ffffff"
             cls.SURFACE_HOVER = "#f8fafc"
             cls.BORDER = "#d7dfe8"
+            cls.BORDER_STRONG = "#6d8aab"
             cls.TEXT_MAIN = "#0f172a"
             cls.TEXT_SUB = "#475569"
             cls.TEXT_DISABLED = "#94a3b8"
@@ -652,9 +672,13 @@ class CertusTheme:
             }}
 
             /* ── Inputs ──────────────────────────────────────────────────────── */
+            /* Step 3.3 — `BORDER_STRONG`, not `BORDER`: here the outline IS the
+             * affordance, it alone says where the field begins. At 1.35:1 it was not
+             * perceptible. Decoration (cards, separators) and the fills of DISABLED
+             * controls stay on `BORDER`, which WCAG exempts. */
             QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox, QPlainTextEdit {{
                 background: {CertusTheme.SURFACE};
-                border: 1px solid {CertusTheme.BORDER};
+                border: 1px solid {CertusTheme.BORDER_STRONG};
                 padding: 5px 10px;
                 min-height: 28px;
                 border-radius: 10px;
@@ -668,7 +692,24 @@ class CertusTheme:
                 outline: none;
             }}
             QComboBox::drop-down {{ border: none; width: 22px; }}
-            QComboBox::down-arrow {{ image: none; }}
+            /* Step 3.8 — a rule here used to erase the QComboBox arrow by forcing its
+             * image property to the empty value, WITHOUT putting anything in its place. A
+             * QComboBox then looked exactly like a QLineEdit: nothing said it drops down.
+             * Measured 2026-09-04: 6 combos in DESIGN alone.
+             *
+             * The NATIVE arrow is restored rather than a custom one drawn. The repository
+             * does carry a `chevron-down` in `certus/ui/certus_icons.py`, but QSS wants an
+             * image PATH, and that same module keeps `is_svg_icon_rendering_disabled()` --
+             * the QtSvg stack is known unstable here. Making the most elementary affordance
+             * depend on a subsystem the project itself sometimes disables would trade a
+             * certain defect for an intermittent one, which is worse.
+             *
+             * The wording of this comment is DELIBERATELY descriptive: written as literal
+             * QSS it would be emitted into the sheet, and a plain grep -- or this step's own
+             * guardrail -- would mistake it for the rule it describes. That happened once,
+             * while writing this very fix.
+             *
+             * Do not erase the arrow again without supplying the replacement image. */
 
             /* ── GroupBox (flat) ─────────────────────────────────────────────── */
             QGroupBox {{

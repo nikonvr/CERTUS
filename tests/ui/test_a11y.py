@@ -62,17 +62,29 @@ def test_wcag_aa_on_every_text_pair_in_both_modes() -> None:
     CertusTheme.configure("light")
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BORDER sur SURFACE à 1.35 (clair) et 1.48 (sombre) < 3.0 — sera levé à l'étape 3.3",
-)
 def test_wcag_non_text_contrast_on_borders_in_both_modes() -> None:
+    """WCAG 1.4.11 sur la bordure qui PORTE l'affordance — étape 3.3, faite le 2026-09-06.
+
+    ⚠️ **Ce test était un `xfail(strict=True)` dont la raison annonçait « sera levé à
+    l'étape 3.3 » en montant `BORDER` à 3:1. L'étape a été faite, et elle a conclu
+    l'inverse.**
+
+    `BORDER` a 122 usages, et il sert de **fond** — pas de bordure — aux boutons
+    DÉSACTIVÉS, aux séparateurs de menu et aux poignées d'ascenseur. Le monter aurait
+    rendu un contrôle désactivé plus présent qu'un contrôle actif, et aurait sur-appliqué
+    la règle : **WCAG exempte explicitement les éléments désactivés**.
+
+    C'est donc `BORDER_STRONG` qui porte le seuil, et `BORDER` reste volontairement en
+    dessous. Le contrôle négatif correspondant — *« `BORDER` est-il TOUJOURS sous 3:1 ? »* —
+    vit dans `tests/ui/test_ux_border_contrast.py`, avec la vérification sur les **deux**
+    fonds : `#7792b1` avait été écarté pour 3,22 sur SURFACE mais **2,86 sur BACKGROUND**.
+    """
     for mode in ("light", "dark"):
         CertusTheme.configure(mode)
-        cr = contrast_ratio(CertusTheme.BORDER, CertusTheme.SURFACE)
+        cr = contrast_ratio(CertusTheme.BORDER_STRONG, CertusTheme.SURFACE)
         assert cr >= 3.0, (
-            f"Mode {mode}: BORDER ({CertusTheme.BORDER}) sur SURFACE ({CertusTheme.SURFACE}) "
-            f"a un ratio {cr:.2f} < 3.0"
+            f"Mode {mode}: BORDER_STRONG ({CertusTheme.BORDER_STRONG}) sur SURFACE "
+            f"({CertusTheme.SURFACE}) a un ratio {cr:.2f} < 3.0"
         )
     CertusTheme.configure("light")
 

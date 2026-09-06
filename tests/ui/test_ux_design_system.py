@@ -19,7 +19,18 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 
-THEME_FILES = {"certus_theme.py", "certus_theme_config.py"}
+#: Les fichiers qui DEFINISSENT la palette, donc ou un hexadecimal est a sa place.
+#:
+#: `certus_hub_config.py` a rejoint la liste le 2026-09-06, a l'etape 3.9, et ce n'est pas
+#: un relachement du cliquet : c'est desormais la SOURCE UNIQUE des couleurs de marque.
+#: Elles ne pouvaient pas vivre dans `certus_theme.py` — `certus/core/` n'a pas le droit
+#: d'importer `certus.ui`, donc le fait partage devait DESCENDRE dans la couche basse.
+#: `certus_theme_config.py`, deja exempte, est dans `certus/core/` pour la meme raison.
+#:
+#: 🔑 La limite a ete RESSERREE de 315 a 310 dans le meme changement, exactement du nombre
+#: d'hexadecimaux que l'exemption retire du comptage. Sans cela, exempter un fichier
+#: donnerait du mou a tous les autres — un cliquet qu'on desserre en le deplaçant.
+THEME_FILES = {"certus_theme.py", "certus_theme_config.py", "certus_hub_config.py"}
 
 
 def _get_ui_python_files() -> list[Path]:
@@ -65,10 +76,16 @@ def count_user_facing_emoji() -> int:
 
 
 def test_no_new_hardcoded_hex_outside_the_theme() -> None:
-    """Ratchet. Measured 2026-09-04: <= 315 occurrences in 44 files."""
+    """Ratchet. Remesure 2026-09-06 : <= 310 hors des fichiers de palette.
+
+    L'ancienne limite etait 315 avec deux fichiers exemptes. `certus_hub_config.py` est
+    devenu le troisieme a l'etape 3.9, ce qui retire 8 hexadecimaux du comptage ; la limite
+    descend donc de 315 a 310 et non a 307, parce que l'etape a aussi ajoute quatre
+    couleurs de marque et retire l'usage detourne du jeton de succes.
+    """
     count = count_hex_outside_theme()
-    assert count <= 315, (
-        f"Hardcoded hex colors ratchet violated! Found {count} > 315. "
+    assert count <= 310, (
+        f"Hardcoded hex colors ratchet violated! Found {count} > 310. "
         "Use CertusTheme tokens instead of hardcoded hex values."
     )
 

@@ -11,6 +11,19 @@ from certus.ui.certus_qt_widgets import QColor, QGraphicsDropShadowEffect, QIcon
 from PyQt6.QtGui import QPalette, QBrush, QPixmap, QPainter, QFont
 from PyQt6.QtWidgets import QApplication, QPushButton, QToolButton
 
+# Step 3.9 - the brand palette is defined once, in the low layer. See the comment on
+# `BRAND_INDEX` below for why it lives there rather than here.
+from certus.core.certus_hub_config import (
+    HUB_BRAND_DESIGN as _HUB_BRAND_DESIGN,
+    HUB_BRAND_FIELD as _HUB_BRAND_FIELD,
+    HUB_BRAND_INDEX as _HUB_BRAND_INDEX,
+    HUB_BRAND_METAL as _HUB_BRAND_METAL,
+    HUB_BRAND_RE as _HUB_BRAND_RE,
+    HUB_BRAND_SMOOTHER as _HUB_BRAND_SMOOTHER,
+    HUB_BRAND_STRAT as _HUB_BRAND_STRAT,
+    HUB_BRAND_SUBSTRATE as _HUB_BRAND_SUBSTRATE,
+)
+
 class CertusTheme:
     """
 
@@ -230,13 +243,28 @@ class CertusTheme:
 
     # Brand Colors (Module Specific) - Added missing
 
-    BRAND_INDEX = "#3b82f6"  # Blue
+    # Step 3.9 - READ, not redeclared. These four hex values were written out a second
+    # time here, so the theme and the HUB catalogue could drift apart silently.
+    #
+    # The single source is `certus/core/certus_hub_config.py`, and it lives in the LOW
+    # layer on purpose: `core` may never import `certus.ui`, so the shared fact had to
+    # descend. `ui` importing `core` is the allowed direction, and that module is a leaf
+    # (it imports only `typing`), so there is no cycle.
+    BRAND_INDEX = _HUB_BRAND_INDEX  # Blue
 
-    BRAND_DESIGN = "#8b5cf6"  # Violet
+    BRAND_DESIGN = _HUB_BRAND_DESIGN  # Violet
 
-    BRAND_METAL = "#64748b"  # Slate
+    BRAND_METAL = _HUB_BRAND_METAL  # Slate
 
-    BRAND_STRAT = "#10b981"  # Emerald
+    BRAND_STRAT = _HUB_BRAND_STRAT  # Emerald
+
+    BRAND_RE = _HUB_BRAND_RE
+
+    BRAND_FIELD = _HUB_BRAND_FIELD
+
+    BRAND_SMOOTHER = _HUB_BRAND_SMOOTHER
+
+    BRAND_SUBSTRATE = _HUB_BRAND_SUBSTRATE
 
     # UI Constants - Added missing
 

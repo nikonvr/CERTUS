@@ -242,8 +242,6 @@ class CertusTheme:
 
     ELEVATED = SURFACE_HOVER
 
-    DARK_BORDER = "#334155"
-
     RADIUS_XL = 16
 
     SPACING_XS = 2
@@ -273,8 +271,6 @@ class CertusTheme:
     DARK_CARD = "#334155"
 
     DARK_TEXT_MAIN = "#e2e8f0"
-
-    DARK_TEXT_SUB = "#94a3b8"
 
     # Radii
 
@@ -385,6 +381,20 @@ class CertusTheme:
             cls.DANGER_LABEL = "#0f172a"
             cls.DANGER_HOVER = "#fca5a5"
             cls.INFO = "#60a5fa"
+            # Step 3.4 - the badge pairs used to keep their LIGHT values in dark mode.
+            # Not an accessibility failure: text held 5.30 to 6.49:1 on its own fill in
+            # both. It was a visual one -- a pastel chip measured 14.5 to 16.2:1 against
+            # the dark SURFACE, punching a hole in the window. Recomputed at the same hue,
+            # text >= 5.9:1 on its own fill, fill 1.45 to 1.72:1 against SURFACE so the
+            # chip still reads as a chip.
+            cls.SUCCESS_BG = "#244731"
+            cls.SUCCESS_TEXT = "#60dc8f"
+            cls.WARNING_BG = "#61351a"
+            cls.WARNING_TEXT = "#f0ba98"
+            cls.DANGER_BG = "#572828"
+            cls.DANGER_TEXT = "#f1a2a2"
+            cls.INFO_BG = "#273458"
+            cls.INFO_TEXT = "#9db3f1"
         else:
             cls.DARK_MODE = False
             cls.BACKGROUND = "#eef2f7"
@@ -397,6 +407,15 @@ class CertusTheme:
             cls.TEXT_DISABLED = "#94a3b8"
             cls.PRIMARY = "#0f62fe"
             cls.PRIMARY_TEXT = "#ffffff"
+            # Step 3.4 - restated explicitly so switching back from dark restores them.
+            cls.SUCCESS_BG = "#dcfce7"
+            cls.SUCCESS_TEXT = "#166534"
+            cls.WARNING_BG = "#fef3c7"
+            cls.WARNING_TEXT = "#92400e"
+            cls.DANGER_BG = "#fee2e2"
+            cls.DANGER_TEXT = "#b91c1c"
+            cls.INFO_BG = "#dbeafe"
+            cls.INFO_TEXT = "#1d4ed8"
             cls.PRIMARY_HOVER = "#0353e9"
             cls.SECONDARY = "#334155"
             cls.SUCCESS = "#15803d"

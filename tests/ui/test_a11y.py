@@ -22,16 +22,21 @@ def _snapshot() -> dict[str, str]:
     return {k: getattr(CertusTheme, k) for k in SEMANTIC_TOKENS}
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="8 jetons sémantiques identiques en clair et en sombre — sera levé à l'étape 3.4",
-)
 def test_dark_mode_actually_changes_the_semantic_tokens() -> None:
     """Guards the reason the previous test proved nothing.
 
     Measured 2026-09-04: SUCCESS_BG/TEXT, WARNING_BG/TEXT, DANGER_BG/TEXT and
     INFO_BG/TEXT were identical in both modes, so 4 of the 5 pairs the contrast
     test iterated over in 'dark' were in fact re-testing the light values.
+
+    ✅ **Levé le 2026-09-06 par l'étape 3.4**, et c'est le `strict=True` qui l'a exigé : le
+    correctif a fait passer ce test, et un `xfail` strict qui réussit est rapporté comme un
+    ÉCHEC. Le marqueur a donc lui-même signalé qu'il devait partir — un `xfail` non strict
+    serait resté en place indéfiniment, à décrire un défaut réparé.
+
+    📏 Les quatre paires valent désormais, en sombre : `#244731`/`#60dc8f`,
+    `#61351a`/`#f0ba98`, `#572828`/`#f1a2a2`, `#273458`/`#9db3f1`. Le détail — dont le fait
+    que ce n'était **pas** un échec de contraste — est dans `test_ux_dark_palette.py`.
     """
     CertusTheme.configure("light")
     light = _snapshot()

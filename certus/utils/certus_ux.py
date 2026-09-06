@@ -225,6 +225,14 @@ def build_premium_overrides(_theme: str | None = None) -> str:
     border_strong = getattr(T, "BORDER_STRONG", T.BORDER)
     surface = T.SURFACE
 
+    # Step 3.1 - sizes routed to the scale. Only the pt values that land EXACTLY on a step
+    # are routed, so this sheet comes out byte-identical; `11pt` and `9.5pt` below are
+    # off-scale and are left alone rather than nudged, because rounding them would be a
+    # rendering change dressed as a refactor.
+    font_xs = T.FONT_SIZE_XS
+    font_sm = T.FONT_SIZE_SM
+    font_base = T.FONT_SIZE_BASE
+
     # Step 3.7 - glyphs for checked indicators, painted with QPainter and served by
     # PATH. Returns "" when the write fails or no QApplication exists; the property is
     # then OMITTED rather than emitted empty.
@@ -491,7 +499,7 @@ QPushButton#{OBJ.ICON_BUTTON}:hover {{
 /* -- Subtle text (captions, hints, timestamps) ------------------------- */
 QLabel#{OBJ.SUBTLE_TEXT} {{
     color: {text_sub};
-    font-size: 9pt;
+    font-size: {font_sm}pt;
 }}
 
 /* -- Keyboard key indicator (Ctrl+K, Esc, ...) ------------------------- */
@@ -502,7 +510,7 @@ QLabel#{OBJ.KBD} {{
     border-radius: {r_sm}px;
     padding: 1px 6px;
     font-family: {Typography.FAMILY_MONO};
-    font-size: 8pt;
+    font-size: {font_xs}pt;
     font-weight: 600;
 }}
 
@@ -585,7 +593,7 @@ QHeaderView::section {{
     padding: {sp_sm}px {sp_md}px;
     font-weight: 600;
     text-transform: uppercase;
-    font-size: 9pt;
+    font-size: {font_sm}pt;
 }}
 QHeaderView::section:hover {{
     background-color: {primary_soft};
@@ -631,7 +639,7 @@ QPlainTextEdit {{
     border-radius: {r_sm}px;
     padding: 5px 8px;
     font-family: {Typography.FAMILY_UI};
-    font-size: 10pt;
+    font-size: {font_base}pt;
 }}
 
 /* -- Modern Tabs (Flat clean design) ---------------------------------- */
@@ -791,7 +799,7 @@ QToolTip {{
     border-radius: 6px;
     padding: 6px 10px;
     font-family: {Typography.FAMILY_UI};
-    font-size: 9pt;
+    font-size: {font_sm}pt;
 }}
 """
 

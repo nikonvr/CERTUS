@@ -91,10 +91,22 @@ def test_no_new_hardcoded_hex_outside_the_theme() -> None:
 
 
 def test_no_new_hardcoded_font_size() -> None:
-    """Ratchet. Measured 2026-09-04: <= 173 occurrences, 23 distinct sizes, px and pt mixed."""
+    """Ratchet. Remesure 2026-09-06 apres l'etape 3.1 : <= 157.
+
+    Depart 2026-09-04 : 173 autorisees, 162 reelles, 23 valeurs distinctes, px et pt
+    MELANGES. L'etape 3.1 a route les 5 declarations en pt qui tombaient EXACTEMENT sur un
+    pas de l'echelle, dans `certus_ux.py`, et la limite descend d'autant -- de 173 a 157,
+    ce qui supprime aussi les 11 de mou qui trainaient.
+
+    🔴 LES 157 QUI RESTENT NE SONT PAS UN OUBLI. La majorite est en **px** (56 fois `11px`
+    a elle seule), et convertir px en pt CHANGE le rendu des onze fenetres : a 96 dpi,
+    10 pt valent 13,3 px, donc un libelle a 11 px est plus PETIT que la base tout en
+    paraissant plus grand dans la source. Choisir l'unite est une decision a prendre avec
+    les yeux sur un ecran, pas un refactor a glisser dans une passe de nuit.
+    """
     count = count_hardcoded_font_sizes()
-    assert count <= 173, (
-        f"Hardcoded font size ratchet violated! Found {count} > 173. "
+    assert count <= 157, (
+        f"Hardcoded font size ratchet violated! Found {count} > 157. "
         "Use CertusTheme font tokens instead of inline font-size."
     )
 

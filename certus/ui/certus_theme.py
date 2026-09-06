@@ -24,6 +24,13 @@ from certus.core.certus_hub_config import (
     HUB_BRAND_SUBSTRATE as _HUB_BRAND_SUBSTRATE,
 )
 
+# Step 3.1 - the typographic scale already exists in the UX token layer, so it is READ
+# here rather than restated. `certus/utils/certus_ux.py` imports only `dataclasses` and
+# `typing` at module level, so this cannot cycle back; and `ui -> utils` is the allowed
+# direction (it is `utils -> ui` that CLAUDE.md counts as an inversion).
+from certus.utils.certus_ux import Typography as _Typography
+
+
 class CertusTheme:
     """
 
@@ -37,7 +44,37 @@ class CertusTheme:
 
     FONT_FAMILY = "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif"
 
-    FONT_SIZE_BASE = 10
+    # Step 3.1 - the typographic scale, in POINTS, the unit the base already used.
+    #
+    # Measured 2026-09-06: 162 inline `font-size:` declarations outside the palette files,
+    # across 23 distinct values, with px and pt MIXED. Mixing the two is the deeper defect:
+    # at 96 dpi 10pt is 13.3px, so a 11px label is SMALLER than the base while looking
+    # bigger in the source.
+    #
+    # 🔴 ROUTING THE px VALUES IS A SEPARATE DECISION AND IS NOT DONE HERE. Converting
+    # 11px (56 occurrences, the most common size in the whole suite) to a pt token changes
+    # what every one of the eleven windows renders. That is a judgement call for the
+    # project owner, made with eyes on a screen, not a refactor to slip in.
+    #
+    # What IS done: the pt declarations that already land exactly on a scale step are
+    # routed here, so the stylesheets come out BYTE-IDENTICAL. Off-scale pt values
+    # (9.5, 11, 13, 15) are left alone rather than nudged onto a step - rounding them
+    # would be a rendering change wearing the clothes of a refactor.
+    #
+    # 🔑 THESE ARE VIEWS ON AN EXISTING SCALE, NOT A NEW ONE. `certus/utils/certus_ux.py`
+    # already declares `Typography` with the same sizes in the same unit -- and its eight
+    # SIZE tokens were used NOWHERE in production, only by a test asserting they increase.
+    # `FONT_SIZE_BASE = 10` and `Typography.BODY = 10` were therefore already the same fact
+    # written twice. Declaring a second scale here would have made it three. The step asked
+    # for these names; they are provided as aliases so the value lives in one place.
+    FONT_SIZE_XS = _Typography.CAPTION
+    FONT_SIZE_SM = _Typography.BODY_SM
+    FONT_SIZE_BASE = _Typography.BODY
+    FONT_SIZE_LG = _Typography.H3
+    FONT_SIZE_XL = _Typography.H2
+    #: Not routed anywhere yet: no pt declaration in the suite asks for it. Kept because a
+    #: scale with a hole in it invites a fresh hardcoded value at that size.
+    FONT_SIZE_DISPLAY = _Typography.DISPLAY
 
     # Colors (Light Mode Default)
 

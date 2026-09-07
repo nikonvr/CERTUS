@@ -76,6 +76,25 @@ même valeur dans les 25 `.md`** — c'est-à-dire la règle ci-dessus, appliqu�
 
 📏 Au 2026-08-19 : **0 point à instruire** sur **cinq balayages**, contrôle négatif vert.
 
+### ⚠️ N'ÉCRIS PAS L'ARTEFACT QUE TU DÉCRIS — il fait trébucher le contrôle que tu respectes
+
+📏 **Le motif s'est produit TROIS FOIS dans la seule nuit du 2026-09-06 au 07**, sur trois
+outils différents, et chaque fois il a coûté un aller-retour :
+
+| ce qui a été écrit | ce que ça a cassé |
+|---|---|
+| un commentaire QSS **citant la règle supprimée** en syntaxe littérale | le commentaire vit dans une f-string, donc il est **recraché dans la feuille de style** — la vérification a lu le commentaire et cru que la règle était toujours là |
+| une docstring citant `#0f62fe` pour raconter un défaut | `test_ux_design_system` compte les hex **au niveau du texte** : le cliquet est passé de 315 à 316 pour une phrase d'explication |
+| un commentaire nommant la constante qu'il explique | l'assertion `"HUB_SUCCESS" not in source` a échoué sur son propre commentaire |
+
+🔑 **La parade est de nommer, pas de citer** : *« la propriété d'image était forcée à la valeur
+vide »* plutôt que la ligne QSS ; *« la couleur primaire »* plutôt que son hexadécimal.
+
+⚠️ **Et quand la citation est vraiment utile, c'est au CONTRÔLE de s'adapter** — dépouiller les
+commentaires avant de lire une feuille, ignorer les docstrings avant de chercher une URL. Un
+contrôle qui interdit d'**expliquer** ce qu'on a corrigé pousse à corriger sans expliquer, ce
+qui est pire que le défaut qu'il surveille.
+
 | balayage | ce qu'il couvre |
 |---|---|
 | **A** — constantes du code | 6 constantes lues par AST, zéro document ne les contredit |
@@ -497,13 +516,17 @@ Aucun n'admet d'exception. Si tu crois devoir en violer un, **arrête-toi et dem
    rapports de mesures d'indice réelles. `reports/` n'est **pas** gitignoré ; seuls quatre
    sous-motifs le sont (`reports/exports/`, `release_dossier_*.zip`, `Report_*`,
    `STRAT_observability_*`).
-   📏 **Remesuré le 2026-08-19, et le tableau s'est INVERSÉ** : **2 266 fichiers**, dont
-   **2 067 suivis par git**. La ligne d'avant disait *« 33 suivis sur 226, les 193 autres
-   irrécupérables »* — le dossier a été **multiplié par dix** et l'essentiel est désormais
-   versionné. ⚠️ **L'interdit tient quand même** : **199 fichiers restent hors de git**, un
-   nombre à peu près inchangé (193 → 199). Ce sont eux qui sont irrécupérables, pas le
-   dossier entier. 🔴 **Ne recopie aucun de ces quatre nombres : recompte-les**
-   (`git ls-files reports | wc -l`).
+   📏 **Remesuré le 2026-09-07 : 2 154 fichiers, 2 141 suivis par git — il en reste 13
+   dehors, pas 199.** ⚠️ **Le chiffre précédent était périmé d'un facteur 15**, et il faisait
+   paraître le dossier bien plus menacé qu'il ne l'est. Les 13 sont des artefacts de runs du
+   3 septembre (`Report_STRAT_*`, `STRAT_observability_*`), tous couverts par `.gitignore` et
+   tous **régénérables** : plus rien d'irrécupérable ne traîne ici.
+   🔑 **L'interdit tient quand même, et sa raison a changé** : ce n'est plus « des fichiers
+   hors git seraient perdus », c'est que **2 141 fichiers versionnés de résultats
+   scientifiques n'ont pas à être effacés dans un nettoyage**. 🔴 **Ne recopie aucun de ces
+   nombres : recompte-les** (`git ls-files reports | wc -l`).
+   📌 Ce qui est réellement hors git aujourd'hui est ailleurs — les PDF sélénium et
+   `studies/` — et c'est consigné en tête de [`docs/REPRENDRE_ICI.md`](docs/REPRENDRE_ICI.md).
 4. **Ne modifie `example/example_strat/JSON-strat-example.json` que pour DURCIR.**
    Il s'est écarté des valeurs correctes **quatre fois**, toujours dans le sens
    **permissif**, et chaque fois cela a coûté une session de diagnostic. C'est le sens

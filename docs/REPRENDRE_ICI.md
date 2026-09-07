@@ -3,6 +3,64 @@
 > Ce fichier dit **où on s'est arrêté** et **la commande exacte pour repartir**. Il est le
 > premier à lire, avant `CLAUDE.md`.
 
+---
+
+## 🔴 TU CHANGES DE MACHINE ? LIS CECI D'ABORD — 24 FICHIERS NE SONT PAS DANS GIT
+
+📏 Mesuré le 2026-09-07. **`git push` ne les emporte pas. Un clone sur la machine neuve ne les
+aura pas.** Copie-les à la main, sur une clé ou par le réseau, AVANT de quitter le poste :
+
+```
+Selenium_Optical_Constants.pdf                   668 Ko
+Selenium_Optical_Constants_Applied_Optics.pdf    668 Ko
+studies/selenium_bk7/                            2,8 Mo   24 fichiers au total
+```
+
+`studies/selenium_bk7/` porte **trois scripts** — `selenium_index_solver.py`,
+`generate_publication_pdf.py`, `make_equations.py`, `make_linear_figures.py` — et une
+quinzaine de figures. **Ce n'est pas du dérivé : les scripts sont des sources**, et rien
+ailleurs ne permet de les reconstruire.
+
+🔑 **Ils sont hors git DÉLIBÉRÉMENT** — c'est un travail séparé, à commiter quand 👤 le
+décidera. Ce paragraphe ne dit pas de les commiter, il dit de **ne pas les perdre**.
+
+### Ce qui NE risque rien, contrairement à ce que dit encore `CLAUDE.md`
+
+📏 **`reports/` : 2 154 fichiers, 2 141 suivis par git.** Les **13** qui restent dehors sont
+tous des artefacts de runs du 3 septembre (`Report_STRAT_*`, `STRAT_observability_*`), tous
+couverts par `.gitignore`, tous **régénérables**. ⚠️ L'interdit n° 3 de `CLAUDE.md` annonce
+« **199 fichiers irrécupérables** » : **c'est périmé d'un facteur 15**, et cela fait paraître
+`reports/` bien plus menacé qu'il ne l'est. `example/` est intégralement suivi (276 sur 276).
+
+### Sur la machine neuve, avant toute autre chose
+
+```bat
+git clone https://github.com/nikonvr/CERTUS.git
+git checkout refactor-corridors-mixins
+```
+
+Puis **l'environnement, qui n'est PAS dans le dépôt** :
+
+| ce qui est supposé | où c'est écrit |
+|---|---|
+| l'interpréteur à `C:\envs\certus\Scripts\python.exe` | codé en dur partout — §4 de `CLAUDE.md` dit pourquoi |
+| Python **3.14.7**, numba **0.66.0** | §13 de `CLAUDE.md` |
+| `QT_QPA_FONTDIR=C:\Windows\Fonts` pour les tests d'interface | utilisé par les tests à sous-processus |
+
+```bat
+C:\envs\certus\Scripts\python.exe scripts\preflight.py
+```
+
+Doit finir par `PREFLIGHT=GO`. ⚠️ **Le premier `pytest` sur un cache numba froid rend 3 échecs
+qui sont FAUX** — relance une seconde fois avant de signaler quoi que ce soit (§2 de
+`CLAUDE.md`).
+
+⚠️ **Et le hook de publication ne se transporte pas** : `core.hooksPath` est une configuration
+**locale**, jamais héritée d'un clone. Sur la machine neuve, `git push` sera explicite tant que
+tu ne l'armes pas.
+
+---
+
 ## 🟢 LE CHANTIER COURANT DE L'INTERFACE — phases 0, 1, 2 closes · phase 3 aux deux tiers
 
 ### Phase 3 — ce qui est fait dans la nuit du 2026-09-06 au 07

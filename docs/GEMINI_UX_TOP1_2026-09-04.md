@@ -2941,6 +2941,35 @@ qu'elles modifient. Voir l'encadré ci-dessous.
 
 ---
 
+### 🔵 CE QUI ATTEND UN ARBITRAGE DE 👤 — état au 2026-09-07
+
+Sept points, tous **mesurés**, aucun tranché seul. Ils sont rassemblés ici parce qu'éparpillés
+dans les lignes d'étapes ils se perdent.
+
+| # | la question | ce qui est mesuré |
+|---|---|---|
+| 1 | **px ou pt ?** L'étape 3.1 est bloquée là-dessus. | 157 tailles restent en dur, majoritairement en **px** ; `11px` revient **56 fois**. À 96 dpi, 10 pt valent 13,3 px, donc un libellé à 11 px est plus **petit** que la base tout en paraissant plus grand dans la source. Convertir change le rendu des **onze** fenêtres. **Ça se décide les yeux sur un écran.** |
+| 2 | **Les quatre teintes de marque te conviennent-elles ?** | RE `#d66b1f` · FIELD `#1995ae` · SMOOTHER `#e548b1` · SUBSTRATE `#469e1a`. Choisies par **mesure** (≥ 3,4:1 pour l'icône blanche, distance RGB maximale aux couleurs en place), pas par goût. Le goût reste le tien ; la **structure** — un jeton par module, source unique, aucun jeton sémantique détourné — est ce qui compte. |
+| 3 | **STRAT reste sous le seuil.** | `#10b981` donne **2,54:1** pour une icône blanche, là où WCAG demande 3:1. **Non touché** : c'est une couleur d'identité établie. La corriger la ferait virer vers un vert plus sombre. |
+| 4 | **3.3 n'a pas été faite comme écrit.** | L'étape disait « porter `BORDER` à ≥ 3:1 ». `BORDER` a **122 usages** et sert de **fond aux contrôles désactivés** : le relever aurait rendu un bouton inactif plus présent qu'un actif. J'ai posé `BORDER_STRONG` à côté. **Si tu préférais l'autre lecture, c'est un jeton à retirer, pas un chantier.** |
+| 5 | **La seconde moitié de 3.9 n'est pas faite.** | « La couleur suit `category` » rendrait **six modules identiques** (tous `core_workflow`) et viderait de sens les quatre jetons neufs. Les deux moitiés de l'étape se contredisent ; j'ai gardé la première. |
+| 6 | **Une divergence de palette, constatée et NON corrigée.** | En sombre, `SURFACE` vaut `#111827` en QSS mais `DARK_SURFACE` vaut `#1e293b` dans la palette Qt — alors que `BACKGROUND` et `TEXT_MAIN` s'accordent avec leur jumeau. L'asymétrie sent l'oubli, **mais un `QPalette.Base` plus clair que la fenêtre est aussi un choix d'élévation courant.** Je n'ai pas tranché sans voir l'écran. |
+| 7 | **La passe complète n'est pas déterministe.** | 3 échecs distincts sur 5 passes, chacun passant isolément. Détail et hypothèse en tête de [`REPRENDRE_ICI.md`](REPRENDRE_ICI.md). **`0 failed` n'est pas reproductible à coup sûr**, ce qui affaiblit le seul critère du projet. |
+
+#### ⚠️ Ce que j'ai fait de travers, pour que ça ne se répète pas
+
+- **J'ai écrit du français dans `certus/`**, ce qu'interdit la règle 11 — 34 lignes, converties
+  avant commit. L'interdit ne vise pas `scripts/`, qui est en français, d'où la confusion.
+- **Trois fois** j'ai fait trébucher mon propre contrôle en **écrivant l'artefact que je
+  décrivais** : la règle QSS dans un commentaire recraché dans la feuille, un hexadécimal dans
+  une docstring comptée par le cliquet, un nom de jeton dans le commentaire qui l'explique.
+  🔑 La leçon est consignée au §1 de [`CLAUDE.md`](../CLAUDE.md) — *nommer, pas citer*.
+- **J'ai attribué les plantages de worker à la mémoire, « machine à 7,9 Go »** : c'est la
+  machine de **référence** du `CLAUDE.md`, pas celle-ci, qui a **33,6 Go**. Corrigé. Recopier
+  une caractéristique machine sans la remesurer est exactement l'erreur que ce dépôt traque.
+
+---
+
 ### 🔴 3-AUDIT — CE QUE COÛTE VRAIMENT LA PHASE 3, mesuré le 2026-09-06
 
 **La phase n'est pas une chose, c'en est trois, et leurs risques sont opposés.** Ne la

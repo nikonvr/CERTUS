@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import QFrame, QLabel, QVBoxLayout, QGraphicsDropShadowEffect
-from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QRect
+from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QRect, pyqtSignal
 from certus.ui.certus_ui import CertusTheme
+from certus.utils.certus_ux import Typography
 from PyQt6.QtGui import QColor
 
 class ModuleBadge(QLabel):
@@ -42,10 +43,50 @@ class ModuleBadge(QLabel):
 
 class BaseApplicationCard(QFrame):
     """Base logic for iOS-style hover animations in CERTUS Hub."""
+
+    #: Emitted when the card is activated, by mouse or by keyboard.
+    activated = pyqtSignal()
+
     def __init__(self, accent_color: str, parent=None) -> None:
         super().__init__(parent)
         self.accent_color = accent_color
         self.setCursor(Qt.CursorShape.PointingHandCursor)
+        # These cards are the only way into the suite, and they are frames,
+        # not buttons: without an explicit focus policy Tab cannot reach them
+        # and the welcome window is mouse-only.
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        # Set by a left press, cleared by the matching release.
+        self._armed = False
+
+    def mousePressEvent(self, event):  # noqa: N802 - Qt naming
+        """Arm on the left button only; nothing is launched yet."""
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._armed = True
+            event.accept()
+            return
+        super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):  # noqa: N802 - Qt naming
+        """Activate only if the same click ends inside the card.
+
+        Acting on release is what lets a mis-click be undone: press, slide
+        off the card, let go, and nothing happens.
+        """
+        if event.button() != Qt.MouseButton.LeftButton or not self._armed:
+            super().mouseReleaseEvent(event)
+            return
+        self._armed = False
+        if self.rect().contains(event.position().toPoint()):
+            self.activated.emit()
+        event.accept()
+
+    def keyPressEvent(self, event):  # noqa: N802 - Qt naming
+        """Activate on Enter or Space, the way any button would."""
+        if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space):
+            self.activated.emit()
+            event.accept()
+            return
+        super().keyPressEvent(event)
 
 class ApplicationCard(BaseApplicationCard):
     """iPhone-style application icon card for the HUB 3x3 matrix."""
@@ -64,6 +105,8 @@ class ApplicationCard(BaseApplicationCard):
         self.script_name = script_name
         self.setFixedSize(112, 130)
         self.setObjectName("AppCard")
+        self.setAccessibleName(title)
+        self.setAccessibleDescription(f"{subtitle} - {description}")
         
         self.setToolTip(f"<b>{title}</b><br>{subtitle}<br><br>{description}")
         
@@ -109,7 +152,7 @@ class ApplicationCard(BaseApplicationCard):
             QLabel {{
                 
                 font-weight: {CertusTheme.FONT_WEIGHT_SEMIBOLD};
-                font-size: 11px;
+                font-size: {Typography.BODY_LG}pt;
                 background: transparent;
             }}
         """)
@@ -156,8 +199,6 @@ class GroupedApplicationCard(ApplicationCard):
         if self.launch_callback:
             self.launch_callback(script)
 
-    def mousePressEvent(self, event):
-        # Just launch the first sub-app to keep it simple as iPhone icons
-        if self.sub_apps:
-            self._on_launch(self.sub_apps[0]["script"])
-        super().mousePressEvent(event)
+    # No mouse handler of its own: the base class emits `activated` on a
+    # left release, and `script_name` already IS the first sub-app's script
+    # (see __init__), so the group launches the same module either way.

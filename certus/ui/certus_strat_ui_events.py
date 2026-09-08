@@ -52,6 +52,13 @@ class CertusStratEventsMixin:
 
     def on_toggle_details(self, checked) -> None:
 
+        # Toggle the PANEL, not just the text inside it: a hidden parent keeps
+        # its children hidden, so revealing the child alone showed nothing -
+        # and the panel's Copy button stayed unreachable all session.
+        panel = getattr(self, "_log_panel", None)
+        if panel is not None:
+            panel.setVisible(checked)
+
         self.log_text.setVisible(checked)
 
         self.toggle_details_btn.setText("Hide Details" if checked else "Show Details")

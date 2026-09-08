@@ -72,6 +72,7 @@ from certus.core.certus_core import (
 from certus.core.certus_core import OPENPYXL_AVAILABLE
 from certus.utils.certus_data import read_data_file_robust
 from certus.ui.certus_theme import CertusTheme, get_standard_stylesheet
+from certus.utils.certus_ux import Typography
 from certus.core.certus_core import get_export_config, setup_module_logging
 from certus.core.certus_core import QueueHandler, setup_gui_logger
 from certus.ui.certus_plot import (
@@ -102,7 +103,7 @@ class CertusToast(QLabel):
         bg = getattr(CertusTheme, color_key, CertusTheme.PRIMARY)
         self.setText(text)
         self.setStyleSheet(
-            f"background: {bg}; color: {fg}; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 11px;"
+            f"background: {bg}; color: {fg}; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: {Typography.BODY_LG}pt;"
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
         self.adjustSize()
@@ -150,7 +151,7 @@ class CertusStatusPill(QLabel):
         bg, fg, border = self._levels().get(self._level, self._levels()["default"])
         self.setStyleSheet(
             f"background: {bg}; color: {fg}; border: 1px solid {border}; "
-            f"border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 600;"
+            f"border-radius: 6px; padding: 4px 10px; font-size: {Typography.BODY_LG}pt; font-weight: 600;"
         )
 
 class CertusThemeToggle(QPushButton):
@@ -190,7 +191,7 @@ class CertusThemeToggle(QPushButton):
                 background: {CertusTheme.SURFACE};
                 border: 1px solid {CertusTheme.BORDER};
                 border-radius: 16px;
-                font-size: 14px;
+                font-size: {Typography.H2}pt;
             }}
             QPushButton:hover {{
                 border-color: {CertusTheme.PRIMARY};
@@ -269,6 +270,11 @@ class AutoShrinkTitleLabel(QLabel):
             
         self._update_style(current_size)
 
+#: Minimum height of a click target, matching the suite-wide floor checked by
+#: tests/ui/test_ux_button_min_height.py.
+BUTTON_MIN_HEIGHT_PX = 24
+
+
 class CertusLogPanel(QWidget):
     """
 
@@ -310,7 +316,7 @@ class CertusLogPanel(QWidget):
 
         lbl = QLabel(title)
 
-        lbl.setStyleSheet(f"font-weight: bold; color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        lbl.setStyleSheet(f"font-weight: bold; color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt;")
 
         hl.addWidget(lbl)
 
@@ -321,6 +327,11 @@ class CertusLogPanel(QWidget):
         btn_copy.setToolTip("Copy all logs to clipboard")
 
         btn_copy.setCursor(Qt.CursorShape.PointingHandCursor)
+
+        # The suite applies a 24 px floor to click targets. This panel predates
+        # the harness that measures it, so its button stayed at 21 px in the two
+        # modules that were never audited.
+        btn_copy.setMinimumHeight(BUTTON_MIN_HEIGHT_PX)
 
         btn_copy.setStyleSheet(
             f"QPushButton {{ background: transparent; border: none; color: {CertusTheme.PRIMARY}; font-weight: 700; padding: 2px 6px; border-radius: 8px; }} QPushButton:hover {{ color: {CertusTheme.TEXT_MAIN}; background: {CertusTheme.SURFACE_HOVER}; }}"
@@ -335,6 +346,14 @@ class CertusLogPanel(QWidget):
         self.log_text = create_log_widget(visible=visible, height=height)
 
         layout.addWidget(self.log_text)
+
+        # The flag used to reach the inner text widget only, leaving the panel
+        # itself on screen: the HUB showed an empty 'PROCESS LAUNCH LOGS' header
+        # while its own toggle button was unchecked.
+        # 🔴 LAST, and it has to be. Qt marks as HIDDEN any child added to an
+        # ALREADY VISIBLE parent, so calling this before addWidget left log_text
+        # hidden inside a shown panel.
+        self.setVisible(visible)
 
     def _on_copy(self) -> None:
 

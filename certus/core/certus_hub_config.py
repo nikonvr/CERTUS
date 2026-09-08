@@ -187,3 +187,20 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "contract": "material_workflow",
     },
 )
+
+
+def hub_grid_columns(n_modules: int, max_cols: int = 5) -> int:
+    """Return the column count for the HUB launcher grid.
+
+    The count used to be hard-coded at three, for a catalogue of nine. The
+    catalogue holds ten, so the tenth module sat alone on a fourth row. The
+    rule applied here is that no row may hold a single tile while the others
+    are full, and it is derived from the catalogue so that adding a module
+    cannot reopen the defect.
+    """
+    if n_modules <= 1:
+        return 1
+    if n_modules <= max_cols:
+        return n_modules
+    fits = [c for c in range(max_cols, 1, -1) if n_modules % c != 1]
+    return max(fits) if fits else max_cols

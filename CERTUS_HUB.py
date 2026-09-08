@@ -117,6 +117,7 @@ from certus.ui.certus_qt_widgets import (
 
 
 from certus.core.certus_core import SVG_AVAILABLE
+from certus.utils.certus_ux import Typography
 
 
 if SVG_AVAILABLE:
@@ -141,6 +142,7 @@ from certus.core.certus_core import get_export_config, get_resource_path, save_e
 
 from certus.ui.certus_ui import (
     claim_shortcut_for_action,
+    configure_theme_from_preference,
     SVG_AVAILABLE,
     CertusTheme,
     CertusThemeToggle,
@@ -176,7 +178,7 @@ from PyQt6.QtWidgets import QComboBox
 # =============================================================================
 
 
-from certus.core.certus_hub_config import HubAppCatalogItem, HUB_APP_CATALOG
+from certus.core.certus_hub_config import HubAppCatalogItem, HUB_APP_CATALOG, hub_grid_columns
 from certus.ui.certus_hub_widgets import ModuleBadge, BaseApplicationCard, ApplicationCard, GroupedApplicationCard
 
 
@@ -251,6 +253,10 @@ class CertusHub(QMainWindow):
         """
 
         super().__init__()
+
+        # BEFORE any widget: see configure_theme_from_preference. The HUB is the
+        # only window that does not inherit CertusBaseApp, so it needs its own call.
+        configure_theme_from_preference()
 
         self.setWindowTitle("CERTUS-HUB - Calculated Error Reduction Through Unbiased Simulation")
 
@@ -352,7 +358,9 @@ class CertusHub(QMainWindow):
         # Module definitions
         self.apps = self._build_hub_apps_catalog()
 
-        MAX_COLS = 3  # 3x3 Grid (9 modules)
+        # Derived from the catalogue: a hard-coded 3 left the tenth module
+        # alone on a fourth row (see hub_grid_columns).
+        MAX_COLS = hub_grid_columns(len(self.apps))
 
         for idx, app in enumerate(self.apps):
             if app.get("type") == "group":
@@ -365,6 +373,9 @@ class CertusHub(QMainWindow):
                 )
 
                 card.launch_callback = self.launch_module
+                card.activated.connect(
+                    lambda _=None, c=card: c.launch_callback(c.script_name)
+                )
 
             else:
                 card = ApplicationCard(
@@ -377,7 +388,11 @@ class CertusHub(QMainWindow):
                     app["badge"],
                 )
 
-                card.mousePressEvent = lambda e, s=app["script"]: self.launch_module(s)
+                # Mouse and keyboard share one path. Assigning `mousePressEvent`
+                # here used to shadow the card's own handler, so ANY mouse
+                # button launched the module, and it launched on press - with
+                # no way to take back a mis-click.
+                card.activated.connect(lambda _=None, s=app["script"]: self.launch_module(s))
 
             # P1.4 - apply hover-lift + fade-in micro-animations on each card.
             # self._apply_card_animations(card, index=idx)
@@ -396,12 +411,17 @@ class CertusHub(QMainWindow):
 
         bottom_bar = QWidget()
 
+        # A stylesheet with NO SELECTOR applies to this widget AND every one of
+        # its children. Its fill therefore reached the buttons inside, and being
+        # set on a nearer ancestor it beat their own rule - which still supplied
+        # the label colour. The result was a white label on white.
+        bottom_bar.setObjectName("HubBottomBar")
+
         bottom_bar.setStyleSheet(f"""
-
-            border-top: 1px solid {CertusTheme.BORDER}; 
-
-            background-color: {CertusTheme.SURFACE};
-
+            QWidget#HubBottomBar {{
+                border-top: 1px solid {CertusTheme.BORDER};
+                background-color: {CertusTheme.SURFACE};
+            }}
         """)
 
         bb_layout = QHBoxLayout(bottom_bar)
@@ -573,7 +593,7 @@ class CertusHub(QMainWindow):
             /* Hub specific overrides */
             #HubFooter {{ 
                 color: {CertusTheme.TEXT_SUB}; 
-                font-size: 9px; 
+                font-size: {Typography.BODY_SM}pt; 
                 padding: {CertusTheme.SPACING_MD}px; 
                 background-color: {CertusTheme.BACKGROUND}; 
                 border-top: 1px solid {CertusTheme.BORDER}; 

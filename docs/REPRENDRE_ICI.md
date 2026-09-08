@@ -116,8 +116,13 @@ fausse.
 est le Rate ([`CHANTIER_RATE.md`](CHANTIER_RATE.md)), celui de l'**interface** est ci-dessous.
 La carte du §3 de [`CLAUDE.md`](../CLAUDE.md) est le seul endroit qui les nomme tous les deux.
 
-📌 **Le dossier fait autorité : [`GEMINI_UX_TOP1_2026-09-04.md`](GEMINI_UX_TOP1_2026-09-04.md).**
-Son **§0ter** porte tout ce qui est récent ; les phases **4 à 6** restent entières, et la **3 est aux deux tiers**.
+📌 **Le dossier fait autorité : [`UX_PLAN.md`](UX_PLAN.md).** Son **§0** dit l'état en une
+table. Au 2026-09-08 : **§3 et §4 entièrement clos**, 12 critères de fin sur 13 atteints et
+mesurés ; ce qui reste n'est **pas du code** — une revue visuelle par 👤 et trois arbitrages.
+
+⚠️ *Ce renvoi désignait `GEMINI_UX_TOP1_2026-09-04.md`, supprimé le 2026-09-08 : son en-tête
+déclarait lui-même ses tableaux d'état périmés. Ce que la mesure y a réfuté est extrait dans
+[`UX_DEMENTIS.md`](UX_DEMENTIS.md) ; `git log` garde le reste.*
 
 🔑 **Si tu attaques la phase 3, lis son encadré `3-AUDIT` d'abord.** Elle se présente comme un
 bloc homogène et n'en est pas un : **six étapes sont sûres et déjà outillées** (jetons de

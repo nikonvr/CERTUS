@@ -181,7 +181,7 @@ class ExportManager:
                 "title": "Design Optimization Summary",
                 "type": "kv",
                 "content": {
-                    "Best RMSE": f"{rmse_val:.5f}",
+                    "Best RMSE": f"{rmse_val:.6f}",
                     "Total Layers": str(self.ui.front_table.rowCount()),
                     "Total Thickness": (f"{np.sum(ep):.2f} nm" if len(ep) > 0 else "N/A"),
                     "Reference L0": f"{self.ui.l0_spin.value()} nm",

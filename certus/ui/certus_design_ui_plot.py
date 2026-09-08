@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_design_common import *
+from certus.utils.certus_ux import Typography
 
 class PlotManager:
     def __init__(self, ui):
@@ -322,7 +323,7 @@ class PlotManager:
         )
 
         # Column 1: Best RMSE (theoretical, can be <5nm)
-        i_rmse = QTableWidgetItem(f"{rec.get('best_rmse', float('inf')):.5f}")
+        i_rmse = QTableWidgetItem(f"{rec.get('best_rmse', float('inf')):.6f}")
         i_rmse.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
         i_rmse.setToolTip("Best theoretical RMSE (may have layers < 5nm)")
 
@@ -335,7 +336,7 @@ class PlotManager:
         i_dmin_rmse.setToolTip("Min. thickness of RMSE champion")
 
         # Column 3: Best MC (robust, can be <5nm)
-        i_mc = QTableWidgetItem(f"{rec.get('best_mc', float('inf')):.5f}")
+        i_mc = QTableWidgetItem(f"{rec.get('best_mc', float('inf')):.6f}")
         i_mc.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
         i_mc.setToolTip("Best robust RMSE (MC +/-0.3nm)")
 
@@ -351,7 +352,7 @@ class PlotManager:
         # BARRIER: Columns 5-6 - Best Fab (FABRICABLE) - CRITICAL LOGIC
         # =====================================================================
         best_fab = rec.get("best_fab", float("inf"))
-        i_fab = QTableWidgetItem(f"{best_fab:.5f}" if best_fab < float("inf") else "-")
+        i_fab = QTableWidgetItem(f"{best_fab:.6f}" if best_fab < float("inf") else "-")
         i_fab.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
         if best_fab < float("inf"):
             i_fab.setToolTip("Best manufacturable RMSE (all layers >= 5nm)")
@@ -1402,7 +1403,7 @@ class PlotManager:
                 "Double-click col 3-4 = load Best MC | "
                 "Double-click col 5-6 = load Best Fab (>=5nm)"
             )
-            lbl.setStyleSheet("font-size: 12px; margin-bottom: 5px;")
+            lbl.setStyleSheet(f"font-size: {Typography.H3}pt; margin-bottom: 5px;")
             p_lay.addWidget(lbl)
 
             p_lay.addWidget(self.ui.pareto_table)

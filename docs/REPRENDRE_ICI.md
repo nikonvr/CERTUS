@@ -13,19 +13,30 @@ le protège, et **chaque poste s'est révélé pire que son diagnostic**.
 | ce qui était | ce qui est |
 |---|---|
 | 🔴 la CI **ne se déclenchait pas** sur la branche de travail — filtre `main` + une branche périmée | déclencheur sans filtre : une **liste** se périme, une **propriété** non |
-| 🔴 le job `lint` était rouge **sur ses trois étapes** | **les trois vertes**. ⚠️ *Cette ligne disait que la troisième « demande un jugement par symbole » : c'était mon diagnostic, et il était faux.* Sur les 32 symboles morts, **27 sont appelés depuis `certus/`** — l'audit cherchait ses références dans le même périmètre étroit que ses candidats. **Un** défaut de périmètre, pas 32 jugements |
+| 🔴 le job `lint` était rouge **sur ses trois étapes** | **les trois vertes**. ⚠️ *Cette ligne disait que la troisième « demande un jugement par symbole » : c'était mon diagnostic, et il était faux.* Sur les 32 symboles morts, **27 sont appelés depuis `certus/`** — l'audit cherchait ses références dans le même périmètre étroit que ses candidats. **Un** défaut de périmètre, pas 32 jugements. Les sept qui restent : §55 de [`DEFAUTS_OUVERTS.md`](DEFAUTS_OUVERTS.md) |
 | 🔴 le golden master rendait **`collected 0 items`** alors que son lanceur le dit *obligatoire* | **8 tests, 4 min 10, verts** |
 | 🔴 **2 de ses 7 modules mesuraient un MOCK** — la référence de STRAT était inatteignable par construction | retirée ; INDEX réparé et mesuré à **0,00257** |
 | 🔴 la **vitrine** — le document que 👤 juge le plus important — était **hors de tout contrôle** | ses chiffres sont comparés au corpus, contrôle négatif vérifié |
 | 🔴 **150 commandes mortes** dans la documentation et les scripts | zéro, et un contrôle **fatal** les empêche de revenir |
+| 🟠 un **antislash simple** dans une docstring de sonde — avertissement aujourd'hui, **erreur** dans une version future de Python | corrigé, et un cliquet balaye désormais **tout** le dépôt : 0 séquence invalide |
 
 🔑 **Le fil rouge de la nuit, et il vaut plus que la liste** : *un garde-fou rouge en
 permanence, ou qui ne se déclenche jamais, ne protège rien — il apprend à ignorer le rouge.*
 Trois instruments étaient dans ce cas, et personne ne les regardait plus.
 
+🔑 **Le second fil, et il a mordu DEUX FOIS la même nuit : la faute était dans
+l'INSTRUMENT, pas dans le code.** L'audit des symboles morts accusait 32 symboles dont 27
+sont vivants — il regardait ailleurs. Et ma propre sonde d'échappements a accusé trois
+fichiers de tests de « ne pas compiler » : ils portent une marque d'ordre d'octets, légale,
+que l'import retire et que ma lecture gardait. **Avant d'instruire 32 dossiers, demande-toi
+si l'accusateur sait lire.**
+
 ⚠️ **Deux fois j'ai soupçonné à tort**, et la vérification l'a montré : la vitrine cite bien
 les chiffres rétractés **avec leur rétractation**, et le HUB a bien un glisser-déposer. *Un
 soupçon n'est pas une mesure.*
+
+🔴 **RIEN N'EST PUBLIÉ.** Tous les commits de la nuit vivent sur `claude/ux-plan-simplifie`,
+en local. Le dépôt est public et aucun `git push` n'a été fait — c'est une décision de 👤.
 
 🔵 **Ce qui reste, et qui n'est pas du code** : la revue visuelle des onze fenêtres, trois
 arbitrages, et surtout **deux dépôts réels du 48 couches** — le §26 est intact, rien ne valide

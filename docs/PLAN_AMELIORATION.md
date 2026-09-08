@@ -12,7 +12,7 @@ disorder, in particular does not start with batch C.
 > | still open | done, do not redo |
 > |---|---|
 > | **A6 / lot E** — the`physics ↔ core`cycle and the layer inversions | **lot A**, five findings of six |
-> | **lot B** — extending the oracle to gradients | **F822 and F821**, both at 0 since 2026-08-19 |
+> | ~~**lot B** — extending the oracle to gradients~~ 🟢 **CLOS, et il l'était déjà** — voir ci-dessous | **F822 and F821**, both at 0 since 2026-08-19 |
 > | **lot C** — import hygiene, F401 / F403 / F405 only | **D1**, the`extend-ignore`ratchet |
 > | **D2 / D3 / D4** — CI, property-based, signature contracts | **lot F**, which describes a history that is not this repository's |
 >
@@ -185,7 +185,25 @@ from lot E's own line, which carried four refuted figures.
 
 ---
 
-### Lot B — Extending the oracle to gradients
+### Lot B — 🟢 **CLOS le 2026-09-08 : il l'était déjà, et le document ne le savait pas**
+
+📏 Mesuré : `tests/oracle/` rend **569 passed en 6,48 s**, et **cinq de ses fichiers portent
+sur les gradients** — `gradient_harness.py`, `test_gradient_analytic_oracle.py`,
+`test_gradients_vs_finite_differences.py`, `test_metal_gradient_vs_fd.py`,
+`test_spline_gradient_vs_fd.py`. Le harnais que ce lot réclamait **existe**.
+
+⚠️ **Le bandeau de ce document le déclarait ouvert au 2026-09-06**, alors que les fichiers
+étaient là. 🔑 *Un état écrit se périme même quand le travail avance — surtout quand il avance.
+Vérifie l'existence avant de planifier contre un manque.*
+
+📌 Ce qui reste à trancher, et qui n'est **pas** le lot B : la couverture est-elle complète ?
+Le lot demandait *« chaque fonction exportant un gradient »*. Le compter est une mesure d'une
+minute ; ce n'est plus un chantier.
+
+<details>
+<summary>Le texte d'origine du lot, conservé pour ce qu'il dit du RISQUE</summary>
+
+### Lot B — Extending the oracle to gradients (texte d'origine)
 
 **Why now.**The oracle covers R and T, normal and oblique incidence. He doesn't
 **does not**cover analytical gradients — but a false gradient does not produce an error:
@@ -207,6 +225,8 @@ itself**, not at a reconstructed cost — that's what makes the test litmus. Wit
 relative 1e-6 for a central step of 1e-6.
 
 **Risk**: zero, purely additive.
+
+</details>
 
 ---
 

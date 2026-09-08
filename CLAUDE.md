@@ -319,10 +319,16 @@ a **publié un test cassé** sans que rien ne le signale — il vivait dans `tes
 d'un périmètre restreint à `tests/ui/`. **La leçon vaut dans les deux sens :**
 
 ```bat
+python -m pytest tests/oracle/ -q --no-cov
 python -m pytest tests/unit/ -q --no-cov
 python -m pytest tests/ui/ -q --no-cov --deselect tests/ui/test_ux_re_stop_when_idle.py
 python -m pytest tests/ui/test_ux_re_stop_when_idle.py -q --no-cov
 ```
+
+🟢 **`tests/oracle/` d'abord, et il coûte 6,48 s** — 569 tests, mesuré le 2026-09-08. ⚠️ *Ce
+bloc l'avait omis pendant une journée : c'est la référence TMM indépendante, elle couvre R, T,
+l'incidence oblique **et les gradients analytiques**, et rien ne justifie de la sauter.*
+📏 Le §16 annonçait `89,72 s` au 2026-08-17 : **14 fois plus lent**, à cache numba froid.
 
 🔴 **EN TROIS COMMANDES, ET CE N'EST PAS UNE COMMODITÉ.** ⚠️ *Ce paragraphe annonçait une passe
 unique « de 33 à 53 min » : sur la machine du 2026-09-08 elle **n'aboutit pas**, et deux

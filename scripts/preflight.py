@@ -16,6 +16,7 @@ Read-only: this script writes nothing and changes nothing.
 
 from __future__ import annotations
 
+import importlib.util
 import os
 import subprocess
 import sys
@@ -181,19 +182,24 @@ check(
          "Record this version next to any number you report.",
     fatal=False,
 )
-# 🔴 CE CONTROLE ETAIT FAUX, ET IL ECHOUAIT SUR LA SEULE CONFIGURATION QUI EXISTE.
-# Il exigeait que le chemin de l'interpreteur contienne `.venv` -- ce qui suppose un venv
-# DANS le depot. Or le venv a demenage hors de l'arbre (`C:\envs\certus`) et il n'y a plus
-# aucun `.venv` ici : le controle rendait donc FAUX pour le bon interpreteur.
+# 🔴 CE CONTROLE S'EST TROMPE TROIS FOIS, ET TOUJOURS DE LA MEME FACON.
+#   1. il a exige `.venv` DANS le chemin -- ce qui supposait un venv dans le depot ;
+#   2. puis un `pyvenv.cfg` a cote -- ce qui supposait qu'il y ait un venv DU TOUT ;
+#   3. or la machine du 2026-09-08 n'en a aucun. Le projet tourne sur le Python
+#      systeme, et ce controle avertissait donc EN PERMANENCE sur la seule
+#      configuration qui existe.
 #
-# 🔑 C'est la meme faute que `EXPECTED_ROOT = C:\dev\gemini` corrigee au §2 : coder en dur
-# un CHEMIN au lieu de verifier une PROPRIETE. La propriete d'un venv, c'est qu'un
-# `pyvenv.cfg` se trouve a cote de son interpreteur -- vrai ou qu'il soit pose.
-_venv_cfg = Path(sys.executable).resolve().parent.parent / "pyvenv.cfg"
+# 🔑 Un avertissement permanent apprend a ignorer les avertissements -- c'est la regle
+# que CLAUDE.md applique deja au mode FAST. Et la propriete cherchee n'a JAMAIS ete
+# « est-ce un venv » : un venv n'etait qu'un PROXY de « cet interpreteur est equipe
+# pour le projet ». On verifie donc l'equipement, qui est la vraie question, et qui
+# reste vrai quel que soit l'endroit d'ou l'interpreteur est lance.
+_REQUIRED = ("PyQt6", "numpy", "scipy", "numba")
+_missing = [m for m in _REQUIRED if importlib.util.find_spec(m) is None]
 check(
-    "running a venv interpreter (pyvenv.cfg next to it)",
-    _venv_cfg.is_file(),
-    f"{sys.executable}  ->  {_venv_cfg if _venv_cfg.is_file() else 'no pyvenv.cfg found'}",
+    "interpreter equipped for the project (" + ", ".join(_REQUIRED) + ")",
+    not _missing,
+    sys.executable if not _missing else f"{sys.executable}  ->  missing: {', '.join(_missing)}",
     fatal=False,
 )
 

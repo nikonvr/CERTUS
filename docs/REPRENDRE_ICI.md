@@ -43,12 +43,12 @@ Puis **l'environnement, qui n'est PAS dans le dépôt** :
 
 | ce qui est supposé | où c'est écrit |
 |---|---|
-| l'interpréteur à `C:\envs\certus\Scripts\python.exe` | codé en dur partout — §4 de `CLAUDE.md` dit pourquoi |
+| l'interpréteur | 🟢 **plus aucun chemin en dur depuis le 2026-09-08** — les commandes disent `python`, et `preflight.py` vérifie une PROPRIÉTÉ. Le §2 de `CLAUDE.md` dit pourquoi, et raconte les deux chemins morts qui ont précédé |
 | Python **3.14.7**, numba **0.66.0** | §13 de `CLAUDE.md` |
 | `QT_QPA_FONTDIR=C:\Windows\Fonts` pour les tests d'interface | utilisé par les tests à sous-processus |
 
 ```bat
-C:\envs\certus\Scripts\python.exe scripts\preflight.py
+python scripts\preflight.py
 ```
 
 Doit finir par `PREFLIGHT=GO`. ⚠️ **Le premier `pytest` sur un cache numba froid rend 3 échecs
@@ -801,7 +801,7 @@ indépendant et le mode se justifie.
 | # | ce qui ne traverse pas | ce qu'il faut faire |
 |---|---|---|
 | 1 | **le hook `post-commit`** — `.git/hooks/` n'est pas versionné | 🟢 **RÉSOLU le 2026-08-22.** Le hook vit désormais dans **`.githooks/post-commit`**, qui EST versionné. Une commande l'arme : `git config core.hooksPath .githooks`. ⚠️ L'armement reste **délibéré** — `core.hooksPath` est une config **locale**, donc un clone n'arme rien tout seul, et c'est voulu : **committer, c'est publier** sur un dépôt public |
-| 2 | **le chemin de l'interpréteur** | l'ancienne machine avait `C:\envs\certus\Scripts\python.exe`, **pas** `.venv`. Le script accepte une surcharge : `CERTUS_PY=... bash scripts/batch_r75x2_reprenable.sh` |
+| 2 | **le chemin de l'interpréteur** | l'ancienne machine avait un venv hors dépôt, **pas** un `.venv` local ; celle-ci n'en a aucun. Le script accepte une surcharge : `CERTUS_PY=... bash scripts/batch_r75x2_reprenable.sh` |
 | 3 | **le cache numba est FROID** | la **première** passe de `pytest tests/oracle/ tests/unit/` rendra **3 échecs FAUX** (`test_phase2_gradient_analytic_vs_fd` et les deux `TestIRGlobalModelStrategy`). Cause dans numba, pas dans le dépôt — voir `CLAUDE.md` §2. **Relance une seconde fois avant de signaler quoi que ce soit** |
 | 4 | **le cache de profils de fente est froid** | la Phase A du premier run prendra ~30 min au lieu de ~10. Ce n'est pas une régression |
 | 5 | 🔴 **les durées mesurées ne valent que sur leur machine** | et elles **diffèrent selon la famille de run** : un `r75x2` **nu** prend **91 à 97 min**, un `r75x2-2nm` **livré** prend **~115 min** — il porte plus de survivants au criblage. Repère : i5-8250U, 8 threads. Sur une machine plus puissante ce sera moins, mais **ne baisse PAS `CERTUS_BENCH_TIMEOUT_S` pour autant** |
@@ -853,7 +853,7 @@ dernière minute** — donc en cas de doute sur une machine inconnue, on ne le b
 
 ```bat
 git fetch origin
-C:\envs\certus\Scripts\python.exe scripts\preflight.py
+python scripts\preflight.py
 ```
 
 Le contrôle **2bis** répond à la seule question qui fait perdre du travail : *y a-t-il ici des
@@ -861,10 +861,10 @@ commits que le distant n'a pas ?* Il est vrai **quel que soit** l'état du hook 
 rend utile, parce que l'absence de hook est **silencieuse**.
 
 ```bat
-C:\envs\certus\Scripts\python.exe -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
+python -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
 dir .git\hooks\post-commit*
-C:\envs\certus\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
-C:\envs\certus\Scripts\python.exe -m ruff check .
+python -m pytest tests/oracle/ tests/unit/ -q --no-cov
+python -m ruff check .
 ```
 
 Attendus : le chemin **dans l'arbre que tu édites** · l'état du hook **connu** (piège 1) ·
@@ -875,8 +875,8 @@ le 2026-08-23 `coherence_md.py` rend **1 point, et c'est un faux positif instrui
 fin du §0000. Un **second** point serait neuf.
 
 ```bat
-C:\envs\certus\Scripts\python.exe scripts\coherence_md.py
-C:\envs\certus\Scripts\python.exe scripts\check_claude_md.py
+python scripts\coherence_md.py
+python scripts\check_claude_md.py
 ```
 
 ---
@@ -1321,7 +1321,7 @@ absents du commit précédent — donc ils échouent tous sur le code d'avant.
 ```bat
 set CERTUS_PROBE_OVERRIDES=injected_strategies=reports/plans/plans_s077_vers_s042.json
 set CERTUS_PROBE_TAG=inject12s077
-C:\envs\certus\Scripts\python.exe scripts\probe_blocs_vs_plantage.py r75x2 deep 0 0 2.0 0 42 0
+python scripts\probe_blocs_vs_plantage.py r75x2 deep 0 0 2.0 0 42 0
 ```
 
 🔴 **L'étiquette est obligatoire, la sonde refuse sans elle** : deux runs qui ne diffèrent que
@@ -1453,9 +1453,9 @@ code de production, sans contexte reconstruit. La docstring de la sonde porte l'
 ## 6. ⚡ Repartir
 
 ```bat
-C:\envs\certus\Scripts\python.exe scripts\preflight.py
-C:\envs\certus\Scripts\python.exe scripts\coherence_md.py
-C:\envs\certus\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
+python scripts\preflight.py
+python scripts\coherence_md.py
+python -m pytest tests/oracle/ tests/unit/ -q --no-cov
 ```
 
 Attendu : `PREFLIGHT=GO` · **`1 point(s) a instruire`** (le faux positif instruit en fin de
@@ -1465,8 +1465,11 @@ Attendu : `PREFLIGHT=GO` · **`1 point(s) a instruire`** (le faux positif instru
 Il valait 2450 le 17/08 et plus de 2560 le 21/08. **Le seul critère est `0 failed`**, comme
 c'est écrit plus haut dans ce document, qui est désormais le **seul** document d'arrivée.
 
-⚠️ **L'interpréteur est `C:\envs\certus\Scripts\python.exe`.** Il n'y a **pas** de `.venv` dans
-le dépôt ; tout document qui en cite un est faux.
+🟢 **L'interpréteur ne s'écrit plus.** Les commandes disent `python` ; ce qui compte est que
+`import certus` résolve **dans l'arbre où tu édites** et que les dépendances s'importent —
+`preflight.py` vérifie les deux. ⚠️ *Cette ligne a prescrit successivement un `.venv` local puis
+un venv hors dépôt, et les deux se sont périmés. **Tout document qui nomme un chemin
+d'interpréteur a tort par construction.***
 
 ---
 

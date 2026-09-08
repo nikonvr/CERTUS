@@ -3,7 +3,7 @@
 **C'est le point d'entrée du projet, et la carte de tout le reste.**
 
 ⚠️ **Il disait « tout le savoir est ici, il n'y a rien d'autre à lire » — c'est FAUX depuis
-les extractions du 2026-08-16.** Le savoir vit dans **25 fichiers** : ce document porte les
+les extractions du 2026-08-16.** Le savoir vit dans **une trentaine de fichiers** — `git ls-files '*.md' | wc -l` en donne le compte du jour, 33 le 2026-09-08 : ce document porte les
 **directives** et l'**état**, et les dossiers de `docs/` font **autorité** sur leur sujet
 (§1). Le lire seul ne suffit pas ; le lire **en entier** ne sert à rien. **Passe par la carte
 du §3.**
@@ -62,11 +62,11 @@ zéro fait qui ne soit pas déjà écrit ici.
 ### 🟢 La cohérence entre dossiers est vérifiée MÉCANIQUEMENT depuis le 2026-08-19
 
 ```bat
-C:\envs\certus\Scripts\python.exe scripts\coherence_md.py
+python scripts\coherence_md.py
 ```
 
 `check_claude_md.py` vérifie **un** fichier ; celui-ci vérifie que **le même fait porte la
-même valeur dans les 25 `.md`** — c'est-à-dire la règle ci-dessus, appliquée par une machine.
+même valeur dans TOUS les `.md`** — c'est-à-dire la règle ci-dessus, appliquée par une machine.
 
 | | |
 |---|---|
@@ -74,7 +74,20 @@ même valeur dans les 25 `.md`** — c'est-à-dire la règle ci-dessus, appliqu�
 | **il porte un CONTRÔLE NÉGATIF** | il plante une contradiction volontaire et exige de la détecter. 🔑 *Un harnais dont tout passe toujours ne prouve rien* — et ce contrôle a immédiatement révélé que l'outil n'examinait que **2 lignes sur 9** pour le 48c |
 | **il ne comprend pas le français** | une ligne qui **raconte** une correction est écartée par marqueur (« périmé », « non comparable », « score de repli »). Un signalement est **une phrase à lire**, pas une erreur |
 
-📏 Au 2026-08-19 : **0 point à instruire** sur **cinq balayages**, contrôle négatif vert.
+📏 Au 2026-09-08 : **0 point à instruire** sur **33 fichiers**, contrôle négatif vert.
+
+🔴 **ET SON PÉRIMÈTRE ÉTAIT PLUS ÉTROIT QUE LE CORPUS — corrigé le 2026-09-08.** Il ne balayait
+que la racine et `docs/`, soit 26 fichiers sur 33. Il ne lisait donc pas
+`tests/headless/README.md`, qui portait **sept commandes** citant `.venv\Scripts\python.exe` —
+le **premier** interpréteur mort du projet, jamais corrigé parce qu'aucun contrôle ne le
+regardait. 🔑 *Un contrôle de cohérence dont le périmètre est plus étroit que le corpus rend
+« 0 point à instruire » sans que cela veuille dire quoi que ce soit.*
+
+⚠️ **Et le contrôle négatif a immédiatement pris ce correctif en défaut** : réduire la liste à
+`git ls-files` rendait invisible le fichier que ce contrôle **plante lui-même**, puisqu'il
+n'est pas suivi. Le périmètre est donc l'**union** des fichiers suivis et de ce qui traîne à la
+racine et dans `docs/` — ce qui a l'autre mérite de vérifier un document **avant** qu'il soit
+commité.
 
 ### ⚠️ N'ÉCRIS PAS L'ARTEFACT QUE TU DÉCRIS — il fait trébucher le contrôle que tu respectes
 
@@ -140,7 +153,7 @@ taille et ne compte plus jamais comme une faute.
 
 🔑 **Pourquoi c'est cohérent avec ce qui a motivé le plafond.** La cause racine désignée en
 2026-08-16 n'a jamais été la longueur : c'était que **le même fait était énoncé à plusieurs
-endroits**. Or cela, c'est `coherence_md.py` qui le mesure — sur les 25 `.md` à la fois, et
+endroits**. Or cela, c'est `coherence_md.py` qui le mesure — sur tous les `.md` à la fois, et
 avec un contrôle négatif qui prouve qu'il mord. Un nombre de lignes n'en est qu'un **proxy**,
 et un proxy qui *échoue* pousse à extraire une section **pour tenir un chiffre**, pas parce
 qu'elle mérite son dossier.
@@ -158,7 +171,7 @@ dossier, `scripts/extraire_section.py` le fait proprement — il laisse un renvo
 **Une seule commande fait les trois premiers points, et elle est à jour :**
 
 ```bat
-C:\envs\certus\Scripts\python.exe scripts\preflight.py
+python scripts\preflight.py
 ```
 
 Elle doit finir par `PREFLIGHT=GO`. Ce qui suit explique **ce qu'elle vérifie et pourquoi**,
@@ -167,28 +180,37 @@ Elle doit finir par `PREFLIGHT=GO`. Ce qui suit explique **ce qu'elle vérifie e
 **1. Vérifie que tu es dans le bon dossier.**
 
 ```bat
-C:\envs\certus\Scripts\python.exe -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
+python -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
 ```
 
 Le chemin affiché **doit être dans l'arbre où tu édites**.
 Si ce n'est pas le cas → **ARRÊTE-TOI. Signale-le. Ne modifie rien.**
 
-🔴 **L'INTERPRÉTEUR N'EST PAS DANS LE DÉPÔT, ET CE DOCUMENT A PRESCRIT PENDANT DES JOURS UNE
-COMMANDE QUI NE S'EXÉCUTE PAS.** 📏 Trouvé le 2026-08-19 en relisant ce fichier ligne à ligne :
-`.venv\Scripts\python.exe` n'existe **pas** — le venv vit à `C:\envs\certus` depuis le
-déménagement hors de Google Drive. **47 commandes réparties sur 10 fichiers** étaient donc
-inexécutables, **à commencer par la toute première de ce §2**. Un agent neuf échouait à son
-premier geste sans savoir pourquoi.
+🔴 **CE DOCUMENT A PRESCRIT UN INTERPRÉTEUR MORT TROIS FOIS DE SUITE, ET C'EST LA MÊME ERREUR
+À CHAQUE FOIS.** Les commandes de ce fichier disent maintenant `python`, sans chemin. Ce n'est
+pas un relâchement : c'est la conclusion de trois échecs mesurés.
 
-⚠️ **Et `preflight.py` aggravait le cas** : son contrôle exigeait `.venv` **dans le chemin**
-de l'interpréteur, donc il rendait `[BAD]` pour le **seul** interpréteur correct. C'est la
-même faute que `EXPECTED_ROOT` juste en dessous — coder en dur un **chemin** au lieu de
-vérifier une **propriété**. Il teste désormais la présence d'un `pyvenv.cfg` à côté de
-l'interpréteur, ce qui reste vrai où qu'on le pose.
+| ce que le document prescrivait | ce qui était vrai |
+|---|---|
+| `.venv\Scripts\python.exe` | corrigé le 2026-08-19 — **47 commandes sur 10 fichiers** inexécutables, à commencer par la toute première de ce §2 |
+| `C:\envs\certus\Scripts\python.exe` | corrigé le 2026-09-08 — **38 commandes sur 7 fichiers**, et ce dossier n'existe plus du tout sur la machine |
+| *(plus aucun chemin)* | le projet tourne sur le **Python système**, sans venv |
 
-🔑 **Si le venv bouge encore**, ne cherche pas un chemin dans un document : demande-le à
-Python. `python -c "import sys; print(sys.executable)"` depuis l'environnement actif, ou
-`preflight.py` qui le dit et le vérifie.
+🔑 **LA RÈGLE QUI REMPLACE LE CHEMIN : un document ne nomme pas l'interpréteur, il nomme la
+PROPRIÉTÉ qu'il doit avoir.** Elles sont deux — `import certus` doit résoudre **dans l'arbre où
+tu édites**, et l'interpréteur doit porter les dépendances — et `preflight.py` vérifie les
+deux. Un chemin, lui, se périme au premier déménagement, et il l'a fait deux fois.
+
+⚠️ **`preflight.py` s'est trompé trois fois, toujours de la même façon**, et c'est le meilleur
+exemple du piège. Il a exigé `.venv` **dans le chemin**, puis un `pyvenv.cfg` **à côté** — deux
+**proxys** de la vraie question. Or cette machine n'a aucun venv : le contrôle avertissait donc
+**en permanence sur la seule configuration qui existe**, et un avertissement permanent apprend
+à ignorer les avertissements. 📏 Corrigé le 2026-09-08 : il vérifie que `PyQt6`, `numpy`,
+`scipy` et `numba` s'importent — *« cet interpréteur est-il équipé »*, qui est la propriété
+cherchée depuis le début. Un venv n'en était qu'un proxy.
+
+🔑 **Si tu doutes de l'interpréteur, demande-le à Python, pas à un document :**
+`python -c "import sys; print(sys.executable)"`.
 
 🔴 **Il n'y a PAS de racine attendue en dur, et c'est délibéré.** Ce document a longtemps
 exigé `C:\dev\gemini` — **un dossier qui n'existe plus**, et la constante `EXPECTED_ROOT`
@@ -270,8 +292,8 @@ au-dessus, la violation est **toujours active**.
 **3. Vérifie que tout est vert avant de toucher à quoi que ce soit.**
 
 ```bat
-C:\envs\certus\Scripts\python.exe -m ruff check .
-C:\envs\certus\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
+python -m ruff check .
+python -m pytest tests/oracle/ tests/unit/ -q --no-cov
 ```
 
 Attendu : `All checks passed!` puis **zéro échec**.
@@ -285,12 +307,28 @@ a **publié un test cassé** sans que rien ne le signale — il vivait dans `tes
 d'un périmètre restreint à `tests/ui/`. **La leçon vaut dans les deux sens :**
 
 ```bat
-C:\envs\certus\Scripts\python.exe -m pytest tests/ui/ tests/unit/ -q --no-cov
+python -m pytest tests/unit/ -q --no-cov
+python -m pytest tests/ui/ -q --no-cov --deselect tests/ui/test_ux_re_stop_when_idle.py
+python -m pytest tests/ui/test_ux_re_stop_when_idle.py -q --no-cov
 ```
 
-⚠️ **Compte le temps** : cette passe dure **de 33 à 53 min** sur i5-8250U à cache chaud, contre
-~4 min pour `tests/ui/` seule. Ce n'est pas une commande qu'on lance entre deux éditions —
-c'est celle qui décide qu'un travail est fini.
+🔴 **EN TROIS COMMANDES, ET CE N'EST PAS UNE COMMODITÉ.** ⚠️ *Ce paragraphe annonçait une passe
+unique « de 33 à 53 min » : sur la machine du 2026-09-08 elle **n'aboutit pas**, et deux
+tentatives ont été tuées par leur propre plafond de 90 minutes.* 📏 Mesuré ce jour-là :
+
+| commande | durée | pourquoi |
+|---|---|---|
+| `tests/unit/` | **2 min 58**, 2 456 tests | toute la lenteur est ailleurs |
+| `tests/ui/` sans le fichier écarté | **> 50 min** | chaque test construit des fenêtres Qt en sous-processus |
+| `tests/ui/test_ux_re_stop_when_idle.py` | **6,90 s seul** | 🔴 mais **~9 min PAR TEST** dans la suite complète — un facteur ~500, cause inconnue, reproduit sur deux passes |
+
+🔑 **Et découper a un second mérite** : un arrêt natif dans une moitié ne détruit plus le
+verdict de l'autre. Ce n'est pas une commande qu'on lance entre deux éditions — c'est celle qui
+décide qu'un travail est fini.
+
+⚠️ **Une passe qui enjambe une édition n'est pas un verdict** : les modules déjà importés
+gardent l'ancien code, ceux qui restent prennent le nouveau, et le résultat ne décrit aucun
+arbre existant. Deux passes ont dû être jetées le 2026-09-08 pour l'avoir oublié.
 
 🔴 **NE COMPARE PAS LE NOMBRE DE TESTS À UN CHIFFRE ÉCRIT ICI — COMPTE-LE.** Ce document a
 porté successivement 2 300, 2 301, 2 310 et 2 450 pour la même commande, et **aucun de ces
@@ -299,7 +337,7 @@ chiffres ne survit à l'ajout d'un test**, c'est-à-dire à une journée de trav
 l'ajout de trois tests le même jour — l'écart de 3 est exactement celui des trois ajouts.
 
 ```bat
-C:\envs\certus\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov --collect-only
+python -m pytest tests/oracle/ tests/unit/ -q --no-cov --collect-only
 ```
 
 **Le seul critère qui vaut est `0 failed`.** Un compte qui bouge de +3 parce qu'on a fait son
@@ -429,7 +467,7 @@ moteur mathématique** : tout `$...$` y sort en texte brut.
 ## 4. Vérifier l'environnement — une minute, non négociable
 
 ```bat
-C:\envs\certus\Scripts\python.exe -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
+python -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
 git config --get core.hooksPath
 ```
 
@@ -441,12 +479,16 @@ git config --get core.hooksPath
   consigne envoyait vers un dossier fantôme. **Aucune RACINE DE DÉPÔT n'est écrite en dur**,
   ici ni ailleurs — c'est délibéré, et `scripts/preflight.py` le vérifie par une propriété
   (*« `import certus` résout-il dans l'arbre courant ? »*), jamais par un chemin.
-  🔴 **Ne confonds pas avec l'INTERPRÉTEUR, qui lui EST écrit en dur** — `C:\envs\certus`,
-  depuis le 2026-08-19. Ce n'est pas un oubli : une commande doit être **copiable-collable**,
-  et le venv vit hors du dépôt donc aucun chemin relatif ne le désigne. Les deux régimes
-  diffèrent parce que la racine **change à chaque snapshot** alors que le venv est **unique
-  sur la machine**. ⚠️ S'il déménage à son tour, `coherence_md.py` le dira au premier
-  passage : son contrôle E exige que tout interpréteur cité **existe**.
+  🟢 **L'INTERPRÉTEUR SUIT DÉSORMAIS LA MÊME RÈGLE QUE LA RACINE : aucun chemin en dur.**
+  ⚠️ *Ce point disait l'inverse jusqu'au 2026-09-08 — « l'interpréteur, lui, EST écrit en
+  dur », au motif qu'une commande doit être copiable-collable. L'argument était bon et la
+  conclusion mauvaise : le chemin s'est périmé **deux fois**, et la seconde fois le dossier
+  avait purement disparu.* Les commandes disent `python` ; ce qui est vérifié est une
+  **propriété**, au §2.
+  🔑 **Et l'instrument le disait.** `coherence_md.py`, contrôle E, exige que tout interpréteur
+  cité **existe** — il signalait donc ces 45 citations mortes à chaque passage, et ce
+  signalement a été lu comme du bruit de fond pendant des semaines. *Un contrôle qu'on
+  n'instruit pas ne sert à rien ; il coûte même, en habituant à passer outre.*
 - 🔴 **Le hook `post-commit` est ARMABLE, pas armé — et la différence se MESURE, elle ne se
   suppose pas.** 👤 a demandé le 2026-08-14 que le push soit armé, et le hook vit depuis dans
   `.githooks/post-commit`, versionné. Mais il ne s'active que si `core.hooksPath` pointe sur
@@ -463,18 +505,23 @@ git config --get core.hooksPath
 
 ### Commandes de référence
 
-Toutes depuis la racine du dépôt, toujours avec `C:\envs\certus\Scripts\python.exe` — jamais `python`
-nu, qui prendrait l'interpréteur système sans les dépendances.
+Toutes depuis la racine du dépôt. ⚠️ *Ce paragraphe prescrivait un chemin d'interpréteur
+absolu et interdisait `python` nu ; c'est l'inverse depuis le 2026-09-08 — voir §2.*
 
-| But | Commande | Durée |
+🔴 **Une durée sans sa machine ne vaut rien**, et ce tableau en a porté plusieurs. Chacune est
+donc datée et attribuée. Le seul critère qui survive à un changement de machine est
+`0 failed` ; les durées ne servent qu'à savoir si on lance la commande maintenant ou plus tard.
+
+| But | Commande | Durée mesurée |
 |---|---|---|
-| Tests du noyau | `C:\envs\certus\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov` | **216,69 s** mesuré le 2026-08-19 à 15:16, i5-8250U, cache **chaud** — `2451 passed, 5 skipped` à cet instant, soit **deux tests avant l'état actuel**. À cache **froid**, 784 s |
-| Suite complète | `C:\envs\certus\Scripts\python.exe -m pytest tests/ -q --no-cov` | ~1 h 45 |
-| Lint | `C:\envs\certus\Scripts\python.exe -m ruff check .` → `All checks passed!` | ~10 s |
-| Run STRAT complet | `C:\envs\certus\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42` | ~25 min |
+| Lint | `python -m ruff check .` → `All checks passed!` | ~10 s |
+| Tests unitaires | `python -m pytest tests/unit/ -q --no-cov` | **178,88 s** — 2026-09-08, Python 3.14.7 système, cache chaud, `2456 passed, 10 skipped` |
+| Tests d'interface | `python -m pytest tests/ui/ -q --no-cov --deselect tests/ui/test_ux_re_stop_when_idle.py` | **> 50 min** — 2026-09-08. 🔴 **Le fichier écarté coûte ~9 min PAR TEST en suite alors qu'il vaut 6,90 s isolé** ; laissé dedans, la passe n'aboutit pas. Lance-le à part |
+| Tests du noyau | `python -m pytest tests/oracle/ tests/unit/ -q --no-cov` | 216,69 s le 2026-08-19 sur i5-8250U à cache chaud, 784 s à froid. ⚠️ **Non remesuré depuis** ; le compte de tests collectés est passé de 2 456 à **3 033** entre-temps |
+| Run STRAT complet | `python scripts\probe_anchor_noise_pipeline.py full 1.0 42` | ~25 min |
 | Idem, seuil injecté | `... probe_anchor_noise_pipeline.py full 1.0 42 0 2.1` | ~25 min |
-| Sonde noyau rapide | `C:\envs\certus\Scripts\python.exe scripts\probe_anchor_noise.py` | ~1 min |
-| Banc sur exemples réels | `C:\envs\certus\Scripts\python.exe scripts\bench_examples.py <module> --auto-yes` | variable |
+| Sonde noyau rapide | `python scripts\probe_anchor_noise.py` | ~1 min |
+| Banc sur exemples réels | `python scripts\bench_examples.py <module> --auto-yes` | variable |
 
 ⚠️ **N'utilise pas `tests/headless/` pour mesurer** : `test_design.py` et `test_strat.py`
 remplacent le calcul par un mock.
@@ -517,8 +564,8 @@ Aucun n'admet d'exception. Si tu crois devoir en violer un, **arrête-toi et dem
    rapports de mesures d'indice réelles. `reports/` n'est **pas** gitignoré ; seuls quatre
    sous-motifs le sont (`reports/exports/`, `release_dossier_*.zip`, `Report_*`,
    `STRAT_observability_*`).
-   📏 **Remesuré le 2026-09-07 : 2 154 fichiers, 2 141 suivis par git — il en reste 13
-   dehors, pas 199.** ⚠️ **Le chiffre précédent était périmé d'un facteur 15**, et il faisait
+   📏 **Remesuré le 2026-09-08 : 2 141 fichiers, 2 141 suivis par git — il n'en reste AUCUN
+   dehors.** (2 154 / 13 la veille, 199 le 2026-08-19.) ⚠️ **Le chiffre précédent était périmé d'un facteur 15**, et il faisait
    paraître le dossier bien plus menacé qu'il ne l'est. Les 13 sont des artefacts de runs du
    3 septembre (`Report_STRAT_*`, `STRAT_observability_*`), tous couverts par `.gitignore` et
    tous **régénérables** : plus rien d'irrécupérable ne traîne ici.
@@ -542,7 +589,7 @@ Aucun n'admet d'exception. Si tu crois devoir en violer un, **arrête-toi et dem
    paramètres **après coup** — c'est toujours la voie à préférer.
 
 5. **Jamais « corriger » `except A, B:`.** C'est la syntaxe PEP 758, valide depuis
-   Python 3.14, utilisée volontairement dans **18** modules (compté par AST le 2026-08-19,
+   Python 3.14, utilisée volontairement dans **28** modules (recompté par AST le 2026-09-08 ; la ligne disait 18 le 2026-08-19,
    la ligne disait 14 — et un `grep` ne suffit pas : il faut distinguer le tuple **sans**
    parenthèses de `except (A, B):`, qui est l'ancienne syntaxe et n'a rien à voir). Ajouter des parenthèses change le
    sens du code.
@@ -734,8 +781,8 @@ Pour **chaque** action, dans cet ordre, sans en sauter :
    jamais porté d'action.*
 2. **Fais la modification la plus petite possible.** Une seule chose à la fois : si tu
    changes deux choses et que le résultat bouge, personne ne saura laquelle en est cause.
-3. **Tests** : `C:\envs\certus\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov`. Un échec ⇒ n'avance pas.
-4. **Lint** : `C:\envs\certus\Scripts\python.exe -m ruff check .` doit dire exactement `All checks passed!`
+3. **Tests** : `python -m pytest tests/oracle/ tests/unit/ -q --no-cov`. Un échec ⇒ n'avance pas.
+4. **Lint** : `python -m ruff check .` doit dire exactement `All checks passed!`
 5. **Non-régression bit-à-bit** si tu as ajouté un paramètre — voir la règle d'or ci-dessous.
 6. **Mesure** avec la commande exacte, machine libre.
 7. **Committe**, puis colle le hash dans ta réponse.
@@ -944,9 +991,11 @@ d'empilements, stratégie de dépôt. Application **PyQt6** + noyau **NumPy/SciP
   d'interpréteur, sinon un écart de version sera attribué au code.
 - Cible principale Windows, build gelé PyInstaller
 - 📏 **Mesuré le 2026-08-19**, et les trois chiffres qui figuraient ici étaient faux :
-  **171 600** lignes de source (`certus/` + les 12 fichiers de la racine, 294 fichiers) ·
-  **62 146** de tests (261 fichiers) · **21 687** de scripts (97 fichiers) ·
-  **2 456** tests collectés sur `tests/oracle/ + tests/unit/`.
+  **169 005** lignes dans `certus/` · **73 381** de tests · **29 166** de scripts ·
+  **3 033** tests collectés sur `tests/oracle/ + tests/unit/` (2026-09-08).
+  🔴 **Ces quatre nombres étaient faux d'entrée et le seront encore : ne les lis pas, compte-les.**
+  Le seul intérêt du bloc est l'ordre de grandeur — un noyau de ~170 kl, une suite de tests
+  qui fait 43 % de sa taille.
   ⚠️ L'ancien « 183 600 de source » ne correspondait à **aucun périmètre** : ni `certus/`
   seul (163 485), ni avec la racine (171 600), ni en ajoutant `scripts/` (193 287). Et le
   « ~2 300 tests » était faux par inclusion. 🔴 **Ces nombres se périment ; recompte-les**
@@ -1007,8 +1056,10 @@ un `pip install` ne récupérerait aucun sous-module : le projet n'est utilisabl
 ### Pièges de fichiers
 
 - 🔴 **`reports/` contient les résultats scientifiques de 👤** — classeurs Excel et rapports
-  HTML de déterminations d'indice. **199 fichiers sur 2 266 sont hors de git** (mesuré le
-  2026-08-19) et sont irrécupérables — voir interdit 3, qui porte les chiffres.
+  HTML de déterminations d'indice. 🔴 **Le compte est à l'interdit 3, et nulle part ailleurs.**
+  ⚠️ *Cette ligne en portait une COPIE — « 199 fichiers sur 2 266 hors de git » — restée au
+  2026-08-19 pendant que l'interdit 3 était remesuré deux fois. Les deux chiffres se
+  contredisaient dans le même document, ce qui est exactement la faute que le §1 interdit.*
   Ne le supprime **jamais** dans un « nettoyage ».
 - Les 3 fichiers `certus_*.py` restants à la racine (`certus_curve_smoother`,
   `certus_spectral_preproc`, `certus_substrate_index`) sont des **façades légitimes** de
@@ -1429,7 +1480,7 @@ la **classe d'équivalence SEEL** (§22), pas le score.
 
 ```bat
 set CERTUS_BENCH_TIMEOUT_S=38400
-C:\envs\certus\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42
+python scripts\probe_anchor_noise_pipeline.py full 1.0 42
 ```
 
 Le plafond était en dur ; il est surchargeable par cette variable, **défaut 1800 s**
@@ -1895,7 +1946,7 @@ natures très différentes de risque, et c'est la seconde qui avait disparu.
 
 ### CI
 
-248 fichiers `.py` sous `tests/` (241 `test_*.py`). ⚠️ **Le « 2 299 tests collectés » qui
+**342** fichiers `.py` sous `tests/`, dont **334** `test_*.py` (2026-09-08 ; 248 et 241 au 2026-08-19 — le comptage vieillit d'une journée de travail). ⚠️ **Le « 2 299 tests collectés » qui
 figurait ici est faux par inclusion** : `tests/oracle/` + `tests/unit/` en rend à eux seuls
 **2 456** au 2026-08-19, et `tests/` est un sur-ensemble. 🔴 **Ne recopie pas ce nombre : il
 change dès qu'on ajoute un test** — compte-le avec `--collect-only` (§2). Le compte réel de

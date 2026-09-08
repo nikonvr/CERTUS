@@ -25,7 +25,7 @@ sa copie*. **Ne rétablis pas ces lignes ; va les lire dans `CLAUDE.md`.**
 n'importe quelle liste :
 
 ```bat
-C:\envs\certus\Scripts\python.exe scripts\preflight.py
+python scripts\preflight.py
 ```
 
 Elle doit finir par `PREFLIGHT=GO`. Le reste — quelle commande interroge le hook, ce que

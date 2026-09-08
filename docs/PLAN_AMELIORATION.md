@@ -358,17 +358,17 @@ re-checked on 2026-09-06 — the eleven directories named below all exist.
 
 ```bash
 # fast, before AND after any change to an optical calculation
-C:/envs/certus/Scripts/python.exe -m pytest tests/oracle/ -q --no-cov
+python -m pytest tests/oracle/ -q --no-cov
 ```
 
 ```bash
 # wide, before committing
-C:/envs/certus/Scripts/python.exe -m pytest tests/oracle/ tests/unit/ tests/core/ tests/domain/ tests/property/ -q --no-cov
+python -m pytest tests/oracle/ tests/unit/ tests/core/ tests/domain/ tests/property/ -q --no-cov
 ```
 
 ```bash
 # complete
-C:/envs/certus/Scripts/python.exe -m pytest tests/integration/ tests/headless/ tests/ui/ tests/performance/ tests/regression/ tests/utils/ -q --no-cov
+python -m pytest tests/integration/ tests/headless/ tests/ui/ tests/performance/ tests/regression/ tests/utils/ -q --no-cov
 ```
 
 ⚠️ **The “~12 min” this section promised has been removed, not corrected**: a duration without
@@ -379,5 +379,5 @@ never a stopwatch.**
 Check what Python actually imports, if in doubt:
 
 ```bash
-C:/envs/certus/Scripts/python.exe -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
+python -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
 ```

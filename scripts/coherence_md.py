@@ -36,6 +36,7 @@ from __future__ import annotations
 
 import ast
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -130,8 +131,30 @@ DU_CODE: list[tuple[str, str, str, str]] = [
 
 
 def _md() -> list[Path]:
-    fs = sorted(ROOT.glob("*.md")) + sorted((ROOT / "docs").glob("*.md"))
-    return [f for f in fs if f.exists()]
+    """Tous les `.md` SUIVIS PAR GIT, pas seulement la racine et `docs/`.
+
+    🔴 Ce selecteur ne regardait que ces deux dossiers, et il ratait donc
+    `tests/headless/README.md` -- qui portait SEPT commandes citant
+    `.venv\\Scripts\\python.exe`, le premier interpreteur mort du projet, jamais
+    corrige parce qu'aucun controle ne le lisait. Trouve le 2026-09-08.
+
+    🔑 Un controle de coherence dont le PERIMETRE est plus etroit que le corpus
+    rend « 0 point a instruire » sans que cela veuille dire quoi que ce soit.
+    """
+    out = subprocess.run(
+        ["git", "ls-files", "*.md"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    ).stdout.split()
+    # 🔴 UNION, PAS REMPLACEMENT. `git ls-files` ignore les fichiers NON SUIVIS, et le
+    # controle negatif en plante justement un : le reduire a la seule liste git a casse
+    # ce controle du premier coup, le 2026-09-08. Il a fait son travail sur son auteur.
+    # Accessoirement, un `.md` en cours d'ecriture doit etre verifie AVANT d'etre commite.
+    fs = [ROOT / rel for rel in out]
+    fs += sorted(ROOT.glob("*.md")) + sorted((ROOT / "docs").glob("*.md"))
+    return sorted({f for f in fs if f.exists()})
 
 
 #: 🔴 NE JUGE PAS, MONTRE. Un renvoi `§N` qui pointe sur une section EXISTANTE mais sur le

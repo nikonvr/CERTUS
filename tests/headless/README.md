@@ -20,17 +20,17 @@ tests/headless/
 
 ### All tests
 ```powershell
-.\.venv\Scripts\python.exe tests/headless/run_all.py
+python tests/headless/run_all.py
 ```
 
 ### An individual test
 ```powershell
-.\.venv\Scripts\python.exe tests/headless/test_metal_single.py
-.\.venv\Scripts\python.exe tests/headless/test_metal_bilayer.py
-.\.venv\Scripts\python.exe tests/headless/test_field.py
-.\.venv\Scripts\python.exe tests/headless/test_re.py
-.\.venv\Scripts\python.exe tests/headless/test_design.py
-.\.venv\Scripts\python.exe tests/headless/test_spline.py
+python tests/headless/test_metal_single.py
+python tests/headless/test_metal_bilayer.py
+python tests/headless/test_field.py
+python tests/headless/test_re.py
+python tests/headless/test_design.py
+python tests/headless/test_spline.py
 ```
 
 ## Expected reference values

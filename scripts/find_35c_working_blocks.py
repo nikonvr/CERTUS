@@ -1,7 +1,7 @@
 """Recherche systématique par essais/erreurs et propagation pour trouver des stratégies par blocs robustes (crash_rate = 0) sur le 35 couches.
 
 Usage:
-    .venv/Scripts/python.exe scripts/find_35c_working_blocks.py
+    python scripts/find_35c_working_blocks.py
 """
 
 from __future__ import annotations

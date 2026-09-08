@@ -1,8 +1,8 @@
 """PILOTE DU LOT DE 10 A 12 H -- grille resolution x epaisseur optique, puis exploration elargie.
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\batch_grille_resolution.py --heures 12
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\batch_grille_resolution.py --heures 10
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\batch_grille_resolution.py --etat
+    python scripts\\batch_grille_resolution.py --heures 12
+    python scripts\\batch_grille_resolution.py --heures 10
+    python scripts\\batch_grille_resolution.py --etat
 
 👤 2026-08-17 : *« j'aimerai avoir 10 h pour lancer un batch [...] avec de la valeur ajoutee dans
 la comprehension slit 1 nm vs 2 nm et 75c dans toutes ses variantes »*, puis *« j'aimerai aussi
@@ -460,7 +460,7 @@ def main() -> int:
           f"{refuses} non engagees faute de temps")
     print("=" * 92)
     print("\n  Lire la grille :")
-    print("    C:\\envs\\certus\\Scripts\\python.exe scripts\\batch_grille_resolution.py --etat")
+    print("    python scripts\\batch_grille_resolution.py --etat")
     print("\n  ⚠️ Toute cellule rendant des DEPOSABLES doit etre rejouee en PREMIUM avant")
     print("     publication (§8), et toute cellule MARGINALE a une seconde graine (§24-46).")
     return 0

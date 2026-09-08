@@ -1,6 +1,6 @@
 """LIRE UNE CELLULE MULTISEED -- les trois lectures posees d'avance, et rien d'autre.
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\lire_multiseed.py <journal.log> [artefact.json]
+    python scripts\\lire_multiseed.py <journal.log> [artefact.json]
 
 L'artefact est devine a partir de la ligne « consigne dans ... » du journal s'il n'est pas donne.
 

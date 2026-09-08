@@ -1,6 +1,6 @@
 """BATCH DE NUIT -- FAIRE TROUVER A LA GRAINE 42 CE QUE LA GRAINE 77 TROUVE.
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\batch_nuit_2026-08-21_seed42.py [heures]
+    python scripts\\batch_nuit_2026-08-21_seed42.py [heures]
 
 👤 2026-08-20, 23h : *« objectif : que seed 42 trouve d'aussi bonnes strategies que seed 77 en
 terme de seel et l'implanter sur le code de production »*, avec autonomie totale sur les
@@ -109,7 +109,10 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 ROOT = Path(__file__).resolve().parents[1]
-PY = r"C:\envs\certus\Scripts\python.exe"
+# L'interpreteur QUI TOURNE, pas un chemin ecrit a la main : celui-ci s'est perime
+# deux fois, et la seconde fois le dossier avait disparu. sys.executable est par
+# construction equipe, puisque ce script s'y execute.
+PY = sys.executable
 SONDE = "scripts/probe_blocs_vs_plantage.py"
 
 #: `r75x2`, `deep`, fente 2 nm, graine 42, aucun profil elargi, aucune queue Rate.

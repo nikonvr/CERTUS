@@ -12,7 +12,7 @@ We therefore capture the thicknesses actually simulated (thicknesses_all), we re
 de chaque tirage, et on rend la distribution de l'ecart PAR BANDE — plus le decalage du front,
 qui est la vraie grandeur physique sur un dichroique.
 
-    .venv/Scripts/python.exe scripts/probe_spectral_error.py
+    python scripts/probe_spectral_error.py
 
 Does not write anything except reports/. Do not touch any production codes.
 """

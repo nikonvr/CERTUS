@@ -1,7 +1,7 @@
 """BATCH 2 DE LA NUIT — 👤 2026-08-20 : « continue a elaborer des batchs pour faire avancer
 le chantier rate, et lance les directement ».
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\batch_nuit_2026-08-20.py
+    python scripts\\batch_nuit_2026-08-20.py
 
 Enchaine apres le batch du 19, dont les six cellules ont rendu.
 

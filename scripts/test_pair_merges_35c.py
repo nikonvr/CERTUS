@@ -7,7 +7,7 @@ Pour chaque paire adjacente (i, i+1) parmi les 34 paires possibles :
   - Vérifie si une longueur d'onde donne STRICTEMENT 0 crash et mesure le SEEL et RMSE.
 
 Usage:
-    .venv/Scripts/python.exe scripts/test_pair_merges_35c.py
+    python scripts/test_pair_merges_35c.py
 """
 
 from __future__ import annotations

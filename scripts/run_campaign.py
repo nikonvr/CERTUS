@@ -1,6 +1,6 @@
 """Unattended measurement campaign. ONE command, no shell, no environment typing.
 
-    .venv\\Scripts\\python.exe scripts\\run_campaign.py
+    python scripts\\run_campaign.py
 
 Runs the whole overnight campaign and verifies each run got the configuration it
 was asked for. Takes no argument, makes no choice, writes no code.

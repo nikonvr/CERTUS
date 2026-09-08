@@ -1,6 +1,6 @@
 """LIRE CE QUE COUTE LE PARALLELISME -- un run SEUL contre le meme run a DEUX.
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\lire_solo_vs_parallele.py <solo.log> <parallele.log>
+    python scripts\\lire_solo_vs_parallele.py <solo.log> <parallele.log>
 
 ## 🔑 LA SEULE QUESTION QU'IL REPOND, ET CE QU'ELLE DECIDE
 

@@ -1,6 +1,6 @@
 """LA RESOLUTION SPECTRALE QU'UN DESIGN EXIGE -- calculee sans strategie et sans Monte-Carlo.
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\probe_resolution_exigee.py [composant ...]
+    python scripts\\probe_resolution_exigee.py [composant ...]
 
 👤 2026-08-17 : *« le but ultime serait d'arriver a predire sans tout calculer si un design peut
 passer avec un seul verre ou pas »*, puis *« je me pose aussi la question de la resolution

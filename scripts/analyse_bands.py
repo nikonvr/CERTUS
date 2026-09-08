@@ -1,6 +1,6 @@
 """Where does the damage land? Per-band profile of every probe run on disk.
 
-    .venv\\Scripts\\python.exe scripts\\analyse_bands.py
+    python scripts\\analyse_bands.py
 
 Reads nothing but `reports/probe_anchor_noise_pipeline_*.json`. No bench time.
 

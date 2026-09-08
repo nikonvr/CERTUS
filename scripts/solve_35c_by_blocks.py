@@ -3,7 +3,7 @@
 Ne modifie aucun critère physique, cherche les combinaisons qui passent tous les tests existants.
 
 Usage:
-    .venv/Scripts/python.exe scripts/solve_35c_by_blocks.py
+    python scripts/solve_35c_by_blocks.py
 """
 
 from __future__ import annotations

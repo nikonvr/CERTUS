@@ -29,7 +29,7 @@
     champ `parametres_de_notation`, ajoute le matin meme, qui a demasque une comparaison a
     trois variables changees -- le jour de sa pose.
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\probe_renoter.py <composant> <plans.json> [graine] [mode_contexte]
+    python scripts\\probe_renoter.py <composant> <plans.json> [graine] [mode_contexte]
 
 ## 🔑 POURQUOI CET OUTIL EXISTE — il conditionne DEUX questions ouvertes
 

@@ -1,6 +1,6 @@
 """Reference du 75 couches aleatoire EN UNE SEULE CAMPAGNE, sur verre nu.
 
-    .venv\Scripts\python.exe scripts\ref_r75.py
+    python scripts\ref_r75.py
 
 C'est la mesure manquante du 2026-08-15 : sans elle on ne peut pas dire si le random75 a
 BESOIN d'un changement de verre temoin. Meme reglage que les sous-empilements du controle

@@ -1,7 +1,7 @@
 """NOMMER LE DOCUMENT SUR UN RENVOI « §N » QUI POINTE AILLEURS.
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\nommer_les_renvois_de_section.py           # SIMULATION
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\nommer_les_renvois_de_section.py --ecrire  # applique
+    python scripts\\nommer_les_renvois_de_section.py           # SIMULATION
+    python scripts\\nommer_les_renvois_de_section.py --ecrire  # applique
 
 ## 🔑 POURQUOI CET OUTIL EXISTE
 

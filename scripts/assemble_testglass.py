@@ -1,6 +1,6 @@
 """MULTI-TEMOINS : assembler A + B + C et noter la PIECE, sans refaire un seul tirage.
 
-    .venv\\Scripts\\python.exe scripts\\assemble_testglass.py
+    python scripts\\assemble_testglass.py
 
 👤 2026-08-15 : *« il faut memoriser les epaisseurs des tirages de A, B et C pour recalculer
 sur tout le design A-B-C »*, et *« il ne faut pas refaire de tirages, on utilise ceux

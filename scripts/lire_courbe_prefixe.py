@@ -1,6 +1,6 @@
 """LIRE LA COURBE SEEL(n) ET crash(n) -- et refuser de la sur-interpreter.
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\lire_courbe_prefixe.py [artefact...]
+    python scripts\\lire_courbe_prefixe.py [artefact...]
 
 ## Les deux courbes ne disent pas la meme chose, et ne se lisent pas pareil
 

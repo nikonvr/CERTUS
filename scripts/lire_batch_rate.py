@@ -1,6 +1,6 @@
 """LECTURE DES ARTEFACTS DU BATCH RATE -- et de la PREDICTION posee avant qu'il tourne.
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\lire_batch_rate.py
+    python scripts\\lire_batch_rate.py
 
 ## Ce que cet instrument fait, et ce qu'il refuse de faire
 

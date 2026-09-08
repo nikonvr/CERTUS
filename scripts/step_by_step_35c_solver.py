@@ -1,7 +1,7 @@
 """Analyse pas-à-pas de la survie couche par couche pour identifier les blocs maximaux à 0% de crash.
 
 Usage:
-    .venv/Scripts/python.exe scripts/step_by_step_35c_solver.py
+    python scripts/step_by_step_35c_solver.py
 """
 
 from __future__ import annotations

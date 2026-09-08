@@ -1,6 +1,6 @@
 """COMBIEN DE STRATEGIES MULTI-LAMBDA EXISTENT-IL ? -- le comptage EXACT, en quelques secondes.
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\probe_denombre_couvertures.py [K_MAX]
+    python scripts\\probe_denombre_couvertures.py [K_MAX]
 
 👤 2026-08-17 : *« s'acharner pour moi veut dire etre certain a 100 % qu'aucune strategie
 multi lambda avec un seul verre temoin ne peut fonctionner avec une statistique de reussite

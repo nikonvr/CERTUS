@@ -1,6 +1,6 @@
 """Traque MECANIQUEMENT les contradictions de CLAUDE.md.
 
-    .venv\\Scripts\\python.exe scripts\\check_claude_md.py
+    python scripts\\check_claude_md.py
 
 👤 2026-08-15 : *« je te propose de faire des passes successives sur claude.md jusqu'a
 trouver zero contradiction »*. Relire 4 500 lignes a l'oeil ne converge pas -- on retrouve

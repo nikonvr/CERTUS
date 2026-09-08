@@ -1,6 +1,6 @@
 """ACTIONS A1 and A2 of the roadmap -- turning-point detection under smoothing.
 
-    .venv\\Scripts\\python.exe scripts\\probe_tp_fabrication.py
+    python scripts\\probe_tp_fabrication.py
 
 Takes no argument. Prints three tables and a verdict per action. Paste the WHOLE
 output. Nothing to configure, nothing to choose.

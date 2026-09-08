@@ -1,6 +1,6 @@
 """LIRE LE BATCH DE LA NUIT DU 2026-08-21, et appliquer la regle de decision ECRITE D'AVANCE.
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\lire_nuit_2026-08-21.py
+    python scripts\\lire_nuit_2026-08-21.py
 
 ## 🔑 CE QUE CE SCRIPT FAIT, ET POURQUOI IL EXISTE SEPAREMENT DU BATCH
 

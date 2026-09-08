@@ -1,6 +1,6 @@
 """Controle MECANIQUE de TOUS les documents du depot -- md et html.
 
-    .venv\\Scripts\\python.exe scripts\\check_docs.py
+    python scripts\\check_docs.py
 
 👤 2026-08-16 : *« fais un controle minutieux des autres fichiers md et html »*.
 

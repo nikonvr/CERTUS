@@ -1,6 +1,6 @@
 """LE FILTRE DE PHASE A LAISSE-T-IL PASSER DES LAMBDA SANS POINT TOURNANT ?
 
-    .venv\\Scripts\\python.exe scripts\\probe_tp_admissibilite.py
+    python scripts\\probe_tp_admissibilite.py
 
 👤 2026-08-15 : *« évidemment toute proposition doit être validée par l'expérience numérique.
 Et voir sur le 35c, 48c avec un seul testglass s'il y a amélioration. »*

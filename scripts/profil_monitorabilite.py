@@ -1,6 +1,6 @@
 """MONITORABILITE PAR COUCHE — une grandeur PHYSIQUE, sans aucune recherche.
 
-    .venv\\Scripts\\python.exe scripts\\profil_monitorabilite.py
+    python scripts\\profil_monitorabilite.py
 
 👤 2026-08-15 : *« il faut absolument comprendre et donner des resultats coherents, c'est la
 base de toute demarche scientifique »*.

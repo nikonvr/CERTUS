@@ -1,6 +1,6 @@
 """LE NOMBRE DE BLOCS PREDIT-IL LE PLANTAGE ? -- une campagne, des centaines de points.
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\probe_blocs_vs_plantage.py [composant] [mode]
+    python scripts\\probe_blocs_vs_plantage.py [composant] [mode]
 
 👤 2026-08-17 : *« ce qui est important, c'est de trouver un chemin avec des blocs de longueurs
 d'onde pour monitorer l'ensemble et en bonus avec compensation d'erreur »*.

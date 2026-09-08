@@ -659,7 +659,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--duree-attendue", type=float, default=DUREE_ATTENDUE_DEFAUT_MIN,
                     help="minutes, pour decider si un lancement rentre. Remplacee par la duree "
                          f"REELLE des le premier run fini. Defaut {DUREE_ATTENDUE_DEFAUT_MIN:g}")
-    ap.add_argument("--python", default=os.environ.get("CERTUS_PY", "C:/envs/certus/Scripts/python.exe"))
+    # Defaut = l'interpreteur qui tourne. Il valait un chemin en dur, mort depuis un
+    # demenagement : la recherche multi-graines echouait donc sans CERTUS_PY.
+    ap.add_argument("--python", default=os.environ.get("CERTUS_PY", sys.executable))
     ap.add_argument("--multitemoin", type=int, default=0, metavar="K",
                     help="si AUCUNE realisation ne trouve, ESCALADER de 2 a K verres temoins "
                          "et s'arreter au MINIMUM qui rend faisable. 0 = ne pas essayer. "

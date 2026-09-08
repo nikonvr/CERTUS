@@ -1,7 +1,7 @@
 """Sonde directe pour tester la simulation Monte-Carlo du passe-bande 35 couches avec des blocs physiques.
 
 Usage:
-    .venv/Scripts/python.exe scripts/test_35c_blocks.py
+    python scripts/test_35c_blocks.py
 """
 
 from __future__ import annotations

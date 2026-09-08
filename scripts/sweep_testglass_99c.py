@@ -1,9 +1,9 @@
 """MULTIPLE-TESTGLASS -- batch sweep of the cut positions on the 99-layer 5-cavity filter.
 
-    .venv\\Scripts\\python.exe scripts\\sweep_testglass_99c.py --cuts none      # baseline FIRST
-    .venv\\Scripts\\python.exe scripts\\sweep_testglass_99c.py --preset single
-    .venv\\Scripts\\python.exe scripts\\sweep_testglass_99c.py --preset double --mode deep
-    .venv\\Scripts\\python.exe scripts\\sweep_testglass_99c.py --preset control \\
+    python scripts\\sweep_testglass_99c.py --cuts none      # baseline FIRST
+    python scripts\\sweep_testglass_99c.py --preset single
+    python scripts\\sweep_testglass_99c.py --preset double --mode deep
+    python scripts\\sweep_testglass_99c.py --preset control \\
         --config example/example_strat/JSON-strat-example.json --layers 48
 
 Presets, all expressed as FRACTIONS of the stack so they transfer to any component:

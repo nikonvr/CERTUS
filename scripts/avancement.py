@@ -1,6 +1,6 @@
 """Ou en sont les batchs, et est-ce que ca progresse ou est-ce qu'on tape dans le vide ?
 
-    .venv\\Scripts\\python.exe scripts\\avancement.py
+    python scripts\\avancement.py
 
 👤 2026-08-15 : *« je veux juste pouvoir interroger l'avancement et les resultats partiels
 pour sentir si cela progresse ou si on tape dans le vide »*.

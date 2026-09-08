@@ -1,7 +1,7 @@
 """RECALER LES RENVOIS `fichier.py:N` QUE LES EDITIONS DE CODE ONT DECALES.
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\recaler_renvois.py           # SIMULATION
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\recaler_renvois.py --ecrire  # applique
+    python scripts\\recaler_renvois.py           # SIMULATION
+    python scripts\\recaler_renvois.py --ecrire  # applique
 
 ## 🔑 POURQUOI CET OUTIL EXISTE, ET IL EST NE D'UNE MESURE
 

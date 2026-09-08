@@ -1,8 +1,8 @@
 """A/B : exiger un point tournant en Phase A ameliore-t-il le SEEL du 48c et du 35c ?
 
-    .venv\\Scripts\\python.exe scripts\\test_require_tp.py --composant 48c --mode off
-    .venv\\Scripts\\python.exe scripts\\test_require_tp.py --composant 48c --mode on
-    .venv\\Scripts\\python.exe scripts\\test_require_tp.py --etat
+    python scripts\\test_require_tp.py --composant 48c --mode off
+    python scripts\\test_require_tp.py --composant 48c --mode on
+    python scripts\\test_require_tp.py --etat
 
 👤 2026-08-15 : *« evidemment toute proposition doit etre validee par l'experience numerique.
 Et voir sur le 35c, 48c avec un seul testglass s'il y a amelioration. »*

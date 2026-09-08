@@ -1,6 +1,6 @@
 """LA CASE MANQUANTE, PUIS LA COURBE — 👤 2026-08-19, « les deux dans cet ordre ».
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\batch_voie_de_garage.py
+    python scripts\\batch_voie_de_garage.py
 
 ## Ce que ce batch tranche, et pourquoi il passe AVANT tout le reste
 

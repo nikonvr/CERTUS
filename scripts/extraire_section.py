@@ -1,6 +1,6 @@
 """Extrait une section de CLAUDE.md vers docs/, et laisse un renvoi a sa place.
 
-    .venv\\Scripts\\python.exe scripts\\extraire_section.py --section "## 25." \\
+    python scripts\\extraire_section.py --section "## 25." \\
         --vers docs/CHANTIER_MULTITEMOINS.md --titre "..." --resume resume.txt
 
 👤 2026-08-16 : *« CLAUDE.md fait 5413 lignes, je pense que c'est inefficace car les IA ne

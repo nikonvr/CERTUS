@@ -1,6 +1,6 @@
 """BATCH DE NUIT — 👤 2026-08-19 : « enchaîne sur un batch pour continuer à comprendre ».
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\batch_nuit_2026-08-19.py
+    python scripts\\batch_nuit_2026-08-19.py
 
 Lancé en autonomie, après le batch « voie de garage ».
 

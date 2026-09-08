@@ -1,6 +1,6 @@
 """Assemble toutes les partitions depuis le cache d'intervalles et les classe.
 
-    .venv\\Scripts\\python.exe scripts\\classer_partitions.py
+    python scripts\\classer_partitions.py
 
 Aucun run. Tout sort du cache produit par `campagne_intervalles.py` : les epaisseurs
 simulees de chaque intervalle sont concatenees tirage par tirage, et la piece de 99 couches

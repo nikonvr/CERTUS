@@ -3,7 +3,7 @@ CERTUS Headless Test Suite — Runner
 Runs all module integration tests sequentially and reports pass/fail + RMSE.
 
 Usage:
-    .venv\Scripts\python.exe tests/headless/run_all.py
+    python tests/headless/run_all.py
 """
 
 import sys

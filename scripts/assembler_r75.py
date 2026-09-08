@@ -1,6 +1,6 @@
 """ASSEMBLAGE DU 75 COUCHES ALEATOIRE + test HORS ECHANTILLON de la regle de sensibilite.
 
-    .venv\\Scripts\\python.exe scripts\\assembler_r75.py
+    python scripts\\assembler_r75.py
 
 🔑 POURQUOI CE COMPOSANT ET PAS UN AUTRE. Le random75 (graine 2026) n'a ni cavite, ni
 miroir, ni periodicite. Une regle qui aurait besoin de la STRUCTURE du design ne doit donc

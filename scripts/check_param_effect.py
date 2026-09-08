@@ -1,7 +1,7 @@
 """TEST DIFFERENTIEL : un reglage qui ne change RIEN au resultat est inerte.
 
-    .venv\\Scripts\\python.exe scripts\\check_param_effect.py
-    .venv\\Scripts\\python.exe scripts\\check_param_effect.py --only machine_sampling_dd
+    python scripts\\check_param_effect.py
+    python scripts\\check_param_effect.py --only machine_sampling_dd
 
 POURQUOI CETTE METHODE PLUTOT QU'UNE AUTRE. Chercher si un parametre est *lu* demande de
 suivre la chaine qui le mene au calcul, et cette chaine a des angles morts : les reglages STRAT sont lus par

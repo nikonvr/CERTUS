@@ -1,6 +1,6 @@
 """LE PLANTAGE VARIE-T-IL AVEC LE BRUIT, ET DANS LE BON SENS ?
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\probe_plantage_vs_sigma.py <artefact.json>
+    python scripts\\probe_plantage_vs_sigma.py <artefact.json>
 
 ## 🔴 POURQUOI CETTE SONDE EXISTE — une anomalie MESUREE, pas soupconnee
 

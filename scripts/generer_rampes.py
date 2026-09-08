@@ -1,7 +1,7 @@
 """FABRIQUER LES RAMPES DE LANCEMENT D'UN COMPOSANT, a partir de plusieurs graines.
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\generer_rampes.py r75x2 42 77 101 202
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\generer_rampes.py r75x2 42 77 --relire-seulement
+    python scripts\\generer_rampes.py r75x2 42 77 101 202
+    python scripts\\generer_rampes.py r75x2 42 77 --relire-seulement
 
 ## 🔑 POURQUOI CE SCRIPT EXISTE
 

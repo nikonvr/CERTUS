@@ -1,7 +1,7 @@
 """Test fin de la couche 1 pour trouver les longueurs d'ondes où le crash est STRICTEMENT 0/150.
 
 Usage:
-    .venv/Scripts/python.exe scripts/test_layer1_zero_crash.py
+    python scripts/test_layer1_zero_crash.py
 """
 
 from __future__ import annotations

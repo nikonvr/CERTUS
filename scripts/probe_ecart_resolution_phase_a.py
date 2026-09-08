@@ -1,6 +1,6 @@
 """LA PHASE A LAISSE-T-ELLE DE LA RESOLUTION SPECTRALE SUR LA TABLE ?
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\probe_ecart_resolution_phase_a.py <composant> [observability.json]
+    python scripts\\probe_ecart_resolution_phase_a.py <composant> [observability.json]
 
 ## D'ou vient la question
 

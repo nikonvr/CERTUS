@@ -13,13 +13,13 @@ Displays the final RMSE T_rel over the entire file (measurement points).
 Usage (from the project root):
 
 
-  python tests/script_full_domain_nbrel.py
+  python scripts/script_full_domain_nbrel.py
 
 
-  python tests/script_full_domain_nbrel.py --lambda-min 1000
+  python scripts/script_full_domain_nbrel.py --lambda-min 1000
 
 
-  python tests/script_full_domain_nbrel.py --no-clip
+  python scripts/script_full_domain_nbrel.py --no-clip
 
 
 """

@@ -6,7 +6,7 @@ Paramètres élargis x20 :
 - mining_candidates_limit = 60000 (au lieu de 3000)
 
 Usage:
-    .venv/Scripts/python.exe scripts/run_pipeline_x20_35c.py
+    python scripts/run_pipeline_x20_35c.py
 """
 
 from __future__ import annotations

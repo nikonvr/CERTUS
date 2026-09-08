@@ -1,6 +1,6 @@
 """Pourquoi un sous-empilement plante : la CAUSE par couche, pas seulement le taux.
 
-    .venv\\Scripts\\python.exe scripts\\diag_substack.py example/example_strat/JSON-strat-99c-partB.json
+    python scripts\\diag_substack.py example/example_strat/JSON-strat-99c-partB.json
 
 Un taux de plantage dit qu'on echoue ; il ne dit pas de quoi. Le noyau distingue trois
 causes, et elles appellent des remedes OPPOSES :

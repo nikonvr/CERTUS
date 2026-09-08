@@ -1,8 +1,8 @@
 """CAMPAGNE DES INTERVALLES : mesurer une fois chaque sous-empilement, assembler ensuite.
 
-    .venv\\Scripts\\python.exe scripts\\campagne_intervalles.py --vague 2
-    .venv\\Scripts\\python.exe scripts\\campagne_intervalles.py --vague 3 --shard 0/2
-    .venv\\Scripts\\python.exe scripts\\campagne_intervalles.py --etat        # ou en est-on
+    python scripts\\campagne_intervalles.py --vague 2
+    python scripts\\campagne_intervalles.py --vague 3 --shard 0/2
+    python scripts\\campagne_intervalles.py --etat        # ou en est-on
 
 👤 2026-08-15 : *« je suis intimement persuade que c'est complique de trouver quand changer,
 et que ce n'est pas un simple essai en coupant en 3 parties egales qui donne le resultat »*.

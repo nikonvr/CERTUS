@@ -1,7 +1,7 @@
 """LES CHAINES VUES PAR L'UTILISATEUR SONT-ELLES INTACTES ? — sonde de l'etape 3.0
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\sonde_libelles_visibles.py
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\sonde_libelles_visibles.py --detail
+    python scripts\\sonde_libelles_visibles.py
+    python scripts\\sonde_libelles_visibles.py --detail
 
 ## Pourquoi cette sonde existe
 

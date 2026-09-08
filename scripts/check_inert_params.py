@@ -1,6 +1,6 @@
 """Traque les PARAMETRES INERTES : poses et jamais lus, ou lus et jamais poses.
 
-    .venv\\Scripts\\python.exe scripts\\check_inert_params.py
+    python scripts\\check_inert_params.py
 
 POURQUOI CE SCRIPT EXISTE. Le 2026-08-15, deux defauts de cette famille ont ete trouves en
 une matinee, et aucun des deux ne produisait d'erreur :

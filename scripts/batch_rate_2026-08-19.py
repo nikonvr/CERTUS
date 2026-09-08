@@ -1,6 +1,6 @@
 """BATCH RATE SUR LE 75c x2 -- 👤 2026-08-19, « entre 2 et 4 h », lancé en son absence.
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\batch_rate_2026-08-19.py
+    python scripts\\batch_rate_2026-08-19.py
 
 ## Pourquoi ces cellules-la, et pas d'autres
 

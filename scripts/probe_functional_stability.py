@@ -24,7 +24,7 @@ puis hors ligne :
      de l'autre : le test ne favorise ni l'une ni l'autre par construction.
   2. BOOTSTRAP. Coefficient de variation de chaque estimateur, strategie par strategie.
 
-    .venv/Scripts/python.exe scripts/probe_functional_stability.py
+    python scripts/probe_functional_stability.py
 
 Does not write anything except reports/. Does not modify any behavior.
 """

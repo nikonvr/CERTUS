@@ -1,7 +1,7 @@
 """SERIE D'ECHELLE : le meme empilement aleatoire de 75 couches, a 4 echelles d'epaisseur.
 
-    .venv\\Scripts\\python.exe scripts\\serie_echelle_r75.py --facteur 0.5
-    .venv\\Scripts\\python.exe scripts\\serie_echelle_r75.py --etat
+    python scripts\\serie_echelle_r75.py --facteur 0.5
+    python scripts\\serie_echelle_r75.py --etat
 
 👤 2026-08-15 : *« je te propose de tester 2 75c supplementaires. L'un avec toutes les
 epaisseurs x2, l'autre avec toutes les epaisseurs /2. Histoire de comprendre les choses... »*

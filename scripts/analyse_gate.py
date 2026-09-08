@@ -1,6 +1,6 @@
 """Read the GATE campaign artefacts and lay out the four questions it was built to answer.
 
-    .venv\\Scripts\\python.exe scripts\\analyse_gate.py
+    python scripts\\analyse_gate.py
 
 Takes no argument, runs nothing, writes nothing. It reads `reports/probe_anchor_*.json`,
 selects the runs by their RECORDED configuration -- never by their file name -- and prints

@@ -7,7 +7,7 @@ Mesure à CHAQUE tirage :
 4. Comparaison directe avec le record de référence 35 lambdas (RMSE P95 = 0.06085, SEEL ≈ 0.58 nm).
 
 Usage:
-    .venv/Scripts/python.exe scripts/campaign_exhaustive_35c_blocks.py
+    python scripts/campaign_exhaustive_35c_blocks.py
 """
 
 from __future__ import annotations

@@ -1,7 +1,7 @@
 """Reordonne et renumerote les sections de CLAUDE.md, et propage dans TOUS les fichiers.
 
-    .venv\\Scripts\\python.exe scripts\\renumeroter.py --dry-run
-    .venv\\Scripts\\python.exe scripts\\renumeroter.py
+    python scripts\\renumeroter.py --dry-run
+    python scripts\\renumeroter.py
 
 👤 2026-08-16 : *« n'hesite pas a renumeroter les sections et les hierarchiser »*.
 

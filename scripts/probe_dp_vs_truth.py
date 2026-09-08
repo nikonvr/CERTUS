@@ -22,7 +22,7 @@ mecaniquement attenuee par restriction d'etendue.
 is therefore calculated BY n_blocks, then aggregated. The overall rho on the mixed population is
 donne a titre indicatif seulement.
 
-    .venv/Scripts/python.exe scripts/probe_dp_vs_truth.py
+    python scripts/probe_dp_vs_truth.py
 
 Does not write anything except reports/. Does not modify any behavior.
 """

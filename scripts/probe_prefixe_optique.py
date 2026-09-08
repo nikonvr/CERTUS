@@ -1,6 +1,6 @@
 """LA COURBE SEEL(n) ET crash(n) -- « a partir de quand l'optique pose probleme ? »
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\probe_prefixe_optique.py [composant] [mode] [graine]
+    python scripts\\probe_prefixe_optique.py [composant] [mode] [graine]
 
 ## L'idee, et elle est de 👤 (2026-08-19)
 

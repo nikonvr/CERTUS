@@ -1,6 +1,6 @@
 """LA DISPERSION DU SCORE — le verrou de toute affirmation sur le classement.
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\lire_dispersion_consensus.py
+    python scripts\\lire_dispersion_consensus.py
 
 🔴 **Écrit AVANT que les données n'arrivent**, le 2026-08-20 à 00:10, pendant que la cellule 1
 tourne. C'est délibéré : le critère de lecture doit être fixé avant de voir les chiffres, sinon

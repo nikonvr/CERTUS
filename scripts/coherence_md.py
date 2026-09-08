@@ -1,6 +1,6 @@
 """COHERENCE DE TOUS LES .md — le meme fait porte-t-il la meme valeur partout ?
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\coherence_md.py
+    python scripts\\coherence_md.py
 
 👤 2026-08-19 : *« refais une passe de verification de coherence parfaite et totale de tous
 les fichiers md »*.
@@ -480,6 +480,7 @@ def main() -> int:
     fichiers = _md()
     tout_le_md = "\n".join(f.read_text(encoding="utf-8", errors="replace") for f in fichiers)
     n_pb = 0
+    n_fatal = 0
     print("=" * 96)
     print(f"COHERENCE DES {len(fichiers)} FICHIERS .md")
     print("=" * 96)
@@ -610,27 +611,51 @@ def main() -> int:
     # 10 fichiers, dont la TOUTE PREMIERE du demarrage -- n'existait pas : le venv avait
     # demenage hors du depot. Un agent neuf echouait a son premier geste sans savoir pourquoi.
     # Aucun outil ne regardait si les commandes documentees s'EXECUTENT.
-    print("\n=== E. LES INTERPRETEURS CITES DANS LES COMMANDES EXISTENT-ILS ? ===")
+    # 🔴 ET CE CONTROLE NE REGARDAIT QUE L'INTERPRETEUR. Un `scripts/xxx.py` cite dans une
+    # commande pouvait disparaitre sans que rien ne le dise. Il verifie desormais les DEUX,
+    # parce que la question utile n'est pas « ce chemin existe-t-il » mais « cette commande
+    # s'execute-t-elle ».
+    #
+    # 🔑 ET SES ECHECS SONT FATALS, PAS « A INSTRUIRE ». Un signalement des autres controles
+    # est une phrase a lire, un jugement. Un chemin mort est un FAIT : la commande ne part
+    # pas. Les melanger a coute trois episodes -- l'interpreteur mort a ete signale a chaque
+    # passage pendant des semaines, noye parmi des points a instruire, et lu comme du bruit.
+    print("\n=== E. LES COMMANDES DOCUMENTEES S'EXECUTENT-ELLES ? ===")
     rx_py = re.compile(r"([A-Za-z]:[\\/][^\s`\"']*?python\.exe|\.?[\\/]?[\w.-]*venv[\\/]"
                        r"[Ss]cripts[\\/]python\.exe)")
+    rx_script = re.compile(r"(?:python|py)(?:\.exe)?\s+(?:-\w+\s+\S+\s+)*([\w./\\-]+\.py)\b")
     vus_i: dict[str, list[str]] = {}
-    for f in fichiers:
+    vus_s: dict[str, list[str]] = {}
+    # 🔴 LES `.py` AUSSI. Leurs docstrings portent une ligne d'usage copiable, et personne
+    # ne les balayait : 25 d'entre elles prescrivaient encore le PREMIER interpreteur mort
+    # du projet, plus DEUX chemins en dur dans du code execute -- dont le lanceur de la
+    # recherche multi-graines, qui echouait donc sans surcharge d'environnement.
+    # Trouve le 2026-09-08, apres que les `.md` eurent ete nettoyes.
+    a_lire = list(fichiers) + sorted((ROOT / "scripts").glob("*.py"))
+    for f in a_lire:
         for i, l in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
             if _est_correction(l):
                 continue
             for m in rx_py.finditer(l):
                 vus_i.setdefault(m.group(1).replace("\\\\", "\\"), []).append(f"{f.name}:{i}")
+            for m in rx_script.finditer(l):
+                vus_s.setdefault(m.group(1).replace("\\", "/"), []).append(f"{f.name}:{i}")
     ko_i = 0
     for chemin, ou in sorted(vus_i.items()):
-        existe = Path(chemin.replace("\\", "/")).is_file()
-        if not existe:
+        if not Path(chemin.replace("\\", "/")).is_file():
             ko_i += 1
-            n_pb += 1
-            print(f"  🔴 {chemin}  N'EXISTE PAS -- {len(ou)} citation(s), ex. {ou[0]}")
+            n_fatal += 1
+            print(f"  🔴 FATAL  interpreteur {chemin} N'EXISTE PAS -- {len(ou)} citation(s), ex. {ou[0]}")
         else:
-            print(f"  🟢 {chemin}  ({len(ou)} citation(s))")
+            print(f"  🟢 interpreteur {chemin}  ({len(ou)} citation(s))")
     if not vus_i:
-        print("  ·  aucun interpreteur cite")
+        print("  🟢 aucun chemin d'interpreteur cite -- les commandes disent `python`, ce qui est la consigne")
+    for chemin, ou in sorted(vus_s.items()):
+        if not (ROOT / chemin).is_file():
+            ko_i += 1
+            n_fatal += 1
+            print(f"  🔴 FATAL  script {chemin} INTROUVABLE -- {len(ou)} citation(s), ex. {ou[0]}")
+    print(f"  {'🟢' if ko_i == 0 else '🔴'} {len(vus_s)} script(s) cite(s) dans une commande, {ko_i} chemin(s) mort(s)")
 
     # 🔴 UN NUMERO DE LIGNE DANS LES BORNES PEUT POINTER SUR N'IMPORTE QUOI. Le controle A de
     # check_claude_md.py verifie que `fichier.py:N` existe et que N <= nombre de lignes. Il ne
@@ -728,11 +753,15 @@ def main() -> int:
         print("     et son « 0 point a instruire » ne veut plus rien dire.")
 
     print("\n" + "=" * 96)
+    if n_fatal:
+        print(f"  🔴 {n_fatal} COMMANDE(S) MORTE(S) -- ce n'est PAS un point a instruire.")
+        print("     Un chemin qui n'existe pas ne se discute pas : la commande ne part pas,")
+        print("     et un agent neuf echoue a son premier geste sans savoir pourquoi.")
     print(f"  {n_pb} point(s) a instruire.")
     print("  ⚠️ Un signalement n'est PAS une erreur : c'est une phrase a LIRE. L'outil ne")
     print("     comprend pas le francais, il rapproche un mot et un nombre.")
     print("=" * 96)
-    return 0 if n_pb == 0 else 1
+    return 0 if (n_pb == 0 and n_fatal == 0) else 1
 
 
 if __name__ == "__main__":

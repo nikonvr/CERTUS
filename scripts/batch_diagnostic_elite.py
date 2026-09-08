@@ -1,6 +1,6 @@
 """BATCH DIAGNOSTIC ELITE — 👤 2026-08-20 : « seed 42 doit trouver ce que le code ne trouve pas ».
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\batch_diagnostic_elite.py
+    python scripts\\batch_diagnostic_elite.py
 
 ## Le but, tel que 👤 l'a fixé
 

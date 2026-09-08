@@ -1,6 +1,6 @@
 """TURNING POINT n'est PAS « couche a 1 QWOT ». Mesure de l'ecart entre les deux.
 
-    .venv\\Scripts\\python.exe scripts\\probe_turning_points.py
+    python scripts\\probe_turning_points.py
 
 👤 2026-08-15, deux fois et il a raison les deux fois :
   *« la notion de QWOT est differente de turning point, attention ! Le turning point = QWOT

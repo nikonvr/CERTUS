@@ -1,6 +1,6 @@
 """CONTROLE NEGATIF : sur un composant ou le monitoring MARCHE, changer de temoin doit PERDRE.
 
-    .venv\\Scripts\\python.exe scripts\\controle_negatif.py --composant 48c --shard 0/6
+    python scripts\\controle_negatif.py --composant 48c --shard 0/6
 
 C'est le test de falsification de la regle trouvee le 2026-08-15 sur le 99 couches :
 

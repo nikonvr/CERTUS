@@ -6,7 +6,7 @@ measurement at the CORE LEVEL, on the real stack of the 48-layer dichroic, what
 `poem_anchor_noise` does all three failure modes. Without Qt, without pipeline:
 a few seconds.
 
-    .venv/Scripts/python.exe scripts/probe_anchor_noise.py
+    python scripts/probe_anchor_noise.py
 
 Deux experiences.
 

@@ -1,6 +1,6 @@
 """« AUCUNE_DEPOSABLE » VEUT-IL DIRE « INFAISABLE » ? Non, et [0,66) le prouve.
 
-    .venv\\Scripts\\python.exe scripts\\verif_66_vs_68.py --mode premium
+    python scripts\\verif_66_vs_68.py --mode premium
 
 👤 2026-08-15 : *« comment 0-68 peut-il etre deposable 39 fois alors que 0-66 ne trouve
 aucun ? Les 39 strategies ne peuvent etre appliquees au 0-66 ??? »*

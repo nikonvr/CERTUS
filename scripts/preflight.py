@@ -1,6 +1,6 @@
 """PREFLIGHT -- run this BEFORE touching anything, and paste the whole output.
 
-    .venv\\Scripts\\python.exe scripts\\preflight.py
+    python scripts\\preflight.py
 
 Answers, in one command, the four questions of CLAUDE.md section 0, plus three
 more that have each cost a session on this project. It prints one verdict line:

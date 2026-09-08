@@ -1,6 +1,6 @@
 """AUDIT DU MODE RATE -- ce qui le bride, et ce que ca coute REELLEMENT.
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\audit_rate.py
+    python scripts\\audit_rate.py
 
 👤 2026-08-18 : *« je reste persuade que le rate est sous-employe, il faut lancer des idees pour
 lui permettre d'etre pleinement utilise »*, puis *« fais un veritable audit avec des

@@ -1,8 +1,8 @@
 """Pipeline STRAT complet sur le juge de paix, drapeau `poem_anchor_noise` ferme puis ouvert.
 
-    .venv/Scripts/python.exe scripts/probe_anchor_noise_pipeline.py off    # reference
-    .venv/Scripts/python.exe scripts/probe_anchor_noise_pipeline.py on     # bruit seul
-    .venv/Scripts/python.exe scripts/probe_anchor_noise_pipeline.py full   # modele complet
+    python scripts/probe_anchor_noise_pipeline.py off    # reference
+    python scripts/probe_anchor_noise_pipeline.py on     # bruit seul
+    python scripts/probe_anchor_noise_pipeline.py full   # modele complet
 
 Reuses AS IS the band analysis of `probe_spectral_error.py` — same code, so
 chiffres comparables par construction au baseline qu'il a produit :

@@ -3,7 +3,7 @@
 Principe : Construit les blocs un par un de l'amont vers l'aval en exigeant 0.0% de crash à chaque étape.
 
 Usage:
-    .venv/Scripts/python.exe scripts/forward_block_builder_35c.py
+    python scripts/forward_block_builder_35c.py
 """
 
 from __future__ import annotations

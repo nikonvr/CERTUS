@@ -16,7 +16,7 @@ a layer can be specified locally and amplify what precedes it.
 
 Cost: a few evaluations per candidate, NO Monte-Carlo.
 
-    .venv\\Scripts\\python.exe scripts\\check_compensation_gain.py
+    python scripts\\check_compensation_gain.py
 """
 
 import sys

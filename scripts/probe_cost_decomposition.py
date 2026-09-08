@@ -27,7 +27,7 @@ VERDICT ATTENDU :
 
 We also measure rho(rmse_lin, rmse_true): the validity of the linearization, prior to everything.
 
-    .venv/Scripts/python.exe scripts/probe_cost_decomposition.py
+    python scripts/probe_cost_decomposition.py
 
 Does not write anything except reports/. Does not modify any behavior.
 """

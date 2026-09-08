@@ -1,6 +1,6 @@
 """HARNAIS DE VERIFICATION DE MES PROPRES AFFIRMATIONS -- 2026-08-18.
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\verifier_affirmations.py
+    python scripts\\verifier_affirmations.py
 
 👤 2026-08-18 : *« il faut etre plus rigoureux, tu dois converger vers des interpretations et des
 conclusions solides. Essaie de changer de methodologie pour tout verifier ce qui vient d'etre dit

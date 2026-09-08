@@ -14,7 +14,7 @@ This probe intercepts the kernel on the first call, without changing anything in
   - how many distinct “regions” they cover at different separation thresholds;
   - the cost curve (lambda) of a few layers, to judge its regularity.
 
-    .venv/Scripts/python.exe scripts/probe_block_wls.py
+    python scripts/probe_block_wls.py
 
 Do not write anything in the repository except reports/. Does not modify any behavior.
 """

@@ -23,7 +23,7 @@ same rule idx_nom_stop) on the real nominal stack of the example, propagating th
 TMM. It is a replication, therefore to be read as such: if it diverges from the nucleus, it is
 qui a tort.
 
-    .venv/Scripts/python.exe scripts/probe_poem_engagement.py
+    python scripts/probe_poem_engagement.py
 
 Does not write anything except reports/. Do not touch any production codes.
 """

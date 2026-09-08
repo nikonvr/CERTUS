@@ -8,7 +8,7 @@ Paramètres élargis x20 :
 - n_screen_runs : 10 tirages
 
 Usage:
-    .venv/Scripts/python.exe scripts/run_pipeline_x20_48c.py
+    python scripts/run_pipeline_x20_48c.py
 """
 
 from __future__ import annotations

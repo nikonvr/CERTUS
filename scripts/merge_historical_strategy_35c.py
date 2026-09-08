@@ -7,7 +7,7 @@ Principe :
 4. Mesure l'évolution du SEEL et de l'écart spectral à chaque réduction de bloc (35 -> 34 -> ... -> K).
 
 Usage:
-    .venv/Scripts/python.exe scripts/merge_historical_strategy_35c.py
+    python scripts/merge_historical_strategy_35c.py
 """
 
 from __future__ import annotations

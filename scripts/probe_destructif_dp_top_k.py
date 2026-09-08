@@ -1,6 +1,6 @@
 """PREUVE NON CIRCULAIRE QUE `dp_top_k` ATTEINT LE CALCUL -- par DESTRUCTION.
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\probe_destructif_dp_top_k.py [composant]
+    python scripts\\probe_destructif_dp_top_k.py [composant]
 
 👤 2026-08-18 : *« une derniere verification stp avec une methodologie differente ? »*
 

@@ -1,6 +1,6 @@
 """LE CRITERE PAR SWING TROUVERAIT-IL SEULEMENT QUELQUE CHOSE ? -- verification AVANT de mesurer.
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\probe_swing_par_couche.py
+    python scripts\\probe_swing_par_couche.py
 
 👤 2026-08-19 : « continue avec le rate by swing ».
 

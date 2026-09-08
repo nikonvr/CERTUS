@@ -1,6 +1,6 @@
 """Reads the campaign and answers the questions it was designed to answer.
 
-    .venv\\Scripts\\python.exe scripts\\analyse_campagne.py
+    python scripts\\analyse_campagne.py
 
 Reads only `reports/probe_anchor_noise_pipeline_*.json`. No bench time, and it can be
 run WHILE the campaign is still going -- every run is identified by the `config` block

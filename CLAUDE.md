@@ -114,7 +114,8 @@ qui est pire que le défaut qu'il surveille.
 | **B** — grandeurs physiques | 10 faits (SEEL des 4 composants, cadence, bruit, fente, cible, rendement) : **valeur unique** partout |
 | **C** — 🔑 **automatique** | **297 symboles numériques** découverts dans `certus/`, **18 cités** dans les `.md`. Tout `NOM = N` écrit dans un document est comparé au code. **Ce balayage grandit tout seul** quand un document cite un symbole de plus |
 | **D** — profondeurs par mode | la table `fast/premium/deep` lue dans l'interface, et les **triplets** `50 / 150 / 300` que les documents écrivent |
-| **E** — contrôle négatif | plante une contradiction et exige de la détecter |
+| **E** — 🔴 **les commandes s'exécutent-elles** | **FATAL, pas « à instruire »** : tout interpréteur et tout script cité dans une commande doit exister, dans les `.md` **et dans les docstrings de `scripts/`**. 📏 103 scripts couverts. ⚠️ *Il ne regardait que l'interpréteur, dans les seuls `.md`, et ses échecs étaient noyés parmi les points à instruire — donc lus comme du bruit pendant des semaines.* Élargi et rendu fatal le 2026-09-08, **contrôle négatif vérifié** : un script inexistant rend `exit 1` |
+| **H** — contrôle négatif | plante une contradiction et exige de la détecter |
 
 🔑 **Ce qu'il a trouvé le jour de son écriture** : deux dossiers donnaient **2,5** et **2,7** pour la même grandeur, tous deux dérivés du `0,760 nm` **rétracté**. C'est exactement le genre de divergence qu'aucune relecture humaine n'attrape.
 Et **trois défauts de l'outil lui-même**, tous révélés par le contrôle négatif ou par
@@ -192,9 +193,20 @@ pas un relâchement : c'est la conclusion de trois échecs mesurés.
 
 | ce que le document prescrivait | ce qui était vrai |
 |---|---|
-| `.venv\Scripts\python.exe` | corrigé le 2026-08-19 — **47 commandes sur 10 fichiers** inexécutables, à commencer par la toute première de ce §2 |
-| `C:\envs\certus\Scripts\python.exe` | corrigé le 2026-09-08 — **38 commandes sur 7 fichiers**, et ce dossier n'existe plus du tout sur la machine |
+| `.venv\Scripts\python.exe` | corrigé le 2026-08-19 dans les `.md` — **47 commandes sur 10 fichiers** inexécutables, à commencer par la toute première de ce §2 |
+| `C:\envs\certus\Scripts\python.exe` | corrigé le 2026-09-08, et ce dossier n'existe plus du tout sur la machine |
 | *(plus aucun chemin)* | le projet tourne sur le **Python système**, sans venv |
+
+📏 **Le nettoyage du 2026-09-08, et son enseignement.** 38 commandes dans les `.md`, puis 7 de
+plus dans un README que rien ne balayait, puis **25 lignes d'usage** dans des docstrings de
+`scripts/` — et une fois le contrôle E élargi à ces fichiers, **78 de plus, dans 57 fichiers**,
+écrites avec des antislashs **doublés** que ma recherche manuelle ne voyait pas. Total :
+**150 commandes mortes**, dont **deux dans du code exécuté** — le lanceur de la recherche
+multi-graines échouait donc à chaque appel sans surcharge d'environnement.
+
+🔑 **C'est l'argument entier pour un instrument plutôt qu'une relecture** : j'ai balayé à la
+main, déclaré le nettoyage fini, et l'outil a immédiatement trouvé trois fois plus. *Une
+recherche à la main ne connaît que les orthographes auxquelles on a pensé.*
 
 🔑 **LA RÈGLE QUI REMPLACE LE CHEMIN : un document ne nomme pas l'interpréteur, il nomme la
 PROPRIÉTÉ qu'il doit avoir.** Elles sont deux — `import certus` doit résoudre **dans l'arbre où
@@ -1019,11 +1031,21 @@ d'empilements, stratégie de dépôt. Application **PyQt6** + noyau **NumPy/SciP
   d'interpréteur, sinon un écart de version sera attribué au code.
 - Cible principale Windows, build gelé PyInstaller
 - 📏 **Mesuré le 2026-08-19**, et les trois chiffres qui figuraient ici étaient faux :
-  **169 005** lignes dans `certus/` · **73 381** de tests · **29 166** de scripts ·
-  **3 033** tests collectés sur `tests/oracle/ + tests/unit/` (2026-09-08).
-  🔴 **Ces quatre nombres étaient faux d'entrée et le seront encore : ne les lis pas, compte-les.**
-  Le seul intérêt du bloc est l'ordre de grandeur — un noyau de ~170 kl, une suite de tests
-  qui fait 43 % de sa taille.
+  🔴 **CE BLOC NE PORTE PLUS DE NOMBRES, ET C'EST DÉLIBÉRÉ.** Il en a porté quatre séries
+  successives, **toutes fausses à leur tour** — non par négligence, mais parce qu'un compte de
+  lignes ou de tests se périme dès qu'on travaille. Un document qui imprime un chiffre puis
+  écrit « recompte-les » invite à recopier le chiffre. **Voici donc les commandes, pas les
+  valeurs** :
+
+```bat
+git ls-files "certus/*.py" "certus/**/*.py" | xargs wc -l
+git ls-files "tests/**/test_*.py" | wc -l
+python -m pytest tests/oracle/ tests/unit/ -q --no-cov --collect-only
+```
+
+  📌 **Le seul fait stable est l'ordre de grandeur** : un noyau de l'ordre de **170 000 lignes**,
+  et une suite de tests qui fait **environ 40 % de sa taille**. C'est cela qui dit à quoi on a
+  affaire ; le chiffre exact ne dit rien de plus et se périme en une journée.
   ⚠️ L'ancien « 183 600 de source » ne correspondait à **aucun périmètre** : ni `certus/`
   seul (163 485), ni avec la racine (171 600), ni en ajoutant `scripts/` (193 287). Et le
   « ~2 300 tests » était faux par inclusion. 🔴 **Ces nombres se périment ; recompte-les**
@@ -1367,220 +1389,28 @@ chemin de calcul est celui d'avant, au bit près.
 
 ---
 
-## 21. Points de référence — les repères valides, et ce qui les périme
+📌 **Les repères chiffrés sont dans [`REPERES_MESURES.md`](docs/REPERES_MESURES.md)** — extrait
+d'ici le 2026-09-08. Ce sont des **mesures qu'on consulte**, pas une consigne qu'on lit au
+démarrage.
 
-🟢 **LES REPÈRES EXISTENT DEPUIS LE 2026-08-15.** Les voici, tous mesurés **fente
-2 nm**, donc sous le modèle courant. Ce sont eux qu'on cite, et aucun autre.
+**Ce qu'il faut retenir sans l'ouvrir, et qui gouverne toute comparaison :**
 
-| composant | couches | SEEL | plantage | condition |
-|---|---|---|---|---|
-| dichroïque `JSON-strat-example` | 48 | **0,173 nm** | 0 % | 6 blocs, une seule campagne |
-| passe-bande 3 cavités `JSON-strat-bandpass-3cav` | 35 | **0,482 nm** | 0 % | 6 blocs, mode DEEP |
-| **aléatoire** `JSON-strat-random75` | 75 | **0,272 nm** | 0 % | une seule campagne, 241/662 déposables |
-| passe-bande 5 cavités `JSON-strat-bandpass-5cav-99c` | 99 | **0,81 nm** | 0 % par campagne | 🔴 **4 verres témoins** — 0-22 / 22-42 / 42-76 / 76-99 · ⚠️ moyenne de **trois graines** (0,782 / 0,816 / 0,839) ; ne cite jamais le 0,782 seul |
-| le même, **en une seule campagne** | 99 | *aucun score valide* | **100 %** sur 487 stratégies | non fabricable — §23.8 |
-| **aléatoire ×2** `JSON-strat-random75-x2-fabricable` | 75 | **0,6248 nm** | 0 % | épaisseurs **doublées**, fente **native 1 nm**, pur optique, 277 déposables |
-| le même **à 2 nm**, config livrée | 75 | **0,5676 nm** | 1,67 % | 🔴 **AVEC les rampes** de `example/example_strat/rampes_r75x2-2nm.json`. 3 graines : 0,5676 / 0,5692 / 0,5707, étendue 0,55 %. Ce n'est **pas** une découverte autonome |
-| le même **à 2 nm, SANS rampes** | 75 | *aucun score valide* | **100 %** | 🔴 **3 graines nues sur 4 rendent ZÉRO** (42, 101, 202) ; seule la 77 trouve, 547 déposables. §33 de [`PLAN_PRODUCTION_2026-08-20.md`](docs/PLAN_PRODUCTION_2026-08-20.md) |
-
-🔑 **Lis la troisième et la quatrième ligne ensemble : 75 couches passent, 99 non.** Ce n'est
-donc **pas la longueur** qui met le monitoring optique en échec, c'est la **structure**. Le
-random75 n'a ni cavité ni miroir, le 99c a cinq cavités et des miroirs de 19 couches.
-Voir §23.4.
-
-⚠️ **Cette ligne disait « cinq espaceurs à swing nul et des miroirs sous 10⁻⁴ » — c'est
-réfuté.** Mesuré le 2026-08-15 : les cinq espaceurs offrent **65 à 133 λ utilisables** chacun,
-et **aucune des 99 couches n'est muette**. Le swing crête-à-crête d'une demi-onde n'est pas
-nul ; c'est son écart début-fin qui l'est, et ce n'est pas la même grandeur. Ce qui met le
-99c en échec est la **marge** du sursaut face à l'hystérésis, pas l'absence de signal.
-
-#### 🔴🔴 LA SÉRIE D'ÉCHELLE DU RANDOM75 MESURAIT LA RECHERCHE, PAS LA PHYSIQUE — 2026-08-18
-
-📌 **Le dossier fait autorité : [`CHANTIER_PREDICTIBILITE.md`](docs/CHANTIER_PREDICTIBILITE.md)
-§4quater et §4quinquies.** Ce qu'il faut retenir sans l'ouvrir :
-
-| Σ QWOT | variante | offertes | déposables | `crash_min` | SEEL |
-|---|---|---|---|---|---|
-| 57,4 | ×0,5 | 375 | 0 | 48 % | — |
-| 114,9 | ×1 | 662 | 241 | 0 % | 0,272 nm |
-| 172,3 | ×1,5 | 440 | 1 | 0 % | 0,633 nm |
-| 201,1 | **×1,75** | 746 | **282** | 0 % | **0,528 nm** |
-| 229,8 | ×2 | 404 | 0 | **100 %** | — |
-| 229,8 | ×2 **en `deep`, fente 1 nm** | 1 986 | **277** | **1,0 %** | **0,625 nm** |
-| 229,8 | le même **en `extreme`** | 2 945 | 254 | 1,0 % | 0,629 nm ⚠️ *ce tableau ne portait QUE cette ligne, et créditait donc `extreme` d'un déblocage que **`deep` seul fait mieux, à un cinquième du coût*** |
-
-🔑 **Deux faits, et ils changent la lecture de tout ce chantier :**
-
-1. **`×1,75` est PLUS ÉPAIS que `×1,5` et rend 282 déposables contre 1.** Il n'y a pas de loi
-   « plus c'est épais, plus c'est dur ».
-2. 📏 Sur les cinq points au **même protocole**, la corrélation de rang avec le nombre de
-   déposables vaut **+0,103 pour Σ QWOT** — la propriété du design — et **+0,975 pour le nombre
-   de stratégies OFFERTES** par la recherche. Et la flèche causale est établie : **même design,
-   même graine, même fente**, seule la largeur de recherche change, et ×2 passe de **0/404** à
-   **254/2 945**.
-
-🔴 **Donc un `crash_min = 100 %` ne dit PAS, à lui seul, « ce composant n'est pas
-monitorable ».** Il peut dire « ma recherche n'a pas proposé ce qui marche », et **rien dans la
-sortie ne distingue les deux**. C'est le défaut §24-37 dans l'autre sens, et il a fait croire
-trois jours durant que ×2 était impossible.
-
-🔑 **MAIS LA RÉCIPROQUE EST FAUSSE AUSSI, et elle a été mesurée le 2026-08-19 au soir.** Un
-`100 %` qui **résiste à la profondeur** dit, lui, quelque chose de réel : sur `r75x2` à 2 nm,
-`fast` (404), `premium` (651) et `deep` (**1 617** stratégies) rendent **tous les trois 0
-déposable et 100 %**. **À cette fente, ce n'est plus la recherche qui manque.** La bonne règle
-est donc : *un `100 %` en `fast` ne conclut rien ; un `100 %` qui tient jusqu'à `deep` est un
-constat sur le composant et sa fente.*
-
-⚠️ **L'offre ne suffit pas pour autant, et la mesure du 2026-08-19 au soir le tranche.**
-Cette ligne disait *« il a fallu la fente fine ET l'élargissement »* : **c'est l'élargissement
-qui est de trop**. 📏 À **2 nm**, la recherche a été poussée jusqu'à `deep` — **1 617
-stratégies, 0 déposable, 100 % de plantage** — donc quadrupler l'offre (404 → 1 617) ne change
-**rien**. Et à **1 nm**, `deep` **seul** rend 277 déposables. **Il a donc fallu la FENTE FINE
-et la PROFONDEUR**, pas l'élargissement.
-
-#### 🟠 CES QUATRE SEEL NE VIVENT PAS SUR LE MÊME DOMAINE SPECTRAL — constaté le 2026-08-15
-
-👤 : *« on reste comme cela, mais c'est à noter dans un coin »*. C'est donc **un état de fait
-assumé, pas un défaut à corriger** — mais il faut le savoir avant de lire le tableau ci-dessus
-comme un classement de difficulté.
-
-| composant | grille de notation | largeur | points |
-|---|---|---|---|
-| 48c dichroïque | 400 – 700 nm | **300 nm** | 301 |
-| 75c aléatoire | 550 – 750 nm | **200 nm** | 201 |
-| 35c passe-bande | 600 – 660 nm | **60 nm** | 61 |
-| 99c passe-bande | 610 – 655 nm | **45 nm** | 91 (pas de 0,5 nm) |
-
-**Les deux passe-bandes sont déjà notés en zone réduite** — leur configuration resserre la
-plage autour de la bande. Les deux autres sont notés large. Donc l'ordre
-`0,173 < 0,272 < 0,482 < 0,81` mélange **deux effets** : la difficulté intrinsèque du
-composant, **et** la largeur de la fenêtre où l'erreur est regardée. Une bande étroite autour
-d'une résonance concentre le score là où le filtre est le plus sensible ; une grille large
-dilue la même erreur dans des zones plates.
-
-🔑 **Ce qui reste parfaitement valide malgré ça** : toute comparaison **à composant fixé** —
-c'est-à-dire tout ce que fait la campagne du 2026-08-15, où seule la position du changement de
-témoin varie sur une grille inchangée. L'avertissement ne porte que sur les comparaisons
-**d'un composant à l'autre**.
-
-**Comment c'est calculé, exactement.** Deux grilles à ne pas confondre :
-
-| paramètre | rôle |
+| | |
 |---|---|
-| `wl_range_start` → `wl_range_end`, pas `wl_step` | la grille de **notation** : c'est sur elle que RMSE et SEEL sont calculés |
-| `scan_wl_min` → `scan_wl_max` | la grille de **balayage** : les λ de contrôle candidates. Aucun effet sur le score |
+| 🔴 **les SEEL des composants ne se comparent PAS entre eux** | ils ne vivent pas sur le même domaine spectral — **300 / 200 / 60 / 45 nm**. L'ordre `0,173 < 0,272 < 0,482 < 0,81` mélange la difficulté du composant et la largeur de la fenêtre où l'erreur est regardée. 🔑 Toute comparaison **à composant fixé** reste parfaitement valide ; c'est le seul régime qui l'est |
+| 🔴 **ce qui PÉRIME un repère** | le **biais de fente** est actif par défaut depuis le 2026-08-11. Tout `RESULT` antérieur décrit une machine à fentes infiniment fines. Ce ne sont pas des chiffres faux : ce sont **les réponses à une autre question** |
+| 🔴 **un `RESULT` seul ne départage rien** | à N = 150 la dispersion Monte-Carlo vaut σ ≈ 6 %, et l'écart entre la 1ʳᵉ et la 2ᵉ vaut **0,8 σ**. **Deux runs qui diffèrent de moins de ~8 % sont indiscernables.** Ce qui compare deux configurations est la **classe d'équivalence SEEL**, pas le score |
+| 🔴 **`CERTUS_BENCH_TIMEOUT_S` : 5400 est un PLANCHER, pas une valeur** | la règle est `max(5400, 4 × durée attendue)`. Le prendre pour une valeur a **détruit quatre mesures de 90 minutes** le 2026-08-22, tuées à 13-16 nombres de blocs sur 16 |
+| ⚠️ **le banc ne crie pas quand il échoue** | au-delà du plafond il rend `RESULT=None` et un tableau de 12 stratégies au lieu de 345 — **cela ressemble à un résultat**. Cherche `WAIT_TIMEOUT=` dans le journal : c'est l'empreinte, et elle est sans ambiguïté |
 
-La pondération spectrale **existe** (`compute_batch_rmse`, argument `weights`,
-`certus_strat_batch.py:554`) : on déclare des zones via `params["targets"]`, chaque point reçoit
-`poids utilisateur × quadrature en d ln λ`, et **un point hors de toute zone reçoit un poids
-nul** — il ne compte même pas au dénominateur. 🔴 **Mais aucune des quatre configurations ne
-définit `targets`**, donc le code retombe sur son repli documenté `rank_weights = None` :
-**pondération UNIFORME sur toute la grille**. Le mécanisme est écrit et testé, il n'a
-simplement jamais servi sur ces composants.
+🔑 **Et le fait physique que ces repères établissent** : le random75 passe à 0 % de plantage
+quand le 99 couches plante à 100 % en une campagne. **Ce n'est donc pas la LONGUEUR qui met le
+monitoring optique en échec, c'est la STRUCTURE** — le premier n'a ni cavité ni miroir, le
+second a cinq cavités et des miroirs de 19 couches.
 
-📌 **Si un jour on veut une zone (par exemple 550-650 nm)** : passer par `targets`, pas par
-`wl_range`. Changer `wl_range` déplacerait aussi la cible nominale et rendrait tout
-incomparable avec les mesures existantes ; `targets` pondère sans changer la grille.
-
-⚠️ **Le 0,86 nm des anciens rapports sur le 99c est un score de repli, pas une performance**
-— il est rendu quand aucune stratégie ne survit à la porte de plantage. Comparer deux configurations sur des scores de repli revient à comparer
-deux façons d'échouer. Voir §23.8.
-
-🔴 **Ce qui PÉRIME un repère.** Le **biais de fente** est actif par défaut depuis le
-2026-08-11 (§30). Tout `RESULT` mesuré **avant** cette date décrit une machine à fentes
-**infiniment fines**, qui n'existe pas. Ce ne sont pas des chiffres faux : ce sont les
-**réponses à une autre question**.
-
-**Sont donc périmés, et il ne faut plus les citer** : l'ancien `D0.ref`
-`0.0027329534107462224`, la courbe de corridor, la protection POEM ×41,2, la position de la
-falaise, et toute statistique par bande antérieure.
-
-⚠️ **`RESULT` agrège les trois niveaux de bruit** (0,5× / 1× / 2×). Il est donc comparable
-aux **scores** du classement, et **jamais** aux statistiques **par bande**, qui sont au niveau
-nominal seul. `RESULT` **est** le `robustness_score` de la gagnante.
-
-🔴 **Et un `RESULT` seul ne départage rien.** §24-26 l'a mesuré : à N = 150, la dispersion
-Monte-Carlo vaut σ ≈ 6 % et l'écart entre la 1ʳᵉ et la 2ᵉ vaut 0,8 σ. **Deux runs qui
-diffèrent de moins de ~8 % sont indiscernables.** Ce qui compare deux configurations, c'est
-la **classe d'équivalence SEEL** (§22), pas le score.
-
-**Ce qu'il faut faire avant toute mesure au banc :**
-
-```bat
-set CERTUS_BENCH_TIMEOUT_S=38400
-python scripts\probe_anchor_noise_pipeline.py full 1.0 42
-```
-
-Le plafond était en dur ; il est surchargeable par cette variable, **défaut 1800 s**
-(`scripts/bench_examples.py:171` — `DEFAULT_TIMEOUT_MS = CERTUS_BENCH_TIMEOUT_S × 1000`).
-
-### 🔴 5400 EST UN PLANCHER, PAS UNE VALEUR — et cette ligne a coûté une nuit entière
-
-⚠️ **Ce paragraphe disait « Mets 5400 et laisse finir », sans dire sur QUELLE CHARGE.** C'était
-une durée sans sa machine ni son composant, ce que §11-1 interdit — et le 2026-08-22 elle a
-détruit **quatre mesures de 90 minutes** :
-
-```
-nu_s101  91 min · nu_s202  91 min · livree_s101  90 min · livree_s202  90 min
-         ^^^^^^ quatre fois EXACTEMENT 5400 s
-
-verdicts : SURCHARGES_NON_APPLIQUEES x3 · ECHEC_RESULT_NONE x1
-empreinte : « WAIT_TIMEOUT=5400 s — aucune emission recue »
-```
-
-📏 Elles avaient pourtant fait **13 à 16 nombres de blocs sur 16** : le travail était presque
-fini quand le plafond l'a tranché. Un run pleine plage sur `r75x2` à 2 nm prend **2 h 39 =
-9540 s** (mesuré le 2026-08-21).
-
-🔑 **LA RÈGLE, celle que les pilotes du dépôt appliquent depuis toujours** —
-`batch_nuit_2026-08-19.py:115`, `batch_nuit_2026-08-20.py:137`, `batch_diagnostic_elite.py:164` :
-
-```
-CERTUS_BENCH_TIMEOUT_S = max(5400, 4 x duree_attendue_en_secondes)
-```
-
-**Quatre fois la durée attendue, avec 5400 pour plancher.** Le facteur 4 n'est pas décoratif :
-une graine défavorable peut doubler le nombre de survivants au criblage, donc la durée.
-
-### ⚠️ Le piège, et il a maintenant fonctionné trois fois
-
-Au-delà du plafond le banc ne signale pas d'erreur bruyamment. Il émet `RESULT=None` et un
-tableau de 12 stratégies au lieu de 345 — **cela ressemble à un résultat**. Vérifie toujours
-`WAIT_EXIT` et le nombre de stratégies avant de lire un `RESULT`.
-
-🔑 **Et cherche `WAIT_TIMEOUT=` dans le journal : c'est l'empreinte, elle est sans ambiguïté.**
-Une durée qui vaut *exactement* le plafond pour plusieurs mesures d'affilée l'est aussi — une
-coïncidence à la seconde près n'existe pas.
-
-⚠️ **Une mesure, une machine.** Ne lance rien d'autre pendant un run : ni tests, ni lint, ni
-recherche récursive. Le pipeline sature tous les cœurs en `prange`.
-
-**Suite de tests, mesurée sur cette copie le 2026-08-08** :
-
-```
-pytest tests/oracle/ tests/unit/ -q --no-cov  ->  0 failed
-ruff check .                                  ->  All checks passed!
-```
-
-⚠️ Des documents supprimés annonçaient 2300 et 2301, avec la **même durée au centième**
-(`87.60s`) dans cinq entrées différentes. Ces lignes n'avaient pas été mesurées.
-
-🔴 **Et la phrase qui suivait était fausse : elle disait « la référence est 2310 », six
-lignes après un bloc annonçant 2450 pour la même commande.** Deux chiffres contradictoires
-dans la même section.
-
-🔑 **La leçon a été tirée le 2026-08-19, et elle est plus forte que la correction** : ce
-document a porté **2 300, 2 301, 2 310 puis 2 450** pour la même commande, et **chacun a été
-faux à son tour**. Ce n'est pas une suite d'inattentions — c'est qu'**un compte de tests se
-périme dès qu'on ajoute un test**, donc dès qu'on travaille. 📏 Le 2026-08-19 il valait
-**2 453** puis **2 456** dans la même journée. **Le chiffre est retiré au profit du seul
-critère qui survive : `0 failed`.** Voir §2.
-
-⚠️ **Une durée sans sa machine ne vaut rien.** Le bloc ci-dessus portait un `101.24s` qui
-n'est reproductible **sur aucune machine connue du projet** : la même commande rend **216,69 s**
-sur i5-8250U à cache chaud (mesuré le 2026-08-19) et **784 s** à cache froid. La durée a été
-retirée du bloc plutôt que corrigée — c'est le critère `0 failed` qui compte, et une durée
-n'a de sens qu'accompagnée du processeur, du cache et de la charge.
+⚠️ **Une mesure, une machine.** Ne lance rien d'autre pendant un run : le pipeline sature tous
+les cœurs. Et une durée sans sa machine ne vaut rien — ce document a porté un `101,24 s`
+reproductible sur aucune machine connue du projet.
 
 ---
 
@@ -1785,84 +1615,31 @@ malédiction du vainqueur. Voir la §23.12 du dossier.
 
 ---
 
-## 24. Défauts ouverts, et constats qui gouvernent
+📌 **Le registre complet est dans [`DEFAUTS_OUVERTS.md`](docs/DEFAUTS_OUVERTS.md)** — extrait
+d'ici le 2026-09-08 parce qu'il pesait **24 % de ce fichier à lui seul** (~10 700 tokens
+avalés à chaque démarrage) alors qu'il se **consulte**, il ne se lit pas.
 
-Trouvés en appliquant §12. **Ce qui a été vérifié et qui tient est sorti de ce document** —
-`git log` le garde. Ne restent ici que les défauts **encore ouverts**, c'est-à-dire du
-travail à faire.
+🔴 **Sa portée, et il faut la connaître avant d'y croire** : tout y vient de la lecture des
+diffs, du code et des artefacts committés, plus `ruff` et la suite de tests. **Aucune mesure au
+banc n'a été relancée.** Une déclaration chiffrée y est donc *réfutée* seulement si un artefact
+la contredit ; celles qui n'ont produit aucun artefact ne sont ni confirmées ni réfutées —
+elles sont **non vérifiées**, un troisième état qu'il ne faut pas confondre avec « tient ».
 
-🔴 **Portée de la vérification, pour ne pas s'y tromper** : tout ce qui suit vient de la
-lecture des diffs, du code et des artefacts committés, plus `ruff` et la suite de tests.
-**Aucune mesure au banc n'a été relancée** — ni T0, ni aucune non-régression. Les
-constatations chiffrées ci-dessous portent sur des **artefacts existants**, pas sur des runs
-neufs.
+**Les cinq qui gouvernent, sans ouvrir le dossier :**
 
-### 🔴 Ne tient pas
-
-| # | Ce qui a été trouvé |
+| | |
 |---|---|
-| 49 | 🔴 **`search_resolution` ÉTAIT NEUTRALISÉ DANS TOUTE LA CAMPAGNE DES INTERVALLES, alors que 👤 l'a posé comme PRÉREQUIS.** `certus_strat_robustness.py:868` : *« ON BY DEFAULT since 2026-08-12 — 👤 "the slit is systematically searched, it is a **PREREQUISITE**". A strategy that does not carry its own slit is not executable in the chamber […] **the historical path is `search_resolution: false`** »*.<br>Or `mesurer()` de `scripts/campagne_intervalles.py` force `search_resolution: False` et épingle **2 nm** — et `JSON-strat-bandpass-5cav-99c.json` porte pourtant `search_resolution = 1`. **Les 272 intervalles du cache premium et les 751 stratégies du 2026-08-17 ont donc tourné sur une machine où l'opérateur n'a pas le droit de toucher à la fente**, c'est-à-dire le régime que 👤 avait écarté comme non exécutable en salle.<br>📏 Mesure du 2026-08-12 citée dans le même docstring : la règle `slit <= res_limit` rejette **31 % des paires (couche, λ) à 5 nm, 14 % à 2 nm, 2 % à 1 nm, 0,5 % à 0,5 nm** — passer de 2 à 1 nm **divise le rejet par 7**.<br>🔑 Et l'effet n'est pas le choix à quatre valeurs : *« the slit changes WHICH WAVELENGTHS ARE GOOD »*. Une λ en zone lisse tolère 5 nm et encaisse le bonus de bruit **÷1,5** ; une λ de bord de bande exige 1 nm et paie le **×2**. **C'est un arbitrage, pas un gain gratuit.**<br>⚠️ **Et aucune sonde statique n'applique la fente** — `profil_monitorabilite.py` et `probe_distance_extremum.py` tournent à résolution **infinie**. Elles surestiment donc le swing, et le plus fortement sur les empilements **épais**. 📌 Détail et plan de test dans [`CHANTIER_PREDICTIBILITE.md`](docs/CHANTIER_PREDICTIBILITE.md) §5. |
-| 53 | 🔴 **LE LOGGER `ThinFilm` EST MUET — donc tout `logger.info` de `certus_strat_ranking.py` est PERDU.** 📏 Mesuré le 2026-08-21 : sa ligne inconditionnelle `Mining: n_blocks=...` apparaît **zéro fois** dans les journaux de campagne, alors que le logger `W{n_blk}` du worker passe. Un run de 50 min a été rendu **ininterprétable** faute de pouvoir distinguer « la passe n'a pas tourné » de « chaque candidate était infaisable ». Même motif que §24-37. 🔑 **Règle : un instrument dont la sortie n'atteint pas le RÉSULTAT n'est pas un instrument** — journalise depuis le worker, ou remonte des compteurs. Détail en §27 de [`PLAN_PRODUCTION_2026-08-20.md`](docs/PLAN_PRODUCTION_2026-08-20.md). |
-| 54 | 🔴 **RESTREINDRE LA PLAGE DE BLOCS PAR `iter_divider_start/end` VIDE LA DP.** 📏 Mesuré le 2026-08-21 sur `r75x2` : à plage restreinte, `Mining found` vaut **1 à 2** par nombre de blocs et le compteur de couverture rend `0 λ déjà employées` — donc **aucun groupement rendu par le solveur** ; les 1 à 2 stratégies viennent des graines structurées. À plage **complète**, le même bloc 9 en mine **601**. ⚠️ **Conséquence : toute mesure comparative de la RECHERCHE se fait à plage complète.** Restreindre économise du temps en détruisant l'objet mesuré — et cela affaiblit les contrôles négatifs faits ainsi (§27 du plan de production). La cause exacte n'est **pas** établie : les libellés parlent de diviseurs de complexité, pas de sélection de plage. |
-| 46 | 🔴 **UN VERDICT D'INTERVALLE N'EST PAS DÉTERMINÉ PAR UNE GRAINE, et le basculement est CATÉGORIEL.** 📏 Mesuré le 2026-08-17 sur le 99c, même intervalle, même machine, `robustness_seed` seul change :<br>`[38,99)` 61c **graine 42** → `AUCUNE_DEPOSABLE`, **0/452**, `crash_min` **42,0 %**, meilleure RMSE `0.18817`<br>`[38,99)` 61c **graine 77** → `DEPOSABLE`, **70/521**, `crash_min` **0,0 %**, meilleure RMSE `0.18777`<br>✅ **Contrôle 1 de §12 passé** : à graine 42, deux commits différents (`7564c78`, `817bc76`) rendent **les mêmes nombres**, RMSE comprise. Le basculement vient de la graine, pas du code.<br>🔑 **L'effet se compose** : la graine change le bruit → les choix de Phase A → **la population de stratégies elle-même** (452 contre 521). Ce ne sont pas les mêmes stratégies notées autrement. Même classe que l'invariant de [`DECISIONS_TRANCHEES.md`](docs/DECISIONS_TRANCHEES.md) — *la réalisation ne doit pas décider quelles candidates existent* — mais sur l'axe de la graine.<br>⚠️ **Portée** : les 263 entrées du cache premium sont toutes à `robustness_seed = 42`, et le **0,782 nm à 4 témoins** en descend. Cela ne le rend pas faux — cela veut dire qu'**une graine ne l'établit pas**. `--graine` est exposée (`4906252`) et écrit **à côté** (suffixe `_sNNN`), donc le contrôle coûte quelques heures et zéro risque.<br>🟢 **Nuance mesurée le même jour** : sur des intervalles **confortables** (`[0,22)`, `[22,42)`, 100 % de déposables aux deux graines) le verdict ne bouge pas et le score se tient à ~12 %. **La graine décide là où l'intervalle est marginal, pas partout.** |
-| 47 | 🔴 **LE CONSENSUS EST DÉCOUPLÉ DE `robustness_seed` DÈS QUE `consensus_seed_list` EST RENSEIGNÉE — donc un balayage de graine n'est que PARTIEL.** `_resolve_consensus_seeds` (`certus/core/certus_strat_consensus.py:111`) : la liste explicite gagne, et `base_seed` n'est consulté qu'en son absence. Le 99c porte `consensus_seed_list = 41,42,43,44,45` avec `consensus_num_seeds = 3` → le consensus tourne sur **`[41, 42, 43]`**, identiques dans le run à graine 42 **et** dans celui à graine 77. Il n'a jamais vu 77.<br>✅ **Et il n'aurait rien stabilisé de toute façon** : le code le dit lui-même (`certus_strat_robustness.py:2199`) — *« consensus rescoring … only reads `robustness_score` »*. Il réécrit le score des `consensus_top_k`, **jamais `crash_rate`**. Donc `n_deposables` et `crash_min` sont **mono-graine par construction**.<br>Même famille que §24-18 : le chemin consensus porte une configuration que les surcharges n'atteignent pas. ⚠️ §24-18 ne mord pas sur cette configuration, où `consensus_num_runs` et `robustness_num_runs` valent tous deux **150** — la coïncidence masque le piège, elle ne le désarme pas.<br>🔴 **CONFIRMÉ SUR UN SECOND COMPOSANT LE 2026-08-19, et la signature est nette.** Sur `r75x2`, même configuration, `robustness_seed` 42 contre 77 : le **plantage** bouge (4,00 % ↔ 2,00 %) et la couche critique aussi (39 ↔ 32), mais les **scores** sont identiques à **3,2e-11** — l'ordre de la gigue de recompilation, c'est-à-dire rien. ⚠️ **Le piège de lecture est là** : des SEEL identiques sur deux graines ressemblent à une confirmation de robustesse. **C'est l'erreur n° 4 du §5** — un chiffre qui ne varie pas avec ce qui devrait le faire varier. 🔑 **Ce qui sonde vraiment la dispersion est un changement de TRIPLET de graines de consensus, pas de `robustness_seed`.**<br>✅ **FAIT dans la nuit du 2026-08-19 au 20, et c'est la première mesure du bruit du SEEL sur ce composant.** Trois runs identiques en tout sauf le triplet : `41,42,43` → **0,6885** · `51,52,53` → **0,6679** · `61,62,63` → **0,6774**. Étendue **3,10 %**, soit σ ≈ 1,83 % (E[étendue]/σ = 1,693 à n = 3), donc **2,59 % sur une différence de deux SEEL**.<br>🔴 **Conséquence immédiate, et elle va dans le sens inverse de la prudence attendue** : le σ que l'on empruntait à §24-26 (mesuré sur le **48 couches**) valait 7,3 % sur une différence — **trop grand d'un facteur 2,8**. Il faisait déclarer « indiscernables » des coupures qui le sont à 3,53 σ et 2,58 σ. **Un bruit emprunté à un autre composant ne vaut rien, ni pour affirmer ni pour refuser.**<br>🟢 **Et ce qui ne bouge d'aucun triplet à l'autre** : le plantage (`4,00 %` dans les trois) et l'identité de la gagnante (**75 blocs** dans les trois). Le rescorage de consensus déplace le **score**, jamais le **verdict de fabricabilité** ni le **choix de la stratégie** — ce qui rend le résultat du chantier insensible à toute cette discussion. 📌 Détail et verdict coupure par coupure : [`CHANTIER_RATE.md`](docs/CHANTIER_RATE.md) §3bis |
-| 51 | 🔴 **`strategy_id` N'EST PAS UNIQUE — donc TOUT appariement enfant/parente par `from {id}` est ambigu.** 📏 Mesuré le 2026-08-19 sur `r75x2` : **21 identifiants sur 79** sont portés par 2 ou 3 stratégies **réellement différentes** — `n_blocks` différents, scores différents, λ différentes. Exemple : l'id `900000008` désigne à la fois une stratégie à 14 blocs, une à 10 et une à 1.<br>🔑 **Ce que ça casse** : l'`origin` d'une variante porte `RATE_L29(from 900000285)`, et c'est le seul lien vers sa parente. Avec des ids non uniques, **on ne sait pas de laquelle**. L'analyse appariée — le test le plus fort dont on dispose, celui qui a tranché le mécanisme du Rate — n'est donc légitime que là où l'id **se trouve** être unique, ce qu'il faut **vérifier à chaque fois** au lieu de le supposer.<br>⚠️ **Portée mesurée** : sur les 41 artefacts de balayage, **4 seulement** portent des ids exploitables (le champ valait `None` avant le correctif du 2026-08-19) ; les 37 autres ne supportent aucun appariement. 🟢 L'appariement du mécanisme Rate tient parce que la parente `75800` est unique dans ses artefacts — **vérifié**, pas supposé. |
-| 48 | 🔴 **§24-37 N'EST PAS UNIVERSEL : l'échec peut naître à l'ASSEMBLAGE alors que la Phase A est parfaitement saine.** §24-37 explique la falaise du corridor par une Phase A acculée au « moins mauvais taux ». 📏 Le 2026-08-17, `[38,99)` en donne le contre-exemple, et la corrélation va **à l'envers** :<br>`a=36` → 6/446 déposables, `crash_min` 0 %, **4 couches en repli**, min 1 λ survivante<br>**`a=38`** → **0/452**, `crash_min` **42 %**, **0 couche en repli**, jamais moins de **4** survivantes, `crash_rate_min_observed` = **0,0000 partout**<br>`a=20` → 80/654, `crash_min` 0 %, **4 couches en repli**, min 1 survivante<br>🔑 **Le cas qui échoue a la Phase A la plus SAINE des trois.** Chaque couche est individuellement excellente, l'estimation par couche annonce zéro plantage, et la meilleure des 452 stratégies **assemblées** plante 42 % du temps.<br>✅ **Et cela donne à §24-33 le contre-exemple qu'il réclamait.** Il demandait d'*« instrumenter le `p` que la DP reçoit réellement »* : le voici mesuré, **`p_PhaseA` = 0,0000 contre 42 % réels**. L'écart n'est pas marginal, il est total. |
-| 50 | 🔴 **`strategy_phase_timeout` EST INERTE — quatrième cas du motif, après `fast_auto_blocks`, `machine_sampling_dd` et `dp_yield_weight`.** 📏 Mesuré le 2026-08-18 : `grep -rn strategy_phase_timeout certus/core certus/workers` rend **0**. Il est collecté par `collect_params` (`certus_strat_ui_state.py:1033`), **exposé à l'utilisateur** dans un widget *« Max Time per Iteration (sec) »* dont l'info-bulle promet que *« the engine cancels the current pass if exceeded »*, enregistré dans les JSON — et **aucune ligne de calcul ne le lit**. 🔴 **C'est donc une promesse faite à l'utilisateur qui n'est pas tenue**, ce qui est pire qu'un simple paramètre mort.<br>⚠️ **J'avais bâti quatre affirmations dessus le 2026-08-18** — dans la sonde, le mode `extreme`, `CLAUDE.md` et un encadré entier de `CERTUS_STRAT.html` — toutes disant qu'il empêchait une troncature silencieuse. Corrigées le jour même.<br>**Les deux vrais bornages, tous deux CODÉS EN DUR :** `timeout=30.0` passé à `_find_k_best_groupings_dp_sequential` (`certus_strat_ranking.py:296`) — 🟢 **inerte lui aussi**, la fonction déclare `timeout` et `start_time` et ne les lit jamais ; et `concurrent.futures.wait(futures, timeout=600)` (`certus_strat_workers.py:1402`) — 🟠 il n'ampute pas les résultats (`shutdown(wait=True)` attend) mais **cesse de journaliser les exceptions** des segments au-delà de 600 s. **Sur un run de 157 min, une erreur tardive est muette.** |
-| 3 | **Le lissage est une moyenne CAUSALE** (fenêtre `[i−k+1 … i]`), qui décale un extremum de ≈ `(k−1)/2` échantillons, soit **0,44 nm à k = 8**. [`TRAVAUX_A_VENIR.md`](docs/TRAVAUX_A_VENIR.md) §12.2 écrit « n'ajouter aucun décalage temporel » et §18-5 pose « aucun retard » en postulat figé. Une moyenne **centrée** ne décalerait rien. |
-| 4 | **T7 n'est pas implémenté** malgré le message de `162a0ff`. L'arrêt reste obtenu par inversion parabolique continue ; aucune loi `U(0 ; 0,125 nm)` n'existe. Par ailleurs T5, T6 et T7 dans un seul commit contredit **C3**. |
-| 18 | 🔴 **Le chemin CONSENSUS ignore `robustness_num_runs`.** Trouvé au rodage du 2026-08-10 : un run demandant **20 tirages**, `CONFIG` à l'appui, rend `0.002948627371309867` — **exactement**, au dernier bit, la référence historique à **150** tirages. `_unpack_consensus_cfg` porte un `consensus_num_runs` distinct, que l'override n'atteint pas. **Toute mesure faite avec le consensus actif est donc à une profondeur autre que celle demandée, et n'est comparable à rien.** Exposer `consensus_num_runs` avant de s'en servir. |
-| 15 | 🔴 **Deux configurations différentes rendent le MÊME `RESULT` au bit, alors que leurs bandes diffèrent.** Seuils 2,0 A et 2,4 A : `RESULT = 0.003192038110407474` pour les deux, mais `passante` vaut 0,003214 contre 0,004444 — **38 % d'écart**. Donc `RESULT` est **aveugle à un changement qui déplace visiblement le résultat**. Avant de continuer à s'en servir comme grandeur de tête, il faut savoir ce qu'il agrège exactement : §21 dit « le pire des trois niveaux de bruit », et personne n'a vérifié cette phrase dans le code. |
-| 16 | 🟢 **La bande bloquée n'est jamais le mode de défaillance.** Sur les 25 runs au disque, elle est **~567× plus propre** que la passante, sans exception. §22 s'inquiète à juste titre qu'un RMSE uniforme ne puisse pas distinguer les deux bandes — mais **le filtre ne rate jamais son blocage, il rate son passage**. ⚠️ Cela ne clôt pas §22 : l'exigence est ~500× plus serrée en bande bloquée, et 567 ≈ 500 signifie que les deux bandes sont **également proches de leur spec**, pas que l'une est acquise. Il faut les tolérances réelles par bande pour trancher, et on ne les a pas. |
-| 12 | 🟠 **La marge de Phase A agit, mais ne change jamais l'issue** — *constat corrigé le 2026-08-11, l'ancien était trop sévère.* Il disait « elle ne rejette RIEN », sur la seule foi d'un `RESULT` bit-identique. **C'était lire la mauvaise grandeur.** D5.marg de la campagne du 2026-08-11 : à 3,33 le classement porte **257** stratégies contre 228 à 1,66, et son **top-5 est différent**. La marge atteint donc bien le calcul et modifie la population de la Phase A. Mais la gagnante reste la **même stratégie physique** — `[544, 531]`, 2 blocs, origine SYM, sous l'id 2226 au lieu de 2228, l'id n'étant qu'un rang d'énumération — et le score est bit-identique. **Le bon énoncé : elle change ce qui est offert, jamais ce qui est retenu.** |
-| 19 | 🟢 **La prédiction du [`TRAVAUX_A_VENIR.md`](docs/TRAVAUX_A_VENIR.md) §12.3 est CONFIRMÉE, et cette fois sans l'artefact.** Le nombre de blocs de la gagnante croît de façon monotone avec le corridor : **2 → 3 → 4 → 5 → 8**. [`TRAVAUX_A_VENIR.md`](docs/TRAVAUX_A_VENIR.md) §12.3 l'annonçait — *« cela favorise les stratégies dont les λ de contrôle sont réparties plutôt que groupées »*. 🔑 **Ce qui rend ce constat solide, c'est qu'il survit à la correction.** Le bug de normalisation poussait dans le **même sens** (il pénalisait les λ groupées d'un facteur allant jusqu'à 21) : tant qu'il était là, l'effet physique était indémontrable. L'artefact retiré, l'effet demeure. |
-| 17 | 🔑 **POEM protège AUSSI contre l'erreur d'indice, et ce n'est pas le théorème qui le fait.** Sur le corridor corrigé (2026-08-10), à 0,005 : `SEEL 0,6 nm` avec POEM contre **`22,3 nm` et 29,3 % de plantage** sans — un rapport de **×34,8** sur le `RESULT`. Or POEM n'est invariant que par distorsion **affine**, et une erreur d'indice n'en est pas une. **L'explication est l'autre mécanisme** : POEM recale ses ancres sur les extrema réellement observés, donc il compense les erreurs d'épaisseur **accumulées**. ⚠️ Le facteur de protection propre (rapport des coûts) demande un run POEM-off à corridor 0 sur le code corrigé, **qui n'existe pas encore** — les valeurs ×7,6 puis ×6,85 citées plus tôt sont d'avant l'enveloppe. |
-| 26 | 🔑 **LE RÉSULTAT DE LA CAMPAGNE DU 2026-08-11 : à N = 150, le classement départage du BRUIT.** Deux mesures indépendantes le disent, et elles concordent.<br>📏 **(1) Dispersion sur sous-paquets** du run N = 1200, `scripts\analyse_campagne.py`. `spread_relative` est une **étendue** (max−min)/médiane, pas un écart-type : divisée par `E[étendue]/σ` du nombre de paquets, elle donne `σ ≈ 6,28 %` à N = 128 (9 paquets, ÷2,97) et `6,73 %` à N = 256 (4 paquets, ÷2,06). La loi en `1/√N` est **exacte** entre N = 32 et N = 128 : 12,56 / 6,28 = **2,00** pour une profondeur ×4. Donc **σ ≈ 5 à 6 % au point de fonctionnement N = 150**.<br>📏 **(2) Écarts entre stratégies**, classement N = 150, corridor 0 : #1 `0.0027330` · #2 **+6,5 %** · #3 +9,9 % · #4 +11,0 % · #8 +16,6 %.<br>🔴 **L'écart #1→#2 vaut 6,5 %, et la différence de deux scores porte `σ√2 ≈ 8 %` : la gagnante et sa dauphine sont à 0,8 σ. Indiscernables.** Le top 8 entier tient dans ~2 σ.<br>✅ **Corroboré par le balayage D2, obtenu autrement** : le top-5 n'est stable à **aucun** passage de N, et la gagnante alterne 2228 / 2218 / 2228 / 2228 / 2228 / 2218.<br>🔑 **Et les huit lisent `SEEL = 0,3 nm`.** La règle de tri de §22 — SEEL quantifié à 0,1 nm, puis rendement — n'est donc **pas une commodité d'affichage : c'est le classement statistiquement correct**, et cette campagne démontre que le tri continu actuel départage du bruit.<br>💰 **Le coût de l'alternative, chiffré** : séparer 6,5 % à 3 σ demanderait `σ ≈ 1,5 %`, soit `N ≈ 150 × (5,5/1,5)² ≈ 2000` tirages par stratégie — **×13**. La bonne réponse n'est pas de les acheter, c'est de déclarer l'égalité. |
-| 42 | 🔑 **LES DIX EX ÆQUO SONT IDENTIQUES SUR 42 COUCHES SUR 48 — et trois choses convergent sur les six dernières.** Mesuré le 2026-08-11 avec le masque de préfixe commun.<br>**Le préfixe commun vaut 42 couches.** Les dix surveillent les 42 premières à **544 nm**, à l'identique. Elles ne diffèrent que par **où** elles changent de λ — couche 42, 43, 44 ou 45 — et **vers quelle** λ (506 à 545 nm). Autrement dit, à l'intérieur de la classe d'équivalence, toute la recherche se réduit à **une seule décision prise dans les six dernières couches**.<br>🔑 **Et cette région est déjà connue pour deux autres raisons** : §24-36 a mesuré que **rien ne plante avant la couche 35** et que tout plante de 35 à 47 ; et le Rate y est le plus précis, puisqu'il y dispose du plus grand nombre de couches de référence (§A24, loi en `1/√n`).<br>**Trois faits indépendants désignent les couches 42 à 47.** Les candidates du placement Rate de 👤 — la dernière couche d'un bloc, celle où λ change à `i+1` — valent ici **41, 42, 43 et 44**. Elles tombent exactement dans cette région.<br>✅ **Le masque fait son travail** : **4** marges discriminantes distinctes au lieu de 2, et l'ordre change réellement. La nouvelle première (`900000208`, 3ᵉ au score) porte **3,32 A** là où l'ancienne première (`2228`) en porte **0,83 A** — quatre fois plus exposée. La plus exposée de la classe, `900000204`, tombe au 10ᵉ rang avec **0,208 A**.<br>⚠️ Quatre stratégies se retrouvent **à égalité au sommet**, marge écrêtée à 2 A : c'est voulu et c'est la règle d'A23 — *au-delà de 2 A, rien ne distingue une impossibilité d'une autre*. Leur ordre relatif reste celui du score, faute de mieux, et il ne faut pas le lire comme un classement. |
-| 41 | 🟢 **A23 ÉTAGE 3 — LA MARGE EST VALIDÉE, et le test a été rendu NON CIRCULAIRE avant de l'être.** Mesuré le 2026-08-11 sur les 228 stratégies du repère, **aucun run supplémentaire** — les trois niveaux de bruit étaient déjà calculés.<br>🔴 **L'objection d'abord, parce qu'elle était fondée.** Marge et plantage sortent de la **même** simulation. Et `margin_level` **devient négative** exactement quand `CRASH_LEVEL_UNREACHABLE` se déclenche : marge < 0 ⟺ a planté. Sur 23 stratégies (jusqu'à **−1702 A**) la marge **constate**, elle ne prédit rien. Une corrélation calculée sur l'ensemble complet aurait été une tautologie déguisée en validation.<br>✅ **Le test propre, sur les 205 marges STRICTEMENT POSITIVES** — celles dont la couche critique n'a **jamais** échoué, où la marge dit seulement de combien on est passé près :<br>`0 – 0,3 A` → 21 stratégies, **14 plantent**, taux moyen **0,984 %** · `0,3 – 0,6 A` → 3, toutes plantent, 1,556 % · `0,6 – 0,9 A` → 181, **7 plantent**, taux moyen **0,044 %**.<br>🔑 **Sous 0,6 A : 17 sur 24 plantent (71 %). Au-dessus : 7 sur 181 (4 %). Un facteur 22 sur le taux, prédit depuis le SIGNAL seul.** Corrélation **−0,577** sur ce sous-ensemble.<br>**On peut donc croire la marge à 1× là où le comptage rend zéro** — ce qui était toute la condition d'A23 : *on n'extrapole jamais sans avoir validé l'extrapolation dans le régime où la mesure est possible.*<br>⚠️ **Trois réserves.** La tranche 0,3–0,6 A ne compte que **3** stratégies : elle ne pèse rien seule. **24 stratégies plantent malgré une marge positive** — elles plantent sur une **autre** couche que leur couche critique, ce qui est attendu (la critique est la plus exposée, pas la seule) mais borne la précision du modèle. Et **aucune stratégie n'atteint 2 A** : la règle « au-delà de 2 A, impossible » reste **non testée** sur cet empilement, où rien n'est prouvablement sûr. |
-| 39 | 📏 **LA FALAISE, ENCADRÉE SUR 5 GRAINES — campagne G, 2026-08-11. Remplace le §24-35, qui n'avait que 3 graines.**<br>**Où la graine 77 casse exactement** : `0,005 → 0 %` · `0,006 → 0 %` · `0,0075 → 0 %` · `0,010 → 100 %`. **La falaise est entre 0,0075 et 0,010**, donc la marge sur la valeur du modèle vaut **×1,5 à ×2** — plus serré que ce que §24-35 laissait croire.<br>**Le taux d'échec sur 5 graines** : à la valeur du modèle **0,005 → 0 graine sur 5 en échec** (pire cas 0,7 %) · au double **0,010 → 2 graines sur 5** (77 à 100 %, 202 à 37,3 %).<br>🔑 **L'énoncé défendable** : *le design est confortable à l'incertitude d'indice spécifiée, et deux graines sur cinq ne survivent pas à son doublement.* C'est une marge, pas un gouffre — et c'est maintenant chiffré sur un échantillon, pas sur une anecdote.<br>⚠️ **Ne lis pas la non-monotonie de la graine 77 comme un signal** : SEEL 1,3 → 0,7 → 1,0 nm de 0,005 à 0,0075, avec une gagnante à 4, puis 3, puis 2 blocs. C'est §24-26 en action — le classement départage du bruit, et la gagnante est un tirage. Les trois valent « de l'ordre de 1 nm », rien de plus. |
-| 40 | 🟢 **LE MONITORING COUCHE-PAR-COUCHE GAGNE SUR 2 GRAINES SUR 5 À LA VALEUR DU MODÈLE.** Rang de la première stratégie à 48 blocs, corridor 0,005 : `graine 42 → 153/165` · `77 → 2/78` · **`101 → 1/80`** · **`202 → 1/90`** · `303 → 98/116`. Les gagnantes des graines 101 et 202 sont **à 48 blocs**.<br>Ce n'est donc ni une anomalie ni un artefact de la graine 101 : **à l'incertitude d'indice réelle, se réancrer à chaque couche est la meilleure stratégie deux fois sur cinq.** Combiné à §24-34 (l'effet se referme au-delà) et à §21.3 de la page (48 blocs coûte ×171 à corridor **0**), le tableau complet est : *le monitoring par blocs gagne quand l'indice est connu, le monitoring par couche gagne quand il l'est mal, et le basculement tombe dans la plage réelle d'un atelier.*<br>⚠️ L'offre varie aussi : 30 stratégies à 48 blocs à la graine 101 contre 4 partout ailleurs. Non expliqué. |
-| 37 | 🔴 **LA FALAISE N'EST PAS DE LA PHYSIQUE QUI DURCIT — C'EST LA PHASE A QUI N'A PLUS LE CHOIX, ET LE SYSTÈME NE LE DIT PAS.** Mesuré le 2026-08-11 par comptage des rejets (§12-contrôle 4), sur les `STRAT_observability_*.json` des deux runs effondrés :<br>`candidates offertes` **108** · `interdites pour plantage` **103** · `survivantes, médiane sur 48 couches` **1** · **32 couches sur 48 en repli « moins mauvais taux »** · tolérance de plantage **0,001**, taux minimal réellement observé **0,007** — **7× la tolérance**.<br>**La chaîne complète** : le corridor rend presque toutes les λ inadmissibles → la Phase A ne trouve **aucune** λ sous la tolérance sur 32 couches et garde la moins mauvaise → la stratégie n'est plus *choisie*, elle est **forcée** → la Phase B la trouve à 100 % de plantage.<br>🔴 **Et le résultat final ne porte aucune trace de tout cela.** Il annonce une gagnante, avec un score et un SEEL, exactement comme un run sain. C'est le motif que ce document décrit depuis le début : *ça ne produit pas d'erreur, ça produit un résultat plausible.* Le repli **est** journalisé par couche, mais rien ne remonte au classement.<br>✅ **Correctif à faire, et il est petit** : remonter `n_layers_forced` (le nombre de couches en repli) dans le résultat de stratégie et dans le classement. **Une stratégie bâtie sur 32 couches forcées n'est pas comparable à une stratégie librement choisie**, et aujourd'hui rien ne permet de les distinguer. |
-| 38 | 🟠 **Un filtre de plus qui ne rejette RIEN : `forbidden_gain_negative` vaut 0 sur les 8 runs examinés**, à toutes les couches, corridor 0 comme corridor 0,020. Le critère de gain de compensation négatif n'a **jamais** écarté une seule candidate. Comme pour §24-12 et §24-33 : soit il n'atteint pas le calcul, soit ce qu'il écarterait n'existe pas. **Compter avant de conclure** — mais un filtre à zéro rejet sur toute la plage mesurée est un défaut, pas un succès. |
-| 33 | ✅ **§24-14 EST TRANCHÉ : `dp_yield_weight` N'ATTEINT PAS LE CALCUL.** F1 du 2026-08-11 l'a porté à 200 sur le bras qui plante à **59,3 %** (POEM coupé + distorsion). Résultat **bit-identique** à `yw = 0`, `0.3279370792191264`, même gagnante `8800`, **même top-5 dans le même ordre**. Or le terme vaudrait `200 · (−log(1 − 0,593))` = **180**, un coût énorme. Ce n'est donc plus l'explication arithmétique de §24-14 : **le fil est coupé.**<br>⚠️ **La nuance qui reste, et il faut la dire** : le `p` de la DP est l'estimation **par couche de la Phase A**, pas le taux final de la Phase B. Il reste donc deux lectures — le paramètre n'atteint pas la DP, ou la DP voit encore `p = 0` même ici. **Pratiquement, c'est le même verdict : comme bouton, il ne fait rien.** Ce qui les départagerait : instrumenter le `p` que la DP reçoit réellement. |
-| 34 | 🔴 **MA PRÉDICTION DE §24-30 EST RÉFUTÉE — le monitoring couche-par-couche gagne dans une FENÊTRE, pas de façon monotone.** J'avais posé que si le mécanisme était réel, élargir le corridor devait le pousser plus loin. F2 dit le contraire :<br>`graine 101, corr 0,005` → 30 stratégies à 48 blocs, **rangs 1 à 30** · `graine 101, corr 0,010` → **1 seule, rang 55 sur 68**, et la gagnante fait 3 blocs · `graine 77` → rang 2 puis rang 21.<br>🔑 Et le run qui réfute est **sain** (0 % de plantage, SEEL 1,3 nm), donc ce n'est pas un régime cas limite qui parle. **Le constat §24-30 reste vrai — le gradient de pire à meilleur existe — mais il n'est pas monotone et je l'avais sur-extrapolé.** Il y a une bande d'incertitude d'indice où se réancrer à chaque couche paie, et elle se referme au-delà. |
-| 36 | 🟢 **A23 ÉTAGE 0 REND SON PREMIER VRAI DIAGNOSTIC — impossible à obtenir avant le 2026-08-11.** Sur l'effondrement de la graine 77 à corridor 0,010, le profil par couche montre que **rien ne plante avant la couche 35**, puis tout plante de **35 à 47** — le dernier quart de l'empilement. Sur 1033 plantages par couche : **856 (79 %) sont des `tp_miscount`**, 222 (21 %) des `level_unreachable`.<br>**C'est l'histoire de l'erreur accumulée, lue directement** : l'erreur d'indice se compose le long de l'empilement, et dans le dernier quart l'écart d'épaisseur optique devient assez grand pour que la machine compte le **mauvais nombre d'extrema**. Ce n'est pas le niveau qui devient inatteignable, c'est le **comptage** qui décroche.<br>La gagnante porte en plus `worst_swing = 0,0334` à la couche 31 et **2 couches sous `SWING_MIN`** : la Phase A a retenu une stratégie qui a des couches sans signal exploitable. **Un taux agrégé de « 100 % » ne disait rien de tout cela.** |
-| 29 | 🟢 **CAMPAGNE E, 2026-08-11 — les correctifs de cohérence passent la porte C1, et les deux résultats de tête TIENNENT.** 12/12 runs `OK`, code corrigé (§24-20, 23, 24, 25).<br>✅ **Porte C1** : `E0.ref = 0.0027329534106323534` contre `D0.ref = 0.0027329534107462224`, **écart relatif 4,2e-11** — l'ordre de la recompilation (2,8e-11, §9). Aucun correctif n'a fui dans le chemin neutre, donc la campagne est interprétable.<br>✅ **La courbe du corridor survit** : `×1,23 · ×2,03 · ×2,41 · ×4,66` contre `×1,24 · ×1,86 · ×2,46 · ×4,32` avant. Écarts de −0,7 % à +9 %, c'est-à-dire **dans le bruit statistique** (σ√2 ≈ 8 %, §24-26). Exposant **0,545** contre 0,525. **C'était le résultat phare et il est robuste au correctif.**<br>🔑 **POEM : la protection monte à ×41,2** (contre ×17,5). POEM actif ×1,198 sous distorsion, POEM coupé **×49,41**. Couper POEM sans aucune distorsion coûte déjà ×2,43 (contre ×1,975).<br>⚠️ **Le dommage résiduel avec POEM est de +19,8 % ici, pas +0,9 %.** [`TRAVAUX_A_VENIR.md`](docs/TRAVAUX_A_VENIR.md) §12.1 disait déjà que le +0,87 % de la graine 42 était un tirage chanceux. **Cite la protection, jamais le résiduel.** |
-| 30 | 🔑 **LE MONITORING COUCHE-PAR-COUCHE PASSE DE PIRE À MEILLEUR QUAND LE CORRIDOR S'ÉLARGIT.** Gradient mesuré le 2026-08-11, et il est propre :<br>`corridor 0, graine 42` → 48 blocs au rang **228 sur 228** (dernier) · `0,005 graine 42` → rang 153/165 · `0,005 graine 77` → rang **2**/78 · `0,005 graine 101` → **rang 1, et les rangs 1 à 30**.<br>Le mécanisme est cohérent : les ancres POEM héritées du bloc ont été acquises sous un indice que la machine croit connaître et ne connaît pas. Plus l'erreur d'indice est grande, plus l'historique est **trompeur** — jusqu'au point où se réancrer à chaque couche devient gagnant. C'est le bout extrême de la tendance « λ réparties » du §24-19.<br>🔴 **MAIS ÇA NE CONTINUE PAS — voir §24-34, qui réfute l'extrapolation que j'avais faite ici.** L'effet vit dans une **fenêtre** d'incertitude d'indice et se referme au-delà. Le gradient ci-dessus est réel ; « plus le corridor est large, plus ça gagne » est faux.<br>🔴 **Ça ne contredit PAS le ×171 de §21.3 de la page** : celui-ci est mesuré à corridor **0**, où 48 blocs est effectivement catastrophique. Les deux énoncés portent sur deux régimes. **Ne cite jamais l'un sans son corridor.**<br>⚠️ Constat second, à ne pas perdre : `n_ranked` s'effondre avec le corridor — **228 → 165 → 78 → 80**. La Phase A élimine beaucoup plus de candidates quand l'indice est incertain. Non expliqué. |
-| 31 | 🟠 **A23 fonctionne dès le premier usage, et il donne un chiffre honnête plutôt que le chiffre espéré.** Le profil de plantage par couche et le swing de la couche la pire remontent maintenant dans les rapports. Sur la gagnante de E4.101 : `worst_swing = 0,0874` à la **couche 39**, et l'unique plantage `level_unreachable` est **à la couche 39**. Coïncidence parfaite, sur les 10 premières lignes examinées.<br>🔴 **Puis la statistique complète corrige l'enthousiasme : 157 sur 561, soit 28 %.** À comparer à 1/48 ≈ 2 % par hasard : c'est un **enrichissement de 13×**, donc un vrai signal — mais la couche à plus faible swing n'est la couche défaillante que dans un cas sur quatre.<br>**Conclusion, et c'est exactement l'argument d'A23** : le swing est un **proxy**, pas la grandeur. Il faut la **marge** — étage 2 — qui est mesurée sur le signal réel au lieu d'être supposée. Ce 28 % est la meilleure justification qu'on ait pour faire l'étage 2 plutôt que de s'arrêter au swing. |
-| 32 | 🔴 **E2 A ÉCHOUÉ, et c'est instructif : `dp_yield_weight` reste indécidable.** Le run devait trancher §24-14 en portant le poids là où il y a des plantages — corridor 0,005, qui plantait à 29,3 % sur le code d'avant. **Sur le code corrigé ce bras plante à 0,0 %**, donc le terme valait encore `w·(−log(1−0)) = 0` et E2 est revenu **bit-identique à E1.3**, même gagnante, même score. §24-14 est toujours ouvert. Le seul bras qui plante encore est E3.4 (POEM coupé + distorsion, **59,3 %**) → c'est là qu'il faut le mesurer, et c'est l'objet de F1. ⚠️ **Leçon de méthode** : une expérience conçue contre un régime que le correctif fait disparaître ne mesure rien. Vérifier que le régime existe **encore** avant de lancer. |
-| 28 | 🔴 **AUCUN critère connu d'avance ne permet d'élaguer les 228 stratégies. Mesuré, et il détruit la règle évidente.** À corridor 0 la classe d'équivalence (`SEEL = 0,3 nm`) compte **10 membres, aux rangs 1 à 10, tous à 2 blocs, tous `ELITE` ou `SYM`** — une règle de tri superbe. **Elle ne survit à aucun changement de régime :**<br>`corr 0` → 2 blocs, ELITE+SYM · `0,001` → **3 blocs, `LOCAL_SEARCH` seul** · `0,0025` → 2 à 5 blocs, trois générateurs · `0,005` → **5 blocs, `LOCAL_SEARCH` seul** · `0,010` → **8 blocs, `LOCAL_SEARCH` seul** · graine 77 → 2-3 blocs, **les quatre générateurs** · 101 → LOCAL_SEARCH+SMART_MERGE · 202 → ELITE.<br>🔴 **`LOCAL_SEARCH` ne produit RIEN à corridor 0 et produit la gagnante, seule, à 0,001, 0,005 et 0,010.** La règle « il ne gagne jamais », que les données à corridor 0 justifiaient parfaitement, aurait **jeté la gagnante dans 4 configurations sur 8**. Idem pour « ne garder que les 2 blocs ».<br>**Chaque générateur mérite sa place dans au moins un régime, aucun dans tous.** C'est §25 en acte : *on ne prédit pas un résultat de simulation.*<br>✅ **Le levier qui marche est la PROFONDEUR, pas la population** (§24-27) : générer large, cribler peu (10 tirages, sans perte), approfondir étroit sur les ~10 finalistes. C'est une **réallocation**, pas une dépense en plus — ce qu'on cesse de payer à des stratégies à 3× la gagnante finance la profondeur là où elle décide. 📏 Coût mesuré : **~0,15 s par (stratégie × tirage)** au stade final, la Phase A (~730 s) n'ayant pas à être refaite. |
-| 27 | 🟢 **L'entonnoir Phase A → Phase B NE FUIT PAS.** D3 du 2026-08-11, et le contrôle 4 de §12 est satisfait : le criblage **atteint** bien le calcul — `n_ranked` vaut **133 / 140 / 219 / 228 / 445** pour un criblage à 10 / 50 / 100 / 25 tirages et `keep30`. Malgré 445 stratégies classées contre 133, la gagnante est **toujours** `[544, 531]`, 2 blocs, SYM, et le score est bit-identique. **Cribler à 10 tirages ne perd rien, et garder 30 survivantes ne trouve rien de mieux.** ⚠️ C'est un résultat sur **une** graine et **un** empilement : il ferme A20 pour ce cas, pas en général. |
-| 21 | ⚠️ **`MAX_LOOKBACK = 4` n'était documenté nulle part ici.** `MAX_LOOKBACK = MAX_LOOKBACK_VAL` (`certus_strat_growth.py:939`), la constante valant `MAX_LOOKBACK_VAL = 4` (`:75`). ⚠️ *Le renvoi disait `:526`, qui ne porte rien de tel.* L'historique de bloc rejoué par POEM est écrêté à **4 couches**, quelle que soit la longueur du bloc. C'est délibéré et testé (`tests/unit/test_strat_poem.py:169`), mais il faut le savoir pour lire tout résultat sur le nombre de blocs : **la valeur d'un bloc long est plafonnée par construction.** Un bloc de 24 couches ne rejoue que ses 4 dernières. |
-| 22 | ⚠️ **L'historique est échantillonné 1,33× plus grossièrement que la couche courante**, et le commentaire du noyau annonce 4×. `NPTS_PREV = 16` par couche d'historique contre `NPTS = 64` sur `3 × d_nom`, soit 21,3 points par `d_nom` : le rapport de **densité** vaut 21,33/16 = **1,33**, pas 64/16 = 4 — les deux balayages ne couvrent pas la même longueur (`certus_strat_growth.py:511`). Conséquence réelle : un même point physique ne porte pas la même densité de bruit selon qu'il est lu comme historique ou comme couche courante. La grille cadence-machine corrige cela (ligne 652) mais elle est derrière `if smoothing_window > 1` — la soudure du §24-2. **Toutes les mesures faites à `reading_smoothing_window = 1` ont donc l'échantillonnage asymétrique.** |
-| 43 | 🟢 **LA SURVEILLANCE PAR BLOCS SURPASSE LE MONOCOUCHE SUR LES DEUX EMPILEMENTS DE RÉFÉRENCE.** Les chiffres et leur artefact sont en **§24-43, en fin de document** (`reports/RAPPORT_SYNTHESE_STRATEGIES_BLOCS_35C_48C.md`) — n'en garde qu'une seule copie, ici le renvoi. 🔑 **5 changements de λ** en atelier au lieu de 34 et 47. 🔴 **La version antérieure de cette ligne citait `0.01824 / 0.00753 / 0.06391` et des SEEL de 0,9 et 0,7 nm : chiffres RÉFUTÉS.** Ils ne sont dans aucun artefact, et les deux SEEL du 35c sont **arithmétiquement impossibles** — $2\sqrt{0{,}08496} = 0{,}583$ nm et $2\sqrt{0{,}06391} = 0{,}506$ nm, pas 0,9 et 0,7. Ne les recopie pas. ⚠️ Le plantage nul est mesuré sur les blocs **présents dans le balayage** : 1 à 9 et 48 sur le 48c, 1 à 7 et 35 sur le 35c. Pas « de 2 à 9 » partout. |
-| 44 | 🔑 **POURQUOI LES BLOCS BATTENT LE MONOCOUCHE (PHYSIQUE & POEM).** En monocouche, chaque couche réinitialise la phase et détruit la continuité du signal. Dans un bloc (5 à 8 couches), POEM s'appuie sur la continuité de $T(\lambda)$ et compense les dérives d'épaisseur passées (jusqu'à `MAX_LOOKBACK = 4`). De plus, l'interférence constructive transforme les couches individuelles à pente nulle ($\frac{dT}{de} \approx 0$) en fronts de déclenchement très raides. La **zone Goldilocks (4 à 7 blocs, optimum à 6)** évite à la fois l'aveuglement spectral ($\le 3$ blocs) et la perte de mémoire ($\ge 10$ blocs). |
-| 45 | 🟠 **LE BONUS PHASE A BLOCK-AWARE DÉVERROUILLE L'ENTONNOIR, MAIS IL ALTÈRE BIEN LE CHAMP DE COÛT.** `certus_strat_objectives.py:415`, $C \leftarrow C_{\text{local}}/\sqrt{\text{streak}}$, seuil **`streak >= 2`**.<br>• Il fait franchir la troncature `dp_top_k` aux λ stables — **20 en FAST, 40 en PREMIUM, 100 en DEEP**, pas « 40 » : plus le `top_k` est large, moins le bonus change quoi que ce soit, et **aucune mesure ne l'a isolé mode par mode**.<br>• 🔴 **« sans altérer les coûts locaux » était FAUX** : le coût est **écrasé en place**, `cost_raw` (`certus/core/certus_strat_objectives.py:457`) contient déjà la valeur bonifiée, donc le coût d'avant n'est **plus récupérable**.<br>• 🔴 **Le bonus court AVANT `_normalize_phase_a_results`** (`certus_strat_pipeline.py:99`), dont la moyenne est calculée sur les coûts déjà bonifiés (`certus/core/certus_strat_objectives.py:438`) : la moyenne baisse, donc les candidates **non** bonifiées voient leur coût normalisé **monter**.<br>• 🔑 **La normalisation élève au carré** (`certus/core/certus_strat_objectives.py:456`) : ce que la DP de Phase B voit est $C/\text{streak}$, **pas** $C/\sqrt{\text{streak}}$. Un bloc de 9 couches est favorisé d'un facteur **9**, pas 3.<br>• ⚠️ Le seuil `streak >= 2` ne correspond **pas** aux blocs de 5 à 8 couches de la ligne 44 : deux couches consécutives suffisent à gagner un facteur 2, dans un régime qu'aucune mesure ne dit gagnant.<br>• 🔴 **Le « Cost Smoothing testé et réfuté à `0.37784` » n'a JAMAIS été mesuré.** Rien ne l'implémente (`grep cost_smoothing` → 0), il a été écarté par raisonnement. Et `0.37784` est le score de la stratégie **à 1 bloc** d'un run nominal 35c (`reports/campagne_N35_300.log:4309`, graine 42, N = 300). Il ne dit rien du lissage. |
-| 9 | **`MachineModel` n'a toujours aucun consommateur en production.** Vérifié le 2026-08-09 : 5 occurrences en tout — la classe, deux ré-exports, un import, le test. Et `trigger_tolerance: float = 0.05` reste documenté « in T units (0..1) » alors que les consommateurs réels divisent par 100 : **piège ×100**. Manquent toujours vitesse de dépôt et cadence, qui sont pourtant en §17. |
+| 🔴 **`search_resolution` était neutralisé dans TOUTE la campagne des intervalles** | alors que 👤 l'a posé comme **prérequis** — « la fente est systématiquement cherchée ». Les 272 intervalles du cache premium ont donc tourné sur une machine où l'opérateur n'a pas le droit d'y toucher |
+| 🔴 **le logger `ThinFilm` est MUET** | tout `logger.info` du classement est **perdu**. Un run de 50 min a été rendu ininterprétable faute de distinguer « la passe n'a pas tourné » de « chaque candidate était infaisable ». 🔑 *Un instrument dont la sortie n'atteint pas le résultat n'est pas un instrument* |
+| 🔴 **restreindre la plage de blocs VIDE la DP** | à plage restreinte le solveur ne rend **aucun groupement** ; à plage complète le même bloc en mine 601. Toute mesure comparative de la RECHERCHE se fait à plage complète |
+| 🔴 **un verdict d'intervalle n'est pas déterminé par une graine** | même intervalle, même code, `robustness_seed` seul change : `0/452` et 42 % de plantage contre `70/521` et 0 %. La graine décide là où l'intervalle est **marginal** |
+| 🔴 **`strategy_id` n'est PAS unique** | 21 identifiants sur 79 portés par 2 ou 3 stratégies **différentes**. Tout appariement enfant/parente par `from {id}` est donc ambigu, et n'est légitime que là où l'unicité a été **vérifiée**, pas supposée |
 
-**Le point 7 est refermé pour l'avenir** (`f4ada2d`) : la sonde écrit désormais sa
-configuration effective dans `r["config"]` et dans le nom du fichier. Les deux artefacts déjà
-produits, eux, restent inexploitables — **on ne peut pas les rattraper, il faut les
-refaire.**
-
-### ✅ Fermés — talons conservés parce que le code et ce document y renvoient
-
-| # | Ce qu'il en reste |
-|---|---|
-| 52 | 🔑 **DIX CLÉS SUR ONZE N'ATTEIGNAIENT PAS LE CALCUL DEPUIS LE JSON — corrigé le 2026-08-20 (`aad370a`).** 📏 On charge une configuration portant onze leviers de recherche, on lit `collect_params`, dix ressortent à `None` : `rate_tail_sweep`, `rate_by_swing`, `rate_tail_keep_optical`, `rate_layer_sets`, `require_turning_point`, `optical_prefix_sweep`, `elite_min_improvement`, `elite_rounds`, `phase_a_seed`, `robustness_seed`. **Ils n'existaient que par surcharge de sonde**, donc tout le savoir des campagnes était inaccessible depuis l'application.<br>🔴 **Le cas le plus coûteux : `robustness_seed` valait TOUJOURS 42.** `_get_float_safe` interroge un widget de ce nom, et **il n'en existe aucun** — 0 déclaration dans tout `certus/ui/`. La meilleure configuration connue de `r75x2` (SEEL 0,5692, graine 77) était donc **structurellement hors de portée** de la production.<br>🔑 **La famille du défaut, et c'est elle qu'il faut retenir** : `dp_yield_weight` (§24-33) et `machine_sampling_dd` (§28-A8) sont le même motif — *un réglage visible qui n'agit pas est pire qu'un réglage absent : il fournit une explication fausse pour un résultat, et personne ne va la vérifier.* **Avant d'attribuer quoi que ce soit à un paramètre, vérifier qu'il arrive.**<br>✅ 26 tests posés, dont **24 échouent sur le code d'avant** (`tests/unit/test_strat_config_routing.py`). |
-
-| # | Ce qu'il en reste |
-|---|---|
-| 1 | L'écart de 2,5e-11 n'était pas une violation de C1 : c'est la **recompilation** numba. Le seul instrument de C1 reste une empreinte `float.hex()`, qui n'existe pas (A5). |
-| 2 | La grille machine était **soudée** au lissage. Dé-soudée : `machine_sampling_dd`, défaut 0. |
-| 5 | Trois commits de fonctionnalité n'avaient **aucun** test. Comblé depuis. La règle demeure : **un test doit ÉCHOUER sur le code d'avant**, sinon il ne prouve rien. |
-| 7 | 🔑 **Un run qui ne consigne pas sa configuration n'est comparable à rien.** Deux artefacts ont été perdus ainsi. La sonde écrit désormais sa configuration effective dans le résultat **et** dans le nom du fichier — et le nom porte aussi le **composant** (§32). |
-| 11 | `CERTUS_POEM_ENABLED=0` était ignoré : `"0 "` avec une espace de fin passait le test d'appartenance. **Toute variable lue est `.strip()`, et une valeur inattendue lève.** |
-| 14 | `dp_yield_weight` : tranché en §24-33, il **n'atteint pas le calcul**. |
-| 20 | La Phase A recalculait le domaine de normalisation du corridor par couche. Corrigé : **un seul appelant calcule l'enveloppe et la passe aux trois étages.** |
-| 23 | 🔑 **La propagation d'état de la Phase A laissait six paramètres à leur valeur neutre**, donc l'historique propagé vivait dans un monde plus propre que les candidates jugées dessus. Corrigé, et la **fente** en a été le septième (§30). C'est le motif à surveiller : *l'historique doit être simulé dans le monde où les candidates sont jugées.* |
-| 25 | Un repli silencieux réinstallait la normalisation fautive du corridor. **Il lève désormais.** Règle générale : un paramètre manquant est une erreur de programmation, pas un défaut à combler en silence. |
-| 35 | La falaise du corridor : périmé par §24-39, mesuré sur 5 graines au lieu de 3. |
+⚠️ **Le motif qui les relie, et c'est lui qu'il faut retenir** : *un réglage visible qui n'agit
+pas est pire qu'un réglage absent — il fournit une explication fausse pour un résultat, et
+personne ne va la vérifier.* **Avant d'attribuer quoi que ce soit à un paramètre, vérifie qu'il
+arrive.** Le dossier en recense plusieurs : `dp_yield_weight`, `machine_sampling_dd`,
+`strategy_phase_timeout`, et dix clés sur onze qui n'atteignaient pas le calcul depuis le JSON.
 
 ---
 
@@ -1974,7 +1751,8 @@ natures très différentes de risque, et c'est la seconde qui avait disparu.
 
 ### CI
 
-**342** fichiers `.py` sous `tests/`, dont **334** `test_*.py` (2026-09-08 ; 248 et 241 au 2026-08-19 — le comptage vieillit d'une journée de travail). ⚠️ **Le « 2 299 tests collectés » qui
+Le compte de fichiers de test se lit par `git ls-files "tests/**/test_*.py" | wc -l`, pas ici :
+il a valu 241 puis 334 en trois semaines, et chaque valeur écrite a été fausse le lendemain. ⚠️ **Le « 2 299 tests collectés » qui
 figurait ici est faux par inclusion** : `tests/oracle/` + `tests/unit/` en rend à eux seuls
 **2 456** au 2026-08-19, et `tests/` est un sur-ensemble. 🔴 **Ne recopie pas ce nombre : il
 change dès qu'on ajoute un test** — compte-le avec `--collect-only` (§2). Le compte réel de

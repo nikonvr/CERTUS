@@ -1,10 +1,10 @@
 """A/B test : brancher la marge dans le classement final (Poste 5).
 
-    .venv\\Scripts\\python.exe scripts\\test_margin_ranking.py --composant 48c --mode off
-    .venv\\Scripts\\python.exe scripts\\test_margin_ranking.py --composant 48c --mode on
-    .venv\\Scripts\\python.exe scripts\\test_margin_ranking.py --composant 35c --mode off
-    .venv\\Scripts\\python.exe scripts\\test_margin_ranking.py --composant 35c --mode on
-    .venv\\Scripts\\python.exe scripts\\test_margin_ranking.py --etat
+    python scripts\\test_margin_ranking.py --composant 48c --mode off
+    python scripts\\test_margin_ranking.py --composant 48c --mode on
+    python scripts\\test_margin_ranking.py --composant 35c --mode off
+    python scripts\\test_margin_ranking.py --composant 35c --mode on
+    python scripts\\test_margin_ranking.py --etat
 """
 
 from __future__ import annotations

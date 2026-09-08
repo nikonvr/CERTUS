@@ -1,6 +1,6 @@
 """LA PLUS GRANDE DISTANCE A L'EXTREMUM, COUCHE PAR COUCHE -- la seule route vers une impossibilite.
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\probe_distance_extremum.py [composant ...]
+    python scripts\\probe_distance_extremum.py [composant ...]
 
 👤 2026-08-17 : *« s'acharner pour moi veut dire etre certain a 100 % qu'aucune strategie multi
 lambda avec un seul verre temoin ne peut fonctionner »*.

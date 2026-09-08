@@ -373,9 +373,12 @@ class CertusHub(QMainWindow):
                 )
 
                 card.launch_callback = self.launch_module
-                card.activated.connect(
-                    lambda _=None, c=card: c.launch_callback(c.script_name)
-                )
+                # ⚠️ L'audit `lambda_connect` ne voyait PAS ce site : sa recherche exige
+                # que la connexion et la fonction anonyme tiennent sur UNE ligne, et
+                # celle-ci etait coupee en deux. Un angle mort de l'outil, pas une
+                # exception a la regle. (Le motif n'est pas ecrit ici : il ferait
+                # trebucher l'audit sur le commentaire qui l'explique.)
+                card.activated.connect(functools.partial(self.launch_module, card.script_name))
 
             else:
                 card = ApplicationCard(
@@ -392,7 +395,7 @@ class CertusHub(QMainWindow):
                 # here used to shadow the card's own handler, so ANY mouse
                 # button launched the module, and it launched on press - with
                 # no way to take back a mis-click.
-                card.activated.connect(lambda _=None, s=app["script"]: self.launch_module(s))
+                card.activated.connect(functools.partial(self.launch_module, app["script"]))
 
             # P1.4 - apply hover-lift + fade-in micro-animations on each card.
             # self._apply_card_animations(card, index=idx)
@@ -664,7 +667,7 @@ class CertusHub(QMainWindow):
 
         process.setWorkingDirectory(base_dir)
 
-        process.finished.connect(lambda c, s, p=process, n=app_name: self.on_process_finished(p, n, c))
+        process.finished.connect(functools.partial(self._process_finished_slot, process, app_name))
 
         # Handle process lifecycle signals asynchronously
         module_name = Path(app_name).stem
@@ -715,6 +718,16 @@ class CertusHub(QMainWindow):
 
         except (OSError, IOError, PermissionError):
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+
+    def _process_finished_slot(self, process, app_name, exit_code, _status=None) -> None:
+        """Slot nomme pour `QProcess.finished`, qui emet (code, statut).
+
+        `on_process_finished` attend (process, nom, code) : cet adaptateur remet les
+        arguments dans l'ordre et absorbe le statut. Il existe pour que la connexion
+        soit un objet NOMME -- une lambda anonyme ne se deconnecte pas, ne se teste
+        pas, et sa duree de vie n'est garantie par personne.
+        """
+        self.on_process_finished(process, app_name, exit_code)
 
     def on_process_finished(self, process, app_name, exit_code) -> None:
 
@@ -850,24 +863,19 @@ class CertusHub(QMainWindow):
         # "Ctrl+Minus" were dead anyway - Qt 6 resolves them to an EMPTY
         # QKeySequence.
 
+        # 🔴 QUATRE BRANCHES RETIREES LE 2026-09-08, TOUTES INATTEIGNABLES. Les cinq
+        # entrees ci-dessus portent chacune un script, donc `if script:` etait
+        # toujours vrai -- et le commentaire juste au-dessus dit lui-meme que Zoom et
+        # F1 vivent dans le menu d'aide, pas ici. Ces branches mortes portaient a
+        # elles seules TROIS des cinq `connect(lambda)` que la CI refuse.
         for key, script, desc in shortcuts:
+            if not script:
+                # Une entree sans script est une erreur de programmation, pas un cas
+                # a rattraper en silence : elle installerait un raccourci muet.
+                raise ValueError(f"raccourci {key!r} declare sans script a lancer")
+
             shortcut = QShortcut(QKeySequence(key), self)
-
-            if script:
-                shortcut.activated.connect(functools.partial(self.launch_module, script))
-
-            elif key == "Ctrl+Plus":
-                shortcut.activated.connect(lambda: self._log_message("Zoom shortcut reserved for child windows"))
-
-            elif key == "Ctrl+Minus":
-                shortcut.activated.connect(lambda: self._log_message("Zoom shortcut reserved for child windows"))
-
-            elif key == "Ctrl+0":
-                shortcut.activated.connect(lambda: self._log_message("Zoom reset reserved for child windows"))
-
-            else:
-                shortcut.activated.connect(self.open_documentation)
-
+            shortcut.activated.connect(functools.partial(self.launch_module, script))
             shortcut.setWhatsThis(desc)
 
     # =========================================================================

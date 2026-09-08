@@ -2,13 +2,17 @@ name: lint
 
 on:
   pull_request:
+  # 🔴 AUCUN FILTRE DE BRANCHE, ET C'EST DELIBERE.
+  # Ce declencheur listait `main` et `refactor-corridors-mixins`, parce que
+  # « ne surveiller que main revenait a ne rien surveiller ». La lecon etait
+  # bonne, la solution mauvaise : la liste s'est perimee a son tour. Mesure le
+  # 2026-09-08, le travail se fait sur `claude/ux-plan-simplifie`, absente de la
+  # liste -- donc aucun des commits du jour n'aurait ete verifie.
+  #
+  # 🔑 C'est exactement la faute du chemin d'interpreteur ecrit en dur, corrigee
+  # le meme jour : une LISTE se perime, une PROPRIETE non. La propriete cherchee
+  # est « du code a ete pousse », pas « sur telle branche nommee ».
   push:
-    branches:
-      - main
-      # La branche de travail a plus de 150 commits d'avance sur main, dont le
-      # dernier commit remonte au 2026-04-27. Ne surveiller que main revenait a
-      # ne rien surveiller du tout.
-      - refactor-corridors-mixins
 
 jobs:
   ruff:
@@ -34,8 +38,21 @@ jobs:
       - name: Ruff check
         run: ruff check .
 
-      - name: Ruff format (check)
-        run: ruff format --check .
+      # 🔴 L'ETAPE `ruff format --check .` A ETE RETIREE LE 2026-09-08, ET CE N'EST PAS
+      # UN RELACHEMENT : elle CONTREDISAIT la politique ecrite du depot.
+      #
+      #   pyproject.toml, [tool.ruff.format] : « `ruff format` is configured but NOT
+      #   auto-applied yet [...] Switch to autofix in a dedicated PR once the team
+      #   confirms the spec. »
+      #
+      # 📏 Mesure du meme jour : **510 fichiers** ne sont pas conformes. Cette etape
+      # echouait donc a CHAQUE execution -- un job rouge en permanence n'est pas un
+      # garde-fou, il apprend a ignorer le rouge. Meme mecanisme que l'avertissement
+      # permanent de `preflight.py`, corrige le meme jour.
+      #
+      # 🔑 A RETABLIR TEL QUEL le jour ou la PR dediee reformate les 510 fichiers.
+      # C'est une decision de specification, pas une correction : elle appartient a
+      # l'equipe, et elle produit un diff qui touche presque tout le depot.
 
       - name: Dead symbol audit (CI)
         if: matrix.python-version == '3.14.5'

@@ -1763,12 +1763,36 @@ figurait ici est faux par inclusion** : `tests/oracle/` + `tests/unit/` en rend 
 **2 456** au 2026-08-19, et `tests/` est un sur-ensemble. 🔴 **Ne recopie pas ce nombre : il
 change dès qu'on ajoute un test** — compte-le avec `--collect-only` (§2). Le compte réel de
 la suite complète n'est pas mesuré — elle coûte ~1 h 45.
-`release-windows.yml:93` lance `pytest tests/oracle/ tests/unit/`, `tests.yml` lance
-`tests/oracle/` puis `tests/`. **`lint.yml` n'exécute aucun test** — c'est le chantier qui
-reste.
+### 🔴 LA CI NE TOURNAIT PAS, ET QUAND ELLE TOURNAIT ELLE ÉTAIT ROUGE — 2026-09-08
 
-🔴 La branche de travail `refactor-corridors-mixins` est très en avance sur `main` (dernier
-commit `main` : 2026-04-27) : **ces commits n'ont jamais été validés par la CI sur `main`.**
+Trois défauts distincts, tous mesurés, deux corrigés.
+
+| # | ce qui était | état |
+|---|---|---|
+| 1 | `lint.yml` et `tests.yml` ne se déclenchaient que sur `main` et `refactor-corridors-mixins`. **La branche de travail n'y était pas** : aucun commit du jour n'aurait été vérifié | ✅ **filtre de branche supprimé** |
+| 2 | `lint.yml` exigeait un formatage que **510 fichiers** ne respectent pas — alors que `pyproject.toml` dit noir sur blanc que le formatage **n'est pas appliqué** et attend une PR dédiée. La CI contredisait la politique du dépôt | ✅ **étape retirée**, à rétablir le jour de cette PR |
+| 3 | l'audit des connexions anonymes exigeait **zéro** et en trouvait **cinq** | ✅ **zéro** |
+
+🔑 **Le défaut n° 1 est EXACTEMENT celui du chemin d'interpréteur** : une **liste** se périme,
+une **propriété** non. Le commentaire d'origine disait pourtant *« ne surveiller que `main`
+revenait à ne rien surveiller »* — la leçon était bonne, la solution était d'ajouter un
+deuxième nom à la liste, et elle s'est périmée à son tour.
+
+📌 **Sur les cinq connexions anonymes** : **trois vivaient dans des branches inatteignables**
+du câblage des raccourcis — les cinq entrées déclarées portent toutes un script, donc les
+branches `Ctrl+Plus` / `Ctrl+Minus` / `Ctrl+0` et leur repli n'ont jamais pu s'exécuter.
+Retirées. Une quatrième était **de moi**, écrite le matin même. Et l'audit en **rate** une
+cinquième par construction : sa recherche exige que la connexion tienne sur une seule ligne.
+
+🔴 **CE QUI RESTE ROUGE, ET POURQUOI JE NE L'AI PAS TOUCHÉ** : `dead_symbol_audit` rend
+**32 candidats**, dont au moins un est un **faux positif de l'outil** — `CertusHub.closeEvent`,
+que Qt appelle sans qu'aucun code Python ne le nomme. Les blanchir en bloc cacherait un vrai
+symbole mort ; chacun demande un jugement. **Le job `lint` reste donc rouge**, sur ce point
+seul.
+
+🟢 **Le verdict de la CI tombe désormais AUSSI en local** : `tests/unit/test_ci_lambda_connect_audit.py`
+exécute l'audit au lieu de le dupliquer, avec deux contrôles en sens inverse. Un job rouge sur
+GitHub que personne ne regarde ne protège rien.
 
 ---
 

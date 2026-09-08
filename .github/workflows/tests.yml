@@ -1,21 +1,27 @@
 name: tests
 
-# La suite compte 2746 tests et ne tournait NULLE PART en intégration continue.
-# lint.yml n'exécute aucun test ; release-windows.yml en exécute 3 fichiers sur 226.
-# Aucun des 150+ commits de la branche de travail n'avait donc été validé.
+# Ce workflow existe parce que la suite ne tournait NULLE PART en intégration
+# continue : lint.yml n'exécute aucun test, release-windows.yml en exécute trois
+# fichiers.
 #
-# Durée mesurée localement le 2026-08-02 : 6 min 27 pour la suite complète. C'est
-# assez rapide pour tout exécuter — aucun test n'est exclu, ni par marqueur ni
-# autrement. Si cela devait changer, les marqueurs `slow` et `performance` sont
-# déjà déclarés dans pyproject.toml et sont le bon levier ; exclure au hasard ne
-# l'est pas.
+# 🔴 AUCUN TEST N'EST EXCLU, et c'est la règle. Les étapes ci-dessous découpent la
+# suite pour rendre un échec ATTRIBUABLE et pour isoler un fichier pathologique —
+# elles n'en retirent aucun. Si le job devient trop long, la réponse est de séparer
+# les JOBS, ou d'employer les marqueurs `slow` et `performance` déjà déclarés dans
+# pyproject.toml ; exclure au hasard ne l'est pas.
+#
+# ⚠️ Ne recopie aucun compte de tests ici. Ce commentaire a porté « 2746 tests » et
+# « 6 min 27 pour la suite complète », mesurés le 2026-08-02 — les deux étaient
+# largement dépassés au 2026-09-08, et le second avait rendu le budget du job
+# insuffisant sans que personne ne le voie.
 
 on:
   pull_request:
+  # 🔴 AUCUN FILTRE DE BRANCHE — voir le commentaire de lint.yml. La liste
+  # `main` + `refactor-corridors-mixins` s'etait perimee : mesure le 2026-09-08,
+  # le travail se fait sur une branche absente de la liste, donc AUCUN commit
+  # n'etait verifie. Une liste se perime, une propriete non.
   push:
-    branches:
-      - main
-      - refactor-corridors-mixins
 
 jobs:
   pytest:
@@ -23,7 +29,14 @@ jobs:
     # ubuntu-latest et non windows-latest : la recette Linux est validée
     # (CLAUDE.md §4) et bien plus rapide, PyQt6 tournant en mode offscreen.
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # 🔴 30 MIN NE SUFFISAIENT PLUS. Le commentaire d'en-tete annonce « 6 min 27 pour
+    # la suite complete », mesure le 2026-08-02 -- avant que la suite ne grossisse de
+    # plusieurs centaines de tests, dont toute la campagne d'ergonomie. 📏 Localement
+    # le 2026-09-08, `tests/ui/` seule depasse 50 min sur un i5-8250U Windows ; ubuntu
+    # en offscreen est plus rapide, mais l'ecart au budget etait deja structurel.
+    # 60 min laisse une marge sans etre illimite ; si le job expire, la reponse est de
+    # SEPARER les jobs, pas de relever encore.
+    timeout-minutes: 60
 
     strategy:
       fail-fast: false
@@ -92,7 +105,31 @@ jobs:
           source .venv/bin/activate
           python -m pytest tests/oracle/ -q --no-cov
 
-      - name: Suite complète
+      - name: Tests unitaires
+        # Separe de l'interface : 2 456 tests en 2 min 58 localement le 2026-09-08.
+        # C'est la moitie qui attrape le plus, pour le moins cher.
         run: |
           source .venv/bin/activate
-          python -m pytest tests/ -q --no-cov
+          python -m pytest tests/unit/ -q --no-cov
+
+      - name: Interface
+        # 🔴 `test_ux_re_stop_when_idle` est ECARTE ici et lance seul juste apres.
+        # Mesure du 2026-09-08 : ~9 min PAR TEST dans la suite complete contre
+        # 6,90 s pour ses six tests isoles -- un facteur de l'ordre de 500, cause
+        # inconnue, reproduit sur deux passes. Laisse dedans, il consomme a lui
+        # seul ~54 min et fait expirer le job.
+        run: |
+          source .venv/bin/activate
+          python -m pytest tests/ui/ -q --no-cov --deselect tests/ui/test_ux_re_stop_when_idle.py
+
+      - name: Interface — le fichier pathologique, seul
+        run: |
+          source .venv/bin/activate
+          python -m pytest tests/ui/test_ux_re_stop_when_idle.py -q --no-cov
+
+      - name: Le reste de tests/
+        # Tout ce qui n'est ni oracle, ni unit, ni ui : integration, headless,
+        # regression, performance. Rien n'est exclu.
+        run: |
+          source .venv/bin/activate
+          python -m pytest tests/ -q --no-cov --ignore=tests/oracle --ignore=tests/unit --ignore=tests/ui

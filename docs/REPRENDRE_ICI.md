@@ -38,9 +38,17 @@ soupçon n'est pas une mesure.*
 🔴 **RIEN N'EST PUBLIÉ.** Tous les commits de la nuit vivent sur `claude/ux-plan-simplifie`,
 en local. Le dépôt est public et aucun `git push` n'a été fait — c'est une décision de 👤.
 
+🔴 **CE QUI S'EST OUVERT AU MATIN, ET C'EST LE PLUS GROS POSTE RESTANT : aucune fenêtre de
+module n'est jamais détruite.** 📏 Chaque `CertusREApp` laisse **45 widgets de premier niveau
+vivants** malgré `close()` — la fenêtre elle-même comprise — et **construire la suivante coûte
+plus cher** : ×3,63 en six itérations. C'est pour cela que `tests/ui/` **n'atteint plus la fin
+en 2 h** et doit être découpée. Une cause a été trouvée et corrigée (un dictionnaire de module
+qui ne pouvait pas se vider) ; 📏 **elle ne change rien au compte** — les autres retenants sont
+nommés en §56 de [`DEFAUTS_OUVERTS.md`](DEFAUTS_OUVERTS.md), avec la sonde qui les mesure.
+
 🔵 **Ce qui reste, et qui n'est pas du code** : la revue visuelle des onze fenêtres, trois
-arbitrages, et surtout **deux dépôts réels du 48 couches** — le §26 est intact, rien ne valide
-STRAT contre la réalité.
+arbitrages, et surtout **deux dépôts réels du 48 couches** — la validation externe est intacte,
+rien ne valide STRAT contre la réalité.
 
 ---
 

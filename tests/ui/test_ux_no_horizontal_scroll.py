@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import os
-import subprocess
 import sys
 import tempfile
 import time
@@ -12,6 +11,9 @@ import pytest
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 MARKER = "__CERTUS_HSCROLL_TEST__"
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _ux_worker import run_ux_worker  # noqa: E402
 
 SPLITTER_APPS = [
     ("certus.ui.certus_design_ui", "CertusDesignApp"),
@@ -96,7 +98,7 @@ def test_control_panel_never_scrolls_sideways(mod_path: str, cls_name: str, size
     env = dict(os.environ, PYTHONIOENCODING="utf-8")
     env.pop("QT_QPA_PLATFORM", None)
 
-    proc = subprocess.run(
+    data = run_ux_worker(
         [
             sys.executable,
             os.path.abspath(__file__),
@@ -106,16 +108,11 @@ def test_control_panel_never_scrolls_sideways(mod_path: str, cls_name: str, size
             str(w),
             str(h),
         ],
-        capture_output=True,
-        text=True,
-        cwd=REPO_ROOT,
+        MARKER,
+        context=f"{cls_name} @ {size}",
         env=env,
-        encoding="utf-8",
-        errors="replace",
+        cwd=REPO_ROOT,
     )
-    hit = [x for x in (proc.stdout or "").splitlines() if x.startswith(MARKER)]
-    assert hit, f"Worker crashed for {cls_name} @ {size}:\n{proc.stderr}"
-    data = json.loads(hit[0][len(MARKER) :])
     assert data["hscroll_px"] == 0, f"{cls_name} @ {size}: {data['hscroll_px']} px du panneau sont hors champ"
 
 

@@ -23,13 +23,15 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-import subprocess
 import sys
 import tempfile
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 MARKER = "__CERTUS_HELP_REALITY__"
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _ux_worker import run_ux_worker  # noqa: E402
 
 MODULES_UNDER_TEST = [
     "CERTUS_DESIGN",
@@ -98,18 +100,13 @@ def test_help_announces_no_shortcut_the_window_lacks(tag: str) -> None:
         QT_QPA_PLATFORM="offscreen",
         QT_QPA_FONTDIR=r"C:\Windows\Fonts",
     )
-    proc = subprocess.run(
+    phantom = run_ux_worker(
         [sys.executable, os.path.abspath(__file__), "--worker", tag],
-        capture_output=True,
-        text=True,
-        cwd=str(ROOT),
+        MARKER,
+        context=f"{tag}",
         env=env,
-        encoding="utf-8",
-        errors="replace",
-    )
-    hit = [x for x in (proc.stdout or "").splitlines() if x.startswith(MARKER)]
-    assert hit, f"Worker crashed for {tag}:\n{proc.stderr}"
-    phantom = json.loads(hit[0][len(MARKER) :])["phantom"]
+        cwd=str(ROOT),
+    )["phantom"]
 
     assert not phantom, f"{tag}: the help announces keys that do nothing: {phantom}"
 

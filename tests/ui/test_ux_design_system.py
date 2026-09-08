@@ -2,7 +2,7 @@
 
 Contrôles statiques d'invariants (lecture des sources) :
 - Aucune nouvelle couleur hexadécimale hors du thème (cliquet <= 315).
-- Aucune nouvelle taille de police codée en dur (cliquet <= 173).
+- Aucune nouvelle taille de police codée en dur (cliquet <= 52).
 - Aucun nouvel emoji dans les libellés utilisateur (cliquet <= 36).
 - Police et taille uniformes sur toute la suite (Phase 3).
 """
@@ -13,7 +13,6 @@ import json
 import os
 from pathlib import Path
 import re
-import subprocess
 import sys
 import pytest
 
@@ -105,8 +104,8 @@ def test_no_new_hardcoded_font_size() -> None:
     les yeux sur un ecran, pas un refactor a glisser dans une passe de nuit.
     """
     count = count_hardcoded_font_sizes()
-    assert count <= 157, (
-        f"Hardcoded font size ratchet violated! Found {count} > 157. "
+    assert count <= 52, (
+        f"Hardcoded font size ratchet violated! Found {count} > 52. "
         "Use CertusTheme font tokens instead of inline font-size."
     )
 
@@ -137,6 +136,9 @@ def test_no_emoji_in_user_facing_labels() -> None:
 # test green without a single line of code changing.
 
 FONT_MARKER = "__CERTUS_FONT_TEST__"
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _ux_worker import run_ux_worker  # noqa: E402
 
 
 def _font_worker_main(tag: str) -> None:
@@ -171,18 +173,13 @@ def _measure_font(tag: str) -> dict:
         # family would look unavailable - that is defect J1, not a finding.
         QT_QPA_FONTDIR=r"C:\Windows\Fonts",
     )
-    proc = subprocess.run(
+    return run_ux_worker(
         [sys.executable, os.path.abspath(__file__), "--font-worker", tag],
-        capture_output=True,
-        text=True,
-        cwd=str(ROOT),
+        FONT_MARKER,
+        context=f"{tag}",
         env=env,
-        encoding="utf-8",
-        errors="replace",
+        cwd=str(ROOT),
     )
-    hit = [x for x in (proc.stdout or "").splitlines() if x.startswith(FONT_MARKER)]
-    assert hit, f"Font worker crashed for {tag}:\n{proc.stderr}"
-    return json.loads(hit[0][len(FONT_MARKER) :])
 
 
 @pytest.fixture(scope="module")

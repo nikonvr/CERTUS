@@ -7,7 +7,7 @@ Two distinct families, both fixed by disabling sorting on the instance:
 2. CELLS ARE WIDGETS. Qt does not move cell widgets when sorting: a sort pairs
    one row's widgets with another row's data.
 
-This guard exists because the hole was opened twice. docs/GEMINI_UX_TOP1_2026-09-04.md
+This guard exists because the hole was opened twice. docs/UX_DEMENTIS.md
 step 2.9 warns: "do not restore sorting without the locks in the same change".
 On 2026-09-04 the ExcelTableWidget.__init__ that enables sorting was restored and
 the certus_lock_row_order() calls were not, which put the suite back in the exact
@@ -35,7 +35,6 @@ from __future__ import annotations
 
 import json
 import os
-import subprocess
 import sys
 import tempfile
 import time
@@ -43,6 +42,9 @@ import pytest
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 MARKER = "__CERTUS_SORT_SAFETY_TEST__"
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _ux_worker import run_ux_worker  # noqa: E402
 
 # (module, class, path to the table on the window)
 # "widgets:key" reaches into a dict attribute; a bare name is a plain attribute.
@@ -120,18 +122,13 @@ def _measure(mod_path: str, cls_name: str, path: str) -> dict:
     env = dict(os.environ, PYTHONIOENCODING="utf-8")
     env.pop("QT_QPA_PLATFORM", None)
 
-    proc = subprocess.run(
+    return run_ux_worker(
         [sys.executable, os.path.abspath(__file__), "--worker", mod_path, cls_name, path],
-        capture_output=True,
-        text=True,
-        cwd=REPO_ROOT,
+        MARKER,
+        context=f"{cls_name}.{path}",
         env=env,
-        encoding="utf-8",
-        errors="replace",
+        cwd=REPO_ROOT,
     )
-    hit = [x for x in (proc.stdout or "").splitlines() if x.startswith(MARKER)]
-    assert hit, f"Worker crashed for {cls_name}.{path}:\n{proc.stderr}"
-    return json.loads(hit[0][len(MARKER) :])
 
 
 @pytest.mark.parametrize("mod_path,cls_name,path", STACK_TABLES)

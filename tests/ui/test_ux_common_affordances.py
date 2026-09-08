@@ -31,12 +31,14 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-import subprocess
 import sys
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 MARKER = "__CERTUS_AFFORDANCE_TEST__"
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _ux_worker import run_ux_worker  # noqa: E402
 
 # Modules whose window derives from CertusBaseApp. The HUB is a plain
 # QMainWindow (see step 2.18's own note) and is out of scope here.
@@ -100,18 +102,13 @@ def _measure(tag: str) -> dict:
         QT_QPA_PLATFORM="offscreen",
         QT_QPA_FONTDIR=r"C:\Windows\Fonts",
     )
-    proc = subprocess.run(
+    return run_ux_worker(
         [sys.executable, os.path.abspath(__file__), "--worker", tag],
-        capture_output=True,
-        text=True,
-        cwd=str(ROOT),
+        MARKER,
+        context=f"{tag}",
         env=env,
-        encoding="utf-8",
-        errors="replace",
+        cwd=str(ROOT),
     )
-    hit = [x for x in (proc.stdout or "").splitlines() if x.startswith(MARKER)]
-    assert hit, f"Worker crashed for {tag}:\n{proc.stderr}"
-    return json.loads(hit[0][len(MARKER) :])
 
 
 @pytest.mark.parametrize("tag", BASE_APP_MODULES)

@@ -78,7 +78,7 @@ même valeur dans TOUS les `.md`** — c'est-à-dire la règle ci-dessus, appliq
 
 🔴 **ET SON PÉRIMÈTRE ÉTAIT PLUS ÉTROIT QUE LE CORPUS — corrigé le 2026-09-08.** Il ne balayait
 que la racine et `docs/`, soit 26 fichiers sur 33. Il ne lisait donc pas
-`tests/headless/README.md`, qui portait **sept commandes** citant `.venv\Scripts\python.exe` —
+`tests/headless/README.md`, qui portait **sept commandes** citant le venv local d'origine —
 le **premier** interpréteur mort du projet, jamais corrigé parce qu'aucun contrôle ne le
 regardait. 🔑 *Un contrôle de cohérence dont le périmètre est plus étroit que le corpus rend
 « 0 point à instruire » sans que cela veuille dire quoi que ce soit.*
@@ -441,6 +441,34 @@ ailleurs — c'est la règle qui empêche les contradictions de revenir.
 | [`DECISIONS_TRANCHEES.md`](docs/DECISIONS_TRANCHEES.md) | grille des λ, profondeur Monte-Carlo, les deux correctifs |
 | [`PERFORMANCE.md`](docs/PERFORMANCE.md) | ⚡ ce qui a été mesuré, **y compris les pistes fermées** |
 | [`ENONCE_PROBLEME.md`](reports/ENONCE_PROBLEME.md) | énoncé autonome, pour poser le problème à un tiers |
+
+#### 🔴 Les quatre documents que cette carte ne nommait pas — rattachés le 2026-09-08
+
+📏 Le corpus compte **33 `.md` suivis, 17 323 lignes**. Quatre n'étaient cités **par aucun
+autre fichier ET absents de cette carte** — donc invisibles à un agent qui suit les
+instructions. **Aucun n'était vide de sens** : c'est le rattachement qui manquait, pas le
+contenu. 🔑 *Et l'orphelinat coûte* : `tests/headless/README.md` a gardé **sept commandes
+citant le tout premier interpréteur mort** parce qu'aucun contrôle ni aucune carte ne le
+regardait.
+
+| dossier | ce qu'il porte, et pourquoi il compte |
+|---|---|
+| [`PLAN_AMELIORATION.md`](docs/PLAN_AMELIORATION.md) | 🔴 **quatre chantiers OUVERTS** que rien n'annonçait ici : le cycle d'imports `physics ↔ core` (A6 / lot E), l'oracle étendu aux **gradients** (lot B) — *un gradient faux ne lève pas, il fait converger ailleurs* —, l'hygiène d'imports (lot C), et CI / property-based / contrats de signature (D2-D4) |
+| [`README_REGRESSION_TESTS.md`](tests/regression/README_REGRESSION_TESTS.md) | la suite **Golden Master** de convergence, et sa règle *« toute modification de code DOIT passer cette suite »*. 🔴 Voir l'avertissement ci-dessous : elle ne tourne pas sous `pytest` |
+| [`README_REFERENCE_CONFORMANCE.md`](pages/README_REFERENCE_CONFORMANCE.md) | les règles des pages HTML de `pages/`, **et une mesure ouverte** : 13 pages sur 15 déclarent `lang="en"`, deux non |
+| [`RAPPORT_FILTRE_EXTREME_5CAV_99C.md`](example/example_strat/RAPPORT_FILTRE_EXTREME_5CAV_99C.md) | l'étude du passe-bande **99 couches** — formule, matériaux, performances TMM, règles de dépôt. ⚠️ [`COMPOSANTS.md`](docs/COMPOSANTS.md) ne couvre PAS ce composant : ce n'est pas un doublon |
+
+🔴 **LA SUITE « OBLIGATOIRE » NE TOURNE PAS — mesuré le 2026-09-08.**
+`pytest tests/regression/` rend **`collected 0 items`** : `test_convergence.py` porte un nom
+que `pytest` ramasse, mais c'est un **script** (`main()` + `if __name__ == "__main__"`), pas un
+module de tests. Il se lance par `RUN_CONVERGENCE_TESTS.bat`, dont l'en-tête dit *« OBLIGATOIRE
+avant toute validation de code »*. **Un zéro silencieux dans une suite verte** — exactement le
+motif que ce document traque.
+
+⚠️ **Et deux choses de plus, avant de s'y fier** : sa base `baseline_rmse.json` ne porte que
+**5 entrées pour les 7 modules** qu'elle déclare tester — DESIGN et INDEX manquent ; et elle
+mesure les scripts de `tests/headless/`, dont le §4 dit que **deux remplacent le calcul par un
+mock**. La réparer est un chantier, pas une correction.
 
 🔑 **La page qui compte, et 👤 l'a dit : `pages/CERTUS_STRAT.html`.**
 

@@ -114,7 +114,7 @@ class CurveSmootherGUI(QMainWindow):
         self.detached_windows: list[QMainWindow] = []
         self.settings = QSettings("CERTUS_SUITE", "CurveSmoother")
         self.last_dir = self.settings.value("last_dir", "")
-        self.current_level = "Moyen"
+        self.current_level = "Medium"
         self._setup_ui()
         self._attach_ui_log_handler()
 
@@ -181,33 +181,43 @@ class CurveSmootherGUI(QMainWindow):
 
         self.btn_load = create_styled_button("Load Data (.xlsx/.xls)", variant="primary")
         self.btn_load.clicked.connect(self.load_file)
+        self.btn_load.setToolTip("Load a spectral data file. Each column is plotted as a curve.")
         self.combo_mode = QComboBox()
         self.combo_mode.setMinimumWidth(160)
         self.combo_mode.setStyleSheet(
             f"color: {CertusTheme.TEXT_MAIN}; background: {CertusTheme.BACKGROUND}; "
             f"border: 1px solid {CertusTheme.BORDER}; padding: 4px; border-radius: 4px;"
         )
-        self.combo_mode.addItems(["Faible", "Moyen", "Fort"])
+        self.combo_mode.addItems(["Low", "Medium", "High"])
         self.combo_mode.setCurrentIndex(1)
         self.combo_mode.setEnabled(False)
         self.combo_mode.currentIndexChanged.connect(self.auto_tune)
-        self.lbl_computed_params = create_styled_label("   [ Niveau: Moyen ]", color=CertusTheme.TEXT_SUB)
+        self.combo_mode.setToolTip(
+            "Smoothing strength. Low preserves narrow features, High suppresses more noise. "
+            "The filter parameters are then tuned automatically on the loaded data."
+        )
+        self.lbl_computed_params = create_styled_label("   [ Level: Medium ]", color=CertusTheme.TEXT_SUB)
         self.chk_raw = QCheckBox("Show Raw Traces")
         self.chk_raw.setChecked(False)
         self.chk_raw.stateChanged.connect(self.update_plot)
+        self.chk_raw.setToolTip("Overlay the unsmoothed measurements on the plot.")
         self.combo_isolate = QComboBox()
         self.combo_isolate.setMinimumWidth(150)
         self.combo_isolate.setStyleSheet(
             f"color: {CertusTheme.TEXT_MAIN}; background: {CertusTheme.BACKGROUND}; "
             f"border: 1px solid {CertusTheme.BORDER}; padding: 4px; border-radius: 4px;"
         )
+        self.combo_isolate.setToolTip("Curve to open in the isolated view.")
         self.btn_isolate = create_styled_button("View Isolated", variant="outline")
         self.btn_isolate.clicked.connect(self.open_isolated_view)
+        self.btn_isolate.setToolTip("Open the curve selected on the left in its own window.")
         self.btn_isolate.setEnabled(False)
-        self.btn_help = create_styled_button("❓ Help", variant="outline")
+        self.btn_help = create_styled_button("Quick guide", variant="outline")
         self.btn_help.clicked.connect(self.show_help)
+        self.btn_help.setToolTip("Show a short usage reminder. Full documentation is under Help (F1).")
         self.btn_save = create_styled_button("Save Clean Data", variant="secondary")
         self.btn_save.clicked.connect(self.save_file)
+        self.btn_save.setToolTip("Write the smoothed curves to a new file. The source file is left untouched.")
         self.btn_save.setEnabled(False)
 
         row1.addWidget(self.btn_load)
@@ -232,6 +242,8 @@ class CurveSmootherGUI(QMainWindow):
         self.plot_widget.setLabel("bottom", "Wavelength (nm)", **{"color": CertusTheme.TEXT_MAIN, "font-size": "11pt"})
         self.plot_widget.setLabel("left", "Amplitude", **{"color": CertusTheme.TEXT_MAIN, "font-size": "11pt"})
         self.plot_widget.showGrid(x=True, y=True, alpha=0.2)
+        self._empty_notice = None
+        self._show_empty_notice()
         self.plot_widget.getAxis("bottom").setPen(pg.mkPen(color=CertusTheme.BORDER))
         self.plot_widget.getAxis("left").setPen(pg.mkPen(color=CertusTheme.BORDER))
         self.plot_widget.setStyleSheet(
@@ -300,14 +312,40 @@ class CurveSmootherGUI(QMainWindow):
         if self.df is None:
             return
         self.current_level = self.combo_mode.currentText()
-        self.lbl_computed_params.setText(f"   [ Niveau: {self.current_level} ]")
+        self.lbl_computed_params.setText(f"   [ Level: {self.current_level} ]")
         self.lbl_computed_params.setStyleSheet(f"color: {CertusTheme.SUCCESS}; font-weight: bold;")
         self.update_plot()
 
+    def _show_empty_notice(self) -> None:
+        """Say the plot is empty.
+
+        With no data, the axes still graduate 0 to 1 - Qt's default range, not a
+        measurement. Unlabelled, that reads as data.
+        """
+        if self._empty_notice is not None:
+            return
+        notice = pg.TextItem(
+            "No data loaded.\nUse Load Data to open a spectrum file.",
+            color=CertusTheme.TEXT_SUB,
+            anchor=(0.5, 0.5),
+        )
+        notice.setPos(0.5, 0.5)
+        self.plot_widget.addItem(notice)
+        self._empty_notice = notice
+
+    def _hide_empty_notice(self) -> None:
+        if self._empty_notice is None:
+            return
+        self.plot_widget.removeItem(self._empty_notice)
+        self._empty_notice = None
+
     def update_plot(self) -> None:
         if self.df is None:
+            self._show_empty_notice()
             return
         self.plot_widget.clear()
+        # clear() drops every item, the notice included.
+        self._empty_notice = None
         x = self.df.iloc[:, 0].values
         y_raw = self.df.iloc[:, 1:].values.T
         colors = self._chart_colors()

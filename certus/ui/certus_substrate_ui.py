@@ -71,6 +71,7 @@ from certus.core.certus_core import (
     canonicalize_substrate_label,
     substrate_sellmeier_coeffs,
 )
+from certus.utils.certus_ux import Typography
 from certus.core.certus_substrate_helpers import filter_bare_substrate_columns, is_bare_substrate_column, norm_header, expand_substrate_abbrevs, unglue_substrate_nu
 from certus.core.certus_metrology import ValidationStatus
 from certus.utils.certus_services import SubstrateIndexRequest, SubstrateIndexService
@@ -217,7 +218,7 @@ class IndexTableDialog(QDialog):
             self._series_summary_text = summary_rows
             detail = QLabel(" | ".join(summary_rows))
             detail.setWordWrap(True)
-            detail.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 10px;")
+            detail.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY}pt;")
             layout.addWidget(detail)
             self.summary_label.setText(self.summary_label.text() + f" | Series status: {len([s for s in self._series_quality.values() if s.get('quality_label') == 'good'])} good, {len([s for s in self._series_quality.values() if s.get('quality_label') == 'degraded'])} degraded, {len([s for s in self._series_quality.values() if s.get('quality_label') == 'poor'])} poor")
             self.summary_label.setToolTip("Executive summary of fit quality across substrate series.")
@@ -766,7 +767,7 @@ class IndexTableDialog(QDialog):
         layout = QVBoxLayout(dlg)
 
         info = QLabel(
-            f"<span style='color:{CertusTheme.TEXT_SUB};font-size:11px;'>"
+            f"<span style='color:{CertusTheme.TEXT_SUB};font-size: {Typography.BODY_LG}pt;'>"
             "RMSE (unweighted, vs raw n on fit window), description and coefficients. "
             "Series (blocks === ... ===): from minimal best RMSE to worst, top of window. "
             "In each series: laws from best to worst RMSE (like table columns). "
@@ -1101,6 +1102,7 @@ class SubstrateIndexGUI(QMainWindow):
 
         self.btn_load = create_styled_button("Load Data (.xlsx/.xls)", variant="primary")
         self.btn_load.clicked.connect(self.load_file)
+        self.btn_load.setToolTip("Load a measured transmission or reflection spectrum.")
 
         self.fit_lmin_spin = QDoubleSpinBox()
         self.fit_lmin_spin.setRange(100.0, 20000.0)
@@ -1108,6 +1110,10 @@ class SubstrateIndexGUI(QMainWindow):
         self.fit_lmin_spin.setSingleStep(50.0)
         self.fit_lmin_spin.setValue(400.0)
         self.fit_lmin_spin.valueChanged.connect(self._on_fit_range_spin_changed)
+        self.fit_lmin_spin.setToolTip(
+            "Shortest wavelength used to fit the index, in nm (100 to 20000). "
+            "Points outside the range are ignored by the fit."
+        )
 
         self.fit_lmax_spin = QDoubleSpinBox()
         self.fit_lmax_spin.setRange(100.0, 20000.0)
@@ -1115,6 +1121,10 @@ class SubstrateIndexGUI(QMainWindow):
         self.fit_lmax_spin.setSingleStep(50.0)
         self.fit_lmax_spin.setValue(5000.0)
         self.fit_lmax_spin.valueChanged.connect(self._on_fit_range_spin_changed)
+        self.fit_lmax_spin.setToolTip(
+            "Longest wavelength used to fit the index, in nm (100 to 20000). "
+            "Points outside the range are ignored by the fit."
+        )
 
         self.sell_auto_chk = QCheckBox("Sellmeier full auto")
         self.sell_auto_chk.setChecked(True)
@@ -1151,6 +1161,10 @@ class SubstrateIndexGUI(QMainWindow):
 
         self.btn_calc_n = create_styled_button("Calc Substrate Index (3 laws)", variant="secondary")
         self.btn_calc_n.clicked.connect(self.calculate_index)
+        self.btn_calc_n.setToolTip(
+            "Fit the substrate index over the wavelength range above, using the three "
+            "dispersion laws, and report which one fits best."
+        )
         self.btn_calc_n.setEnabled(False)
 
         self.btn_export_datasheet = create_styled_button("Export Datasheet (JSON)", variant="outline")
@@ -1189,7 +1203,7 @@ class SubstrateIndexGUI(QMainWindow):
         c_layout.addWidget(tools)
 
         hint = QLabel(
-            f"<span style='color:{CertusTheme.TEXT_SUB};font-size:11px;'>"
+            f"<span style='color:{CertusTheme.TEXT_SUB};font-size: {Typography.BODY_LG}pt;'>"
             "Only spectral columns whose <b>name</b> indicates a <b>bare substrate</b> "
             "(e.g. <i>substrate nu</i>, <i>sbst nu</i>, <i>SNU</i>, <i>BSUB</i>, <i>bare sub</i>, "
             "<i>no-coat</i>, <i>sans_dep</i>, <i>nu</i> isolated...) are loaded; "
@@ -1245,7 +1259,7 @@ class SubstrateIndexGUI(QMainWindow):
 
         self.output_table_hint = QLabel("Tip: use the model selector to focus on one law, or keep All models to compare the full stack.")
         self.output_table_hint.setWordWrap(True)
-        self.output_table_hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        self.output_table_hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt;")
         self.output_tables_layout.addWidget(self.output_table_hint)
         self.output_tables_area = QWidget()
         self.output_tables_area_layout = QVBoxLayout(self.output_tables_area)

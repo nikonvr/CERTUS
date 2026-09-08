@@ -1,68 +1,43 @@
-# Dead-symbol whitelist
-# One symbol id per line: module_path:Function or module_path:Class.method
-# Generated from current baseline with tools/dead_symbol_audit.py --write-whitelist
+# Dead-symbol whitelist -- HAND-MAINTAINED, one measured reason per entry.
+#
+# One symbol id per line: module_path:Function or module_path:Class.method.
+# Blank lines and lines starting with # are ignored by the audit.
+#
+# WARNING: `--write-whitelist` regenerates this file from the current baseline
+# and DESTROYS every comment below. Use it to inspect a baseline, never to
+# update this file -- an entry without its reason is an exemption nobody can
+# review.
+#
+# 2026-09-08 -- this file went from 64 entries to 7. It was NOT pruned for
+# tidiness: the audit used to look for references in the same narrow perimeter
+# as its candidates, so it reported 32 symbols the application actually calls.
+# Once references were collected across the whole runtime tree, 57 entries
+# could no longer match anything. An exemption that can never fire is a promise
+# nobody checks, and it would silently cover a symbol that dies later.
+# `tests/unit/test_ci_dead_symbol_audit.py` now forbids fossil entries.
 
-CERTUS_DESIGN:CertusDesignApp.copy_logs_to_clipboard
-CERTUS_HUB:ApplicationCard.enterEvent
-CERTUS_HUB:ApplicationCard.leaveEvent
-CERTUS_INDEX:CertusIndexApp.copy_logs_to_clipboard
-CERTUS_INDEX:KLogAxisItem.tickStrings
-CERTUS_INDEX_SPLINE:CertusIndexSplineApp._can_offer_mwir_extra_node
-CERTUS_INDEX_SPLINE:CertusIndexSplineApp._prompt_mwir_extra_node
-CERTUS_INDEX_SPLINE:CertusIndexSplineApp._result_needs_deferred_corridors
-CERTUS_INDEX_SPLINE:CertusIndexSplineApp._start_deferred_corridor_worker_from_breakpoint_pending
-CERTUS_INDEX_SPLINE:CertusIndexSplineApp._start_mwir_insert_worker
-CERTUS_INDEX_SPLINE:CertusIndexSplineApp._sync_corridor_btn_from_chk
-CERTUS_STRAT:CertusStratApp.copy_logs_to_clipboard
-CERTUS_STRAT:CertusStratApp.timerEvent
-CERTUS_STRAT:_start_monitor_live_feed_thread
-_certus_physics_impl:Material.get_n_at_wavelength
-_certus_physics_impl:MaterialDatabase.get_cache_stats
-_certus_physics_impl:MaterialDatabase.get_cached_computation
-_certus_physics_impl:MaterialDatabase.get_clues_vectorized
-_certus_physics_impl:MaterialDatabase.get_material_list
-_certus_physics_impl:MaterialDatabase.get_wavelength_range
-_certus_physics_impl:MaterialDatabase.substrate_cache
-_certus_physics_impl:SingleLinkageClusterer.unique_basins_x
-_certus_physics_impl:SplineCache.get_splines
-_certus_physics_impl:_apply_exact_backside_generic
-_certus_physics_impl:calculate_RT_single_layer_single
-_certus_physics_impl:calculate_bare_substrate_R
-_certus_physics_impl:calculate_bare_substrate_R_absorbing
-_certus_physics_impl:calculate_bare_substrate_T_absorbing
-_certus_physics_impl:calculate_reflection_array
-_certus_physics_impl:calculate_reflection_infinite_substrate_array
-_certus_physics_impl:calculate_transmission_array
-certus_core:ConfigManager.reload
-certus_core:SystemConfig.resource_path
-certus_index_spline_core:SplineOptConfig.bootstrap_view
-certus_index_spline_core:SplineOptConfig.compose
-certus_index_spline_core:SplineOptConfig.smart_init_view
-certus_index_spline_core:export_spline_result_jsonable
-certus_live_visualizer:LiveOptimizationVisualizer.get_widget
-certus_live_visualizer:LiveOptimizationVisualizer.request_update
-certus_live_visualizer:LiveOptimizationVisualizer.set_target_data
-certus_live_visualizer:create_live_visualizer
-certus_manual_sigma_knot_dialog:ManualSigmaKnotDialog.set_feedback_message
-certus_metrology:RunManifest.to_json
+# Referenced nowhere in the runtime tree. Its only call site is COMMENTED OUT,
+# at CERTUS_HUB.py:401, and has been since the initial commit -- so this is
+# parked code, not something recently orphaned. To decide: revive the animation
+# or drop the method.
+CERTUS_HUB:CertusHub._apply_card_animations
+
+# Referenced nowhere at all, tests included.
+CERTUS_METAL_BILAYER:_bilayer_autopsy_dir
+
+# Referenced nowhere at all, tests included. The name suggests a feature that
+# lost its entry point rather than a leftover helper: deleting it would delete
+# work, so the call belongs to the project owner.
+CERTUS_METAL_BILAYER:CertusMetalBilayerApp._build_auto_batch_script
+CERTUS_METAL_SINGLE:CertusMetalSingleApp._build_auto_batch_script
+
+# Called ONLY by tests/unit/test_certus_metal_single_smoke.py -- a real call,
+# not a name collision. That is a different fact from the ones above: the
+# function works, nothing in production wants it.
+CERTUS_METAL_SINGLE:_get_single_substrate_n_array
+
+# Both already exempt before 2026-09-08, and both survive the wider reference
+# perimeter: no runtime module calls them. The grep hits are substrings of
+# other names (_get_thickness_bounds_nm, test_list_to_array), not references.
 certus_physics.structures:Layer.get_thickness
 certus_physics.structures:TLUParameters.to_array
-certus_plot:CertusScientificPlot.set_labels
-certus_strat_context:StratContext.activate
-certus_strat_context:StratContext.worker_init
-certus_strat_service:StratStrategyService.set_deterministic
-certus_strat_workers_dto:WorkerThreadResult.for_step_33
-certus_substrate_index:IndexCore.suggest_trimmed_fit_range
-certus_ui:CertusActionBar.add_separator
-certus_ui:CertusBaseApp.confirm_destructive
-certus_ui:CertusBaseApp.register_command
-certus_ui:CertusCollapsible.is_expanded
-certus_ui:CertusStatusPill.set_level
-certus_ui:CertusTheme.get_primary_button_stylesheet
-certus_ui:CertusWorkerBase.emit_stats
-certus_ui:CertusWorkerBase.is_stop_requested
-certus_ui:ExcelTableWidget.export_to_excel
-certus_ui:ExcelTableWidget.set_data
-certus_ui:StatsCounter.as_dict
-spline_visual_utils:live_monitor_nk_clipboard_tsv_2nm
-spline_visual_utils:snap_spline_visual_dict

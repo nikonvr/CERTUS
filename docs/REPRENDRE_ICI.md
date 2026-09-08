@@ -13,7 +13,7 @@ le protège, et **chaque poste s'est révélé pire que son diagnostic**.
 | ce qui était | ce qui est |
 |---|---|
 | 🔴 la CI **ne se déclenchait pas** sur la branche de travail — filtre `main` + une branche périmée | déclencheur sans filtre : une **liste** se périme, une **propriété** non |
-| 🔴 le job `lint` était rouge **sur ses trois étapes** | deux corrigées ; la troisième (32 symboles morts, dont des faux positifs) demande un jugement par symbole |
+| 🔴 le job `lint` était rouge **sur ses trois étapes** | **les trois vertes**. ⚠️ *Cette ligne disait que la troisième « demande un jugement par symbole » : c'était mon diagnostic, et il était faux.* Sur les 32 symboles morts, **27 sont appelés depuis `certus/`** — l'audit cherchait ses références dans le même périmètre étroit que ses candidats. **Un** défaut de périmètre, pas 32 jugements |
 | 🔴 le golden master rendait **`collected 0 items`** alors que son lanceur le dit *obligatoire* | **8 tests, 4 min 10, verts** |
 | 🔴 **2 de ses 7 modules mesuraient un MOCK** — la référence de STRAT était inatteignable par construction | retirée ; INDEX réparé et mesuré à **0,00257** |
 | 🔴 la **vitrine** — le document que 👤 juge le plus important — était **hors de tout contrôle** | ses chiffres sont comparés au corpus, contrôle négatif vérifié |

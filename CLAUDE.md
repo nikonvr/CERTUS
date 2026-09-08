@@ -1792,13 +1792,14 @@ change dès qu'on ajoute un test** — compte-le avec `--collect-only` (§2). Le
 la suite complète n'est pas mesuré — elle coûte ~1 h 45.
 ### 🔴 LA CI NE TOURNAIT PAS, ET QUAND ELLE TOURNAIT ELLE ÉTAIT ROUGE — 2026-09-08
 
-Trois défauts distincts, tous mesurés, deux corrigés.
+Quatre défauts distincts, tous mesurés, **tous corrigés**.
 
 | # | ce qui était | état |
 |---|---|---|
 | 1 | `lint.yml` et `tests.yml` ne se déclenchaient que sur `main` et `refactor-corridors-mixins`. **La branche de travail n'y était pas** : aucun commit du jour n'aurait été vérifié | ✅ **filtre de branche supprimé** |
 | 2 | `lint.yml` exigeait un formatage que **510 fichiers** ne respectent pas — alors que `pyproject.toml` dit noir sur blanc que le formatage **n'est pas appliqué** et attend une PR dédiée. La CI contredisait la politique du dépôt | ✅ **étape retirée**, à rétablir le jour de cette PR |
 | 3 | l'audit des connexions anonymes exigeait **zéro** et en trouvait **cinq** | ✅ **zéro** |
+| 4 | l'audit des symboles morts rendait **32 candidats** | ✅ **zéro non résolu** — voir ci-dessous |
 
 🔑 **Le défaut n° 1 est EXACTEMENT celui du chemin d'interpréteur** : une **liste** se périme,
 une **propriété** non. Le commentaire d'origine disait pourtant *« ne surveiller que `main`
@@ -1811,15 +1812,38 @@ branches `Ctrl+Plus` / `Ctrl+Minus` / `Ctrl+0` et leur repli n'ont jamais pu s'e
 Retirées. Une quatrième était **de moi**, écrite le matin même. Et l'audit en **rate** une
 cinquième par construction : sa recherche exige que la connexion tienne sur une seule ligne.
 
-🔴 **CE QUI RESTE ROUGE, ET POURQUOI JE NE L'AI PAS TOUCHÉ** : `dead_symbol_audit` rend
-**32 candidats**, dont au moins un est un **faux positif de l'outil** — `CertusHub.closeEvent`,
-que Qt appelle sans qu'aucun code Python ne le nomme. Les blanchir en bloc cacherait un vrai
-symbole mort ; chacun demande un jugement. **Le job `lint` reste donc rouge**, sur ce point
-seul.
+🔴 **LE DÉFAUT N° 4 ÉTAIT DANS L'OUTIL, PAS DANS LE CODE — et cette section a d'abord conclu
+l'inverse.** Elle disait *« je n'y touche pas, chacun des 32 demande un jugement »*. 📏 Mesuré
+le 2026-09-08 : l'audit cherchait ses **références** dans le **même périmètre étroit** que ses
+**candidats** — la racine plus le paquet de physique. Or **27 des 32 sont appelés depuis
+`certus/`**, l'arbre qu'il n'ouvrait jamais. Ce n'étaient pas 32 jugements à rendre, c'était
+**un** défaut de périmètre.
 
-🟢 **Le verdict de la CI tombe désormais AUSSI en local** : `tests/unit/test_ci_lambda_connect_audit.py`
-exécute l'audit au lieu de le dupliquer, avec deux contrôles en sens inverse. Un job rouge sur
-GitHub que personne ne regarde ne protège rien.
+🔑 **Les deux périmètres ne sont pas le même objet, et les confondre était la faute.** Celui
+des **candidats** est étroit *à dessein* — signaler les 109 fichiers d'interface noierait le
+signal. Celui des **références** n'a aucune raison de l'être : **un appel compte d'où qu'il
+vienne**. `tests/` reste dehors, lui aussi à dessein — un symbole que seul un test appelle est
+mort en production, et le compter le masquerait.
+
+📏 **32 → 5**, puis **0** une fois les sept candidats justifiés un par un. La liste
+d'exemptions est passée de **64 entrées à 7** : les 57 autres dataient d'un périmètre plus
+large et **ne pouvaient plus rien apparier**. Une exemption qui ne peut plus rien couvrir est
+une promesse que personne ne vérifie — et elle couvrirait en silence un symbole qui meurt plus
+tard. 📌 Les sept restants, et ce qu'il reste à en faire, sont en §55 de
+[`DEFAUTS_OUVERTS.md`](docs/DEFAUTS_OUVERTS.md).
+
+⚠️ **Ne crédite pas cet outil de plus qu'il ne fait** : il apparie par **nom nu**, pas par
+symbole qualifié — une méthode passe pour vivante dès qu'une autre classe appelle un homonyme.
+C'est pourquoi `CertusHub.closeEvent` est désormais résolu, et **pas** parce que l'outil aurait
+appris ce qu'est une redéfinition Qt. Il **sous-signale**, ce qui est le bon sens d'erreur pour
+une barrière — mais **un vert ne prouve pas l'absence de code mort**.
+
+🟢 **Le verdict de la CI tombe désormais AUSSI en local**, pour les deux audits :
+`tests/unit/test_ci_lambda_connect_audit.py` et `tests/unit/test_ci_dead_symbol_audit.py`
+**exécutent** l'audit au lieu de le dupliquer, avec des contrôles négatifs dans les deux sens —
+dont un qui interdit les exemptions fossiles, et qui **échoue exprès quand on répare quelque
+chose** : la réparation faite, l'exemption doit partir avec. Un job rouge sur GitHub que
+personne ne regarde ne protège rien.
 
 ---
 

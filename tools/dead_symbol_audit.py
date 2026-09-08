@@ -2,6 +2,25 @@
 
 Scans Python modules for top-level functions and class methods that appear
 unused, with a conservative whitelist model for CI enforcement.
+
+THE TWO PERIMETERS ARE NOT THE SAME, and conflating them was a defect.
+Candidates are looked for in a deliberately narrow set of modules -- the root
+entry points plus the physics package -- because flagging the whole interface
+tree would drown the signal. References are looked for across the entire
+runtime tree instead: a call counts wherever it lives.
+
+Measured on 2026-09-08: collecting references in the narrow perimeter reported
+32 unresolved candidates, 27 of which are called from the application package
+the tool never opened. A permanently red gate teaches everyone to ignore red.
+
+Tests stay OUT of the reference perimeter on purpose: a symbol only a test
+calls is dead in production, and counting the test would hide it.
+
+Known limitation, stated so nobody credits the tool with more than it does:
+matching is by bare name, not by qualified symbol. A method is considered
+alive when any other class calls something of the same name. The tool
+therefore under-reports, which is the safe direction for a gate -- but green
+does not prove the absence of dead code.
 """
 
 from __future__ import annotations
@@ -52,6 +71,31 @@ def _iter_python_files(root: Path) -> list[Path]:
         for path in physics_dir.rglob("*.py"):
             rel_parts = set(path.relative_to(root).parts)
             if rel_parts & EXCLUDED_DIR_NAMES:
+                continue
+            files.append(path)
+
+    return sorted(set(files))
+
+
+def _iter_reference_files(root: Path) -> list[Path]:
+    """Every runtime module a call could live in.
+
+    Wider than the candidate perimeter on purpose: a reference counts wherever
+    it is written. `scripts/` is included because the project runs those
+    constantly -- a symbol used only there is used.
+
+    `tests/` and `tools/` are excluded. A test-only symbol is dead in
+    production, and the audits under `tools/` name symbols as data rather than
+    calling them.
+    """
+    files: list[Path] = list(root.glob("*.py"))
+
+    for package in ("certus", "certus_physics", "scripts"):
+        directory = root / package
+        if not directory.exists():
+            continue
+        for path in directory.rglob("*.py"):
+            if set(path.relative_to(root).parts) & EXCLUDED_DIR_NAMES:
                 continue
             files.append(path)
 
@@ -185,9 +229,8 @@ def _is_excluded_by_heuristic(defn: Definition) -> bool:
 
 
 def run_audit(whitelist_path: Path) -> tuple[list[Definition], list[Definition], list[Definition]]:
-    py_files = _iter_python_files(ROOT)
-    defs = _collect_definitions(py_files)
-    refs = _collect_references(py_files)
+    defs = _collect_definitions(_iter_python_files(ROOT))
+    refs = _collect_references(_iter_reference_files(ROOT))
 
     candidates: list[Definition] = []
     for defn in defs:

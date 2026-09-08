@@ -13,10 +13,10 @@ deux workflows ne se déclenchaient même pas sur la branche de travail.
 ⚠️ Ce test ne duplique pas l'audit, il l'**exécute**. S'il change, le test suit
 sans qu'on ait à le récrire — c'est la seule façon qu'il ne mente pas.
 
-📌 L'audit des symboles morts n'est délibérément PAS repris ici : il rend 32
-candidats dont au moins un est un faux positif de l'outil (`closeEvent`, que Qt
-appelle sans qu'aucun code Python ne le nomme). Chacun demande un jugement ; les
-figer en bloc cacherait un vrai symbole mort.
+📌 L'audit des symboles morts a son propre fichier, `test_ci_dead_symbol_audit.py`.
+⚠️ Ce renvoi disait qu'il n'était « délibérément pas repris, parce qu'il rend 32
+candidats dont chacun demande un jugement » : les 32 étaient à 27 sur 32 des faux
+positifs de périmètre, corrigés le 2026-09-08. Il en reste 7, tous mesurés.
 """
 
 from __future__ import annotations

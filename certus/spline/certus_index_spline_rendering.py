@@ -43,7 +43,7 @@ from certus.ui.certus_ui import (
     show_toast,
     open_documentation,
 )
-from certus.utils.certus_ux import OBJ
+from certus.utils.certus_ux import Typography, OBJ
 from certus.utils.certus_reset_framework import create_reset_button
 from certus.spline.certus_index_spline_core import (
     allowed_substrate_names,
@@ -1141,7 +1141,7 @@ class _UIBuilderMixin:
         self.params_collapsible = CertusCollapsible("2-4  Parameters", self.ctrl_tabs, expanded=True)
         self.params_collapsible._hdr.setStyleSheet(
             f"QPushButton {{ background: {CertusTheme.SURFACE_HOVER}; border: none; "
-            f"border-radius: 6px; padding: 4px 8px; font-weight: 600; font-size: 11px; "
+            f"border-radius: 6px; padding: 4px 8px; font-weight: 600; font-size: {Typography.BODY_LG}pt; "
             f"color: {CertusTheme.TEXT_MAIN}; text-align: left; }}"
             f"QPushButton:hover {{ background: {CertusTheme.BORDER}; }}"
         )
@@ -1660,7 +1660,7 @@ class _UIBuilderMixin:
         return panel
 
     def _build_basic_step2_substrate_thickness(self, parent_layout: "QVBoxLayout", style: str) -> None:
-        box2 = CertusCard("2  Substrate n(lambda) & layer thickness d (nm)")
+        box2 = CertusCard("2  Substrate n(λ) & layer thickness d (nm)")
         box2.setStyleSheet(style)
         box2.body.setContentsMargins(6, 4, 6, 4)
         box2.body.setSpacing(4)
@@ -1771,7 +1771,7 @@ class _UIBuilderMixin:
             box = QVBoxLayout()
             box.setSpacing(1)
             lbl_title = QLabel(label_text)
-            lbl_title.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 10px; font-weight: bold;")
+            lbl_title.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY}pt; font-weight: bold;")
             lbl_val = QLabel(default_val)
             lbl_val.setStyleSheet(f"color: {color_hex}; font-size: 13px; font-weight: 700;")
             box.addWidget(lbl_title)
@@ -1890,7 +1890,7 @@ class _UIBuilderMixin:
         ctx_lay.addWidget(hint)
 
         self.lbl_corridor_rmse_summary = QLabel("No corridor RMSE profile available yet.")
-        self.lbl_corridor_rmse_summary.setStyleSheet(f"color: {CertusTheme.TEXT_MAIN}; font-size: 11px;")
+        self.lbl_corridor_rmse_summary.setStyleSheet(f"color: {CertusTheme.TEXT_MAIN}; font-size: {Typography.BODY_LG}pt;")
         self.lbl_corridor_rmse_summary.setToolTip(
             "<b>Final quality summary</b><br>"
             "Displays the globally optimized thickness d* found on the grid "
@@ -1899,7 +1899,7 @@ class _UIBuilderMixin:
         ctx_lay.addWidget(self.lbl_corridor_rmse_summary)
 
         self.lbl_corridor_rmse_robust_compact = QLabel("Robust interval: -")
-        self.lbl_corridor_rmse_robust_compact.setStyleSheet(f"color: {CertusTheme.TEXT_MAIN}; font-size: 11px;")
+        self.lbl_corridor_rmse_robust_compact.setStyleSheet(f"color: {CertusTheme.TEXT_MAIN}; font-size: {Typography.BODY_LG}pt;")
         self.lbl_corridor_rmse_robust_compact.setToolTip(
             "<b>Robust interval (compact format)</b><br>"
             "Displays the center and half-width in the form "
@@ -1941,7 +1941,7 @@ class _UIBuilderMixin:
 
         self.lbl_corridors_tab_state = QLabel()
         self.lbl_corridors_tab_state.setTextFormat(Qt.TextFormat.RichText)
-        self.lbl_corridors_tab_state.setStyleSheet(f"color: {CertusTheme.TEXT_MAIN}; font-size: 11px;")
+        self.lbl_corridors_tab_state.setStyleSheet(f"color: {CertusTheme.TEXT_MAIN}; font-size: {Typography.BODY_LG}pt;")
         self.lbl_corridors_tab_state.setToolTip("Corridor option state in the UI for the next optimization run.")
         ctx_lay.addWidget(self.lbl_corridors_tab_state)
         ctx_lay.addStretch(1)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_strat_common import *
+from certus.utils.certus_ux import Typography
 
 class InteractiveSpectrumWindow(CertusWindowSpyMixin, QMainWindow):
 
@@ -44,7 +45,7 @@ class InteractiveSpectrumWindow(CertusWindowSpyMixin, QMainWindow):
 
         lbl = QLabel("<b>Monte Carlo Reliability Analysis</b>")
 
-        lbl.setStyleSheet(f"color: {CertusTheme.PRIMARY}; font-size: 14px;")
+        lbl.setStyleSheet(f"color: {CertusTheme.PRIMARY}; font-size: {Typography.H2}pt;")
 
         h_layout.addWidget(lbl)
 
@@ -70,7 +71,7 @@ class InteractiveSpectrumWindow(CertusWindowSpyMixin, QMainWindow):
 
             lbl_txt = QLabel(text)
 
-            lbl_txt.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px; font-weight: bold;")
+            lbl_txt.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt; font-weight: bold;")
 
             legend_layout.addWidget(lbl_color)
 

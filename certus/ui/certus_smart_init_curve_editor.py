@@ -17,6 +17,7 @@ UX: large points, wide lambda target, closest in value, hover feedback + live dr
 
 from __future__ import annotations
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
+from certus.utils.certus_ux import Typography
 
 
 from typing import Callable
@@ -333,7 +334,7 @@ class SmartInitNKCurveEditorDialog(QDialog):
             "<i>k</i>: log scale axis."
         )
         hint.setWordWrap(True)
-        hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 12px;")
+        hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.H3}pt;")
         lay.addWidget(hint)
 
         self._lbl_live = QLabel()

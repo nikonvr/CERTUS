@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_index_spline_common import *
+from certus.utils.certus_ux import Typography
 from certus.ui.certus_index_spline_common import _apply_fixed_log_k_axis
 
 class CertusIndexSplineLayoutExtrasMixin:
@@ -14,7 +15,7 @@ class CertusIndexSplineLayoutExtrasMixin:
         gst = self._control_group_box_style()
         hint = QLabel("Order: 2 → 3 → 4")
         hint.setWordWrap(False)
-        hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt;")
         v.addWidget(hint)
         self._build_basic_step2_substrate_thickness(v, gst)
         self._build_basic_step3_spectral_targets(v, gst)
@@ -73,7 +74,7 @@ class CertusIndexSplineLayoutExtrasMixin:
 
         info.setWordWrap(True)
 
-        info.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        info.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt;")
 
         lay.addWidget(info)
 
@@ -100,7 +101,7 @@ class CertusIndexSplineLayoutExtrasMixin:
 
         intro.setWordWrap(True)
 
-        intro.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        intro.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt;")
 
         grid.addWidget(intro, 0, 0, 1, 2)
 

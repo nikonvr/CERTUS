@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 from certus.ui.certus_theme import CertusTheme
+from certus.utils.certus_ux import Typography
 from certus.utils.certus_strat_service import APP_CONTEXT
 
 class WelcomeGuideWidget(QWidget):
@@ -34,12 +35,12 @@ class WelcomeGuideWidget(QWidget):
                 border-radius: 16px;
             }}
             .step-number {{ font-size: 34px; font-weight: 900; opacity: 0.20; }}
-            .step-title {{ color: {CertusTheme.TEXT_MAIN}; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; }}
-            .step-desc {{ color: {CertusTheme.TEXT_SUB}; font-size: 11px; line-height: 1.35; }}
+            .step-title {{ color: {CertusTheme.TEXT_MAIN}; font-size: {Typography.H3}pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; }}
+            .step-desc {{ color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt; line-height: 1.35; }}
 
             .mission-frame {{ background: {CertusTheme.SURFACE}; border: 1px solid {CertusTheme.BORDER}; border-radius: 14px; }}
             .dash-frame {{ background: {CertusTheme.SURFACE}; border: 1px solid {CertusTheme.BORDER}; border-radius: 12px; }}
-            .dash-header {{ color: {CertusTheme.PRIMARY}; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid {CertusTheme.BORDER}; padding-bottom: 6px; margin-bottom: 8px; }}
+            .dash-header {{ color: {CertusTheme.PRIMARY}; font-size: {Typography.BODY}pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid {CertusTheme.BORDER}; padding-bottom: 6px; margin-bottom: 8px; }}
 
         """)
 
@@ -157,7 +158,7 @@ class WelcomeGuideWidget(QWidget):
 
             lbl_txt = QLabel(text)
 
-            lbl_txt.setStyleSheet(f"color: {CertusTheme.TEXT_MAIN}; font-size: 11px; background: transparent;")
+            lbl_txt.setStyleSheet(f"color: {CertusTheme.TEXT_MAIN}; font-size: {Typography.BODY_LG}pt; background: transparent;")
 
             lbl_txt.setTextFormat(Qt.TextFormat.RichText)
 
@@ -324,12 +325,12 @@ class WelcomeGuideWidget(QWidget):
         lbl_icon.setFixedSize(24, 24)
 
         lbl_icon.setStyleSheet(
-            f"background-color: {CertusTheme.INFO_BG}; color: {CertusTheme.SECONDARY}; border-radius: 4px; font-weight: bold; font-size: 14px;"
+            f"background-color: {CertusTheme.INFO_BG}; color: {CertusTheme.SECONDARY}; border-radius: 4px; font-weight: bold; font-size: {Typography.H2}pt;"
         )
 
         if icon == "✓":
             lbl_icon.setStyleSheet(
-                f"background-color: {CertusTheme.SUCCESS_BG}; color: {CertusTheme.SUCCESS}; border-radius: 4px; font-weight: bold; font-size: 14px;"
+                f"background-color: {CertusTheme.SUCCESS_BG}; color: {CertusTheme.SUCCESS}; border-radius: 4px; font-weight: bold; font-size: {Typography.H2}pt;"
             )
 
         lbl_text = QLabel(label)

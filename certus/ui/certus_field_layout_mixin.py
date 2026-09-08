@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_field_common import *
+from certus.utils.certus_ux import Typography
 
 
 class CertusFieldLayoutMixin:
@@ -137,7 +138,7 @@ class CertusFieldLayoutMixin:
         metrics_layout = QVBoxLayout(metrics_layout_w)
         self.lbl_max_e2 = QLabel("Peak |E|² : N/A")
         self.lbl_r = QLabel("R : N/A")
-        self.lbl_max_e2.setStyleSheet(f"font-size: 14px; font-weight: bold; color: {CertusTheme.SUCCESS};")
+        self.lbl_max_e2.setStyleSheet(f"font-size: {Typography.H2}pt; font-weight: bold; color: {CertusTheme.SUCCESS};")
         metrics_layout.addWidget(self.lbl_max_e2)
         metrics_layout.addWidget(self.lbl_r)
         self.card_metrics.body.addWidget(metrics_layout_w)
@@ -177,7 +178,7 @@ class CertusFieldLayoutMixin:
         overview_layout.setSpacing(6)
 
         overview_hint = QLabel("Overview — field, spectral response and index profile visible together")
-        overview_hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        overview_hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt;")
         overview_layout.addWidget(overview_hint)
 
         overview_grid = QGridLayout()

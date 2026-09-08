@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_strat_common import *
+from certus.utils.certus_ux import Typography
 from certus.ui.certus_ui import CertusScientificPlot
 
 class StrategySpectralPerformanceWindow(CertusWindowSpyMixin, QMainWindow):
@@ -65,7 +66,7 @@ class StrategySpectralPerformanceWindow(CertusWindowSpyMixin, QMainWindow):
 
         lbl = QLabel(f"<b>Spectral Robustness Analysis</b> (Strategy #{strategy_id})")
 
-        lbl.setStyleSheet(f"color: {CertusTheme.CHART_PRIMARY}; font-size: 14px;")
+        lbl.setStyleSheet(f"color: {CertusTheme.CHART_PRIMARY}; font-size: {Typography.H2}pt;")
 
         h_layout.addWidget(lbl)
 

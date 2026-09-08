@@ -27,6 +27,7 @@ from PyQt6.QtWidgets import (
 )
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
+from certus.utils.certus_ux import Typography
 from certus.ui.certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
 from certus.ui.certus_smart_init_curve_editor import SmartInitNKCurveEditorDialog
 from certus.ui.certus_ui import (
@@ -355,7 +356,7 @@ class SmartInitPreviewManager:
                 "(small slack on this penalty is configurable)."
             )
             lbl_mono_relax.setWordWrap(True)
-            lbl_mono_relax.setStyleSheet(f"color: {CertusTheme.WARNING}; font-size: 11px; padding: 2px 0;")
+            lbl_mono_relax.setStyleSheet(f"color: {CertusTheme.WARNING}; font-size: {Typography.BODY_LG}pt; padding: 2px 0;")
             lay.addWidget(lbl_mono_relax)
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -374,7 +375,7 @@ class SmartInitPreviewManager:
 
         self.lbl_rmse = QLabel()
         self.lbl_rmse.setStyleSheet(
-            f"font-size: 14px; font-weight: bold; color: {CertusTheme.PRIMARY}; padding: 4px 0;"
+            f"font-size: {Typography.H2}pt; font-weight: bold; color: {CertusTheme.PRIMARY}; padding: 4px 0;"
         )
         left_lay.addWidget(self.lbl_rmse)
 
@@ -440,7 +441,7 @@ class SmartInitPreviewManager:
                     border: 1px solid {CertusTheme.BORDER};
                     border-radius: 3px;
                     font-weight: bold;
-                    font-size: 11px;
+                    font-size: {Typography.BODY_LG}pt;
                     padding: 0px;
                 }}
                 QPushButton:hover {{

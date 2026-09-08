@@ -26,6 +26,7 @@ from PyQt6.QtWidgets import (
 )
 
 from certus.ui.certus_theme import CertusTheme
+from certus.utils.certus_ux import Typography
 
 # Tone -> theme attribute, resolved lazily so a theme switch is picked up.
 _TONE_ATTRS = {
@@ -76,9 +77,9 @@ class CertusKpiBanner(QFrame):
             box.setSpacing(1)
 
             lbl_caption = QLabel(caption)
-            lbl_caption.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 10px; font-weight: bold;")
+            lbl_caption.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY}pt; font-weight: bold;")
             lbl_value = QLabel(PLACEHOLDER)
-            lbl_value.setStyleSheet(f"color: {_tone_color('primary')}; font-size: 14px; font-weight: 700;")
+            lbl_value.setStyleSheet(f"color: {_tone_color('primary')}; font-size: {Typography.H2}pt; font-weight: 700;")
             lbl_value.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
 
             box.addWidget(lbl_caption)
@@ -96,7 +97,7 @@ class CertusKpiBanner(QFrame):
             return
         try:
             lbl.setText(str(value))
-            lbl.setStyleSheet(f"color: {_tone_color(tone)}; font-size: 14px; font-weight: 700;")
+            lbl.setStyleSheet(f"color: {_tone_color(tone)}; font-size: {Typography.H2}pt; font-weight: 700;")
         except RuntimeError:  # widget already destroyed
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
@@ -127,7 +128,7 @@ def build_synthesis_tab(
 
     lbl_hint = QLabel(hint)
     lbl_hint.setWordWrap(True)
-    lbl_hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+    lbl_hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt;")
     lay.addWidget(lbl_hint)
 
     lay.addWidget(banner)

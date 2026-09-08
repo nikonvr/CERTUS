@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_strat_common import *
+from certus.utils.certus_ux import Typography
 from certus.ui.certus_strat_mixins_ui import CertusWindowSpyMixin
 from certus.core.certus_strat_core import _compute_strategy_symmetry_score_percent
 # Crash tolerance threshold, 👤 "5% lost deposition is perfect". Imported
@@ -82,7 +83,7 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
         else:
             lbl_fallback = QLabel("CERTUS")
 
-            lbl_fallback.setStyleSheet(f"color: {CertusTheme.PRIMARY}; font-weight: bold; font-size: 14px;")
+            lbl_fallback.setStyleSheet(f"color: {CertusTheme.PRIMARY}; font-weight: bold; font-size: {Typography.H2}pt;")
 
             logo_layout.addWidget(lbl_fallback)
 
@@ -101,7 +102,7 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
         self.origin_summary_label = QLabel("Origins: -")
 
         self.origin_summary_label.setStyleSheet(
-            f"font-size: 12px; color: {CertusTheme.TEXT_SUB}; padding: 2px 10px 8px 10px;"
+            f"font-size: {Typography.H3}pt; color: {CertusTheme.TEXT_SUB}; padding: 2px 10px 8px 10px;"
         )
 
         layout.addWidget(self.origin_summary_label)

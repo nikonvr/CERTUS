@@ -99,7 +99,7 @@ from certus.ui.certus_ui import (
 from certus.core.certus_metrology import ValidationStatus
 from certus.utils.certus_services import IndexFitRequest, IndexFitService
 from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
-from certus.utils.certus_ux import build_premium_overrides, OBJ
+from certus.utils.certus_ux import Typography, build_premium_overrides, OBJ
 from certus.ui.certus_svg import SVG_AVAILABLE
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Event
@@ -659,7 +659,7 @@ class CertusIndexLayoutMixin:
 
         self.lbl_file = QLabel("No file loaded")
 
-        self.lbl_file.setStyleSheet(f"font-style: italic; color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        self.lbl_file.setStyleSheet(f"font-style: italic; color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt;")
 
         l.addWidget(self.lbl_file)
 
@@ -667,7 +667,7 @@ class CertusIndexLayoutMixin:
 
         self.lbl_data_type = QLabel("")
 
-        self.lbl_data_type.setStyleSheet(f"color: {CertusTheme.PRIMARY}; font-weight: bold; font-size: 11px;")
+        self.lbl_data_type.setStyleSheet(f"color: {CertusTheme.PRIMARY}; font-weight: bold; font-size: {Typography.BODY_LG}pt;")
 
         l.addWidget(self.lbl_data_type)
 
@@ -756,7 +756,7 @@ class CertusIndexLayoutMixin:
 
         self.lbl_frosted_info = QLabel("i Frosted: measures R or Rnu (1 side), never R/Tnu")
 
-        self.lbl_frosted_info.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 10px; font-style: italic;")
+        self.lbl_frosted_info.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY}pt; font-style: italic;")
 
         self.lbl_frosted_info.setVisible(False)
 
@@ -798,7 +798,7 @@ class CertusIndexLayoutMixin:
 
         self.lbl_ksub_file = QLabel("(no files)")
 
-        self.lbl_ksub_file.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 10px;")
+        self.lbl_ksub_file.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY}pt;")
 
         h_ksub.addWidget(self.btn_import_ksub)
 
@@ -1125,7 +1125,7 @@ class CertusIndexLayoutMixin:
 
         self.toggle_details_btn.setStyleSheet(f"""
 
-            QPushButton {{ background-color: {CertusTheme.SECONDARY}; color: white; border: 1px solid {CertusTheme.BORDER}; border-radius: 3px; padding: 2px; font-size: 11px; font-weight: bold; }}
+            QPushButton {{ background-color: {CertusTheme.SECONDARY}; color: white; border: 1px solid {CertusTheme.BORDER}; border-radius: 3px; padding: 2px; font-size: {Typography.BODY_LG}pt; font-weight: bold; }}
 
             QPushButton:checked {{ background-color: {CertusTheme.PRIMARY}; }}
 

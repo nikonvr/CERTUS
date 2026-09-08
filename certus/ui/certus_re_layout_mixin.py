@@ -123,7 +123,7 @@ from certus.ui.certus_ui import (
     confirm_stop_with_timeout,
 )
 
-from certus.utils.certus_ux import build_premium_overrides, OBJ
+from certus.utils.certus_ux import Typography, build_premium_overrides, OBJ
 from certus.utils.certus_data import OPENPYXL_AVAILABLE
 from certus.workers.certus_re_workers import REWorker
 from certus.ui.certus_re_ui import CertusREResultsDialog
@@ -250,7 +250,7 @@ class CertusRELayoutMixin:
 
         workflow_hint.setWordWrap(True)
 
-        workflow_hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 10px;")
+        workflow_hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY}pt;")
 
         workflow_card.body.addWidget(workflow_hint)
 
@@ -329,7 +329,7 @@ class CertusRELayoutMixin:
 
         hint.setWordWrap(True)
 
-        hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt;")
 
         lay.addWidget(hint)
 
@@ -401,7 +401,7 @@ class CertusRELayoutMixin:
 
         hint.setWordWrap(True)
 
-        hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt;")
 
         lay.addWidget(hint)
 
@@ -479,7 +479,7 @@ class CertusRELayoutMixin:
 
         lbl_idx.setWordWrap(True)
 
-        lbl_idx.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        lbl_idx.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt;")
 
         lay.addWidget(lbl_idx)
 
@@ -493,7 +493,7 @@ class CertusRELayoutMixin:
 
         sub = QLabel("<b>Design and measurement reference</b>")
 
-        sub.setStyleSheet(f"color: {CertusTheme.TEXT_MAIN}; font-size: 11px;")
+        sub.setStyleSheet(f"color: {CertusTheme.TEXT_MAIN}; font-size: {Typography.BODY_LG}pt;")
 
         lay.addWidget(sub)
 
@@ -773,7 +773,7 @@ class CertusRELayoutMixin:
         plot_header_layout.addWidget(detach_btn)
 
         plot_hint = QLabel(
-            f'<span style="color:{CertusTheme.TEXT_SUB}; font-size:11px;">'
+            f'<span style="color:{CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt;">'
             "RE load, run, and optimization options: left panel."
             "</span>"
         )
@@ -813,7 +813,7 @@ class CertusRELayoutMixin:
 
         self.plot_tabs.addTab(self.profile_plot, "Index profile")
 
-        self.plot_tabs.addTab(self.nk_plot, "n(lambda)")
+        self.plot_tabs.addTab(self.nk_plot, "n(λ)")
 
         c1 = FlashyCard(
             "Excel workbook",
@@ -1018,7 +1018,7 @@ class CertusRELayoutMixin:
         self.stats_label = QLabel("Evals: 0")
 
         self.stats_label.setStyleSheet(
-            f"QLabel {{ color: {CertusTheme.TEXT_MAIN}; font-weight: bold; font-size: 12px; padding: 2px 8px; background-color: transparent; }}"
+            f"QLabel {{ color: {CertusTheme.TEXT_MAIN}; font-weight: bold; font-size: {Typography.H3}pt; padding: 2px 8px; background-color: transparent; }}"
         )
 
         self.progress_widget = EnhancedProgressWidget()
@@ -1035,7 +1035,7 @@ class CertusRELayoutMixin:
 
         self.log_btn.clicked.connect(self.toggle_logs)
 
-        self.log_btn.setStyleSheet("font-size: 11px; padding: 2px 8px;")
+        self.log_btn.setStyleSheet(f"font-size: {Typography.BODY_LG}pt; padding: 2px 8px;")
 
         self.status_bar.addWidget(self.log_btn)
 
@@ -1212,7 +1212,7 @@ class CertusRELayoutMixin:
 
         _cap_lbl.setWordWrap(True)
 
-        _cap_lbl.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px; padding-bottom: 6px;")
+        _cap_lbl.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt; padding-bottom: 6px;")
 
         lay.addWidget(_cap_lbl)
 

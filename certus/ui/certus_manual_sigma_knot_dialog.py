@@ -28,6 +28,7 @@ from PyQt6.QtWidgets import (
 )
 
 from certus.ui.certus_ui import CertusScientificPlot, CertusTheme
+from certus.utils.certus_ux import Typography
 from certus.ui.certus_ui_widgets_progress import EnhancedProgressWidget
 
 
@@ -218,7 +219,7 @@ class ManualSigmaKnotDialog(QDialog):
         self.lbl_preview_log = QLabel("Preview log: init")
         self.lbl_preview_log.setWordWrap(True)
         self.lbl_preview_log.setStyleSheet(
-            f"background-color: #141414; color: #d6f0ff; padding: 5px 7px; border-radius: 4px; font-family: 'Consolas', 'Courier New', monospace; font-size: 11px; border: 1px solid {CertusTheme.BORDER};"
+            f"background-color: #141414; color: #d6f0ff; padding: 5px 7px; border-radius: 4px; font-family: 'Consolas', 'Courier New', monospace; font-size: {Typography.BODY_LG}pt; border: 1px solid {CertusTheme.BORDER};"
         )
         top_layout.addWidget(self.lbl_preview_log)
 
@@ -393,7 +394,7 @@ class ManualSigmaKnotDialog(QDialog):
         self.txt_runtime_log.setReadOnly(True)
         self.txt_runtime_log.setMinimumHeight(30)
         self.txt_runtime_log.setStyleSheet(
-            f"background-color: #121212; color: #00ff00; font-family: 'Consolas', 'Courier New', monospace; font-size: 11px; border: 1px solid {CertusTheme.BORDER}; border-radius: 4px; padding: 4px;"
+            f"background-color: #121212; color: #00ff00; font-family: 'Consolas', 'Courier New', monospace; font-size: {Typography.BODY_LG}pt; border: 1px solid {CertusTheme.BORDER}; border-radius: 4px; padding: 4px;"
         )
         self.txt_runtime_log.setPlaceholderText("Re-optimization progress messages appear here.")
 

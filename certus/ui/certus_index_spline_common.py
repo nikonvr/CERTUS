@@ -147,7 +147,7 @@ from certus.utils.certus_services import IndexFitRequest, IndexFitService
 from certus.utils.certus_reset_framework import create_reset_button
 
 from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
-from certus.utils.certus_ux import build_premium_overrides, OBJ
+from certus.utils.certus_ux import Typography, build_premium_overrides, OBJ
 
 from certus.ui.certus_smart_init_curve_editor import SmartInitNKCurveEditorDialog
 
@@ -404,7 +404,7 @@ def _add_spectrum_thickness_badge(
         html=(
             '<div style="background-color: rgba(15, 23, 42, 180); '
             'padding: 4px 8px; border: 1px solid rgba(255,255,255,0.18); border-radius: 6px;">'
-            f'<span style="color: {CertusTheme.PRIMARY}; font-size: 12px;"><b>d = {float(d_nm):.2f} nm</b></span>'
+            f'<span style="color: {CertusTheme.PRIMARY}; font-size: {Typography.H3}pt;"><b>d = {float(d_nm):.2f} nm</b></span>'
             "</div>"
         ),
         anchor=(0.0, 1.0),
@@ -641,18 +641,18 @@ def _build_smart_init_knot_columns(
 
         lam_l = QLabel()
         lam_l.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        lam_l.setStyleSheet(f"font-size: 9px; color: {CertusTheme.TEXT_SUB};")
+        lam_l.setStyleSheet(f"font-size: {Typography.BODY_SM}pt; color: {CertusTheme.TEXT_SUB};")
 
         sig_l = QLabel()
         sig_l.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        sig_l.setStyleSheet(f"font-size: 9px; color: {CertusTheme.TEXT_SUB};")
+        sig_l.setStyleSheet(f"font-size: {Typography.BODY_SM}pt; color: {CertusTheme.TEXT_SUB};")
 
         lbl_lam_cols.append(lam_l)
         lbl_sig_cols.append(sig_l)
 
         cap_n = QLabel("n")
         cap_n.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        cap_n.setStyleSheet(f"font-size: 8px; color: {CertusTheme.TEXT_SUB};")
+        cap_n.setStyleSheet(f"font-size: {Typography.CAPTION}pt; color: {CertusTheme.TEXT_SUB};")
 
         row_n = QHBoxLayout()
         row_n.setSpacing(1)
@@ -662,12 +662,12 @@ def _build_smart_init_knot_columns(
         val_n = QLabel()
         val_n.setAlignment(Qt.AlignmentFlag.AlignCenter)
         val_n.setMinimumWidth(36)
-        val_n.setStyleSheet("font-size: 10px;")
+        val_n.setStyleSheet(f"font-size: {Typography.BODY}pt;")
         bp_n = QPushButton("+")
         bp_n.setFixedSize(28, 28)
         b_auto_n = QPushButton("auto")
         b_auto_n.setFixedSize(42, 28)
-        b_auto_n.setStyleSheet("font-size: 9px; padding: 1px 2px;")
+        b_auto_n.setStyleSheet(f"font-size: {Typography.BODY_SM}pt; padding: 1px 2px;")
 
         lbl_n_cols.append(val_n)
         row_n.addWidget(bm_n)
@@ -678,7 +678,7 @@ def _build_smart_init_knot_columns(
 
         cap_L = QLabel("ln k")
         cap_L.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        cap_L.setStyleSheet(f"font-size: 8px; color: {CertusTheme.TEXT_SUB};")
+        cap_L.setStyleSheet(f"font-size: {Typography.CAPTION}pt; color: {CertusTheme.TEXT_SUB};")
 
         row_L = QHBoxLayout()
         row_L.setSpacing(1)
@@ -688,12 +688,12 @@ def _build_smart_init_knot_columns(
         val_L = QLabel()
         val_L.setAlignment(Qt.AlignmentFlag.AlignCenter)
         val_L.setMinimumWidth(36)
-        val_L.setStyleSheet("font-size: 10px;")
+        val_L.setStyleSheet(f"font-size: {Typography.BODY}pt;")
         bp_L = QPushButton("+")
         bp_L.setFixedSize(28, 28)
         b_auto_L = QPushButton("auto")
         b_auto_L.setFixedSize(42, 28)
-        b_auto_L.setStyleSheet("font-size: 9px; padding: 1px 2px;")
+        b_auto_L.setStyleSheet(f"font-size: {Typography.BODY_SM}pt; padding: 1px 2px;")
 
         lbl_L_cols.append(val_L)
         row_L.addWidget(bm_L)

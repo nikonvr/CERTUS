@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_strat_common import *
+from certus.utils.certus_ux import Typography
 from certus.ui.certus_strat_plots_ui import CertusScientificPlot
 
 class InteractiveIndicesWindow(CertusWindowSpyMixin, QMainWindow):
@@ -59,7 +60,7 @@ class InteractiveIndicesWindow(CertusWindowSpyMixin, QMainWindow):
 
             t = QLabel(text)
 
-            t.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px; font-weight: bold;")
+            t.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt; font-weight: bold;")
 
             h_layout.addWidget(l)
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_index_spline_common import *
+from certus.utils.certus_ux import Typography
 
 def _apply_fixed_log_k_axis(plot_w: Any | None) -> None:
     from certus.ui.certus_index_spline_common import _apply_fixed_log_k_axis as impl
@@ -39,7 +40,7 @@ class LiveIndexMonitor(QDialog):
         l.addLayout(h)
 
         self.lbl_d = QLabel("d =  nm")
-        self.lbl_d.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        self.lbl_d.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt;")
         l.addWidget(self.lbl_d)
 
         self.p_n = CertusScientificPlot(title="Index n")

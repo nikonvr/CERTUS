@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_field_common import *
+from certus.utils.certus_ux import Typography
 
 class CertusFieldEventsMixin:
     """CertusFieldEventsMixin."""
@@ -277,9 +278,9 @@ class CertusFieldEventsMixin:
         body {{ background: #f8fafc; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; }}
         .container {{ max-width: 1000px; margin: 0 auto; background: white; padding: 32px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }}
         h1 {{ font-size: 28px; font-weight: 700; color: #1e293b; margin-bottom: 8px; }}
-        p {{ color: #64748b; font-size: 14px; margin-bottom: 24px; }}
+        p {{ color: #64748b; font-size: {Typography.H2}pt; margin-bottom: 24px; }}
         table {{ width: 100%; border-collapse: collapse; margin-top: 16px; }}
-        th {{ background: #f1f5f9; color: #475569; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; padding: 12px; border-bottom: 2px solid #e2e8f0; }}
+        th {{ background: #f1f5f9; color: #475569; font-weight: 600; text-transform: uppercase; font-size: {Typography.BODY_LG}pt; letter-spacing: 0.05em; padding: 12px; border-bottom: 2px solid #e2e8f0; }}
         tr:hover {{ background: #f8fafc; }}
     </style>
 </head>

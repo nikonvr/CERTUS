@@ -16,6 +16,7 @@ from PyQt6.QtCore import QRunnable, QThreadPool, pyqtSlot
 from PyQt6.QtWidgets import QMessageBox, QPlainTextEdit, QTextEdit, QPushButton, QWidget
 
 from certus.utils.errors import NUMERICAL_FAULT_EXCEPTIONS
+from certus.utils.certus_ux import Typography
 
 
 __all__ = [
@@ -501,7 +502,7 @@ def create_reset_button(app_instance, use_app_reset: bool = False) -> "QPushButt
             padding: 8px 16px;
             border-radius: 4px;
             font-weight: bold;
-            font-size: 11px;
+            font-size: {Typography.BODY_LG}pt;
         }
         QPushButton:hover {
             background-color: #7a4a00;

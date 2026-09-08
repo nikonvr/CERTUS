@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_index_spline_common import *
+from certus.utils.certus_ux import Typography
 from certus.utils.certus_index_utils import _lam_uniform_grid
 
 # Registry of workers that did not respond to cooperative stop. It maintains a
@@ -533,7 +534,7 @@ class CertusIndexSplineEventsExtrasMixin:
         lay = QVBoxLayout(w)
         lbl = QLabel(message)
         lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lbl.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-style: italic; font-size: 11px;")
+        lbl.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-style: italic; font-size: {Typography.BODY_LG}pt;")
         lbl.setWordWrap(True)
         lay.addStretch(1)
         lay.addWidget(lbl)
@@ -612,7 +613,7 @@ class CertusIndexSplineEventsExtrasMixin:
         tb_lay.setContentsMargins(8, 2, 8, 2)
 
         lbl = QLabel("Mode Axe X :")
-        lbl.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px; font-weight: bold;")
+        lbl.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt; font-weight: bold;")
         tb_lay.addWidget(lbl)
 
         self.cb_spectrum_xmode = QComboBox()

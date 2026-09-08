@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_field_common import *
+from certus.utils.certus_ux import Typography
 
 class CertusFieldStateMixin:
     """CertusFieldStateMixin."""
@@ -852,7 +853,7 @@ class CertusFieldStateMixin:
             "Double-click col 3-4 = load Best MC | "
             "Double-click col 5-6 = load Best Fab (>=5nm)"
         )
-        lbl.setStyleSheet("font-size: 12px; margin-bottom: 5px; color: #475569;")
+        lbl.setStyleSheet(f"font-size: {Typography.H3}pt; margin-bottom: 5px; color: #475569;")
         p_lay.addWidget(lbl)
 
         self.pareto_table = QTableWidget(0, 8)

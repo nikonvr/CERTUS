@@ -71,6 +71,7 @@ from certus.core.certus_core import (
 from certus.core.certus_core import OPENPYXL_AVAILABLE
 from certus.utils.certus_data import read_data_file_robust
 from certus.ui.certus_theme import CertusTheme, get_standard_stylesheet
+from certus.utils.certus_ux import Typography
 from certus.core.certus_core import get_export_config, setup_module_logging
 from certus.core.certus_core import QueueHandler, setup_gui_logger
 from certus.ui.certus_plot import (
@@ -93,13 +94,13 @@ class CertusSectionHeader(QWidget):
         lay.setSpacing(8)
         lbl = QLabel(title)
         lbl.setStyleSheet(
-            f"font-weight: 700; font-size: 11px; color: {CertusTheme.TEXT_MAIN}; "
+            f"font-weight: 700; font-size: {Typography.BODY_LG}pt; color: {CertusTheme.TEXT_MAIN}; "
             f"text-transform: uppercase; letter-spacing: 0.5px;"
         )
         lay.addWidget(lbl)
         if caption:
             cap = QLabel(caption)
-            cap.setStyleSheet(f"font-size: 10px; color: {CertusTheme.TEXT_SUB};")
+            cap.setStyleSheet(f"font-size: {Typography.BODY}pt; color: {CertusTheme.TEXT_SUB};")
             lay.addWidget(cap)
         lay.addStretch(1)
         sep = QFrame()
@@ -209,7 +210,7 @@ class CertusStepper(QWidget):
             bg, fg, border = CertusTheme.SURFACE, CertusTheme.TEXT_SUB, CertusTheme.BORDER
         return (
             f"QPushButton {{ background: {bg}; color: {fg}; border: 2px solid {border}; "
-            f"border-radius: 12px; font-weight: 700; font-size: 10px; }}"
+            f"border-radius: 12px; font-weight: 700; font-size: {Typography.BODY}pt; }}"
         )
 
     def _btn_style(self, i: int) -> str:
@@ -225,7 +226,7 @@ class CertusStepper(QWidget):
         # labels were the smallest interactive elements of the whole suite.
         return (
             f"QPushButton {{ background: transparent; border: none; color: {color}; "
-            f"font-weight: {weight}; font-size: 11px; text-align: left; padding: 2px 0; "
+            f"font-weight: {weight}; font-size: {Typography.BODY_LG}pt; text-align: left; padding: 2px 0; "
             f"min-height: 24px; }}"
         )
 
@@ -262,7 +263,7 @@ class CertusCollapsible(QWidget):
         self._hdr.clicked.connect(self._toggle)
         self._hdr.setStyleSheet(
             f"QPushButton {{ background: {CertusTheme.SURFACE_HOVER}; border: none; "
-            f"border-radius: 6px; padding: 6px 10px; font-weight: 600; font-size: 11px; min-height: 24px; "
+            f"border-radius: 6px; padding: 6px 10px; font-weight: 600; font-size: {Typography.BODY_LG}pt; min-height: 24px; "
             f"color: {CertusTheme.TEXT_MAIN}; text-align: left; }}"
             f"QPushButton:hover {{ background: {CertusTheme.BORDER}; }}"
         )

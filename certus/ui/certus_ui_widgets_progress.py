@@ -71,6 +71,7 @@ from certus.core.certus_core import (
 from certus.core.certus_core import OPENPYXL_AVAILABLE
 from certus.utils.certus_data import read_data_file_robust
 from certus.ui.certus_theme import CertusTheme, get_standard_stylesheet
+from certus.utils.certus_ux import Typography
 from certus.core.certus_core import get_export_config, setup_module_logging
 from certus.core.certus_core import QueueHandler, setup_gui_logger
 from certus.ui.certus_plot import (
@@ -158,7 +159,7 @@ class ProgressDialog(QWidget):
 
         self.title_label = QLabel(title)
         self.title_label.setWordWrap(True)
-        self.title_label.setStyleSheet(f"color: {CertusTheme.TEXT_MAIN}; font-size: 14px; font-weight: 600;")
+        self.title_label.setStyleSheet(f"color: {CertusTheme.TEXT_MAIN}; font-size: {Typography.H2}pt; font-weight: 600;")
 
         layout.addWidget(self.title_label)
 
@@ -174,7 +175,7 @@ class ProgressDialog(QWidget):
 
         self.status_label = QLabel("Ready to start")
         self.status_label.setWordWrap(True)
-        self.status_label.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 12px;")
+        self.status_label.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.H3}pt;")
 
         layout.addWidget(self.status_label)
 
@@ -193,7 +194,7 @@ class ProgressDialog(QWidget):
 
         self.detail_label = QLabel("")
         self.detail_label.setWordWrap(True)
-        self.detail_label.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        self.detail_label.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt;")
         layout.addWidget(self.detail_label)
         self.detail_label.setText(_format_progress_status(
             status="idle",
@@ -284,11 +285,11 @@ class DualStageProgressWidget(QWidget):
         bars_layout.setSpacing(6)
 
         self.overall_header = QLabel("Overall progress")
-        self.overall_header.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 10px; font-weight: 600;")
+        self.overall_header.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY}pt; font-weight: 600;")
         
         self._overall_value_label = QLabel("0%")
         self._overall_value_label.setAlignment(Qt.AlignmentFlag.AlignRight)
-        self._overall_value_label.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 10px; font-weight: 600;")
+        self._overall_value_label.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY}pt; font-weight: 600;")
         
         overall_h_layout = QHBoxLayout()
         overall_h_layout.setContentsMargins(0, 0, 0, 0)
@@ -306,11 +307,11 @@ class DualStageProgressWidget(QWidget):
         bars_layout.addWidget(self.progress_bar)
 
         self.stage_header = QLabel("Current stage")
-        self.stage_header.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 10px; font-weight: 600;")
+        self.stage_header.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY}pt; font-weight: 600;")
         self.stage_header.setVisible(False)
         
         self._stage_value_label = QLabel("")
-        self._stage_value_label.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 10px;")
+        self._stage_value_label.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY}pt;")
         self._stage_value_label.setVisible(False)
         
         # We add them to bars_layout, but wait, a QHBoxLayout won't hide automatically when children are hidden.
@@ -345,11 +346,11 @@ class DualStageProgressWidget(QWidget):
         layout.addLayout(bars_layout)
 
         self.info_label = QLabel(self._main_label)
-        self.info_label.setStyleSheet(f"color: {CertusTheme.TEXT_MAIN}; font-size: 11px; font-weight: 500;")
+        self.info_label.setStyleSheet(f"color: {CertusTheme.TEXT_MAIN}; font-size: {Typography.BODY_LG}pt; font-weight: 500;")
         layout.addWidget(self.info_label)
 
         self.detail_label = QLabel("")
-        self.detail_label.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        self.detail_label.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt;")
         layout.addWidget(self.detail_label)
         self.detail_label.setText(_format_progress_status(
             status="idle",

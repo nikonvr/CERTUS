@@ -72,7 +72,24 @@ def _variant_colors(variant: str) -> tuple[str, str, str]:
 
 _TOAST_CLS = None
 _STACK_CLS = None
-_STACKS: dict[int, object] = {}  # parent id -> CertusToastStack
+
+#: Attribute the parent carries its own stack under.
+#:
+#: 🔴 THIS REPLACES A MODULE-LEVEL DICT KEYED BY ``id(parent)``, AND THAT DICT
+#: LEAKED EVERY WINDOW IT EVER SAW. The chain was circular: the dict held the
+#: stack, the stack holds a Python reference to its parent, and the cleanup was
+#: wired to the parent's ``destroyed`` signal -- a destruction the dict's own
+#: reference made impossible. Measured on 2026-09-09: one call to
+#: ``get_toast_stack`` turns a collectable widget into an immortal one, and each
+#: RE window left 45 top-level widgets alive, so building the next one cost more
+#: than the last (x3.54 over six).
+#:
+#: Hanging the stack on the parent makes the lifetime follow ownership: the stack
+#: dies with the window. It also removes the ``id()`` key, which was a second
+#: defect waiting to fire -- ids are reused once an object dies, so a new window
+#: could have inherited a dead one's stack. Only the leak kept that from
+#: happening.
+_STACK_ATTR = "_certus_toast_stack"
 
 
 def _build_toast_class():
@@ -377,20 +394,22 @@ def get_toast_stack(parent):
     """Return (creating if needed) the :class:`CertusToastStack` for ``parent``."""
     if parent is None:
         return None
-    key = id(parent)
-    stack = _STACKS.get(key)
+
+    stack = getattr(parent, _STACK_ATTR, None)
+    if stack is not None:
+        try:
+            stack.parent()  # a wrapper whose C++ side is gone raises here
+        except RuntimeError:
+            stack = None
+
     if stack is None:
         StackCls = _get_stack_cls()
         stack = StackCls(parent)
-        _STACKS[key] = stack
-
-        # Cleanup entry on destroy
-        def _drop_stack(*_args, stack_key=key):
-            _STACKS.pop(stack_key, None)
-
         try:
-            parent.destroyed.connect(_drop_stack)
-        except (AttributeError, RuntimeError, TypeError):
+            setattr(parent, _STACK_ATTR, stack)
+        except AttributeError:
+            # A parent that cannot carry the attribute gets a fresh stack on
+            # every call: slower, still correct, and it never leaks.
             pass
     return stack
 

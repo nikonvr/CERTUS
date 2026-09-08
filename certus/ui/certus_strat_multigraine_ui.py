@@ -63,13 +63,13 @@ def interpreteur_et_script() -> tuple[str | None, str]:
     """
     if getattr(sys, "frozen", False):
         return None, (
-            "🔴 la recherche multi-realisation n'est pas disponible dans la version COMPILEE : "
-            "elle lance des processus separes a partir de `scripts/`, qui n'est pas embarque "
-            "dans le paquet. Lance CERTUS depuis les sources pour l'utiliser."
+            "🔴 The multi-seed search is not available in the COMPILED build: it starts "
+            "separate processes from `scripts/`, which is not bundled. Run CERTUS from "
+            "the sources to use it."
         )
     script = RACINE / "scripts" / "orchestre_multigraine.py"
     if not script.is_file():
-        return None, f"🔴 script introuvable : {script}"
+        return None, f"🔴 script not found: {script}"
     return sys.executable, ""
 
 #: Le bruit sur une DIFFERENCE de SEEL, mesure sur ce depot. Sert a dire si un ecart
@@ -278,13 +278,13 @@ class CertusStratMultigraineMixin:
         self._mg_tampon = ""
 
         onglet = QWidget()
-        self.tabs.addTab(onglet, "Multi-realisation")
+        self.tabs.addTab(onglet, "Multi-seed")
         v = QVBoxLayout(onglet)
         v.setSpacing(10)
         v.setContentsMargins(5, 5, 5, 5)
 
         # -- reglages ---------------------------------------------------------------------
-        carte = CertusCard("Budget et objectif")
+        carte = CertusCard("Budget and objective")
         # 🔴 LE COMPOSANT EST EXPLICITE, ET SANS VALEUR PAR DEFAUT MUETTE. La premiere version
         # codait « r75x2 » en dur : l'utilisateur pouvait avoir charge un tout autre
         # empilement et l'onglet aurait rendu un SEEL plausible portant sur autre chose.
@@ -292,47 +292,52 @@ class CertusStratMultigraineMixin:
         self._mg_composant.addItem("")
         self._mg_composant.addItems(sorted(COMPOSANTS))
         self._mg_composant.setToolTip(
-            "Le composant a chercher. Pre-selectionne sur celui que vous avez charge, quand il "
-            "correspond a une entree connue.\n🔴 Sans choix explicite, la recherche est REFUSEE."
+            "The component to search. Pre-selected from the one you loaded, when it matches "
+            "a known entry.\n🔴 Without an explicit choice, the search is REFUSED."
         )
         _pre = composant_depuis_fichier(getattr(self, "_last_config_file", None))
         if _pre:
             self._mg_composant.setCurrentText(_pre)
         self._mg_budget = QLineEdit("2h")
         self._mg_budget.setToolTip(
-            "Duree maximale : 2h · 90m · 1h30 · nuit (10 h).\n"
-            "Le budget gouverne les LANCEMENTS, pas les arrets : un run deja en vol est "
-            "laisse finir, parce qu'un run coupe est une mesure detruite."
+            "Maximum duration: 2h · 90m · 1h30 · nuit (10 h).\n"
+            "The last one is a keyword of the runner, not a label: type it as it stands.\n"
+            "The budget governs what is STARTED, never what is stopped: a run already in "
+            "flight is left to finish, because a run cut short is a measurement destroyed."
         )
         self._mg_objectif = QComboBox()
-        self._mg_objectif.addItems(["premier", "meilleur"])
+        # 🔴 LE LIBELLE EST ANGLAIS, LA VALEUR RESTE FRANCAISE. Le drapeau `--objectif`
+        # de `orchestre_multigraine.py` n'accepte que deux jetons francais : renommer
+        # les entrees ferait rejeter la ligne de commande par argparse.
+        self._mg_objectif.addItem("first to find", "premier")
+        self._mg_objectif.addItem("best within budget", "meilleur")
         self._mg_objectif.setToolTip(
-            "premier : on s'arrete des qu'une realisation trouve -- le plus rapide.\n"
-            "meilleur : on epuise le budget et on unit tout.\n"
-            "⚠️ Les trois graines qui trouvent s'etalent de 0,5599 a 0,6112 nm, soit 9,2 % : "
-            "s'arreter au premier peut couter cela."
+            "first to find: stop as soon as one run succeeds -- the fastest.\n"
+            "best within budget: spend the whole budget, then merge everything.\n"
+            "⚠️ The three seeds that succeed spread from 0.5599 to 0.6112 nm, i.e. 9.2 %: "
+            "stopping at the first one can cost that much."
         )
         self._mg_cible = QLineEdit("")
         self._mg_cible.setPlaceholderText("ex. 0.57")
         self._mg_cible.setToolTip(
-            "On arrete des qu'une realisation rend un SEEL <= cette valeur, en nm.\n"
-            "Laisser vide pour ne pas armer de cible."
+            "Stop as soon as one run reaches a SEEL <= this value, in nm.\n"
+            "Leave empty to arm no target."
         )
         self._mg_slots = QLineEdit("2")
         self._mg_slots.setToolTip(
-            "Recherches concurrentes, en processus SEPARES.\n"
-            "Mesure du 2026-08-22 sur 16 threads : deux runs concurrents rendent +29 % de "
-            "debit, pas +100 % -- le goulot est la bande passante memoire."
+            "Concurrent searches, in SEPARATE processes.\n"
+            "Measured 2026-08-22 on 16 threads: two concurrent runs give +29 % throughput, "
+            "not +100 % -- the bottleneck is memory bandwidth."
         )
         # QGridLayout 2 colonnes (label | widget) : évite le minimum ~870 px du QHBoxLayout
         # 5-paires-en-ligne, ce qui causait un défilement horizontal à 1366×768.
         g = QGridLayout()
         g.setColumnStretch(1, 1)
-        for _row, (lib, w) in enumerate((("Composant :", self._mg_composant),
-                                         ("Budget :", self._mg_budget),
-                                         ("Objectif :", self._mg_objectif),
-                                         ("SEEL cible (nm) :", self._mg_cible),
-                                         ("Slots :", self._mg_slots))):
+        for _row, (lib, w) in enumerate((("Component:", self._mg_composant),
+                                         ("Budget:", self._mg_budget),
+                                         ("Objective:", self._mg_objectif),
+                                         ("Target SEEL (nm):", self._mg_cible),
+                                         ("Slots:", self._mg_slots))):
             g.addWidget(QLabel(lib), _row, 0)
             g.addWidget(w, _row, 1)
         carte.body.addLayout(g)
@@ -342,9 +347,9 @@ class CertusStratMultigraineMixin:
         # QVBoxLayout : les trois labels sont trop longs pour coexister en une ligne sans
         # imposer un minimum ~825 px au panneau.
         barre = QVBoxLayout()
-        self._mg_bouton_lancer = QPushButton("Lancer la recherche")
+        self._mg_bouton_lancer = QPushButton("Start the search")
         self._mg_bouton_lancer.setToolTip(
-            "Rejoue la recherche sur plusieurs réalisations (graines) dans un budget de temps donné."
+            "Replays the search over several seeds within a given time budget."
         )
         self._mg_bouton_lancer.clicked.connect(self._mg_lancer)
         # 🔑 LE MOT EST « FINALISER », PAS « ARRETER », ET C'EST 👤 QUI L'A TROUVE :
@@ -352,21 +357,21 @@ class CertusStratMultigraineMixin:
         # QUITTE et se lit « tout annuler » ; or les deux boutons produisent le chiffre
         # citable -- ils ne different que par le sort des realisations EN VOL. Le mot juste
         # dit ce qu'on OBTIENT.
-        self._mg_bouton_finaliser = QPushButton("Finaliser (laisser finir)")
+        self._mg_bouton_finaliser = QPushButton("Finalise (let runs finish)")
         self._mg_bouton_finaliser.setEnabled(False)
         self._mg_bouton_finaliser.setToolTip(
-            "Cesse de LANCER de nouvelles réalisations, LAISSE FINIR celles qui tournent, puis "
-            "enchaine sur l'union et la notation finale.\nRien n'est gaspille — mais il faut "
-            "attendre la fin des runs en vol."
+            "Stops STARTING new runs, LETS the running ones FINISH, then moves on to the "
+            "merge and the final scoring.\nNothing is wasted — but you must wait for the "
+            "runs still in flight."
         )
         self._mg_bouton_finaliser.clicked.connect(lambda: self._mg_finaliser("attendre"))
 
-        self._mg_bouton_finaliser_vite = QPushButton("Finaliser tout de suite")
+        self._mg_bouton_finaliser_vite = QPushButton("Finalise now")
         self._mg_bouton_finaliser_vite.setEnabled(False)
         self._mg_bouton_finaliser_vite.setToolTip(
-            "Passe a l'union et a la notation finale IMMEDIATEMENT, sur ce qui est deja mesure.\n"
-            "⚠️ Les réalisations en vol sont tuées et leur travail est PERDU — quatre mesures "
-            "de 91 min l'ont été ainsi le 2026-08-22, coupées à 98,9 % d'avancement."
+            "Moves to the merge and the final scoring IMMEDIATELY, on what is already measured.\n"
+            "⚠️ Runs in flight are killed and their work is LOST — four 91-minute measurements "
+            "went that way on 2026-08-22, cut at 98.9 % of their progress."
         )
         self._mg_bouton_finaliser_vite.clicked.connect(lambda: self._mg_finaliser("abandonner"))
 
@@ -378,21 +383,23 @@ class CertusStratMultigraineMixin:
         # -- tableau vivant ---------------------------------------------------------------
         self._mg_table = QTableWidget(0, 6)
         self._mg_table.setHorizontalHeaderLabels(
-            ["Graine", "Etat", "SEEL (nm)", "Blocs", "Plantage", "Duree"]
+            ["Seed", "Status", "SEEL (nm)", "Blocks", "Crash rate", "Duration"]
         )
         self._mg_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         v.addWidget(self._mg_table, 1)
 
-        self._mg_resume = QLabel(
-            "Le SEEL affiche pendant la campagne est PROVISOIRE : il est mesure sur la graine "
-            "qui l'a trouve. Le chiffre citable vient de la notation finale sur une graine "
-            "disjointe."
-        )
+        # Vide a la construction : `_mg_rafraichir` juste en dessous l'ecrit aussitot.
+        # La version precedente posait ici un paragraphe ecrase avant d'avoir ete vu.
+        self._mg_resume = QLabel("")
         self._mg_resume.setWordWrap(True)
         v.addWidget(self._mg_resume)
         self._mg_rafraichir()
 
     # -- pilotage -------------------------------------------------------------------------
+
+    def _mg_objectif_courant(self) -> str:
+        """Le jeton que le script accepte, pas le libelle que l'operateur lit."""
+        return self._mg_objectif.currentData() or "premier"
 
     def _mg_lancer(self) -> None:
         from PyQt6.QtCore import QProcess
@@ -401,7 +408,7 @@ class CertusStratMultigraineMixin:
             cible = float(self._mg_cible.text().replace(",", ".")) if self._mg_cible.text().strip() else None
             slots = int(self._mg_slots.text())
         except ValueError:
-            self._mg_resume.setText("🔴 SEEL cible ou slots illisible.")
+            self._mg_resume.setText("🔴 Target SEEL or slot count unreadable.")
             return
 
         py, motif = interpreteur_et_script()
@@ -414,16 +421,15 @@ class CertusStratMultigraineMixin:
             # 🔴 ON REFUSE, ON NE DEVINE PAS. Chercher sur un composant que 👤 n'a pas designe
             # rendrait un SEEL parfaitement plausible portant sur un autre empilement.
             self._mg_resume.setText(
-                "🔴 choisis un COMPOSANT avant de lancer. Aucun defaut n'est applique : "
-                "chercher sur un empilement que tu n'as pas designe rendrait un SEEL "
-                "plausible et faux."
+                "🔴 Pick a COMPONENT before starting. No default is applied: searching a "
+                "stack you did not name would return a SEEL that is plausible and wrong."
             )
             return
 
         args = construire_arguments(
             composant=composant,
             budget=self._mg_budget.text().strip() or "2h",
-            objectif=self._mg_objectif.currentText(),
+            objectif=self._mg_objectif_courant(),
             seel_cible=cible,
             slots=slots,
         )
@@ -478,8 +484,8 @@ class CertusStratMultigraineMixin:
             # plus arriver -- le script annonce son drapeau des la premiere seconde -- mais
             # s'il arrivait, 👤 doit le savoir plutot que de croire l'arret demande.
             self._mg_resume.setText(
-                "🔴 finalisation IMPOSSIBLE pour l'instant : la campagne n'a pas encore annonce son "
-                "point de finalisation. Reessaie dans un instant."
+                "🔴 Cannot finalise yet: the campaign has not announced its finalisation "
+                "point. Try again in a moment."
             )
             return
         Path(self._mg_etat.drapeau).write_text(
@@ -488,11 +494,11 @@ class CertusStratMultigraineMixin:
         self._mg_bouton_finaliser.setEnabled(False)
         self._mg_bouton_finaliser_vite.setEnabled(False)
         self._mg_resume.setText(
-            "⏹ FINALISATION demandee — les realisations en vol sont TUEES, l'union et la notation "
-            "sur graine disjointe s'enchainent tout de suite."
+            "⏹ FINALISATION requested — runs in flight are KILLED; the merge and the scoring "
+            "on a disjoint seed follow immediately."
             if mode == "abandonner" else
-            "⏹ FINALISATION demandee — les realisations en vol sont laissees finir, puis l'union et "
-            "la notation sur graine disjointe produisent le chiffre citable."
+            "⏹ FINALISATION requested — runs in flight are left to finish, then the merge and "
+            "the scoring on a disjoint seed produce the quotable figure."
         )
 
     def _mg_sur_sortie(self) -> None:
@@ -542,7 +548,7 @@ class CertusStratMultigraineMixin:
         for r, li in enumerate(lignes):
             for c, txt in enumerate((
                 str(li.graine),
-                li.etat,
+                ETAT_AFFICHE.get(li.etat, li.etat),
                 f"{li.seel:.4f}" if li.seel is not None else "--",
                 str(li.n_blocs) if li.n_blocs is not None else "--",
                 f"{100 * li.crash:.2f} %" if li.crash is not None else "--",
@@ -552,27 +558,61 @@ class CertusStratMultigraineMixin:
         self._mg_resume.setText(resumer(e))
 
 
+#: Les etats sont des jetons INTERNES d'une machine a etats pure, epingles PAR VALEUR
+#: dans tests/unit/test_strat_multigraine_ui.py. On les traduit donc a l'AFFICHAGE
+#: plutot que de les renommer : un libelle n'est pas une valeur.
+ETAT_AFFICHE: dict[str, str] = {
+    "en attente": "waiting",
+    "en cours": "running",
+    "trouve": "found",
+    "rien": "nothing found",
+    "deja mesuree": "already measured",
+    "non essayee": "not tried",
+}
+
+
 def resumer(e: EtatMultigraine) -> str:
     """Le texte du bandeau. Fonction PURE, donc testable -- et c'est la phrase que 👤 lira
-    pour decider d'arreter, elle doit dire ce que le chiffre vaut."""
-    bouts = [f"{e.combien_trouvent()} realisation(s) ont trouve sur {len(e.lignes)}"]
+    pour decider d'arreter, elle doit dire ce que le chiffre vaut.
+
+    Le TEXTE RENDU est en anglais, comme le reste de l'interface ; les identifiants et
+    les commentaires de ce module restent en francais, ce n'est pas le sujet.
+
+    L'ancienne premiere phrase disait « N realisation(s) ont trouve » : un verbe au
+    pluriel sur un compte qui vaut tres souvent 1, et c'est le chiffre le plus regarde
+    de l'onglet.
+    """
+    bouts: list[str] = []
+    if e.lignes:
+        trouves = e.combien_trouvent()
+        bouts.append(f"{trouves} seed{'' if trouves == 1 else 's'} found out of {len(e.lignes)}")
     prov = e.meilleur_provisoire()
     if prov is not None:
-        bouts.append(f"meilleur SEEL {prov:.4f} nm — PROVISOIRE, note sur sa propre graine")
+        bouts.append(f"best SEEL {prov:.4f} nm — PROVISIONAL, scored on its own seed")
     if e.plans_unis is not None:
-        u = f"union : {e.plans_unis} plan(s)"
+        u = f"merge: {e.plans_unis} plan(s)"
         if e.plans_ecartes:
-            u += f", {e.plans_ecartes} ECARTE(S) par le plafond"
+            u += f", {e.plans_ecartes} DISCARDED by the cap"
         bouts.append(u)
     if e.seel_final is not None:
-        bouts.append(f"RESULTAT CITABLE {e.seel_final:.4f} nm, note sur une graine disjointe")
+        bouts.append(f"QUOTABLE RESULT {e.seel_final:.4f} nm, scored on a disjoint seed")
         av = e.avertissement_ecart()
         if av:
             bouts.append("⚠️ " + av)
     if e.motif_finalisation:
-        bouts.append(f"arret : {e.motif_finalisation}")
+        bouts.append(f"stopped: {e.motif_finalisation}")
     if e.non_essayees:
-        bouts.append(f"⚠️ NON ESSAYEES faute de budget : {e.non_essayees}")
+        bouts.append(f"⚠️ NOT TRIED for lack of budget: {e.non_essayees}")
+    if not bouts:
+        # Rien n'a encore ete annonce : on dit ce que le chiffre vaudra, plutot que
+        # « 0 sur 0 ». ⚠️ La condition porte sur `bouts`, PAS sur `e.lignes` : une
+        # campagne peut annoncer une union ou un motif d'arret sans qu'aucune ligne
+        # de graine existe, et une premiere version les avalait toutes.
+        return (
+            "The SEEL shown during a campaign is PROVISIONAL: it is measured on the very "
+            "seed that found it. The quotable figure comes from the final scoring, on a "
+            "disjoint seed."
+        )
     return " · ".join(bouts)
 
 

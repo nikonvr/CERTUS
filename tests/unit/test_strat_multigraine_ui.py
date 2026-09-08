@@ -141,9 +141,13 @@ def test_un_evenement_INCONNU_est_ignore_sans_casser() -> None:
 # ---------------------------------------------------------------------------
 
 def test_le_bandeau_dit_PROVISOIRE_tant_qu_il_n_y_a_pas_de_notation() -> None:
-    """🔴 C'est sur ce chiffre que 👤 decide d'arreter. Il doit porter sa reserve."""
+    """🔴 C'est sur ce chiffre que 👤 decide d'arreter. Il doit porter sa reserve.
+
+    ⚠️ Le mot a change avec l'anglicisation du bandeau (plan UX, 5.8) ; la PROPRIETE
+    verifiee est la meme.
+    """
     e = _etat({"evt": "deja", "graine": 404, "deposables": 372, "seel": 0.5599})
-    assert "PROVISOIRE" in resumer(e)
+    assert "PROVISIONAL" in resumer(e)
 
 
 def test_le_bandeau_annonce_le_CITABLE_apres_notation() -> None:
@@ -152,7 +156,8 @@ def test_le_bandeau_annonce_le_CITABLE_apres_notation() -> None:
         {"evt": "resultat", "seel": 0.5612, "seel_provisoire": 0.5599, "n_blocs": 10},
     )
     t = resumer(e)
-    assert "CITABLE" in t and "0.5612" in t and "disjointe" in t
+    # Meme propriete qu'avant : le chiffre citable, sa valeur, et la graine disjointe.
+    assert "QUOTABLE" in t and "0.5612" in t and "disjoint" in t
 
 
 def test_l_ecart_utilise_le_provisoire_VU_PAR_LE_SCRIPT() -> None:
@@ -190,14 +195,20 @@ def test_un_resultat_MEILLEUR_que_le_provisoire_n_alerte_pas() -> None:
 # ---------------------------------------------------------------------------
 
 def test_la_TRONCATURE_de_l_union_se_voit() -> None:
-    """📏 Premier essai reel du 2026-08-22 : 200 plans retenus, 483 ECARTES."""
+    """📏 Premier essai reel du 2026-08-22 : 200 plans retenus, 483 ECARTES.
+
+    ⚠️ Le mot a change avec l'anglicisation du bandeau (plan UX, 5.8) ; la PROPRIETE
+    verifiee est la meme.
+    """
     e = _etat({"evt": "union", "plans": 200, "ecartes": 483})
-    assert "483" in resumer(e) and "ECARTE" in resumer(e)
+    assert "483" in resumer(e) and "DISCARDED" in resumer(e)
 
 
 def test_les_graines_NON_ESSAYEES_se_voient() -> None:
+    """Le mot a change avec l'anglicisation du bandeau (plan UX, 5.8) ; la propriete
+    verifiee est la meme : les graines non essayees sont nommees."""
     e = _etat({"evt": "fin", "trouve": False, "non_essayees": [909, 1111]})
-    assert "NON ESSAYEES" in resumer(e) and "909" in resumer(e)
+    assert "NOT TRIED" in resumer(e) and "909" in resumer(e)
 
 
 def test_le_MOTIF_d_arret_se_voit() -> None:
@@ -408,7 +419,9 @@ def test_en_mode_GELE_on_REFUSE_en_disant_pourquoi(monkeypatch: pytest.MonkeyPat
     monkeypatch.setattr(sys, "frozen", True, raising=False)
     py, motif = interpreteur_et_script()
     assert py is None
-    assert "COMPILEE" in motif and "sources" in motif
+    # Le message est passe a l'anglais (plan UX, 5.8) ; il doit toujours nommer le
+    # paquet compile ET la sortie de secours.
+    assert "COMPILED" in motif and "sources" in motif
 
 
 def test_une_derniere_ligne_SANS_retour_chariot_n_est_pas_perdue() -> None:

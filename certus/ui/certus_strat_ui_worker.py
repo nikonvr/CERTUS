@@ -2,6 +2,49 @@ from __future__ import annotations
 from certus.ui.certus_strat_common import *
 from certus.core.certus_strat_config import _SPECTRUM_COUNTER
 
+# Explicit: this module is served by a star import, and the placeholder was
+# used three times without ever being bound - see _refresh_synthesis_kpis.
+import math
+
+from certus.ui.certus_overview_tab import PLACEHOLDER
+from certus.utils.certus_strat_service import APP_CONTEXT, select_best_strat_result
+
+
+def _format_seel(result: dict) -> str:
+    """SEEL of one strategy result, or the placeholder when it cannot be derived.
+
+    Same derivation as the results table: the factor and exponent come from the
+    fit that step 0 leaves in the application context, applied to the error at
+    the NOMINAL noise level. Anything missing yields the placeholder rather
+    than a guess - a headline figure invented from an absent calibration is
+    the worst failure this suite can produce.
+    """
+    calibration = APP_CONTEXT.get("seel_data")
+    if not calibration or "fit_k" not in calibration or "fit_alpha" not in calibration:
+        return PLACEHOLDER
+
+    nominal = next(
+        (
+            r
+            for r in result.get("results_per_noise", []) or []
+            if abs(float(r.get("noise_level", 0.0)) - 1.0) < 0.1
+        ),
+        None,
+    )
+    if not nominal:
+        return PLACEHOLDER
+
+    rmse = nominal.get("rmse_p95", nominal.get("rmse_mean"))
+    if rmse is None:
+        return PLACEHOLDER
+
+    try:
+        seel = float(calibration["fit_k"]) * (float(rmse) ** float(calibration["fit_alpha"]))
+    except ArithmeticError, TypeError, ValueError:
+        return PLACEHOLDER
+
+    return f"{seel:.3f}" if math.isfinite(seel) else PLACEHOLDER
+
 
 class CertusStratWorkerMixin:
     def _request_stop(self) -> None:
@@ -607,10 +650,17 @@ class CertusStratWorkerMixin:
     def _refresh_synthesis_kpis(self) -> None:
         """Fill the KPI strip from the winning strategy of the finished run.
 
-        Keys are the ones the solver really emits - ``robustness_score``,
-        ``crash_rate`` and ``n_blocks`` (see certus_strat_robustness). SEEL is
-        deliberately absent: it never reaches these results, it is computed in
-        the UI at step 0.
+        The headline is the SEEL, in nanometres of thickness error per layer.
+        It does NOT reach these results - it is derived here from the fit that
+        step 0 leaves in the application context, and stays blank when that fit
+        is absent. An earlier version of this docstring called its absence
+        deliberate; the results table had been deriving it all along.
+
+        The other keys are the ones the solver really emits, and the shape is
+        the one ``_finalize_robustness_results`` returns: ``robustness_score``
+        and ``crash_rate`` at the top of the result, ``n_blocks`` INSIDE its
+        ``strategy`` - read from the top it was always None, so the block count
+        never reached the operator.
         """
         banner = getattr(self, "kpi_banner", None)
         if banner is None:
@@ -621,11 +671,14 @@ class CertusStratWorkerMixin:
                 banner.set_value("status", "No strategy ranked", "warn")
                 return
 
-            best = strategies[0]
+            # Not ``strategies[0]``: a partially populated payload can keep a
+            # placeholder zero at the top, which is why this helper exists.
+            best = select_best_strat_result(strategies) or strategies[0]
             score = best.get("robustness_score")
             crash = best.get("crash_rate")
-            blocks = best.get("n_blocks")
+            blocks = (best.get("strategy") or {}).get("n_blocks")
 
+            banner.set_value("seel", _format_seel(best))
             banner.set_value("score", f"{float(score):.6f}" if score is not None else PLACEHOLDER)
             if crash is None:
                 banner.set_value("crash", PLACEHOLDER, "neutral")

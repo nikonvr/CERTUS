@@ -274,9 +274,22 @@ class CertusStratPlotMixin:
     def _apply_pixmap(self, pixmap) -> None:
 
         self.logger.info("[STRAT-UI] _apply_pixmap(size=%dx%d)", pixmap.width(), pixmap.height())
+        # Fit inside the label instead of stretching to it. Turning the flag
+        # off alone would CROP a plot larger than the widget, trading one
+        # defect for a worse one, so scale down with the ratio preserved.
+        target = self.main_plot_widget.size()
+        if not target.isEmpty() and (
+            pixmap.width() > target.width() or pixmap.height() > target.height()
+        ):
+            pixmap = pixmap.scaled(
+                target,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+
         self.main_plot_widget.setPixmap(pixmap)
 
-        self.main_plot_widget.setScaledContents(True)
+        self.main_plot_widget.setScaledContents(False)
 
         if self.plot_stack.currentWidget() != self.main_plot_widget:
             self.plot_stack.setCurrentWidget(self.main_plot_widget)

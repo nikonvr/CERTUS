@@ -1491,7 +1491,7 @@ class MetalBaseApp(CertusBaseApp):
         self.btn_load = create_styled_button(" Load File...", "secondary")
         self.btn_load.setToolTip(
             "Load a data file (CSV or Excel) containing columns:\n"
-            "lambda (nm), R, [T], [Rback]  percentage or 01 scale accepted."
+            "lambda (nm), R, [T], [Rback] - percentage or 0-1 scale accepted."
         )
         self.btn_load.clicked.connect(self.load_target_file)
         l.addWidget(self.btn_load)

@@ -1,6 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_design_common import *
-from certus.utils.certus_ux import OBJ
+from certus.utils.certus_ux import Typography, OBJ
 
 
 class LayoutManager:
@@ -156,8 +156,17 @@ class LayoutManager:
 
             n7_spin = self.ui._create_spin(1.5, dec=3)
 
-            for spin in [n4_spin, n7_spin]:
+            # The wavelength is taken from the column heading and the bounds are
+            # read back from the widget, so neither can drift away from what the
+            # operator sees or from what the field actually accepts.
+            for spin, header in ((n4_spin, headers[2]), (n7_spin, headers[3])):
                 spin.setRange(1.0, 4.0)
+
+                spin.setToolTip(
+                    f"Refractive index of {mat_name} at {header.split('@')[-1]} nm, "
+                    f"between {spin.minimum():.3f} and {spin.maximum():.3f}. "
+                    "Changing it re-evaluates the design."
+                )
 
                 spin.valueChanged.connect(self.ui._on_schedule_eval_signal)
 
@@ -701,7 +710,7 @@ class LayoutManager:
 
         self.ui.plot_tabs.addTab(self.ui.profile_plot, "Profile")
 
-        self.ui.plot_tabs.addTab(self.ui.nk_plot, "n(lambda)")
+        self.ui.plot_tabs.addTab(self.ui.nk_plot, "n(λ)")
 
         self.ui.plot_tabs.addTab(self.ui.color_plot, "Color")
 
@@ -1001,7 +1010,7 @@ class LayoutManager:
         self.ui.stats_label = QLabel("♟️ 0 minima  | 🎲 0 evals  | 🌈️ 0")
 
         self.ui.stats_label.setStyleSheet(
-            f"QLabel {{ color: {CertusTheme.TEXT_MAIN}; font-weight: bold; font-size: 12px; padding: 2px 8px; background-color: transparent; }}"
+            f"QLabel {{ color: {CertusTheme.TEXT_MAIN}; font-weight: bold; font-size: {Typography.H3}pt; padding: 2px 8px; background-color: transparent; }}"
         )
 
         self.ui.zoom_label = QLabel("Zoom 100%")

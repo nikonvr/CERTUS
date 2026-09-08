@@ -209,6 +209,7 @@ from certus.core.certus_core import OPENPYXL_AVAILABLE
 
 from certus.utils.certus_data import read_data_file_robust
 from certus.ui.certus_theme import CertusTheme
+from certus.utils.certus_ux import Typography
 from certus.ui.certus_ui_utils import open_documentation
 
 
@@ -374,7 +375,7 @@ def create_header_logo_widget(
 
                 color: {CertusTheme.TEXT_SUB};
 
-                font-size: 10px;
+                font-size: {Typography.BODY}pt;
 
             }}
 
@@ -579,7 +580,7 @@ def create_top_actions_bar(
                 border-radius: 10px;
                 padding: 6px 10px;
                 color: {CertusTheme.TEXT_SUB};
-                font-size: 11px;
+                font-size: {Typography.BODY_LG}pt;
                 font-weight: 600;
             }}
             QPushButton:hover {{
@@ -616,8 +617,9 @@ def create_top_actions_bar(
     if export_func:
         btns.append(("Export", export_func, QStyle.StandardPixmap.SP_DialogApplyButton, "Export"))
 
-    if help_func:
-        btns.append(("Help", help_func, QStyle.StandardPixmap.SP_DialogHelpButton, "Help"))
+    # No "Help" here: the window chrome already carries one, reachable by F1,
+    # and it opens the SAME documentation. Two buttons with one word for one
+    # destination left the operator guessing which was broken.
 
     for text, func, icon, tip_key in btns:
         if func:  # Only add if callback provided
@@ -658,3 +660,42 @@ def attach_splitter_capper(splitter: QSplitter, max_ratio: float = 0.34) -> Spli
     capper = SplitterCapper(splitter, max_ratio=max_ratio, parent=splitter)
     splitter.installEventFilter(capper)
     return capper
+
+
+class CertusBooleanField(QCheckBox):
+    """A check box that reads and writes like the text field it replaces.
+
+    Seven STRAT settings were on/off switches typed into a text box labelled
+    "(0/1)". Nothing stopped an operator entering 2, "oui", or a blank.
+
+    Swapping in a plain ``QCheckBox`` would have been worse: the settings layer
+    reads every widget through ``.text()``, and a check box returns its LABEL
+    there. The engine would have silently fallen back to a default while the
+    screen showed the operator's choice. This subclass therefore keeps the
+    ``.text()`` / ``.setText()`` contract, in "1" / "0" form.
+
+    It also re-emits ``textChanged``: the machine-model card recomputes its
+    summary on every keystroke so that what the screen shows is what the run
+    will do, and a widget without that signal breaks the window at build time.
+    """
+
+    textChanged = pyqtSignal(str)
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.toggled.connect(lambda _checked: self.textChanged.emit(self.text()))
+
+    def text(self) -> str:  # noqa: D102 - Qt override
+        return "1" if self.isChecked() else "0"
+
+    def setText(self, value) -> None:  # noqa: N802, D102 - Qt override
+        raw = str(value).strip().lower()
+        self.setChecked(raw not in ("", "0", "false", "no", "off"))
+
+    def setReadOnly(self, read_only) -> None:  # noqa: N802
+        """QLineEdit compatibility: a read-only switch cannot be toggled.
+
+        Callers disable settings this way; a check box has no read-only mode,
+        so the equivalent is to stop accepting input.
+        """
+        self.setEnabled(not bool(read_only))

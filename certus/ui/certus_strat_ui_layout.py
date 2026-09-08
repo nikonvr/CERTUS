@@ -1,5 +1,27 @@
 from __future__ import annotations
 from certus.ui.certus_strat_common import *
+from certus.utils.certus_ux import Typography
+from certus.ui.certus_ui_widgets_factory import CertusBooleanField
+from PyQt6.QtCore import QLocale
+from PyQt6.QtGui import QDoubleValidator
+
+#: Settings typed as a comma-separated LIST, not a single number: a number
+#: validator would stop the operator entering a valid value.
+LIST_VALUED_SETTINGS = frozenset({"robustness_noise_factors"})
+
+
+def _as_numeric_field(edit):
+    """Refuse what the reader cannot parse, and return the field.
+
+    These settings are read with float(); anything accepted here but rejected
+    by float() is dropped in SILENCE. The C locale matters: on a French
+    keyboard "1,5" is the natural way to write one and a half.
+    """
+    validator = QDoubleValidator(edit)
+    validator.setNotation(QDoubleValidator.Notation.StandardNotation)
+    validator.setLocale(QLocale.c())
+    edit.setValidator(validator)
+    return edit
 from certus.ui.certus_ui import WelcomeGuideWidget, EnhancedProgressWidget
 from certus.ui.certus_strat_stack_progress_widget import CertusStratStackProgressWidget
 from certus.ui.certus_strat_monitor_ui import CertusStratGrowthWidget
@@ -185,7 +207,7 @@ class CertusStratLayoutMixin:
         workflow_hint.setWordWrap(True)
 
         workflow_hint.setStyleSheet(
-            f"color: {CertusTheme.TEXT_SUB}; font-size: 11px; line-height: 1.4; padding: 2px 0 4px 0;"
+            f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt; line-height: 1.4; padding: 2px 0 4px 0;"
         )
 
         workflow_card.body.addWidget(workflow_hint)
@@ -242,7 +264,10 @@ class CertusStratLayoutMixin:
 
         self.main_plot_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.main_plot_widget.setScaledContents(True)
+        # NEVER stretch: this label carries the main scientific view, and
+        # scaling it to the widget ignores the aspect ratio - the plotted
+        # curve would be distorted, differently at each window size.
+        self.main_plot_widget.setScaledContents(False)
 
         self.main_plot_widget.setStyleSheet(f"background-color: {CertusTheme.SURFACE};")
 
@@ -266,6 +291,11 @@ class CertusStratLayoutMixin:
 
         self.kpi_banner = CertusKpiBanner(
             [
+                # First, because CLAUDE.md 22 makes it the only quantity to
+                # report: an equivalent thickness error per layer, which a
+                # chamber operator reads directly. The score next to it is a
+                # ranking figure, not something anyone can act on.
+                ("seel", "SEEL (nm/layer)"),
                 ("score", "ROBUSTNESS SCORE"),
                 ("crash", "CRASH RATE"),
                 ("blocks", "BLOCKS"),
@@ -315,7 +345,7 @@ class CertusStratLayoutMixin:
         self.stats_label = QLabel("♟️ 0  | 🎲 0  |  🌈️ 0")
 
         self.stats_label.setStyleSheet(
-            f"QLabel {{ color: {CertusTheme.TEXT_MAIN}; font-weight: 700; font-size: 12px; padding: 2px 8px; background-color: transparent; }}"
+            f"QLabel {{ color: {CertusTheme.TEXT_MAIN}; font-weight: 700; font-size: {Typography.H3}pt; padding: 2px 8px; background-color: transparent; }}"
         )
 
         self.stats_label.setToolTip(
@@ -377,7 +407,7 @@ class CertusStratLayoutMixin:
 
         top_settings_layout.setSpacing(6)
 
-        gb_sub = CertusCard("substrate_Base Wavelength")
+        gb_sub = CertusCard("Base Wavelength")
 
         gb_sub_layout = QHBoxLayout()
 
@@ -404,7 +434,7 @@ class CertusStratLayoutMixin:
 
         lbl_idx = QLabel("Index:")
 
-        self.widgets["nSub_custom"] = QLineEdit()
+        self.widgets["nSub_custom"] = _as_numeric_field(QLineEdit())
 
         self.widgets["nSub_custom"].setPlaceholderText("1.73")
 
@@ -432,9 +462,9 @@ class CertusStratLayoutMixin:
 
         lbl_l0 = QLabel("Center lambda₀ (nm):")
 
-        lbl_l0.setStyleSheet(f"font-weight: bold; font-size: 12px; color: {CertusTheme.INFO_TEXT};")
+        lbl_l0.setStyleSheet(f"font-weight: bold; font-size: {Typography.H3}pt; color: {CertusTheme.INFO_TEXT};")
 
-        self.widgets["l0"] = QLineEdit()
+        self.widgets["l0"] = _as_numeric_field(QLineEdit())
 
         self.widgets["l0"].setFixedWidth(70)
 
@@ -1272,7 +1302,7 @@ class CertusStratLayoutMixin:
 
         n_layout = QHBoxLayout()
 
-        self.widgets[f"n{label}_r"] = QLineEdit()
+        self.widgets[f"n{label}_r"] = _as_numeric_field(QLineEdit())
         self.widgets[f"n{label}_r"].setPlaceholderText("e.g. 2.3")
         self.widgets[f"n{label}_r"].setFixedWidth(50)
         self.widgets[f"n{label}_r"].setToolTip(
@@ -1381,10 +1411,20 @@ class CertusStratLayoutMixin:
 
             row = idx % rows
 
-            lbl = QLabel(label_text)
+            # A label saying "(0/1)" IS the declaration that the setting is a
+            # switch. Reading it here means adding a boolean setting cannot
+            # reintroduce a free-text field by omission.
+            is_boolean = "(0/1)" in label_text
+            lbl = QLabel(label_text.replace(" (0/1)", "") if is_boolean else label_text)
 
-            edit = QLineEdit()
-            edit.setMaximumWidth(70)
+            if is_boolean:
+                edit = CertusBooleanField()
+                edit.setAccessibleName(lbl.text().rstrip(":").strip())
+            else:
+                edit = QLineEdit()
+                edit.setMaximumWidth(70)
+                if key not in LIST_VALUED_SETTINGS:
+                    _as_numeric_field(edit)
 
             self.widgets[key] = edit
 

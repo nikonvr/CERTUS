@@ -130,6 +130,15 @@ class CertusCard(QFrame):
             f"border-radius: 8px; }}"
         )
 
+    def refresh_theme(self) -> None:
+        """Re-apply this card's own stylesheet after a theme change.
+
+        The sheet is an f-string evaluated once, at construction; the palette it
+        captured does not follow a later switch. The method already existed under
+        a private name and nothing ever called it.
+        """
+        self._refresh_style()
+
     def showEvent(self, event) -> None:
         super().showEvent(event)
         if getattr(self, "_intro_fade_started", False):
@@ -149,6 +158,12 @@ class CertusCard(QFrame):
             pass
 
 class FlashyCard(QFrame):
+    def refresh_theme(self) -> None:
+        """Re-apply this card's own stylesheet after a theme change."""
+        self.setStyleSheet(
+            f"background: {CertusTheme.SURFACE}; border: 1px solid {CertusTheme.BORDER}; border-radius: 12px;"
+        )
+
     """
 
     Styled card widget for displaying feature highlights.
@@ -167,9 +182,7 @@ class FlashyCard(QFrame):
 
         super().__init__()
 
-        self.setStyleSheet(
-            f"background: {CertusTheme.SURFACE}; border: 1px solid {CertusTheme.BORDER}; border-radius: 12px;"
-        )
+        self.refresh_theme()
 
         l = QVBoxLayout(self)
 

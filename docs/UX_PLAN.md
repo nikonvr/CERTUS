@@ -1054,10 +1054,55 @@ sur fond sombre ne doit **pas** déclencher. Vérifié échouant sur le code d'a
 `2 failed, 4 passed`, avec 7 et 21 widgets nommés. Après : `6 passed`, et `96 passed` sur les
 dix garde-fous de thème et de palette.
 
-⚠️ **Limite, et elle est réelle** : rien de tout cela ne fait suivre ces feuilles lors d'une
-bascule de thème **à chaud**. Elles restent figées sur la palette du moment de la construction ;
-seule une reconstruction les rafraîchit. C'est une limite préexistante, elle est inchangée, et
-elle est maintenant écrite.
+#### La bascule à chaud — deux défauts de plus, dont un « bouton sans effet »
+
+J'avais d'abord écrit que la bascule **à chaud** restait une limite inchangée. En la mesurant,
+elle s'est révélée porter deux défauts distincts.
+
+🔴 **Le bouton de bascule ne faisait rien sur INDEX SPLINE.** `CertusThemeToggle.toggle`
+finissait par `if hasattr(w, "_apply_theme"): … else: apply_certus_theme(w)`. Or la classe
+d'application de base **définit** ce hook en `pass` : le test était donc vrai pour **toutes**
+les fenêtres et **la branche de repli était du code mort**. Une fenêtre qui ne surcharge pas
+le hook recevait un no-op — la palette changeait, sa feuille n'était jamais reconstruite.
+📏 Mesuré, fenêtre claire puis un clic : DESIGN et STRAT reconstruisent, **INDEX SPLINE non**.
+Corrigé en reconstruisant **toujours**, puis en appelant le hook.
+
+🔑 **C'est un « bouton sans effet visible » de plus**, le critère que le §6 suit à zéro — et il
+avait échappé à tout le monde parce qu'aucun garde-fou ne cliquait sur ce bouton.
+
+🟠 **Et les feuilles de widget, elles, ne suivaient toujours pas.** 📏 Après un clic :
+**6 sur le HUB, 20 sur DESIGN, 29 sur STRAT, 22 sur INDEX SPLINE** gardaient la palette claire.
+
+La ventilation par classe a montré que ce n'était pas dispersé : **`CertusCard` à lui seul en
+portait 6 sur 20 et 19 sur 29** — et il possédait **déjà** une méthode privée pour réappliquer
+sa feuille, que rien n'appelait jamais. Un protocole `refresh_theme()` est donc posé sur les
+**quatre composants partagés** (`CertusCard`, `FlashyCard`, `CertusKpiBanner`,
+`CertusLogPanel`), et la bascule parcourt l'arbre en l'appelant là où il existe.
+
+```
+                avant   apres
+CERTUS_HUB          6       4
+CERTUS_DESIGN      20       7
+CERTUS_STRAT       29       7
+CERTUS_INDEX_SPLINE 22      11
+```
+
+⚠️ **Ce qui reste, et pourquoi je ne le fais pas** : le résidu est fait de `QWidget`,
+`QPushButton`, `QTextEdit`, `QStatusBar` dont la feuille est écrite **en ligne sur leur site
+d'appel**, sans classe propre pour porter la méthode. Les fermer demande de déplacer quelque
+**quatre-vingt-dix** feuilles dans la feuille globale, indexées par nom d'objet — **une refonte,
+pas un correctif**, et elle touche toutes les fenêtres. Le résidu est donc **cliqueté** à sa
+valeur mesurée, pour qu'il ne puisse pas grossir sans qu'on le voie.
+
+🔴 **Constat laissé ouvert** : **SMOOTHER et SUBSTRATE INDEX n'ont aucun bouton de bascule.**
+Les deux modules jamais audités, encore une fois. Leur en ajouter un est une décision de
+périmètre, pas une correction.
+
+Garde-fou : `tests/ui/test_ux_theme_toggle_reaches_the_window.py`, 12 tests — la feuille de la
+fenêtre après un clic, le protocole `refresh_theme`, et le cliquet sur le résidu. Vérifié
+échouant sur le code d'avant : `1 failed, 7 passed`, sur INDEX SPLINE nommément. ⚠️ Le
+garde-fou **falsifie la préférence en mémoire** : cliquer ne peut pas laisser la machine dans
+un autre thème que celui où elle était.
 
 ---
 

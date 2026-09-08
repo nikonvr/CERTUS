@@ -221,11 +221,31 @@ class CertusThemeToggle(QPushButton):
 
         w = self.window()
 
+        # 🔴 ALWAYS rebuild the window sheet, THEN let the window add its own.
+        # This used to be an if/else on hasattr(w, the theme hook) -- and the
+        # base application class DEFINES that hook as a no-op, so the test was
+        # true for every window and the else branch was dead code. A window
+        # that did not override the hook therefore got nothing at all: the
+        # palette switched and its stylesheet was never rebuilt. Measured
+        # 2026-09-08 on INDEX SPLINE, the only window in that case.
+        apply_certus_theme(w)
+
+        # Then every component that knows how to repaint itself. A stylesheet set
+        # ON A WIDGET is an f-string evaluated once, so rebuilding the window sheet
+        # above does not reach it. Measured 2026-09-08 before this loop existed:
+        # 20 such widgets on DESIGN and 29 on STRAT kept the old palette after one
+        # click, CertusCard alone accounting for 6 and 19 of them.
+        for child in w.findChildren(QWidget):
+            refresher = getattr(child, "refresh_theme", None)
+            if callable(refresher):
+                try:
+                    refresher()
+                except RuntimeError:
+                    # Widget already destroyed: nothing to repaint.
+                    continue
+
         if hasattr(w, "_apply_theme"):
             w._apply_theme()
-
-        else:
-            apply_certus_theme(w)
 
 class AutoShrinkTitleLabel(QLabel):
     """A label that shrinks its font size to prevent being cut off."""
@@ -296,7 +316,8 @@ class CertusLogPanel(QWidget):
 
         super().__init__(parent)
 
-        self.setStyleSheet(f"background-color: {CertusTheme.SURFACE};")
+        self._panel_header = None
+        self.refresh_theme()
 
         layout = QVBoxLayout(self)
 
@@ -308,7 +329,8 @@ class CertusLogPanel(QWidget):
 
         header.setFixedHeight(28)
 
-        header.setStyleSheet(f"background-color: {CertusTheme.SURFACE}; border-bottom: 1px solid {CertusTheme.BORDER};")
+        self._panel_header = header
+        self.refresh_theme()
 
         hl = QHBoxLayout(header)
 
@@ -354,6 +376,19 @@ class CertusLogPanel(QWidget):
         # ALREADY VISIBLE parent, so calling this before addWidget left log_text
         # hidden inside a shown panel.
         self.setVisible(visible)
+
+    def refresh_theme(self) -> None:
+        """Re-apply the panel's own stylesheets after a theme change.
+
+        Both sheets are f-strings evaluated once, at construction, so neither
+        follows a later switch. The header is held for that reason alone.
+        """
+        self.setStyleSheet(f"background-color: {CertusTheme.SURFACE};")
+        header = getattr(self, "_panel_header", None)
+        if header is not None:
+            header.setStyleSheet(
+                f"background-color: {CertusTheme.SURFACE}; border-bottom: 1px solid {CertusTheme.BORDER};"
+            )
 
     def _on_copy(self) -> None:
 

@@ -56,10 +56,7 @@ class CertusKpiBanner(QFrame):
         super().__init__(parent)
         self.setObjectName("certusKpiBanner")
         self.setFixedHeight(58)
-        self.setStyleSheet(
-            f"#certusKpiBanner {{ background: {CertusTheme.SURFACE};"
-            f" border: 1px solid {CertusTheme.BORDER}; border-radius: 8px; }}"
-        )
+        self.refresh_theme()
         # A KPI strip must never dictate how wide the panel is. Left on the
         # default Preferred policy this banner claimed a 630 px minimum, which
         # unbalanced the main splitter and cost CERTUS-DESIGN 12 points of plot
@@ -88,6 +85,17 @@ class CertusKpiBanner(QFrame):
             self._values[key] = lbl_value
 
         lay.addStretch(1)
+
+    def refresh_theme(self) -> None:
+        """Re-apply the strip's own stylesheet after a theme change.
+
+        The sheet is an f-string evaluated once, at construction: without this it
+        keeps painting the palette that was in force back then.
+        """
+        self.setStyleSheet(
+            f"#certusKpiBanner {{ background: {CertusTheme.SURFACE};"
+            f" border: 1px solid {CertusTheme.BORDER}; border-radius: 8px; }}"
+        )
 
     def set_value(self, key: str, value: str, tone: str = "primary") -> None:
         """Update one KPI. Unknown keys are ignored rather than raising."""

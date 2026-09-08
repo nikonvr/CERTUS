@@ -1,7 +1,35 @@
-# 🔴 REPRENDRE ICI — état au 2026-09-07
+# 🔴 REPRENDRE ICI — état au 2026-09-08
 
 > Ce fichier dit **où on s'est arrêté** et **la commande exacte pour repartir**. Il est le
 > premier à lire, avant `CLAUDE.md`.
+
+---
+
+## ⚡ CE QUI A CHANGÉ DANS LA NUIT DU 2026-09-08 — le filet de sécurité
+
+**Le chantier d'interface est clos** (`docs/UX_PLAN.md`, §3 et §4). La nuit a porté sur ce qui
+le protège, et **chaque poste s'est révélé pire que son diagnostic**.
+
+| ce qui était | ce qui est |
+|---|---|
+| 🔴 la CI **ne se déclenchait pas** sur la branche de travail — filtre `main` + une branche périmée | déclencheur sans filtre : une **liste** se périme, une **propriété** non |
+| 🔴 le job `lint` était rouge **sur ses trois étapes** | deux corrigées ; la troisième (32 symboles morts, dont des faux positifs) demande un jugement par symbole |
+| 🔴 le golden master rendait **`collected 0 items`** alors que son lanceur le dit *obligatoire* | **8 tests, 4 min 10, verts** |
+| 🔴 **2 de ses 7 modules mesuraient un MOCK** — la référence de STRAT était inatteignable par construction | retirée ; INDEX réparé et mesuré à **0,00257** |
+| 🔴 la **vitrine** — le document que 👤 juge le plus important — était **hors de tout contrôle** | ses chiffres sont comparés au corpus, contrôle négatif vérifié |
+| 🔴 **150 commandes mortes** dans la documentation et les scripts | zéro, et un contrôle **fatal** les empêche de revenir |
+
+🔑 **Le fil rouge de la nuit, et il vaut plus que la liste** : *un garde-fou rouge en
+permanence, ou qui ne se déclenche jamais, ne protège rien — il apprend à ignorer le rouge.*
+Trois instruments étaient dans ce cas, et personne ne les regardait plus.
+
+⚠️ **Deux fois j'ai soupçonné à tort**, et la vérification l'a montré : la vitrine cite bien
+les chiffres rétractés **avec leur rétractation**, et le HUB a bien un glisser-déposer. *Un
+soupçon n'est pas une mesure.*
+
+🔵 **Ce qui reste, et qui n'est pas du code** : la revue visuelle des onze fenêtres, trois
+arbitrages, et surtout **deux dépôts réels du 48 couches** — le §26 est intact, rien ne valide
+STRAT contre la réalité.
 
 ---
 
@@ -26,17 +54,20 @@ décidera. Ce paragraphe ne dit pas de les commiter, il dit de **ne pas les perd
 
 ### Ce qui NE risque rien, contrairement à ce que dit encore `CLAUDE.md`
 
-📏 **`reports/` : 2 154 fichiers, 2 141 suivis par git.** Les **13** qui restent dehors sont
-tous des artefacts de runs du 3 septembre (`Report_STRAT_*`, `STRAT_observability_*`), tous
-couverts par `.gitignore`, tous **régénérables**. ⚠️ L'interdit n° 3 de `CLAUDE.md` annonce
-« **199 fichiers irrécupérables** » : **c'est périmé d'un facteur 15**, et cela fait paraître
-`reports/` bien plus menacé qu'il ne l'est. `example/` est intégralement suivi (276 sur 276).
+📏 **`reports/` : 2 141 fichiers, 2 141 suivis par git — il n'en reste AUCUN dehors**
+(remesuré le 2026-09-08 ; 13 la veille, 199 le 2026-08-19). ⚠️ *L'interdit n° 3 de `CLAUDE.md`
+annonçait « 199 fichiers irrécupérables » et le §13 en portait une copie encore plus vieille :
+les deux se contredisaient dans le même document. Corrigé le 2026-09-08, et le compte ne vit
+plus qu'à un seul endroit.* `example/` est intégralement suivi.
 
 ### Sur la machine neuve, avant toute autre chose
 
 ```bat
 git clone https://github.com/nikonvr/CERTUS.git
-git checkout refactor-corridors-mixins
+git branch -a    # ⚠️ NE RECOPIE PAS un nom de branche depuis un document :
+                 # celui qui etait ecrit ici a vieilli, exactement comme le chemin
+                 # d'interpreteur et comme le filtre de branche de la CI. Le travail
+                 # du 2026-09-08 vit sur `claude/ux-plan-simplifie`, et cela changera.
 ```
 
 Puis **l'environnement, qui n'est PAS dans le dépôt** :
@@ -745,7 +776,10 @@ pourquoi les temps absolus des vieilles campagnes ne valent plus rien.
 :: un chemin LOCAL, court, hors de tout dossier synchronise
 git clone https://github.com/nikonvr/CERTUS.git C:\certus
 cd C:\certus
-git checkout refactor-corridors-mixins
+git branch -a    # ⚠️ NE RECOPIE PAS un nom de branche depuis un document :
+                 # celui qui etait ecrit ici a vieilli, exactement comme le chemin
+                 # d'interpreteur et comme le filtre de branche de la CI. Le travail
+                 # du 2026-09-08 vit sur `claude/ux-plan-simplifie`, et cela changera.
 ```
 
 ⚠️ **`refactor-corridors-mixins` est la branche de travail**, très en avance sur `main` — dont le

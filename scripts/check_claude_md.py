@@ -124,7 +124,12 @@ def check_section_refs(lines: list[str]) -> list[str]:
         # designe explicitement l'autre document. Exactement le meme defaut que le controle I
         # de `coherence_md.py`, corrige le meme jour : un controle qui crie a tort se fait
         # ignorer, et un controle ignore ne protege plus de rien.
-        if re.search(r"\w+\.md", line):
+        # 📏 Faux positif du 2026-09-09, meme famille : la ligne renvoyait au
+        # « §21.15 » de la VITRINE, un `.html`. Le controle ne reconnaissait que
+        # `.md` comme marqueur de renvoi croise, donc il le lisait comme interne et
+        # criait au fantome. La vitrine est un document de plein droit du projet --
+        # c'est meme celui que 👤 juge le plus important.
+        if re.search(r"\w+\.(?:md|html)", line):
             continue
         for ref in re.findall(r"§\s*(\d+(?:bis|ter)?)", line):
             if ref in existing or ref in seen:

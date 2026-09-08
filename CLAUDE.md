@@ -131,22 +131,32 @@ cohérent ».**
 ### Le budget, et il est vérifié mécaniquement
 
 ⚠️ **AVANT DE COURIR APRÈS LES SIGNALEMENTS DU CONTRÔLEUR, lis ceci.** `check_claude_md.py`
-rend en permanence **5 « VALEURS DISCORDANTES »**, et les cinq ont été instruites une par une
-le 2026-08-19 : **ce sont des faux positifs**, le contrôle rapprochant un nom de paramètre du
-premier nombre voisin. `index_corridor` attrape le hash `162a0ff` · `dp_yield_weight` une
-**date**, 2026 · `machine_sampling_dd` des **comptages** (« 21 points », « 27 sites d'appel »,
-« 8 sites du noyau ») · `reading_smoothing_window` le « **2 s** » de la fenêtre ·
-`phase_a_level_margin_factor : 1,66 / 3,33` sont **les deux valeurs légitimes** (actuelle et à
-évaluer).
+rend en permanence des « VALEURS DISCORDANTES », et elles ont été instruites une par une le
+2026-08-19 : **ce sont des faux positifs**, le contrôle rapprochant un nom de paramètre du
+premier nombre voisin. `index_corridor` attrape un **hash** · `machine_sampling_dd` des
+**comptages** de phrase · `reading_smoothing_window` la **durée** de la fenêtre ·
+`phase_a_level_margin_factor` porte **deux valeurs légitimes**, l'actuelle et celle à évaluer.
 
-⚠️ **Vérifie les NOMS, pas les nombres.** Ce paragraphe listait des valeurs précises
-(« 21 / 27 / 9 ») qui se périment dès qu'une phrase voisine change — le 9 valait déjà 8 le
-2026-09-06. Ce qui identifie un faux positif est **le paramètre concerné** ; si un **sixième
-nom** apparaît, il n'est pas couvert par ce paragraphe et doit être instruit.
+⚠️ **Vérifie les NOMS, pas les nombres — et ce paragraphe vient d'en donner la preuve.** Il
+listait **cinq** noms et un plancher de 5 ; 📏 le 2026-09-09 le contrôle en rend **quatre**.
+`dp_yield_weight` en est sorti tout seul, parce qu'une phrase voisine a changé — c'est
+exactement ce que cet avertissement annonçait, arrivé à l'avertissement lui-même. **Ne recopie
+donc pas le compte : lance le contrôle, et instruis tout nom qui n'est pas dans la liste
+ci-dessus.**
 
-🔑 **Le contrôle reste utile — il a trouvé la vraie contradiction du même jour**, deux lignes
+🟢 **Et le contrôle B, lui, est à ZÉRO — il n'y est pas resté tout seul.** 📏 Sortir les
+repères de mesure et les défauts ouverts vers leurs dossiers, le 2026-09-08, a laissé
+**17 renvois internes pointant dans le vide**, la carte du document en tête. Tous corrigés le
+lendemain. ⚠️ Le contrôle n'en signalait que **deux**, parce qu'il déduplique par numéro —
+*un compte de signalements n'est pas un compte de défauts.*
+
+⚠️ **Et ce paragraphe-ci a d'abord nommé les deux sections par leur numéro, donc il s'est
+signalé lui-même.** C'est le motif que ce document décrit plus haut, la quatrième fois qu'il
+frappe : **nommer, ne pas citer.**
+
+🔑 **Le contrôle reste utile — il a trouvé la vraie contradiction du 2026-08-19**, deux lignes
 du même paramètre dans la table de §19, l'une prescrivant 8 et l'autre 1. **Ne le désarme
-pas ; sache seulement que son plancher est 5, pas 0.**
+pas ; sache seulement que son plancher n'est pas 0 sur le contrôle C.**
 
 🔴 **`CLAUDE.md` N'EST PLUS PLAFONNÉ — la contrainte des 2 000 lignes est retirée le
 2026-09-06, sur décision de 👤.** Le contrôle F subsiste, mais **informatif** : il rapporte la
@@ -423,8 +433,8 @@ Deux changements simultanés ne s'attribuent pas.
 | Toucher à du calcul optique | §16 — conventions physiques et oracle TMM |
 | Comprendre la machine de dépôt | §17 — les spécifications du physicien |
 | **Ce qu'on suppose de la machine** | **§18 — le modèle FIGÉ de la chaîne de lecture. Ne pas le rouvrir.** |
-| **Comparer un résultat** | **§21 — les repères valides, tous fente 2 nm.** Ce qui les périme y est dit, et pourquoi ils ne se comparent pas entre composants |
-| **Savoir ce qui est encore cassé** | **§24 — défauts ouverts. À lire avant toute action.** |
+| **Comparer un résultat** | **[`REPERES_MESURES.md`](docs/REPERES_MESURES.md) — les repères valides, tous fente 2 nm.** Ce qui les périme y est dit, et pourquoi ils ne se comparent pas entre composants |
+| **Savoir ce qui est encore cassé** | **[`DEFAUTS_OUVERTS.md`](docs/DEFAUTS_OUVERTS.md) — défauts ouverts. À lire avant toute action.** |
 | Comprendre le mode Rate | **§22, bloc « Le mode Rate »** — noyau écrit **et** variantes actives par défaut. ⚠️ Trois critères distincts s'y mélangent, démêlés dans l'encadré *« le rate est souvent réservé aux couches fines »* |
 | Vérifier le travail d'un autre agent | §12 — protocole de re-vérification |
 | **Quand §23 sera fini** | §34 — A25, A26, A27, en réserve, et les cinq choses à ne PAS faire |
@@ -511,8 +521,8 @@ aucune instruction, et elle a un régime propre :
 |---|---|
 | **Une affirmation fausse y coûte plus qu'un manque** | Un évaluateur qui prend un chiffre en défaut cesse de croire le reste. Tout nombre doit être sourçable dans le code ou dans un artefact de `reports/`. |
 | **La nuance juste convainc, le superlatif non** | « le meilleur partitionnement **mesuré** sur deux empilements » se défend ; « l'optimum universel » se réfute en une question. |
-| **Elle doit montrer sa LIMITE** | §21.15 porte le 99 couches, dont **aucune stratégie ne survit** — plantage 100 %, et le 0,86 nm qui traîne est un **score de repli**. Un expert le trouverait de toute façon. |
-| **Et ce qui lève la limite** | **§21.16 — multiple testglass**, ajoutée le 2026-08-15 : le même 99 couches devient fabricable, **0,81 nm** à 0 % de plantage. ⚠️ Le `0,782` était le plus **favorable de trois graines** (0,782 / 0,816 / 0,839) — corrigé le 17/08. Elle dit aussi les trois attentes que la mesure a **démenties**, et ce qui n'est **pas** revendiqué (borne supérieure, une seule graine). |
+| **Elle doit montrer sa LIMITE** | Son §21.15, dans `CERTUS_STRAT.html`, porte le 99 couches, dont **aucune stratégie ne survit** — plantage 100 %, et le 0,86 nm qui traîne est un **score de repli**. Un expert le trouverait de toute façon. |
+| **Et ce qui lève la limite** | **§21.16 de `CERTUS_STRAT.html` — multiple testglass**, ajoutée le 2026-08-15 : le même 99 couches devient fabricable, **0,81 nm** à 0 % de plantage. ⚠️ Le `0,782` était le plus **favorable de trois graines** (0,782 / 0,816 / 0,839) — corrigé le 17/08. Elle dit aussi les trois attentes que la mesure a **démenties**, et ce qui n'est **pas** revendiqué (borne supérieure, une seule graine). |
 | **Vérifie la STRUCTURE après toute édition** | Le 2026-08-14 un `</ul>` supprimé faisait rendre 400 lignes à l'intérieur d'une liste, et avait emporté une puce entière. `python scripts/verifier_html.py pages/*.html` — 📏 **les 15 pages passent** au 2026-09-08. |
 
 🟢 **ET SES CHIFFRES SONT ENFIN VÉRIFIÉS PAR UNE MACHINE — 2026-09-08.** Le contrôle B de
@@ -657,7 +667,7 @@ Aucun n'admet d'exception. Si tu crois devoir en violer un, **arrête-toi et dem
    d'activation des différentes sources d'erreur, ainsi que le mode rate »*. Les deux
    fichiers portent donc désormais **explicitement** les onze réglages du modèle, au
    lieu de dépendre de défauts codés. Un fichier de configuration doit décrire la
-   machine sur laquelle il tourne, sinon le run n'est comparable à rien (§24-7).
+   machine sur laquelle il tourne, sinon le run n'est comparable à rien (`DEFAUTS_OUVERTS.md` §24-7).
    ⚠️ Pour essayer autre chose, `scripts\probe_anchor_noise_pipeline.py` injecte les
    paramètres **après coup** — c'est toujours la voie à préférer.
 
@@ -913,7 +923,7 @@ exactement le même chiffre.** Ce n'est pas du bruit : c'est un second état, re
    besoin.** Ajouter un paramètre à un noyau numba change sa signature, donc force une
    recompilation, donc déplace le chiffre. **N'exige jamais l'égalité exacte d'un `RESULT` de
    part et d'autre d'un ajout de paramètre.**
-2. ✅ **Le constat §24-1 est définitivement innocenté.** L'écart de 2,5e-11 que j'avais pris
+2. ✅ **Le constat §24-1 de `DEFAUTS_OUVERTS.md` est définitivement innocenté.** L'écart de 2,5e-11 que j'avais pris
    pour une violation de la règle d'or était T5 changeant la signature du noyau. Retiré par
    prudence hier, retiré par **preuve** aujourd'hui.
 3. **A5 doit comparer à état compilé constant** — ou porter cette tolérance explicitement.
@@ -963,7 +973,7 @@ exactement le même chiffre.** Ce n'est pas du bruit : c'est un second état, re
 
 **Un rapport est une déclaration, pas une preuve.** Ce protocole consiste à essayer de
 **casser** chaque déclaration, pas à la confirmer. Appliqué deux fois, il a trouvé quatre
-affirmations fausses la première fois et neuf la seconde (§24) — il fonctionne.
+affirmations fausses la première fois et neuf la seconde (`DEFAUTS_OUVERTS.md`) — il fonctionne.
 
 ⚠️ **Il a ses limites, et il faut les dire.** Les deux passes ont vérifié des **diffs, du
 code et des artefacts**. Aucune des deux n'a relancé une mesure au banc. Une déclaration
@@ -1018,7 +1028,7 @@ arrière, puis refais : un correctif posé sur une base non vérifiée hérite d
    `allclose` — mais **sur l'empreinte du noyau en mono-thread (A5), jamais sur le `RESULT`
    du banc**, qui a ~3e-11 de gigue irréductible (§9). 🔴 **Une version antérieure de ce
    contrôle disait « au-delà de 1e-12, ce n'est pas numba » et faisait comparer des `RESULT`
-   de banc. C'est ainsi que le constat §24-1 a été écrit puis retiré : il accusait le code
+   de banc. C'est ainsi que le constat §24-1 de `DEFAUTS_OUVERTS.md` a été écrit puis retiré : il accusait le code
    d'un bruit de sommation parallèle.** Le seul chiffre exploitable ici est celui du harnais.
 2. **Les tests ajoutés échouent-ils sur le code d'avant ?** Copie-les dans le worktree
    baseline et lance-les. Ils **doivent** échouer. C'est le contrôle le plus rentable de la
@@ -1060,7 +1070,7 @@ d'empilements, stratégie de dépôt. Application **PyQt6** + noyau **NumPy/SciP
   la règle « un fait, un seul endroit » violée en direct, une heure après l'avoir invoquée.*
   ⚠️ **Après un changement de version, les caches numba sont invalidés** : le premier appel
   est lent (Piège 7) **et les derniers chiffres d'un `RESULT` peuvent bouger**. Les repères
-  de §21 ont été mesurés sous **3.14.6**. Toute mesure rapportée doit porter sa version
+  de `REPERES_MESURES.md` ont été mesurés sous **3.14.6**. Toute mesure rapportée doit porter sa version
   d'interpréteur, sinon un écart de version sera attribué au code.
 - Cible principale Windows, build gelé PyInstaller
 - 📏 **Mesuré le 2026-08-19**, et les trois chiffres qui figuraient ici étaient faux :
@@ -1349,10 +1359,10 @@ les coups.
 et non 3. ⚠️ Elle dépend de `N` autant que de `k` : **c'est une valeur mesurée, pas une loi.**
 
 ⚠️ **ET ELLE A ÉTÉ MESURÉE AVEC UN LISSAGE CENTRÉ, alors que le code lisse de façon CAUSALE**
-(`certus_strat_growth.py:1398`, fenêtre `[i−k+1 … i]` — c'est §24-3). 🟢 **Ce n'est pas
+(`certus_strat_growth.py:1398`, fenêtre `[i−k+1 … i]` — c'est `DEFAUTS_OUVERTS.md` §24-3). 🟢 **Ce n'est pas
 disqualifiant ici, et voici pourquoi** : le signal propre de cette sonde est **plat**, donc les
 deux lissages rendent le même bruit lissé — même variance `σ/√k`, seule la phase diffère. Le
-décalage de `(k−1)/2` que §24-3 dénonce ne mord que pour **localiser** un extremum sur un signal
+décalage de `(k−1)/2` que `DEFAUTS_OUVERTS.md` §24-3 dénonce ne mord que pour **localiser** un extremum sur un signal
 **non plat**, ce que cette mesure ne fait pas. **Mais toute mesure de seuil sur un signal non
 plat devra, elle, être refaite en causal.**
 
@@ -1391,8 +1401,8 @@ paramètres ont été arrêtés avec le physicien le 2026-08-08 et sont dans le 
 | `slit_bias_enabled` | **vrai**, fente nominale **2 nm** — 👤 *« réaliste, pas optimiste »* | [`TRAVAUX_A_VENIR.md`](docs/TRAVAUX_A_VENIR.md) §12.7 |
 | `affine_scale_amp` | **0,05** ⇒ `a ∈ [0,95 ; 1,05]` | [`TRAVAUX_A_VENIR.md`](docs/TRAVAUX_A_VENIR.md) §12.1 |
 | `affine_offset_amp` | **0,02** ⇒ `b ∈ [−0,02 ; +0,02]` | [`TRAVAUX_A_VENIR.md`](docs/TRAVAUX_A_VENIR.md) §12.1 |
-| Plafond du banc | `CERTUS_BENCH_TIMEOUT_S = max(5400, 4 × durée attendue)` — 🔴 **5400 est un PLANCHER, pas une valeur** : le prendre pour une valeur a détruit quatre mesures le 2026-08-22 | §21 |
-| Graine de référence | **42**, `scan_wl_step` **1.0** | §21 |
+| Plafond du banc | `CERTUS_BENCH_TIMEOUT_S = max(5400, 4 × durée attendue)` — 🔴 **5400 est un PLANCHER, pas une valeur** : le prendre pour une valeur a détruit quatre mesures le 2026-08-22 | `REPERES_MESURES.md` |
+| Graine de référence | **42**, `scan_wl_step` **1.0** | `REPERES_MESURES.md` |
 | `robustness_num_runs` | **300** — 👤 posé le 2026-08-13. ⚠️ **Ce n'est PAS un réglage de précision** : la profondeur commande la sensibilité du filtre de plantage, donc **quelles stratégies existent** | [`DECISIONS_TRANCHEES.md`, enquete 23](docs/DECISIONS_TRANCHEES.md) |
 | `n_screen_runs` | **25**, et 👤 a délégué le choix le 2026-08-13. 🔴 **NE LE DESCENDS PAS À 10** : `1/10 = 10 % ≥ 5 %`, donc **un seul plantage sur dix tue la stratégie** — et depuis le correctif 1 elle est aussi perdue comme **parent**. §24-27 avait mesuré « 10 ne perd rien » **avant** que le criblage ne choisisse les parents : la mesure ne couvre plus le rôle | [`DECISIONS_TRANCHEES.md`, enquete 23ter](docs/DECISIONS_TRANCHEES.md) |
 | `sigma_rate` (mode Rate) | 🔑 **aucune valeur à poser** — grandeur DÉRIVÉE du simulateur | §22, dérivation |
@@ -1704,7 +1714,7 @@ doit être ultra rapide ! »* (2026-08-12)
 800. **La conséquence, et il faut la connaître** : [`TRAVAUX_A_VENIR.md`](docs/TRAVAUX_A_VENIR.md) §12.2 a mesuré que moins de tirages
 signifie moins d'occasions pour le bruit de fabriquer un faux point tournant — 32,9 % à
 80 points contre 99,9 % à 800, à seuil égal. **Le modèle est donc OPTIMISTE sur ce
-mécanisme**, qui pèse 79 % des plantages mesurés (§24-36). C'est un arbitrage assumé
+mécanisme**, qui pèse 79 % des plantages mesurés (`DEFAUTS_OUVERTS.md` §24-36). C'est un arbitrage assumé
 vitesse / fidélité, pas un oubli.
 
 ### 🔒 La grille de balayage est FIGÉE à 1 nm — ne la rouvre pas
@@ -1829,8 +1839,8 @@ mort en production, et le compter le masquerait.
 d'exemptions est passée de **64 entrées à 7** : les 57 autres dataient d'un périmètre plus
 large et **ne pouvaient plus rien apparier**. Une exemption qui ne peut plus rien couvrir est
 une promesse que personne ne vérifie — et elle couvrirait en silence un symbole qui meurt plus
-tard. 📌 Les sept restants, et ce qu'il reste à en faire, sont en §55 de
-[`DEFAUTS_OUVERTS.md`](docs/DEFAUTS_OUVERTS.md).
+tard. 📌 Les sept restants, et ce qu'il reste à en faire :
+[`DEFAUTS_OUVERTS.md`](docs/DEFAUTS_OUVERTS.md) §55.
 
 ⚠️ **Ne crédite pas cet outil de plus qu'il ne fait** : il apparie par **nom nu**, pas par
 symbole qualifié — une méthode passe pour vivante dès qu'une autre classe appelle un homonyme.
@@ -1911,7 +1921,7 @@ le CODE** et jamais contre ce document.
 
 | | |
 |---|---|
-| **le biais de fente est actif par défaut** depuis le 2026-08-11 | tout `RESULT` antérieur décrit une machine à fentes infiniment fines. C'est ce qui périme les anciens repères (§21) |
+| **le biais de fente est actif par défaut** depuis le 2026-08-11 | tout `RESULT` antérieur décrit une machine à fentes infiniment fines. C'est ce qui périme les anciens repères (`REPERES_MESURES.md`) |
 | **la moyenne de lecture reste causale** | elle ne regarde pas en avant |
 | **l'arrêt n'est pas quantifié** | la loi `U(0 ; 0,125 nm)` de §18-7 n'est pas appliquée |
 | 🔴 **`machine_sampling_dd` est inatteignable en pratique** | 8 sites d'appel, 1 le passe — et en dur à `0.0`. Le compte est en §28 |
@@ -1930,7 +1940,7 @@ négatifs**, et les négatifs comptent autant : trois pistes y sont **fermées p
 | la forme fermée de `T(d)` | **×1,20 mesuré**, et elle est **exacte** — même calcul écrit autrement, vérifié à 5,4e-20 contre le noyau et 3,2e-15 contre l'oracle |
 | le fossé entre machines | ×1 à ×3,2 selon les modules, **pas** ×7-10 |
 
-⚠️ **Les mesures de performance antérieures au 2026-08-11 ne se citent plus** : elles précèdent le biais de fente, donc elles répondent à une autre question (§21). Seuls les **rapports** de [`PERFORMANCE.md`](docs/PERFORMANCE.md) restent valides.
+⚠️ **Les mesures de performance antérieures au 2026-08-11 ne se citent plus** : elles précèdent le biais de fente, donc elles répondent à une autre question (`REPERES_MESURES.md`). Seuls les **rapports** de [`PERFORMANCE.md`](docs/PERFORMANCE.md) restent valides.
 
 ---
 
@@ -1939,7 +1949,7 @@ négatifs**, et les négatifs comptent autant : trois pistes y sont **fermées p
 📌 **Le dossier est dans [`docs/COMPOSANTS.md`](docs/COMPOSANTS.md)** — la formule, les
 matériaux, la plage spectrale et l'histoire de chaque composant.
 
-**Les cinq, et ce que chacun sert à tester** — les repères chiffrés sont en §21 :
+**Les cinq, et ce que chacun sert à tester** — les repères chiffrés sont dans `REPERES_MESURES.md` :
 
 | composant | couches | ce qu'il apporte |
 |---|---|---|
@@ -1951,7 +1961,7 @@ matériaux, la plage spectrale et l'histoire de chaque composant.
 
 🔴 **Ils ne sont pas notés sur le même domaine spectral** — 300 / 200 / 60 / 45 nm. Comparer
 leurs SEEL entre eux mélange la difficulté du composant et la largeur de la fenêtre. Les
-comparaisons **à composant fixé** restent valides. Voir §21.
+comparaisons **à composant fixé** restent valides. Voir `REPERES_MESURES.md`.
 
 ---
 

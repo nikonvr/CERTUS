@@ -23,7 +23,7 @@
 
         set CERTUS_PROBE_OVERRIDES=injected_strategies=reports/plans/plans_s077_vers_s042.json
         set CERTUS_PROBE_TAG=inject12s077
-        ... scripts\probe_blocs_vs_plantage.py r75x2 deep 0 0 2.0 0 42 0
+        ... scripts\\probe_blocs_vs_plantage.py r75x2 deep 0 0 2.0 0 42 0
 
     Le fichier est conserve pour son historique de methode, qui vaut d'etre lu : c'est le
     champ `parametres_de_notation`, ajoute le matin meme, qui a demasque une comparaison a

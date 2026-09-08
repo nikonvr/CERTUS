@@ -563,12 +563,22 @@ class CertusTheme:
         return "Inter" if loaded else "Segoe UI"
 
     @classmethod
-    def apply_to_app(cls, app: QApplication, dark_mode: bool = False) -> None:
+    def apply_to_app(cls, app: QApplication, dark_mode: bool | None = None) -> None:
         from certus.ui.certus_ui import update_global_plot_config
-        from certus.core.certus_core import load_font_config
-        """Applies theme to QApplication"""
+        from certus.core.certus_core import load_font_config, load_theme_config
+        """Apply the theme to the QApplication.
+
+        🔴 `dark_mode` defaults to the PERSISTED PREFERENCE, not to light. It used
+        to default to `False`, and four call sites passed nothing - among them
+        `init_certus_app`, the shared bootstrap. Each of them therefore FORCED the
+        light palette over whatever the operator had chosen, and every widget
+        stylesheet built afterwards froze that light palette on a dark window.
+        Measured 2026-09-08 with a dark preference: 21 such sheets on DESIGN.
+        """
 
         # Synchronize active theme configuration
+        if dark_mode is None:
+            dark_mode = load_theme_config() == "dark"
         cls.configure("dark" if dark_mode else "light")
 
         # Load font preference

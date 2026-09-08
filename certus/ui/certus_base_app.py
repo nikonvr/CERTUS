@@ -241,10 +241,12 @@ from certus.ui.certus_ui_utils import (
     _CertusDropFilter,
     update_global_plot_config,
     apply_certus_theme,
+    configure_theme_from_preference,
 )
 from certus.ui.certus_ui_widgets_factory import attach_splitter_capper, create_log_widget, create_top_actions_bar
 from certus.ui.certus_ui_widgets_utils import CertusLogPanel
 from certus.ui.certus_theme import CertusTheme, get_standard_stylesheet
+from certus.utils.certus_ux import Typography
 import certus.ui.certus_io_ui as certus_io_ui
 
 
@@ -429,6 +431,12 @@ class CertusBaseApp(
     ) -> None:
 
         super().__init__(parent)
+
+        # BEFORE any widget: a widget-level stylesheet is an f-string evaluated
+        # once, at build time. Configured later - as apply_certus_theme does at
+        # the end of construction - those sheets keep the light palette on a
+        # dark window.
+        configure_theme_from_preference()
 
         # Runtime container is injectable to avoid hidden globals.
         self.runtime: CertusRuntime = runtime if runtime is not None else build_runtime()
@@ -819,10 +827,10 @@ class CertusBaseApp(
                     background-color: {CertusTheme.SURFACE};
                     border-right: 1px solid {CertusTheme.BORDER};
                 }}
-                QWidget {{ font-size: 11px; }}
+                QWidget {{ font-size: {Typography.BODY_LG}pt; }}
                 QGroupBox {{
                     font-weight: 700;
-                    font-size: 11px;
+                    font-size: {Typography.BODY_LG}pt;
                     margin-top: 6px;
                     border: 1px solid {CertusTheme.BORDER};
                     border-radius: 14px;
@@ -835,10 +843,10 @@ class CertusBaseApp(
                     margin-left: 8px;
                     color: {CertusTheme.PRIMARY};
                 }}
-                QLabel#HeaderLabel {{ font-size: 14px; font-weight: 800; color: {CertusTheme.TEXT_MAIN}; }}
-                QPushButton {{ font-size: 11px; padding: 5px 10px; border-radius: 10px; }}
-                QComboBox {{ font-size: 11px; padding: 3px 8px; border-radius: 10px; }}
-                QDoubleSpinBox, QSpinBox {{ font-size: 11px; padding: 3px 8px; border-radius: 10px; }}
+                QLabel#HeaderLabel {{ font-size: {Typography.H2}pt; font-weight: 800; color: {CertusTheme.TEXT_MAIN}; }}
+                QPushButton {{ font-size: {Typography.BODY_LG}pt; padding: 5px 10px; border-radius: 10px; }}
+                QComboBox {{ font-size: {Typography.BODY_LG}pt; padding: 3px 8px; border-radius: 10px; }}
+                QDoubleSpinBox, QSpinBox {{ font-size: {Typography.BODY_LG}pt; padding: 3px 8px; border-radius: 10px; }}
             """,
         )
         if hasattr(self, "progress_widget"):
@@ -2094,11 +2102,11 @@ class CertusBaseApp(
             self.target_table.setHorizontalHeaderLabels(
                 [
                     "Active",
-                    "Angle()",
+                    "Angle (°)",
                     "Pol",
                     "Type",
-                    "lambdamin",
-                    "lambdamax",
+                    "λ min (nm)",
+                    "λ max (nm)",
                     "Val min",
                     "Val max",
                     "Weight",
@@ -2108,7 +2116,7 @@ class CertusBaseApp(
         else:
             self.target_table.setColumnCount(6)
 
-            self.target_table.setHorizontalHeaderLabels(["Active", "lambdamin", "lambdamax", "Tmin", "Tmax", "Weight"])
+            self.target_table.setHorizontalHeaderLabels(["Active", "λ min (nm)", "λ max (nm)", "Tmin", "Tmax", "Weight"])
 
     def detach_front_table(self) -> None:
         """Detaches layer table to separate window"""

@@ -106,7 +106,9 @@ def main() -> None:
 
     app = QApplication(sys.argv)
 
-    CertusTheme.apply_to_app(app, dark_mode=False)
+    # No explicit mode: apply_to_app follows the persisted preference. Passing
+    # False here made DESIGN open light whatever the operator had chosen.
+    CertusTheme.apply_to_app(app)
 
     # Standardized initialization with COMMON
 

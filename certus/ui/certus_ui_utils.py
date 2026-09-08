@@ -43,6 +43,7 @@ Domain map:
 """
 
 __all__ = [
+    "configure_theme_from_preference",
     # Theme
     "CertusTheme",
     "get_standard_stylesheet",
@@ -281,6 +282,31 @@ def set_certus_window_icon(window: QWidget, icon_name: str = "certus.ico") -> bo
 
     return False
 
+def configure_theme_from_preference() -> str:
+    """Point the palette at the persisted preference, and return the mode.
+
+    🔴 CALL THIS BEFORE BUILDING ANY WIDGET. A stylesheet set on a widget is an
+    f-string evaluated ONCE, while that widget is built. This used to run only
+    inside ``apply_certus_theme``, which every window calls at the END of its
+    construction - so every widget-level sheet froze the palette loaded at
+    import, which is the light one. Measured 2026-09-08 with a dark preference:
+    7 such sheets on the HUB and 21 on DESIGN still painted the light surface,
+    among them the header, the bottom bar, the log panel and the theme toggle
+    itself.
+
+    Idempotent: reading the preference twice is cheap, and the palette is a
+    class-level assignment.
+
+    ⚠️ This does NOT make those sheets follow a theme change at RUNTIME. They
+    stay frozen at whatever the palette was when the window was built; only a
+    rebuild refreshes them. That limit is unchanged, and it is separate.
+    """
+    # Read once and reuse: two reads could disagree if the file changes between.
+    mode = load_theme_config()
+    CertusTheme.configure(mode)
+    return mode
+
+
 def apply_certus_theme(
     window: QWidget,
     plots: list[Any] | None = None,
@@ -312,9 +338,7 @@ def apply_certus_theme(
     # opened in light, because the preference reached only apply_os_window_effects
     # below (the OS title bar) and the plot palette - never CertusTheme itself.
     # The operator got a dark title bar around a light interface.
-    # Read once and reuse: two reads could disagree if the file changes between.
-    _persisted_mode = load_theme_config()
-    CertusTheme.configure(_persisted_mode)
+    _persisted_mode = configure_theme_from_preference()
 
     # U1: append premium overrides (additive, opt-in via objectName).
     premium_css = ""

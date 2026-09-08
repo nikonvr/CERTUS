@@ -71,6 +71,7 @@ from certus.core.certus_core import (
 from certus.core.certus_core import OPENPYXL_AVAILABLE
 from certus.utils.certus_data import read_data_file_robust
 from certus.ui.certus_theme import CertusTheme, get_standard_stylesheet
+from certus.utils.certus_ux import Typography
 from certus.core.certus_core import get_export_config, setup_module_logging
 from certus.core.certus_core import QueueHandler, setup_gui_logger
 from certus.ui.certus_plot import (
@@ -104,12 +105,12 @@ class CertusCard(QFrame):
             lbl = QLabel(title)
             lbl.setObjectName("CertusCardTitle")
             lbl.setStyleSheet(
-                f"font-weight: 700; font-size: 11px; color: {CertusTheme.TEXT_MAIN}; letter-spacing: 0.3px;"
+                f"font-weight: 700; font-size: {Typography.BODY_LG}pt; color: {CertusTheme.TEXT_MAIN}; letter-spacing: 0.3px;"
             )
             hl.addWidget(lbl)
             if subtitle:
                 sub = QLabel(subtitle)
-                sub.setStyleSheet(f"font-size: 10px; color: {CertusTheme.TEXT_SUB};")
+                sub.setStyleSheet(f"font-size: {Typography.BODY}pt; color: {CertusTheme.TEXT_SUB};")
                 hl.addWidget(sub)
             hl.addStretch(1)
             sep = QFrame()
@@ -231,7 +232,7 @@ class CertusDashboardCard(QFrame):
         header = QHBoxLayout()
         self.lbl_title = QLabel(title.upper())
         self.lbl_title.setStyleSheet(
-            f"color: {CertusTheme.TEXT_SUB}; font-weight: bold; font-size: 11px; letter-spacing: 1px;"
+            f"color: {CertusTheme.TEXT_SUB}; font-weight: bold; font-size: {Typography.BODY_LG}pt; letter-spacing: 1px;"
         )
 
         self.lbl_icon = QLabel()
@@ -257,11 +258,14 @@ class CertusDashboardCard(QFrame):
         val_row.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignBottom)
 
         self.lbl_value = QLabel("---")
-        self.lbl_value.setStyleSheet(f"color: {CertusTheme.TEXT}; font-size: 28px; font-weight: 800;")
+        # TEXT_MAIN, not TEXT: the latter is the SAME dark navy in both modes, so the
+        # biggest figure of the card sat at 1.01:1 on a dark surface while its own
+        # title and unit, on TEXT_SUB, followed the theme correctly.
+        self.lbl_value.setStyleSheet(f"color: {CertusTheme.TEXT_MAIN}; font-size: 28px; font-weight: 800;")
 
         self.lbl_unit = QLabel(unit)
         self.lbl_unit.setStyleSheet(
-            f"color: {CertusTheme.TEXT_SUB}; font-size: 14px; font-weight: bold; margin-bottom: 4px;"
+            f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.H2}pt; font-weight: bold; margin-bottom: 4px;"
         )
 
         val_row.addWidget(self.lbl_value)
@@ -269,7 +273,7 @@ class CertusDashboardCard(QFrame):
         layout.addLayout(val_row)
 
         self.lbl_msg = QLabel("Ready")
-        self.lbl_msg.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        self.lbl_msg.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt;")
         self.lbl_msg.setWordWrap(True)
         self.lbl_msg.setVisible(False)
         layout.addWidget(self.lbl_msg)
@@ -289,15 +293,15 @@ class CertusDashboardCard(QFrame):
             "warning": CertusTheme.WARNING,
             "danger": CertusTheme.DANGER,
             "info": CertusTheme.PRIMARY,
-            "normal": CertusTheme.TEXT,
+            "normal": CertusTheme.TEXT_MAIN,
         }
-        val_color = color_map.get(status, CertusTheme.TEXT)
+        val_color = color_map.get(status, CertusTheme.TEXT_MAIN)
         self.lbl_value.setStyleSheet(f"color: {val_color}; font-size: 28px; font-weight: 800;")
 
         if msg:
             self.lbl_msg.setText(msg)
             self.lbl_msg.setVisible(True)
-            self.lbl_msg.setStyleSheet(f"color: {val_color}; font-size: 11px; font-weight: 500;")
+            self.lbl_msg.setStyleSheet(f"color: {val_color}; font-size: {Typography.BODY_LG}pt; font-weight: 500;")
         else:
             self.lbl_msg.setVisible(False)
 

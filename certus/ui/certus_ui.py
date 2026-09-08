@@ -47,6 +47,7 @@ __all__ = [
     "CertusTheme",
     "get_standard_stylesheet",
     "apply_certus_theme",
+    "configure_theme_from_preference",
     # Widgets
     "CertusThemeToggle",
     "CertusScientificPlot",
@@ -309,6 +310,7 @@ from certus.ui.certus_ui_widgets_factory import (
 from certus.ui.certus_ui_utils import (
     set_certus_window_icon,
     apply_certus_theme,
+    configure_theme_from_preference,
     update_global_plot_config,
     open_documentation,
     install_standard_shortcuts,

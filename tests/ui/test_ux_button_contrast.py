@@ -1,8 +1,18 @@
-"""Button labels must stay legible in BOTH themes (mission order, step 2.4).
+"""The COLOUR TOKENS of a filled button must be a legible pair (plan UX, 4.1).
 
-The primary button was fixed with tokens (PRIMARY_TEXT / PRIMARY_HOVER switch
-with the mode, so white becomes #0f172a in dark). The danger button was not: it
-still carries `color: #ffffff` hardcoded on CertusTheme.DANGER.
+🔴 READ THIS BEFORE TRUSTING THIS FILE. It asserts a property of the TOKENS,
+and nothing obliges the shipped stylesheet to use them. It was green from the
+day it was written while `build_premium_overrides` still hardcoded a literal
+white on both filled buttons - the very defect the paragraph below describes.
+Measured 2026-09-08: 2.54:1 on the primary fill and 2.77:1 on the danger fill,
+in dark mode, painted on screen, while every assertion here passed.
+
+What actually catches that is `test_ux_button_label_is_painted`, which renders
+the button and reads the pixels back. **This guard is necessary and not
+sufficient**: keep both, and never take a green here for a legible button.
+
+The stylesheet was routed to the tokens on 2026-09-08, so the figures below are
+now what ships. They are kept because they say WHY the pair must be a pair.
 
 Measured 2026-09-04, WCAG 2.1 relative luminance:
 
@@ -13,6 +23,10 @@ Measured 2026-09-04, WCAG 2.1 relative luminance:
 A hardcoded colour cannot follow the theme; that is the whole reason
 CertusTheme exists. The ratio is computed here rather than asserted from a
 table, so the test still means something after a palette change.
+
+⚠️ The 2.77:1 line above was, until 2026-09-08, a description of the LIVE
+state written inside a guard that could not see it. That is the lesson, and it
+became rule R13 of the plan: measure what is RENDERED, not what is declared.
 """
 
 from __future__ import annotations

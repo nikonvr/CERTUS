@@ -86,6 +86,7 @@ symptôme jusqu'à son mécanisme coûte une heure et en rapporte trois.*
 | R12 | **Après avoir régénéré une baseline, colle le diff des métriques.** | Sinon le cliquet protège la régression au lieu de la signaler. |
 | R13 | **Mesure ce qui est RENDU, pas ce qui est déclaré.** | 📏 `test_ux_button_contrast` était vert alors que la feuille livrée peignait 2,54:1 : il assérait la paire de **jetons**, que rien n'obligeait la feuille à employer. Quand la propriété est visuelle, peins le widget et relis les pixels. |
 | R14 | **Un garde-fou d'interface ne déclenche jamais l'action qu'il vérifie.** | Un test d'activation a lancé de vrais modules CERTUS et bloqué la suite dix minutes. Construis un widget isolé, ou inspecte sans émettre. |
+| R15 | **Une assertion doit pouvoir échouer — vérifie-le, ne le suppose pas.** | 📏 `assert hub.acceptDrops() is True` est vrai de **tout** `QMainWindow` nu : deux tests l'ont porté sans rien vérifier. Le contrôle utile est toujours le **refus** — qu'un type non pris en charge soit rejeté — sans quoi « accepte tout » passe aussi bien que « accepte ce qu'il faut ». Corollaire : tout garde-fou porte au moins un contrôle négatif, et on le voit **échouer** une fois. |
 
 **Environnement** : Python système 3.14.7, PyQt6 / Qt 6.11. Le venv `C:\envs\certus` cité dans
 `CLAUDE.md` **n'existe pas**. Vérifie avant de mesurer :

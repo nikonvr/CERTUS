@@ -15,10 +15,36 @@ from certus.ui.certus_design_ui import CertusDesignApp
 from certus.ui.certus_strat_stack_progress_widget import CertusStratStackProgressWidget
 
 
+def _drag_enter(widget, filename: str):
+    """Construit un QDragEnterEvent portant un seul fichier, et le soumet au widget.
+
+    Rendu tel quel pour que l'appelant lise `isAccepted()`.
+    """
+    mime = QMimeData()
+    mime.setUrls([QUrl.fromLocalFile(str(Path(filename).resolve()))])
+    event = QDragEnterEvent(
+        QPoint(100, 100),
+        Qt.DropAction.CopyAction,
+        mime,
+        Qt.MouseButton.NoButton,
+        Qt.KeyboardModifier.NoModifier,
+    )
+    widget.dragEnterEvent(event)
+    return event
+
+
 def test_drag_and_drop_event_handling():
     """Vérifier que CertusBaseApp accepte les fichiers .json par glisser-déposer."""
     window = CertusDesignApp()
-    assert window.acceptDrops() is True
+    # ⚠️ `acceptDrops()` N'EST PAS UN CONTROLE : mesure le 2026-09-08, un
+    # QMainWindow NU le rend deja True. L'assertion qui se trouvait ici ne
+    # pouvait donc pas echouer. Ce qui teste quelque chose est qu'un type que
+    # la fenetre ne sait pas lire soit REFUSE -- sans quoi « accepte tout »
+    # passerait aussi bien que « accepte ce qu'il faut ».
+    refus = _drag_enter(window, "quelque_chose.exe")
+    assert refus.isAccepted() is False, (
+        "la fenetre accepte un type qu'elle ne sait pas lire : le filtre par extension ne mord pas"
+    )
 
     # Simuler un drag enter avec un fichier JSON
     mime = QMimeData()
@@ -78,7 +104,15 @@ def test_hub_shortcuts_and_drag_drop():
     from CERTUS_HUB import CertusHub
 
     hub = CertusHub()
-    assert hub.acceptDrops() is True
+    # ⚠️ `acceptDrops()` N'EST PAS UN CONTROLE : mesure le 2026-09-08, un
+    # QMainWindow NU le rend deja True. L'assertion qui se trouvait ici ne
+    # pouvait donc pas echouer. Ce qui teste quelque chose est qu'un type que
+    # la fenetre ne sait pas lire soit REFUSE -- sans quoi « accepte tout »
+    # passerait aussi bien que « accepte ce qu'il faut ».
+    refus = _drag_enter(hub, "quelque_chose.exe")
+    assert refus.isAccepted() is False, (
+        "la fenetre accepte un type qu'elle ne sait pas lire : le filtre par extension ne mord pas"
+    )
 
     # Vérifier le drag enter sur le HUB
     mime = QMimeData()

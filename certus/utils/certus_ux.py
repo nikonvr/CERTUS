@@ -211,6 +211,9 @@ def build_premium_overrides(_theme: str | None = None) -> str:
     from certus.ui.certus_ui import CertusTheme as T
 
     primary = T.PRIMARY
+    # The label of a filled button follows the fill, so it must be a TOKEN.
+    # A literal white was shipped here and measured at 2.54:1 in dark mode.
+    primary_label = T.PRIMARY_TEXT
     primary_soft = _hex_with_alpha(primary, 18)
     primary_hover = _darken_color(primary, 0.08)
     primary_pressed = _darken_color(primary, 0.16)
@@ -248,6 +251,7 @@ def build_premium_overrides(_theme: str | None = None) -> str:
     text_main = T.TEXT_MAIN
     text_sub = T.TEXT_SUB
     danger = T.DANGER
+    danger_label = T.DANGER_LABEL
     danger_hover = _darken_color(danger, 0.08)
     danger_pressed = _darken_color(danger, 0.16)
 
@@ -380,7 +384,7 @@ QPushButton:disabled {{
 /* -- Primary button (opt-in) ------------------------------------------- */
 QPushButton#{OBJ.PRIMARY_BUTTON} {{
     background-color: {primary};
-    color: #ffffff;
+    color: {primary_label};
     border: none;
     border-radius: {r_md}px;
     padding: {sp_sm}px {sp_lg}px;
@@ -402,7 +406,7 @@ QPushButton#{OBJ.PRIMARY_BUTTON}:disabled {{
 /* -- Danger button (opt-in) -------------------------------------------- */
 QPushButton#{OBJ.DANGER_BUTTON} {{
     background-color: {danger};
-    color: #ffffff;
+    color: {danger_label};
     border: none;
     border-radius: {r_md}px;
     padding: {sp_sm}px {sp_lg}px;
@@ -592,7 +596,6 @@ QHeaderView::section {{
     border-bottom: 1px solid {border};
     padding: {sp_sm}px {sp_md}px;
     font-weight: 600;
-    text-transform: uppercase;
     font-size: {font_sm}pt;
 }}
 QHeaderView::section:hover {{

@@ -65,6 +65,19 @@ def test_index_headless():
         if final_result:
             if hasattr(final_result, "rmse_final"):
                 print(f"RMSE: {final_result.rmse_final:.6f}")
+            elif hasattr(final_result, "final_mse"):
+                # 🔴 L'OBJET PORTE `final_mse`, PAS `rmse_final`. Ce bloc cherchait un
+                # attribut qui n'existe pas et retombait sur l'infini : INDEX etait donc
+                # declare mesurable par le golden master tout en ne rendant JAMAIS de
+                # valeur. Trouve le 2026-09-08.
+                #
+                # 🔑 La racine carree n'est pas une supposition : la conversion est ecrite
+                # dans le code du projet -- `spline_workers.py` calcule sa RMSE finale par
+                # `sqrt(max(final_mse, 0))`. MSE et RMSE sont deux grandeurs, et les
+                # confondre sur un logiciel de metrologie serait pire que ne rien afficher.
+                import math
+
+                print(f"RMSE: {math.sqrt(max(float(final_result.final_mse), 0.0)):.6f}")
             elif isinstance(final_result, dict) and "rmse" in final_result:
                 print(f"RMSE: {final_result['rmse']:.6f}")
             else:

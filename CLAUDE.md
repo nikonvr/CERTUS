@@ -476,17 +476,28 @@ regardait.
 | [`README_REFERENCE_CONFORMANCE.md`](pages/README_REFERENCE_CONFORMANCE.md) | les règles des pages HTML de `pages/`, **et une mesure ouverte** : 13 pages sur 15 déclarent `lang="en"`, deux non |
 | [`RAPPORT_FILTRE_EXTREME_5CAV_99C.md`](example/example_strat/RAPPORT_FILTRE_EXTREME_5CAV_99C.md) | l'étude du passe-bande **99 couches** — formule, matériaux, performances TMM, règles de dépôt. ⚠️ [`COMPOSANTS.md`](docs/COMPOSANTS.md) ne couvre PAS ce composant : ce n'est pas un doublon |
 
-🔴 **LA SUITE « OBLIGATOIRE » NE TOURNE PAS — mesuré le 2026-09-08.**
-`pytest tests/regression/` rend **`collected 0 items`** : `test_convergence.py` porte un nom
-que `pytest` ramasse, mais c'est un **script** (`main()` + `if __name__ == "__main__"`), pas un
-module de tests. Il se lance par `RUN_CONVERGENCE_TESTS.bat`, dont l'en-tête dit *« OBLIGATOIRE
-avant toute validation de code »*. **Un zéro silencieux dans une suite verte** — exactement le
-motif que ce document traque.
+🟢 **LA SUITE « OBLIGATOIRE » TOURNE DEPUIS LE 2026-09-08 — elle rendait `collected 0 items`.**
+`test_convergence.py` porte un nom que `pytest` ramasse, mais c'est un **script**
+(`main()` + `if __name__`). La règle *« passe obligatoire avant toute validation »*, affichée
+par son lanceur, désignait donc une suite qui **n'existait pas dans la suite de tests** — un
+zéro silencieux dans un vert. `test_convergence_guard.py` expose de vrais tests : il **appelle**
+les fonctions du script au lieu de les copier. 📏 **8 tests, 4 min 10, tous verts.**
 
-⚠️ **Et deux choses de plus, avant de s'y fier** : sa base `baseline_rmse.json` ne porte que
-**5 entrées pour les 7 modules** qu'elle déclare tester — DESIGN et INDEX manquent ; et elle
-mesure les scripts de `tests/headless/`, dont le §4 dit que **deux remplacent le calcul par un
-mock**. La réparer est un chantier, pas une correction.
+🔴 **Et deux de ses sept modules mesuraient un MOCK.** `tests/headless/test_design.py` et
+`test_strat.py` remplacent le calcul — ce que le §4 dit depuis longtemps et que ce harnais
+ignorait. Le mock de STRAT émet zéro stratégie, donc une RMSE infinie : **sa référence
+`0,01706` était inatteignable par construction**, un fossile d'avant le mock qui produisait un
+rouge que personne ne pouvait corriger. Retirée. *Une entrée qui ne peut pas passer apprend à
+ignorer la suite.*
+
+🟢 **INDEX est mesuré depuis le même jour** : son script cherchait un attribut `rmse_final`
+que l'objet de résultats ne porte pas — il porte `final_mse` — et retombait donc en silence
+sur l'infini. Corrigé, et la conversion n'est pas devinée : le code du projet calcule sa RMSE
+par `sqrt(max(final_mse, 0))`. **MSE et RMSE sont deux grandeurs.** INDEX rend **0,00257**.
+
+📌 **Couverture honnête : 5 modules sur 7.** La référence d'INDEX a été **capturée, pas
+validée** — elle dit *« pas pire qu'aujourd'hui »*. Rendre DESIGN et STRAT mesurables demande
+un script headless qui exécute vraiment le pipeline : c'est un chantier.
 
 🔑 **La page qui compte, et 👤 l'a dit : `pages/CERTUS_STRAT.html`.**
 

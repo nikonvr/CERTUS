@@ -111,7 +111,7 @@ qui est pire que le défaut qu'il surveille.
 | balayage | ce qu'il couvre |
 |---|---|
 | **A** — constantes du code | 6 constantes lues par AST, zéro document ne les contredit |
-| **B** — grandeurs physiques | 10 faits (SEEL des 4 composants, cadence, bruit, fente, cible, rendement) : **valeur unique** partout |
+| **B** — grandeurs physiques | 10 faits (SEEL des 4 composants, cadence, bruit, fente, cible, rendement) : **valeur unique** partout. 🟢 **Étendu aux 15 pages HTML le 2026-09-08** — voir l'encadré de la vitrine plus bas |
 | **C** — 🔑 **automatique** | **297 symboles numériques** découverts dans `certus/`, **18 cités** dans les `.md`. Tout `NOM = N` écrit dans un document est comparé au code. **Ce balayage grandit tout seul** quand un document cite un symbole de plus |
 | **D** — profondeurs par mode | la table `fast/premium/deep` lue dans l'interface, et les **triplets** `50 / 150 / 300` que les documents écrivent |
 | **E** — 🔴 **les commandes s'exécutent-elles** | **FATAL, pas « à instruire »** : tout interpréteur et tout script cité dans une commande doit exister, dans les `.md` **et dans les docstrings de `scripts/`**. 📏 103 scripts couverts. ⚠️ *Il ne regardait que l'interpréteur, dans les seuls `.md`, et ses échecs étaient noyés parmi les points à instruire — donc lus comme du bruit pendant des semaines.* Élargi et rendu fatal le 2026-09-08, **contrôle négatif vérifié** : un script inexistant rend `exit 1` |
@@ -513,7 +513,23 @@ aucune instruction, et elle a un régime propre :
 | **La nuance juste convainc, le superlatif non** | « le meilleur partitionnement **mesuré** sur deux empilements » se défend ; « l'optimum universel » se réfute en une question. |
 | **Elle doit montrer sa LIMITE** | §21.15 porte le 99 couches, dont **aucune stratégie ne survit** — plantage 100 %, et le 0,86 nm qui traîne est un **score de repli**. Un expert le trouverait de toute façon. |
 | **Et ce qui lève la limite** | **§21.16 — multiple testglass**, ajoutée le 2026-08-15 : le même 99 couches devient fabricable, **0,81 nm** à 0 % de plantage. ⚠️ Le `0,782` était le plus **favorable de trois graines** (0,782 / 0,816 / 0,839) — corrigé le 17/08. Elle dit aussi les trois attentes que la mesure a **démenties**, et ce qui n'est **pas** revendiqué (borne supérieure, une seule graine). |
-| **Vérifie la STRUCTURE après toute édition** | Le 2026-08-14 un `</ul>` supprimé faisait rendre 400 lignes à l'intérieur d'une liste, et avait emporté une puce entière. Passe `html.parser`, ne te fie pas à l'œil. |
+| **Vérifie la STRUCTURE après toute édition** | Le 2026-08-14 un `</ul>` supprimé faisait rendre 400 lignes à l'intérieur d'une liste, et avait emporté une puce entière. `python scripts/verifier_html.py pages/*.html` — 📏 **les 15 pages passent** au 2026-09-08. |
+
+🟢 **ET SES CHIFFRES SONT ENFIN VÉRIFIÉS PAR UNE MACHINE — 2026-09-08.** Le contrôle B de
+`coherence_md.py` ne lisait que les `.md` : **le document que 👤 juge le plus important était
+hors de tout périmètre**, et pouvait affirmer une valeur que le corpus a rétractée sans que
+rien ne le dise. Il balaye désormais aussi les 15 pages, balises retirées.
+
+📏 **Et le verdict est bon** : sur les 10 grandeurs, **valeur unique partout** — la cadence
+machine passe de 7 à **11 citations**, preuve que les pages sont bien lues. J'avais soupçonné
+l'inverse : la vitrine cite `0,86 nm` **sept fois** et `0,782 nm` **six fois**, deux chiffres
+rétractés. ⚠️ **Vérification faite, elle les cite AVEC leur rétractation** — *« it is NOT a
+robustness score »*, *« the most favourable of three seeds »*. **Ma suspicion était fausse
+deux fois.**
+
+🔑 **Le défaut n'était donc pas son contenu, c'était qu'aucune machine ne le tenait.** Elle est
+juste parce qu'on l'a maintenue ; elle le restera parce qu'un contrôle négatif le prouve — une
+valeur contradictoire plantée dans une page **est détectée et nommée**.
 
 Les autres pages de `pages/` (14 fichiers : DESIGN, INDEX, FIELD, HUB, RE, METAL, métrologie…)
 et les rapports de `reports/*.html` existent aussi. ⚠️ Ceux de `reports/` **ne chargent aucun

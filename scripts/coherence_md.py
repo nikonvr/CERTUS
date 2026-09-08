@@ -130,6 +130,29 @@ DU_CODE: list[tuple[str, str, str, str]] = [
 ]
 
 
+def _pages() -> list[Path]:
+    """Les pages HTML publiees. Elles affirment les MEMES grandeurs que les `.md`."""
+    return sorted((ROOT / "pages").glob("*.html"))
+
+
+def _lignes(f: Path) -> list[str]:
+    """Les lignes d'un fichier, balises HTML retirees.
+
+    🔴 La vitrine est le document que 👤 juge le plus important -- *« c'est lui qui
+    convaincra les acheteurs »* -- et AUCUN controle ne lisait ses chiffres : ce script
+    ne balayait que les `.md`. Une page pouvait donc affirmer une valeur que le corpus a
+    retractee sans que rien ne le dise.
+
+    📏 Mesure du 2026-09-08 : elle est juste -- elle cite bien le score de repli du 99c
+    et l'etendue des trois graines avec leur reserve. Mais elle l'est parce qu'on l'a
+    MAINTENUE, pas parce qu'une machine l'y oblige. C'est cette machine qui manquait.
+    """
+    txt = f.read_text(encoding="utf-8", errors="replace")
+    if f.suffix.lower() in (".html", ".htm"):
+        txt = re.sub(r"<[^>]+>", " ", txt)
+    return txt.splitlines()
+
+
 def _md() -> list[Path]:
     """Tous les `.md` SUIVIS PAR GIT, pas seulement la racine et `docs/`.
 
@@ -482,7 +505,7 @@ def main() -> int:
     n_pb = 0
     n_fatal = 0
     print("=" * 96)
-    print(f"COHERENCE DES {len(fichiers)} FICHIERS .md")
+    print(f"COHERENCE DE {len(fichiers)} FICHIERS .md + {len(_pages())} PAGES HTML")
     print("=" * 96)
 
     print("\n=== A. LES CONSTANTES DU CODE, ET CE QUE LES DOCUMENTS EN DISENT ===")
@@ -515,8 +538,11 @@ def main() -> int:
     print("\n=== B. LES GRANDEURS PHYSIQUES : le meme fait, plusieurs valeurs ? ===")
     for lib, ctx, val, excl in FAITS:
         vues: dict[str, list[str]] = {}
-        for f in fichiers:
-            for i, l in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+        # 🔑 LES PAGES PUBLIEES SONT DANS LE PERIMETRE. Un fait vit a un seul endroit --
+        # et une vitrine qui contredit le corpus est pire qu'un dossier qui le contredit,
+        # parce qu'un evaluateur qui prend un chiffre en defaut cesse de croire le reste.
+        for f in list(fichiers) + _pages():
+            for i, l in enumerate(_lignes(f), 1):
                 if not re.search(ctx, l) or _est_correction(l):
                     continue
                 # 🔴 Sans cette garde, « SEEL 0,583 sur 35c et 0,173 sur 48c » declenche DEUX

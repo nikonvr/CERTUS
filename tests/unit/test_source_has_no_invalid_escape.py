@@ -16,18 +16,23 @@ marque d'ordre d'octets, parfaitement légale (PEP 263) : la machinerie d'import
 retire, mais `compile()` sur une chaîne la refuse. Une première version de cette
 sonde les a donc signalés comme cassés alors qu'ils s'importent tous les trois.
 *Un défaut de l'instrument ressemble à un défaut du code.*
+
+🔴 **LE PÉRIMÈTRE, CE SONT LES FICHIERS SUIVIS PAR GIT — corrigé le 2026-09-25.** La première
+version balayait le disque depuis la racine en excluant des dossiers nommés un par un. Lancée
+depuis l'arbre principal, elle lisait donc les copies de worktrees de `.claude/worktrees/` et
+`studies/`, hors git : **neuf faux coupables, aucun dans le dépôt**. Elle passait sur la
+machine qui l'a écrite parce que la session tournait elle-même dans un worktree.
 """
 
 from __future__ import annotations
 
+import subprocess
 import warnings
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
 DOSSIERS_EXCLUS = {
-    ".venv",
-    ".git",
     "__pycache__",
     "build",
     "dist",
@@ -37,7 +42,18 @@ DOSSIERS_EXCLUS = {
 
 
 def _sources() -> list[Path]:
-    return sorted(p for p in ROOT.rglob("*.py") if not set(p.relative_to(ROOT).parts) & DOSSIERS_EXCLUS)
+    """Les sources SUIVIES par git ; sans git, le disque moins tout dossier caché."""
+    try:
+        sortie = subprocess.run(
+            ["git", "ls-files", "-z", "--", "*.py"], cwd=ROOT, capture_output=True, check=True
+        ).stdout.decode("utf-8")
+        return sorted(ROOT / p for p in sortie.split("\0") if p and (ROOT / p).is_file())
+    except (OSError, subprocess.CalledProcessError):
+        return sorted(
+            p
+            for p in ROOT.rglob("*.py")
+            if not any(part.startswith(".") or part in DOSSIERS_EXCLUS for part in p.relative_to(ROOT).parts)
+        )
 
 
 def _avertissements(chemin: Path) -> list[str]:
@@ -57,6 +73,12 @@ def test_the_sweep_actually_reads_the_repository():
     """Contrôle négatif : un balayage vide passerait pour vert."""
     fichiers = _sources()
     assert len(fichiers) > 400, f"seulement {len(fichiers)} source(s) balayée(s) — le périmètre s'est effondré"
+
+
+def test_the_sweep_stays_in_this_tree():
+    """Contrôle négatif du périmètre : aucune source prise dans une copie du dépôt."""
+    intrus = [p for p in _sources() if any(part.startswith(".") for part in p.relative_to(ROOT).parts[:-1])]
+    assert not intrus, f"{len(intrus)} source(s) lue(s) dans un dossier caché, par exemple {intrus[0]}"
 
 
 def test_the_sweep_can_still_detect_one():

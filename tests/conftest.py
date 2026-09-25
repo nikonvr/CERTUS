@@ -33,6 +33,20 @@ for _stream in _streams:
         except (ValueError, OSError):
             pass
 
+# On Windows the C runtime allows 512 FILE* streams per process by default. Under the
+# offscreen platform, Qt's FreeType engine keeps font files open as FILE* streams: measured
+# 2026-09-25, the first DESIGN window takes 253 slots and the UI suite fills all 512 before
+# test_u8_animations_onboarding_reports, whose Excel export (lxml writes through fopen) then
+# fails with "Too many open files". The count depends on the fonts installed on the machine.
+# Raise the ceiling to the C runtime maximum (see tests/unit/test_conftest_stdio_ceiling.py).
+if sys.platform == "win32":
+    try:
+        import ctypes
+
+        ctypes.cdll.ucrtbase._setmaxstdio(8192)
+    except (OSError, AttributeError):
+        pass
+
 import os
 
 # Force Qt offscreen platform for headless CI/test environments.

@@ -18,7 +18,15 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 #("✅ analytic=..., fd=..."). 48 occurrences of ✅/❌/⚠ in 12 test files.
 #We force UTF-8 on the test flows: a diagnostic print must never be able to
 #to fail an assertion which itself has passed.
-for _stream in (sys.stdout, sys.stderr):
+# The REAL streams too, not only pytest's: on a cold numba cache, numba's ColorShell calls
+# colorama.init() while capture is suspended and wraps the real sys.stdout -- cp1252 when
+# the output is redirected -- so a later print failed a passing test (2026-09-25, see
+# tests/unit/test_conftest_real_streams_are_utf8.py).
+_streams = []
+for _s in (sys.stdout, sys.stderr, sys.__stdout__, sys.__stderr__):
+    if _s is not None and all(_s is not _t for _t in _streams):
+        _streams.append(_s)
+for _stream in _streams:
     if hasattr(_stream, "reconfigure"):
         try:
             _stream.reconfigure(encoding="utf-8", errors="replace")

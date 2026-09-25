@@ -75,14 +75,84 @@ PUITS = {
 CONSTRUCTEURS = {
     "QLabel", "QPushButton", "QCheckBox", "QRadioButton", "QGroupBox", "QAction",
     "QToolButton", "QTableWidgetItem", "QTreeWidgetItem", "CertusCard",
+    # 🔴 Les deux FABRIQUES du depot. Sans elles, la sonde ne voyait aucun des 72 boutons
+    # construits par la premiere, ni les neuf onglets de la seconde -- et elle annoncait
+    # zero alors qu'un onglet portait encore une esperluette mangee et qu'un bouton
+    # ecrivait le nom de la lettre grecque en toutes lettres.
+    # 🔑 Un puits absent de cette liste est un angle mort SILENCIEUX, contrairement a
+    # celui du controle F, qui se compte et s'affiche.
+    "create_styled_button", "_add_plot_tab",
 }
+
+#: 🔴 L'INDEX de l'argument qui atteint l'ecran, quand ce n'est pas le premier.
+#: La sonde parcourait TOUS les arguments : elle comptait donc la donnee metier de
+#: `addItem(texte, donnee)` comme un libelle. `certus_index_spline_eventsextras_mixin.py`
+#: porte `addItem("...", "lambda")`, et cette seconde chaine etait signalee comme un mot
+#: a traduire -- or la renommer casse `_on_spectrum_x_mode_changed`.
+INDEX_TEXTE = {"addTab": 1, "setTabText": 1, "insertItem": 1, "setItemText": 1, "_add_plot_tab": 1}
+
+#: 🔑 CE QUE Qt FAIT REELLEMENT DE L'ESPERLUETTE, PUITS PAR PUITS. Mesure le 2026-09-07
+#: en peignant le widget et en comparant sa largeur a celle du meme texte prive du signe.
+#: ⚠️ Ce n'est PAS la meme propriete que `PUITS`, qui dit seulement ce qui atteint l'ecran.
+#: Les confondre faisait compter 23 defauts la ou la mesure en designe 4, et prescrivait
+#: 19 corrections FAUSSES : doubler le signe dans une infobulle l'y afficherait EN DOUBLE.
+#:
+#:     QPushButton 136 == 136   QCheckBox 146 == 146   QRadioButton 146 == 146
+#:     QToolButton 136 == 136   QAction   136 == 136   addTab 50 == 50
+#:     addItem     120 == 120                                          -> MANGEE
+#:
+#:     QLabel 132 != 122   CertusCard 138 != 129   QGroupBox 161 != 151
+#:     setHorizontalHeaderLabels 144 != 134                            -> AFFICHEE
+#:
+#: 🔴 QGroupBox est contre-intuitif : c'est la mesure qui tranche, pas la documentation.
+#: 🔴 Et la methode qui associe un libelle a son champ n'est appelee NULLE PART dans le
+#: depot, donc aucun QLabel ne porte de raccourci.
+MANGEURS = {"addTab", "setTabText", "addItem", "insertItem", "setItemText", "addAction"}
+MANGEURS_CONSTRUCTEURS = {
+    "QPushButton", "QCheckBox", "QRadioButton", "QToolButton", "QAction",
+    # Les fabriques rendent l'une un bouton, l'autre un onglet : deux mangeurs.
+    "create_styled_button", "_add_plot_tab",
+}
+AFFICHEURS = {
+    "setToolTip", "setWindowTitle", "setStatusTip", "setWhatsThis", "setPlaceholderText",
+    "setHorizontalHeaderLabels", "setVerticalHeaderLabels", "setHeaderLabels",
+    "setAccessibleName", "setInformativeText", "setLabelText", "setSuffix", "setPrefix",
+}
+AFFICHEURS_CONSTRUCTEURS = {"QLabel", "QGroupBox", "CertusCard", "QTableWidgetItem", "QTreeWidgetItem"}
+
+#: `setText` depend de son RECEVEUR, et l'AST ne le type pas : on lit donc son nom.
+#: Mesure : un bouton mange le signe (136 == 136) la ou une etiquette et le corps d'une
+#: boite de message l'affichent (270 != 260). 🔑 Ce qui n'est reconnu ni d'un cote ni de
+#: l'autre est compte A PART : le ranger d'office serait la faute meme qu'on corrige ici.
+RECEVEUR_MANGEUR = re.compile(r"(?:^|_)(?:btn|button)s?(?:_|$)", re.IGNORECASE)
+RECEVEUR_AFFICHEUR = re.compile(
+    r"(?:^|_)(?:lbl|label|progress|msg|message|title|status|hint|box|dlg|dialog)s?(?:_|$)",
+    re.IGNORECASE,
+)
 
 #: Un trou laisse par un separateur : deux espaces ENTRE deux caracteres de texte.
 #: Ni un alignement de debut de ligne, ni une indentation dans un bloc HTML.
 TROU = re.compile(r"[A-Za-z0-9)\]]  +[A-Za-z0-9(\[]")
-MOT_LAMBDA = re.compile(r"\blambda\b", re.IGNORECASE)
 
-EXCLUS = {"tests", "scripts", "build", "dist", "node_modules", "studies", ".git", ".venv"}
+#: ⚠️ La borne de mot generique ne convient PAS ici. En mode str elle suit `isalnum()`,
+#: qui rend vrai pour un chiffre en indice : le nom suivi d'un zero souscrit n'offrait
+#: donc aucune frontiere et echappait au controle. Trois occurrences vivaient ainsi dans
+#: `certus_strat_ui_layout.py`, invisibles pour la sonde. On borne sur les caracteres de
+#: mot ASCII, ce qui laisse tranquilles les noms de champs a tiret bas.
+MOT_LAMBDA = re.compile(r"(?<![A-Za-z_])lambda(?![A-Za-z_])", re.IGNORECASE)
+
+EXCLUS = {"tests", "scripts", "build", "dist", "node_modules", "studies"}
+
+#: 🔴 ET TOUT REPERTOIRE CACHE, ce qui n'etait PAS le cas et a fausse une mesure de
+#: 60 %. La liste ci-dessus nommait `.git` et `.venv` un par un, donc elle ne disait
+#: rien de `.claude/worktrees/`, ou une session parallele tient une COPIE du depot.
+#: 📏 Mesure du 2026-09-07 : 578 fichiers sur 968 balayes venaient d'un autre arbre,
+#: portant le code d'AVANT les corrections -- et les trois tests de comptage de
+#: l'etape 3.0 ont echoue pour cette seule raison, en annonçant une regression qui
+#: n'existait pas. C'est le piege n° 1 du §4 de `CLAUDE.md` : modifier un arbre et
+#: en mesurer un autre, sans le moindre message d'erreur.
+def _est_cache(chemin: Path) -> bool:
+    return any(partie.startswith(".") for partie in chemin.parts)
 
 
 def _est_emoji(texte: str) -> bool:
@@ -93,8 +163,10 @@ def _est_emoji(texte: str) -> bool:
 
 
 def _sources() -> list[Path]:
+    """Les sources de CET arbre -- ni un worktree voisin, ni un cache."""
     return sorted(
-        p for p in RACINE.rglob("*.py") if not (EXCLUS & set(p.parts))
+        p for p in RACINE.rglob("*.py")
+        if not (EXCLUS & set(p.parts)) and not _est_cache(p.relative_to(RACINE))
     )
 
 
@@ -106,17 +178,28 @@ def _nom_appele(node: ast.Call) -> str | None:
     return None
 
 
-def _recolte(chemin: Path) -> tuple[list[tuple[str, int]], int]:
-    """Rend les chaines litterales atteignant un puits, et le compte des arguments NON litteraux.
+def _nom_receveur(node: ast.Call) -> str:
+    """Le nom de l'objet sur lequel le puits est appele -- vide si l'AST ne le nomme pas."""
+    cible = node.func.value if isinstance(node.func, ast.Attribute) else None
+    if isinstance(cible, ast.Attribute):
+        return cible.attr
+    if isinstance(cible, ast.Name):
+        return cible.id
+    return ""
 
-    Le second nombre est l'angle mort, et il est rendu pour etre affiche -- pas pour etre tu.
+
+def _recolte_source(source: str) -> tuple[list[tuple[str, int, str, str]], int]:
+    """Le coeur de la recolte, sur du texte -- pour que le controle negatif puisse MORDRE.
+
+    Une logique qu'on ne peut exercer que sur le depot entier ne se verifie pas : la
+    premiere version de cette sonde etait fausse et verte, faute d'un tel point d'entree.
     """
     try:
-        arbre = ast.parse(chemin.read_text(encoding="utf-8", errors="replace"))
+        arbre = ast.parse(source)
     except SyntaxError:
         return [], 0
 
-    litterales: list[tuple[str, int]] = []
+    litterales: list[tuple[str, int, str, str]] = []
     aveugles = 0
     for node in ast.walk(arbre):
         if not isinstance(node, ast.Call):
@@ -124,14 +207,43 @@ def _recolte(chemin: Path) -> tuple[list[tuple[str, int]], int]:
         nom = _nom_appele(node)
         if nom not in PUITS and nom not in CONSTRUCTEURS:
             continue
-        for arg in node.args:
+        receveur = _nom_receveur(node)
+        vise = INDEX_TEXTE.get(nom, 0)
+        for i, arg in enumerate(node.args):
             if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
-                litterales.append((arg.value, node.lineno))
+                # Un seul argument est le libelle ; les autres portent des donnees metier,
+                # et les corriger casse la logique qui les compare.
+                if i == vise:
+                    litterales.append((arg.value, node.lineno, nom, receveur))
             elif isinstance(arg, ast.JoinedStr) or (
                 isinstance(arg, ast.BinOp) and isinstance(arg.op, ast.Add)
             ):
                 aveugles += 1
     return litterales, aveugles
+
+
+def _recolte(chemin: Path) -> tuple[list[tuple[str, int, str, str]], int]:
+    """Idem, sur un fichier."""
+    return _recolte_source(chemin.read_text(encoding="utf-8", errors="replace"))
+
+
+def _mnemonique_actif(puits: str, receveur: str) -> bool | None:
+    """Qt mangera-t-il l'esperluette ? Vrai, faux, ou None quand ce n'est PAS mesure.
+
+    🔑 Le troisieme cas est le plus important des trois. Repondre vrai par defaut, c'est
+    ce que faisait la version precedente : elle prescrivait alors de doubler le signe dans
+    des infobulles, ou il se serait affiche EN DOUBLE.
+    """
+    if puits in MANGEURS or puits in MANGEURS_CONSTRUCTEURS:
+        return True
+    if puits in AFFICHEURS or puits in AFFICHEURS_CONSTRUCTEURS:
+        return False
+    if puits == "setText":
+        if RECEVEUR_MANGEUR.search(receveur):
+            return True
+        if RECEVEUR_AFFICHEUR.search(receveur):
+            return False
+    return None
 
 
 #: Une entite HTML (`&amp;`, `&#9646;`) n'est PAS un mnemonique : Qt la rend telle quelle.
@@ -159,6 +271,7 @@ def _mutile(texte: str) -> bool:
 def _balaye() -> dict:
     separateur: list[str] = []
     mnemonique: list[str] = []
+    indetermine: list[str] = []
     mot_lambda: list[str] = []
     emoji: list[str] = []
     aveugles = 0
@@ -168,17 +281,21 @@ def _balaye() -> dict:
         rel = chemin.relative_to(RACINE)
         litterales, borgnes = _recolte(chemin)
         aveugles += borgnes
-        for texte, ligne in litterales:
+        for texte, ligne, puits, receveur in litterales:
             marque = f"{rel}:{ligne}  {texte!r}"
             trou = _mutile(texte)
-            amp = _esperluette_seule(texte)
+            # 🔴 Un `&` ne devient un raccourci que dans CERTAINS puits : il est affiche
+            # tel quel dans une infobulle, un titre de fenetre, une etiquette et un cadre.
+            amp = _esperluette_seule(texte) and _mnemonique_actif(puits, receveur)
             # ⚠️ Les deux categories ne s'excluent PAS. Une chaine peut porter un
             # separateur efface ET une esperluette -- deux correctifs sur la meme ligne.
             if trou:
                 separateur.append(marque)
-            if amp:
+            if amp is True:
                 mnemonique.append(marque)
-            if trou and amp:
+            elif amp is None:
+                indetermine.append(f"{marque}   [{puits} sur {receveur or '?'}]")
+            if trou and amp is True:
                 deux_defauts += 1
             if MOT_LAMBDA.search(texte):
                 mot_lambda.append(marque)
@@ -188,6 +305,7 @@ def _balaye() -> dict:
     return {
         "separateur": separateur,
         "mnemonique": mnemonique,
+        "indetermine": indetermine,
         "lambda": mot_lambda,
         "emoji": emoji,
         "aveugles": aveugles,
@@ -230,12 +348,48 @@ def _controle_negatif() -> tuple[bool, bool, bool]:
     """
     voit_trou = _mutile("Optical Profiles  n(lambda)")
     voit_lambda = bool(MOT_LAMBDA.search("n(lambda) and ln k(lambda)"))
+    # 🔴 Et le nom suivi d'un zero souscrit, que la borne de mot generique laissait passer.
+    voit_lambda = voit_lambda and bool(MOT_LAMBDA.search("Center lambda\u2080 (nm):"))
+    # ... sans mordre sur un nom de champ, qui n'est pas un libelle.
+    voit_lambda = voit_lambda and not MOT_LAMBDA.search("(lambda_min + lambda_max) / 2")
     # La source d'un mnemonique n'a QUE des espaces simples : le trou nait au rendu.
     mnemo = "Substrate (n) & layer thickness"
     ne_confond_pas = _esperluette_seule(mnemo) and not _mutile(mnemo)
     # Et une entite HTML ne doit surtout pas etre prise pour un mnemonique.
     ignore_entite = not _esperluette_seule("<span>&#9646;</span> = Smart Delta")
-    return voit_trou, voit_lambda, ne_confond_pas and ignore_entite
+
+    # 🔴 LE CONTROLE QUI MANQUAIT, ET SON ABSENCE A COUTE 19 CORRECTIONS FAUSSES.
+    # Un puits qui affiche l'esperluette ne doit pas etre signale ; un puits qui la mange
+    # doit l'etre ; un puits non mesure ne doit etre range NI d'un cote NI de l'autre.
+    trie_les_puits = (
+        _mnemonique_actif("setToolTip", "") is False
+        and _mnemonique_actif("QLabel", "") is False
+        and _mnemonique_actif("addTab", "") is True
+        and _mnemonique_actif("setText", "stop_step2_btn") is True
+        and _mnemonique_actif("setText", "lbl_status") is False
+        and _mnemonique_actif("setText", "quelque_chose") is None
+    )
+
+    # 🔴 Et la donnee metier d'un `addItem` ne doit PAS etre prise pour un libelle.
+    recoltees, _ = _recolte_source(
+        'combo.addItem("Wavelength lambda (nm)", "lambda")\n'
+        'tabs.addTab(page, "n & k")\n'
+    )
+    textes = [t for t, _ligne, _puits, _recv in recoltees]
+    ignore_donnee = textes == ["Wavelength lambda (nm)", "n & k"]
+
+    # 🔴 LE CONTROLE QUI MANQUAIT, ET SON ABSENCE A FAIT ANNONCER UNE FAUSSE
+    # REGRESSION. Un repertoire cache peut contenir une copie entiere du depot ;
+    # la balayer revient a mesurer un autre arbre que celui qu'on edite.
+    hors_arbre = not any(_est_cache(p.relative_to(RACINE)) for p in _sources())
+
+    return (
+        voit_trou,
+        voit_lambda,
+        ne_confond_pas and ignore_entite,
+        trie_les_puits,
+        ignore_donnee and hors_arbre,
+    )
 
 
 def _tete(titre: str) -> None:
@@ -273,8 +427,16 @@ def main() -> int:
     print("     fabrique Alt+Space, qui est le menu de fenetre de Windows.")
     print("  ⚠️ La SOURCE d'un mnemonique n'a que des espaces simples : le double espace")
     print("     n'apparait qu'au RENDU. Ne le cherche donc jamais dans le fichier.")
+    print("  🔴 Seuls les puits qui MANGENT le signe sont comptes ici — mesure le")
+    print("     2026-09-07. Une infobulle, un titre de fenetre, une etiquette et un cadre")
+    print("     l'affichent tel quel : y doubler l'esperluette la montrerait EN DOUBLE.")
     print(f"  🔴 {r['deux_defauts']} chaine(s) portent les DEUX defauts — A et B a la fois.")
     montre("mnemonique")
+    if r["indetermine"]:
+        print(f"\n  ⚠️ {len(r['indetermine'])} chaine(s) NON CLASSEES : le puits n'a pas ete")
+        print("     mesure, ou le receveur de `setText` n'est pas reconnu. Elles ne sont NI")
+        print("     un defaut NI un faux positif — c'est a toi de trancher, pas a la sonde.")
+        montre("indetermine")
 
     _tete("C. `lambda` ECRIT EN TOUTES LETTRES au lieu de λ")
     print(f"  {len(r['lambda'])} chaine(s), {fichiers('lambda')} fichier(s)")
@@ -308,11 +470,16 @@ def main() -> int:
     print(f"  Perimetre : {len(PUITS)} methodes + {len(CONSTRUCTEURS)} constructeurs.")
 
     _tete("G. CONTROLE NEGATIF — l'outil sait-il seulement DETECTER ?")
-    voit_trou, voit_lambda, ne_confond_pas = _controle_negatif()
+    voit_trou, voit_lambda, ne_confond_pas, trie_les_puits, ignore_donnee = _controle_negatif()
     print(f"  {'🟢' if voit_trou else '🔴'} il repere un double espace plante")
-    print(f"  {'🟢' if voit_lambda else '🔴'} il repere un `lambda` plante")
+    print(f"  {'🟢' if voit_lambda else '🔴'} il repere un nom plante, indice compris,")
+    print("       sans mordre sur un nom de champ a tiret bas")
     print(f"  {'🟢' if ne_confond_pas else '🔴'} il ne confond PAS une esperluette avec un trou")
-    if not (voit_trou and voit_lambda and ne_confond_pas):
+    print(f"  {'🟢' if trie_les_puits else '🔴'} il sait quels puits MANGENT le signe, et laisse")
+    print("       les autres NON CLASSES au lieu de les ranger d'office")
+    print(f"  {'🟢' if ignore_donnee else '🔴'} il ne prend PAS la donnee metier d'un `addItem`")
+    print("       pour un libelle")
+    if not (voit_trou and voit_lambda and ne_confond_pas and trie_les_puits and ignore_donnee):
         print("  🔴 LA SONDE NE MORD PAS. Ne crois aucun compte ci-dessus.")
         return 2
 

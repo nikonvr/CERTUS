@@ -1115,7 +1115,7 @@ class _UIBuilderMixin:
         left_lay.addWidget(stepper_card)
 
         # ── File card ─────────────────────────────────────────────────────────
-        file_card = CertusCard("1  Spectrum")
+        file_card = CertusCard("1 — Spectrum")
         file_card.body.setContentsMargins(8, 4, 8, 6)
         file_card.body.setSpacing(4)
         self.lbl_file = QLabel("(no file loaded)")
@@ -1124,7 +1124,7 @@ class _UIBuilderMixin:
         self.lbl_file.setToolTip("Path of the last loaded file.")
         self.btn_load = create_styled_button("Load spectrum…", "secondary")
         self.btn_load.setToolTip(
-            "Step 1: open a file containing at least lambda and transmission T. "
+            "Step 1: open a file containing at least λ and transmission T. "
             "In Basic, enable T/Tsub if T already is T_film/T_bare_sub ratio (often in %)."
         )
         self.btn_load.clicked.connect(self._on_load)
@@ -1148,7 +1148,7 @@ class _UIBuilderMixin:
         left_lay.addWidget(self.params_collapsible)
 
         # ── Action bar (Run / Stop / toggles) ────────────────────────────────
-        action_card = CertusCard("5  Run, manual nodes, corridors")
+        action_card = CertusCard("5 — Run, manual nodes, corridors")
         action_card.body.setContentsMargins(8, 4, 8, 6)
         action_card.body.setSpacing(4)
 
@@ -1385,7 +1385,7 @@ class _UIBuilderMixin:
             scroll.ensureWidgetVisible(widget, 0, 24)
 
     def _build_basic_step3_spectral_targets(self, parent_layout: "QVBoxLayout", style: str) -> None:
-        box3 = CertusCard("3  What to fit on the spectrum (T, T/Tsub, R)")
+        box3 = CertusCard("3 — What to fit on the spectrum (T, T/Tsub, R)")
         box3.setStyleSheet(style)
         box3.body.setContentsMargins(6, 4, 6, 4)
         box3.body.setSpacing(4)
@@ -1417,7 +1417,7 @@ class _UIBuilderMixin:
             "Checked (usual case): T column is T_film / bare-substrate T ratio (backside included), same for R. "
             "Often provided in percent (100 = ratio 1). Fit compares against ratio model without dividing by T_sub again. "
             "Unchecked: columns are absolute transmission/reflection (or %). "
-            "RMSE objective uses ln lambda weighting and optional mixed T/R loss."
+            "RMSE objective uses ln λ weighting and optional mixed T/R loss."
         )
         self.chk_trel.toggled.connect(self._on_trel_plot_refresh)
         g3.addWidget(self.chk_trel, r3, 0, 1, 2)
@@ -1456,7 +1456,7 @@ class _UIBuilderMixin:
 
         parent_layout.addWidget(box3)
 
-        btn_rmse_win = create_styled_button("Spectral RMSE window (lambda)...", "secondary")
+        btn_rmse_win = create_styled_button("Spectral RMSE window (λ)...", "secondary")
         btn_rmse_win.setToolTip(
             "Limits the wavelengths used in the optimization MSE/RMSE. "
             "The displayed spectrum remains complete; only points in the band count for the adjustment."
@@ -1554,7 +1554,7 @@ class _UIBuilderMixin:
         tb = QHBoxLayout()
         self.btn_copy_nk = create_styled_button("Copy full table (TSV)", "secondary")
         self.btn_copy_nk.setEnabled(False)
-        self.btn_copy_nk.setToolTip("All columns (lambda, n?, k?) - Excel paste")
+        self.btn_copy_nk.setToolTip("All columns (λ, n?, k?) - Excel paste")
         self.btn_copy_nk.clicked.connect(self._copy_nk_to_clipboard)
         tb.addWidget(self.btn_copy_nk)
 
@@ -1605,10 +1605,10 @@ class _UIBuilderMixin:
         self.table_nk.setEditTriggers(ExcelTableWidget.EditTrigger.NoEditTriggers)
         self.table_nk.horizontalHeader().setStretchLastSection(True)
         self.table_nk.setToolTip(
-            "lambda grid by spectral region: 2 nm step (<=400 nm), 5 nm (400-1200 nm), "
+            "λ grid by spectral region: 2 nm step (<=400 nm), 5 nm (400-1200 nm), "
             "10 nm beyond; n, k and envelopes interpolated from result mesh. "
             "Envelopes: corridor bounds (d profiling). "
-            "Previews: all n (or k) curves, envelope band if corridor; synchronized lambda cursor. "
+            "Previews: all n (or k) curves, envelope band if corridor; synchronized λ cursor. "
             "Ctrl+C: copy selection (TSV) -> Excel."
         )
 
@@ -1637,8 +1637,8 @@ class _UIBuilderMixin:
         lay.addLayout(tb)
 
         hint = QLabel(
-            "Theoretical table on a piecewise lambda grid: 2 nm (<=400), 5 nm (400-1200), 10 nm (>1200). "
-            "Colonnes: lambda, n, k, d, ns, Tth, Rth."
+            "Theoretical table on a piecewise λ grid: 2 nm (<=400), 5 nm (400-1200), 10 nm (>1200). "
+            "Colonnes: λ, n, k, d, ns, Tth, Rth."
         )
         hint.setWordWrap(True)
         hint.setStyleSheet(CertusTheme.get_hint_text_style())
@@ -1650,7 +1650,7 @@ class _UIBuilderMixin:
         self.table_data_th.setEditTriggers(ExcelTableWidget.EditTrigger.NoEditTriggers)
         self.table_data_th.horizontalHeader().setStretchLastSection(True)
         self.table_data_th.setToolTip(
-            "Theoretical grid aligned on reporting lambda mesh. Refreshed from best-live snapshot during optimization."
+            "Theoretical grid aligned on reporting λ mesh. Refreshed from best-live snapshot during optimization."
         )
         lay.addWidget(self.table_data_th, 1)
 
@@ -1660,12 +1660,12 @@ class _UIBuilderMixin:
         return panel
 
     def _build_basic_step2_substrate_thickness(self, parent_layout: "QVBoxLayout", style: str) -> None:
-        box2 = CertusCard("2  Substrate n(λ) & layer thickness d (nm)")
+        box2 = CertusCard("2 — Substrate n(λ) & layer thickness d (nm)")
         box2.setStyleSheet(style)
         box2.body.setContentsMargins(6, 4, 6, 4)
         box2.body.setSpacing(4)
         box2.setToolTip(
-            "Step 2: set substrate optical index n_sub(lambda) and single-layer thickness bounds. "
+            "Step 2: set substrate optical index n_sub(λ) and single-layer thickness bounds. "
             "This must be physically consistent before running the fit."
         )
 
@@ -1799,7 +1799,7 @@ class _UIBuilderMixin:
 
         self._idx_tab_overview = self._add_plot_tab(self._build_tab_overview(), "✦ Synthèse (Overview)")
         self._add_plot_tab(self._build_tab_spectrum(), "Spectrum T / R")
-        self._idx_tab_indices = self._add_plot_tab(self._build_tab_indices(), "n & k")
+        self._idx_tab_indices = self._add_plot_tab(self._build_tab_indices(), "n, k")
         self._tab_corridor_panel = self._build_tab_corridor()
         self._idx_tab_corridor = self._add_plot_tab(self._tab_corridor_panel, "Corridors n/k")
         self._tab_corridor_rmse_panel = self._build_tab_corridor_rmse()
@@ -1922,7 +1922,7 @@ class _UIBuilderMixin:
         ctx_lay.setContentsMargins(0, 0, 0, 0)
 
         hint = QLabel(
-            "<b>Acceptance envelope (profiling in d)</b> - n(lambda) and k(lambda) bands after optimization. "
+            "<b>Acceptance envelope (profiling in d)</b> - n(λ) and k(λ) bands after optimization. "
             "Calculation starts from the <b>best polished spectral RMSE</b> ('best RMSE' + RMSE_ref+Delta default): "
             "the displayed reference curve is the scientific nominal, and the envelope groups models whose "
             "masked RMSE remains <= RMSE<sub>best</sub> + Delta. This is not a Bayesian confidence interval."
@@ -1933,7 +1933,7 @@ class _UIBuilderMixin:
             "<b>log10 k:</b> the <b>bold</b> orange curve follows the main optimization result ('n &amp; log10 k' tab). "
             "Shaded area = min/max of linear <i>k</i> from refits accepted at various <i>d</i> "
             "(without corrective widening in scientific mode). The <b>dashed</b> orange curve appears only if a central refit "
-            "differs significantly from the bold curve. <b>Crosshair:</b> the value follows the bold curve at the cursor lambda."
+            "differs significantly from the bold curve. <b>Crosshair:</b> the value follows the bold curve at the cursor λ."
         )
         hint.setWordWrap(True)
         hint.setStyleSheet(CertusTheme.get_hint_text_style())

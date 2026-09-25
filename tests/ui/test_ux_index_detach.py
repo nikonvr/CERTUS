@@ -5,7 +5,7 @@ under it: _add_main_control_buttons inserts "Data" before the other addTab calls
 
 Measured 2026-09-05 on the instantiated window:
 
-    index 0 -> 'Data'            index 3 -> 'n & k'
+    index 0 -> 'Data'            index 3 -> 'n, k'
     index 1 -> 'Synthesis'       index 4 -> 'Convergence'
     index 2 -> 'Spectrum'        index 5 -> 'Final Equations'
 
@@ -22,6 +22,7 @@ Data, an empty tab. One fix puts out both.
 from __future__ import annotations
 
 import pytest
+from scripts.audit_ux_certus import libelle_affiche
 
 
 @pytest.fixture
@@ -37,7 +38,10 @@ def index_window(qapp):
 
 def _tab_index(win, needle: str) -> int:
     for i in range(win.tabs.count()):
-        if needle.lower() in win.tabs.tabText(i).lower():
+        # Par le libelle AFFICHE, pas par la source : un onglet dont l'esperluette est
+        # doublee s'ecrit autrement qu'il ne se peint, et le test survit alors a toute
+        # correction de raccourci future.
+        if needle.lower() in libelle_affiche(win.tabs.tabText(i)).lower():
             return i
     raise AssertionError(f"no tab matching {needle!r} among {[win.tabs.tabText(i) for i in range(win.tabs.count())]}")
 
@@ -53,7 +57,7 @@ def test_index_opens_on_the_spectrum_tab(index_window) -> None:
     [
         ("Spectrum", "spectrum"),
         ("Data", "data_table"),
-        ("n & k", "nk_n"),
+        ("n, k", "nk_n"),
     ],
 )
 def test_detach_follows_the_current_tab(index_window, tab_needle, expected_key) -> None:

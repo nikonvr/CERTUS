@@ -521,7 +521,7 @@ class _SettingsMixin:
 
         lay = QVBoxLayout(dlg)
 
-        chk = QCheckBox("Limit optimization MSE/RMSE to a lambda band (nm)")
+        chk = QCheckBox("Limit optimization MSE/RMSE to a λ band (nm)")
 
         chk.setChecked(self._rmse_fit_lambda_enabled)
 

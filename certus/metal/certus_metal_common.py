@@ -474,7 +474,7 @@ def setup_common_metal_plots(app) -> None:
 
     app.p1.vb.sigResized.connect(_sync_p2_geometry)
 
-    app.tabs.addTab(app.clues_plot, "n & k")
+    app.tabs.addTab(app.clues_plot, "n, k")
 
 
 
@@ -1491,7 +1491,7 @@ class MetalBaseApp(CertusBaseApp):
         self.btn_load = create_styled_button(" Load File...", "secondary")
         self.btn_load.setToolTip(
             "Load a data file (CSV or Excel) containing columns:\n"
-            "lambda (nm), R, [T], [Rback] - percentage or 0-1 scale accepted."
+            "λ (nm), R, [T], [Rback] — percentage or 0-1 scale accepted."
         )
         self.btn_load.clicked.connect(self.load_target_file)
         l.addWidget(self.btn_load)

@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import os
 import subprocess
 import sys
@@ -108,6 +109,20 @@ def _is_transient(widget) -> bool:
     return False
 
 
+def libelle_affiche(source: str) -> str:
+    """Ce que Qt PEINT, a partir du texte source d'un libelle.
+
+    Un signe double se peint en signe simple ; un signe seul est le prefixe du raccourci
+    et disparait. 🔴 Cette ligne effacait les deux, donc le cliquet rendait le MEME texte
+    avant et apres la correction de l'etape 3.0 : il ne pouvait ni la constater ni la
+    proteger. Mesure le 2026-09-07 sur les quatre onglets concernes.
+
+    🔑 Source unique : `tests/ui/test_ux_index_detach.py` en portait une copie, et deux
+    copies d'une meme regle divergent au premier correctif.
+    """
+    return re.sub(r"&(.)", r"\1", source).strip()
+
+
 def skeleton(win) -> list[str]:
     """One line per interactive control, in traversal order.
 
@@ -151,8 +166,7 @@ def skeleton(win) -> list[str]:
             # into RE reported its whole tab widget as "missing". Per-tab entries
             # still catch a lost or renamed tab, and they name which one.
             for i in range(w.count()):
-                tab = w.tabText(i).replace("&", "").strip()
-                out.append(f"{type(w).__name__}|{tab[:48]}")
+                out.append(f"{type(w).__name__}|{libelle_affiche(w.tabText(i))[:48]}")
             continue
         label = (w.text() if hasattr(w, "text") else "") or ""
         out.append(f"{type(w).__name__}|{(label or w.objectName())[:48]}")

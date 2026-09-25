@@ -65,7 +65,7 @@ class LayoutManager:
 
         workflow_card = CertusCard("Workflow")
 
-        workflow_hint = QLabel("1 Configure materials  2 Define stack  3 Set optimizer  4 Evaluate / Run")
+        workflow_hint = QLabel("1 Configure materials  →  2 Define stack  →  3 Set optimizer  →  4 Evaluate / Run")
 
         workflow_hint.setWordWrap(True)
 
@@ -213,9 +213,9 @@ class LayoutManager:
 
         self.ui.l0_spin.valueChanged.connect(self.ui._on_tikhonravov_points_changed)
 
-        self.ui.l0_spin.setToolTip("Reference wavelength lambda₀ (nm) for converting QWOT to physical thickness.")
+        self.ui.l0_spin.setToolTip("Reference wavelength λ₀ (nm) for converting QWOT to physical thickness.")
 
-        l0_lay.addWidget(QLabel("lambda₀ ref.:"))
+        l0_lay.addWidget(QLabel("λ₀ ref.:"))
 
         l0_lay.addWidget(self.ui.l0_spin)
 

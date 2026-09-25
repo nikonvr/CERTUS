@@ -460,7 +460,7 @@ class CertusStratLayoutMixin:
 
         gb_lam.body.addLayout(gb_lam_layout)
 
-        lbl_l0 = QLabel("Center lambda₀ (nm):")
+        lbl_l0 = QLabel("Center λ₀ (nm):")
 
         lbl_l0.setStyleSheet(f"font-weight: bold; font-size: {Typography.H3}pt; color: {CertusTheme.INFO_TEXT};")
 
@@ -473,8 +473,8 @@ class CertusStratLayoutMixin:
         )
 
         self.widgets["l0"].setToolTip(
-            "Reference (center) wavelength lambda₀ in nanometres.\n"
-            "Used as the nucleation anchor and to convert optical thicknesses (QWOT = lambda₀/4n).\n"
+            "Reference (center) wavelength λ₀ in nanometres.\n"
+            "Used as the nucleation anchor and to convert optical thicknesses (QWOT = λ₀/4n).\n"
             "Also used as the nucleation wavelength for the first monochromatic monitoring block."
         )
 

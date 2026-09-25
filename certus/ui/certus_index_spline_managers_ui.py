@@ -93,11 +93,11 @@ class Step4MeshOptimizerBuilder:
 
         v_adv.addLayout(row_pf)
 
-        lb_mesh_dlam = QLabel("Min. Deltalambda/lambda step (sigma mesh) :")
+        lb_mesh_dlam = QLabel("Min. Δλ/λ step (sigma mesh) :")
 
         lb_mesh_dlam.setToolTip(
-            "Canonical mesh constraint: min(delta-lambda between nodes) / lambda >= this value, "
-            "with lambda? = (lambda_min + lambda_max) / 2 from file. Number of segments is reduced if needed; "
+            "Canonical mesh constraint: min(Δλ between nodes) / λ >= this value, "
+            "with λ_mid = (lambda_min + lambda_max) / 2 from file. Number of segments is reduced if needed; "
             "IR extension (+2 knots) is omitted if it violates threshold.\n"
             "0 = disabled (nominal behavior without this constraint)."
         )
@@ -224,7 +224,7 @@ class Step4MeshOptimizerBuilder:
         lb_cor = QLabel("Corridors n/k (d profiling):")
 
         lb_cor.setToolTip(
-            "Calculate a plausible thickness interval and n(lambda), k(lambda) corridors by fixing d, then re-optimizing\n"
+            "Calculate a plausible thickness interval and n(λ), k(λ) corridors by fixing d, then re-optimizing\n"
             "the n and ln k nodes with the same penalties and masked RMSE as the fit.\n\n"
             "RMSE_ref+Delta mode (default): accepted RMSE <= best polished spectral RMSE + Delta; the nominal 'best' curve\n"
             "is a native member of the envelope (not a pseudo-confidence interval centered on a heuristic refit).\n"
@@ -262,7 +262,7 @@ class Step4MeshOptimizerBuilder:
 
         app.cb_corr_mode = QComboBox()
 
-        app.cb_corr_mode.addItem("Heuristic (alpha?RMSE_opt)", "alpha")
+        app.cb_corr_mode.addItem("Heuristic (alpha * RMSE_opt)", "alpha")
 
         app.cb_corr_mode.addItem("RMSE_ref + Delta (absolute)", "abs_delta")
 
@@ -279,7 +279,7 @@ class Step4MeshOptimizerBuilder:
             "RMSE_ref + Delta: RMSE(d) <= RMSE_ref + Delta (same spectral mask). With 'best RMSE' checked, RMSE_ref = "
             "spectral_rmse_best_value (best polish); otherwise base curves from the dict.\n"
             "RMSE_ref + Delta adaptive: Delta is estimated locally from the profiled RMSE(d) parabola and local roughness.\n"
-            "LR: Delta^2 <= chi^2(1, conf); constant sigma or sigma_i(lambda) ~ |residual| when residual sigma is enabled."
+            "LR: Delta^2 <= chi^2(1, conf); constant sigma or sigma_i(λ) ~ |residual| when residual sigma is enabled."
         )
 
         row_cor.addWidget(QLabel("mode"))
@@ -550,7 +550,7 @@ class Step4MeshOptimizerBuilder:
 
         app.chk_corr_boot.setToolTip(
             "Parametric bootstrap: generates B T/R datasets by adding Gaussian noise (sigma_T, sigma_R),\n"
-            "re-launches d profiling for each replication, then computes percentile bands on n(lambda), k(lambda)\n"
+            "re-launches d profiling for each replication, then computes percentile bands on n(λ), k(λ)\n"
             "and a distribution of the d interval."
         )
 
@@ -627,7 +627,7 @@ class Step4MeshOptimizerBuilder:
 
         app.sp_corr_boot_block.setValue(1)
 
-        app.sp_corr_boot_block.setToolTip("Block length (in lambda points) for residual bootstrap. 1 = iid.")
+        app.sp_corr_boot_block.setToolTip("Block length (in λ points) for residual bootstrap. 1 = iid.")
 
         row_cor.addSpacing(6)
 
@@ -673,7 +673,7 @@ class Step4MeshOptimizerBuilder:
 
         row_cor_v25 = QHBoxLayout()
 
-        app.chk_corr_sigma_hetero = QCheckBox("sigma(lambda) residual")
+        app.chk_corr_sigma_hetero = QCheckBox("sigma(λ) residual")
         app.chk_corr_sigma_hetero.setToolTip(
             "Heteroscedastic residual model: local regression plus parametric bootstrap."
         )
@@ -697,11 +697,11 @@ class Step4MeshOptimizerBuilder:
 
         app.sp_corr_hetero_scale.setValue(1.0)
 
-        app.sp_corr_hetero_scale.setToolTip("Scale factor on |residual| for sigma_i(lambda) (0 = floor only).")
+        app.sp_corr_hetero_scale.setToolTip("Scale factor on |residual| for sigma_i(λ) (0 = floor only).")
 
         row_cor_v25.addSpacing(6)
 
-        row_cor_v25.addWidget(QLabel("scale sigma(lambda)"))
+        row_cor_v25.addWidget(QLabel("scale sigma(λ)"))
 
         row_cor_v25.addWidget(app.sp_corr_hetero_scale)
 

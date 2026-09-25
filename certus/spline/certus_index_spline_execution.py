@@ -760,7 +760,7 @@ class _RunMixin:
                 self.logger.warning("_plot_result: missing lam_nm in result; fallback to experimental lambda grid.")
         lam0 = np.asarray(lam0_src if lam0_src is not None else [], dtype=np.float64).ravel()
         if lam0.size == 0:
-            self.lbl_status.setText("No lambda available to plot the result.")
+            self.lbl_status.setText("No λ available to plot the result.")
             if self.logger:
                 self.logger.error("_plot_result aborted: lam_nm unavailable after fallback.")
             self._spectrum_clear_theory_probe()

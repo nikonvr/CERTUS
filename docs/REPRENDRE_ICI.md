@@ -111,6 +111,38 @@ tu ne l'armes pas.
 
 ---
 
+## 🔴 UNE SONDE QUI BALAYE DEPUIS LA RACINE DEVIENT FAUSSE DÈS QU'UNE TÂCHE TOURNE EN PARALLÈLE
+
+📏 **Mesuré le 2026-09-07, et cela a produit une fausse régression.** Une session qui
+lance une tâche de fond crée un **worktree git sous `.claude/worktrees/`** — c'est-à-dire
+une **copie entière du dépôt**, à l'intérieur du dépôt. Tout outil qui fait un balayage
+récursif depuis la racine la lit donc aussi.
+
+```
+sonde des libelles, avant correctif :  968 fichiers balayes
+                    dont              :  578 dans un worktree   -> 60 %
+apres                                 :  390, aucun
+```
+
+🔑 **Le symptôme est trompeur** : les trois tests de comptage de l'étape 3.0 ont annoncé
+que des défauts corrigés étaient revenus. Ils lisaient le code d'**avant**, dans un autre
+arbre. C'est le **piège n° 1 du §4 de [`CLAUDE.md`](../CLAUDE.md)** — *modifier un dossier
+et en mesurer un autre, sans le moindre message d'erreur* — dans une forme que ce document
+ne décrivait pas : ce n'est pas une **autre** copie du dépôt sur la machine, c'est une
+copie **dedans**, créée par l'outillage lui-même.
+
+⚠️ **Nommer `.git` et `.venv` un par un ne suffit pas.** C'est ce que faisait la liste
+d'exclusions, donc elle ne disait rien de `.claude/`. La forme qui survit est d'écarter
+**tout composant de chemin commençant par un point**, ou mieux, de balayer un périmètre
+**nommé** (`certus/` plus les points d'entrée) plutôt que la racine entière — ce que fait
+déjà le cliquet de l'étape 1.3, et c'est pourquoi lui n'a jamais été touché.
+
+🟢 **Les deux sondes portent désormais le contrôle négatif correspondant** : elles
+vérifient qu'aucun fichier hors de l'arbre courant n'entre dans leur mesure, et sortent
+en 2 sinon — pour qu'on ne prenne jamais leur silence pour un résultat.
+
+---
+
 ## 🟢 LE CHANTIER COURANT DE L'INTERFACE — phases 0, 1, 2 closes · phase 3 aux deux tiers
 
 ### Phase 3 — ce qui est fait dans la nuit du 2026-09-06 au 07
@@ -125,7 +157,9 @@ tu ne l'armes pas.
 | ✅ | **3.7** | la coche des cases **n'avait jamais été dessinée** — Qt ne résout pas les data-URL en QSS |
 | ✅ | **3.8** | chevron des combos rétabli |
 | ✅ | **3.9** | couleurs de marque — SMOOTHER était peint avec le jeton **SUCCESS**. Source unique descendue dans `core` |
-| ⬜ | **3.0 · 3.5 · 3.10** | ouvertes. **3.0 et 3.5 sont les dangereuses** — voir ci-dessous |
+| ✅ | **3.0** | **FAITE le 2026-09-07.** Les trois signatures à zéro, la sonde sort en 0. 🔴 Son contrôle B annonçait **23** défauts, la mesure en désigne **4** : elle ignorait *où* Qt fait un raccourci. Deux autres angles morts fermés, dont les **fabriques de widgets** du dépôt (72 appels). 🔴 Et le cliquet du squelette était **aveugle** à l'étape — il effaçait toute esperluette. ⚠️ Un onglet élargi a **débordé la barre à 1366 px** : dans cette phase, un libellé qui s'allonge est un changement de mise en page |
+| 🟠 | **3.10** | **DEUX PASSES le 2026-09-07**, deux fichiers sur la quarantaine. La seconde a donné une **source unique** à l'identité du dialogue des nœuds manuels — six nuances sur dix-sept sites — **sans changer aucune valeur** (ensemble des couleurs identique, vérifié avant écriture). Elle a révélé une règle **dupliquée mot pour mot**, une divergence de couleur entre la ligne d'un nœud et son étiquette, et **deux étiquettes qui échouent le contraste en clair** — celui-là attend un arbitrage, puisque le corriger demande de choisir une couleur. La première passe, elle, Ce n'était PAS cosmétique : la feuille appliquée **par-dessus** celle du thème écrasait en dur des libellés que le thème posait déjà par jeton, et **trois contrastes échouaient en mode sombre**. En clair la feuille sort **identique au caractère** — le contrôle qui sépare un correctif d'un changement d'interface. 🔴 Le garde-fou existant lisait la **mauvaise feuille** ; étendu. 🔴 Et l'instrument neuf a prescrit faux sur **31 sites** avant que son contrôle négatif ne soit durci |
+| ⬜ | **3.5** | ouverte. **C'est la dangereuse** — voir ci-dessous |
 
 📏 **Périmètre complet `tests/ui/ + tests/unit/` : `3000 passed, 0 failed`** au dernier
 relevé avant 3.1. ⚠️ **Ne recopie pas ce compte** — il bouge dès qu'on ajoute un test ; le
@@ -197,9 +231,10 @@ test. **Le seul critère qui survive est `0 failed`.**
 les validations d'une journée ont porté sur un périmètre restreint, et **un test cassé a été
 publié** sans que rien ne le signale.
 
-🟢 **Tout est commité ET poussé** sur `refactor-corridors-mixins`, la campagne partant de
-`bdfe2f9`. 🔴 **Aucun compte de commits n'est écrit ici — compte-le**, c'est la même règle que
-pour les tests trois lignes plus haut :
+🔴 **« Tout est commité et poussé » était FAUX, et l'est resté 18 jours** : la session du
+2026-09-07 a écrit cette phrase puis laissé 33 fichiers hors de git, et la nuit du 2026-09-08
+a travaillé sur une branche locale jamais poussée. Les deux ont été réunis le 2026-09-25.
+**Ne crois pas ce paragraphe — lance les deux commandes :**
 
 ```bat
 git log --oneline bdfe2f9~1..HEAD

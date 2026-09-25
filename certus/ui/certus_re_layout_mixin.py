@@ -246,7 +246,7 @@ class CertusRELayoutMixin:
 
         workflow_card = CertusCard("Workflow")
 
-        workflow_hint = QLabel("1 Load workbook  2 Evaluate spectrum  3 Run RE  4 Inspect results")
+        workflow_hint = QLabel("1 Load workbook  →  2 Evaluate spectrum  →  3 Run RE  →  4 Inspect results")
 
         workflow_hint.setWordWrap(True)
 
@@ -396,7 +396,7 @@ class CertusRELayoutMixin:
             "Modes below are left to right: <b>Slow</b> -> <b>Medium</b> -> <b>Fast</b>. "
             "<b>Slow</b> = larger budget (more multistarts, top-K, shakes, iterations) to seek a better minimum. "
             "<b>Medium</b> = settings validated on the optimal batch (exploration + iterations). "
-            "<b>Fast</b> = fewer restarts / top-K / shakes and reduced iterations  quick run."
+            "<b>Fast</b> = fewer restarts / top-K / shakes and reduced iterations — quick run."
         )
 
         hint.setWordWrap(True)
@@ -424,7 +424,7 @@ class CertusRELayoutMixin:
         self.re_speed_fast_radio = QRadioButton("Fast")
 
         self.re_speed_fast_radio.setToolTip(
-            "Single multistart, top-K 1, no shakes, reduced iterations  good for a first try."
+            "Single multistart, top-K 1, no shakes, reduced iterations — good for a first try."
         )
 
         self.re_speed_medium_radio.setChecked(True)
@@ -475,7 +475,7 @@ class CertusRELayoutMixin:
 
         lay.setSpacing(12)
 
-        lbl_idx = QLabel("<b>Optical indices</b>  H, L and substrate:  index  sheet (n(lambda), k(lambda) tables).")
+        lbl_idx = QLabel("<b>Optical indices</b> — H, L and substrate: 'index' sheet (n(λ), k(λ) tables).")
 
         lbl_idx.setWordWrap(True)
 
@@ -517,7 +517,7 @@ class CertusRELayoutMixin:
 
         lay.addWidget(self._re_readout_backside_lbl)
 
-        fit_label = QLabel("RE fit lambda window:")
+        fit_label = QLabel("RE fit λ window:")
         lay.addWidget(fit_label)
 
         fit_row = QHBoxLayout()
@@ -529,7 +529,7 @@ class CertusRELayoutMixin:
         self.re_fit_lambda_min_spin.setDecimals(1)
         self.re_fit_lambda_min_spin.setSingleStep(10.0)
         self.re_fit_lambda_min_spin.setSuffix(" nm")
-        self.re_fit_lambda_min_spin.setToolTip("Ignore all RE measurement points with lambda below this minimum.")
+        self.re_fit_lambda_min_spin.setToolTip("Ignore all RE measurement points with λ below this minimum.")
         self.re_fit_lambda_min_spin.valueChanged.connect(self._on_re_fit_window_changed)
         fit_row.addWidget(self.re_fit_lambda_min_spin)
 
@@ -540,7 +540,7 @@ class CertusRELayoutMixin:
         self.re_fit_lambda_max_spin.setDecimals(1)
         self.re_fit_lambda_max_spin.setSingleStep(10.0)
         self.re_fit_lambda_max_spin.setSuffix(" nm")
-        self.re_fit_lambda_max_spin.setToolTip("Ignore all RE measurement points with lambda above this maximum.")
+        self.re_fit_lambda_max_spin.setToolTip("Ignore all RE measurement points with λ above this maximum.")
         self.re_fit_lambda_max_spin.valueChanged.connect(self._on_re_fit_window_changed)
         fit_row.addWidget(self.re_fit_lambda_max_spin)
 
@@ -596,7 +596,7 @@ class CertusRELayoutMixin:
         self.l0_spin.valueChanged.connect(self._on_l0_changed_update_substrate_info)
 
         self.l0_spin.setToolTip(
-            "lambda₀ (nm) after loading RE, fixed by the <b>design</b> sheet (see Excel box above)."
+            "λ₀ (nm) after loading RE, fixed by the <b>design</b> sheet (see Excel box above)."
         )
 
         self.l0_spin.setVisible(False)
@@ -1186,7 +1186,7 @@ class CertusRELayoutMixin:
 
         dlg = QDialog(parent or self)
 
-        dlg.setWindowTitle("RE  ap(lambda) (phase 4)")
+        dlg.setWindowTitle("RE — ap(λ) (phase 4)")
 
         set_certus_window_icon(dlg)
 

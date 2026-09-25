@@ -93,3 +93,83 @@ def test_button_stylesheet_carries_no_hardcoded_colour(role: str) -> None:
         )
     finally:
         CertusTheme.configure("light")
+
+
+# --- la feuille appliquee PAR-DESSUS celle du theme --------------------------
+#
+# 🔴 LE CONTROLE CI-DESSUS NE LA VOYAIT PAS, et c'est ce qui a laisse passer le
+# defaut jusqu'au 2026-09-07. Il interroge les constructeurs de CertusTheme, qui
+# etaient deja tokenises ; `certus_ux.build_premium_overrides()` est appliquee
+# ensuite et gagne donc sur eux. Elle ecrivait `color: #ffffff` en dur sur six
+# elements poses sur un remplissage colore.
+#
+# Mesure le 2026-09-07, mode sombre, avant correctif :
+#
+#     primaire  #ffffff sur #60a5fa  =  2.54:1   ECHEC AA
+#     danger    #ffffff sur #f87171  =  2.77:1   ECHEC AA
+#     succes    #ffffff sur #34d399  =  1.92:1   ECHEC AA
+#
+# et apres, par le jeton de libellé :  7.02 / 6.45 / 9.29.
+#
+# 🔑 En mode CLAIR le jeton et le blanc valent la meme chose, donc la feuille
+# claire sort identique au caractere -- verifie par empreinte SHA-256. Le
+# correctif ne change le rendu que la ou il etait fautif.
+
+#: Les regles de libellé de cette feuille, par l'identifiant d'objet du widget.
+OVERRIDE_LABEL_RULES = ["PRIMARY_BUTTON", "DANGER_BUTTON", "SUCCESS_BUTTON", "empty-cta"]
+
+
+def _override_sheet(mode: str) -> str:
+    from certus.ui.certus_theme import CertusTheme
+    from certus.utils.certus_ux import build_premium_overrides
+
+    try:
+        CertusTheme.configure(mode)
+        return build_premium_overrides()
+    finally:
+        CertusTheme.configure("light")
+
+
+def test_the_override_sheet_carries_no_literal_white_label(qapp) -> None:
+    """A `color:` rule fixed to white cannot follow the theme it sits on.
+
+    This asserts a property of the SHEET THAT IS ACTUALLY APPLIED, not of the one
+    underneath it. Verified failing on the code of 2026-09-07 morning: six rules.
+    """
+    _ = qapp
+    css = _override_sheet("dark")
+    fautives = [
+        ligne.strip()
+        for ligne in css.splitlines()
+        if ligne.strip().startswith(("color:", "selection-color:")) and "#ffffff" in ligne.lower()
+    ]
+    assert not fautives, (
+        f"{len(fautives)} regle(s) de libelle fixees au blanc dans la feuille appliquee "
+        f"par-dessus le theme : {fautives[:4]}. En mode sombre le remplissage devient une "
+        f"teinte pale, donc le libelle y tombe sous 3:1."
+    )
+
+
+def test_the_override_sheet_is_unchanged_in_light_mode(qapp) -> None:
+    """Routing a label token must not touch the light theme.
+
+    The token and the literal hold the same value in light mode, so this is the
+    control that separates « a defect was fixed » from « the interface changed ».
+    Every `color:` rule of the light sheet must still resolve to the light label.
+    """
+    _ = qapp
+    from certus.ui.certus_theme import CertusTheme
+
+    CertusTheme.configure("light")
+    attendu = CertusTheme.PRIMARY_TEXT.lower()
+    css = _override_sheet("light")
+    regles = [
+        ligne.strip()
+        for ligne in css.splitlines()
+        if ligne.strip().startswith(("color:", "selection-color:"))
+    ]
+    assert regles, "aucune regle de libelle trouvee -- la feuille a change de forme"
+    assert any(attendu in ligne.lower() for ligne in regles), (
+        f"aucune regle de libelle ne porte {attendu} en mode clair : le routage a change "
+        f"le rendu clair, ce qui n'etait pas le but"
+    )

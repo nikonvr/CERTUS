@@ -1,7 +1,7 @@
 """Cliquet du système visuel (Étape 1.3).
 
 Contrôles statiques d'invariants (lecture des sources) :
-- Aucune nouvelle couleur hexadécimale hors du thème (cliquet <= 315).
+- Aucune nouvelle couleur hexadécimale hors du thème (cliquet <= 294).
 - Aucune nouvelle taille de police codée en dur (cliquet <= 52).
 - Aucun nouvel emoji dans les libellés utilisateur (cliquet <= 36).
 - Police et taille uniformes sur toute la suite (Phase 3).
@@ -75,22 +75,53 @@ def count_user_facing_emoji() -> int:
 
 
 def test_no_new_hardcoded_hex_outside_the_theme() -> None:
-    """Ratchet. Remesure 2026-09-06 : <= 310 hors des fichiers de palette.
+    """Ratchet. Remesure 2026-09-07 apres la SECONDE passe de l'etape 3.10 : <= 294.
 
-    L'ancienne limite etait 315 avec deux fichiers exemptes. `certus_hub_config.py` est
-    devenu le troisieme a l'etape 3.9, ce qui retire 8 hexadecimaux du comptage ; la limite
-    descend donc de 315 a 310 et non a 307, parce que l'etape a aussi ajoute quatre
-    couleurs de marque et retire l'usage detourne du jeton de succes.
+    Historique des paliers, parce que chacun dit ce qui l'a fait bouger : 315 avec deux
+    fichiers de palette exemptes · 310 quand un troisieme les a rejoints a l'etape 3.9,
+    resserre du nombre exact d'hexadecimaux que l'exemption retirait -- sans quoi
+    exempter un fichier aurait donne du mou a tous les autres · 304 depuis la premiere
+    passe de 3.10, qui a route les six libelles poses sur un remplissage colore dans
+    `certus_ux.py`, la feuille appliquee PAR-DESSUS celle du theme · 294 depuis la
+    seconde passe, qui a donne une SOURCE UNIQUE a l'identite du dialogue des noeuds
+    manuels -- six nuances repandues sur dix-sept sites, ramenees a leurs declarations.
+
+    🔑 Cette seconde passe ne CHANGE aucune valeur, seulement leur nom : l'ensemble des
+    couleurs employees par le fichier est identique avant et apres, ce que le script de
+    la passe verifiait avant d'ecrire. Elle a rendu visibles deux choses cachees dans
+    des litteraux distants de deux cent cinquante lignes -- une regle de couleur ecrite
+    DEUX FOIS mot pour mot, et une divergence entre la couleur de ligne d'un noeud et
+    celle de son etiquette. 📏 Les deux etiquettes de nature echouent d'ailleurs le
+    contraste en mode clair, 2,36:1 et 3,40:1 pour un seuil de 4,5 ; corriger demande
+    de CHOISIR une couleur, ce que cette etape ne fait pas.
+
+    🔑 Cette passe n'etait pas cosmetique, et c'est mesure : en mode clair le jeton et
+    le blanc litteral valent la meme chose, donc la feuille CLAIRE sort identique au
+    caractere -- empreinte comparee avant/apres. En mode SOMBRE le remplissage devient
+    une teinte pale et le jeton passe au fonce : les trois libelles de bouton tenaient
+    2,54 / 2,77 / 1,92 contre le seuil de 4,5, et rendent 7,02 / 6,45 / 9,29 apres.
+    Trois echecs d'accessibilite fermes.
+
+    ⚠️ SIX AUTRES SITES DU MEME FICHIER SONT LAISSES, deliberement : deux teintes de
+    degrade et une bordure pale n'ont aucun jeton correspondant, et les trois de
+    l'infobulle sont un choix assume -- elle reste sombre dans les deux modes. L'une
+    d'elles porte par COINCIDENCE la valeur d'un jeton de survol de surface, dont le
+    role n'a rien a voir : la router sur la seule egalite de valeur serait faux.
+
+    🔴 CE COMPTE N'EST PAS LA DETTE. Il compte au niveau du texte, donc il inclut les
+    couleurs d'un HTML EXPORTE -- qui ne doit surtout pas suivre le theme de
+    l'application -- et celles qu'un commentaire cite pour expliquer un defaut.
+    `scripts/sonde_couleurs_en_dur.py` fait la separation et la chiffre.
     """
     count = count_hex_outside_theme()
-    assert count <= 310, (
-        f"Hardcoded hex colors ratchet violated! Found {count} > 310. "
+    assert count <= 294, (
+        f"Hardcoded hex colors ratchet violated! Found {count} > 294. "
         "Use CertusTheme tokens instead of hardcoded hex values."
     )
 
 
 def test_no_new_hardcoded_font_size() -> None:
-    """Ratchet. Remesure 2026-09-06 apres l'etape 3.1 : <= 157.
+    """Ratchet : <= 52 depuis l'etape 3.1 du 2026-09-08 (157 le 2026-09-06).
 
     Depart 2026-09-04 : 173 autorisees, 162 reelles, 23 valeurs distinctes, px et pt
     MELANGES. L'etape 3.1 a route les 5 declarations en pt qui tombaient EXACTEMENT sur un

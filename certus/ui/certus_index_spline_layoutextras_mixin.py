@@ -94,7 +94,7 @@ class CertusIndexSplineLayoutExtrasMixin:
 
         intro = QLabel(
             "<b>CERTUS-INDEX-SPLINE.</b> Global fit of "
-            "<i>n(lambda)</i>, <i>k(lambda)</i> as piecewise-linear in sigma=1/lambda (ln k at knots), "
+            "<i>n(λ)</i>, <i>k(λ)</i> as piecewise-linear in sigma=1/λ (ln k at knots), "
             "with <b>local L-BFGS-B</b> polish. Advanced mode: catalog of continuous laws "
             "on normalized <i>u</i> and 19-D re-optimization if spectral RMSE improves."
         )

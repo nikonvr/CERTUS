@@ -1322,7 +1322,7 @@ class _CorridorWorkerMixin:
         )
 
         self.btn_corridor_rmse_export_envelope_nk.setToolTip(
-            "Export an Excel file (.xlsx) with two sheets (n, k), on lambda grids 2/5/10 nm, for RMSE(d) envelope points."
+            "Export an Excel file (.xlsx) with two sheets (n, k), on λ grids 2/5/10 nm, for RMSE(d) envelope points."
         )
 
         self.btn_corridor_rmse_export_envelope_nk.clicked.connect(self._export_corridor_rmse_envelope_nk_excel)

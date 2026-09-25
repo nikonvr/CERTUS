@@ -344,7 +344,7 @@ class SmartInitNKCurveEditorDialog(QDialog):
             f"color: {CertusTheme.PRIMARY}; font-size: 13px; font-weight: 600; padding: 6px; "
             f"background: rgba(128,128,128,0.12); border-radius: 6px;"
         )
-        self._lbl_live.setText("Hover or drag a point to see lambda, n and k.")
+        self._lbl_live.setText("Hover or drag a point to see λ, n and k.")
         lay.addWidget(self._lbl_live)
 
         split = QSplitter(Qt.Orientation.Vertical)
@@ -400,7 +400,7 @@ class SmartInitNKCurveEditorDialog(QDialog):
         self._sp_all_n.setToolTip("n value applied to all nodes (n_lo / n_hi bounds respected).")
         row_bulk.addWidget(self._sp_all_n)
         btn_all_n = QPushButton("Apply")
-        btn_all_n.setToolTip("Set all n - same n on each lambda node.")
+        btn_all_n.setToolTip("Set all n - same n on each λ node.")
         btn_all_n.clicked.connect(self._apply_all_n)
         row_bulk.addWidget(btn_all_n)
         row_bulk.addSpacing(20)
@@ -414,7 +414,7 @@ class SmartInitNKCurveEditorDialog(QDialog):
         self._sp_all_k.setToolTip("k value (linear) applied to all nodes; graph axis in log.")
         row_bulk.addWidget(self._sp_all_k)
         btn_all_k = QPushButton("Apply")
-        btn_all_k.setToolTip("Set all k - same k on each lambda node.")
+        btn_all_k.setToolTip("Set all k - same k on each λ node.")
         btn_all_k.clicked.connect(self._apply_all_k)
         row_bulk.addWidget(btn_all_k)
         row_bulk.addStretch()
@@ -559,7 +559,7 @@ class SmartInitNKCurveEditorDialog(QDialog):
         elif self._hover_phys_k is not None:
             phys = self._hover_phys_k
         if phys is None:
-            self._lbl_live.setText("Hover or drag a point - wide lambda band, picks the closest node value.")
+            self._lbl_live.setText("Hover or drag a point - wide λ band, picks the closest node value.")
             return
         lam_v = self._lam_for_phys(int(phys))
         n_v = float(np.asarray(self._get_n(), dtype=np.float64).ravel()[phys])

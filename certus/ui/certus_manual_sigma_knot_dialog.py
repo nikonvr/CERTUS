@@ -34,6 +34,68 @@ from certus.ui.certus_ui_widgets_progress import EnhancedProgressWidget
 
 _LOG = logging.getLogger("CERTUS")
 
+#: 🎨 L'IDENTITE ORANGE DE CE DIALOGUE. Elle vivait en six nuances sur dix-sept sites,
+#: sans source unique -- le motif que l'etape 3.9 a ferme pour les couleurs de module.
+#: ⚠️ Aucune valeur n'a ete changee en la nommant : l'ensemble des couleurs employees est
+#: identique avant et apres, donc le rendu aussi.
+#:
+#: 🔴 DEUX CHOSES QUE LE NOMMAGE REND VISIBLES, mesurees le 2026-09-07 :
+#:
+#:   1. Le noeud PREEXISTANT porte deux couleurs -- une pour sa ligne de trace, une autre
+#:      pour son etiquette de nature -- la ou le PROPOSE n'en porte qu'une seule pour les
+#:      deux. On pourrait croire l'etiquette eclaircie pour se lire sur fond clair ; la
+#:      mesure dit non, elle echoue aussi (2,36:1 contre 2,05:1 pour la ligne, seuil 4,5).
+#:      C'est une divergence, pas un arbitrage.
+#:
+#:   2. Les deux etiquettes de nature ECHOUENT le contraste en mode clair -- 2,36:1 et
+#:      3,40:1 pour un seuil de 4,5, et la graisse 600 ne suffit pas a les faire compter
+#:      comme du gros texte. En mode sombre elles tiennent (7,52 et 5,21).
+#:      🔑 Corriger demande de CHOISIR une couleur, ce que cette etape ne fait pas : elle
+#:      route ce qui existe, elle ne decide pas de la palette. Consigne pour arbitrage.
+class _AccentNoeud:
+    """Les couleurs propres a ce dialogue, nommees par ROLE et non par valeur."""
+
+    #: Le trait du noeud deja present dans le maillage, et celui du noeud propose.
+    LIGNE_PREEXISTANT = "#ff9f1a"
+    LIGNE_PROPOSE = "#c97800"
+    #: L'etiquette de nature. Celle du propose reprend la couleur de sa ligne ; celle du
+    #: preexistant s'en ecarte, et le commentaire ci-dessus dit pourquoi c'est un constat.
+    ETIQUETTE_PREEXISTANT = "#d4a100"
+
+    #: L'accent vif : cadre de la ligne selectionnee, milieu de la poignee au survol, et
+    #: fond du badge de selection. Les trois portaient la meme valeur a trois endroits ;
+    #: les reunir affirme qu'ils doivent rester solidaires, ce qui est le cas voulu.
+    VIF = "#ffb347"
+    VIF_CLAIR = "#ffd58a"
+    VIF_TRAIT = "#d8901c"
+    #: Le texte du badge de selection, pose SUR l'accent vif.
+    SUR_VIF = "#1b1b1b"
+
+    #: La poignee de separation au repos -- un degrade gris, sans lien avec l'orange.
+    POIGNEE_BORD = "#d9dde3"
+    POIGNEE_MILIEU = "#aeb7c2"
+    POIGNEE_TRAIT = "#8e99a6"
+
+
+
+#: On-screen label for each preview axis value. The internal state stays "lambda"/"sigma"
+#: -- what the toggle shows is a VIEW on it. Without this indirection,
+#: `_toggle_preview_axis` writes the state straight into the button and the Greek
+#: letter reverts to its spelled-out name on the first click.
+_PREVIEW_AXIS_LABELS = {"lambda": "λ", "sigma": "sigma"}
+
+
+def _style_de_ligne(est_preexistant: bool) -> tuple[str, float]:
+    """La couleur et l'epaisseur du trait d'un noeud, selon qu'il preexiste ou est propose.
+
+    🔴 CETTE REGLE ETAIT ECRITE DEUX FOIS, mot pour mot, a deux cent cinquante lignes
+    d'ecart -- la couleur ET l'epaisseur. Deux copies d'une meme regle divergent au premier
+    correctif ; celle-ci avait deja divergé de sa jumelle d'etiquette (voir `_AccentNoeud`).
+    """
+    if est_preexistant:
+        return _AccentNoeud.LIGNE_PREEXISTANT, 2.5
+    return _AccentNoeud.LIGNE_PROPOSE, 2.0
+
 
 def _sorted_xy(
     lam_nm: np.ndarray | None,
@@ -78,7 +140,7 @@ class _LambdaKnotRow(QFrame):
         layout.setContentsMargins(8, 6, 8, 6)
         self.lbl_kind = QLabel("", self)
         layout.addWidget(self.lbl_kind)
-        layout.addWidget(QLabel("lambda (nm)"))
+        layout.addWidget(QLabel("λ (nm)"))
 
         self.spin = QDoubleSpinBox(self)
         self.spin.setDecimals(4)
@@ -104,7 +166,9 @@ class _LambdaKnotRow(QFrame):
 
     def set_selected(self, selected: bool) -> None:
         if selected:
-            self.setStyleSheet("QFrame { border: 2px solid #ffb347; border-radius: 4px; }")
+            self.setStyleSheet(
+            f"QFrame {{ border: 2px solid {_AccentNoeud.VIF}; border-radius: 4px; }}"
+        )
         else:
             self.setStyleSheet("")
 
@@ -200,7 +264,7 @@ class ManualSigmaKnotDialog(QDialog):
         self.main_splitter.setStretchFactor(1, 0)
 
         intro = QLabel(
-            "Add one or more extra knots on the lambda axis, then click 'Local Re-optimize' to run the local polish. "
+            "Add one or more extra knots on the λ axis, then click 'Local Re-optimize' to run the local polish. "
             "Left click the graph to select the nearest knot (or add one if none is near), "
             "drag the lines to move them, right click near a line to remove it, "
             "and use the list below for fine numerical adjustments. Delete key = remove selected knot. "
@@ -474,7 +538,7 @@ class ManualSigmaKnotDialog(QDialog):
             pen=None,
             symbol="d",
             symbolSize=10,
-            symbolBrush=pg.mkBrush("#c97800"),
+            symbolBrush=pg.mkBrush(_AccentNoeud.LIGNE_PROPOSE),
             name="Proposed knots",
         )
 
@@ -540,29 +604,31 @@ class ManualSigmaKnotDialog(QDialog):
         self.rows_splitter.setStretchFactor(0, 0)
         self.rows_splitter.setStretchFactor(1, 1)
         self.rows_splitter.setSizes([130, 260])
+        # f-string : les accolades QSS sont doublees, sinon Python les prend pour des
+        # champs de format et leve au chargement du module.
         self.rows_splitter.setStyleSheet(
-            """
-            QSplitter::handle:vertical {
+            f"""
+            QSplitter::handle:vertical {{
                 background: qlineargradient(
                     x1: 0, y1: 0, x2: 0, y2: 1,
-                    stop: 0 #d9dde3,
-                    stop: 0.5 #aeb7c2,
-                    stop: 1 #d9dde3
+                    stop: 0 {_AccentNoeud.POIGNEE_BORD},
+                    stop: 0.5 {_AccentNoeud.POIGNEE_MILIEU},
+                    stop: 1 {_AccentNoeud.POIGNEE_BORD}
                 );
-                border-top: 1px solid #8e99a6;
-                border-bottom: 1px solid #8e99a6;
+                border-top: 1px solid {_AccentNoeud.POIGNEE_TRAIT};
+                border-bottom: 1px solid {_AccentNoeud.POIGNEE_TRAIT};
                 margin: 2px 0;
-            }
-            QSplitter::handle:vertical:hover {
+            }}
+            QSplitter::handle:vertical:hover {{
                 background: qlineargradient(
                     x1: 0, y1: 0, x2: 0, y2: 1,
-                    stop: 0 #ffd58a,
-                    stop: 0.5 #ffb347,
-                    stop: 1 #ffd58a
+                    stop: 0 {_AccentNoeud.VIF_CLAIR},
+                    stop: 0.5 {_AccentNoeud.VIF},
+                    stop: 1 {_AccentNoeud.VIF_CLAIR}
                 );
-                border-top: 1px solid #d8901c;
-                border-bottom: 1px solid #d8901c;
-            }
+                border-top: 1px solid {_AccentNoeud.VIF_TRAIT};
+                border-bottom: 1px solid {_AccentNoeud.VIF_TRAIT};
+            }}
             """
         )
         self.rows_splitter.handle(1).setCursor(Qt.CursorShape.SizeVerCursor)
@@ -644,8 +710,7 @@ class ManualSigmaKnotDialog(QDialog):
 
     def _create_preview_line(self, row: _LambdaKnotRow) -> pg.InfiniteLine:
         is_preexisting = str(getattr(row, "origin", "propose")).strip().lower() == "preexistant"
-        base_color = "#ff9f1a" if is_preexisting else "#c97800"
-        base_width = 2.5 if is_preexisting else 2.0
+        base_color, base_width = _style_de_ligne(is_preexisting)
         pos_x = self._preview_x_from_lambda(row.spin.value())
         line = pg.InfiniteLine(
             pos=float(pos_x),
@@ -681,7 +746,7 @@ class ManualSigmaKnotDialog(QDialog):
         y_pos = y_anchor + 0.02 * max(abs(y_anchor), 1.0)
         if row.selection_label is None:
             lbl = pg.TextItem(
-                html='<div style="background-color:#ffb347;color:#1b1b1b;padding:2px 5px;border-radius:3px;"><b>Selection</b></div>',
+                html=f'<div style="background-color:{_AccentNoeud.VIF};color:{_AccentNoeud.SUR_VIF};padding:2px 5px;border-radius:3px;"><b>Selection</b></div>',
                 anchor=(0.5, 1.0),
             )
             row.selection_label = lbl
@@ -692,8 +757,7 @@ class ManualSigmaKnotDialog(QDialog):
         if row.preview_line is None:
             return
         is_preexisting = str(getattr(row, "origin", "propose")).strip().lower() == "preexistant"
-        base_color = "#ff9f1a" if is_preexisting else "#c97800"
-        base_width = 2.5 if is_preexisting else 2.0
+        base_color, base_width = _style_de_ligne(is_preexisting)
         is_sel = row is self._selected_row
         if is_sel:
             row.preview_line.setPen(pg.mkPen(CertusTheme.WARNING, width=3))
@@ -890,9 +954,9 @@ class ManualSigmaKnotDialog(QDialog):
             on_select=self._set_selected_row,
         )
         if str(origin).strip().lower() == "preexistant":
-            row.set_kind("Pre-existing", color="#d4a100")
+            row.set_kind("Pre-existing", color=_AccentNoeud.ETIQUETTE_PREEXISTANT)
         else:
-            row.set_kind("Proposed", color="#c97800")
+            row.set_kind("Proposed", color=_AccentNoeud.LIGNE_PROPOSE)
         row.preview_line = self._create_preview_line(row)
         self._row_widgets.append(row)
         self.plot.addItem(row.preview_line)
@@ -1138,7 +1202,7 @@ class ManualSigmaKnotDialog(QDialog):
         self.lbl_feedback.setText(str(message or "").strip())
 
     def _relabel_preview_axis(self) -> None:
-        self.plot.setLabel("bottom", "sigma (cm^-1)" if self._preview_axis == "sigma" else "lambda (nm)")
+        self.plot.setLabel("bottom", "sigma (cm^-1)" if self._preview_axis == "sigma" else "λ (nm)")
         if hasattr(self, "_preview_popup") and self._preview_popup is not None:
             self._preview_popup.setWindowTitle(f"Manual knots spectral preview | axis {self._preview_axis}")
 
@@ -1146,10 +1210,10 @@ class ManualSigmaKnotDialog(QDialog):
         try:
             if getattr(self, "_preview_axis_button", None) is None:
                 btn = QToolButton(self.plot)
-                btn.setText("lambda")
+                btn.setText(_PREVIEW_AXIS_LABELS["lambda"])
                 btn.setCheckable(True)
                 btn.setChecked(False)
-                btn.setToolTip("Toggle preview axis between lambda and sigma")
+                btn.setToolTip("Toggle preview axis between λ and sigma")
                 btn.clicked.connect(self._toggle_preview_axis)
                 btn.setStyleSheet(self._axis_toggle_style)
                 btn.setParent(self.plot)
@@ -1166,7 +1230,7 @@ class ManualSigmaKnotDialog(QDialog):
     def _toggle_preview_axis(self) -> None:
         self._preview_axis = "sigma" if self._preview_axis == "lambda" else "lambda"
         if self._preview_axis_button is not None:
-            self._preview_axis_button.setText(self._preview_axis)
+            self._preview_axis_button.setText(_PREVIEW_AXIS_LABELS[self._preview_axis])
             self._preview_axis_button.setChecked(self._preview_axis == "sigma")
         self._relabel_preview_axis()
         self._rescale_preview_curves()

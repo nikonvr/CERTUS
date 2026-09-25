@@ -1175,10 +1175,10 @@ class SubstrateIndexGUI(QMainWindow):
         # Row 1 layout
         row1.addWidget(self.btn_load)
         row1.addSpacing(10)
-        row1.addWidget(QLabel("lambda min fit (nm):"))
+        row1.addWidget(QLabel("λ min fit (nm):"))
         row1.addWidget(self.fit_lmin_spin)
         row1.addSpacing(10)
-        row1.addWidget(QLabel("lambda max fit (nm):"))
+        row1.addWidget(QLabel("λ max fit (nm):"))
         row1.addWidget(self.fit_lmax_spin)
         row1.addSpacing(15)
         row1.addWidget(self.sell_auto_chk)

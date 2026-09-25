@@ -1557,12 +1557,12 @@ class CertusREExcelMixin:
 
             self.l0_spin.setButtonSymbols(QAbstractSpinBox.ButtonSymbols.NoButtons)
 
-            self.l0_spin.setToolTip("Value fixed by the RE file <b>design</b> sheet  read-only.")
+            self.l0_spin.setToolTip("Value fixed by the RE file <b>design</b> sheet — read-only.")
 
         if hasattr(self, "back_check"):
             self.back_check.setEnabled(False)
 
-            self.back_check.setToolTip("State fixed by column headers on the RE <b>measurement</b> sheet  read-only.")
+            self.back_check.setToolTip("State fixed by column headers on the RE <b>measurement</b> sheet — read-only.")
 
     def _show_initial_re_rmse(self):
         init_rmse = self._compute_re_rmse(0.0, 0.0, 0.0)
@@ -1742,16 +1742,16 @@ class CertusREExcelMixin:
         if use_sp:
             lay.addWidget(
                 QLabel(
-                    "<b>Tabulated Re(n)</b> vs <b>Re + DeltaRe(lambda)</b> (linear interpolation on knots, "
-                    "clamp |DeltaRe|(lambda) envelope). Substrate: dynamic Cauchy. <b>Im(n)</b> unchanged."
+                    "<b>Tabulated Re(n)</b> vs <b>Re + DeltaRe(λ)</b> (linear interpolation on knots, "
+                    "clamp |DeltaRe|(λ) envelope). Substrate: dynamic Cauchy. <b>Im(n)</b> unchanged."
                 )
             )
 
         else:
             lay.addWidget(
                 QLabel(
-                    "<b>Real part of indices</b>  after = Re × (1 + <i>p</i>% × <i>t</i>3), "
-                    "<i>t</i> = max(0, (lambdalambda₀)/(5200lambda₀)). <b>Im(n)</b> unchanged."
+                    "<b>Real part of indices</b> — after = Re × (1 + <i>p</i>% × <i>t</i><sup>3</sup>), "
+                    "<i>t</i> = max(0, (λ - λ₀)/(5200 - λ₀)). <b>Im(n)</b> unchanged."
                 )
             )
 

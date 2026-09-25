@@ -363,7 +363,7 @@ class CertusIndexLayoutMixin:
 
         self.plot_nk = CertusScientificPlot(self, "Optical Constants", "Index", "Wavelength (nm)")
 
-        self.tabs.addTab(wrap_scientific_plot_with_toolbar(self, self.plot_nk), "n & k")
+        self.tabs.addTab(wrap_scientific_plot_with_toolbar(self, self.plot_nk), "n, k")
 
         # --- Convergence tab (UX-3: live RMSE feedback) ---
 
@@ -650,7 +650,7 @@ class CertusIndexLayoutMixin:
 
         self.btn_load.setToolTip(
             "Load a CSV/Excel file with Transmission and/or Reflectance data.\n"
-            "Expected columns: lambda (nm), T (%), R (%)  or any subset."
+            "Expected columns: λ (nm), T (%), R (%) — or any subset."
         )
 
         self.btn_load.clicked.connect(self.load_file)
@@ -788,12 +788,12 @@ class CertusIndexLayoutMixin:
 
         h_ksub = QHBoxLayout()
 
-        self.btn_import_ksub = QPushButton("Import k_sub (CSV lambda,k)")
+        self.btn_import_ksub = QPushButton("Import k_sub (CSV λ,k)")
 
         self.btn_import_ksub.setFixedHeight(24)
 
         self.btn_import_ksub.setToolTip(
-            "Import a 2-column CSV file with substrate extinction coefficient:\nColumn 1: lambda (nm) | Column 2: k_sub"
+            "Import a 2-column CSV file with substrate extinction coefficient:\nColumn 1: λ (nm) | Column 2: k_sub"
         )
 
         self.lbl_ksub_file = QLabel("(no files)")
@@ -901,7 +901,7 @@ class CertusIndexLayoutMixin:
 
         l.addLayout(h, 0, 1)
 
-        l.addWidget(QLabel("lambda Range (nm):"), 1, 0)
+        l.addWidget(QLabel("λ Range (nm):"), 1, 0)
 
         h2 = QHBoxLayout()
 

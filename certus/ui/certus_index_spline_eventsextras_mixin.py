@@ -618,8 +618,8 @@ class CertusIndexSplineEventsExtrasMixin:
 
         self.cb_spectrum_xmode = QComboBox()
         self.cb_spectrum_xmode.setFixedHeight(24)
-        self.cb_spectrum_xmode.addItem("Longueur d'onde lambda (nm)", "lambda")
-        self.cb_spectrum_xmode.addItem("Nombre d'onde sigma = 1/lambda (nm-1)", "sigma")
+        self.cb_spectrum_xmode.addItem("Longueur d'onde λ (nm)", "lambda")
+        self.cb_spectrum_xmode.addItem("Nombre d'onde sigma = 1/λ (nm-1)", "sigma")
         self.cb_spectrum_xmode.addItem("Dispersion sigma2 (nm-2)", "sigma2")
         self.cb_spectrum_xmode.currentIndexChanged.connect(self._on_spectrum_x_mode_changed)
         tb_lay.addWidget(self.cb_spectrum_xmode)

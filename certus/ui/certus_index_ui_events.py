@@ -261,7 +261,7 @@ class CertusIndexEventsMixin:
 
                     self.sb_sub_thickness_mm.setEnabled(False)
 
-                    self.lbl_ksub_file.setText("example/sapphire fresnel.xlsx  no k column: transparent only")
+                    self.lbl_ksub_file.setText("example/sapphire fresnel.xlsx — no k column: transparent only")
 
             else:
                 # File not found  warn but don't block

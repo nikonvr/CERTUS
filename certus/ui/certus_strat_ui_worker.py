@@ -487,7 +487,7 @@ class CertusStratWorkerMixin:
         if task in (StratTask.STRATEGY_SEARCH, StratTask.FULL_PIPELINE):
             self.stop_step2_btn.setEnabled(True)
 
-            self.stop_step2_btn.setText("⏩ Stop & Proceed")
+            self.stop_step2_btn.setText("⏩ Stop && Proceed")
 
             params["stop_requested"] = False
 
@@ -614,7 +614,7 @@ class CertusStratWorkerMixin:
 
         self.stop_step2_btn.setEnabled(False)
 
-        self.stop_step2_btn.setText("⏩ Stop & Proceed")
+        self.stop_step2_btn.setText("⏩ Stop && Proceed")
 
         self.status_label.setText("Complete")
 

@@ -212,7 +212,9 @@ def build_premium_overrides(_theme: str | None = None) -> str:
 
     primary = T.PRIMARY
     # The label of a filled button follows the fill, so it must be a TOKEN.
-    # A literal white was shipped here and measured at 2.54:1 in dark mode.
+    # A literal white was shipped on five fills and measured in dark mode at 2.54 / 2.77 /
+    # 1.92:1, against 7.02 / 6.45 / 9.29:1 through the token (2026-09-07). In light mode
+    # both resolve to the same value, so the light sheet is unchanged.
     primary_label = T.PRIMARY_TEXT
     primary_soft = _hex_with_alpha(primary, 18)
     primary_hover = _darken_color(primary, 0.08)
@@ -277,7 +279,7 @@ QTextEdit:focus {{
     border: 1px solid {primary};
     /* Qt does not honor box-shadow; we emulate a ring via padding + margin */
     selection-background-color: {primary};
-    selection-color: #ffffff;
+    selection-color: {primary_label};
 }}
 
 /* -- Focus ring on BUTTONS (step 3.6) ----------------------------------
@@ -428,7 +430,7 @@ QPushButton#{OBJ.DANGER_BUTTON}:disabled {{
 /* -- Success button (opt-in) ------------------------------------------- */
 QPushButton#{OBJ.SUCCESS_BUTTON} {{
     background-color: {success};
-    color: #ffffff;
+    color: {primary_label};
     border: none;
     border-radius: {r_md}px;
     padding: {sp_sm}px {sp_lg}px;
@@ -450,7 +452,7 @@ QPushButton#{OBJ.SUCCESS_BUTTON}:disabled {{
 /* -- Featured button (opt-in) ------------------------------------------ */
 QPushButton#{OBJ.FEATURED_BUTTON} {{
     background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {primary}, stop:1 #2563eb);
-    color: #ffffff;
+    color: {primary_label};
     border: none;
     border-radius: {r_md}px;
     padding: {sp_sm + 2}px {sp_lg * 1.5}px;
@@ -779,7 +781,7 @@ QSlider::handle:horizontal:hover {{
 /* -- Empty State Call-to-Action ---------------------------------------- */
 QPushButton#empty-cta {{
     background-color: {primary};
-    color: #ffffff;
+    color: {primary_label};
     border: none;
     border-radius: {r_md}px;
     padding: {sp_sm}px {sp_lg}px;

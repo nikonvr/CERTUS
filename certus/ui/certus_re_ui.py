@@ -154,7 +154,7 @@ class CertusREResultsDialog(QDialog):
 
         layout.addWidget(
             QLabel(
-                "<i>QWOT / DeltaQWOT: 4n*ep/lambda₀ at lambda₀; initial tabulated n; "
+                "<i>QWOT / DeltaQWOT: 4n*ep/λ₀ at λ₀; initial tabulated n; "
                 "final tabulated n + run DeltaRe splines H/L (aligned with TRF objective QWOT).</i>"
             )
         )
@@ -485,14 +485,14 @@ class CertusREResultsDialog(QDialog):
 
         export_tgt_btn.setToolTip(
             "One sheet per measurement point: target (RE file) vs computed R or T "
-            "(thicknesses + DeltaRe H/L splines of the  solution)."
+            "(thicknesses + DeltaRe H/L splines of the solution)."
         )
 
         export_tgt_btn.clicked.connect(self.export_tgt_calc)
 
         idx_drift_btn = QPushButton(" Re indices (before / after correction)")
 
-        idx_drift_btn.setToolTip("Tabulated Re vs after DeltaRe splines (H/L)  substrate unchanged.")
+        idx_drift_btn.setToolTip("Tabulated Re vs after DeltaRe splines (H/L) — substrate unchanged.")
 
         idx_drift_btn.clicked.connect(self.open_idx)
 
@@ -511,15 +511,15 @@ class CertusREResultsDialog(QDialog):
         delta_qwot_btn = QPushButton(" Plot DeltaQWOT")
 
         delta_qwot_btn.setToolTip(
-            "DeltaQWOT per layer: (4/lambda₀)(n_fin*ep_fin - n_init*ep_init) with n_fin = n_tab + run DeltaRe splines."
+            "DeltaQWOT per layer: (4/λ₀)(n_fin*ep_fin - n_init*ep_init) with n_fin = n_tab + run DeltaRe splines."
         )
 
         delta_qwot_btn.clicked.connect(self.show_delta_qwot_plot)
 
-        beam_ap_plot_btn = QPushButton(" Beam ap(lambda)")
+        beam_ap_plot_btn = QPushButton(" Beam ap(λ)")
 
         beam_ap_plot_btn.setToolTip(
-            "ap(lambda) in constant steps between lambda nodes (staircase steps), "
+            "ap(λ) in constant steps between λ nodes (staircase steps), "
             "one curve per run (= best). The step ap values are not constrained to be monotonic."
         )
 

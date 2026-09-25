@@ -350,9 +350,9 @@ class SmartInitPreviewManager:
             lbl_mono_relax = QLabel(
                 "<b>Manual tuning</b>: <i>n</i> may be <b>non-monotone</b> in sigma between knots here "
                 "(sliders / editor). <b>After Continue</b>: optimization uses the "
-                "<b>— reparametrization</b> - <i>n</i> non-decreasing in sigma on the run's lambda band "
-                "(so in practice <i>n</i> <b>decreasing or quasi-flat</b> as lambda increases on these segments), "
-                "plus a penalty (UV-VIS band) if <i>n</i> rises too much with lambda "
+                "<b>— reparametrization</b> - <i>n</i> non-decreasing in sigma on the run's λ band "
+                "(so in practice <i>n</i> <b>decreasing or quasi-flat</b> as λ increases on these segments), "
+                "plus a penalty (UV-VIS band) if <i>n</i> rises too much with λ "
                 "(small slack on this penalty is configurable)."
             )
             lbl_mono_relax.setWordWrap(True)
@@ -643,7 +643,7 @@ class SmartInitPreviewManager:
         # Autofind best presets
         h_af = QHBoxLayout()
         h_af.setSpacing(4)
-        btn_auto_preset = create_styled_button("Auto preset & d", CertusTheme.SECONDARY)
+        btn_auto_preset = create_styled_button("Auto preset && d", CertusTheme.SECONDARY)
         btn_auto_preset.setToolTip("Tests typical profiles and automatically selects the one with the best initial response.")
         btn_auto_preset.clicked.connect(self.auto_find_best_preset)
         h_af.addWidget(btn_auto_preset)
@@ -653,7 +653,7 @@ class SmartInitPreviewManager:
         btn_auto_nkd_sweep.clicked.connect(self.run_nkd_sweep_all)
         h_af.addWidget(btn_auto_nkd_sweep)
 
-        btn_auto_local = create_styled_button("Polish d & indices", CertusTheme.SECONDARY)
+        btn_auto_local = create_styled_button("Polish d && indices", CertusTheme.SECONDARY)
         btn_auto_local.setToolTip("Launches Autofind: jointly optimizes thickness and indices for a fast local fit.")
         btn_auto_local.clicked.connect(self.run_fast_local_search)
         h_af.addWidget(btn_auto_local)

@@ -35,10 +35,13 @@ if str(RACINE) not in sys.path:
     sys.path.insert(0, str(RACINE))
 
 from scripts.sonde_libelles_visibles import (  # noqa: E402
+    _balaye,
     _controle_negatif,
     _esperluette_seule,
     _est_emoji,
+    _mnemonique_actif,
     _mutile,
+    _recolte_source,
 )
 
 
@@ -131,11 +134,95 @@ class TestLeControleNegatifInterne:
     qu'on ne prenne pas son silence pour un resultat.
     """
 
-    def test_les_trois_verifications_mordent(self) -> None:
-        voit_trou, voit_lambda, ne_confond_pas = _controle_negatif()
+    def test_les_cinq_verifications_mordent(self) -> None:
+        voit_trou, voit_nom, ne_confond_pas, trie_les_puits, ignore_donnee = _controle_negatif()
         assert voit_trou, "la sonde ne repere plus un double espace plante"
-        assert voit_lambda, "la sonde ne repere plus un `lambda` plante"
+        assert voit_nom, (
+            "la sonde ne repere plus un nom plante -- ou bien elle mord a nouveau sur un "
+            "nom de champ a tiret bas, qui n'est pas un libelle"
+        )
         assert ne_confond_pas, (
             "la sonde confond a nouveau une esperluette avec un separateur efface -- "
             "c'est exactement le defaut de sa premiere version"
         )
+        assert trie_les_puits, (
+            "la sonde ne distingue plus les puits qui MANGENT l'esperluette de ceux qui "
+            "l'affichent -- c'est ce qui lui faisait prescrire 19 corrections fausses"
+        )
+        assert ignore_donnee, (
+            "la sonde reprend la donnee metier d'un `addItem` pour un libelle -- la "
+            "corriger casse la logique qui la compare"
+        )
+
+
+class TestLePuitsDecideDuSortDeLEsperluette:
+    """Mesure le 2026-09-07 en peignant le widget, pas lu dans une documentation.
+
+    🔑 La sonde a longtemps traite `PUITS` (ce qui atteint l'ecran) comme si c'etait la
+    liste des puits mnemoniques. Ce sont deux proprietes differentes, et les confondre
+    faisait compter 23 defauts la ou la mesure en designe 4.
+    """
+
+    @pytest.mark.parametrize(
+        "puits",
+        ["addTab", "addItem", "QPushButton", "QCheckBox", "QRadioButton", "QToolButton"],
+    )
+    def test_ces_puits_mangent_le_signe(self, puits: str) -> None:
+        assert _mnemonique_actif(puits, "") is True
+
+    @pytest.mark.parametrize(
+        "puits",
+        ["setToolTip", "setWindowTitle", "setStatusTip", "QLabel", "QGroupBox", "CertusCard"],
+    )
+    def test_ces_puits_l_affichent_tel_quel(self, puits: str) -> None:
+        """Y doubler l'esperluette la montrerait EN DOUBLE a l'ecran."""
+        assert _mnemonique_actif(puits, "") is False
+
+    def test_set_text_se_decide_sur_son_receveur(self) -> None:
+        assert _mnemonique_actif("setText", "stop_step2_btn") is True
+        assert _mnemonique_actif("setText", "lbl_status") is False
+
+    def test_un_receveur_inconnu_reste_NON_CLASSE(self) -> None:
+        """Ni defaut ni faux positif : le ranger d'office serait la faute d'origine."""
+        assert _mnemonique_actif("setText", "machin") is None
+
+
+class TestSeulLeLibelleEstRecolte:
+    """Un puits a plusieurs arguments, et un seul atteint l'ecran."""
+
+    def test_la_donnee_metier_d_un_addItem_est_ignoree(self) -> None:
+        recoltees, _ = _recolte_source('combo.addItem("Wavelength (nm)", "lambda")')
+        assert [t for t, *_ in recoltees] == ["Wavelength (nm)"]
+
+    def test_addTab_porte_son_libelle_en_SECOND(self) -> None:
+        recoltees, _ = _recolte_source('tabs.addTab(page, "Spectrum")')
+        assert [t for t, *_ in recoltees] == ["Spectrum"]
+
+
+class TestLEtape30EstFaite:
+    """Les tests de comptage que l'etape 3.0 prescrit.
+
+    🔑 Ils n'avaient PAS ete ecrits plus tot, et c'etait delibere : ils auraient echoue,
+    ce qui etait leur preuve d'utilite. Ils passent depuis la campagne du 2026-09-07.
+
+    ⚠️ Aucun ne compare a un compte : un compte se perime au premier libelle ajoute.
+    Le seul critere qui survive est ZERO.
+
+    ⚠️ Et ce zero ne vaut que POUR LES LITTERAUX : le controle F de la sonde denombre
+    les libelles construits par f-string, qui echappent a tous ces controles.
+    """
+
+    def test_aucun_separateur_efface_ne_subsiste(self) -> None:
+        """Un double espace dans un libelle est le trou laisse par un separateur retire."""
+        restants = _balaye()["separateur"]
+        assert restants == [], f"{len(restants)} libelle(s) mutile(s) : {restants[:5]}"
+
+    def test_aucune_esperluette_ne_fabrique_de_raccourci_parasite(self) -> None:
+        """Suivie d'une espace, Qt en fait Alt+Space : le menu de fenetre de Windows."""
+        restants = _balaye()["mnemonique"]
+        assert restants == [], f"{len(restants)} esperluette(s) mangee(s) : {restants[:5]}"
+
+    def test_aucun_libelle_n_ecrit_le_nom_de_la_lettre_grecque(self) -> None:
+        """La suite se contredisait a l'ecran : 27 fichiers ecrivaient deja la lettre."""
+        restants = _balaye()["lambda"]
+        assert restants == [], f"{len(restants)} libelle(s) concerne(s) : {restants[:5]}"

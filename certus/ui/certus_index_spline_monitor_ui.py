@@ -29,9 +29,9 @@ class LiveIndexMonitor(QDialog):
         self.cb.currentIndexChanged.connect(on_unit_change)
         h.addWidget(self.cb)
 
-        self._btn_copy_nk_2nm = create_styled_button("Copy lambda, n, k (2 nm step)", "secondary", parent=self)
+        self._btn_copy_nk_2nm = create_styled_button("Copy λ, n, k (2 nm step)", "secondary", parent=self)
         self._btn_copy_nk_2nm.setToolTip(
-            "Clipboard: lambda (integer nm), n, k sorted by increasing lambda, interpolated on a 2 nm grid (TSV)."
+            "Clipboard: λ (integer nm), n, k sorted by increasing λ, interpolated on a 2 nm grid (TSV)."
         )
         self._btn_copy_nk_2nm.clicked.connect(self._copy_nk_clipboard_2nm)
         h.addWidget(self._btn_copy_nk_2nm)

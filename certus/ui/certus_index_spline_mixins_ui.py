@@ -355,7 +355,7 @@ class _SmartInitDialogMixin:
 
         aux_dlg = QDialog(parent_dlg)
 
-        aux_dlg.setWindowTitle("Optical Profiles  n(λ) and ln k(λ)")
+        aux_dlg.setWindowTitle("Optical Profiles — n(λ) and ln k(λ)")
 
         aux_dlg.setMinimumWidth(500)
 

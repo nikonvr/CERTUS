@@ -27,6 +27,7 @@ agent les lira. `git log` garde le reste.
 | §4.6 — ergonomie métier (ex-phase 5) | ✅ close. Un point annoncé en a révélé **quatre**, dont un qui empêchait l'export automatique après chaque run |
 | §4.7 — le mode sombre figé | ✅ close. 🔴 **Le plus gros défaut trouvé de la journée** : quatre appels écrasaient la préférence de l'opérateur par un défaut d'argument, et 34 feuilles de style sur 93 peignaient en clair sur une fenêtre sombre |
 | campagne typographique | ✅ close, cliquet 173 → 52 |
+| étapes 3.0 (libellés : λ, tirets, esperluettes) et 3.10 (couleurs en dur, deux passes) | ✅ faites le 2026-09-07 dans l'arbre principal, **restées hors de git 18 jours**, réappliquées le 2026-09-25 par-dessus ce plan. Cliquet des hexadécimaux 315 → 294 |
 | **§6 — critères de fin** | **12 sur 13 atteints et mesurés.** Le treizième est une cible démontrée inatteignable, consignée en `xfail(strict=True)` |
 
 📏 **Validation du 2026-09-08, en trois commandes** (voir §2 pour pourquoi trois) :

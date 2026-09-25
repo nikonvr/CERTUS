@@ -56,47 +56,19 @@ _SI_XLSX_SHEET = "Si-substrate"
 
 
 def _silicon_stub_arrays() -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-
-
-    """Placeholder Si (n, k) when clues.xlsx is missing (tests / dev checkout without data)."""
-
-
+    """Placeholder Si (n, k) using Sellmeier Li 1980 in the IR when spreadsheet is missing."""
     wl = np.array(
-
-
-        [250.0, 400.0, 600.0, 800.0, 1000.0, 1200.0, 1500.0, 2000.0, 2500.0],
-
-
+        [250.0, 400.0, 600.0, 800.0, 1000.0, 1200.0, 1500.0, 2000.0, 2500.0, 3000.0, 3500.0, 4000.0, 4500.0, 5000.0, 5200.0],
         dtype=np.float64,
-
-
     )
-
-
     n = np.array(
-
-
-        [5.1, 4.2, 3.95, 3.75, 3.65, 3.55, 3.48, 3.45, 3.42],
-
-
+        [5.1, 4.2, 3.95, 3.75, 3.65, 3.5237, 3.4821, 3.4527, 3.4394, 3.4323, 3.4281, 3.4253, 3.4234, 3.4221, 3.4216],
         dtype=np.float64,
-
-
     )
-
-
     k = np.array(
-
-
-        [0.15, 0.05, 0.02, 0.01, 0.008, 0.006, 0.004, 0.003, 0.002],
-
-
+        [0.15, 0.05, 0.02, 0.01, 0.008, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         dtype=np.float64,
-
-
     )
-
-
     return wl, n, k
 
 

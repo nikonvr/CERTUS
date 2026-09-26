@@ -218,16 +218,21 @@ class TestUXComponentsBoost:
         toggle = CertusThemeToggle()
         assert toggle is not None
         
-        # Mock functions called by toggle
+        # Patch the names where toggle() looks them up: certus_ui_widgets_utils imported
+        # update_global_plot_config and apply_certus_theme at load time, so patching them in
+        # certus_ui_utils had no effect -- and apply_certus_theme re-read the theme from disk,
+        # which made the last configure() call depend on the saved preference.
         with patch("certus.ui.certus_ui_widgets_utils.load_theme_config", return_value="light"), \
              patch("certus.ui.certus_ui_widgets_utils.save_theme_config") as mock_save, \
              patch("certus.ui.certus_theme.CertusTheme.configure") as mock_conf, \
-             patch("certus.ui.certus_ui_utils.update_global_plot_config") as mock_plot, \
-             patch("certus.ui.certus_theme.CertusTheme.apply_to_app") as mock_apply_app:
-            
+             patch("certus.ui.certus_ui_widgets_utils.update_global_plot_config") as mock_plot, \
+             patch("certus.ui.certus_ui_widgets_utils.apply_certus_theme"), \
+             patch("certus.ui.certus_theme.CertusTheme.apply_to_app"):
+
             toggle.toggle()
             mock_save.assert_called_with("dark")
             mock_conf.assert_called_with("dark")
+            mock_plot.assert_called_with(True)
 
     def test_flashy_grid_factory(self, qapp) -> None:
         _ = qapp

@@ -34,7 +34,7 @@ Dernière validation locale complète, sur `e05d0db` (Windows 11) : ruff propre 
 | R7 | D23 : les trois faux échecs à cache numba froid, attribués à `sys.modules` | à instruire | reproduire à cache froid, trouver le test qui pollue, puis `tests/conftest.py` | une première passe à cache froid rend 0 failed |
 | R8 | lint : F811, 85 cas, un par un | à faire | imports en double des modules racine (sûrs) ; réaffectations de noyaux dans `_certus_physics_impl.py` (`DO NOT SPLIT`) | F811 sort d'`extend-ignore` ; `tests/oracle/` vert avant et après |
 | R9 | lint à effet possible : imports (F401, F405, I001, E402) et RUF005, RUF015, RUF046, UP040, UP042, UP046, B019, E741 | à spécifier | F401 compte des réexports volontaires ; l'ordre des imports compte (import circulaire) | une spécification écrite et validée par 👤 avant tout code |
-| R10 | chaque session pytest laisse un dossier `certus_test_prefs_*` dans le dossier temporaire (65 en une journée, supprimés le 2026-09-26) | à faire, petit | `tests/conftest.py`, création de `CERTUS_CONFIG_DIR` : le supprimer à la sortie (`atexit`) | une session pytest ne laisse aucun dossier ; oracle et unit verts |
+| R10 | chaque session pytest laissait un dossier `certus_test_prefs_*` dans le dossier temporaire (65 en une journée) | **faite** (commit « tests : chaque session pytest supprime son dossier de préférences ») : `atexit` supprime le seul dossier créé par `tests/conftest.py`, jamais un `CERTUS_CONFIG_DIR` fourni ; test en sous-processus, qui échoue sans le correctif | `tests/conftest.py` | 0 dossier après oracle 570 passed et unit 2 521 passed, 5 skipped (mesuré le 2026-09-26) |
 
 ## 1. Où en sont les programmes
 

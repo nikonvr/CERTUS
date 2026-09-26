@@ -55,8 +55,15 @@ import os
 # with the automatic export OFF: otherwise each full optimisation run by a test dropped a
 # report into the user's reports/ (2026-09-26, tests/unit/test_user_preferences_are_isolated.py).
 # Set BEFORE any certus import: the preference managers read their file at import time.
+# Removed at exit: without it every pytest session left one directory behind in the
+# temporary folder (65 in one day, measured 2026-09-26). Only the directory created here
+# is removed -- a CERTUS_CONFIG_DIR set by the caller is never touched.
 if "CERTUS_CONFIG_DIR" not in os.environ:
+    import atexit
+    import shutil
+
     _prefs_dir = Path(tempfile.mkdtemp(prefix="certus_test_prefs_"))
+    atexit.register(shutil.rmtree, _prefs_dir, ignore_errors=True)
     (_prefs_dir / "certus_export.json").write_text(
         '{"auto_export_enabled": false, "schema_version": 1}', encoding="utf-8"
     )

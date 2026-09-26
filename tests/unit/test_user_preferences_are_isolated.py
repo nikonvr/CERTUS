@@ -58,3 +58,25 @@ def test_without_the_variable_the_path_is_the_former_one(monkeypatch) -> None:
     monkeypatch.delenv("CERTUS_CONFIG_DIR", raising=False)
     manager = ConfigManager(PROBE, "light", "theme_mode")
     assert manager._path() == Path(get_resource_path(PROBE))
+
+
+@pytest.mark.unit
+def test_a_pytest_session_leaves_no_private_directory_behind(tmp_path) -> None:
+    """The private copy is removed when the session ends (2026-09-26: 65 left in one day).
+
+    A real pytest session runs in a subprocess whose temporary folder is `tmp_path`, with
+    CERTUS_CONFIG_DIR unset so that tests/conftest.py creates its own directory there.
+    """
+    import subprocess
+    import sys
+
+    env = {k: v for k, v in os.environ.items() if k != "CERTUS_CONFIG_DIR"}
+    for var in ("TMPDIR", "TEMP", "TMP"):
+        env[var] = str(tmp_path)
+    target = "tests/unit/test_user_preferences_are_isolated.py::test_the_suite_runs_on_private_preferences"
+    run = subprocess.run(
+        [sys.executable, "-m", "pytest", target, "-q", "--no-cov", "-p", "no:cacheprovider"],
+        cwd=ROOT, env=env, capture_output=True, text=True, timeout=300,
+    )
+    assert run.returncode == 0, run.stdout[-2000:] + run.stderr[-2000:]
+    assert sorted(p.name for p in tmp_path.glob("certus_test_prefs_*")) == []

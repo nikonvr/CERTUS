@@ -85,9 +85,13 @@ def check_code_refs(lines: list[str]) -> list[str]:
             seen.add((path, num))
             f = ROOT / path
             if not f.exists():
-                # peut-etre cite sans son dossier : on cherche le basename
+                # peut-etre cite sans son dossier : on cherche le basename.
+                # Tout dossier CACHE est ecarte, pas seulement .venv : les copies de
+                # worktrees de .claude/worktrees/ rendaient chaque nom « ambigu, 4 fichiers »
+                # (2026-09-25). Nommer les dossiers un par un ne survit pas a l'outillage.
                 hits = [h for h in ROOT.glob(f"**/{Path(path).name}")
-                        if ".venv" not in str(h) and "__pycache__" not in str(h)]
+                        if "__pycache__" not in h.parts
+                        and not any(p.startswith(".") for p in h.relative_to(ROOT).parts[:-1])]
                 if not hits:
                     out.append(f"{DOC.name}:{i}  FICHIER INTROUVABLE  {path}")
                 elif len(hits) > 1:

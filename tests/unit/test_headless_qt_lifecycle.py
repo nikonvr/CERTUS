@@ -115,8 +115,13 @@ def test_02_next_test_is_clean(qapp):
 def test_headless_teardown_joins_before_deleting(tmp_path, isolated, fail_body):
     """The same scenario fails without isolation, even when the body passes."""
     if isolated:
-        fixture = Path(__file__).parents[1] / "headless" / "conftest.py"
-        (tmp_path / "conftest.py").write_text(fixture.read_text(encoding="utf-8"), encoding="utf-8")
+        tests_dir = Path(__file__).parents[1]
+        # The conftest delegates to the shared helper: copy both, as pytest will find them.
+        for name, source in (
+            ("conftest.py", tests_dir / "headless" / "conftest.py"),
+            ("qt_lifecycle.py", tests_dir / "qt_lifecycle.py"),
+        ):
+            (tmp_path / name).write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
     (tmp_path / "pytest.ini").write_text("[pytest]\n", encoding="utf-8")
     (tmp_path / "test_boundary.py").write_text(
         f"FAIL_BODY = {fail_body!r}\n" + _SCENARIO, encoding="utf-8"

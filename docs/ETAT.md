@@ -131,7 +131,7 @@ numéros de l'ancien registre sont entre parenthèses
 |---|---|---|
 | D1 | **Des réglages visibles n'agissent pas** : `strategy_phase_timeout` (son info-bulle promet d'annuler la passe, aucune ligne de calcul ne le lit), `machine_sampling_dd` (le seul appel du noyau qui le transmet passe 0.0 en dur), `dp_yield_weight` (sans effet même à 200), `fast_auto_blocks` (journalisé, jamais lu), `seel_equivalence_half_width` sans aucun appelant (n° 33, 50, 52). Et **le mode d'exécution écrase sept budgets du JSON** dans `collect_params` : chargé dans l'application, `JSON-strat-example.json` déclare `robustness_num_runs` 300 et tourne à 150 (mesuré le 2026-09-26). Les info-bulles des deux premiers le disent depuis le 2026-09-26 | brancher ou retirer chacun, et décider qui du mode ou du fichier fait foi — décision de 👤 |
 | D2 | La porte de plantage juge au **pire des trois niveaux de bruit** (0,5× / 1× / 2×) : `crash_rate` est ce maximum, et le taux au bruit réel n'est porté nulle part | exposer le taux au bruit nominal |
-| D3 | Le logger `ThinFilm` est muet : tout `logger.info` du classement est perdu (n° 53) | journaliser depuis le worker, ou remonter des compteurs |
+| D3 | Le logger `ThinFilm` est muet : tout `logger.info` du classement est perdu (n° 53). Cause établie le 2026-09-26 : ni lui ni la racine n'ont de gestionnaire, donc Python jette les `info` et ne laisse passer les avertissements que vers stderr (gestionnaire de dernier recours) ; le worker, lui, attache le sien à `W{n_blk}` | en faire un enfant du logger `CERTUS`, ou passer `params["logger"]` au classement — change ce qu'affichent les journaux de STRAT, décision de 👤 |
 | D4 | Une stratégie bâtie sur des couches « forcées » (Phase A en repli) est indiscernable d'une stratégie choisie (n° 37) | remonter `n_layers_forced` dans le résultat et le classement |
 | D5 | `strategy_id` n'est pas unique : 21 identifiants sur 79 portés par plusieurs stratégies (n° 51) | vérifier l'unicité avant tout appariement parente/enfant |
 | D6 | Le consensus ignore `robustness_num_runs`, et `robustness_seed` dès que `consensus_seed_list` est renseignée (n° 18, 47) | exposer `consensus_num_runs` |
@@ -172,18 +172,32 @@ numéros de l'ancien registre sont entre parenthèses
 
 ## 5. Ce qui attend une décision de 👤
 
+Ces sujets demandent un jugement de physicien ou de propriétaire du produit. Ce qui a pu
+être tranché sans eux l'a été (section 5bis).
+
 | sujet | ce qui est en jeu |
 |---|---|
-| **historique git public** | l'historique du dépôt porte encore le texte intégral d'une thèse tierce (`reports/_zideluns_text.json`), les classeurs d'avant correctif avec un nom civil, et des fichiers `.vs/`. Purger = `git filter-repo` puis force-push : tous les hash changent, étiquette `depart-gemini` comprise |
-| **le dépôt dans Google Drive** | un dépôt git synchronisé par Drive est lent et exposé aux copies de conflit dans `.git` ; ce dossier est en plus partagé par deux PC sous deux chemins différents. Recommandé : un clone hors Drive par machine |
+| **historique git public** | l'historique porte encore le texte intégral d'une thèse tierce (`reports/_zideluns_text.json`), les classeurs d'avant correctif avec un nom civil, et des fichiers `.vs/`. Purger = `git filter-repo` puis force-push : tous les hash changent, étiquette `depart-gemini` comprise. 📌 **Décision du 2026-09-26 : ne pas purger sans ton accord explicite** — l'acte est irréversible sur un dépôt public et casse tous les renvois ; la thèse est par ailleurs publiquement accessible, l'enjeu est sa rediffusion. Ce qui était évitable l'a été : le papier tiers et `studies/` sont désormais dans `.gitignore` |
+| **le dépôt dans Google Drive** | un dépôt git synchronisé par Drive est lent et exposé aux copies de conflit dans `.git` ; ce dossier est en plus partagé par deux PC sous deux chemins différents. Recommandé : un clone hors Drive par machine. Non fait : déplacer l'arbre de travail pendant qu'on y travaille n'est pas une opération sûre |
 | **données Nb2O5 « Syrus »** | dans les feuilles `Nb2O5-Syrus` et `IR-Syrus-Nb2O5` de `example/database_index/indices.xlsx`, n tombe de 2,09 à 4,0 µm à 1,19 à 4,7 µm puis remonte à 1,78 à 5 µm, quand les feuilles H400 et H800 restent entre 2,07 et 2,13. Un creux de cette taille avec k ≤ 0,018 n'est pas physique |
-| **défauts D1, D10, D24** | brancher ou retirer les réglages inertes ; fiabiliser l'ajustement du saphir ; supprimer ou rebrancher les symboles morts |
-| **interface** | la revue visuelle des onze fenêtres, reportée le 2026-09-08 ; trois arbitrages : teintes de marque, bande des fichiers récents, bornes des champs numériques |
+| **défauts D1, D10, D24** | brancher ou retirer les réglages inertes, et décider qui du mode ou du fichier fait foi ; fiabiliser l'ajustement du saphir ; supprimer ou rebrancher les symboles morts. Les trois **changent des résultats de production** |
+| **interface** | la revue visuelle des onze fenêtres, reportée le 2026-09-08 ; trois arbitrages : teintes de marque, bande des fichiers récents, bornes des champs numériques. 📌 La branche `claude/charming-wright-43077a` porte un travail **non porté** — lire les couleurs des badges, info-bulles et barre de progression dans le thème ; les trois fichiers portent encore des hexadécimaux en dur. L'appliquer **change le rendu**, donc cela attend la revue |
 | **validation externe** | deux stratégies réellement déposées du dichroïque, avec leurs spectres mesurés. Le test est **ordinal** : STRAT doit les classer dans le bon ordre |
-| **sorties de test dans `reports/`** | les 24 `Report_SINGLE` suivis sont tous des sorties de l'exemple simulé `Target_Titane_Simu_20nm`, alors que `.gitignore` les range parmi les « mesures métaux réelles » ; les 24 `Report_INDEX_H400-RTNBrel-sapphire` suivis portent le nom du fichier d'entrée du test headless INDEX. Les garder ou les retirer ; et sortir `certus_export.json` / `certus_theme.json` de git (défaut D31) |
-| **fichiers hors git** | `Selenium_Optical_Constants*.pdf` et `studies/selenium_bk7/` (dont des scripts sources) ne sont pas versionnés : à copier à la main avant tout changement de machine, ou à commiter |
-| **branches locales** | `local/sauvegarde-2026-09-25` (son contenu est réappliqué dans `be3b596` et `80cc8a1`) et `claude/charming-wright-43077a` (vise trois fichiers déplacés depuis) : supprimables |
-| **poste de travail** | `C:\invalid\`, laissé par un ancien test ; le venv `C:\envs\certus` (numba 0.66), inutilisé depuis le passage au Python système |
+| **sorties de test dans `reports/`** | les 24 `Report_SINGLE` suivis sont tous des sorties de l'exemple simulé `Target_Titane_Simu_20nm`, alors que `.gitignore` les range parmi les « mesures métaux réelles » ; les 24 `Report_INDEX_H400-RTNBrel-sapphire` suivis portent le nom du fichier d'entrée du test headless INDEX. Les garder ou les retirer. Et `certus_export.json` / `certus_theme.json`, tes préférences, sont suivis par git : les tests ne les touchent plus, mais l'application les réécrit à chaque réglage |
+| **fichiers hors git** | `Selenium_Optical_Constants*.pdf` (œuvre d'un tiers) et `studies/selenium_bk7/` (recherche non publiée, dont des scripts sources) : ignorés désormais, donc dans aucun clone. **À sauvegarder à la main avant tout changement de machine**, ou à commiter si tu le décides |
+| **poste de travail** | le venv `C:\envs\certus` (numba 0.66) est inutilisé depuis le passage au Python système : à supprimer si tu le confirmes |
+| **courriel dans l'historique** | quatre commits portent ton adresse personnelle ; les 1 344 autres l'adresse de non-réponse GitHub. C'est ton choix, pas un défaut — signalé une fois |
+
+## 5bis. Arbitrages rendus le 2026-09-26, sans attendre
+
+| décidé | pourquoi |
+|---|---|
+| **les tests n'écrivent plus tes fichiers** | `CERTUS_CONFIG_DIR` isole les préférences, export automatique coupé ; les sous-processus héritent de la variable. Inerte sans elle : le chemin d'avant, au bit |
+| **`test_config.json` retiré du suivi** | résidu d'un test de `ConfigManager`, jamais une donnée |
+| **`C:\invalid\` supprimé** | résidu d'un test corrigé depuis ; deux fichiers de journal vides ou de diagnostic |
+| **branche `local/sauvegarde-2026-09-25` supprimée** | redondante, **vérifié par empreinte** : les classeurs `indices.xlsx` et `reverse_sample.xlsx` y sont identiques à ceux de `HEAD`, et le travail d'interface identique à `be3b596`. Rien d'unique n'a été perdu |
+| **le papier tiers et `studies/` sont ignorés** | le seul risque encore évitable sur un dépôt public est une **addition future** ; l'historique, lui, est la ligne ci-dessus |
+| **l'interface se mesure sur Windows en CI** | sous Linux, 69 échecs et 12 erreurs, tous dus à l'absence de Segoe UI — l'audit refuse de mesurer des largeurs sur une machine qui n'existe pas. Job séparé, aucun test exclu |
 
 ## 6. Chantiers spécifiés, en attente
 

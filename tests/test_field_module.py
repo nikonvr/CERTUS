@@ -577,14 +577,23 @@ def test_field_pareto_front():
     
     assert app.pareto_history == {}
     assert app.pareto_window is None
-    
+
+    # The record takes its materials from the real stack. Since 2026-09-04 a point whose
+    # thickness count differs from the stack is refused instead of being stored with an
+    # invented alternating H/L stack -- which is what this test used to expect ([0, 1, 0]).
+    layer_types = list(app._get_params().layer_types)
+    n = len(layer_types)
+    emp = [1.0] * n
+    app._update_pareto_record([1.0] * (n + 1), 0.25)
+    assert app.pareto_history == {}, "a point that does not match the stack must be refused"
+
     # 1. Update Pareto record
-    app._update_pareto_record([1.0, 1.0, 1.0], 0.25)
-    
-    assert 3 in app.pareto_history
-    rec = app.pareto_history[3]
+    app._update_pareto_record(emp, 0.25)
+
+    assert n in app.pareto_history
+    rec = app.pareto_history[n]
     assert rec["best_cost"] == 0.25
-    assert rec["emp_rmse"] == [1.0, 1.0, 1.0]
+    assert rec["emp_rmse"] == emp
     
     # 2. Ensure Pareto UI lazily initializes
     assert app._ensure_pareto_ui() is True
@@ -597,7 +606,7 @@ def test_field_pareto_front():
     
     # Double-click column 1 (Best Cost)
     app._load_pareto_design(0, 1)
-    app._restore_pareto_champion.assert_called_with([1.0, 1.0, 1.0], [0, 1, 0])
+    app._restore_pareto_champion.assert_called_with(emp, layer_types)
     
     # 4. Clear Pareto
     app._clear_pareto()

@@ -1522,7 +1522,6 @@ class CertusStratStateMixin:
             "consensus_num_runs": int(self._get_float_safe("consensus_num_runs", 150)),
             "consensus_std_weight": self._get_float_safe("consensus_std_weight", 0.35),
             "consensus_score_mode": "mean_std",
-            "consensus_seed_list": str(getattr(self, "_loaded_config", {}).get("consensus_seed_list", "")),
             "execution_mode": (
                 self.widgets["execution_mode"].currentText().strip().lower()
                 if self.widgets.get("execution_mode")

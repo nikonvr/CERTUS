@@ -47,7 +47,6 @@ class ExternalEvaluationStrategy:
                 "clues_at_wl": clues_at_wl,
                 "nominal_matrix_cache": nominal_matrix_cache,
                 "all_wls": all_wls,
-                "p_thick_nominal": p_thick_nominal,
             }
 
         sim_context = worker.opti_results.copy()

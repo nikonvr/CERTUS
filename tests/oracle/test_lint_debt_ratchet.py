@@ -14,11 +14,11 @@ except ImportError:
 
 ROOT = Path(__file__).resolve().parents[2]
 PYPROJECT_PATH = ROOT / "pyproject.toml"
-MAX_ALLOWED_EXTEND_IGNORE = 68
+MAX_ALLOWED_EXTEND_IGNORE = 66
 
 
 def test_lint_debt_ratchet_extend_ignore():
-    """Action D1 — Assert pyproject.toml extend-ignore list length does not expand beyond 68."""
+    """Action D1 — Assert pyproject.toml extend-ignore list length does not expand beyond the cap."""
     assert PYPROJECT_PATH.exists(), f"Missing pyproject.toml at {PYPROJECT_PATH}"
     with open(PYPROJECT_PATH, "rb") as f:
         data = tomllib.load(f)

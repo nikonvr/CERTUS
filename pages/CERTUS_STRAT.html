@@ -4997,7 +4997,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     <tr><td style="border:1px solid #cbd5e1;padding:5px 10px;">Best partition</td>
                         <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;"><b>4 blocks</b></td>
                         <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;"><b>4 blocks</b></td></tr>
-                    <tr><td style="border:1px solid #cbd5e1;padding:5px 10px;"><b>SEEL</b></td>
+                    <tr><td style="border:1px solid #cbd5e1;padding:5px 10px;"><b>SEEL</b> (fallback score, 100 % crash)</td>
                         <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;"><b>0.86 nm</b></td>
                         <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;"><b>0.86 nm</b></td></tr>
                     <tr><td style="border:1px solid #cbd5e1;padding:5px 10px;">RMSE P95</td>
@@ -5031,8 +5031,8 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     figures stand; this one does not.
                     <br><br>
                     🔑 <b>This is the honest case for the multiple-testglass programme below.</b> The
-                    question on a 99-layer five-cavity filter is not &ldquo;how much better than
-                    0.86 nm&rdquo;. It is <b>whether the component can be optically monitored at
+                    question on a 99-layer five-cavity filter is not &ldquo;how much better than the
+                    0.86 nm fallback&rdquo;. It is <b>whether the component can be optically monitored at
                     all</b> — and the first target is a crash rate under 5 %, before any SEEL is
                     worth quoting.
                 </div>
@@ -5508,7 +5508,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
             300 Monte-Carlo draws, 2026-08-21, 8 threads. The base configuration is untouched: the 2 nm variant
             differs from it by the slit width and that one key. SEEL $= 2\sqrt{\text{RMSE}_{P95}}$, the same
             definition used throughout this page. Method, and the nine claims retracted the same day, in
-            <code>docs/PLAN_PRODUCTION_2026-08-20.md</code> &sect;25 to &sect;31.
+            <code>docs/archives/PLAN_PRODUCTION_2026-08-20.md</code> &sect;25 to &sect;31.
         </div>
 
         <h3 id="sec-10-19">10.19 The launch pads are no longer needed &mdash; an autonomous discovery, 2026-08-22</h3>
@@ -5628,7 +5628,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
             <code>scripts/orchestre_multigraine.py</code>, campaign <code>scripts/batch_75c_nuit.sh</code>,
             coherence check <code>scripts/coherence_campagne.py</code> &mdash; 0 points to instruct: one commit,
             one Monte-Carlo depth 50/300, one slit and one mode across every artefact. Method, and the three
-            claims retracted the same day, in <code>docs/REPRENDRE_ICI.md</code> &sect;000 and &sect;001.
+            claims retracted the same day, in <code>docs/archives/REPRENDRE_ICI.md</code> &sect;000 and &sect;001.
         </div>
 
         <h3 id="sec-10-21">10.21 The crash rate falls when the noise rises &mdash; and the culprit is our own detector</h3>
@@ -5702,7 +5702,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
             probe <code>scripts/probe_plantage_vs_sigma.py</code>, sweep
             <code>scripts/enchainer_hysteresis.sh</code>, mechanism at
             <code>certus/core/certus_strat_robustness.py:2526-2532</code>. Reading rule written <i>before</i> the
-            result, in <code>docs/REPRENDRE_ICI.md</code> &sect;1ter.
+            result, in <code>docs/archives/REPRENDRE_ICI.md</code> &sect;1ter.
         </div>
 
         <h2 id="sec-11">11. Making It Fast — What the Structure Gives for Free</h2>

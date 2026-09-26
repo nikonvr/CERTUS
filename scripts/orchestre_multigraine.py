@@ -351,7 +351,7 @@ def partition_temoins(n_couches: int, n_temoins: int) -> list[int]:
     est PLAT ». Verification faite, cette etendue ne dit RIEN du choix d'une coupure quand le
     critere est le PLANTAGE :
 
-      · `docs/CHANTIER_MULTITEMOINS.md:287` intitule la ligne « etendue totale du SEEL ».
+      · `docs/archives/CHANTIER_MULTITEMOINS.md:287` intitule la ligne « etendue totale du SEEL ».
       · `scripts/classer_partitions.py:178` ECARTE les partitions dont le plantage cumule
         depasse `--max-crash` (defaut 0.05, ligne 107) AVANT de calculer la RMSE. L'etendue
         est donc CONDITIONNELLE au fait d'avoir deja franchi la porte de plantage : elle

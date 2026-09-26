@@ -1,63 +1,27 @@
-# CERTUS — Headless Testing
+# CERTUS — Headless tests
 
-Headless integration tests to validate each CERTUS module without UI interaction.
+Headless tests: each module is driven without user interaction (Qt offscreen). They run in
+the standard suite (`python -m pytest tests/ -q --no-cov --ignore=tests/oracle
+--ignore=tests/unit --ignore=tests/ui`) and one by one as scripts.
 
-## Structure
+⚠️ **`test_design.py` and `test_strat.py` replace the computation with a mock** (the optimiser
+and the STRAT pipeline respectively): they check the plumbing, never a result. Do not measure
+anything with them — the benchmark without mocks is `scripts/bench_examples.py`.
 
-```
-tests/headless/
-├── README.md
-├── run_all.py ← Runner global
-├── test_metal_single.py ← CERTUS METAL SINGLE
-├── test_metal_bilayer.py ← CERTUS METAL BILAYER
-├── test_field.py ← CERTUS FIELD
-├── test_re.py ← CERTUS RE
-├── test_design.py ← CERTUS DESIGN
-└── test_spline.py ← CERTUS INDEX SPLINE
-```
+| file | module | data |
+|---|---|---|
+| `test_metal_single.py` | CERTUS METAL SINGLE | `example/example_metal_single/` |
+| `test_metal_bilayer.py` | CERTUS METAL BILAYER | `example/example_metal_bilayer/` |
+| `test_field.py` | CERTUS FIELD — 1064 / 532 / 355 nm | `example/example_field/test_hr_mirror.json` |
+| `test_re.py` | CERTUS RE | `example/example_RE/reverse_sample.xlsx` |
+| `test_spline.py` | CERTUS INDEX SPLINE — Al2O3 substrate, ~1700 nm film | `example/example_index_spline/TSIO2-1700-1.xlsx` |
+| `test_index.py` | CERTUS INDEX | — |
+| `test_design.py` | CERTUS DESIGN, optimiser mocked | `example/example_design/JSON-design-optimized.json` |
+| `test_design_campaign.py` | CERTUS DESIGN, campaign plumbing | — |
+| `test_strat.py` | CERTUS STRAT, pipeline mocked | — |
+| `test_code_duplication.py` | AST duplication guard on `certus/` | — |
 
-## Use
-
-### All tests
-```powershell
+```bat
+python -m pytest tests/headless/ -q --no-cov
 python tests/headless/run_all.py
 ```
-
-### An individual test
-```powershell
-python tests/headless/test_metal_single.py
-python tests/headless/test_metal_bilayer.py
-python tests/headless/test_field.py
-python tests/headless/test_re.py
-python tests/headless/test_design.py
-python tests/headless/test_spline.py
-```
-
-## Expected reference values
-
-| Module | Metric | Expected value |
-|----------------|------------------|-----------------|
-| METAL_SINGLE | RMSE | ~1.5% |
-| METAL_BILAYER | RMSE | ~1.5% |
-| FIELD | success | True |
-| RE | RMSE | ~0.015 |
-| DESIGN | Best RMSE | < 0.010 |
-| SPLINE | RMSE | ~0.003–0.005 |
-
-## Data used
-
-| Module | Example file |
-|----------------|------------------------------------------------------|
-| METAL_SINGLE |`example/example_metal_single/`|
-| METAL_BILAYER |`example/example_metal_bilayer/`|
-| FIELD |`example/example_field/test_hr_mirror.json`|
-| RE |`example/example_RE/reverse_sample.xlsx`|
-| DESIGN |`example/example_design/JSON-design-optimized.json`|
-| SPLINE |`example/example_index_spline/TSIO2-1700-1.xlsx`|
-
-## Notes
-
-- **SPLINE**: Al2O3 substrate, relative T measurements, thickness ~1700 nm, n(550nm)~1.475, n(2000nm)~1.43
-- **DESIGN**:`global`mode (~30-60s), RMSE < 0.010 expected
-- **FIELD**: multilayer calculation 1064/532/355 nm
-- All tests are self-contained (no GUI, no user interaction)

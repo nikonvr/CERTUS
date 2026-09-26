@@ -47,7 +47,7 @@ def test_harness_says_when_the_skeleton_never_settled() -> None:
     'Detach plot' and its tab widget as MISSING, while a solo run of the very
     same code matches the baseline exactly (114 controls, zero diff). The
     phantom removal was attributed to a code regression in section 0bis of
-    the UX dossier for half a day (docs/UX_DEMENTIS.md).
+    the UX dossier for half a day (docs/archives/UX_DEMENTIS.md).
 
     A run that did not settle is not a measurement: it must say so.
     """

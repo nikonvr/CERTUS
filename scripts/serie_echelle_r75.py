@@ -33,7 +33,7 @@ une couche QWOT »*. **Mesure** (`scripts/probe_turning_points.py`) :
 
 Le x0.5 offre en fait un point d'arret sur **49 des 61** lambda candidates par couche
 (mediane). L'argument etait faux, donc la prediction qu'il portait ne vaut rien.
-🔑 Voir `docs/QWOT_ET_TURNING_POINT.md` avant d'ecrire quoi que ce soit sur ce sujet.
+🔑 Voir `docs/archives/QWOT_ET_TURNING_POINT.md` avant d'ecrire quoi que ce soit sur ce sujet.
 
 **Il n'y a donc PLUS de prediction engagee sur cette serie**, et c'est preferable a une
 prediction fondee sur un raisonnement refute. Ce que la serie mesure reste net : a nombre de
@@ -120,7 +120,7 @@ def geometrie(facteur: float) -> dict:
             # docstring de ce fichier refute l'assimilation des deux, mesure a l'appui
             # (59 contre 1 sur x0,5, facteur 59). Le depart d'un point tournant est decale
             # d'une phase 1/2 arctan(R/Q) fixee par l'empilement du dessous. Voir
-            # docs/QWOT_ET_TURNING_POINT.md avant d'en tirer quoi que ce soit.
+            # docs/archives/QWOT_ET_TURNING_POINT.md avant d'en tirer quoi que ce soit.
             "couches_sous_1_qwot": int(sum(1 for q in qwot if q < 1.0))}
 
 

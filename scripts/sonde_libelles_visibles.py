@@ -7,7 +7,7 @@
 
 Une passe a **efface les caracteres non-ASCII** des chaines visibles sans les remplacer, et
 elle a laisse des cicatrices : un separateur retire laisse un **double espace**, un `λ` retire
-laisse le mot **`lambda`**. L'etape 4.1 de `docs/UX_PLAN.md` doit ramener
+laisse le mot **`lambda`**. L'etape 4.1 de `docs/archives/UX_PLAN.md` doit ramener
 ces comptes a zero.
 
 🔴 **ET CE N'EST PAS COSMETIQUE.** `certus/metal/certus_metal_common.py` affiche

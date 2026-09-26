@@ -6,7 +6,7 @@
 
 Le 2026-08-23, monter la bande passante memoire de **+69 %** (2133 -> 3600 MHz, DOCP) n'a rien
 rendu sur la duree d'un run. La conclusion *« le goulot est la bande passante memoire »* du
-2026-08-22 est donc REFUTEE -- voir §0000 de `docs/REPRENDRE_ICI.md`.
+2026-08-22 est donc REFUTEE -- voir §0000 de `docs/archives/REPRENDRE_ICI.md`.
 
 Reste la question qu'elle laisse ouverte : **la machine passe-t-elle a l'echelle ?** Un run seul
 le dit, et c'est ce qui decide si des COEURS se paient :

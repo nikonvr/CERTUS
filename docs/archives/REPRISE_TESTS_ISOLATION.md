@@ -1,3 +1,5 @@
+> **ARCHIVE (2026-09-26) — ce document ne fait plus autorité.** L'état courant est dans [`docs/ETAT.md`](../ETAT.md), les règles dans [`CLAUDE.md`](../../CLAUDE.md). Conservé tel quel pour l'historique ; ses renvois internes peuvent pointer vers d'anciennes sections.
+
 # RESUME — state leaks between tests (isolation)
 
 **Session of 2026-08-02**, during the performance campaign.

@@ -12,7 +12,7 @@
 # 🔴 CETTE LIGNE CONCLUAIT « le goulot est la bande passante memoire ». C'EST REFUTE depuis le
 # 2026-08-23 : +69 % de bande passante (2133 -> 3600 MHz, DOCP) n'ont rien rendu, sur six blocs
 # et deux graines. Le +29 % reste MESURE, son explication non. Voir §0000 de
-# docs/REPRENDRE_ICI.md, et `scripts/mesure_solo_vs_parallele.sh` qui instruit la suite.
+# docs/archives/REPRENDRE_ICI.md, et `scripts/mesure_solo_vs_parallele.sh` qui instruit la suite.
 #
 # 🔴 On regarde les PROCESSUS, jamais l'apparition d'un artefact : la sonde l'ecrit AVANT sa
 # synthese, et une chaine qui le guettait a lance la mesure suivante 10 s trop tot le

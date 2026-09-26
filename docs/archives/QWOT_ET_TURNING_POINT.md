@@ -1,3 +1,5 @@
+> **ARCHIVE (2026-09-26) — ce document ne fait plus autorité.** L'état courant est dans [`docs/ETAT.md`](../ETAT.md), les règles dans [`CLAUDE.md`](../../CLAUDE.md). Conservé tel quel pour l'historique ; ses renvois internes peuvent pointer vers d'anciennes sections.
+
 # 🔴 QWOT ≠ TURNING POINT — lis ceci avant d'écrire une ligne sur les points d'arrêt
 
 > 👤 2026-08-15 : *« la notion de QWOT est différente de turning point, attention ! »* —

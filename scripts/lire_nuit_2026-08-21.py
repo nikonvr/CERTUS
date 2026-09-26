@@ -5,7 +5,7 @@
 ## 🔑 CE QUE CE SCRIPT FAIT, ET POURQUOI IL EXISTE SEPAREMENT DU BATCH
 
 La regle de decision de la question de fond est ecrite en **§8.2ter de
-`docs/REPRENDRE_ICI.md`**, AVANT la mesure, precisement pour ne pas etre reinterpretee selon le
+`docs/archives/REPRENDRE_ICI.md`**, AVANT la mesure, precisement pour ne pas etre reinterpretee selon le
 resultat. Ce script l'applique mecaniquement.
 
     r75x2 NU (sans rampes), graines 101 et 202
@@ -204,7 +204,7 @@ def main() -> int:
     print("=" * 78)
     print("  Tout porte sur `r75x2` a 2 nm -- UN empilement, UNE fente. 👤 a fixe ce perimetre")
     print("  le 2026-08-21 (« on reste sur le 75cx2 »). Aucune affirmation de GENERALITE n'est")
-    print("  permise : voir §8.2bis de docs/REPRENDRE_ICI.md pour les formulations autorisees.")
+    print("  permise : voir §8.2bis de docs/archives/REPRENDRE_ICI.md pour les formulations autorisees.")
     return 0
 
 

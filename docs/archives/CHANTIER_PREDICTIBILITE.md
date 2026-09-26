@@ -1,3 +1,5 @@
+> **ARCHIVE (2026-09-26) — ce document ne fait plus autorité.** L'état courant est dans [`docs/ETAT.md`](../ETAT.md), les règles dans [`CLAUDE.md`](../../CLAUDE.md). Conservé tel quel pour l'historique ; ses renvois internes peuvent pointer vers d'anciennes sections.
+
 # PRÉDIRE SI UN DESIGN PASSE AVEC UN SEUL VERRE TÉMOIN
 
 > 👤 **2026-08-17** : *« le chantier suivant devrait se concentrer sur les 75c. Il faut arriver à

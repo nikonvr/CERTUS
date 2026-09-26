@@ -837,7 +837,7 @@ def calculate_dynamics_ULTIMATE(
     #
     # Le point tournant, c'est l'admittance du systeme qui devient reelle, donc
     # `tan 2.delta = R/Q` -> delta_TP = (1/2).arctan2(R, Q) + k.(pi/2). Ce N'EST PAS
-    # « la couche atteint 1 QWOT » : voir docs/QWOT_ET_TURNING_POINT.md.
+    # « la couche atteint 1 QWOT » : voir docs/archives/QWOT_ET_TURNING_POINT.md.
     #
     # Cout : O(1) par lambda, sur des grandeurs deja calculees ci-dessus. Aucun parcours
     # supplementaire de l'empilement.

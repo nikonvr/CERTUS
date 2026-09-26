@@ -109,24 +109,24 @@ MAP = {
 #:   pages/CERTUS_STRAT.html         §2.8, §10.15 -> sa numerotation a elle
 #:   pages/CERTUS_METAL_BILAYER.html §5
 #:   docs/REPRISE_PERF.md            §1 a §6
-#:   docs/PLAN_AMELIORATION.md       §0.3, §4, §7
-#:   docs/REPRISE_TESTS_ISOLATION.md §2, §2.1
+#:   docs/archives/PLAN_AMELIORATION.md       §0.3, §4, §7
+#:   docs/archives/REPRISE_TESTS_ISOLATION.md §2, §2.1
 #:
 #: Ne figurent ici que les fichiers dont les renvois pointent vers CLAUDE.md : celui-ci, les
 #: dossiers EXTRAITS de lui (qui ont herite de ses renvois), et les deux documents ecrits en
 #: le citant. Verifie qu'un fichier appartient bien a cette categorie AVANT de l'ajouter.
 CIBLES = [
     "CLAUDE.md",
-    "docs/CHANTIER_MULTITEMOINS.md",
-    "docs/TRAVAUX_A_VENIR.md",
-    "docs/FEUILLE_DE_ROUTE.md",
-    "docs/MODE_RATE.md",
-    "docs/DECISIONS_TRANCHEES.md",
-    "docs/COMPOSANTS.md",
-    "docs/PERFORMANCE.md",
-    "docs/ETAT_IMPLANTATION.md",
-    "docs/RESERVE_A25_A27.md",
-    "docs/QWOT_ET_TURNING_POINT.md",
+    "docs/archives/CHANTIER_MULTITEMOINS.md",
+    "docs/archives/TRAVAUX_A_VENIR.md",
+    "docs/archives/FEUILLE_DE_ROUTE.md",
+    "docs/archives/MODE_RATE.md",
+    "docs/archives/DECISIONS_TRANCHEES.md",
+    "docs/archives/COMPOSANTS.md",
+    "docs/archives/PERFORMANCE.md",
+    "docs/archives/ETAT_IMPLANTATION.md",
+    "docs/archives/RESERVE_A25_A27.md",
+    "docs/archives/QWOT_ET_TURNING_POINT.md",
     "docs/REPRISE.md",
     "docs/PLAN_2026-08-16.md",
 ]

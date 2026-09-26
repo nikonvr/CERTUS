@@ -32,7 +32,7 @@ implantation, contre les references 0,173 nm (48c) et 0,482 nm (35c).
 
 Rappel de vocabulaire, parce que c'est l'erreur du jour : un point tournant, c'est
 l'admittance du SYSTEME qui devient reelle (`tan 2.delta = R/Q`), pas une couche a 1 QWOT.
-Voir docs/QWOT_ET_TURNING_POINT.md.
+Voir docs/archives/QWOT_ET_TURNING_POINT.md.
 """
 
 from __future__ import annotations

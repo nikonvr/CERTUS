@@ -4,7 +4,7 @@
 
     Il ne reproduit pas son propre point fixe : re-noter les 12 meilleurs plans de la graine
     77 SOUS LA GRAINE 77 rend 100 % de plantage la ou la reference en mesure 0,67 a 1,33 %.
-    Toutes ses sorties sont retirees -- voir `docs/REPRENDRE_ICI.md` §3.
+    Toutes ses sorties sont retirees -- voir `docs/archives/REPRENDRE_ICI.md` §3.
 
     SIX causes candidates ont ete eliminees le 2026-08-20 au soir, sans machine, et AUCUNE
     n'a ete trouvee : la grille full_dynamics_grid vide (inerte, un seul dereferencement dans

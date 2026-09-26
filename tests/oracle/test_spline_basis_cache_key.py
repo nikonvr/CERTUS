@@ -31,7 +31,7 @@ This file therefore locks three properties:
   3. le gradient METAL REAGIT a un deplacement de noeud de 1e-9 um, mille fois sous
      rounding — this is the property that ensures that the optimizer is not blind.
 
-📏 REPONSE AU CONSTAT A2 de `docs/PLAN_AMELIORATION.md`, qui demandait de trancher entre
+📏 REPONSE AU CONSTAT A2 de `docs/archives/PLAN_AMELIORATION.md`, qui demandait de trancher entre
 « le cache manque systematiquement » (lenteur) et « il rend une base perimee » (resultat
 false): **neither one nor the other.** The node positions are in the key, so no basis
 expired is not rendered where it counts; and the rounding of this key creates a third
@@ -71,7 +71,7 @@ def _isolate_cache():
     entries and requires `< 500` on a terminal cache at 512. 📏 My few entries did it
     go from ~496 to 510, and this test failed even though it has nothing to do with this
     file. This is the same fault family as the `sys.modules` leak documented in
-    `docs/REPRISE_TESTS_ISOLATION.md` : un test qui passe seul et echoue en selection
+    `docs/archives/REPRISE_TESTS_ISOLATION.md` : un test qui passe seul et echoue en selection
     large.
     """
     snapshot = SplineBasisCache._cache.copy()
@@ -176,7 +176,7 @@ def test_metal_gradient_sees_knot_moves_below_the_cache_rounding():
     #⚠️ No `try/except` here, and this is deliberate: a fallback on a check
     #lexical source would pass this test WITHOUT ever executing the assertion which
     # compte. C'est exactement le piege « un test qui ne peut pas echouer n'est pas un
-    # test » de docs/PLAN_AMELIORATION.md §0.2. Si l'appel casse, le test doit casser.
+    # test » de docs/archives/PLAN_AMELIORATION.md §0.2. Si l'appel casse, le test doit casser.
     # `nSub_complex_array=None` ne convient pas : le noyau njit en aval l'indexe.
     n_sub = np.full(l_array.size, complex(1.52, 0.0), dtype=np.complex128)
     tgt = np.ones_like(l_array) * 0.5

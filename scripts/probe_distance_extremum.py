@@ -69,7 +69,7 @@ lecture est trop forte : le 99c est une CONFIGURATION SINGULIERE pour POEM -- to
 multiplicateurs sont entiers, donc fin de couche et point tournant coincident a lambda_mon, et sa
 reponse est un 100 % PLAT qui ne discrimine rien. Comparer une grandeur contre lui n'est pas un
 test loyal. Le test loyal est la serie d'echelle du random75, et il a ete fait le meme jour :
-sur la serie, cette distance n'ordonne pas davantage. Voir docs/CHANTIER_PREDICTIBILITE.md §3.
+sur la serie, cette distance n'ordonne pas davantage. Voir docs/archives/CHANTIER_PREDICTIBILITE.md §3.
 
 Si une couche avait sa plus grande distance a l'extremum tres basse, aucune strategie ne pourrait
 l'eviter -- ni les 26 a lambda unique, ni les 5 x 10^57. Aucune ne l'a. La condition necessaire

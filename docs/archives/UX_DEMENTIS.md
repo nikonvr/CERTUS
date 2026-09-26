@@ -1,3 +1,5 @@
+> **ARCHIVE (2026-09-26) — ce document ne fait plus autorité.** L'état courant est dans [`docs/ETAT.md`](../ETAT.md), les règles dans [`CLAUDE.md`](../../CLAUDE.md). Conservé tel quel pour l'historique ; ses renvois internes peuvent pointer vers d'anciennes sections.
+
 # UX — ce que la mesure a démenti
 
 **Extrait le 2026-09-08 de `GEMINI_UX_TOP1_2026-09-04.md`, qui a été supprimé le même jour.**

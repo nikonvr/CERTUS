@@ -278,7 +278,7 @@ _MATRICE_FENTES = (5.0, 2.0, 1.0, 0.5)
 #: y compris les deux configurations BARRIERE (deep trouve 0 deposable) ou extreme aurait ete le
 #: plus utile. Les cellules restantes de la passe de reference (75c, x1,75, x1,5) portaient sur
 #: des composants ou `deep` trouve DEJA des centaines de deposables -- les moins susceptibles
-#: d'apporter de l'information. Detail : docs/CHANTIER_PREDICTIBILITE.md §4quater-bis.
+#: d'apporter de l'information. Detail : docs/archives/CHANTIER_PREDICTIBILITE.md §4quater-bis.
 #:
 #: `--matrice` reste fonctionnel et reprenable si la question est rouverte, mais elle ne doit
 #: PAS etre relancee sans une raison neuve : la question posee a recu sa reponse.

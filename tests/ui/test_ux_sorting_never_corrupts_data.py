@@ -7,7 +7,7 @@ Two distinct families, both fixed by disabling sorting on the instance:
 2. CELLS ARE WIDGETS. Qt does not move cell widgets when sorting: a sort pairs
    one row's widgets with another row's data.
 
-This guard exists because the hole was opened twice. docs/UX_DEMENTIS.md
+This guard exists because the hole was opened twice. docs/archives/UX_DEMENTIS.md
 step 2.9 warns: "do not restore sorting without the locks in the same change".
 On 2026-09-04 the ExcelTableWidget.__init__ that enables sorting was restored and
 the certus_lock_row_order() calls were not, which put the suite back in the exact

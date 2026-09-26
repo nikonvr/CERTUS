@@ -7,7 +7,7 @@
 #
 # Le 2026-08-23, monter la bande passante memoire de +69 % (2133 -> 3600 MHz) n'a rien rendu :
 # la conclusion « le goulot est la bande passante memoire » est REFUTEE (§0000 de
-# docs/REPRENDRE_ICI.md). Reste la question ouverte : la machine passe-t-elle a l'echelle ?
+# docs/archives/REPRENDRE_ICI.md). Reste la question ouverte : la machine passe-t-elle a l'echelle ?
 # 👤 demande ou mettre son argent -- RAM, coeurs, ou rien. Cette mesure est la seule qui
 # repond, et elle est GRATUITE.
 #

@@ -606,7 +606,7 @@ def _rate_swing_candidates(strategy: dict[str, Any], num_layers: int,
                            swing_ctx: "_RateSwingContext") -> list[int]:
     """Layers where a Rate is NEEDED: the growth-time swing is below `dynamics_threshold`.
 
-    🔑 2026-08-19, docs/CHANTIER_RATE.md contradiction C: `_rate_swing_candidates` and
+    🔑 2026-08-19, docs/archives/CHANTIER_RATE.md contradiction C: `_rate_swing_candidates` and
     `_rate_candidate_layers` answer two DIFFERENT questions on purpose --  where a Rate
     costs nothing (block boundary) versus where it is needed (poor optical signal). Kept
     SEPARATE, ADDITIVE: this function never removes what the boundary criterion already
@@ -669,7 +669,7 @@ def _rate_candidate_layers(strategy: dict[str, Any], num_layers: int,
     r75x2 the native placements go 291 -> 314 and layer 74 goes 0 -> 112, displacing 71. But
     a full replay of the tail sweep gives a MAXIMUM deviation of 0.03 % over five cuts, and
     the cliff does not move. Earlier tail campaigns stay readable. See
-    docs/CHANTIER_RATE.md §9 -- and note that the 0.03 % is the ROUNDING order, which is the
+    docs/archives/CHANTIER_RATE.md §9 -- and note that the 0.03 % is the ROUNDING order, which is the
     only residual the arithmetic allows.
 
     🔑 `swing_ctx`, added 2026-08-19: when given, NEEDED layers (poor growth-time swing)
@@ -968,7 +968,7 @@ def _expand_with_rate_variants(
 
     🔑 `rate_by_swing`, added 2026-08-19, default `False`: places candidates by NEED (growth-
     time swing below `dynamics_threshold`) in addition to by COST (block boundary), instead
-    of by cost alone. docs/CHANTIER_RATE.md contradiction C. Requires
+    of by cost alone. docs/archives/CHANTIER_RATE.md contradiction C. Requires
     `p_thick_nominal` / `nominal_matrix_cache` / `all_wls` / `clues_at_wl`, threaded in by
     `_prepare_robustness_inputs` from `opti_results` -- nothing new computed, only reaches a
     function that did not have them before.
@@ -1012,7 +1012,7 @@ def _expand_with_rate_variants(
 
     # 🔴 `rate_by_swing`, added 2026-08-19 -- INACTIVE by default, golden rule: at
     # `False` `swing_ctx` stays `None` and `_rate_candidate_layers` runs its historical
-    # boundary-only path, bit for bit. docs/CHANTIER_RATE.md action 1.
+    # boundary-only path, bit for bit. docs/archives/CHANTIER_RATE.md action 1.
     #
     # Placing the Rate where it is NEEDED (poor growth-time swing) rather than only where
     # it is CHEAPEST (a block boundary) -- contradiction C of the audit. Requires the

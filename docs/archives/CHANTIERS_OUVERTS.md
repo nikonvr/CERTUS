@@ -1,3 +1,5 @@
+> **ARCHIVE (2026-09-26) — ce document ne fait plus autorité.** L'état courant est dans [`docs/ETAT.md`](../ETAT.md), les règles dans [`CLAUDE.md`](../../CLAUDE.md). Conservé tel quel pour l'historique ; ses renvois internes peuvent pointer vers d'anciennes sections.
+
 # CHANTIERS OUVERTS — extrait de `CLAUDE.md` §27 le 2026-08-19
 
 > Ce dossier **fait autorité** sur les chantiers listés ici. `CLAUDE.md` n'en garde qu'un

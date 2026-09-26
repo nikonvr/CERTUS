@@ -1,6 +1,12 @@
 # Dictionnaire des Paramètres de Configuration STRAT (.json)
 
-Ce guide détaille l'intégralité des paramètres utilisés par le solveur et l'interface **CERTUS STRAT**.
+Ce guide décrit les clés des configurations **CERTUS STRAT**. Les valeurs citées sont celles de
+`JSON-strat-example.json` (le dichroïque), pas des défauts de l'interface.
+
+⚠️ **Le mode d'exécution écrase sept clés du fichier** : `robustness_num_runs`,
+`consensus_num_runs`, `n_screen_runs`, `elite_rounds`, `dp_top_k`, `k_keep_survivors` et
+`mining_candidates_limit` prennent la valeur du mode, quelle que soit celle du JSON
+(`collect_params`, dans `certus/ui/certus_strat_ui_state.py`).
 
 ---
 
@@ -8,8 +14,8 @@ Ce guide détaille l'intégralité des paramètres utilisés par le solveur et l
 
 | Clé JSON | Type | Valeurs possibles | Description |
 |---|---|---|---|
-| `execution_mode` | `string` | `"fast"`, `"premium"`, `"deep"` | Profil global de calcul. Mappe automatiquement les budgets Monte-Carlo ($N=50, 150, 300$), le criblage ($n_{\text{screen}}=10, 25, 50$) et la largeur de faisceau ($dp\_top\_k=20, 40, 100$). |
-| `strategy_phase_timeout` | `float` | Ex: `120` (s) | Temps limite d'exécution alloué par phase de calcul. |
+| `execution_mode` | `string` | `"fast"`, `"premium"`, `"deep"`, `"extreme"` | Profil de calcul, `premium` par défaut. Fixe `robustness_num_runs` 50 / 150 / 300, `n_screen_runs` 10 / 25 / 50 et `dp_top_k` 20 / 40 / 100 (fast / premium / deep). `extreme` garde la profondeur de `deep` et élargit la génération, sans gain mesuré sur `deep`. |
+| `strategy_phase_timeout` | `float` | `120` (s) | 🔴 **Inerte** : enregistré et affiché, mais aucune ligne de calcul ne le lit ; il ne borne rien. |
 
 ---
 
@@ -31,7 +37,7 @@ Ce guide détaille l'intégralité des paramètres utilisés par le solveur et l
 
 ## 3. Domaine Spectral & Résolution Monochromateur
 
-| Clé JSON | Type | Valeur défaut | Description |
+| Clé JSON | Type | Valeur | Description |
 |---|---|---|---|
 | `wl_range_start` | `float` | `400.0` (nm) | Début de la plage spectrale cible pour l'évaluation du filtre. |
 | `wl_range_end` | `float` | `700.0` (nm) | Fin de la plage spectrale cible. |
@@ -47,30 +53,30 @@ Ce guide détaille l'intégralité des paramètres utilisés par le solveur et l
 
 ## 4. Modèle Physique & Sources d'Erreurs de Dépôt
 
-| Clé JSON | Type | Valeur recommandée | Description |
+| Clé JSON | Type | Valeur | Description |
 |---|---|---|---|
 | `allow_rate` | `int`/`bool` | `1` | `1` = autorise le mode Rate (surveillance au chrono sur couches sans extremum franc), `0` = optique pure. |
-| `poem_anchor_noise` | `int`/`bool` | `1` | `1` = active le modèle de compensation de croissance POEM sous bruit de lecture. |
+| `poem_anchor_noise` | `int`/`bool` | `1` | `1` = bruite le signal de monitoring avant la détection des points tournants, la lecture des ancres POEM et le test d'atteignabilité. |
 | `poem_anchor_noise_phase_a` | `int`/`bool` | `1` | `1` = applique le bruit dès la pré-sélection Phase A. |
 | `index_corridor` | `float` | `0.005` | Demi-largeur du couloir de dérive d'indice de réfraction admissible. |
 | `photometric_curvature_amp` | `float` | `0.00375` | Amplitude de la courbure photométrique résiduelle du spectrophotomètre. |
 | `affine_scale_amp` | `float` | `0.0` | Amplitude de distorsion affine d'échelle sur la transmission ($a \in [1-\delta, 1+\delta]$). |
 | `affine_offset_amp` | `float` | `0.0` | Amplitude de décalage affine de ligne de base ($b \in [-\delta, +\delta]$). |
 | `reading_smoothing_window` | `int` | `1` | Taille de la fenêtre de lissage des lectures machine (1 = désactivé/neutre). |
-| `machine_sampling_dd` | `float` | `0.0` | Grille d'échantillonnage d'épaisseur machine (0.0 = continue). |
+| `machine_sampling_dd` | `float` | `0.0` | Pas de la grille machine en nm (0 = grille grossière). 🔴 **Inerte** : le noyau reçoit toujours 0. |
 | `tp_hysteresis_factor` | `float` | `1.66` | Seuil d'hystérésis pour la détection anti-bruit des points tournants. |
 | `phase_a_level_margin_factor` | `float` | `1.66` | Marge de sécurité requise entre le niveau de transmission visé et les extrema. |
-| `trigger_tolerance` | `float` | `0.05` | Tolérance photométrique sur le déclenchement d'arrêt. |
+| `trigger_tolerance` | `float` | `0.05` | Bruit de lecture en **points de transmission** : l'amplitude en unités T vaut `trigger_tolerance / 100`. |
 
 ---
 
 ## 5. Programmation Dynamique & Découpage en Blocs (Phase A & B)
 
-| Clé JSON | Type | Valeur défaut | Description |
+| Clé JSON | Type | Valeur | Description |
 |---|---|---|---|
 | `iter_divider_start` | `float` | `18` | Diviseur de départ pour le balayage de découpage en blocs ($N_{\text{couches}} / \text{div}$). |
 | `iter_divider_end` | `float` | `5` | Diviseur de fin pour le balayage de découpage en blocs. |
-| `dp_top_k` | `int` | `40` | Largeur du faisceau DP : nombre de meilleures candidates conservées par bloc. |
+| `dp_top_k` | `int` | fixé par le mode | Largeur du faisceau DP : nombre de meilleures candidates conservées par bloc. |
 | `k_keep_survivors` | `int` | `10` | Nombre de survivantes transmises pour la recombinaison entre blocs. |
 | `n_screen_runs` | `int` | `25` | Nombre de tirages Monte-Carlo de pré-sélection (criblage) avant Phase B. |
 | `mining_candidates_limit` | `int` | `3000` | Budget maximal de variantes combinatoires explorées (stochastique + symétrie). |
@@ -83,9 +89,9 @@ Ce guide détaille l'intégralité des paramètres utilisés par le solveur et l
 
 ## 6. Évaluation Robuste & Consensus Multi-Graines
 
-| Clé JSON | Type | Valeur défaut | Description |
+| Clé JSON | Type | Valeur | Description |
 |---|---|---|---|
-| `robustness_num_runs` | `int` | `150` | Nombre de simulations Monte-Carlo finales par stratégie ($N$). |
+| `robustness_num_runs` | `int` | `300` | Nombre de simulations Monte-Carlo finales par stratégie ($N$). 🔴 Écrasé par le mode : 150 en `premium`. |
 | `robustness_noise_factors` | `string`/`list` | `"[0.5, 1.0, 2.0]"` | Multiplicateurs de bruit appliqués lors de l'audit de robustesse. |
 | `enable_consensus_ranking` | `int`/`bool` | `1` | `1` = active le classement par consensus multi-graines pour éliminer la gigue. |
 | `consensus_num_seeds` | `int` | `3` | Nombre de graines aléatoires indépendantes évaluées. |

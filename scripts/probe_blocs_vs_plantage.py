@@ -323,7 +323,7 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
         # CIRCULARITE que le parametre atteint le calcul, comme machine_sampling_dd ne le
         # faisait pas. La ligne de log [TP] compte les rejets par couche.
         "require_turning_point": int(min_tp),
-        # 🔑 RATE PAR BESOIN -- inactif par defaut, docs/CHANTIER_RATE.md.
+        # 🔑 RATE PAR BESOIN -- inactif par defaut, docs/archives/CHANTIER_RATE.md.
         # Ajoute aux candidates Rate les couches dont le swing de croissance est
         # sous `dynamics_threshold`, EN PLUS des frontieres de bloc. 📏 Mesure du
         # 2026-08-19 : n'agit que sur le 75c (5 couches sur 75), inerte sur 35c,

@@ -198,7 +198,7 @@ def check_dup_numbers(lines: list[str]) -> list[str]:
 #:
 #: Ces motifs cherchent une phrase qui traite les deux notions comme equivalentes DANS UNE
 #: MEME PHRASE. Ils ne se declenchent pas sur un texte qui les OPPOSE -- c'est le role de
-#: DISCULPANTS, sinon docs/QWOT_ET_TURNING_POINT.md se signalerait lui-meme.
+#: DISCULPANTS, sinon docs/archives/QWOT_ET_TURNING_POINT.md se signalerait lui-meme.
 QWOT_TP_MOTIFS = (
     re.compile(r"sous\s+1\s*QWOT[^.]{0,60}(aucun|pas d[eu']|sans)\s+(extrem|turning|point d)", re.I),
     re.compile(r"(aucun|pas d[eu']|sans)\s+(extremum|extrema|turning point|point d'arr[eê]t)[^.]{0,60}sous\s+1\s*QWOT", re.I),
@@ -213,7 +213,7 @@ DISCULPANTS = ("n'est pas", "different", "différent", "ne coincide", "ne coïnc
 
 
 def check_qwot_vs_tp(lines: list[str]) -> list[str]:
-    """E -- assimile-t-on QWOT et turning point ? Voir docs/QWOT_ET_TURNING_POINT.md."""
+    """E -- assimile-t-on QWOT et turning point ? Voir docs/archives/QWOT_ET_TURNING_POINT.md."""
     out = []
     for i, line in enumerate(lines, 1):
         if any(d in line for d in DISCULPANTS):

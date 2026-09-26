@@ -1,3 +1,5 @@
+> **ARCHIVE (2026-09-26) — ce document ne fait plus autorité.** L'état courant est dans [`docs/ETAT.md`](../ETAT.md), les règles dans [`CLAUDE.md`](../../CLAUDE.md). Conservé tel quel pour l'historique ; ses renvois internes peuvent pointer vers d'anciennes sections.
+
 # ORDRE DE MISSION CLOUD — 2026-09-25
 
 > Écrit à la demande de 👤, qui finance ces sessions sur un crédit de 100 $. **Une tâche par

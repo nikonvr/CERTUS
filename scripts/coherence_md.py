@@ -177,7 +177,9 @@ def _md() -> list[Path]:
     # Accessoirement, un `.md` en cours d'ecriture doit etre verifie AVANT d'etre commite.
     fs = [ROOT / rel for rel in out]
     fs += sorted(ROOT.glob("*.md")) + sorted((ROOT / "docs").glob("*.md"))
-    return sorted({f for f in fs if f.exists()})
+    # docs/archives/ est ECARTE : des documents figes, declares sans autorite, porteraient
+    # sinon a jamais les valeurs perimees qu'ils racontent (cure du 2026-09-26).
+    return sorted({f for f in fs if f.exists() and f.relative_to(ROOT).parts[:2] != ("docs", "archives")})
 
 
 #: 🔴 NE JUGE PAS, MONTRE. Un renvoi `§N` qui pointe sur une section EXISTANTE mais sur le

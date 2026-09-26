@@ -4,7 +4,7 @@
 
 ## Ce que ce batch tranche, et pourquoi il passe AVANT tout le reste
 
-L'analyse contradictoire du 2026-08-19 (docs/CHANTIER_RATE.md §12) a trouve que **la case
+L'analyse contradictoire du 2026-08-19 (docs/archives/CHANTIER_RATE.md §12) a trouve que **la case
 decisive n'avait jamais ete lancee** : `r75x2` en `deep` a **2 nm** n'existe pas. Toute la
 queue Rate repose sur du `fast` (N=50) et du `premium` (N=150) a 2 nm, qui rendent zero
 deposable en pur optique.

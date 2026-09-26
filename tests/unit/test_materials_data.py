@@ -123,3 +123,63 @@ def test_load_si_from_xlsx_exceptions() -> None:
         with patch("pathlib.Path.is_file", return_value=True):
             with pytest.raises(CertusMaterialError, match="not strictly increasing"):
                 md._load_si_from_xlsx("dummy.xlsx")
+
+
+# ---------------------------------------------------------------------------
+# The Si data must come from the VERSIONED sheet, not from the 15-point stub.
+#
+# material_constants.xlsx and clues.xlsx were the only sources searched, and neither
+# has ever been committed: every clone silently used the stub. Measured 2026-09-25
+# against the 'Si-substrate' sheet of example/database_index/indices.xlsx: air/Si
+# reflectance off by -11 points at 400 nm and +0.9 point near 900 nm -- for INDEX,
+# RE and METAL BILAYER on a silicon substrate.
+# ---------------------------------------------------------------------------
+
+_VERSIONED_DB = Path(__file__).resolve().parents[2] / "example" / "database_index" / "indices.xlsx"
+
+
+def _versioned_sheet():
+    import pandas as pd
+
+    df = pd.read_excel(_VERSIONED_DB, sheet_name="Si-substrate", header=0, engine="openpyxl")
+    df.columns = df.columns.astype(str).str.strip().str.lower()
+    df = df.sort_values(by="wl_nm").dropna(subset=["wl_nm", "n"])
+    return df["wl_nm"].to_numpy(float), df["n"].to_numpy(float), df["k"].to_numpy(float)
+
+
+def test_si_data_is_the_versioned_sheet_without_a_local_override() -> None:
+    import numpy as np
+
+    importlib.reload(md)
+    if md._find_materials_xlsx_path():
+        pytest.skip("a local material_constants.xlsx / clues.xlsx override is present")
+    wl, n, k = _versioned_sheet()
+    assert md.SI_SOURCE.replace("\\", "/").endswith("example/database_index/indices.xlsx")
+    assert len(md.SI_WAVELENGTH_NM) == len(wl) == 566
+    np.testing.assert_array_equal(md.SI_WAVELENGTH_NM, wl)
+    np.testing.assert_array_equal(md.SI_N_DATA, n)
+    np.testing.assert_array_equal(md.SI_K_DATA, k)
+
+
+def test_get_nk_si_returns_the_sheet_with_the_macleod_sign() -> None:
+    import numpy as np
+
+    importlib.reload(md)
+    if md._find_materials_xlsx_path():
+        pytest.skip("a local material_constants.xlsx / clues.xlsx override is present")
+    wl, n, k = _versioned_sheet()
+    probe = np.array([400.0, 900.0, 1500.0])
+    expected = np.interp(probe, wl, n) - 1j * np.interp(probe, wl, k)
+    got = md.get_nk_si(probe)
+    np.testing.assert_allclose(got, expected, rtol=0, atol=1e-12)
+    assert np.all(got.imag <= 0.0), "n - ik: an absorbing substrate has a NEGATIVE imaginary part"
+
+
+def test_stub_fallback_is_a_warning_not_an_info(monkeypatch, caplog) -> None:
+    monkeypatch.setattr(md, "_si_candidate_paths", lambda: [])
+    with caplog.at_level(logging.INFO):
+        wl, n, k, source = md._load_si_data()
+    stub_wl, _, _ = md._silicon_stub_arrays()
+    assert source == "built-in stub"
+    assert len(wl) == len(stub_wl)
+    assert any(r.levelno == logging.WARNING and "falling back" in r.getMessage().lower() for r in caplog.records)

@@ -284,9 +284,15 @@ class CertusIndexEventsMixin:
 
                 self.sb_sub_thickness_mm.setEnabled(True)
 
-                # Show info; disable manual CSV import (data is built-in from clues.xlsx)
+                # Show where the Si data REALLY comes from; disable manual CSV import.
+                # The label named a spreadsheet that was never in the repository, even
+                # while the coarse built-in approximation was in use.
+                from certus_physics.materials_data import SI_SOURCE
 
-                self.lbl_ksub_file.setText("clues.xlsx -> Si-substrate (auto)")
+                if SI_SOURCE == "built-in stub":
+                    self.lbl_ksub_file.setText("Si: built-in approximation (no Si-substrate sheet found)")
+                else:
+                    self.lbl_ksub_file.setText(f"{Path(SI_SOURCE).name} -> Si-substrate (auto)")
 
                 self.btn_import_ksub.setEnabled(False)
 
@@ -299,7 +305,7 @@ class CertusIndexEventsMixin:
             else:
                 self.chk_absorbing_sub.setEnabled(True)
 
-                self.lbl_ksub_file.setText("clues.xlsx Si-substrate NOT FOUND")
+                self.lbl_ksub_file.setText("Si-substrate data NOT FOUND")
 
         else:
             # Other substrates: restore manual control

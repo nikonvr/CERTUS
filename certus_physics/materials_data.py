@@ -4,10 +4,13 @@
 =============================
 
 
-Silicon substrate optical constants loaded from clues.xlsx (Si-substrate sheet).
+Silicon substrate optical constants (n, k), read from a 'Si-substrate' sheet.
 
-
-SINGLE SOURCE OF TRUTH: clues.xlsx is the authoritative reference."""
+Sources, in priority order: an optional LOCAL override at the project root
+(material_constants.xlsx, then the legacy clues.xlsx -- neither has ever been
+committed), then the VERSIONED database example/database_index/indices.xlsx.
+The 15-point built-in stub is a last resort, logged as a WARNING. The source
+actually used is exposed as SI_SOURCE."""
 
 
 
@@ -56,7 +59,11 @@ _SI_XLSX_SHEET = "Si-substrate"
 
 
 def _silicon_stub_arrays() -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Placeholder Si (n, k) using Sellmeier Li 1980 in the IR when spreadsheet is missing."""
+    """Last-resort Si (n, k) when no spreadsheet loads: a coarse 15-point table.
+
+    Its IR values (>= 1200 nm) follow the Salzberg & Villa (1957) Sellmeier formula for
+    silicon, to within 5e-5 in n; a previous docstring attributed them to Li (1980).
+    Below 1200 nm it is only a rough placeholder."""
     wl = np.array(
         [250.0, 400.0, 600.0, 800.0, 1000.0, 1200.0, 1500.0, 2000.0, 2500.0, 3000.0, 3500.0, 4000.0, 4500.0, 5000.0, 5200.0],
         dtype=np.float64,
@@ -226,43 +233,54 @@ def _load_si_from_xlsx(xlsx_path: str) -> tuple[np.ndarray, np.ndarray, np.ndarr
 
 
 
+def _versioned_si_database_path() -> str:
+    """The repository's own index database, which carries a 'Si-substrate' sheet.
+
+    material_constants.xlsx and clues.xlsx are local overrides that have never been
+    committed. Without this versioned source every clone fell back to the stub in
+    silence -- measured 2026-09-25: air/Si reflectance off by -11 points at 400 nm and
+    +0.9 point near 900 nm, for INDEX, RE and METAL BILAYER on a silicon substrate.
+    """
+    from certus.core.certus_config import get_resource_path
+
+    return get_resource_path(str(Path("example") / "database_index" / "indices.xlsx"))
+
+
+def _si_candidate_paths() -> list[str]:
+    """Si sources in priority order: the local override first, then the versioned database."""
+    candidates = []
+    override = _find_materials_xlsx_path()
+    if override:
+        candidates.append(override)
+    versioned = _versioned_si_database_path()
+    if Path(versioned).is_file():
+        candidates.append(versioned)
+    return candidates
+
+
+def _load_si_data() -> tuple[np.ndarray, np.ndarray, np.ndarray, str]:
+    """Return (wavelengths_nm, n, k, source) from the first source that loads; stub last."""
+    failures = []
+    for path in _si_candidate_paths():
+        try:
+            wl, n, k = _load_si_from_xlsx(path)
+        except (CertusError, OSError) as e:
+            failures.append(f"{path}: {e}")
+            continue
+        _log.info("Silicon optical constants loaded from %s (%d points).", path, len(wl))
+        return wl, n, k, path
+    wl, n, k = _silicon_stub_arrays()
+    detail = "; ".join(failures) if failures else "no Si-substrate spreadsheet found"
+    _log.warning(
+        f"Error loading Silicon optical constants ({detail}). "
+        "Falling back to built-in Silicon constants: a 15-point approximation, off by up "
+        "to 11 reflectance points in the visible."
+    )
+    return wl, n, k, "built-in stub"
+
+
 _MATERIALS_PATH = _find_materials_xlsx_path()
-
-
-if not _MATERIALS_PATH:
-
-
-    SI_WAVELENGTH_NM, SI_N_DATA, SI_K_DATA = _silicon_stub_arrays()
-
-
-    _log.info("Using built-in Silicon optical constants dataset.")
-
-
-else:
-
-
-    try:
-
-
-        SI_WAVELENGTH_NM, SI_N_DATA, SI_K_DATA = _load_si_from_xlsx(_MATERIALS_PATH)
-
-
-    except (CertusError, OSError) as e:
-
-
-        SI_WAVELENGTH_NM, SI_N_DATA, SI_K_DATA = _silicon_stub_arrays()
-
-
-        _log.warning(
-
-
-            f"Error loading Silicon optical constants from {_MATERIALS_PATH}: {e}. "
-
-
-            "Falling back to built-in Silicon constants."
-
-
-        )
+SI_WAVELENGTH_NM, SI_N_DATA, SI_K_DATA, SI_SOURCE = _load_si_data()
 
 
 
@@ -283,7 +301,11 @@ else:
 
 
 
-@njit(cache=True)
+# NOT cached on disk: numba freezes module-level arrays as compile-time constants, and a
+# cache keyed on this source file would keep serving the Si data of its FIRST compilation
+# after the spreadsheet changes -- while INDEX and RE, which read the arrays at run time,
+# would already see the new values. One compilation per process is the price.
+@njit
 
 
 def get_nk_si(wavelength_nm):

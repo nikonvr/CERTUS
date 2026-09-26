@@ -26,6 +26,12 @@ qui a tort.
     python scripts/probe_poem_engagement.py
 
 Does not write anything except reports/. Do not touch any production codes.
+
+ATTENTION (2026-09-26) : cette sonde ne cherche les points tournants que dans le balayage de la couche
+COURANTE, alors que le noyau relit aussi l'historique du bloc (jusqu'a `MAX_LOOKBACK_VAL`
+couches). Elle mourait sur deux imports perimes ; reparee, elle rend 0 % d'engagement sur
+toutes les couches du dichroique -- ce qui decrit la sonde, pas le noyau. Ne pas la citer
+sans l'avoir d'abord reconciliee avec certus_strat_growth.py.
 """
 
 from __future__ import annotations
@@ -54,8 +60,7 @@ def main() -> None:
     _app = QApplication.instance() or QApplication(sys.argv[:1])
     import numpy as np
 
-    from certus_physics import calculate_RT_vectorized_real_HL
-    from certus.core.certus_core import get_refractive_clues_vectorized
+    from certus_physics import calculate_RT_vectorized_real_HL, get_refractive_clues_vectorized
     from certus.core.certus_strat_core import APP_CONTEXT  # noqa: F401
 
     cfg = json.loads((ROOT / "example/example_strat/JSON-strat-example.json").read_text("utf-8"))
@@ -64,7 +69,7 @@ def main() -> None:
     scan_min, scan_max = float(cfg["scan_wl_min"]), float(cfg["scan_wl_max"])
     scan_step = float(cfg["scan_wl_step"])
 
-    from certus.core.certus_core import MaterialDatabase  # type: ignore
+    from certus_physics import MaterialDatabase
 
     db = MaterialDatabase()
     wl_l0 = np.array([l0], dtype=np.float64)

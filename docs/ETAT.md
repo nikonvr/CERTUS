@@ -121,7 +121,8 @@ du dichroïque dont le plantage s'écarterait nettement du prédit rouvrirait ce
 
 ## 4. Défauts ouverts
 
-Numérotés ici ; les numéros de l'ancien registre sont entre parenthèses
+Numérotés ici ; un défaut corrigé sort de la liste et son numéro n'est pas réattribué. Les
+numéros de l'ancien registre sont entre parenthèses
 ([`archives/DEFAUTS_OUVERTS.md`](archives/DEFAUTS_OUVERTS.md)).
 
 **Ils faussent un résultat ou trompent l'utilisateur**
@@ -166,7 +167,6 @@ Numérotés ici ; les numéros de l'ancien registre sont entre parenthèses
 | D26 | Inversions de couches, comptées le 2026-08-19 : `utils → ui` (11), `core → workers` (10), cycle `physics ↔ core` (23 et 29 imports) |
 | D27 | Sous-paquets PEP 420 et `packages = ["certus"]` : un `pip install` ne livrerait aucun sous-module |
 | D28 | Commentaires, docstrings et journaux en français dans `certus/`, contraires à l'interdit 11 |
-| D29 | L'aperçu « Morphing Live » de METAL SINGLE et BILAYER échoue toujours en silence (il importe deux fonctions qui n'existent pas, puis PySide6) |
 | D30 | `CERTUS_METAL_SINGLE.py` et `CERTUS_METAL_BILAYER.py` restent à la racine alors que `certus/metal/` existe ; le `.coverage` pointe vers un autre snapshot |
 | D31 | **Les tests écrivent dans les dossiers de l'utilisateur.** L'export automatique est actif par défaut, donc les tests headless — lancés aussi en sous-processus par `tests/regression/` — déposent un rapport dans `reports/` à chaque optimisation complète (un `Report_SINGLE` le 2026-09-26). Et `tests/unit/test_certus_core.py` réécrit `certus_export.json`, fichier de préférences **suivi par git** comme `certus_theme.json` |
 

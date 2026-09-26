@@ -1842,57 +1842,6 @@ class CertusMetalBilayerApp(MetalBaseApp):
             progress_pct=progress_pct if progress_pct is not None else -1,
         )
 
-        # Top 1% UX Morphing Live
-        if xk is not None:
-            try:
-                l_array = getattr(self, "x", None)
-                if l_array is not None:
-                    from certus.core._certus_physics_impl import get_nk_cauchy_simple, calculate_reflectance_bilayer_vectorized, get_nk_from_spline
-                    eM_fixed = getattr(self, "optim_args", {}).get("eM_fixed", None)
-                    num_knots = getattr(self, "optim_args", {}).get("num_knots", 5)
-                    offset = 4 if eM_fixed is None else 3
-                    eM_val = float(xk[0] if eM_fixed is None else eM_fixed)
-                    eL_val = float(xk[1] if eM_fixed is None else xk[0])
-                    n_infini_val = float(xk[2] if eM_fixed is None else xk[1])
-                    A_val = float(xk[3] if eM_fixed is None else xk[2])
-                    
-                    n_knots = xk[offset : offset + num_knots]
-                    k_knots = xk[offset + num_knots : offset + 2 * num_knots]
-                    lambda_internes = xk[offset + 2 * num_knots :]
-                    
-                    min_lambda = float(np.min(l_array))
-                    max_lambda = float(np.max(l_array))
-                    knot_l = np.empty(num_knots, dtype=np.float64)
-                    knot_l[0] = min_lambda
-                    if len(lambda_internes) > 0:
-                        knot_l[1:-1] = np.sort(lambda_internes)
-                    knot_l[-1] = max_lambda
-                    
-                    p_spline_nk = np.empty(2 * num_knots, dtype=np.float64)
-                    p_spline_nk[:num_knots] = n_knots
-                    p_spline_nk[num_knots:] = k_knots
-                    
-                    nM_real, nM_imag = get_nk_from_spline(p_spline_nk, knot_l, l_array, use_cache=False)
-                    nL_calc = get_nk_cauchy_simple(l_array, n_infini_val, A_val)
-                    
-                    n_sub = getattr(self, "substrate_nk", None)
-                    if n_sub is None:
-                        from certus.core._certus_physics_impl import get_nk_si
-                        n_sub = get_nk_si(l_array)
-                        
-                    R_calc = calculate_reflectance_bilayer_vectorized(
-                        l_array, nM_real - 1j * nM_imag, eM_val, eL_val, nL_calc + 0j, n_sub
-                    )
-                    
-                    self.reflectance_curve.setData(l_array, R_calc)
-                    if hasattr(self, "n_curve"): self.n_curve.setData(l_array, nM_real)
-                    if hasattr(self, "k_curve"): self.k_curve.setData(l_array, nM_imag)
-                    
-                    from PySide6.QtWidgets import QApplication
-                    QApplication.processEvents()
-            except Exception:
-                pass
-
     def on_optimization_finished(self, results):
         """Handles optimization finish"""
 

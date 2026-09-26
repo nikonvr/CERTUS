@@ -135,12 +135,6 @@ from certus.spline.spline_pipeline import (
 
 from certus.spline.certus_corridor_utils import quick_pwlnk_refit_result_dict
 
-try:
-    from certus.spline.spline_pipeline import _snap_spline_visual_dict
-except ImportError:
-    def _snap_spline_visual_dict(result: dict[str, Any]) -> dict[str, Any]:
-        return dict(result)
-
 from certus.utils.certus_ux import OBJ
 from certus.utils.certus_reset_framework import create_reset_button
 from certus.utils.certus_data import load_spectrum_columns, read_data_file_robust, build_export_context, build_report_sections, export_optimization_report

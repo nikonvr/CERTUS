@@ -38,14 +38,7 @@ from certus.spline.spline_workers import worker_auto_best_split_knot_refinement
 from certus.spline.spline_pipeline import worker_spline_optimization
 from certus.utils.certus_skeleton import install_skeleton
 from certus.ui.certus_ui import get_certus_last_dir, set_certus_last_dir, CertusTheme
-try:
-    from certus.spline.spline_visual_utils import snap_spline_visual_dict as _snap_spline_visual_dict
-except ImportError:
-    try:
-        from certus.spline.spline_pipeline import _snap_spline_visual_dict
-    except ImportError:
-        def _snap_spline_visual_dict(result: dict[str, Any]) -> dict[str, Any]:
-            return dict(result)
+from certus.spline.spline_visual_utils import snap_spline_visual_dict as _snap_spline_visual_dict
 
 
 

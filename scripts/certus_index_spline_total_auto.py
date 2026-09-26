@@ -32,10 +32,10 @@ from certus_physics import (
 )
 from certus.spline.certus_index_spline_core import (
     normalize_spectrum_dataframe,
-    worker_spline_optimization,
     SplineOptConfig,
     DataType,
 )
+from certus.spline.spline_pipeline import worker_spline_optimization
 
 def run_ultimate_validation():
     # Force mode headless pour Qt (secours)

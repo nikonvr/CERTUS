@@ -1799,28 +1799,6 @@ class CertusMetalSingleApp(MetalBaseApp):
         )
         if hasattr(self, "field_opt_status"):
             self.field_opt_status.setText(build_metal_progress_status_text(data))
-            
-        # Top 1% UX Morphing Live
-        if xk is not None:
-            try:
-                l_array = getattr(self, "x", None)
-                if l_array is not None:
-                    from certus.core._certus_physics_impl import get_nk_cauchy_simple, calculate_reflection_array
-                    eL_val = float(xk[1])
-                    n_calc = get_nk_cauchy_simple(l_array, float(xk[2]), float(xk[3]))
-                    k_calc = np.zeros_like(n_calc)
-                    n_sub = getattr(self, "substrate_nk", None)
-                    if n_sub is None:
-                        from certus.core._certus_physics_impl import get_nk_sio2
-                        n_sub = get_nk_sio2(l_array)
-                    R_calc = calculate_reflection_array(l_array, n_calc, k_calc, eL_val, n_sub)
-                    self.reflectance_curve.setData(l_array, R_calc)
-                    self.n_curve.setData(l_array, n_calc)
-                    # Force a light repaint so the UI is responsive but doesn't block
-                    from PySide6.QtWidgets import QApplication
-                    QApplication.processEvents()
-            except Exception:
-                pass
 
     def on_optimization_finished(self, results) -> None:
         """Handles optimization finish."""

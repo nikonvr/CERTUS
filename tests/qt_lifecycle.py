@@ -23,12 +23,19 @@ _unjoined_resources = []
 _JOIN_TIMEOUT_S = 180.0
 
 
-def qt_lifecycle(qapp, monkeypatch, label):
+def qt_lifecycle(qapp, monkeypatch, label, main_windows_only=False):
     """Join work before deleting windows, including after an assertion failure.
 
     qapp retains the session's QApplication even though the tests use instance().
     Track starts rather than traversing QObject children for QThreads: some
     workers have no parent, and a QObject worker's thread is a separate object.
+
+    `main_windows_only` narrows the destruction to parentless main windows -- the
+    module windows of D11 -- each flushed on its own. Measured 2026-09-27: deleting
+    every new top-level at the end of a tests/ui test aborted the process in
+    test_certus_strat_ui_smoke, which parents half-built sub-windows to a loose
+    QWidget and queues their deletion itself; non-deterministically, and only when
+    another test ran first. Such widgets keep the timing they had before.
     """
     previous_windows = set(QApplication.topLevelWidgets())
     qt_threads = []
@@ -131,6 +138,8 @@ def qt_lifecycle(qapp, monkeypatch, label):
     # Include popups created by completion slots, but preserve earlier tests'
     # session fixtures. Closing alone only hides most CERTUS windows (D11).
     windows = [w for w in QApplication.topLevelWidgets() if w not in previous_windows]
+    if main_windows_only:
+        windows = [w for w in windows if isinstance(w, QMainWindow) and w.parentWidget() is None]
     # Destroy the main windows before their menus/popups. Pyqtgraph's ViewBox
     # destruction still uses its menus; deleting every top-level widget in
     # Qt's unspecified enumeration order can abort inside the main destructor.
@@ -140,5 +149,6 @@ def qt_lifecycle(qapp, monkeypatch, label):
             window.close()
             window.deleteLater()
             QCoreApplication.sendPostedEvents(window, QEvent.Type.DeferredDelete)
-    QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+    if not main_windows_only:
+        QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
     assert all(sip.isdeleted(w) for w in windows), f"{label} windows survived teardown"

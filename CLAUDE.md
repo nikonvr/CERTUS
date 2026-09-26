@@ -6,7 +6,8 @@ servant à fabriquer de vrais filtres : une erreur silencieuse ne plante pas, el
 **résultat faux qui a l'air juste**, et quelqu'un fabrique une pièce avec.
 
 **Deux documents, et deux seulement :** ce fichier porte les **règles** ; l'**état** du projet
-(repères mesurés, décisions, défauts ouverts, chantiers) est dans [`docs/ETAT.md`](docs/ETAT.md).
+(repères mesurés, décisions, défauts ouverts, chantiers) est dans [`docs/ETAT.md`](docs/ETAT.md),
+dont la **section 0 est la reprise** : à lire en premier, et à tenir à jour au fil du travail.
 L'historique — campagnes, hypothèses réfutées — est dans [`docs/archives/`](docs/archives/) et
 **ne fait pas autorité**. Les numéros de section que citent le code et les archives désignent
 l'ancienne version de ce fichier, archivée sous

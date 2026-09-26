@@ -90,7 +90,6 @@ __all__ = [
     # Threading
     "WorkerSignals",
     "GenericWorker",
-    "CertusWorkerBase",
     # App Base
     "CertusBaseApp",
     # Utilities
@@ -294,7 +293,7 @@ from certus.ui.certus_plot import (
 from certus.ui.certus_ui_widgets_layout import CertusCollapsible, CertusSectionHeader, CertusStepper, CertusActionBar
 from certus.ui.certus_ui_widgets_progress import DualStageProgressWidget, EnhancedProgressWidget, ProgressDialog
 from certus.ui.certus_ui_widgets_welcome import WelcomeGuideWidget
-from certus.workers.certus_base_workers import WorkerSignals, GenericWorker, CertusWorkerBase
+from certus.workers.certus_base_workers import WorkerSignals, GenericWorker
 from certus.ui.certus_base_app import CertusBaseApp, CertusAppLogsMixin, StatsCounter
 from certus.ui.certus_ui_widgets_factory import (
     create_flashy_grid,

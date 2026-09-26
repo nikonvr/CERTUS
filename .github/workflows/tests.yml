@@ -26,8 +26,8 @@ on:
 jobs:
   pytest:
     name: pytest (ubuntu, py${{ matrix.python-version }})
-    # ubuntu-latest et non windows-latest : la recette Linux est validée
-    # (CLAUDE.md §4) et bien plus rapide, PyQt6 tournant en mode offscreen.
+    # ubuntu-latest pour tout ce qui ne mesure pas l'interface : plus rapide, PyQt6
+    # tournant en mode offscreen. L'interface a son propre job Windows, plus bas.
     runs-on: ubuntu-latest
     # 🔴 30 MIN NE SUFFISAIENT PLUS. Le commentaire d'en-tete annonce « 6 min 27 pour
     # la suite complete », mesure le 2026-08-02 -- avant que la suite ne grossisse de
@@ -112,24 +112,65 @@ jobs:
           source .venv/bin/activate
           python -m pytest tests/unit/ -q --no-cov
 
-      - name: Interface
-        # 🔴 `test_ux_re_stop_when_idle` est ECARTE ici et lance seul juste apres.
-        # Mesure du 2026-09-08 : ~9 min PAR TEST dans la suite complete contre
-        # 6,90 s pour ses six tests isoles -- un facteur de l'ordre de 500, cause
-        # inconnue, reproduit sur deux passes. Laisse dedans, il consomme a lui
-        # seul ~54 min et fait expirer le job.
-        run: |
-          source .venv/bin/activate
-          python -m pytest tests/ui/ -q --no-cov --deselect tests/ui/test_ux_re_stop_when_idle.py
-
-      - name: Interface — le fichier pathologique, seul
-        run: |
-          source .venv/bin/activate
-          python -m pytest tests/ui/test_ux_re_stop_when_idle.py -q --no-cov
-
       - name: Le reste de tests/
         # Tout ce qui n'est ni oracle, ni unit, ni ui : integration, headless,
         # regression, performance. Rien n'est exclu.
         run: |
           source .venv/bin/activate
           python -m pytest tests/ -q --no-cov --ignore=tests/oracle --ignore=tests/unit --ignore=tests/ui
+
+  interface:
+    name: interface (windows, py3.14)
+    # 🔴 L'INTERFACE SE MESURE SUR WINDOWS, et ce n'est pas une preference. L'audit
+    # d'ergonomie mesure des largeurs en pixels avec Segoe UI, la police de la machine
+    # cible ; il REFUSE de tourner sans elle (« every width would be measured on a
+    # machine that does not exist »). 📏 Le 2026-09-26 sous Linux : 69 echecs et 12
+    # erreurs sur ~800 tests d'interface, tous dus a la police absente ou a des
+    # sous-processus sans plateforme Qt -- aucun a un defaut du code. Separer le job
+    # applique la regle de l'en-tete : on separe, on n'exclut rien.
+    runs-on: windows-latest
+    # Localement 31 min (Ryzen 7 5700G, 2026-09-26) ; un runner est plus lent.
+    timeout-minutes: 120
+    env:
+      QT_QPA_PLATFORM: offscreen
+      NUMBA_CACHE_DIR: ${{ runner.temp }}\certus_numba_cache
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Installer uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Python 3.14
+        run: uv python install 3.14
+
+      - name: Dépendances
+        run: |
+          uv venv --python 3.14
+          uv pip install \
+            "numpy>=2.4.6,<3.0.0" "scipy>=1.17.1" "pandas>=3.0.3,<4.0.0" \
+            "numba>=0.65.1" "PyQt6>=6.11.0" "pyqtgraph>=0.14.0" \
+            "matplotlib>=3.10.9" "openpyxl>=3.1.5" "pydantic>=2.14.0a1" \
+            "XlsxWriter>=3.2.9" "joblib>=1.5.3" \
+            "pytest>=8.0.0" "pytest-cov>=5.0.0" "hypothesis>=6.0.0"
+
+      - name: Vérifier que certus est importé depuis le dépôt
+        run: |
+          source .venv/Scripts/activate
+          python -c "import certus.physics.certus_opt_tmm as m, pathlib, sys; print(m.__file__); sys.exit(0 if pathlib.Path(m.__file__).is_relative_to(pathlib.Path.cwd()) else 1)"
+
+      - name: Interface
+        # 🔴 `test_ux_re_stop_when_idle` est ECARTE ici et lance seul juste apres :
+        # ~9 min PAR TEST dans la suite complete contre quelques secondes isole
+        # (fenetres jamais detruites, defaut D11 de docs/ETAT.md).
+        run: |
+          source .venv/Scripts/activate
+          python -m pytest tests/ui/ -q --no-cov --deselect tests/ui/test_ux_re_stop_when_idle.py
+
+      - name: Interface — le fichier pathologique, seul
+        run: |
+          source .venv/Scripts/activate
+          python -m pytest tests/ui/test_ux_re_stop_when_idle.py -q --no-cov

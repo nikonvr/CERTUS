@@ -18,8 +18,7 @@
 > 12 de CLAUDE.md avant de valider quoi que ce soit ou de relayer le rapport d'un autre agent.
 > Les décisions de la section 5 reviennent à 👤 : **ne les tranche pas à sa place**.
 
-**Point de départ.** Branche `refactor-corridors-mixins`, synchronisée avec `origin` à la fin de
-la session du 2026-09-26. Première commande : `python scripts\preflight.py` → `PREFLIGHT=GO`.
+**Point de départ.** Branche `refactor-corridors-mixins`, synchronisée avec `origin` à la fin de la session du 2026-09-26. Première commande : `python scripts\preflight.py` → `PREFLIGHT=GO`.
 Dernière validation locale complète, sur `e05d0db` (Windows 11) : ruff propre · oracle 570 passed
 · unit 2 520 passed, 5 skipped · le reste de `tests/` 338 passed, 2 skipped · **0 failed** ;
 `tests/ui/` est confié au job Windows de la CI. CI du même commit (run 36252221457) : job Linux `pytest` **vert** à toutes ses étapes, `tests/headless/` compris ; `lint` vert ; job Windows `interface` encore en cours à la remise, à vérifier.
@@ -35,6 +34,7 @@ Dernière validation locale complète, sur `e05d0db` (Windows 11) : ruff propre 
 | R7 | D23 : les trois faux échecs à cache numba froid, attribués à `sys.modules` | à instruire | reproduire à cache froid, trouver le test qui pollue, puis `tests/conftest.py` | une première passe à cache froid rend 0 failed |
 | R8 | lint : F811, 85 cas, un par un | à faire | imports en double des modules racine (sûrs) ; réaffectations de noyaux dans `_certus_physics_impl.py` (`DO NOT SPLIT`) | F811 sort d'`extend-ignore` ; `tests/oracle/` vert avant et après |
 | R9 | lint à effet possible : imports (F401, F405, I001, E402) et RUF005, RUF015, RUF046, UP040, UP042, UP046, B019, E741 | à spécifier | F401 compte des réexports volontaires ; l'ordre des imports compte (import circulaire) | une spécification écrite et validée par 👤 avant tout code |
+| R10 | chaque session pytest laisse un dossier `certus_test_prefs_*` dans le dossier temporaire (65 en une journée, supprimés le 2026-09-26) | à faire, petit | `tests/conftest.py`, création de `CERTUS_CONFIG_DIR` : le supprimer à la sortie (`atexit`) | une session pytest ne laisse aucun dossier ; oracle et unit verts |
 
 ## 1. Où en sont les programmes
 

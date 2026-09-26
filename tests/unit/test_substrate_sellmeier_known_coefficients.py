@@ -30,7 +30,10 @@ def test_fit_sellmeier_recovers_known_synthetic_curve(substrate_id: int) -> None
         float(wl_nm.max()),
         model_kind="sellmeier3poles",
         return_meta=True,
-        sellmeier_timeout_s=6.0,
+        # No wall-clock budget: the fit gates its polish on elapsed time, so a timeout makes
+        # the result depend on the speed of the machine (0.00144 locally, 0.00205 on a CI
+        # runner for sapphire). The iteration limits below bound the work instead.
+        sellmeier_timeout_s=None,
         sellmeier_de_maxiter=120,
         sellmeier_ls_max_nfev=1200,
     )

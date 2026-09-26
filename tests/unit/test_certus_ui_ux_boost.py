@@ -403,7 +403,8 @@ class TestCertusBaseAppBoost:
         test_dir = tmp_path / "fake_dir"
         test_dir.mkdir()
         
-        with patch("os.startfile") as mock_startfile, \
+        # create=True: os.startfile exists only on Windows, and this test forces win32.
+        with patch("os.startfile", create=True) as mock_startfile, \
              patch("subprocess.Popen") as mock_popen, \
              patch("sys.platform", "win32"):
             open_file_explorer(str(test_dir))

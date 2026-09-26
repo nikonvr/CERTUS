@@ -432,13 +432,16 @@ class TestCoreCoverageBoost:
         wait_warmup(1.0)
         assert _WarmupRegistry.thread is None
 
-    def test_resource_path_frozen(self, monkeypatch):
+    def test_resource_path_frozen(self, monkeypatch, tmp_path):
+        # A platform-native executable path: a Windows literal is parsed as a relative
+        # file name on Linux, which made this test Windows-only by accident.
+        exe = tmp_path / "bin" / "certus.exe"
         get_resource_path.cache_clear()
         monkeypatch.setattr("sys.frozen", True, raising=False)
-        monkeypatch.setattr("sys.executable", "C:\\test\\bin\\certus.exe")
+        monkeypatch.setattr("sys.executable", str(exe))
         try:
             p = get_resource_path("test.json")
-            assert "C:\\test\\bin\\test.json" in p or "C:/test/bin/test.json" in p
+            assert p == str((exe.parent / "test.json").resolve())
         finally:
             get_resource_path.cache_clear()
 

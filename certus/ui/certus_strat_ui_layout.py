@@ -833,7 +833,7 @@ class CertusStratLayoutMixin:
             "screening_mc_runs": "Number of Monte Carlo runs for the pre-selection screening phase. More = better filtering but slower.",
             "screening_keep_top_k": "Number of top strategies retained per configuration after screening before deep evaluation.",
             "mc_runs_block": "Monte Carlo runs per candidate block test in Phase A. Drives early robustness estimation.",
-            "strategy_phase_timeout": "Maximum wall-clock time (seconds) allowed per iteration. The engine cancels the current pass if exceeded.",
+            "strategy_phase_timeout": "Recorded in the configuration but NOT enforced: no computation reads it, so no pass is ever cancelled.",
         }
 
         for _k, _tip in _tips_loop.items():
@@ -1073,9 +1073,9 @@ class CertusStratLayoutMixin:
                 "filter chain is not known, and an unmeasured hypothesis is worse than none."
             ),
             "machine_sampling_dd": (
-                "Sampling step of the deposition sweep, in nm. 0 keeps the fast grid. The real "
-                "machine reads every 0.125 nm, which is 38x finer and far slower -- the model is "
-                "therefore OPTIMISTIC on turning points fabricated by noise."
+                "Sampling step of the deposition sweep, in nm. NOT applied at present: the kernel "
+                "always receives 0, the fast grid. The real machine reads every 0.125 nm, 38x "
+                "finer -- the model is therefore OPTIMISTIC on turning points fabricated by noise."
             ),
         }
         for _k, _tip in _tips_machine.items():

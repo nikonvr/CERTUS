@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 
 _ROOT = Path(__file__).resolve().parents[2]
-_SPEC = util.spec_from_file_location("certus_metal_bilayer", _ROOT / "certus_metal_bilayer.py")
+_SPEC = util.spec_from_file_location("certus_metal_bilayer", _ROOT / "CERTUS_METAL_BILAYER.py")
 assert _SPEC and _SPEC.loader is not None
 _mod = util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(_mod)

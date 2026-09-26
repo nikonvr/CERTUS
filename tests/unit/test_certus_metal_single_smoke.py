@@ -10,7 +10,7 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parent.parent.parent
-MODULE_PATH = ROOT / "certus_metal_siNGLE.py"
+MODULE_PATH = ROOT / "CERTUS_METAL_SINGLE.py"
 
 
 @pytest.mark.unit

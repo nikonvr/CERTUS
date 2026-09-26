@@ -2,7 +2,7 @@ import os
 import logging
 import numpy as np
 import pandas as pd
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 import pyqtgraph as pg
 from PyQt6.QtWidgets import QMessageBox
 
@@ -90,8 +90,15 @@ def _notify_user(
         QMessageBox.information(parent, title or "Info", message)
 
 def _update_loaded_file_label(lbl_file, filepath: str) -> str:
-    """Update file label widget and return basename."""
-    fname = Path(filepath).name
+    """Update file label widget and return basename.
+
+    Uses ``PureWindowsPath`` rather than the ambient ``Path``: the app's file
+    dialogs always hand back Windows-style paths (the frozen build only ships
+    for Windows), so parsing must not depend on the host platform running the
+    interpreter (e.g. a Linux CI worker), where a plain ``Path`` would treat
+    the whole backslash-separated string as a single opaque name.
+    """
+    fname = PureWindowsPath(filepath).name
     lbl_file.setText(f" {fname}")
     lbl_file.setStyleSheet(f"color: {CertusTheme.SUCCESS}; font-weight: bold;")
     lbl_file.setToolTip(filepath)
@@ -99,7 +106,7 @@ def _update_loaded_file_label(lbl_file, filepath: str) -> str:
 
 def _set_spectrum_plot_title(plot_spectrum, source_name: str) -> None:
     """Set standardized spectrum title from source name."""
-    src_name = Path(source_name).stem
+    src_name = PureWindowsPath(source_name).stem
     plot_spectrum.plotItem.setTitle(f"Spectrum      {src_name}")
 
 def _display_detected_data_type(lbl_data_type, logger, data_type: DataType) -> str:

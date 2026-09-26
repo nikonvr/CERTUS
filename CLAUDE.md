@@ -119,6 +119,9 @@ Et `tests/oracle/` avant et après toute modification d'un calcul optique.
   modifiée sans toucher au `.py` reste servie périmée.
 - **Les tests partagent des caches de classe** (`SplineBasisCache._cache`…) : sauve et
   restaure-les dans une fixture `autouse`.
+- **Un test ne crée jamais sa `QApplication`, il prend `qapp`** : créée dans une variable
+  locale, elle meurt avec le premier test Qt du processus, et tout ce qui suit tourne sur une
+  Qt détruite. Un gardien l'impose (`tests/unit/test_tests_borrow_the_session_qapplication.py`).
 - **Un test qui échoue n'a pas forcément tort — mais parfois si** : cinq tests vérifiaient un
   comportement faux. Comprends d'abord, dis lequel des deux est faux, et pourquoi.
 - **La Phase A ne dit rien** : lis le `reports/STRAT_observability_*.json` le plus récent.

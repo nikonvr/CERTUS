@@ -4,6 +4,7 @@ Property-Based Tests for Event Bus
 Tests event sourcing pattern avec Hypothesis.
 """
 
+import dataclasses
 import pytest
 from hypothesis import given, strategies as st, settings
 
@@ -35,7 +36,7 @@ def test_domain_event_immutable():
     """Property: DomainEvent is immutable (frozen)."""
     event = DomainEvent("Test", "agg-1", {"key": "value"})
 
-    with pytest.raises(Exception):  # dataclass frozen
+    with pytest.raises(dataclasses.FrozenInstanceError):
         event.event_type = "Modified"  # type: ignore
 
 

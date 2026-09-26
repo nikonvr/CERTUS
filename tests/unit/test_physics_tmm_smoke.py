@@ -41,7 +41,7 @@ def test_compute_TMM_generic_quarter_wave_matches_vector_admittance_analytics() 
     npt.assert_allclose(t_tmm, t_ana, rtol=0.0, atol=1e-9)
 
 
-@pytest.mark.parametrize("wl_nm", (400.0, 550.0, 700.0))
+@pytest.mark.parametrize("wl_nm", [400.0, 550.0, 700.0])
 def test_compute_TMM_single_point_k0_agrees_with_generic_hlh(wl_nm: float) -> None:
     n_h, n_l, n_sub, l0_design = 2.30, 1.45, 1.52, 550.0
     d_h = l0_design / (4.0 * n_h)
@@ -61,7 +61,7 @@ def test_compute_TMM_single_point_k0_agrees_with_generic_hlh(wl_nm: float) -> No
     npt.assert_allclose(t_k, t_g, rtol=0.0, atol=1e-9)
 
 
-@pytest.mark.parametrize("wl_nm", (400.0, 550.0, 700.0))
+@pytest.mark.parametrize("wl_nm", [400.0, 550.0, 700.0])
 def test_compute_TMM_single_point_k0_exact_front_matches_generic_hlh(wl_nm: float) -> None:
     n_h, n_l, n_sub, l0_design = 2.30, 1.45, 1.52, 550.0
     d_h = l0_design / (4.0 * n_h)

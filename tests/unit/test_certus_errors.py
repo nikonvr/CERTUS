@@ -227,7 +227,7 @@ class TestValidateSpectralData:
             validate_spectral_data([400.0], [0.1], min_points=2)
 
     def test_nan_wavelengths(self):
-        with pytest.raises(CertusValidationError, match="NaN.*wavelengths"):
+        with pytest.raises(CertusValidationError, match=r"NaN.*wavelengths"):
             validate_spectral_data([400.0, float("nan")], [0.1, 0.2])
 
     def test_nan_values(self):

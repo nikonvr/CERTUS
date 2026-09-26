@@ -11,6 +11,7 @@ import sys
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
+import dataclasses
 import pytest
 
 
@@ -169,7 +170,7 @@ def test_u10_tooltip_spec_is_frozen_dataclass():
     s = TooltipSpec(title="Hello", body="World")
     assert s.title == "Hello"
     assert s.body == "World"
-    with pytest.raises(Exception):
+    with pytest.raises(dataclasses.FrozenInstanceError):
         s.title = "Changed"  # frozen
 
 

@@ -647,7 +647,7 @@ class TestEndToEndIntegration:
 
             validate_wavelength_range(800.0, 400.0)  # Invalide
 
-            assert False, "Devrait lever une exception"
+            pytest.fail("Devrait lever une exception")
 
         except (CertusValidationError, ValueError) as e:
 

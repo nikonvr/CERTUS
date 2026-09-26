@@ -52,7 +52,7 @@ def test_validate_payload_checks_material_coverage() -> None:
         "nSub_id": "nSub"
     }
     # Should raise because no overlap exists at all
-    with pytest.raises(ValueError, match="Requested start 200.0nm < Data start 400.0nm"):
+    with pytest.raises(ValueError, match=r"Requested start 200\.0nm < Data start 400\.0nm"):
         svc.validate_payload({"step": 0, "params": params}, materials_db=db)
 
     # Should pass if within range

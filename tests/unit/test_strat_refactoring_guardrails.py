@@ -225,10 +225,10 @@ def test_robust_material_database_refactoring_guardrails():
         #of a layer, without exception or log: a false and silent result.
         #KeyError belongs to NUMERICAL_FAULT_EXCEPTIONS, so STRAT callers
         #switch to their already logged fallback.
-        with pytest.raises(KeyError, match="not found|introuvable"):
+        with pytest.raises(KeyError, match=r"not found|introuvable"):
             db.get_refractive_index("Air_Nonexistent", 600.0)
 
-        with pytest.raises(KeyError, match="not found|introuvable"):
+        with pytest.raises(KeyError, match=r"not found|introuvable"):
             db.get_refractive_clues_vectorized("Air_Nonexistent", np.array([500.0]))
 
 

@@ -12,6 +12,7 @@ from pathlib import Path
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
+import dataclasses
 import pytest
 
 
@@ -113,7 +114,8 @@ def _isolated_onboarding(monkeypatch):
     m._MEMORY_FLAGS.clear()
 
 
-def test_u9_onboarding_completion_flag(_isolated_onboarding):
+@pytest.mark.usefixtures("_isolated_onboarding")
+def test_u9_onboarding_completion_flag():
     from certus.ui.certus_onboarding import is_completed, mark_completed, reset_onboarding
 
     assert is_completed("INDEX") is False
@@ -123,7 +125,8 @@ def test_u9_onboarding_completion_flag(_isolated_onboarding):
     assert is_completed("INDEX") is False
 
 
-def test_u9_reset_all_clears_every_app(_isolated_onboarding):
+@pytest.mark.usefixtures("_isolated_onboarding")
+def test_u9_reset_all_clears_every_app():
     from certus.ui.certus_onboarding import is_completed, mark_completed, reset_onboarding
 
     mark_completed("A")
@@ -138,7 +141,7 @@ def test_u9_tour_step_is_frozen_dataclass():
 
     s = TourStep(title="Hi", body="Welcome")
     assert s.title == "Hi"
-    with pytest.raises(Exception):
+    with pytest.raises(dataclasses.FrozenInstanceError):
         s.title = "Changed"
 
 
@@ -171,7 +174,8 @@ def test_u9_filter_resolvable_drops_invalid_steps():
     assert [s.title for s, _ in out] == ["Welcome", "Load"]
 
 
-def test_u9_run_onboarding_skipped_when_empty(_isolated_onboarding):
+@pytest.mark.usefixtures("_isolated_onboarding")
+def test_u9_run_onboarding_skipped_when_empty():
     from certus.ui.certus_onboarding import OnboardingResult, run_onboarding
 
     class _Parent:
@@ -181,7 +185,8 @@ def test_u9_run_onboarding_skipped_when_empty(_isolated_onboarding):
     assert result == OnboardingResult.EMPTY.value
 
 
-def test_u9_run_onboarding_already_done(_isolated_onboarding):
+@pytest.mark.usefixtures("_isolated_onboarding")
+def test_u9_run_onboarding_already_done():
     from certus.ui.certus_onboarding import OnboardingResult, TourStep, mark_completed, run_onboarding
 
     class _Parent:

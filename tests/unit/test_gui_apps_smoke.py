@@ -17,15 +17,15 @@ if str(ROOT) not in sys.path:
 
 
 @pytest.mark.unit
-def test_certus_design_app_constructs_headless(monkeypatch) -> None:
+def test_certus_design_app_constructs_headless(monkeypatch, qapp) -> None:
     """Verify that CertusDesignApp instantiates correctly offscreen."""
     monkeypatch.setenv("QT_QPA_PLATFORM", "offscreen")
     pytest.importorskip("PyQt6")
 
-    from PyQt6.QtWidgets import QApplication, QMainWindow
+    from PyQt6.QtWidgets import QMainWindow
     from certus.ui.certus_design_ui import CertusDesignApp
 
-    app = QApplication.instance() or QApplication([])
+    app = qapp  # the session's: a local one would die with the first Qt test
     window = CertusDesignApp()
     try:
         assert window is not None
@@ -36,15 +36,15 @@ def test_certus_design_app_constructs_headless(monkeypatch) -> None:
 
 
 @pytest.mark.unit
-def test_certus_index_app_constructs_headless(monkeypatch) -> None:
+def test_certus_index_app_constructs_headless(monkeypatch, qapp) -> None:
     """Verify that CertusIndexApp instantiates correctly offscreen."""
     monkeypatch.setenv("QT_QPA_PLATFORM", "offscreen")
     pytest.importorskip("PyQt6")
 
-    from PyQt6.QtWidgets import QApplication, QMainWindow
+    from PyQt6.QtWidgets import QMainWindow
     from certus.ui.certus_index_ui import CertusIndexApp
 
-    app = QApplication.instance() or QApplication([])
+    app = qapp  # the session's: a local one would die with the first Qt test
     window = CertusIndexApp()
     try:
         assert window is not None
@@ -55,15 +55,15 @@ def test_certus_index_app_constructs_headless(monkeypatch) -> None:
 
 
 @pytest.mark.unit
-def test_certus_strat_app_constructs_headless(monkeypatch) -> None:
+def test_certus_strat_app_constructs_headless(monkeypatch, qapp) -> None:
     """Verify that CertusStratApp instantiates correctly offscreen."""
     monkeypatch.setenv("QT_QPA_PLATFORM", "offscreen")
     pytest.importorskip("PyQt6")
 
-    from PyQt6.QtWidgets import QApplication, QMainWindow
+    from PyQt6.QtWidgets import QMainWindow
     from certus.ui.certus_strat_ui import CertusStratApp
 
-    app = QApplication.instance() or QApplication([])
+    app = qapp  # the session's: a local one would die with the first Qt test
     window = CertusStratApp()
     try:
         assert window is not None
@@ -74,15 +74,15 @@ def test_certus_strat_app_constructs_headless(monkeypatch) -> None:
 
 
 @pytest.mark.unit
-def test_certus_index_spline_app_constructs_headless(monkeypatch) -> None:
+def test_certus_index_spline_app_constructs_headless(monkeypatch, qapp) -> None:
     """Verify that CertusIndexSplineApp instantiates correctly offscreen."""
     monkeypatch.setenv("QT_QPA_PLATFORM", "offscreen")
     pytest.importorskip("PyQt6")
 
-    from PyQt6.QtWidgets import QApplication, QMainWindow
+    from PyQt6.QtWidgets import QMainWindow
     from certus.ui.certus_index_spline_ui import CertusIndexSplineApp
 
-    app = QApplication.instance() or QApplication([])
+    app = qapp  # the session's: a local one would die with the first Qt test
     window = CertusIndexSplineApp()
     try:
         assert window is not None
@@ -93,15 +93,15 @@ def test_certus_index_spline_app_constructs_headless(monkeypatch) -> None:
 
 
 @pytest.mark.unit
-def test_certus_hub_app_constructs_headless(monkeypatch) -> None:
+def test_certus_hub_app_constructs_headless(monkeypatch, qapp) -> None:
     """Verify that CertusHub instantiates correctly offscreen."""
     monkeypatch.setenv("QT_QPA_PLATFORM", "offscreen")
     pytest.importorskip("PyQt6")
 
-    from PyQt6.QtWidgets import QApplication, QMainWindow
+    from PyQt6.QtWidgets import QMainWindow
     from CERTUS_HUB import CertusHub
 
-    app = QApplication.instance() or QApplication([])
+    app = qapp  # the session's: a local one would die with the first Qt test
     window = CertusHub()
     try:
         assert window is not None

@@ -274,24 +274,24 @@ def test_le_json_du_flux_survit_a_un_chemin_WINDOWS() -> None:
     __import__("os").environ.get("CERTUS_SKIP_GUI") == "1",
     reason="banc graphique desactive",
 )
-def test_le_pilotage_par_QProcess_remplit_reellement_le_tableau() -> None:
+def test_le_pilotage_par_QProcess_remplit_reellement_le_tableau(qapp) -> None:
     """🔑 LE TEST QUI EPROUVE LE MAILLON QU'ON SUPPOSE TOUJOURS BON.
 
     Tout le reste de ce fichier teste des fonctions pures. Ici on demarre un VRAI processus,
     on laisse Qt lire sa sortie, et on verifie que le tableau se remplit. Le run est en
     `--dry-run` : la chaine de pilotage est identique, seul le calcul est absent.
 
-    🔴 La QApplication est gardee dans une variable LOCALE et referencee jusqu'a la fin :
-    ramassee par le GC, elle emporte la fenetre, et ce depot a deja perdu une soiree ainsi.
+    🔴 La QApplication est celle de la SESSION (`qapp`). Creee ici dans une variable locale,
+    elle mourrait avec le test quand il est le premier test Qt du processus -- et avec elle la
+    fenetre, puis tous les tests Qt suivants (R6, 2026-09-27). Ce depot a deja perdu une
+    soiree a une application ramassee par le GC.
     """
     import os
 
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     from PyQt6.QtCore import QCoreApplication, QEventLoop, QProcess
-    from PyQt6.QtWidgets import QApplication
 
-    app = QApplication.instance() or QApplication([])
-    assert app is not None
+    assert qapp is not None
 
     from certus.ui.certus_strat_ui import CertusStratApp
 

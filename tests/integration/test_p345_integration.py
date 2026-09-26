@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import os
-import sys
 from pathlib import Path
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -118,12 +117,11 @@ def test_p4_audit_palette_reports_worst_pair():
     assert summary["worst_pair"] == "muted"
 
 
-def test_p4_apply_accessibility_defaults_names_widgets_without_name():
-    from PyQt6.QtWidgets import QApplication, QLineEdit, QWidget
+def test_p4_apply_accessibility_defaults_names_widgets_without_name(qapp):
+    from PyQt6.QtWidgets import QLineEdit, QWidget
 
     from certus.ui.certus_a11y import apply_accessibility_defaults
 
-    _qapp = QApplication.instance() or QApplication(sys.argv)
     root = QWidget()
     e1 = QLineEdit(root); e1.setObjectName("sampleSpin")
     e2 = QLineEdit(root); e2.setObjectName("")  # no objectName, no tooltip

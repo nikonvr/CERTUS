@@ -38,14 +38,13 @@ s'arme que par `git config core.hooksPath .githooks`, réglage local jamais hér
 python -m ruff check .
 python -m pytest tests/oracle/ -q --no-cov
 python -m pytest tests/unit/ -q --no-cov
-python -m pytest tests/ui/ -q --no-cov --deselect tests/ui/test_ux_re_stop_when_idle.py
-python -m pytest tests/ui/test_ux_re_stop_when_idle.py -q --no-cov
+python -m pytest tests/ui/ -q --no-cov
 python -m pytest tests/ -q --no-cov --ignore=tests/oracle --ignore=tests/unit --ignore=tests/ui
 ```
 
-📏 Mesuré du 2026-09-25 au 26 (Windows 11, Ryzen 7 5700G 8 cœurs / 16 threads, 31 Go,
-Python 3.14.7, cache chaud) : oracle 6 à 20 s · unit 3 à 4 min · ui 31 min · fichier écarté
-1 à 7 s · le reste, mesuré par dossier, ~9 min dont headless 3 min 24 et régression ~3 min.
+📏 Mesuré du 2026-09-25 au 27 (Windows 11, Ryzen 7 5700G 8 cœurs / 16 threads, 31 Go,
+Python 3.14.7, cache chaud) : oracle 6 à 20 s · unit 3 à 4 min · ui 20 min · le reste,
+mesuré par dossier, ~9 min dont headless 3 min 24 et régression ~3 min.
 **Une durée sans sa machine ne vaut rien ; un compte de tests se périme au premier test
 ajouté — ne recopie ni l'un ni l'autre.**
 

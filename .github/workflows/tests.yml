@@ -5,10 +5,10 @@ name: tests
 # fichiers.
 #
 # 🔴 AUCUN TEST N'EST EXCLU, et c'est la règle. Les étapes ci-dessous découpent la
-# suite pour rendre un échec ATTRIBUABLE et pour isoler un fichier pathologique —
-# elles n'en retirent aucun. Si le job devient trop long, la réponse est de séparer
-# les JOBS, ou d'employer les marqueurs `slow` et `performance` déjà déclarés dans
-# pyproject.toml ; exclure au hasard ne l'est pas.
+# suite pour rendre un échec ATTRIBUABLE — elles n'en retirent aucun. Si le job
+# devient trop long, la réponse est de séparer les JOBS, ou d'employer les
+# marqueurs `slow` et `performance` déjà déclarés dans pyproject.toml ; exclure
+# au hasard ne l'est pas.
 #
 # ⚠️ Ne recopie aucun compte de tests ici. Ce commentaire a porté « 2746 tests » et
 # « 6 min 27 pour la suite complète », mesurés le 2026-08-02 — les deux étaient
@@ -131,7 +131,8 @@ jobs:
     # sous-processus sans plateforme Qt -- aucun a un defaut du code. Separer le job
     # applique la regle de l'en-tete : on separe, on n'exclut rien.
     runs-on: windows-latest
-    # Localement 31 min (Ryzen 7 5700G, 2026-09-26) ; un runner est plus lent.
+    # Localement 20 min pour tests/ui/ complet (Ryzen 7 5700G, 2026-09-27) ; un runner
+    # est plus lent : 43 min 36 le 2026-09-26, fichier pathologique ecarte.
     timeout-minutes: 120
     env:
       QT_QPA_PLATFORM: offscreen
@@ -165,14 +166,10 @@ jobs:
           python -c "import certus.physics.certus_opt_tmm as m, pathlib, sys; print(m.__file__); sys.exit(0 if pathlib.Path(m.__file__).is_relative_to(pathlib.Path.cwd()) else 1)"
 
       - name: Interface
-        # 🔴 `test_ux_re_stop_when_idle` est ECARTE ici et lance seul juste apres :
-        # ~9 min PAR TEST dans la suite complete contre quelques secondes isole
-        # (fenetres jamais detruites, defaut D11 de docs/ETAT.md).
+        # D'un seul tenant : tests/ui/conftest.py detruit les fenetres principales que
+        # chaque test construit (D11 de docs/ETAT.md). Avant, `test_ux_re_stop_when_idle`
+        # devait etre lance a part -- ~9 min PAR TEST en fin de suite, quelques secondes
+        # seul -- parce que chaque fenetre fermee restait vivante.
         run: |
           source .venv/Scripts/activate
-          python -m pytest tests/ui/ -q --no-cov --deselect tests/ui/test_ux_re_stop_when_idle.py
-
-      - name: Interface — le fichier pathologique, seul
-        run: |
-          source .venv/Scripts/activate
-          python -m pytest tests/ui/test_ux_re_stop_when_idle.py -q --no-cov
+          python -m pytest tests/ui/ -q --no-cov

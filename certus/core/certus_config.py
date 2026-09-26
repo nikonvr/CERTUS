@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -33,6 +34,12 @@ class ConfigManager:
         self.reload()
 
     def _path(self) -> Path:
+        # CERTUS_CONFIG_DIR moves the preference files elsewhere. The test suite sets it so
+        # that no test rewrites the user's own preferences, subprocesses included; unset,
+        # the files live next to the application, exactly as before.
+        override = os.environ.get("CERTUS_CONFIG_DIR", "").strip()
+        if override:
+            return Path(override) / self.filename
         return Path(get_resource_path(self.filename))
 
     def _load(self) -> Any:

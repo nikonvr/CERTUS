@@ -49,6 +49,19 @@ if sys.platform == "win32":
 
 import os
 
+# Tests must never rewrite the user's own preferences: certus_export.json and
+# certus_theme.json live next to the application and are tracked by git. Every test
+# process -- subprocesses included, through the environment -- works on a private copy,
+# with the automatic export OFF: otherwise each full optimisation run by a test dropped a
+# report into the user's reports/ (2026-09-26, tests/unit/test_user_preferences_are_isolated.py).
+# Set BEFORE any certus import: the preference managers read their file at import time.
+if "CERTUS_CONFIG_DIR" not in os.environ:
+    _prefs_dir = Path(tempfile.mkdtemp(prefix="certus_test_prefs_"))
+    (_prefs_dir / "certus_export.json").write_text(
+        '{"auto_export_enabled": false, "schema_version": 1}', encoding="utf-8"
+    )
+    os.environ["CERTUS_CONFIG_DIR"] = str(_prefs_dir)
+
 # Force Qt offscreen platform for headless CI/test environments.
 # Must be set BEFORE any QApplication is created.
 if "QT_QPA_PLATFORM" not in os.environ:

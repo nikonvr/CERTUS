@@ -11,8 +11,11 @@ from PyQt6.QtWidgets import QApplication, QMainWindow
 
 # On a join timeout, keep the owners alive and stop the suite. Destroying them or
 # continuing with the next test would turn a useful error into a native crash.
+# 180 s, not 30: INDEX's second stage refines after PGLOBAL without reading the stop
+# flag, so teardown waits for its natural end. Under CPU load that outlived 30 s and
+# stopped the suite after test_index (measured 2026-09-26; without load: 9 passed).
 _unjoined_resources = []
-_JOIN_TIMEOUT_S = 30.0
+_JOIN_TIMEOUT_S = 180.0
 
 
 @pytest.fixture(autouse=True)

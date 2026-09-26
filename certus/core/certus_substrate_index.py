@@ -1323,9 +1323,7 @@ class IndexCore:
                 "requested_model_kind": str(requested_model_kind),
             }
 
-            for k, v in extra.items():
-                if v is not None:
-                    d[k] = v
+            d.update({k: v for k, v in extra.items() if v is not None})
 
             return d
 

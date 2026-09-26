@@ -552,8 +552,7 @@ class _SmartInitDialogMixin:
 
         merged = dict(result)
 
-        for k, v in snap.items():
-            merged[k] = v
+        merged.update(snap)
 
         self._strip_worker_final_fields_inconsistent_with_live_merge(merged)
 

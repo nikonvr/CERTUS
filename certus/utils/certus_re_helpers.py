@@ -1373,7 +1373,6 @@ _RE_DESIGN_LABEL_SKIP = frozenset(
         "design",
         "sub",
         "substrate",
-        "substrate",
         "ref",
         "lref",
         "nm",

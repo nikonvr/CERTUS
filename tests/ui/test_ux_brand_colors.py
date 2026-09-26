@@ -76,10 +76,11 @@ class TestChaqueFAMILLEAUneCouleurDistincte:
         for module, couleur in couleurs.items():
             vus.setdefault(couleur, set()).add(module)
 
-        fautives = {}
-        for couleur, modules in vus.items():
-            if len(modules) > 1 and not any(modules <= f for f in FRATRIES):
-                fautives[couleur] = modules
+        fautives = {
+            couleur: modules
+            for couleur, modules in vus.items()
+            if len(modules) > 1 and not any(modules <= f for f in FRATRIES)
+        }
         assert not fautives, (
             "des modules SANS PARENTE partagent une couleur, donc la tuile ne les "
             "distingue pas : "

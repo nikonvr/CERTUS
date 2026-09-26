@@ -453,7 +453,7 @@ def main():
     # Extract and display SMART failures diagnostic
     all_failures = []
     for r in results:
-        if "failures" in r and r["failures"]:
+        if r.get("failures"):
             all_failures.extend(r["failures"])
             
     if all_failures:

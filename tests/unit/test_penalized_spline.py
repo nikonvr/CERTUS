@@ -44,7 +44,7 @@ def main():
     elif "R" in df.columns and df["R"].max() > 1.5:
         df["R"] = df["R"] / 100.0
 
-    if not "lambda" in df.columns:
+    if "lambda" not in df.columns:
         if "Wavelength (nm)" in df.columns:
             df["lambda"] = df["Wavelength (nm)"]
         elif "Wavelength, nm" in df.columns:

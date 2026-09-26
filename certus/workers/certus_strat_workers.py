@@ -788,7 +788,7 @@ def _parallel_block_worker(args) -> dict:
             except Exception as e:
                 logger.warning(f"[Block {n_blk}] SharedMemory (Matrix) reconnection failed: {e}")
 
-        if "materials_data" in pre_calc_data and pre_calc_data["materials_data"]:
+        if pre_calc_data.get("materials_data"):
             local_materials_db = MaterialDatabase(filepath="")
 
             local_materials_db._data = pre_calc_data["materials_data"]

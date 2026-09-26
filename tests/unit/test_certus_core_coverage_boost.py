@@ -385,7 +385,8 @@ class TestCoreCoverageBoost:
             assert cm.save("val") is False
 
     def test_export_config_wrappers(self, tmp_path, monkeypatch):
-        _rp = lambda name: str(tmp_path / name)
+        def _rp(name):
+            return str(tmp_path / name)
         monkeypatch.setattr("certus.core.certus_core.get_resource_path", _rp)
         monkeypatch.setattr("certus.core.certus_config.get_resource_path", _rp)
         from certus.core.certus_core import load_export_config, save_export_config, get_export_config
@@ -395,7 +396,8 @@ class TestCoreCoverageBoost:
         assert load_export_config() is False
 
     def test_theme_config_wrappers(self, tmp_path, monkeypatch):
-        _rp = lambda name: str(tmp_path / name)
+        def _rp(name):
+            return str(tmp_path / name)
         monkeypatch.setattr("certus.core.certus_core.get_resource_path", _rp)
         monkeypatch.setattr("certus.core.certus_config.get_resource_path", _rp)
         from certus.core.certus_core import load_theme_config, save_theme_config

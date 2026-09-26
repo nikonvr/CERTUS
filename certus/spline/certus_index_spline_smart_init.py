@@ -881,9 +881,10 @@ class SmartInitPreviewManager:
     def apply_preset(self, preset_name: str) -> None:
         try:
             target_sk = np.asarray(self.state.sk, dtype=np.float64).ravel()
-            projector = lambda sk: project_manual_material_preset(
-                preset_name, sk, d_nm_hint=self.state.preview_d_nm
-            )
+            def projector(sk):
+                return project_manual_material_preset(
+                    preset_name, sk, d_nm_hint=self.state.preview_d_nm
+                )
             self.parent_worker._execute_smart_init_preset_logic(self.cfg, projector, self._relax_si_mono, self.state)
             self.refresh_knot_lines_and_ui()
             logger.info("Smart Init Preset Applied: %s", preset_name)

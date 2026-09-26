@@ -459,7 +459,7 @@ def mine_strategies_for_block_count(
             return cost_map_in
         n_wl = float(nucleation_wl)
         for i in range(nucleation_size):
-            if i in cost_map_in and cost_map_in[i]:
+            if cost_map_in.get(i):
                 if n_wl in cost_map_in[i]:
                     val = cost_map_in[i][n_wl]
                 else:
@@ -665,7 +665,7 @@ def _generate_structured_seed_strategies(
 
     best_wl_global = 550.0
     min_c = float("inf")
-    for _layer_idx, cands in raw_results_thickness.items():
+    for cands in raw_results_thickness.values():
         for c in cands:
             cost = float(c.get("cost", float("inf")))
             if cost < min_c:

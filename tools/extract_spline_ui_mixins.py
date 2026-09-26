@@ -45,7 +45,7 @@ categories = {
 }
 
 all_categorized = []
-for k, v in categories.items():
+for v in categories.values():
     all_categorized.extend(v)
 
 uncategorized = []

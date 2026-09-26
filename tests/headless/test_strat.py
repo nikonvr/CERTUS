@@ -126,7 +126,8 @@ def test_strat_headless():
             # fallback: look for ANY float inside final_result that looks like rmse
             if best_rmse == float('inf'):
                 try:
-                    import dataclasses, json
+                    import dataclasses
+                    import json
                     d = dataclasses.asdict(final_result) if dataclasses.is_dataclass(final_result) else final_result.model_dump()
                     if "best_rmse" in d:
                         best_rmse = d["best_rmse"]

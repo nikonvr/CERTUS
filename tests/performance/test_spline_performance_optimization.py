@@ -1517,7 +1517,7 @@ class SplinePerformanceAnalyzer:
         # Memory usage
 
 
-        if "memory" in results and results["memory"]:
+        if results.get("memory"):
 
 
             mem = results["memory"]

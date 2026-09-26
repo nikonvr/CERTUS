@@ -74,7 +74,7 @@ categories = {
 
 # Ensure all methods are categorized except __init__
 all_categorized = []
-for k, v in categories.items():
+for v in categories.values():
     all_categorized.extend(v)
 
 uncategorized = []

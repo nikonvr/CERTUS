@@ -21,7 +21,7 @@ def test_select_best_strat_result_prefers_first_positive_score(items, expected):
     assert best is not None
 
     for key in ("robustness_score", "rmse_p95", "rmse_mean", "rmse", "final_rmse"):
-        if key in best and best[key]:
+        if best.get(key):
             assert float(best[key]) == pytest.approx(expected)
             return
 

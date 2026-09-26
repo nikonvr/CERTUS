@@ -2373,7 +2373,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
         self._clear_beam_plots()
         x = stats["lambda_axis"]
 
-        if "valleys" in stats and stats["valleys"]:
+        if stats.get("valleys"):
             self._plot_beam_valleys(x, stats["valleys"])
 
         self._plot_beam_global_uncertainty_n(x, stats)

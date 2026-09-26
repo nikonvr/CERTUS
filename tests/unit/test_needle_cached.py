@@ -52,7 +52,9 @@ or Needle logic in NeedleWorker."""
 import numpy as np
 
 
-import sys, os, time
+import sys
+import os
+import time
 from pathlib import Path
 
 

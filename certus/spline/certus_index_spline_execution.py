@@ -873,7 +873,8 @@ class _RunMixin:
             from certus.ui.certus_index_spline_ui import _add_spectrum_thickness_badge as badge_fn
         except ImportError:
             # Fallback to local rendering module badge function if defined, or stub
-            badge_fn = lambda *args: None
+            def badge_fn(*args):
+                return None
         badge_fn(self.plot_T, x_mod, y_spec, d_nm)
 
         self.plot_n.autoRange()

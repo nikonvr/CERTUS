@@ -82,7 +82,7 @@ ignore = [
 # Re-audit by running:  python -m ruff check . --statistics
 extend-ignore = [
   # Style legacy (low priority, batch later via #34 collateral)
-  "E401", "E402", "E701", "E702", "E713", "E731", "E741",
+  "E402", "E701", "E702", "E741",
   # Pyflakes legacy
   "F401",  # unused-import — Batch F of #56 (depends on this action)
   "F403", "F405",  # wildcard imports — #15 will eradicate
@@ -93,7 +93,7 @@ extend-ignore = [
   "I001",  # unsorted-imports — `ruff format` will handle later
   # Bugbear legacy
   "B007", "B008", "B009", "B010", "B011", "B017", "B019",
-  "B023", "B033", "B904", "B905",
+  "B023", "B904", "B905",
   # Pyupgrade legacy (modernization sweep tracked separately)
   "UP006", "UP007", "UP009", "UP015",
   "UP031", "UP034", "UP035", "UP037",
@@ -101,10 +101,10 @@ extend-ignore = [
   # Pytest legacy (tests already green — these are stylistic)
   "PT006", "PT007", "PT011", "PT015", "PT017", "PT018", "PT019",
   # Performance legacy
-  "PERF102", "PERF401", "PERF403",
+  "PERF401",
   # Ruff-specific legacy
   "RUF001", "RUF002", "RUF003", "RUF005", "RUF010", "RUF012",
-  "RUF013", "RUF015", "RUF019", "RUF022", "RUF023",
+  "RUF013", "RUF015", "RUF022", "RUF023",
   "RUF043", "RUF046", "RUF059", "RUF100",
 ]
 

@@ -27,7 +27,7 @@ Dernière validation locale complète, sur `e05d0db` (Windows 11) : ruff propre 
 |---|---|---|---|---|
 | R1 | juger la fixture headless sur la CI Linux (D23) | en cours : 1 run vert sur 3 | run 36252221457, étape « Le reste de tests/ » | trois runs Linux de suite sans arrêt natif ni « did not join » (`gh run rerun`) ; sinon, relancer cette étape avec `QT_FORCE_STDERR_LOGGING=1` et `-s` pour lire le message |
 | R2 | D32 : la CI installe exactement `uv.lock` | à faire | étape d'installation de `.github/workflows/tests.yml` ; les outils de test sont dans l'extra `dev` : `uv sync --frozen --no-install-project --extra dev` | le journal de CI montre les versions d'`uv.lock` (pyqt6-qt6 6.11.1), CI verte |
-| R3 | D33 : retenir un `EvalWorker` remplacé jusqu'à son `finished` natif | à faire | `spectrum_eval_start_worker` ; modèle : `_ORPHAN_WORKERS` du mixin index spline | un test en sous-processus meurt (code 127) sans le correctif et passe avec ; oracle et unit verts |
+| R3 | D33 : retenir un `EvalWorker` remplacé jusqu'à son `finished` natif | **faite** (commit « interface : remplacer une évaluation en cours ne détruit plus son thread ») : `_retain_until_finished` dans `certus_spectrum_eval_ui`, sur le modèle `_ORPHAN_WORKERS` du mixin spline ; un seul site écrasait le worker | `spectrum_eval_start_worker` | 5 tests, dont un contrôle négatif en sous-processus (un `QThread` lâché en cours tue le processus) ; 4 échouent sur le code d'avant. ruff propre, oracle 570, unit 2 526 passed |
 | R4 | lint, règles sans effet à l'exécution : B009, B010, B904, UP009, UP015, UP034, RUF010, F541, RUF013, UP006, UP035, UP045, B905 (`strict=False` explicite)… | à faire | D25 ; à la main, jamais `ruff --fix` | chaque règle sortie d'`extend-ignore` **et** d'`ALLOWED_EXTEND_IGNORE`, un commit par famille, ruff, oracle et unit verts |
 | R5 | D11 : trouver qui retient les fenêtres fermées | à faire | `scripts/sonde_fenetres_fuient.py` | une fenêtre fermée est détruite (top-levels revenus à la base) et la construction ne ralentit plus d'une instance à l'autre |
 | R6 | D23 : abort quand les tests unitaires METAL et les tests headless partagent un processus | à instruire, après R5 | commande et diagnostic dans D23 | cette commande passe |
@@ -197,7 +197,6 @@ numéros de l'ancien registre sont entre parenthèses
 | D27 | Sous-paquets PEP 420 et `packages = ["certus"]` : un `pip install` ne livrerait aucun sous-module |
 | D30 | `CERTUS_METAL_SINGLE.py` et `CERTUS_METAL_BILAYER.py` restent à la racine alors que `certus/metal/` existe ; le `.coverage` pointe vers un autre snapshot |
 | D32 | **La CI n'installe pas les versions verrouillées** : le workflow `tests` fait `uv pip install` de bornes minimales, sans `uv.lock`. Le 2026-09-26 il a installé `pyqt6-qt6` 6.11.2 (`uv.lock` : 6.11.1 ; le poste : 6.11.0) : une CI rouge peut venir d'une version que personne n'a choisie |
-| D33 | `spectrum_eval_start_worker` (DESIGN, RE) remplace `app.eval_worker` sans vérifier que l'évaluation précédente est finie. Si elle tourne encore, son `QThread` n'est plus retenu que par son propre `run()` ; mesuré le 2026-09-26 sur un `QThread` minimal, ce cas tue le processus (`qFatal`, code 127). Non reproduit dans l'application |
 
 ## 5. Ce qui attend une décision de 👤
 

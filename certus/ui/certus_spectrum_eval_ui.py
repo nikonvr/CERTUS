@@ -28,6 +28,46 @@ from certus.ui.certus_ui import CertusTheme
 SpectrumEvalVariant = Literal["design", "re"]
 
 
+#: Replaced `EvalWorker` threads, held until their native `finished` fires.
+#:
+#: 🔴 WHY A MODULE-LEVEL LIST AND NOT AN ATTRIBUTE. `spectrum_eval_start_worker` overwrites
+#: `app.eval_worker`. If the previous evaluation is still running, that assignment drops its
+#: last Python reference: the QThread is destroyed while running, and Qt answers with a
+#: qFatal -- the process dies, the user loses the session without a message. Measured
+#: 2026-09-26 on a minimal QThread: exit code 127. A list held by `app` would not help on the
+#: `closeEvent` path, where `app` itself is destroyed. Same remedy as the spline mixin's
+#: `_ORPHAN_WORKERS`.
+_ORPHAN_EVAL_WORKERS: list = []
+
+
+def _retain_until_finished(worker: Any) -> bool:
+    """Keep `worker` alive until it finishes. Returns True if it was retained.
+
+    🔑 THE RELEASE IS DRIVEN BY THE NATIVE `QThread.finished`, never by a custom signal: the
+    thread's affinity is the GUI thread, so the connection is queued and `deleteLater` is only
+    processed once `isFinished()` is true. A worker already finished needs nothing.
+    """
+    if worker is None:
+        return False
+    try:
+        if not worker.isRunning():
+            return False
+    except RuntimeError:  # already destroyed on the C++ side
+        return False
+
+    _ORPHAN_EVAL_WORKERS.append(worker)
+    worker.finished.connect(worker.deleteLater)
+    worker.finished.connect(
+        lambda w=worker: _ORPHAN_EVAL_WORKERS.remove(w) if w in _ORPHAN_EVAL_WORKERS else None
+    )
+    logging.warning(
+        "[SPECTRUM_EVAL.start_worker] previous evaluation still running: it is retained until "
+        "its finished() (%d retained). Its result is dropped -- the generation id filters it.",
+        len(_ORPHAN_EVAL_WORKERS),
+    )
+    return True
+
+
 def spectrum_eval_feedback(app: Any, message: str, level: str = "info") -> None:
     """Best-effort premium feedback for spectrum evaluation workflows."""
     try:
@@ -343,6 +383,10 @@ def spectrum_eval_start_worker(app: Any, cfg: Dict[str, Any], eval_start: float)
     )
 
     app._set_busy(True)
+
+    # The previous evaluation may still be running: retain it before the assignment below
+    # drops its last reference (see `_retain_until_finished`).
+    _retain_until_finished(getattr(app, "eval_worker", None))
 
     app.eval_worker = EvalWorker(cfg)
 

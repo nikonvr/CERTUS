@@ -133,13 +133,17 @@ jobs:
     timeout-minutes: 120
     env:
       QT_QPA_PLATFORM: offscreen
-      NUMBA_CACHE_DIR: ${{ runner.temp }}\certus_numba_cache
     defaults:
       run:
         shell: bash
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Cache numba hors de l'arborescence source
+        # Pose par une etape : le contexte `runner` n'existe pas dans l'`env` d'un job
+        # (le premier essai, 2026-09-26, a rendu un workflow invalide en 0 s).
+        run: echo "NUMBA_CACHE_DIR=$RUNNER_TEMP/certus_numba_cache" >> "$GITHUB_ENV"
 
       - name: Installer uv
         uses: astral-sh/setup-uv@v5

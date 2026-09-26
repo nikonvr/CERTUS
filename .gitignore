@@ -143,6 +143,17 @@ translation_cache.json
 /strat_pipeline_comments.txt
 /french_lines.txt
 /.strat_diff.txt
+
+# --- 🔴 CE QUI NE DOIT JAMAIS ENTRER DANS UN DEPOT PUBLIC. Ces deux regles ne sont pas
+# du rangement : le depot est public, et l'interdit du document de reference porte sur
+# l'oeuvre d'un tiers autant que sur les donnees personnelles.
+#   - l'article Applied Optics sur le selenium est l'oeuvre d'un TIERS : le redistribuer
+#     depend de sa licence, ce qui ne se decide pas dans un `git add -A` distrait ;
+#   - `studies/` est un travail de recherche NON PUBLIE de l'utilisateur, a commiter
+#     quand il le decidera. 📌 Il n'est donc dans aucun clone : le sauvegarder a la main
+#     avant tout changement de machine (docs/ETAT.md).
+/Selenium_Optical_Constants*.pdf
+/studies/
 /python-*-amd64.exe
 /Claude Setup*.exe
 

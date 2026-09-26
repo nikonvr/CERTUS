@@ -105,7 +105,7 @@ class REPhase4Strategy:
         _p4_scan_wall_s = float(time.perf_counter() - _t_p4_scan_wall)
         _p4_scan_mse_evals = int(_cb2_ref[0]["i"]) - _p4_cb_i_before_scan
         logging.info(
-            "RE phase 4 scan profile | wall_s=%.4f | MSE_ep_delta=%d | scan_steps=%d | s_per_MSE_ep%.5f | opt: re_phase4_aperture_scan_points ou snap grille / warm cache",
+            "RE phase 4 scan profile | wall_s=%.4f | MSE_ep_delta=%d | scan_steps=%d | s_per_MSE_ep%.5f | opt: re_phase4_aperture_scan_points or grid snap / warm cache",
             _p4_scan_wall_s,
             _p4_scan_mse_evals,
             len(_p4_scan_trace),

@@ -408,13 +408,13 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
         ext_item.setToolTip("Number of extrema computed on the theoretical noiseless curve")
         self.table.setItem(row, 13, ext_item)
 
-        # ---- 14, 15, 16 : la fente, les couches Rate, la couche critique ----------
+        # ---- 14, 15, 16: the slit, the Rate layers, the critical layer ----------
         #
-        # 👤 2026-08-12 : "trouver une strategie, c'est trouver les lambda de controle ou
-        # les couches de rate, et donner a l'utilisateur une valeur des fentes." Les deux
-        # dernieres manquaient au tableau, donc la gagnante n'etait PAS EXECUTABLE en
-        # salle: l'operateur ne savait ni quelle fente regler, ni quelle couche deposer au
-        # chrono. L'information existait -- uniquement dans la chaine `origin`.
+        # 👤 2026-08-12: "finding a strategy is finding the control wavelengths or
+        # the rate layers, and giving the user a value for the slits." The last two
+        # were missing from the table, so the winner was NOT EXECUTABLE in the
+        # chamber: the operator knew neither which slit to set, nor which layer to deposit
+        # on the clock. The information existed -- only in the `origin` string.
         slit = result.get("monochromator_resolution_nm")
         slit_item = NumericTableWidgetItem(f"{float(slit):g}" if slit is not None else "?")
         slit_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -444,9 +444,9 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
             rate_item.setBackground(QColor(CertusTheme.WARNING_BG))
         self.table.setItem(row, 15, rate_item)
 
-        # A23: ce qui va lacher, pourquoi, et de combien. Defini meme a ZERO plantage,
-        # ce qui est le seul regime que ces empilements connaissent -- un taux nul ne
-        # classe rien, une marge classe toujours.
+        # A23: what will give way, why, and by how much. Defined even at ZERO crashes,
+        # which is the only regime these stacks know -- a zero rate ranks nothing, a
+        # margin always ranks.
         cl = result.get("critical_layer") or {}
         margin = cl.get("margin_in_A") if cl else None
         if cl:
@@ -473,11 +473,11 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
         crit_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
         self.table.setItem(row, 16, crit_item)
 
-        # 17 : la source de defaut qui pese le plus SUR CETTE strategie.
+        # 17: the defect source that weighs the most ON THIS strategy.
         #
-        # 👤 2026-08-12 : "cela permettra a l'utilisateur de mieux comprendre d'ou
-        # viennent les problemes." Le profil complet est dans l'info-bulle; la colonne ne
-        # montre que le premier, parce que c'est lui qui decide de l'action a mener.
+        # 👤 2026-08-12: "it will let the user better understand where the problems
+        # come from." The full profile is in the tooltip; the column only shows the
+        # first, because it is the one that decides the action to take.
         abl = result.get("ablation") or []
         if abl:
             top_src = abl[0]
@@ -505,7 +505,7 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
         abl_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
         self.table.setItem(row, 17, abl_item)
 
-        # ---- SEEL, decalees de quatre par les colonnes ci-dessus -----------------
+        # ---- SEEL, shifted by four by the columns above -----------------
         for col_idx, noise_idx in enumerate([0, 1, 2]):
             target_col = 18 + col_idx
             if noise_idx < len(noise_results):

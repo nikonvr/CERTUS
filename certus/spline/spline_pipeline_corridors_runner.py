@@ -152,7 +152,7 @@ def _select_corridor_base_result_for_profile(
     central refit seed is aligned with this model (otherwise threshold and refit mismatch).
 
     If ``corridor_profile_d_base_source`` attribute is missing (minimal cfg), default =
-    ``best_polished`` comme ``SplineOptConfig``.
+    ``best_polished``, like ``SplineOptConfig``.
     """
     mode = str(getattr(cfg, "corridor_profile_d_base_source", "best_polished") or "best_polished").strip().lower()
     out["post_s3_scientific_corridor_seed_candidate_id"] = None

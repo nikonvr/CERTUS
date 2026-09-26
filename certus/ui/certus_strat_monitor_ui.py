@@ -3,7 +3,7 @@ from certus.ui.certus_strat_common import *
 from certus.ui.certus_ui import CertusScientificPlot
 
 class CertusStratGrowthWidget(QWidget):
-    """Composant visuel dynamique de la croissance optique et des blocs en Phase B."""
+    """Dynamic visual component of the optical growth and of the blocks in Phase B."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)

@@ -1,30 +1,30 @@
-"""ONGLET « Multi-realisation » -- chercher sur K graines dans un budget, et pouvoir couper.
+"""« Multi-realisation » TAB -- search over K seeds within a budget, and be able to stop.
 
-## POURQUOI CET ONGLET, ET POURQUOI IL NE CALCULE RIEN LUI-MEME
+## WHY THIS TAB, AND WHY IT COMPUTES NOTHING ITSELF
 
-Sur `r75x2` a 2 nm, une graine trouve ou ne trouve pas. Mesure du 2026-08-22, sept graines
-NUES, plage complete, aucune surcharge : 42, 101, 202, 303 rendent **zero** ; 77, 404 et 505
-trouvent, avec des SEEL de 0,5692, 0,5599 et 0,6112 nm. La reponse produit est donc de rejouer
-la meme recherche sur plusieurs realisations.
+On `r75x2` at 2 nm, a seed finds or does not find. Measured on 2026-08-22, seven BARE seeds,
+full range, no override: 42, 101, 202, 303 return **zero**; 77, 404 and 505 find, with SEELs
+of 0.5692, 0.5599 and 0.6112 nm. The product answer is therefore to replay the same search
+over several realisations.
 
-🔑 **CET ONGLET PILOTE `scripts/orchestre_multigraine.py`, IL NE LE REIMPLEMENTE PAS.** La regle
-de la disjonction des graines, l'union en tourniquet, le plafond de temps, l'ecriture des
-artefacts -- tout cela vit dans le script, y est teste, et n'existe qu'a un seul endroit. Deux
-chemins de code finiraient par diverger, et c'est une facture que ce depot a deja payee.
+🔑 **THIS TAB DRIVES `scripts/orchestre_multigraine.py`, IT DOES NOT REIMPLEMENT IT.** The rule
+of disjoint seeds, the round-robin union, the time cap, the writing of the artefacts -- all of
+it lives in the script, is tested there, and exists in one single place. Two code paths would
+end up diverging, and that is a bill this repository has already paid.
 
-🔴 **ET LE PILOTAGE PASSE PAR DES PROCESSUS SEPARES, CE N'EST PAS UN DETAIL D'IMPLANTATION.**
-`certus_strat_workers.py:1452` force `max_workers = 1` avec le motif « prevent Numba CPU
-oversubscription and deadlocks ». Un deadlock numba est INTRA-processus : lancer K recherches
-dans des processus distincts contourne le danger au lieu de le braver. C'est aussi ce qui
-permet a l'interface de rester vivante pendant des heures de calcul.
+🔴 **AND THE DRIVING GOES THROUGH SEPARATE PROCESSES, WHICH IS NOT AN IMPLEMENTATION DETAIL.**
+`certus_strat_workers.py` forces `max_workers = 1` with the reason "prevent Numba CPU
+oversubscription and deadlocks". A numba deadlock is INTRA-process: launching K searches in
+distinct processes sidesteps the danger instead of braving it. It is also what keeps the
+interface alive during hours of computation.
 
-## CE QUE L'UTILISATEUR VOIT, ET LA RESERVE QUI VOYAGE AVEC
+## WHAT THE USER SEES, AND THE CAVEAT THAT TRAVELS WITH IT
 
-Le SEEL annonce pendant la campagne est **PROVISOIRE** : il est mesure sur la graine qui l'a
-trouve. Le chiffre citable vient de la notation finale sur une graine **disjointe**. L'ecart
-est le canal de la malediction du vainqueur -- **+12,9 %** le 2026-08-15, **+0,55 %** le
-2026-08-22. Ce n'est donc pas une constante, et la colonne « provisoire » du tableau existe
-pour que personne ne cite le mauvais nombre.
+The SEEL announced during the campaign is **PROVISIONAL**: it is measured on the seed that
+found it. The quotable figure comes from the final scoring on a **disjoint** seed. The gap is
+the channel of the winner's curse -- **+12.9 %** on 2026-08-15, **+0.55 %** on 2026-08-22. It is
+therefore not a constant, and the "provisional" column of the table exists so that nobody
+quotes the wrong number.
 """
 
 from __future__ import annotations
@@ -38,8 +38,8 @@ _SCRIPTS = RACINE / "scripts"
 if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))
 
-#: 🔑 Le format d'evenement est IMPORTE de l'emetteur, jamais recopie. Un format dont
-#: l'ecriture et la lecture vivent dans deux fichiers derive au premier changement.
+#: 🔑 The event format is IMPORTED from the emitter, never copied. A format whose
+#: writing and reading live in two files drifts at the first change.
 from orchestre_multigraine import (  # noqa: E402
     ECHELLE_GRAINES,
     GRAINE_NOTATION_DEFAUT,
@@ -49,17 +49,17 @@ from probe_blocs_vs_plantage import COMPOSANTS  # noqa: E402
 
 
 def interpreteur_et_script() -> tuple[str | None, str]:
-    """L'interpreteur a lancer et le motif d'un refus. Rend (None, motif) si c'est impossible.
+    """The interpreter to launch and the reason for a refusal. Returns (None, reason) if impossible.
 
-    🔴 EN MODE GELE, RIEN DE TOUT CECI NE MARCHE, ET IL FAUT LE DIRE AU LIEU D'ECHOUER
-    BIZARREMENT. `certus_hub.spec` produit un executable PyInstaller ; dans ce paquet
-    `sys.executable` est `CERTUS_HUB.exe` et non un python, `__file__` pointe dans un dossier
-    d'extraction temporaire, et `scripts/` n'est pas embarque du tout. Lancer
-    `sys.executable scripts/orchestre_multigraine.py` y donnerait une erreur incomprehensible.
+    🔴 IN FROZEN MODE, NONE OF THIS WORKS, AND IT MUST BE SAID INSTEAD OF FAILING
+    STRANGELY. `certus_hub.spec` produces a PyInstaller executable; in that bundle
+    `sys.executable` is `CERTUS_HUB.exe` and not a python, `__file__` points into a temporary
+    extraction folder, and `scripts/` is not bundled at all. Launching
+    `sys.executable scripts/orchestre_multigraine.py` there would give an incomprehensible error.
 
-    ⚠️ La reparation propre serait d'embarquer le script et de retrouver un interpreteur ; elle
-    n'est pas faite, et elle ne peut pas etre eprouvee sans construire un paquet. On DETECTE
-    donc, et on refuse en disant pourquoi.
+    ⚠️ The proper repair would be to bundle the script and find an interpreter; it is not
+    done, and it cannot be tried without building a bundle. So this DETECTS, and refuses
+    saying why.
     """
     if getattr(sys, "frozen", False):
         return None, (
@@ -72,8 +72,8 @@ def interpreteur_et_script() -> tuple[str | None, str]:
         return None, f"🔴 script not found: {script}"
     return sys.executable, ""
 
-#: Le bruit sur une DIFFERENCE de SEEL, mesure sur ce depot. Sert a dire si un ecart
-#: provisoire -> definitif est significatif ou non.
+#: The noise on a DIFFERENCE of SEEL, measured on this repository. Used to say whether
+#: a provisional -> final gap is significant or not.
 BRUIT_DIFFERENCE_SEEL_PCT = 2.59
 
 
@@ -91,11 +91,11 @@ class LigneGraine:
 
 @dataclass
 class EtatMultigraine:
-    """La machine a etats de l'onglet -- PURE, sans Qt, donc testable sans ecran.
+    """The state machine of the tab -- PURE, without Qt, hence testable without a screen.
 
-    🔑 Elle est separee de la vue deliberement. Une logique d'affichage enfermee dans un widget
-    ne se teste qu'en ouvrant une fenetre, et ce depot a deja mesure ce que coute un banc
-    graphique (QApplication ramassee par le GC, dialogues modales, `_is_busy` mort).
+    🔑 It is separated from the view deliberately. Display logic locked inside a widget can
+    only be tested by opening a window, and this repository has already measured what a
+    graphical bench costs (QApplication collected by the GC, modal dialogs, dead `_is_busy`).
     """
 
     lignes: dict[int, LigneGraine] = field(default_factory=dict)
@@ -113,10 +113,10 @@ class EtatMultigraine:
     artefact_final: str = ""
 
     def appliquer(self, evt: dict) -> None:
-        """Consomme un evenement du flux `[ORCH]`. Ignore ce qu'elle ne connait pas.
+        """Consumes an event of the `[ORCH]` stream. Ignores what it does not know.
 
-        ⚠️ Ignorer l'inconnu est VOULU : un evenement ajoute plus tard au script ne doit pas
-        faire tomber une interface qui tourne depuis six heures.
+        ⚠️ Ignoring the unknown is INTENDED: an event added to the script later must not
+        bring down an interface that has been running for six hours.
         """
         t = evt.get("evt")
         if t == "demarrage":
@@ -150,9 +150,9 @@ class EtatMultigraine:
                     li.etat = "non essayee"
         elif t == "resultat":
             self.seel_final = evt.get("seel")
-            # 🔑 On retient le provisoire TEL QUE LE SCRIPT L'A VU, pas tel que la vue le
-            # recalcule : c'est lui qui a decide de l'arret, et l'ecart publie doit porter
-            # sur ce chiffre-la. Les recalculer ici les ferait diverger silencieusement.
+            # 🔑 The provisional value is kept AS THE SCRIPT SAW IT, not as the view
+            # recomputes it: that value decided the stop, and the published gap must be about
+            # that figure. Recomputing them here would make them diverge silently.
             self.seel_provisoire_retenu = evt.get("seel_provisoire")
             self.n_blocs_final = evt.get("n_blocs")
             self.crash_final = evt.get("crash")
@@ -165,10 +165,10 @@ class EtatMultigraine:
     # -- lectures ------------------------------------------------------------------------
 
     def meilleur_provisoire(self) -> float | None:
-        """Le meilleur SEEL annonce en cours de campagne. 🔴 PROVISOIRE : chaque valeur est
-        mesuree sur la graine qui l'a trouvee, et elles ne sont pas comparables entre elles au
-        sens strict. On l'affiche comme un REPERE pour decider d'arreter, jamais comme un
-        resultat."""
+        """The best SEEL announced during the campaign. 🔴 PROVISIONAL: each value is
+        measured on the seed that found it, and they are not strictly comparable with one
+        another. It is displayed as a MARKER to decide when to stop, never as a
+        result."""
         vus = [li.seel for li in self.lignes.values() if li.seel is not None]
         return min(vus) if vus else None
 
@@ -176,7 +176,7 @@ class EtatMultigraine:
         return sum(1 for li in self.lignes.values() if li.deposables > 0)
 
     def ecart_provisoire_final_pct(self) -> float | None:
-        """Le canal de malediction du vainqueur, mesure a CETTE campagne."""
+        """The winner's-curse channel, measured on THIS campaign."""
         prov = self.seel_provisoire_retenu or self.meilleur_provisoire()
         if prov is None or self.seel_final is None or prov <= 0:
             return None
@@ -193,17 +193,17 @@ class EtatMultigraine:
 
 
 def composant_depuis_fichier(chemin: str | None) -> str | None:
-    """Le nom de composant que la sonde attend, deduit du fichier CHARGE dans l'application.
+    """The component name the probe expects, deduced from the file LOADED in the application.
 
-    🔴 CETTE FONCTION EXISTE PARCE QUE LA PREMIERE VERSION DE L'ONGLET CODAIT « r75x2 » EN DUR.
-    L'utilisateur pouvait charger n'importe quel composant : l'onglet aurait cherche sur un
-    AUTRE, et rendu un SEEL parfaitement plausible portant sur un empilement qui n'est pas
-    celui affiche. C'est la faute que ce depot redoute le plus -- « une erreur silencieuse ne
-    plante pas : elle produit un resultat faux qui a l'air juste, et quelqu'un fabrique une
-    piece avec » (AGENTS.md).
+    🔴 THIS FUNCTION EXISTS BECAUSE THE FIRST VERSION OF THE TAB HARD-CODED "r75x2".
+    The user could load any component: the tab would have searched on ANOTHER one, and
+    returned a perfectly plausible SEEL about a stack that is not the one displayed. That
+    is the mistake this repository fears most -- "a silent error does not crash: it
+    produces a wrong result that looks right, and someone manufactures a part with it"
+    (CLAUDE.md).
 
-    Rend None si le fichier ne correspond a aucune entree de `COMPOSANTS` -- et l'appelant doit
-    alors REFUSER, jamais choisir a la place de l'utilisateur.
+    Returns None if the file matches no entry of `COMPOSANTS` -- and the caller must then
+    REFUSE, never choose in the user's place.
     """
     if not chemin:
         return None
@@ -217,8 +217,8 @@ def composant_depuis_fichier(chemin: str | None) -> str | None:
                 return nom
         except (OSError, ValueError):
             continue
-    # Repli sur le nom de fichier : un depot clone ailleurs, ou un chemin relatif, ne doit pas
-    # faire perdre la correspondance.
+    # Fall back on the file name: a repository cloned elsewhere, or a relative path,
+    # must not lose the match.
     for nom, (rel, _n) in COMPOSANTS.items():
         if Path(rel).name.lower() == cible.name.lower():
             return nom
@@ -237,9 +237,9 @@ def construire_arguments(
     graines: list[int] | None = None,
     graine_notation: int = GRAINE_NOTATION_DEFAUT,
 ) -> list[str]:
-    """La ligne de commande, construite en UN endroit et testable sans lancer Qt.
+    """The command line, built in ONE place and testable without starting Qt.
 
-    🔴 `--evenements` est TOUJOURS pose : c'est par lui que l'interface sait ce qui se passe.
+    🔴 `--evenements` is ALWAYS set: it is how the interface knows what is happening.
     """
     args = [
         "scripts/orchestre_multigraine.py", composant,
@@ -259,11 +259,11 @@ def construire_arguments(
 
 
 # =========================================================================================
-# LA VUE -- mince par construction : elle affiche l'etat ci-dessus et pilote un QProcess.
+# THE VIEW -- thin by construction: it displays the state above and drives a QProcess.
 # =========================================================================================
 
 class CertusStratMultigraineMixin:
-    """Onglet « Multi-realisation ». Melange dans `CertusStratApp`."""
+    """« Multi-realisation » tab. Mixed into `CertusStratApp`."""
 
     def _create_multigraine_tab(self) -> None:
         from PyQt6.QtCore import QProcess
@@ -285,9 +285,9 @@ class CertusStratMultigraineMixin:
 
         # -- reglages ---------------------------------------------------------------------
         carte = CertusCard("Budget and objective")
-        # 🔴 LE COMPOSANT EST EXPLICITE, ET SANS VALEUR PAR DEFAUT MUETTE. La premiere version
-        # codait « r75x2 » en dur : l'utilisateur pouvait avoir charge un tout autre
-        # empilement et l'onglet aurait rendu un SEEL plausible portant sur autre chose.
+        # 🔴 THE COMPONENT IS EXPLICIT, AND WITHOUT A SILENT DEFAULT. The first version
+        # hard-coded "r75x2": the user could have loaded an entirely different stack and
+        # the tab would have returned a plausible SEEL about something else.
         self._mg_composant = QComboBox()
         self._mg_composant.addItem("")
         self._mg_composant.addItems(sorted(COMPOSANTS))
@@ -306,9 +306,9 @@ class CertusStratMultigraineMixin:
             "flight is left to finish, because a run cut short is a measurement destroyed."
         )
         self._mg_objectif = QComboBox()
-        # 🔴 LE LIBELLE EST ANGLAIS, LA VALEUR RESTE FRANCAISE. Le drapeau `--objectif`
-        # de `orchestre_multigraine.py` n'accepte que deux jetons francais : renommer
-        # les entrees ferait rejeter la ligne de commande par argparse.
+        # 🔴 THE LABEL IS ENGLISH, THE VALUE STAYS FRENCH. The `--objectif` flag of
+        # `orchestre_multigraine.py` only accepts two French tokens: renaming the
+        # entries would make argparse reject the command line.
         self._mg_objectif.addItem("first to find", "premier")
         self._mg_objectif.addItem("best within budget", "meilleur")
         self._mg_objectif.setToolTip(
@@ -329,8 +329,8 @@ class CertusStratMultigraineMixin:
             "Measured 2026-08-22 on 16 threads: two concurrent runs give +29 % throughput, "
             "not +100 % -- the bottleneck is memory bandwidth."
         )
-        # QGridLayout 2 colonnes (label | widget) : évite le minimum ~870 px du QHBoxLayout
-        # 5-paires-en-ligne, ce qui causait un défilement horizontal à 1366×768.
+        # QGridLayout with 2 columns (label | widget): avoids the ~870 px minimum of the
+        # QHBoxLayout with 5 pairs in a row, which caused horizontal scrolling at 1366x768.
         g = QGridLayout()
         g.setColumnStretch(1, 1)
         for _row, (lib, w) in enumerate((("Component:", self._mg_composant),
@@ -343,20 +343,19 @@ class CertusStratMultigraineMixin:
         carte.body.addLayout(g)
         v.addWidget(carte)
 
-        # -- boutons ----------------------------------------------------------------------
-        # QVBoxLayout : les trois labels sont trop longs pour coexister en une ligne sans
-        # imposer un minimum ~825 px au panneau.
+        # -- buttons ----------------------------------------------------------------------
+        # QVBoxLayout: the three labels are too long to share one line without imposing
+        # a ~825 px minimum on the panel.
         barre = QVBoxLayout()
         self._mg_bouton_lancer = QPushButton("Start the search")
         self._mg_bouton_lancer.setToolTip(
             "Replays the search over several seeds within a given time budget."
         )
         self._mg_bouton_lancer.clicked.connect(self._mg_lancer)
-        # 🔑 LE MOT EST « FINALISER », PAS « ARRETER », ET C'EST 👤 QUI L'A TROUVE :
-        # « plutot que arreter, le vrai mot serait finaliser ». « Arreter » dit ce qu'on
-        # QUITTE et se lit « tout annuler » ; or les deux boutons produisent le chiffre
-        # citable -- ils ne different que par le sort des realisations EN VOL. Le mot juste
-        # dit ce qu'on OBTIENT.
+        # 🔑 THE WORD IS "FINALISE", NOT "STOP", AND 👤 FOUND IT: "rather than stop, the
+        # real word would be finalise". "Stop" says what is LEFT and reads as "cancel
+        # everything"; yet both buttons produce the quotable figure -- they only differ by
+        # the fate of the realisations IN FLIGHT. The right word says what is OBTAINED.
         self._mg_bouton_finaliser = QPushButton("Finalise (let runs finish)")
         self._mg_bouton_finaliser.setEnabled(False)
         self._mg_bouton_finaliser.setToolTip(
@@ -388,8 +387,8 @@ class CertusStratMultigraineMixin:
         self._mg_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         v.addWidget(self._mg_table, 1)
 
-        # Vide a la construction : `_mg_rafraichir` juste en dessous l'ecrit aussitot.
-        # La version precedente posait ici un paragraphe ecrase avant d'avoir ete vu.
+        # Empty at construction: `_mg_rafraichir` just below writes it at once.
+        # The previous version put a paragraph here that was overwritten before being seen.
         self._mg_resume = QLabel("")
         self._mg_resume.setWordWrap(True)
         v.addWidget(self._mg_resume)
@@ -398,7 +397,7 @@ class CertusStratMultigraineMixin:
     # -- pilotage -------------------------------------------------------------------------
 
     def _mg_objectif_courant(self) -> str:
-        """Le jeton que le script accepte, pas le libelle que l'operateur lit."""
+        """The token the script accepts, not the label the operator reads."""
         return self._mg_objectif.currentData() or "premier"
 
     def _mg_lancer(self) -> None:
@@ -418,8 +417,8 @@ class CertusStratMultigraineMixin:
 
         composant = self._mg_composant_courant()
         if composant is None:
-            # 🔴 ON REFUSE, ON NE DEVINE PAS. Chercher sur un composant que 👤 n'a pas designe
-            # rendrait un SEEL parfaitement plausible portant sur un autre empilement.
+            # 🔴 REFUSE, DO NOT GUESS. Searching on a component 👤 did not designate would
+            # return a perfectly plausible SEEL about another stack.
             self._mg_resume.setText(
                 "🔴 Pick a COMPONENT before starting. No default is applied: searching a "
                 "stack you did not name would return a SEEL that is plausible and wrong."
@@ -439,10 +438,10 @@ class CertusStratMultigraineMixin:
     _mg_python: str = sys.executable
 
     def _mg_demarrer_processus(self, args: list[str]) -> None:
-        """La couture. 🔑 Elle existe pour que la chaine ENTIERE -- demarrage, sortie standard,
-        decodage, machine a etats, tableau -- soit eprouvee par un test au lieu d'etre supposee.
-        Sans elle, le seul moyen de verifier le pilotage serait de lancer une vraie campagne de
-        plusieurs heures, donc personne ne le ferait."""
+        """The seam. 🔑 It exists so that the WHOLE chain -- start-up, standard output,
+        decoding, state machine, table -- is proven by a test instead of being assumed.
+        Without it, the only way to check the driving would be to launch a real campaign of
+        several hours, so nobody would do it."""
         from PyQt6.QtCore import QProcess
 
         self._mg_etat = EtatMultigraine()
@@ -459,30 +458,30 @@ class CertusStratMultigraineMixin:
         self._mg_rafraichir()
 
     def _mg_composant_courant(self) -> str | None:
-        """Le composant a chercher : celui que l'utilisateur a CHOISI dans la liste.
+        """The component to search: the one the user CHOSE in the list.
 
-        🔴 Rend None si rien n'est choisi, et l'appelant REFUSE de lancer. Il n'y a
-        deliberement aucune valeur par defaut : chercher sur un composant que l'utilisateur
-        n'a pas designe rendrait un SEEL plausible portant sur un autre empilement.
+        🔴 Returns None if nothing is chosen, and the caller REFUSES to launch. There is
+        deliberately no default value: searching on a component the user did not
+        designate would return a plausible SEEL about another stack.
         """
         nom = self._mg_composant.currentText().strip()
         return nom if nom in COMPOSANTS else None
 
     def _mg_finaliser(self, mode: str = "attendre") -> None:
-        """🔑 ON DEPOSE UN FICHIER, ON NE TUE PAS depuis l'interface -- et son CONTENU dit le
-        mode. 👤 : « si on clique sur arreter, on n'est pas oblige de terminer de suite, on peut
-        passer a l'etape 3 ».
+        """🔑 A FILE IS DROPPED, NOTHING IS KILLED from the interface -- and its CONTENT says
+        the mode. 👤: "if we click on stop, we do not have to finish right away, we can
+        move on to step 3".
 
-        Les DEUX modes menent a l'etape 3, l'union puis la notation finale. Ce qui les separe
-        est le sort des realisations en vol :
+        BOTH modes lead to step 3, the union then the final scoring. What separates them
+        is the fate of the realisations in flight:
 
-            attendre    on les laisse finir     rien n'est perdu, mais on attend
-            abandonner  on les tue              etape 3 tout de suite, leur travail est perdu
+            attendre    they are left to finish     nothing is lost, but we wait
+            abandonner  they are killed             step 3 at once, their work is lost
         """
         if not self._mg_etat.drapeau:
-            # 🔴 UN BOUTON ACTIF QUI N'AGIT PAS EST PIRE QU'UN BOUTON GRISE. Ce cas ne devrait
-            # plus arriver -- le script annonce son drapeau des la premiere seconde -- mais
-            # s'il arrivait, 👤 doit le savoir plutot que de croire l'arret demande.
+            # 🔴 AN ACTIVE BUTTON THAT DOES NOTHING IS WORSE THAN A GREYED ONE. This case
+            # should no longer happen -- the script announces its flag within the first second --
+            # but if it did, 👤 must know it rather than believe the stop was requested.
             self._mg_resume.setText(
                 "🔴 Cannot finalise yet: the campaign has not announced its finalisation "
                 "point. Try again in a moment."
@@ -504,9 +503,9 @@ class CertusStratMultigraineMixin:
     def _mg_sur_sortie(self) -> None:
         brut = bytes(self._mg_proc.readAllStandardOutput()).decode("utf-8", errors="replace")
         self._mg_tampon += brut
-        # ⚠️ On decoupe sur les lignes COMPLETES seulement : un evenement JSON coupe en deux
-        # par la frontiere d'un paquet serait illisible, et `lire_evenement` rendrait None
-        # en silence.
+        # ⚠️ Only COMPLETE lines are split: a JSON event cut in two by the boundary
+        # of a chunk would be unreadable, and `lire_evenement` would return None
+        # silently.
         *lignes, self._mg_tampon = self._mg_tampon.split("\n")
         for ligne in lignes:
             evt = lire_evenement(ligne.strip())
@@ -515,18 +514,18 @@ class CertusStratMultigraineMixin:
         self._mg_rafraichir()
 
     def _mg_sur_fin(self) -> None:
-        # 🔴 ON VIDE LE TUYAU AVANT DE CONCLURE. `finished` peut arriver alors qu'un dernier
-        # paquet n'a pas ete lu : sans ce drainage, les evenements `resultat` et `fin` -- donc
-        # LE CHIFFRE CITABLE -- se perdraient, et l'interface afficherait un provisoire comme
-        # s'il etait definitif. C'est le pire sens possible pour une perte.
+        # 🔴 THE PIPE IS DRAINED BEFORE CONCLUDING. `finished` can arrive while a last
+        # chunk has not been read: without this draining, the `resultat` and `fin` events --
+        # hence THE QUOTABLE FIGURE -- would be lost, and the interface would show a
+        # provisional value as if it were final. That is the worst possible direction for a loss.
         try:
             self._mg_sur_sortie()
         except (RuntimeError, AttributeError):
             pass
-        # ⚠️ Et le reste peut porter PLUSIEURS lignes, dont une derniere sans retour chariot --
-        # un processus tue en ecrivant en laisse une. 📏 Ma premiere version traitait tout le
-        # tampon comme UNE ligne : le JSON devenait illisible et les evenements etaient perdus
-        # tous ensemble. C'est un test qui l'a trouve, pas une relecture.
+        # ⚠️ And the remainder can carry SEVERAL lines, the last one without a newline --
+        # a process killed while writing leaves one. 📏 My first version treated the whole
+        # buffer as ONE line: the JSON became unreadable and the events were lost all
+        # together. A test found it, not a review.
         if self._mg_tampon:
             for ligne in self._mg_tampon.split("\n"):
                 evt = lire_evenement(ligne.strip())
@@ -558,9 +557,9 @@ class CertusStratMultigraineMixin:
         self._mg_resume.setText(resumer(e))
 
 
-#: Les etats sont des jetons INTERNES d'une machine a etats pure, epingles PAR VALEUR
-#: dans tests/unit/test_strat_multigraine_ui.py. On les traduit donc a l'AFFICHAGE
-#: plutot que de les renommer : un libelle n'est pas une valeur.
+#: The states are INTERNAL tokens of a pure state machine, pinned BY VALUE
+#: in tests/unit/test_strat_multigraine_ui.py. They are therefore translated at
+#: DISPLAY time rather than renamed: a label is not a value.
 ETAT_AFFICHE: dict[str, str] = {
     "en attente": "waiting",
     "en cours": "running",
@@ -572,15 +571,14 @@ ETAT_AFFICHE: dict[str, str] = {
 
 
 def resumer(e: EtatMultigraine) -> str:
-    """Le texte du bandeau. Fonction PURE, donc testable -- et c'est la phrase que 👤 lira
-    pour decider d'arreter, elle doit dire ce que le chiffre vaut.
+    """The banner text. PURE function, hence testable -- and it is the sentence 👤 will read
+    to decide when to stop, so it must say what the figure is worth.
 
-    Le TEXTE RENDU est en anglais, comme le reste de l'interface ; les identifiants et
-    les commentaires de ce module restent en francais, ce n'est pas le sujet.
+    The RENDERED TEXT is in English, like the rest of the interface; the identifiers of
+    this module stay French, because tests and the script's flags pin them.
 
-    L'ancienne premiere phrase disait « N realisation(s) ont trouve » : un verbe au
-    pluriel sur un compte qui vaut tres souvent 1, et c'est le chiffre le plus regarde
-    de l'onglet.
+    The former first sentence said "N realisation(s) ont trouve": a plural verb on a
+    count that very often equals 1, and it is the most watched figure of the tab.
     """
     bouts: list[str] = []
     if e.lignes:
@@ -604,10 +602,10 @@ def resumer(e: EtatMultigraine) -> str:
     if e.non_essayees:
         bouts.append(f"⚠️ NOT TRIED for lack of budget: {e.non_essayees}")
     if not bouts:
-        # Rien n'a encore ete annonce : on dit ce que le chiffre vaudra, plutot que
-        # « 0 sur 0 ». ⚠️ La condition porte sur `bouts`, PAS sur `e.lignes` : une
-        # campagne peut annoncer une union ou un motif d'arret sans qu'aucune ligne
-        # de graine existe, et une premiere version les avalait toutes.
+        # Nothing has been announced yet: say what the figure will be worth, rather
+        # than "0 of 0". ⚠️ The condition is on `bouts`, NOT on `e.lignes`: a campaign
+        # can announce a union or a stop reason without any seed line existing, and a
+        # first version swallowed them all.
         return (
             "The SEEL shown during a campaign is PROVISIONAL: it is measured on the very "
             "seed that found it. The quotable figure comes from the final scoring, on a "

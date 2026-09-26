@@ -208,7 +208,7 @@ class CertusScientificPlot(pg.PlotWidget):
         self._custom_setXRange(*args, **kwargs)
 
     def mouseDoubleClickEvent(self, event) -> None:
-        """Double-clic gauche pour réinitialiser instantanément l'échelle (autoRange)."""
+        """Left double-click to reset the scale instantly (autoRange)."""
         if event.button() == Qt.MouseButton.LeftButton:
             try:
                 self.plotItem.autoRange()

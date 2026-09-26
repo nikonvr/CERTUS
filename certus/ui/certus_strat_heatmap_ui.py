@@ -2,7 +2,7 @@ from __future__ import annotations
 from certus.ui.certus_strat_common import *
 from certus.ui.certus_strat_plots_ui import CertusScientificPlot
 
-class InteractiveHeatmapWindow(QWidget):  # <--- Changement ici: QWidget au lieu de QMainWindow
+class InteractiveHeatmapWindow(QWidget):  # <--- Changed here: QWidget instead of QMainWindow
     def __init__(self, parent, raw_data_thickness) -> Any:
 
         super().__init__(parent)
@@ -85,7 +85,7 @@ class InteractiveHeatmapWindow(QWidget):  # <--- Changement ici: QWidget au lieu
 
         self.img_item = pg.ImageItem(grid_norm)
 
-        # Palette de couleurs (Magma-ish)
+        # Colour palette (Magma-ish)
 
         pos = np.linspace(0, 1, 5)
 

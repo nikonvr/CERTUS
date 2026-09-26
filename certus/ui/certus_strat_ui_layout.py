@@ -224,10 +224,10 @@ class CertusStratLayoutMixin:
 
         self._create_advanced_tab()
 
-        # L'onglet qui rejoue la recherche sur K realisations dans un budget de temps. Il
-        # PILOTE `scripts/orchestre_multigraine.py` au lieu de le reimplementer : la regle de
-        # disjonction des graines, l'union en tourniquet et le plafond de temps n'existent
-        # donc qu'a un seul endroit.
+        # The tab that replays the search over K realisations within a time budget. It
+        # DRIVES `scripts/orchestre_multigraine.py` instead of reimplementing it: the rule of
+        # disjoint seeds, the round-robin union and the time cap therefore exist in one
+        # single place.
         self._create_multigraine_tab()
 
         # "Why CERTUS?" marketing content moved out of scientific plot tabs (Option A)
@@ -1003,16 +1003,16 @@ class CertusStratLayoutMixin:
             if _k in self.widgets:
                 self.widgets[_k].setToolTip(_tip)
 
-        # ── MODELE MACHINE : les sources d'erreur, et leur ETAT visible ────────
+        # ── MACHINE MODEL: the error sources, and their visible STATE ────────
         #
-        # 👤 2026-08-12 : "l'utilisateur doit visualiser tres facilement ce qui est
-        # actif, ce qui ne l'est pas". Avant cette carte, les huit reglages du modele
-        # n'existaient QUE dans le JSON: on lancait un run sans savoir quelle machine il
-        # simulait, et un fichier sans la clef prenait un defaut invisible.
+        # 👤 2026-08-12: "the user must see very easily what is active and what is
+        # not". Before this card, the eight settings of the model existed ONLY in the
+        # JSON: a run was launched without knowing which machine it simulated, and a file
+        # without the key took an invisible default.
         #
-        # 🔴 Le bandeau d'etat est le point, pas les champs. Il se relit d'un coup d'oeil
-        # et il est recalcule a chaque frappe: c'est la seule facon de garantir que ce que
-        # l'ecran affiche est ce que le run va faire.
+        # 🔴 The status banner is the point, not the fields. It reads at a glance and
+        # it is recomputed at every keystroke: it is the only way to guarantee that what
+        # the screen shows is what the run will do.
         machine_group = CertusCard("Machine model — error sources")
 
         machine_layout = machine_group.body
@@ -1341,8 +1341,8 @@ class CertusStratLayoutMixin:
 
         parent_layout.addWidget(group)
 
-    #: Les huit sources d'erreur, dans l'ordre ou elles se lisent: clef, libelle court,
-    #: et la valeur qui signifie INACTIF. `None` = c'est un reglage, pas un interrupteur.
+    #: The eight error sources, in reading order: key, short label, and the value
+    #: that means INACTIVE. `None` = it is a setting, not a switch.
     _MACHINE_SOURCES = (
         ("slit_bias_enabled", "biais de fente", 0.0),
         ("search_resolution", "recherche de fente", 0.0),
@@ -1354,16 +1354,16 @@ class CertusStratLayoutMixin:
     )
 
     def _refresh_machine_status(self, *_a) -> None:
-        """Bandeau d'etat : ce qui est ACTIF, ce qui ne l'est pas, d'un coup d'oeil.
+        """Status banner: what is ACTIVE, what is not, at a glance.
 
-        👤 2026-08-12 : *"l'utilisateur doit visualiser tres facilement ce qui est actif,
-        ce qui ne l'est pas"*. Recalcule a chaque frappe, donc il ne peut pas mentir --
-        un bandeau rafraichi seulement au chargement afficherait la configuration
-        precedente pendant qu'on en edite une autre.
+        👤 2026-08-12: *"the user must see very easily what is active and what is
+        not"*. Recomputed at every keystroke, so it cannot lie -- a banner refreshed
+        only at load time would show the previous configuration while another one is
+        being edited.
 
-        ⚠️ Un champ illisible s'affiche `?` et JAMAIS "inactif". Les deux ne veulent pas
-        dire la meme chose, et confondre "je ne sais pas" avec "c'est eteint" est
-        exactement ce que ce projet paie depuis le debut.
+        ⚠️ An unreadable field shows `?` and NEVER "inactive". The two do not mean the
+        same thing, and confusing "I do not know" with "it is off" is exactly what
+        this project has been paying for since the beginning.
         """
         if not hasattr(self, "machine_status"):
             return

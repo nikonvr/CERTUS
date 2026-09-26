@@ -131,7 +131,7 @@ class StrategySpectralPerformanceWindow(CertusWindowSpyMixin, QMainWindow):
 
             self.plot_widget.setXRange(wl_min, wl_max)
 
-            # Activation de l'échelle automatique sur les axes à la fin du tracé
+            # Enable automatic scaling on the axes at the end of the plot
             try:
                 self.plot_widget.enableAutoRange(axis=pg.ViewBox.XYAxes, enable=True)
                 self.plot_widget.autoRange()

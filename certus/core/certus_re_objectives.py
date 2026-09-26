@@ -385,8 +385,8 @@ def _log_phase4_trf_summary(
 
     logging.info(
         "RE phase 4 TRF profile | wall_s=%.4f | MSE_ep_count_since_TRF_reset=%d | "
-        "ls_nfev=%d | jac: ~njev×(1+%d) MSE_ep (1 residu + %d FD ap_knots + restore) | "
-        "s_per_ls_nfev%.5f | opt: re_phase4_trf_max_nfev tol_factor ou jac ap analytique",
+        "ls_nfev=%d | jac: ~njev×(1+%d) MSE_ep (1 residual + %d FD ap_knots + restore) | "
+        "s_per_ls_nfev%.5f | opt: re_phase4_trf_max_nfev tol_factor or analytic jac ap",
         p4_trf_wall_s,
         p4_trf_mse_evals,
         int(res_p4.nfev),

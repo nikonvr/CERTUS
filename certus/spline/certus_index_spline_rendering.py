@@ -148,7 +148,7 @@ class _PlotMixin:
             except NUMERICAL_FAULT_EXCEPTIONS:
                 logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
-        # --- n preview : enveloppe puis courbes ---
+        # --- n preview: envelope then curves ---
         y_n_all = [nv]
         if np.any(np.isfinite(n_nl_v)):
             y_n_all.append(n_nl_v)
@@ -184,7 +184,7 @@ class _PlotMixin:
             if c_n is not None:
                 setattr(c_n, "_certus_crosshair_primary", True)
 
-        # --- k preview : enveloppe (k>0) puis courbes ---
+        # --- k preview: envelope (k>0) then curves ---
         y_k_all = [kv]
         if np.any(np.isfinite(k_nl_v)):
             y_k_all.append(k_nl_v)
@@ -593,7 +593,7 @@ class _PlotMixin:
                 pen=pg.mkPen("#7a3cff", width=2, style=Qt.PenStyle.DashLine),
             )
 
-            # c2 = coefficient quadratique (RMSE = c2x^2+c1x+c0, x = d ? anchor) ; sommet en d_center.
+            # c2 = quadratic coefficient (RMSE = c2x^2+c1x+c0, x = d - anchor); vertex at d_center.
             if np.isfinite(c2) and c2 > 0 and np.isfinite(c1) and np.isfinite(c0):
                 d_v = float(parab_fit.get("d_center", float("nan")))
                 r_v = float(c0) - float(c1) ** 2 / (4.0 * float(c2))
@@ -814,7 +814,7 @@ class _PlotMixin:
         # Try to calculate it locally from the points and RMSE threshold.
         if not _int_ok and rmse_thr is not None and np.isfinite(float(rmse_thr)) and d_plot.size > 1:
             thr = float(rmse_thr)
-            # On cherche les points d'intersection (simple scan lin?aire sur l'enveloppe basse)
+            # Look for the intersection points (simple linear scan on the lower envelope)
             # Note: d_parab_arr is sorted? and contains the min-per-d envelope
             if d_parab_arr.size > 2:
                 try:
@@ -836,7 +836,7 @@ class _PlotMixin:
             _line_int_lo.setToolTip(f"Smart interval low-bound: {_d_int_lo:.3f} nm")
             _line_int_hi.setToolTip(f"Smart interval high-bound: {_d_int_hi:.3f} nm")
 
-            # Labels sur les lignes intelligentes
+            # Labels on the smart lines
             _d_int_adap = src.get("profile_d_rmse_abs_tolerance_adaptive", False)
             _int_label_base = "Deltad auto" + (" (adapt.)" if _d_int_adap else "")
             _label_lo = pg.TextItem(

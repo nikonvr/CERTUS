@@ -634,7 +634,7 @@ class CertusStratWorkerMixin:
                 bool(self.opti_results),
             )
 
-        # Activation des échelles automatiques sur tous les graphiques actifs à la fin du workflow
+        # Enable automatic scaling on every active plot at the end of the workflow
         try:
             for win in getattr(self, "transmission_windows", []):
                 if hasattr(win, "plot_widget") and win.plot_widget:

@@ -598,7 +598,7 @@ def simulate_growth_kernel(
     #       material.
     #
     # 🔴 Q3 SAID THE OPPOSITE AND IT WAS WRONG -- corrected 2026-08-19 on 👤's instruction:
-    # *"rate ne se calcule qu'avec les couches optiquement deposees"*. It used to read
+    # *"the rate is only computed with the optically deposited layers"*. It used to read
     # "it CHAINS: the last deposited layer is a reference, Rate ones included", and Rate
     # layers were indeed counted.
     #
@@ -635,7 +635,7 @@ def simulate_growth_kernel(
     # Rate tail it stops growing at the tail entry and the 1/sqrt(n) gain stops with it.
     #
     # ⚠️ THE ROUNDING IS NEGLIGIBLE AND NOTHING SHOULD BE BUILT ON IT -- 👤 2026-08-19:
-    # *"on ne tient pas compte du round, c'est d'un ordre superieur"*. An earlier version
+    # *"we do not take the rounding into account, it is of a higher order"*. An earlier version
     # of this comment claimed the rounding "IS 9bis-7's U(0, 0.125 nm) stopping law,
     # appearing on its own with no parameter to pose". That was an over-claim: 0.125 nm on
     # a layer of ~100 nm is 1.2e-3 relative, against an inherited scatter of 2e-2 at one
@@ -659,10 +659,10 @@ def simulate_growth_kernel(
         n_ref = 0
         acc = 0.0
         for j in range(i_layer - 2, -1, -2):        # same parity = same material
-            # 👤 2026-08-19 : « rate ne se calcule qu'avec les couches optiquement
-            # deposees ». Une couche Rate ne porte aucune mesure -- elle a ete posee EN
-            # AVEUGLE d'apres l'estimation courante, donc son ratio vaut cette estimation
-            # elle-meme. La reprendre comme reference, c'est se citer soi-meme.
+            # 👤 2026-08-19: "the rate is only computed with the optically deposited
+            # layers". A Rate layer carries no measurement -- it was laid BLIND from the
+            # current estimate, so its ratio equals that estimate itself. Taking it back as
+            # a reference is quoting oneself.
             if prev_rate_flags is not None and j < prev_rate_flags.shape[0] and prev_rate_flags[j]:
                 continue
             d_real_j = prev_thicknesses_sim[j]

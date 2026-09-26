@@ -234,7 +234,7 @@ class SmartInitPreviewManager:
             QMessageBox.warning(self.parent_worker, "Smart Init", "n / L sizes are inconsistent with sigma knots.")
             raise ValueError("n / L sizes are inconsistent with sigma knots")
 
-        self.rel_step = 0.005  # +/-0,5 % sur n et sur L = ln k
+        self.rel_step = 0.005  # +/-0.5 % on n and on L = ln k
         self.L_lo_g = float(self.grids["L_lo"])
         self.L_hi_g = float(self.grids["L_hi"])
         self._relax_si_mono = self.cfg.n_mono_band_nm is not None

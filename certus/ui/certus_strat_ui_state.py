@@ -228,22 +228,22 @@ class CertusStratStateMixin:
             "extrema_exclusion_ratio": "60.0",
             "nucleation_mc_runs": "40",
             "mining_candidates_limit": "3000",
-            # ── MODELE MACHINE : les six sources d'erreur, 2026-08-12 ──────────
+            # ── MACHINE MODEL: the six error sources, 2026-08-12 ──────────
             #
-            # 🔴 LES DEFAUTS SONT CEUX DE LA MACHINE REELLE, pas des valeurs neutres.
-            # Un champ vide ou a zero decrirait un instrument parfait qui n'existe pas,
-            # et c'est precisement ce que 👤 a demande de corriger: "je ne veux pas etre
-            # optimiste sur les fentes mais realiste", "les biais d'indice doivent
-            # toujours etre actifs, c'est la base", "le rate est le cas general".
+            # 🔴 THE DEFAULTS ARE THOSE OF THE REAL MACHINE, not neutral values.
+            # An empty or zero field would describe a perfect instrument that does not exist,
+            # and that is precisely what 👤 asked to correct: "I do not want to be optimistic
+            # about the slits but realistic", "the index biases must always be active, it is
+            # the basis", "rate is the general case".
             "slit_bias_enabled": "1",
             "monochromator_resolution_nm": "2.0",
             "search_resolution": "1",
             "index_corridor": "0.005",
             "photometric_curvature_amp": "0.00375",
             "allow_rate": "1",
-            # Les deux qui restent INACTIFS, et leur motif est dans CLAUDE.md:
-            # le lissage parce que les algorithmes de l'OMS ne sont pas connus,
-            # la grille machine parce que 👤 "on ne fait pas un calcul tous les 4 Hz".
+            # The two that stay INACTIVE, and their reason is in CLAUDE.md:
+            # the smoothing because the OMS algorithms are not known,
+            # the machine grid because 👤 "we do not run a calculation at every 4 Hz".
             "reading_smoothing_window": "1",
             "machine_sampling_dd": "0.0",
             "n_screen_runs": "25",
@@ -1232,11 +1232,11 @@ class CertusStratStateMixin:
             #
             # 🔴 Default FALSE. With the key absent the candidate list is untouched and
             # every downstream bit is what it was -- constraint C1.
-            # 🔴 LE WIDGET D'ABORD, comme les autres sources d'erreur. Cette ligne lisait
-            # UNIQUEMENT le fichier de design: le champ de l'interface affichait 1, le run
-            # tournait a False, et le bandeau d'etat disait "ACTIF". Trouve le 2026-08-12
-            # en verifiant que l'affichage correspond a ce que `collect_params` rend --
-            # un bandeau qui ment est pire que pas de bandeau du tout.
+            # 🔴 THE WIDGET FIRST, like the other error sources. This line read ONLY the
+            # design file: the interface field showed 1, the run went with False, and the
+            # status banner said "ACTIVE". Found on 2026-08-12 while checking that the display
+            # matches what `collect_params` returns -- a banner that lies is worse than no
+            # banner at all.
             "allow_rate": bool(self._get_float_safe(
                 "allow_rate",
                 _config_float(getattr(self, "_loaded_config", {}), "allow_rate", 1.0),
@@ -1258,11 +1258,10 @@ class CertusStratStateMixin:
             # an absent key must not read as "off". The defaults themselves changed on
             # 2026-08-12 to describe the real machine (bias on, Rate on, corridor on,
             # curvature on), so silence now means the realistic setting, not the empty one.
-            # 🔴 LE WIDGET FAIT FOI QUAND IL EXISTE. Sans cela l'utilisateur regle un
-            # champ dans l'interface, le run n'en tient pas compte, et rien ne le dit --
-            # exactement le mode de defaillance que ce depot documente. `_get_float_safe`
-            # rend le defaut quand le widget est absent (chemin sans interface), et le
-            # fichier de design reste la source dans ce cas.
+            # 🔴 THE WIDGET WINS WHEN IT EXISTS. Otherwise the user sets a field in the
+            # interface, the run ignores it, and nothing says so -- exactly the failure mode
+            # this repository documents. `_get_float_safe` returns the default when the
+            # widget is absent (headless path), and the design file stays the source then.
             "slit_bias_enabled": bool(self._get_float_safe(
                 "slit_bias_enabled",
                 1.0 if _config_flag_default(
@@ -1278,121 +1277,119 @@ class CertusStratStateMixin:
                 _config_float(getattr(self, "_loaded_config", {}),
                               "photometric_curvature_amp", PHOTOMETRIC_CURVATURE_AMP),
             )),
-            # Grille TMM : 0 = grille actuelle. 👤 "on ne fait pas un calcul tous les 4 Hz,
-            # c'est la base de ce code qui doit etre ultra rapide" -- donc 0 reste le defaut.
+            # TMM grid: 0 = current grid. 👤 "we do not run a calculation at every 4 Hz, the
+            # basis of this code is that it must be ultra fast" -- so 0 stays the default.
             "machine_sampling_dd": _config_float(
                 getattr(self, "_loaded_config", {}), "machine_sampling_dd", 0.0
             ),
-            # Porte de plantage : 0 = comparaison historique du taux ESTIME au seuil fixe,
-            # bit pour bit. Une valeur dans (0, 1) la remplace par une borne de confiance
-            # de Clopper-Pearson a ce niveau -- voir `_crash_gate_rejects`. Inactive par
-            # defaut, contrainte C1 : le correctif change tous les resultats, donc il doit
-            # etre ARME explicitement et mesure seul.
+            # Crash gate: 0 = historical comparison of the ESTIMATED rate with the fixed
+            # threshold, bit for bit. A value in (0, 1) replaces it by a Clopper-Pearson
+            # confidence bound at that level -- see `_crash_gate_rejects`. Inactive by
+            # default, constraint C1: the fix changes every result, so it must be ARMED
+            # explicitly and measured alone.
             "crash_gate_confidence": _config_float(
                 getattr(self, "_loaded_config", {}), "crash_gate_confidence", 0.0
             ),
-            # ── LES LEVIERS DE RECHERCHE, ROUTES DEPUIS LA CONFIGURATION ──────────
+            # ── THE SEARCH LEVERS, ROUTED FROM THE CONFIGURATION ──────────
             #
-            # 🔴 AUCUN DE CES HUIT N'ARRIVAIT JUSQU'AU CALCUL. Mesure du 2026-08-20 :
-            # on charge un JSON qui les porte tous, on lit `collect_params`, et DIX cles
-            # sur onze ressortent a `None`. Ils n'existaient que par surcharge de sonde --
-            # donc tout le savoir des campagnes etait inaccessible depuis l'application.
+            # 🔴 NONE OF THESE EIGHT REACHED THE COMPUTATION. Measured on 2026-08-20:
+            # a JSON carrying all of them is loaded, `collect_params` is read, and TEN keys
+            # out of eleven come back as `None`. They only existed through probe overrides --
+            # so all the knowledge of the campaigns was out of reach from the application.
             #
-            # 📏 Le cas qui l'a revele : `rate_tail_sweep` est la SEULE voie connue pour
-            # rendre `r75x2` deposable a 2 nm (SEEL 0,672, plantage 2,67 %, sous la cible
-            # de 5 % de 👤) -- et la production ne pouvait pas l'armer.
+            # 📏 The case that revealed it: `rate_tail_sweep` is the ONLY known way to make
+            # `r75x2` depositable at 2 nm (SEEL 0.672, crash 2.67 %, under the 5 % target
+            # of 👤) -- and production could not arm it.
             #
-            # 🔒 REGLE D'OR : chacun vaut sa valeur INACTIVE en l'absence de cle JSON, donc
-            # le chemin par defaut est celui d'avant, au bit. `[]` pour les balayages, 0
-            # pour les entiers, `False` pour les drapeaux -- exactement ce que le noyau
-            # recevait quand la cle n'existait nulle part.
-            # 🔑 LE MULTISEED AU CRIBLAGE -- l'etage ou les graines divergent.
+            # 🔒 GOLDEN RULE: each takes its INACTIVE value when the JSON key is absent, so
+            # the default path is the former one, to the bit. `[]` for the sweeps, 0 for the
+            # integers, `False` for the flags -- exactly what the kernel received when the
+            # key existed nowhere.
+            # 🔑 MULTISEED AT SCREENING -- the stage where the seeds diverge.
             #
-            # 📏 Mesure du 2026-08-21 sur `r75x2` a 2 nm, `deep` : les populations des graines
-            # 42 et 77 n'ont AUCUN prefixe commun. Par signature de plan exacte, nombre de
-            # blocs par nombre de blocs -- 46,7 % de signatures communes des le bloc 1, ou rien
-            # n'est pourtant encore herite, puis 7,4 %, puis ~1 %, puis 0 % au-dela de 11 blocs.
-            # Le criblage est le seul etage stochastique en amont, et ses survivants deviennent
-            # les `inherited_strategies` du bloc suivant ET les parents d'ELITE.
+            # 📏 Measured on 2026-08-21 on `r75x2` at 2 nm, `deep`: the populations of seeds
+            # 42 and 77 have NO common prefix. By exact plan signature, block count by block
+            # count -- 46.7 % of common signatures from block 1, where nothing is inherited yet,
+            # then 7.4 %, then ~1 %, then 0 % beyond 11 blocks. Screening is the only
+            # stochastic stage upstream, and its survivors become the `inherited_strategies`
+            # of the next block AND the ELITE parents.
             #
-            # 👤 2026-08-21 : « meme si le code en production est ralenti, ce sera un gain
-            # enorme d'inclure des strategies diverses venant de plusieurs seed ». La contrainte
-            # mono-graine est donc LEVEE, et ce reglage est la porte par laquelle elle le
-            # devient.
+            # 👤 2026-08-21: "even if the production code is slowed down, it will be a huge
+            # gain to include diverse strategies coming from several seeds". The single-seed
+            # constraint is therefore LIFTED, and this setting is the door through which it is.
             #
-            # 🔒 Chaine comme `consensus_seed_list`, et pour la meme raison : une liste de
-            # graines se lit et s'ecrit plus surement en « 42,77,101 » qu'en tableau JSON.
-            # Vide ⇒ un seul criblage a la graine du run ⇒ chemin d'avant AU BIT.
+            # 🔒 A string like `consensus_seed_list`, and for the same reason: a list of
+            # seeds reads and writes more reliably as "42,77,101" than as a JSON array.
+            # Empty ⇒ a single screening at the run's seed ⇒ former path TO THE BIT.
             "screen_seed_list": str(
                 getattr(self, "_loaded_config", {}).get("screen_seed_list", "")
             ),
-            # 🔑 INJECTER DES PLANS DONNES DANS LA POPULATION -- chemin ou liste de plans.
+            # 🔑 INJECT GIVEN PLANS INTO THE POPULATION -- a path or a list of plans.
             #
-            # 📏 Sur `r75x2` a 2 nm, quatre leviers de RECHERCHE ont rendu zero deposable a la
-            # graine 42 : plafond ELITE a 480, union de cinq criblages, porte a confiance,
-            # queue Rate. Une question ne bouge plus depuis deux jours et aucun levier de
-            # recherche ne peut y repondre -- la region saine existe-t-elle a cette graine ?
-            # Les 12 meilleurs plans de la graine 77 sont au disque avec leurs λ ; les verser
-            # dans la population et laisser le CHEMIN DE PRODUCTION les noter y repond.
+            # 📏 On `r75x2` at 2 nm, four SEARCH levers returned zero depositable at seed 42:
+            # ELITE cap at 480, union of five screenings, confidence gate, Rate tail. One
+            # question has not moved for two days and no search lever can answer it -- does
+            # the healthy region exist at this seed? The 12 best plans of seed 77 are on disk
+            # with their wavelengths; pouring them into the population and letting the
+            # PRODUCTION PATH score them answers it.
             #
-            # 🔒 Ils entrent par `inherited_strategies`, un canal qui existe deja et qui est
-            # deja teste : filtre sur `n_blocks == n_blk`, verification de contrat, criblage,
-            # notation. Aucun second chemin sur lequel se tromper -- contrairement au contexte
-            # reconstruit de `probe_renoter.py`, qui n'a jamais reproduit son point fixe.
+            # 🔒 They enter through `inherited_strategies`, a channel that already exists and
+            # is already tested: filter on `n_blocks == n_blk`, contract check, screening,
+            # scoring. No second path to get wrong -- unlike the rebuilt context of
+            # `probe_renoter.py`, which never reproduced its fixed point.
             #
-            # Vide ⇒ rien n'est ajoute ⇒ chemin d'avant AU BIT.
+            # Empty ⇒ nothing is added ⇒ former path TO THE BIT.
             "injected_strategies": str(
                 getattr(self, "_loaded_config", {}).get("injected_strategies", "")
             ),
-            # 🔑 DIVERSITE EN λ DU VIVIER DE PARENTS -- l'axe ou ELITE se deplace.
+            # 🔑 WAVELENGTH DIVERSITY OF THE PARENT POOL -- the axis along which ELITE moves.
             #
-            # 📏 Mesure du 2026-08-21 sur r75x2 a 2 nm, graine 42, avec l'instrument
-            # [ELITE-PARENTS] : les CINQ parents d'ELITE a dix blocs portaient UN SEUL jeu de
-            # λ. C'etaient des quasi-doublons d'une lignee -- on retire un bloc, on en duplique
-            # un, et c'est tout. `elite_parent_top_k` achete dix COPIES, pas dix DIRECTIONS,
-            # et `enable_block_diversity` ne l'empeche pas : il diversifie la PARTITION de
-            # blocs, un axe orthogonal a celui ou ELITE se deplace.
+            # 📏 Measured on 2026-08-21 on r75x2 at 2 nm, seed 42, with the [ELITE-PARENTS]
+            # instrument: the FIVE ten-block ELITE parents carried ONE SINGLE set of
+            # wavelengths. They were near-duplicates of one lineage -- one block removed, one
+            # duplicated, and that is all. `elite_parent_top_k` buys ten COPIES, not ten
+            # DIRECTIONS, and `enable_block_diversity` does not prevent it: it diversifies the
+            # block PARTITION, an axis orthogonal to the one along which ELITE moves.
             #
-            # C'est ce qui explique que quatre leviers d'elargissement aient rendu ZERO
-            # deposable : un plafond plus grand, une portee plus large et cinq graines
-            # cherchent tous plus fort AUTOUR DU MEME POINT.
+            # That is what explains why four widening levers returned ZERO depositable: a
+            # larger cap, a wider span and five seeds all search harder AROUND THE SAME POINT.
             #
-            # 📏 Et le budget de l'etalement est deja depense -- en redondance. La Phase A
-            # declare une MEDIANE de 86 λ admissibles par couche ; la recherche en produit 14
-            # a 29 par nombre de blocs, soit ~5 a 7 strategies PAR λ.
+            # 📏 And the spreading budget is already spent -- on redundancy. Phase A declares a
+            # MEDIAN of 86 admissible wavelengths per layer; the search produces 14 to 29 per
+            # block count, i.e. ~5 to 7 strategies PER wavelength.
             #
-            # 🔒 INERTE PAR DEFAUT : sans la cle, chemin d'avant AU BIT.
-            # ⚠️ Et elle ne fabrique rien : elle CHOISIT. Sur ce composant la famille gagnante
-            # exige 450 nm, absente des 1617 strategies -- etaler est necessaire et NON
-            # suffisant.
+            # 🔒 INERT BY DEFAULT: without the key, former path TO THE BIT.
+            # ⚠️ And it fabricates nothing: it CHOOSES. On this component the winning family
+            # requires 450 nm, absent from the 1617 strategies -- spreading is necessary and
+            # NOT sufficient.
             "enable_wl_diversity": _config_flag(
                 getattr(self, "_loaded_config", {}), "enable_wl_diversity", False
             ),
-            # 🔴 ZERO, JAMAIS None. `params.get(cle, defaut)` rend None quand la cle EXISTE
-            # avec la valeur None -- il ne retombe PAS sur le defaut. Un `int(None)` leverait,
-            # et seulement sur le chemin arme, donc invisible a la suite de tests.
+            # 🔴 ZERO, NEVER None. `params.get(key, default)` returns None when the key EXISTS
+            # with the value None -- it does NOT fall back on the default. An `int(None)` would
+            # raise, and only on the armed path, hence invisible to the test suite.
             "wl_diversity_top_k": int(
                 _config_float(getattr(self, "_loaded_config", {}), "wl_diversity_top_k", 0.0)
             ),
-            # 🔑 LA COUVERTURE EN λ. Elle FORCE une λ admissible que les `top_k` groupements
-            # n'emploient pas, en restreignant une couche de la `cost_map` a cette seule λ, et
-            # laisse la DP re-optimiser le reste du plan. C'est la difference avec une mutation
-            # ELITE, qui casse la coherence du plan.
-            # 📏 Mecanisme mesure le 2026-08-21 sur `r75x2` a 2 nm, plage complete, graine 42 :
-            # au bloc 15, 140 λ deja employees, 763 absentes, **300 ajoutees, 0 infaisable**, et
-            # la population passe de 601 a 901 groupements. Forcer une λ est donc faisable, et
-            # la passe atteint bien le calcul.
-            # 🔒 INERTE PAR DEFAUT : sans la cle, chemin d'avant AU BIT.
-            # ⚠️ Elle n'etait atteignable QUE par `CERTUS_PROBE_OVERRIDES` avant ce routage --
-            # mesurable, pas livrable. C'est le motif inverse de `fast_auto_blocks` : la ou
-            # celui-ci est pose et jamais lu, celui-la etait lu et jamais posable.
+            # 🔑 WAVELENGTH COVERAGE. It FORCES an admissible wavelength that the `top_k`
+            # groupings do not use, by restricting one layer of the `cost_map` to that single
+            # wavelength, and lets the DP re-optimise the rest of the plan. That is the difference
+            # with an ELITE mutation, which breaks the coherence of the plan.
+            # 📏 Mechanism measured on 2026-08-21 on `r75x2` at 2 nm, full range, seed 42:
+            # at block 15, 140 wavelengths already used, 763 absent, **300 added, 0 infeasible**,
+            # and the population goes from 601 to 901 groupings. Forcing a wavelength is therefore
+            # feasible, and the pass does reach the computation.
+            # 🔒 INERT BY DEFAULT: without the key, former path TO THE BIT.
+            # ⚠️ It was reachable ONLY through `CERTUS_PROBE_OVERRIDES` before this routing --
+            # measurable, not deliverable. It is the reverse pattern of `fast_auto_blocks`: where
+            # that one is set and never read, this one was read and never settable.
             "enable_wl_coverage": _config_flag(
                 getattr(self, "_loaded_config", {}), "enable_wl_coverage", False
             ),
-            # 🔴 ZERO, JAMAIS None -- meme piege que `wl_diversity_top_k` ci-dessus, et il ne
-            # leverait que sur le chemin arme. A zero, le consommateur retombe sur `dp_top_k`.
-            # ⚠️ Le noyau ECRETE ensuite a la largeur de la plage d'identifiants reservee (100
-            # par origine) et le journalise : le plafond dur n'est pas un reglage de recherche.
+            # 🔴 ZERO, NEVER None -- same trap as `wl_diversity_top_k` above, and it would
+            # only raise on the armed path. At zero, the consumer falls back on `dp_top_k`.
+            # ⚠️ The kernel then CLIPS it to the width of the reserved identifier range (100
+            # per origin) and logs it: the hard cap is not a search setting.
             "wl_coverage_top_k": int(
                 _config_float(getattr(self, "_loaded_config", {}), "wl_coverage_top_k", 0.0)
             ),
@@ -1414,33 +1411,33 @@ class CertusStratStateMixin:
             "optical_prefix_sweep": _config_list_int(
                 getattr(self, "_loaded_config", {}), "optical_prefix_sweep"
             ),
-            # ⚠️ `elite_min_improvement` est ECRETE A ZERO par
-            # `certus_strat_consensus.py:208` (`max(0.0, ...)`), donc il ne peut que DURCIR
-            # la porte ELITE, jamais la desserrer. Le router ici le rend au moins reglable ;
-            # lever l'ecretage est une decision separee, a mesurer (plan §10, A0bis).
+            # ⚠️ `elite_min_improvement` is CLIPPED AT ZERO by
+            # `certus_strat_consensus.py` (`max(0.0, ...)`), so it can only TIGHTEN the
+            # ELITE gate, never loosen it. Routing it here at least makes it settable; lifting
+            # the clipping is a separate decision, to be measured (plan §10, A0bis).
             "elite_min_improvement": _config_float(
                 getattr(self, "_loaded_config", {}), "elite_min_improvement", 0.0
             ),
-            # ── LES CINQ LEVIERS DU RAFFINEMENT ELITE ─────────────────────────────
+            # ── THE FIVE LEVERS OF THE ELITE REFINEMENT ─────────────────────────────
             #
-            # 🔑 POURQUOI CEUX-LA EN PARTICULIER. Sur `r75x2` a 2 nm, ELITE est le SEUL
-            # generateur qui produise des strategies deposables : toutes les autres familles
-            # (RATE_L*, SMART_MERGE, SYM, THICKNESS²) en rendent zero, aux deux graines
-            # mesurees. Et il rend 743 strategies a une graine, ZERO a l'autre.
+            # 🔑 WHY THESE ONES IN PARTICULAR. On `r75x2` at 2 nm, ELITE is the ONLY
+            # generator that produces depositable strategies: all the other families
+            # (RATE_L*, SMART_MERGE, SYM, THICKNESS²) return zero, at both measured seeds.
+            # And it returns 743 strategies at one seed, ZERO at the other.
             #
-            # 📏 Ce que le journal montre, et qui dessine une recherche locale timide :
-            #     elite_wl_neighbor_span = 1     -> on n'essaie que lambda ± 1 nm par bloc
-            #     elite_max_candidates   = 120   -> mais le journal mesure `generated=9`
-            #     elite_stop_on_no_gain  = True  -> UN round sterile arrete TOUT, les
-            #                                        rounds 2 et 3 ne tournent jamais
+            # 📏 What the log shows, and it draws a timid local search:
+            #     elite_wl_neighbor_span = 1     -> only lambda ± 1 nm is tried per block
+            #     elite_max_candidates   = 120   -> but the log measures `generated=9`
+            #     elite_stop_on_no_gain  = True  -> ONE sterile round stops EVERYTHING,
+            #                                        rounds 2 and 3 never run
             #
-            # ⚠️ AUCUN N'EST ENCORE ETABLI COMME LA CAUSE. Les compteurs de rejets poses
-            # dans `certus_strat_consensus.py` le diront. Les router ne prejuge de rien --
-            # cela rend seulement l'hypothese TESTABLE, ce qu'elle n'etait pas.
+            # ⚠️ NONE IS YET ESTABLISHED AS THE CAUSE. The rejection counters placed in
+            # `certus_strat_consensus.py` will tell. Routing them prejudges nothing --
+            # it only makes the hypothesis TESTABLE, which it was not.
             #
-            # 🔒 Chacun vaut son defaut historique en l'absence de cle JSON : le chemin par
-            # defaut est celui d'avant, au bit. `_config_flag_default` pour le drapeau,
-            # dont l'ABSENCE doit rendre `True` et non `False`.
+            # 🔒 Each takes its historical default when the JSON key is absent: the default
+            # path is the former one, to the bit. `_config_flag_default` for the flag,
+            # whose ABSENCE must give `True`, not `False`.
             "elite_wl_neighbor_span": int(
                 _config_float(getattr(self, "_loaded_config", {}), "elite_wl_neighbor_span", 1.0)
             ),
@@ -1453,14 +1450,14 @@ class CertusStratStateMixin:
             "elite_max_full_evals": int(
                 _config_float(getattr(self, "_loaded_config", {}), "elite_max_full_evals", 36.0)
             ),
-            # 🔴 `elite_num_runs` N'EST DELIBEREMENT PAS ROUTE, et c'est la regle d'or qui
-            # l'interdit. Le noyau fait `max(10, params.get("elite_num_runs", min(num_runs,
-            # 80)))` : son defaut DEPEND de `num_runs`, donc du mode -- 80 en `deep`. Le
-            # router avec un defaut de 0 rendrait `max(10, 0) = 10` en l'absence de cle
-            # JSON, soit un HUITIEME de la profondeur historique, et le chemin par defaut
-            # cesserait d'etre celui d'avant. Il faudrait pour cela un sentinelle `None`
-            # traitee cote noyau -- une modification separee, a faire seule si elle est
-            # jugee utile. Les quatre leviers ci-dessus suffisent a tester l'hypothese.
+            # 🔴 `elite_num_runs` IS DELIBERATELY NOT ROUTED, and the golden rule is what
+            # forbids it. The kernel does `max(10, params.get("elite_num_runs", min(num_runs,
+            # 80)))`: its default DEPENDS on `num_runs`, hence on the mode -- 80 in `deep`.
+            # Routing it with a default of 0 would give `max(10, 0) = 10` without a JSON key,
+            # i.e. one EIGHTH of the historical depth, and the default path would stop being
+            # the former one. That would need a `None` sentinel handled on the kernel side --
+            # a separate change, to be made alone if it is judged useful. The four levers
+            # above are enough to test the hypothesis.
             # ── AXIS 3: the spectral target, routed from the configuration ───
             #
             # 👤 "The most important is the respected spectral target." STRAT ranked
@@ -1482,15 +1479,14 @@ class CertusStratStateMixin:
             "force_first_layer_same_wl": True,
             "include_secondary_rmse_stats": bool(self._get_float_safe("include_secondary_rmse_stats", 0)),
             "keep_full_mc_top_k": int(self._get_float_safe("keep_full_mc_top_k", 30)),
-            # 🔴 LA GRAINE N'ETAIT PAS LISIBLE DEPUIS LE JSON, et c'est le defaut le plus
-            # couteux trouve le 2026-08-20. `_get_float_safe` cherche un WIDGET de ce nom ;
-            # il n'en existe aucun (0 declaration dans tout certus/ui/), donc elle valait
-            # TOUJOURS 42 quoi que porte la configuration. Onze autres cles se replient
-            # pourtant sur `_loaded_config` deux lignes plus haut -- la graine etait la
-            # grande absente. Consequence mesuree : la meilleure configuration connue de
-            # `r75x2` (SEEL 0,5692, graine 77) etait STRUCTURELLEMENT hors de portee de la
-            # production, qui ne pouvait tirer qu'un seul billet, toujours le meme.
-            # 🔒 Sans widget ET sans cle JSON, la valeur reste 42 : chemin d'avant au bit.
+            # 🔴 THE SEED COULD NOT BE READ FROM THE JSON, and it is the most costly defect
+            # found on 2026-08-20. `_get_float_safe` looks for a WIDGET of that name; there is
+            # none (0 declarations in all of certus/ui/), so it was ALWAYS 42 whatever the
+            # configuration carried. Eleven other keys fall back on `_loaded_config` two lines
+            # above -- the seed was the one missing. Measured consequence: the best known
+            # configuration of `r75x2` (SEEL 0.5692, seed 77) was STRUCTURALLY out of reach of
+            # production, which could only draw a single ticket, always the same one.
+            # 🔒 Without a widget AND without a JSON key, the value stays 42: former path to the bit.
             "robustness_seed": int(
                 self._get_float_safe("robustness_seed", 0)
                 or _config_float(getattr(self, "_loaded_config", {}), "robustness_seed", 0.0)

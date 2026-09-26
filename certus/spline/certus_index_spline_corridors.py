@@ -966,7 +966,7 @@ class _CorridorWorkerMixin:
         if spec_order.size != nu:
             spec_order = np.arange(nu, dtype=np.int64)
 
-        # lam_s / n_s / k_s viennent de _spectral_display_align : d?j? co-lin?aires et tri?s par lambda.
+        # lam_s / n_s / k_s come from _spectral_display_align: already co-linear and sorted by lambda.
         # spec_order is used only to reorder corridor bands stored as n_lam (raw order before sorting).
         lam_f = np.asarray(lam_s, dtype=np.float64).ravel()
         n_f = np.asarray(n_s, dtype=np.float64).ravel()

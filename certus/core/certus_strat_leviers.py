@@ -1,34 +1,36 @@
-"""LES LEVIERS DE RATE ET DE MULTI-TEMOIN -- un registre, et un seul.
+"""THE RATE AND MULTIPLE-TESTGLASS LEVERS -- one registry, and only one.
 
-## POURQUOI CE FICHIER EXISTE
+## WHY THIS FILE EXISTS
 
-👤, 2026-08-22 : *« améliore strat avec toutes les subtilités du rate et du multi témoin pour
-une version ultra complète »*.
+👤, 2026-08-22: *"improve strat with all the subtleties of rate and of the multiple testglass
+for an ultra complete version"*.
 
-📏 L'audit du meme jour a trouve que la production n'utilise presque RIEN du savoir accumule :
-`rate_by_swing` ecrit, teste et **eteint** ; `rate_tail_sweep` -- celui-la meme qui rend le
-`r75x2` fabricable a 2 nm -- **eteint** ; le multi-Rate outille le 18/08 et **inerte**. Tout est
-derriere un drapeau a `False`, et rien dans l'interface ne le disait.
+📏 The audit of the same day found that production uses almost NONE of the accumulated
+knowledge: `rate_by_swing` written, tested and **switched off**; `rate_tail_sweep` -- the very
+one that makes `r75x2` manufacturable at 2 nm -- **switched off**; the multi-Rate tooled on
+08-18 and **inert**. Everything is behind a flag set to `False`, and nothing in the interface
+said so.
 
-## 🔴 CE QUE « ULTRA COMPLETE » NE PEUT PAS VOULOIR DIRE
+## 🔴 WHAT "ULTRA COMPLETE" CANNOT MEAN
 
-**Tout allumer par defaut.** Chaque levier CHANGE LA RECHERCHE : les activer invaliderait en
-silence toute comparaison avec les mesures existantes -- et ce depot compte ses mesures en
-journees de calcul. Le dossier a d'ailleurs ecrit les criteres d'acceptation A L'AVANCE pour
-plusieurs d'entre eux ; les allumer sans les appliquer les gaspillerait.
+**Switching everything on by default.** Each lever CHANGES THE SEARCH: activating them would
+silently invalidate every comparison with the existing measurements -- and this repository
+counts its measurements in days of computation. The dossier also wrote the acceptance
+criteria IN ADVANCE for several of them; switching them on without applying those criteria
+would waste them.
 
-**Ultra complete veut donc dire : chaque levier ATTEIGNABLE, VISIBLE, et accompagne de ce que
-la mesure en dit.** L'utilisateur arme en connaissance de cause, ou n'arme pas.
+**Ultra complete therefore means: every lever REACHABLE, VISIBLE, and accompanied by what the
+measurement says about it.** The user arms knowingly, or does not arm.
 
-## 🔑 ET CE REGISTRE EST LA SOURCE UNIQUE
+## 🔑 AND THIS REGISTRY IS THE SINGLE SOURCE
 
-Il est lu par l'interface (pour construire le panneau) ET par les tests (qui confrontent chaque
-`defaut` declare ici a la valeur REELLE du noyau). Un defaut qui changerait dans
-`certus_strat_robustness.py` sans changer ici ferait **echouer un test** : l'interface ne peut
-donc pas mentir sur ce que la production fait.
+It is read by the interface (to build the panel) AND by the tests (which confront every
+`defaut` declared here with the REAL value of the kernel). A default that changed in
+`certus_strat_robustness.py` without changing here would **fail a test**: the interface
+therefore cannot lie about what production does.
 
-C'est la meme regle que le reste du depot -- *un fait, un seul endroit* -- appliquee a des
-reglages dont l'utilisateur ne peut pas verifier l'effet a l'oeil.
+It is the same rule as the rest of the repository -- *one fact, one place* -- applied to
+settings whose effect the user cannot check by eye.
 """
 
 from __future__ import annotations
@@ -36,43 +38,43 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-#: 🟢 mesure a l'appui, l'armer est defendable
+#: 🟢 backed by a measurement, arming it is defensible
 VALIDE = "valide"
-#: 🟠 mesure a l'appui, mais une reserve connue -- lire `reserve` avant d'armer
+#: 🟠 backed by a measurement, but with a known caveat -- read `reserve` before arming
 RESERVE = "reserve"
-#: 🔵 ecrit et teste, JAMAIS mesure en production -- armer, c'est ouvrir une mesure
+#: 🔵 written and tested, NEVER measured in production -- arming it opens a measurement
 NON_MESURE = "non_mesure"
-#: 🔒 outil de dernier recours : mesure comme NUISIBLE hors de son cas d'emploi
+#: 🔒 last-resort tool: measured as HARMFUL outside its use case
 DERNIER_RECOURS = "dernier_recours"
 
 
 @dataclass(frozen=True)
 class Levier:
-    """Un reglage, sa valeur de production, et ce que la mesure en dit."""
+    """A setting, its production value, and what the measurement says about it."""
 
     cle: str
     libelle: str
-    #: La valeur EFFECTIVE en production. 🔴 Confrontee au noyau par un test.
+    #: The EFFECTIVE value in production. 🔴 Confronted with the kernel by a test.
     defaut: Any
-    #: `bool`, `int`, `float` ou `liste` (chaine separee par des `;`).
+    #: `bool`, `int`, `float` or `liste` (string separated by `;`).
     genre: str
     statut: str
-    #: Ce que la mesure etablit. Une phrase, avec ses chiffres.
+    #: What the measurement establishes. One sentence, with its figures.
     mesure: str
-    #: Ce qu'il faut savoir AVANT d'armer. Vide si rien.
+    #: What must be known BEFORE arming. Empty if nothing.
     reserve: str = ""
-    #: Le critere d'acceptation ecrit d'avance, quand le dossier en pose un.
+    #: The acceptance criterion written in advance, when the dossier sets one.
     critere: str = ""
     famille: str = "rate"
-    #: Constantes du noyau non atteignables par configuration.
+    #: Kernel constants that no configuration can reach.
     constante: bool = False
 
 
-#: 🔴 CHAQUE `defaut` CI-DESSOUS EST CONFRONTE AU NOYAU PAR
-#: `tests/unit/test_strat_leviers.py`. Ne pas le modifier sans modifier le noyau, et
-#: reciproquement.
+#: 🔴 EVERY `defaut` BELOW IS CONFRONTED WITH THE KERNEL BY
+#: `tests/unit/test_strat_leviers.py`. Do not change it without changing the kernel, and
+#: vice versa.
 LEVIERS: tuple[Levier, ...] = (
-    # ---------------------------------------------------------------- RATE : le mecanisme
+    # ---------------------------------------------------------------- RATE: the mechanism
     Levier(
         cle="allow_rate",
         libelle="Autoriser le Rate (quartz / chrono)",
@@ -86,7 +88,7 @@ LEVIERS: tuple[Levier, ...] = (
                 "ouverte vers la couche suivante. Une gagnante qui porte un Rate n'est pas la "
                 "meme promesse pour l'atelier qu'une gagnante en pur optique.",
     ),
-    # ---------------------------------------------------------------- RATE : le placement
+    # ---------------------------------------------------------------- RATE: the placement
     Levier(
         cle="rate_by_swing",
         libelle="Placer le Rate ou il est NECESSAIRE (swing faible)",
@@ -121,7 +123,7 @@ LEVIERS: tuple[Levier, ...] = (
                 "l'augmenter les restreint tous les deux. Un reglage, deux effets -- ne pas "
                 "l'ajuster pour le Rate sans regarder ce qu'il fait a la Phase A.",
     ),
-    # ---------------------------------------------------------------- RATE : les plafonds
+    # ---------------------------------------------------------------- RATE: the caps
     Levier(
         cle="rate_max_variants_per_strategy",
         libelle="Variantes Rate par strategie",
@@ -158,7 +160,7 @@ LEVIERS: tuple[Levier, ...] = (
         reserve="Au-dela de 1, le nombre de variantes explose combinatoirement. Jamais mesure "
                 "en production.",
     ),
-    # ---------------------------------------------------------------- RATE : la queue
+    # ---------------------------------------------------------------- RATE: the tail
     Levier(
         cle="rate_tail_sweep",
         libelle="Queue Rate (hybride optique-puis-Rate)",
@@ -173,7 +175,7 @@ LEVIERS: tuple[Levier, ...] = (
         reserve="🔴 C'EST UNE AFFAIRE DE 2 nm. A 1 nm, le pur optique la BAT. Et le SEEL "
                 "obtenu (0,68-0,69) est +18 % au-dessus de la voie avec rampes.",
     ),
-    # ---------------------------------------------------------------- RATE : les constantes
+    # ---------------------------------------------------------------- RATE: the constants
     Levier(
         cle="RATE_MIN_LAYER",
         libelle="Premiere couche ou le Rate est permis",
@@ -229,10 +231,10 @@ LEVIERS: tuple[Levier, ...] = (
     ),
 )
 
-#: Index par cle, pour les lectures ponctuelles.
+#: Index by key, for one-off lookups.
 PAR_CLE: dict[str, Levier] = {lv.cle: lv for lv in LEVIERS}
 
-#: Les libelles courts des statuts, pour l'interface.
+#: The short labels of the statuses, for the interface.
 LIBELLE_STATUT: dict[str, str] = {
     VALIDE: "🟢 valide",
     RESERVE: "🟠 mesure, avec reserve",
@@ -246,12 +248,12 @@ def leviers_de(famille: str) -> tuple[Levier, ...]:
 
 
 def surcharges_non_defaut(valeurs: dict[str, Any]) -> dict[str, Any]:
-    """Ce qui s'ecarte de la production, et rien d'autre.
+    """What departs from production, and nothing else.
 
-    🔑 Sert a construire `CERTUS_PROBE_OVERRIDES` : un levier laisse a son defaut ne doit PAS
-    entrer dans la surcharge, sinon l'artefact porterait une etiquette et se croirait different
-    d'un run nominal -- alors qu'il en serait le jumeau. Ce depot a deja perdu des mesures pour
-    des artefacts indiscernables.
+    🔑 Used to build `CERTUS_PROBE_OVERRIDES`: a lever left at its default must NOT enter
+    the override, otherwise the artefact would carry a label and believe itself different
+    from a nominal run -- while being its twin. This repository has already lost
+    measurements to indistinguishable artefacts.
     """
     out: dict[str, Any] = {}
     for cle, val in valeurs.items():

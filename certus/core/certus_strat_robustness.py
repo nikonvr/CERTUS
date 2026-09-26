@@ -181,7 +181,7 @@ RESOLUTION_NOISE_FACTOR: dict[float, float] = {5.0: 1.0 / 1.5, 2.0: 1.0, 1.0: 2.
 #: Nominal slit, the one the measured noise amplitude corresponds to (👤 2026-08-09).
 NOMINAL_RESOLUTION_NM: float = 2.0
 
-# 👤 "et bien evidemment les biais d'indice doivent etre toujours actifs, c'est la base"
+# 👤 "and of course the index biases must always be active, it is the basis"
 # (2026-08-12). The indices are PRESUPPOSED, known to +/-0.005 in absolute index units --
 # 12.3. A default of 0 describes a machine whose materials are known exactly, which is
 # not a machine. Like the slit bias and Rate, this breaks C1 deliberately: the historical
@@ -505,9 +505,9 @@ def _prepare_robustness_inputs(
                 _st["slit_profile"] = None                    # for that strategy alone
         n_ok = sum(1 for _st in all_strategies if _st.get("slit_profile") is not None)
         logger.info(
-            f"[SLIT] biais de fente actif, {n_ok}/{len(all_strategies)} strategies "
-            f"-- fente {_slit_b:g} nm, profil de {SLIT_PROFILE_NODES} noeuds, "
-            f"{len(_SLIT_PROFILE_CACHE) - _n_before} profils NEUFS en "
+            f"[SLIT] slit bias active, {n_ok}/{len(all_strategies)} strategies "
+            f"-- slit {_slit_b:g} nm, profile of {SLIT_PROFILE_NODES} nodes, "
+            f"{len(_SLIT_PROFILE_CACHE) - _n_before} NEW profiles in "
             f"{time.perf_counter() - _t0:.1f} s (cache: {len(_SLIT_PROFILE_CACHE)})"
         )
     return all_strategies, noise_levels or [], p_thick_nominal, num_layers
@@ -517,22 +517,22 @@ def _prepare_robustness_inputs(
 #: 👤 asked for the trial "on the 10 best strategies", not on everything: an unbounded
 #: expansion costs a factor 6 on the whole Monte-Carlo for candidates nobody asked about.
 def _resolve_witness_resets(raw: Any) -> list[int]:
-    """MULTIPLE-TESTGLASS : accepte une liste, ou une chaine separee par `;` ou `,`.
+    """MULTIPLE-TESTGLASS: accepts a list, or a string separated by `;` or `,`.
 
-    🔑 POURQUOI CETTE FORME DE CHAINE EXISTE. 👤, 2026-08-22 : *« un utilisateur ne sait pas au
-    debut si le multi-temoin sera necessaire, donc il faut le rajouter »*. Pour qu'un
-    orchestrateur puisse l'armer sans ecrire un fichier de configuration, il faut qu'il passe
-    par le canal des surcharges -- lequel ne transporte que des SCALAIRES. Une chaine est donc
-    le seul vehicule, et ce resolveur en fait une liste.
+    🔑 WHY THIS STRING FORM EXISTS. 👤, 2026-08-22: *"a user does not know at the start
+    whether the multiple testglass will be needed, so it must be addable"*. For an
+    orchestrator to arm it without writing a configuration file, it has to go through the
+    override channel -- which carries SCALARS only. A string is therefore the only
+    vehicle, and this resolver turns it into a list.
 
-    ⚠️ Le separateur `;` est prefere a `,` parce que le parseur de surcharges de
-    `probe_blocs_vs_plantage.py` decoupe deja sur les virgules : une liste ecrite avec des
-    virgules y serait hachee avant meme d'arriver ici. Les deux sont acceptes malgre tout, pour
-    qu'un fichier de configuration ecrit a la main ne surprenne personne.
+    ⚠️ The `;` separator is preferred to `,` because the override parser of
+    `probe_blocs_vs_plantage.py` already splits on commas: a list written with commas
+    would be chopped up before it even got here. Both are accepted anyway, so that a
+    hand-written configuration file surprises nobody.
 
-    🔒 INERTE PAR DEFAUT : absent, vide ou illisible rend `[]`, ce qui reproduit le
-    comportement mono-temoin AU BIT PRES. Ce resolveur ne peut donc pas changer une mesure
-    existante.
+    🔒 INERT BY DEFAULT: absent, empty or unreadable returns `[]`, which reproduces the
+    single-testglass behaviour BIT FOR BIT. This resolver therefore cannot change an
+    existing measurement.
     """
     if raw is None or raw == "" or raw == []:
         return []
@@ -550,19 +550,19 @@ def _resolve_witness_resets(raw: Any) -> list[int]:
             v = int(float(m))
         except (TypeError, ValueError):
             continue
-        # 🔴 L'index 0 n'a aucun sens et il est ecarte : la couche 0 pousse deja sur verre nu.
+        # 🔴 Index 0 is meaningless and is dropped: layer 0 already grows on bare glass.
         if v > 0 and v not in out:
             out.append(v)
     return sorted(out)
 
 
-#: 🔴 PORTE DE 3 A 40 LE 2026-08-22, avec `RATE_VARIANT_TOP_N_DEFAUT`. Les deux vont
-#: ENSEMBLE : 40 variantes sur 50 parents coutent 2 000 evaluations, contre 12 923 pour
-#: 3 variantes sur tous. On explore treize fois plus profondement pour six fois moins cher.
+#: 🔴 RAISED FROM 3 TO 40 ON 2026-08-22, together with `RATE_VARIANT_TOP_N_DEFAUT`. The two go
+#: TOGETHER: 40 variants on 50 parents cost 2 000 evaluations, against 12 923 for 3 variants
+#: on all of them. The search goes thirteen times deeper for one sixth of the cost.
 RATE_MAX_VARIANTS_PER_STRATEGY: int = 40
 
-#: Combien de strategies, parmi les mieux classees, recoivent des variantes Rate.
-#: `0` = toutes, le comportement d'avant le 2026-08-22.
+#: How many strategies, among the best ranked, receive Rate variants.
+#: `0` = all of them, the behaviour before 2026-08-22.
 RATE_VARIANT_TOP_N_DEFAUT: int = 50
 
 #: Below this many layers per block, a "block boundary" says nothing -- every layer is
@@ -578,23 +578,23 @@ RATE_MIN_LAYERS_PER_BLOCK: float = 3.0
 RATE_SWING_MIN_DEFAULT: float = 0.025
 
 
-#: 👤 2026-08-19 : « rate est interdit sur les 2 premieres couches ! mais absolument pas la
-#: derniere ». Les deux bornes du code etaient FAUSSES, et en sens opposes.
+#: 👤 2026-08-19: "rate is forbidden on the first 2 layers! but absolutely not on the
+#: last one". Both bounds of the code were WRONG, in opposite directions.
 #:
-#: 🔑 LA BORNE BASSE A UNE RAISON PHYSIQUE, et elle donne exactement 2. Le facteur de rate se
-#: calcule sur les couches de MEME PARITE deposees AVANT la couche i
-#: (`certus_strat_growth.py:634`, `range(i_layer-2, -1, -2)`). Pour i = 0 et i = 1 cette boucle
-#: est vide : `n_ref = 0`, la machine n'a jamais rien depose dont elle puisse tirer un rate.
+#: 🔑 THE LOWER BOUND HAS A PHYSICAL REASON, and it gives exactly 2. The rate factor is
+#: computed on the layers of the SAME PARITY deposited BEFORE layer i
+#: (`certus_strat_growth.py`, `range(i_layer-2, -1, -2)`). For i = 0 and i = 1 that loop is
+#: empty: `n_ref = 0`, the machine has deposited nothing it could derive a rate from.
 #:
-#: 🔴 ET LE NOYAU NE LE REFUSAIT PAS -- il retombait SILENCIEUSEMENT sur POEM (garde `n_ref > 0`,
-#: ligne 640). Une variante etiquetee `RATE_L1` simulait donc du POEM pur. 📏 Mesure du
-#: 2026-08-19 sur 24 581 placements : la couche 1 a bien ete proposee 2 fois. Deux resultats
-#: portaient une etiquette qui mentait sur ce qui avait tourne. On refuse desormais en amont.
+#: 🔴 AND THE KERNEL DID NOT REFUSE IT -- it fell back SILENTLY on POEM (guard `n_ref > 0`).
+#: A variant labelled `RATE_L1` therefore simulated pure POEM. 📏 Measured on 2026-08-19 over
+#: 24 581 placements: layer 1 was indeed proposed twice. Two results carried a label that
+#: lied about what had run. It is now refused upstream.
 RATE_MIN_LAYER: int = 2
 
 
 def _wl_de_la_couche(strategy: dict[str, Any], layer: int) -> float | None:
-    """La lambda que la strategie surveille pour cette couche, ou None hors de tout bloc."""
+    """The wavelength the strategy monitors for this layer, or None outside any block."""
     for blk in strategy.get("blocks") or []:
         if int(blk.get("start", 0)) <= layer < int(blk.get("end", 0)):
             wl = blk.get("wavelength")
@@ -628,8 +628,8 @@ def _rate_swing_candidates(strategy: dict[str, Any], num_layers: int,
             layer_to_wl[layer] = float(wl)
 
     out: list[int] = []
-    # 👤 2026-08-19 : la derniere couche N'EST PLUS exclue (elle l'etait, « same final-layer
-    # exclusion as A24 »), et les deux premieres le sont desormais explicitement.
+    # 👤 2026-08-19: the last layer is NO LONGER excluded (it was, "same final-layer
+    # exclusion as A24"), and the first two now are, explicitly.
     for layer in range(RATE_MIN_LAYER, num_layers):
         wl = layer_to_wl.get(layer)
         if wl is None:
@@ -652,8 +652,8 @@ def _rate_candidate_layers(strategy: dict[str, Any], num_layers: int,
     did. 14-10 lists three costs for a Rate layer and a block boundary already pays two
     of them: the lost anchors, and the turning-point count that restarts anyway.
 
-    🔴 THE FINAL-LAYER EXCLUSION IS GONE -- 👤 2026-08-19: *"rate est interdit sur les 2
-    premieres couches ! mais absolument pas la derniere"*. It had been excluded on the grounds
+    🔴 THE FINAL-LAYER EXCLUSION IS GONE -- 👤 2026-08-19: *"rate is forbidden on the first 2
+    layers! but absolutely not on the last one"*. It had been excluded on the grounds
     that "the two pull opposite ways", which was never a reason to forbid, only a reason to
     measure. 📏 And the measurement now says the exclusion was removing the BEST candidate:
     across 24 581 observed placements the final layer appeared **0 times** while the
@@ -687,17 +687,17 @@ def _rate_candidate_layers(strategy: dict[str, Any], num_layers: int,
         for blk in blocks:
             end = int(blk.get("end", 0))
             last = end - 1                       # last layer of this block
-            # 👤 2026-08-19, GRAVE : interdit sur les 2 premieres couches, autorise partout
-            # ailleurs -- la derniere COMPRISE. L'ancienne borne `< num_layers - 1` excluait
-            # la derniere et laissait passer les couches 0 et 1.
+            # 👤 2026-08-19, ENGRAVED: forbidden on the first 2 layers, allowed everywhere
+            # else -- the last one INCLUDED. The former bound `< num_layers - 1` excluded the
+            # last layer and let layers 0 and 1 through.
             if RATE_MIN_LAYER <= last < num_layers:
                 out.append(last)
-    # 🔴 LES DEUX CRITERES SE PARTAGENT LE PLAFOND, ILS NE S'EVINCENT PAS. Mesure du
-    # 2026-08-19 : trier tout le pool par profondeur puis couper a `cap` faisait que des
-    # couches a faible swing, plus profondes, evincaient TOUTES les frontieres de bloc
-    # (candidates [31,32,33] au lieu de [13,21,29]). Ce n'etait pas l'intention -- le
-    # critere de BESOIN doit s'ajouter a celui de COUT, pas le remplacer. On garde donc la
-    # moitie du plafond a chacun, le reliquat revenant a l'autre s'il n'en a pas l'usage.
+    # 🔴 THE TWO CRITERIA SHARE THE CAP, THEY DO NOT EVICT EACH OTHER. Measured on
+    # 2026-08-19: sorting the whole pool by depth and then cutting at `cap` let low-swing,
+    # deeper layers evict ALL the block boundaries (candidates [31,32,33] instead of
+    # [13,21,29]). That was not the intent -- the NEED criterion must add to the COST one,
+    # not replace it. Each therefore keeps half of the cap, the remainder going to the
+    # other if it has no use for it.
     if swing_ctx is not None:
         besoin = [x for x in _rate_swing_candidates(strategy, num_layers, swing_ctx)
                   if x not in out]
@@ -776,40 +776,39 @@ class _RateSwingContext:
         if cached is not None:
             return cached
         self.n_calls += 1
-        # 🔑 UN DICTIONNAIRE D'UNE SEULE ENTREE SUFFIT, et c'est ce qui contourne proprement
-        # le piege qui a tue un run le 2026-08-19. `calculate_dynamics_ULTIMATE` ne consulte que
-        # les lambda presentes dans son `wls_array` -- ici une seule. On lui passe donc un vrai
-        # dict bati par acces indexe, ce que l'objet de memoire partagee du pipeline supporte
-        # tout autant qu'un dict natif. Plus besoin d'exiger `.items()` sur la source.
-        # 🔴 ET ON MUSELLE LE DIAGNOSTIC DE `calculate_dynamics_ULTIMATE` PENDANT L'APPEL.
-        # Il avertit quand `nanstd(dyn_vals)` est nul, ce qui detecte une couche reellement
-        # plate quand on lui passe TOUTE la grille de lambda. Ici on ne lui en passe qu'UNE :
-        # l'ecart-type d'une seule valeur vaut 0 par construction, donc l'avertissement se
-        # declenche a CHAQUE appel et n'apprend rien. 📏 Mesure du 2026-08-19 : deux lignes
-        # WARNING par appel, soit des dizaines de milliers sur un run reel -- journal
-        # inexploitable et cout d'ecriture non nul. On restaure le niveau ensuite.
-        # 🔴 L'ACCES PASSE PAR `_IdxWrapper`, defini ligne 102 DE CE FICHIER. `clues_at_wl`
-        # n'est pas forcement un dict indexable par flottant -- il peut arriver en objet de
-        # memoire partagee ou en sequence indexee. Le wrapper absorbe les deux, et rend None
-        # au lieu de lever. J'ai ecrit deux fois un acces direct avant de m'en apercevoir, et
-        # les deux fois un run complet est mort en cours de route.
+        # 🔑 A ONE-ENTRY DICTIONARY IS ENOUGH, and that is what cleanly avoids the trap
+        # that killed a run on 2026-08-19. `calculate_dynamics_ULTIMATE` only looks at the
+        # wavelengths present in its `wls_array` -- a single one here. It is therefore given a
+        # real dict built by indexed access, which the pipeline's shared-memory object supports
+        # just as well as a native dict. No need to require `.items()` on the source any more.
+        # 🔴 AND THE DIAGNOSTIC OF `calculate_dynamics_ULTIMATE` IS MUTED DURING THE CALL.
+        # It warns when `nanstd(dyn_vals)` is zero, which detects a genuinely flat layer when
+        # it is given the WHOLE wavelength grid. Here it is given only ONE: the standard
+        # deviation of a single value is 0 by construction, so the warning fires on EVERY call
+        # and teaches nothing. 📏 Measured on 2026-08-19: two WARNING lines per call, i.e. tens
+        # of thousands on a real run -- an unusable log and a non-zero writing cost. The level
+        # is restored afterwards.
+        # 🔴 ACCESS GOES THROUGH `_IdxWrapper`, defined IN THIS FILE. `clues_at_wl` is not
+        # necessarily a dict indexable by float -- it may arrive as a shared-memory object or an
+        # indexed sequence. The wrapper absorbs both, and returns None instead of raising. I
+        # wrote a direct access twice before noticing, and both times a full run died midway.
         try:
             clue = _IdxWrapper(self.clues_at_wl)[float(wl)]
         except (KeyError, TypeError, IndexError):
             clue = None
         if clue is None:
-            # 🔑 DEGRADATION SURE : sans indices, on declare la couche BIEN VUE (swing infini),
-            # donc elle reste optique. Le critere perd de la portee, il ne fabrique pas de
-            # fausse couche Rate -- et le compteur ci-dessous le rend visible dans le journal.
+            # 🔑 SAFE DEGRADATION: without indices, the layer is declared WELL SEEN (infinite
+            # swing), so it stays optical. The criterion loses reach, it does not fabricate a
+            # false Rate layer -- and the counter below makes it visible in the log.
             self.n_absents += 1
             self._cache[key] = float("inf")
             return float("inf")
-        # 🔴 ET ON MUSELLE LE DIAGNOSTIC DE `calculate_dynamics_ULTIMATE` PENDANT L'APPEL.
-        # Il avertit quand `nanstd(dyn_vals)` est nul, ce qui detecte une couche reellement
-        # plate quand on lui passe TOUTE la grille de lambda. Ici on ne lui en passe qu'UNE :
-        # l'ecart-type d'une seule valeur vaut 0 par construction, donc l'avertissement se
-        # declenche a CHAQUE appel et n'apprend rien. 📏 Mesure du 2026-08-19 : deux lignes
-        # WARNING par appel, soit des dizaines de milliers sur un run reel.
+        # 🔴 AND THE DIAGNOSTIC OF `calculate_dynamics_ULTIMATE` IS MUTED DURING THE CALL.
+        # It warns when `nanstd(dyn_vals)` is zero, which detects a genuinely flat layer when
+        # it is given the WHOLE wavelength grid. Here it is given only ONE: the standard
+        # deviation of a single value is 0 by construction, so the warning fires on EVERY call
+        # and teaches nothing. 📏 Measured on 2026-08-19: two WARNING lines per call, i.e. tens
+        # of thousands on a real run.
         _log_tf = logging.getLogger("ThinFilm")
         _niveau = _log_tf.level
         _log_tf.setLevel(logging.ERROR)
@@ -819,7 +818,7 @@ class _RateSwingContext:
                 {float(wl): clue}, self.nominal_matrix_cache, self.all_wls,
             )
         except Exception:                                   # noqa: BLE001
-            # Meme regle : on degrade, on compte, on ne tue pas un run de 25 minutes.
+            # Same rule: degrade, count, do not kill a 25-minute run.
             self.n_absents += 1
             self._cache[key] = float("inf")
             return float("inf")
@@ -832,54 +831,57 @@ class _RateSwingContext:
 
 def _optical_prefix_variants(strategies: list[dict[str, Any]], params: Any,
                              num_layers: int, logger: Any) -> list[dict[str, Any]]:
-    """`n` couches optiques, le reste a epaisseur PARFAITE -- la courbe SEEL(n) de 👤.
+    """`n` optical layers, the rest at PERFECT thickness -- the SEEL(n) curve of 👤.
 
-    👤 2026-08-19 : *« 20 couches optiques plus le reste avec des epaisseurs PARFAITES, on
-    calcule SEEL20 ; puis 21 ; idem jusqu'a SEEL75. On regarde la courbe SEEL = f(n) et on en
-    deduit a partir de quand l'optique pose probleme. »* Puis : *« attention, la courbe n'est
-    pas forcement monotone, il faut la tracer ENTIEREMENT. »*
+    👤 2026-08-19: *"20 optical layers plus the rest with PERFECT thicknesses, we compute
+    SEEL20; then 21; likewise up to SEEL75. We look at the curve SEEL = f(n) and deduce
+    from it where the optical monitoring becomes a problem."* Then: *"careful, the curve
+    is not necessarily monotonic, it must be plotted ENTIRELY."*
 
-    🔑 CE QUI REND CETTE MESURE DIFFERENTE DE TOUT LE RESTE : c'est une DECOMPOSITION, pas une
-    recherche. Chaque `n` est UNE mesure, jamais un maximum sur des candidates -- la malediction
-    du vainqueur (+12,9 % mesures le 15/08, et qui se COMPOSE dans un glouton) ne s'applique pas.
+    🔑 WHAT MAKES THIS MEASUREMENT DIFFERENT FROM EVERYTHING ELSE: it is a DECOMPOSITION,
+    not a search. Each `n` is ONE measurement, never a maximum over candidates -- the
+    winner's curse (+12.9 % measured on 08-15, and it COMPOUNDS in a greedy search) does
+    not apply.
 
-    🟢 ET LE NOYAU N'A BESOIN DE RIEN. `_build_layer_wavelengths_from_strategy` initialise
-    `layer_wavelengths` a ZERO et ne remplit que les couches couvertes par un bloc ; le noyau
-    part alors sur `if wl < 0.1` (`certus_strat_growth.py`) et rend l'epaisseur EXACTEMENT
-    nominale, marges a 1e18 donc plantage impossible. Tronquer les blocs a `n` suffit.
+    🟢 AND THE KERNEL NEEDS NOTHING. `_build_layer_wavelengths_from_strategy` initialises
+    `layer_wavelengths` to ZERO and fills only the layers covered by a block; the kernel
+    then takes the `if wl < 0.1` branch (`certus_strat_growth.py`) and returns EXACTLY the
+    nominal thickness, margins at 1e18 so a crash is impossible. Truncating the blocks to
+    `n` is enough.
 
-    ⚠️ « PARFAIT » N'EST PAS « RATE ». Une couche Rate herite du facteur A ; une couche parfaite
-    n'herite de rien. SEEL(n) est donc une BORNE INFERIEURE, pas la prediction de la vraie
-    strategie. 🔴 Et la difference entre les deux N'ISOLE PAS proprement le cout du Rate, contre
-    ce que j'avais ecrit : `A` s'estime sur les couches optiques du prefixe, donc un prefixe
-    degrade donne un `A` degrade. Les deux couts sont COUPLES, pas additifs.
+    ⚠️ "PERFECT" IS NOT "RATE". A Rate layer inherits the factor A; a perfect layer
+    inherits nothing. SEEL(n) is therefore a LOWER BOUND, not the prediction of the real
+    strategy. 🔴 And the difference between the two does NOT cleanly ISOLATE the cost of
+    Rate, contrary to what I had written: `A` is estimated on the optical layers of the
+    prefix, so a degraded prefix gives a degraded `A`. The two costs are COUPLED, not
+    additive.
 
-    🔑 Les deux courbes se repartissent le travail, et c'est structurel :
-        crash(n)  MONOTONE par construction -- la croissance est causale, donc les couches
-                  0..n-1 se comportent a l'identique que la couche n soit optique ou parfaite,
-                  et ajouter une couche optique ne peut qu'ajouter une occasion de planter.
-                  La falaise y est donc NON AMBIGUE.
-        SEEL(n)   PAS monotone : POEM se re-ancre et CORRIGE l'amont (protection x34,8,
-                  §24-17), donc une couche optique de plus peut faire BAISSER l'erreur. Ce sont
-                  les REMONTEES LOCALES qui designent les couches ou l'optique nuit.
+    🔑 The two curves share the work, and this is structural:
+        crash(n)  MONOTONIC by construction -- growth is causal, so layers 0..n-1 behave
+                  identically whether layer n is optical or perfect, and adding an
+                  optical layer can only add an opportunity to crash. The cliff is
+                  therefore UNAMBIGUOUS there.
+        SEEL(n)   NOT monotonic: POEM re-anchors and CORRECTS the upstream error
+                  (protection x34.8, §24-17), so one more optical layer can LOWER the
+                  error. The LOCAL RISES designate the layers where optics does harm.
     """
     sweep = sorted({int(x) for x in (params.get("optical_prefix_sweep") or [])})
     if not sweep:
         return []
-    # ⚠️ ON NE BALAIE PAS TOUTES LES PARENTES. La courbe est CONDITIONNELLE au plan de
-    # surveillance, donc n'a de sens que sur un plan donne -- et le seul defendable sur r75x2
-    # est le monitoring COUCHE PAR COUCHE : mesure du 2026-08-19, les 224 strategies a blocs
-    # plantent TOUTES a 100 %, et l'unique rescapee est celle a 75 blocs. Balayer 74 valeurs
-    # de n sur 110 parentes rendrait en outre 8 000 strategies pour rien.
-    # 🔴 `n_blocks` EST SOUVENT ABSENT DU DICTIONNAIRE DE STRATEGIE, et le lire avec un defaut
-    # de 0 faisait echouer le test pour TOUTES les strategies -- donc zero prefixe, en silence.
-    # 📏 Coute 100 minutes de calcul le 2026-08-19 : la sonde a tourne, rendu 682 strategies,
-    # et une courbe VIDE. La preuve etait sous les yeux -- `probe_blocs_vs_plantage.py` lit
-    # `st.get("n_blocks", len(blocks))`, ce qui dit exactement que la cle manque souvent.
+    # ⚠️ NOT ALL PARENTS ARE SWEPT. The curve is CONDITIONAL on the monitoring plan, so it
+    # only makes sense on a given plan -- and the only defensible one on r75x2 is LAYER-BY-
+    # LAYER monitoring: measured on 2026-08-19, the 224 block strategies ALL crash at 100 %,
+    # and the only survivor is the 75-block one. Sweeping 74 values of n over 110 parents
+    # would moreover return 8 000 strategies for nothing.
+    # 🔴 `n_blocks` IS OFTEN MISSING FROM THE STRATEGY DICTIONARY, and reading it with a
+    # default of 0 made the test fail for ALL strategies -- hence zero prefixes, silently.
+    # 📏 It cost 100 minutes of computation on 2026-08-19: the probe ran, returned 682
+    # strategies, and an EMPTY curve. The proof was in plain sight -- `probe_blocs_vs_plantage.py`
+    # reads `st.get("n_blocks", len(blocks))`, which says exactly that the key is often missing.
     #
-    # ⚠️ ET MON TEST UNITAIRE POSAIT LA CLE A LA MAIN (`par_couche["n_blocks"] = 48`), donc il
-    # validait mon hypothese au lieu des donnees. Un test ecrit depuis la meme croyance que le
-    # code ne teste rien. Il utilise desormais un dictionnaire de strategie tel qu'il arrive.
+    # ⚠️ AND MY UNIT TEST SET THE KEY BY HAND (`par_couche["n_blocks"] = 48`), so it validated
+    # my hypothesis instead of the data. A test written from the same belief as the code
+    # tests nothing. It now uses a strategy dictionary as it actually arrives.
     def _n_blocs(s: dict[str, Any]) -> int:
         n = s.get("n_blocks")
         return int(n) if n is not None else len(s.get("blocks") or [])
@@ -887,8 +889,8 @@ def _optical_prefix_variants(strategies: list[dict[str, Any]], params: Any,
     meres = [s for s in strategies if _n_blocs(s) >= num_layers]
     if not meres:
         logger.warning(
-            "[PREFIX] aucune strategie a surveillance couche par couche : le balayage de "
-            "prefixe optique est SANS OBJET sur cette population, il est ignore."
+            "[PREFIX] no strategy monitors layer by layer: the optical prefix sweep is "
+            "NOT APPLICABLE to this population, it is skipped."
         )
         return []
     out: list[dict[str, Any]] = []
@@ -906,16 +908,16 @@ def _optical_prefix_variants(strategies: list[dict[str, Any]], params: Any,
             v = dict(strat)
             v["blocks"] = tronques
             v["n_blocks"] = len(tronques)
-            # 🔴 Aucune couche Rate : les couches >= n_opt sont PARFAITES, pas en Rate.
-            # Confondre les deux ferait mesurer le cout du Rate au lieu de l'isoler.
+            # 🔴 No Rate layer: layers >= n_opt are PERFECT, not Rate.
+            # Confusing the two would measure the cost of Rate instead of isolating it.
             v["rate_layers"] = []
             v["strategy_id"] = _variant_id(strat.get("strategy_id"), next_id)
             v["origin"] = f"OPT_PREFIX{n_opt}(from {strat.get('strategy_id', '?')})"
             next_id += 1
             out.append(v)
     logger.info(
-        f"[PREFIX] {len(out)} prefixes optiques injectes sur {len(meres)} strategie(s) "
-        f"couche-par-couche, n de {min(sweep)} a {max(sweep)}."
+        f"[PREFIX] {len(out)} optical prefixes injected on {len(meres)} layer-by-layer "
+        f"strategy(ies), n from {min(sweep)} to {max(sweep)}."
     )
     return out
 
@@ -948,8 +950,8 @@ def _expand_with_rate_variants(
     understood, not before.
 
     🔑 SINCE 2026-08-18 THAT DEFAULT IS LIFTABLE, and the reason is that the objection above
-    is about ATTRIBUTION, not about physics. 👤: *"je reste persuade que le rate est
-    sous-employe"*, and the question asked is one of EXISTENCE -- is a much lower SEEL hiding
+    is about ATTRIBUTION, not about physics. 👤: *"I remain convinced that rate is
+    under-used"*, and the question asked is one of EXISTENCE -- is a much lower SEEL hiding
     behind a strategy with several Rate layers? Attribution is not required to answer it.
 
         rate_max_layers_per_variant     default 1  -- historical path, bit for bit
@@ -973,39 +975,39 @@ def _expand_with_rate_variants(
     `_prepare_robustness_inputs` from `opti_results` -- nothing new computed, only reaches a
     function that did not have them before.
     """
-    # 🔴 LE BALAYAGE DE PREFIXE OPTIQUE EST HOISTE AU-DESSUS DU GARDE `allow_rate`, ET C'EST
-    # LE POINT ENTIER. Ce n'est PAS une fonction du Rate : il mesure le cout de la surveillance
-    # OPTIQUE seule, en laissant la queue a epaisseur PARFAITE. La sonde a donc besoin de
-    # `allow_rate = False` -- sinon des variantes Rate se melangeraient a la population et on
-    # mesurerait les deux couts a la fois. Place sous le garde, l'injection rendait ZERO
-    # variante en silence : la sonde aurait tourne deux heures pour une courbe vide.
+    # 🔴 THE OPTICAL PREFIX SWEEP IS HOISTED ABOVE THE `allow_rate` GUARD, AND THAT IS THE
+    # WHOLE POINT. It is NOT a Rate feature: it measures the cost of OPTICAL monitoring alone,
+    # leaving the tail at PERFECT thickness. The probe therefore needs `allow_rate = False` --
+    # otherwise Rate variants would mix into the population and both costs would be measured
+    # at once. Placed under the guard, the injection returned ZERO variants silently: the
+    # probe would have run for two hours for an empty curve.
     prefixes = _optical_prefix_variants(strategies, params, num_layers, logger)
     if not bool(params.get("allow_rate", True)):
-        # ⚠️ Regle d'or : sans `optical_prefix_sweep`, `prefixes` est vide et on rend l'objet
-        # `strategies` LUI-MEME, exactement comme avant. Le chemin par defaut ne bouge pas.
+        # ⚠️ Golden rule: without `optical_prefix_sweep`, `prefixes` is empty and the
+        # `strategies` object ITSELF is returned, exactly as before. The default path does not move.
         return (list(strategies) + prefixes) if prefixes else strategies
     max_layers = max(1, int(params.get("rate_max_layers_per_variant", 1) or 1))
     cap = max(1, int(params.get("rate_max_variants_per_strategy",
                                 RATE_MAX_VARIANTS_PER_STRATEGY)
                      or RATE_MAX_VARIANTS_PER_STRATEGY))
-    # 🔴 CONTRADICTION A DE L'AUDIT, REPAREE LE 2026-08-22. Le plafond citait « l'essai sur
-    # les 10 meilleures » et etendait en fait TOUTES les strategies a 3 variantes -- donc ni
-    # la consigne, ni son contraire.
+    # 🔴 CONTRADICTION A OF THE AUDIT, REPAIRED ON 2026-08-22. The cap quoted "the trial on
+    # the 10 best" and in fact extended ALL strategies to 3 variants -- so neither the
+    # instruction nor its opposite.
     #
-    # 📏 Cout mesure de ce compromis : 12 923 variantes Rate pour 20 deposables. Le dossier
-    # avait deja chiffre la reparation : « un plafond a 40 sur les 50 meilleures couterait
-    # 2 000 variantes au lieu de 12 923, et explorerait chaque parent TREIZE FOIS plus
-    # profondement ». Moins cher ET plus profond -- c'est ce qui fait de la place au critere
-    # par swing sans evincer les frontieres de bloc.
+    # 📏 Measured cost of that compromise: 12 923 Rate variants for 20 depositable ones. The
+    # dossier had already costed the repair: "a cap of 40 on the 50 best would cost 2 000
+    # variants instead of 12 923, and would explore each parent THIRTEEN TIMES more
+    # deeply". Cheaper AND deeper -- that is what makes room for the swing criterion without
+    # evicting the block boundaries.
     #
-    # 🔒 `0` retablit l'ancien comportement : toutes les strategies etendues.
+    # 🔒 `0` restores the former behaviour: all strategies are extended.
     top_n = int(params.get("rate_variant_top_n", RATE_VARIANT_TOP_N_DEFAUT) or 0)
     if top_n > 0 and len(strategies) > top_n:
-        # Les strategies arrivent deja triees par score croissant depuis le criblage.
+        # The strategies already arrive sorted by increasing score from the screening.
         eligibles = set(id(x) for x in list(strategies)[:top_n])
         logger.info(
-            f"[RATE] expansion limitee aux {top_n} meilleures sur {len(strategies)} "
-            f"(plafond {cap} par strategie)."
+            f"[RATE] expansion limited to the {top_n} best of {len(strategies)} "
+            f"(cap {cap} per strategy)."
         )
     else:
         eligibles = None
@@ -1017,33 +1019,32 @@ def _expand_with_rate_variants(
     # Placing the Rate where it is NEEDED (poor growth-time swing) rather than only where
     # it is CHEAPEST (a block boundary) -- contradiction C of the audit. Requires the
     # arrays Phase A already computed, threaded in by `_prepare_robustness_inputs`.
-    # 🟢 ARME PAR DEFAUT DEPUIS LE 2026-08-22, sur demande de 👤 : « je cherche a faire une
-    # version aboutie qui n'a pas peur d'introduire du rate et ses subtilites ».
+    # 🟢 ARMED BY DEFAULT SINCE 2026-08-22, at the request of 👤: "I am trying to make a
+    # finished version that is not afraid of introducing rate and its subtleties".
     #
-    # 🔑 CE QUI REND CE DEFAUT SUR : une variante Rate entre comme COUT, jamais comme
-    # COUPERET (§22, §24-28). Elle S'AJOUTE a un classement qui contient deja les strategies
-    # pur optique ; elle ne peut donc pas degrader le choix final. Le seul canal par lequel
-    # elle le pourrait est le PLAFOND PARTAGE -- et c'est pourquoi la contradiction A est
-    # reparee dans le meme commit : sans cela, les candidates « besoin » evinceraient les
-    # candidates « cout ».
+    # 🔑 WHAT MAKES THIS DEFAULT SAFE: a Rate variant enters as a COST, never as a
+    # CUT-OFF (§22, §24-28). It is ADDED to a ranking that already contains the pure-optical
+    # strategies; it therefore cannot degrade the final choice. The only channel through
+    # which it could is the SHARED CAP -- and that is why contradiction A is repaired in the
+    # same commit: without it, the "need" candidates would evict the "cost" candidates.
     #
-    # 🔑 ET CELA REPARE LA CONTRADICTION B PAR EFFET DE BORD : le critere de frontiere est
-    # garde par `RATE_MIN_LAYERS_PER_BLOCK`, le critere de swing NE L'EST PAS. Une strategie
-    # qui surveille couche par couche -- le regime que §24-40 mesure GAGNANT sur 2 graines
-    # sur 5 -- recoit donc enfin des candidates Rate.
+    # 🔑 AND THIS REPAIRS CONTRADICTION B AS A SIDE EFFECT: the boundary criterion is
+    # guarded by `RATE_MIN_LAYERS_PER_BLOCK`, the swing criterion IS NOT. A strategy that
+    # monitors layer by layer -- the regime §24-40 measures as WINNING on 2 seeds out of
+    # 5 -- therefore finally receives Rate candidates.
     swing_ctx: _RateSwingContext | None = None
     if bool(params.get("rate_by_swing", True)):
-        # 🔴 `clues_at_wl` N'EST PAS TOUJOURS UN DICTIONNAIRE, et un run complet est mort de
-        # cette hypothese le 2026-08-19. Dans le pipeline il arrive sous la forme d'un objet de
-        # memoire partagee (`SharedIndicesWorker`) : `calculate_dynamics_ULTIMATE` lui applique
-        # `.items()`, leve un `AttributeError` noye dans 3900 lignes de journal, et le run se
-        # termine sur un « No strategies found » qui n'en dit pas la cause.
+        # 🔴 `clues_at_wl` IS NOT ALWAYS A DICTIONARY, and a full run died of that
+        # assumption on 2026-08-19. In the pipeline it arrives as a shared-memory object
+        # (`SharedIndicesWorker`): `calculate_dynamics_ULTIMATE` calls `.items()` on it, raises
+        # an `AttributeError` drowned in 3900 log lines, and the run ends on a "No strategies
+        # found" that does not say why.
         #
-        # 🔑 Le meme fichier montrait pourtant la parade six cents lignes plus haut :
-        # `_prepare_robustness_nominal_optics` enveloppe la meme valeur dans `_IdxWrapper` au
-        # lieu de la traiter comme un dict. On exige donc ici une VRAIE correspondance, et on
-        # retombe BRUYAMMENT sur les frontieres de bloc sinon -- un critere inerte doit se
-        # signaler, jamais rendre un resultat plausible.
+        # 🔑 Yet the same file showed the remedy six hundred lines higher:
+        # `_prepare_robustness_nominal_optics` wraps the same value in `_IdxWrapper` instead of
+        # treating it as a dict. A REAL mapping is therefore required here, and otherwise the
+        # code falls back NOISILY on the block boundaries -- an inert criterion must report
+        # itself, never return a plausible result.
         _pret = (p_thick_nominal is not None and nominal_matrix_cache is not None
                  and all_wls is not None and clues_at_wl is not None
                  and hasattr(all_wls, "astype"))
@@ -1051,103 +1052,104 @@ def _expand_with_rate_variants(
             threshold = float(params.get("dynamics_threshold", RATE_SWING_MIN_DEFAULT))
             swing_ctx = _RateSwingContext(p_thick_nominal, clues_at_wl,
                                           nominal_matrix_cache, all_wls, threshold)
-            # 🔑 AUTO-TEST AVANT LA BOUCLE : une seule evaluation, sur la premiere couche de la
-            # premiere strategie. Si le cablage est rompu, on le sait en une seconde et on le
-            # DIT, au lieu de tuer un run de 25 minutes a mi-parcours -- ce qui est arrive
-            # trois fois le 2026-08-19, pour trois causes differentes.
+            # 🔑 SELF-TEST BEFORE THE LOOP: a single evaluation, on the first layer of the
+            # first strategy. If the wiring is broken, it is known within a second and SAID,
+            # instead of killing a 25-minute run halfway -- which happened three times on
+            # 2026-08-19, for three different causes.
             _wl0 = next((_wl_de_la_couche(s, 0) for s in strategies
                          if _wl_de_la_couche(s, 0) is not None), None)
             if _wl0 is None or swing_ctx.n_absents or swing_ctx.swing_at(0, _wl0) == float("inf"):
                 logger.warning(
-                    "[RATE] rate_by_swing DESACTIVE : l'auto-test d'evaluation du swing a "
-                    "echoue (lambda de sonde %s, %d acces manques). Le critere ne fabriquera "
-                    "aucune couche Rate.", _wl0, swing_ctx.n_absents,
+                    "[RATE] rate_by_swing DISABLED: the swing evaluation self-test "
+                    "failed (probe wavelength %s, %d missed accesses). The criterion will "
+                    "fabricate no Rate layer.", _wl0, swing_ctx.n_absents,
                 )
                 swing_ctx = None
         else:
             logger.warning(
-                "[RATE] rate_by_swing=true INACTIF : tableaux nominaux absents, ou "
-                "`clues_at_wl` (%s) / `all_wls` (%s) ne sont pas du type attendu. Retombe "
-                "sur les frontieres de bloc seules.",
+                "[RATE] rate_by_swing=true INACTIVE: nominal arrays missing, or "
+                "`clues_at_wl` (%s) / `all_wls` (%s) are not of the expected type. Falling "
+                "back on block boundaries only.",
                 type(clues_at_wl).__name__, type(all_wls).__name__,
             )
 
-    # 🔑 BALAYAGE DE QUEUE -- 👤 2026-08-19 : « avant les couches i, un filtre le plus parfait
-    # possible en tout optique, puis les couches i+1 a N en rate ». INACTIF par defaut (liste
-    # vide), donc la regle d'or tient.
+    # 🔑 TAIL SWEEP -- 👤 2026-08-19: "before layer i, the most perfect filter possible
+    # fully optical, then layers i+1 to N in rate". INACTIVE by default (empty list), so the
+    # golden rule holds.
     #
-    # 🔴 CETTE FORME EST HORS D'ATTEINTE DU GENERATEUR. Le dossier ecarte d'ordinaire les
-    # mecanismes de forcage -- « inutile, un run genere deja des centaines de strategies » --
-    # mais la recherche place 1 a 3 couches Rate aux FRONTIERES DE BLOC, jamais 40 en queue.
-    # Seule l'injection peut tester la forme, et c'est le seul cas mesure ou elle se justifie.
+    # 🔴 THIS SHAPE IS OUT OF THE GENERATOR'S REACH. The dossier usually rules out forcing
+    # mechanisms -- "useless, a run already generates hundreds of strategies" -- but the
+    # search places 1 to 3 Rate layers at BLOCK BOUNDARIES, never 40 in the tail. Only
+    # injection can test the shape, and it is the only measured case where it is justified.
     #
-    # 📏 CE QUI FIXE LA PLAGE DE COUPURE, mesure le 2026-08-19 sur les 10 runs du x2 : la
-    # couche critique dominante est la 32 a 2 nm et la 35 partout ailleurs, et 59 a 74 % des
-    # couches critiques sont AVANT la couche 40. Une queue demarrant a 40 laisserait donc le
-    # plantage dominant dans la partie optique -- d'ou un balayage a partir de 28.
+    # 📏 WHAT FIXES THE CUT RANGE, measured on 2026-08-19 over the 10 runs of x2: the
+    # dominant critical layer is 32 at 2 nm and 35 everywhere else, and 59 to 74 % of the
+    # critical layers are BEFORE layer 40. A tail starting at 40 would therefore leave the
+    # dominant crash in the optical part -- hence a sweep starting at 28.
     #
-    # 📏 ET LA CAUSE EST UNIVOQUE : 100 % des plantages des couches 32/35/39 sont
-    # « niveau d'arret hors d'atteinte », zero « comptage de points tournants ». C'est la
-    # DERIVE ACCUMULEE, pas le signal propre de la couche. Franchir la zone en boucle ouverte
-    # evite d'y chercher un niveau devenu inatteignable -- c'est le mecanisme teste ici.
+    # 📏 AND THE CAUSE IS UNEQUIVOCAL: 100 % of the crashes of layers 32/35/39 are
+    # "stop level out of reach", zero "turning-point count". It is the ACCUMULATED DRIFT,
+    # not the layer's own signal. Crossing the zone in open loop avoids looking there for a
+    # level that has become unreachable -- that is the mechanism tested here.
     tail_cuts = params.get("rate_tail_sweep") or []
-    # 🔑 RATE CHIRURGICAL -- 👤 2026-08-19 : « si a j+1 on repart en optique et qu'il y a
-    # plusieurs extremums, POEM est efficace non ? ». VERIFIE dans le noyau, et la reponse est
-    # oui : `n_hist = (i_layer - block_start) * NPTS_PREV` ne sert qu'a EMPRUNTER des extrema
-    # aux couches precedentes du bloc. Une couche qui possede ses deux points tournants n'en a
-    # pas besoin -- et POEM lit ses ancres sur le signal REEL, donc il compense la derive amont
-    # par changement de variable (« we thus stop exactly at the desired thickness »).
+    # 🔑 SURGICAL RATE -- 👤 2026-08-19: "if at j+1 we go back to optical and there are
+    # several extrema, POEM is effective, isn't it?". VERIFIED in the kernel, and the answer
+    # is yes: `n_hist = (i_layer - block_start) * NPTS_PREV` only serves to BORROW extrema
+    # from the previous layers of the block. A layer that has its own two turning points
+    # does not need them -- and POEM reads its anchors on the REAL signal, so it compensates
+    # the upstream drift by change of variable ("we thus stop exactly at the desired
+    # thickness").
     #
-    # 🔴 CONSEQUENCE, ET ELLE INVALIDE LA QUEUE MONOLITHIQUE COMME SEULE FORME. Si l'optique
-    # redemarre pleinement apres une couche Rate, rien n'oblige a passer 23 couches en boucle
-    # ouverte : il suffit de FRANCHIR celles qui echouent. Le cout du Rate croissant avec le
-    # nombre de couches concernees (+1 % a 35 couches, +22 % a 75), 3 couches devraient couter
-    # bien moins que 23.
+    # 🔴 CONSEQUENCE, AND IT INVALIDATES THE MONOLITHIC TAIL AS THE ONLY SHAPE. If optics
+    # fully restarts after a Rate layer, nothing forces 23 layers into open loop: it is
+    # enough to CROSS the ones that fail. The cost of Rate growing with the number of layers
+    # involved (+1 % at 35 layers, +22 % at 75), 3 layers should cost far less than 23.
     #
-    # 📏 Les cibles ne sont pas choisies : elles sont MESUREES. Sur x2 a 2 nm, trois couches
-    # concentrent 73 % des couches critiques -- 32 (47 %), 39 (16 %), 35 (10 %) -- et 100 % de
-    # ces echecs sont des « niveau d'arret hors d'atteinte », donc de la derive, pas du signal.
+    # 📏 The targets are not chosen: they are MEASURED. On x2 at 2 nm, three layers hold
+    # 73 % of the critical layers -- 32 (47 %), 39 (16 %), 35 (10 %) -- and 100 % of these
+    # failures are "stop level out of reach", hence drift, not signal.
     #
-    # ⚠️ ET C'EST ITERATIF PAR NATURE. Franchir la couche 32 deplacera le point de rupture
-    # ailleurs ; il faudra remesurer les couches critiques et recommencer. C'est la recurrence
-    # que 👤 decrivait des le depart.
+    # ⚠️ AND IT IS ITERATIVE BY NATURE. Crossing layer 32 will move the breaking point
+    # elsewhere; the critical layers will have to be remeasured and the process repeated.
+    # That is the recurrence 👤 described from the start.
     layer_sets = params.get("rate_layer_sets") or []
     keep_optical = int(params.get("rate_tail_keep_optical", 0) or 0)
 
-    # 🔑 BALAYAGE DE PREFIXE OPTIQUE -- 👤 2026-08-19 :
+    # 🔑 OPTICAL PREFIX SWEEP -- 👤 2026-08-19:
     #
-    #   « 20 couches optiques plus le reste avec des epaisseurs PARFAITES, on calcule SEEL20 ;
-    #     puis 21 ; ... jusqu'a SEEL75. On regarde la courbe SEEL = f(n) et on en deduit a
-    #     partir de quand l'optique pose probleme. »
-    #   « attention, la courbe n'est pas forcement monotone, il faut la tracer ENTIEREMENT
-    #     pour decider quand le rate est necessaire. »
+    #   "20 optical layers plus the rest with PERFECT thicknesses, we compute SEEL20;
+    #     then 21; ... up to SEEL75. We look at the curve SEEL = f(n) and deduce from it
+    #     where the optical monitoring becomes a problem."
+    #   "careful, the curve is not necessarily monotonic, it must be plotted ENTIRELY
+    #     to decide when rate is necessary."
     #
-    # 🔑 CE QUI REND CETTE MESURE DIFFERENTE DE TOUT LE RESTE : c'est une DECOMPOSITION, pas
-    # une recherche. Chaque `n` est UNE mesure, jamais un maximum sur des candidates -- donc
-    # aucune malediction du vainqueur, celle qui a coute +12,9 % le 15/08 et qui se COMPOSE
-    # dans un glouton.
+    # 🔑 WHAT MAKES THIS MEASUREMENT DIFFERENT FROM EVERYTHING ELSE: it is a DECOMPOSITION,
+    # not a search. Each `n` is ONE measurement, never a maximum over candidates -- so no
+    # winner's curse, the one that cost +12.9 % on 08-15 and that COMPOUNDS in a greedy
+    # search.
     #
-    # 🟢 ET AUCUN CODE NOUVEAU N'EST NECESSAIRE COTE NOYAU. `_build_layer_wavelengths_from_
-    # strategy` initialise `layer_wavelengths` a ZERO et ne remplit que les couches couvertes
-    # par un bloc ; le noyau part alors sur `if wl < 0.1` (certus_strat_growth.py) et rend
-    # l'epaisseur EXACTEMENT nominale, marges a 1e18 donc plantage impossible. Tronquer les
-    # blocs a `n` suffit : les couches >= n sont parfaites, par un chemin deja ecrit et teste.
+    # 🟢 AND NO NEW KERNEL CODE IS NEEDED. `_build_layer_wavelengths_from_strategy`
+    # initialises `layer_wavelengths` to ZERO and fills only the layers covered by a
+    # block; the kernel then takes the `if wl < 0.1` branch (certus_strat_growth.py) and
+    # returns EXACTLY the nominal thickness, margins at 1e18 so a crash is impossible.
+    # Truncating the blocks to `n` is enough: layers >= n are perfect, through a path
+    # already written and tested.
     #
-    # ⚠️ « PARFAIT » N'EST PAS « RATE », et il ne faut pas confondre les deux. Une couche Rate
-    # herite du facteur A ; une couche parfaite n'herite de rien. SEEL(n) est donc une BORNE
-    # INFERIEURE, pas la prediction de la vraie strategie. C'est precisement l'interet : la
-    # difference entre les deux ISOLE le cout propre de la queue Rate.
+    # ⚠️ "PERFECT" IS NOT "RATE", and the two must not be confused. A Rate layer inherits
+    # the factor A; a perfect layer inherits nothing. SEEL(n) is therefore a LOWER BOUND,
+    # not the prediction of the real strategy. That is precisely the point: the difference
+    # between the two ISOLATES the proper cost of the Rate tail.
     #
-    # 🔑 Les deux courbes se repartissent le travail, et c'est structurel :
-    #     crash(n)  est MONOTONE par construction -- ajouter une couche optique ne peut
-    #               qu'ajouter une occasion de planter. La falaise y est donc non ambigue.
-    #     SEEL(n)   n'est PAS monotone, parce que POEM se re-ancre et CORRIGE l'amont
-    #               (protection x34,8 mesuree, §24-17). Une couche optique de plus peut faire
-    #               BAISSER l'erreur. Ce sont les REMONTEES locales qui designent les couches
-    #               ou la surveillance optique nuit.
-    # 🔴 Les prefixes optiques ont deja consomme des identifiants a partir de
-    # STRATEGY_ID_RATE_BASE : sans ce decalage, une variante Rate porterait le meme id qu'un
-    # prefixe et l'appariement enfant/parente deviendrait impossible a demeler.
+    # 🔑 The two curves share the work, and this is structural:
+    #     crash(n)  is MONOTONIC by construction -- adding an optical layer can only add
+    #               an opportunity to crash. The cliff is therefore unambiguous there.
+    #     SEEL(n)   is NOT monotonic, because POEM re-anchors and CORRECTS the upstream
+    #               error (protection x34.8 measured, §24-17). One more optical layer can
+    #               LOWER the error. The local RISES designate the layers where optical
+    #               monitoring does harm.
+    # 🔴 The optical prefixes have already consumed identifiers starting from
+    # STRATEGY_ID_RATE_BASE: without this offset, a Rate variant would carry the same id as a
+    # prefix and the child/parent pairing would become impossible to untangle.
     variants: list[dict[str, Any]] = list(prefixes)
     skipped = 0
     next_id = STRATEGY_ID_RATE_BASE + len(prefixes)
@@ -1167,8 +1169,8 @@ def _expand_with_rate_variants(
                 next_id += 1
                 variants.append(v)
         logger.info(
-            f"[RATE-SET] {len(variants)} variantes chirurgicales sur {len(strategies)} "
-            f"strategies, {len(layer_sets)} jeux de couches."
+            f"[RATE-SET] {len(variants)} surgical variants on {len(strategies)} "
+            f"strategies, {len(layer_sets)} layer sets."
         )
     if tail_cuts:
         for strat in strategies:
@@ -1179,11 +1181,11 @@ def _expand_with_rate_variants(
                 v = dict(strat)
                 v["blocks"] = list(strat.get("blocks") or [])
                 queue = list(range(c, num_layers))
-                # 🔑 LA REGLE D'EXCEPTION DE 👤 : « sauf les couches [a bon signal] qui restent
-                # en optique ». Elle exige un critere DISCRIMINANT -- 📏 le « >= 2 points
-                # tournants » propose au depart est satisfait par 32 couches de queue sur 35,
-                # il n'aurait rien selectionne. On garde donc les `keep` couches de PLUS FORT
-                # swing, ce qui selectionne par construction.
+                # 🔑 THE EXCEPTION RULE OF 👤: "except the layers [with a good signal] that stay
+                # optical". It requires a DISCRIMINATING criterion -- 📏 the ">= 2 turning points"
+                # proposed at first is met by 32 tail layers out of 35, it would have selected
+                # nothing. The `keep` layers with the STRONGEST swing are therefore kept, which
+                # selects by construction.
                 if keep_optical and swing_ctx is not None:
                     note = []
                     for lay in queue:
@@ -1200,13 +1202,13 @@ def _expand_with_rate_variants(
                 next_id += 1
                 variants.append(v)
         logger.info(
-            f"[RATE-TAIL] {len(variants)} variantes de queue injectees sur "
-            f"{len(strategies)} strategies, coupures {sorted(int(c) for c in tail_cuts)}."
+            f"[RATE-TAIL] {len(variants)} tail variants injected on "
+            f"{len(strategies)} strategies, cuts {sorted(int(c) for c in tail_cuts)}."
         )
     for strat in strategies:
-        # 🔴 CONTRADICTION A : on etend PROFONDEMENT les meilleures, au lieu d'etendre
-        # PLATEMENT toutes. `eligibles` est None quand `rate_variant_top_n = 0`, et le
-        # chemin d'avant revient alors au bit pres.
+        # 🔴 CONTRADICTION A: the best ones are extended DEEPLY, instead of extending
+        # all of them FLATLY. `eligibles` is None when `rate_variant_top_n = 0`, and the
+        # former path then comes back bit for bit.
         if eligibles is not None and id(strat) not in eligibles:
             continue
         # The historical path caps the CANDIDATES at 3; the multi-layer path needs them all
@@ -1244,10 +1246,10 @@ def _expand_with_rate_variants(
                      f"evaluations TMM a lambda fixe, {_dt:.1f} s au total pour cette "
                      f"expansion.")
         logger.info(
-            f"[RATE] {len(variants)} variantes sur {len(strategies)} strategies, "
-            f"{cap} au plus chacune, frontieres les plus PROFONDES d'abord. "
-            f"{skipped} strategie(s) ecartee(s) : aucune frontiere de bloc ni couche a "
-            f"faible swing.{_extra}"
+            f"[RATE] {len(variants)} variants on {len(strategies)} strategies, "
+            f"{cap} at most each, DEEPEST boundaries first. "
+            f"{skipped} strategy(ies) skipped: no block boundary and no low-swing "
+            f"layer.{_extra}"
         )
     return strategies + variants
 
@@ -1527,16 +1529,16 @@ def _expand_with_resolution_variants(
     next_id = STRATEGY_ID_SLIT_BASE
     skipped: dict[float, int] = {}
     for strat in strategies:
-        # La fente la plus large que la courbure de CETTE strategie tolere. `None` quand
-        # on ne peut pas la calculer : on ne filtre alors rien, plutot que de filtrer sur
-        # une valeur inventee.
+        # The widest slit the curvature of THIS strategy tolerates. `None` when it
+        # cannot be computed: nothing is filtered then, rather than filtering on an
+        # invented value.
         res_lim = None
         if p_thick_nominal is not None:
             try:
                 res_lim = float(
                     _calculate_strategy_spectral_resolution(strat, p_thick_nominal, params)[0]
                 )
-            except Exception:  # noqa: BLE001 -- un critere indisponible ne filtre pas
+            except Exception:  # noqa: BLE001 -- an unavailable criterion filters nothing
                 res_lim = None
         # The strategy as given keeps its identity and the run's slit: the comparison is
         # against itself, so the baseline must stay bit-identical to a no-search run.
@@ -1556,9 +1558,9 @@ def _expand_with_resolution_variants(
             v["origin"] = f"SLIT{slit:g}(from {strat.get('strategy_id', '?')})"
             next_id += 1
             out.append(v)
-    # 🔴 Ce qui est saute est COMPTE et DIT. Un elagage silencieux se lit comme une
-    # couverture complete, et c'est le mode de defaillance que ce depot paie depuis
-    # le debut : ca ne produit pas d'erreur, ca produit un resultat plausible.
+    # 🔴 What is skipped is COUNTED and SAID. A silent pruning reads as full coverage,
+    # and that is the failure mode this repository has been paying for since the
+    # beginning: it does not produce an error, it produces a plausible result.
     sk = "  |  saute par la courbure : " + ", ".join(
         f"{k:g} nm x{v}" for k, v in sorted(skipped.items(), reverse=True)
     ) if skipped else ""
@@ -1605,9 +1607,9 @@ def phase_a_slit_profiles(
         if not _SLIT_PHASE_A_WARNED:
             _SLIT_PHASE_A_WARNED = True
             logging.getLogger(__name__).warning(
-                "[SLIT] Phase A sans nH_id/nL_id/nSub_id : le biais de fente n'est PAS "
-                "applique a la selection des lambda. La Phase A juge donc un "
-                "monochromateur parfait pendant que la Phase B simule une fente (12.2)."
+                "[SLIT] Phase A without nH_id/nL_id/nSub_id: the slit bias is NOT "
+                "applied to the wavelength selection. Phase A therefore judges a "
+                "perfect monochromator while Phase B simulates a slit (12.2)."
             )
         return None
     slit_b = float(params.get("monochromator_resolution_nm", 2.0) or 2.0)
@@ -1625,12 +1627,12 @@ def phase_a_slit_profiles(
     return out
 
 
-#: Les sources d'erreur qu'on eteint une par une, avec la clef de params a neutraliser
-#: et le nom que l'operateur lira. Le BRUIT DE LECTURE en fait partie deliberement: il
-#: sert de temoin. 📏 Mesure du 2026-08-12, il pese ~0 % sur les deux composants -- et
-#: c'est attendu, c'est du bruit, il s'annule sur les tirages la ou les trois autres
-#: sont des BIAIS qui poussent tous les tirages du meme cote. Une ablation ou le bruit
-#: sortirait dominant signalerait une erreur de montage, pas un resultat.
+#: The error sources switched off one by one, with the params key to neutralise
+#: and the name the operator will read. The READING NOISE is deliberately one of them: it
+#: serves as a control. 📏 Measured on 2026-08-12, it weighs ~0 % on both components -- and
+#: that is expected, it is noise, it averages out over the draws whereas the other three
+#: are BIASES that push every draw the same way. An ablation where the noise came out
+#: dominant would signal a set-up error, not a result.
 ABLATION_SOURCES: tuple[tuple[str, str, object], ...] = (
     ("slit_bias_enabled", "biais de fente", False),
     ("index_corridor", "corridor d'indice", 0.0),
@@ -1638,15 +1640,14 @@ ABLATION_SOURCES: tuple[tuple[str, str, object], ...] = (
     ("trigger_tolerance_zero", "bruit de lecture", None),
 )
 
-#: Profondeur Monte-Carlo de l'ablation. Volontairement plus faible que celle du
-#: classement: on mesure une CONTRIBUTION RELATIVE, pas un score. 64 tirages donnent
-#: ~12 % de dispersion, ce qui suffit largement a separer une source a 60 % d'une
-#: source a 2 % -- et ne suffirait pas a departager deux strategies, ce qu'on ne fait
-#: pas ici.
+#: Monte-Carlo depth of the ablation. Deliberately lower than that of the
+#: ranking: a RELATIVE CONTRIBUTION is measured, not a score. 64 draws give
+#: ~12 % dispersion, which is ample to separate a 60 % source from a 2 % one --
+#: and would not be enough to separate two strategies, which is not done here.
 ABLATION_NUM_RUNS: int = 64
 
-#: Nombre de strategies profilees. 👤 2026-08-12: "pour chacune des 20 meilleures
-#: strategies, faire un classement de l'influence de chaque source de defaut".
+#: Number of profiled strategies. 👤 2026-08-12: "for each of the 20 best
+#: strategies, rank the influence of each defect source".
 ABLATION_TOP_K: int = 20
 
 
@@ -1665,33 +1666,33 @@ def _ablation_profile(
     full_dyn_grid: dict,
     logger,
 ) -> list[dict[str, Any]]:
-    """Classement des sources de defaut par leur contribution, POUR CETTE strategie.
+    """Ranking of the defect sources by their contribution, FOR THIS strategy.
 
-    👤 2026-08-12 : *"j'aimerais savoir quel est le defaut le plus problematique... pour
-    chacune des 20 meilleures strategies, cela permettra a l'utilisateur de mieux
-    comprendre d'ou viennent les problemes."*
+    👤 2026-08-12: *"I would like to know which defect is the most problematic... for
+    each of the 20 best strategies, it will let the user better understand where the
+    problems come from."*
 
-    On eteint chaque source a tour de role et on relit le score. La contribution est
-    `1 - score_sans / score_avec` : la part du score qui disparait quand la source
-    disparait.
+    Each source is switched off in turn and the score is read again. The contribution is
+    `1 - score_without / score_with`: the share of the score that disappears when the
+    source disappears.
 
-    🔴 CE QUE CE NOMBRE N'EST PAS. Les contributions NE S'ADDITIONNENT PAS a 100 %. Les
-    sources interagissent -- le corridor fausse l'epaisseur ET l'indice du filtre fini,
-    la fente deplace l'ancre que POEM utilisera ensuite -- donc eteindre deux sources ne
-    retire pas la somme de leurs deux parts. Lire ces chiffres comme un partage d'un
-    gateau serait une faute. Ce sont des DERIVEES: "de combien le score baisse si je
-    retire celle-ci", chacune prise seule.
+    🔴 WHAT THIS NUMBER IS NOT. The contributions DO NOT ADD UP to 100 %. The sources
+    interact -- the corridor distorts the thickness AND the index of the finished
+    filter, the slit moves the anchor POEM will use next -- so switching off two sources
+    does not remove the sum of their two shares. Reading these figures as slices of a
+    cake would be a mistake. They are DERIVATIVES: "by how much the score drops if I
+    remove this one", each taken alone.
 
-    📏 Ce que ca donne, mesure sur les gagnantes du 2026-08-12: sur le dichroique le
-    corridor d'indice pese **69 %** contre 1 % a la courbure et 0 % a la fente -- une
-    source ecrase tout. Sur le passe-bande, fente **16 %** et corridor **15 %**: personne
-    ne domine, c'est deja un compromis. **Le meme modele donne donc deux diagnostics
-    opposes selon le composant**, ce qui est exactement pourquoi ce profil a sa place
-    dans le rapport plutot que dans une note generale.
+    📏 What it gives, measured on the winners of 2026-08-12: on the dichroic the index
+    corridor weighs **69 %** against 1 % for the curvature and 0 % for the slit -- one
+    source crushes everything. On the bandpass, slit **16 %** and corridor **15 %**:
+    nobody dominates, it is already a compromise. **The same model thus gives two
+    opposite diagnoses depending on the component**, which is exactly why this profile
+    belongs in the report rather than in a general note.
 
-    ⚠️ Et pour le corridor, la part affichee est plutot une SOUS-ESTIMATION: il agit deux
-    fois, sur les epaisseurs deposees et sur l'indice reel du filtre fini, alors qu'une
-    partie des metriques ne voit que la premiere.
+    ⚠️ And for the corridor, the displayed share is rather an UNDERESTIMATE: it acts
+    twice, on the deposited thicknesses and on the real index of the finished filter,
+    whereas some of the metrics only see the first.
     """
     if not (base_score and base_score > 0.0):
         return []
@@ -1706,7 +1707,7 @@ def _ablation_profile(
                 p2["thickness_tolerance_nm"] = 0.0
             else:
                 p2[key] = neutral
-            # Une seule strategie, une profondeur reduite: c'est un diagnostic.
+            # A single strategy, a reduced depth: this is a diagnostic.
             res = _execute_robustness_tasks(
                 all_strategies=[strategy],
                 noise_levels=_resolve_robustness_noise_levels(p2),
@@ -1732,12 +1733,12 @@ def _ablation_profile(
             out.append({
                 "source": label,
                 "score_without": s2,
-                # Positive = retirer la source AMELIORE, donc elle nuit. Negatif = la
-                # retirer degrade, ce qui arrive et doit se voir plutot que d'etre
-                # ecrete a zero: une source peut MASQUER une autre.
+                # Positive = removing the source IMPROVES, so it does harm. Negative =
+                # removing it degrades, which happens and must show rather than being
+                # clipped to zero: a source can MASK another one.
                 "contribution": 1.0 - s2 / base_score,
             })
-        except Exception as exc:  # noqa: BLE001 -- un diagnostic ne casse jamais un run
+        except Exception as exc:  # noqa: BLE001 -- a diagnostic never breaks a run
             logger.debug(f"[ABLATION] {label} : {exc!r}")
     out.sort(key=lambda d: -d["contribution"])
     return out
@@ -1774,24 +1775,24 @@ def _filter_finite_robustness_scores(
         else:
             rejected.append(item)
 
-    # 🔴 CETTE LIGNE ETAIT EMISE PAR STRATEGIE, ET ELLE A TIRE 11 028 FOIS SUR UN SEUL RUN
-    # (mesure du 2026-08-24, `reports/hysteresis05_2026-08-24/`). Elle est desormais AGREGEE.
+    # 🔴 THIS LINE WAS EMITTED PER STRATEGY, AND IT FIRED 11 028 TIMES ON A SINGLE RUN
+    # (measured on 2026-08-24, `reports/hysteresis05_2026-08-24/`). It is now AGGREGATED.
     #
-    # 🔑 POURQUOI AGREGER ICI, ET SEUILLER PLUS BAS -- ce n'est pas le meme cas. Quand il
-    # reste des survivants, la fonction ne rend QUE `filtered_results` : les strategies a
-    # score non fini sont ecartees et n'atteignent JAMAIS l'artefact. Leur nombre n'est donc
-    # recuperable nulle part ailleurs, et un seuil le perdrait pour de bon. Une ligne par
-    # appel le conserve en entier.
+    # 🔑 WHY AGGREGATE HERE AND THRESHOLD BELOW -- it is not the same case. When survivors
+    # remain, the function returns ONLY `filtered_results`: strategies with a non-finite
+    # score are dropped and NEVER reach the artefact. Their number is therefore recoverable
+    # nowhere else, and a threshold would lose it for good. One line per call keeps it
+    # whole.
     if rejected:
         ids = [str(it.get("strategy", {}).get("strategy_id", "?")) for it in rejected[:5]]
         if len(strategies_results) == 1:
             logger.debug(
-                f"[ROBUSTNESS] 1 strategie ecartee pour score NON FINI -- id : {ids[0]}"
+                f"[ROBUSTNESS] 1 strategy dropped for a NON-FINITE score -- id: {ids[0]}"
             )
         else:
             logger.warning(
-                f"[ROBUSTNESS] {len(rejected)} strategie(s) ecartee(s) pour score NON FINI"
-                f" -- ids : {', '.join(ids)}{' ...' if len(rejected) > 5 else ''}"
+                f"[ROBUSTNESS] {len(rejected)} strategy(ies) dropped for a NON-FINITE score"
+                f" -- ids: {', '.join(ids)}{' ...' if len(rejected) > 5 else ''}"
             )
 
     if filtered_results or not rejected:
@@ -1805,25 +1806,25 @@ def _filter_finite_robustness_scores(
     rejected.sort(key=_fallback_key)
     best_crash = float(rejected[0].get("crash_rate", 1.0))
 
-    # 🔴 CES DEUX MESSAGES PARLENT D'UN CLASSEMENT PRIVE DE SIGNAL. Un classement d'UN SEUL
-    # element n'est pas un classement : sur `len(rejected) == 1` l'affirmation est vraie par
-    # vacuite et ne dit rien. Le seuil n'est donc pas un chiffre choisi, c'est la definition
-    # de ce dont le message parle.
+    # 🔴 THESE TWO MESSAGES ARE ABOUT A RANKING DEPRIVED OF SIGNAL. A ranking of ONE
+    # element is not a ranking: at `len(rejected) == 1` the statement is vacuously true and
+    # says nothing. The threshold is therefore not a chosen number, it is the definition of
+    # what the message is about.
     #
-    # 📏 Mesure du 2026-08-24 sur un run entier (`reports/hysteresis05_2026-08-24/`) :
+    # 📏 Measured on 2026-08-24 over a whole run (`reports/hysteresis05_2026-08-24/`):
     #
-    #     2400 emissions sur n = 1   ·   7 sur n = 2   ·   3 sur n = 601   ·   3 ailleurs
+    #     2400 emissions at n = 1   ·   7 at n = 2   ·   3 at n = 601   ·   3 elsewhere
     #
-    # soit 2400 lignes ERROR sur 2440 qui portaient sur une population d'UNE strategie, et
-    # TROIS lignes informatives noyees dedans. Un `grep ERROR` n'y rendait plus rien -- ce
-    # qui neutralisait aussi les gardes poses ailleurs, dont celui de la malediction du
-    # vainqueur (`certus_strat_workers.py`).
+    # i.e. 2400 ERROR lines out of 2440 that concerned a population of ONE strategy, and
+    # THREE informative lines drowned among them. A `grep ERROR` no longer returned
+    # anything -- which also neutralised the guards placed elsewhere, including the
+    # winner's-curse one (`certus_strat_workers.py`).
     #
-    # 🔑 ET ON NE PERD RIEN : le cas n = 1 est deja consigne par strategie dans l'artefact,
-    # via `crash_eliminated` pose juste en dessous -- 4051 sur 4454 dans
-    # `blocs_vs_plantage_r75x2_deep_s404.json`. La ligne dupliquait une donnee durable.
-    # C'est aussi ce qui ecarte le compteur agrege ici : il rendrait `sum(crash_eliminated)`,
-    # un nombre deja calculable.
+    # 🔑 AND NOTHING IS LOST: the n = 1 case is already recorded per strategy in the
+    # artefact, through `crash_eliminated` set just below -- 4051 out of 4454 in
+    # `blocs_vs_plantage_r75x2_deep_s404.json`. The line duplicated durable data.
+    # That is also what rules out an aggregated counter here: it would return
+    # `sum(crash_eliminated)`, a number that can already be computed.
     parle = len(rejected) >= 2
     if parle:
         logger.error(
@@ -1838,28 +1839,26 @@ def _filter_finite_robustness_scores(
         item["robustness_score"] = _worst_finite_rmse(item)
         item["crash_eliminated"] = True
 
-    # 🔴 LE REGIME DEGENERE EST ANNONCE, ET IL NE L'ETAIT PAS.
+    # 🔴 THE DEGENERATE REGIME IS ANNOUNCED, AND IT WAS NOT.
     #
-    # Quand TOUTES les strategies sont eliminees, tous les scores rendus sont des REPLIS
-    # (`_worst_finite_rmse`). Le classement qui suit trie donc des valeurs de repli, et le
-    # `crash_rate` est CONSTANT -- les deux premieres cles de tri ne portent aucune
-    # information. Or c'est ce classement qui choisit les PARENTS d'ELITE, dont la mutation
-    # decide de tout.
+    # When ALL strategies are eliminated, all returned scores are FALLBACKS
+    # (`_worst_finite_rmse`). The ranking that follows therefore sorts fallback values, and
+    # `crash_rate` is CONSTANT -- the first two sort keys carry no information. Yet this
+    # ranking is what picks the ELITE PARENTS, whose mutation decides everything.
     #
-    # 📏 Mesure du 2026-08-21 : sur `r75x2` a 2 nm, graine 42, les 1617 strategies sont dans
-    # ce cas, et RIEN ne le disait. Il a fallu deux jours pour s'en apercevoir -- non pas
-    # parce que c'etait cache, mais parce qu'un artefact ne porte QUE des scores finis meme
-    # quand tout plante, et qu'un classement de replis ressemble trait pour trait a un
-    # classement.
+    # 📏 Measured on 2026-08-21: on `r75x2` at 2 nm, seed 42, all 1617 strategies are in
+    # that case, and NOTHING said so. It took two days to notice -- not because it was
+    # hidden, but because an artefact carries ONLY finite scores even when everything
+    # crashes, and a ranking of fallbacks looks exactly like a ranking.
     #
-    # 🔑 MEME SEUIL QUE CI-DESSUS, ET POUR LA MEME RAISON : ce message decrit un CLASSEMENT
-    # sans signal. Sur une seule strategie il n'y a pas de classement, donc rien a annoncer.
+    # 🔑 SAME THRESHOLD AS ABOVE, AND FOR THE SAME REASON: this message describes a RANKING
+    # without signal. On a single strategy there is no ranking, hence nothing to announce.
     if parle:
         logger.warning(
-            f"   [REGIME] 🔴 DEGENERE : les {len(rejected)} strategies rendues portent un score "
-            f"de REPLI, et leur crash_rate est constant. Le classement qui suit -- donc le choix "
-            f"des PARENTS d'ELITE -- ne dispose d'aucun signal dans ses deux premieres cles. "
-            f"`use_margin_ranking` est la seule cle informative dans ce regime."
+            f"   [REGIME] 🔴 DEGENERATE: the {len(rejected)} returned strategies carry a "
+            f"FALLBACK score, and their crash_rate is constant. The ranking that follows -- "
+            f"hence the choice of the ELITE PARENTS -- has no signal in its first two keys. "
+            f"`use_margin_ranking` is the only informative key in this regime."
         )
     return rejected
 
@@ -2283,21 +2282,21 @@ def _test_strategy_robustness_task(
     results_per_noise = []
     crash_rate_max = 0.0  # worst non-terminating deposition rate across noise levels
     crash_count_max = 0    # ... and the COUNT behind it, which the rate throws away
-    # 🔑 LE TAUX PAR NIVEAU DE BRUIT, ET IL N'EXISTAIT NULLE PART.
+    # 🔑 THE RATE PER NOISE LEVEL, AND IT EXISTED NOWHERE.
     #
-    # `crash_rate_max` est un MAX sur les trois niveaux (`robustness_noise_factors`, par
-    # defaut [0,5 · 1,0 · 2,0]), et c'est lui que la porte de plantage compare a la
-    # tolerance de 5 % de 👤. Donc la tolerance s'applique au PIRE des trois, dont un a
-    # DEUX FOIS le bruit de lecture mesure (§18-2 : ±0,05 point, A = 5e-4). Le 1x est la
-    # machine ; le 0,5x et le 2x sont des multiplicateurs de robustesse.
+    # `crash_rate_max` is a MAX over the three levels (`robustness_noise_factors`, by
+    # default [0.5 · 1.0 · 2.0]), and it is what the crash gate compares with the 5 %
+    # tolerance of 👤. The tolerance therefore applies to the WORST of the three, one of
+    # which is TWICE the measured reading noise (§18-2: ±0.05 point, A = 5e-4). The 1x is
+    # the machine; the 0.5x and 2x are robustness multipliers.
     #
-    # 🔴 Et la reduction par `max` est IRREVERSIBLE : aucun artefact de ce depot ne porte le
-    # taux au bruit REEL, donc on ne peut pas savoir, sur aucun run existant, si une
-    # strategie rejetee etait fabricable sur la machine de 👤. On garde donc le detail.
+    # 🔴 And the reduction by `max` is IRREVERSIBLE: no artefact of this repository carries
+    # the rate at the REAL noise, so it cannot be known, on any existing run, whether a
+    # rejected strategy was manufacturable on the machine of 👤. The detail is therefore kept.
     #
-    # 🔒 Ce que cela NE fait PAS : changer la porte. La regle reste le max, et c'est une
-    # decision de 👤 -- juger au pire des trois est peut-etre exactement la marge qu'il veut.
-    # Ce qui n'etait pas defendable, c'est que personne ne puisse le MESURER.
+    # 🔒 What this does NOT do: change the gate. The rule stays the max, and it is a
+    # decision of 👤 -- judging on the worst of the three may be exactly the margin they want.
+    # What was not defensible is that nobody could MEASURE it.
     crash_rates_by_noise: dict[str, float] = {}
     # Breakdown of crashes by CAUSE, worst case across noise levels.
     crash_rates_by_cause = {
@@ -2475,23 +2474,23 @@ def _test_strategy_robustness_task(
     # here: it is swept and decided by measurement.
     tp_hysteresis_factor = float(params.get("tp_hysteresis_factor", 0.0) or 0.0)
     for noise_idx, noise_val in enumerate(noise_levels):
-        # 🔴 LE BRUIT DE LECTURE EST UN SEUL PROCESSUS CONTINU SUR TOUT LE DEPOT, et une
-        # campagne n'en lit QUE SA TRANCHE.
+        # 🔴 THE READING NOISE IS ONE SINGLE CONTINUOUS PROCESS OVER THE WHOLE DEPOSITION,
+        # and a campaign reads ONLY ITS SLICE of it.
         #
-        # Sans ces deux parametres, mesurer un sous-empilement isolement lui donne un flux
-        # de bruit qui REPART A ZERO. Trois campagnes lancees a la meme graine -- ce qu'il
-        # faut faire pour partager la realisation d'indice -- recoivent alors un bruit de
-        # lecture correle a 76-79 % (mesure le 2026-08-15), la ou deux graines distinctes
-        # donnent -0,09. Or deux couches deposees a vingt minutes d'intervalle ne partagent
-        # pas le bruit de leur photodetecteur.
+        # Without these two parameters, measuring a sub-stack in isolation gives it a noise
+        # stream that RESTARTS AT ZERO. Three campaigns launched with the same seed -- which is
+        # what must be done to share the index realisation -- then receive a reading noise
+        # correlated at 76-79 % (measured on 2026-08-15), where two distinct seeds give
+        # -0.09. Yet two layers deposited twenty minutes apart do not share the noise of their
+        # photodetector.
         #
-        # 🔑 La graine ne peut pas resoudre ca : elle pilote A LA FOIS le corridor d'indice
-        # -- qui DOIT etre partage, les materiaux sont les memes -- et le bruit de lecture,
-        # qui doit etre INDEPENDANT. Les deux demandent des traitements opposes. On garde
-        # donc la meme graine, et on decale la TRANCHE.
+        # 🔑 The seed cannot solve this: it drives BOTH the index corridor -- which MUST be
+        # shared, the materials are the same -- and the reading noise, which must be
+        # INDEPENDENT. The two require opposite treatments. The same seed is therefore kept,
+        # and the SLICE is shifted.
         #
-        # Defauts : offset 0 et total = num_layers, soit exactement le comportement d'avant
-        # (contrainte C1).
+        # Defaults: offset 0 and total = num_layers, i.e. exactly the former behaviour
+        # (constraint C1).
         noise_total = int(params.get("noise_total_layers", 0) or 0) or num_layers
         noise_off = int(params.get("noise_layer_offset", 0) or 0)
         if noise_off < 0 or noise_off + num_layers > noise_total:
@@ -2885,9 +2884,9 @@ def _test_strategy_robustness_task(
         _hist_rejects = crash_rate_max >= CRASH_RATE_TOLERANCE
         if _hist_rejects != _gate_rejects:
             logger.info(
-                f"   [GATE] strat {strategy.get('strategy_id', '?')} : la borne de confiance "
-                f"{'EPARGNE' if _hist_rejects else 'REJETTE EN PLUS'} -- plantage "
-                f"{crash_rate_max:.2%} ({crash_count_max}/{num_runs}), borne basse "
+                f"   [GATE] strat {strategy.get('strategy_id', '?')}: the confidence bound "
+                f"{'SPARES' if _hist_rejects else 'ALSO REJECTS'} -- crash "
+                f"{crash_rate_max:.2%} ({crash_count_max}/{num_runs}), lower bound "
                 f"{crash_rate_lower_bound(crash_count_max, num_runs, float(params.get(CRASH_GATE_CONFIDENCE_KEY))):.2%}"
             )
 
@@ -2959,7 +2958,7 @@ def _test_strategy_robustness_task(
         "results_per_noise": results_per_noise,
         "robustness_score": final_score,
         "crash_rate": crash_rate_max,
-        # Le detail que le `max` ci-dessus jette. Voir le commentaire de `crash_rates_by_noise`.
+        # The detail the `max` above throws away. See the comment of `crash_rates_by_noise`.
         "crash_rates_by_noise": dict(crash_rates_by_noise),
         # The three failure modes, separately. 👤 "If 95% of depositions
         # work, it's a win" — but knowing WHY the 5% fail is what
@@ -3252,15 +3251,14 @@ def run_final_simulation_block(
         n_layers_matrix_precomp=n_layers_matrix_precomp,
     )
 
-    # ---- PROFIL D'ABLATION sur les meilleures, 👤 2026-08-12 -------------------
+    # ---- ABLATION PROFILE on the best ones, 👤 2026-08-12 -------------------
     #
-    # "pour chacune des 20 meilleures strategies, faire un classement de l'influence de
-    # chaque source de defaut. Cela permettra a l'utilisateur de mieux comprendre d'ou
-    # viennent les problemes."
+    # "for each of the 20 best strategies, rank the influence of each defect
+    # source. It will let the user better understand where the problems come from."
     #
-    # 🔴 APRES le classement, jamais avant: c'est un DIAGNOSTIC, il ne doit pas pouvoir
-    # influencer l'ordre. Et seulement sur les meilleures -- profiler 400 strategies
-    # coutrait quatre fois le run pour expliquer des candidates que personne ne deposera.
+    # 🔴 AFTER the ranking, never before: it is a DIAGNOSTIC, it must not be able to
+    # influence the order. And only on the best ones -- profiling 400 strategies would
+    # cost four times the run to explain candidates nobody will deposit.
     if bool(params.get("ablation_profile", True)) and strategies_results:
         top = sorted(strategies_results,
                      key=lambda r: float(r.get("robustness_score", 1e18)))[:ABLATION_TOP_K]
@@ -3277,8 +3275,8 @@ def run_final_simulation_block(
         if done:
             first = done[0]["ablation"][0]
             logger.info(
-                f"[ABLATION] {len(done)} strategies profilees en "
-                f"{time.perf_counter() - t_abl:.1f} s -- source dominante de la 1re : "
+                f"[ABLATION] {len(done)} strategies profiled in "
+                f"{time.perf_counter() - t_abl:.1f} s -- dominant source of the 1st: "
                 f"{first['source']} ({first['contribution']:+.0%})"
             )
 

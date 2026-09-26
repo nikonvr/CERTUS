@@ -346,13 +346,13 @@ class CertusStratPlotMixin:
 
             info_msg = f"PHASE B : {strategy.get('n_blocks')} BLOCS | Score de robustesse (RMSE): {score:.5f}"
 
-            # 1. Mise à jour du panneau central intégré de l'application
+            # 1. Update of the central panel embedded in the application
             if hasattr(self, "phase_b_live_widget"):
                 self.phase_b_live_widget.update_monitor(x, y, bounds, info_msg, blocks)
                 if hasattr(self, "plot_stack") and self.plot_stack.currentWidget() != self.phase_b_live_widget:
                     self.plot_stack.setCurrentWidget(self.phase_b_live_widget)
 
-            # 2. Mise à jour de la fenêtre satellite (si non fermée par l'utilisateur)
+            # 2. Update of the satellite window (if not closed by the user)
             if self.live_monitor_window is not None and not getattr(self.live_monitor_window, "user_hidden", False):
                 if not self.live_monitor_window.isVisible():
                     self.live_monitor_window.show()

@@ -19,8 +19,8 @@ malediction du vainqueur dans `certus_strat_workers.py`.
 
 | message | remede | pourquoi |
 |---|---|---|
-| `[ROBUSTNESS] NONE of the N` et `[REGIME] DEGENERE` | **seuil `N >= 2`** | ils decrivent un CLASSEMENT sans signal ; un classement d'un seul element n'est pas un classement. Et le cas `N = 1` est deja consigne par strategie dans l'artefact via `crash_eliminated` |
-| `ecartee(s) pour score NON FINI` | **agregation** | quand il reste des survivants, ces strategies sont ecartees et n'atteignent JAMAIS l'artefact : leur nombre n'est recuperable nulle part, donc un seuil le perdrait |
+| `[ROBUSTNESS] NONE of the N` et `[REGIME] DEGENERATE` | **seuil `N >= 2`** | ils decrivent un CLASSEMENT sans signal ; un classement d'un seul element n'est pas un classement. Et le cas `N = 1` est deja consigne par strategie dans l'artefact via `crash_eliminated` |
+| `dropped for a NON-FINITE score` | **agregation** | quand il reste des survivants, ces strategies sont ecartees et n'atteignent JAMAIS l'artefact : leur nombre n'est recuperable nulle part, donc un seuil le perdrait |
 
 > Une ligne de journal ne se justifie que si son information n'est **nulle part ailleurs**.
 > En double → on coupe. Unique → on garde, agregee si elle est volumineuse.
@@ -99,7 +99,7 @@ class TestLeScoreNonFiniEstAGREGE:
         with caplog.at_level(logging.DEBUG, logger=LOGGER.name):
             out = _filter_finite_robustness_scores(lot, logger=LOGGER)
 
-        nonfini = [m for m in _lignes(caplog, logging.WARNING) if "NON FINI" in m]
+        nonfini = [m for m in _lignes(caplog, logging.WARNING) if "NON-FINITE" in m]
         assert len(nonfini) == 1, "une ligne par appel, pas une par strategie"
         assert "40" in nonfini[0], "et elle porte le COMPTE, qui n'est nulle part ailleurs"
         # il reste un survivant : les 40 ecartees ne rejoindront JAMAIS l'artefact,
@@ -109,7 +109,7 @@ class TestLeScoreNonFiniEstAGREGE:
     def test_aucune_ligne_quand_tout_est_fini(self, caplog):
         with caplog.at_level(logging.DEBUG, logger=LOGGER.name):
             _filter_finite_robustness_scores([_strat(1, 0.2), _strat(2, 0.3)], logger=LOGGER)
-        assert [m for m in _lignes(caplog, logging.WARNING) if "NON FINI" in m] == []
+        assert [m for m in _lignes(caplog, logging.WARNING) if "NON-FINITE" in m] == []
 
 
 class TestLInstrumentNeChangeRienAuCalcul:

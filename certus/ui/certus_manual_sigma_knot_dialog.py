@@ -34,44 +34,44 @@ from certus.ui.certus_ui_widgets_progress import EnhancedProgressWidget
 
 _LOG = logging.getLogger("CERTUS")
 
-#: 🎨 L'IDENTITE ORANGE DE CE DIALOGUE. Elle vivait en six nuances sur dix-sept sites,
-#: sans source unique -- le motif que l'etape 3.9 a ferme pour les couleurs de module.
-#: ⚠️ Aucune valeur n'a ete changee en la nommant : l'ensemble des couleurs employees est
-#: identique avant et apres, donc le rendu aussi.
+#: 🎨 THE ORANGE IDENTITY OF THIS DIALOG. It lived in six shades over seventeen sites,
+#: without a single source -- the pattern that step 3.9 closed for the module colours.
+#: ⚠️ No value was changed by naming it: the set of colours in use is identical before
+#: and after, hence the rendering too.
 #:
-#: 🔴 DEUX CHOSES QUE LE NOMMAGE REND VISIBLES, mesurees le 2026-09-07 :
+#: 🔴 TWO THINGS THAT NAMING MAKES VISIBLE, measured on 2026-09-07:
 #:
-#:   1. Le noeud PREEXISTANT porte deux couleurs -- une pour sa ligne de trace, une autre
-#:      pour son etiquette de nature -- la ou le PROPOSE n'en porte qu'une seule pour les
-#:      deux. On pourrait croire l'etiquette eclaircie pour se lire sur fond clair ; la
-#:      mesure dit non, elle echoue aussi (2,36:1 contre 2,05:1 pour la ligne, seuil 4,5).
-#:      C'est une divergence, pas un arbitrage.
+#:   1. The PRE-EXISTING knot carries two colours -- one for its trace line, another
+#:      for its nature label -- where the PROPOSED one carries a single one for both.
+#:      One might think the label was lightened to read on a light background; the
+#:      measurement says no, it fails too (2.36:1 against 2.05:1 for the line, threshold
+#:      4.5). It is a divergence, not a trade-off.
 #:
-#:   2. Les deux etiquettes de nature ECHOUENT le contraste en mode clair -- 2,36:1 et
-#:      3,40:1 pour un seuil de 4,5, et la graisse 600 ne suffit pas a les faire compter
-#:      comme du gros texte. En mode sombre elles tiennent (7,52 et 5,21).
-#:      🔑 Corriger demande de CHOISIR une couleur, ce que cette etape ne fait pas : elle
-#:      route ce qui existe, elle ne decide pas de la palette. Consigne pour arbitrage.
+#:   2. Both nature labels FAIL the contrast in light mode -- 2.36:1 and 3.40:1
+#:      for a threshold of 4.5, and the 600 weight is not enough for them to count as
+#:      large text. In dark mode they hold (7.52 and 5.21).
+#:      🔑 Fixing it requires CHOOSING a colour, which this step does not do: it routes
+#:      what exists, it does not decide the palette. Recorded for arbitration.
 class _AccentNoeud:
-    """Les couleurs propres a ce dialogue, nommees par ROLE et non par valeur."""
+    """The colours specific to this dialog, named by ROLE and not by value."""
 
-    #: Le trait du noeud deja present dans le maillage, et celui du noeud propose.
+    #: The stroke of the knot already present in the mesh, and that of the proposed knot.
     LIGNE_PREEXISTANT = "#ff9f1a"
     LIGNE_PROPOSE = "#c97800"
-    #: L'etiquette de nature. Celle du propose reprend la couleur de sa ligne ; celle du
-    #: preexistant s'en ecarte, et le commentaire ci-dessus dit pourquoi c'est un constat.
+    #: The nature label. That of the proposed knot reuses the colour of its line; that of
+    #: the pre-existing one departs from it, and the comment above says why it is a finding.
     ETIQUETTE_PREEXISTANT = "#d4a100"
 
-    #: L'accent vif : cadre de la ligne selectionnee, milieu de la poignee au survol, et
-    #: fond du badge de selection. Les trois portaient la meme valeur a trois endroits ;
-    #: les reunir affirme qu'ils doivent rester solidaires, ce qui est le cas voulu.
+    #: The bright accent: frame of the selected row, middle of the handle on hover, and
+    #: background of the selection badge. All three carried the same value in three places;
+    #: gathering them states that they must stay tied, which is the intended case.
     VIF = "#ffb347"
     VIF_CLAIR = "#ffd58a"
     VIF_TRAIT = "#d8901c"
-    #: Le texte du badge de selection, pose SUR l'accent vif.
+    #: The text of the selection badge, laid ON the bright accent.
     SUR_VIF = "#1b1b1b"
 
-    #: La poignee de separation au repos -- un degrade gris, sans lien avec l'orange.
+    #: The splitter handle at rest -- a grey gradient, unrelated to the orange.
     POIGNEE_BORD = "#d9dde3"
     POIGNEE_MILIEU = "#aeb7c2"
     POIGNEE_TRAIT = "#8e99a6"
@@ -86,11 +86,11 @@ _PREVIEW_AXIS_LABELS = {"lambda": "λ", "sigma": "sigma"}
 
 
 def _style_de_ligne(est_preexistant: bool) -> tuple[str, float]:
-    """La couleur et l'epaisseur du trait d'un noeud, selon qu'il preexiste ou est propose.
+    """The colour and width of a knot's stroke, depending on whether it pre-exists or is proposed.
 
-    🔴 CETTE REGLE ETAIT ECRITE DEUX FOIS, mot pour mot, a deux cent cinquante lignes
-    d'ecart -- la couleur ET l'epaisseur. Deux copies d'une meme regle divergent au premier
-    correctif ; celle-ci avait deja divergé de sa jumelle d'etiquette (voir `_AccentNoeud`).
+    🔴 THIS RULE WAS WRITTEN TWICE, word for word, two hundred and fifty lines apart --
+    the colour AND the width. Two copies of one rule diverge at the first fix; this one
+    had already diverged from its label twin (see `_AccentNoeud`).
     """
     if est_preexistant:
         return _AccentNoeud.LIGNE_PREEXISTANT, 2.5
@@ -604,8 +604,8 @@ class ManualSigmaKnotDialog(QDialog):
         self.rows_splitter.setStretchFactor(0, 0)
         self.rows_splitter.setStretchFactor(1, 1)
         self.rows_splitter.setSizes([130, 260])
-        # f-string : les accolades QSS sont doublees, sinon Python les prend pour des
-        # champs de format et leve au chargement du module.
+        # f-string: the QSS braces are doubled, otherwise Python takes them for format
+        # fields and raises when the module is loaded.
         self.rows_splitter.setStyleSheet(
             f"""
             QSplitter::handle:vertical {{

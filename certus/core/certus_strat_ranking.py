@@ -47,11 +47,11 @@ from certus.utils.certus_strat_context import (
 
 
 
-#: Decalage de la plage d'identifiants des groupements de COUVERTURE, par origine.
-#: Le plan est `n_blocks * 1000 + offset + rank`, offsets 0/100/200 pour les cartes de cout et
-#: 800 pour les graines structurees : 300/400/500 sont donc libres.
+#: Offset of the identifier range of the COVERAGE groupings, per origin.
+#: The plan is `n_blocks * 1000 + offset + rank`, offsets 0/100/200 for the cost maps and
+#: 800 for the structured seeds: 300/400/500 are therefore free.
 _COUVERTURE_ID_OFFSET = 300
-#: Largeur de cette plage -- donc plafond dur du budget de couverture, par origine.
+#: Width of that range -- hence the hard cap of the coverage budget, per origin.
 _COUVERTURE_ID_STRIDE = 100
 
 
@@ -70,52 +70,51 @@ def _couverture_wl_groupings(
 ) -> list[dict]:
     """Groupings that USE the admissible wavelengths the k-best never selected.
 
-    🔑 POURQUOI CETTE PASSE EXISTE, ET ELLE EST NEE D'UNE MESURE, PAS D'UNE INTUITION.
+    🔑 WHY THIS PASS EXISTS, AND IT WAS BORN FROM A MEASUREMENT, NOT AN INTUITION.
 
-    📏 Le 2026-08-21, sur `r75x2` a 2 nm, graine 42 : la Phase A declare une MEDIANE de 86
-    longueurs d'onde admissibles par couche. La recherche en produit **14 a 29** par nombre de
-    blocs, et **65 sur les 301 de la grille** pour l'ensemble de ses 1617 strategies. Elle
-    depense 104 a 160 strategies par nombre de blocs, soit **cinq a sept doublons par λ**.
+    📏 On 2026-08-21, on `r75x2` at 2 nm, seed 42: Phase A declares a MEDIAN of 86
+    admissible wavelengths per layer. The search produces **14 to 29** per block count,
+    and **65 out of the 301 of the grid** over all of its 1617 strategies. It spends
+    104 to 160 strategies per block count, i.e. **five to seven duplicates per λ**.
 
-        Le budget de l'etalement est deja depense -- en redondance.
+        The spreading budget is already spent -- on redundancy.
 
-    🔴 Et le prix de cette redondance est mesure : la famille des 72 strategies deposables
-    exige 685 nm sur le bloc des couches 33-52, et cette λ figure dans **ZERO** des 1617
-    strategies. SIX leviers ont ete essayes sans effet -- plafond ELITE a 480, portee ±2 nm,
-    porte de plantage a borne de confiance, cinq graines au criblage, profil elargi ×3-×4,
-    diversite en λ du vivier de parents. Aucun ne pouvait marcher : ils elargissent la
-    recherche AUTOUR DE CE QUI EXISTE DEJA, et la λ requise n'existe nulle part.
+    🔴 And the price of that redundancy is measured: the family of the 72 depositable
+    strategies requires 685 nm on the block of layers 33-52, and that λ appears in **ZERO**
+    of the 1617 strategies. SIX levers were tried without effect -- ELITE cap at 480, span
+    ±2 nm, crash gate with a confidence bound, five seeds at screening, widened profile
+    x3-x4, λ diversity of the parent pool. None could work: they widen the search AROUND
+    WHAT ALREADY EXISTS, and the required λ exists nowhere.
 
-    🟢 CE QUI REND CETTE PASSE POSSIBLE SANS TOUCHER A LA DP. `_find_k_best_groupings_dp_sequential`
-    prend une `cost_map` -- `{couche: {λ: cout}}`. Restreindre UNE couche a une seule λ suffit
-    donc a forcer le bloc qui la contient a l'employer, et la DP rend alors le MEILLEUR
-    groupement COHERENT sous cette contrainte. C'est la difference avec une mutation : ELITE
-    substitue une λ dans un plan par ailleurs inchange, ce qui casse sa coherence ; ici le
-    reste du plan est RE-OPTIMISE autour de la contrainte.
+    🟢 WHAT MAKES THIS PASS POSSIBLE WITHOUT TOUCHING THE DP. `_find_k_best_groupings_dp_sequential`
+    takes a `cost_map` -- `{layer: {λ: cost}}`. Restricting ONE layer to a single λ is
+    therefore enough to force the block that contains it to use it, and the DP then returns
+    the BEST COHERENT grouping under that constraint. That is the difference with a
+    mutation: ELITE substitutes a λ in an otherwise unchanged plan, which breaks its
+    coherence; here the rest of the plan is RE-OPTIMISED around the constraint.
 
-    ⚠️ LA COUCHE FORCEE EST CELLE OU LA λ EST LA MOINS CHERE, et ce n'est pas un reglage :
-    c'est l'endroit ou la Phase A la juge la plus naturelle. Aucun seuil, aucun parametre
-    invente (§19).
+    ⚠️ THE FORCED LAYER IS THE ONE WHERE THE λ IS CHEAPEST, and that is not a setting:
+    it is where Phase A judges it most natural. No threshold, no invented parameter (§19).
 
-    ⚠️ Et l'ordre de traitement est le COUT CROISSANT de la λ, pour que le budget, s'il mord,
-    morde sur les moins prometteuses -- jamais sur les meilleures.
+    ⚠️ And the processing order is INCREASING COST of the λ, so that the budget, if it
+    bites, bites on the least promising ones -- never on the best.
 
-    🔴 UN ECHEC EST DIT. Forcer une couche peut rendre le probleme infaisable au nombre de
-    blocs demande : la DP ne rend alors rien, et on le compte. Un elagage silencieux se lit
-    comme une couverture complete, et c'est le mode de defaillance que ce depot paie depuis
-    le debut.
+    🔴 A FAILURE IS SAID. Forcing a layer can make the problem infeasible at the requested
+    block count: the DP then returns nothing, and it is counted. A silent pruning reads as
+    full coverage, and that is the failure mode this repository has been paying for since
+    the beginning.
 
-    🔴 ET LES COMPTEURS REMONTENT PAR `stats`, PAS SEULEMENT PAR LE JOURNAL. 📏 Mesure du
-    2026-08-21 : le logger `ThinFilm` de ce module est MUET -- sa ligne `info` inconditionnelle
-    « Mining: n_blocks=... » apparait **zero fois** dans les journaux de campagne, tandis que
-    le logger `W{n_blk}` du worker passe sans probleme. Un premier run de cinquante minutes a
-    donc ete rendu ININTERPRETABLE : impossible de distinguer « la passe n'a pas tourne » de
-    « chaque λ forcee etait infaisable ».
+    🔴 AND THE COUNTERS GO UP THROUGH `stats`, NOT ONLY THROUGH THE LOG. 📏 Measured on
+    2026-08-21: the `ThinFilm` logger of this module is MUTE -- its unconditional `info`
+    line "Mining: n_blocks=..." appears **zero times** in the campaign logs, while the
+    worker's `W{n_blk}` logger gets through without trouble. A first fifty-minute run was
+    therefore made UNINTERPRETABLE: impossible to tell "the pass did not run" from
+    "every forced λ was infeasible".
 
-        Un instrument dont la sortie n'atteint pas le resultat n'est pas un instrument.
+        An instrument whose output does not reach the result is not an instrument.
 
-    C'est exactement le motif de §24-37 -- *« le repli EST journalise par couche, mais rien ne
-    remonte au classement »*. Le journal reste, par commodite ; `stats` est ce qui compte.
+    It is exactly the pattern of §24-37 -- *"the fallback IS logged per layer, but nothing
+    goes up to the ranking"*. The log stays, for convenience; `stats` is what counts.
     """
     if budget <= 0:
         return []
@@ -124,7 +123,7 @@ def _couverture_wl_groupings(
     for sol in solutions:
         deja |= _solution_wls(sol)
 
-    # Toutes les λ admissibles, avec leur meilleur cout et la couche ou il est atteint.
+    # All the admissible wavelengths, with their best cost and the layer where it is reached.
     meilleur: dict[float, tuple[float, int]] = {}
     for couche, dico in (cost_map or {}).items():
         for w, c in (dico or {}).items():
@@ -134,27 +133,27 @@ def _couverture_wl_groupings(
 
     absentes = sorted((w for w in meilleur if w not in deja), key=lambda w: meilleur[w][0])
     if not absentes:
-        # 🔴 Ce cas se consigne AUSSI. Sans compteur, « aucune λ absente » et « la passe n'a
-        # pas tourne » se lisent exactement pareil dans un artefact -- et c'est la confusion
-        # qui a coute un run de cinquante minutes le 2026-08-21.
+        # 🔴 This case is recorded TOO. Without a counter, "no missing λ" and "the pass did
+        # not run" read exactly the same in an artefact -- and that is the confusion that
+        # cost a fifty-minute run on 2026-08-21.
         if stats is not None:
             stats["deja_employees"] = stats.get("deja_employees", 0) + len(deja)
             stats["absentes"] = stats.get("absentes", 0)
             stats["appels_dp"] = stats.get("appels_dp", 0)
-        logger.info("   [WL-COUVERTURE] aucune λ admissible absente des groupements : rien a faire.")
+        logger.info("   [WL-COUVERTURE] no admissible λ is missing from the groupings: nothing to do.")
         return []
 
     ajoutes: list[dict] = []
     infaisables = 0
     for w in absentes:
-        # 🔴 LE BUDGET PLAFONNE LES TENTATIVES, PAS LES AJOUTS. Premiere version fausse, et
-        # mesuree : elle testait `len(ajoutes) >= budget`, si bien qu'un cas ou TOUT est
-        # infaisable ne consommait aucun budget et payait quand meme chaque appel.
-        # 📏 Le 2026-08-21, sur une configuration ou la DP ne rendait aucun groupement :
-        # « 903 absentes -> 0 ajoutee(s), 903 infaisable(s), 903 appels DP » -- pour un budget
-        # de 100, et environ deux minutes par nombre de blocs jetees.
-        # Les λ etant triees par cout CROISSANT, les `budget` premieres tentatives sont les
-        # plus prometteuses : plafonner le travail ne sacrifie pas les meilleures.
+        # 🔴 THE BUDGET CAPS THE ATTEMPTS, NOT THE ADDITIONS. First version wrong, and
+        # measured: it tested `len(ajoutes) >= budget`, so a case where EVERYTHING is
+        # infeasible consumed no budget and still paid for every call.
+        # 📏 On 2026-08-21, on a configuration where the DP returned no grouping:
+        # "903 missing -> 0 added, 903 infeasible, 903 DP calls" -- for a budget
+        # of 100, and about two minutes thrown away per block count.
+        # The wavelengths being sorted by INCREASING cost, the first `budget` attempts are the
+        # most promising: capping the work does not sacrifice the best ones.
         if len(ajoutes) + infaisables >= budget:
             break
         _cout, couche = meilleur[w]
@@ -175,9 +174,9 @@ def _couverture_wl_groupings(
         stats["non_traitees"] = stats.get("non_traitees", 0) + max(0, reste)
         stats["appels_dp"] = stats.get("appels_dp", 0) + len(ajoutes) + infaisables
     logger.info(
-        f"   [WL-COUVERTURE] {len(deja)} λ deja employees, {len(absentes)} absentes -> "
-        f"{len(ajoutes)} groupement(s) ajoute(s), {infaisables} infaisable(s) au nombre de "
-        f"blocs demande" + (f", {reste} NON TRAITEE(S) faute de budget ({budget})" if reste > 0 else "")
+        f"   [WL-COUVERTURE] {len(deja)} λ already used, {len(absentes)} missing -> "
+        f"{len(ajoutes)} grouping(s) added, {infaisables} infeasible at the requested "
+        f"block count" + (f", {reste} NOT PROCESSED for lack of budget ({budget})" if reste > 0 else "")
     )
     return ajoutes
 
@@ -438,14 +437,14 @@ def mine_strategies_for_block_count(
     sym_scoring_mode: str = SYM_DEFAULT_SCORING_MODE,
     sym_allow_hybrid: bool = False,
     min_wl_sep_nm: float = DP_DEFAULT_MIN_WL_SEPARATION_NM,
-    # 🔑 COUVERTURE EN λ -- inertes par defaut, chemin d'avant AU BIT.
-    # `wl_coverage_top_k = 0` retombe sur `top_k` : autant de groupements pour la COUVERTURE
-    # que pour l'OPTIMALITE. C'est une symetrie, pas un nombre invente (§19).
+    # 🔑 λ COVERAGE -- inert by default, former path TO THE BIT.
+    # `wl_coverage_top_k = 0` falls back on `top_k`: as many groupings for COVERAGE
+    # as for OPTIMALITY. It is a symmetry, not an invented number (§19).
     enable_wl_coverage: bool = False,
     wl_coverage_top_k: int = 0,
-    # 🔴 Rempli sur place, parce que le logger de ce module est MUET (voir
-    # `_couverture_wl_groupings`). C'est le seul canal par lequel l'appelant apprend ce que la
-    # passe a fait -- et « rien a couvrir » doit se distinguer de « pas tourne ».
+    # 🔴 Filled in place, because the logger of this module is MUTE (see
+    # `_couverture_wl_groupings`). It is the only channel through which the caller learns what
+    # the pass did -- and "nothing to cover" must be told apart from "did not run".
     wl_coverage_stats: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     if n_blocks <= 0 or num_layers <= 0:
@@ -548,9 +547,9 @@ def mine_strategies_for_block_count(
                 f"[DEBUG MINING] Layer {layer_idx}: {len(cost_map[layer_idx])} wavelengths, sample: {wls_sample}"
             )
 
-        # 🔒 Les reglages de la DP sont rassembles ICI et nulle part ailleurs : la passe de
-        # couverture la rappelle sous contrainte, et deux listes de quatorze arguments qui
-        # doivent rester identiques seraient une divergence programmee.
+        # 🔒 The DP settings are gathered HERE and nowhere else: the coverage pass
+        # calls it again under constraint, and two lists of fourteen arguments that must
+        # stay identical would be a scheduled divergence.
         _dp_reglages = dict(
             timeout=30.0,
             force_monolayer=force_monolayer,
@@ -574,28 +573,28 @@ def mine_strategies_for_block_count(
         solutions = _appel_dp(cost_map, top_k)
         logger.debug(f"[DEBUG MINING] {origin_name}: DP returned {len(solutions)} solutions")
 
-        # 🔑 LA COUVERTURE EN λ -- inerte par defaut, chemin d'avant AU BIT.
-        # Voir `_couverture_wl_groupings` pour la mesure qui la motive : la Phase A admet une
-        # mediane de 86 λ par couche, la recherche en emploie 14 a 29, et la λ dont les 72
-        # deposables ont besoin figure dans ZERO strategie.
-        # 🔴 LES GROUPEMENTS DE COUVERTURE ONT LEUR PROPRE PLAGE D'IDENTIFIANTS, et ce n'est
-        # pas de la cosmetique. Le plan est `strategy_id_base + offset_id + rank` avec
-        # `strategy_id_base = n_blocks * 1000`, et les offsets employes sont 0 / 100 / 200 pour
-        # les trois cartes de cout, 800 pour les graines structurees. En mode DEEP `top_k` vaut
-        # **exactement 100** : le plan est SATURE. Allonger `solutions` en place aurait donc
-        # donne au 101e groupement l'identifiant du 1er de la carte suivante -- deux strategies
-        # differentes sous un meme id, et tout ce qui indexe par id (le cache premium, les
-        # rapports, `from 9000000...`) se serait tu.
-        # Les offsets 300 / 400 / 500 sont libres, et 800 borne la plage.
+        # 🔑 λ COVERAGE -- inert by default, former path TO THE BIT.
+        # See `_couverture_wl_groupings` for the measurement that motivates it: Phase A admits
+        # a median of 86 λ per layer, the search uses 14 to 29, and the λ the 72 depositable
+        # ones need appears in ZERO strategies.
+        # 🔴 THE COVERAGE GROUPINGS HAVE THEIR OWN IDENTIFIER RANGE, and it is not
+        # cosmetic. The plan is `strategy_id_base + offset_id + rank` with
+        # `strategy_id_base = n_blocks * 1000`, and the offsets in use are 0 / 100 / 200 for
+        # the three cost maps, 800 for the structured seeds. In DEEP mode `top_k` is
+        # **exactly 100**: the plan is SATURATED. Extending `solutions` in place would therefore
+        # have given the 101st grouping the identifier of the 1st of the next map -- two
+        # different strategies under one id, and everything that indexes by id (the premium
+        # cache, the reports, `from 9000000...`) would have gone silent.
+        # Offsets 300 / 400 / 500 are free, and 800 bounds the range.
         couverture: list = []
         if enable_wl_coverage:
             _plafond = _COUVERTURE_ID_STRIDE
             _budget = min(int(wl_coverage_top_k or top_k), _plafond)
             if int(wl_coverage_top_k or top_k) > _plafond:
                 logger.warning(
-                    f"   [WL-COUVERTURE] budget demande {int(wl_coverage_top_k or top_k)} "
-                    f"ecrete a {_plafond} : c'est la largeur de la plage d'identifiants "
-                    f"reservee par origine, pas un reglage de recherche."
+                    f"   [WL-COUVERTURE] requested budget {int(wl_coverage_top_k or top_k)} "
+                    f"clipped to {_plafond}: it is the width of the identifier range "
+                    f"reserved per origin, not a search setting."
                 )
             couverture = _couverture_wl_groupings(
                 cost_map, solutions, _appel_dp, _budget, logger, wl_coverage_stats
@@ -619,9 +618,9 @@ def mine_strategies_for_block_count(
         if solutions:
             _convertir(solutions, offset_id, origin_name)
         if couverture:
-            # L'origine est DISTINCTE : sans cela on ne saurait pas, en lisant un classement,
-            # si une gagnante vient de l'optimalite ou de la couverture -- et c'est justement
-            # la question que cette passe est censee trancher.
+            # The origin is DISTINCT: otherwise, reading a ranking, one could not tell
+            # whether a winner comes from optimality or from coverage -- and that is precisely
+            # the question this pass is meant to settle.
             _convertir(
                 couverture,
                 offset_id + _COUVERTURE_ID_OFFSET,
@@ -1114,19 +1113,18 @@ def _apply_wl_diversity_if_enabled(
     params: dict[str, Any],
     logger: logging.Logger,
 ) -> list[dict[str, Any]]:
-    """Spread the head over WAVELENGTH space. 🔒 INERTE PAR DEFAUT, chemin d'avant au bit.
+    """Spread the head over WAVELENGTH space. 🔒 INERT BY DEFAULT, former path to the bit.
 
-    Voir `_apply_wl_diversity` pour la mesure qui la motive : les cinq parents d'ELITE a dix
-    blocs portaient UN SEUL jeu de λ, et c'est ce qui explique que quatre leviers
-    d'elargissement aient rendu zero deposable -- ils cherchaient plus fort AUTOUR DU MEME
-    POINT.
+    See `_apply_wl_diversity` for the measurement that motivates it: the five ten-block ELITE
+    parents carried ONE SINGLE set of λ, and that explains why four widening levers returned
+    zero depositable -- they searched harder AROUND THE SAME POINT.
     """
     if not bool(params.get("enable_wl_diversity", False)):
         return strategies_results
-    # 🔴 `or` ET NON `get(cle, defaut)`. Une cle presente a None ou a 0 doit retomber sur le
-    # reglage des blocs, et `get` ne le fait pas : il ne retombe que si la cle est ABSENTE.
-    # Ce defaut aurait leve un TypeError uniquement quand la passe est ARMEE -- donc jamais
-    # dans la suite de tests, ou le drapeau est faux par defaut.
+    # 🔴 `or` AND NOT `get(key, default)`. A key present with None or 0 must fall back on
+    # the block setting, and `get` does not do it: it only falls back if the key is ABSENT.
+    # That default would have raised a TypeError only when the pass is ARMED -- hence never
+    # in the test suite, where the flag is false by default.
     top_k = int(
         params.get("wl_diversity_top_k") or params.get("block_diversity_top_k") or 10
     )
@@ -1135,10 +1133,10 @@ def _apply_wl_diversity_if_enabled(
     out = _apply_wl_diversity(strategies_results, top_k=top_k)
     apres = len({_wl_set((it.get("strategy") or {}).get("blocks", []))
                  for it in out[:top_k]})
-    # 🔴 CE QUE LA PASSE A CHANGE EST DIT, PAS SUPPOSE. Une passe de diversite qui ne
-    # diversifie rien est exactement le genre de reglage qui cree une fausse explication.
+    # 🔴 WHAT THE PASS CHANGED IS SAID, NOT ASSUMED. A diversity pass that diversifies
+    # nothing is exactly the kind of setting that creates a false explanation.
     logger.info(
-        f"   [WL-DIVERSITE] tete de {top_k} : {avant} jeu(x) de λ distinct(s) -> {apres}"
+        f"   [WL-DIVERSITE] head of {top_k}: {avant} distinct λ set(s) -> {apres}"
     )
     return out
 
@@ -1167,44 +1165,44 @@ def _select_best_strat_result(strategies_results: list[dict[str, Any]]) -> dict[
     return select_best_strat_result(strategies_results)
 
 # --------------------------------------------------------------------------- #
-# Plages d'identifiants de strategie -- UNE seule declaration
+# Strategy identifier ranges -- ONE single declaration
 # --------------------------------------------------------------------------- #
 #
-# 🔴 POURQUOI CECI EXISTE, et ce que ca a deja coute. Le 2026-08-12 la gagnante d'un run
-# portait l'identifiant 990000320. J'ai lu "plage 990 = variante Rate" et je l'ai
-# rapporte comme telle; son `origin` disait LOCAL_SEARCH. Le generateur de consensus
-# part de `max_sid + 1`, donc il GRIMPE dans n'importe quelle plage des qu'une variante
-# existe -- et deux generateurs finissent par se partager les memes numeros.
+# 🔴 WHY THIS EXISTS, and what it has already cost. On 2026-08-12 the winner of a run
+# carried the identifier 990000320. I read "range 990 = Rate variant" and reported
+# it as such; its `origin` said LOCAL_SEARCH. The consensus generator starts from
+# `max_sid + 1`, so it CLIMBS into any range as soon as a variant exists -- and two
+# generators end up sharing the same numbers.
 #
-# La lecture fausse est ensuite remontee a l'utilisateur, qui a cru voir du Rate gagner
-# la ou il n'y en avait jamais eu. C'est exactement le motif de ce depot: ca ne produit
-# pas d'erreur, ca produit un resultat plausible.
+# The wrong reading was then passed on to the user, who believed they saw Rate winning
+# where there had never been any. That is exactly the pattern of this repository: it
+# does not produce an error, it produces a plausible result.
 #
-# 🔑 LA REGLE, ET ELLE EST SIMPLE : **l'identifiant n'est pas une donnee, c'est un
-# numero.** Le generateur se lit dans `origin`, qui fait foi. Les plages ci-dessous ne
-# servent qu'a garantir que deux strategies distinctes ne portent jamais le meme numero.
+# 🔑 THE RULE, AND IT IS SIMPLE: **the identifier is not data, it is a number.** The
+# generator is read in `origin`, which is authoritative. The ranges below only serve
+# to guarantee that two distinct strategies never carry the same number.
 
-#: Base des strategies derivees (local search de la Phase B, `certus_strat_workers`).
+#: Base of the derived strategies (Phase B local search, `certus_strat_workers`).
 STRATEGY_ID_DERIVED_BASE: int = 900_000_000
-#: Base des variantes de FENTE (A18).
+#: Base of the SLIT variants (A18).
 STRATEGY_ID_SLIT_BASE: int = 970_000_000
-#: Base des variantes RATE.
+#: Base of the RATE variants.
 STRATEGY_ID_RATE_BASE: int = 990_000_000
-#: Plafond au-dela duquel un generateur incremental ne doit jamais monter: il entrerait
-#: dans les plages reservees ci-dessus.
+#: Cap beyond which an incremental generator must never climb: it would enter
+#: the ranges reserved above.
 STRATEGY_ID_INCREMENTAL_CEILING: int = STRATEGY_ID_SLIT_BASE
 
 
 def clamp_incremental_strategy_id(next_id: int) -> int:
-    """Empeche un compteur `max_sid + 1` d'entrer dans une plage reservee.
+    """Prevents a `max_sid + 1` counter from entering a reserved range.
 
-    Les generateurs incrementaux (consensus, ELITE, recherche locale) partent du plus
-    grand identifiant deja vu, pour ne pas collisionner avec l'existant. Mais une fois
-    que des variantes a 970M ou 990M sont dans la liste, ce `max + 1` les suit et le
-    numero cesse de dire quoi que ce soit.
+    The incremental generators (consensus, ELITE, local search) start from the largest
+    identifier already seen, so as not to collide with what exists. But once variants at
+    970M or 990M are in the list, that `max + 1` follows them and the number stops
+    meaning anything.
 
-    On le ramene donc sous le plafond. Le risque residuel -- reutiliser un numero deja
-    pris sous le plafond -- est ecarte par les signatures de strategie, qui sont ce qui
-    dedoublonne reellement (`_existing_block_signatures`).
+    It is therefore brought back under the cap. The residual risk -- reusing a number
+    already taken under the cap -- is ruled out by the strategy signatures, which are what
+    really deduplicates (`_existing_block_signatures`).
     """
     return next_id if next_id < STRATEGY_ID_INCREMENTAL_CEILING else STRATEGY_ID_DERIVED_BASE

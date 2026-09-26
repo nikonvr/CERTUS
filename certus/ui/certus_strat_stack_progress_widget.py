@@ -1,4 +1,4 @@
-"""Widget de visualisation dynamique de l'empilement (Stack) pendant la Phase A de CERTUS-STRAT."""
+"""Dynamic view of the stack while Phase A of CERTUS-STRAT runs."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ from certus.ui.certus_theme import CertusTheme
 
 
 class LayerCard(QFrame):
-    """Carte représentative d'une couche physique unique de l'empilement."""
+    """Card representing one single physical layer of the stack."""
 
     def __init__(self, index: int, mat: str, mult: float, thickness_nm: float, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -39,7 +39,7 @@ class LayerCard(QFrame):
         layout.setContentsMargins(10, 4, 10, 4)
         layout.setSpacing(12)
 
-        # 1. Numéro de couche
+        # 1. Layer number
         self.lbl_num = QLabel(f"#{index:02d}")
         self.lbl_num.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
         self.lbl_num.setFixedWidth(34)
@@ -107,7 +107,7 @@ class LayerCard(QFrame):
 
 
 class CertusStratStackProgressWidget(QWidget):
-    """Panneau central dynamique affichant l'empilement optique en cours d'analyse en Phase A."""
+    """Central dynamic panel showing the optical stack being analysed in Phase A."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -123,7 +123,7 @@ class CertusStratStackProgressWidget(QWidget):
         root_layout.setContentsMargins(16, 16, 16, 16)
         root_layout.setSpacing(12)
 
-        # 1. En-tête / Titre
+        # 1. Header / Title
         header_layout = QHBoxLayout()
         self.lbl_title = QLabel("STACK ANALYSIS — Phase A : Admissibilité couche par couche")
         self.lbl_title.setFont(QFont("Segoe UI", 12, QFont.Weight.Bold))
@@ -141,7 +141,7 @@ class CertusStratStackProgressWidget(QWidget):
         header_layout.addWidget(self.lbl_layer_pill)
         root_layout.addLayout(header_layout)
 
-        # 2. Carte de résumé (KPIs)
+        # 2. Summary card (KPIs)
         kpi_card = QFrame()
         kpi_card.setStyleSheet(
             f"background-color: {CertusTheme.SURFACE}; border: 1px solid {CertusTheme.BORDER}; "
@@ -164,7 +164,7 @@ class CertusStratStackProgressWidget(QWidget):
 
         root_layout.addWidget(kpi_card)
 
-        # 3. Zone de défilement des couches
+        # 3. Scrolling area of the layers
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setStyleSheet(
@@ -184,13 +184,13 @@ class CertusStratStackProgressWidget(QWidget):
         return len(self.layer_cards) > 0
 
     def init_stack_from_table(self, table: Any, l0: float = 550.0, h_mat: str = "H", l_mat: str = "L") -> None:
-        """Initialiser la liste des couches à partir de la table du cockpit."""
+        """Initialise the list of layers from the cockpit table."""
         # Nettoyage précédent
         for card in self.layer_cards:
             card.deleteLater()
         self.layer_cards.clear()
 
-        # Supprimer le stretch final temporairement
+        # Remove the final stretch temporarily
         while self.layers_layout.count():
             item = self.layers_layout.takeAt(0)
             if item.widget():
@@ -228,7 +228,7 @@ class CertusStratStackProgressWidget(QWidget):
 
     @pyqtSlot(int, int, int)
     def update_progress(self, current_layer: int, total_layers: int, pct: int) -> None:
-        """Mettre à jour la couche en cours d'analyse."""
+        """Update the layer currently being analysed."""
         if total_layers <= 0:
             return
 
@@ -242,7 +242,7 @@ class CertusStratStackProgressWidget(QWidget):
                 card.set_state("done")
             elif layer_num == current_layer:
                 card.set_state("active")
-                # Auto-scroll intelligent centré sur la couche active
+                # Smart auto-scroll centred on the active layer
                 try:
                     target_y = card.pos().y() + card.height() // 2 - self.scroll_area.viewport().height() // 2
                     v_bar = self.scroll_area.verticalScrollBar()
@@ -256,12 +256,12 @@ class CertusStratStackProgressWidget(QWidget):
                 card.set_state("pending")
 
     def mark_phase_a_complete(self) -> None:
-        """Marquer toutes les couches comme admissibles une fois la Phase A terminée."""
+        """Mark every layer as admissible once Phase A is finished."""
         for card in self.layer_cards:
             card.set_state("done")
 
     def update_phase_b_progress(self, message: str, pct: int) -> None:
-        """Afficher l'avancement de la Phase B (optimisation par blocs)."""
+        """Show the progress of Phase B (block optimisation)."""
         self.mark_phase_a_complete()
         self.lbl_title.setText("OPTIMIZATION — Phase B : Groupement en blocs & Robustesse")
         self.lbl_layer_pill.setText("Phase B en cours")

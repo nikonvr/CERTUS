@@ -163,7 +163,7 @@ class TestLaJournalisation:
             )
         msgs = " ".join(r.getMessage() for r in caplog.records)
         assert "[WL-DIVERSITE]" in msgs
-        assert "2 jeu(x)" in msgs and "-> 3" in msgs
+        assert "2 distinct" in msgs and "-> 3" in msgs
 
     def test_le_top_k_retombe_sur_celui_des_blocs(self):
         """Un seul reglage a connaitre si l'on n'en veut qu'un."""

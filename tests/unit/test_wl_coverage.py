@@ -147,7 +147,7 @@ class TestLesEchecsSontDITS:
         assert out == []
         msg = " ".join(r.getMessage() for r in caplog.records)
         assert "[WL-COUVERTURE]" in msg
-        assert "2 infaisable(s)" in msg, msg
+        assert "2 infeasible" in msg, msg
 
     def test_le_budget_qui_mord_est_DIT(self, caplog):
         carte = {0: {500.0: 1.0, 610.0: 2.0, 620.0: 3.0, 630.0: 4.0}}
@@ -157,8 +157,8 @@ class TestLesEchecsSontDITS:
             )
         assert len(out) == 1
         msg = " ".join(r.getMessage() for r in caplog.records)
-        assert "NON TRAITEE(S) faute de budget" in msg, msg
-        assert "2 NON TRAITEE(S)" in msg, msg
+        assert "NOT PROCESSED for lack of budget" in msg, msg
+        assert "2 NOT PROCESSED" in msg, msg
 
     def test_rien_a_faire_est_DIT_aussi(self, caplog):
         with caplog.at_level(logging.INFO, logger="test_wl_coverage"):
@@ -166,7 +166,7 @@ class TestLesEchecsSontDITS:
                 CARTE, [_sol(500, 600, 700)], lambda c, k: [], 10, LOGGER
             )
         msg = " ".join(r.getMessage() for r in caplog.records)
-        assert "absente" in msg, msg
+        assert "missing" in msg, msg
 
 
 # --- de bout en bout, a travers le minage reel -------------------------------
@@ -251,7 +251,7 @@ class TestDeBoutEnBout:
         with caplog.at_level(logging.WARNING):
             _miner(enable_wl_coverage=True, wl_coverage_top_k=_COUVERTURE_ID_STRIDE + 1)
         msg = " ".join(r.getMessage() for r in caplog.records)
-        assert "ecrete" in msg, msg
+        assert "clipped" in msg, msg
 
 
 class TestLesCompteursRemontent:

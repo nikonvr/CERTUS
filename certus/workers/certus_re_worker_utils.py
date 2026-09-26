@@ -302,7 +302,7 @@ def re_trf_thickness_bounds(ep0: np.ndarray, radius_pct: float) -> tuple[np.ndar
 
 
 def re_trf_bounds_scipy_tuples(lb_ep: np.ndarray, ub_ep: np.ndarray) -> list[tuple[float, float]]:
-    """Forme attendue par ``scipy.optimize`` (differential_evolution, etc.)."""
+    """Shape expected by ``scipy.optimize`` (differential_evolution, etc.)."""
 
     lb = np.asarray(lb_ep, dtype=np.float64).ravel()
 

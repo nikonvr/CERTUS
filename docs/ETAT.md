@@ -13,7 +13,7 @@
 |---|---|---|
 | **Calcul (STRAT)** | composant étalon : l'aléatoire ×2 (`r75x2`) à la fente de 2 nm. Fabricable avec les rampes de la configuration livrée ; sans rampes, 3 graines sur 7 trouvent des déposables. Toute la fabricabilité passe par le générateur ELITE | voir la section 6 |
 | **Interface** | plan clos le 2026-09-08 : 12 critères de fin sur 13 atteints et mesurés, le treizième démontré inatteignable (`xfail` strict) | la revue visuelle et trois arbitrages de 👤 (section 5) ; la fuite des fenêtres (défaut D11) |
-| **Qualité** | CI GitHub sous Linux sur toutes les branches : lint vert ; tests verts sauf l'ajustement Sellmeier du saphir, corrigé le 2026-09-26 (défaut D10) | traduire les commentaires français de `certus/` (défaut D28) |
+| **Qualité** | CI GitHub sous Linux sur toutes les branches. Le 2026-09-26 : commentaires, docstrings et journaux de `certus/` traduits en anglais (1 143 lignes), deux garde-fous posés (langue ; noms importés qui existent) | la fuite des fenêtres (D11) ; l'isolation des tests (D23) |
 | **Documentation** | cure du 2026-09-26 : deux documents vivants, 27 archivés | tenir « un fait, un seul endroit » |
 | **Validation externe** | 🔴 **aucune** : STRAT n'est validé que contre lui-même | deux dépôts réels du dichroïque (section 5) |
 
@@ -166,7 +166,6 @@ numéros de l'ancien registre sont entre parenthèses
 | D25 | Dette de lint masquée par `extend-ignore` (68 règles) : 12 142 erreurs le 2026-08-19, presque toutes d'import (F401, F405, E402, I001) ; les noms indéfinis (F821, F822) sont à zéro |
 | D26 | Inversions de couches, comptées le 2026-08-19 : `utils → ui` (11), `core → workers` (10), cycle `physics ↔ core` (23 et 29 imports) |
 | D27 | Sous-paquets PEP 420 et `packages = ["certus"]` : un `pip install` ne livrerait aucun sous-module |
-| D28 | Commentaires, docstrings et journaux en français dans `certus/`, contraires à l'interdit 11 |
 | D30 | `CERTUS_METAL_SINGLE.py` et `CERTUS_METAL_BILAYER.py` restent à la racine alors que `certus/metal/` existe ; le `.coverage` pointe vers un autre snapshot |
 | D31 | **Les tests écrivent dans les dossiers de l'utilisateur.** L'export automatique est actif par défaut, donc les tests headless — lancés aussi en sous-processus par `tests/regression/` — déposent un rapport dans `reports/` à chaque optimisation complète (un `Report_SINGLE` le 2026-09-26). Et `tests/unit/test_certus_core.py` réécrit `certus_export.json`, fichier de préférences **suivi par git** comme `certus_theme.json` |
 

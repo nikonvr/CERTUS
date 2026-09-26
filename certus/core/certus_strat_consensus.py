@@ -504,13 +504,13 @@ def _rank_and_filter_strategies(
         params=params,
         logger=logger,
     )
-    # 🔑 LA DIVERSITE EN λ VIENT EN DERNIER, ET C'EST VOULU.
+    # 🔑 THE λ DIVERSITY COMES LAST, AND THAT IS INTENDED.
     #
-    # Les deux passes precedentes diversifient la FAMILLE d'origine et la PARTITION de blocs.
-    # 📏 Mesure du 2026-08-21 : elles laissent passer cinq parents d'ELITE portant UN SEUL jeu
-    # de λ, parce qu'elles diversifient des axes orthogonaux a celui ou ELITE se deplace. La
-    # passe λ agit donc apres elles, sur la tete qu'elles ont deja formee.
-    # 🔒 Inerte par defaut : sans `enable_wl_diversity`, chemin d'avant au bit.
+    # The two previous passes diversify the FAMILY of origin and the block PARTITION.
+    # 📏 Measured on 2026-08-21: they let through five ELITE parents carrying ONE SINGLE set
+    # of λ, because they diversify axes orthogonal to the one along which ELITE moves. The
+    # λ pass therefore acts after them, on the head they have already formed.
+    # 🔒 Inert by default: without `enable_wl_diversity`, former path to the bit.
     strategies_results = _apply_wl_diversity_if_enabled(
         strategies_results=strategies_results,
         params=params,
@@ -635,7 +635,7 @@ def _format_wl_histogram(hist: dict[float, int], top: int = WL_HISTOGRAM_HARD_CA
     items = sorted(hist.items(), key=lambda kv: (-kv[1], kv[0]))
     head = " ".join(f"{wl:g}:{n}" for wl, n in items[:top])
     omitted = len(items) - top
-    # Ne devrait jamais arriver sur la grille reelle ; si cela arrive, on le DIT.
+    # Should never happen on the real grid; if it does, SAY so.
     return head + (f" [+{omitted} wl OVER HARD CAP {top}]" if omitted > 0 else "")
 
 
@@ -754,13 +754,13 @@ def _apply_elite_refinement_if_enabled(
 
     raw_factors = _parse_noise_factors(ctx.params.get("robustness_noise_factors", [0.5, 1.0, 2.0]))
     nominal_noise_level = _resolve_nominal_noise_level(ctx.noise_levels, raw_factors)
-    #CONTROL grid (not `scan_wl_step`), not union with grid
-    # d'affichage a 1 nm : ELITE mutait les lambda de 1 nm, hors grille, d'ou les
-    #`551, 552, 553, 554` at the top of the ranking. See
+    # CONTROL grid (not `scan_wl_step`), not its union with the display grid
+    # at 1 nm: ELITE used to mutate the wavelengths by 1 nm, off-grid, hence the
+    # `551, 552, 553, 554` at the top of the ranking. See
     # `_resolve_monitoring_wavelength_grid`.
     available_wls = _resolve_monitoring_wavelength_grid(ctx.params, ctx.clues_at_wl, ctx.wl_arr)
     ctx.logger.info(
-        f"[ELITE] grille de controle : {len(available_wls)} lambda au pas de "
+        f"[ELITE] control grid: {len(available_wls)} lambda at a step of "
         f"{float(ctx.params.get('scan_wl_step', 0.0)):g} nm"
     )
     total_elite_added = 0
@@ -781,8 +781,8 @@ def _apply_elite_refinement_if_enabled(
         nominal_threshold, target_threshold = nominal_target_pair
         max_sid = _max_strategy_id(strategies_results)
         existing_signatures = _existing_block_signatures(strategies_results)
-        # 🔑 CE QU'ELITE PREND POUR POINT DE DEPART -- journalisation pure. Sa mutation etant
-        # deterministe, locale et une-a-la-fois, tout le resultat se decide ici.
+        # 🔑 WHAT ELITE TAKES AS ITS STARTING POINT -- pure logging. Its mutation being
+        # deterministic, local and one-at-a-time, the whole result is decided here.
         _log_elite_parents(ctx.logger, elite_round, strategies_results[:parent_count])
         elite_candidates, _next_sid = _generate_elite_candidate_strategies(
             parent_results=strategies_results[:parent_count],
@@ -802,14 +802,15 @@ def _apply_elite_refinement_if_enabled(
 
         candidates_to_eval = [(int(e_idx), strat) for e_idx, strat in enumerate(elite_candidates)]
 
-        # 🔴 COMPTER LES REJETS, PAS LIRE LE CODE -- controle 4 du §12 de CLAUDE.md.
-        # 📏 Le 2026-08-20, ELITE rend 0 strategie a la graine 42 et 743 a la graine 77 sur
-        # le meme composant, et RIEN dans les artefacts ne dit POURQUOI : ni si les
-        # candidates sont engendrees puis rejetees, ni a laquelle des trois portes. Trois
-        # hypotheses ont ete formulees et refutees l'une apres l'autre faute de ce compte.
-        # Un filtre inerte ne produit pas d'erreur -- il produit un resultat plausible.
-        # ⚠️ Instrumentation PURE : trois compteurs et une ligne de journal. Aucun chemin de
-        # calcul ne change, les resultats restent bit-a-bit ceux d'avant.
+        # 🔴 COUNT THE REJECTIONS, DO NOT READ THE CODE -- check 4 of the verification protocol
+        # in CLAUDE.md.
+        # 📏 On 2026-08-20, ELITE returns 0 strategies at seed 42 and 743 at seed 77 on the
+        # same component, and NOTHING in the artefacts says WHY: neither whether the candidates
+        # are generated then rejected, nor at which of the three gates. Three hypotheses were
+        # put forward and refuted one after the other for lack of that count.
+        # An inert filter does not produce an error -- it produces a plausible result.
+        # ⚠️ PURE instrumentation: three counters and one log line. No computation path
+        # changes, the results stay bit for bit the former ones.
         rej_halving = rej_full_rmse = rej_score_non_fini = 0
         # Same three gates, but WHICH WAVELENGTHS -- see `_elite_wl_histogram`.
         wl_generated = _elite_wl_histogram(elite_candidates)
@@ -878,24 +879,24 @@ def _apply_elite_refinement_if_enabled(
             candidates_to_eval = [(e_idx, strat) for _val, e_idx, strat in stage_results[:keep_count]]
 
         if not candidates_to_eval:
-            # 🔴 LES COMPTEURS SONT EMIS ICI AUSSI, ET C'EST INDISPENSABLE. Cette sortie
-            # precede la ligne de compteurs placee apres l'evaluation complete : sans cela
-            # le round se terminait SANS RIEN MESURER. Defaut trouve par relecture le
-            # 2026-08-20, avant de depenser 120 min de machine sur un instrument muet.
+            # 🔴 THE COUNTERS ARE EMITTED HERE TOO, AND IT IS ESSENTIAL. This exit comes
+            # before the counters line placed after the full evaluation: without this, the round
+            # ended WITHOUT MEASURING ANYTHING. Defect found by review on 2026-08-20, before
+            # spending 120 machine minutes on a mute instrument.
             #
-            # 🔑 ET CETTE SORTIE A UN SENS PRECIS, ETABLI PAR ANALYSE DU FLOT -- elle ne
-            # veut PAS dire « tout a ete rejete au halving ». Demonstration :
-            #   `candidates_to_eval` part avec TOUTES les candidates ; dans la boucle,
-            #   soit `stage_results` est vide et on sort par `break` SANS reassigner,
-            #   soit `keep_count = max(elite_max_full_evals, len//2) >= 1` et la tranche
-            #   `stage_results[:keep_count]` est NON VIDE.
-            #   Donc `candidates_to_eval` est vide SI ET SEULEMENT SI `elite_candidates`
-            #   l'etait : **cette sortie signifie que le GENERATEUR n'a rien produit.**
+            # 🔑 AND THIS EXIT HAS A PRECISE MEANING, ESTABLISHED BY FLOW ANALYSIS -- it does
+            # NOT mean "everything was rejected at halving". Proof:
+            #   `candidates_to_eval` starts with ALL the candidates; in the loop,
+            #   either `stage_results` is empty and the loop exits through `break` WITHOUT reassigning,
+            #   or `keep_count = max(elite_max_full_evals, len//2) >= 1` and the slice
+            #   `stage_results[:keep_count]` is NON EMPTY.
+            #   So `candidates_to_eval` is empty IF AND ONLY IF `elite_candidates`
+            #   was: **this exit means that the GENERATOR produced nothing.**
             #
-            # C'est ce qui rend le diagnostic auto-interpretable :
-            #   sortie=HALVING  ... sur 0 engendrees  -> generateur a sec
-            #   sortie=COMPLETE  score_non_fini eleve -> les candidates plantent
-            #   sortie=COMPLETE  full_rmse eleve      -> le seuil rejette
+            # That is what makes the diagnostic self-interpreting:
+            #   exit=HALVING  ... on 0 generated      -> generator ran dry
+            #   exit=COMPLETE  high score_non_fini    -> the candidates crash
+            #   exit=COMPLETE  high full_rmse         -> the threshold rejects
             ctx.logger.info(
                 f"[ELITE] Round {elite_round}: rejets -- halving={rej_halving} "
                 f"full_rmse={rej_full_rmse} score_non_fini={rej_score_non_fini} "
@@ -948,12 +949,12 @@ def _apply_elite_refinement_if_enabled(
                         continue
                     full_score = float(full_res.get("robustness_score", np.inf))
                     if not np.isfinite(full_score):
-                        # 🔑 CETTE PORTE-LA EST INVISIBLE DANS LES ARTEFACTS. Le classement
-                        # remplace ensuite l'infini par un repli (`_worst_finite_rmse`), si
-                        # bien qu'un artefact ne porte QUE des scores finis meme quand tout
-                        # plante a 100 %. Mesure du 2026-08-20 : 1617 scores finis sur 1617,
-                        # crash 100,00 % partout. On ne peut donc pas savoir depuis l'artefact
-                        # si ELITE a bute ici -- d'ou ce compteur.
+                        # 🔑 THIS GATE IS INVISIBLE IN THE ARTEFACTS. The ranking then
+                        # replaces infinity with a fallback (`_worst_finite_rmse`), so that
+                        # an artefact carries ONLY finite scores even when everything
+                        # crashes at 100 %. Measured on 2026-08-20: 1617 finite scores out of 1617,
+                        # crash 100.00 % everywhere. The artefact therefore cannot tell
+                        # whether ELITE hit this gate -- hence this counter.
                         rej_score_non_fini += 1
                         wl_rejects["score_non_fini"].update(
                             _elite_wl_histogram([full_res.get("strategy") or {}])
@@ -971,12 +972,12 @@ def _apply_elite_refinement_if_enabled(
                 except NUMERICAL_FAULT_EXCEPTIONS as e:
                     ctx.logger.warning(f"[ELITE] Round {elite_round}: full evaluation failed: {e}")
 
-        # ⚠️ `rej_halving` COMPTE DES REJETS QUI N'ELIMINENT PAS TOUJOURS. Si un etage du
-        # halving rejette TOUT, la boucle sort sur `break` (ligne ~631) sans reassigner
-        # `candidates_to_eval`, qui garde donc l'ensemble de l'etage precedent -- et ces
-        # candidates passent quand meme en evaluation complete. C'est un filet de securite
-        # du code existant, pas un defaut, mais il faut le savoir pour lire le compteur :
-        # un `halving` eleve ne signifie pas « autant de candidates perdues ».
+        # ⚠️ `rej_halving` COUNTS REJECTIONS THAT DO NOT ALWAYS ELIMINATE. If a stage of
+        # the halving rejects EVERYTHING, the loop exits through its `break` without reassigning
+        # `candidates_to_eval`, which therefore keeps the whole previous stage -- and those
+        # candidates still go through the full evaluation. It is a safety net of the existing
+        # code, not a defect, but it must be known to read the counter: a high `halving`
+        # does not mean "that many candidates lost".
         ctx.logger.info(
             f"[ELITE] Round {elite_round}: rejets -- halving={rej_halving} "
             f"full_rmse={rej_full_rmse} score_non_fini={rej_score_non_fini} "

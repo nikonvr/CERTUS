@@ -941,7 +941,7 @@ class SplineReportBuilder:
 
         Generates a timestamped file containing:
 
-        - Spectrum: mod?le final n/k ; colonnes polish spectral spline cubique sigma si ``n_lam_seg_spline_sigma``.
+        - Spectrum: final n/k model; cubic spectral spline sigma polish columns if ``n_lam_seg_spline_sigma``.
 
           Lines sorted by increasing lambda. Corridors / boot in same order.
 

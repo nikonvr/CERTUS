@@ -526,16 +526,16 @@ def simulate_stack_robustness_batch(
                 # each replayed layer must carry its own bias profile, not this layer's.
                 slit_profiles,
                 witness_base[i_layer],
-                # ⚠️ Les deux defauts du noyau, repetes tels quels pour pouvoir atteindre le
-                # parametre suivant par position. `machine_sampling_dd` reste donc a 0.0 --
-                # c'est le defaut A8 documente comme INATTEIGNABLE, et ce n'est pas ici
-                # qu'on le repare : le repeter ne change rien, l'omettre non plus.
+                # ⚠️ The kernel's two defaults, repeated as they are in order to reach the next
+                # parameter by position. `machine_sampling_dd` therefore stays at 0.0 -- it is
+                # defect A8, documented as UNREACHABLE, and this is not the place to repair it:
+                # repeating it changes nothing, omitting it neither.
                 False,
                 0.0,
-                # 👤 2026-08-19 : le rate ne se calcule QUE sur les couches optiquement
-                # deposees. Le noyau ne recevait que le drapeau de la couche courante et
-                # reprenait donc les couches Rate anterieures comme references, alors
-                # qu'elles ne portent aucune mesure. On lui passe le tableau entier.
+                # 👤 2026-08-19: the rate is computed ONLY on the optically deposited layers.
+                # The kernel only received the flag of the current layer and therefore took the
+                # earlier Rate layers as references, although they carry no measurement. It is
+                # given the whole array.
                 rate_flags,
             )
             current_run_th_buffer[r, i_layer] = val

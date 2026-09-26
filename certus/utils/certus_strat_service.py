@@ -824,23 +824,23 @@ def calculate_dynamics_ULTIMATE(
                 float(dyn_vals[probe_idx]),
             )
 
-    # ── NOMBRE DE POINTS TOURNANTS, par la forme fermee du noyau ────────────────
+    # ── NUMBER OF TURNING POINTS, through the kernel's closed form ────────────────
     #
-    # 👤 2026-08-15 : *« le code pourrait ou meme devrait, en Phase A, regarder pour une
-    # couche i le nombre de lambda permettant de passer un turning point »*.
+    # 👤 2026-08-15: *"the code could or even should, in Phase A, look for a layer i at
+    # the number of wavelengths that allow going through a turning point"*.
     #
-    # 🔴 `dynamics` NE MESURE PAS CA. C'est le swing crete-a-crete T_max - T_min : une
-    # couche dont T croit de facon MONOTONE pendant toute sa croissance a un swing
-    # excellent et AUCUN extremum sur lequel s'arreter. 📏 Mesure du 2026-08-15
-    # (`scripts/probe_tp_admissibilite.py`) : 1,3 a 3,9 % des candidates admissibles sont
-    # dans ce cas, dont une a swing 0,467 sur le 99c.
+    # 🔴 `dynamics` DOES NOT MEASURE THAT. It is the peak-to-peak swing T_max - T_min: a
+    # layer whose T grows MONOTONICALLY during its whole growth has an excellent swing and
+    # NO extremum to stop on. 📏 Measured on 2026-08-15
+    # (`scripts/probe_tp_admissibilite.py`): 1.3 to 3.9 % of the admissible candidates are
+    # in that case, one of them with a swing of 0.467 on the 99c.
     #
-    # Le point tournant, c'est l'admittance du systeme qui devient reelle, donc
-    # `tan 2.delta = R/Q` -> delta_TP = (1/2).arctan2(R, Q) + k.(pi/2). Ce N'EST PAS
-    # « la couche atteint 1 QWOT » : voir docs/archives/QWOT_ET_TURNING_POINT.md.
+    # The turning point is the admittance of the system becoming real, hence
+    # `tan 2.delta = R/Q` -> delta_TP = (1/2).arctan2(R, Q) + k.(pi/2). It is NOT
+    # "the layer reaches 1 QWOT": see docs/archives/QWOT_ET_TURNING_POINT.md.
     #
-    # Cout : O(1) par lambda, sur des grandeurs deja calculees ci-dessus. Aucun parcours
-    # supplementaire de l'empilement.
+    # Cost: O(1) per wavelength, on quantities already computed above. No extra
+    # traversal of the stack.
     X = M_before_stack[:, 0, 0] + n_sub_array * M_before_stack[:, 0, 1]
     Y = M_before_stack[:, 1, 0] + n_sub_array * M_before_stack[:, 1, 1]
     C_ = X + Y
@@ -900,28 +900,29 @@ def _select_candidates_phase_a(
     threshold = float(params.get("dynamics_threshold", 0.025))
     pre_candidates_dyn = [d for d in dynamics if d["dynamics"] >= threshold]
 
-    # ── EXIGER UN POINT TOURNANT — proposition de 👤 du 2026-08-15, EN TEST ──────
+    # ── REQUIRE A TURNING POINT -- proposal of 👤 of 2026-08-15, UNDER TEST ──────
     #
-    # 🔴 DESACTIVE PAR DEFAUT, et ce n'est pas de la prudence de facade : sans ca la
-    # contrainte C1 tombe et toute mesure anterieure devient incomparable. Le defaut
-    # `False` laisse le chemin de calcul mot pour mot celui d'avant ce parametre.
+    # 🔴 DISABLED BY DEFAULT, and it is not token caution: without it constraint C1
+    # falls and every earlier measurement becomes incomparable. The `False` default
+    # leaves the computation path word for word the one before this parameter.
     #
-    # ⚠️ EXCLUSION SECHE, DONC LE CAS EXTREME. Une couche sans point tournant reste
-    # deposable : elle s'arrete sur un NIVEAU ABSOLU, ou en Rate. Ce qu'elle perd, c'est
-    # l'ancre de phase auto-referencee dont POEM a besoin. Un critere de production
-    # devrait donc etre un COUT, pas un couperet -- et un cout NON MONOTONE, puisque
-    # `CRASH_TP_MISCOUNT` sanctionne aussi le trop-plein de points tournants proches.
-    # Le couperet est ici pour repondre a UNE question, celle de 👤 :
+    # ⚠️ A HARD EXCLUSION, HENCE THE EXTREME CASE. A layer without a turning point stays
+    # depositable: it stops on an ABSOLUTE LEVEL, or in Rate. What it loses is the
+    # self-referenced phase anchor POEM needs. A production criterion should therefore be
+    # a COST, not a cut-off -- and a NON-MONOTONIC cost, since `CRASH_TP_MISCOUNT` also
+    # penalises an excess of close turning points. The cut-off is here to answer ONE
+    # question, the one of 👤:
     #
-    #     « voir sur le 35c, 48c avec un seul testglass s'il y a amelioration »
+    #     "see on the 35c, 48c with a single testglass whether there is an improvement"
     #
-    # Si meme l'exclusion totale ne bouge pas le SEEL, un cout doux ne le bougera pas
-    # davantage, et la proposition est reglee sans avoir a deviner sa forme.
-    # 🔑 Accepte un BOOLEEN (True = au moins 1 point tournant) ou un ENTIER (le minimum
-    # exige). L'entier existe pour une raison precise : un reglage DESTRUCTIF -- par exemple
-    # 999 -- doit vider la selection. C'est la seule facon de prouver, sans circularite, que
-    # ce parametre ATTEINT le calcul. Un resultat bit-a-bit identique entre `False` et `999`
-    # signifierait que le parametre est inerte, comme `machine_sampling_dd` l'etait.
+    # If even the total exclusion does not move the SEEL, a soft cost will not move it
+    # either, and the proposal is settled without having to guess its shape.
+    # 🔑 Accepts a BOOLEAN (True = at least 1 turning point) or an INTEGER (the required
+    # minimum). The integer exists for a precise reason: a DESTRUCTIVE setting -- for
+    # example 999 -- must empty the selection. It is the only way to prove, without
+    # circularity, that this parameter REACHES the computation. A bit-for-bit identical
+    # result between `False` and `999` would mean the parameter is inert, as
+    # `machine_sampling_dd` was.
     _req_tp = params.get("require_turning_point", False)
     _min_tp = int(_req_tp) if not isinstance(_req_tp, bool) else (1 if _req_tp else 0)
     if _min_tp >= 1:
@@ -1246,8 +1247,8 @@ def _validate_candidates_phase_a(
 
     affine_scale_amp = float(params.get("affine_scale_amp", 0.0) or 0.0)
     affine_offset_amp = float(params.get("affine_offset_amp", 0.0) or 0.0)
-    # 12.1bis : la Phase A doit voir la MEME distorsion photometrique que la Phase B.
-    # Le defaut vit dans certus_strat_robustness pour qu'il n'y en ait qu'un seul.
+    # 12.1bis: Phase A must see the SAME photometric distortion as Phase B.
+    # The default lives in certus_strat_robustness so that there is only one.
     from certus.physics.certus_strat_growth import PHOTOMETRIC_CURVATURE_AMP
     photo_curvature_amp = float(
         params.get("photometric_curvature_amp", PHOTOMETRIC_CURVATURE_AMP) or 0.0
@@ -1255,8 +1256,8 @@ def _validate_candidates_phase_a(
     poem_enabled = bool(params.get("poem_enabled", True))
     affine_seed = (int(phase_a_seed) * 3_266_489_917 + (int(i_layer) + 1) * 40_503 + 0x7E2A_8431) % (2**53)
     smoothing_window = int(params.get("reading_smoothing_window", 1) or 1)
-    # 👤 le corridor d'indice est actif par defaut (12.3) -- la valeur vit dans
-    # certus_strat_robustness pour qu'il n'y en ait qu'une.
+    # 👤 the index corridor is active by default (12.3) -- the value lives in
+    # certus_strat_robustness so that there is only one.
     from certus.core.certus_strat_robustness import INDEX_CORRIDOR_DEFAULT
     index_corridor = float(params.get("index_corridor", INDEX_CORRIDOR_DEFAULT) or 0.0)
     index_seed = (int(phase_a_seed) * 2_654_435_761 + (int(i_layer) + 1) * 850_507 + 0x3F1B_79C5) % (2**53)

@@ -154,7 +154,7 @@ def compute_TMM_single_point_k0_exact(
 
     M11 = complex(1, 0)
 
-    # Backward Sub->Air: Mb = L_0 ... L_{N-1} (meme ordre physique, sens inverse)
+    # Backward Sub->Air: Mb = L_0 ... L_{N-1} (same physical order, opposite direction)
 
     Mb00 = complex(1, 0)
 

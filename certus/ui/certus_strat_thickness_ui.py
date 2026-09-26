@@ -382,7 +382,7 @@ class TransmissionVsThicknessWindow(CertusWindowSpyMixin, QMainWindow):
 
                     self.p1.addItem(txt_pct)
 
-            # Activation de l'échelle automatique sur tous les axes à la fin du tracé
+            # Enable automatic scaling on all axes at the end of the plot
             try:
                 self.p1.enableAutoRange(axis=pg.ViewBox.XYAxes, enable=True)
                 self.p1.autoRange()

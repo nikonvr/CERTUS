@@ -517,9 +517,9 @@ def _resolve_injected_strategies(params: Any) -> list[dict[str, Any]]:
         if not chemin.is_absolute():
             chemin = Path(__file__).resolve().parents[2] / raw
         if not chemin.is_file():
-            # 🔴 UN FICHIER MANQUANT LEVE, il ne se tait pas. Une injection silencieusement
-            # vide rendrait un run qui ressemble trait pour trait a un run sans injection, et
-            # on conclurait « les plans plantent » alors qu'aucun n'a ete evalue.
+            # 🔴 A MISSING FILE RAISES, it does not keep quiet. A silently empty injection
+            # would return a run that looks exactly like a run without injection, and one
+            # would conclude "the plans crash" while none was evaluated.
             raise FileNotFoundError(f"injected_strategies : {chemin} est introuvable")
         import json
 
@@ -551,7 +551,7 @@ def _resolve_injected_strategies(params: Any) -> list[dict[str, Any]]:
         nom = str(plan.get("nom") or plan.get("origin") or f"plan_{i}")
         out.append({
             "strategy_id": 9_500_000 + i,
-            "n_blocks": len(propres),          # derive, jamais repris du fichier
+            "n_blocks": len(propres),          # derived, never taken from the file
             "blocks": propres,
             "origin": f"INJECTED({nom})",
             "avg_cost": float("inf"),
@@ -579,8 +579,8 @@ def _resolve_screen_seeds(params: Any) -> list[int]:
         The realisation decides WHICH STRATEGIES EXIST, and it decides it here.
 
     SO THE UNION OF K SCREENINGS IS NOT A SHORTCUT, IT IS THE REPAIR. The project owner,
-    2026-08-21: "meme si le code en production est ralenti, ce sera un gain enorme d'inclure
-    des strategies diverses venant de plusieurs seed."
+    2026-08-21: "even if the production code is slowed down, it will be a huge gain to include
+    diverse strategies coming from several seeds."
 
     AND IT NEVER COMPARES SCORES ACROSS SEEDS. The union carries PLANS; the mandatory full pass
     downstream rescores every one of them on the run's own seed. This is the project's invariant
@@ -671,9 +671,9 @@ def _screen_with_seeds(
         seed_note = None
     if seed_note is not None and seed_note in seeds:
         logger.error(
-            f"   [{etiquette}] 🔴 GRAINE DE NOTATION {seed_note} PRESENTE DANS LES GRAINES DE "
-            f"GENERATION {seeds} -- canal de malediction du vainqueur OUVERT. Le chiffre de ce "
-            f"run n'est pas comparable a un run note sur une graine DISJOINTE."
+            f"   [{etiquette}] 🔴 SCORING SEED {seed_note} PRESENT AMONG THE GENERATION "
+            f"SEEDS {seeds} -- winner's-curse channel OPEN. The figure of this run is not "
+            f"comparable to a run scored on a DISJOINT seed."
         )
 
     retenus: list[dict[str, Any]] = []
@@ -733,10 +733,11 @@ def _parallel_block_worker(args) -> dict:
         nucleation_info,
     ) = args
 
-    # 🔑 LES PLANS INJECTES ENTRENT PAR LE CANAL DE L'HERITAGE, pas par un chemin neuf.
-    # `inherited_strategies` filtre deja sur `n_blocks == n_blk`, verifie le contrat, crible
-    # et note -- donc un plan injecte traverse EXACTEMENT le code que toute autre candidate
-    # traverse. Sans cle `injected_strategies`, la liste est vide et rien ne change.
+    # 🔑 THE INJECTED PLANS ENTER THROUGH THE INHERITANCE CHANNEL, not through a new path.
+    # `inherited_strategies` already filters on `n_blocks == n_blk`, checks the contract,
+    # screens and scores -- so an injected plan goes through EXACTLY the code any other
+    # candidate goes through. Without an `injected_strategies` key, the list is empty and
+    # nothing changes.
     _injectes = _resolve_injected_strategies(params)
     if _injectes:
         inherited_strategies = list(inherited_strategies or []) + _injectes
@@ -867,35 +868,35 @@ def _parallel_block_worker(args) -> dict:
             min_wl_sep_nm=float(
                 params.get("dp_min_wl_separation_nm", DP_DEFAULT_MIN_WL_SEPARATION_NM)
             ),
-            # 🔑 La couverture en λ. Voir `_couverture_wl_groupings` : la Phase A admet une
-            # mediane de 86 λ par couche, la recherche en emploie 14 a 29, et la λ dont les
-            # 72 strategies deposables ont besoin figure dans ZERO des 1617.
+            # 🔑 λ coverage. See `_couverture_wl_groupings`: Phase A admits a median of
+            # 86 λ per layer, the search uses 14 to 29, and the λ the 72 depositable
+            # strategies need appears in ZERO of the 1617.
             enable_wl_coverage=bool(params.get("enable_wl_coverage", False)),
             wl_coverage_top_k=int(params.get("wl_coverage_top_k") or 0),
             wl_coverage_stats=_couv_stats,
         )
 
-        # 🔴 ON JOURNALISE ICI, PAS DANS LE MINEUR, et ce n'est pas un detail de style.
-        # 📏 Mesure du 2026-08-21 : le logger `ThinFilm` du mineur est MUET -- sa ligne
-        # inconditionnelle « Mining: n_blocks=... » apparait ZERO fois dans les journaux de
-        # campagne, alors que ce logger-ci (`W{n_blk}`) passe. Un run de cinquante minutes a
-        # ete perdu a ne pas pouvoir distinguer « la passe n'a pas tourne » de « chaque λ
-        # forcee etait infaisable ». Piege 6 : un silence ne prouve rien.
+        # 🔴 LOGGING HAPPENS HERE, NOT IN THE MINER, and it is not a matter of style.
+        # 📏 Measured on 2026-08-21: the miner's `ThinFilm` logger is MUTE -- its unconditional
+        # line "Mining: n_blocks=..." appears ZERO times in the campaign logs, while this
+        # logger (`W{n_blk}`) gets through. A fifty-minute run was lost for not being able to
+        # tell "the pass did not run" from "every forced λ was infeasible". Trap 6: a
+        # silence proves nothing.
         if _couv_stats:
             logger.info(
                 f"   [Block {n_blk}] [WL-COUVERTURE] {_couv_stats.get('deja_employees', 0)} λ "
-                f"deja employees, {_couv_stats.get('absentes', 0)} absentes -> "
-                f"{_couv_stats.get('ajoutees', 0)} ajoutee(s), "
-                f"{_couv_stats.get('infaisables', 0)} infaisable(s), "
-                f"{_couv_stats.get('non_traitees', 0)} hors budget "
-                f"({_couv_stats.get('appels_dp', 0)} appels DP)"
+                f"already used, {_couv_stats.get('absentes', 0)} missing -> "
+                f"{_couv_stats.get('ajoutees', 0)} added, "
+                f"{_couv_stats.get('infaisables', 0)} infeasible, "
+                f"{_couv_stats.get('non_traitees', 0)} over budget "
+                f"({_couv_stats.get('appels_dp', 0)} DP calls)"
             )
         elif bool(params.get("enable_wl_coverage", False)):
-            # 🔴 Le drapeau est arme et les compteurs sont VIDES : la passe n'a pas tourne.
-            # C'est un defaut de cablage, pas un resultat -- et il doit crier.
+            # 🔴 The flag is armed and the counters are EMPTY: the pass did not run.
+            # It is a wiring defect, not a result -- and it must shout.
             logger.error(
-                f"   [Block {n_blk}] 🔴 [WL-COUVERTURE] armee mais AUCUN compteur : la passe "
-                f"n'a pas ete atteinte. Ne lis pas ce run comme une mesure de la couverture."
+                f"   [Block {n_blk}] 🔴 [WL-COUVERTURE] armed but NO counter: the pass "
+                f"was not reached. Do not read this run as a measurement of the coverage."
             )
 
         logger.debug(f"[W{n_blk}] mine_strategies_for_block_count returned {len(strategies_dp)} strategies")

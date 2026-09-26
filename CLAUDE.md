@@ -77,7 +77,9 @@ Et `tests/oracle/` avant et après toute modification d'un calcul optique.
 10. **Jamais de rapport de session à la racine** ; une sortie de campagne va dans `reports/`.
 11. **Jamais de français dans les commentaires, docstrings et journaux de `certus/`.** Restent
     en français, délibérément : les mots utilisés comme **données** (`certus_re_helpers.py`),
-    les **clés JSON persistées** (`seuil1`/`seuil2`) et les **libellés vus par l'utilisateur**.
+    les **clés JSON persistées** (`seuil1`/`seuil2`), les formats de journal que des scripts
+    analysent (la ligne de compteurs ELITE) et les **libellés vus par l'utilisateur**.
+    Garde-fou : `tests/unit/test_certus_is_written_in_english.py`.
 
 ## 4. Les erreurs qui annulent un travail
 

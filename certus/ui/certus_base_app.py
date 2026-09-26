@@ -604,7 +604,7 @@ class CertusBaseApp(
         # P4 - Fill missing accessibility metadata on input widgets.
         self._apply_accessibility_defaults()
 
-        # U6 - Support universel du glisser-déposer de fichiers
+        # U6 - Universal drag-and-drop support for files
         try:
             self.setAcceptDrops(True)
         except TypeError, RuntimeError:
@@ -2396,7 +2396,7 @@ class CertusBaseApp(
         super().closeEvent(event)
 
     def dragEnterEvent(self, event) -> None:
-        """Accepter le glisser-déposer de fichiers de configuration ou de mesure."""
+        """Accept the drag-and-drop of configuration or measurement files."""
         if event.mimeData().hasUrls():
             urls = event.mimeData().urls()
             if any(url.toLocalFile().lower().endswith((".json", ".csv", ".dat", ".txt", ".xlsx")) for url in urls):
@@ -2405,7 +2405,7 @@ class CertusBaseApp(
         super().dragEnterEvent(event)
 
     def dropEvent(self, event) -> None:
-        """Charger automatiquement le fichier déposé sur l'interface."""
+        """Load automatically the file dropped on the interface."""
         if event.mimeData().hasUrls():
             urls = event.mimeData().urls()
             valid_files = [
@@ -2421,7 +2421,7 @@ class CertusBaseApp(
         super().dropEvent(event)
 
     def _handle_dropped_file(self, file_path: str) -> None:
-        """Routeur universel pour le chargement d'un fichier déposé."""
+        """Universal router for loading a dropped file."""
         from pathlib import Path
 
         name = Path(file_path).name

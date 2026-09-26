@@ -342,8 +342,8 @@ def _compute_blocks_range_for_params(
     params: dict[str, Any],
     dense: bool = False,
 ) -> list[int]:
-    # 🔴 MODE FAST SUPPRIME (2026-08-05) — decision du physicien : « interdit le mode
-    # fast, je veux un mode vraiment semblable a la realite et j'ai tout mon temps ».
+    # 🔴 FAST MODE REMOVED (2026-08-05) -- decision of the physicist: "forbid the fast
+    # mode, I want a mode truly close to reality and I have all the time I need".
     #
     #A branch `if execution_mode == "fast" and fast_auto_blocks` replaced the
     #contractual range by a union of FAST_AUTO_BLOCKS_DIVIDER_PRESETS calculated at
@@ -352,8 +352,8 @@ def _compute_blocks_range_for_params(
     #harmful: we explored fewer divisions.
     #
     #`collect_params` already sets execution_mode to "premium" and removes it from the GUI;
-    #the branch is deleted here so that the programmatic path (headless tests,
-    # appels directs) ne puisse pas la reactiver en posant params a la main.
+    # the branch is deleted here so that the programmatic path (headless tests,
+    # direct calls) cannot re-enable it by setting params by hand.
     div_start = float(params.get("iter_divider_start", 10.0))
     div_end = float(params.get("iter_divider_end", 3.0))
     return _compute_blocks_range_contractual(num_layers, div_start, div_end, dense=dense)
@@ -654,10 +654,10 @@ def _apply_wl_diversity(
             return 0.0
         return 1.0 - len(a & b) / len(a | b)
 
-    chosen = [0]                              # le mieux classe, toujours garde
+    chosen = [0]                              # the best ranked, always kept
     restants = set(range(1, len(ordered_results)))
     while len(chosen) < k and restants:
-        # le candidat le plus LOIN de ce qui est deja pris -- max-min
+        # the candidate FURTHEST from what is already taken -- max-min
         best_idx, best_d = None, -1.0
         for i in sorted(restants):
             d = min(_distance(sets[i], sets[j]) for j in chosen)

@@ -68,7 +68,7 @@ def lire(p: str) -> None:
     c = d.get("courbe") or []
     if not c:
         print(f"  {os.path.basename(p)} : COURBE VIDE")
-        print("  🔴 Verifier le journal : si `[PREFIX] ... SANS OBJET` y figure, la population")
+        print("  🔴 Verifier le journal : si `[PREFIX] ... NOT APPLICABLE` (`SANS OBJET` avant le 2026-09-26) y figure, la population")
         print("     ne portait aucune strategie a surveillance couche par couche.")
         return
     c.sort(key=lambda z: z["n_opt"])

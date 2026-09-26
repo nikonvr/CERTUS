@@ -100,6 +100,10 @@ reports/STRAT_observability_*
 !reports/Report_INDEX*
 !reports/Report_METAL*
 !reports/Report_SINGLE*
+# ...sauf les sorties de l'exemple SIMULE de METAL SINGLE : son nom dit qu'il n'est pas une
+# mesure, et le test headless en ecrit un a chaque passe (export automatique actif par
+# defaut). Les 24 deja suivis le restent -- une regle d'ignore ne touche pas au passe.
+reports/Report_SINGLE_Target_Titane_Simu_*
 
 # ─────────────── Rust engine (build artefacts) ───────────────
 certus_engine_rs/target/

@@ -272,12 +272,19 @@ class TestLoggingSystem:
         assert isinstance(logger, logging.Logger)
         assert logger.name == "CERTUS"
 
-    def test_logging_error_handling(self):
-        """Test la gestion des errors de logging."""
-        # Test with an invalid path
-        logger = setup_logging("/invalid/path/test.log")
+    def test_logging_error_handling(self, tmp_path):
+        """An uncreatable log directory must degrade to console logging, not raise.
+
+        The path sits under a regular FILE, so creating it fails on every platform. The
+        previous "/invalid/path" was creatable on Windows (the run left a real C:\\invalid)
+        and raised PermissionError on Linux, because setup_logging created the directory
+        outside its try block.
+        """
+        blocker = tmp_path / "a_regular_file"
+        blocker.write_text("x")
+        logger = setup_logging(str(blocker / "sub" / "test.log"))
         assert isinstance(logger, logging.Logger)
-        # Should continue with console logging only
+        assert logger.handlers, "console logging must survive the failed file handler"
 
     def test_setup_logging_is_idempotent_for_handler_count(self):
         """Repeated setup should replace handlers instead of accumulating duplicates."""

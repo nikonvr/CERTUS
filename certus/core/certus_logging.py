@@ -106,9 +106,11 @@ def setup_logging(log_file: str | None = None, level: int | None = None) -> logg
     logger.addHandler(console_handler)
     if log_file:
         log_path = Path(log_file)
-        log_path.parent.mkdir(parents=True, exist_ok=True)
         from logging.handlers import RotatingFileHandler
         try:
+            # Inside the try: an uncreatable log directory must degrade to console
+            # logging, not abort start-up (it raised PermissionError on Linux).
+            log_path.parent.mkdir(parents=True, exist_ok=True)
             file_handler = RotatingFileHandler(str(log_path), maxBytes=MAX_LOG_FILE_SIZE_BYTES, backupCount=MAX_LOG_BACKUP_FILES, encoding="utf-8")
             file_handler.setFormatter(formatter)
             file_handler.setLevel(logging.DEBUG)
@@ -116,8 +118,8 @@ def setup_logging(log_file: str | None = None, level: int | None = None) -> logg
         except (OSError, PermissionError):
             pass
     jsonl_path = Path(log_file).with_suffix(".jsonl") if log_file else Path("logs") / "CERTUS.jsonl"
-    jsonl_path.parent.mkdir(parents=True, exist_ok=True)
     try:
+        jsonl_path.parent.mkdir(parents=True, exist_ok=True)
         attach_jsonl_handler(logger, jsonl_path)
     except Exception:
         logger.debug("logger=certus sink=jsonl status=unavailable path=%s", jsonl_path, exc_info=True)

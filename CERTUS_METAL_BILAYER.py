@@ -679,7 +679,7 @@ class OptimizationWorker(MetalOptimizationWorker):
                 max_active_clusters=5,        # Focus deeply on the top 5 best basins
             )
             
-            def make_callback(step_i, total_s):
+            def make_callback(step_i, total_s, k=k):
                 def callback(payload):
                     base_pct = step_i * (100.0 / total_s)
                     step_pct = payload.get("progress_pct", 0) / total_s
@@ -691,7 +691,7 @@ class OptimizationWorker(MetalOptimizationWorker):
 
             try:
                 result = run_pglobal_optimization(
-                    lambda x: global_objective_function(x, *args_for_objective),
+                    lambda x, _args=args_for_objective: global_objective_function(x, *_args),
                     bounds,
                     x0=current_x0,
                     max_iter=iter_per_step,

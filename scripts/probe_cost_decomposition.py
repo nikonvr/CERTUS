@@ -249,7 +249,7 @@ def main() -> None:
     B.emit("  rho de Spearman avec le VRAI score (robustness_score), par n_blocks")
     B.emit("  cout_0 = somme P95|dd|   cout_1 = + sensibilites (diagonal)   cout_2 = + covariance")
     for g in r["groupes"]:
-        def _f(k):
+        def _f(k, g=g):
             v = g[k]
             return f"{v['rho']:+.3f}" if v else "  n/a "
 

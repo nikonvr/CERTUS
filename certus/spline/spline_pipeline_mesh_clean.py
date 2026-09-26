@@ -450,6 +450,8 @@ def worker_spline_auto_clean_knots(
             local_best_knots = None
             local_best_variant = "baseline"
 
+            # B023 does not apply: this helper runs within its own iteration of `for i`, and
+            # step, i and best_result_out are not rebound before its calls (no thread involved).
             def _update_best_candidate(vname: str, tk: np.ndarray, is_refine: bool = False) -> float:
                 nonlocal best_cand_rmse, best_cand_result, best_cand_knots, best_cand_variant
                 nonlocal local_best_rmse, local_best_knots, local_best_variant
@@ -460,7 +462,7 @@ def worker_spline_auto_clean_knots(
                     step_eval_cache,
                     cfg_prescreen,
                     cfg_candidate,
-                    best_result_out,
+                    best_result_out,  # noqa: B023
                     nominal_rmse,
                     tolerance,
                     prescreen_enabled,
@@ -491,8 +493,8 @@ def worker_spline_auto_clean_knots(
                     if np.isfinite(cand_rmse):
                         log.debug(
                             "INDEX_SPLINE [AUTO_CLEAN] step=%d idx=%d %s rejected before polish | rmse_fast=%.8f | gate=%.8f",
-                            int(step + 1),
-                            int(i),
+                            int(step + 1),  # noqa: B023
+                            int(i),  # noqa: B023
                             kind_str,
                             float(cand_rmse),
                             float(gate),
@@ -500,8 +502,8 @@ def worker_spline_auto_clean_knots(
                     else:
                         log.debug(
                             "INDEX_SPLINE [AUTO_CLEAN] step=%d idx=%d %s failed/non-finite",
-                            int(step + 1),
-                            int(i),
+                            int(step + 1),  # noqa: B023
+                            int(i),  # noqa: B023
                             kind_str,
                         )
                 return cand_rmse

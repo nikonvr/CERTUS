@@ -349,7 +349,7 @@ def analyse() -> dict:
         T = np.asarray(T, dtype=np.float64)          # (n_runs, n_wl)
         E = T - T_nom[None, :]
 
-        def band(mask):
+        def band(mask, E=E):
             # 🔴 A BAND CAN BE EMPTY, and until 2026-08-12 that raised. The three masks
             # above are pinned to the dichroic's edge (400-540 / 540-560 / 560+); on the
             # three-cavity bandpass, whose spectral target is 600-660 nm, `passante` and

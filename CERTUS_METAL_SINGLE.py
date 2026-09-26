@@ -571,7 +571,7 @@ class OptimizationWorker(MetalOptimizationWorker):
                     return callback
 
                 result = run_pglobal_optimization(
-                    lambda x: global_objective_function(x, *args_for_objective),
+                    lambda x, _args=args_for_objective: global_objective_function(x, *_args),
                     bounds,
                     x0=current_x0,
                     max_iter=iter_per_step,

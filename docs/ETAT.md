@@ -167,6 +167,8 @@ numéros de l'ancien registre sont entre parenthèses
 | D26 | Inversions de couches, comptées le 2026-08-19 : `utils → ui` (11), `core → workers` (10), cycle `physics ↔ core` (23 et 29 imports) |
 | D27 | Sous-paquets PEP 420 et `packages = ["certus"]` : un `pip install` ne livrerait aucun sous-module |
 | D30 | `CERTUS_METAL_SINGLE.py` et `CERTUS_METAL_BILAYER.py` restent à la racine alors que `certus/metal/` existe ; le `.coverage` pointe vers un autre snapshot |
+| D32 | **La CI n'installe pas les versions verrouillées** : le workflow `tests` fait `uv pip install` de bornes minimales, sans `uv.lock`. Le 2026-09-26 il a installé `pyqt6-qt6` 6.11.2 (`uv.lock` : 6.11.1 ; le poste : 6.11.0) : une CI rouge peut venir d'une version que personne n'a choisie |
+| D33 | `spectrum_eval_start_worker` (DESIGN, RE) remplace `app.eval_worker` sans vérifier que l'évaluation précédente est finie. Si elle tourne encore, son `QThread` n'est plus retenu que par son propre `run()` ; mesuré le 2026-09-26 sur un `QThread` minimal, ce cas tue le processus (`qFatal`, code 127). Non reproduit dans l'application |
 | D31 | **Les tests écrivent dans les dossiers de l'utilisateur.** L'export automatique est actif par défaut, donc les tests headless — lancés aussi en sous-processus par `tests/regression/` — déposent un rapport dans `reports/` à chaque optimisation complète (un `Report_SINGLE` le 2026-09-26). Et `tests/unit/test_certus_core.py` réécrit `certus_export.json`, fichier de préférences **suivi par git** comme `certus_theme.json` |
 
 ## 5. Ce qui attend une décision de 👤

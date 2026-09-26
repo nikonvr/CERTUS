@@ -58,7 +58,7 @@ class ConfigManager:
                 return self.default_value
             self._value = config.get(self.key_name, self.default_value)
             return self._value
-        except (OSError, IOError, json.JSONDecodeError, TypeError, ValueError) as exc:
+        except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
             logging.debug("Could not load %s: %s", self.filename, exc)
             self._value = self.default_value
             return self.default_value
@@ -74,7 +74,7 @@ class ConfigManager:
                         parsed = json.load(f)
                         if isinstance(parsed, dict):
                             config = parsed
-                except (OSError, IOError, json.JSONDecodeError, TypeError) as exc:
+                except (OSError, json.JSONDecodeError, TypeError) as exc:
                     logging.debug("Could not read existing config file for save, starting fresh: %s", exc)
                     config = {}
             config["schema_version"] = CONFIG_SCHEMA_VERSION
@@ -86,7 +86,7 @@ class ConfigManager:
             tmp_path.replace(config_path)
             self._value = value
             return True
-        except (OSError, IOError, TypeError, ValueError) as exc:
+        except (OSError, TypeError, ValueError) as exc:
             logging.warning("Could not save %s: %s", self.filename, exc)
             return False
 

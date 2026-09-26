@@ -1783,7 +1783,7 @@ def _package_corridor_results(ctx: CorridorProfileContext) -> dict[str, Any]:
         "corridor_n_hi": np.asarray(n_hi, dtype=np.float64),
         "corridor_k_lo": np.asarray(k_lo, dtype=np.float64),
         "corridor_k_hi": np.asarray(k_hi, dtype=np.float64),
-        "corridor_k_min_half_width": float(1e-4),
+        "corridor_k_min_half_width": 1e-4,
         "corridor_k_min_half_width_enforced_points": int(k_min_changed),
     }
 

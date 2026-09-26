@@ -139,7 +139,7 @@ class GenericWorker(QThread):
 
     def __init__(self, func: Callable, *args, **kwargs) -> None:
 
-        super(GenericWorker, self).__init__()
+        super().__init__()
 
         self.func = func
 

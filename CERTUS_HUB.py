@@ -716,7 +716,7 @@ class CertusHub(QMainWindow):
         try:
             save_export_config(enabled)
 
-        except (OSError, IOError, PermissionError):
+        except (OSError, PermissionError):
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
     def _process_finished_slot(self, process, app_name, exit_code, _status=None) -> None:

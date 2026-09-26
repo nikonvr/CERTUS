@@ -8,7 +8,6 @@ Checks parallel vs sequential mode of PGlobalOptimizerINDEX (CERTUS_INDEX).
 
 from __future__ import annotations
 
-import sys
 
 import numpy as np
 import pytest
@@ -80,11 +79,8 @@ class TestPGlobalIndexParallelModeAudit:
 
         monkeypatch.setattr(certus_core, "is_frozen", lambda: True)
         w = certus_core.get_safe_worker_count()
-        if sys.version_info < (3, 14):
-            assert w == 1
-        else:
-            exp = max(
-                1,
-                certus_core._get_cpu_count() - certus_core._RESERVED_CORES_FOR_WORKERS,
-            )
-            assert w == exp
+        exp = max(
+            1,
+            certus_core._get_cpu_count() - certus_core._RESERVED_CORES_FOR_WORKERS,
+        )
+        assert w == exp

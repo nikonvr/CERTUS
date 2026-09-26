@@ -1813,7 +1813,7 @@ class IndexCore:
             logger.warning(
                 "Polynomial fit rejected: rmse %.6g > acceptance %.6g (wrmse=%.6g) -> fallback monotonic raw.",
                 float(rmse_unweighted),
-                float(0.06),
+                0.06,
                 float(wrmse),
             )
 

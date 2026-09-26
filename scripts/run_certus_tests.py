@@ -490,7 +490,7 @@ def main():
         with open(report_path, "w", encoding="utf-8") as f:
             json.dump(report_data, f, indent=2)
         print(f"{Colors.OKCYAN}[OK] Structured JSON report saved to {report_path}{Colors.ENDC}")
-    except IOError as e:
+    except OSError as e:
         print(f"{Colors.WARNING}[!] Could not save JSON report: {e}{Colors.ENDC}")
 
     if global_success:

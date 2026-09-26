@@ -12,11 +12,12 @@ vivants** — 31 menus, la fenêtre elle-même, et le reste — malgré `close()
 et un ramassage explicite. Le coût de construction croît **linéairement** avec ce
 qui traîne : ×3,54 en six itérations sur RE, ×2,84 sur STRAT.
 
-🔑 **C'EST POURQUOI LA SUITE D'INTERFACE NE PEUT PLUS SE LANCER D'UN SEUL TENANT.**
-`test_ux_re_stop_when_idle.py` coûte **6,5 s lancé seul** et **plus de 30 min** à
-l'intérieur de la suite, qui partage une seule `QApplication` de portée session.
-Ce n'est pas ce fichier qui est lent : c'est tout ce que les 700 tests précédents
-ont laissé vivant.
+🔑 **C'EST CE QUI RALENTISSAIT LA SUITE D'INTERFACE.** `test_ux_re_stop_when_idle.py`
+coûtait **6,5 s lancé seul** et **plus de 30 min** à l'intérieur de la suite, qui
+partage une seule `QApplication` de portée session : ce n'était pas ce fichier,
+c'était tout ce que les tests précédents laissaient vivant. Depuis le 2026-09-27,
+`tests/ui/conftest.py` détruit les fenêtres principales que chaque test construit
+(D11 dans `docs/ETAT.md`).
 
 📏 **UNE CAUSE TROUVÉE, ET ELLE ÉTAIT CIRCULAIRE.**
 `certus/ui/certus_toast_stack.py` tenait un dictionnaire **de module** qui gardait
@@ -36,8 +37,9 @@ liées (`CertusBaseApp._schedule_eval`, `CertusRETableMixin.add_target`,
 cinq fermetures lexicales. ⚠️ **Ce ne sont PAS les minuteries à un coup** : laisser
 tourner la boucle d'événements 1,5 s ne libère rien, le compte continue de croître.
 
-⚠️ **Un défaut du PRODUIT, pas seulement du harnais.** Une session qui ouvre et
-ferme des modules ne rend jamais leur mémoire.
+⚠️ **Sans effet en production** : le hub lance chaque module dans son propre
+processus, et fermer la fenêtre finit le processus. La fuite ne coûte que dans un
+processus qui construit plusieurs fenêtres — la suite de tests.
 
 📌 Le contrôle négatif est dans le premier test : un widget qui n'a jamais reçu de
 pile est bien libéré. Sans lui, un ramassage cassé ferait passer tout le fichier.

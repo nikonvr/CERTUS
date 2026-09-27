@@ -892,8 +892,10 @@
                 default, because we do not really know what smoothing algorithms Bühler applies"</i>. So
                 <code>machine_sampling_dd = 0</code> and <code>reading_smoothing_window = 1</code>: the
                 sweep stays at ~21 points per layer where the machine reads 800, and no filter is
-                modelled. The de-soldering was still done, so both remain <i>expressible</i> — the point
-                was to make the choice available, not to take it.
+                modelled. The smoothing window remains <i>expressible</i>. The machine grid does not:
+                no call ever passed <code>machine_sampling_dd</code> to the kernel, so the setting was
+                withdrawn from the interface on 2026-09-27; it survives only as a kernel parameter
+                held at 0.
                 <br><br>
                 🔴 <b>The consequence, and it must be carried with every crash figure on this page.</b>
                 Fewer draws mean fewer chances for the noise to fabricate a false turning point — 32.9 %
@@ -2853,15 +2855,10 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
         <p>
             The algorithm explores block counts from a contractual range controlled by the
             <code>iter_divider_start</code> and <code>iter_divider_end</code> parameters, together with the fixed
-            counts {1, 2, N}. In <strong>Fast Auto mode</strong> (<code>fast_auto_blocks=True</code>), four preset
-            divider pairs are combined to broaden the coverage.
+            counts {1, 2, N}. Every execution mode explores that same range. A former <i>Fast Auto</i>
+            branch replaced it by a union of four preset divider pairs, and explored fewer block counts: it
+            was removed on 2026-08-05, and its <code>fast_auto_blocks</code> flag on 2026-09-27.
         </p>
-        <div class="new-badge">
-            <strong>Fast Auto block presets</strong> (divider_start / divider_end): Compact (20/12), Balanced (12/6),
-            Extended (8/4), and Very Extended (6/2.5). Each preset is computed via
-            <code>_compute_blocks_range_contractual</code> and the results are combined, typically yielding 5–15 distinct
-            block counts per run.
-        </div>
 
         <p>
             <code>mine_strategies_for_block_count</code> runs three DP passes in parallel (ThreadPoolExecutor) for each
@@ -2944,7 +2941,16 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
             <p>The <strong>layer importance map</strong> is built from Phase A: layers with higher P75 dynamics receive a larger continuity reward.</p>
         </div>
 
-                <h3>4.4 🔴 YIELD in the DP objective — <code>dp_yield_weight</code></h3>
+                <h3>4.4 🔴 YIELD in the DP objective — an idea, not implemented</h3>
+        <div class="note">
+            <strong>Withdrawn on 2026-09-27.</strong> The weight <code>dp_yield_weight</code> added
+            $w\cdot(-\log(1-p))$ to a cost map, but $p$ never reached it: the Phase A entries that feed
+            that map keep only the wavelength and the costs, so the term was zero at every weight, and the
+            map it altered fed a fusion heuristic, not the DP. Measured on the real normalisation: the
+            weighted map equals the input to the last bit at $w = 1$, $200$ and $10^6$. The setting, its
+            helpers and its log line are gone. Bringing yield into the DP means first carrying the crash
+            rate through the Phase A normalisation; the reasoning below is kept for that day.
+        </div>
         <div style="border:3px solid #b91c1c;border-radius:10px;padding:16px 20px;margin:20px 0;background:#fef2f2;">
             <p style="margin:0 0 12px;">
                 Phase A measures the non-terminable deposition rate <b>per layer and per wavelength</b> and
@@ -3618,13 +3624,6 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">25</td>
                         <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-weight:bold;background:#fffbeb;">40</td>
                     </tr>
-                    <tr>
-                        <td style="border:1px solid #cbd5e1;padding:6px 10px;"><code>strategy_phase_timeout</code></td>
-                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">300 s</td>
-                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">300 s</td>
-                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">300 s</td>
-                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;background:#fffbeb;">10 800 s &mdash; <i>inert, see below</i></td>
-                    </tr>
                     <tr style="background:#f8fafc;">
                         <td style="border:1px solid #cbd5e1;padding:6px 10px;"><b>Evaluation depth</b> (<code>robustness_num_runs</code>)</td>
                         <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">50</td>
@@ -3635,16 +3634,13 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 </table>
 
                 <div class="note">
-                    <strong>One of these six is currently inert, and we would rather say so.</strong>
-                    <code>strategy_phase_timeout</code> is collected, shown in a widget and written to the saved
-                    configuration &mdash; but no line under <code>certus/core</code> or <code>certus/workers</code>
-                    reads it. Extreme therefore has <b>six</b> active levers, not seven, and nothing measured here
-                    should be attributed to that key. It is left in place so a run's recorded configuration states
-                    the intent, and so a future rewiring finds the right value already set. The two limits that do
-                    bound the search are hard-coded rather than configurable: the beam-search call passes a 30 s
-                    ceiling that the callee never reads, and the worker pool stops <i>logging</i> segment exceptions
-                    after 600 s &mdash; results are still collected, but a late error is silent. Both are recorded
-                    as open defects.
+                    <strong>No time limit bounds the search.</strong> A seventh row,
+                    <code>strategy_phase_timeout</code>, was shown and saved, and raised to 10&nbsp;800&nbsp;s by
+                    Extreme, but no computation read it: it was withdrawn on 2026-09-27, and a file that still
+                    carries it loads with one log line saying it is ignored. What remains is hard-coded: the
+                    beam-search call passes a 30&nbsp;s ceiling that the callee never reads, and the worker pool
+                    stops <i>logging</i> segment exceptions after 600&nbsp;s &mdash; results are still collected,
+                    but a late error is silent.
                 </div>
 
                 <p>
@@ -4141,10 +4137,10 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     robustness score is $\approx 6\,\%$ relative at $N = 150$, so at
                     SEEL&nbsp;$= 0.3$&nbsp;nm the noise is $\approx 0.018$&nbsp;nm &mdash; nearly
                     <b>twice</b> the 0.01&nbsp;nm bin. Two strategies separated by one bin are
-                    therefore <i>not</i> distinguishable by that alone. The second, statistical bound
-                    that would prevent this (<code>seel_equivalence_half_width</code>) exists and is
-                    unit-tested, but <b>has no caller in production</b>: the ranking key uses the
-                    absolute step only. Treat a one-bin difference as a tie.
+                    therefore <i>not</i> distinguishable by that alone. A second, statistical bound
+                    (<code>seel_equivalence_half_width</code>) was written but never called in production,
+                    and was removed on 2026-09-27: the ranking key uses the absolute step only. Treat a
+                    one-bin difference as a tie.
                 </div>
 
                 <h3>10.7 How many Monte-Carlo draws are actually needed</h3>
@@ -5391,7 +5387,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
 
                 <h4>What this does <i>not</i> claim</h4>
                 <ul>
-                    <li><b>It is not a factor attribution.</b> Extreme changes seven search-width settings at once.
+                    <li><b>It is not a factor attribution.</b> Extreme changes six search-width settings at once.
                     What is established is <i>&laquo;&nbsp;widening the search&nbsp;&raquo;</i> as a block, not which
                     of its levers carries the effect.</li>
                     <li><b>Supply is not sufficient.</b> Measured counter-example: the same stack in Premium at 2 nm

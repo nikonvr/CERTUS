@@ -19,6 +19,10 @@ lisible. `test_convergence_guard.py` porte les tests : il **appelle** les foncti
 **Les références sont dans `baseline_rmse.json`, et nulle part ailleurs.** Cinq modules sont
 mesurés : RE, SPLINE, METAL_SINGLE, METAL_BILAYER et INDEX. Celle d'INDEX a été **capturée**
 le 2026-09-08, pas validée : elle dit « pas pire qu'alors », pas « juste ».
+Celles de METAL_SINGLE et METAL_BILAYER ont été **resserrées** le 2026-09-27 : elles valaient
+1,3 et 7 fois la RMSE atteinte, et ne pouvaient voir qu'une dégradation énorme. Chacune est la
+pire valeur mesurée sur le poste (0,0061 sur trois exécutions ; 0,002209 sur onze), plus 5 %
+pour les écarts entre machines, la valeur sous Linux n'ayant pas été mesurée.
 INDEX, RE et METAL_BILAYER ne rendent pas deux fois la même RMSE, ce qui est accepté : leur
 garde retient la meilleure de quatre exécutions au plus (voir `test_convergence_guard.py`).
 `scripts/collect_rmse.py` régénère les références.

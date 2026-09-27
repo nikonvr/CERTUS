@@ -9,7 +9,6 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-import pyqtgraph as pg
 
 from PyQt6.QtSvgWidgets import QSvgWidget
 

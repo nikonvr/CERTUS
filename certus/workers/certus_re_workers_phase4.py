@@ -1,4 +1,3 @@
-from certus.utils.certus_re_math import re_envelope_max_delta_n
 from certus.utils.certus_re_config import RE_PHASE4_TRF_TOL_FACTOR
 from certus.utils.certus_re_config import RE_PHASE4_TRF_MAX_NFEV
 from certus.utils.certus_re_config import RE_PHASE4_APERTURE_SCAN_POINTS
@@ -6,9 +5,6 @@ from certus.utils.certus_re_config import RE_P4_BEAM_AP_BOUNDS_DEG
 from certus.utils.certus_re_config import RE_P4_AP_FD_STEP_DEG
 from certus.utils.certus_re_config import RE_LBFGSB_GTOL
 from certus.utils.certus_re_config import RE_LBFGSB_FTOL
-from certus.utils.certus_re_math import re_compute_spline_basis_matrix
-from certus.utils.certus_re_math import re_compute_tikhonov_weights
-from certus.utils.certus_re_config import RE_P4_BEAM_N_KNOTS
 import logging
 import time
 import math

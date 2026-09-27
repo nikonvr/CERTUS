@@ -625,7 +625,7 @@ class CertusBaseApp(
         deliberately, or that legitimately starts on a scroll area, is left
         alone. Space on a scroll area scrolls; Space on a button runs something.
         """
-        from PyQt6.QtWidgets import QAbstractButton, QAbstractSpinBox, QComboBox, QLineEdit
+        from PyQt6.QtWidgets import QAbstractButton, QAbstractSpinBox, QComboBox
 
         try:
             focused = self.focusWidget()

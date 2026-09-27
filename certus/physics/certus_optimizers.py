@@ -964,7 +964,6 @@ class PGlobalOptimizer:
 
         """
 
-        import time
 
         best_ever_y = float("inf")
 

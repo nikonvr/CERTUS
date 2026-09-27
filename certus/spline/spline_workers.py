@@ -12,10 +12,7 @@ import time
 
 from threading import Event
 
-from collections.abc import Callable
-from typing import Any
 
-import numpy as np
 
 from scipy.optimize import minimize
 
@@ -45,7 +42,6 @@ from certus.spline.certus_index_spline_core import (
     make_bounds_and_x0,
     min_relative_lambda_spacing_ratio,
     nan_nk_outside_rmse_lambda_window,
-    physical_nodes_to_x_slice_n,
     rmse_at_spline_stage_x0_init,
     snapshot_result_with_rmse_fit_meta,
     sol3_phase1_maxfun_effective,

@@ -84,8 +84,6 @@ from certus_physics import (  # STRAT-specific kernels (previously imported from
     compute_batch_rmse,
     compute_T_front_at_layer,
     find_nucleation_adaptive_kernel,
-    get_refractive_index,
-    get_refractive_clues_vectorized,
     precompute_matrix_cache_kernel,
     rank_nucleation_candidates_kernel,
     simulate_growth_kernel,

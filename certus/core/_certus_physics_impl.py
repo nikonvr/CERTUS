@@ -1,4 +1,3 @@
-SMALL_EPSILON = 1e-12
 """
 
 
@@ -717,25 +716,18 @@ from certus.physics.certus_colorimetry import (
 )
 
 from certus.physics.certus_tmm_core import (
-    apply_exact_backside_combination,
-    calc_spectrum_front,
-    calc_spectrum_full,
-    calc_spectrum_full_exact,
     calc_spectrum_full_oblique_exact,
     calc_spectrum_oblique_backside_vectorized,
     calc_spectrum_oblique_vectorized,
     calculate_RT_single_layer_backside_array,
-    calculate_RT_vectorized_real,
     calculate_RT_vectorized_real_HL,
     calculate_bare_substrate_RT,
     calculate_single_interface_R,
-    calculate_transmission_single,
     oblique_front_char_matrix_single,
     oblique_front_rt_from_char_matrix_nsub_real,
 )
 
 from certus.physics.certus_tmm_core import (
-    _apply_exact_backside_generic,
     _calc_spectrum_oblique_parallel,
     _oblique_stack_rt_single,
     _calculate_RT_HL_core,

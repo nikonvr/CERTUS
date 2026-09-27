@@ -1,7 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_design_common import *
 from certus.ui.certus_design_ui_plot import PlotManager
-from certus.ui.certus_design_ui_layout import LayoutManager
 from certus.ui.certus_design_ui_state import StateManager
 from certus.ui.certus_design_ui_events import EventsManager
 from certus.ui.certus_design_ui_worker import WorkerManager

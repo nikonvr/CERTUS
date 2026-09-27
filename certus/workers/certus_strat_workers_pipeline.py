@@ -16,8 +16,7 @@ from certus.core.certus_strat_config import _init_stats_queue
 import traceback
 import time
 from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
-from PyQt6.QtCore import QThread, Qt, QMetaObject
-import queue
+from PyQt6.QtCore import Qt, QMetaObject
 from certus.utils.certus_strat_context import _compute_blocks_range_for_params
 from certus.utils.certus_data import SharedIndicesManager, SharedArrayManager
 from PyQt6.QtCore import QThread

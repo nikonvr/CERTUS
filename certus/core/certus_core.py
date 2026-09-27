@@ -637,9 +637,6 @@ T_SUB_MIN_R_NORM: float = 0.05  # threshold for R_nu = R/T_sub (absorption band 
 # =============================================================================
 
 
-CONFIG_SCHEMA_VERSION = 1
-
-
 # =============================================================================
 
 # PRECISION POLICY (Opus 4.6 - Hardcoded Mixed Precision)

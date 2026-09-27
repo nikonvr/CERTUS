@@ -1,8 +1,3 @@
-from certus.utils.certus_re_math import re_envelope_max_delta_n
-from certus.utils.certus_re_math import re_compute_spline_basis_matrix
-from certus.utils.certus_re_math import re_compute_tikhonov_weights
-from certus.utils.certus_re_math import re_substrate_cauchy_barrier_residuals_jac
-from certus.utils.certus_re_config import RE_P4_BEAM_N_KNOTS
 import logging
 import joblib
 import time

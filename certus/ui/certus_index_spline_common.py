@@ -586,7 +586,6 @@ def _format_smart_init_status_text(k_n: int, dv: float, rmse_lbl: str, rm: float
     )
 
 
-import dataclasses
 
 
 
@@ -618,8 +617,6 @@ def _build_smart_init_knot_columns(
     sigma knot: lambda/sigma labels, n +/- buttons, ln k +/- buttons, auto btns.
     All list arguments are mutated in-place (cleared then appended to).
     """
-    from PyQt6.QtCore import Qt
-    from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
     # Clear widget lists
     lbl_lam_cols.clear()
@@ -730,7 +727,6 @@ def _smart_init_wire_hold_button(
     bump_L_fn: "Callable[[int, int, float], None]",
 ) -> None:
     """Wire a QPushButton as a hold-to-repeat +/- button for n or ln k adjustment."""
-    from PyQt6.QtCore import QTimer
 
     t = QTimer(parent_dlg)
     t.setInterval(78)

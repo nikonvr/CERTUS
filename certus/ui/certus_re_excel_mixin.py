@@ -881,8 +881,6 @@ class CertusREExcelMixin:
 
         import html
 
-        from PyQt6.QtWidgets import QTextEdit
-
         dlg = QDialog(self)
 
         dlg.setWindowTitle("RE Load Summary")

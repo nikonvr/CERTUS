@@ -1392,7 +1392,6 @@ class CertusMetalSingleApp(MetalBaseApp):
 
         l.addLayout(self._create_labeled_input("substrate:", self.combo_substrate, "substrate Material (Transparent)."))
 
-        from PyQt6.QtWidgets import QLabel
         self.substrate_info_label = QLabel("")
 
 

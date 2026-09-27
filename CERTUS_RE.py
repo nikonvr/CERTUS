@@ -483,8 +483,6 @@ class CertusREApp(
 
 
 def main():
-    import sys
-    from certus.ui.certus_ui import init_certus_app
 
     app = init_certus_app()
     certus_app = CertusREApp()

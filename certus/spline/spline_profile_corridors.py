@@ -125,7 +125,6 @@ from certus.spline.certus_corridor_orchestrator_utils import (
     _prep_corridor_base_eff,
     _eval_adaptive_abs_tolerance,
     _eval_corridor_threshold_fallback,
-    _package_corridor_results,
 )
 
 

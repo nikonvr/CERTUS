@@ -7,7 +7,6 @@ import functools
 from datetime import datetime
 import numpy as np
 import pandas as pd
-import pyqtgraph as pg
 from PyQt6.QtSvgWidgets import QSvgWidget
 
 _QS_INDEX_ORG = "CERTUS"

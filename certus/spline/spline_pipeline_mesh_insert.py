@@ -667,7 +667,6 @@ def worker_spline_auto_add_one_knot(
     live_cb=None,
 ) -> dict | None:
     """Standalone worker: test one insertion in every mid-gap and keep the best candidate."""
-    import copy as _copy
 
     log = logging.getLogger("CERTUS")
     try:

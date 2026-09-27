@@ -222,7 +222,6 @@ def _sellmeier_seed_from_compact_poly(
     q_mid: np.ndarray,
     ls_bounds_q: tuple[list[float], list[float]],
 ) -> tuple[str, np.ndarray]:
-    from scipy.optimize import least_squares
     seed_desc = "centre box (q)"
     q0 = q_mid
     poly_seed = _sellmeier_compact_polynomial_seed(wl, n_vals, mask)
@@ -588,7 +587,6 @@ def _fit_model_sellmeier3poles(
     sellmeier_ls_max_nfev: int,
     sellmeier_log_l1l2: bool | None,
 ) -> tuple[np.ndarray | None, str, np.ndarray | None, dict]:
-    from scipy.optimize import least_squares, minimize
 
     import time
 

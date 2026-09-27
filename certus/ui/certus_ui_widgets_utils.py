@@ -721,7 +721,7 @@ class SkeletonLoaderWidget(QWidget):
         self.shape = shape  # "chart", "table", "dashboard", "cards"
         self._shimmer_offset = -0.5
         
-        from PyQt6.QtCore import QTimeLine, QEasingCurve
+        from PyQt6.QtCore import QTimeLine
         self._timeline = QTimeLine(1400, self)
         self._timeline.setFrameRange(0, 100)
         self._timeline.setLoopCount(0)  # Loop infinitely
@@ -734,7 +734,7 @@ class SkeletonLoaderWidget(QWidget):
         self.update()
 
     def paintEvent(self, event) -> None:
-        from PyQt6.QtGui import QPainter, QLinearGradient, QBrush, QColor, QPainterPath
+        from PyQt6.QtGui import QPainter, QLinearGradient, QBrush, QPainterPath
         from PyQt6.QtCore import QRectF, Qt
         
         painter = QPainter(self)

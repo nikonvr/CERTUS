@@ -1,6 +1,4 @@
 from __future__ import annotations
-import numpy as np
-from numba import njit
 from scipy.interpolate import PchipInterpolator, CubicSpline
 from certus.utils.certus_re_config import (
     RE_P4_BEAM_N_KNOTS,
@@ -385,7 +383,6 @@ def re_compute_spline_basis_matrix(
 
     """
 
-    from scipy.interpolate import CubicSpline
 
     k = np.asarray(knot_wl_nm, dtype=np.float64).ravel()
 

@@ -53,7 +53,6 @@ import os
 from pathlib import Path
 
 import multiprocessing
-import sys
 import functools
 
 from certus.core.certus_core import create_module_environment

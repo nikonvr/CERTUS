@@ -422,7 +422,6 @@ class DesignOptimizationStrategy:
 
     def _prepare_pglobal_inputs(worker, *, var_idx: list[int], mode: str) -> tuple:
         """Build PGlobal preamble objects and emit initial progress line."""
-        from certus.workers.certus_design_worker_utils import prepare_pglobal_inputs_from_state
         pglobal_progress = build_progress_callback(worker.signals.progress_snapshot.emit, "DESIGN", "PGLOBAL")
         return prepare_pglobal_inputs_from_state(var_idx=var_idx, mode=mode, cfg=worker.cfg, signal_emit=pglobal_progress, gradient_func=worker._gradient_func_pglobal)
 

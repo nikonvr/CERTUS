@@ -224,7 +224,6 @@ from certus.core.certus_core import (
     build_runtime,
     handle_exception,
     get_resource_path,
-    load_theme_config,
     save_theme_config,
 )
 
@@ -381,7 +380,6 @@ def update_global_plot_config(dark_mode: bool = False) -> None:
 
     """
 
-    import pyqtgraph as pg
 
     from PyQt6.QtWidgets import QApplication
 
@@ -1023,7 +1021,6 @@ def safe_ui_action(func):
     - Catches other exceptions (unhandled/generic): logs a detailed stack trace to the structured JSONL file,
       and shows a general error message to the user to prevent crashing the UI loop.
     """
-    import functools
     import logging
     from PyQt6.QtWidgets import QApplication, QWidget
 

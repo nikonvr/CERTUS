@@ -53,7 +53,6 @@ from certus.core._certus_physics_impl import (  # noqa: F401
     calculate_reflection_infinite_substrate_single,
     calculate_RT_single_layer_absorbing_substrate_array,
     _calculate_RT_absorbing_sub_single,
-    _compute_single_layer_sensitivity_kernel,
     calculate_transmission_single,
     calculate_RT_vectorized_real,
     calculate_RT_vectorized_real_HL,

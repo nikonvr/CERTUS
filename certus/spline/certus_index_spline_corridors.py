@@ -180,7 +180,6 @@ def _plot_spectrum_raw_scatter(
     symbol_size: int = 5,
 ) -> None:
     """Raw spectral data: always in points (no line), CERTUS convention."""
-    from certus.ui.certus_ui import sanitize_xy_for_plot
     xf, yf = sanitize_xy_for_plot(x, y)
     if xf.size == 0:
         return

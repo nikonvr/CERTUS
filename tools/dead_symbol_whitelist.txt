@@ -15,8 +15,3 @@
 # could no longer match anything. An exemption that can never fire is a promise
 # nobody checks, and it would silently cover a symbol that dies later.
 # `tests/unit/test_ci_dead_symbol_audit.py` now forbids fossil entries.
-
-# Called ONLY by tests/unit/test_certus_metal_single_smoke.py -- a real call,
-# not a name collision. That is a different fact from a symbol referenced
-# nowhere: the function works, nothing in production wants it.
-CERTUS_METAL_SINGLE:_get_single_substrate_n_array

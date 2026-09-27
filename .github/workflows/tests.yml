@@ -1,41 +1,23 @@
 name: tests
 
-# Ce workflow existe parce que la suite ne tournait NULLE PART en intégration
-# continue : lint.yml n'exécute aucun test, release-windows.yml en exécute trois
-# fichiers.
+# La suite complète de CLAUDE.md, section 2, à chaque push.
 #
-# 🔴 AUCUN TEST N'EST EXCLU, et c'est la règle. Les étapes ci-dessous découpent la
-# suite pour rendre un échec ATTRIBUABLE — elles n'en retirent aucun. Si le job
-# devient trop long, la réponse est de séparer les JOBS, ou d'employer les
-# marqueurs `slow` et `performance` déjà déclarés dans pyproject.toml ; exclure
-# au hasard ne l'est pas.
-#
-# ⚠️ Ne recopie aucun compte de tests ici. Ce commentaire a porté « 2746 tests » et
-# « 6 min 27 pour la suite complète », mesurés le 2026-08-02 — les deux étaient
-# largement dépassés au 2026-09-08, et le second avait rendu le budget du job
-# insuffisant sans que personne ne le voie.
+# 🔴 AUCUN TEST N'EST EXCLU. Les étapes découpent la suite pour rendre un échec
+# attribuable, elles n'en retirent aucun : si un job devient trop long, on sépare les
+# jobs. Ne recopie ici ni compte de tests ni durée : ils se périmaient en un mois.
 
 on:
   pull_request:
-  # 🔴 AUCUN FILTRE DE BRANCHE — voir le commentaire de lint.yml. La liste
-  # `main` + `refactor-corridors-mixins` s'etait perimee : mesure le 2026-09-08,
-  # le travail se fait sur une branche absente de la liste, donc AUCUN commit
-  # n'etait verifie. Une liste se perime, une propriete non.
+  # Aucun filtre de branche : une liste de branches se périme, « du code a été poussé »
+  # non. Une liste périmée a déjà laissé passer des commits sans vérification.
   push:
 
 jobs:
   pytest:
     name: pytest (ubuntu, py${{ matrix.python-version }})
-    # ubuntu-latest pour tout ce qui ne mesure pas l'interface : plus rapide, PyQt6
-    # tournant en mode offscreen. L'interface a son propre job Windows, plus bas.
+    # Tout sauf l'interface, sous Linux avec PyQt6 en offscreen ; l'interface a son job
+    # Windows, plus bas. Si ce job expire, on le sépare, on ne relève pas le plafond.
     runs-on: ubuntu-latest
-    # 🔴 30 MIN NE SUFFISAIENT PLUS. Le commentaire d'en-tete annonce « 6 min 27 pour
-    # la suite complete », mesure le 2026-08-02 -- avant que la suite ne grossisse de
-    # plusieurs centaines de tests, dont toute la campagne d'ergonomie. 📏 Localement
-    # le 2026-09-08, `tests/ui/` seule depasse 50 min sur un i5-8250U Windows ; ubuntu
-    # en offscreen est plus rapide, mais l'ecart au budget etait deja structurel.
-    # 60 min laisse une marge sans etre illimite ; si le job expire, la reponse est de
-    # SEPARER les jobs, pas de relever encore.
     timeout-minutes: 60
 
     strategy:
@@ -56,9 +38,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Bibliothèques système requises par PyQt6
-        # Liste issue de la recette validée (CLAUDE.md §4). Sans elles, l'import de
-        # PyQt6 échoue même en offscreen — le plugin de plateforme est lié à EGL et
-        # xkbcommon.
+        # Sans elles, PyQt6 ne s'importe pas, même en offscreen : le plugin de
+        # plateforme est lié à EGL et à xkbcommon.
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
@@ -76,40 +57,31 @@ jobs:
         run: uv python install ${{ matrix.python-version }}
 
       - name: Dépendances
-        # 🔴 LES DERNIÈRES VERSIONS STABLES, À CHAQUE RUN. CERTUS tourne toujours sur un
-        # poste à jour (décision de 👤, 2026-09-27) : la CI éprouve donc ce que ce poste
-        # aura, pas une photographie. `--upgrade` ré-résout vers le dernier stable permis par
-        # `pyproject.toml` ; `uv.lock` n'est qu'un point de départ, rafraîchi par
-        # `uv lock --upgrade`. Une CI rouge peut venir d'une version publiée le jour même :
-        # c'est l'information voulue. `uv pip list` journalise ce qui a été éprouvé.
-        #
-        # Le projet est utilisable en mode source uniquement : seul certus/domain a
-        # un __init__.py, les sept autres sous-paquets sont en PEP 420 et
-        # pyproject déclare packages = ["certus"] (CLAUDE.md §2). D'où
-        # `--no-install-project` : on installe les dépendances, jamais le projet.
+        # 🔴 LES DERNIÈRES VERSIONS STABLES, À CHAQUE RUN (docs/ETAT.md, section 3,
+        # Logiciel) : `--upgrade` ré-résout au-delà de `uv.lock`, qui n'est qu'un point de
+        # départ. Une CI rouge peut donc venir d'une version publiée le jour même, et c'est
+        # voulu ; `uv pip list` journalise ce qui a été éprouvé. CERTUS s'utilise en source,
+        # sans système de construction : on installe les dépendances, jamais le projet.
         run: |
           uv sync --upgrade --no-install-project --extra dev --python ${{ matrix.python-version }}
           uv pip list
 
       - name: Vérifier que certus est importé depuis le dépôt
-        # Garde-fou : un jour, un install éditable résolvait `certus` vers un AUTRE
-        # snapshot du disque, et les correctifs restaient invisibles (CLAUDE.md §5.5).
-        # Deux lignes ici évitent de valider le mauvais code pendant des mois.
+        # Un install éditable a déjà fait résoudre `certus` vers une AUTRE copie du disque :
+        # les correctifs restaient invisibles aux tests.
         run: |
           source .venv/bin/activate
           python -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
           python -c "import certus.physics.certus_opt_tmm as m, pathlib, sys; sys.exit(0 if pathlib.Path(m.__file__).is_relative_to(pathlib.Path.cwd()) else 1)"
 
       - name: Oracle TMM
-        # Lancé d'abord et séparément : c'est la référence indépendante qui valide
-        # la physique (CLAUDE.md §7). S'il tombe, le reste n'a pas d'intérêt.
+        # D'abord : la référence TMM indépendante. S'il tombe, le reste n'a pas d'intérêt.
         run: |
           source .venv/bin/activate
           python -m pytest tests/oracle/ -q --no-cov
 
       - name: Tests unitaires
-        # Separe de l'interface : 2 456 tests en 2 min 58 localement le 2026-09-08.
-        # C'est la moitie qui attrape le plus, pour le moins cher.
+        # La partie qui attrape le plus, pour le moins cher.
         run: |
           source .venv/bin/activate
           python -m pytest tests/unit/ -q --no-cov
@@ -123,16 +95,11 @@ jobs:
 
   interface:
     name: interface (windows, py3.14)
-    # 🔴 L'INTERFACE SE MESURE SUR WINDOWS, et ce n'est pas une preference. L'audit
-    # d'ergonomie mesure des largeurs en pixels avec Segoe UI, la police de la machine
-    # cible ; il REFUSE de tourner sans elle (« every width would be measured on a
-    # machine that does not exist »). 📏 Le 2026-09-26 sous Linux : 69 echecs et 12
-    # erreurs sur ~800 tests d'interface, tous dus a la police absente ou a des
-    # sous-processus sans plateforme Qt -- aucun a un defaut du code. Separer le job
-    # applique la regle de l'en-tete : on separe, on n'exclut rien.
+    # 🔴 L'INTERFACE SE MESURE SUR WINDOWS : l'audit d'ergonomie mesure des largeurs en
+    # pixels avec Segoe UI, la police de la machine cible, et refuse de tourner sans
+    # elle. Sous Linux, le 2026-09-26 : 69 échecs et 12 erreurs, tous dus à la police
+    # absente ou à des sous-processus sans plateforme Qt.
     runs-on: windows-latest
-    # Localement 20 min pour tests/ui/ complet (Ryzen 7 5700G, 2026-09-27) ; un runner
-    # est plus lent : 43 min 36 le 2026-09-26, fichier pathologique ecarte.
     timeout-minutes: 120
     env:
       QT_QPA_PLATFORM: offscreen
@@ -144,8 +111,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Cache numba hors de l'arborescence source
-        # Pose par une etape : le contexte `runner` n'existe pas dans l'`env` d'un job
-        # (le premier essai, 2026-09-26, a rendu un workflow invalide en 0 s).
+        # Posé par une étape : le contexte `runner` n'existe pas dans l'`env` d'un job.
         run: echo "NUMBA_CACHE_DIR=$RUNNER_TEMP/certus_numba_cache" >> "$GITHUB_ENV"
 
       - name: Installer uv
@@ -166,10 +132,8 @@ jobs:
           python -c "import certus.physics.certus_opt_tmm as m, pathlib, sys; print(m.__file__); sys.exit(0 if pathlib.Path(m.__file__).is_relative_to(pathlib.Path.cwd()) else 1)"
 
       - name: Interface
-        # D'un seul tenant : tests/ui/conftest.py detruit les fenetres principales que
-        # chaque test construit (D11 de docs/ETAT.md). Avant, `test_ux_re_stop_when_idle`
-        # devait etre lance a part -- ~9 min PAR TEST en fin de suite, quelques secondes
-        # seul -- parce que chaque fenetre fermee restait vivante.
+        # D'un seul tenant : tests/ui/conftest.py détruit les fenêtres principales que
+        # chaque test construit (D11 de docs/ETAT.md).
         run: |
           source .venv/Scripts/activate
           python -m pytest tests/ui/ -q --no-cov

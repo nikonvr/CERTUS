@@ -8,7 +8,8 @@ Extracted from certus_index_spline_core.py for Single Responsibility Principle.
 from __future__ import annotations
 import numpy as np
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 from certus.utils.certus_index_utils import DataType
 
 # Constants required by config defaults

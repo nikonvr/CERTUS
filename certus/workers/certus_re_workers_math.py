@@ -9,7 +9,8 @@ import time
 import math
 from copy import deepcopy
 import numpy as np
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 from certus.utils.certus_re_math import (
     RE_P4_BEAM_N_KNOTS,
     RE_SUB_CAUCHY_BARRIER_SQRT_W,

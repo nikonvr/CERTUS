@@ -9,7 +9,7 @@ Performance: ~3x faster than deepcopy for typical result dictionaries.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 import numpy as np
 
 

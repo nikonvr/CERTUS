@@ -298,7 +298,7 @@ def _sorted_finite_sigma_knots(sigma_knots) -> np.ndarray:
 
 # --- Extracted helper functions from CERTUS_INDEX_SPLINE ---
 
-from typing import Mapping
+from collections.abc import Mapping
 
 _D_SLIDER_STEPS_DEFAULT = 5000
 

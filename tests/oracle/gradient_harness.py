@@ -45,7 +45,7 @@ inverted sign — manifest as discrepancies of 50% or 100%.
 
 from __future__ import annotations
 
-from typing import Callable
+from collections.abc import Callable
 
 import numpy as np
 

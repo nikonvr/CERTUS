@@ -54,7 +54,8 @@ import logging
 from pathlib import Path
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Final, Iterable
+from collections.abc import Iterable
+from typing import Any, Final
 
 import pandas as pd
 

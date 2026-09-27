@@ -13,7 +13,8 @@ from copy import deepcopy
 from pathlib import Path
 from functools import partial
 from types import SimpleNamespace
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
 import numpy as np
 

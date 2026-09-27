@@ -39,7 +39,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Callable, Final, Optional
+from collections.abc import Callable
+from typing import Final, Optional
 
 
 _QS_ORG: Final[str] = "CERTUS"

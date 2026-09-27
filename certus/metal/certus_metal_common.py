@@ -22,7 +22,8 @@ import traceback
 
 from dataclasses import dataclass, field
 
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any, Optional
 from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
 
 

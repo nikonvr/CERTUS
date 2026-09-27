@@ -403,7 +403,8 @@ from dataclasses import dataclass
 from threading import Event, RLock
 
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 
 from numba import njit, prange

@@ -1,7 +1,8 @@
 from __future__ import annotations
 import numpy as np
 from numba import njit, prange
-from typing import Callable, TYPE_CHECKING
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 import time
 import os
 import math

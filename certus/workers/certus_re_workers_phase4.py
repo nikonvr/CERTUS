@@ -14,7 +14,8 @@ import time
 import math
 from copy import deepcopy
 import numpy as np
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from certus.core.certus_core import CFG, get_float_dtype, get_complex_dtype
 from certus.core.certus_lazy_imports import lazy_scipy

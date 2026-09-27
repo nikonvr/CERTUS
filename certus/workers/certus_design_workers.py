@@ -22,7 +22,7 @@ from certus.utils.certus_logging import get_structured_logger
 from certus.workers.certus_design_workers_strat import DesignOptimizationStrategy
 from certus.workers.certus_design_workers_needle_strat import NeedleOptimizationStrategy
 from threading import Event
-from typing import Any, List, Dict
+from typing import Any
 import numpy as np
 import pyqtgraph as pg
 from certus.ui.certus_qt_widgets import QAbstractItemView, QAbstractSpinBox, QApplication, QCheckBox, QComboBox, QDialog, QDoubleSpinBox, QFrame, QGridLayout, QHBoxLayout, QHeaderView, QKeySequence, QLabel, QPushButton, QScrollArea, QShortcut, QSpinBox, QSplitter, QStackedWidget, QStatusBar, QStyle, QTableWidget, QTableWidgetItem, QTabWidget, QTextEdit, QThread, QTimer, Qt, QVBoxLayout, QWidget, pyqtSignal

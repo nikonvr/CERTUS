@@ -10,7 +10,8 @@ import json
 import logging
 import time
 from dataclasses import dataclass, field, replace
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 import pandas as pd

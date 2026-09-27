@@ -10,7 +10,8 @@ import logging
 import os
 import tempfile
 from pathlib import Path
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from PyQt6.QtCore import QRunnable, QThreadPool, pyqtSlot
 from PyQt6.QtWidgets import QMessageBox, QPlainTextEdit, QTextEdit, QPushButton, QWidget

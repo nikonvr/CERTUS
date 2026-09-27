@@ -44,7 +44,6 @@ from certus.utils.certus_re_config import RE_GUI_DEFAULT_BEAM_APERTURE_DEG, RE_S
 
 from certus.utils.certus_re_math import (
     Any,
-    Dict,
     RE_SPLINE_KNOTS_NM,
     RE_SPLINE_NODE2_DEFAULT_NM,
     RE_SPLINE_N_KNOTS,
@@ -379,7 +378,7 @@ def _re_calc_spectrum_for_config(
     return _eval_angle(angle)
 
 
-def _re_p4_kwargs_from_opt_result(best_r: Dict, cfg: Dict) -> Dict[str, Any]:
+def _re_p4_kwargs_from_opt_result(best_r: dict, cfg: dict) -> dict[str, Any]:
     """If *best_r* contains phase-4 knots, returns kwargs to align theory/RMSE with the beam fit."""
 
     _ak = best_r.get("re_p4_beam_ap_knots_deg")

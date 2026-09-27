@@ -18,7 +18,8 @@ import threading
 import time
 import traceback
 from pathlib import Path
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
 
 import numpy as np

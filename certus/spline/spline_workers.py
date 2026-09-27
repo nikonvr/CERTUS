@@ -12,7 +12,8 @@ import time
 
 from threading import Event
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 
@@ -650,7 +651,8 @@ def _lbfgsb_phase_with_progress(
 
 
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 import numpy as np
 
 @dataclass

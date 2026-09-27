@@ -6,7 +6,7 @@ Event bus for domain events (event sourcing pattern).
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Callable, Dict, List
+from collections.abc import Callable
 import time
 
 

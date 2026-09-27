@@ -70,7 +70,7 @@ import copy
 
 from threading import Event
 
-from typing import Any, List, Dict
+from typing import Any
 from PyQt6.QtCore import QPointF
 
 import numpy as np

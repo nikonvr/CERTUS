@@ -70,7 +70,7 @@ import multiprocessing
 from pathlib import Path
 import sys
 import traceback
-from typing import Any, List, Dict
+from typing import Any
 
 from certus.core.certus_core import certus_timestamp_display, setup_logging
 

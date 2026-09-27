@@ -32,7 +32,8 @@ import time
 from dataclasses import dataclass, replace, field
 from enum import auto
 from threading import Event
-from typing import Any, Callable, Mapping
+from collections.abc import Callable, Mapping
+from typing import Any
 
 import numpy as np
 import pandas as pd

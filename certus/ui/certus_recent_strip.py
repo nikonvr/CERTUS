@@ -18,7 +18,8 @@ Public API
 
 from __future__ import annotations
 
-from typing import Callable, Final
+from collections.abc import Callable
+from typing import Final
 
 
 STRIP_MAX_ITEMS: Final[int] = 5

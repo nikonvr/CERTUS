@@ -10,7 +10,6 @@ Usage:
 import ast
 import sys
 from pathlib import Path
-from typing import Set, Dict, List, Tuple
 import re
 
 

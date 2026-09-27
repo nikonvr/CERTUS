@@ -4,7 +4,7 @@ from certus.ui.certus_design_common import *
 class OptimizationManager:
     def __init__(self, ui):
         self.ui = ui
-    def _handle_stopped_workflow_result(self, d: Dict) -> None:
+    def _handle_stopped_workflow_result(self, d: dict) -> None:
         """Finalize UI and keep best result when workflow is manually stopped."""
         self.ui._stack_info_best_ep = None
         self.ui._stack_info_best_rmse = None
@@ -85,7 +85,7 @@ class OptimizationManager:
         self.ui._is_internal_restart = False
         return True
 
-    def _track_and_apply_post_optim_result(self, d: Dict) -> None:
+    def _track_and_apply_post_optim_result(self, d: dict) -> None:
         """Track workflow RMSE state and apply optimized QW values to the table."""
         final_ep = d["ep"]
         rmse_before_cleanup = d.get("rmse", float("inf"))
@@ -131,7 +131,7 @@ class OptimizationManager:
         if current_best_rmse < float("inf"):
             self.ui._update_pareto_record(self.ui.ep_current, current_best_rmse)
 
-    def _run_post_optim_cleanup(self, d: Dict) -> int:
+    def _run_post_optim_cleanup(self, d: dict) -> int:
         """Apply post-prune/cleanup hook and return removed layer count."""
         if getattr(self.ui, "_post_prune", False):
             self.ui._post_prune = False
@@ -300,7 +300,7 @@ class OptimizationManager:
 
         self.ui.orchestrator.schedule_smart_decimation_remove_and_optimize()
 
-    def _apply_smart_decimation_optim_result(self, data: Dict[str, Any], rmse_after: float) -> None:
+    def _apply_smart_decimation_optim_result(self, data: dict[str, Any], rmse_after: float) -> None:
         """Apply optimization payload and refresh best-RMSE tracking."""
         if "ep" in data:
             self.ui.ep_current = data["ep"].copy()

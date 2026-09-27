@@ -4,7 +4,8 @@ import math
 from copy import deepcopy
 import numpy as np
 from scipy.optimize import least_squares
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from certus.core.certus_core import CFG, get_float_dtype, get_complex_dtype
 from certus.core.certus_re_config import REPhase3Result, REPhase4Result, _set_top_result_dto, _top_result_dto, RE_RESULT_LABEL_WITH_DRIFT

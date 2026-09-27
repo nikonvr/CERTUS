@@ -16,7 +16,7 @@ import json
 import platform
 import shutil
 from pathlib import Path
-from typing import Dict, Any, List, Tuple
+from typing import Any
 
 # Resolve ROOT directory (parents[1] because we are in scripts/)
 ROOT = Path(__file__).resolve().parents[1]

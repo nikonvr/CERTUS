@@ -5,7 +5,7 @@
 
 from enum import Enum
 import sys
-from typing import Any, Dict
+from typing import Any
 
 from certus.ui.certus_qt_widgets import QColor, QGraphicsDropShadowEffect, QIcon
 from PyQt6.QtGui import QPalette, QBrush, QPixmap, QPainter, QFont

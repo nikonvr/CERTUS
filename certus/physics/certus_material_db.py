@@ -1,6 +1,7 @@
 import numpy as np
 from numba import njit, prange
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 from functools import lru_cache
 import math
 from certus.core.certus_core import SUBSTRATES

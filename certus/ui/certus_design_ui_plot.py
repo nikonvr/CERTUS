@@ -239,7 +239,7 @@ class PlotManager:
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.ui.log(f"Failed to load Pareto design: {e}", "ERROR")
 
-    def _restore_pareto_champion(self, table_state: list[Dict[str, Any]], ep: np.ndarray) -> None:
+    def _restore_pareto_champion(self, table_state: list[dict[str, Any]], ep: np.ndarray) -> None:
         """Restore table state and current thicknesses from a stored Pareto champion."""
         self.ui._restore_table_state(table_state)
         self.ui.ep_current = ep.copy()
@@ -311,7 +311,7 @@ class PlotManager:
         dialog.exec()
         self.ui._use_exact_ep = True
 
-    def _populate_pareto_table_row(self, row_index: int, n_layers: int, rec: Dict[str, Any]) -> None:
+    def _populate_pareto_table_row(self, row_index: int, n_layers: int, rec: dict[str, Any]) -> None:
         """Render one row of the Pareto table, preserving fixed column semantics."""
         # Colonne 0: N
         i_layers = QTableWidgetItem(str(n_layers))
@@ -519,7 +519,7 @@ class PlotManager:
 
     def _update_pareto_catalog(
         self,
-        rec: Dict[str, Any],
+        rec: dict[str, Any],
         current_ep: np.ndarray,
         rmse_val: float,
         mc_rmse: float,
@@ -556,7 +556,7 @@ class PlotManager:
 
     def _update_pareto_fab_champion(
         self,
-        rec: Dict[str, Any],
+        rec: dict[str, Any],
         current_ep: np.ndarray,
         rmse_val: float,
     ) -> bool:
@@ -573,7 +573,7 @@ class PlotManager:
 
     def _update_pareto_mc_champion(
         self,
-        rec: Dict[str, Any],
+        rec: dict[str, Any],
         current_ep: np.ndarray,
         mc_rmse: float,
     ) -> bool:
@@ -589,7 +589,7 @@ class PlotManager:
 
     def _update_pareto_rmse_champion(
         self,
-        rec: Dict[str, Any],
+        rec: dict[str, Any],
         current_ep: np.ndarray,
         rmse_val: float,
         mc_rmse: float,
@@ -662,11 +662,11 @@ class PlotManager:
                 var_list.append(r)
         return np.array(var_list, dtype=np.int64)
 
-    def _build_pareto_table_state(self, ep: np.ndarray) -> list[Dict[str, Any]]:
+    def _build_pareto_table_state(self, ep: np.ndarray) -> list[dict[str, Any]]:
         """Rebuild table snapshot from thickness vector and current UI material/var states."""
         mats = self.ui._get_materials()
         l0 = self.ui.l0_spin.value()
-        state: list[Dict[str, Any]] = []
+        state: list[dict[str, Any]] = []
         table_rows = self.ui.front_table.rowCount()
 
         for r in range(min(len(ep), table_rows)):
@@ -694,7 +694,7 @@ class PlotManager:
 
         return state
 
-    def _update_optim_live_plot_normal_mode(self, data: Dict, wls: np.ndarray) -> None:
+    def _update_optim_live_plot_normal_mode(self, data: dict, wls: np.ndarray) -> None:
         """Update live transmission curve and sampled optimization points in normal mode."""
 
         Ts = data["Ts"]
@@ -837,7 +837,7 @@ class PlotManager:
 
         self.ui.spectrum_plot.repaint()
 
-    def _update_oblique_detached_plots(self, oblique_tgts: list, spectra_display: Dict, wls: np.ndarray) -> None:
+    def _update_oblique_detached_plots(self, oblique_tgts: list, spectra_display: dict, wls: np.ndarray) -> None:
         """Refresh detached spectrum widgets for oblique mode."""
 
         detached_targets = self.ui._get_plot_targets("spectrum", self.ui.spectrum_plot)[1:]
@@ -874,7 +874,7 @@ class PlotManager:
                     name=label,
                 )
 
-    def _update_optim_live_plot_oblique_mode(self, data: Dict, wls: np.ndarray) -> None:
+    def _update_optim_live_plot_oblique_mode(self, data: dict, wls: np.ndarray) -> None:
         """Update live oblique spectra and detached plots."""
 
         spectra_display = data.get("spectra_display", {})
@@ -947,7 +947,7 @@ class PlotManager:
 
         self._finalize_oblique_live_plot(active_curve_keys, wls)
 
-    def _update_optim_live_profile_tabs(self, data: Dict) -> None:
+    def _update_optim_live_profile_tabs(self, data: dict) -> None:
         """Refresh profile and n(lambda) tabs during live optimization updates."""
 
         if "ep" not in data:
@@ -973,7 +973,7 @@ class PlotManager:
 
     def _update_optim_live_plot_title(
         self,
-        data: Dict,
+        data: dict,
         rmse_valid: bool,
         rmse: Any,
         evals: int,
@@ -1007,7 +1007,7 @@ class PlotManager:
             size="11pt",
         )
 
-    def _update_optim_live_plot(self, data: Dict) -> None:
+    def _update_optim_live_plot(self, data: dict) -> None:
         """Updates the graph with the current curve and displays the current iteration.
 
         Updates Spectrum, Profile and n(lambda) regardless of which tab is displayed."""
@@ -1065,7 +1065,7 @@ class PlotManager:
 
         self._update_optim_live_profile_tabs(data)
 
-    def _on_intermediate_spectrum(self, data: Dict) -> None:
+    def _on_intermediate_spectrum(self, data: dict) -> None:
         """Callback for intermediate spectral update"""
 
         if data.get("type") != "intermediate":

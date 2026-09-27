@@ -15,7 +15,8 @@ helpers focus on:
 from __future__ import annotations
 
 from dataclasses import dataclass, asdict
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 import copy
 import json
 import logging

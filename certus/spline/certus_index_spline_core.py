@@ -12,7 +12,8 @@ import logging
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from functools import lru_cache
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 import pandas as pd

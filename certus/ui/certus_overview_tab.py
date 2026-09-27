@@ -13,7 +13,7 @@ The banner holds no domain logic: callers push values through :meth:`set_value`.
 from __future__ import annotations
 
 import logging
-from typing import Iterable
+from collections.abc import Iterable
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (

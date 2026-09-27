@@ -145,7 +145,7 @@ class CertusStratExportMixin:
             paths.append(self._manifest_relpath(db_path))
         return list(dict.fromkeys(p for p in paths if p))
 
-    def on_excel_ready(self, excel_data: io.BytesIO, metadata: Dict) -> Any:
+    def on_excel_ready(self, excel_data: io.BytesIO, metadata: dict) -> Any:
         """Handle automatic export (Excel + HTML)"""
         self.logger.debug("[DEBUG-UI] on_excel_ready entered.")
 

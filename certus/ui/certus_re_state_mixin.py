@@ -22,7 +22,7 @@ import multiprocessing
 import traceback
 from pathlib import Path
 import sys
-from typing import Any, List, Dict
+from typing import Any
 import numpy as np
 import pyqtgraph as pg
 

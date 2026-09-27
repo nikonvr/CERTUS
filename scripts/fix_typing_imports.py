@@ -6,7 +6,6 @@ This script only processes typing imports that are safe to autocorrect.
 
 import re
 from pathlib import Path
-from typing import Dict, Set
 
 #Mapping files with their detected import typing
 TYPING_FIXES = {

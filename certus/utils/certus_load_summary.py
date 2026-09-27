@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import functools
 import html
-from typing import Iterable
+from collections.abc import Iterable
 
 
 def build_summary_plain_text(title: str, lines: Iterable[tuple[str, bool] | str]) -> str:

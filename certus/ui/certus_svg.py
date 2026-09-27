@@ -1,7 +1,7 @@
 """SVG Export Utilities for CERTUS Suite
 Provides SVG export functionality for plots and diagrams."""
 
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 import numpy as np
 

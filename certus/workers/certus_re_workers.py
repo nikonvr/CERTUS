@@ -20,7 +20,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import joblib
 from functools import partial
 from types import SimpleNamespace
-from typing import Any, Protocol, Callable
+from collections.abc import Callable
+from typing import Any, Protocol
 import numpy as np
 from scipy.optimize import least_squares
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS

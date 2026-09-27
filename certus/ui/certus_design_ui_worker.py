@@ -55,7 +55,7 @@ class WorkerManager:
 
         spectrum_eval_start_worker(self.ui, cfg, _eval_start)
 
-    def _on_eval_finished(self, data: Dict, generation_id: int | None = None) -> None:
+    def _on_eval_finished(self, data: dict, generation_id: int | None = None) -> None:
         """
 
         Callback after spectral evaluation completion.
@@ -711,7 +711,7 @@ class WorkerManager:
         if hasattr(self, "status_label"):
             self.ui.status_label.setText(msg)
 
-    def _on_col_done(self, d: Dict) -> None:
+    def _on_col_done(self, d: dict) -> None:
         """Callback after colorimetric analysis"""
 
         if hasattr(self, "progress_widget"):

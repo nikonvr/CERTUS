@@ -62,7 +62,8 @@ import logging
 from dataclasses import dataclass
 import time
 from threading import Event
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 import numpy as np
 from scipy.interpolate import PchipInterpolator
 from certus.spline.certus_index_spline_core import (

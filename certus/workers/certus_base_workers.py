@@ -9,7 +9,8 @@ import time
 import traceback
 import warnings
 from collections import deque
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 from certus.utils.certus_progress_tracker import (
     ProgressSnapshot,
     StepState,

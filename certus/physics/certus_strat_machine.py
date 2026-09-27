@@ -8,7 +8,7 @@ Centralized hardware specifications for optical deposition monitoring machines
 """
 
 from dataclasses import dataclass
-from typing import Callable
+from collections.abc import Callable
 import numpy as np
 
 OMS5100_DEFAULT_READING_NOISE_PCT: float = 0.05

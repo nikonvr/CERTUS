@@ -126,7 +126,8 @@ warnings.filterwarnings("ignore", category=RuntimeWarning, message="overflow enc
 from collections import deque
 
 
-from typing import TYPE_CHECKING, Any, Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 
 import numpy as np

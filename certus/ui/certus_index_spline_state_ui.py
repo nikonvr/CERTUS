@@ -1,7 +1,7 @@
 from __future__ import annotations
 import dataclasses
 from enum import Enum, auto
-from typing import Optional, Dict, List
+from typing import Optional
 from certus.ui.certus_index_spline_common import *
 
 class SmartInitPayload(BaseModel):

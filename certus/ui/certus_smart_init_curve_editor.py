@@ -20,7 +20,7 @@ from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.utils.certus_ux import Typography
 
 
-from typing import Callable
+from collections.abc import Callable
 
 
 import numpy as np

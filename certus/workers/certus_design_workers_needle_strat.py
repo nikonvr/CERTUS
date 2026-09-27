@@ -3,7 +3,8 @@ import logging
 import time
 import math
 from copy import deepcopy
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, CFG, ensure_numpy_array, get_complex_dtype, get_float_dtype, get_resource_path, certus_timestamp_display, certus_timestamp_file, setup_module_logging

@@ -85,8 +85,10 @@ jobs:
           python $tmp
 
       - name: Syntax compile check
+        # compileall exits 0 on a missing file: the entry points are globbed, and none found fails.
         run: |
-          python -m compileall certus_services.py certus_metrology.py CERTUS_STRAT.py CERTUS_DESIGN.py CERTUS_RE.py
+          python -m compileall -q certus
+          python -c "import compileall, glob, sys; files = sorted(glob.glob('CERTUS_*.py')); sys.exit(0 if files and all(compileall.compile_file(f, quiet=1) for f in files) else 1)"
 
       - name: Full test suite (oracle + unit including release guardrails)
         run: |

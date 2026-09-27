@@ -86,7 +86,7 @@ extend-ignore = [
   # Pyflakes legacy
   "F401",  # unused-import — Batch F of #56 (depends on this action)
   "F403", "F405",  # wildcard imports — #15 will eradicate
-  "F541",  # f-string-missing-placeholders
+   # f-string-missing-placeholders
   "F811",  # redefined-while-unused
   "F841",  # unused-variable
   # Isort

@@ -141,7 +141,7 @@ def test_design_headless():
         if final_rmse < best_rmse_seen[0]:
             best_rmse_seen[0] = final_rmse
 
-        print(f"\nHEADLESS DESIGN DONE.")
+        print("\nHEADLESS DESIGN DONE.")
         print(f"Best RMSE: {best_rmse_seen[0]:.6f}")
         print(f"Optimization passes: {signal_count[0]}")
 

@@ -63,7 +63,7 @@ def main():
 
     app.collect_params = patched_collect
 
-    print(f"Lancement de app.run_workflow(23) avec rayon d'action x20...", flush=True)
+    print("Lancement de app.run_workflow(23) avec rayon d'action x20...", flush=True)
     app.run_workflow(23)
     res = B.wait_for(app.worker) if getattr(app, "worker", None) else None
 

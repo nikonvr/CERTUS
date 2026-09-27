@@ -68,9 +68,9 @@ if len(lin_ok) >= 3:
     disp_b = max(bp) / min(bp)
     print(f"Hors extrema, {len(lin_ok)} points :")
     print(f"  Phase A : |Delta_d * pente| varie d'un facteur {disp_a:.2f}")
-    print(f"            -> proche de 1 = Delta_d suit bien dT/|pente|")
+    print("            -> proche de 1 = Delta_d suit bien dT/|pente|")
     print(f"  Phase B : |Delta_d| varie d'un facteur {disp_b:.2f}")
-    print(f"            -> proche de 1 = Delta_d INDEPENDANT de la pente")
+    print("            -> proche de 1 = Delta_d INDEPENDANT de la pente")
     print()
     print("=" * 66)
     if disp_b < 1.3:

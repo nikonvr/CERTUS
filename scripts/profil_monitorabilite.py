@@ -154,8 +154,8 @@ def main() -> int:
         # 🔑 LA GRANDEUR QUI GOUVERNE UN BLOC : combien de lambda servent TOUTES les
         # couches d'un intervalle a la fois. C'est l'intersection, et elle ne peut que
         # DECROITRE quand on allonge -- monotone PAR CONSTRUCTION, donc coherente.
-        print(f"\n  lambda servant TOUT le prefixe [0,b) -- intersection, monotone par construction")
-        print(f"    b :", end="")
+        print("\n  lambda servant TOUT le prefixe [0,b) -- intersection, monotone par construction")
+        print("    b :", end="")
         bornes = [b for b in range(10, N + 1, 10)] + [N]
         inter = p["adm_tp"].copy()
         cum = np.ones(nl, dtype=bool)
@@ -165,7 +165,7 @@ def main() -> int:
             courbe.append(int(cum.sum()))
         for b in bornes:
             print(f" {b:4d}", end="")
-        print(f"\n    n :", end="")
+        print("\n    n :", end="")
         for b in bornes:
             print(f" {courbe[b - 1]:4d}", end="")
         print()
@@ -174,7 +174,7 @@ def main() -> int:
             print(f"  🔴 l'intersection tombe a ZERO des la couche {zero} : "
                   f"aucun bloc unique ne peut couvrir [0,{zero}).")
         # profil par couche, en tranches
-        print(f"\n  lambda utilisables PAR COUCHE (moyenne par tranche de 10) :")
+        print("\n  lambda utilisables PAR COUCHE (moyenne par tranche de 10) :")
         print("    ", end="")
         for k in range(0, N, 10):
             seg = par_couche[k:k + 10]

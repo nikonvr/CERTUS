@@ -242,7 +242,7 @@ def _score(assembled: np.ndarray, n_runs: int) -> int:
     print("=" * 78)
     print(f"  RMSE P95 : {p95:.6f}")
     print(f"  SEEL     : {seel:.3f} nm")
-    print(f"\n  reperes : 48c 0,17 nm | 35c 0,53 nm | cible posee par 👤 : 0,3 nm")
+    print("\n  reperes : 48c 0,17 nm | 35c 0,53 nm | cible posee par 👤 : 0,3 nm")
     print("  ⚠️ Ce SEEL est SPECTRAL. Il ne porte aucun taux de plantage : la faisabilite")
     print("     a ete etablie campagne par campagne, chacune sous 5 %.")
     return 0

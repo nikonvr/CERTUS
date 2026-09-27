@@ -1091,7 +1091,7 @@ class SplineOptimizerComparison:
 
 
 
-        print(f"\n🏆 PERFORMANCE AWARDS:")
+        print("\n🏆 PERFORMANCE AWARDS:")
 
         print(f"  Fastest: {fastest.optimizer_name} ({fastest.execution_time:.2f}s)")
 
@@ -1109,7 +1109,7 @@ class SplineOptimizerComparison:
 
         if robustness:
 
-            print(f"\n📊 ROBUSTNESS ANALYSIS (Standard Deviation of costs):")
+            print("\n📊 ROBUSTNESS ANALYSIS (Standard Deviation of costs):")
 
             for opt_name, costs in robustness.items():
 
@@ -1125,7 +1125,7 @@ class SplineOptimizerComparison:
 
         # Recommendations
 
-        print(f"\n💡 RECOMMENDATIONS:")
+        print("\n💡 RECOMMENDATIONS:")
 
 
 

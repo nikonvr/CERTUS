@@ -96,8 +96,8 @@ def lire(p: str) -> None:
         av = f"{100 * crash[i - 1]:.2f} %" if i else "-"
         print(f"\n  🔴 LA FALAISE : le plantage franchit {100 * CRASH_TOL:.0f} % a n = {franchi}"
               f"  ({av} a n = {franchi - 1} -> {100 * crash[i]:.2f} % a n = {franchi})")
-        print(f"     C'est LA que la surveillance optique cesse d'etre tenable, et c'est donc")
-        print(f"     la que le Rate doit prendre le relais.")
+        print("     C'est LA que la surveillance optique cesse d'etre tenable, et c'est donc")
+        print("     la que le Rate doit prendre le relais.")
 
     # --- les remontees de SEEL, sur la courbe qui ne l'est pas ----------------------------
     print(f"\n  {'n':>5}{'crash':>9}{'SEEL':>9}{'d(SEEL)':>10}   remarque")

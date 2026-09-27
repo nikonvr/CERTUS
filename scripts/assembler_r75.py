@@ -185,7 +185,7 @@ def main() -> int:
     print("=" * 72)
     print(f"  [REF] S en 1 nm ABSOLU (comparable a 25.10) : Pearson {rp_nm:+.3f}  Spearman {rs_nm:+.3f}")
     print(f"        S en 1 % relatif  (NON comparable)    : Pearson {rp_rel:+.3f}  Spearman {rs_rel:+.3f}")
-    print(f"  reperes en 1 nm absolu : 99c +0,69 | 48c +0,25 | 35c +0,20")
+    print("  reperes en 1 nm absolu : 99c +0,69 | 48c +0,25 | 35c +0,20")
     print("\n  [INFO] Avec 18 points et 11 a egalite, |r| < 0,47 n'est pas distinguable de zero")
     print("         au seuil de 5 %. Lis le signe et l'amplitude ensemble, jamais le signe seul.")
 

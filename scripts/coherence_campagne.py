@@ -135,7 +135,7 @@ def main(argv: list[str] | None = None) -> int:
                      key=lambda s: s.get("score", math.inf))
         tag = (d.get("config") or {}).get("overrides_tag") or ""
         marque = " ← CITABLE" if str(tag).startswith("union") else (
-            f" ← multi-temoin" if str(tag).startswith("mt") else "")
+            " ← multi-temoin" if str(tag).startswith("mt") else "")
         rate = ""
         if dep:
             avec = sum(1 for s in dep if s.get("rate_layers"))

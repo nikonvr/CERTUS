@@ -32,7 +32,7 @@ from certus.ui.certus_index_spline_plot_mixin import CertusIndexSplinePlotMixin
 from certus.ui.certus_index_spline_events_mixin import CertusIndexSplineEventsMixin
 from certus.ui.certus_index_spline_workers_mixin import CertusIndexSplineWorkersMixin'''
 
-new_class = f'''class CertusIndexSplineApp(
+new_class = '''class CertusIndexSplineApp(
     CertusBaseApp,
     CertusIndexSplineLayoutMixin,
     CertusIndexSplineStateMixin,

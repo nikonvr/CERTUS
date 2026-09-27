@@ -396,7 +396,7 @@ def test_macleod_reference():
     if abs(R_code - R_mac) > 0.001 or abs(T_code - T_mac) > 0.001:
 
 
-        print(f"  \u26a0\ufe0f  ECART compute_TMM_generic vs Macleod exact for k>0")
+        print("  \u26a0\ufe0f  ECART compute_TMM_generic vs Macleod exact for k>0")
 
 
 

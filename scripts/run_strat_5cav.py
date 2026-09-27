@@ -35,7 +35,7 @@ def main():
     json_path = ROOT / json_rel
 
     sys.stderr.write("=" * 80 + "\n")
-    sys.stderr.write(f"LANCEMENT DU SOLVEUR STRAT : 5 CAVITÉS 99 COUCHES [MODE DEEP EXTRÊME]\n")
+    sys.stderr.write("LANCEMENT DU SOLVEUR STRAT : 5 CAVITÉS 99 COUCHES [MODE DEEP EXTRÊME]\n")
     sys.stderr.write(f"Configuration : {json_path.name}\n")
     sys.stderr.write("=" * 80 + "\n\n")
 

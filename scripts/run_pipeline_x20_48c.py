@@ -62,11 +62,11 @@ def main():
 
     app.collect_params = patched_collect
 
-    print(f"Configuration appliquée sur le 48 couches :")
-    print(f"  * dp_top_k = 40 (nominal)")
-    print(f"  * k_keep_survivors = 10 (nominal)")
-    print(f"  * mining_candidates_limit = 3000 (nominal)")
-    print(f"  * Profondeur finale = 150 tirages (N=150), screening = 10 tirages\n", flush=True)
+    print("Configuration appliquée sur le 48 couches :")
+    print("  * dp_top_k = 40 (nominal)")
+    print("  * k_keep_survivors = 10 (nominal)")
+    print("  * mining_candidates_limit = 3000 (nominal)")
+    print("  * Profondeur finale = 150 tirages (N=150), screening = 10 tirages\n", flush=True)
 
     t0 = time.perf_counter()
     print("Lancement de app.run_workflow(23)...", flush=True)

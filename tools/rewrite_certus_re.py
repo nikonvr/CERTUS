@@ -34,7 +34,7 @@ from certus.ui.certus_re_plot_mixin import CertusREPlotMixin
 from certus.ui.certus_re_excel_mixin import CertusREExcelMixin
 from certus.ui.certus_re_workers_mixin import CertusREWorkersMixin'''
 
-new_class = f'''class CertusREApp(
+new_class = '''class CertusREApp(
     CertusBaseApp,
     CertusRELayoutMixin,
     CertusREStateMixin,

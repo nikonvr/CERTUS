@@ -387,7 +387,7 @@ def ecrire_rapport(chemin: Path, etat: dict) -> None:
     A = L.append
     A("# BATCH NUIT 2026-08-21 -- faire trouver a la graine 42 ce que la 77 trouve")
     A("")
-    A(f"- composant : **r75x2**, 2 nm, `deep`, graine **42** — exclusivement")
+    A("- composant : **r75x2**, 2 nm, `deep`, graine **42** — exclusivement")
     A(f"- lance : {etat['debut']} · echeance : {etat['echeance']}")
     A(f"- commit de l'instrument : `{etat.get('commit', '?')}`")
     A(f"- machine : {etat.get('machine', '?')}")

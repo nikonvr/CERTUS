@@ -394,7 +394,7 @@ def main():
                     print(f"{Colors.OKCYAN}[INFO] Parallel execution enabled via pytest-xdist (-n auto){Colors.ENDC}")
                 except ImportError:
                     print(f"{Colors.WARNING}[!] pytest-xdist is not installed. Falling back to sequential run.{Colors.ENDC}")
-                    print(f"    To run in parallel, install pytest-xdist: pip install pytest-xdist")
+                    print("    To run in parallel, install pytest-xdist: pip install pytest-xdist")
                     
             res = run_step("Pytest Suite", pytest_cmd, ROOT)
             results.append(res)

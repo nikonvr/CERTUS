@@ -184,7 +184,7 @@ def main() -> int:
     print(f"  couche 2, apres une non-QWOT : decalage de phase median "
           f"{np.median(r_apres):.4f} rad = {np.degrees(np.median(r_apres)):.1f} deg, "
           f"max {max(r_apres):.4f} rad")
-    print(f"  🔑 des la couche 2 la coincidence est PERDUE.\n")
+    print("  🔑 des la couche 2 la coincidence est PERDUE.\n")
 
     resultats = {"controle_substrat_nu_R_max": float(max(r_nu)),
                  "controle_couche2_dephasage_median_rad": float(np.median(r_apres))}

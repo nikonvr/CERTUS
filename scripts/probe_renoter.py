@@ -173,7 +173,7 @@ def _renoter(opti, params, plans, nom, graine, mode_ctx, fichier, surcharges=Non
         except Exception:
             return set()
     kg, kc = _cles(grille), _cles(clues)
-    print(f"\n  --- CE QUE LE CONTEXTE OFFRE ---", flush=True)
+    print("\n  --- CE QUE LE CONTEXTE OFFRE ---", flush=True)
     print(f"    λ exigees par les plans        : {len(besoins)}  "
           f"{[round(w) for w in besoins[:10]]}{' …' if len(besoins) > 10 else ''}", flush=True)
     print(f"    full_dynamics_grid             : {type(grille).__name__}, "

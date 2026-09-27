@@ -164,7 +164,7 @@ def lire(p: str) -> None:
     print("  « l'optimum doit se deplacer vers des queues plus COURTES (coupure plus tardive) »")
     print("  car le vivier de references ne grossit plus dans la queue : une longue queue fige")
     print("  desormais une erreur unique au lieu d'etre creditee d'un n_ref fictif.")
-    print(f"  reference d'avant correctif : optimum a 52, plateau de crash plat de 58 a 46.")
+    print("  reference d'avant correctif : optimum a 52, plateau de crash plat de 58 a 46.")
     if c0 > 52:
         print(f"  📏 optimum a {c0} > 52  -> CONFORME a la prediction")
     elif c0 == 52:

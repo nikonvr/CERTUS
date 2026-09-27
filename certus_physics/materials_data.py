@@ -212,7 +212,7 @@ def _load_si_from_xlsx(xlsx_path: str) -> tuple[np.ndarray, np.ndarray, np.ndarr
     if len(wl) < 2:
 
 
-        raise CertusMaterialError(f"Si-substrate sheet has fewer than 2 data points")
+        raise CertusMaterialError("Si-substrate sheet has fewer than 2 data points")
 
 
     if np.any(np.diff(wl) <= 0):

@@ -98,7 +98,7 @@ def main() -> int:
     print(f"  La bande BLOQUEE est {med(passband) / med(blocked):.0f}x plus propre que la passante,")
     print("  sur tous les runs. Le filtre ne rate jamais son blocage ; il rate son passage.")
     ratios = [r["front"] / r["passante"] for r in rows if r["passante"]]
-    print(f"  Le FRONT porte systematiquement plus d'erreur que la passante :")
+    print("  Le FRONT porte systematiquement plus d'erreur que la passante :")
     print(f"    rapport front/passante  min {min(ratios):.2f}  median {med(ratios):.2f}  max {max(ratios):.2f}")
     print("\n  ⚠️ Les populations de strategies different d'un run a l'autre. Ces profils")
     print("     decrivent la FORME de l'erreur, pas une comparaison appariee.")

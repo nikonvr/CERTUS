@@ -183,7 +183,7 @@ def main():
                 stats.setdefault("failed", []).append((str(filepath), repr(exc)))
 
         print(f"\n{'=' * 80}")
-        print(f"[STATS] STATISTIQUES")
+        print("[STATS] STATISTIQUES")
         print(f"{'=' * 80}")
         print(f"Fichiers analyses: {stats['total']}")
         print(f"Fichiers avec wildcard imports: {stats['with_wildcards']}")

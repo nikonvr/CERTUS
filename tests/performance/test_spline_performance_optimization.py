@@ -1493,7 +1493,7 @@ class SplinePerformanceAnalyzer:
         if "adaptive" in results:
 
 
-            print(f"\nAdaptive Configurations:")
+            print("\nAdaptive Configurations:")
 
 
             for config in results["adaptive"]:
@@ -1541,7 +1541,7 @@ class SplinePerformanceAnalyzer:
         if recommendations:
 
 
-            print(f"\nOPTIMIZATION RECOMMENDATIONS:")
+            print("\nOPTIMIZATION RECOMMENDATIONS:")
 
 
             for i, rec in enumerate(recommendations, 1):
@@ -1559,7 +1559,7 @@ class SplinePerformanceAnalyzer:
         else:
 
 
-            print(f"\nNo significant optimizations identified.")
+            print("\nNo significant optimizations identified.")
 
 
 

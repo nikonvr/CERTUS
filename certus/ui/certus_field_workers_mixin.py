@@ -116,7 +116,7 @@ class CertusFieldWorkersMixin:
                         }
                         
                         if len(emp_factors) >= 100:
-                            self.logger.info(f"[Synthesis] Max layer count (100) reached. Stopping synthesis.")
+                            self.logger.info("[Synthesis] Max layer count (100) reached. Stopping synthesis.")
                             self._synthesis_active = False
                             self._is_running = False
                             self.btn_calc.setEnabled(True)

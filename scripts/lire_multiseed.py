@@ -241,9 +241,9 @@ def main() -> int:
             # jamais sur la grille reelle de ~301 -- s'il mord, c'est un defaut a regarder.
             print(f"   🔴 {n_tronq} histogramme(s) TRONQUE(S) : le compte de {LAMBDA_CIBLE} nm "
                   f"est un PLANCHER, pas une mesure.")
-            print(f"      Si ce journal precede le 2026-08-21, c'est l'ancienne troncature a "
-                  f"14 λ -- corrigee depuis, mais elle ne se rattrape pas : REJOUER le run. "
-                  f"Sinon le plafond dur a mordu, ce qui ne devrait pas arriver.")
+            print("      Si ce journal precede le 2026-08-21, c'est l'ancienne troncature a "
+                  "14 λ -- corrigee depuis, mais elle ne se rattrape pas : REJOUER le run. "
+                  "Sinon le plafond dur a mordu, ce qui ne devrait pas arriver.")
         elif not fini:
             print("   ⏳ RUN INACHEVE : aucun verdict. Le compte ci-dessus est partiel et "
                   "n'est PAS comparable aux 2 sur 4226 de la reference, qui portent sur "

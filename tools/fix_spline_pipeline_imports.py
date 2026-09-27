@@ -55,7 +55,7 @@ def fix_imports():
     for g in groups.values():
         all_exports.extend(g)
     
-    facade_content += f"\n__all__ = [\n"
+    facade_content += "\n__all__ = [\n"
     for exp in all_exports:
         facade_content += f"    '{exp}',\n"
     facade_content += "]\n"

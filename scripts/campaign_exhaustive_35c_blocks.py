@@ -66,7 +66,7 @@ REF_BENCHMARK = {
 def main():
     print("=" * 80)
     print("CAMPAGNE EXHAUSTIVE DE RECHERCHE PAR BLOCS SUR LE PASSE-BANDE 35 COUCHES")
-    print(f"RÉFÉRENCE À BATTRE (35 lambdas) :")
+    print("RÉFÉRENCE À BATTRE (35 lambdas) :")
     print(f"  * Crash : {REF_BENCHMARK['crash_rate']*100:.1f} %")
     print(f"  * Écart spectral RMSE P95 (600-660 nm) : {REF_BENCHMARK['rmse_p95_target']:.5f}")
     print(f"  * SEEL équivalent : {REF_BENCHMARK['seel_nm']:.2f} nm")

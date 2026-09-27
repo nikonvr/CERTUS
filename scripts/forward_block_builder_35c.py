@@ -173,7 +173,7 @@ def main():
                         print(f"  ✅ Bloc [{start_layer+1}..{end_layer}] ({blk_len} couches) @ {wl:.0f} nm -> 0 CRASH sur {end_layer}/35 couches !", flush=True)
 
         if not next_beam_candidates:
-            print(f"⚠️ Aucun bloc n'a donné 0 crash à cette étape. Recherche du bloc au crash minimum...", flush=True)
+            print("⚠️ Aucun bloc n'a donné 0 crash à cette étape. Recherche du bloc au crash minimum...", flush=True)
             # Chercher le minimum de crash
             break
 

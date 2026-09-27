@@ -535,7 +535,7 @@ class LbfgsbRegressionTester:
             speedup = de_result.execution_time / lbfgsb_result.execution_time
             eval_reduction = de_result.n_evaluations / lbfgsb_result.n_evaluations
 
-            self.logger.info(f"🚀 PERFORMANCE IMPROVEMENT:")
+            self.logger.info("🚀 PERFORMANCE IMPROVEMENT:")
             self.logger.info(f"  Speedup: {speedup:.1f}x")
             self.logger.info(f"  Evaluation reduction: {eval_reduction:.1f}x")
 

@@ -144,13 +144,13 @@ def main() -> int:
 
     ratios = np.array([x[4] for x in lignes])
     print(f"\n  {len(lignes)} couches comparees")
-    print(f"  ratio res_lim(choix reel) / res_lim(meilleur choix) :")
+    print("  ratio res_lim(choix reel) / res_lim(meilleur choix) :")
     print(f"     mediane {np.median(ratios):.3f}   moyenne {ratios.mean():.3f}   "
           f"min {ratios.min():.3f}   max {ratios.max():.3f}")
     print(f"     couches sous 0,50 : {(ratios < 0.5).sum()} / {len(ratios)}")
     print(f"     couches sous 0,25 : {(ratios < 0.25).sum()} / {len(ratios)}")
 
-    print(f"\n  les 12 couches ou la Phase A laisse le plus :")
+    print("\n  les 12 couches ou la Phase A laisse le plus :")
     print(f"    {'couche':>7} {'lambda':>8} {'res_lim reel':>13} {'res_lim max':>12} {'ratio':>7}")
     for k, wl, reel, best, ratio in sorted(lignes, key=lambda x: x[4])[:12]:
         print(f"    {k:>7} {wl:>7.0f}n {reel:>11.3f}nm {best:>10.3f}nm {ratio:>7.3f}")

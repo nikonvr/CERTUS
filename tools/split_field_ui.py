@@ -51,7 +51,7 @@ for cat, cat_methods in categories.items():
 
 # Now update certus_field_ui.py
 import re
-new_class = f'''class CertusFieldApp(
+new_class = '''class CertusFieldApp(
     CertusBaseApp,
     CertusFieldLayoutMixin,
     CertusFieldPlotMixin,

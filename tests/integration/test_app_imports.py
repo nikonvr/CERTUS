@@ -28,8 +28,7 @@ def test_entry_point_imports_without_circular_errors(app_filename):
     tests_dir = Path(__file__).resolve().parent.parent.parent
     app_path = tests_dir / app_filename
     
-    if not app_path.exists():
-        pytest.skip(f"App {app_filename} not found at {app_path}")
+    assert app_path.exists(), f"App {app_filename} not found at {app_path}"
         
     module_name = app_filename.replace(".py", "")
     

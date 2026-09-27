@@ -44,10 +44,9 @@ _EXAMPLE_ROOT = _REPO_ROOT / "example"
 
 
 def _example(relpath: str) -> Path:
-    """Resolve an example file path; skip the test if missing."""
+    """Resolve an example file path; a missing example is a failure, never a skip."""
     p = _EXAMPLE_ROOT / relpath
-    if not p.is_file():
-        pytest.skip(f"Fichier exemple manquant : {relpath}")
+    assert p.is_file(), f"Fichier exemple manquant : {relpath}"
     return p
 
 

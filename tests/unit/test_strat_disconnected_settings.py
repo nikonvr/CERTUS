@@ -201,3 +201,12 @@ class TestDpYieldWeight:
         constants = _string_constants(pipeline)
         assert "raw_results_sq" in constants, "premise: the pipeline code is the one read"
         assert "dp_yield_weight" not in constants
+
+    def test_no_helper_still_claims_to_build_the_dp_objective(self):
+        """Once the setting was gone the two helpers had no caller left, and their
+        docstrings still called their output "the DP objective when w > 0"."""
+        from certus.core import certus_strat_ranking as ranking
+
+        assert hasattr(ranking, "mine_strategies_for_block_count"), "premise: the module"
+        assert not hasattr(ranking, "build_yield_cost_map")
+        assert not hasattr(ranking, "combine_cost_and_yield")

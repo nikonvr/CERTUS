@@ -1,7 +1,7 @@
 """INDEX_SPLINE integration: TSIO2-1700-1.xlsx, window 250–5000 nm (RMSE mask).
 
-The file can be provided by ``spectro_data/TSIO2-1700-1.xlsx`` at the root of the repository
-ou via la variable d'environnement ``CERTUS_TSIO2_XLSX``.
+The file is the INDEX SPLINE example, ``example/example_index_spline/TSIO2-1700-1.xlsx``;
+the environment variable ``CERTUS_TSIO2_XLSX`` points the test at another copy.
 
 RMSE reference: of the order of **1.5–2e-3** on the filtered game (T/T_sub, sapphire),
 with x0 from the SiO₂ material preset + obligatory local descent + polish (quick profile).
@@ -39,19 +39,11 @@ def _repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
-def resolve_tsio2_1700_xlsx() -> Path | None:
+def resolve_tsio2_1700_xlsx() -> Path:
     env = os.environ.get("CERTUS_TSIO2_XLSX", "").strip()
-    candidates: list[Path] = []
     if env:
-        candidates.append(Path(env))
-    root = _repo_root()
-    candidates.append(root / "spectro_data" / "TSIO2-1700-1.xlsx")
-    here = root.parent / "0804 - Copie" / "data spectro" / "TSIO2-1700-1.xlsx"
-    candidates.append(here)
-    for p in candidates:
-        if p.is_file():
-            return p.resolve()
-    return None
+        return Path(env).resolve()
+    return (_repo_root() / "example" / "example_index_spline" / "TSIO2-1700-1.xlsx").resolve()
 
 
 @pytest.fixture(scope="module")
@@ -62,8 +54,7 @@ def _warm_physics() -> None:
 @pytest.fixture
 def tsio2_bundle(_warm_physics):
     path = resolve_tsio2_1700_xlsx()
-    if path is None:
-        pytest.skip("TSIO2-1700-1.xlsx introuvable (spectro_data/ ou CERTUS_TSIO2_XLSX).")
+    assert path.is_file(), f"TSIO2-1700-1.xlsx missing: {path}"
 
     df = read_data_file_robust(str(path))
     df = normalize_spectrum_dataframe(df)

@@ -76,19 +76,19 @@ jobs:
         run: uv python install ${{ matrix.python-version }}
 
       - name: Dépendances
-        # 🔴 LES VERSIONS VERROUILLÉES, PAS DES BORNES MINIMALES. En installant des bornes,
-        # la CI prenait ce que PyPI publiait ce jour-là : le 2026-09-26 elle a monté
-        # `pyqt6-qt6` en 6.11.2 quand le verrou disait 6.11.1 — une CI rouge pouvait donc
-        # venir d'une version que personne n'a choisie. `--frozen` interdit de modifier
-        # `uv.lock` en silence : si le verrou ne satisfait plus `pyproject.toml`, l'étape
-        # échoue au lieu de résoudre autre chose.
+        # 🔴 LES DERNIÈRES VERSIONS STABLES, À CHAQUE RUN. CERTUS tourne toujours sur un
+        # poste à jour (décision de 👤, 2026-09-27) : la CI éprouve donc ce que ce poste
+        # aura, pas une photographie. `--upgrade` ré-résout vers le dernier stable permis par
+        # `pyproject.toml` ; `uv.lock` n'est qu'un point de départ, rafraîchi par
+        # `uv lock --upgrade`. Une CI rouge peut venir d'une version publiée le jour même :
+        # c'est l'information voulue. `uv pip list` journalise ce qui a été éprouvé.
         #
         # Le projet est utilisable en mode source uniquement : seul certus/domain a
         # un __init__.py, les sept autres sous-paquets sont en PEP 420 et
         # pyproject déclare packages = ["certus"] (CLAUDE.md §2). D'où
         # `--no-install-project` : on installe les dépendances, jamais le projet.
         run: |
-          uv sync --frozen --no-install-project --extra dev --python ${{ matrix.python-version }}
+          uv sync --upgrade --no-install-project --extra dev --python ${{ matrix.python-version }}
           uv pip list
 
       - name: Vérifier que certus est importé depuis le dépôt
@@ -155,9 +155,9 @@ jobs:
         run: uv python install 3.14
 
       - name: Dépendances
-        # Mêmes versions verrouillées que le job Linux — voir son commentaire.
+        # Les dernières versions stables, comme le job Linux — voir son commentaire.
         run: |
-          uv sync --frozen --no-install-project --extra dev --python 3.14
+          uv sync --upgrade --no-install-project --extra dev --python 3.14
           uv pip list
 
       - name: Vérifier que certus est importé depuis le dépôt

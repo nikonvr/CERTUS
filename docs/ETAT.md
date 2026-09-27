@@ -197,6 +197,7 @@ numéros de l'ancien registre sont entre parenthèses
 | D26 | Inversions de couches, comptées le 2026-08-19 : `utils → ui` (11), `core → workers` (10), cycle `physics ↔ core` (23 et 29 imports) |
 | D27 | Sous-paquets PEP 420 et `packages = ["certus"]` : un `pip install` ne livrerait aucun sous-module |
 | D30 | `CERTUS_METAL_SINGLE.py` et `CERTUS_METAL_BILAYER.py` restent à la racine alors que `certus/metal/` existe ; le `.coverage` pointe vers un autre snapshot |
+| D34 | **Deux `_package_corridor_results` qui divergent** : 433 lignes dans `certus/spline/certus_corridor_orchestrator_utils.py`, importées par `certus_corridor_exploration.py` et jamais appelées ; 135 lignes dans `spline_profile_corridors.py`, la seule appelée et celle que testent `test_certus_strat_coherence.py`. L'audit des symboles morts ne voit pas la première : elle est importée. La supprimer, ou établir laquelle est juste, est à décider (relevé le 2026-09-27, R8) |
 
 ## 5. Ce qui attend une décision de 👤
 

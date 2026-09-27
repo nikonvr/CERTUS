@@ -222,7 +222,6 @@ class _PhysicsBridge:
         )
 
 
-
 def wavelength_to_index(wavelength_nm: float) -> int:
     """Convert a wavelength float to a stable integer index at WL_DECIMALS precision."""
     return int(np.rint(float(wavelength_nm) * WL_INDEX_SCALE))
@@ -265,13 +264,6 @@ class StratStrategyService(BaseHeadlessService):
         super().__init__(runner)
 
     VALID_STEPS = {0, 2, 3, 23, 33}
-
-    _deterministic: bool = False
-
-    def set_deterministic(self, value: bool) -> None:
-        """P1-10: Toggle deterministic mode for automated verification."""
-        self._deterministic = bool(value)
-        logging.getLogger(__name__).info("STRAT deterministic mode: %s", self._deterministic)
 
     def _validate_payload_shape(self, payload: Mapping[str, Any]) -> StratPayloadParts:
         """Validate the legacy STRAT payload shape before domain-specific checks."""
@@ -522,7 +514,6 @@ def calculate_nominal_properties(
         "fom_nominal": 0.0,  # Legacy placeholder
         "color_nominal": [255, 255, 255],  # Placeholder
     }, multipliers
-
 
 
 def calculate_sensitivity_matrix(params: dict[str, Any], nominal_results: dict[str, Any]) -> dict[str, Any]:
@@ -1048,7 +1039,6 @@ def _select_candidates_phase_a(
     return valid_candidates_data, full_dyn_map
 
 
-
 def compute_probe_offset_nm_from_ratio(params: dict[str, Any]) -> float:
     """Convert probe offset ratio to physical thickness (nm), using legacy STRAT logic."""
     tolerance_nm = params.get("thickness_tolerance_nm")
@@ -1448,7 +1438,6 @@ def _validate_candidates_phase_a(
         p_thick_sim_updates = []
 
     return results_thickness, p_thick_sim_updates
-
 
 
 def select_best_strat_result(strategies_results: list[dict[str, Any]]) -> dict[str, Any] | None:

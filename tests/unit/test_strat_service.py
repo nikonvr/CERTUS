@@ -101,16 +101,6 @@ def test_p1_10_generate_noise_array_returns_zeros_in_deterministic_mode() -> Non
     assert np.array_equal(noise, np.zeros((2, 3), dtype=np.float64))
 
 
-def test_p1_10_set_deterministic_toggles_service_flag() -> None:
-    svc = StratStrategyService(lambda cfg: cfg)
-
-    svc.set_deterministic(True)
-    assert svc._deterministic is True
-
-    svc.set_deterministic(False)
-    assert svc._deterministic is False
-
-
 def test_p1_10_generate_noise_array_is_reproducible_with_local_rng() -> None:
     rng_a = np.random.default_rng(123)
     rng_b = np.random.default_rng(123)

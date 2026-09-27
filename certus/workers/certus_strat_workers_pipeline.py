@@ -2,7 +2,6 @@
 from typing import TYPE_CHECKING, Any
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.core.certus_strat_core import APP_CONTEXT
-from certus.core.certus_strat_ranking import build_yield_cost_map, combine_cost_and_yield
 from certus.utils.certus_strat_context import StratContext
 from certus.workers.certus_strat_workers_dto import WorkerThreadResult
 from certus.core.certus_metrology import ValidationStatus
@@ -99,40 +98,15 @@ class FullPipelineStrategy:
 
             worker.params["logger"].info(f"🔄 PHASE 3: Dynamic Programming Strategy Optimization ({len(blocks_range)} steps) - HYBRID ENGINE...")
 
-            # ── AXIS 4.1: THE YIELD ENTERS THE DP OBJECTIVE ──────────
-            #
-            # 🔴 THIS IS WHERE THE DATA WAS DISCARDED. Each entry of
-            # `raw_results_sq` carries `crash_rate` — the rate of unfinishable
-            # depositions per (layer, lambda), measured by Phase A. This line only retained
-            # `x["cost"]`: the crash rate was only used for a binary threshold, and a
-            # lambda at 0.001% was treated like a lambda at 0.106%, even though they
-            # differ by a factor of a hundred on the only quantity that COMPOSES over the
-            # height of the stack.
-            #
-            # The yield of a stack is `prod(1 - p_i)`, whose logarithm is
-            # ADDITIVE: this is exactly what a Bellman DP optimizes exactly.
-            #
-            # `dp_yield_weight = 0` (default) leaves the map unchanged, thus the
-            # behavior from before down to the bit. The value is not guessed: it is
-            # swept. See `build_yield_cost_map` and `combine_cost_and_yield`.
+            # The squared Phase A costs, per (layer, lambda): what the inheritance step prices
+            # its block fusions with (`derive_strategies_exhaustive`). The per-block DP reads
+            # `raw_results_sq` itself. ⚠️ No crash rate reaches this map:
+            # `_normalize_phase_a_results` keeps only `wl`, `cost` and `cost_raw`, so a yield
+            # term built from it is zero everywhere -- which is why `dp_yield_weight` changed
+            # nothing at any weight, and was removed.
             cost_map_sq_clean = {
                 l: {x["wl"]: x["cost"] for x in items} for l, items in pre_calc_data["raw_results_sq"].items()
             }
-            _dp_yield_w = float(worker.params.get("dp_yield_weight", 0.0) or 0.0)
-            if _dp_yield_w > 0.0:
-                _yield_map = build_yield_cost_map(pre_calc_data["raw_results_sq"])
-                _n_informative = sum(
-                    1 for lm in _yield_map.values() for v in lm.values() if v > 0.0
-                )
-                _n_cells = sum(len(lm) for lm in _yield_map.values())
-                worker.params["logger"].info(
-                    f"   [YIELD] DP on cost + {_dp_yield_w:g} x (-log(1-p)): "
-                    f"{_n_informative}/{_n_cells} (layer, lambda) cells carry a "
-                    f"measurable crash rate. The others let the cost in nm decide."
-                )
-                cost_map_sq_clean = combine_cost_and_yield(
-                    cost_map_sq_clean, _yield_map, _dp_yield_w
-                )
 
             materials_db = worker.params.get("materials_db") or APP_CONTEXT.get("materials_db")
 

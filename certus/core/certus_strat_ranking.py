@@ -105,11 +105,12 @@ def _couverture_wl_groupings(
     the beginning.
 
     🔴 AND THE COUNTERS GO UP THROUGH `stats`, NOT ONLY THROUGH THE LOG. 📏 Measured on
-    2026-08-21: the `ThinFilm` logger of this module is MUTE -- its unconditional `info`
-    line "Mining: n_blocks=..." appears **zero times** in the campaign logs, while the
+    2026-08-21: the `ThinFilm` logger this module then used is MUTE -- its unconditional
+    `info` line "Mining: n_blocks=..." appears **zero times** in the campaign logs, while the
     worker's `W{n_blk}` logger gets through without trouble. A first fifty-minute run was
     therefore made UNINTERPRETABLE: impossible to tell "the pass did not run" from
-    "every forced λ was infeasible".
+    "every forced λ was infeasible". (Since D3 the miner logs through the logger its caller
+    carries; `ThinFilm` is only its fallback.)
 
         An instrument whose output does not reach the result is not an instrument.
 
@@ -209,82 +210,6 @@ def _convert_solution_to_strategy(sol, num_layers, n_blocks, origin_tag, s_id) -
         "symmetry_bonus": float(sol.get("symmetry_bonus", 0.0)),
         "same_wl_kept": int(sol.get("same_wl_kept", 0)),
     }
-
-
-#: Ceiling on `p` before the logarithm. `-log(1 - 1)` is infinity, which would EXCLUDE the
-#: candidate instead of ranking it last — and if all candidates of a layer
-#: were 1, the DP would have no path left. So we cap at 1 - 1e-9, giving a
-#: cost of ~20.7 nats: huge, but finite, so the order among bad options survives.
-_YIELD_P_MAX: float = 1.0 - 1e-9
-
-
-def build_yield_cost_map(
-    raw_results: dict[int, list[dict[str, Any]]],
-) -> dict[int, dict[float, float]]:
-    """Map `[layer][lambda] -> -log(1 - p)`, LOGARITHM OF YIELD.
-
-    Phase A calculates `results_fast[idx, 2]`, the non-terminating deposition rate
-    per layer and wavelength. Phase B constructs the map given to DP by taking `-log(1 - p)`.
-
-    Why logarithm: A deposition terminates if EVERY layer terminates:
-    `yield = prod(1 - p_i)`. Its logarithm is ADDITIVE — exactly the form that Bellman DP
-    optimizes without approximation. `-log(1 - p)` is a direct component of `P(conforming)`.
-
-    `p` is estimated over `num_runs` Monte-Carlo draws. Below `1/num_runs`, this map equals ZERO.
-    That is why it ADDS to the thickness error cost rather than replacing it (see `dp_yield_weight`).
-    """
-    out: dict[int, dict[float, float]] = {}
-    for layer_idx, items in (raw_results or {}).items():
-        layer_map: dict[float, float] = {}
-        for entry in items or []:
-            try:
-                p = float(entry.get("crash_rate", 0.0) or 0.0)
-            except (TypeError, ValueError):
-                continue
-            if p < 0.0:
-                p = 0.0
-            elif p > _YIELD_P_MAX:
-                p = _YIELD_P_MAX
-            layer_map[float(entry["wl"])] = -math.log1p(-p)
-        if layer_map:
-            out[int(layer_idx)] = layer_map
-    return out
-
-
-def combine_cost_and_yield(
-    cost_map: dict[int, dict[float, float]],
-    yield_map: dict[int, dict[float, float]],
-    yield_weight: float,
-) -> dict[int, dict[float, float]]:
-    """`cost_nm + w x (-log(1 - p))`, the DP objective when `w > 0`.
-
-    `yield_weight = 0` (default) returns the input map AS IS — therefore the
-    previous behavior, bit for bit.
-
-    🔴 WHY A SUM AND NOT A REPLACEMENT. The plan proposed to replace the cost
-    in nanometers by the yield alone. Two measurements oppose this:
-
-      1. 📏 On the benchmark, the BEST lambda of each of the 47 layers has a
-         NULL crash rate. A pure yield objective would thus be zero on almost
-         all paths and the DP would become DEGENERATE — it would no longer rank anything.
-      2. The plan itself points out: "a DP that optimizes only yield can
-         propose safe but spectrally mediocre strategies".
-
-    In summary, the yield REORDERS where it is measurable and lets the cost in
-    nanometers decide elsewhere. This is strictly more information, never less.
-
-    ⚠️ `w` is in nanometers per nat, and it cannot be guessed. Benchmark to calibrate it:
-    at a per-layer tolerance of 0.107%, `-log(1-p)` is 1.07e-3 nat; for this
-    crash to weigh as much as 0.2 nm of error — the order of magnitude of the median measured cost
-    — `w` needs to be around 200. **To be scanned, not to be set.**
-    """
-    if yield_weight <= 0.0 or not yield_map:
-        return cost_map
-    out: dict[int, dict[float, float]] = {}
-    for layer_idx, layer_dict in cost_map.items():
-        y = yield_map.get(layer_idx, {})
-        out[layer_idx] = {wl: c + yield_weight * y.get(wl, 0.0) for wl, c in layer_dict.items()}
-    return out
 
 
 def _find_k_best_groupings_dp_sequential(
@@ -442,13 +367,17 @@ def mine_strategies_for_block_count(
     # as for OPTIMALITY. It is a symmetry, not an invented number (§19).
     enable_wl_coverage: bool = False,
     wl_coverage_top_k: int = 0,
-    # 🔴 Filled in place, because the logger of this module is MUTE (see
-    # `_couverture_wl_groupings`). It is the only channel through which the caller learns what
-    # the pass did -- and "nothing to cover" must be told apart from "did not run".
+    # 🔴 Filled in place: a log line is read by a person, the counters by the caller, which
+    # must tell "nothing to cover" apart from "did not run" (see `_couverture_wl_groupings`).
     wl_coverage_stats: dict[str, Any] | None = None,
+    # The logger the pipeline carries (`params["logger"]`; the worker's `W{n_blk}`). D3:
+    # `ThinFilm`, the fallback, has no handler and neither has the root, so Python drops
+    # every `info` it gets -- the "Mining: n_blocks=..." line never reached a campaign log.
+    logger: logging.Logger | None = None,
 ) -> list[dict[str, Any]]:
     if n_blocks <= 0 or num_layers <= 0:
         return []
+    log = logger if logger is not None else logging.getLogger("ThinFilm")
 
     strategies_collected = []
     strategy_id_base = n_blocks * 1000
@@ -533,12 +462,12 @@ def mine_strategies_for_block_count(
         if nucleation_wl:
             cost_map_sym = apply_nucleation_constraint(cost_map_sym)
 
-    logging.getLogger("ThinFilm").info(
+    log.info(
         f"Mining: n_blocks={n_blocks}, CostMapThick Size={len(cost_map_thick)}, CostMapSq Size={len(cost_map_sq)}"
     )
 
     def run_mining(cost_map, origin_name, offset_id, apply_sym_post=False) -> Any:
-        logger = logging.getLogger("ThinFilm")
+        logger = log
         logger.debug(f"[DEBUG MINING] {origin_name}: Starting DP with {len(cost_map)} layers, n_blocks={n_blocks}")
         
         for layer_idx in list(cost_map.keys())[:3]:
@@ -770,38 +699,12 @@ def _generate_structured_seed_strategies(
 
 #: Measurement limit on an equivalent per-layer error. 👤 "SEEL a 0.01 nm pres partout" (2026-08-14). Half-width, hence 0.005.
 SEEL_RESOLUTION_NM = 0.005
-#: Statistical resolution of a robustness score, RELATIVE. 📏 Measured 17-26 at
-#: N = 150 by sub-packet dispersion; it follows 1/sqrt(N) exactly between N = 32 and
-#: N = 128. 🔴 If the Monte-Carlo depth changes, REMEASURE it -- do not scale it in
-#: your head.
-SCORE_RESOLUTION_REL = 0.06
-
-
-def seel_equivalence_half_width(seel_nm: float, score_resolution_rel: float = SCORE_RESOLUTION_REL) -> float:
-    """Half-width, in nm, below which two SEEL values must be called equal.
-
-    🔴 TWO LIMITS, AND THE COARSER ONE WINS. The 0.1 nm step is a MEASUREMENT limit:
-    an equivalent per-layer error is not knowable finer than that. The statistical
-    resolution is a different limit and it is RELATIVE, so a fixed step drifts against
-    it as SEEL grows. 📏 Measured 2026-08-11:
-
-        SEEL 0.3 nm -> the 0.1 nm bin is +/-19 %   wider than the +/-6 % noise  ✅
-        SEEL 0.6 nm -> +/-7.8 %                    comparable; rank 2 sits at +7.3 %,
-                                                   indistinguishable, yet lands OUTSIDE
-        SEEL 1.1 nm -> +/-4.4 %                    NARROWER than the noise           ❌
-
-    Below the noise the rule separates strategies the measurement cannot separate,
-    which is the very thing quantisation exists to prevent. Taking the larger of the
-    two never distinguishes below either limit.
-    """
-    return max(SEEL_RESOLUTION_NM, score_resolution_rel * max(seel_nm, 0.0))
 
 
 def rank_key_seel_yield_margin(
     seel_nm: float,
     crash_rate: float,
     critical_margin_in_A: float,
-    score_resolution_rel: float = SCORE_RESOLUTION_REL,
 ) -> tuple[float, float, float]:
     """The 👤 ranking rule of 14, as a sort key. Lower is better on every component.
 

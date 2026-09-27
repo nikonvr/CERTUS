@@ -819,7 +819,6 @@ class CertusStratLayoutMixin:
                 ("screening_mc_runs", "Screening MC Runs (Pre-selection):"),
                 ("screening_keep_top_k", "Keep Top K Strategies per Config:"),
                 ("mc_runs_block", "MC Runs per layer test (Phase A):"),
-                ("strategy_phase_timeout", "Max Time per Iteration (sec):"),
             ],
         )
 
@@ -833,7 +832,6 @@ class CertusStratLayoutMixin:
             "screening_mc_runs": "Number of Monte Carlo runs for the pre-selection screening phase. More = better filtering but slower.",
             "screening_keep_top_k": "Number of top strategies retained per configuration after screening before deep evaluation.",
             "mc_runs_block": "Monte Carlo runs per candidate block test in Phase A. Drives early robustness estimation.",
-            "strategy_phase_timeout": "Recorded in the configuration but NOT enforced: no computation reads it, so no pass is ever cancelled.",
         }
 
         for _k, _tip in _tips_loop.items():
@@ -1027,7 +1025,6 @@ class CertusStratLayoutMixin:
                 ("photometric_curvature_amp", "Photometric curvature:"),
                 ("allow_rate", "Allow Rate mode (0/1):"),
                 ("reading_smoothing_window", "Reading smoothing (k):"),
-                ("machine_sampling_dd", "Machine grid (nm, 0=off):"),
             ],
         )
 
@@ -1071,11 +1068,6 @@ class CertusStratLayoutMixin:
             "reading_smoothing_window": (
                 "Running mean over k readings before detection. OFF (k=1) on purpose: the OMS "
                 "filter chain is not known, and an unmeasured hypothesis is worse than none."
-            ),
-            "machine_sampling_dd": (
-                "Sampling step of the deposition sweep, in nm. NOT applied at present: the kernel "
-                "always receives 0, the fast grid. The real machine reads every 0.125 nm, 38x "
-                "finer -- the model is therefore OPTIMISTIC on turning points fabricated by noise."
             ),
         }
         for _k, _tip in _tips_machine.items():
@@ -1341,8 +1333,8 @@ class CertusStratLayoutMixin:
 
         parent_layout.addWidget(group)
 
-    #: The eight error sources, in reading order: key, short label, and the value
-    #: that means INACTIVE. `None` = it is a setting, not a switch.
+    #: The error sources the status banner reports, in reading order: key, short label, and
+    #: the value that means INACTIVE. The slit width is reported apart, as a value.
     _MACHINE_SOURCES = (
         ("slit_bias_enabled", "biais de fente", 0.0),
         ("search_resolution", "recherche de fente", 0.0),
@@ -1350,7 +1342,6 @@ class CertusStratLayoutMixin:
         ("photometric_curvature_amp", "courbure photometrique", 0.0),
         ("allow_rate", "mode Rate", 0.0),
         ("reading_smoothing_window", "lissage de lecture", 1.0),
-        ("machine_sampling_dd", "grille machine", 0.0),
     )
 
     def _refresh_machine_status(self, *_a) -> None:

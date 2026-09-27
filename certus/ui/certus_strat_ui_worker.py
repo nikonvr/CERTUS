@@ -439,13 +439,12 @@ class CertusStratWorkerMixin:
 
         if exec_mode == "fast":
             self.logger.info(
-                "[MODE] FAST active | robustness_num_runs=%s | consensus_num_runs=%s | n_screen_runs=%s | mc_runs_block=%s | elite_rounds=%s | fast_auto_blocks=%s",
+                "[MODE] FAST active | robustness_num_runs=%s | consensus_num_runs=%s | n_screen_runs=%s | mc_runs_block=%s | elite_rounds=%s",
                 params.get("robustness_num_runs"),
                 params.get("consensus_num_runs"),
                 params.get("n_screen_runs"),
                 params.get("mc_runs_block"),
                 params.get("elite_rounds", 1),
-                params.get("fast_auto_blocks", True),
             )
 
         else:

@@ -169,6 +169,7 @@ def _prepare_block_strategy_phase_b(
             sym_adaptive_same_wl=sym_adaptive_same_wl,
             sym_scoring_mode=sym_scoring_mode,
             sym_allow_hybrid=sym_allow_hybrid,
+            logger=logger,
         )
         all_strategies.extend(strats)
 

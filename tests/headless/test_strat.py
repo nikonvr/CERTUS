@@ -64,7 +64,6 @@ def test_strat_headless():
         if hasattr(strat_app, "worker") and strat_app.worker:
             if isinstance(strat_app.worker.params, dict):
                 strat_app.worker.params["execution_mode"] = "fast"
-                strat_app.worker.params["strategy_phase_timeout"] = 1
                 strat_app.worker.params["mc_runs_block"] = 1
                 strat_app.worker.params["robustness_num_runs"] = 1
                 strat_app.worker.params["screening_mc_runs"] = 1

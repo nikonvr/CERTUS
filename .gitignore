@@ -121,10 +121,6 @@ reports/STRAT_observability_*
 # defaut). Les 24 deja suivis le restent -- une regle d'ignore ne touche pas au passe.
 reports/Report_SINGLE_Target_Titane_Simu_*
 
-# ─────────────── Rust engine (build artefacts) ───────────────
-certus_engine_rs/target/
-certus_engine_rs/uv.lock
-
 # ─────────────── Agent / tooling worktrees ───────────────
 .claude/
 .numba_cache/

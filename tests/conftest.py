@@ -294,7 +294,7 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "regression: Performance regression tests")
     config.addinivalue_line(
         "markers",
-        "index_spline_smoke: Smoke INDEX SPLINE (scripts/smoke_index_spline.py)",
+        "index_spline_smoke: Smoke INDEX SPLINE (pytest -m index_spline_smoke)",
     )
 
 

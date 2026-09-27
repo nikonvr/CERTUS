@@ -124,7 +124,6 @@ omit = [
   "*/site-packages/*",
   "build/*",
   "dist/*",
-  "setup.py",
   "CERTUS_DESIGN.py",
   "CERTUS_HUB.py",
   "CERTUS_INDEX.py",
@@ -133,10 +132,7 @@ omit = [
   "CERTUS_METAL_SINGLE.py",
   "CERTUS_RE.py",
   "CERTUS_STRAT.py",
-  "certus_plot.py",
-  "certus_re_helpers.py",
   "certus_substrate_index.py",
-  "spline_profile_corridors.py",
   "scripts/*",
   "tools/*",
 ]
@@ -157,34 +153,3 @@ exclude_lines = [
 
 [tool.coverage.html]
 directory = "htmlcov"
-
-[tool.mypy]
-python_version = "3.14"
-warn_return_any = false
-warn_unused_configs = true
-# Require type hints for all new code
-disallow_untyped_defs = false
-check_untyped_defs = true
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-exclude = [
-    "build/",
-    "dist/",
-    "tests/",
-    "tools/",
-    "scripts/"
-]
-
-[[tool.mypy.overrides]]
-module = [
-    "numpy.*",
-    "scipy.*",
-    "pandas.*",
-    "pyqtgraph.*",
-    "matplotlib.*",
-    "openpyxl.*",
-    "PyQt6.*",
-    "numba.*"
-]
-ignore_missing_imports = true

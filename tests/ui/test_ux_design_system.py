@@ -24,12 +24,11 @@ ROOT = Path(__file__).resolve().parents[2]
 #: un relachement du cliquet : c'est desormais la SOURCE UNIQUE des couleurs de marque.
 #: Elles ne pouvaient pas vivre dans `certus_theme.py` — `certus/core/` n'a pas le droit
 #: d'importer `certus.ui`, donc le fait partage devait DESCENDRE dans la couche basse.
-#: `certus_theme_config.py`, deja exempte, est dans `certus/core/` pour la meme raison.
 #:
 #: 🔑 La limite a ete RESSERREE de 315 a 310 dans le meme changement, exactement du nombre
 #: d'hexadecimaux que l'exemption retire du comptage. Sans cela, exempter un fichier
 #: donnerait du mou a tous les autres — un cliquet qu'on desserre en le deplaçant.
-THEME_FILES = {"certus_theme.py", "certus_theme_config.py", "certus_hub_config.py"}
+THEME_FILES = {"certus_theme.py", "certus_hub_config.py"}
 
 
 def _get_ui_python_files() -> list[Path]:

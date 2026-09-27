@@ -44,7 +44,7 @@ HEX = re.compile(r"#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b")
 #: Les fichiers qui DEFINISSENT la palette. Meme liste que le cliquet de l'etape 1.3 --
 #: elle vit ici en second exemplaire parce qu'importer un module de `tests/` depuis
 #: `scripts/` inverserait la dependance ; le controle F la compare a celle du cliquet.
-FICHIERS_PALETTE = {"certus_theme.py", "certus_theme_config.py", "certus_hub_config.py"}
+FICHIERS_PALETTE = {"certus_theme.py", "certus_hub_config.py"}
 
 #: Marqueurs de HTML destine a un FICHIER, donc a survivre au theme de l'application.
 MARQUEURS_HTML = (

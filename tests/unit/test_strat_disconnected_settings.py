@@ -210,3 +210,26 @@ class TestDpYieldWeight:
         assert hasattr(ranking, "mine_strategies_for_block_count"), "premise: the module"
         assert not hasattr(ranking, "build_yield_cost_map")
         assert not hasattr(ranking, "combine_cost_and_yield")
+
+
+class TestSeelEquivalenceHalfWidth:
+    """`seel_equivalence_half_width` defined a RELATIVE equivalence class for SEEL (6 % of
+    the value, `SCORE_RESOLUTION_REL`) that no ranking applied: its only callers were its own
+    tests. `rank_key_seel_yield_margin` bins at the fixed 0.01 nm step decided on 2026-08-14,
+    and never read the `score_resolution_rel` argument it accepted."""
+
+    def test_the_rule_no_ranking_applied_is_gone(self):
+        from certus.core import certus_strat_ranking as ranking
+
+        assert hasattr(ranking, "SEEL_RESOLUTION_NM"), "premise: the applied step stays"
+        assert not hasattr(ranking, "seel_equivalence_half_width")
+        assert not hasattr(ranking, "SCORE_RESOLUTION_REL")
+
+    def test_the_ranking_key_accepts_no_argument_it_ignores(self):
+        from certus.core.certus_strat_ranking import rank_key_seel_yield_margin
+
+        assert list(inspect.signature(rank_key_seel_yield_margin).parameters) == [
+            "seel_nm",
+            "crash_rate",
+            "critical_margin_in_A",
+        ]

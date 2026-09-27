@@ -7,35 +7,7 @@
 
 from __future__ import annotations
 
-import pytest
-
-from certus.core.certus_strat_ranking import (
-    SEEL_RESOLUTION_NM,
-    rank_key_seel_yield_margin,
-    seel_equivalence_half_width,
-)
-
-
-# --------------------------------------------------------------------------- #
-# The half-width: two limits (0.005 nm measurement limit and statistical limit).
-# --------------------------------------------------------------------------- #
-
-def test_the_measurement_limit_governs_small_seel():
-    """At 0.05 nm the 0.005 nm half-width is wider than the 6 % statistical noise."""
-    assert seel_equivalence_half_width(0.05) == pytest.approx(SEEL_RESOLUTION_NM)
-
-
-def test_the_statistical_limit_takes_over_for_large_seel():
-    """At 1.1 nm the +/-6 % noise (0.066 nm) is wider than the 0.005 nm measurement limit."""
-    assert seel_equivalence_half_width(1.1) == pytest.approx(0.066)
-    assert seel_equivalence_half_width(1.1) > SEEL_RESOLUTION_NM
-
-
-def test_the_half_width_never_falls_below_either_limit():
-    for seel in (0.0, 0.05, 0.1, 0.17, 0.3, 0.48, 1.1, 5.0, 30.0):
-        h = seel_equivalence_half_width(seel)
-        assert h >= SEEL_RESOLUTION_NM
-        assert h >= 0.06 * seel - 1e-12
+from certus.core.certus_strat_ranking import rank_key_seel_yield_margin
 
 
 # --------------------------------------------------------------------------- #

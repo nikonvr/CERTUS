@@ -98,18 +98,6 @@ jobs:
         run: |
           python tools/release_checks.py
 
-      - name: Generate KPI snapshot
-        if: matrix.python-version == '3.14.5'
-        run: |
-          python tools/kpi_snapshot.py --write-report
-
-      - name: Generate KPI-5 runtime baseline (best effort)
-        if: matrix.python-version == '3.14.5'
-        continue-on-error: true
-        timeout-minutes: 4
-        run: |
-          python tools/kpi_snapshot.py --with-kpi5-runtime --write-report
-
       - name: Smoke release (offscreen)
         shell: pwsh
         run: |
@@ -139,11 +127,3 @@ jobs:
           path: |
             dist/CERTUS_HUB.exe
             build/**
-
-      - name: Upload KPI snapshot artifact
-        if: matrix.python-version == '3.14.5'
-        uses: actions/upload-artifact@v4
-        with:
-          name: certus-kpi-snapshot-py314
-          path: |
-            reports/KPI_SNAPSHOT_*.md

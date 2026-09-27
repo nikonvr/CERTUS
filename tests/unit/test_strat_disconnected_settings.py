@@ -75,6 +75,20 @@ def _told_ignored(lines: list[str]) -> list[str]:
     return [line for line in lines if "no longer a setting" in line]
 
 
+def _save(window, tmp_path: Path, monkeypatch) -> dict:
+    """What "Save configuration" writes, the file dialog answered with a path in tmp_path."""
+    from PyQt6.QtWidgets import QFileDialog
+
+    target = tmp_path / "saved.json"
+    monkeypatch.setattr(
+        QFileDialog, "getSaveFileName", staticmethod(lambda *a, **k: (str(target), ""))
+    )
+    window.save_configuration()
+    saved = json.loads(target.read_text(encoding="utf-8"))
+    assert "robustness_num_runs" in saved, "premise: the file was written by the window"
+    return saved
+
+
 class TestFastAutoBlocks:
     """`fast_auto_blocks` was set to True by `collect_params` and printed by the FAST mode
     banner, while nothing read it: the branch that consumed it had been deleted
@@ -114,13 +128,37 @@ class TestStrategyPhaseTimeout:
         assert "strategy_phase_timeout" not in strat_window.collect_params()
 
     def test_saving_no_longer_writes_it(self, strat_window, tmp_path, monkeypatch):
-        from PyQt6.QtWidgets import QFileDialog
+        assert "strategy_phase_timeout" not in _save(strat_window, tmp_path, monkeypatch)
 
-        target = tmp_path / "saved.json"
-        monkeypatch.setattr(
-            QFileDialog, "getSaveFileName", staticmethod(lambda *a, **k: (str(target), ""))
-        )
-        strat_window.save_configuration()
-        saved = json.loads(target.read_text(encoding="utf-8"))
-        assert "robustness_num_runs" in saved, "premise: the file was written by the window"
-        assert "strategy_phase_timeout" not in saved
+
+class TestMachineSamplingDd:
+    """`machine_sampling_dd` had a field ("Machine grid"), a place in saved files and in the
+    status banner, and a `collect_params` key read from the file only -- the field itself
+    never reached `collect_params`. Nothing past `collect_params` read the key either: the one
+    kernel call that could carry it (`certus_strat_batch.py`) passes 0.0 by position."""
+
+    def test_no_field_shows_it(self, strat_window):
+        assert "machine_sampling_dd" not in strat_window.widgets
+
+    def test_the_status_banner_no_longer_reports_it(self, strat_window):
+        assert "machine_sampling_dd" not in [key for key, *_ in strat_window._MACHINE_SOURCES]
+        strat_window._refresh_machine_status()
+        banner = strat_window.machine_status.text()
+        assert "lissage de lecture" in banner, "premise: the banner reports the sources"
+        assert "grille machine" not in banner
+
+    @pytest.mark.parametrize("mode", MODES)
+    def test_no_mode_puts_it_in_the_parameters(self, strat_window, mode):
+        strat_window.widgets["execution_mode"].setCurrentText(mode)
+        assert "machine_sampling_dd" not in strat_window.collect_params()
+
+    def test_a_file_that_sets_it_still_loads_and_says_it_is_ignored(self, strat_window, tmp_path):
+        with _captured(strat_window.logger) as lines:
+            _load(strat_window, tmp_path, machine_sampling_dd=0.125)
+        assert strat_window._loaded_config.get("machine_sampling_dd") == 0.125
+        told = _told_ignored(lines)
+        assert len(told) == 1 and "machine_sampling_dd" in told[0], lines
+        assert "machine_sampling_dd" not in strat_window.collect_params()
+
+    def test_saving_no_longer_writes_it(self, strat_window, tmp_path, monkeypatch):
+        assert "machine_sampling_dd" not in _save(strat_window, tmp_path, monkeypatch)

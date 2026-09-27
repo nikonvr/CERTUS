@@ -134,7 +134,7 @@ def _config_flag_default(config: object, key: str, default: bool) -> bool:
 #: still carries one keeps loading -- the key is ignored, and `load_configuration` says so in
 #: one line, because its "CONFIGURATION LOADED" listing prints every key of the file and would
 #: otherwise pass the key off as a setting.
-_RETIRED_CONFIG_KEYS: tuple[str, ...] = ("strategy_phase_timeout",)
+_RETIRED_CONFIG_KEYS: tuple[str, ...] = ("strategy_phase_timeout", "machine_sampling_dd")
 
 
 class CertusStratStateMixin:
@@ -247,11 +247,9 @@ class CertusStratStateMixin:
             "index_corridor": "0.005",
             "photometric_curvature_amp": "0.00375",
             "allow_rate": "1",
-            # The two that stay INACTIVE, and their reason is in CLAUDE.md:
-            # the smoothing because the OMS algorithms are not known,
-            # the machine grid because 👤 "we do not run a calculation at every 4 Hz".
+            # The one that stays INACTIVE: the smoothing, because the OMS algorithms are
+            # not known.
             "reading_smoothing_window": "1",
-            "machine_sampling_dd": "0.0",
             "n_screen_runs": "25",
             "k_keep_survivors": "10",
             "top_k_parents": "20",
@@ -605,7 +603,6 @@ class CertusStratStateMixin:
                 "photometric_curvature_amp",
                 "allow_rate",
                 "reading_smoothing_window",
-                "machine_sampling_dd",
                 "n_screen_runs",
                 "k_keep_survivors",
                 "top_k_parents",
@@ -1288,11 +1285,6 @@ class CertusStratStateMixin:
                 _config_float(getattr(self, "_loaded_config", {}),
                               "photometric_curvature_amp", PHOTOMETRIC_CURVATURE_AMP),
             )),
-            # TMM grid: 0 = current grid. 👤 "we do not run a calculation at every 4 Hz, the
-            # basis of this code is that it must be ultra fast" -- so 0 stays the default.
-            "machine_sampling_dd": _config_float(
-                getattr(self, "_loaded_config", {}), "machine_sampling_dd", 0.0
-            ),
             # Crash gate: 0 = historical comparison of the ESTIMATED rate with the fixed
             # threshold, bit for bit. A value in (0, 1) replaces it by a Clopper-Pearson
             # confidence bound at that level -- see `_crash_gate_rejects`. Inactive by

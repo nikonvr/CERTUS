@@ -89,6 +89,7 @@ scratch/
 artifacts/
 bottleneck_*.txt
 .benchmarks/
+.ast_analyzer_cache.json
 
 # ─────────────── Legacy / dead code ───────────────
 _DEAD_SCRIPTS_BACKUP/

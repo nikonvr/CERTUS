@@ -28,7 +28,7 @@ wheels = [
 [[package]]
 name = "certus-optical-suite"
 version = "26.5.0"
-source = { editable = "." }
+source = { virtual = "." }
 dependencies = [
     { name = "joblib" },
     { name = "matplotlib" },

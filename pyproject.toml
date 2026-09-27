@@ -1,12 +1,10 @@
-[build-system]
-requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.build_meta"
-
+# CERTUS runs from source (CLAUDE.md, section 8). There is no build system: uv installs the
+# dependencies, never the project, and `pip install .` is not supported. The Windows
+# release is a PyInstaller build (certus_hub.spec).
 [project]
 name = "certus-optical-suite"
 version = "26.05.0"
 description = "CERTUS optical thin-film suite (design, strat, RE, index, metal)."
-readme = "README.md"
 requires-python = ">=3.14.5"
 license = { text = "Proprietary" }
 authors = [
@@ -44,9 +42,6 @@ dev = [
 freeze = [
   "pyinstaller>=6.10.0",
 ]
-
-[tool.setuptools]
-packages = ["certus"]
 
 # -----------------------------------------------------------------------------
 # Ruff (lint + format)

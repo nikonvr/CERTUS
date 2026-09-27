@@ -546,14 +546,14 @@ except ImportError, ModuleNotFoundError:
             f"Frozen: {getattr(sys, 'frozen', False)}, "
             f"MEIPASS: {getattr(sys, '_MEIPASS', 'N/A')}, "
             f"__file__: {__file__}"
-        )
+        ) from None
 
     # Load from file path
 
     _spec = importlib.util.spec_from_file_location("_certus_structures", _structures_path)
 
     if _spec is None or _spec.loader is None:
-        raise ImportError(f"Cannot create spec for {_structures_path}")
+        raise ImportError(f"Cannot create spec for {_structures_path}") from None
 
     _structures_module = importlib.util.module_from_spec(_spec)
 
@@ -865,7 +865,7 @@ def get_refractive_index(material_id: Any, wavelength_nm: float, db_instance=Non
             raise KeyError(
                 f"Unknown material {material_id!r} "
                 f"(db_instance={'present' if db_instance is not None else 'None'})"
-            )
+            ) from None
 
 
 def get_refractive_clues_vectorized(material_id: Any, wavelengths: np.ndarray, db_instance=None) -> np.ndarray:

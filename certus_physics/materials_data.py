@@ -161,7 +161,7 @@ def _load_si_from_xlsx(xlsx_path: str) -> tuple[np.ndarray, np.ndarray, np.ndarr
     except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
 
 
-        raise CertusFileError(f"Cannot read sheet '{_SI_XLSX_SHEET}' from {xlsx_path}: {e}")
+        raise CertusFileError(f"Cannot read sheet '{_SI_XLSX_SHEET}' from {xlsx_path}: {e}") from e
 
 
 

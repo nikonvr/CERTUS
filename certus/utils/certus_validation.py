@@ -24,7 +24,7 @@ class PathValidator:
         try:
             resolved_path = path.resolve()
         except Exception as e:
-            raise ValueError(f"Invalid path representation: {e}")
+            raise ValueError(f"Invalid path representation: {e}") from e
 
         # Check allowed extensions
         if allowed_extensions is not None:
@@ -44,14 +44,14 @@ class PathValidator:
             try:
                 resolved_base = Path(base_dir).resolve()
             except Exception as e:
-                raise ValueError(f"Invalid base directory representation: {e}")
+                raise ValueError(f"Invalid base directory representation: {e}") from e
 
             # Check if resolved path is sub-path of base_dir
             # Using commonpath is extremely robust to determine directory containment
             try:
                 common = Path(os.path.commonpath([str(resolved_base), str(resolved_path)]))
             except Exception as e:
-                raise ValueError(f"Failed to check path traversal: {e}")
+                raise ValueError(f"Failed to check path traversal: {e}") from e
 
             if common != resolved_base:
                 raise ValueError(
@@ -76,7 +76,7 @@ class NumericValidator:
         try:
             f_val = float(value)
         except (TypeError, ValueError):
-            raise ValueError(f"{name} must be a valid number.")
+            raise ValueError(f"{name} must be a valid number.") from None
 
         import math
         if math.isnan(f_val):
@@ -110,7 +110,7 @@ class NumericValidator:
                 raise ValueError()
             i_val = int(f_val)
         except (TypeError, ValueError):
-            raise ValueError(f"{name} must be a valid integer.")
+            raise ValueError(f"{name} must be a valid integer.") from None
 
         if min_val is not None and i_val < min_val:
             raise ValueError(f"{name} ({i_val}) must be at least {min_val}.")

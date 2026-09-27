@@ -398,9 +398,6 @@ class CertusHub(QMainWindow):
                 # no way to take back a mis-click.
                 card.activated.connect(functools.partial(self.launch_module, app["script"]))
 
-            # P1.4 - apply hover-lift + fade-in micro-animations on each card.
-            # self._apply_card_animations(card, index=idx)
-
             row = idx // MAX_COLS
 
             col = idx % MAX_COLS
@@ -1054,43 +1051,6 @@ class CertusHub(QMainWindow):
 
         except (ImportError, AttributeError, RuntimeError, TypeError) as e:  # pragma: no cover - defensive
             self._log_message(f"About dialog failed: {e}")
-
-    # =========================================================================
-
-    # P1.4 - Card micro-animations (hover lift + staggered fade-in)
-
-    # =========================================================================
-
-    def _apply_card_animations(self, card, *, index: int) -> None:
-        """Attach hover-lift and a staggered fade-in on an HUB card."""
-
-        try:
-            from certus.ui.certus_animations import fade_in, hover_lift
-
-        except ImportError:
-            return
-
-        try:
-            hover_lift(card, lift_px=3)
-
-        except (AttributeError, RuntimeError, TypeError):
-            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
-
-        # Stagger the fade-in so cards appear sequentially (~60 ms apart).
-
-        try:
-            from PyQt6.QtCore import QTimer
-
-            delay_ms = 60 * int(index)
-
-            # Targeted fade-in on content to avoid replacing the card's shadow effect
-
-            target = getattr(card, "content_container", card)
-
-            QTimer.singleShot(delay_ms, lambda: fade_in(target, duration_ms=220))
-
-        except (ImportError, AttributeError, RuntimeError, TypeError):
-            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
 
 # =============================================================================

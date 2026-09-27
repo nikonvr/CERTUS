@@ -36,12 +36,6 @@ class Layer:
     qwot: float  # Optical thickness (QWOT)
     var: bool = True  # Variable (optimizable)
 
-    def get_thickness(self, l0: float, n_at_l0: float) -> float:
-        """Calculates physical thickness"""
-        if n_at_l0 > CFG.EPSILON:
-            return self.qwot * l0 / (4.0 * n_at_l0)
-        return 0.0
-
 
 @dataclass(slots=True)
 class Target:
@@ -88,9 +82,6 @@ class TLUParameters:
     C: float
     Eu: float
     eps_inf: float
-
-    def to_array(self) -> np.ndarray:
-        return np.array([self.Eg, self.A, self.E0, self.C, self.Eu, self.eps_inf])
 
     @classmethod
     def from_array(cls, arr: np.ndarray) -> "TLUParameters":

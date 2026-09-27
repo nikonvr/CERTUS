@@ -279,7 +279,6 @@ def _load_si_data() -> tuple[np.ndarray, np.ndarray, np.ndarray, str]:
     return wl, n, k, "built-in stub"
 
 
-_MATERIALS_PATH = _find_materials_xlsx_path()
 SI_WAVELENGTH_NM, SI_N_DATA, SI_K_DATA, SI_SOURCE = _load_si_data()
 
 

@@ -281,7 +281,7 @@ class REPhase4Strategy:
         _compute_qwot_rmse = L._compute_qwot_rmse
         _rmse_combined = L._rmse_combined
         re_env_s = L.re_env_s
-        _has_high_angle = any((float(meta["angle"]) >= 10.0 for meta in oblique_config_meta))
+        _has_high_angle = any(float(meta["angle"]) >= 10.0 for meta in oblique_config_meta)
         _p4_best_seen_rmse: float | None = None
         if results and (not worker._stop):
             best_res = results[0]

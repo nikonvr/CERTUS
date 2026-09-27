@@ -37,7 +37,7 @@ class REMathStrategy:
         _ph4_ap_now = None
         if ctx._re_state.get('is_phase4'):
             _kap = np.asarray(ctx._re_state['re_aperture_knots'], dtype=np.float64).ravel()[:int(RE_P4_BEAM_N_KNOTS)]
-            _ph4_ap_now = tuple((float(x) for x in _kap))
+            _ph4_ap_now = tuple(float(x) for x in _kap)
         if _c['x'] is not None and np.array_equal(xv, _c['x']):
             if _ph4_ap_now is None:
                 return
@@ -93,7 +93,7 @@ class REMathStrategy:
                 _ex_p2 = joblib.Parallel(n_jobs=_nw_j, backend=_backend)
                 _c['fd_executor'] = _ex_p2
             try:
-                results = _ex_p2((joblib.delayed(_p2_fd_j_res)(j) for j in _active_js))
+                results = _ex_p2(joblib.delayed(_p2_fd_j_res)(j) for j in _active_js)
                 for res in results:
                     jj, j_col = res
                     J_var[:, jj] = j_col
@@ -102,7 +102,7 @@ class REMathStrategy:
                     logging.getLogger(__name__).warning('RE phase2 FD process executor (loky) fallback to threading', exc_info=True)
                     _fallback = joblib.Parallel(n_jobs=_nw_j, backend='threading')
                     _c['fd_executor'] = _fallback
-                    results = _fallback((joblib.delayed(_p2_fd_j_res)(j) for j in _active_js))
+                    results = _fallback(joblib.delayed(_p2_fd_j_res)(j) for j in _active_js)
                     for res in results:
                         jj, j_col = res
                         J_var[:, jj] = j_col

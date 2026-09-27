@@ -196,9 +196,9 @@ class REContextStrategy:
         _wp_ctx = worker.cfg.get('re_workbook_path')
         if _wp_ctx:
             logging.info('RE context  workbook: %s', Path(str(_wp_ctx)).name)
-        _n_tg_on = sum((1 for t in oblique_tgts if getattr(t, 'on', True)))
+        _n_tg_on = sum(1 for t in oblique_tgts if getattr(t, 'on', True))
         _angles = sorted({float(t.angle) for t in oblique_tgts if getattr(t, 'on', True)})
-        logging.info('RE context  lambda_ref=%.2f nm | objective grid [%.1f ... %.1f] nm (%d pts) | %d active targets | %d spectral blocks (weight Deltaln(lambda) trapezoidal) | incidence deg: %s | phase1 thickness radius +/-%g%%', float(lambda_ref), float(np.min(wls)) if wls.size else float('nan'), float(np.max(wls)) if wls.size else float('nan'), int(wls.size), _n_tg_on, len(oblique_config_meta), ', '.join((f'{a:g}' for a in _angles)) if _angles else '', float(radius))
+        logging.info('RE context  lambda_ref=%.2f nm | objective grid [%.1f ... %.1f] nm (%d pts) | %d active targets | %d spectral blocks (weight Deltaln(lambda) trapezoidal) | incidence deg: %s | phase1 thickness radius +/-%g%%', float(lambda_ref), float(np.min(wls)) if wls.size else float('nan'), float(np.max(wls)) if wls.size else float('nan'), int(wls.size), _n_tg_on, len(oblique_config_meta), ', '.join(f'{a:g}' for a in _angles) if _angles else '', float(radius))
         _re_log_objective_diagnostic('initial (Excel design thicknesses)', rmse_initial_sp, rmse_initial_q, _a_p1)
         _de_mx = int(worker.cfg.get('re_phase1_de_maxiter', 0))
         _de_ps = int(worker.cfg.get('re_phase1_de_popsize', 8))

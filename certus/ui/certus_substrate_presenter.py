@@ -136,7 +136,7 @@ class CertusSubstratePresenter:
         n_results_by_model: dict[str, dict[str, np.ndarray]] = {}
         rmse_row: dict[str, dict[str, float]] = {}
         n_fit_meta: dict[str, dict[str, dict]] = {}
-        total_cols = sum((len(v) for v in groups.values()))
+        total_cols = sum(len(v) for v in groups.values())
         total_steps = max(total_cols * _N_SUBSTRATE_MODELS, 1)
         done_steps = 0
         col_idx = 0

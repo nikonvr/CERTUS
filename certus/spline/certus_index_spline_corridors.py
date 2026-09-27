@@ -1135,25 +1135,23 @@ class _CorridorWorkerMixin:
 
             if has_profile:
                 self.plot_k_corridor.setToolTip(
-                    (
-                        "Bold orange: k from the result dict (same as main tab). "
-                        + "Shaded band: pointwise min/max in linear k over accepted d-refits, enlarged so the bold curve stays inside. "
-                        + f"Filigree: {filigree_count} accepted refit curve(s) sampled from the corridor stack. "
-                        + (
-                            f"Seed gate: {100.0 * seed_gate_kept_rate:.1f}% of fixed-d refits kept the incoming seed ({seed_gate_eval_count} evaluations). A high value means the corridor, especially in k, may stay close to the nominal branch because alternative local refits did not beat the spectral seed. "
-                            if np.isfinite(seed_gate_kept_rate) and seed_gate_eval_count > 0
-                            else ""
-                        )
-                        + "Each accepted refit can still be spline-smooth; visible kinks in the shaded envelope simply mark where the active lower/upper branch switches between different accepted refits once viewed in log10(k). "
-                        + (
-                            f"A minimum linear-k corridor half-width of +/-{k_min_hw:.1e} is enforced around the reference k when needed "
-                            f"(adjusted points: {k_min_pts}). "
-                            if np.isfinite(k_min_hw) and k_min_hw > 0.0
-                            else ""
-                        )
-                        + "Dashed orange (if shown): center-d refit when it differs from the bold line. "
-                        + "Crosshair y follows the bold curve at the cursor lambda when possible."
+                    "Bold orange: k from the result dict (same as main tab). "
+                    + "Shaded band: pointwise min/max in linear k over accepted d-refits, enlarged so the bold curve stays inside. "
+                    + f"Filigree: {filigree_count} accepted refit curve(s) sampled from the corridor stack. "
+                    + (
+                        f"Seed gate: {100.0 * seed_gate_kept_rate:.1f}% of fixed-d refits kept the incoming seed ({seed_gate_eval_count} evaluations). A high value means the corridor, especially in k, may stay close to the nominal branch because alternative local refits did not beat the spectral seed. "
+                        if np.isfinite(seed_gate_kept_rate) and seed_gate_eval_count > 0
+                        else ""
                     )
+                    + "Each accepted refit can still be spline-smooth; visible kinks in the shaded envelope simply mark where the active lower/upper branch switches between different accepted refits once viewed in log10(k). "
+                    + (
+                        f"A minimum linear-k corridor half-width of +/-{k_min_hw:.1e} is enforced around the reference k when needed "
+                        f"(adjusted points: {k_min_pts}). "
+                        if np.isfinite(k_min_hw) and k_min_hw > 0.0
+                        else ""
+                    )
+                    + "Dashed orange (if shown): center-d refit when it differs from the bold line. "
+                    + "Crosshair y follows the bold curve at the cursor lambda when possible."
                 )
 
             else:

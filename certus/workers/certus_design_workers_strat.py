@@ -289,8 +289,8 @@ class DesignOptimizationStrategy:
     def _maybe_upgrade_grid_tikhonravov(worker, *, ep_current: np.ndarray, mats: dict, stack, tgts, oblique_mode: bool, oblique_tgts, wls: np.ndarray, float_dtype, complex_dtype, has_back_stack: bool, stack_back, ep_back: np.ndarray, n_sub: np.ndarray, n_layers_T: np.ndarray, n_back_T: np.ndarray, tgt_vals, tgt_weights) -> tuple:
         """Apply optional Tikhonravov-driven wavelength grid densification before final polish."""
         try:
-            lambda_min = min((t.lmin for t in tgts if t.valid())) if not oblique_mode else min((t.lmin for t in oblique_tgts if t.valid()))
-            lambda_max = max((t.lmax for t in tgts if t.valid())) if not oblique_mode else max((t.lmax for t in oblique_tgts if t.valid()))
+            lambda_min = min(t.lmin for t in tgts if t.valid()) if not oblique_mode else min(t.lmin for t in oblique_tgts if t.valid())
+            lambda_max = max(t.lmax for t in tgts if t.valid()) if not oblique_mode else max(t.lmax for t in oblique_tgts if t.valid())
             wl_ref = (lambda_min + lambda_max) / 2.0
             L_total = 0.0
             for i, layer in enumerate(stack):

@@ -238,8 +238,6 @@ PLAN_FULL = [
     # flat, they do not reach the computation and that is a defect, not a calibration. ===
     entry("D5.marg", "Phase A margin 3.33 -- was bit-identical to 1.66",
           env={"CERTUS_PHASE_A_MARGIN": "3.33"}, expect={"phase_a_level_margin_factor": 3.33}),
-    entry("D5.yw200", "dp_yield_weight 200 -- was inert across three decades",
-          args=("full", "1.0", "42", "200"), expect={"dp_yield_weight": 200.0}),
 ]
 
 #: SMOKE plan -- the go/no-go before committing twelve hours.
@@ -276,9 +274,8 @@ PLAN_SMOKE = [
     entry("S5.consensus", "multi-seed consensus -- switched off since forever, never exercised",
           env={**_SMOKE, "CERTUS_CONSENSUS": "1"},
           expect={"enable_consensus_ranking": True}),
-    entry("S6.seed", "another seed, and dp_yield_weight through argument 4",
-          args=("full", "1.0", "77", "200"), env=dict(_SMOKE),
-          expect={"robustness_seed": 77, "dp_yield_weight": 200.0}),
+    entry("S6.seed", "another seed", args=("full", "1.0", "77"), env=dict(_SMOKE),
+          expect={"robustness_seed": 77}),
 ]
 
 #: PLAN E -- the rerun made necessary by the coherence fixes of 2026-08-11.
@@ -318,14 +315,6 @@ PLAN_E = [
           env={"CERTUS_INDEX_CORRIDOR": "0.005", "CERTUS_POEM_ENABLED": "0"},
           expect={"index_corridor": 0.005, "poem_enabled": False}),
 
-    # --- E2. Settles 17-14 in ONE run. dp_yield_weight was called inert on three
-    # decades, but its cost is w.(-log(1-p)) and every strategy had p = 0, so the term
-    # is EXACTLY zero whatever w. Run it where crashes exist: E1.5 showed 29 % there.
-    # Still flat -> the wire is cut. Moves -> there was never anything to repair.
-    entry("E2.yw", "dp_yield_weight 200 AT corridor 0.005 -- where crashes actually exist",
-          args=("full", "1.0", "42", "200"), env={"CERTUS_INDEX_CORRIDOR": "0.005"},
-          expect={"dp_yield_weight": 200.0, "index_corridor": 0.005}),
-
     # --- E3. POEM x17.5 redone. The four arms were measured while Phase A propagated
     # its history WITHOUT the distortion and WITH POEM forced on, in all four arms --
     # including the two POEM-off ones. The protection factor is the central claim of
@@ -353,19 +342,8 @@ PLAN_E = [
           expect={"index_corridor": 0.005, "robustness_seed": 101}),
 ]
 
-#: PLAN F -- the two questions campaign E left open, 2026-08-11.
+#: PLAN F -- a question campaign E left open, 2026-08-11.
 PLAN_F = [
-    # --- F1. E2 FAILED, and it failed for an instructive reason. It ran
-    # dp_yield_weight at corridor 0.005 expecting crashes to exist there -- they did in
-    # the PRE-FIX D1.5 (29.3 %). On the corrected code that arm crashes 0.0 %, so the
-    # yield term was w.(-log(1-0)) = 0 again and E2 came back BIT-IDENTICAL to E1.3.
-    # 17-14 is therefore still open. The only arm that still crashes is E3.4, at 59.3 %.
-    entry("F1.yw", "dp_yield_weight 200 where crashes REALLY exist: POEM off + distortion",
-          args=("full", "1.0", "42", "200"),
-          env={"CERTUS_POEM_ENABLED": "0", "CERTUS_AFFINE_SCALE_AMP": "0.05",
-               "CERTUS_AFFINE_OFFSET_AMP": "0.02"},
-          expect={"dp_yield_weight": 200.0, "poem_enabled": False, "affine_scale_amp": 0.05}),
-
     # --- F2. Per-layer monitoring goes from WORST to BEST as the corridor widens, and
     # the gradient is clean: rank 228/228 at corridor 0 (seed 42), 153/165 at 0.005
     # (seed 42), 2/78 (seed 77), then 1st AND ranks 1-30 (seed 101). If the mechanism

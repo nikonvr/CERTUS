@@ -58,10 +58,8 @@ WATCHED = (
     "reading_smoothing_window",
     "SEEL_RESOLUTION_NM",
     "machine_sampling_dd",
-    "dp_yield_weight",
     "crash_gate_confidence",
     "MAX_LOOKBACK",
-    "SCORE_RESOLUTION_REL",
 )
 
 #: Un nombre cite ici est une PREUVE de refutation, pas une valeur a appliquer.

@@ -69,7 +69,6 @@ TRACED_KEYS: tuple[str, ...] = (
     "poem_anchor_noise",
     "tp_hysteresis_factor",
     "phase_a_level_margin_factor",
-    "dp_yield_weight",
     "scan_wl_step",
     "robustness_seed",
     "reading_smoothing_window",
@@ -240,8 +239,6 @@ def patch_flag(
             params["robustness_seed"] = int(seed)
             params["phase_a_seed"] = int(seed)
             params["consensus_seed_list"] = ",".join(str(seed + i) for i in range(5))
-        if yield_weight is not None:
-            params["dp_yield_weight"] = float(yield_weight)
         params["poem_anchor_noise"] = noise
         params["poem_anchor_noise_phase_a"] = noise
         params["tp_hysteresis_factor"] = hyst
@@ -279,7 +276,6 @@ def patch_flag(
         f"| phase_a_level_margin_factor={margin:g} "
         f"| scan_wl_step={'(config)' if scan_step is None else f'{scan_step:g} nm'}"
         f"| seed={'(config)' if seed is None else seed}"
-        f"| dp_yield_weight={'(config)' if yield_weight is None else f'{float(yield_weight):g}'}"
     )
 
 
@@ -461,6 +457,10 @@ def main() -> None:
     scan_step = float(sys.argv[2]) if len(sys.argv) > 2 else None
     seed = int(sys.argv[3]) if len(sys.argv) > 3 else None
     yield_weight = float(sys.argv[4]) if len(sys.argv) > 4 else None
+    if yield_weight not in (None, 0.0):
+        # dp_yield_weight was retired on 2026-09-27: the DP never received the yield term.
+        # Argument 4 stays, at 0 only, so that argument 5 keeps its position.
+        raise SystemExit("argument 4 (dp_yield_weight) no longer exists: pass 0 to reach argument 5")
     tp_hyst = float(sys.argv[5]) if len(sys.argv) > 5 else None
     tag = mode if scan_step is None else f"{mode}_step{scan_step:g}".replace(".", "p")
     if seed is not None:

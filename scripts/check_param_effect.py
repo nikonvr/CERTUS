@@ -82,7 +82,6 @@ CASES: list[tuple[str, object, object]] = [
     ("k_keep_survivors", 6, 20),
     ("phase_a_level_margin_factor", 1.66, 3.33),
     ("allow_rate", True, False),
-    ("dp_yield_weight", 0.0, 1.0),
     # Multi-temoins, ecrit le 2026-08-14 : ce script est sa verification de bout en bout.
     ("witness_reset_layers", [], [4]),
 ]

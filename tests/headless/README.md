@@ -17,7 +17,6 @@ anything with them — the benchmark without mocks is `scripts/bench_examples.py
 | `test_spline.py` | CERTUS INDEX SPLINE — Al2O3 substrate, ~1700 nm film | `example/example_index_spline/TSIO2-1700-1.xlsx` |
 | `test_index.py` | CERTUS INDEX | — |
 | `test_design.py` | CERTUS DESIGN, optimiser mocked | `example/example_design/JSON-design-optimized.json` |
-| `test_design_campaign.py` | CERTUS DESIGN, campaign plumbing | — |
 | `test_strat.py` | CERTUS STRAT, pipeline mocked | — |
 | `test_code_duplication.py` | AST duplication guard on `certus/` | — |
 

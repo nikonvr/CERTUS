@@ -5,6 +5,10 @@ an absent one, because it supplies a false explanation. Each class below guards 
 that was shown, saved or logged while no computing line read it. None could be wired both
 trivially and bit for bit, so each was REMOVED, and each class fails on the code before its
 removal.
+
+The last class guards the other half of D1: the execution mode sets budgets over those the
+configuration states. The mode still wins -- which of the two should is the user's decision --
+but `collect_params` now says it, in one line.
 """
 
 from __future__ import annotations
@@ -13,6 +17,7 @@ import ast
 import inspect
 import json
 import logging
+import re
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -233,3 +238,70 @@ class TestSeelEquivalenceHalfWidth:
             "crash_rate",
             "critical_margin_in_A",
         ]
+
+
+#: What each mode has always set, copied from the `collect_params` of e3ce77d. Written out
+#: here rather than read from the code, so that the tests also hold the budgets themselves.
+MODE_BUDGETS = {
+    "fast": {"robustness_num_runs": 50, "consensus_num_runs": 50, "n_screen_runs": 10,
+             "elite_rounds": 1, "dp_top_k": 20, "k_keep_survivors": 6},
+    "premium": {"robustness_num_runs": 150, "consensus_num_runs": 150, "n_screen_runs": 25,
+                "elite_rounds": 2, "dp_top_k": 40, "k_keep_survivors": 10,
+                "mining_candidates_limit": 3000},
+    "deep": {"robustness_num_runs": 300, "consensus_num_runs": 300, "n_screen_runs": 50,
+             "elite_rounds": 3, "dp_top_k": 100, "k_keep_survivors": 25,
+             "mining_candidates_limit": 10000},
+    "extreme": {"robustness_num_runs": 300, "consensus_num_runs": 300, "n_screen_runs": 50,
+                "elite_rounds": 3, "dp_top_k": 100, "k_keep_survivors": 40,
+                "mining_candidates_limit": 12000, "phase_a_keep_limit": 200,
+                "top_k_parents": 80, "max_fusions_per_parent": 15,
+                "screening_keep_top_k": 20},
+}
+
+
+def _mode_lines(lines: list[str]) -> list[str]:
+    return [line for line in lines if line.startswith("[MODE]")]
+
+
+class TestTheModeOverrideIsSaid:
+    """The execution mode sets its budgets whatever the configuration states: loaded in the
+    application, the reference file declares `robustness_num_runs` 300 and runs at 150 in
+    `premium`, and nothing said so. The mode still wins; `collect_params` now says it."""
+
+    def test_the_reference_file_is_told_it_runs_at_150_where_it_declares_300(
+        self, strat_window, tmp_path
+    ):
+        cfg = _load(strat_window, tmp_path)
+        assert cfg["execution_mode"] == "premium", "premise"
+        assert str(cfg["robustness_num_runs"]) == "300", "premise"
+        with _captured(strat_window.logger) as lines:
+            params = strat_window.collect_params()
+        assert params["robustness_num_runs"] == 150, "the mode still wins: no run changes"
+        said = _mode_lines(lines)
+        assert len(said) == 1, lines
+        assert "robustness_num_runs 300 -> 150 (overridden)" in said[0], said[0]
+
+    @pytest.mark.parametrize("mode", MODES)
+    def test_every_budget_the_mode_sets_is_said_with_both_values(self, strat_window, mode):
+        strat_window.widgets["execution_mode"].setCurrentText(mode)
+        with _captured(strat_window.logger) as lines:
+            params = strat_window.collect_params()
+        said = _mode_lines(lines)
+        assert len(said) == 1, lines
+        body = said[0].split(": ", 1)[1]
+        for key, value in MODE_BUDGETS[mode].items():
+            assert params[key] == value, f"{mode}: {key} is no longer what the mode set"
+            assert re.search(rf"(^|, ){key} \S+ -> {value}( \(overridden\))?(,|$)", body), (
+                f"{mode}: {key} is not said with both values: {said[0]}"
+            )
+        assert said[0].startswith(f"[MODE] {mode.upper()} sets {len(MODE_BUDGETS[mode])} budgets")
+
+    def test_it_is_said_once_per_configuration_not_at_every_call(self, strat_window):
+        with _captured(strat_window.logger) as lines:
+            for _ in range(3):
+                strat_window.collect_params()
+        assert len(_mode_lines(lines)) == 1, "plots and exports call collect_params too"
+        strat_window.widgets["execution_mode"].setCurrentText("deep")
+        with _captured(strat_window.logger) as lines:
+            strat_window.collect_params()
+        assert len(_mode_lines(lines)) == 1, "another configuration is said again"

@@ -141,6 +141,93 @@ _RETIRED_CONFIG_KEYS: tuple[str, ...] = (
 )
 
 
+#: The budgets each execution mode sets, whatever the configuration says, in the order
+#: `collect_params` has always written them. An unknown mode runs as `premium`.
+#:
+#: 🔴 THE MODE WINS OVER THE FILE, and nothing in the file says so: loaded in the application,
+#: `JSON-strat-example.json` declares `robustness_num_runs` 300 and runs at 150 in `premium`.
+#: Which of the two should win is the user's decision (D1). Until it is taken, the mode keeps
+#: winning -- changing that would change production results -- and `collect_params` names, in
+#: one log line, every budget the mode sets with the value the configuration asked for.
+_MODE_BUDGETS: dict[str, dict[str, int]] = {
+    "fast": {
+        "robustness_num_runs": 50,
+        "consensus_num_runs": 50,
+        "n_screen_runs": 10,
+        "elite_rounds": 1,
+        "dp_top_k": 20,
+        "k_keep_survivors": 6,
+    },
+    "deep": {
+        "robustness_num_runs": 300,
+        "consensus_num_runs": 300,
+        "n_screen_runs": 50,
+        "elite_rounds": 3,
+        "dp_top_k": 100,
+        "k_keep_survivors": 25,
+        "mining_candidates_limit": 10000,
+    },
+    # EXTREME -- for the user who has all the time. Measured 2026-08-18.
+    #
+    # 🔴 WHY THIS MODE EXISTS -- AND THE REASON DOES NOT SURVIVE ITS CONTROL RUN.
+    #
+    # The original claim, kept here verbatim because it is what the mode was built on:
+    # on the x2 scale variant of random75 the standard search returned 404 strategies
+    # and NOT ONE was depositable, while widening the search returned 2945 strategies
+    # of which 254 are depositable (SEEL 0.629 nm) -- "the wall was the search, not
+    # the physics".
+    #
+    # 🔴 THAT COMPARISON CHANGED TWO THINGS AT ONCE: the MODE (fast -> deep) and the
+    # widening profile. It is error 3 of CLAUDE.md section 5, and the missing control
+    # reverses the conclusion.
+    #
+    # Measured 2026-08-20, r75x2 at 1 nm, seed 42, the very case that motivated it:
+    #
+    #     deep ALONE (widening off)   1986 strategies   277 depositable   SEEL 0.6248
+    #     deep + widening profile     2945 strategies   254 depositable   SEEL 0.6292
+    #     fast alone                   429 strategies     0 depositable   crash 38 %
+    #
+    # Widening buys +48 % strategies, LOSES 8 % of the depositables (277 -> 254) and
+    # moves SEEL by +0.7 %, i.e. 0.27 sigma against the 2.59 % measured on this
+    # component -- indistinguishable. THE MODE DID ALL THE WORK; the widening did
+    # none of it, at roughly five times the cost of a deep run.
+    #
+    # ⚠️ Attribute nothing to this mode until a case is found where it beats plain
+    # deep. pages/CERTUS_STRAT.html already states this ("Extreme is not what makes
+    # this design manufacturable"); this comment used to contradict the page.
+    #
+    # WHAT IT CHANGES, AND WHAT IT DELIBERATELY DOES NOT. It widens what is GENERATED
+    # and RETAINED. It leaves the EVALUATION depth identical to deep (300 draws), so a
+    # crash rate produced here is directly comparable to a deep run. Widening scoring
+    # depth instead would make the numbers incomparable with everything already
+    # measured.
+    #
+    # COST: roughly 5x a deep run. Measured 157 min on 75 layers, 8 threads.
+    "extreme": {
+        "robustness_num_runs": 300,
+        "consensus_num_runs": 300,
+        "n_screen_runs": 50,
+        "elite_rounds": 3,
+        "dp_top_k": 100,
+        "k_keep_survivors": 40,
+        "mining_candidates_limit": 12000,
+        "phase_a_keep_limit": 200,
+        "top_k_parents": 80,
+        "max_fusions_per_parent": 15,
+        "screening_keep_top_k": 20,
+    },
+    "premium": {
+        "robustness_num_runs": 150,
+        "consensus_num_runs": 150,
+        "n_screen_runs": 25,
+        "elite_rounds": 2,
+        "dp_top_k": 40,
+        "k_keep_survivors": 10,
+        "mining_candidates_limit": 3000,
+    },
+}
+
+
 class CertusStratStateMixin:
     def _load_defaults(self) -> None:
         """Load default values for CERTUS-STRAT"""
@@ -1530,83 +1617,56 @@ class CertusStratStateMixin:
         }
 
         mode = str(params_out.get("execution_mode", "premium")).strip().lower()
-        if mode == "fast":
-            params_out["execution_mode"] = "fast"
-            params_out["robustness_num_runs"] = 50
-            params_out["consensus_num_runs"] = 50
-            params_out["n_screen_runs"] = 10
-            params_out["elite_rounds"] = 1
-            params_out["dp_top_k"] = 20
-            params_out["k_keep_survivors"] = 6
-        elif mode == "deep":
-            params_out["execution_mode"] = "deep"
-            params_out["robustness_num_runs"] = 300
-            params_out["consensus_num_runs"] = 300
-            params_out["n_screen_runs"] = 50
-            params_out["elite_rounds"] = 3
-            params_out["dp_top_k"] = 100
-            params_out["k_keep_survivors"] = 25
-            params_out["mining_candidates_limit"] = 10000
-        elif mode == "extreme":
-            # EXTREME -- for the user who has all the time. Measured 2026-08-18.
-            #
-            # 🔴 WHY THIS MODE EXISTS -- AND THE REASON DOES NOT SURVIVE ITS CONTROL RUN.
-            #
-            # The original claim, kept here verbatim because it is what the mode was built on:
-            # on the x2 scale variant of random75 the standard search returned 404 strategies
-            # and NOT ONE was depositable, while widening the search returned 2945 strategies
-            # of which 254 are depositable (SEEL 0.629 nm) -- "the wall was the search, not
-            # the physics".
-            #
-            # 🔴 THAT COMPARISON CHANGED TWO THINGS AT ONCE: the MODE (fast -> deep) and the
-            # widening profile. It is error 3 of CLAUDE.md section 5, and the missing control
-            # reverses the conclusion.
-            #
-            # Measured 2026-08-20, r75x2 at 1 nm, seed 42, the very case that motivated it:
-            #
-            #     deep ALONE (widening off)   1986 strategies   277 depositable   SEEL 0.6248
-            #     deep + widening profile     2945 strategies   254 depositable   SEEL 0.6292
-            #     fast alone                   429 strategies     0 depositable   crash 38 %
-            #
-            # Widening buys +48 % strategies, LOSES 8 % of the depositables (277 -> 254) and
-            # moves SEEL by +0.7 %, i.e. 0.27 sigma against the 2.59 % measured on this
-            # component -- indistinguishable. THE MODE DID ALL THE WORK; the widening did
-            # none of it, at roughly five times the cost of a deep run.
-            #
-            # ⚠️ Attribute nothing to this mode until a case is found where it beats plain
-            # deep. pages/CERTUS_STRAT.html already states this ("Extreme is not what makes
-            # this design manufacturable"); this comment used to contradict the page.
-            #
-            # WHAT IT CHANGES, AND WHAT IT DELIBERATELY DOES NOT. It widens what is GENERATED
-            # and RETAINED. It leaves the EVALUATION depth identical to deep (300 draws), so a
-            # crash rate produced here is directly comparable to a deep run. Widening scoring
-            # depth instead would make the numbers incomparable with everything already
-            # measured.
-            #
-            # COST: roughly 5x a deep run. Measured 157 min on 75 layers, 8 threads.
-            params_out["execution_mode"] = "extreme"
-            params_out["robustness_num_runs"] = 300
-            params_out["consensus_num_runs"] = 300
-            params_out["n_screen_runs"] = 50
-            params_out["elite_rounds"] = 3
-            params_out["dp_top_k"] = 100
-            params_out["k_keep_survivors"] = 40
-            params_out["mining_candidates_limit"] = 12000
-            params_out["phase_a_keep_limit"] = 200
-            params_out["top_k_parents"] = 80
-            params_out["max_fusions_per_parent"] = 15
-            params_out["screening_keep_top_k"] = 20
-        else:
-            params_out["execution_mode"] = "premium"
-            params_out["robustness_num_runs"] = 150
-            params_out["consensus_num_runs"] = 150
-            params_out["n_screen_runs"] = 25
-            params_out["elite_rounds"] = 2
-            params_out["dp_top_k"] = 40
-            params_out["k_keep_survivors"] = 10
-            params_out["mining_candidates_limit"] = 3000
+        if mode not in _MODE_BUDGETS:
+            mode = "premium"
+        params_out["execution_mode"] = mode
+        budgets: list[tuple[str, Any, int]] = []
+        for key, value in _MODE_BUDGETS[mode].items():
+            budgets.append((key, self._configured_budget(key), value))
+            params_out[key] = value
+        self._say_mode_budgets(mode, budgets)
 
         return params_out
+
+    def _configured_budget(self, key: str) -> Any:
+        """What the configuration asks for `key`: its field when it has one, else the loaded
+        file. `None` when neither states it -- an empty field is not a value."""
+        widget = self.widgets.get(key)
+        if widget is not None and hasattr(widget, "text"):
+            raw = widget.text().strip()
+        else:
+            loaded = getattr(self, "_loaded_config", None)
+            raw = loaded.get(key) if isinstance(loaded, dict) else None
+        return None if raw is None or raw == "" else raw
+
+    def _say_mode_budgets(self, mode: str, budgets: list[tuple[str, Any, int]]) -> None:
+        """One log line: every budget `mode` sets, as `key configuration -> run`.
+
+        A budget whose configured value differs from the run's is marked `(overridden)`;
+        one the configuration does not state reads `unset`. The line is said once per
+        distinct content: `collect_params` also runs for plots and exports, and repeating
+        the line at each of those calls would bury it.
+        """
+        parts = []
+        n_overridden = 0
+        for key, configured, run in budgets:
+            if configured is None:
+                parts.append(f"{key} unset -> {run}")
+                continue
+            try:
+                overridden = float(configured) != float(run)
+            except (TypeError, ValueError):
+                overridden = True
+            if overridden:
+                n_overridden += 1
+            parts.append(f"{key} {configured} -> {run}" + (" (overridden)" if overridden else ""))
+        line = (
+            f"[MODE] {mode.upper()} sets {len(budgets)} budgets whatever the configuration "
+            f"says, {n_overridden} overridden (configuration -> run): " + ", ".join(parts)
+        )
+        if line != getattr(self, "_said_mode_budgets", None):
+            self._said_mode_budgets = line
+            self.logger.info(line)
 
     def _normalize_alias_key(self, value: Any) -> str:
         """Return a canonical lookup key for a user-facing material/substrate name."""

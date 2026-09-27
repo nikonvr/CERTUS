@@ -15,8 +15,6 @@ from certus_physics import Layer, Target, Sample
 from certus.core.certus_core import get_logger
 
 
-
-
 class TestCERTUSDesign:
     """Tests for le module CERTUS_DESIGN."""
 
@@ -53,7 +51,6 @@ class TestCERTUSDesign:
 
         assert CertusTheme is not None
         assert callable(apply_certus_theme)
-
 
 
 class TestDesignFunctionality:
@@ -299,13 +296,3 @@ class TestDesignFunctionality:
         except ImportError:
             pytest.skip("compute_spectrum_simple non disponible")
 
-    def test_optimization_parameters(self):
-        """Test optimization settings."""
-        optimization_params = ["max_iterations", "tolerance", "algorithm"]
-
-        available_params = []
-        for param in optimization_params:
-            if hasattr(CERTUS_DESIGN, param):
-                available_params.append(param)
-
-        assert len(available_params) >= 0

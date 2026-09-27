@@ -420,15 +420,6 @@ class TestBootstrapApp:
 class TestErrorHandling:
     """Tests for la gestion des errors."""
 
-    def test_import_error_handling(self):
-        """Test la gestion des errors d'import."""
-        # Test that required imports work
-        try:
-            import numpy as np
-
-            assert True
-        except ImportError:
-            pytest.fail("numpy should be available")
 
     def test_configuration_error_handling(self):
         """Test la gestion des errors de configuration."""

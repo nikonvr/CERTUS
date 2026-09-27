@@ -45,25 +45,6 @@ class TestCERTUSIndex:
         assert Target is not None
         assert Sample is not None
 
-    def test_index_functionality(self):
-        """Test indexing features."""
-        import CERTUS_INDEX
-
-        # Verify main functions
-        index_functions = [
-            "analyze_dielectric",
-            "fit_tauc_lorentz",
-            "extract_optical_constants",
-        ]
-
-        available_functions = []
-        for func_name in index_functions:
-            if hasattr(CERTUS_INDEX, func_name):
-                available_functions.append(func_name)
-
-        # At least some functions should be available
-        assert len(available_functions) >= 0
-
 
 class TestCERTUSStrat:
     """Tests for CERTUS_STRAT."""
@@ -87,24 +68,6 @@ class TestCERTUSStrat:
         logger = get_logger()
         assert logger is not None
 
-    def test_strat_functionality(self):
-        """Test policy features."""
-        import CERTUS_STRAT
-
-        # Verify main functions
-        strat_functions = [
-            "monitor_production",
-            "self_compensation",
-            "strategy_optimization",
-        ]
-
-        available_functions = []
-        for func_name in strat_functions:
-            if hasattr(CERTUS_STRAT, func_name):
-                available_functions.append(func_name)
-
-        # At least some functions should be available
-        assert len(available_functions) >= 0
 
     def test_multiprocessing_integration(self):
         """Test multiprocessing integration."""
@@ -139,24 +102,6 @@ class TestCERTUSMetalSingle:
         logger = get_logger()
         assert logger is not None
 
-    def test_metal_functionality(self):
-        """Test metal functionalities."""
-        import CERTUS_METAL_SINGLE
-
-        # Verify main functions
-        metal_functions = [
-            "extract_metal_constants",
-            "fit_metal_optical",
-            "analyze_metal_layer",
-        ]
-
-        available_functions = []
-        for func_name in metal_functions:
-            if hasattr(CERTUS_METAL_SINGLE, func_name):
-                available_functions.append(func_name)
-
-        # At least some functions should be available
-        assert len(available_functions) >= 0
 
     def test_optimization_integration(self):
         """Test the integration with scipy.optimize."""
@@ -191,25 +136,6 @@ class TestCERTUSMetalBilayer:
 
         logger = get_logger()
         assert logger is not None
-
-    def test_bilayer_functionality(self):
-        """Test the bilayer functionalities."""
-        import CERTUS_METAL_BILAYER
-
-        # Verify main functions
-        bilayer_functions = [
-            "analyze_bilayer",
-            "extract_bilayer_constants",
-            "fit_bilayer_model",
-        ]
-
-        available_functions = []
-        for func_name in bilayer_functions:
-            if hasattr(CERTUS_METAL_BILAYER, func_name):
-                available_functions.append(func_name)
-
-        # At least some functions should be available
-        assert len(available_functions) >= 0
 
 
 @pytest.mark.integration

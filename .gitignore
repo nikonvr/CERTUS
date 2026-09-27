@@ -68,6 +68,12 @@ logs/
 IndexSpline_Result_*.xlsx
 reports/exports/
 
+# ─────────────── User preferences ───────────────
+# Rewritten by the application at every setting (theme, font, auto-export): they belong
+# to one user, not to the repository. Missing, the code falls back to its defaults.
+/certus_export.json
+/certus_theme.json
+
 # ─────────────── Debug / scratch ───────────────
 scratch/
 artifacts/

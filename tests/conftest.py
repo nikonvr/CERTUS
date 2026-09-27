@@ -50,7 +50,7 @@ if sys.platform == "win32":
 import os
 
 # Tests must never rewrite the user's own preferences: certus_export.json and
-# certus_theme.json live next to the application and are tracked by git. Every test
+# certus_theme.json live next to the application. Every test
 # process -- subprocesses included, through the environment -- works on a private copy,
 # with the automatic export OFF: otherwise each full optimisation run by a test dropped a
 # report into the user's reports/ (2026-09-26, tests/unit/test_user_preferences_are_isolated.py).

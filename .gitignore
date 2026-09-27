@@ -96,7 +96,6 @@ _DEAD_SCRIPTS_BACKUP/
 
 # ─────────────── Build / release ───────────────
 artifacts/root_cleanup_*/
-reports/release_dossier_*.zip
 _metal_cache/
 
 # ─────────────── Local backups / test outputs ───────────────

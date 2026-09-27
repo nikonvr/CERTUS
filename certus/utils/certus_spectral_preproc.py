@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Pretraitement spectral partage (CERTUS Curve Smoother, Substrate Index, etc.)."""
 
 from __future__ import annotations

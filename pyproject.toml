@@ -95,7 +95,7 @@ extend-ignore = [
   "B007", "B008", "B009", "B010", "B019",
   "B904", "B905",
   # Pyupgrade legacy (modernization sweep tracked separately)
-  "UP006", "UP007", "UP009", "UP015",
+  "UP006", "UP007", "UP015",
   "UP031", "UP034", "UP035", "UP037",
   "UP040", "UP042", "UP045", "UP046",
   # Pytest legacy (tests already green — these are stylistic)

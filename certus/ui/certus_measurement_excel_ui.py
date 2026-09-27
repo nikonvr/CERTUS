@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Interactive Excel loading of spectral measurements (measurement type sheet).
 

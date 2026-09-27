@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Smart-coaching log helpers for INDEX_SPLINE corridor pipeline.
 
 Extracted from ``spline_profile_corridors`` (verbose log-only helpers) to keep

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Root-level facade: re-exports certus.utils.certus_spectral_preproc publicly.
 
 Tests that do ``import certus_spectral_preproc`` (or use pytest.importorskip) will

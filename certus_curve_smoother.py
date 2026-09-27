@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 CERTUS CURVE SMOOTHER
 Thin facade delegator for the Curve Smoother app.

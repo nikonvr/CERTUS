@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 I/O and serialization utilities for CERTUS-INDEX-SPLINE.

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 CERTUS-INDEX-SPLINE Corridors and Export Module.

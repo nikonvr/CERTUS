@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 """Contract tests for live corridor RMSE payloads."""
 

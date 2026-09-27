@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 """
 CERTUS-INDEX-SPLINE UI Rendering and Plotting Mixins.

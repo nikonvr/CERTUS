@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 """Shared contract helpers for live corridor RMSE payloads."""
 

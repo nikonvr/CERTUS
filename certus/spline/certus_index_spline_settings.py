@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 """
 CERTUS-INDEX-SPLINE Settings and Corridor UI Controls Mixins.

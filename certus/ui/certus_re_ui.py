@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 certus_re_ui.py - Extract of CertusREResultsDialog from CERTUS_RE.py
 """

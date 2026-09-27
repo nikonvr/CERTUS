@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 CERTUS SUBSTRATE INDEX
 Thin facade delegator for the Substrate Index characterization app.

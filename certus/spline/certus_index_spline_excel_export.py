@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 """
 CERTUS-INDEX-SPLINE Excel Export Module.

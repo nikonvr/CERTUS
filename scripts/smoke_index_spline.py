@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Smoke INDEX SPLINE: a command for imports + targeted pytest subsuite.
 

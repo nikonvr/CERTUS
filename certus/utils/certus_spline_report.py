@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Spline report builder: Excel export for INDEX_SPLINE results.
 
 Extracted from CERTUS_INDEX_SPLINE.py for maintainability.

@@ -16,12 +16,6 @@
 # nobody checks, and it would silently cover a symbol that dies later.
 # `tests/unit/test_ci_dead_symbol_audit.py` now forbids fossil entries.
 
-# Referenced nowhere in the runtime tree. Its only call site is COMMENTED OUT,
-# at CERTUS_HUB.py:401, and has been since the initial commit -- so this is
-# parked code, not something recently orphaned. To decide: revive the animation
-# or drop the method.
-CERTUS_HUB:CertusHub._apply_card_animations
-
 # Referenced nowhere at all, tests included.
 CERTUS_METAL_BILAYER:_bilayer_autopsy_dir
 

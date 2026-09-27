@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Regenerates pages/CERTUS_*.html: unified <head> (MathJax + Mermaid + shared assets)
 and <body> body extracted from the existing.

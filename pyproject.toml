@@ -49,52 +49,35 @@ freeze = [
 packages = ["certus"]
 
 # -----------------------------------------------------------------------------
-# Ruff (lint + format) — Foundation action #2 of CERTUS_MASTER_TODO_OPTIMIZATION
+# Ruff (lint + format)
 # -----------------------------------------------------------------------------
-# Target: Python 3.14+ (aligned with requires-python >= 3.14.5).
-# Initial baseline (2026-04-26): full lint select with `extend-ignore` of every
-# rule that currently has live violations across the codebase. Each ignored rule
-# below maps to a planned cleanup batch; remove the entry once the batch lands.
-# DO NOT use `ruff check --fix` blindly on legacy code — surface diffs in PR.
+# Full lint select; `extend-ignore` lists the rules that still have violations.
+# Never grow it, and never `ruff check --fix`: many "unused" imports are deliberate
+# re-exports (CLAUDE.md, section 3). The ratchet tests/oracle/test_lint_debt_ratchet.py
+# names the remaining rules: none may enter, and a rule that leaves must leave its list.
 [tool.ruff]
 target-version = "py314"
 line-length = 120
-extend-exclude = [
-  "tools/build_certus_pages.py",  # broken f-string template, see #2 follow-up note
-  "build",
-  "dist",
-  ".venv",
-  "*.egg-info",
-  "OLD VERSION",
-  # Legacy UTF-16 scratch snapshots (untracked, not part of the package). Kept
-  # on disk for manual reference; excluded from lint since they are not UTF-8.
-  "old_physics_impl.py",
-  "old_ui.py",
-]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "RUF", "PT", "PERF"]
 ignore = [
   "E501",  # line-too-long: handled by `line-length = 120`, not enforced strictly
 ]
-# Existing-violations whitelist. Linked actions in master TODO drive the cleanup.
 # Re-audit by running:  python -m ruff check . --statistics
 extend-ignore = [
-  # Style legacy (low priority, batch later via #34 collateral)
+  # Style legacy
   "E402", "E701", "E702", "E741",
   # Pyflakes legacy
-  "F401",  # unused-import — Batch F of #56 (depends on this action)
-  "F403", "F405",  # wildcard imports — #15 will eradicate
-   # f-string-missing-placeholders
-   # redefined-while-unused
+  "F401",  # unused-import: some are deliberate re-exports
+  "F403", "F405",  # wildcard imports
   "F841",  # unused-variable
   # Isort
-  "I001",  # unsorted-imports — `ruff format` will handle later
+  "I001",  # unsorted-imports
   # Bugbear legacy
   "B007", "B008", "B019",
-  
-  # Pyupgrade legacy (modernization sweep tracked separately)
-  "UP007", 
+  # Pyupgrade legacy
+  "UP007",
   "UP031", "UP037",
   "UP040", "UP042", "UP046",
   # Pytest legacy (tests already green — these are stylistic)

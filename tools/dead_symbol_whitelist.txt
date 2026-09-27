@@ -16,12 +16,6 @@
 # nobody checks, and it would silently cover a symbol that dies later.
 # `tests/unit/test_ci_dead_symbol_audit.py` now forbids fossil entries.
 
-# Referenced nowhere at all, tests included. The name suggests a feature that
-# lost its entry point rather than a leftover helper: deleting it would delete
-# work, so the call belongs to the project owner.
-CERTUS_METAL_BILAYER:CertusMetalBilayerApp._build_auto_batch_script
-CERTUS_METAL_SINGLE:CertusMetalSingleApp._build_auto_batch_script
-
 # Called ONLY by tests/unit/test_certus_metal_single_smoke.py -- a real call,
 # not a name collision. That is a different fact from the ones above: the
 # function works, nothing in production wants it.

@@ -2522,19 +2522,6 @@ class CertusMetalSingleApp(MetalBaseApp):
 
         self.widgets["min_knot_dist"].setText(str(mat.get("min_knot_dist", DEFAULT_MIN_KNOT_DISTANCE)))
 
-    def _build_auto_batch_script(self, config_path: str, out_dir: str) -> str:
-        return f'''$env:CERTUS_CONSOLE_LOG_LEVEL = "DEBUG"
-$env:CERTUS_METAL_PGLOBAL_MIN_FEVAL_FACTOR = "12"
-$env:CERTUS_METAL_POLISH_RESTARTS = "16"
-$env:CERTUS_METAL_INITIAL_MESH_SIZE = "128"
-$env:CERTUS_METAL_SEVERE_POLISH = "1"
-$env:CERTUS_METAL_SEVERE_POLISH_RESTARTS = "20"
-$env:CERTUS_METAL_SEVERE_POLISH_SPAN_SCALE = "0.008"
-$env:CERTUS_METAL_SEVERE_POLISH_MAXITER = "1800"
-$env:CERTUS_METAL_LOCAL_MESH_SEED = "54321"
-$env:CERTUS_METAL_INITIAL_MESH_SEED = "12345"
-python CERTUS_METAL_SINGLE.py --config "{config_path}" --auto-run --auto-close 2>&1 | Tee-Object -FilePath "{out_dir}\\run_verbose.txt"'''
-
     def _resolve_config_target_file(self, config_path: str) -> str | None:
         try:
             cfg_path = Path(config_path).expanduser().resolve()

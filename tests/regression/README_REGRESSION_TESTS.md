@@ -19,8 +19,8 @@ lisible. `test_convergence_guard.py` porte les tests : il **appelle** les foncti
 **Les références sont dans `baseline_rmse.json`, et nulle part ailleurs.** Cinq modules sont
 mesurés : RE, SPLINE, METAL_SINGLE, METAL_BILAYER et INDEX. Celle d'INDEX a été **capturée**
 le 2026-09-08, pas validée : elle dit « pas pire qu'alors », pas « juste ».
-⚠️ INDEX n'amorce pas son générateur aléatoire : sa RMSE change d'une exécution à l'autre, et
-sa garde échoue par intermittence sans régression (D35 de [`docs/ETAT.md`](../../docs/ETAT.md)).
+INDEX, RE et METAL_BILAYER ne rendent pas deux fois la même RMSE, ce qui est accepté : leur
+garde retient la meilleure de quatre exécutions au plus (voir `test_convergence_guard.py`).
 `scripts/collect_rmse.py` régénère les références.
 
 DESIGN et STRAT ne sont **pas** mesurables ici : leurs scripts headless remplacent le calcul

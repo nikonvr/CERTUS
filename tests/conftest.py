@@ -75,11 +75,9 @@ if "QT_QPA_PLATFORM" not in os.environ:
     os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
 # Disable automatic onboarding tour during tests
-try:
-    from certus.ui.certus_base_app import CertusBaseApp
-    CertusBaseApp._maybe_run_first_time_tour = lambda self: None
-except ImportError:
-    pass
+from certus.ui.certus_base_app import CertusBaseApp
+
+CertusBaseApp._maybe_run_first_time_tour = lambda self: None
 
 try:
     from PyQt6.QtWidgets import QApplication
@@ -88,14 +86,11 @@ try:
 except ImportError:
     QT_AVAILABLE = False
 
-try:
-    from certus_physics import Layer, Target, Sample
-    from certus.core.certus_core import get_float_dtype, get_complex_dtype
-    from certus.utils.errors import CertusError, CertusValidationError
-
-    PHYSICS_AVAILABLE = True
-except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
-    PHYSICS_AVAILABLE = False
+# First-party imports are never guarded: a module that no longer imports must fail the
+# suite, not turn the tests that need it into skips.
+from certus_physics import Layer, Target, Sample
+from certus.core.certus_core import get_float_dtype, get_complex_dtype
+from certus.utils.errors import CertusError, CertusValidationError
 
 
 @pytest.fixture(scope="session")
@@ -114,25 +109,18 @@ def qapp():
 @pytest.fixture(scope="session")
 def float_dtype():
     """Default float data type."""
-    if PHYSICS_AVAILABLE:
-        return get_float_dtype()
-    return np.float32
+    return get_float_dtype()
 
 
 @pytest.fixture(scope="session")
 def complex_dtype():
     """Default data complex type."""
-    if PHYSICS_AVAILABLE:
-        return get_complex_dtype()
-    return np.complex64
+    return get_complex_dtype()
 
 
 @pytest.fixture
 def sample_layers(float_dtype):
     """Test layers for optical calculations."""
-    if not PHYSICS_AVAILABLE:
-        pytest.skip("certus_physics non disponible")
-
     return [
         Layer(mat="SiO2", qwot=1.0),
         Layer(mat="TiO2", qwot=2.0),
@@ -149,9 +137,6 @@ def sample_wavelengths():
 @pytest.fixture
 def sample_targets():
     """Cibles d'optimisation de test."""
-    if not PHYSICS_AVAILABLE:
-        pytest.skip("certus_physics non disponible")
-
     return [
         Target(lmin=550.0, lmax=550.0, tmin=0.5, tmax=0.5, w=1.0),
         Target(lmin=650.0, lmax=650.0, tmin=0.8, tmax=0.8, w=0.5),
@@ -252,8 +237,7 @@ def performance_benchmark_data():
     for i in range(n_layers):
         thickness = np.random.uniform(10, 200)
         material = "SiO2" if i % 2 == 0 else "TiO2"
-        if PHYSICS_AVAILABLE:
-            layers.append(Layer(mat=material, qwot=thickness / 100.0))
+        layers.append(Layer(mat=material, qwot=thickness / 100.0))
 
     wavelengths = np.linspace(400, 800, n_wavelengths)
 

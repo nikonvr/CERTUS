@@ -99,7 +99,7 @@ def _attach_anim(widget, key: str, anim) -> None:
     if bag is None:
         bag = {}
         try:
-            setattr(widget, "_certus_anims", bag)
+            widget._certus_anims = bag
         except (AttributeError, RuntimeError, TypeError):
             return
     bag[key] = anim

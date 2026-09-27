@@ -1089,7 +1089,7 @@ class CertusIndexWorkerMixin:
                         k_smooth, params_k = fit_k_global_8p(wls, k_cal, valid_mask=valid_mask)
 
                         if params_k is not None:
-                            setattr(res, "k_8p_params", params_k)
+                            res.k_8p_params = params_k
 
                         # 3. Update dataframe with perfectly smooth n & newly re-optimized k
 
@@ -1100,7 +1100,7 @@ class CertusIndexWorkerMixin:
 
                         # Save Sellmeier parameters to res object to export them
 
-                        setattr(res, "sellmeier_params", params_n)
+                        res.sellmeier_params = params_n
 
                         self.logger.info("[INDEX.SPLINE] phase5 complete | status=success")
 

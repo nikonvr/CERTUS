@@ -404,7 +404,7 @@ def patch_nk() -> None:
             continue
         try:
             if getattr(mod, "get_nk_from_spline", None) is orig:
-                setattr(mod, "get_nk_from_spline", wrapped)
+                mod.get_nk_from_spline = wrapped
                 n += 1
         except (AttributeError, TypeError):
             continue

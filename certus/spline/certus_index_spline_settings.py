@@ -759,9 +759,9 @@ class _CorridorControlMixin:
 
         cfg_corr = self._cfg_with_result_substrate(cfg_base, result).replace()
 
-        setattr(cfg_corr, "gui_defer_corridor_profile_after_nl", False)
+        cfg_corr.gui_defer_corridor_profile_after_nl = False
         # Manual "Corridors" action must execute profiling now, regardless of the main run checkbox state.
-        setattr(cfg_corr, "corridor_profile_d_enabled", True)
+        cfg_corr.corridor_profile_d_enabled = True
 
         # --- Resync solver snapshot if manual dialog changed the mesh (K) ---
         _snap = result.get("gui_solver_snapshot_for_corridors")

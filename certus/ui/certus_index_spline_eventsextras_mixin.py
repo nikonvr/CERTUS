@@ -837,7 +837,7 @@ class CertusIndexSplineEventsExtrasMixin:
             curve = plot_widget_plot_finite(widget, xf, yf, pen=p, name=name)
 
             if curve is not None and crosshair_primary:
-                setattr(curve, "_certus_crosshair_primary", True)
+                curve._certus_crosshair_primary = True
                 if hasattr(curve, "setZValue"):
                     try:
                         curve.setZValue(10)

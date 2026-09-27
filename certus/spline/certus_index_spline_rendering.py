@@ -181,7 +181,7 @@ class _PlotMixin:
         if xn.size >= 2:
             c_n = plot_widget_plot_finite(pn, xn, yn, pen=pg.mkPen("#0057ff", width=2.4), name="n")
             if c_n is not None:
-                setattr(c_n, "_certus_crosshair_primary", True)
+                c_n._certus_crosshair_primary = True
 
         # --- k preview: envelope (k>0) then curves ---
         y_k_all = [kv]
@@ -218,7 +218,7 @@ class _PlotMixin:
         if xk.size >= 2:
             c_k = plot_widget_plot_finite(pk, xk, yk, pen=pg.mkPen("#f59e0b", width=2.4), name="k")
             if c_k is not None:
-                setattr(c_k, "_certus_crosshair_primary", True)
+                c_k._certus_crosshair_primary = True
 
         pn.setLogMode(False, False)
         _apply_fixed_log_k_axis(pk)

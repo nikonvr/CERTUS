@@ -555,10 +555,8 @@ class _RunMixin:
                 type(QThread.currentThread()).__name__,
             )
 
-        setattr(
-            cfg_run,
-            "gui_defer_corridor_profile_after_nl",
-            bool(getattr(self, "chk_corridor_d", None) and self.chk_corridor_d.isChecked()),
+        cfg_run.gui_defer_corridor_profile_after_nl = bool(
+            getattr(self, "chk_corridor_d", None) and self.chk_corridor_d.isChecked()
         )
         self._last_run_cfg = cfg_run
 

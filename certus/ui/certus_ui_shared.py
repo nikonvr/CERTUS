@@ -11,7 +11,7 @@ def _clamp_zoom_factor(value: float) -> float:
 
 def apply_app_zoom(owner, factor: float, *, label_attr: str, stylesheet_fn=None, toast_fn=None, base_font_size: int = 10) -> float:
     factor = _clamp_zoom_factor(factor)
-    setattr(owner, "_zoom_factor", factor)
+    owner._zoom_factor = factor
     app = QApplication.instance()
     if app is not None:
         app.setFont(QFont("Segoe UI", max(9, round(base_font_size * factor))))

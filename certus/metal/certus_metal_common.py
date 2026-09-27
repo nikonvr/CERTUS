@@ -97,42 +97,25 @@ from certus.utils.certus_load_summary import build_summary_plain_text, show_load
 
 
 
-# =============================================================================
-
-# CONSTANTS (Shared Defaults)
-
-# =============================================================================
-
-DEFAULT_EM_MIN = 5
-
-DEFAULT_EM_MAX = 50
-
-DEFAULT_NUM_KNOTS = 5
-
-DEFAULT_NK_MIN = 0.0
-
-DEFAULT_NK_MAX = 10.0
-
-DEFAULT_MIN_KNOT_DISTANCE = 20.0
-
-DEFAULT_EXCEL_FILENAME = "metal_results.xlsx"
-
-
-DEFAULT_POPSIZE = 15
-
-DEFAULT_MAXITER = 800
-
-DEFAULT_TOL = 0.005
-
-DEFAULT_MUTATION_MIN = 0.5
-
-DEFAULT_MUTATION_MAX = 1.0
-
-DEFAULT_RECOMBINATION = 0.7
-
-DEFAULT_UPDATING = "deferred"
-
-DEFAULT_WORKERS = 1
+# The shared defaults live in certus_metal_defaults, a module without Qt that the
+# METAL computation modules can import; they are re-exported here unchanged.
+from certus.metal.certus_metal_defaults import (
+    DEFAULT_EM_MAX,
+    DEFAULT_EM_MIN,
+    DEFAULT_EXCEL_FILENAME,
+    DEFAULT_MAXITER,
+    DEFAULT_MIN_KNOT_DISTANCE,
+    DEFAULT_MUTATION_MAX,
+    DEFAULT_MUTATION_MIN,
+    DEFAULT_NK_MAX,
+    DEFAULT_NK_MIN,
+    DEFAULT_NUM_KNOTS,
+    DEFAULT_POPSIZE,
+    DEFAULT_RECOMBINATION,
+    DEFAULT_TOL,
+    DEFAULT_UPDATING,
+    DEFAULT_WORKERS,
+)
 
 METAL_GLOBAL_STATUS = "global"
 METAL_LOCAL_STATUS = "local"

@@ -234,12 +234,6 @@ def get_context() -> StratContext:
 # --- Extracted helper constants & functions from CERTUS_STRAT ---
 
 SYM_MISSING_DISTANCE = 999.0
-FAST_AUTO_BLOCKS_DIVIDER_PRESETS = (
-    (20.0, 12.0),  # compact
-    (12.0, 6.0),   # balanced
-    (8.0, 4.0),    # extended
-    (6.0, 2.5),    # very_extended
-)
 
 
 def _clamp01(val: float) -> float:
@@ -342,18 +336,11 @@ def _compute_blocks_range_for_params(
     params: dict[str, Any],
     dense: bool = False,
 ) -> list[int]:
-    # 🔴 FAST MODE REMOVED (2026-08-05) -- decision of the physicist: "forbid the fast
-    # mode, I want a mode truly close to reality and I have all the time I need".
-    #
-    #A branch `if execution_mode == "fast" and fast_auto_blocks` replaced the
-    #contractual range by a union of FAST_AUTO_BLOCKS_DIVIDER_PRESETS calculated at
-    #`dense=False` — while the caller requests `dense=True`. This was the SECOND effect
-    #of `fast`, less visible than the division of Monte-Carlo budgets but just as
-    #harmful: we explored fewer divisions.
-    #
-    #`collect_params` already sets execution_mode to "premium" and removes it from the GUI;
-    # the branch is deleted here so that the programmatic path (headless tests,
-    # direct calls) cannot re-enable it by setting params by hand.
+    # Every execution mode, fast included, explores the same contractual range. A former
+    # branch for `fast` replaced it by a union of four preset divider pairs computed at
+    # `dense=False` while the caller asks for `dense=True`: fast explored fewer block
+    # counts on top of its smaller Monte-Carlo budgets. It was removed on 2026-08-05 so
+    # that no path, headless or direct, can bring it back.
     div_start = float(params.get("iter_divider_start", 10.0))
     div_end = float(params.get("iter_divider_end", 3.0))
     return _compute_blocks_range_contractual(num_layers, div_start, div_end, dense=dense)

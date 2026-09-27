@@ -100,7 +100,6 @@ from certus.utils.certus_strat_context import (
     StratContext,
     get_context,
     SYM_MISSING_DISTANCE,
-    FAST_AUTO_BLOCKS_DIVIDER_PRESETS,
     _clamp01,
     _compute_local_extrema_symmetry_score,
     _build_symmetry_bonus_map,

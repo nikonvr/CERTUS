@@ -88,14 +88,6 @@ def _substrate_index_norm_header(raw) -> str:
     return norm_header(raw)
 
 
-def _substrate_index_expand_substrate_abbrevs(s: str) -> str:
-    return expand_substrate_abbrevs(s)
-
-
-def _substrate_index_unglue_substrate_nu(s: str) -> str:
-    return unglue_substrate_nu(s)
-
-
 # Exclusions: stack / target (including lab abbreviations)
 
 
@@ -147,10 +139,6 @@ _RE_SUBSTRATE_INDEX_INCLUDE = re.compile(
     r")",
     re.IGNORECASE,
 )
-
-
-def _is_bare_substrate_spectrum_column(name) -> bool:
-    return is_bare_substrate_column(name)
 
 
 def _filter_dataframe_bare_substrate_columns(df: pd.DataFrame) -> tuple[pd.DataFrame, list[str], list[str]]:

@@ -74,6 +74,16 @@ reports/exports/
 /certus_export.json
 /certus_theme.json
 
+# ─────────────── Stray outputs at the root ───────────────
+# Written by tests or tools run from the repository root; never versioned again.
+/metal_results.xlsx
+/test_log
+/test_cfg*.json
+/test_err_save.json
+/invalid_dir/
+/best_headless_stack.json
+/best_pglobal_metal_params*.json
+
 # ─────────────── Debug / scratch ───────────────
 scratch/
 artifacts/

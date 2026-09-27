@@ -51,10 +51,6 @@ SELLMEIER_COEFFS_BY_ID: dict[int, tuple[float, ...]] = {
     ),  # B270i
 }
 
-# Legacy alias
-
-SELLMEIER_COEFFS_TUPLE = SELLMEIER_COEFFS_BY_ID
-
 
 # Substrate Definitions
 

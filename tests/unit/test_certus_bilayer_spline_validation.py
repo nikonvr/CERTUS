@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from CERTUS_METAL_BILAYER import _validate_bilayer_spline_state
+from certus.metal.certus_metal_bilayer_physics import _validate_bilayer_spline_state
 
 
 def test_validate_bilayer_spline_state_accepts_coherent_state() -> None:

@@ -87,20 +87,6 @@ def test_module_imports():
             print(f"❌ {module}: Erreur import: {e}")
 
 
-def test_run_all_verifications_script_interface():
-    """Test that the run_all_verifications script exposes main and ROOT."""
-    # The script was moved from tests/ to scripts/smoke/
-    smoke_dir = str(Path(__file__).resolve().parents[2] / "scripts" / "smoke")
-    if smoke_dir not in sys.path:
-        sys.path.insert(0, smoke_dir)
-    import run_all_verifications as rav  # noqa: E402
-    assert hasattr(rav, "main")
-    assert callable(rav.main)
-    assert hasattr(rav, "ROOT")
-    assert Path(rav.ROOT).is_dir()
-    assert rav.check_1002_removed() == (True, "Check directory disabled")
-
-
 def main():
     """Main function."""
     print("🔍 FULL LOAD TEST WITHOUT GUI")

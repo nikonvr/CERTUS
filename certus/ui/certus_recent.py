@@ -32,6 +32,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Final
+from certus.utils.certus_qsettings import certus_settings
 
 
 # =============================================================================
@@ -77,7 +78,7 @@ def _qs_settings():
     try:
         from PyQt6.QtCore import QSettings  # type: ignore
 
-        return QSettings(_QS_ORG, _QS_APP)
+        return certus_settings(_QS_ORG, _QS_APP)
     except ImportError:
         return None
 

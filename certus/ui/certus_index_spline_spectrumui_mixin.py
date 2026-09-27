@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_index_spline_common import *
+from certus.utils.certus_qsettings import certus_settings
 
 class CertusIndexSplineSpectrumUIMixin:
     """CertusIndexSplineSpectrumUIMixin."""
@@ -10,7 +11,7 @@ class CertusIndexSplineSpectrumUIMixin:
         if not hasattr(self, "chk_t"):
             return
 
-        s = QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
+        s = certus_settings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
 
         s.setValue(_QS_SPECTRUM_FIT_T, self.chk_t.isChecked())
 
@@ -39,7 +40,7 @@ class CertusIndexSplineSpectrumUIMixin:
     def _spectrum_open_dialog_start_path(self) -> str:
         """Last file spectrum (Qt pre-selection) otherwise last folder suite, otherwise script."""
 
-        s = QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
+        s = certus_settings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
 
         last_file = str(s.value(_QS_LAST_SPECTRUM, "") or "").strip()
 
@@ -61,7 +62,7 @@ class CertusIndexSplineSpectrumUIMixin:
 
         set_certus_last_dir(ap)
 
-        QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP).setValue(_QS_LAST_SPECTRUM, ap)
+        certus_settings(_QS_SPLINE_ORG, _QS_SPLINE_APP).setValue(_QS_LAST_SPECTRUM, ap)
 
     def _spectrum_clear_theory_probe(self) -> None:
         """Clears the n,k,T (R) grid aligned on the last model trace (spectrum context menu)."""

@@ -6,6 +6,7 @@ from PyQt6.QtCore import QSettings
 from PyQt6.QtWidgets import QFileDialog, QMessageBox
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.utils.certus_data import read_data_file_robust
+from certus.utils.certus_qsettings import certus_settings
 
 DATA_FILE_FILTER = "Data (*.csv *.txt *.xlsx)"
 DATA_FILES_FILTER_EXTENDED = "Data Files (*.csv *.txt *.xlsx *.xls);;All Files (*)"
@@ -28,7 +29,7 @@ CERTUS_UI_STRINGS = {
 }
 
 def get_certus_last_dir() -> str:
-    settings = QSettings(CERTUS_SETTINGS_ORG, CERTUS_SETTINGS_APP)
+    settings = certus_settings(CERTUS_SETTINGS_ORG, CERTUS_SETTINGS_APP)
     return str(settings.value(CERTUS_LAST_DIR_KEY, "") or "")
 
 def set_certus_last_dir(file_or_dir_path: str) -> None:
@@ -37,7 +38,7 @@ def set_certus_last_dir(file_or_dir_path: str) -> None:
     path = Path(file_or_dir_path).resolve()
     dirpath = path if path.is_dir() else path.parent
     if str(dirpath) and dirpath.is_dir():
-        settings = QSettings(CERTUS_SETTINGS_ORG, CERTUS_SETTINGS_APP)
+        settings = certus_settings(CERTUS_SETTINGS_ORG, CERTUS_SETTINGS_APP)
         settings.setValue(CERTUS_LAST_DIR_KEY, str(dirpath))
 
 def certus_get_open_file_name(
@@ -93,7 +94,7 @@ def open_data_file_and_read(
         file_filter = DATA_FILE_FILTER
     if last_dir_settings_key is not None:
         org, app = last_dir_settings_key
-        settings = QSettings(org, app)
+        settings = certus_settings(org, app)
         initial_dir = initial_dir or settings.value("last_dir", "")
     if not initial_dir:
         initial_dir = get_certus_last_dir()
@@ -103,7 +104,7 @@ def open_data_file_and_read(
     set_certus_last_dir(filepath)
     if last_dir_settings_key is not None:
         org, app = last_dir_settings_key
-        settings = QSettings(org, app)
+        settings = certus_settings(org, app)
         settings.setValue("last_dir", str(Path(filepath).parent))
     df = read_data_file_robust(filepath, **read_kwargs)
     return filepath, df

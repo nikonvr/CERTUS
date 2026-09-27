@@ -370,6 +370,7 @@ from certus.ui.mixins.certus_base_core_mixins import (
     CertusRecentsMixin,
     CertusDialogMixin,
 )
+from certus.utils.certus_qsettings import certus_settings
 
 
 class CertusBaseApp(
@@ -718,7 +719,7 @@ class CertusBaseApp(
                 logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
     def _qs_restore(self) -> None:
-        qs = QSettings("CERTUS", self.APP_NAME)
+        qs = certus_settings("CERTUS", self.APP_NAME)
         geom = qs.value(self._qs_key("geometry"))
         if geom is not None:
             self.restoreGeometry(geom)
@@ -743,7 +744,7 @@ class CertusBaseApp(
         self._qs_restore_table_headers(qs)
 
     def _qs_save(self) -> None:
-        qs = QSettings("CERTUS", self.APP_NAME)
+        qs = certus_settings("CERTUS", self.APP_NAME)
         qs.setValue(self._qs_key("geometry"), self.saveGeometry())
         qs.setValue(self._qs_key("windowState"), self.saveState())
         sp = getattr(self, "main_split", None)

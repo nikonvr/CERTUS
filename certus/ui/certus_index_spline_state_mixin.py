@@ -1,6 +1,7 @@
 from __future__ import annotations
 from certus.ui.certus_index_spline_common import *
 from certus.spline.certus_index_spline_core import SPLINE_PERF_PRESETS
+from certus.utils.certus_qsettings import certus_settings
 
 class CertusIndexSplineStateMixin:
     """CertusIndexSplineStateMixin."""
@@ -60,7 +61,7 @@ class CertusIndexSplineStateMixin:
 
         self._persist_simple_auto_uncertainty_pref()
 
-        QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP).setValue(
+        certus_settings(_QS_SPLINE_ORG, _QS_SPLINE_APP).setValue(
             _QS_SPLINE_UNCERTAINTY_DEFAULTS_REV, int(_UNCERTAINTY_DEFAULTS_REV)
         )
 

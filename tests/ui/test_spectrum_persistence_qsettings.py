@@ -1,12 +1,19 @@
 """
 QSettings contract for session persistence (INDEX SPLINE step 3, classic INDEX wT/wR).
-Uses an isolated INI directory (tmp_path) to avoid polluting the user registry.
+
+The settings go to an INI file under tmp_path, never to the registry: certus_settings honours
+CERTUS_CONFIG_DIR. Until 2026-09-27 this file set `QSettings.setPath(IniFormat, ...)`, which the
+(organization, application) constructor ignores -- each run rewrote the user's INDEX SPLINE
+fit options in the registry.
 """
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
-from PyQt6.QtCore import QSettings
+
+from certus.utils.certus_qsettings import certus_settings
 
 
 def _as_bool(v) -> bool:
@@ -18,12 +25,8 @@ def _as_bool(v) -> bool:
 
 
 @pytest.fixture
-def isolated_qsettings_path(tmp_path):
-    QSettings.setPath(
-        QSettings.Format.IniFormat,
-        QSettings.Scope.UserScope,
-        str(tmp_path),
-    )
+def isolated_qsettings_path(tmp_path, monkeypatch):
+    monkeypatch.setenv("CERTUS_CONFIG_DIR", str(tmp_path))
     return tmp_path
 
 
@@ -38,7 +41,8 @@ def test_spline_spectrum_step3_keys_roundtrip(isolated_qsettings_path):
         _QS_SPECTRUM_WT,
     )
 
-    s = QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
+    s = certus_settings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
+    assert Path(s.fileName()).is_relative_to(isolated_qsettings_path), s.fileName()
     s.setValue(_QS_SPECTRUM_FIT_T, False)
     s.setValue(_QS_SPECTRUM_FIT_TREL, True)
     s.setValue(_QS_SPECTRUM_FIT_R, True)
@@ -46,7 +50,7 @@ def test_spline_spectrum_step3_keys_roundtrip(isolated_qsettings_path):
     s.setValue(_QS_SPECTRUM_WR, 0.7)
     s.sync()
 
-    s2 = QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
+    s2 = certus_settings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
     assert _as_bool(s2.value(_QS_SPECTRUM_FIT_T)) is False
     assert _as_bool(s2.value(_QS_SPECTRUM_FIT_TREL)) is True
     assert _as_bool(s2.value(_QS_SPECTRUM_FIT_R)) is True
@@ -57,11 +61,12 @@ def test_spline_spectrum_step3_keys_roundtrip(isolated_qsettings_path):
 def test_index_classic_weight_keys_roundtrip(isolated_qsettings_path):
     from certus.ui.certus_index_ui_state import _QS_INDEX_APP, _QS_INDEX_ORG, _QS_INDEX_WEIGHT_R, _QS_INDEX_WEIGHT_T
 
-    s = QSettings(_QS_INDEX_ORG, _QS_INDEX_APP)
+    s = certus_settings(_QS_INDEX_ORG, _QS_INDEX_APP)
+    assert Path(s.fileName()).is_relative_to(isolated_qsettings_path), s.fileName()
     s.setValue(_QS_INDEX_WEIGHT_T, 0.25)
     s.setValue(_QS_INDEX_WEIGHT_R, 0.75)
     s.sync()
 
-    s2 = QSettings(_QS_INDEX_ORG, _QS_INDEX_APP)
+    s2 = certus_settings(_QS_INDEX_ORG, _QS_INDEX_APP)
     assert float(s2.value(_QS_INDEX_WEIGHT_T)) == pytest.approx(0.25)
     assert float(s2.value(_QS_INDEX_WEIGHT_R)) == pytest.approx(0.75)

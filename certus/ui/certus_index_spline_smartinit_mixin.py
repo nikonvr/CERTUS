@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_index_spline_common import *
+from certus.utils.certus_qsettings import certus_settings
 
 class CertusIndexSplineSmartInitMixin:
     """CertusIndexSplineSmartInitMixin."""
@@ -80,10 +81,10 @@ class CertusIndexSplineSmartInitMixin:
         cfg.smart_preview_d_nm_override = d_final
         cfg.smart_preview_accepted_rmse = float(rmse_worker_mesh)
 
-        QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP).setValue(
+        certus_settings(_QS_SPLINE_ORG, _QS_SPLINE_APP).setValue(
             _QS_SMART_INIT_DEEP, bool(chk_si_deep is not None and chk_si_deep.isChecked())
         )
-        QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP).setValue(
+        certus_settings(_QS_SPLINE_ORG, _QS_SPLINE_APP).setValue(
             _QS_SMART_INIT_TWO_PHASE, bool(chk_si_two_phase is not None and chk_si_two_phase.isChecked())
         )
 

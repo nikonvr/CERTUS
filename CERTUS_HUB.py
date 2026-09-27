@@ -180,6 +180,7 @@ from PyQt6.QtWidgets import QComboBox
 
 from certus.core.certus_hub_config import HubAppCatalogItem, HUB_APP_CATALOG, hub_grid_columns
 from certus.ui.certus_hub_widgets import ModuleBadge, BaseApplicationCard, ApplicationCard, GroupedApplicationCard
+from certus.utils.certus_qsettings import certus_settings
 
 
 class CertusHub(QMainWindow):
@@ -583,7 +584,7 @@ class CertusHub(QMainWindow):
         try:
             from PyQt6.QtCore import QSettings
 
-            _geom = QSettings("CERTUS", "CERTUS-HUB").value("window/geometry")
+            _geom = certus_settings("CERTUS", "CERTUS-HUB").value("window/geometry")
             if _geom is not None:
                 self.restoreGeometry(_geom)
         except (RuntimeError, TypeError):
@@ -794,7 +795,7 @@ class CertusHub(QMainWindow):
         try:
             from PyQt6.QtCore import QSettings
 
-            QSettings("CERTUS", "CERTUS-HUB").setValue("window/geometry", self.saveGeometry())
+            certus_settings("CERTUS", "CERTUS-HUB").setValue("window/geometry", self.saveGeometry())
         except (RuntimeError, TypeError):
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 

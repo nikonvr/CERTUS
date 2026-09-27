@@ -51,6 +51,7 @@ from certus.utils.certus_load_summary import build_summary_plain_text, show_load
 from certus.utils.certus_data import read_data_file_robust
 from certus.spline.certus_index_spline_core import normalize_spectrum_dataframe
 from certus.spline.spline_pipeline import worker_run_corridor_profile_after_nl_choice
+from certus.utils.certus_qsettings import certus_settings
 
 _DEFAULT_CORRIDOR_RMSE_DELTA: float = 2.5e-4
 _DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN: float = 2.5e-5
@@ -148,7 +149,7 @@ class _SettingsMixin:
 
     def _restore_splitter_states(self) -> None:
 
-        s = QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
+        s = certus_settings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
 
         try:
             v_rev_raw = s.value(_QS_MAIN_SPLITTER_LAYOUT_REV, 0)
@@ -176,7 +177,7 @@ class _SettingsMixin:
 
     def _persist_splitter_states(self, *_args) -> None:
 
-        s = QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
+        s = certus_settings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
 
         if hasattr(self, "main_split"):
             s.setValue(_QS_MAIN_SPLITTER_STATE, self.main_split.saveState())
@@ -188,7 +189,7 @@ class _SettingsMixin:
     def _maybe_apply_uncertainty_defaults_migrated(self) -> None:
         """Applies automatic uncertainty defaults once (migration / new install)."""
 
-        s = QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
+        s = certus_settings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
 
         try:
             rev = int(s.value(_QS_SPLINE_UNCERTAINTY_DEFAULTS_REV, 0) or 0)
@@ -624,7 +625,7 @@ class _SettingsMixin:
         if not hasattr(self, "chk_t"):
             return
 
-        s = QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
+        s = certus_settings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
 
         widgets = (
             self.chk_t,

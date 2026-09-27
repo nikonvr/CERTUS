@@ -80,6 +80,7 @@ from certus.spline.spline_presets import (
 from certus.spline.spline_visual_utils import (
     snap_spline_visual_dict as _snap_spline_visual_dict,
 )
+from certus.utils.certus_qsettings import certus_settings
 
 logger = logging.getLogger("CERTUS_INDEX_SPLINE.smart_init")
 
@@ -682,13 +683,13 @@ class SmartInitPreviewManager:
 
         self.chk_si_deep = QCheckBox("Run pglobal deep search")
         self.chk_si_deep.setChecked(
-            bool(QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP).value(_QS_SMART_INIT_DEEP, True, type=bool))
+            bool(certus_settings(_QS_SPLINE_ORG, _QS_SPLINE_APP).value(_QS_SMART_INIT_DEEP, True, type=bool))
         )
         actions_vlay.addWidget(self.chk_si_deep)
 
         self.chk_si_two_phase = QCheckBox("Enable two-phase pglobal (K=14)")
         self.chk_si_two_phase.setChecked(
-            bool(QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP).value(_QS_SMART_INIT_TWO_PHASE, False, type=bool))
+            bool(certus_settings(_QS_SPLINE_ORG, _QS_SPLINE_APP).value(_QS_SMART_INIT_TWO_PHASE, False, type=bool))
         )
         actions_vlay.addWidget(self.chk_si_two_phase)
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 from certus.ui.certus_index_spline_common import *
 from certus.utils.certus_ux import Typography
 from certus.utils.certus_index_utils import _lam_uniform_grid
+from certus.utils.certus_qsettings import certus_settings
 
 # Registry of workers that did not respond to cooperative stop. It maintains a
 # STRONG reference until QThread.finished() is emitted, which prevents Python from
@@ -560,7 +561,7 @@ class CertusIndexSplineEventsExtrasMixin:
 
     def _restore_simple_auto_uncertainty_pref(self) -> None:
 
-        s = QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
+        s = certus_settings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
 
         v = s.value(_QS_SPLINE_SIMPLE_AUTO_UNCERTAINTY)
 
@@ -572,7 +573,7 @@ class CertusIndexSplineEventsExtrasMixin:
 
     def _persist_simple_auto_uncertainty_pref(self) -> None:
 
-        QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP).setValue(
+        certus_settings(_QS_SPLINE_ORG, _QS_SPLINE_APP).setValue(
             _QS_SPLINE_SIMPLE_AUTO_UNCERTAINTY, bool(getattr(self, "_simple_auto_uncertainty", True))
         )
 

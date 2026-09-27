@@ -41,6 +41,7 @@ from dataclasses import dataclass
 from enum import Enum
 from collections.abc import Callable
 from typing import Final, Optional
+from certus.utils.certus_qsettings import certus_settings
 
 
 _QS_ORG: Final[str] = "CERTUS"
@@ -96,7 +97,7 @@ def _qs_settings():
     try:
         from PyQt6.QtCore import QSettings
 
-        return QSettings(_QS_ORG, _QS_APP)
+        return certus_settings(_QS_ORG, _QS_APP)
     except ImportError:
         return None
 

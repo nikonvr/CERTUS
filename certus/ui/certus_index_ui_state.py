@@ -131,6 +131,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from certus.utils.certus_qsettings import certus_settings
 
 class CertusIndexStateMixin:
     def _load_defaults(self) -> None:
@@ -220,7 +221,7 @@ class CertusIndexStateMixin:
         if not hasattr(self, "sb_weight_T"):
             return
 
-        s = QSettings(_QS_INDEX_ORG, _QS_INDEX_APP)
+        s = certus_settings(_QS_INDEX_ORG, _QS_INDEX_APP)
 
         self.sb_weight_T.blockSignals(True)
 
@@ -248,7 +249,7 @@ class CertusIndexStateMixin:
         if not hasattr(self, "sb_weight_T"):
             return
 
-        s = QSettings(_QS_INDEX_ORG, _QS_INDEX_APP)
+        s = certus_settings(_QS_INDEX_ORG, _QS_INDEX_APP)
 
         s.setValue(_QS_INDEX_WEIGHT_T, float(self.sb_weight_T.value()))
 

@@ -23,6 +23,7 @@ from certus.ui.certus_ui_utils import (
 )
 from certus.core.certus_core import load_theme_config, save_theme_config
 import certus.ui.certus_io_ui as certus_io_ui
+from certus.utils.certus_qsettings import certus_settings
 
 
 class CertusZoomMixin:
@@ -72,14 +73,14 @@ class CertusZoomMixin:
 
     def _store_ui_zoom(self) -> None:
         try:
-            qs = QSettings("CERTUS", getattr(self, "APP_NAME", "CERTUS"))
+            qs = certus_settings("CERTUS", getattr(self, "APP_NAME", "CERTUS"))
             qs.setValue(self._qs_key("uiZoom"), float(getattr(self, "_zoom_factor", 1.0)))
         except AttributeError, RuntimeError, TypeError, ValueError:
             pass
 
     def _restore_ui_zoom(self) -> None:
         try:
-            qs = QSettings("CERTUS", getattr(self, "APP_NAME", "CERTUS"))
+            qs = certus_settings("CERTUS", getattr(self, "APP_NAME", "CERTUS"))
             value = qs.value(self._qs_key("uiZoom"), 1.0)
             self._zoom_factor = max(0.85, min(1.30, float(value)))
             base_pt = getattr(CertusTheme, "FONT_SIZE_BASE", 10)

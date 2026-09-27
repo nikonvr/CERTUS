@@ -87,6 +87,7 @@ from certus.ui.certus_plot import (
 from certus.ui.certus_io_ui import CERTUS_UI_STRINGS
 from certus.ui.certus_ui_widgets_factory import create_header_logo_widget, create_log_widget
 from certus.ui.certus_ui_utils import apply_certus_theme, set_certus_window_icon, update_global_plot_config
+from certus.utils.certus_qsettings import certus_settings
 
 class CertusToast(QLabel):
     """Non-modal transient notification auto-hiding after duration_ms."""
@@ -658,7 +659,7 @@ class DetachedPlotWindow(QMainWindow):
         # the title so each chart keeps its own place.
         self._qs_geometry_key = f"detached/{title}/geometry"
         try:
-            saved = QSettings("CERTUS", "DetachedPlots").value(self._qs_geometry_key)
+            saved = certus_settings("CERTUS", "DetachedPlots").value(self._qs_geometry_key)
             if saved is not None:
                 self.restoreGeometry(saved)
         except (RuntimeError, TypeError):
@@ -703,7 +704,7 @@ class DetachedPlotWindow(QMainWindow):
     def closeEvent(self, e) -> None:
 
         try:
-            QSettings("CERTUS", "DetachedPlots").setValue(self._qs_geometry_key, self.saveGeometry())
+            certus_settings("CERTUS", "DetachedPlots").setValue(self._qs_geometry_key, self.saveGeometry())
         except (RuntimeError, TypeError, AttributeError):
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 

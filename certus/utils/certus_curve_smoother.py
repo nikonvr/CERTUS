@@ -40,6 +40,7 @@ from certus.ui.certus_ui import (
     wrap_scientific_plot_with_toolbar,
 )
 from certus.utils.certus_spectral_preproc import smooth_dataframe_auto, smooth_spectrum_auto
+from certus.utils.certus_qsettings import certus_settings
 
 logger = setup_module_logging("CERTUS_CURVE_SMOOTHER")
 
@@ -111,7 +112,7 @@ class CurveSmootherGUI(QMainWindow):
         self.df: pd.DataFrame | None = None
         self.file_path = ""
         self.detached_windows: list[QMainWindow] = []
-        self.settings = QSettings("CERTUS_SUITE", "CurveSmoother")
+        self.settings = certus_settings("CERTUS_SUITE", "CurveSmoother")
         self.last_dir = self.settings.value("last_dir", "")
         self.current_level = "Medium"
         self._setup_ui()

@@ -129,6 +129,7 @@ from certus.core.certus_substrate_index import (
     _rank_models_by_selection_score,
     _align_xy_lengths,
 )
+from certus.utils.certus_qsettings import certus_settings
 
 class IndexTableDialog(QDialog):
     def __init__(
@@ -828,7 +829,7 @@ class SubstrateIndexGUI(QMainWindow):
 
         self._attach_ui_log_handler()
 
-        self.settings = QSettings("SFL", "CERTUS_SUBSTRATE_INDEX")
+        self.settings = certus_settings("SFL", "CERTUS_SUBSTRATE_INDEX")
         self.last_dir = self.settings.value("last_dir", "")
 
         self._setup_ui()

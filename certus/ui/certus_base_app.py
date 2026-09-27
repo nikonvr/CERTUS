@@ -1685,7 +1685,7 @@ class CertusBaseApp(
 
                     y_pts = tgt.tmin + slope * (x_pts - tgt.lmin)
 
-                    for x, y in zip(x_pts, y_pts):
+                    for x, y in zip(x_pts, y_pts, strict=False):
                         if tgt.lmin <= x <= tgt.lmax:
                             scatter_pts.append({"pos": (x, y), "size": 8, "pen": pg.mkPen(None), "brush": brush})
 
@@ -1719,7 +1719,7 @@ class CertusBaseApp(
 
                 y_pts = t.tmin + slope * (x_pts - t.lmin)
 
-                for x, y in zip(x_pts, y_pts):
+                for x, y in zip(x_pts, y_pts, strict=False):
                     # Final check: do not plot points outside range
 
                     if t.lmin <= x <= t.lmax:

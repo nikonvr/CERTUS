@@ -777,7 +777,7 @@ class CertusRecentsMixin:
             from certus.ui.certus_recent import short_label
 
             items = [short_label(p, max_length=80) for p in paths]
-            label_to_path = dict(zip(items, paths))
+            label_to_path = dict(zip(items, paths, strict=False))
             choice, ok = QInputDialog.getItem(self, "Open recent configuration", "Pick a recent file:", items, 0, False)
             if ok and choice and choice in label_to_path:
                 if hasattr(self, "load_config"):

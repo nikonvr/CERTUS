@@ -87,7 +87,7 @@ def lire(p: str) -> None:
           f"donc score de REPLI, non affiche)")
 
     # --- la falaise, sur la courbe qui est monotone --------------------------------------
-    franchi = next((n for n, k in zip(ns, crash) if k >= CRASH_TOL), None)
+    franchi = next((n for n, k in zip(ns, crash, strict=False) if k >= CRASH_TOL), None)
     if franchi is None:
         print(f"\n  🟢 le plantage ne franchit JAMAIS {100 * CRASH_TOL:.0f} % sur "
               f"n = {ns[0]}..{ns[-1]} : l'optique tient sur tout l'empilement.")
@@ -104,7 +104,7 @@ def lire(p: str) -> None:
     print("  " + "-" * 74)
     prec = None
     remontees = []
-    for n, k, s in zip(ns, crash, seel):
+    for n, k, s in zip(ns, crash, seel, strict=False):
         if s is None:
             print(f"  {n:>5}{100 * k:>8.2f}%{'repli':>9}{'-':>10}   "
                   f"{'plante : aucun score exploitable' if k >= CRASH_TOL else ''}")

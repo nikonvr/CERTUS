@@ -199,7 +199,7 @@ class CertusFieldStateMixin:
 
             if hasattr(self, "table_spectral_res"):
                 spec_headers = ["Wavelength (nm)", "Reflectance (R)"]
-                spec_data = [[f"{wl:.2f}", f"{r:.6f}"] for wl, r in zip(wls, R_values)]
+                spec_data = [[f"{wl:.2f}", f"{r:.6f}"] for wl, r in zip(wls, R_values, strict=False)]
                 self.table_spectral_res.set_data(spec_headers, spec_data)
         except Exception as e:
             self.logger.debug(f"Error updating spectral response: {e}")

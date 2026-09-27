@@ -144,7 +144,7 @@ def main() -> int:
         ys = [math.log(v) for _, v, _ in pts]
         n = len(xs)
         sx, sy = sum(xs), sum(ys)
-        slope = (n * sum(x * y for x, y in zip(xs, ys)) - sx * sy) / (n * sum(x * x for x in xs) - sx * sx)
+        slope = (n * sum(x * y for x, y in zip(xs, ys, strict=False)) - sx * sy) / (n * sum(x * x for x in xs) - sx * sx)
         print(f"\n  exposant log-log : {slope:.3f}   (1 = lineaire, 0.5 = racine)")
     off = next((r for r in runs if r["config"].get("poem_enabled") is False
                 and abs(float(r["config"].get("index_corridor", 0)) - 0.005) < 1e-12), None)

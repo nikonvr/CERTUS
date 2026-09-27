@@ -1204,7 +1204,7 @@ class CertusRELayoutMixin:
         for _lbl, _knm, _kap in runs:
             _ks, _as = _re_p4_sort_knot_pairs(_knm, _kap)
 
-            _pairs = "    ".join(f"lambda={float(lam):.0f} nm -> ap={float(apv):.2f}" for lam, apv in zip(_ks, _as))
+            _pairs = "    ".join(f"lambda={float(lam):.0f} nm -> ap={float(apv):.2f}" for lam, apv in zip(_ks, _as, strict=False))
 
             _cap_lines.append(f"{_lbl}: {_pairs}")
 
@@ -1290,7 +1290,7 @@ class CertusRELayoutMixin:
             )
 
             if idx == 0:
-                for _lam, _ap in zip(k_s, a_s):
+                for _lam, _ap in zip(k_s, a_s, strict=False):
                     _txt = pg.TextItem(
                         text=f"lambda={float(_lam):.0f}nm\nap={float(_ap):.2f}",
                         color=pg.mkColor(c),

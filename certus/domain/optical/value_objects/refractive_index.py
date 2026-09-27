@@ -154,7 +154,7 @@ class RefractiveIndexDispersion:
             raise ValueError("Need at least 2 wavelength points for dispersion")
 
         # Validate all indices
-        for n, k in zip(self.n_values, self.k_values):
+        for n, k in zip(self.n_values, self.k_values, strict=True):
             RefractiveIndex(n, k)  # Will raise if invalid
 
     def at_wavelength(self, wavelength_nm: float) -> RefractiveIndex:

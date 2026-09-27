@@ -234,7 +234,7 @@ def _prepare_phase2_bounds_and_topk(self, *, results, bind_p2_plan, emit_re_prog
     act_l = bool(self.cfg.get("re_refine_l", False))
     b_lam = RE_SPLINE_NODE2_BOUNDS_NM if (act_h or act_l) else (RE_SPLINE_NODE2_DEFAULT_NM - 1e-10, RE_SPLINE_NODE2_DEFAULT_NM + 1e-10)
     env_knot = np.asarray(env_knot, dtype=np.float64)
-    bounds_spline = list(zip((-env_knot).tolist(), env_knot.tolist()))
+    bounds_spline = list(zip((-env_knot).tolist(), env_knot.tolist(), strict=True))
     b_spline_H = bounds_spline if act_h else [(-1e-15, 1e-15)] * nk
     b_spline_L = bounds_spline if act_l else [(-1e-15, 1e-15)] * nk
     bounds_p2 = list(bounds) + b_spline_H + b_spline_L + [b_lam]

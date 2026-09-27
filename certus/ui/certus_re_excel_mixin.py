@@ -669,7 +669,7 @@ class CertusREExcelMixin:
         keys = ("measurement", "design", "index")
 
         for perm in permutations(names, 3):
-            trial = dict(zip(keys, perm))
+            trial = dict(zip(keys, perm, strict=False))
 
             try:
                 _lambda_ref, _sub, qwot = self._parse_re_design(wb[trial["design"]])
@@ -1263,7 +1263,7 @@ class CertusREExcelMixin:
             for spec, vals in spectra_columns:
                 group = []
 
-                for wl, val in zip(wls_meas, vals):
+                for wl, val in zip(wls_meas, vals, strict=False):
                     if np.isnan(val):
                         continue
 

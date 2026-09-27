@@ -118,7 +118,7 @@ def _distance(a: tuple, b: tuple) -> int:
     """
     if len(a) != len(b):
         return 10**6
-    return sum(1 for x, y in zip(a, b) if x != y)
+    return sum(1 for x, y in zip(a, b, strict=False) if x != y)
 
 
 def _porte_les_plans(d: dict) -> bool:

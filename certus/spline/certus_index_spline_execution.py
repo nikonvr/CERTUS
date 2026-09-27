@@ -122,7 +122,7 @@ class _CorridorExportMixin:
         lines.append("# section: profile_points")
         lines.append("d_nm\tRMSE")
 
-        for di, ri in zip(d_s.tolist(), r_s.tolist()):
+        for di, ri in zip(d_s.tolist(), r_s.tolist(), strict=False):
             lines.append(f"{float(di):.8f}\t{float(ri):.10f}")
 
         par = getattr(self, "_corridor_rmse_parab_export", None)
@@ -376,7 +376,7 @@ class _CorridorExportMixin:
 
                 for sh_name in ("n", "k"):
                     ws = writer.sheets[sh_name]
-                    for col_idx, (v_d, v_r) in enumerate(zip(hdr_d, hdr_rmse), start=1):
+                    for col_idx, (v_d, v_r) in enumerate(zip(hdr_d, hdr_rmse, strict=False), start=1):
                         ws.cell(row=1, column=col_idx, value=v_d)
                         ws.cell(row=2, column=col_idx, value=v_r)
         except (OSError, ValueError, TypeError, RuntimeError) as exc:

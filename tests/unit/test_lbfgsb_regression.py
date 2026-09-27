@@ -436,7 +436,7 @@ class LbfgsbRegressionTester:
                     x0,
                     method="L-BFGS-B",
                     jac=obj.gradient,
-                    bounds=[(l, u) for l, u in zip(bounds[:, 0], bounds[:, 1])],
+                    bounds=[(l, u) for l, u in zip(bounds[:, 0], bounds[:, 1], strict=True)],
                     options={"ftol": 1e-12, "gtol": 1e-12, "maxiter": 1000},
                 )
 

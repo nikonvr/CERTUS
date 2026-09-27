@@ -133,13 +133,13 @@ def main() -> int:
 
     if len(exploitables) < 2:
         print("  🟠 VERDICT SUSPENDU. La regle exige les DEUX graines nues exploitables.")
-        for g, r in zip((101, 202), nus):
+        for g, r in zip((101, 202), nus, strict=False):
             print(f"     graine {g} : {r['etat']}")
         print("  🔴 Ne compte PAS un artefact manquant comme un zero : c'est une absence de")
         print("     donnee, pas un resultat. C'est la lecon de l'analyseur du 2026-08-21, qui")
         print("     avait conclu sur un seul nombre de blocs degenere.")
     else:
-        trouvent = [g for g, r in zip((101, 202), nus) if r["n_dep"] > 0]
+        trouvent = [g for g, r in zip((101, 202), nus, strict=False) if r["n_dep"] > 0]
         if len(trouvent) == 2:
             print("  🟢 LES DEUX GRAINES NUES TROUVENT.")
             print("     -> la graine 42 est MALCHANCEUSE.")

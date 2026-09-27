@@ -180,7 +180,7 @@ def propager(mapping: dict[str, str], dry: bool) -> int:
 
         s = re.sub(r"§\s*(\d+(?:bis|ter)?)((?:[.‑\-]\d+)?)", sub, s)
         s = s.replace("\x00", "")
-        n = sum(1 for a, b in zip(avant.split("§"), s.split("§")) if a != b)
+        n = sum(1 for a, b in zip(avant.split("§"), s.split("§"), strict=False) if a != b)
         if s != avant:
             total += 1
             if not dry:

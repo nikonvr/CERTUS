@@ -114,7 +114,7 @@ def export_plot_to_svg(
 
     # Create path for the line
     path_data = []
-    for i, (x, y) in enumerate(zip(wavelengths, values)):
+    for i, (x, y) in enumerate(zip(wavelengths, values, strict=False)):
         svg_x = margin + (x - x_min) / (x_max - x_min) * plot_width
         svg_y = height - margin - (y - y_min) / (y_max - y_min) * plot_height
 
@@ -275,7 +275,7 @@ def export_spectrum_to_svg(
                 )
 
         path_data_r = []
-        for i, (xi, yi) in enumerate(zip(wavelengths, R)):
+        for i, (xi, yi) in enumerate(zip(wavelengths, R, strict=False)):
             sx, sy = to_svg_coords(xi, yi)
             path_data_r.append(f"{'M' if i == 0 else 'L'} {sx:.2f} {sy:.2f}")
         dwg.add(
@@ -287,7 +287,7 @@ def export_spectrum_to_svg(
             )
         )
         path_data_t = []
-        for i, (xi, yi) in enumerate(zip(wavelengths, T)):
+        for i, (xi, yi) in enumerate(zip(wavelengths, T, strict=False)):
             sx, sy = to_svg_coords(xi, yi)
             path_data_t.append(f"{'M' if i == 0 else 'L'} {sx:.2f} {sy:.2f}")
         dwg.add(

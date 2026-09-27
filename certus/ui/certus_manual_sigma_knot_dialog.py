@@ -1083,7 +1083,7 @@ class ManualSigmaKnotDialog(QDialog):
     def _sync_summary_and_preview(self) -> None:
         row_lambda_knots = [float(row.spin.value()) for row in self._row_widgets]
         preview_lambda_knots = sorted(row_lambda_knots)
-        for row, lam_k in zip(self._row_widgets, row_lambda_knots):
+        for row, lam_k in zip(self._row_widgets, row_lambda_knots, strict=False):
             if row.preview_line is not None:
                 target_x = self._preview_x_from_lambda(float(lam_k))
                 if abs(float(row.preview_line.value()) - float(target_x)) > 1e-9:

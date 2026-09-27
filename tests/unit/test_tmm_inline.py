@@ -660,7 +660,7 @@ def test_compute_dynamics_kernel():
         M = np.eye(2, dtype=complex)
 
 
-        for n_j, d_j in zip(prev_n, prev_d):
+        for n_j, d_j in zip(prev_n, prev_d, strict=False):
 
 
             phi = k0 * n_j * d_j
@@ -1908,7 +1908,7 @@ def test_check_extrema_proximity():
     M_before = np.eye(2, dtype=complex)
 
 
-    for n_j, d_j in zip(prev_n, prev_d):
+    for n_j, d_j in zip(prev_n, prev_d, strict=False):
 
 
         phi = k0 * n_j * d_j

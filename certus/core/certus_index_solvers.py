@@ -165,7 +165,7 @@ class GradientSearcher:
                 x0,
                 method="L-BFGS-B",
                 jac=jac,
-                bounds=[(l, u) for l, u in zip(self.lb, self.ub)],
+                bounds=[(l, u) for l, u in zip(self.lb, self.ub, strict=False)],
                 options={
                     "ftol": 1e-9,
                     "gtol": 1e-9,

@@ -142,7 +142,7 @@ class ExportManager:
                     rmse = cat_entry.get("rmse", float("inf"))
                     ep = cat_entry.get("ep", [])
                     stack = cat_entry.get("stack", [])
-                    design_str = " | ".join(f"{s.mat}: {d:.2f}" for s, d in zip(stack, ep))
+                    design_str = " | ".join(f"{s.mat}: {d:.2f}" for s, d in zip(stack, ep, strict=False))
                     ws_p.append([n_layers, rmse, design_str])
 
         ws_m = wb.create_sheet("Manifest")

@@ -298,7 +298,7 @@ def test_G_correlation_offre() -> None:
         d2 = sum((q - m2) ** 2 for q in b)
         if d1 == 0 or d2 == 0:
             return float("nan")
-        return sum((p - m1) * (q - m2) for p, q in zip(a, b)) / math.sqrt(d1 * d2)
+        return sum((p - m1) * (q - m2) for p, q in zip(a, b, strict=False)) / math.sqrt(d1 * d2)
 
     rq = rho([p[0] for p in pts], [p[2] for p in pts])
     rn = rho([p[1] for p in pts], [p[2] for p in pts])

@@ -858,7 +858,7 @@ def _apply_elite_refinement_if_enabled(
                     )
                     for e_idx, strat in candidates_to_eval
                 ]
-                for future, (e_idx, strat) in zip(futures_stage, candidates_to_eval):
+                for future, (e_idx, strat) in zip(futures_stage, candidates_to_eval, strict=True):
                     try:
                         res = future.result()
                         nominal_val = _extract_rmse_p95_for_noise(res, nominal_noise_level)

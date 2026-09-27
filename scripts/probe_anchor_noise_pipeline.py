@@ -304,7 +304,7 @@ def _layer_wavelengths(row: dict) -> list[float]:
     """Per-layer monitoring wavelength, rebuilt from the block boundaries."""
     out: list[float] = []
     wls = row.get("wavelengths") or []
-    for (start, end), wl in zip(row.get("block_bounds") or [], wls):
+    for (start, end), wl in zip(row.get("block_bounds") or [], wls, strict=False):
         out.extend([float(wl)] * max(0, int(end) - int(start)))
     return out
 

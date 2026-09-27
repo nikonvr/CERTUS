@@ -2094,7 +2094,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
         if df_spectra is None:
             return
 
-        summary_kv = dict(zip(df_summary["Parameter"], df_summary["Value"]))
+        summary_kv = dict(zip(df_summary["Parameter"], df_summary["Value"], strict=True))
         dl_kv = {r["Parameter"]: f"{r['Value']:.4f} {r['Unit']}" for r in dl_rows}
 
         sections = [

@@ -526,7 +526,7 @@ class SplineOptimizerComparison:
 
             jac=self.gradient,
 
-            bounds=[(l, u) for l, u in zip(self.bounds[:, 0], self.bounds[:, 1])],
+            bounds=[(l, u) for l, u in zip(self.bounds[:, 0], self.bounds[:, 1], strict=True)],
 
             options={
 
@@ -658,7 +658,7 @@ class SplineOptimizerComparison:
 
             jac=self.gradient,
 
-            bounds=[(l, u) for l, u in zip(self.bounds[:, 0], self.bounds[:, 1])],
+            bounds=[(l, u) for l, u in zip(self.bounds[:, 0], self.bounds[:, 1], strict=True)],
 
             options={"ftol": 1e-12, "gtol": 1e-12, "maxiter": 1000},
 
@@ -760,7 +760,7 @@ class SplineOptimizerComparison:
 
             jac=self.gradient,
 
-            bounds=[(l, u) for l, u in zip(self.bounds[:, 0], self.bounds[:, 1])],
+            bounds=[(l, u) for l, u in zip(self.bounds[:, 0], self.bounds[:, 1], strict=True)],
 
             options={"ftol": 1e-12, "gtol": 1e-12, "maxiter": 1000},
 

@@ -152,7 +152,7 @@ def rapport(nom: str, base: str, couv: list[int], strat: list[int]) -> None:
     print(f"\n  base {base} -- couvertures {tot_c:,} | STRATEGIES {tot_s:,}".replace(",", " "))
     print(f"  {'k blocs':>8} {'couvertures':>16} {'strategies':>20} {'criblage 25 tirages':>22}")
     print("  " + "-" * 70)
-    for k, (c, s) in enumerate(zip(couv, strat)):
+    for k, (c, s) in enumerate(zip(couv, strat, strict=False)):
         if c == 0:
             continue
         print(f"  {k:>8} {c:>16,} {s:>20,} {_duree(s, SEC_CRIBLAGE):>22}".replace(",", " "))

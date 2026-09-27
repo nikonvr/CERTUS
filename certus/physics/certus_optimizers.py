@@ -68,7 +68,7 @@ class LBFGSBSearcher:
         self.func = func
 
         # Pre-compute bounds list once (avoid O(dim) list creation per search)
-        self._bounds_list = list(zip(bounds[:, 0], bounds[:, 1]))
+        self._bounds_list = list(zip(bounds[:, 0], bounds[:, 1], strict=True))
 
         self.dim = len(bounds)
 

@@ -189,7 +189,7 @@ class IRGlobalModelStrategy:
                     obj,
                     x0_clamped,
                     method="L-BFGS-B",
-                    bounds=list(zip(flat_bounds[:, 0], flat_bounds[:, 1])),
+                    bounds=list(zip(flat_bounds[:, 0], flat_bounds[:, 1], strict=True)),
                     options={"maxiter": 3000, "ftol": 1e-15, "gtol": 1e-10},
                 )
                 if np.isfinite(res_s0.fun) and res_s0.fun < 100000000000.0:
@@ -257,7 +257,7 @@ class IRGlobalModelStrategy:
                 obj,
                 res_pg.x,
                 method="L-BFGS-B",
-                bounds=list(zip(flat_bounds[:, 0], flat_bounds[:, 1])),
+                bounds=list(zip(flat_bounds[:, 0], flat_bounds[:, 1], strict=True)),
                 options={"maxiter": 5000, "ftol": 1e-16, "gtol": 1e-11},
                 callback=_stage2_cb,
             )

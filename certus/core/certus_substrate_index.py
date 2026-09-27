@@ -1841,7 +1841,7 @@ class IndexCore:
             float(n_fit[i_worst]),
         )
 
-        coeff_map = {k: v for k, v in zip(active_terms, p)}
+        coeff_map = {k: v for k, v in zip(active_terms, p, strict=False)}
 
         p_full = np.asarray(
             [float(coeff_map.get(k, 0.0)) for k in _POLY_COEFF_KEYS],

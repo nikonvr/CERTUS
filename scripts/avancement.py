@@ -42,7 +42,7 @@ def rows() -> list[dict]:
     if len(lines) < 2:
         return []
     head = lines[0]
-    return [dict(zip(head, r)) for r in lines[1:] if len(r) == len(head)]
+    return [dict(zip(head, r, strict=True)) for r in lines[1:] if len(r) == len(head)]
 
 
 def running() -> list[str]:

@@ -53,9 +53,9 @@ class TooltipSpec:
 
     title: str
     body: str
-    icon_name: Optional[str] = None
-    link: Optional[str] = None
-    link_label: Optional[str] = None
+    icon_name: str | None = None
+    link: str | None = None
+    link_label: str | None = None
 
     def has_icon(self) -> bool:
         return bool(self.icon_name)

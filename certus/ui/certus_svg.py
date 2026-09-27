@@ -191,7 +191,7 @@ def export_plot_to_svg(
 def export_spectrum_to_svg(
     wavelengths: Union[np.ndarray, list[float]],
     R: Union[np.ndarray, list[float]],
-    T: Optional[Union[np.ndarray, list[float]]] = None,
+    T: Union[np.ndarray, list[float]] | None = None,
     filename: str = "spectrum.svg",
     width: int = 800,
     height: int = 600,

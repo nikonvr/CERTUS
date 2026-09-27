@@ -34,7 +34,7 @@ class LazyModule:
     when they are actually needed.
     """
 
-    def __init__(self, module_name: str, import_func: Optional[Callable] = None):
+    def __init__(self, module_name: str, import_func: Callable | None = None):
         """
         Args:
             module_name: Fully qualified module name (e.g., 'scipy.optimize')
@@ -42,7 +42,7 @@ class LazyModule:
         """
         self._module_name = module_name
         self._import_func = import_func or __import__
-        self._module: Optional[Any] = None
+        self._module: Any | None = None
         self._loading = False
 
     def _load(self) -> Any:

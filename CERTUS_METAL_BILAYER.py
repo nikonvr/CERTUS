@@ -173,7 +173,7 @@ DEFAULT_EL_VARIATION = "20"
 
 
 def _build_bilayer_bounds(
-    params: dict[str, Any], l_array: Optional[np.ndarray] = None, include_eM: bool = True
+    params: dict[str, Any], l_array: np.ndarray | None = None, include_eM: bool = True
 ) -> list[tuple[float, float]]:
     """Build bounds list for bilayer optimization. If include_eM=False, omit first (eM) bound."""
 
@@ -240,8 +240,8 @@ def _bilayer_reflectance_mse(
     r_tgt_array: np.ndarray,
     num_knots: int,
     min_knot_dist: float,
-    nSub_complex_array: Optional[np.ndarray],
-    eM_fixed: Optional[float] = None,
+    nSub_complex_array: np.ndarray | None,
+    eM_fixed: float | None = None,
 ) -> float:
     """Compute bilayer reflectance MSE or return np.inf when constraints fail."""
 
@@ -423,7 +423,7 @@ def _validate_bilayer_objective_inputs(
     l_array: np.ndarray,
     r_tgt_array: np.ndarray,
     min_knot_dist: float,
-    eM_fixed: Optional[float] = None,
+    eM_fixed: float | None = None,
 ) -> dict[str, Any]:
     """Fail fast with explicit errors before calling the heavy physics kernel.
 
@@ -472,7 +472,7 @@ def global_objective_function(
     l_array: np.ndarray,
     r_tgt_array: np.ndarray,
     min_knot_dist: float,
-    nSub_complex_array: Optional[np.ndarray] = None,
+    nSub_complex_array: np.ndarray | None = None,
 ) -> float:
     """
 
@@ -779,7 +779,7 @@ def objective_function_fixed_eM(
     l_array: np.ndarray,
     r_tgt_array: np.ndarray,
     min_knot_dist: float,
-    nSub_complex_array: Optional[np.ndarray] = None,
+    nSub_complex_array: np.ndarray | None = None,
 ) -> float:
     """
 

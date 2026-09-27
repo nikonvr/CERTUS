@@ -2010,8 +2010,8 @@ class MetalBaseApp(CertusBaseApp):
         self,
         worker_class: type[QObject],
         build_bounds_fn: Callable[[dict, np.ndarray], np.ndarray],
-        build_params_fn: Optional[Callable[[dict], None]] = None,
-        before_run_fn: Optional[Callable[[dict], bool]] = None,
+        build_params_fn: Callable[[dict], None] | None = None,
+        before_run_fn: Callable[[dict], bool] | None = None,
     ) -> None:
         """Shared logic for starting metal optimization."""
         if getattr(self, "optimization_thread", None) is not None:

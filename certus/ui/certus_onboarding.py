@@ -78,9 +78,9 @@ class TourStep:
 
     title: str
     body: str
-    target_attr: Optional[str] = None
+    target_attr: str | None = None
     placement: str = "auto"
-    icon_name: Optional[str] = None
+    icon_name: str | None = None
 
 
 # =============================================================================
@@ -147,7 +147,7 @@ def reset_onboarding(app_name: str | None = None) -> None:
 # =============================================================================
 
 
-def resolve_target(parent, target_attr: Optional[str]):
+def resolve_target(parent, target_attr: str | None):
     """Look up ``target_attr`` on ``parent``. Returns the widget or None."""
     if not target_attr:
         return None

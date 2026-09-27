@@ -1009,7 +1009,7 @@ NUMERICAL_FAULT_EXCEPTIONS = (
 
 def setup_module_logging(
     module_name: str,
-    log_file: Optional[str] = None,
+    log_file: str | None = None,
 ) -> logging.LoggerAdapter:
     """Setup logging for a specific CERTUS module."""
 

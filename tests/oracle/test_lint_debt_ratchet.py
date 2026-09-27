@@ -19,7 +19,7 @@ ALLOWED_EXTEND_IGNORE = frozenset({
     "PT017", "PT018", "RUF001", "RUF002", "RUF003", "RUF005", 
     "RUF012", "RUF015", "RUF022", "RUF023", "RUF046",
     "RUF059", "RUF100", "UP007", 
-    "UP031", "UP035", "UP037", "UP040", "UP042", "UP045", "UP046",
+    "UP031", "UP035", "UP037", "UP040", "UP042", "UP046",
 })
 
 

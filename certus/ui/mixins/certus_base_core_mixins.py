@@ -59,7 +59,7 @@ class CertusZoomMixin:
             self.status_bar.addPermanentWidget(label)
         self._zoom_status_label = label
 
-    def _update_zoom_status(self, factor: Optional[float] = None, announce: bool = True) -> None:
+    def _update_zoom_status(self, factor: float | None = None, announce: bool = True) -> None:
         label = getattr(self, "_zoom_status_label", None)
         if label is not None:
             current = getattr(self, "_zoom_factor", 1.0) if factor is None else factor
@@ -465,7 +465,7 @@ class CertusCommandPaletteMixin:
             if getattr(self, "logger", None):
                 self.logger.exception("Shortcuts overlay failed to open")
 
-    def install_help_menu(self, *, app_label: Optional[str] = None) -> None:
+    def install_help_menu(self, *, app_label: str | None = None) -> None:
         try:
             mb = self.menuBar()
             if mb is None:
@@ -512,7 +512,7 @@ class CertusCommandPaletteMixin:
         except RuntimeError, AttributeError, TypeError, ValueError:
             pass
 
-    def _show_default_about_dialog(self, app_label: Optional[str] = None) -> None:
+    def _show_default_about_dialog(self, app_label: str | None = None) -> None:
         try:
             from PyQt6.QtWidgets import QMessageBox
 
@@ -591,8 +591,8 @@ class CertusPremiumExportMixin:
         self.validation_warnings = cur
 
     def export_premium_excel(
-        self, sections: list, output_path: Optional[str] = None, *, ctx: Any = None
-    ) -> Optional[str]:
+        self, sections: list, output_path: str | None = None, *, ctx: Any = None
+    ) -> str | None:
         try:
             from certus.utils.certus_reports import build_excel_report
         except ImportError:
@@ -620,8 +620,8 @@ class CertusPremiumExportMixin:
             return None
 
     def export_premium_pdf(
-        self, sections: list, output_path: Optional[str] = None, *, ctx: Any = None
-    ) -> Optional[str]:
+        self, sections: list, output_path: str | None = None, *, ctx: Any = None
+    ) -> str | None:
         try:
             from certus.utils.certus_reports import build_pdf_report
         except ImportError:
@@ -651,17 +651,17 @@ class CertusPremiumExportMixin:
     def _build_report_sections(self) -> list:
         return []
 
-    def export_report_excel(self) -> Optional[str]:
+    def export_report_excel(self) -> str | None:
         return self.export_premium_excel(self._build_report_sections())
 
-    def export_report_pdf(self) -> Optional[str]:
+    def export_report_pdf(self) -> str | None:
         return self.export_premium_pdf(self._build_report_sections())
 
 
 class CertusEmptyStateMixin:
     """Provides automatic empty state injections for data tables."""
 
-    _EMPTY_STATE_HINTS: dict[str, tuple[str, str, str, Optional[str]]] = {
+    _EMPTY_STATE_HINTS: dict[str, tuple[str, str, str, str | None]] = {
         "front_table": (
             "layers",
             "No layers yet",
@@ -794,7 +794,7 @@ class CertusDialogMixin:
         title: str,
         message: str,
         *,
-        detail: Optional[str] = None,
+        detail: str | None = None,
         confirm_label: str = "Continue",
         cancel_label: str = "Cancel",
         default_cancel: bool = True,

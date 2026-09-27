@@ -36,7 +36,7 @@ class Layer:
     material_id: str
     thickness: Thickness
     refractive_index: RefractiveIndex
-    metadata: Optional[dict] = None
+    metadata: dict | None = None
 
     def __post_init__(self):
         """Invariant validation."""

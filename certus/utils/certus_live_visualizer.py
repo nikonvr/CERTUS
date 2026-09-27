@@ -60,10 +60,10 @@ class LiveOptimizationVisualizer(QObject):
         self.last_update_evals = 0
 
         # Data storage
-        self.current_data: Optional[LiveUpdateData] = None
-        self.wavelengths: Optional[np.ndarray] = None
-        self.target_T: Optional[np.ndarray] = None
-        self.target_R: Optional[np.ndarray] = None
+        self.current_data: LiveUpdateData | None = None
+        self.wavelengths: np.ndarray | None = None
+        self.target_T: np.ndarray | None = None
+        self.target_R: np.ndarray | None = None
 
         # UI components
         self.setup_ui()
@@ -88,7 +88,7 @@ class LiveOptimizationVisualizer(QObject):
             "Data copied to clipboard (TSV).",
         )
 
-    def _build_tsv_for_excel(self) -> Optional[str]:
+    def _build_tsv_for_excel(self) -> str | None:
         """TSV aligned on wavelength grid + convergence columns (NaN padding)."""
         d = self.current_data
         if d is None:

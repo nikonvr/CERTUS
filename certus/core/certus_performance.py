@@ -184,11 +184,11 @@ class PerformanceMonitor:
             logger = self._get_logger()
             logger.info(f"PERF: {operation} took {elapsed:.3f}s")
 
-    def get_metrics(self, operation: str) -> Optional[OperationMetrics]:
+    def get_metrics(self, operation: str) -> OperationMetrics | None:
         """Get metrics for a specific operation."""
         return self._metrics.get(operation)
 
-    def report(self, top_n: Optional[int] = None, sort_by: str = "total") -> dict[str, Any]:
+    def report(self, top_n: int | None = None, sort_by: str = "total") -> dict[str, Any]:
         """
         Generate performance report.
 
@@ -227,7 +227,7 @@ class PerformanceMonitor:
             },
         }
 
-    def report_str(self, top_n: Optional[int] = 10, sort_by: str = "total") -> str:
+    def report_str(self, top_n: int | None = 10, sort_by: str = "total") -> str:
         """
         Generate human-readable performance report.
 
@@ -269,7 +269,7 @@ class PerformanceMonitor:
         """Clear all collected metrics."""
         self._metrics.clear()
 
-    def log_report(self, top_n: Optional[int] = 10, sort_by: str = "total"):
+    def log_report(self, top_n: int | None = 10, sort_by: str = "total"):
         """Log the performance report."""
         logger = self._get_logger()
         report_str = self.report_str(top_n=top_n, sort_by=sort_by)
@@ -280,7 +280,7 @@ class PerformanceMonitor:
 perf_monitor = PerformanceMonitor()
 
 
-def log_perf(func: Optional[Callable] = None, *, operation: Optional[str] = None, threshold: Optional[float] = None):
+def log_perf(func: Callable | None = None, *, operation: str | None = None, threshold: float | None = None):
     """
     Decorator for automatic performance logging.
 

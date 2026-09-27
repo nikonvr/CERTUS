@@ -152,9 +152,9 @@ class CertusScientificPlot(pg.PlotWidget):
         self._apply_sensible_empty_range()
 
         self._tracked_curves = []
-        self._certus_crosshair_label_fn: Optional[Callable[[float, Any, float], str]] = None
+        self._certus_crosshair_label_fn: Callable[[float, Any, float], str] | None = None
         self._certus_crosshair_vertical_only: bool = False
-        self._certus_mouse_moved_hook: Optional[Callable[[Any, Any, float, float, Any], None]] = None
+        self._certus_mouse_moved_hook: Callable[[Any, Any, float, float, Any], None] | None = None
 
         self.proxy = pg.SignalProxy(self.scene().sigMouseMoved, rateLimit=60, slot=self._on_mouse_move)
         self._curves: dict[str, pg.PlotDataItem] = {}

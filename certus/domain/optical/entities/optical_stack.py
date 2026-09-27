@@ -39,7 +39,7 @@ class OpticalStack:
         if not isinstance(self.layers, list):
             raise TypeError("layers must be a list")
 
-    def add_layer(self, layer: Layer, position: Optional[int] = None) -> None:
+    def add_layer(self, layer: Layer, position: int | None = None) -> None:
         """
         Add a layer to the stack.
 

@@ -39,7 +39,6 @@ dev = [
   "pytest>=8.0.0",
   "pytest-cov>=5.0.0",
   "ruff>=0.15.12",
-  "pre-commit>=4.0.0",
   "hypothesis>=6.0.0",
 ]
 freeze = [
@@ -113,9 +112,8 @@ extend-ignore = [
 "tools/_*.py" = ["E402"]                    # disposable scripts
 
 [tool.ruff.format]
-# `ruff format` is configured but NOT auto-applied yet. The pre-commit hook in
-# .pre-commit-config.yaml runs `ruff-format --check` only — surface diffs to
-# review. Switch to autofix in a dedicated PR once the team confirms the spec.
+# `ruff format` is configured but NOT applied: 510 files would change (2026-09-08), and
+# no workflow or hook runs it. Reformatting the repository is a decision of its owner.
 quote-style = "double"
 indent-style = "space"
 line-ending = "lf"

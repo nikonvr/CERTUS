@@ -28,9 +28,11 @@ l'infini, donc **aucune execution ne peut atteindre sa ligne de base `0.01706`**
 qui est un fossile d'avant le mock. Une entree qui ne peut pas passer produit un
 rouge que personne ne peut corriger, et apprend a ignorer la suite.
 
-📌 **INDEX est mesurable — il ne mocke pas — mais n'a pas de ligne de base.**
-Elle n'est pas inventee ici : `scripts/collect_rmse.py` la produit, et enteriner
-une reference est une decision qui revient au proprietaire du projet.
+📌 **INDEX est mesurable — il ne mocke pas.** Sa reference a ete capturee le
+2026-09-08 par `scripts/collect_rmse.py`. ⚠️ INDEX n'amorce pas son generateur :
+sa RMSE change d'une execution a l'autre et sa garde echoue par intermittence sans
+regression (D35 de docs/ETAT.md) ; fixer une graine ou la tolerance revient au
+proprietaire du projet.
 """
 
 from __future__ import annotations

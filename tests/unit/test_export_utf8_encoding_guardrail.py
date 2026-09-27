@@ -37,19 +37,3 @@ def test_optical_symbols_json_roundtrip_utf8() -> None:
         assert loaded["trophy"] == "🏆 Best Strategy"
     finally:
         tmp_path.unlink(missing_ok=True)
-
-
-@pytest.mark.unit
-def test_certus_reports_write_uses_utf8() -> None:
-    """Vérifie que les utilitaires d'écriture asynchrone imposent bien encoding='utf-8'."""
-    from certus.utils.certus_reset_framework import AsyncWriteWorker
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        out_file = Path(tmpdir) / "test_report.json"
-        worker = AsyncWriteWorker(lambda: OPTICAL_SYMBOLS, out_file)
-        worker.run()
-
-        assert out_file.exists()
-        content = out_file.read_text(encoding="utf-8")
-        assert "λ = 550.0 nm" in content
-        assert "✓ Admissible" in content

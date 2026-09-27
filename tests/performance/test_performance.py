@@ -8,19 +8,15 @@ import sys
 from pathlib import Path
 
 # Ajouter les imports conditionnels
-try:
-    from certus_physics import (
-        Layer,
-        Target,
-        Sample,
-        calculate_RT_vectorized_real,
-        get_refractive_index,
-    )
-    from certus.core.certus_core import get_safe_worker_count, get_float_dtype, get_complex_dtype
+from certus_physics import (
+    Layer,
+    Target,
+    Sample,
+    calculate_RT_vectorized_real,
+    get_refractive_index,
+)
+from certus.core.certus_core import get_safe_worker_count, get_float_dtype, get_complex_dtype
 
-    PHYSICS_AVAILABLE = True
-except ImportError:
-    PHYSICS_AVAILABLE = False
 
 try:
     import tracemalloc
@@ -111,7 +107,6 @@ def run_tmm_wrapper(layers, wavelengths):
 
 
 @pytest.mark.performance
-@pytest.mark.skipif(not PHYSICS_AVAILABLE, reason="Physics module non disponible")
 class TestCalculationPerformance:
     """Performance tests for optical calculations."""
 
@@ -135,7 +130,6 @@ class TestCalculationPerformance:
         assert isinstance(spectrum, np.ndarray)
         assert len(spectrum) == len(sample_wavelengths)
 
-    @pytest.mark.skipif(not PHYSICS_AVAILABLE, reason="Physics module non disponible")
     def test_multilayer_performance(self, sample_wavelengths):
         """Test performance for multiple layers."""
         layers = [
@@ -157,7 +151,6 @@ class TestCalculationPerformance:
         assert isinstance(spectrum, np.ndarray)
 
     @pytest.mark.parametrize("n_layers", [10, 25, 50, 100])
-    @pytest.mark.skipif(not PHYSICS_AVAILABLE, reason="Physics module non disponible")
     def test_scalability_performance(self, n_layers, sample_wavelengths):
         """Test scalability with the number of layers."""
         # Create n alternating layers
@@ -178,7 +171,6 @@ class TestCalculationPerformance:
         assert calculationation_time < expected_max_time
         assert isinstance(spectrum, np.ndarray)
 
-    @pytest.mark.skipif(not PHYSICS_AVAILABLE, reason="Physics module non disponible")
     def test_wavelength_array_size_performance(self):
         """Test performance with different wavelength array sizes."""
         sizes = [100, 500, 1000, 2000]
@@ -201,7 +193,6 @@ class TestCalculationPerformance:
 
 
 @pytest.mark.performance
-@pytest.mark.skipif(not PHYSICS_AVAILABLE, reason="Physics module non disponible")
 class TestMemoryPerformance:
     """Memory performance tests."""
 
@@ -228,7 +219,6 @@ class TestMemoryPerformance:
         except ImportError:
             pytest.skip("tracemalloc non disponible")
 
-    @pytest.mark.skipif(not PHYSICS_AVAILABLE, reason="Physics module non disponible")
     @pytest.mark.skipif(not TRACEMALLOC_AVAILABLE, reason="tracemalloc non disponible")
     def test_memory_usage_multiple_calculationations(self, sample_wavelengths):
         """Test memory usage for multiple calculations."""
@@ -268,7 +258,6 @@ class TestMemoryPerformance:
         except ImportError:
             pytest.skip("tracemalloc non disponible")
 
-    @pytest.mark.skipif(not PHYSICS_AVAILABLE, reason="Physics module non disponible")
     @pytest.mark.skipif(not TRACEMALLOC_AVAILABLE, reason="tracemalloc non disponible")
     def test_memory_leak_detection(self, sample_wavelengths):
         """Test memory leak detection."""
@@ -306,7 +295,6 @@ class TestMemoryPerformance:
 
 
 @pytest.mark.performance
-@pytest.mark.skipif(not PHYSICS_AVAILABLE, reason="Physics module non disponible")
 class TestDataTypePerformance:
     """Performance tests for different types of data."""
 
@@ -414,7 +402,6 @@ class TestParallelPerformance:
 
 
 @pytest.mark.benchmark
-@pytest.mark.skipif(not PHYSICS_AVAILABLE, reason="Physics module non disponible")
 class TestBenchmarks:
     """Benchmarks de performance."""
 

@@ -51,12 +51,8 @@ from certus.ui.certus_ui import (
 )
 
 # Conditional imports for components that may not be available
-try:
-    from certus.ui.certus_ui import CertusScientificPlot
+from certus.ui.certus_ui import CertusScientificPlot
 
-    SCIENTIFIC_PLOT_AVAILABLE = True
-except ImportError:
-    SCIENTIFIC_PLOT_AVAILABLE = False
 
 try:
     import pyqtgraph as pg  # noqa: F401
@@ -65,12 +61,8 @@ try:
 except ImportError:
     PYQTGRAPH_AVAILABLE = False
 
-try:
-    from certus.ui.certus_ui import ExcelTableWidget
+from certus.ui.certus_ui import ExcelTableWidget
 
-    EXCEL_TABLE_AVAILABLE = True
-except ImportError:
-    EXCEL_TABLE_AVAILABLE = False
 
 
 @pytest.mark.skipif(not QT_AVAILABLE, reason="PyQt6 not available")
@@ -405,9 +397,6 @@ class TestUIComponents:
 class TestCertusScientificPlot:
     """Tests for the CertusScientificPlot class."""
 
-    @pytest.mark.skipif(
-        not SCIENTIFIC_PLOT_AVAILABLE, reason="CertusScientificPlot not available"
-    )
     def test_plot_initialization(self, qapp):
         _ = qapp
         """Test scientific plot initialization."""
@@ -417,9 +406,6 @@ class TestCertusScientificPlot:
         # CertusScientificPlot IS a plot widget (inherits pg.PlotWidget), not HAS one
         assert hasattr(plot, "plotItem")
 
-    @pytest.mark.skipif(
-        not SCIENTIFIC_PLOT_AVAILABLE, reason="CertusScientificPlot not available"
-    )
     def test_plot_add_curve(self, qapp, sample_wavelengths, sample_spectrum):
         _ = qapp
         """Test adding a curve to the plot."""
@@ -431,9 +417,6 @@ class TestCertusScientificPlot:
 
         assert len(plot._curves) >= 2
 
-    @pytest.mark.skipif(
-        not SCIENTIFIC_PLOT_AVAILABLE, reason="CertusScientificPlot not available"
-    )
     def test_plot_clear(self, qapp, sample_wavelengths, sample_spectrum):
         _ = qapp
         """Test clearing the plot."""
@@ -445,9 +428,6 @@ class TestCertusScientificPlot:
 
         assert len(plot._curves) == 0
 
-    @pytest.mark.skipif(
-        not SCIENTIFIC_PLOT_AVAILABLE, reason="CertusScientificPlot not available"
-    )
     def test_plot_set_labels(self, qapp):
         _ = qapp
         """Test setting plot axis labels."""
@@ -510,9 +490,6 @@ class TestPlotExcelExportHelpers:
 class TestExcelTableWidget:
     """Tests for the ExcelTableWidget class."""
 
-    @pytest.mark.skipif(
-        not EXCEL_TABLE_AVAILABLE, reason="ExcelTableWidget not available"
-    )
     def test_table_initialization(self, qapp):
         _ = qapp
         """Test ExcelTableWidget initialization."""
@@ -521,9 +498,6 @@ class TestExcelTableWidget:
         assert isinstance(table, QTableWidget)
         assert hasattr(table, "export_to_excel")
 
-    @pytest.mark.skipif(
-        not EXCEL_TABLE_AVAILABLE, reason="ExcelTableWidget not available"
-    )
     def test_table_set_data(self, qapp):
         _ = qapp
         """Test setting data in the table widget."""
@@ -543,9 +517,6 @@ class TestExcelTableWidget:
         for col, header in enumerate(headers):
             assert table.horizontalHeaderItem(col).text() == header
 
-    @pytest.mark.skipif(
-        not EXCEL_TABLE_AVAILABLE, reason="ExcelTableWidget not available"
-    )
     def test_table_export_to_excel(self, qapp, temp_directory):
         _ = qapp
         """Test Excel export."""

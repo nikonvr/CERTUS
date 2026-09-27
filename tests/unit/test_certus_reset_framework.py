@@ -14,11 +14,7 @@ try:
 except ImportError:
     QT_AVAILABLE = False
 
-try:
-    from certus.utils.certus_reset_framework import AsyncWriteWorker, CertusResetManager, create_reset_button, save_state_async
-    RESET_AVAILABLE = True
-except ImportError:
-    RESET_AVAILABLE = False
+from certus.utils.certus_reset_framework import AsyncWriteWorker, CertusResetManager, create_reset_button, save_state_async
 
 
 def _make_mock_app(
@@ -78,7 +74,6 @@ def _make_mock_app(
 
 
 
-@pytest.mark.skipif(not RESET_AVAILABLE, reason="certus_reset_framework non disponible")
 class TestCertusResetManager:
     """Tests for CertusResetManager."""
 
@@ -158,7 +153,7 @@ class TestCertusResetManager:
         assert not hasattr(app, "_load_defaults")
 
 
-@pytest.mark.skipif(not QT_AVAILABLE or not RESET_AVAILABLE, reason="PyQt6 ou certus_reset_framework non disponible")
+@pytest.mark.skipif(not QT_AVAILABLE, reason="PyQt6 non disponible")
 class TestCreateResetButton:
     """Tests for create_reset_button."""
 
@@ -191,7 +186,7 @@ class TestCreateResetButton:
         assert btn is not None
 
 
-@pytest.mark.skipif(not QT_AVAILABLE or not RESET_AVAILABLE, reason="PyQt6 ou certus_reset_framework non disponible")
+@pytest.mark.skipif(not QT_AVAILABLE, reason="PyQt6 non disponible")
 class TestResetIntegration:
     """Reset integration tests (without opening real dialogs)."""
 

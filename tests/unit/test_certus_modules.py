@@ -8,72 +8,43 @@ from pathlib import Path
 # Add root directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-# Import conditionnels
+# A module that no longer imports must fail these tests, never skip them.
 MODULES = {
-    "CERTUS_INDEX": None,
-    "CERTUS_STRAT": None,
-    "CERTUS_METAL_SINGLE": None,
-    "CERTUS_METAL_BILAYER": None,
+    name: __import__(name)
+    for name in ("CERTUS_INDEX", "CERTUS_STRAT", "CERTUS_METAL_SINGLE", "CERTUS_METAL_BILAYER")
 }
-
-for module_name in MODULES.keys():
-    try:
-        MODULES[module_name] = __import__(module_name)
-    except ImportError:
-        MODULES[module_name] = None
 
 
 class TestCERTUSIndex:
     """Tests for CERTUS_INDEX."""
 
-    @pytest.mark.skipif(
-        MODULES["CERTUS_INDEX"] is None, reason="CERTUS_INDEX non disponible"
-    )
     def test_module_import(self):
         """Test que le module s'importe correctement."""
         import CERTUS_INDEX
 
         assert hasattr(CERTUS_INDEX, "__version__")
 
-    @pytest.mark.skipif(
-        MODULES["CERTUS_INDEX"] is None, reason="CERTUS_INDEX non disponible"
-    )
     def test_bootstrap_integration(self):
         """Test the integration with bootstrap_app."""
         from certus.core.certus_core import bootstrap_app
 
         assert callable(bootstrap_app)
 
-    @pytest.mark.skipif(
-        MODULES["CERTUS_INDEX"] is None, reason="CERTUS_INDEX non disponible"
-    )
     def test_logging_integration(self):
         """Test the integration with the logging system."""
-        try:
-            from certus.core.certus_core import get_logger
+        from certus.core.certus_core import get_logger
 
-            logger = get_logger()
-            assert logger is not None
-        except ImportError:
-            pytest.skip("Logging non disponible")
+        logger = get_logger()
+        assert logger is not None
 
-    @pytest.mark.skipif(
-        MODULES["CERTUS_INDEX"] is None, reason="CERTUS_INDEX non disponible"
-    )
     def test_physics_integration(self):
         """Test the integration with certus_physics."""
-        try:
-            from certus_physics import Layer, Target, Sample
+        from certus_physics import Layer, Target, Sample
 
-            assert Layer is not None
-            assert Target is not None
-            assert Sample is not None
-        except ImportError:
-            pytest.skip("certus_physics non disponible")
+        assert Layer is not None
+        assert Target is not None
+        assert Sample is not None
 
-    @pytest.mark.skipif(
-        MODULES["CERTUS_INDEX"] is None, reason="CERTUS_INDEX non disponible"
-    )
     def test_index_functionality(self):
         """Test indexing features."""
         import CERTUS_INDEX
@@ -97,40 +68,25 @@ class TestCERTUSIndex:
 class TestCERTUSStrat:
     """Tests for CERTUS_STRAT."""
 
-    @pytest.mark.skipif(
-        MODULES["CERTUS_STRAT"] is None, reason="CERTUS_STRAT non disponible"
-    )
     def test_module_import(self):
         """Test que le module s'importe correctement."""
         import CERTUS_STRAT
 
         assert hasattr(CERTUS_STRAT, "__version__")
 
-    @pytest.mark.skipif(
-        MODULES["CERTUS_STRAT"] is None, reason="CERTUS_STRAT non disponible"
-    )
     def test_bootstrap_integration(self):
         """Test the integration with bootstrap_app."""
         from certus.core.certus_core import bootstrap_app
 
         assert callable(bootstrap_app)
 
-    @pytest.mark.skipif(
-        MODULES["CERTUS_STRAT"] is None, reason="CERTUS_STRAT non disponible"
-    )
     def test_logging_integration(self):
         """Test the integration with the logging system."""
-        try:
-            from certus.core.certus_core import get_logger
+        from certus.core.certus_core import get_logger
 
-            logger = get_logger()
-            assert logger is not None
-        except ImportError:
-            pytest.skip("Logging non disponible")
+        logger = get_logger()
+        assert logger is not None
 
-    @pytest.mark.skipif(
-        MODULES["CERTUS_STRAT"] is None, reason="CERTUS_STRAT non disponible"
-    )
     def test_strat_functionality(self):
         """Test policy features."""
         import CERTUS_STRAT
@@ -150,9 +106,6 @@ class TestCERTUSStrat:
         # At least some functions should be available
         assert len(available_functions) >= 0
 
-    @pytest.mark.skipif(
-        MODULES["CERTUS_STRAT"] is None, reason="CERTUS_STRAT non disponible"
-    )
     def test_multiprocessing_integration(self):
         """Test multiprocessing integration."""
         import CERTUS_STRAT
@@ -167,44 +120,25 @@ class TestCERTUSStrat:
 class TestCERTUSMetalSingle:
     """Tests for CERTUS_METAL_SINGLE."""
 
-    @pytest.mark.skipif(
-        MODULES["CERTUS_METAL_SINGLE"] is None,
-        reason="CERTUS_METAL_SINGLE non disponible",
-    )
     def test_module_import(self):
         """Test que le module s'importe correctement."""
         import CERTUS_METAL_SINGLE
 
         assert hasattr(CERTUS_METAL_SINGLE, "__version__")
 
-    @pytest.mark.skipif(
-        MODULES["CERTUS_METAL_SINGLE"] is None,
-        reason="CERTUS_METAL_SINGLE non disponible",
-    )
     def test_bootstrap_integration(self):
         """Test the integration with bootstrap_app."""
         from certus.core.certus_core import bootstrap_app
 
         assert callable(bootstrap_app)
 
-    @pytest.mark.skipif(
-        MODULES["CERTUS_METAL_SINGLE"] is None,
-        reason="CERTUS_METAL_SINGLE non disponible",
-    )
     def test_logging_integration(self):
         """Test the integration with the logging system."""
-        try:
-            from certus.core.certus_core import get_logger
+        from certus.core.certus_core import get_logger
 
-            logger = get_logger()
-            assert logger is not None
-        except ImportError:
-            pytest.skip("Logging non disponible")
+        logger = get_logger()
+        assert logger is not None
 
-    @pytest.mark.skipif(
-        MODULES["CERTUS_METAL_SINGLE"] is None,
-        reason="CERTUS_METAL_SINGLE non disponible",
-    )
     def test_metal_functionality(self):
         """Test metal functionalities."""
         import CERTUS_METAL_SINGLE
@@ -224,10 +158,6 @@ class TestCERTUSMetalSingle:
         # At least some functions should be available
         assert len(available_functions) >= 0
 
-    @pytest.mark.skipif(
-        MODULES["CERTUS_METAL_SINGLE"] is None,
-        reason="CERTUS_METAL_SINGLE non disponible",
-    )
     def test_optimization_integration(self):
         """Test the integration with scipy.optimize."""
         import CERTUS_METAL_SINGLE
@@ -243,44 +173,25 @@ class TestCERTUSMetalSingle:
 class TestCERTUSMetalBilayer:
     """Tests for CERTUS_METAL_BILAYER."""
 
-    @pytest.mark.skipif(
-        MODULES["CERTUS_METAL_BILAYER"] is None,
-        reason="CERTUS_METAL_BILAYER non disponible",
-    )
     def test_module_import(self):
         """Test que le module s'importe correctement."""
         import CERTUS_METAL_BILAYER
 
         assert hasattr(CERTUS_METAL_BILAYER, "__version__")
 
-    @pytest.mark.skipif(
-        MODULES["CERTUS_METAL_BILAYER"] is None,
-        reason="CERTUS_METAL_BILAYER non disponible",
-    )
     def test_bootstrap_integration(self):
         """Test the integration with bootstrap_app."""
         from certus.core.certus_core import bootstrap_app
 
         assert callable(bootstrap_app)
 
-    @pytest.mark.skipif(
-        MODULES["CERTUS_METAL_BILAYER"] is None,
-        reason="CERTUS_METAL_BILAYER non disponible",
-    )
     def test_logging_integration(self):
         """Test the integration with the logging system."""
-        try:
-            from certus.core.certus_core import get_logger
+        from certus.core.certus_core import get_logger
 
-            logger = get_logger()
-            assert logger is not None
-        except ImportError:
-            pytest.skip("Logging non disponible")
+        logger = get_logger()
+        assert logger is not None
 
-    @pytest.mark.skipif(
-        MODULES["CERTUS_METAL_BILAYER"] is None,
-        reason="CERTUS_METAL_BILAYER non disponible",
-    )
     def test_bilayer_functionality(self):
         """Test the bilayer functionalities."""
         import CERTUS_METAL_BILAYER
@@ -307,49 +218,40 @@ class TestModulesIntegration:
 
     def test_modules_core_integration(self):
         """Test the modules ↔ core integration."""
-        try:
-            from certus.core.certus_core import get_logger, get_resource_path
-            from certus.ui.certus_ui import CertusTheme
+        from certus.core.certus_core import get_logger, get_resource_path
+        from certus.ui.certus_ui import CertusTheme
 
-            logger = get_logger()
-            theme = CertusTheme
-            resource_path = get_resource_path
+        logger = get_logger()
+        theme = CertusTheme
+        resource_path = get_resource_path
 
-            assert logger is not None
-            assert theme is not None
-            assert callable(resource_path)
-        except ImportError as e:
-            pytest.skip(f"Missing dependency:{e}")
+        assert logger is not None
+        assert theme is not None
+        assert callable(resource_path)
 
     def test_modules_physics_integration(self):
         """Test the integration of modules ↔ physics."""
-        try:
-            from certus_physics import Layer, Target, Sample
+        from certus_physics import Layer, Target, Sample
 
-            # Create test objects
-            layer = Layer(mat="SiO2", qwot=1.0)
-            target = Target(lmin=550.0, lmax=550.0, tmin=0.5, tmax=0.5, w=1.0)
+        # Create test objects
+        layer = Layer(mat="SiO2", qwot=1.0)
+        target = Target(lmin=550.0, lmax=550.0, tmin=0.5, tmax=0.5, w=1.0)
 
-            assert layer.mat == "SiO2"
-            assert target.lmin == 550.0
+        assert layer.mat == "SiO2"
+        assert target.lmin == 550.0
 
-        except ImportError as e:
-            pytest.skip(f"Physics integration not available:{e}")
 
     def test_modules_error_handling(self):
         """Test error handling in modules."""
-        try:
-            from certus.utils.errors import CertusError, CertusValidationError
+        from certus.utils.errors import CertusError, CertusValidationError
 
-            #Test that exceptions are available
-            error = CertusError("Test error")
-            validation_error = CertusValidationError("Test validation")
+        #Test that exceptions are available
+        error = CertusError("Test error")
+        validation_error = CertusValidationError("Test validation")
 
-            assert isinstance(error, Exception)
-            assert isinstance(validation_error, CertusError)
+        assert isinstance(error, Exception)
+        assert isinstance(validation_error, CertusError)
 
-        except ImportError as e:
-            pytest.skip(f"Gestion d'errors non disponible: {e}")
 
     def test_available_modules_count(self):
         """Test le nombre de modules disponibles."""
@@ -376,9 +278,6 @@ class TestModulesPerformance:
     )
     def test_module_import_time(self, module_name):
         """Test le temps d'import des modules."""
-        if MODULES[module_name] is None:
-            pytest.skip(f"{module_name} non disponible")
-
         import time
 
         # Measure le temps d'import

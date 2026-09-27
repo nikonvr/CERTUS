@@ -14,18 +14,13 @@ from pathlib import Path
 # Add root directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-try:
-    import CERTUS_RE
-    from certus_physics import Layer, Target, Sample
-    from certus.core.certus_core import get_logger
+import CERTUS_RE
+from certus_physics import Layer, Target, Sample
+from certus.core.certus_core import get_logger
 
-    RE_AVAILABLE = True
-except ImportError:
-    RE_AVAILABLE = False
 
 
 @pytest.mark.unit
-@pytest.mark.skipif(not RE_AVAILABLE, reason="CERTUS_RE not available")
 class TestParseREColumnHeader:
     """RE header parser (incidence, polarization, R/T, backside)."""
 
@@ -89,9 +84,7 @@ class TestParseREColumnHeader:
 
 
 @pytest.mark.unit
-@pytest.mark.skipif(not RE_AVAILABLE, reason="CERTUS_RE not available")
 @pytest.mark.unit
-@pytest.mark.skipif(not RE_AVAILABLE, reason="CERTUS_RE not available")
 class TestRERmseProgressParsing:
     """Pure parsing of RE RMSE progress messages."""
 
@@ -120,7 +113,6 @@ class TestRERmseProgressParsing:
 
 
 @pytest.mark.unit
-@pytest.mark.skipif(not RE_AVAILABLE, reason="CERTUS_RE not available")
 class TestREMeasurementWavelengthColumn:
     """Column detection lambda sheet measurement."""
 
@@ -155,7 +147,6 @@ class TestREMeasurementWavelengthColumn:
 
 
 @pytest.mark.unit
-@pytest.mark.skipif(not RE_AVAILABLE, reason="CERTUS_RE not available")
 class TestREDesignQwotAndSheets:
     """Multi-column QWOT and RE sheet name resolution."""
 
@@ -203,7 +194,6 @@ class TestREDesignQwotAndSheets:
 
 
 @pytest.mark.unit
-@pytest.mark.skipif(not RE_AVAILABLE, reason="CERTUS_RE not available")
 class TestREsubstrateCauchy3:
     """Model n = a0 + a1(lambdaref/lambda)² + a2(lambdaref/lambda)⁴ and tube barrier."""
 
@@ -265,7 +255,6 @@ def test_re_ranking_combined_rmse_matches_formula():
 
 
 @pytest.mark.unit
-@pytest.mark.skipif(not RE_AVAILABLE, reason="CERTUS_RE not available")
 class TestREDeadzoneExcess:
     """Bandes mortes DeltaRe / DeltaQ (RE)."""
 
@@ -292,7 +281,6 @@ class TestREDeadzoneExcess:
 
 
 @pytest.mark.unit
-@pytest.mark.skipif(not RE_AVAILABLE, reason="CERTUS_RE not available")
 class TestREHLDeltaReKnotRegularization:
     """Residue √(w)·(DeltaRe/env)²: ~quartic growth in amplitude of DeltaRe."""
 
@@ -314,7 +302,6 @@ class TestREHLDeltaReKnotRegularization:
 
 
 @pytest.mark.unit
-@pytest.mark.skipif(not RE_AVAILABLE, reason="CERTUS_RE not available")
 class TestREPhase4BeamKnots:
     """Phase-4 chromatic beam helpers and spectrum path (no full REWorker)."""
 
@@ -511,7 +498,6 @@ assert abs(r_scalar - r_knots) < 1e-9
 
 @pytest.mark.integration
 @pytest.mark.slow
-@pytest.mark.skipif(not RE_AVAILABLE, reason="CERTUS_RE not available")
 class TestReverseSampleXlsxInitialRmse:
     """RE integration (disabled without headless helper)."""
 
@@ -519,7 +505,6 @@ class TestReverseSampleXlsxInitialRmse:
 
 
 @pytest.mark.unit
-@pytest.mark.skipif(not RE_AVAILABLE, reason="CERTUS_RE not available")
 class TestREAppSkeletonLoaders:
     """Validate skeleton loader integration on CertusREApp."""
 
@@ -549,7 +534,6 @@ class TestREAppSkeletonLoaders:
 
 
 @pytest.mark.unit
-@pytest.mark.skipif(not RE_AVAILABLE, reason="CERTUS_RE not available")
 class TestCertusREResultsDialogSmoke:
     """Smoke test for CertusREResultsDialog initialization."""
 

@@ -9,16 +9,11 @@ from unittest.mock import Mock, patch
 # Add root directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-try:
-    import CERTUS_HUB
-    from certus.core.certus_core import bootstrap_app, get_logger
-
-    HUB_AVAILABLE = True
-except ImportError:
-    HUB_AVAILABLE = False
+import CERTUS_HUB
+from certus.core.certus_core import bootstrap_app, get_logger
 
 
-@pytest.mark.skipif(not HUB_AVAILABLE, reason="CERTUS_HUB non disponible")
+
 class TestCERTUSHUB:
     """Tests for le module CERTUS_HUB."""
 
@@ -51,26 +46,19 @@ class TestCERTUSHUB:
 
     def test_logging_integration(self):
         """Test the integration with the logging system."""
-        try:
-            from certus.core.certus_core import get_logger
+        from certus.core.certus_core import get_logger
 
-            logger = get_logger()
-            assert logger is not None
-        except ImportError:
-            pytest.skip("Logging non disponible")
+        logger = get_logger()
+        assert logger is not None
 
     def test_ui_components_import(self):
         """Test l'import des composants UI."""
-        try:
-            from certus.ui.certus_ui import CertusTheme, apply_certus_theme
+        from certus.ui.certus_ui import CertusTheme, apply_certus_theme
 
-            assert CertusTheme is not None
-            assert callable(apply_certus_theme)
-        except ImportError:
-            pytest.skip("certus_ui non disponible")
+        assert CertusTheme is not None
+        assert callable(apply_certus_theme)
 
 
-@pytest.mark.skipif(not HUB_AVAILABLE, reason="CERTUS_HUB non disponible")
 class TestHubFunctionality:
     """Tests for hub functionality."""
 
@@ -98,14 +86,11 @@ class TestHubFunctionality:
 
     def test_resource_handling(self):
         """Test la gestion des ressources."""
-        try:
-            from certus.core.certus_core import get_resource_path
+        from certus.core.certus_core import get_resource_path
 
-            # Test with a relative path
-            resource_path = get_resource_path("certus_theme.json")
-            assert isinstance(resource_path, str)
-        except (ImportError, FileNotFoundError):
-            pytest.skip("Gestion de ressources non disponible")
+        # Test with a relative path
+        resource_path = get_resource_path("certus_theme.json")
+        assert isinstance(resource_path, str)
 
     def test_hub_app_catalog_is_declarative_and_complete(self):
         """Launcher catalog entries must expose stable card metadata."""
@@ -129,7 +114,6 @@ class TestHubFunctionality:
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(not HUB_AVAILABLE, reason="CERTUS_HUB non disponible")
 class TestHubIntegration:
     """Integration tests for the hub."""
 
@@ -152,20 +136,17 @@ class TestHubIntegration:
 
     def test_hub_core_integration(self):
         """Test hub ↔ core integration."""
-        try:
-            from certus.core.certus_core import get_logger, get_resource_path
-            from certus.ui.certus_ui import CertusTheme
+        from certus.core.certus_core import get_logger, get_resource_path
+        from certus.ui.certus_ui import CertusTheme
 
-            # Verify that all dependencies work
-            logger = get_logger()
-            theme = CertusTheme
-            resource_path = get_resource_path
+        # Verify that all dependencies work
+        logger = get_logger()
+        theme = CertusTheme
+        resource_path = get_resource_path
 
-            assert logger is not None
-            assert theme is not None
-            assert callable(resource_path)
-        except ImportError as e:
-            pytest.skip(f"Missing dependency:{e}")
+        assert logger is not None
+        assert theme is not None
+        assert callable(resource_path)
 
     def test_module_launch_capabilities(self):
         """Tests module launch capabilities."""

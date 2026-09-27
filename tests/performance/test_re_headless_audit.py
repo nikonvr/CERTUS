@@ -22,17 +22,12 @@ if _perf_dir not in sys.path:
     sys.path.insert(0, _perf_dir)
 import test_performance as _tp  # noqa: E402
 
-PHYSICS_AVAILABLE = _tp.PHYSICS_AVAILABLE
 run_tmm_wrapper = _tp.run_tmm_wrapper
 
-try:
-    from certus_physics import Layer
-except ImportError:
-    Layer = None  # type: ignore[misc, assignment]
+from certus_physics import Layer
 
 
 @pytest.mark.performance
-@pytest.mark.skipif(not PHYSICS_AVAILABLE, reason="certus_physics indisponible")
 class TestREHeadlessThroughputAudit:
     """Load similar to RE worker: many TMM calls (sequential vs thread pool)."""
 

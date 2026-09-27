@@ -13,10 +13,7 @@ def test_headless_execution_pipeline(certus_root, qapp):
     Test headless execution by simulating a run of CERTUS_METAL_BILAYER 
     via its config loader and worker, bypassing the UI clicks.
     """
-    try:
-        from CERTUS_METAL_BILAYER import CertusMetalBilayerApp
-    except ImportError:
-        pytest.skip("CERTUS_METAL_BILAYER not loadable")
+    from CERTUS_METAL_BILAYER import CertusMetalBilayerApp
 
     app = CertusMetalBilayerApp()
     

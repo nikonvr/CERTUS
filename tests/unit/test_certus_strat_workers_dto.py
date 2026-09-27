@@ -6,11 +6,7 @@ import pytest
 
 from certus.workers.certus_strat_workers_dto import WorkerThreadRequest, WorkerThreadResult
 
-try:
-    from certus.workers.certus_strat_workers import LiveFeedMonitor
-    STRAT_WORKERS_AVAILABLE = True
-except ImportError:
-    STRAT_WORKERS_AVAILABLE = False
+from certus.workers.certus_strat_workers import LiveFeedMonitor
 
 
 @pytest.mark.unit
@@ -85,7 +81,6 @@ def test_worker_thread_result_step33_to_legacy_dict() -> None:
     assert payload["final_results"] == {"external": True}
 
 
-@pytest.mark.skipif(not STRAT_WORKERS_AVAILABLE, reason="certus_strat_workers non disponible")
 class TestLiveFeedMonitor:
     def test_poll_emits_latest_package(self) -> None:
         from unittest.mock import Mock

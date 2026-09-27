@@ -2,14 +2,9 @@ import pytest
 import numpy as np
 
 # Skip test if certus_physics is missing
-try:
-    from certus_physics import calculate_RT_vectorized_real
-    from certus.core.certus_core import get_float_dtype, get_complex_dtype
-    PHYSICS_AVAILABLE = True
-except ImportError:
-    PHYSICS_AVAILABLE = False
+from certus_physics import calculate_RT_vectorized_real
+from certus.core.certus_core import get_float_dtype, get_complex_dtype
 
-@pytest.mark.skipif(not PHYSICS_AVAILABLE, reason="certus_physics non disponible")
 def test_numba_jit_warmup():
     """
     Test that Numba JIT functions compile and execute successfully.

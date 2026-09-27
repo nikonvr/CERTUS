@@ -143,18 +143,12 @@ class TestThreadSafeCounter:
 def test_retro_compat_plot_cache_importable_from_certus_strat():
     """PlotCache must remain importable from CERTUS_STRAT (re-export)."""
     # Lightweight import: we do not load Qt, just the symbol
-    try:
-        from CERTUS_STRAT import PlotCache as PC_from_strat  # noqa: F401
-    except ImportError as e:
-        pytest.skip(f"CERTUS_STRAT not importable in this context: {e}")
+    from CERTUS_STRAT import PlotCache as PC_from_strat  # noqa: F401
     assert PC_from_strat is PlotCache
 
 
 def test_retro_compat_thread_safe_counter_importable_from_certus_strat():
     """ThreadSafeCounter must remain importable from CERTUS_STRAT (re-export)."""
-    try:
-        from CERTUS_STRAT import ThreadSafeCounter as TSC_from_strat  # noqa: F401
-    except ImportError as e:
-        pytest.skip(f"CERTUS_STRAT not importable in this context: {e}")
+    from CERTUS_STRAT import ThreadSafeCounter as TSC_from_strat  # noqa: F401
     assert TSC_from_strat is ThreadSafeCounter
 

@@ -1,4 +1,4 @@
-﻿"""Unit tests for CERTUS_DESIGN.py
+"""Unit tests for CERTUS_DESIGN.py
 
 Covers optical design features."""
 
@@ -10,18 +10,13 @@ from pathlib import Path
 # Add root directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-try:
-    import CERTUS_DESIGN
-    from certus_physics import Layer, Target, Sample
-    from certus.core.certus_core import get_logger
-
-    DESIGN_AVAILABLE = True
-except ImportError:
-    DESIGN_AVAILABLE = False
+import CERTUS_DESIGN
+from certus_physics import Layer, Target, Sample
+from certus.core.certus_core import get_logger
 
 
 
-@pytest.mark.skipif(not DESIGN_AVAILABLE, reason="CERTUS_DESIGN non disponible")
+
 class TestCERTUSDesign:
     """Tests for le module CERTUS_DESIGN."""
 
@@ -39,38 +34,28 @@ class TestCERTUSDesign:
 
     def test_logging_integration(self):
         """Test the integration with the logging system."""
-        try:
-            from certus.core.certus_core import get_logger
+        from certus.core.certus_core import get_logger
 
-            logger = get_logger()
-            assert logger is not None
-        except ImportError:
-            pytest.skip("Logging non disponible")
+        logger = get_logger()
+        assert logger is not None
 
     def test_physics_integration(self):
         """Test the integration with certus_physics."""
-        try:
-            from certus_physics import Layer, Target, Sample
+        from certus_physics import Layer, Target, Sample
 
-            assert Layer is not None
-            assert Target is not None
-            assert Sample is not None
-        except ImportError:
-            pytest.skip("certus_physics non disponible")
+        assert Layer is not None
+        assert Target is not None
+        assert Sample is not None
 
     def test_ui_integration(self):
         """Test the integration with certus_ui."""
-        try:
-            from certus.ui.certus_ui import CertusTheme, apply_certus_theme
+        from certus.ui.certus_ui import CertusTheme, apply_certus_theme
 
-            assert CertusTheme is not None
-            assert callable(apply_certus_theme)
-        except ImportError:
-            pytest.skip("certus_ui non disponible")
+        assert CertusTheme is not None
+        assert callable(apply_certus_theme)
 
 
 
-@pytest.mark.skipif(not DESIGN_AVAILABLE, reason="CERTUS_DESIGN non disponible")
 class TestDesignFunctionality:
     """Tests for design features."""
 
@@ -279,33 +264,27 @@ class TestDesignFunctionality:
 
     def test_layer_management(self):
         """Test layer management."""
-        try:
-            from certus_physics import Layer
+        from certus_physics import Layer
 
-            layer1 = Layer(mat="SiO2", qwot=1.0)
-            layer2 = Layer(mat="TiO2", qwot=2.0)
+        layer1 = Layer(mat="SiO2", qwot=1.0)
+        layer2 = Layer(mat="TiO2", qwot=2.0)
 
-            assert layer1.mat == "SiO2"
-            assert layer1.qwot == 1.0
-            assert layer2.mat == "TiO2"
-            assert layer2.qwot == 2.0
+        assert layer1.mat == "SiO2"
+        assert layer1.qwot == 1.0
+        assert layer2.mat == "TiO2"
+        assert layer2.qwot == 2.0
 
-        except ImportError:
-            pytest.skip("Layer non disponible")
 
     def test_target_management(self):
         """Test la gestion des cibles."""
-        try:
-            from certus_physics import Target
+        from certus_physics import Target
 
-            target = Target(lmin=550.0, lmax=550.0, tmin=0.5, tmax=0.5, w=1.0)
+        target = Target(lmin=550.0, lmax=550.0, tmin=0.5, tmax=0.5, w=1.0)
 
-            assert target.lmin == 550.0
-            assert target.tmin == 0.5
-            assert target.w == 1.0
+        assert target.lmin == 550.0
+        assert target.tmin == 0.5
+        assert target.w == 1.0
 
-        except ImportError:
-            pytest.skip("Target non disponible")
 
     def test_spectrum_calculationation(self, sample_layers, sample_wavelengths):
         """Test the spectrum calculation."""

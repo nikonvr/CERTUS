@@ -22,31 +22,26 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 # Imports conditionnels
 
-try:
 
-    from certus_physics import Layer, Target, Sample
+from certus_physics import Layer, Target, Sample
 
-    from certus.core.certus_core import get_logger, get_resource_path, setup_logging
+from certus.core.certus_core import get_logger, get_resource_path, setup_logging
 
-    from certus.ui.certus_ui import CertusTheme, apply_certus_theme
+from certus.ui.certus_ui import CertusTheme, apply_certus_theme
 
-    from certus.utils.errors import (
+from certus.utils.errors import (
 
-        CertusError,
+    CertusError,
 
-        CertusValidationError,
+    CertusValidationError,
 
-        validate_wavelength_range,
+    validate_wavelength_range,
 
-    )
-
+)
 
 
-    PHYSICS_AVAILABLE = True
 
-except ImportError:
 
-    PHYSICS_AVAILABLE = False
 
 
 
@@ -58,7 +53,6 @@ from spectrum_helpers import compute_spectrum_simple
 
 @pytest.mark.integration
 
-@pytest.mark.skipif(not PHYSICS_AVAILABLE, reason="Modules core non disponibles")
 
 class TestCoreIntegration:
 
@@ -152,7 +146,6 @@ class TestCoreIntegration:
 
 @pytest.mark.integration
 
-@pytest.mark.skipif(not PHYSICS_AVAILABLE, reason="Physics module non disponible")
 
 class TestPhysicsIntegration:
 
@@ -254,7 +247,6 @@ class TestPhysicsIntegration:
 
 @pytest.mark.integration
 
-@pytest.mark.skipif(not PHYSICS_AVAILABLE, reason="Modules non disponibles")
 
 class TestModuleInteraction:
 
@@ -355,7 +347,6 @@ class TestModuleInteraction:
 
 @pytest.mark.integration
 
-@pytest.mark.skipif(not PHYSICS_AVAILABLE, reason="Physics module non disponible")
 
 class TestWorkflowIntegration:
 
@@ -493,7 +484,6 @@ class TestWorkflowIntegration:
 
 @pytest.mark.integration
 
-@pytest.mark.skipif(not PHYSICS_AVAILABLE, reason="Physics module non disponible")
 
 class TestPerformanceIntegration:
 
@@ -577,7 +567,6 @@ class TestPerformanceIntegration:
 
 @pytest.mark.e2e
 
-@pytest.mark.skipif(not PHYSICS_AVAILABLE, reason="Modules non disponibles")
 
 class TestEndToEndIntegration:
 

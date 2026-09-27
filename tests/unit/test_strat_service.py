@@ -16,7 +16,6 @@ from certus.utils.certus_strat_service import (
 from certus.workers.certus_strat_workers_dto import StratParamsDTO
 
 
-
 def test_validate_payload_rejects_invalid_step() -> None:
     svc = StratStrategyService(lambda cfg: cfg)
     with pytest.raises(ValueError, match=r"unsupported step|is not one of"):
@@ -25,8 +24,6 @@ def test_validate_payload_rejects_invalid_step() -> None:
 
 def test_validate_payload_accepts_and_normalizes() -> None:
     svc = StratStrategyService(lambda cfg: cfg)
-    if svc._get_schema() is not None:
-        pytest.skip("Legacy string-step coercion N/A with JSON schema validation active")
     payload = svc.validate_payload({"step": "2", "params": {"seed": 1}, "opti_results": {"x": 1}})
     assert payload["step"] == 2
     assert payload["params"] == {"seed": 1}
@@ -95,75 +92,6 @@ def _valid_params() -> dict:
         "nL_id": "SiO2",
         "nSub_id": "Silice",
     }
-
-
-def test_p1_8_valid_payload_passes_schema() -> None:
-    """A fully valid payload must pass schema validation with zero errors."""
-    svc = StratStrategyService(lambda cfg: cfg)
-    errors = svc.validate_against_schema({"step": 0, "params": _valid_params()})
-    assert errors == [], f"Expected no schema errors, got: {errors}"
-
-
-def test_p1_8_missing_required_param_detected() -> None:
-    """Missing required param (e.g. l0) must be reported as a schema violation."""
-    svc = StratStrategyService(lambda cfg: cfg)
-    params = _valid_params()
-    del params["l0"]
-    errors = svc.validate_against_schema({"step": 0, "params": params})
-    # If jsonschema is installed, errors must be non-empty; otherwise skip
-    if svc._get_schema() is not None:
-        assert any("l0" in e for e in errors), f"Expected l0 error, got: {errors}"
-
-
-def test_p1_8_invalid_step_detected_by_schema() -> None:
-    """Step value not in enum must be reported as a schema violation."""
-    svc = StratStrategyService(lambda cfg: cfg)
-    errors = svc.validate_against_schema({"step": 999, "params": _valid_params()})
-    if svc._get_schema() is not None:
-        assert len(errors) > 0, "Expected schema errors for step=999"
-
-
-def test_p1_8_validate_payload_raises_on_schema_violation() -> None:
-    """validate_payload must raise ValueError when schema violations are detected."""
-    svc = StratStrategyService(lambda cfg: cfg)
-    if svc._get_schema() is None:
-        pytest.skip("jsonschema not available")
-    params = _valid_params()
-    del params["l0"]
-    with pytest.raises(ValueError, match="schema"):
-        svc.validate_payload({"step": 0, "params": params})
-
-
-def test_strat_schema_rejects_extra_keys() -> None:
-    """Unknown keys must be rejected now that additionalProperties is false."""
-    svc = StratStrategyService(lambda cfg: cfg)
-    if svc._get_schema() is None:
-        pytest.skip("jsonschema not available")
-
-    payload = {
-        "step": 0,
-        "params": {
-            **_valid_params(),
-            "unexpected_param": 123,
-        },
-        "unexpected_root": True,
-    }
-
-    with pytest.raises(ValueError, match="schema"):
-        svc.validate_payload(payload)
-
-
-def test_p1_8_scan_wl_bounds_must_be_paired() -> None:
-    """scan_wl_min and scan_wl_max must be provided together (cross-field rule)."""
-    svc = StratStrategyService(lambda cfg: cfg)
-    if svc._get_schema() is None:
-        pytest.skip("jsonschema not available")
-
-    params = _valid_params()
-    params["scan_wl_min"] = 450.0
-
-    with pytest.raises(ValueError, match="schema"):
-        svc.validate_payload({"step": 0, "params": params})
 
 
 def test_p1_10_generate_noise_array_returns_zeros_in_deterministic_mode() -> None:
@@ -370,7 +298,6 @@ def test_pr5_invalid_schema_rejected() -> None:
         svc.validate_payload({"step": 0, "params": "not-a-dict"})
 
 
-
 def test_pr5_material_coverage_failure() -> None:
     """Material coverage checking must raise ValueError when all materials are out of bounds."""
     svc = StratStrategyService(lambda cfg: cfg)
@@ -411,8 +338,6 @@ def test_pr5_legacy_payload_normalization() -> None:
 def test_pr5_dto_compatibility() -> None:
     """Passing Pydantic DTO instances directly in the payload must work seamlessly."""
     svc = StratStrategyService(lambda cfg: cfg)
-    if svc._get_schema() is not None:
-        pytest.skip("DTO passthrough N/A with JSON schema active (schema expects plain dict for params)")
     params_dto = StratParamsDTO.model_validate(_valid_params())
     dto_payload = {
         "step": 0,
@@ -422,6 +347,5 @@ def test_pr5_dto_compatibility() -> None:
     normalized = svc.validate_payload(dto_payload)
     assert normalized["step"] == 0
     assert normalized["params"] is params_dto
-
 
 

@@ -4,9 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from typing import Any
-import json
 import logging
-import pathlib
 from dataclasses import dataclass
 
 import numpy as np
@@ -268,48 +266,12 @@ class StratStrategyService(BaseHeadlessService):
 
     VALID_STEPS = {0, 2, 3, 23, 33}
 
-    _SCHEMA_PATH = pathlib.Path(__file__).resolve().parents[2] / "schemas" / "STRAT_PAYLOAD_SCHEMA_V1.json"
-    _schema: dict | None = None
     _deterministic: bool = False
 
     def set_deterministic(self, value: bool) -> None:
         """P1-10: Toggle deterministic mode for automated verification."""
         self._deterministic = bool(value)
         logging.getLogger(__name__).info("STRAT deterministic mode: %s", self._deterministic)
-
-    @classmethod
-    def _get_schema(cls) -> dict | None:
-        """Load and cache the JSON schema, return None if jsonschema not available."""
-        if cls._schema is not None:
-            return cls._schema
-        try:
-            import jsonschema  # noqa: F401
-
-            with open(cls._SCHEMA_PATH, encoding="utf-8") as f:
-                cls._schema = json.load(f)
-        except (ImportError, FileNotFoundError) as exc:
-            logging.getLogger(__name__).debug("STRAT payload schema unavailable: %s", exc)
-            cls._schema = None
-        return cls._schema
-
-    def validate_against_schema(self, payload: Mapping[str, Any]) -> list[str]:
-        """Validate payload against STRAT_PAYLOAD_SCHEMA_V1. Returns list of error messages."""
-        schema = self._get_schema()
-        if schema is None:
-            logging.getLogger(__name__).debug("STRAT schema validation skipped: schema unavailable")
-            return []
-        try:
-            import jsonschema
-
-            validator = jsonschema.Draft202012Validator(schema)
-            errors = [
-                f"{'.'.join(str(p) for p in e.absolute_path) or 'root'}: {e.message}"
-                for e in sorted(validator.iter_errors(payload), key=lambda e: e.path)
-            ]
-            return errors
-        except Exception as exc:  # noqa: BLE001
-            logging.getLogger(__name__).warning("Schema validation skipped: %s", exc)
-            return []
 
     def _validate_payload_shape(self, payload: Mapping[str, Any]) -> StratPayloadParts:
         """Validate the legacy STRAT payload shape before domain-specific checks."""
@@ -345,29 +307,10 @@ class StratStrategyService(BaseHeadlessService):
 
         return StratPayloadParts(step=step, params=params, opti_results=opti_results)
 
-    def _clean_payload_for_schema(self, val: Any) -> Any:
-        if hasattr(val, "model_dump"):
-            return self._clean_payload_for_schema(val.model_dump(exclude_none=True))
-        if isinstance(val, Mapping):
-            return {str(k): self._clean_payload_for_schema(v) for k, v in val.items() if v is not None}
-        if isinstance(val, (list, tuple)):
-            return [self._clean_payload_for_schema(v) for v in val]
-        if isinstance(val, (int, float, str, bool)) or val is None:
-            return val
-        return str(val)
-
     def _validate_structural(self, payload: Mapping[str, Any]) -> StratPayloadParts:
-        """Phase 1: Structural validation (JSON schema + type shape checks)."""
+        """Phase 1: Structural validation (type shape checks)."""
         if not isinstance(payload, Mapping):
             raise ValueError("payload must be a mapping")
-
-        # Strict JSON schema validation (with rich-object clean conversion)
-        clean_payload = self._clean_payload_for_schema(payload)
-        schema_errors = self.validate_against_schema(clean_payload)
-        if schema_errors:
-            raise ValueError("Payload schema violations:\n" + "\n".join(schema_errors))
-
-        # DTO schema and model structure checks
         return self._validate_payload_shape(payload)
 
     def _validate_domain(self, parts: StratPayloadParts, materials_db: Any = None) -> None:

@@ -17,12 +17,6 @@
 # `tests/unit/test_ci_dead_symbol_audit.py` now forbids fossil entries.
 
 # Called ONLY by tests/unit/test_certus_metal_single_smoke.py -- a real call,
-# not a name collision. That is a different fact from the ones above: the
-# function works, nothing in production wants it.
+# not a name collision. That is a different fact from a symbol referenced
+# nowhere: the function works, nothing in production wants it.
 CERTUS_METAL_SINGLE:_get_single_substrate_n_array
-
-# Both already exempt before 2026-09-08, and both survive the wider reference
-# perimeter: no runtime module calls them. The grep hits are substrings of
-# other names (_get_thickness_bounds_nm, test_list_to_array), not references.
-certus_physics.structures:Layer.get_thickness
-certus_physics.structures:TLUParameters.to_array

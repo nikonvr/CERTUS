@@ -50,7 +50,6 @@ ajouté — ne recopie ni l'un ni l'autre.**
 
 | échec | ce que c'est |
 |---|---|
-| 3 tests à la **première** passe après un changement de numba ou d'interpréteur (`test_phase2_gradient`, deux `TestIRGlobalModelStrategy`) | faux échecs de cache numba froid : **relance avant de signaler** |
 | un test d'interface qui meurt sans message | arrêt natif `0xC0000005` du worker Qt, mesuré 2 fois sur 120 lancements ; le harnais réessaie une fois |
 | un processus qui meurt sans message Qt | sous Windows, Qt écrit dans `OutputDebugString` : relance avec `QT_FORCE_STDERR_LOGGING=1`, et `-s` pour que pytest ne capture pas (souvent « QThread: Destroyed while thread … is still running », D23) |
 | un test qui passe seul et échoue en suite | fuite d'état entre tests (caches de classe, `sys.modules`) : cherche le test précédent |

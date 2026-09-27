@@ -9,6 +9,7 @@ removal.
 
 from __future__ import annotations
 
+import ast
 import inspect
 import json
 import logging
@@ -162,3 +163,41 @@ class TestMachineSamplingDd:
 
     def test_saving_no_longer_writes_it(self, strat_window, tmp_path, monkeypatch):
         assert "machine_sampling_dd" not in _save(strat_window, tmp_path, monkeypatch)
+
+
+def _string_constants(module) -> set[str]:
+    """The string literals of a module's CODE -- comments are not in the AST."""
+    tree = ast.parse(inspect.getsource(module))
+    return {
+        node.value
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Constant) and isinstance(node.value, str)
+    }
+
+
+class TestDpYieldWeight:
+    """`dp_yield_weight` went from the file into `collect_params`, and the full pipeline added
+    `w x (-log(1 - p))` to a cost map built from `raw_results_sq` -- whose entries carry no
+    crash rate. The yield term was zero at every weight (the map came out identical, bit for
+    bit, at 1, 200 and 1e6), and that map feeds the fusion heuristics of the inheritance
+    step, not the per-block DP that the `[YIELD]` log line announced."""
+
+    @pytest.mark.parametrize("mode", MODES)
+    def test_no_mode_puts_it_in_the_parameters(self, strat_window, mode):
+        strat_window.widgets["execution_mode"].setCurrentText(mode)
+        assert "dp_yield_weight" not in strat_window.collect_params()
+
+    def test_a_file_that_sets_it_still_loads_and_says_it_is_ignored(self, strat_window, tmp_path):
+        with _captured(strat_window.logger) as lines:
+            _load(strat_window, tmp_path, dp_yield_weight=200.0)
+        assert strat_window._loaded_config.get("dp_yield_weight") == 200.0
+        told = _told_ignored(lines)
+        assert len(told) == 1 and "dp_yield_weight" in told[0], lines
+        assert "dp_yield_weight" not in strat_window.collect_params()
+
+    def test_the_pipeline_no_longer_reads_it(self):
+        from certus.workers import certus_strat_workers_pipeline as pipeline
+
+        constants = _string_constants(pipeline)
+        assert "raw_results_sq" in constants, "premise: the pipeline code is the one read"
+        assert "dp_yield_weight" not in constants

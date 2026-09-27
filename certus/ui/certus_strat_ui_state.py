@@ -134,7 +134,11 @@ def _config_flag_default(config: object, key: str, default: bool) -> bool:
 #: still carries one keeps loading -- the key is ignored, and `load_configuration` says so in
 #: one line, because its "CONFIGURATION LOADED" listing prints every key of the file and would
 #: otherwise pass the key off as a setting.
-_RETIRED_CONFIG_KEYS: tuple[str, ...] = ("strategy_phase_timeout", "machine_sampling_dd")
+_RETIRED_CONFIG_KEYS: tuple[str, ...] = (
+    "strategy_phase_timeout",
+    "machine_sampling_dd",
+    "dp_yield_weight",
+)
 
 
 class CertusStratStateMixin:
@@ -1196,14 +1200,6 @@ class CertusStratStateMixin:
             # made the turning points rule inert. 0 = previous path.
             "phase_a_level_margin_factor": _config_float(
                 getattr(self, "_loaded_config", {}), "phase_a_level_margin_factor"
-            ),
-            # ── YIELD weight in DP objective (axis 4.1) ──────────
-            #
-            # cost = cost_nm + w x (-log(1 - p)), where p is the rate of non-
-            # terminable depositions measured by Phase A for this (layer, lambda). 0 = the
-            # crash does not enter the objective, previous behavior.
-            "dp_yield_weight": _config_float(
-                getattr(self, "_loaded_config", {}), "dp_yield_weight"
             ),
             # ── Photometric affine distortion (a, b) & POEM enable ──────────────
             "affine_scale_amp": _config_float(

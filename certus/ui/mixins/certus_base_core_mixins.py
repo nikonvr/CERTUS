@@ -112,7 +112,7 @@ class CertusZoomMixin:
             )
         except AttributeError, RuntimeError, TypeError, ZeroDivisionError:
             pass
-        if hasattr(self, "statusBar") and callable(getattr(self, "statusBar")):
+        if hasattr(self, "statusBar") and callable(self.statusBar):
             try:
                 self.statusBar().setStyleSheet(CertusTheme.get_status_bar_stylesheet())
             except AttributeError, RuntimeError, TypeError:
@@ -133,7 +133,7 @@ class CertusCommandPaletteMixin:
         from certus.utils.certus_command_palette import CommandAction
 
         actions: list[Any] = []
-        if hasattr(self, "save_config") and callable(getattr(self, "save_config")):
+        if hasattr(self, "save_config") and callable(self.save_config):
             actions.append(
                 CommandAction(
                     id="file.save_config",
@@ -146,7 +146,7 @@ class CertusCommandPaletteMixin:
                     callback=lambda: self.save_config(),
                 )
             )
-        if hasattr(self, "load_config") and callable(getattr(self, "load_config")):
+        if hasattr(self, "load_config") and callable(self.load_config):
             actions.append(
                 CommandAction(
                     id="file.load_config",

@@ -106,7 +106,7 @@ def plot_widget_plot_finite(widget, x, y, **kwargs):
     if xf.size == 0:
         return None
     name = kwargs.get("name", "")
-    if hasattr(widget, "add_curve") and callable(getattr(widget, "add_curve")):
+    if hasattr(widget, "add_curve") and callable(widget.add_curve):
         color = kwargs.pop("color", kwargs.pop("pen", "#1e3a8a"))
         width = int(kwargs.pop("width", 2))
         style = kwargs.pop("style", Qt.PenStyle.SolidLine)

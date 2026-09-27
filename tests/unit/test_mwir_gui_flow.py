@@ -413,7 +413,7 @@ def test_start_deferred_corridor_worker_logs_after_stage(monkeypatch) -> None:
 
     assert ok is True
     cfg_used = app._worker.args[0]
-    assert getattr(cfg_used, "corridor_profile_d_enabled") is True
+    assert cfg_used.corridor_profile_d_enabled is True
     assert any(
         "launching deferred corridor worker | after_stage=manual_sigma_insert" in msg
         for msg in logger.info_calls
@@ -449,7 +449,7 @@ def test_start_deferred_corridor_worker_sets_standard_base_mode(monkeypatch) -> 
 
     assert ok is True
     cfg_used = app._worker.args[0]
-    assert getattr(cfg_used, "corridor_profile_d_enabled") is True
+    assert cfg_used.corridor_profile_d_enabled is True
     assert "Corridors:" in app.lbl_status.texts[-1]
 
 

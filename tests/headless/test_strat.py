@@ -115,7 +115,7 @@ def test_strat_headless():
         if final_result:
             best_rmse = float('inf')
             if hasattr(final_result, "best_rmse"):
-                best_rmse = getattr(final_result, "best_rmse")
+                best_rmse = final_result.best_rmse
             elif isinstance(final_result, dict) and "best_rmse" in final_result:
                 best_rmse = final_result["best_rmse"]
             elif isinstance(final_result, list) and len(final_result) > 0 and isinstance(final_result[0], dict) and "rmse" in final_result[0]:

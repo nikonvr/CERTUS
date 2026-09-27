@@ -92,7 +92,7 @@ extend-ignore = [
   # Isort
   "I001",  # unsorted-imports — `ruff format` will handle later
   # Bugbear legacy
-  "B007", "B008", "B009", "B010", "B019",
+  "B007", "B008", "B010", "B019",
   "B904", "B905",
   # Pyupgrade legacy (modernization sweep tracked separately)
   "UP006", "UP007", 

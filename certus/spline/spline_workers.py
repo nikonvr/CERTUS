@@ -2339,7 +2339,7 @@ def _run_single_spline_stage(
         n_samples_per_iter=int(pg_conf.n_samples_per_iter),
         local_search_budget=int(pg_conf.local_search_budget),
         pglobal_random_seed=(
-            int(getattr(pg_conf, "random_seed")) if getattr(pg_conf, "random_seed", None) is not None else None
+            int(pg_conf.random_seed) if getattr(pg_conf, "random_seed", None) is not None else None
         ),
         dim_pglobal_bounds=int(bounds_pg.shape[0]),
         bounds_are_trust_region=bool(trust_rho_val is not None),

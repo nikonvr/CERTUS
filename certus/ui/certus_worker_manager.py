@@ -40,7 +40,7 @@ class CertusWorkerManager(QObject):
     def stop_all(self) -> None:
         """Gracefully interrupt all running workers."""
         for worker in list(self._active_workers):
-            if hasattr(worker, "stop") and callable(getattr(worker, "stop")):
+            if hasattr(worker, "stop") and callable(worker.stop):
                 try:
                     worker.stop()
                 except Exception:

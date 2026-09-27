@@ -51,7 +51,7 @@ class OperationMetrics:
     """Metrics for a single operation type."""
 
     operation: str
-    times: List[float] = field(default_factory=list)
+    times: list[float] = field(default_factory=list)
 
     @property
     def count(self) -> int:
@@ -93,7 +93,7 @@ class OperationMetrics:
     def p99(self) -> float:
         return np.percentile(self.times, 99) if self.times else 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert metrics to dictionary for reporting."""
         return {
             "operation": self.operation,
@@ -119,7 +119,7 @@ class PerformanceMonitor:
     """
 
     def __init__(self):
-        self._metrics: Dict[str, OperationMetrics] = defaultdict(lambda: OperationMetrics(operation=""))
+        self._metrics: dict[str, OperationMetrics] = defaultdict(lambda: OperationMetrics(operation=""))
         self._enabled = ENABLE_PERF_LOGGING
         self._logger = None
 
@@ -188,7 +188,7 @@ class PerformanceMonitor:
         """Get metrics for a specific operation."""
         return self._metrics.get(operation)
 
-    def report(self, top_n: Optional[int] = None, sort_by: str = "total") -> Dict[str, Any]:
+    def report(self, top_n: Optional[int] = None, sort_by: str = "total") -> dict[str, Any]:
         """
         Generate performance report.
 

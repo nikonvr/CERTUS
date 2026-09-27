@@ -52,7 +52,7 @@ def print_banner(title: str):
     print(f"{Colors.BOLD}{Colors.OKBLUE}  {title}{Colors.ENDC}")
     print(f"{Colors.BOLD}{Colors.OKBLUE}{'=' * 70}{Colors.ENDC}\n")
 
-def check_environment() -> Tuple[bool, Dict[str, Any]]:
+def check_environment() -> tuple[bool, dict[str, Any]]:
     """Verify system requirements and Python dependencies."""
     print(f"{Colors.BOLD}[Phase 0] checking system environment and dependencies...{Colors.ENDC}")
     
@@ -93,7 +93,7 @@ def check_environment() -> Tuple[bool, Dict[str, Any]]:
 
     return success, status
 
-def run_step(name: str, cmd: List[str], cwd: Path) -> Dict[str, Any]:
+def run_step(name: str, cmd: list[str], cwd: Path) -> dict[str, Any]:
     """Run a single validation command and stream results live."""
     print(f"{Colors.BOLD}Running: {name}...{Colors.ENDC}")
     start_time = time.time()
@@ -225,7 +225,7 @@ def run_step(name: str, cmd: List[str], cwd: Path) -> Dict[str, Any]:
             "stderr": str(e),
         }
 
-def get_git_changed_files() -> List[str]:
+def get_git_changed_files() -> list[str]:
     """Get list of modified and untracked files from git."""
     try:
         res = subprocess.run(
@@ -250,7 +250,7 @@ def get_git_changed_files() -> List[str]:
         print(f"{Colors.WARNING}[!] Git not available or not a git repository: {e}{Colors.ENDC}")
         return []
 
-def get_matching_test_files(changed_files: List[str]) -> List[str]:
+def get_matching_test_files(changed_files: list[str]) -> list[str]:
     """Map changed files to their corresponding test files."""
     matched_tests = set()
     

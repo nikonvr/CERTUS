@@ -99,9 +99,9 @@ def spectrum_eval_n_vis_points(app: Any, variant: SpectrumEvalVariant) -> int:
 
 def spectrum_eval_on_finished_prepare_display(
     app: Any,
-    data: Dict[str, Any],
+    data: dict[str, Any],
     generation_id: int | None,
-) -> Dict[str, Any] | None:
+) -> dict[str, Any] | None:
     """
 
     Generation control (stale), RMSE snapshot, monotonic display policy.
@@ -227,7 +227,7 @@ def spectrum_eval_run_preamble(app: Any, run_eval_cb: Any) -> bool:
 def spectrum_eval_build_worker_cfg(
     app: Any,
     variant: SpectrumEvalVariant,
-) -> Dict[str, Any] | None:
+) -> dict[str, Any] | None:
     """
 
     Prepares the cfg dict for EvalWorker. Returns None if aborted (materials / targets).
@@ -295,7 +295,7 @@ def spectrum_eval_build_worker_cfg(
         "info",
     )
 
-    cfg: Dict[str, Any] = {
+    cfg: dict[str, Any] = {
         "variant": variant,
         "mats": mats,
         "stack": stack,
@@ -364,7 +364,7 @@ def spectrum_eval_build_worker_cfg(
     return cfg
 
 
-def spectrum_eval_start_worker(app: Any, cfg: Dict[str, Any], eval_start: float) -> None:
+def spectrum_eval_start_worker(app: Any, cfg: dict[str, Any], eval_start: float) -> None:
 
     from certus.workers.certus_spectral_workers import EvalWorker
 
@@ -413,7 +413,7 @@ def spectrum_eval_start_worker(app: Any, cfg: Dict[str, Any], eval_start: float)
 def spectrum_eval_plot_curves(
     app: Any,
     *,
-    data_for_display: Dict[str, Any],
+    data_for_display: dict[str, Any],
     plot_targets: list,
     res_vis: dict,
     res_optim: dict,

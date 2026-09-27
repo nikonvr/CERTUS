@@ -41,7 +41,7 @@ class DesignOrchestrator:
 
         logging.info("[ORCHESTRATOR] DesignOrchestrator initialized.")
 
-    def start_synthesis(self, initial_cfg: Dict[str, Any]):
+    def start_synthesis(self, initial_cfg: dict[str, Any]):
         """Entry point to kickstart the autonomous synthesis loop."""
         self.is_running = True
         logging.info("[ORCHESTRATOR] Synthesis loop started.")
@@ -67,7 +67,7 @@ class DesignOrchestrator:
         """Return True when post-optim workflow is inside Needle cycle states."""
         return hasattr(self, "_needle_cycle_step") and self._needle_cycle_step in [1, 2, 3]
 
-    def _on_optim_done(self, d: Dict) -> None:
+    def _on_optim_done(self, d: dict) -> None:
         """Central callback after any optimization completes.
 
         This is the main state machine driving the hybrid design workflow.
@@ -443,7 +443,7 @@ class DesignOrchestrator:
         self._start_needle_process()
         return True
 
-    def _handle_decimation_polish_completion(self, d: Dict) -> bool:
+    def _handle_decimation_polish_completion(self, d: dict) -> bool:
         """Route decimation polish completion and bypass standard workflow."""
         if not getattr(self.ui, "_decimation_polishing", False):
             return False
@@ -457,7 +457,7 @@ class DesignOrchestrator:
         self.ui._on_decimation_polish_done()
         return True
 
-    def _handle_smart_decimation_followup(self, d: Dict) -> bool:
+    def _handle_smart_decimation_followup(self, d: dict) -> bool:
         """Advance smart decimation polish passes when enabled."""
         if not hasattr(self.ui, "_smart_decimation_step"):
             return False
@@ -748,7 +748,7 @@ class DesignOrchestrator:
         if hasattr(self.ui, "schedule_task"):
             self._schedule_task(100, self.ui._decimation_remove_and_polish)
 
-    def _on_needle_found(self, res: Dict) -> None:
+    def _on_needle_found(self, res: dict) -> None:
         if hasattr(self.ui, "progress_widget"):
             self.ui.progress_widget.stop("Done")
         """
@@ -912,7 +912,7 @@ class DesignOrchestrator:
             if not self._apply_needle_split_insertion(res):
                 return
 
-    def _handle_needle_no_candidate(self, action: str, res: Dict) -> Any:
+    def _handle_needle_no_candidate(self, action: str, res: dict) -> Any:
         """Handle "none" needle actions including retries, aborts, and overshoot prune."""
 
         current_count = self.ui.front_table.rowCount()
@@ -933,7 +933,7 @@ class DesignOrchestrator:
 
         return action, res, True
 
-    def _handle_needle_no_candidate_below_target(self, action: str, res: Dict, current_count: int) -> tuple:
+    def _handle_needle_no_candidate_below_target(self, action: str, res: dict, current_count: int) -> tuple:
         """Handle retries and abort for needle no-candidate results below target count."""
 
         self.ui.log(
@@ -1077,7 +1077,7 @@ class DesignOrchestrator:
 
         return False
 
-    def _apply_needle_split_insertion(self, res: Dict) -> bool:
+    def _apply_needle_split_insertion(self, res: dict) -> bool:
         """Apply a split insertion candidate and launch the local refinement cycle."""
 
         idx = res["layer_idx"]

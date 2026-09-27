@@ -130,7 +130,7 @@ def copy_result_dict(result: dict, deep_lists: bool = False) -> dict:
     return copied
 
 
-def copy_list_of_results(results: List[dict]) -> List[dict]:
+def copy_list_of_results(results: list[dict]) -> list[dict]:
     """
     Efficiently copy a list of result dictionaries.
 

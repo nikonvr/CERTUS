@@ -419,8 +419,8 @@ def validate_refractive_index(
 
 
 def validate_spectral_data(
-    wavelengths: Union[np.ndarray, List[float]],
-    values: Union[np.ndarray, List[float]],
+    wavelengths: Union[np.ndarray, list[float]],
+    values: Union[np.ndarray, list[float]],
     value_name: str = "values",
     min_points: int = 2,
     check_bounds: bool = True,

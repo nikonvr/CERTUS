@@ -325,13 +325,13 @@ class CertusREApp(
 
         # Shared state with base (tables, spectrum)
 
-        self.target_widgets: List = []
+        self.target_widgets: list = []
 
         self.ep_current: np.ndarray | None = None
 
-        self.last_result: Dict = {}
+        self.last_result: dict = {}
 
-        self._best_eval_result: Dict | None = None
+        self._best_eval_result: dict | None = None
 
         self._best_eval_rmse: float = float("inf")
 

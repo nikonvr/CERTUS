@@ -31,8 +31,8 @@ class OpticalStack:
     """
 
     stack_id: str = field(default_factory=lambda: str(uuid4()))
-    layers: List[Layer] = field(default_factory=list)
-    _events: List[dict] = field(default_factory=list, repr=False)
+    layers: list[Layer] = field(default_factory=list)
+    _events: list[dict] = field(default_factory=list, repr=False)
 
     def __post_init__(self):
         """Initial validation."""
@@ -187,7 +187,7 @@ class OpticalStack:
 
         return True
 
-    def get_events(self) -> List[dict]:
+    def get_events(self) -> list[dict]:
         """
         Retrieve emitted domain events.
 

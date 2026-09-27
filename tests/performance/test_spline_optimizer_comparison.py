@@ -579,7 +579,7 @@ class SplineOptimizerComparison:
 
 
 
-    def test_hybrid_strategies(self) -> List[OptimizerResult]:
+    def test_hybrid_strategies(self) -> list[OptimizerResult]:
 
         """Test hybrid optimization strategies"""
 
@@ -811,7 +811,7 @@ class SplineOptimizerComparison:
 
 
 
-    def test_robustness(self) -> Dict[str, List[float]]:
+    def test_robustness(self) -> dict[str, list[float]]:
 
         """Test optimizer robustness with different starting points"""
 
@@ -927,7 +927,7 @@ class SplineOptimizerComparison:
 
 
 
-    def run_comparison(self) -> Tuple[List[OptimizerResult], Dict[str, List[float]]]:
+    def run_comparison(self) -> tuple[list[OptimizerResult], dict[str, list[float]]]:
 
         """Run complete optimizer comparison"""
 
@@ -1015,7 +1015,7 @@ class SplineOptimizerComparison:
 
     def print_comparison(
 
-        self, results: List[OptimizerResult], robustness: Dict[str, List[float]]
+        self, results: list[OptimizerResult], robustness: dict[str, list[float]]
 
     ):
 

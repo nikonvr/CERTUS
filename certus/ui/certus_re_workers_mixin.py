@@ -236,7 +236,7 @@ class CertusREWorkersMixin:
 
         spectrum_eval_start_worker(self, cfg, _eval_start)
 
-    def _on_eval_finished(self, data: Dict, generation_id: int | None = None):
+    def _on_eval_finished(self, data: dict, generation_id: int | None = None):
         """
 
         Callback after spectral evaluation completion.
@@ -743,7 +743,7 @@ class CertusREWorkersMixin:
             self._re_nk_preview_sub012 = data.get("re_nk_preview_sub012")
             self._plot_nk()
 
-    def _on_re_done(self, data: Dict):
+    def _on_re_done(self, data: dict):
         """Handle REWorker completion; show results dialog."""
         self._remove_re_skeletons()
         self._re_mode_active = False
@@ -1379,7 +1379,7 @@ class CertusREWorkersMixin:
                 "ERROR",
             )
 
-    def _re_p4_display_beam_kwargs(self) -> Dict[str, Any]:
+    def _re_p4_display_beam_kwargs(self) -> dict[str, Any]:
         """Optional phase 4 arguments for _re_calc / RMSE when the last 'best' RE is a beam run."""
 
         if not getattr(self, "_re_p4_display_beam_active", False):

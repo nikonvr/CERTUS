@@ -29,8 +29,8 @@ CERTUS_COLORS = {
 
 
 def export_plot_to_svg(
-    wavelengths: Union[np.ndarray, List[float]],
-    values: Union[np.ndarray, List[float]],
+    wavelengths: Union[np.ndarray, list[float]],
+    values: Union[np.ndarray, list[float]],
     title: str = "Spectral Plot",
     xlabel: str = "Wavelength (nm)",
     ylabel: str = "Value",
@@ -189,9 +189,9 @@ def export_plot_to_svg(
 
 
 def export_spectrum_to_svg(
-    wavelengths: Union[np.ndarray, List[float]],
-    R: Union[np.ndarray, List[float]],
-    T: Optional[Union[np.ndarray, List[float]]] = None,
+    wavelengths: Union[np.ndarray, list[float]],
+    R: Union[np.ndarray, list[float]],
+    T: Optional[Union[np.ndarray, list[float]]] = None,
     filename: str = "spectrum.svg",
     width: int = 800,
     height: int = 600,

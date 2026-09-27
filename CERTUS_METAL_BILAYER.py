@@ -173,8 +173,8 @@ DEFAULT_EL_VARIATION = "20"
 
 
 def _build_bilayer_bounds(
-    params: Dict[str, Any], l_array: Optional[np.ndarray] = None, include_eM: bool = True
-) -> List[Tuple[float, float]]:
+    params: dict[str, Any], l_array: Optional[np.ndarray] = None, include_eM: bool = True
+) -> list[tuple[float, float]]:
     """Build bounds list for bilayer optimization. If include_eM=False, omit first (eM) bound."""
 
     eL_min = max(0, params.get("eL_nominal", 900) - params.get("eL_variation", 20))

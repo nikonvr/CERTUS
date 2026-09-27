@@ -51,8 +51,8 @@ class EventBus:
     """
 
     def __init__(self):
-        self._handlers: Dict[str, List[Callable[[DomainEvent], None]]] = {}
-        self._store: List[DomainEvent] = []
+        self._handlers: dict[str, list[Callable[[DomainEvent], None]]] = {}
+        self._store: list[DomainEvent] = []
 
     def subscribe(self, event_type: str, handler: Callable[[DomainEvent], None]) -> None:
         """
@@ -85,7 +85,7 @@ class EventBus:
                 # Log error but don't crash
                 print(f"Error in event handler: {e}")
 
-    def replay(self, aggregate_id: str) -> List[DomainEvent]:
+    def replay(self, aggregate_id: str) -> list[DomainEvent]:
         """
         Replay all events for aggregate (event sourcing).
 
@@ -97,7 +97,7 @@ class EventBus:
         """
         return [e for e in self._store if e.aggregate_id == aggregate_id]
 
-    def get_all_events(self) -> List[DomainEvent]:
+    def get_all_events(self) -> list[DomainEvent]:
         """
         Get all events in order.
 

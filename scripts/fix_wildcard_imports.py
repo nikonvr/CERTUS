@@ -22,7 +22,7 @@ class WildcardImportFixer:
         self.content = filepath.read_text(encoding="utf-8")
         self.tree = ast.parse(self.content, filename=str(filepath))
 
-    def find_wildcard_imports(self) -> List[Tuple[int, str]]:
+    def find_wildcard_imports(self) -> list[tuple[int, str]]:
         """Find all wildcard imports with their line."""
         wildcards = []
         for node in ast.walk(self.tree):
@@ -32,7 +32,7 @@ class WildcardImportFixer:
                     wildcards.append((node.lineno, module))
         return wildcards
 
-    def find_used_names(self) -> Set[str]:
+    def find_used_names(self) -> set[str]:
         """Finds all names used in the code."""
         used = set()
 
@@ -46,7 +46,7 @@ class WildcardImportFixer:
 
         return used
 
-    def get_typing_symbols(self) -> Set[str]:
+    def get_typing_symbols(self) -> set[str]:
         """Commonly used typing symbols."""
         return {
             "Any",
@@ -73,7 +73,7 @@ class WildcardImportFixer:
             "TYPE_CHECKING",
         }
 
-    def suggest_explicit_imports(self, module: str, used_names: Set[str]) -> str:
+    def suggest_explicit_imports(self, module: str, used_names: set[str]) -> str:
         """Suggests explicit imports for a given module."""
 
         if module == "typing":
@@ -103,7 +103,7 @@ class WildcardImportFixer:
         #For other modules, we suggest a manual analysis
         return f"# TODO: Analyser manuellement les symboles utilisés depuis {module}"
 
-    def generate_fixes(self) -> Dict[str, List[str]]:
+    def generate_fixes(self) -> dict[str, list[str]]:
         """Generates suggested fixes."""
         wildcards = self.find_wildcard_imports()
         if not wildcards:

@@ -376,15 +376,6 @@ def _bilayer_reflectance_mse(
 
 
 
-def _bilayer_autopsy_dir() -> Path:
-    """Directory used to persist autopsy payloads."""
-
-    path = Path(get_resource_path("reports")) / "autopsy"
-    path.mkdir(parents=True, exist_ok=True)
-    return path
-
-
-
 def _write_bilayer_autopsy_record(kind: str, payload: dict[str, Any]) -> Path | None:
     """Persist a compact JSON payload for post-mortem analysis."""
     return None
@@ -1295,12 +1286,6 @@ class CertusMetalBilayerApp(MetalBaseApp):
     # CertusBaseApp configuration
 
     APP_NAME = "CERTUS-METAL-BILAYER"
-
-    WINDOW_TITLE = "CERTUS • Metal n,k Index Determination"
-
-    SUMMARY_SUBSTRATE_LABEL = "SILICON (SI)"
-
-    SUMMARY_FACES_MODE = "ONE FACE (NO BACKSIDE)"
 
     def _load_defaults(self):
         """Load default values for CERTUS-METAL-BILAYER."""

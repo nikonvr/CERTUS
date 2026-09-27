@@ -974,7 +974,8 @@ class TestSapphirenuexampleSellmeier:
     @pytest.fixture(scope="class")
 
 
-    def sapphire_ctx(self) -> tuple[pd.DataFrame, np.ndarray, dict[str, list]]:
+    @classmethod
+    def sapphire_ctx(cls) -> tuple[pd.DataFrame, np.ndarray, dict[str, list]]:
 
 
         return _load_sapphirenu_example_dataframe()

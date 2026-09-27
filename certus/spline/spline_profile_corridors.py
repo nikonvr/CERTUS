@@ -799,6 +799,7 @@ def _package_corridor_results(ctx: CorridorProfileContext) -> dict[str, Any]:
         "profile_d_acceptance_mode": "lr" if ctx.use_lr else ("delta_rmse_abs_best_polished" if (ctx.use_abs_delta and ctx.scientific_nominal) else ("delta_rmse_abs" if ctx.use_abs_delta else "alpha_heuristic")),
         "profile_d_scientific_nominal": bool(ctx.scientific_nominal),
         "profile_rmse_best_ref": float(ctx.rmse_opt) if ctx.scientific_nominal else None,
+        "profile_d_rmse_opt": float(ctx.rmse_opt),
         "profile_d_rmse_ref_source": str(ctx.rmse_ref_tag),
         "profile_d_rmse_thresh": float(ctx.rmse_thresh_active),
         "profile_d_rmse_thresh_nominal": float(ctx.rmse_thresh) if (not ctx.use_lr) else None,
@@ -823,6 +824,11 @@ def _package_corridor_results(ctx: CorridorProfileContext) -> dict[str, Any]:
         "profile_d_parabola_curvature": float(parab_fit.get("curvature", float("nan"))),
         "profile_d_seed_gate_eval_count": int(ctx.seed_gate_eval_count),
         "profile_d_seed_gate_kept_count": int(ctx.seed_gate_kept_count),
+        "profile_d_seed_gate_kept_rate": (
+            float(ctx.seed_gate_kept_count) / float(ctx.seed_gate_eval_count)
+            if int(ctx.seed_gate_eval_count) > 0
+            else float("nan")
+        ),
         "profile_d_seed_gate_saturated": bool(ctx.seed_gate_saturated_global),
         "profile_d_seed_gate_auto_escalated": bool(ctx.seed_gate_auto_escalated_global),
         "profile_d_user_rmse_mask": np.asarray(ctx._user_mask, dtype=bool).copy() if ctx._user_mask is not None and len(np.asarray(ctx._user_mask)) > 0 else None,

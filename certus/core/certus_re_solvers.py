@@ -1052,15 +1052,6 @@ def re_execute_phase2_candidate(
             "fd_executor": None,
         }
 
-        def _eval_both_p2a(
-            x_sp: np.ndarray,
-            _cb2a=_cb2a,
-            ep_p1=ep_p1,
-            _ki=ki,
-            _t_pf=_t_pf,
-        ) -> tuple | None:
-            return worker._compute_eval_both_p2a(ctx_p2, x_sp, _cb2a, ep_p1, _ki, _t_pf)
-
         def _fun_res_p2a(x_sp: np.ndarray, _cb2a=_cb2a) -> Any:
             return worker._compute_fun_res_p2a(ctx_p2, x_sp, _cb2a)
 

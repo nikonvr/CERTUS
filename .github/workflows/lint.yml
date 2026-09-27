@@ -33,7 +33,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install Ruff
-        run: python -m pip install --upgrade pip ruff==0.15.12
+        # La derniere version, comme les dependances du workflow `tests` : CERTUS tourne
+        # toujours a jour (decision du 2026-09-27). L'epingle 0.15.12 divergeait du verrou
+        # (0.16.9) et du poste ; `ruff --version` journalise ce qui a ete eprouve.
+        run: |
+          python -m pip install --upgrade pip ruff
+          ruff --version
 
       - name: Ruff check
         run: ruff check .

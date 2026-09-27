@@ -213,7 +213,7 @@ def read_data_file_robust(filepath: str, **kwargs) -> pd.DataFrame:
     return read_csv_robust(filepath, **kwargs)
 
 
-def to_csv_robust(df: pd.DataFrame, filepath: str, decimal_separator: str = None, **kwargs) -> None:
+def to_csv_robust(df: pd.DataFrame, filepath: str, decimal_separator: str | None = None, **kwargs) -> None:
     """
     Writes a DataFrame to a CSV file with configurable format.
 
@@ -765,7 +765,7 @@ PERF_MONITOR = PerformanceMonitor()
 # =============================================================================
 
 
-def generate_html_report(filename: str, title: str, sections: list[dict], figures: list = None) -> bool:
+def generate_html_report(filename: str, title: str, sections: list[dict], figures: list | None = None) -> bool:
     """
     Generates an HTML report with sections and figures.
 

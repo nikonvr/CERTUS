@@ -1592,7 +1592,7 @@ class MetalBaseApp(CertusBaseApp):
         return c
 
     def _create_material_params_group(
-        self, show_diel_model: bool = False, substrate_options: list = None
+        self, show_diel_model: bool = False, substrate_options: list | None = None
     ) -> CertusCard:
         """
 

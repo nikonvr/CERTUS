@@ -253,7 +253,7 @@ def create_flashy_grid(cards: list) -> QWidget:
 
     return w
 
-def create_log_widget(visible: bool = False, height: int = None) -> QTextEdit:
+def create_log_widget(visible: bool = False, height: int | None = None) -> QTextEdit:
     """
 
     Creates a standardized log text widget.

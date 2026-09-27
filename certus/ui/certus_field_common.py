@@ -140,7 +140,7 @@ class OpticsPanelWidget(QWidget):
         return spin
 
     def _create_combo(
-        self, default_val: str, allow_air: bool = True, items_list: list[str] | tuple[str, ...] = None
+        self, default_val: str, allow_air: bool = True, items_list: list[str] | tuple[str, ...] | None = None
     ) -> QComboBox:
         combo = QComboBox()
         if allow_air:
@@ -353,7 +353,7 @@ class StackPanelWidget(QWidget):
         if hasattr(self, "btn_container"):
             self.btn_container.setVisible(visible)
 
-    def add_row_to_table(self, row: int, qwot: float, mat_str: str = None) -> None:
+    def add_row_to_table(self, row: int, qwot: float, mat_str: str | None = None) -> None:
         """Adds or updates a row in the layers table securely."""
         try:
             if mat_str is None:

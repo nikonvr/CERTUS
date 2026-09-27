@@ -196,7 +196,7 @@ class PGlobalOptimizerINDEX:
         self,
         objective,
         bounds: np.ndarray,
-        n_workers: int = None,
+        n_workers: int | None = None,
         config: PGlobalConfig | None = None,
         log_clues: list | None = None,
         stop_event: Event | None = None,

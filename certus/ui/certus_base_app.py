@@ -960,7 +960,7 @@ class CertusBaseApp(
                 ) from e
 
     @safe_ui_action
-    def load_config(self, filename: str = None) -> None:
+    def load_config(self, filename: str | None = None) -> None:
         """Load configuration from JSON file."""
 
         import json

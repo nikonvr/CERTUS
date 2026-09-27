@@ -310,7 +310,7 @@ class CertusLogPanel(QWidget):
         self,
         title: str = "LOGS",
         visible: bool = True,
-        height: int = None,
+        height: int | None = None,
         parent=None,
     ) -> None:
 

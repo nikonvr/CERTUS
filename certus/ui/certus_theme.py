@@ -382,7 +382,7 @@ class CertusTheme:
         """
 
     @classmethod
-    def get_font(cls, size: int = None, weight: int = FONT_WEIGHT_NORMAL) -> QFont:
+    def get_font(cls, size: int | None = None, weight: int = FONT_WEIGHT_NORMAL) -> QFont:
         """Returns a standardized QFont using the theme's font family."""
 
         family = cls.FONT_FAMILY.split(",")[0].strip("'")

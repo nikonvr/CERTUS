@@ -171,7 +171,7 @@ def attach_console_logging(app) -> None:
 DEFAULT_TIMEOUT_MS: int = int(float(os.environ.get("CERTUS_BENCH_TIMEOUT_S", "1800")) * 1000.0)
 
 
-def wait_for(worker, timeout_ms: int = None):
+def wait_for(worker, timeout_ms: int | None = None):
     if timeout_ms is None:
         timeout_ms = DEFAULT_TIMEOUT_MS
     """Attend la fin d'un worker Qt et renvoie son resultat."""

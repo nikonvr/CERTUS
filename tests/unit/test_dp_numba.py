@@ -14,9 +14,9 @@ def _find_k_best_groupings_dp_sequential(
     num_layers: int,
     top_k: int = 100,
     timeout: float = 120.0,
-    start_time: float = None,
+    start_time: float | None = None,
     force_monolayer: bool = False,
-    nucleation_wl: float = None,
+    nucleation_wl: float | None = None,
     nucleation_size: int = 0,
 ):
     if start_time is None:
@@ -407,7 +407,7 @@ def _find_k_best_groupings_dp_numba(
     num_layers: int,
     top_k: int = 100,
     force_monolayer: bool = False,
-    nucleation_wl: float = None,
+    nucleation_wl: float | None = None,
     nucleation_size: int = 0,
 ):
     # 1. Prepare dense matrices

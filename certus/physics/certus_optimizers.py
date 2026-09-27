@@ -200,7 +200,7 @@ class LBFGSBSearcher:
 
         return x.copy(), float(f), nfev
 
-    def search(self, x0: np.ndarray, max_feval: int = 1000, callback: Callable = None) -> tuple[np.ndarray, float, int]:
+    def search(self, x0: np.ndarray, max_feval: int = 1000, callback: Callable | None = None) -> tuple[np.ndarray, float, int]:
 
         try:
             # Probe gradient on first call (needs x0 to test)

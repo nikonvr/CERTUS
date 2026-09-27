@@ -28,7 +28,7 @@ def test_field_headless():
         example_path = Path("example/example_field/test_hr_mirror.json").resolve()
         print("Loading config from:", example_path)
 
-        with open(example_path, "r") as f:
+        with open(example_path) as f:
             data = json.load(f)
 
         # Bypass the QDialog popup in on_import_design

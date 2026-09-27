@@ -169,7 +169,7 @@ def _read_description(path: Path) -> str:
     try:
         desc_path = path.with_suffix(".txt")
         if desc_path.is_file():
-            with open(desc_path, "r", encoding="utf-8") as f:
+            with open(desc_path, encoding="utf-8") as f:
                 return f.read().strip().splitlines()[0] if f else ""
     except (OSError, UnicodeDecodeError, ValueError):
         pass

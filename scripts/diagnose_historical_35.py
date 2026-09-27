@@ -41,7 +41,7 @@ opti_results = {"clues_at_wl": clues_at_wl}
 wl_arr, nH_arr, nL_arr, nSub_arr, T_nom = _prepare_robustness_nominal_optics(params, p_thick_nominal, opti_results)
 full_dyn_grid = {i: {float(w): 0.1 for w in clues_at_wl.keys()} for i in range(len(p_thick_nominal))}
 
-with open(ROOT / "reports" / "STRAT_observability_20260814_102134.json", "r") as f:
+with open(ROOT / "reports" / "STRAT_observability_20260814_102134.json") as f:
     obs = json.load(f)
 wls = [float(l["best_wl"]) for l in obs["layers"]][:len(p_thick_nominal)]
 print(f"Nombre de couches chargées : {len(wls)} / {len(p_thick_nominal)}")

@@ -22,7 +22,7 @@ def test_json_parsing():
 
     for example in examples:
         try:
-            with open(example, "r") as f:
+            with open(example) as f:
                 data = json.load(f)
 
             print(f"OK {example}: {len(data)}keys")
@@ -49,7 +49,7 @@ def test_csv_parsing():
 
     for csv_file in csv_files:
         try:
-            with open(csv_file, "r") as f:
+            with open(csv_file) as f:
                 lines = f.readlines()
 
             print(f"OK {csv_file}: {len(lines)} lines")

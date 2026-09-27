@@ -94,7 +94,7 @@ def main():
     # 0. Stratégie Phase A (les 35 longueurs d'ondes individuelles optimisées par Phase A)
     import json
     obs_file = ROOT / "reports" / "STRAT_observability_20260814_102134.json"
-    with open(obs_file, "r", encoding="utf-8") as f:
+    with open(obs_file, encoding="utf-8") as f:
         obs_data = json.load(f)
     phase_a_wls = [float(l["best_wl"]) for l in obs_data["layers"]]
     

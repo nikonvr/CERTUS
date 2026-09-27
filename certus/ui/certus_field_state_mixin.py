@@ -399,7 +399,7 @@ class CertusFieldStateMixin:
             return
 
         try:
-            with open(filename, 'r') as f:
+            with open(filename) as f:
                 data = json.load(f)
             
             def set_combo(combo: QComboBox, text: str):
@@ -503,7 +503,7 @@ class CertusFieldStateMixin:
             return
 
         try:
-            with open(filename, 'r') as f:
+            with open(filename) as f:
                 data = json.load(f)
 
             # If the design file contains materials and center wavelength config, load them

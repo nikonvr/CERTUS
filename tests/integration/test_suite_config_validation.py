@@ -22,7 +22,7 @@ def test_config_json_validation(json_file):
     This prevents broken configs from crashing applications on load.
     """
     try:
-        with open(json_file, 'r', encoding='utf-8') as f:
+        with open(json_file, encoding='utf-8') as f:
             data = json.load(f)
             assert isinstance(data, (dict, list)), "JSON file must contain a dict or list"
     except json.JSONDecodeError as e:

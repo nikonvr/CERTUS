@@ -2640,7 +2640,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
     def _resolve_config_target_file(self, config_path: str) -> str | None:
         try:
             cfg_path = Path(config_path).expanduser().resolve()
-            with open(cfg_path, "r", encoding="utf-8") as fh:
+            with open(cfg_path, encoding="utf-8") as fh:
                 cfg = json.load(fh)
             target_hint = cfg.get("target_file", None)
             if not target_hint:

@@ -117,7 +117,7 @@ def main():
 
     # Charger la stratégie historique issue du rapport d'observabilité
     obs_file = ROOT / "reports" / "STRAT_observability_20260814_102134.json"
-    with open(obs_file, "r", encoding="utf-8") as f:
+    with open(obs_file, encoding="utf-8") as f:
         obs_data = json.load(f)
     historical_wls = [float(l["best_wl"]) for l in obs_data["layers"]]
 

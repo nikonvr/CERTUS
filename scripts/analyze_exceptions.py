@@ -94,7 +94,7 @@ def audit_exceptions(root_dir: Path) -> dict:
                 filepath = Path(dirpath) / filename
                 total_files += 1
                 try:
-                    with open(filepath, "r", encoding="utf-8") as f:
+                    with open(filepath, encoding="utf-8") as f:
                         tree = ast.parse(f.read(), filename=str(filepath))
                     
                     visitor = ExceptionVisitor(filepath)

@@ -679,7 +679,7 @@ class CertusStratStateMixin:
         self._last_config_file = filename
 
         try:
-            with open(filename, "r", encoding="utf-8") as f:
+            with open(filename, encoding="utf-8") as f:
                 config = json.load(f)
 
             if not isinstance(config, dict):
@@ -857,7 +857,7 @@ class CertusStratStateMixin:
 
         try:
             for f_path in files:
-                with open(f_path, "r", encoding="utf-8") as f:
+                with open(f_path, encoding="utf-8") as f:
                     try:
                         data = json.load(f)
 

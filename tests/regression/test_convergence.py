@@ -67,7 +67,7 @@ def main():
         print("Please run scripts/collect_rmse.py first to generate the baseline.")
         sys.exit(1)
         
-    with open(baseline_path, "r") as f:
+    with open(baseline_path) as f:
         baseline = json.load(f)
         
     passed = 0

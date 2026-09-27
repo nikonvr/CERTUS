@@ -128,7 +128,7 @@ def read_csv_robust(filepath: str, **kwargs) -> pd.DataFrame:
 
     try:
         # 1. Detect format
-        with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
+        with open(filepath, encoding="utf-8", errors="ignore") as f:
             sample = f.read(CSV_SAMPLE_SIZE)
 
         has_semi = ";" in sample

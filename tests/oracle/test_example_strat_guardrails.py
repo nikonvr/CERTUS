@@ -17,7 +17,7 @@ REF_JSON_PATH = ROOT / "example" / "example_strat" / "JSON-strat-example.json"
 def test_reference_config_anti_drift_guardrail():
     """Action 6.1 #4 — Verify reference JSON configuration keys against unintended drift."""
     assert REF_JSON_PATH.exists(), f"Missing reference file: {REF_JSON_PATH}"
-    with open(REF_JSON_PATH, "r", encoding="utf-8") as f:
+    with open(REF_JSON_PATH, encoding="utf-8") as f:
         cfg = json.load(f)
 
     # Check key calibration values
@@ -29,7 +29,7 @@ def test_reference_config_anti_drift_guardrail():
 
 def test_spectral_sanity_dichroic_guardrail():
     """Action 6.1 #2 — Verify 48-layer dichroic design is a valid passband/stopband filter."""
-    with open(REF_JSON_PATH, "r", encoding="utf-8") as f:
+    with open(REF_JSON_PATH, encoding="utf-8") as f:
         cfg = json.load(f)
 
     mults = np.array(cfg["stack_multipliers"], dtype=np.float64)

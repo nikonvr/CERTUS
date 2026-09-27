@@ -23,7 +23,7 @@ def test_no_toplevel_import_of_physics_impl_in_monoliths():
         path_obj = Path(path)
         if not path_obj.name.startswith("CERTUS_"):
             continue
-        with open(path, "r", encoding="utf-8") as fh:
+        with open(path, encoding="utf-8") as fh:
             tree = ast.parse(fh.read(), filename=path)
         for node in tree.body:  # module-level only
             if isinstance(node, ast.ImportFrom) and node.module == "_certus_physics_impl":
@@ -72,7 +72,7 @@ def test_no_new_toplevel_import_of_physics_impl():
         if name in _PHYSICS_IMPL_TOPLEVEL_WHITELIST:
             continue
         try:
-            with open(path, "r", encoding="utf-8") as fh:
+            with open(path, encoding="utf-8") as fh:
                 tree = ast.parse(fh.read(), filename=path)
         except (SyntaxError, UnicodeDecodeError):
             # Skip unparsable files (none expected at root, but stay defensive).
@@ -107,7 +107,7 @@ def test_no_processpoolexecutor_in_strat():
     """
     strat_path = Path(__file__).resolve().parents[2] / "CERTUS_STRAT.py"
 
-    with open(strat_path, "r", encoding="utf-8") as f:
+    with open(strat_path, encoding="utf-8") as f:
         tree = ast.parse(f.read(), filename=str(strat_path))
 
     for node in ast.walk(tree):
@@ -131,7 +131,7 @@ def test_no_sequential_pglobal():
     """
     physics_path = Path(__file__).resolve().parents[2] / "certus" / "physics" / "certus_optimizers.py"
 
-    with open(physics_path, "r", encoding="utf-8") as f:
+    with open(physics_path, encoding="utf-8") as f:
         tree = ast.parse(f.read(), filename=str(physics_path))
 
     pglobal_found = False
@@ -184,7 +184,7 @@ def test_numba_nogil_enabled():
 
     trees = []
     for f_path in kernel_files:
-        with open(f_path, "r", encoding="utf-8") as f:
+        with open(f_path, encoding="utf-8") as f:
             trees.append(ast.parse(f.read(), filename=str(f_path)))
 
     found = set()

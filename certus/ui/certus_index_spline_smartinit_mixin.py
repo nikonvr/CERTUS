@@ -358,7 +358,7 @@ class CertusIndexSplineSmartInitMixin:
         if not path:
             return
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 data = json.load(f)
             from certus.utils.certus_result_schema import validate_project_dict
             validate_project_dict(data)

@@ -6,7 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 for p in sorted(ROOT.glob("reports/*bandpass*.json")):
     try:
-        with open(p, "r", encoding="utf-8") as f:
+        with open(p, encoding="utf-8") as f:
             data = json.load(f)
         if isinstance(data, dict) and "strategies" in data:
             for s in data["strategies"]:

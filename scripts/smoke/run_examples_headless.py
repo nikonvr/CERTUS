@@ -134,7 +134,7 @@ def test_design():
         if f.suffix.lower() != ".json":
             continue
         try:
-            with open(f, "r", encoding="utf-8") as fh:
+            with open(f, encoding="utf-8") as fh:
                 data = json.load(fh)
             assert isinstance(data, dict), "root not dict"
             assert "materials" in data, "no 'materials' key"
@@ -182,7 +182,7 @@ def test_strat():
         if f.suffix.lower() != ".json":
             continue
         try:
-            with open(f, "r", encoding="utf-8") as fh:
+            with open(f, encoding="utf-8") as fh:
                 data = json.load(fh)
             assert isinstance(data, dict), "root not dict"
             assert len(data) >= 2, f"too few keys: {len(data)}"

@@ -974,7 +974,7 @@ class CertusBaseApp(
             certus_io_ui.set_certus_last_dir(filename)
 
             try:
-                with open(filename, "r", encoding="utf-8") as f:
+                with open(filename, encoding="utf-8") as f:
                     config = json.load(f)
 
                 if not isinstance(config, dict):

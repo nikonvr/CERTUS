@@ -15,7 +15,7 @@ def test_no_ultra_fine_duplicates():
     hashes = defaultdict(list)
 
     def extract_chunks(filepath):
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(filepath, encoding="utf-8") as f:
             source = f.read()
         try:
             tree = ast.parse(source)

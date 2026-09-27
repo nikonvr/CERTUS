@@ -285,14 +285,12 @@ class TestDesignFunctionality:
 
     def test_spectrum_calculationation(self, sample_layers, sample_wavelengths):
         """Test the spectrum calculation."""
-        try:
-            from conftest import compute_spectrum_simple
+        # Not `from conftest import`: several conftest.py exist, and the bare name
+        # resolves to tests/unit/conftest.py here (tests/spectrum_helpers.py says why).
+        from spectrum_helpers import compute_spectrum_simple
 
-            spectrum = compute_spectrum_simple(sample_layers, sample_wavelengths)
+        spectrum = compute_spectrum_simple(sample_layers, sample_wavelengths)
 
-            assert isinstance(spectrum, np.ndarray)
-            assert len(spectrum) == len(sample_wavelengths)
-
-        except ImportError:
-            pytest.skip("compute_spectrum_simple non disponible")
+        assert isinstance(spectrum, np.ndarray)
+        assert len(spectrum) == len(sample_wavelengths)
 

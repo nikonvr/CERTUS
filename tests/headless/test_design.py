@@ -55,26 +55,6 @@ def test_design_headless():
             if rmse < best_rmse_seen[0]:
                 best_rmse_seen[0] = rmse
                 print(f"HEADLESS: New best RMSE: {rmse:.6f}")
-                if rmse < 0.005:
-                    try:
-                        stack = []
-                        for row in range(design_app.front_table.rowCount()):
-                            mat_widget = design_app.front_table.cellWidget(row, 0)
-                            th_widget = design_app.front_table.cellWidget(row, 1)
-                            
-                            mat = mat_widget.currentText() if mat_widget else ""
-                            if th_widget and hasattr(th_widget, "value"):
-                                th = float(th_widget.value())
-                            else:
-                                item = design_app.front_table.item(row, 1)
-                                th = float(item.text()) if item else 0.0
-                                
-                            stack.append({"material": mat, "thickness": th})
-                        import json
-                        with open("D:/1406/1406/best_headless_stack.json", "w") as f:
-                            json.dump(stack, f, indent=4)
-                    except Exception as e:
-                        print("Failed to save stack:", e)
             idle_timer.setInterval(100)
 
         design_app.optimization_finished_signal.connect(on_signal_fired)

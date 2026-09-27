@@ -870,14 +870,17 @@ def _parallel_block_worker(args) -> dict:
             enable_wl_coverage=bool(params.get("enable_wl_coverage", False)),
             wl_coverage_top_k=int(params.get("wl_coverage_top_k") or 0),
             wl_coverage_stats=_couv_stats,
+            # D3: the miner's own `ThinFilm` logger has no handler, so its lines never
+            # reached a campaign log. It logs through this one instead.
+            logger=logger,
         )
 
-        # 🔴 LOGGING HAPPENS HERE, NOT IN THE MINER, and it is not a matter of style.
-        # 📏 Measured on 2026-08-21: the miner's `ThinFilm` logger is MUTE -- its unconditional
-        # line "Mining: n_blocks=..." appears ZERO times in the campaign logs, while this
-        # logger (`W{n_blk}`) gets through. A fifty-minute run was lost for not being able to
-        # tell "the pass did not run" from "every forced λ was infeasible". Trap 6: a
-        # silence proves nothing.
+        # 🔴 THE TOTALS ARE LOGGED HERE, summed over the three cost maps the miner ran.
+        # 📏 Measured on 2026-08-21: while the miner logged to `ThinFilm`, its unconditional
+        # line "Mining: n_blocks=..." appeared ZERO times in the campaign logs, and a
+        # fifty-minute run was lost for not being able to tell "the pass did not run" from
+        # "every forced λ was infeasible". Trap 6: a silence proves nothing -- the counters,
+        # not the log, say what the pass did.
         if _couv_stats:
             logger.info(
                 f"   [Block {n_blk}] [WL-COUVERTURE] {_couv_stats.get('deja_employees', 0)} λ "

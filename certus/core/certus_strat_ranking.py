@@ -105,11 +105,12 @@ def _couverture_wl_groupings(
     the beginning.
 
     🔴 AND THE COUNTERS GO UP THROUGH `stats`, NOT ONLY THROUGH THE LOG. 📏 Measured on
-    2026-08-21: the `ThinFilm` logger of this module is MUTE -- its unconditional `info`
-    line "Mining: n_blocks=..." appears **zero times** in the campaign logs, while the
+    2026-08-21: the `ThinFilm` logger this module then used is MUTE -- its unconditional
+    `info` line "Mining: n_blocks=..." appears **zero times** in the campaign logs, while the
     worker's `W{n_blk}` logger gets through without trouble. A first fifty-minute run was
     therefore made UNINTERPRETABLE: impossible to tell "the pass did not run" from
-    "every forced λ was infeasible".
+    "every forced λ was infeasible". (Since D3 the miner logs through the logger its caller
+    carries; `ThinFilm` is only its fallback.)
 
         An instrument whose output does not reach the result is not an instrument.
 
@@ -366,13 +367,17 @@ def mine_strategies_for_block_count(
     # as for OPTIMALITY. It is a symmetry, not an invented number (§19).
     enable_wl_coverage: bool = False,
     wl_coverage_top_k: int = 0,
-    # 🔴 Filled in place, because the logger of this module is MUTE (see
-    # `_couverture_wl_groupings`). It is the only channel through which the caller learns what
-    # the pass did -- and "nothing to cover" must be told apart from "did not run".
+    # 🔴 Filled in place: a log line is read by a person, the counters by the caller, which
+    # must tell "nothing to cover" apart from "did not run" (see `_couverture_wl_groupings`).
     wl_coverage_stats: dict[str, Any] | None = None,
+    # The logger the pipeline carries (`params["logger"]`; the worker's `W{n_blk}`). D3:
+    # `ThinFilm`, the fallback, has no handler and neither has the root, so Python drops
+    # every `info` it gets -- the "Mining: n_blocks=..." line never reached a campaign log.
+    logger: logging.Logger | None = None,
 ) -> list[dict[str, Any]]:
     if n_blocks <= 0 or num_layers <= 0:
         return []
+    log = logger if logger is not None else logging.getLogger("ThinFilm")
 
     strategies_collected = []
     strategy_id_base = n_blocks * 1000
@@ -457,12 +462,12 @@ def mine_strategies_for_block_count(
         if nucleation_wl:
             cost_map_sym = apply_nucleation_constraint(cost_map_sym)
 
-    logging.getLogger("ThinFilm").info(
+    log.info(
         f"Mining: n_blocks={n_blocks}, CostMapThick Size={len(cost_map_thick)}, CostMapSq Size={len(cost_map_sq)}"
     )
 
     def run_mining(cost_map, origin_name, offset_id, apply_sym_post=False) -> Any:
-        logger = logging.getLogger("ThinFilm")
+        logger = log
         logger.debug(f"[DEBUG MINING] {origin_name}: Starting DP with {len(cost_map)} layers, n_blocks={n_blocks}")
         
         for layer_idx in list(cost_map.keys())[:3]:

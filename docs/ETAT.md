@@ -18,10 +18,8 @@
 > 12 de CLAUDE.md avant de valider quoi que ce soit ou de relayer le rapport d'un autre agent.
 > Les décisions de la section 5 reviennent à 👤 : **ne les tranche pas à sa place**.
 
-**Point de départ.** Branche `refactor-corridors-mixins`, synchronisée avec `origin` à la fin de la session du 2026-09-26. Première commande : `python scripts\preflight.py` → `PREFLIGHT=GO`.
-Dernière validation locale complète, sur `e05d0db` (Windows 11) : ruff propre · oracle 570 passed
-· unit 2 520 passed, 5 skipped · le reste de `tests/` 338 passed, 2 skipped · **0 failed** ;
-`tests/ui/` est confié au job Windows de la CI. CI du même commit (run 36252221457) : job Linux `pytest` **vert** à toutes ses étapes, `tests/headless/` compris ; `lint` vert ; job Windows `interface` **vert** (785 passed en 50 min 33 sur le runner, dès 9477d51).
+**Point de départ.** Branche `refactor-corridors-mixins`, synchronisée avec `origin` à la fin de la session du 2026-09-27. Première commande : `python scripts\preflight.py` → `PREFLIGHT=GO`.
+Dernière validation locale complète, sur 249cfee (Windows 11, le 2026-09-27) : ruff propre · oracle 570 passed · unit 2 532 passed, 5 skipped · `tests/ui/` 791 passed, 10 skipped, 3 xfailed · le reste de `tests/` 338 passed, 2 skipped · **0 failed**. CI de 3d02a16 (run 36288054565), le même code plus deux scripts de contrôle et la documentation : **verte** sur les deux jobs (interface 791 passed en 16 min 39). La garde de convergence d'INDEX peut rougir sans régression (D35).
 
 | # | action | état | où | fini quand |
 |---|---|---|---|---|

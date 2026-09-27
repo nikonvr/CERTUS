@@ -1,18 +1,17 @@
 """Map pytest-cov "Missing" line ranges to top-level functions of a target module.
 
-Designed to support PHY-1 Step 2 (backlog couverture KPI-5). Generates a sorted
-list of uncovered functions by size (LOC) so micro-batches B.22..B.N can be
-dispatched in priority order.
+Lists the uncovered functions of a module, largest first, so that coverage work can
+start where it pays most.
 
 Usage:
     python tools/coverage_function_audit.py \
-        --target _certus_physics_impl.py \
+        --target certus/core/_certus_physics_impl.py \
         --xml coverage.xml
 
 Or, parse the pytest --cov-report=term-missing dump captured to a file:
 
     python tools/coverage_function_audit.py \
-        --target _certus_physics_impl.py \
+        --target certus/core/_certus_physics_impl.py \
         --term-report coverage_missing.txt
 
 Output is plain text (markdown table) on stdout.

@@ -11,7 +11,7 @@ import os
 import subprocess
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent.parent  # D:/1006
+ROOT = Path(__file__).resolve().parent.parent.parent
 PYTHON = sys.executable
 TESTS_DIR = Path(__file__).resolve().parent
 

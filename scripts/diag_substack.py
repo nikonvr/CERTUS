@@ -108,7 +108,7 @@ def main() -> int:
         sc = s.get("robustness_score")
         st = s.get("strategy") or {}
         finite = isinstance(sc, (int, float)) and sc == sc and sc != float("inf")
-        print(f"   id={str(st.get('id', '?')):<12} score={str(sc)[:22]:<22} "
+        print(f"   id={st.get('id', '?')!s:<12} score={str(sc)[:22]:<22} "
               f"fini={finite}  origine={str(st.get('origin', '?'))[:26]}")
     if zero:
         sc0 = strats[0].get("robustness_score")

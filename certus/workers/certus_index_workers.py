@@ -1151,7 +1151,7 @@ class OptimizationWorker(QObject):
             self.logger.error(f" Optimization error: {e}")
             self.logger.error(traceback.format_exc())
             self._cleanup()
-            self.error.emit(f"{str(e)}\n{traceback.format_exc()}")
+            self.error.emit(f"{e!s}\n{traceback.format_exc()}")
 
     def _cleanup(self) -> None:
         if self._optimizer:

@@ -857,7 +857,7 @@ class CertusRETableMixin:
             self.log(f"{len(rows_data)} row(s) pasted from Excel", "SUCCESS")
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
-            self.log(f"Paste error: {str(e)}", "ERROR")
+            self.log(f"Paste error: {e!s}", "ERROR")
 
             traceback.print_exc()
 

@@ -556,4 +556,4 @@ class ExportManager:
                 self.ui.log("Export failed (build_standard_report error).", "ERROR")
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
-            self.ui.log(f"Export error:{str(e)}", "ERROR")
+            self.ui.log(f"Export error:{e!s}", "ERROR")

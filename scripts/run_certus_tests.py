@@ -215,7 +215,7 @@ def run_step(name: str, cmd: List[str], cwd: Path) -> Dict[str, Any]:
         }
     except Exception as e:
         duration = time.time() - start_time
-        print(f"  {Colors.FAIL}[ERROR] EXCEPTION ({duration:.2f}s) - {str(e)}{Colors.ENDC}")
+        print(f"  {Colors.FAIL}[ERROR] EXCEPTION ({duration:.2f}s) - {e!s}{Colors.ENDC}")
         return {
             "name": name,
             "success": False,

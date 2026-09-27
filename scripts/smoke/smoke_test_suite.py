@@ -58,7 +58,7 @@ except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexErro
         process.kill()
         return False
     except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
-        print(f"ERROR: {str(e)}")
+        print(f"ERROR: {e!s}")
         return False
 
 

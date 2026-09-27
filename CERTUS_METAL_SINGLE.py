@@ -1466,7 +1466,7 @@ class CertusMetalSingleApp(MetalBaseApp):
             self.target_data = None
         except ValueError as e:
             title, details, suggestion = get_error_message("file_format", path=filepath)
-            QMessageBox.critical(self, title, f"{details}\n\nErreur: {str(e)}\n\n💡 {suggestion}")
+            QMessageBox.critical(self, title, f"{details}\n\nErreur: {e!s}\n\n💡 {suggestion}")
             self.target_data = None
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             show_error(self, "generic_error", details=str(e))

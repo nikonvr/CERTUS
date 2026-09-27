@@ -1101,7 +1101,7 @@ def safe_ui_action(func):
                 return None
             try:
                 from certus.ui.certus_ui import show_toast
-                show_toast(parent, f"Error: {str(e)}", level="error", duration_ms=4000)
+                show_toast(parent, f"Error: {e!s}", level="error", duration_ms=4000)
             except Exception:
                 from certus.utils.errors import show_error
                 show_error(parent, "generic_error", details=str(e))
@@ -1113,7 +1113,7 @@ def safe_ui_action(func):
                 return None
             try:
                 from certus.ui.certus_ui import show_toast
-                show_toast(parent, f"Critical: {str(e)}", level="error", duration_ms=5000)
+                show_toast(parent, f"Critical: {e!s}", level="error", duration_ms=5000)
             except Exception:
                 from certus.utils.errors import show_error
                 show_error(parent, "generic_error", details=str(e))

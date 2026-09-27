@@ -116,8 +116,8 @@ def lire(p: str) -> None:
         # jusqu'a la fin, donc le compte se deduit de la longueur de l'empilement.
         n_rate = (N_COUCHES.get(str(d.get("composant")), 0) - c) or "?"
         print(f"  {c:>8}{(n_rate or '?'):>14}{len(g):>7}{100 * cm:>10.2f}%{len(dep):>7}"
-              f"{(f'{seel:.3f}' if seel else '-'):>9}{str(nb or '-'):>9}"
-              f"{str(cl if cl is not None else '-'):>17}")
+              f"{(f'{seel:.3f}' if seel else '-'):>9}{nb or '-'!s:>9}"
+              f"{cl if cl is not None else '-'!s:>17}")
         if seel:
             lignes.append((c, seel, best))
 

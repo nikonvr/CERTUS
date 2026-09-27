@@ -665,7 +665,7 @@ def _fit_summary_line(
     """Compact human-readable summary for logs and debug trace."""
 
     return (
-        f"Fit column done: {str(col_name)} | best={best_lab} | score={float(best_score):.6g} | "
+        f"Fit column done: {col_name!s} | best={best_lab} | score={float(best_score):.6g} | "
         f"rmse_fit={float(best_rmse) if np.isfinite(best_rmse) else float('nan'):.6g} | "
         f"n@4500={float(best_value_at_idx):.6f}"
     )

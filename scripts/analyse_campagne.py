@@ -167,7 +167,7 @@ def main() -> int:
         top = tuple(x.get("id") for x in rk[:5])
         stable = "—" if prev_top is None else ("OUI" if top == prev_top else "non")
         wid = (r.get("winner") or {}).get("id", "—")
-        print(f"  {N:>6d} {r['result']:>20.15f} {seel(r):>9s} {str(wid):>10s} {stable:>32s}")
+        print(f"  {N:>6d} {r['result']:>20.15f} {seel(r):>9s} {wid!s:>10s} {stable:>32s}")
         prev_top = top
     print("\n  DISPERSION SUR SOUS-PAQUETS -- combien l'estimation oscille a N donne")
     print("  Un seul run profond remplace le balayage : les paquets sont emboites dans")

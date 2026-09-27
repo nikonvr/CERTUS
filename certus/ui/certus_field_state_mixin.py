@@ -628,8 +628,8 @@ class CertusFieldStateMixin:
             dlg.exec()
 
         except Exception as e:
-            self.logger.error(f"Import error: {str(e)}")
-            show_toast(self, f"Error: {str(e)}", "error")
+            self.logger.error(f"Import error: {e!s}")
+            show_toast(self, f"Error: {e!s}", "error")
 
     def _get_cleanup_dmin_nm(self) -> float:
         """Return the minimum thickness threshold used for post-optimization cleanup."""

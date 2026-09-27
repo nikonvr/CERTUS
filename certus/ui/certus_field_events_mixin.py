@@ -159,8 +159,8 @@ class CertusFieldEventsMixin:
             self.logger.info(f"Exported field data to {filename}")
             show_toast(self, "Data exported successfully.", "success")
         except Exception as e:
-            self.logger.error(f"Export error: {str(e)}")
-            show_toast(self, f"Export failed: {str(e)}", "error")
+            self.logger.error(f"Export error: {e!s}")
+            show_toast(self, f"Export failed: {e!s}", "error")
 
     def _export_results_html(self, html_path: str) -> bool:
         from certus.ui.certus_ui_utils import open_file_explorer
@@ -223,8 +223,8 @@ class CertusFieldEventsMixin:
             else:
                 show_toast(self, "HTML Report generation failed.", "error")
         except Exception as e:
-            self.logger.error(f"Report generation error: {str(e)}")
-            show_toast(self, f"Report generation failed: {str(e)}", "error")
+            self.logger.error(f"Report generation error: {e!s}")
+            show_toast(self, f"Report generation failed: {e!s}", "error")
 
     def on_open_reports_clicked(self):
         report_dir = os.path.join(get_resource_path("."), "reports")
@@ -316,4 +316,4 @@ class CertusFieldEventsMixin:
             show_toast(self, "Pareto report generated successfully.", "success")
         except Exception as e:
             self.logger.error(f"Failed to generate Pareto report: {e}")
-            show_toast(self, f"Generation failed: {str(e)}", "error")
+            show_toast(self, f"Generation failed: {e!s}", "error")

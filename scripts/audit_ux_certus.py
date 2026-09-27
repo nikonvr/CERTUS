@@ -517,8 +517,8 @@ def _audit_pass(names: list[str], width: int, height: int) -> tuple[list[dict], 
         pct = "n/a" if row["plot_pct"] is None else f"{row['plot_pct']}"
         tables = f"{row['tables_sortable']}/{row['n_tables']}"
         print(
-            f"{row['app']:<21}{pct:>7}{str(row['left_px']):>7}"
-            f"{str(row['left_min_px']):>6}{row['n_shortcuts']:>6}{tables:>8}  "
+            f"{row['app']:<21}{pct:>7}{row['left_px']!s:>7}"
+            f"{row['left_min_px']!s:>6}{row['n_shortcuts']:>6}{tables:>8}  "
             f"{('OK' if not bad else bad[0])}"
         )
         for extra in bad[1:]:

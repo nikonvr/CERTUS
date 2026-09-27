@@ -2067,7 +2067,7 @@ class CertusREExcelMixin:
             self.log(f"Exported to:  {f}", "SUCCESS")
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
-            self.log(f"Export error: {str(e)}", "ERROR")
+            self.log(f"Export error: {e!s}", "ERROR")
 
     def export_re_targets_vs_theory(
         self,

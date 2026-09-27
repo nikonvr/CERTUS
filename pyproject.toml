@@ -103,7 +103,7 @@ extend-ignore = [
   # Performance legacy
   "PERF401",
   # Ruff-specific legacy
-  "RUF001", "RUF002", "RUF003", "RUF005", "RUF010", "RUF012",
+  "RUF001", "RUF002", "RUF003", "RUF005", "RUF012",
   "RUF013", "RUF015", "RUF022", "RUF023",
   "RUF046", "RUF059", "RUF100",
 ]

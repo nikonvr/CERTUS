@@ -130,6 +130,13 @@ def _config_flag_default(config: object, key: str, default: bool) -> bool:
     return bool(float(raw) > 0.5)
 
 
+#: Configuration keys that no longer name a setting: no computation reads them. A file that
+#: still carries one keeps loading -- the key is ignored, and `load_configuration` says so in
+#: one line, because its "CONFIGURATION LOADED" listing prints every key of the file and would
+#: otherwise pass the key off as a setting.
+_RETIRED_CONFIG_KEYS: tuple[str, ...] = ("strategy_phase_timeout",)
+
+
 class CertusStratStateMixin:
     def _load_defaults(self) -> None:
         """Load default values for CERTUS-STRAT"""
@@ -214,7 +221,6 @@ class CertusStratStateMixin:
             "screening_mc_runs": "20",
             "screening_keep_top_k": "5",
             "mc_runs_block": "100",
-            "strategy_phase_timeout": "120",
             "trigger_tolerance": "0.1",
             "noise_distribution": "gaussian",
             "non_monotonic_mode": "attenuate",
@@ -581,7 +587,6 @@ class CertusStratStateMixin:
                 "mc_runs_block",
                 "iter_divider_start",
                 "iter_divider_end",
-                "strategy_phase_timeout",
                 "screening_mc_runs",
                 "screening_keep_top_k",
                 "trigger_tolerance",
@@ -751,6 +756,13 @@ class CertusStratStateMixin:
                 self.logger.info("  %-35s: %s", key, val_str)
 
             self.logger.info("=" * 60)
+
+            retired = [key for key in _RETIRED_CONFIG_KEYS if key in config]
+            if retired:
+                self.logger.info(
+                    "[STRAT-CONFIG] ignored, no longer a setting (no computation reads it): %s",
+                    ", ".join(retired),
+                )
 
             if os.environ.get("QT_QPA_PLATFORM", "").lower() != "offscreen":
                 blocks = config.get("blocks") or [] if isinstance(config, dict) else []
@@ -1092,7 +1104,6 @@ class CertusStratStateMixin:
             "iter_divider_end": self._get_float_safe("iter_divider_end", 3.0),
             "screening_mc_runs": int(self._get_float_safe("screening_mc_runs", 20)),
             "screening_keep_top_k": int(self._get_float_safe("screening_keep_top_k", 5)),
-            "strategy_phase_timeout": self._get_float_safe("strategy_phase_timeout", 120.0),
             "reality_sim_params": {
                 "trigger_tolerance": self._get_float_safe("trigger_tolerance", 0.1),
                 "noise_distribution": NOISE_DISTRIBUTION_GAUSSIAN,
@@ -1597,12 +1608,6 @@ class CertusStratStateMixin:
             params_out["top_k_parents"] = 80
             params_out["max_fusions_per_parent"] = 15
             params_out["screening_keep_top_k"] = 20
-            # NOTE, measured 2026-08-18: this key is currently INERT. No line under certus/core
-            # or certus/workers reads it -- it is collected, shown in a widget, and saved to JSON,
-            # but nothing bounds a phase with it. It is set here so that the run's recorded
-            # configuration states the intent, and so that a future rewiring finds the right
-            # value already in place. Attribute nothing to it.
-            params_out["strategy_phase_timeout"] = 10800
         else:
             params_out["execution_mode"] = "premium"
             params_out["robustness_num_runs"] = 150

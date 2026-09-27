@@ -10,10 +10,19 @@ removal.
 from __future__ import annotations
 
 import inspect
+import json
+import logging
+from contextlib import contextmanager
+from pathlib import Path
 
 import pytest
 
 pytest.importorskip("PyQt6")
+
+ROOT = Path(__file__).resolve().parents[2]
+#: The reference configuration. It is only READ here: every variant is a copy in tmp_path.
+EXAMPLE = ROOT / "example" / "example_strat" / "JSON-strat-example.json"
+MODES = ("fast", "premium", "deep", "extreme")
 
 
 @pytest.fixture(autouse=True)
@@ -31,6 +40,41 @@ def strat_window(qapp):
     return CertusSTRATApp()
 
 
+class _Lines(logging.Handler):
+    def __init__(self) -> None:
+        super().__init__(logging.DEBUG)
+        self.lines: list[str] = []
+
+    def emit(self, record: logging.LogRecord) -> None:
+        self.lines.append(record.getMessage())
+
+
+@contextmanager
+def _captured(logger: logging.Logger):
+    """The lines `logger` emits inside the block. The STRAT window logger does not
+    propagate (it feeds the Show Details panel), so `caplog` would see nothing."""
+    handler = _Lines()
+    logger.addHandler(handler)
+    try:
+        yield handler.lines
+    finally:
+        logger.removeHandler(handler)
+
+
+def _load(window, tmp_path: Path, **extra) -> dict:
+    """Load the reference configuration plus `extra` keys, through a file, as a user does."""
+    cfg = json.loads(EXAMPLE.read_text(encoding="utf-8"))
+    cfg.update(extra)
+    path = tmp_path / "config.json"
+    path.write_text(json.dumps(cfg), encoding="utf-8")
+    window.load_configuration(str(path))
+    return cfg
+
+
+def _told_ignored(lines: list[str]) -> list[str]:
+    return [line for line in lines if "no longer a setting" in line]
+
+
 class TestFastAutoBlocks:
     """`fast_auto_blocks` was set to True by `collect_params` and printed by the FAST mode
     banner, while nothing read it: the branch that consumed it had been deleted
@@ -43,3 +87,40 @@ class TestFastAutoBlocks:
         from certus.ui import certus_strat_ui_worker
 
         assert "fast_auto_blocks" not in inspect.getsource(certus_strat_ui_worker)
+
+
+class TestStrategyPhaseTimeout:
+    """`strategy_phase_timeout` had a field ("Max Time per Iteration"), a default, a place in
+    saved files and a value of its own in `extreme` (10 800 s), while no computing line read
+    it: no pass was ever cancelled."""
+
+    def test_no_field_shows_it(self, strat_window):
+        assert "strategy_phase_timeout" not in strat_window.widgets
+
+    @pytest.mark.parametrize("mode", MODES)
+    def test_no_mode_puts_it_in_the_parameters(self, strat_window, mode):
+        strat_window.widgets["execution_mode"].setCurrentText(mode)
+        params = strat_window.collect_params()
+        assert params["execution_mode"] == mode, "premise: the mode under test is the one run"
+        assert "strategy_phase_timeout" not in params
+
+    def test_a_file_that_carries_it_still_loads_and_says_it_is_ignored(self, strat_window, tmp_path):
+        with _captured(strat_window.logger) as lines:
+            cfg = _load(strat_window, tmp_path)
+        assert "strategy_phase_timeout" in cfg, "premise: the reference file carries the key"
+        assert strat_window._loaded_config.get("strategy_phase_timeout") == cfg["strategy_phase_timeout"]
+        told = _told_ignored(lines)
+        assert len(told) == 1 and "strategy_phase_timeout" in told[0], lines
+        assert "strategy_phase_timeout" not in strat_window.collect_params()
+
+    def test_saving_no_longer_writes_it(self, strat_window, tmp_path, monkeypatch):
+        from PyQt6.QtWidgets import QFileDialog
+
+        target = tmp_path / "saved.json"
+        monkeypatch.setattr(
+            QFileDialog, "getSaveFileName", staticmethod(lambda *a, **k: (str(target), ""))
+        )
+        strat_window.save_configuration()
+        saved = json.loads(target.read_text(encoding="utf-8"))
+        assert "robustness_num_runs" in saved, "premise: the file was written by the window"
+        assert "strategy_phase_timeout" not in saved

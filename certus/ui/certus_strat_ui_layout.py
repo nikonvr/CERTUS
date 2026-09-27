@@ -819,7 +819,6 @@ class CertusStratLayoutMixin:
                 ("screening_mc_runs", "Screening MC Runs (Pre-selection):"),
                 ("screening_keep_top_k", "Keep Top K Strategies per Config:"),
                 ("mc_runs_block", "MC Runs per layer test (Phase A):"),
-                ("strategy_phase_timeout", "Max Time per Iteration (sec):"),
             ],
         )
 
@@ -833,7 +832,6 @@ class CertusStratLayoutMixin:
             "screening_mc_runs": "Number of Monte Carlo runs for the pre-selection screening phase. More = better filtering but slower.",
             "screening_keep_top_k": "Number of top strategies retained per configuration after screening before deep evaluation.",
             "mc_runs_block": "Monte Carlo runs per candidate block test in Phase A. Drives early robustness estimation.",
-            "strategy_phase_timeout": "Recorded in the configuration but NOT enforced: no computation reads it, so no pass is ever cancelled.",
         }
 
         for _k, _tip in _tips_loop.items():

@@ -1381,8 +1381,9 @@ class CertusStratStateMixin:
             # feasible, and the pass does reach the computation.
             # 🔒 INERT BY DEFAULT: without the key, former path TO THE BIT.
             # ⚠️ It was reachable ONLY through `CERTUS_PROBE_OVERRIDES` before this routing --
-            # measurable, not deliverable. It is the reverse pattern of `fast_auto_blocks`: where
-            # that one is set and never read, this one was read and never settable.
+            # measurable, not deliverable. It is the reverse pattern of the former
+            # `fast_auto_blocks` key, set and never read until it was removed: this one was
+            # read and never settable.
             "enable_wl_coverage": _config_flag(
                 getattr(self, "_loaded_config", {}), "enable_wl_coverage", False
             ),
@@ -1527,7 +1528,6 @@ class CertusStratStateMixin:
                 if self.widgets.get("execution_mode")
                 else "premium"
             ),
-            "fast_auto_blocks": True,
         }
 
         mode = str(params_out.get("execution_mode", "premium")).strip().lower()

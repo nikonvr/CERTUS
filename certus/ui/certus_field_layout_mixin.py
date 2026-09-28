@@ -326,9 +326,6 @@ class CertusFieldLayoutMixin:
         self.tab_widget.setCurrentIndex(0)
         return self.right_splitter
 
-    def _build_plot_export_frames(self, plot_data: dict) -> dict[str, pd.DataFrame]:
-        return FieldExportService.build_plot_export_frames(plot_data)
-
     def _build_summary_frame(self, params: FieldParamsDTO) -> pd.DataFrame:
         return FieldExportService.build_summary_frame(
             params,

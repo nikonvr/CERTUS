@@ -130,9 +130,6 @@ class CertusFieldPlotMixin:
                 targets.append(win.plot_widget)
         return targets
 
-    def _build_plot_export_frames(self, plot_data: dict) -> dict[str, pd.DataFrame]:
-        return FieldExportService.build_plot_export_frames(plot_data)
-
     def _build_plot_data(self, result) -> FieldPlotData:
         return FieldPlotData.from_any(result)
 

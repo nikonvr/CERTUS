@@ -65,7 +65,6 @@ extend-ignore = [
   "E402", "E701", "E702", "E741",
   # Pyflakes legacy
   "F401",  # unused-import: some are deliberate re-exports
-  "F403", "F405",  # wildcard imports
   "F841",  # unused-variable
   # Isort
   "I001",  # unsorted-imports

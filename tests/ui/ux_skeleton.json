@@ -222,7 +222,6 @@
     "QRadioButton|Standard (transparent substrate)",
     "QRadioButton|Frosted glass",
     "QComboBox|",
-    "QCheckBox|Absorbent substrate (k = 0)",
     "QDoubleSpinBox|50.0",
     "QLineEdit|50.0",
     "QDoubleSpinBox|1000.0",

@@ -767,10 +767,13 @@ class CertusIndexLayoutMixin:
         self.chk_absorbing_sub.setChecked(False)
 
         self.chk_absorbing_sub.setToolTip(
-            "Enable if the substrate has a non-negligible k(\u03bb) coefficient.\n"
-            "Al2O3: n(\u03bb) remains equation-based; k(\u03bb) is available only if "
-            "sapphire fresnel.xlsx contains a k column."
+            "Silicon only: k(\u03bb) comes from the silicon data named below.\n"
+            "Set the thickness to 0 to treat the substrate as transparent."
         )
+
+        # Shown for silicon only (_on_substrate_changed): the fit reads no absorption for
+        # any other substrate.
+        self.chk_absorbing_sub.setVisible(False)
 
         l.addWidget(self.chk_absorbing_sub)
 

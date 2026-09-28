@@ -58,10 +58,6 @@ from certus.core.certus_index_core import (
     calculate_relative_R_normalization,
     _optimize_point_kernel,
     _optimize_all_points_batch,
-    _SAPPHIRE_DATA_FILE,
-    _SAPPHIRE_WLS,
-    _SAPPHIRE_K,
-    _SAPPHIRE_FILE_HAS_K_COLUMN,
     _SILICON_WLS,
     _SILICON_K,
 )
@@ -217,117 +213,68 @@ class CertusIndexEventsMixin:
         self._persist_index_weight_settings()
 
     def _on_substrate_changed(self, index: int) -> None:
-        """When Al2O3 or Si is selected: auto-configure absorbing mode (locked) if k(lambda) is available.
+        """Show the absorbing-substrate controls for silicon only.
 
-        Sapphire without k column in xlsx: transparent substrate only (no absorption).
-
-        For any other substrate: restore manual mode."""
+        Silicon is the one substrate whose absorption the fit reads
+        (`_resolve_substrate_absorption_inputs`): its k(lambda) table is used, locked on, and
+        only the thickness is left to the user. For every other substrate, and for silicon
+        without its table, the worker forces k = 0, so the controls are hidden (D43)."""
 
         sub_name = SUBSTRATE_LIST[index] if 0 <= index < len(SUBSTRATE_LIST) else ""
 
-        is_sapphire = sub_name == "Sapphire (Al2O3)"
+        if sub_name == "Silicon (Si)" and _SILICON_WLS is not None:
+            self.chk_absorbing_sub.setVisible(True)
 
-        is_silicon = sub_name == "Silicon (Si)"
+            self.chk_absorbing_sub.setChecked(True)
 
-        if is_sapphire:
-            if _SAPPHIRE_WLS is not None:
-                self._absorbing_sub_widget.setVisible(True)
+            self.chk_absorbing_sub.setEnabled(False)
 
-                self.btn_import_ksub.setEnabled(False)
+            self._absorbing_sub_widget.setVisible(True)
 
-                self._ksub_raw_wls = _SAPPHIRE_WLS
-
-                self._ksub_raw_k = _SAPPHIRE_K
-
-                if _SAPPHIRE_FILE_HAS_K_COLUMN:
-                    self.chk_absorbing_sub.setChecked(True)
-
-                    self.chk_absorbing_sub.setEnabled(False)
-
-                    self.sb_sub_thickness_mm.setValue(1.0)
-
-                    self.sb_sub_thickness_mm.setEnabled(True)
-
-                    self.lbl_ksub_file.setText("example/sapphire fresnel.xlsx (auto, colonne k)")
-
-                else:
-                    self.chk_absorbing_sub.setChecked(False)
-
-                    self.chk_absorbing_sub.setEnabled(False)
-
-                    self.sb_sub_thickness_mm.setValue(0.0)
-
-                    self.sb_sub_thickness_mm.setEnabled(False)
-
-                    self.lbl_ksub_file.setText("example/sapphire fresnel.xlsx — no k column: transparent only")
-
-            else:
-                # File not found  warn but don't block
-
-                self.chk_absorbing_sub.setEnabled(True)
-
-                self.lbl_ksub_file.setText("example/sapphire fresnel.xlsx NOT FOUND")
-
-        elif is_silicon:
-            if _SILICON_WLS is not None:
-                # Auto-activate and lock absorbing mode
-
-                self.chk_absorbing_sub.setChecked(True)
-
-                self.chk_absorbing_sub.setEnabled(False)
-
-                self._absorbing_sub_widget.setVisible(True)
-
-                self.sb_sub_thickness_mm.setValue(0.5)
-
-                self.sb_sub_thickness_mm.setEnabled(True)
-
-                # Show where the Si data REALLY comes from; disable manual CSV import.
-                # The label named a spreadsheet that was never in the repository, even
-                # while the coarse built-in approximation was in use.
-                from certus_physics.materials_data import SI_SOURCE
-
-                if SI_SOURCE == "built-in stub":
-                    self.lbl_ksub_file.setText("Si: built-in approximation (no Si-substrate sheet found)")
-                else:
-                    self.lbl_ksub_file.setText(f"{Path(SI_SOURCE).name} -> Si-substrate (auto)")
-
-                self.btn_import_ksub.setEnabled(False)
-
-                # Store silicon k internally (will be interpolated to target grid in _on_run)
-
-                self._ksub_raw_wls = _SILICON_WLS
-
-                self._ksub_raw_k = _SILICON_K
-
-            else:
-                self.chk_absorbing_sub.setEnabled(True)
-
-                self.lbl_ksub_file.setText("Si-substrate data NOT FOUND")
-
-        else:
-            # Other substrates: restore manual control
-
-            self.chk_absorbing_sub.setChecked(False)
-
-            self.chk_absorbing_sub.setEnabled(True)
-
-            self._absorbing_sub_widget.setVisible(False)
-
-            self.sb_sub_thickness_mm.setValue(1.0)
+            self.sb_sub_thickness_mm.setValue(0.5)
 
             self.sb_sub_thickness_mm.setEnabled(True)
 
-            self.btn_import_ksub.setEnabled(True)
+            # Show where the Si data REALLY comes from; disable manual CSV import.
+            # The label named a spreadsheet that was never in the repository, even
+            # while the coarse built-in approximation was in use.
+            from certus_physics.materials_data import SI_SOURCE
 
-            if self._ksub_raw_wls is _SAPPHIRE_WLS or self._ksub_raw_wls is _SILICON_WLS:
-                # Clear built-in data so other substrates start clean
+            if SI_SOURCE == "built-in stub":
+                self.lbl_ksub_file.setText("Si: built-in approximation (no Si-substrate sheet found)")
+            else:
+                self.lbl_ksub_file.setText(f"{Path(SI_SOURCE).name} -> Si-substrate (auto)")
 
-                self._ksub_raw_wls = None
+            self.btn_import_ksub.setEnabled(False)
 
-                self._ksub_raw_k = None
+            # Store silicon k internally (will be interpolated to target grid in _on_run)
 
-            self.lbl_ksub_file.setText("(no files)")
+            self._ksub_raw_wls = _SILICON_WLS
+
+            self._ksub_raw_k = _SILICON_K
+
+            return
+
+        self.chk_absorbing_sub.setChecked(False)
+
+        self.chk_absorbing_sub.setVisible(False)
+
+        self._absorbing_sub_widget.setVisible(False)
+
+        self.sb_sub_thickness_mm.setValue(1.0)
+
+        self.sb_sub_thickness_mm.setEnabled(True)
+
+        self.btn_import_ksub.setEnabled(True)
+
+        if self._ksub_raw_wls is _SILICON_WLS:
+            # Clear built-in data so other substrates start clean
+
+            self._ksub_raw_wls = None
+
+            self._ksub_raw_k = None
+
+        self.lbl_ksub_file.setText("(no files)")
 
     def _on_absorbing_sub_toggled(self, checked: bool) -> None:
 

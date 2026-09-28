@@ -247,6 +247,11 @@ def compute_metal_bilayer_gradient_analytic(
 
     Wrapper calculating full gradient using Analytic TMM + FD Spline for Bilayer Metal.
 
+    Layout of x, the one of the bilayer objective (_bilayer_reflectance_mse) and of its
+    bounds (_build_bilayer_bounds) in certus_metal_bilayer_physics:
+    [eM, eL, n_infini, A, n_1 .. n_K, k_1 .. k_K, lambda_1 .. lambda_(K-2)],
+    with K = num_knots control points per spline family.
+
     """
 
     grad = np.zeros_like(x)
@@ -255,7 +260,7 @@ def compute_metal_bilayer_gradient_analytic(
 
     offset = 4
 
-    spline_knot_count = num_knots + 1
+    spline_knot_count = num_knots
 
     n_knots = x[offset : offset + spline_knot_count]
 
@@ -344,14 +349,14 @@ def compute_metal_bilayer_gradient_analytic(
 
         dk_dp = (ks_p - k_calc) / h_val
 
-        # Index: 2 * spline_knot_count, and NOT 2 * num_knots.
+        # Index: 2 * spline_knot_count, the end of the k block.
         #
-        # spline_knot_count equals num_knots + 1, so the old index wrote TWO
-        # positions too early. The block of k knots occupies grad[offset + skc :
+        # When each family held num_knots + 1 values, an index written with
+        # 2 * num_knots landed TWO positions too early. The block of k knots occupies grad[offset + skc :
         # offset + 2*skc] ; the lambda loop therefore overwrote its last two slots,
         # and the last two lambda positions NEVER received a gradient.
         #
-        # Verified numerically against finite differences (num_knots=4, 3 lambda):
+        # Verified numerically against finite differences (5 values per family, 3 lambda):
         #   k[3], k[4]           -> gradients destroyed, replaced by those of lambda
         #   lambda[0]            -> received the gradient of lambda[2]
         #   lambda[1], lambda[2] -> exactly 0, while the FD is non-zero

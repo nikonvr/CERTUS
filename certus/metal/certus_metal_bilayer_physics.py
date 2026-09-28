@@ -134,7 +134,7 @@ def _bilayer_reflectance_mse(
     spline_knot_count = num_knots
     expected_internal = max(0, spline_knot_count - 2)
     expected_size = offset + 2 * spline_knot_count + expected_internal
-    # The global parametrization uses (num_knots + 1) control points per spline family.
+    # The global parametrization uses num_knots control points per spline family.
     debug_ctx["spline_knot_count"] = int(spline_knot_count)
     debug_ctx["expected_internal"] = int(expected_internal)
     debug_ctx["expected_size"] = int(expected_size)

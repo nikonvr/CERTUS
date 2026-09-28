@@ -105,7 +105,6 @@ from certus.core.certus_metrology import ValidationStatus
 from certus.utils.certus_services import IndexFitRequest, IndexFitService
 from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
 from certus.utils.certus_ux import build_premium_overrides, OBJ
-from certus.ui.certus_svg import SVG_AVAILABLE
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Event
 import pyqtgraph as pg

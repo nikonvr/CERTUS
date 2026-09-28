@@ -123,14 +123,6 @@ from certus.utils.certus_ux import build_premium_overrides, OBJ
 
 # JIT Warmup moved to main() with SplashScreen
 
-from certus.ui.certus_svg import SVG_AVAILABLE
-
-if SVG_AVAILABLE:
-    from PyQt6.QtSvgWidgets import QSvgWidget  # pylint: disable=unused-import
-
-else:
-    QSvgWidget = None
-
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from threading import Event

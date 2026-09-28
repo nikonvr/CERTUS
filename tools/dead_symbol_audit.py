@@ -60,15 +60,18 @@ class Definition:
 
 
 def _iter_python_files(root: Path) -> list[Path]:
-    """Scan runtime modules only: root *.py + certus_physics package.
+    """Scan runtime modules only: root *.py, the certus_physics package and certus/metal.
 
-    Tests and tooling scripts are intentionally excluded from candidates.
+    certus/metal holds the METAL applications that lived at the root until 2026-09-28:
+    moving them must not take them out of the audit. Tests and tooling scripts are
+    intentionally excluded from candidates.
     """
     files: list[Path] = list(root.glob("*.py"))
 
-    physics_dir = root / "certus_physics"
-    if physics_dir.exists():
-        for path in physics_dir.rglob("*.py"):
+    for package in (root / "certus_physics", root / "certus" / "metal"):
+        if not package.exists():
+            continue
+        for path in package.rglob("*.py"):
             rel_parts = set(path.relative_to(root).parts)
             if rel_parts & EXCLUDED_DIR_NAMES:
                 continue

@@ -206,14 +206,20 @@ def test_the_definition_perimeter_stays_narrow():
 
     Le signaler ici évite qu'on « répare » le rouge en faisant les deux d'un coup —
     ce serait deux changements à la fois, et le résultat ne s'attribuerait pas.
+    `certus/metal` y est entré le 2026-09-28, décision de portée : les applications
+    METAL y sont descendues de la racine (D30), qui était dans le périmètre.
     """
     sys.path.insert(0, str(ROOT / "tools"))
     from dead_symbol_audit import _iter_python_files
 
     fichiers = _iter_python_files(ROOT)
-    zones = {p.relative_to(ROOT).parts[0] for p in fichiers if len(p.relative_to(ROOT).parts) > 1}
+    zones = {
+        "/".join(p.relative_to(ROOT).parts[:2]) if p.relative_to(ROOT).parts[0] == "certus" else p.relative_to(ROOT).parts[0]
+        for p in fichiers
+        if len(p.relative_to(ROOT).parts) > 1
+    }
 
-    assert zones <= {"certus_physics"}, (
+    assert zones <= {"certus_physics", "certus/metal"}, (
         f"le périmètre des définitions s'est élargi à {sorted(zones)} : c'est une décision "
         "de portée, pas un correctif de faux positif"
     )

@@ -45,7 +45,6 @@ from certus_physics import calc_spectrum_front_wrapper, calc_spectrum_full_wrapp
 calc_spectrum_front = calc_spectrum_front_wrapper
 calc_spectrum_full = calc_spectrum_full_wrapper
 calc_spectrum_full_exact = calc_spectrum_full_exact_wrapper
-# from certus.core.certus_design_core import *  # Unused
 from certus.core.certus_design_core import _design_objective_wrapper_common, _design_compute_oblique_error_common, _design_gradient_func_pglobal_common, _design_compute_oblique_error_and_grad_analytic_common, _design_optimization_callback_common
 
 class OptimWorker(QObject):

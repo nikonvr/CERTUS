@@ -1,5 +1,4 @@
 from __future__ import annotations
-# from typing import *  # Unused
 import typing
 import numpy as np
 import logging

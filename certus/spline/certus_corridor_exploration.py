@@ -1,4 +1,3 @@
-# from typing import *  # Unused
 import numpy as np
 import time
 import logging
@@ -6,7 +5,6 @@ import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from certus.core.certus_core import Any, NUMERICAL_FAULT_EXCEPTIONS
 
-# from certus.spline.certus_index_spline_core import *  # Unused
 from certus.spline.certus_corridor_config import (
     CorridorLiveStreamer,
     CorridorWalkSideContext,
@@ -19,7 +17,6 @@ from certus.spline.certus_corridor_config import (
     x_slice_n_to_physical_nodes,
 )
 
-# from certus.spline.certus_corridor_fitter import *  # Unused
 from certus.spline.certus_corridor_utils import (
     _extract_knots_and_nodes_from_result,
     _x_nodes0_from_mesh_x_if_consistent,

@@ -1,5 +1,4 @@
 from __future__ import annotations
-# from typing import *  # Unused
 import typing
 import logging
 import numpy as np
@@ -8,7 +7,6 @@ from certus.core.certus_core import Any
 if typing.TYPE_CHECKING:
     from certus.spline.certus_corridor_config import ProfileCorridorConfig
 
-# from certus.spline.certus_index_spline_core import *  # Unused
 
 log = logging.getLogger('CERTUS')
 

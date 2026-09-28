@@ -1,9 +1,7 @@
-# from typing import *  # Unused
 import numpy as np
 from scipy.optimize import minimize
 from certus.core.certus_core import Any, NUMERICAL_FAULT_EXCEPTIONS
 
-# from certus.spline.certus_index_spline_core import *  # Unused
 from certus.spline.certus_corridor_utils import _robust_sigma_from_mad
 from certus.spline.spline_objective import (
     SplinePWLObjective,

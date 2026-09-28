@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-# from typing import *  # Unused
 from pydantic import BaseModel, ConfigDict
 import numpy as np
 from certus.core.certus_core import Any

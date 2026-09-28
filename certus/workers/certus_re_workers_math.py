@@ -18,7 +18,6 @@ from certus.utils.certus_re_math import (
 
 # 
 from certus.utils.certus_re_helpers import _re_trf_residual_rms
-# from certus.core.certus_re_solvers import *  # Unused
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from certus.core.certus_re_solvers import REUserStopRequested
 

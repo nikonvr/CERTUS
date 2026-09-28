@@ -1,4 +1,3 @@
-# from typing import *  # Unused
 import numpy as np
 import logging
 from certus.core.certus_core import Any, NUMERICAL_FAULT_EXCEPTIONS

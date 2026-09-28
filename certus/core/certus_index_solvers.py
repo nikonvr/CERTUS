@@ -94,8 +94,6 @@ from certus.utils.certus_index_utils import (
     calculate_index_rmse,
 )
 
-# from .certus_index_config import *  # Unused
-# from .certus_index_objectives import *  # Unused
 
 class GradientSearcher:
     """L-BFGS-B local search using Analytic Gradient"""

@@ -29,7 +29,6 @@ from certus.utils.certus_re_math import (
 from certus.utils.certus_re_math import _re_p4_ap_band_intervals_str
 from certus.utils.certus_re_helpers import _re_trf_residual_rms, RE_GUI_DEFAULT_BEAM_APERTURE_DEG
 
-# from certus.core.certus_re_solvers import *  # Unused
 from certus.workers.certus_re_worker_utils import p2_result_to_correc_tuple
 
 

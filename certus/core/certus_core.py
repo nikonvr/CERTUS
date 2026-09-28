@@ -44,9 +44,6 @@ from certus.core.certus_runtime import CertusRuntime, build_runtime, setup_numba
 from certus.core.certus_logging import get_logger, handle_exception, setup_logging
 from certus.core.certus_performance import perf_monitor, log_perf, PerformanceMonitor
 
-DISPLAY_VERSION_LABEL = APP_DISPLAY_NAME
-DISPLAY_FULL_LABEL = APP_FULL_NAME
-
 
 __all__ = [
     # Version
@@ -231,13 +228,6 @@ _RESERVED_CORES_FOR_WORKERS: int = min(2, max(1, (os.cpu_count() or 4) // 8))  #
 MAX_LOG_FILE_SIZE_BYTES: int = 5 * 1024 * 1024  # 5 MB
 
 MAX_LOG_BACKUP_FILES: int = 1
-
-JSON_INDENT: int = 2
-
-
-# Thread safety constants
-
-DEFAULT_THREAD_TIMEOUT_MS: int = 3000  # 3 seconds
 
 
 @lru_cache(maxsize=1)
@@ -804,18 +794,6 @@ class GlobalConfig:
     MAX_FEVAL_LOCAL: int = 10000
 
     MAX_FEVAL_GLOBAL: int = 150000
-
-    MAX_FEVAL_INDEX: int = 80000
-
-    MAX_FEVAL_METAL: int = 80000
-
-    DEFAULT_SAMPLES_PER_ITER: int = 6000
-
-    # Visuals
-
-    CONVERGENCE_CURVE_COLOR: str = "#c0392b"
-
-    CONVERGENCE_CURVE_WIDTH: int = 2
 
 
 CFG = GlobalConfig()

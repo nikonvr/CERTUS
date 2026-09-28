@@ -185,10 +185,6 @@ class PerformanceMonitor:
             logger = self._get_logger()
             logger.info(f"PERF: {operation} took {elapsed:.3f}s")
 
-    def get_metrics(self, operation: str) -> OperationMetrics | None:
-        """Get metrics for a specific operation."""
-        return self._metrics.get(operation)
-
     def report(self, top_n: int | None = None, sort_by: str = "total") -> dict[str, Any]:
         """
         Generate performance report.
@@ -228,53 +224,9 @@ class PerformanceMonitor:
             },
         }
 
-    def report_str(self, top_n: int | None = 10, sort_by: str = "total") -> str:
-        """
-        Generate human-readable performance report.
-
-        Args:
-            top_n: Number of top operations to include
-            sort_by: Sort operations by this metric
-
-        Returns:
-            Formatted string report
-        """
-        report = self.report(top_n=top_n, sort_by=sort_by)
-
-        if not report["operations"]:
-            return "No performance data collected."
-
-        lines = [
-            "=" * 80,
-            "CERTUS PERFORMANCE REPORT",
-            "=" * 80,
-            f"Total operations tracked: {report['summary']['total_operations']}",
-            f"Total time: {report['summary']['total_time']:.3f}s",
-            f"Total calls: {report['summary']['total_calls']}",
-            "",
-            f"Top {len(report['operations'])} operations by {sort_by}:",
-            "-" * 80,
-            f"{'Operation':<40} {'Count':>8} {'Total':>10} {'Mean':>10} {'P95':>10}",
-            "-" * 80,
-        ]
-
-        for op in report["operations"]:
-            lines.append(
-                f"{op['operation']:<40} {op['count']:>8} {op['total']:>10.3f}s {op['mean']:>10.3f}s {op['p95']:>10.3f}s"
-            )
-
-        lines.append("=" * 80)
-        return "\n".join(lines)
-
     def reset(self):
         """Clear all collected metrics."""
         self._metrics.clear()
-
-    def log_report(self, top_n: int | None = 10, sort_by: str = "total"):
-        """Log the performance report."""
-        logger = self._get_logger()
-        report_str = self.report_str(top_n=top_n, sort_by=sort_by)
-        logger.info("\n" + report_str)
 
 
 # Global performance monitor instance

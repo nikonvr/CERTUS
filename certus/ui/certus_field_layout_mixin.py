@@ -336,6 +336,3 @@ class CertusFieldLayoutMixin:
             self.edit_angle,
             self.combo_pol,
         )
-
-    def _build_plot_data(self, result) -> FieldPlotData:
-        return FieldPlotData.from_any(result)

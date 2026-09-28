@@ -5,9 +5,6 @@ from certus.utils.certus_ux import Typography
 class CertusFieldStateMixin:
     """CertusFieldStateMixin."""
 
-    def _get_default_splitter_sizes(self) -> list[int]:
-        return [520, 1380]
-
 
 
     def _normalize_layer_material(self, row: int) -> str:
@@ -217,28 +214,6 @@ class CertusFieldStateMixin:
         except Exception as e:
             logging.error(f"Error reattaching stack: {e}")
 
-    def _apply_theme(self) -> None:
-        plots_to_theme = []
-        if hasattr(self, "plot_widget"):
-            plots_to_theme.extend(self._get_plot_targets("field_profile", self.plot_widget))
-        if hasattr(self, "spectral_plot_widget"):
-            plots_to_theme.extend(self._get_plot_targets("spectral_response", self.spectral_plot_widget))
-        if hasattr(self, "profile_plot_widget"):
-            plots_to_theme.extend(self._get_plot_targets("index_profile", self.profile_plot_widget))
-            
-        if plots_to_theme:
-            self._apply_certus_compact_theme(plots=plots_to_theme)
-        
-        if hasattr(self, "log_text"):
-            self.log_text.setStyleSheet(f"""
-                QTextEdit {{
-                    background-color: {CertusTheme.SURFACE};
-                    color: {CertusTheme.TEXT_MAIN};
-                    border: 1px solid {CertusTheme.BORDER};
-                    border-radius: 4px;
-                }}
-            """)
-
     def _setup_shortcuts(self) -> None:
         pass # Managed partly by base class
 
@@ -330,18 +305,10 @@ class CertusFieldStateMixin:
             self._skip_auto_calc = False
             self._update_thicknesses()
 
-    def save_config(self):
-        try:
-            params = self._get_params()
-        except Exception:
-            show_toast(self, "Invalid configuration", "error")
-            return
-
-        filename, _ = QFileDialog.getSaveFileName(self, "Save Configuration", "", "JSON Files (*.json)")
-        if not filename:
-            return
-
-        data = {
+    def _collect_config(self) -> dict:
+        """FIELD settings for `CertusBaseApp.save_config`."""
+        params = self._get_params()
+        return {
             "mat_H": self.combo_mat_H.currentText(),
             "mat_L": self.combo_mat_L.currentText(),
             "mat_Sub": self.combo_mat_Sub.currentText(),
@@ -361,64 +328,53 @@ class CertusFieldStateMixin:
             "rmax": params.rmax,
             "min_field_active": bool(params.min_field_active),
             "global_opt": bool(params.global_opt),
-            "allow_growth": bool(self.chk_allow_growth.isChecked())
+            "allow_growth": bool(self.chk_allow_growth.isChecked()),
         }
 
+    def _apply_config(self, data: dict) -> None:
+        """Apply FIELD settings read by `CertusBaseApp.load_config`."""
+
+        def set_combo(combo: QComboBox, text: str):
+            idx = combo.findText(text)
+            if idx >= 0:
+                combo.setCurrentIndex(idx)
+
+        set_combo(self.combo_mat_H, data.get("mat_H", "H800-Nb2O5"))
+        set_combo(self.combo_mat_L, data.get("mat_L", "H800-SiO2"))
+        set_combo(self.combo_mat_Sub, data.get("mat_Sub", "SiO2"))
+        set_combo(self.combo_mat_Sup, data.get("mat_Sup", "Air"))
+
+        self.edit_l0.setValue(data.get("l0", 1064.0))
+        self.edit_lcalc.setText(str(data.get("lcalc", "1064.0")))
+        self.edit_seuil1.setValue(data.get("seuil1", 0.5))
+        self.edit_seuil2.setValue(data.get("seuil2", 0.5))
+        self.edit_alpha.setValue(data.get("alpha", 10.0))
+
+        self.edit_angle.setValue(data.get("theta_inc_deg", 0.0))
+        self.combo_pol.setCurrentIndex(data.get("pol_idx", 0))
+        self.edit_mc_error.setValue(data.get("mc_error", 2.0))
+        self.edit_mc_iter.setValue(data.get("mc_iter", 50))
+        self.edit_rmin.setValue(data.get("rmin", 1.0))
+        self.edit_rmax.setValue(data.get("rmax", 1.0))
+        self.chk_min_field.setChecked(bool(data.get("min_field_active", False)))
+        self.chk_global_opt.setChecked(bool(data.get("global_opt", False)))
+        self.chk_allow_growth.setChecked(bool(data.get("allow_growth", False)))
+
+        emp = data.get("emp_factors", [])
+        layer_types = data.get("layer_types", [])
+
+        self._is_updating_table = True
         try:
-            with open(filename, 'w') as f:
-                json.dump(data, f, indent=4)
-            show_toast(self, "Configuration saved successfully.", "success")
-        except Exception as e:
-            show_toast(self, f"Error saving: {e}", "error")
+            self._load_stack(emp, layer_types)
+        finally:
+            self._is_updating_table = False
+        self._update_thicknesses()
 
-    def load_config(self):
-        filename, _ = QFileDialog.getOpenFileName(self, "Load Configuration", "", "JSON Files (*.json)")
-        if not filename:
-            return
+    def _post_save_config(self, filename: str) -> None:
+        show_toast(self, "Configuration saved successfully.", "success")
 
-        try:
-            with open(filename) as f:
-                data = json.load(f)
-            
-            def set_combo(combo: QComboBox, text: str):
-                idx = combo.findText(text)
-                if idx >= 0:
-                    combo.setCurrentIndex(idx)
-                    
-            set_combo(self.combo_mat_H, data.get("mat_H", "H800-Nb2O5"))
-            set_combo(self.combo_mat_L, data.get("mat_L", "H800-SiO2"))
-            set_combo(self.combo_mat_Sub, data.get("mat_Sub", "SiO2"))
-            set_combo(self.combo_mat_Sup, data.get("mat_Sup", "Air"))
-            
-            self.edit_l0.setValue(data.get("l0", 1064.0))
-            self.edit_lcalc.setText(str(data.get("lcalc", "1064.0")))
-            self.edit_seuil1.setValue(data.get("seuil1", 0.5))
-            self.edit_seuil2.setValue(data.get("seuil2", 0.5))
-            self.edit_alpha.setValue(data.get("alpha", 10.0))
-            
-            self.edit_angle.setValue(data.get("theta_inc_deg", 0.0))
-            self.combo_pol.setCurrentIndex(data.get("pol_idx", 0))
-            self.edit_mc_error.setValue(data.get("mc_error", 2.0))
-            self.edit_mc_iter.setValue(data.get("mc_iter", 50))
-            self.edit_rmin.setValue(data.get("rmin", 1.0))
-            self.edit_rmax.setValue(data.get("rmax", 1.0))
-            self.chk_min_field.setChecked(bool(data.get("min_field_active", False)))
-            self.chk_global_opt.setChecked(bool(data.get("global_opt", False)))
-            self.chk_allow_growth.setChecked(bool(data.get("allow_growth", False)))
-            
-            emp = data.get("emp_factors", [])
-            layer_types = data.get("layer_types", [])
-
-            self._is_updating_table = True
-            try:
-                self._load_stack(emp, layer_types)
-            finally:
-                self._is_updating_table = False
-            self._update_thicknesses()
-            
-            show_toast(self, "Configuration loaded.", "success")
-        except Exception as e:
-            show_toast(self, f"Error loading: {e}", "error")
+    def _post_load_config(self, filename: str, config: dict) -> None:
+        show_toast(self, "Configuration loaded.", "success")
 
     def open_help(self):
         show_toast(self, "CERTUS Electric Field Optimization module.", "info")

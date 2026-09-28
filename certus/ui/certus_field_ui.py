@@ -10,13 +10,15 @@ from certus.ui.certus_ui_utils import install_standard_shortcuts
 
 
 class CertusFieldApp(
-    CertusBaseApp,
-    CertusAppLogsMixin,
+    # The FIELD mixins come first, as in the other applications: listed after
+    # CertusBaseApp, every FIELD specialisation was shadowed by the base class.
     CertusFieldLayoutMixin,
     CertusFieldPlotMixin,
     CertusFieldEventsMixin,
     CertusFieldWorkersMixin,
     CertusFieldStateMixin,
+    CertusAppLogsMixin,
+    CertusBaseApp,
 ):
     APP_NAME = "CERTUS-FIELD"
     APP_TITLE = "Electric Field Optimization"

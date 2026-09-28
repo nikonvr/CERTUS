@@ -1,7 +1,5 @@
 from __future__ import annotations
 import dataclasses
-from enum import Enum, auto
-from typing import Optional
 from dataclasses import dataclass
 from typing import Any
 import numpy as np

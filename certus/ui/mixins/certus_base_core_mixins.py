@@ -7,17 +7,15 @@ cluttering the main application logic.
 """
 
 import functools
-import logging
-from typing import Any, Optional
+from typing import Any
 
-from PyQt6.QtCore import QSettings, QTimer, Qt
-from PyQt6.QtGui import QFont, QKeySequence, QShortcut
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QApplication
 
 from certus.ui.certus_theme import CertusTheme, get_standard_stylesheet
 from certus.ui.certus_ui_utils import (
     claim_shortcut_for_action,
-    install_standard_shortcuts,
     show_toast,
     update_global_plot_config,
 )

@@ -24,10 +24,20 @@ from certus.ui.certus_ui import (
 from certus.utils.certus_ux import build_premium_overrides
 from certus.spline.certus_index_spline_core import SplineOptConfig
 from certus.ui.certus_index_spline_common import (
-    _CorridorControlMixin, _SettingsMixin, _CorridorGenMixin, _DataMixin,
-    _RunMixin, _CorridorExportMixin, _UIBuilderMixin, _PlotMixin,
-    _CorridorWorkerMixin, _SmartInitDialogMixin, _LazyCertusIndexSplineApp,
-    _ConfigBuilderMixin, _MeshOptimizationMixin, _ExcelExportMixin, _UIMixin
+    _CorridorControlMixin,
+    _SettingsMixin,
+    _CorridorGenMixin,
+    _DataMixin,
+    _RunMixin,
+    _CorridorExportMixin,
+    _UIBuilderMixin,
+    _PlotMixin,
+    _CorridorWorkerMixin,
+    _SmartInitDialogMixin,
+    _ConfigBuilderMixin,
+    _MeshOptimizationMixin,
+    _ExcelExportMixin,
+    _UIMixin,
 )
 from certus.ui.certus_index_spline_state_mixin import CertusIndexSplineStateMixin
 from certus.ui.certus_index_spline_smartinit_mixin import CertusIndexSplineSmartInitMixin

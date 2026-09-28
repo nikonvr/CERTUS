@@ -3,13 +3,11 @@
 # Extracted from certus.ui.certus_ui.py to solve 8 circular imports
 # =============================================================================
 
-from enum import Enum
-import sys
 from typing import Any
 
-from certus.ui.certus_qt_widgets import QColor, QGraphicsDropShadowEffect, QIcon
-from PyQt6.QtGui import QPalette, QBrush, QPixmap, QPainter, QFont
-from PyQt6.QtWidgets import QApplication, QPushButton, QToolButton
+from certus.ui.certus_qt_widgets import QColor, QGraphicsDropShadowEffect
+from PyQt6.QtGui import QPalette, QFont
+from PyQt6.QtWidgets import QApplication
 
 # Step 3.9 - the brand palette is defined once, in the low layer. See the comment on
 # `BRAND_INDEX` below for why it lives there rather than here.

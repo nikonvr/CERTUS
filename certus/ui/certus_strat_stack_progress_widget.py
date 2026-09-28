@@ -2,18 +2,15 @@
 
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 from PyQt6.QtCore import Qt, pyqtSlot
-from PyQt6.QtGui import QColor, QFont
+from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
-    QProgressBar,
     QScrollArea,
-    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )

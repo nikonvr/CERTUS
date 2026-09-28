@@ -67,42 +67,32 @@ __all__ = [
 ]
 
 
-import copy
 import functools
 
 
-import logging
 
 
-import os
 from pathlib import Path
 
 
-import queue
 
 
-import sys
 
 
-import time
 
 
-import traceback
 
 
 import warnings
 
 warnings.filterwarnings("ignore", category=RuntimeWarning, message="overflow encountered in cast", module="pyqtgraph")
 
-from collections import deque
 
 
-from collections.abc import Callable
 from typing import Any
 
 
 import numpy as np
-from pydantic import ValidationError
 
 
 import pandas as pd
@@ -111,14 +101,10 @@ import pandas as pd
 import pyqtgraph as pg
 
 
-from certus.core.certus_core import CFG, certus_timestamp_display
-from certus.utils.certus_dto import IndexSplineConfigDTO
 
 
-from certus_physics import init_thickness
 
 
-from certus_physics.structures import Layer, Target
 
 
 # PyQtGraph ViewBox vs NumPy/Python 3.14  cosmetic RuntimeWarning on cast (any emitting module)
@@ -139,40 +125,22 @@ from PyQt6.QtCore import (
     QObject,
     QSize,
     Qt,
-    QThread,
-    QTimer,
-    QUrl,
     pyqtSignal,
-    QMetaObject,
-    Q_ARG,
-    QSettings,
-    QPropertyAnimation,
-    QEasingCurve,
 )
 
 
-from PyQt6.QtGui import QColor, QFont, QIcon, QKeySequence, QPalette, QShortcut
+from PyQt6.QtGui import QFont, QIcon
 
 
 from PyQt6.QtWidgets import (
     QApplication,
     QCheckBox,
-    QDoubleSpinBox,
-    QFileDialog,
-    QFrame,
-    QGraphicsDropShadowEffect,
     QGridLayout,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
-    QMainWindow,
-    QMessageBox,
-    QProgressBar,
     QPushButton,
     QSplitter,
     QStyle,
-    QTableWidget,
-    QTableWidgetItem,
     QTextEdit,
     QToolButton,
     QVBoxLayout,
@@ -187,13 +155,7 @@ from PyQt6.QtWidgets import (
 
 
 from certus.core.certus_core import (
-    NUMERICAL_FAULT_EXCEPTIONS,
-    CertusRuntime,
-    build_runtime,
-    handle_exception,
     get_resource_path,
-    load_theme_config,
-    save_theme_config,
 )
 from certus.ui.certus_qt_svg import SVG_AVAILABLE
 
@@ -208,7 +170,6 @@ if SVG_AVAILABLE:
 from certus.core.certus_core import OPENPYXL_AVAILABLE
 
 
-from certus.utils.certus_data import read_data_file_robust
 from certus.ui.certus_theme import CertusTheme
 from certus.utils.certus_ux import Typography
 from certus.ui.certus_ui_utils import open_documentation

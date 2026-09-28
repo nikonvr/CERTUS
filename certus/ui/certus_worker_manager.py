@@ -5,7 +5,7 @@ Implements dependency injection for background task orchestration.
 
 import logging
 from collections.abc import Callable
-from typing import Protocol, Any
+from typing import Protocol
 from PyQt6.QtCore import QObject, QThread, pyqtSignal
 
 class CertusWorkerManagerProtocol(Protocol):

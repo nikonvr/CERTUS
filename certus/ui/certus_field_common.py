@@ -2,64 +2,32 @@ from PyQt6.QtWidgets import (
     QMainWindow,
     QWidget,
     QVBoxLayout,
-    QHBoxLayout,
     QLabel,
     QDoubleSpinBox,
     QTableWidget,
     QTableWidgetItem,
     QHeaderView,
     QAbstractItemView,
-    QScrollArea,
-    QFrame,
-    QSplitter,
-    QTextEdit,
     QAbstractSpinBox,
-    QPushButton,
-    QFileDialog,
     QComboBox,
     QLineEdit,
-    QTabWidget,
     QGridLayout,
     QCheckBox,
-    QDialog,
-    QApplication,
 )
-from PyQt6.QtCore import Qt, pyqtSlot, pyqtSignal, QTimer
-from PyQt6.QtGui import QFont
+from PyQt6.QtCore import Qt, pyqtSignal
 
-from certus.ui.certus_ui_widgets_cards import CertusCard
-from certus.ui.certus_base_app import CertusBaseApp, CertusAppLogsMixin
-from certus.ui.certus_ui_widgets_factory import create_styled_button, create_header_logo_widget, create_top_actions_bar
-from certus.ui.certus_ui_widgets_utils import CertusThemeToggle, DetachedPlotWindow, ExcelTableWidget
-from certus.ui.certus_ui_widgets_layout import CertusCollapsible
-from certus.ui.certus_theme import CertusTheme
-from certus.ui.certus_ui_utils import show_toast, open_file_explorer
-from certus.ui.certus_ui_widgets_progress import EnhancedProgressWidget
-from certus.ui.certus_plot import clone_plot_widget
+from certus.ui.certus_ui_widgets_factory import create_styled_button
 
 from certus.ui.certus_icons import certus_icon
-from certus.ui.certus_field_plot import CertusFieldPlotWidget, CertusSpectralPlotWidget, CertusIndexProfilePlotWidget
-from certus.ui.certus_field_services import FieldExportService, FieldPlotData, FieldStackService
-from certus.workers.certus_field_workers_dto import FieldWorkerRequest, FieldParamsDTO
-from certus.workers.certus_field_workers import FieldWorkerThread
-from certus.core._certus_physics_impl import MaterialDatabase
-from certus.workers.certus_strat_workers import _resolve_strat_indices_db_path
-from certus.core.certus_core import get_resource_path, SUBSTRATE_CHOICES
-from certus.utils.certus_data import generate_html_report, to_excel_robust
+from certus.core.certus_core import SUBSTRATE_CHOICES
 
 # certus_load_summary helpers reserved for future use (not yet wired in FIELD)
-from certus.core.certus_field_core import calculate_opt_metrics, get_layer_properties_from_list
 
 import pyqtgraph as pg
 import pyqtgraph.exporters
-import traceback
 import logging
-import json
-import os
 import pandas as pd
 import importlib.util
-from datetime import datetime
-from pathlib import Path
 import numpy as np
 
 LIDT_PRESETS = {

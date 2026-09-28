@@ -76,7 +76,6 @@ __all__ = [
 ]
 
 
-import copy
 from certus.utils.certus_copy_utils import copy_optimization_result
 import functools
 
@@ -84,20 +83,16 @@ import functools
 import logging
 
 
-import os
 from pathlib import Path
 
 
 import queue
 
 
-import sys
 
 
-import time
 
 
-import traceback
 
 
 import warnings
@@ -107,7 +102,6 @@ warnings.filterwarnings("ignore", category=RuntimeWarning, message="overflow enc
 from collections import deque
 
 
-from collections.abc import Callable
 from typing import Any
 
 
@@ -147,22 +141,14 @@ import pyqtgraph.exporters  # pylint: disable=unused-import
 
 
 from PyQt6.QtCore import (
-    QObject,
-    QSize,
     Qt,
     QThread,
     QTimer,
-    QUrl,
     pyqtSignal,
-    QMetaObject,
-    Q_ARG,
     QSettings,
-    QPropertyAnimation,
-    QEasingCurve,
 )
 
 
-from PyQt6.QtGui import QColor, QFont, QIcon, QKeySequence, QPalette, QShortcut
 
 
 from PyQt6.QtWidgets import (
@@ -171,23 +157,13 @@ from PyQt6.QtWidgets import (
     QCheckBox,
     QDoubleSpinBox,
     QFileDialog,
-    QFrame,
-    QGraphicsDropShadowEffect,
-    QGridLayout,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QMainWindow,
-    QMessageBox,
-    QProgressBar,
-    QPushButton,
     QSplitter,
-    QStyle,
     QTableWidget,
     QTableWidgetItem,
-    QTextEdit,
-    QToolButton,
-    QVBoxLayout,
     QWidget,
 )
 
@@ -202,10 +178,6 @@ from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
     CertusRuntime,
     build_runtime,
-    handle_exception,
-    get_resource_path,
-    load_theme_config,
-    save_theme_config,
 )
 from certus.ui.certus_qt_svg import SVG_AVAILABLE
 
@@ -220,7 +192,6 @@ if SVG_AVAILABLE:
 from certus.core.certus_core import OPENPYXL_AVAILABLE
 
 
-from certus.utils.certus_data import read_data_file_robust
 
 
 # =============================================================================
@@ -229,7 +200,6 @@ from certus.utils.certus_data import read_data_file_robust
 from certus.ui.certus_ui_utils import (
     safe_ui_action,
     show_toast,
-    show_status_feedback,
     confirm_stop_with_timeout,
     process_log_queue_standard,
     open_file_explorer,
@@ -239,12 +209,10 @@ from certus.ui.certus_ui_utils import (
     copy_app_logs_to_clipboard,
     install_standard_shortcuts,
     install_unique_shortcut,
-    _CertusDropFilter,
-    update_global_plot_config,
     apply_certus_theme,
     configure_theme_from_preference,
 )
-from certus.ui.certus_ui_widgets_factory import attach_splitter_capper, create_log_widget, create_top_actions_bar
+from certus.ui.certus_ui_widgets_factory import attach_splitter_capper, create_log_widget
 from certus.ui.certus_ui_widgets_utils import CertusLogPanel
 from certus.ui.certus_theme import CertusTheme, get_standard_stylesheet
 from certus.utils.certus_ux import Typography

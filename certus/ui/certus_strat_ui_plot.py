@@ -18,7 +18,6 @@ from certus.ui.certus_strat_plots_ui import UniversalPlotWindow
 from certus.ui.certus_strat_heatmap_ui import InteractiveHeatmapWindow
 from certus.ui.certus_strat_table_ui import StrategiesTableWindow
 from certus.ui.certus_strat_indices_ui import InteractiveIndicesWindow
-from certus.ui.certus_strat_monitor_ui import LiveMonitorWindow
 from certus.ui.certus_strat_thickness_ui import TransmissionVsThicknessWindow
 from certus.ui.certus_strat_spectrum_ui import InteractiveSpectrumWindow
 from certus.ui.certus_strat_performance_ui import StrategySpectralPerformanceWindow

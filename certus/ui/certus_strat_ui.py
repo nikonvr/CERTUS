@@ -19,16 +19,10 @@ from certus.ui.certus_ui import CertusBaseApp, init_certus_app
 from certus.workers.certus_strat_workers import _resolve_strat_indices_db_path
 from certus.ui.certus_strat_mixins_ui import CertusWindowSpyMixin
 from certus.ui.certus_strat_table_ui import StrategiesTableWindow
-from certus.ui.certus_strat_plots_ui import CertusScientificPlot, UniversalPlotWindow
-from certus.ui.certus_strat_heatmap_ui import InteractiveHeatmapWindow
+from certus.ui.certus_strat_plots_ui import UniversalPlotWindow
 from certus.ui.certus_strat_thickness_ui import TransmissionVsThicknessWindow
 from certus.ui.certus_strat_performance_ui import StrategySpectralPerformanceWindow
 from certus.ui.certus_strat_json_ui import JsonViewerWindow
-from certus.ui.certus_strat_indices_ui import InteractiveIndicesWindow
-from certus.ui.certus_strat_spectrum_ui import InteractiveSpectrumWindow
-from certus.ui.certus_strat_popout_ui import PopOutWindow
-from certus.ui.certus_strat_monitor_ui import LiveMonitorWindow
-from certus.ui.certus_strat_welcome_ui import WelcomeGuideWidget
 
 
 # =========================================================================================

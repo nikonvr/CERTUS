@@ -15,8 +15,6 @@ CERTUS Substrate Index - Substrate refractive index determination only
 
 import functools
 from pathlib import Path
-from typing import Any
-import re
 import sys
 
 
@@ -32,7 +30,7 @@ import pandas as pd
 import pyqtgraph as pg
 
 
-from PyQt6.QtCore import Qt, QSettings
+from PyQt6.QtCore import Qt
 
 
 from PyQt6.QtGui import QFont, QColor, QBrush
@@ -63,24 +61,14 @@ from PyQt6.QtWidgets import (
 
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
-    setup_module_logging,
     __version__,
-    SELLMEIER_COEFFS_BY_ID,
-    SUBSTRATES,
-    CANONICAL_SUBSTRATE_LABELS,
-    canonicalize_substrate_label,
-    substrate_sellmeier_coeffs,
 )
 from certus.utils.certus_ux import Typography
-from certus.core.certus_substrate_helpers import filter_bare_substrate_columns, is_bare_substrate_column, norm_header, expand_substrate_abbrevs, unglue_substrate_nu
-from certus.core.certus_metrology import ValidationStatus
-from certus.utils.certus_services import SubstrateIndexRequest, SubstrateIndexService
 
 
 from certus.ui.certus_measurement_excel_ui import open_measurement_excel_interactive
 
 
-from certus.utils.certus_spectral_preproc import dynamic_savgol_blend
 
 
 from certus.ui.certus_ui import (
@@ -93,7 +81,6 @@ from certus.ui.certus_ui import (
     init_certus_app,
     create_styled_button,
     create_styled_label,
-    set_certus_window_icon,
     create_header_logo_widget,
     ExcelTableWidget,
 )
@@ -110,11 +97,9 @@ from certus.core.certus_substrate_index import (
 
 from certus.ui.certus_substrate_plot_utils import (
     _add_pg_fit_band_outside_shading,
-    _nan_split_band_y,
     _pg_plot_xy_split_band,
     _pg_plot_scatter_split_band,
 )
-from certus.core.certus_substrate_index import _fit_summary_line
 from certus.core.certus_substrate_index import (
     _N_SUBSTRATE_MODELS,
     _filter_dataframe_bare_substrate_columns,
@@ -125,8 +110,6 @@ from certus.core.certus_substrate_index import (
     _rmse_is_best_fit,
     _substrate_index_geom_fit_mask,
     _substrate_index_models_ordered_by_rmse,
-    _model_selection_score,
-    _rank_models_by_selection_score,
     _align_xy_lengths,
 )
 from certus.utils.certus_qsettings import certus_settings

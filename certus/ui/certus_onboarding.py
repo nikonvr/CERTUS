@@ -40,7 +40,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 from collections.abc import Callable
-from typing import Final, Optional
+from typing import Final
 from certus.utils.certus_qsettings import certus_settings
 
 

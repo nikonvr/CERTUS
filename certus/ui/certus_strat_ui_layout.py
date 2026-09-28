@@ -66,7 +66,7 @@ def _as_numeric_field(edit):
 from certus.ui.certus_ui import WelcomeGuideWidget, EnhancedProgressWidget
 from certus.ui.certus_strat_stack_progress_widget import CertusStratStackProgressWidget
 from certus.ui.certus_strat_monitor_ui import CertusStratGrowthWidget
-from certus.ui.certus_overview_tab import PLACEHOLDER, CertusKpiBanner
+from certus.ui.certus_overview_tab import CertusKpiBanner
 
 
 class CertusStratLayoutMixin:

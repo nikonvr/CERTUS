@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 
-import copy
 from certus.utils.certus_copy_utils import copy_optimization_result
 
 import logging

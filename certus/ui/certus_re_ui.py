@@ -8,7 +8,6 @@ from certus.utils.certus_re_config import (
 )
 
 import numpy as np
-from typing import Any
 
 from certus.ui.certus_qt_widgets import (
     QDialog,

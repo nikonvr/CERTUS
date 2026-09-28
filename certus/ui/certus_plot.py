@@ -2,7 +2,7 @@ import functools
 import logging
 from pathlib import Path
 from collections.abc import Callable
-from typing import Any, Optional
+from typing import Any
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg

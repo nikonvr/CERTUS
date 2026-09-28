@@ -6,7 +6,6 @@ import pyqtgraph as pg
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
-    QComboBox,
     QGroupBox,
     QDialog,
     QDialogButtonBox,
@@ -17,7 +16,6 @@ from PyQt6.QtWidgets import (
     QMenu,
     QMessageBox,
     QPlainTextEdit,
-    QProgressBar,
     QPushButton,
     QScrollArea,
     QSplitter,

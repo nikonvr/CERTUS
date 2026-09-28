@@ -39,7 +39,7 @@ Public API
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Final, Optional
+from typing import Any, Final
 
 
 HOVER_DELAY_MS: Final[int] = 400

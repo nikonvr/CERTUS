@@ -1,4 +1,3 @@
-from .certus_opt_needle import (needle_scan_cached)
 
 from certus.physics.certus_optimizers import PGlobalOptimizer, SingleLinkageClusterer
 from certus.physics.certus_material_db import MaterialDatabase
@@ -11,7 +10,6 @@ from certus.physics.certus_opt_tmm import (
     trim_worst_only,
     calculate_reflectance_bilayer_vectorized,
     compute_RT_from_matrix,
-    Material,
 )
 from certus.physics.gradient_utils import (
     compute_mse_vectorized,

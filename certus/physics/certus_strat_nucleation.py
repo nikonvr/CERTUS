@@ -1,16 +1,12 @@
 import numpy as np
 from numba import njit, prange
-import math
-from certus.core.certus_core import TWO_PI
-from certus.physics.certus_opt_kernels import compute_RT_from_matrix
-from certus.physics.certus_tmm_core import compute_TMM_single_point_k0_exact
 
 NON_MONOTONIC_MODE_ATTENUATE = 0
 NON_MONOTONIC_MODE_REJECT = 1
 K_MAX_LAYER_BACKSIDE: float = 0.001
 K_MAX_SUBSTRATE_BACKSIDE: float = 0.00001
-from .certus_strat_math import _solve_quadratic_target, _calc_T_added_layer, _seeded_noise_sample
-from .certus_strat_growth import compute_T_front_at_layer, simulate_growth_kernel
+from .certus_strat_math import _seeded_noise_sample
+from .certus_strat_growth import simulate_growth_kernel
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")

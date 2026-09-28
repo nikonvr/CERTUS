@@ -6,11 +6,8 @@ from typing import TYPE_CHECKING
 import time
 import os
 import math
-import threading
 from scipy.optimize import minimize
 from threading import RLock
-from concurrent.futures import ProcessPoolExecutor
-from collections import defaultdict
 from certus.core.certus_core import PI
 from threading import Event
 

@@ -17,7 +17,6 @@ Read-only: this script writes nothing and changes nothing.
 from __future__ import annotations
 
 import importlib.util
-import os
 import subprocess
 import sys
 from pathlib import Path

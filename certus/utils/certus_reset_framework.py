@@ -11,7 +11,6 @@ from typing import Any
 from PyQt6.QtWidgets import QMessageBox, QPlainTextEdit, QTextEdit, QPushButton, QWidget
 
 from certus.utils.errors import NUMERICAL_FAULT_EXCEPTIONS
-from certus.utils.certus_ux import Typography
 
 
 __all__ = [

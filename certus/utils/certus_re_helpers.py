@@ -72,8 +72,6 @@ from certus.utils.certus_re_math import (
     _RE_FT_COL_N,
     _RE_FT_COL_QW,
     _RE_FT_COL_THICK,
-    _re_envelope_pchip,
-    _RE_BMAT_CACHE_MAXSIZE,
 )
 
 

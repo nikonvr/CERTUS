@@ -2,9 +2,6 @@ import numpy as np
 from numba import njit, prange
 from collections.abc import Callable
 from typing import Any
-from functools import lru_cache
-import math
-from certus.core.certus_core import SUBSTRATES
 
 
 # [MONOLITHIC BLOCK] MATERIAL DATABASE

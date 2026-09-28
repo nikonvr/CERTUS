@@ -1,5 +1,5 @@
 from __future__ import annotations
-from scipy.interpolate import PchipInterpolator, CubicSpline
+from scipy.interpolate import CubicSpline
 from certus.utils.certus_re_config import (
     RE_P4_BEAM_N_KNOTS,
     RE_SUB_CAUCHY_BARRIER_SQRT_W,

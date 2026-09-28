@@ -11,13 +11,11 @@ from __future__ import annotations
 
 import faulthandler
 import logging
-import os
 import sys
 import threading
 import time
 import traceback
 from pathlib import Path
-from collections.abc import Callable
 from typing import Any
 
 

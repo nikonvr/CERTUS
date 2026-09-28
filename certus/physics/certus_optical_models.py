@@ -2,11 +2,9 @@ SMALL_EPSILON = 1e-12
 import numpy as np
 from scipy.interpolate import CubicSpline
 
-from numba import njit, float64, boolean, prange
-import math
+from numba import njit, prange
 from collections import OrderedDict
 from functools import lru_cache
-from threading import Lock
 from certus.core.certus_core import PI
 
 

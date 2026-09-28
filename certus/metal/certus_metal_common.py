@@ -16,22 +16,19 @@ import logging
 import os
 from pathlib import Path
 
-import time
 
 import traceback
 
 from dataclasses import dataclass, field
 
 from collections.abc import Callable
-from typing import Any, Optional
-from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
+from typing import Any
 
 
 import numpy as np
 import scipy.optimize
 import pyqtgraph as pg
 
-from scipy.optimize import OptimizeResult
 
 from PyQt6.QtCore import QEvent, QObject, Qt, QThread, QTimer, pyqtSignal, pyqtSlot
 
@@ -85,7 +82,6 @@ from certus.ui.certus_ui import (
     stop_worker_and_thread,
     clone_plot_widget,
     create_header_logo_widget,
-    create_log_widget,
     open_data_file_and_read,
     install_standard_shortcuts,
     enable_file_drop,

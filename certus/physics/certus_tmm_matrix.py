@@ -1,12 +1,11 @@
 import numpy as np
 from numba import njit, prange
-import math
 from certus.physics.certus_opt_tmm import compute_TMM_generic, compute_RT_from_matrix
 from certus.core.certus_core import TWO_PI
 
 SMALL_EPSILON = 1e-12
 
-from .certus_tmm_substrate import calculate_bare_substrate_R, calculate_bare_substrate_RT, calculate_single_interface_R
+from .certus_tmm_substrate import calculate_bare_substrate_R
 
 
 # ─── LOCKED ─── Validated by test_tmm_coherence.py + test_gradient_vs_fd.py ───

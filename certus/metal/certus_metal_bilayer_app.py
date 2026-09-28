@@ -10,7 +10,6 @@ CERTUS_METAL_BILAYER.py re-exports this module.
 
 import json
 import logging
-import os
 import time
 import traceback
 from pathlib import Path
@@ -33,7 +32,6 @@ from PyQt6.QtWidgets import (
 
 from certus.core.certus_core import (
     get_float_dtype,
-    get_resource_path,
     certus_timestamp_display,
     certus_timestamp_file,
     NUMERICAL_FAULT_EXCEPTIONS,

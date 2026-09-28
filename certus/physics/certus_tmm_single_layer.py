@@ -5,11 +5,6 @@ from certus.core.certus_core import TWO_PI
 
 SMALL_EPSILON = 1e-12
 
-from .certus_tmm_substrate import (
-    calculate_single_interface_R,
-    calculate_bare_substrate_R_absorbing,
-    calculate_bare_substrate_T_absorbing,
-)
 from .certus_tmm_matrix import compute_complex_phase_components
 
 

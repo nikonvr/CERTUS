@@ -10,7 +10,7 @@ import pandas as pd
 
 
 from certus.core.certus_core import SELLMEIER_COEFFS_BY_ID, SUBSTRATES, NUMERICAL_FAULT_EXCEPTIONS
-from certus.utils.certus_db_helpers import find_matching_sheets, merge_two_curves, merge_multiple_curves, MergedMaterialDict
+from certus.utils.certus_db_helpers import MergedMaterialDict
 
 
 def _build_sellmeier_by_name() -> dict:

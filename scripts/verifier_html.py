@@ -20,7 +20,6 @@ Rend 0 si tout tient, 1 sinon.
 
 from __future__ import annotations
 
-import re
 import sys
 from html.parser import HTMLParser
 from pathlib import Path

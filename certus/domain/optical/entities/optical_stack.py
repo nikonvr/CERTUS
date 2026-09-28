@@ -7,7 +7,6 @@ Manages domain invariants and emits domain events.
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Optional
 from uuid import uuid4
 
 from certus.domain.optical.entities import Layer

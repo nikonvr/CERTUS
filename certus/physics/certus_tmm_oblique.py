@@ -1,13 +1,9 @@
 import numpy as np
 from numba import njit, prange
-import math
-from certus.physics.certus_opt_tmm import compute_TMM_generic, compute_RT_from_matrix
 from certus.core.certus_core import TWO_PI
 
 SMALL_EPSILON = 1e-12
 
-from .certus_tmm_substrate import calculate_single_interface_R
-from .certus_tmm_backside import _apply_exact_backside_generic, apply_exact_backside_combination
 from .certus_tmm_matrix import compute_complex_phase_components, calc_spectrum_front
 
 

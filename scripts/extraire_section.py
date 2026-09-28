@@ -25,7 +25,6 @@ qu'un agent doit en RETENIR -- et c'est la seule chose qui merite de rester.
 from __future__ import annotations
 
 import argparse
-import io
 import os
 import sys
 from datetime import date

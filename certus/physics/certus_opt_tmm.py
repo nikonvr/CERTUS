@@ -1,10 +1,8 @@
 SMALL_EPSILON = 1e-12
 import numpy as np
 from numba import njit, prange
-import math
 from certus.core.certus_core import (
     WL_DECIMALS,
-    PI,
     TWO_PI,
     N_SUPERSTRATE,
     get_complex_dtype,
@@ -13,16 +11,8 @@ from certus.core.certus_core import (
 )
 from dataclasses import dataclass
 from certus.physics.certus_optical_models import (
-    get_nk_from_spline,
-    get_nk_cauchy_simple,
     get_nk_cauchy_wrapper,
-    sellmeier_n_array,
-    get_nk_cauchy,
-    epsilon2_TLU_array,
-    epsilon1_TL_analytic,
-    epsilon_to_nk,
 )
-from scipy.interpolate import CubicSpline
 
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")

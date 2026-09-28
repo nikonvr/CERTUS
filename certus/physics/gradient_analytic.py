@@ -7,11 +7,10 @@ Contains analytic gradient computation kernels for TMM optimization.
 
 import numpy as np
 from numba import njit, prange
-import math
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from certus.core.certus_core import WL_DECIMALS, PI, TWO_PI, N_SUPERSTRATE
+from certus.core.certus_core import PI, TWO_PI
 import certus.physics.certus_tmm_core as tmm_core
 
 # Explicit imports for type annotations and helper functions
@@ -35,18 +34,6 @@ from certus.physics.gradient_utils import cost_numba_fast
 # `Target` only appears in an annotation, so a typing import is sufficient.
 if TYPE_CHECKING:
     from certus_physics.structures import Target
-from certus.physics.certus_optical_models import (
-    get_nk_from_spline,
-    get_nk_cauchy_simple,
-    get_nk_cauchy_wrapper,
-    sellmeier_n_array,
-    get_nk_cauchy,
-    epsilon2_TLU_array,
-    epsilon1_TL_analytic,
-    epsilon_to_nk,
-)
-from scipy.interpolate import CubicSpline
-from certus.physics.gradient_utils import compute_mse_vectorized
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")

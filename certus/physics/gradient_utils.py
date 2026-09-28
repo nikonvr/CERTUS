@@ -7,7 +7,6 @@ Contains shared utility functions for cost calculation and MSE computation.
 
 import numpy as np
 from numba import njit, prange
-from certus.core.certus_core import WL_DECIMALS, PI, TWO_PI, N_SUPERSTRATE
 import certus.physics.certus_tmm_core as tmm_core
 
 
@@ -123,7 +122,6 @@ def cost_numba_fast(
 
 
 from certus.physics.gradient_analytic import (
-    prepare_targets_vectorized,
     make_cost_function,
 )
 

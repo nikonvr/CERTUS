@@ -1,9 +1,6 @@
 import numpy as np
 from numba import njit, prange
-import math
 from certus.core.certus_core import TWO_PI
-from certus.physics.certus_opt_kernels import compute_RT_from_matrix
-from certus.physics.certus_tmm_core import compute_TMM_single_point_k0_exact
 
 NON_MONOTONIC_MODE_ATTENUATE = 0
 NON_MONOTONIC_MODE_REJECT = 1

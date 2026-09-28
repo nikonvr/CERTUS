@@ -1,5 +1,11 @@
 from __future__ import annotations
-from certus.ui.certus_strat_common import *
+from typing import Any
+import numpy as np
+import pandas as pd
+import pyqtgraph as pg
+from PyQt6.QtGui import QTransform
+from PyQt6.QtWidgets import QVBoxLayout, QWidget
+from certus.ui.certus_ui import attach_excel_clipboard_context_menu
 from certus.ui.certus_strat_plots_ui import CertusScientificPlot
 
 class InteractiveHeatmapWindow(QWidget):  # <--- Changed here: QWidget instead of QMainWindow

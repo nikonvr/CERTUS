@@ -1,5 +1,30 @@
 from __future__ import annotations
-from certus.ui.certus_strat_common import *
+import os
+from pathlib import Path
+import json
+import logging
+import traceback
+from collections import deque
+from typing import Any
+from pydantic import ValidationError
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QFileDialog, QLineEdit, QMessageBox, QTableWidgetItem
+from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
+from certus_physics import NON_MONOTONIC_MODE_ATTENUATE
+from certus.utils.certus_dto import StratConfigDTO
+from certus.core.certus_strat_core import (
+    SYM_DEFAULT_CONTINUITY_WEIGHT,
+    SYM_DEFAULT_EXTREMA_WINDOW_OT,
+    SYM_DEFAULT_SAME_WL_BONUS,
+    SYM_DEFAULT_SCORING_MODE,
+    SYM_DEFAULT_TIE_EPS_ABS,
+    SYM_DEFAULT_TIE_EPS_REL,
+    SYM_DEFAULT_WEIGHT,
+)
+from certus.ui.certus_ui import get_certus_last_dir, safe_ui_action, set_certus_last_dir
+from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
+from certus.workers.certus_strat_workers import StratTask, WorkerThread
+from certus.utils.certus_strat_service import NOISE_DISTRIBUTION_GAUSSIAN, rebuild_visualization_context
 from certus_physics import NON_MONOTONIC_MODE_REJECT
 from certus.utils.certus_strat_context import _validate_strategy_blocks_contract
 from certus.ui.certus_strat_json_ui import JsonViewerWindow

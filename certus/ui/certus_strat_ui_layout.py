@@ -1,5 +1,46 @@
 from __future__ import annotations
-from certus.ui.certus_strat_common import *
+import functools
+from typing import Any
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import (
+    QApplication,
+    QButtonGroup,
+    QComboBox,
+    QFrame,
+    QGridLayout,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QRadioButton,
+    QScrollArea,
+    QSizePolicy,
+    QSplitter,
+    QStackedWidget,
+    QStatusBar,
+    QStyle,
+    QTabWidget,
+    QVBoxLayout,
+    QWidget,
+)
+from certus.core.certus_core import SUBSTRATE_MAPPING, get_resource_path
+from certus.core.certus_strat_core import SYM_DEFAULT_SCORING_MODE
+from certus.ui.certus_ui import (
+    CERTUS_UI_STRINGS,
+    CertusCard,
+    CertusLogPanel,
+    CertusStatusPill,
+    CertusTheme,
+    CertusThemeToggle,
+    ExcelTableWidget,
+    apply_certus_theme,
+    create_header_logo_widget,
+    create_top_actions_bar,
+    open_documentation,
+    open_file_explorer,
+)
+from certus.utils.certus_ux import OBJ, build_premium_overrides
 from certus.utils.certus_ux import Typography
 from certus.ui.certus_ui_widgets_factory import CertusBooleanField
 from PyQt6.QtCore import QLocale

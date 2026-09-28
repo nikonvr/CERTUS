@@ -1,5 +1,19 @@
 from __future__ import annotations
-from certus.ui.certus_strat_common import *
+from pathlib import Path
+import logging
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QKeySequence, QShortcut
+from PyQt6.QtWidgets import QSizePolicy, QTableWidgetItem
+from certus.ui.certus_ui import (
+    CERTUS_UI_STRINGS,
+    CertusTheme,
+    copy_app_logs_to_clipboard,
+    enable_file_drop,
+    install_standard_shortcuts,
+    open_documentation,
+    show_toast,
+)
+from certus.ui.certus_ui_shared import apply_app_zoom
 from certus.ui.certus_strat_popout_ui import PopOutWindow
 
 

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from certus.ui.certus_strat_common import *
+import logging
 
 class CertusWindowSpyMixin:
     def showEvent(self, event) -> None:

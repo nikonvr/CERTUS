@@ -1,5 +1,19 @@
 from __future__ import annotations
-from certus.ui.certus_strat_common import *
+import logging
+import queue
+import time
+from typing import Any
+import numpy as np
+from PyQt6.QtCore import QThread, Qt, pyqtSlot
+from PyQt6.QtGui import QPixmap
+from PyQt6.QtWidgets import QMessageBox
+from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
+from certus.workers.certus_strat_workers import PlotRenderWorker
+from certus.utils.certus_strat_service import (
+    calculate_nominal_properties,
+    rebuild_visualization_context,
+    simulate_detailed_growth_for_ui,
+)
 from certus.ui.certus_strat_plots_ui import UniversalPlotWindow
 from certus.ui.certus_strat_heatmap_ui import InteractiveHeatmapWindow
 from certus.ui.certus_strat_table_ui import StrategiesTableWindow

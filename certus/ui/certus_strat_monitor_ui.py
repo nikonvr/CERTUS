@@ -1,5 +1,11 @@
 from __future__ import annotations
-from certus.ui.certus_strat_common import *
+from certus.ui.certus_strat_common import CertusWindowSpyMixin
+import logging
+import numpy as np
+import pyqtgraph as pg
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QLabel, QMainWindow, QVBoxLayout, QWidget
+from certus.ui.certus_ui import CertusTheme, set_certus_window_icon
 from certus.ui.certus_ui import CertusScientificPlot
 
 class CertusStratGrowthWidget(QWidget):

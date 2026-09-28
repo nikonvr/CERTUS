@@ -1,5 +1,36 @@
 from __future__ import annotations
-from certus.ui.certus_strat_common import *
+from certus.ui.certus_strat_common import QSvgWidget
+from pathlib import Path
+import json
+import logging
+import traceback
+from typing import Any
+import numpy as np
+import pandas as pd
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QColor, QFont
+from PyQt6.QtWidgets import (
+    QApplication,
+    QFileDialog,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QTableWidgetItem,
+    QVBoxLayout,
+    QWidget,
+)
+from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, get_resource_path
+from certus.utils.certus_data import numpy_encoder, to_csv_robust
+from certus.core.certus_strat_core import APP_CONTEXT, SYM_DEFAULT_EXTREMA_WINDOW_OT
+from certus.ui.certus_ui import (
+    CertusTheme,
+    ExcelTableWidget,
+    NumericTableWidgetItem,
+    create_styled_button,
+    get_certus_last_dir,
+    set_certus_last_dir,
+    set_certus_window_icon,
+)
 from certus.utils.certus_ux import Typography
 from certus.ui.certus_strat_mixins_ui import CertusWindowSpyMixin
 from certus.core.certus_strat_core import _compute_strategy_symmetry_score_percent

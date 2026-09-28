@@ -1,5 +1,14 @@
 from __future__ import annotations
-from certus.ui.certus_strat_common import *
+from certus.ui.certus_strat_common import CertusWindowSpyMixin
+import logging
+from typing import Any
+import numpy as np
+import pyqtgraph as pg
+from PyQt6.QtCore import QTimer, Qt
+from PyQt6.QtGui import QColor, QFont
+from PyQt6.QtWidgets import QHBoxLayout, QLabel, QMainWindow, QVBoxLayout, QWidget
+from certus.ui.certus_ui import CertusTheme, set_certus_window_icon
+from certus.utils.certus_strat_service import simulate_detailed_growth_for_ui
 from certus.ui.certus_ui import CertusScientificPlot
 
 class TransmissionVsThicknessWindow(CertusWindowSpyMixin, QMainWindow):

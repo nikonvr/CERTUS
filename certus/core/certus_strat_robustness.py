@@ -42,7 +42,6 @@ from certus_physics import (
     calculate_RT_vectorized_real_HL,
     compute_batch_rmse,
     corridor_wl_range,
-    precompute_matrix_cache_kernel,
     simulate_stack_robustness_batch,
 )
 
@@ -68,14 +67,9 @@ from certus.core.certus_strat_objectives import (
     _compute_strategy_symmetry_score_percent,
 )
 
-from certus.utils.certus_strat_context import (
-    _validate_strategy_blocks_contract,
-    _strategy_signature,
-)
 
 from certus.utils.certus_strat_service import (
     compute_probe_offset_nm_from_ratio,
-    select_best_strat_result,
     calculate_RT_normal_real,
     calculate_dynamics_ULTIMATE,
 )

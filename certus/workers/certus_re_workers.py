@@ -1,31 +1,16 @@
-from certus.utils.certus_re_math import re_substrate_cauchy_barrier_residuals_jac
-from certus.utils.certus_re_math import re_substrate_cauchy_phi_matrix, re_envelope_max_delta_n
 import time
 import traceback
 import logging
-from pathlib import Path
 logger = logging.getLogger(__name__)
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import joblib
-from functools import partial
-from types import SimpleNamespace
-from collections.abc import Callable
 from typing import Any, Protocol
 import numpy as np
-from scipy.optimize import least_squares
-from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
-from certus.core.certus_re_config import REWorkerRequest, REPhase3Result, REPhase4Result, _top_result_dto, _set_top_result_dto, _prepend_result_dto, RE_RESULT_LABEL_WITH_DRIFT
-from certus.utils.certus_re_helpers import _re_apply_correc, _re_correc_to_nk_preview_payload, _re_calc_spectrum_for_config, _re_p4_ap_band_intervals_str, _re_log_objective_diagnostic, RE_GUI_DEFAULT_BEAM_APERTURE_DEG, _re_sort_results_best_for_table_and_apply, re_knots_wavelengths, _re_trf_residual_rms
-from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_PHASE3_SHAKES, RE_SUB_CAUCHY_BARRIER_SQRT_W, RE_SUB_CAUCHY_TUBE_DELTA, RE_LBFGSB_FTOL, RE_LBFGSB_GTOL, RE_GUI_DEFAULT_RE_PHASE1_RESTARTS, RE_P4_BEAM_AP_BOUNDS_DEG, RE_GUI_DEFAULT_RE_PHASE2_TOP_K, RE_GUI_DEFAULT_RE_QWOT_ALPHA, RE_P4_AP_FD_STEP_DEG, RE_P4_BEAM_N_KNOTS, RE_PHASE2B_MAXITER, RE_PHASE2_SPLINE_PREFIT_MAXITER, RE_PHASE4_APERTURE_SCAN_POINTS, RE_PHASE4_TRF_MAX_NFEV, RE_PHASE4_TRF_TOL_FACTOR, RE_RANKING_ALPHA_REF
-from certus.utils.certus_re_math import re_compute_spline_basis_matrix, re_compute_tikhonov_weights
+from certus.core.certus_re_config import REWorkerRequest, REPhase4Result
+from certus.utils.certus_re_config import RE_RANKING_ALPHA_REF
 
-from certus.workers.certus_re_worker_utils import shake_sigmas_adaptive, p2_result_to_correc_tuple, re_enrich_results_ranking_fields, re_finalize_ranking_log_suffix, re_finalize_finished_main_log_line, re_finalize_rmse_milestone_log_line, re_finalize_progress_message_done, re_live_plot_wls_and_dispersion_nk, re_trf_thickness_bounds, re_trf_bounds_scipy_tuples, re_phase1_trf_runs_multistart, RE_CORREC_NOMINAL_PCT, re_build_p2_progress_plan, re_progress_pct_p1, re_progress_pct_p2a, re_progress_pct_p2b, re_progress_pct_p3, resolve_re_qwot_alphas
 from certus.utils.certus_re_results_builder import REResultsBuilder as REResultsPayloadBuilder
-from certus.core.certus_re_solvers import REUserStopRequested
 from certus.ui.certus_qt_widgets import QThread
 from certus.ui.certus_ui import WorkerSignals
-from certus.core.certus_re_objectives import _prepare_re_run_context_setup, _build_re_mse_grad_helper, _build_qwot_helpers
 
 class REWorker(QThread):
     """Two-stage RE: (1) TRF Deltaln(lambda) trapezoidal, thicknesses only, tabulated n;

@@ -5,14 +5,12 @@ from typing import Any
 
 logger = logging.getLogger("CERTUS")
 
-import warnings
 from scipy.optimize import least_squares, minimize
 
 from certus.core.certus_substrate_helpers import norm_header
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
     SELLMEIER_COEFFS_BY_ID,
-    SUBSTRATES,
     canonicalize_substrate_label,
     substrate_sellmeier_coeffs,
 )

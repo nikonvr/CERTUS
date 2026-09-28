@@ -12,13 +12,8 @@ from certus.utils.certus_re_config import RE_PHASE2B_MAXITER
 from certus.utils.certus_re_config import RE_LBFGSB_GTOL
 from certus.utils.certus_re_config import RE_LBFGSB_FTOL
 from certus.utils.certus_re_math import re_substrate_cauchy_initial_theta
-from certus.utils.certus_re_math import re_compute_spline_basis_matrix
-from certus.utils.certus_re_math import re_compute_tikhonov_weights
-from certus.utils.certus_re_math import re_substrate_cauchy_barrier_residuals_jac
 from certus.utils.certus_re_math import re_substrate_cauchy_phi_matrix
 from certus.utils.certus_re_config import RE_P4_BEAM_AP_BOUNDS_DEG
-from certus.utils.certus_re_config import RE_PHASE2_LAM2_FD_STEP
-from certus.utils.certus_re_config import RE_PHASE2_SPLINE_FD_STEP
 from certus.utils.certus_re_config import RE_P4_BEAM_N_KNOTS
 from certus.utils.certus_re_config import RE_RE_DEADZONE_QWOT_ABS
 from certus.utils.certus_re_config import RE_RE_DEADZONE_DELTA_RE_ABS
@@ -26,7 +21,6 @@ from certus.utils.certus_re_config import RE_HL_DELTA_RE_REG_SQRT_W
 import numpy as np
 import time
 import logging
-import traceback
 from typing import Any
 
 from scipy.optimize import least_squares
@@ -35,8 +29,6 @@ from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 
 from certus.core.certus_re_config import (
     REPhase1Result,
-    REPhase2Result,
-    REPhase3Result,
     REPhase4Result,
     REPhase2Context,
     _prepend_result_dto,
@@ -45,9 +37,6 @@ from certus.core.certus_re_config import (
     _top_result_dto,
 )
 from certus.core.certus_re_objectives import (
-    _build_re_mse_grad_helper,
-    _global_compute_re_mse_gradient,
-    _build_qwot_helpers,
     _build_phase2b_output,
     _log_phase4_trf_summary,
     _build_phase4_aperture_bounds,
@@ -58,21 +47,13 @@ from certus.core.certus_re_objectives import (
 )
 from certus.utils.certus_re_helpers import (
     RE_SPLINE_NODE2_DEFAULT_NM,
-    RE_SPLINE_N_KNOTS,
     format_re_spline_knots_log,
     re_knots_wavelengths,
-    RE_GUI_DEFAULT_BEAM_APERTURE_DEG,
-    _re_p4_beam_knots_lam_nm_from_wls,
     _re_trf_residual_rms,
     _re_log_objective_diagnostic,
 )
 from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_SPLINE_TIKHONOV
 from certus.workers.certus_re_worker_utils import (
-    re_live_plot_wls_and_dispersion_nk,
-    shake_sigmas_adaptive,
-    re_progress_pct_p2a,
-    re_progress_pct_p2b,
-    re_progress_pct_p3,
     p2_result_to_correc_tuple,
 )
 

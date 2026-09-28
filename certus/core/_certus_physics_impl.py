@@ -377,45 +377,35 @@ import logging
 
 import numpy as np
 from certus.utils.certus_db_helpers import (
-    find_matching_sheets,
-    merge_two_curves,
-    merge_multiple_curves,
     MergedMaterialDict,
 )
 
 _SubProcessMaterialDB = MergedMaterialDict
 
 
-import math
 
 
-import os
 from pathlib import Path
 
 
 from collections import OrderedDict
 
 
-from dataclasses import dataclass
 
 
-from threading import Event, RLock
+from threading import RLock
 
 
-from collections.abc import Callable
 from typing import Any
 
 
 from numba import njit, prange
 
 
-from scipy.optimize import minimize
 
 
-from scipy.interpolate import CubicSpline
 
 
-from functools import lru_cache
 
 
 # Import from Core
@@ -425,15 +415,9 @@ from certus.core.certus_core import (
     FROSTED_GLASS_CAUCHY_A,
     FROSTED_GLASS_CAUCHY_B,
     HC_EV_NM,
-    N_SUPERSTRATE,
-    OPENPYXL_AVAILABLE,
-    PI,
-    SMALL_EPSILON,
     SUBSTRATE_MIN_LAMBDA,
     TWO_PI,
-    WL_DECIMALS,
     get_complex_dtype,
-    NUMERICAL_FAULT_EXCEPTIONS,
 )
 
 
@@ -729,8 +713,6 @@ from certus.physics.certus_tmm_core import (
 
 from certus.physics.certus_tmm_core import (
     _calc_spectrum_oblique_parallel,
-    _oblique_stack_rt_single,
-    _calculate_RT_HL_core,
 )
 from certus.physics.certus_tmm_core import _calculate_RT_absorbing_sub_single
 from certus.physics.certus_opt_tmm import Material
@@ -762,7 +744,6 @@ from certus.physics.certus_opt_kernels import (
     _compute_single_layer_sensitivity_array,
     _compute_index_cost_gradient_kernel,
     _compute_gradient_analytic_kernel,
-    _compute_oblique_gradient_contrib_kernel,
     _compute_oblique_rt_and_grads_kernel,
     _compute_metal_tmm_gradient_kernel,
 )
@@ -944,12 +925,9 @@ from certus.physics.certus_strat_kernels import (
 )
 
 from certus.physics.certus_strat_kernels import (
-    MachineModel,
     _compute_valid_blocks_kernel,
     _dp_kernel,
-    _solve_quadratic_target,
     _calculate_RT_HL_single_point,
-    _seeded_noise_sample,
 )
 
 

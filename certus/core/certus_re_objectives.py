@@ -1,6 +1,4 @@
 from __future__ import annotations
-from certus.utils.certus_re_math import re_substrate_cauchy_barrier_residuals_jac
-from certus.utils.certus_re_math import re_substrate_cauchy_phi_matrix
 from certus.utils.certus_re_math import RE_SPLINE_NODE2_BOUNDS_NM
 from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_QWOT_ALPHA
 from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_PHASE2_TOP_K
@@ -49,11 +47,6 @@ from certus.workers.certus_re_worker_utils import (
     re_nominal_indices_at_wls,
     re_oblique_config_meta_from_wls,
     re_objective_wls_weight_log_trap,
-    p2_result_to_correc_tuple,
-    re_finalize_ranking_log_suffix,
-    re_finalize_finished_main_log_line,
-    re_finalize_rmse_milestone_log_line,
-    re_finalize_progress_message_done,
 )
 
 

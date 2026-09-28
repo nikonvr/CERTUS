@@ -11,9 +11,6 @@ import logging
 import numpy as np
 
 from certus.core.certus_core import CFG, get_complex_dtype, get_export_config, get_float_dtype
-from certus.utils.certus_logging import get_structured_logger
-from certus.workers.certus_design_workers_dto import ColorWorkerRequest, NeedleWorkerRequest, OptimWorkerRequest
-from certus.workers.certus_design_workers import NeedleWorker, OptimWorker
 
 class DesignOrchestrator:
     """

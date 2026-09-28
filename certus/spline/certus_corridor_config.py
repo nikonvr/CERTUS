@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pydantic import BaseModel, ConfigDict
 import numpy as np
 from certus.core.certus_core import Any

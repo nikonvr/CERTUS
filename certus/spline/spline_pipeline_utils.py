@@ -4,58 +4,23 @@ from __future__ import annotations
 import copy as _copy
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 import logging
-from dataclasses import dataclass
-import time
 from threading import Event
 from collections.abc import Callable
 from typing import Any
 import numpy as np
-from scipy.interpolate import PchipInterpolator
 from certus.spline.certus_index_spline_core import (
-    K_MIN_PHYS,
     SplineOptConfig,
     _canonical_knots_min_lambda_kw,
     canonical_spline_sigma_knots,
-    corridor_profile_refit_maxfun,
-    _bounds_x0_for_sigma_knots,
-    _log_index_spline_best_config,
-    log_index_spline_d_trace,
     _log_spline_pipeline_json,
     _reflectance_absolute_backside_from_nk,
-    apply_rmse_fit_window_nk_nan_to_result,
-    enforce_k_floor_on_nodes,
     snapshot_result_with_rmse_fit_meta,
-    x_slice_n_to_physical_nodes,
-    physical_nodes_to_x_slice_n,
 )
 from certus.utils.certus_index_utils import (
     _ratio_theoretical_from_nk,
     _reflectance_ratio_theoretical_from_nk,
     _sorted_finite_sigma_knots as _sorted_finite_sigma_knots_for_log,
     _transmittance_absolute_from_nk,
-)
-from certus_physics import (
-    clip_to_bounds,
-)
-from certus.spline.spline_objective import (
-    build_segment_optimizer_x_vector,
-    build_spline_objective_masked_grid,
-    spectral_mse_rmse_masked_from_nk,
-    spline_objective_mse_on_masked_grid,
-)
-from certus.spline.spline_finalize import (
-    _collect_post_s3_candidates,
-    _finalize_spectral_rmse_mesh_polish_and_best,
-    _log_skipped_knot_insertion_fixed_mesh,
-    _select_final_scientific_candidate,
-    _spectral_polish_node_mesh_profile,
-)
-from certus.spline.certus_corridor_config import ProfileCorridorConfig
-from certus.spline.spline_profile_corridors import compute_profiled_corridors_by_d
-from certus.spline.certus_corridor_utils import widen_corridor_envelope_to_include_nk_in_result
-from certus.spline.certus_corridor_logger import (
-    log_coaching_corridor_pipeline_skip_empty,
-    log_coaching_uncertainty_parameter_guide,
 )
 
 

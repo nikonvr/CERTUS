@@ -12,7 +12,7 @@ from typing import Any
 import numpy as np
 import pyqtgraph as pg
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QCursor, QFont
+from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSplitter,
     QScrollArea, QFrame, QTabWidget, QStackedWidget, QCheckBox,
@@ -48,7 +48,6 @@ from certus.spline.certus_index_spline_core import (
     allowed_substrate_names,
     SIO2_DEFAULT_D_LO_NM,
     SIO2_DEFAULT_D_HI_NM,
-    SPLINE_PERF_PRESETS
 )
 from certus.core.certus_design_tokens import slider_corridor_half_stylesheet
 

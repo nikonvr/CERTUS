@@ -9,22 +9,18 @@ Standalone: no imports from CERTUS_INDEX nor certus_swanepool. PGlobal from cert
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
-from enum import Enum, auto
 from functools import lru_cache
-from collections.abc import Callable
 from typing import Any
 
 import numpy as np
 import pandas as pd
 
-from certus.core.certus_array_utils import as_float64_1d, sorted_float64, interp_sorted
+from certus.core.certus_array_utils import as_float64_1d, sorted_float64
 
 from certus.core.certus_core import (
     K_MAX_LIMIT,
     N_MAX_LIMIT,
     N_MIN_LIMIT,
-    SUBSTRATES,
     SUBSTRATE_LIST,
     create_module_environment,
 )

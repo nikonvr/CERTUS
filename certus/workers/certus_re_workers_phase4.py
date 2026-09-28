@@ -7,13 +7,10 @@ from certus.utils.certus_re_config import RE_LBFGSB_GTOL
 from certus.utils.certus_re_config import RE_LBFGSB_FTOL
 import logging
 import time
-import math
-from copy import deepcopy
 import numpy as np
 from collections.abc import Callable
 from typing import Any
 
-from certus.core.certus_core import CFG, get_float_dtype, get_complex_dtype
 from certus.core.certus_lazy_imports import lazy_scipy
 scipy = lazy_scipy()
 from certus.core.certus_re_config import REPhase4Result, RE_RESULT_LABEL_WITH_DRIFT, _prepend_result_dto
@@ -27,7 +24,7 @@ from certus.utils.certus_re_math import (
 
 #
 from certus.utils.certus_re_math import _re_p4_ap_band_intervals_str
-from certus.utils.certus_re_helpers import _re_trf_residual_rms, RE_GUI_DEFAULT_BEAM_APERTURE_DEG
+from certus.utils.certus_re_helpers import RE_GUI_DEFAULT_BEAM_APERTURE_DEG
 
 from certus.workers.certus_re_worker_utils import p2_result_to_correc_tuple
 

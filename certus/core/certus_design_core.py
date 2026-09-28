@@ -35,12 +35,7 @@ CERTUS-DESIGN.py - Optical Filter Design & Optimization
 
 from certus.core.certus_core import __version__
 
-import os
-from pathlib import Path
 
-import multiprocessing
-import sys
-import functools
 
 from certus.core.certus_core import create_module_environment
 
@@ -64,12 +59,9 @@ import logging
 
 import time
 
-import traceback
 
-import copy
 
 import threading
-from threading import Event
 
 from typing import Any
 from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
@@ -91,52 +83,14 @@ import numpy as np
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
     CFG,
-    ensure_numpy_array,
-    get_complex_dtype,
-    get_float_dtype,
-    get_resource_path,
-    certus_timestamp_display,
-    certus_timestamp_file,
-    setup_module_logging,
 )
-from certus.utils.errors import safe_ui_action
 
 from certus.workers.certus_design_worker_utils import (
-    build_pglobal_optimizer,
-    build_pglobal_config_from_cfg,
-    optim_backside_flags_from_cfg,
-    optim_bounds_thickness_global,
-    optim_bounds_thickness_healing,
-    optim_bounds_thickness_local,
     optim_calc_oblique_selected,
-    optim_display_wavelength_grid,
-    optim_oblique_attach_local_positions,
-    optim_oblique_configs_from_groups,
-    optim_oblique_group_targets_on_wavelengths,
-    optim_oblique_unique_display_keys,
-    optim_post_optim_time_budget_seconds,
-    optim_prepare_stack_nk_back,
-    optim_qwot_values_from_ep_stack,
-    optim_rmse_display_string,
-    optim_rmse_is_valid_for_log,
-    optim_var_indices_from_stack,
-    prepare_pglobal_inputs_from_state,
-    prepare_pglobal_optimizer_runtime,
-    run_coord_descent_5cycles,
-    run_pglobal_restart_loop,
 )
 
 # --- 4. DATA (IO, Reporting) ---
 
-from certus.utils.certus_data import OPENPYXL_AVAILABLE, generate_html_report
-from certus.workers.certus_design_workers_dto import (
-    ColorWorkerRequest,
-    ColorWorkerResult,
-    NeedleWorkerResult,
-    NeedleWorkerRequest,
-    OptimWorkerRequest,
-    OptimWorkerResult,
-)
 
 # --- 5. ERRORS (Validation, Messages) ---
 
@@ -167,17 +121,12 @@ from certus_physics import (  # Cache & Utils; Gradient Logic (Analytic); Numba 
     xyz_to_lab,
 )
 
-from certus.utils.certus_index_utils import spectral_rmse_weights
 
 # --- 3. UI (Theme, Widgets) ---
 
 
-from certus.core.certus_metrology import ValidationStatus
-from certus.utils.certus_services import IndexFitRequest, IndexFitService
 
-from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
 
-from certus.workers.certus_spectral_workers import EvalWorker, WarmupWorker
 
 
 

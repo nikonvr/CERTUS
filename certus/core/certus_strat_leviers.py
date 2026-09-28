@@ -35,7 +35,7 @@ settings whose effect the user cannot check by eye.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 #: 🟢 backed by a measurement, arming it is defensible

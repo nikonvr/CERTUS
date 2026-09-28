@@ -1,18 +1,10 @@
 
-from typing import TYPE_CHECKING, Any
-from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
+from typing import TYPE_CHECKING
 from certus.core.certus_strat_core import APP_CONTEXT
-from certus.utils.certus_strat_context import StratContext
 from certus.workers.certus_strat_workers_dto import WorkerThreadResult
-from certus.core.certus_metrology import ValidationStatus
-from certus.utils.certus_strat_service import calculate_nominal_properties, extract_best_rmse, select_best_strat_result
+from certus.utils.certus_strat_service import calculate_nominal_properties, extract_best_rmse
 from certus.core.certus_strat_core import generate_excel_report
-from certus.core.certus_core import get_export_config, get_resource_path, certus_timestamp_file
-from pathlib import Path
-from certus.core.certus_core import SUBSTRATE_MAPPING
 import certus.utils.certus_strat_service as _strat_service_module
-import traceback
-import time
 import numpy as np
 
 from certus.core.certus_strat_robustness import run_final_simulation_block, _get_best_noise_results

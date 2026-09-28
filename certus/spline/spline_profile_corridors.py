@@ -100,79 +100,50 @@ from certus.spline.certus_corridor_config import (
 from certus.spline.certus_corridor_fitter import _fit_nodes_at_fixed_d, _fit_local_quadratic_rmse_profile
 from certus.spline.certus_corridor_exploration import _corridor_profile_walk_side, compute_regular_grid_rmse_profile
 
-from certus.spline.certus_corridor_logger import _log_coaching_corridor_outcome, _log_coaching_bootstrap_outcome, _log_coaching_reg_sensitivity_outcome, _log_corridor_base_geometry, _log_corridor_envelope_diagnostics, _log_corridor_start_config
+from certus.spline.certus_corridor_logger import _log_coaching_corridor_outcome, _log_corridor_envelope_diagnostics
 from certus.spline.certus_corridor_orchestrator_utils import _setup_corridor_context
-from certus.spline.certus_corridor_bootstrap import _bootstrap_single_replicate, _bootstrap_pool_entry, _resample_residuals_block
-from certus.spline.certus_corridor_utils import _expand_corridor_envelope_with_reported_nk, _robust_sigma_from_mad, _estimate_adaptive_rmse_abs_tolerance, _pick_rmse_reference_for_profile, _extract_knots_and_nodes_from_result, _spectral_rmse_at_packed_nodes, _x_nodes0_from_mesh_x_if_consistent, _bounds_for_nodes_only, _hetero_sigma_masked_from_base, _chi2_masked_constant_sigma, _detect_corridor_spike, quick_pwlnk_refit_result_dict
+from certus.spline.certus_corridor_utils import (
+    _expand_corridor_envelope_with_reported_nk,
+    _extract_knots_and_nodes_from_result,
+    _spectral_rmse_at_packed_nodes,
+    _x_nodes0_from_mesh_x_if_consistent,
+    _bounds_for_nodes_only,
+    _detect_corridor_spike,
+    quick_pwlnk_refit_result_dict,
+)
 from certus.spline.certus_corridor_orchestrator_utils import enforce_min_k_corridor_half_width
 
 from certus.spline.certus_corridor_orchestrator_utils import (
-    _best_fit_at_d,
-    _generate_iso_phase_seed,
-    _theoretical_TR_from_base_result,
     _manual_grid_tag_base_on_duplicate_discard,
-    _detect_breakpoint,
-    _run_global_opt_from_breakpoint,
-    _build_emergency_fit_record,
-    _profile_p0_suspects,
-    _profile_manual_grid_coverage_audit,
-    _package_profile_grid_result,
-    _compute_corridor_rmse_threshold,
-    _prep_corridor_base_eff,
-    _eval_adaptive_abs_tolerance,
-    _eval_corridor_threshold_fallback,
 )
 
 
 import logging
 
 
-import threading
 
-import time
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 
-from dataclasses import dataclass
 
 from typing import Any
 
 import numpy as np
 
-from scipy.optimize import minimize
 
 from scipy.stats import chi2 as _chi2
 
-from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, get_safe_worker_count
+from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 
 from certus_physics import clip_to_bounds
 
 from certus.spline.certus_index_spline_core import (
-    N_MAX_LIMIT,
-    N_MIN_LIMIT,
-    DataType,
     SplineOptConfig,
     corridor_profile_refit_maxfun,
-    physical_nodes_to_x_slice_n,
-    _reflectance_absolute_backside_from_nk,
 )
 
-from certus.utils.certus_index_utils import (
-    _ratio_theoretical_from_nk,
-    _reflectance_ratio_theoretical_from_nk,
-    _transmittance_absolute_from_nk,
-)
 
-from certus.spline.spline_objective import (
-    SplinePWLObjective,
-    build_spline_objective_masked_grid,
-    nk_from_x_pwlnk,
-    spectral_mse_rmse_masked_from_nk,
-    spline_pwl_analytic_grad_supported,
-    x_slice_n_to_physical_nodes,
-)
 
-from certus.spline.spline_finalize import extract_nominal_best_polished_corridor_reference
 
 log = logging.getLogger("CERTUS")
 
@@ -185,7 +156,6 @@ _LOG_PREFIX = "INDEX_SPLINE [CORRIDORS d]"
 
 
 
-from pydantic import BaseModel, ConfigDict
 
 
 

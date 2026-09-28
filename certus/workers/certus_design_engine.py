@@ -12,7 +12,7 @@ from typing import Any
 
 import numpy as np
 
-from certus.core.certus_core import CFG, NUMERICAL_FAULT_EXCEPTIONS
+from certus.core.certus_core import CFG
 from certus_physics import (
     calc_spectrum_full_oblique_exact,
     calc_spectrum_oblique_backside_vectorized,

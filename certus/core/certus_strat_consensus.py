@@ -17,7 +17,7 @@ import numpy as np
 from typing import Any
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, get_safe_worker_count
-from certus.core.certus_strat_config import APP_CONTEXT, RobustnessContext
+from certus.core.certus_strat_config import RobustnessContext
 
 # Import helpers from context and ranking
 from certus.core.certus_strat_ranking import (
@@ -26,7 +26,6 @@ from certus.core.certus_strat_ranking import (
     _apply_family_diversity_if_enabled,
     _apply_block_diversity_if_enabled,
     _apply_wl_diversity_if_enabled,
-    _resolve_available_wavelengths,
     _resolve_monitoring_wavelength_grid,
     _max_strategy_id,
     _existing_block_signatures,

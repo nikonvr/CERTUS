@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from certus.core.certus_array_utils import as_float64_1d, sorted_float64, interp_sorted
+from certus.core.certus_array_utils import as_float64_1d, interp_sorted
 from certus.core.certus_core import K_MAX_LIMIT, N_MAX_LIMIT, N_MIN_LIMIT
 
 

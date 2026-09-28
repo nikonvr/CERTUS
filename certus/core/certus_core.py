@@ -32,11 +32,8 @@ Contains:
 from certus.core.version import (
     APP_VERSION as __version__,
     APP_SUITE_VERSION,
-    APP_DISPLAY_NAME,
-    APP_FULL_NAME,
 )
 from certus.core.certus_config import (
-    CONFIG_SCHEMA_VERSION,
     ConfigManager,
     get_resource_path as config_get_resource_path,
 )
@@ -139,7 +136,6 @@ import sys
 
 import tempfile
 
-import traceback
 from functools import lru_cache
 from pathlib import Path
 
@@ -147,7 +143,7 @@ from dataclasses import dataclass
 
 from datetime import datetime
 
-from typing import Any, Optional
+from typing import Any
 
 from certus.utils.certus_logging import attach_jsonl_handler, get_structured_logger
 

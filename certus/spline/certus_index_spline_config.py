@@ -9,11 +9,10 @@ from __future__ import annotations
 import numpy as np
 from dataclasses import dataclass, field
 from collections.abc import Callable
-from typing import Any
 from certus.utils.certus_index_utils import DataType
 
 # Constants required by config defaults
-from certus.core.certus_core import K_MAX_LIMIT, N_MAX_LIMIT, N_MIN_LIMIT
+from certus.core.certus_core import K_MAX_LIMIT
 
 class SplinePGlobalConfig:
     """PGlobal optimizer + SOL3 phase 1 + local-only fallback settings."""

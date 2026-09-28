@@ -6,19 +6,8 @@ Contains ExcelExport, CorridorWorker, CorridorExport, CorridorGen, and CorridorC
 """
 
 from __future__ import annotations
-import csv
-from dataclasses import dataclass, field, replace
-import json
-import logging
-import math
-import multiprocessing
 import os
-import sys
-import threading
 import time
-import traceback
-from pathlib import Path
-from collections.abc import Callable
 from typing import Any
 from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
 
@@ -26,64 +15,40 @@ import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 
-from PyQt6.QtCore import Qt, QSettings, QTimer, pyqtSignal, QEvent, QAbstractAnimation, QThread
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
-    QApplication, QDialog, QMessageBox, QFileDialog, QVBoxLayout, QHBoxLayout,
-    QWidget, QLabel, QPushButton, QTableWidgetItem, QCheckBox, QDoubleSpinBox,
-    QSpinBox, QComboBox, QDialogButtonBox, QFrame, QGridLayout, QProgressBar,
-    QScrollArea, QSlider, QSplitter, QStackedWidget, QTabWidget
+    QApplication,
+    QMessageBox,
+    QVBoxLayout,
+    QHBoxLayout,
+    QWidget,
+    QLabel,
+    QTableWidgetItem,
+    QCheckBox,
+    QDoubleSpinBox,
+    QSpinBox,
 )
-from PyQt6.QtGui import QFont, QCursor
 
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _DEFAULT_CORRIDOR_RMSE_DELTA: float = 2.5e-4
 _DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN: float = 2.5e-5
 _CORRIDOR_K_TAB_MIN_HALF_WIDTH: float = 1e-4
 
-from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, __version__
-from certus.core.certus_metrology import ValidationStatus
-from certus.utils.certus_services import IndexFitRequest, IndexFitService
+from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.ui.certus_ui import (
     GenericWorker,
     CertusTheme,
-    attach_excel_clipboard_context_menu,
     create_styled_button,
-    show_toast,
     CertusScientificPlot,
-    CertusActionBar,
-    CertusCard,
-    CertusStepper,
-    CertusCollapsible,
-    CertusStatusPill,
-    safe_ui_action,
-    get_certus_last_dir,
-    set_certus_last_dir,
-    setup_pyqtgraph_defaults,
-    CertusLogPanel,
-    CertusThemeToggle,
     EnhancedProgressWidget,
-    ExcelTableWidget,
-    create_header_logo_widget,
 )
 
 from certus.spline.certus_index_spline_core import (
     log_index_spline_d_trace,
     _log_index_spline_best_config,
-    SPLINE_PWL_K_NODES,
-    SPLINE_MIN_RMSE_FIT_OBJECTIVE_POINTS,
-    SPLINE_PERF_PRESETS,
-    DataType,
     SplineOptConfig,
-    default_n_mono_band_nm_from_spectrum,
-    normalize_spectrum_dataframe,
-    gui_perf_preset_only,
-    _to_fraction_T,
     ensure_lam_nm_array,
-    prepare_exp_TR_for_fit,
     substrate_id_from_name,
-    canonical_spline_sigma_knots,
-    bridge_sigma_knots_preserve_manual,
-    rmse_at_spline_stage_x0_init,
     _QS_SPLINE_ORG,
     _QS_SPLINE_APP,
     _QS_SPECTRUM_FIT_R,
@@ -91,84 +56,37 @@ from certus.spline.certus_index_spline_core import (
     _QS_SPECTRUM_FIT_T,
     _QS_SPECTRUM_WR,
     _QS_SPECTRUM_WT,
-    _QS_SPLINE_UNCERTAINTY_DEFAULTS_REV,
-    _UNCERTAINTY_DEFAULTS_REV,
-    _QS_MAIN_SPLITTER_LAYOUT_REV,
-    _MAIN_SPLITTER_LAYOUT_REV,
-    _QS_MAIN_SPLITTER_STATE,
-    _QS_RIGHT_SPLITTER_STATE,
-    SIO2_DEFAULT_D_HI_NM,
-    SIO2_DEFAULT_D_LO_NM,
-    reset_smart_init_preview_guard,
-    allowed_substrate_names,
 )
 
 from certus.utils.certus_index_utils import (
     log_structured_json_event,
     _get_substrate_n_array_spline,
-    _stretch_sig_to_px,
-    _get_xv_spectral_coord,
-    _d_from_slider_int,
-    _slider_int_from_d_nm,
-    _spectral_display_align,
-    _lam_uniform_grid,
     _safe_int_from_mapping,
     _filter_rmse_peaks_iteratively,
 )
 
 from certus.spline.spline_objective import (
-    _spline_objective_lam_mask,
-    objective_lam_mask_on_target_grid,
     spectral_mse_rmse_masked_from_nk,
 )
 
-from certus.spline.spline_workers import (
-    _pack_spline_stage_result,
-    worker_auto_best_split_knot_refinement,
-)
 
 from certus.spline.spline_pipeline import (
     _sync_theoretical_tr_from_nk_dict,
-    worker_run_corridor_profile_after_nl_choice,
-    worker_spline_optimization,
 )
 
 from certus.spline.certus_corridor_utils import quick_pwlnk_refit_result_dict
 
-from certus.utils.certus_ux import OBJ
-from certus.utils.certus_reset_framework import create_reset_button
-from certus.utils.certus_data import load_spectrum_columns, read_data_file_robust, build_export_context, build_report_sections, export_optimization_report
 from certus.spline.certus_corridor_utils import _expand_corridor_envelope_with_reported_nk, enforce_min_k_corridor_half_width
-from certus.spline.certus_corridor_fitter import _fit_local_quadratic_rmse_profile
-from certus.ui.certus_plot import sanitize_xy_for_plot, plot_widget_plot_finite, wrap_scientific_plot_with_toolbar
-from certus.core.certus_design_tokens import slider_corridor_half_stylesheet
+from certus.ui.certus_plot import plot_widget_plot_finite
 
-from certus.spline.spline_presets import (
-    project_manual_material_preset,
-)
 
-from certus.spline.spline_smart_init import (
-    build_smart_manual_sigma_knots_from_preview_grid,
-    interp_n_L_pwlnk_to_sigmas,
-    pick_best_manual_material_preset,
-    recalc_smart_init_spectral_preview,
-    smart_init_sweep_node_thickness_rmse,
-)
 
 from certus.ui.certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
-from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
-
-from certus.spline.certus_index_spline_smart_init import (
-    SmartInitPayload,
-    _SmartInitState,
-    SmartInitState,
-    SmartInitPreviewManager,
-)
-
-from certus.utils.certus_skeleton import install_skeleton, uninstall_skeleton
 
 
-from certus.spline.spline_pipeline_utils import _interp_series_at_sigma_knots
+from certus.utils.certus_skeleton import uninstall_skeleton
+
+
 
 def _apply_fixed_log_k_axis(plot_w: Any | None) -> None:
     """Force the CERTUS log-k axis convention locally in this module."""

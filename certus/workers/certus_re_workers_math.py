@@ -1,10 +1,7 @@
 import logging
 import joblib
 import time
-import math
-from copy import deepcopy
 import numpy as np
-from collections.abc import Callable
 from typing import Any
 from certus.utils.certus_re_math import (
     RE_P4_BEAM_N_KNOTS,

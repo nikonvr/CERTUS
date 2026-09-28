@@ -1,13 +1,8 @@
 import logging
 import time
-import math
-from copy import deepcopy
 import numpy as np
 from scipy.optimize import least_squares
-from collections.abc import Callable
-from typing import Any
 
-from certus.core.certus_core import CFG, get_float_dtype, get_complex_dtype
 from certus.core.certus_re_config import REPhase3Result, REPhase4Result, _set_top_result_dto, _top_result_dto, RE_RESULT_LABEL_WITH_DRIFT
 from certus.core.certus_re_solvers import REUserStopRequested
 from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_PHASE3_SHAKES, RE_LBFGSB_FTOL, RE_LBFGSB_GTOL

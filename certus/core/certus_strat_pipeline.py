@@ -10,7 +10,6 @@ Contains:
 - _finalize_block_strategy_result
 """
 
-import logging
 import traceback
 import numpy as np
 from typing import Any
@@ -19,7 +18,6 @@ from certus_physics import arange_inclusive
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.core.certus_strat_config import (
-    APP_CONTEXT,
     SYM_DEFAULT_EXTREMA_WINDOW_OT,
     precompute_clues_and_matrices,
     get_refractive_index,
@@ -30,8 +28,6 @@ from certus.core.certus_strat_ranking import (
     SYM_DEFAULT_CONTINUITY_WEIGHT,
     SYM_DEFAULT_SCORING_MODE,
     mine_strategies_for_block_count,
-    _filter_valid_robustness_strategies,
-    _select_best_strat_result,
 )
 from certus.core.certus_strat_robustness import (
     run_final_simulation_block,

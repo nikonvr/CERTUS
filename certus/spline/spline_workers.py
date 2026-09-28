@@ -27,8 +27,6 @@ from certus.utils.certus_index_utils import (
 from certus_physics import (
     PGlobalConfig,
     PGlobalOptimizer,
-    Sample,
-    calculate_bare_substrate_RT,
     clip_to_bounds,
 )
 

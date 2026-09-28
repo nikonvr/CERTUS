@@ -8,8 +8,7 @@ Contains Payload, State, PreviewManager and Dialog Mixin for Smart Init.
 from __future__ import annotations
 import json
 import logging
-import time
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field
 from collections.abc import Callable
 from typing import Any
 
@@ -17,59 +16,50 @@ import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 from pydantic import BaseModel, ConfigDict
-from scipy.optimize import minimize_scalar
 
-from PyQt6.QtCore import Qt, QSettings, QThread, pyqtSignal, QEvent
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
-    QDialog, QDialogButtonBox, QDoubleSpinBox, QFileDialog, QGridLayout, QHBoxLayout,
-    QLabel, QMessageBox, QProgressBar, QPushButton, QSlider, QSpinBox, QSplitter,
-    QTableWidgetItem, QVBoxLayout, QWidget, QCheckBox, QApplication, QComboBox, QScrollArea
+    QDialog,
+    QFileDialog,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QMessageBox,
+    QPushButton,
+    QSlider,
+    QSpinBox,
+    QSplitter,
+    QVBoxLayout,
+    QWidget,
+    QCheckBox,
+    QApplication,
+    QComboBox,
+    QScrollArea,
 )
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.utils.certus_ux import Typography
-from certus.ui.certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
 from certus.ui.certus_smart_init_curve_editor import SmartInitNKCurveEditorDialog
 from certus.ui.certus_ui import (
-    CertusScientificPlot,
     CertusTheme,
-    attach_excel_clipboard_context_menu,
-    create_header_logo_widget,
     create_styled_button,
-    get_certus_last_dir,
-    set_certus_last_dir,
     wrap_scientific_plot_with_toolbar,
     show_toast,
-    CertusActionBar,
     CertusCard,
-    CertusStepper,
-    CertusCollapsible,
-    CertusStatusPill,
     safe_ui_action,
 )
 
 from certus.spline.certus_index_spline_core import (
-    bridge_sigma_knots_preserve_manual,
-    log_rmse_mesh_bridge_diagnosis,
     rmse_at_spline_stage_x0_init,
-    SplineOptConfig,
-    _to_fraction_T,
     SPLINE_PWL_K_NODES,
 )
 
 from certus.spline.spline_smart_init import (
     build_smart_manual_sigma_knots_from_preview_grid,
     interp_n_L_pwlnk_to_sigmas,
-    pick_best_manual_material_preset,
-    recalc_smart_init_spectral_preview,
-    smart_init_sweep_node_thickness_rmse,
 )
 
-from certus.spline.spline_objective import (
-    physical_nodes_to_x_slice_n,
-)
 
-from certus.spline.spline_pipeline import enforce_local_optimization_policy
 
 from certus.spline.spline_presets import (
     _project_nb2o5_preset_to_sigma_knots,

@@ -7,7 +7,6 @@ import logging
 import traceback
 import numpy as np
 from collections.abc import Iterable
-from typing import Any
 
 from PyQt6.QtCore import QObject, QThread, pyqtSignal
 from certus.workers.certus_field_workers_dto import FieldWorkerRequest, FieldWorkerResult, FieldParamsDTO

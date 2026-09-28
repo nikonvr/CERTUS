@@ -13,14 +13,9 @@ CERTUS Substrate Index - Substrate refractive index determination only
 """
 
 
-import functools
-from pathlib import Path
-from typing import Any
 import re
-import sys
 
 
-import logging
 
 
 import numpy as np
@@ -38,24 +33,13 @@ import pandas as pd
 
 
 from certus.core.certus_substrate_sellmeier import (
-    SELLMEIER_N_ACCEPT_LO, SELLMEIER_N_ACCEPT_HI, SELLMEIER_MIN_L_SEP_UM, SELLMEIER_L_SEP_SOFT_WEIGHT,
-    SELLMEIER_DEFAULT_LOG_L1L2, SELLMEIER_2POLES_PARAM_BOUNDS, SELLMEIER_2POLES_LAM_FRAC_MAX, SELLMEIER_3TERM_C_FRAC_MAX, SELLMEIER_SEED_POINTS, SELLMEIER_MULTISTART_TRIALS, SELLMEIER_WEIGHT_MODE, _SUBSTRATE_PRIOR_HINTS,
-    _sellmeier_2poles_jac,
-    _sellmeier_param_reparam_helpers,
+    SELLMEIER_N_ACCEPT_LO,
+    SELLMEIER_N_ACCEPT_HI,
+    SELLMEIER_DEFAULT_LOG_L1L2,
     _resolve_sellmeier_settings,
     _fit_model_sellmeier3poles,
-    _sellmeier_l_separation_gap_um,
     _sellmeier_prior_coeffs_for_column,
-    _sellmeier_multistart_candidates,
-    _sellmeier_compact_polynomial_seed,
-    _sellmeier_polish_helpers,
-    sellmeier_2poles_const_eval,
-    _sellmeier_2poles_param_bounds,
     _sellmeier_3term_standard_eval,
-    _sellmeier_residual_factory,
-    _sellmeier_seed_from_compact_poly,
-    _sellmeier_midpoint_seed,
-    _sellmeier_weights_from_nm
 )
 
 from certus.core.certus_core import (
@@ -63,12 +47,9 @@ from certus.core.certus_core import (
     setup_module_logging,
     __version__,
     SELLMEIER_COEFFS_BY_ID,
-    SUBSTRATES,
-    CANONICAL_SUBSTRATE_LABELS,
     canonicalize_substrate_label,
-    substrate_sellmeier_coeffs,
 )
-from certus.core.certus_substrate_helpers import filter_bare_substrate_columns, is_bare_substrate_column, norm_header, expand_substrate_abbrevs, unglue_substrate_nu
+from certus.core.certus_substrate_helpers import filter_bare_substrate_columns, is_bare_substrate_column, norm_header
 from certus.core.certus_metrology import ValidationStatus
 from certus.utils.certus_services import SubstrateIndexRequest, SubstrateIndexService
 

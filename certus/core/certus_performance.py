@@ -34,7 +34,7 @@ from collections import defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from collections.abc import Callable
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 

@@ -2,7 +2,6 @@ from __future__ import annotations
 import typing
 import numpy as np
 import logging
-import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from certus.core.certus_core import (
@@ -30,7 +29,6 @@ from certus.spline.certus_corridor_utils import (
     _bounds_for_nodes_only,
     _chi2_masked_constant_sigma,
     _estimate_adaptive_rmse_abs_tolerance,
-    _expand_corridor_envelope_with_reported_nk,
     _extract_knots_and_nodes_from_result,
     _spectral_rmse_at_packed_nodes,
     _x_nodes0_from_mesh_x_if_consistent,
@@ -39,14 +37,11 @@ from certus.spline.certus_corridor_utils import (
 )
 
 from certus.spline.certus_corridor_logger import (
-    _log_coaching_corridor_outcome,
     _log_coaching_reg_sensitivity_outcome,
-    _log_corridor_envelope_diagnostics,
 )
 
 from certus.spline.spline_objective import (
     build_spline_objective_masked_grid,
-    nk_from_x_pwlnk,
     SplinePWLObjective,
 )
 from certus.utils.certus_index_utils import (

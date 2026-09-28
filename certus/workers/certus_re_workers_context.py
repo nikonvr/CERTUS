@@ -8,12 +8,9 @@ from certus.utils.certus_re_config import RE_SUB_CAUCHY_BARRIER_SQRT_W
 from certus.utils.certus_re_config import RE_SUB_CAUCHY_TUBE_DELTA
 import logging
 import time
-import math
-from copy import deepcopy
 from pathlib import Path
 from functools import partial
 from types import SimpleNamespace
-from collections.abc import Callable
 from typing import Any
 from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
 import numpy as np
@@ -21,7 +18,7 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
-from certus.core.certus_re_config import REPhase3Result, REPhase4Result
+from certus.core.certus_re_config import REPhase4Result
 from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_PHASE1_RESTARTS, RE_GUI_DEFAULT_RE_PHASE2_TOP_K, RE_PHASE2_SPLINE_PREFIT_MAXITER, RE_PHASE2B_MAXITER
 from certus.utils.certus_re_helpers import (
     _re_apply_correc,

@@ -1,8 +1,6 @@
 import numpy as np
 import time
 import logging
-import threading
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from certus.core.certus_core import Any, NUMERICAL_FAULT_EXCEPTIONS
 
 from certus.spline.certus_corridor_config import (
@@ -33,19 +31,13 @@ from certus.spline.certus_corridor_orchestrator_utils import (
     _best_fit_at_d,
     _generate_iso_phase_seed,
     _theoretical_TR_from_base_result,
-    _manual_grid_tag_base_on_duplicate_discard,
     _detect_breakpoint,
     _run_global_opt_from_breakpoint,
     _build_emergency_fit_record,
     _profile_p0_suspects,
     _profile_manual_grid_coverage_audit,
     _package_profile_grid_result,
-    _compute_corridor_rmse_threshold,
-    _prep_corridor_base_eff,
-    _eval_adaptive_abs_tolerance,
-    _eval_corridor_threshold_fallback,
 )
-from certus.spline.spline_objective import build_spline_objective_masked_grid, nk_from_x_pwlnk
 log = logging.getLogger('CERTUS')
 _LOG_PREFIX = "INDEX_SPLINE [CORRIDOR EXPLORE]"
 def _corridor_profile_walk_side(

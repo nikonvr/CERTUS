@@ -21,8 +21,8 @@ from scipy.interpolate import CubicSpline
 
 
 from certus.core.certus_core import N_MIN_LIMIT, N_MAX_LIMIT
-from certus.core.certus_array_utils import as_float64_1d, sorted_float64, interp_sorted
-from certus.utils.certus_index_utils import _ratio_theoretical_from_nk, _transmittance_absolute_from_nk, spectral_rmse_weights
+from certus.core.certus_array_utils import as_float64_1d
+from certus.utils.certus_index_utils import _transmittance_absolute_from_nk, spectral_rmse_weights
 
 import functools
 

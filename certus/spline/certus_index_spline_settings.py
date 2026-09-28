@@ -16,7 +16,7 @@ import numpy as np
 from certus.spline.certus_index_spline_core import _log_index_spline_best_config
 import pyqtgraph as pg
 
-from PyQt6.QtCore import QSettings, QTimer
+from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import (
     QDialog, QMessageBox, QVBoxLayout, QWidget, QLabel,
     QPushButton, QCheckBox, QDialogButtonBox, QDoubleSpinBox,
@@ -26,7 +26,6 @@ from PyQt6.QtWidgets import (
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.ui.certus_ui import (
-    CertusTheme,
     safe_ui_action,
     GenericWorker,
 )

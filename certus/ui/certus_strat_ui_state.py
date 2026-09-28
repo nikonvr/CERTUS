@@ -1093,6 +1093,8 @@ class CertusStratStateMixin:
             pass
         self.worker.signals.show_strategies_table.connect(self.on_show_strategies_table)
 
+        # Registered, so that closing the window mid-run asks first (confirm_close_during_run).
+        self.worker_manager.register_worker(self.worker)
         self.worker.start()
 
     def collect_params(self) -> dict[str, Any]:

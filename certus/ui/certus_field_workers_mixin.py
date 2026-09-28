@@ -251,6 +251,8 @@ class CertusFieldWorkersMixin:
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         QApplication.processEvents()
 
+        # Registered, so that closing the window mid-run asks first (confirm_close_during_run).
+        self.worker_manager.register_worker(self.worker)
         self.worker.start()
 
     @pyqtSlot(int, str)

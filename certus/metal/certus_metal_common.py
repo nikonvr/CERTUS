@@ -1723,6 +1723,11 @@ class MetalBaseApp(CertusBaseApp):
 
     def _post_load_config(self, filename: str, config: dict) -> None:
 
+        if getattr(self, "_auto_batch_mode", False):
+            # An unattended batch has nobody to click a modal dialog: it would wait forever.
+            self.logger.info("Configuration loaded from %s", filename)
+            return
+
         if os.environ.get("QT_QPA_PLATFORM", "").lower() != "offscreen":
             p = config.get("physical_params", {}) if isinstance(config, dict) else {}
 

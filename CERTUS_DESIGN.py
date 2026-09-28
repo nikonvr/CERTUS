@@ -77,9 +77,11 @@ from certus.core.certus_core import CertusFacadeModule
 import certus.core.certus_design_core as certus_design_core
 import certus.workers.certus_design_workers as certus_design_workers
 import certus.ui.certus_design_ui as certus_design_ui
-from certus.core.certus_design_core import *
-from certus.workers.certus_design_workers import *
-from certus.ui.certus_design_ui import *
+import logging
+from certus.core.certus_core import setup_module_logging
+from certus.ui.certus_qt_widgets import QApplication, QTimer, Qt
+from certus.ui.certus_ui import CertusTheme, init_certus_app
+from certus.ui.certus_design_ui import CertusDesignApp
 
 sys.modules[__name__] = CertusFacadeModule(__name__, [
     certus_design_core,

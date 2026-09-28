@@ -1,5 +1,9 @@
 from __future__ import annotations
-from certus.ui.certus_field_common import *
+from PyQt6.QtWidgets import QLabel
+from PyQt6.QtCore import QTimer
+from certus.ui.certus_base_app import CertusAppLogsMixin, CertusBaseApp
+from certus.ui.certus_ui_widgets_progress import EnhancedProgressWidget
+from certus.core._certus_physics_impl import MaterialDatabase
 from certus.workers.certus_strat_workers import _resolve_strat_indices_db_path
 from certus.ui.certus_field_layout_mixin import CertusFieldLayoutMixin
 from certus.ui.certus_field_plot_mixin import CertusFieldPlotMixin

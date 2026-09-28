@@ -512,7 +512,9 @@ def estimate_initial_params(
 
 # =============================================================================
 
-_SAPPHIRE_DATA_FILE = str(Path(script_dir) / "example" / "sapphire fresnel.xlsx")
+# Resolved from the project root (or the executable's folder once frozen): the folder of
+# this module is certus/core, which has no example/ directory.
+_SAPPHIRE_DATA_FILE = get_resource_path("example/sapphire fresnel.xlsx")
 
 _SAPPHIRE_WLS: np.ndarray | None = None
 

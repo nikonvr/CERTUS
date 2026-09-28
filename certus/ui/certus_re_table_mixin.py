@@ -3,7 +3,6 @@ import logging
 import traceback
 from typing import Any
 import numpy as np
-import pyqtgraph as pg
 
 from certus.core.certus_core import CFG, NUMERICAL_FAULT_EXCEPTIONS
 

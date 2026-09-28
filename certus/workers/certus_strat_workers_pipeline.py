@@ -1,7 +1,6 @@
 
 from typing import TYPE_CHECKING
 from certus.core.certus_strat_core import APP_CONTEXT
-import certus.utils.certus_strat_service as _strat_service_module
 from certus.core.certus_strat_config import _init_stats_queue
 from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
 from PyQt6.QtCore import Qt, QMetaObject

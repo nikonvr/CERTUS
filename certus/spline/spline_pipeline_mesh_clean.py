@@ -12,7 +12,6 @@ from .spline_pipeline_mesh_insert import (
 )
 
 """Main spline pipeline: JSON logging, RMSE snapshots, worker orchestration."""
-import copy as _copy
 from certus.utils.certus_copy_utils import copy_spline_result
 import logging
 from dataclasses import dataclass
@@ -21,9 +20,6 @@ from typing import Any
 import numpy as np
 from certus.spline.certus_index_spline_core import (
     SplineOptConfig,
-)
-from certus.utils.certus_index_utils import (
-    _sorted_finite_sigma_knots as _sorted_finite_sigma_knots_for_log,
 )
 
 

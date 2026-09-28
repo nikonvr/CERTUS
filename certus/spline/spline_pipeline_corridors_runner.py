@@ -4,7 +4,6 @@ from .spline_pipeline_utils import (
 )
 
 """Main spline pipeline: JSON logging, RMSE snapshots, worker orchestration."""
-import copy as _copy
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 import logging
 from threading import Event
@@ -18,9 +17,6 @@ from certus.spline.certus_index_spline_core import (
     apply_rmse_fit_window_nk_nan_to_result,
     x_slice_n_to_physical_nodes,
     physical_nodes_to_x_slice_n,
-)
-from certus.utils.certus_index_utils import (
-    _sorted_finite_sigma_knots as _sorted_finite_sigma_knots_for_log,
 )
 from certus.spline.certus_corridor_config import ProfileCorridorConfig
 from certus.spline.spline_profile_corridors import compute_profiled_corridors_by_d

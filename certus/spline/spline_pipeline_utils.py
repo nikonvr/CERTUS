@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 """Main spline pipeline: JSON logging, RMSE snapshots, worker orchestration."""
-import copy as _copy
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 import logging
 from threading import Event

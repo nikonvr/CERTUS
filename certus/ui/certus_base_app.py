@@ -109,7 +109,6 @@ import numpy as np
 from pydantic import ValidationError
 
 
-import pandas as pd
 
 
 from certus.ui.certus_plot import clone_plot_widget

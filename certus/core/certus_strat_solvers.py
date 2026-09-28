@@ -73,10 +73,6 @@ from certus_physics import (  # STRAT-specific kernels (previously imported from
 
 
 
-import certus.utils.certus_strat_service as _strat_service_module
-from certus.utils.certus_strat_service import (
-    _validate_candidates_phase_a as _service_validate_candidates_phase_a,
-)
 
 
 _validate_phase_a_bridge_lock = threading.Lock()

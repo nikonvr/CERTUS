@@ -30,7 +30,6 @@ from certus.physics.gradient_oblique import (
     compute_gradient_all_layers_analytic,
     compute_oblique_gradient_contrib_analytic,
     compute_oblique_rt_and_grads_analytic,
-    _compute_oblique_gradient_contrib_kernel,
     _compute_oblique_rt_and_grads_kernel,
 )
 from certus.physics.gradient_metal import (

@@ -2,7 +2,6 @@ SMALL_EPSILON = 1e-12
 import numpy as np
 from numba import njit, prange
 from certus.core.certus_core import TWO_PI
-import certus.physics.certus_tmm_core as tmm_core
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")

@@ -4,7 +4,6 @@ from certus.core.certus_strat_core import APP_CONTEXT
 from certus.workers.certus_strat_workers_dto import WorkerThreadResult
 from certus.utils.certus_strat_service import calculate_nominal_properties, extract_best_rmse
 from certus.core.certus_strat_core import generate_excel_report
-import certus.utils.certus_strat_service as _strat_service_module
 import numpy as np
 
 from certus.core.certus_strat_robustness import run_final_simulation_block, _get_best_noise_results

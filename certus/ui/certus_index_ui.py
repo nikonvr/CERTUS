@@ -1,5 +1,4 @@
 
-import numpy as np
 import pandas as pd
 
 
@@ -58,7 +57,6 @@ from certus.ui.certus_ui import (
 
 
 
-import pyqtgraph as pg
 
 import scipy.optimize
 

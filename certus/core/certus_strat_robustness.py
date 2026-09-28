@@ -23,7 +23,6 @@ import logging
 import concurrent.futures
 import time
 import numpy as np
-import pandas as pd
 from typing import Any
 
 from certus_physics import (

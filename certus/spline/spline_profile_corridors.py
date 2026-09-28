@@ -131,7 +131,6 @@ from typing import Any
 import numpy as np
 
 
-from scipy.stats import chi2 as _chi2
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 

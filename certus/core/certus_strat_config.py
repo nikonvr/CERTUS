@@ -21,7 +21,6 @@ from certus.utils.certus_progress_tracker import build_progress_snapshot, StepSt
 
 import numpy as np
 
-import pandas as pd
 
 
 
@@ -73,10 +72,6 @@ from certus.utils.certus_strat_context import (
 
 
 
-import certus.utils.certus_strat_service as _strat_service_module
-from certus.utils.certus_strat_service import (
-    _validate_candidates_phase_a as _service_validate_candidates_phase_a,
-)
 
 
 _validate_phase_a_bridge_lock = threading.Lock()

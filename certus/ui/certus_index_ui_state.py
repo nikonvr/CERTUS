@@ -1,6 +1,4 @@
 from pathlib import Path
-import numpy as np
-import pandas as pd
 
 _QS_INDEX_ORG = "CERTUS"
 _QS_INDEX_APP = "INDEX"
@@ -15,7 +13,6 @@ from certus.core.certus_index_core import (
     OptimizationConfig,
     substrateMode,
 )
-import pyqtgraph as pg
 import scipy.optimize
 from PyQt6.QtWidgets import (
     QMessageBox,

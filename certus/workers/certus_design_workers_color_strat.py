@@ -1,4 +1,3 @@
-import numpy as np
 from typing import Any
 
 from certus.core.certus_design_core import (

@@ -19,7 +19,6 @@ from .spline_pipeline_corridors_runner import (
 )
 
 """Main spline pipeline: JSON logging, RMSE snapshots, worker orchestration."""
-import copy as _copy
 import logging
 import time
 from threading import Event
@@ -39,7 +38,6 @@ from certus.spline.certus_index_spline_core import (
 from certus.utils.certus_index_utils import (
     _ratio_theoretical_from_nk,
     _reflectance_ratio_theoretical_from_nk,
-    _sorted_finite_sigma_knots as _sorted_finite_sigma_knots_for_log,
     _transmittance_absolute_from_nk,
 )
 from certus_physics import (

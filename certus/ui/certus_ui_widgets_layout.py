@@ -1,6 +1,3 @@
-import numpy as np
-import pandas as pd
-import pyqtgraph as pg
 import pyqtgraph.exporters  # pylint: disable=unused-import
 from PyQt6.QtCore import (
     Qt,

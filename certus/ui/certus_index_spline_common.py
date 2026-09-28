@@ -34,7 +34,6 @@ from certus.core.certus_core import (
     create_module_environment,
 )
 from certus.utils.certus_index_utils import (
-    _sorted_finite_sigma_knots as _sorted_finite_sigma_knots_impl,
     _get_substrate_n_array_spline,
 )
 from certus.ui.certus_ui import (
@@ -144,10 +143,6 @@ from certus.spline.spline_profile_corridors import (
 )
 
 
-from certus.spline.spline_visual_utils import (
-    live_monitor_nk_clipboard_tsv_2nm as _live_monitor_nk_clipboard_tsv_2nm,
-    snap_spline_visual_dict as _snap_spline_visual_dict,
-)
 
 from certus.spline.certus_index_spline_excel_export import (
     _ExcelExportMixin,

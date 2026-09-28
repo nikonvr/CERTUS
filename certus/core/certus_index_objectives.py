@@ -11,7 +11,6 @@ from certus.core.certus_index_core import TLU_SOFT_EDGE_MARGIN, TLU_PRIOR_TRANSP
 from numba import njit
 import logging
 import numpy as np
-import pandas as pd
 from typing import Any
 
 from certus.core.certus_core import (

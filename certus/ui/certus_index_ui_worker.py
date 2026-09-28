@@ -46,7 +46,6 @@ from certus.ui.certus_ui import (
     stop_worker_and_thread,
     show_toast,
 )
-import pyqtgraph as pg
 import scipy.optimize
 from PyQt6.QtCore import QThread, QTimer, pyqtSlot
 from PyQt6.QtWidgets import (

@@ -13,7 +13,6 @@ from collections.abc import Callable
 from typing import Any
 
 import numpy as np
-import pandas as pd
 import pyqtgraph as pg
 from pydantic import BaseModel, ConfigDict
 
@@ -67,9 +66,6 @@ from certus.spline.spline_presets import (
     project_manual_material_preset
 )
 
-from certus.spline.spline_visual_utils import (
-    snap_spline_visual_dict as _snap_spline_visual_dict,
-)
 from certus.utils.certus_qsettings import certus_settings
 
 logger = logging.getLogger("CERTUS_INDEX_SPLINE.smart_init")

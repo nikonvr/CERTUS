@@ -23,12 +23,9 @@ from certus.core.certus_core import SUBSTRATE_CHOICES
 
 # certus_load_summary helpers reserved for future use (not yet wired in FIELD)
 
-import pyqtgraph as pg
 import pyqtgraph.exporters
 import logging
-import pandas as pd
 import importlib.util
-import numpy as np
 
 LIDT_PRESETS = {
     "SiO2": 25.0,

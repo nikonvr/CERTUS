@@ -10,7 +10,6 @@ root launcher CERTUS_METAL_SINGLE.py re-exports this module.
 import json  # used by the configuration loading (_resolve_config_target_file); the import was missing
 import logging
 import os
-import traceback
 from pathlib import Path
 
 import numpy as np

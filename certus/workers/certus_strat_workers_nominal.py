@@ -2,7 +2,6 @@
 from typing import TYPE_CHECKING
 from certus.core.certus_strat_core import APP_CONTEXT
 from certus.workers.certus_strat_workers_dto import WorkerThreadResult
-import certus.utils.certus_strat_service as _strat_service_module
 
 if TYPE_CHECKING:
     from certus.workers.certus_strat_workers import WorkerThread

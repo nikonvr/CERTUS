@@ -14,7 +14,6 @@ def _numba_set_threads_clamped(n: int) -> int:
     return max(1, min(31, int(n)))
 import logging
 import numpy as np
-import pandas as pd
 from typing import Any
 
 from certus.core.certus_core import (

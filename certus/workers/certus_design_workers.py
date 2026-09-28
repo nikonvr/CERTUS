@@ -17,7 +17,6 @@ from certus.workers.certus_design_workers_needle_strat import NeedleOptimization
 from threading import Event
 from typing import Any
 import numpy as np
-import pyqtgraph as pg
 from certus.ui.certus_qt_widgets import QThread
 from PyQt6.QtCore import QObject
 from certus.core.certus_core import (

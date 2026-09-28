@@ -20,7 +20,6 @@ import traceback
 from pathlib import Path
 from typing import Any
 import numpy as np
-import pyqtgraph as pg
 
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,

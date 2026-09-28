@@ -1,8 +1,6 @@
 import logging
 import functools
 from typing import Any
-import numpy as np
-import pandas as pd
 from certus.ui.certus_ui_widgets_factory import attach_splitter_capper
 from certus.ui.certus_overview_tab import CertusKpiBanner, build_synthesis_tab
 from certus.ui.certus_ui import (

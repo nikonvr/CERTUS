@@ -12,7 +12,6 @@ from typing import Any
 from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
 
 import numpy as np
-import pandas as pd
 import pyqtgraph as pg
 
 from PyQt6.QtCore import Qt, QTimer

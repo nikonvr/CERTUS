@@ -1,10 +1,6 @@
 from __future__ import annotations
 """Main spline pipeline: JSON logging, RMSE snapshots, worker orchestration."""
 import copy as _copy
-import numpy as np
-from certus.utils.certus_index_utils import (
-    _sorted_finite_sigma_knots as _sorted_finite_sigma_knots_for_log,
-)
 
 from .spline_pipeline_utils import (
     _WorkerProgressCoordinator,

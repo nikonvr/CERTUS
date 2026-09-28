@@ -2,7 +2,6 @@ from typing import TYPE_CHECKING
 from certus.utils.certus_strat_service import calculate_nominal_properties, extract_best_rmse
 from certus.core.certus_strat_core import generate_excel_report
 from certus.utils.certus_exclusions import filter_params_for_serialization
-import certus.utils.certus_strat_service as _strat_service_module
 
 from certus.core.certus_strat_config import precompute_clues_and_matrices
 from certus.core.certus_strat_robustness import run_final_simulation_block

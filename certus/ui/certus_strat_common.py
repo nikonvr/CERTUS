@@ -14,11 +14,8 @@ import concurrent.futures
 
 
 
-import numpy as np
 
-import pandas as pd
 
-import pyqtgraph as pg
 
 
 
@@ -60,10 +57,6 @@ from certus_physics import (  # STRAT-specific kernels (previously imported from
 
 from certus.workers.certus_strat_workers import (
     _resolve_strat_indices_db_path,
-)
-import certus.utils.certus_strat_service as _strat_service_module
-from certus.utils.certus_strat_service import (
-    _validate_candidates_phase_a as _service_validate_candidates_phase_a,
 )
 
 

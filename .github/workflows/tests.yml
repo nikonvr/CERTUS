@@ -62,9 +62,12 @@ jobs:
         # départ. Une CI rouge peut donc venir d'une version publiée le jour même, et c'est
         # voulu ; `uv pip list` journalise ce qui a été éprouvé. CERTUS s'utilise en source,
         # sans système de construction : on installe les dépendances, jamais le projet.
+        # `--upgrade` réécrit `uv.lock` : on rend ensuite celui du dépôt, que les tests
+        # comparent à `requirements.lock` (test_requirements_lock_follows_uv_lock).
         run: |
           uv sync --upgrade --no-install-project --extra dev --python ${{ matrix.python-version }}
           uv pip list
+          git checkout -- uv.lock
 
       - name: Vérifier que certus est importé depuis le dépôt
         # Un install éditable a déjà fait résoudre `certus` vers une AUTRE copie du disque :
@@ -125,6 +128,7 @@ jobs:
         run: |
           uv sync --upgrade --no-install-project --extra dev --python 3.14
           uv pip list
+          git checkout -- uv.lock
 
       - name: Vérifier que certus est importé depuis le dépôt
         run: |

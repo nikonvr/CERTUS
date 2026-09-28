@@ -58,30 +58,6 @@ class CertusIndexSplineLayoutExtrasMixin:
 
         return panel
 
-    def _build_tab_log(self) -> QWidget:
-
-        w = QWidget()
-
-        lay = QVBoxLayout(w)
-
-        lay.setContentsMargins(12, 12, 12, 12)
-
-        info = QLabel(
-            "The detailed stream (local stages, K stages, polish, continuous laws) appears in the "
-            "<b>OPTIMIZATION LOG</b> panel under the plots. "
-            "Use <b>Copy Logs</b> on that panel to copy all text."
-        )
-
-        info.setWordWrap(True)
-
-        info.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt;")
-
-        lay.addWidget(info)
-
-        lay.addStretch(1)
-
-        return w
-
     def _build_tab_why(self) -> QWidget:
 
         panel = QWidget()

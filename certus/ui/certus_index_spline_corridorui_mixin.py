@@ -242,27 +242,6 @@ class CertusIndexSplineCorridorUIMixin:
 
         return self._last_result
 
-    def _set_corridor_rmse_view_centered(self, d_center: float, half_width_nm: float) -> None:
-
-        if not hasattr(self, "plot_corridor_rmse_d"):
-            return
-
-        if not np.isfinite(d_center):
-            return
-
-        hw = float(max(0.0, half_width_nm))
-
-        if not np.isfinite(hw):
-            return
-
-        hw_eff = float(max(hw, 0.5))
-
-        pad = float(max(0.02 * (2.0 * hw_eff), 0.25))
-
-        self.plot_corridor_rmse_d.plotItem.setXRange(
-            float(d_center - hw_eff - pad), float(d_center + hw_eff + pad), padding=0.0
-        )
-
     def _set_corridor_rmse_view_data_bounds(self, d_vals: np.ndarray, r_vals: np.ndarray) -> None:
         """Sets the scale of the RMSE(d) graph to the min/max bounds of the data."""
 

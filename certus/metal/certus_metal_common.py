@@ -98,7 +98,6 @@ from certus.ui.certus_ui import (
 from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
 
 
-
 # The shared defaults live in certus_metal_defaults, a module without Qt that the
 # METAL computation modules can import; they are re-exported here unchanged.
 from certus.metal.certus_metal_defaults import (
@@ -140,7 +139,6 @@ class MetalProgressEvent:
     best_cost: float = float("inf")
     elapsed_s: float = 0.0
     mode: str = METAL_GLOBAL_STATUS
-
 
 
 def normalize_percent_column(values: np.ndarray) -> np.ndarray:
@@ -463,34 +461,6 @@ def setup_common_metal_plots(app) -> None:
     app.tabs.addTab(app.clues_plot, "n, k")
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class MetalOptimizationWorker(QObject):
     """Base Optimization Worker for METAL applications"""
 
@@ -526,198 +496,6 @@ class MetalOptimizationWorker(QObject):
         """Request stop"""
 
         self.is_running = False
-
-
-def metal_optimization_worker_run_differential_evolution(
-    worker: MetalOptimizationWorker,
-    global_objective_function: Callable[..., Any],
-    args_for_objective: tuple,
-) -> None:
-    """
-    Run ``scipy.optimize.differential_evolution`` with shared callback
-    (progress, best candidate, user stop). Emits ``finished`` or ``error``.
-    """
-
-    p = worker.params
-    logger = logging.getLogger("CERTUS")
-
-    def _fmt_head(vec, max_items: int = 6) -> list[float]:
-        arr = np.asarray(vec) if vec is not None else np.asarray([])
-        if arr.size == 0:
-            return []
-        return np.round(arr[: min(max_items, arr.size)], 6).tolist()
-
-    try:
-        worker.best_candidate = {"x": None, "fun": float("inf")}
-
-        worker._last_live_emit_time = 0.0
-        worker._start_time = time.time()
-
-        logger.info(
-            "GLOBAL_OPT start popsize=%s maxiter=%s tol=%s mutation=(%s,%s) recombination=%s updating=%s workers=%s bounds=%s target_points=%s",
-            p.get("popsize", DEFAULT_POPSIZE),
-            p.get("maxiter", DEFAULT_MAXITER),
-            p.get("tol", DEFAULT_TOL),
-            p.get("mutation_min", DEFAULT_MUTATION_MIN),
-            p.get("mutation_max", DEFAULT_MUTATION_MAX),
-            p.get("recombination", DEFAULT_RECOMBINATION),
-            p.get("updating", DEFAULT_UPDATING),
-            p.get("workers", 1),
-            len(p.get("bounds", [])),
-            len(p.get("target_lambda", [])),
-        )
-
-        def callback(xk, _convergence) -> None:
-
-            if not worker.is_running:
-                raise StopIteration("User requested stop.")
-
-            worker.iteration_count += 1
-
-            popsize = int(p.get("popsize", DEFAULT_POPSIZE))
-
-            worker.evaluation_count += popsize
-
-            worker.stats_update.emit("MCS", popsize)
-
-            current_mse = float(global_objective_function(xk, *args_for_objective))
-            previous_best = float(worker.best_candidate["fun"])
-            improved = current_mse < previous_best
-
-            current_rmse = float(np.sqrt(max(current_mse, 0.0)))
-            previous_best_rmse = float(np.sqrt(max(previous_best, 0.0)))
-
-            if improved:
-                worker.best_candidate["fun"] = current_mse
-                worker.best_candidate["x"] = np.asarray(xk).copy()
-
-            now = time.time()
-            elapsed_s = now - getattr(worker, "_start_time", now)
-            x_head = _fmt_head(xk)
-            best_head = _fmt_head(worker.best_candidate["x"])
-            logger.info(
-                "GLOBAL_OPT iter=%s/%s evals=%s current_rmse=%.6e best_rmse=%.6e improved=%s elapsed_s=%.1f x_head=%s best_head=%s",
-                worker.iteration_count,
-                p.get("maxiter", DEFAULT_MAXITER),
-                worker.evaluation_count,
-                current_rmse,
-                previous_best_rmse if not improved else float(np.sqrt(max(worker.best_candidate["fun"], 0.0))),
-                improved,
-                elapsed_s,
-                x_head,
-                best_head,
-            )
-
-            emitted = False
-
-            if worker.iteration_count % 2 == 0:
-                worker.progress_snapshot.emit(build_progress_snapshot(message=f"DE | Gen {worker.iteration_count}/{p.get('maxiter', DEFAULT_MAXITER)}", display_ratio=min(1.0, worker.iteration_count / max(1, p.get('maxiter', DEFAULT_MAXITER))), progress_ratio=min(1.0, worker.iteration_count / max(1, p.get('maxiter', DEFAULT_MAXITER))), eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module='METAL', phase='DE', metadata={"params": xk, "best_params": worker.best_candidate["x"].copy() if worker.best_candidate["x"] is not None else xk, "mse": current_mse, "current_y": current_mse, "current_rmse": current_rmse, "best_cost": worker.best_candidate["fun"], "best_rmse": float(np.sqrt(max(worker.best_candidate["fun"], 0.0))), "iteration": worker.iteration_count, "evaluation_count": worker.evaluation_count, "elapsed_s": elapsed_s, "improved": improved, "x_head": x_head, "best_head": best_head}))
-                worker._last_live_emit_time = now
-                emitted = True
-
-            if not emitted and now - worker._last_live_emit_time >= 5.0 and worker.best_candidate["x"] is not None:
-                worker._last_live_emit_time = now
-
-                worker.progress_snapshot.emit(build_progress_snapshot(message=f"DE | Gen {worker.iteration_count}/{p.get('maxiter', DEFAULT_MAXITER)} | best-only", display_ratio=min(1.0, worker.iteration_count / max(1, p.get('maxiter', DEFAULT_MAXITER))), progress_ratio=min(1.0, worker.iteration_count / max(1, p.get('maxiter', DEFAULT_MAXITER))), eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module='METAL', phase='DE', metadata={"params": worker.best_candidate["x"].copy(), "best_params": worker.best_candidate["x"].copy(), "mse": worker.best_candidate["fun"], "current_y": current_mse, "current_rmse": current_rmse, "best_cost": worker.best_candidate["fun"], "best_rmse": float(np.sqrt(max(worker.best_candidate["fun"], 0.0))), "iteration": worker.iteration_count, "evaluation_count": worker.evaluation_count, "elapsed_s": elapsed_s, "improved": False, "x_head": x_head, "best_head": best_head}))
-
-        bounds = p["bounds"]
-
-        max_workers = p.get("workers", 1)
-
-        if max_workers > 1:
-            from concurrent.futures import ThreadPoolExecutor
-
-            class ThreadMap:
-                def __init__(self, ex) -> None:
-
-                    self.ex = ex
-
-                def __call__(self, func, iterabl) -> list:
-
-                    return list(self.ex.map(func, iterabl))
-
-            with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                result = scipy.optimize.differential_evolution(
-                    global_objective_function,
-                    bounds,
-                    args=args_for_objective,
-                    popsize=p["popsize"],
-                    maxiter=p["maxiter"],
-                    tol=p["tol"],
-                    mutation=(p["mutation_min"], p["mutation_max"]),
-                    recombination=p["recombination"],
-                    updating="deferred",
-                    workers=ThreadMap(executor),
-                    callback=callback,
-                    disp=False,
-                )
-
-        else:
-            result = scipy.optimize.differential_evolution(
-                global_objective_function,
-                bounds,
-                args=args_for_objective,
-                popsize=p["popsize"],
-                maxiter=p["maxiter"],
-                tol=p["tol"],
-                mutation=(p["mutation_min"], p["mutation_max"]),
-                recombination=p["recombination"],
-                updating=p["updating"],
-                workers=1,
-                callback=callback,
-                disp=False,
-            )
-
-        if hasattr(result, "nfev") and result.nfev > 0:
-            logger.info(
-                "GLOBAL_OPT complete success=%s nfev=%s nit=%s best_mse=%.6e best_x_head=%s message=%s",
-                getattr(result, "success", None),
-                getattr(result, "nfev", None),
-                getattr(result, "nit", None),
-                float(getattr(result, "fun", float("nan"))),
-                _fmt_head(getattr(result, "x", None)),
-                getattr(result, "message", ""),
-            )
-            batches = result.nfev // 100
-
-            if batches > 0:
-                worker.stats_update.emit("SP", batches * 100)
-
-            remaining = result.nfev % 100
-
-            if remaining > 0:
-                worker.stats_update.emit("SP", remaining)
-
-        worker.finished.emit({"result": result, "params": p})
-
-    except StopIteration as e:
-        logger.info(
-            "GLOBAL_OPT stopped_by_user iterations=%s evals=%s best_mse=%s best_x_head=%s",
-            worker.iteration_count,
-            worker.evaluation_count,
-            worker.best_candidate["fun"],
-            _fmt_head(worker.best_candidate["x"]),
-        )
-        if worker.best_candidate["x"] is not None:
-            from scipy.optimize import OptimizeResult
-
-            dummy_res = OptimizeResult(
-                x=worker.best_candidate["x"],
-                fun=worker.best_candidate["fun"],
-                nfev=worker.evaluation_count,
-                message="Stopped by user",
-                success=True,
-            )
-
-            worker.finished.emit({"result": dummy_res, "params": p})
-
-        else:
-            worker.error.emit(str(e))
-
-    except NUMERICAL_FAULT_EXCEPTIONS as e:
-        logger.error("Optimization worker error: %s", e, exc_info=True)
-
-        worker.error.emit(f"Error in optimization worker:\n{traceback.format_exc()}")
 
 
 # BaseBeamAnalysisWorker removed (Dead Code)

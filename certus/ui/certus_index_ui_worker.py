@@ -293,18 +293,6 @@ class CertusIndexWorkerMixin:
 
         self._thread.start()
 
-    def _abort_run_optimization(self, title: str, message: str, *, critical: bool = False) -> None:
-        """Abort run setup with a user-visible message and reset primary buttons."""
-        _notify_user(
-            self,
-            title,
-            message,
-            level="error" if critical else "warning",
-            blocking=critical,
-        )
-        self.btn_run.setEnabled(True)
-        self.btn_stop.setEnabled(False)
-
     def _resolve_substrate_absorption_inputs(
         self,
         *,

@@ -475,10 +475,6 @@ def _smart_init_pw_nk_clipboard_df(curve_n: Any, curve_pk: Any) -> pd.DataFrame 
 
 # LiveIndexMonitor is defined locally in this module
 
-def _interp_t_at_lam_knots(lam_grid: np.ndarray, t_grid: np.ndarray, cur_sk: np.ndarray) -> np.ndarray:
-    """Interpolate theoretical T at knot lambda positions (sigma -> lambda conversion)."""
-    return _interp_series_at_sigma_knots(lam_grid, t_grid, cur_sk)[1]
-
 from certus.spline.spline_pipeline_utils import _interp_series_at_sigma_knots
 
 _D_SLIDER_STEPS_DEFAULT = 5000
@@ -575,26 +571,6 @@ def _worker_curve_minimum_deep_refit(
         out["mse"] = float(rm * rm)
     out["gui_curve_minimum_deep_refit"] = True
     return out
-
-def _format_smart_init_status_text(k_n: int, dv: float, rmse_lbl: str, rm: float, best_rmse: float) -> str:
-    """Format the summary text for the smart init preview dialog."""
-    return (
-        f"Summary: dialog mesh K={k_n} sigma knots (worker uses canonical file K after 'Continue' if different). "
-        f"Squares = theoretical T at knots. Continue -> local refinement on this mesh. "
-        f"d {dv:.2f} nm | stage {rmse_lbl} start (x0 after clip, before L-BFGS-B) {rm:.6f} "
-        f"| best reached {best_rmse:.6f}"
-    )
-
-
-
-
-
-
-
-
-
-
-
 
 class _LazyCertusIndexSplineApp:
     def __getattr__(self, name):

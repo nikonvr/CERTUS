@@ -11,16 +11,6 @@ class CertusIndexSplineManualMeshMixin:
         return _sorted_finite_sigma_knots_for_log(sigma_knots)
 
     @staticmethod
-    def _sigma_knots_to_lambda_nm(sigma_knots: Any) -> np.ndarray:
-        from certus.spline.spline_pipeline_utils import _sigma_knots_to_lambda_nm_for_log
-        return _sigma_knots_to_lambda_nm_for_log(sigma_knots)
-
-    @staticmethod
-    def _sigma_knot_difference_with_tolerance(source_sigma_knots: Any, reference_sigma_knots: Any) -> np.ndarray:
-        from certus.spline.spline_pipeline_utils import _sigma_knot_difference_for_log
-        return _sigma_knot_difference_for_log(source_sigma_knots, reference_sigma_knots)
-
-    @staticmethod
     def _summarize_manual_mesh_change(before_sigma_knots: Any, after_sigma_knots: Any) -> dict[str, Any]:
         from certus.spline.spline_pipeline_utils import _sigma_mesh_change_summary_for_log
         return _sigma_mesh_change_summary_for_log(before_sigma_knots, after_sigma_knots)

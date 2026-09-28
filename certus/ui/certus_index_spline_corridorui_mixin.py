@@ -456,11 +456,6 @@ class CertusIndexSplineCorridorUIMixin:
                 "Unable to start manual corridor calculation from the current result.",
             )
 
-    def _sync_corridor_btn_from_chk(self) -> None:
-
-        if not hasattr(self, "btn_corridor_toggle") or not hasattr(self, "chk_corridor_d"):
-            return
-
     def _on_corridor_chk_state_changed(self, *_args) -> None:
 
         self._refresh_corridors_gui_state_labels()

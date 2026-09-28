@@ -1053,20 +1053,3 @@ class CertusIndexSplineEventsExtrasMixin:
         if hint in status:
             return status
         return f"{status} | {hint}"
-
-    def _rmse_fit_lambda_tuple_for_report(self) -> tuple[float, float] | None:
-        """lambda window for display/export (result first, else GUI)."""
-
-        rw = None
-
-        if self._last_result is not None:
-            rw = self._last_result.get("rmse_fit_lambda_nm")
-
-        if rw is None and getattr(self, "_rmse_fit_lambda_enabled", False):
-            rl0 = float(self._rmse_fit_lambda_lo)
-
-            rl1 = float(self._rmse_fit_lambda_hi)
-
-            rw = (min(rl0, rl1), max(rl0, rl1))
-
-        return rw

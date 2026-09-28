@@ -4,7 +4,7 @@ ExportManager (the full-results export that ends every DESIGN run, and the Excel
 PlotManager (the Pareto summary) pass `app_version=__version__` to the manifest request, and the
 Pareto summary checks the manifest with get_missing_manifest_fields. Neither module imported
 either name: `import *` never carries a name that starts with an underscore, and
-certus_design_common had no get_missing_manifest_fields. From the split of the monolith (June
+certus_design_common (removed since) had no get_missing_manifest_fields. From the split of the monolith (June
 2026) to 2026-09-28, each of these exports stopped on a NameError before writing anything.
 """
 

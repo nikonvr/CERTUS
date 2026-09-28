@@ -10,28 +10,6 @@ class CertusFieldStateMixin:
 
 
 
-    def on_cleanup(self):
-        removed = self.smart_cleanup(self.table_layers)
-        if removed > 0:
-            show_toast(self, f"Cleaned up {removed} layer(s).", variant="success")
-        else:
-            show_toast(self, "Stack is already clean.", variant="info")
-
-    def on_needle(self):
-        try:
-            params = self._get_params()
-        except ValueError as err:
-            show_toast(self, str(err), "warning")
-            return
-            
-        self._initial_field_data = getattr(self, "_last_plot_data", None)
-        self._initial_spectral_data = getattr(self, "_last_spectral_data", None)
-
-        self.btn_calc.setEnabled(False)
-        self.btn_opt.setEnabled(False)
-        self.btn_mc.setEnabled(False)
-        self._start_worker(FieldWorkerRequest(action="needle", params=params))
-
     def _normalize_layer_material(self, row: int) -> str:
         mat_item = self.table_layers.item(row, 0)
         if mat_item is None:

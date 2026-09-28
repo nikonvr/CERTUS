@@ -133,35 +133,6 @@ class CertusFieldEventsMixin:
         self.btn_mc.setEnabled(False)
         self._start_worker(FieldWorkerRequest(action="tolerate", params=params))
 
-    def on_load_json_clicked(self):
-        self.on_import_design()
-
-    def on_export_csv_clicked(self):
-        """Export current field data to Excel (xlsx).
-
-        Uses _last_plot_data (set after every successful calculation)
-        instead of current_result which is never assigned.
-        FieldExportService.build_plot_export_frames returns dict[str, DataFrame].
-        """
-        if not self._last_plot_data:
-            show_toast(self, "No result to export. Run a calculation first.", "warning")
-            return
-
-        filename, _ = QFileDialog.getSaveFileName(self, "Export to Excel", "", "Excel Files (*.xlsx)")
-        if not filename:
-            return
-
-        try:
-            sheets = FieldExportService.build_plot_export_frames(self._last_plot_data)
-            with pd.ExcelWriter(filename, engine="openpyxl") as writer:
-                for sheet_name, df in sheets.items():
-                    df.to_excel(writer, sheet_name=sheet_name[:31], index=False)
-            self.logger.info(f"Exported field data to {filename}")
-            show_toast(self, "Data exported successfully.", "success")
-        except Exception as e:
-            self.logger.error(f"Export error: {e!s}")
-            show_toast(self, f"Export failed: {e!s}", "error")
-
     def _export_results_html(self, html_path: str) -> bool:
         from certus.ui.certus_ui_utils import open_file_explorer
         """Generate a professional standalone HTML report for field optimization."""
@@ -200,31 +171,6 @@ class CertusFieldEventsMixin:
         except Exception as e:
             self.logger.error(f"Report generation failed: {e}")
             return False
-
-    def on_export_html_clicked(self):
-        """Export a full HTML report.
-
-        Guards on _last_plot_data instead of current_result
-        (current_result is never assigned — _export_results_html
-        reads the stack table and plot widgets directly).
-        """
-        if not self._last_plot_data:
-            show_toast(self, "No result to export. Run a calculation first.", "warning")
-            return
-
-        filename, _ = QFileDialog.getSaveFileName(self, "HTML Report", "", "HTML Files (*.html)")
-        if not filename:
-            return
-
-        try:
-            if self._export_results_html(filename):
-                self.logger.info(f"Report generated at {filename}")
-                show_toast(self, "Report generated.", "success")
-            else:
-                show_toast(self, "HTML Report generation failed.", "error")
-        except Exception as e:
-            self.logger.error(f"Report generation error: {e!s}")
-            show_toast(self, f"Report generation failed: {e!s}", "error")
 
     def on_open_reports_clicked(self):
         report_dir = os.path.join(get_resource_path("."), "reports")

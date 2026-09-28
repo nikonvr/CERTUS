@@ -376,18 +376,6 @@ class StackPanelWidget(QWidget):
         except Exception as e:
             logging.error(f"Error in add_row_to_table: {e}")
 
-    def on_add_layer(self) -> None:
-        try:
-            row = self.table_layers.rowCount()
-            self.table_layers.insertRow(row)
-            self.is_updating_table = True
-            self.add_row_to_table(row, 1.0)
-            self.is_updating_table = False
-            self.structure_changed.emit()
-        except Exception as e:
-            logging.error(f"Error in on_add_layer: {e}")
-            self.is_updating_table = False
-
     def on_del_layer(self) -> None:
         """Safely removes a layer with UI protections."""
         try:

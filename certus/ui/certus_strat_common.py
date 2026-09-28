@@ -135,23 +135,6 @@ from certus.utils.certus_data import (
     to_excel_robust,
 )
 
-class CertusWindowSpyMixin:
-    def showEvent(self, event) -> None:
-        logging.getLogger("CERTUS").debug(
-            "[SPY-WINDOW] %s.showEvent() title='%s' id=%s geometry=%s visible=%s",
-            self.__class__.__name__, self.windowTitle(), id(self), self.geometry(), self.isVisible()
-        )
-        if hasattr(super(), "showEvent"):
-            super().showEvent(event)
-
-    def hideEvent(self, event) -> None:
-        logging.getLogger("CERTUS").debug(
-            "[SPY-WINDOW] %s.hideEvent() title='%s' id=%s geometry=%s visible=%s",
-            self.__class__.__name__, self.windowTitle(), id(self), self.geometry(), self.isVisible()
-        )
-        if hasattr(super(), "hideEvent"):
-            super().hideEvent(event)
-
 from certus_physics import (  # STRAT-specific kernels (previously imported from certus.core._certus_physics_impl)
     MaterialDatabase,
     NON_MONOTONIC_MODE_ATTENUATE,

@@ -1,5 +1,6 @@
 from __future__ import annotations
-from certus.ui.certus_strat_common import CertusWindowSpyMixin, QSvgWidget
+from certus.ui.certus_strat_common import QSvgWidget
+from certus.ui.certus_strat_mixins_ui import CertusWindowSpyMixin
 from pathlib import Path
 import json
 import logging

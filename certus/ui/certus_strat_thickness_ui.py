@@ -1,5 +1,5 @@
 from __future__ import annotations
-from certus.ui.certus_strat_common import CertusWindowSpyMixin
+from certus.ui.certus_strat_mixins_ui import CertusWindowSpyMixin
 import logging
 from typing import Any
 import numpy as np

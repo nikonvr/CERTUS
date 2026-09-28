@@ -1,5 +1,5 @@
 from __future__ import annotations
-from certus.ui.certus_strat_common import CertusWindowSpyMixin
+from certus.ui.certus_strat_mixins_ui import CertusWindowSpyMixin
 import logging
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QMainWindow

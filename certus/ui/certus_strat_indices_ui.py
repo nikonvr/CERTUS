@@ -1,5 +1,5 @@
 from __future__ import annotations
-from certus.ui.certus_strat_common import CertusWindowSpyMixin
+from certus.ui.certus_strat_mixins_ui import CertusWindowSpyMixin
 import logging
 import numpy as np
 import pyqtgraph as pg

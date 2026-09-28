@@ -1571,25 +1571,6 @@ class CertusREExcelMixin:
             if hasattr(self, "run_eval"):
                 self.run_eval()
 
-    def _re_capture_loaded_exact_ep(self) -> None:
-        """Freeze the exact loaded thickness vector for the first RE RMSE."""
-
-        try:
-            if self.ep_current is None:
-                return
-
-            ep = np.asarray(self.ep_current, dtype=np.float64).ravel().copy()
-
-            if ep.size == 0 or not np.all(np.isfinite(ep)):
-                return
-
-            if self._re_loaded_exact_ep is None or not np.array_equal(self._re_loaded_exact_ep, ep):
-                self._re_loaded_exact_ep = ep
-
-            self._use_exact_ep = True
-        except Exception as exc:
-            self.logger.warning("RE: failed to capture exact loaded ep: %s", exc)
-
     def _show_re_drifted_indices_window(
         self,
         a_pct: float = 0.0,

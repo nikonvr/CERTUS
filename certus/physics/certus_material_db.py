@@ -132,10 +132,6 @@ class MaterialDatabase:
         mat = self._db.materials[material_name]
         return float(mat["wl"][0]), float(mat["wl"][-1])
 
-    @property
-    def substrate_cache(self) -> dict:
-        return self._substrate_cache
-
     def get_cached_computation(self, key: str, compute_func: Callable, *args, **kwargs):
         if key in self._computation_cache:
             self._cache_hits += 1

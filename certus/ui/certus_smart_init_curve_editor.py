@@ -630,11 +630,6 @@ class SmartInitNKCurveEditorDialog(QDialog):
 
         self._update_live_label()
 
-    def refresh_plots(self) -> None:
-        """To be called after parent recalculation or grid change."""
-
-        self._refresh_curves_only()
-
     def closeEvent(self, event) -> None:  # noqa: ANN001
         self._debounce_main.stop()
         self._f_n.detach()

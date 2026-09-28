@@ -333,12 +333,6 @@ class CurveSmootherGUI(QMainWindow):
         self.plot_widget.addItem(notice)
         self._empty_notice = notice
 
-    def _hide_empty_notice(self) -> None:
-        if self._empty_notice is None:
-            return
-        self.plot_widget.removeItem(self._empty_notice)
-        self._empty_notice = None
-
     def update_plot(self) -> None:
         if self.df is None:
             self._show_empty_notice()

@@ -259,14 +259,3 @@ class CertusStratStackProgressWidget(QWidget):
         """Mark every layer as admissible once Phase A is finished."""
         for card in self.layer_cards:
             card.set_state("done")
-
-    def update_phase_b_progress(self, message: str, pct: int) -> None:
-        """Show the progress of Phase B (block optimisation)."""
-        self.mark_phase_a_complete()
-        self.lbl_title.setText("OPTIMIZATION — Phase B : Groupement en blocs & Robustesse")
-        self.lbl_layer_pill.setText("Phase B en cours")
-        self.lbl_layer_pill.setStyleSheet(
-            "background-color: #059669; color: white; padding: 4px 12px; border-radius: 12px; font-weight: bold;"
-        )
-        self.lbl_kpi_progress.setText(f"{message} ({pct}%)")
-        self.lbl_kpi_thick.setText(f"✓ Phase A validée : {len(self.layer_cards)}/{len(self.layer_cards)} couches admissibles")

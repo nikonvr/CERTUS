@@ -578,15 +578,6 @@ except (FileNotFoundError, OSError, *NUMERICAL_FAULT_EXCEPTIONS) as _e_sap:
         stacklevel=1,
     )
 
-def _get_sapphire_k_on_grid(wavelengths_nm: np.ndarray) -> np.ndarray | None:
-    """Interpolate sapphire k on any wavelength grid. Returns None if data unavailable."""
-
-    if _SAPPHIRE_WLS is None or _SAPPHIRE_K is None:
-        return None
-
-    return np.interp(wavelengths_nm, _SAPPHIRE_WLS, _SAPPHIRE_K, left=0.0, right=0.0).astype(np.float64)
-
-
 # =============================================================================
 
 # SILICON SUBSTRATE  tabulated nk data from clues.xlsx -> Si-substrate

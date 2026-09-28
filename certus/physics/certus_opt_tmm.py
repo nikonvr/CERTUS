@@ -508,14 +508,6 @@ class Material:
 
         return n_real.astype(complex_dtype)
 
-    def get_n_at_wavelength(self, wl: float) -> float:
-        """Returns n at specific wavelength"""
-
-        result = self.get_nk(np.array([wl], dtype=np.float64))
-
-        return float(result[0].real)
-
-
 @njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
 def get_n_frosted_glass_array(wavelengths_nm: np.ndarray) -> np.ndarray:
     """Calculate frosted glass refractive index for an array of wavelengths."""

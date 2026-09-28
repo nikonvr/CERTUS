@@ -31,18 +31,6 @@ def apply_app_zoom(owner, factor: float, *, label_attr: str, stylesheet_fn=None,
     return factor
 
 
-def zoom_in_factor(owner) -> float:
-    return _clamp_zoom_factor(getattr(owner, "_zoom_factor", 1.0) + _ZOOM_STEP)
-
-
-def zoom_out_factor(owner) -> float:
-    return _clamp_zoom_factor(getattr(owner, "_zoom_factor", 1.0) - _ZOOM_STEP)
-
-
-def standard_config_file_filter() -> str:
-    return "JSON File (*.json);;Excel File (*.xlsx)"
-
-
 def _format_progress_duration(seconds: float) -> str:
     """Standardized duration formatter for UI progress widgets."""
     if seconds is None or seconds < 0:

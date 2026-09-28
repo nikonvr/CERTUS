@@ -138,7 +138,3 @@ def glyph_path(name: str, color: str, size: int = 16) -> str:
         return ""
     return target.as_posix()
 
-
-def clear_glyph_cache() -> None:
-    """Forget memoised paths. Call after a theme switch."""
-    glyph_path.cache_clear()

@@ -405,10 +405,6 @@ class SingleLinkageClusterer:
         return self._seeds_y_buf[: self._seeds_count]
 
     @property
-    def unique_basins_x(self) -> np.ndarray:
-        return self._basins_x_buf[: self._basins_count]
-
-    @property
     def unique_basins_y(self) -> np.ndarray:
         return self._basins_y_buf[: self._basins_count]
 

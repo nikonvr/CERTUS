@@ -299,10 +299,6 @@ class SplineOptConfig:
     def corridor_view(self):
         return self.corridor
 
-    def nonlinear_alpha_view(self):
-        return self.nonlinear_alpha
-
-
 def sol3_phase1_maxfun_effective_from_view(view: SplinePGlobalConfig) -> int:
     """View-based core of :func:`sol3_phase1_maxfun_effective` (Lot B2).
 

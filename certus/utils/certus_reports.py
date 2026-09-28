@@ -206,38 +206,6 @@ def validate_manifest_for_export(
     return (len(missing) == 0), missing
 
 
-def build_report_context(
-    *,
-    module_name: str,
-    title: str,
-    rmse: float | None = None,
-    subtitle: str = "",
-    app_name: str = "CERTUS",
-    author: str = "",
-    source_paths: list[str] | None = None,
-    run_manifest: dict[str, Any] | None = None,
-    warnings: list[str] | None = None,
-    status: str | None = None,
-) -> ReportContext:
-    manifest = dict(run_manifest or {})
-    if source_paths is not None:
-        manifest.setdefault("source_paths", source_paths)
-    if warnings:
-        manifest.setdefault("warnings", warnings)
-    if status:
-        manifest.setdefault("status", status)
-    if rmse is not None:
-        manifest.setdefault("rmse", rmse)
-    manifest.setdefault("module_name", module_name)
-    return ReportContext(
-        title=title,
-        subtitle=subtitle,
-        app_name=app_name,
-        author=author,
-        run_manifest=manifest or None,
-    )
-
-
 def build_report_sections(
     *,
     summary: dict[str, Any],
@@ -261,30 +229,6 @@ def build_report_sections(
     if notes:
         sections.append(Section(title="Notes", kind="text", text="\n".join(str(n) for n in notes)))
     return sections
-
-
-def export_report_bundle(
-    *,
-    ctx: ReportContext,
-    sections: list[Section],
-    output_dir: str,
-    base_name: str,
-    logger_obj: logging.Logger | None = None,
-    export_excel: bool = True,
-    export_pdf: bool = False,
-) -> dict[str, str | None]:
-    out_dir = Path(output_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
-    result: dict[str, str | None] = {"excel": None, "pdf": None}
-    if export_excel:
-        result["excel"] = build_excel_report(ctx, sections, str(out_dir / f"{base_name}.xlsx"))
-        if logger_obj:
-            logger_obj.info("Excel report saved: %s", Path(result["excel"]).name)
-    if export_pdf:
-        result["pdf"] = build_pdf_report(ctx, sections, str(out_dir / f"{base_name}.pdf"))
-        if logger_obj:
-            logger_obj.info("PDF report saved: %s", Path(result["pdf"]).name)
-    return result
 
 
 # =============================================================================

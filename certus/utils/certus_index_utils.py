@@ -1112,11 +1112,3 @@ def calculate_index_rmse(mse: float) -> float:
         return 0.0
     return float(np.sqrt(mse))
 
-
-def calculate_rmse_from_arrays(calc: np.ndarray, target: np.ndarray, weights: np.ndarray | None = None) -> float:
-    """Compute Root Mean Squared Error (RMSE) between calculated and target arrays with optional weights."""
-    from certus_physics import compute_mse_vectorized
-    mse, _ = compute_mse_vectorized(calc, target, weights)
-    return float(np.sqrt(np.maximum(mse, 0.0)))
-
-

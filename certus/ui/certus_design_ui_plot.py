@@ -1,5 +1,7 @@
 from __future__ import annotations
 from certus.ui.certus_design_common import *
+from certus.core.certus_core import __version__
+from certus.utils.certus_data import get_missing_manifest_fields
 from certus.utils.certus_ux import Typography
 
 class PlotManager:

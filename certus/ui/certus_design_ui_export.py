@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_design_common import *
+from certus.core.certus_core import __version__
 from certus.utils.certus_copy_utils import copy_optimization_result
 
 

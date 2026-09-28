@@ -220,12 +220,12 @@ from PyQt6.QtWidgets import (
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
     CertusRuntime,
-    SVG_AVAILABLE,
     build_runtime,
     handle_exception,
     get_resource_path,
     save_theme_config,
 )
+from certus.ui.certus_qt_svg import SVG_AVAILABLE
 
 
 if SVG_AVAILABLE:

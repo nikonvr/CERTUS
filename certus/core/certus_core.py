@@ -105,7 +105,6 @@ __all__ = [
     "setup_gui_logger",
     # Dependencies
     "OPENPYXL_AVAILABLE",
-    "SVG_AVAILABLE",
     # Bootstrap & Exceptions
     "bootstrap_app",
     "CertusError",
@@ -166,26 +165,6 @@ except ImportError:
     OPENPYXL_AVAILABLE = False
 
 
-def check_svg_availability() -> bool:
-    """Check SVG widget availability.
-
-    Returns False if explicitly disabled or if PyQt6.QtSvgWidgets is missing.
-    """
-    # Respect manual override if requested
-    o = os.environ.get("CERTUS_SVG_ICONS", "").strip().lower()
-    if o in ("0", "false", "no", "off"):
-        return False
-
-    try:
-        from PyQt6.QtSvgWidgets import QSvgWidget  # noqa: F401  # availability check
-
-        return True
-
-    except ImportError, ModuleNotFoundError:
-        return False
-
-
-SVG_AVAILABLE = check_svg_availability()
 
 
 # Unified timestamp formats for all CERTUS modules (logs, reports, filenames)

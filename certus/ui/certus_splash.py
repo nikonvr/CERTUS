@@ -9,7 +9,8 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QSplashScreen
 
-from certus.core.certus_core import get_resource_path, SVG_AVAILABLE
+from certus.core.certus_core import get_resource_path
+from certus.ui.certus_qt_svg import SVG_AVAILABLE
 
 
 def create_splash(init_message: str = "Initializing...", do_warmup: bool = True) -> QSplashScreen:

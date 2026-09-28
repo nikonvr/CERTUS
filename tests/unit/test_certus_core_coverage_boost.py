@@ -46,10 +46,10 @@ from certus.core.certus_core import (
     is_frozen,
     setup_gui_logger,
     wait_warmup,
-    check_svg_availability,
     get_materials_db_hash,
     setup_logging,
 )
+from certus.ui.certus_qt_svg import check_svg_availability
 
 
 # ─────────────────────────────────────────────────────────────────────

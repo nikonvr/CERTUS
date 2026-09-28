@@ -116,7 +116,7 @@ from certus.ui.certus_qt_widgets import (
 # Conditional SVG import for logo
 
 
-from certus.core.certus_core import SVG_AVAILABLE
+from certus.ui.certus_qt_svg import SVG_AVAILABLE
 from certus.utils.certus_ux import Typography
 
 

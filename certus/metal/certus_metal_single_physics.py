@@ -18,7 +18,6 @@ from certus.core.certus_core import (
     substrate_sellmeier_id,
     NUMERICAL_FAULT_EXCEPTIONS,
 )
-from certus.core._certus_physics_impl import get_n_substrate_array_by_id
 from certus.metal.certus_metal_defaults import (
     DEFAULT_NK_MAX,
     DEFAULT_NK_MIN,
@@ -36,13 +35,6 @@ def _resolve_single_substrate_id(sub_text: str) -> int:
         return int(val)
     fallback = substrate_sellmeier_id("BK7")
     return int(fallback if fallback is not None else 1)
-
-def _get_single_substrate_n_array(substrate_id: int, wavelengths_nm: np.ndarray) -> np.ndarray:
-    try:
-        return get_n_substrate_array_by_id(substrate_id, wavelengths_nm)
-    except KeyError:
-        fallback = substrate_sellmeier_id("BK7")
-        return get_n_substrate_array_by_id(int(fallback if fallback is not None else 1), wavelengths_nm)
 
 
 # =============================================================================

@@ -48,10 +48,7 @@ import certus.metal.certus_metal_single_physics as certus_metal_single_physics
 # Bound here, not only reached through the facade below: tests load this file by
 # path, and a module loaded that way is never replaced by its facade.
 from certus.metal.certus_metal_single_app import CertusMetalSingleApp
-from certus.metal.certus_metal_single_physics import (
-    _get_single_substrate_n_array,
-    _resolve_single_substrate_id,
-)
+from certus.metal.certus_metal_single_physics import _resolve_single_substrate_id
 
 from certus.ui.certus_ui import (
     init_certus_app,

@@ -59,7 +59,6 @@ from certus.core.certus_index_core import (
     _optimize_point_kernel,
     _optimize_all_points_batch,
     _SILICON_WLS,
-    _SILICON_K,
 )
 from certus.workers.certus_index_workers import (
     IRGlobalModelWorker,
@@ -96,7 +95,6 @@ from certus.ui.certus_ui import (
     init_certus_app,
     open_documentation,
     get_certus_last_dir,
-    set_certus_last_dir,
     setup_gui_exception_handling,
     setup_module_logging,
     setup_pyqtgraph_defaults,
@@ -235,7 +233,7 @@ class CertusIndexEventsMixin:
 
             self.sb_sub_thickness_mm.setEnabled(True)
 
-            # Show where the Si data REALLY comes from; disable manual CSV import.
+            # Show where the Si data really comes from.
             # The label named a spreadsheet that was never in the repository, even
             # while the coarse built-in approximation was in use.
             from certus_physics.materials_data import SI_SOURCE
@@ -244,14 +242,6 @@ class CertusIndexEventsMixin:
                 self.lbl_ksub_file.setText("Si: built-in approximation (no Si-substrate sheet found)")
             else:
                 self.lbl_ksub_file.setText(f"{Path(SI_SOURCE).name} -> Si-substrate (auto)")
-
-            self.btn_import_ksub.setEnabled(False)
-
-            # Store silicon k internally (will be interpolated to target grid in _on_run)
-
-            self._ksub_raw_wls = _SILICON_WLS
-
-            self._ksub_raw_k = _SILICON_K
 
             return
 
@@ -265,60 +255,11 @@ class CertusIndexEventsMixin:
 
         self.sb_sub_thickness_mm.setEnabled(True)
 
-        self.btn_import_ksub.setEnabled(True)
-
-        if self._ksub_raw_wls is _SILICON_WLS:
-            # Clear built-in data so other substrates start clean
-
-            self._ksub_raw_wls = None
-
-            self._ksub_raw_k = None
-
         self.lbl_ksub_file.setText("(no files)")
 
     def _on_absorbing_sub_toggled(self, checked: bool) -> None:
 
         self._absorbing_sub_widget.setVisible(checked)
-
-    def _on_import_ksub(self) -> None:
-
-        path = certus_get_open_file_name(self, "Import k_sub substrate", "CSV (*.csv);;All (*)")
-
-        if not path:
-            return
-
-        set_certus_last_dir(path)
-
-        try:
-            df_k = pd.read_csv(path, comment="#")
-
-            # Accept first two numeric columns regardless of header names
-
-            cols = df_k.select_dtypes(include=[np.number]).columns
-
-            if len(cols) < 2:
-                raise ValueError("The CSV must contain at least 2 numeric columns (lambda, k).")
-
-            self._ksub_raw_wls = df_k[cols[0]].to_numpy(dtype=np.float64)
-
-            self._ksub_raw_k = df_k[cols[1]].to_numpy(dtype=np.float64)
-
-            self.lbl_ksub_file.setText(Path(path).name)
-
-            self.logger.info(
-                "[FILE] k_sub imported: %s (%d points)",
-                Path(path).resolve(),
-                len(self._ksub_raw_wls),
-            )
-
-        except NUMERICAL_FAULT_EXCEPTIONS as e:
-            _notify_user(self, "k_sub Error", str(e), level="warning")
-
-            self._ksub_raw_wls = None
-
-            self._ksub_raw_k = None
-
-            self.lbl_ksub_file.setText("(error)")
 
     def _auto_detect_from_file(self, filepath: str) -> None:
         """Auto-detect substrate from filename and pre-estimate thickness

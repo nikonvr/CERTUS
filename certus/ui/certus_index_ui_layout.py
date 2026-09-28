@@ -785,23 +785,13 @@ class CertusIndexLayoutMixin:
 
         abs_layout.setSpacing(4)
 
-        # k_sub CSV import row
+        # where the silicon k(lambda) data comes from
 
         h_ksub = QHBoxLayout()
-
-        self.btn_import_ksub = QPushButton("Import k_sub (CSV λ,k)")
-
-        self.btn_import_ksub.setFixedHeight(24)
-
-        self.btn_import_ksub.setToolTip(
-            "Import a 2-column CSV file with substrate extinction coefficient:\nColumn 1: λ (nm) | Column 2: k_sub"
-        )
 
         self.lbl_ksub_file = QLabel("(no files)")
 
         self.lbl_ksub_file.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY}pt;")
-
-        h_ksub.addWidget(self.btn_import_ksub)
 
         h_ksub.addWidget(self.lbl_ksub_file, 1)
 
@@ -840,15 +830,7 @@ class CertusIndexLayoutMixin:
 
         l.addWidget(self._absorbing_sub_widget)
 
-        # Internal storage for loaded k_sub data (raw, before interpolation)
-
-        self._ksub_raw_wls: np.ndarray | None = None
-
-        self._ksub_raw_k: np.ndarray | None = None
-
         self.chk_absorbing_sub.toggled.connect(self._on_absorbing_sub_toggled)
-
-        self.btn_import_ksub.clicked.connect(self._on_import_ksub)
 
         # Auto-configure absorbing substrate when substrate selection changes
 

@@ -29,17 +29,13 @@ from certus.ui.certus_index_spline_common import (
     _CorridorWorkerMixin, _SmartInitDialogMixin, _LazyCertusIndexSplineApp,
     _ConfigBuilderMixin, _MeshOptimizationMixin, _ExcelExportMixin, _UIMixin
 )
-from certus.ui.certus_index_spline_layout_mixin import CertusIndexSplineLayoutMixin
 from certus.ui.certus_index_spline_state_mixin import CertusIndexSplineStateMixin
-from certus.ui.certus_index_spline_table_mixin import CertusIndexSplineTableMixin
-from certus.ui.certus_index_spline_plot_mixin import CertusIndexSplinePlotMixin
 from certus.ui.certus_index_spline_smartinit_mixin import CertusIndexSplineSmartInitMixin
 from certus.ui.certus_index_spline_manualmesh_mixin import CertusIndexSplineManualMeshMixin
 from certus.ui.certus_index_spline_corridorui_mixin import CertusIndexSplineCorridorUIMixin
 from certus.ui.certus_index_spline_spectrumui_mixin import CertusIndexSplineSpectrumUIMixin
 from certus.ui.certus_index_spline_layoutextras_mixin import CertusIndexSplineLayoutExtrasMixin
 from certus.ui.certus_index_spline_eventsextras_mixin import CertusIndexSplineEventsExtrasMixin
-from certus.ui.certus_index_spline_workers_mixin import CertusIndexSplineWorkersMixin
 
 class CertusIndexSplineApp(
     _CorridorControlMixin,
@@ -56,17 +52,13 @@ class CertusIndexSplineApp(
     _MeshOptimizationMixin,
     _ExcelExportMixin,
     _UIMixin,
-    CertusIndexSplineLayoutMixin,
     CertusIndexSplineStateMixin,
-    CertusIndexSplineTableMixin,
-    CertusIndexSplinePlotMixin,
     CertusIndexSplineSmartInitMixin,
     CertusIndexSplineManualMeshMixin,
     CertusIndexSplineCorridorUIMixin,
     CertusIndexSplineSpectrumUIMixin,
     CertusIndexSplineLayoutExtrasMixin,
     CertusIndexSplineEventsExtrasMixin,
-    CertusIndexSplineWorkersMixin,
     CertusBaseApp,
 ):
     """CERTUS application to optimize spline parameters for a given substrate index model."""

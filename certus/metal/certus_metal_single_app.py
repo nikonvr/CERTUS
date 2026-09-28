@@ -790,20 +790,6 @@ class CertusMetalSingleApp(MetalBaseApp):
             perf_layout.addWidget(card, idx // 2, idx % 2)
         # "About" marketing content moved out of scientific plot tabs (Option A)
 
-    def _warmup_numba(self) -> None:
-        """JIT precompilation via background thread"""
-        try:
-            self.sig_numba_ready.disconnect()
-            self.sig_numba_error.disconnect()
-        except TypeError:
-            pass
-        self.sig_numba_ready.connect(self._on_numba_ready_ui)
-        self.sig_numba_error.connect(self._on_numba_error_ui)
-        import threading
-        if hasattr(self, "status_label"):
-            self.status_label.setText("System warming up (compiling JIT)...")
-        threading.Thread(target=self._warmup_numba_thread_runner, daemon=True).start()
-
     def _warmup_numba_thread_runner(self) -> None:
         try:
             # Warmup specific to Single Metal (Spline + Incoherent substrate)
@@ -1614,32 +1600,7 @@ class CertusMetalSingleApp(MetalBaseApp):
             },
         }
 
-    def export_results(self) -> None:
-        """Exports results to Excel + HTML (Single/Beam)"""
-
-        if hasattr(self, "beam_stats") and self.beam_stats is not None:
-            self._export_beam_results()
-            return
-
-        if not hasattr(self, "final_results"):
-            show_toast(self, "Please run optimization first.", "warning")
-            return
-
-        # Prepare data
-        reports_dir = get_resource_path("reports")
-        os.makedirs(reports_dir, exist_ok=True)
-
-        # Self-export check logic handled by caller usually or here
-        if not get_export_config():
-            return
-
-        try:
-            self._do_export_single_results(reports_dir)
-        except NUMERICAL_FAULT_EXCEPTIONS as e:
-            self.logger.error(f"Error exporting: {e}")
-            traceback.print_exc()
-
-    def _do_export_single_results(self, reports_dir: str):
+    def _do_export_results(self, reports_dir: str):
         from certus.utils.certus_data import ReportSection
 
         res = self.final_results["result"]
@@ -2085,111 +2046,6 @@ class CertusMetalSingleApp(MetalBaseApp):
         except Exception as exc:
             self.logger.error("AUTO_BATCH target_file resolution failed config=%s reason=%s", config_path, exc)
         return None
-
-    def _enable_auto_batch_mode(self, config_path: str) -> None:
-        self._auto_batch_mode = True
-        self._auto_batch_config = config_path
-        self._auto_batch_started = False
-        self._auto_batch_quit = False
-
-        def _kickoff():
-            if self._auto_batch_started:
-                return
-            self._auto_batch_started = True
-            self.logger.info("AUTO_BATCH starting optimization from config: %s", config_path)
-            self._last_run_config_path = config_path
-            self.load_config(config_path)
-            target_path = self._resolve_config_target_file(config_path)
-            if target_path:
-                self.load_target_file(target_path)
-            if not getattr(self, "target_data", None):
-                self.logger.error("AUTO_BATCH aborted: no valid target data loaded")
-                self.maybe_quit_after_auto_batch()
-                return
-            QTimer.singleShot(1500, self.start_optimization)
-
-        QTimer.singleShot(1000, _kickoff)
-
-    def _write_auto_batch_result(self, results, iteration_count: int) -> None:
-        out_dir = Path(self._last_run_config_path).parent if getattr(self, "_last_run_config_path", None) else Path.cwd()
-        out_path = out_dir / "auto_batch_result.json"
-        result_obj = results.get("result", None)
-        x = getattr(result_obj, "x", None)
-        params = []
-        if x is not None:
-            try:
-                params = [float(v) for v in np.asarray(x).ravel().tolist()]
-            except Exception:
-                params = []
-
-        live_last = getattr(self, "_auto_batch_last_progress", {}) or {}
-        live_best_rmse = getattr(self, "_auto_batch_best_rmse", None)
-        live_best_mse = getattr(self, "_auto_batch_best_mse", None)
-
-        final_mse = float(getattr(result_obj, "fun", results.get("mse", np.nan)))
-        final_rmse = float(np.sqrt(final_mse)) if np.isfinite(final_mse) and final_mse >= 0 else None
-
-        best_rmse = None
-        if live_best_rmse is not None:
-            try:
-                best_rmse = float(live_best_rmse)
-            except Exception:
-                best_rmse = None
-        if best_rmse is None and live_last.get("best_rmse") is not None:
-            try:
-                best_rmse = float(live_last.get("best_rmse"))
-            except Exception:
-                best_rmse = None
-        if best_rmse is None:
-            best_rmse = final_rmse
-
-        best_mse = None
-        if live_best_mse is not None:
-            try:
-                best_mse = float(live_best_mse)
-            except Exception:
-                best_mse = None
-        if best_mse is None and live_last.get("best_cost") is not None:
-            try:
-                best_mse = float(live_last.get("best_cost"))
-            except Exception:
-                best_mse = None
-        if best_mse is None:
-            best_mse = final_mse
-
-        if not params and live_last.get("params") is not None:
-            try:
-                params = [float(v) for v in np.asarray(live_last.get("params")).ravel().tolist()]
-            except Exception:
-                params = []
-
-        payload = {
-            "timestamp": __import__("datetime").datetime.now().isoformat(),
-            "best_rmse": best_rmse,
-            "best_mse": best_mse,
-            "final_rmse": final_rmse,
-            "final_mse": final_mse,
-            "live_current_rmse": live_last.get("current_rmse", None),
-            "live_best_rmse": live_last.get("best_rmse", None),
-            "iterations": int(iteration_count),
-            "nit": int(results.get("nit", iteration_count)),
-            "success": bool(results.get("success", False)),
-            "message": str(results.get("message", "")),
-            "params": params,
-            "config": str(getattr(self, "_last_run_config_path", "")),
-        }
-        import json
-        out_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-        self.logger.info("AUTO_BATCH wrote result file=%s best_rmse=%s", out_path, best_rmse)
-        try:
-            if getattr(self, "logger", None) and getattr(self.logger, "handlers", None):
-                for handler in self.logger.handlers:
-                    try:
-                        handler.flush()
-                    except Exception:
-                        pass
-        except Exception:
-            pass
 
     def maybe_quit_after_auto_batch(self) -> None:
         if self._auto_batch_mode and not self._auto_batch_quit:

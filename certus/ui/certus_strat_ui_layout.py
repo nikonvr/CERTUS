@@ -1214,51 +1214,6 @@ class CertusStratLayoutMixin:
 
         adv_layout.addStretch()
 
-    def _create_why_certus_tab(self) -> None:
-        """Creates Why CERTUS? tab with FlashyCards matching INDEX/METAL/DESIGN style"""
-
-        perf_tab = QWidget()
-
-        self.tabs.addTab(perf_tab, "Why CERTUS?")
-
-        perf_layout = QGridLayout(perf_tab)
-
-        perf_layout.setSpacing(20)
-
-        perf_layout.setContentsMargins(30, 30, 30, 30)
-
-        c1 = FlashyCard(
-            "High-Rate Monte Carlo",
-            "Simulation of deposition dispersions\nRapid evaluation of real-world robustness",
-            icon="🚀",
-        )
-
-        c2 = FlashyCard(
-            "Error Compensation",
-            "Auto-compensated wavelengths\nMaintains performance under perturbations",
-            icon="⚡",
-        )
-
-        c3 = FlashyCard(
-            "Dynamic Programming",
-            "Block selection by global cost\nStructured, scalable, and traceable search",
-            icon="🎯",
-        )
-
-        c4 = FlashyCard(
-            "Robust Statistical Validation",
-            "Multi-noise stress tests + RMSE scoring\nReliable ranking of manufacturable strategies",
-            icon="🔮",
-        )
-
-        perf_layout.addWidget(c1, 0, 0)
-
-        perf_layout.addWidget(c2, 0, 1)
-
-        perf_layout.addWidget(c3, 1, 0)
-
-        perf_layout.addWidget(c4, 1, 1)
-
     def _create_material_group(self, parent_layout, title, prefix, label, _is_compact=False) -> None:
 
         group = CertusCard(title)

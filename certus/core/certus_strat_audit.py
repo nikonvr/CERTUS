@@ -108,68 +108,6 @@ def _score_proxy(result: Any) -> float:
         return float("inf")
 
 
-def run_strat_sensitivity_audit(
-    base_params: dict[str, Any],
-    *,
-    cases: Iterable[StratAuditCase] = DEFAULT_AUDIT_CASES,
-    logger: logging.Logger | None = None,
-) -> StratAuditSummary:
-    """Run a compact sensitivity audit around the STRAT pipeline.
-
-    The function executes the full optimization pipeline for a handful of
-    perturbed parameter sets and compares the selected strategy signatures.
-    """
-    logger = logger or logging.getLogger(__name__)
-    base_params = _copy_params(base_params)
-
-    results: list[StratAuditResult] = []
-    baseline_result: StratAuditResult | None = None
-    sigs: list[str] = []
-
-    for case in cases:
-        params = _copy_params(base_params)
-        params.update(case.overrides)
-        logger.info("Running STRAT audit case %s with overrides=%s", case.name, case.overrides)
-        try:
-            output = optimize_block_strategy_hybrid(params)
-        except Exception as exc:  # noqa: BLE001
-            logger.error("Audit case %s failed: %s", case.name, exc, exc_info=True)
-            output = {"error": repr(exc)}
-        strategy_id, signature, total_cost, n_blocks = _extract_strategy_fields(output)
-        score_proxy = _score_proxy(output)
-        res = StratAuditResult(
-            name=case.name,
-            strategy_signature=signature,
-            strategy_id=strategy_id,
-            total_cost=total_cost,
-            n_blocks=n_blocks,
-            score_proxy=score_proxy,
-            payload=output if isinstance(output, dict) else {"result": repr(output)},
-        )
-        results.append(res)
-        sigs.append(signature)
-        if case.name == "baseline":
-            baseline_result = res
-
-    if baseline_result is None:
-        baseline_result = results[0]
-
-    sig_counts = {sig: sigs.count(sig) for sig in set(sigs)}
-    dominant = max(sig_counts.values()) if sig_counts else 0
-    dominant_ratio = dominant / max(1, len(sigs))
-    probs = [count / len(sigs) for count in sig_counts.values()] if sig_counts else [1.0]
-    entropy = float(-sum(p * np.log2(p) for p in probs if p > 0.0))
-    stability_index = float(dominant_ratio / (1.0 + entropy))
-
-    return StratAuditSummary(
-        baseline=baseline_result,
-        cases=results,
-        stability_index=stability_index,
-        signature_entropy=entropy,
-        dominant_signature_ratio=dominant_ratio,
-    )
-
-
 def audit_summary_to_dict(summary: StratAuditSummary) -> dict[str, Any]:
     return {
         "baseline": asdict(summary.baseline),

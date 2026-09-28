@@ -238,49 +238,6 @@ class CertusStratWorkerMixin:
             f"♟️ {format_count_kmg(self.stat_counters['MS'])}  | 🎲 {format_count_kmg(self.stat_counters['MCS'])}  |  🌈️ {format_count_kmg(self.stat_counters['SP'])}"
         )
 
-    def _stop_active_render_thread(self, timeout_ms: int = 5000) -> None:
-
-        active_thread = getattr(self, "_active_render_thread", None)
-        if active_thread is None:
-            return
-
-        try:
-            if self._thread_is_running_safe(active_thread):
-                self.logger.debug("[STRAT-UI] Stopping active render thread...")
-                active_thread.quit()
-                if not active_thread.wait(timeout_ms):
-                    self.logger.warning("[STRAT-UI] Active render thread did not stop within %sms.", timeout_ms)
-                    active_thread.requestInterruption()
-                    active_thread.wait(min(timeout_ms, 1000))
-        except RuntimeError, AttributeError:
-            pass
-        finally:
-            if active_thread is not None and not self._thread_is_running_safe(active_thread):
-                self._active_render_thread = None
-
-    def _stop_worker_thread(self, timeout_ms: int = 10000) -> None:
-
-        worker = getattr(self, "worker", None)
-        if worker is None:
-            return
-
-        try:
-            if hasattr(worker, "params") and isinstance(worker.params, dict):
-                worker.params["stop_requested"] = True
-
-            if self._thread_is_running_safe(worker):
-                self.logger.debug("[STRAT-UI] Stopping worker thread id=%s...", id(worker))
-                worker.quit()
-                if not worker.wait(timeout_ms):
-                    self.logger.warning("[STRAT-UI] Worker thread did not stop within %sms.", timeout_ms)
-                    worker.requestInterruption()
-                    worker.wait(min(timeout_ms, 1000))
-        except RuntimeError, AttributeError:
-            pass
-        finally:
-            if worker is not None and not self._thread_is_running_safe(worker):
-                self.worker = None
-
     def has_running_computation(self) -> bool:
         """Whether a STRAT computation is under way, for the stop dialog.
 
@@ -336,31 +293,6 @@ class CertusStratWorkerMixin:
                     thread.deleteLater()
         except RuntimeError, AttributeError, ValueError:
             pass
-
-    def _stop_all_worker_threads(self, timeout_ms: int = 5000) -> None:
-
-        threads = list(getattr(self, "_active_worker_threads", []))
-        if not threads:
-            return
-
-        self.logger.debug("[STRAT-UI] Stopping %d worker threads...", len(threads))
-        for thread in threads:
-            try:
-                if self._thread_is_running_safe(thread):
-                    self.logger.debug("[STRAT-UI] -> quitting worker thread id=%s", id(thread))
-                    thread.quit()
-            except RuntimeError, AttributeError:
-                continue
-        deadline = time.time() + (timeout_ms / 1000.0)
-        for thread in threads:
-            try:
-                remaining = max(0, int((deadline - time.time()) * 1000))
-                if self._thread_is_running_safe(thread) and remaining > 0:
-                    if not thread.wait(remaining):
-                        self.logger.warning("[STRAT-UI] Worker thread did not stop in time id=%s", id(thread))
-            except RuntimeError, AttributeError:
-                continue
-        self._active_worker_threads = [t for t in self._active_worker_threads if self._thread_is_running_safe(t)]
 
     def request_stop_optimization(self) -> None:
 

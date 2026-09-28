@@ -105,12 +105,17 @@ class TestCERTUSMetalSingle:
 
     def test_optimization_integration(self):
         """Test the integration with scipy.optimize."""
+        import inspect
+
         import CERTUS_METAL_SINGLE
 
-        # Verify scipy.optimize is used
+        # Verify scipy.optimize is used -- in the file that defines the beam-analysis
+        # worker, reached through the launcher. The launcher itself only re-exports it,
+        # and the one mention it keeps (a warnings filter) would pass for the wrong reason.
+        worker_file = inspect.getsourcefile(CERTUS_METAL_SINGLE.BeamAnalysisWorker)
         has_optimization = (
             "scipy.optimize"
-            in open(CERTUS_METAL_SINGLE.__file__, encoding="utf-8").read()
+            in open(worker_file, encoding="utf-8").read()
         )
         assert has_optimization
 

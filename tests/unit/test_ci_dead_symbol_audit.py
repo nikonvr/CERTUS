@@ -23,6 +23,7 @@ l'absence de code mort.
 
 from __future__ import annotations
 
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -73,18 +74,54 @@ def _signale_sans_liste_blanche() -> set[str]:
         check=False,
     )
     assert out.returncode == 0, f"l'audit ne s'exécute plus :\n{out.stderr}"
+    return _candidats(out.stdout)
+
+
+def _candidats(sortie: str) -> set[str]:
+    """Les identifiants de symbole que l'audit liste dans sa sortie."""
     return {
         ligne.strip().removeprefix("- ").split(" (")[0]
-        for ligne in out.stdout.splitlines()
+        for ligne in sortie.splitlines()
         if ligne.strip().startswith("- ")
     }
 
 
-def test_the_audit_exists_and_runs():
-    """Contrôle négatif : un audit introuvable ferait passer tout le reste."""
+def test_the_audit_exists_and_runs(tmp_path):
+    """Contrôle négatif : un audit introuvable, ou qui ne signale plus rien, ferait passer tout le reste.
+
+    Le symbole mort est PLANTÉ dans une arborescence jetable, à côté d'un symbole
+    appelé : l'audit doit signaler l'un et taire l'autre. Le contrôle ne dépend donc
+    pas du code mort que contient le projet — le périmètre des définitions (la racine
+    et `certus_physics/`) peut n'en plus contenir aucun sans que l'audit ait cessé de
+    mordre, et exiger d'y en trouver un ferait alors échouer ce test à tort.
+    """
     assert AUDIT.is_file(), f"{AUDIT} est introuvable — lint.yml le lance pourtant"
-    assert _signale_sans_liste_blanche(), (
-        "l'audit ne signale plus RIEN sans liste blanche : il ne mord plus, et un vert en CI ne voudrait plus rien dire"
+    copie = tmp_path / "tools" / AUDIT.name
+    copie.parent.mkdir()
+    shutil.copy2(AUDIT, copie)
+    (tmp_path / "CERTUS_SONDE.py").write_text(
+        "def _sonde_morte():\n    return 0\n\n\ndef _sonde_vivante():\n    return 1\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "CERTUS_APPELANT.py").write_text(
+        "from CERTUS_SONDE import _sonde_vivante\n\nVALEUR = _sonde_vivante()\n",
+        encoding="utf-8",
+    )
+    out = subprocess.run(
+        [sys.executable, str(copie), "--whitelist", str(tmp_path / "aucune_liste_blanche")],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert out.returncode == 0, f"l'audit ne s'exécute plus :\n{out.stderr}"
+    signales = _candidats(out.stdout)
+    assert "CERTUS_SONDE:_sonde_morte" in signales, (
+        "l'audit ne signale plus un symbole mort planté exprès : il ne mord plus, "
+        "et un vert en CI ne voudrait plus rien dire"
+    )
+    assert "CERTUS_SONDE:_sonde_vivante" not in signales, (
+        f"l'audit signale un symbole appelé : il mord au hasard — {sorted(signales)}"
     )
 
 

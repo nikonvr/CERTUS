@@ -6,13 +6,17 @@ import numpy as np
 import pytest
 from certus.core._certus_physics_impl import compute_metal_bilayer_gradient_analytic, SplineBasisCache
 from certus.core.certus_core import canonicalize_substrate_label, substrate_sellmeier_id
-from CERTUS_METAL_SINGLE import objective_function_fixed_eM, gradient_function_fixed_eM, _resolve_single_substrate_id
+from certus.metal.certus_metal_single_physics import (
+    objective_function_fixed_eM,
+    gradient_function_fixed_eM,
+    _resolve_single_substrate_id,
+)
 
 
 @pytest.mark.unit
 def test_compute_metal_bilayer_gradient_analytic_non_regression() -> None:
     # Setup parameters
-    num_knots = 4
+    num_knots = 5
     l_array = np.linspace(400, 800, 30)
     r_tgt_array = np.ones(30) * 0.5
     min_knot_dist = 10.0
@@ -368,7 +372,7 @@ def test_gradient_function_fixed_eM_returns_zeros_for_non_finite_x() -> None:
 @pytest.mark.unit
 def test_bilayer_analytic_gradient_agrees_with_finite_differences() -> None:
     """Analytic gradient must match finite-difference approximation on eM and eL."""
-    num_knots = 2
+    num_knots = 3
     l_array = np.linspace(400, 800, 20)
     r_tgt_array = np.ones(20) * 0.4
     min_knot_dist = 10.0

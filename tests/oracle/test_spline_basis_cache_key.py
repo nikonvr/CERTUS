@@ -14,9 +14,9 @@ Le x2 apparent vient de ce que l'arrondi CONFOND les perturbations de difference
 of L-BFGS-B: the gain IS the error. An exact key makes the result fair and removes
 tout le gain.
 
-**Le garde-fou reel n'est pas la cle, et ce n'est pas non plus le `use_cache=False` des
-lignes 270 et 342 comme je l'ai d'abord ecrit.** `compute_metal_bilayer_gradient_analytic`
-consults the cache **directly** (line 319), so no caller flag does
+**Le garde-fou reel n'est pas la cle, et ce n'est pas non plus le `use_cache=False` de
+ses deux appels a `get_nk_from_spline` comme je l'ai d'abord ecrit.** `compute_metal_bilayer_gradient_analytic`
+consults the cache **directly** (its `SplineBasisCache.get` call), so no caller flag does
 governs. But 📏 the measurement shows that this does not break anything: the memorized base is not useful
 than the gradient with respect to the VALUES of nodes, while everything that depends on their
 POSITIONS passe par les deux chemins non memoises. Les positions etant figees a
@@ -136,12 +136,12 @@ def test_metal_gradient_sees_knot_moves_below_the_cache_rounding():
     🔴 IT'S THE GUARD THAT COUNTS, and it's not the one I thought.
 
     `compute_metal_bilayer_gradient_analytic` consulte `SplineBasisCache` une fois par
-    call (`gradient_metal.py:319`), directly — so neither `use_cache=False` nor the option
+    call (its `SplineBasisCache.get`), directly — so neither `use_cache=False` nor the option
     `--force-cache` du banc ne le gouvernent. J'ai d'abord ecrit ce test en exigeant
     ZERO consultation du cache. 📏 La mesure m'a contredit, et la contradiction est
     instructive : la base memoisee ne sert qu'au gradient par rapport aux VALEURS de
     nodes, while everything that depends on their POSITIONS passes through both
-    `use_cache=False` des lignes 270 et 342. Les positions etant figees a l'interieur
+    `use_cache=False` de ses deux appels a `get_nk_from_spline`. Les positions etant figees a l'interieur
     of a call, the basis is correct for what it is used for.
 
     There remains a peremption of order (dB/dlambda) x 1e-6, i.e. ~1e-6 relative to the
@@ -156,12 +156,12 @@ def test_metal_gradient_sees_knot_moves_below_the_cache_rounding():
     import certus.physics.gradient_metal as gm
 
     l_array = np.linspace(0.45, 0.95, 41)
-    num_knots = 3
-    spline_knot_count = num_knots + 1
+    num_knots = 4
+    spline_knot_count = num_knots
     # Disposition de x, imposee par le code : [ep_metal, ep_L, n_infini, A,
     # n_knots (sc), k_knots (sc), lambdas_internes]. La grille de noeuds est
     # `[l_min] + lambdas_internes + [l_max]`, et CubicSpline exige autant de valeurs
-    # que de noeuds — d'ou `len(lambdas_internes) = sc - 2` et `len(x) = 3.num_knots + 5`.
+    # que de noeuds — d'ou `len(lambdas_internes) = sc - 2` et `len(x) = 3.num_knots + 2`.
     n_internal = spline_knot_count - 2
     x = np.concatenate(
         (
@@ -171,7 +171,7 @@ def test_metal_gradient_sees_knot_moves_below_the_cache_rounding():
             np.linspace(0.55, 0.85, n_internal),
         )
     )
-    assert x.size == 3 * num_knots + 5
+    assert x.size == 3 * num_knots + 2
     # Signature reelle : (x, num_knots, l_array, r_tgt_array, _min_knot_dist, nSub=None).
     #⚠️ No `try/except` here, and this is deliberate: a fallback on a check
     #lexical source would pass this test WITHOUT ever executing the assertion which

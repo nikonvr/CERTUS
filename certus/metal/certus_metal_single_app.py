@@ -1,0 +1,2053 @@
+"""
+CERTUS-METAL SINGLE: Qt workers and application window
+======================================================
+
+The optimization worker, the beam-analysis worker and the CertusMetalSingleApp
+window. The computation they drive lives in certus_metal_single_physics. The
+root launcher CERTUS_METAL_SINGLE.py re-exports this module.
+"""
+
+import json  # used by the configuration loading (_resolve_config_target_file); the import was missing
+import logging
+import os
+import traceback
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import scipy.optimize
+import pyqtgraph as pg
+
+from PyQt6.QtCore import QObject, Qt, QTimer, pyqtSignal, pyqtSlot
+from PyQt6.QtWidgets import (
+    QApplication,
+    QGridLayout,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QWidget,
+)
+
+from certus.core.certus_core import (
+    SUBSTRATE_CHOICES,
+    canonicalize_substrate_label,
+    get_float_dtype,
+    get_resource_path,
+    certus_timestamp_display,
+    certus_timestamp_file,
+    NUMERICAL_FAULT_EXCEPTIONS,
+)
+from certus.core._certus_physics_impl import get_n_substrate_array_by_id
+
+from certus.utils.certus_data import (
+    OPENPYXL_AVAILABLE,
+    to_excel_robust,
+)
+
+from certus.utils.errors import (
+    get_error_message,
+    show_error,
+)
+
+from certus.metal.certus_metal_common import (
+    DEFAULT_EM_MAX,
+    DEFAULT_EM_MIN,
+    DEFAULT_MAXITER,
+    DEFAULT_MIN_KNOT_DISTANCE,
+    DEFAULT_MUTATION_MAX,
+    DEFAULT_MUTATION_MIN,
+    DEFAULT_NK_MAX,
+    DEFAULT_NK_MIN,
+    DEFAULT_NUM_KNOTS,
+    DEFAULT_POPSIZE,
+    DEFAULT_RECOMBINATION,
+    DEFAULT_TOL,
+    DEFAULT_UPDATING,
+    DEFAULT_WORKERS,
+    MetalBaseApp,
+    MetalOptimizationWorker,
+    build_metal_progress_status_text,
+    build_metal_startup_log_lines,
+    build_metal_target_data,
+    normalize_metal_progress_payload,
+    setup_beam_analysis_thread,
+    teardown_beam_thread,
+    setup_common_metal_plots,
+    elevate_spline_knots,
+)
+from certus.metal.pglobal_adapter import run_pglobal_optimization
+
+from certus_physics import (
+    calculate_RTRback_incoherent_vectorized,
+    get_nk_from_spline,
+)
+from certus.metal.certus_metal_single_physics import (
+    _build_single_bounds,
+    _resolve_single_substrate_id,
+    global_objective_function,
+    gradient_function_fixed_eM,
+    objective_function_fixed_eM,
+)
+
+from certus.ui.certus_overview_tab import CertusKpiBanner, build_synthesis_tab
+from certus.ui.certus_ui import (
+    CertusCard,
+    CertusScientificPlot,
+    CertusTheme,
+    DATA_FILES_FILTER_EXTENDED,
+    FlashyCard,
+    get_export_config,
+    open_data_file_and_read,
+    show_toast,
+)
+
+from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
+
+
+# =============================================================================
+
+
+# WORKER THREAD
+
+
+# =============================================================================
+
+
+class OptimizationWorker(MetalOptimizationWorker):
+    """Optimization worker thread"""
+
+    # Signals inherited from MetalOptimizationWorker
+
+    # __init__ inherited (initializes params, is_running, counters, best_candidate)
+
+    @pyqtSlot()
+    def run(self) -> None:
+        """
+
+        Execute the metal single layer optimization worker thread.
+
+        This method performs the complete optimization workflow for single metal layers including:
+
+        - Parameter optimization for single metal layer
+
+        - Spectral calculationation and target fitting
+
+        - MSE calculationation and convergence tracking
+
+        - Progress monitoring and signal emission
+
+        Args:
+
+            self: OptimizationWorker instance
+
+        Returns:
+
+            None
+
+        Notes:
+
+            - Logs operation details
+
+            - Includes error handling
+
+            - Emits progress and finished signals
+
+            - Handles single metal layer constraints
+
+            - Uses PGlobal optimization algorithm
+
+        """
+
+        try:
+            p = self.params
+
+            float_dtype = get_float_dtype()
+
+            target_lambda = np.ascontiguousarray(p["target_lambda"], dtype=float_dtype)
+
+            target_r = np.ascontiguousarray(p["target_r"], dtype=float_dtype)
+
+            target_t = np.ascontiguousarray(p["target_t"], dtype=float_dtype)
+
+            target_rb = np.ascontiguousarray(p["target_rb"], dtype=float_dtype)
+
+            substrate_id = p["substrate_id"]
+
+            nSub_real = get_n_substrate_array_by_id(substrate_id, target_lambda)
+
+            nSub_complex_array = nSub_real.astype(np.complex128) + 0j
+
+            num_knots = p["num_knots"]
+
+            precomputed = {
+                "min_lambda": float(target_lambda.min()),
+                "max_lambda": float(target_lambda.max()),
+            }
+
+            args_for_objective = (
+                p["num_knots"],
+                target_lambda,
+                target_r,
+                target_t,
+                target_rb,
+                p["min_knot_dist"],
+                nSub_complex_array,
+                precomputed,
+            )
+
+            # --- KNOT CONTINUATION (MESH REFINEMENT) LOGIC ---
+            # If the user explicitly provided an x0 (e.g. Resume from UI), we do not do continuation
+            user_x0 = np.asarray(p.get("x0", []), dtype=float_dtype) if p.get("x0") is not None else np.array([])
+            target_num_knots = num_knots
+            
+            if len(user_x0) > 0:
+                knot_steps = [target_num_knots]
+            else:
+                knot_steps = list(range(2, target_num_knots + 1))
+                
+            total_steps = len(knot_steps)
+            total_feval = int(p.get("maxfeval", 25000))
+            feval_per_step = max(1000, total_feval // total_steps)
+            iter_per_step = max(1, int(p.get("maxiter", DEFAULT_MAXITER)) // total_steps)
+            
+            current_x0 = user_x0 if len(user_x0) > 0 else None
+            
+            logger = logging.getLogger("CERTUS.METAL.SINGLE")
+            logger.info("Starting Knot Continuation over steps: %s", knot_steps)
+            
+            result = None
+            
+            for step_idx, k in enumerate(knot_steps):
+                if not self.is_running:
+                    break
+                    
+                logger.info("--- KNOT STEP K=%d ---", k)
+                
+                # Elevate knots if continuing from a previous step
+                if current_x0 is not None and k > 2 and len(user_x0) == 0:
+                    current_x0 = elevate_spline_knots(current_x0, k - 1, precomputed["min_lambda"], precomputed["max_lambda"])
+                
+                # Update params for current knot count
+                p_k = p.copy()
+                p_k["num_knots"] = k
+                
+                # Build bounds
+                bounds = np.array(_build_single_bounds(p_k, l_array=target_lambda, include_eM=True), dtype=float_dtype)
+                
+                # If we are refining (k > 2) and didn't start from user_x0, tighten the bounds around the current solution
+                if k > 2 and current_x0 is not None and len(user_x0) == 0:
+                    delta_eM = 5.0
+                    delta_nk = 0.5
+                    delta_l = 50.0
+                    
+                    bounds[0] = (max(bounds[0][0], current_x0[0] - delta_eM), min(bounds[0][1], current_x0[0] + delta_eM))
+                    for idx in range(1, 1 + 2 * k):
+                        bounds[idx] = (max(bounds[idx][0], current_x0[idx] - delta_nk), min(bounds[idx][1], current_x0[idx] + delta_nk))
+                    for idx in range(1 + 2 * k, len(bounds)):
+                        bounds[idx] = (max(bounds[idx][0], current_x0[idx] - delta_l), min(bounds[idx][1], current_x0[idx] + delta_l))
+
+                if current_x0 is not None:
+                    # Guarantee current_x0 is strictly within the bounds to prevent optimizer crash
+                    lows = [b[0] for b in bounds]
+                    highs = [b[1] for b in bounds]
+                    current_x0 = np.clip(current_x0, lows, highs)
+
+                # Setup args for objective
+                args_for_objective = (
+                    k,
+                    target_lambda,
+                    target_r,
+                    target_t,
+                    target_rb,
+                    p["min_knot_dist"],
+                    nSub_complex_array,
+                    precomputed,
+                )
+
+                from certus.core._certus_physics_impl import PGlobalConfig
+                cfg = PGlobalConfig.for_dimension(dim=len(bounds)).with_overrides(
+                    alpha=0.05,
+                    reduction_ratio=0.2,
+                    n_samples_per_iter=600,       # Fast global phase -> fluid UI
+                    local_search_budget=1500,     # Meaningful local search descent
+                    max_active_clusters=5,        # Focus deeply on the top 5 best basins
+                )
+
+                logger.info(
+                    "GLOBAL_OPT(PGlobal) K=%d start max_iter=%s max_feval=%s workers=%s bounds=%s",
+                    k, iter_per_step, feval_per_step, int(p.get("workers", 1)), len(bounds),
+                )
+                
+                def make_callback(step_i, total_s):
+                    def callback(payload):
+                        base_pct = step_i * (100.0 / total_s)
+                        step_pct = payload.get("progress_pct", 0) / total_s
+                        payload["progress_pct"] = base_pct + step_pct
+                        self.progress.emit(payload)
+                    return callback
+
+                result = run_pglobal_optimization(
+                    lambda x, _args=args_for_objective: global_objective_function(x, *_args),
+                    bounds,
+                    x0=current_x0,
+                    max_iter=iter_per_step,
+                    max_feval=feval_per_step,
+                    workers=int(p.get("workers", 1)),
+                    stop_event=self._stop_event,
+                    callback=make_callback(step_idx, total_steps),
+                    progress_logger=lambda msg, _k=k: logging.getLogger("CERTUS.METAL.SINGLE").info("GLOBAL_OPT(PGlobal) K=%d %s", _k, msg),
+                    ultra_wide=bool(p.get("ultra_wide", False)),
+                    config=cfg,
+                    skip_polish=(k < target_num_knots),
+                )
+                
+                current_x0 = result.x
+
+            logger.info(
+                "GLOBAL_OPT(PGlobal) complete success=%s best_rmse=%s iterations=%s evals=%s",
+                getattr(result, "success", None),
+                float(np.sqrt(max(float(getattr(result, "fun", float("inf"))), 0.0))) if result else float("inf"),
+                getattr(result, "nit", None) if result else 0,
+                getattr(result, "nfev", None) if result else 0,
+            )
+            
+            # Emit final progress 100% just in case
+            if result:
+                self.progress.emit({
+                    "progress_pct": 100,
+                    "current_rmse": float(np.sqrt(max(float(getattr(result, "fun", float("inf"))), 0.0))),
+                    "best_rmse": float(np.sqrt(max(float(getattr(result, "fun", float("inf"))), 0.0))),
+                    "iteration": getattr(result, "nit", 0),
+                    "max_iteration": int(p.get("maxiter", DEFAULT_MAXITER)),
+                    "best_x": result.x,
+                    "message": "Optimization Complete",
+                    "current_knots": target_num_knots
+                })
+            
+        except Exception as e:
+            import traceback
+            logging.getLogger("CERTUS.METAL.SINGLE").error("OptimizationWorker exception: %s\n%s", e, traceback.format_exc())
+            if hasattr(self, "error"):
+                self.error.emit(str(e))
+        finally:
+            if 'result' in locals():
+                self.finished.emit({"result": result, "params": p})
+            else:
+                self.finished.emit({})
+
+
+class BeamAnalysisWorker(QObject):
+    """
+
+    Beam analysis worker for Single Metal
+
+    Scan eM (Thickness) around optimum to check solution uniqueness/valley shape.
+
+    Bi-directional scan from optimum.
+
+    """
+
+    finished = pyqtSignal(dict)
+
+    progress = pyqtSignal(int, int, float)  # step, total, best_mse
+
+    error = pyqtSignal(str)
+
+    def __init__(self, params, optimal_solution, optimal_mse, step_nm=0.5, mse_tolerance=0.1):
+
+        super().__init__()
+
+        self.params = params
+
+        self.optimal_solution = optimal_solution
+
+        self.optimal_mse = optimal_mse
+
+        self.step_nm = step_nm
+
+        self.mse_tolerance = mse_tolerance
+
+        self.is_running = True
+
+    @pyqtSlot()
+    def run(self):
+
+        try:
+            num_knots = self.params["num_knots"]
+
+            l_array = self.params["target_lambda"]
+
+            r_tgt_array = self.params["target_r"]
+
+            min_knot_dist = self.params["min_knot_dist"]
+
+            substrate_id = self.params.get("substrate_id", 0)
+
+            # Global optimal solution
+
+            # x = [eM, n_knots, k_knots, lambda_internes]
+
+            eM_optimal = self.optimal_solution[0]
+
+            offset = 1
+
+            n_knots_optimal = self.optimal_solution[offset : offset + num_knots]
+
+            k_knots_optimal = self.optimal_solution[offset + num_knots : offset + 2 * num_knots]
+
+            lambda_internes_optimal = self.optimal_solution[offset + 2 * num_knots :]
+
+            # Initial x0 (without eM): only n/k vary in beam scan.
+
+            lambda_internes_fixed = np.asarray(lambda_internes_optimal, dtype=np.float64)
+
+            x0_optimal_reduced = np.concatenate((n_knots_optimal, k_knots_optimal))
+
+            # Scan Range
+
+            eM_min_scan = max(1.0, eM_optimal - 20.0)
+
+            eM_max_scan = eM_optimal + 20.0
+
+            eM_range_up = np.arange(eM_optimal + self.step_nm, eM_max_scan + 1e-6, self.step_nm)
+
+            eM_range_down = np.arange(eM_optimal - self.step_nm, eM_min_scan - 1e-6, -self.step_nm)
+
+            total_steps = 1 + len(eM_range_up) + len(eM_range_down)
+
+            # Bounds (without eM): keep only n/k bounds (lambda knots fixed).
+
+            bounds = _build_single_bounds(self.params, l_array=None, include_eM=False)
+
+            l_min_val, l_max_val = l_array.min(), l_array.max()
+
+            # Precompute values for objective function (avoid recalculationation in hot loop)
+
+            nSub_real = get_n_substrate_array_by_id(substrate_id, l_array)
+
+            precomputed = {
+                "min_lambda": l_min_val,
+                "max_lambda": l_max_val,
+                "nSub_complex_array": nSub_real.astype(np.complex128),
+                "eM_buffer": np.empty(1, dtype=np.float64),
+                "knot_l_buffer": np.empty(num_knots, dtype=np.float64),
+                "p_spline_buffer": np.empty(2 * num_knots, dtype=np.float64),
+            }
+
+            # Smart MSE threshold
+
+            mse_threshold = max(self.optimal_mse * 1.5 + 1e-5, 5e-5)
+
+            all_solutions = []
+
+            # 1. Add Optimal
+
+            # Recalculate full spectra for storage
+
+            plot_lambda = np.linspace(l_min_val, l_max_val, 300)
+
+            knot_l_opt = np.concatenate(([l_min_val], np.sort(lambda_internes_optimal), [l_max_val]))
+
+            p_spline_nk_opt = np.concatenate((n_knots_optimal, k_knots_optimal))
+
+            try:
+                n_calc_opt, k_calc_opt = get_nk_from_spline(p_spline_nk_opt, knot_l_opt, plot_lambda)
+
+            except NUMERICAL_FAULT_EXCEPTIONS as e:
+                logging.warning(f"Optimal spline reconstruction failed: {e}")
+
+                # Fallback to zeros to avoid crash
+
+                n_calc_opt = np.zeros_like(plot_lambda)
+
+                k_calc_opt = np.zeros_like(plot_lambda)
+
+            all_solutions.append(
+                {
+                    "mse": self.optimal_mse,
+                    "n": n_calc_opt,
+                    "k": k_calc_opt,
+                    "eM": eM_optimal,
+                    "params": self.optimal_solution.copy(),
+                }
+            )
+
+            processed_steps = 1
+
+            def process_scan_range(eM_list, start_x0):
+
+                nonlocal processed_steps
+
+                current_x0 = start_x0.copy()
+
+                for eM_test in eM_list:
+                    if not self.is_running:
+                        return
+
+                    def obj_fun(x, eM_test=eM_test):
+
+                        return objective_function_fixed_eM(
+                            x,
+                            eM_test,
+                            num_knots,
+                            l_array,
+                            r_tgt_array,
+                            min_knot_dist,
+                            precomputed,
+                            lambda_internes_fixed=lambda_internes_fixed,
+                        )
+
+                    def grad_fun(x, eM_test=eM_test):
+
+                        return gradient_function_fixed_eM(
+                            x,
+                            eM_test,
+                            num_knots,
+                            l_array,
+                            r_tgt_array,
+                            min_knot_dist,
+                            precomputed,
+                            lambda_internes_fixed=lambda_internes_fixed,
+                        )
+
+                    try:
+                        # Use analytic-gradient L-BFGS-B on spline parameters
+
+                        res = scipy.optimize.minimize(
+                            obj_fun,
+                            current_x0,
+                            method="L-BFGS-B",
+                            bounds=bounds,
+                            jac=grad_fun,
+                            options={"ftol": 1e-9, "gtol": 1e-9, "maxiter": 2000},
+                        )
+
+                        mse = res.fun
+
+                        if np.isfinite(mse) and mse <= mse_threshold * 2.0:
+                            x_opt = res.x
+
+                            # Reconstruct
+
+                            n_k_v = x_opt[0:num_knots]
+
+                            k_k_v = x_opt[num_knots : 2 * num_knots]
+
+                            knot_l = np.concatenate(([l_min_val], np.sort(lambda_internes_fixed), [l_max_val]))
+
+                            p_dspline = np.concatenate((n_k_v, k_k_v))
+
+                            try:
+                                n_c, k_c = get_nk_from_spline(p_dspline, knot_l, plot_lambda)
+
+                                if mse <= mse_threshold:
+                                    all_solutions.append(
+                                        {
+                                            "mse": mse,
+                                            "n": n_c,
+                                            "k": k_c,
+                                            "eM": eM_test,
+                                            "params": np.concatenate(([eM_test], x_opt, lambda_internes_fixed)),
+                                        }
+                                    )
+
+                            except (
+                                ValueError,
+                                TypeError,
+                                RuntimeError,
+                                AttributeError,
+                                KeyError,
+                                IndexError,
+                                FileNotFoundError,
+                            ):
+                                # Skip this solution if reconstruction fails
+
+                                pass
+
+                            current_x0 = x_opt.copy()
+
+                        else:
+                            # Reset to optimal if lost
+
+                            current_x0 = x0_optimal_reduced.copy()
+
+                    except (
+                        ValueError,
+                        TypeError,
+                        RuntimeError,
+                        AttributeError,
+                        KeyError,
+                        IndexError,
+                        FileNotFoundError,
+                    ) as e:
+                        logging.error(f"Beam error at {eM_test}: {e}", exc_info=True)
+
+                    processed_steps += 1
+
+                    self.progress.emit(processed_steps, total_steps, self.optimal_mse)
+
+            process_scan_range(eM_range_up, x0_optimal_reduced)
+
+            process_scan_range(eM_range_down, x0_optimal_reduced)
+
+            all_solutions.sort(key=lambda s: s["eM"])
+
+            # Compute Statistics
+
+            if not all_solutions:
+                all_solutions.append({"mse": self.optimal_mse, "eM": eM_optimal})
+
+            eM_vals = np.array([s["eM"] for s in all_solutions])
+
+            n_stack = np.vstack([s["n"] for s in all_solutions])
+
+            k_stack = np.vstack([s["k"] for s in all_solutions])
+
+            stats = {
+                "eM_mean": np.mean(eM_vals),
+                "eM_std": np.std(eM_vals),
+                "eM_min": np.min(eM_vals),
+                "eM_max": np.max(eM_vals),
+                "n_mean": np.mean(n_stack, axis=0),
+                "n_std": np.std(n_stack, axis=0),
+                "n_min": np.min(n_stack, axis=0),
+                "n_max": np.max(n_stack, axis=0),
+                "k_mean": np.mean(k_stack, axis=0),
+                "k_std": np.std(k_stack, axis=0),
+                "k_min": np.min(k_stack, axis=0),
+                "k_max": np.max(k_stack, axis=0),
+                "lambda_axis": plot_lambda,
+                "count": len(all_solutions),
+                "threshold": mse_threshold,
+                "best_mse": self.optimal_mse,
+                "all_solutions": all_solutions,
+            }
+
+            self.finished.emit(stats)
+
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
+            self.error.emit(str(e))
+
+            logging.error(f"Beam Worker Crash: {e}", exc_info=True)
+
+    def stop(self) -> None:
+
+        self.is_running = False
+
+
+# =============================================================================
+
+
+# MAIN WINDOW
+
+
+# =============================================================================
+
+
+class CertusMetalSingleApp(MetalBaseApp):
+    sig_numba_ready = pyqtSignal()
+    sig_numba_error = pyqtSignal()
+    """Main CERTUS-METAL Application"""
+
+    # MetalBaseApp handles APP_NAME/TITLE via __init__ or class vars if we set them,
+
+    # but MetalBaseApp __init__ takes args.
+
+    MODULE_ID = "CERTUS_METAL_SINGLE"
+
+    def __init__(self) -> None:
+
+        # Pass title to base
+
+        super().__init__(
+            app_name="CERTUS-METAL-SINGLE",
+            app_title="Metal Single Layer (Transparent substrate)",
+        )
+        from certus.core.certus_core import setup_gui_logger
+        setup_gui_logger(self.log_queue, "CERTUS")
+
+        # METAL-specific state (additions to base)
+
+        self.worker = None
+
+        self.optimization_thread = None
+
+        self.beam_worker = None
+
+        self.beam_thread = None
+
+        self._last_worker_params = None  # Cache for thread-safe access
+        self._auto_batch_mode = False
+        self._auto_batch_config = None
+        self._auto_batch_started = False
+        self._auto_batch_quit = False
+
+    def _setup_parameter_grid(self, layout) -> None:
+        """Standard Metal Single Params"""
+
+        # Row 0: Input Data (Base)
+
+        layout.addWidget(self._create_input_group(), 0, 0, 1, 2)
+
+        # Row 1: Physical (left) + Material (right)
+
+        layout.addWidget(self._create_physical_params_group(), 1, 0)
+
+        layout.addWidget(self._create_material_params_group(), 1, 1)
+
+        # Row 2: Output + Live
+
+        layout.addWidget(self._create_output_group(), 2, 0)
+
+        layout.addWidget(self._create_live_params_group(), 2, 1)
+
+        layout.setColumnStretch(0, 1)
+
+        layout.setColumnStretch(1, 1)
+
+    def _setup_plots(self) -> None:
+        """Standard Metal Plots"""
+
+        self.reflectance_plot = CertusScientificPlot(
+            self,
+            "Reflectance Comparison",
+            "Reflectance",
+            "Wavelength (nm)",
+        )
+
+        self.reflectance_plot.addLegend(offset=(-10, 10))
+
+        self.reflectance_plot.showGrid(x=True, y=True)
+
+        self.target_curve = self.reflectance_plot.plot(
+            [],
+            [],
+            pen=None,
+            symbol="o",
+            symbolSize=3,
+            symbolPen=None,
+            symbolBrush="k",
+            name="Target",
+        )
+
+        self.calc_r_curve = self.reflectance_plot.plot(
+            [], [], pen=pg.mkPen(CertusTheme.CHART_PRIMARY, width=2), name="Calc R"
+        )
+
+        self.calc_t_curve = self.reflectance_plot.plot(
+            [], [], pen=pg.mkPen(CertusTheme.SUCCESS, width=2), name="Calc T"
+        )
+
+        self.calc_rb_curve = self.reflectance_plot.plot(
+            [], [], pen=pg.mkPen(CertusTheme.WARNING, width=2), name="Calc Rb"
+        )
+
+        # Synthesis tab first: METAL exposed its figures only through the plot
+        # titles and the status bar. Shared cockpit widget, same as DESIGN/INDEX.
+        self.kpi_banner = CertusKpiBanner(
+            [
+                ("rmse", "FINAL RMSE"),
+                ("iterations", "ITERATIONS"),
+                ("status", "FIT STATUS"),
+            ]
+        )
+        self.tabs.addTab(
+            build_synthesis_tab(
+                self.kpi_banner,
+                "Optical-constants synthesis — refreshed when an optimization completes.",
+            ),
+            "✦ Synthesis",
+        )
+
+        self.tabs.addTab(self.reflectance_plot, "Reflectance")
+
+        setup_common_metal_plots(self)
+
+        self.mse_plot = CertusScientificPlot(
+            self,
+            "Optimization Convergence",
+            "Best RMSE",
+            "Iteration",
+        )
+        self.mse_plot.plotItem.setLabel("left", "Best RMSE", units="")
+        self.mse_plot.showGrid(x=True, y=True)
+        self.mse_plot.setLogMode(y=True)
+        self.mse_curve = self.mse_plot.plot([], [], pen=pg.mkPen(CertusTheme.CHART_DANGER, width=2), name="Best RMSE")
+        self.tabs.addTab(self.mse_plot, "Convergence")
+
+        self.perf_tab = QWidget()
+        perf_layout = QGridLayout(self.perf_tab)
+        perf_layout.setSpacing(16)
+        perf_layout.setContentsMargins(22, 22, 22, 22)
+
+        cards = [
+            FlashyCard("Flexible n(λ), k(λ) Model", "Spline interpolation for real metals\nCaptures fine dispersion variations", icon="🚀"),
+            FlashyCard("Accelerated Numba TMM", "Vectorized thin film computation\nResponse time close to native", icon="⚡"),
+            FlashyCard("Dual-Axis n & k Tracking", "Simultaneous reading of index/extinction\nClear analysis of material physics", icon="📈"),
+            FlashyCard("Stable Global Optimization", "Differential Evolution + local polish\nFewer local minima traps", icon="🔮"),
+        ]
+        for idx, card in enumerate(cards):
+            perf_layout.addWidget(card, idx // 2, idx % 2)
+        # "About" marketing content moved out of scientific plot tabs (Option A)
+
+    def _warmup_numba_thread_runner(self) -> None:
+        try:
+            # Warmup specific to Single Metal (Spline + Incoherent substrate)
+            wls = np.array([500.0, 600.0], dtype=np.float64)
+
+            # 1. Warmup Spline
+            p_spline = np.array([1.5, 1.5, 0.5, 0.5], dtype=np.float64)
+            knot_l = np.array([400.0, 800.0], dtype=np.float64)
+            get_nk_from_spline(p_spline, knot_l, wls)
+
+            # 2. Warmup TMM (Incoherent)
+            # Create dummy arrays
+            eM = np.array([20.0], dtype=np.float64)
+            nM_complex_2d = np.array([[1.5 - 0.5j], [1.5 - 0.5j]], dtype=np.complex128)
+            nSub = np.array([1.45 + 0j, 1.45 + 0j], dtype=np.complex128)
+            calculate_RTRback_incoherent_vectorized(eM, nM_complex_2d, nSub, wls)
+
+            try:
+                self.sig_numba_ready.emit()
+            except (RuntimeError, AttributeError):
+                return
+
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
+            self.logger.error(f"✗ Numba warmup failed: {e}", exc_info=True)
+            try:
+                self.sig_numba_error.emit()
+            except (RuntimeError, AttributeError):
+                return
+
+    @pyqtSlot()
+    def _on_numba_ready_ui(self) -> None:
+        if hasattr(self, "status_label"):
+            self.status_label.setText("Ready (JIT Compiled)")
+        self._on_numba_ready()  # Mark as ready
+        try:
+            show_toast(self, "System ready. JIT Warmup complete.", "success")
+        except Exception:
+            pass
+
+    @pyqtSlot()
+    def _on_numba_error_ui(self) -> None:
+        if hasattr(self, "status_label"):
+            self.status_label.setText("JIT Init Error")
+
+    def on_file_loaded(self, data: "np.ndarray") -> None:
+        """Process loaded data (Hook from MetalBaseApp)"""
+
+        try:
+            self.target_data = build_metal_target_data(data, include_t=True, include_rback=True)
+
+            if hasattr(self, "target_curve"):
+                self.target_curve.setData(self.target_data["lambda"], self.target_data["R"])
+
+            self.update_lambda_filters()
+
+            if hasattr(self, "reflectance_plot"):
+                self.reflectance_plot.autoRange()
+
+            self.logger.info(f"Loaded Data: {data.shape[1]} columns. Points: {len(data)}")
+
+        except (ValueError, NUMERICAL_FAULT_EXCEPTIONS) as e:
+            self.logger.error(f"Error parsing data: {e}")
+
+            QMessageBox.warning(self, "Data Error", f"Could not parse data columns: {e}")
+
+    def _create_physical_params_group(self) -> CertusCard:
+        """Creates compact physical params group with Info Icons"""
+
+        c = CertusCard("Physical Parameters")
+
+        l = c.body
+
+        l.setSpacing(4)
+
+        l.setContentsMargins(8, 12, 8, 8)
+
+        self.widgets["eM_min"] = QLineEdit(str(DEFAULT_EM_MIN))
+
+        self.widgets["eM_min"].setFixedHeight(24)
+
+        self.widgets["eM_max"] = QLineEdit(str(DEFAULT_EM_MAX))
+
+        self.widgets["eM_max"].setFixedHeight(24)
+
+        l.addLayout(
+            self._create_labeled_input(
+                "eM min:",
+                self.widgets["eM_min"],
+                "Minimum expected thickness of the metal layer (nm).",
+            )
+        )
+
+        l.addLayout(
+            self._create_labeled_input(
+                "eM max:",
+                self.widgets["eM_max"],
+                "Maximum expected thickness of the metal layer (nm).",
+            )
+        )
+
+        return c
+
+    def _create_material_params_group(self) -> CertusCard:
+        """Creates compact material params group with Info Icons"""
+
+        c = CertusCard("Material Parameters")
+
+        l = c.body
+
+        l.setSpacing(4)
+
+        l.setContentsMargins(8, 12, 8, 8)
+
+        # substrate Selector
+
+        from PyQt6.QtWidgets import QComboBox
+
+        self.combo_substrate = QComboBox()
+
+        self.combo_substrate.setToolTip("Select the transparent substrate material.")
+
+        self.combo_substrate.addItems(list(SUBSTRATE_CHOICES))
+
+        self.combo_substrate.setFixedHeight(24)
+
+        l.addLayout(self._create_labeled_input("substrate:", self.combo_substrate, "substrate Material (Transparent)."))
+
+        self.substrate_info_label = QLabel("")
+
+
+        # Metal Inputs
+
+        self.widgets["num_knots"] = QLineEdit(str(DEFAULT_NUM_KNOTS))
+
+        self.widgets["num_knots"].setFixedHeight(24)
+
+        self.widgets["nk_min"] = QLineEdit(str(DEFAULT_NK_MIN))
+
+        self.widgets["nk_min"].setFixedHeight(24)
+
+        self.widgets["nk_max"] = QLineEdit(str(DEFAULT_NK_MAX))
+
+        self.widgets["nk_max"].setFixedHeight(24)
+
+        self.widgets["min_knot_dist"] = QLineEdit(str(DEFAULT_MIN_KNOT_DISTANCE))
+
+        self.widgets["min_knot_dist"].setFixedHeight(24)
+
+        l.addSpacing(10)
+
+        l.addLayout(
+            self._create_labeled_input(
+                "Knots:",
+                self.widgets["num_knots"],
+                "Number of control points for B-Spline.",
+            )
+        )
+
+        l.addLayout(self._create_labeled_input("n,k min:", self.widgets["nk_min"], "Lower bound for n and k."))
+
+        l.addLayout(self._create_labeled_input("n,k max:", self.widgets["nk_max"], "Upper bound for n and k."))
+
+        l.addLayout(
+            self._create_labeled_input(
+                "Knot Dist:",
+                self.widgets["min_knot_dist"],
+                "Minimum spectral distance between knots (nm).",
+            )
+        )
+
+        return c
+
+    def load_target_file(self, filepath=None):
+        """Loads target file (robust CSV/Excel)"""
+
+        filepath = self._resolve_target_filepath(filepath)
+        if not filepath:
+            return
+
+        try:
+            parsed = self._parse_and_validate_target_data(filepath)
+            if not parsed:
+                return
+
+            res, wls, R_val, T_val, Rb_val = parsed
+
+            self._show_target_load_summary(filepath, res, wls, R_val, T_val, Rb_val)
+            self._plot_target_data(wls, R_val, T_val, Rb_val)
+
+        except FileNotFoundError:
+            show_error(self, "file_not_found", path=filepath)
+            self.target_data = None
+        except PermissionError:
+            show_error(self, "file_permission", path=filepath)
+            self.target_data = None
+        except pd.errors.EmptyDataError:
+            show_error(self, "file_empty", path=filepath)
+            self.target_data = None
+        except ValueError as e:
+            title, details, suggestion = get_error_message("file_format", path=filepath)
+            QMessageBox.critical(self, title, f"{details}\n\nErreur: {e!s}\n\n💡 {suggestion}")
+            self.target_data = None
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
+            show_error(self, "generic_error", details=str(e))
+            self.target_data = None
+
+    def _resolve_target_filepath(self, filepath):
+        if filepath is None or isinstance(filepath, bool):
+            filepath = None
+            target_guess = getattr(self, "_auto_batch_config", None)
+            if getattr(self, "_auto_batch_mode", False) and target_guess:
+                filepath = self._resolve_config_target_file(target_guess)
+            if filepath is None:
+                filepath, _ = open_data_file_and_read(
+                    self,
+                    "Open Reflectance File",
+                    DATA_FILES_FILTER_EXTENDED,
+                )
+                if filepath is None:
+                    return None
+
+        filepath = str(Path(filepath).expanduser().resolve())
+        if not Path(filepath).exists():
+            msg = f"Target data file does not exist: {filepath}"
+            self.logger.error(msg)
+            if os.environ.get("QT_QPA_PLATFORM", "").lower() != "offscreen":
+                QMessageBox.warning(self, "Data Error", msg)
+            return None
+        return filepath
+
+    def _parse_and_validate_target_data(self, filepath):
+        from certus.utils.certus_data import load_spectrum_columns
+
+        roles = {0: "lambda", 1: "R", 2: "T", 3: "Rback"}
+
+        res = load_spectrum_columns(
+            filepath, max_columns=4, normalise_percent=True, sort_ascending=True, column_roles=roles
+        )
+
+        self.target_data = build_metal_target_data(
+            np.column_stack(
+                [
+                    res.x,
+                    res.y_columns.get("R", np.full_like(res.x, np.nan)),
+                    res.y_columns.get("T", np.full_like(res.x, np.nan)),
+                    res.y_columns.get("Rback", np.full_like(res.x, np.nan)),
+                ]
+            ),
+            include_t=True,
+            include_rback=True,
+        )
+
+        wls = self.target_data["lambda"]
+        R_val = self.target_data["R"]
+        T_val = self.target_data["T"]
+        Rb_val = self.target_data["Rback"]
+
+        if len(wls) == 0 or not np.any(np.isfinite(wls)) or not np.any(np.isfinite(R_val)):
+            msg = f"Invalid target data in {filepath}: no finite wavelength/R values."
+            self.logger.error(msg)
+            self.target_data = None
+            if os.environ.get("QT_QPA_PLATFORM", "").lower() != "offscreen":
+                QMessageBox.warning(self, "Data Error", msg)
+            return None
+
+        self.logger.info(
+            "AUTO_BATCH target loaded path=%s rows=%d finite_R=%d finite_T=%d finite_Rback=%d",
+            filepath,
+            int(len(wls)),
+            int(np.count_nonzero(np.isfinite(R_val))),
+            int(np.count_nonzero(np.isfinite(T_val))),
+            int(np.count_nonzero(np.isfinite(Rb_val))),
+        )
+
+        if len(res.y_columns) < 3:
+            msg = []
+
+            if "T" not in res.y_columns:
+                msg.append("Transmission (T)")
+
+            if "Rback" not in res.y_columns:
+                msg.append("Back-Reflectance (Rback)")
+
+            warn = (
+                f"Some columns are missing: {', '.join(msg)}. "
+                "Optimization will proceed using available data only."
+            )
+            self.logger.warning(warn)
+            if os.environ.get("QT_QPA_PLATFORM", "").lower() != "offscreen":
+                QMessageBox.warning(
+                    self,
+                    "Data Warning",
+                    f"Some columns are missing:\n{', '.join(msg)}\n\n"
+                    "Optimization will proceed using available data only.",
+                )
+
+        self._last_target_file = filepath  # Save path for JSON
+        self.lbl_file.setText(Path(filepath).name)
+
+        return res, wls, R_val, T_val, Rb_val
+
+    def _show_target_load_summary(self, filepath, res, wls, R_val, T_val, Rb_val):
+        if os.environ.get("QT_QPA_PLATFORM", "").lower() != "offscreen":
+            n_rows = res.n_rows
+            lmin = float(np.nanmin(wls)) if n_rows else float("nan")
+            lmax = float(np.nanmax(wls)) if n_rows else float("nan")
+
+            summary = build_summary_plain_text(
+                "CERTUS METAL SINGLE - Load Summary",
+                [
+                    f"File: {Path(filepath).resolve()}",
+                    "",
+                    "General",
+                    (f"Rows: {n_rows}", n_rows <= 0),
+                    "",
+                    "Data",
+                    (
+                        f"Wavelength range: [{lmin:.1f}, {lmax:.1f}] nm",
+                        not (np.isfinite(lmin) and np.isfinite(lmax) and lmax > lmin),
+                    ),
+                    ("Reflectance column (R): yes", bool(np.all(np.isnan(R_val)))),
+                    (f"Transmission column (T): {'yes' if not np.all(np.isnan(T_val)) else 'no'}", False),
+                    (f"Back-reflectance column (Rback): {'yes' if not np.all(np.isnan(Rb_val)) else 'no'}", False),
+                    "",
+                    "Compatibility checks",
+                    (
+                        "Potential unit conversion applied (% -> fraction): "
+                        f"{'yes' if res.normalised_to_fraction else 'no'}",
+                        False,
+                    ),
+                ],
+            )
+
+            try:
+                show_load_summary_dialog(self, "METAL SINGLE Load Summary", summary)
+            except Exception as exc:
+                self.logger.warning("Load summary dialog failed; target data remains loaded: %s", exc, exc_info=True)
+        else:
+            self.logger.info("AUTO_BATCH skipping load summary dialog in offscreen mode")
+
+    def _plot_target_data(self, wls, R_val, T_val, Rb_val):
+        self.reflectance_plot.clear()
+
+        if not np.all(np.isnan(R_val)):
+            self.target_r_curve = self.reflectance_plot.plot(
+                wls,
+                R_val,
+                pen=None,
+                symbol="o",
+                symbolSize=5,
+                symbolBrush=CertusTheme.CHART_PRIMARY,
+                name="Target R",
+            )
+
+        if not np.all(np.isnan(T_val)):
+            self.target_t_curve = self.reflectance_plot.plot(
+                wls,
+                T_val,
+                pen=None,
+                symbol="t",
+                symbolSize=5,
+                symbolBrush=CertusTheme.CHART_SUCCESS,
+                name="Target T",
+            )
+
+        if not np.all(np.isnan(Rb_val)):
+            self.target_rb_curve = self.reflectance_plot.plot(
+                wls,
+                Rb_val,
+                pen=None,
+                symbol="s",
+                symbolSize=5,
+                symbolBrush=CertusTheme.CHART_WARNING,
+                name="Target Rback",
+            )
+
+        self.calc_r_curve = self.reflectance_plot.plot(
+            [], [], pen=pg.mkPen(CertusTheme.CHART_PRIMARY, width=2), name="Calc R"
+        )
+        self.calc_t_curve = self.reflectance_plot.plot(
+            [], [], pen=pg.mkPen(CertusTheme.CHART_SUCCESS, width=2), name="Calc T"
+        )
+        self.calc_rb_curve = self.reflectance_plot.plot(
+            [], [], pen=pg.mkPen(CertusTheme.CHART_WARNING, width=2), name="Calc Rback"
+        )
+
+        self.reflectance_plot.addLegend()
+        self.update_lambda_filters()
+        self.reflectance_plot.autoRange()
+
+    def _build_single_optimization_params(self) -> dict:
+        """Build validated optimization parameters for the SINGLE workflow."""
+
+        params: dict[str, float | int | str | np.ndarray] = {}
+
+        raw_knots = int(self.widgets["num_knots"].text())
+        if raw_knots > 5:
+            self.logger.warning(f"Requested {raw_knots} knots. Clamping to 5 (System Limit).")
+            raw_knots = 5
+            self.widgets["num_knots"].setText("5")
+
+        params["num_knots"] = raw_knots
+        params["eM_min"] = float(self.widgets["eM_min"].text())
+
+        sub_text = self.combo_substrate.currentText()
+        params["substrate_id"] = _resolve_single_substrate_id(sub_text)
+        params["substrate_label"] = canonicalize_substrate_label(sub_text)
+        return params
+
+    def _validate_single_optimization_params(self, params: dict) -> bool:
+        """Validate SINGLE-specific optimization guardrails."""
+
+        e_min = params["eM_min"]
+        e_max = params["eM_max"]
+        e_mean = (e_min + e_max) / 2.0
+        e_range = e_max - e_min
+        if e_range > (0.5 * e_mean):
+            ret = QMessageBox.warning(
+                self,
+                "Wide Thickness Range",
+                f"The thickness range ({e_min}-{e_max} nm) is very wide.\n"
+                f"Effective Range: {e_mean:.1f} +/- {e_range / 2:.1f} nm (+/-{e_range / 2 / e_mean * 100:.0f}%)\n\n"
+                "For reliable convergence, the nominal thickness should be known to +/-20%.\n"
+                "Do you want to proceed anyway?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            )
+            if ret == QMessageBox.StandardButton.No:
+                return False
+
+        target_t_filtered = params.get("target_t", np.array([]))
+        if len(target_t_filtered) > 0:
+            t_min = np.nanmin(target_t_filtered)
+            t_mean = np.nanmean(target_t_filtered)
+            if t_min < 0.01:
+                QMessageBox.warning(
+                    self,
+                    "Transmission Low",
+                    f"Safety Check Failed!\nMinimum Transmission is too low ({t_min * 100:.2f}% < 1%).\n\n"
+                    "Optimization requires adequate transmission signal.",
+                )
+                return False
+            if t_mean < 0.05:
+                QMessageBox.warning(
+                    self,
+                    "Transmission Low",
+                    f"Safety Check Failed!\nMean Transmission is too low ({t_mean * 100:.2f}% < 5%).\n\n"
+                    "Optimization requires adequate transmission signal.",
+                )
+                return False
+
+        return True
+
+    def start_optimization(self) -> None:
+        """Starts optimization using the shared _metal_start_optimization helper."""
+
+        def build_params(params):
+            params.update(self._build_single_optimization_params())
+
+        def before_run(params):
+            if not self._validate_single_optimization_params(params):
+                return False
+
+            sub_text = self.combo_substrate.currentText()
+            sub_label = canonicalize_substrate_label(sub_text)
+            for line in build_metal_startup_log_lines(self, variant_label="METAL SINGLE", params=params):
+                self.logger.info(line)
+            self.logger.info(f"substrate: {sub_text} | canonical: {sub_label}")
+            return True
+
+        def build_bounds(params, target_lambda):
+            return _build_single_bounds(params, l_array=target_lambda, include_eM=True)
+
+        self._metal_start_optimization(
+            worker_class=OptimizationWorker,
+            build_bounds_fn=build_bounds,
+            build_params_fn=build_params,
+            before_run_fn=before_run,
+        )
+
+    def _on_optim_progress(self, data: dict) -> None:
+        """Updates progress widget with optimization progress"""
+
+        data = normalize_metal_progress_payload(data)
+        iteration = int(data.get("iteration", 0))
+        mode = str(data.get("mode", "global")).lower()
+        progress_pct = int(data.get("progress_pct", min(100, int(100 * iteration / max(1, getattr(self, "_optim_max_iter", DEFAULT_MAXITER))))))
+        mse = float(data.get("mse", 0))
+        rmse = float(data.get("current_rmse", np.sqrt(mse) if mse > 0 else 0))
+        best_rmse = float(data.get("best_rmse", np.sqrt(float(data.get("best_cost", mse))) if float(data.get("best_cost", mse)) > 0 else 0))
+
+        xk = data.get("params", None)
+        eM = xk[0] if xk is not None else 0.0
+        best_cost = float(data.get("best_cost", mse))
+        evals = int(data.get("evaluation_count", self.stat_counters.get("SP", 0)))
+        elapsed_s = float(data.get("elapsed_s", 0.0))
+        max_iter = int(data.get("max_iteration", getattr(self, "_optim_max_iter", DEFAULT_MAXITER)))
+
+        # UI update only (console logging is handled by pglobal_adapter)
+
+        self._auto_batch_last_progress = {
+            "iteration": iteration,
+            "mse": mse,
+            "current_rmse": rmse,
+            "best_rmse": best_rmse,
+            "best_cost": best_cost,
+            "evaluation_count": evals,
+            "elapsed_s": elapsed_s,
+            "mode": mode,
+            "max_iteration": max_iter,
+            "params": xk,
+        }
+        if getattr(self, "_auto_batch_mode", False):
+            if best_rmse > 0 and np.isfinite(best_rmse):
+                current = getattr(self, "_auto_batch_best_rmse", None)
+                self._auto_batch_best_rmse = best_rmse if current is None else min(float(current), float(best_rmse))
+            if best_cost > 0 and np.isfinite(best_cost):
+                current_mse = getattr(self, "_auto_batch_best_mse", None)
+                self._auto_batch_best_mse = best_cost if current_mse is None else min(float(current_mse), float(best_cost))
+
+        self.widgets["live_eM"].setText(f"{eM:.2f}")
+        self.widgets["live_MSE"].setText(f"{rmse:.6e}")
+        self.widgets["live_iter"].setText(str(iteration))
+
+        self.progress_widget.update(
+            iteration=iteration,
+            max_iter=max_iter,
+            evals=evals,
+            phase="PGLOBAL" if mode == "global" else "DE",
+            extra_info=f"RMSE: {rmse:.6f} | Best RMSE: {best_rmse:.6f} | Time {int(elapsed_s)}s",
+            progress_pct=progress_pct,
+        )
+        if hasattr(self, "field_opt_status"):
+            self.field_opt_status.setText(build_metal_progress_status_text(data))
+
+    def on_optimization_finished(self, results) -> None:
+        """Handles optimization finish."""
+
+        self._uninstall_all_skeletons()
+
+        self.progress_widget.stop("Optimization complete — results ready")
+
+        # Cache iteration count before cleanup (thread-safe)
+
+        worker = getattr(self, "worker", None)
+
+        iteration_count = worker.iteration_count if worker else results.get("nit", 0)
+
+        # Reset UI state (no confirmation needed - optimization completed normally)
+
+        self.btn_run.setEnabled(True)
+
+        self.btn_stop.setEnabled(False)
+
+        self.btn_beam.setEnabled(True)
+
+        # Use cached params for plotting
+
+        if self._last_worker_params is not None:
+            result_obj = results["result"]
+            if getattr(result_obj, "x", None) is None or len(np.asarray(result_obj.x)) == 0:
+                self.logger.error("Optimization finished without a valid parameter vector; skipping final plot update.")
+            else:
+                self.update_plots(
+                    {
+                        "params": result_obj.x,
+                        "mse": result_obj.fun,
+                        "iteration": iteration_count,
+                    },
+                    final=True,
+                )
+
+        banner = getattr(self, "kpi_banner", None)
+        if banner is not None:
+            try:
+                _res = results.get("result")
+                _mse = float(getattr(_res, "fun", float("nan")))
+                banner.set_value("rmse", f"{np.sqrt(max(_mse, 0.0)):.6f}", "good")
+                banner.set_value("iterations", str(iteration_count))
+                banner.set_value("status", "Optimization complete", "good")
+            except (ValueError, TypeError, AttributeError, RuntimeError):
+                logging.getLogger("CERTUS").debug("KPI refresh skipped", exc_info=True)
+
+        self.final_results = results
+
+        if getattr(self, "_auto_batch_mode", False):
+            try:
+                self._write_auto_batch_result(results, iteration_count)
+            except Exception as exc:
+                self.logger.error("AUTO_BATCH result export failed: %s", exc, exc_info=True)
+            finally:
+                try:
+                    QApplication.processEvents()
+                except Exception:
+                    pass
+
+        # Self-export (Excel + HTML) if enabled via HUB
+
+        if get_export_config():
+            QTimer.singleShot(500, self.export_results)
+
+        self.maybe_quit_after_auto_batch()
+
+    def update_plots(self, data, final=False) -> None:
+        """Updates plots with current optimization state (live during run, full on finish)."""
+
+        # Thread-safe params access via cache
+
+        p = self._last_worker_params
+
+        if p is None:
+            return
+
+        xk = data.get("params")
+
+        if xk is None:
+            return
+            
+        xk = np.asarray(xk, dtype=np.float64)
+
+        eM = xk[0]
+
+        self.widgets["live_eM"].setText(f"{eM:.2f}")
+
+        mse_val = float(data.get("mse", 0.0))
+        rmse_val = float(data.get("current_rmse", data.get("best_rmse", np.sqrt(mse_val) if mse_val >= 0 else 0.0)))
+
+        self.widgets["live_MSE"].setText(f"{rmse_val:.4e}")
+
+        if not hasattr(self, "rmse_data") or not isinstance(self.rmse_data, dict):
+            self.rmse_data = {"iterations": [], "rmse": []}
+        else:
+            self.rmse_data.setdefault("iterations", [])
+            self.rmse_data.setdefault("rmse", [])
+            self.rmse_data.pop("errors", None)
+
+        iteration = int(data.get("iteration", len(self.rmse_data["iterations"])))
+        if final and self.rmse_data["iterations"] and iteration <= self.rmse_data["iterations"][-1]:
+            iteration = self.rmse_data["iterations"][-1] + 1
+
+        self.rmse_data["iterations"].append(iteration)
+        self.rmse_data["rmse"].append(rmse_val)
+
+        self.mse_curve.setData(self.rmse_data["iterations"], self.rmse_data["rmse"])
+        self.mse_data = self.rmse_data
+
+        # Safely deduce the number of knots from the incoming parameter vector length.
+        # Vector structure for single metal: 1 (eM) + 2k (n and k) + (k - 2) (lambdas) = 3k - 1.
+        # Therefore, k = (size + 1) / 3.
+        num_knots = int(round((len(xk) + 1) / 3.0))
+        offset = 1
+
+        n_knots = xk[offset : offset + num_knots]
+
+        k_knots = xk[offset + num_knots : offset + 2 * num_knots]
+
+        lambda_internes = np.asarray(xk[offset + 2 * num_knots :], dtype=float)
+
+        l_array = p["target_lambda"]
+
+        min_l, max_l = l_array.min(), l_array.max()
+
+        lambda_internes = lambda_internes[np.isfinite(lambda_internes)]
+        lambda_internes = np.unique(np.sort(lambda_internes))
+        num_internal_knots = max(0, num_knots - 2)
+        if lambda_internes.size < num_internal_knots:
+            if max_l <= min_l:
+                raise ValueError("Invalid wavelength interval for spline knots")
+            fallback = np.linspace(min_l, max_l, num_knots)[1:-1]
+            lambda_internes = np.unique(np.sort(np.concatenate([lambda_internes, fallback])))
+        if lambda_internes.size > num_internal_knots:
+            lambda_internes = lambda_internes[:num_internal_knots]
+
+        knot_l = np.concatenate(([min_l], lambda_internes, [max_l]))
+        knot_l = np.unique(np.sort(knot_l))
+        expected_knot_count = num_knots
+        if knot_l.size != expected_knot_count:
+            # fallback to evenly spaced knots to guarantee spline validity
+            knot_l = np.linspace(min_l, max_l, expected_knot_count)
+        if knot_l.size < 2 or not np.all(np.diff(knot_l) > 0):
+            raise ValueError("Invalid spline knot sequence: knots must be strictly increasing")
+
+        p_spline_nk = np.concatenate((n_knots, k_knots))
+        if p_spline_nk.size != 2 * knot_l.size:
+            raise ValueError(
+                f"Invalid spline coefficient state: coeff_size={p_spline_nk.size} knot_size={knot_l.size}"
+            )
+
+        plot_lambda_range = np.linspace(min_l, max_l, 200)
+
+        try:
+            n_calc, k_calc = get_nk_from_spline(p_spline_nk, knot_l, plot_lambda_range)
+        except Exception as exc:
+            self.logger.warning("Single spline plot skipped: %s", exc, exc_info=True)
+            return
+
+        # Calculate R, T, Rback for Plotting
+
+        # Need to reshape for vectorized call
+
+        nM_complex = n_calc - 1j * k_calc
+
+        nM_complex_2d = np.empty((len(plot_lambda_range), 1), dtype=np.complex128)
+
+        nM_complex_2d[:, 0] = nM_complex
+
+        nSub_real = get_n_substrate_array_by_id(p.get("substrate_id", 1), plot_lambda_range)
+
+        nSub_complex = nSub_real + 0j
+
+        try:
+            R_calc, T_calc, Rb_calc = calculate_RTRback_incoherent_vectorized(
+                np.array([eM], dtype=np.float64),
+                nM_complex_2d,
+                nSub_complex,
+                plot_lambda_range,
+            )
+            if not (np.all(np.isfinite(R_calc)) and np.all(np.isfinite(T_calc)) and np.all(np.isfinite(Rb_calc))):
+                raise ValueError("non-finite optical curves")
+        except Exception as exc:
+            self.logger.warning("Single reflectance plot skipped: %s", exc, exc_info=True)
+            return
+
+        pen_r = pg.mkPen(CertusTheme.PRIMARY, width=3 if final else 2)
+
+        pen_t = pg.mkPen(CertusTheme.SUCCESS, width=3 if final else 2)
+
+        pen_rb = pg.mkPen(CertusTheme.WARNING, width=3 if final else 2)
+
+        self.calc_r_curve.setData(plot_lambda_range, R_calc, pen=pen_r)
+
+        self.calc_t_curve.setData(plot_lambda_range, T_calc, pen=pen_t)
+
+        self.calc_rb_curve.setData(plot_lambda_range, Rb_calc, pen=pen_rb)
+
+        self.n_curve.setData(plot_lambda_range, n_calc)
+
+        self.k_curve.setData(plot_lambda_range, k_calc)
+
+        try:
+            if self.p1 is not None and self.p2 is not None and self.p1.vb is not None:
+                scene_rect = self.p1.vb.sceneBoundingRect()
+                if scene_rect.isValid() and scene_rect.width() > 0 and scene_rect.height() > 0:
+                    self.p2.setGeometry(scene_rect)
+
+        except NUMERICAL_FAULT_EXCEPTIONS:
+            pass
+
+        # Like Metal Bilayer: n/k zoom live (otherwise ViewBox remains on empty range -> invisible curves).
+
+        if not final and int(data.get("iteration", 0)) % 3 == 0:
+            self.p1.vb.autoRange()
+
+            self.p2.autoRange()
+
+        if final:
+            self.p1.vb.autoRange()
+
+            self.p2.autoRange()
+
+            try:
+                src_name = ""
+
+                if hasattr(self, "_last_target_file") and self._last_target_file:
+                    src_name = " - " + Path(self._last_target_file).stem
+
+                self.reflectance_plot.plotItem.setTitle(
+                    f"Reflectance Comparison{src_name}", color=CertusTheme.CHART_PRIMARY, size="12pt"
+                )
+
+                self.clues_plot.plotItem.setTitle(
+                    f"Optimized Metal Optical Constants (n, k){src_name}", color=CertusTheme.CHART_PRIMARY, size="12pt"
+                )
+
+            except NUMERICAL_FAULT_EXCEPTIONS :
+                pass
+
+            # Export triggered only from on_optimization_finished
+
+    def _get_config_dict(self) -> dict:
+        """Returns JSON struct for config"""
+
+        return {
+            "version": "1.0.0",
+            "excel_filename": self.widgets["excel_filename"].text(),
+            "physical_params": {
+                "eM_min": self.widgets["eM_min"].text(),
+                "eM_max": self.widgets["eM_max"].text(),
+            },
+            "material_params": {
+                "num_knots": self.widgets["num_knots"].text(),
+                "nk_min": self.widgets["nk_min"].text(),
+                "nk_max": self.widgets["nk_max"].text(),
+                "min_knot_dist": self.widgets["min_knot_dist"].text(),
+            },
+            "filters": {
+                "lmin_filter": self.widgets["lmin_filter"].text(),
+                "lmax_filter": self.widgets["lmax_filter"].text(),
+            },
+            "optimization": {
+                "popsize": DEFAULT_POPSIZE,
+                "maxiter": DEFAULT_MAXITER,
+                "tol": DEFAULT_TOL,
+                "mutation_min": DEFAULT_MUTATION_MIN,
+                "mutation_max": DEFAULT_MUTATION_MAX,
+                "recombination": DEFAULT_RECOMBINATION,
+                "updating": DEFAULT_UPDATING,
+                "workers": DEFAULT_WORKERS,
+            },
+        }
+
+    def _do_export_results(self, reports_dir: str):
+        from certus.utils.certus_data import ReportSection
+
+        res = self.final_results["result"]
+        xk = res.x
+        mse = res.fun
+
+        ts = certus_timestamp_file()
+        rmse_val = np.sqrt(mse) if mse > 0 else 0
+
+        src_name = ""
+        if hasattr(self, "_last_target_file") and self._last_target_file:
+            src_name = "_" + Path(self._last_target_file).stem
+
+        base_name = f"Report_SINGLE{src_name}_{ts}_RMSE_{rmse_val:.5f}"
+        excel_path = str(Path(reports_dir) / f"{base_name}.xlsx")
+        html_path = str(Path(reports_dir) / f"{base_name}.html")
+
+        sol_rows = [{"Parameter": "eM (Thickness)", "Value": xk[0], "Unit": "nm"}]
+        df_sol = pd.DataFrame(sol_rows)
+
+        df_spectra = self._build_export_spectra_dataframe(xk)
+
+        sections = [
+            ReportSection(
+                title="Optimization Summary",
+                kind="kv",
+                content={
+                    "Date": certus_timestamp_display(),
+                    "Final RMSE": f"{rmse_val:.6f}",
+                    "Final MSE": f"{mse:.6e}",
+                    "Max Iterations": str(self._last_worker_params.get("maxiter", "N/A") if self._last_worker_params else "N/A"),
+                    "Thickness": f"{xk[0]:.2f} nm",
+                },
+                sheet_name="Summary",
+            ),
+            ReportSection(title="Solution Parameters", kind="table", content=df_sol, sheet_name="Solution"),
+            ReportSection(title="Spectra", kind="table", content=df_spectra, sheet_name="Spectra"),
+            ReportSection(
+                title="Reflectance Plot",
+                kind="image",
+                content=self.widget_to_b64(self.reflectance_plot),
+                include_in_excel=False,
+            ),
+            ReportSection(
+                title="n & k Clues Plot",
+                kind="image",
+                content=self.widget_to_b64(self.clues_plot),
+                include_in_excel=False,
+            ),
+            ReportSection(
+                title="Convergence Plot",
+                kind="image",
+                content=self.widget_to_b64(self.mse_plot),
+                include_in_excel=False,
+            ),
+        ]
+
+        exp_res = self.export_via_builder(
+            sections,
+            excel_path=excel_path,
+            html_path=html_path,
+            html_title="CERTUS-SINGLE Optimization Report",
+        )
+
+        if exp_res.get("excel") or exp_res.get("html"):
+            self.status_label.setText(f"Reports saved — {base_name}")
+
+    def _build_export_spectra_dataframe(self, xk) -> pd.DataFrame:
+        p = self._last_worker_params
+        l_array = p["target_lambda"]
+        target_r = p["target_r"]
+        num_knots = p["num_knots"]
+
+        offset = 1
+        n_knots = xk[offset : offset + num_knots]
+        k_knots = xk[offset + num_knots : offset + 2 * num_knots]
+        lambda_internes = xk[offset + 2 * num_knots :]
+
+        min_l, max_l = l_array.min(), l_array.max()
+        knot_l = np.concatenate(([min_l], np.sort(lambda_internes), [max_l]))
+        p_spline = np.concatenate((n_knots, k_knots))
+        n_calc, k_calc = get_nk_from_spline(p_spline, knot_l, l_array)
+
+        return pd.DataFrame(
+            {
+                "Wavelength (nm)": l_array,
+                "R Target": target_r,
+                "n (Metal)": n_calc,
+                "k (Metal)": k_calc,
+            }
+        )
+
+    def start_beam_analysis(self) -> None:
+        """Starts beam analysis: metal thickness scan"""
+
+        if not self.target_data:
+            show_toast(self, "Load target file first.", "warning")
+
+            return
+
+        # Verify optimization done
+
+        if not hasattr(self, "final_results") or self.final_results is None:
+            show_toast(
+                self,
+                "Run standard optimization (START) first\nto get reference solution.",
+                "warning",
+            )
+
+            return
+
+        try:
+            p = {k: v.text() for k, v in self.widgets.items() if isinstance(v, QLineEdit)}
+
+            params = {k: float(v) for k, v in p.items() if k not in ["excel_filename"]}
+
+            params["num_knots"] = int(p["num_knots"])
+
+            # substrate ID
+
+            sub_text = self.combo_substrate.currentText()
+
+            params["substrate_id"] = _resolve_single_substrate_id(sub_text)
+            params["substrate_label"] = canonicalize_substrate_label(sub_text)
+
+            params["eM_min"] = float(p.get("eM_min", DEFAULT_EM_MIN))
+
+            params["eM_max"] = float(p.get("eM_max", DEFAULT_EM_MAX))
+
+            params["nk_min"] = float(p.get("nk_min", DEFAULT_NK_MIN))
+
+            params["nk_max"] = float(p.get("nk_max", DEFAULT_NK_MAX))
+
+            mask = (self.target_data["lambda"] >= params["lmin_filter"]) & (
+                self.target_data["lambda"] <= params["lmax_filter"]
+            )
+
+            params["target_lambda"] = self.target_data["lambda"][mask]
+
+            params["target_r"] = self.target_data["R"][mask]
+
+            # Add min_knot_dist if missing
+
+            if "min_knot_dist" not in params:
+                params["min_knot_dist"] = float(self.widgets["min_knot_dist"].text())
+
+            # Get optimal solution found
+
+            optimal_solution = self.final_results["result"].x.copy()
+
+            optimal_mse = float(self.final_results["result"].fun)
+
+        except (ValueError, KeyError) as e:
+            QMessageBox.critical(self, "Parameter Error", f"Invalid value: {e}")
+
+            return
+
+        self.btn_run.setEnabled(False)
+
+        self.btn_beam.setEnabled(False)
+
+        self.btn_stop.setEnabled(True)
+
+        self.status_label.setText("Scanning metal thickness...")
+
+        # Scan step 0.5 nm, MSE tolerance +/- 20%
+
+        worker = BeamAnalysisWorker(params, optimal_solution, optimal_mse, step_nm=0.5, mse_tolerance=0.2)
+
+        setup_beam_analysis_thread(self, worker).start()
+
+    def on_beam_finished(self, stats):
+        """Handles beam analysis finish"""
+
+        teardown_beam_thread(self, stats)
+
+        # --- Beam Graphic Display ---
+
+        # Clear items but keep axes
+
+        self.p1.clear()
+
+        self.p2.clear()
+
+        # Re-add basics
+
+        self.p1.addItem(self.n_curve)
+
+        self.p2.addItem(self.k_curve)
+
+        x = stats["lambda_axis"]
+
+        # Global N zone (Blue - Total math uncertainty)
+
+        n_mean = stats["n_mean"]
+
+        n_std = stats["n_std"]
+
+        n_upper = n_mean + 2 * n_std
+
+        n_lower = n_mean - 2 * n_std
+
+        # Global n uncertainty fill
+
+        curve_n_upper = pg.PlotDataItem(
+            x,
+            n_upper,
+            pen=pg.mkPen(CertusTheme.PRIMARY, width=1, style=Qt.PenStyle.DotLine),
+        )
+
+        curve_n_lower = pg.PlotDataItem(
+            x,
+            n_lower,
+            pen=pg.mkPen(CertusTheme.PRIMARY, width=1, style=Qt.PenStyle.DotLine),
+        )
+
+        fill_n = pg.FillBetweenItem(
+            curve_n_lower,
+            curve_n_upper,
+            brush=pg.mkBrush(*CertusTheme.hex_to_rgba_tuple(CertusTheme.PRIMARY, 25)),
+        )
+
+        self.p1.addItem(fill_n)
+
+        self.p1.addItem(curve_n_upper)
+
+        self.p1.addItem(curve_n_lower)
+
+        # Global n mean curve (blue, thick)
+
+        self.n_curve.setData(x, n_mean)
+
+        # Global K zone (Red - Total math uncertainty)
+
+        k_mean = stats["k_mean"]
+
+        k_std = stats["k_std"]
+
+        k_upper = k_mean + 2 * k_std
+
+        k_lower = k_mean - 2 * k_std
+
+        # Global k uncertainty fill
+
+        curve_k_upper = pg.PlotDataItem(
+            x,
+            k_upper,
+            pen=pg.mkPen(CertusTheme.DANGER, width=1, style=Qt.PenStyle.DotLine),
+        )
+
+        curve_k_lower = pg.PlotDataItem(
+            x,
+            k_lower,
+            pen=pg.mkPen(CertusTheme.DANGER, width=1, style=Qt.PenStyle.DotLine),
+        )
+
+        fill_k = pg.FillBetweenItem(
+            curve_k_lower,
+            curve_k_upper,
+            brush=pg.mkBrush(*CertusTheme.hex_to_rgba_tuple(CertusTheme.DANGER, 25)),
+        )
+
+        self.p2.addItem(fill_k)
+
+        self.p2.addItem(curve_k_upper)
+
+        self.p2.addItem(curve_k_lower)
+
+        # Global k mean curve
+
+        self.k_curve.setData(x, k_mean)
+
+        # Show individual curves to visualize beam
+
+        if "all_solutions" in stats and len(stats["all_solutions"]) > 0:
+            for _, sol in enumerate(stats["all_solutions"]):
+                if "n" in sol and "k" in sol:
+                    pen_n_indiv = pg.mkPen(CertusTheme.hex_to_rgba_tuple(CertusTheme.PRIMARY, 50), width=1)
+
+                    n_item = pg.PlotDataItem(stats["lambda_axis"], sol["n"], pen=pen_n_indiv)
+
+                    self.p1.addItem(n_item)
+
+                    pen_k_indiv = pg.mkPen(CertusTheme.hex_to_rgba_tuple(CertusTheme.DANGER, 50), width=1)
+
+                    k_item = pg.PlotDataItem(stats["lambda_axis"], sol["k"], pen=pen_k_indiv)
+
+                    self.p2.addItem(k_item)
+
+        # Auto-select "n & k" tab
+
+        self.tabs.setCurrentIndex(1)
+
+        count = stats["count"]
+
+        rmse_best = np.sqrt(stats["best_mse"]) if stats["best_mse"] >= 0 else 0.0
+
+        self.status_label.setText(f"Beam: {count} solutions | eM: {stats['eM_min']:.1f}-{stats['eM_max']:.1f} nm")
+
+        QMessageBox.information(
+            self,
+            "Beam Analysis Results",
+            f"Beam Analysis by Thickness Scan\n"
+            f"{count} solutions kept\n"
+            f"Best RMSE found: {rmse_best:.2e}\n\n"
+            f"Thickness eM: {stats['eM_mean']:.2f} +/- {2 * stats['eM_std']:.2f} nm\n"
+            f"See 'n & k' tab to visualize results.",
+        )
+
+        # Self-export
+
+        if get_export_config():
+            QTimer.singleShot(500, self.export_results)
+
+    def _export_beam_results(self):
+        """Exports beam analysis results"""
+
+        if not hasattr(self, "beam_stats") or self.beam_stats is None:
+            return
+
+        stats = self.beam_stats
+
+        reports_dir = get_resource_path("reports")
+
+        os.makedirs(reports_dir, exist_ok=True)
+
+        ts = certus_timestamp_file()
+
+        try:
+            src_name = ""
+
+            if hasattr(self, "_last_target_file") and self._last_target_file:
+                src_name = "_" + Path(self._last_target_file).stem
+
+            base_name = f"Beam_SINGLE{src_name}_{ts}"
+
+        except NUMERICAL_FAULT_EXCEPTIONS :
+            base_name = f"Beam_SINGLE_{ts}"
+
+        excel_path = str(Path(reports_dir) / f"{base_name}.xlsx")
+
+        try:
+            df_summary = pd.DataFrame(
+                {
+                    "Parameter": [
+                        "eM_mean",
+                        "eM_std",
+                        "eM_min",
+                        "eM_max",
+                        "RMSE_best",
+                        "Count",
+                    ],
+                    "Value": [
+                        f"{stats['eM_mean']:.3f}",
+                        f"{stats['eM_std']:.3f}",
+                        f"{stats['eM_min']:.3f}",
+                        f"{stats['eM_max']:.3f}",
+                        f"{np.sqrt(stats['best_mse']):.6f}",
+                        f"{stats['count']}",
+                    ],
+                }
+            )
+
+            df_spectra = pd.DataFrame(
+                {
+                    "lambda_nm": stats["lambda_axis"],
+                    "n_mean": stats["n_mean"],
+                    "n_std": stats["n_std"],
+                    "k_mean": stats["k_mean"],
+                    "k_std": stats["k_std"],
+                }
+            )
+
+            sol_data = []
+
+            for idx, s in enumerate(stats["all_solutions"]):
+                sol_data.append({"ID": idx + 1, "RMSE": np.sqrt(s["mse"]), "eM": s["eM"]})
+
+            df_sols = pd.DataFrame(sol_data)
+
+            if OPENPYXL_AVAILABLE:
+                with pd.ExcelWriter(excel_path, engine="openpyxl") as writer:
+                    df_summary.to_excel(writer, sheet_name="Beam Summary", index=False)
+
+                    df_spectra.to_excel(writer, sheet_name="Reference Indices", index=False)
+
+                    df_sols.to_excel(writer, sheet_name="Solutions", index=False)
+
+                self.logger.info(f"Beam report saved: {base_name}")
+
+                self.status_label.setText(f"Beam Export:{base_name}")
+
+            else:
+                to_excel_robust(df_summary, excel_path)
+
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
+            self.logger.error(f"Beam export error:{e}")
+
+    def _apply_config_dict(self, config):
+        """Loads JSON struct for config.
+
+        Contract note: `substrate_id` belongs to the transparent substrate only;
+        metal-layer parameters stay inside `physical_params` / `material_params`.
+        """
+
+        phys = config.get("physical_params", {})
+
+        self.widgets["eM_min"].setText(str(phys.get("eM_min", DEFAULT_EM_MIN)))
+
+        self.widgets["eM_max"].setText(str(phys.get("eM_max", DEFAULT_EM_MAX)))
+
+        mat = config.get("material_params", {})
+
+        self.widgets["num_knots"].setText(str(mat.get("num_knots", DEFAULT_NUM_KNOTS)))
+
+        self.widgets["nk_min"].setText(str(mat.get("nk_min", DEFAULT_NK_MIN)))
+
+        self.widgets["nk_max"].setText(str(mat.get("nk_max", DEFAULT_NK_MAX)))
+
+        self.widgets["min_knot_dist"].setText(str(mat.get("min_knot_dist", DEFAULT_MIN_KNOT_DISTANCE)))
+
+    def _resolve_config_target_file(self, config_path: str) -> str | None:
+        try:
+            cfg_path = Path(config_path).expanduser().resolve()
+            with open(cfg_path, encoding="utf-8") as fh:
+                cfg = json.load(fh)
+            target_hint = cfg.get("target_file", None)
+            if not target_hint:
+                return None
+            candidate = Path(str(target_hint)).expanduser()
+            candidates = []
+            if candidate.is_absolute():
+                candidates.append(candidate)
+            else:
+                candidates.append((cfg_path.parent / candidate).resolve())
+                candidates.append((Path.cwd() / candidate).resolve())
+                candidates.append((cfg_path.parent.parent / candidate).resolve())
+            for item in candidates:
+                if item.exists():
+                    self.logger.info("AUTO_BATCH resolved target_file=%s from config=%s", item, cfg_path)
+                    return str(item)
+            self.logger.error("AUTO_BATCH target_file not found target=%s searched=%s", target_hint, [str(x) for x in candidates])
+        except Exception as exc:
+            self.logger.error("AUTO_BATCH target_file resolution failed config=%s reason=%s", config_path, exc)
+        return None
+
+    def maybe_quit_after_auto_batch(self) -> None:
+        if self._auto_batch_mode and not self._auto_batch_quit:
+            self._auto_batch_quit = True
+            QTimer.singleShot(1200, QApplication.instance().quit)

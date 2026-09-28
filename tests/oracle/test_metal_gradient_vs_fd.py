@@ -2,7 +2,7 @@
 
 This gradient carried an indexing defect: the loop on the node positions
 wrote ``grad[offset + 2 * num_knots + i]`` while the block of nodes k extends
-up to ``offset + 2 * spline_knot_count``, with ``spline_knot_count = num_knots + 1``.
+up to ``offset + 2 * spline_knot_count``, with ``spline_knot_count = num_knots + 1`` at the time.
 Two positions too early, therefore:
 
     k[3], k[4] gradients overwritten by those of lambda
@@ -43,10 +43,10 @@ SUBSTRATE = np.full(WAVELENGTHS.size, complex(4.0, -0.05), dtype=np.complex128)
 def _pack(num_knots: int) -> tuple[np.ndarray, list[tuple[int, int]]]:
     """Optimization vector and division into families of parameters.
 
-    Disposition : [eM, eL, n_inf, A] [n x (num_knots+1)] [k x (num_knots+1)]
-                  [lambda x (num_knots-1)]
+    Disposition : [eM, eL, n_inf, A] [n x num_knots] [k x num_knots]
+                  [lambda x (num_knots-2)] -- celle de l'objectif bicouche
     """
-    knot_values = num_knots + 1
+    knot_values = num_knots
     inner_lambda = knot_values - 2
 
     thicknesses = [25.0, 90.0]
@@ -70,7 +70,7 @@ def _pack(num_knots: int) -> tuple[np.ndarray, list[tuple[int, int]]]:
     return params, blocks
 
 
-@pytest.mark.parametrize("num_knots", [3, 4, 6], ids=["K3", "K4", "K6"])
+@pytest.mark.parametrize("num_knots", [4, 5, 7], ids=["K4", "K5", "K7"])
 def test_gradient_metal_bilayer_coincide_avec_les_differences_finies(
     num_knots: int,
 ) -> None:
@@ -112,7 +112,7 @@ def test_aucune_composante_du_gradient_n_est_muette() -> None:
     were never written and remained at zero. A parameter whose gradient is
     always zero is never optimized — silently.
     """
-    num_knots = 4
+    num_knots = 5
     params, blocks = _pack(num_knots)
 
     _, gradient = compute_metal_bilayer_gradient_analytic(

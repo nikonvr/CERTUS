@@ -1,5 +1,47 @@
 from __future__ import annotations
-from certus.ui.certus_design_common import *
+import functools
+from typing import Any
+import pyqtgraph as pg
+from certus.ui.certus_qt_widgets import (
+    QAbstractItemView,
+    QAbstractSpinBox,
+    QCheckBox,
+    QComboBox,
+    QDoubleSpinBox,
+    QFrame,
+    QGridLayout,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QPushButton,
+    QScrollArea,
+    QSpinBox,
+    QSplitter,
+    QStackedWidget,
+    QStatusBar,
+    QStyle,
+    QTabWidget,
+    QTableWidget,
+    QVBoxLayout,
+    QWidget,
+    Qt,
+)
+from certus.core.certus_core import CFG
+from certus.ui.certus_ui import (
+    CertusCard,
+    CertusCollapsible,
+    CertusScientificPlot,
+    CertusStatusPill,
+    CertusTheme,
+    CertusThemeToggle,
+    EnhancedProgressWidget,
+    FlashyCard,
+    WelcomeGuideWidget,
+    create_flashy_grid,
+    create_header_logo_widget,
+    create_top_actions_bar,
+)
+from certus.ui.certus_overview_tab import CertusKpiBanner, build_synthesis_tab
 from certus.utils.certus_ux import Typography, OBJ
 
 

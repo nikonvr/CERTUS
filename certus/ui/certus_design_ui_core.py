@@ -1,5 +1,21 @@
 from __future__ import annotations
-from certus.ui.certus_design_common import *
+import logging
+import numpy as np
+from certus.ui.certus_qt_widgets import (
+    QCheckBox,
+    QDialog,
+    QDoubleSpinBox,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QTextEdit,
+    QTimer,
+    QVBoxLayout,
+    Qt,
+)
+from certus_physics import Material, ObliqueTarget, Target, init_thickness
+from certus.ui.certus_ui import CertusCard, CertusTheme, copy_app_logs_to_clipboard
 
 class CoreManager:
     def __init__(self, ui):

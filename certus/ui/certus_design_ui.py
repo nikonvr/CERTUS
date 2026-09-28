@@ -1,5 +1,13 @@
 from __future__ import annotations
-from certus.ui.certus_design_common import *
+from typing import Any
+import numpy as np
+from certus.ui.certus_qt_widgets import QApplication, QTableWidgetItem, QThread, Qt, pyqtSignal
+from certus.core.certus_core import CFG
+from certus.utils.errors import safe_ui_action
+from certus_physics import ObliqueTarget
+from certus.ui.certus_ui import CertusBaseApp, CertusTheme
+from certus.workers.certus_spectral_workers import EvalWorker, WarmupWorker
+from certus.workers.certus_design_workers import ColorWorker, NeedleWorker, OptimWorker
 from certus.ui.certus_design_ui_plot import PlotManager
 from certus.ui.certus_design_ui_state import StateManager
 from certus.ui.certus_design_ui_events import EventsManager

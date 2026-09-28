@@ -1,5 +1,20 @@
 from __future__ import annotations
-from certus.ui.certus_design_common import *
+from pathlib import Path
+import logging
+import numpy as np
+from certus.ui.certus_qt_widgets import (
+    QApplication,
+    QCheckBox,
+    QComboBox,
+    QDoubleSpinBox,
+    QHBoxLayout,
+    QKeySequence,
+    QShortcut,
+    QWidget,
+    Qt,
+)
+from certus.core.certus_core import CFG, NUMERICAL_FAULT_EXCEPTIONS
+from certus.ui.certus_ui import enable_file_drop, install_standard_shortcuts, open_documentation, show_toast
 
 class EventsManager:
     def __init__(self, ui):

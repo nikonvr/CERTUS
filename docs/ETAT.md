@@ -31,7 +31,7 @@ Dernière validation locale complète, sur 2c7929f (Windows 11, le 2026-09-28) :
 | R6 | abandon quand METAL et headless partagent un processus (D23) | **faite** : aucun test ne crée sa `QApplication`, un gardien l'impose ; 3 passes sur 3 | `tests/unit/test_tests_borrow_the_session_qapplication.py` | 2026-09-27 |
 | R7 | faux échecs à cache numba froid | **reviennent dans un arbre neuf** : 0 failed sur deux passes à cache vide le 2026-09-27, mais 3 failed à la première passe d'un worktree neuf le même jour, puis 0 aux huit suivantes. La consigne de relance est revenue dans CLAUDE.md, section 2 | — | 2026-09-28 |
 | R8 | lint F811, 85 cas | **faite** : `extend-ignore` à 34 règles ; espaces de noms comparés avant et après | D25 | 2026-09-27 |
-| R9 | lint à effet possible : imports (F403, F405, F401, E402, I001) puis petites règles | **spécifiée, pas commencée** : démarche et contrôles en section 6 | section 6 | — |
+| R9 | lint à effet possible : imports (F403, F405, F401, E402, I001) puis petites règles | **étape 1 faite** : plus aucun `import *` (FIELD bab804d, DESIGN f04ab60 et 2dde2db, STRAT 23e4d50, INDEX SPLINE 1c71e7f), chaque nom importé de son origine ; F403, F405 et B019 sortent d'`extend-ignore` (a1d07f2, 3cbd15d). **Étape 2 (F401) en cours** : lots physique, METAL, utils, domaine, scripts (1aec9b3, 147 noms) puis cœur, workers, spline (46eed45, 1 604 noms). Contrôles en section 6 | section 6 | — |
 | R10 | un dossier de préférences laissé par chaque session pytest | **faite** | `tests/conftest.py` | 2026-09-26 |
 | R11 | les tests écrivaient les réglages de 👤 dans le registre | **faite** : `certus_settings` ; `HKCU\Software\CERTUS` identique octet pour octet après une passe complète | `certus/utils/certus_qsettings.py` | 2026-09-27 |
 | R12 | supprimer l'obsolète et le débranché | **faite** : 209 fichiers supprimés (27 640 lignes) depuis e3ce77d, 29 400 lignes de moins en net au 2026-09-28 — scripts de campagnes closes ou cassés, outils de refactorisation à usage unique, fichiers morts de la racine, prototype Rust, configurations sans effet (`Makefile`, `CODEOWNERS`, pre-commit qui lançait `ruff --fix`, mypy), échafaudages, copies en double, validation STRAT par schéma JSON qui ne tournait jamais, fichier d'état de réinitialisation que rien ne lisait. `requirements.lock` réexporté (32 paquets en retard) et tenu par un garde-fou ; plus de système de construction (D27) | `git log` des 2026-09-27 et 28 | 2026-09-28 |
@@ -41,6 +41,11 @@ Dernière validation locale complète, sur 2c7929f (Windows 11, le 2026-09-28) :
 | R17 | FIELD : `CertusBaseApp` passait avant les mixins et masquait toutes leurs spécialisations | **faite** (a5269eb) : « Enregistrer la configuration » écrivait `{}`, « Charger » ne faisait rien, « Détacher le tracé » levait AttributeError ; les mixins passent devant, la configuration passe par les crochets communs. Test : 4 failed avant, 4 passed après ; cliquet d'ergonomie FIELD vert | `certus/ui/certus_field_ui.py` | 2026-09-28 |
 | R18 | la garde « fermer pendant un run » ne voyait aucun run | **faite** (923ef1b) : `register_worker` n'avait aucun appelant, la garde comptait toujours zéro ; STRAT et FIELD enregistrent désormais leurs workers. Test avec un vrai worker FIELD : 4 failed avant, 4 passed après | `certus/ui/certus_base_app.py` | 2026-09-28 |
 | R16 | D30 : les monolithes METAL de la racine | **faite** (fusion 5ba0a44) : `CERTUS_METAL_SINGLE.py` et `CERTUS_METAL_BILAYER.py` passent de 2 728 et 2 815 lignes à 145 et 153 ; le calcul vit dans des modules sans Qt de `certus/metal/`, la fenêtre et les workers à côté. Empreintes `float.hex` des fonctions de calcul identiques avant et après ; quatre méthodes dupliquées remontées dans `MetalBaseApp`. En chemin, l'analyse de faisceau BILAYER corrigée : son gradient découpait `num_knots + 1` points par famille, chaque pas levait et le faisceau ne gardait que l'optimum, écart nul (exemple : 20 pas en erreur et 1 solution avant, 0 et 28 après) | `certus/metal/` | 2026-09-28 |
+| R19 | des tests qui plantaient ou sautaient selon leur voisinage | **faite** : une fenêtre FIELD laissée vivante faisait mourir le processus à l'arrêt (12d68c6) ; tout fichier de test qui construit une fenêtre CERTUS la détruit, un gardien l'impose (c32f461) ; neuf `importorskip` sur du code du projet, dont deux qui sautaient lancés seuls, deviennent des imports, un gardien l'impose (2c8b48c) | `tests/unit/test_tests_destroy_the_windows_they_build.py`, `test_first_party_modules_are_never_skipped.py` | 2026-09-28 |
+| R20 | des actions de l'interface levaient NameError depuis le découpage de juin | **faite**, révélée par R9 : DESIGN — les exports de rapport (10ef53a) et un dossier de travail `certus/ui` au lieu de la racine (f04ab60) ; STRAT — détacher la table, charger des stratégies externes, le mode non monotone « reject » (d33981a). Chaque test échoue sur le code d'avant | `tests/unit/test_design_*`, `test_strat_ui_actions_find_their_names.py` | 2026-09-28 |
+| R21 | les modules de `certus/` mettaient leur dossier dans `sys.path` | **faite** (599b9ee) : 102 modules du paquet importables une seconde fois sous leur nom nu ; deux tests en vivaient | `bootstrap_app` | 2026-09-28 |
+| R22 | INDEX : tableau du saphir introuvable depuis le 2026-05-27 ; réglages d'absorption affichés pour tous les substrats | **faite** : chemin rétabli (d063e49) ; D43 tranché par 👤, réglages montrés pour le silicium seul (695b807), import d'un fichier k inatteignable retiré (39ebf52). Le calcul ne change pas | `certus_index_ui_events.py` | 2026-09-28 |
+| R23 | code mort et doublons révélés par R9 | **faite** : `certus_design_common` (8c5d7a7), quatre mixins INDEX SPLINE vides (320f94a), `_plot_spectrum_raw_scatter` défini trois fois (4bf7133), `CertusWindowSpyMixin` deux fois (f0105a2), vingt `import *` commentés (6c72536) | — | 2026-09-28 |
 
 ## 1. Où en sont les programmes
 
@@ -48,7 +53,7 @@ Dernière validation locale complète, sur 2c7929f (Windows 11, le 2026-09-28) :
 |---|---|---|
 | **Calcul (STRAT)** | composant étalon : l'aléatoire ×2 (`r75x2`) à la fente de 2 nm. Fabricable avec les rampes de la configuration livrée ; sans rampes, 3 graines sur 7 trouvent des déposables. Toute la fabricabilité passe par le générateur ELITE | voir la section 6 |
 | **Interface** | plan clos le 2026-09-08 : 12 critères de fin sur 13 atteints et mesurés, le treizième démontré inatteignable (`xfail` strict) | la revue visuelle et trois arbitrages de 👤 (section 5) ; la fuite des fenêtres (défaut D11) |
-| **Qualité** | CI GitHub sur toutes les branches : job `pytest` sous Linux (oracle, unit, puis le reste de `tests/`), job `interface` sous Windows (`tests/ui/`), dernières versions stables à chaque run. `certus/` commenté en anglais, garde-fou ; les tests n'écrivent ni les préférences ni le registre de 👤 ; dette de lint de 34 règles, cliquet nominatif (D25) | R9, puis D11 ; l'ordre des actions est le tableau de la section 0 |
+| **Qualité** | CI GitHub sur toutes les branches : job `pytest` sous Linux (oracle, unit, puis le reste de `tests/`), job `interface` sous Windows (`tests/ui/`), dernières versions stables à chaque run. `certus/` commenté en anglais, garde-fou ; les tests n'écrivent ni les préférences ni le registre de 👤 ; dette de lint de 31 règles, cliquet nominatif (D25) | R9 étape 2 (F401), puis D11 ; l'ordre des actions est le tableau de la section 0 |
 | **Documentation** | cure du 2026-09-26 : deux documents vivants, 27 archivés | tenir « un fait, un seul endroit » |
 | **Validation externe** | 🔴 **aucune** : STRAT n'est validé que contre lui-même | deux dépôts réels du dichroïque (section 5) |
 
@@ -134,6 +139,11 @@ du dichroïque dont le plantage s'écarterait nettement du prédit rouvrirait ce
 - **CERTUS tourne toujours sur un poste à jour** : les bornes minimales de `pyproject.toml` ne comptent pas ; la CI ré-résout vers les dernières versions stables à chaque run (`uv sync --upgrade`), `uv.lock` n'est qu'un point de départ (`uv lock --upgrade`). Pas de pré-version : pydantic ≥ 2.13.4 stable, plus 2.14 bêta.
 - **La non-reproductibilité est acceptée** : INDEX, RE et METAL_BILAYER ne rendent pas deux fois la même RMSE — leurs générateurs ne sont pas amorcés, et on ne les amorce pas. Mesuré le 2026-09-27 : INDEX de 0,002546 à 0,002691 sur dix exécutions, et 0,0067 (2,6 fois la référence) environ une fois sur huit ; RE 0,05 % ; METAL_BILAYER 1 %. La garde de convergence retient pour eux la meilleure de quatre exécutions au plus (`tests/regression/test_convergence_guard.py`).
 
+### Interface — décidé le 2026-09-28
+
+- **INDEX : les réglages d'absorption du substrat ne s'affichent que pour le silicium**, le seul
+  substrat dont le calcul lit l'absorption ; pour tous les autres, le worker force k = 0 (D43).
+
 ### Règles gravées
 
 - **Une λ de contrôle est interdite** si, signal bruité, elle risque de mal compter les points
@@ -199,12 +209,13 @@ numéros de l'ancien registre sont entre parenthèses
 | # | défaut |
 |---|---|
 | D11 | **Une fenêtre de module fermée n'est pas détruite** : des lambdas et des `functools.partial` branchés sur les signaux de ses propres widgets la capturent, et la connexion les tient du côté C++ de PyQt, où le ramasse-miettes ne voit pas le cycle (`scripts/sonde_retenants_fenetre.py`, 2026-09-27 : `CertusREApp` retenue par quatre méthodes liées, cinq fermetures et deux attributs de `CertusToast` / `CertusToastStack`). **Sans effet en production** : le hub lance chaque module dans son propre processus (`QProcess`), et fermer la fenêtre finit le processus. Les tests détruisent désormais leurs fenêtres (R5). Coûterait dans tout processus qui construirait plusieurs fenêtres. Piste : `WA_DeleteOnClose` sur `CertusBaseApp`, à condition de retenir d'abord ses `QThread` encore actifs : sans cela, libérer la fenêtre libère un thread en cours (D23) |
-| D23 | Isolation des tests. Le plantage intermittent de `tests/headless/` a sa cause établie (2026-09-26) : un `QThread` reçoit un `DeferredDelete` pendant qu'il tourne, et Qt s'arrête sur « QThread: Destroyed while thread … is still running » ; l'émetteur n'est pas identifié. La fixture `headless_lifecycle` joint les threads Qt et Python avant de livrer les destructions différées, avec un délai de 180 s (R1). Restent : rien ne protège `sys.modules` ; un arrêt natif `0xC0000005` du worker Qt, 2 fois sur 120 lancements (le harnais d'interface réessaie) ; les raffinements qui suivent PGLOBAL dans l'étage IR d'INDEX ne lisent pas l'arrêt (section 5) ; une fenêtre laissée vivante jusqu'à la sortie de l'interpréteur peut faire planter sa finalisation |
+| D23 | Isolation des tests. Le plantage intermittent de `tests/headless/` a sa cause établie (2026-09-26) : un `QThread` reçoit un `DeferredDelete` pendant qu'il tourne, et Qt s'arrête sur « QThread: Destroyed while thread … is still running » ; l'émetteur n'est pas identifié. La fixture `headless_lifecycle` joint les threads Qt et Python avant de livrer les destructions différées, avec un délai de 180 s (R1). Restent : rien ne protège `sys.modules` ; un arrêt natif `0xC0000005` du worker Qt, 2 fois sur 120 lancements (le harnais d'interface réessaie) ; les raffinements qui suivent PGLOBAL dans l'étage IR d'INDEX ne lisent pas l'arrêt (section 5) ; `tests/headless/test_index.py` suivi des tests d'intégration sort une fois sur deux ou trois avec le code 1 et « lost sys.stderr » après que tous ses tests ont passé (vu sur 320f94a comme après ; piste : un fil de préchauffage numba encore vivant à l'arrêt, D42) ; un échec d'interface non identifié, une passe sur cinq du groupe INDEX le 2026-09-28 |
 | D24 | Code mort : l'audit (`tools/dead_symbol_audit.py`) cherche ses candidats à la racine, dans `certus_physics` et dans `certus/metal`, et n'en trouve aucun, liste blanche vide. Le reste de `certus/` n'est pas dans son périmètre : il ne voit pas ce qui y meurt |
-| D25 | Dette de lint masquée par `extend-ignore` : **34 règles, 11 231 violations le 2026-09-28**, presque toutes d'import (F401 5 154, F405 3 123, E402 854, I001 807) ; les noms indéfinis (F821, F822) sont à zéro. Le cliquet `tests/oracle/test_lint_debt_ratchet.py` nomme les règles restantes : aucune ne peut entrer, et une règle sortie doit quitter sa liste. RUF022 et RUF023 (trier `__all__`, `__slots__`) restent ignorées à dessein |
+| D25 | Dette de lint masquée par `extend-ignore` : **31 règles** ; plus aucun import étoile, et les noms indéfinis (F821, F822) sont à zéro. Les imports inutilisés (F401) se retirent par lots (R9) ; restent surtout E402 et I001. Le cliquet `tests/oracle/test_lint_debt_ratchet.py` nomme les règles restantes : aucune ne peut entrer, et une règle sortie doit quitter sa liste. RUF022 et RUF023 (trier `__all__`, `__slots__`) restent ignorées à dessein |
 | D26 | Inversions de couches, comptées le 2026-08-19 : `utils → ui` (11), `core → workers` (10), cycle `physics ↔ core` (23 et 29 imports). Mesuré le 2026-09-28, module par module dans un interpréteur neuf : 62 des 73 modules de `certus/core`, `certus/physics` et `certus/domain` se chargent sans Qt (garde-fou `test_computation_imports_no_qt`) ; les dix autres sont le cœur DESIGN et STRAT, qui tirent Qt par ces inversions, et `certus.physics.gradient_analytic` ne s'importe pas seul (cycle avec `gradient_utils`) |
 | D40 | METAL BILAYER : l'analyse de faisceau minimise la MSE de réflectance seule, l'optimisation globale y ajoute une pénalité de lissage — deux objectifs, dont les RMSE ne se comparent pas |
 | D41 | INDEX, INDEX SPLINE, RE, METAL et DESIGN arrêtent leurs workers dans leur propre `closeEvent` avant d'appeler celui de base : la question « un calcul tourne, fermer quand même ? » ne peut pas s'y poser. La leur donner, c'est demander avant d'arrêter, comme STRAT — un changement de comportement à la fermeture |
+| D42 | Neuf modules de bibliothèque appellent `create_module_environment(__file__)` à l'import : chacun lance un fil de préchauffage numba (trois à la fois au démarrage de DESIGN) et reconfigure le journal CERTUS, dont la destination dépend alors de l'ordre des imports ; leur `script_dir`, leur propre dossier, ne sert presque jamais. Seule l'insertion dans `sys.path` est corrigée (R21) |
 | D38 | Des seuils de durée en secondes dans `tests/performance/` peuvent échouer quand le poste est chargé : un échec non identifié le 2026-09-27 au soir, trois agents faisant tourner leurs tests en même temps, puis 0 failed à la même révision |
 
 ## 5. Ce qui attend une décision de 👤
@@ -269,28 +280,27 @@ avec sa condition dans la même phrase que le chiffre.
 d'empreinte `float.hex()` qu'exige la règle d'or.
 
 **Architecture** (détail : [`archives/PLAN_AMELIORATION.md`](archives/PLAN_AMELIORATION.md)) —
-le cycle `physics ↔ core` (lot E), l'hygiène d'imports F401 / F403 / F405 (lot C). L'oracle
+le cycle `physics ↔ core` (lot E), l'hygiène d'imports F401 (lot C). L'oracle
 couvre déjà les gradients analytiques (lot B, clos).
 
-**Lint à effet possible (R9) — spécifié ; démarche retenue le 2026-09-27 (délégation de 👤).**
-Règles et comptes du 2026-09-28 : F401 5 154, F405 3 123, E402 854, I001 807, RUF046 98, E741 95,
-F403 52, RUF005 11, RUF015 3, UP042 3, UP046 3, UP040 2, B019 1.
+**Lint à effet possible (R9) — étape 1 faite, étape 2 en cours ; démarche retenue le 2026-09-27 (délégation de 👤).**
+Règles et comptes du 2026-09-28, avant les lots F401 : F401 4 999, E402 813, I001 793, RUF046 98, E741 89,
+RUF005 10, RUF015 3, UP042 3, UP046 3, UP040 2.
 
 | règle | ce qui peut changer un comportement | démarche proposée |
 |---|---|---|
-| F403, F405 | 50 modules reçoivent des noms par `import *` depuis les modules `*_common` ; ruff ne voit pas ce qu'ils en tirent | d'abord : remplacer chaque `import *` par la liste explicite des noms que le module utilise, un module commun à la fois ; c'est ce qui rend F401 sûr |
-| F401 | un import « inutilisé » peut être un ré-export (y compris dans un import sur plusieurs lignes) ou un effet de bord (enregistrement, configuration numba avant un `@njit`) | ne retirer que si aucun fichier suivi ne l'importe depuis ce module (AST, lignes multiples comprises) et si le module importé l'est encore ailleurs ; sinon `__all__` explicite, ou `# noqa: F401` justifié en une ligne |
+| F401 | un import « inutilisé » peut être un ré-export (y compris dans un import sur plusieurs lignes, ou un nom déclaré par `__all__.extend`), un effet de bord (enregistrement, sous-module `import a.b`, configuration numba avant un `@njit`), ou servi par une façade `CertusFacadeModule` | **en cours**, par lots : un nom ne part que si l'import est au niveau du module, hors `try`, sans accès dynamique du module à ses globales, et si aucun fichier suivi ni aucune façade ne le prend ; le reste est listé, pas retiré |
 | I001, E402 | l'ordre des imports compte : cycle `physics ↔ core`, `configure_numba_env()` avant tout `@njit`, `QT_QPA_PLATFORM` avant la première `QApplication` | réordonner seulement les fichiers sans import à effet, jamais les façades ni `certus_core` ; E402 cas par cas |
-| E741 | renommer `l`, `O`, `I` : sans effet, mais 124 cas dont des noyaux numba | après recompilation, empreinte `float.hex()` des noyaux touchés (C1) |
+| E741 | renommer `l`, `O`, `I` : sans effet, mais 89 cas dont des noyaux numba | après recompilation, empreinte `float.hex()` des noyaux touchés (C1) |
 | RUF046, RUF005, RUF015 | équivalences qui dépendent du type : `round(x)` d'un scalaire numpy rend bien un `int`, mais `round(x, n)` et `np.round(x)` rendent un `float64` (mesuré, numpy 2.5.2) ; `a + b` et `[*a, *b]` diffèrent si `a` est un tableau numpy | cas par cas, avec le type réel de l'argument |
 | UP040, UP042, UP046 | changent l'objet à l'exécution (`TypeAliasType`, sous-classe de `str`, génériques PEP 695) | restent ignorées (arbitrage du 2026-09-27) |
-| B019 | `lru_cache` sur une méthode retient l'instance ; le corriger change la mise en cache | au cas par cas, avec la mesure de ce qui est mis en cache |
 
-**Contrôles à chaque commit** : ruff ; oracle ; unit ; `tests/ui/` ; le reste de `tests/` ; l'import
-réel de tous les modules ; deux photos avant/après — l'espace de noms final de chaque module
-touché, et les noms qu'utilise chaque module à import étoilé. Les deux outils qui les prennent
-sont `scripts/lint_ns_snapshot.py` et `scripts/lint_star_names.py`.
-**Ordre** : F403/F405, puis F401 module par module, puis E402/I001, puis les petites règles.
+**Contrôles à chaque commit** : ruff ; oracle ; unit ; `tests/ui/` ; le reste de `tests/` ; trois
+photos avant/après — l'espace de noms final de chaque module touché (`scripts/lint_ns_snapshot.py`),
+les modules que charge chaque script d'entrée une fois son fil de préchauffage fini, et les noms
+que sert chaque façade `CertusFacadeModule`. Un nom qui disparaît ne doit être ni utilisé ni
+demandé par personne.
+**Ordre** : F401 par lots, puis E402/I001, puis les petites règles.
 
 **Prédictibilité** (détail : [`archives/CHANTIER_PREDICTIBILITE.md`](archives/CHANTIER_PREDICTIBILITE.md)) —
 prédire sans tout calculer si un design passe avec un seul verre témoin ; quatre routes déjà

@@ -73,7 +73,7 @@ _CORE_MODULES = [
 ]
 
 _GUI_MODULES = [
-    "certus_ui",
+    "certus.ui.certus_ui",
     "CERTUS_INDEX_SPLINE",
     "CERTUS_DESIGN",
     "CERTUS_INDEX",
@@ -95,8 +95,7 @@ def test_gui_module_syntax(module_name: str) -> None:
     import py_compile
 
     spec = importlib.util.find_spec(module_name)
-    if spec is None or spec.origin is None:
-        pytest.skip(f"Module {module_name} not found in path")
+    assert spec is not None and spec.origin is not None, f"module {module_name} not found"
     py_compile.compile(spec.origin, doraise=True)
 
 

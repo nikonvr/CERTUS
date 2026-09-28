@@ -1064,9 +1064,13 @@ def bootstrap_app(
     else:
         script_dir = str(Path(app_file).resolve(strict=False).parent)
 
-    # Setup path (only if not already present)
+    # An application script puts its folder on sys.path. A module of the certus package does
+    # not: with certus/core or certus/ui on sys.path, each of their modules could be imported a
+    # second time under its bare name, as a separate module object.
 
-    if script_dir not in sys.path:
+    package_dir = Path(__file__).resolve().parents[1]
+
+    if script_dir not in sys.path and not Path(script_dir).resolve().is_relative_to(package_dir):
         sys.path.insert(0, script_dir)
 
     # Launch JIT warmup in background thread (non-blocking startup)

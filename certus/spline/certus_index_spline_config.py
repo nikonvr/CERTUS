@@ -15,12 +15,6 @@ from certus.utils.certus_index_utils import DataType
 # Constants required by config defaults
 from certus.core.certus_core import K_MAX_LIMIT, N_MAX_LIMIT, N_MIN_LIMIT
 
-SPLINE_PWL_N_SEG: int = 10
-SPLINE_EXTRA_IR_KNOTS_LAM_MAX_THRESHOLD_NM: float = 4000.0
-K_MIN_PHYS: float = 1e-9
-L_LNK_MIN_PHYS: float = -20.723265836946411  # float(np.log(1e-9))
-K_FLOOR_DEFAULT: float = 1e-5
-
 class SplinePGlobalConfig:
     """PGlobal optimizer + SOL3 phase 1 + local-only fallback settings."""
 

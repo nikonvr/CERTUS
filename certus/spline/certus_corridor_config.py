@@ -724,9 +724,6 @@ class CorridorContextBuilder:
         self.live_k_curves = []
         self.live_chi2_vals = []
 
-    def _emit_live_profile(self, current_d_nm=None):
-        self.live_streamer.emit_profile(current_d_nm=current_d_nm)
-
     def _push_live_point(self, d_nm, rmse, n_lam=None, k_lam=None, chi2=None):
         self.live_streamer.push_point(d_nm, rmse, n_lam=n_lam, k_lam=k_lam, chi2=chi2)
 

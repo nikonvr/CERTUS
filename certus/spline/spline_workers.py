@@ -704,9 +704,6 @@ class FreeKnotStageContext:
     best_z: list = field(default_factory=list)
     best_spec_mse: list = field(default_factory=list)
 
-    def w2s(self, sk: np.ndarray) -> np.ndarray:
-        return sigma_knots_encode(sk, self.s_lo, self.s_hi)
-
     def s2s(self, raw: np.ndarray) -> np.ndarray:
         return sigma_knots_decode(raw, self.s_lo, self.s_hi, work=self.decode_work, reuse_output=True)
 
@@ -982,50 +979,6 @@ def _snap_nk_mesh_sol3b(
         n_at = np.interp(sk_ref, skn0, nn0)
 
     return sk_ref, n_at, LL_at
-
-
-def _prepare_free_knot_problem(
-    cfg: SplineOptConfig,
-    base_result: dict,
-    optimize_n: bool,
-    seq_label: str,
-    stage_name: str,
-    ev: str,
-    progress_cb,
-    log: Any,
-):
-    lam = np.asarray(cfg.lam_nm, dtype=np.float64).ravel()
-    sig = 1.0 / np.maximum(lam, 1e-9)
-    mg = build_spline_objective_masked_grid(cfg)
-    if mg is None:
-        log.warning("_run_free_knot_stage (%s): empty objective mask.", stage_name)
-        _log_spline_pipeline_json(log, f"{ev}_abort", seq=seq_label, reason="masked_grid_empty")
-        progress_cb(100, f"{stage_name}: Aborted (empty mask).")
-        return None
-    lam_f, sig_f, n_sub_f_mg, w_f, inv_npix, t_exp_f, r_exp_f = mg
-    s_lo = float(np.min(sig)); s_hi = float(np.max(sig)); _span_sig = float(max(s_hi - s_lo, 1e-30))
-    sigma_snap_atol = float(max(2.5e-5, 1e-6 * _span_sig, 1e-12))
-    ws = _free_knot_warm_state(base_result, cfg, optimize_n, seq_label, stage_name, ev, progress_cb, log)
-    if ws is None:
-        return None
-    sk0 = ws["sk0"]; skn0 = ws["skn0"]; skL0 = ws["skL0"]; d0 = ws["d0"]; nn0 = ws["nn0"]; LL0 = ws["LL0"]
-    K = ws["K"]; x_sol2_for_check = ws["x_sol2_for_check"]
-    M = K - 1
-    lo_k = max(float(cfg.k_clip_lo), 1e-12); hi_k = max(float(cfg.k_clip_hi), lo_k * 1.0001)
-    L_lo = float(np.log(lo_k)); L_hi = float(np.log(hi_k))
-    n_lo = float(N_MIN_LIMIT); n_hi = float(N_MAX_LIMIT)
-    min_dlam_ratio_req = float(max(getattr(cfg, "spline_min_delta_lambda_over_lambda_mean", 0.0) or 0.0, 0.0))
-    lam_lo = float(np.min(lam)) if lam.size else float("nan")
-    lam_hi = float(np.max(lam)) if lam.size else float("nan")
-    skn_spacing_ref = np.asarray(skn0, dtype=np.float64).ravel().copy()
-    skL_spacing_ref = np.asarray(skL0, dtype=np.float64).ravel().copy()
-    if optimize_n:
-        z0 = np.concatenate(([d0], sigma_knots_encode(skn0, float(np.min(sig)), float(np.max(sig))), sigma_knots_encode(skL0, float(np.min(sig)), float(np.max(sig))), np.clip(nn0, n_lo, n_hi), np.clip(LL0, L_lo, L_hi)))
-        bnds = ([(float(cfg.d_lo), float(cfg.d_hi))] + [(-12.0, 12.0)] * M + [(-12.0, 12.0)] * M + [(n_lo, n_hi)] * K + [(L_lo, L_hi)] * K)
-    else:
-        z0 = np.concatenate(([d0], sigma_knots_encode(skL0, float(np.min(sig)), float(np.max(sig))), np.clip(LL0, L_lo, L_hi)))
-        bnds = [(float(cfg.d_lo), float(cfg.d_hi))] + [(-12.0, 12.0)] * M + [(L_lo, L_hi)] * K
-    return locals()
 
 
 def _run_free_knot_stage(

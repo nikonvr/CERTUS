@@ -2,7 +2,10 @@ from __future__ import annotations
 import dataclasses
 from enum import Enum, auto
 from typing import Optional
-from certus.ui.certus_index_spline_common import *
+from dataclasses import dataclass
+from typing import Any
+import numpy as np
+from pydantic import BaseModel, ConfigDict
 
 class SmartInitPayload(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)

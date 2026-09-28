@@ -1,5 +1,7 @@
 from __future__ import annotations
-from certus.ui.certus_index_spline_common import *
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QGridLayout, QLabel, QSplitter, QVBoxLayout, QWidget
+from certus.ui.certus_ui import CertusScientificPlot, CertusTheme, FlashyCard, wrap_scientific_plot_with_toolbar
 from certus.utils.certus_ux import Typography
 from certus.ui.certus_index_spline_common import _apply_fixed_log_k_axis
 

@@ -285,50 +285,8 @@ class CertusDesignApp(
         self.events_manager._toggle_back_stack(state)
 
     # PlotManager Proxies
-    def init_plot_elements(self) -> None:
-        self.plot_manager.init_plot_elements()
-
     def update_plot(self, R: np.ndarray, R_back: np.ndarray | None = None) -> None:
         self.plot_manager.update_plot(R, R_back)
-
-    def _update_pareto_plot(self) -> None:
-        self.plot_manager._update_pareto_plot()
-
-    def update_target_scatter(self) -> None:
-        self.plot_manager.update_target_scatter()
-
-    def _update_scatter(
-        self, plot_item, x_data, y_data, w_data, is_active, brush_active, brush_inactive, is_oblique=False
-    ):
-        return self.plot_manager._update_scatter(
-            plot_item, x_data, y_data, w_data, is_active, brush_active, brush_inactive, is_oblique
-        )
-
-    def update_envelope_plot(self, env_top: np.ndarray, env_bot: np.ndarray) -> None:
-        self.plot_manager.update_envelope_plot(env_top, env_bot)
-
-    def toggle_oblique_targets_display(self, show: bool) -> None:
-        self.plot_manager.toggle_oblique_targets_display(show)
-
-    def _update_target_oblique_lines(self) -> None:
-        self.plot_manager._update_target_oblique_lines()
-
-    def reset_target_scatter(self) -> None:
-        self.plot_manager.reset_target_scatter()
-
-    def draw_crosshair(
-        self,
-        p: QPointF,
-        plot_item: pg.PlotItem,
-        v_line: pg.InfiniteLine,
-        h_line: pg.InfiniteLine,
-        label: pg.TextItem,
-        label_format: str,
-    ) -> None:
-        self.plot_manager.draw_crosshair(p, plot_item, v_line, h_line, label, label_format)
-
-    def update_color_display(self, L: float, a: float, b: float) -> None:
-        self.plot_manager.update_color_display(L, a, b)
 
     def _on_update_spectrum_y_scale_signal(self, *args) -> None:
         self.plot_manager._on_update_spectrum_y_scale_signal(*args)
@@ -610,9 +568,6 @@ class CertusDesignApp(
 
     def _finish_smart_decimation(self, *args, **kwargs):
         return self.optimization_manager._finish_smart_decimation(*args, **kwargs)
-
-    def _finalize_smart_decimation_post_actions(self, *args, **kwargs):
-        return self.optimization_manager._finalize_smart_decimation_post_actions(*args, **kwargs)
 
     def _decimation_remove_and_polish(self, *args, **kwargs):
         return self.optimization_manager._decimation_remove_and_polish(*args, **kwargs)

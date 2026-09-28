@@ -9,10 +9,10 @@ from certus.ui.certus_index_spline_common import (
     _QS_SPLINE_ORG,
     _QS_SPLINE_SIMPLE_AUTO_UNCERTAINTY,
     CertusIndexSplineApp,
-    _plot_spectrum_raw_scatter,
     _worker_curve_minimum_deep_refit,
     logger,
 )
+from certus.spline.certus_index_spline_execution import _plot_spectrum_raw_scatter
 import logging
 from threading import Event
 from typing import Any

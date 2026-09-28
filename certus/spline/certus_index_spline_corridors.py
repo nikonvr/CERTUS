@@ -170,31 +170,6 @@ from certus.utils.certus_skeleton import install_skeleton, uninstall_skeleton
 
 from certus.spline.spline_pipeline_utils import _interp_series_at_sigma_knots
 
-def _plot_spectrum_raw_scatter(
-    plot_w: pg.PlotWidget,
-    x: np.ndarray,
-    y: np.ndarray,
-    *,
-    color: str,
-    name: str,
-    symbol_size: int = 5,
-) -> None:
-    """Raw spectral data: always in points (no line), CERTUS convention."""
-    xf, yf = sanitize_xy_for_plot(x, y)
-    if xf.size == 0:
-        return
-    plot_w.plot(
-        xf,
-        yf,
-        pen=None,
-        symbol="o",
-        symbolSize=int(symbol_size),
-        symbolBrush=pg.mkBrush(color),
-        symbolPen=pg.mkPen(color, width=0.6),
-        name=name,
-    )
-
-
 def _apply_fixed_log_k_axis(plot_w: Any | None) -> None:
     """Force the CERTUS log-k axis convention locally in this module."""
     if plot_w is None:

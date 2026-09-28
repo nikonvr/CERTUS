@@ -1,5 +1,7 @@
 from __future__ import annotations
 from certus.ui.certus_strat_common import *
+from certus_physics import NON_MONOTONIC_MODE_REJECT
+from certus.utils.certus_strat_context import _validate_strategy_blocks_contract
 from certus.ui.certus_strat_json_ui import JsonViewerWindow
 
 #: String values recognized as TRUE in a config file.

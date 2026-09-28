@@ -1,9 +1,6 @@
 import pytest
 import numpy as np
 from unittest.mock import patch, MagicMock
-from PyQt6.QtWidgets import QApplication
-
-_APP = QApplication.instance() or QApplication([])
 
 from certus.core.certus_field_core import (
     _trapz_numba, 
@@ -13,6 +10,21 @@ from certus.core.certus_field_core import (
 from certus.workers.certus_field_workers_dto import FieldParamsDTO, FieldWorkerRequest
 from certus.workers.certus_field_workers import FieldWorkerThread, top_level_objective_function
 from certus.ui.certus_field_services import FieldExportService, FieldPlotData, FieldStackService
+
+
+@pytest.fixture(autouse=True)
+def _windows_end_with_the_test(qapp, monkeypatch):
+    """The FIELD windows built here are destroyed when their test ends (D11).
+
+    Left alive until the interpreter exits, one of them was enough for
+    `pytest tests/test_field_module.py tests/headless/test_field.py` to die at shutdown
+    (0xc0000005 or 0xc0000409, after every test had passed), and for a following tests/ui
+    file to crash in QApplication.setFont (measured 2026-09-28).
+    """
+    from qt_lifecycle import qt_lifecycle
+
+    yield from qt_lifecycle(qapp, monkeypatch, "FIELD module", main_windows_only=True)
+
 
 # ---------------------------------------------------------
 # TESTS CORE (Numba & Math)

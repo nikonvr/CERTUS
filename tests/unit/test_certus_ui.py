@@ -716,7 +716,6 @@ def test_strat_strategies_table_headers_contract(qapp):
     from pathlib import Path
 
     sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-    pytest.importorskip("CERTUS_STRAT")
     from CERTUS_STRAT import StrategiesTableWindow
 
     strategy_result = {
@@ -1118,7 +1117,6 @@ class TestUIExceptionHandling:
             assert app.export_report_pdf() is None or isinstance(app.export_report_pdf(), (str, type(None)))
 
     def test_re_app_callbacks_protected(self, qapp):
-        pytest.importorskip("CERTUS_RE")
         with patch("CERTUS_RE.WarmupWorker"):
             from CERTUS_RE import CertusREApp
 

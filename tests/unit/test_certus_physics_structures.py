@@ -13,7 +13,8 @@ sys.path.insert(0, str(ROOT))
 
 @pytest.mark.unit
 def test_physics_impl_exports_expected_symbols() -> None:
-    mod = pytest.importorskip("_certus_physics_impl")
+    import certus.core._certus_physics_impl as mod
+
     assert hasattr(mod, "Layer")
     assert hasattr(mod, "Target")
     assert hasattr(mod, "NKCache")

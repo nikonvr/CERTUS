@@ -40,7 +40,7 @@ sys.path.insert(0, str(ROOT))
 
 
 
-csi = pytest.importorskip("certus_substrate_index", reason="certus_substrate_index unavailable")
+import certus.core.certus_substrate_index as csi
 
 
 

@@ -10,7 +10,7 @@ import pytest
 ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT))
 
-cm = pytest.importorskip("certus_measurement_excel_ui", reason="certus_measurement_excel_ui indisponible")
+from certus.ui import certus_measurement_excel_ui as cm
 
 
 @pytest.mark.unit

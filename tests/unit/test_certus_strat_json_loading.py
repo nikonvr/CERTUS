@@ -8,7 +8,6 @@ from pathlib import Path
 import pytest
 
 pytest.importorskip("PyQt6")
-pytest.importorskip("CERTUS_STRAT")
 
 from PyQt6.QtWidgets import QApplication
 

@@ -16,6 +16,14 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 
+@pytest.fixture(autouse=True)
+def _windows_end_with_the_test(qapp, monkeypatch):
+    """The windows a test builds are destroyed when it ends (D11): closing only hides them."""
+    from qt_lifecycle import qt_lifecycle
+
+    yield from qt_lifecycle(qapp, monkeypatch, "GUI smoke", main_windows_only=True)
+
+
 @pytest.mark.unit
 def test_certus_design_app_constructs_headless(monkeypatch, qapp) -> None:
     """Verify that CertusDesignApp instantiates correctly offscreen."""

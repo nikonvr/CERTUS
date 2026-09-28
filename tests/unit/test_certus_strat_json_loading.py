@@ -15,6 +15,14 @@ from PyQt6.QtWidgets import QApplication
 from certus.ui.certus_strat_ui import CertusSTRATApp  # type: ignore[attr-defined]
 
 
+@pytest.fixture(autouse=True)
+def _windows_end_with_the_test(qapp, monkeypatch):
+    """The windows a test builds are destroyed when it ends (D11): closing only hides them."""
+    from qt_lifecycle import qt_lifecycle
+
+    yield from qt_lifecycle(qapp, monkeypatch, "STRAT JSON loading", main_windows_only=True)
+
+
 @pytest.mark.unit
 def test_strat_json_example_loads_canonical_h_material(qapp):
     """The example JSON should load the canonical H/L/substrate labels."""

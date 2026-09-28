@@ -6,6 +6,14 @@ import pytest
 from certus.utils.certus_reset_framework import reset_app_to_defaults
 
 
+@pytest.fixture(autouse=True)
+def _windows_end_with_the_test(qapp, monkeypatch):
+    """The windows a test builds are destroyed when it ends (D11): closing only hides them."""
+    from qt_lifecycle import qt_lifecycle
+
+    yield from qt_lifecycle(qapp, monkeypatch, "reset lifecycle", main_windows_only=True)
+
+
 @pytest.mark.unit
 def test_design_app_reset_lifecycle(monkeypatch, qapp) -> None:
     """Vérifie que CertusDesignApp se réinitialise proprement sans exception."""

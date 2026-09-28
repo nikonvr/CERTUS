@@ -44,6 +44,14 @@ from certus.ui.certus_strat_multigraine_ui import (  # noqa: E402
 )
 
 
+@pytest.fixture(autouse=True)
+def _windows_end_with_the_test(qapp, monkeypatch):
+    """The windows a test builds are destroyed when it ends (D11): closing only hides them."""
+    from qt_lifecycle import qt_lifecycle
+
+    yield from qt_lifecycle(qapp, monkeypatch, "multigraine UI", main_windows_only=True)
+
+
 def _etat(*evts: dict) -> EtatMultigraine:
     e = EtatMultigraine()
     for v in evts:

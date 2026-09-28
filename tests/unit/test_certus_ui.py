@@ -64,6 +64,13 @@ except ImportError:
 from certus.ui.certus_ui import ExcelTableWidget
 
 
+@pytest.fixture(autouse=True)
+def _windows_end_with_the_test(qapp, monkeypatch):
+    """The windows a test builds are destroyed when it ends (D11): closing only hides them."""
+    from qt_lifecycle import qt_lifecycle
+
+    yield from qt_lifecycle(qapp, monkeypatch, "certus_ui", main_windows_only=True)
+
 
 @pytest.mark.skipif(not QT_AVAILABLE, reason="PyQt6 not available")
 class TestDataFileFiltersAndHelper:

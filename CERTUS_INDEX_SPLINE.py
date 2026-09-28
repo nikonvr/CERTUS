@@ -8,7 +8,6 @@ Forwards all attributes dynamically to modularized submodules.
 from __future__ import annotations
 import sys
 import multiprocessing
-from pathlib import Path
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QApplication
 

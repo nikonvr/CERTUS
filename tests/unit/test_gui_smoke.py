@@ -270,24 +270,26 @@ def test_spline_pipeline_has_copy() -> None:
 
 
 def test_certus_design_physics_import_unified() -> None:
-    """CERTUS_DESIGN must import all physics symbols from a single import block."""
+    """CERTUS_DESIGN compiles, and imports no certus_physics symbol twice.
+
+    Written when the monolith's physics imports were merged into one block. CERTUS_DESIGN.py is
+    now a thin entry script whose facade serves the physics of its submodules: it imports no
+    physics symbol itself (unused imports removed on 2026-09-29), and none may come back twice.
+    """
+    import ast
     import py_compile
     from pathlib import Path
 
-    # Just verify it compiles — the merged import is syntactically valid
     design_path = Path("CERTUS_DESIGN.py").resolve()
     py_compile.compile(str(design_path), doraise=True)
-
-    # Verify the key symbols are accessible
-    src = design_path.read_text(encoding="utf-8")
-    # Count 'from certus_physics import (' blocks
-    import re
-
-    blocks = re.findall(r"^from certus_physics import \(", src, re.MULTILINE)
-    # Should be 2 (the merged one + the wrapper one for calc_spectrum_*)
-    assert len(blocks) == 2, (
-        f"Expected exactly 2 'from certus_physics import (' blocks, found {len(blocks)}"
-    )
+    tree = ast.parse(design_path.read_text(encoding="utf-8"))
+    names = [
+        a.asname or a.name
+        for n in ast.walk(tree)
+        if isinstance(n, ast.ImportFrom) and n.module == "certus_physics"
+        for a in n.names
+    ]
+    assert len(names) == len(set(names)), f"certus_physics symbols imported twice: {names}"
 
 
 def test_auto_clean_neighbor_pull_no_copy_error() -> None:

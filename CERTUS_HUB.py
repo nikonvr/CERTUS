@@ -31,7 +31,7 @@ Fixed: Header generation and Config loading robustness.
 """
 
 
-from typing import Any, TypedDict
+from typing import Any
 import functools
 import logging
 import multiprocessing
@@ -92,9 +92,7 @@ from certus.ui.certus_qt_widgets import (
     QApplication,
     QCheckBox,
     QColor,
-    QFont,
     QFrame,
-    QGraphicsDropShadowEffect,
     QGridLayout,
     QHBoxLayout,
     QIcon,
@@ -105,7 +103,6 @@ from certus.ui.certus_qt_widgets import (
     QProcess,
     QPushButton,
     QShortcut,
-    QTextEdit,
     QTimer,
     Qt,
     QVBoxLayout,
@@ -153,7 +150,6 @@ from certus.ui.certus_ui import (
     CertusLogPanel,
 )
 from certus.ui.certus_ui_widgets_factory import (
-    create_colored_label,
     create_header_logo_widget,
     create_styled_label,
 )
@@ -179,7 +175,7 @@ from PyQt6.QtWidgets import QComboBox
 
 
 from certus.core.certus_hub_config import HubAppCatalogItem, HUB_APP_CATALOG, hub_grid_columns
-from certus.ui.certus_hub_widgets import ModuleBadge, BaseApplicationCard, ApplicationCard, GroupedApplicationCard
+from certus.ui.certus_hub_widgets import ApplicationCard, GroupedApplicationCard
 from certus.utils.certus_qsettings import certus_settings
 
 

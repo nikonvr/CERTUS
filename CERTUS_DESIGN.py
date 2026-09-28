@@ -42,18 +42,11 @@ _configure_numba_env()
 
 from certus.core.certus_core import __version__
 
-from certus_physics import (
-    Layer,
-)
-from certus_physics import (
-    calc_spectrum_front_wrapper,
-)
 
 import os
 from pathlib import Path
 
 import multiprocessing
-import functools
 
 from certus.core.certus_core import create_module_environment
 

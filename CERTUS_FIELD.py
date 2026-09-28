@@ -2,12 +2,9 @@
 # ARCHITECTURE: LIGHTWEIGHT FACADE FOR FIELD MODULE
 # =========================================================================================
 
-import os
 import sys
 import multiprocessing
 import ctypes
-from pathlib import Path
-import logging
 
 #Numba configuration BEFORE any import using @njit (see CERTUS_HUB.py).
 #Without this call, NUMBA_CACHE_DIR is not defined and the JIT cache is written next
@@ -22,7 +19,7 @@ from certus.core.certus_core import create_module_environment
 env = create_module_environment(__file__, "FIELD")
 script_dir = env["script_dir"]
 
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication
 
 from certus.core.certus_core import setup_module_logging

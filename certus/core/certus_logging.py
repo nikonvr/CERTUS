@@ -70,19 +70,6 @@ class CertusConsoleFormatter(logging.Formatter):
         return formatted
 
 
-class CertusGuiFormatter(logging.Formatter):
-    def __init__(self):
-        super().__init__(datefmt="%Y-%m-%d %H:%M:%S")
-        self.use_unicode = _supports_utf8()
-
-    def format(self, record: logging.LogRecord) -> str:
-        sep1 = "✦" if self.use_unicode else "*"
-        sep2 = "➔" if self.use_unicode else "->"
-        time_str = self.formatTime(record, self.datefmt)
-        lvl_name = record.levelname.ljust(5)
-        return f"{time_str} {sep1} {lvl_name} {sep2} {record.getMessage()}"
-
-
 def _resolve_console_log_level(default: int) -> int:
     raw = os.environ.get("CERTUS_CONSOLE_LOG_LEVEL", "").strip().upper()
     if not raw:

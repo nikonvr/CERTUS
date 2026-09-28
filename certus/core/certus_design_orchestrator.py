@@ -41,12 +41,6 @@ class DesignOrchestrator:
 
         logging.info("[ORCHESTRATOR] DesignOrchestrator initialized.")
 
-    def start_synthesis(self, initial_cfg: dict[str, Any]):
-        """Entry point to kickstart the autonomous synthesis loop."""
-        self.is_running = True
-        logging.info("[ORCHESTRATOR] Synthesis loop started.")
-        self.ui.log("Synthesis orchestration is not yet wired into the UI flow.", "ERROR")
-
     def abort(self):
         """Forcefully stops any running synthesis loop."""
         self.is_running = False

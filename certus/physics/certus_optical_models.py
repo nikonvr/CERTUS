@@ -286,57 +286,6 @@ def epsilon_to_nk(
 # =============================================================================
 
 
-class SplineCache:
-    """
-
-    Cache for CubicSpline objects to avoid recreation on each call.
-
-    Thread-safe via LRU cache on immutable tuple keys.
-
-    Kept for backward compatibility; prefer SplineBasisCache for optimization loops.
-
-    """
-
-    _instance = None
-
-    def __new__(cls):
-
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-
-        return cls._instance
-
-    @lru_cache(maxsize=512)
-    def _get_splines(self, knot_wl_tuple, n_values_tuple, k_values_tuple):
-
-        knot_wl = np.array(knot_wl_tuple)
-
-        n_vals = np.array(n_values_tuple)
-
-        k_vals = np.array(k_values_tuple)
-
-        spline_n = CubicSpline(knot_wl, n_vals, bc_type="natural", extrapolate=False)
-
-        spline_k = CubicSpline(knot_wl, k_vals, bc_type="natural", extrapolate=False)
-
-        return spline_n, spline_k
-
-    def get_splines(self, knot_wavelengths, n_knot_values, k_knot_values):
-
-        return self._get_splines(
-            tuple(knot_wavelengths.round(6)),
-            tuple(n_knot_values.round(6)),
-            tuple(k_knot_values.round(6)),
-        )
-
-    def clear(self):
-
-        self._get_splines.cache_clear()
-
-
-_spline_cache = SplineCache()
-
-
 class SplineBasisCache:
     """
 

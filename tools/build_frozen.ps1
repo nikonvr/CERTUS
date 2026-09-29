@@ -14,5 +14,12 @@ if ($exitCode -ne 0) {
     exit $exitCode
 }
 
-Write-Host "[CERTUS] frozen build PASSED"
+# PyInstaller exits 0 even when it has left something out: the build is done when the executable is there.
+$exe = Join-Path $repoRoot "dist\CERTUS_HUB\CERTUS_HUB.exe"
+if (-not (Test-Path -LiteralPath $exe)) {
+    Write-Host "[CERTUS] frozen build FAILED: $exe was not produced"
+    exit 1
+}
+
+Write-Host "[CERTUS] frozen build PASSED ($exe)"
 exit 0

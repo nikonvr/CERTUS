@@ -125,5 +125,5 @@ jobs:
         with:
           name: certus-hub-frozen-py314
           path: |
-            dist/CERTUS_HUB.exe
-            build/**
+            dist/CERTUS_HUB/**
+            build/certus_hub/warn-certus_hub.txt

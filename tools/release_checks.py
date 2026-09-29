@@ -4,11 +4,34 @@ import argparse
 import os
 import re
 import subprocess
+import sys
 import time
 from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+
+#: Where `tools/build_frozen.ps1` leaves the build (PyInstaller's default).
+DIST_DIR = REPO_ROOT / "dist"
+
+#: The frozen suite is a FOLDER (`dist/CERTUS_HUB/`): one executable, that is the hub and every
+#: module (`CERTUS_HUB.exe --run-module NAME`), and the data next to it. See `certus_hub.spec`.
+FROZEN_NAME = "CERTUS_HUB"
+
+#: Read by the code through `get_resource_path`, so they must sit next to the executable.
+FROZEN_REQUIRED_FILES = (
+    "certus.ico",
+    "certus.svg",
+    "data/materials_v1.json",
+    "pages/CERTUS_HUB.html",
+)
+
+#: Sanity bounds on the size of the whole folder (Qt, NumPy, SciPy and Numba are in it).
+FROZEN_MIN_BYTES = 50_000_000
+FROZEN_MAX_BYTES = 3_000_000_000
+
+#: How often a started process is looked at (seconds).
+POLL_SEC = 0.1
 
 
 def _parse_pyproject_dependencies(pyproject_path: Path) -> set[str]:
@@ -89,63 +112,121 @@ def check_lock_consistency() -> list[str]:
     return errors
 
 
+def _frozen_folder() -> Path:
+    return DIST_DIR / FROZEN_NAME
+
+
+def _frozen_exe() -> Path:
+    return _frozen_folder() / f"{FROZEN_NAME}.exe"
+
+
 def check_frozen_artifact() -> list[str]:
-    exe = REPO_ROOT / "dist" / "CERTUS_HUB.exe"
+    folder = _frozen_folder()
+    exe = _frozen_exe()
     errors: list[str] = []
     if not exe.exists():
-        errors.append("Missing frozen artifact: dist/CERTUS_HUB.exe")
+        errors.append(f"Missing frozen artifact: dist/{FROZEN_NAME}/{exe.name}")
         return errors
-    size = exe.stat().st_size
-    if size < 5_000_000:
-        errors.append(
-            f"Frozen artifact too small ({size} bytes) - build potentially incomplete"
-        )
-    if size > 500_000_000:
-        errors.append(
-            f"Frozen artifact abnormally large ({size} bytes)"
-        )
+
     try:
-        data = exe.read_bytes()
-        if len(data) < 64 or data[:2] != b"MZ":
+        with exe.open("rb") as handle:
+            head = handle.read(65536)
+        if len(head) < 64 or head[:2] != b"MZ":
             errors.append("Invalid frozen artifact: missing DOS/PE signature (MZ)")
         else:
-            pe_off = int.from_bytes(data[0x3C:0x40], "little")
-            if pe_off + 4 > len(data) or data[pe_off:pe_off + 4] != b"PE\x00\x00":
+            pe_off = int.from_bytes(head[0x3C:0x40], "little")
+            if pe_off + 4 > len(head) or head[pe_off:pe_off + 4] != b"PE\x00\x00":
                 errors.append("Invalid frozen artifact: PE header not found")
     except OSError as exc:
         errors.append(f"Cannot read frozen artifact: {exc}")
+
+    # The executable of a folder build is only the launcher: what makes the build complete is
+    # what sits next to it, and the size of the whole folder.
+    size = sum(p.stat().st_size for p in folder.rglob("*") if p.is_file())
+    if size < FROZEN_MIN_BYTES:
+        errors.append(f"Frozen folder too small ({size} bytes) - build potentially incomplete")
+    if size > FROZEN_MAX_BYTES:
+        errors.append(f"Frozen folder abnormally large ({size} bytes)")
+    if not list(folder.glob("python3*.dll")):
+        errors.append("Frozen folder holds no Python runtime (python3*.dll)")
+    for name in FROZEN_REQUIRED_FILES:
+        if not (folder / name).is_file():
+            errors.append(f"Frozen folder is missing a file the code reads: {name}")
     return errors
 
 
-def check_frozen_functional_startup(timeout_sec: int = 12) -> list[str]:
-    exe = REPO_ROOT / "dist" / "CERTUS_HUB.exe"
-    if not exe.exists():
-        return ["Missing frozen artifact: dist/CERTUS_HUB.exe"]
+def _newest_log_tail(folder: Path, since: float, lines: int = 6) -> str:
+    """Last lines of the log the frozen process wrote after `since` (a windowed exe has no console).
 
-    errors: list[str] = []
-    full_env = os.environ.copy()
-    full_env["QT_QPA_PLATFORM"] = "offscreen"
+    The start-up failure log is the one that says why, so it comes first.
+    """
+    logs = [p for p in folder.glob("*.log") if p.stat().st_mtime >= since]
+    if not logs:
+        return ""
+    startup = folder / "certus_frozen_startup.log"
+    newest = startup if startup in logs else max(logs, key=lambda p: p.stat().st_mtime)
+    try:
+        tail = newest.read_text(encoding="utf-8", errors="replace").splitlines()[-lines:]
+    except OSError:
+        return ""
+    return f" [{newest.name}: " + " | ".join(line.strip() for line in tail if line.strip()) + "]"
 
-    proc = subprocess.Popen([str(exe)], env=full_env)
+
+def _window_titles_of(pid: int) -> list[str]:
+    """Titles of the visible windows that process `pid` owns (Windows only).
+
+    The checks run with `QT_QPA_PLATFORM=offscreen`, where Qt draws no native window: a visible one
+    is a native dialog, and the one that matters is PyInstaller's "Unhandled exception in script"
+    box, which keeps a failed process alive and looking healthy.
+    """
+    if sys.platform != "win32":
+        return []
+    import ctypes
+    from ctypes import wintypes
+
+    user32 = ctypes.windll.user32
+    titles: list[str] = []
+
+    @ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+    def visit(hwnd, _lparam):
+        owner = wintypes.DWORD()
+        user32.GetWindowThreadProcessId(hwnd, ctypes.byref(owner))
+        if owner.value == pid and user32.IsWindowVisible(hwnd):
+            buffer = ctypes.create_unicode_buffer(256)
+            user32.GetWindowTextW(hwnd, buffer, 256)
+            titles.append(buffer.value)
+        return True
+
+    user32.EnumWindows(visit, 0)
+    return titles
+
+
+def _process_stays_up(command: list[str], label: str, timeout_sec: float) -> list[str]:
+    """Start `command` headless; it must still be running after `timeout_sec`, and show no dialog.
+
+    A GUI process that ends by itself while nobody touches it has failed to start, whatever its
+    exit code: a healthy one waits for the user. One that stays up behind an error box has failed
+    as well.
+    """
+    folder = _frozen_folder()
+    env = os.environ.copy()
+    env["QT_QPA_PLATFORM"] = "offscreen"
+
     start = time.time()
+    proc = subprocess.Popen(command, env=env, cwd=str(folder))
     try:
         while (time.time() - start) < float(timeout_sec):
             code = proc.poll()
-            if code is None:
-                time.sleep(0.5)
-                continue
-            if code != 0:
-                errors.append(
-                    f"Frozen executable stopped too early with non-zero code: {code}"
-                )
-            # If code == 0 quickly, still suspicious for GUI app startup.
-            if code == 0 and (time.time() - start) < 2.0:
-                errors.append(
-                    "Frozen executable terminated immediately (<2s), suspicious startup"
-                )
-            return errors
-        # Process stayed up long enough: startup considered healthy.
-        return errors
+            if code is not None:
+                return [
+                    f"{label} stopped by itself after {time.time() - start:.1f}s with code {code}"
+                    + _newest_log_tail(folder, start - 1.0)
+                ]
+            titles = _window_titles_of(proc.pid)
+            if titles:
+                return [f"{label} opened a dialog: {titles}" + _newest_log_tail(folder, start - 1.0)]
+            time.sleep(POLL_SEC)
+        return []
     finally:
         if proc.poll() is None:
             proc.terminate()
@@ -153,6 +234,37 @@ def check_frozen_functional_startup(timeout_sec: int = 12) -> list[str]:
                 proc.wait(timeout=3)
             except subprocess.TimeoutExpired:
                 proc.kill()
+
+
+def _hub_catalog() -> tuple[str, tuple[str, ...]]:
+    """The flag that starts a module, and the modules of the hub catalog (what the frozen hub can start)."""
+    sys.path.insert(0, str(REPO_ROOT))
+    try:
+        from certus.core.certus_frozen_entry import catalog_modules
+        from certus.core.certus_hub_config import RUN_MODULE_FLAG
+    finally:
+        sys.path.remove(str(REPO_ROOT))
+    return RUN_MODULE_FLAG, catalog_modules()
+
+
+def check_frozen_functional_startup(timeout_sec: int = 12) -> list[str]:
+    exe = _frozen_exe()
+    if not exe.exists():
+        return [f"Missing frozen artifact: dist/{FROZEN_NAME}/{exe.name}"]
+    return _process_stays_up([str(exe)], "Frozen hub", timeout_sec)
+
+
+def check_frozen_modules_startup(timeout_sec: int = 12) -> list[str]:
+    """Every module of the catalog, started the way the frozen hub starts it."""
+    exe = _frozen_exe()
+    if not exe.exists():
+        return [f"Missing frozen artifact: dist/{FROZEN_NAME}/{exe.name}"]
+
+    flag, modules = _hub_catalog()
+    errors: list[str] = []
+    for name in modules:
+        errors.extend(_process_stays_up([str(exe), flag, name], f"Frozen module {name}", timeout_sec))
+    return errors
 
 
 def check_release_structure() -> list[str]:
@@ -179,6 +291,7 @@ def check_release_structure() -> list[str]:
         "./tools/smoke_release.ps1",
         "./tools/build_frozen.ps1",
         "actions/upload-artifact@v4",
+        "dist/CERTUS_HUB/**",
         "tests/unit/test_release_guardrails.py",
     ]
     for token in required_tokens:
@@ -200,11 +313,21 @@ def check_release_structure() -> list[str]:
         errors.append("Missing spec: certus_hub.spec")
     else:
         spec_text = spec_file.read_text(encoding="utf-8")
-        for token in ("CERTUS_HUB.py", 'name="CERTUS_HUB"', 'icon="certus.ico"'):
+        for token in (
+            "frozen_entry.py",
+            'name="CERTUS_HUB"',
+            'icon="certus.ico"',
+            'contents_directory="."',
+            "COLLECT(",
+        ):
             if token not in spec_text:
                 errors.append(f"Incomplete frozen spec (missing token): {token}")
         if 'console=False' not in spec_text:
             errors.append("Incomplete frozen spec: expected console=False")
+
+    for entry in ("tools/frozen_entry.py", "certus/core/certus_frozen_entry.py"):
+        if not (REPO_ROOT / entry).exists():
+            errors.append(f"Missing frozen entry: {entry}")
 
     for asset in ("certus.ico", "certus.svg"):
         if not (REPO_ROOT / asset).exists():
@@ -223,13 +346,13 @@ def main() -> int:
     parser.add_argument(
         "--check-frozen-run",
         action="store_true",
-        help="Checks for minimal functional startup of the frozen executable.",
+        help="Checks for minimal functional startup of the frozen hub and of each frozen module.",
     )
     parser.add_argument(
         "--startup-timeout-sec",
         type=int,
         default=12,
-        help="Timeout (seconds) for frozen boot check.",
+        help="Timeout (seconds) for each frozen boot check.",
     )
     args = parser.parse_args()
 
@@ -240,9 +363,9 @@ def main() -> int:
     if args.check_frozen:
         failures.extend(check_frozen_artifact())
     if args.check_frozen_run:
-        failures.extend(
-            check_frozen_functional_startup(timeout_sec=int(args.startup_timeout_sec))
-        )
+        timeout = int(args.startup_timeout_sec)
+        failures.extend(check_frozen_functional_startup(timeout_sec=timeout))
+        failures.extend(check_frozen_modules_startup(timeout_sec=timeout))
 
     if failures:
         print("[CERTUS] release checks FAILED")

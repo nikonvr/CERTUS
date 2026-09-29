@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import importlib.util
+import sys
 from pathlib import Path
 
 import pytest
@@ -36,3 +38,150 @@ def test_critical_guardrail_files_exist() -> None:
     ]
     missing = [str(p.relative_to(repo)) for p in required_files if not p.exists()]
     assert not missing, "Guardrail files missing: " + ", ".join(missing)
+
+
+# =============================================================================
+# The frozen build: what `tools/release_checks.py` accepts and refuses
+# =============================================================================
+
+
+def _release_checks():
+    """`tools/release_checks.py` as a module (`tools/` is not a package)."""
+    path = Path(__file__).resolve().parents[2] / "tools" / "release_checks.py"
+    spec = importlib.util.spec_from_file_location("release_checks_under_test", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+@pytest.mark.unit
+def test_the_release_structure_holds_on_the_repository() -> None:
+    assert _release_checks().check_release_structure() == []
+
+
+def _frozen_folder(tmp_path: Path, rc, *, data: bool = True, runtime: bool = True) -> Path:
+    """A folder that looks like `dist/CERTUS_HUB/`: a PE launcher, the runtime, the data."""
+    folder = tmp_path / rc.FROZEN_NAME
+    folder.mkdir()
+    header = bytearray(b"MZ" + bytes(0x7E))
+    header[0x3C:0x40] = (0x80).to_bytes(4, "little")
+    (folder / f"{rc.FROZEN_NAME}.exe").write_bytes(bytes(header) + b"PE" + bytes(2) + bytes(64))
+    if runtime:
+        (folder / "python314.dll").write_bytes(b"runtime")
+    for name in rc.FROZEN_REQUIRED_FILES if data else ():
+        (folder / name).parent.mkdir(parents=True, exist_ok=True)
+        (folder / name).write_bytes(b"data")
+    return folder
+
+
+@pytest.fixture
+def rc(tmp_path, monkeypatch):
+    module = _release_checks()
+    monkeypatch.setattr(module, "DIST_DIR", tmp_path)
+    monkeypatch.setattr(module, "FROZEN_MIN_BYTES", 1)  # the size floor is for a real build
+    return module
+
+
+@pytest.mark.unit
+def test_a_complete_frozen_folder_is_accepted(tmp_path, rc) -> None:
+    _frozen_folder(tmp_path, rc)
+
+    assert rc.check_frozen_artifact() == []
+
+
+@pytest.mark.unit
+def test_a_frozen_folder_without_the_data_the_code_reads_is_refused(tmp_path, rc) -> None:
+    _frozen_folder(tmp_path, rc, data=False)
+
+    errors = rc.check_frozen_artifact()
+
+    assert [name for name in rc.FROZEN_REQUIRED_FILES if not any(name in e for e in errors)] == []
+
+
+@pytest.mark.unit
+def test_a_frozen_folder_without_the_python_runtime_is_refused(tmp_path, rc) -> None:
+    _frozen_folder(tmp_path, rc, runtime=False)
+
+    assert any("Python runtime" in e for e in rc.check_frozen_artifact())
+
+
+@pytest.mark.unit
+def test_a_missing_frozen_build_is_reported(rc) -> None:
+    assert any("Missing frozen artifact" in e for e in rc.check_frozen_artifact())
+    assert any("Missing frozen artifact" in e for e in rc.check_frozen_functional_startup(timeout_sec=1))
+    assert any("Missing frozen artifact" in e for e in rc.check_frozen_modules_startup(timeout_sec=1))
+
+
+@pytest.mark.unit
+def test_a_process_that_stays_up_is_accepted_and_stopped(tmp_path, rc) -> None:
+    _frozen_folder(tmp_path, rc)
+
+    assert rc._process_stays_up([sys.executable, "-c", "import time; time.sleep(60)"], "Frozen hub", 1) == []
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("code", [0, 3])
+def test_a_process_that_stops_by_itself_is_refused_whatever_its_exit_code(tmp_path, rc, code) -> None:
+    # Exit code 0 is the trap: the module that ran a library file as `__main__` "succeeded" at once.
+    _frozen_folder(tmp_path, rc)
+
+    errors = rc._process_stays_up([sys.executable, "-c", f"import sys; sys.exit({code})"], "Frozen module X", 30)
+
+    assert len(errors) == 1
+    assert "Frozen module X stopped by itself" in errors[0]
+    assert f"code {code}" in errors[0]
+
+
+@pytest.mark.unit
+def test_the_refusal_quotes_the_log_the_process_wrote(tmp_path, rc) -> None:
+    folder = _frozen_folder(tmp_path, rc)
+    (folder / "certus_x.log").write_text(chr(10).join(["first", "failed to open the database"]), encoding="utf-8")
+
+    errors = rc._process_stays_up([sys.executable, "-c", "pass"], "Frozen module X", 30)
+
+    assert "failed to open the database" in errors[0]
+
+
+@pytest.mark.unit
+def test_every_module_of_the_catalog_is_started_the_way_the_hub_starts_it(tmp_path, rc, monkeypatch) -> None:
+    from certus.core.certus_hub_config import RUN_MODULE_FLAG
+
+    folder = _frozen_folder(tmp_path, rc)
+    started = []
+    monkeypatch.setattr(rc, "_process_stays_up", lambda command, label, timeout: started.append((command, label)) or [])
+
+    assert rc.check_frozen_modules_startup(timeout_sec=1) == []
+
+    commands = [command for command, _label in started]
+    assert all(command[:2] == [str(folder / "CERTUS_HUB.exe"), RUN_MODULE_FLAG] for command in commands)
+    assert [command[2] for command in commands] == list(rc._hub_catalog()[1])
+    assert len(commands) == 10
+
+
+@pytest.mark.unit
+@pytest.mark.skipif(sys.platform != "win32", reason="the native dialog of a frozen Windows build")
+def test_a_process_that_stays_up_behind_a_dialog_is_refused(tmp_path, rc) -> None:
+    # PyInstaller's "Unhandled exception in script" box keeps a failed module alive and looking
+    # healthy: STRAT passed a "stays up" check for as long as `scripts/` was missing from the build.
+    _frozen_folder(tmp_path, rc)
+    code = "import ctypes; ctypes.windll.user32.MessageBoxW(0, 'boom', 'Unhandled exception in script', 0)"
+
+    errors = rc._process_stays_up([sys.executable, "-c", code], "Frozen module X", 30)
+
+    assert len(errors) == 1
+    assert "opened a dialog" in errors[0]
+    assert "Unhandled exception in script" in errors[0]
+
+
+@pytest.mark.unit
+def test_the_refusal_quotes_the_startup_log_before_any_other(tmp_path, rc) -> None:
+    folder = _frozen_folder(tmp_path, rc)
+    (folder / "certus_frozen_startup.log").write_text(
+        chr(10).join(["Traceback", "ModuleNotFoundError: No module named 'x'"]), encoding="utf-8"
+    )
+    (folder / "certus_zzz.log").write_text("something written later", encoding="utf-8")
+
+    errors = rc._process_stays_up([sys.executable, "-c", "pass"], "Frozen module X", 30)
+
+    assert "ModuleNotFoundError: No module named 'x'" in errors[0]
+    assert "something written later" not in errors[0]

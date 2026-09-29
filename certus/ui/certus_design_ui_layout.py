@@ -526,7 +526,7 @@ class LayoutManager:
         action_layout = QVBoxLayout()
         action_layout.setSpacing(12)
 
-        logger = getattr(self, "logger", None)
+        logger = getattr(self.ui, "logger", None)
         if logger:
             logger.info(
                 "DESIGN UI: building action buttons | has_functools=%s", bool(getattr(functools, "partial", None))

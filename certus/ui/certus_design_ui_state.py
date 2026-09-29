@@ -3,7 +3,6 @@ from certus.core.certus_core import APP_SUITE_VERSION, CFG
 import os
 from pathlib import Path
 import logging
-import time
 from typing import Any
 import numpy as np
 from certus.ui.certus_qt_widgets import QCheckBox
@@ -202,7 +201,7 @@ class StateManager:
     def _apply_config(self, c: dict) -> None:
         """Apply a parsed configuration dict to the UI (Lot C)."""
 
-        cfg_filename = getattr(self.ui, "_last_config_file", None) or getattr(self, "_last_config_file", None) or "<unknown>"
+        cfg_filename = getattr(self.ui, "_last_config_file", None) or "<unknown>"
         front_rows = c.get("front", [])
         back_rows = c.get("back", [])
         target_rows = c.get("targets", [])
@@ -238,7 +237,8 @@ class StateManager:
 
         self.ui.log("Format Version: %s" % c.get("version", "Unknown"), "INFO")
 
-        self.ui._last_config_file = getattr(self, "_last_config_file", None)
+        # The new configuration has no source file until _post_load_config records it.
+        self.ui._last_config_file = None
         self.ui._loading_config = True
         
         # Reset current optimization state so new config is evaluated fresh
@@ -477,10 +477,6 @@ class StateManager:
             self.ui._plot_nk()
         except Exception as plot_err:
             logging.debug("[LOAD] immediate plot refresh failed: %s", plot_err)
-
-        _load_start = getattr(self, '_load_config_start_time', None)
-        if _load_start is not None:
-            self.ui.log(f"[LOAD] === load_config complete in {(time.time() - _load_start) * 1000:.1f}ms ===", "INFO")
 
         self.ui.log(f"Config loaded from {Path(filename).name}", "SUCCESS")
 

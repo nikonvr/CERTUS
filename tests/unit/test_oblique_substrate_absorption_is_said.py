@@ -1,17 +1,19 @@
-"""The oblique-incidence kernels read the substrate as transparent, and say so when it matters.
+"""The oblique PLATE kernels read the substrate as transparent, and say so when it matters.
 
-Every oblique kernel of `certus/physics` (the spectrum, its backside variants and the analytic
-gradients that DESIGN's objective is built from) keeps the real part of the substrate index and
-drops its absorption: « transparent exit approximation », written in a comment of one kernel and
-nowhere the operator could see it. For a dielectric it costs less than 1e-3 on R; for a substrate
-that absorbs it costs up to 0.25 (an index of 1.7 - 1.11i at 30 degrees: 0.234 on R, measured
-against `tests/oracle/tmm_reference.py`). The spectrum on screen and the objective agree with one
-another, both wrong in the same way, so nothing looks off.
+The oblique kernels of `certus/physics` that end on a semi-infinite substrate (the spectrum of a front
+stack and the analytic gradient of DESIGN's objective built from it) read the complex substrate:
+`tests/oracle/test_oblique_absorbing_substrate.py`. The ones that build an incoherent plate with a back
+side (the substrate is then the middle medium: internal reflections, and the loss along the plate) keep
+the real part of the index and drop the absorption: « transparent exit approximation », written in a
+comment of one kernel and nowhere the operator could see it. For a dielectric it costs less than 1e-3 on
+R; for a substrate that absorbs it costs up to 0.25 (an index of 1.7 - 1.11i at 30 degrees: 0.22 on R
+under a layer of 2.3 x 100 nm, measured against `tests/oracle/tmm_reference.py`). The spectrum on screen and the objective agree with
+one another, both wrong in the same way, so nothing looks off.
 
-Until the kernels take the complex substrate (a decision of the owner, `docs/ETAT.md` section 5),
-each entry point says it once per process, in the log and as a warning, when the substrate absorbs
-beyond `OBLIQUE_TRANSPARENT_SUBSTRATE_K_MAX`. Normal incidence reads the complex index and is not
-concerned.
+Until the plate kernels take the complex substrate too, each of their entry points says it once per
+process, in the log and as a warning, when the substrate absorbs beyond
+`OBLIQUE_TRANSPARENT_SUBSTRATE_K_MAX`. The entry points that read the absorption, and normal incidence,
+are not concerned.
 """
 
 from __future__ import annotations
@@ -51,26 +53,31 @@ def _entry_points(n_sub, angle=45.0):
 
     var = np.array([0], dtype=np.int64)
     back = np.zeros((3, 0), dtype=np.complex128)
-    return {
-        "spectrum": lambda: calc_spectrum_oblique_vectorized(WLS, LAYERS, THICKNESS, n_sub, angle, "s"),
-        "spectrum with backside": lambda: calc_spectrum_oblique_backside_vectorized(
-            WLS, LAYERS, THICKNESS, n_sub, angle, "p"
-        ),
-        "selected by the optimizer": lambda: optim_calc_oblique_selected(
+
+    def selected(has_back_calc):
+        return optim_calc_oblique_selected(
             WLS,
             LAYERS,
             THICKNESS,
             n_sub,
             angle,
             "s",
-            has_back_calc=True,
-            has_back_stack=True,
+            has_back_calc=has_back_calc,
+            has_back_stack=has_back_calc,
             d_back=np.zeros(0),
             n_back_T=back,
             calc_spectrum_full_oblique_exact=calc_spectrum_full_oblique_exact,
             calc_spectrum_oblique_backside_vectorized=calc_spectrum_oblique_backside_vectorized,
             calc_spectrum_oblique_vectorized=calc_spectrum_oblique_vectorized,
+        )
+
+    return {
+        "spectrum": lambda: calc_spectrum_oblique_vectorized(WLS, LAYERS, THICKNESS, n_sub, angle, "s"),
+        "spectrum with backside": lambda: calc_spectrum_oblique_backside_vectorized(
+            WLS, LAYERS, THICKNESS, n_sub, angle, "p"
         ),
+        "selected by the optimizer, with a back side": lambda: selected(True),
+        "selected by the optimizer, front only": lambda: selected(False),
         "gradient contribution": lambda: compute_oblique_gradient_contrib_analytic(
             THICKNESS, LAYERS, n_sub, WLS, np.full(3, 0.5), np.ones(3), angle, True, True, var
         ),
@@ -83,25 +90,40 @@ def _entry_points(n_sub, angle=45.0):
     }
 
 
-ENTRY_POINTS = [
-    "spectrum",
+#: The plate kernels: they read the real part of the substrate, and say it.
+PLATE_ENTRY_POINTS = [
     "spectrum with backside",
-    "selected by the optimizer",
-    "gradient contribution",
+    "selected by the optimizer, with a back side",
     "R, T and gradients",
     "backside bundle",
 ]
 
+#: The kernels that end on a semi-infinite substrate: they read its absorption.
+FRONT_ENTRY_POINTS = [
+    "spectrum",
+    "selected by the optimizer, front only",
+    "gradient contribution",
+]
 
-@pytest.mark.parametrize("name", ENTRY_POINTS)
-def test_an_absorbing_substrate_is_reported_by_every_oblique_entry_point(name) -> None:
+
+@pytest.mark.parametrize("name", PLATE_ENTRY_POINTS)
+def test_an_absorbing_substrate_is_reported_by_every_plate_entry_point(name) -> None:
     call = _entry_points(ABSORBING)[name]
 
     with pytest.warns(UserWarning, match="substrate is read as transparent"):
         call()
 
 
-@pytest.mark.parametrize("name", ENTRY_POINTS)
+@pytest.mark.parametrize("name", FRONT_ENTRY_POINTS)
+def test_an_absorbing_substrate_read_by_the_front_kernels_is_not_reported(name) -> None:
+    call = _entry_points(ABSORBING)[name]
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        call()
+
+
+@pytest.mark.parametrize("name", PLATE_ENTRY_POINTS + FRONT_ENTRY_POINTS)
 def test_a_transparent_substrate_is_not_reported(name) -> None:
     call = _entry_points(TRANSPARENT)[name]
 
@@ -113,7 +135,7 @@ def test_a_transparent_substrate_is_not_reported(name) -> None:
 def test_a_substrate_at_the_bound_is_not_reported() -> None:
     from certus.physics.certus_oblique_substrate import OBLIQUE_TRANSPARENT_SUBSTRATE_K_MAX
 
-    call = _entry_points(np.full(3, complex(3.5, -OBLIQUE_TRANSPARENT_SUBSTRATE_K_MAX)))["spectrum"]
+    call = _entry_points(np.full(3, complex(3.5, -OBLIQUE_TRANSPARENT_SUBSTRATE_K_MAX)))["spectrum with backside"]
 
     with warnings.catch_warnings():
         warnings.simplefilter("error")
@@ -145,9 +167,9 @@ def test_it_is_said_once_per_process_in_the_log_and_as_a_warning() -> None:
     try:
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
-            calls["spectrum"]()
-            calls["gradient contribution"]()
             calls["spectrum with backside"]()
+            calls["backside bundle"]()
+            calls["R, T and gradients"]()
     finally:
         logger.removeHandler(handler)
         logger.setLevel(level)

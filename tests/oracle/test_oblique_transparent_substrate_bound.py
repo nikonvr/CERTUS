@@ -1,15 +1,22 @@
-"""What the oblique kernels lose by reading the substrate as transparent, against the oracle.
+"""What the oblique plate kernels lose by reading the substrate as transparent, against the oracle.
 
-`OBLIQUE_TRANSPARENT_SUBSTRATE_K_MAX` is the absorption above which the kernels say that they
-ignore the substrate's. This file ties it to a measure instead of a feeling: below it the error on
-R stays under 1e-3 for every angle and both polarizations, above it (a metal) the error is
-one or two orders of magnitude larger, which is what the warning is for.
+`OBLIQUE_TRANSPARENT_SUBSTRATE_K_MAX` is the absorption above which the plate kernels (the ones that
+build an incoherent plate with a back side) say that they ignore the substrate's. This file ties it to
+a measure instead of a feeling: below it the error on R stays under 1e-3 for every angle and both
+polarizations, above it (a metal) the error is one or two orders of magnitude larger, which is what
+the warning is for.
 
-`tests/oracle/tmm_reference.py` reads the complex substrate (Macleod, chap. 2.10); the kernel
-receives the same index and keeps its real part.
+`tests/oracle/tmm_reference.py` reads the complex substrate (Macleod, chap. 2.10). The kernel measured
+here is `compute_oblique_rt_and_grads_analytic` in its forward direction (air -> stack -> substrate),
+the one the plate combination starts from; it receives the same index and keeps its real part. The
+kernels that end on a semi-infinite substrate (`calc_spectrum_oblique_vectorized`, the gradient
+contribution) read the complex index and agree with the oracle to 1e-12:
+`test_oblique_absorbing_substrate.py`.
 """
 
 from __future__ import annotations
+
+import warnings
 
 import numpy as np
 import pytest
@@ -20,18 +27,28 @@ NO_LAYERS = np.zeros((1, 0), dtype=np.complex128)
 
 
 def _worst_error_on_r(n: float, k: float) -> float:
-    from certus.physics.certus_tmm_oblique import calc_spectrum_oblique_vectorized
+    from certus.physics.gradient_oblique import compute_oblique_rt_and_grads_analytic
 
     worst = 0.0
-    for angle in ANGLES:
-        for polarization in ("s", "p"):
-            r, _t = calc_spectrum_oblique_vectorized(
-                np.array([600.0]), NO_LAYERS, np.zeros(0), np.array([complex(n, -k)]), angle, polarization
-            )
-            r_ref, _ = rt_stack_oblique(
-                600.0, np.zeros(0, dtype=np.complex128), np.zeros(0), angle, polarization == "s", 1 + 0j, complex(n, -k)
-            )
-            worst = max(worst, abs(float(r[0]) - r_ref))
+    with warnings.catch_warnings():
+        # The kernel says that it reads the real part: that is what is measured here.
+        warnings.simplefilter("ignore")
+        for angle in ANGLES:
+            for polarization in ("s", "p"):
+                r, _t, _dr, _dt = compute_oblique_rt_and_grads_analytic(
+                    np.zeros(0),
+                    NO_LAYERS,
+                    np.array([complex(n, -k)]),
+                    np.array([600.0]),
+                    np.zeros(0, dtype=np.int64),
+                    angle,
+                    polarization == "s",
+                    False,
+                )
+                r_ref, _ = rt_stack_oblique(
+                    600.0, np.zeros(0, dtype=np.complex128), np.zeros(0), angle, polarization == "s", 1 + 0j, complex(n, -k)
+                )
+                worst = max(worst, abs(float(r[0]) - r_ref))
     return worst
 
 

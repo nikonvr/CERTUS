@@ -40,7 +40,10 @@ def optim_calc_oblique_selected(
 ):
     """Selects the oblique kernel (front-only, bare backside, backside with coating)."""
 
-    warn_if_oblique_substrate_absorbs(n_sub_arr)
+    if has_back_calc:
+        # The front-only kernel reads the complex substrate; the ones that build a plate with a back side
+        # still read its real part only.
+        warn_if_oblique_substrate_absorbs(n_sub_arr)
 
     if has_back_calc and has_back_stack:
         return calc_spectrum_full_oblique_exact(

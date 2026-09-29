@@ -6,7 +6,7 @@ Contains gradient computation for oblique (non-normal) incidence angles.
 """
 
 import numpy as np
-from certus.physics.certus_oblique_substrate import warn_if_oblique_substrate_absorbs
+from certus.physics.certus_oblique_substrate import oblique_exit_admittance, warn_if_oblique_substrate_absorbs
 from numba import njit, prange
 import certus.physics.certus_tmm_core as tmm_core
 from certus.core.certus_core import TWO_PI
@@ -14,87 +14,223 @@ from certus.physics.gradient_utils import compute_mse_vectorized, SMALL_EPSILON
 from .gradient_analytic import _compute_gradient_analytic_kernel
 
 
-@njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
-def _compute_oblique_gradient_contrib_kernel(
-    ep: np.ndarray,
-    n_layers_T: np.ndarray,
-    n_sub: np.ndarray,
-    wls: np.ndarray,
-    tgt_vals: np.ndarray,
-    tgt_weights: np.ndarray,
-    var_idx: np.ndarray,
-    angle_deg: float,
-    is_s_pol: bool,
-    target_is_reflectance: bool,
-) -> tuple[float, np.ndarray, float]:
+def _make_oblique_gradient_contrib_kernel(absorbing_substrate: bool):
+    """Build the analytic oblique kernel of the front-only objective, for one kind of substrate.
+
+    `absorbing_substrate` is a compile-time constant: Numba drops the branch it rules out BEFORE typing,
+    so the kernel for a substrate without absorption is exactly the one that ran before the absorbing
+    one existed (the same operations on the same types, bit for bit, which the C1 rule requires), and
+    both come from one source. `n_sub` is read as complex (`n - ik`) in the absorbing kernel.
     """
 
-    Analytic oblique contribution kernel (front-only).
+    @njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
+    def kernel(
+        ep: np.ndarray,
+        n_layers_T: np.ndarray,
+        n_sub: np.ndarray,
+        wls: np.ndarray,
+        tgt_vals: np.ndarray,
+        tgt_weights: np.ndarray,
+        var_idx: np.ndarray,
+        angle_deg: float,
+        is_s_pol: bool,
+        target_is_reflectance: bool,
+    ) -> tuple[float, np.ndarray, float]:
+        """
 
-    Returns unnormalized sums:
+        Analytic oblique contribution kernel (front-only).
 
-        err_sum = Σ w * (y - tgt)^2
+        Returns unnormalized sums:
 
-        grad_raw = Σ w * (y - tgt) * dy/dd
+            err_sum = Σ w * (y - tgt)^2
 
-        weight_sum = Σ w
+            grad_raw = Σ w * (y - tgt) * dy/dd
 
-    so caller can aggregate several target groups then apply global normalization.
+            weight_sum = Σ w
 
-    """
+        so caller can aggregate several target groups then apply global normalization.
 
-    n_wls = len(wls)
+        """
 
-    n_layers = len(ep)
+        n_wls = len(wls)
 
-    n_vars = len(var_idx)
+        n_layers = len(ep)
 
-    grad_per_wl = np.zeros((n_wls, n_vars), dtype=np.float64)
+        n_vars = len(var_idx)
 
-    err_per_wl = np.zeros(n_wls, dtype=np.float64)
+        grad_per_wl = np.zeros((n_wls, n_vars), dtype=np.float64)
 
-    weight_per_wl = np.zeros(n_wls, dtype=np.float64)
+        err_per_wl = np.zeros(n_wls, dtype=np.float64)
 
-    n0 = 1.0
+        weight_per_wl = np.zeros(n_wls, dtype=np.float64)
 
-    theta0_rad = np.deg2rad(angle_deg)
+        n0 = 1.0
 
-    sin_theta0 = np.sin(theta0_rad)
+        theta0_rad = np.deg2rad(angle_deg)
 
-    cos_theta0 = np.cos(theta0_rad)
+        sin_theta0 = np.sin(theta0_rad)
 
-    for i_wl in prange(n_wls):
-        wl = wls[i_wl]
+        cos_theta0 = np.cos(theta0_rad)
 
-        n_sub_real = n_sub[i_wl].real
+        for i_wl in prange(n_wls):
+            wl = wls[i_wl]
 
-        w = tgt_weights[i_wl]
+            n_sub_real = n_sub[i_wl].real
 
-        if w <= 1e-12:
-            continue
+            w = tgt_weights[i_wl]
 
-        sin_theta_sub = (n0 / max(n_sub_real, SMALL_EPSILON)) * sin_theta0
+            if w <= 1e-12:
+                continue
 
-        if sin_theta_sub > 1.0:
-            y_val = 1.0 if target_is_reflectance else 0.0
+            if absorbing_substrate:
+                # An absorbing substrate: complex exit admittance, as in the spectrum kernel. The thickness
+                # derivatives below depend on it only through `eta_sub`, which enters B and C.
+                eta_sub, exit_ok = oblique_exit_admittance(n_sub[i_wl], sin_theta0, is_s_pol)
 
-            diff = y_val - tgt_vals[i_wl]
+                if (not exit_ok) or ((not is_s_pol) and abs(cos_theta0) < SMALL_EPSILON):
+                    y_val = 1.0 if target_is_reflectance else 0.0
 
-            err_per_wl[i_wl] = w * diff * diff
+                    diff = y_val - tgt_vals[i_wl]
 
-            weight_per_wl[i_wl] = w
+                    err_per_wl[i_wl] = w * diff * diff
 
-            continue
+                    weight_per_wl[i_wl] = w
 
-        cos_theta_sub = np.sqrt(1.0 - sin_theta_sub * sin_theta_sub)
+                    continue
 
-        if is_s_pol:
-            eta_inc = n0 * cos_theta0
+                eta_inc = n0 * cos_theta0 if is_s_pol else n0 / cos_theta0
 
-            eta_sub = n_sub_real * cos_theta_sub
+                # The flux that enters the substrate: the real part of its admittance.
+                t_gain = eta_sub.real / eta_inc
 
-        else:
-            if abs(cos_theta0) < SMALL_EPSILON or abs(cos_theta_sub) < SMALL_EPSILON:
+            else:
+                sin_theta_sub = (n0 / max(n_sub_real, SMALL_EPSILON)) * sin_theta0
+
+                if sin_theta_sub > 1.0:
+                    y_val = 1.0 if target_is_reflectance else 0.0
+
+                    diff = y_val - tgt_vals[i_wl]
+
+                    err_per_wl[i_wl] = w * diff * diff
+
+                    weight_per_wl[i_wl] = w
+
+                    continue
+
+                cos_theta_sub = np.sqrt(1.0 - sin_theta_sub * sin_theta_sub)
+
+                if is_s_pol:
+                    eta_inc = n0 * cos_theta0
+
+                    eta_sub = n_sub_real * cos_theta_sub
+
+                else:
+                    if abs(cos_theta0) < SMALL_EPSILON or abs(cos_theta_sub) < SMALL_EPSILON:
+                        y_val = 1.0 if target_is_reflectance else 0.0
+
+                        diff = y_val - tgt_vals[i_wl]
+
+                        err_per_wl[i_wl] = w * diff * diff
+
+                        weight_per_wl[i_wl] = w
+
+                        continue
+
+                    eta_inc = n0 / cos_theta0
+
+                    eta_sub = n_sub_real / cos_theta_sub
+
+                t_gain = eta_sub / eta_inc
+
+            # Prefix products: P[k] = L_{k-1} ... L_0, P[0]=I
+
+            prefix = np.zeros((n_layers + 1, 4), dtype=np.complex128)
+
+            prefix[0, 0] = 1.0 + 0.0j
+
+            prefix[0, 3] = 1.0 + 0.0j
+
+            # Layer matrices and per-layer optical terms (for derivatives)
+
+            L_store = np.zeros((n_layers, 4), dtype=np.complex128)
+
+            eta_store = np.zeros(n_layers, dtype=np.complex128)
+
+            beta_store = np.zeros(n_layers, dtype=np.complex128)
+
+            valid = True
+
+            k0 = TWO_PI / max(wl, SMALL_EPSILON)
+
+            for k in range(n_layers):
+                n_layer = n_layers_T[i_wl, k]
+
+                if abs(n_layer) < SMALL_EPSILON:
+                    valid = False
+
+                    break
+
+                sin_theta_layer = (n0 / n_layer) * sin_theta0
+
+                cos_theta_layer = np.sqrt(1.0 - sin_theta_layer * sin_theta_layer)
+
+                if is_s_pol:
+                    eta_layer = n_layer * cos_theta_layer
+
+                else:
+                    if abs(cos_theta_layer) < SMALL_EPSILON:
+                        valid = False
+
+                        break
+
+                    eta_layer = n_layer / cos_theta_layer
+
+                if abs(eta_layer) < SMALL_EPSILON:
+                    valid = False
+
+                    break
+
+                beta = k0 * n_layer * cos_theta_layer
+
+                phi = beta * ep[k]
+
+                cp = np.cos(phi)
+
+                sp = np.sin(phi)
+
+                l01 = 1j * sp / eta_layer
+
+                l10 = 1j * eta_layer * sp
+
+                L_store[k, 0] = cp
+
+                L_store[k, 1] = l01
+
+                L_store[k, 2] = l10
+
+                L_store[k, 3] = cp
+
+                eta_store[k] = eta_layer
+
+                beta_store[k] = beta
+
+                p00 = prefix[k, 0]
+
+                p01 = prefix[k, 1]
+
+                p10 = prefix[k, 2]
+
+                p11 = prefix[k, 3]
+
+                prefix[k + 1, 0] = cp * p00 + l01 * p10
+
+                prefix[k + 1, 1] = cp * p01 + l01 * p11
+
+                prefix[k + 1, 2] = l10 * p00 + cp * p10
+
+                prefix[k + 1, 3] = l10 * p01 + cp * p11
+
+            if not valid:
                 y_val = 1.0 if target_is_reflectance else 0.0
 
                 diff = y_val - tgt_vals[i_wl]
@@ -105,100 +241,84 @@ def _compute_oblique_gradient_contrib_kernel(
 
                 continue
 
-            eta_inc = n0 / cos_theta0
+            # Suffix products: S[k] = L_{n-1} ... L_{k+1}; S[n-1]=I
 
-            eta_sub = n_sub_real / cos_theta_sub
+            suffix = np.zeros((n_layers, 4), dtype=np.complex128)
 
-        # Prefix products: P[k] = L_{k-1} ... L_0, P[0]=I
+            if n_layers > 0:
+                suffix[n_layers - 1, 0] = 1.0 + 0.0j
 
-        prefix = np.zeros((n_layers + 1, 4), dtype=np.complex128)
+                suffix[n_layers - 1, 3] = 1.0 + 0.0j
 
-        prefix[0, 0] = 1.0 + 0.0j
+                for k in range(n_layers - 2, -1, -1):
+                    s00 = suffix[k + 1, 0]
 
-        prefix[0, 3] = 1.0 + 0.0j
+                    s01 = suffix[k + 1, 1]
 
-        # Layer matrices and per-layer optical terms (for derivatives)
+                    s10 = suffix[k + 1, 2]
 
-        L_store = np.zeros((n_layers, 4), dtype=np.complex128)
+                    s11 = suffix[k + 1, 3]
 
-        eta_store = np.zeros(n_layers, dtype=np.complex128)
+                    l00 = L_store[k + 1, 0]
 
-        beta_store = np.zeros(n_layers, dtype=np.complex128)
+                    l01 = L_store[k + 1, 1]
 
-        valid = True
+                    l10 = L_store[k + 1, 2]
 
-        k0 = TWO_PI / max(wl, SMALL_EPSILON)
+                    l11 = L_store[k + 1, 3]
 
-        for k in range(n_layers):
-            n_layer = n_layers_T[i_wl, k]
+                    suffix[k, 0] = s00 * l00 + s01 * l10
 
-            if abs(n_layer) < SMALL_EPSILON:
-                valid = False
+                    suffix[k, 1] = s00 * l01 + s01 * l11
 
-                break
+                    suffix[k, 2] = s10 * l00 + s11 * l10
 
-            sin_theta_layer = (n0 / n_layer) * sin_theta0
+                    suffix[k, 3] = s10 * l01 + s11 * l11
 
-            cos_theta_layer = np.sqrt(1.0 - sin_theta_layer * sin_theta_layer)
+            m00 = prefix[n_layers, 0]
 
-            if is_s_pol:
-                eta_layer = n_layer * cos_theta_layer
+            m01 = prefix[n_layers, 1]
 
-            else:
-                if abs(cos_theta_layer) < SMALL_EPSILON:
-                    valid = False
+            m10 = prefix[n_layers, 2]
 
-                    break
+            m11 = prefix[n_layers, 3]
 
-                eta_layer = n_layer / cos_theta_layer
+            B = m00 + m01 * eta_sub
 
-            if abs(eta_layer) < SMALL_EPSILON:
-                valid = False
+            C = m10 + m11 * eta_sub
 
-                break
+            denom = eta_inc * B + C
 
-            beta = k0 * n_layer * cos_theta_layer
+            den2 = denom * denom
 
-            phi = beta * ep[k]
+            den_mag_sq = (denom.real * denom.real) + (denom.imag * denom.imag)
 
-            cp = np.cos(phi)
+            if den_mag_sq < SMALL_EPSILON:
+                y_val = 1.0 if target_is_reflectance else 0.0
 
-            sp = np.sin(phi)
+                diff = y_val - tgt_vals[i_wl]
 
-            l01 = 1j * sp / eta_layer
+                err_per_wl[i_wl] = w * diff * diff
 
-            l10 = 1j * eta_layer * sp
+                weight_per_wl[i_wl] = w
 
-            L_store[k, 0] = cp
+                continue
 
-            L_store[k, 1] = l01
+            num = eta_inc * B - C
 
-            L_store[k, 2] = l10
+            r = num / denom
 
-            L_store[k, 3] = cp
+            t = 2.0 * eta_inc / denom
 
-            eta_store[k] = eta_layer
+            R_unclipped = (r * r.conjugate()).real
 
-            beta_store[k] = beta
+            T_unclipped = t_gain * (t * t.conjugate()).real
 
-            p00 = prefix[k, 0]
+            R_val = max(0.0, min(1.0, R_unclipped))
 
-            p01 = prefix[k, 1]
+            T_val = max(0.0, min(1.0, T_unclipped))
 
-            p10 = prefix[k, 2]
-
-            p11 = prefix[k, 3]
-
-            prefix[k + 1, 0] = cp * p00 + l01 * p10
-
-            prefix[k + 1, 1] = cp * p01 + l01 * p11
-
-            prefix[k + 1, 2] = l10 * p00 + cp * p10
-
-            prefix[k + 1, 3] = l10 * p01 + cp * p11
-
-        if not valid:
-            y_val = 1.0 if target_is_reflectance else 0.0
+            y_val = R_val if target_is_reflectance else T_val
 
             diff = y_val - tgt_vals[i_wl]
 
@@ -206,208 +326,127 @@ def _compute_oblique_gradient_contrib_kernel(
 
             weight_per_wl[i_wl] = w
 
-            continue
+            # If clamped, keep stable behavior and null derivative at this point.
 
-        # Suffix products: S[k] = L_{n-1} ... L_{k+1}; S[n-1]=I
+            if (target_is_reflectance and (R_val != R_unclipped)) or (
+                (not target_is_reflectance) and (T_val != T_unclipped)
+            ):
+                continue
 
-        suffix = np.zeros((n_layers, 4), dtype=np.complex128)
+            for i_var in range(n_vars):
+                k = var_idx[i_var]
 
-        if n_layers > 0:
-            suffix[n_layers - 1, 0] = 1.0 + 0.0j
+                p00 = prefix[k, 0]
 
-            suffix[n_layers - 1, 3] = 1.0 + 0.0j
+                p01 = prefix[k, 1]
 
-            for k in range(n_layers - 2, -1, -1):
-                s00 = suffix[k + 1, 0]
+                p10 = prefix[k, 2]
 
-                s01 = suffix[k + 1, 1]
+                p11 = prefix[k, 3]
 
-                s10 = suffix[k + 1, 2]
+                if k == n_layers - 1:
+                    s00 = 1.0 + 0.0j
 
-                s11 = suffix[k + 1, 3]
+                    s01 = 0.0 + 0.0j
 
-                l00 = L_store[k + 1, 0]
+                    s10 = 0.0 + 0.0j
 
-                l01 = L_store[k + 1, 1]
+                    s11 = 1.0 + 0.0j
 
-                l10 = L_store[k + 1, 2]
+                else:
+                    s00 = suffix[k, 0]
 
-                l11 = L_store[k + 1, 3]
+                    s01 = suffix[k, 1]
 
-                suffix[k, 0] = s00 * l00 + s01 * l10
+                    s10 = suffix[k, 2]
 
-                suffix[k, 1] = s00 * l01 + s01 * l11
+                    s11 = suffix[k, 3]
 
-                suffix[k, 2] = s10 * l00 + s11 * l10
+                eta_layer = eta_store[k]
 
-                suffix[k, 3] = s10 * l01 + s11 * l11
+                beta = beta_store[k]
 
-        m00 = prefix[n_layers, 0]
+                phi = beta * ep[k]
 
-        m01 = prefix[n_layers, 1]
+                cp = np.cos(phi)
 
-        m10 = prefix[n_layers, 2]
+                sp = np.sin(phi)
 
-        m11 = prefix[n_layers, 3]
+                dcp = -sp * beta
 
-        B = m00 + m01 * eta_sub
+                dsp = cp * beta
 
-        C = m10 + m11 * eta_sub
+                dl01 = 1j * dsp / eta_layer
 
-        denom = eta_inc * B + C
+                dl10 = 1j * eta_layer * dsp
 
-        den2 = denom * denom
+                # tmp = dL @ P
 
-        den_mag_sq = (denom.real * denom.real) + (denom.imag * denom.imag)
+                t00 = dcp * p00 + dl01 * p10
 
-        if den_mag_sq < SMALL_EPSILON:
-            y_val = 1.0 if target_is_reflectance else 0.0
+                t01 = dcp * p01 + dl01 * p11
 
-            diff = y_val - tgt_vals[i_wl]
+                t10 = dl10 * p00 + dcp * p10
 
-            err_per_wl[i_wl] = w * diff * diff
+                t11 = dl10 * p01 + dcp * p11
 
-            weight_per_wl[i_wl] = w
+                # dM = S @ tmp
 
-            continue
+                dm00 = s00 * t00 + s01 * t10
 
-        num = eta_inc * B - C
+                dm01 = s00 * t01 + s01 * t11
 
-        r = num / denom
+                dm10 = s10 * t00 + s11 * t10
 
-        t = 2.0 * eta_inc / denom
+                dm11 = s10 * t01 + s11 * t11
 
-        R_unclipped = (r * r.conjugate()).real
+                dB = dm00 + dm01 * eta_sub
 
-        T_unclipped = (eta_sub / eta_inc) * (t * t.conjugate()).real
+                dC = dm10 + dm11 * eta_sub
 
-        R_val = max(0.0, min(1.0, R_unclipped))
+                dden = eta_inc * dB + dC
 
-        T_val = max(0.0, min(1.0, T_unclipped))
+                if target_is_reflectance:
+                    dnum = eta_inc * dB - dC
 
-        y_val = R_val if target_is_reflectance else T_val
+                    dr = (dnum * denom - num * dden) / den2
 
-        diff = y_val - tgt_vals[i_wl]
+                    dy = 2.0 * (r.conjugate() * dr).real
 
-        err_per_wl[i_wl] = w * diff * diff
+                else:
+                    dt = -(2.0 * eta_inc) * dden / den2
 
-        weight_per_wl[i_wl] = w
+                    dy = t_gain * 2.0 * (t.conjugate() * dt).real
 
-        # If clamped, keep stable behavior and null derivative at this point.
+                grad_per_wl[i_wl, i_var] += w * diff * dy
 
-        if (target_is_reflectance and (R_val != R_unclipped)) or (
-            (not target_is_reflectance) and (T_val != T_unclipped)
-        ):
-            continue
+        err_sum = 0.0
 
-        for i_var in range(n_vars):
-            k = var_idx[i_var]
-
-            p00 = prefix[k, 0]
-
-            p01 = prefix[k, 1]
-
-            p10 = prefix[k, 2]
-
-            p11 = prefix[k, 3]
-
-            if k == n_layers - 1:
-                s00 = 1.0 + 0.0j
-
-                s01 = 0.0 + 0.0j
-
-                s10 = 0.0 + 0.0j
-
-                s11 = 1.0 + 0.0j
-
-            else:
-                s00 = suffix[k, 0]
-
-                s01 = suffix[k, 1]
-
-                s10 = suffix[k, 2]
-
-                s11 = suffix[k, 3]
-
-            eta_layer = eta_store[k]
-
-            beta = beta_store[k]
-
-            phi = beta * ep[k]
-
-            cp = np.cos(phi)
-
-            sp = np.sin(phi)
-
-            dcp = -sp * beta
-
-            dsp = cp * beta
-
-            dl01 = 1j * dsp / eta_layer
-
-            dl10 = 1j * eta_layer * dsp
-
-            # tmp = dL @ P
-
-            t00 = dcp * p00 + dl01 * p10
-
-            t01 = dcp * p01 + dl01 * p11
-
-            t10 = dl10 * p00 + dcp * p10
-
-            t11 = dl10 * p01 + dcp * p11
-
-            # dM = S @ tmp
-
-            dm00 = s00 * t00 + s01 * t10
-
-            dm01 = s00 * t01 + s01 * t11
-
-            dm10 = s10 * t00 + s11 * t10
-
-            dm11 = s10 * t01 + s11 * t11
-
-            dB = dm00 + dm01 * eta_sub
-
-            dC = dm10 + dm11 * eta_sub
-
-            dden = eta_inc * dB + dC
-
-            if target_is_reflectance:
-                dnum = eta_inc * dB - dC
-
-                dr = (dnum * denom - num * dden) / den2
-
-                dy = 2.0 * (r.conjugate() * dr).real
-
-            else:
-                dt = -(2.0 * eta_inc) * dden / den2
-
-                dy = (eta_sub / eta_inc) * 2.0 * (t.conjugate() * dt).real
-
-            grad_per_wl[i_wl, i_var] += w * diff * dy
-
-    err_sum = 0.0
-
-    weight_sum = 0.0
-
-    for i in range(n_wls):
-        err_sum += err_per_wl[i]
-
-        weight_sum += weight_per_wl[i]
-
-    grad_raw = np.zeros(n_vars, dtype=np.float64)
-
-    for v in range(n_vars):
-        s = 0.0
+        weight_sum = 0.0
 
         for i in range(n_wls):
-            s += grad_per_wl[i, v]
+            err_sum += err_per_wl[i]
 
-        grad_raw[v] = s
+            weight_sum += weight_per_wl[i]
 
-    return err_sum, grad_raw, weight_sum
+        grad_raw = np.zeros(n_vars, dtype=np.float64)
 
+        for v in range(n_vars):
+            s = 0.0
+
+            for i in range(n_wls):
+                s += grad_per_wl[i, v]
+
+            grad_raw[v] = s
+
+        return err_sum, grad_raw, weight_sum
+
+    return kernel
+
+
+_compute_oblique_gradient_contrib_kernel = _make_oblique_gradient_contrib_kernel(False)
+
+_compute_oblique_gradient_contrib_kernel_absorbing = _make_oblique_gradient_contrib_kernel(True)
 
 def compute_oblique_gradient_contrib_analytic(
     ep: np.ndarray,
@@ -429,8 +468,6 @@ def compute_oblique_gradient_contrib_analytic(
 
     """
 
-    warn_if_oblique_substrate_absorbs(n_sub)
-
     if var_idx is None:
         var_idx_arr = np.arange(len(ep), dtype=np.int64)
 
@@ -449,7 +486,15 @@ def compute_oblique_gradient_contrib_analytic(
 
     n_sub_c128 = np.asarray(n_sub, dtype=np.complex128)
 
-    return _compute_oblique_gradient_contrib_kernel(
+    # A substrate without absorption keeps the kernel that always ran; one that absorbs anywhere in the band
+    # takes the kernel that reads its complex admittance.
+    kernel = (
+        _compute_oblique_gradient_contrib_kernel_absorbing
+        if np.any(n_sub_c128.imag != 0.0)
+        else _compute_oblique_gradient_contrib_kernel
+    )
+
+    return kernel(
         ep_f64,
         n_layers_T_c128,
         n_sub_c128,

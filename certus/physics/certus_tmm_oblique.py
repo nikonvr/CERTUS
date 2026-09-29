@@ -1,7 +1,8 @@
 import numpy as np
 from numba import njit, prange
 from certus.core.certus_core import TWO_PI
-from certus.physics.certus_oblique_substrate import warn_if_oblique_substrate_absorbs
+from certus.physics.certus_opt_tmm import compute_RT_from_matrix
+from certus.physics.certus_oblique_substrate import oblique_exit_admittance, warn_if_oblique_substrate_absorbs
 
 SMALL_EPSILON = 1e-12
 
@@ -15,6 +16,27 @@ from .certus_tmm_matrix import compute_complex_phase_components, calc_spectrum_f
 
 
 # =============================================================================
+
+
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
+def _oblique_rt_absorbing_exit(M00, M01, M10, M11, n_exit, sin_theta_air, cos_theta_air, is_s_pol):
+    """(R, T) from air, at oblique incidence, of a stack (matrix M) that ends on an EXIT medium that absorbs.
+
+    The exit admittance is complex (`oblique_exit_admittance`); R and T come from
+    `compute_RT_from_matrix`, the single source of the R/T extraction, which takes admittances as well as
+    indices. T is the flux that enters the substrate: `Re(η_exit) / Re(η_inc) · |t|²`.
+    """
+
+    eta_exit, ok = oblique_exit_admittance(n_exit, sin_theta_air, is_s_pol)
+
+    if not ok:
+        return 1.0, 0.0
+
+    eta_inc = cos_theta_air if is_s_pol else 1.0 / cos_theta_air
+
+    R, T = compute_RT_from_matrix(M00, M01, M10, M11, complex(eta_inc, 0.0), eta_exit)
+
+    return max(0.0, min(1.0, R)), max(0.0, min(1.0, T))
 
 
 # --- LOCKED --- Validated by test_tmm_coherence.py ───
@@ -63,6 +85,21 @@ def _calc_spectrum_oblique_parallel(
 
         if n_layers_count == 0:
             # No layers - direct Fresnel
+
+            if n_sub_val.imag != 0.0:
+                # An absorbing substrate: complex exit admittance, R and T from the single source.
+                R[i], T[i] = _oblique_rt_absorbing_exit(
+                    complex(1.0, 0.0),
+                    complex(0.0, 0.0),
+                    complex(0.0, 0.0),
+                    complex(1.0, 0.0),
+                    n_sub_val,
+                    sin_theta0,
+                    cos_theta0,
+                    is_s_pol,
+                )
+
+                continue
 
             n_sub_real = n_sub_val.real
 
@@ -200,6 +237,14 @@ def _calc_spectrum_oblique_parallel(
         else:
             # Completed layer loop - compute R, T
 
+            if n_sub_val.imag != 0.0:
+                # An absorbing substrate: complex exit admittance, R and T from the single source.
+                R[i], T[i] = _oblique_rt_absorbing_exit(
+                    M00, M01, M10, M11, n_sub_val, sin_theta0, cos_theta0, is_s_pol
+                )
+
+                continue
+
             n_sub_real = n_sub_val.real
 
             sin_theta_sub = (n0 / n_sub_real) * sin_theta0
@@ -227,12 +272,8 @@ def _calc_spectrum_oblique_parallel(
 
             # [C] = [M10 M11] [eta_sub]
 
-            # Note: eta_inc, eta_sub are strictly real here: the substrate is read as transparent (real part
-            # of its index only), and its absorption is ignored.
-
-            # The loss stays under 1e-3 on R up to k = OBLIQUE_TRANSPARENT_SUBSTRATE_K_MAX and reaches 0.25 for a
-            # metal: `warn_if_oblique_substrate_absorbs` says so, at the entry points, when it matters. The
-            # backside functions do not correct it: they read the same real index.
+            # Note: eta_inc, eta_sub are strictly real here: a substrate without absorption (`imag == 0`). An
+            # absorbing one took the branch above, with its complex admittance.
 
             B = M00 + M01 * eta_sub
 
@@ -304,8 +345,6 @@ def calc_spectrum_oblique_vectorized(
         T, R = calc_spectrum_front(wls, d_layers, n_layers_T, n_sub)
 
         return R, T
-
-    warn_if_oblique_substrate_absorbs(n_sub)
 
     # Convert polarization string to boolean for Numba
 

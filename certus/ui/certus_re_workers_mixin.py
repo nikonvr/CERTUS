@@ -616,8 +616,6 @@ class CertusREWorkersMixin:
 
         if "ep" in data:
             self.ep_current = data["ep"]
-            if hasattr(self, "_update_index_profile_plot"):
-                self._update_index_profile_plot()
 
         spectra_display = data.get("spectra_display")
         if spectra_display is not None:

@@ -1239,15 +1239,32 @@ def compute_gradient_all_layers_analytic(
 
     n_sub_c128 = np.asarray(n_sub, dtype=np.complex128)
 
-    cost, grad, _ = _compute_gradient_analytic_kernel(
-        ep_f64,
-        n_layers_T_c128,
-        n_sub_c128,
-        wls_f64,
-        tgt_vals_f64,
-        tgt_weights_f64,
-        var_idx_arr,
-    )
+    if np.any(n_sub_c128.imag != 0.0):
+        # The analytic kernel below computes T from the substrate side (the substrate as the incident medium
+        # of the stack), which is the transmittance only when the substrate does not absorb: for one that does
+        # it minimized another objective than `cost_numba_fast` reports (1.8e-5 off in the mean of T^2 at
+        # k = 1e-4, 0.05 at k = 0.3, measured against the oracle). The oblique kernel at 0 degree reads the
+        # complex exit (air -> stack -> substrate); T is a normalized weighted squared error, like here.
+        err_sum, grad_raw, weight_sum = compute_oblique_gradient_contrib_analytic(
+            ep_f64, n_layers_T_c128, n_sub_c128, wls_f64, tgt_vals_f64, tgt_weights_f64, 0.0, True, False, var_idx_arr
+        )
+
+        if weight_sum < 1e-12:
+            cost, grad = 1e30, np.zeros(len(var_idx_arr), dtype=np.float64)
+
+        else:
+            cost, grad = err_sum / weight_sum, grad_raw * (2.0 / weight_sum)
+
+    else:
+        cost, grad, _ = _compute_gradient_analytic_kernel(
+            ep_f64,
+            n_layers_T_c128,
+            n_sub_c128,
+            wls_f64,
+            tgt_vals_f64,
+            tgt_weights_f64,
+            var_idx_arr,
+        )
 
     # Add penalty for min thickness violation
 

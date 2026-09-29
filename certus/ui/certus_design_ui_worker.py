@@ -801,14 +801,14 @@ class WorkerManager:
 
         """
 
-        if not confirm_stop_with_timeout(self):
+        if not confirm_stop_with_timeout(self.ui):
             return
 
         # CRITICAL: Set flag FIRST to block pending QTimer callbacks
 
         self.ui._workflow_stopped = True
 
-        if hasattr(self, "progress_widget"):
+        if hasattr(self.ui, "progress_widget"):
             self.ui.progress_widget.stop("Cancelled")
 
         self.ui.log("Stopping optimization...", "WARNING")

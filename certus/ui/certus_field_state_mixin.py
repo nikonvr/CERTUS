@@ -648,7 +648,6 @@ class CertusFieldStateMixin:
                 removed_total += 1
 
             if self.table_layers.rowCount() > 1:
-                self.rebuild_material_pattern()
                 self.smart_cleanup(self.table_layers)
             if not self._stack_has_layers_below_dmin(dmin_nm):
                 break

@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import QFileDialog, QLineEdit, QMessageBox, QTableWidgetIte
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus_physics import NON_MONOTONIC_MODE_ATTENUATE
 from certus.utils.certus_dto import StratConfigDTO
+from certus.utils.certus_numeric_text import parse_decimal
 from certus.core.certus_strat_core import (
     SYM_DEFAULT_CONTINUITY_WEIGHT,
     SYM_DEFAULT_EXTREMA_WINDOW_OT,
@@ -1070,6 +1071,13 @@ class CertusStratStateMixin:
 
         params = self.collect_params()
 
+        problems = self.input_problems(params)
+
+        if problems:
+            self.refuse_to_run(problems)
+
+            return
+
         if self.opti_results is None:
             self.logger.info("Initializing context for external strategies (Matrices & Indices)...")
 
@@ -1137,6 +1145,9 @@ class CertusStratStateMixin:
 
             Dict containing all parameters for the simulation workflow."""
 
+        # An entry that cannot be read is remembered by `_get_float_safe`, for `input_problems`.
+        self._rejected_entries = {}
+
         # Resolve H-index: either constant float or material name
 
         if self.widgets["h_type_custom"].isChecked():
@@ -1177,7 +1188,15 @@ class CertusStratStateMixin:
 
         table = self.widgets["stack_table"]
 
-        multipliers = [float(table.item(r, 2).text()) for r in range(table.rowCount()) if table.item(r, 2)]
+        multipliers = []
+        for row in range(table.rowCount()):
+            item = table.item(row, 2)
+            if not item:
+                continue
+            try:
+                multipliers.append(parse_decimal(item.text()))
+            except ValueError as exc:
+                raise ValueError(f'Layer {row + 1}: "{item.text()}" is not a valid multiplier.') from exc
 
         stack_string = ",".join(map(str, multipliers))
 
@@ -1187,6 +1206,7 @@ class CertusStratStateMixin:
             noise_factors = [float(x.strip()) for x in noise_str.split(",") if x.strip()]
 
         except (ValueError, TypeError):
+            self._rejected_entries["robustness_noise_factors"] = self.widgets["robustness_noise_factors"].text().strip()
             noise_factors = [0.5, 1.0, 2.0]
 
         if str(nSub_id).strip() in {"Silice", "SiO2", "H800-SiO2", "H800 SiO2", "H800_SiO2"}:
@@ -1749,8 +1769,52 @@ class CertusStratStateMixin:
             return default
 
         try:
-            return float(text)
+            return parse_decimal(text)
 
         except ValueError:
+            # The run is refused and the operator told (`input_problems`), never started on a
+            # value he did not type.
+            self.__dict__.setdefault("_rejected_entries", {})[widget_name] = text
             return default
+
+    def _field_label(self, key: str) -> str:
+        """The label the operator reads next to the field ``key``."""
+        widget = self.widgets.get(key)
+        return (widget.property("field_label") if widget is not None else None) or key
+
+    def input_problems(self, params: dict[str, Any]) -> list[str]:
+        """What stops a run from starting on the entries as typed.
+
+        The entries that are not a number, and the few values that would break the spectral grid:
+        a wavelength or a step that is not positive, and a range that is reversed.
+        """
+        problems = [f'{self._field_label(key)}: "{text}" cannot be read.' for key, text in self._rejected_entries.items()]
+        for key in ("l0", "wl_step", "scan_wl_step"):
+            if key not in self._rejected_entries and not params[key] > 0:
+                problems.append(f"{self._field_label(key)}: {params[key]:g} must be positive.")
+        wl_start, wl_end = params["wl_range"]
+        if not wl_end > wl_start:
+            problems.append(
+                f"{self._field_label('wl_range_start')} ({wl_start:g}) must be below "
+                f"{self._field_label('wl_range_end')} ({wl_end:g})."
+            )
+        if not params["scan_wl_max"] > params["scan_wl_min"]:
+            problems.append(
+                f"{self._field_label('scan_wl_min')} ({params['scan_wl_min']:g}) must be below "
+                f"{self._field_label('scan_wl_max')} ({params['scan_wl_max']:g})."
+            )
+        return problems
+
+    def refuse_to_run(self, problems: list[str]) -> None:
+        """Tell the operator what stops the run and put the cursor on the first entry at fault."""
+        self.logger.warning("Run refused: %s", "; ".join(problems))
+        QMessageBox.warning(
+            self, "Cannot start the run", "Fix these entries first:\n\n" + "\n".join(f"• {p}" for p in problems)
+        )
+        for key in self._rejected_entries:
+            widget = self.widgets.get(key)
+            if isinstance(widget, QLineEdit):
+                widget.setFocus()
+                widget.selectAll()
+                break
 

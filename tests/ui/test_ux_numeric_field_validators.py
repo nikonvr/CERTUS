@@ -9,6 +9,10 @@ something else.
 natural way to write one and a half - and ``float("1,5")`` raises, so the value
 is dropped without a word. On a metrology tool that is a wrong run, not a typo.
 
+Since 2026-09-29 the reader is `certus.utils.certus_numeric_text.parse_decimal`, which reads the
+comma as a point, and a run whose entries it still cannot read is refused with a message
+(`tests/unit/test_strat_numeric_entries.py`).
+
 ⚠️ What this guard does NOT check: numeric RANGES. No bound for these settings
 exists anywhere in the code - no pydantic constraint, no setRange - so a range
 would have to be invented, and an invented bound on a physics parameter is
@@ -65,9 +69,15 @@ def test_every_numeric_field_has_a_validator(strat):
 
 
 @pytest.mark.parametrize("bad", ["abc", "1,5", "1.2.3", "oui"])
-def test_a_numeric_field_refuses_what_float_cannot_parse(strat, bad):
-    """Anything the field accepts must survive float() - that is the real contract."""
+def test_a_numeric_field_refuses_what_its_reader_cannot_parse(strat, bad):
+    """Anything the field accepts must survive the reader - that is the real contract.
+
+    The reader is `parse_decimal`, which takes the decimal comma: « 1,5 » is a number the field
+    may accept (it turns the comma into a point as it is typed), « 1.2.3 » is not.
+    """
     from PyQt6.QtGui import QValidator
+
+    from certus.utils.certus_numeric_text import parse_decimal
 
     offenders = []
     for key, widget in _numeric_line_edits(strat).items():
@@ -77,10 +87,10 @@ def test_a_numeric_field_refuses_what_float_cannot_parse(strat, bad):
         state, _text, _pos = v.validate(bad, len(bad))
         if state == QValidator.State.Acceptable:
             try:
-                float(bad)
+                parse_decimal(bad)
             except ValueError:
                 offenders.append(key)
-    assert not offenders, f"field(s) accepting {bad!r}, which float() rejects: {offenders[:5]}"
+    assert not offenders, f"field(s) accepting {bad!r}, which the reader rejects: {offenders[:5]}"
 
 
 def test_a_numeric_field_still_accepts_a_plain_number(strat):

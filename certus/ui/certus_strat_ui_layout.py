@@ -51,17 +51,29 @@ from PyQt6.QtGui import QDoubleValidator
 LIST_VALUED_SETTINGS = frozenset({"robustness_noise_factors"})
 
 
-def _as_numeric_field(edit):
+class _DecimalValidator(QDoubleValidator):
+    """A QDoubleValidator (C locale, standard notation) that takes the decimal comma as a point.
+
+    On a French keyboard "1,5" is the natural way to write one and a half. The C locale reads
+    the comma as an intermediate state: the field kept it, `hasAcceptableInput()` said no, and
+    nobody ever asked. The comma is turned into a point as it is typed or pasted, so that what
+    the field shows is what the reader reads.
+    """
+
+    def validate(self, text, pos):
+        return super().validate(text.replace(",", "."), pos)
+
+
+def _as_numeric_field(edit, label):
     """Refuse what the reader cannot parse, and return the field.
 
-    These settings are read with float(); anything accepted here but rejected
-    by float() is dropped in SILENCE. The C locale matters: on a French
-    keyboard "1,5" is the natural way to write one and a half.
+    ``label`` names the field for the message that refuses a run (see ``input_problems``).
     """
-    validator = QDoubleValidator(edit)
+    validator = _DecimalValidator(edit)
     validator.setNotation(QDoubleValidator.Notation.StandardNotation)
     validator.setLocale(QLocale.c())
     edit.setValidator(validator)
+    edit.setProperty("field_label", label)
     return edit
 from certus.ui.certus_ui import WelcomeGuideWidget, EnhancedProgressWidget
 from certus.ui.certus_strat_stack_progress_widget import CertusStratStackProgressWidget
@@ -475,7 +487,7 @@ class CertusStratLayoutMixin:
 
         lbl_idx = QLabel("Index:")
 
-        self.widgets["nSub_custom"] = _as_numeric_field(QLineEdit())
+        self.widgets["nSub_custom"] = _as_numeric_field(QLineEdit(), "Substrate index")
 
         self.widgets["nSub_custom"].setPlaceholderText("1.73")
 
@@ -505,7 +517,7 @@ class CertusStratLayoutMixin:
 
         lbl_l0.setStyleSheet(f"font-weight: bold; font-size: {Typography.H3}pt; color: {CertusTheme.INFO_TEXT};")
 
-        self.widgets["l0"] = _as_numeric_field(QLineEdit())
+        self.widgets["l0"] = _as_numeric_field(QLineEdit(), lbl_l0.text().rstrip(":"))
 
         self.widgets["l0"].setFixedWidth(70)
 
@@ -1290,7 +1302,7 @@ class CertusStratLayoutMixin:
 
         n_layout = QHBoxLayout()
 
-        self.widgets[f"n{label}_r"] = _as_numeric_field(QLineEdit())
+        self.widgets[f"n{label}_r"] = _as_numeric_field(QLineEdit(), title)
         self.widgets[f"n{label}_r"].setPlaceholderText("e.g. 2.3")
         self.widgets[f"n{label}_r"].setFixedWidth(50)
         self.widgets[f"n{label}_r"].setToolTip(
@@ -1411,7 +1423,9 @@ class CertusStratLayoutMixin:
                 edit = QLineEdit()
                 edit.setMaximumWidth(70)
                 if key not in LIST_VALUED_SETTINGS:
-                    _as_numeric_field(edit)
+                    _as_numeric_field(edit, lbl.text().rstrip(":").strip())
+
+            edit.setProperty("field_label", lbl.text().rstrip(":").strip())
 
             self.widgets[key] = edit
 

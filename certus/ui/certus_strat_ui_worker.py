@@ -382,6 +382,15 @@ class CertusStratWorkerMixin:
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Error collecting parameters: {e}")
 
+            self.refuse_to_run([str(e)])
+
+            return
+
+        problems = self.input_problems(params)
+
+        if problems:
+            self.refuse_to_run(problems)
+
             return
 
         exec_mode = str(params.get("execution_mode", "premium")).lower()

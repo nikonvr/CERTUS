@@ -635,7 +635,7 @@ class PlotManager:
     def _compute_pareto_mc_rmse(self, current_ep: np.ndarray, rmse_val: float) -> float:
         """Estimate robust RMSE with lightweight MC sampling around current thicknesses."""
         mc_rmse = rmse_val
-        local_seed = int(getattr(self, "run_seed", 0) or 0)
+        local_seed = int(getattr(self.ui, "run_seed", 0) or 0)
         rng = np.random.default_rng(local_seed)
         var_idx = self._pareto_variable_indices(current_ep)
 

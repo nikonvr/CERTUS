@@ -49,6 +49,12 @@ HUB_BRAND_SUBSTRATE: Final[str] = "#469e1a"
 # four different hues on them would destroy information rather than add any.
 
 
+#: How the frozen hub starts a module. In the frozen suite the hub and every module are the ONE
+#: executable, so a module is started as `CERTUS_HUB.exe --run-module CERTUS_DESIGN [file]`
+#: (see `certus.core.certus_frozen_entry`); from the sources it is `python CERTUS_DESIGN.py`.
+RUN_MODULE_FLAG: Final[str] = "--run-module"
+
+
 class HubAppCatalogItem(TypedDict, total=False):
     """Declarative metadata for one HUB launcher card."""
 

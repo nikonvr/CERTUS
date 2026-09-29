@@ -174,7 +174,7 @@ from PyQt6.QtWidgets import QComboBox
 # =============================================================================
 
 
-from certus.core.certus_hub_config import HubAppCatalogItem, HUB_APP_CATALOG, hub_grid_columns
+from certus.core.certus_hub_config import HubAppCatalogItem, HUB_APP_CATALOG, RUN_MODULE_FLAG, hub_grid_columns
 from certus.ui.certus_hub_widgets import ApplicationCard, GroupedApplicationCard
 from certus.utils.certus_qsettings import certus_settings
 
@@ -635,9 +635,12 @@ class CertusHub(QMainWindow):
         base_name = Path(app_name).stem
 
         if getattr(sys, "frozen", False):
-            program = str(Path(base_dir) / (base_name + (".exe" if sys.platform == "win32" else "")))
+            # The frozen suite is ONE executable, the hub and every module: `sys.executable` is
+            # that executable, and a module is started by its name (certus_frozen_entry.py). It
+            # used to run `<base_name>.exe`, which the build does not produce.
+            program = sys.executable
 
-            args = []
+            args = [RUN_MODULE_FLAG, base_name]
 
         else:
             program = sys.executable

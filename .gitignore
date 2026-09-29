@@ -97,6 +97,7 @@ _metal_cache/
 # ─────────────── Run outputs in reports/ ───────────────
 # Campaign reports and per-run STRAT diagnostics are regenerated: ignored.
 reports/Report_*
+reports/Pareto_Summary_*
 reports/STRAT_observability_*
 # 🔴 EXCEPT index and metal reports: REAL spectrophotometer measurements, irrecoverable
 # (CLAUDE.md, prohibition 3).

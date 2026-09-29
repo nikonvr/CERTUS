@@ -550,8 +550,43 @@ class _WarmupRegistry:
     """
 
     thread = None
-    # Set by the first bootstrap_app call of the process, never reset: the warmup runs once.
+    # Set by the first start_jit_warmup call of the process, never reset: the warmup runs once.
     started = False
+
+
+def _bg_warmup() -> None:
+    try:
+        from certus_physics import warmup_physics
+
+        warmup_physics(silent=True)
+    except ImportError:
+        pass
+
+    try:
+        from certus.core.certus_re_objectives import _warmup_re_physics
+
+        _warmup_re_physics()
+    except Exception:
+        pass
+
+
+def start_jit_warmup() -> None:
+    """Start the background JIT warmup, once per process, once the application's imports are done.
+
+    bootstrap_app used to start it, at the top of every entry script and at the import of nine
+    library modules: its thread then imported modules while the main thread imported others,
+    and the import system could deadlock (CI, 2026-09-28: `_DeadlockError: deadlock detected by
+    _ModuleLock('scipy.linalg.cython_lapack')` in an INDEX run). init_certus_app calls this.
+    """
+    if _WarmupRegistry.started:
+        return
+    _WarmupRegistry.started = True
+    import threading
+
+    thread = threading.Thread(target=_bg_warmup, name="CertusJitWarmup", daemon=True)
+    thread.start()
+    # Stored on the registry so callers can wait if needed
+    _WarmupRegistry.thread = thread
 
 
 def wait_warmup(timeout: float = 30.0) -> None:
@@ -1070,39 +1105,6 @@ def bootstrap_app(
 
     if script_dir not in sys.path and not Path(script_dir).resolve().is_relative_to(package_dir):
         sys.path.insert(0, script_dir)
-
-    # Launch JIT warmup in background thread (non-blocking startup)
-
-    import threading
-
-    def _bg_warmup():
-
-        try:
-            from certus_physics import warmup_physics
-
-            warmup_physics(silent=True)
-        except ImportError:
-            pass
-
-        try:
-            from certus.core.certus_re_objectives import _warmup_re_physics
-
-            _warmup_re_physics()
-        except Exception:
-            pass
-
-    # Once per process: the warmup compiles the same kernels whoever asks, and library modules
-    # bootstrap at import too (D42) -- importing CERTUS_INDEX used to start seven of these threads.
-    if not _WarmupRegistry.started:
-        _WarmupRegistry.started = True
-
-        _warmup_thread = threading.Thread(target=_bg_warmup, daemon=True)
-
-        _warmup_thread.start()
-
-        # Store on the registry so callers can wait if needed
-
-        _WarmupRegistry.thread = _warmup_thread
 
     active_runtime = runtime if runtime is not None else build_runtime(log_file=_log_name)
 

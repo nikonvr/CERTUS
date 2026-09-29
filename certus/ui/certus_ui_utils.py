@@ -186,6 +186,7 @@ from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
     handle_exception,
     get_resource_path,
+    start_jit_warmup,
 )
 from certus.ui.certus_qt_svg import SVG_AVAILABLE
 
@@ -898,6 +899,9 @@ def init_certus_app(app_name: str = "CERTUS", app: QApplication | None = None, *
     app.setApplicationName(app_name)
 
     setup_pyqtgraph_defaults()
+
+    # The imports of the application are done by now: the JIT warmup can run beside it.
+    start_jit_warmup()
 
     return app
 

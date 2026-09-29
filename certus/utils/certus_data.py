@@ -827,7 +827,10 @@ def generate_html_report(filename: str, title: str, sections: list[dict], figure
                     html.append(f"<div style='{item_style}'><b>{k}</b><br>{v}</div>")
                 html.append("</div>")
             elif typ == "table":
-                if isinstance(cnt, pd.DataFrame):
+                if "rows" in sec:
+                    table = pd.DataFrame(sec["rows"], columns=sec.get("headers"))
+                    html.append(table.to_html(border=0, classes="dataframe", index=False))
+                elif isinstance(cnt, pd.DataFrame):
                     html.append(cnt.to_html(border=0, classes="dataframe", index=False))
                 elif isinstance(cnt, list) and cnt and isinstance(cnt[0], dict):
                     html.append(pd.DataFrame(cnt).to_html(border=0, classes="dataframe", index=False))

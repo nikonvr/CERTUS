@@ -19,7 +19,7 @@
 > Les décisions de la section 5 reviennent à 👤 : **ne les tranche pas à sa place**.
 
 **Point de départ.** Branche `refactor-corridors-mixins`. Première commande : `python scripts\preflight.py` → `PREFLIGHT=GO`.
-Dernière validation locale complète, sur 7a8d352 (Windows 11, le 2026-09-29) : ruff propre · oracle 564 passed · unit 2 516 passed, aucun saut · `tests/ui/` 785 passed, 10 skipped, 3 xfailed · le reste de `tests/` 347 passed, 2 skipped · **0 failed**. La garde de convergence retient la meilleure de quatre exécutions pour les modules non reproductibles (section 3).
+Dernière validation locale complète, sur 5a4cc15 (Windows 11, le 2026-09-29) : ruff propre · oracle 563 passed · unit 2 518 passed, aucun saut · `tests/ui/` 785 passed, 10 skipped, 3 xfailed · le reste de `tests/` 347 passed, 2 skipped · **0 failed**. La garde de convergence retient la meilleure de quatre exécutions pour les modules non reproductibles (section 3).
 
 | # | action | état | où | fini quand |
 |---|---|---|---|---|
@@ -50,6 +50,7 @@ Dernière validation locale complète, sur 7a8d352 (Windows 11, le 2026-09-29) :
 | R25 | les tests INDEX sortaient une fois sur trois avec le code 1 (« lost sys.stderr ») | **faite** (97857ec) : `test_suite_ui_instantiation` laissait vivre huit fenêtres jusqu'à la sortie ; le gardien des fenêtres voit désormais celles construites par `getattr`. 5 sorties en erreur sur 18 avant, 0 sur 12 après | `tests/integration/test_suite_ui_instantiation.py` | 2026-09-29 |
 | R26 | trois imports étoile déguisés (D44) : des modules recopiaient d'autres modules entiers dans leurs globales | **faite** : `certus_strat_objectives` (110964e), `certus_strat_core`, qui re-exporte désormais 29 noms un à un (673acc5), la façade `certus_substrate_index.py` (a9e91f1) ; leurs imports inutiles partent ensuite (e1216ce) et le cœur STRAT se charge sans Qt | `certus/core/certus_strat_core.py` | 2026-09-29 |
 | R27 | l'outil d'indice de substrat du hub ne s'ouvrait plus depuis le 2026-06-13 (`main()` remplacé par `pass`) | **faite** (a9e91f1) ; un test exécute désormais chacun des dix scripts du hub jusqu'à sa boucle d'événements (cfdf98b) | `tests/integration/test_hub_scripts_start_their_app.py` | 2026-09-29 |
+| R28 | des lectures `self.nom` que rien ne définit : AttributeError au premier passage, qu'aucun linter ne voit | **faite** : FIELD — après chaque optimisation laissant une couche mince intérieure, le nettoyage levait, la ré-optimisation ne partait pas (3b9485a), et l'épaisseur affichée ne suivait pas la fusion (8e504de) ; INDEX SPLINE — trois gestionnaires d'erreur levaient par `self.self.logger` (81a5ee4), un gestionnaire « Auto NKD Sweep » jamais branché (377b95e) ; DESIGN — stratégie couleur jamais branchée (e3f124a) ; RE — appel gardé toujours faux (9169b44). Un balayage lit les 28 510 lectures `self.x` de toutes les classes ; il échoue sur 823f67e avec ces quatre défauts (5a4cc15) | `tests/unit/test_self_attributes_are_defined.py` | 2026-09-29 |
 
 ## 1. Où en sont les programmes
 
@@ -57,7 +58,7 @@ Dernière validation locale complète, sur 7a8d352 (Windows 11, le 2026-09-29) :
 |---|---|---|
 | **Calcul (STRAT)** | composant étalon : l'aléatoire ×2 (`r75x2`) à la fente de 2 nm. Fabricable avec les rampes de la configuration livrée ; sans rampes, 3 graines sur 7 trouvent des déposables. Toute la fabricabilité passe par le générateur ELITE | voir la section 6 |
 | **Interface** | plan clos le 2026-09-08 : 12 critères de fin sur 13 atteints et mesurés, le treizième démontré inatteignable (`xfail` strict) | la revue visuelle et trois arbitrages de 👤 (section 5) ; la fuite des fenêtres (défaut D11) |
-| **Qualité** | CI GitHub sur toutes les branches : job `pytest` sous Linux (oracle, unit, puis le reste de `tests/`), job `interface` sous Windows (`tests/ui/`), dernières versions stables à chaque run. `certus/` commenté en anglais, garde-fou ; les tests n'écrivent ni les préférences ni le registre de 👤 ; dette de lint de 31 règles, cliquet nominatif (D25) | R9 étape 2 (F401), puis D11 ; l'ordre des actions est le tableau de la section 0 |
+| **Qualité** | CI GitHub sur toutes les branches : job `pytest` sous Linux (oracle, unit, puis le reste de `tests/`), job `interface` sous Windows (`tests/ui/`), dernières versions stables à chaque run. `certus/` commenté en anglais, garde-fou ; les tests n'écrivent ni les préférences ni le registre de 👤 ; dette de lint de 31 règles, cliquet nominatif (D25) | R9, suite : E402, I001, puis les petites règles ; D11 ; l'ordre des actions est le tableau de la section 0 |
 | **Documentation** | cure du 2026-09-26 : deux documents vivants, 27 archivés | tenir « un fait, un seul endroit » |
 | **Validation externe** | 🔴 **aucune** : STRAT n'est validé que contre lui-même | deux dépôts réels du dichroïque (section 5) |
 

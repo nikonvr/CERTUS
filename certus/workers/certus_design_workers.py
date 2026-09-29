@@ -230,7 +230,7 @@ class OptimWorker(QObject):
                 logger = get_structured_logger(
                     logger, 
                     run_context=getattr(self.request, "run_context", None),
-                    trace=self.request.trace, 
+                    run_id=self.request.trace.run_id,
                     app_id="CERTUS_DESIGN"
                 )
             

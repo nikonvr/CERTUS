@@ -670,6 +670,7 @@ class CertusFieldStateMixin:
 
         if removed > 0:
             self.logger.info("[FIELD] strict cleanup removed %d thin layer(s).", removed)
+            self._update_thicknesses()
 
         try:
             params = self._get_params()

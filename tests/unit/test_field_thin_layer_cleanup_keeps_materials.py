@@ -81,3 +81,14 @@ def test_the_relaunched_optimization_starts_from_the_cleaned_stack(field_app, mo
     assert request.action == "optimize"
     assert list(request.params.emp_factors) == [2.0, 1.0]
     assert list(request.params.layer_types) == [0, 1]
+
+
+def test_the_merged_layer_shows_its_new_thickness(field_app, monkeypatch) -> None:
+    """The thickness column followed the QWOT only when the re-optimization came back."""
+    monkeypatch.setattr(field_app, "_start_worker", lambda request: None)
+    _load(field_app, [("H", 1.0), ("L", 0.02), ("H", 1.0), ("L", 1.0)])
+    one_qwot_nm = float(field_app.table_layers.item(0, 2).text())
+
+    field_app._cleanup_thin_layers_and_reoptimize(source="optimization")
+
+    assert float(field_app.table_layers.item(0, 2).text()) == pytest.approx(2 * one_qwot_nm, abs=0.02)

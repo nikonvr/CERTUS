@@ -290,7 +290,7 @@ def check_release_structure() -> list[str]:
         "python tools/release_checks.py --check-frozen-run",
         "./tools/smoke_release.ps1",
         "./tools/build_frozen.ps1",
-        "actions/upload-artifact@v4",
+        "actions/upload-artifact@",
         "dist/CERTUS_HUB/**",
         "tests/unit/test_release_guardrails.py",
     ]

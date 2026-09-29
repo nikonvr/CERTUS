@@ -2,6 +2,10 @@ import numpy as np
 from numba import njit, prange
 from certus.physics.certus_opt_tmm import compute_TMM_generic
 from certus.core.certus_core import TWO_PI
+from certus.physics.certus_substrate_absorption import (
+    DEFAULT_SUBSTRATE_THICKNESS_NM,
+    substrate_internal_transmittance,
+)
 
 SMALL_EPSILON = 1e-12
 
@@ -21,10 +25,14 @@ def _apply_exact_backside_generic(
     n_layers_all_wls: np.ndarray,
     n_sub_all_wls: np.ndarray,
     wls: np.ndarray,
+    substrate_thickness_nm: float = DEFAULT_SUBSTRATE_THICKNESS_NM,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
 
     Exact incoherent backside for generic multilayer (no back coating).
+
+    A substrate that absorbs is a plate of thickness `substrate_thickness_nm` that loses flux on each pass
+    (`certus_substrate_absorption`).
 
     Computes R' (Sub -> Stack -> Air) via compute_TMM_generic with reversed arrays.
 
@@ -45,14 +53,36 @@ def _apply_exact_backside_generic(
 
         n_s = n_sub_all_wls[i]
 
-        # Check for absorbing substrate (infinite thickness assumption)
+        if n_s.imag != 0.0:
+            # A substrate that absorbs is a plate: the interfaces seen from inside keep the real part of its
+            # index, and each pass loses tau. tau = 0 is the semi-infinite absorber (T = 0, R = R_front).
+            n_air_abs = complex(1.0)
 
-        if abs(n_s.imag) > 1e-8:
-            # Absorbing substrate: Light doesn't reach back interface / doesn't return
+            n_rev_abs = n_layers_all_wls[i, ::-1].copy() if n_layers_all_wls.ndim > 1 else n_layers_all_wls[i : i + 1]
 
-            R_total[i] = R_front[i]
+            R_prime_abs, T_prime_abs = compute_TMM_generic(k0, d_rev, n_rev_abs, complex(n_s.real, 0.0), n_air_abs)
 
-            T_total[i] = 0.0
+            r_b_abs = (n_s.real - 1.0) / (n_s.real + 1.0)
+
+            R_sub_abs = r_b_abs * r_b_abs
+
+            tau = substrate_internal_transmittance(n_s.imag, wls[i], substrate_thickness_nm, 1.0)
+
+            tau2 = tau * tau
+
+            D_abs = 1.0 - R_prime_abs * R_sub_abs * tau2
+
+            if D_abs < 1e-12:
+                D_abs = 1e-12
+
+            T_abs = (T_front[i] * (1.0 - R_sub_abs) * tau) / D_abs
+
+            # T_front * T_prime, not T_front * T_front: equal only when the substrate does not absorb.
+            R_abs = R_front[i] + (T_front[i] * T_prime_abs * R_sub_abs * tau2) / D_abs
+
+            T_total[i] = min(1.0, max(0.0, T_abs))
+
+            R_total[i] = min(1.0, max(0.0, R_abs))
 
             continue
 

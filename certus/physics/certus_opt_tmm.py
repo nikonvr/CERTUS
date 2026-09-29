@@ -10,6 +10,10 @@ from certus.core.certus_core import (
     FROSTED_GLASS_CAUCHY_B,
 )
 from dataclasses import dataclass
+from certus.physics.certus_substrate_absorption import (
+    DEFAULT_SUBSTRATE_THICKNESS_NM,
+    substrate_internal_transmittance,
+)
 from certus.physics.certus_optical_models import (
     get_nk_cauchy_wrapper,
 )
@@ -185,10 +189,15 @@ def calculate_RTRback_incoherent_vectorized(
     n_layers_all_wls: np.ndarray,
     n_substrate_all_wls: np.ndarray,
     wls: np.ndarray,
+    substrate_thickness_nm: float = DEFAULT_SUBSTRATE_THICKNESS_NM,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
 
     Calculates R (Front), T, and Rback (Back) for a film on a THICK INCOHERENT substrate.
+
+    A substrate that absorbs (`imag(n) != 0`) is a plate of thickness `substrate_thickness_nm` that loses
+    flux on each pass (`certus_substrate_absorption`), continuous in `k` up to the semi-infinite absorber.
+    Rback is the reflectance seen from the back side: the air -> substrate interface, then what comes back.
 
     """
 
@@ -213,28 +222,36 @@ def calculate_RTRback_incoherent_vectorized(
 
         Rf_coh, Tf_coh = compute_TMM_generic(k0_arr[i], thicknesses, n_layers, n_inc_front, ns)
 
-        if abs(ns.imag) > 1e-8:
-            # Absorbing substrate (Infinite): No Backside Reflection
+        if ns.imag != 0.0:
+            # A substrate that absorbs is a plate: the interfaces seen from inside keep the real part of its
+            # index, and each pass loses tau. tau = 0 is the semi-infinite absorber: T = 0, R = Rf, and Rback
+            # is the Fresnel reflectance air -> substrate of the complex index.
+            ns_in = complex(ns.real, 0.0)
 
-            T_total[i] = 0.0
+            Rb_abs, Tb_abs = compute_TMM_generic(k0_arr[i], thicknesses[::-1], n_layers[::-1], ns_in, n_inc_front)
 
-            R_total[i] = Rf_coh
+            r_in = (ns.real - 1.0) / (ns.real + 1.0)
 
-            Rback_total[i] = 0.0  # Or should it be R_sub (air-sub) only?
+            R_in = r_in * r_in
 
-            # Convention: Rback is measured from Back (Air->Sub).
+            r_out = (1.0 - ns) / (1.0 + ns)
 
-            # If sub is absorbing infinite, light sees Air->Sub interface, absorbs, nothing returns from front stack.
+            R_out = abs(r_out) ** 2
 
-            # So Rback = R(Air->Sub)
+            tau = substrate_internal_transmittance(ns.imag, wls[i], substrate_thickness_nm, 1.0)
 
-            # Fresnel Air -> Sub
+            tau2 = tau * tau
 
-            n_air = 1.0
+            denom_abs = 1.0 - Rb_abs * R_in * tau2
 
-            r_as = (n_air - ns) / (n_air + ns)
+            if denom_abs < 1e-9:
+                denom_abs = 1e-9
 
-            Rback_total[i] = abs(r_as) ** 2
+            T_total[i] = (Tf_coh * (1.0 - R_in) * tau) / denom_abs
+
+            R_total[i] = Rf_coh + (Tf_coh * Tb_abs * R_in * tau2) / denom_abs
+
+            Rback_total[i] = R_out + ((1.0 - R_out) * (1.0 - R_in) * Rb_abs * tau2) / denom_abs
 
             continue
 

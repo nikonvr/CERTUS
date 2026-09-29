@@ -2,6 +2,10 @@ import numpy as np
 from numba import njit, prange
 from certus.physics.certus_opt_tmm import compute_TMM_generic, compute_RT_from_matrix
 from certus.core.certus_core import TWO_PI
+from certus.physics.certus_substrate_absorption import (
+    DEFAULT_SUBSTRATE_THICKNESS_NM,
+    substrate_internal_transmittance,
+)
 
 SMALL_EPSILON = 1e-12
 
@@ -230,8 +234,14 @@ def calculate_RT_with_backside_fused(
     n_layers_all_wls: np.ndarray,
     n_sub_all_wls: np.ndarray,
     wls: np.ndarray,
+    substrate_thickness_nm: float = DEFAULT_SUBSTRATE_THICKNESS_NM,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Calculate R/T for multilayer stack WITH EXACT backside correction in a single pass."""
+    """Calculate R/T for multilayer stack WITH EXACT backside correction in a single pass.
+
+    A substrate that absorbs (`imag(n_sub) != 0`) is a plate of thickness `substrate_thickness_nm` that
+    loses flux on each pass (`certus_substrate_absorption`): the answer is continuous in `k`, from the
+    plate without loss (`k = 0`) to the semi-infinite absorber (`k` large: `T = 0`, `R` of the front).
+    """
     n_wls = len(wls)
     k0_arr = TWO_PI / wls
     R_total = np.empty(n_wls, dtype=wls.dtype)
@@ -247,10 +257,23 @@ def calculate_RT_with_backside_fused(
         Rf, Tf = compute_TMM_single_point_k0(k0, thicknesses, n_layers_all_wls[i], n_s)
 
         # 2. Backside correction
-        if abs(n_s.imag) > 1e-8:
-            # Absorbing substrate: Light doesn't reach back interface / doesn't return
-            R_total[i] = Rf
-            T_total[i] = 0.0
+        if n_s.imag != 0.0:
+            # A substrate that absorbs is a plate: the interfaces seen from inside keep the real part of
+            # its index, and each pass loses tau. tau = 0 is the semi-infinite absorber (T = 0, R = Rf).
+            n_rev_abs = n_layers_all_wls[i, ::-1].copy() if n_layers_all_wls.ndim > 1 else n_layers_all_wls[i : i + 1]
+            R_prime, T_prime = compute_TMM_generic(k0, d_rev, n_rev_abs, complex(n_s.real, 0.0), n_air)
+            r_b = (n_s.real - 1.0) / (n_s.real + 1.0)
+            R_sub = r_b * r_b
+            tau = substrate_internal_transmittance(n_s.imag, wls[i], substrate_thickness_nm, 1.0)
+            tau2 = tau * tau
+            D = 1.0 - R_prime * R_sub * tau2
+            if D < 1e-12:
+                D = 1e-12
+            T_tot = (Tf * (1.0 - R_sub) * tau) / D
+            # Tf * T_prime, not Tf * Tf: the two are equal only when the substrate does not absorb.
+            R_tot = Rf + (Tf * T_prime * R_sub * tau2) / D
+            T_total[i] = min(1.0, max(0.0, T_tot))
+            R_total[i] = min(1.0, max(0.0, R_tot))
             continue
 
         # R' = Sub -> Stack -> Air (reversed arrays, swapped media)
@@ -294,6 +317,7 @@ def calculate_RT_vectorized_real(
     n_substrate_all_wls: np.ndarray,  # (n_wls,) complex
     wls: np.ndarray,
     with_backside: bool = True,
+    substrate_thickness_nm: float = DEFAULT_SUBSTRATE_THICKNESS_NM,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Calculate R/T for multilayer stack with optional EXACT backside correction.
 
@@ -308,7 +332,9 @@ def calculate_RT_vectorized_real(
         R, T arrays"""
 
     if with_backside:
-        return calculate_RT_with_backside_fused(thicknesses, n_layers_all_wls, n_substrate_all_wls, wls)
+        return calculate_RT_with_backside_fused(
+            thicknesses, n_layers_all_wls, n_substrate_all_wls, wls, substrate_thickness_nm
+        )
     else:
         return calculate_RT_no_backside(thicknesses, n_layers_all_wls, n_substrate_all_wls, wls)
 
@@ -439,6 +465,7 @@ def calc_spectrum_full_exact(
     d_back: np.ndarray,
     n_back: np.ndarray,
     n_sub: np.ndarray,
+    substrate_thickness_nm: float = DEFAULT_SUBSTRATE_THICKNESS_NM,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Exact inconsistent backside calculation for Front + Back stacks.
 
@@ -476,7 +503,12 @@ def calc_spectrum_full_exact(
 
         denom = 1 - Rf_prime * Rb_prime
 
-        T_total = (Tf * Tb) / denom"""
+        T_total = (Tf * Tb) / denom
+
+    A substrate that absorbs is a plate of thickness `substrate_thickness_nm`: the interfaces seen from inside
+    keep the real part of its index, and the back-side quantities come back as `Rb' tau^2` and `Tb tau`
+    (`certus_substrate_absorption`), so that the caller's formula, and its derivatives, stay those of a plate
+    without loss."""
 
     n_wls = len(wls)
 
@@ -508,6 +540,26 @@ def calc_spectrum_full_exact(
         n_s = n_sub[i]
 
         n_air = complex(1.0)
+
+        if n_s.imag != 0.0:
+            # A substrate that absorbs: the interfaces seen from inside keep the real part of its index.
+            n_s_in = complex(n_s.real, 0.0)
+
+            n_front_rev_abs = n_front[i, ::-1].copy() if n_front.ndim > 1 else n_front[i : i + 1]
+
+            Rf_prime[i], _ = compute_TMM_generic(k0, d_front_rev, n_front_rev_abs, n_s_in, n_air)
+
+            n_back_rev_abs = n_back[i, ::-1].copy() if n_back.ndim > 1 else n_back[i : i + 1]
+
+            Rb_abs, Tb_abs = compute_TMM_generic(k0, d_back_rev, n_back_rev_abs, n_s_in, n_air)
+
+            tau = substrate_internal_transmittance(n_s.imag, wls[i], substrate_thickness_nm, 1.0)
+
+            Rb_prime[i] = Rb_abs * tau * tau
+
+            Tb[i] = Tb_abs * tau
+
+            continue
 
         # Front reversed: Sub -> Front -> Air
 

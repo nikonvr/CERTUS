@@ -83,8 +83,6 @@ from certus_physics import (  # STRAT-specific kernels (previously imported from
     compute_T_front_profile,
     compute_dT_dd_kernel,
     find_nucleation_adaptive_kernel,
-    get_refractive_index,
-    get_refractive_clues_vectorized,
     precompute_matrix_cache_kernel,
     rank_nucleation_candidates_kernel,
     simulate_growth_kernel,
@@ -172,11 +170,6 @@ PERF_MONITOR = PerformanceMonitor()
 # Imported here for full backward compatibility.
 from certus.utils.certus_strat_context import PlotCache, ThreadSafeCounter  # noqa: E402
 
-
-import certus.core.certus_strat_config as _config
-for _k, _v in _config.__dict__.items():
-    if not _k.startswith("__"):
-        globals()[_k] = _v
 
 def _run_phase_a_hybrid_loop(
     params: dict[str, Any],

@@ -157,11 +157,11 @@ class LayoutManager:
 
         self.ui._apply_certus_compact_theme(
             plots=[
-                getattr(self, "spectrum_plot", None),
-                getattr(self, "profile_plot", None),
-                getattr(self, "nk_plot", None),
-                getattr(self, "color_plot", None),
-                getattr(self, "plot_convergence", None),
+                getattr(self.ui, "spectrum_plot", None),
+                getattr(self.ui, "profile_plot", None),
+                getattr(self.ui, "nk_plot", None),
+                getattr(self.ui, "color_plot", None),
+                getattr(self.ui, "plot_convergence", None),
             ]
         )
 

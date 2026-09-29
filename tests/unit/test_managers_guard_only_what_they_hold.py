@@ -25,21 +25,9 @@ ROOT = Path(__file__).resolve().parents[2]
 
 DELEGATES = {"ui", "app", "window"}
 
-_PLOT_THEME = (
-    "Reading the plots on the window applies the compact theme to them at start-up: their "
-    "background goes from #ffffff to the theme's #eef2f7. A change of rendering awaits the "
-    "interface review (docs/ETAT.md, section 5)."
-)
-
 # Guards on a name the manager does not hold that are deliberately left as they are. Each entry
 # is a prefix of the report line, with the reason.
-ALLOWED: dict[str, str] = {
-    "certus/ui/certus_design_ui_layout.py::LayoutManager guards 'spectrum_plot'": _PLOT_THEME,
-    "certus/ui/certus_design_ui_layout.py::LayoutManager guards 'profile_plot'": _PLOT_THEME,
-    "certus/ui/certus_design_ui_layout.py::LayoutManager guards 'nk_plot'": _PLOT_THEME,
-    "certus/ui/certus_design_ui_layout.py::LayoutManager guards 'color_plot'": _PLOT_THEME,
-    "certus/ui/certus_design_ui_layout.py::LayoutManager guards 'plot_convergence'": _PLOT_THEME,
-}
+ALLOWED: dict[str, str] = {}
 
 
 def _assigned_self_attributes(node: ast.AST) -> set[str]:

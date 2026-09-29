@@ -550,6 +550,8 @@ class _WarmupRegistry:
     """
 
     thread = None
+    # Set by the first bootstrap_app call of the process, never reset: the warmup runs once.
+    started = False
 
 
 def wait_warmup(timeout: float = 30.0) -> None:
@@ -1089,13 +1091,18 @@ def bootstrap_app(
         except Exception:
             pass
 
-    _warmup_thread = threading.Thread(target=_bg_warmup, daemon=True)
+    # Once per process: the warmup compiles the same kernels whoever asks, and library modules
+    # bootstrap at import too (D42) -- importing CERTUS_INDEX used to start seven of these threads.
+    if not _WarmupRegistry.started:
+        _WarmupRegistry.started = True
 
-    _warmup_thread.start()
+        _warmup_thread = threading.Thread(target=_bg_warmup, daemon=True)
 
-    # Store on the registry so callers can wait if needed
+        _warmup_thread.start()
 
-    _WarmupRegistry.thread = _warmup_thread
+        # Store on the registry so callers can wait if needed
+
+        _WarmupRegistry.thread = _warmup_thread
 
     active_runtime = runtime if runtime is not None else build_runtime(log_file=_log_name)
 

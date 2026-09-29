@@ -984,7 +984,7 @@ class PlotManager:
             ep_back = data.get("ep_back")
 
             if ep_back is None:
-                ep_back = getattr(self, "ep_back_current", None)
+                ep_back = getattr(self.ui, "ep_back_current", None)
 
             self.ui._plot_profile(
                 data["ep"],
@@ -1019,7 +1019,7 @@ class PlotManager:
         n_layers_disp = len(data["ep"]) if "ep" in data else 0
 
         try:
-            src_name = Path(getattr(self, "_last_config_file", "")).stem
+            src_name = Path(getattr(self.ui, "_last_config_file", "")).stem
 
             title_prefix = f"[{src_name}] " if src_name else ""
 
@@ -1051,7 +1051,7 @@ class PlotManager:
         import numpy as np
         rmse_valid = rmse is not None and not np.isnan(rmse)
 
-        evals = data.get("evals", 0) + getattr(self, "accumulated_evals", 0)
+        evals = data.get("evals", 0) + getattr(self.ui, "accumulated_evals", 0)
 
         is_global_best = bool(data.get("is_global_best", False))
 
@@ -1102,7 +1102,7 @@ class PlotManager:
         import numpy as np
         rmse_valid = rmse is not None and not np.isnan(rmse)
 
-        evals = data.get("evals", 0) + getattr(self, "accumulated_evals", 0)
+        evals = data.get("evals", 0) + getattr(self.ui, "accumulated_evals", 0)
 
 
         if rmse_valid:
@@ -1125,7 +1125,7 @@ class PlotManager:
 
                 self.ui._stack_info_best_rmse = rmse
 
-                now = getattr(self, "_stack_info_last_update", 0.0)
+                now = getattr(self.ui, "_stack_info_last_update", 0.0)
 
 
                 t = time.time()

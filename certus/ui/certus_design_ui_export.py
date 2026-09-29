@@ -410,7 +410,7 @@ class ExportManager:
         """Exports design configuration and spectrum to Excel via build_standard_report."""
         import pandas as pd
 
-        f = certus_get_save_file_name(self, "Export to Excel", "Excel (*.xlsx)")
+        f = certus_get_save_file_name(self.ui, "Export to Excel", "Excel (*.xlsx)")
 
         if not f:
             return

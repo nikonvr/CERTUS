@@ -240,6 +240,66 @@ def is_frozen() -> bool:
     return getattr(sys, "frozen", False)
 
 
+@lru_cache(maxsize=8)
+def _numba_cache_key_of(root: str) -> str:
+    digest = hashlib.sha256()
+    digest.update(sys.version.encode())
+    try:
+        from importlib.metadata import version
+
+        digest.update(version("numba").encode())
+    except Exception:  # numba absent or its metadata unreadable: the key is still one
+        digest.update(b"numba?")
+    if is_frozen():
+        # No source on disk: the executable is the code.
+        try:
+            stat = Path(sys.executable).stat()
+            digest.update(f"{__version__}|{stat.st_size}|{stat.st_mtime_ns}".encode())
+        except OSError:
+            digest.update(str(__version__).encode())
+        return digest.hexdigest()[:12]
+    base = Path(root)
+    for package in ("certus", "certus_physics"):
+        for path in sorted((base / package).rglob("*.py")):
+            try:
+                data = path.read_bytes()
+            except OSError:
+                continue
+            if b"numba" in data:
+                digest.update(path.relative_to(base).as_posix().encode())
+                digest.update(b"\0")
+                digest.update(data)
+    return digest.hexdigest()[:12]
+
+
+def numba_cache_key(root: Path | None = None) -> str:
+    """Twelve hex digits that name what the compiled code of the Numba cache was compiled from.
+
+    Numba drops a cached function when ITS source file changes, and only then: a function of one file
+    that calls a function of another keeps its cached machine code, with the OLD callee inside, when
+    the callee's file changes. Measured here: `cost_numba_fast` (gradient_utils.py) went on running the
+    `calc_spectrum_full_exact` of the previous version of certus_tmm_matrix.py, and its cost ignored the
+    absorbing substrate that the new code reads, until the cache was emptied by hand. Numerical results of
+    an old version, silently, after an update.
+
+    The cache directory carries this key (`numba_cache_dir`): the sources whose text mentions `numba` (its
+    kernels, and the modules that give them constants), the version of Python and that of Numba. A change
+    in one of them opens another directory, and the machine code of the old sources is never read. A file
+    that does not mention `numba` (the interface) does not move the key: editing a label does not recompile
+    the kernels.
+
+    `root` is the folder that holds `certus/` and `certus_physics/` (the repository, by default).
+    """
+    return _numba_cache_key_of(str(Path(__file__).resolve().parents[2] if root is None else root))
+
+
+def numba_cache_dir() -> str:
+    """The directory of the Numba cache for this version of the sources; created if missing."""
+    path = Path(tempfile.gettempdir()) / "CERTUS_Numba_Cache" / numba_cache_key()
+    path.mkdir(parents=True, exist_ok=True)
+    return str(path)
+
+
 def get_materials_db_hash() -> str | None:
     """Returns SHA256 of the current materials DB if available."""
     try:
@@ -285,7 +345,7 @@ def configure_numba_env() -> None:
     # If a test resets _CERTUS_NUMBA_CONFIGURED to "0", we must re-run full config.
     if getattr(sys, "_certus_numba_configured", False) and os.environ.get("_CERTUS_NUMBA_CONFIGURED") == "1":
         if "NUMBA_CACHE_DIR" not in os.environ:
-            os.environ["NUMBA_CACHE_DIR"] = str(Path(tempfile.gettempdir()) / "CERTUS_Numba_Cache")
+            os.environ["NUMBA_CACHE_DIR"] = numba_cache_dir()
         if "NUMBA_THREADING_LAYER" not in os.environ:
             os.environ["NUMBA_THREADING_LAYER"] = "workqueue" if is_frozen() else "omp"
         return
@@ -320,9 +380,9 @@ def configure_numba_env() -> None:
             pass
 
     # Setup cache directory
-    # Using a deterministic temp dir ensures reuse across runs
-    cache_dir = str(Path(tempfile.gettempdir()) / "CERTUS_Numba_Cache")
-    Path(cache_dir).mkdir(parents=True, exist_ok=True)
+    # A deterministic temp dir per version of the sources ensures reuse across runs of the same code, and
+    # never the machine code of another one (see `numba_cache_key`)
+    cache_dir = numba_cache_dir()
     os.environ["NUMBA_CACHE_DIR"] = cache_dir
 
     if is_frozen():

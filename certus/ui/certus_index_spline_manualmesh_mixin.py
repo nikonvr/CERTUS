@@ -471,44 +471,6 @@ class CertusIndexSplineManualMeshMixin:
             delta_ns = dlg.substrate_delta_ns()
             self._start_manual_auto_add_one_worker(seed_current, selected_lambda_knots_nm, float(delta_ns))
 
-        def _on_auto_nkd_sweep() -> None:
-            if self._worker_role not in ("idle",):
-                if self.logger:
-                    self.logger.warning(
-                        "INDEX_SPLINE GUI: auto_nkd_sweep refused because worker busy | role=%s",
-                        str(self._worker_role),
-                    )
-                if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
-                    self._manual_knots_dialog.append_runtime_log(
-                        "Launch refused: an optimization is already in progress."
-                    )
-                QMessageBox.information(
-                    self,
-                    "Manual knots",
-                    "An optimization is already in progress. Wait for it to finish before restarting.",
-                )
-                return
-            seed_current = self._manual_postprocess_seed_result()
-            if not isinstance(seed_current, dict):
-                if self.logger:
-                    self.logger.warning("INDEX_SPLINE GUI: auto_nkd_sweep refused because no usable seed result")
-                QMessageBox.information(
-                    self,
-                    "Auto NKD Sweep",
-                    "No usable current result to start sweep.",
-                )
-                return
-            if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
-                self._manual_knots_dialog.clear_runtime_log()
-                self._manual_knots_dialog.set_runtime_progress(0.0, "Starting auto NKD sweep...")
-                d_seed, rmse_seed = CertusIndexSplineApp._runtime_metrics_from_result_dict(seed_current)
-                self._manual_knots_dialog.set_runtime_metrics(d_seed, rmse_seed)
-                self._manual_knots_dialog.append_runtime_log(
-                    "Auto NKD Sweep: optimizing across groups of 3 knots..."
-                )
-            selected_lambda_knots_nm = dlg.selected_lambda_knots()
-            delta_ns = dlg.substrate_delta_ns()
-            self._start_manual_auto_nkd_sweep_worker(seed_current, selected_lambda_knots_nm, float(delta_ns))
 
         def _on_recall_best() -> None:
             if self._worker_role not in ("idle",):

@@ -328,21 +328,6 @@ class ColorWorker(QObject):
     def isInterruptionRequested(self) -> bool:
         return QThread.currentThread().isInterruptionRequested()
 
-    def _compute_oblique_error(self, ep_test) -> Any:
-        return self.color_strat._compute_oblique_error(self, ep_test)
-
-    def _compute_oblique_error_and_grad_analytic(self, ep_test) -> Any:
-        return self.color_strat._compute_oblique_error_and_grad_analytic(self, ep_test)
-
-    def _objective_wrapper(self, x) -> Any:
-        return self.color_strat._objective_wrapper(self, x)
-
-    def _gradient_func_pglobal(self, x) -> Any:
-        return self.color_strat._gradient_func_pglobal(self, x)
-
-    def _optimization_callback(self, sample) -> Any:
-        return self.color_strat._optimization_callback(self, sample)
-
     def run(self) -> None:
         try:
             float_dtype = get_float_dtype()

@@ -122,7 +122,7 @@ class WorkerManager:
 
         # Self-export if pending (triggered by Case C or time budget completion)
 
-        if getattr(self, "_export_pending", False):
+        if getattr(self.ui, "_export_pending", False):
             self.ui._export_pending = False
 
             self.ui.orchestrator.schedule_export_results()

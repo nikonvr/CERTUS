@@ -66,20 +66,20 @@ class PlotManager:
 
             manifest_dict: dict[str, Any] = {}
             try:
-                status_txt = str(getattr(self, "validation_status", "OK") or "OK")
+                status_txt = str(getattr(self.ui, "validation_status", "OK") or "OK")
                 try:
                     status_val = ValidationStatus(status_txt)
                 except ValueError:
                     status_val = ValidationStatus.OK
                 seed_val = None
                 for _seed_candidate in (
-                    getattr(self, "run_seed", None),
-                    getattr(self, "random_seed", None),
-                    getattr(self, "_loaded_config", {}).get("seed")
-                    if isinstance(getattr(self, "_loaded_config", None), dict)
+                    getattr(self.ui, "run_seed", None),
+                    getattr(self.ui, "random_seed", None),
+                    getattr(self.ui, "_loaded_config", {}).get("seed")
+                    if isinstance(getattr(self.ui, "_loaded_config", None), dict)
                     else None,
-                    getattr(self, "_loaded_config", {}).get("random_seed")
-                    if isinstance(getattr(self, "_loaded_config", None), dict)
+                    getattr(self.ui, "_loaded_config", {}).get("random_seed")
+                    if isinstance(getattr(self.ui, "_loaded_config", None), dict)
                     else None,
                 ):
                     if _seed_candidate is None:
@@ -89,7 +89,7 @@ class PlotManager:
                         break
                     except (TypeError, ValueError):
                         continue
-                svc = IndexFitService(runner=lambda _cfg: dict(getattr(self, "pareto_history", {}) or {}))
+                svc = IndexFitService(runner=lambda _cfg: dict(getattr(self.ui, "pareto_history", {}) or {}))
                 req = IndexFitRequest(
                     config={
                         "module": "CERTUS_DESIGN",
@@ -99,15 +99,15 @@ class PlotManager:
                     source_paths=[
                         p
                         for p in (
-                            str(getattr(self, "filename", "") or "").strip(),
-                            str(getattr(self, "_last_config_file", "") or "").strip(),
+                            str(getattr(self.ui, "filename", "") or "").strip(),
+                            str(getattr(self.ui, "_last_config_file", "") or "").strip(),
                         )
                         if p
                     ],
                     seed=seed_val,
                     app_id="CERTUS_DESIGN",
                     app_version=__version__,
-                    warnings=list(getattr(self, "validation_warnings", []) or []),
+                    warnings=list(getattr(self.ui, "validation_warnings", []) or []),
                     status=status_val,
                 )
                 manifest_dict = svc.fit(req).manifest.to_dict()

@@ -22,12 +22,20 @@ _WINDOW = re.compile(r"Certus\w*App")
 
 
 def _builds_a_window(tree: ast.AST) -> bool:
+    """A `Certus...App(...)` call, or a window class looked up by name (getattr) and called."""
+    uses_getattr = False
+    names_a_window = False
     for node in ast.walk(tree):
         if isinstance(node, ast.Call):
             name = node.func.id if isinstance(node.func, ast.Name) else getattr(node.func, "attr", "")
             if _WINDOW.fullmatch(name):
                 return True
-    return False
+            uses_getattr = uses_getattr or name == "getattr"
+        elif isinstance(node, ast.Constant) and isinstance(node.value, str) and (
+            _WINDOW.fullmatch(node.value) or node.value == "CertusHub"
+        ):
+            names_a_window = True
+    return uses_getattr and names_a_window
 
 
 def _has_autouse_lifecycle(tree: ast.AST) -> bool:
@@ -79,6 +87,7 @@ def test_the_guard_sees_a_window_and_a_lifecycle() -> None:
     """The two detectors are not vacuous."""
     assert _builds_a_window(ast.parse("win = CertusFieldApp()"))
     assert not _builds_a_window(ast.parse("win = CertusTheme()"))
+    assert _builds_a_window(ast.parse("cls = getattr(module, 'CertusStratApp')\nwin = cls()"))
     lifecycle = (
         "@pytest.fixture(autouse=True)\n"
         "def f(qapp, monkeypatch):\n"

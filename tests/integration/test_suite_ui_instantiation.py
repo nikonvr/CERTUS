@@ -15,6 +15,14 @@ CERTUS_APPS_MAPPING = {
     "CERTUS_STRAT": "CertusStratApp",
 }
 
+@pytest.fixture(autouse=True)
+def _windows_end_with_the_test(qapp, monkeypatch):
+    """The windows a test builds are destroyed when it ends (D11): closing only hides them."""
+    from qt_lifecycle import qt_lifecycle
+
+    yield from qt_lifecycle(qapp, monkeypatch, "UI instantiation", main_windows_only=True)
+
+
 @pytest.mark.parametrize("module_name, class_name", CERTUS_APPS_MAPPING.items())
 def test_ui_instantiation(qapp, module_name, class_name):
     """

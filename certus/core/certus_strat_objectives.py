@@ -1,70 +1,34 @@
 # =============================================================================
 # CERTUS STRAT - Core numerical and physics logic
 # =============================================================================
-import sys
-import os
 import math
-from pathlib import Path
 import concurrent.futures
 
-import ctypes
 
-import hashlib
 
-import io
 
-import json
 
 import logging
 
-import queue
 
 import threading
 
-import time
 
-import traceback
 
-from collections import deque
 
 from typing import Any
-from dataclasses import dataclass
 
 import numpy as np
 
-import pandas as pd
-from pydantic import ValidationError
 
-from concurrent.futures import ThreadPoolExecutor
 
 
 
 
 # Import access config
-from certus.core.certus_core import (
-    NUMERICAL_FAULT_EXCEPTIONS,
-    SUBSTRATE_MAPPING,
-    get_export_config,
-    get_resource_path,
-    get_safe_worker_count,
-    certus_timestamp_display,
-    certus_timestamp_file,
-    setup_module_logging,
-)
 
 from certus.utils.certus_data import (
-    OPENPYXL_AVAILABLE,
     PerformanceMonitor,
-    SharedArrayManager,
-    SharedArrayWorker,
-    SharedIndicesManager,
-    SharedIndicesWorker,
-    TimingLogger,
-    generate_html_report,
-    get_missing_manifest_fields,
-    numpy_encoder,
-    to_csv_robust,
-    to_excel_robust,
 )
 
 from certus_physics import (  # STRAT-specific kernels (previously imported from certus.core._certus_physics_impl)
@@ -95,59 +59,21 @@ from certus_physics import (  # STRAT-specific kernels (previously imported from
 # Import context system (replaces global variables)
 
 from certus.utils.certus_strat_context import (
-    StratContext,
-    get_context,
     SYM_MISSING_DISTANCE,
     _clamp01,
     _compute_local_extrema_symmetry_score,
-    _build_symmetry_bonus_map,
-    _build_layer_importance_map,
-    _compute_blocks_range_contractual,
-    _compute_blocks_range_for_params,
-    _validate_strategy_blocks_contract,
-    _augment_solution_cost_with_sym,
-    _origin_family,
-    _parse_origin_priority_map,
-    _origin_priority_from_map,
-    _apply_family_diversity,
-    _blocks_signature,
-    _strategy_signature,
-    _strategy_id_sort_token,
-    _extract_rmse_p95_for_noise,
-    _dedupe_preserve_order_int,
-    _default_consensus_seeds,
-    _resolve_consensus_top_k,
-    _resolve_consensus_num_seeds,
-    _resolve_consensus_seed_stride,
-    _resolve_consensus_num_runs,
 )
 
 # Robust db clues (fixed xlsx)
 
-from certus.utils.certus_strat_db import RobustMaterialDatabase
-from certus.utils.certus_dto import StratConfigDTO
 
 
-from certus.utils.certus_export import show_copy_excel_feedback
 
-from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
-from certus.utils.certus_ux import build_premium_overrides, OBJ
-from certus.core.certus_metrology import ValidationStatus
-from certus.utils.certus_services import IndexFitRequest, IndexFitService
-from certus.workers.certus_strat_workers_dto import WorkerThreadRequest, WorkerThreadResult
-import certus.utils.certus_strat_service as _strat_service_module
 from certus.utils.certus_strat_service import (
-    StratStrategyService,
-    calculate_nominal_properties,
-    calculate_RT_normal_real,
-    calculate_dynamics_ULTIMATE,
     _select_candidates_phase_a,
     _validate_candidates_phase_a as _service_validate_candidates_phase_a,
-    compute_probe_offset_nm_from_ratio,
     generate_noise_array,
     NOISE_DISTRIBUTION_GAUSSIAN,
-    select_best_strat_result,
-    extract_best_rmse,
 )
 
 

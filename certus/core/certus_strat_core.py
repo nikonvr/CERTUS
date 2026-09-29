@@ -4,9 +4,6 @@
 # The names other modules take from this one, each imported from the module that defines it.
 # It used to copy the whole namespace of eight STRAT modules into its globals (an import * in
 # disguise, D44): ruff saw neither what it offered nor what others took from it.
-import sys
-import os
-from pathlib import Path
 
 from certus.core.certus_strat_config import _emit_stat, _flush_sp_stats, _worker_init, precompute_clues_and_matrices
 from certus.core.certus_strat_objectives import (
@@ -35,6 +32,3 @@ from certus.core.certus_strat_utils import (
 )
 from certus.utils.certus_strat_context import PlotCache, ThreadSafeCounter
 
-from certus.utils.certus_export import show_copy_excel_feedback
-from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
-from certus.utils.certus_ux import build_premium_overrides, OBJ

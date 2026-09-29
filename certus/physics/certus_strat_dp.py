@@ -3,8 +3,7 @@ from numba import njit
 
 NON_MONOTONIC_MODE_ATTENUATE = 0
 NON_MONOTONIC_MODE_REJECT = 1
-K_MAX_LAYER_BACKSIDE: float = 0.001
-K_MAX_SUBSTRATE_BACKSIDE: float = 0.00001
+from certus.physics.certus_substrate_absorption import K_MAX_LAYER_BACKSIDE, K_MAX_SUBSTRATE_BACKSIDE
 
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")

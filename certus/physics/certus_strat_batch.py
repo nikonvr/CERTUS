@@ -6,8 +6,7 @@ from certus.physics.certus_tmm_core import compute_TMM_single_point_k0_exact
 
 NON_MONOTONIC_MODE_ATTENUATE = 0
 NON_MONOTONIC_MODE_REJECT = 1
-K_MAX_LAYER_BACKSIDE: float = 0.001
-K_MAX_SUBSTRATE_BACKSIDE: float = 0.00001
+from certus.physics.certus_substrate_absorption import K_MAX_LAYER_BACKSIDE, K_MAX_SUBSTRATE_BACKSIDE
 from .certus_strat_math import _seeded_noise_sample
 from .certus_strat_growth import simulate_growth_kernel
 

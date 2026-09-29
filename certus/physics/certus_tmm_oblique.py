@@ -1,6 +1,7 @@
 import numpy as np
 from numba import njit, prange
 from certus.core.certus_core import TWO_PI
+from certus.physics.certus_oblique_substrate import warn_if_oblique_substrate_absorbs
 
 SMALL_EPSILON = 1e-12
 
@@ -226,9 +227,12 @@ def _calc_spectrum_oblique_parallel(
 
             # [C] = [M10 M11] [eta_sub]
 
-            # Note: eta_inc, eta_sub are strictly real here (transparent incident/exit approximation for R/T calculation)
+            # Note: eta_inc, eta_sub are strictly real here: the substrate is read as transparent (real part
+            # of its index only), and its absorption is ignored.
 
-            # This matches standard behavior. Absorption in substrate handled by Backside Correction functions.
+            # The loss stays under 1e-3 on R up to k = OBLIQUE_TRANSPARENT_SUBSTRATE_K_MAX and reaches 0.25 for a
+            # metal: `warn_if_oblique_substrate_absorbs` says so, at the entry points, when it matters. The
+            # backside functions do not correct it: they read the same real index.
 
             B = M00 + M01 * eta_sub
 
@@ -301,6 +305,8 @@ def calc_spectrum_oblique_vectorized(
 
         return R, T
 
+    warn_if_oblique_substrate_absorbs(n_sub)
+
     # Convert polarization string to boolean for Numba
 
     is_s_pol = polarization.lower() == "s"
@@ -331,6 +337,8 @@ def calc_spectrum_oblique_backside_vectorized(
     Oblique wrapper with incoherent backside (bare substrate).
 
     """
+
+    warn_if_oblique_substrate_absorbs(n_sub)
 
     # Single source of truth: delegate to full oblique exact with empty back stack.
 

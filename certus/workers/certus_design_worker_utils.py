@@ -19,6 +19,7 @@ from certus.core.certus_core import CFG, NUMERICAL_FAULT_EXCEPTIONS, get_float_d
 from certus_physics import PGlobalConfig, PGlobalOptimizer, prepare_targets_vectorized
 
 import numpy as np
+from certus.physics.certus_oblique_substrate import warn_if_oblique_substrate_absorbs
 
 
 def optim_calc_oblique_selected(
@@ -38,6 +39,8 @@ def optim_calc_oblique_selected(
     calc_spectrum_oblique_vectorized,
 ):
     """Selects the oblique kernel (front-only, bare backside, backside with coating)."""
+
+    warn_if_oblique_substrate_absorbs(n_sub_arr)
 
     if has_back_calc and has_back_stack:
         return calc_spectrum_full_oblique_exact(

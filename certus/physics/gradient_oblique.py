@@ -6,6 +6,7 @@ Contains gradient computation for oblique (non-normal) incidence angles.
 """
 
 import numpy as np
+from certus.physics.certus_oblique_substrate import warn_if_oblique_substrate_absorbs
 from numba import njit, prange
 import certus.physics.certus_tmm_core as tmm_core
 from certus.core.certus_core import TWO_PI
@@ -427,6 +428,8 @@ def compute_oblique_gradient_contrib_analytic(
     Returns unnormalized (err_sum, grad_raw, weight_sum).
 
     """
+
+    warn_if_oblique_substrate_absorbs(n_sub)
 
     if var_idx is None:
         var_idx_arr = np.arange(len(ep), dtype=np.int64)
@@ -855,6 +858,8 @@ def compute_oblique_rt_and_grads_analytic(
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Python wrapper for oblique R/T + analytic dR,dT kernel."""
 
+    warn_if_oblique_substrate_absorbs(n_sub)
+
     ep_f64 = np.asarray(ep, dtype=np.float64)
 
     n_layers_c128 = np.asarray(n_layers_T, dtype=np.complex128)
@@ -950,6 +955,8 @@ def compute_oblique_backside_bundle_analytic(
     Returns y_R, dy_R, y_T, dy_T wrt front thickness variables.
 
     """
+
+    warn_if_oblique_substrate_absorbs(n_sub)
 
     ep_f64 = np.asarray(ep, dtype=np.float64)
 

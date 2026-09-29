@@ -66,7 +66,6 @@ def test_strat_headless():
                 strat_app.worker.params["execution_mode"] = "fast"
                 strat_app.worker.params["mc_runs_block"] = 1
                 strat_app.worker.params["robustness_num_runs"] = 1
-                strat_app.worker.params["screening_mc_runs"] = 1
                 strat_app.worker.params["n_screen_runs"] = 1
                 strat_app.worker.params["k_keep_survivors"] = 1
                 strat_app.worker.params["top_k_parents"] = 1

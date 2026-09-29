@@ -251,11 +251,12 @@ MODE_BUDGETS = {
     "deep": {"robustness_num_runs": 300, "consensus_num_runs": 300, "n_screen_runs": 50,
              "elite_rounds": 3, "dp_top_k": 100, "k_keep_survivors": 25,
              "mining_candidates_limit": 10000},
+    # `phase_a_keep_limit` (200) and `screening_keep_top_k` (20) are no longer set: no computing line
+    # read them, and they left with the six settings of test_strat_settings_nothing_reads.py.
     "extreme": {"robustness_num_runs": 300, "consensus_num_runs": 300, "n_screen_runs": 50,
                 "elite_rounds": 3, "dp_top_k": 100, "k_keep_survivors": 40,
-                "mining_candidates_limit": 12000, "phase_a_keep_limit": 200,
-                "top_k_parents": 80, "max_fusions_per_parent": 15,
-                "screening_keep_top_k": 20},
+                "mining_candidates_limit": 12000, "top_k_parents": 80,
+                "max_fusions_per_parent": 15},
 }
 
 

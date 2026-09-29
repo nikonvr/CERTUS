@@ -83,7 +83,6 @@ Ce guide décrit les clés des configurations **CERTUS STRAT**. Les valeurs cit�
 | `top_k_parents` | `int` | `20` | Nombre de stratégies parentes retenues pour les hybridations élites. |
 | `max_fusions_per_parent` | `int` | `5` | Nombre maximal de fusions produites par parent élite. |
 | `phase_a_scan_limit` | `int` | `300` | Limite de balayage brut des candidats en Phase A. |
-| `phase_a_keep_limit` | `int` | `50` | Nombre maximal de nœuds retenus en sortie de Phase A. |
 
 ---
 

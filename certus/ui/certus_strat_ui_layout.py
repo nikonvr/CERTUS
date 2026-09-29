@@ -839,7 +839,6 @@ class CertusStratLayoutMixin:
                 ("scan_wl_step", "Candidate lambda Step (nm):"),
                 ("dynamics_threshold", "Dynamics Threshold:"),
                 ("min_transmission_floor", "Min Transmission Floor (0-1, e.g. 0.10):"),
-                ("min_spectral_resolution", "Min Spectral Resolution (nm):"),
             ],
         )
 
@@ -853,7 +852,6 @@ class CertusStratLayoutMixin:
             "scan_wl_step": "Step (nm) between candidate monitoring wavelengths during the DP scan.",
             "dynamics_threshold": "Minimum peak-to-valley transmission dynamics required for a candidate wavelength to be retained (unitless, 0-1).",
             "min_transmission_floor": "Minimum absolute transmission T required at a candidate wavelength (0-1). Excludes opaque regions.",
-            "min_spectral_resolution": "Minimum allowed spectral resolution (nm) at a candidate wavelength. Below this, the optical signal is too noisy to be usable.",
         }
 
         for _k, _tip in _tips_filter.items():
@@ -869,8 +867,6 @@ class CertusStratLayoutMixin:
             [
                 ("iter_divider_start", "Start Divider (Low Complexity) [N / X]:"),
                 ("iter_divider_end", "End Divider (High Complexity) [N / X]:"),
-                ("screening_mc_runs", "Screening MC Runs (Pre-selection):"),
-                ("screening_keep_top_k", "Keep Top K Strategies per Config:"),
                 ("mc_runs_block", "MC Runs per layer test (Phase A):"),
             ],
         )
@@ -882,8 +878,6 @@ class CertusStratLayoutMixin:
         _tips_loop = {
             "iter_divider_start": "Low-complexity limit: the search starts with stacks of N/X layers per block iteration (X = this value). Lower X = finer search.",
             "iter_divider_end": "High-complexity limit: as stacks grow large, divides the iteration count. Higher X = faster but coarser.",
-            "screening_mc_runs": "Number of Monte Carlo runs for the pre-selection screening phase. More = better filtering but slower.",
-            "screening_keep_top_k": "Number of top strategies retained per configuration after screening before deep evaluation.",
             "mc_runs_block": "Monte Carlo runs per candidate block test in Phase A. Drives early robustness estimation.",
         }
 
@@ -903,7 +897,6 @@ class CertusStratLayoutMixin:
                     "trigger_tolerance",
                     "Trigger Tolerance (noise) %:",
                 ),  # Kept for backward compat / relative
-                ("mse_tolerance_limit_pct", "MSE Filtering Tolerance (Best +/- %):"),
                 ("non_monotonic_error_factor", "Non-Monotonic Error Gain Factor:"),
                 (
                     "wavelength_change_penalty",
@@ -961,7 +954,6 @@ class CertusStratLayoutMixin:
         _tips_sim = {
             "thickness_tolerance_nm": "Gaussian noise standard deviation (+/- nm) applied to each layer thickness during Monte Carlo simulations.",
             "trigger_tolerance": "Relative trigger tolerance (% of thickness) used to define the optical trigger acceptance window.",
-            "mse_tolerance_limit_pct": "MSE filtering tolerance: retain candidates within Best MSE × (1 + this %). Filters out poor strategies early.",
             "non_monotonic_error_factor": "Penalty multiplier applied to the RMSE when the growth curve is non-monotonic in the monitoring window.",
             "wavelength_change_penalty": "Cost multiplier applied each time the monitoring wavelength changes between consecutive blocks. Rewards single-wavelength strategies.",
         }
@@ -1171,10 +1163,8 @@ class CertusStratLayoutMixin:
             limits_layout,
             [
                 ("phase_a_scan_limit", "Phase A: Scan Depth (Candidates):"),
-                ("phase_a_keep_limit", "Phase A: Max Retained Candidates:"),
                 ("nucleation_max_rmse", "Nucleation: Max RMSE (nm):"),
                 ("nucleation_degradation", "Nucleation: Degradation Thresh. (Ratio):"),
-                ("step0_sigma", "Step 1: Preview Noise Sigma (nm):"),
             ],
         )
 
@@ -1184,10 +1174,8 @@ class CertusStratLayoutMixin:
 
         _tips_limits = {
             "phase_a_scan_limit": "Phase A: maximum number of candidate wavelengths evaluated per block iteration.",
-            "phase_a_keep_limit": "Phase A: maximum number of candidates retained after scanning before Phase B screening.",
             "nucleation_max_rmse": "Nucleation: maximum acceptable RMSE (nm) for a nucleation wavelength to be accepted.",
             "nucleation_degradation": "Nucleation: if the RMSE degrades by more than this ratio vs. the reference, the nucleation attempt is rejected.",
-            "step0_sigma": "Step 1 (Nominal preview): Gaussian sigma (nm) applied to simulate a quick noise preview without full Monte Carlo.",
         }
 
         for _k, _tip in _tips_limits.items():

@@ -68,7 +68,7 @@ class CoreManager:
 
             return
 
-        self.ui.substrate_info_window = QDialog(self)
+        self.ui.substrate_info_window = QDialog(self.ui)
 
         self.ui.substrate_info_window.setWindowTitle("🔬 Stack information")
 

@@ -5,7 +5,7 @@
 > [`CLAUDE.md`](../CLAUDE.md). Il se tient **en place** : un fait change, on corrige sa ligne,
 > on ne raconte pas la correction (`git log` s'en charge). Toute mesure porte sa date.
 > Le détail et l'historique sont dans [`archives/`](archives/), sans autorité.
-> Mis à jour le 2026-09-28.
+> Mis à jour le 2026-09-29.
 
 ## 0. Reprise — à lire en premier, à tenir à jour
 
@@ -19,7 +19,7 @@
 > Les décisions de la section 5 reviennent à 👤 : **ne les tranche pas à sa place**.
 
 **Point de départ.** Branche `refactor-corridors-mixins`. Première commande : `python scripts\preflight.py` → `PREFLIGHT=GO`.
-Dernière validation locale complète, sur 2c7929f (Windows 11, le 2026-09-28) : ruff propre · oracle 569 passed · unit 2 484 passed, aucun saut · `tests/ui/` 790 passed, 10 skipped, 3 xfailed · le reste de `tests/` 337 passed, 2 skipped · **0 failed**. La garde de convergence retient la meilleure de quatre exécutions pour les modules non reproductibles (section 3).
+Dernière validation locale complète, sur 7a8d352 (Windows 11, le 2026-09-29) : ruff propre · oracle 564 passed · unit 2 516 passed, aucun saut · `tests/ui/` 785 passed, 10 skipped, 3 xfailed · le reste de `tests/` 347 passed, 2 skipped · **0 failed**. La garde de convergence retient la meilleure de quatre exécutions pour les modules non reproductibles (section 3).
 
 | # | action | état | où | fini quand |
 |---|---|---|---|---|

@@ -552,21 +552,21 @@ class EventsManager:
 
         threads_to_stop = []
         try:
-            optim_t = getattr(self, "optim_thread", None)
+            optim_t = getattr(self.ui, "optim_thread", None)
             if optim_t is not None:
-                threads_to_stop.append((optim_t, getattr(self, "optim_worker", None)))
+                threads_to_stop.append((optim_t, getattr(self.ui, "optim_worker", None)))
         except RuntimeError:
             pass
         try:
-            needle_t = getattr(self, "needle_thread", None)
+            needle_t = getattr(self.ui, "needle_thread", None)
             if needle_t is not None:
-                threads_to_stop.append((needle_t, getattr(self, "needle_worker", None)))
+                threads_to_stop.append((needle_t, getattr(self.ui, "needle_worker", None)))
         except RuntimeError:
             pass
         try:
-            col_t = getattr(self, "col_thread", None)
+            col_t = getattr(self.ui, "col_thread", None)
             if col_t is not None:
-                threads_to_stop.append((col_t, getattr(self, "col_worker", None)))
+                threads_to_stop.append((col_t, getattr(self.ui, "col_worker", None)))
         except RuntimeError:
             pass
 
@@ -577,15 +577,15 @@ class EventsManager:
                         thread,
                         worker,
                         timeout_ms=2000,
-                        logger=getattr(self, "logger", None),
+                        logger=getattr(self.ui, "logger", None),
                     )
             except (RuntimeError, AttributeError) as e:
-                if hasattr(self, "logger") and self.ui.logger:
+                if hasattr(self.ui, "logger") and self.ui.logger:
                     self.ui.logger.debug(f"Error stopping thread: {e}")
 
         workers = [
-            getattr(self, "warmup_worker", None),
-            getattr(self, "eval_worker", None),
+            getattr(self.ui, "warmup_worker", None),
+            getattr(self.ui, "eval_worker", None),
         ]
 
         for worker in workers:
@@ -610,7 +610,7 @@ class EventsManager:
             except (RuntimeError, AttributeError) as e:
                 # Non-critical: worker may already be destroyed
 
-                if hasattr(self, "logger") and self.ui.logger:
+                if hasattr(self.ui, "logger") and self.ui.logger:
                     self.ui.logger.debug(f"Error stopping worker {type(worker).__name__}: {e}")
 
         # Call parent cleanup (stops base class workers)

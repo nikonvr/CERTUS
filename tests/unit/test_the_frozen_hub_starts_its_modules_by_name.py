@@ -45,6 +45,7 @@ def started(monkeypatch):
     A dialog would block the suite for good (nobody answers it): the hub reports a script it cannot
     find with `QMessageBox.critical`, so here that is a failure.
     """
+    import CERTUS_HUB
     from PyQt6.QtCore import QProcess
     from PyQt6.QtWidgets import QMessageBox
 
@@ -53,14 +54,20 @@ def started(monkeypatch):
     def no_dialog(_parent, title, text, *_a, **_k):
         pytest.fail(f"the hub opened a dialog: {title}: {text}")
 
+    def forget_resource_folders():
+        # `get_resource_path` is cached, and the hub holds the function it imported: a test that reloaded
+        # `certus_core` leaves the hub with another one. Both are cleared, so that the folder read while
+        # `sys.frozen` is faked does not outlive it, nor a folder left by an earlier test.
+        for cached in {get_resource_path, CERTUS_HUB.get_resource_path}:
+            cached.cache_clear()
+
     calls: list[tuple[str, list[str]]] = []
     monkeypatch.setattr(QProcess, "start", lambda self, *_a: calls.append((self.program(), self.arguments())))
     monkeypatch.setattr(QMessageBox, "critical", no_dialog)
     monkeypatch.setattr(QMessageBox, "warning", no_dialog)
-    # `get_resource_path` is cached: the folder read while `sys.frozen` is faked must not outlive it.
-    get_resource_path.cache_clear()
+    forget_resource_folders()
     yield calls
-    get_resource_path.cache_clear()
+    forget_resource_folders()
 
 
 def test_the_frozen_hub_starts_a_module_through_its_own_executable(hub, started, monkeypatch) -> None:

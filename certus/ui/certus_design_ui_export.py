@@ -379,7 +379,7 @@ class ExportManager:
 
         os.makedirs(reports_dir, exist_ok=True)
 
-        rmse_val = getattr(self, "_workflow_best_rmse", None)
+        rmse_val = getattr(self.ui, "_workflow_best_rmse", None)
 
         if rmse_val is None or not np.isfinite(rmse_val) or rmse_val < 0.0:
             rmse_val = self.ui.last_result.get("rmse", 0.0)
@@ -392,7 +392,7 @@ class ExportManager:
         try:
             src_name = ""
 
-            if hasattr(self, "_last_config_file") and self.ui._last_config_file:
+            if hasattr(self.ui, "_last_config_file") and self.ui._last_config_file:
                 src_name = "_" + Path(self.ui._last_config_file).stem
 
             base_name = f"Report_DESIGN{src_name}_{ts}_RMSE_{rmse_val:.5f}"

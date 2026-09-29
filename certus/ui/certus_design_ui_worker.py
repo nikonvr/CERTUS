@@ -555,10 +555,10 @@ class WorkerManager:
         # Update progress widget
 
         self.ui.progress_widget.update(
-            iteration=getattr(self, "_optim_current_iter", val),
-            max_iter=getattr(self, "_optim_max_iter", 100),
-            evals=getattr(self, "_optim_n_evals", 0),
-            phase=getattr(self, "_optim_current_phase", "OPTIMIZATION"),
+            iteration=getattr(self.ui, "_optim_current_iter", val),
+            max_iter=getattr(self.ui, "_optim_max_iter", 100),
+            evals=getattr(self.ui, "_optim_n_evals", 0),
+            phase=getattr(self.ui, "_optim_current_phase", "OPTIMIZATION"),
             extra_info=(f"{gen_info} | RMSE: {msg.split('Best:')[-1].strip()}" if "Best:" in msg else ""),
         )
 
@@ -574,15 +574,15 @@ class WorkerManager:
         if stat_name == "EVAL":
             self.ui._optim_n_evals = value
 
-            display_value = value + getattr(self, "accumulated_evals", 0)
+            display_value = value + getattr(self.ui, "accumulated_evals", 0)
 
             # Update progress widget with new eval count
 
             self.ui.progress_widget.update(
-                iteration=getattr(self, "_optim_current_iter", 0),
-                max_iter=getattr(self, "_optim_max_iter", 100),
+                iteration=getattr(self.ui, "_optim_current_iter", 0),
+                max_iter=getattr(self.ui, "_optim_max_iter", 100),
                 evals=display_value,
-                phase=getattr(self, "_optim_current_phase", "OPTIMIZATION"),
+                phase=getattr(self.ui, "_optim_current_phase", "OPTIMIZATION"),
             )
 
         # Update stats label
@@ -598,7 +598,7 @@ class WorkerManager:
             self.ui.stats_label.setText("|".join(parts))
 
         elif stat_name == "EVAL":
-            display_value = value + getattr(self, "accumulated_evals", 0)
+            display_value = value + getattr(self.ui, "accumulated_evals", 0)
 
             parts = current.split("|")
 
@@ -680,7 +680,7 @@ class WorkerManager:
             "run_id": getattr(self.ui, "_workflow_run_id", None),
             "run_context": getattr(self.ui, "_workflow_run_ctx", None),
         }
-        if hasattr(self, "progress_widget"):
+        if hasattr(self.ui, "progress_widget"):
             self.ui.progress_widget.start(phase="COLORIMETRY")
 
         self.ui._set_busy(True)
@@ -708,7 +708,7 @@ class WorkerManager:
 
     def _on_needle_progress(self, val: int, msg: str) -> None:
         """Callback for needle progress update"""
-        if hasattr(self, "progress_widget"):
+        if hasattr(self.ui, "progress_widget"):
             self.ui.progress_widget.update(
                 iteration=val,
                 max_iter=100,
@@ -716,12 +716,12 @@ class WorkerManager:
                 phase="NEEDLE SCAN",
                 extra_info=msg,
             )
-        if hasattr(self, "status_label"):
+        if hasattr(self.ui, "status_label"):
             self.ui.status_label.setText(msg)
 
     def _on_col_progress(self, val: int, msg: str) -> None:
         """Callback for colorimetric progress update"""
-        if hasattr(self, "progress_widget"):
+        if hasattr(self.ui, "progress_widget"):
             self.ui.progress_widget.update(
                 iteration=val,
                 max_iter=100,
@@ -729,13 +729,13 @@ class WorkerManager:
                 phase="COLORIMETRY",
                 extra_info=msg,
             )
-        if hasattr(self, "status_label"):
+        if hasattr(self.ui, "status_label"):
             self.ui.status_label.setText(msg)
 
     def _on_col_done(self, d: dict) -> None:
         """Callback after colorimetric analysis"""
 
-        if hasattr(self, "progress_widget"):
+        if hasattr(self.ui, "progress_widget"):
             self.ui.progress_widget.stop("Done")
 
         if d["ok"]:

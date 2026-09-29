@@ -586,7 +586,7 @@ class DesignOrchestrator:
 
             allow_growth = True
 
-            if hasattr(self, "allow_growth_check"):
+            if hasattr(self.ui, "allow_growth_check"):
                 allow_growth = self.ui.allow_growth_check.isChecked()
 
             if allow_growth and self._target_layer_count <= current_count:
@@ -622,7 +622,7 @@ class DesignOrchestrator:
                 self._needle_merit_before = float("inf")
 
             # If layers merged, restart light optimization (keep_history to preserve target)
-            self.ui.accumulated_evals += getattr(self, "_optim_n_evals", 0)
+            self.ui.accumulated_evals += getattr(self.ui, "_optim_n_evals", 0)
             self._schedule_task(50, lambda: self.ui.run_optim("local", keep_history=True))
             return
 
@@ -991,7 +991,7 @@ class DesignOrchestrator:
 
             self._overshoot_active = False
 
-        checkpoint = getattr(self, "_pre_needle_checkpoint", None)
+        checkpoint = getattr(self.ui, "_pre_needle_checkpoint", None)
 
         if checkpoint is not None:
             self.ui.log("Needle: reverting to checkpoint.", "WARNING")
@@ -1060,7 +1060,7 @@ class DesignOrchestrator:
             self.ui._workflow_best_rmse = float("inf")
             self.ui._best_eval_rmse = float("inf")
 
-            self.ui.accumulated_evals += getattr(self, "_optim_n_evals", 0)
+            self.ui.accumulated_evals += getattr(self.ui, "_optim_n_evals", 0)
 
             self._schedule_task(50, lambda: self.ui.run_optim("local", keep_history=True))
 
@@ -1123,7 +1123,7 @@ class DesignOrchestrator:
 
         self.ui.ep_current = np.concatenate([self.ui.ep_current[:idx], new_block, self.ui.ep_current[idx + 1 :]])
 
-        if hasattr(self, "_optim_n_evals"):
+        if hasattr(self.ui, "_optim_n_evals"):
             self.ui.accumulated_evals += self.ui._optim_n_evals
 
         self._needle_cycle_step = 1

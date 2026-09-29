@@ -1772,10 +1772,10 @@ class _DataMixin:
                     ns_g = ns_raw
             except NUMERICAL_FAULT_EXCEPTIONS:
                 if self.logger:
-                    self.self.logger.debug("Data TH substrate ns build failed", exc_info=True)
+                    self.logger.debug("Data TH substrate ns build failed", exc_info=True)
             except (TypeError, ValueError):
                 if self.logger:
-                    self.self.logger.debug("Data TH substrate lookup failed", exc_info=True)
+                    self.logger.debug("Data TH substrate lookup failed", exc_info=True)
 
         d_nm = float(r.get("d_nm", float("nan")))
         d_g = np.full_like(lam_g, d_nm, dtype=np.float64)
@@ -1887,7 +1887,7 @@ class _DataMixin:
                 preview["rmse"] = float(rmse_preview)
         except (TypeError, ValueError, RuntimeError):
             if self.logger:
-                self.self.logger.debug("Manual delta-ns preview RMSE recompute failed", exc_info=True)
+                self.logger.debug("Manual delta-ns preview RMSE recompute failed", exc_info=True)
 
         self._last_worker_result = dict(preview)
         self._last_result = dict(preview)

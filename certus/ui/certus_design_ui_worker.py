@@ -401,6 +401,8 @@ class WorkerManager:
                 "ep_back": (self.ui.ep_back_current if self.ui.ep_back_current is not None else []),
                 "stack_back": self.ui._get_back_stack(),
                 "calc_oblique_func": (calc_spectrum_oblique_vectorized if self.ui.oblique_mode else None),
+                "run_id": getattr(self.ui, "_workflow_run_id", None),
+                "run_context": getattr(self.ui, "_workflow_run_ctx", None),
             }
 
         elif mode == "healing":
@@ -424,8 +426,8 @@ class WorkerManager:
                 "ep_back": (self.ui.ep_back_current if self.ui.ep_back_current is not None else []),
                 "stack_back": self.ui._get_back_stack(),
                 "calc_oblique_func": (calc_spectrum_oblique_vectorized if self.ui.oblique_mode else None),
-                "run_id": getattr(self, "_workflow_run_id", None),
-                "run_context": getattr(self, "_workflow_run_ctx", None),
+                "run_id": getattr(self.ui, "_workflow_run_id", None),
+                "run_context": getattr(self.ui, "_workflow_run_ctx", None),
             }
 
         else:
@@ -487,8 +489,8 @@ class WorkerManager:
                 "stack_back": self.ui._get_back_stack(),
                 "max_clusters": g_max_clusters,
                 "calc_oblique_func": (calc_spectrum_oblique_vectorized if self.ui.oblique_mode else None),
-                "run_id": getattr(self, "_workflow_run_id", None),
-                "run_context": getattr(self, "_workflow_run_ctx", None),
+                "run_id": getattr(self.ui, "_workflow_run_id", None),
+                "run_context": getattr(self.ui, "_workflow_run_ctx", None),
             }
 
         # Start Worker
@@ -675,8 +677,8 @@ class WorkerManager:
             "n": self.ui.mc_n_spin.value(),
             "sigma": self.ui.mc_sigma_spin.value(),
             "l0": self.ui.l0_spin.value(),
-            "run_id": getattr(self, "_workflow_run_id", None),
-            "run_context": getattr(self, "_workflow_run_ctx", None),
+            "run_id": getattr(self.ui, "_workflow_run_id", None),
+            "run_context": getattr(self.ui, "_workflow_run_ctx", None),
         }
         if hasattr(self, "progress_widget"):
             self.ui.progress_widget.start(phase="COLORIMETRY")

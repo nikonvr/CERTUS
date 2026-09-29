@@ -25,12 +25,6 @@ ROOT = Path(__file__).resolve().parents[2]
 
 DELEGATES = {"ui", "app", "window"}
 
-_NEEDLE_GATE = (
-    "Reading it on the window plays the values tuned there (3 rounds without improvement, "
-    "predicted gain 2e-5 and 0.003) instead of the orchestrator's defaults (2, 1e-5, 0.002) and "
-    "re-enables the exploration branch of the deep Needle: the default behaviour of the "
-    "optimization changes. Owner decision (docs/ETAT.md, section 5)."
-)
 _PLOT_THEME = (
     "Reading the plots on the window applies the compact theme to them at start-up: their "
     "background goes from #ffffff to the theme's #eef2f7. A change of rendering awaits the "
@@ -40,10 +34,6 @@ _PLOT_THEME = (
 # Guards on a name the manager does not hold that are deliberately left as they are. Each entry
 # is a prefix of the report line, with the reason.
 ALLOWED: dict[str, str] = {
-    "certus/core/certus_design_orchestrator.py::DesignOrchestrator guards '_needle_no_improve_rounds'": _NEEDLE_GATE,
-    "certus/core/certus_design_orchestrator.py::DesignOrchestrator guards '_needle_gate_no_improve_rounds'": _NEEDLE_GATE,
-    "certus/core/certus_design_orchestrator.py::DesignOrchestrator guards '_needle_pred_gain_abs_threshold'": _NEEDLE_GATE,
-    "certus/core/certus_design_orchestrator.py::DesignOrchestrator guards '_needle_pred_gain_rel_threshold'": _NEEDLE_GATE,
     "certus/ui/certus_design_ui_worker.py::WorkerManager guards 'allow_growth_check'": (
         "Reading the checkbox on the window caps the global optimization as soon as the topology "
         "growth is ticked, which it is by default (`needle_coupled`): the default budget of the "

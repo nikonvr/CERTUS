@@ -387,7 +387,7 @@ class DesignOrchestrator:
         current_count = self.ui.front_table.rowCount()
         allow_growth = self.ui.allow_growth_check.isChecked() if hasattr(self.ui, "allow_growth_check") else True
         has_deficit = current_count < self._target_layer_count
-        stagnating = getattr(self, "_needle_no_improve_rounds", 0) >= getattr(self, "_needle_gate_no_improve_rounds", 2)
+        stagnating = getattr(self.ui, "_needle_no_improve_rounds", 0) >= getattr(self.ui, "_needle_gate_no_improve_rounds", 2)
         needs_exploration = (
             allow_growth
             and stagnating
@@ -864,9 +864,9 @@ class DesignOrchestrator:
 
                 pred_gain_rel = pred_gain_abs / max(workflow_best, 1e-12)
 
-                min_abs = getattr(self, "_needle_pred_gain_abs_threshold", 1e-5)
+                min_abs = getattr(self.ui, "_needle_pred_gain_abs_threshold", 1e-5)
 
-                min_rel = getattr(self, "_needle_pred_gain_rel_threshold", 0.002)
+                min_rel = getattr(self.ui, "_needle_pred_gain_rel_threshold", 0.002)
 
                 allow_growth = True
                 if hasattr(self.ui, "allow_growth_check"):

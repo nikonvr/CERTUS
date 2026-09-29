@@ -157,7 +157,7 @@ class WorkerManager:
         n_total = len(res_optim["l"]) if len(res_optim["l"]) > 0 else len(self.ui._get_optim_wls())
 
         try:
-            src_name = Path(getattr(self, "_last_config_file", "")).stem
+            src_name = Path(getattr(self.ui, "_last_config_file", "")).stem
 
             if src_name:
                 title = f"Spectrum ({self.ui.front_table.rowCount()} layers) | {src_name} | Points/Target: {n_points} ({n_total} total)"
@@ -433,7 +433,7 @@ class WorkerManager:
         else:
             pre_polish = False
 
-            if hasattr(self, "pre_polish_check"):
+            if hasattr(self.ui, "pre_polish_check"):
                 pre_polish = self.ui.pre_polish_check.isChecked()
 
             # If needle growth is enabled, use ultra-fast global (just seed)
@@ -506,7 +506,7 @@ class WorkerManager:
 
         # Carry best RMSE across internal restarts so GUI doesn't regress
 
-        if keep_history and hasattr(self, "_workflow_best_rmse"):
+        if keep_history and hasattr(self.ui, "_workflow_best_rmse"):
             self.ui.optim_worker.best_rmse_seen = self.ui._workflow_best_rmse
 
         self.ui.optim_thread = QThread()

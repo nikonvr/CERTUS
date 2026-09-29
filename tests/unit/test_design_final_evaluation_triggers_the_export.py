@@ -33,11 +33,17 @@ def test_a_pending_export_is_scheduled_when_the_evaluation_ends(qapp, monkeypatc
     monkeypatch.setattr(app.orchestrator, "schedule_export_results", lambda: scheduled.append("export"))
     evaluated = []
     real_finished = app.worker_manager._on_eval_finished
-    monkeypatch.setattr(
-        app.worker_manager,
-        "_on_eval_finished",
-        lambda data, generation_id=None: (real_finished(data, generation_id), evaluated.append(1)),
-    )
+
+    def finished(data, generation_id=None):
+        # `load_config` starts an evaluation of its own: its callback arrives stale, is dropped by
+        # the window, and says nothing about the evaluation this test starts. Only the callback
+        # of the current generation counts as "the evaluation ended".
+        current = generation_id == app._current_eval_generation
+        real_finished(data, generation_id)
+        if current:
+            evaluated.append(1)
+
+    monkeypatch.setattr(app.worker_manager, "_on_eval_finished", finished)
     app._export_pending = True
 
     app.run_eval()

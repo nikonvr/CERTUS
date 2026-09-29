@@ -34,11 +34,6 @@ _PLOT_THEME = (
 # Guards on a name the manager does not hold that are deliberately left as they are. Each entry
 # is a prefix of the report line, with the reason.
 ALLOWED: dict[str, str] = {
-    "certus/ui/certus_design_ui_worker.py::WorkerManager guards 'allow_growth_check'": (
-        "Reading the checkbox on the window caps the global optimization as soon as the topology "
-        "growth is ticked, which it is by default (`needle_coupled`): the default budget of the "
-        "global phase changes. Owner decision (docs/ETAT.md, section 5)."
-    ),
     "certus/ui/certus_design_ui_layout.py::LayoutManager guards 'spectrum_plot'": _PLOT_THEME,
     "certus/ui/certus_design_ui_layout.py::LayoutManager guards 'profile_plot'": _PLOT_THEME,
     "certus/ui/certus_design_ui_layout.py::LayoutManager guards 'nk_plot'": _PLOT_THEME,

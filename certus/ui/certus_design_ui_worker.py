@@ -440,7 +440,7 @@ class WorkerManager:
 
             # Needle will iterate and refine - no need for exhaustive global
 
-            allow_growth = getattr(self, "allow_growth_check", None)
+            allow_growth = getattr(self.ui, "allow_growth_check", None)
 
             needle_coupled = allow_growth and allow_growth.isChecked()
 

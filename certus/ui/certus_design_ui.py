@@ -523,6 +523,9 @@ class CertusDesignApp(
     def _handle_stopped_workflow_result(self, *args, **kwargs):
         return self.optimization_manager._handle_stopped_workflow_result(*args, **kwargs)
 
+    def show_error_dialog(self, *args, **kwargs):
+        return self.optimization_manager.show_error_dialog(*args, **kwargs)
+
     def _finalize_if_post_optim_budget_exceeded(self, *args, **kwargs):
         return self.optimization_manager._finalize_if_post_optim_budget_exceeded(*args, **kwargs)
 

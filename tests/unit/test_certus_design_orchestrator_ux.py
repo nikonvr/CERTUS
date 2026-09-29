@@ -11,6 +11,8 @@ def test_design_orchestrator_shows_guided_error_on_optimization_failure() -> Non
     """Verifies that an optimization failure triggers a guided QMessageBox warning (UX-3)."""
     # 1. Mock the UI object that the orchestrator expects
     mock_ui = MagicMock()
+    # A failed run, not a stopped one: a MagicMock would answer any attribute with a truthy mock.
+    mock_ui._workflow_stopped = False
     orchestrator = DesignOrchestrator(mock_ui)
 
     # 2. Simulate a failure payload from the OptimWorker

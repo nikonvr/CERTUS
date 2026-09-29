@@ -149,7 +149,7 @@ class DesignOrchestrator:
         
         print("DEBUG: _on_optim_done ENTERED. d.ok =", d.get("ok", False))
 
-        if getattr(self, "_workflow_stopped", False):
+        if getattr(self.ui, "_workflow_stopped", False):
             self.ui._handle_stopped_workflow_result(d)
 
             return
@@ -534,7 +534,7 @@ class DesignOrchestrator:
 
         # GUARD: If user clicked STOP, do not start needle
 
-        if getattr(self, "_workflow_stopped", False):
+        if getattr(self.ui, "_workflow_stopped", False):
             self.ui.log("Workflow stopped, skipping needle.", "WARNING")
 
             self.ui._set_busy(False)
@@ -808,7 +808,7 @@ class DesignOrchestrator:
 
         # GUARD: If user clicked STOP, do not process needle result
 
-        if getattr(self, "_workflow_stopped", False):
+        if getattr(self.ui, "_workflow_stopped", False):
             self.ui.log("Workflow stopped, ignoring needle result.", "WARNING")
 
             self.ui._set_busy(False)

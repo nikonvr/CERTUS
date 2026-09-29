@@ -350,7 +350,7 @@ class WorkerManager:
 
         # Guard: if user clicked STOP, refuse internal restarts
 
-        if keep_history and getattr(self, "_workflow_stopped", False):
+        if keep_history and getattr(self.ui, "_workflow_stopped", False):
             self.ui.log("Workflow stopped by user, ignoring internal restart.", "WARNING")
 
             self.ui._set_busy(False)

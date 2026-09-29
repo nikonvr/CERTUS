@@ -2,7 +2,11 @@ import numpy as np
 from numba import njit, prange
 from certus.core.certus_core import TWO_PI
 from certus.physics.certus_opt_tmm import compute_RT_from_matrix
-from certus.physics.certus_oblique_substrate import oblique_exit_admittance, warn_if_oblique_substrate_absorbs
+from certus.physics.certus_oblique_substrate import oblique_exit_admittance
+from certus.physics.certus_substrate_absorption import (
+    DEFAULT_SUBSTRATE_THICKNESS_NM,
+    substrate_internal_transmittance,
+)
 
 SMALL_EPSILON = 1e-12
 
@@ -370,14 +374,16 @@ def calc_spectrum_oblique_backside_vectorized(
     n_sub: np.ndarray,
     angle_deg: float,
     polarization: str,
+    substrate_thickness_nm: float = DEFAULT_SUBSTRATE_THICKNESS_NM,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
 
     Oblique wrapper with incoherent backside (bare substrate).
 
-    """
+    A substrate that absorbs is a plate of thickness `substrate_thickness_nm` that loses flux on each pass
+    (`certus_substrate_absorption`).
 
-    warn_if_oblique_substrate_absorbs(n_sub)
+    """
 
     # Single source of truth: delegate to full oblique exact with empty back stack.
 
@@ -394,6 +400,7 @@ def calc_spectrum_oblique_backside_vectorized(
         np.ascontiguousarray(n_sub, dtype=np.complex128),
         float(angle_deg),
         is_s_pol,
+        float(substrate_thickness_nm),
     )
 
 
@@ -689,10 +696,17 @@ def calc_spectrum_full_oblique_exact(
     n_sub: np.ndarray,
     angle_deg: float,
     is_s_pol: bool,
+    substrate_thickness_nm: float = DEFAULT_SUBSTRATE_THICKNESS_NM,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
 
     Oblique exact incoherent combination for Front + Back stacks.
+
+    A substrate that absorbs (`imag(n_sub) != 0`) is read through its complex admittance for what enters
+    it from the front stack, and as a plate of thickness `substrate_thickness_nm` for the way through:
+    the back-side quantities are multiplied by its internal transmittance (`certus_substrate_absorption`).
+    The interfaces seen from inside keep the real part of its index. A substrate without absorption takes
+    the branch that always ran.
 
     """
 
@@ -726,16 +740,28 @@ def calc_spectrum_full_oblique_exact(
 
         # Forward: Air -> Front -> Sub
 
-        Rf, Tf = _oblique_stack_rt_single(
-            wl,
-            n_front[i],
-            d_front,
-            sin_theta_air,
-            cos_theta_air,
-            1.0,
-            n_sub_real,
-            is_s_pol,
-        )
+        n_sub_val = n_sub[i]
+
+        absorbing = n_sub_val.imag != 0.0
+
+        if absorbing:
+            M00, M01, M10, M11 = oblique_front_char_matrix_single(
+                wl, n_front[i], d_front, sin_theta_air, cos_theta_air, is_s_pol
+            )
+
+            Rf, Tf = _oblique_rt_absorbing_exit(M00, M01, M10, M11, n_sub_val, sin_theta_air, cos_theta_air, is_s_pol)
+
+        else:
+            Rf, Tf = _oblique_stack_rt_single(
+                wl,
+                n_front[i],
+                d_front,
+                sin_theta_air,
+                cos_theta_air,
+                1.0,
+                n_sub_real,
+                is_s_pol,
+            )
 
         # Reverse front: Sub -> Front -> Air (for Rf' and T_front_rev)
 
@@ -830,6 +856,18 @@ def calc_spectrum_full_oblique_exact(
 
                     elif Tb > 1.0:
                         Tb = 1.0
+
+        if absorbing:
+            # The plate loses flux on each pass: the back side is seen through it (Rb' tau^2, Tb tau).
+            sin_sub_real = sin_theta_air / n_sub_real
+
+            cos_sub_real = np.sqrt(max(0.0, 1.0 - sin_sub_real * sin_sub_real))
+
+            tau = substrate_internal_transmittance(n_sub_val.imag, wl, substrate_thickness_nm, cos_sub_real)
+
+            Rb_prime = Rb_prime * tau * tau
+
+            Tb = Tb * tau
 
         denom = 1.0 - Rf_prime * Rb_prime
 

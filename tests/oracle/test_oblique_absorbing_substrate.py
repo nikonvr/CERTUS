@@ -10,8 +10,12 @@ The exit admittance is now complex (Macleod eq. 2.36 and 2.37, complex angle) an
 enters the substrate, `4 Re(η_inc) Re(η_exit) / |η_inc B + C|²`. The kernels for a substrate without
 absorption are the ones that always ran, bit for bit (C1): the absorbing branch is compiled apart.
 
-Not covered here: the kernels that build an incoherent plate with a back side, which still read the real
-part (`test_oblique_transparent_substrate_bound.py`).
+The R/T + analytic derivatives kernel (`compute_oblique_rt_and_grads_analytic`, which DESIGN's plate is
+built from, at normal incidence too) reads the complex exit in its forward direction (air -> stack ->
+substrate). Its reverse direction (substrate -> stack -> air) keeps the real part: the substrate is then
+the incident medium of a plate, whose loss is `certus_substrate_absorption`'s.
+
+Not covered here: the plate kernels' back side (`test_oblique_transparent_substrate_bound.py`).
 """
 
 from __future__ import annotations
@@ -202,3 +206,81 @@ def test_the_exit_admittance_refuses_a_p_wave_at_grazing_of_a_medium_that_cannot
     assert (eta, ok) == (0j, False)
     eta_s, ok_s = oblique_exit_admittance(complex(1.0, 0.0), 1.0, True)
     assert ok_s and eta_s == 0j  # s at grazing: admittance 0, usable, and the caller sees it
+
+
+# =============================================================================
+# The R/T + analytic derivatives kernel, forward: air -> stack -> substrate
+# =============================================================================
+
+
+@pytest.mark.parametrize("is_s", [True, False])
+@pytest.mark.parametrize("angle", [0.0, 30.0, 60.0, 80.0])
+@pytest.mark.parametrize("n_sub", SUBSTRATES)
+def test_the_forward_rt_and_its_derivatives_match_the_oracle(n_sub, angle, is_s) -> None:
+    import warnings
+
+    from certus.physics.gradient_oblique import compute_oblique_rt_and_grads_analytic
+
+    n_layers = 3
+    n, d = _stack(n_layers, np.random.default_rng(29))
+    n_sub_arr = np.full(len(WLS), n_sub)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")  # the plate kernels say they read the real part in reverse
+        r, t, dr, dt = compute_oblique_rt_and_grads_analytic(
+            d, n, n_sub_arr, WLS, np.arange(n_layers, dtype=np.int64), angle, is_s, False
+        )
+
+    step = 1e-3
+    for i, wl in enumerate(WLS):
+        r_ref, t_ref = rt_stack_oblique(float(wl), n[i], d, angle, is_s, n_sub=n_sub)
+        assert (r[i], t[i]) == pytest.approx((r_ref, t_ref), abs=1e-12)
+        for j in range(n_layers):
+            up, down = d.copy(), d.copy()
+            up[j] += step
+            down[j] -= step
+            r_up, t_up = rt_stack_oblique(float(wl), n[i], up, angle, is_s, n_sub=n_sub)
+            r_down, t_down = rt_stack_oblique(float(wl), n[i], down, angle, is_s, n_sub=n_sub)
+            assert dr[i, j] == pytest.approx((r_up - r_down) / (2 * step), rel=1e-5, abs=1e-8)
+            assert dt[i, j] == pytest.approx((t_up - t_down) / (2 * step), rel=1e-5, abs=1e-8)
+
+
+def test_the_reverse_direction_still_reads_the_real_part_of_the_substrate() -> None:
+    # Documented, not wished for: Sub -> stack -> Air has the substrate as its incident medium. The plate
+    # model carries the loss; the interfaces are those of the real index.
+    import warnings
+
+    from certus.physics.gradient_oblique import compute_oblique_rt_and_grads_analytic
+
+    n, d = _stack(3, np.random.default_rng(31))
+    var = np.arange(3, dtype=np.int64)
+    absorbing = np.full(len(WLS), complex(1.7, -1.11))
+    real_part = np.full(len(WLS), complex(1.7, 0.0))
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        with_loss = compute_oblique_rt_and_grads_analytic(d, n, absorbing, WLS, var, 40.0, True, True)
+        without = compute_oblique_rt_and_grads_analytic(d, n, real_part, WLS, var, 40.0, True, True)
+
+    for got, expected in zip(with_loss, without, strict=True):
+        assert np.array_equal(got, expected)
+
+
+def test_a_substrate_without_absorption_keeps_the_rt_kernel_that_always_ran(monkeypatch) -> None:
+    import certus.physics.gradient_oblique as module
+
+    used = []
+    result = (np.zeros(3), np.zeros(3), np.zeros((3, 0)), np.zeros((3, 0)))
+    monkeypatch.setattr(module, "_compute_oblique_rt_and_grads_kernel", lambda *a: used.append("plain") or result)
+    monkeypatch.setattr(
+        module, "_compute_oblique_rt_and_grads_kernel_absorbing", lambda *a: used.append("absorbing") or result
+    )
+    n, d = _stack(2, np.random.default_rng(37))
+    var = np.zeros(0, dtype=np.int64)
+
+    module.compute_oblique_rt_and_grads_analytic(d, n, np.full(3, complex(1.52, 0.0)), WLS, var, 30.0, True, False)
+    module.compute_oblique_rt_and_grads_analytic(d, n, np.full(3, complex(1.52, -1e-9)), WLS, var, 30.0, True, False)
+    module.compute_oblique_rt_pair_and_grads_analytic(d, n, np.full(3, complex(1.52, 0.0)), WLS, var, 30.0, True)
+    module.compute_oblique_rt_pair_and_grads_analytic(d, n, np.full(3, complex(1.52, -1e-9)), WLS, var, 30.0, True)
+
+    assert used == ["plain", "absorbing", "plain", "plain", "absorbing", "absorbing"]

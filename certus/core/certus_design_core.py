@@ -122,6 +122,9 @@ from certus_physics import (  # Cache & Utils; Gradient Logic (Analytic); Numba 
 )
 
 
+from certus.physics.certus_substrate_absorption import apply_plate_loss
+
+
 # --- 3. UI (Theme, Widgets) ---
 
 
@@ -408,6 +411,10 @@ def _design_compute_oblique_error_and_grad_analytic_common(app, ep_test) -> tupl
                         is_s_pol,
                         True,
                     )
+
+                # A substrate that absorbs is a plate that loses flux on each pass: the back side is seen
+                # through it, and the combination below stays the one of a plate without loss.
+                Rb_prime, Tb = apply_plate_loss(Rb_prime, Tb, n_sub_sel, wls_sel, angle)
 
                 D = np.maximum(1.0 - Rf_prime * Rb_prime, 1e-12)
                 D2 = D * D

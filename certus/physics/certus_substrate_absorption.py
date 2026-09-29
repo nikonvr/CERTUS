@@ -56,3 +56,45 @@ def substrate_internal_transmittance(k: float, wavelength_nm: float, thickness_n
     if cos_theta < SMALL_EPSILON or wavelength_nm <= 0.0:
         return 0.0
     return float(np.exp(-4.0 * np.pi * abs(k) * thickness_nm / (wavelength_nm * cos_theta)))
+
+
+@njit(cache=True, fastmath=False, nogil=True, error_model="numpy")
+def plate_internal_transmittance(n_sub: np.ndarray, wls: np.ndarray, angle_deg: float, thickness_nm: float) -> np.ndarray:
+    """`substrate_internal_transmittance` per wavelength, at the angle of incidence `angle_deg` in air.
+
+    The angle in the substrate comes from the REAL part of its index (Snell): a plate loses more when the
+    ray crosses it obliquely. A real part that cannot carry the ray (`sin θ > 1`) lets nothing through.
+    """
+    tau = np.empty(len(wls), dtype=np.float64)
+    sin_air = np.sin(np.deg2rad(angle_deg))
+    for i in range(len(wls)):
+        n_real = n_sub[i].real
+        cos_sub = 0.0
+        if n_real > SMALL_EPSILON:
+            sin_sub = sin_air / n_real
+            cos_sub = np.sqrt(max(0.0, 1.0 - sin_sub * sin_sub))
+        tau[i] = substrate_internal_transmittance(n_sub[i].imag, wls[i], thickness_nm, cos_sub)
+    return tau
+
+
+def apply_plate_loss(
+    rb_prime: np.ndarray,
+    tb: np.ndarray,
+    n_sub: np.ndarray,
+    wls: np.ndarray,
+    angle_deg: float,
+    thickness_nm: float = DEFAULT_SUBSTRATE_THICKNESS_NM,
+) -> tuple[np.ndarray, np.ndarray]:
+    """The back-side quantities of an incoherent plate, seen through the loss of the substrate.
+
+    Returns `(Rb' · τ², Tb · τ)`: the callers keep their combination and its derivatives, written for a
+    plate without loss, and put these in place of `Rb'` and `Tb`. Without absorption `τ` is exactly 1 and
+    the two arrays come back unchanged, bit for bit.
+    """
+    tau = plate_internal_transmittance(
+        np.ascontiguousarray(n_sub, dtype=np.complex128),
+        np.ascontiguousarray(wls, dtype=np.float64),
+        float(angle_deg),
+        float(thickness_nm),
+    )
+    return rb_prime * tau * tau, tb * tau

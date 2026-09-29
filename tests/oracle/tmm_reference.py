@@ -46,6 +46,8 @@ __all__ = [
     "n_hat",
     "tilted_admittance",
     "rt_stack_oblique",
+    "rt_plate_incoherent",
+    "rt_plate_coherent_mean",
 ]
 
 
@@ -318,3 +320,90 @@ def rt_stack_oblique(
     transmittance = float(4.0 * eta_inc.real * eta_exit.real / (abs(y_sys) ** 2))
 
     return reflectance, transmittance
+
+
+def rt_plate_incoherent(
+    wavelength_nm: float,
+    n_front: np.ndarray | list[complex],
+    d_front: np.ndarray | list[float],
+    n_back: np.ndarray | list[complex],
+    d_back: np.ndarray | list[float],
+    n_sub: complex,
+    angle_deg: float,
+    s_polarisation: bool,
+    thickness_nm: float,
+) -> tuple[float, float]:
+    """(R, T) of a substrate PLATE (incoherent), from air, with a front stack and an optional back stack.
+
+    The model, written from the book (Macleod, thick substrate) with `rt_stack_oblique` for every coherent
+    piece: the front stack is read from air into the COMPLEX substrate (what enters it); the interfaces
+    seen from inside (the front stack from the substrate, the back stack, or the bare back) use the REAL
+    part of its index; the loss along the plate is Beer-Lambert, `tau = exp(-4 pi k D / (lambda cos theta))`
+    per pass. Stacks are ordered as in `rt_stack_oblique`: index 0 adjacent to the substrate.
+
+        T = Tf Tb tau / (1 - Rf' Rb' tau^2)         R = Rf + Tf T' Rb' tau^2 / (1 - Rf' Rb' tau^2)
+    """
+    n_front = np.asarray(n_front, dtype=np.complex128)
+    n_back = np.asarray(n_back, dtype=np.complex128)
+    d_front = np.asarray(d_front, dtype=np.float64)
+    d_back = np.asarray(d_back, dtype=np.float64)
+    n_real, k = float(n_sub.real), float(-n_sub.imag)
+    sin_sub = np.sin(np.deg2rad(angle_deg)) / n_real
+    theta_sub = float(np.rad2deg(np.arcsin(min(sin_sub, 1.0))))
+    cos_sub = float(np.sqrt(max(0.0, 1.0 - sin_sub * sin_sub)))
+
+    def stack(n_layers, thicknesses, angle, n_inc, n_exit):
+        return rt_stack_oblique(
+            wavelength_nm, n_layers, thicknesses, angle, s_polarisation, n_inc=n_inc, n_sub=n_exit
+        )
+
+    r_f, t_f = stack(n_front, d_front, angle_deg, 1.0 + 0.0j, n_sub)
+    r_f_inside, t_f_inside = stack(n_front[::-1], d_front[::-1], theta_sub, n_real + 0.0j, 1.0 + 0.0j)
+    r_b, t_b = stack(n_back[::-1], d_back[::-1], theta_sub, n_real + 0.0j, 1.0 + 0.0j)
+
+    tau = 1.0 if k == 0.0 else float(np.exp(-4.0 * np.pi * k * thickness_nm / (wavelength_nm * cos_sub)))
+    denominator = 1.0 - r_f_inside * r_b * tau * tau
+    return (
+        r_f + t_f * t_f_inside * r_b * tau * tau / denominator,
+        t_f * t_b * tau / denominator,
+    )
+
+
+def rt_plate_coherent_mean(
+    wavelength_nm: float,
+    n_front: np.ndarray | list[complex],
+    d_front: np.ndarray | list[float],
+    n_back: np.ndarray | list[complex],
+    d_back: np.ndarray | list[float],
+    n_sub: complex,
+    angle_deg: float,
+    s_polarisation: bool,
+    thickness_nm: float,
+    samples: int = 64,
+) -> tuple[float, float]:
+    """The same plate, EXACTLY, and averaged: the truth that `rt_plate_incoherent` approximates.
+
+    Air | front stack | substrate as a thick layer of complex index | back stack | air, one coherent TMM,
+    for `samples` thicknesses of the substrate spread over one fringe (`lambda / (2 n cos theta)`). The
+    mean over one fringe of the coherent answer is the incoherent one: it shares no assumption with the
+    plate model, neither the interfaces read with the real part of the index nor the Beer-Lambert loss.
+    Only for a substrate that does not absorb too much for `cos` and `sin` of its phase (k below ~ 1e-3).
+    """
+    n_front = np.asarray(n_front, dtype=np.complex128)
+    n_back = np.asarray(n_back, dtype=np.complex128)
+    d_front = np.asarray(d_front, dtype=np.float64)
+    d_back = np.asarray(d_back, dtype=np.float64)
+    n_real = float(n_sub.real)
+    cos_sub = float(np.sqrt(max(0.0, 1.0 - (np.sin(np.deg2rad(angle_deg)) / n_real) ** 2)))
+    fringe = wavelength_nm / (2.0 * n_real * cos_sub)
+
+    n_all = np.concatenate([n_back[::-1], np.array([n_sub], dtype=np.complex128), n_front])
+    reflectance = transmittance = 0.0
+    for j in range(samples):
+        d_all = np.concatenate([d_back[::-1], np.array([thickness_nm + fringe * j / samples]), d_front])
+        r, t = rt_stack_oblique(
+            wavelength_nm, n_all, d_all, angle_deg, s_polarisation, n_inc=1.0 + 0.0j, n_sub=1.0 + 0.0j
+        )
+        reflectance += r
+        transmittance += t
+    return reflectance / samples, transmittance / samples

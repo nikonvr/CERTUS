@@ -364,7 +364,9 @@ def test_hot_kernels_are_jit_compiled() -> None:
         (opt_tmm, "compute_RT_from_matrix"),
         (grad_analytic, "_compute_gradient_analytic_kernel"),
         (grad_oblique, "_compute_oblique_rt_and_grads_kernel"),
+        (grad_oblique, "_compute_oblique_rt_and_grads_kernel_absorbing"),
         (grad_oblique, "_compute_oblique_gradient_contrib_kernel"),
+        (grad_oblique, "_compute_oblique_gradient_contrib_kernel_absorbing"),
         (grad_metal, "_compute_metal_tmm_gradient_kernel"),
     ]
 

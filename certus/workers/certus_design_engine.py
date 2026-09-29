@@ -24,6 +24,7 @@ from certus_physics import (
 )
 
 from certus.workers.certus_design_worker_utils import optim_calc_oblique_selected
+from certus.physics.certus_substrate_absorption import apply_plate_loss
 
 
 @dataclass
@@ -161,6 +162,7 @@ class DesignPhysicsBridge:
                         Rb_prime, Tb, _, _ = compute_oblique_rt_and_grads_analytic(self.d_back, n_back_sel, n_sub_sel, wls_sel, np.zeros(0, dtype=np.int64), angle, is_s_pol, True)
                     else:
                         Rb_prime, Tb, _, _ = compute_oblique_rt_and_grads_analytic(np.zeros(0, dtype=np.float64), np.zeros((len(wls_sel), 0), dtype=np.complex128), n_sub_sel, wls_sel, np.zeros(0, dtype=np.int64), angle, is_s_pol, True)
+                    Rb_prime, Tb = apply_plate_loss(Rb_prime, Tb, n_sub_sel, wls_sel, angle)
                     D = np.maximum(1.0 - Rf_prime * Rb_prime, 1e-12)
                     D2 = D * D
                     if is_reflectance:

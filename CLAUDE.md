@@ -160,7 +160,8 @@ Et `tests/oracle/` avant et après toute modification d'un calcul optique.
   `physics ↔ core`) : **n'en crée aucune nouvelle** ; si tu en as besoin, le symbole doit
   descendre dans `domain/` ou `core/`.
 - Seul `certus/domain/` a un `__init__.py` (paquets PEP 420) : le projet s'utilise en source.
-- Les trois `certus_*.py` de la racine sont des façades de ré-export que des tests importent.
+- `certus_curve_smoother.py` et `certus_substrate_index.py`, à la racine, sont des points d'entrée
+  que le hub lance ; le second recopie aussi les globales de `certus.core.certus_substrate_index`.
 
 ## 9. Vocabulaire
 

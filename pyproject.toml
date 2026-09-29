@@ -6,7 +6,7 @@ name = "certus-optical-suite"
 version = "26.05.0"
 description = "CERTUS optical thin-film suite (design, strat, RE, index, metal)."
 requires-python = ">=3.14.5"
-license = { text = "Proprietary" }
+license = "GPL-3.0-only"
 authors = [
   { name = "CERTUS Team" }
 ]
@@ -14,7 +14,6 @@ classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Science/Research",
   "Topic :: Scientific/Engineering :: Physics",
-  "License :: Other/Proprietary License",
   "Programming Language :: Python :: 3.14",
   "Operating System :: Microsoft :: Windows",
 ]

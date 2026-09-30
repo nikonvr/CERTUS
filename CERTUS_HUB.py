@@ -32,7 +32,7 @@ Fixed: Header generation and Config loading robustness.
 
 
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, NamedTuple
 import functools
 import logging
 import multiprocessing
@@ -180,6 +180,48 @@ from certus.ui.certus_hub_widgets import ApplicationCard, GroupedApplicationCard
 from certus.utils.certus_qsettings import certus_settings
 
 
+#: Lines of a dead module's error output that the hub shows and logs. A traceback opens with a header and
+#: ends with the error, so the END says why: the hub used to keep the first 200 characters, the header.
+STDERR_TAIL_LINES = 15
+
+#: Exit codes of a module stopped from outside (Task Manager, `kill`, a window closed by force). They
+#: deserve a message only when the module also wrote something to its error output.
+FORCE_CLOSE_EXIT_CODES = (1, 15, -1)
+
+_MAX_CAUSE_CHARS = 300
+
+
+class ModuleStop(NamedTuple):
+    """What the hub tells the user about a module that ended badly."""
+
+    headline: str  # what happened, in one sentence
+    cause: str  # the last line of its error output: the error message itself
+    details: str  # the tail of that output, for the dialog's "Show Details"
+    crashed: bool  # killed by the system (access violation, segfault) rather than ended by its own error
+
+
+def describe_module_stop(module_name: str, exit_code: int, crashed: bool, stderr_text: str) -> ModuleStop | None:
+    """The message for a module that ended badly, or None when its end deserves none.
+
+    Nothing to say of a normal exit (code 0), nor of a module stopped from outside
+    (`FORCE_CLOSE_EXIT_CODES`) that wrote nothing: on Unix `kill` ends a process with signal 15, which Qt
+    calls a crash, and the user did that on purpose. Everything else is worth a message: an uncaught
+    exception exits with code 1 and a traceback, and the hub ignored it because code 1 read as "the user
+    closed it"; a native crash has no traceback at all, only a status.
+    """
+    lines = [line.rstrip() for line in stderr_text.splitlines() if line.strip()]
+    if exit_code == 0 or (exit_code in FORCE_CLOSE_EXIT_CODES and not lines):
+        return None
+    code = f"exit code {exit_code}"
+    if not 0 <= exit_code <= 255:
+        code += f", 0x{exit_code & 0xFFFFFFFF:08X}"  # Windows reports a crash as an NTSTATUS
+    headline = f"{module_name} crashed ({code})." if crashed else f"{module_name} stopped because of an error ({code})."
+    cause = lines[-1].strip() if lines else "It wrote no error message."
+    if len(cause) > _MAX_CAUSE_CHARS:
+        cause = cause[: _MAX_CAUSE_CHARS - 3] + "..."
+    return ModuleStop(headline, cause, "\n".join(lines[-STDERR_TAIL_LINES:]), crashed)
+
+
 class CertusHub(QMainWindow):
     @staticmethod
     def _build_hub_apps_catalog() -> list[HubAppCatalogItem]:
@@ -263,6 +305,10 @@ class CertusHub(QMainWindow):
         self.setMinimumSize(700, 500)
 
         self.active_processes = []
+
+        # Set once the hub has decided to close: the modules it then stops end with a status that would
+        # otherwise read as a crash (Qt reports `kill()` on Windows as CrashExit, code 0xF291).
+        self._closing = False
 
         # Global Background Style 2026 (Handled properly in _apply_theme now)
 
@@ -676,6 +722,12 @@ class CertusHub(QMainWindow):
             self._log_message(f"{n} started successfully.")
 
         def on_error(err, n=module_name, p=process):
+            if err != QProcess.ProcessError.FailedToStart:
+                # `Crashed` is followed by `finished`, which carries the exit status and the module's last
+                # words: `on_process_finished` reports it. This handler told the user "Could not start" of a
+                # module that had run for an hour.
+                self._log_message(f"ERROR: {n} reported {err.name}.")
+                return
             self._log_message(f"ERROR: Failed to start {n} (Error: {err})")
             if p in self.active_processes:
                 self.active_processes.remove(p)
@@ -723,13 +775,14 @@ class CertusHub(QMainWindow):
         """Slot nomme pour `QProcess.finished`, qui emet (code, statut).
 
         `on_process_finished` attend (process, nom, code) : cet adaptateur remet les
-        arguments dans l'ordre et absorbe le statut. Il existe pour que la connexion
-        soit un objet NOMME -- une lambda anonyme ne se deconnecte pas, ne se teste
-        pas, et sa duree de vie n'est garantie par personne.
+        arguments dans l'ordre et lit le statut (un module tue par le systeme n'a qu'un
+        statut pour le dire). Il existe pour que la connexion soit un objet NOMME --
+        une lambda anonyme ne se deconnecte pas, ne se teste pas, et sa duree de vie
+        n'est garantie par personne.
         """
-        self.on_process_finished(process, app_name, exit_code)
+        self.on_process_finished(process, app_name, exit_code, crashed=_status == QProcess.ExitStatus.CrashExit)
 
-    def on_process_finished(self, process, app_name, exit_code) -> None:
+    def on_process_finished(self, process, app_name, exit_code, crashed=False) -> None:
 
         module_name = Path(app_name).stem
 
@@ -751,20 +804,35 @@ class CertusHub(QMainWindow):
 
         self._update_active_indicator()
 
-        if exit_code == 0:
-            self._log_message(f"{module_name} exited normally.")
-
-        elif exit_code not in (1, 15, -1):  # Ignore common force-close codes
+        stop = describe_module_stop(module_name, exit_code, crashed, stderr_text)
+        if stop is None:
+            self._log_message(f"{module_name} exited normally." if exit_code == 0 else f"{module_name} exited with code {exit_code}.")
+        else:
             self._log_message(f"{module_name} exited with code {exit_code}")
-
-            if stderr_text:
-                self._log_message(f"Error: {stderr_text[:200]}")
+            if stop.details:
+                self._log_message(f"Last lines of its error output:\n{stop.details}")
+            if not self._closing:
+                self._show_module_stop(stop)
 
         if process in self.active_processes and process.state() != QProcess.ProcessState.Running:
             try:
                 process.deleteLater()
             except RuntimeError:
                 pass
+
+    def _show_module_stop(self, stop: ModuleStop) -> None:
+        """Say why a module ended badly. Not modal: the other modules and the cards stay usable."""
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Icon.Critical if stop.crashed else QMessageBox.Icon.Warning)
+        box.setWindowTitle("Module stopped")
+        box.setText(stop.headline)
+        box.setInformativeText(stop.cause)
+        if stop.details:
+            box.setDetailedText(stop.details)
+        box.setStandardButtons(QMessageBox.StandardButton.Ok)
+        box.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        box.setWindowModality(Qt.WindowModality.NonModal)
+        box.show()
 
     def on_toggle_details(self, checked) -> None:
 
@@ -791,6 +859,8 @@ class CertusHub(QMainWindow):
 
     def closeEvent(self, event) -> None:
         """Stop child processes cleanly before the hub is destroyed."""
+        self._closing = True
+
         try:
             from PyQt6.QtCore import QSettings
 

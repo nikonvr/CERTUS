@@ -246,6 +246,30 @@ def test_coverage_is_the_percentage_of_lines_not_the_one_that_mixes_branches(tmp
     assert metrics.couverture(path) == {"lignes": 30.0, "physics": 50.0}
 
 
+def _coverage_file(path, **files: tuple[int, int]):
+    report = {"files": {name: {"summary": {"num_statements": lines, "covered_lines": covered}} for name, (covered, lines) in files.items()}}
+    path.write_text(json.dumps(report), encoding="utf-8")
+    return path
+
+
+def test_a_weak_module_is_one_that_no_measure_covers_and_only_the_larger_ones_count(tmp_path) -> None:
+    ordinary = _coverage_file(
+        tmp_path / "ordinary.json",
+        **{
+            "certus/physics/kernel.py": (5, 60),  # 8 %: the JIT hides it in an ordinary run
+            "certus/core/fine.py": (50, 60),
+            "certus/core/tiny.py": (0, 40),  # under 50 lines: not counted
+            "certus\\ui\\window.py": (3, 100),  # a Windows path: counted, 3 %
+            "tests/unit/test_x.py": (0, 500),  # not certus/
+        },
+    )
+    kernels = _coverage_file(tmp_path / "kernels.json", **{"certus/physics/kernel.py": (45, 60), "certus/ui/window.py": (0, 100)})
+
+    assert metrics.modules_faibles([ordinary]) == 2
+    assert metrics.modules_faibles([ordinary, kernels]) == 1  # the kernel is covered once the JIT is off: best of both
+    assert metrics.modules_faibles([ordinary], seuil=2.0) == 0
+
+
 # =============================================================================
 # The table
 # =============================================================================

@@ -63,6 +63,7 @@ INDICATEURS: tuple[tuple[str, str, float | None, float | None, str | None], ...]
     ("couverture.lignes", "couverture des lignes de certus/ (%)", 46.8, 55.0, "max"),
     ("couverture.noyaux", "couverture de certus/physics, JIT coupe (%)", 45.9, 70.0, "max"),
     ("tests.modules_sans_test", "modules certus/ qu'aucun test ne nomme", 69, 40, "min"),
+    ("couverture.modules_faibles", "modules certus/ couverts a moins de 15 % (>= 50 lignes)", 13, 8, "min"),
     ("tests.sans_assertion", "tests sans aucune assertion", 57, 0, "min"),
     ("lint.violations", "dette de lint masquee : violations", 3319, 1500, "min"),
     ("lint.regles", "dette de lint masquee : regles", 32, 24, "min"),
@@ -664,6 +665,25 @@ def couverture(chemin: Path) -> dict[str, float]:
     return {"lignes": pourcentage(certus), "physics": pourcentage(physique)}
 
 
+def modules_faibles(chemins: list[Path], seuil: float = 15.0, minimum: int = 50) -> int:
+    """Combien de fichiers de `certus/` (d'au moins `minimum` lignes) restent sous `seuil` % dans TOUTES les mesures.
+
+    Un fichier compte pour sa MEILLEURE couverture parmi les JSON donnes : un noyau compile est invisible dans la
+    mesure ordinaire et se voit dans celle qui coupe la compilation. C'est ce qui remplace « aucun test ne nomme
+    ce module », une mesure de noms : le 2026-09-30, 64 modules n'etaient nommes par aucun test, et 13 seulement
+    etaient couverts a moins de 15 % par toutes les suites.
+    """
+    meilleure: dict[str, float] = {}
+    for chemin in chemins:
+        for nom, valeur in json.loads(chemin.read_text(encoding="utf-8"))["files"].items():
+            nom = nom.replace("\\", "/")
+            resume = valeur["summary"]
+            if nom.startswith("certus/") and resume["num_statements"] >= minimum:
+                pc = 100 * resume["covered_lines"] / resume["num_statements"]
+                meilleure[nom] = max(meilleure.get(nom, 0.0), pc)
+    return sum(1 for pc in meilleure.values() if pc < seuil)
+
+
 _OUVERTURE = r"""
 import importlib, json, os, sys, time
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -789,6 +809,17 @@ def mesurer(
             mesures[cle] = lues["lignes"] if cle == "couverture.lignes" else lues["physics"]
         except (OSError, ValueError, KeyError) as exc:
             mesures[cle], absents[cle] = None, f"{fichier.name} illisible ({type(exc).__name__})"
+
+    fournis = [fichier for fichier in (fichier_couverture, fichier_noyaux) if fichier is not None]
+    if fournis:
+        try:
+            mesures["couverture.modules_faibles"] = modules_faibles(fournis)
+        except (OSError, ValueError, KeyError) as exc:
+            mesures["couverture.modules_faibles"] = None
+            absents["couverture.modules_faibles"] = f"JSON de couverture illisible ({type(exc).__name__})"
+    else:
+        mesures["couverture.modules_faibles"] = None
+        absents["couverture.modules_faibles"] = "option --couverture FICHIER.json (coverage json)"
 
     if statique_seulement:
         for cle in ("lint.violations", "lint.regles", "ui.boutons_sous_4_5", "gel.taille_mo", "pub.ci_rouge",

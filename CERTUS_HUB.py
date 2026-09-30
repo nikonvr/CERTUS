@@ -31,6 +31,7 @@ Fixed: Header generation and Config loading robustness.
 """
 
 
+from collections.abc import Sequence
 from typing import Any
 import functools
 import logging
@@ -617,7 +618,9 @@ class CertusHub(QMainWindow):
                 return item
         return None
 
-    def launch_module(self, app_name: str) -> None:
+    def launch_module(self, app_name: str, *, files: Sequence[str] = ()) -> None:
+        """Start a module in its own process. `files` are its command line: the modules read
+        `sys.argv[1]` as the file to open ("Load file from CLI if provided")."""
 
         # Use get_resource_path to get base dir
 
@@ -640,14 +643,14 @@ class CertusHub(QMainWindow):
             # used to run `<base_name>.exe`, which the build does not produce.
             program = sys.executable
 
-            args = [RUN_MODULE_FLAG, base_name]
+            args = [RUN_MODULE_FLAG, base_name, *files]
 
         else:
             program = sys.executable
 
             script_path = Path(base_dir) / app_name
 
-            args = [str(script_path)]
+            args = [str(script_path), *files]
 
             if not script_path.exists():
                 QMessageBox.critical(self, "Error", f"Script not found: {script_path}")
@@ -983,7 +986,8 @@ class CertusHub(QMainWindow):
         target = paths[0]
         script = self._module_for_dropped_file(target)
         self._log_message(f"Dropped {Path(target).name} -> launching {Path(script).stem}")
-        self.launch_module(script)
+        # The module opens the file it is given; without it a drop only started an empty window.
+        self.launch_module(script, files=[target])
 
     def _install_help_menu(self) -> None:
         """Create the standard Help menu: Shortcuts, Docs, About."""

@@ -108,6 +108,7 @@ markers = [
   "ui: UI tests",
   "e2e: End-to-end tests",
   "slow: Slow running tests",
+  "kernels: Tests whose value is the coverage of compiled kernels: the kernel-coverage job runs them with NUMBA_DISABLE_JIT=1",
 ]
 
 [tool.coverage.run]

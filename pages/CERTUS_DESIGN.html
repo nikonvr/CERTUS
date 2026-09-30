@@ -316,6 +316,20 @@
             $$ T_{total} = \frac{T_{fwd} \cdot T_{ext}}{1 - R_{back} \cdot R_{ext}}, \qquad
             R_{ext} = \left(\frac{n_{sub} - 1}{n_{sub} + 1}\right)^2 $$
         </div>
+        <p>
+            When the substrate absorbs ($\hat n = n - ik$, $k > 0$), it is a plate of thickness $D$ that loses part of
+            the flux on each pass (Beer&ndash;Lambert). With $\tau$ the flux left after <em>one</em> pass, the same
+            formula holds with $T_{ext} \to T_{ext}\,\tau$ and $R_{ext} \to R_{ext}\,\tau^2$:
+        </p>
+        <div class="eq-box">
+            $$ \tau = e^{-4\pi\,|k|\,D\,/\,(\lambda \cos\theta)}, \qquad
+            T_{total} = \frac{T_{fwd} \cdot T_{ext}\,\tau}{1 - R_{back} \cdot R_{ext}\,\tau^2} $$
+        </div>
+        <p>
+            $\tau = 1$ is the lossless plate above; $\tau = 0$ is the semi-infinite absorber (nothing comes back from
+            the back side). The two are the ends of one formula, so the result is continuous in $k$. DESIGN and
+            STRAT do not ask for $D$: it defaults to 1&nbsp;mm.
+        </p>
 
         <!-- ================================================================ -->
         <!--  4. ANALYTIC GRADIENT                                             -->

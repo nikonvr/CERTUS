@@ -614,45 +614,11 @@ class TestEndToEndIntegration:
 
 
 
-        # Le workflow est complet
-
-        assert True
-
-
-
     def test_error_handling_workflow(self):
-
         """Test a complete workflow with error management."""
-
-        # 1. Configuration
-
         logger = setup_logging()
 
-
-
-        # 2. Attempting an invalid operation
-
-        try:
-
-            validate_wavelength_range(800.0, 400.0)  # Invalide
-
-            pytest.fail("Devrait lever une exception")
-
-        except (CertusValidationError, ValueError) as e:
-
-            # 3. Logger l'error
-
-            logger.warning(f"Validation error: {e}")
-
-
-
-            # 4. Check error handling
-
-            assert True  # The exception has been raised
-
-
-
-        # Le workflow d'error est correct
-
-        assert True
-
+        # An inverted range is refused, and the refusal is logged rather than swallowed.
+        with pytest.raises((CertusValidationError, ValueError), match="Invalid wavelength range") as refused:
+            validate_wavelength_range(800.0, 400.0)
+        logger.warning(f"Validation error: {refused.value}")

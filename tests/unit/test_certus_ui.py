@@ -1087,7 +1087,6 @@ class TestUIExceptionHandling:
         with patch.object(QMessageBox, "about") as mock_about:
             app._show_default_about_dialog("Dummy App")
             mock_about.assert_called_once()
-        assert True
 
     def test_base_app_recent_and_reports(self, qapp, tmp_path):
         _ = qapp

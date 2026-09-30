@@ -386,6 +386,14 @@ class StateManager:
                     if w is None:
                         continue
                     if hasattr(w, "setCurrentText"):
+                        if w.findText(str(value)) < 0:
+                            # A combo box ignores a text it does not offer, and keeps its first choice:
+                            # a configuration saved with `Avg` used to load as s without a word.
+                            self.ui.log(
+                                f"Target row {r + 1}: {value!r} is not one of the choices of this column;"
+                                f" {w.itemText(0)!r} is kept.",
+                                "WARNING",
+                            )
                         w.setCurrentText(value)
                     else:
                         w.setValue(value)

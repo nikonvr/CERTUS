@@ -219,6 +219,10 @@ def _design_objective_wrapper_common(app, x) -> Any:
     if len(x) != len(app._var_idx):
         return 1e30
 
+    # A NaN or an infinity in a trial vector is not a design: `(R, T)` of it used to come out as (0, 0).
+    if not np.all(np.isfinite(x)):
+        return 1e30
+
     if app._all_variable:
         ep_buffer = np.ascontiguousarray(x)
     else:
@@ -289,6 +293,10 @@ def _design_compute_oblique_error_common(app, ep_test) -> Any:
 def _design_gradient_func_pglobal_common(app, x) -> Any:
     """Shared cost + analytic gradient for PGlobalOptimizer."""
     if len(x) != len(app._var_idx):
+        return 1e30, np.zeros(len(app._var_idx), dtype=np.float64)
+
+    # A NaN or an infinity in a trial vector is not a design: `(R, T)` of it used to come out as (0, 0).
+    if not np.all(np.isfinite(x)):
         return 1e30, np.zeros(len(app._var_idx), dtype=np.float64)
 
     if app._all_variable:

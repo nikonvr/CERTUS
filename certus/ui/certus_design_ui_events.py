@@ -423,9 +423,11 @@ class EventsManager:
 
             pol_combo = QComboBox()
 
-            pol_combo.setToolTip("Target polarization: s, p, or Avg (unpolarized average).")
+            pol_combo.setToolTip("Target polarization: s or p.")
 
-            pol_combo.addItems(["s", "p", "Avg"])
+            # There was an `Avg` (unpolarized average) here: no kernel computes the average of the two waves,
+            # and a row set to it was computed as p.
+            pol_combo.addItems(["s", "p"])
 
             pol_combo.currentTextChanged.connect(self.ui._schedule_eval)
 

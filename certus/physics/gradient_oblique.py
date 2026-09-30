@@ -6,6 +6,7 @@ Contains gradient computation for oblique (non-normal) incidence angles.
 """
 
 import numpy as np
+from certus.physics.certus_inputs import check_incidence_angle
 from certus.physics.certus_oblique_substrate import oblique_exit_admittance
 from certus.physics.certus_substrate_absorption import DEFAULT_SUBSTRATE_THICKNESS_NM, apply_plate_loss
 from numba import njit, prange
@@ -492,6 +493,8 @@ def compute_oblique_gradient_contrib_analytic(
 
     n_sub_c128 = np.asarray(n_sub, dtype=np.complex128)
 
+    angle_deg = check_incidence_angle(angle_deg)
+
     # A substrate without absorption keeps the kernel that always ran; one that absorbs anywhere in the band
     # takes the kernel that reads its complex admittance.
     kernel = _pick_kernel(
@@ -948,6 +951,8 @@ def compute_oblique_rt_and_grads_analytic(
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Python wrapper for oblique R/T + analytic dR,dT kernel."""
 
+    angle_deg = check_incidence_angle(angle_deg)
+
     ep_f64 = np.asarray(ep, dtype=np.float64)
 
     n_layers_c128 = np.asarray(n_layers_T, dtype=np.complex128)
@@ -993,6 +998,8 @@ def compute_oblique_rt_pair_and_grads_analytic(
     Returns (front, reverse) where each item is (R, T, dR, dT).
 
     """
+
+    angle_deg = check_incidence_angle(angle_deg)
 
     ep_f64 = np.asarray(ep, dtype=np.float64)
 
@@ -1055,6 +1062,8 @@ def compute_oblique_backside_bundle_analytic(
     seen through its loss (`apply_plate_loss`), and the combination below is the one of a plate without loss.
 
     """
+
+    angle_deg = check_incidence_angle(angle_deg)
 
     ep_f64 = np.asarray(ep, dtype=np.float64)
 

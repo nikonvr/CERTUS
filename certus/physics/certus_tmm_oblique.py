@@ -2,6 +2,7 @@ import numpy as np
 from numba import njit, prange
 from certus.core.certus_core import TWO_PI
 from certus.physics.certus_opt_tmm import compute_RT_from_matrix
+from certus.physics.certus_inputs import check_incidence_angle, is_s_polarization, require_finite
 from certus.physics.certus_oblique_substrate import oblique_exit_admittance
 from certus.physics.certus_substrate_absorption import (
     DEFAULT_SUBSTRATE_THICKNESS_NM,
@@ -341,6 +342,16 @@ def calc_spectrum_oblique_vectorized(
 
     """
 
+    # A NaN or a wave beyond grazing is no incidence; anything but s or p is no polarization.
+
+    angle_deg = check_incidence_angle(angle_deg)
+
+    is_s_pol = is_s_polarization(polarization)
+
+    # The thicknesses and the wavelengths are what an optimizer moves; the index arrays are prepared once and
+    # are the large ones: checking them here would cost a tenth of each evaluation (measured 0.15 of 1.5 ms).
+    require_finite(wls=wls, d_layers=d_layers, n_sub=n_sub)
+
     # For normal incidence, use calc_spectrum_front
 
     if abs(angle_deg) < 1e-6:
@@ -350,9 +361,6 @@ def calc_spectrum_oblique_vectorized(
 
         return R, T
 
-    # Convert polarization string to boolean for Numba
-
-    is_s_pol = polarization.lower() == "s"
 
     # Ensure correct dtypes
 
@@ -387,7 +395,13 @@ def calc_spectrum_oblique_backside_vectorized(
 
     # Single source of truth: delegate to full oblique exact with empty back stack.
 
-    is_s_pol = polarization.lower() == "s"
+    angle_deg = check_incidence_angle(angle_deg)
+
+    is_s_pol = is_s_polarization(polarization)
+
+    # The thicknesses and the wavelengths are what an optimizer moves; the index arrays are prepared once and
+    # are the large ones: checking them here would cost a tenth of each evaluation (measured 0.15 of 1.5 ms).
+    require_finite(wls=wls, d_layers=d_layers, n_sub=n_sub)
 
     wls_f64 = np.ascontiguousarray(wls, dtype=np.float64)
 

@@ -26,6 +26,7 @@ from PyQt6.QtWidgets import QDialog, QVBoxLayout
 
 from certus.core.certus_core import CFG, NUMERICAL_FAULT_EXCEPTIONS, ensure_numpy_array, get_complex_dtype, get_float_dtype
 from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
+from certus.physics.certus_inputs import is_s_polarization
 
 from certus_physics import NKCache, calc_rmse
 
@@ -524,7 +525,7 @@ def _calc_oblique_selected_kernel(
             n_back_T_arr,
             n_sub_arr,
             float(angle),
-            str(pol).lower() == "s",
+            is_s_polarization(pol),
         )
     if has_back_calc and (not has_back_stack):
         return calc_spectrum_oblique_backside_vectorized(wls_arr, n_front_T, d_front_arr, n_sub_arr, angle, pol)

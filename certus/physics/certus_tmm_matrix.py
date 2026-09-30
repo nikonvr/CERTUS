@@ -2,6 +2,7 @@ import numpy as np
 from numba import njit, prange
 from certus.physics.certus_opt_tmm import compute_TMM_generic, compute_RT_from_matrix
 from certus.core.certus_core import TWO_PI
+from certus.physics.certus_inputs import require_finite, require_layers_below_overflow
 from certus.physics.certus_substrate_absorption import (
     DEFAULT_SUBSTRATE_THICKNESS_NM,
     substrate_internal_transmittance,
@@ -330,6 +331,15 @@ def calculate_RT_vectorized_real(
 
     Returns:
         R, T arrays"""
+
+    require_finite(
+        thicknesses=thicknesses,
+        n_layers_all_wls=n_layers_all_wls,
+        n_substrate_all_wls=n_substrate_all_wls,
+        wls=wls,
+    )
+
+    require_layers_below_overflow(thicknesses, n_layers_all_wls, wls)
 
     if with_backside:
         return calculate_RT_with_backside_fused(

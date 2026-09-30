@@ -63,6 +63,9 @@ class DesignPhysicsBridge:
     def objective(self, x: np.ndarray) -> Any:
         if len(x) != len(self.var_idx):
             return 1e30
+        # A NaN or an infinity in a trial vector is not a design: `(R, T)` of it used to be (0, 0).
+        if not np.all(np.isfinite(x)):
+            return 1e30
         ep_buffer = self._build_ep(x)
         if np.any((ep_buffer > 1e-12) & (ep_buffer < CFG.MIN_THICKNESS)):
             return 1e30
@@ -83,6 +86,8 @@ class DesignPhysicsBridge:
 
     def gradient(self, x: np.ndarray) -> tuple[Any, np.ndarray]:
         if len(x) != len(self.var_idx):
+            return 1e30, np.zeros(len(self.var_idx), dtype=np.float64)
+        if not np.all(np.isfinite(x)):
             return 1e30, np.zeros(len(self.var_idx), dtype=np.float64)
         ep_full = self._build_ep(x)
         violations = (ep_full > 1e-12) & (ep_full < CFG.MIN_THICKNESS)

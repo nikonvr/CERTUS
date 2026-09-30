@@ -17,6 +17,7 @@ from typing import Any
 
 from certus.core.certus_core import CFG, NUMERICAL_FAULT_EXCEPTIONS, get_float_dtype
 from certus_physics import PGlobalConfig, PGlobalOptimizer, prepare_targets_vectorized
+from certus.physics.certus_inputs import is_s_polarization
 
 import numpy as np
 
@@ -48,7 +49,7 @@ def optim_calc_oblique_selected(
             n_back_T,
             n_sub_arr,
             float(angle),
-            str(pol).lower() == "s",
+            is_s_polarization(pol),
         )
 
     if has_back_calc and (not has_back_stack):
@@ -203,7 +204,7 @@ def optim_oblique_configs_from_groups(
             {
                 "angle": angle,
                 "pol": pol,
-                "is_s_pol": str(pol).lower() == "s",
+                "is_s_pol": is_s_polarization(pol),
                 "all_clues": all_clues,
                 "wls_config": wls[all_clues],
                 "n_sub_config": n_sub[all_clues],

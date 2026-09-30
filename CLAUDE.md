@@ -116,7 +116,9 @@ mais **synchronisés par Drive**) : supprime-les ensuite.
 
 - **C1** s'éprouve par une empreinte `float.hex()` du noyau, pas par le `RESULT` du banc : à
   état compilé identique le banc est déterministe, mais **une recompilation décale les
-  derniers chiffres** (2,8e-11, reproductible). Ce harnais n'existe pas encore (voir ETAT).
+  derniers chiffres** (2,8e-11, reproductible). **`python scripts\c1_diff.py HEAD`** (50 s) compare au bit
+  l'arbre de travail à un commit : corpus fixe, interpréteurs neufs, caches Numba vierges ; à lancer
+  avant de committer tout changement de noyau. Il ne prouve que ce que son corpus appelle.
 - **C2** — croissance et notation voient **la même réalisation** de chaque perturbation :
   tout tirage est une fonction pure de (graine, tirage, index physique), **jamais** de la
   stratégie (ni λ, ni découpage en blocs, ni épaisseur obtenue). Générateur :

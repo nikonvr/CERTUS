@@ -281,7 +281,9 @@ def attach_rich_tooltip(
 
     _REGISTRY[id(widget)] = (spec, flt)
 
-    def _drop_tooltip_spec(*_args, key=id(widget)) -> None:
+    _tooltip_key = id(widget)  # frozen now: the widget is gone when the callback runs
+
+    def _drop_tooltip_spec(*_args, key=_tooltip_key) -> None:
         _REGISTRY.pop(key, None)
 
     try:

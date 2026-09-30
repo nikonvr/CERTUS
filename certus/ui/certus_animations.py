@@ -320,7 +320,9 @@ def hover_lift(
         return None
     _HOVER_FILTERS[id(widget)] = flt
 
-    def _drop_hover_filter(*_args, key=id(widget)):
+    _hover_key = id(widget)  # frozen now: the widget is gone when the callback runs
+
+    def _drop_hover_filter(*_args, key=_hover_key):
         _HOVER_FILTERS.pop(key, None)
 
     try:

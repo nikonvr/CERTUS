@@ -343,7 +343,9 @@ def attach_empty_state_to(
     watcher = _Watcher(view, overlay)
     _OVERLAYS[id(view)] = (overlay, watcher)
 
-    def _drop_overlay(*_args, key=id(view)):
+    _overlay_key = id(view)  # frozen now: the view is gone when the callback runs
+
+    def _drop_overlay(*_args, key=_overlay_key):
         _OVERLAYS.pop(key, None)
 
     try:

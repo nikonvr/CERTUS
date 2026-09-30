@@ -14,6 +14,9 @@ from certus.utils.certus_index_utils import DataType
 # Constants required by config defaults
 from certus.core.certus_core import K_MAX_LIMIT
 
+#: Default upper clip of k: 0.99, and never above what the model accepts (`K_MAX_LIMIT`).
+_K_CLIP_HI_DEFAULT: float = min(0.99, float(K_MAX_LIMIT))
+
 class SplinePGlobalConfig:
     """PGlobal optimizer + SOL3 phase 1 + local-only fallback settings."""
 
@@ -155,7 +158,7 @@ class SplineOptConfig:
     t_is_ratio: bool = False
     x0_warm: np.ndarray | None = None
     k_clip_lo: float = 1e-5
-    k_clip_hi: float = min(0.99, float(K_MAX_LIMIT))
+    k_clip_hi: float = _K_CLIP_HI_DEFAULT
     sigma_knots_override: np.ndarray | None = None
     n_mono_band_nm: tuple[float, float] | None = None
     n_mono_continuous_penalty: float = 0.0
@@ -197,7 +200,7 @@ class SplineOptConfig:
         t_is_ratio=False,
         x0_warm=None,
         k_clip_lo=1e-5,
-        k_clip_hi=min(0.99, float(K_MAX_LIMIT)),
+        k_clip_hi=_K_CLIP_HI_DEFAULT,
         sigma_knots_override=None,
         n_mono_band_nm=None,
         n_mono_continuous_penalty=0.0,

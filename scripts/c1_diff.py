@@ -51,7 +51,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 
 #: A monter a chaque changement du corpus : il fait partie de la cle du cache de la base.
-VERSION_CORPUS = 1
+VERSION_CORPUS = 2
 
 #: Ce qu'on exporte d'une revision : le paquet de calcul et ses voisins, pas `reports/` (592 Mo).
 PAQUETS = ("certus", "certus_physics")
@@ -202,7 +202,8 @@ def corpus_strat(rec: Enregistreur) -> None:
 
     Les parametres de chaque appel sont tires au hasard (graine fixe) parmi les valeurs qui font emprunter au noyau
     ses branches : POEM ou repli absolu, mode non monotone, hysteresis, bruit de lecture, derive photometrique,
-    lissage, palier de debit, profil de fente. Un noyau de 1 190 lignes ne se caracterise pas cas par cas.
+    lissage, palier de debit, profil de fente, temoin change en cours de route, balayage adaptatif, grille de la
+    machine sans lissage, couches deja posees au debit. Un noyau de 1 190 lignes ne se caracterise pas cas par cas.
     """
     g = "certus.physics.certus_strat_growth"
     f_grow = rec.resoudre("strat.growth", f"{g}:simulate_growth_kernel")
@@ -219,19 +220,33 @@ def corpus_strat(rec: Enregistreur) -> None:
     nominal = np.array([53.19, 85.62, 53.19, 85.62, 53.19, 85.62, 53.19, 85.62])
     n_h, n_l, n_sub = 2.35 + 0j, 1.46 + 0j, 1.52 + 0j
 
-    for cas in range(240):
+    for cas in range(400):
         i_layer = int(rng.integers(1, len(nominal)))
         prev = nominal[:i_layer] * (1.0 + rng.normal(0.0, 0.01, i_layer))
         wl = float(rng.choice([500.0, 540.0, 600.0, 650.0]))
         profiles = rng.normal(0.0, 1e-3, (len(nominal), nodes)) if rng.random() < 0.3 else None
         est_taux = bool(rng.random() < 0.25)
+        # Les quatre derniers parametres du noyau : temoin change en cours de route, balayage adaptatif, grille de la
+        # machine sans lissage, couches deja posees au debit. Sans eux, la moitie des branches ne serait jamais lue.
+        base_layer = int(rng.integers(0, i_layer + 1)) if rng.random() < 0.3 else 0
+        drapeaux = (rng.random(len(nominal)) < 0.4) if est_taux and rng.random() < 0.5 else None
+        adaptatif = bool(rng.random() < 0.3)
+        lissage = int(rng.choice([1, 3]))
+        grille = float(rng.choice([0.0, 0.0, 0.125, 0.25]))
+        if adaptatif:
+            # 🔴 Le balayage adaptatif AVEC la grille fine lit hors du balayage grossier : le re-echantillonnage suppose 64
+            # points sur trois fois l'epaisseur, le balayage adaptatif en a moins sur une autre fenetre. Le noyau rend alors
+            # une `margin_missed` differente d'un lancement a l'autre (mesure le 2026-09-30, D54 : 6 cas sur 87 du corpus,
+            # jusqu'a 20 % d'ecart). Un corpus dont l'arbre ne se retrouve pas lui-meme ne prouve rien : on l'evite.
+            lissage, grille = 1, 0.0
         rec.appeler(
             "strat.growth", cas, f_grow, nominal, i_layer, prev, wl, n_h, n_l, n_sub,
             float(rng.choice([1.0, 0.98])), float(rng.choice([0.0, 0.3, -0.3])), float(rng.choice([1.0, 2.0])),
             int(rng.integers(0, 2)), int(rng.choice([-1, 1])), float(rng.choice([0.0, 1e-3])), int(rng.integers(0, 5)),
             int(rng.integers(0, 3)), float(rng.choice([0.0, 0.01])), float(rng.choice([1.0, 0.98])),
             float(rng.choice([0.0, 0.01])), float(rng.choice([0.0, 0.5])), bool(rng.random() < 0.7),
-            int(rng.choice([1, 3])), 2.30 if est_taux else -1.0, 1.45 if est_taux else -1.0, est_taux, profiles,
+            lissage, 2.30 if est_taux else -1.0, 1.45 if est_taux else -1.0, est_taux, profiles,
+            base_layer, adaptatif, grille, drapeaux,
         )  # fmt: skip
 
     for cas in range(20):
@@ -490,6 +505,14 @@ def _cle_du_cache(sha: str, noms: list[str], fils: int) -> str:
     return "_".join(morceaux).replace("/", "-")
 
 
+def _fichier_du_cache(entree: Path, suffixe: str) -> Path:
+    """`entree` suivi de `suffixe`. `Path.with_suffix` ne convient pas : la cle contient les points des versions
+    (`3.14.7_2.5.3_0.67_<empreinte>`), il remplacerait tout ce qui suit le dernier, empreinte du script comprise, et une base
+    calculee par un ancien corpus etait rendue a un corpus plus recent (2026-09-30 : 160 cas « seulement a la tete »).
+    """
+    return entree.with_name(entree.name + suffixe)
+
+
 def lancer(arbre: Path, sortie: Path, noms: list[str], fils: int, tmp: Path, nom: str) -> subprocess.Popen:
     env = {k: v for k, v in os.environ.items() if k not in ("NUMBA_DISABLE_JIT", "NUMBA_CPU_NAME", "NUMBA_OPT")}
     env.update(
@@ -538,7 +561,7 @@ def executer(racine: Path, base: str, tete: str, noms: list[str], fils: int = 4,
         for cote, (_arbre, sha) in a_calculer.items():
             if cache and sha:
                 entree = dossier_cache / _cle_du_cache(sha, noms, fils)
-                if entree.with_suffix(".npz").exists() and entree.with_suffix(".json").exists():
+                if _fichier_du_cache(entree, ".npz").exists() and _fichier_du_cache(entree, ".json").exists():
                     depuis_cache[cote] = entree
         processus = {
             cote: lancer(arbre, sorties[cote], noms, fils, tmp, cote)
@@ -552,15 +575,15 @@ def executer(racine: Path, base: str, tete: str, noms: list[str], fils: int = 4,
         donnees = {}
         for cote in ("base", "tete"):
             if cote in depuis_cache:
-                npz, meta = depuis_cache[cote].with_suffix(".npz"), depuis_cache[cote].with_suffix(".json")
+                npz, meta = _fichier_du_cache(depuis_cache[cote], ".npz"), _fichier_du_cache(depuis_cache[cote], ".json")
             else:
                 npz, meta = sorties[cote], sorties[cote].with_suffix(".json")
                 sha = a_calculer[cote][1]
                 if cache and sha:
                     dossier_cache.mkdir(exist_ok=True)
                     entree = dossier_cache / _cle_du_cache(sha, noms, fils)
-                    entree.with_suffix(".npz").write_bytes(npz.read_bytes())
-                    entree.with_suffix(".json").write_bytes(meta.read_bytes())
+                    _fichier_du_cache(entree, ".npz").write_bytes(npz.read_bytes())
+                    _fichier_du_cache(entree, ".json").write_bytes(meta.read_bytes())
             with np.load(npz) as f:
                 tableaux = {k: f[k] for k in f.files}
             donnees[cote] = (tableaux, json.loads(meta.read_text(encoding="utf-8"))["erreurs"])

@@ -128,6 +128,11 @@ mais **synchronisés par Drive**) : supprime-les ensuite.
   l'arbre de travail à un commit : corpus fixe, interpréteurs neufs, caches Numba vierges ; à lancer
   avant de committer tout changement de noyau. Il ne prouve que ce que son corpus appelle. Un noyau relu du cache
   n'a pas toujours les bits du noyau compilé à l'instant (gradients, `fastmath`, ETAT D52) : compare **froid à froid**.
+  **Couper un noyau `fastmath` déplace les derniers bits selon la forme de la coupe** (mesuré : 3 à 116 résultats de
+  croissance sur 1 200, jusqu'à 14 592 ulp) ; `inline="always"` sur le morceau extrait, et les boucles fusionnées gardées
+  fusionnées, ont rendu les mêmes bits (`certus_strat_growth.py`, ETAT D54). Un corpus se valide en comparant un arbre à
+  lui-même : `python scripts\c1_diff.py X --tete X --sans-cache` doit rendre 0 (le 2026-09-30 il a trouvé un noyau qui ne se
+  retrouvait pas lui-même).
 - **C2** — croissance et notation voient **la même réalisation** de chaque perturbation :
   tout tirage est une fonction pure de (graine, tirage, index physique), **jamais** de la
   stratégie (ni λ, ni découpage en blocs, ni épaisseur obtenue). Générateur :

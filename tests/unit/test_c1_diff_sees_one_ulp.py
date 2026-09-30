@@ -183,3 +183,28 @@ def test_cold_against_warm_runs_the_same_tree_twice_in_one_cache(trees, monkeypa
 
     assert caches == ["commun", "commun"]  # one NUMBA_CACHE_DIR for both runs
     assert "a froid" in capsys.readouterr().out
+
+
+# =============================================================================
+# The cache of the base
+# =============================================================================
+
+
+def test_the_cache_files_of_the_base_keep_the_whole_key(tmp_path) -> None:
+    # `Path.with_suffix` replaced everything after the last dot of the key (`3.14.7_2.5.3_0.67_<hash of the script>`): the
+    # hash of the script and the last digits of the versions fell out of the file name, so a base computed by an older
+    # corpus was served to a newer one (2026-09-30: 160 cases "only at the head" that the base had never run).
+    key = c1._cle_du_cache("a" * 40, ["strat"], 4)
+    entry = tmp_path / key
+
+    npz, meta = c1._fichier_du_cache(entry, ".npz"), c1._fichier_du_cache(entry, ".json")
+
+    assert npz.name == key + ".npz" and meta.name == key + ".json"
+    assert key.split("_")[-1] in npz.name  # the hash of the script is in the name
+
+
+def test_two_keys_that_differ_only_after_their_last_dot_are_two_files(tmp_path) -> None:
+    first = c1._fichier_du_cache(tmp_path / "abc_strat_4_3.14.7_2.5.3_0.67_aaaa", ".npz")
+    second = c1._fichier_du_cache(tmp_path / "abc_strat_4_3.14.7_2.5.3_0.67_bbbb", ".npz")
+
+    assert first != second

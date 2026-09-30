@@ -177,6 +177,11 @@ mais **synchronisés par Drive**) : supprime-les ensuite.
   laisser de trace. Restreins-le aux exceptions attendues, ou écris
   `logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)` (rien ne coûte à
   un niveau supérieur). `tests/unit/test_no_broad_exception_is_swallowed_in_silence.py` refuse un nouveau.
+- **Un bouton de `create_styled_button` porte sa propre feuille**, qui l'emporte sur celle de l'application quelle que soit la
+  spécificité : une règle d'état posée ailleurs (`:focus`) ne l'atteint pas, elle va DANS `get_button_style`. Son libellé se dérive du
+  fond (`CertusTheme.label_on`), jamais d'un jeton choisi pour un thème. Pour un état de focus, Qt garde la taille calculée avant
+  le focus : le test de non-déplacement la lui fait recalculer (changer le texte). `test_ux_button_label_is_painted.py` et
+  `test_ux_focus_ring.py` lisent les pixels ; un test qui lit la feuille déclarée ne voit pas ce qu'on peint.
 - **Le premier calcul est lent** (compilation numba, +30 s) : chauffe, puis mesure.
 - **N'écris pas l'artefact que tu décris** : un hexadécimal cité dans un commentaire fait
   bouger le cliquet des couleurs, une règle QSS citée dans une f-string est recrachée dans la

@@ -269,3 +269,132 @@ class TestLesBoutonsDeLaFabriqueOntUnAnneau:
             )
         finally:
             hote.close()
+
+
+# =============================================================================
+# Cases, radios, onglets, curseurs : ce qu'un utilisateur au clavier traverse aussi
+# =============================================================================
+#
+# 📏 Mesure du 2026-09-30, en peignant chaque controle avant et apres `setFocus()` sous les deux
+# feuilles de la fenetre : une case, un radio, l'onglet selectionne et un curseur changent
+# **0 pixel**. Les boutons avaient leur anneau (etape 3.6), pas ces controles-la.
+#
+# Ce qui est verifie est PEINT, avec la feuille que les fenetres appliquent (theme + surcharges).
+
+CONTROLES = ["case", "radio", "onglet", "curseur"]
+
+
+def _controle(nom: str):
+    """(widget a peindre, widget qui prend le focus)."""
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtWidgets import QCheckBox, QLabel, QRadioButton, QSlider, QTabWidget
+
+    if nom == "case":
+        w = QCheckBox("Enable the option")
+        return w, w
+    if nom == "radio":
+        w = QRadioButton("Choice")
+        return w, w
+    if nom == "onglet":
+        w = QTabWidget()
+        w.addTab(QLabel("a"), "First")
+        w.addTab(QLabel("b"), "Second")
+        return w, w.tabBar()
+    w = QSlider(Qt.Orientation.Horizontal)
+    return w, w
+
+
+@pytest.fixture
+def feuille_des_fenetres(qapp):
+    """La feuille que les fenetres posent : celle du theme, puis les surcharges ; l'ancienne est rendue."""
+    from certus.ui.certus_theme import CertusTheme
+    from certus.utils.certus_ux import build_premium_overrides
+
+    avant = qapp.styleSheet()
+
+    def poser(mode: str) -> None:
+        CertusTheme.configure(mode)
+        qapp.setStyleSheet(CertusTheme.get_standard_stylesheet() + build_premium_overrides(mode))
+
+    try:
+        yield poser
+    finally:
+        qapp.setStyleSheet(avant)
+        CertusTheme.configure("light")
+
+
+def _avec_un_voisin(qapp, widget):
+    from PyQt6.QtWidgets import QPushButton, QVBoxLayout, QWidget
+
+    hote = QWidget()
+    disposition = QVBoxLayout(hote)
+    voisin = QPushButton("autre")
+    disposition.addWidget(widget)
+    disposition.addWidget(voisin)
+    hote.resize(320, 140)
+    hote.show()
+    hote.activateWindow()
+    qapp.processEvents()
+    voisin.setFocus()
+    qapp.processEvents()
+    return hote, voisin
+
+
+@pytest.mark.parametrize("mode", ["light", "dark"])
+@pytest.mark.parametrize("nom", CONTROLES)
+class TestLesControlesQuiSeCochentOuSeGlissentOntUnAnneau:
+    def test_prendre_le_focus_dessine_l_anneau_du_theme(self, mode, nom, qapp, feuille_des_fenetres) -> None:
+        from PyQt6.QtCore import Qt
+
+        from certus.ui.certus_theme import CertusTheme
+
+        feuille_des_fenetres(mode)
+        peint, cible = _controle(nom)
+        hote, _voisin = _avec_un_voisin(qapp, peint)
+        try:
+            repos = _peindre(peint)
+            cible.setFocus(Qt.FocusReason.TabFocusReason)
+            qapp.processEvents()
+            assert cible.hasFocus(), "le controle n'a pas pris le focus : la mesure ne mesurerait rien"
+            focus = _peindre(peint)
+            primaire = CertusTheme.PRIMARY.lower()
+            nouveaux = [
+                (x, y)
+                for y in range(repos.height())
+                for x in range(repos.width())
+                if repos.pixel(x, y) != focus.pixel(x, y)
+            ]
+            de_l_anneau = [p for p in nouveaux if focus.pixelColor(*p).name() == primaire]
+            assert len(nouveaux) > 30, f"{mode}/{nom} : {len(nouveaux)} pixel(s) changent au focus -- il est invisible"
+            assert len(de_l_anneau) >= 10, (
+                f"{mode}/{nom} : {len(nouveaux)} pixels changent, dont {len(de_l_anneau)} a la couleur de l'anneau "
+                f"({primaire}) : ce qui change n'est pas l'anneau du theme"
+            )
+        finally:
+            hote.close()
+
+    def test_prendre_le_focus_ne_deplace_rien(self, mode, nom, qapp, feuille_des_fenetres) -> None:
+        from PyQt6.QtCore import Qt
+
+        feuille_des_fenetres(mode)
+        peint, cible = _controle(nom)
+        hote, voisin = _avec_un_voisin(qapp, peint)
+        try:
+            avant = (peint.geometry(), voisin.geometry(), peint.sizeHint())
+            cible.setFocus(Qt.FocusReason.TabFocusReason)
+            qapp.processEvents()
+            # Qt garde la taille d'avant le focus : on la lui fait recalculer dans l'etat focalise
+            if hasattr(peint, "setText"):
+                texte = peint.text()
+                peint.setText(texte + " ")
+                peint.setText(texte)
+            elif hasattr(peint, "setTabText"):
+                texte = peint.tabText(0)
+                peint.setTabText(0, texte + " ")
+                peint.setTabText(0, texte)
+            qapp.processEvents()
+            assert (peint.geometry(), voisin.geometry(), peint.sizeHint()) == avant, (
+                f"{mode}/{nom} : prendre le focus a deplace ou redimensionne un controle"
+            )
+        finally:
+            hote.close()

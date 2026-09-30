@@ -326,6 +326,34 @@ QPushButton#{OBJ.FEATURED_BUTTON}:focus {{
     padding: {sp_sm}px {sp_lg * 1.5 - 2}px;
 }}
 
+/* -- Focus ring on check boxes, radio buttons, tabs and sliders --------
+ * Measured 2026-09-30 by painting each control before and after `setFocus()`
+ * under both sheets: a check box, a radio button, the selected tab and a
+ * slider changed ZERO pixels. The buttons had their ring (step 3.6); the
+ * controls a keyboard user crosses just as often had none.
+ *
+ * The ring is {{primary}} in both themes: 5.00:1 on SURFACE in light, 6.98:1 in
+ * dark (step 3.6 measured the pair), above the 3:1 WCAG 1.4.11 asks of it.
+ *
+ * NOTHING MOVES, as for the buttons. A check box and a radio button take an
+ * `outline`, which Qt paints without touching the box model (sizeHint 247x18
+ * before and after). The selected tab already carries a 1px border (2px under
+ * it), transparent: the ring only gives it a colour. The slider handle is a
+ * fixed 16px box whose 1px border becomes 2px inside it. The tab rule is
+ * `:selected:focus` because only the current tab shows the bar's focus. */
+QCheckBox:focus,
+QRadioButton:focus {{
+    outline: 2px solid {primary};
+}}
+QTabBar::tab:selected:focus {{
+    border: 1px solid {primary};
+    border-bottom: 2px solid {primary};
+    border-radius: {r_sm}px;
+}}
+QSlider::handle:horizontal:focus {{
+    border: 2px solid {primary};
+}}
+
 /* -- Elevated card (opt-in via objectName="{OBJ.CARD}") --------------- */
 QFrame#{OBJ.CARD},
 QWidget#{OBJ.CARD} {{

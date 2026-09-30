@@ -1189,6 +1189,50 @@ def _read_poem_anchors(
     return n_tp_real, n_tp_nom, margin_missed, margin_fab, T_prev_nom, T_last_nom, T_prev_real, T_last_real, poem_ok
 
 
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def _level_reachability(Ts_r, n_tot, n_hist, idx_nom_stop, tp_hysteresis, target_T_noisy):
+    """Is the stopping level reached by the real signal between the start of the layer and the next extremum after the stop?
+
+    Returns (margin_level, level_reached): how far INSIDE the reachable band the level sits (positive: room to spare,
+    negative: missed by that much, signed on purpose), and whether it is inside at all. A level that is never reached
+    is a crash: the machine waits for it and the deposition never ends.
+    """
+    i_lay0 = n_hist
+    i_stop = idx_nom_stop
+    # upper bound: next real extremum after stop, else end of scan.
+    # Same detection rule as counting, cf. next_turning_point_after.
+    i_end = next_turning_point_after(Ts_r, n_tot, i_stop, tp_hysteresis)
+    t_lo = Ts_r[i_lay0]
+    t_hi = Ts_r[i_lay0]
+    for k in range(i_lay0, i_end + 1):
+        if Ts_r[k] < t_lo:
+            t_lo = Ts_r[k]
+        if Ts_r[k] > t_hi:
+            t_hi = Ts_r[k]
+    # ✅ NO TOLERANCE HERE, AND THIS IS INTENDED.
+    #
+    # I thought for a moment that an overshoot of the order of noise should be
+    # tolerated, on the grounds that a quarter-wave stack monitored at its own
+    # centering wavelength crashed at 100%. This was my mistake: this 100% is
+    # the CORRECT result.
+    #
+    # At exact QWOT the stop falls on the turning point, where dT/dd = 0: a
+    # level no longer has any thickness sensitivity, and half of the noise
+    # realizations place the target beyond the extremum, where it will never
+    # be reached. This is exactly why a QWOT is not monitored at its lambda_0
+    # by level cut-off -- and it is STRAT's job to go look elsewhere.
+    # check_extrema_proximity exists for the same reason.
+    # A23 stage 2, level side: how far INSIDE the reachable band the target sits.
+    # Positive = that much room to spare, negative = missed by that much. Signed on
+    # purpose: a crashed layer still carries how badly, which is what lets the 2x
+    # noise level calibrate the model where crashes are countable (A23 stage 3).
+    d_lo = target_T_noisy - t_lo
+    d_hi = t_hi - target_T_noisy
+    margin_level = d_lo if d_lo < d_hi else d_hi
+    level_reached = not (target_T_noisy < t_lo - 1e-12 or target_T_noisy > t_hi + 1e-12)
+    return margin_level, level_reached
+
+
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def simulate_growth_kernel(
     p_thick_nominal: np.ndarray,
@@ -1823,39 +1867,10 @@ def simulate_growth_kernel(
     # verified rate did NOT depend on probe_offset (6.63% at 0.5 nm, 6.88% at
     # 10 nm): it was not a fit artifact, but the physical failure itself, uncounted.
     if nominal_th > 0.0001:
-        i_lay0 = n_hist
-        i_stop = idx_nom_stop
-        # upper bound: next real extremum after stop, else end of scan.
-        # Same detection rule as counting, cf. next_turning_point_after.
-        i_end = next_turning_point_after(Ts_r, n_tot, i_stop, tp_hysteresis)
-        t_lo = Ts_r[i_lay0]
-        t_hi = Ts_r[i_lay0]
-        for k in range(i_lay0, i_end + 1):
-            if Ts_r[k] < t_lo:
-                t_lo = Ts_r[k]
-            if Ts_r[k] > t_hi:
-                t_hi = Ts_r[k]
-        # ✅ NO TOLERANCE HERE, AND THIS IS INTENDED.
-        #
-        # I thought for a moment that an overshoot of the order of noise should be
-        # tolerated, on the grounds that a quarter-wave stack monitored at its own
-        # centering wavelength crashed at 100%. This was my mistake: this 100% is
-        # the CORRECT result.
-        #
-        # At exact QWOT the stop falls on the turning point, where dT/dd = 0: a
-        # level no longer has any thickness sensitivity, and half of the noise
-        # realizations place the target beyond the extremum, where it will never
-        # be reached. This is exactly why a QWOT is not monitored at its lambda_0
-        # by level cut-off -- and it is STRAT's job to go look elsewhere.
-        # check_extrema_proximity exists for the same reason.
-        # A23 stage 2, level side: how far INSIDE the reachable band the target sits.
-        # Positive = that much room to spare, negative = missed by that much. Signed on
-        # purpose: a crashed layer still carries how badly, which is what lets the 2x
-        # noise level calibrate the model where crashes are countable (A23 stage 3).
-        d_lo = target_T_noisy - t_lo
-        d_hi = t_hi - target_T_noisy
-        margin_level = d_lo if d_lo < d_hi else d_hi
-        if target_T_noisy < t_lo - 1e-12 or target_T_noisy > t_hi + 1e-12:
+        margin_level, level_reached = _level_reachability(
+            Ts_r, n_tot, n_hist, idx_nom_stop, tp_hysteresis, target_T_noisy,
+        )
+        if not level_reached:
             # level never reached: non-terminable deposition
             return (
                 nominal_th + CRASH_LEVEL_UNREACHABLE * CRASH_SENTINEL_UNIT,

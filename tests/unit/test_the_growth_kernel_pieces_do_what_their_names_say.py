@@ -29,6 +29,7 @@ from certus.physics.certus_strat_growth import (  # noqa: E402
     _apply_photometric_drift,
     _fill_history_signal,
     _frozen_trigger_level,
+    _level_reachability,
     _monotonicity_scan,
     _read_poem_anchors,
     _resample_on_machine_grid,
@@ -734,3 +735,62 @@ def test_the_counting_margins_are_those_of_the_real_signal() -> None:
     missed, fab = turning_point_margins(real, len(real), 0.05)
     assert (got["margin_missed"], got["margin_fab"]) == pytest.approx((missed, fab))
     assert (missed, fab) != pytest.approx(turning_point_margins(nominal, len(nominal), 0.05))
+
+
+# =============================================================================
+# _level_reachability : is the stopping level between the start of the layer and the next extremum after the stop?
+# =============================================================================
+
+
+def _reach(signal, target, *, n_hist=0, stop=2, hysteresis=0.0):
+    signal = np.asarray(signal, dtype=float)
+    margin, reached = _level_reachability(signal, len(signal), n_hist, stop, hysteresis, target)
+    return margin, bool(reached)
+
+
+def test_a_level_inside_the_band_is_reached_and_the_margin_is_the_room_to_the_nearer_edge() -> None:
+    signal = 0.5 + 0.2 * SIGNAL  # from the stop at 2 the next extremum is the minimum at 3: the band is [0.3, 0.7]
+
+    assert _reach(signal, 0.5) == (pytest.approx(0.2), True)
+    assert _reach(signal, 0.6) == (pytest.approx(0.1), True)
+    assert _reach(signal, 0.35) == (pytest.approx(0.05), True)
+
+
+def test_a_level_beyond_the_band_is_not_reached_and_the_margin_says_by_how_much_it_is_missed() -> None:
+    signal = 0.5 + 0.2 * SIGNAL
+
+    assert _reach(signal, 0.75) == (pytest.approx(-0.05), False)  # missed by 0.05 above
+    assert _reach(signal, 0.25) == (pytest.approx(-0.05), False)  # and below
+
+
+def test_the_band_ends_at_the_next_extremum_after_the_stop_not_at_the_end_of_the_scan() -> None:
+    signal = 0.5 + 0.2 * np.array([0.0, 1.0, 0.0, -1.0, 0.0, 2.0, 0.0])  # a higher maximum at 5 (0.9), after the stop
+
+    assert _reach(signal, 0.8, stop=2)[1] is False  # the machine stops at the next extremum (3), before the 0.9
+    assert _reach(signal, 0.8, stop=4)[1] is True  # from 4 the next extremum is the 0.9 itself
+
+
+def test_the_band_starts_at_the_first_reading_of_the_layer_not_at_the_start_of_the_history() -> None:
+    history = [9.0, 9.0]  # two readings of the replayed history: they must not stretch the band
+    signal = np.concatenate([history, 0.5 + 0.2 * SIGNAL])
+
+    margin, reached = _reach(signal, 0.5, n_hist=2, stop=4)
+
+    assert reached and margin == pytest.approx(0.2)
+    # Near the top of the band the history would show: it would lift the top edge to 9.0 and hide both the margin and a miss.
+    assert _reach(signal, 0.65, n_hist=2, stop=4) == (pytest.approx(0.05), True)
+    assert _reach(signal, 0.80, n_hist=2, stop=4)[1] is False
+
+
+def test_there_is_no_tolerance_on_the_edge_of_the_band_beyond_a_picounit() -> None:
+    signal = 0.5 + 0.2 * SIGNAL
+
+    assert _reach(signal, 0.7 + 5e-13)[1] is True
+    assert _reach(signal, 0.7 + 5e-12)[1] is False
+
+
+def test_after_the_last_extremum_the_band_runs_to_the_end_of_the_scan() -> None:
+    signal = 0.5 + 0.2 * SIGNAL
+
+    assert _reach(signal, 0.6, stop=5)[1] is True  # nothing after 5 but the last reading (0.5)
+    assert _reach(signal, 0.9, stop=5)[1] is False

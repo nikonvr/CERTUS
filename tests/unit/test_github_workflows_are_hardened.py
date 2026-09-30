@@ -97,6 +97,21 @@ def test_checkout_does_not_keep_the_token(path) -> None:
     assert text.count("persist-credentials: false") == len(checkouts)
 
 
+def test_the_secret_scan_can_see_the_commits_it_scans() -> None:
+    """gitleaks reads `first^..last` of a push; a depth-1 checkout has no such range.
+
+    Measured 2026-09-30, on the first push of this branch (53 commits): the step failed with
+    `unknown revision 2727bc0^..78fda46` after scanning ~0 bytes ("no leaks found in partial scan"). A check
+    that fails before it reads anything proves nothing, and a red workflow nobody believes ends up unread.
+    """
+    text = _text(ROOT / ".github" / "workflows" / "security.yml")
+    scan = text.split("\njobs:\n", 1)[1].split("\n  codeql:\n", 1)[0]
+    checkout = scan.split("- name: Checkout", 1)[1].split("- name:", 1)[0]
+
+    assert "gitleaks/gitleaks-action" in scan
+    assert re.search(r"^\s+fetch-depth: 0\s*$", checkout, flags=re.MULTILINE)
+
+
 def test_dependabot_keeps_the_pinned_actions_up_to_date() -> None:
     config = _text(ROOT / ".github" / "dependabot.yml")
 

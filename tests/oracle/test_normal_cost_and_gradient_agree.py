@@ -10,7 +10,7 @@ followed the gradient of another objective than the one it reported.
 
 The weights of DESIGN average 1 (`spectral_rmse_weights`); the gradient of the back-stack branch divides by the
 number of points where the cost divides by the sum of the weights, so the two agree only then. That is what
-these tests use; it is a separate, older defect (PHY-09, in the report of 2026-09-30).
+these tests use; it is a separate, older defect (PHY-12, D45 in docs/ETAT.md).
 """
 
 from __future__ import annotations

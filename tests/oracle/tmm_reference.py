@@ -149,7 +149,7 @@ def rt_from_assembly(matrix: np.ndarray, n_inc: complex, n_sub: complex) -> tupl
         n_sub: indice complexe du substrat.
 
     Returns:
-        Torque ``(R, T)``, reflectance and power transmittance.
+        ``(R, T)``, reflectance and power transmittance.
     """
     bc = matrix @ np.array([1.0 + 0.0j, n_sub], dtype=np.complex128)
     b_val, c_val = bc[0], bc[1]
@@ -223,8 +223,8 @@ def r_single_layer_front(
 
 
 # ── Incidence oblique ────────────────────────────────────────────────────────
-#Macleod chap. 2.10. The Snell invariant ``n₀ sin θ₀`` is conserved in everything
-#stacking; the angle in an absorbent diaper is COMPLEX, and that's normal.
+# Macleod ch. 2.10. The Snell invariant ``n₀ sin θ₀`` is conserved throughout the
+# stack; the angle in an absorbing layer is COMPLEX, and that is normal.
 #The inclined admittance replaces n̂ in the characteristic matrix:
 #     s (TE) : η = n̂ cos θ
 #     p (TM) : η = n̂ / cos θ

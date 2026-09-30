@@ -1084,6 +1084,50 @@ def _frozen_trigger_level(
     return target_nominal
 
 
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def _apply_photometric_drift(
+    Ts_r,
+    n_tot,
+    affine_scale,
+    affine_offset,
+    photo_curvature,
+):
+    """Distort the real signal `Ts_r[:n_tot]` in place as the instrument would: T_measured = affine_scale * T + affine_offset,
+    then the curvature T(1 - T) of amplitude `photo_curvature`, which no affine change of variable absorbs. (1.0, 0.0, 0.0)
+    is the identity and leaves the array alone.
+    """
+    if affine_scale != 1.0 or affine_offset != 0.0 or photo_curvature != 0.0:
+        for k_aff in range(n_tot):
+            t_aff = affine_scale * Ts_r[k_aff] + affine_offset
+            Ts_r[k_aff] = t_aff + 4.0 * photo_curvature * t_aff * (1.0 - t_aff)
+
+
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def _running_mean(
+    Ts_r,
+    Ts_n,
+    n_tot,
+    smoothing_window,
+):
+    """Replace `Ts_r[:n_tot]` and `Ts_n[:n_tot]`, in place, by their running mean over the last `smoothing_window` readings
+    (fewer at the start of the signal: the mean of what has been read so far).
+    """
+    k_win = smoothing_window
+    Ts_r_raw = Ts_r.copy()
+    Ts_n_raw = Ts_n.copy()
+    sum_r = 0.0
+    sum_n = 0.0
+    for idx_w in range(n_tot):
+        sum_r += Ts_r_raw[idx_w]
+        sum_n += Ts_n_raw[idx_w]
+        if idx_w >= k_win:
+            sum_r -= Ts_r_raw[idx_w - k_win]
+            sum_n -= Ts_n_raw[idx_w - k_win]
+        w_len = idx_w + 1 if idx_w < k_win else k_win
+        Ts_r[idx_w] = sum_r / w_len
+        Ts_n[idx_w] = sum_n / w_len
+
+
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def simulate_growth_kernel(
     p_thick_nominal: np.ndarray,
@@ -1604,10 +1648,9 @@ def simulate_growth_kernel(
                 Ts_r, Ts_n, apply_signal_noise, signal_noise_scale, signal_noise_seed, signal_noise_run,
             )
         else:  # noqa: RET505 -- coarse TMM grid, the historical path
-            if affine_scale != 1.0 or affine_offset != 0.0 or photo_curvature != 0.0:
-                for k_aff in range(n_tot):
-                    t_aff = affine_scale * Ts_r[k_aff] + affine_offset
-                    Ts_r[k_aff] = t_aff + 4.0 * photo_curvature * t_aff * (1.0 - t_aff)
+            _apply_photometric_drift(
+                Ts_r, n_tot, affine_scale, affine_offset, photo_curvature,
+            )
             # ⚠️ 12.4 flags this rounding: with a FIXED window `(NPTS-1)/D_SCAN` was
             # exact because 63/3 is an integer. With a window that varies per layer the
             # nominal sits at the fraction `nominal_th / d_max` of the scan, and the
@@ -1615,24 +1658,12 @@ def simulate_growth_kernel(
             idx_nom_stop = n_hist + int(round((npts_cur - 1) * nominal_th / d_max))
 
         if smoothing_window > 1:
-            if affine_scale != 1.0 or affine_offset != 0.0 or photo_curvature != 0.0:
-                for k_aff in range(n_tot):
-                    t_aff = affine_scale * Ts_r[k_aff] + affine_offset
-                    Ts_r[k_aff] = t_aff + 4.0 * photo_curvature * t_aff * (1.0 - t_aff)
-            k_win = smoothing_window
-            Ts_r_raw = Ts_r.copy()
-            Ts_n_raw = Ts_n.copy()
-            sum_r = 0.0
-            sum_n = 0.0
-            for idx_w in range(n_tot):
-                sum_r += Ts_r_raw[idx_w]
-                sum_n += Ts_n_raw[idx_w]
-                if idx_w >= k_win:
-                    sum_r -= Ts_r_raw[idx_w - k_win]
-                    sum_n -= Ts_n_raw[idx_w - k_win]
-                w_len = idx_w + 1 if idx_w < k_win else k_win
-                Ts_r[idx_w] = sum_r / w_len
-                Ts_n[idx_w] = sum_n / w_len
+            _apply_photometric_drift(
+                Ts_r, n_tot, affine_scale, affine_offset, photo_curvature,
+            )
+            _running_mean(
+                Ts_r, Ts_n, n_tot, smoothing_window,
+            )
         # ---- THE BARE SUBSTRATE IS A TURNING POINT, AND IT WAS IGNORED ----------
         #
         # Physicist, 2026-08-05: "for layer 1 we start the layer on a turning point,

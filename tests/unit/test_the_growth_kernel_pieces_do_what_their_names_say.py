@@ -26,10 +26,12 @@ from certus.physics.certus_strat_growth import (  # noqa: E402
     SCAN_NPTS_CURRENT,
     SCAN_NPTS_HISTORY,
     _fill_current_signal,
+    _apply_photometric_drift,
     _fill_history_signal,
     _frozen_trigger_level,
     _monotonicity_scan,
     _resample_on_machine_grid,
+    _running_mean,
     _scan_window,
     _stack_matrix,
     _stack_matrix_pair,
@@ -587,3 +589,66 @@ def test_a_layer_of_no_thickness_stops_at_the_last_point_of_the_scan() -> None:
     _, _, _, nominal, n_layer = _stacks_under(2)
 
     assert _frozen_trigger_level(WL, n_layer + 0j, 0.0, N_SUB + 0j, *nominal, 0.4321) == 0.4321
+
+
+# =============================================================================
+# _apply_photometric_drift and _running_mean : what the instrument does to the signal
+# =============================================================================
+
+
+def test_the_identity_drift_leaves_the_signal_alone() -> None:
+    signal = np.linspace(0.05, 0.95, 12)
+
+    _apply_photometric_drift(signal, len(signal), 1.0, 0.0, 0.0)
+
+    np.testing.assert_array_equal(signal, np.linspace(0.05, 0.95, 12))
+
+
+@pytest.mark.parametrize("scale, offset, curvature", [(0.98, 0.0, 0.0), (1.0, 0.01, 0.0), (0.95, -0.02, 0.0), (1.0, 0.0, 0.5)])
+def test_the_drift_is_an_affine_change_of_T_and_then_the_curvature_no_affine_change_absorbs(scale, offset, curvature) -> None:
+    signal = np.linspace(0.05, 0.95, 12)
+
+    drifted = signal.copy()
+    _apply_photometric_drift(drifted, len(signal), scale, offset, curvature)
+
+    affine = scale * signal + offset
+    np.testing.assert_allclose(drifted, affine + 4.0 * curvature * affine * (1.0 - affine), atol=1e-15)
+
+
+def test_the_drift_reads_the_first_n_tot_readings_and_nothing_after() -> None:
+    signal = np.linspace(0.1, 0.9, 10)
+
+    drifted = signal.copy()
+    _apply_photometric_drift(drifted, 6, 0.9, 0.05, 0.3)
+
+    np.testing.assert_array_equal(drifted[6:], signal[6:])
+    assert not np.allclose(drifted[:6], signal[:6])
+
+
+def _running_mean_reference(x: np.ndarray, window: int) -> np.ndarray:
+    """The mean of the last `window` readings, of those so far at the start."""
+    return np.array([x[max(0, i - window + 1) : i + 1].mean() for i in range(len(x))])
+
+
+@pytest.mark.parametrize("window", [1, 2, 3, 7, 20, 40])
+def test_the_running_mean_is_the_mean_of_the_last_readings_of_each_signal(window) -> None:
+    rng = np.random.default_rng(4)
+    real, nominal = rng.uniform(0, 1, 30), rng.uniform(0, 1, 30)
+
+    got_r, got_n = real.copy(), nominal.copy()
+    _running_mean(got_r, got_n, 30, window)
+
+    np.testing.assert_allclose(got_r, _running_mean_reference(real, window), atol=1e-13)
+    np.testing.assert_allclose(got_n, _running_mean_reference(nominal, window), atol=1e-13)
+
+
+def test_the_running_mean_smooths_the_first_n_tot_readings_only() -> None:
+    rng = np.random.default_rng(5)
+    real, nominal = rng.uniform(0, 1, 15), rng.uniform(0, 1, 15)
+
+    got_r, got_n = real.copy(), nominal.copy()
+    _running_mean(got_r, got_n, 10, 3)
+
+    np.testing.assert_array_equal(got_r[10:], real[10:])
+    np.testing.assert_array_equal(got_n[10:], nominal[10:])
+    np.testing.assert_allclose(got_r[:10], _running_mean_reference(real[:10], 3), atol=1e-13)

@@ -1,0 +1,16 @@
+# Fins de ligne : le depot range du LF, quel que soit le poste. Sans ce fichier, le resultat
+# depend du reglage core.autocrlf de chacun (mesure le 2026-09-30 : true sur ce poste, 2 266
+# fichiers texte en LF dans l'index et en CRLF sur le disque).
+* text=auto
+
+# Ce qu'un interprete lit reste en LF apres un checkout sous Windows : un `#!/bin/sh^M` ne demarre pas.
+*.sh text eol=lf
+.githooks/* text eol=lf
+
+# Jamais convertis, ni fusionnes, ni compares ligne a ligne.
+*.npy binary
+*.npz binary
+*.xlsx binary
+*.xls binary
+*.png binary
+*.ico binary

@@ -908,6 +908,69 @@ def _resample_on_machine_grid(
     return Ts_r, Ts_n, n_tot, idx_nom_stop
 
 
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def _scan_window(
+    block_start_layer,
+    i_layer,
+    witness_base_layer,
+    n_H,
+    n_L,
+    nominal_th,
+    adaptive_scan,
+    wl,
+):
+    """What the scan reads: the first layer replayed (`j0`), the length of the history in points (`n_hist`), the number of
+    points of the current layer (`npts_cur`), the depth it is swept to (`d_max`), and the length of both signals (`n_tot`).
+
+    The block starts at `block_start_layer` (-1, or past the layer: the layer alone), goes back at most
+    `MAX_LOOKBACK_VAL` layers, and never below the witness the signal is read on. The current layer is swept over
+    `D_SCAN_VAL` times its thickness in `SCAN_NPTS_CURRENT` points; with `adaptive_scan` it is swept over its thickness
+    plus the error margin plus half an optical period, at the same density in points per nanometre.
+    """
+    MAX_LOOKBACK = MAX_LOOKBACK_VAL
+    NPTS = SCAN_NPTS_CURRENT
+    NPTS_PREV = SCAN_NPTS_HISTORY
+    D_SCAN = D_SCAN_VAL
+    j0 = block_start_layer
+    if j0 < 0 or j0 > i_layer:
+        j0 = i_layer
+    if i_layer - j0 > MAX_LOOKBACK:
+        j0 = i_layer - MAX_LOOKBACK
+    # A block cannot start below the witness it is read on. The caller already
+    # forces a block boundary at every swap, so this only guards against a caller
+    # that forgot: without it `range(witness_base_layer, j0)` would run BACKWARDS,
+    # i.e. render empty, and the pre-block stack would vanish in silence -- the
+    # plausible-but-wrong failure this project keeps paying for.
+    if j0 < witness_base_layer:
+        j0 = witness_base_layer
+    n_hist = (i_layer - j0) * NPTS_PREV
+    # The scan window, computed HERE because it sizes the arrays below.
+    n_cur_n_w = n_H if i_layer % 2 == 0 else n_L
+    npts_cur = NPTS
+    d_max = D_SCAN * nominal_th
+    if adaptive_scan and nominal_th > 0.0001:
+        # 🔴 THE TWO NEEDS ADD UP, they do not compete -- and taking their maximum
+        # was wrong. Measured 2026-08-11: with `max()` a layer declared
+        # non-terminable by the classic sweep came back terminable, because the
+        # reachability test bounds its window at the NEXT EXTREMUM after the stop
+        # and the shorter sweep no longer contained one. It then fell back on the
+        # end of the array, which is MORE PERMISSIVE -- the sweep was hiding
+        # crashes, the worst possible direction for an error.
+        #
+        #   the stop wanders by up to the error margin (👤 "10 nm, or it is scrap")
+        #   and FROM WHEREVER IT LANDS the next extremum can be half a period away
+        #
+        # so the window is nominal + margin + half period, not their maximum.
+        half_period = wl / (4.0 * n_cur_n_w.real) if n_cur_n_w.real > 1e-9 else nominal_th
+        d_max = nominal_th + SCAN_ERROR_MARGIN_NM + half_period
+        density = NPTS / (D_SCAN * nominal_th)          # points per nm, UNCHANGED
+        npts_cur = int(round(density * d_max))
+        if npts_cur < 8:
+            npts_cur = 8
+    n_tot = n_hist + npts_cur
+    return j0, n_hist, npts_cur, d_max, n_tot
+
+
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def simulate_growth_kernel(
     p_thick_nominal: np.ndarray,
@@ -1350,43 +1413,9 @@ def simulate_growth_kernel(
     T_prev_nom = 0.0
     T_last_nom = 0.0
     if nominal_th > 0.0001:
-        j0 = block_start_layer
-        if j0 < 0 or j0 > i_layer:
-            j0 = i_layer
-        if i_layer - j0 > MAX_LOOKBACK:
-            j0 = i_layer - MAX_LOOKBACK
-        # A block cannot start below the witness it is read on. The caller already
-        # forces a block boundary at every swap, so this only guards against a caller
-        # that forgot: without it `range(witness_base_layer, j0)` would run BACKWARDS,
-        # i.e. render empty, and the pre-block stack would vanish in silence -- the
-        # plausible-but-wrong failure this project keeps paying for.
-        if j0 < witness_base_layer:
-            j0 = witness_base_layer
-        n_hist = (i_layer - j0) * NPTS_PREV
-        # The scan window, computed HERE because it sizes the arrays below.
-        n_cur_n_w = n_H if i_layer % 2 == 0 else n_L
-        npts_cur = NPTS
-        d_max = D_SCAN * nominal_th
-        if adaptive_scan and nominal_th > 0.0001:
-            # 🔴 THE TWO NEEDS ADD UP, they do not compete -- and taking their maximum
-            # was wrong. Measured 2026-08-11: with `max()` a layer declared
-            # non-terminable by the classic sweep came back terminable, because the
-            # reachability test bounds its window at the NEXT EXTREMUM after the stop
-            # and the shorter sweep no longer contained one. It then fell back on the
-            # end of the array, which is MORE PERMISSIVE -- the sweep was hiding
-            # crashes, the worst possible direction for an error.
-            #
-            #   the stop wanders by up to the error margin (👤 "10 nm, or it is scrap")
-            #   and FROM WHEREVER IT LANDS the next extremum can be half a period away
-            #
-            # so the window is nominal + margin + half period, not their maximum.
-            half_period = wl / (4.0 * n_cur_n_w.real) if n_cur_n_w.real > 1e-9 else nominal_th
-            d_max = nominal_th + SCAN_ERROR_MARGIN_NM + half_period
-            density = NPTS / (D_SCAN * nominal_th)          # points per nm, UNCHANGED
-            npts_cur = int(round(density * d_max))
-            if npts_cur < 8:
-                npts_cur = 8
-        n_tot = n_hist + npts_cur
+        j0, n_hist, npts_cur, d_max, n_tot = _scan_window(
+            block_start_layer, i_layer, witness_base_layer, n_H, n_L, nominal_th, adaptive_scan, wl,
+        )
         Ts_r = np.zeros(n_tot, dtype=np.float64)
         Ts_n = np.zeros(n_tot, dtype=np.float64)
         # Same cut as the two matrices above: the stack UNDER the replayed window is the

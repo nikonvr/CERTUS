@@ -19,11 +19,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "oracle"))
 from tmm_reference import rt_stack, stack_matrix  # noqa: E402
 
 from certus.physics.certus_strat_growth import (  # noqa: E402
+    D_SCAN_VAL,
+    MAX_LOOKBACK_VAL,
+    SCAN_ERROR_MARGIN_NM,
     SCAN_NPTS_CURRENT,
     SCAN_NPTS_HISTORY,
     _fill_current_signal,
     _fill_history_signal,
     _resample_on_machine_grid,
+    _scan_window,
     _stack_matrix,
     _stack_matrix_pair,
 )
@@ -442,3 +446,68 @@ def test_without_a_history_the_first_reading_of_the_layer_is_its_own_draw() -> N
     added = noisy[0] - clean[0]
 
     assert added[0] == pytest.approx(scale * _seeded_noise_sample(seed, 1, run, 4096, True), abs=1e-15)
+
+
+# =============================================================================
+# _scan_window : which layers are replayed, and how far the current one is swept
+# =============================================================================
+
+
+def _window(block_start, i_layer, *, base=0, nominal_th=50.0, adaptive=False, wl=550.0, n_even=N_EVEN, n_odd=N_ODD):
+    j0, n_hist, npts_cur, d_max, n_tot = _scan_window(block_start, i_layer, base, n_even + 0j, n_odd + 0j, nominal_th, adaptive, wl)
+    return {"j0": j0, "n_hist": n_hist, "npts_cur": npts_cur, "d_max": d_max, "n_tot": n_tot}
+
+
+def test_a_layer_alone_replays_nothing_and_is_swept_over_three_thicknesses_in_64_points() -> None:
+    for block_start in (-1, 9):  # -1 is the default, and a start past the layer means the same
+        got = _window(block_start, 4)
+
+        assert got == {"j0": 4, "n_hist": 0, "npts_cur": SCAN_NPTS_CURRENT, "d_max": D_SCAN_VAL * 50.0, "n_tot": SCAN_NPTS_CURRENT}
+
+
+def test_a_block_replays_its_layers_before_the_current_one_at_sixteen_points_each() -> None:
+    got = _window(2, 5)
+
+    assert got["j0"] == 2 and got["n_hist"] == 3 * SCAN_NPTS_HISTORY
+    assert got["n_tot"] == 3 * SCAN_NPTS_HISTORY + SCAN_NPTS_CURRENT
+
+
+def test_the_history_goes_back_at_most_max_lookback_layers() -> None:
+    at_the_limit = _window(9 - MAX_LOOKBACK_VAL, 9)
+    one_beyond = _window(9 - MAX_LOOKBACK_VAL - 1, 9)
+    far_beyond = _window(0, 9)
+
+    assert at_the_limit["j0"] == one_beyond["j0"] == far_beyond["j0"] == 9 - MAX_LOOKBACK_VAL
+    assert far_beyond["n_hist"] == MAX_LOOKBACK_VAL * SCAN_NPTS_HISTORY
+
+
+def test_a_block_never_starts_below_the_witness_it_is_read_on() -> None:
+    # Without the floor `range(witness_base_layer, j0)` would run backwards and the stack under the window would vanish.
+    assert _window(1, 4, base=3)["j0"] == 3
+    assert _window(1, 4, base=3)["n_hist"] == SCAN_NPTS_HISTORY
+    assert _window(1, 4, base=0)["j0"] == 1
+
+
+@pytest.mark.parametrize("i_layer, n_layer", [(2, N_EVEN), (3, N_ODD)])
+def test_the_adaptive_window_is_the_thickness_plus_the_error_margin_plus_half_a_period(i_layer, n_layer) -> None:
+    nominal, wl = 80.0, 610.0
+
+    got = _window(-1, i_layer, nominal_th=nominal, adaptive=True, wl=wl)
+
+    half_period = wl / (4.0 * n_layer)  # from an extremum to the next: lambda / 4n
+    assert got["d_max"] == pytest.approx(nominal + SCAN_ERROR_MARGIN_NM + half_period)
+    density = SCAN_NPTS_CURRENT / (D_SCAN_VAL * nominal)  # the density in points per nm is that of the fixed window
+    assert got["npts_cur"] == int(round(density * got["d_max"]))
+    assert got["n_tot"] == got["n_hist"] + got["npts_cur"]
+
+
+def test_the_adaptive_window_of_an_index_of_zero_falls_back_on_one_more_thickness() -> None:
+    got = _window(-1, 2, nominal_th=80.0, adaptive=True, n_even=0.0)
+
+    assert got["d_max"] == pytest.approx(80.0 + SCAN_ERROR_MARGIN_NM + 80.0)
+
+
+def test_a_layer_of_no_thickness_is_swept_with_the_fixed_window_even_when_adaptive() -> None:
+    got = _window(-1, 2, nominal_th=0.00005, adaptive=True)
+
+    assert got["npts_cur"] == SCAN_NPTS_CURRENT and got["d_max"] == pytest.approx(D_SCAN_VAL * 0.00005)

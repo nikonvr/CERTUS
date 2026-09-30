@@ -24,7 +24,7 @@ from .certus_tmm_matrix import compute_complex_phase_components, calc_spectrum_f
 
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
-def _oblique_rt_absorbing_exit(M00, M01, M10, M11, n_exit, sin_theta_air, cos_theta_air, is_s_pol):
+def _oblique_rt_absorbing_exit(M00: complex, M01: complex, M10: complex, M11: complex, n_exit: complex, sin_theta_air: float, cos_theta_air: float, is_s_pol: bool) -> tuple[float, float]:
     """(R, T) from air, at oblique incidence, of a stack (matrix M) that ends on an EXIT medium that absorbs.
 
     The exit admittance is complex (`oblique_exit_admittance`); R and T come from
@@ -559,7 +559,7 @@ def oblique_front_char_matrix_single(
     sin_theta_air: float,
     cos_theta_air: float,
     is_s_pol: bool,
-):
+) -> tuple[complex, complex, complex, complex]:
     """2×2 characteristic matrix (Macleod) of the battery alone, air interface -> last film.
 
     Same convention as `_calc_spectrum_oblique_parallel` / `_oblique_stack_rt_single`.
@@ -636,15 +636,15 @@ def oblique_front_char_matrix_single(
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def oblique_front_rt_from_char_matrix_nsub_real(
-    M00,
-    M01,
-    M10,
-    M11,
+    M00: complex,
+    M01: complex,
+    M10: complex,
+    M11: complex,
     n_sub_real: float,
     sin_theta_air: float,
     cos_theta_air: float,
     is_s_pol: bool,
-):
+) -> tuple[float, float]:
     """R, T in air incidence -> substrate from M (stack) and real n_sub (η_sub via Snell)."""
 
     n0 = 1.0

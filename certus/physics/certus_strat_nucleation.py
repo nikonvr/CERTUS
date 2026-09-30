@@ -23,7 +23,7 @@ def rank_nucleation_candidates_kernel(
     use_gaussian: bool = True,
     non_monotonic_mode: int = NON_MONOTONIC_MODE_ATTENUATE,
     seed_base: int = 0,
-):
+) -> np.ndarray:
     """
 
     Parallel kernel to rank candidate wavelengths for nucleation search.
@@ -93,7 +93,7 @@ def find_nucleation_adaptive_kernel(
     use_gaussian: bool = True,
     non_monotonic_mode: int = NON_MONOTONIC_MODE_ATTENUATE,
     seed_base: int = 0,
-):
+) -> tuple[np.ndarray, np.ndarray]:
     """
 
     Parallel kernel for adaptive nucleation Search.

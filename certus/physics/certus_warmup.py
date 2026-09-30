@@ -1,9 +1,10 @@
 import numpy as np
 import logging
+from collections.abc import Callable
 
 logger = logging.getLogger("CERTUS_WARMUP")
 
-def run_warmup(progress_callback=None):
+def run_warmup(progress_callback: Callable[[str], None] | None = None) -> None:
     """
     Forces Numba to compile the critical physics functions by calling them with dummy data.
     This effectively eliminates the JIT warmup time when the user interacts with the UI.

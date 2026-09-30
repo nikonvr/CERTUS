@@ -15,7 +15,7 @@ def _compute_valid_blocks_kernel(
     top_k: int,
     max_W: int,
     min_wl_sep: float = 0.0,
-):
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Candidate block costs, with MINIMUM SPECTRAL SEPARATION.
 
     `min_wl_sep` <= 0 restores legacy behavior: top_k lowest-cost wavelengths.
@@ -136,7 +136,7 @@ def _compute_valid_blocks_kernel(
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def _dp_kernel(
     block_costs: np.ndarray, block_wls: np.ndarray, block_counts: np.ndarray, n_blocks: int, num_layers: int, top_k: int
-):
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     dp_costs = np.full((n_blocks + 1, num_layers + 1, top_k * 2), np.inf, dtype=np.float64)
     dp_paths_start = np.full((n_blocks + 1, num_layers + 1, top_k * 2, n_blocks), -1, dtype=np.int32)
     dp_paths_end = np.full((n_blocks + 1, num_layers + 1, top_k * 2, n_blocks), -1, dtype=np.int32)

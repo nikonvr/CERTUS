@@ -53,18 +53,18 @@ def corridor_wl_range(spectral_wls: np.ndarray, monitor_wls: np.ndarray) -> tupl
 
 @njit(parallel=True, cache=True, fastmath=True, nogil=True, error_model="numpy")
 def validate_wavelengths_batch(
-    candidate_wls,
-    n_H_arr,
-    n_L_arr,
-    n_Sub_arr,
-    runs_history,
-    p_thick_nominal,
-    i_layer,
-    probe_offset,
-    noise_values,
-    non_monotonic_factor,
+    candidate_wls: np.ndarray,
+    n_H_arr: np.ndarray,
+    n_L_arr: np.ndarray,
+    n_Sub_arr: np.ndarray,
+    runs_history: np.ndarray,
+    p_thick_nominal: np.ndarray,
+    i_layer: int,
+    probe_offset: float,
+    noise_values: np.ndarray,
+    non_monotonic_factor: float,
     non_monotonic_mode: int = NON_MONOTONIC_MODE_ATTENUATE,
-    block_start_arr: np.ndarray = None,
+    block_start_arr: np.ndarray | None = None,
     gain_probe_nm: float = 1.0,
     signal_noise_scale: float = 0.0,
     signal_noise_seed: int = 0,
@@ -79,9 +79,9 @@ def validate_wavelengths_batch(
     index_seed: int = 0,
     corridor_lo: float = 0.0,
     corridor_hi: float = 0.0,
-    rate_flags: np.ndarray = None,
-    slit_profiles: np.ndarray = None,
-):
+    rate_flags: np.ndarray | None = None,
+    slit_profiles: np.ndarray | None = None,
+) -> np.ndarray:
     """Evaluates each candidate monitoring wavelength for ONE layer (Phase A).
 
     Returns an array (n_cands, 4):
@@ -164,7 +164,7 @@ def validate_wavelengths_batch(
         # float64 by the parfor type inference and then rejected as an array index.
         # The inert sentinel has one row, so the modulo pins it to 0; when profiles are
         # supplied it has n_cands rows and the modulo is the identity.
-        c_slit = c_idx % slit_arr.shape[0]
+        c_slit = c_idx % slit_arr.shape[0]  # type: ignore[union-attr]  # `slit_on` guards it; the branch-free form is numba's
         blk = -1
         if block_start_arr is not None:
             blk = block_start_arr[c_idx]
@@ -239,7 +239,7 @@ def validate_wavelengths_batch(
                 # and that is precisely what this function varies, so a single per-layer
                 # matrix would give every candidate the incumbent's curvature -- the
                 # inert-filter failure of 20-control 4.
-                slit_arr[c_slit],
+                slit_arr[c_slit],  # type: ignore[index]
             )
             if val > 100000.0:
                 # non-terminable deposition: sentinel nominal_th + 1e6
@@ -341,7 +341,7 @@ def simulate_stack_robustness_batch(
     probe_offset: float,
     non_monotonic_factor: float,
     non_monotonic_mode: int = NON_MONOTONIC_MODE_ATTENUATE,
-    signal_noise_scale: np.ndarray = None,
+    signal_noise_scale: np.ndarray | None = None,
     signal_noise_seed: int = 0,
     tp_hysteresis: float = 0.0,
     affine_scale_amp: float = 0.0,
@@ -354,9 +354,9 @@ def simulate_stack_robustness_batch(
     index_seed: int = 0,
     corridor_lo: float = 0.0,
     corridor_hi: float = 0.0,
-    rate_flags: np.ndarray = None,
-    slit_profiles: np.ndarray = None,
-    witness_reset_flags: np.ndarray = None,
+    rate_flags: np.ndarray | None = None,
+    slit_profiles: np.ndarray | None = None,
+    witness_reset_flags: np.ndarray | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
 
@@ -560,7 +560,7 @@ def compute_batch_rmse(
     nSub_arr: np.ndarray,
     T_target: np.ndarray,
     n_layers_flattened: np.ndarray,
-    weights: np.ndarray = None,
+    weights: np.ndarray | None = None,
     index_corridor: float = 0.0,
     index_seed: int = 0,
     corridor_wl_min: float = 0.0,
@@ -732,7 +732,7 @@ def precompute_matrix_cache_kernel(
 
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
-def _calculate_RT_HL_single_point(wl, nH, nL, n_s, thicknesses):
+def _calculate_RT_HL_single_point(wl: float, nH: complex, nL: complex, n_s: complex, thicknesses: np.ndarray) -> tuple[float, float]:
     """Single wavelength, single run TMM for HL stacks.
 
     CONVENTION: index 0 = layer 1 = substrate side (aligned with compute_TMM_single_point_k0_exact).
@@ -793,7 +793,7 @@ def _calculate_RT_HL_single_point(wl, nH, nL, n_s, thicknesses):
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
-def calculate_RT_batch_kernel(wls, nH_arr, nL_arr, nSub_arr, thicknesses_batch):
+def calculate_RT_batch_kernel(wls: np.ndarray, nH_arr: np.ndarray, nL_arr: np.ndarray, nSub_arr: np.ndarray, thicknesses_batch: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """
     Parallel loop over 'num_runs', where each run is a full TMM spectral calculation.
     thicknesses_batch: (num_runs, num_layers)

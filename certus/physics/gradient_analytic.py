@@ -663,11 +663,11 @@ def _compute_single_layer_sensitivity_kernel(
 
     dninv_dni_i = (ni * ni - nr * nr) * inv_n2 * inv_n2
 
-    def mul_c(r1, i1, r2, i2):
+    def mul_c(r1: float, i1: float, r2: float, i2: float) -> tuple[float, float]:
 
         return r1 * r2 - i1 * i2, r1 * i2 + i1 * r2
 
-    def get_dM01(dsr, dsi, sr, si, invr, invi, dinvr, dinvi):
+    def get_dM01(dsr: float, dsi: float, sr: float, si: float, invr: float, invi: float, dinvr: float, dinvi: float) -> tuple[float, float]:
 
         # (ds_imag - i*ds_real) * (inv_n_r + i*inv_n_i) + (s_imag - i*s_real) * (dinvr + i*dinvi)
 
@@ -677,7 +677,7 @@ def _compute_single_layer_sensitivity_kernel(
 
         return t1r + t2r, t1i + t2i
 
-    def get_dM10(dsr, dsi, sr, si, nr, ni, dnr, dni):
+    def get_dM10(dsr: float, dsi: float, sr: float, si: float, nr: float, ni: float, dnr: float, dni: float) -> tuple[float, float]:
 
         # (ds_imag - i*ds_real) * (nr + i*ni) + (s_imag - i*s_real) * (dnr + i*dni)
 
@@ -711,7 +711,7 @@ def _compute_single_layer_sensitivity_kernel(
 
     M11r, M11i = c_real, c_imag
 
-    def compute_denom_deriv(dm00r, dm00i, dm01r, dm01i, dm10r, dm10i, dm11r, dm11i):
+    def compute_denom_deriv(dm00r: float, dm00i: float, dm01r: float, dm01i: float, dm10r: float, dm10i: float, dm11r: float, dm11i: float) -> tuple[float, float]:
 
         pr = n0 * dm00r + n0 * ns * dm01r + dm10r + ns * dm11r
 
@@ -751,7 +751,7 @@ def _compute_single_layer_sensitivity_kernel(
 
     T_val = 4.0 * n0 * ns * inv_magD2
 
-    def calc_dT(dDr, dDi):
+    def calc_dT(dDr: float, dDi: float) -> float:
 
         re_DD = dDr * Dr + dDi * Di
 
@@ -769,7 +769,7 @@ def _compute_single_layer_sensitivity_kernel(
 
     R_val = magN2 * inv_magD2
 
-    def compute_num_deriv(dm00r, dm00i, dm01r, dm01i, dm10r, dm10i, dm11r, dm11i):
+    def compute_num_deriv(dm00r: float, dm00i: float, dm01r: float, dm01i: float, dm10r: float, dm10i: float, dm11r: float, dm11i: float) -> tuple[float, float]:
 
         qr = n0 * dm00r + n0 * ns * dm01r - dm10r - ns * dm11r
 
@@ -799,7 +799,7 @@ def _compute_single_layer_sensitivity_kernel(
         dM11_dni_i,
     )
 
-    def calc_dR(dNr, dNi, dDr, dDi):
+    def calc_dR(dNr: float, dNi: float, dDr: float, dDi: float) -> float:
 
         re_NN = dNr * Nr + dNi * Ni
 
@@ -857,7 +857,7 @@ def _compute_single_layer_sensitivity_kernel(
 
     R_prime = (Nr_p * Nr_p + Ni_p * Ni_p) * inv_magD2
 
-    def calc_dR_prime(dm00r, dm00i, dm01r, dm01i, dm10r, dm10i, dm11r, dm11i):
+    def calc_dR_prime(dm00r: float, dm00i: float, dm01r: float, dm01i: float, dm10r: float, dm10i: float, dm11r: float, dm11i: float) -> float:
 
         qrp = ns * dm00r + ns * dm01r - dm10r - dm11r
 

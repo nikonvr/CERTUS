@@ -24,7 +24,7 @@ def _compute_metal_tmm_gradient_kernel(
     nL_complex_array: np.ndarray,
     nSub_complex_array: np.ndarray,
     r_tgt_array: np.ndarray,
-):
+) -> tuple[float, float, float, np.ndarray, np.ndarray, np.ndarray]:
     """Computes Cost and Gradients w.r.t physical params and optical clues for Bilayer."""
 
     n_pts = len(l_array)
@@ -237,8 +237,8 @@ def _compute_metal_tmm_gradient_kernel(
 
 
 def compute_metal_bilayer_gradient_analytic(
-    x, num_knots, l_array, r_tgt_array, _min_knot_dist, nSub_complex_array=None
-):
+    x: np.ndarray, num_knots: int, l_array: np.ndarray, r_tgt_array: np.ndarray, _min_knot_dist: float, nSub_complex_array: np.ndarray | None = None
+) -> tuple[float, np.ndarray]:
     """
 
     Wrapper calculating full gradient using Analytic TMM + FD Spline for Bilayer Metal.

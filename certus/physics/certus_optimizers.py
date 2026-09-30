@@ -13,6 +13,7 @@ from threading import Event
 
 if TYPE_CHECKING:
     from certus_physics.structures import PGlobalConfig, Sample
+    from concurrent.futures import ThreadPoolExecutor
 
 
 # [MONOLITHIC BLOCK] PGLOBAL ALGORITHM
@@ -59,7 +60,7 @@ class LBFGSBSearcher:
         bounds: np.ndarray,
         config: PGlobalConfig | None = None,
         gradient_func: Callable | None = None,
-    ):
+    ) -> None:
 
         self.func = func
 
@@ -83,13 +84,13 @@ class LBFGSBSearcher:
         # Pre-build combined fun+grad closure (probed once in __init__,
         # not per search call). Saves ~2 TMM evals per local search.
         self._objective_fn = func
-        self._jac_arg = None
+        self._jac_arg: bool | None = None
 
         if gradient_func is not None:
             _func = func
             _grad = gradient_func
 
-            def _fun_and_grad(x):
+            def _fun_and_grad(x: np.ndarray) -> float | tuple[float, np.ndarray]:
                 f = _func(x)
                 g = _grad(x)
                 if isinstance(g, tuple):
@@ -98,14 +99,14 @@ class LBFGSBSearcher:
                     return f
                 return f, g
 
-            self._fun_and_grad = _fun_and_grad
+            self._fun_and_grad: Callable[[np.ndarray], float | tuple[float, np.ndarray]] | None = _fun_and_grad
             # Probe deferred to first search() call where x0 is available
             self._grad_probed = False
         else:
             self._fun_and_grad = None
             self._grad_probed = True  # nothing to probe
 
-    def _probe_gradient(self, x0: np.ndarray):
+    def _probe_gradient(self, x0: np.ndarray) -> None:
         """One-time probe: does gradient_func work for the given x0?"""
         if self._grad_probed:
             return
@@ -225,7 +226,7 @@ class LBFGSBSearcher:
 
             if callback:
 
-                def min_callback(xk):
+                def min_callback(xk: np.ndarray) -> None:
 
                     callback(xk)
 
@@ -358,7 +359,7 @@ class SingleLinkageClusterer:
 
     _INITIAL_BUF_CAP = 256
 
-    def __init__(self, bounds: np.ndarray, config: PGlobalConfig):
+    def __init__(self, bounds: np.ndarray, config: PGlobalConfig) -> None:
 
         self.bounds = bounds
 
@@ -445,7 +446,7 @@ class SingleLinkageClusterer:
 
             return unclustered_x, unclustered_y
 
-    def add_cluster_result(self, x_local: np.ndarray, y_local: float):
+    def add_cluster_result(self, x_local: np.ndarray, y_local: float) -> None:
         """
 
         Registers a completed L-BFGS-B local search.
@@ -505,7 +506,7 @@ class SingleLinkageClusterer:
 
             return expected_total, expected_undiscovered
 
-    def _append_to_seeds(self, x_array: np.ndarray, y_array: np.ndarray):
+    def _append_to_seeds(self, x_array: np.ndarray, y_array: np.ndarray) -> None:
         """Amortized O(1) append into pre-allocated doubling buffer."""
         x_new = np.atleast_2d(x_array)
         y_new = np.asarray(y_array, dtype=np.float64).ravel()
@@ -523,7 +524,7 @@ class SingleLinkageClusterer:
         self._seeds_y_buf[self._seeds_count : self._seeds_count + n_new] = y_new
         self._seeds_count += n_new
 
-    def _append_to_basins(self, x_local: np.ndarray, y_local: float):
+    def _append_to_basins(self, x_local: np.ndarray, y_local: float) -> None:
         """Amortized O(1) append into pre-allocated doubling buffer."""
         needed = self._basins_count + 1
         if needed > self._basins_x_buf.shape[0]:
@@ -538,7 +539,7 @@ class SingleLinkageClusterer:
         self._basins_y_buf[self._basins_count] = y_local
         self._basins_count += 1
 
-    def get_best_minimum(self):
+    def get_best_minimum(self) -> tuple[np.ndarray, float] | None:
 
         with self._lock:
             if self._basins_count == 0:
@@ -548,7 +549,7 @@ class SingleLinkageClusterer:
 
             return self._basins_x_buf[idx].copy(), float(self._basins_y_buf[idx])
 
-    def clear(self):
+    def clear(self) -> None:
 
         with self._lock:
             self.clusters.clear()
@@ -610,7 +611,7 @@ class PGlobalOptimizer:
         log_clues: list[int] | None = None,
         x0: np.ndarray | None = None,
         gradient_func: Callable | None = None,
-    ):
+    ) -> None:
 
         self.objective = objective
 
@@ -661,7 +662,7 @@ class PGlobalOptimizer:
 
         # Persistent thread pool - created lazily on first parallel call
 
-        self._pool = None
+        self._pool: ThreadPoolExecutor | None = None
 
     # ── Helpers ────────────────────────────────────────────────────────
 
@@ -902,7 +903,7 @@ class PGlobalOptimizer:
         except (ImportError, ValueError):
             pass
 
-    def _get_pool(self):
+    def _get_pool(self) -> ThreadPoolExecutor:
         """Return persistent thread pool, creating it lazily on first use."""
 
         if self._pool is None:
@@ -931,7 +932,7 @@ class PGlobalOptimizer:
 
         return self._pool
 
-    def _shutdown_pool(self):
+    def _shutdown_pool(self) -> None:
         """Shutdown the persistent thread pool if it exists."""
 
         if self._pool is not None:

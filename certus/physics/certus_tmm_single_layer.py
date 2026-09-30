@@ -419,15 +419,15 @@ def calculate_RT_single_layer_backside_array(
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
 def batch_single_layer_T_mse(
-    wavelengths,
-    n_sub,
-    w,
-    inv_npix,
-    t_exp,
-    n_batch,
-    k_batch,
-    d_batch,
-):
+    wavelengths: np.ndarray,
+    n_sub: np.ndarray,
+    w: np.ndarray,
+    inv_npix: float,
+    t_exp: np.ndarray,
+    n_batch: np.ndarray,
+    k_batch: np.ndarray,
+    d_batch: np.ndarray,
+) -> np.ndarray:
     """N spectra T-MSE in one prange(N). Each thread computes a full spectrum."""
     N = n_batch.shape[0]
     n_pix = wavelengths.shape[0]
@@ -447,18 +447,18 @@ def batch_single_layer_T_mse(
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
 def batch_single_layer_RT_mse(
-    wavelengths,
-    n_sub,
-    w,
-    inv_npix,
-    t_exp,
-    r_exp,
-    n_batch,
-    k_batch,
-    d_batch,
-    wt,
-    wr,
-):
+    wavelengths: np.ndarray,
+    n_sub: np.ndarray,
+    w: np.ndarray,
+    inv_npix: float,
+    t_exp: np.ndarray,
+    r_exp: np.ndarray,
+    n_batch: np.ndarray,
+    k_batch: np.ndarray,
+    d_batch: np.ndarray,
+    wt: float,
+    wr: float,
+) -> np.ndarray:
     """N spectra fused R+T MSE in one prange(N)."""
     N = n_batch.shape[0]
     n_pix = wavelengths.shape[0]

@@ -531,7 +531,7 @@ def next_turning_point_after(Ts: np.ndarray, n_tot: int, i_start: int, hysteresi
 # could appear OR be measured.
 #
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
-def _stack_matrix(wl, n_even, n_odd, thicknesses, j_start, j_end):
+def _stack_matrix(wl: float, n_even: complex, n_odd: complex, thicknesses: np.ndarray, j_start: int, j_end: int) -> tuple[complex, complex, complex, complex]:
     """Characteristic matrix of layers `j_start` .. `j_end - 1`, as (m00, m01, m10, m11).
 
     Even layers have index `n_even`, odd ones `n_odd`, and `thicknesses[j]` is the thickness of layer j. An empty range
@@ -559,7 +559,7 @@ def _stack_matrix(wl, n_even, n_odd, thicknesses, j_start, j_end):
 
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
-def _stack_matrix_pair(wl, n_even_r, n_odd_r, th_r, n_even_n, n_odd_n, th_n, j_start, j_end):
+def _stack_matrix_pair(wl: float, n_even_r: complex, n_odd_r: complex, th_r: np.ndarray, n_even_n: complex, n_odd_n: complex, th_n: np.ndarray, j_start: int, j_end: int) -> tuple[complex, complex, complex, complex, complex, complex, complex, complex]:
     """The real and the nominal characteristic matrices of layers `j_start` .. `j_end - 1`, in ONE loop.
 
     Returns (R00, R01, R10, R11, Q00, Q01, Q10, Q11): R is the real stack (indices `n_even_r`, `n_odd_r`, thicknesses
@@ -676,31 +676,31 @@ def _stack_matrix_pair(wl, n_even_r, n_odd_r, th_r, n_even_n, n_odd_n, th_n, j_s
 #
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
 def _fill_history_signal(
-    wl,
-    n_Sub,
-    n_H_r,
-    n_L_r,
-    n_H,
-    n_L,
-    prev_thicknesses_sim,
-    p_thick_nominal,
-    j0,
-    i_layer,
-    R00,
-    R01,
-    R10,
-    R11,
-    Q00,
-    Q01,
-    Q10,
-    Q11,
-    Ts_r,
-    Ts_n,
-    apply_signal_noise,
-    signal_noise_scale,
-    signal_noise_seed,
-    signal_noise_run,
-):
+    wl: float,
+    n_Sub: complex,
+    n_H_r: complex,
+    n_L_r: complex,
+    n_H: complex,
+    n_L: complex,
+    prev_thicknesses_sim: np.ndarray,
+    p_thick_nominal: np.ndarray,
+    j0: int,
+    i_layer: int,
+    R00: complex,
+    R01: complex,
+    R10: complex,
+    R11: complex,
+    Q00: complex,
+    Q01: complex,
+    Q10: complex,
+    Q11: complex,
+    Ts_r: np.ndarray,
+    Ts_n: np.ndarray,
+    apply_signal_noise: bool,
+    signal_noise_scale: float,
+    signal_noise_seed: int,
+    signal_noise_run: int,
+) -> tuple[int, complex, complex, complex, complex, complex, complex, complex, complex]:
     """Replay the layers `j0` .. `i_layer - 1` of the block: fill `Ts_r` and `Ts_n` with their signal, from index 0.
 
     `Ts_r` is what the machine read (real thicknesses, real indices, reading noise), `Ts_n` what the strategy expects
@@ -800,32 +800,32 @@ def _fill_history_signal(
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
 def _fill_current_signal(
-    wl,
-    n_Sub,
-    n_H_r,
-    n_L_r,
-    n_H,
-    n_L,
-    i_layer,
-    R00,
-    R01,
-    R10,
-    R11,
-    Q00,
-    Q01,
-    Q10,
-    Q11,
-    d_max,
-    npts_cur,
-    n_hist,
-    idx,
-    Ts_r,
-    Ts_n,
-    apply_signal_noise,
-    signal_noise_scale,
-    signal_noise_seed,
-    signal_noise_run,
-):
+    wl: float,
+    n_Sub: complex,
+    n_H_r: complex,
+    n_L_r: complex,
+    n_H: complex,
+    n_L: complex,
+    i_layer: int,
+    R00: complex,
+    R01: complex,
+    R10: complex,
+    R11: complex,
+    Q00: complex,
+    Q01: complex,
+    Q10: complex,
+    Q11: complex,
+    d_max: float,
+    npts_cur: int,
+    n_hist: int,
+    idx: int,
+    Ts_r: np.ndarray,
+    Ts_n: np.ndarray,
+    apply_signal_noise: bool,
+    signal_noise_scale: float,
+    signal_noise_seed: int,
+    signal_noise_run: int,
+) -> None:
     """Scan the layer being grown, from 0 to `d_max` in `npts_cur` steps: its real and nominal signals go to `Ts_r[idx:]`
     and `Ts_n[idx:]`.
 
@@ -950,20 +950,20 @@ def _fill_current_signal(
 #
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
 def _resample_on_machine_grid(
-    machine_sampling_dd,
-    j0,
-    i_layer,
-    nominal_th,
-    n_hist,
-    p_thick_nominal,
-    prev_thicknesses_sim,
-    Ts_r,
-    Ts_n,
-    apply_signal_noise,
-    signal_noise_scale,
-    signal_noise_seed,
-    signal_noise_run,
-):
+    machine_sampling_dd: float,
+    j0: int,
+    i_layer: int,
+    nominal_th: float,
+    n_hist: int,
+    p_thick_nominal: np.ndarray,
+    prev_thicknesses_sim: np.ndarray,
+    Ts_r: np.ndarray,
+    Ts_n: np.ndarray,
+    apply_signal_noise: bool,
+    signal_noise_scale: float,
+    signal_noise_seed: int,
+    signal_noise_run: int,
+) -> tuple[np.ndarray, np.ndarray, int, int]:
     """Put the coarse TMM scan on the readings the machine actually makes: one every `machine_sampling_dd` nm (0.125 by
     default), interpolated from the coarse points, each with its own noise draw.
 
@@ -1086,15 +1086,15 @@ def _resample_on_machine_grid(
 #
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
 def _scan_window(
-    block_start_layer,
-    i_layer,
-    witness_base_layer,
-    n_H,
-    n_L,
-    nominal_th,
-    adaptive_scan,
-    wl,
-):
+    block_start_layer: int,
+    i_layer: int,
+    witness_base_layer: int,
+    n_H: complex,
+    n_L: complex,
+    nominal_th: float,
+    adaptive_scan: bool,
+    wl: float,
+) -> tuple[int, int, int, float, int]:
     """What the scan reads: the first layer replayed (`j0`), the length of the history in points (`n_hist`), the number of
     points of the current layer (`npts_cur`), the depth it is swept to (`d_max`), and the length of both signals (`n_tot`).
 
@@ -1149,19 +1149,19 @@ def _scan_window(
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
 def _monotonicity_scan(
-    wl,
-    n_current,
-    nominal_th,
-    n_Sub,
-    M_before_00,
-    M_before_01,
-    M_before_10,
-    M_before_11,
-    M_nom_00,
-    M_nom_01,
-    M_nom_10,
-    M_nom_11,
-):
+    wl: float,
+    n_current: complex,
+    nominal_th: float,
+    n_Sub: complex,
+    M_before_00: complex,
+    M_before_01: complex,
+    M_before_10: complex,
+    M_before_11: complex,
+    M_nom_00: complex,
+    M_nom_01: complex,
+    M_nom_10: complex,
+    M_nom_11: complex,
+) -> tuple[bool, np.ndarray]:
     """Is T(d) monotonic over the nominal thickness of the layer being grown? Five depths, 0 to `nominal_th` in quarters,
     on the real stack (`M_before`); the nominal stack (`M_nom`) is scanned at the same depths.
 
@@ -1223,16 +1223,16 @@ def _monotonicity_scan(
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
 def _frozen_trigger_level(
-    wl,
-    n_current,
-    nominal_th,
-    n_Sub,
-    M_nom_00,
-    M_nom_01,
-    M_nom_10,
-    M_nom_11,
-    T_mono_4,
-):
+    wl: float,
+    n_current: complex,
+    nominal_th: float,
+    n_Sub: complex,
+    M_nom_00: complex,
+    M_nom_01: complex,
+    M_nom_10: complex,
+    M_nom_11: complex,
+    T_mono_4: float,
+) -> float:
     """The level at which the deposition of the layer is stopped, computed BEFORE the deposition on the NOMINAL stack and
     frozen: T of the nominal stack at the nominal thickness. A layer of no thickness has no such level, and takes
     `T_mono_4`, the last of the five points of `_monotonicity_scan`.
@@ -1262,12 +1262,12 @@ def _frozen_trigger_level(
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
 def _apply_photometric_drift(
-    Ts_r,
-    n_tot,
-    affine_scale,
-    affine_offset,
-    photo_curvature,
-):
+    Ts_r: np.ndarray,
+    n_tot: int,
+    affine_scale: float,
+    affine_offset: float,
+    photo_curvature: float,
+) -> None:
     """Distort the real signal `Ts_r[:n_tot]` in place as the instrument would: T_measured = affine_scale * T + affine_offset,
     then the curvature T(1 - T) of amplitude `photo_curvature`, which no affine change of variable absorbs. (1.0, 0.0, 0.0)
     is the identity and leaves the array alone.
@@ -1280,11 +1280,11 @@ def _apply_photometric_drift(
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
 def _running_mean(
-    Ts_r,
-    Ts_n,
-    n_tot,
-    smoothing_window,
-):
+    Ts_r: np.ndarray,
+    Ts_n: np.ndarray,
+    n_tot: int,
+    smoothing_window: int,
+) -> None:
     """Replace `Ts_r[:n_tot]` and `Ts_n[:n_tot]`, in place, by their running mean over the last `smoothing_window` readings
     (fewer at the start of the signal: the mean of what has been read so far).
     """
@@ -1379,15 +1379,15 @@ def _running_mean(
 #
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
 def _read_poem_anchors(
-    i_layer,
-    j0,
-    Ts_r,
-    Ts_n,
-    n_tot,
-    idx_nom_stop,
-    tp_hysteresis,
-    poem_enabled,
-):
+    i_layer: int,
+    j0: int,
+    Ts_r: np.ndarray,
+    Ts_n: np.ndarray,
+    n_tot: int,
+    idx_nom_stop: int,
+    tp_hysteresis: float,
+    poem_enabled: bool,
+) -> tuple[int, int, float, float, float, float, float, float, bool]:
     """Count the turning points of the real and the nominal signal up to the nominal stop, and read the two anchors POEM needs.
 
     Returns (n_tp_real, n_tp_nom, margin_missed, margin_fab, T_prev_nom, T_last_nom, T_prev_real, T_last_real, poem_ok):
@@ -1478,7 +1478,7 @@ def _read_poem_anchors(
 # 10 nm): it was not a fit artifact, but the physical failure itself, uncounted.
 #
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
-def _level_reachability(Ts_r, n_tot, n_hist, idx_nom_stop, tp_hysteresis, target_T_noisy):
+def _level_reachability(Ts_r: np.ndarray, n_tot: int, n_hist: int, idx_nom_stop: int, tp_hysteresis: float, target_T_noisy: float) -> tuple[float, bool]:
     """Is the stopping level reached by the real signal between the start of the layer and the next extremum after the stop?
 
     Returns (margin_level, level_reached): how far INSIDE the reachable band the level sits (positive: room to spare,
@@ -1523,22 +1523,22 @@ def _level_reachability(Ts_r, n_tot, n_hist, idx_nom_stop, tp_hysteresis, target
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
 def _invert_thickness_from_probes(
-    wl,
-    n_current,
-    nominal_th,
-    probe_offset,
-    n_Sub,
-    M_before_00,
-    M_before_01,
-    M_before_10,
-    M_before_11,
-    affine_scale,
-    affine_offset,
-    photo_curvature,
-    slit_profiles,
-    i_layer,
-    target_T_noisy,
-):
+    wl: float,
+    n_current: complex,
+    nominal_th: float,
+    probe_offset: float,
+    n_Sub: complex,
+    M_before_00: complex,
+    M_before_01: complex,
+    M_before_10: complex,
+    M_before_11: complex,
+    affine_scale: float,
+    affine_offset: float,
+    photo_curvature: float,
+    slit_profiles: np.ndarray | None,
+    i_layer: int,
+    target_T_noisy: float,
+) -> float:
     """The error on the thickness at which the machine stops the layer: three probe thicknesses around the nominal one
     (`nominal_th` and `probe_offset` either side), T read on the real stack (`M_before`) at each, a parabola through them,
     and the thickness at which it reaches `target_T_noisy`, minus the nominal thickness.
@@ -1678,7 +1678,7 @@ def _invert_thickness_from_probes(
 # 17-... above and hand the Rate layers a worse estimate for no physical reason.
 #
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
-def _rate_layer_thickness(i_layer, prev_thicknesses_sim, p_thick_nominal, prev_rate_flags):
+def _rate_layer_thickness(i_layer: int, prev_thicknesses_sim: np.ndarray, p_thick_nominal: np.ndarray, prev_rate_flags: np.ndarray | None) -> tuple[bool, float]:
     """The thickness of a layer deposited by RATE, when the machine has a rate to go by: (True, thickness), else (False, 0.0).
 
     The estimate averages d_nominal / d_real over the previous layers of the same material (same parity) that were
@@ -1750,17 +1750,17 @@ def _rate_layer_thickness(i_layer, prev_thicknesses_sim, p_thick_nominal, prev_r
 #
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
 def _add_slit_bias(
-    Ts_r,
-    slit_profiles,
-    p_thick_nominal,
-    prev_thicknesses_sim,
-    j0,
-    i_layer,
-    n_hist,
-    npts_cur,
-    d_max,
-    nominal_th,
-):
+    Ts_r: np.ndarray,
+    slit_profiles: np.ndarray,
+    p_thick_nominal: np.ndarray,
+    prev_thicknesses_sim: np.ndarray,
+    j0: int,
+    i_layer: int,
+    n_hist: int,
+    npts_cur: int,
+    d_max: float,
+    nominal_th: float,
+) -> None:
     """Add to the REAL signal `Ts_r` (never to the nominal one) the bias that a slit of finite width puts on what the
     instrument reads: each replayed layer `j0` .. `i_layer - 1` with its own profile, then the layer being grown.
 
@@ -1789,9 +1789,9 @@ def simulate_growth_kernel(
     i_layer: int,
     prev_thicknesses_sim: np.ndarray,
     wl: float,
-    n_H,
-    n_L,
-    n_Sub,
+    n_H: complex,
+    n_L: complex,
+    n_Sub: complex,
     probe_offset: float,
     noise_val_precalc: float,
     non_monotonic_factor: float,
@@ -1809,11 +1809,11 @@ def simulate_growth_kernel(
     n_H_real: float = -1.0,
     n_L_real: float = -1.0,
     is_rate: bool = False,
-    slit_profiles: np.ndarray = None,
+    slit_profiles: np.ndarray | None = None,
     witness_base_layer: int = 0,
     adaptive_scan: bool = False,
     machine_sampling_dd: float = 0.0,
-    prev_rate_flags: np.ndarray = None,
+    prev_rate_flags: np.ndarray | None = None,
 ) -> tuple[float, float, float, float, float]:
     """
 
@@ -2085,7 +2085,7 @@ def simulate_growth_kernel(
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def compute_T_front_at_layer(
-    wl: float, n_layer, n_Sub, M_before_00, M_before_01, M_before_10, M_before_11, d: float
+    wl: float, n_layer: complex, n_Sub: complex, M_before_00: complex, M_before_01: complex, M_before_10: complex, M_before_11: complex, d: float
 ) -> float:
     """
 
@@ -2115,12 +2115,12 @@ def compute_T_front_at_layer(
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def compute_T_front_profile(
     wl: float,
-    n_layer,
-    n_Sub,
-    M_before_00,
-    M_before_01,
-    M_before_10,
-    M_before_11,
+    n_layer: complex,
+    n_Sub: complex,
+    M_before_00: complex,
+    M_before_01: complex,
+    M_before_10: complex,
+    M_before_11: complex,
     d_array: np.ndarray,
 ) -> np.ndarray:
     """Front-side T over a WHOLE thickness grid, in a single call.
@@ -2238,7 +2238,7 @@ def prepare_dynamics_data_kernel(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
-def compute_dynamics_kernel(wls, n_layers, n_subs, thicknesses, M_befores):
+def compute_dynamics_kernel(wls: np.ndarray, n_layers: np.ndarray, n_subs: np.ndarray, thicknesses: np.ndarray, M_befores: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
 
     Compute TMM dynamics: peak-to-peak range of T(d) over layer growth.
@@ -2311,9 +2311,9 @@ def update_run_states_kernel(
     i_layer: int,
     prev_stacks: np.ndarray,
     best_wl: float,
-    nH,
-    nL,
-    nSub,
+    nH: complex,
+    nL: complex,
+    nSub: complex,
     offset_val: float,
     noise_values: np.ndarray,
     factor_val: float,
@@ -2332,8 +2332,8 @@ def update_run_states_kernel(
     index_seed: int = 0,
     corridor_lo: float = 0.0,
     corridor_hi: float = 0.0,
-    slit_profiles: np.ndarray = None,
-):
+    slit_profiles: np.ndarray | None = None,
+) -> np.ndarray:
     """Parallel update of simulation states for next layer.
 
     ``block_start_layer`` must be the one OF THE RETAINED WAVELENGTH. The states
@@ -2431,8 +2431,8 @@ def update_run_states_kernel(
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def calculate_detailed_growth(
-    num_layers, p_thick_nominal, layer_wavelengths, n_H_arr, n_L_arr, n_Sub_arr, steps_per_layer_arr
-):
+    num_layers: int, p_thick_nominal: np.ndarray, layer_wavelengths: np.ndarray, n_H_arr: np.ndarray, n_L_arr: np.ndarray, n_Sub_arr: np.ndarray, steps_per_layer_arr: np.ndarray
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
 
     Detailed growth simulation with exact physics.

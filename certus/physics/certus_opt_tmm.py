@@ -385,8 +385,8 @@ def calculate_reflection_infinite_substrate_single(
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
 def calculate_reflectance_bilayer_vectorized(
-    l_array, nM_complex_array, eM_phys, eL_phys, nL_complex_array, nSub_complex_array
-):
+    l_array: np.ndarray, nM_complex_array: np.ndarray, eM_phys: float, eL_phys: float, nL_complex_array: np.ndarray, nSub_complex_array: np.ndarray
+) -> np.ndarray:
     """
 
     Calculate reflectance for Metal|SiO2|Si structure using scalarized TMM.

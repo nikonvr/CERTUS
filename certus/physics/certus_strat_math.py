@@ -34,7 +34,7 @@ def _calc_T_added_layer(
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def check_extrema_proximity(
-    wl, n_current, n_previous, n_Sub, thickness_nominal, M_before, exclusion_width, check_start, wl_changed=False
+    wl: float, n_current: complex, n_previous: complex, n_Sub: complex, thickness_nominal: float, M_before: np.ndarray, exclusion_width: float, check_start: bool, wl_changed: bool = False
 ) -> bool:
     """
 
@@ -261,7 +261,7 @@ def calculate_extrema_distances(
     physical_scan_radius = scan_ot / float(abs(n_current)) if abs(n_current) > 1e-09 else 16.0
     step = 0.5
 
-    def scan_window(center):
+    def scan_window(center: float) -> tuple[np.ndarray, np.ndarray]:
         start_w = center - physical_scan_radius
         end_w = center + physical_scan_radius
         pts = int((end_w - start_w) / step) + 1
@@ -377,7 +377,7 @@ def check_extrema_proximity_batch(
 
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
-def _seeded_noise_sample(seed_base: int, group_idx: int, run_idx: int, elem_idx: int, gaussian: bool) -> np.float64:
+def _seeded_noise_sample(seed_base: int, group_idx: int, run_idx: int, elem_idx: int, gaussian: bool) -> float:
     s = (
         np.uint64(seed_base)
         + np.uint64(11400714819323198485) * np.uint64(group_idx + 1)

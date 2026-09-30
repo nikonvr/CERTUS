@@ -14,14 +14,16 @@ import certus.physics.certus_tmm_core as tmm_core
 from certus.domain.constants import TWO_PI
 from certus.physics.gradient_utils import compute_mse_vectorized, SMALL_EPSILON
 from .gradient_analytic import _compute_gradient_analytic_kernel
+from collections.abc import Callable
+from typing import Any
 
 
-def _pick_kernel(plain, absorbing, n_sub_c128):
+def _pick_kernel(plain: Callable[..., Any], absorbing: Callable[..., Any], n_sub_c128: np.ndarray) -> Callable[..., Any]:
     """The kernel that reads a substrate that absorbs anywhere in the band, else the one that always ran."""
 
     return absorbing if np.any(n_sub_c128.imag != 0.0) else plain
 
-def _make_oblique_gradient_contrib_kernel(absorbing_substrate: bool):
+def _make_oblique_gradient_contrib_kernel(absorbing_substrate: bool) -> Callable[..., Any]:
     """Build the analytic oblique kernel of the front-only objective, for one kind of substrate.
 
     `absorbing_substrate` is a compile-time constant: Numba drops the branch it rules out BEFORE typing,
@@ -515,7 +517,7 @@ def compute_oblique_gradient_contrib_analytic(
     )
 
 
-def _make_oblique_rt_and_grads_kernel(absorbing_substrate: bool):
+def _make_oblique_rt_and_grads_kernel(absorbing_substrate: bool) -> Callable[..., Any]:
     """Build the oblique R/T + analytic dR, dT kernel, for one kind of substrate.
 
     Same device as `_make_oblique_gradient_contrib_kernel`: `absorbing_substrate` is a compile-time

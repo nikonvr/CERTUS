@@ -598,13 +598,13 @@ def calc_spectrum_full_exact(
 # Wrappers ensuring (n, d) usage from App matches (d, n) in Kernel
 
 
-def calc_spectrum_front_wrapper(wls, n, d, ns):
+def calc_spectrum_front_wrapper(wls: np.ndarray, n: np.ndarray, d: np.ndarray, ns: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """Refactored wrapper: accepts (wls, n, d, ns) -> calls kernel (wls, d, n, ns)"""
 
     return calc_spectrum_front(wls, d, n, ns)
 
 
-def calc_spectrum_full_wrapper(wls, nf, df, ns, nb, db):
+def calc_spectrum_full_wrapper(wls: np.ndarray, nf: np.ndarray, df: np.ndarray, ns: np.ndarray, nb: np.ndarray, db: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Refactored wrapper: accepts (wls, n_f, d_f, n_sub, n_b, d_b) -> calls kernel"""
 
     # Kernel expects: (wls, d_front, n_front, d_back, n_back, n_sub)
@@ -612,7 +612,7 @@ def calc_spectrum_full_wrapper(wls, nf, df, ns, nb, db):
     return calc_spectrum_full(wls, df, nf, db, nb, ns)
 
 
-def calc_spectrum_full_exact_wrapper(wls, nf, df, ns, nb, db):
+def calc_spectrum_full_exact_wrapper(wls: np.ndarray, nf: np.ndarray, df: np.ndarray, ns: np.ndarray, nb: np.ndarray, db: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Exact wrapper: accepts (wls, n_f, d_f, n_sub, n_b, d_b) -> calls exact kernel"""
 
     # Kernel expects: (wls, d_front, n_front, d_back, n_back, n_sub)

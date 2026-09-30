@@ -7,6 +7,10 @@ from collections import OrderedDict
 from functools import lru_cache
 from certus.domain.constants import PI
 from typing import ClassVar
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from threading import Lock
 
 
 # [MONOLITHIC BLOCK] OPTICAL MODELS
@@ -102,7 +106,7 @@ def get_nk_cauchy_wrapper(n4: float, n7: float, wls: np.ndarray) -> np.ndarray:
 
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
-def get_nk_cauchy_simple(wavelength_nm, n_infini, A):
+def get_nk_cauchy_simple(wavelength_nm: np.ndarray, n_infini: float, A: float) -> np.ndarray:
     """Cauchy dielectric model: n = n_inf + A/lambda^2 (Used in Metal Bilayer)"""
 
     return n_infini + A / (wavelength_nm**2)
@@ -321,7 +325,7 @@ class SplineBasisCache:
     _lock = None  # Initialized lazily to avoid import-time threading overhead
 
     @classmethod
-    def _get_lock(cls):
+    def _get_lock(cls) -> Lock:
 
         if cls._lock is None:
             from threading import Lock
@@ -426,7 +430,7 @@ class SplineBasisCache:
             return B
 
     @classmethod
-    def clear(cls):
+    def clear(cls) -> None:
 
         with cls._get_lock():
             cls._cache.clear()

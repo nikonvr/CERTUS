@@ -78,13 +78,13 @@ def numba_interp_vectorized(x_arr: np.ndarray, xp: np.ndarray, fp: np.ndarray) -
 class MaterialDatabase:
     """Thread-safe material DB with smart cache (Robust wrapper to prevent substrate/material cross-loading)"""
 
-    def __init__(self, filepath: str = "clues.xlsx"):
+    def __init__(self, filepath: str = "clues.xlsx") -> None:
         from certus.utils.certus_strat_db import RobustMaterialDatabase
 
         self._db = RobustMaterialDatabase(filepath)
-        self._interpolation_cache = {}
-        self._substrate_cache = {}
-        self._computation_cache = {}
+        self._interpolation_cache: dict[tuple[str, float], float] = {}
+        self._substrate_cache: dict[str, Any] = {}
+        self._computation_cache: dict[str, Any] = {}
         self._cache_hits = 0
         self._cache_misses = 0
 
@@ -93,11 +93,11 @@ class MaterialDatabase:
         return self._db.materials
 
     @property
-    def _data(self):
+    def _data(self) -> dict[str, dict[str, Any]]:
         return self._db.materials
 
     @_data.setter
-    def _data(self, value):
+    def _data(self, value: dict[str, dict[str, Any]]) -> None:
         self._db.materials = value
 
     def get_index(self, material_name: str, wavelength_nm: float) -> float:
@@ -117,7 +117,7 @@ class MaterialDatabase:
         val = self._db.get_refractive_clues_vectorized(material_name, wavelengths)
         return val.real
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         self._interpolation_cache.clear()
 
     def get_material_list(self) -> list[str]:
@@ -129,7 +129,7 @@ class MaterialDatabase:
         mat = self._db.materials[material_name]
         return float(mat["wl"][0]), float(mat["wl"][-1])
 
-    def get_cached_computation(self, key: str, compute_func: Callable, *args, **kwargs):
+    def get_cached_computation(self, key: str, compute_func: Callable, *args: Any, **kwargs: Any) -> Any:
         if key in self._computation_cache:
             self._cache_hits += 1
             return self._computation_cache[key]

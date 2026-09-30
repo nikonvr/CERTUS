@@ -19,9 +19,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "oracle"))
 from tmm_reference import rt_stack, stack_matrix  # noqa: E402
 
 from certus.physics.certus_strat_growth import (  # noqa: E402
+    SCAN_NPTS_CURRENT,
     SCAN_NPTS_HISTORY,
     _fill_current_signal,
     _fill_history_signal,
+    _resample_on_machine_grid,
     _stack_matrix,
     _stack_matrix_pair,
 )
@@ -326,3 +328,117 @@ def test_the_nominal_scan_is_never_noised() -> None:
 
     np.testing.assert_array_equal(noisy["ts_n"], clean["ts_n"])
     assert not np.array_equal(noisy["ts_r"], clean["ts_r"])
+
+
+# =============================================================================
+# _resample_on_machine_grid : the coarse scan read at the machine's cadence
+# =============================================================================
+
+DD = 0.125  # the machine reads every 0.125 nm: 240 rpm, 4 readings a second, 0.5 nm/s
+
+
+def _fine(nominal, i_layer, j0, *, dd=DD, coarse_r=None, coarse_n=None, noise=0.0, seed=0, run=0):
+    """Resample the coarse scan of layers j0 .. i_layer (history, then the current one) on the machine grid."""
+    nominal = np.asarray(nominal, dtype=float)
+    n_hist = SCAN_NPTS_HISTORY * (i_layer - j0)
+    size = n_hist + SCAN_NPTS_CURRENT
+    ts_r = np.full(size, 0.5) if coarse_r is None else np.array(coarse_r, dtype=float)
+    ts_n = np.full(size, 0.25) if coarse_n is None else np.array(coarse_n, dtype=float)
+    given = (ts_r.copy(), ts_n.copy())
+    out = _resample_on_machine_grid(
+        dd, j0, i_layer, nominal[i_layer], n_hist, nominal, nominal * 1.01, ts_r, ts_n, noise > 0.0, noise, seed, run
+    )
+    return out, given, (ts_r, ts_n)
+
+
+def _sizes(nominal, i_layer, j0, dd=DD) -> tuple[int, int]:
+    m_hist = sum(int(np.ceil(nominal[j] / dd)) for j in range(j0, i_layer))
+    return m_hist, m_hist + int(np.ceil(3.0 * nominal[i_layer] / dd)) + 1
+
+
+@pytest.mark.parametrize("dd", [0.125, 0.2])
+@pytest.mark.parametrize("i_layer, j0", [(1, 0), (3, 1), (2, 2)])
+def test_the_fine_grid_has_a_reading_every_dd_over_the_history_and_three_thicknesses_of_the_layer(i_layer, j0, dd) -> None:
+    nominal = [50.0, 60.0, 42.5, 71.3]
+
+    (ts_r, ts_n, n_tot, stop), _, _ = _fine(nominal, i_layer, j0, dd=dd)
+
+    m_hist, m_tot = _sizes(nominal, i_layer, j0, dd)
+    assert n_tot == m_tot and len(ts_r) == len(ts_n) == m_tot
+    assert stop == m_hist + int(round(nominal[i_layer] / dd))  # the nominal stop, on the fine grid
+
+
+def test_smoothing_alone_reads_the_default_grid_of_a_eighth_of_a_nanometre() -> None:
+    nominal = [50.0, 60.0]
+
+    (_, _, n_default, stop_default), _, _ = _fine(nominal, 1, 0, dd=0.0)
+    (_, _, n_explicit, stop_explicit), _, _ = _fine(nominal, 1, 0, dd=0.125)
+
+    assert (n_default, stop_default) == (n_explicit, stop_explicit)
+
+
+def test_a_constant_signal_stays_constant_and_the_coarse_scan_is_not_touched() -> None:
+    (ts_r, ts_n, _, _), given, after = _fine([50.0, 60.0, 42.5], 2, 0)
+
+    np.testing.assert_allclose(ts_r, 0.5, atol=1e-15)
+    np.testing.assert_allclose(ts_n, 0.25, atol=1e-15)
+    np.testing.assert_array_equal(after[0], given[0])  # new arrays: the coarse ones are read, never written
+    np.testing.assert_array_equal(after[1], given[1])
+
+
+def test_the_current_layer_is_read_at_its_own_depth() -> None:
+    # A ramp in depth on the coarse scan (value = depth in nm) reads back as m * dd on the fine one.
+    nominal = [50.0, 60.0]
+    n_hist = SCAN_NPTS_HISTORY
+    step = 3.0 * nominal[1] / (SCAN_NPTS_CURRENT - 1)
+    coarse = np.concatenate([np.zeros(n_hist), np.arange(SCAN_NPTS_CURRENT) * step])
+
+    (ts_r, ts_n, _, _), _, _ = _fine(nominal, 1, 0, coarse_r=coarse, coarse_n=coarse)
+
+    m_hist, m_tot = _sizes(nominal, 1, 0)
+    m = np.arange(m_tot - m_hist - 1)  # the last reading falls past the scan: it is extrapolated, not compared
+    np.testing.assert_allclose(ts_r[m_hist + m], m * DD, atol=1e-9)
+    np.testing.assert_allclose(ts_n[m_hist + m], m * DD, atol=1e-9)
+
+
+@pytest.mark.xfail(strict=True, reason="D55: a replayed layer is read one coarse step late (d/16), then flat over its last step")
+def test_a_replayed_layer_is_read_at_its_own_depth() -> None:
+    # The coarse scan of a replayed layer starts at 1/16 of its thickness (0 is the last point of the layer below), the
+    # interpolation index starts at 0: a ramp in depth comes back shifted by 1/16, and clamped at 1 over the last 1/16.
+    nominal = [50.0, 60.0]
+    coarse = np.concatenate([np.arange(1, SCAN_NPTS_HISTORY + 1) / SCAN_NPTS_HISTORY, np.zeros(SCAN_NPTS_CURRENT)])
+
+    (ts_r, _, _, _), _, _ = _fine(nominal, 1, 0, coarse_r=coarse, coarse_n=coarse)
+
+    m = np.arange(int(np.ceil(nominal[0] / DD)))
+    np.testing.assert_allclose(ts_r[m], m * DD / nominal[0], atol=1e-2)
+
+
+def test_the_reading_noise_is_drawn_per_reading_by_layer_and_position_and_never_on_the_nominal_signal() -> None:
+    nominal, scale, seed, run = [50.0, 60.0, 42.5], 0.01, 3, 8
+    clean = _fine(nominal, 2, 0)[0]
+    noisy = _fine(nominal, 2, 0, noise=scale, seed=seed, run=run)[0]
+
+    added = noisy[0] - clean[0]
+    m0, m1 = int(np.ceil(nominal[0] / DD)), int(np.ceil(nominal[1] / DD))
+    for j, first, count in ((0, 0, m0), (1, m0, m1)):  # a replayed layer j: reading m carries (group j, element m)
+        expected = [scale * _seeded_noise_sample(seed, j, run, m, True) for m in range(count)]
+        np.testing.assert_allclose(added[first : first + count], expected, atol=1e-15)
+    current = m0 + m1
+    # The current layer: (group i_layer, element 4096 + m), except its first reading, which is the last one of the layer
+    # below and takes ITS draw: one reading is not drawn twice.
+    first_draw = scale * _seeded_noise_sample(seed, 1, run, m1 - 1, True)
+    assert added[current] == pytest.approx(first_draw, abs=1e-15)
+    for m in (1, 2, 40):
+        assert added[current + m] == pytest.approx(scale * _seeded_noise_sample(seed, 2, run, 4096 + m, True), abs=1e-15)
+    np.testing.assert_array_equal(noisy[1], clean[1])  # the nominal signal is what the strategy expects: nobody measures it
+
+
+def test_without_a_history_the_first_reading_of_the_layer_is_its_own_draw() -> None:
+    nominal, scale, seed, run = [50.0, 60.0], 0.01, 3, 8
+    clean = _fine(nominal, 1, 1)[0]
+    noisy = _fine(nominal, 1, 1, noise=scale, seed=seed, run=run)[0]
+
+    added = noisy[0] - clean[0]
+
+    assert added[0] == pytest.approx(scale * _seeded_noise_sample(seed, 1, run, 4096, True), abs=1e-15)

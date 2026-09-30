@@ -800,6 +800,114 @@ def _fill_current_signal(
         idx += 1
 
 
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def _resample_on_machine_grid(
+    machine_sampling_dd,
+    j0,
+    i_layer,
+    nominal_th,
+    n_hist,
+    p_thick_nominal,
+    prev_thicknesses_sim,
+    Ts_r,
+    Ts_n,
+    apply_signal_noise,
+    signal_noise_scale,
+    signal_noise_seed,
+    signal_noise_run,
+):
+    """Put the coarse TMM scan on the readings the machine actually makes: one every `machine_sampling_dd` nm (0.125 by
+    default), interpolated from the coarse points, each with its own noise draw.
+
+    `Ts_r` and `Ts_n` hold the coarse scan (`SCAN_NPTS_HISTORY` points per replayed layer of the block `j0` ..
+    `i_layer - 1`, then `SCAN_NPTS_CURRENT` for the layer being grown). Returns (Ts_r, Ts_n, n_tot, idx_nom_stop): the
+    two signals on the fine grid, their length, and the index of the nominal stop on it. New arrays, the coarse ones
+    are not touched.
+    """
+    D_SCAN = D_SCAN_VAL
+    NPTS = SCAN_NPTS_CURRENT
+    NPTS_PREV = SCAN_NPTS_HISTORY
+    SAMPLE_DD = machine_sampling_dd if machine_sampling_dd > 0.0 else 0.125
+    M_hist = 0
+    for j in range(j0, i_layer):
+        M_hist += int(np.ceil(p_thick_nominal[j] / SAMPLE_DD))
+    M_cur = int(np.ceil(D_SCAN * nominal_th / SAMPLE_DD)) + 1
+    M_tot = M_hist + M_cur
+
+    Ts_r_samp = np.empty(M_tot, dtype=np.float64)
+    Ts_n_samp = np.empty(M_tot, dtype=np.float64)
+
+    idx_src = 0
+    idx_dst = 0
+    for j in range(j0, i_layer):
+        d_rj = prev_thicknesses_sim[j]
+        d_nj = p_thick_nominal[j]
+        M_pj = int(np.ceil(d_nj / SAMPLE_DD))
+        tmm_sub_r = Ts_r[idx_src : idx_src + NPTS_PREV]
+        tmm_sub_n = Ts_n[idx_src : idx_src + NPTS_PREV]
+        inv_drj_npts = (NPTS_PREV / d_rj) * SAMPLE_DD if d_rj > 1e-9 else 0.0
+        inv_dnj_npts = (NPTS_PREV / d_nj) * SAMPLE_DD if d_nj > 1e-9 else 0.0
+        kr_flt = 0.0
+        kn_flt = 0.0
+        for m in range(M_pj):
+            kr_low = min(max(0, int(kr_flt)), NPTS_PREV - 1)
+            kr_frac = kr_flt - kr_low
+            kr_hi = min(kr_low + 1, NPTS_PREV - 1)
+            vr = (1.0 - kr_frac) * tmm_sub_r[kr_low] + kr_frac * tmm_sub_r[kr_hi]
+
+            kn_low = min(max(0, int(kn_flt)), NPTS_PREV - 1)
+            kn_frac = kn_flt - kn_low
+            kn_hi = min(kn_low + 1, NPTS_PREV - 1)
+            vn = (1.0 - kn_frac) * tmm_sub_n[kn_low] + kn_frac * tmm_sub_n[kn_hi]
+
+            Ts_r_samp[idx_dst] = vr
+            Ts_n_samp[idx_dst] = vn
+
+            if apply_signal_noise:
+                Ts_r_samp[idx_dst] += signal_noise_scale * _seeded_noise_sample(
+                    signal_noise_seed, j, signal_noise_run, m, True
+                )
+            idx_dst += 1
+            kr_flt += inv_drj_npts
+            kn_flt += inv_dnj_npts
+        idx_src += NPTS_PREV
+
+    tmm_cur_r = Ts_r[n_hist : n_hist + NPTS]
+    tmm_cur_n = Ts_n[n_hist : n_hist + NPTS]
+    d_max_cur = D_SCAN * nominal_th
+    fc_step = ((NPTS - 1) / d_max_cur) * SAMPLE_DD if d_max_cur > 1e-9 else 0.0
+    fc_flt = 0.0
+    for m in range(M_cur):
+        kc_low = min(max(0, int(fc_flt)), NPTS - 2)
+        kc_frac = fc_flt - kc_low
+        kc_hi = kc_low + 1
+
+        vr = (1.0 - kc_frac) * tmm_cur_r[kc_low] + kc_frac * tmm_cur_r[kc_hi]
+        vn = (1.0 - kc_frac) * tmm_cur_n[kc_low] + kc_frac * tmm_cur_n[kc_hi]
+
+        Ts_r_samp[idx_dst] = vr
+        Ts_n_samp[idx_dst] = vn
+
+        if apply_signal_noise:
+            g_noise = i_layer
+            e_noise = 4096 + m
+            if m == 0 and M_hist > 0:
+                g_noise = i_layer - 1
+                prev_M = int(np.ceil(p_thick_nominal[i_layer - 1] / SAMPLE_DD))
+                e_noise = prev_M - 1
+            Ts_r_samp[idx_dst] += signal_noise_scale * _seeded_noise_sample(
+                signal_noise_seed, g_noise, signal_noise_run, e_noise, True
+            )
+        idx_dst += 1
+        fc_flt += fc_step
+
+    n_tot = M_tot
+    Ts_r = Ts_r_samp
+    Ts_n = Ts_n_samp
+    idx_nom_stop = M_hist + int(round(nominal_th / SAMPLE_DD))
+    return Ts_r, Ts_n, n_tot, idx_nom_stop
+
+
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def simulate_growth_kernel(
     p_thick_nominal: np.ndarray,
@@ -1407,84 +1515,10 @@ def simulate_growth_kernel(
         # the physics having degraded.
         use_fine_grid = machine_sampling_dd > 0.0 or smoothing_window > 1
         if use_fine_grid:
-            SAMPLE_DD = machine_sampling_dd if machine_sampling_dd > 0.0 else 0.125
-            M_hist = 0
-            for j in range(j0, i_layer):
-                M_hist += int(np.ceil(p_thick_nominal[j] / SAMPLE_DD))
-            M_cur = int(np.ceil(D_SCAN * nominal_th / SAMPLE_DD)) + 1
-            M_tot = M_hist + M_cur
-
-            Ts_r_samp = np.empty(M_tot, dtype=np.float64)
-            Ts_n_samp = np.empty(M_tot, dtype=np.float64)
-
-            idx_src = 0
-            idx_dst = 0
-            for j in range(j0, i_layer):
-                d_rj = prev_thicknesses_sim[j]
-                d_nj = p_thick_nominal[j]
-                M_pj = int(np.ceil(d_nj / SAMPLE_DD))
-                tmm_sub_r = Ts_r[idx_src : idx_src + NPTS_PREV]
-                tmm_sub_n = Ts_n[idx_src : idx_src + NPTS_PREV]
-                inv_drj_npts = (NPTS_PREV / d_rj) * SAMPLE_DD if d_rj > 1e-9 else 0.0
-                inv_dnj_npts = (NPTS_PREV / d_nj) * SAMPLE_DD if d_nj > 1e-9 else 0.0
-                kr_flt = 0.0
-                kn_flt = 0.0
-                for m in range(M_pj):
-                    kr_low = min(max(0, int(kr_flt)), NPTS_PREV - 1)
-                    kr_frac = kr_flt - kr_low
-                    kr_hi = min(kr_low + 1, NPTS_PREV - 1)
-                    vr = (1.0 - kr_frac) * tmm_sub_r[kr_low] + kr_frac * tmm_sub_r[kr_hi]
-
-                    kn_low = min(max(0, int(kn_flt)), NPTS_PREV - 1)
-                    kn_frac = kn_flt - kn_low
-                    kn_hi = min(kn_low + 1, NPTS_PREV - 1)
-                    vn = (1.0 - kn_frac) * tmm_sub_n[kn_low] + kn_frac * tmm_sub_n[kn_hi]
-
-                    Ts_r_samp[idx_dst] = vr
-                    Ts_n_samp[idx_dst] = vn
-
-                    if apply_signal_noise:
-                        Ts_r_samp[idx_dst] += signal_noise_scale * _seeded_noise_sample(
-                            signal_noise_seed, j, signal_noise_run, m, True
-                        )
-                    idx_dst += 1
-                    kr_flt += inv_drj_npts
-                    kn_flt += inv_dnj_npts
-                idx_src += NPTS_PREV
-
-            tmm_cur_r = Ts_r[n_hist : n_hist + NPTS]
-            tmm_cur_n = Ts_n[n_hist : n_hist + NPTS]
-            d_max_cur = D_SCAN * nominal_th
-            fc_step = ((NPTS - 1) / d_max_cur) * SAMPLE_DD if d_max_cur > 1e-9 else 0.0
-            fc_flt = 0.0
-            for m in range(M_cur):
-                kc_low = min(max(0, int(fc_flt)), NPTS - 2)
-                kc_frac = fc_flt - kc_low
-                kc_hi = kc_low + 1
-
-                vr = (1.0 - kc_frac) * tmm_cur_r[kc_low] + kc_frac * tmm_cur_r[kc_hi]
-                vn = (1.0 - kc_frac) * tmm_cur_n[kc_low] + kc_frac * tmm_cur_n[kc_hi]
-
-                Ts_r_samp[idx_dst] = vr
-                Ts_n_samp[idx_dst] = vn
-
-                if apply_signal_noise:
-                    g_noise = i_layer
-                    e_noise = 4096 + m
-                    if m == 0 and M_hist > 0:
-                        g_noise = i_layer - 1
-                        prev_M = int(np.ceil(p_thick_nominal[i_layer - 1] / SAMPLE_DD))
-                        e_noise = prev_M - 1
-                    Ts_r_samp[idx_dst] += signal_noise_scale * _seeded_noise_sample(
-                        signal_noise_seed, g_noise, signal_noise_run, e_noise, True
-                    )
-                idx_dst += 1
-                fc_flt += fc_step
-
-            n_tot = M_tot
-            Ts_r = Ts_r_samp
-            Ts_n = Ts_n_samp
-            idx_nom_stop = M_hist + int(round(nominal_th / SAMPLE_DD))
+            Ts_r, Ts_n, n_tot, idx_nom_stop = _resample_on_machine_grid(
+                machine_sampling_dd, j0, i_layer, nominal_th, n_hist, p_thick_nominal, prev_thicknesses_sim,
+                Ts_r, Ts_n, apply_signal_noise, signal_noise_scale, signal_noise_seed, signal_noise_run,
+            )
         else:  # noqa: RET505 -- coarse TMM grid, the historical path
             if affine_scale != 1.0 or affine_offset != 0.0 or photo_curvature != 0.0:
                 for k_aff in range(n_tot):

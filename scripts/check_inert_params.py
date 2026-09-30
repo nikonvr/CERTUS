@@ -131,26 +131,26 @@ def main() -> int:
                       and len(k) > 6 and not k.startswith(("_", "test"))}
 
     print("=" * 78)
-    print("A. POSES DANS UN DICT DE PARAMETRES, JAMAIS LUS : %d" % len(posed_unread))
+    print(f"A. POSES DANS UN DICT DE PARAMETRES, JAMAIS LUS : {len(posed_unread)}")
     print("=" * 78)
     for k, v in sorted(posed_unread.items()):
-        print("  %-34s pose en %s" % (k, ", ".join(v[:3])))
+        print(f"  {k!s:<34} pose en {', '.join(v[:3])}")
 
     print("\n" + "=" * 78)
-    print("B. PRESENTS DANS UNE CONFIG D'EXEMPLE, JAMAIS LUS : %d" % len(cfg_unread))
+    print(f"B. PRESENTS DANS UNE CONFIG D'EXEMPLE, JAMAIS LUS : {len(cfg_unread)}")
     print("=" * 78)
     for k, v in sorted(cfg_unread.items()):
-        print("  %-34s dans %d fichier(s), ex. %s" % (k, len(v), Path(v[0]).name))
+        print(f"  {k!s:<34} dans {len(v)} fichier(s), ex. {Path(v[0]).name}")
 
     print("\n" + "=" * 78)
-    print("C. LUS AVEC UN DEFAUT, JAMAIS ECRITS : %d  (le defaut s'applique TOUJOURS)" % len(read_unwritten))
+    print(f"C. LUS AVEC UN DEFAUT, JAMAIS ECRITS : {len(read_unwritten)}  (le defaut s'applique TOUJOURS)")
     print("=" * 78)
     for k, v in sorted(read_unwritten.items())[:40]:
-        print("  %-34s lu en %s" % (k, ", ".join(v[:2])))
+        print(f"  {k!s:<34} lu en {', '.join(v[:2])}")
 
     total = len(posed_unread) + len(cfg_unread)
     print("\n" + "=" * 78)
-    print("A EXAMINER : %d" % total)
+    print(f"A EXAMINER : {total}")
     print("Aucun n'est automatiquement une faute. Mais chacun est un reglage dont")
     print("PERSONNE ne garantit qu'il fait quelque chose.")
     print("=" * 78)

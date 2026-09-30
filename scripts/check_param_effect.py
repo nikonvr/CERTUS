@@ -154,7 +154,7 @@ def main() -> int:
         sys.stderr.write(f"    {mark} | A={sa!r} ({na} strat) | B={sb!r} ({nb} strat) | {dt:.0f} s\n")
 
     print("\n" + "=" * 78)
-    print("REGLAGES SANS AUCUN EFFET SUR CE COMPOSANT : %d" % len(inert))
+    print(f"REGLAGES SANS AUCUN EFFET SUR CE COMPOSANT : {len(inert)}")
     print("=" * 78)
     for key, sa, _sb, na, _nb in inert:
         print(f"  {key:<32} score identique au bit ({sa!r}), {na} strategies")
@@ -162,14 +162,14 @@ def main() -> int:
     print("  mecanisme est cense mordre avant de conclure a un reglage mort.")
 
     print("\n" + "=" * 78)
-    print("REGLAGES QUI AGISSENT : %d" % len(alive))
+    print(f"REGLAGES QUI AGISSENT : {len(alive)}")
     print("=" * 78)
     for key, sa, sb, _na, _nb in alive:
         print(f"  {key:<32} {sa!r} -> {sb!r}")
 
     if unclear:
         print("\n" + "=" * 78)
-        print("NON CONCLUANTS : %d" % len(unclear))
+        print(f"NON CONCLUANTS : {len(unclear)}")
         print("=" * 78)
         for key, why in unclear:
             print(f"  {key:<32} {why}")

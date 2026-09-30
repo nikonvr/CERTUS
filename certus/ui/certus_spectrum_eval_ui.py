@@ -281,11 +281,9 @@ def spectrum_eval_build_worker_cfg(
     n_optim = len(wls_optim) if wls_optim is not None else 0
 
     app.log(
-        (
-            "[SPECTRUM_EVAL.build_worker_cfg] spectral evaluation prepared | "
-            "display_pts=%d | display_range_nm=[%.0f,%.0f] | optim_pts=%d | active_targets=%d | variant=%s"
-        )
-        % (n_vis, lmin_display, lmax_display, n_optim, len(active), variant),
+        "[SPECTRUM_EVAL.build_worker_cfg] spectral evaluation prepared | "
+        f"display_pts={n_vis:d} | display_range_nm=[{lmin_display:.0f},{lmax_display:.0f}] | "
+        f"optim_pts={n_optim:d} | active_targets={len(active):d} | variant={variant}",
         "INFO",
     )
     spectrum_eval_feedback(

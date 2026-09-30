@@ -207,7 +207,7 @@ def etat() -> int:
               f"{r['n_strats']:<5d} {r['crash_min']:5.1f} %  {s}")
     manque = [f for f in FACTEURS if not (CACHE / f"x{f:g}.json").exists() and not (CACHE / f"x{f:g}_premium.json").exists()]
     if manque:
-        print(f"\n  en attente : {', '.join('x%g' % f for f in manque)}")
+        print(f"\n  en attente : {', '.join(f'x{f:g}' for f in manque)}")
     else:
         print("\n  serie complete.")
     return 0

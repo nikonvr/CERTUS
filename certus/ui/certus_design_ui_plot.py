@@ -1268,15 +1268,8 @@ class PlotManager:
         stack_back_len = len(stack_back) if stack_back else 0
 
         self.ui.log(
-            (
-                "[DESIGN.profile] plot requested | ep_len=%s | stack_len=%d | back_ep_len=%s | back_stack_len=%d"
-            )
-            % (
-                ep_len,
-                stack_len,
-                ep_back_len,
-                stack_back_len,
-            ),
+            f"[DESIGN.profile] plot requested | ep_len={ep_len} | stack_len={stack_len:d} | "
+            f"back_ep_len={ep_back_len} | back_stack_len={stack_back_len:d}",
             "INFO",
         )
 
@@ -1296,7 +1289,7 @@ class PlotManager:
 
                 mats = self.ui._get_materials()
 
-                self.ui.log("[DESIGN.profile] materials loaded | keys=%s" % list(mats.keys()), "INFO")
+                self.ui.log(f"[DESIGN.profile] materials loaded | keys={list(mats.keys())}", "INFO")
 
                 sub_key = "substrate" if "substrate" in mats else ("Substrate" if "Substrate" in mats else None)
 

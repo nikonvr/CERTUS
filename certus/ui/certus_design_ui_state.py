@@ -213,29 +213,16 @@ class StateManager:
         ep_before = getattr(self.ui, "ep_current", None)
         ep_before_len = len(ep_before) if ep_before is not None else None
         front_before_len = self.ui.front_table.rowCount() if hasattr(self.ui, "front_table") else None
+        cfg_version = c.get("version", "Unknown")
         self.ui.log(
-            (
-                "[LOAD] start | file=%s | version=%s | l0=%.2f | materials=%d | front=%d | back_en=%s | "
-                "back_coat=%s | back=%d | targets=%d | oblique=%s | ep_before_len=%s | front_table_rows=%s"
-            )
-            % (
-                cfg_filename,
-                c.get("version", "Unknown"),
-                float(c.get("l0", 500)),
-                len(materials),
-                len(front_rows),
-                back_enabled,
-                back_coat_enabled,
-                len(back_rows),
-                len(target_rows),
-                oblique_mode,
-                ep_before_len,
-                front_before_len,
-            ),
+            f"[LOAD] start | file={cfg_filename} | version={cfg_version} | l0={float(c.get('l0', 500)):.2f} | "
+            f"materials={len(materials):d} | front={len(front_rows):d} | back_en={back_enabled} | "
+            f"back_coat={back_coat_enabled} | back={len(back_rows):d} | targets={len(target_rows):d} | "
+            f"oblique={oblique_mode} | ep_before_len={ep_before_len} | front_table_rows={front_before_len}",
             "INFO",
         )
 
-        self.ui.log("Format Version: %s" % c.get("version", "Unknown"), "INFO")
+        self.ui.log(f"Format Version: {c.get('version', 'Unknown')}", "INFO")
 
         # The new configuration has no source file until _post_load_config records it.
         self.ui._last_config_file = None

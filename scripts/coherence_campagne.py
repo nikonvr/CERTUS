@@ -142,9 +142,8 @@ def main(argv: list[str] | None = None) -> int:
             rate = f" · {avec}/{len(dep)} avec Rate"
             if dep[0].get("rate_layers"):
                 rate += f" (gagnante : couches {dep[0]['rate_layers']})"
-        print("    %-14s s%-5s %5d strats %5d dep %s%s%s" % (
-            d.get("composant"), d.get("seed"), len(st), len(dep),
-            f"SEEL {_seel(dep[0]['score']):.4f}" if dep else "--", rate, marque))
+        seel = f"SEEL {_seel(dep[0]['score']):.4f}" if dep else "--"
+        print(f"    {d.get('composant')!s:<14} s{d.get('seed')!s:<5} {len(st):5d} strats {len(dep):5d} dep {seel}{rate}{marque}")
 
     print()
     print("=" * 78)

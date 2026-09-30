@@ -25,7 +25,8 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from threading import Event
-    from certus.physics.certus_optimizers import PGlobalOptimizer, Sample
+    from certus.physics.certus_optimizers import PGlobalOptimizer
+    from certus_physics.structures import Sample
 
 
 def optim_calc_oblique_selected(

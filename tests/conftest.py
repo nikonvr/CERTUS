@@ -321,3 +321,23 @@ def setup_test_environment():
         handler.close()
         _certus.removeHandler(handler)
 
+
+@pytest.fixture(autouse=True)
+def no_test_leaves_an_inherited_qt_method_on_its_subclass(request):
+    """The test that restores `QMessageBox.exec` by assignment is the one that fails, not a later one.
+
+    See tests/qt_leaks.py: assigning back an inherited method read from the class makes it local and unbound,
+    and every later `box.exec()` raises. The leak is repaired here so that it costs one test, not the run.
+    """
+    yield
+    from qt_leaks import leaked_inherited_methods, repair
+
+    leaked = leaked_inherited_methods()
+    if leaked:
+        repair(leaked)
+        pytest.fail(
+            f"{request.node.nodeid} left {', '.join(leaked)} defined on the class itself: use `monkeypatch.setattr` "
+            "(it restores an inherited method by deleting it), not `Cls.method = original`.",
+            pytrace=False,
+        )
+

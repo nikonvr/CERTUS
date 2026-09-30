@@ -118,20 +118,18 @@ def test_strat_reports_busy_while_a_thread_runs(qapp) -> None:
         win.close()
 
 
-def test_the_dialog_stays_for_a_window_that_cannot_answer(qapp) -> None:
+def test_the_dialog_stays_for_a_window_that_cannot_answer(qapp, monkeypatch) -> None:
     """No probe means no silence: the default must never lose the stop."""
     from PyQt6.QtWidgets import QMessageBox, QWidget
 
     from certus.ui.certus_ui_utils import confirm_stop_with_timeout
 
     shown = []
-    original = QMessageBox.exec
-    try:
-        QMessageBox.exec = lambda self: shown.append(True) or 0
-        parent = QWidget()  # no has_running_computation at all
-        confirm_stop_with_timeout(parent, timeout_sec=30)
-        parent.deleteLater()
-    finally:
-        QMessageBox.exec = original
+    # monkeypatch, not `QMessageBox.exec = original`: read from the class, the inherited method is the unbound
+    # QDialog.exec, and assigning it back would make it local to QMessageBox and break every later box.exec()
+    monkeypatch.setattr(QMessageBox, "exec", lambda self: shown.append(True) or 0)
+    parent = QWidget()  # no has_running_computation at all
+    confirm_stop_with_timeout(parent, timeout_sec=30)
+    parent.deleteLater()
 
     assert shown, "a window without the probe lost its stop dialog"

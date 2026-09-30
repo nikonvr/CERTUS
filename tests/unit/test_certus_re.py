@@ -537,7 +537,7 @@ class TestREAppSkeletonLoaders:
 class TestCertusREResultsDialogSmoke:
     """Smoke test for CertusREResultsDialog initialization."""
 
-    def test_dialog_init(self, qapp):
+    def test_dialog_init(self, qapp, monkeypatch):
         from certus.ui.certus_re_ui import CertusREResultsDialog
         from unittest.mock import MagicMock
 
@@ -582,28 +582,22 @@ class TestCertusREResultsDialogSmoke:
 
         # Use MagicMock / direct mock to avoid exec/show blocking issues
         # Since .exec() starts an event loop, let's mock self.exec / self.show so the dialog starts and finishes immediately during the test
-        original_exec = CertusREResultsDialog.exec
-        original_show = CertusREResultsDialog.show
-        CertusREResultsDialog.exec = MagicMock()
-        CertusREResultsDialog.show = MagicMock()
+        monkeypatch.setattr(CertusREResultsDialog, "exec", MagicMock())  # not `= original`: see tests/qt_leaks.py
+        monkeypatch.setattr(CertusREResultsDialog, "show", MagicMock())
 
         mock_app._re_initial_stack = initial_stack
 
-        try:
-            dlg = CertusREResultsDialog(
-                mock_app,
-                results,
-                ep0=np.array([100.0, 150.0]),
-                re_rmse_initial=0.015,
-                re_rmse_phase1=0.008,
-                re_rmse_final=0.002,
-                initial_stack=None,
-                announce_in_log=False,
-            )
-            assert dlg is not None
-            assert dlg.main_app == mock_app
-            assert dlg.initial_stack == initial_stack
-        finally:
-            CertusREResultsDialog.exec = original_exec
-            CertusREResultsDialog.show = original_show
+        dlg = CertusREResultsDialog(
+            mock_app,
+            results,
+            ep0=np.array([100.0, 150.0]),
+            re_rmse_initial=0.015,
+            re_rmse_phase1=0.008,
+            re_rmse_final=0.002,
+            initial_stack=None,
+            announce_in_log=False,
+        )
+        assert dlg is not None
+        assert dlg.main_app == mock_app
+        assert dlg.initial_stack == initial_stack
 

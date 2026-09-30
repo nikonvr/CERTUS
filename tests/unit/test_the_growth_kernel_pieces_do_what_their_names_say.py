@@ -22,6 +22,7 @@ from tmm_reference import rt_stack, stack_matrix  # noqa: E402
 from certus.physics.certus_strat_growth import (  # noqa: E402
     D_SCAN_VAL,
     MAX_LOOKBACK_VAL,
+    RATE_TURN_NM,
     SCAN_ERROR_MARGIN_NM,
     SCAN_NPTS_CURRENT,
     SCAN_NPTS_HISTORY,
@@ -32,6 +33,7 @@ from certus.physics.certus_strat_growth import (  # noqa: E402
     _invert_thickness_from_probes,
     _level_reachability,
     _monotonicity_scan,
+    _rate_layer_thickness,
     _read_poem_anchors,
     _resample_on_machine_grid,
     _running_mean,
@@ -871,3 +873,78 @@ def test_a_slit_bias_moves_the_probes_and_not_the_level() -> None:
 
     assert unbiased == pytest.approx(_error(target), abs=1e-12)  # no bias is the same as no profile
     assert biased - unbiased == pytest.approx(-bias / slope, rel=0.05)  # T(d) + bias = level moves the root by -bias / T'
+
+
+# =============================================================================
+# _rate_layer_thickness : a layer laid by turntable turns, from the rate the previous layers of its material gave
+# =============================================================================
+
+NOMINAL_RATE = np.array([50.0, 80.0, 50.0, 80.0, 50.0, 80.0])
+
+
+def _rate(i_layer, real, *, flags=None, nominal=NOMINAL_RATE):
+    got, thickness = _rate_layer_thickness(i_layer, np.asarray(real, dtype=float), np.asarray(nominal, dtype=float), flags)
+    return bool(got), thickness
+
+
+def test_a_rate_layer_is_laid_for_the_turns_the_average_ratio_of_its_material_commands() -> None:
+    # The two previous layers of the same material came out 10 % thin: A = 50 / 45. The rate believes the machine is fast by A.
+    real = [45.0, 72.0, 45.0, 72.0, 0.0, 0.0]
+
+    got, thickness = _rate(4, real)
+
+    assert got
+    assert thickness == pytest.approx(50.0 / (50.0 / 45.0))  # d_nominal / A, to the turn
+    assert thickness / RATE_TURN_NM == pytest.approx(round(thickness / RATE_TURN_NM))  # a whole number of turns
+
+
+def test_only_the_layers_of_the_same_material_count() -> None:
+    steady = _rate(4, [45.0, 72.0, 45.0, 72.0, 0.0, 0.0])
+    other_material_wild = _rate(4, [45.0, 5.0, 45.0, 500.0, 0.0, 0.0])
+
+    assert steady == other_material_wild
+
+
+def test_a_layer_that_was_itself_laid_by_rate_is_not_a_reference() -> None:
+    # It was laid blind from the current estimate: its ratio IS the estimate, and taking it back would be quoting oneself.
+    real = [45.0, 72.0, 30.0, 72.0, 0.0, 0.0]  # layer 2 came out very thin, but by rate
+    flags = np.array([False, False, True, False, False, False])
+
+    with_flags = _rate(4, real, flags=flags)
+    without = _rate(4, real)
+
+    assert with_flags == (True, pytest.approx(45.0))  # layer 0 alone: A = 50 / 45
+    assert without[1] == pytest.approx(50.0 / ((50.0 / 45.0 + 50.0 / 30.0) / 2))
+    assert with_flags[1] != pytest.approx(without[1])
+
+
+def test_a_flag_array_shorter_than_the_stack_flags_nothing_beyond_its_end() -> None:
+    real = [45.0, 72.0, 30.0, 72.0, 0.0, 0.0]
+
+    assert _rate(4, real, flags=np.array([False])) == _rate(4, real)
+    # Layer 0 is flagged, layer 2 lies beyond the end of the flags: it is a reference, and only it (A = 50 / 30).
+    assert _rate(4, real, flags=np.array([True])) == (True, pytest.approx(30.0))
+
+
+@pytest.mark.parametrize("i_layer", [0, 1])
+def test_a_layer_with_no_layer_of_its_material_before_it_has_no_rate(i_layer) -> None:
+    assert _rate(i_layer, [45.0, 72.0, 45.0, 72.0, 45.0, 72.0]) == (False, 0.0)
+
+
+def test_when_every_reference_was_laid_by_rate_or_has_no_thickness_there_is_no_rate() -> None:
+    assert _rate(4, [45.0, 72.0, 45.0, 72.0, 0.0, 0.0], flags=np.array([True, False, True, False, False, False])) == (False, 0.0)
+    assert _rate(4, [0.0, 72.0, 0.0, 72.0, 0.0, 0.0]) == (False, 0.0)  # nothing was deposited: no ratio to average
+
+
+def test_a_rate_layer_is_laid_for_at_least_one_turn() -> None:
+    nominal = NOMINAL_RATE.copy()
+    nominal[4] = 0.01  # a hundredth of a nanometre: zero turns, rounded up to one
+
+    assert _rate(4, [50.0, 80.0, 50.0, 80.0, 0.0, 0.0], nominal=nominal) == (True, pytest.approx(RATE_TURN_NM))
+
+
+def test_the_thickness_of_a_rate_layer_is_rounded_to_a_whole_turn() -> None:
+    nominal = NOMINAL_RATE.copy()
+    nominal[4] = 50.075  # 400.6 turns at A = 1: rounded to the nearest turn, not cut down
+
+    assert _rate(4, [50.0, 80.0, 50.0, 80.0, 0.0, 0.0], nominal=nominal) == (True, pytest.approx(401 * RATE_TURN_NM))

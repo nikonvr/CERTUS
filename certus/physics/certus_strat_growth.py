@@ -1319,6 +1319,40 @@ def _invert_thickness_from_probes(
     return error_raw
 
 
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def _rate_layer_thickness(i_layer, prev_thicknesses_sim, p_thick_nominal, prev_rate_flags):
+    """The thickness of a layer deposited by RATE, when the machine has a rate to go by: (True, thickness), else (False, 0.0).
+
+    The estimate averages d_nominal / d_real over the previous layers of the same material (same parity) that were
+    deposited under OPTICAL control (`prev_rate_flags` marks the layers laid by rate, which carry no measurement); a layer
+    is then laid for `round(d_nominal / (A * RATE_TURN_NM))` turns of the turntable, at least one. With no optical layer of
+    the material before it there is no rate: (False, 0.0), and the layer falls back on optical monitoring.
+    """
+    n_ref = 0
+    acc = 0.0
+    for j in range(i_layer - 2, -1, -2):        # same parity = same material
+        # 👤 2026-08-19: "the rate is only computed with the optically deposited
+        # layers". A Rate layer carries no measurement -- it was laid BLIND from the
+        # current estimate, so its ratio equals that estimate itself. Taking it back as
+        # a reference is quoting oneself.
+        if prev_rate_flags is not None and j < prev_rate_flags.shape[0] and prev_rate_flags[j]:
+            continue
+        d_real_j = prev_thicknesses_sim[j]
+        d_nom_j = p_thick_nominal[j]
+        if d_real_j > 1e-9 and d_nom_j > 1e-9:
+            acc += d_nom_j / d_real_j
+            n_ref += 1
+    if n_ref > 0:                                # Q2: otherwise fall through to POEM
+        a_est = acc / n_ref
+        d_nom_i = p_thick_nominal[i_layer]
+        if a_est > 1e-9 and d_nom_i > 0.0:
+            turns = np.round(d_nom_i / (a_est * RATE_TURN_NM))
+            if turns < 1.0:
+                turns = 1.0
+            return True, float(turns * RATE_TURN_NM)
+    return False, 0.0
+
+
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def simulate_growth_kernel(
     p_thick_nominal: np.ndarray,
@@ -1487,35 +1521,16 @@ def simulate_growth_kernel(
     # forget its own calibration. Cutting here would throw away the sqrt(n) averaging of
     # 17-... above and hand the Rate layers a worse estimate for no physical reason.
     if is_rate:
-        n_ref = 0
-        acc = 0.0
-        for j in range(i_layer - 2, -1, -2):        # same parity = same material
-            # 👤 2026-08-19: "the rate is only computed with the optically deposited
-            # layers". A Rate layer carries no measurement -- it was laid BLIND from the
-            # current estimate, so its ratio equals that estimate itself. Taking it back as
-            # a reference is quoting oneself.
-            if prev_rate_flags is not None and j < prev_rate_flags.shape[0] and prev_rate_flags[j]:
-                continue
-            d_real_j = prev_thicknesses_sim[j]
-            d_nom_j = p_thick_nominal[j]
-            if d_real_j > 1e-9 and d_nom_j > 1e-9:
-                acc += d_nom_j / d_real_j
-                n_ref += 1
-        if n_ref > 0:                                # Q2: otherwise fall through to POEM
-            a_est = acc / n_ref
-            d_nom_i = p_thick_nominal[i_layer]
-            if a_est > 1e-9 and d_nom_i > 0.0:
-                turns = np.round(d_nom_i / (a_est * RATE_TURN_NM))
-                if turns < 1.0:
-                    turns = 1.0
-                # dyn = -1.0 flags "NOT MONITORED": this layer has no observed swing at
-                # all, and averaging a 0.0 into the dynamics profile would report it as
-                # a catastrophically flat layer instead of an unwatched one.
-                # Both counting margins are sentinels, and that is not a shortcut: with
-                # no trigger, a Rate layer CANNOT suffer CRASH_LEVEL_UNREACHABLE nor
-                # CRASH_TP_MISCOUNT. It removes those two failure modes on itself --
-                # and hands the cost to the next layer, which loses its anchors (14-10).
-                return (float(turns * RATE_TURN_NM), -1.0, 1e18, 1e18, 1e18)
+        has_rate, rate_thickness = _rate_layer_thickness(i_layer, prev_thicknesses_sim, p_thick_nominal, prev_rate_flags)
+        if has_rate:
+            # dyn = -1.0 flags "NOT MONITORED": this layer has no observed swing at
+            # all, and averaging a 0.0 into the dynamics profile would report it as
+            # a catastrophically flat layer instead of an unwatched one.
+            # Both counting margins are sentinels, and that is not a shortcut: with
+            # no trigger, a Rate layer CANNOT suffer CRASH_LEVEL_UNREACHABLE nor
+            # CRASH_TP_MISCOUNT. It removes those two failure modes on itself --
+            # and hands the cost to the next layer, which loses its anchors (14-10).
+            return (rate_thickness, -1.0, 1e18, 1e18, 1e18)
 
     TWO_PI_VAL = TWO_PI
     n_H_r = n_H if n_H_real.real < 0.0 else n_H_real

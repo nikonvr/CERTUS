@@ -8,12 +8,11 @@ import os
 import math
 from scipy.optimize import minimize
 from threading import RLock
-from certus.core.certus_core import PI
+from certus.domain.constants import PI
 from threading import Event
 
 if TYPE_CHECKING:
-    from certus_physics.structures import Sample
-    from certus.core._certus_physics_impl import PGlobalConfig
+    from certus_physics.structures import PGlobalConfig, Sample
 
 
 # [MONOLITHIC BLOCK] PGLOBAL ALGORITHM

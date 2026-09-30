@@ -1,7 +1,7 @@
 import numpy as np
 from numba import njit, prange
 from certus.physics.certus_opt_tmm import compute_TMM_generic, compute_RT_from_matrix
-from certus.core.certus_core import TWO_PI
+from certus.domain.constants import TWO_PI
 from certus.physics.certus_inputs import require_finite, require_layers_below_overflow
 from certus.physics.certus_substrate_absorption import (
     DEFAULT_SUBSTRATE_THICKNESS_NM,

@@ -1,6 +1,6 @@
 import numpy as np
 from numba import njit, prange
-from certus.core.certus_core import TWO_PI
+from certus.domain.constants import TWO_PI
 from certus.physics.certus_opt_tmm import compute_RT_from_matrix
 from certus.physics.certus_inputs import check_incidence_angle, is_s_polarization, require_finite
 from certus.physics.certus_oblique_substrate import oblique_exit_admittance

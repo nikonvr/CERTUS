@@ -11,7 +11,7 @@ from certus.physics.certus_oblique_substrate import oblique_exit_admittance
 from certus.physics.certus_substrate_absorption import DEFAULT_SUBSTRATE_THICKNESS_NM, apply_plate_loss
 from numba import njit, prange
 import certus.physics.certus_tmm_core as tmm_core
-from certus.core.certus_core import TWO_PI
+from certus.domain.constants import TWO_PI
 from certus.physics.gradient_utils import compute_mse_vectorized, SMALL_EPSILON
 from .gradient_analytic import _compute_gradient_analytic_kernel
 

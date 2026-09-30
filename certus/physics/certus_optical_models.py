@@ -5,7 +5,7 @@ from scipy.interpolate import CubicSpline
 from numba import njit, prange
 from collections import OrderedDict
 from functools import lru_cache
-from certus.core.certus_core import PI
+from certus.domain.constants import PI
 
 
 # [MONOLITHIC BLOCK] OPTICAL MODELS

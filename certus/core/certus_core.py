@@ -33,6 +33,19 @@ from certus.core.version import (
     APP_VERSION as __version__,
     APP_SUITE_VERSION,
 )
+# The constants that the physics layer reads live in a leaf that imports nothing of CERTUS (certus/domain/constants.py):
+# re-exported here, as before, so that the code that imports them from the core keeps working.
+from certus.domain.constants import (
+    FROSTED_GLASS_CAUCHY_A,
+    FROSTED_GLASS_CAUCHY_B,
+    FROSTED_GLASS_N,
+    N_SUPERSTRATE,
+    PI,
+    TWO_PI,
+    WL_DECIMALS,
+    get_complex_dtype,
+    get_float_dtype,
+)
 from certus.core.certus_config import (
     ConfigManager,
     get_resource_path as config_get_resource_path,
@@ -687,11 +700,7 @@ SMALL_EPSILON: float = 1e-12
 
 HC_EV_NM: float = 1239.84193  # h*c in eV·nm
 
-PI: float = np.pi
-
-TWO_PI: float = 6.283185307179586
-
-N_SUPERSTRATE: float = 1.0  # Air
+# PI, TWO_PI, N_SUPERSTRATE: certus/domain/constants.py (imported at the top of this file)
 
 
 # --- Optical Index Limits ---
@@ -705,7 +714,7 @@ K_MAX_LIMIT: float = 8.0
 
 # --- Precision ---
 
-WL_DECIMALS: int = 6
+# WL_DECIMALS: certus/domain/constants.py (imported at the top of this file)
 
 
 # --- T/R normalization (T_substrate thresholds to avoid explosion 1/T) ---
@@ -758,24 +767,8 @@ def get_precision_config() -> bool:
     return False
 
 
-@lru_cache(maxsize=1)
-def get_float_dtype():
-    """Default float dtype. Double precision — see measurement above.
-
-    Cached for performance.
-    """
-
-    return np.float64
-
-
-@lru_cache(maxsize=1)
-def get_complex_dtype():
-    """Default complex dtype. Double precision — see measurement above.
-
-    Cached for performance.
-    """
-
-    return np.complex128
+# `get_float_dtype` and `get_complex_dtype` (double precision, per the measurement above) live in
+# certus/domain/constants.py, next to the constants that the physics layer reads; imported at the top of this file.
 
 
 # =============================================================================
@@ -898,11 +891,7 @@ CFG = GlobalConfig()
 
 # --- Frosted Glass (Infinite Substrate) ---
 
-FROSTED_GLASS_N: float = 1.52  # Average index
-
-FROSTED_GLASS_CAUCHY_A: float = 1.5046
-
-FROSTED_GLASS_CAUCHY_B: float = 4200.0  # nm²
+# FROSTED_GLASS_N, FROSTED_GLASS_CAUCHY_A, FROSTED_GLASS_CAUCHY_B: certus/domain/constants.py (imported at the top of this file)
 
 
 # --- Absorption Bands ---

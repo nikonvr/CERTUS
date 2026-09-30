@@ -7,7 +7,7 @@ Contains gradient computation for metallic (highly absorbing) layers.
 
 import numpy as np
 from numba import njit, prange
-from certus.core.certus_core import TWO_PI
+from certus.domain.constants import TWO_PI
 from certus.physics.certus_optical_models import (
     SplineBasisCache,
     get_nk_cauchy_simple,

@@ -10,7 +10,7 @@ from numba import njit, prange
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from certus.core.certus_core import PI, TWO_PI
+from certus.domain.constants import PI, TWO_PI
 import certus.physics.certus_tmm_core as tmm_core
 
 # Explicit imports for type annotations and helper functions

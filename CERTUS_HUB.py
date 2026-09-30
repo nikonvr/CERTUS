@@ -178,6 +178,7 @@ from PyQt6.QtWidgets import QComboBox
 from certus.core.certus_hub_config import HubAppCatalogItem, HUB_APP_CATALOG, RUN_MODULE_FLAG, hub_grid_columns
 from certus.ui.certus_hub_widgets import ApplicationCard, GroupedApplicationCard
 from certus.utils.certus_qsettings import certus_settings
+from certus.ui.mixins.certus_base_core_mixins import CertusDialogMixin
 
 
 #: Lines of a dead module's error output that the hub shows and logs. A traceback opens with a header and
@@ -222,7 +223,7 @@ def describe_module_stop(module_name: str, exit_code: int, crashed: bool, stderr
     return ModuleStop(headline, cause, "\n".join(lines[-STDERR_TAIL_LINES:]), crashed)
 
 
-class CertusHub(QMainWindow):
+class CertusHub(CertusDialogMixin, QMainWindow):
     @staticmethod
     def _build_hub_apps_catalog() -> list[HubAppCatalogItem]:
         """Return HUB application cards configuration.
@@ -834,6 +835,17 @@ class CertusHub(QMainWindow):
         box.setWindowModality(Qt.WindowModality.NonModal)
         box.show()
 
+    def _running_modules(self) -> list:
+        """The modules whose process is up. Registered is not running: `finished` may not have been handled yet."""
+        running = []
+        for process in self.active_processes:
+            try:
+                if process is not None and process.state() != QProcess.ProcessState.NotRunning:
+                    running.append(process)
+            except RuntimeError:  # the QProcess was deleted (deleteLater) but is still in the list
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+        return running
+
     def on_toggle_details(self, checked) -> None:
 
         self.log_container.setVisible(checked)
@@ -858,7 +870,18 @@ class CertusHub(QMainWindow):
             return
 
     def closeEvent(self, event) -> None:
-        """Stop child processes cleanly before the hub is destroyed."""
+        """Stop child processes cleanly before the hub is destroyed, after asking when any is running."""
+        running = len(self._running_modules())
+        if running and not self.confirm_destructive(
+            "Close the launcher?",
+            f"{running} module{' is' if running == 1 else 's are'} still running.",
+            detail=f"Closing the launcher stops {'it' if running == 1 else 'them'}: "
+            f"whatever is not saved in {'it' if running == 1 else 'them'} is lost.",
+            confirm_label="Close and stop",
+            cancel_label="Keep working",
+        ):
+            event.ignore()
+            return
         self._closing = True
 
         try:

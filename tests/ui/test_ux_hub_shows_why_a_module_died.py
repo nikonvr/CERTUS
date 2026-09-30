@@ -1,9 +1,10 @@
-"""The hub says why a module died (audit UX-06, plan S6.3).
+"""The hub says why a module died, and asks before it stops the ones that are running (audit UX-06, plan S6.3).
 
 `on_process_finished` ignored the exit codes 1, 15 and -1 as "the user closed it", and for any other code kept the
 FIRST 200 characters of the module's error output: the header of a traceback, never the error. An uncaught exception
 exits with code 1, so a module that failed to start left nothing at all. A native crash was worse:
-`errorOccurred(Crashed)` reached a handler that told the user "Could not start" of a module that had run.
+`errorOccurred(Crashed)` reached a handler that told the user "Could not start" of a module that had run. And closing
+the hub stopped every module after 1.5 s, without a question.
 
 The tests that matter run REAL child processes: what the fix depends on is what Qt reports for a real exit, and a
 double that returns what the author expects proves nothing about it.
@@ -285,7 +286,7 @@ def test_a_module_that_cannot_start_still_says_so(hub, dialogs, tmp_path, monkey
 
 
 # =============================================================================
-# Closing the hub stops the modules: that is not a crash
+# Closing the hub stops the modules: after asking
 # =============================================================================
 
 
@@ -298,11 +299,30 @@ def start_sleeping_module(hub, tmp_path: Path):
     return process
 
 
-def test_the_modules_the_hub_stops_on_purpose_are_not_reported_as_crashes(hub, dialogs, tmp_path) -> None:
+def test_declining_the_question_keeps_the_hub_and_its_modules(hub, tmp_path, monkeypatch) -> None:
     from PyQt6.QtCore import QProcess
     from PyQt6.QtGui import QCloseEvent
 
     process = start_sleeping_module(hub, tmp_path)
+    asked = []
+    monkeypatch.setattr(type(hub), "confirm_destructive", lambda self, *a, **k: asked.append((a, k)) or False, raising=False)
+
+    event = QCloseEvent()
+    hub.closeEvent(event)
+
+    assert asked, "the hub stopped a running module without asking"
+    assert "1 module is still running" in asked[0][0][1]
+    assert not event.isAccepted(), "the hub closed although the user said no"
+    assert process.state() == QProcess.ProcessState.Running, "the module was stopped although the user said no"
+    assert hub._closing is False, "a declined close must not leave the hub believing that it is closing"
+
+
+def test_accepting_the_question_stops_the_module_without_a_crash_message(hub, dialogs, tmp_path, monkeypatch) -> None:
+    from PyQt6.QtCore import QProcess
+    from PyQt6.QtGui import QCloseEvent
+
+    process = start_sleeping_module(hub, tmp_path)
+    monkeypatch.setattr(type(hub), "confirm_destructive", lambda self, *a, **k: True, raising=False)
 
     event = QCloseEvent()
     hub.closeEvent(event)
@@ -312,3 +332,23 @@ def test_the_modules_the_hub_stops_on_purpose_are_not_reported_as_crashes(hub, d
     assert process.state() == QProcess.ProcessState.NotRunning
     assert not boxes_of(hub), "stopping a module on purpose was reported as if it had crashed"
     assert not dialogs, f"closing the hub opened a dialog while it stopped its own modules: {dialogs}"
+
+
+def test_nothing_is_asked_when_nothing_is_running(hub, monkeypatch) -> None:
+    """A registered module is not a running one: `finished` may not have been handled yet."""
+    from PyQt6.QtCore import QProcess
+    from PyQt6.QtGui import QCloseEvent
+
+    class Finished:
+        def state(self):
+            return QProcess.ProcessState.NotRunning
+
+    hub.active_processes.append(Finished())
+    asked = []
+    monkeypatch.setattr(type(hub), "confirm_destructive", lambda self, *a, **k: asked.append(a) or False, raising=False)
+
+    event = QCloseEvent()
+    hub.closeEvent(event)
+
+    assert not asked, "the hub asked to close with nothing running"
+    assert event.isAccepted()

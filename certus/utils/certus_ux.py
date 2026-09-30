@@ -190,6 +190,86 @@ def _darken_color(hex_color: str, factor: float = 0.1) -> str:
     return f"#{r:02x}{g:02x}{b:02x}"
 
 
+def _focus_ring_css(primary: str, surface: str, r_sm: int, sp_sm: int, sp_lg: int) -> str:
+    """The focus rings of the premium sheet: buttons (step 3.6), then check boxes, radio buttons, tabs and sliders.
+
+    They used to sit in the f-string of `build_premium_overrides`, which had grown to 645 lines against a ledger ceiling
+    of 617 (`tests/architecture_debt.json`). Moved as they were: the sheet is byte-identical in both themes.
+    """
+    return f"""/* -- Focus ring on BUTTONS (step 3.6) ----------------------------------
+ * Measured 2026-09-06: before this block there was NOT ONE :focus rule on a
+ * button, in either QSS layer. A keyboard user could not see where focus was.
+ *
+ * THE RING COLOUR DIFFERS PER FAMILY, and that is not decoration -- no single
+ * colour clears 3:1 in both themes. Measured with certus_a11y.contrast_ratio:
+ *
+ *   default button   ring {{primary}} against SURFACE   5.00:1 light  6.98:1 dark
+ *   filled variants  ring {{surface}} against the fill  4.83:1 .. 9.29:1 both
+ *
+ * Two candidates were measured and REJECTED: a {{primary}} ring vanishes on a
+ * PRIMARY fill (1:1), and a {{text_main}} ring falls to 1.56:1 on SUCCESS in
+ * dark mode -- because dark-mode text is light and so are the dark-mode fills.
+ *
+ * On a filled button the ring reads as an inset gap biting into the fill; it is
+ * perceived against the fill, which is the pair measured above.
+ *
+ * 🔑 PADDING IS COMPENSATED so that taking focus NEVER reflows the layout. The
+ * border grows by 1px (default, which already had 1px) or 2px (variants, which
+ * declare `border: none`); the padding shrinks by exactly as much, so the outer
+ * size is unchanged. A focus ring that moved its neighbours would be worse than
+ * no focus ring at all.
+ *
+ * QToolButton is deliberately OUT OF SCOPE: this sheet sets it no padding, so
+ * there is nothing to compensate against, and the chrome ones already carry
+ * NoFocus. Giving them a ring is a separate change with its own measurement.
+ */
+QPushButton:focus {{
+    border: 2px solid {primary};
+    padding: {sp_sm - 1}px {sp_lg - 1}px;
+}}
+
+QPushButton#{OBJ.PRIMARY_BUTTON}:focus,
+QPushButton#{OBJ.DANGER_BUTTON}:focus,
+QPushButton#{OBJ.SUCCESS_BUTTON}:focus {{
+    border: 2px solid {surface};
+    padding: {sp_sm - 2}px {sp_lg - 2}px;
+}}
+
+QPushButton#{OBJ.FEATURED_BUTTON}:focus {{
+    border: 2px solid {surface};
+    padding: {sp_sm}px {sp_lg * 1.5 - 2}px;
+}}
+
+/* -- Focus ring on check boxes, radio buttons, tabs and sliders --------
+ * Measured 2026-09-30 by painting each control before and after `setFocus()`
+ * under both sheets: a check box, a radio button, the selected tab and a
+ * slider changed ZERO pixels. The buttons had their ring (step 3.6); the
+ * controls a keyboard user crosses just as often had none.
+ *
+ * The ring is {{primary}} in both themes: 5.00:1 on SURFACE in light, 6.98:1 in
+ * dark (step 3.6 measured the pair), above the 3:1 WCAG 1.4.11 asks of it.
+ *
+ * NOTHING MOVES, as for the buttons. A check box and a radio button take an
+ * `outline`, which Qt paints without touching the box model (sizeHint 247x18
+ * before and after). The selected tab already carries a 1px border (2px under
+ * it), transparent: the ring only gives it a colour. The slider handle is a
+ * fixed 16px box whose 1px border becomes 2px inside it. The tab rule is
+ * `:selected:focus` because only the current tab shows the bar's focus. */
+QCheckBox:focus,
+QRadioButton:focus {{
+    outline: 2px solid {primary};
+}}
+QTabBar::tab:selected:focus {{
+    border: 1px solid {primary};
+    border-bottom: 2px solid {primary};
+    border-radius: {r_sm}px;
+}}
+QSlider::handle:horizontal:focus {{
+    border: 2px solid {primary};
+}}
+"""
+
+
 def build_premium_overrides(_theme: str | None = None) -> str:
     """Build the premium QSS overrides string.
 
@@ -282,78 +362,7 @@ QTextEdit:focus {{
     selection-color: {primary_label};
 }}
 
-/* -- Focus ring on BUTTONS (step 3.6) ----------------------------------
- * Measured 2026-09-06: before this block there was NOT ONE :focus rule on a
- * button, in either QSS layer. A keyboard user could not see where focus was.
- *
- * THE RING COLOUR DIFFERS PER FAMILY, and that is not decoration -- no single
- * colour clears 3:1 in both themes. Measured with certus_a11y.contrast_ratio:
- *
- *   default button   ring {{primary}} against SURFACE   5.00:1 light  6.98:1 dark
- *   filled variants  ring {{surface}} against the fill  4.83:1 .. 9.29:1 both
- *
- * Two candidates were measured and REJECTED: a {{primary}} ring vanishes on a
- * PRIMARY fill (1:1), and a {{text_main}} ring falls to 1.56:1 on SUCCESS in
- * dark mode -- because dark-mode text is light and so are the dark-mode fills.
- *
- * On a filled button the ring reads as an inset gap biting into the fill; it is
- * perceived against the fill, which is the pair measured above.
- *
- * 🔑 PADDING IS COMPENSATED so that taking focus NEVER reflows the layout. The
- * border grows by 1px (default, which already had 1px) or 2px (variants, which
- * declare `border: none`); the padding shrinks by exactly as much, so the outer
- * size is unchanged. A focus ring that moved its neighbours would be worse than
- * no focus ring at all.
- *
- * QToolButton is deliberately OUT OF SCOPE: this sheet sets it no padding, so
- * there is nothing to compensate against, and the chrome ones already carry
- * NoFocus. Giving them a ring is a separate change with its own measurement.
- */
-QPushButton:focus {{
-    border: 2px solid {primary};
-    padding: {sp_sm - 1}px {sp_lg - 1}px;
-}}
-
-QPushButton#{OBJ.PRIMARY_BUTTON}:focus,
-QPushButton#{OBJ.DANGER_BUTTON}:focus,
-QPushButton#{OBJ.SUCCESS_BUTTON}:focus {{
-    border: 2px solid {surface};
-    padding: {sp_sm - 2}px {sp_lg - 2}px;
-}}
-
-QPushButton#{OBJ.FEATURED_BUTTON}:focus {{
-    border: 2px solid {surface};
-    padding: {sp_sm}px {sp_lg * 1.5 - 2}px;
-}}
-
-/* -- Focus ring on check boxes, radio buttons, tabs and sliders --------
- * Measured 2026-09-30 by painting each control before and after `setFocus()`
- * under both sheets: a check box, a radio button, the selected tab and a
- * slider changed ZERO pixels. The buttons had their ring (step 3.6); the
- * controls a keyboard user crosses just as often had none.
- *
- * The ring is {{primary}} in both themes: 5.00:1 on SURFACE in light, 6.98:1 in
- * dark (step 3.6 measured the pair), above the 3:1 WCAG 1.4.11 asks of it.
- *
- * NOTHING MOVES, as for the buttons. A check box and a radio button take an
- * `outline`, which Qt paints without touching the box model (sizeHint 247x18
- * before and after). The selected tab already carries a 1px border (2px under
- * it), transparent: the ring only gives it a colour. The slider handle is a
- * fixed 16px box whose 1px border becomes 2px inside it. The tab rule is
- * `:selected:focus` because only the current tab shows the bar's focus. */
-QCheckBox:focus,
-QRadioButton:focus {{
-    outline: 2px solid {primary};
-}}
-QTabBar::tab:selected:focus {{
-    border: 1px solid {primary};
-    border-bottom: 2px solid {primary};
-    border-radius: {r_sm}px;
-}}
-QSlider::handle:horizontal:focus {{
-    border: 2px solid {primary};
-}}
-
+{_focus_ring_css(primary, surface, r_sm, sp_sm, sp_lg)}
 /* -- Elevated card (opt-in via objectName="{OBJ.CARD}") --------------- */
 QFrame#{OBJ.CARD},
 QWidget#{OBJ.CARD} {{

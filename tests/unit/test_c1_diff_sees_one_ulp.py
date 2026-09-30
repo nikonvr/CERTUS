@@ -143,3 +143,23 @@ def test_one_ulp_planted_in_the_single_tmm_source_is_found_on_the_right_array(tr
     assert "selftest#000#0" in out  # R moved
     assert "selftest#000#1" not in out  # T did not
     assert " 2 ulp" in out or " 1 ulp" in out
+
+
+def test_cold_against_warm_runs_the_same_tree_twice_in_one_cache(trees, monkeypatch, capsys) -> None:
+    """Measured 2026-09-30: a kernel read back from the cache does not always return the bits of the one
+    compiled a moment ago (the gradient kernels, because of fastmath). The mode that measures it must share
+    the cache between its two runs, or it compares two cold runs and finds nothing."""
+    clean, _, _ = trees
+    caches = []
+    real_launch = c1.lancer
+
+    def spy(tree, output, names, threads, tmp, name):
+        caches.append(name)
+        return real_launch(tree, output, names, threads, tmp, name)
+
+    monkeypatch.setattr(c1, "lancer", spy)
+
+    assert c1.main([str(clean), "--froid-contre-chaud", "--corpus", "selftest"]) == 0
+
+    assert caches == ["commun", "commun"]  # one NUMBA_CACHE_DIR for both runs
+    assert "a froid" in capsys.readouterr().out

@@ -418,6 +418,29 @@ def lancer(arbre: Path, sortie: Path, noms: list[str], fils: int, tmp: Path, nom
     )  # fmt: skip
 
 
+def froid_contre_chaud(racine: Path, arbre: str, noms: list[str], fils: int = 4) -> tuple[dict, str, str, float]:
+    """Le MEME arbre deux fois, dans un cache commun : a froid (il compile et ecrit), puis a chaud (il relit).
+
+    La mesure du 2026-09-30 (3,5e-18 sur 89 tableaux de gradient) disait qu'un noyau relu du cache ne rend pas
+    toujours les bits d'un noyau compile a l'instant. Ici on la refait sur tout le corpus, par point d'entree.
+    """
+    debut = time.perf_counter()
+    with tempfile.TemporaryDirectory(prefix="c1_") as temp:
+        tmp = Path(temp)
+        dossier, nom, _sha = preparer(racine, arbre, tmp / "arbre")
+        donnees = {}
+        for cote in ("froid", "chaud"):
+            sortie = tmp / f"{cote}.npz"
+            p = lancer(dossier, sortie, noms, fils, tmp, "commun")  # meme NUMBA_CACHE_DIR les deux fois
+            texte, _ = p.communicate(timeout=1800)
+            if p.returncode != 0 or "OUVRIER_OK" not in texte:
+                raise RuntimeError(f"l'ouvrier {cote} a echoue (code {p.returncode}) :\n{texte[-1500:]}")
+            with np.load(sortie) as f:
+                donnees[cote] = ({k: f[k] for k in f.files}, json.loads(sortie.with_suffix(".json").read_text(encoding="utf-8"))["erreurs"])
+    par_entree = comparer(donnees["froid"][0], donnees["chaud"][0], donnees["froid"][1], donnees["chaud"][1])
+    return par_entree, f"{nom}, a froid", f"{nom}, a chaud", time.perf_counter() - debut
+
+
 def executer(racine: Path, base: str, tete: str, noms: list[str], fils: int = 4, *, cache: bool = True) -> tuple[dict, str, str, float]:
     """Joue le corpus sur la base et sur la tete, en parallele ; rend (points d'entree, nom base, nom tete, secondes)."""
     debut = time.perf_counter()
@@ -472,6 +495,10 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--corpus", default=",".join(CORPUS_PAR_DEFAUT), help=f"parmi {', '.join(CORPUS)}")
     p.add_argument("--fils", type=int, default=4, help="NUMBA_NUM_THREADS des deux cotes (defaut 4)")
     p.add_argument("--sans-cache", action="store_true", help="recalculer meme une base deja calculee")
+    p.add_argument(
+        "--froid-contre-chaud", action="store_true",
+        help="compare la base a elle-meme : compilee a froid, puis relue du cache (ignore --tete)",
+    )  # fmt: skip
     p.add_argument("--json", type=Path, help="ecrire le rapport, avec sa provenance (sans ecraser)")
     p.add_argument("--ouvrier", nargs=3, metavar=("ARBRE", "SORTIE", "CORPUS"), help=argparse.SUPPRESS)
     args = p.parse_args(argv)
@@ -486,7 +513,10 @@ def main(argv: list[str] | None = None) -> int:
     if inconnus:
         p.error(f"corpus inconnu : {inconnus} (connus : {list(CORPUS)})")
     try:
-        par_entree, nom_base, nom_tete, secondes = executer(ROOT, args.base, args.tete, noms, args.fils, cache=not args.sans_cache)
+        if args.froid_contre_chaud:
+            par_entree, nom_base, nom_tete, secondes = froid_contre_chaud(ROOT, args.base, noms, args.fils)
+        else:
+            par_entree, nom_base, nom_tete, secondes = executer(ROOT, args.base, args.tete, noms, args.fils, cache=not args.sans_cache)
     except (RuntimeError, subprocess.SubprocessError, OSError) as exc:
         print(f"C1 : le harnais a echoue : {exc}", file=sys.stderr)
         return 2

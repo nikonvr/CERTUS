@@ -480,6 +480,77 @@ def next_turning_point_after(Ts: np.ndarray, n_tot: int, i_start: int, hysteresi
     return n_tot - 1
 
 
+# ---- SUB-KERNELS OF `simulate_growth_kernel` ------------------------------------------------------------
+#
+# The pieces cut out of the kernel below are compiled with `inline="always"`: Numba pastes their body into the caller
+# before LLVM sees it, so the compiled kernel is the one the monolith produced. Without it the same code moves the
+# last bits. Measured on 2026-09-30 with `python scripts/c1_diff.py HEAD --corpus strat`, for this very cut: 3 of the
+# 1 200 growth results differ, by up to 16 ulp; other ways of cutting it moved 7 and 116 of them, by up to 14 592 ulp
+# (2.3e-12 relative). `fastmath` lets LLVM reassociate and fuse operations according to the SHAPE of the function, and
+# a call boundary changes that shape. Called from Python, a sub-kernel is an ordinary compiled function, which is how
+# the tests read it.
+#
+# Do not remove `inline="always"`, and do not split a fused loop, without running that command.
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def _stack_matrix(wl, n_even, n_odd, thicknesses, j_start, j_end):
+    """Characteristic matrix of layers `j_start` .. `j_end - 1`, as (m00, m01, m10, m11).
+
+    Even layers have index `n_even`, odd ones `n_odd`, and `thicknesses[j]` is the thickness of layer j. An empty range
+    is the identity. `simulate_growth_kernel` builds two of these: the stack of the witness up to the layer being
+    grown, real and nominal.
+    """
+    m00 = 1.0 + 0j
+    m01 = 0.0 + 0j
+    m10 = 0.0 + 0j
+    m11 = 1.0 + 0j
+    for j in range(j_start, j_end):
+        n_prev = n_even if j % 2 == 0 else n_odd
+        th_prev = thicknesses[j]
+        phi = TWO_PI / wl * n_prev * th_prev
+        cp, sp = (np.cos(phi), np.sin(phi))
+        son = sp / n_prev if abs(n_prev) > 1e-09 else 0.0
+        e01 = +1j * son
+        e10 = +1j * n_prev * sp
+        t00 = cp * m00 + e01 * m10
+        t01 = cp * m01 + e01 * m11
+        t10 = e10 * m00 + cp * m10
+        t11 = e10 * m01 + cp * m11
+        m00, m01, m10, m11 = (t00, t01, t10, t11)
+    return m00, m01, m10, m11
+
+
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def _stack_matrix_pair(wl, n_even_r, n_odd_r, th_r, n_even_n, n_odd_n, th_n, j_start, j_end):
+    """The real and the nominal characteristic matrices of layers `j_start` .. `j_end - 1`, in ONE loop.
+
+    Returns (R00, R01, R10, R11, Q00, Q01, Q10, Q11): R is the real stack (indices `n_even_r`, `n_odd_r`, thicknesses
+    `th_r`), Q the nominal one. The two are computed in the same loop on purpose: two loops moved the last bits (see
+    the note above).
+    """
+    R00, R01, R10, R11 = (1.0 + 0j, 0.0 + 0j, 0.0 + 0j, 1.0 + 0j)
+    Q00, Q01, Q10, Q11 = (1.0 + 0j, 0.0 + 0j, 0.0 + 0j, 1.0 + 0j)
+    for j in range(j_start, j_end):
+        n_p_r = n_even_r if j % 2 == 0 else n_odd_r
+        n_p_n = n_even_n if j % 2 == 0 else n_odd_n
+        ph1 = TWO_PI / wl * n_p_r * th_r[j]
+        c1, s1 = (np.cos(ph1), np.sin(ph1))
+        so1 = s1 / n_p_r if abs(n_p_r) > 1e-09 else 0.0
+        a0 = c1 * R00 + 1j * so1 * R10
+        a1 = c1 * R01 + 1j * so1 * R11
+        a2 = 1j * n_p_r * s1 * R00 + c1 * R10
+        a3 = 1j * n_p_r * s1 * R01 + c1 * R11
+        R00, R01, R10, R11 = (a0, a1, a2, a3)
+        ph2 = TWO_PI / wl * n_p_n * th_n[j]
+        c2, s2 = (np.cos(ph2), np.sin(ph2))
+        so2 = s2 / n_p_n if abs(n_p_n) > 1e-09 else 0.0
+        b0 = c2 * Q00 + 1j * so2 * Q10
+        b1 = c2 * Q01 + 1j * so2 * Q11
+        b2 = 1j * n_p_n * s2 * Q00 + c2 * Q10
+        b3 = 1j * n_p_n * s2 * Q01 + c2 * Q11
+        Q00, Q01, Q10, Q11 = (b0, b1, b2, b3)
+    return R00, R01, R10, R11, Q00, Q01, Q10, Q11
+
+
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def simulate_growth_kernel(
     p_thick_nominal: np.ndarray,
@@ -700,23 +771,9 @@ def simulate_growth_kernel(
     #
     # ⚠️ `witness_base_layer = 0` reproduces the single-witness behaviour exactly. That
     # is the invariant to test first.
-    M_before_00 = 1.0 + 0j
-    M_before_01 = 0.0 + 0j
-    M_before_10 = 0.0 + 0j
-    M_before_11 = 1.0 + 0j
-    for j in range(witness_base_layer, i_layer):
-        n_prev = n_H_r if j % 2 == 0 else n_L_r
-        th_prev = prev_thicknesses_sim[j]
-        phi = TWO_PI_VAL / wl * n_prev * th_prev
-        cp, sp = (np.cos(phi), np.sin(phi))
-        son = sp / n_prev if abs(n_prev) > 1e-09 else 0.0
-        m01 = +1j * son
-        m10 = +1j * n_prev * sp
-        t00 = cp * M_before_00 + m01 * M_before_10
-        t01 = cp * M_before_01 + m01 * M_before_11
-        t10 = m10 * M_before_00 + cp * M_before_10
-        t11 = m10 * M_before_01 + cp * M_before_11
-        M_before_00, M_before_01, M_before_10, M_before_11 = (t00, t01, t10, t11)
+    M_before_00, M_before_01, M_before_10, M_before_11 = _stack_matrix(
+        wl, n_H_r, n_L_r, prev_thicknesses_sim, witness_base_layer, i_layer
+    )
     # --- NOMINAL stack, accumulated in parallel with the real one ---------------------
     #
     # The trigger level of a layer is calculated BEFORE deposition, on the
@@ -729,23 +786,7 @@ def simulate_growth_kernel(
     # noise / P', WITHOUT any accumulated error term. At zero noise, the
     # thickness was nominal whatever the previous errors, so no compensation
     # could appear OR be measured.
-    M_nom_00 = 1.0 + 0j
-    M_nom_01 = 0.0 + 0j
-    M_nom_10 = 0.0 + 0j
-    M_nom_11 = 1.0 + 0j
-    for j in range(witness_base_layer, i_layer):
-        n_prev = n_H if j % 2 == 0 else n_L
-        th_prev_nom = p_thick_nominal[j]
-        phi = TWO_PI_VAL / wl * n_prev * th_prev_nom
-        cp, sp = (np.cos(phi), np.sin(phi))
-        son = sp / n_prev if abs(n_prev) > 1e-09 else 0.0
-        m01 = +1j * son
-        m10 = +1j * n_prev * sp
-        t00 = cp * M_nom_00 + m01 * M_nom_10
-        t01 = cp * M_nom_01 + m01 * M_nom_11
-        t10 = m10 * M_nom_00 + cp * M_nom_10
-        t11 = m10 * M_nom_01 + cp * M_nom_11
-        M_nom_00, M_nom_01, M_nom_10, M_nom_11 = (t00, t01, t10, t11)
+    M_nom_00, M_nom_01, M_nom_10, M_nom_11 = _stack_matrix(wl, n_H, n_L, p_thick_nominal, witness_base_layer, i_layer)
 
     nominal_th = p_thick_nominal[i_layer]
     n_current = n_H if i_layer % 2 == 0 else n_L
@@ -991,29 +1032,11 @@ def simulate_growth_kernel(
         n_tot = n_hist + npts_cur
         Ts_r = np.zeros(n_tot, dtype=np.float64)
         Ts_n = np.zeros(n_tot, dtype=np.float64)
-        R00, R01, R10, R11 = (1.0 + 0j, 0.0 + 0j, 0.0 + 0j, 1.0 + 0j)
-        Q00, Q01, Q10, Q11 = (1.0 + 0j, 0.0 + 0j, 0.0 + 0j, 1.0 + 0j)
         # Same cut as the two matrices above: the stack UNDER the replayed window is the
         # witness's, not the part's.
-        for j in range(witness_base_layer, j0):
-            n_p_r = n_H_r if j % 2 == 0 else n_L_r
-            n_p_n = n_H if j % 2 == 0 else n_L
-            ph1 = TWO_PI_VAL / wl * n_p_r * prev_thicknesses_sim[j]
-            c1, s1 = (np.cos(ph1), np.sin(ph1))
-            so1 = s1 / n_p_r if abs(n_p_r) > 1e-09 else 0.0
-            a0 = c1 * R00 + 1j * so1 * R10
-            a1 = c1 * R01 + 1j * so1 * R11
-            a2 = 1j * n_p_r * s1 * R00 + c1 * R10
-            a3 = 1j * n_p_r * s1 * R01 + c1 * R11
-            R00, R01, R10, R11 = (a0, a1, a2, a3)
-            ph2 = TWO_PI_VAL / wl * n_p_n * p_thick_nominal[j]
-            c2, s2 = (np.cos(ph2), np.sin(ph2))
-            so2 = s2 / n_p_n if abs(n_p_n) > 1e-09 else 0.0
-            b0 = c2 * Q00 + 1j * so2 * Q10
-            b1 = c2 * Q01 + 1j * so2 * Q11
-            b2 = 1j * n_p_n * s2 * Q00 + c2 * Q10
-            b3 = 1j * n_p_n * s2 * Q01 + c2 * Q11
-            Q00, Q01, Q10, Q11 = (b0, b1, b2, b3)
+        R00, R01, R10, R11, Q00, Q01, Q10, Q11 = _stack_matrix_pair(
+            wl, n_H_r, n_L_r, prev_thicknesses_sim, n_H, n_L, p_thick_nominal, witness_base_layer, j0
+        )
         idx = 0
         for j in range(j0, i_layer):
             n_j_r = n_H_r if j % 2 == 0 else n_L_r

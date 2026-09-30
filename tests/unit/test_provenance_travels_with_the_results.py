@@ -56,8 +56,8 @@ def test_the_provenance_says_which_code_and_which_environment() -> None:
     p = provenance()
 
     assert set(p) >= {
-        "certus_version", "git_commit", "git_dirty", "python", "numpy", "scipy", "numba", "platform", "machine",
-        "generated_at_utc",
+        "certus_version", "git_commit", "git_dirty", "python", "numpy", "scipy", "numba", "numba_cache_key",
+        "numba_cache_keyed", "platform", "machine", "generated_at_utc",
     }
     assert p["python"] == ".".join(map(str, sys.version_info[:3]))
     assert p["numpy"] not in ("", "unknown")
@@ -65,6 +65,32 @@ def test_the_provenance_says_which_code_and_which_environment() -> None:
     assert p["platform"]
     assert datetime.fromisoformat(p["generated_at_utc"]).tzinfo is not None
     json.dumps(p)  # a report can carry it
+
+
+def test_the_provenance_says_whether_numba_read_the_cache_of_these_sources(monkeypatch) -> None:
+    from types import SimpleNamespace
+
+    from certus.core.certus_core import numba_cache_key
+    from certus.core.certus_metrology import provenance
+
+    key = numba_cache_key()
+
+    # Numba imported: what it fixed at import counts, whatever the environment says now.
+    monkeypatch.setitem(sys.modules, "numba", SimpleNamespace(config=SimpleNamespace(CACHE_DIR=f"/tmp/CERTUS_Numba_Cache/{key}")))
+    assert provenance()["numba_cache_key"] == key
+    assert provenance()["numba_cache_keyed"] is True
+    monkeypatch.setitem(sys.modules, "numba", SimpleNamespace(config=SimpleNamespace(CACHE_DIR="")))
+    monkeypatch.setenv("NUMBA_CACHE_DIR", f"/tmp/CERTUS_Numba_Cache/{key}")  # set too late to count
+    assert provenance()["numba_cache_keyed"] is False  # next to the sources
+    monkeypatch.setitem(sys.modules, "numba", SimpleNamespace(config=SimpleNamespace(CACHE_DIR="/tmp/mine")))
+    assert provenance()["numba_cache_keyed"] is False  # a directory of the caller's choosing
+
+    # Numba not imported yet: the environment is what it will read.
+    monkeypatch.setitem(sys.modules, "numba", None)
+    monkeypatch.setenv("NUMBA_CACHE_DIR", f"/tmp/CERTUS_Numba_Cache/{key}")
+    assert provenance()["numba_cache_keyed"] is True
+    monkeypatch.delenv("NUMBA_CACHE_DIR")
+    assert provenance()["numba_cache_keyed"] is False
 
 
 def test_the_commit_is_the_one_of_the_checkout() -> None:

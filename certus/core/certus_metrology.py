@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import json
 import locale
+import os
 import platform
 import subprocess
 import sys
@@ -23,10 +24,12 @@ from pydantic import BaseModel, ConfigDict, Field
 
 try:
     from certus.core.certus_core import __version__ as CERTUS_VERSION
-    from certus.core.certus_core import get_materials_db_hash
+    from certus.core.certus_core import get_materials_db_hash, numba_cache_key
 except ImportError:
     CERTUS_VERSION = "unknown"
     def get_materials_db_hash():
+        return ""
+    def numba_cache_key():
         return ""
 
 
@@ -58,14 +61,28 @@ def _distribution_version(name: str) -> str:
         return "unknown"
 
 
+def _numba_cache_in_use() -> str:
+    """The directory Numba reads its cache from: what it fixed when it was imported, else what it will read."""
+    config = getattr(sys.modules.get("numba"), "config", None)
+    if config is not None:
+        return str(getattr(config, "CACHE_DIR", "") or "")
+    return os.environ.get("NUMBA_CACHE_DIR", "")
+
+
 def provenance() -> dict[str, Any]:
     """What produced a result, in a flat dictionary a report can carry: enough to run it again.
 
     Measured on 2026-09-30, none of the 1 451 JSON files of `reports/` carried the commit, the platform or the
     versions of Python, NumPy or Numba (3 named a version): a result nobody could tie to the code that gave it.
     Versions come from the installed distributions, without importing them.
+
+    `numba_cache_keyed` says whether the machine code that computed the result was compiled from these sources:
+    True when Numba read the directory that carries their key (`numba_cache_key`), False when it read its own
+    default next to the sources (where a caller keeps an OLD callee after an update) or a directory of the
+    caller's choosing, whose content nobody named.
     """
     commit, dirty = git_state()
+    key = numba_cache_key()
     return {
         "certus_version": CERTUS_VERSION,
         "git_commit": commit or None,
@@ -74,6 +91,8 @@ def provenance() -> dict[str, Any]:
         "numpy": _distribution_version("numpy"),
         "scipy": _distribution_version("scipy"),
         "numba": _distribution_version("numba"),
+        "numba_cache_key": key or None,
+        "numba_cache_keyed": bool(key) and Path(_numba_cache_in_use()).name == key,
         "platform": platform.platform(),
         "machine": platform.machine(),
         "generated_at_utc": datetime.now(UTC).isoformat(timespec="seconds"),

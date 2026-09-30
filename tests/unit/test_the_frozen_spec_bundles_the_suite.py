@@ -141,9 +141,8 @@ def test_the_data_the_code_reads_land_where_the_code_looks_for_them(frozen) -> N
         assert _landing_of(resource, datas) == resource, f"{resource} is not bundled at its own place"
 
 
-def _scripts_imported_when_the_package_starts() -> set[str]:
-    """`scripts/` files that a module of the suite imports at module level (so at start-up)."""
-    scripts = {p.stem for p in (ROOT / "scripts").glob("*.py")}
+def _module_level_imports(path: Path) -> set[str]:
+    """The top-level names that `path` imports when it starts (module level, under `try` and `if` too)."""
 
     def imports(body):
         for node in body:
@@ -155,14 +154,28 @@ def _scripts_imported_when_the_package_starts() -> set[str]:
                 for handler in getattr(node, "handlers", []):
                     yield from imports(handler.body)
 
-    found = set()
+    names: set[str] = set()
+    for node in imports(ast.parse(path.read_text(encoding="utf-8")).body):
+        if isinstance(node, ast.ImportFrom):
+            names |= {node.module.split(".")[0]} if node.level == 0 and node.module else set()
+        else:
+            names |= {alias.name.split(".")[0] for alias in node.names}
+    return names
+
+
+def _scripts_imported_when_the_package_starts() -> set[str]:
+    """`scripts/` files that a module of the suite imports at module level (so at start-up), and, since a
+    script that is bundled starts too, the ones THEY import in turn."""
+    scripts = {p.stem for p in (ROOT / "scripts").glob("*.py")}
+
+    found: set[str] = set()
     for path in [*(ROOT / "certus").rglob("*.py"), *(ROOT / "certus_physics").rglob("*.py"), *ROOT.glob("*.py")]:
-        for node in imports(ast.parse(path.read_text(encoding="utf-8")).body):
-            if isinstance(node, ast.ImportFrom):
-                names = [node.module] if node.level == 0 and node.module else []
-            else:
-                names = [alias.name for alias in node.names]
-            found |= {name.split(".")[0] for name in names} & scripts
+        found |= _module_level_imports(path) & scripts
+    pending = set(found)
+    while pending:
+        more = (_module_level_imports(ROOT / "scripts" / f"{pending.pop()}.py") & scripts) - found
+        found |= more
+        pending |= more
     return {f"scripts/{name}.py" for name in found}
 
 
@@ -172,6 +185,9 @@ def test_the_scripts_a_module_imports_at_start_up_are_bundled(frozen) -> None:
     imported = _scripts_imported_when_the_package_starts()
 
     assert "scripts/orchestre_multigraine.py" in imported, "the search for these imports is broken"
+    # `probe_blocs_vs_plantage` imports `_artefact` (its provenance) when it starts: a build that carried the
+    # first and not the second ended CERTUS_STRAT with "No module named '_artefact'" (release check, 2026-09-30).
+    assert "scripts/_artefact.py" in imported, "what a bundled script imports is not followed"
     for script in sorted(imported):
         assert _landing_of(script, frozen.analysis["datas"]) == script, f"{script} is imported at start-up"
 

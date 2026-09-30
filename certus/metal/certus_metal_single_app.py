@@ -1644,7 +1644,7 @@ class CertusMetalSingleApp(MetalBaseApp):
                 include_in_excel=False,
             ),
             ReportSection(
-                title="n & k Clues Plot",
+                title="n & k Indices Plot",
                 kind="image",
                 content=self.widget_to_b64(self.clues_plot),
                 include_in_excel=False,

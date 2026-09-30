@@ -1312,7 +1312,7 @@ class CertusStratLayoutMixin:
         self.widgets[f"{prefix}_material_file"].setMinimumContentsLength(12)
         self.widgets[f"{prefix}_material_file"].addItems(self.material_list)
         self.widgets[f"{prefix}_material_file"].setToolTip(
-            "Dispersive material file from the clues database (wavelength-dependent n & k).\n"
+            "Dispersive material file from the refractive-index database (wavelength-dependent n & k).\n"
             "Active only in 'Dispersive (File)' mode."
         )
 

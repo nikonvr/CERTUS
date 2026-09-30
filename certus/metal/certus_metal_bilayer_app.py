@@ -1564,7 +1564,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
                 include_in_excel=False,
             ),
             ReportSection(
-                "Clues Plot",
+                "Indices Plot",
                 kind="image",
                 content=self.widget_to_b64(getattr(self, "clues_plot", None)),
                 include_in_excel=False,

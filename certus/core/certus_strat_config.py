@@ -319,7 +319,7 @@ def _warn_backside_approximation_if_needed(
             logger.warning(
                 f"Backside approximation may be invalid at {wl:.1f} nm: "
                 f"{', '.join(msgs)}. "
-                f"Incoherent backside correction assumes real clues "
+                f"Incoherent backside correction assumes real indices "
                 f"(|k_layer| < {K_MAX_LAYER_BACKSIDE}, |k_sub| < {K_MAX_SUBSTRATE_BACKSIDE})."
             )
 

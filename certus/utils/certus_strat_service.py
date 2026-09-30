@@ -710,7 +710,7 @@ def calculate_dynamics_ULTIMATE(
         all_clues.append(clue)
     if missing_wls:
         raise KeyError(
-            f"Missing refractive clues for {len(missing_wls)} wavelength(s); "
+            f"Missing refractive indices for {len(missing_wls)} wavelength(s); "
             f"examples={missing_wls[:5]}"
         )
     n_H_arr = np.array([c["H"] for c in all_clues], dtype=np.complex128)

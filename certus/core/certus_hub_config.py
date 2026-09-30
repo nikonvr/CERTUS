@@ -87,7 +87,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
     {
         "title": "RE",
         "sub": "Reverse Engineering",
-        "desc": "Extraction of refractive clues from experimental curves using spline networks.",
+        "desc": "Extraction of refractive indices from experimental curves using spline networks.",
         "script": "CERTUS_RE.py",
         "icon": "🕵️",
         "color": HUB_BRAND_RE,

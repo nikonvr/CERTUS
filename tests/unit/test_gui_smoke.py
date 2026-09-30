@@ -133,7 +133,7 @@ def test_spline_report_builder_has_build_report() -> None:
     assert "auto" in params
 
 
-def test_spline_report_builder_no_result_returns_silently() -> None:
+def test_spline_report_builder_no_result_returns_silently(caplog) -> None:
     """build_report(auto=True) with result=None should return without error."""
     from certus.utils.certus_spline_report import SplineReportContext, SplineReportBuilder
 
@@ -148,8 +148,9 @@ def test_spline_report_builder_no_result_returns_silently() -> None:
         opt_config=None,
     )
     builder = SplineReportBuilder(ctx, logger=logging.getLogger("test"))
-    # Should not raise
-    builder.build_report(auto=True)
+    with caplog.at_level(logging.DEBUG, logger="test"):
+        assert builder.build_report(auto=True) is None
+    assert not caplog.records  # automatic export without a result: nothing to say
 
 
 def test_spline_report_builder_uses_ctx_spectrum_path() -> None:

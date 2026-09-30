@@ -106,8 +106,14 @@ def test_build_report_auto_without_result_noop(monkeypatch, tmp_path, minimal_ct
     monkeypatch.setattr(pd, "ExcelWriter", lambda path, *args, **kwargs: _DummyWriter(str(path), *args, **kwargs))
     monkeypatch.setattr(pd.DataFrame, "to_excel", lambda self, writer, *args, **kwargs: None)
     monkeypatch.setattr("certus.utils.certus_spline_report._get_script_dir", lambda: tmp_path)
-    builder = SplineReportBuilder(ctx, logger=_DummyLogger())
-    builder.build_report(auto_export=True)
+    logger = _DummyLogger()
+    builder = SplineReportBuilder(ctx, logger=logger)
+    assert builder.build_report(auto_export=True) is None
+    assert logger.records == []  # automatic export without a result: nothing to say
+    assert list(tmp_path.iterdir()) == []  # and nothing written
+    builder.build_report(auto_export=False)
+    assert logger.records == [("warning", ("event=export_excel status=skipped reason=no_result",), {})]  # by hand: it says why
+    assert list(tmp_path.iterdir()) == []
 
 
 def test_build_report_falls_back_to_df_lambda(monkeypatch, tmp_path, minimal_ctx):

@@ -76,7 +76,12 @@ def test_validate_payload_checks_material_coverage_fallback_to_wl() -> None:
         "nL_id": "nL",
         "nSub_id": "nSub"
     }
-    svc.validate_payload({"step": 0, "params": params}, materials_db=db)
+    validated = svc.validate_payload({"step": 0, "params": params}, materials_db=db)
+    assert validated["params"].nH_id == "nH"  # accepted and normalized: `wl` (400-700) covers 450-600
+    # The coverage comes from `wl` (no explicit bounds): a range beyond its end is refused, naming that end.
+    beyond = dict(params, wl_range=[800.0, 900.0], scan_wl_min=800.0, scan_wl_max=900.0)
+    with pytest.raises(ValueError, match=r"Data end 700\.0nm"):
+        svc.validate_payload({"step": 0, "params": beyond}, materials_db=db)
 
 
 # ---------------------------------------------------------------------------

@@ -389,7 +389,7 @@ def _njit_ir_global_mse_fused(
 class IRGlobalObjective:
     """Refinement objective for Phase 2 (>2500nm) using 13-parameter global model."""
 
-    def __init__(self, wls, target_T, target_R, n_sub, T_sub, R_sub, thickness, n_tlu_ref, config) -> None:
+    def __init__(self, wls: np.ndarray, target_T: np.ndarray, target_R: np.ndarray, n_sub: np.ndarray, T_sub: np.ndarray, R_sub: np.ndarray, thickness: float, n_tlu_ref: Any, config: Any) -> None:
 
         self.wls = wls.astype(np.float64)
 
@@ -503,7 +503,7 @@ class IRGlobalObjective:
 
         self._cache_version = 0
 
-        self._cache = None
+        self._cache: dict[str, Any] | None = None
 
     def invalidate_cache(self) -> None:
 
@@ -529,7 +529,7 @@ class IRGlobalObjective:
 
         return c
 
-    def _set_cached(self, p: np.ndarray, cost=None, grad=None, n=None, k=None) -> None:
+    def _set_cached(self, p: np.ndarray, cost: float | None = None, grad: np.ndarray | None = None, n: np.ndarray | None = None, k: np.ndarray | None = None) -> None:
 
         c = self._cache
 
@@ -557,7 +557,7 @@ class IRGlobalObjective:
 
         self._cache = c
 
-    def __call__(self, p) -> Any:
+    def __call__(self, p: np.ndarray) -> Any:
 
         cached = self._get_cached(p)
 
@@ -641,7 +641,7 @@ class IRGlobalObjective:
 
         return cost
 
-    def _compute_cost(self, n, k) -> Any:
+    def _compute_cost(self, n: np.ndarray, k: np.ndarray) -> Any:
 
         if self.is_frosted:
             R_c = calculate_reflection_array(self.wls, n, k, self.thickness, self.n_sub)
@@ -699,7 +699,7 @@ class IRGlobalObjective:
 
             return cost / total_w if total_w > 0 else 1e9
 
-    def gradient(self, p) -> Any:
+    def gradient(self, p: np.ndarray) -> Any:
 
         cached = self._get_cached(p)
 
@@ -772,7 +772,7 @@ class IRGlobalObjective:
 
         return grad_out
 
-def _phase23_cached_get(cache: dict[str, object] | None, x: np.ndarray) -> dict[str, object] | None:
+def _phase23_cached_get(cache: dict[str, Any] | None, x: np.ndarray) -> dict[str, Any] | None:
     """Shared cache access for Phase23 objective wrappers."""
     c = cache
     if c is None:
@@ -784,12 +784,12 @@ def _phase23_cached_get(cache: dict[str, object] | None, x: np.ndarray) -> dict[
     return c
 
 def _phase23_cached_set(
-    cache: dict[str, object] | None,
+    cache: dict[str, Any] | None,
     x: np.ndarray,
     *,
     cost: float | None = None,
     grad: np.ndarray | None = None,
-) -> dict[str, object]:
+) -> dict[str, Any]:
     """Shared cache write for Phase23 objective wrappers."""
     c = cache
     if c is None or c["x"].shape != x.shape or not np.array_equal(c["x"], x):
@@ -828,12 +828,12 @@ class Phase23SplineObjective:
 
         self._p_dummy_8 = np.zeros(8, dtype=np.float64)
 
-        self._cache = None
+        self._cache: dict[str, Any] | None = None
 
     def _get_cached(self, x: np.ndarray) -> Any:
         return _phase23_cached_get(self._cache, x)
 
-    def _set_cached(self, x: np.ndarray, cost=None, grad=None) -> None:
+    def _set_cached(self, x: np.ndarray, cost: float | None = None, grad: np.ndarray | None = None) -> None:
         self._cache = _phase23_cached_set(self._cache, x, cost=cost, grad=grad)
 
     def __call__(self, x: np.ndarray) -> float:
@@ -993,12 +993,12 @@ class Phase23Pass2SplineObjective:
 
         self._fd_eps = max(1e-7 * (wl_max_um - wl_min_um), 1e-8)
 
-        self._cache = None
+        self._cache: dict[str, Any] | None = None
 
     def _get_cached(self, x: np.ndarray) -> Any:
         return _phase23_cached_get(self._cache, x)
 
-    def _set_cached(self, x: np.ndarray, cost=None, grad=None) -> None:
+    def _set_cached(self, x: np.ndarray, cost: float | None = None, grad: np.ndarray | None = None) -> None:
         self._cache = _phase23_cached_set(self._cache, x, cost=cost, grad=grad)
 
     def _knot_lam_from_x(self, x: np.ndarray) -> np.ndarray:
@@ -1307,9 +1307,9 @@ class TLUObjective:
 
         self.best_value = np.inf
 
-        self.best_params = None
+        self.best_params: np.ndarray | None = None
 
-        self._cache = None
+        self._cache: dict[str, Any] | None = None
 
         # Eg (eV): if Eg << hv over part of the window, the TLU becomes inconsistent (wild n/k).
         # Lower bound = max photon on grid + small margin (sub-gap model usable across the full fit).
@@ -1469,7 +1469,7 @@ class TLUObjective:
 
         return c
 
-    def _set_cached(self, params: np.ndarray, cost=None, grad=None) -> None:
+    def _set_cached(self, params: np.ndarray, cost: float | None = None, grad: np.ndarray | None = None) -> None:
 
         c = self._cache
 

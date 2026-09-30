@@ -31,7 +31,7 @@ class REMseContext:
     dT_all_buf: np.ndarray = field(init=False)
     grad_raw_buf: np.ndarray = field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         nloc = len(self.wls)
         nv = self.n_layers_count
         self.yR_all_buf = np.zeros(nloc, dtype=np.float64)

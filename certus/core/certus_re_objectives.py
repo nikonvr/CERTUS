@@ -48,9 +48,10 @@ from certus.core.certus_re_worker_utils import (
     re_oblique_config_meta_from_wls,
     re_objective_wls_weight_log_trap,
 )
+from collections.abc import Callable
 
 
-def _contiguous_selector(idx: np.ndarray):
+def _contiguous_selector(idx: np.ndarray) -> np.ndarray | slice:
     """``slice`` equivalent to ``idx`` when it is a contiguous interval.
 
     Indexing a numpy array with an integer array COPIES the selection; a slice creates a view.
@@ -147,12 +148,12 @@ def _prepare_re_run_context_setup(self, _re_t0: float) -> tuple[Any, dict[str, A
     prep = {"mats": mats, "stack": stack, "ep0": ep0, "radius": radius, "oblique_tgts": oblique_tgts, "lambda_ref": lambda_ref, "n_layers_count": n_layers_count, "n_layers_nominal": n_layers_nominal, "n_sub_nominal": n_sub_nominal, "is_H": is_H, "is_L": is_L, "n_ref_nom_per_layer": n_ref_nom_per_layer, "_lref_arr": _lref_arr, "_p4_beam_knots_lam": _p4_beam_knots_lam, "oblique_config_meta": oblique_config_meta, "wt_spectral": wt_spectral, "re_env_s": re_env_s, "_re_env_on_wls": _re_env_on_wls, "_ap_gui": _ap_gui, "_re_state": _re_state, "wls_min": wls_min, "wls_max": wls_max, "wls": wls, "_RE_P_SETUP": _RE_P_SETUP, "_RE_P_P1": _RE_P_P1, "_re_pct_hi": _re_pct_hi, "_emit_re_prog": _emit_re_prog}
     return ctx, prep
 
-def _build_re_mse_grad_helper(self, ctx):
-    def _mse_grad_accumulate_ep(ep_arr: np.ndarray, wt: np.ndarray, want_grad: bool, correc: tuple, return_residuals: bool = False) -> tuple:
+def _build_re_mse_grad_helper(self, ctx: Any) -> Callable[..., Any]:
+    def _mse_grad_accumulate_ep(ep_arr: np.ndarray, wt: np.ndarray, want_grad: bool, correc: tuple, return_residuals: bool = False) -> tuple | None:
         return _global_compute_re_mse_gradient(self.cfg, ctx, ep_arr, wt, want_grad, correc, return_residuals=return_residuals)
     return _mse_grad_accumulate_ep
 
-def _build_qwot_helpers(self, ep0, n_ref_nom_per_layer, is_H, is_L, lambda_ref, re_env_s, _lref_arr, _alpha_slot):
+def _build_qwot_helpers(self, ep0: Any, n_ref_nom_per_layer: Any, is_H: Any, is_L: Any, lambda_ref: Any, re_env_s: Any, _lref_arr: Any, _alpha_slot: Any) -> dict[str, Callable[..., Any]]:
     _dz_qw_cfg = float(self.cfg.get("re_qwot_deadzone_abs", RE_RE_DEADZONE_QWOT_ABS))
     def _get_delta_qwot(ep: np.ndarray, correc: tuple) -> np.ndarray:
         _qc = correc if (correc and len(correc) > 0 and correc[0] in RE_SPLINE_CORREC_KINDS) else None
@@ -171,7 +172,7 @@ def _build_qwot_helpers(self, ep0, n_ref_nom_per_layer, is_H, is_L, lambda_ref, 
         return _re_rmse_combined_spectral_qwot(float(rmse_sp), float(rmse_qwot), float(_alpha_slot[0]))
     return {"_get_delta_qwot": _get_delta_qwot, "_compute_qwot_rmse": _compute_qwot_rmse, "_compute_qwot_rmse_raw": _compute_qwot_rmse_raw, "_rmse_combined": _rmse_combined}
 
-def _prepare_phase2_fd_settings(self, re_env_s: float):
+def _prepare_phase2_fd_settings(self, re_env_s: float) -> dict[str, Any]:
     _p2fd_spl = float(self.cfg.get("re_phase2_spline_fd_step", RE_PHASE2_SPLINE_FD_STEP))
     _p2fd_lam = float(self.cfg.get("re_phase2_lam2_fd_step", RE_PHASE2_LAM2_FD_STEP))
     _fd_1s = bool(self.cfg.get("re_phase2_onesided_spline_fd", RE_PHASE2_ONESIDED_SPLINE_FD))
@@ -195,7 +196,7 @@ def _prepare_phase2_fd_settings(self, re_env_s: float):
         "_env_knot": _env_knot,
     }
 
-def _prepare_phase2_bounds_and_topk(self, *, results, bind_p2_plan, emit_re_prog, re_p2_plan, nk, wls, re_use_staged_order, env_knot, bounds):
+def _prepare_phase2_bounds_and_topk(self, *, results: Any, bind_p2_plan: Any, emit_re_prog: Any, re_p2_plan: Any, nk: Any, wls: np.ndarray, re_use_staged_order: Any, env_knot: Any, bounds: Any) -> dict[str, Any]:
     results.sort(key=lambda r: r.get("rmse_combined", r["rmse"]))
     re_p2_plan[0] = bind_p2_plan(len(results))
     pl = re_p2_plan[0]
@@ -230,7 +231,7 @@ def _prepare_phase2_bounds_and_topk(self, *, results, bind_p2_plan, emit_re_prog
     bounds_p2 = list(bounds) + b_spline_H + b_spline_L + [b_lam]
     return {"_top_k": top_k, "bounds_p2": bounds_p2, "b_lam": b_lam, "bounds_spline": bounds_spline, "_act_h": act_h, "_act_l": act_l, "_merge_rtol": merge_rtol}
 
-def _build_p2_prefit_bounds(bounds_spref):
+def _build_p2_prefit_bounds(bounds_spref: Any) -> tuple[Any, Any]:
     lb = np.array([float(b[0]) for b in bounds_spref], dtype=np.float64)
     ub = np.array([float(b[1]) for b in bounds_spref], dtype=np.float64)
     return lb, ub
@@ -314,7 +315,7 @@ def _build_phase2b_output(
 
     if use_sub_c3:
         th_end = np.asarray(x_end[i_cu : i_cu + 3], dtype=np.float64).ravel()
-        cor_end = (
+        cor_end: tuple[Any, ...] = (
             "spline_sub3",
             dh_end,
             dl_end,
@@ -385,9 +386,9 @@ def _log_phase4_trf_summary(
         p4_trf_wall_s / max(int(res_p4.nfev), 1),
     )
 
-def _global_compute_re_mse_gradient(cfg, ctx, 
-    ep_local,
-    spectral_weights_wls,
+def _global_compute_re_mse_gradient(cfg: Any, ctx: Any, 
+    ep_local: np.ndarray,
+    spectral_weights_wls: np.ndarray,
     want_grad: bool,
     correc: tuple,
     return_residuals: bool = False,
@@ -424,7 +425,7 @@ def _global_compute_re_mse_gradient(cfg, ctx,
 
     # ``stats`` groups weights/user targets per bucket.
     # ``spectral_weights_local`` applies the Deltaln(lambda) quadrature on the points of the bucket.
-    def _accum_from_stats(y_vals, dy_vals, stats, spectral_weights_local) -> None:
+    def _accum_from_stats(y_vals: np.ndarray, dy_vals: np.ndarray, stats: Any, spectral_weights_local: np.ndarray) -> None:
         nonlocal total_err, total_w, grad_raw
         ws = float(stats["w_sum"])
         if ws <= 0.0:
@@ -486,14 +487,14 @@ def _global_compute_re_mse_gradient(cfg, ctx,
     return mse, grad
 
 def _global_evaluate_oblique_physics(
-    ctx,
+    ctx: Any,
     ep_use: np.ndarray,
     n_lay_full: np.ndarray,
     n_sub_full: np.ndarray,
     spectral_weights_wls: np.ndarray,
     want_grad: bool,
     return_residuals: bool,
-    _accum_from_stats,
+    _accum_from_stats: Callable[..., Any],
 ) -> None:
     for meta in ctx.oblique_config_meta:
         angle = float(meta["angle"])
@@ -617,9 +618,9 @@ def _global_evaluate_oblique_physics(
             _accum_from_stats(yR_all[sel], dR_all[sel, :], bucket["R"], spectral_weights_local)
             _accum_from_stats(yT_all[sel], dT_all[sel, :], bucket["T"], spectral_weights_local)
 
-def _global_add_regularization_residuals(cfg,
-    ctx,
-    ep_local,
+def _global_add_regularization_residuals(cfg: Any,
+    ctx: Any,
+    ep_local: np.ndarray,
     correc: tuple,
     want_grad: bool,
     res_list: list,

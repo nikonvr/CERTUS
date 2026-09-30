@@ -14,6 +14,7 @@ from certus.core.certus_core import (
     canonicalize_substrate_label,
     substrate_sellmeier_coeffs,
 )
+from collections.abc import Callable
 
 SELLMEIER_N_ACCEPT_LO = 1.05
 SELLMEIER_N_ACCEPT_HI = 6.5
@@ -188,7 +189,7 @@ def _sellmeier_param_reparam_helpers(
     return bounds_q, _p_from_q, _q_from_p, np.asarray([b[0] for b in bounds], dtype=np.float64), np.asarray([b[1] for b in bounds], dtype=np.float64)
 
 
-def _sellmeier_residual_factory(p_from_q, wl_fit_um: np.ndarray, n_fit: np.ndarray, w_fit_sell: np.ndarray, n_lo_acc: float, n_hi_acc: float):
+def _sellmeier_residual_factory(p_from_q: Callable[..., Any], wl_fit_um: np.ndarray, n_fit: np.ndarray, w_fit_sell: np.ndarray, n_lo_acc: float, n_hi_acc: float) -> tuple[Callable[..., Any], Callable[..., Any]]:
     def _residuals(p: np.ndarray, x_um: np.ndarray, y_n: np.ndarray, w_nm_inv: np.ndarray) -> np.ndarray:
         pred = sellmeier_2poles_const_eval(p, x_um)
         return (pred - y_n) * w_nm_inv * 1000.0
@@ -216,7 +217,7 @@ def _sellmeier_seed_from_compact_poly(
     wl_fit_nm: np.ndarray,
     n_vals: np.ndarray,
     mask: np.ndarray,
-    p_from_q,
+    p_from_q: Callable[..., Any],
     q_mid: np.ndarray,
     ls_bounds_q: tuple[list[float], list[float]],
 ) -> tuple[str, np.ndarray]:
@@ -262,7 +263,7 @@ def _sellmeier_seed_from_compact_poly(
     return seed_desc, q0
 
 
-def _sellmeier_multistart_candidates(q0: np.ndarray, _p_from_q, _q_from_p, bounds, ls_bounds_q, n_trials: int) -> list[np.ndarray]:
+def _sellmeier_multistart_candidates(q0: np.ndarray, _p_from_q: Callable[..., Any], _q_from_p: Callable[..., Any], bounds: Any, ls_bounds_q: Any, n_trials: int) -> list[np.ndarray]:
     rng = np.random.default_rng(12345)
     q_candidates: list[np.ndarray] = [np.asarray(q0, dtype=np.float64)]
     p_base = _p_from_q(q0)
@@ -282,7 +283,7 @@ def _sellmeier_multistart_candidates(q0: np.ndarray, _p_from_q, _q_from_p, bound
     return q_candidates
 
 
-def _sellmeier_polish_helpers(p_from_q, wl_fit_um: np.ndarray, n_fit: np.ndarray, w_fit_sell: np.ndarray, log_l1l2: bool):
+def _sellmeier_polish_helpers(p_from_q: Callable[..., Any], wl_fit_um: np.ndarray, n_fit: np.ndarray, w_fit_sell: np.ndarray, log_l1l2: bool) -> tuple[Callable[..., Any], ...]:
     def _residuals_polish_q(qv: np.ndarray) -> np.ndarray:
         pv = p_from_q(qv)
         r = _sellmeier_residual_factory(p_from_q, wl_fit_um, n_fit, w_fit_sell, -np.inf, np.inf)[0](pv, wl_fit_um, n_fit, w_fit_sell)
@@ -457,7 +458,7 @@ def _resolve_sellmeier_settings(
     """Normalize UI Sellmeier settings into a single robust config tuple."""
 
     if auto_enabled:
-        timeout_cfg = 8.0
+        timeout_cfg: float | None = 8.0
         de_maxiter = 300
         ls_max_nfev = 3000
     else:
@@ -538,7 +539,7 @@ def _fit_model_sellmeier3poles(
     n_fit: np.ndarray,
     wl_fit_nm: np.ndarray,
     wl_fit_um: np.ndarray,
-    progress_cb,
+    progress_cb: Callable[..., Any] | None,
     sellmeier_timeout_s: float | None,
     sellmeier_de_maxiter: int,
     sellmeier_de_popsize: int,
@@ -675,7 +676,7 @@ def _fit_model_sellmeier3poles(
 
             for _ in range(n_trials - 1):
                 jit = rng.uniform(-0.15, 0.15, size=q0.shape)
-                jit[6] = float(rng.uniform(-0.5, 0.5))
+                jit[6] = float(rng.uniform(-0.5, 0.5))  # type: ignore[index]
                 qj = np.asarray(q0 + jit, dtype=np.float64)
                 qj = np.clip(qj, ls_bounds_q[0], ls_bounds_q[1])
                 q_candidates.append(qj)

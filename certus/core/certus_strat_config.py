@@ -133,7 +133,7 @@ def _init_stats_queue() -> Any:
 
     return ctx.stats_queue
 
-def _worker_init(stats_queue, live_queue=None) -> None:
+def _worker_init(stats_queue: Any, live_queue: Any = None) -> None:
     """Initialize worker with queues via StratContext."""
 
     ctx = StratContext(stats_queue=stats_queue, live_queue=live_queue)
@@ -165,7 +165,7 @@ def _flush_sp_stats() -> None:
         ctx.flush_stats()
 
 def _prepare_precompute_wavelength_grid(
-    params: dict[str, Any], p_thick_nominal: list[float], logger
+    params: dict[str, Any], p_thick_nominal: list[float], logger: logging.Logger
 ) -> tuple[np.ndarray, int]:
 
     l0 = float(params["l0"])
@@ -215,7 +215,7 @@ def _prepare_precompute_wavelength_grid(
     return all_wls, num_layers
 
 def _resolve_clues_at_wavelength(
-    params: dict[str, Any], wl: float, db_instance: Any, logger
+    params: dict[str, Any], wl: float, db_instance: Any, logger: logging.Logger
 ) -> dict[str, complex | float]:
 
     try:
@@ -257,7 +257,7 @@ def _resolve_clues_at_wavelength(
         return {"H": n_h_fb, "L": n_l_fb, "substrate": n_sub_fb}
 
 def _build_clues_at_wavelengths(
-    params: dict[str, Any], all_wls: np.ndarray, logger
+    params: dict[str, Any], all_wls: np.ndarray, logger: logging.Logger
 ) -> dict[float, dict[str, complex | float]]:
 
     db_instance = params.get("materials_db_instance") or params.get("materials_db")
@@ -280,7 +280,7 @@ def _build_clues_at_wavelengths(
     return clues_at_wl
 
 def _warn_backside_approximation_if_needed(
-    clues_at_wl: dict[float, dict[str, complex | float]], all_wls: np.ndarray, logger
+    clues_at_wl: dict[float, dict[str, complex | float]], all_wls: np.ndarray, logger: logging.Logger
 ) -> None:
 
     idx_dict = _IdxWrapper(clues_at_wl)
@@ -332,7 +332,7 @@ def _build_nominal_matrix_cache_from_clues(
     all_wls: np.ndarray,
     p_thick_nominal: list[float],
     num_layers: int,
-    logger,
+    logger: logging.Logger,
 ) -> np.ndarray:
 
     all_wls_f64 = all_wls.astype(np.float64)
@@ -348,7 +348,7 @@ def _build_nominal_matrix_cache_from_clues(
     return nominal_matrix_cache
 
 def precompute_clues_and_matrices(
-    params: dict[str, Any], p_thick_nominal: list[float], logger
+    params: dict[str, Any], p_thick_nominal: list[float], logger: logging.Logger
 ) -> tuple[dict[float, dict[str, complex]], np.ndarray, np.ndarray]:
     """Build the wavelength-resolved index dictionary and the cumulative TMM matrix cache.
 

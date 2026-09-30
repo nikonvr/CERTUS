@@ -7,11 +7,12 @@ import unicodedata
 
 import numpy as np
 import pandas as pd
+from typing import Any
 
 
 
 
-def norm_header(raw) -> str:
+def norm_header(raw: Any) -> str:
     s = str(raw).strip().lower()
     s = "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn")
     s = s.replace("œ", "oe").replace("æ", "ae")
@@ -69,7 +70,7 @@ _RE_SUBSTRATE_INDEX_INCLUDE = re.compile(
 )
 
 
-def is_bare_substrate_column(name) -> bool:
+def is_bare_substrate_column(name: Any) -> bool:
     s0 = norm_header(name)
     if not s0:
         return False

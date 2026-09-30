@@ -39,6 +39,8 @@ from typing import Any
 import numpy as np
 
 from certus.core.certus_logging import get_logger
+from collections.abc import Iterator
+import logging
 
 # Enable performance logging via environment variable
 ENABLE_PERF_LOGGING = os.environ.get("CERTUS_PERF_LOG", "").strip().lower() in ("1", "true", "yes", "on")
@@ -119,30 +121,30 @@ class PerformanceMonitor:
     Thread-safe for concurrent measurements.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._metrics: dict[str, OperationMetrics] = defaultdict(lambda: OperationMetrics(operation=""))
         self._enabled = ENABLE_PERF_LOGGING
-        self._logger = None
+        self._logger: logging.Logger | None = None
 
     @property
     def enabled(self) -> bool:
         return self._enabled
 
-    def enable(self):
+    def enable(self) -> None:
         """Enable performance monitoring."""
         self._enabled = True
 
-    def disable(self):
+    def disable(self) -> None:
         """Disable performance monitoring."""
         self._enabled = False
 
-    def _get_logger(self):
+    def _get_logger(self) -> logging.Logger:
         if self._logger is None:
             self._logger = get_logger()
         return self._logger
 
     @contextmanager
-    def measure(self, operation: str):
+    def measure(self, operation: str) -> Iterator[None]:
         """
         Context manager for measuring operation duration.
 
@@ -164,7 +166,7 @@ class PerformanceMonitor:
             elapsed = time.perf_counter() - start
             self.record(operation, elapsed)
 
-    def record(self, operation: str, elapsed: float):
+    def record(self, operation: str, elapsed: float) -> None:
         """
         Record a timing measurement.
 
@@ -224,7 +226,7 @@ class PerformanceMonitor:
             },
         }
 
-    def reset(self):
+    def reset(self) -> None:
         """Clear all collected metrics."""
         self._metrics.clear()
 
@@ -233,7 +235,7 @@ class PerformanceMonitor:
 perf_monitor = PerformanceMonitor()
 
 
-def log_perf(func: Callable | None = None, *, operation: str | None = None, threshold: float | None = None):
+def log_perf(func: Callable | None = None, *, operation: str | None = None, threshold: float | None = None) -> Callable[..., Any]:
     """
     Decorator for automatic performance logging.
 
@@ -257,7 +259,7 @@ def log_perf(func: Callable | None = None, *, operation: str | None = None, thre
         log_threshold = threshold if threshold is not None else PERF_LOG_THRESHOLD
 
         @functools.wraps(f)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             if not perf_monitor.enabled:
                 return f(*args, **kwargs)
 

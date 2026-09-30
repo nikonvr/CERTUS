@@ -35,7 +35,7 @@ class LazyModule:
     when they are actually needed.
     """
 
-    def __init__(self, module_name: str, import_func: Callable | None = None):
+    def __init__(self, module_name: str, import_func: Callable | None = None) -> None:
         """
         Args:
             module_name: Fully qualified module name (e.g., 'scipy.optimize')
@@ -79,7 +79,7 @@ class LazyModule:
         module = self._load()
         return module(*args, **kwargs)
 
-    def __dir__(self):
+    def __dir__(self) -> list[str]:
         """Support dir() for introspection."""
         module = self._load()
         return dir(module)
@@ -234,7 +234,7 @@ def is_available(module_name: str) -> bool:
 
 
 # Cache availability results
-_availability_cache = {}
+_availability_cache: dict[str, bool] = {}
 
 
 def check_scipy_available() -> bool:

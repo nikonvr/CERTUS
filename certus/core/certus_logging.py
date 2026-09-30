@@ -10,6 +10,7 @@ from pathlib import Path
 
 
 from certus.utils.certus_logging import attach_jsonl_handler
+from types import TracebackType
 
 MAX_LOG_FILE_SIZE_BYTES = 10 * 1024 * 1024
 MAX_LOG_BACKUP_FILES = 3
@@ -34,7 +35,7 @@ def _supports_utf8() -> bool:
 
 
 class CertusConsoleFormatter(logging.Formatter):
-    def __init__(self, use_color: bool = True):
+    def __init__(self, use_color: bool = True) -> None:
         super().__init__(datefmt="%Y-%m-%d %H:%M:%S")
         self.use_color = use_color
         self.use_unicode = _supports_utf8()
@@ -118,7 +119,7 @@ def get_logger() -> logging.Logger:
     return logger if logger.handlers else setup_logging()
 
 
-def handle_exception(exc_type: type[BaseException], exc_value: BaseException, exc_traceback: object) -> None:
+def handle_exception(exc_type: type[BaseException], exc_value: BaseException, exc_traceback: TracebackType | None) -> None:
     if issubclass(exc_type, KeyboardInterrupt):
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
         return

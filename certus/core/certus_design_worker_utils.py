@@ -20,6 +20,12 @@ from certus_physics import PGlobalConfig, PGlobalOptimizer, prepare_targets_vect
 from certus.physics.certus_inputs import is_s_polarization
 
 import numpy as np
+from collections.abc import Callable
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from threading import Event
+    from certus.physics.certus_optimizers import PGlobalOptimizer, Sample
 
 
 def optim_calc_oblique_selected(
@@ -34,10 +40,10 @@ def optim_calc_oblique_selected(
     has_back_stack: bool,
     d_back: np.ndarray,
     n_back_T: np.ndarray,
-    calc_spectrum_full_oblique_exact,
-    calc_spectrum_oblique_backside_vectorized,
-    calc_spectrum_oblique_vectorized,
-):
+    calc_spectrum_full_oblique_exact: Any,
+    calc_spectrum_oblique_backside_vectorized: Any,
+    calc_spectrum_oblique_vectorized: Any,
+) -> tuple[np.ndarray, ...]:
     """Selects the oblique kernel (front-only, bare backside, backside with coating)."""
 
     if has_back_calc and has_back_stack:
@@ -563,13 +569,13 @@ def prepare_pglobal_inputs_from_state(
 
 def build_pglobal_optimizer(
     *,
-    objective_wrapper,
-    bounds,
-    stop_event,
-    pg_conf,
-    x0_start,
-    gradient_func,
-):
+    objective_wrapper: Callable[..., Any],
+    bounds: np.ndarray,
+    stop_event: Event | None,
+    pg_conf: Any,
+    x0_start: np.ndarray | None,
+    gradient_func: Callable[..., Any] | None,
+) -> PGlobalOptimizer:
     """Instantiate a PGlobalOptimizer with the standard CERTUS wiring."""
     return PGlobalOptimizer(
         objective_wrapper,
@@ -610,20 +616,20 @@ def prepare_pglobal_optimizer_runtime(
 def run_pglobal_restart_loop(
     *,
     mode: str,
-    optimizer,
-    objective_wrapper,
-    bounds,
-    pg_conf,
-    gradient_func_to_use,
+    optimizer: Any,
+    objective_wrapper: Callable[..., Any],
+    bounds: np.ndarray,
+    pg_conf: Any,
+    gradient_func_to_use: Callable[..., Any] | None,
     max_iter_run: int,
-    callback,
+    callback: Callable[..., Any] | None,
     opt_start_time: float,
-    stop_event,
-    progress_emit,
+    stop_event: Event,
+    progress_emit: Callable[..., Any],
     cfg: dict[str, Any],
-    callback_counter_getter,
-    set_optimizer,
-):
+    callback_counter_getter: Any,
+    set_optimizer: Any,
+) -> Sample | None:
     """Run the auto-restart loop and return the best sample found."""
     best_sample_overall = None
     restarts = 3 if mode == "global" else 1
@@ -692,26 +698,26 @@ def run_pglobal_restart_loop(
 
 def run_coord_descent_5cycles(
     *,
-    ep_current,
-    best_cost,
-    var_idx,
-    oblique_mode,
-    compute_oblique_error,
-    compute_oblique_error_and_grad_analytic,
-    n_layers_T,
-    n_sub,
-    wls,
-    tgt_vals,
-    tgt_weights,
-    has_back_calc,
-    n_back_T,
-    d_back,
+    ep_current: Any,
+    best_cost: Any,
+    var_idx: Any,
+    oblique_mode: Any,
+    compute_oblique_error: Any,
+    compute_oblique_error_and_grad_analytic: Any,
+    n_layers_T: Any,
+    n_sub: np.ndarray,
+    wls: np.ndarray,
+    tgt_vals: Any,
+    tgt_weights: Any,
+    has_back_calc: Any,
+    n_back_T: Any,
+    d_back: Any,
     cfg: dict[str, Any],
-    evaluate_thicknesses,
-    get_gradient_analytic,
-    progress_emit,
+    evaluate_thicknesses: Any,
+    get_gradient_analytic: Any,
+    progress_emit: Callable[..., Any],
     best_rmse_seen: float,
-):
+) -> tuple[np.ndarray, float, float]:
     """Run the final 5-cycle refinement and return updated state."""
     use_gradient = True
     cycle_no_gain = 0
@@ -856,24 +862,24 @@ def run_coord_descent_5cycles(
 
 def maybe_upgrade_grid_tikhonravov(
     *,
-    ep_current,
-    mats,
-    stack,
-    tgts,
-    oblique_mode,
-    oblique_tgts,
-    wls,
-    float_dtype,
-    complex_dtype,
-    has_back_stack,
-    stack_back,
-    ep_back,
-    n_sub,
-    n_layers_T,
-    n_back_T,
-    tgt_vals,
-    tgt_weights,
-):
+    ep_current: Any,
+    mats: Any,
+    stack: Any,
+    tgts: Any,
+    oblique_mode: Any,
+    oblique_tgts: Any,
+    wls: np.ndarray,
+    float_dtype: Any,
+    complex_dtype: Any,
+    has_back_stack: Any,
+    stack_back: Any,
+    ep_back: Any,
+    n_sub: np.ndarray,
+    n_layers_T: Any,
+    n_back_T: Any,
+    tgt_vals: Any,
+    tgt_weights: Any,
+) -> tuple[Any, ...]:
     """Optionally densify the wavelength grid before final refinement."""
     try:
         lambda_min = min(t.lmin for t in tgts if t.valid()) if not oblique_mode else min(t.lmin for t in oblique_tgts if t.valid())
@@ -952,7 +958,7 @@ def build_needle_scan_mask(
     return needle_mat_names, scan_mask
 
 
-def stop_qt_worker_thread_safely(thread, worker=None, *, timeout_ms: int = 2000, logger: Any | None = None) -> bool:
+def stop_qt_worker_thread_safely(thread: Any, worker: Any = None, *, timeout_ms: int = 2000, logger: Any | None = None) -> bool:
     """Request a cooperative stop on a Qt worker thread without unsafe termination.
 
     The helper is intentionally defensive and testable with simple dummy objects.

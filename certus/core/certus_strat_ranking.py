@@ -44,6 +44,7 @@ from certus.utils.certus_strat_context import (
     _blocks_signature,
     _extract_rmse_p95_for_noise,
 )
+from collections.abc import Callable
 
 
 
@@ -63,9 +64,9 @@ def _solution_wls(sol: dict) -> set:
 def _couverture_wl_groupings(
     cost_map: dict[int, dict[float, float]],
     solutions: list[dict],
-    appel_dp,
+    appel_dp: Callable[..., Any],
     budget: int,
-    logger,
+    logger: logging.Logger,
     stats: dict | None = None,
 ) -> list[dict]:
     """Groupings that USE the admissible wavelengths the k-best never selected.
@@ -182,7 +183,7 @@ def _couverture_wl_groupings(
     return ajoutes
 
 
-def _convert_solution_to_strategy(sol, num_layers, n_blocks, origin_tag, s_id) -> dict:
+def _convert_solution_to_strategy(sol: dict[str, Any], num_layers: int, n_blocks: int, origin_tag: str, s_id: Any) -> dict:
     blocks_info = sol.get("blocks_info", [])
     blocks_struct = []
     for start, end, wl in blocks_info:
@@ -298,7 +299,7 @@ def _find_k_best_groupings_dp_sequential(
     if final_count == 0:
         return []
 
-    solutions = []
+    solutions: list[dict[str, Any]] = []
     for t in range(final_count):
         total_cost = dp_costs[n_blocks, num_layers, t]
         blocks_info = []
@@ -383,7 +384,7 @@ def mine_strategies_for_block_count(
     strategy_id_base = n_blocks * 1000
     LIMIT_CANDIDATES = candidate_limit
 
-    def apply_nucleation_constraint(cost_map_in) -> Any:
+    def apply_nucleation_constraint(cost_map_in: dict[Any, Any]) -> Any:
         if not nucleation_wl or nucleation_size <= 0:
             return cost_map_in
         n_wl = float(nucleation_wl)
@@ -466,7 +467,7 @@ def mine_strategies_for_block_count(
         f"Mining: n_blocks={n_blocks}, CostMapThick Size={len(cost_map_thick)}, CostMapSq Size={len(cost_map_sq)}"
     )
 
-    def run_mining(cost_map, origin_name, offset_id, apply_sym_post=False) -> Any:
+    def run_mining(cost_map: dict[Any, Any], origin_name: str, offset_id: int, apply_sym_post: bool = False) -> Any:
         logger = log
         logger.debug(f"[DEBUG MINING] {origin_name}: Starting DP with {len(cost_map)} layers, n_blocks={n_blocks}")
         
@@ -479,7 +480,7 @@ def mine_strategies_for_block_count(
         # 🔒 The DP settings are gathered HERE and nowhere else: the coverage pass
         # calls it again under constraint, and two lists of fourteen arguments that must
         # stay identical would be a scheduled divergence.
-        _dp_reglages = dict(
+        _dp_reglages: dict[str, Any] = dict(
             timeout=30.0,
             force_monolayer=force_monolayer,
             nucleation_wl=nucleation_wl,
@@ -494,7 +495,7 @@ def mine_strategies_for_block_count(
             min_wl_sep_nm=float(min_wl_sep_nm),
         )
 
-        def _appel_dp(carte, k):
+        def _appel_dp(carte: dict[Any, Any], k: int) -> Any:
             return _find_k_best_groupings_dp_sequential(
                 carte, n_blocks, num_layers, top_k=k, **_dp_reglages
             )
@@ -763,7 +764,7 @@ def _apply_strategy_ranking(
             crash_rate = float(item.get("crash_rate", 1.0))
             cl = item.get("critical_layer") or {}
             margin_val = float(cl.get("margin_in_A", item.get("critical_margin", 0.0)) or 0.0)
-            primary_key = rank_key_seel_yield_margin(seel_nm, crash_rate, margin_val)
+            primary_key: tuple[float, ...] = rank_key_seel_yield_margin(seel_nm, crash_rate, margin_val)
         else:
             primary_key = (float(item.get("robustness_score", np.inf)),)
 

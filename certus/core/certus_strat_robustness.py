@@ -51,7 +51,7 @@ from certus.core.certus_core import (
 
 from certus.utils.certus_exclusions import filter_params_for_gui
 
-from certus.core.certus_strat_config import (
+from certus.core.certus_strat_config import (  # type: ignore[attr-defined]
     APP_CONTEXT,
     RobustnessContext,
     SYM_DEFAULT_EXTREMA_WINDOW_OT,
@@ -97,14 +97,14 @@ class _IdxWrapper:
 
     __slots__ = ("_is_dict", "obj")
 
-    def __init__(self, obj) -> None:
+    def __init__(self, obj: Any) -> None:
         self.obj = obj
         self._is_dict = hasattr(obj, "get")
 
-    def __getitem__(self, k) -> Any:
+    def __getitem__(self, k: Any) -> Any:
         return self.obj.get(k) if self._is_dict else self.obj[k]
 
-    def __contains__(self, k) -> bool:
+    def __contains__(self, k: Any) -> bool:
         if hasattr(self.obj, "__contains__"):
             return k in self.obj
         if self._is_dict:
@@ -117,11 +117,11 @@ class _SafeLocalClues(dict):
 
     __slots__ = ("_original",)
 
-    def __init__(self, original, *args, **kwargs):
+    def __init__(self, original: Any, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._original = _IdxWrapper(original)
 
-    def get(self, wl: float, default=None) -> Any:
+    def get(self, wl: float, default: Any = None) -> Any:
         wl_f = float(wl)
         if super().__contains__(wl_f):
             return super().__getitem__(wl_f)
@@ -132,20 +132,20 @@ class _SafeLocalClues(dict):
         except Exception:
             return default
 
-    def __getitem__(self, wl) -> Any:
+    def __getitem__(self, wl: float) -> Any:
         res = self.get(wl)
         if res is None:
             raise KeyError(wl)
         return res
 
-    def __contains__(self, wl) -> bool:
+    def __contains__(self, wl: Any) -> bool:  # `Any`: the supertype takes `object`
         wl_f = float(wl)
         if super().__contains__(wl_f):
             return True
         return wl_f in self._original
 
 
-def _parse_noise_factors(raw_factors) -> list[float]:
+def _parse_noise_factors(raw_factors: Any) -> list[float]:
     if isinstance(raw_factors, str):
         try:
             cleaned = raw_factors.replace("[", "").replace("]", "").strip()
@@ -217,7 +217,7 @@ def _resolve_robustness_noise_levels(params: dict[str, Any]) -> list[float]:
     """Resolve robustness noise-level vector from STRAT params."""
     noise_factors = _parse_noise_factors(params.get("robustness_noise_factors", [0.5, 1.0, 2.0]))
     if params.get("thickness_tolerance_nm") is not None:
-        base_tol = float(params.get("thickness_tolerance_nm"))
+        base_tol = float(params.get("thickness_tolerance_nm"))  # type: ignore[arg-type]  # guarded by the `is not None` above
         return [base_tol * f * _resolution_noise_factor(params) for f in noise_factors]
 
     try:
@@ -752,7 +752,7 @@ class _RateSwingContext:
     __slots__ = ("_cache", "all_wls", "clues_at_wl", "n_absents", "n_calls", "nominal_matrix_cache",
                  "p_thick_nominal", "threshold")
 
-    def __init__(self, p_thick_nominal, clues_at_wl, nominal_matrix_cache, all_wls,
+    def __init__(self, p_thick_nominal: Any, clues_at_wl: Any, nominal_matrix_cache: Any, all_wls: Any,
                 threshold: float) -> None:
         self.p_thick_nominal = p_thick_nominal
         self.clues_at_wl = clues_at_wl
@@ -920,10 +920,10 @@ def _expand_with_rate_variants(
     params: dict[str, Any],
     num_layers: int,
     logger: logging.Logger,
-    p_thick_nominal=None,
-    nominal_matrix_cache=None,
-    all_wls=None,
-    clues_at_wl=None,
+    p_thick_nominal: Any = None,
+    nominal_matrix_cache: Any = None,
+    all_wls: Any = None,
+    clues_at_wl: Any = None,
 ) -> list[dict[str, Any]]:
     """Add Rate variants of each strategy, so the ranking can compare them side by side.
 
@@ -1247,7 +1247,7 @@ def _expand_with_rate_variants(
     return strategies + variants
 
 
-def _calculate_strategy_spectral_resolution(strategy, p_thick_nominal, params) -> tuple:
+def _calculate_strategy_spectral_resolution(strategy: dict[str, Any], p_thick_nominal: Any, params: dict[str, Any]) -> tuple:
     blocks = strategy["blocks"]
     nH_id, nL_id, nSub_id = params["nH_id"], params["nL_id"], params["nSub_id"]
     db_local = params.get("materials_db_instance") or params.get("materials_db") or APP_CONTEXT.get("materials_db")
@@ -1286,7 +1286,7 @@ def _calculate_strategy_spectral_resolution(strategy, p_thick_nominal, params) -
         current_stack_thick = p_thick_nominal[: i_layer + 1]
         wls_check = [max(0.1, wl_mon - half_bw), wl_mon, wl_mon + half_bw]
 
-        RT = calculate_RT_normal_real(wls_check, nH_id, nL_id, nSub_id, current_stack_thick, db_instance=db_local)
+        RT = calculate_RT_normal_real(wls_check, nH_id, nL_id, nSub_id, current_stack_thick, db_instance=db_local)  # type: ignore[arg-type]  # the wrapper converts the list
         T_vals = RT[:, 1]
 
         if len(T_vals) == 3:
@@ -1432,7 +1432,7 @@ def _slit_bias_profiles(
         row = np.zeros(SLIT_PROFILE_NODES, dtype=np.float64)
         for iu, u in enumerate(us):
             RT = calculate_RT_normal_real(
-                wls, nH_id, nL_id, nSub_id, base + [u * d_nom], db_instance=db_local
+                wls, nH_id, nL_id, nSub_id, base + [u * d_nom], db_instance=db_local  # type: ignore[arg-type]
             )
             T = RT[:, 1]
             row[iu] = float(np.dot(_SLIT_GL_W, T[:3]) / 2.0 - T[3])
@@ -2113,7 +2113,7 @@ def _execute_robustness_tasks(
     return _filter_finite_robustness_scores(strategies_results, logger=logger)
 
 
-_SOBOL_NOISE_CACHE = {}
+_SOBOL_NOISE_CACHE: dict[tuple[int, int, int, int], np.ndarray] = {}
 
 def _get_cached_sobol_noise(base_seed: int, noise_idx: int, num_runs: int, num_layers: int) -> np.ndarray:
     key = (base_seed, noise_idx, num_runs, num_layers)
@@ -2194,20 +2194,20 @@ def _index_stream_seed(base_seed: int, noise_idx: int) -> int:
 
 
 def _test_strategy_robustness_task(
-    strategy,
-    _strat_idx,
-    noise_levels,
-    num_runs,
-    p_thick_nominal,
-    clues_at_wl,
-    params,
-    wl_arr,
-    nH_arr,
-    nL_arr,
-    nSub_arr,
-    T_nom,
-    full_dyn_grid,
-    n_layers_matrix_precomp=None,
+    strategy: dict[str, Any],
+    _strat_idx: int,
+    noise_levels: Any,
+    num_runs: int,
+    p_thick_nominal: Any,
+    clues_at_wl: Any,
+    params: dict[str, Any],
+    wl_arr: np.ndarray,
+    nH_arr: np.ndarray,
+    nL_arr: np.ndarray,
+    nSub_arr: np.ndarray,
+    T_nom: Any,
+    full_dyn_grid: Any,
+    n_layers_matrix_precomp: Any = None,
     compute_layer_profile: bool = True,
 ) -> dict:
     import numba
@@ -2880,7 +2880,7 @@ def _test_strategy_robustness_task(
                 f"   [GATE] strat {strategy.get('strategy_id', '?')}: the confidence bound "
                 f"{'SPARES' if _hist_rejects else 'ALSO REJECTS'} -- crash "
                 f"{crash_rate_max:.2%} ({crash_count_max}/{num_runs}), lower bound "
-                f"{crash_rate_lower_bound(crash_count_max, num_runs, float(params.get(CRASH_GATE_CONFIDENCE_KEY))):.2%}"
+                f"{crash_rate_lower_bound(crash_count_max, num_runs, float(params.get(CRASH_GATE_CONFIDENCE_KEY))):.2%}"  # type: ignore[arg-type]
             )
 
     # This block is computed AFTER final_score and results_per_noise, on which it
@@ -3186,7 +3186,7 @@ def run_final_simulation_block(
         logger.info("[ROBUSTNESS] 'clues_at_wl' not found in opti_results. Recomputing clues on the fly.")
         clues_at_wl, _, _ = precompute_clues_and_matrices(params, p_thick_nominal, logger)
 
-    wls_to_fetch = set()
+    wls_to_fetch: set[float] = set()
     if hasattr(clues_at_wl, "wls"):
         wls_to_fetch.update(float(w) for w in clues_at_wl.wls)
     elif hasattr(clues_at_wl, "keys"):
@@ -3309,7 +3309,7 @@ def run_final_simulation_block(
 
         consensus_map = _init_consensus_map()
 
-        _consensus_tasks: list[tuple[int, str, tuple, int, tuple, concurrent.futures.Future]] = []
+        _consensus_tasks: list[tuple[int, str, tuple, int, tuple, concurrent.futures.Future | None]] = []
         _consensus_cached: dict[str, list[float]] = {}
 
         for local_idx, item in enumerate(candidates):

@@ -27,6 +27,7 @@ from certus_physics import (
     SingleLinkageClusterer,
     clip_to_bounds,
 )
+from collections.abc import Callable
 
 
 class GradientSearcher:
@@ -34,11 +35,11 @@ class GradientSearcher:
 
     def __init__(
         self,
-        func,
+        func: Callable[..., Any],
         bounds: np.ndarray,
         config: PGlobalConfig,
         stop_event: Event | None = None,
-        monitor_callback=None,
+        monitor_callback: Callable[..., Any] | None = None,
     ) -> None:
 
         self.func = func
@@ -126,7 +127,7 @@ class PGlobalOptimizerINDEX:
 
     def __init__(
         self,
-        objective,
+        objective: Callable[..., Any],
         bounds: np.ndarray,
         n_workers: int | None = None,
         config: PGlobalConfig | None = None,
@@ -315,12 +316,12 @@ class PGlobalOptimizerINDEX:
             return True
         return False
 
-    def _make_monitor_callback(self, callback):
+    def _make_monitor_callback(self, callback: Callable[..., Any] | None) -> Callable[[np.ndarray], Any] | None:
         """Wrap the live callback for sequential local search."""
         if not callback:
             return None
 
-        def monitor(xk):
+        def monitor(xk: np.ndarray) -> Any:
             return callback(Sample(xk, self.objective(xk)))
 
         return monitor
@@ -329,7 +330,7 @@ class PGlobalOptimizerINDEX:
         """Budget remaining for a local refinement step."""
         return min(self.config.local_search_budget, self.config.max_feval - self.n_evals)
 
-    def _prepare_iteration_batches(self, n_samples: int):
+    def _prepare_iteration_batches(self, n_samples: int) -> tuple[int, np.ndarray, np.ndarray] | None:
         """Sample, sort and reduce the active set for one optimize iteration."""
         new_samples = self._sample_uniform(n_samples)
         if not new_samples:
@@ -345,13 +346,13 @@ class PGlobalOptimizerINDEX:
         cand_x, cand_y = self.clusterer.process_batch(x_batch, y_batch, self._n_total_samples)
         return n_keep, cand_x, cand_y
 
-    def _callback_best_so_far(self, callback, best_ever):
+    def _callback_best_so_far(self, callback: Callable[..., Any] | None, best_ever: Sample | None) -> None:
         """Emit the best sample available for iteration progress."""
         if callback and len(self._all_samples) > 0:
             best_so_far = self._all_samples[0]
             callback(best_so_far if best_ever is None or best_so_far.y <= best_ever.y else best_ever)
 
-    def _run_sequential_local_search(self, cand_x, cand_y, n_dispatch: int, callback, best_ever):
+    def _run_sequential_local_search(self, cand_x: np.ndarray, cand_y: np.ndarray, n_dispatch: int, callback: Callable[..., Any] | None, best_ever: Sample | None) -> Sample | None:
         """Run local search sequentially for the best candidates."""
         idx_sorted = np.argsort(cand_y)[:n_dispatch]
         for idx in idx_sorted:
@@ -377,7 +378,7 @@ class PGlobalOptimizerINDEX:
                 logging.getLogger("CERTUS").error("[INDEX.PGLOBAL] local search failed | mode=sequential | reason=%s", e, exc_info=True)
         return best_ever
 
-    def _run_parallel_local_search(self, cand_x, cand_y, n_dispatch: int, callback, best_ever):
+    def _run_parallel_local_search(self, cand_x: np.ndarray, cand_y: np.ndarray, n_dispatch: int, callback: Callable[..., Any] | None, best_ever: Sample | None) -> Sample | None:
         """Run local search in the executor for the best candidates."""
         idx_sorted = np.argsort(cand_y)[:n_dispatch]
         futures = {}
@@ -392,7 +393,7 @@ class PGlobalOptimizerINDEX:
                 self.stop_event,
                 monitor_callback=None,
             )
-            futures[self._executor.submit(searcher.search, x_start, self._local_search_budget())] = x_start
+            futures[self._executor.submit(searcher.search, x_start, self._local_search_budget())] = x_start  # type: ignore[union-attr]
         for future in as_completed(futures):
             if self.stop_event and self.stop_event.is_set():
                 break
@@ -408,7 +409,7 @@ class PGlobalOptimizerINDEX:
                 logging.getLogger("CERTUS").error("[INDEX.PGLOBAL] local search failed | mode=parallel | reason=%s", e, exc_info=True)
         return best_ever
 
-    def optimize(self, max_iter: int = 30, callback=None, x0: np.ndarray | None = None) -> Sample | None:
+    def optimize(self, max_iter: int = 30, callback: Callable[..., Any] | None = None, x0: np.ndarray | None = None) -> Sample | None:
 
         start_time = time.time()
 
@@ -521,7 +522,7 @@ class PGlobalOptimizerINDEX:
 
 
 class SubsetOptimTask:
-    def __init__(self, worker, wls, n_sub, target_T, target_R, exclude_range) -> None:
+    def __init__(self, worker: Any, wls: np.ndarray, n_sub: np.ndarray, target_T: np.ndarray, target_R: np.ndarray, exclude_range: Any) -> None:
 
         self.worker = worker
 
@@ -535,7 +536,7 @@ class SubsetOptimTask:
 
         self.exclude_range = exclude_range
 
-    def __call__(self, offset) -> Any:
+    def __call__(self, offset: int) -> Any:
 
         return self.worker._run_subset_optim(
             slice(offset, None, 3), self.wls, self.n_sub, self.target_T, self.target_R, self.exclude_range

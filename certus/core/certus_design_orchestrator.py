@@ -11,6 +11,7 @@ import logging
 import numpy as np
 
 from certus.core.certus_core import CFG, get_complex_dtype, get_export_config, get_float_dtype
+from collections.abc import Callable
 
 class DesignOrchestrator:
     """
@@ -21,29 +22,36 @@ class DesignOrchestrator:
     and emits generalized events to the UI/Script listener.
     """
     
-    def __init__(self, ui_instance):
+    # Attributes the needle flow creates and deletes (`hasattr` / `delattr`): declared, never given a value here.
+    _needle_cycle_step: int
+    _needle_merit_before: float
+    _needle_excluded_layers: set[int]
+    _needle_last_rejected_candidate: dict[str, Any] | None
+
+    def __init__(self, ui_instance: Any) -> None:
         self.ui = ui_instance
         self.is_running = False
 
         # References to current active workers
-        self.current_needle_worker = None
-        self.current_optim_worker = None
+        self.current_needle_worker: Any = None
+        self.current_optim_worker: Any = None
 
         # State management for specific orchestration flows
-        self._healing_phase = None
+        self._healing_phase: str | None = None
         self._overshoot_active = False
         self._overshoot_done = False
-        self._original_target_count = None
-        self._target_layer_count = None
+        # Set by the needle flow before anything reads them: ints for every reader, None only until then.
+        self._original_target_count: int = None  # type: ignore[assignment]
+        self._target_layer_count: int = None  # type: ignore[assignment]
 
         logging.info("[ORCHESTRATOR] DesignOrchestrator initialized.")
 
-    def abort(self):
+    def abort(self) -> None:
         """Forcefully stops any running synthesis loop."""
         self.is_running = False
         logging.info("[ORCHESTRATOR] Synthesis loop aborted.")
 
-    def _schedule_task(self, delay_ms: int, func) -> None:
+    def _schedule_task(self, delay_ms: int, func: Callable[[], None]) -> None:
         if hasattr(self.ui, "schedule_task"):
             self.ui.schedule_task(delay_ms, func)
         else:

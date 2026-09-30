@@ -27,9 +27,9 @@ try:
     from certus.core.certus_core import get_materials_db_hash, numba_cache_key
 except ImportError:
     CERTUS_VERSION = "unknown"
-    def get_materials_db_hash():
+    def get_materials_db_hash() -> str | None:
         return ""
-    def numba_cache_key():
+    def numba_cache_key(root: Path | None = None) -> str:
         return ""
 
 

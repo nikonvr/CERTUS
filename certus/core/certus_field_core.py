@@ -53,7 +53,7 @@ def _trapz_numba(y: np.ndarray, x: np.ndarray) -> float:
     return res
 
 @numba.njit(cache=True)
-def _calculate_field_single_pol(indices_c1_cn: np.ndarray, ep_c1_cn: np.ndarray, nSub_r: float, lambda_calc: float, n_super: float, integral_points: int, theta_inc: float, is_p_pol: bool) -> tuple[float, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def _calculate_field_single_pol(indices_c1_cn: np.ndarray, ep_c1_cn: np.ndarray, nSub_r: float, lambda_calc: float, n_super: float, integral_points: int, theta_inc: float, is_p_pol: bool) -> tuple[float, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     n_layers = len(ep_c1_cn)
     nSub_complex = nSub_r + 0j
     n0 = n_super + 0j
@@ -233,7 +233,8 @@ def calculate_electric_field(n1_r: float, n2_r: float, nSub_r: float, l0: float,
         indices_c1_cn, ep_c1_cn, n1_r, n2_r, nSub_r, l0, lambda_calc, n_superstrate_real, integral_points, theta_inc, pol_flag
     )
 
-    z_coords_final, E2_values_final = [], []
+    z_coords_final: list[float] = []
+    E2_values_final: list[float] = []
     current_z_start = 0
     k_vac = 2 * np.pi / lambda_calc
     

@@ -57,6 +57,8 @@ from certus.utils.certus_services import SubstrateIndexRequest, SubstrateIndexSe
 
 
 from certus.utils.certus_spectral_preproc import dynamic_savgol_blend
+from collections.abc import Callable
+from typing import Any
 
 
 
@@ -64,7 +66,7 @@ from certus.utils.certus_spectral_preproc import dynamic_savgol_blend
 logger = setup_module_logging("CERTUS_SUBSTRATE_INDEX")
 
 
-def _substrate_index_norm_header(raw) -> str:
+def _substrate_index_norm_header(raw: Any) -> str:
 
     return norm_header(raw)
 
@@ -126,10 +128,10 @@ def _filter_dataframe_bare_substrate_columns(df: pd.DataFrame) -> tuple[pd.DataF
     return filter_bare_substrate_columns(df)
 
 
-def _classify_substrate_index_columns(columns) -> dict[str, list]:
+def _classify_substrate_index_columns(columns: Any) -> dict[str, list]:
     """Classifies measurement columns by n(lambda) calculation type."""
 
-    groups = {
+    groups: dict[str, list[Any]] = {
         "t_2f": [],
         "r_2f": [],
         "r45s_1f": [],
@@ -854,7 +856,7 @@ def _index_spline_merge_closest_knot_pair(knot_lam_um: np.ndarray, n_knot: np.nd
     return lam_new, n_new
 
 
-def _index_eval_bspline_linear_extrap(spl, lo_um: float, hi_um: float, x_um: np.ndarray) -> np.ndarray:
+def _index_eval_bspline_linear_extrap(spl: Any, lo_um: float, hi_um: float, x_um: np.ndarray) -> np.ndarray:
     """Evaluates a scipy B-spline on [lo, hi]; outside range: tangents at edges (affine extension)."""
 
     from scipy.interpolate import BSpline
@@ -891,7 +893,7 @@ def _index_eval_bspline_linear_extrap(spl, lo_um: float, hi_um: float, x_um: np.
     return out
 
 
-def _index_pack_bspline_lsq(spl, lo_um: float, hi_um: float) -> np.ndarray:
+def _index_pack_bspline_lsq(spl: Any, lo_um: float, hi_um: float) -> np.ndarray:
     """Serializes least squares B-spline: [4, k, lambdamin_nm, lambdamax_nm, nt, t_nm..., nc, c...]."""
 
     t_um = np.asarray(spl.t, dtype=np.float64).ravel()
@@ -1209,7 +1211,7 @@ class IndexCore:
         wl_min_fit: float,
         wl_max_fit: float,
         valid_mask: np.ndarray | None = None,
-        progress_cb=None,
+        progress_cb: Callable[..., Any] | None = None,
         model_kind: str = "polynomial",
         *,
         return_meta: bool = False,
@@ -1296,7 +1298,7 @@ class IndexCore:
 
             return d
 
-        def _ret(n_out: np.ndarray, source: str, coeffs: np.ndarray | None, **meta_extra):
+        def _ret(n_out: np.ndarray, source: str, coeffs: np.ndarray | None, **meta_extra: Any) -> np.ndarray | tuple[np.ndarray, dict]:
 
             out = np.asarray(n_out, dtype=np.float64)
 
@@ -1305,7 +1307,7 @@ class IndexCore:
 
             return out
 
-        def _ret_fallback_raw(source: str):
+        def _ret_fallback_raw(source: str) -> np.ndarray | tuple[np.ndarray, dict]:
 
             n_fb = IndexCore._fallback_monotonic_raw(wl, n_vals, wl_min_fit, wl_max_fit)
 
@@ -1344,8 +1346,6 @@ class IndexCore:
             return _ret_fallback_raw(res_src)
         return _ret(res_n, res_src, res_coeffs, **res_extra)
 
-
-
     @staticmethod
     def _fit_model_spline_adaptive(
         wl: np.ndarray,
@@ -1353,7 +1353,7 @@ class IndexCore:
         n_fit: np.ndarray,
         wl_fit_nm: np.ndarray,
         w_fit: np.ndarray,
-        progress_cb,
+        progress_cb: Callable[..., Any] | None,
     ) -> tuple[np.ndarray | None, str, np.ndarray | None, dict]:
         from scipy.interpolate import make_lsq_spline
 
@@ -1426,7 +1426,7 @@ class IndexCore:
             if callable(progress_cb):
                 progress_cb(1, 2)
 
-            def _fit_bspline_lsq_wls(interior_um: np.ndarray):
+            def _fit_bspline_lsq_wls(interior_um: np.ndarray) -> tuple[Any, float]:
                 """Interior knots strictly in ]lo,hi[; cubic clamped at edges."""
 
                 inter = np.asarray(interior_um, dtype=np.float64).ravel()
@@ -1831,14 +1831,14 @@ class IndexCore:
         wl_min_fit: float,
         wl_max_fit: float,
         model_kind: str = "polynomial",
-        progress_cb=None,
+        progress_cb: Callable[..., Any] | None = None,
         *,
         log_preprocess: bool = True,
         sellmeier_timeout_s: float | None = None,
         sellmeier_de_maxiter: int = 300,
         sellmeier_ls_max_nfev: int = 3000,
         sellmeier_log_l1l2: bool | None = None,
-    ):
+    ) -> tuple[Any, Any, Any]:
 
         n_raw = np.asarray(n_raw, dtype=np.float64).ravel()
 

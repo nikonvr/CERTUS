@@ -196,7 +196,7 @@ calc_spectrum_full_exact = calc_spectrum_full_exact_wrapper
 _EP_BUFFER_TLS = threading.local()
 
 
-def _get_ep_buffer(app) -> np.ndarray:
+def _get_ep_buffer(app: Any) -> np.ndarray:
     """Thickness buffer private to calling THREAD.
 
     `app._ep_buffer` was previously a single shared array. Threads in parallel optimization
@@ -214,7 +214,7 @@ def _get_ep_buffer(app) -> np.ndarray:
     return buf
 
 
-def _design_objective_wrapper_common(app, x) -> Any:
+def _design_objective_wrapper_common(app: Any, x: np.ndarray) -> Any:
     """Shared objective wrapper for Optim/Color/Needle workers."""
     if len(x) != len(app._var_idx):
         return 1e30
@@ -252,7 +252,7 @@ def _design_objective_wrapper_common(app, x) -> Any:
         app._d_back,
     )
 
-def _design_compute_oblique_error_common(app, ep_test) -> Any:
+def _design_compute_oblique_error_common(app: Any, ep_test: np.ndarray) -> Any:
     """Shared oblique-mode error grouped by (angle, polarization)."""
     total_err = 0.0
     total_weight = 0.0
@@ -290,7 +290,7 @@ def _design_compute_oblique_error_common(app, ep_test) -> Any:
         return 1e30
     return total_err / total_weight
 
-def _design_gradient_func_pglobal_common(app, x) -> Any:
+def _design_gradient_func_pglobal_common(app: Any, x: np.ndarray) -> Any:
     """Shared cost + analytic gradient for PGlobalOptimizer."""
     if len(x) != len(app._var_idx):
         return 1e30, np.zeros(len(app._var_idx), dtype=np.float64)
@@ -337,7 +337,7 @@ def _design_gradient_func_pglobal_common(app, x) -> Any:
     )
     return cost, grad_var
 
-def _design_compute_oblique_error_and_grad_analytic_common(app, ep_test) -> tuple:
+def _design_compute_oblique_error_and_grad_analytic_common(app: Any, ep_test: np.ndarray) -> tuple:
     """
     Shared oblique cost + analytic gradient.
 
@@ -467,7 +467,7 @@ def _design_compute_oblique_error_and_grad_analytic_common(app, ep_test) -> tupl
         return 1e30, np.zeros(len(app._var_idx), dtype=np.float64)
     return total_err / total_weight, (2.0 / total_weight) * grad_raw
 
-def _design_optimization_callback_common(app, sample) -> None:
+def _design_optimization_callback_common(app: Any, sample: Any) -> None:
     try:
         if app._stop_event.is_set():
             logging.debug("OptimWorker callback: stop_event is set, returning")

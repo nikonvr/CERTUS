@@ -20,6 +20,7 @@ from certus_physics import (
 from certus.utils.certus_index_utils import (
     DataType,
 )
+from typing import Any
 
 class substrateMode(Enum):
     """substrate mode"""
@@ -218,7 +219,7 @@ class OptimizationResults:
         tlu_params: TLUParameters | None = None,
         optimization_stats: dict | None = None,
         execution_time: float = 0.0,
-        sellmeier_params=None,
+        sellmeier_params: Any = None,
     ) -> None:
 
         self.config = config

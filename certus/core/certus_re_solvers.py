@@ -60,7 +60,7 @@ from certus.core.certus_re_worker_utils import (
 class REUserStopRequested(Exception):
     pass
 
-def re_execute_phase1(worker) -> list[dict]:
+def re_execute_phase1(worker: Any) -> list[dict]:
 
     from scipy.optimize import least_squares
 
@@ -72,7 +72,7 @@ def re_execute_phase1(worker) -> list[dict]:
 
     # ``wt_wls`` = pre-calculated spectral weights on the objective grid lambda.
 
-    def _run_single_phase1(run_idx, label, wt_wls, x0_run):
+    def _run_single_phase1(run_idx: int, label: str, wt_wls: Any, x0_run: Any) -> dict[str, Any] | None:
         if c._stop:
             return None
             
@@ -82,7 +82,7 @@ def re_execute_phase1(worker) -> list[dict]:
             c._pct_p1(run_idx, 0.0),
             f"RE phase 1 (TRF, {label})  variables={c.n_layers_count} (thicknesses); nominal indices"
         )
-        _cache = {"x": None, "res": None, "jac": None, "mse": None, "i": 0, "last_emit": time.perf_counter()}
+        _cache: dict[str, Any] = {"x": None, "res": None, "jac": None, "mse": None, "i": 0, "last_emit": time.perf_counter()}
 
         def _eval_both(x: np.ndarray) -> None:
             if c._stop:
@@ -218,7 +218,7 @@ def re_execute_phase1(worker) -> list[dict]:
 
     return res_p1
 
-def re_execute_phase1_p4_scan(worker) -> None:
+def re_execute_phase1_p4_scan(worker: Any) -> None:
     """Step 2/3 in sequential order: flat ap scan + joint TRF thick+ap (nominal indices)."""
 
     L = worker._re_phase_ns
@@ -325,7 +325,7 @@ def re_execute_phase1_p4_scan(worker) -> None:
 
         i_ap_s2 = L.n_layers_count
 
-        _c_s2 = {
+        _c_s2: dict[str, Any] = {
             "x": None,
             "res": None,
             "jac": None,
@@ -545,7 +545,7 @@ def re_execute_phase1_p4_scan(worker) -> None:
     elif L._re_use_staged_order and not results and not worker._stop:
         logging.info("RE staged order  step 2/3 skipped (no available phase-1 candidate).")
 
-def re_execute_phase2_splines(worker) -> None:
+def re_execute_phase2_splines(worker: Any) -> None:
     """Phase 2: DeltaRe splines + prefit 2a / joint 2b (top-K).
 
     Structure (kept as single function due to closure coupling):
@@ -941,7 +941,7 @@ def re_execute_phase2_splines(worker) -> None:
         )
 
 def re_execute_phase2_candidate(
-    worker,
+    worker: Any,
     *,
     ki: int,
     top_k: int,
@@ -1021,7 +1021,7 @@ def re_execute_phase2_candidate(
             ]
         )
 
-        _cb2a = {
+        _cb2a: dict[str, Any] = {
             "x": None,
             "res": None,
             "jac": None,
@@ -1033,10 +1033,10 @@ def re_execute_phase2_candidate(
             "fd_executor": None,
         }
 
-        def _fun_res_p2a(x_sp: np.ndarray, _cb2a=_cb2a) -> Any:
+        def _fun_res_p2a(x_sp: np.ndarray, _cb2a: Any = _cb2a) -> Any:
             return worker._compute_fun_res_p2a(ctx_p2, x_sp, _cb2a)
 
-        def _jac_res_p2a(x_sp: np.ndarray, _cb2a=_cb2a) -> Any:
+        def _jac_res_p2a(x_sp: np.ndarray, _cb2a: Any = _cb2a) -> Any:
             return worker._compute_jac_res_p2a(ctx_p2, x_sp, _cb2a)
 
         logging.info(
@@ -1249,7 +1249,7 @@ def re_execute_phase2_candidate(
     return phase2_result.to_legacy_dict()
 
 def re_run_phase4_joint_trf(
-    worker,
+    worker: Any,
     *,
     p4_trf_nfev: int,
     nap: int,
@@ -1298,7 +1298,7 @@ def re_run_phase4_joint_trf(
     def _restore_aperture_knots(xv: np.ndarray) -> None:
         re_state["re_aperture_knots"][:] = xv[i_ap0 : i_ap0 + nap]
 
-    def _fun_res_p4(xv) -> Any:
+    def _fun_res_p4(xv: np.ndarray) -> Any:
         _restore_aperture_knots(xv)
         return fun_res_p2(xv[:i_ap0], emit_interval=8.0)
 

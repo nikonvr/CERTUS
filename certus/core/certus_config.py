@@ -26,7 +26,7 @@ CONFIG_SCHEMA_VERSION = 1
 class ConfigManager:
     """Small JSON config manager with schema versioning."""
 
-    def __init__(self, filename: str, default_value: Any, key_name: str):
+    def __init__(self, filename: str, default_value: Any, key_name: str) -> None:
         self.filename = filename
         self.default_value = default_value
         self.key_name = key_name

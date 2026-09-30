@@ -156,7 +156,7 @@ from dataclasses import dataclass
 
 from datetime import datetime
 
-from typing import Any
+from typing import Any, Literal, overload
 
 from certus.utils.certus_logging import attach_jsonl_handler, get_structured_logger
 
@@ -404,7 +404,7 @@ def configure_numba_env() -> None:
             os.environ["NUMBA_NUM_THREADS"] = cur
             os.environ.setdefault("NUMBA_THREADING_LAYER", "workqueue" if is_frozen() else "omp")
             os.environ["_CERTUS_NUMBA_CONFIGURED"] = "1"
-            sys._certus_numba_configured = True
+            sys._certus_numba_configured = True  # type: ignore[attr-defined]
             return
         except Exception:
             # Fallback to standard path if runtime introspection fails.
@@ -448,7 +448,7 @@ def configure_numba_env() -> None:
                 os.environ[env_var] = s_cores
 
     os.environ["_CERTUS_NUMBA_CONFIGURED"] = "1"
-    sys._certus_numba_configured = True
+    sys._certus_numba_configured = True  # type: ignore[attr-defined]
 
 
 @lru_cache(maxsize=8)
@@ -527,7 +527,7 @@ def _supports_utf8() -> bool:
 class CertusConsoleFormatter(logging.Formatter):
     """Clean, elegant, and colorized log formatter for the terminal console."""
 
-    def __init__(self, use_color: bool = True):
+    def __init__(self, use_color: bool = True) -> None:
         super().__init__(datefmt="%Y-%m-%d %H:%M:%S")
         self.use_color = use_color
         self.use_unicode = _supports_utf8()
@@ -576,7 +576,7 @@ class CertusConsoleFormatter(logging.Formatter):
 class CertusGuiFormatter(logging.Formatter):
     """Clean, structured log formatter for the GUI Log panels."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(datefmt="%Y-%m-%d %H:%M:%S")
         self.use_unicode = _supports_utf8()
 
@@ -620,7 +620,7 @@ class SystemConfig:
         return get_logger()
 
     @staticmethod
-    def handle_exception(exc_type: type[BaseException], exc_value: BaseException, exc_traceback: object) -> None:
+    def handle_exception(exc_type: type[BaseException], exc_value: BaseException, exc_traceback: TracebackType | None) -> None:
         handle_exception(exc_type, exc_value, exc_traceback)
 
 
@@ -640,7 +640,7 @@ class _WarmupRegistry:
     to redeclare `global` in every accessor.
     """
 
-    thread = None
+    thread: threading.Thread | None = None
     # Set by the first start_jit_warmup call of the process, never reset: the warmup runs once.
     started = False
 
@@ -931,13 +931,13 @@ class QueueHandler(logging.Handler):
 
     """
 
-    def __init__(self, log_queue: queue.Queue):
+    def __init__(self, log_queue: queue.Queue) -> None:
 
         super().__init__()
 
         self.log_queue = log_queue
 
-    def emit(self, record):
+    def emit(self, record: logging.LogRecord) -> None:
         """Emits message to queue"""
 
         try:
@@ -1001,7 +1001,7 @@ class CertusError(Exception):
 
     """
 
-    def __init__(self, message: str, details: str = "", suggestion: str = ""):
+    def __init__(self, message: str, details: str = "", suggestion: str = "") -> None:
 
         self.message = message
 
@@ -1121,6 +1121,36 @@ def create_module_environment(module_file: str, module_name: str) -> dict[str, A
     }
 
 
+@overload
+def bootstrap_app(
+    app_file: str,
+    _log_name: str | None = None,
+    *,
+    runtime: CertusRuntime | None = None,
+    return_runtime: Literal[False] = False,
+) -> str: ...
+
+
+@overload
+def bootstrap_app(
+    app_file: str,
+    _log_name: str | None = None,
+    *,
+    runtime: CertusRuntime | None = None,
+    return_runtime: Literal[True],
+) -> tuple[str, CertusRuntime]: ...
+
+
+@overload
+def bootstrap_app(
+    app_file: str,
+    _log_name: str | None = None,
+    *,
+    runtime: CertusRuntime | None = None,
+    return_runtime: bool,
+) -> str | tuple[str, CertusRuntime]: ...
+
+
 def bootstrap_app(
     app_file: str,
     _log_name: str | None = None,
@@ -1215,6 +1245,11 @@ def ensure_numpy_arrays(*arrays: Any) -> tuple[np.ndarray, ...]:
 
 
 import types
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import threading
+    from types import TracebackType
 
 
 class CertusFacadeModule(types.ModuleType):
@@ -1223,14 +1258,14 @@ class CertusFacadeModule(types.ModuleType):
     Delegates attribute access and modification to underlying submodules.
     """
 
-    def __init__(self, name: str, submodules: list):
+    def __init__(self, name: str, submodules: list) -> None:
         super().__init__(name)
         self._submodules = submodules
         if name in sys.modules:
             for k, v in sys.modules[name].__dict__.items():
                 self.__dict__[k] = v
 
-    def __getattr__(self, name: str):
+    def __getattr__(self, name: str) -> Any:
         if name == "_submodules":
             raise AttributeError(name)
         for sub in self._submodules:
@@ -1238,7 +1273,7 @@ class CertusFacadeModule(types.ModuleType):
                 return getattr(sub, name)
         raise AttributeError(f"module '{self.__name__}' has no attribute '{name}'")
 
-    def __setattr__(self, name: str, value: Any):
+    def __setattr__(self, name: str, value: Any) -> None:
         super().__setattr__(name, value)
         if name != "_submodules" and hasattr(self, "_submodules"):
             for sub in self._submodules:

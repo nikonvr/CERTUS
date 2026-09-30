@@ -710,7 +710,7 @@ def _log_elite_parents(
     for rank, item in enumerate(parents, start=1):
         strat = item.get("strategy", {}) or {}
         wls = [
-            float(b.get("wavelength"))
+            float(b.get("wavelength"))  # type: ignore[arg-type]
             for b in (strat.get("blocks") or [])
             if isinstance(b, dict) and b.get("wavelength") is not None
         ]

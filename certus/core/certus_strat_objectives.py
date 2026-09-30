@@ -100,7 +100,7 @@ from certus.utils.certus_strat_context import PlotCache, ThreadSafeCounter  # no
 def _run_phase_a_hybrid_loop(
     params: dict[str, Any],
     p_thick_nominal: list[float],
-    clues_at_wl: dict[str, Any],
+    clues_at_wl: dict[float, dict[str, complex]],
     scan_wl_range: np.ndarray,
     num_layers: int,
     logger: logging.Logger,
@@ -110,12 +110,12 @@ def _run_phase_a_hybrid_loop(
     raw_results_thickness: dict[int, list[dict[str, float]]] = {}
     full_dynamics_grid: dict[int, dict[float, float]] = {}
     num_runs = int(params.get("mc_runs_block", 100))
-    phase_a_observability = {
+    phase_a_observability: dict[str, Any] = {
         "layers": [],
         "scan_wl_count": int(len(scan_wl_range)),
         "mc_runs_block": int(num_runs),
     }
-    run_states = [{"p_thick_sim": [], "M_cache_sim": {}} for _ in range(num_runs)]
+    run_states: list[dict[str, Any]] = [{"p_thick_sim": [], "M_cache_sim": {}} for _ in range(num_runs)]
 
     # The logger is a keyword argument of this function, but it was missing from
     # params: _validate_candidates_phase_a read it empty and Phase A elimination
@@ -156,7 +156,7 @@ def _run_phase_a_hybrid_loop(
             pct = int((i_layer / num_layers) * 40)
             progress_signal.emit(pct, f"Phase A: Computing Layer {i_layer + 1}/{num_layers}")
 
-        current_avg_stack = []
+        current_avg_stack: list[float] = []
         if i_layer > 0:
             for j in range(i_layer):
                 avg_t = np.mean([run["p_thick_sim"][j] for run in run_states])
@@ -299,7 +299,7 @@ def _apply_block_aware_bonus(
     they survive the Phase B DP `top_k` truncation.
     """
     # 1. Build streak map (forward pass)
-    streak_fwd = {}
+    streak_fwd: dict[tuple[int, float], int] = {}
     for i in range(num_layers):
         for c in raw_results_thickness.get(i, []):
             wl = c["wl"]
@@ -309,7 +309,7 @@ def _apply_block_aware_bonus(
                 streak_fwd[(i, wl)] = 1
                 
     # 2. Build max streak map (backward pass)
-    max_streak = {}
+    max_streak: dict[tuple[int, float], int] = {}
     for i in range(num_layers - 1, -1, -1):
         for c in raw_results_thickness.get(i, []):
             wl = c["wl"]
@@ -468,10 +468,10 @@ def _compute_dT_dd_per_layer(
         float(h_nm),
     )
 
-def _extract_local_extrema_points(d_vals: np.ndarray, t_vals: np.ndarray, eps: float = 1e-10) -> list[dict[str, float]]:
+def _extract_local_extrema_points(d_vals: np.ndarray, t_vals: np.ndarray, eps: float = 1e-10) -> list[dict[str, Any]]:
     """Find local extrema from sampled T(d) curve."""
 
-    extrema: list[dict[str, float]] = []
+    extrema: list[dict[str, Any]] = []
 
     if len(d_vals) < 3 or len(t_vals) < 3:
         return extrema

@@ -615,7 +615,7 @@ def get_n_substrate_array_by_id_kernel(
     return results
 
 
-_SUBSTRATE_CACHE = {}
+_SUBSTRATE_CACHE: dict[Any, Any] = {}
 
 
 def get_n_substrate_array_by_id(substrate_id: int, wavelengths_nm: np.ndarray) -> np.ndarray:
@@ -768,7 +768,7 @@ class NKCache:
     _max_size = 100
 
     @classmethod
-    def get(cls, mat_key, n4, n7, wls):
+    def get(cls, mat_key: Any, n4: float, n7: float, wls: np.ndarray) -> np.ndarray:
 
         if len(wls) == 0:
             return np.array([], dtype=np.complex128)
@@ -799,7 +799,7 @@ class NKCache:
             return val_c
 
 
-def get_refractive_index(material_id: Any, wavelength_nm: float, db_instance=None):
+def get_refractive_index(material_id: Any, wavelength_nm: float, db_instance: Any = None) -> float | complex:
 
     if not isinstance(material_id, str):
         try:
@@ -842,7 +842,7 @@ def get_refractive_index(material_id: Any, wavelength_nm: float, db_instance=Non
             ) from None
 
 
-def get_refractive_clues_vectorized(material_id: Any, wavelengths: np.ndarray, db_instance=None) -> np.ndarray:
+def get_refractive_clues_vectorized(material_id: Any, wavelengths: np.ndarray, db_instance: Any = None) -> np.ndarray:
 
     n = len(wavelengths)
 
@@ -946,7 +946,7 @@ from certus.physics.certus_strat_kernels import (
 # =============================================================================
 
 
-def init_thickness(n4_or_stack, l0: float, qw_or_mats) -> any:
+def init_thickness(n4_or_stack: Any, l0: float, qw_or_mats: Any) -> float | list[float]:
     """Calculate physical thickness (Scalar or List)"""
 
     # 1. Scalar Mode (n4, l0, qw)
@@ -1012,7 +1012,7 @@ def calc_qwot(n4: float, l0: float, d: float) -> float:
     return (4.0 * n4 * d) / l0
 
 
-def calc_rmse(Ts: np.ndarray, wls: np.ndarray, targets: list[Target]) -> tuple[float, float]:
+def calc_rmse(Ts: np.ndarray, wls: np.ndarray, targets: list[Any]) -> tuple[float, float]:  # `Target` is loaded by path (see `_structures_module`)
     """Calculate RMSE against targets (spectral quadrature Delta ln lambda)."""
 
     from certus.utils.certus_index_utils import spectral_rmse_weights

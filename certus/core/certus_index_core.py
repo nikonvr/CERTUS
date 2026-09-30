@@ -271,22 +271,22 @@ def _optimize_point_kernel(
 
 @njit(cache=True, fastmath=True, nogil=True, parallel=True, error_model="numpy")
 def _optimize_all_points_batch(
-    n_start_arr,
-    k_start_arr,
-    wl_arr,
-    T_targets,
-    R_targets,
-    weight_T,
-    weight_R,
-    n_sub_arr,
-    T_sub_arr,
-    R_sub_arr,
-    d,
-    use_T,
-    use_R,
-    use_normalized,
-    is_frosted_glass,
-    excluded_mask,
+    n_start_arr: np.ndarray,
+    k_start_arr: np.ndarray,
+    wl_arr: np.ndarray,
+    T_targets: np.ndarray,
+    R_targets: np.ndarray,
+    weight_T: float,
+    weight_R: float,
+    n_sub_arr: np.ndarray,
+    T_sub_arr: np.ndarray,
+    R_sub_arr: np.ndarray,
+    d: float,
+    use_T: bool,
+    use_R: bool,
+    use_normalized: bool,
+    is_frosted_glass: bool,
+    excluded_mask: np.ndarray,
 ) -> tuple:
     """
 

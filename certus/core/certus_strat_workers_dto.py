@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any, TYPE_CHECKING
 from collections.abc import Mapping
 from pydantic import BaseModel, ConfigDict
+from collections.abc import Iterator
 
 if TYPE_CHECKING:
     from certus.utils.certus_data import TimingLogger
@@ -20,7 +21,7 @@ class _MappingBase(BaseModel, Mapping):
         except AttributeError:
             raise KeyError(key) from None
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:  # type: ignore[override]  # the mapping view of a pydantic model iterates keys
         keys = list(self.__class__.model_fields.keys())
         if self.model_extra:
             keys.extend(self.model_extra.keys())

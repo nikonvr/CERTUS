@@ -1,28 +1,34 @@
-"""Every import that breaks the layering, and every import cycle, is on a list, and the list only shrinks.
+"""The architecture debt is a list, and the list only shrinks.
 
-The layers (`COUCHES` in scripts/metrics.py) run domain < physics < core = utils < metal = spline < workers < ui. A lower
-layer that imports a higher one at module level is an upward edge, and a cycle is modules that cannot be imported one
-without the others. The audit of 2026-09-29 counted 47 upward edges and 4 cycles at run time (8 with the imports that
-only a type checker reads); the plan of the 8 weeks brings them down, and this test keeps them there: a NEW edge or
-cycle fails it, and so does a debt that was paid and is still on the list (remove it: the gain is locked in and cannot
-come back unnoticed).
+Four kinds of debt are named in tests/architecture_debt.json, each measured by scripts/metrics.py:
 
-The list is tests/architecture_debt.json. It names edges module to module, not layer to layer: swapping an old edge for a
-new one leaves the count where it was, and only the names see it. Function-level imports are not counted (they run
-later, they are the usual remedy), and neither, for the cycles, are those under `if TYPE_CHECKING:` (they never run,
-and they are the standard way to break a cycle: certus_ui_utils.py documents its own). The layering still sees them.
+* `aretes_montantes`: an import, at module level, of a higher layer by a lower one. The layers (`COUCHES`) run
+  domain < physics < core = utils < metal = spline < workers < ui. The audit of 2026-09-29 counted 47.
+* `cycles`: modules that cannot be imported one without the others, at run time. The audit counted 4 (8 with the imports
+  that only a type checker reads).
+* `fonctions_longues` (over 300 lines), `fonctions_complexes` (complexity over 60): 52 and 20 at the audit.
+* `fichiers_longs` (over 1 500 lines): 23.
+
+A NEW entry fails the test, and so does one that has grown; an entry that was paid (or whose measure went down) must be
+corrected in the same commit, so the gain is locked in and cannot come back unnoticed. `python scripts/metrics.py
+--dette tests/architecture_debt.json` writes the file as it should be.
+
+Edges and functions are named, not counted: swapping an old edge for a new one, or splitting a function while a
+neighbour grows, leaves a count where it was, and only the names see it. Function-level imports are not counted (they run
+later, they are the usual remedy), and neither, for the cycles, are those under `if TYPE_CHECKING:` (they never run, and
+they are the standard way to break a cycle: certus_ui_utils.py documents its own). The layering still sees them.
 """
 
 from __future__ import annotations
 
-import ast
 import importlib.util
 import json
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[2]
-PACKAGES = ("certus", "certus_physics")
 DEBT = json.loads((ROOT / "tests" / "architecture_debt.json").read_text(encoding="utf-8"))
 
 
@@ -35,26 +41,23 @@ def _metrics():
 
 
 metrics = _metrics()
+MEASURED = metrics.dette(metrics.sources_certus(ROOT))
+
+REGENERATE = "python scripts/metrics.py --dette tests/architecture_debt.json"
+CEILINGS = {
+    "fonctions_longues": "lines (a function over 300 lines: extract named pieces, as the plan does)",
+    "fonctions_complexes": "complexity (over 60: split the branches into named functions)",
+    "fichiers_longs": "lines (a file over 1 500 lines: split it by responsibility)",
+}
 
 
-def _measured() -> tuple[set[str], set[tuple[str, ...]]]:
-    trees = {}
-    for package in PACKAGES:
-        for path in sorted((ROOT / package).rglob("*.py")):
-            rel = path.relative_to(ROOT).as_posix()
-            trees[rel] = ast.parse(path.read_text(encoding="utf-8-sig", errors="replace"), filename=rel)
-    graph, modules = metrics.graphe_imports(trees)
-    edges = {f"{a} -> {b}" for a, b in metrics.liste_aretes_montantes(graph, modules)}
-    at_run_time, _ = metrics.graphe_imports(trees, avec_typage=False)
-    cycles = {tuple(sorted(c)) for c in metrics.cycles(at_run_time, modules)}
-    return edges, cycles
-
-
-EDGES, CYCLES = _measured()
+# =============================================================================
+# Edges and cycles: the set is exact
+# =============================================================================
 
 
 def test_no_new_import_breaks_the_layering() -> None:
-    new = sorted(EDGES - set(DEBT["aretes_montantes"]))
+    new = sorted(set(MEASURED["aretes_montantes"]) - set(DEBT["aretes_montantes"]))
 
     assert not new, (
         "a lower layer now imports a higher one at module level. Import it inside the function that needs it, or move "
@@ -63,14 +66,14 @@ def test_no_new_import_breaks_the_layering() -> None:
 
 
 def test_a_paid_edge_leaves_the_list() -> None:
-    paid = sorted(set(DEBT["aretes_montantes"]) - EDGES)
+    paid = sorted(set(DEBT["aretes_montantes"]) - set(MEASURED["aretes_montantes"]))
 
-    assert not paid, f"these edges no longer exist: remove them from tests/architecture_debt.json, the gain is yours: {paid}"
+    assert not paid, f"these edges no longer exist: remove them from tests/architecture_debt.json ({REGENERATE}): {paid}"
 
 
 def test_no_new_import_cycle() -> None:
-    listed = {tuple(sorted(c)) for c in DEBT["cycles"]}
-    new = sorted(CYCLES - listed)
+    listed = {tuple(c) for c in DEBT["cycles"]}
+    new = sorted({tuple(c) for c in MEASURED["cycles"]} - listed)
 
     assert not new, (
         "modules that now import one another when they are imported (a cycle). Break it with an import inside the "
@@ -79,19 +82,49 @@ def test_no_new_import_cycle() -> None:
 
 
 def test_a_broken_cycle_leaves_the_list() -> None:
-    listed = {tuple(sorted(c)) for c in DEBT["cycles"]}
-    paid = sorted(listed - CYCLES)
+    listed = {tuple(c) for c in DEBT["cycles"]}
+    paid = sorted(listed - {tuple(c) for c in MEASURED["cycles"]})
 
     assert not paid, (
         "these cycles are gone, or changed members (a smaller cycle is a new entry, and the old one goes): "
-        f"update tests/architecture_debt.json: {paid}"
+        f"update tests/architecture_debt.json ({REGENERATE}): {paid}"
     )
 
 
-def test_the_list_names_only_what_the_measure_can_see() -> None:
-    # A typo in the list would hide nothing and be corrected by the two tests above; a list that is not sorted or has a
-    # duplicate is harder to review than it should be.
-    assert DEBT["aretes_montantes"] == sorted(set(DEBT["aretes_montantes"]))
-    assert DEBT["cycles"] == sorted({tuple(sorted(c)) for c in DEBT["cycles"]}) or all(
-        c == sorted(c) for c in DEBT["cycles"]
+# =============================================================================
+# Sizes: a ceiling per offender
+# =============================================================================
+
+
+@pytest.mark.parametrize("section", CEILINGS)
+def test_no_new_offender_joins_the_list(section) -> None:
+    new = {name: size for name, size in MEASURED[section].items() if name not in DEBT[section]}
+
+    assert not new, f"new entries in `{section}`, measured in {CEILINGS[section]}. Split them before they are committed: {new}"
+
+
+@pytest.mark.parametrize("section", CEILINGS)
+def test_no_offender_has_grown(section) -> None:
+    grown = {
+        name: f"{DEBT[section][name]} -> {size}" for name, size in MEASURED[section].items() if size > DEBT[section].get(name, size)
+    }
+
+    assert not grown, f"`{section}` grew, in {CEILINGS[section]}: {grown}"
+
+
+@pytest.mark.parametrize("section", CEILINGS)
+def test_an_offender_that_was_paid_leaves_the_list(section) -> None:
+    paid = sorted(set(DEBT[section]) - set(MEASURED[section]))
+
+    assert not paid, f"under the threshold or gone: remove them from `{section}` ({REGENERATE}): {paid}"
+
+
+@pytest.mark.parametrize("section", CEILINGS)
+def test_a_reduced_offender_lowers_its_ceiling(section) -> None:
+    lowered = {
+        name: f"{DEBT[section][name]} -> {size}" for name, size in MEASURED[section].items() if size < DEBT[section].get(name, size)
+    }
+
+    assert not lowered, (
+        f"`{section}` went down: write the new ceilings in the same commit, so the gain stays ({REGENERATE}): {lowered}"
     )

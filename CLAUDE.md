@@ -55,6 +55,11 @@ CI de HEAD…) : `python scripts\metrics.py` (1 min ; `--rapide` : 10 s, le stat
 qu'une mesure manque, jamais un zéro. La **couverture** se mesure sur toutes les suites (`pytest --cov=certus` avec `--cov-append`) et
 sur les noyaux compilés à part (`NUMBA_DISABLE_JIT=1 pytest tests/oracle tests/core --cov=certus` : sans cela `physics` paraît à 20 %) ;
 `python scripts\check_coverage_floors.py cov.json --noyaux cov_noyaux.json` refuse qu'un paquet passe sous son plancher.
+La **dette d'architecture** (imports montants, cycles à l'exécution, fonctions de plus de 300 lignes ou de complexité
+supérieure à 60, fichiers de plus de 1 500 lignes) est nommée dans `tests/architecture_debt.json` :
+`tests/unit/test_the_architecture_debt_only_shrinks.py` refuse un élément nouveau ou qui grossit, et exige
+qu'une dette payée, ou une mesure qui baisse, y soit corrigée dans le même commit (`python scripts\metrics.py --dette
+tests\architecture_debt.json` réécrit le registre).
 
 | échec | ce que c'est |
 |---|---|
@@ -142,6 +147,10 @@ mais **synchronisés par Drive**) : supprime-les ensuite.
   périmée. Les applications et la session de tests lisent un répertoire de cache clé par les sources
   qui mentionnent numba (`numba_cache_key`, `ensure_numba_cache_dir` dans `certus/core/certus_core.py`) ;
   ce qui importe les noyaux sans point d'entrée lit encore le cache de l'arbre (ETAT D49).
+  **Un module qui donne une valeur (constante, appelé, façade) à un noyau doit dire numba** dans son
+  texte, sinon sa modification ne bouge pas la clé : `certus/domain/constants.py` (les constantes que
+  lit la physique, `TWO_PI`…) et la façade `certus_tmm_core.py` le disent, et
+  `tests/unit/test_the_cache_key_covers_what_the_kernels_read.py` refuse tout autre trou.
 - **Les tests partagent des caches de classe** (`SplineBasisCache._cache`…) : sauve et
   restaure-les dans une fixture `autouse`.
 - **Un test ne crée jamais sa `QApplication`, il prend `qapp`** : créée dans une variable

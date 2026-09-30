@@ -147,6 +147,102 @@ def test_complexity_is_one_plus_the_branches_and_is_high_above_sixty() -> None:
     assert metrics.architecture({"certus/core/a.py": _branches(60)})[0]["arch.fonctions_cc_gt60"] == 1
 
 
+def test_functions_are_named_by_qualified_name_and_duplicates_are_numbered() -> None:
+    source = textwrap.dedent("""
+        class A:
+            def m(self):
+                def inner():
+                    pass
+                return inner
+
+            @property
+            def p(self):
+                return 1
+
+            @p.setter
+            def p(self, value):
+                pass
+
+        def f():
+            pass
+
+        if True:
+            def f():
+                pass
+
+        try:
+            def g():
+                pass
+        except ImportError:
+            def g():
+                pass
+    """)
+
+    names = [name for name, *_ in metrics._fonctions_qualifiees(ast.parse(source))]
+
+    assert names == ["A.m", "A.m.<locals>.inner", "A.p", "A.p#2", "f", "f#2", "g", "g#2"]
+
+
+def _named(name: str, lines: int) -> str:
+    return f"def {name}():\n" + "    x = 1\n" * (lines - 1) + "\n"
+
+
+def _branchy(name: str, branches: int) -> str:
+    return f"def {name}(x):\n" + "".join(f"    if x == {i}:\n        return {i}\n" for i in range(branches)) + "\n"
+
+
+def test_the_debt_names_what_goes_over_a_threshold_and_keeps_its_measure() -> None:
+    sources = {
+        "certus/core/a.py": _named("just_under", 300) + _named("over", 301) + _branchy("simple", 59) + _branchy("branchy", 61),
+        "scripts/a.py": _named("script_over", 400),  # the limit is on certus/, as for the indicators
+    }
+
+    debt = metrics.dette(sources)
+
+    assert debt["fonctions_longues"] == {"certus/core/a.py::over": 301}
+    assert debt["fonctions_complexes"] == {"certus/core/a.py::branchy": 62}  # 1 + 61 branches; 60 is not over
+    assert debt["fichiers_longs"] == {}
+
+
+def test_a_file_is_long_above_fifteen_hundred_lines_and_only_under_certus() -> None:
+    assert metrics.dette({"certus/core/big.py": "x = 1\n" * 1500})["fichiers_longs"] == {}
+    assert metrics.dette({"certus/core/big.py": "x = 1\n" * 1501})["fichiers_longs"] == {"certus/core/big.py": 1501}
+    assert metrics.dette({"certus_physics/big.py": "x = 1\n" * 1501})["fichiers_longs"] == {"certus_physics/big.py": 1501}
+    assert metrics.dette({"scripts/big.py": "x = 1\n" * 1501})["fichiers_longs"] == {}
+
+
+def test_the_debt_and_the_indicators_count_the_same_offenders() -> None:
+    sources = {"certus/core/a.py": _named("over", 301) + _branchy("branchy", 61), "certus/core/big.py": "x = 1\n" * 1501}
+
+    measures, _ = metrics.architecture(sources)
+    debt = metrics.dette(sources)
+
+    assert measures["arch.fonctions_gt300"] == len(debt["fonctions_longues"]) == 1
+    assert measures["arch.fonctions_cc_gt60"] == len(debt["fonctions_complexes"]) == 1
+    assert measures["arch.fichiers_gt1500"] == len(debt["fichiers_longs"]) == 1
+
+
+def test_dette_writes_the_ledger_from_the_folders_the_cache_key_reads_and_stops(tmp_path) -> None:
+    for rel, text in {
+        "certus/core/a.py": "from certus.ui import w\n",
+        "certus/ui/w.py": "x = 1\n",
+        "certus_physics/big.py": "x = 1\n" * 1501,
+        "scripts/not_read.py": "from certus.ui import w\n",
+    }.items():
+        (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / rel).write_text(text)
+    out = tmp_path / "debt.json"
+
+    assert metrics.main(["--racine", str(tmp_path), "--dette", str(out)]) == 0
+
+    written = json.loads(out.read_text(encoding="utf-8"))
+    assert written["aretes_montantes"] == ["certus.core.a -> certus.ui.w"]
+    assert written["fichiers_longs"] == {"certus_physics/big.py": 1501}
+    assert set(written) == {
+        "_commentaire", "aretes_montantes", "cycles", "fonctions_longues", "fonctions_complexes", "fichiers_longs",
+    }  # fmt: skip
+
+
 def test_only_a_broad_handler_that_does_nothing_is_swallowed() -> None:
     source = textwrap.dedent("""
         def f():

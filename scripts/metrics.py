@@ -92,6 +92,11 @@ COUCHES = {
 }  # fmt: skip
 QT = ("PyQt6", "PyQt5", "PySide", "pyqtgraph")
 
+#: Ce qui fait d'une fonction ou d'un fichier un point chaud (les indicateurs `arch.*` et le registre de dette).
+SEUIL_FONCTION_LIGNES = 300
+SEUIL_FONCTION_CC = 60
+SEUIL_FICHIER_LIGNES = 1500
+
 #: Les familles que `pyproject.toml` selectionne ; `extend-ignore` en masque une partie.
 FAMILLES_LINT = "E,F,I,B,UP,RUF,PT,PERF"
 
@@ -408,9 +413,11 @@ def architecture(sources: dict[str, str]) -> tuple[dict[str, int], dict[str, Any
     mesures = {
         "arch.fichiers_py": len(sources),
         "arch.lignes_py": sum(len(t.splitlines()) for t in sources.values()),
-        "arch.fonctions_gt300": sum(1 for lignes, *_ in fonctions_certus if lignes > 300),
-        "arch.fonctions_cc_gt60": sum(1 for _, cc, *_ in fonctions_certus if cc > 60),
-        "arch.fichiers_gt1500": sum(1 for f, t in sources.items() if f.startswith("certus") and len(t.splitlines()) > 1500),
+        "arch.fonctions_gt300": sum(1 for lignes, *_ in fonctions_certus if lignes > SEUIL_FONCTION_LIGNES),
+        "arch.fonctions_cc_gt60": sum(1 for _, cc, *_ in fonctions_certus if cc > SEUIL_FONCTION_CC),
+        "arch.fichiers_gt1500": sum(
+            1 for f, t in sources.items() if f.startswith("certus") and len(t.splitlines()) > SEUIL_FICHIER_LIGNES
+        ),
         "arch.cycles": len(cycles(graphe_execution, modules)),
         "arch.aretes_montantes": sum(montantes.values()),
         "arch.except_avales": except_avales(arbres),
@@ -422,6 +429,87 @@ def architecture(sources: dict[str, str]) -> tuple[dict[str, int], dict[str, Any
         "cycles_avec_imports_de_typage": len(cycles(graphe, modules)),
     }
     return mesures, detail
+
+
+def _fonctions_qualifiees(arbre: ast.Module) -> list[tuple[str, int, int]]:
+    """(nom qualifie, lignes, complexite) de chaque fonction du module : `Classe.methode`, `f.<locals>.g`.
+
+    Deux fonctions de meme nom qualifie (une propriete et son `setter`, une definition par branche d'un `if`) se
+    distinguent par `#2`, `#3`... dans l'ordre du fichier.
+    """
+    trouvees: list[tuple[str, int, int]] = []
+    vus: collections.Counter = collections.Counter()
+
+    def visiter(noeuds: list[ast.stmt], prefixe: str) -> None:
+        for n in noeuds:
+            if isinstance(n, ast.FunctionDef | ast.AsyncFunctionDef):
+                nom = f"{prefixe}{n.name}"
+                vus[nom] += 1
+                c = _Complexite()
+                c.visit(n)
+                lignes = getattr(n, "end_lineno", n.lineno) - n.lineno + 1
+                trouvees.append((nom if vus[nom] == 1 else f"{nom}#{vus[nom]}", lignes, c.n))
+                visiter(n.body, f"{nom}.<locals>.")
+            elif isinstance(n, ast.ClassDef):
+                visiter(n.body, f"{prefixe}{n.name}.")
+            else:
+                for champ in ("body", "orelse", "finalbody"):
+                    sous = getattr(n, champ, None)
+                    if isinstance(sous, list):
+                        visiter(sous, prefixe)
+                for h in getattr(n, "handlers", []):
+                    visiter(h.body, prefixe)
+
+    visiter(arbre.body, "")
+    return trouvees
+
+
+def sources_certus(racine: Path) -> dict[str, str]:
+    """Les `.py` de `certus/` et de `certus_physics/` sur le disque (la clef du cache Numba lit les memes dossiers)."""
+    sources = {}
+    for paquet in ("certus", "certus_physics"):
+        for chemin in sorted((racine / paquet).rglob("*.py")):
+            sources[chemin.relative_to(racine).as_posix()] = chemin.read_text(encoding="utf-8-sig", errors="replace")
+    return sources
+
+
+def dette(sources: dict[str, str]) -> dict[str, Any]:
+    """Le registre de la dette d'architecture de `sources` : ce que `tests/architecture_debt.json` doit contenir.
+
+    * `aretes_montantes` : les imports de niveau module d'une couche basse vers une couche plus haute, module a module ;
+    * `cycles` : les cycles d'imports a l'execution (hors `if TYPE_CHECKING:`), membres tries ;
+    * `fonctions_longues`, `fonctions_complexes`, `fichiers_longs` : ce qui depasse les seuils, avec sa mesure (un
+      plafond : elle ne fait que baisser).
+    """
+    arbres: dict[str, ast.Module] = {}
+    for f, texte in sources.items():
+        try:
+            arbres[f] = ast.parse(texte, filename=f)
+        except (SyntaxError, ValueError):
+            continue
+    graphe, modules = graphe_imports(arbres)
+    graphe_execution, _ = graphe_imports(arbres, avec_typage=False)
+    longues: dict[str, int] = {}
+    complexes: dict[str, int] = {}
+    for f, arbre in sorted(arbres.items()):
+        if not f.startswith("certus"):
+            continue
+        for nom, lignes, cc in _fonctions_qualifiees(arbre):
+            if lignes > SEUIL_FONCTION_LIGNES:
+                longues[f"{f}::{nom}"] = lignes
+            if cc > SEUIL_FONCTION_CC:
+                complexes[f"{f}::{nom}"] = cc
+    return {
+        "aretes_montantes": [f"{a} -> {b}" for a, b in liste_aretes_montantes(graphe, modules)],
+        "cycles": sorted(sorted(c) for c in cycles(graphe_execution, modules)),
+        "fonctions_longues": longues,
+        "fonctions_complexes": complexes,
+        "fichiers_longs": {
+            f: n
+            for f, t in sorted(sources.items())
+            if f.startswith("certus") and (n := len(t.splitlines())) > SEUIL_FICHIER_LIGNES
+        },
+    }
 
 
 # =============================================================================
@@ -875,6 +963,16 @@ def mesurer(
     return mesures, absents, detail
 
 
+COMMENTAIRE_DETTE = (
+    "La dette d'architecture, mesuree par scripts/metrics.py. aretes_montantes : les imports de niveau module d'une couche "
+    "basse vers une couche plus haute (COUCHES), module a module. cycles : les cycles d'imports a l'execution (hors "
+    "`if TYPE_CHECKING:`). fonctions_longues, fonctions_complexes, fichiers_longs : ce qui depasse 300 lignes, une "
+    "complexite de 60, 1 500 lignes, avec sa mesure. Le registre ne fait que retrecir : un nouvel element, ou une mesure "
+    "qui monte, fait echouer tests/unit/test_the_architecture_debt_only_shrinks.py ; une dette payee, ou une mesure qui "
+    "baisse, doit y etre corrigee dans le meme commit (python scripts/metrics.py --dette tests/architecture_debt.json)."
+)
+
+
 def main(argv: list[str] | None = None) -> int:
     for flux in (sys.stdout, sys.stderr):
         if hasattr(flux, "reconfigure"):
@@ -888,7 +986,16 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--couverture-noyaux", type=Path, help="JSON de `coverage json` pris avec NUMBA_DISABLE_JIT=1")
     p.add_argument("--base", type=Path, help="un JSON ecrit par ce script : la base de comparaison, au lieu de l'audit")
     p.add_argument("--json", type=Path, help="ecrire aussi les mesures, avec leur provenance (sans ecraser)")
+    p.add_argument(
+        "--dette", type=Path, help="reecrire le registre de dette d'architecture (tests/architecture_debt.json) et s'arreter"
+    )
     args = p.parse_args(argv)
+
+    if args.dette:
+        registre = {"_commentaire": COMMENTAIRE_DETTE, **dette(sources_certus(args.racine))}
+        args.dette.write_text(json.dumps(registre, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+        print(f"{args.dette} : " + ", ".join(f"{len(v)} {k}" for k, v in registre.items() if k != "_commentaire"))
+        return 0
 
     base = None
     if args.base:

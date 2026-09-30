@@ -414,13 +414,28 @@ def _nom_appel(appel: ast.Call) -> str:
     return f.attr if isinstance(f, ast.Attribute) else (f.id if isinstance(f, ast.Name) else "")
 
 
-def a_une_assertion(fonction: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
-    """La fonction affirme-t-elle quelque chose : `assert`, `pytest.raises`, un `assert_*`, un assistant ?"""
+def a_une_assertion(
+    fonction: ast.FunctionDef | ast.AsyncFunctionDef,
+    locales: dict[str, ast.FunctionDef | ast.AsyncFunctionDef] | None = None,
+    _profondeur: int = 3,
+) -> bool:
+    """La fonction affirme-t-elle quelque chose : `assert`, `pytest.raises`, un `assert_*`, un assistant ?
+
+    Un assistant DEFINI DANS LE MEME FICHIER (`locales`) compte pour ce qu'il fait, pas pour son nom : le
+    2026-09-30, quatre fichiers avaient un `check()` qui comptait PASS et FAIL sans jamais affirmer, et le
+    nom suffisait a faire croire que les 25 tests qui l'appellent affirmaient. Un assistant importe, dont on
+    ne lit pas le corps, reste juge sur son nom.
+    """
+    locales = locales or {}
     for n in ast.walk(fonction):
         if isinstance(n, ast.Assert):
             return True
         if isinstance(n, ast.Call):
             nom = _nom_appel(n)
+            if nom in locales and locales[nom] is not fonction:
+                if _profondeur > 0 and a_une_assertion(locales[nom], locales, _profondeur - 1):
+                    return True
+                continue
             if nom in _APPELS_ASSERTION or nom.startswith(_PREFIXES_ASSERTION):
                 return True
         if isinstance(n, ast.With):
@@ -432,7 +447,7 @@ def a_une_assertion(fonction: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
 
 def tests_statiques(tests: dict[str, str], modules_certus: list[str]) -> dict[str, int]:
     """Les mesures `tests.*` : fonctions de test, sans assertion, modules que aucun test ne nomme."""
-    collectables: list[ast.FunctionDef | ast.AsyncFunctionDef] = []
+    collectables: list[tuple[ast.FunctionDef | ast.AsyncFunctionDef, dict[str, Any]]] = []
     for f, texte in tests.items():
         nom = posixpath.basename(f)
         if not (nom.startswith("test_") or nom.endswith("_test.py")):
@@ -441,13 +456,18 @@ def tests_statiques(tests: dict[str, str], modules_certus: list[str]) -> dict[st
             arbre = ast.parse(texte)
         except (SyntaxError, ValueError):
             continue
+        locales = {n.name: n for n in ast.walk(arbre) if isinstance(n, ast.FunctionDef | ast.AsyncFunctionDef)}
         for node in ast.walk(arbre):
             if isinstance(node, ast.ClassDef) and node.name.startswith("Test"):
                 collectables += [
-                    b for b in node.body if isinstance(b, ast.FunctionDef | ast.AsyncFunctionDef) and b.name.startswith("test")
+                    (b, locales)
+                    for b in node.body
+                    if isinstance(b, ast.FunctionDef | ast.AsyncFunctionDef) and b.name.startswith("test")
                 ]
         collectables += [
-            n for n in arbre.body if isinstance(n, ast.FunctionDef | ast.AsyncFunctionDef) and n.name.startswith("test")
+            (n, locales)
+            for n in arbre.body
+            if isinstance(n, ast.FunctionDef | ast.AsyncFunctionDef) and n.name.startswith("test")
         ]
 
     # Un module est « nomme » quand son nom apparait comme mot entier dans un fichier de tests.
@@ -456,7 +476,7 @@ def tests_statiques(tests: dict[str, str], modules_certus: list[str]) -> dict[st
     return {
         "tests.fichiers": len(tests),
         "tests.fonctions": len(collectables),
-        "tests.sans_assertion": sum(1 for fn in collectables if not a_une_assertion(fn)),
+        "tests.sans_assertion": sum(1 for fn, locales in collectables if not a_une_assertion(fn, locales)),
         "tests.modules": len(modules),
         "tests.modules_sans_test": sum(1 for m in modules if m not in mots),
     }

@@ -172,6 +172,27 @@ def test_a_test_without_an_assertion_is_found_however_the_others_assert() -> Non
     assert measures["tests.sans_assertion"] == 2
 
 
+def test_a_local_helper_counts_for_what_it_does_and_not_for_its_name() -> None:
+    """Measured 2026-09-30: four files had a `check()` that counted PASS and FAIL and never asserted; its name was
+    enough for the counter to believe the 25 tests that call it asserted."""
+    counting = (
+        "PASS = 0\n"
+        "def check(name, got, ref):\n    global PASS\n    PASS += 1\n    print(name)\n"
+        "def test_a():\n    check('a', 1, 1)\n"
+    )
+    asserting = (
+        "def check(name, got, ref):\n    assert got == ref, name\n"
+        "def test_a():\n    check('a', 1, 1)\n"
+        "def test_b():\n    helper()\n"  # a helper that is not named like a check, and hands the work to one that asserts
+        "def helper():\n    check('b', 1, 1)\n"
+    )
+    imported = "from helpers import check\n\n\ndef test_a():\n    check('a', 1, 1)\n"  # not defined here: judged by its name
+
+    assert metrics.tests_statiques({"tests/unit/test_x.py": counting}, [])["tests.sans_assertion"] == 1
+    assert metrics.tests_statiques({"tests/unit/test_x.py": asserting}, [])["tests.sans_assertion"] == 0
+    assert metrics.tests_statiques({"tests/unit/test_x.py": imported}, [])["tests.sans_assertion"] == 0
+
+
 def test_a_module_is_named_when_a_test_says_its_name_as_a_word() -> None:
     modules = ["certus/physics/alpha_kernel.py", "certus/physics/beta_kernel.py", "certus/physics/__init__.py"]
     tests = {

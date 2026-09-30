@@ -70,7 +70,7 @@ extend-ignore = [
   # Bugbear legacy
   "B007",
   # Pyupgrade legacy
-  "UP007",
+  
   "UP031", "UP037",
   "UP040", "UP042", "UP046",
   # Pytest legacy (tests already green — these are stylistic)

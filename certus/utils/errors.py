@@ -29,7 +29,6 @@ Usage:
 
 """
 
-from typing import Union
 
 import functools
 import logging
@@ -419,8 +418,8 @@ def validate_refractive_index(
 
 
 def validate_spectral_data(
-    wavelengths: Union[np.ndarray, list[float]],
-    values: Union[np.ndarray, list[float]],
+    wavelengths: np.ndarray | list[float],
+    values: np.ndarray | list[float],
     value_name: str = "values",
     min_points: int = 2,
     check_bounds: bool = True,

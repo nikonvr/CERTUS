@@ -311,6 +311,7 @@ class DualStageProgressWidget(QWidget):
         self._start_time = time.time()
         self._last_time = self._start_time
         self._last_evals = 0
+        self._display_progress = None
         self._evals_per_sec = 0.0
         self._is_running = True
         self._is_canceled = False
@@ -379,12 +380,11 @@ class DualStageProgressWidget(QWidget):
         if progress_pct >= 0:
             target_val = min(100, progress_pct)
         else:
-            target_val = 0
-            if max_iter > 0:
-                target_val = int(100 * iteration / max_iter)
-            if evals > 0 and getattr(self, "_last_evals", None) is not None:
-                eval_ratio = min(1.0, evals / max(1, self._last_evals + max(1, evals)))
-                target_val = int(100 * (0.7 * (target_val / 100.0) + 0.3 * eval_ratio))
+            # The share of the work done is iteration / max_iter and nothing else: the number of evaluations
+            # says how busy the run is, not how far along. A blend `0.7 p + 0.3 evals / (last + evals)` stood
+            # here, but `_last_evals` had been set to `evals` a few lines above, so its ratio was always 1/2:
+            # the bar stopped at 85 % of a finished run and sat at 15 % when the total was unknown.
+            target_val = int(100 * iteration / max_iter) if max_iter > 0 else 0
             target_val = min(100, max(0, target_val))
         self._display_progress = smooth_progress(self._display_progress, target_val / 100.0)
         target_val = int(round(100 * (self._display_progress if self._display_progress is not None else 0.0)))

@@ -29,7 +29,7 @@ class DomainEvent:
     timestamp: float = field(default_factory=time.time)
     event_id: str = field(default_factory=lambda: f"evt-{int(time.time() * 1000)}")
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validation."""
         if not self.event_type:
             raise ValueError("event_type cannot be empty")
@@ -50,7 +50,7 @@ class EventBus:
         >>> bus.publish(event)
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._handlers: dict[str, list[Callable[[DomainEvent], None]]] = {}
         self._store: list[DomainEvent] = []
 

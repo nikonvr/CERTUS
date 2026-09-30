@@ -33,7 +33,7 @@ class OpticalStack:
     layers: list[Layer] = field(default_factory=list)
     _events: list[dict] = field(default_factory=list, repr=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initial validation."""
         if not isinstance(self.layers, list):
             raise TypeError("layers must be a list")

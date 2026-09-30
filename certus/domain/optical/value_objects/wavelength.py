@@ -33,7 +33,7 @@ class Wavelength:
     MIN_NM: float = 100.0  # Near UV
     MAX_NM: float = 10000.0  # Mid IR
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Invariant validation."""
         if not isinstance(self.nm, (int, float)):
             raise TypeError(f"Wavelength must be numeric, got {type(self.nm)}")
@@ -99,7 +99,7 @@ class WavelengthRange:
     min_wl: Wavelength
     max_wl: Wavelength
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.min_wl.nm >= self.max_wl.nm:
             raise ValueError(f"Invalid range: min={self.min_wl.nm} >= max={self.max_wl.nm}")
 

@@ -37,7 +37,7 @@ class RefractiveIndex:
     MAX_N: float = 10.0  # Realistic upper bound for thin films
     MAX_K: float = 10.0  # High absorption bound for metals
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Physical invariants validation."""
         if not isinstance(self.n, (int, float)) or not isinstance(self.k, (int, float)):
             raise TypeError("n and k must be numeric")
@@ -146,7 +146,7 @@ class RefractiveIndexDispersion:
     n_values: tuple[float, ...]
     k_values: tuple[float, ...]
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not (len(self.wavelengths_nm) == len(self.n_values) == len(self.k_values)):
             raise ValueError("Wavelengths, n and k arrays must have same length")
 

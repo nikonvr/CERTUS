@@ -37,7 +37,7 @@ class Layer:
     refractive_index: RefractiveIndex
     metadata: dict | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Invariant validation."""
         if not self.material_id or not isinstance(self.material_id, str):
             raise ValueError("material_id must be non-empty string")

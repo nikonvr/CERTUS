@@ -44,7 +44,7 @@ FROSTED_GLASS_CAUCHY_B: float = 4200.0  # nm²
 
 
 @lru_cache(maxsize=1)
-def get_float_dtype():
+def get_float_dtype() -> type[np.float64]:
     """Default float dtype: double precision.
 
     Cached for performance.
@@ -54,7 +54,7 @@ def get_float_dtype():
 
 
 @lru_cache(maxsize=1)
-def get_complex_dtype():
+def get_complex_dtype() -> type[np.complex128]:
     """Default complex dtype: double precision.
 
     Cached for performance.

@@ -246,7 +246,7 @@ class TestREsubstrateCauchy3:
 
 @pytest.mark.unit
 def test_re_ranking_combined_rmse_matches_formula():
-    from certus.workers.certus_re_worker_utils import re_ranking_combined_rmse
+    from certus.core.certus_re_worker_utils import re_ranking_combined_rmse
 
     sp, qw, a = 0.012, 0.02, 0.05
     out = re_ranking_combined_rmse(sp, qw, a)

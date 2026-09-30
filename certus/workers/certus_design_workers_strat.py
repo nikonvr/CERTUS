@@ -3,7 +3,7 @@ import logging
 from typing import Any
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, CFG, get_float_dtype
-from certus.workers.certus_design_worker_utils import (
+from certus.core.certus_design_worker_utils import (
     build_pglobal_optimizer,
     build_pglobal_config_from_cfg,
     prepare_pglobal_inputs_from_state,
@@ -11,7 +11,7 @@ from certus.workers.certus_design_worker_utils import (
     run_pglobal_restart_loop,
 )
 from certus_physics import cost_numba_fast, compute_gradient_all_layers_analytic, prepare_targets_vectorized, PGlobalConfig
-from certus.workers.certus_design_workers_dto import OptimWorkerResult
+from certus.core.certus_design_workers_dto import OptimWorkerResult
 from certus.utils.certus_progress_tracker import build_progress_callback, build_progress_snapshot, StepState
 from certus.core.certus_design_core import (
     _design_compute_oblique_error_common,

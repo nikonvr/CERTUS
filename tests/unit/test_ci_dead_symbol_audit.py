@@ -42,7 +42,7 @@ SITES_D_APPEL = {
         "PGlobalConfig.for_index(",
     ),
     "certus_physics.structures:PGlobalConfig.for_local": (
-        "certus/workers/certus_design_worker_utils.py",
+        "certus/core/certus_design_worker_utils.py",
         "PGlobalConfig.for_local(",
     ),
     "CERTUS_METAL_SINGLE:CertusMetalSingleApp._setup_plots": (

@@ -26,7 +26,7 @@ from certus.core.certus_core import (
     get_float_dtype,
 )
 from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState, build_progress_callback
-from certus.workers.certus_design_worker_utils import (
+from certus.core.certus_design_worker_utils import (
     optim_backside_flags_from_cfg,
     optim_bounds_thickness_global,
     optim_bounds_thickness_healing,
@@ -42,7 +42,7 @@ from certus.workers.certus_design_worker_utils import (
     run_coord_descent_5cycles,
     run_pglobal_restart_loop,
 )
-from certus.workers.certus_design_workers_dto import ColorWorkerRequest, ColorWorkerResult, NeedleWorkerResult, NeedleWorkerRequest, OptimWorkerRequest, OptimWorkerResult
+from certus.core.certus_design_workers_dto import ColorWorkerRequest, ColorWorkerResult, NeedleWorkerResult, NeedleWorkerRequest, OptimWorkerRequest, OptimWorkerResult
 from certus_physics import (
     PGlobalConfig,
     calc_spectrum_full_oblique_exact,
@@ -294,7 +294,7 @@ class OptimWorker(QObject):
                 ep_current = ep0.copy()
                 ep_current[var_idx] = best_sample_overall.x
                 best_cost = best_sample_overall.y
-                from certus.workers.certus_design_worker_utils import maybe_upgrade_grid_tikhonravov
+                from certus.core.certus_design_worker_utils import maybe_upgrade_grid_tikhonravov
                 wls, n_sub, n_layers_T, n_back_T, tgt_vals, tgt_weights = maybe_upgrade_grid_tikhonravov(ep_current=ep_current, mats=mats, stack=stack, tgts=tgts, oblique_mode=oblique_mode, oblique_tgts=oblique_tgts, wls=wls, float_dtype=float_dtype, complex_dtype=complex_dtype, has_back_stack=has_back_stack, stack_back=stack_back, ep_back=ep_back, n_sub=n_sub, n_layers_T=n_layers_T, n_back_T=n_back_T, tgt_vals=tgt_vals, tgt_weights=tgt_weights)
                 try:
                     self.signals.progress_snapshot.emit(build_progress_snapshot(message='Final refinement (5x coordinate descent)...', display_ratio=0.95, progress_ratio=0.95, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module='DESIGN', phase='FINAL_REFINEMENT'))

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from certus.workers.certus_design_workers_dto import (
+from certus.core.certus_design_workers_dto import (
     ColorWorkerRequest,
     ColorWorkerResult,
     NeedleWorkerResult,
@@ -116,7 +116,7 @@ def test_needle_worker_result_from_legacy_split_payload() -> None:
 
 @pytest.mark.unit
 def test_design_params_dto_validation() -> None:
-    from certus.workers.certus_design_workers_dto import DesignParamsDTO
+    from certus.core.certus_design_workers_dto import DesignParamsDTO
 
     # Validate defaults
     dto = DesignParamsDTO()

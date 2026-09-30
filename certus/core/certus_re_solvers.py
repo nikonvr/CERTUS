@@ -53,7 +53,7 @@ from certus.utils.certus_re_helpers import (
     _re_log_objective_diagnostic,
 )
 from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_SPLINE_TIKHONOV
-from certus.workers.certus_re_worker_utils import (
+from certus.core.certus_re_worker_utils import (
     p2_result_to_correc_tuple,
 )
 

@@ -751,12 +751,12 @@ def run_strat():
     run = time.perf_counter() - t1
 
     # Le pipeline STRAT emet un WorkerThreadResult
-    # (certus/workers/certus_strat_workers_dto.py:132), PAS un dict : la cle
+    # (certus/core/certus_strat_workers_dto.py:132), PAS un dict : la cle
     #carrying the RMSE is `rmse`, in its `final_results` field. The bench
     #was looking for `best_rmse` on a dict — both were wrong, so RESULT
     #was None on STRAT and the module had no correction anchor.
     # La charge utile est le to_legacy_dict() d'un WorkerThreadResult
-    # (certus/workers/certus_strat_workers_dto.py:132) : un dict a DEUX cles,
+    # (certus/core/certus_strat_workers_dto.py:132) : un dict a DEUX cles,
     # `final_results` et `opti_results` (constate par instrumentation).
     #
     # Le RMSE n'y figure PAS directement. La cle "rmse" du module appartient a

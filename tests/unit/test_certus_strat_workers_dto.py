@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from certus.workers.certus_strat_workers_dto import WorkerThreadRequest, WorkerThreadResult
+from certus.core.certus_strat_workers_dto import WorkerThreadRequest, WorkerThreadResult
 
 from certus.workers.certus_strat_workers import LiveFeedMonitor
 

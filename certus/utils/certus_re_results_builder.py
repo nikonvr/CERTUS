@@ -8,7 +8,7 @@ from typing import Any
 
 import numpy as np
 
-from certus.workers.certus_re_worker_utils import (
+from certus.core.certus_re_worker_utils import (
     REResultsBuilder as _LegacyREResultsBuilder,
     re_result_dict_stop_before_first_trf,
 )

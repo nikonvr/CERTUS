@@ -4,7 +4,7 @@ from typing import Any
 import numpy as np
 from certus.ui.certus_qt_widgets import QCheckBox
 from certus.utils.errors import safe_ui_action
-from certus.workers.certus_design_worker_utils import (
+from certus.core.certus_design_worker_utils import (
     optim_post_optim_time_budget_seconds,
     optim_qwot_values_from_ep_stack,
     optim_rmse_display_string,
@@ -877,7 +877,7 @@ class OptimizationManager:
 
         def _evaluate_test_stack(ep_test, stack_test):
             try:
-                from certus.workers.certus_design_worker_utils import optim_prepare_stack_nk_back
+                from certus.core.certus_design_worker_utils import optim_prepare_stack_nk_back
                 from certus_physics import compute_gradient_all_layers_analytic
                 from certus.core.certus_core import get_complex_dtype, get_float_dtype
                 mats = self.ui._get_materials()

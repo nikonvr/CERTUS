@@ -735,7 +735,7 @@ class CoreManager:
     def _shutdown_previous_optim_worker(self) -> None:
         """Stop any running optimization worker before starting a new cycle."""
 
-        from certus.workers.certus_design_worker_utils import stop_qt_worker_thread_safely
+        from certus.core.certus_design_worker_utils import stop_qt_worker_thread_safely
 
         if self.ui.optim_thread is not None:
             try:

@@ -1,9 +1,6 @@
 {
   "_commentaire": "Chaque import de niveau module qui va d'une couche basse vers une couche plus haute (COUCHES de scripts/metrics.py), et chaque cycle d'imports a l'execution (hors `if TYPE_CHECKING:`), est ici : la dette d'architecture, mesuree le 2026-09-30 apres la sortie des constantes de la physique (certus/domain/constants.py). La liste ne fait que retrecir : un import nouveau fait echouer tests/unit/test_the_architecture_debt_only_shrinks.py, et une dette payee doit en sortir. Un import de niveau fonction n'est pas compte : il s'execute plus tard, c'est le remede habituel.",
   "aretes_montantes": [
-    "certus.core.certus_design_core -> certus.workers.certus_design_worker_utils",
-    "certus.core.certus_re_objectives -> certus.workers.certus_re_worker_utils",
-    "certus.core.certus_re_solvers -> certus.workers.certus_re_worker_utils",
     "certus.metal.certus_metal_bilayer_app -> certus.ui.certus_overview_tab",
     "certus.metal.certus_metal_bilayer_app -> certus.ui.certus_ui",
     "certus.metal.certus_metal_common -> certus.ui.certus_plot",
@@ -20,14 +17,10 @@
     "certus.spline.certus_index_spline_smart_init -> certus.ui.certus_ui",
     "certus.utils.certus_curve_smoother -> certus.ui.certus_measurement_excel_ui",
     "certus.utils.certus_curve_smoother -> certus.ui.certus_ui",
-    "certus.utils.certus_design_services -> certus.workers.certus_design_workers_dto",
     "certus.utils.certus_export -> certus.ui.certus_ui",
-    "certus.utils.certus_re_helpers -> certus.workers.certus_re_worker_utils",
-    "certus.utils.certus_re_results_builder -> certus.workers.certus_re_worker_utils",
     "certus.utils.certus_spline_report -> certus.spline.certus_index_spline_core",
     "certus.utils.certus_spline_report -> certus.spline.spline_objective",
-    "certus.utils.certus_spline_report -> certus.spline.spline_profile_corridors",
-    "certus.utils.certus_strat_service -> certus.workers.certus_strat_workers_dto"
+    "certus.utils.certus_spline_report -> certus.spline.spline_profile_corridors"
   ],
   "cycles": [
     [

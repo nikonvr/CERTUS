@@ -85,7 +85,7 @@ from certus.core.certus_core import (
     CFG,
 )
 
-from certus.workers.certus_design_worker_utils import (
+from certus.core.certus_design_worker_utils import (
     optim_calc_oblique_selected,
 )
 

@@ -23,7 +23,7 @@ from certus_physics import (
     cost_numba_fast,
 )
 
-from certus.workers.certus_design_worker_utils import optim_calc_oblique_selected
+from certus.core.certus_design_worker_utils import optim_calc_oblique_selected
 from certus.physics.certus_substrate_absorption import apply_plate_loss
 
 

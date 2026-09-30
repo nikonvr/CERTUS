@@ -10,7 +10,7 @@ from __future__ import annotations
 from certus.core.certus_core import create_module_environment, NUMERICAL_FAULT_EXCEPTIONS
 
 
-from certus.workers.certus_re_worker_utils import (
+from certus.core.certus_re_worker_utils import (
     re_objective_wls_weight_log_trap,
     re_ranking_combined_rmse,
 )

@@ -548,7 +548,7 @@ class EventsManager:
 
         """
 
-        from certus.workers.certus_design_worker_utils import stop_qt_worker_thread_safely
+        from certus.core.certus_design_worker_utils import stop_qt_worker_thread_safely
 
         # Ensure all workers are stopped to avoid "QThread: Destroyed while thread is still running"
 

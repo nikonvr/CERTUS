@@ -12,7 +12,7 @@ from typing import Any
 
 from certus.utils.certus_services import BaseHeadlessRequest, BaseHeadlessResponse, BaseHeadlessService
 from certus.core.certus_metrology import ValidationStatus
-from certus.workers.certus_design_workers_dto import DesignParamsDTO, OptimWorkerRequest, OptimWorkerResult
+from certus.core.certus_design_workers_dto import DesignParamsDTO, OptimWorkerRequest, OptimWorkerResult
 
 
 _DESIGN_CFG_KEYS = {

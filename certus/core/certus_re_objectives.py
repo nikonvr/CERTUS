@@ -42,7 +42,7 @@ from certus.utils.certus_re_helpers import (
 )
 from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_SPLINE_TIKHONOV
 from certus.core.certus_re_config import REMseContext, REPhase2Result, RE_RESULT_LABEL_WITH_DRIFT, _result_dto_at
-from certus.workers.certus_re_worker_utils import (
+from certus.core.certus_re_worker_utils import (
     re_objective_wls_grid,
     re_nominal_indices_at_wls,
     re_oblique_config_meta_from_wls,

@@ -7,7 +7,7 @@ from certus.core.certus_re_config import REPhase3Result, REPhase4Result, _set_to
 from certus.core.certus_re_solvers import REUserStopRequested
 from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_PHASE3_SHAKES, RE_LBFGSB_FTOL, RE_LBFGSB_GTOL
 from certus.utils.certus_re_helpers import re_knots_wavelengths
-from certus.workers.certus_re_worker_utils import p2_result_to_correc_tuple, shake_sigmas_adaptive
+from certus.core.certus_re_worker_utils import p2_result_to_correc_tuple, shake_sigmas_adaptive
 
 
 class REPhase3Strategy:

@@ -1,7 +1,7 @@
 
 from typing import TYPE_CHECKING
 from certus.core.certus_strat_core import APP_CONTEXT
-from certus.workers.certus_strat_workers_dto import WorkerThreadResult
+from certus.core.certus_strat_workers_dto import WorkerThreadResult
 from certus.utils.certus_strat_service import calculate_nominal_properties, extract_best_rmse
 from certus.core.certus_strat_core import generate_excel_report
 import numpy as np

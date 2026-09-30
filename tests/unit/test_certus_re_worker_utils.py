@@ -14,7 +14,7 @@ import pytest
 
 from certus.utils.certus_re_helpers import _parse_re_rmse_combined_from_progress_message
 
-from certus.workers.certus_re_worker_utils import (
+from certus.core.certus_re_worker_utils import (
 
     RE_CORREC_NOMINAL_PCT,
 

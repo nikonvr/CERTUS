@@ -27,7 +27,7 @@ from certus_physics import (
 )
 from certus.utils.certus_strat_context import StratContext
 from certus.core.certus_core import WL_DECIMALS
-from certus.workers.certus_strat_workers_dto import StratParamsDTO, StratOptiResultsDTO
+from certus.core.certus_strat_workers_dto import StratParamsDTO, StratOptiResultsDTO
 
 NOISE_DISTRIBUTION_GAUSSIAN = "gaussian"
 NON_MONOTONIC_MODE_ATTENUATE = "attenuate"

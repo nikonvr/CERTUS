@@ -100,7 +100,7 @@ from certus.utils.certus_strat_context import (
 # Robust db clues (fixed xlsx)
 
 
-from certus.workers.certus_strat_workers_dto import WorkerThreadRequest, WorkerThreadResult
+from certus.core.certus_strat_workers_dto import WorkerThreadRequest, WorkerThreadResult
 from certus.utils.certus_strat_service import (
     StratStrategyService,
     calculate_nominal_properties,

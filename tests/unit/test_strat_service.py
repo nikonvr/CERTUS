@@ -13,7 +13,7 @@ from certus.utils.certus_strat_service import (
     generate_noise_array,
     wavelength_to_index,
 )
-from certus.workers.certus_strat_workers_dto import StratParamsDTO
+from certus.core.certus_strat_workers_dto import StratParamsDTO
 
 
 def test_validate_payload_rejects_invalid_step() -> None:

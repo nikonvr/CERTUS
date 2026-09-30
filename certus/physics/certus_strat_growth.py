@@ -75,6 +75,13 @@ MAX_LOOKBACK_VAL: int = 4
 #: ~1 % of the profile amplitude, four decades under the reading noise it perturbs.
 SLIT_PROFILE_NODES: int = 17
 
+#: Points of the scan of the layer being grown, and of each layer of the replayed block history. The current layer is
+#: swept over D_SCAN_VAL times its thickness in 64 points (the nominal stop falls on index 21). Numerical choices, not
+#: the machine's cadence (see the reading-noise note in `simulate_growth_kernel`). Module level because the pieces cut
+#: out of the kernel all size their arrays with them.
+SCAN_NPTS_CURRENT: int = 64
+SCAN_NPTS_HISTORY: int = 16
+
 CRASH_SENTINEL_MIN: float = 100000.0
 CRASH_SENTINEL_UNIT: float = 1000000.0
 #: Target stopping level is not bracketed by signal before next extremum.
@@ -551,6 +558,130 @@ def _stack_matrix_pair(wl, n_even_r, n_odd_r, th_r, n_even_n, n_odd_n, th_n, j_s
     return R00, R01, R10, R11, Q00, Q01, Q10, Q11
 
 
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def _fill_history_signal(
+    wl,
+    n_Sub,
+    n_H_r,
+    n_L_r,
+    n_H,
+    n_L,
+    prev_thicknesses_sim,
+    p_thick_nominal,
+    j0,
+    i_layer,
+    R00,
+    R01,
+    R10,
+    R11,
+    Q00,
+    Q01,
+    Q10,
+    Q11,
+    Ts_r,
+    Ts_n,
+    apply_signal_noise,
+    signal_noise_scale,
+    signal_noise_seed,
+    signal_noise_run,
+):
+    """Replay the layers `j0` .. `i_layer - 1` of the block: fill `Ts_r` and `Ts_n` with their signal, from index 0.
+
+    `Ts_r` is what the machine read (real thicknesses, real indices, reading noise), `Ts_n` what the strategy expects
+    (nominal). `(R00, R01, R10, R11)` and `(Q00, Q01, Q10, Q11)` are the real and nominal matrices of the stack below
+    `j0`. Returns (idx, R00, R01, R10, R11, Q00, Q01, Q10, Q11): the next free index of the arrays, and the matrices
+    of the stack up to `i_layer`, where the scan of the current layer goes on.
+    """
+    TWO_PI_VAL = TWO_PI
+    NPTS_PREV = SCAN_NPTS_HISTORY
+    idx = 0
+    for j in range(j0, i_layer):
+        n_j_r = n_H_r if j % 2 == 0 else n_L_r
+        n_j_n = n_H if j % 2 == 0 else n_L
+        d_rj = prev_thicknesses_sim[j]
+        d_nj = p_thick_nominal[j]
+        # ---- CLOSED FORM ON THE HISTORY TOO (18ter) -----------------------
+        #
+        # 📏 The ablation of 2026-08-11 named this block: re-scanning the block
+        # history is **38.6 %** of the kernel, the single largest item -- and the
+        # closed form had only been applied to the CURRENT layer's sweep. Each
+        # history layer j is equally "a layer growing on a fixed substack", the
+        # substack being layers 0..j-1, so the same three coefficients apply.
+        #
+        # ⚠️ TWO SETS OF COEFFICIENTS, and they are not interchangeable: the real
+        # signal is swept over the REAL thickness d_rj on the real indices, the
+        # nominal one over d_nj on the nominal indices. Sharing them would silently
+        # merge the two stacks -- the very divergence this kernel exists to measure.
+        fast_j = (
+            abs(n_j_r.imag) < K_MAX_CLOSED_FORM and abs(n_j_n.imag) < K_MAX_CLOSED_FORM
+        )
+        Pjr = 0.0
+        Qjr = 0.0
+        Rjr = 0.0
+        Pjn = 0.0
+        Qjn = 0.0
+        Rjn = 0.0
+        kkjr = 0.0
+        kkjn = 0.0
+        if fast_j:
+            Pjr, Qjr, Rjr = layer_scan_coeffs(R00, R01, R10, R11, n_j_r, n_Sub)
+            Pjn, Qjn, Rjn = layer_scan_coeffs(Q00, Q01, Q10, Q11, n_j_n, n_Sub)
+            kkjr = TWO_PI_VAL / wl * n_j_r.real
+            kkjn = TWO_PI_VAL / wl * n_j_n.real
+        for k in range(1, NPTS_PREV + 1):
+            f = k / NPTS_PREV
+            if fast_j:
+                tdj = 2.0 * kkjr * (f * d_rj)
+                denj = Pjr + Qjr * np.cos(tdj) + Rjr * np.sin(tdj)
+                if denj > 1e-18:
+                    Ts_r[idx] = 4.0 * n_Sub.real / denj
+            else:
+                p3 = TWO_PI_VAL / wl * n_j_r * (f * d_rj)
+                c3, s3 = (np.cos(p3), np.sin(p3))
+                o3 = s3 / n_j_r if abs(n_j_r) > 1e-09 else 0.0
+                z1 = (c3 * R00 + 1j * o3 * R10) + n_Sub * (c3 * R01 + 1j * o3 * R11)
+                z1 = z1 + (1j * n_j_r * s3 * R00 + c3 * R10) + n_Sub * (1j * n_j_r * s3 * R01 + c3 * R11)
+                if abs(z1) > 1e-09:
+                    Ts_r[idx] = 4.0 * n_Sub.real / (z1.real**2 + z1.imag**2)
+            if apply_signal_noise:
+                # group = j: the past of layer j carries the SAME noise for
+                # all the layers of the block that read it again.
+                Ts_r[idx] += signal_noise_scale * _seeded_noise_sample(
+                    signal_noise_seed, j, signal_noise_run, k - 1, True
+                )
+            if fast_j:
+                tdn = 2.0 * kkjn * (f * d_nj)
+                denn = Pjn + Qjn * np.cos(tdn) + Rjn * np.sin(tdn)
+                if denn > 1e-18:
+                    Ts_n[idx] = 4.0 * n_Sub.real / denn
+            else:
+                p4 = TWO_PI_VAL / wl * n_j_n * (f * d_nj)
+                c4, s4 = (np.cos(p4), np.sin(p4))
+                o4 = s4 / n_j_n if abs(n_j_n) > 1e-09 else 0.0
+                z2 = (c4 * Q00 + 1j * o4 * Q10) + n_Sub * (c4 * Q01 + 1j * o4 * Q11)
+                z2 = z2 + (1j * n_j_n * s4 * Q00 + c4 * Q10) + n_Sub * (1j * n_j_n * s4 * Q01 + c4 * Q11)
+                if abs(z2) > 1e-09:
+                    Ts_n[idx] = 4.0 * n_Sub.real / (z2.real**2 + z2.imag**2)
+            idx += 1
+        p3 = TWO_PI_VAL / wl * n_j_r * d_rj
+        c3, s3 = (np.cos(p3), np.sin(p3))
+        o3 = s3 / n_j_r if abs(n_j_r) > 1e-09 else 0.0
+        g0 = c3 * R00 + 1j * o3 * R10
+        g1 = c3 * R01 + 1j * o3 * R11
+        g2 = 1j * n_j_r * s3 * R00 + c3 * R10
+        g3 = 1j * n_j_r * s3 * R01 + c3 * R11
+        R00, R01, R10, R11 = (g0, g1, g2, g3)
+        p4 = TWO_PI_VAL / wl * n_j_n * d_nj
+        c4, s4 = (np.cos(p4), np.sin(p4))
+        o4 = s4 / n_j_n if abs(n_j_n) > 1e-09 else 0.0
+        h0 = c4 * Q00 + 1j * o4 * Q10
+        h1 = c4 * Q01 + 1j * o4 * Q11
+        h2 = 1j * n_j_n * s4 * Q00 + c4 * Q10
+        h3 = 1j * n_j_n * s4 * Q01 + c4 * Q11
+        Q00, Q01, Q10, Q11 = (h0, h1, h2, h3)
+    return idx, R00, R01, R10, R11, Q00, Q01, Q10, Q11
+
+
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def simulate_growth_kernel(
     p_thick_nominal: np.ndarray,
@@ -967,8 +1098,8 @@ def simulate_growth_kernel(
     #     measurement but the resolution of T_real(d) = target_T_noisy. The noise
     #     of the stopping reading is already carried, and only carried, by
     #     `noise_val_precalc`.
-    NPTS = 64
-    NPTS_PREV = 16
+    NPTS = SCAN_NPTS_CURRENT
+    NPTS_PREV = SCAN_NPTS_HISTORY
     MAX_LOOKBACK = MAX_LOOKBACK_VAL
     # Module constant so the slit-bias profiles are sampled on exactly this axis.
     D_SCAN = D_SCAN_VAL
@@ -1037,91 +1168,11 @@ def simulate_growth_kernel(
         R00, R01, R10, R11, Q00, Q01, Q10, Q11 = _stack_matrix_pair(
             wl, n_H_r, n_L_r, prev_thicknesses_sim, n_H, n_L, p_thick_nominal, witness_base_layer, j0
         )
-        idx = 0
-        for j in range(j0, i_layer):
-            n_j_r = n_H_r if j % 2 == 0 else n_L_r
-            n_j_n = n_H if j % 2 == 0 else n_L
-            d_rj = prev_thicknesses_sim[j]
-            d_nj = p_thick_nominal[j]
-            # ---- CLOSED FORM ON THE HISTORY TOO (18ter) -----------------------
-            #
-            # 📏 The ablation of 2026-08-11 named this block: re-scanning the block
-            # history is **38.6 %** of the kernel, the single largest item -- and the
-            # closed form had only been applied to the CURRENT layer's sweep. Each
-            # history layer j is equally "a layer growing on a fixed substack", the
-            # substack being layers 0..j-1, so the same three coefficients apply.
-            #
-            # ⚠️ TWO SETS OF COEFFICIENTS, and they are not interchangeable: the real
-            # signal is swept over the REAL thickness d_rj on the real indices, the
-            # nominal one over d_nj on the nominal indices. Sharing them would silently
-            # merge the two stacks -- the very divergence this kernel exists to measure.
-            fast_j = (
-                abs(n_j_r.imag) < K_MAX_CLOSED_FORM and abs(n_j_n.imag) < K_MAX_CLOSED_FORM
-            )
-            Pjr = 0.0
-            Qjr = 0.0
-            Rjr = 0.0
-            Pjn = 0.0
-            Qjn = 0.0
-            Rjn = 0.0
-            kkjr = 0.0
-            kkjn = 0.0
-            if fast_j:
-                Pjr, Qjr, Rjr = layer_scan_coeffs(R00, R01, R10, R11, n_j_r, n_Sub)
-                Pjn, Qjn, Rjn = layer_scan_coeffs(Q00, Q01, Q10, Q11, n_j_n, n_Sub)
-                kkjr = TWO_PI_VAL / wl * n_j_r.real
-                kkjn = TWO_PI_VAL / wl * n_j_n.real
-            for k in range(1, NPTS_PREV + 1):
-                f = k / NPTS_PREV
-                if fast_j:
-                    tdj = 2.0 * kkjr * (f * d_rj)
-                    denj = Pjr + Qjr * np.cos(tdj) + Rjr * np.sin(tdj)
-                    if denj > 1e-18:
-                        Ts_r[idx] = 4.0 * n_Sub.real / denj
-                else:
-                    p3 = TWO_PI_VAL / wl * n_j_r * (f * d_rj)
-                    c3, s3 = (np.cos(p3), np.sin(p3))
-                    o3 = s3 / n_j_r if abs(n_j_r) > 1e-09 else 0.0
-                    z1 = (c3 * R00 + 1j * o3 * R10) + n_Sub * (c3 * R01 + 1j * o3 * R11)
-                    z1 = z1 + (1j * n_j_r * s3 * R00 + c3 * R10) + n_Sub * (1j * n_j_r * s3 * R01 + c3 * R11)
-                    if abs(z1) > 1e-09:
-                        Ts_r[idx] = 4.0 * n_Sub.real / (z1.real**2 + z1.imag**2)
-                if apply_signal_noise:
-                    # group = j: the past of layer j carries the SAME noise for
-                    # all the layers of the block that read it again.
-                    Ts_r[idx] += signal_noise_scale * _seeded_noise_sample(
-                        signal_noise_seed, j, signal_noise_run, k - 1, True
-                    )
-                if fast_j:
-                    tdn = 2.0 * kkjn * (f * d_nj)
-                    denn = Pjn + Qjn * np.cos(tdn) + Rjn * np.sin(tdn)
-                    if denn > 1e-18:
-                        Ts_n[idx] = 4.0 * n_Sub.real / denn
-                else:
-                    p4 = TWO_PI_VAL / wl * n_j_n * (f * d_nj)
-                    c4, s4 = (np.cos(p4), np.sin(p4))
-                    o4 = s4 / n_j_n if abs(n_j_n) > 1e-09 else 0.0
-                    z2 = (c4 * Q00 + 1j * o4 * Q10) + n_Sub * (c4 * Q01 + 1j * o4 * Q11)
-                    z2 = z2 + (1j * n_j_n * s4 * Q00 + c4 * Q10) + n_Sub * (1j * n_j_n * s4 * Q01 + c4 * Q11)
-                    if abs(z2) > 1e-09:
-                        Ts_n[idx] = 4.0 * n_Sub.real / (z2.real**2 + z2.imag**2)
-                idx += 1
-            p3 = TWO_PI_VAL / wl * n_j_r * d_rj
-            c3, s3 = (np.cos(p3), np.sin(p3))
-            o3 = s3 / n_j_r if abs(n_j_r) > 1e-09 else 0.0
-            g0 = c3 * R00 + 1j * o3 * R10
-            g1 = c3 * R01 + 1j * o3 * R11
-            g2 = 1j * n_j_r * s3 * R00 + c3 * R10
-            g3 = 1j * n_j_r * s3 * R01 + c3 * R11
-            R00, R01, R10, R11 = (g0, g1, g2, g3)
-            p4 = TWO_PI_VAL / wl * n_j_n * d_nj
-            c4, s4 = (np.cos(p4), np.sin(p4))
-            o4 = s4 / n_j_n if abs(n_j_n) > 1e-09 else 0.0
-            h0 = c4 * Q00 + 1j * o4 * Q10
-            h1 = c4 * Q01 + 1j * o4 * Q11
-            h2 = 1j * n_j_n * s4 * Q00 + c4 * Q10
-            h3 = 1j * n_j_n * s4 * Q01 + c4 * Q11
-            Q00, Q01, Q10, Q11 = (h0, h1, h2, h3)
+        idx, R00, R01, R10, R11, Q00, Q01, Q10, Q11 = _fill_history_signal(
+            wl, n_Sub, n_H_r, n_L_r, n_H, n_L, prev_thicknesses_sim, p_thick_nominal, j0, i_layer,
+            R00, R01, R10, R11, Q00, Q01, Q10, Q11, Ts_r, Ts_n,
+            apply_signal_noise, signal_noise_scale, signal_noise_seed, signal_noise_run,
+        )
         # ---- SCAN WINDOW (👤 2026-08-11) ------------------------------------
         #
         # 👤 *"scanning from zero to three times, that seems enormous! No layer will be

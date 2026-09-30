@@ -46,8 +46,12 @@ def imports() -> dict[str, tuple[int, str]]:
     processes = {
         module: subprocess.Popen(
             [sys.executable, "-c", f"import {module}"],
-            cwd=ROOT, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
-        )  # fmt: skip
+            cwd=ROOT,
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
         for module in MODULES
     }
     results = {}

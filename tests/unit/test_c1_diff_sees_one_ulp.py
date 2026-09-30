@@ -98,6 +98,26 @@ def test_a_refusal_that_only_one_side_makes_is_a_difference() -> None:
 
 
 # =============================================================================
+# The corpus itself
+# =============================================================================
+
+
+def test_the_default_corpus_reaches_the_strat_kernels_without_a_refusal() -> None:
+    """A corpus whose calls are refused on the head compares nothing: a changed signature must be seen here, not as
+    a harmless "both refuse alike" in a comparison. Measured 2026-09-30: 1 703 arrays, 0 refusals, 80.6 % of
+    `certus_strat_growth.py` reached with the JIT off (this corpus is also what exercises `simulate_growth_kernel`)."""
+    assert c1.CORPUS_PAR_DEFAUT == ("normal", "oblique", "strat")
+    rec = c1.Enregistreur()
+
+    c1.corpus_strat(rec)
+
+    assert rec.erreurs == {}, rec.erreurs
+    entries = {key.split("#")[0] for key in rec.tableaux}
+    assert entries == {"strat.growth", "strat.states", "strat.turning", "strat.next", "strat.margins", "strat.scan", "strat.tprofile", "strat.detailed"}
+    assert len(rec.tableaux) > 1500
+
+
+# =============================================================================
 # The pipeline
 # =============================================================================
 

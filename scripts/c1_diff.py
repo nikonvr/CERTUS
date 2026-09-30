@@ -197,6 +197,89 @@ def corpus_oblique(rec: Enregistreur) -> None:
             )  # fmt: skip
 
 
+def corpus_strat(rec: Enregistreur) -> None:
+    """La simulation de croissance de STRAT : le noyau, ses aides, la propagation par tirage, la croissance detaillee.
+
+    Les parametres de chaque appel sont tires au hasard (graine fixe) parmi les valeurs qui font emprunter au noyau
+    ses branches : POEM ou repli absolu, mode non monotone, hysteresis, bruit de lecture, derive photometrique,
+    lissage, palier de debit, profil de fente. Un noyau de 1 190 lignes ne se caracterise pas cas par cas.
+    """
+    g = "certus.physics.certus_strat_growth"
+    f_grow = rec.resoudre("strat.growth", f"{g}:simulate_growth_kernel")
+    f_states = rec.resoudre("strat.states", f"{g}:update_run_states_kernel")
+    f_tp = rec.resoudre("strat.turning", f"{g}:detect_turning_points")
+    f_next = rec.resoudre("strat.next", f"{g}:next_turning_point_after")
+    f_margin = rec.resoudre("strat.margins", f"{g}:turning_point_margins")
+    f_scan = rec.resoudre("strat.scan", f"{g}:layer_scan_coeffs")
+    f_profile = rec.resoudre("strat.tprofile", f"{g}:compute_T_front_profile")
+    f_detail = rec.resoudre("strat.detailed", f"{g}:calculate_detailed_growth")
+    nodes = 8  # SLIT_PROFILE_NODES : le nombre exact est celui du noyau, mais toute largeur >= 2 est une entree valide
+
+    rng = np.random.default_rng(20260930)
+    nominal = np.array([53.19, 85.62, 53.19, 85.62, 53.19, 85.62, 53.19, 85.62])
+    n_h, n_l, n_sub = 2.35 + 0j, 1.46 + 0j, 1.52 + 0j
+
+    for cas in range(240):
+        i_layer = int(rng.integers(1, len(nominal)))
+        prev = nominal[:i_layer] * (1.0 + rng.normal(0.0, 0.01, i_layer))
+        wl = float(rng.choice([500.0, 540.0, 600.0, 650.0]))
+        profiles = rng.normal(0.0, 1e-3, (len(nominal), nodes)) if rng.random() < 0.3 else None
+        est_taux = bool(rng.random() < 0.25)
+        rec.appeler(
+            "strat.growth", cas, f_grow, nominal, i_layer, prev, wl, n_h, n_l, n_sub,
+            float(rng.choice([1.0, 0.98])), float(rng.choice([0.0, 0.3, -0.3])), float(rng.choice([1.0, 2.0])),
+            int(rng.integers(0, 2)), int(rng.choice([-1, 1])), float(rng.choice([0.0, 1e-3])), int(rng.integers(0, 5)),
+            int(rng.integers(0, 3)), float(rng.choice([0.0, 0.01])), float(rng.choice([1.0, 0.98])),
+            float(rng.choice([0.0, 0.01])), float(rng.choice([0.0, 0.5])), bool(rng.random() < 0.7),
+            int(rng.choice([1, 3])), 2.30 if est_taux else -1.0, 1.45 if est_taux else -1.0, est_taux, profiles,
+        )  # fmt: skip
+
+    for cas in range(20):
+        i_layer = int(rng.integers(1, len(nominal)))
+        n_runs = int(rng.integers(2, 6))
+        history = np.tile(nominal[:i_layer], (n_runs, 1)) * (1.0 + rng.normal(0.0, 0.01, (n_runs, i_layer)))
+        couloir = float(rng.choice([0.0, 0.005]))  # l'incertitude d'indice : la bande de longueurs d'onde ne compte qu'avec elle
+        rec.appeler(
+            "strat.states", cas, f_states, nominal, i_layer, history, float(rng.choice([500.0, 540.0, 600.0])),
+            n_h, n_l, n_sub, 1.0, rng.uniform(-0.3, 0.3, n_runs), 2.0, int(rng.integers(0, 2)), int(rng.choice([-1, 1])),
+            float(rng.choice([0.0, 1e-3])), int(rng.integers(0, 5)), float(rng.choice([0.0, 0.01])),
+            float(rng.choice([0.0, 0.02])), float(rng.choice([0.0, 0.02])), float(rng.choice([0.0, 0.5])),
+            int(rng.integers(0, 5)), bool(rng.random() < 0.7), int(rng.choice([1, 3])), couloir,
+            int(rng.integers(0, 5)), 450.0 if couloir else 0.0, 650.0 if couloir else 0.0,
+            rng.normal(0.0, 1e-3, (len(nominal), nodes)) if rng.random() < 0.3 else None,
+        )  # fmt: skip
+
+    for cas in range(60):  # signaux de controle : sommes de sinus, bruit ou pas, tous les seuils
+        n = int(rng.integers(20, 200))
+        ts = np.abs(np.sin(np.linspace(0.0, rng.uniform(2.0, 30.0), n))) + rng.normal(0.0, rng.choice([0.0, 1e-4, 1e-2]), n)
+        hysteresis = float(rng.choice([0.0, 0.005, 0.05]))
+        idx_stop = int(rng.integers(0, n))
+        rec.appeler("strat.turning", cas, f_tp, ts, n, idx_stop, bool(rng.random() < 0.5), hysteresis)
+        rec.appeler("strat.next", cas, f_next, ts, n, int(rng.integers(0, n)), hysteresis)
+        rec.appeler("strat.margins", cas, f_margin, ts, n, hysteresis)
+
+    for cas in range(30):  # coefficients de balayage et profils de T
+        matrix = np.eye(2, dtype=np.complex128)
+        n_layer = complex(rng.uniform(1.3, 2.4), 0.0)
+        wl = float(rng.uniform(400.0, 900.0))
+        for _ in range(int(rng.integers(1, 6))):
+            n_i, d_i = rng.uniform(1.3, 2.4), rng.uniform(20.0, 150.0)
+            phi = 2 * np.pi * n_i * d_i / wl
+            layer = np.array([[np.cos(phi), 1j * np.sin(phi) / n_i], [1j * n_i * np.sin(phi), np.cos(phi)]])
+            matrix = layer @ matrix
+        rec.appeler("strat.scan", cas, f_scan, matrix[0, 0], matrix[0, 1], matrix[1, 0], matrix[1, 1], n_layer, n_sub)
+        rec.appeler(
+            "strat.tprofile", cas, f_profile, wl, n_layer, n_sub, matrix[0, 0], matrix[0, 1], matrix[1, 0], matrix[1, 1],
+            np.linspace(0.0, 200.0, 41),
+        )  # fmt: skip
+
+    rec.appeler(
+        "strat.detailed", 0, f_detail, len(nominal), nominal, np.full(len(nominal), 540.0),
+        np.full(len(nominal), n_h), np.full(len(nominal), n_l), np.full(len(nominal), n_sub),
+        np.full(len(nominal), 20, dtype=np.int64),
+    )  # fmt: skip
+
+
 def corpus_selftest(rec: Enregistreur) -> None:
     """Un seul noyau, `compute_RT_from_matrix` : de quoi prouver que le harnais voit un ulp, en quelques secondes."""
     f = rec.resoudre("selftest", "certus.physics.certus_opt_tmm:compute_RT_from_matrix")
@@ -215,8 +298,8 @@ def corpus_selftest(rec: Enregistreur) -> None:
     rec.poser("selftest#000#1", np.array(transmissions))
 
 
-CORPUS = {"normal": corpus_normal, "oblique": corpus_oblique, "selftest": corpus_selftest}
-CORPUS_PAR_DEFAUT = ("normal", "oblique")
+CORPUS = {"normal": corpus_normal, "oblique": corpus_oblique, "strat": corpus_strat, "selftest": corpus_selftest}
+CORPUS_PAR_DEFAUT = ("normal", "oblique", "strat")
 
 
 def ouvrier(arbre: Path, sortie: Path, noms: list[str]) -> int:

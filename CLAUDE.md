@@ -85,7 +85,8 @@ mais **synchronisés par Drive**) : supprime-les ensuite.
 6. **Jamais inverser `n̂ = n − ik`** (k ≥ 0) : l'inverse crée de l'énergie (`R + T > 1`).
 7. **Jamais réimplémenter une formule TMM** : la source unique pour R et T est
    `certus/physics/certus_opt_tmm.py::compute_RT_from_matrix` (deux réimplémentations fausses,
-   de 46 et 82 points de réflectance).
+   de 46 et 82 points de réflectance). Garde-fou : le cliquet `tests/oracle/test_tmm_formula_has_one_source.py`
+   nomme les copies d'aujourd'hui ; aucune ne peut entrer.
 8. **Jamais découper `certus/core/_certus_physics_impl.py`** (`DO NOT SPLIT` : visibilité
    mutuelle des noyaux compilés).
 9. **Jamais affirmer un résultat non mesuré.** Soit tu colles la sortie de la commande, soit

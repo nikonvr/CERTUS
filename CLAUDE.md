@@ -118,7 +118,8 @@ mais **synchronisés par Drive**) : supprime-les ensuite.
   état compilé identique le banc est déterministe, mais **une recompilation décale les
   derniers chiffres** (2,8e-11, reproductible). **`python scripts\c1_diff.py HEAD`** (50 s) compare au bit
   l'arbre de travail à un commit : corpus fixe, interpréteurs neufs, caches Numba vierges ; à lancer
-  avant de committer tout changement de noyau. Il ne prouve que ce que son corpus appelle.
+  avant de committer tout changement de noyau. Il ne prouve que ce que son corpus appelle. Un noyau relu du cache
+  n'a pas toujours les bits du noyau compilé à l'instant (gradients, `fastmath`, ETAT D52) : compare **froid à froid**.
 - **C2** — croissance et notation voient **la même réalisation** de chaque perturbation :
   tout tirage est une fonction pure de (graine, tirage, index physique), **jamais** de la
   stratégie (ni λ, ni découpage en blocs, ni épaisseur obtenue). Générateur :

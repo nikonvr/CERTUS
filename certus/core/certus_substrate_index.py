@@ -1699,12 +1699,12 @@ class IndexCore:
             )
 
             return n_out_sp, f"analytic-bspline-lsq-nc{n_coef}", packed, {}
-
         except (ValueError, RuntimeError, ArithmeticError) as ex:
-            logger.warning("Spline fit failed: %s -> fallback to Polynomial.", str(ex))
-
+            logger.warning("Spline fit failed: %s -> fallback to the raw monotonic n.", str(ex))
+            return None, "fallback-raw-spline-failed", None, {}
         except NUMERICAL_FAULT_EXCEPTIONS :
-            logger.exception("Spline fit unexpected failure -> fallback to Polynomial.")
+            logger.exception("Spline fit unexpected failure -> fallback to the raw monotonic n.")
+            return None, "fallback-raw-spline-failed", None, {}
 
     @staticmethod
     def _fit_model_polynomial(

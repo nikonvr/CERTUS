@@ -19,7 +19,7 @@
 > Les décisions de la section 5 reviennent à 👤 : **ne les tranche pas à sa place**.
 
 **Point de départ.** Branche `refactor-corridors-mixins`. Première commande : `python scripts\preflight.py` → `PREFLIGHT=GO`.
-Dernière validation locale complète, sur 4163c62 (Windows 11, le 2026-09-30) : ruff propre · oracle 1 089 passed · unit 2 910 passed, aucun saut · `tests/ui/` 785 passed, 10 skipped, 3 xfailed · le reste de `tests/` 347 passed, 2 skipped · contrôles des documents : 0 point · **0 failed**. Le dossier gelé, reconstruit sur e883559 (spec corrigé, R35), passe les contrôles de release : le hub et les dix modules restent vivants sans fenêtre d'erreur native. La garde de convergence retient la meilleure de quatre exécutions pour les modules non reproductibles (section 3).
+Dernière validation locale complète, sur 09871a0 (Windows 11, le 2026-09-30) : ruff propre · oracle 1 090 passed · unit 3 014 passed, 1 xfailed (D53, strict), aucun saut · `tests/ui/` 785 passed, 10 skipped, 3 xfailed · le reste de `tests/` 347 passed, 2 skipped · contrôles des documents : 0 point · **0 failed**. Le dossier gelé, reconstruit sur e883559 (spec corrigé, R35), passe les contrôles de release : le hub et les dix modules restent vivants sans fenêtre d'erreur native. La garde de convergence retient la meilleure de quatre exécutions pour les modules non reproductibles (section 3).
 
 | # | action | état | où | fini quand |
 |---|---|---|---|---|

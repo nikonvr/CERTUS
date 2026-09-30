@@ -27,6 +27,7 @@ partout : *ca ne produit pas d'erreur, ca produit un resultat plausible.*
 from __future__ import annotations
 
 import json
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -57,6 +58,24 @@ def chemin_libre(cible: Path, *, horodatage: str | None = None) -> tuple[Path, P
     return libre, cible
 
 
+def avec_provenance(donnees: Any) -> Any:
+    """`donnees` avec ce qui l'a produit : le commit, les versions, la plateforme.
+
+    🔴 Sur les 1 451 JSON de `reports/` (2026-09-30), AUCUN ne portait le commit, la plateforme ni les
+    versions de Python, NumPy ou Numba : un resultat que personne ne pouvait rattacher au code qui l'avait
+    donne. Un dictionnaire recoit une cle `provenance` (copie : l'appelant garde le sien) ; ce qui n'en est
+    pas un (une liste) ou qui en porte deja une est rendu tel quel.
+    """
+    if not isinstance(donnees, dict) or "provenance" in donnees:
+        return donnees
+    racine = str(Path(__file__).resolve().parents[1])
+    if racine not in sys.path:
+        sys.path.insert(0, racine)
+    from certus.core.certus_metrology import provenance
+
+    return {**donnees, "provenance": provenance()}
+
+
 def ecrire_json(cible: Path, donnees: Any, *, racine: Path | None = None) -> Path:
     """Ecrit `donnees` en JSON sans jamais ecraser, et dit a voix haute ce qu'il fait.
 
@@ -69,7 +88,7 @@ def ecrire_json(cible: Path, donnees: Any, *, racine: Path | None = None) -> Pat
         quand = datetime.fromtimestamp(ancien.stat().st_mtime)
         print(f"\n🟠 {ancien.name} EXISTE DEJA ({taille} octets, {quand:%Y-%m-%d %H:%M}).")
         print(f"   L'artefact precedent est CONSERVE. Le nouveau va dans {ecrit.name}.")
-    ecrit.write_text(json.dumps(donnees, indent=2, ensure_ascii=False), encoding="utf-8")
+    ecrit.write_text(json.dumps(avec_provenance(donnees), indent=2, ensure_ascii=False), encoding="utf-8")
     ou = ecrit.relative_to(racine) if racine else ecrit
     print(f"\nconsigne dans {ou}")
     return ecrit

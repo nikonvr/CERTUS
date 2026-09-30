@@ -92,6 +92,7 @@ from certus.core.certus_strat_objectives import (
     _run_phase_a_hybrid_loop,
     _normalize_phase_a_results,
 )
+from certus.core.certus_metrology import provenance
 from certus.utils.certus_strat_context import (
     _build_symmetry_bonus_map,
     _build_layer_importance_map,
@@ -119,7 +120,7 @@ def _export_phase_a_observability_json(params: dict[str, Any], payload: dict[str
         out_path = str(Path(report_dir) / f"STRAT_observability_{ts}.json")
 
         with open(out_path, "w", encoding="utf-8") as f:
-            json.dump(payload, f, indent=2, ensure_ascii=False)
+            json.dump({**payload, "provenance": provenance()}, f, indent=2, ensure_ascii=False)
 
         logger_local = params.get("logger")
 

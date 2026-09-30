@@ -37,6 +37,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
+from _artefact import avec_provenance  # noqa: E402
 
 import bench_examples as B  # noqa: E402
 import probe_spectral_error as PSE  # noqa: E402
@@ -529,7 +530,7 @@ def main() -> None:
     r["config"] = dict(APPLIED_CONFIG)
     r["seel"] = seel_block(val, r)
     PSE.OUT.parent.mkdir(parents=True, exist_ok=True)
-    PSE.OUT.write_text(json.dumps(r, indent=1), encoding="utf-8")
+    PSE.OUT.write_text(json.dumps(avec_provenance(r), indent=1), encoding="utf-8")
     B.emit(f"PROBE_WRITTEN={PSE.OUT}  strategies={r['n']}")
     B.emit(f"CONFIG={json.dumps(r['config'], sort_keys=True)}")
 

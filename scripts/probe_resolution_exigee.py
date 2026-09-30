@@ -91,6 +91,7 @@ ROOT = Path(__file__).resolve().parents[1]
 os.chdir(ROOT)
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
+from _artefact import avec_provenance  # noqa: E402
 
 TEST_BW = 1.0               # B, la largeur d'essai de la difference seconde (comme le code)
 FENTES_MACHINE = (5.0, 2.0, 1.0, 0.5)   # §19 -- ce que la machine offre reellement
@@ -207,7 +208,7 @@ def main() -> int:
     print("  0,5 nm a x2. Elle n'a PAS a expliquer x0,5, qui admet 0,5 nm et echoue quand meme.")
 
     out = ROOT / "reports" / "resolution_exigee.json"
-    out.write_text(json.dumps(sortie, indent=2, ensure_ascii=False), encoding="utf-8")
+    out.write_text(json.dumps(avec_provenance(sortie), indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nconsigne dans {out.relative_to(ROOT)}")
     return 0
 

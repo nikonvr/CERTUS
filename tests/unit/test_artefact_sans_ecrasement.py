@@ -53,12 +53,19 @@ class TestCheminLibre:
         assert libre.name == "courbe_S.log"
 
 
+def _sans_provenance(chemin: Path) -> dict:
+    """Le JSON relu, sans la cle `provenance` que `ecrire_json` ajoute (DAT-01) : ces tests parlent des donnees."""
+    lu = json.loads(chemin.read_text(encoding="utf-8"))
+    lu.pop("provenance", None)
+    return lu
+
+
 class TestEcrireJson:
     def test_ecrit_et_rend_le_chemin(self, tmp_path: Path) -> None:
         c = tmp_path / "r.json"
         ecrit = ecrire_json(c, {"a": 1})
         assert ecrit == c
-        assert json.loads(c.read_text(encoding="utf-8")) == {"a": 1}
+        assert _sans_provenance(c) == {"a": 1}
 
     def test_n_ecrase_jamais(self, tmp_path: Path, capsys: pytest.CaptureFixture) -> None:
         c = tmp_path / "r.json"
@@ -67,7 +74,7 @@ class TestEcrireJson:
         assert ecrit != c
         # 🔒 LE POINT ENTIER : la reference est intacte
         assert json.loads(c.read_text(encoding="utf-8")) == {"reference": "8,26 Mo"}
-        assert json.loads(ecrit.read_text(encoding="utf-8")) == {"neuf": True}
+        assert _sans_provenance(ecrit) == {"neuf": True}
         # 🔒 et la collision est DITE, pas tue
         sortie = capsys.readouterr().out
         assert "EXISTE DEJA" in sortie

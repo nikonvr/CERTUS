@@ -58,6 +58,7 @@ ROOT = Path(__file__).resolve().parents[1]
 os.chdir(ROOT)
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
+from _artefact import avec_provenance  # noqa: E402
 
 COMPOSANTS = {
     "48c dichroique": "example/example_strat/JSON-strat-example.json",
@@ -188,7 +189,7 @@ def main() -> int:
                       f"swing {e['swing']:.4f} (seuil {r['seuil_dynamics']}), t_min {e['t_min']:.4f}")
 
     p = ROOT / "reports" / "tp_admissibilite.json"
-    p.write_text(json.dumps(out, indent=2, ensure_ascii=False), encoding="utf-8")
+    p.write_text(json.dumps(avec_provenance(out), indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nconsigne dans {p}")
     print("\n⚠️  Ceci mesure une OPPORTUNITE, pas un gain. Le gain se mesure au banc,")
     print("    contre les references 0,173 nm (48c) et 0,482 nm (35c).")

@@ -64,6 +64,7 @@ ROOT = Path(__file__).resolve().parents[1]
 os.chdir(ROOT)
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
+from _artefact import avec_provenance  # noqa: E402
 
 COMPOSANTS = {
     "35c": "example/example_strat/JSON-strat-bandpass-3cav.json",
@@ -166,8 +167,8 @@ def main() -> int:
     print("=" * 78)
 
     p = ROOT / "reports" / f"destructif_dp_top_k_{nom}.json"
-    p.write_text(json.dumps({"composant": nom, "verdict": verdict, "runs": out,
-                             "stamp": datetime.now().isoformat(timespec="seconds")},
+    p.write_text(json.dumps(avec_provenance({"composant": nom, "verdict": verdict, "runs": out,
+                                             "stamp": datetime.now().isoformat(timespec="seconds")}),
                             indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"consigne dans {p.relative_to(ROOT)}")
     return 0 if verdict == "ATTEINT_LE_CALCUL" else 1

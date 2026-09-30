@@ -79,6 +79,7 @@ ROOT = Path(__file__).resolve().parents[1]
 os.chdir(ROOT)
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
+from _artefact import avec_provenance  # noqa: E402
 
 COMPOSANTS = {
     "35c": "example/example_strat/JSON-strat-bandpass-3cav.json",
@@ -166,13 +167,13 @@ def main() -> int:
     lignes.sort(key=lambda z: z["n_opt"])
 
     out = ROOT / "reports" / f"prefixe_optique_{nom}_{mode}_s{graine:03d}.json"
-    out.write_text(json.dumps({
+    out.write_text(json.dumps(avec_provenance({
         "composant": nom, "mode": mode, "seed": graine, "n_couches": n_couches,
         "profondeur": profondeur, "stamp": datetime.now().isoformat(timespec="seconds"),
         "n_strats": len(strats), "courbe": lignes,
         # 🔴 CE CHAMP EXISTE POUR QU'UN ARTEFACT VIDE SE DENONCE LUI-MEME.
         "familles_vues": sorted({_famille(s) for s in strats})[:40],
-    }, indent=1, ensure_ascii=False), encoding="utf-8")
+    }), indent=1, ensure_ascii=False), encoding="utf-8")
     print(f"\n  {len(lignes)} points de courbe -> {out.name}")
     print(f"  (sur {len(strats)} strategies evaluees ; profondeur {profondeur})")
 

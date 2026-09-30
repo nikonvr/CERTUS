@@ -111,6 +111,7 @@ ROOT = Path(__file__).resolve().parents[1]
 os.chdir(ROOT)
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
+from _artefact import avec_provenance  # noqa: E402
 
 COMPOSANTS = {
     "99c": ("example/example_strat/JSON-strat-bandpass-5cav-99c.json", 99),
@@ -756,7 +757,7 @@ def main() -> int:
               f"{datetime.fromtimestamp(out.stat().st_mtime):%Y-%m-%d %H:%M}).")
         print(f"   L'artefact precedent est CONSERVE. Le nouveau va dans {garde.name}.")
         out = garde
-    out.write_text(json.dumps(r, indent=2, ensure_ascii=False), encoding="utf-8")
+    out.write_text(json.dumps(avec_provenance(r), indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nconsigne dans {out.relative_to(ROOT)}")
 
     # 🔒 La synthese ne peut plus rien couter : l'artefact est deja sur le disque.

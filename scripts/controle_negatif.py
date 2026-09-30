@@ -47,6 +47,7 @@ ROOT = Path(__file__).resolve().parents[1]
 os.chdir(ROOT)
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
+from _artefact import avec_provenance  # noqa: E402
 
 COMPOSANTS = {
     # nom : (fichier, nb couches, minimum par temoin, SEEL de reference sans changement)
@@ -162,7 +163,7 @@ def main() -> int:
     for a, b in a_faire:
         row = mesurer(comp, a, b)
         (d / f"i_{a:03d}_{b:03d}.json").write_text(
-            json.dumps(row, indent=2, ensure_ascii=False), encoding="utf-8")
+            json.dumps(avec_provenance(row), indent=2, ensure_ascii=False), encoding="utf-8")
         sys.stderr.write(f"  [{a},{b}) {b - a} couches : {row['verdict']} "
                          f"{row['n_deposables']}/{row['n_strats']}\n")
     return 0

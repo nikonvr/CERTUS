@@ -97,6 +97,7 @@ ROOT = Path(__file__).resolve().parents[1]
 os.chdir(ROOT)
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
+from _artefact import avec_provenance  # noqa: E402
 
 SRC = ROOT / "example" / "example_strat" / "JSON-strat-random75.json"
 FACTEURS = (0.5, 1.0, 1.5, 2.0)
@@ -221,7 +222,7 @@ def main() -> int:
         print(f"        lambdas offrant un TP, par couche (mediane)        : {med_lam:3d} / {len(lams)}\n")
 
     out = ROOT / "reports" / "turning_points_vs_qwot.json"
-    out.write_text(json.dumps(resultats, indent=2, ensure_ascii=False), encoding="utf-8")
+    out.write_text(json.dumps(avec_provenance(resultats), indent=2, ensure_ascii=False), encoding="utf-8")
 
     print("=" * 74)
     print("CONCLUSION")

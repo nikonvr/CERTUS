@@ -62,6 +62,7 @@ ROOT = Path(__file__).resolve().parents[1]
 os.chdir(ROOT)
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
+from _artefact import avec_provenance  # noqa: E402
 
 COMPOSANTS = {
     "99c": "example/example_strat/JSON-strat-bandpass-5cav-99c.json",
@@ -186,7 +187,7 @@ def main() -> int:
         print()
 
     (ROOT / "reports" / "profil_monitorabilite.json").write_text(
-        json.dumps(sortie, indent=2, ensure_ascii=False), encoding="utf-8")
+        json.dumps(avec_provenance(sortie), indent=2, ensure_ascii=False), encoding="utf-8")
     print("consigne dans reports/profil_monitorabilite.json")
     return 0
 

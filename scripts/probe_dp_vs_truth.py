@@ -38,6 +38,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
+from _artefact import avec_provenance  # noqa: E402
 
 import bench_examples as B  # noqa: E402
 
@@ -186,7 +187,7 @@ def main() -> None:
 
     r = analyse()
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps(r, indent=1), encoding="utf-8")
+    OUT.write_text(json.dumps(avec_provenance(r), indent=1), encoding="utf-8")
     B.emit(f"PROBE_WRITTEN={OUT}")
     B.emit(f"CAPTURES={r['n_captures']}  GROUPES={len(r['per_group'])}")
 

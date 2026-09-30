@@ -60,6 +60,7 @@ ROOT = Path(__file__).resolve().parents[1]
 os.chdir(ROOT)
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
+from _artefact import avec_provenance  # noqa: E402
 
 CACHE_BASE = ROOT / "reports" / "intervalles_99c"
 FULL = "example/example_strat/JSON-strat-bandpass-5cav-99c.json"
@@ -321,7 +322,7 @@ def main() -> int:
         sys.stderr.write(f"[{k}/{len(a_faire)}] intervalle [{a},{b}) -- {b - a} couches\n")
         row = mesurer(a, b, mode=args.mode, cache_dir=cache_dir, seed=args.graine)
         fichier(a, b, cache_dir, args.graine).write_text(
-            json.dumps(row, indent=2, ensure_ascii=False), encoding="utf-8")
+            json.dumps(avec_provenance(row), indent=2, ensure_ascii=False), encoding="utf-8")
         sys.stderr.write(
             f"    {row['verdict']} | {row['n_deposables']}/{row['n_strats']} deposables | "
             f"plantage min {row['crash_min']} % | {row['run_s']} s\n")

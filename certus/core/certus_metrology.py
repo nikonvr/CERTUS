@@ -9,8 +9,11 @@ import hashlib
 import json
 import locale
 import platform
+import subprocess
+import sys
 from datetime import UTC, datetime
 from enum import Enum
+from functools import lru_cache
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
@@ -25,6 +28,56 @@ except ImportError:
     CERTUS_VERSION = "unknown"
     def get_materials_db_hash():
         return ""
+
+
+@lru_cache(maxsize=1)
+def git_state() -> tuple[str, bool | None]:
+    """The commit of the checkout that runs, and whether its tracked files differ from it.
+
+    Returns `(sha, dirty)`; `("", None)` when it cannot be known: a frozen build (no repository), no `git`,
+    or a repository that does not answer in time (a synchronized folder can be slow). Asked once per process.
+    """
+    if getattr(sys, "frozen", False):
+        return "", None
+    root = str(Path(__file__).resolve().parents[2])
+    base = ["git", "-C", root, "--no-optional-locks"]
+    try:
+        head = subprocess.run([*base, "rev-parse", "HEAD"], capture_output=True, text=True, timeout=5, check=False)
+        if head.returncode != 0 or len(head.stdout.strip()) != 40:
+            return "", None
+        changed = subprocess.run([*base, "diff", "--quiet", "HEAD", "--"], capture_output=True, timeout=10, check=False)
+        return head.stdout.strip(), (changed.returncode == 1) if changed.returncode in (0, 1) else None
+    except (OSError, subprocess.SubprocessError):
+        return "", None
+
+
+def _distribution_version(name: str) -> str:
+    try:
+        return version(name)
+    except PackageNotFoundError:
+        return "unknown"
+
+
+def provenance() -> dict[str, Any]:
+    """What produced a result, in a flat dictionary a report can carry: enough to run it again.
+
+    Measured on 2026-09-30, none of the 1 451 JSON files of `reports/` carried the commit, the platform or the
+    versions of Python, NumPy or Numba (3 named a version): a result nobody could tie to the code that gave it.
+    Versions come from the installed distributions, without importing them.
+    """
+    commit, dirty = git_state()
+    return {
+        "certus_version": CERTUS_VERSION,
+        "git_commit": commit or None,
+        "git_dirty": dirty,
+        "python": platform.python_version(),
+        "numpy": _distribution_version("numpy"),
+        "scipy": _distribution_version("scipy"),
+        "numba": _distribution_version("numba"),
+        "platform": platform.platform(),
+        "machine": platform.machine(),
+        "generated_at_utc": datetime.now(UTC).isoformat(timespec="seconds"),
+    }
 
 
 class ValidationStatus(str, Enum):
@@ -113,6 +166,8 @@ class RunContext(BaseModel):
     params_hash: str = ""
     materials_db_hash: str = ""
     db_version: str = ""
+    git_commit: str = ""
+    git_dirty: bool | None = None
     warnings: list[str] = Field(default_factory=list)
     status: ValidationStatus = ValidationStatus.OK
 
@@ -155,6 +210,8 @@ class RunContext(BaseModel):
             params_hash=compute_params_hash(params) if params is not None else "",
             materials_db_hash=(_db_hash := str(get_materials_db_hash() or "")),
             db_version=_db_hash[:12],
+            git_commit=git_state()[0],
+            git_dirty=git_state()[1],
             warnings=list(warnings or []),
             status=status,
         )

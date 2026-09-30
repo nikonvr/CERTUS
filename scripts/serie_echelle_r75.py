@@ -74,6 +74,7 @@ ROOT = Path(__file__).resolve().parents[1]
 os.chdir(ROOT)
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
+from _artefact import avec_provenance  # noqa: E402
 
 SRC = ROOT / "example" / "example_strat" / "JSON-strat-random75.json"
 CACHE = ROOT / "reports" / "serie_echelle_r75"
@@ -233,7 +234,7 @@ def main() -> int:
     sys.stderr.write(f"x{f:g} ({args.mode}) : {g['epaisseur_um']} um, la plus fine {g['plus_fine_nm']} nm, "
                      f"{g['couches_sous_1_qwot']} couches sous 1 QWOT\n")
     row = mesurer(f, mode=args.mode)
-    dest.write_text(json.dumps(row, indent=2, ensure_ascii=False), encoding="utf-8")
+    dest.write_text(json.dumps(avec_provenance(row), indent=2, ensure_ascii=False), encoding="utf-8")
     sys.stderr.write(f"x{f:g} ({args.mode}) : {row['verdict']} | {row['n_deposables']}/{row['n_strats']} "
                      f"deposables | plantage min {row['crash_min']} % | SEEL {row.get('seel')}\n")
     return 0

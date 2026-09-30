@@ -45,6 +45,8 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 ROOT = Path(__file__).resolve().parents[1]
 os.chdir(ROOT)
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "scripts"))
+from _artefact import avec_provenance  # noqa: E402
 
 import numpy as np  # noqa: E402
 
@@ -338,7 +340,7 @@ def main() -> None:
         "experiment_c": experiment_c(S),
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps(res, indent=1), encoding="utf-8")
+    OUT.write_text(json.dumps(avec_provenance(res), indent=1), encoding="utf-8")
     emit("")
     emit(f"PROBE_WRITTEN={OUT}")
 

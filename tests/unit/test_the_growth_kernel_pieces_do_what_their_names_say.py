@@ -29,6 +29,7 @@ from certus.physics.certus_strat_growth import (  # noqa: E402
     _apply_photometric_drift,
     _fill_history_signal,
     _frozen_trigger_level,
+    _invert_thickness_from_probes,
     _level_reachability,
     _monotonicity_scan,
     _read_poem_anchors,
@@ -794,3 +795,79 @@ def test_after_the_last_extremum_the_band_runs_to_the_end_of_the_scan() -> None:
 
     assert _reach(signal, 0.6, stop=5)[1] is True  # nothing after 5 but the last reading (0.5)
     assert _reach(signal, 0.9, stop=5)[1] is False
+
+
+# =============================================================================
+# _invert_thickness_from_probes : where the machine stops the layer, read on three probe thicknesses
+# =============================================================================
+
+I_LAYER, NOMINAL_TH, PROBE = 1, 60.0, 1.0
+TH_UNDER = np.random.default_rng(8).uniform(40, 120, 8)
+
+
+def _t_of(d: float) -> float:
+    """T of the real stack with layer I_LAYER at thickness d, from the independent oracle."""
+    return rt_stack(WL, [N_EVEN, N_ODD], [TH_UNDER[0], d], 1.0, N_SUB)[1]
+
+
+def _error(target, *, scale=1.0, offset=0.0, curvature=0.0, slit=None, probe=PROBE) -> float:
+    real = _stack_matrix(WL, N_EVEN, N_ODD, TH_UNDER, 0, I_LAYER)
+    return _invert_thickness_from_probes(
+        WL, N_ODD + 0j, NOMINAL_TH, probe, N_SUB + 0j, *real, scale, offset, curvature, slit, I_LAYER, target
+    )
+
+
+def test_the_test_setup_is_on_a_slope_not_on_an_extremum() -> None:
+    slope = (_t_of(NOMINAL_TH + 0.5) - _t_of(NOMINAL_TH - 0.5)) / 1.0
+
+    assert abs(slope) > 1e-4  # per nm; on an extremum the inversion has nothing to hold on to
+
+
+@pytest.mark.parametrize("delta", [0.0, 0.4, -0.7, 1.5])
+def test_the_error_is_the_distance_from_the_nominal_thickness_to_the_one_that_reaches_the_level(delta) -> None:
+    got = _error(_t_of(NOMINAL_TH + delta))
+
+    assert got == pytest.approx(delta, abs=2e-3)  # a parabola through three probes 1 nm apart, on a smooth T(d)
+
+
+@pytest.mark.parametrize("probe", [0.5, 5.0, 20.0])
+def test_the_level_of_the_nominal_thickness_is_inverted_to_no_error_whatever_the_probe_offset(probe) -> None:
+    # The parabola passes exactly through the probe AT the nominal thickness: a probe anywhere else would miss it.
+    assert _error(_t_of(NOMINAL_TH), probe=probe) == pytest.approx(0.0, abs=1e-7)
+
+
+@pytest.mark.parametrize("scale, offset", [(0.9574, 0.0), (1.0, 0.02), (0.95, -0.03)])
+def test_an_affine_drift_changes_nothing_when_the_level_is_read_with_the_same_instrument(scale, offset) -> None:
+    # POEM reports its level on the drifted extrema: the level carries the drift, and so must the probes.
+    target = _t_of(NOMINAL_TH + 0.4)
+
+    drifted = _error(scale * target + offset, scale=scale, offset=offset)
+
+    assert drifted == pytest.approx(_error(target), abs=1e-9)
+    # In the units of the drifted instrument the target of the ideal one is another equation: the defect of the 2026-08-08.
+    assert abs(_error(target, scale=scale, offset=offset) - _error(target)) > 0.5
+
+
+def test_the_curvature_is_applied_to_the_three_probes_like_the_rest_of_the_drift() -> None:
+    target = _t_of(NOMINAL_TH + 0.4)
+    scale, offset, curvature = 0.98, 0.01, 0.5
+    affine = scale * target + offset
+    level = affine + 4.0 * curvature * affine * (1.0 - affine)  # the target as the drifted instrument reads it
+
+    got = _error(level, scale=scale, offset=offset, curvature=curvature)
+
+    assert got == pytest.approx(0.4, abs=2e-2)  # not exact: the curvature is not affine, the parabola only absorbs most of it
+    assert abs(_error(level) - 0.4) > 0.5
+
+
+def test_a_slit_bias_moves_the_probes_and_not_the_level() -> None:
+    target = _t_of(NOMINAL_TH + 0.4)
+    slope = (_t_of(NOMINAL_TH + 0.5) - _t_of(NOMINAL_TH - 0.5)) / 1.0
+    bias = 0.002
+    profiles = np.zeros((4, 9))
+    profiles[I_LAYER] = bias  # the bias of THIS layer, the same at every depth; the other layers have none
+
+    biased, unbiased = _error(target, slit=profiles), _error(target, slit=np.zeros((4, 9)))
+
+    assert unbiased == pytest.approx(_error(target), abs=1e-12)  # no bias is the same as no profile
+    assert biased - unbiased == pytest.approx(-bias / slope, rel=0.05)  # T(d) + bias = level moves the root by -bias / T'

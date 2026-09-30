@@ -1233,6 +1233,92 @@ def _level_reachability(Ts_r, n_tot, n_hist, idx_nom_stop, tp_hysteresis, target
     return margin_level, level_reached
 
 
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def _invert_thickness_from_probes(
+    wl,
+    n_current,
+    nominal_th,
+    probe_offset,
+    n_Sub,
+    M_before_00,
+    M_before_01,
+    M_before_10,
+    M_before_11,
+    affine_scale,
+    affine_offset,
+    photo_curvature,
+    slit_profiles,
+    i_layer,
+    target_T_noisy,
+):
+    """The error on the thickness at which the machine stops the layer: three probe thicknesses around the nominal one
+    (`nominal_th` and `probe_offset` either side), T read on the real stack (`M_before`) at each, a parabola through them,
+    and the thickness at which it reaches `target_T_noisy`, minus the nominal thickness.
+
+    The inversion is in MEASURED units: the affine drift and the slit bias are applied to the three probe readings, like
+    everything the instrument reads, while the target stays what the controller computed. An affine map commutes with the
+    parabola fit and the root solve, which is what keeps POEM invariant under it.
+    """
+    TWO_PI_VAL = TWO_PI
+    th_points = np.array([max(0.1, nominal_th - probe_offset), nominal_th, nominal_th + probe_offset])
+    T_points = np.zeros(3)
+    for k in range(3):
+        d = th_points[k]
+        phi = TWO_PI_VAL / wl * n_current * d
+        cp, sp = (np.cos(phi), np.sin(phi))
+        son = sp / n_current if abs(n_current) > 1e-09 else 0.0
+        m01 = +1j * son
+        m10 = +1j * n_current * sp
+        a00 = cp * M_before_00 + m01 * M_before_10
+        a01 = cp * M_before_01 + m01 * M_before_11
+        a10 = m10 * M_before_00 + cp * M_before_10
+        a11 = m10 * M_before_01 + cp * M_before_11
+        denom = a00 + n_Sub * a01 + a10 + n_Sub * a11
+        if abs(denom) > 1e-09:
+            T_points[k] = 4.0 * n_Sub.real / (denom.real**2 + denom.imag**2)
+    # ---- THE INVERSION MUST BE IN MEASURED UNITS ----------------------------
+    #
+    # `target_T_noisy` is a level read on the instrument, so it carries the affine
+    # distortion. The forward model inverted against it must carry it too, or the
+    # two sides of `T(d) = target` are expressed in different units.
+    #
+    # 🔴 THIS WAS THE DEFECT THAT MADE THE AFFINE PARAMETERS UNUSABLE. POEM is exactly
+    # invariant under T -> a.T + b: both anchors absorb the distortion, so the reported
+    # level equals a.target_true + b, and solving a.T(d) + b = a.target_true + b returns
+    # the intended thickness. Inverting the UNDISTORTED parabola solved
+    # T(d) = a.target_true + b instead, which is a different equation.
+    #
+    # 📏 Measured on 6 QWOT layers monitored at 610 nm, d_nom = 94.178 nm, upstream
+    # error 2 nm, no noise. Expected shift under an affine map: ZERO.
+    #
+    #     a = 1.0000  b = 0.000  ->  d_stop =  94.128 nm
+    #     a = 0.9574  b = 0.000  ->  d_stop =  87.527 nm     -6.60 nm
+    #     a = 1.0000  b = 0.020  ->  d_stop = 100.522 nm     +6.39 nm
+    #
+    # An affine map commutes with the parabola fit and with the root solve, so applying
+    # it to the three probe points restores the invariance exactly.
+    if affine_scale != 1.0 or affine_offset != 0.0 or photo_curvature != 0.0:
+        for k in range(3):
+            t_aff = affine_scale * T_points[k] + affine_offset
+            T_points[k] = t_aff + 4.0 * photo_curvature * t_aff * (1.0 - t_aff)
+    # 12.7: these three points are what the instrument READS around the stopping
+    # thickness, so they carry the slit bias like every other reading. The target they
+    # are solved against stays monochromatic -- that asymmetry IS the effect, and
+    # applying the bias to both sides would cancel it exactly.
+    #
+    # 🔑 And EACH of the three carries the bias of ITS OWN thickness. They straddle the
+    # stopping point, so a common constant would cancel out of the parabola's curvature
+    # and shift only its offset; the differing biases tilt the parabola, which is what
+    # actually moves the root. Same reason as on `Ts_r`: it is the variation that bites.
+    if slit_profiles is not None and slit_profiles.shape[0] > 0 and nominal_th > 1e-9:
+        for k in range(3):
+            T_points[k] += slit_bias_at(slit_profiles, i_layer, th_points[k] / nominal_th)
+    a_quad, b_quad, c_quad = fit_parabola_vertex_3points(th_points, T_points)
+    calc_thick = _solve_quadratic_target(a_quad, b_quad, c_quad, target_T_noisy, nominal_th)
+    error_raw = calc_thick - nominal_th
+    return error_raw
+
+
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def simulate_growth_kernel(
     p_thick_nominal: np.ndarray,
@@ -1891,62 +1977,10 @@ def simulate_growth_kernel(
                 margin_missed,
                 margin_fab,
             )
-    th_points = np.array([max(0.1, nominal_th - probe_offset), nominal_th, nominal_th + probe_offset])
-    T_points = np.zeros(3)
-    for k in range(3):
-        d = th_points[k]
-        phi = TWO_PI_VAL / wl * n_current * d
-        cp, sp = (np.cos(phi), np.sin(phi))
-        son = sp / n_current if abs(n_current) > 1e-09 else 0.0
-        m01 = +1j * son
-        m10 = +1j * n_current * sp
-        a00 = cp * M_before_00 + m01 * M_before_10
-        a01 = cp * M_before_01 + m01 * M_before_11
-        a10 = m10 * M_before_00 + cp * M_before_10
-        a11 = m10 * M_before_01 + cp * M_before_11
-        denom = a00 + n_Sub * a01 + a10 + n_Sub * a11
-        if abs(denom) > 1e-09:
-            T_points[k] = 4.0 * n_Sub.real / (denom.real**2 + denom.imag**2)
-    # ---- THE INVERSION MUST BE IN MEASURED UNITS ----------------------------
-    #
-    # `target_T_noisy` is a level read on the instrument, so it carries the affine
-    # distortion. The forward model inverted against it must carry it too, or the
-    # two sides of `T(d) = target` are expressed in different units.
-    #
-    # 🔴 THIS WAS THE DEFECT THAT MADE THE AFFINE PARAMETERS UNUSABLE. POEM is exactly
-    # invariant under T -> a.T + b: both anchors absorb the distortion, so the reported
-    # level equals a.target_true + b, and solving a.T(d) + b = a.target_true + b returns
-    # the intended thickness. Inverting the UNDISTORTED parabola solved
-    # T(d) = a.target_true + b instead, which is a different equation.
-    #
-    # 📏 Measured on 6 QWOT layers monitored at 610 nm, d_nom = 94.178 nm, upstream
-    # error 2 nm, no noise. Expected shift under an affine map: ZERO.
-    #
-    #     a = 1.0000  b = 0.000  ->  d_stop =  94.128 nm
-    #     a = 0.9574  b = 0.000  ->  d_stop =  87.527 nm     -6.60 nm
-    #     a = 1.0000  b = 0.020  ->  d_stop = 100.522 nm     +6.39 nm
-    #
-    # An affine map commutes with the parabola fit and with the root solve, so applying
-    # it to the three probe points restores the invariance exactly.
-    if affine_scale != 1.0 or affine_offset != 0.0 or photo_curvature != 0.0:
-        for k in range(3):
-            t_aff = affine_scale * T_points[k] + affine_offset
-            T_points[k] = t_aff + 4.0 * photo_curvature * t_aff * (1.0 - t_aff)
-    # 12.7: these three points are what the instrument READS around the stopping
-    # thickness, so they carry the slit bias like every other reading. The target they
-    # are solved against stays monochromatic -- that asymmetry IS the effect, and
-    # applying the bias to both sides would cancel it exactly.
-    #
-    # 🔑 And EACH of the three carries the bias of ITS OWN thickness. They straddle the
-    # stopping point, so a common constant would cancel out of the parabola's curvature
-    # and shift only its offset; the differing biases tilt the parabola, which is what
-    # actually moves the root. Same reason as on `Ts_r`: it is the variation that bites.
-    if slit_profiles is not None and slit_profiles.shape[0] > 0 and nominal_th > 1e-9:
-        for k in range(3):
-            T_points[k] += slit_bias_at(slit_profiles, i_layer, th_points[k] / nominal_th)
-    a_quad, b_quad, c_quad = fit_parabola_vertex_3points(th_points, T_points)
-    calc_thick = _solve_quadratic_target(a_quad, b_quad, c_quad, target_T_noisy, nominal_th)
-    error_raw = calc_thick - nominal_th
+    error_raw = _invert_thickness_from_probes(
+        wl, n_current, nominal_th, probe_offset, n_Sub, M_before_00, M_before_01, M_before_10, M_before_11,
+        affine_scale, affine_offset, photo_curvature, slit_profiles, i_layer, target_T_noisy,
+    )
     dyn_encounter = 0.0
     if nominal_th > 0.0001:
         dyn_encounter = np.max(T_mono) - np.min(T_mono)

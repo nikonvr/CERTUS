@@ -111,7 +111,7 @@
     "certus/workers/certus_field_workers.py::FieldWorkerThread._run_optimize": 61
   },
   "fichiers_longs": {
-    "certus/core/_certus_physics_impl.py": 1669,
+    "certus/core/_certus_physics_impl.py": 1668,
     "certus/core/certus_index_objectives.py": 1934,
     "certus/core/certus_strat_robustness.py": 3482,
     "certus/core/certus_substrate_index.py": 1968,

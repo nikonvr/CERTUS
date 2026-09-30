@@ -396,7 +396,7 @@ from collections import OrderedDict
 from threading import RLock
 
 
-from typing import Any
+from typing import Any, ClassVar
 
 
 from numba import njit, prange
@@ -1645,7 +1645,6 @@ from certus.physics.certus_tmm_single_layer import (
 )
 from certus.physics.certus_tmm_backside import _apply_exact_backside_generic, apply_exact_backside_combination
 from certus.physics.certus_opt_tmm import compute_RT_from_matrix
-from typing import ClassVar
 
 __all__.extend(
     [

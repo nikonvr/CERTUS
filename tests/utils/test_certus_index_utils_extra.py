@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 import pytest
 import numpy as np
 import pandas as pd
@@ -142,7 +144,6 @@ def test_analyze_loaded_data():
     assert res["R"] is not None
 
 from certus.utils.certus_index_utils import fit_sellmeier_global, fit_k_global_8p
-from typing import ClassVar
 
 def test_fit_sellmeier_global():
     # Synthetic constant index n = 1.5

@@ -27,6 +27,7 @@ from certus.physics.certus_strat_growth import (  # noqa: E402
     SCAN_NPTS_CURRENT,
     SCAN_NPTS_HISTORY,
     _fill_current_signal,
+    _add_slit_bias,
     _apply_photometric_drift,
     _fill_history_signal,
     _frozen_trigger_level,
@@ -948,3 +949,51 @@ def test_the_thickness_of_a_rate_layer_is_rounded_to_a_whole_turn() -> None:
     nominal[4] = 50.075  # 400.6 turns at A = 1: rounded to the nearest turn, not cut down
 
     assert _rate(4, [50.0, 80.0, 50.0, 80.0, 0.0, 0.0], nominal=nominal) == (True, pytest.approx(401 * RATE_TURN_NM))
+
+
+# =============================================================================
+# _add_slit_bias : what a slit of finite width adds to the REAL signal, layer by layer
+# =============================================================================
+
+NODES = 9
+
+
+def _profiles(gains, offset=0.0) -> np.ndarray:
+    """One row per layer: offset + gain * u sampled on [0, D_SCAN_VAL], which the linear interpolation reproduces exactly."""
+    u = np.linspace(0.0, D_SCAN_VAL, NODES)
+    return np.array([offset + g * u for g in gains])
+
+
+def _biased(profiles, nominal, real, j0, i_layer, npts_cur, d_max, nominal_th, size=None) -> np.ndarray:
+    n_hist = (i_layer - j0) * SCAN_NPTS_HISTORY
+    signal = np.zeros(n_hist + npts_cur + 3 if size is None else size)
+    _add_slit_bias(signal, profiles, np.asarray(nominal, float), np.asarray(real, float), j0, i_layer, n_hist, npts_cur, d_max, nominal_th)
+    return signal
+
+
+def test_each_replayed_layer_carries_its_own_profile_at_the_depth_it_was_read() -> None:
+    nominal, real, gains = [50.0, 60.0, 70.0, 40.0], [51.0, 57.0, 77.0, 0.0], [0.001, 0.002, 0.003, 0.004]
+
+    got = _biased(_profiles(gains), nominal, real, 1, 3, 21, 120.0, 40.0)
+
+    expected = np.zeros(len(got))
+    for j in (1, 2):  # reading k of layer j is at u = (k / 16) * d_real / d_nominal
+        for k in range(1, SCAN_NPTS_HISTORY + 1):
+            expected[(j - 1) * SCAN_NPTS_HISTORY + (k - 1)] = gains[j] * (k / SCAN_NPTS_HISTORY) * real[j] / nominal[j]
+    for k in range(21):  # the current layer: u = k * (d_max / nominal_th) / (npts_cur - 1)
+        expected[2 * SCAN_NPTS_HISTORY + k] = gains[3] * k * (120.0 / 40.0) / 20
+    np.testing.assert_allclose(got, expected, atol=1e-15)
+    assert (got[2 * SCAN_NPTS_HISTORY + 21 :] == 0.0).all()  # nothing beyond the scan
+
+
+def test_a_layer_of_no_nominal_thickness_is_read_at_the_start_of_its_profile() -> None:
+    # 1 / d_nominal is guarded: the readings sit at u = 0 instead of dividing by zero.
+    got = _biased(_profiles([0.001, 0.002, 0.003], offset=0.5), [50.0, 0.0, 40.0], [51.0, 12.0, 0.0], 1, 2, 9, 60.0, 40.0)
+
+    np.testing.assert_allclose(got[:SCAN_NPTS_HISTORY], 0.5, atol=1e-15)
+
+
+def test_a_scan_of_one_point_is_read_at_the_start_of_the_profile() -> None:
+    got = _biased(_profiles([0.001, 0.002], offset=0.25), [50.0, 40.0], [50.0, 0.0], 1, 1, 1, 40.0, 40.0)
+
+    assert got[0] == pytest.approx(0.25, abs=1e-15)

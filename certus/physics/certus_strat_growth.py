@@ -1353,6 +1353,41 @@ def _rate_layer_thickness(i_layer, prev_thicknesses_sim, p_thick_nominal, prev_r
     return False, 0.0
 
 
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def _add_slit_bias(
+    Ts_r,
+    slit_profiles,
+    p_thick_nominal,
+    prev_thicknesses_sim,
+    j0,
+    i_layer,
+    n_hist,
+    npts_cur,
+    d_max,
+    nominal_th,
+):
+    """Add to the REAL signal `Ts_r` (never to the nominal one) the bias that a slit of finite width puts on what the
+    instrument reads: each replayed layer `j0` .. `i_layer - 1` with its own profile, then the layer being grown.
+
+    A profile is indexed by u = depth / nominal thickness, in [0, D_SCAN_VAL]. The reading k of a replayed layer is at
+    u = (k / SCAN_NPTS_HISTORY) * d_real / d_nominal; the reading k of the current layer at
+    u = k * (d_max / nominal_th) / (npts_cur - 1). `Ts_r` is modified in place.
+    """
+    NPTS_PREV = SCAN_NPTS_HISTORY
+    for j_sb in range(j0, i_layer):
+        d_n_sb = p_thick_nominal[j_sb]
+        inv_n_sb = 1.0 / d_n_sb if d_n_sb > 1e-9 else 0.0
+        base_sb = (j_sb - j0) * NPTS_PREV
+        for k_sb in range(1, NPTS_PREV + 1):
+            u_sb = (k_sb / NPTS_PREV) * prev_thicknesses_sim[j_sb] * inv_n_sb
+            Ts_r[base_sb + k_sb - 1] += slit_bias_at(slit_profiles, j_sb, u_sb)
+    inv_cur_sb = (d_max / nominal_th) / (npts_cur - 1) if npts_cur > 1 else 0.0
+    for k_sb in range(npts_cur):
+        Ts_r[n_hist + k_sb] += slit_bias_at(
+            slit_profiles, i_layer, k_sb * inv_cur_sb
+        )
+
+
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def simulate_growth_kernel(
     p_thick_nominal: np.ndarray,
@@ -1803,18 +1838,10 @@ def simulate_growth_kernel(
         # different curvatures. Applying layer i's bias to layer j's replay would forge
         # the anchors POEM then reads.
         if slit_profiles is not None and slit_profiles.shape[0] > 0:
-            for j_sb in range(j0, i_layer):
-                d_n_sb = p_thick_nominal[j_sb]
-                inv_n_sb = 1.0 / d_n_sb if d_n_sb > 1e-9 else 0.0
-                base_sb = (j_sb - j0) * NPTS_PREV
-                for k_sb in range(1, NPTS_PREV + 1):
-                    u_sb = (k_sb / NPTS_PREV) * prev_thicknesses_sim[j_sb] * inv_n_sb
-                    Ts_r[base_sb + k_sb - 1] += slit_bias_at(slit_profiles, j_sb, u_sb)
-            inv_cur_sb = (d_max / nominal_th) / (npts_cur - 1) if npts_cur > 1 else 0.0
-            for k_sb in range(npts_cur):
-                Ts_r[n_hist + k_sb] += slit_bias_at(
-                    slit_profiles, i_layer, k_sb * inv_cur_sb
-                )
+            _add_slit_bias(
+                Ts_r, slit_profiles, p_thick_nominal, prev_thicknesses_sim, j0, i_layer, n_hist, npts_cur,
+                d_max, nominal_th,
+            )
 
         # ---- A8: THE MACHINE SAMPLING GRID, UNWELDED FROM THE SMOOTHING (17-2) ----
         #

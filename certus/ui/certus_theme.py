@@ -711,6 +711,10 @@ class CertusTheme:
         }
         bg = fills.get(variant, variant)
         fg, hover, pressed = cls.button_states(bg)
+        # The focus ring is a border that grows where the padding shrinks, so that taking focus moves nothing.
+        # The widget's own sheet says `border: none`, which the application-level `QPushButton:focus` rule cannot
+        # override: without a rule here a focused button painted exactly as before (0 pixels changed, 73 sites).
+        pad_v, pad_h, ring = 7, 14, 2
 
         return f"""
 
@@ -718,7 +722,7 @@ class CertusTheme:
 
                 background-color: {bg}; color: {fg}; border: none; border-radius: 10px;
 
-                padding: 7px 14px; font-weight: 700; font-family: {cls.FONT_FAMILY};
+                padding: {pad_v}px {pad_h}px; font-weight: 700; font-family: {cls.FONT_FAMILY};
 
                 min-height: 28px;
 
@@ -727,6 +731,8 @@ class CertusTheme:
             QPushButton:hover {{ background-color: {hover}; }}
 
             QPushButton:pressed {{ background-color: {pressed}; }}
+
+            QPushButton:focus {{ border: {ring}px solid {fg}; padding: {pad_v - ring}px {pad_h - ring}px; }}
 
             QPushButton:disabled {{ background-color: {cls.BORDER}; color: {cls.TEXT_DISABLED}; }}
 

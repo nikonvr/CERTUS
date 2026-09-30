@@ -154,3 +154,118 @@ class TestLAnneauEstVISIBLE:
                 "text_main passe desormais le seuil en sombre : soit la palette a change, "
                 "soit le seuil ne mord plus. Remesure avant de simplifier l'anneau."
             )
+
+
+# =============================================================================
+# Les boutons que la fabrique habille elle-meme : `create_styled_button`
+# =============================================================================
+#
+# 📏 Mesure du 2026-09-30, en peignant un bouton avant et apres `setFocus()` : **0 pixel change**,
+# dans les deux themes et pour les six roles ; le bouton de la feuille premium, lui, en change
+# 1 308. `create_styled_button` (73 sites d'appel) pose SA feuille sur le bouton, en `border: none` ;
+# une regle posee sur le widget l'emporte sur celle de l'application quelle que soit sa
+# specificite, donc la regle `QPushButton:focus` de la couche applicative ne l'atteignait jamais.
+# Un utilisateur au clavier ne voyait pas ou il etait sur 73 boutons.
+#
+# Ce qui est verifie ici est PEINT : les pixels de l'anneau et du remplissage, pas la feuille.
+
+ROLES_DE_LA_FABRIQUE = ["primary", "secondary", "info", "success", "warning", "danger"]
+FONDS_DONNES_DIRECTEMENT = ["SECONDARY", "DANGER"]  # `create_styled_button("Load config", CertusTheme.SECONDARY)`
+
+
+def _poser_un_bouton(qapp, theme: str, variante: str):
+    """Un bouton de la fabrique a cote d'un autre, dans une fenetre active ; rend (hote, bouton, autre)."""
+    from PyQt6.QtWidgets import QPushButton, QVBoxLayout, QWidget
+
+    from certus.ui.certus_theme import CertusTheme
+    from certus.ui.certus_ui_widgets_factory import create_styled_button
+
+    CertusTheme.configure(theme)
+    hote = QWidget()
+    disposition = QVBoxLayout(hote)
+    bouton = create_styled_button("Load config", getattr(CertusTheme, variante) if variante.isupper() else variante)
+    autre = QPushButton("autre")
+    disposition.addWidget(bouton)
+    disposition.addWidget(autre)
+    hote.resize(300, 140)
+    hote.show()
+    hote.activateWindow()
+    qapp.processEvents()
+    autre.setFocus()
+    qapp.processEvents()
+    return hote, bouton, autre
+
+
+def _peindre(widget):
+    from PyQt6.QtGui import QImage, QPainter
+
+    image = QImage(widget.size(), QImage.Format.Format_ARGB32)
+    image.fill(0)
+    peintre = QPainter(image)
+    widget.render(peintre)
+    peintre.end()
+    return image
+
+
+@pytest.fixture
+def theme_clair_apres():
+    from certus.ui.certus_theme import CertusTheme
+
+    yield
+    CertusTheme.configure("light")
+
+
+@pytest.mark.parametrize("mode", ["light", "dark"])
+@pytest.mark.parametrize("variante", [*ROLES_DE_LA_FABRIQUE, *FONDS_DONNES_DIRECTEMENT])
+class TestLesBoutonsDeLaFabriqueOntUnAnneau:
+    def test_prendre_le_focus_change_ce_qui_est_peint(self, mode, variante, qapp, theme_clair_apres) -> None:
+        hote, bouton, _autre = _poser_un_bouton(qapp, mode, variante)
+        try:
+            repos = _peindre(bouton)
+            bouton.setFocus()
+            qapp.processEvents()
+            assert bouton.hasFocus(), "le bouton n'a pas pris le focus : la mesure ne mesurerait rien"
+            focus = _peindre(bouton)
+            changes = sum(
+                repos.pixel(x, y) != focus.pixel(x, y) for y in range(repos.height()) for x in range(repos.width())
+            )
+            assert changes > 100, f"{mode}/{variante} : {changes} pixel(s) changent au focus -- il est invisible"
+        finally:
+            hote.close()
+
+    def test_l_anneau_se_lit_contre_le_remplissage(self, mode, variante, qapp, theme_clair_apres) -> None:
+        """WCAG 1.4.11 : 3:1 pour l'indicateur ; lu sur les pixels du bord gauche, a mi-hauteur."""
+        from certus.ui.certus_a11y import contrast_ratio
+
+        hote, bouton, _autre = _poser_un_bouton(qapp, mode, variante)
+        try:
+            bouton.setFocus()
+            qapp.processEvents()
+            image = _peindre(bouton)
+            y = image.height() // 2
+            anneau = image.pixelColor(1, y).name()
+            remplissage = image.pixelColor(6, y).name()
+            ratio = contrast_ratio(anneau, remplissage)
+            assert ratio >= 3.0, f"{mode}/{variante} : anneau {anneau} sur {remplissage} = {ratio:.2f}:1, sous 3:1"
+        finally:
+            hote.close()
+
+    def test_prendre_le_focus_ne_deplace_rien(self, mode, variante, qapp, theme_clair_apres) -> None:
+        """Bordure plus marge invariantes : un anneau qui pousse ses voisins serait pire que pas d'anneau."""
+        hote, bouton, autre = _poser_un_bouton(qapp, mode, variante)
+        try:
+            avant = (bouton.geometry(), autre.geometry(), bouton.sizeHint())
+            bouton.setFocus()
+            qapp.processEvents()
+            # Qt garde la taille qu'il avait calculee avant le focus : on la lui fait recalculer DANS l'etat
+            # focalise (changer le texte vide ce cache), puis on laisse la disposition se refaire. Sans cela
+            # une marge non compensee ne se voit pas ici, et se verrait au prochain remaniement de la fenetre.
+            texte = bouton.text()
+            bouton.setText(texte + " ")
+            bouton.setText(texte)
+            qapp.processEvents()
+            assert (bouton.geometry(), autre.geometry(), bouton.sizeHint()) == avant, (
+                f"{mode}/{variante} : prendre le focus a deplace ou redimensionne un bouton"
+            )
+        finally:
+            hote.close()

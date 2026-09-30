@@ -263,11 +263,12 @@ def test_the_reverse_direction_still_reads_the_real_part_of_the_substrate() -> N
         without = compute_oblique_rt_and_grads_analytic(d, n, real_part, WLS, var, 40.0, True, True)
 
     # Equal to rounding, not to the bit: the two calls run two separately compiled kernels, and nothing promises
-    # they round alike. On the Ubuntu runner (2026-09-30) the arrays agreed on the nine digits printed and not
-    # on the bits. Where the kernel does read k = 1.11 (forward direction) the results differ by up to 1.4e2
-    # relative (measured 2026-09-30): the tolerance below is ten orders of magnitude from that.
+    # they round alike. Measured 2026-09-30 on 200 random stacks (Windows): 550 of 800 arrays equal to the bit, the
+    # worst relative gap 2.9e-12 (cancellation in a gradient entry); on the Ubuntu runner this very case agreed on
+    # the nine digits printed and not on the bits. Where the kernel does read k = 1.11 (forward direction) the
+    # results differ by up to 1.4e2 relative: the tolerance below is ten orders of magnitude from that.
     for got, expected in zip(with_loss, without, strict=True):
-        np.testing.assert_allclose(got, expected, rtol=1e-10, atol=1e-13)
+        np.testing.assert_allclose(got, expected, rtol=1e-8, atol=1e-12)
 
 
 def test_a_substrate_without_absorption_keeps_the_rt_kernel_that_always_ran(monkeypatch) -> None:

@@ -498,6 +498,38 @@ def next_turning_point_after(Ts: np.ndarray, n_tot: int, i_start: int, hysteresi
 # the tests read it.
 #
 # Do not remove `inline="always"`, and do not split a fused loop, without running that command.
+# 🔑 MULTIPLE-TESTGLASS: BOTH stacks below start at `witness_base_layer`, not at 0.
+#
+# A fresh witness carries only the layers deposited SINCE it was swapped in, so the
+# monitoring signal is that of a shorter stack -- which is the whole point: on a
+# 99-layer filter the witness goes optically dead long before the part is finished
+# (half-wave spacers swing by nothing, 19-layer mirrors transmit under 1e-4).
+#
+# 🔴 AND THE COST OF THE SWAP FALLS OUT OF THESE TWO LOOPS ON ITS OWN -- it is not
+# modelled anywhere else, and must not be. The trigger level is computed on the
+# NOMINAL stack and applied to the REAL one; that mismatch is what produces the
+# error of opposite sign, i.e. optical monitoring's self-compensation. Start both
+# loops at the same `witness_base_layer` and the errors of the layers BELOW it are
+# invisible to both: they can no longer be compensated, and they stay frozen in the
+# part for good. Truncating only one of the two would be far worse than wrong -- it
+# would compare a 99-layer nominal target against a 20-layer real stack.
+#
+# ⚠️ `witness_base_layer = 0` reproduces the single-witness behaviour exactly. That
+# is the invariant to test first.
+#
+# --- NOMINAL stack, accumulated in parallel with the real one ---------------------
+#
+# The trigger level of a layer is calculated BEFORE deposition, on the
+# nominal design, and it no longer moves. Targeting it on a stack that
+# has become erroneous is what produces the error of opposite sign: this
+# is the compensation mechanism (Macleod, Bousquet).
+#
+# Before this fix, the target was T_real(d_nom) : the inversion parabola
+# interpolating exactly this same point, the resolution gave Delta_d =
+# noise / P', WITHOUT any accumulated error term. At zero noise, the
+# thickness was nominal whatever the previous errors, so no compensation
+# could appear OR be measured.
+#
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
 def _stack_matrix(wl, n_even, n_odd, thicknesses, j_start, j_end):
     """Characteristic matrix of layers `j_start` .. `j_end - 1`, as (m00, m01, m10, m11).
@@ -558,6 +590,90 @@ def _stack_matrix_pair(wl, n_even_r, n_odd_r, th_r, n_even_n, n_odd_n, th_n, j_s
     return R00, R01, R10, R11, Q00, Q01, Q10, Q11
 
 
+# CONTINUOUS SCAN OVER THE BLOCK LENGTH, and not only on the current layer.
+# Without this POEM only captures the intra-layer swing.
+#
+#   At UNCHANGED wavelength the monitoring signal is CONTINUOUS from one
+#   layer to the next: the turning points already crossed during the previous
+#   layers of the block remain valid measurements, exploitable to realign
+#   the current layer. Upon changing lambda we start on a new signal
+#   and all history is lost.
+#
+# This is what gives monochromatic blocks their value, what Arsac's P-PM
+# (chap. 4) exploits, and what Zideluns et al. (Opt. Express 29, 33398,
+# 2021) formulate as: "self-compensation operates only at the monitored
+# wavelength and diminishes when layers are monitored at different
+# wavelengths".
+#
+# block_start_layer = index of the first layer of the block. Default -1 =
+# layer alone, which preserves the behavior of unmodified callers.
+# ---- READING NOISE ON THE MONITORING SIGNAL (axis 1.1) --------------
+#
+# `noise_val_precalc` for a long time only noised A SINGLE point in the whole
+# chain: the stopping comparison (`target_T_noisy`, below). However `Ts_r`, the
+# "real" signal, is used for three more things, and none were noised:
+#
+#   - the DETECTION of turning points           -> "do we see the TPs?"
+#   - reading the POEM ANCHORS (T_prev, T_last) -> "is POEM free?"
+#   - the REACHABILITY test of the level        -> "do we reach the level?"
+#
+# The three questions of the final arbiter thus received the answer "always, and
+# exactly", which has no content: the extrema were localized on a perfect TMM
+# curve. In particular POEM reports its frozen fraction on the ACTUALLY OBSERVED
+# extrema -- T_prev_real and T_last_real are supposed to be MEASUREMENTS.
+# We gave it the benefit of realignment without making it pay the cost: the
+# target level being T_prev + p.(T_last - T_prev), two anchors each carrying a
+# standard deviation error sigma give
+#
+#     Var[target] = sigma^2 . [ (1-p)^2 + p^2 ]   + sigma^2 on the stopping reading
+#
+# which is an effective noise of sigma.sqrt(1 + (1-p)^2 + p^2): x1.22 at p = 0.5,
+# and up to x1.41 when the trigger falls on an anchor. POEM exchanges a BIAS
+# (uncompensated error) for a VARIANCE (two more measurements), and the model
+# only counted the benefit -- it therefore structurally favored strategies that
+# rely on many anchors, or on old anchors inherited from the block, since it
+# assumed them to be perfect.
+#
+# 🔴 COMMON RANDOM NUMBERS -- the constraint not to lose.
+#
+# The draw is a PURE FUNCTION of (seed, scanned layer, draw, point index). No
+# input depends on the strategy: neither the wavelength, nor the block splitting,
+# nor `block_start_layer`. Two strategies compared on the same (seed, draw)
+# therefore see EXACTLY the same reading noise, and their score difference
+# remains attributable to the strategy alone.
+#
+# This is why the draw is not materialized as an array: an array indexed flat on
+# the scan would BECOME MISALIGNED from one strategy to another, since the
+# history length `n_hist` depends on the block splitting. The
+# `_seeded_noise_sample` generator -- already in production for nucleation,
+# same N(0, 1/3) law truncated to +/-1 as the Phase B Sobol draw -- is called
+# with indices ALIGNED TO PHYSICS:
+#
+#   history of layer j, point k           ->  (group=j,       elem=k)
+#   scan of the current layer, k          ->  (group=i_layer, elem=NPTS_PREV+k)
+#
+# The first indexing is invariant in `i_layer`: all layers of a same block reread
+# the past of layer j WITH THE SAME NOISE. This is the physical invariant --
+# the machine recorded a measurement, it does not remeasure it.
+#
+# ⚠ WHAT REMAINS UNFAITHFUL, and what must be kept in mind to read the produced
+# crash rates. The number of PARASITE extrema fabricated by a reading noise
+# depends on the sampling DENSITY of the scan, which is here a numerical choice
+# (NPTS = 64 over 3x the thickness, NPTS_PREV = 16 over 1x) and not the machine's
+# cadence. The history is therefore sampled four times more coarsely than the
+# current layer, and the same physical point does not have the same noise
+# depending on whether it is read as "current layer" or as "history".
+# Modeling the cadence and integration time is axis 1.2, not this one.
+#
+# ARE NOT NOISED, and it is intended:
+#   - `Ts_n`: the NOMINAL signal is the strategy, calculated offline before
+#     deposition. There is nobody to measure it.
+#   - `T_mono`: design quantity (dynamic range, monotonicity), not a reading.
+#   - the three points `T_points` of the parabolic inversion: they are not a
+#     measurement but the resolution of T_real(d) = target_T_noisy. The noise
+#     of the stopping reading is already carried, and only carried, by
+#     `noise_val_precalc`.
+#
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
 def _fill_history_signal(
     wl,
@@ -800,6 +916,38 @@ def _fill_current_signal(
         idx += 1
 
 
+# ---- A8: THE MACHINE SAMPLING GRID, UNWELDED FROM THE SMOOTHING (17-2) ----
+#
+# The grid and the smoothing are two different things and they were expressible
+# only together. `SAMPLE_DD = 0.125` lived INSIDE `if smoothing_window > 1`, so
+# the configuration 12.4 requires in order to be validated -- FINE GRID, WINDOW
+# AT 1 -- could not be written at all.
+#
+# 🔑 WHY THE GRID MATTERS, and it is not about being "a bit coarse". The plate
+# turns at 240 rpm, the witness passes the detector 4 times a second, the
+# deposit advances at 0.5 nm/s: the machine reads every 0.125 nm, so 800 times
+# on a 100 nm layer where the model simulates 21. A factor 38 -- and EVERY
+# READING CARRIES ITS OWN NOISE DRAW. 12.4 measured what that governs: noise
+# alone fabricates a false turning point in 32.9 % of layers at 80 points,
+# 92.9 % at 320, and 99.9 % at the machine's own 800. The model has been
+# underestimating that risk by construction, simply by drawing 38 times less.
+#
+# The trick is 12.4's: T(d) is smooth and covers less than one period over the
+# whole sweep, so the expensive TMM evaluations stay coarse and are INTERPOLATED
+# onto the real reading positions, where the noise is drawn. Faithful draw
+# count, unchanged TMM cost.
+#
+# ⚠️ THE UNWELDING IS ONE-DIRECTIONAL, and that is correct rather than lazy. The
+# smoothing window is counted IN MACHINE READINGS, so it is meaningless on the
+# coarse grid: smoothing still implies the fine grid. What was missing is the
+# other direction -- the fine grid WITHOUT smoothing -- and that is now
+# expressible via `machine_sampling_dd`.
+#
+# 🔴 AND 12.4 WARNS ABOUT EXACTLY THIS CONFIGURATION: the fine grid ALONE takes
+# fabrication from 33 % to 99.9 %. The crash rate will rise sharply. That is
+# EXPECTED, it is the whole point of measuring it, and it must not be read as
+# the physics having degraded.
+#
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
 def _resample_on_machine_grid(
     machine_sampling_dd,
@@ -908,6 +1056,34 @@ def _resample_on_machine_grid(
     return Ts_r, Ts_n, n_tot, idx_nom_stop
 
 
+# ---- SCAN WINDOW (👤 2026-08-11) ------------------------------------
+#
+# 👤 *"scanning from zero to three times, that seems enormous! No layer will be
+# off by more than 10 nm of thickness, or it is scrap."*
+#
+# 📏 Measured on the 48-layer dichroic: `D_SCAN = 3.0` makes **63 %** of the
+# sweep cover thicknesses no layer will ever reach without being scrap. On the
+# 253 nm layer it scans to 760 nm.
+#
+# 🔑 THE DEFECT IS NOT THAT 3 IS TOO BIG -- IT IS THE SCALING. `D_SCAN` is a
+# MULTIPLE of the layer thickness, yet the two things that require going beyond
+# the nominal are both FIXED IN NANOMETRES:
+#
+#   * the stopping point, bounded by the largest meaningful error (15 nm here);
+#   * the reachability test, which needs the NEXT extremum -- half an optical
+#     period, i.e. lambda/(4n): 57.9 nm on H, 93.2 nm on L at 544 nm, and that
+#     does not depend on how thick the layer is.
+#
+# A multiple is therefore too generous on a thick layer and possibly TOO SHORT
+# on a thin one -- the same parameter wrong in both directions.
+#
+# ⚠️ THE DENSITY IS PRESERVED, and that is what makes this a cost saving rather
+# than a change of model. The number of points falls WITH the window, so the
+# sampling stays at the same points per nanometre -- hence the same number of
+# noise draws per nanometre, the same false-extremum fabrication rate (12.4
+# measured 33 % at 80 points against 99.9 % at 800), the same physics. Cutting
+# NPTS at a fixed window would NOT be neutral.
+#
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
 def _scan_window(
     block_start_layer,
@@ -1128,6 +1304,79 @@ def _running_mean(
         Ts_n[idx_w] = sum_n / w_len
 
 
+# ------------------------------------------------------------------------
+# POEM -- Percent of Optical Extrema Monitoring
+#
+#   T_POEM = (T_trigger - T_prev_TP) / (T_last_TP - T_prev_TP)      (Arsac
+#   these 2025, eq. 2.2 ; Zideluns et al., Opt. Express 29, 33398 (2021))
+#
+# The stopping point is NOT a transmission value but a FRACTION of the
+# photometric amplitude between the last two turning points. The fraction
+# is pre-calculated on the NOMINAL and frozen before deposition; at runtime
+# it is reported on the ACTUALLY observed extrema.
+#
+# Consequence, and this is the whole point: if the real signal undergoes an
+# affine distortion T_real = a*T_nom + b -- gain drift or photometric offset,
+# index error, upstream thickness error -- then T_prev and T_last undergo
+# the same, and the reported level is a*T_trigger_nom + b. We thus stop
+# exactly at the desired thickness. Compensation is obtained by CHANGE OF
+# VARIABLE, not by a manually tuned reduction coefficient.
+#
+# "If the current layer has less than two turning points, the virtual next
+#  turning points are used": we extend the scan beyond d_nom.
+#
+# Fallback: if the swing amplitude is too weak (< SWING_MIN, cf. the 4%
+# minimum starting amplitude of Zideluns et al.), POEM is ill-conditioned
+# and we fall back on the frozen absolute target.
+# 64 points and not 5: locating a turning point with 5 points neither allows
+# distinguishing a clear extremum from a shoulder, nor counting several of them.
+# Cost: 64 T evaluations per layer and per run, versus 8 previously.
+#
+# 🔴 THE TWO COUNTING CAUSES STAY SEPARATE, and A23 says so in as many words:
+# "one margin per layer is too coarse -- it takes one per layer AND per cause".
+# Merging them into min(missed, fabricated) was tried and measured: the number
+# jumped from 0.15 A to 505 A between two noise levels, a factor 3000, purely
+# because the BINDING CAUSE switched. That reads as a bug and hides the only thing
+# an operator can act on -- a faint ripple is cured by moving the wavelength, an
+# invented extremum by raising the threshold. Trap 1, corollary 2.
+#
+# ---- THE BARE SUBSTRATE IS A TURNING POINT, AND IT WAS IGNORED ----------
+#
+# Physicist, 2026-08-05: "for layer 1 we start the layer on a turning point,
+# but that is mandatory".
+#
+# This is correct and automatic. For a single layer on substrate,
+# R(d) = A + B.cos(2.delta) with delta = 2.pi.n.d/lambda, therefore
+# dR/dd proportional to sin(2.delta), which VANISHES at d = 0. Numerically
+# verified (n_H = 2.35, substrate 1.52, lambda = 500 nm): slope at d = 0 of
+# -8.0e-4 per nm versus -7.9e-3 in the middle of the quarter wave, which is
+# ten times less -- the residue comes from the finite difference on a 2.5 nm
+# step, the true derivative is zero.
+#
+# However the detection loop starts at k = 1: an EDGE extremum is structurally
+# invisible. Consequence measured on the example, whose first multiplier
+# is 1.556 (thus idx_nom_stop ~ 33):
+#
+#     detected extrema    [21, 42]        d = 53.2 and 106.4 nm
+#     k = 21 <= 33        tp_b = 21, tp_a remains -1
+#     k = 42 >  33        rejected because tp_b >= 0
+#     => tp_a = -1  =>  poem_ok = FALSE on layer 0
+#
+# Layer 0 therefore fell back on the absolute target, without compensation.
+# And this explained why it had only ONE surviving wavelength out of ~51
+# scanned, hence the absence of a common lambda with layer 1, hence the
+# force_monolayer fallback which fabricates an invalid edge.
+#
+# 🔴 THIS ANCHOR IS THE MOST RELIABLE OF ALL. At d = 0 on layer 0, the real
+# stack and the nominal stack are the SAME object -- the bare substrate.
+# T_prev_real = T_prev_nom exactly, with no upstream error possible, and
+# the machine measures this level even before starting.
+#
+# Intentionally narrow condition: only the first layer of the stack (i_layer == 0,
+# thus j0 == 0). For a block starting higher, d = 0 of its first layer is NOT an
+# extremum in general: the sub-stack already deposited has no reason to be
+# stationary there.
+#
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
 def _read_poem_anchors(
     i_layer,
@@ -1189,6 +1438,45 @@ def _read_poem_anchors(
     return n_tp_real, n_tp_nom, margin_missed, margin_fab, T_prev_nom, T_last_nom, T_prev_real, T_last_real, poem_ok
 
 
+# ---- HARD FAILURE: the stopping level is never reached ----------
+#
+# Very unfavorable case reported in the room: if the theoretical stop falls
+# JUST BEFORE a turning point, an upstream error can make the signal turn
+# before having reached the targeted value. The machine waits for a level
+# that will never come and the deposition goes into a tailspin. It's not a
+# loss of precision, it's a CRASH -- a discrete event, invisible to an RMSE
+# criterion as long as it's not explicitly detected.
+#
+# This is why stopping AFTER a turning point is much safer: the extremum
+# is already counted, the signal moves away from it monotonically, and the
+# level is inevitably reached. This is also the justification for the
+# asymmetry of check_extrema_proximity -- forbidden zone 3x wider BEFORE
+# a turning point than AFTER.
+#
+# We model the failure here as it happens: if the targeted level is not
+# bracketed by the real signal between the start of the layer and the next
+# extremum, the run is lost.
+#
+# ⚠ THIS TEST MUST NOT DEPEND ON poem_ok. It did, and it was a hole.
+#
+# Whether a level is reachable or not is a question of signal PHYSICS, not
+# of the anchoring strategy used to calculate it. Keeping the detection
+# behind `poem_ok` deactivated it precisely in cases where POEM is
+# ill-conditioned -- swing below SWING_MIN, fewer than two turning points --
+# which are exactly the most exposed.
+#
+# Measurement on example/example_strat/JSON-strat-example.json, 48 layers x 51
+# scan wavelengths, upstream error of +2 nm, zero noise:
+#   detected crash                           :  0.21 %
+#   SILENT fallback on vertex (disc < 0)     :  6.68 %   <- 30 times more
+#
+# These 6.68% came out of _solve_quadratic_target through its
+# `discriminant < 0` branch (certus_strat_math.py:207), which returns the
+# vertex of the parabola without reporting anything: median error 5.2 nm,
+# maximum 29 nm, where 0.05 nm is already worth less than an atom. The
+# verified rate did NOT depend on probe_offset (6.63% at 0.5 nm, 6.88% at
+# 10 nm): it was not a fit artifact, but the physical failure itself, uncounted.
+#
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
 def _level_reachability(Ts_r, n_tot, n_hist, idx_nom_stop, tp_hysteresis, target_T_noisy):
     """Is the stopping level reached by the real signal between the start of the layer and the next extremum after the stop?
@@ -1319,6 +1607,76 @@ def _invert_thickness_from_probes(
     return error_raw
 
 
+# ---- RATE MODE (14, A24) -------------------------------------------------
+#
+# The machine stops watching and counts turntable revolutions instead. It needs a
+# deposition rate to convert a thickness into a number of turns, and 👤 settled how
+# it gets one (2026-08-11):
+#
+#   Q2  Rate is FORBIDDEN until a layer of this material has been deposited under
+#       photometric control -- without one there is no measured rate at all.
+#   Q4  the estimate AVERAGES over every previous OPTICALLY DEPOSITED layer of the
+#       material.
+#
+# 🔴 Q3 SAID THE OPPOSITE AND IT WAS WRONG -- corrected 2026-08-19 on 👤's instruction:
+# *"the rate is only computed with the optically deposited layers"*. It used to read
+# "it CHAINS: the last deposited layer is a reference, Rate ones included", and Rate
+# layers were indeed counted.
+#
+# 🔑 WHY IT MATTERED, AND IT IS NOT COSMETIC. A Rate layer comes out at d_real = d_nom/A
+# BY CONSTRUCTION, so its own ratio d_nom/d_real is exactly A -- the running average
+# itself. Feeding it back changed nothing in the VALUE of A while incrementing `n_ref`:
+# the pool grew with entries carrying ZERO information. Every accuracy claim resting on
+# the 1/sqrt(n) law was therefore overstated as soon as a Rate layer entered the pool,
+# and a long Rate tail inflated `n_ref` without improving anything at all.
+#
+# ⚠️ The physical consequence stays, and it is the right one: inside a Rate tail the
+# estimate is FROZEN at its value on entering the tail, because no new optical layer of
+# that material is ever deposited again. Every layer of the tail inherits the SAME
+# relative error, correlated, which never averages out. That is now visible in `n_ref`
+# instead of being hidden by it.
+#
+# 🔑 sigma_rate IS NOT A PARAMETER. The machine compares turns observed against the
+# thickness it BELIEVES it deposited -- the nominal one, since nothing told it
+# otherwise -- and the simulator holds both numbers. So its estimate is reproduced,
+# not replaced by a draw. There is nothing to tune here.
+#
+#   layer k, deposited under POEM: real d_real_k, so n_k = d_real_k / q turns,
+#   while the machine believes d_nom_k. Its rate estimate is v.d_nom_k/d_real_k.
+#   Averaged:  v_hat = v . mean_k(d_nom_k / d_real_k) = v . A
+#   Rate layer i: it commands round(d_nom_i / (A.q)) turns, hence
+#
+#       d_real_i = round(d_nom_i / (A.q)) . q
+#
+# 📏 Without the rounding this is d_nom_i / A, i.e. the HARMONIC MEAN of the
+# previous ratios -- so averaging divides the inherited scatter by sqrt(n): 2,0 %
+# at one reference layer, 0,41 % at twenty-four (measured 2026-08-11). The Rate
+# gets steadily more accurate deeper into the stack.
+# ⚠️ n counts OPTICAL reference layers only (see the Q3 correction above), so in a
+# Rate tail it stops growing at the tail entry and the 1/sqrt(n) gain stops with it.
+#
+# ⚠️ THE ROUNDING IS NEGLIGIBLE AND NOTHING SHOULD BE BUILT ON IT -- 👤 2026-08-19:
+# *"we do not take the rounding into account, it is of a higher order"*. An earlier version
+# of this comment claimed the rounding "IS 9bis-7's U(0, 0.125 nm) stopping law,
+# appearing on its own with no parameter to pose". That was an over-claim: 0.125 nm on
+# a layer of ~100 nm is 1.2e-3 relative, against an inherited scatter of 2e-2 at one
+# reference layer -- more than an order of magnitude below, and it does not model the
+# optical stopping quantisation at all. The rounding is kept because it is what a turn
+# counter physically does; it is not evidence for anything.
+#
+# ⚠️ C2 is safe BY CONSTRUCTION, and it is worth saying why. A Rate layer reads
+# nothing, so it consumes no reading noise -- and that shifts nothing, because
+# `_seeded_noise_sample` is a pure function of (seed, group, run, element), a hash
+# and not a sequential stream. Skipping draws cannot misalign another layer. This
+# is exactly the property 12.4 chose the generator for.
+# 🔴 THIS LOOP IS NOT CUT AT A TESTGLASS SWAP, AND THAT IS DELIBERATE. Everything
+# else the kernel reads is truncated at `witness_base_layer`; this one spans the
+# whole run. The rate estimate is a property of the MACHINE -- the quartz, the
+# chrono, what the source is actually doing -- not of the glass the beam looks at.
+# Swapping the witness restores the optical signal; it does not make the machine
+# forget its own calibration. Cutting here would throw away the sqrt(n) averaging of
+# 17-... above and hand the Rate layers a worse estimate for no physical reason.
+#
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
 def _rate_layer_thickness(i_layer, prev_thicknesses_sim, p_thick_nominal, prev_rate_flags):
     """The thickness of a layer deposited by RATE, when the machine has a rate to go by: (True, thickness), else (False, 0.0).
@@ -1353,6 +1711,43 @@ def _rate_layer_thickness(i_layer, prev_thicknesses_sim, p_thick_nominal, prev_r
     return False, 0.0
 
 
+# ---- SLIT BIAS (12.7) --------------------------------------------------
+#
+# 👤 *"At no point does the OMS know how to compute spectral responses with a
+# resolution problem, it is always at perfect resolution! That is why opening
+# the slits too much can be a problem: the expected levels are not the right
+# ones."*
+#
+# 🔴 THE ASYMMETRY IS THE PHENOMENON. The bias goes on `Ts_r` -- what the
+# instrument READS through a slit of width B -- and NOWHERE else. `Ts_n` and
+# `target_nominal` are what the controller COMPUTES offline, monochromatically,
+# and they must stay untouched. Biasing both would cancel the effect exactly,
+# the crash rate would barely move, and one would conclude the slit does not
+# matter. That is the same failure 12.1 found THREE times on the affine
+# distortion, and it is invisible from the outside.
+#
+# It is not noise: a bias does not average out, does not dilute in the
+# Monte-Carlo, and pushes every draw the same way. The machine cuts
+# systematically too early or too late and has no way of noticing -- its only
+# reference is its own monochromatic theory.
+#
+# ⚠️ SIGNED. T'' > 0 near a minimum, < 0 near a maximum, so the bias always
+# pushes TOWARDS THE INSIDE of the curve. Near a turning point -- exactly where
+# POEM takes its anchors -- it shrinks the measured swing, and POEM then applies
+# its frozen fraction to an amplitude that is too small.
+#
+# 🔑 AND THE BIAS FOLLOWS THE THICKNESS, it is not one number for the layer. The
+# curvature the machine averages over changes as the layer grows, so the bias at
+# the first anchor, at the second, and at the trigger are three different
+# numbers. Measured spread inside one layer: up to 62 A (see `slit_bias_at`).
+# A single constant is the one shape POEM absorbs exactly, so the previous
+# version modelled the harmless half of the effect and none of the harmful half.
+#
+# ⚠️ EACH HISTORY LAYER CARRIES ITS OWN PROFILE. The replayed block history is
+# made of readings taken through the same slit but on different substacks, hence
+# different curvatures. Applying layer i's bias to layer j's replay would forge
+# the anchors POEM then reads.
+#
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
 def _add_slit_bias(
     Ts_r,
@@ -1486,75 +1881,7 @@ def simulate_growth_kernel(
         # No monitoring wavelength: nothing is read, so neither margin is constrained.
         return (float(p_thick_nominal[i_layer]), 0.0, 1e18, 1e18, 1e18)
 
-    # ---- RATE MODE (14, A24) -------------------------------------------------
-    #
-    # The machine stops watching and counts turntable revolutions instead. It needs a
-    # deposition rate to convert a thickness into a number of turns, and 👤 settled how
-    # it gets one (2026-08-11):
-    #
-    #   Q2  Rate is FORBIDDEN until a layer of this material has been deposited under
-    #       photometric control -- without one there is no measured rate at all.
-    #   Q4  the estimate AVERAGES over every previous OPTICALLY DEPOSITED layer of the
-    #       material.
-    #
-    # 🔴 Q3 SAID THE OPPOSITE AND IT WAS WRONG -- corrected 2026-08-19 on 👤's instruction:
-    # *"the rate is only computed with the optically deposited layers"*. It used to read
-    # "it CHAINS: the last deposited layer is a reference, Rate ones included", and Rate
-    # layers were indeed counted.
-    #
-    # 🔑 WHY IT MATTERED, AND IT IS NOT COSMETIC. A Rate layer comes out at d_real = d_nom/A
-    # BY CONSTRUCTION, so its own ratio d_nom/d_real is exactly A -- the running average
-    # itself. Feeding it back changed nothing in the VALUE of A while incrementing `n_ref`:
-    # the pool grew with entries carrying ZERO information. Every accuracy claim resting on
-    # the 1/sqrt(n) law was therefore overstated as soon as a Rate layer entered the pool,
-    # and a long Rate tail inflated `n_ref` without improving anything at all.
-    #
-    # ⚠️ The physical consequence stays, and it is the right one: inside a Rate tail the
-    # estimate is FROZEN at its value on entering the tail, because no new optical layer of
-    # that material is ever deposited again. Every layer of the tail inherits the SAME
-    # relative error, correlated, which never averages out. That is now visible in `n_ref`
-    # instead of being hidden by it.
-    #
-    # 🔑 sigma_rate IS NOT A PARAMETER. The machine compares turns observed against the
-    # thickness it BELIEVES it deposited -- the nominal one, since nothing told it
-    # otherwise -- and the simulator holds both numbers. So its estimate is reproduced,
-    # not replaced by a draw. There is nothing to tune here.
-    #
-    #   layer k, deposited under POEM: real d_real_k, so n_k = d_real_k / q turns,
-    #   while the machine believes d_nom_k. Its rate estimate is v.d_nom_k/d_real_k.
-    #   Averaged:  v_hat = v . mean_k(d_nom_k / d_real_k) = v . A
-    #   Rate layer i: it commands round(d_nom_i / (A.q)) turns, hence
-    #
-    #       d_real_i = round(d_nom_i / (A.q)) . q
-    #
-    # 📏 Without the rounding this is d_nom_i / A, i.e. the HARMONIC MEAN of the
-    # previous ratios -- so averaging divides the inherited scatter by sqrt(n): 2,0 %
-    # at one reference layer, 0,41 % at twenty-four (measured 2026-08-11). The Rate
-    # gets steadily more accurate deeper into the stack.
-    # ⚠️ n counts OPTICAL reference layers only (see the Q3 correction above), so in a
-    # Rate tail it stops growing at the tail entry and the 1/sqrt(n) gain stops with it.
-    #
-    # ⚠️ THE ROUNDING IS NEGLIGIBLE AND NOTHING SHOULD BE BUILT ON IT -- 👤 2026-08-19:
-    # *"we do not take the rounding into account, it is of a higher order"*. An earlier version
-    # of this comment claimed the rounding "IS 9bis-7's U(0, 0.125 nm) stopping law,
-    # appearing on its own with no parameter to pose". That was an over-claim: 0.125 nm on
-    # a layer of ~100 nm is 1.2e-3 relative, against an inherited scatter of 2e-2 at one
-    # reference layer -- more than an order of magnitude below, and it does not model the
-    # optical stopping quantisation at all. The rounding is kept because it is what a turn
-    # counter physically does; it is not evidence for anything.
-    #
-    # ⚠️ C2 is safe BY CONSTRUCTION, and it is worth saying why. A Rate layer reads
-    # nothing, so it consumes no reading noise -- and that shifts nothing, because
-    # `_seeded_noise_sample` is a pure function of (seed, group, run, element), a hash
-    # and not a sequential stream. Skipping draws cannot misalign another layer. This
-    # is exactly the property 12.4 chose the generator for.
-    # 🔴 THIS LOOP IS NOT CUT AT A TESTGLASS SWAP, AND THAT IS DELIBERATE. Everything
-    # else the kernel reads is truncated at `witness_base_layer`; this one spans the
-    # whole run. The rate estimate is a property of the MACHINE -- the quartz, the
-    # chrono, what the source is actually doing -- not of the glass the beam looks at.
-    # Swapping the witness restores the optical signal; it does not make the machine
-    # forget its own calibration. Cutting here would throw away the sqrt(n) averaging of
-    # 17-... above and hand the Rate layers a worse estimate for no physical reason.
+    # RATE MODE: the estimate of the rate and the thickness it commands are `_rate_layer_thickness`, which carries the notes.
     if is_rate:
         has_rate, rate_thickness = _rate_layer_thickness(i_layer, prev_thicknesses_sim, p_thick_nominal, prev_rate_flags)
         if has_rate:
@@ -1571,39 +1898,11 @@ def simulate_growth_kernel(
     n_H_r = n_H if n_H_real.real < 0.0 else n_H_real
     n_L_r = n_L if n_L_real.real < 0.0 else n_L_real
 
-    # 🔑 MULTIPLE-TESTGLASS: BOTH stacks below start at `witness_base_layer`, not at 0.
-    #
-    # A fresh witness carries only the layers deposited SINCE it was swapped in, so the
-    # monitoring signal is that of a shorter stack -- which is the whole point: on a
-    # 99-layer filter the witness goes optically dead long before the part is finished
-    # (half-wave spacers swing by nothing, 19-layer mirrors transmit under 1e-4).
-    #
-    # 🔴 AND THE COST OF THE SWAP FALLS OUT OF THESE TWO LOOPS ON ITS OWN -- it is not
-    # modelled anywhere else, and must not be. The trigger level is computed on the
-    # NOMINAL stack and applied to the REAL one; that mismatch is what produces the
-    # error of opposite sign, i.e. optical monitoring's self-compensation. Start both
-    # loops at the same `witness_base_layer` and the errors of the layers BELOW it are
-    # invisible to both: they can no longer be compensated, and they stay frozen in the
-    # part for good. Truncating only one of the two would be far worse than wrong -- it
-    # would compare a 99-layer nominal target against a 20-layer real stack.
-    #
-    # ⚠️ `witness_base_layer = 0` reproduces the single-witness behaviour exactly. That
-    # is the invariant to test first.
+    # Both stacks start at `witness_base_layer`, not at 0 (multiple testglass): see the notes above `_stack_matrix`.
     M_before_00, M_before_01, M_before_10, M_before_11 = _stack_matrix(
         wl, n_H_r, n_L_r, prev_thicknesses_sim, witness_base_layer, i_layer
     )
-    # --- NOMINAL stack, accumulated in parallel with the real one ---------------------
-    #
-    # The trigger level of a layer is calculated BEFORE deposition, on the
-    # nominal design, and it no longer moves. Targeting it on a stack that
-    # has become erroneous is what produces the error of opposite sign: this
-    # is the compensation mechanism (Macleod, Bousquet).
-    #
-    # Before this fix, the target was T_real(d_nom) : the inversion parabola
-    # interpolating exactly this same point, the resolution gave Delta_d =
-    # noise / P', WITHOUT any accumulated error term. At zero noise, the
-    # thickness was nominal whatever the previous errors, so no compensation
-    # could appear OR be measured.
+    # The NOMINAL stack is accumulated in parallel with the real one (the trigger level is computed on it).
     M_nom_00, M_nom_01, M_nom_10, M_nom_11 = _stack_matrix(wl, n_H, n_L, p_thick_nominal, witness_base_layer, i_layer)
 
     nominal_th = p_thick_nominal[i_layer]
@@ -1617,116 +1916,7 @@ def simulate_growth_kernel(
         wl, n_current, nominal_th, n_Sub, M_nom_00, M_nom_01, M_nom_10, M_nom_11, T_mono[4],
     )
 
-    # ------------------------------------------------------------------------
-    # POEM -- Percent of Optical Extrema Monitoring
-    #
-    #   T_POEM = (T_trigger - T_prev_TP) / (T_last_TP - T_prev_TP)      (Arsac
-    #   these 2025, eq. 2.2 ; Zideluns et al., Opt. Express 29, 33398 (2021))
-    #
-    # The stopping point is NOT a transmission value but a FRACTION of the
-    # photometric amplitude between the last two turning points. The fraction
-    # is pre-calculated on the NOMINAL and frozen before deposition; at runtime
-    # it is reported on the ACTUALLY observed extrema.
-    #
-    # Consequence, and this is the whole point: if the real signal undergoes an
-    # affine distortion T_real = a*T_nom + b -- gain drift or photometric offset,
-    # index error, upstream thickness error -- then T_prev and T_last undergo
-    # the same, and the reported level is a*T_trigger_nom + b. We thus stop
-    # exactly at the desired thickness. Compensation is obtained by CHANGE OF
-    # VARIABLE, not by a manually tuned reduction coefficient.
-    #
-    # "If the current layer has less than two turning points, the virtual next
-    #  turning points are used": we extend the scan beyond d_nom.
-    #
-    # Fallback: if the swing amplitude is too weak (< SWING_MIN, cf. the 4%
-    # minimum starting amplitude of Zideluns et al.), POEM is ill-conditioned
-    # and we fall back on the frozen absolute target.
-    # 64 points and not 5: locating a turning point with 5 points neither allows
-    # distinguishing a clear extremum from a shoulder, nor counting several of them.
-    # Cost: 64 T evaluations per layer and per run, versus 8 previously.
-    # CONTINUOUS SCAN OVER THE BLOCK LENGTH, and not only on the current layer.
-    # Without this POEM only captures the intra-layer swing.
-    #
-    #   At UNCHANGED wavelength the monitoring signal is CONTINUOUS from one
-    #   layer to the next: the turning points already crossed during the previous
-    #   layers of the block remain valid measurements, exploitable to realign
-    #   the current layer. Upon changing lambda we start on a new signal
-    #   and all history is lost.
-    #
-    # This is what gives monochromatic blocks their value, what Arsac's P-PM
-    # (chap. 4) exploits, and what Zideluns et al. (Opt. Express 29, 33398,
-    # 2021) formulate as: "self-compensation operates only at the monitored
-    # wavelength and diminishes when layers are monitored at different
-    # wavelengths".
-    #
-    # block_start_layer = index of the first layer of the block. Default -1 =
-    # layer alone, which preserves the behavior of unmodified callers.
-    # ---- READING NOISE ON THE MONITORING SIGNAL (axis 1.1) --------------
-    #
-    # `noise_val_precalc` for a long time only noised A SINGLE point in the whole
-    # chain: the stopping comparison (`target_T_noisy`, below). However `Ts_r`, the
-    # "real" signal, is used for three more things, and none were noised:
-    #
-    #   - the DETECTION of turning points           -> "do we see the TPs?"
-    #   - reading the POEM ANCHORS (T_prev, T_last) -> "is POEM free?"
-    #   - the REACHABILITY test of the level        -> "do we reach the level?"
-    #
-    # The three questions of the final arbiter thus received the answer "always, and
-    # exactly", which has no content: the extrema were localized on a perfect TMM
-    # curve. In particular POEM reports its frozen fraction on the ACTUALLY OBSERVED
-    # extrema -- T_prev_real and T_last_real are supposed to be MEASUREMENTS.
-    # We gave it the benefit of realignment without making it pay the cost: the
-    # target level being T_prev + p.(T_last - T_prev), two anchors each carrying a
-    # standard deviation error sigma give
-    #
-    #     Var[target] = sigma^2 . [ (1-p)^2 + p^2 ]   + sigma^2 on the stopping reading
-    #
-    # which is an effective noise of sigma.sqrt(1 + (1-p)^2 + p^2): x1.22 at p = 0.5,
-    # and up to x1.41 when the trigger falls on an anchor. POEM exchanges a BIAS
-    # (uncompensated error) for a VARIANCE (two more measurements), and the model
-    # only counted the benefit -- it therefore structurally favored strategies that
-    # rely on many anchors, or on old anchors inherited from the block, since it
-    # assumed them to be perfect.
-    #
-    # 🔴 COMMON RANDOM NUMBERS -- the constraint not to lose.
-    #
-    # The draw is a PURE FUNCTION of (seed, scanned layer, draw, point index). No
-    # input depends on the strategy: neither the wavelength, nor the block splitting,
-    # nor `block_start_layer`. Two strategies compared on the same (seed, draw)
-    # therefore see EXACTLY the same reading noise, and their score difference
-    # remains attributable to the strategy alone.
-    #
-    # This is why the draw is not materialized as an array: an array indexed flat on
-    # the scan would BECOME MISALIGNED from one strategy to another, since the
-    # history length `n_hist` depends on the block splitting. The
-    # `_seeded_noise_sample` generator -- already in production for nucleation,
-    # same N(0, 1/3) law truncated to +/-1 as the Phase B Sobol draw -- is called
-    # with indices ALIGNED TO PHYSICS:
-    #
-    #   history of layer j, point k           ->  (group=j,       elem=k)
-    #   scan of the current layer, k          ->  (group=i_layer, elem=NPTS_PREV+k)
-    #
-    # The first indexing is invariant in `i_layer`: all layers of a same block reread
-    # the past of layer j WITH THE SAME NOISE. This is the physical invariant --
-    # the machine recorded a measurement, it does not remeasure it.
-    #
-    # ⚠ WHAT REMAINS UNFAITHFUL, and what must be kept in mind to read the produced
-    # crash rates. The number of PARASITE extrema fabricated by a reading noise
-    # depends on the sampling DENSITY of the scan, which is here a numerical choice
-    # (NPTS = 64 over 3x the thickness, NPTS_PREV = 16 over 1x) and not the machine's
-    # cadence. The history is therefore sampled four times more coarsely than the
-    # current layer, and the same physical point does not have the same noise
-    # depending on whether it is read as "current layer" or as "history".
-    # Modeling the cadence and integration time is axis 1.2, not this one.
-    #
-    # ARE NOT NOISED, and it is intended:
-    #   - `Ts_n`: the NOMINAL signal is the strategy, calculated offline before
-    #     deposition. There is nobody to measure it.
-    #   - `T_mono`: design quantity (dynamic range, monotonicity), not a reading.
-    #   - the three points `T_points` of the parabolic inversion: they are not a
-    #     measurement but the resolution of T_real(d) = target_T_noisy. The noise
-    #     of the stopping reading is already carried, and only carried, by
-    #     `noise_val_precalc`.
+    # POEM (percent of optical extrema monitoring) and the reading noise: see the notes above `_read_poem_anchors` and `_fill_history_signal`.
     NPTS = SCAN_NPTS_CURRENT
     NPTS_PREV = SCAN_NPTS_HISTORY
     MAX_LOOKBACK = MAX_LOOKBACK_VAL
@@ -1739,13 +1929,7 @@ def simulate_growth_kernel(
     # the kernel is not told what A is and must not guess it. 1e18 = "no constraint of
     # this kind here", which is NOT the same as "safe" and must never be averaged.
     margin_level = 1e18      # distance of the stopping level from the reachable band
-    # 🔴 THE TWO COUNTING CAUSES STAY SEPARATE, and A23 says so in as many words:
-    # "one margin per layer is too coarse -- it takes one per layer AND per cause".
-    # Merging them into min(missed, fabricated) was tried and measured: the number
-    # jumped from 0.15 A to 505 A between two noise levels, a factor 3000, purely
-    # because the BINDING CAUSE switched. That reads as a bug and hides the only thing
-    # an operator can act on -- a faint ripple is cured by moving the wavelength, an
-    # invented extremum by raising the threshold. Trap 1, corollary 2.
+    # The two counting causes stay separate (A23): see the notes above `_read_poem_anchors`.
     margin_missed = 1e18     # ripple too faint  -> an extremum goes UNCOUNTED
     margin_fab = 1e18        # noise excursion   -> an extremum is INVENTED
     T_prev_real = 0.0
@@ -1768,112 +1952,21 @@ def simulate_growth_kernel(
             R00, R01, R10, R11, Q00, Q01, Q10, Q11, Ts_r, Ts_n,
             apply_signal_noise, signal_noise_scale, signal_noise_seed, signal_noise_run,
         )
-        # ---- SCAN WINDOW (👤 2026-08-11) ------------------------------------
-        #
-        # 👤 *"scanning from zero to three times, that seems enormous! No layer will be
-        # off by more than 10 nm of thickness, or it is scrap."*
-        #
-        # 📏 Measured on the 48-layer dichroic: `D_SCAN = 3.0` makes **63 %** of the
-        # sweep cover thicknesses no layer will ever reach without being scrap. On the
-        # 253 nm layer it scans to 760 nm.
-        #
-        # 🔑 THE DEFECT IS NOT THAT 3 IS TOO BIG -- IT IS THE SCALING. `D_SCAN` is a
-        # MULTIPLE of the layer thickness, yet the two things that require going beyond
-        # the nominal are both FIXED IN NANOMETRES:
-        #
-        #   * the stopping point, bounded by the largest meaningful error (15 nm here);
-        #   * the reachability test, which needs the NEXT extremum -- half an optical
-        #     period, i.e. lambda/(4n): 57.9 nm on H, 93.2 nm on L at 544 nm, and that
-        #     does not depend on how thick the layer is.
-        #
-        # A multiple is therefore too generous on a thick layer and possibly TOO SHORT
-        # on a thin one -- the same parameter wrong in both directions.
-        #
-        # ⚠️ THE DENSITY IS PRESERVED, and that is what makes this a cost saving rather
-        # than a change of model. The number of points falls WITH the window, so the
-        # sampling stays at the same points per nanometre -- hence the same number of
-        # noise draws per nanometre, the same false-extremum fabrication rate (12.4
-        # measured 33 % at 80 points against 99.9 % at 800), the same physics. Cutting
-        # NPTS at a fixed window would NOT be neutral.
+        # The scan window: see the notes above `_scan_window`.
         _fill_current_signal(
             wl, n_Sub, n_H_r, n_L_r, n_H, n_L, i_layer, R00, R01, R10, R11, Q00, Q01, Q10, Q11, d_max,
             npts_cur, n_hist, idx, Ts_r, Ts_n, apply_signal_noise, signal_noise_scale, signal_noise_seed,
             signal_noise_run,
         )
 
-        # ---- SLIT BIAS (12.7) --------------------------------------------------
-        #
-        # 👤 *"At no point does the OMS know how to compute spectral responses with a
-        # resolution problem, it is always at perfect resolution! That is why opening
-        # the slits too much can be a problem: the expected levels are not the right
-        # ones."*
-        #
-        # 🔴 THE ASYMMETRY IS THE PHENOMENON. The bias goes on `Ts_r` -- what the
-        # instrument READS through a slit of width B -- and NOWHERE else. `Ts_n` and
-        # `target_nominal` are what the controller COMPUTES offline, monochromatically,
-        # and they must stay untouched. Biasing both would cancel the effect exactly,
-        # the crash rate would barely move, and one would conclude the slit does not
-        # matter. That is the same failure 12.1 found THREE times on the affine
-        # distortion, and it is invisible from the outside.
-        #
-        # It is not noise: a bias does not average out, does not dilute in the
-        # Monte-Carlo, and pushes every draw the same way. The machine cuts
-        # systematically too early or too late and has no way of noticing -- its only
-        # reference is its own monochromatic theory.
-        #
-        # ⚠️ SIGNED. T'' > 0 near a minimum, < 0 near a maximum, so the bias always
-        # pushes TOWARDS THE INSIDE of the curve. Near a turning point -- exactly where
-        # POEM takes its anchors -- it shrinks the measured swing, and POEM then applies
-        # its frozen fraction to an amplitude that is too small.
-        #
-        # 🔑 AND THE BIAS FOLLOWS THE THICKNESS, it is not one number for the layer. The
-        # curvature the machine averages over changes as the layer grows, so the bias at
-        # the first anchor, at the second, and at the trigger are three different
-        # numbers. Measured spread inside one layer: up to 62 A (see `slit_bias_at`).
-        # A single constant is the one shape POEM absorbs exactly, so the previous
-        # version modelled the harmless half of the effect and none of the harmful half.
-        #
-        # ⚠️ EACH HISTORY LAYER CARRIES ITS OWN PROFILE. The replayed block history is
-        # made of readings taken through the same slit but on different substacks, hence
-        # different curvatures. Applying layer i's bias to layer j's replay would forge
-        # the anchors POEM then reads.
+        # Slit bias (12.7): see the notes above `_add_slit_bias`.
         if slit_profiles is not None and slit_profiles.shape[0] > 0:
             _add_slit_bias(
                 Ts_r, slit_profiles, p_thick_nominal, prev_thicknesses_sim, j0, i_layer, n_hist, npts_cur,
                 d_max, nominal_th,
             )
 
-        # ---- A8: THE MACHINE SAMPLING GRID, UNWELDED FROM THE SMOOTHING (17-2) ----
-        #
-        # The grid and the smoothing are two different things and they were expressible
-        # only together. `SAMPLE_DD = 0.125` lived INSIDE `if smoothing_window > 1`, so
-        # the configuration 12.4 requires in order to be validated -- FINE GRID, WINDOW
-        # AT 1 -- could not be written at all.
-        #
-        # 🔑 WHY THE GRID MATTERS, and it is not about being "a bit coarse". The plate
-        # turns at 240 rpm, the witness passes the detector 4 times a second, the
-        # deposit advances at 0.5 nm/s: the machine reads every 0.125 nm, so 800 times
-        # on a 100 nm layer where the model simulates 21. A factor 38 -- and EVERY
-        # READING CARRIES ITS OWN NOISE DRAW. 12.4 measured what that governs: noise
-        # alone fabricates a false turning point in 32.9 % of layers at 80 points,
-        # 92.9 % at 320, and 99.9 % at the machine's own 800. The model has been
-        # underestimating that risk by construction, simply by drawing 38 times less.
-        #
-        # The trick is 12.4's: T(d) is smooth and covers less than one period over the
-        # whole sweep, so the expensive TMM evaluations stay coarse and are INTERPOLATED
-        # onto the real reading positions, where the noise is drawn. Faithful draw
-        # count, unchanged TMM cost.
-        #
-        # ⚠️ THE UNWELDING IS ONE-DIRECTIONAL, and that is correct rather than lazy. The
-        # smoothing window is counted IN MACHINE READINGS, so it is meaningless on the
-        # coarse grid: smoothing still implies the fine grid. What was missing is the
-        # other direction -- the fine grid WITHOUT smoothing -- and that is now
-        # expressible via `machine_sampling_dd`.
-        #
-        # 🔴 AND 12.4 WARNS ABOUT EXACTLY THIS CONFIGURATION: the fine grid ALONE takes
-        # fabrication from 33 % to 99.9 %. The crash rate will rise sharply. That is
-        # EXPECTED, it is the whole point of measuring it, and it must not be read as
-        # the physics having degraded.
+        # The machine sampling grid (A8): see the notes above `_resample_on_machine_grid`.
         use_fine_grid = machine_sampling_dd > 0.0 or smoothing_window > 1
         if use_fine_grid:
             Ts_r, Ts_n, n_tot, idx_nom_stop = _resample_on_machine_grid(
@@ -1897,42 +1990,7 @@ def simulate_growth_kernel(
             _running_mean(
                 Ts_r, Ts_n, n_tot, smoothing_window,
             )
-        # ---- THE BARE SUBSTRATE IS A TURNING POINT, AND IT WAS IGNORED ----------
-        #
-        # Physicist, 2026-08-05: "for layer 1 we start the layer on a turning point,
-        # but that is mandatory".
-        #
-        # This is correct and automatic. For a single layer on substrate,
-        # R(d) = A + B.cos(2.delta) with delta = 2.pi.n.d/lambda, therefore
-        # dR/dd proportional to sin(2.delta), which VANISHES at d = 0. Numerically
-        # verified (n_H = 2.35, substrate 1.52, lambda = 500 nm): slope at d = 0 of
-        # -8.0e-4 per nm versus -7.9e-3 in the middle of the quarter wave, which is
-        # ten times less -- the residue comes from the finite difference on a 2.5 nm
-        # step, the true derivative is zero.
-        #
-        # However the detection loop starts at k = 1: an EDGE extremum is structurally
-        # invisible. Consequence measured on the example, whose first multiplier
-        # is 1.556 (thus idx_nom_stop ~ 33):
-        #
-        #     detected extrema    [21, 42]        d = 53.2 and 106.4 nm
-        #     k = 21 <= 33        tp_b = 21, tp_a remains -1
-        #     k = 42 >  33        rejected because tp_b >= 0
-        #     => tp_a = -1  =>  poem_ok = FALSE on layer 0
-        #
-        # Layer 0 therefore fell back on the absolute target, without compensation.
-        # And this explained why it had only ONE surviving wavelength out of ~51
-        # scanned, hence the absence of a common lambda with layer 1, hence the
-        # force_monolayer fallback which fabricates an invalid edge.
-        #
-        # 🔴 THIS ANCHOR IS THE MOST RELIABLE OF ALL. At d = 0 on layer 0, the real
-        # stack and the nominal stack are the SAME object -- the bare substrate.
-        # T_prev_real = T_prev_nom exactly, with no upstream error possible, and
-        # the machine measures this level even before starting.
-        #
-        # Intentionally narrow condition: only the first layer of the stack (i_layer == 0,
-        # thus j0 == 0). For a block starting higher, d = 0 of its first layer is NOT an
-        # extremum in general: the sub-stack already deposited has no reason to be
-        # stationary there.
+        # The bare substrate is a turning point: see the notes above `_read_poem_anchors`.
         n_tp_real, n_tp_nom, margin_missed, margin_fab, T_prev_nom, T_last_nom, T_prev_real, T_last_real, poem_ok = _read_poem_anchors(
             i_layer, j0, Ts_r, Ts_n, n_tot, idx_nom_stop, tp_hysteresis, poem_enabled,
         )
@@ -1956,44 +2014,7 @@ def simulate_growth_kernel(
 
     target_T_noisy = target_level + noise_val_precalc
 
-    # ---- HARD FAILURE: the stopping level is never reached ----------
-    #
-    # Very unfavorable case reported in the room: if the theoretical stop falls
-    # JUST BEFORE a turning point, an upstream error can make the signal turn
-    # before having reached the targeted value. The machine waits for a level
-    # that will never come and the deposition goes into a tailspin. It's not a
-    # loss of precision, it's a CRASH -- a discrete event, invisible to an RMSE
-    # criterion as long as it's not explicitly detected.
-    #
-    # This is why stopping AFTER a turning point is much safer: the extremum
-    # is already counted, the signal moves away from it monotonically, and the
-    # level is inevitably reached. This is also the justification for the
-    # asymmetry of check_extrema_proximity -- forbidden zone 3x wider BEFORE
-    # a turning point than AFTER.
-    #
-    # We model the failure here as it happens: if the targeted level is not
-    # bracketed by the real signal between the start of the layer and the next
-    # extremum, the run is lost.
-    #
-    # ⚠ THIS TEST MUST NOT DEPEND ON poem_ok. It did, and it was a hole.
-    #
-    # Whether a level is reachable or not is a question of signal PHYSICS, not
-    # of the anchoring strategy used to calculate it. Keeping the detection
-    # behind `poem_ok` deactivated it precisely in cases where POEM is
-    # ill-conditioned -- swing below SWING_MIN, fewer than two turning points --
-    # which are exactly the most exposed.
-    #
-    # Measurement on example/example_strat/JSON-strat-example.json, 48 layers x 51
-    # scan wavelengths, upstream error of +2 nm, zero noise:
-    #   detected crash                           :  0.21 %
-    #   SILENT fallback on vertex (disc < 0)     :  6.68 %   <- 30 times more
-    #
-    # These 6.68% came out of _solve_quadratic_target through its
-    # `discriminant < 0` branch (certus_strat_math.py:207), which returns the
-    # vertex of the parabola without reporting anything: median error 5.2 nm,
-    # maximum 29 nm, where 0.05 nm is already worth less than an atom. The
-    # verified rate did NOT depend on probe_offset (6.63% at 0.5 nm, 6.88% at
-    # 10 nm): it was not a fit artifact, but the physical failure itself, uncounted.
+    # Hard failure, the stopping level is never reached: see the notes above `_level_reachability`.
     if nominal_th > 0.0001:
         margin_level, level_reached = _level_reachability(
             Ts_r, n_tot, n_hist, idx_nom_stop, tp_hysteresis, target_T_noisy,

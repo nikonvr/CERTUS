@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from uuid import uuid4
 
-from certus.domain.optical.entities import Layer
+from certus.domain.optical.entities.layer import Layer
 from certus.domain.optical.value_objects import Wavelength
 
 

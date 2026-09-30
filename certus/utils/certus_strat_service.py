@@ -1538,9 +1538,9 @@ def simulate_detailed_growth_for_ui(
     clues_db = opti_results["clues_at_wl"]
 
     try:
-        first_wl = list(clues_db.keys())[0]
+        first_wl = next(iter(clues_db.keys()))
         _nSub_fallback = complex(clues_db[first_wl].get("substrate", 1.52))
-    except (IndexError, AttributeError, KeyError):
+    except (StopIteration, IndexError, AttributeError, KeyError):  # StopIteration: an empty database, the old IndexError
         _nSub_fallback = complex(1.52)
 
     nH_id = params.get("nH_r", 2.3)

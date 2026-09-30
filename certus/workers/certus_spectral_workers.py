@@ -394,7 +394,7 @@ def _pick_transmission_from_spectra_or_front(
 ) -> np.ndarray:
     """Return first grouped transmission or fallback to front-spectrum transmission."""
     if spectra:
-        first_key = list(spectra.keys())[0]
+        first_key = next(iter(spectra.keys()))
         return np.asarray(spectra[first_key]["T"])
     t_vals, _ = calc_spectrum_front(wls, n_front_T, d_front, n_sub)
     return np.asarray(t_vals)

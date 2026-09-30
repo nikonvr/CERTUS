@@ -814,7 +814,7 @@ def _parallel_block_worker(args) -> dict:
         logger.debug(f"[W{n_blk}] num_layers: {pre_calc_data['num_layers']}")
 
         sample_layer = (
-            list(pre_calc_data["raw_results_thickness"].keys())[0] if pre_calc_data["raw_results_thickness"] else -1
+            next(iter(pre_calc_data["raw_results_thickness"].keys())) if pre_calc_data["raw_results_thickness"] else -1
         )
 
         if sample_layer >= 0:

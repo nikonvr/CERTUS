@@ -170,7 +170,7 @@ class TestBuildRuntime:
 
 class TestWaitWarmup:
     def test_no_error_when_no_thread(self) -> None:
-        wait_warmup(timeout=0.1)  # should not raise
+        assert wait_warmup(timeout=0.1) is None  # no warmup thread: it returns at once with nothing to report
 
 
 class TestGetLogger:

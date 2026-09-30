@@ -19,9 +19,10 @@ from certus.utils.certus_index_utils import (
 
 
 class TestLogStructuredJsonEvent:
-    def test_none_logger_is_noop(self):
+    def test_none_logger_is_noop(self, caplog):
         """No exception when logger is None."""
-        log_structured_json_event(None, "CH", "evt")
+        assert log_structured_json_event(None, "CH", "evt") is None
+        assert not caplog.records  # and nothing goes to any other logger
 
     def test_emits_json_line(self, caplog):
         import logging
@@ -37,8 +38,18 @@ class TestLogStructuredJsonEvent:
 
         log = logging.getLogger("certus_test_json2")
         log.setLevel(logging.DEBUG)
-        # np.array is not JSON-serializable — should silently swallow
-        log_structured_json_event(log, "CH", "evt", bad=np.array([1, 2]))
+        # An object the encoder cannot write does not stop the event: what is logged says the payload failed.
+        log_structured_json_event(log, "CH", "evt", bad=object())
+        assert '"serialization_failed":true' in caplog.text
+        assert '"field_keys":["bad"]' in caplog.text
+
+    def test_a_numpy_array_field_is_written_as_a_list(self, caplog):
+        import logging
+
+        log = logging.getLogger("certus_test_json3")
+        log.setLevel(logging.DEBUG)
+        log_structured_json_event(log, "CH", "evt", values=np.array([1, 2]))
+        assert '"values":[1,2]' in caplog.text  # the numpy encoder handles it: nothing to swallow
 
 
 # ── spectral_rmse_weights ──

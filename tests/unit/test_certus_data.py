@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -143,9 +144,11 @@ class TestTimingLogger:
         t.end("test")
         assert "test" not in t.start_times
 
-    def test_end_without_start_noop(self) -> None:
+    def test_end_without_start_noop(self, caplog) -> None:
         t = TimingLogger()
-        t.end("nonexistent")  # should not raise
+        with caplog.at_level(logging.INFO, logger="CERTUS.Timing"):
+            t.end("nonexistent")
+        assert "Finished" not in caplog.text  # nothing was started, nothing is reported
 
     def test_global_timing(self) -> None:
         t = TimingLogger()

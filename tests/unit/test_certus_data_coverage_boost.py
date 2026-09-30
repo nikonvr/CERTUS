@@ -12,8 +12,10 @@ Targets gaps in:
 - SharedIndicesManager/Worker (context manager, get)
 """
 
+import logging
 import sys
 import tempfile
+from multiprocessing import shared_memory
 from pathlib import Path
 
 import numpy as np
@@ -152,9 +154,12 @@ class TestTimingLogger:
         tl.end("test_section")
         assert "test_section" not in tl.start_times
 
-    def test_end_nonexistent_noop(self):
+    def test_end_nonexistent_noop(self, caplog):
         tl = TimingLogger()
-        tl.end("nonexistent")  # Should not raise
+        with caplog.at_level(logging.INFO, logger="CERTUS.Timing"):
+            tl.end("nonexistent")
+        assert "Finished" not in caplog.text  # a section that never started has no duration to report
+        assert tl.start_times == {}
 
     def test_global_start_end(self):
         tl = TimingLogger()
@@ -240,5 +245,10 @@ class TestSharedIndicesManagerWorker:
     def test_double_close_safe(self):
         clues = {500.0: {"H": 2.3, "L": 1.45, "substrate": 1.52}}
         mgr = SharedIndicesManager(clues)
+        name = mgr.shm_name
         mgr.close()
-        mgr.close()  # Should not raise
+        assert mgr.shm is None
+        with pytest.raises(FileNotFoundError):
+            shared_memory.SharedMemory(name=name)  # the first close really released the segment
+        mgr.close()  # the second finds nothing to do
+        assert mgr.shm is None

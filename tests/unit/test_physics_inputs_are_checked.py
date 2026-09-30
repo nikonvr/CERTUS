@@ -173,7 +173,7 @@ def test_a_layer_that_is_opaque_beyond_overflow_is_refused_instead_of_answering_
 def test_a_thin_absorbing_layer_is_not_mistaken_for_an_opaque_one() -> None:
     from certus.physics.certus_inputs import require_layers_below_overflow
 
-    require_layers_below_overflow(np.array([50.0]), np.full((3, 1), complex(2.0, -0.1)), WLS)
+    assert require_layers_below_overflow(np.array([50.0]), np.full((3, 1), complex(2.0, -0.1)), WLS) is None
 
 
 # =============================================================================

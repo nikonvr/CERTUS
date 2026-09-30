@@ -116,14 +116,16 @@ class TestEmitStat:
 
     def test_no_queue_no_crash(self):
         ctx = StratContext()
-        ctx.emit_stat("SP", 1)  # Should not raise
-        ctx.emit_stat("MS", 1)
+        ctx.emit_stat("SP", 1)
+        ctx.emit_stat("MS", 1)  # without a queue, nothing is sent and nothing fails
+        assert ctx.sp_buffer == 1  # the spectrum count waits in the buffer for a queue, it is not lost
 
     def test_broken_pipe_handled(self):
         queue = MagicMock()
         queue.put.side_effect = BrokenPipeError
         ctx = StratContext(stats_queue=queue)
-        ctx.emit_stat("MS", 1)  # Should not raise
+        ctx.emit_stat("MS", 1)  # a queue whose reader has gone does not stop the calculation
+        queue.put.assert_called_once_with(("MS", 1))
 
 
 class TestFlushStats:

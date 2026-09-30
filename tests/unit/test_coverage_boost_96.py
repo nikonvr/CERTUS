@@ -53,7 +53,8 @@ def test_setup_numba_cache_value_error(monkeypatch):
     import certus.core.certus_core as certus_core
     import numba
     monkeypatch.setitem(sys.modules, "numba", numba)
-    monkeypatch.setattr(numba, "get_num_threads", Mock(side_effect=ValueError("Simulated Error")))
+    broken = Mock(side_effect=ValueError("Simulated Error"))
+    monkeypatch.setattr(numba, "get_num_threads", broken)
     for env_var in [
         "_CERTUS_NUMBA_CONFIGURED",
         "NUMBA_CACHE_DIR",
@@ -73,7 +74,10 @@ def test_setup_numba_cache_value_error(monkeypatch):
         # monkeypatch restaure les valeurs d'origine en fin de test.
         monkeypatch.delenv(env_var, raising=False)
     monkeypatch.setitem(os.environ, "_CERTUS_NUMBA_CONFIGURED", "0")
-    certus_core.setup_numba_cache()
+    # Today's contract: the function reads the environment and never asks numba, so a numba that misbehaves
+    # cannot break start-up (this test was written for an older body that did ask it).
+    assert certus_core.setup_numba_cache() == ""
+    broken.assert_not_called()
 
 @pytest.mark.unit
 def test_setup_numba_cache_frozen(monkeypatch):
@@ -144,8 +148,10 @@ def test_set_num_threads_env_missing(monkeypatch):
         "VECLIB_MAXIMUM_THREADS",
         "NUMEXPR_NUM_THREADS",
     ]:
-        monkeypatch.delitem(os.environ, env_var, raising=False)
-    certus_core.set_num_threads(4)
+        monkeypatch.setenv(env_var, "saved")  # registered, so that teardown restores the state before the test
+        monkeypatch.delenv(env_var)
+    assert certus_core.set_num_threads(4) == 4
+    assert {os.environ[v] for v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "VECLIB_MAXIMUM_THREADS", "NUMEXPR_NUM_THREADS")} == {"4"}
 
 @pytest.mark.unit
 def test_get_logger_fallback(monkeypatch):
@@ -176,7 +182,10 @@ def test_queue_handler_broken_pipe():
     qh.log_queue = Mock()
     qh.log_queue.put = Mock(side_effect=BrokenPipeError("broken"))
     record = logging.LogRecord("name", logging.INFO, "pathname", 12, "msg", (), None)
+    qh.handleError = Mock()
     qh.emit(record)
+    qh.log_queue.put.assert_called_once()
+    qh.handleError.assert_called_once_with(record)  # the broken pipe is handed to the logging machinery
 
 @pytest.mark.unit
 def test_setup_module_logging_default():
@@ -197,7 +206,9 @@ def test_bootstrap_app_frozen(monkeypatch):
 def test_bg_warmup_import_error(monkeypatch):
     import certus.core.certus_core as certus_core
     monkeypatch.setitem(sys.modules, "certus_physics", None)
-    certus_core.bootstrap_app("dummy.py")
+    script_dir = certus_core.bootstrap_app("dummy.py")
+    # bootstrap_app no longer imports certus_physics (there is no warmup thread left to fail): it returns the folder.
+    assert script_dir == str(Path("dummy.py").resolve(strict=False).parent)
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -299,6 +310,8 @@ def test_generate_html_report_dataframe(tmp_path):
         {"title": "DataFrame", "type": "table", "content": pd.DataFrame({"col": [1, 2]})}
     ]
     certus_data.generate_html_report(str(f), "Title", sections)
+    html = f.read_text(encoding="utf-8")
+    assert "<table" in html and "DataFrame" in html and "col" in html
 
 @pytest.mark.unit
 def test_generate_html_report_figures(tmp_path):
@@ -310,6 +323,7 @@ def test_generate_html_report_figures(tmp_path):
     class DummyFig:
         pass
     certus_data.generate_html_report(str(f), "Title", sections, figures=[DummyFig()])
+    assert "hello" in f.read_text(encoding="utf-8")  # an object that is not a figure does not stop the report
 
 @pytest.mark.unit
 def test_build_standard_report_incomplete_html_only(tmp_path):
@@ -356,10 +370,11 @@ def test_errors_validation_wavelength_negative():
 def test_errors_show_helpers(qapp):
     from certus.utils.errors import show_error, show_warning, show_validation_error, CertusValidationError
     from PyQt6.QtWidgets import QMessageBox
-    with patch.object(QMessageBox, "exec", return_value=0):
+    with patch.object(QMessageBox, "exec", return_value=0) as box_exec:
         show_error(None, "generic_error", details="some detail")
         show_warning(None, "title", "msg", "suggestion")
         show_validation_error(None, CertusValidationError("msg", "details", "suggestion"))
+    assert box_exec.call_count == 3  # one dialog per helper
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -383,17 +398,20 @@ def test_reset_framework_extra_coverage():
     stack_table = Mock()
     stack_table.setRowCount = Mock()
     app.widgets = {"stack_table": stack_table}
-    app.stat_counters = {"EVAL": 0}
+    app.stat_counters = {"EVAL": 7}
     app.detached_window = None
     app.detached_plot_windows = {}
     
     m = CertusResetManager(app)
     m._stop_all_workers()
+    w.requestInterruption.assert_called_once()  # no request_stop: the fallback asked for the interruption
+    w.stop.assert_called_once()  # and stop() was tried, its RuntimeError swallowed
     
     bad_widget = Mock()
     bad_widget.clear = Mock(side_effect=RuntimeError("clear failed"))
     app.findChildren = Mock(return_value=[bad_widget])
     m._clear_ui_elements()
+    bad_widget.clear.assert_called_once()
     
     plot = Mock()
     plot.plotItem = Mock()
@@ -401,11 +419,13 @@ def test_reset_framework_extra_coverage():
     plot.plotItem.setLabel = Mock(side_effect=RuntimeError("setLabel failed"))
     app.spectrum_plot = plot
     m._reset_all_plots()
+    plot.plotItem.clear.assert_called_once()
     
     class DummyCache:
         pass
     app._live_curves = DummyCache()
     m._clear_internal_state()
+    assert app.stat_counters == {"EVAL": 0}  # the counters were reset, keys kept
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -775,6 +795,7 @@ def test_reset_framework_pyqtgraph_import_error(monkeypatch):
     app.spectrum_plot = None
     m = CertusResetManager(app)
     m._reset_all_plots()
+    app.findChildren.assert_not_called()  # without pyqtgraph the generic sweep over plot widgets is skipped
 
 @pytest.mark.unit
 def test_reset_framework_clear_text_error():
@@ -785,6 +806,7 @@ def test_reset_framework_clear_text_error():
     app.findChildren = Mock(return_value=[bad_widget])
     m = CertusResetManager(app)
     m._clear_text_outputs_only()
+    bad_widget.clear.assert_called_once()  # tried once, the AttributeError swallowed
 
 @pytest.mark.unit
 def test_reset_framework_detached_plot_error():
@@ -795,6 +817,8 @@ def test_reset_framework_detached_plot_error():
     app.detached_plot_windows = {"plot1": bad_win}
     m = CertusResetManager(app)
     m._handle_detached_windows()
+    bad_win.close.assert_called_once()
+    assert app.detached_plot_windows == {}  # the registry is emptied even if a window refused to close
 
 @pytest.mark.unit
 def test_auto_tune_savgol_params_even_w(monkeypatch):

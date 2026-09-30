@@ -95,7 +95,7 @@ class TestExceptionHierarchy:
 
 class TestValidateWavelengthRange:
     def test_valid_range(self):
-        validate_wavelength_range(400.0, 800.0)  # Should not raise
+        assert validate_wavelength_range(400.0, 800.0) is None  # a valid range is silent
 
     def test_nan_raises(self):
         with pytest.raises(CertusValidationError):
@@ -133,10 +133,10 @@ class TestValidateWavelengthRange:
 
 class TestValidateThickness:
     def test_valid_thickness(self):
-        validate_thickness(100.0)
+        assert validate_thickness(100.0) is None
 
     def test_zero_allowed(self):
-        validate_thickness(0.0, allow_zero=True)
+        assert validate_thickness(0.0, allow_zero=True) is None
 
     def test_zero_not_allowed(self):
         with pytest.raises(CertusValidationError, match="Zero thickness"):
@@ -166,10 +166,10 @@ class TestValidateThickness:
 
 class TestValidateRefractiveIndex:
     def test_valid_index(self):
-        validate_refractive_index(2.3)
+        assert validate_refractive_index(2.3) is None
 
     def test_valid_with_k(self):
-        validate_refractive_index(2.3, k=0.01)
+        assert validate_refractive_index(2.3, k=0.01) is None
 
     def test_nan_raises(self):
         with pytest.raises(CertusValidationError, match="Invalid"):
@@ -184,7 +184,7 @@ class TestValidateRefractiveIndex:
             validate_refractive_index(0.5)
 
     def test_below_one_allowed(self):
-        validate_refractive_index(0.5, allow_below_one=True)
+        assert validate_refractive_index(0.5, allow_below_one=True) is None
 
     def test_too_high_raises(self):
         with pytest.raises(CertusValidationError, match="too high"):
@@ -212,7 +212,7 @@ class TestValidateSpectralData:
     def test_valid_data(self):
         wl = np.array([400.0, 500.0, 600.0])
         val = np.array([0.1, 0.5, 0.9])
-        validate_spectral_data(wl, val)
+        assert validate_spectral_data(wl, val) is None
 
     def test_empty_raises(self):
         with pytest.raises(CertusValidationError, match="Empty"):
@@ -243,7 +243,7 @@ class TestValidateSpectralData:
             validate_spectral_data([400.0, 500.0], [0.1, 1.5])
 
     def test_no_bounds_check(self):
-        validate_spectral_data([400.0, 500.0], [0.1, 1.5], check_bounds=False)
+        assert validate_spectral_data([400.0, 500.0], [0.1, 1.5], check_bounds=False) is None
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -253,7 +253,7 @@ class TestValidateSpectralData:
 
 class TestValidateParameterRange:
     def test_valid(self):
-        validate_parameter_range(5.0, 0.0, 10.0, "test")
+        assert validate_parameter_range(5.0, 0.0, 10.0, "test") is None
 
     def test_nan_raises(self):
         with pytest.raises(CertusValidationError, match="Invalid"):
@@ -580,7 +580,7 @@ class TestValidateProjectDict:
             "L_nodes": [-1.0, 0.0, 1.0],
             "d_nm": 120.0
         }
-        validate_project_dict(valid_data)  # Should pass without exceptions
+        assert validate_project_dict(valid_data) is None  # a valid project is accepted silently
 
     def test_missing_required_keys(self):
         from certus.utils.certus_result_schema import validate_project_dict

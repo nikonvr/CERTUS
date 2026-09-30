@@ -49,6 +49,10 @@ cache Numba chaud) : oracle 8 s (53 s à froid) · unit 7 min 23 · ui 18 min 32
 `tests/` 7 min 53. **Une durée sans sa machine ne vaut rien ; un compte de tests se périme au
 premier test ajouté — ne recopie ni l'un ni l'autre.**
 
+Les **indicateurs du plan** (dette de lint, cycles d'imports, tests sans assertion, contraste des boutons,
+CI de HEAD…) : `python scripts\metrics.py` (1 min ; `--rapide` : 10 s, le statique seul). Un `n/a` y dit
+qu'une mesure manque, jamais un zéro.
+
 | échec | ce que c'est |
 |---|---|
 | 3 tests à la **première** passe dans un arbre neuf (`test_phase2_gradient`, deux `TestIRGlobalModelStrategy`) | cache numba froid, vu après un changement de numba ou d'interpréteur, et le 2026-09-27 dans un worktree neuf (`AttributeError: module 'numba' has no attribute 'core'`). Relance une fois : s'ils passent, c'était le cache ; sinon, c'est un vrai échec |

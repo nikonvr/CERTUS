@@ -295,14 +295,54 @@ class TestLoggingSystem:
         assert len(second.handlers) == first_count
 
 
+#: `configure_numba_env` changes what the whole process inherits, and takes another road once Numba is imported:
+#: it is read in a fresh interpreter, where nothing has imported Numba yet (as when an application starts).
+_CONFIGURE_IN_A_FRESH_INTERPRETER = """
+import json, os, sys
+sys.path.insert(0, ".")
+NAMES = ("NUMBA_CACHE_DIR", "NUMBA_NUM_THREADS", "NUMBA_THREADING_LAYER", "OMP_NUM_THREADS",
+         "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "_CERTUS_NUMBA_CONFIGURED")
+for name in NAMES:
+    os.environ.pop(name, None)
+from certus.core.certus_core import configure_numba_env, numba_cache_dir
+assert "numba" not in sys.modules
+configure_numba_env()
+first = {name: os.environ.get(name) for name in NAMES}
+configure_numba_env()
+second = {name: os.environ.get(name) for name in NAMES}
+print("@@" + json.dumps({"first": first, "second": second, "keyed_dir": numba_cache_dir()}))
+"""
+
+
+@pytest.fixture(scope="module")
+def configured() -> dict:
+    import subprocess
+
+    root = Path(__file__).resolve().parents[2]
+    out = subprocess.run(
+        [sys.executable, "-c", _CONFIGURE_IN_A_FRESH_INTERPRETER],
+        cwd=root, capture_output=True, text=True, timeout=120,
+    )  # fmt: skip
+    line = next((x for x in out.stdout.splitlines() if x.startswith("@@")), None)
+    assert line is not None, out.stderr[-800:]
+    return json.loads(line[2:])
+
+
 class TestNumbaEnvironment:
     """Tests for Numba environment bootstrap idempotence."""
 
-    def test_configure_numba_env_is_idempotent(self, monkeypatch):
-        pass
+    def test_configure_numba_env_is_idempotent(self, configured):
+        assert configured["first"]["_CERTUS_NUMBA_CONFIGURED"] == "1"
+        assert configured["second"] == configured["first"]  # the second call changes nothing
 
-    def test_configure_numba_env_sets_cache_and_thread_defaults(self, monkeypatch):
-        pass
+    def test_configure_numba_env_sets_cache_and_thread_defaults(self, configured):
+        env = configured["first"]
+
+        assert env["NUMBA_CACHE_DIR"] == configured["keyed_dir"]  # the directory named by the sources
+        assert env["NUMBA_THREADING_LAYER"] == "omp"  # development mode: `workqueue` is for the frozen build
+        counts = [env[name] for name in ("NUMBA_NUM_THREADS", "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS")]
+        assert all(count.isdigit() and 1 <= int(count) <= (os.cpu_count() or 1) for count in counts)
+        assert len(set(counts)) == 1  # one thread budget, given to Numba and to the BLAS libraries alike
 
 
 class TestExportConfig:

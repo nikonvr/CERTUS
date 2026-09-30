@@ -10,6 +10,7 @@ import queue
 import sys
 import tempfile
 from pathlib import Path
+from unittest.mock import Mock
 
 import numpy as np
 import pytest
@@ -194,13 +195,23 @@ class TestUtilities:
         n = get_safe_worker_count(0)
         assert n == 1
 
-    def test_handle_exception_keyboard(self):
-        # Should not raise
-        handle_exception(KeyboardInterrupt, KeyboardInterrupt(), None)
+    def test_handle_exception_keyboard(self, monkeypatch, caplog):
+        # Ctrl+C is not a crash
+        hook = Mock()
+        monkeypatch.setattr(sys, "__excepthook__", hook)
+        error = KeyboardInterrupt()
+        with caplog.at_level(logging.CRITICAL):
+            handle_exception(KeyboardInterrupt, error, None)
+        hook.assert_called_once_with(KeyboardInterrupt, error, None)  # left to the interpreter's own hook
+        assert "uncaught_exception" not in caplog.text  # and not logged as a crash
 
-    def test_wait_warmup_noop(self):
+    def test_wait_warmup_noop(self, monkeypatch):
         # Should not raise when no warmup thread
-        wait_warmup(0.1)
+        from certus.core.certus_core import _WarmupRegistry
+
+        monkeypatch.setattr(_WarmupRegistry, "thread", None)
+        assert wait_warmup(0.1) is None
+        assert _WarmupRegistry.thread is None
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -416,7 +427,9 @@ class TestCoreCoverageBoost:
         monkeypatch.setattr(q, "put", mock_put)
         
         # Verify it handles the error and doesn't raise exception
+        handler.handleError = Mock()
         handler.emit(record)
+        handler.handleError.assert_called_once_with(record)  # the OSError is handed to the logging machinery
 
     def test_setup_numba_cache_and_build_runtime(self, tmp_path, monkeypatch):
         monkeypatch.setattr("certus.core.certus_core.get_resource_path", lambda name: str(tmp_path / name))

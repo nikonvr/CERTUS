@@ -878,9 +878,13 @@ class TestUIExceptionHandling:
 
         assert copy_app_logs_to_clipboard(DummyApp()) is True
 
-    def test_open_file_explorer_invalid_path(self):
+    def test_open_file_explorer_invalid_path(self, caplog):
+        import logging
+
         from certus.ui.certus_ui import open_file_explorer
-        open_file_explorer("C:/definitely/does/not/exist")
+        with caplog.at_level(logging.WARNING):
+            open_file_explorer("C:/definitely/does/not/exist")
+        assert "Path does not exist" in caplog.text  # refused with a warning, nothing launched
 
     def test_base_app_private_helpers(self, qapp):
         _ = qapp
@@ -1196,6 +1200,8 @@ class TestProUXComponents:
         btn = QPushButton("Action")
         bar.add_widget(btn)
         bar.add_stretch()
+        assert bar.layout().count() == 2  # the button, then the stretch
+        assert bar.layout().itemAt(0).widget() is btn
 
     def test_install_shortcuts(self, qapp):
         _ = qapp
@@ -1385,6 +1391,16 @@ class TestProUXComponents:
         apply_os_window_effects(window, dark_mode=False)
         apply_os_window_effects(window, dark_mode=True)
         
+        from PyQt6.QtCore import Qt
+        import os
+        import platform
+
+        translucent = window.testAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        if os.name == "nt" and int(platform.version().split(".")[-1]) >= 22000:
+            assert translucent  # Windows 11: the window is made translucent for Mica
+            assert "rgba(" in window.styleSheet()
+        else:
+            assert not translucent  # nothing to do elsewhere: the window is left as it was
         window.close()
 
 

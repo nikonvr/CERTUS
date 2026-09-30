@@ -80,6 +80,7 @@ def test_metal_bilayer_headless():
             if res is not None:
                 rmse = res.fun ** 0.5
                 print(f"RMSE: {rmse:.6f}")
+        assert final_result, "METAL BILAYER finished without a result"
 
     except Exception as e:
         import traceback

@@ -85,7 +85,7 @@ def test_metal_single_headless():
                 print(f"RMSE: {final_result['rmse']:.6f}")
             else:
                 print(f"RMSE: float('inf')  # Result was: {final_result}")
-        
+        assert final_result, "METAL SINGLE finished without a result"
     except Exception as e:
         import traceback
         traceback.print_exc()

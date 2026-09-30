@@ -110,6 +110,7 @@ def test_strat_headless():
         certus.workers.certus_strat_workers.WorkerThread._execute_full_pipeline = original_execute
             
         print("HEADLESS STRAT DONE.")
+        assert final_result == {"strategies": [], "status": "mocked"}  # the worker's finished signal reached the window
         if final_result:
             best_rmse = float('inf')
             if hasattr(final_result, "best_rmse"):

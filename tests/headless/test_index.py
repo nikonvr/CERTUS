@@ -84,7 +84,7 @@ def test_index_headless():
                 print(f"RMSE: float('inf')  # Result: {final_result}")
         else:
             print("RMSE: float('inf')")
-        
+        assert final_result, "INDEX finished without a result (timeout or worker error)"
     except Exception as e:
         import traceback
         traceback.print_exc()

@@ -219,7 +219,7 @@ class TestPhysicsIntegration:
 
         # Validate a wavelength range
 
-        validate_wavelength_range(400.0, 800.0)
+        assert validate_wavelength_range(400.0, 800.0) is None
 
 
 
@@ -229,7 +229,7 @@ class TestPhysicsIntegration:
 
 
 
-        validate_thickness(100.0)
+        assert validate_thickness(100.0) is None
 
 
 
@@ -239,7 +239,7 @@ class TestPhysicsIntegration:
 
 
 
-        validate_refractive_index(1.5, 0.0)
+        assert validate_refractive_index(1.5, 0.0) is None
 
 
 
@@ -400,7 +400,7 @@ class TestWorkflowIntegration:
 
         # 1. Valider les longueurs d'onde
 
-        validate_wavelength_range(400.0, 800.0)
+        assert validate_wavelength_range(400.0, 800.0) is None
 
 
 
@@ -410,7 +410,7 @@ class TestWorkflowIntegration:
 
 
 
-        validate_thickness(100.0)
+        assert validate_thickness(100.0) is None
 
 
 
@@ -420,7 +420,7 @@ class TestWorkflowIntegration:
 
 
 
-        validate_refractive_index(1.5, 0.0)
+        assert validate_refractive_index(1.5, 0.0) is None
 
 
 
@@ -434,7 +434,7 @@ class TestWorkflowIntegration:
 
         values = np.random.uniform(0, 1, 100)
 
-        validate_spectral_data(wavelengths, values)
+        assert validate_spectral_data(wavelengths, values) is None
 
 
 

@@ -114,6 +114,9 @@ def test_field_headless():
             print("Result:", final_result)
         else:
             print("No result received (may have finished synchronously or no worker)")
+        assert field_app.table_layers.rowCount() > 0  # the layers of the example were loaded
+        if final_result:
+            assert len(final_result.z_coords) > 0  # and a result carries its depth grid
 
     except Exception as e:
         import traceback

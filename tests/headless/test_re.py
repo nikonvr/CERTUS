@@ -49,6 +49,8 @@ def test_re_headless():
         print(f"RE RMSE_QWOT   : {rmse_qwot}")
     else:
         print("No result received.")
+    assert final_result is not None, "the RE worker returned no result"
+    assert 0.0 <= final_result["rmse"] < 1.0  # a finite fit, far below 100 %
 
 if __name__ == "__main__":
     test_re_headless()

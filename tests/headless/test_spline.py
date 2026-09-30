@@ -86,6 +86,7 @@ def test_spline_headless():
         print(f"n(550nm)   : {n_at_visible}")
         print(f"n(2000nm)  : {n_at_ir}")
         print("Result keys:", list(result.keys()))
+        assert 0.0 <= rmse < 1.0  # a finite fit, far below 100 %
     else:
         print(f"No dict result: {type(result)}")
         sys.exit(1)

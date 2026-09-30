@@ -124,6 +124,8 @@ def test_design_headless():
         print("\nHEADLESS DESIGN DONE.")
         print(f"Best RMSE: {best_rmse_seen[0]:.6f}")
         print(f"Optimization passes: {signal_count[0]}")
+        assert design_app.front_table.rowCount() > 0  # the example stack was loaded
+        assert signal_count[0] >= 1  # and the workflow's finished signal reached the window
 
     except Exception as e:
         import traceback

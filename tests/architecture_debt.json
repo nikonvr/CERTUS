@@ -46,15 +46,6 @@
       "certus.core.certus_strat_solvers",
       "certus.core.certus_strat_utils",
       "certus.utils.certus_strat_service"
-    ],
-    [
-      "certus.physics.gradient_analytic",
-      "certus.physics.gradient_utils"
-    ],
-    [
-      "certus.ui.certus_index_spline_common",
-      "certus.ui.certus_index_spline_managers_ui",
-      "certus.ui.certus_index_spline_mixins_ui"
     ]
   ]
 }

@@ -1,5 +1,6 @@
 from __future__ import annotations
-from certus.ui.certus_index_spline_common import _DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN, logger
+import logging
+from certus.spline.certus_index_spline_settings import _DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN
 from threading import Event
 from typing import Any
 import numpy as np
@@ -30,6 +31,9 @@ from certus.spline.spline_objective import _spline_objective_lam_mask
 from certus.ui.certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
 from certus.spline.spline_visual_utils import snap_spline_visual_dict as _snap_spline_visual_dict
 from certus.ui.certus_index_spline_managers_ui import Step4MeshOptimizerBuilder
+
+# The logger of the whole window: the same object as `logger` of certus_index_spline_common (one name, one logger).
+logger = logging.getLogger("CERTUS_INDEX_SPLINE")
 
 class _ConfigBuilderMixin:
     """Mixin extracting _build_opt_config logic."""

@@ -22,7 +22,8 @@ import certus.physics.certus_tmm_core as tmm_core
 #   FIRST evaluation — and `make_cost_function` is a public API, exported in
 #   the `__all__` of `_certus_physics_impl` and re-exported by `certus_opt_kernels`.
 #
-# `gradient_utils` only imports numpy/numba and `certus.core.certus_core`: no cycle.
+# `gradient_utils` only imports numpy, numba and the TMM facade: no cycle. (It used to re-export `make_cost_function`
+# from this module at the end of its file, and `gradient_analytic` could not be imported first.)
 from certus.physics.gradient_utils import cost_numba_fast
 
 # ⚠️ `Target` under TYPE_CHECKING, and this is not just for show: importing

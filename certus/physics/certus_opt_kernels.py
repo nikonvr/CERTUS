@@ -14,7 +14,6 @@ from certus.physics.certus_opt_tmm import (
 from certus.physics.gradient_utils import (
     compute_mse_vectorized,
     cost_numba_fast,
-    make_cost_function,
 )
 from certus.physics.gradient_analytic import (
     _compute_epsilon2_gradient_kernel,
@@ -24,6 +23,7 @@ from certus.physics.gradient_analytic import (
     _compute_index_cost_gradient_kernel,
     _compute_gradient_analytic_kernel,
     _compute_single_layer_sensitivity_kernel,
+    make_cost_function,
     prepare_targets_vectorized,
 )
 from certus.physics.gradient_oblique import (

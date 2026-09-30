@@ -119,9 +119,3 @@ def cost_numba_fast(
         return 1e12
 
     return mse
-
-
-from certus.physics.gradient_analytic import (
-    make_cost_function,
-)
-

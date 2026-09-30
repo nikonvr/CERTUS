@@ -22,6 +22,7 @@ from certus.ui.certus_ui_utils import (
 from certus.core.certus_core import load_theme_config, save_theme_config
 import certus.ui.certus_io_ui as certus_io_ui
 from certus.utils.certus_qsettings import certus_settings
+from typing import ClassVar
 
 
 class CertusZoomMixin:
@@ -660,7 +661,7 @@ class CertusPremiumExportMixin:
 class CertusEmptyStateMixin:
     """Provides automatic empty state injections for data tables."""
 
-    _EMPTY_STATE_HINTS: dict[str, tuple[str, str, str, str | None]] = {
+    _EMPTY_STATE_HINTS: ClassVar[dict[str, tuple[str, str, str, str | None]]] = {
         "front_table": (
             "layers",
             "No layers yet",

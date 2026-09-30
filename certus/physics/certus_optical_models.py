@@ -6,6 +6,7 @@ from numba import njit, prange
 from collections import OrderedDict
 from functools import lru_cache
 from certus.domain.constants import PI
+from typing import ClassVar
 
 
 # [MONOLITHIC BLOCK] OPTICAL MODELS
@@ -311,7 +312,7 @@ class SplineBasisCache:
 
     """
 
-    _cache: OrderedDict = OrderedDict()
+    _cache: ClassVar[OrderedDict] = OrderedDict()
 
     # Cache bound. Beyond this, we evict the oldest USED entry (LRU),
     #and not the entire cache — see comment in get().

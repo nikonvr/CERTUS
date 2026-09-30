@@ -92,7 +92,7 @@ def test_stretch_sig_to_px():
     assert _stretch_sig_to_px(1.0, 2.0) == 14000
 
 class DummyCfg:
-    rmse_fit_lambda_nm = [450.0, 750.0]
+    rmse_fit_lambda_nm: ClassVar[list[float]] = [450.0, 750.0]
 
 def test_compute_study_lambda_window_nm():
     lam = np.array([400.0, 500.0, 800.0])
@@ -142,6 +142,7 @@ def test_analyze_loaded_data():
     assert res["R"] is not None
 
 from certus.utils.certus_index_utils import fit_sellmeier_global, fit_k_global_8p
+from typing import ClassVar
 
 def test_fit_sellmeier_global():
     # Synthetic constant index n = 1.5

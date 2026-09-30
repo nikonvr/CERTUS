@@ -28,6 +28,7 @@ from certus.core.certus_hub_config import (
 # direction (it is `utils -> ui` that CLAUDE.md counts as an inversion).
 from certus.utils.certus_ux import Typography as _Typography
 import logging
+from typing import ClassVar
 
 
 class CertusTheme:
@@ -275,7 +276,7 @@ class CertusTheme:
 
     CHART_ACCENT = PRIMARY  # Added missing
 
-    CHART_COLORS = [PRIMARY, SECONDARY, DANGER, CHART_PURPLE, WARNING, INFO]
+    CHART_COLORS: ClassVar[list[str]] = [PRIMARY, SECONDARY, DANGER, CHART_PURPLE, WARNING, INFO]
 
     # Brand Colors (Module Specific) - Added missing
 

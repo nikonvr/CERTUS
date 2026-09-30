@@ -40,6 +40,7 @@ import re
 import sys
 from html.parser import HTMLParser
 from pathlib import Path
+from typing import ClassVar
 
 # 🔴 La console Windows est en cp1252 et ce script imprime des pastilles. Sans ces deux
 # lignes, UnicodeEncodeError leve A LA FIN -- apres la mesure, a l'ecriture de la synthese.
@@ -106,7 +107,7 @@ TIERS = {"numba", "llvmlite", "numpy", "scipy", "PyQt6", "matplotlib", "openpyxl
 
 
 class Balises(HTMLParser):
-    VIDES = {"br", "img", "meta", "link", "hr", "input", "source", "col", "area", "base"}
+    VIDES: ClassVar[set[str]] = {"br", "img", "meta", "link", "hr", "input", "source", "col", "area", "base"}
 
     def __init__(self) -> None:
         super().__init__()

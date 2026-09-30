@@ -32,11 +32,12 @@ from certus.ui.certus_io_ui import CERTUS_UI_STRINGS
 from certus.ui.certus_ui_widgets_factory import create_header_logo_widget, create_log_widget
 from certus.ui.certus_ui_utils import apply_certus_theme, set_certus_window_icon, update_global_plot_config
 from certus.utils.certus_qsettings import certus_settings
+from typing import ClassVar
 
 class CertusToast(QLabel):
     """Non-modal transient notification auto-hiding after duration_ms."""
 
-    _LEVELS = {
+    _LEVELS: ClassVar[dict[str, tuple[str, str]]] = {
         "info": ("PRIMARY", "#fff"),
         "success": ("SUCCESS", "#fff"),
         "warning": ("WARNING", "#222"),

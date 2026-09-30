@@ -22,6 +22,7 @@ three times before this (no factors, non-finite cost, cost out of range).
 from __future__ import annotations
 
 import pytest
+from typing import ClassVar
 
 
 @pytest.fixture
@@ -55,9 +56,9 @@ def test_no_pareto_point_when_the_layer_count_disagrees(field_window, monkeypatc
     """A silent length mismatch must not be padded with a made-up sequence."""
 
     class _Params:
-        layer_types = [0, 1]  # two materials for four thicknesses
-        n1_rs = [1.46]
-        n2_rs = [2.35]
+        layer_types: ClassVar[list[int]] = [0, 1]  # two materials for four thicknesses
+        n1_rs: ClassVar[list[float]] = [1.46]
+        n2_rs: ClassVar[list[float]] = [2.35]
         l0 = 500.0
 
     monkeypatch.setattr(field_window, "_get_params", lambda: _Params())

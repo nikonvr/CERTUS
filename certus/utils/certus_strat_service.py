@@ -28,6 +28,7 @@ from certus_physics import (
 from certus.utils.certus_strat_context import StratContext
 from certus.core.certus_core import WL_DECIMALS
 from certus.core.certus_strat_workers_dto import StratParamsDTO, StratOptiResultsDTO
+from typing import ClassVar
 
 NOISE_DISTRIBUTION_GAUSSIAN = "gaussian"
 NON_MONOTONIC_MODE_ATTENUATE = "attenuate"
@@ -263,7 +264,7 @@ class StratStrategyService(BaseHeadlessService):
     def __init__(self, runner=lambda config: config) -> None:
         super().__init__(runner)
 
-    VALID_STEPS = {0, 2, 3, 23, 33}
+    VALID_STEPS: ClassVar[set[int]] = {0, 2, 3, 23, 33}
 
     def _validate_payload_shape(self, payload: Mapping[str, Any]) -> StratPayloadParts:
         """Validate the legacy STRAT payload shape before domain-specific checks."""

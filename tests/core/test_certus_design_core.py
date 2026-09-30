@@ -111,6 +111,7 @@ def test_design_compute_oblique_error_common_no_weight():
 
 
 from certus.core.certus_design_core import _design_optimization_callback_common
+from typing import ClassVar
 
 class MockSample:
     def __init__(self, y, x, gen):
@@ -135,7 +136,7 @@ class MockOptimizer:
     def __init__(self):
         self.n_evals = 100
         class Clusterer:
-            clusters = [1, 2, 3]
+            clusters: ClassVar[list[int]] = [1, 2, 3]
         self.clusterer = Clusterer()
 
 class MockCallbackApp(MockApp):

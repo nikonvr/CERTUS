@@ -761,7 +761,7 @@ from certus.physics.certus_opt_kernels import _compute_single_layer_sensitivity_
 class NKCache:
     """Global thread-safe LRU cache for Cauchy clues (Opus 4.6)"""
 
-    _cache: OrderedDict = OrderedDict()
+    _cache: ClassVar[OrderedDict] = OrderedDict()
 
     _lock = RLock()
 
@@ -1645,6 +1645,7 @@ from certus.physics.certus_tmm_single_layer import (
 )
 from certus.physics.certus_tmm_backside import _apply_exact_backside_generic, apply_exact_backside_combination
 from certus.physics.certus_opt_tmm import compute_RT_from_matrix
+from typing import ClassVar
 
 __all__.extend(
     [

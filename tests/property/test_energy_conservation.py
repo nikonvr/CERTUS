@@ -52,6 +52,7 @@ from certus.core._certus_physics_impl import (
     calculate_RT_no_backside,
 
 )
+from typing import ClassVar
 
 
 
@@ -125,7 +126,7 @@ class TestEnergyConservation:
 
     # Macleod convention: n̂ = n - ik (NEGATIVE imag for absorption)
 
-    ABSORBING_CASES = [
+    ABSORBING_CASES: ClassVar[list] = [
 
         # 3 weakly absorbing layers
 
@@ -269,7 +270,7 @@ class TestMacleodReciprocity:
 
     # Macleod convention : n̂ = n - ik
 
-    CASES = [
+    CASES: ClassVar[list] = [
 
         (
 

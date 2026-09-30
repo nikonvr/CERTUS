@@ -37,7 +37,7 @@ class _WorkerProgressCoordinator:
 
     """
 
-    __slots__ = ("_root", "_last")
+    __slots__ = ("_last", "_root")
 
     def __init__(self, root_cb: Callable[[int, str], None]) -> None:
 

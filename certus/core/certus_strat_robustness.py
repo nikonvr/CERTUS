@@ -95,7 +95,7 @@ CRASH_RATE_TOLERANCE = 0.05
 class _IdxWrapper:
     """Dict-like wrapper supporting both ``dict.get`` and ``list[idx]`` access."""
 
-    __slots__ = ("obj", "_is_dict")
+    __slots__ = ("_is_dict", "obj")
 
     def __init__(self, obj) -> None:
         self.obj = obj
@@ -749,8 +749,8 @@ class _RateSwingContext:
     a strategy, and across strategies that share a parent.
     """
 
-    __slots__ = ("p_thick_nominal", "clues_at_wl", "nominal_matrix_cache", "all_wls",
-                "threshold", "_cache", "n_calls", "n_absents")
+    __slots__ = ("_cache", "all_wls", "clues_at_wl", "n_absents", "n_calls", "nominal_matrix_cache",
+                 "p_thick_nominal", "threshold")
 
     def __init__(self, p_thick_nominal, clues_at_wl, nominal_matrix_cache, all_wls,
                 threshold: float) -> None:

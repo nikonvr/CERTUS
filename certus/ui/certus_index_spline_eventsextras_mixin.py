@@ -30,7 +30,6 @@ from certus.ui.certus_ui import (
     show_toast,
     wrap_scientific_plot_with_toolbar,
 )
-from certus.ui.certus_index_spline_state_ui import SplineState
 from certus.utils.certus_skeleton import uninstall_skeleton
 from certus.spline.certus_index_spline_core import (
     SPLINE_PERF_PRESETS,
@@ -476,35 +475,6 @@ class CertusIndexSplineEventsExtrasMixin:
 
         except NUMERICAL_FAULT_EXCEPTIONS:
             logger.debug("_update_persistent_nk_monitor failed", exc_info=True)
-
-    def _save_undo_state(self) -> None:
-        """Store current state before computation in undo stack.
-
-        NOT reachable by Ctrl+Z, whatever this docstring used to claim. SPLINE
-        owns no front_table, and CertusBaseApp._undo replays through it, so the
-        stack this fills has no consumer. Measured 2026-09-05: it is the only
-        module that WRITES an undo state and never reads one back. Either write
-        the consumer or drop the writer - but do not promise a key that does
-        nothing (step 2.13).
-        """
-
-        if not hasattr(self, "undo_stack"):
-            return
-
-        d_lo_ui, d_hi_ui = self._get_thickness_bounds_nm()
-
-        state = SplineState(
-            result=dict(self._last_result) if self._last_result is not None else None,
-            d_lo=float(d_lo_ui),
-            d_hi=float(d_hi_ui),
-            wt=self.w_t.value(),
-            wr=self.w_r.value(),
-        )
-
-        self.undo_stack.append(state)
-
-        if hasattr(self, "undo_btn"):
-            self.undo_btn.setEnabled(True)
 
     def _get_thickness_bounds_nm(self) -> tuple[float, float]:
 

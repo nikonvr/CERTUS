@@ -36,18 +36,6 @@ class SmartInitPayload(BaseModel):
 
         return cls(**clean_d)
 
-@dataclass
-class SplineState:
-    result: dict | None
-
-    d_lo: float
-
-    d_hi: float
-
-    wt: float
-
-    wr: float
-
 @dataclasses.dataclass
 class _SmartInitState:
     """State object to hold mutable UI references and mathematical parameters of the Smart Init dialog."""

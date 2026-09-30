@@ -531,7 +531,6 @@ class _RunMixin:
             if self.logger:
                 self.logger.info("Auto-Best: Smart Init dialog interception active.")
 
-        self._save_undo_state()
         self.__class__._prepare_worker_restart(self)
         reset_smart_init_preview_guard(cfg)
 

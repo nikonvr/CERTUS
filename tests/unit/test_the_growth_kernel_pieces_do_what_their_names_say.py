@@ -30,11 +30,13 @@ from certus.physics.certus_strat_growth import (  # noqa: E402
     _fill_history_signal,
     _frozen_trigger_level,
     _monotonicity_scan,
+    _read_poem_anchors,
     _resample_on_machine_grid,
     _running_mean,
     _scan_window,
     _stack_matrix,
     _stack_matrix_pair,
+    turning_point_margins,
 )
 from certus.physics.certus_strat_math import _seeded_noise_sample  # noqa: E402
 
@@ -652,3 +654,83 @@ def test_the_running_mean_smooths_the_first_n_tot_readings_only() -> None:
     np.testing.assert_array_equal(got_r[10:], real[10:])
     np.testing.assert_array_equal(got_n[10:], nominal[10:])
     np.testing.assert_allclose(got_r[:10], _running_mean_reference(real[:10], 3), atol=1e-13)
+
+
+# =============================================================================
+# _read_poem_anchors : the turning points, and the two anchors POEM stops on
+# =============================================================================
+
+SIGNAL = np.array([0.0, 1.0, 0.0, -1.0, 0.0, 1.0, 0.0])  # maxima at 1 and 5, a minimum at 3
+
+
+def _anchors(real, nominal, *, i_layer=1, j0=1, stop=6, hysteresis=0.0, poem=True) -> dict:
+    names = ("n_tp_real", "n_tp_nom", "margin_missed", "margin_fab", "T_prev_nom", "T_last_nom", "T_prev_real", "T_last_real", "poem_ok")
+    real, nominal = np.asarray(real, dtype=float), np.asarray(nominal, dtype=float)
+    out = _read_poem_anchors(i_layer, j0, real, nominal, len(real), stop, hysteresis, poem)
+    return dict(zip(names, out, strict=True))
+
+
+def test_the_anchors_are_the_last_two_turning_points_before_the_stop_on_each_signal() -> None:
+    real, nominal = 0.5 + 0.20 * SIGNAL, 0.5 + 0.18 * SIGNAL  # the stack drifted: the same shape, another swing
+
+    got = _anchors(real, nominal)
+
+    assert got["n_tp_real"] == got["n_tp_nom"] == 3
+    assert (got["T_prev_real"], got["T_last_real"]) == pytest.approx((0.3, 0.7))  # the machine reads them: REAL values
+    assert (got["T_prev_nom"], got["T_last_nom"]) == pytest.approx((0.32, 0.68))  # the strategy fixed the fraction on these
+    assert got["poem_ok"]
+
+
+def test_the_stop_cuts_the_anchors_short_and_the_extrema_after_it_are_not_counted() -> None:
+    real, nominal = 0.5 + 0.20 * SIGNAL, 0.5 + 0.18 * SIGNAL
+
+    got = _anchors(real, nominal, stop=3)
+
+    assert got["n_tp_real"] == 2  # the maximum at 5 lies beyond the stop
+    assert (got["T_prev_real"], got["T_last_real"]) == pytest.approx((0.7, 0.3))
+
+
+def test_poem_can_be_switched_off_and_the_anchors_are_still_read() -> None:
+    real, nominal = 0.5 + 0.20 * SIGNAL, 0.5 + 0.18 * SIGNAL
+
+    got = _anchors(real, nominal, poem=False)
+
+    assert not got["poem_ok"]
+    assert got["T_prev_real"] == pytest.approx(0.3)
+
+
+@pytest.mark.parametrize("real_swing, nominal_swing", [(0.03, 0.30), (0.30, 0.03), (0.03, 0.03)])
+def test_poem_needs_a_swing_above_the_floor_on_the_real_and_on_the_nominal_signal(real_swing, nominal_swing) -> None:
+    # 0.04, in MEASURED units: below it POEM is ill-conditioned against the reading noise. Both signals are tested.
+    got = _anchors(0.5 + real_swing * SIGNAL / 2, 0.5 + nominal_swing * SIGNAL / 2)
+
+    assert not got["poem_ok"]
+    assert _anchors(0.5 + 0.30 * SIGNAL / 2, 0.5 + 0.30 * SIGNAL / 2)["poem_ok"]
+
+
+def test_without_two_turning_points_on_both_signals_there_is_no_anchor_and_nothing_is_read() -> None:
+    ramp = np.linspace(0.2, 0.8, 7)
+
+    got = _anchors(0.5 + 0.20 * SIGNAL, ramp)  # the nominal signal has no extremum
+
+    assert not got["poem_ok"]
+    assert got["n_tp_nom"] == 0
+    assert (got["T_prev_real"], got["T_last_real"], got["T_prev_nom"], got["T_last_nom"]) == (0.0, 0.0, 0.0, 0.0)
+
+
+def test_the_first_layer_of_the_stack_starts_on_a_turning_point_and_no_other_layer_does() -> None:
+    # On the bare substrate T(d) starts stationary: layer 0 of a block that starts at 0 counts its own start.
+    valley = np.array([1.0, 0.8, 0.6, 0.4, 0.6, 0.8, 1.0])
+    first, later = _anchors(valley, valley, i_layer=0, j0=0), _anchors(valley, valley, i_layer=0, j0=1)
+
+    assert first["n_tp_real"] == first["n_tp_nom"] == later["n_tp_real"] + 1 == later["n_tp_nom"] + 1
+
+
+def test_the_counting_margins_are_those_of_the_real_signal() -> None:
+    real, nominal = 0.5 + 0.20 * SIGNAL, 0.5 + 0.03 * SIGNAL
+
+    got = _anchors(real, nominal, hysteresis=0.05)
+
+    missed, fab = turning_point_margins(real, len(real), 0.05)
+    assert (got["margin_missed"], got["margin_fab"]) == pytest.approx((missed, fab))
+    assert (missed, fab) != pytest.approx(turning_point_margins(nominal, len(nominal), 0.05))

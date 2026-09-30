@@ -1128,6 +1128,67 @@ def _running_mean(
         Ts_n[idx_w] = sum_n / w_len
 
 
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def _read_poem_anchors(
+    i_layer,
+    j0,
+    Ts_r,
+    Ts_n,
+    n_tot,
+    idx_nom_stop,
+    tp_hysteresis,
+    poem_enabled,
+):
+    """Count the turning points of the real and the nominal signal up to the nominal stop, and read the two anchors POEM needs.
+
+    Returns (n_tp_real, n_tp_nom, margin_missed, margin_fab, T_prev_nom, T_last_nom, T_prev_real, T_last_real, poem_ok):
+    the two counts, the two counting margins of the REAL signal, the last two turning points before the stop on the
+    nominal signal (which fix the fraction) and on the real one (where it is reported), and whether POEM is usable: enabled,
+    two anchors on both signals, and a swing above `SWING_MIN` (in measured units) between them on both.
+    """
+    SWING_MIN = 0.04
+    T_prev_real = 0.0
+    T_last_real = 0.0
+    T_prev_nom = 0.0
+    T_last_nom = 0.0
+    poem_ok = False
+    start_is_tp = i_layer == 0 and j0 == 0
+    # The REAL signal: what the machine counts.
+    n_tp_real, tp_a, tp_b = detect_turning_points(
+        Ts_r, n_tot, idx_nom_stop, start_is_tp, tp_hysteresis
+    )
+    # The NOMINAL signal: what the strategy expects of it. SAME detection
+    # rule, imperatively -- the two countings also serve to detect the
+    # DIVERGENCE of the number of extrema, which is one of the two crash
+    # modes, and two different rules would fabricate one at each layer.
+    # Counting the edge on one side and not the other would have the same effect.
+    n_tp_nom, tp_a_n, tp_b_n = detect_turning_points(
+        Ts_n, n_tot, idx_nom_stop, start_is_tp, tp_hysteresis
+    )
+    # A23 stage 2, counting side. Measured on the REAL signal -- the one the
+    # machine reads. The binding margin is the smaller of the two ways the count
+    # can go wrong; they are returned separately by `turning_point_margins` and
+    # combined here only because one number per (run, layer) is what the batch can
+    # carry. The CAUSE is recoverable from the sentinel when it actually crashes.
+    margin_missed, margin_fab = turning_point_margins(Ts_r, n_tot, tp_hysteresis)
+    if tp_a >= 0 and tp_b >= 0 and tp_a_n >= 0 and tp_b_n >= 0:
+        # fraction: NOMINAL anchors  |  report: MEASURED REAL anchors
+        T_prev_nom = Ts_n[tp_a_n]
+        T_last_nom = Ts_n[tp_b_n]
+        T_prev_real = Ts_r[tp_a]
+        T_last_real = Ts_r[tp_b]
+        amp_nom = T_last_nom - T_prev_nom
+        amp_real = T_last_real - T_prev_real
+        # SWING_MIN is a floor in MEASURED units. POEM is ill-conditioned when the
+        # amplitude between the two anchors is small compared to reading noise, and
+        # reading noise is what the instrument reports, hence measured units too.
+        # Scaling the threshold by `affine_scale` cancelled the gain exactly and
+        # made the test blind to the very distortion it must survive.
+        if poem_enabled and abs(amp_nom) > SWING_MIN and abs(amp_real) > SWING_MIN:
+            poem_ok = True
+    return n_tp_real, n_tp_nom, margin_missed, margin_fab, T_prev_nom, T_last_nom, T_prev_real, T_last_real, poem_ok
+
+
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def simulate_growth_kernel(
     p_thick_nominal: np.ndarray,
@@ -1700,40 +1761,9 @@ def simulate_growth_kernel(
         # thus j0 == 0). For a block starting higher, d = 0 of its first layer is NOT an
         # extremum in general: the sub-stack already deposited has no reason to be
         # stationary there.
-        start_is_tp = i_layer == 0 and j0 == 0
-        # The REAL signal: what the machine counts.
-        n_tp_real, tp_a, tp_b = detect_turning_points(
-            Ts_r, n_tot, idx_nom_stop, start_is_tp, tp_hysteresis
+        n_tp_real, n_tp_nom, margin_missed, margin_fab, T_prev_nom, T_last_nom, T_prev_real, T_last_real, poem_ok = _read_poem_anchors(
+            i_layer, j0, Ts_r, Ts_n, n_tot, idx_nom_stop, tp_hysteresis, poem_enabled,
         )
-        # The NOMINAL signal: what the strategy expects of it. SAME detection
-        # rule, imperatively -- the two countings also serve to detect the
-        # DIVERGENCE of the number of extrema, which is one of the two crash
-        # modes, and two different rules would fabricate one at each layer.
-        # Counting the edge on one side and not the other would have the same effect.
-        n_tp_nom, tp_a_n, tp_b_n = detect_turning_points(
-            Ts_n, n_tot, idx_nom_stop, start_is_tp, tp_hysteresis
-        )
-        # A23 stage 2, counting side. Measured on the REAL signal -- the one the
-        # machine reads. The binding margin is the smaller of the two ways the count
-        # can go wrong; they are returned separately by `turning_point_margins` and
-        # combined here only because one number per (run, layer) is what the batch can
-        # carry. The CAUSE is recoverable from the sentinel when it actually crashes.
-        margin_missed, margin_fab = turning_point_margins(Ts_r, n_tot, tp_hysteresis)
-        if tp_a >= 0 and tp_b >= 0 and tp_a_n >= 0 and tp_b_n >= 0:
-            # fraction: NOMINAL anchors  |  report: MEASURED REAL anchors
-            T_prev_nom = Ts_n[tp_a_n]
-            T_last_nom = Ts_n[tp_b_n]
-            T_prev_real = Ts_r[tp_a]
-            T_last_real = Ts_r[tp_b]
-            amp_nom = T_last_nom - T_prev_nom
-            amp_real = T_last_real - T_prev_real
-            # SWING_MIN is a floor in MEASURED units. POEM is ill-conditioned when the
-            # amplitude between the two anchors is small compared to reading noise, and
-            # reading noise is what the instrument reports, hence measured units too.
-            # Scaling the threshold by `affine_scale` cancelled the gain exactly and
-            # made the test blind to the very distortion it must survive.
-            if poem_enabled and abs(amp_nom) > SWING_MIN and abs(amp_real) > SWING_MIN:
-                poem_ok = True
 
     if poem_ok:
         # frozen fraction, calculated on the nominal (eq. 2.2)

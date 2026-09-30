@@ -41,7 +41,7 @@ from certus_physics import (
     calc_spectrum_full_exact_wrapper,
 )
 
-from certus.ui.certus_ui import WorkerSignals, set_certus_window_icon
+from certus.workers.certus_base_workers import WorkerSignals
 
 
 calc_spectrum_front = calc_spectrum_front_wrapper
@@ -121,6 +121,8 @@ class DetachedTableWindow(QDialog):
     def __init__(self, table, parent=None) -> None:
 
         super().__init__(parent)
+
+        from certus.ui.certus_ui import set_certus_window_icon  # a helper of the interface: loaded when the window opens
 
         set_certus_window_icon(self)
 

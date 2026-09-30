@@ -27,12 +27,7 @@
     "certus.utils.certus_spline_report -> certus.spline.certus_index_spline_core",
     "certus.utils.certus_spline_report -> certus.spline.spline_objective",
     "certus.utils.certus_spline_report -> certus.spline.spline_profile_corridors",
-    "certus.utils.certus_strat_service -> certus.workers.certus_strat_workers_dto",
-    "certus.workers.certus_design_workers -> certus.ui.certus_qt_widgets",
-    "certus.workers.certus_design_workers -> certus.ui.certus_ui",
-    "certus.workers.certus_re_workers -> certus.ui.certus_qt_widgets",
-    "certus.workers.certus_re_workers -> certus.ui.certus_ui",
-    "certus.workers.certus_spectral_workers -> certus.ui.certus_ui"
+    "certus.utils.certus_strat_service -> certus.workers.certus_strat_workers_dto"
   ],
   "cycles": [
     [

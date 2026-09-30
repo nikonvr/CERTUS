@@ -17,8 +17,7 @@ from certus.workers.certus_design_workers_needle_strat import NeedleOptimization
 from threading import Event
 from typing import Any
 import numpy as np
-from certus.ui.certus_qt_widgets import QThread
-from PyQt6.QtCore import QObject
+from PyQt6.QtCore import QObject, QThread
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
     CFG,
@@ -54,7 +53,7 @@ from certus_physics import (
     xyz_to_lab,
 )
 from certus.utils.certus_index_utils import spectral_rmse_weights
-from certus.ui.certus_ui import WorkerSignals
+from certus.workers.certus_base_workers import WorkerSignals
 from certus_physics import calc_spectrum_front_wrapper, calc_spectrum_full_wrapper, calc_spectrum_full_exact_wrapper
 calc_spectrum_front = calc_spectrum_front_wrapper
 calc_spectrum_full = calc_spectrum_full_wrapper

@@ -9,8 +9,8 @@ from certus.core.certus_re_config import REWorkerRequest, REPhase4Result
 from certus.utils.certus_re_config import RE_RANKING_ALPHA_REF
 
 from certus.utils.certus_re_results_builder import REResultsBuilder as REResultsPayloadBuilder
-from certus.ui.certus_qt_widgets import QThread
-from certus.ui.certus_ui import WorkerSignals
+from PyQt6.QtCore import QThread
+from certus.workers.certus_base_workers import WorkerSignals
 
 class REWorker(QThread):
     """Two-stage RE: (1) TRF Deltaln(lambda) trapezoidal, thicknesses only, tabulated n;

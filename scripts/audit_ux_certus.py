@@ -58,6 +58,19 @@ BUTTON_MIN_H = 24  # px, click-target floor
 LABEL_MAX_CHARS = 32  # beyond this a control label belongs in a tooltip
 VITAL_KEYS = ("F5", "Esc", "Ctrl+S", "Ctrl+O", "F1")
 
+#: Ce que chaque fenetre doit a un utilisateur au clavier depend de ce qu'elle fait. Un lanceur et deux utilitaires de
+#: fichier ne lancent rien de long : F5 et Esc y seraient des touches qui ne font rien (CLAUDE.md, section 4).
+VITAL_KEYS_BY_MODULE = {
+    "CERTUS_HUB": ("Ctrl+O", "F1"),
+    "CERTUS_SMOOTHER": ("Ctrl+S", "Ctrl+O", "F1"),
+    "CERTUS_SUBSTRATE_INDEX": ("Ctrl+S", "Ctrl+O", "F1"),
+}
+
+
+def vital_keys_for(tag: str) -> tuple[str, ...]:
+    """Les touches que la fenetre `tag` doit porter."""
+    return VITAL_KEYS_BY_MODULE.get(tag, VITAL_KEYS)
+
 MARKER = "__CERTUS_AUDIT_JSON__"
 
 
@@ -107,6 +120,30 @@ def _is_transient(widget) -> bool:
             return True
         node = node.parentWidget()
     return False
+
+
+def is_inner_line_edit(widget) -> bool:
+    """Le QLineEdit interne d'un QAbstractSpinBox ou d'un QComboBox editable : une piece de ce controle, pas un champ.
+
+    Qt montre l'info-bulle du spinbox au-dessus de son champ interne : le QLineEdit qui n'en a pas laisse remonter
+    l'evenement a son parent. Le compter comme un champ sans info-bulle ajoutait 14 faux constats sur 3 fenetres.
+    """
+    from PyQt6.QtWidgets import QAbstractSpinBox, QComboBox, QLineEdit
+
+    return isinstance(widget, QLineEdit) and isinstance(widget.parentWidget(), QAbstractSpinBox | QComboBox)
+
+
+def owns_undo_machinery(win) -> bool:
+    """La fenetre peut-elle annuler ? `undo_stack` seul ne le dit pas : CertusBaseApp le donne a TOUTES les fenetres.
+
+    Elle le peut si elle sait REJOUER un etat (`front_table`, le test meme de `CertusBaseApp._save_undo_state`) ou si
+    elle a sa propre ecriture (STRAT). Une pile que personne n'ecrit, ou que rien ne relit, n'est pas un annuler.
+    """
+    from certus.ui.certus_base_app import CertusBaseApp
+
+    own = getattr(type(win), "_save_undo_state", None)
+    own_writer = own is not None and own is not CertusBaseApp._save_undo_state
+    return hasattr(win, "undo_stack") and (hasattr(win, "front_table") or own_writer)
 
 
 def libelle_affiche(source: str) -> str:
@@ -365,7 +402,11 @@ def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: in
     out["btn_no_tooltip"] = sum(1 for b in buttons if not b.toolTip().strip())
 
     # --- inputs ---------------------------------------------------------------
-    inputs = [w for w in win.findChildren((QLineEdit, QComboBox, QAbstractSpinBox, QCheckBox)) if w.isVisible()]
+    inputs = [
+        w
+        for w in win.findChildren((QLineEdit, QComboBox, QAbstractSpinBox, QCheckBox))
+        if w.isVisible() and not is_inner_line_edit(w)
+    ]
     out["n_inputs"] = len(inputs)
     out["input_no_tooltip"] = sum(1 for w in inputs if not w.toolTip().strip())
 
@@ -394,9 +435,9 @@ def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: in
             seqs.add(QKeySequence(ks).toString())
     seqs.discard("")
     out["n_shortcuts"] = len(seqs)
-    out["missing_vital_keys"] = [k for k in VITAL_KEYS if k not in seqs]
+    out["missing_vital_keys"] = [k for k in vital_keys_for(tag) if k not in seqs]
     out["has_undo_key"] = "Ctrl+Z" in seqs
-    out["has_undo_stack"] = hasattr(win, "undo_stack")
+    out["has_undo_stack"] = owns_undo_machinery(win)
 
     # --- long control labels (they dictate panel width) -----------------------
     long_labels: list[str] = []

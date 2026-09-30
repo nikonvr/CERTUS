@@ -154,7 +154,7 @@ from certus.ui.certus_ui_widgets_factory import (
     create_header_logo_widget,
     create_styled_label,
 )
-from PyQt6.QtWidgets import QComboBox
+from PyQt6.QtWidgets import QComboBox, QFileDialog
 
 
 # Styled buttons/labels - Now imported from certus.ui.certus_ui
@@ -547,6 +547,8 @@ class CertusHub(CertusDialogMixin, QMainWindow):
         main_layout.addWidget(bottom_bar)
 
         # P0.4 / P2.3 - install a Help menu bar (consistent with sub-apps)
+        self._install_file_menu()
+
         self._install_help_menu()
 
         # Log Container (toggleable)
@@ -1081,6 +1083,27 @@ class CertusHub(CertusDialogMixin, QMainWindow):
         self._log_message(f"Dropped {Path(target).name} -> launching {Path(script).stem}")
         # The module opens the file it is given; without it a drop only started an empty window.
         self.launch_module(script, files=[target])
+
+    def _install_file_menu(self) -> None:
+        """The File menu: open a file in the module that reads it, the keyboard way of dropping it on the window."""
+        try:
+            file_menu = self.menuBar().addMenu("&File")
+            act_open = file_menu.addAction("Open file in its module…")
+            claim_shortcut_for_action(act_open, "Ctrl+O", self)
+            act_open.setToolTip("Ask for a file and open it in the module able to read it (as dropping it would).")
+            act_open.triggered.connect(self.open_file_in_module)
+        except (AttributeError, RuntimeError, TypeError) as e:  # pragma: no cover - defensive
+            self._log_message(f"File menu install failed: {e}")
+
+    def open_file_in_module(self) -> None:
+        """Ask for a file, then do what dropping it on the window does: launch the module able to read it."""
+        patterns = " ".join(f"*{ext}" for ext in self.DROP_EXTENSIONS)
+        path, _ = QFileDialog.getOpenFileName(self, "Open a file in CERTUS", "", f"CERTUS files ({patterns});;All files (*)")
+        if not path:
+            return
+        script = self._module_for_dropped_file(path)
+        self._log_message(f"Opened {Path(path).name} -> launching {Path(script).stem}")
+        self.launch_module(script, files=[path])
 
     def _install_help_menu(self) -> None:
         """Create the standard Help menu: Shortcuts, Docs, About."""

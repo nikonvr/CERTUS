@@ -17,24 +17,17 @@ import functools
 from pathlib import Path
 import sys
 
-
 import logging
-
 
 import numpy as np
 
-
 import pandas as pd
-
 
 import pyqtgraph as pg
 
-
 from PyQt6.QtCore import Qt
 
-
 from PyQt6.QtGui import QFont, QColor, QBrush
-
 
 from PyQt6.QtWidgets import (
     QApplication,
@@ -58,13 +51,11 @@ from PyQt6.QtWidgets import (
     QAbstractItemView,
 )
 
-
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
     __version__,
 )
 from certus.utils.certus_ux import Typography
-
 
 from certus.ui.certus_measurement_excel_ui import open_measurement_excel_interactive
 
@@ -83,6 +74,8 @@ from certus.ui.certus_ui import (
     create_styled_label,
     create_header_logo_widget,
     ExcelTableWidget,
+    install_standard_shortcuts,
+    open_documentation,
 )
 
 
@@ -1260,6 +1253,14 @@ class SubstrateIndexGUI(QMainWindow):
 
         layout.addWidget(content)
 
+        # `click()`: the export button is greyed out until a run has produced something to export.
+        install_standard_shortcuts(
+            self,
+            save=self.btn_export_datasheet.click,
+            load=self.btn_load.click,
+            help=lambda: open_documentation("CERTUS_SUBSTRATE_INDEX"),
+        )
+
         self.progress_widget = EnhancedProgressWidget()
 
         if hasattr(self.progress_widget, "canceled"):
@@ -1649,7 +1650,6 @@ def main():
     window.show()
 
     sys.exit(app.exec())
-
 
 if __name__ == "__main__":
     main()

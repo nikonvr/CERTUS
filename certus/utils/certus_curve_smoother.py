@@ -36,6 +36,7 @@ from certus.ui.certus_ui import (
     create_styled_button,
     create_styled_label,
     init_certus_app,
+    install_standard_shortcuts,
     set_certus_window_icon,
     wrap_scientific_plot_with_toolbar,
 )
@@ -214,7 +215,7 @@ class CurveSmootherGUI(QMainWindow):
         self.btn_isolate.setEnabled(False)
         self.btn_help = create_styled_button("Quick guide", variant="outline")
         self.btn_help.clicked.connect(self.show_help)
-        self.btn_help.setToolTip("Show a short usage reminder. Full documentation is under Help (F1).")
+        self.btn_help.setToolTip("Show a short usage reminder (F1).")
         self.btn_save = create_styled_button("Save Clean Data", variant="secondary")
         self.btn_save.clicked.connect(self.save_file)
         self.btn_save.setToolTip("Write the smoothed curves to a new file. The source file is left untouched.")
@@ -254,6 +255,11 @@ class CurveSmootherGUI(QMainWindow):
         self.log_panel = CertusLogPanel(title="LOGS", visible=True, height=170)
         c_layout.addWidget(self.log_panel)
         layout.addWidget(content)
+
+        # `click()` and not the slot: a button that is greyed out (no data loaded yet) does nothing, and so does its key.
+        install_standard_shortcuts(
+            self, save=self.btn_save.click, load=self.btn_load.click, help=self.btn_help.click
+        )
 
     def _smooth_y(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
         y_smoothed, _info = smooth_spectrum_auto(x, y, level=self.current_level)

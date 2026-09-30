@@ -493,7 +493,6 @@ class MetalOptimizationWorker(QObject):
 
         self.is_running = False
 
-
 # BaseBeamAnalysisWorker removed (Dead Code)
 
 
@@ -532,7 +531,6 @@ class MetalJobSpec:
     report_sheets: tuple[str, ...] = ()
     beam_analysis_kind: str = ""
     extra: dict[str, Any] = field(default_factory=dict)
-
 
 # Canonical specs used when P3 fusion lands. Kept here so the two METAL apps
 # can import them directly:
@@ -930,6 +928,8 @@ class MetalBaseApp(CertusBaseApp):
 
         install_standard_shortcuts(
             self,
+            save=getattr(self, "save_config", None),
+            load=getattr(self, "load_config", None),
             run=getattr(self, "start_optimization", None),
             stop=getattr(self, "stop_optimization", None),
             help=lambda: open_documentation(getattr(self, "MODULE_ID", "CERTUS_METAL")),

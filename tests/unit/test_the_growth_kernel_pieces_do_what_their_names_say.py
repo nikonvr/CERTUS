@@ -10,6 +10,7 @@ Numba compiles it as an ordinary function. One test group per piece, against the
 from __future__ import annotations
 
 import sys
+from itertools import pairwise
 from pathlib import Path
 
 import numpy as np
@@ -26,6 +27,8 @@ from certus.physics.certus_strat_growth import (  # noqa: E402
     SCAN_NPTS_HISTORY,
     _fill_current_signal,
     _fill_history_signal,
+    _frozen_trigger_level,
+    _monotonicity_scan,
     _resample_on_machine_grid,
     _scan_window,
     _stack_matrix,
@@ -511,3 +514,76 @@ def test_a_layer_of_no_thickness_is_swept_with_the_fixed_window_even_when_adapti
     got = _window(-1, 2, nominal_th=0.00005, adaptive=True)
 
     assert got["npts_cur"] == SCAN_NPTS_CURRENT and got["d_max"] == pytest.approx(D_SCAN_VAL * 0.00005)
+
+
+# =============================================================================
+# _monotonicity_scan and _frozen_trigger_level : what the layer offers, and where the machine will stop it
+# =============================================================================
+
+
+def _stacks_under(i_layer, base=0):
+    """The real and the nominal stack under layer `i_layer` (thicknesses differ), and the index of that layer."""
+    rng = np.random.default_rng(8)
+    th_real, th_nom = rng.uniform(40, 120, 8), rng.uniform(40, 120, 8)
+    real = _stack_matrix(WL, N_EVEN, N_ODD, th_real, base, i_layer)
+    nominal = _stack_matrix(WL, NOMINAL_EVEN, NOMINAL_ODD, th_nom, base, i_layer)
+    return th_real, th_nom, real, nominal, (N_EVEN if i_layer % 2 == 0 else N_ODD)
+
+
+def _flips(values, tol=1e-9) -> bool:
+    """Does the slope of `values` change sign, ignoring the flat parts? (the rule stated in the docstring)"""
+    signs = [np.sign(b - a) for a, b in pairwise(values) if abs(b - a) > tol]
+    return any(a != b for a, b in pairwise(signs))
+
+
+@pytest.mark.parametrize("i_layer, base", [(0, 0), (1, 0), (3, 1)])
+def test_the_monotonicity_scan_reads_five_depths_of_the_real_stack_from_the_oracle(i_layer, base) -> None:
+    th_real, th_nom, real, nominal, n_layer = _stacks_under(i_layer, base)
+    nominal_th = 90.0
+
+    non_monotonic, t_mono = _monotonicity_scan(WL, n_layer + 0j, nominal_th, N_SUB + 0j, *real, *nominal)
+
+    layers = [N_EVEN if jj % 2 == 0 else N_ODD for jj in range(base, i_layer + 1)]
+    expected = [rt_stack(WL, layers, [*th_real[base:i_layer], k / 4.0 * nominal_th], 1.0, N_SUB)[1] for k in range(5)]
+    np.testing.assert_allclose(t_mono, expected, atol=1e-11)
+    assert bool(non_monotonic) == _flips(expected)
+
+
+def test_a_layer_that_stays_under_a_quarter_wave_is_monotonic_and_one_that_crosses_it_is_not() -> None:
+    _, _, real, nominal, n_layer = _stacks_under(0)  # the bare substrate under the layer: T falls to a minimum at the quarter wave
+    quarter_wave = WL / (4.0 * n_layer)
+
+    short, _ = _monotonicity_scan(WL, n_layer + 0j, 0.6 * quarter_wave, N_SUB + 0j, *real, *nominal)
+    crossing, t_mono = _monotonicity_scan(WL, n_layer + 0j, 1.6 * quarter_wave, N_SUB + 0j, *real, *nominal)
+
+    assert not short and crossing
+    assert t_mono.min() < t_mono[0]  # it went down and came back up: an extremum was crossed
+
+
+def test_a_layer_of_no_thickness_has_nothing_to_scan() -> None:
+    _, _, real, nominal, n_layer = _stacks_under(2)
+
+    non_monotonic, t_mono = _monotonicity_scan(WL, n_layer + 0j, 0.0, N_SUB + 0j, *real, *nominal)
+
+    assert not non_monotonic
+    np.testing.assert_array_equal(t_mono, np.zeros(5))
+
+
+@pytest.mark.parametrize("i_layer, base", [(0, 0), (2, 0), (3, 1)])
+def test_the_trigger_level_is_the_nominal_stack_at_the_nominal_thickness(i_layer, base) -> None:
+    th_real, th_nom, real, nominal, n_layer = _stacks_under(i_layer, base)
+    nominal_th = 77.0
+    n_nominal_layer = NOMINAL_EVEN if i_layer % 2 == 0 else NOMINAL_ODD
+
+    got = _frozen_trigger_level(WL, n_nominal_layer + 0j, nominal_th, N_SUB + 0j, *nominal, 0.123)
+
+    layers = [NOMINAL_EVEN if jj % 2 == 0 else NOMINAL_ODD for jj in range(base, i_layer + 1)]
+    expected = rt_stack(WL, layers, [*th_nom[base:i_layer], nominal_th], 1.0, N_SUB)[1]
+    assert got == pytest.approx(expected, abs=1e-11)
+    assert got != pytest.approx(0.123)  # `T_mono_4` is not read when the layer has a thickness
+
+
+def test_a_layer_of_no_thickness_stops_at_the_last_point_of_the_scan() -> None:
+    _, _, _, nominal, n_layer = _stacks_under(2)
+
+    assert _frozen_trigger_level(WL, n_layer + 0j, 0.0, N_SUB + 0j, *nominal, 0.4321) == 0.4321

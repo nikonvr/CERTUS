@@ -971,6 +971,119 @@ def _scan_window(
     return j0, n_hist, npts_cur, d_max, n_tot
 
 
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def _monotonicity_scan(
+    wl,
+    n_current,
+    nominal_th,
+    n_Sub,
+    M_before_00,
+    M_before_01,
+    M_before_10,
+    M_before_11,
+    M_nom_00,
+    M_nom_01,
+    M_nom_10,
+    M_nom_11,
+):
+    """Is T(d) monotonic over the nominal thickness of the layer being grown? Five depths, 0 to `nominal_th` in quarters,
+    on the real stack (`M_before`); the nominal stack (`M_nom`) is scanned at the same depths.
+
+    Returns (is_non_monotonic, T_mono): whether the slope changes sign between the five points (an extremum is crossed
+    before the stop), and the five values of T on the real stack, whose spread is the swing the layer offers.
+    """
+    TWO_PI_VAL = TWO_PI
+    is_non_monotonic = False
+    T_mono = np.zeros(5, dtype=np.float64)
+    T_mono_nom = np.zeros(5, dtype=np.float64)  # same scan, NOMINAL stack
+    k_ext = -1  # index of the last extremum crossed (swing), -1 if none
+    if nominal_th > 0.0001:
+        for k in range(5):
+            th_frac = k / 4.0 * nominal_th
+            phi_c = TWO_PI_VAL / wl * n_current * th_frac
+            cp_c, sp_c = (np.cos(phi_c), np.sin(phi_c))
+            son_c = sp_c / n_current if abs(n_current) > 1e-09 else 0.0
+            m01_c = +1j * son_c
+            m10_c = +1j * n_current * sp_c
+            a00 = cp_c * M_before_00 + m01_c * M_before_10
+            a01 = cp_c * M_before_01 + m01_c * M_before_11
+            a10 = m10_c * M_before_00 + cp_c * M_before_10
+            a11 = m10_c * M_before_01 + cp_c * M_before_11
+            denom = a00 + n_Sub * a01 + a10 + n_Sub * a11
+            if abs(denom) > 1e-09:
+                T_mono[k] = 4.0 * n_Sub.real / (denom.real**2 + denom.imag**2)
+            # same point, but on the NOMINAL matrix: this is the value the
+            # controller EXPECTED to see pass.
+            b00 = cp_c * M_nom_00 + m01_c * M_nom_10
+            b01 = cp_c * M_nom_01 + m01_c * M_nom_11
+            b10 = m10_c * M_nom_00 + cp_c * M_nom_10
+            b11 = m10_c * M_nom_01 + cp_c * M_nom_11
+            den_n = b00 + n_Sub * b01 + b10 + n_Sub * b11
+            if abs(den_n) > 1e-09:
+                T_mono_nom[k] = 4.0 * n_Sub.real / (den_n.real**2 + den_n.imag**2)
+        diffs = np.zeros(4, dtype=np.float64)
+        for k in range(4):
+            diffs[k] = T_mono[k + 1] - T_mono[k]
+        flips = 0
+        current_sign = 0.0
+        if diffs[0] > 1e-09:
+            current_sign = 1.0
+        elif diffs[0] < -1e-09:
+            current_sign = -1.0
+        for k in range(1, 4):
+            next_sign = 0.0
+            if diffs[k] > 1e-09:
+                next_sign = 1.0
+            elif diffs[k] < -1e-09:
+                next_sign = -1.0
+            if next_sign != 0.0:
+                if current_sign != 0.0 and next_sign != current_sign:
+                    flips += 1
+                current_sign = next_sign
+        if flips > 0:
+            is_non_monotonic = True
+    return is_non_monotonic, T_mono
+
+
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def _frozen_trigger_level(
+    wl,
+    n_current,
+    nominal_th,
+    n_Sub,
+    M_nom_00,
+    M_nom_01,
+    M_nom_10,
+    M_nom_11,
+    T_mono_4,
+):
+    """The level at which the deposition of the layer is stopped, computed BEFORE the deposition on the NOMINAL stack and
+    frozen: T of the nominal stack at the nominal thickness. A layer of no thickness has no such level, and takes
+    `T_mono_4`, the last of the five points of `_monotonicity_scan`.
+
+    `T_mono_4` is a scalar, not the array: handing the array over moved the last bits of the dynamics the kernel returns
+    (27 of the 400 corpus cases, 192 ulp), the scalar does not.
+    """
+    TWO_PI_VAL = TWO_PI
+    target_nominal = 0.0
+    if nominal_th > 0.0001:
+        phi_t = TWO_PI_VAL / wl * n_current * nominal_th
+        cp_t, sp_t = (np.cos(phi_t), np.sin(phi_t))
+        son_t = sp_t / n_current if abs(n_current) > 1e-09 else 0.0
+        mt01 = +1j * son_t
+        mt10 = +1j * n_current * sp_t
+        b00 = cp_t * M_nom_00 + mt01 * M_nom_10
+        b01 = cp_t * M_nom_01 + mt01 * M_nom_11
+        b10 = mt10 * M_nom_00 + cp_t * M_nom_10
+        b11 = mt10 * M_nom_01 + cp_t * M_nom_11
+        den_t = b00 + n_Sub * b01 + b10 + n_Sub * b11
+        if abs(den_t) > 1e-09:
+            target_nominal = 4.0 * n_Sub.real / (den_t.real**2 + den_t.imag**2)
+    else:
+        target_nominal = T_mono_4
+    return target_nominal
+
+
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def simulate_growth_kernel(
     p_thick_nominal: np.ndarray,
@@ -1210,72 +1323,14 @@ def simulate_growth_kernel(
 
     nominal_th = p_thick_nominal[i_layer]
     n_current = n_H if i_layer % 2 == 0 else n_L
-    is_non_monotonic = False
-    T_mono = np.zeros(5, dtype=np.float64)
-    T_mono_nom = np.zeros(5, dtype=np.float64)  # same scan, NOMINAL stack
-    k_ext = -1  # index of the last extremum crossed (swing), -1 if none
-    if nominal_th > 0.0001:
-        for k in range(5):
-            th_frac = k / 4.0 * nominal_th
-            phi_c = TWO_PI_VAL / wl * n_current * th_frac
-            cp_c, sp_c = (np.cos(phi_c), np.sin(phi_c))
-            son_c = sp_c / n_current if abs(n_current) > 1e-09 else 0.0
-            m01_c = +1j * son_c
-            m10_c = +1j * n_current * sp_c
-            a00 = cp_c * M_before_00 + m01_c * M_before_10
-            a01 = cp_c * M_before_01 + m01_c * M_before_11
-            a10 = m10_c * M_before_00 + cp_c * M_before_10
-            a11 = m10_c * M_before_01 + cp_c * M_before_11
-            denom = a00 + n_Sub * a01 + a10 + n_Sub * a11
-            if abs(denom) > 1e-09:
-                T_mono[k] = 4.0 * n_Sub.real / (denom.real**2 + denom.imag**2)
-            # same point, but on the NOMINAL matrix: this is the value the
-            # controller EXPECTED to see pass.
-            b00 = cp_c * M_nom_00 + m01_c * M_nom_10
-            b01 = cp_c * M_nom_01 + m01_c * M_nom_11
-            b10 = m10_c * M_nom_00 + cp_c * M_nom_10
-            b11 = m10_c * M_nom_01 + cp_c * M_nom_11
-            den_n = b00 + n_Sub * b01 + b10 + n_Sub * b11
-            if abs(den_n) > 1e-09:
-                T_mono_nom[k] = 4.0 * n_Sub.real / (den_n.real**2 + den_n.imag**2)
-        diffs = np.zeros(4, dtype=np.float64)
-        for k in range(4):
-            diffs[k] = T_mono[k + 1] - T_mono[k]
-        flips = 0
-        current_sign = 0.0
-        if diffs[0] > 1e-09:
-            current_sign = 1.0
-        elif diffs[0] < -1e-09:
-            current_sign = -1.0
-        for k in range(1, 4):
-            next_sign = 0.0
-            if diffs[k] > 1e-09:
-                next_sign = 1.0
-            elif diffs[k] < -1e-09:
-                next_sign = -1.0
-            if next_sign != 0.0:
-                if current_sign != 0.0 and next_sign != current_sign:
-                    flips += 1
-                current_sign = next_sign
-        if flips > 0:
-            is_non_monotonic = True
+    is_non_monotonic, T_mono = _monotonicity_scan(
+        wl, n_current, nominal_th, n_Sub, M_before_00, M_before_01, M_before_10, M_before_11, M_nom_00,
+        M_nom_01, M_nom_10, M_nom_11,
+    )
     # FROZEN trigger level, calculated on the nominal and not on the real.
-    target_nominal = 0.0
-    if nominal_th > 0.0001:
-        phi_t = TWO_PI_VAL / wl * n_current * nominal_th
-        cp_t, sp_t = (np.cos(phi_t), np.sin(phi_t))
-        son_t = sp_t / n_current if abs(n_current) > 1e-09 else 0.0
-        mt01 = +1j * son_t
-        mt10 = +1j * n_current * sp_t
-        b00 = cp_t * M_nom_00 + mt01 * M_nom_10
-        b01 = cp_t * M_nom_01 + mt01 * M_nom_11
-        b10 = mt10 * M_nom_00 + cp_t * M_nom_10
-        b11 = mt10 * M_nom_01 + cp_t * M_nom_11
-        den_t = b00 + n_Sub * b01 + b10 + n_Sub * b11
-        if abs(den_t) > 1e-09:
-            target_nominal = 4.0 * n_Sub.real / (den_t.real**2 + den_t.imag**2)
-    else:
-        target_nominal = T_mono[4]
+    target_nominal = _frozen_trigger_level(
+        wl, n_current, nominal_th, n_Sub, M_nom_00, M_nom_01, M_nom_10, M_nom_11, T_mono[4],
+    )
 
     # ------------------------------------------------------------------------
     # POEM -- Percent of Optical Extrema Monitoring

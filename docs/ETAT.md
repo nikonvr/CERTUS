@@ -4,7 +4,7 @@
 > décidé, les défauts ouverts et les chantiers. Les **règles** sont dans
 > [`CLAUDE.md`](../CLAUDE.md). Il se tient **en place** : un fait change, on corrige sa ligne,
 > on ne raconte pas la correction (`git log` s'en charge). Toute mesure porte sa date.
-> Le détail et l'historique sont dans [`archives/`](archives/), sans autorité.
+> Le détail et l'historique sont dans `git`, sans autorité (CLAUDE.md, en-tête).
 > Mis à jour le 2026-09-30.
 
 ## 0. Reprise — à lire en premier, à tenir à jour
@@ -71,7 +71,7 @@ Dernière validation locale complète, sur e2a9e85 (Windows 11, le 2026-09-30) :
 | **Calcul (STRAT)** | composant étalon : l'aléatoire ×2 (`r75x2`) à la fente de 2 nm. Fabricable avec les rampes de la configuration livrée ; sans rampes, 3 graines sur 7 trouvent des déposables. Toute la fabricabilité passe par le générateur ELITE | voir la section 6 |
 | **Interface** | plan clos le 2026-09-08 : 12 critères de fin sur 13 atteints et mesurés, le treizième démontré inatteignable (`xfail` strict) | la revue visuelle et trois arbitrages de 👤 (section 5) ; la fuite des fenêtres (défaut D11) |
 | **Qualité** | CI GitHub sur toutes les branches : job `pytest` sous Linux (oracle, unit, puis le reste de `tests/`), job `interface` sous Windows (`tests/ui/`), dernières versions stables à chaque run. `certus/` commenté en anglais, garde-fou ; les tests n'écrivent ni les préférences ni le registre de 👤 ; dette de lint de 31 règles, cliquet nominatif (D25) | R9, suite : E402, I001, puis les petites règles ; D11 ; l'ordre des actions est le tableau de la section 0 |
-| **Documentation** | cure du 2026-09-26 : deux documents vivants, 27 archivés | tenir « un fait, un seul endroit » |
+| **Documentation** | deux documents vivants ; les 27 archives de la cure du 2026-09-26 ont quitté l'arbre le 2026-09-30 (`git` les garde, section 8) | tenir « un fait, un seul endroit » |
 | **Validation externe** | 🔴 **aucune** : STRAT n'est validé que contre lui-même | deux dépôts réels du dichroïque (section 5) |
 
 ## 2. Repères mesurés — fente 2 nm, modèle courant
@@ -201,7 +201,7 @@ du dichroïque dont le plantage s'écarterait nettement du prédit rouvrirait ce
 
 Numérotés ici ; un défaut corrigé sort de la liste et son numéro n'est pas réattribué. Les
 numéros de l'ancien registre sont entre parenthèses
-([`archives/DEFAUTS_OUVERTS.md`](archives/DEFAUTS_OUVERTS.md)).
+(`git show 7b08dc8:docs/archives/DEFAUTS_OUVERTS.md`).
 
 **Ils faussent un résultat ou trompent l'utilisateur**
 
@@ -301,13 +301,13 @@ Le 2026-09-26, puis le 2026-09-27 sur délégation explicite de 👤 (« arbitre
 
 ## 6. Chantiers spécifiés, en attente
 
-**Calcul** (détail : [`archives/REPRENDRE_ICI.md`](archives/REPRENDRE_ICI.md), section 8) —
+**Calcul** (détail : `git show 7b08dc8:docs/archives/REPRENDRE_ICI.md`, section 8) —
 dimensionner K, le nombre de graines à lancer : p ≈ 3/7 pour trouver un déposable, 2/7 pour
 atteindre le niveau 0,57 · balayer `tp_hysteresis_factor` à bruit fixé · compter le criblage et
 l'héritage quand un étage deviendra suspect · porter le résultat de `r75x2` dans la vitrine,
 avec sa condition dans la même phrase que le chiffre.
 
-**Modèle physique** (détail : [`archives/TRAVAUX_A_VENIR.md`](archives/TRAVAUX_A_VENIR.md)) :
+**Modèle physique** (détail : `git show 7b08dc8:docs/archives/TRAVAUX_A_VENIR.md`) :
 
 | | sujet | état |
 |---|---|---|
@@ -319,12 +319,12 @@ avec sa condition dans la même phrase que le chiffre.
 | 12.6 | facteur de face arrière | en dernier, ou jamais |
 | 12.7 | résolution du monochromateur | spécifié |
 
-**Réserve** (détail : [`archives/RESERVE_A25_A27.md`](archives/RESERVE_A25_A27.md)) —
+**Réserve** (détail : `git show 7b08dc8:docs/archives/RESERVE_A25_A27.md`) —
 **A25** `sigma_rate` comme prédiction : la seule grandeur vérifiable de l'extérieur, contre les
 ±1 à 2 % que 👤 observe en salle · **A26** un bloc de santé de run · **A27** le harnais
 d'empreinte `float.hex()` qu'exige la règle d'or.
 
-**Architecture** (détail : [`archives/PLAN_AMELIORATION.md`](archives/PLAN_AMELIORATION.md)) —
+**Architecture** (détail : `git show 7b08dc8:docs/archives/PLAN_AMELIORATION.md`) —
 le cycle `physics ↔ core` (lot E), l'hygiène d'imports F401 (lot C). L'oracle
 couvre déjà les gradients analytiques (lot B, clos).
 
@@ -347,7 +347,7 @@ que sert chaque façade `CertusFacadeModule`. Un nom qui disparaît ne doit êtr
 demandé par personne.
 **Ordre** : E402/I001, puis les petites règles.
 
-**Prédictibilité** (détail : [`archives/CHANTIER_PREDICTIBILITE.md`](archives/CHANTIER_PREDICTIBILITE.md)) —
+**Prédictibilité** (détail : `git show 7b08dc8:docs/archives/CHANTIER_PREDICTIBILITE.md`) —
 prédire sans tout calculer si un design passe avec un seul verre témoin ; quatre routes déjà
 fermées par la mesure.
 
@@ -363,27 +363,16 @@ fermées par la mesure.
 
 Une règle n'est acquise que si elle survit sur un empilement **sans structure**.
 
-## 8. Les archives — ce que chacune contient
+## 8. L'historique
 
-| document | contenu |
-|---|---|
-| [`CLAUDE_2026-09-26.md`](archives/CLAUDE_2026-09-26.md) | l'ancien document de référence, 2 000 lignes ; les numéros de section cités par le code y renvoient |
-| [`REPRENDRE_ICI.md`](archives/REPRENDRE_ICI.md) | le journal de reprise jusqu'au 2026-09-08 : campagnes `r75x2`, multiseed, DOCP, hystérésis |
-| [`DEFAUTS_OUVERTS.md`](archives/DEFAUTS_OUVERTS.md) | l'ancien registre des défauts, avec leurs mesures |
-| [`REPERES_MESURES.md`](archives/REPERES_MESURES.md) | les repères de la section 2 et leur protocole ; la série d'échelle du random75 |
-| [`PLAN_PRODUCTION_2026-08-20.md`](archives/PLAN_PRODUCTION_2026-08-20.md) | le programme du calcul d'août : multiseed, injection de plans, voie ELITE |
-| [`CHANTIER_RATE.md`](archives/CHANTIER_RATE.md), [`MODE_RATE.md`](archives/MODE_RATE.md) | le mode Rate : mécanisme, coût, `sigma_rate` dérivé du simulateur |
-| [`CHANTIER_MULTITEMOINS.md`](archives/CHANTIER_MULTITEMOINS.md) | le multi-témoins sur le passe-bande de 99 couches |
-| [`CHANTIER_PREDICTIBILITE.md`](archives/CHANTIER_PREDICTIBILITE.md) | prédire la fabricabilité ; le mode `extreme` |
-| [`SEEL.md`](archives/SEEL.md) | la définition de SEEL et l'histoire de sa quantification |
-| [`QWOT_ET_TURNING_POINT.md`](archives/QWOT_ET_TURNING_POINT.md) | la démonstration QWOT ≠ point tournant |
-| [`TRAVAUX_A_VENIR.md`](archives/TRAVAUX_A_VENIR.md), [`RESERVE_A25_A27.md`](archives/RESERVE_A25_A27.md) | les chantiers du modèle physique et la réserve, spécifiés |
-| [`FEUILLE_DE_ROUTE.md`](archives/FEUILLE_DE_ROUTE.md), [`ETAT_IMPLANTATION.md`](archives/ETAT_IMPLANTATION.md) | les acquis A1 à A25, et l'implantation établie contre le code |
-| [`DECISIONS_TRANCHEES.md`](archives/DECISIONS_TRANCHEES.md) | les enquêtes closes : grille des λ, profondeur Monte-Carlo |
-| [`COMPOSANTS.md`](archives/COMPOSANTS.md), [`RAPPORT_FILTRE_EXTREME_5CAV_99C.md`](archives/RAPPORT_FILTRE_EXTREME_5CAV_99C.md) | la fiche de chaque composant, et l'étude du 99 couches |
-| [`PERFORMANCE.md`](archives/PERFORMANCE.md) | les mesures de vitesse, pistes fermées comprises |
-| [`CHANTIERS_OUVERTS.md`](archives/CHANTIERS_OUVERTS.md), [`PLAN_AMELIORATION.md`](archives/PLAN_AMELIORATION.md) | les propositions non mesurées et le plan d'architecture |
-| [`UX_PLAN.md`](archives/UX_PLAN.md), [`UX_DEMENTIS.md`](archives/UX_DEMENTIS.md) | le chantier d'interface et ses affirmations réfutées |
-| [`MEMOIRE_PROJET.md`](archives/MEMOIRE_PROJET.md) | les pièges du poste et du banc, dont `d_lo` / `d_hi` d'INDEX SPLINE |
-| [`REPRISE_TESTS_ISOLATION.md`](archives/REPRISE_TESTS_ISOLATION.md), [`MESURE_REPRODUCTIBILITE_2026-09-07.md`](archives/MESURE_REPRODUCTIBILITE_2026-09-07.md) | l'isolation des tests et la reproductibilité de la suite d'interface |
-| [`ORDRE_CLOUD_2026-09-25.md`](archives/ORDRE_CLOUD_2026-09-25.md) | l'ordre de mission cloud, abandonné le 2026-09-26 au profit du travail local |
+Les 27 archives — journaux de campagnes, plans, enquêtes closes, ordres abandonnés, tous sans autorité —
+ont quitté l'arbre le 2026-09-30 : `git` les garde. Lire l'une : `git show 7b08dc8:docs/archives/NOM.md` ;
+les lister : `git ls-tree --name-only 7b08dc8 docs/archives/`. Les plus utiles :
+
+- `CLAUDE_2026-09-26.md`, l'ancien document de référence, dont le code cite les numéros de section, et
+  `DEFAUTS_OUVERTS.md`, l'ancien registre, dont les numéros sont entre parenthèses en section 4 ;
+- `SEEL.md` (la définition de SEEL et l'histoire de sa quantification) et `QWOT_ET_TURNING_POINT.md` ;
+- `REPERES_MESURES.md`, le protocole des repères de la section 2 ;
+- `TRAVAUX_A_VENIR.md` et `RESERVE_A25_A27.md`, les chantiers spécifiés de la section 6 ;
+- `REPRENDRE_ICI.md` et `PLAN_PRODUCTION_2026-08-20.md`, le journal et le programme du calcul d'août,
+  que cite la vitrine STRAT.

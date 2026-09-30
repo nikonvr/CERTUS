@@ -1,7 +1,10 @@
 # Dictionnaire des Paramètres de Configuration STRAT (.json)
 
 Ce guide décrit les clés des configurations **CERTUS STRAT**. Les valeurs citées sont celles de
-`JSON-strat-example.json` (le dichroïque), pas des défauts de l'interface.
+`JSON-strat-example.json` (le dichroïque), pas des défauts de l'interface. Il ne décrit pas toutes les clés
+d'un fichier : `collect_params` (dans `certus/ui/certus_strat_ui_state.py`) en est la liste complète, et
+un fichier peut porter des clés retirées, ignorées au chargement avec une ligne du journal
+(`_RETIRED_CONFIG_KEYS`).
 
 ⚠️ **Le mode d'exécution écrase sept clés du fichier** : `robustness_num_runs`,
 `consensus_num_runs`, `n_screen_runs`, `elite_rounds`, `dp_top_k`, `k_keep_survivors` et

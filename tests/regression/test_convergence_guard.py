@@ -7,6 +7,14 @@ pendant que `RUN_CONVERGENCE_TESTS.bat` annonce en en-tete que cette suite est
 *« OBLIGATOIRE avant toute validation de code »*. **Un zero silencieux dans une
 suite verte** — mesure le 2026-09-08.
 
+MODE D'EMPLOI (ce que disait `README_REGRESSION_TESTS.md`, supprime le 2026-09-30) :
+`python -m pytest tests/regression/ -q --no-cov` lance un vrai pipeline par module, en sous-processus ;
+`-m "not slow"` ne garde que les controles rapides ; `python tests/regression/test_convergence.py` imprime le
+rapport lisible. Les references sont dans `baseline_rmse.json`, et nulle part ailleurs (cinq modules : RE,
+SPLINE, METAL_SINGLE, METAL_BILAYER, INDEX) ; `scripts/collect_rmse.py` les regenere. INDEX, RE et
+METAL_BILAYER ne rendent pas deux fois la meme RMSE, ce qui est accepte (docs/ETAT.md, section 3) : la garde
+retient la meilleure de quatre executions au plus. DESIGN et STRAT ne sont pas mesurables ici.
+
 Ce module n'en est pas une copie : il **appelle** les fonctions du script. Si le
 script change, ces tests suivent sans qu'on ait a les recrire.
 

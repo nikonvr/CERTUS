@@ -243,15 +243,23 @@ def _couche(f: str | None) -> str | None:
     return None
 
 
-def aretes_montantes(graphe: dict[str, set[str]], modules: dict[str, str]) -> collections.Counter:
-    """Les imports d'une couche haute par une couche plus basse, comptes par paire de couches."""
-    n: collections.Counter = collections.Counter()
+def liste_aretes_montantes(graphe: dict[str, set[str]], modules: dict[str, str]) -> list[tuple[str, str]]:
+    """Les imports de niveau module d'une couche basse vers une couche plus haute : (importeur, importe), tries."""
+    aretes = []
     for a, cibles in graphe.items():
         la = _couche(modules.get(a))
         for b in cibles:
             lb = _couche(modules.get(b))
             if la in COUCHES and lb in COUCHES and la != lb and COUCHES[la] < COUCHES[lb]:
-                n[(la, lb)] += 1
+                aretes.append((a, b))
+    return sorted(aretes)
+
+
+def aretes_montantes(graphe: dict[str, set[str]], modules: dict[str, str]) -> collections.Counter:
+    """Les memes imports, comptes par paire de couches."""
+    n: collections.Counter = collections.Counter()
+    for a, b in liste_aretes_montantes(graphe, modules):
+        n[(_couche(modules.get(a)), _couche(modules.get(b)))] += 1
     return n
 
 

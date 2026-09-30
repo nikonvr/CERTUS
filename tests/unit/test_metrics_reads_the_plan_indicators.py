@@ -12,6 +12,7 @@ they move with every commit.
 
 from __future__ import annotations
 
+import ast
 import importlib.util
 import json
 import re
@@ -62,6 +63,25 @@ def test_a_module_level_import_of_a_higher_layer_is_one_upward_edge() -> None:
 
     assert measures["arch.aretes_montantes"] == 1
     assert detail["aretes_montantes"] == {"certus.physics -> certus.core": 1}
+
+
+def test_the_upward_edges_are_named_module_to_module_and_the_count_is_made_from_them() -> None:
+    # tests/architecture_debt.json lists these names; swapping one edge for another leaves the count where it was.
+    sources = {
+        "certus/physics/kernel.py": "from certus.core import settings\nfrom certus.ui import window\n",
+        "certus/physics/other.py": "from certus.core import settings\n",
+        "certus/core/settings.py": "LIMIT = 1\n",
+        "certus/ui/window.py": "from certus.core import settings\n",
+    }
+    trees = {f: ast.parse(t) for f, t in sources.items()}
+    graph, modules = metrics.graphe_imports(trees)
+
+    assert metrics.liste_aretes_montantes(graph, modules) == [
+        ("certus.physics.kernel", "certus.core.settings"),
+        ("certus.physics.kernel", "certus.ui.window"),
+        ("certus.physics.other", "certus.core.settings"),
+    ]
+    assert metrics.aretes_montantes(graph, modules) == {("certus.physics", "certus.core"): 2, ("certus.physics", "certus.ui"): 1}
 
 
 def test_an_import_inside_a_function_is_neither_an_edge_nor_a_cycle() -> None:

@@ -20,6 +20,7 @@ from tmm_reference import rt_stack, stack_matrix  # noqa: E402
 
 from certus.physics.certus_strat_growth import (  # noqa: E402
     SCAN_NPTS_HISTORY,
+    _fill_current_signal,
     _fill_history_signal,
     _stack_matrix,
     _stack_matrix_pair,
@@ -226,3 +227,102 @@ def test_the_nominal_signal_is_never_noised_and_without_a_scale_nothing_is() -> 
     np.testing.assert_array_equal(noisy["ts_n"], clean["ts_n"])
     assert not np.array_equal(noisy["ts_r"], clean["ts_r"])
     np.testing.assert_array_equal(_history(1, 4, noise=0.0, seed=9)["ts_r"], clean["ts_r"])
+
+
+# =============================================================================
+# _fill_current_signal : the scan of the layer being grown
+# =============================================================================
+
+SENTINEL = -7.0  # what the arrays hold before the scan: anything else at the end is the scan's doing
+
+
+def _current(i_layer, npts, d_max, *, idx=0, n_hist=0, n_even=N_EVEN, n_odd=N_ODD, noise=0.0, seed=0, run=0, base=0):
+    """Scan layer `i_layer` from 0 to `d_max` in `npts` points, on a stack whose real and nominal thicknesses differ."""
+    rng = np.random.default_rng(21)
+    th_real = rng.uniform(40, 120, 8)
+    th_nom = rng.uniform(40, 120, 8)
+    r = _stack_matrix(WL, n_even, n_odd, th_real, base, i_layer)
+    q = _stack_matrix(WL, NOMINAL_EVEN, NOMINAL_ODD, th_nom, base, i_layer)
+    ts_r, ts_n = np.full(idx + npts + 5, SENTINEL), np.full(idx + npts + 5, SENTINEL)
+    _fill_current_signal(
+        WL,
+        N_SUB + 0j,
+        n_even,
+        n_odd,
+        NOMINAL_EVEN,
+        NOMINAL_ODD,
+        i_layer,
+        *r,
+        *q,
+        d_max,
+        npts,
+        n_hist,
+        idx,
+        ts_r,
+        ts_n,
+        noise > 0.0,
+        noise,
+        seed,
+        run,
+    )
+    return {"ts_r": ts_r, "ts_n": ts_n, "th_real": th_real, "th_nom": th_nom}
+
+
+def _oracle_current(i_layer, d, base, n_even, n_odd, thicknesses) -> float:
+    """T of layers base .. i_layer - 1 in full and layer `i_layer` grown to `d` nm."""
+    layers = [n_even if jj % 2 == 0 else n_odd for jj in range(base, i_layer + 1)]
+    return rt_stack(WL, layers, [*thicknesses[base:i_layer], d], 1.0, N_SUB)[1]
+
+
+@pytest.mark.parametrize("imag", [0.0, 0.01])  # the closed form and the matrix path take turns
+@pytest.mark.parametrize("i_layer, base", [(0, 0), (3, 0), (4, 2)])
+def test_each_point_of_the_current_scan_is_the_oracles_transmission_from_zero_to_d_max(i_layer, base, imag) -> None:
+    npts, d_max = 21, 150.0
+    n_even, n_odd = N_EVEN - 1j * imag, N_ODD - 1j * imag
+
+    got = _current(i_layer, npts, d_max, n_even=n_even, n_odd=n_odd, base=base)
+
+    for k in range(npts):
+        d = k * d_max / (npts - 1)
+        real = _oracle_current(i_layer, d, base, n_even, n_odd, got["th_real"])
+        nominal = _oracle_current(i_layer, d, base, NOMINAL_EVEN, NOMINAL_ODD, got["th_nom"])
+        assert got["ts_r"][k] == pytest.approx(real, abs=1e-11), k
+        assert got["ts_n"][k] == pytest.approx(nominal, abs=1e-11), k
+
+
+def test_the_scan_writes_from_idx_and_only_there() -> None:
+    got = _current(2, 12, 90.0, idx=5)
+
+    for signal in (got["ts_r"], got["ts_n"]):
+        assert (signal[:5] == SENTINEL).all() and (signal[17:] == SENTINEL).all()
+        assert (signal[5:17] != SENTINEL).all()
+
+
+def test_the_noise_of_the_current_layer_is_indexed_by_the_layer_and_the_point() -> None:
+    scale, seed, run, i_layer, npts = 0.01, 4, 6, 3, 9
+    clean, noisy = _current(i_layer, npts, 120.0), _current(i_layer, npts, 120.0, noise=scale, seed=seed, run=run)
+
+    added = noisy["ts_r"][:npts] - clean["ts_r"][:npts]
+
+    expected = [scale * _seeded_noise_sample(seed, i_layer, run, SCAN_NPTS_HISTORY + k, True) for k in range(npts)]
+    np.testing.assert_allclose(added, expected, atol=1e-15)
+
+
+def test_the_first_point_after_a_history_is_the_last_history_point_and_takes_its_noise() -> None:
+    # d = 0 of layer i is the end of layer i - 1, the same physical reading: it is drawn once, under the history's index.
+    scale, seed, run, i_layer, npts = 0.01, 4, 6, 3, 9
+    clean = _current(i_layer, npts, 120.0, n_hist=SCAN_NPTS_HISTORY)
+    noisy = _current(i_layer, npts, 120.0, n_hist=SCAN_NPTS_HISTORY, noise=scale, seed=seed, run=run)
+
+    added = noisy["ts_r"][:npts] - clean["ts_r"][:npts]
+
+    assert added[0] == pytest.approx(scale * _seeded_noise_sample(seed, i_layer - 1, run, SCAN_NPTS_HISTORY - 1, True), abs=1e-15)
+    assert added[1] == pytest.approx(scale * _seeded_noise_sample(seed, i_layer, run, SCAN_NPTS_HISTORY + 1, True), abs=1e-15)
+
+
+def test_the_nominal_scan_is_never_noised() -> None:
+    noisy = _current(2, 9, 100.0, noise=0.02, seed=1, run=1)
+    clean = _current(2, 9, 100.0)
+
+    np.testing.assert_array_equal(noisy["ts_n"], clean["ts_n"])
+    assert not np.array_equal(noisy["ts_r"], clean["ts_r"])

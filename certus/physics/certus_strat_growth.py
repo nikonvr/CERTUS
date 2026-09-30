@@ -682,6 +682,124 @@ def _fill_history_signal(
     return idx, R00, R01, R10, R11, Q00, Q01, Q10, Q11
 
 
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def _fill_current_signal(
+    wl,
+    n_Sub,
+    n_H_r,
+    n_L_r,
+    n_H,
+    n_L,
+    i_layer,
+    R00,
+    R01,
+    R10,
+    R11,
+    Q00,
+    Q01,
+    Q10,
+    Q11,
+    d_max,
+    npts_cur,
+    n_hist,
+    idx,
+    Ts_r,
+    Ts_n,
+    apply_signal_noise,
+    signal_noise_scale,
+    signal_noise_seed,
+    signal_noise_run,
+):
+    """Scan the layer being grown, from 0 to `d_max` in `npts_cur` steps: its real and nominal signals go to `Ts_r[idx:]`
+    and `Ts_n[idx:]`.
+
+    `(R00 .. R11)` and `(Q00 .. Q11)` are the real and nominal matrices of the stack under it. The real signal carries
+    the reading noise of the (seed, run) draw, indexed by the layer and the point; when the block has a history
+    (`n_hist > 0`), the first point is the continuation of the last history point and takes ITS noise draw, so that one
+    reading is not drawn twice.
+    """
+    TWO_PI_VAL = TWO_PI
+    NPTS_PREV = SCAN_NPTS_HISTORY
+    step_s = d_max / (npts_cur - 1)
+    n_cur_r = n_H_r if i_layer % 2 == 0 else n_L_r
+    n_cur_n = n_H if i_layer % 2 == 0 else n_L
+    # ---- CLOSED-FORM FAST PATH (18ter) ----------------------------------
+    #
+    # 🔴 GUARD, not a fallback. `layer_scan_coeffs` is exact only while delta stays
+    # real, i.e. k = 0. 👤 restricted STRAT to k < 1e-4 on 2026-08-11, where the
+    # measured error is 4.2e-8 -- 0.008 % of the reading noise. Beyond that the
+    # matrix path is used, and it is chosen HERE rather than silently: the two paths
+    # must never diverge without anyone noticing (17-25).
+    fast_path = (
+        abs(n_cur_r.imag) < K_MAX_CLOSED_FORM and abs(n_cur_n.imag) < K_MAX_CLOSED_FORM
+    )
+    Pr = 0.0
+    Qr = 0.0
+    Rr = 0.0
+    Pn = 0.0
+    Qn = 0.0
+    Rn = 0.0
+    kk_r = 0.0
+    kk_n = 0.0
+    if fast_path:
+        Pr, Qr, Rr = layer_scan_coeffs(R00, R01, R10, R11, n_cur_r, n_Sub)
+        Pn, Qn, Rn = layer_scan_coeffs(Q00, Q01, Q10, Q11, n_cur_n, n_Sub)
+        kk_r = TWO_PI_VAL / wl * n_cur_r.real
+        kk_n = TWO_PI_VAL / wl * n_cur_n.real
+    for k in range(npts_cur):
+        d_k = k * step_s
+        if fast_path:
+            # CLOSED FORM: three coefficients paid once, then two trig calls per
+            # point and no complex arithmetic at all. Verified to 1.2e-15 against
+            # the INDEPENDENT TMM oracle over 40 random stacks -- the same order as
+            # the production paths. See `layer_scan_coeffs`.
+            td_r = 2.0 * kk_r * d_k
+            den_r = Pr + Qr * np.cos(td_r) + Rr * np.sin(td_r)
+            if den_r > 1e-18:
+                Ts_r[idx] = 4.0 * n_Sub.real / den_r
+        else:
+            phi_kr = TWO_PI_VAL / wl * n_cur_r * d_k
+            cpkr, spkr = (np.cos(phi_kr), np.sin(phi_kr))
+            sonkr = spkr / n_cur_r if abs(n_cur_r) > 1e-09 else 0.0
+            e01r = +1j * sonkr
+            e10r = +1j * n_cur_r * spkr
+            r00 = cpkr * R00 + e01r * R10
+            r01 = cpkr * R01 + e01r * R11
+            r10 = e10r * R00 + cpkr * R10
+            r11 = e10r * R01 + cpkr * R11
+            dr = r00 + n_Sub * r01 + r10 + n_Sub * r11
+            if abs(dr) > 1e-09:
+                Ts_r[idx] = 4.0 * n_Sub.real / (dr.real**2 + dr.imag**2)
+        if apply_signal_noise:
+            g_noise = i_layer
+            e_noise = NPTS_PREV + k
+            if k == 0 and n_hist > 0:
+                g_noise = i_layer - 1
+                e_noise = NPTS_PREV - 1
+            Ts_r[idx] += signal_noise_scale * _seeded_noise_sample(
+                signal_noise_seed, g_noise, signal_noise_run, e_noise, True
+            )
+        phi_kn = TWO_PI_VAL / wl * n_cur_n * d_k
+        if fast_path:
+            td_n = 2.0 * kk_n * d_k
+            den_n = Pn + Qn * np.cos(td_n) + Rn * np.sin(td_n)
+            if den_n > 1e-18:
+                Ts_n[idx] = 4.0 * n_Sub.real / den_n
+        else:
+            cpkn, spkn = (np.cos(phi_kn), np.sin(phi_kn))
+            sonkn = spkn / n_cur_n if abs(n_cur_n) > 1e-09 else 0.0
+            e01n = +1j * sonkn
+            e10n = +1j * n_cur_n * spkn
+            q00 = cpkn * Q00 + e01n * Q10
+            q01 = cpkn * Q01 + e01n * Q11
+            q10 = e10n * Q00 + cpkn * Q10
+            q11 = e10n * Q01 + cpkn * Q11
+            dn = q00 + n_Sub * q01 + q10 + n_Sub * q11
+            if abs(dn) > 1e-09:
+                Ts_n[idx] = 4.0 * n_Sub.real / (dn.real**2 + dn.imag**2)
+        idx += 1
+
+
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def simulate_growth_kernel(
     p_thick_nominal: np.ndarray,
@@ -1200,84 +1318,11 @@ def simulate_growth_kernel(
         # noise draws per nanometre, the same false-extremum fabrication rate (12.4
         # measured 33 % at 80 points against 99.9 % at 800), the same physics. Cutting
         # NPTS at a fixed window would NOT be neutral.
-        step_s = d_max / (npts_cur - 1)
-        n_cur_r = n_H_r if i_layer % 2 == 0 else n_L_r
-        n_cur_n = n_H if i_layer % 2 == 0 else n_L
-        # ---- CLOSED-FORM FAST PATH (18ter) ----------------------------------
-        #
-        # 🔴 GUARD, not a fallback. `layer_scan_coeffs` is exact only while delta stays
-        # real, i.e. k = 0. 👤 restricted STRAT to k < 1e-4 on 2026-08-11, where the
-        # measured error is 4.2e-8 -- 0.008 % of the reading noise. Beyond that the
-        # matrix path is used, and it is chosen HERE rather than silently: the two paths
-        # must never diverge without anyone noticing (17-25).
-        fast_path = (
-            abs(n_cur_r.imag) < K_MAX_CLOSED_FORM and abs(n_cur_n.imag) < K_MAX_CLOSED_FORM
+        _fill_current_signal(
+            wl, n_Sub, n_H_r, n_L_r, n_H, n_L, i_layer, R00, R01, R10, R11, Q00, Q01, Q10, Q11, d_max,
+            npts_cur, n_hist, idx, Ts_r, Ts_n, apply_signal_noise, signal_noise_scale, signal_noise_seed,
+            signal_noise_run,
         )
-        Pr = 0.0
-        Qr = 0.0
-        Rr = 0.0
-        Pn = 0.0
-        Qn = 0.0
-        Rn = 0.0
-        kk_r = 0.0
-        kk_n = 0.0
-        if fast_path:
-            Pr, Qr, Rr = layer_scan_coeffs(R00, R01, R10, R11, n_cur_r, n_Sub)
-            Pn, Qn, Rn = layer_scan_coeffs(Q00, Q01, Q10, Q11, n_cur_n, n_Sub)
-            kk_r = TWO_PI_VAL / wl * n_cur_r.real
-            kk_n = TWO_PI_VAL / wl * n_cur_n.real
-        for k in range(npts_cur):
-            d_k = k * step_s
-            if fast_path:
-                # CLOSED FORM: three coefficients paid once, then two trig calls per
-                # point and no complex arithmetic at all. Verified to 1.2e-15 against
-                # the INDEPENDENT TMM oracle over 40 random stacks -- the same order as
-                # the production paths. See `layer_scan_coeffs`.
-                td_r = 2.0 * kk_r * d_k
-                den_r = Pr + Qr * np.cos(td_r) + Rr * np.sin(td_r)
-                if den_r > 1e-18:
-                    Ts_r[idx] = 4.0 * n_Sub.real / den_r
-            else:
-                phi_kr = TWO_PI_VAL / wl * n_cur_r * d_k
-                cpkr, spkr = (np.cos(phi_kr), np.sin(phi_kr))
-                sonkr = spkr / n_cur_r if abs(n_cur_r) > 1e-09 else 0.0
-                e01r = +1j * sonkr
-                e10r = +1j * n_cur_r * spkr
-                r00 = cpkr * R00 + e01r * R10
-                r01 = cpkr * R01 + e01r * R11
-                r10 = e10r * R00 + cpkr * R10
-                r11 = e10r * R01 + cpkr * R11
-                dr = r00 + n_Sub * r01 + r10 + n_Sub * r11
-                if abs(dr) > 1e-09:
-                    Ts_r[idx] = 4.0 * n_Sub.real / (dr.real**2 + dr.imag**2)
-            if apply_signal_noise:
-                g_noise = i_layer
-                e_noise = NPTS_PREV + k
-                if k == 0 and n_hist > 0:
-                    g_noise = i_layer - 1
-                    e_noise = NPTS_PREV - 1
-                Ts_r[idx] += signal_noise_scale * _seeded_noise_sample(
-                    signal_noise_seed, g_noise, signal_noise_run, e_noise, True
-                )
-            phi_kn = TWO_PI_VAL / wl * n_cur_n * d_k
-            if fast_path:
-                td_n = 2.0 * kk_n * d_k
-                den_n = Pn + Qn * np.cos(td_n) + Rn * np.sin(td_n)
-                if den_n > 1e-18:
-                    Ts_n[idx] = 4.0 * n_Sub.real / den_n
-            else:
-                cpkn, spkn = (np.cos(phi_kn), np.sin(phi_kn))
-                sonkn = spkn / n_cur_n if abs(n_cur_n) > 1e-09 else 0.0
-                e01n = +1j * sonkn
-                e10n = +1j * n_cur_n * spkn
-                q00 = cpkn * Q00 + e01n * Q10
-                q01 = cpkn * Q01 + e01n * Q11
-                q10 = e10n * Q00 + cpkn * Q10
-                q11 = e10n * Q01 + cpkn * Q11
-                dn = q00 + n_Sub * q01 + q10 + n_Sub * q11
-                if abs(dn) > 1e-09:
-                    Ts_n[idx] = 4.0 * n_Sub.real / (dn.real**2 + dn.imag**2)
-            idx += 1
 
         # ---- SLIT BIAS (12.7) --------------------------------------------------
         #

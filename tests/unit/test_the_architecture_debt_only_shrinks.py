@@ -1,6 +1,6 @@
 """The architecture debt is a list, and the list only shrinks.
 
-Four kinds of debt are named in tests/architecture_debt.json, each measured by scripts/metrics.py:
+Five kinds of debt are named in tests/architecture_debt.json, each measured by scripts/metrics.py:
 
 * `aretes_montantes`: an import, at module level, of a higher layer by a lower one. The layers (`COUCHES`) run
   domain < physics < core = utils < metal = spline < workers < ui. The audit of 2026-09-29 counted 47.
@@ -8,6 +8,9 @@ Four kinds of debt are named in tests/architecture_debt.json, each measured by s
   that only a type checker reads).
 * `fonctions_longues` (over 300 lines), `fonctions_complexes` (complexity over 60): 52 and 20 at the audit.
 * `fichiers_longs` (over 1 500 lines): 23.
+* `fonctions_non_annotees`: a function of `certus/domain`, `certus/physics` or `certus/core` (the packages the type checker
+  runs on) with no return annotation or an unannotated positional argument. 217 on 2026-10-01, for a plan target of 90 %
+  annotated in each of the three.
 
 A NEW entry fails the test, and so does one that has grown; an entry that was paid (or whose measure went down) must be
 corrected in the same commit, so the gain is locked in and cannot come back unnoticed. `python scripts/metrics.py
@@ -88,6 +91,28 @@ def test_a_broken_cycle_leaves_the_list() -> None:
     assert not paid, (
         "these cycles are gone, or changed members (a smaller cycle is a new entry, and the old one goes): "
         f"update tests/architecture_debt.json ({REGENERATE}): {paid}"
+    )
+
+
+# =============================================================================
+# Annotations: the set is exact
+# =============================================================================
+
+
+def test_a_new_function_comes_annotated() -> None:
+    new = sorted(set(MEASURED["fonctions_non_annotees"]) - set(DEBT["fonctions_non_annotees"]))
+
+    assert not new, (
+        "a function of the typed packages (certus/domain, physics, core) lacks an annotation: a return type, and a type "
+        f"for each positional argument (`-> None` for a constructor). Annotate it: {new}"
+    )
+
+
+def test_an_annotated_function_leaves_the_list() -> None:
+    paid = sorted(set(DEBT["fonctions_non_annotees"]) - set(MEASURED["fonctions_non_annotees"]))
+
+    assert not paid, (
+        f"these functions are annotated now, or gone: remove them from tests/architecture_debt.json ({REGENERATE}): {paid}"
     )
 
 

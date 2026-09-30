@@ -83,6 +83,18 @@ jobs:
           python -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
           python -c "import certus.physics.certus_opt_tmm as m, pathlib, sys; sys.exit(0 if pathlib.Path(m.__file__).is_relative_to(pathlib.Path.cwd()) else 1)"
 
+      - name: Types (mypy) sur domain, physics et core
+        # S4.4. NON BLOQUANT pour l'instant : le plan le rend bloquant sur ces trois paquets une fois qu'une exécution
+        # de la CI l'aura vu vert (le poste de travail est sous Windows, la CI sous Linux : les branches `sys.platform`
+        # et les versions des bibliothèques peuvent faire apparaître ce que le poste ne montre pas). Les réglages sont
+        # dans `[tool.mypy]` de pyproject.toml ; le cliquet des annotations, lui, est un test (`fonctions_non_annotees`).
+        continue-on-error: true
+        run: |
+          source .venv/bin/activate
+          uv pip install mypy
+          python -m mypy --version
+          python -m mypy
+
       - name: Oracle TMM
         # D'abord : la référence TMM indépendante. S'il tombe, le reste n'a pas d'intérêt.
         run: |

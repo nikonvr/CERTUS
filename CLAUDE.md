@@ -60,6 +60,11 @@ supérieure à 60, fichiers de plus de 1 500 lignes) est nommée dans `tests/arc
 `tests/unit/test_the_architecture_debt_only_shrinks.py` refuse un élément nouveau ou qui grossit, et exige
 qu'une dette payée, ou une mesure qui baisse, y soit corrigée dans le même commit (`python scripts\metrics.py --dette
 tests\architecture_debt.json` réécrit le registre).
+Les **types** : `python -m mypy` depuis la racine (réglages dans `[tool.mypy]` ; il parcourt `certus/domain`, `physics` et
+`core`). mypy n'est pas une dépendance du projet : installe-le dans un environnement jetable (`pip install --only-binary=:all:
+mypy`, et `--python-executable` vers le Python du projet s'il n'y est pas). Le même registre nomme les fonctions de ces trois
+paquets sans annotation complète (`fonctions_non_annotees`) : une fonction nouvelle vient annotée, une fonction annotée sort du
+registre dans le même commit. La CI lance mypy sans bloquer tant qu'elle ne l'a pas vu vert.
 
 | échec | ce que c'est |
 |---|---|

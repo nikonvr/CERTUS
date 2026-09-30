@@ -239,8 +239,59 @@ def test_dette_writes_the_ledger_from_the_folders_the_cache_key_reads_and_stops(
     assert written["aretes_montantes"] == ["certus.core.a -> certus.ui.w"]
     assert written["fichiers_longs"] == {"certus_physics/big.py": 1501}
     assert set(written) == {
-        "_commentaire", "aretes_montantes", "cycles", "fonctions_longues", "fonctions_complexes", "fichiers_longs",
+        "_commentaire", "aretes_montantes", "cycles", "fonctions_longues", "fonctions_complexes",
+        "fonctions_non_annotees", "fichiers_longs",
     }  # fmt: skip
+
+
+@pytest.mark.parametrize(
+    "source, annotated",
+    [
+        ("def f(x: int) -> int: ...", True),
+        ("def f(x) -> int: ...", False),
+        ("def f(x: int): ...", False),
+        ("def f() -> None: ...", True),
+        ("def f(): ...", False),
+        ("class A:\n    def m(self, x: int) -> None: ...", True),  # `self` is not asked for a type
+        ("class A:\n    @classmethod\n    def m(cls) -> None: ...", True),  # nor `cls`
+        ("class A:\n    def m(this, x: int) -> None: ...", False),  # only those two names are exempt
+        ("def f(*args, **kwargs) -> None: ...", True),  # the definition looks at positional arguments and the return
+        ("def f(a: int, *, b) -> None: ...", True),  # keyword-only arguments too: the definition is the plan's, unchanged
+        ("async def f(x: int) -> None: ...", True),
+        ("async def f(x) -> None: ...", False),
+    ],
+)
+def test_a_function_is_annotated_with_a_return_and_every_positional_argument(source, annotated) -> None:
+    function = next(n for n in ast.walk(ast.parse(source)) if isinstance(n, ast.FunctionDef | ast.AsyncFunctionDef))
+
+    assert metrics.est_annotee(function) is annotated
+
+
+def test_the_debt_names_the_functions_without_annotations_in_the_typed_packages_only() -> None:
+    sources = {
+        "certus/core/a.py": "def bare(x): ...\n\nclass A:\n    def m(self, y): ...\n    def ok(self, y: int) -> int: ...\n",
+        "certus/physics/b.py": "def outer(a: int) -> int:\n    def inner(b):\n        return b\n    return a\n",
+        "certus/domain/c.py": "def fine(x: int) -> int: ...\n",
+        "certus/ui/d.py": "def not_typed_package(x): ...\n",  # mypy does not run on the UI: not in the ledger
+        "certus_physics/e.py": "def outside(x): ...\n",
+    }
+
+    debt = metrics.dette(sources)
+
+    assert debt["fonctions_non_annotees"] == [
+        "certus/core/a.py::bare",
+        "certus/core/a.py::A.m",
+        "certus/physics/b.py::outer.<locals>.inner",
+    ]  # files in order, functions in the order of the file, nested ones by their qualified name
+
+
+def test_the_annotation_indicator_uses_the_same_definition_as_the_ledger() -> None:
+    sources = {"certus/core/a.py": "def bare(x): ...\ndef ok(x: int) -> int: ...\n"}
+
+    measures, _ = metrics.architecture(sources)
+
+    assert measures["arch.annotees_pct"] == 50
+    assert len(metrics.dette(sources)["fonctions_non_annotees"]) == 1
 
 
 def test_only_a_broad_handler_that_does_nothing_is_swallowed() -> None:

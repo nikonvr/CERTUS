@@ -92,6 +92,10 @@ COUCHES = {
 }  # fmt: skip
 QT = ("PyQt6", "PyQt5", "PySide", "pyqtgraph")
 
+#: Les paquets que le verificateur de types parcourt (`[tool.mypy]` de pyproject.toml) : leurs fonctions sans annotation
+#: sont nommees dans le registre de dette.
+PAQUETS_TYPES = ("certus/domain/", "certus/physics/", "certus/core/")
+
 #: Ce qui fait d'une fonction ou d'un fichier un point chaud (les indicateurs `arch.*` et le registre de dette).
 SEUIL_FONCTION_LIGNES = 300
 SEUIL_FONCTION_CC = 60
@@ -406,8 +410,7 @@ def architecture(sources: dict[str, str]) -> tuple[dict[str, int], dict[str, Any
         for node in ast.walk(arbre):
             if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
                 total += 1
-                args = [a for a in node.args.args if a.arg not in ("self", "cls")]
-                annotees += node.returns is not None and all(a.annotation is not None for a in args)
+                annotees += est_annotee(node)
         anys += len(re.findall(r"\bAny\b", sources[f]))
 
     mesures = {
@@ -431,13 +434,13 @@ def architecture(sources: dict[str, str]) -> tuple[dict[str, int], dict[str, Any
     return mesures, detail
 
 
-def _fonctions_qualifiees(arbre: ast.Module) -> list[tuple[str, int, int]]:
-    """(nom qualifie, lignes, complexite) de chaque fonction du module : `Classe.methode`, `f.<locals>.g`.
+def _fonctions_nommees(arbre: ast.Module) -> list[tuple[str, ast.FunctionDef | ast.AsyncFunctionDef]]:
+    """(nom qualifie, noeud) de chaque fonction du module : `Classe.methode`, `f.<locals>.g`.
 
     Deux fonctions de meme nom qualifie (une propriete et son `setter`, une definition par branche d'un `if`) se
     distinguent par `#2`, `#3`... dans l'ordre du fichier.
     """
-    trouvees: list[tuple[str, int, int]] = []
+    trouvees: list[tuple[str, ast.FunctionDef | ast.AsyncFunctionDef]] = []
     vus: collections.Counter = collections.Counter()
 
     def visiter(noeuds: list[ast.stmt], prefixe: str) -> None:
@@ -445,10 +448,7 @@ def _fonctions_qualifiees(arbre: ast.Module) -> list[tuple[str, int, int]]:
             if isinstance(n, ast.FunctionDef | ast.AsyncFunctionDef):
                 nom = f"{prefixe}{n.name}"
                 vus[nom] += 1
-                c = _Complexite()
-                c.visit(n)
-                lignes = getattr(n, "end_lineno", n.lineno) - n.lineno + 1
-                trouvees.append((nom if vus[nom] == 1 else f"{nom}#{vus[nom]}", lignes, c.n))
+                trouvees.append((nom if vus[nom] == 1 else f"{nom}#{vus[nom]}", n))
                 visiter(n.body, f"{nom}.<locals>.")
             elif isinstance(n, ast.ClassDef):
                 visiter(n.body, f"{prefixe}{n.name}.")
@@ -462,6 +462,22 @@ def _fonctions_qualifiees(arbre: ast.Module) -> list[tuple[str, int, int]]:
 
     visiter(arbre.body, "")
     return trouvees
+
+
+def _fonctions_qualifiees(arbre: ast.Module) -> list[tuple[str, int, int]]:
+    """(nom qualifie, lignes, complexite) de chaque fonction du module (voir `_fonctions_nommees`)."""
+    resultat: list[tuple[str, int, int]] = []
+    for nom, n in _fonctions_nommees(arbre):
+        c = _Complexite()
+        c.visit(n)
+        resultat.append((nom, getattr(n, "end_lineno", n.lineno) - n.lineno + 1, c.n))
+    return resultat
+
+
+def est_annotee(n: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+    """Une fonction est annotee quand elle a un retour et que chacun de ses arguments de position l'est (sauf `self`, `cls`)."""
+    args = [a for a in n.args.args if a.arg not in ("self", "cls")]
+    return n.returns is not None and all(a.annotation is not None for a in args)
 
 
 def sources_certus(racine: Path) -> dict[str, str]:
@@ -479,7 +495,9 @@ def dette(sources: dict[str, str]) -> dict[str, Any]:
     * `aretes_montantes` : les imports de niveau module d'une couche basse vers une couche plus haute, module a module ;
     * `cycles` : les cycles d'imports a l'execution (hors `if TYPE_CHECKING:`), membres tries ;
     * `fonctions_longues`, `fonctions_complexes`, `fichiers_longs` : ce qui depasse les seuils, avec sa mesure (un
-      plafond : elle ne fait que baisser).
+      plafond : elle ne fait que baisser) ;
+    * `fonctions_non_annotees` : les fonctions des paquets que le verificateur de types parcourt (`PAQUETS_TYPES`) qui
+      n'ont pas toutes leurs annotations, `fichier::nom qualifie`.
     """
     arbres: dict[str, ast.Module] = {}
     for f, texte in sources.items():
@@ -504,6 +522,13 @@ def dette(sources: dict[str, str]) -> dict[str, Any]:
         "cycles": sorted(sorted(c) for c in cycles(graphe_execution, modules)),
         "fonctions_longues": longues,
         "fonctions_complexes": complexes,
+        "fonctions_non_annotees": [
+            f"{f}::{nom}"
+            for f, arbre in sorted(arbres.items())
+            if f.startswith(PAQUETS_TYPES)
+            for nom, n in _fonctions_nommees(arbre)
+            if not est_annotee(n)
+        ],
         "fichiers_longs": {
             f: n
             for f, t in sorted(sources.items())
@@ -967,7 +992,9 @@ COMMENTAIRE_DETTE = (
     "La dette d'architecture, mesuree par scripts/metrics.py. aretes_montantes : les imports de niveau module d'une couche "
     "basse vers une couche plus haute (COUCHES), module a module. cycles : les cycles d'imports a l'execution (hors "
     "`if TYPE_CHECKING:`). fonctions_longues, fonctions_complexes, fichiers_longs : ce qui depasse 300 lignes, une "
-    "complexite de 60, 1 500 lignes, avec sa mesure. Le registre ne fait que retrecir : un nouvel element, ou une mesure "
+    "complexite de 60, 1 500 lignes, avec sa mesure. fonctions_non_annotees : les fonctions de certus/domain, physics et "
+    "core (les paquets que mypy parcourt) dont un argument de position ou le retour n'a pas d'annotation. "
+    "Le registre ne fait que retrecir : un nouvel element, ou une mesure "
     "qui monte, fait echouer tests/unit/test_the_architecture_debt_only_shrinks.py ; une dette payee, ou une mesure qui "
     "baisse, doit y etre corrigee dans le meme commit (python scripts/metrics.py --dette tests/architecture_debt.json)."
 )

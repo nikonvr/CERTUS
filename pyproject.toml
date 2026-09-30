@@ -150,3 +150,25 @@ exclude_lines = [
 
 [tool.coverage.html]
 directory = "htmlcov"
+
+# S4.4 : le verificateur de types parcourt les trois couches du bas. `files` nomme les paquets dont les erreurs comptent ;
+# ce qu'ils importent est lu, mais ses erreurs sont tues (`follow_imports = "silent"`). `python -m mypy` depuis la racine.
+# Le cliquet des annotations est `tests/architecture_debt.json` (`fonctions_non_annotees`), qui n'a pas besoin de mypy.
+[tool.mypy]
+python_version = "3.14"
+files = ["certus/domain", "certus/physics", "certus/core"]
+namespace_packages = true
+explicit_package_bases = true
+mypy_path = "$MYPY_CONFIG_FILE_DIR"
+follow_imports = "silent"
+# Les bibliotheques sans annotations (scipy en partie, pyqtgraph, openpyxl...) sont lues comme `Any`.
+ignore_missing_imports = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+# Numba type ses decorateurs : mypy ne suit ni `prange` ni l'appel d'un Dispatcher (53 erreurs sur 99 au premier passage).
+# Ses noyaux sont donc verifies comme du Python ordinaire, et `numba` lui-meme reste opaque.
+module = ["numba", "numba.*"]
+follow_imports = "skip"

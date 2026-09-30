@@ -1,5 +1,5 @@
 {
-  "_commentaire": "Chaque import de niveau module qui va d'une couche basse vers une couche plus haute (COUCHES de scripts/metrics.py), et chaque cycle d'imports, est ici : la dette d'architecture, mesuree le 2026-09-30 apres la sortie des constantes de la physique (certus/domain/constants.py). La liste ne fait que retrecir : un import nouveau fait echouer tests/unit/test_the_architecture_debt_only_shrinks.py, et une dette payee doit en sortir. Un import de niveau fonction n'est pas compte : il s'execute plus tard, c'est le remede habituel.",
+  "_commentaire": "Chaque import de niveau module qui va d'une couche basse vers une couche plus haute (COUCHES de scripts/metrics.py), et chaque cycle d'imports a l'execution (hors `if TYPE_CHECKING:`), est ici : la dette d'architecture, mesuree le 2026-09-30 apres la sortie des constantes de la physique (certus/domain/constants.py). La liste ne fait que retrecir : un import nouveau fait echouer tests/unit/test_the_architecture_debt_only_shrinks.py, et une dette payee doit en sortir. Un import de niveau fonction n'est pas compte : il s'execute plus tard, c'est le remede habituel.",
   "aretes_montantes": [
     "certus.core.certus_design_core -> certus.workers.certus_design_worker_utils",
     "certus.core.certus_re_objectives -> certus.workers.certus_re_worker_utils",
@@ -56,28 +56,9 @@
       "certus.physics.gradient_utils"
     ],
     [
-      "certus.spline.certus_corridor_config",
-      "certus.spline.certus_corridor_logger",
-      "certus.spline.certus_corridor_orchestrator_utils",
-      "certus.spline.certus_corridor_utils"
-    ],
-    [
       "certus.ui.certus_index_spline_common",
       "certus.ui.certus_index_spline_managers_ui",
       "certus.ui.certus_index_spline_mixins_ui"
-    ],
-    [
-      "certus.ui.certus_ui_utils",
-      "certus.ui.certus_ui_widgets_factory",
-      "certus.ui.certus_ui_widgets_utils"
-    ],
-    [
-      "certus.workers.certus_strat_workers",
-      "certus.workers.certus_strat_workers_external",
-      "certus.workers.certus_strat_workers_nominal",
-      "certus.workers.certus_strat_workers_pipeline",
-      "certus.workers.certus_strat_workers_robustness",
-      "certus.workers.certus_strat_workers_search"
     ]
   ]
 }

@@ -2,13 +2,15 @@
 
 The layers (`COUCHES` in scripts/metrics.py) run domain < physics < core = utils < metal = spline < workers < ui. A lower
 layer that imports a higher one at module level is an upward edge, and a cycle is modules that cannot be imported one
-without the others. The audit of 2026-09-29 counted 47 upward edges and 8 cycles; the plan of the 8 weeks brings them
-down, and this test keeps them there: a NEW edge or cycle fails it, and so does a debt that was paid and is still on the
-list (remove it: the gain is locked in and cannot come back unnoticed).
+without the others. The audit of 2026-09-29 counted 47 upward edges and 4 cycles at run time (8 with the imports that
+only a type checker reads); the plan of the 8 weeks brings them down, and this test keeps them there: a NEW edge or
+cycle fails it, and so does a debt that was paid and is still on the list (remove it: the gain is locked in and cannot
+come back unnoticed).
 
 The list is tests/architecture_debt.json. It names edges module to module, not layer to layer: swapping an old edge for a
 new one leaves the count where it was, and only the names see it. Function-level imports are not counted (they run
-later, they are the usual remedy), which is the definition that scripts/metrics.py has always used.
+later, they are the usual remedy), and neither, for the cycles, are those under `if TYPE_CHECKING:` (they never run,
+and they are the standard way to break a cycle: certus_ui_utils.py documents its own). The layering still sees them.
 """
 
 from __future__ import annotations
@@ -43,7 +45,8 @@ def _measured() -> tuple[set[str], set[tuple[str, ...]]]:
             trees[rel] = ast.parse(path.read_text(encoding="utf-8-sig", errors="replace"), filename=rel)
     graph, modules = metrics.graphe_imports(trees)
     edges = {f"{a} -> {b}" for a, b in metrics.liste_aretes_montantes(graph, modules)}
-    cycles = {tuple(sorted(c)) for c in metrics.cycles(graph, modules)}
+    at_run_time, _ = metrics.graphe_imports(trees, avec_typage=False)
+    cycles = {tuple(sorted(c)) for c in metrics.cycles(at_run_time, modules)}
     return edges, cycles
 
 
@@ -69,7 +72,10 @@ def test_no_new_import_cycle() -> None:
     listed = {tuple(sorted(c)) for c in DEBT["cycles"]}
     new = sorted(CYCLES - listed)
 
-    assert not new, f"modules that now import one another at module level (a cycle): {new}"
+    assert not new, (
+        "modules that now import one another when they are imported (a cycle). Break it with an import inside the "
+        f"function that needs it, or under `if TYPE_CHECKING:` when only an annotation needs it: {new}"
+    )
 
 
 def test_a_broken_cycle_leaves_the_list() -> None:

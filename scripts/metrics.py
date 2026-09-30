@@ -70,7 +70,8 @@ INDICATEURS: tuple[tuple[str, str, float | None, float | None, str | None], ...]
     ("arch.fonctions_gt300", "fonctions de plus de 300 lignes", 52, 35, "min"),
     ("arch.fonctions_cc_gt60", "fonctions de complexite > 60", 20, 12, "min"),
     ("arch.fichiers_gt1500", "fichiers certus/ de plus de 1 500 lignes", 23, 18, "min"),
-    ("arch.cycles", "cycles d'imports", 8, 3, "min"),
+    # 8 avec les imports de typage, 4 a l'execution le 2026-09-30 : on compte ce qui s'execute (voir `_imports_de_niveau_module`).
+    ("arch.cycles", "cycles d'imports a l'execution", 4, 3, "min"),
     ("arch.aretes_montantes", "aretes d'import montantes entre couches", 47, 20, "min"),
     ("arch.except_avales", "except larges avales", 74, 30, "min"),
     ("arch.annotees_pct", "fonctions de certus/ annotees (%)", 72, None, None),
@@ -191,8 +192,20 @@ def _imports(f: str, noeuds: list[ast.stmt]) -> list[str]:
     return sortie
 
 
-def _imports_de_niveau_module(arbre: ast.Module) -> list[ast.stmt]:
-    """Les imports qui s'executent a l'import du module : ni dans une fonction, ni dans une classe."""
+def _est_type_checking(test: ast.expr) -> bool:
+    """`TYPE_CHECKING` ou `typing.TYPE_CHECKING` : la condition qui n'est vraie que pour un verificateur de types."""
+    return (isinstance(test, ast.Name) and test.id == "TYPE_CHECKING") or (
+        isinstance(test, ast.Attribute) and test.attr == "TYPE_CHECKING"
+    )
+
+
+def _imports_de_niveau_module(arbre: ast.Module, avec_typage: bool = True) -> list[ast.stmt]:
+    """Les imports de niveau module : ni dans une fonction, ni dans une classe.
+
+    Avec `avec_typage=False`, ceux d'un bloc `if TYPE_CHECKING:` sont laisses de cote : ils ne s'executent jamais, et
+    c'est la maniere reglementaire de rompre un cycle (certus_ui_utils.py le documente). Le `else` d'un tel bloc,
+    lui, s'execute.
+    """
     trouves: list[ast.stmt] = []
 
     def visiter(noeuds: list[ast.stmt]) -> None:
@@ -201,7 +214,8 @@ def _imports_de_niveau_module(arbre: ast.Module) -> list[ast.stmt]:
                 continue
             if isinstance(n, ast.Import | ast.ImportFrom):
                 trouves.append(n)
-            for champ in ("body", "orelse", "finalbody"):
+            champs = ("orelse",) if not avec_typage and isinstance(n, ast.If) and _est_type_checking(n.test) else ("body", "orelse", "finalbody")
+            for champ in champs:
                 sous = getattr(n, champ, None)
                 if isinstance(sous, list):
                     visiter(sous)
@@ -213,8 +227,10 @@ def _imports_de_niveau_module(arbre: ast.Module) -> list[ast.stmt]:
     return trouves
 
 
-def graphe_imports(arbres: dict[str, ast.Module]) -> tuple[dict[str, set[str]], dict[str, str]]:
-    """(module -> modules qu'il importe au niveau module, module -> fichier)."""
+def graphe_imports(
+    arbres: dict[str, ast.Module], avec_typage: bool = True
+) -> tuple[dict[str, set[str]], dict[str, str]]:
+    """(module -> modules qu'il importe au niveau module, module -> fichier). `avec_typage` : voir `_imports_de_niveau_module`."""
     modules = {_nom_module(f): f for f in arbres}
 
     def resoudre(nom: str) -> str:
@@ -226,7 +242,7 @@ def graphe_imports(arbres: dict[str, ast.Module]) -> tuple[dict[str, set[str]], 
     graphe: dict[str, set[str]] = collections.defaultdict(set)
     for f, arbre in arbres.items():
         m = _nom_module(f)
-        for noeud in _imports_de_niveau_module(arbre):
+        for noeud in _imports_de_niveau_module(arbre, avec_typage):
             for nom in _imports(f, [noeud]):
                 if nom.startswith(QT):
                     continue
@@ -374,6 +390,7 @@ def architecture(sources: dict[str, str]) -> tuple[dict[str, int], dict[str, Any
         except (SyntaxError, ValueError):
             continue
     graphe, modules = graphe_imports(arbres)
+    graphe_execution, _ = graphe_imports(arbres, avec_typage=False)
     montantes = aretes_montantes(graphe, modules)
     fonctions_certus = fonctions(arbres)
 
@@ -394,13 +411,16 @@ def architecture(sources: dict[str, str]) -> tuple[dict[str, int], dict[str, Any
         "arch.fonctions_gt300": sum(1 for lignes, *_ in fonctions_certus if lignes > 300),
         "arch.fonctions_cc_gt60": sum(1 for _, cc, *_ in fonctions_certus if cc > 60),
         "arch.fichiers_gt1500": sum(1 for f, t in sources.items() if f.startswith("certus") and len(t.splitlines()) > 1500),
-        "arch.cycles": len(cycles(graphe, modules)),
+        "arch.cycles": len(cycles(graphe_execution, modules)),
         "arch.aretes_montantes": sum(montantes.values()),
         "arch.except_avales": except_avales(arbres),
         "arch.annotees_pct": round(100 * annotees / max(total, 1)),
         "arch.any": anys,
     }
-    detail = {"aretes_montantes": {f"{a} -> {b}": n for (a, b), n in sorted(montantes.items(), key=lambda kv: -kv[1])}}
+    detail = {
+        "aretes_montantes": {f"{a} -> {b}": n for (a, b), n in sorted(montantes.items(), key=lambda kv: -kv[1])},
+        "cycles_avec_imports_de_typage": len(cycles(graphe, modules)),
+    }
     return mesures, detail
 
 

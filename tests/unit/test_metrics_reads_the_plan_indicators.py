@@ -95,6 +95,31 @@ def test_an_import_inside_a_function_is_neither_an_edge_nor_a_cycle() -> None:
     assert metrics.architecture(eager)[0]["arch.cycles"] == 1
 
 
+def test_an_import_under_type_checking_is_an_upward_edge_but_never_a_cycle() -> None:
+    # The standard remedy for a cycle (certus_ui_utils.py documents it) must not be counted as one; the layering still sees it.
+    sources = {
+        "certus/core/a.py": "from certus.core import b\n",
+        "certus/core/b.py": "from typing import TYPE_CHECKING\nif TYPE_CHECKING:\n    from certus.core import a\n",
+        "certus/physics/p.py": "import typing\nif typing.TYPE_CHECKING:\n    from certus.core import a\n",
+    }
+
+    measures, detail = metrics.architecture(sources)
+
+    assert measures["arch.cycles"] == 0
+    assert detail["cycles_avec_imports_de_typage"] == 1
+    assert measures["arch.aretes_montantes"] == 1  # physics -> core
+
+
+def test_what_runs_next_to_type_checking_still_counts_as_an_import() -> None:
+    def cycles(b: str) -> int:
+        sources = {"certus/core/a.py": "from certus.core import b\n", "certus/core/b.py": b}
+        return metrics.architecture(sources)[0]["arch.cycles"]
+
+    assert cycles("import typing\nif typing.TYPE_CHECKING:\n    pass\nelse:\n    from certus.core import a\n") == 1
+    assert cycles("from typing import TYPE_CHECKING\nif not TYPE_CHECKING:\n    from certus.core import a\n") == 1
+    assert cycles("from typing import TYPE_CHECKING\nif TYPE_CHECKING:\n    from certus.core import a\n") == 0
+
+
 def test_a_relative_import_is_resolved_against_its_own_package() -> None:
     sources = {
         "certus/physics/__init__.py": "",

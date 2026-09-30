@@ -9,10 +9,16 @@ old version, silently.
 
 `numba_cache_dir` (used by `configure_numba_env`) is now `CERTUS_Numba_Cache/<key>`, where the key covers the
 sources that mention `numba`, and the versions of Python and Numba.
+
+`ensure_numba_cache_dir` gives the same directory to what does not start from the entry point of an application,
+the test session first. Measured on 2026-09-30: a pytest run read the cache that Numba keeps next to the sources
+(`certus/physics/__pycache__`) when nobody says otherwise, found there a `cost_numba_fast` compiled against the
+old `calc_spectrum_full_exact`, and four oracle tests failed on code that was right.
 """
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import subprocess
@@ -106,6 +112,7 @@ def test_configure_numba_env_uses_the_keyed_directory(tmp_path) -> None:
     )
     env = {**os.environ, "TMP": str(tmp_path), "TEMP": str(tmp_path), "TMPDIR": str(tmp_path)}
     env.pop("_CERTUS_NUMBA_CONFIGURED", None)
+    env.pop("NUMBA_CACHE_DIR", None)  # the test session sets one (tests/conftest.py)
 
     out = subprocess.run([sys.executable, "-c", code, str(ROOT)], env=env, capture_output=True, text=True, check=True)
     directory, key_printed = out.stdout.split()
@@ -153,3 +160,81 @@ def test_a_new_directory_per_version_reads_the_new_callee(tmp_path) -> None:
 
     assert first == 4.0  # (1 + 1) * 2
     assert second == 22.0  # (1 + 10) * 2
+
+
+# =============================================================================
+# The test session does not start from the entry point of an application
+# =============================================================================
+
+HEAD = (
+    "import json, os, sys; sys.path.insert(0, sys.argv[1]);"
+    "from certus.core.certus_core import ensure_numba_cache_dir, numba_cache_key;"
+    "names = lambda: {k for k in os.environ if k.startswith(('NUMBA_', '_CERTUS_NUMBA'))};"
+    "before = names();"
+)
+
+
+def _fresh(code: str, tmp_path: Path, **environment: str) -> dict:
+    env = {**os.environ, "TMP": str(tmp_path), "TEMP": str(tmp_path), "TMPDIR": str(tmp_path)}
+    for name in ("NUMBA_CACHE_DIR", "_CERTUS_NUMBA_CONFIGURED", "NUMBA_NUM_THREADS", "NUMBA_THREADING_LAYER"):
+        env.pop(name, None)
+    env.update(environment)
+    out = subprocess.run([sys.executable, "-c", code, str(ROOT)], env=env, capture_output=True, text=True, check=True)
+    return json.loads(out.stdout)
+
+
+ENSURE = (
+    HEAD + "returned = ensure_numba_cache_dir();"
+    "print(json.dumps({'returned': returned, 'env': os.environ['NUMBA_CACHE_DIR'], 'key': numba_cache_key(),"
+    " 'added': sorted(names() - before)}))"
+)
+
+
+def test_ensure_numba_cache_dir_sets_the_keyed_directory_and_only_that(tmp_path) -> None:
+    got = _fresh(ENSURE, tmp_path)
+
+    assert Path(got["returned"]) == Path(got["env"]) == tmp_path / "CERTUS_Numba_Cache" / got["key"]
+    assert Path(got["returned"]).is_dir()
+    # no thread count, no threading layer, no "configured" flag: those change how a parallel sum adds up
+    assert got["added"] == ["NUMBA_CACHE_DIR"]
+
+
+def test_a_directory_chosen_by_the_caller_is_kept(tmp_path) -> None:
+    chosen = str(tmp_path / "mine")
+
+    got = _fresh(ENSURE, tmp_path, NUMBA_CACHE_DIR=chosen)
+
+    assert got["returned"] == got["env"] == chosen
+    assert got["added"] == []
+    assert not (tmp_path / "CERTUS_Numba_Cache").exists()
+
+
+KERNELS = (
+    "import certus.physics.gradient_utils; import numba;"
+    "print(json.dumps({'numba': numba.config.CACHE_DIR}))"
+)
+
+
+def test_the_kernels_read_the_keyed_directory_once_it_is_asked(tmp_path) -> None:
+    from certus.core.certus_core import numba_cache_key
+
+    got = _fresh(HEAD + "ensure_numba_cache_dir();" + KERNELS, tmp_path)
+
+    assert Path(got["numba"]) == tmp_path / "CERTUS_Numba_Cache" / numba_cache_key()
+
+
+def test_left_alone_numba_keeps_its_cache_next_to_the_sources(tmp_path) -> None:
+    # The defect: with nobody to say otherwise the location is empty, i.e. `certus/physics/__pycache__`.
+    got = _fresh(HEAD + KERNELS, tmp_path)
+
+    assert got["numba"] == ""
+
+
+def test_this_test_session_reads_a_directory_of_the_kind_the_applications_read() -> None:
+    import numba
+
+    # Set by tests/conftest.py before the first import that loads Numba; without it, the kernels of this session
+    # read the cache next to the sources, and an old callee inside a new caller.
+    assert numba.config.CACHE_DIR
+    assert numba.config.CACHE_DIR == os.environ["NUMBA_CACHE_DIR"]
+    assert Path(numba.config.CACHE_DIR).is_dir()

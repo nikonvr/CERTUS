@@ -300,6 +300,25 @@ def numba_cache_dir() -> str:
     return str(path)
 
 
+def ensure_numba_cache_dir() -> str:
+    """Point Numba at the directory of this version of the sources unless the caller chose another; return it.
+
+    For the code that imports the kernels without going through the entry point of an application, which calls
+    `configure_numba_env` first: the test session. Left alone, Numba writes its cache next to the sources, in
+    `certus/physics/__pycache__`, where a function keeps the machine code of an OLD callee of another file after
+    an update (see `numba_cache_key`). Measured on 2026-09-30: `cost_numba_fast` went on ignoring the substrate
+    loss of the new `calc_spectrum_full_exact`, and four oracle tests failed on code that was right.
+
+    Only the directory: no thread count, no threading layer. `configure_numba_env` sets those for the
+    applications, and a change of the thread count changes the order of a parallel sum, so the last bits of a
+    result. Must run before the first `import numba`: Numba fixes its cache location when it is imported.
+    """
+
+    if "NUMBA_CACHE_DIR" not in os.environ:
+        os.environ["NUMBA_CACHE_DIR"] = numba_cache_dir()
+    return os.environ["NUMBA_CACHE_DIR"]
+
+
 def get_materials_db_hash() -> str | None:
     """Returns SHA256 of the current materials DB if available."""
     try:
@@ -344,8 +363,7 @@ def configure_numba_env() -> None:
     # sys flag is the fast path, but only if the env var also confirms "done".
     # If a test resets _CERTUS_NUMBA_CONFIGURED to "0", we must re-run full config.
     if getattr(sys, "_certus_numba_configured", False) and os.environ.get("_CERTUS_NUMBA_CONFIGURED") == "1":
-        if "NUMBA_CACHE_DIR" not in os.environ:
-            os.environ["NUMBA_CACHE_DIR"] = numba_cache_dir()
+        ensure_numba_cache_dir()
         if "NUMBA_THREADING_LAYER" not in os.environ:
             os.environ["NUMBA_THREADING_LAYER"] = "workqueue" if is_frozen() else "omp"
         return

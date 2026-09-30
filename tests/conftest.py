@@ -69,6 +69,18 @@ if "CERTUS_CONFIG_DIR" not in os.environ:
     )
     os.environ["CERTUS_CONFIG_DIR"] = str(_prefs_dir)
 
+# Numba's cache goes where the applications put it: one directory per version of the sources
+# (certus.core.certus_core.numba_cache_key). Left alone, Numba writes it next to the sources, in
+# certus/physics/__pycache__, where a function keeps the machine code of an OLD callee of another file
+# after an update: measured 2026-09-30, cost_numba_fast went on ignoring the substrate loss of the new
+# calc_spectrum_full_exact, and four oracle tests failed on code that was right
+# (tests/unit/test_numba_cache_is_keyed_by_the_sources.py). Only the directory: no thread setting, so no
+# change to the order of a parallel sum. Before the first import that loads Numba: Numba fixes its cache
+# location when it is imported.
+from certus.core.certus_core import ensure_numba_cache_dir  # noqa: E402
+
+ensure_numba_cache_dir()
+
 # Force Qt offscreen platform for headless CI/test environments.
 # Must be set BEFORE any QApplication is created.
 if "QT_QPA_PLATFORM" not in os.environ:

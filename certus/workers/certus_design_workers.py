@@ -118,7 +118,7 @@ class OptimWorker(QObject):
                 self.signals.progress_snapshot.emit(snap)
                 self._progress_snapshot_sent = True
             except Exception:
-                pass
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
         return self.design_strat._optimization_callback(self, sample)
 
     def _run_pre_polish(self, x0_start, var_idx, gradient_func_to_use, objective_wrapper) -> Any:

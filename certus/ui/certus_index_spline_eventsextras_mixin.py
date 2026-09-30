@@ -91,7 +91,7 @@ class CertusIndexSplineEventsExtrasMixin:
         try:
             show_toast(self, "System ready. JIT Warmup complete.", "success")
         except Exception:
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
     @pyqtSlot()
     def _on_numba_error_ui(self) -> None:
@@ -883,7 +883,7 @@ class CertusIndexSplineEventsExtrasMixin:
                     try:
                         curve.setZValue(10)
                     except Exception:
-                        pass
+                        logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         return True
 

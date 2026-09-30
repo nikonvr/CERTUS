@@ -777,7 +777,7 @@ class CertusBaseApp(
         try:
             show_toast(self, "System ready. JIT Warmup complete.", "success")
         except Exception:
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
         self._on_numba_ready()
 
     def _on_warmup_error(self, message: str) -> None:

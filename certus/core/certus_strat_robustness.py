@@ -414,7 +414,7 @@ def _prepare_robustness_nominal_optics(
             nSub_arr = np.array(nSub_list, dtype=np.complex128)
             db_bypassed = True
         except Exception:
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
     if not db_bypassed:
         local_db = params.get("materials_db_instance") or params.get("materials_db") or APP_CONTEXT.get("materials_db")
@@ -3201,7 +3201,7 @@ def run_final_simulation_block(
         try:
             local_clues[wl] = idx_dict[wl]
         except Exception:
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
     clues_at_wl = local_clues
     opti_results = dict(opti_results)

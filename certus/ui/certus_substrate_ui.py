@@ -217,7 +217,7 @@ class IndexTableDialog(QDialog):
             self.plot.legend.setBrush(QBrush(QColor(CertusTheme.SURFACE)))
             self.plot.legend.setLabelTextColor(QColor(CertusTheme.TEXT_MAIN))
         except Exception:
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         self.plot.showGrid(x=True, y=True, alpha=0.3)
 
@@ -1221,7 +1221,7 @@ class SubstrateIndexGUI(QMainWindow):
             self.output_plot.legend.setBrush(QBrush(QColor(CertusTheme.SURFACE)))
             self.output_plot.legend.setLabelTextColor(QColor(CertusTheme.TEXT_MAIN))
         except Exception:
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
         self.output_plot.showGrid(x=True, y=True, alpha=0.25)
         self.output_plot.setLabel("bottom", "Wavelength (nm)")
         self.output_plot.setLabel("left", "Index n")

@@ -45,12 +45,12 @@ class CertusWorkerManager(QObject):
                 try:
                     worker.stop()
                 except Exception:
-                    pass
+                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
             if hasattr(worker, "requestInterruption"):
                 try:
                     worker.requestInterruption()
                 except Exception:
-                    pass
+                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
     def active_count(self) -> int:
         return len(self._active_workers)

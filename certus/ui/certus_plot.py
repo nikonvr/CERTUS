@@ -217,7 +217,7 @@ class CertusScientificPlot(pg.PlotWidget):
                 event.accept()
                 return
             except Exception:
-                pass
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
         super().mouseDoubleClickEvent(event)
 
     def setYRange(self, *args, **kwargs) -> None:
@@ -235,7 +235,7 @@ class CertusScientificPlot(pg.PlotWidget):
                         if xData is not None and len(xData) > 0:
                             return True
                     except Exception:
-                        pass
+                        logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
         return False
 
     def _trigger_auto_range(self) -> None:

@@ -1085,13 +1085,13 @@ def normalize_index_config(cfg: dict) -> dict:
         try:
             out["stack_multipliers"] = [float(x.strip()) for x in str(out["stack_string"]).split(",") if x.strip()]
         except Exception:
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
     for key in ("thickness_min", "thickness_max", "exclude_min", "exclude_max", "weight_T", "weight_R", "l0", "wl_range_start", "wl_range_end", "wl_step", "scan_wl_min", "scan_wl_max", "scan_wl_step", "dynamics_threshold", "min_transmission_floor", "min_spectral_resolution", "mc_runs_block", "iter_divider_start", "iter_divider_end", "strategy_phase_timeout", "screening_mc_runs", "screening_keep_top_k", "trigger_tolerance", "sim_thickness_probe_offset_ratio", "non_monotonic_error_factor", "wavelength_change_penalty", "extrema_exclusion_ratio", "robustness_num_runs", "nucleation_mc_runs", "mining_candidates_limit", "n_screen_runs", "k_keep_survivors", "top_k_parents", "max_fusions_per_parent", "phase_a_scan_limit", "phase_a_keep_limit", "nucleation_max_rmse", "nucleation_degradation", "step0_sigma", "keep_full_mc_top_k", "sym_weight", "sym_same_wl_bonus", "sym_extrema_window", "sym_continuity_weight", "consensus_num_seeds", "consensus_seed_stride", "consensus_top_k", "consensus_num_runs", "consensus_std_weight"):
         if key in out and isinstance(out[key], str):
             try:
                 out[key] = float(str(out[key]).replace(",", "."))
             except Exception:
-                pass
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
     for key in ("frosted", "normalized", "exclude_oh", "strict_min_transmission_floor", "enforce_best_strategy_tmin_check", "sym_enable", "sym_adaptive_same_wl", "sym_allow_hybrid", "sym_prefer_on_tie", "enable_consensus_ranking", "show_plots", "export_excel", "force_first_layer_same_wl"):
         if key in out and isinstance(out[key], str):
             out[key] = str(out[key]).strip().lower() in {"1", "true", "yes", "on", "oui"}
@@ -1102,7 +1102,7 @@ def normalize_index_config(cfg: dict) -> dict:
                 try:
                     out[key] = json.loads(raw)
                 except Exception:
-                    pass
+                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
     return out
 
 

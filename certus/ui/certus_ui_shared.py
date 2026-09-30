@@ -1,5 +1,6 @@
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QApplication
+import logging
 
 _ZOOM_MIN: float = 0.5
 _ZOOM_MAX: float = 2.5
@@ -22,12 +23,12 @@ def apply_app_zoom(owner, factor: float, *, label_attr: str, stylesheet_fn=None,
         try:
             owner.setStyleSheet(stylesheet_fn())
         except Exception:
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
     if toast_fn is not None:
         try:
             toast_fn(owner, f"Zoom {int(round(factor * 100))}%", "info", duration_ms=1200)
         except Exception:
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
     return factor
 
 

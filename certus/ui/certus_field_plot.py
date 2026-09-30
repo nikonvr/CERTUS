@@ -1,6 +1,7 @@
 import pyqtgraph as pg
 from PyQt6.QtCore import Qt
 from certus.ui.certus_plot import CertusScientificPlot
+import logging
 
 
 class CertusFieldPlotWidget(CertusScientificPlot):
@@ -26,7 +27,7 @@ class CertusFieldPlotWidget(CertusScientificPlot):
             try:
                 self.removeItem(item)
             except Exception:
-                pass
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
         self._boundary_items.clear()
         self._mc_items.clear()
 
@@ -137,7 +138,7 @@ class CertusFieldPlotWidget(CertusScientificPlot):
                 try:
                     self.removeItem(item)
                 except Exception:
-                    pass
+                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
             self._boundary_items.clear()
 
         # Plot initial data as dashed lines if present for comparison

@@ -408,7 +408,7 @@ def configure_numba_env() -> None:
             return
         except Exception:
             # Fallback to standard path if runtime introspection fails.
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
     # Setup cache directory
     # A deterministic temp dir per version of the sources ensures reuse across runs of the same code, and
@@ -658,7 +658,7 @@ def _bg_warmup() -> None:
 
         _warmup_re_physics()
     except Exception:
-        pass
+        logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
 
 def start_jit_warmup() -> None:

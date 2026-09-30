@@ -2207,6 +2207,6 @@ class MetalBaseApp(CertusBaseApp):
                     try:
                         handler.flush()
                     except Exception:
-                        pass
+                        logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
         except Exception:
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)

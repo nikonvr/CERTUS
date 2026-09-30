@@ -61,12 +61,12 @@ class CrashAndFreezeWatchdog:
             try:
                 self.log_exception("SYS_UNHANDLED", exc_type, exc_value, exc_tb)
             except Exception:
-                pass
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
             try:
                 if sys.stderr and not getattr(sys.stderr, "closed", False):
                     orig_sys_hook(exc_type, exc_value, exc_tb)
             except Exception:
-                pass
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         sys.excepthook = _certus_sys_excepthook
 
@@ -82,12 +82,12 @@ class CrashAndFreezeWatchdog:
                         args.exc_traceback,
                     )
                 except Exception:
-                    pass
+                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
                 try:
                     if sys.stderr and not getattr(sys.stderr, "closed", False):
                         orig_thread_hook(args)
                 except Exception:
-                    pass
+                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
             threading.excepthook = _certus_thread_excepthook
 
@@ -125,7 +125,7 @@ class CrashAndFreezeWatchdog:
                 f.write(entry)
                 f.flush()
         except Exception:
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
     def _monitor_loop(self) -> None:
         """Background loop checking whether the GUI thread missed its heartbeat."""
@@ -189,7 +189,7 @@ class CrashAndFreezeWatchdog:
             try:
                 self._qt_timer.stop()
             except Exception:
-                pass
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
         if self._faulthandler_file is not None:
             try:
                 faulthandler.disable()
@@ -197,7 +197,7 @@ class CrashAndFreezeWatchdog:
                 self._faulthandler_file.close()
                 self._faulthandler_file = None
             except Exception:
-                pass
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
 
 _GLOBAL_WATCHDOG: CrashAndFreezeWatchdog | None = None

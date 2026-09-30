@@ -173,6 +173,10 @@ mais **synchronisés par Drive**) : supprime-les ensuite.
   `open(chemin, "w")` : un écrivain qui meurt au milieu (disque plein, exception, processus tué)
   laissait un fichier tronqué sur la copie de l'utilisateur. `tests/unit/test_exports_are_written_atomically.py`
   refuse tout autre `open(..., "w")` dans `certus/`.
+- **Un `except` large ne se tait pas** : `except Exception: pass` fait disparaître une erreur sans
+  laisser de trace. Restreins-le aux exceptions attendues, ou écris
+  `logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)` (rien ne coûte à
+  un niveau supérieur). `tests/unit/test_no_broad_exception_is_swallowed_in_silence.py` refuse un nouveau.
 - **Le premier calcul est lent** (compilation numba, +30 s) : chauffe, puis mesure.
 - **N'écris pas l'artefact que tu décris** : un hexadécimal cité dans un commentaire fait
   bouger le cliquet des couleurs, une règle QSS citée dans une f-string est recrachée dans la

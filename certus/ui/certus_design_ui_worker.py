@@ -867,12 +867,12 @@ class WorkerManager:
                     self.ui.optim_worker.request_stop()
                 self.ui.optim_thread.quit()
         except Exception:
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
         try:
             if self.ui.needle_thread and self.ui.needle_thread.isRunning():
                 self.ui.needle_thread.requestInterruption()
         except Exception:
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         for attr in (
             "_needle_cycle_step",

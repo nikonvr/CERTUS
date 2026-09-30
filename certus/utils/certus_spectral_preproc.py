@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 from scipy.signal import find_peaks, savgol_filter
+import logging
 
 
 def _ensure_odd(n: int) -> int:
@@ -454,7 +455,7 @@ def dynamic_savgol_blend(x: np.ndarray, y: np.ndarray, base_window: int, poly: i
             # Same: `x` is original abscissa, `x_prep` is sorted/deduplicated.
             return _safe_clip_percent(f_back(1.0 / x))
     except Exception:
-        pass
+        logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
     y_smoothed, _info = smooth_spectrum_auto(x, y, level="moyen")
     return y_smoothed

@@ -138,7 +138,7 @@ class CertusStratGrowthWidget(QWidget):
             self.plot_widget.enableAutoRange(axis=pg.ViewBox.XYAxes, enable=True)
             self.plot_widget.autoRange()
         except Exception:
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
 
 class LiveMonitorWindow(CertusWindowSpyMixin, QMainWindow):

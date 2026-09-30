@@ -33,6 +33,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Final
 from certus.utils.certus_qsettings import certus_settings
+import logging
 
 
 # =============================================================================
@@ -105,7 +106,7 @@ class RecentFilesRegistry:
         try:
             qs.sync()
         except Exception:
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
     # -- Read -------------------------------------------------------------
     def list_recent(self, category: str, *, limit: int | None = None, drop_missing: bool = True) -> list[str]:

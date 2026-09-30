@@ -82,7 +82,7 @@ class CertusFieldStateMixin:
                 else:
                     return float(db_ref.get_material_index(mat_name, wl).real)
             except Exception:
-                pass
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
         # Fallbacks to avoid crashes if DB is empty or fails
         if "Ta2O5" in mat_name: return 2.10
         if "Nb" in mat_name: return 2.20
@@ -231,7 +231,7 @@ class CertusFieldStateMixin:
                 try:
                     self.detached_stack_window.closed_signal.disconnect()
                 except Exception:
-                    pass
+                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
                 
                 if "stack_structure" in self.detached_plot_windows:
                     del self.detached_plot_windows["stack_structure"]
@@ -596,7 +596,7 @@ class CertusFieldStateMixin:
             if hasattr(self, "opt_panel") and hasattr(self.opt_panel, "edit_dmin"):
                 return max(0.0, float(self.opt_panel.edit_dmin.value()))
         except Exception:
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
         return 5.0
 
     def _stack_has_layers_below_dmin(self, dmin_nm: float) -> bool:
@@ -610,6 +610,7 @@ class CertusFieldStateMixin:
                 if float(thick_item.text()) < dmin_nm:
                     return True
             except Exception:
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
                 continue
         return False
 
@@ -632,6 +633,7 @@ class CertusFieldStateMixin:
                 try:
                     thickness = float(thick_item.text())
                 except Exception:
+                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
                     continue
                 if thickness < dmin_nm:
                     rows_to_remove.append(row)
@@ -1008,7 +1010,7 @@ class CertusFieldStateMixin:
                 if c is not None and np.isfinite(c) and c < 1e20:
                     evals.append(c)
             except Exception:
-                pass
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
         if evals:
             mc_cost = float(np.mean(evals))
 

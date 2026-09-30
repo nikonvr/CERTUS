@@ -935,7 +935,7 @@ class ManualSigmaKnotDialog(QDialog):
             if hasattr(self, "_preview_popup") and self._preview_popup is not None:
                 self._preview_popup.close()
         except Exception:
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
         super().done(result)
 
     def showEvent(self, event) -> None:

@@ -8,6 +8,7 @@ from certus.utils.certus_strat_context import _compute_blocks_range_for_params
 from certus.utils.certus_data import SharedIndicesManager, SharedArrayManager
 from PyQt6.QtCore import QThread
 import queue
+import logging
 
 if TYPE_CHECKING:
     from certus.workers.certus_strat_workers import WorkerThread
@@ -209,16 +210,16 @@ class FullPipelineStrategy:
                     try:
                         live_preview_queue.put("STOP")
                     except Exception:
-                        pass
+                        logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
                 if getattr(worker, "monitor_worker", None) is not None:
                     try:
                         QMetaObject.invokeMethod(worker.monitor_worker, "stop", Qt.ConnectionType.QueuedConnection)
                     except Exception:
-                        pass
+                        logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
                 try:
                     worker.monitor_thread.quit()
                 except Exception:
-                    pass
+                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
                 if not worker.monitor_thread.wait(3000):
                     worker.params["logger"].warning("Live preview monitor thread did not stop within 3s")
 
@@ -232,7 +233,7 @@ class FullPipelineStrategy:
                 try:
                     worker.consumer_thread.quit()
                 except Exception:
-                    pass
+                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
                 if not worker.consumer_thread.wait(2000):
                     worker.params["logger"].warning("Stats consumer thread did not stop within 2s")
 

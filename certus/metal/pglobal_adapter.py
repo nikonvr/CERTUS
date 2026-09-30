@@ -107,6 +107,7 @@ def run_pglobal_optimization(
                     best_sample_fun = val
                     best_sample = np.asarray(candidate, dtype=np.float64)
             except Exception:
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
                 continue
         x0_arr = best_sample.copy()
         local_radius = np.asarray(highs - lows, dtype=np.float64)
@@ -127,6 +128,7 @@ def run_pglobal_optimization(
                         local_best_fun = val
                         local_best = np.asarray(candidate, dtype=np.float64)
                 except Exception:
+                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
                     continue
             x0_arr = local_best.copy()
 

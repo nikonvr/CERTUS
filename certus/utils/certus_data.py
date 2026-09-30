@@ -261,7 +261,7 @@ def _clean_and_truncate_df_for_excel(df: pd.DataFrame) -> pd.DataFrame:
                         needs_cleaning = True
                         break
                 except Exception:
-                    pass
+                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
         if needs_cleaning:
             break
 

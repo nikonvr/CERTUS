@@ -27,6 +27,7 @@ from certus.core.certus_hub_config import (
 # `typing` at module level, so this cannot cycle back; and `ui -> utils` is the allowed
 # direction (it is `utils -> ui` that CLAUDE.md counts as an inversion).
 from certus.utils.certus_ux import Typography as _Typography
+import logging
 
 
 class CertusTheme:
@@ -659,7 +660,7 @@ class CertusTheme:
                         f"has contrast ratio {val.get('ratio')}:1 (min WCAG AA requirement is 4.5:1)"
                     )
         except Exception:
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         # Apply theme stylesheet to app (if supported) instead of relying on QApplication.instance()
         # This handles testing with mocks better

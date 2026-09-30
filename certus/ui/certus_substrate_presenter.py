@@ -118,7 +118,7 @@ class CertusSubstratePresenter:
                 qmeta = n_fit_meta.get(first_key, {}).get(first_model_key, {})
                 quality_summary = f"{first_key} / {first_model_key}: {qmeta.get('source', 'n/a')}"
             except Exception:
-                pass
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
             self.view.display_results(
                 x, n_results_raw, n_results_by_model, rmse_row, n_fit_meta, wl_min_fit, wl_max_fit, quality_summary

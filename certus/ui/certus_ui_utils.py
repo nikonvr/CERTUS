@@ -872,7 +872,7 @@ def init_certus_app(app_name: str = "CERTUS", app: QApplication | None = None, *
             sys.stderr.write(msg_str + "\n")
         qInstallMessageHandler(qt_message_handler)
     except Exception:
-        pass
+        logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
     # Windows Taskbar Icon Fix (AppUserModelID)
 
@@ -1009,7 +1009,7 @@ def safe_ui_action(func):
                 if len(args) > pos_params_count:
                     args = args[:pos_params_count]
         except Exception:
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         app_instance = QApplication.instance()
 
@@ -1371,17 +1371,17 @@ def remove_skeleton_loader(target_widget: QWidget) -> bool:
         try:
             target_widget.removeEventFilter(filt)
         except Exception:
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
         try:
             loader.hide()
             loader.setParent(None)
             loader.deleteLater()
         except Exception:
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
         try:
             del target_widget._certus_skeleton
         except Exception:
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
         removed = True
 
     try:
@@ -1393,9 +1393,9 @@ def remove_skeleton_loader(target_widget: QWidget) -> bool:
                 child.deleteLater()
                 removed = True
             except Exception:
-                pass
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
     except Exception:
-        pass
+        logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
     return removed
 
@@ -1469,4 +1469,4 @@ def apply_os_window_effects(window: QWidget, dark_mode: bool = False) -> None:
             window.setStyleSheet(current_style + override_style)
     except Exception:
         # Silently fail if win32 API / dwmapi is not available (e.g. mock test environment)
-        pass
+        logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)

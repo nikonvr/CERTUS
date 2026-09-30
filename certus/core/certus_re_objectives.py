@@ -799,4 +799,4 @@ def _warmup_re_physics() -> None:
             return_residuals=True,
         )
     except Exception:
-        pass
+        logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)

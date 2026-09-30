@@ -226,7 +226,7 @@ class CertusStratWorkerMixin:
         try:
             show_toast(self, "System ready. JIT Warmup complete.", "success")
         except Exception:
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
     @pyqtSlot()
     def _on_numba_error_ui(self) -> None:
@@ -514,7 +514,7 @@ class CertusStratWorkerMixin:
                     if hasattr(self, "plot_stack"):
                         self.plot_stack.setCurrentWidget(self.stack_progress_widget)
             except Exception:
-                pass
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         # Registered, so that closing the window mid-run asks first (confirm_close_during_run).
         self.worker_manager.register_worker(self.worker)
@@ -699,7 +699,7 @@ class CertusStratWorkerMixin:
                         ):
                             self.plot_stack.setCurrentWidget(self.stack_progress_widget)
                 except Exception:
-                    pass
+                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
             elif "Phase B" in message:
                 try:
                     if hasattr(self, "phase_b_live_widget"):
@@ -707,7 +707,7 @@ class CertusStratWorkerMixin:
                         if hasattr(self, "plot_stack") and self.plot_stack.currentWidget() != self.phase_b_live_widget:
                             self.plot_stack.setCurrentWidget(self.phase_b_live_widget)
                 except Exception:
-                    pass
+                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
     def _stop_all_threads_parallel(self, timeout_ms: int = 10000) -> None:
         """Stop main worker, active render thread, and auxiliary threads in parallel."""

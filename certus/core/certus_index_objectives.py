@@ -1931,4 +1931,4 @@ def warmup_index_objectives(silent: bool = True) -> None:
                 lam_um, np.full(n_pix, 2.0), 100.0, lam_um, p_sell, p_k8, 5.0, np.zeros(0), 0.0
             )
         except Exception:
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)

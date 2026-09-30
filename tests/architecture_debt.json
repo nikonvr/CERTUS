@@ -46,7 +46,7 @@
     "certus/core/certus_substrate_index.py::IndexCore._fit_model_spline_adaptive": 358,
     "certus/core/certus_substrate_sellmeier.py::_fit_model_sellmeier3poles": 389,
     "certus/metal/certus_metal_bilayer_app.py::BeamAnalysisWorker.run": 397,
-    "certus/metal/pglobal_adapter.py::run_pglobal_optimization": 333,
+    "certus/metal/pglobal_adapter.py::run_pglobal_optimization": 335,
     "certus/physics/certus_opt_needle.py::needle_scan_cached": 416,
     "certus/physics/gradient_analytic.py::_compute_epsilon1_gradient_kernel": 372,
     "certus/physics/gradient_analytic.py::_compute_single_layer_sensitivity_kernel": 333,

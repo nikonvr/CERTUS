@@ -6,6 +6,7 @@ from certus.ui.certus_field_services import FieldStackService
 from certus.workers.certus_field_workers_dto import FieldWorkerRequest
 from certus.workers.certus_field_workers import FieldWorkerThread
 import traceback
+import logging
 
 class CertusFieldWorkersMixin:
     """CertusFieldWorkersMixin."""
@@ -32,7 +33,7 @@ class CertusFieldWorkersMixin:
             try:
                 QApplication.restoreOverrideCursor()
             except Exception:
-                pass
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         if not result.success:
             if hasattr(self, "progress_widget"):
@@ -202,7 +203,7 @@ class CertusFieldWorkersMixin:
             try:
                 QApplication.restoreOverrideCursor()
             except Exception:
-                pass
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         if result.success and synthesis_was_active and not self._synthesis_active:
             if len(self.pareto_history) > 1:
@@ -226,7 +227,7 @@ class CertusFieldWorkersMixin:
         try:
             QApplication.restoreOverrideCursor()
         except Exception:
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
         if self.logger:
             self.logger.error(f"Worker Error: {exc_val}\n{''.join(traceback.format_exception(exc_type, exc_val, exc_trace))}")
 

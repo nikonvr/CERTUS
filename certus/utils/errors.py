@@ -83,7 +83,7 @@ def safe_ui_action(func):
                 if len(args) > pos_params_count:
                     args = args[:pos_params_count]
         except Exception:
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         try:
             from certus.ui.certus_ui import safe_ui_action as real_safe_ui_action

@@ -1,5 +1,7 @@
 """Oracle contract tests for Numba CPUDispatcher functions (Lot D4)."""
 
+import os
+
 import pytest
 from numba.core.registry import CPUDispatcher
 
@@ -11,6 +13,10 @@ from certus.physics.gradient_metal import _compute_metal_tmm_gradient_kernel
 from certus.physics.certus_strat_math import _solve_quadratic_target
 
 
+@pytest.mark.skipif(
+    os.environ.get("NUMBA_DISABLE_JIT") == "1",
+    reason="the kernel-coverage run disables the JIT on purpose (tests/coverage_floors.json): nothing is compiled",
+)
 def test_numba_cpu_dispatcher_contracts():
     """Action D4 — Verify all critical Numba JIT physics kernels are valid CPUDispatcher objects."""
     numba_kernels = [

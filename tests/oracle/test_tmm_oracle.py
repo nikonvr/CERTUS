@@ -13,6 +13,7 @@ correctif (voir les commentaires « GARDE-FOU »).
 from __future__ import annotations
 
 import math
+import os
 import sys
 from pathlib import Path
 
@@ -343,6 +344,10 @@ def test_oblique_energy_conservation(angle_deg: float, s_pol: bool) -> None:
     )
 
 
+@pytest.mark.skipif(
+    os.environ.get("NUMBA_DISABLE_JIT") == "1",
+    reason="the kernel-coverage run disables the JIT on purpose (tests/coverage_floors.json): nothing is compiled",
+)
 def test_hot_kernels_are_jit_compiled() -> None:
     """Hot kernels MUST remain compiled by Numba.
 

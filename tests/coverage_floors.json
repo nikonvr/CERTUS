@@ -1,0 +1,19 @@
+{
+  "_commentaire": "Un plancher par paquet : la mesure du 2026-09-30 moins un point. Il protege ce qui existe, il ne fixe pas un objectif. Un plancher ne se releve qu'a la main, dans un commit (scripts/check_coverage_floors.py le suggere) et ne baisse jamais.",
+  "_mesure_lignes": "toutes les suites (oracle, unit, core, domain, utils, property, ui, headless, integration, regression), Windows, JIT actif, pourcentage de LIGNES",
+  "_mesure_noyaux": "oracle + core avec NUMBA_DISABLE_JIT=1 : la seule facon de voir les lignes des noyaux compiles",
+  "lignes": {
+    "certus/": 55.2,
+    "certus/core/": 60.1,
+    "certus/domain/": 82.6,
+    "certus/metal/": 62.3,
+    "certus/physics/": 20.1,
+    "certus/spline/": 46.4,
+    "certus/ui/": 57.4,
+    "certus/utils/": 75.7,
+    "certus/workers/": 59.5
+  },
+  "noyaux": {
+    "certus/physics/": 44.9
+  }
+}

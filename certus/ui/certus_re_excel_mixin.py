@@ -1701,7 +1701,7 @@ class CertusREExcelMixin:
 
         headers: list[str] = ["lambda_nm"]
 
-        for disp, subheads, arrs in series:
+        for disp, subheads, _arrs in series:
             for sh in subheads:
                 headers.append(f"Re({disp}) {sh}")
 
@@ -1728,7 +1728,7 @@ class CertusREExcelMixin:
 
             c = 1
 
-            for disp, subheads, arrs in series:
+            for _disp, _subheads, arrs in series:
                 for col_idx, arr in enumerate(arrs):
                     it_a = QTableWidgetItem(f"{float(arr[i]):.6f}")
 

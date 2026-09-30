@@ -3337,7 +3337,7 @@ def run_final_simulation_block(
             _consensus_max_workers = min(len(_consensus_tasks), get_safe_worker_count())
             _task_futures: list[tuple[str, int, tuple, concurrent.futures.Future]] = []
             with concurrent.futures.ThreadPoolExecutor(max_workers=_consensus_max_workers) as _cexec:
-                for local_idx, sid, strat_sig, seed, cache_key, _ in _consensus_tasks:
+                for local_idx, sid, _strat_sig, seed, cache_key, _ in _consensus_tasks:
                     item = candidates[local_idx]
                     strat = item.get("strategy", {})
                     params_consensus = _build_params_consensus(params_safe, seed=seed)
@@ -3382,7 +3382,7 @@ def run_final_simulation_block(
                             error=e,
                         )
 
-        for local_idx, item in enumerate(candidates):
+        for _local_idx, item in enumerate(candidates):
             strat = item.get("strategy", {})
             sid, strat_sig = _consensus_strategy_identity(strat)
             seed_scores = _consensus_cached.get(sid, [])

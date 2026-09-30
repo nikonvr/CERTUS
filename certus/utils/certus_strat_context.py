@@ -423,7 +423,7 @@ def _augment_solution_cost_with_sym(
     same_wl_kept = 0
     continuity_gain = 0.0
     prev = None
-    for start, end, wl in sorted(blocks_info, key=lambda x: int(x[0])):
+    for start, _end, wl in sorted(blocks_info, key=lambda x: int(x[0])):
         wlf = float(wl)
         if prev is not None and abs(wlf - prev) <= 1e-3:
             same_wl_kept += 1

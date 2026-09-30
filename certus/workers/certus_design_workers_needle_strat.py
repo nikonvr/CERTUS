@@ -111,7 +111,7 @@ class NeedleOptimizationStrategy:
         best_res = None
         min_cost = float('inf')
         N_layers = len(stack)
-        for i, layer in enumerate(stack):
+        for i, _layer in enumerate(stack):
             if worker.isInterruptionRequested():
                 return best_res
             

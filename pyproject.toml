@@ -68,7 +68,7 @@ extend-ignore = [
   # Isort
   "I001",  # unsorted-imports
   # Bugbear legacy
-  "B007",
+  
   # Pyupgrade legacy
   
   "UP031", "UP037",

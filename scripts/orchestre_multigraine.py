@@ -835,7 +835,7 @@ def main(argv: list[str] | None = None) -> int:
                       f"leur travail est PERDU. On passe a l'union et a la notation finale "
                       f"sur ce qui est deja mesure.")
                 _evt("abandon", graines=sorted(en_vol))
-                for g, (p, _tg) in list(en_vol.items()):
+                for _g, (p, _tg) in list(en_vol.items()):
                     p.terminate()
 
             if not en_vol:
@@ -893,7 +893,7 @@ def main(argv: list[str] | None = None) -> int:
         jamais_lancees.extend(file_attente)
         print(f"\n  🛑 Ctrl-C -- {len(en_vol)} run(s) en vol abandonne(s), "
               f"{len(fait)} mesure(s) conservee(s)")
-        for g, (p, _tg) in list(en_vol.items()):
+        for _g, (p, _tg) in list(en_vol.items()):
             p.terminate()
         en_vol.clear()
 

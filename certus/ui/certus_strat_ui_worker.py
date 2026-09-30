@@ -740,14 +740,14 @@ class CertusStratWorkerMixin:
 
         self.logger.debug("[STRAT-UI] Stopping %d active threads in parallel...", len(active_pairs))
 
-        for t, w in active_pairs:
+        for t, _w in active_pairs:
             try:
                 t.quit()
             except RuntimeError:
                 pass
 
         deadline = time.time() + (timeout_ms / 1000.0)
-        for t, w in active_pairs:
+        for t, _w in active_pairs:
             try:
                 remaining = max(0, int((deadline - time.time()) * 1000))
                 if self._thread_is_running_safe(t) and remaining > 0:

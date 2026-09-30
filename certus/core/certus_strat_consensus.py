@@ -828,7 +828,7 @@ def _apply_elite_refinement_if_enabled(
             max(2, ctx.num_runs // 2)
         ]
         
-        for stage_idx, stage_runs in enumerate(halving_budgets):
+        for _stage_idx, stage_runs in enumerate(halving_budgets):
             stage_results: list[tuple[float, int, dict[str, Any]]] = []
             with executor_cls(max_workers=worker_count) as executor:
                 futures_stage = [

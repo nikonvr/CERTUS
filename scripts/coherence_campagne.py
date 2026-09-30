@@ -127,7 +127,7 @@ def main(argv: list[str] | None = None) -> int:
     # --- ce que la campagne a trouve ---------------------------------------------------
     print()
     print("  RESULTATS")
-    for p, d in arts:
+    for _p, d in arts:
         st = d.get("strategies") or []
         if not st:
             continue

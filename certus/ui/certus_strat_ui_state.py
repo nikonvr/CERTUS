@@ -580,7 +580,7 @@ class CertusStratStateMixin:
             if isinstance(raw_mults, list):
                 stack_mults = []
 
-                for i, val in enumerate(raw_mults):
+                for _i, val in enumerate(raw_mults):
                     try:
                         stack_mults.append(float(val))
 

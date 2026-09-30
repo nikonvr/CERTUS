@@ -55,7 +55,7 @@ def test_no_ultra_fine_duplicates():
                     chunks.append((h, filepath, start_line, end_line, chunk_text))
         return chunks
 
-    for root, dirs, files in os.walk(target_dir):
+    for root, _dirs, files in os.walk(target_dir):
         for f in files:
             if f.endswith(".py"):
                 filepath = os.path.join(root, f)

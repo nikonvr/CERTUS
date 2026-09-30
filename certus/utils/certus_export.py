@@ -97,7 +97,7 @@ def build_wide_dataframe_for_export(series: list[tuple[str, np.ndarray, np.ndarr
     data: dict[str, np.ndarray] = {}
     seen: dict[str, int] = {}
 
-    for idx, (name, x, y) in enumerate(series):
+    for _idx, (name, x, y) in enumerate(series):
         base = (str(name).strip() if name else "") or "Curve"
         n = seen.get(base, 0)
         seen[base] = n + 1

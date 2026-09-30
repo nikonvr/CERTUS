@@ -307,7 +307,7 @@ class FieldWorkerThread(QThread):
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [executor.submit(_mc_task, it) for it in range(num_iterations)]
-            for i, future in enumerate(concurrent.futures.as_completed(futures)):
+            for i, _future in enumerate(concurrent.futures.as_completed(futures)):
                 if not self._is_running:
                     executor.shutdown(wait=False, cancel_futures=True)
                     return
@@ -321,7 +321,7 @@ class FieldWorkerThread(QThread):
 
         results = [f.result() for f in futures]
         results.sort(key=lambda x: x[0])
-        for it, z_c_iter, e2_out in results:
+        for _it, z_c_iter, e2_out in results:
             if z_c_iter is None:
                 continue
             z_coords_mc.append(z_c_iter)

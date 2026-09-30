@@ -1,5 +1,10 @@
 # Facade for CERTUS TMM CORE
 # This module exposes the decoupled internal modules to maintain public API compatibility.
+#
+# Numba kernels of other files (certus_strat_batch, gradient_analytic, gradient_utils...) call through these names, and
+# Numba freezes what they resolve to into their cached machine code. The cache key (`numba_cache_key`) reads the files
+# whose text says numba, so this one does: re-pointing a name here recompiles those kernels
+# (tests/unit/test_the_cache_key_covers_what_the_kernels_read.py).
 
 from .certus_tmm_substrate import (
     calculate_bare_substrate_R,

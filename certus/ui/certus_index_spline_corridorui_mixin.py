@@ -17,6 +17,7 @@ from certus.ui.certus_ui import (
     wrap_scientific_plot_with_toolbar,
 )
 from certus.spline.certus_index_spline_corridor_contract import normalize_corridor_live_payload
+from certus.utils.certus_atomic_io import atomic_open
 
 class CertusIndexSplineCorridorUIMixin:
     """CertusIndexSplineCorridorUIMixin."""
@@ -406,7 +407,7 @@ class CertusIndexSplineCorridorUIMixin:
         if path:
             import csv
 
-            with open(path, "w", newline="", encoding="utf-8") as f:
+            with atomic_open(path, "w", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
                 headers = [
                     self.table_corridor.horizontalHeaderItem(i).text() for i in range(self.table_corridor.columnCount())

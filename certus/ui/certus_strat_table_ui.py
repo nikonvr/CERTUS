@@ -38,6 +38,7 @@ from certus.core.certus_strat_core import _compute_strategy_symmetry_score_perce
 #rather than copied: a column that colorizes using a threshold other than the one that
 # ELIMINATES would lie to the operator.
 from certus.core.certus_strat_robustness import CRASH_RATE_TOLERANCE
+from certus.utils.certus_atomic_io import atomic_open
 
 class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
     strategy_selected = pyqtSignal(int, object)
@@ -1071,7 +1072,7 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
             set_certus_last_dir(filename)
 
             try:
-                with open(filename, "w", encoding="utf-8") as f:
+                with atomic_open(filename, "w", encoding="utf-8") as f:
                     json.dump(strategy_data, f, indent=4, default=numpy_encoder)
 
                 logging.getLogger("ThinFilm").info(f"✓ Strategy #{strat_id} saved to {filename}")

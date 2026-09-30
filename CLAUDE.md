@@ -169,6 +169,10 @@ mais **synchronisés par Drive**) : supprime-les ensuite.
   du dialogue Smart Init avant d'exploiter un run.
 - **`tests/headless/test_design.py` et `test_strat.py` remplacent le calcul par un mock** : ne
   mesure rien avec. Le banc sans mock est `scripts\bench_examples.py`.
+- **Un export s'écrit par `atomic_open`** (`certus/utils/certus_atomic_io.py`), jamais par
+  `open(chemin, "w")` : un écrivain qui meurt au milieu (disque plein, exception, processus tué)
+  laissait un fichier tronqué sur la copie de l'utilisateur. `tests/unit/test_exports_are_written_atomically.py`
+  refuse tout autre `open(..., "w")` dans `certus/`.
 - **Le premier calcul est lent** (compilation numba, +30 s) : chauffe, puis mesure.
 - **N'écris pas l'artefact que tu décris** : un hexadécimal cité dans un commentaire fait
   bouger le cliquet des couleurs, une règle QSS citée dans une f-string est recrachée dans la

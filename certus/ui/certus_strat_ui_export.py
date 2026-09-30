@@ -40,6 +40,7 @@ from certus.utils.certus_strat_service import extract_best_rmse
 # emitting `finished` — returning zero results to the user.
 from certus.core.certus_core import __version__
 from certus.ui.certus_strat_common import _resolve_strat_indices_db_path
+from certus.utils.certus_atomic_io import atomic_open
 
 class CertusStratExportMixin:
     def _extract_stack_multipliers(self, config: dict[str, Any]) -> list[float]:
@@ -243,7 +244,7 @@ class CertusStratExportMixin:
             # 1. Save Excel
             self.logger.info("[DEBUG-UI] Saving Excel report...")
 
-            with open(excel_path, "wb") as f:
+            with atomic_open(excel_path, "wb") as f:
                 f.write(excel_data.getvalue())
             if manifest_dict:
                 try:
@@ -261,7 +262,7 @@ class CertusStratExportMixin:
                     self.logger.warning("STRAT manifest Excel sheet injection skipped: %s", exc)
                 try:
                     manifest_path = str(Path(report_dir) / f"{base_name}.manifest.json")
-                    with open(manifest_path, "w", encoding="utf-8") as mf:
+                    with atomic_open(manifest_path, "w", encoding="utf-8") as mf:
                         json.dump(manifest_dict, mf, ensure_ascii=False, indent=2)
                 except (OSError, ValueError, TypeError) as exc:
                     self.logger.warning("STRAT manifest JSON write skipped: %s", exc)
@@ -481,7 +482,7 @@ class CertusStratExportMixin:
         if manifest_dict:
             try:
                 manifest_path = str(Path(report_dir) / f"{base_name}.manifest.json")
-                with open(manifest_path, "w", encoding="utf-8") as mf:
+                with atomic_open(manifest_path, "w", encoding="utf-8") as mf:
                     json.dump(manifest_dict, mf, ensure_ascii=False, indent=2)
             except (OSError, ValueError, TypeError) as exc:
                 self.logger.warning("STRAT manifest JSON write skipped: %s", exc)

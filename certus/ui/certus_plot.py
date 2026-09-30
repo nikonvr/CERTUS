@@ -21,6 +21,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtCore import Qt, QTimer
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
+from certus.utils.certus_atomic_io import atomic_open
 
 # Late imports from certus.utils.certus_export in methods to avoid circular dependency
 
@@ -847,7 +848,7 @@ class CertusScientificPlot(pg.PlotWidget):
             import datetime
 
             meta = f"# CERTUS export {datetime.datetime.now().isoformat(timespec='seconds')}\n"
-            with open(filename, "w", encoding="utf-8") as f:
+            with atomic_open(filename, "w", encoding="utf-8") as f:
                 f.write(meta)
                 df.to_csv(f, index=False)
             QMessageBox.information(
@@ -892,7 +893,7 @@ class CertusScientificPlot(pg.PlotWidget):
             import datetime
 
             meta = f"# CERTUS export {datetime.datetime.now().isoformat(timespec='seconds')}\n"
-            with open(filename, "w", encoding="utf-8") as f:
+            with atomic_open(filename, "w", encoding="utf-8") as f:
                 f.write(meta)
                 df.to_csv(f, index=False, sep="\t", lineterminator="\n")
             QMessageBox.information(
@@ -940,7 +941,7 @@ class CertusScientificPlot(pg.PlotWidget):
             import datetime
 
             meta = f"# CERTUS publication export {datetime.datetime.now().isoformat(timespec='seconds')}\n"
-            with open(filename, "w", encoding="utf-8") as f:
+            with atomic_open(filename, "w", encoding="utf-8") as f:
                 f.write(meta)
                 f.write(self._to_publication_tsv(df))
             QMessageBox.information(

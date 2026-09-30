@@ -60,6 +60,7 @@ def _apply_fixed_log_k_axis(plot_w: Any | None) -> None:
         logger.debug("_apply_fixed_log_k_axis failed", exc_info=True)
 
 from certus.spline.spline_pipeline_utils import _interp_series_at_sigma_knots
+from certus.utils.certus_atomic_io import atomic_open
 
 def _plot_spectrum_raw_scatter(
     plot_w: pg.PlotWidget,
@@ -447,7 +448,7 @@ class _CorridorExportMixin:
 
         m = int(lam_g.size)
         try:
-            with open(path, "w", encoding="utf-8") as fh:
+            with atomic_open(path, "w", encoding="utf-8") as fh:
                 fh.write("lambda_nm,n,n_envelope_min,n_envelope_max,k,k_envelope_min,k_envelope_max\n")
                 for i in range(m):
                     line = f"{float(lam_g[i]):.4f},"

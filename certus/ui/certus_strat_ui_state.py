@@ -57,6 +57,7 @@ def _config_flag(config: object, key: str, default: bool = False) -> bool:
 
 from certus.core.certus_strat_robustness import INDEX_CORRIDOR_DEFAULT  # noqa: E402
 from certus_physics import PHOTOMETRIC_CURVATURE_AMP  # noqa: E402
+from certus.utils.certus_atomic_io import atomic_open
 
 
 def _config_float(config: object, key: str, default: float = 0.0) -> float:
@@ -759,7 +760,7 @@ class CertusStratStateMixin:
 
             config["force_first_layer_same_wl"] = True
 
-            with open(filename, "w", encoding="utf-8") as f:
+            with atomic_open(filename, "w", encoding="utf-8") as f:
                 json.dump(config, f, indent=4, ensure_ascii=False)
 
             self.logger.info("Configuration saved: %s", filename)

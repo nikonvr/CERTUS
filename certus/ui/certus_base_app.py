@@ -338,6 +338,7 @@ from certus.ui.mixins.certus_base_core_mixins import (
     CertusDialogMixin,
 )
 from certus.utils.certus_qsettings import certus_settings
+from certus.utils.certus_atomic_io import atomic_open
 
 
 class CertusBaseApp(
@@ -906,7 +907,7 @@ class CertusBaseApp(
 
                 config = self._collect_config()
 
-                with open(filename, "w", encoding="utf-8") as f:
+                with atomic_open(filename, "w", encoding="utf-8") as f:
                     json.dump(config, f, indent=2, ensure_ascii=False)
 
                 if self.logger:

@@ -98,6 +98,7 @@ from certus.utils.certus_strat_context import (
     _build_layer_importance_map,
     _compute_blocks_range_for_params,
 )
+from certus.utils.certus_atomic_io import atomic_open
 
 # _convert_solution_to_strategy has been moved to certus_strat_ranking.py
 
@@ -119,7 +120,7 @@ def _export_phase_a_observability_json(params: dict[str, Any], payload: dict[str
 
         out_path = str(Path(report_dir) / f"STRAT_observability_{ts}.json")
 
-        with open(out_path, "w", encoding="utf-8") as f:
+        with atomic_open(out_path, "w", encoding="utf-8") as f:
             json.dump({**payload, "provenance": provenance()}, f, indent=2, ensure_ascii=False)
 
         logger_local = params.get("logger")

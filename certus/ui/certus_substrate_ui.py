@@ -113,6 +113,7 @@ from certus.core.certus_substrate_index import (
     _align_xy_lengths,
 )
 from certus.utils.certus_qsettings import certus_settings
+from certus.utils.certus_atomic_io import atomic_open
 
 class IndexTableDialog(QDialog):
     def __init__(
@@ -906,7 +907,7 @@ class SubstrateIndexGUI(QMainWindow):
         }
 
         try:
-            with open(path, "w", encoding="utf-8") as f:
+            with atomic_open(path, "w", encoding="utf-8") as f:
                 json.dump(payload, f, indent=4)
             self.log(f"Datasheet exported to {Path(path).name}", "SUCCESS")
         except (OSError, TypeError, ValueError) as e:

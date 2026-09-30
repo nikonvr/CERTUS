@@ -67,6 +67,7 @@ from certus.spline.spline_presets import (
 )
 
 from certus.utils.certus_qsettings import certus_settings
+from certus.utils.certus_atomic_io import atomic_open
 
 logger = logging.getLogger("CERTUS_INDEX_SPLINE.smart_init")
 
@@ -913,7 +914,7 @@ class SmartInitPreviewManager:
                 "d_nm": float(self.state.preview_d_nm),
                 "rmse": float(self.state.current_rmse),
             }
-            with open(path, "w", encoding="utf-8") as f:
+            with atomic_open(path, "w", encoding="utf-8") as f:
                 json.dump(out_d, f, indent=2)
             show_toast(self.dlg, "Config saved successfully", level="success")
         except (OSError, ValueError, TypeError) as exc:

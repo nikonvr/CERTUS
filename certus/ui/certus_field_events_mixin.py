@@ -11,6 +11,7 @@ import pandas as pd
 from datetime import datetime
 from pathlib import Path
 from certus.utils.certus_ux import Typography
+from certus.utils.certus_atomic_io import atomic_open
 
 class CertusFieldEventsMixin:
     """CertusFieldEventsMixin."""
@@ -175,7 +176,7 @@ class CertusFieldEventsMixin:
                 <table><tr><th>#</th><th>Material</th><th>Thickness</th></tr>{rows}</table>
             </body></html>"""
             
-            with open(html_path, "w", encoding="utf-8") as f:
+            with atomic_open(html_path, "w", encoding="utf-8") as f:
                 f.write(html)
             return True
         except Exception as e:
@@ -266,7 +267,7 @@ class CertusFieldEventsMixin:
 </html>"""
 
         try:
-            with open(filename, "w", encoding="utf-8") as f:
+            with atomic_open(filename, "w", encoding="utf-8") as f:
                 f.write(html_template)
             self.logger.info(f"Pareto HTML report generated at {filename}")
             show_toast(self, "Pareto report generated successfully.", "success")

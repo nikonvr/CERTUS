@@ -862,7 +862,7 @@ def generate_html_report(filename: str, title: str, sections: list[dict], figure
 
         html.append("</div></body></html>")
 
-        with open(filename, "w", encoding="utf-8") as f:
+        with atomic_open(filename, "w", encoding="utf-8") as f:
             f.write("".join(html))
         return True
     except NUMERICAL_FAULT_EXCEPTIONS as e:
@@ -1372,3 +1372,4 @@ def load_spectrum_columns(
 
 # QueueHandler and setup_gui_logger are defined in certus_core.py (Single Source of Truth)
 from certus.core.certus_core import QueueHandler, setup_gui_logger
+from certus.utils.certus_atomic_io import atomic_open

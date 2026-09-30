@@ -27,8 +27,21 @@ from certus.core.certus_hub_config import (
 # `typing` at module level, so this cannot cycle back; and `ui -> utils` is the allowed
 # direction (it is `utils -> ui` that CLAUDE.md counts as an inversion).
 from certus.utils.certus_ux import Typography as _Typography
+
+# The WCAG contrast is computed once, in `certus_a11y` (pure Python, imports nothing of `certus`).
+from certus.ui.certus_a11y import contrast_ratio as _contrast_ratio
 import logging
 from typing import ClassVar
+
+
+#: The two inks a solid button's label is drawn in: white, and the dark ink of the light theme. A label is
+#: whichever of the two reads better on its fill (`CertusTheme.label_on`), never a colour chosen for one theme.
+_LABEL_WHITE = "#ffffff"
+_LABEL_INK = "#0f172a"
+
+#: How far a solid button's fill moves, toward the side AWAY from its label, when hovered and when pressed.
+_HOVER_SHIFT = 0.10
+_PRESSED_SHIFT = 0.20
 
 
 class CertusTheme:
@@ -687,23 +700,17 @@ class CertusTheme:
 
     @classmethod
     def get_button_style(cls, variant: str = "primary") -> str:
-
-        colors = {
-            "primary": (cls.PRIMARY, cls.PRIMARY_TEXT),
-            "secondary": (cls.SECONDARY, "#ffffff"),
-            "info": (cls.INFO, "#000000"),
-            "success": (cls.SUCCESS, "#ffffff"),
-            "warning": (cls.WARNING, "#000000"),
-            "danger": (cls.DANGER, "#ffffff"),
+        # A name is a role; anything else is a fill (`create_styled_button("Load", CertusTheme.SECONDARY)`).
+        fills = {
+            "primary": cls.PRIMARY,
+            "secondary": cls.SECONDARY,
+            "info": cls.INFO,
+            "success": cls.SUCCESS,
+            "warning": cls.WARNING,
+            "danger": cls.DANGER,
         }
-
-        if variant in colors:
-            bg, fg = colors[variant]
-
-        else:
-            # Assume custom color if not a known variant
-
-            bg, fg = variant, "#ffffff"
+        bg = fills.get(variant, variant)
+        fg, hover, pressed = cls.button_states(bg)
 
         return f"""
 
@@ -717,13 +724,48 @@ class CertusTheme:
 
             }}
 
-            QPushButton:hover {{ background-color: {bg}e6; }}
+            QPushButton:hover {{ background-color: {hover}; }}
 
-            QPushButton:pressed {{ background-color: {bg}cc; }}
+            QPushButton:pressed {{ background-color: {pressed}; }}
 
             QPushButton:disabled {{ background-color: {cls.BORDER}; color: {cls.TEXT_DISABLED}; }}
 
         """
+
+    @staticmethod
+    def label_on(fill: str) -> str:
+        """The ink that reads best on a solid `fill`: white or the dark ink, by WCAG contrast.
+
+        A label is derived from the fill because the fill changes with the theme and a label chosen once
+        does not follow it: white on the dark theme's secondary fill is 2.56:1, on its success fill 1.92:1.
+        Not a colour Qt can parse: white, what every button used to get."""
+        colour = QColor(fill)
+        if not colour.isValid():
+            return _LABEL_WHITE
+        hexa = colour.name()
+        return _LABEL_WHITE if _contrast_ratio(_LABEL_WHITE, hexa) >= _contrast_ratio(_LABEL_INK, hexa) else _LABEL_INK
+
+    @classmethod
+    def button_states(cls, fill: str) -> tuple[str, str, str]:
+        """`(label, hover fill, pressed fill)` of a solid button.
+
+        Hover and pressed move the fill AWAY from the label (darker under a white label, lighter under the
+        dark ink), so the contrast of the label grows in those states. They used to blend the fill with the
+        window behind it, 10 % and 20 %, which is the other way round: on the light theme a white label on
+        the primary fill fell from 5.00:1 to 4.26:1 under the pointer and to 3.63:1 when pressed. A fill Qt
+        cannot parse keeps its label and its fill in every state."""
+        label = cls.label_on(fill)
+        colour = QColor(fill)
+        if not colour.isValid():
+            return label, fill, fill
+        toward = QColor("#000000") if label == _LABEL_WHITE else QColor("#ffffff")
+
+        def shifted(amount: float) -> str:
+            return QColor(
+                *(round(a + (b - a) * amount) for a, b in zip(colour.getRgb()[:3], toward.getRgb()[:3], strict=True))
+            ).name()
+
+        return label, shifted(_HOVER_SHIFT), shifted(_PRESSED_SHIFT)
 
     @staticmethod
     def get_shadow(parent=None) -> "QGraphicsDropShadowEffect":

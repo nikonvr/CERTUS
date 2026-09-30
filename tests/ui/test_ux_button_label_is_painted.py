@@ -214,3 +214,45 @@ def test_the_documentation_button_label_is_visible(hub_for_mode):
         f"'Scientific Documentation' in {mode}: label painted {ink} on {paper} = {ratio:.2f}:1 - "
         "the operator cannot read the button"
     )
+
+
+# =============================================================================
+# `create_styled_button`: the six variants, and a fill given directly, in both themes
+# =============================================================================
+#
+# Measured 2026-09-30 with this probe, before the label was derived from the fill: five of
+# twelve (theme x variant) pairs painted under AA (light info 3.54:1, light warning 4.18:1, dark
+# secondary 2.56:1, dark success 1.92:1, dark danger 2.77:1), and the fills passed directly
+# (`create_styled_button("Load", CertusTheme.SECONDARY)`, ~20 call sites) inherited a white label.
+
+
+@pytest.mark.parametrize("themed", ["light", "dark"], indirect=True)
+@pytest.mark.parametrize("variant", ["primary", "secondary", "info", "success", "warning", "danger"])
+def test_a_styled_button_label_reaches_aa(themed, variant: str):
+    from certus.ui.certus_ui_widgets_factory import create_styled_button
+
+    mode, _sheet = themed
+    button = create_styled_button("Load config", variant)
+    button.resize(240, 40)
+
+    ratio, ink, paper = _painted_contrast(button)
+    assert ratio >= AA_NORMAL_TEXT, (
+        f"create_styled_button({variant!r}) in {mode}: label painted {ink} on {paper} = {ratio:.2f}:1, below AA"
+    )
+
+
+@pytest.mark.parametrize("themed", ["light", "dark"], indirect=True)
+@pytest.mark.parametrize("token", ["PRIMARY", "SECONDARY", "DANGER"])
+def test_a_button_given_a_fill_directly_reaches_aa(themed, token: str):
+    """The call sites of INDEX SPLINE pass `CertusTheme.SECONDARY` or `.DANGER`, a hex string, as the variant."""
+    from certus.ui.certus_theme import CertusTheme
+    from certus.ui.certus_ui_widgets_factory import create_styled_button
+
+    mode, _sheet = themed
+    button = create_styled_button("Load config", getattr(CertusTheme, token))
+    button.resize(240, 40)
+
+    ratio, ink, paper = _painted_contrast(button)
+    assert ratio >= AA_NORMAL_TEXT, (
+        f"create_styled_button(CertusTheme.{token}) in {mode}: label painted {ink} on {paper} = {ratio:.2f}:1, below AA"
+    )

@@ -173,3 +173,109 @@ def test_the_override_sheet_is_unchanged_in_light_mode(qapp) -> None:
         f"aucune regle de libelle ne porte {attendu} en mode clair : le routage a change "
         f"le rendu clair, ce qui n'etait pas le but"
     )
+
+
+# --- the six variants of `create_styled_button`, in the three states a button shows ----------
+#
+# `create_styled_button` (73 call sites) puts `CertusTheme.get_button_style(variant)` on the
+# button itself, so that stylesheet decides what is legible, not the tokens above and not the
+# premium sheet. Measured 2026-09-30 by painting each variant and reading the pixels back
+# (test_ux_button_label_is_painted), five of the twelve theme x variant pairs were under AA:
+#
+#     light  info      #000000 on #0369a1  =  3.54:1        light  warning  #000000 on #b45309  = 4.18:1
+#     dark   secondary #ffffff on #94a3b8  =  2.56:1        dark   success  #ffffff on #34d399  = 1.92:1
+#     dark   danger    #ffffff on #f87171  =  2.77:1
+#
+# and the ~20 buttons that pass a fill directly (`create_styled_button("Load", CertusTheme.SECONDARY)`)
+# always got a white label, whatever the fill. The hover and pressed states blended the fill with
+# the window behind it (alpha `e6`, `cc`), which moves it the wrong way: a white label on the
+# light primary fill went from 5.00:1 to 4.26:1 under the pointer and to 3.63:1 when pressed.
+#
+# The label is now derived from the fill, and hover/pressed move the fill away from the label.
+
+BUTTON_VARIANTS = ["primary", "secondary", "info", "success", "warning", "danger"]
+BUTTON_STATES = ["rest", "hover", "pressed"]
+
+
+def _button_colours(css: str) -> dict[str, tuple[str, str]]:
+    """{state: (fill, label)} as `get_button_style` states them: the label is the one of the rest rule."""
+    import re
+
+    rules = {selector.strip(): body for selector, body in re.findall(r"(QPushButton[^{]*)\{([^}]*)\}", css)}
+    label = re.search(r"(?<![-\w])color:\s*(#[0-9a-fA-F]{6})", rules["QPushButton"]).group(1)
+
+    def fill(selector: str) -> str:
+        return re.search(r"background-color:\s*(#[0-9a-fA-F]{6})", rules[selector]).group(1)
+
+    return {
+        "rest": (fill("QPushButton"), label),
+        "hover": (fill("QPushButton:hover"), label),
+        "pressed": (fill("QPushButton:pressed"), label),
+    }
+
+
+@pytest.fixture
+def theme_mode(request):
+    from certus.ui.certus_theme import CertusTheme
+
+    try:
+        CertusTheme.configure(request.param)
+        yield request.param
+    finally:
+        CertusTheme.configure("light")
+
+
+@pytest.mark.parametrize("theme_mode", ["light", "dark"], indirect=True)
+@pytest.mark.parametrize("variant", BUTTON_VARIANTS)
+@pytest.mark.parametrize("state", BUTTON_STATES)
+def test_a_styled_button_label_meets_aa_in_every_state(theme_mode: str, variant: str, state: str) -> None:
+    from certus.ui.certus_theme import CertusTheme
+
+    fill, label = _button_colours(CertusTheme.get_button_style(variant))[state]
+    ratio = _contrast(label, fill)
+    assert ratio >= AA_NORMAL_TEXT, f"{theme_mode} {variant} {state}: {label} on {fill} = {ratio:.2f}:1, below AA"
+
+
+@pytest.mark.parametrize("theme_mode", ["light", "dark"], indirect=True)
+@pytest.mark.parametrize("token", ["PRIMARY", "SECONDARY", "SUCCESS", "WARNING", "DANGER", "INFO"])
+@pytest.mark.parametrize("state", BUTTON_STATES)
+def test_a_button_given_a_fill_directly_gets_a_label_that_reads_on_it(theme_mode: str, token: str, state: str) -> None:
+    """`create_styled_button("Load", CertusTheme.SECONDARY)`: the fill is a hex string, not a role."""
+    from certus.ui.certus_theme import CertusTheme
+
+    fill, label = _button_colours(CertusTheme.get_button_style(getattr(CertusTheme, token)))[state]
+    ratio = _contrast(label, fill)
+    assert ratio >= AA_NORMAL_TEXT, f"{theme_mode} fill {token} {state}: {label} on {fill} = {ratio:.2f}:1, below AA"
+
+
+@pytest.mark.parametrize("theme_mode", ["light", "dark"], indirect=True)
+@pytest.mark.parametrize("variant", BUTTON_VARIANTS)
+def test_hover_and_pressed_never_weaken_the_label(theme_mode: str, variant: str) -> None:
+    """The states move the fill AWAY from the label: the contrast may only grow from rest to pressed."""
+    from certus.ui.certus_theme import CertusTheme
+
+    states = _button_colours(CertusTheme.get_button_style(variant))
+    rest, hover, pressed = (_contrast(states[s][1], states[s][0]) for s in BUTTON_STATES)
+    assert rest < hover < pressed, f"{theme_mode} {variant}: rest {rest:.2f}, hover {hover:.2f}, pressed {pressed:.2f}"
+
+
+def test_the_label_is_the_better_of_the_two_inks_for_the_fill() -> None:
+    """`label_on` is checked against this file's own contrast, not the function's: white or ink, never the worse."""
+    from certus.ui.certus_theme import CertusTheme
+
+    for fill in ["#ffffff", "#000000", "#0f62fe", "#94a3b8", "#34d399", "#f87171", "#b45309", "#0369a1", "#808080"]:
+        chosen = CertusTheme.label_on(fill)
+        other = "#0f172a" if chosen == "#ffffff" else "#ffffff"
+        assert chosen in ("#ffffff", "#0f172a"), f"{fill}: unexpected ink {chosen}"
+        assert _contrast(chosen, fill) >= _contrast(other, fill), f"{fill}: {chosen} is the worse ink"
+
+
+def test_a_fill_qt_cannot_parse_keeps_what_it_always_had() -> None:
+    """`create_styled_button(..., variant="outline")` (four call sites) is not a colour: white label, no invented states."""
+    from certus.ui.certus_theme import CertusTheme
+
+    css = CertusTheme.get_button_style("outline")
+
+    assert CertusTheme.label_on("outline") == "#ffffff"
+    assert "background-color: outline;" in css and "color: #ffffff;" in css
+    assert "outlinee6" not in css and "outlinecc" not in css, "the old code glued an alpha to a name, which is no colour"

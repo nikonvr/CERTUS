@@ -47,6 +47,15 @@ def test_the_metadata_say_the_same() -> None:
     assert [c for c in project["classifiers"] if c.startswith("License ::")] == []
 
 
+def test_the_front_page_of_the_repository_states_the_licence_and_links_it() -> None:
+    """Measured 2026-09-30: the public repository had no README at all, so its front page said nothing."""
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+    assert _pyproject()["project"]["license"] in readme
+    assert "](LICENSE)" in readme
+    assert len(readme.splitlines()) <= 45, "a front page is read in one screen: the detail lives in docs/ETAT.md"
+
+
 def _declared_runtime_dependencies() -> list[str]:
     return [re.split(r"[<>=!~ \[]", spec, maxsplit=1)[0] for spec in _pyproject()["project"]["dependencies"]]
 

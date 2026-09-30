@@ -8,6 +8,7 @@ servant à fabriquer de vrais filtres : une erreur silencieuse ne plante pas, el
 **Deux documents, et deux seulement :** ce fichier porte les **règles** ; l'**état** du projet
 (repères mesurés, décisions, défauts ouverts, chantiers) est dans [`docs/ETAT.md`](docs/ETAT.md),
 dont la **section 0 est la reprise** : à lire en premier, et à tenir à jour au fil du travail.
+`README.md` est la page d'accueil du dépôt public (quoi, lancer, licence) : il ne porte aucun fait qui change.
 L'historique — campagnes, hypothèses réfutées, anciens plans — n'est plus dans l'arbre : **`git` le
 garde**, sans autorité. Un renvoi du code, d'un test ou d'une page à un fichier de `docs/archives/`
 désigne un fichier supprimé le 2026-09-30, qu'on lit par `git show 7b08dc8:docs/archives/NOM.md`.

@@ -52,7 +52,9 @@ premier test ajouté — ne recopie ni l'un ni l'autre.**
 
 Les **indicateurs du plan** (dette de lint, cycles d'imports, tests sans assertion, contraste des boutons,
 CI de HEAD…) : `python scripts\metrics.py` (1 min ; `--rapide` : 10 s, le statique seul). Un `n/a` y dit
-qu'une mesure manque, jamais un zéro.
+qu'une mesure manque, jamais un zéro. La **couverture** se mesure sur toutes les suites (`pytest --cov=certus` avec `--cov-append`) et
+sur les noyaux compilés à part (`NUMBA_DISABLE_JIT=1 pytest tests/oracle tests/core --cov=certus` : sans cela `physics` paraît à 20 %) ;
+`python scripts\check_coverage_floors.py cov.json --noyaux cov_noyaux.json` refuse qu'un paquet passe sous son plancher.
 
 | échec | ce que c'est |
 |---|---|

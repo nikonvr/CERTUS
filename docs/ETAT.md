@@ -14,7 +14,7 @@
 > finie à « faite » avec son commit et sa mesure (la sortie de la commande : CLAUDE.md,
 > interdit 9) ; toute action ou découverte nouvelle ajoute une ligne. Corrige en place, sans
 > récit, et commite chaque mise à jour avec le travail qu'elle décrit. Avant de rendre la main :
-> ce tableau, les lignes D touchées, `git status` propre, `git push`. Relis les sections 2, 4 et
+> ce tableau, les lignes D touchées, `git status` propre (pousser est l'ordre de 👤, CLAUDE.md section 1). Relis les sections 2, 4 et
 > 12 de CLAUDE.md avant de valider quoi que ce soit ou de relayer le rapport d'un autre agent.
 > Les décisions de la section 5 reviennent à 👤 : **ne les tranche pas à sa place**.
 

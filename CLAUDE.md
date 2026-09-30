@@ -26,11 +26,13 @@ Elle doit finir par `PREFLIGHT=GO`. Elle vérifie les deux **propriétés** qui 
 c'est délibéré : les chemins se sont périmés à chaque déménagement. En cas de doute,
 `python -c "import sys; print(sys.executable)"`.
 
-🔴 **Le dépôt est PUBLIC** (`github.com/nikonvr/CERTUS`). Rien qui porte une donnée
-personnelle, un secret ou l'œuvre d'un tiers n'entre dans l'index — métadonnées des classeurs
-Excel comprises. Committer ne publie **pas** par défaut : le hook `.githooks/post-commit` ne
-s'arme que par `git config core.hooksPath .githooks`, réglage local jamais hérité. Vérifie avec
-`git config --get core.hooksPath` et `git status -sb`, ne le suppose pas.
+🔴 **Le dépôt est PUBLIC** (`github.com/nikonvr/CERTUS`). Rien qui porte un secret (clé, mot de
+passe, jeton), la donnée personnelle d'un **autre** que 👤 ou l'œuvre d'un tiers n'entre dans
+l'index — métadonnées des classeurs Excel comprises. Les données de 👤 lui-même sont son choix :
+il assume de tout publier. Committer ne publie **pas** par défaut : le hook
+`.githooks/post-commit` ne s'arme que par `git config core.hooksPath .githooks`, réglage local
+jamais hérité. Vérifie avec `git config --get core.hooksPath` et `git status -sb`, ne le
+suppose pas. **Pousser publie : seulement sur ordre de 👤.**
 
 ## 2. Valider — le seul critère est `0 failed`
 
@@ -42,21 +44,29 @@ python -m pytest tests/ui/ -q --no-cov
 python -m pytest tests/ -q --no-cov --ignore=tests/oracle --ignore=tests/unit --ignore=tests/ui
 ```
 
-📏 Mesuré du 2026-09-25 au 27 (Windows 11, Ryzen 7 5700G 8 cœurs / 16 threads, 31 Go,
-Python 3.14.7, cache chaud) : oracle 6 à 20 s · unit 3 à 4 min · ui 20 min · le reste,
-mesuré par dossier, ~9 min dont headless 3 min 24 et régression ~3 min.
-**Une durée sans sa machine ne vaut rien ; un compte de tests se périme au premier test
-ajouté — ne recopie ni l'un ni l'autre.**
+📏 Mesuré le 2026-09-30 (Windows 11, Ryzen 7 5700G 8 cœurs / 16 threads, 31 Go, Python 3.14.7,
+cache Numba chaud) : oracle 8 s (53 s à froid) · unit 7 min 23 · ui 18 min 32 · le reste de
+`tests/` 7 min 53. **Une durée sans sa machine ne vaut rien ; un compte de tests se périme au
+premier test ajouté — ne recopie ni l'un ni l'autre.**
 
 | échec | ce que c'est |
 |---|---|
 | 3 tests à la **première** passe dans un arbre neuf (`test_phase2_gradient`, deux `TestIRGlobalModelStrategy`) | cache numba froid, vu après un changement de numba ou d'interpréteur, et le 2026-09-27 dans un worktree neuf (`AttributeError: module 'numba' has no attribute 'core'`). Relance une fois : s'ils passent, c'était le cache ; sinon, c'est un vrai échec |
+| un test d'oracle ou d'unit qui échoue sur un code juste, juste après une mise à jour | cache Numba **de l'arbre** périmé (`certus/**/__pycache__/*.nbi` et `.nbc`) : un appelant y garde l'ancien appelé d'un autre fichier (2026-09-30 : `cost_numba_fast` ignorait la perte du substrat du nouveau noyau, 4 échecs à l'oracle). `tests/conftest.py` lit désormais le cache clé par les sources, la session de tests n'y touche plus ; un script qui importe les noyaux sans point d'entrée, si (ETAT D49). Supprime ces fichiers |
 | un test d'interface qui meurt sans message | arrêt natif `0xC0000005` du worker Qt, mesuré 2 fois sur 120 lancements ; le harnais réessaie une fois |
 | un processus qui meurt sans message Qt | sous Windows, Qt écrit dans `OutputDebugString` : relance avec `QT_FORCE_STDERR_LOGGING=1`, et `-s` pour que pytest ne capture pas (par exemple « QThread: Destroyed while thread … is still running », D23, ou « QObject: shared QObject was deleted directly ») |
 | un test qui passe seul et échoue en suite | fuite d'état entre tests (caches de classe, `sys.modules`) : cherche le test précédent |
 
 Si un test est rouge **avant** que tu aies touché quoi que ce soit : arrête-toi et signale.
 Et `tests/oracle/` avant et après toute modification d'un calcul optique.
+
+Le **gel** ne se valide pas par ces tests : la suite entière, verte, n'a pas vu qu'un script embarqué qui en
+importait un autre, non embarqué, empêchait STRAT de démarrer dans l'exécutable (2026-09-30). Après
+avoir touché `certus_hub.spec`, `tools/frozen_entry.py`, `CERTUS_HUB.py` ou un script de `scripts/`
+que STRAT importe au démarrage : `pip install pyinstaller` (extra `freeze`), puis
+`powershell tools\build_frozen.ps1` et `python tools\release_checks.py --check-frozen
+--check-frozen-run`. Le build écrit `dist/` et `build/` dans le dépôt (≈ 450 Mo, ignorés par git,
+mais **synchronisés par Drive**) : supprime-les ensuite.
 
 ## 3. Les onze interdits — aucune exception
 
@@ -115,8 +125,12 @@ Et `tests/oracle/` avant et après toute modification d'un calcul optique.
   marchent, **`setdefault` lève**.
 - **Importer un paquet exécute son `__init__.py`** : depuis `certus/physics/`, importer
   `certus_physics.X` est circulaire ; passe par la façade, et `TYPE_CHECKING` pour une annotation.
-- **Numba fige les tableaux de module** à la compilation : avec `cache=True`, une donnée
-  modifiée sans toucher au `.py` reste servie périmée.
+- **Numba ne relit un appelant que si SON fichier change**, et fige les tableaux de module à la
+  compilation : avec `cache=True`, une fonction qui en appelle une autre d'un **autre** fichier garde
+  l'ancien appelé dans son code machine, et une donnée modifiée sans toucher au `.py` reste servie
+  périmée. Les applications et la session de tests lisent un répertoire de cache clé par les sources
+  qui mentionnent numba (`numba_cache_key`, `ensure_numba_cache_dir` dans `certus/core/certus_core.py`) ;
+  ce qui importe les noyaux sans point d'entrée lit encore le cache de l'arbre (ETAT D49).
 - **Les tests partagent des caches de classe** (`SplineBasisCache._cache`…) : sauve et
   restaure-les dans une fixture `autouse`.
 - **Un test ne crée jamais sa `QApplication`, il prend `qapp`** : créée dans une variable
@@ -160,6 +174,11 @@ Et `tests/oracle/` avant et après toute modification d'un calcul optique.
   `physics ↔ core`) : **n'en crée aucune nouvelle** ; si tu en as besoin, le symbole doit
   descendre dans `domain/` ou `core/`.
 - Seul `certus/domain/` a un `__init__.py` (paquets PEP 420) : le projet s'utilise en source.
+- Le gel (`certus_hub.spec`) est **un** exécutable : `CERTUS_HUB.exe` lance le hub, et
+  `CERTUS_HUB.exe --run-module NOM [fichier]` un module. Son point d'entrée est `tools/frozen_entry.py`,
+  **jamais** un fichier de `certus/core/` : PyInstaller cherche d'abord dans le dossier de son script
+  d'entrée, qui masquerait `certus_substrate_index.py`. Un script de `scripts/` importé au démarrage doit
+  être dans les `datas` du spec, avec ce qu'il importe (`test_the_frozen_spec_bundles_the_suite` le suit).
 - `certus_curve_smoother.py` et `certus_substrate_index.py`, à la racine, sont des points d'entrée
   que le hub lance ; le second recopie aussi les globales de `certus.core.certus_substrate_index`.
 
@@ -185,6 +204,11 @@ Et `tests/oracle/` avant et après toute modification d'un calcul optique.
 - Contrôles : `python scripts\coherence_md.py` (un fait = une valeur dans tous les `.md`, archives
   exclues), `python scripts\check_claude_md.py`, `python scripts\check_docs.py`. « 0 point à
   instruire » ne veut pas dire « tout est cohérent » : ils ne lisent pas les phrases.
+- `pages/*.html` sont des rapports scientifiques **en anglais**, fidèles à ce que le code fait, sans
+  affirmation non étayée : chaque page doit répondre « oui » à *décrit-elle exactement ce que fait le
+  code, sans enjolivement ?* Deux pages sont en français à ce jour (`alternative_swanepoel.html`,
+  `rapport_certus_complet.html`) : les traduire, ou déclarer l'exception — pas une règle que deux fichiers
+  contredisent. Ordre de relecture : METAL, STRAT, INDEX et INDEX SPLINE, RE et DESIGN, le reste.
 - La vitrine `pages/CERTUS_STRAT.html` a un régime strict : tout nombre sourçable dans le code
   ou dans `reports/`, la limite montrée, la structure revérifiée (`python scripts\verifier_html.py pages\CERTUS_STRAT.html`).
 

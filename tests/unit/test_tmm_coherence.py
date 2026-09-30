@@ -179,6 +179,7 @@ def check(name, val, ref, tol=TOL):
     print(f"  {status} {name}: got {val:.8f}, ref {ref:.8f}, diff {diff:.2e}")
 
 
+    assert ok, f"{name}: got {val:.8f}, ref {ref:.8f}, diff {diff:.2e}, tol {tol}"
     return ok
 
 

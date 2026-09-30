@@ -140,6 +140,7 @@ def check(name, got, ref, tol=1e-8):
 
 
         )
+    assert ok, f"{name}: got={got:.10g}  ref={ref:.10g}  tol={tol}"
 
 
 

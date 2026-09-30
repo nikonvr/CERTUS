@@ -154,6 +154,7 @@ def check(name, got, ref, tol=1e-6):
 
 
     print(f"  {status} {name}: got={got:.8e}, ref={ref:.8e}, {label}")
+    assert ok, f"{name}: got={got:.8e}, ref={ref:.8e}, {label}, tol={tol}"
 
 
 

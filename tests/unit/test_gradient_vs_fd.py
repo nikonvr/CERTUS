@@ -204,6 +204,7 @@ def check(name, analytic, fd, tol=1e-4):
         FAIL += 1
 
         print(f"  ❌ {name}: analytic={analytic:.8e}, fd={fd:.8e}, {label}")
+    assert ok, f"{name}: analytic={analytic:.8e}, fd={fd:.8e}, {label}, tol={tol}"
 
 
 

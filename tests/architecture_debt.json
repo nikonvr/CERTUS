@@ -82,7 +82,7 @@
     "certus/ui/certus_strat_table_ui.py::StrategiesTableWindow._populate_table_row": 350,
     "certus/ui/certus_strat_ui_layout.py::CertusStratLayoutMixin._create_design_tab": 366,
     "certus/ui/certus_strat_ui_state.py::CertusStratStateMixin.collect_params": 538,
-    "certus/ui/certus_substrate_ui.py::IndexTableDialog.__init__": 457,
+    "certus/ui/certus_substrate_index_dialog.py::IndexTableDialog.__init__": 457,
     "certus/utils/certus_strat_service.py::_validate_candidates_phase_a": 378,
     "certus/utils/certus_ux.py::build_premium_overrides": 574,
     "certus/workers/certus_field_workers.py::FieldWorkerThread._run_optimize": 432,
@@ -107,7 +107,7 @@
     "certus/ui/certus_index_spline_mixins_ui.py::_MeshOptimizationMixin._build_opt_config": 82,
     "certus/ui/certus_re_excel_mixin.py::CertusREExcelMixin.load_reverse_engineering_from_path": 67,
     "certus/ui/certus_strat_table_ui.py::StrategiesTableWindow._populate_table_row": 66,
-    "certus/ui/certus_substrate_ui.py::IndexTableDialog.__init__": 64,
+    "certus/ui/certus_substrate_index_dialog.py::IndexTableDialog.__init__": 64,
     "certus/workers/certus_field_workers.py::FieldWorkerThread._run_optimize": 61
   },
   "fonctions_non_annotees": [],
@@ -127,7 +127,6 @@
     "certus/ui/certus_re_excel_mixin.py": 2241,
     "certus/ui/certus_re_layout_mixin.py": 1762,
     "certus/ui/certus_strat_ui_state.py": 1809,
-    "certus/ui/certus_substrate_ui.py": 1626,
     "certus/utils/certus_re_helpers.py": 1973,
     "certus/utils/certus_strat_service.py": 1657,
     "certus/workers/certus_strat_workers.py": 1904

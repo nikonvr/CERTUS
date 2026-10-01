@@ -274,85 +274,30 @@ def run_pglobal_optimization(
             progress_logger(f"{ultra_summary_prefix} pre-polish | nfev={int(getattr(optimizer, 'n_evals', 0))} | x_dim={final_x.size} | x_head={np.round(final_x[:min(6, final_x.size)], 6).tolist()}")
 
         # Multi-start local polish to recover sharp minima on tough single-layer cases.
-        polish_starts = [final_x.copy()]
-        rng_seed = os.getenv("CERTUS_METAL_POLISH_SEED", "12345")
-        rng = np.random.default_rng(int(rng_seed) if str(rng_seed).strip().isdigit() else 12345)
-        n_extra_polish = int(os.getenv("CERTUS_METAL_POLISH_RESTARTS", "6" if ultra_wide else "4") or 4)
-        span = bounds_arr[:, 1] - bounds_arr[:, 0]
-        for scale in np.linspace(0.015, 0.08 if ultra_wide else 0.05, max(1, n_extra_polish)):
-            candidate = final_x + rng.normal(0.0, scale, size=final_x.size) * span
-            polish_starts.append(np.clip(candidate, bounds_arr[:, 0], bounds_arr[:, 1]))
-
-        for polish_idx, start_x in enumerate(polish_starts):
-            try:
-                polish = minimize(
-                    objective_fn,
-                    start_x,
-                    method="L-BFGS-B",
-                    bounds=[tuple(b) for b in bounds_arr],
-                    options={"maxiter": max(300, min(3000, budget // 8)), "ftol": 1e-12, "gtol": 1e-8},
-                )
-                polished_fun = float(getattr(polish, "fun", np.inf))
-                if np.isfinite(polished_fun) and polished_fun <= final_fun:
-                    final_x = np.asarray(polish.x, dtype=np.float64)
-                    final_fun = polished_fun
-                    if progress_logger is not None:
-                        progress_logger(
-                            f"{ultra_summary_prefix} polish accepted | restart={polish_idx}/{len(polish_starts)-1} | best_rmse={_safe_rmse(final_fun):.6e} | x_head={np.round(final_x[:min(6, final_x.size)], 6).tolist()}"
-                        )
-                elif progress_logger is not None:
-                    progress_logger(
-                        f"{ultra_summary_prefix} polish rejected | restart={polish_idx}/{len(polish_starts)-1} | polished_rmse={_safe_rmse(polished_fun):.6e} | keep_rmse={_safe_rmse(final_fun):.6e}"
-                    )
-            except Exception as exc:
-                if progress_logger is not None:
-                    progress_logger(f"{ultra_summary_prefix} polish failed | restart={polish_idx}/{len(polish_starts)-1} | reason={exc}")
+        final_fun, final_x, rng_seed = _multi_start_polish(
+            objective_fn,
+            ultra_wide,
+            progress_logger,
+            bounds_arr,
+            budget,
+            ultra_summary_prefix,
+            final_x,
+            final_fun,
+        )
 
     severe_polish_enabled = False if skip_polish else (str(os.getenv("CERTUS_METAL_SEVERE_POLISH", "1")).strip().lower() not in {"0", "false", "no", "off"})
     if severe_polish_enabled and final_x.size > 0:
-        severe_restarts = int(os.getenv("CERTUS_METAL_SEVERE_POLISH_RESTARTS", "6" if ultra_wide else "4") or 4)
-        severe_span_scale = float(os.getenv("CERTUS_METAL_SEVERE_POLISH_SPAN_SCALE", "0.02" if ultra_wide else "0.012") or 0.012)
-        severe_maxiter = int(os.getenv("CERTUS_METAL_SEVERE_POLISH_MAXITER", str(max(800, min(5000, budget // 4)))) or max(800, min(5000, budget // 4)))
-        severe_seed = os.getenv("CERTUS_METAL_SEVERE_POLISH_SEED", rng_seed)
-        severe_rng = np.random.default_rng(int(severe_seed) if str(severe_seed).strip().isdigit() else 24680)
-        severe_span = np.asarray(bounds_arr[:, 1] - bounds_arr[:, 0], dtype=np.float64)
-        if progress_logger is not None:
-            progress_logger(
-                f"{ultra_summary_prefix} severe_polish start | restarts={severe_restarts} | span_scale={severe_span_scale} | maxiter={severe_maxiter} | seed={severe_seed}"
-            )
-        for severe_idx in range(severe_restarts):
-            if severe_idx == 0:
-                start_x = final_x.copy()
-            else:
-                perturb = severe_rng.normal(0.0, severe_span_scale, size=final_x.size) * severe_span
-                start_x = np.clip(final_x + perturb, bounds_arr[:, 0], bounds_arr[:, 1])
-            try:
-                severe = minimize(
-                    objective_fn,
-                    start_x,
-                    method="L-BFGS-B",
-                    bounds=[tuple(b) for b in bounds_arr],
-                    options={"maxiter": severe_maxiter, "ftol": 1e-14, "gtol": 1e-10},
-                )
-                severe_fun = float(getattr(severe, "fun", np.inf))
-                if np.isfinite(severe_fun) and severe_fun <= final_fun:
-                    final_x = np.asarray(severe.x, dtype=np.float64)
-                    final_fun = severe_fun
-                    if progress_logger is not None:
-                        progress_logger(
-                            f"{ultra_summary_prefix} severe_polish accepted | restart={severe_idx}/{severe_restarts-1} | best_rmse={_safe_rmse(final_fun):.6e} | x_head={np.round(final_x[:min(6, final_x.size)], 6).tolist()}"
-                        )
-                elif progress_logger is not None:
-                    progress_logger(
-                        f"{ultra_summary_prefix} severe_polish rejected | restart={severe_idx}/{severe_restarts-1} | polished_rmse={_safe_rmse(severe_fun):.6e} | keep_rmse={_safe_rmse(final_fun):.6e}"
-                    )
-            except Exception as exc:
-                if progress_logger is not None:
-                    progress_logger(
-                        f"{ultra_summary_prefix} severe_polish failed | restart={severe_idx}/{severe_restarts-1} | reason={exc}"
-                    )
-        if progress_logger is not None:
-            progress_logger(f"{ultra_summary_prefix} severe_polish end | best_rmse={_safe_rmse(final_fun):.6e}")
+        final_fun, final_x = _severe_polish(
+            objective_fn,
+            ultra_wide,
+            progress_logger,
+            bounds_arr,
+            budget,
+            ultra_summary_prefix,
+            final_x,
+            final_fun,
+            rng_seed,
+        )
 
     if progress_logger is not None:
         progress_logger(f"{ultra_summary_prefix} final | best_rmse={_safe_rmse(final_fun):.6e} | nfev={int(getattr(optimizer, 'n_evals', 0))} | success=True")
@@ -368,3 +313,89 @@ def run_pglobal_optimization(
         nit=int(getattr(best, "iteration", max_iter) if best is not None else max_iter),
         nfev=int(getattr(optimizer, "n_evals", 0)),
     )
+
+
+def _multi_start_polish(objective_fn, ultra_wide, progress_logger, bounds_arr, budget, ultra_summary_prefix, final_x, final_fun):
+    """Polish the best vector with L-BFGS-B from itself and from a few seeded random perturbations of it, keeping any restart whose cost is no worse; the seed is handed back because the severe polish reuses it."""
+    polish_starts = [final_x.copy()]
+    rng_seed = os.getenv("CERTUS_METAL_POLISH_SEED", "12345")
+    rng = np.random.default_rng(int(rng_seed) if str(rng_seed).strip().isdigit() else 12345)
+    n_extra_polish = int(os.getenv("CERTUS_METAL_POLISH_RESTARTS", "6" if ultra_wide else "4") or 4)
+    span = bounds_arr[:, 1] - bounds_arr[:, 0]
+    for scale in np.linspace(0.015, 0.08 if ultra_wide else 0.05, max(1, n_extra_polish)):
+        candidate = final_x + rng.normal(0.0, scale, size=final_x.size) * span
+        polish_starts.append(np.clip(candidate, bounds_arr[:, 0], bounds_arr[:, 1]))
+
+    for polish_idx, start_x in enumerate(polish_starts):
+        try:
+            polish = minimize(
+                objective_fn,
+                start_x,
+                method="L-BFGS-B",
+                bounds=[tuple(b) for b in bounds_arr],
+                options={"maxiter": max(300, min(3000, budget // 8)), "ftol": 1e-12, "gtol": 1e-8},
+            )
+            polished_fun = float(getattr(polish, "fun", np.inf))
+            if np.isfinite(polished_fun) and polished_fun <= final_fun:
+                final_x = np.asarray(polish.x, dtype=np.float64)
+                final_fun = polished_fun
+                if progress_logger is not None:
+                    progress_logger(
+                        f"{ultra_summary_prefix} polish accepted | restart={polish_idx}/{len(polish_starts)-1} | best_rmse={_safe_rmse(final_fun):.6e} | x_head={np.round(final_x[:min(6, final_x.size)], 6).tolist()}"
+                    )
+            elif progress_logger is not None:
+                progress_logger(
+                    f"{ultra_summary_prefix} polish rejected | restart={polish_idx}/{len(polish_starts)-1} | polished_rmse={_safe_rmse(polished_fun):.6e} | keep_rmse={_safe_rmse(final_fun):.6e}"
+                )
+        except Exception as exc:
+            if progress_logger is not None:
+                progress_logger(f"{ultra_summary_prefix} polish failed | restart={polish_idx}/{len(polish_starts)-1} | reason={exc}")
+    return final_fun, final_x, rng_seed
+
+
+def _severe_polish(objective_fn, ultra_wide, progress_logger, bounds_arr, budget, ultra_summary_prefix, final_x, final_fun, rng_seed):
+    """Re-polish the best vector with a few tighter L-BFGS-B restarts from small random perturbations, keeping any that does not make the cost worse."""
+    severe_restarts = int(os.getenv("CERTUS_METAL_SEVERE_POLISH_RESTARTS", "6" if ultra_wide else "4") or 4)
+    severe_span_scale = float(os.getenv("CERTUS_METAL_SEVERE_POLISH_SPAN_SCALE", "0.02" if ultra_wide else "0.012") or 0.012)
+    severe_maxiter = int(os.getenv("CERTUS_METAL_SEVERE_POLISH_MAXITER", str(max(800, min(5000, budget // 4)))) or max(800, min(5000, budget // 4)))
+    severe_seed = os.getenv("CERTUS_METAL_SEVERE_POLISH_SEED", rng_seed)
+    severe_rng = np.random.default_rng(int(severe_seed) if str(severe_seed).strip().isdigit() else 24680)
+    severe_span = np.asarray(bounds_arr[:, 1] - bounds_arr[:, 0], dtype=np.float64)
+    if progress_logger is not None:
+        progress_logger(
+            f"{ultra_summary_prefix} severe_polish start | restarts={severe_restarts} | span_scale={severe_span_scale} | maxiter={severe_maxiter} | seed={severe_seed}"
+        )
+    for severe_idx in range(severe_restarts):
+        if severe_idx == 0:
+            start_x = final_x.copy()
+        else:
+            perturb = severe_rng.normal(0.0, severe_span_scale, size=final_x.size) * severe_span
+            start_x = np.clip(final_x + perturb, bounds_arr[:, 0], bounds_arr[:, 1])
+        try:
+            severe = minimize(
+                objective_fn,
+                start_x,
+                method="L-BFGS-B",
+                bounds=[tuple(b) for b in bounds_arr],
+                options={"maxiter": severe_maxiter, "ftol": 1e-14, "gtol": 1e-10},
+            )
+            severe_fun = float(getattr(severe, "fun", np.inf))
+            if np.isfinite(severe_fun) and severe_fun <= final_fun:
+                final_x = np.asarray(severe.x, dtype=np.float64)
+                final_fun = severe_fun
+                if progress_logger is not None:
+                    progress_logger(
+                        f"{ultra_summary_prefix} severe_polish accepted | restart={severe_idx}/{severe_restarts-1} | best_rmse={_safe_rmse(final_fun):.6e} | x_head={np.round(final_x[:min(6, final_x.size)], 6).tolist()}"
+                    )
+            elif progress_logger is not None:
+                progress_logger(
+                    f"{ultra_summary_prefix} severe_polish rejected | restart={severe_idx}/{severe_restarts-1} | polished_rmse={_safe_rmse(severe_fun):.6e} | keep_rmse={_safe_rmse(final_fun):.6e}"
+                )
+        except Exception as exc:
+            if progress_logger is not None:
+                progress_logger(
+                    f"{ultra_summary_prefix} severe_polish failed | restart={severe_idx}/{severe_restarts-1} | reason={exc}"
+                )
+    if progress_logger is not None:
+        progress_logger(f"{ultra_summary_prefix} severe_polish end | best_rmse={_safe_rmse(final_fun):.6e}")
+    return final_fun, final_x

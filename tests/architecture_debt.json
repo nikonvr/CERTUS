@@ -46,7 +46,6 @@
     "certus/core/certus_substrate_index.py::IndexCore._fit_model_spline_adaptive": 357,
     "certus/core/certus_substrate_sellmeier.py::_fit_model_sellmeier3poles": 389,
     "certus/metal/certus_metal_bilayer_app.py::BeamAnalysisWorker.run": 397,
-    "certus/metal/pglobal_adapter.py::run_pglobal_optimization": 335,
     "certus/physics/certus_opt_needle.py::needle_scan_cached": 416,
     "certus/physics/gradient_analytic.py::_compute_epsilon1_gradient_kernel": 372,
     "certus/physics/gradient_analytic.py::_compute_single_layer_sensitivity_kernel": 333,
@@ -86,7 +85,7 @@
   },
   "fonctions_complexes": {
     "certus/core/certus_strat_robustness_task.py::_test_strategy_robustness_task": 74,
-    "certus/metal/pglobal_adapter.py::run_pglobal_optimization": 107,
+    "certus/metal/pglobal_adapter.py::run_pglobal_optimization": 77,
     "certus/spline/certus_corridor_exploration.py::_corridor_profile_walk_side": 79,
     "certus/spline/certus_corridor_exploration.py::compute_bootstrap_corridors_by_d": 74,
     "certus/spline/certus_corridor_exploration.py::compute_regular_grid_rmse_profile": 96,

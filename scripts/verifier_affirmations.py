@@ -492,7 +492,8 @@ def test_L_les_deux_regles_gravees_du_rate() -> None:
     # commentaire dit que le code faisait X » finit par etre ignore -- c'est exactement ce que
     # CLAUDE.md reproche aux regles violees en permanence. Meme parade que pour le balayage du
     # francais dans `certus/` : tokenize, pas grep.
-    rob = _code_seul(ROOT / "certus" / "core" / "certus_strat_robustness.py")
+    # le noyau de robustesse tient en plusieurs fichiers depuis S5.2 (la facade et ses `certus_strat_robustness_*.py`)
+    rob = "\n".join(_code_seul(p) for p in sorted((ROOT / "certus" / "core").glob("certus_strat_robustness*.py")))
     gro = _code_seul(ROOT / "certus" / "physics" / "certus_strat_growth.py")
 
     # --- regle 1, cote selection des candidates -----------------------------------------

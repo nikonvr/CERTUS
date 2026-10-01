@@ -37,7 +37,9 @@ from certus.core.certus_strat_leviers import (
 )
 
 NOYAU = Path(__file__).resolve().parents[2] / "certus" / "core" / "certus_strat_robustness.py"
-SRC = NOYAU.read_text(encoding="utf-8")
+#: Le noyau tient en plusieurs fichiers depuis S5.2 : la facade, puis ses `certus_strat_robustness_*.py` (les defauts de `params.get`
+#: et les constantes se lisent dans le texte de tous).
+SRC = "\n".join(p.read_text(encoding="utf-8") for p in sorted(NOYAU.parent.glob("certus_strat_robustness*.py")))
 
 
 def _defaut_params(cle: str):

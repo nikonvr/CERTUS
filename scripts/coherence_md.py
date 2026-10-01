@@ -117,13 +117,13 @@ FAITS: list[tuple[str, str, str, str]] = [
 
 #: Constantes lues dans le CODE : (nom lisible, fichier, nom de la constante, motif dans les .md)
 DU_CODE: list[tuple[str, str, str, str]] = [
-    ("RATE_MIN_LAYER",   "certus/core/certus_strat_robustness.py",  "RATE_MIN_LAYER",   r"RATE_MIN_LAYER"),
+    ("RATE_MIN_LAYER",   "certus/core/certus_strat_robustness_rate.py",  "RATE_MIN_LAYER",   r"RATE_MIN_LAYER"),
     ("RATE_TURN_NM",     "certus/physics/certus_strat_growth.py",   "RATE_TURN_NM",     r"RATE_TURN_NM"),
-    ("RATE_MIN_LAYERS_PER_BLOCK", "certus/core/certus_strat_robustness.py",
+    ("RATE_MIN_LAYERS_PER_BLOCK", "certus/core/certus_strat_robustness_rate.py",
      "RATE_MIN_LAYERS_PER_BLOCK", r"RATE_MIN_LAYERS_PER_BLOCK"),
-    ("RATE_MAX_VARIANTS_PER_STRATEGY", "certus/core/certus_strat_robustness.py",
+    ("RATE_MAX_VARIANTS_PER_STRATEGY", "certus/core/certus_strat_robustness_rate.py",
      "RATE_MAX_VARIANTS_PER_STRATEGY", r"RATE_MAX_VARIANTS_PER_STRATEGY"),
-    ("RATE_SWING_MIN_DEFAULT", "certus/core/certus_strat_robustness.py",
+    ("RATE_SWING_MIN_DEFAULT", "certus/core/certus_strat_robustness_rate.py",
      "RATE_SWING_MIN_DEFAULT", r"RATE_SWING_MIN_DEFAULT|dynamics_threshold"),
     ("PHOTOMETRIC_CURVATURE_AMP", "certus/physics/certus_strat_growth.py",
      "PHOTOMETRIC_CURVATURE_AMP", r"photometric_curvature_amp|PHOTOMETRIC_CURVATURE_AMP"),

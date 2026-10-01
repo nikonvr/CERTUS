@@ -40,9 +40,9 @@
     "certus/core/certus_re_solvers.py::re_execute_phase1_p4_scan": 326,
     "certus/core/certus_re_solvers.py::re_execute_phase2_splines": 394,
     "certus/core/certus_re_solvers.py::re_execute_phase2_candidate": 307,
-    "certus/core/certus_strat_robustness.py::_expand_with_rate_variants": 330,
-    "certus/core/certus_strat_robustness.py::_test_strategy_robustness_task": 814,
     "certus/core/certus_strat_robustness.py::run_final_simulation_block": 340,
+    "certus/core/certus_strat_robustness_rate.py::_expand_with_rate_variants": 330,
+    "certus/core/certus_strat_robustness_task.py::_test_strategy_robustness_task": 814,
     "certus/core/certus_substrate_index.py::IndexCore._fit_model_spline_adaptive": 358,
     "certus/core/certus_substrate_sellmeier.py::_fit_model_sellmeier3poles": 389,
     "certus/metal/certus_metal_bilayer_app.py::BeamAnalysisWorker.run": 397,
@@ -90,7 +90,7 @@
     "certus/workers/certus_strat_workers.py::_parallel_block_worker": 369
   },
   "fonctions_complexes": {
-    "certus/core/certus_strat_robustness.py::_test_strategy_robustness_task": 74,
+    "certus/core/certus_strat_robustness_task.py::_test_strategy_robustness_task": 74,
     "certus/metal/pglobal_adapter.py::run_pglobal_optimization": 107,
     "certus/spline/certus_corridor_exploration.py::_corridor_profile_walk_side": 79,
     "certus/spline/certus_corridor_exploration.py::compute_bootstrap_corridors_by_d": 74,
@@ -114,7 +114,6 @@
   "fichiers_longs": {
     "certus/core/_certus_physics_impl.py": 1668,
     "certus/core/certus_index_objectives.py": 1934,
-    "certus/core/certus_strat_robustness.py": 3482,
     "certus/core/certus_substrate_index.py": 1968,
     "certus/metal/certus_metal_bilayer_app.py": 2118,
     "certus/metal/certus_metal_common.py": 2212,

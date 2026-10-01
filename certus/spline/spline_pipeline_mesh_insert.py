@@ -110,17 +110,7 @@ def insert_manual_sigma_nodes(
 
     mesh_summary = _sigma_mesh_change_summary_for_log(sk, sk_new)
 
-    rmse_ref = float(out.get("rmse", float("inf")))
-    # Use the best known RMSE as reference: polished value may be tighter than the solver dict RMSE.
-    # This prevents accepting K+n results that regress vs the polished baseline.
-    _best_polished_rmse = out.get("spectral_rmse_global_best_value") or out.get("spectral_rmse_polished_value")
-    if _best_polished_rmse is not None:
-        try:
-            _bpr = float(_best_polished_rmse)
-            if np.isfinite(_bpr) and _bpr < rmse_ref:
-                rmse_ref = _bpr
-        except TypeError, ValueError:
-            pass
+    rmse_ref = _reference_rmse_of_the_base_result(out)
     if not np.isfinite(rmse_ref):
         _log_spline_pipeline_json(log, "manual_node_insert_skip", seq="05b", reason="rmse_not_finite")
         log.warning("INDEX_SPLINE [MANUAL NODE INSERT] Skip: reference RMSE not finite.")
@@ -527,6 +517,22 @@ def insert_manual_sigma_nodes(
         live_cb(out)
 
     return out
+
+
+def _reference_rmse_of_the_base_result(out):
+    """Return the RMSE the new mesh is judged against: the one of the base result, or the best polished one when that is tighter and finite."""
+    rmse_ref = float(out.get("rmse", float("inf")))
+    # Use the best known RMSE as reference: polished value may be tighter than the solver dict RMSE.
+    # This prevents accepting K+n results that regress vs the polished baseline.
+    _best_polished_rmse = out.get("spectral_rmse_global_best_value") or out.get("spectral_rmse_polished_value")
+    if _best_polished_rmse is not None:
+        try:
+            _bpr = float(_best_polished_rmse)
+            if np.isfinite(_bpr) and _bpr < rmse_ref:
+                rmse_ref = _bpr
+        except TypeError, ValueError:
+            pass
+    return rmse_ref
 
 
 def insert_mwir_mid_sigma_node(

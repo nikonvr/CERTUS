@@ -45,15 +45,15 @@ python -m pytest tests/ui/ -q --no-cov
 python -m pytest tests/ -q --no-cov --ignore=tests/oracle --ignore=tests/unit --ignore=tests/ui
 ```
 
-📏 Mesuré le 2026-10-01 (Windows 11, Ryzen 7 5700G 8 cœurs / 16 threads, 31 Go, Python 3.14.7,
-cache Numba chaud) : unit 15 min 39 sur la machine au repos ; sur une copie jetable pendant que la machine
-travaillait ailleurs, oracle 69 s · ui 26 min 33 · le reste de `tests/` 10 min 24 (le 2026-09-30, avant
-que unit ne grossisse de moitié : oracle 8 s · unit 7 min 23 · ui 18 min 32 · le reste 7 min 53). **Une
-durée sans sa machine ne vaut rien ; un compte de tests se périme au premier test ajouté — ne recopie
-ni l'un ni l'autre.**
+📏 Mesuré le 2026-10-02 (Windows 11, Ryzen 7 5700G 8 cœurs / 16 threads, 31 Go, Python 3.14.7, cache Numba
+chaud, sur une copie jetable du commit, la machine peu chargée) : oracle 59 s · unit 16 min 59 · le reste de
+`tests/` 9 min 51 · ui 20 min 38, soit 48 min en tout (le 2026-09-30, avant que unit ne grossisse de
+moitié : oracle 8 s · unit 7 min 23 · ui 18 min 32 · le reste 7 min 53, soit 34 min). **Une durée sans
+sa machine ne vaut rien ; un compte de tests se périme au premier test ajouté — ne recopie ni l'un ni
+l'autre.**
 
-**Palier rapide** : `python -m pytest tests/unit/ -m "not slow" -q --no-cov` (2 min 10 sur la même
-machine, au lieu de 15 min 39). Les fonctions de test qui prennent une seconde ou plus sont listées dans
+**Palier rapide** : `python -m pytest tests/unit/ -m "not slow" -q --no-cov` (1 min 47 sur la même
+machine au repos, au lieu de 16 min 59). Les fonctions de test qui prennent une seconde ou plus sont listées dans
 `tests/slow_tests.json`, `tests/conftest.py` les marque `slow` à la collecte, et
 `scripts\refresh_slow_tests.py` refait la liste d'après un journal de `pytest --durations`. Le palier
 rapide aide à itérer ; il ne remplace pas la validation ci-dessus, dont le seul critère reste `0 failed`.

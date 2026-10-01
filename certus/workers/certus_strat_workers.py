@@ -714,26 +714,16 @@ def _parallel_block_worker(args) -> dict:
     _injectes = _resolve_injected_strategies(params)
     if _injectes:
         inherited_strategies = list(inherited_strategies or []) + _injectes
-
     shared_clues = None
-
     local_materials_db = None
-
     logger = logging.getLogger(f"W{n_blk}")
-
     logger.setLevel(logging.INFO)
-
     logger.propagate = False
-
     if not logger.handlers:
         handler = logging.StreamHandler()
-
         handler.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(message)s", datefmt="%H:%M:%S"))
-
         logger.addHandler(handler)
-
     params["logger"] = logger
-
     try:
         # Connection to shared memory
 
@@ -749,35 +739,26 @@ def _parallel_block_worker(args) -> dict:
 
             except Exception as e:
                 logger.warning(f"[Block {n_blk}] SharedMemory (Hints) reconnection failed:{e}")
-
         shared_matrix_worker = None
-
         if "shared_matrix_info" in pre_calc_data:
             try:
                 shared_matrix_worker = SharedArrayWorker(pre_calc_data["shared_matrix_info"])
-
                 pre_calc_data["nominal_matrix_cache"] = shared_matrix_worker.get_array()
 
             except Exception as e:
                 logger.warning(f"[Block {n_blk}] SharedMemory (Matrix) reconnection failed: {e}")
-
         if pre_calc_data.get("materials_data"):
             local_materials_db = MaterialDatabase(filepath="")
-
             local_materials_db._data = pre_calc_data["materials_data"]
-
             params["materials_db_instance"] = local_materials_db
 
         # Get live_queue from StratContext (initialized via _worker_init)
 
         ctx = StratContext.get_current()
-
         live_queue = ctx.live_queue if ctx else None
-
         logger.debug(
             f"[DEBUG-WORKER] [Block {n_blk}] StratContext is {'NOT None' if ctx else 'None'}, live_queue is {'NOT None' if live_queue else 'None'}"
         )
-
         gc.collect()
 
         # Debug tracing (logger.debug instead of print)
@@ -785,24 +766,16 @@ def _parallel_block_worker(args) -> dict:
         logger.debug(
             f"[W{n_blk}] raw_results_thickness keys: {list(pre_calc_data['raw_results_thickness'].keys())[:5]}..."
         )
-
         logger.debug(f"[W{n_blk}] raw_results_sq keys: {list(pre_calc_data['raw_results_sq'].keys())[:5]}...")
-
         logger.debug(f"[W{n_blk}] num_layers: {pre_calc_data['num_layers']}")
-
         sample_layer = (
             next(iter(pre_calc_data["raw_results_thickness"].keys())) if pre_calc_data["raw_results_thickness"] else -1
         )
-
         if sample_layer >= 0:
             sample_data = pre_calc_data["raw_results_thickness"][sample_layer][:3]
-
             logger.debug(f"[W{n_blk}] Layer {sample_layer} sample: {sample_data}")
-
         sym_enable = bool(params.get("sym_enable", True))
-
         sym_bonus_map = pre_calc_data.get("sym_bonus_map", {})
-
         sym_layer_importance = pre_calc_data.get("sym_layer_importance", {})
 
         if sym_enable and not sym_bonus_map:
@@ -906,101 +879,20 @@ def _parallel_block_worker(args) -> dict:
 
         # Inherited Screening
 
-        survivors_inherited = []
+        survivors_inherited = _screen_inherited_strategies(n_blk, pre_calc_data, params, n_screen, k_keep, inherited_strategies)
 
-        if inherited_strategies:
-            valid_inherited = []
+        final_results, unique_survivors = _confirm_unique_survivors(
+            n_blk,
+            pre_calc_data,
+            params,
+            n_screen,
+            n_full,
+            logger,
+            survivors_dp,
+            survivors_inherited,
+        )
 
-            for s in inherited_strategies:
-                if s.get("n_blocks") != n_blk:
-                    continue
-
-                ok, _ = _validate_strategy_blocks_contract(s, pre_calc_data["num_layers"], expected_n_blocks=n_blk)
-
-                if ok:
-                    valid_inherited.append(s)
-
-            if valid_inherited:
-                _emit_stat("MS", len(valid_inherited))
-
-                screen_context_inh = pre_calc_data.copy()
-
-                screen_context_inh["all_strategies"] = valid_inherited
-
-                res_inh = run_final_simulation_block(
-                    screen_context_inh, params, num_runs=n_screen, expand_variants=False
-                )
-
-                if "all_strategies_results" in res_inh:
-                    survivors_inherited = sorted(
-                        res_inh["all_strategies_results"],
-                        key=lambda x: x["robustness_score"],
-                    )[:k_keep]
-
-        unique_survivors = []
-
-        seen_signatures = set()
-
-        for res in survivors_dp + survivors_inherited:
-            strat = res.get("strategy", {})
-
-            sig = _strategy_signature(strat)
-
-            if sig not in seen_signatures:
-                unique_survivors.append(res)
-
-                seen_signatures.add(sig)
-
-        final_results = unique_survivors
-
-        if unique_survivors:
-            # Mandatory confirmation pass on survivors with full MC budget.
-
-            final_context = pre_calc_data.copy()
-
-            final_context["all_strategies"] = [r["strategy"] for r in unique_survivors]
-
-            logger.info(
-                f"   [Block {n_blk}] Full pass on {len(final_context['all_strategies'])} survivors (n_full={n_full})..."
-            )
-
-            final_run = run_final_simulation_block(
-                final_context,
-                params,
-                num_runs=max(int(n_full), int(n_screen)),
-            )
-
-            final_results = final_run.get("all_strategies_results", [])
-
-        best_final = None
-        if final_results:
-            best_final = min(final_results, key=lambda x: x["robustness_score"])
-            logger.info(
-                f"[Block {n_blk}] Best strategy ready: RMSE={best_final['robustness_score']:.5f} "
-                f"blocks={len(best_final.get('strategy', {}).get('blocks', []))}"
-            )
-
-        if live_queue and best_final:
-            try:
-                logger.debug(
-                    f"[DEBUG-WORKER] [Block {n_blk}] Putting best strategy into live_queue. Robustness: {best_final['robustness_score']:.5f}"
-                )
-                live_queue.put(
-                    {
-                        "strategy": best_final["strategy"],
-                        "robustness_score": best_final["robustness_score"],
-                        "n_blk": n_blk,
-                        "block_number": n_blk,
-                    }
-                )
-                logger.debug(f"[DEBUG-WORKER] [Block {n_blk}] Successfully put strategy into live_queue.")
-
-            except Exception as e:
-                logger.error(f"[Worker {n_blk}] Failed to put into live_queue: {e}", exc_info=True)
-        else:
-            logger.debug(
-                f"[DEBUG-WORKER] [Block {n_blk}] Skipped putting into live_queue. live_queue exists: {live_queue is not None}, final_results length: {len(final_results) if final_results else 0}"
-            )
+        best_final = _publish_best_strategy(n_blk, logger, live_queue, final_results)
 
         return {
             "n_blk": n_blk,
@@ -1059,6 +951,114 @@ def _parallel_block_worker(args) -> dict:
         _flush_sp_stats()
 
         gc.collect()
+
+
+def _screen_inherited_strategies(n_blk, pre_calc_data, params, n_screen, k_keep, inherited_strategies):
+    """Screen the strategies inherited from the previous block count: keep those that really have this many blocks and respect the block contract, simulate them, and return the best k_keep by robustness."""
+    survivors_inherited = []
+
+    if inherited_strategies:
+        valid_inherited = []
+
+        for s in inherited_strategies:
+            if s.get("n_blocks") != n_blk:
+                continue
+
+            ok, _ = _validate_strategy_blocks_contract(s, pre_calc_data["num_layers"], expected_n_blocks=n_blk)
+
+            if ok:
+                valid_inherited.append(s)
+
+        if valid_inherited:
+            _emit_stat("MS", len(valid_inherited))
+
+            screen_context_inh = pre_calc_data.copy()
+
+            screen_context_inh["all_strategies"] = valid_inherited
+
+            res_inh = run_final_simulation_block(
+                screen_context_inh, params, num_runs=n_screen, expand_variants=False
+            )
+
+            if "all_strategies_results" in res_inh:
+                survivors_inherited = sorted(
+                    res_inh["all_strategies_results"],
+                    key=lambda x: x["robustness_score"],
+                )[:k_keep]
+    return survivors_inherited
+
+
+def _confirm_unique_survivors(n_blk, pre_calc_data, params, n_screen, n_full, logger, survivors_dp, survivors_inherited):
+    """Drop the survivors that share a signature, then run the mandatory confirmation pass on the rest with the full Monte Carlo budget; return the confirmed results."""
+    unique_survivors = []
+
+    seen_signatures = set()
+
+    for res in survivors_dp + survivors_inherited:
+        strat = res.get("strategy", {})
+
+        sig = _strategy_signature(strat)
+
+        if sig not in seen_signatures:
+            unique_survivors.append(res)
+
+            seen_signatures.add(sig)
+
+    final_results = unique_survivors
+
+    if unique_survivors:
+        # Mandatory confirmation pass on survivors with full MC budget.
+
+        final_context = pre_calc_data.copy()
+
+        final_context["all_strategies"] = [r["strategy"] for r in unique_survivors]
+
+        logger.info(
+            f"   [Block {n_blk}] Full pass on {len(final_context['all_strategies'])} survivors (n_full={n_full})..."
+        )
+
+        final_run = run_final_simulation_block(
+            final_context,
+            params,
+            num_runs=max(int(n_full), int(n_screen)),
+        )
+
+        final_results = final_run.get("all_strategies_results", [])
+    return final_results, unique_survivors
+
+
+def _publish_best_strategy(n_blk, logger, live_queue, final_results):
+    """Find the most robust of the final results, log it, and put it on the live queue so the window can show it before the block count is finished; return it."""
+    best_final = None
+    if final_results:
+        best_final = min(final_results, key=lambda x: x["robustness_score"])
+        logger.info(
+            f"[Block {n_blk}] Best strategy ready: RMSE={best_final['robustness_score']:.5f} "
+                f"blocks={len(best_final.get('strategy', {}).get('blocks', []))}"
+        )
+
+    if live_queue and best_final:
+        try:
+            logger.debug(
+                f"[DEBUG-WORKER] [Block {n_blk}] Putting best strategy into live_queue. Robustness: {best_final['robustness_score']:.5f}"
+            )
+            live_queue.put(
+                {
+                    "strategy": best_final["strategy"],
+                    "robustness_score": best_final["robustness_score"],
+                    "n_blk": n_blk,
+                    "block_number": n_blk,
+                }
+            )
+            logger.debug(f"[DEBUG-WORKER] [Block {n_blk}] Successfully put strategy into live_queue.")
+
+        except Exception as e:
+            logger.error(f"[Worker {n_blk}] Failed to put into live_queue: {e}", exc_info=True)
+    else:
+        logger.debug(
+            f"[DEBUG-WORKER] [Block {n_blk}] Skipped putting into live_queue. live_queue exists: {live_queue is not None}, final_results length: {len(final_results) if final_results else 0}"
+        )
+    return best_final
 
 
 class StatsConsumerWorker(QObject):

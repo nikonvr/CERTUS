@@ -78,8 +78,7 @@
     "certus/ui/certus_substrate_index_dialog.py::IndexTableDialog.__init__": 457,
     "certus/utils/certus_strat_service.py::_validate_candidates_phase_a": 378,
     "certus/utils/certus_ux.py::build_premium_overrides": 574,
-    "certus/workers/certus_field_workers.py::FieldWorkerThread._run_optimize": 347,
-    "certus/workers/certus_strat_workers.py::_parallel_block_worker": 369
+    "certus/workers/certus_field_workers.py::FieldWorkerThread._run_optimize": 347
   },
   "fonctions_complexes": {
     "certus/core/certus_strat_robustness_task.py::_test_strategy_robustness_task": 74,

@@ -325,6 +325,68 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
         # 8: Unique Lambda
         self.table.setItem(row, 8, NumericTableWidgetItem(str(result["num_unique_wavelengths"])))
 
+        self._fill_yield_cell(row, result)
+
+        # 10: Robust Score
+        score_item = NumericTableWidgetItem(f"{result['robustness_score']:.6f}")
+        if row == 0:
+            score_item.setBackground(QColor(CertusTheme.SUCCESS_BG))
+        self.table.setItem(row, 10, score_item)
+
+        self._fill_symmetry_cell(row, result, strat)
+
+        # 11: Comp. Factor
+        noise_results = result.get("results_per_noise", [])
+        self._fill_compensation_cell(row, _rmse_to_seel, noise_results)
+
+        self._fill_extrema_cell(row, strat)
+
+        self._fill_slit_and_rate_cells(row, result, strat)
+
+        self._fill_critical_layer_cell(row, result)
+
+        self._fill_ablation_cell(row, result)
+
+        self._fill_seel_cells(row, _rmse_to_seel, noise_results)
+
+        # Blocks
+        start_col_blocks = 17  # 14 base columns + 3 SEEL
+        blocks = strat.get("blocks", [])
+        for b_idx in range(max_blocks):
+            col_idx = start_col_blocks + b_idx
+            if b_idx < len(blocks):
+                block = blocks[b_idx]
+                wl = block["wavelength"]
+                l_start = block["start"] + 1
+                l_end = block["end"]
+                text_desc = f"{wl:.0f}nm (L{l_start}->L{l_end})"
+                block_item = QTableWidgetItem(text_desc)
+                block_item.setToolTip(f"Block #{b_idx + 1}\nWavelength: {wl}nm\nLayers: {l_start} to {l_end}")
+                self.table.setItem(row, col_idx, block_item)
+            else:
+                self.table.setItem(row, col_idx, QTableWidgetItem(""))
+
+        # Worst Layers
+        start_col_errors = start_col_blocks + max_blocks
+        worst_layers = self._calculate_worst_layers(result, top_k=10)
+        for err_idx, text_val in enumerate(worst_layers):
+            item = QTableWidgetItem(text_val)
+            item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            if "nm" in text_val:
+                try:
+                    val_part = text_val.split()[1].replace("nm", "")
+                    val = float(val_part)
+                    if val > 2.0:
+                        item.setForeground(QColor(CertusTheme.DANGER))
+                        item.setFont(CertusTheme.get_font(9, QFont.Weight.Bold))
+                    elif val > 1.0:
+                        item.setForeground(QColor(CertusTheme.WARNING))
+                except (ValueError, IndexError, AttributeError):
+                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+            self.table.setItem(row, start_col_errors + err_idx, item)
+
+    def _fill_yield_cell(self, row, result):
+        """Fill the yield column of one row: the share of depositions that complete, flagged when the strategy was rescued, with the three failure modes in the tooltip."""
         # 9: YIELD — primary metric, BEFORE score
         # Displayed as first numerical column before RMSE for operator decision-making.
         crash_rate = float(result.get("crash_rate", 0.0) or 0.0)
@@ -369,12 +431,8 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
             yield_item.setForeground(QColor(CertusTheme.SUCCESS_TEXT))
         self.table.setItem(row, 9, yield_item)
 
-        # 10: Robust Score
-        score_item = NumericTableWidgetItem(f"{result['robustness_score']:.6f}")
-        if row == 0:
-            score_item.setBackground(QColor(CertusTheme.SUCCESS_BG))
-        self.table.setItem(row, 10, score_item)
-
+    def _fill_symmetry_cell(self, row, result, strat):
+        """Fill the symmetry column of one row: the layer-by-layer symmetry score on a 0 to 100 scale, coloured by how symmetric the design is."""
         # 11: Symmetry Score [0..100]
         sym_score = strat.get("symmetry_score_pct", result.get("symmetry_score_pct", None))
         if sym_score is None:
@@ -401,9 +459,9 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
             sym_item.setForeground(QColor(CertusTheme.DANGER_TEXT))
         self.table.setItem(row, 11, sym_item)
 
-        # 11: Comp. Factor
+    def _fill_compensation_cell(self, row, _rmse_to_seel, noise_results):
+        """Fill the compensation-factor column of one row: the average physical thickness error over the SEEL at 1x noise, green above 1.5 and red below 0.8."""
         comp_factor_str = "-"
-        noise_results = result.get("results_per_noise", [])
         res_1x = next((r for r in noise_results if abs(r.get("noise_level", 0) - 1.0) < 0.1), None)
         if res_1x:
             try:
@@ -432,6 +490,8 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
                 comp_item.setForeground(QColor(CertusTheme.DANGER))
         self.table.setItem(row, 12, comp_item)
 
+    def _fill_extrema_cell(self, row, strat):
+        """Fill the extrema column of one row: the median number of extrema per layer of the theoretical profile."""
         # 12: Median extrema count per layer (theoretical)
         ext_counts = []
         for p in strat.get("theoretical_layer_profile", []):
@@ -448,6 +508,8 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
         ext_item.setToolTip("Number of extrema computed on the theoretical noiseless curve")
         self.table.setItem(row, 13, ext_item)
 
+    def _fill_slit_and_rate_cells(self, row, result, strat):
+        """Fill the slit and the turn-counting columns of one row: the monochromator slit the strategy was evaluated at, and the layers deposited on the clock instead of by photometry."""
         # ---- 14, 15, 16: the slit, the Rate layers, the critical layer ----------
         #
         # 👤 2026-08-12: "finding a strategy is finding the control wavelengths or
@@ -484,6 +546,8 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
             rate_item.setBackground(QColor(CertusTheme.WARNING_BG))
         self.table.setItem(row, 15, rate_item)
 
+    def _fill_critical_layer_cell(self, row, result):
+        """Fill the critical-layer column of one row: what will give way first, and by how much margin."""
         # A23: what will give way, why, and by how much. Defined even at ZERO crashes,
         # which is the only regime these stacks know -- a zero rate ranks nothing, a
         # margin always ranks.
@@ -513,6 +577,8 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
         crit_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
         self.table.setItem(row, 16, crit_item)
 
+    def _fill_ablation_cell(self, row, result):
+        """Fill the ablation column of one row: the main source of the problems, with the full profile in the tooltip."""
         # 17: the defect source that weighs the most ON THIS strategy.
         #
         # 👤 2026-08-12: "it will let the user better understand where the problems
@@ -545,6 +611,8 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
         abl_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
         self.table.setItem(row, 17, abl_item)
 
+    def _fill_seel_cells(self, row, _rmse_to_seel, noise_results):
+        """Fill the SEEL columns of one row, one per noise level."""
         # ---- SEEL, shifted by four by the columns above -----------------
         for col_idx, noise_idx in enumerate([0, 1, 2]):
             target_col = 18 + col_idx
@@ -573,42 +641,6 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
                     self.table.setItem(row, target_col, NumericTableWidgetItem(f"R:{rmse_val:.5f}"))
             else:
                 self.table.setItem(row, target_col, QTableWidgetItem("N/A"))
-
-        # Blocks
-        start_col_blocks = 17  # 14 base columns + 3 SEEL
-        blocks = strat.get("blocks", [])
-        for b_idx in range(max_blocks):
-            col_idx = start_col_blocks + b_idx
-            if b_idx < len(blocks):
-                block = blocks[b_idx]
-                wl = block["wavelength"]
-                l_start = block["start"] + 1
-                l_end = block["end"]
-                text_desc = f"{wl:.0f}nm (L{l_start}->L{l_end})"
-                block_item = QTableWidgetItem(text_desc)
-                block_item.setToolTip(f"Block #{b_idx + 1}\nWavelength: {wl}nm\nLayers: {l_start} to {l_end}")
-                self.table.setItem(row, col_idx, block_item)
-            else:
-                self.table.setItem(row, col_idx, QTableWidgetItem(""))
-
-        # Worst Layers
-        start_col_errors = start_col_blocks + max_blocks
-        worst_layers = self._calculate_worst_layers(result, top_k=10)
-        for err_idx, text_val in enumerate(worst_layers):
-            item = QTableWidgetItem(text_val)
-            item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            if "nm" in text_val:
-                try:
-                    val_part = text_val.split()[1].replace("nm", "")
-                    val = float(val_part)
-                    if val > 2.0:
-                        item.setForeground(QColor(CertusTheme.DANGER))
-                        item.setFont(CertusTheme.get_font(9, QFont.Weight.Bold))
-                    elif val > 1.0:
-                        item.setForeground(QColor(CertusTheme.WARNING))
-                except (ValueError, IndexError, AttributeError):
-                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
-            self.table.setItem(row, start_col_errors + err_idx, item)
 
     def update_data(self, strategies_results: list[dict[str, Any]]) -> float | None:
         """

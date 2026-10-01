@@ -71,6 +71,43 @@ def vital_keys_for(tag: str) -> tuple[str, ...]:
     """Les touches que la fenetre `tag` doit porter."""
     return VITAL_KEYS_BY_MODULE.get(tag, VITAL_KEYS)
 
+
+#: The windows that have no synthesis to show, and why. A synthesis view (a tab or a KPI strip) sums up the outcome of an
+#: analysis: the launcher runs none, and the two utilities have one output, which IS their plot or their table. The reason is part
+#: of the data: taking a module out of this table turns the check back on for it (tests/unit/test_the_ux_audit_exempts_only_what_it_says.py).
+NO_SYNTHESIS_BY_DESIGN = {
+    "CERTUS_HUB": "launcher: it starts the other modules and computes nothing",
+    "CERTUS_SMOOTHER": "single-purpose utility: one curve in, one smoothed curve out; its result is its plot",
+    "CERTUS_SUBSTRATE_INDEX": "single-purpose utility: spectra in, one index out; its result is its plots and its tables",
+}
+
+
+def table_figures(tables: list) -> dict:
+    """What the audit counts about tables: all of them, and the RESULT tables apart.
+
+    A table nobody can type in (`NoEditTriggers`) is a result: a column of figures an operator wants to sort (best SEEL first) and
+    to widen. A table that can be edited is an INPUT - a stack of layers, a list of spectral windows - and its row order is data:
+    sorting it would describe another filter, so asking it to sort would be asking for a defect. Only result tables are judged.
+    """
+    from PyQt6.QtWidgets import QAbstractItemView, QHeaderView
+
+    def sortable(t) -> bool:
+        return bool(getattr(t, "isSortingEnabled", lambda: False)())
+
+    def resizable(t) -> bool:
+        header = t.horizontalHeader()
+        return header is not None and header.count() > 0 and header.sectionResizeMode(0) == QHeaderView.ResizeMode.Interactive
+
+    results = [t for t in tables if t.editTriggers() == QAbstractItemView.EditTrigger.NoEditTriggers]
+    return {
+        "n_tables": len(tables),
+        "tables_sortable": sum(map(sortable, tables)),
+        "tables_resizable": sum(map(resizable, tables)),
+        "n_result_tables": len(results),
+        "result_tables_sortable": sum(map(sortable, results)),
+        "result_tables_resizable": sum(map(resizable, results)),
+    }
+
 MARKER = "__CERTUS_AUDIT_JSON__"
 
 
@@ -395,7 +432,6 @@ def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: in
         QApplication,
         QCheckBox,
         QComboBox,
-        QHeaderView,
         QLineEdit,
         QPushButton,
         QRadioButton,
@@ -403,7 +439,6 @@ def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: in
         QSplitter,
         QTabWidget,
         QTableView,
-        QTableWidget,
         QToolButton,
     )
 
@@ -598,19 +633,7 @@ def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: in
     # QTableWidget IS-A QTableView: findChildren(QTableView) already returns every
     # QTableWidget. Adding the two lists counted every table twice, which is why the
     # suite was reported as having 32 tables when it has 16.
-    tables = win.findChildren(QTableView)
-    out["n_tables"] = len(tables)
-    out["tables_sortable"] = sum(1 for t in tables if getattr(t, "isSortingEnabled", lambda: False)())
-    resizable = 0
-    for t in tables:
-        header = t.horizontalHeader()
-        if (
-            header is not None
-            and header.count() > 0
-            and header.sectionResizeMode(0) == QHeaderView.ResizeMode.Interactive
-        ):
-            resizable += 1
-    out["tables_resizable"] = resizable
+    out.update(table_figures(win.findChildren(QTableView)))
 
     # --- keyboard -------------------------------------------------------------
     seqs = {QKeySequence(sc.key()).toString() for sc in win.findChildren(QShortcut)}
@@ -671,12 +694,13 @@ def _verdicts(row: dict) -> list[str]:
         bad.append(f"control panel overflows ({lmin} px needed, {lpx} px given)")
     if row.get("panel_hscroll_px"):
         bad.append(f"control panel hides {row['panel_hscroll_px']} px behind a horizontal scrollbar")
-    if row.get("n_tables") and not row.get("tables_sortable"):
-        bad.append(f"{row['n_tables']} tables, none sortable")
+    # Only RESULT tables are judged (see `table_figures`): an editable table is an input, and its row order is data.
+    if row.get("n_result_tables") and not row.get("result_tables_sortable"):
+        bad.append(f"{row['n_result_tables']} result tables, none sortable")
     # A table set to Stretch fills the width on purpose; only flag a module where
-    # no table is either sortable or resizable.
-    if row.get("n_tables") and not row.get("tables_resizable") and not row.get("tables_sortable"):
-        bad.append(f"{row['n_tables']} tables, neither sortable nor resizable")
+    # no result table is either sortable or resizable.
+    if row.get("n_result_tables") and not row.get("result_tables_resizable") and not row.get("result_tables_sortable"):
+        bad.append(f"{row['n_result_tables']} result tables, neither sortable nor resizable")
     if row.get("missing_vital_keys"):
         bad.append("missing keys: " + ", ".join(row["missing_vital_keys"]))
     if row.get("btn_narrow"):
@@ -702,7 +726,7 @@ def _verdicts(row: dict) -> list[str]:
         bad.append(f"{len(row['a11y_unnamed'])} of {row['n_interactive']} controls have no name for a screen reader")
     # A permanent KPI strip answers the same need as a synthesis tab - CERTUS-STRAT
     # uses one because its plot area is a QStackedWidget, not a QTabWidget.
-    if not row.get("has_synthesis") and not row.get("has_kpi_banner"):
+    if not row.get("has_synthesis") and not row.get("has_kpi_banner") and row.get("app") not in NO_SYNTHESIS_BY_DESIGN:
         bad.append("no synthesis view (neither tab nor KPI banner)")
     return bad
 

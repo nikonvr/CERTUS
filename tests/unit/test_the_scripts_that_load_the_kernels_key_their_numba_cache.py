@@ -165,7 +165,7 @@ print(json.dumps({"env": os.environ.get("NUMBA_CACHE_DIR"), "numba_loaded": "num
 """
 
 
-def _expected_dir() -> str:
+def _dir_the_sources_key() -> str:
     sys.path.insert(0, str(ROOT))
     from certus.core.certus_core import numba_cache_dir
 
@@ -187,7 +187,7 @@ def mechanism() -> dict:
     jobs["qapp"] = QAPP
     with ThreadPoolExecutor(max_workers=len(jobs)) as pool:
         done = dict(zip(jobs, pool.map(_fresh, jobs.values()), strict=True))
-    out = {"expected": _expected_dir()}
+    out = {"expected": _dir_the_sources_key()}
     for name, proc in done.items():
         assert proc.returncode == 0, f"{name}: {proc.stderr[-600:]}"
         out[name] = json.loads(proc.stdout.strip().splitlines()[-1])

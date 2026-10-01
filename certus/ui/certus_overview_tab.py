@@ -42,7 +42,7 @@ PLACEHOLDER = "—"
 
 def _tone_color(tone: str) -> str:
     attr = _TONE_ATTRS.get(tone, "TEXT_MAIN")
-    return str(getattr(CertusTheme, attr, None) or getattr(CertusTheme, "TEXT_MAIN", "#212529"))
+    return getattr(CertusTheme, attr, None) or getattr(CertusTheme, "TEXT_MAIN", "#212529")  # the token itself: a sheet written with it follows the theme
 
 
 class CertusKpiBanner(QFrame):

@@ -187,6 +187,47 @@ def is_poor_name(widget, name: str) -> bool:
     return nothing_to_say or name == type(widget).__name__ or (bool(object_name) and squash(name) == squash(object_name))
 
 
+def light_only_colours() -> set[str]:
+    """Les couleurs que la palette claire emploie et que la sombre n'emploie pas.
+
+    Un widget qui en garde une apres le passage au sombre n'a pas ete repeint. La palette active est remise comme elle etait.
+    """
+    from certus.ui.certus_theme import CertusTheme
+
+    was_dark = CertusTheme.DARK_MODE
+    palettes: dict[str, set[str]] = {}
+    try:
+        for mode in ("light", "dark"):
+            CertusTheme.configure(mode)
+            palettes[mode] = {
+                str(v).lower() for n, v in vars(CertusTheme).items() if n.isupper() and isinstance(v, str) and re.fullmatch(r"#[0-9a-fA-F]{6}", v)
+            }
+    finally:
+        CertusTheme.configure("dark" if was_dark else "light")
+    return palettes["light"] - palettes["dark"]
+
+
+def sheet_light_colours(sheet: str, light_only: set[str]) -> list[str]:
+    """Les couleurs de `light_only` que porte cette feuille de style, sans la regle des infobulles.
+
+    L'infobulle a un fond sombre et une encre claire dans les DEUX themes : ce n'est pas une couleur gelee.
+    """
+    without_tooltip = re.sub(r"QToolTip\s*\{[^}]*\}", "", sheet)
+    return sorted({h.lower() for h in re.findall(r"#[0-9a-fA-F]{6}\b", without_tooltip)} & light_only)
+
+
+def frozen_light_sheets(win, light_only: set[str]) -> list[str]:
+    """Les widgets de `win` dont la feuille de style porte encore une couleur claire : `Classe|nomObjet|couleurs`."""
+    from PyQt6.QtWidgets import QWidget
+
+    stale = []
+    for widget in [win, *win.findChildren(QWidget)]:
+        colours = sheet_light_colours(widget.styleSheet(), light_only)
+        if colours:
+            stale.append(f"{type(widget).__name__}|{widget.objectName() or '-'}|{','.join(colours)}")
+    return stale
+
+
 def owns_undo_machinery(win) -> bool:
     """La fenetre peut-elle annuler ? `undo_stack` seul ne le dit pas : CertusBaseApp le donne a TOUTES les fenetres.
 
@@ -324,11 +365,18 @@ def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: in
     # 'CertusThemeToggle|◑' - on a machine set to light it would be '◐', and the
     # skeleton baseline would then fail for a reason absent from the code.
     # Every importer captured the symbol with `from ... import`, so patch them all.
+    # The preference lives in memory: the toggle measured at the end must not write the user's configuration.
+    theme_state = {"mode": "light"}
     for _mod in list(sys.modules.values()):
         if getattr(_mod, "load_theme_config", None) is not None:
             try:
-                _mod.load_theme_config = lambda: "light"
+                _mod.load_theme_config = lambda: theme_state["mode"]
             except (AttributeError, TypeError):  # C extensions and frozen modules
+                pass
+        if getattr(_mod, "save_theme_config", None) is not None:
+            try:
+                _mod.save_theme_config = lambda mode: theme_state.__setitem__("mode", mode) or True
+            except (AttributeError, TypeError):
                 pass
 
     win = cls()
@@ -522,6 +570,20 @@ def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: in
     out["persists_tables"] = hasattr(win, "_qs_save_table_headers")
     out["skeleton"] = skeleton(win)
 
+    # --- the theme toggle reaches the widget sheets (LAST: it changes the palette) -----------------------
+    from PyQt6.QtWidgets import QWidget
+
+    toggles = [w for w in win.findChildren(QWidget) if type(w).__name__ == "CertusThemeToggle"]
+    out["dark_stale"] = None
+    if toggles:
+        light_only = light_only_colours()
+        toggles[0].toggle()
+        _settle_until = time.monotonic() + 1.0
+        while time.monotonic() < _settle_until:
+            app.processEvents()
+            time.sleep(0.02)
+        out["dark_stale"] = frozen_light_sheets(win, light_only)
+
     win.close()
     return out
 
@@ -559,6 +621,8 @@ def _verdicts(row: dict) -> list[str]:
         bad.append(f"{row['input_no_tooltip']} inputs without a tooltip")
     if row.get("btn_no_tooltip"):
         bad.append(f"{row['btn_no_tooltip']} buttons without a tooltip")
+    if row.get("dark_stale"):
+        bad.append(f"{len(row['dark_stale'])} widget sheets keep a light colour after the dark toggle")
     if row.get("a11y_unnamed"):
         bad.append(f"{len(row['a11y_unnamed'])} of {row['n_interactive']} controls have no name for a screen reader")
     # A permanent KPI strip answers the same need as a synthesis tab - CERTUS-STRAT

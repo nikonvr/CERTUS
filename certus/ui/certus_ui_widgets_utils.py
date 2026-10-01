@@ -165,6 +165,9 @@ class CertusThemeToggle(QPushButton):
 
         CertusTheme.apply_to_app(QApplication.instance(), new_mode == "dark")
 
+        # The sheets set ON widgets carry their colours by name: they take the new palette now.
+        CertusTheme.refresh_widget_sheets()
+
         self.theme_changed.emit(new_mode)
 
         # Internal refresh Logic

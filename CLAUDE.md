@@ -194,6 +194,14 @@ mais **synchronisés par Drive**) : supprime-les ensuite.
   fond (`CertusTheme.label_on`), jamais d'un jeton choisi pour un thème. Pour un état de focus, Qt garde la taille calculée avant
   le focus : le test de non-déplacement la lui fait recalculer (changer le texte). `test_ux_button_label_is_painted.py` et
   `test_ux_focus_ring.py` lisent les pixels ; un test qui lit la feuille déclarée ne voit pas ce qu'on peint.
+- **Une couleur de la palette écrite dans une feuille suit le thème ; une copie ne le suit pas.** `CertusTheme.SURFACE` est un
+  `_Token` : une chaîne ordinaire pour tout (Qt, JSON, `==`, `str()`, `%`, `+`) SAUF pour un f-string, qui l'écrit avec son nom
+  (`#ffffff/*T:SURFACE*/`, un commentaire que Qt lit comme du blanc) ; `CertusTheme.refresh_widget_sheets()`, appelé par la bascule de
+  thème, réécrit toute feuille posée sur un widget d'après ces noms. Écris donc `f"color: {CertusTheme.TEXT_MAIN}"`, jamais
+  `str(CertusTheme.TEXT_MAIN)`, une concaténation ou un hexadécimal. Une couleur DÉRIVÉE d'un jeton (un survol, l'encre d'un fond)
+  n'est pas un jeton : le style d'un bouton plein est entre deux marqueurs que `get_button_style` pose et que le rafraîchissement
+  reconstruit. `test_ux_dark_toggle_reaches_the_widgets.py` et `python scripts\audit_ux_certus.py` comptent les feuilles restées
+  claires après un clic sur la bascule.
 - **Le premier calcul est lent** (compilation numba, +30 s) : chauffe, puis mesure.
 - **N'écris pas l'artefact que tu décris** : un hexadécimal cité dans un commentaire fait
   bouger le cliquet des couleurs, une règle QSS citée dans une f-string est recrachée dans la

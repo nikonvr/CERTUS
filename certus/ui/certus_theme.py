@@ -31,6 +31,7 @@ from certus.utils.certus_ux import Typography as _Typography
 # The WCAG contrast is computed once, in `certus_a11y` (pure Python, imports nothing of `certus`).
 from certus.ui.certus_a11y import contrast_ratio as _contrast_ratio
 import logging
+import re
 from typing import ClassVar
 
 
@@ -42,6 +43,51 @@ _LABEL_INK = "#0f172a"
 #: How far a solid button's fill moves, toward the side AWAY from its label, when hovered and when pressed.
 _HOVER_SHIFT = 0.10
 _PRESSED_SHIFT = 0.20
+
+#: The colours of the palette that change with the theme, aliases included: the names `configure` writes.
+#: `TEXT` is left out on purpose, it is the same dark navy in both themes.
+_TOKEN_NAMES = (
+    "BACKGROUND", "SURFACE", "SURFACE_HOVER", "BORDER", "BORDER_STRONG", "TEXT_MAIN", "TEXT_SUB", "TEXT_DISABLED",
+    "PRIMARY", "PRIMARY_TEXT", "PRIMARY_HOVER", "SECONDARY", "SUCCESS", "WARNING", "DANGER", "DANGER_LABEL",
+    "DANGER_HOVER", "INFO", "SUCCESS_BG", "SUCCESS_TEXT", "WARNING_BG", "WARNING_TEXT", "DANGER_BG", "DANGER_TEXT",
+    "INFO_BG", "INFO_TEXT", "BASE_ELEVATED", "ACCENT", "ERROR", "ELEVATED", "CHART_PRIMARY", "CHART_SECONDARY",
+    "CHART_DANGER", "CHART_SUCCESS", "CHART_WARNING", "CHART_INFO", "CHART_ACCENT",
+)  # fmt: skip
+
+#: What an f-string leaves after a colour of the palette (`{CertusTheme.SURFACE}` -> `#ffffff/*T:SURFACE*/`): a CSS comment
+#: that Qt reads as white space, in a style sheet and in the style attribute of rich text alike.
+_SHEET_TOKEN = re.compile(r"(#[0-9a-fA-F]{3,8}|rgba?\([^)]*\))/\*T:(\w+)\*/")
+
+#: The style of a solid button, between two markers that say how to build it again: its label and its hover and pressed
+#: fills are DERIVED from its fill (`button_states`), so the colour of a token cannot be rewritten in place.
+_BUTTON_SEGMENT = re.compile(r"/\*B:([^*]*)\*/.*?/\*B-END\*/", re.DOTALL)
+
+
+class _Token(str):
+    """A colour of the palette: a plain `str` to everything (Qt, JSON, comparisons, `lstrip`), except an f-string.
+
+    A style sheet is an f-string evaluated ONCE, while its widget is built: after a click on the theme toggle, 483 widget
+    sheets on nine windows kept a colour of the other palette (measured 2026-10-01; 105 of the 171 of INDEX SPLINE). The
+    value alone cannot be mapped back to its token, the same hex serving as text in one theme and as a fill in the other.
+    So an f-string writes the colour WITH its name, `#ffffff/*T:SURFACE*/`, and `CertusTheme.refresh_widget_sheets` rewrites
+    each of them from the name. `str(token)`, `%` and `+` give the bare colour: only an f-string or `format` annotates, and
+    it writes the colour the palette has NOW: a token kept by a widget since before the change (a default argument, an
+    attribute) must not write the old palette back the next time the widget repaints itself.
+    """
+
+    def __new__(cls, value: str, name: str) -> "_Token":
+        token = super().__new__(cls, value)
+        token.name = name
+        return token
+
+    def __format__(self, spec: str) -> str:
+        if spec:
+            return super().__format__(spec)
+        return f"{getattr(CertusTheme, self.name, self)!s}/*T:{self.name}*/"
+
+    def __reduce__(self):
+        # A worker process must not import Qt to read a colour: it unpickles as the plain string it is.
+        return (str, (str(self),))
 
 
 class CertusTheme:
@@ -517,6 +563,59 @@ class CertusTheme:
         cls.CHART_INFO = cls.INFO
         cls.CHART_ACCENT = cls.PRIMARY
         cls.CHART_COLORS = [cls.PRIMARY, cls.SECONDARY, cls.DANGER, cls.CHART_PURPLE, cls.WARNING, cls.INFO]
+        cls._annotate_tokens()
+
+    @classmethod
+    def _annotate_tokens(cls) -> None:
+        """Make each colour of the active palette a `_Token` carrying its own name (see `_Token`)."""
+        for name in _TOKEN_NAMES:
+            setattr(cls, name, _Token(str(getattr(cls, name)), name))
+        cls.CHART_COLORS = [cls.PRIMARY, cls.SECONDARY, cls.DANGER, cls.CHART_PURPLE, cls.WARNING, cls.INFO]
+
+    @staticmethod
+    def variant_reference(variant: str) -> str:
+        """What a button style remembers of its variant: a role name, or `token:NAME` for a fill given as a palette colour."""
+        return f"token:{variant.name}" if isinstance(variant, _Token) else str(variant)
+
+    @classmethod
+    def _button_from_reference(cls, reference: str) -> str:
+        return cls.get_button_style(getattr(cls, reference[6:]) if reference.startswith("token:") else reference)
+
+    @classmethod
+    def refresh_widget_sheets(cls, app: QApplication | None = None) -> int:
+        """Rewrite the style sheet of every widget that carries palette colours with those of the active palette.
+
+        Called when the theme changes, after `configure`. A sheet that holds `#hex/*T:NAME*/` takes the present value of
+        NAME (the annotation is kept, a second change works the same), the style of a solid button is built again from its
+        variant (`get_button_style` marks it), a label that spells a colour in rich text is written again. Returns how many widgets were rewritten.
+        """
+        from PyQt6.QtWidgets import QLabel
+
+        app = app or QApplication.instance()
+        if app is None:
+            return 0
+
+        def current(match: "re.Match[str]") -> str:
+            name = match.group(2)
+            value = getattr(cls, name, None) if name in _TOKEN_NAMES else None
+            return f"{value!s}/*T:{name}*/" if isinstance(value, str) else match.group(0)
+
+        rewritten = 0
+        for widget in app.allWidgets():
+            try:
+                new_sheet = _BUTTON_SEGMENT.sub(lambda m: cls._button_from_reference(m.group(1)), widget.styleSheet())
+                new_sheet = _SHEET_TOKEN.sub(current, new_sheet)
+                if new_sheet != widget.styleSheet():
+                    widget.setStyleSheet(new_sheet)
+                    rewritten += 1
+                if isinstance(widget, QLabel) and "/*T:" in widget.text():
+                    new_text = _SHEET_TOKEN.sub(current, widget.text())
+                    if new_text != widget.text():
+                        widget.setText(new_text)
+                        rewritten += 1
+            except RuntimeError:  # the widget was destroyed under us
+                continue
+        return rewritten
 
     @classmethod
     def load_inter_font(cls) -> str:
@@ -716,7 +815,7 @@ class CertusTheme:
         # override: without a rule here a focused button painted exactly as before (0 pixels changed, 73 sites).
         pad_v, pad_h, ring = 7, 14, 2
 
-        return f"""
+        return f"""/*B:{cls.variant_reference(variant)}*/
 
             QPushButton {{
 
@@ -736,7 +835,7 @@ class CertusTheme:
 
             QPushButton:disabled {{ background-color: {cls.BORDER}; color: {cls.TEXT_DISABLED}; }}
 
-        """
+        /*B-END*/"""
 
     @staticmethod
     def label_on(fill: str) -> str:
@@ -1027,4 +1126,7 @@ class CertusTheme:
 
 def get_standard_stylesheet() -> str:
     return CertusTheme.get_standard_stylesheet()
+
+
+CertusTheme._annotate_tokens()  # the light palette of the class body, before any `configure`
 

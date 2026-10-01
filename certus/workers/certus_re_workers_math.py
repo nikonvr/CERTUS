@@ -1,8 +1,15 @@
 import logging
-import joblib
 import time
-import numpy as np
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
+
+import joblib
+import numpy as np
+
+from certus.core.certus_re_solvers import REUserStopRequested
+
+# 
+from certus.utils.certus_re_helpers import _re_trf_residual_rms
 from certus.utils.certus_re_math import (
     RE_P4_BEAM_N_KNOTS,
     RE_SUB_CAUCHY_BARRIER_SQRT_W,
@@ -12,11 +19,6 @@ from certus.utils.certus_re_math import (
     re_knots_wavelengths,
     re_substrate_cauchy_barrier_residuals_jac,
 )
-
-# 
-from certus.utils.certus_re_helpers import _re_trf_residual_rms
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from certus.core.certus_re_solvers import REUserStopRequested
 
 
 class REMathStrategy:

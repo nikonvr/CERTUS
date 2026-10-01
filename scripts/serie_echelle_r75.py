@@ -127,6 +127,7 @@ def geometrie(facteur: float) -> dict:
 
 def mesurer(facteur: float, mode: str = "fast") -> dict:
     import bench_examples as Bx
+
     from CERTUS_STRAT import CertusStratApp
 
     t0 = time.perf_counter()

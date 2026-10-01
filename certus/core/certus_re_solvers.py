@@ -1,70 +1,73 @@
 from __future__ import annotations
-from certus.utils.certus_re_config import RE_PHASE4_TRF_TOL_FACTOR
-from certus.utils.certus_re_config import RE_PHASE4_TRF_MAX_NFEV
-from certus.utils.certus_re_config import RE_PHASE4_APERTURE_SCAN_POINTS
-from certus.utils.certus_re_config import RE_P4_AP_FD_STEP_DEG
-from certus.utils.certus_re_config import RE_SUB_CAUCHY_TUBE_DELTA
-from certus.utils.certus_re_config import RE_PHASE2_SPLINE_PREFIT_MAXITER
-from certus.utils.certus_re_config import RE_PHASE2_SUB_CAUCHY_FD_STEP
-from certus.utils.certus_re_config import RE_PHASE2A_PREFIT_TOL_FACTOR
-from certus.utils.certus_re_config import RE_PHASE2A_SKIP_PREFIT_RMSE_THRESHOLD
-from certus.utils.certus_re_config import RE_PHASE2B_MAXITER
-from certus.utils.certus_re_config import RE_LBFGSB_GTOL
-from certus.utils.certus_re_config import RE_LBFGSB_FTOL
-from certus.utils.certus_re_math import re_substrate_cauchy_initial_theta
-from certus.utils.certus_re_math import re_substrate_cauchy_phi_matrix
-from certus.utils.certus_re_config import RE_P4_BEAM_AP_BOUNDS_DEG
-from certus.utils.certus_re_config import RE_P4_BEAM_N_KNOTS
-from certus.utils.certus_re_config import RE_RE_DEADZONE_QWOT_ABS
-from certus.utils.certus_re_config import RE_RE_DEADZONE_DELTA_RE_ABS
-from certus.utils.certus_re_config import RE_HL_DELTA_RE_REG_SQRT_W
-import numpy as np
-import time
+
 import logging
+import time
+from types import SimpleNamespace
 from typing import Any
 
+import numpy as np
 from scipy.optimize import least_squares
-from types import SimpleNamespace
-from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 
+from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.core.certus_re_config import (
     REPhase1Result,
-    REPhase4Result,
     REPhase2Context,
+    REPhase4Result,
     _prepend_result_dto,
     _replace_all_with_top_dto,
     _result_dto_at,
     _top_result_dto,
 )
 from certus.core.certus_re_objectives import (
-    _build_phase2b_output,
-    _log_phase4_trf_summary,
-    _build_phase4_aperture_bounds,
-    _prepare_phase2_bounds_and_topk,
     _build_p2_prefit_bounds,
     _build_phase2_result,
+    _build_phase2b_output,
+    _build_phase4_aperture_bounds,
+    _log_phase4_trf_summary,
+    _prepare_phase2_bounds_and_topk,
     _prepare_phase2_fd_settings,
 )
-from certus.utils.certus_re_helpers import (
-    RE_SPLINE_NODE2_DEFAULT_NM,
-    format_re_spline_knots_log,
-    re_knots_wavelengths,
-    _re_trf_residual_rms,
-    _re_log_objective_diagnostic,
-)
-from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_SPLINE_TIKHONOV
 from certus.core.certus_re_worker_utils import (
     p2_result_to_correc_tuple,
 )
+from certus.utils.certus_re_config import (
+    RE_GUI_DEFAULT_RE_SPLINE_TIKHONOV,
+    RE_HL_DELTA_RE_REG_SQRT_W,
+    RE_LBFGSB_FTOL,
+    RE_LBFGSB_GTOL,
+    RE_P4_AP_FD_STEP_DEG,
+    RE_P4_BEAM_AP_BOUNDS_DEG,
+    RE_P4_BEAM_N_KNOTS,
+    RE_PHASE2_SPLINE_PREFIT_MAXITER,
+    RE_PHASE2_SUB_CAUCHY_FD_STEP,
+    RE_PHASE2A_PREFIT_TOL_FACTOR,
+    RE_PHASE2A_SKIP_PREFIT_RMSE_THRESHOLD,
+    RE_PHASE2B_MAXITER,
+    RE_PHASE4_APERTURE_SCAN_POINTS,
+    RE_PHASE4_TRF_MAX_NFEV,
+    RE_PHASE4_TRF_TOL_FACTOR,
+    RE_RE_DEADZONE_DELTA_RE_ABS,
+    RE_RE_DEADZONE_QWOT_ABS,
+    RE_SUB_CAUCHY_TUBE_DELTA,
+)
+from certus.utils.certus_re_helpers import (
+    RE_SPLINE_NODE2_DEFAULT_NM,
+    _re_log_objective_diagnostic,
+    _re_trf_residual_rms,
+    format_re_spline_knots_log,
+    re_knots_wavelengths,
+)
+from certus.utils.certus_re_math import re_substrate_cauchy_initial_theta, re_substrate_cauchy_phi_matrix
+
 
 class REUserStopRequested(Exception):
     pass
 
 def re_execute_phase1(worker: Any) -> list[dict]:
 
-    from scipy.optimize import least_squares
-
     from types import SimpleNamespace
+
+    from scipy.optimize import least_squares
 
     c = worker.ctx
 
@@ -149,8 +152,8 @@ def re_execute_phase1(worker: Any) -> list[dict]:
         return phase1_result.to_legacy_dict()
 
     import concurrent.futures
-    import sys
     import os
+    import sys
     is_testing = "pytest" in sys.modules
     max_workers = 1 if is_testing else min(8, os.cpu_count() or 4)
 

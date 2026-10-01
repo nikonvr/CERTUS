@@ -1,25 +1,28 @@
-from pathlib import Path
 import logging
 import traceback
-from certus.ui.certus_index_ui_utils import (
-    _prepare_nk_plot_inputs,
-    KLogAxisItem,
-)
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
+import pyqtgraph as pg
+import scipy.optimize
+from PyQt6.QtCore import Qt
+
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
 )
-from certus.utils.certus_index_utils import DataType
 from certus.core.certus_index_core import (
     OptimizationResults,
+)
+from certus.ui.certus_index_ui_utils import (
+    KLogAxisItem,
+    _prepare_nk_plot_inputs,
 )
 from certus.ui.certus_ui import (
     CertusTheme,
 )
-import pyqtgraph as pg
-import scipy.optimize
-from PyQt6.QtCore import Qt
+from certus.utils.certus_index_utils import DataType
+
 
 class CertusIndexPlotMixin:
     def _plot_raw_and_smoothed_preview(

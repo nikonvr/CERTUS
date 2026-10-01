@@ -11,13 +11,13 @@ from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass, field
 from typing import Any, Generic, Protocol, TypeAlias, TypeVar
 
+from certus.core.certus_metrology import RunContext, RunManifest, ValidationStatus
 from certus.utils.certus_dto import (
     BaseHeadlessRequestModel,
     IndexFitRequestModel,
     REFitRequestModel,
     SubstrateIndexRequestModel,
 )
-from certus.core.certus_metrology import RunContext, RunManifest, ValidationStatus
 
 
 class HeadlessRunner(Protocol):

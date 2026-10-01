@@ -28,19 +28,18 @@ Usage:
 from __future__ import annotations
 
 import functools
+import logging
 import os
 import time
 from collections import defaultdict
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from collections.abc import Callable
 from typing import Any
 
 import numpy as np
 
 from certus.core.certus_logging import get_logger
-from collections.abc import Iterator
-import logging
 
 # Enable performance logging via environment variable
 ENABLE_PERF_LOGGING = os.environ.get("CERTUS_PERF_LOG", "").strip().lower() in ("1", "true", "yes", "on")

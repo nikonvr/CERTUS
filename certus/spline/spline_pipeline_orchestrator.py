@@ -1,39 +1,56 @@
 from __future__ import annotations
-from .spline_pipeline_utils import (
-    _WorkerProgressCoordinator,
-    _pipeline_mesh_dimensions,
-    _log_worker_start_payload,
-    _log_final_insert_enter,
-    _log_after_final_insert,
-    _log_fixed_mesh_stage_summary,
-    _log_after_final_stage_summary,
-    _emit_enter_fixed_mesh_stage,
-    _stop_with_snapshot_if_requested,
-    enforce_local_optimization_policy,
+
+from .spline_pipeline_corridors_runner import (
+    _run_corridor_profile_with_optional_rerun,
 )
 from .spline_pipeline_mesh_insert import (
     insert_mwir_mid_sigma_node,
 )
-from .spline_pipeline_corridors_runner import (
-    _run_corridor_profile_with_optional_rerun,
+from .spline_pipeline_utils import (
+    _emit_enter_fixed_mesh_stage,
+    _log_after_final_insert,
+    _log_after_final_stage_summary,
+    _log_final_insert_enter,
+    _log_fixed_mesh_stage_summary,
+    _log_worker_start_payload,
+    _pipeline_mesh_dimensions,
+    _stop_with_snapshot_if_requested,
+    _WorkerProgressCoordinator,
+    enforce_local_optimization_policy,
 )
 
 """Main spline pipeline: JSON logging, RMSE snapshots, worker orchestration."""
 import logging
 import time
 from threading import Event
+
 import numpy as np
+
 from certus.spline.certus_index_spline_core import (
     K_MIN_PHYS,
     SplineOptConfig,
     _bounds_x0_for_sigma_knots,
     _log_index_spline_best_config,
-    log_index_spline_d_trace,
     _log_spline_pipeline_json,
     _reflectance_absolute_backside_from_nk,
     apply_rmse_fit_window_nk_nan_to_result,
     enforce_k_floor_on_nodes,
+    log_index_spline_d_trace,
     snapshot_result_with_rmse_fit_meta,
+)
+from certus.spline.spline_finalize import (
+    _collect_post_s3_candidates,
+    _finalize_spectral_rmse_mesh_polish_and_best,
+    _log_skipped_knot_insertion_fixed_mesh,
+    _select_final_scientific_candidate,
+    _spectral_polish_node_mesh_profile,
+)
+from certus.spline.spline_objective import (
+    _interpolate_along_sigma,
+    build_segment_optimizer_x_vector,
+    build_spline_objective_masked_grid,
+    spectral_mse_rmse_masked_from_nk,
+    spline_objective_mse_on_masked_grid,
 )
 from certus.utils.certus_index_utils import (
     _ratio_theoretical_from_nk,
@@ -43,21 +60,6 @@ from certus.utils.certus_index_utils import (
 from certus_physics import (
     clip_to_bounds,
 )
-from certus.spline.spline_objective import (
-    _interpolate_along_sigma,
-    build_segment_optimizer_x_vector,
-    build_spline_objective_masked_grid,
-    spectral_mse_rmse_masked_from_nk,
-    spline_objective_mse_on_masked_grid,
-)
-from certus.spline.spline_finalize import (
-    _collect_post_s3_candidates,
-    _finalize_spectral_rmse_mesh_polish_and_best,
-    _log_skipped_knot_insertion_fixed_mesh,
-    _select_final_scientific_candidate,
-    _spectral_polish_node_mesh_profile,
-)
-
 
 
 def _apply_k_floor_to_result(

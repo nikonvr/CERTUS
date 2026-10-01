@@ -59,6 +59,7 @@ import numpy as np
 import pandas as pd
 
 from certus.core.certus_array_utils import as_float64_1d
+
 # Import Core
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, OPENPYXL_AVAILABLE, certus_timestamp_file
 from certus.utils.certus_reports import ReportContext

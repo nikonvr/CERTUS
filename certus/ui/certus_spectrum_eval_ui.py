@@ -6,23 +6,15 @@
 
 from __future__ import annotations
 
-
-from certus.utils.certus_copy_utils import copy_optimization_result
-
 import logging
-
 import time
-
 from typing import Any, Literal
 
-
 import numpy as np
-
 import pyqtgraph as pg
 
-
 from certus.ui.certus_ui import CertusTheme
-
+from certus.utils.certus_copy_utils import copy_optimization_result
 
 SpectrumEvalVariant = Literal["design", "re"]
 

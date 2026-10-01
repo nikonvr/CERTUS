@@ -3,21 +3,22 @@
 from __future__ import annotations
 
 from typing import Any
+
 import numpy as np
 from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QApplication, QMessageBox, QTableWidgetItem
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
+from certus.spline.certus_corridor_utils import enforce_min_k_corridor_half_width
 from certus.spline.certus_index_spline_core import (
     SplineOptConfig,
     ensure_lam_nm_array,
     substrate_id_from_name,
 )
-from certus.utils.certus_index_utils import _get_substrate_n_array_spline
+from certus.spline.certus_index_spline_corridor_ui import CertusScientificPlot, ManualSigmaKnotDialog
 from certus.spline.spline_objective import spectral_mse_rmse_masked_from_nk
 from certus.spline.spline_pipeline import _sync_theoretical_tr_from_nk_dict
-from certus.spline.certus_corridor_utils import enforce_min_k_corridor_half_width
-from certus.spline.certus_index_spline_corridor_ui import CertusScientificPlot, ManualSigmaKnotDialog
+from certus.utils.certus_index_utils import _get_substrate_n_array_spline
 
 
 class _DataMixin:

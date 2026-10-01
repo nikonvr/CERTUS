@@ -10,10 +10,9 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
-from certus.utils.certus_services import BaseHeadlessRequest, BaseHeadlessResponse, BaseHeadlessService
-from certus.core.certus_metrology import ValidationStatus
 from certus.core.certus_design_workers_dto import DesignParamsDTO, OptimWorkerRequest, OptimWorkerResult
-
+from certus.core.certus_metrology import ValidationStatus
+from certus.utils.certus_services import BaseHeadlessRequest, BaseHeadlessResponse, BaseHeadlessService
 
 _DESIGN_CFG_KEYS = {
     "mats",

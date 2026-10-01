@@ -41,7 +41,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Final
 
-
 HOVER_DELAY_MS: Final[int] = 400
 HIDE_DELAY_MS: Final[int] = 150
 MAX_WIDTH_PX: Final[int] = 320

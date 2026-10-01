@@ -1,18 +1,44 @@
 from pathlib import Path
 from typing import Any
+
 import numpy as np
 import pandas as pd
+
 from certus.core.certus_core import (
-    NUMERICAL_FAULT_EXCEPTIONS,
     HC_EV_NM,
+    NUMERICAL_FAULT_EXCEPTIONS,
     PI,
     SMALL_EPSILON,
     T_SUB_MIN_T_NORM,
     get_resource_path,
 )
 from certus.core.certus_lazy_imports import lazy_scipy
+
 scipy = lazy_scipy()
-from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
+from certus.core.certus_index_core import (
+    _SAPPHIRE_DATA_FILE,
+    _SAPPHIRE_FILE_HAS_K_COLUMN,
+    OptimizationConfig,
+    OptimizationResults,
+    calculate_relative_R_normalization,
+    estimate_initial_params,
+)
+from certus.core.certus_index_objectives import (
+    TLUObjective,
+)
+from certus.core.certus_index_solvers import (
+    PGlobalOptimizerINDEX,
+)
+from certus.utils.certus_index_utils import (
+    DataType,
+    _get_substrate_n_array_index,
+    calculate_index_rmse,
+)
+from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
+from certus.workers.certus_index_workers import (
+    Phase1Callback,
+    _compute_RT_from_config,
+)
 from certus_physics import (
     PGlobalConfig,
     TLUParameters,
@@ -22,29 +48,6 @@ from certus_physics import (
     epsilon2_TLU_array,
     epsilon_to_nk,
     get_n_frosted_glass_array,
-)
-from certus.utils.certus_index_utils import (
-    DataType,
-    _get_substrate_n_array_index,
-    calculate_index_rmse,
-)
-from certus.core.certus_index_core import (
-    OptimizationConfig,
-    OptimizationResults,
-    calculate_relative_R_normalization,
-    _SAPPHIRE_DATA_FILE,
-    _SAPPHIRE_FILE_HAS_K_COLUMN,
-    estimate_initial_params,
-)
-from certus.core.certus_index_objectives import (
-    TLUObjective,
-)
-from certus.core.certus_index_solvers import (
-    PGlobalOptimizerINDEX,
-)
-from certus.workers.certus_index_workers import (
-    _compute_RT_from_config,
-    Phase1Callback,
 )
 
 

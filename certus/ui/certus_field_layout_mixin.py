@@ -1,5 +1,8 @@
 from __future__ import annotations
-from certus.ui.certus_field_common import OpticsPanelWidget, OptimizationPanelWidget, StackPanelWidget
+
+import pandas as pd
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
     QFrame,
     QGridLayout,
@@ -13,19 +16,18 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont
-from certus.ui.certus_ui_widgets_cards import CertusCard
-from certus.ui.certus_ui_widgets_factory import create_header_logo_widget, create_styled_button, create_top_actions_bar
-from certus.ui.certus_ui_widgets_utils import CertusThemeToggle, ExcelTableWidget
-from certus.ui.certus_ui_widgets_layout import CertusCollapsible
-from certus.ui.certus_theme import CertusTheme
-from certus.ui.certus_icons import certus_icon
+
+from certus.ui.certus_field_common import OpticsPanelWidget, OptimizationPanelWidget, StackPanelWidget
 from certus.ui.certus_field_plot import CertusFieldPlotWidget, CertusIndexProfilePlotWidget, CertusSpectralPlotWidget
 from certus.ui.certus_field_services import FieldExportService
-from certus.workers.certus_field_workers_dto import FieldParamsDTO
-import pandas as pd
+from certus.ui.certus_icons import certus_icon
+from certus.ui.certus_theme import CertusTheme
+from certus.ui.certus_ui_widgets_cards import CertusCard
+from certus.ui.certus_ui_widgets_factory import create_header_logo_widget, create_styled_button, create_top_actions_bar
+from certus.ui.certus_ui_widgets_layout import CertusCollapsible
+from certus.ui.certus_ui_widgets_utils import CertusThemeToggle, ExcelTableWidget
 from certus.utils.certus_ux import Typography
+from certus.workers.certus_field_workers_dto import FieldParamsDTO
 
 
 class CertusFieldLayoutMixin:

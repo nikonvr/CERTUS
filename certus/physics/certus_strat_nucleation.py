@@ -4,8 +4,9 @@ from numba import njit, prange
 NON_MONOTONIC_MODE_ATTENUATE = 0
 NON_MONOTONIC_MODE_REJECT = 1
 from certus.physics.certus_substrate_absorption import K_MAX_LAYER_BACKSIDE, K_MAX_SUBSTRATE_BACKSIDE
-from .certus_strat_math import _seeded_noise_sample
+
 from .certus_strat_growth import simulate_growth_kernel
+from .certus_strat_math import _seeded_noise_sample
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")

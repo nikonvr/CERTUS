@@ -5,13 +5,14 @@ Extracted from certus_opt_gradients.py for better modularity.
 Contains analytic gradient computation kernels for TMM optimization.
 """
 
-import numpy as np
-from numba import njit, prange
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from certus.domain.constants import PI, TWO_PI
+import numpy as np
+from numba import njit, prange
+
 import certus.physics.certus_tmm_core as tmm_core
+from certus.domain.constants import PI, TWO_PI
 
 # Explicit imports for type annotations and helper functions
 # to prevent F821 undefined symbol errors.
@@ -1798,5 +1799,4 @@ def _compute_gradient_analytic_kernel(
         grad *= 2.0 / weight_sum
 
     return cost, grad, T_arr
-
 

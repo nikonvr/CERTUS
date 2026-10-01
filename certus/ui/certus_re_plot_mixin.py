@@ -1,28 +1,23 @@
 from __future__ import annotations
-from certus.utils.certus_re_math import re_substrate_cauchy_n_re_from_theta
+
 import numpy as np
 import pyqtgraph as pg
-
 
 from certus.ui.certus_qt_widgets import (
     Qt,
 )
-
-from certus_physics import Layer, calc_spectrum_front_wrapper, calc_spectrum_full_exact_wrapper
-
-
-
 from certus.ui.certus_ui import (
     CertusTheme,
 )
-
-
 from certus.utils.certus_re_helpers import (
-    RE_SPLINE_NODE2_DEFAULT_NM,
     RE_SPLINE_N_KNOTS,
+    RE_SPLINE_NODE2_DEFAULT_NM,
     re_interp_delta_knots_clamped,
     re_knots_wavelengths,
 )
+from certus.utils.certus_re_math import re_substrate_cauchy_n_re_from_theta
+from certus_physics import Layer, calc_spectrum_front_wrapper, calc_spectrum_full_exact_wrapper
+
 calc_spectrum_front = calc_spectrum_front_wrapper
 calc_spectrum_full_exact = calc_spectrum_full_exact_wrapper
 

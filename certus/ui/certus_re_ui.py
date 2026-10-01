@@ -3,41 +3,40 @@ certus_re_ui.py - Extract of CertusREResultsDialog from CERTUS_RE.py
 """
 
 from __future__ import annotations
-from certus.utils.certus_re_config import (
-    RE_RANKING_ALPHA_REF,
-)
 
 import numpy as np
 
 from certus.ui.certus_qt_widgets import (
-    QDialog,
-    QVBoxLayout,
-    QLabel,
-    QHBoxLayout,
-    QPushButton,
-    QTableWidgetItem,
-    QColor,
-    Qt,
-    QHeaderView,
     QAbstractItemView,
     QApplication,
+    QColor,
+    QDialog,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QPushButton,
+    Qt,
+    QTableWidgetItem,
     QTimer,
+    QVBoxLayout,
 )
-
 from certus.ui.certus_ui import (
     ExcelTableWidget,
     set_certus_window_icon,
 )
-
+from certus.utils.certus_re_config import (
+    RE_RANKING_ALPHA_REF,
+)
 from certus.utils.certus_re_helpers import (
     RE_SPLINE_N_KNOTS,
     RE_SPLINE_NODE2_DEFAULT_NM,
     _re_sort_results_best_for_table_and_apply,
+    re_delta_qwot_per_layer,
     re_drift_result_log_suffix,
     re_knots_wavelengths,
     re_n_corr_at_lambda_ref,
-    re_delta_qwot_per_layer,
 )
+
 
 class CertusREResultsDialog(QDialog):
     def __init__(

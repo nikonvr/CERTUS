@@ -5,41 +5,39 @@ Contains _CorridorExportMixin and _RunMixin.
 """
 
 from __future__ import annotations
+
 import logging
 import time
 from pathlib import Path
 from typing import Any
-from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
 
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 from PyQt6.QtCore import QThread
-from PyQt6.QtWidgets import QMessageBox, QFileDialog, QApplication
+from PyQt6.QtWidgets import QApplication, QFileDialog, QMessageBox
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
-from certus.ui.certus_ui import GenericWorker, safe_ui_action
 from certus.spline.certus_index_spline_core import (
     SplineOptConfig,
-    log_index_spline_d_trace,
     _log_index_spline_best_config,
-    ensure_lam_nm_array,
     _to_fraction_T,
-    reset_smart_init_preview_guard
-)
-from certus.utils.certus_index_utils import (
-    log_structured_json_event,
-    _rmse_d_lower_envelope_mask,
-    _spectral_display_align
+    ensure_lam_nm_array,
+    log_index_spline_d_trace,
+    reset_smart_init_preview_guard,
 )
 from certus.spline.spline_objective import _spline_objective_lam_mask
-from certus.spline.spline_workers import worker_auto_best_split_knot_refinement
 from certus.spline.spline_pipeline import worker_spline_optimization
-from certus.utils.certus_skeleton import install_skeleton
-from certus.ui.certus_ui import get_certus_last_dir, set_certus_last_dir, CertusTheme
 from certus.spline.spline_visual_utils import snap_spline_visual_dict as _snap_spline_visual_dict
-
-
+from certus.spline.spline_workers import worker_auto_best_split_knot_refinement
+from certus.ui.certus_ui import CertusTheme, GenericWorker, get_certus_last_dir, safe_ui_action, set_certus_last_dir
+from certus.utils.certus_index_utils import (
+    _rmse_d_lower_envelope_mask,
+    _spectral_display_align,
+    log_structured_json_event,
+)
+from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
+from certus.utils.certus_skeleton import install_skeleton
 
 logger = logging.getLogger("CERTUS_INDEX_SPLINE")
 
@@ -61,6 +59,7 @@ def _apply_fixed_log_k_axis(plot_w: Any | None) -> None:
 
 from certus.spline.spline_pipeline_utils import _interp_series_at_sigma_knots
 from certus.utils.certus_atomic_io import atomic_open
+
 
 def _plot_spectrum_raw_scatter(
     plot_w: pg.PlotWidget,

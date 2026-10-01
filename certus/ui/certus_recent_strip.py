@@ -21,7 +21,6 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Final
 
-
 STRIP_MAX_ITEMS: Final[int] = 5
 PILL_MAX_CHARS: Final[int] = 22
 

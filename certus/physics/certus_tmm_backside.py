@@ -1,7 +1,8 @@
 import numpy as np
 from numba import njit, prange
-from certus.physics.certus_opt_tmm import compute_TMM_generic
+
 from certus.domain.constants import TWO_PI
+from certus.physics.certus_opt_tmm import compute_TMM_generic
 from certus.physics.certus_substrate_absorption import (
     DEFAULT_SUBSTRATE_THICKNESS_NM,
     substrate_internal_transmittance,

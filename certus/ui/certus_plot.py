@@ -1,25 +1,27 @@
 import functools
 import logging
-from pathlib import Path
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
+
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 import pyqtgraph.exporters
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QApplication,
-    QWidget,
+    QFileDialog,
+    QMainWindow,
     QMenu,
     QMessageBox,
     QToolBar,
-    QVBoxLayout,
-    QFileDialog,
-    QMainWindow,
     QToolButton,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtGui import QKeySequence, QShortcut
-from PyQt6.QtCore import Qt, QTimer
+
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.utils.certus_atomic_io import atomic_open
 from certus.utils.certus_ux import ClickTarget
@@ -312,7 +314,6 @@ class CertusScientificPlot(pg.PlotWidget):
         from certus.ui.certus_ui import (
             CERTUS_UI_STRINGS,
         )
-
         from certus.utils.certus_export import copy_plot_to_clipboard_excel
 
         ok = copy_plot_to_clipboard_excel(self)
@@ -364,7 +365,6 @@ class CertusScientificPlot(pg.PlotWidget):
         from certus.ui.certus_ui import (
             CERTUS_UI_STRINGS,
         )
-
         from certus.utils.certus_export import plot_dataframe_from_widget
 
         df = plot_dataframe_from_widget(self)
@@ -772,8 +772,8 @@ class CertusScientificPlot(pg.PlotWidget):
         from certus.ui.certus_ui import (
             CERTUS_UI_STRINGS,
             get_certus_last_dir,
-            set_certus_last_dir,
             get_export_settings,
+            set_certus_last_dir,
         )
 
         filename, _ = QFileDialog.getSaveFileName(

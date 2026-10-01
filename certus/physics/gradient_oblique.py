@@ -5,17 +5,20 @@ Extracted from certus_opt_gradients.py for better modularity.
 Contains gradient computation for oblique (non-normal) incidence angles.
 """
 
+from collections.abc import Callable
+from typing import Any
+
 import numpy as np
+from numba import njit, prange
+
+import certus.physics.certus_tmm_core as tmm_core
+from certus.domain.constants import TWO_PI
 from certus.physics.certus_inputs import check_incidence_angle
 from certus.physics.certus_oblique_substrate import oblique_exit_admittance
 from certus.physics.certus_substrate_absorption import DEFAULT_SUBSTRATE_THICKNESS_NM, apply_plate_loss
-from numba import njit, prange
-import certus.physics.certus_tmm_core as tmm_core
-from certus.domain.constants import TWO_PI
-from certus.physics.gradient_utils import compute_mse_vectorized, SMALL_EPSILON
+from certus.physics.gradient_utils import SMALL_EPSILON, compute_mse_vectorized
+
 from .gradient_analytic import _compute_gradient_analytic_kernel
-from collections.abc import Callable
-from typing import Any
 
 
 def _pick_kernel(plain: Callable[..., Any], absorbing: Callable[..., Any], n_sub_c128: np.ndarray) -> Callable[..., Any]:

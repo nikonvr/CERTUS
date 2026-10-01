@@ -2,33 +2,32 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import Any
 import logging
+from collections.abc import Mapping
 from dataclasses import dataclass
+from typing import Any, ClassVar
 
 import numpy as np
 
+from certus.core.certus_core import WL_DECIMALS
+from certus.core.certus_strat_workers_dto import StratOptiResultsDTO, StratParamsDTO
 from certus.utils.certus_services import BaseHeadlessService
+from certus.utils.certus_strat_context import StratContext
 from certus_physics import (
     arange_inclusive,
-    get_refractive_index,
-    get_refractive_clues_vectorized,
-    calculate_RT_vectorized_real_HL,
+    calculate_detailed_growth,
     calculate_RT_batch_kernel,
-    prepare_dynamics_data_kernel,
-    compute_dynamics_kernel,
+    calculate_RT_vectorized_real_HL,
     check_extrema_proximity_batch,
     check_level_margin_batch,
-    validate_wavelengths_batch,
-    update_run_states_kernel,
-    calculate_detailed_growth,
+    compute_dynamics_kernel,
     corridor_wl_range,
+    get_refractive_clues_vectorized,
+    get_refractive_index,
+    prepare_dynamics_data_kernel,
+    update_run_states_kernel,
+    validate_wavelengths_batch,
 )
-from certus.utils.certus_strat_context import StratContext
-from certus.core.certus_core import WL_DECIMALS
-from certus.core.certus_strat_workers_dto import StratParamsDTO, StratOptiResultsDTO
-from typing import ClassVar
 
 NOISE_DISTRIBUTION_GAUSSIAN = "gaussian"
 NON_MONOTONIC_MODE_ATTENUATE = "attenuate"

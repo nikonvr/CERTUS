@@ -1,17 +1,21 @@
 from __future__ import annotations
+
+import logging
+
+import numpy as np
+
+from certus.spline.certus_index_spline_core import SPLINE_PERF_PRESETS
 from certus.ui.certus_index_spline_common import (
-    SIO2_DEFAULT_RMSE_FIT_LAMBDA_ENABLED,
-    SIO2_DEFAULT_RMSE_FIT_LAMBDA_HI_NM,
-    SIO2_DEFAULT_RMSE_FIT_LAMBDA_LO_NM,
     _QS_SPLINE_APP,
     _QS_SPLINE_ORG,
     _QS_SPLINE_UNCERTAINTY_DEFAULTS_REV,
     _UNCERTAINTY_DEFAULTS_REV,
+    SIO2_DEFAULT_RMSE_FIT_LAMBDA_ENABLED,
+    SIO2_DEFAULT_RMSE_FIT_LAMBDA_HI_NM,
+    SIO2_DEFAULT_RMSE_FIT_LAMBDA_LO_NM,
 )
-import logging
-import numpy as np
-from certus.spline.certus_index_spline_core import SPLINE_PERF_PRESETS
 from certus.utils.certus_qsettings import certus_settings
+
 
 class CertusIndexSplineStateMixin:
     """CertusIndexSplineStateMixin."""

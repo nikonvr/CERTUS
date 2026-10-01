@@ -3,22 +3,6 @@
 # =============================================================================
 import concurrent.futures
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # Conditional import of Svg for the logo
 
 try:
@@ -35,9 +19,14 @@ except ImportError:
 
 
 
+# Import context system (replaces global variables)
+# Robust db clues (fixed xlsx)
+from certus.workers.certus_strat_workers import (
+    _resolve_strat_indices_db_path,
+)
 from certus_physics import (  # STRAT-specific kernels (previously imported from certus.core._certus_physics_impl)
-    MaterialDatabase,
     NON_MONOTONIC_MODE_ATTENUATE,
+    MaterialDatabase,
     calculate_RT_vectorized_real_HL,
     compute_batch_rmse,
     find_nucleation_adaptive_kernel,
@@ -47,18 +36,6 @@ from certus_physics import (  # STRAT-specific kernels (previously imported from
     update_run_states_kernel,
     validate_wavelengths_batch,
 )
-
-# Import context system (replaces global variables)
-
-
-# Robust db clues (fixed xlsx)
-
-
-
-from certus.workers.certus_strat_workers import (
-    _resolve_strat_indices_db_path,
-)
-
 
 
 class _LazyCertusStratApp:

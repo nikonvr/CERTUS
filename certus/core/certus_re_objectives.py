@@ -1,54 +1,59 @@
 from __future__ import annotations
-from certus.utils.certus_re_math import RE_SPLINE_NODE2_BOUNDS_NM
-from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_QWOT_ALPHA
-from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_PHASE2_TOP_K
-from certus.utils.certus_re_config import RE_PHASE2_TOP_K_MERGE_REL_TOL
-from certus.utils.certus_re_config import RE_P4_BEAM_AP_BOUNDS_DEG
-from certus.utils.certus_re_config import RE_PHASE2_FD_MAX_WORKERS
-from certus.utils.certus_re_config import RE_PHASE2_FD_PARALLEL
-from certus.utils.certus_re_config import RE_PHASE2_ONESIDED_SPLINE_FD
-from certus.utils.certus_re_config import RE_PHASE2_LAM2_FD_STEP
-from certus.utils.certus_re_config import RE_PHASE2_SPLINE_FD_STEP
-from certus.utils.certus_re_config import RE_P4_BEAM_N_KNOTS
-from certus.utils.certus_re_config import RE_RE_DEADZONE_QWOT_ABS
-from certus.utils.certus_re_config import RE_RE_DEADZONE_DELTA_RE_ABS
-from certus.utils.certus_re_config import RE_HL_DELTA_RE_REG_SQRT_W
-from certus.utils.certus_re_math import re_envelope_max_delta_n
-import numpy as np
+
+import logging
 import time
 from typing import Any
-from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
-import logging
+
+import numpy as np
+
+from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
+from certus.utils.certus_re_config import (
+    RE_GUI_DEFAULT_RE_PHASE2_TOP_K,
+    RE_GUI_DEFAULT_RE_QWOT_ALPHA,
+    RE_HL_DELTA_RE_REG_SQRT_W,
+    RE_P4_BEAM_AP_BOUNDS_DEG,
+    RE_P4_BEAM_N_KNOTS,
+    RE_PHASE2_FD_MAX_WORKERS,
+    RE_PHASE2_FD_PARALLEL,
+    RE_PHASE2_LAM2_FD_STEP,
+    RE_PHASE2_ONESIDED_SPLINE_FD,
+    RE_PHASE2_SPLINE_FD_STEP,
+    RE_PHASE2_TOP_K_MERGE_REL_TOL,
+    RE_RE_DEADZONE_DELTA_RE_ABS,
+    RE_RE_DEADZONE_QWOT_ABS,
+)
+from certus.utils.certus_re_math import RE_SPLINE_NODE2_BOUNDS_NM, re_envelope_max_delta_n
 
 logger = logging.getLogger(__name__)
 
-from certus.utils.certus_re_helpers import (
-    _re_apply_correc,
-    _re_deadzone_excess_abs,
-    re_knots_wavelengths,
-    re_delta_qwot_per_layer,
-    re_n_corr_at_lambda_ref,
-    RE_SPLINE_CORREC_KINDS,
-    RE_SPLINE_NODE2_DEFAULT_NM,
-    _re_p4_chromatic_band_masks,
-    _re_p4_band_ap_deg,
-    _re_p4_effective_half_width_deg,
-    _re_eval_angle_physics_for,
-    RE_SPLINE_N_KNOTS,
-    _re_p4_beam_knots_lam_nm_from_wls,
-    RE_GUI_DEFAULT_BEAM_APERTURE_DEG,
-    _re_p4_ap_band_intervals_str,
-    _re_rmse_combined_spectral_qwot,
+from collections.abc import Callable
+
+from certus.core.certus_re_config import RE_RESULT_LABEL_WITH_DRIFT, REMseContext, REPhase2Result, _result_dto_at
+from certus.core.certus_re_worker_utils import (
+    re_nominal_indices_at_wls,
+    re_objective_wls_grid,
+    re_objective_wls_weight_log_trap,
+    re_oblique_config_meta_from_wls,
 )
 from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_SPLINE_TIKHONOV
-from certus.core.certus_re_config import REMseContext, REPhase2Result, RE_RESULT_LABEL_WITH_DRIFT, _result_dto_at
-from certus.core.certus_re_worker_utils import (
-    re_objective_wls_grid,
-    re_nominal_indices_at_wls,
-    re_oblique_config_meta_from_wls,
-    re_objective_wls_weight_log_trap,
+from certus.utils.certus_re_helpers import (
+    RE_GUI_DEFAULT_BEAM_APERTURE_DEG,
+    RE_SPLINE_CORREC_KINDS,
+    RE_SPLINE_N_KNOTS,
+    RE_SPLINE_NODE2_DEFAULT_NM,
+    _re_apply_correc,
+    _re_deadzone_excess_abs,
+    _re_eval_angle_physics_for,
+    _re_p4_ap_band_intervals_str,
+    _re_p4_band_ap_deg,
+    _re_p4_beam_knots_lam_nm_from_wls,
+    _re_p4_chromatic_band_masks,
+    _re_p4_effective_half_width_deg,
+    _re_rmse_combined_spectral_qwot,
+    re_delta_qwot_per_layer,
+    re_knots_wavelengths,
+    re_n_corr_at_lambda_ref,
 )
-from collections.abc import Callable
 
 
 def _contiguous_selector(idx: np.ndarray) -> np.ndarray | slice:
@@ -743,6 +748,7 @@ def _global_add_regularization_residuals(cfg: Any,
 def _warmup_re_physics() -> None:
     """Background JIT warmup for Reverse Engineering hot paths."""
     import numpy as np
+
     from certus.core.certus_re_config import REMseContext
     try:
         wls = np.linspace(400, 800, 10, dtype=np.float64)

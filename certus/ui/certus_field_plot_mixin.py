@@ -1,8 +1,10 @@
 from __future__ import annotations
-from certus.ui.certus_ui_widgets_utils import DetachedPlotWindow
-from certus.ui.certus_ui_utils import show_toast
-from certus.ui.certus_plot import clone_plot_widget
+
 from certus.ui.certus_field_services import FieldPlotData, FieldStackService
+from certus.ui.certus_plot import clone_plot_widget
+from certus.ui.certus_ui_utils import show_toast
+from certus.ui.certus_ui_widgets_utils import DetachedPlotWindow
+
 
 class CertusFieldPlotMixin:
     """CertusFieldPlotMixin."""

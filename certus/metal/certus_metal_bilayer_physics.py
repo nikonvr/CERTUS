@@ -23,7 +23,6 @@ from certus_physics import (
     get_nk_si,
 )
 
-
 # Silicon optical constants: loaded from clues.xlsx -> Si-substrate via certus_physics.get_nk_si()
 
 

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import logging
 import sys
 import time
-import logging
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -20,9 +20,8 @@ from certus.core.certus_core import ensure_numba_cache_dir  # noqa: E402
 
 ensure_numba_cache_dir()
 
-from certus.spline.certus_index_spline_core import DataType, SplineOptConfig, canonical_spline_sigma_knots
 import certus.spline.spline_profile_corridors as _spc
-
+from certus.spline.certus_index_spline_core import DataType, SplineOptConfig, canonical_spline_sigma_knots
 from certus.spline.spline_profile_corridors import ProfileCorridorConfig, compute_profiled_corridors_by_d
 
 

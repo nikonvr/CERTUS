@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-
 TOKENS = {
     "slider_corridor_groove_bg": "#d7deea",
     "slider_corridor_subpage_bg": "#7a3cff",

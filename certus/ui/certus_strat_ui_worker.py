@@ -1,12 +1,24 @@
 from __future__ import annotations
+
 import logging
+
+# Explicit: this module is served by a star import, and the placeholder was
+# used three times without ever being bound - see _refresh_synthesis_kpis.
+import math
 import time
 import traceback
+
 import numpy as np
 import pyqtgraph as pg
 from PyQt6.QtCore import QThread, QTimer, pyqtSlot
 from PyQt6.QtWidgets import QApplication, QMessageBox
+
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, get_export_config
+from certus.core.certus_strat_config import _SPECTRUM_COUNTER
+from certus.ui.certus_overview_tab import PLACEHOLDER
+from certus.ui.certus_ui import confirm_stop_with_timeout, show_toast
+from certus.utils.certus_strat_service import APP_CONTEXT, select_best_strat_result
+from certus.workers.certus_strat_workers import StratTask, WorkerThread
 from certus_physics import (
     NON_MONOTONIC_MODE_ATTENUATE,
     calculate_RT_vectorized_real_HL,
@@ -15,16 +27,6 @@ from certus_physics import (
     simulate_growth_kernel,
     validate_wavelengths_batch,
 )
-from certus.ui.certus_ui import confirm_stop_with_timeout, show_toast
-from certus.workers.certus_strat_workers import StratTask, WorkerThread
-from certus.core.certus_strat_config import _SPECTRUM_COUNTER
-
-# Explicit: this module is served by a star import, and the placeholder was
-# used three times without ever being bound - see _refresh_synthesis_kpis.
-import math
-
-from certus.ui.certus_overview_tab import PLACEHOLDER
-from certus.utils.certus_strat_service import APP_CONTEXT, select_best_strat_result
 
 
 def _format_seel(result: dict) -> str:

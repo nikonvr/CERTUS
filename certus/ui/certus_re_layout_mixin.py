@@ -1,8 +1,9 @@
 from __future__ import annotations
-from certus.utils.certus_re_math import re_substrate_cauchy_n_re_from_theta
-import logging
+
 import functools
+import logging
 from pathlib import Path
+
 import numpy as np
 import pyqtgraph as pg
 
@@ -10,7 +11,6 @@ from certus.core.certus_core import (
     CFG,
 )
 from certus.ui.certus_overview_tab import CertusKpiBanner, build_synthesis_tab
-
 from certus.ui.certus_qt_widgets import (
     QAbstractItemView,
     QButtonGroup,
@@ -32,45 +32,34 @@ from certus.ui.certus_qt_widgets import (
     QSplitter,
     QStackedWidget,
     QStatusBar,
-    QTabWidget,
     Qt,
+    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
-
-from certus_physics import (
-    calc_spectrum_front_wrapper,
-    calc_spectrum_full_exact_wrapper,
-)
-
-
-
+from certus.ui.certus_re_ui import CertusREResultsDialog
 from certus.ui.certus_ui import (
-    attach_excel_clipboard_context_menu,
     CertusCard,
     CertusCollapsible,
     CertusScientificPlot,
     CertusStatusPill,
     CertusTheme,
     CertusThemeToggle,
-    enable_file_drop,
     EnhancedProgressWidget,
     ExcelTableWidget,
     FlashyCard,
-    install_standard_shortcuts,
-    show_toast,
     WelcomeGuideWidget,
+    attach_excel_clipboard_context_menu,
     create_flashy_grid,
     create_header_logo_widget,
     create_styled_button,
     create_top_actions_bar,
+    enable_file_drop,
+    install_standard_shortcuts,
     set_certus_window_icon,
+    show_toast,
     wrap_scientific_plot_with_toolbar,
 )
-
-from certus.utils.certus_ux import Typography, build_premium_overrides, OBJ
-from certus.ui.certus_re_ui import CertusREResultsDialog
-
 from certus.utils.certus_re_helpers import (
     RE_GUI_DEFAULT_BEAM_APERTURE_DEG,
     RE_SPLINE_NODE2_DEFAULT_NM,
@@ -82,6 +71,12 @@ from certus.utils.certus_re_helpers import (
     re_delta_qwot_per_layer,
     re_interp_delta_knots_clamped,
     re_knots_wavelengths,
+)
+from certus.utils.certus_re_math import re_substrate_cauchy_n_re_from_theta
+from certus.utils.certus_ux import OBJ, Typography, build_premium_overrides
+from certus_physics import (
+    calc_spectrum_front_wrapper,
+    calc_spectrum_full_exact_wrapper,
 )
 
 calc_spectrum_front = calc_spectrum_front_wrapper

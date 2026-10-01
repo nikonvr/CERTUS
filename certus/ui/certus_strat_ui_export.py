@@ -1,28 +1,14 @@
 from __future__ import annotations
-import os
-from pathlib import Path
+
 import io
 import json
+import os
+from pathlib import Path
 from typing import Any
+
 import numpy as np
 import pandas as pd
 from PyQt6.QtWidgets import QComboBox
-from certus.core.certus_core import (
-    NUMERICAL_FAULT_EXCEPTIONS,
-    certus_timestamp_display,
-    certus_timestamp_file,
-    get_resource_path,
-    get_safe_worker_count,
-)
-from certus.utils.certus_data import (
-    OPENPYXL_AVAILABLE,
-    generate_html_report,
-    get_missing_manifest_fields,
-    to_excel_robust,
-)
-from certus.core.certus_metrology import ValidationStatus
-from certus.utils.certus_services import IndexFitService
-from certus.utils.certus_strat_service import extract_best_rmse
 
 # EXPLICIT import, and it is not optional.
 #
@@ -38,9 +24,26 @@ from certus.utils.certus_strat_service import extract_best_rmse
 #   - the call only occurs during EXPORT, after the full calculation completes.
 # Result: the STRAT pipeline calculated everything, then died at the final step without
 # emitting `finished` — returning zero results to the user.
-from certus.core.certus_core import __version__
+from certus.core.certus_core import (
+    NUMERICAL_FAULT_EXCEPTIONS,
+    __version__,
+    certus_timestamp_display,
+    certus_timestamp_file,
+    get_resource_path,
+    get_safe_worker_count,
+)
+from certus.core.certus_metrology import ValidationStatus
 from certus.ui.certus_strat_common import _resolve_strat_indices_db_path
 from certus.utils.certus_atomic_io import atomic_open
+from certus.utils.certus_data import (
+    OPENPYXL_AVAILABLE,
+    generate_html_report,
+    get_missing_manifest_fields,
+    to_excel_robust,
+)
+from certus.utils.certus_services import IndexFitService
+from certus.utils.certus_strat_service import extract_best_rmse
+
 
 class CertusStratExportMixin:
     def _extract_stack_multipliers(self, config: dict[str, Any]) -> list[float]:

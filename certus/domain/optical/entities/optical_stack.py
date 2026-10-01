@@ -6,6 +6,7 @@ Manages domain invariants and emits domain events.
 """
 
 from __future__ import annotations
+
 from dataclasses import dataclass, field
 from uuid import uuid4
 

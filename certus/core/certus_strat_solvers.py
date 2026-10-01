@@ -1,68 +1,52 @@
 # =============================================================================
 # CERTUS STRAT - Core numerical and physics logic
 # =============================================================================
-import os
-from pathlib import Path
 import concurrent.futures
-
-
-
 import io
-
 import json
-
 import logging
-
-
+import os
 import threading
-
-
-
-
+from pathlib import Path
 from typing import Any
 
 import numpy as np
-
 import pandas as pd
 
-
-
-
-# Import access config
-from certus.utils.certus_exclusions import filter_params_for_serialization
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
-    get_resource_path,
     certus_timestamp_file,
+    get_resource_path,
 )
-
 from certus.utils.certus_data import (
     PerformanceMonitor,
 )
 
+# Import access config
+from certus.utils.certus_exclusions import filter_params_for_serialization
 from certus_physics import (  # STRAT-specific kernels (previously imported from certus.core._certus_physics_impl)
     K_MAX_LAYER_BACKSIDE,
     K_MAX_SUBSTRATE_BACKSIDE,
-    MaterialDatabase,
     NON_MONOTONIC_MODE_ATTENUATE,
     NON_MONOTONIC_MODE_REJECT,
+    MaterialDatabase,
     arange_inclusive,
     calculate_detailed_growth,
+    calculate_extrema_distances,
     calculate_RT_batch_kernel,
     calculate_RT_vectorized_real_HL,
-    calculate_extrema_distances,
     compute_batch_rmse,
     compute_T_front_at_layer,
     find_nucleation_adaptive_kernel,
-    get_refractive_index,
     get_refractive_clues_vectorized,
+    get_refractive_index,
     precompute_matrix_cache_kernel,
     rank_nucleation_candidates_kernel,
     simulate_growth_kernel,
     simulate_stack_robustness_batch,
     update_run_states_kernel,
-    validate_wavelengths_batch,
     validate_backside_real_clues,
+    validate_wavelengths_batch,
 )
 
 # Import context system (replaces global variables)
@@ -86,19 +70,19 @@ PERF_MONITOR = PerformanceMonitor()
 # === CACHE SYSTEM FOR PLOTS ===
 # PlotCache and ThreadSafeCounter have been extracted to certus_strat_context.
 # Imported here for full backward compatibility.
-from certus.utils.certus_strat_context import PlotCache, ThreadSafeCounter  # noqa: E402
-
-from certus.core.certus_strat_objectives import (
-    _run_phase_a_hybrid_loop,
-    _normalize_phase_a_results,
-)
 from certus.core.certus_metrology import provenance
-from certus.utils.certus_strat_context import (
-    _build_symmetry_bonus_map,
-    _build_layer_importance_map,
-    _compute_blocks_range_for_params,
+from certus.core.certus_strat_objectives import (
+    _normalize_phase_a_results,
+    _run_phase_a_hybrid_loop,
 )
 from certus.utils.certus_atomic_io import atomic_open
+from certus.utils.certus_strat_context import (  # noqa: E402
+    PlotCache,
+    ThreadSafeCounter,
+    _build_layer_importance_map,
+    _build_symmetry_bonus_map,
+    _compute_blocks_range_for_params,
+)
 
 # _convert_solution_to_strategy has been moved to certus_strat_ranking.py
 

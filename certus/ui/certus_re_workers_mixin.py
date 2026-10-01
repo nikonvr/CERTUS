@@ -1,42 +1,20 @@
 from __future__ import annotations
-from certus.utils.certus_re_config import RE_PHASE4_TRF_MAX_NFEV
-from certus.utils.certus_re_config import RE_PHASE4_APERTURE_SCAN_POINTS
-from certus.utils.certus_re_math import re_substrate_cauchy_n_re_from_theta
-from certus.utils.certus_re_math import format_re_drift_log_triplet_pct
-from certus.utils.certus_re_config import RE_P4_BEAM_AP_BOUNDS_DEG
-from certus.utils.certus_re_config import RE_PHASE2_FD_MAX_WORKERS
-from certus.utils.certus_re_config import RE_PHASE2_FD_PARALLEL
-from certus.utils.certus_re_config import RE_PHASE2_ONESIDED_SPLINE_FD
-from certus.utils.certus_re_config import RE_P4_BEAM_N_KNOTS
-from certus.utils.certus_re_config import RE_RE_DEADZONE_QWOT_ABS
-from certus.utils.certus_re_config import RE_RE_DEADZONE_DELTA_RE_ABS
-from certus.utils.certus_re_config import RE_HL_DELTA_RE_REG_SQRT_W
-from certus.utils.certus_re_config import RE_THICKNESS_SEARCH_RADIUS_PCT
-from certus.utils.certus_re_config import RE_SUB_CAUCHY_TUBE_DELTA
+
 import logging
-from certus.utils.certus_copy_utils import copy_list_of_results
 import time
 import traceback
 from pathlib import Path
 from typing import Any
+
 import numpy as np
 
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
 )
-
 from certus.ui.certus_qt_widgets import (
     QCheckBox,
     QTimer,
 )
-
-from certus_physics import (
-    init_thickness,
-    calc_spectrum_front_wrapper,
-    calc_spectrum_full_exact_wrapper,
-)
-
-
 from certus.ui.certus_spectrum_eval_ui import (
     spectrum_eval_apply_axes_legend_scale,
     spectrum_eval_build_worker_cfg,
@@ -45,20 +23,31 @@ from certus.ui.certus_spectrum_eval_ui import (
     spectrum_eval_run_preamble,
     spectrum_eval_start_worker,
 )
-
 from certus.ui.certus_ui import (
     CertusTheme,
-    safe_ui_action,
-    open_documentation,
     confirm_stop_with_timeout,
+    open_documentation,
+    safe_ui_action,
 )
-
-from certus.workers.certus_re_workers import REWorker
-
+from certus.utils.certus_copy_utils import copy_list_of_results
+from certus.utils.certus_re_config import (
+    RE_HL_DELTA_RE_REG_SQRT_W,
+    RE_P4_BEAM_AP_BOUNDS_DEG,
+    RE_P4_BEAM_N_KNOTS,
+    RE_PHASE2_FD_MAX_WORKERS,
+    RE_PHASE2_FD_PARALLEL,
+    RE_PHASE2_ONESIDED_SPLINE_FD,
+    RE_PHASE4_APERTURE_SCAN_POINTS,
+    RE_PHASE4_TRF_MAX_NFEV,
+    RE_RE_DEADZONE_DELTA_RE_ABS,
+    RE_RE_DEADZONE_QWOT_ABS,
+    RE_SUB_CAUCHY_TUBE_DELTA,
+    RE_THICKNESS_SEARCH_RADIUS_PCT,
+)
 from certus.utils.certus_re_helpers import (
     RE_GUI_DEFAULT_BEAM_APERTURE_DEG,
-    RE_SPLINE_NODE2_DEFAULT_NM,
     RE_SPLINE_N_KNOTS,
+    RE_SPLINE_NODE2_DEFAULT_NM,
     _parse_re_rmse_combined_from_progress_message,
     _re_qwot_rmse_abs_delta_at_l0,
     _re_rmse_combined_spectral_qwot,
@@ -68,6 +57,13 @@ from certus.utils.certus_re_helpers import (
     re_apply_re_index_model,
     re_drift_result_log_suffix,
     re_knots_wavelengths,
+)
+from certus.utils.certus_re_math import format_re_drift_log_triplet_pct, re_substrate_cauchy_n_re_from_theta
+from certus.workers.certus_re_workers import REWorker
+from certus_physics import (
+    calc_spectrum_front_wrapper,
+    calc_spectrum_full_exact_wrapper,
+    init_thickness,
 )
 
 calc_spectrum_front = calc_spectrum_front_wrapper

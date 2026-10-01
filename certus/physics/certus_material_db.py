@@ -1,8 +1,8 @@
-import numpy as np
-from numba import njit, prange
 from collections.abc import Callable
 from typing import Any
 
+import numpy as np
+from numba import njit, prange
 
 # [MONOLITHIC BLOCK] MATERIAL DATABASE
 

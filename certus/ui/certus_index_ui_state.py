@@ -5,19 +5,21 @@ _QS_INDEX_APP = "INDEX"
 _QS_INDEX_WEIGHT_T = "cost_weight_t"
 _QS_INDEX_WEIGHT_R = "cost_weight_r"
 
-from certus.core.certus_core import (
-    __version__,
-)
-from certus.utils.certus_index_utils import DataType, normalize_index_config
-from certus.core.certus_index_core import (
-    OptimizationConfig,
-    substrateMode,
-)
 import scipy.optimize
 from PyQt6.QtWidgets import (
     QMessageBox,
 )
+
+from certus.core.certus_core import (
+    __version__,
+)
+from certus.core.certus_index_core import (
+    OptimizationConfig,
+    substrateMode,
+)
+from certus.utils.certus_index_utils import DataType, normalize_index_config
 from certus.utils.certus_qsettings import certus_settings
+
 
 class CertusIndexStateMixin:
     def _load_defaults(self) -> None:

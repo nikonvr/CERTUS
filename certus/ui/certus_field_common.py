@@ -1,32 +1,30 @@
-from PyQt6.QtWidgets import (
-    QMainWindow,
-    QWidget,
-    QVBoxLayout,
-    QLabel,
-    QDoubleSpinBox,
-    QTableWidget,
-    QTableWidgetItem,
-    QHeaderView,
-    QAbstractItemView,
-    QAbstractSpinBox,
-    QComboBox,
-    QLineEdit,
-    QGridLayout,
-    QCheckBox,
-)
-from PyQt6.QtCore import Qt, pyqtSignal
-
-from certus.ui.certus_ui_widgets_factory import create_styled_button
-
-from certus.ui.certus_icons import certus_icon
-from certus.ui.certus_theme import CertusTheme
-from certus.core.certus_core import SUBSTRATE_CHOICES
+import importlib.util
+import logging
 
 # certus_load_summary helpers reserved for future use (not yet wired in FIELD)
-
 import pyqtgraph.exporters
-import logging
-import importlib.util
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import (
+    QAbstractItemView,
+    QAbstractSpinBox,
+    QCheckBox,
+    QComboBox,
+    QDoubleSpinBox,
+    QGridLayout,
+    QHeaderView,
+    QLabel,
+    QLineEdit,
+    QMainWindow,
+    QTableWidget,
+    QTableWidgetItem,
+    QVBoxLayout,
+    QWidget,
+)
+
+from certus.core.certus_core import SUBSTRATE_CHOICES
+from certus.ui.certus_icons import certus_icon
+from certus.ui.certus_theme import CertusTheme
+from certus.ui.certus_ui_widgets_factory import create_styled_button
 
 LIDT_PRESETS = {
     "SiO2": 25.0,

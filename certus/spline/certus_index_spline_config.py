@@ -6,13 +6,15 @@ Extracted from certus_index_spline_core.py for Single Responsibility Principle.
 """
 
 from __future__ import annotations
-import numpy as np
-from dataclasses import dataclass, field
+
 from collections.abc import Callable
-from certus.utils.certus_index_utils import DataType
+from dataclasses import dataclass, field
+
+import numpy as np
 
 # Constants required by config defaults
 from certus.core.certus_core import K_MAX_LIMIT
+from certus.utils.certus_index_utils import DataType
 
 #: Default upper clip of k: 0.99, and never above what the model accepts (`K_MAX_LIMIT`).
 _K_CLIP_HI_DEFAULT: float = min(0.99, float(K_MAX_LIMIT))

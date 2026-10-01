@@ -32,7 +32,6 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Final
 
-
 DEFAULT_ICON_SIZE_PX: Final[int] = 48
 DEFAULT_TITLE: Final[str] = "No data yet"
 DEFAULT_DESCRIPTION: Final[str] = "Load a file or create an entry to get started."

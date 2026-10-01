@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
 from certus.ui.certus_theme import CertusTheme
 from certus.utils.certus_ux import Typography
 

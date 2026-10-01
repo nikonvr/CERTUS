@@ -4,14 +4,15 @@ CERTUS DESIGN ORCHESTRATOR
 Handles the complex multi-stage topology synthesis loop (Needle -> Optim -> Phase2 -> Cleanup)
 headless, decoupled from the UI.
 """
-from typing import Any
 import functools
 import logging
+from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 
 from certus.core.certus_core import CFG, get_complex_dtype, get_export_config, get_float_dtype
-from collections.abc import Callable
+
 
 class DesignOrchestrator:
     """

@@ -1,11 +1,16 @@
 from __future__ import annotations
-import os
-from pathlib import Path
+
 import logging
+import os
 import time
+from pathlib import Path
 from typing import Any
+
 import numpy as np
 import pyqtgraph as pg
+
+from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, __version__, certus_timestamp_file
+from certus.core.certus_metrology import ValidationStatus
 from certus.ui.certus_qt_widgets import (
     QApplication,
     QCheckBox,
@@ -13,21 +18,18 @@ from certus.ui.certus_qt_widgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
+    Qt,
     QTableWidgetItem,
     QTimer,
     QVBoxLayout,
     QWidget,
-    Qt,
 )
-from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, certus_timestamp_file
-from certus.utils.certus_data import generate_html_report
-from certus_physics import Layer
 from certus.ui.certus_ui import CertusTheme, plot_widget_plot_finite
-from certus.core.certus_metrology import ValidationStatus
+from certus.utils.certus_data import generate_html_report, get_missing_manifest_fields
 from certus.utils.certus_services import IndexFitRequest, IndexFitService
-from certus.core.certus_core import __version__
-from certus.utils.certus_data import get_missing_manifest_fields
 from certus.utils.certus_ux import Typography
+from certus_physics import Layer
+
 
 class PlotManager:
     def __init__(self, ui):
@@ -290,7 +292,7 @@ class PlotManager:
             self.ui.log(f"Context menu error: {e}", "ERROR")
 
     def _show_catalog_dialog(self, N: int) -> None:
-        from PyQt6.QtWidgets import QDialog, QVBoxLayout, QListWidget, QPushButton, QDialogButtonBox, QLabel
+        from PyQt6.QtWidgets import QDialog, QDialogButtonBox, QLabel, QListWidget, QPushButton, QVBoxLayout
         rec = self.ui.pareto_history.get(N)
         if not rec or "catalog" not in rec or not rec["catalog"]:
             self.ui.log("Empty catalog for this layer count.", "WARNING")

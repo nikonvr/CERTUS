@@ -1,8 +1,14 @@
-import numpy as np
-import time
 import logging
-from certus.core.certus_core import Any, NUMERICAL_FAULT_EXCEPTIONS
+import time
 
+import numpy as np
+
+from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, Any
+from certus.spline.certus_corridor_bootstrap import (
+    _bootstrap_pool_entry,
+    _bootstrap_single_replicate,
+    _resample_residuals_block,
+)
 from certus.spline.certus_corridor_config import (
     CorridorLiveStreamer,
     CorridorWalkSideContext,
@@ -14,30 +20,25 @@ from certus.spline.certus_corridor_config import (
     corridor_profile_refit_maxfun,
     x_slice_n_to_physical_nodes,
 )
-
-from certus.spline.certus_corridor_utils import (
-    _extract_knots_and_nodes_from_result,
-    _x_nodes0_from_mesh_x_if_consistent,
-    _bounds_for_nodes_only,
-    _detect_corridor_spike,
-)
-from certus.spline.certus_corridor_bootstrap import (
-    _resample_residuals_block,
-    _bootstrap_pool_entry,
-    _bootstrap_single_replicate,
-)
 from certus.spline.certus_corridor_logger import _log_coaching_bootstrap_outcome
 from certus.spline.certus_corridor_orchestrator_utils import (
     _best_fit_at_d,
-    _generate_iso_phase_seed,
-    _theoretical_TR_from_base_result,
-    _detect_breakpoint,
-    _run_global_opt_from_breakpoint,
     _build_emergency_fit_record,
-    _profile_p0_suspects,
-    _profile_manual_grid_coverage_audit,
+    _detect_breakpoint,
+    _generate_iso_phase_seed,
     _package_profile_grid_result,
+    _profile_manual_grid_coverage_audit,
+    _profile_p0_suspects,
+    _run_global_opt_from_breakpoint,
+    _theoretical_TR_from_base_result,
 )
+from certus.spline.certus_corridor_utils import (
+    _bounds_for_nodes_only,
+    _detect_corridor_spike,
+    _extract_knots_and_nodes_from_result,
+    _x_nodes0_from_mesh_x_if_consistent,
+)
+
 log = logging.getLogger('CERTUS')
 _LOG_PREFIX = "INDEX_SPLINE [CORRIDOR EXPLORE]"
 def _corridor_profile_walk_side(
@@ -63,7 +64,6 @@ def _corridor_profile_walk_side(
     target_min_span: float = 0.0,
 ) -> dict[str, Any]:
     """One-sided d continuation (+d or -d). Use distinct ``pconf.rng_seed`` per thread when running in parallel."""
-
     d_vals: list[float] = []
 
     n_curves: list[np.ndarray] = []

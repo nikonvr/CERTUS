@@ -1,18 +1,18 @@
 from __future__ import annotations
-import os
-from pathlib import Path
+
 import json
 import logging
+import os
 import traceback
 from collections import deque
+from pathlib import Path
 from typing import Any
+
 from pydantic import ValidationError
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QFileDialog, QLineEdit, QMessageBox, QTableWidgetItem
+
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
-from certus_physics import NON_MONOTONIC_MODE_ATTENUATE
-from certus.utils.certus_dto import StratConfigDTO
-from certus.utils.certus_numeric_text import parse_decimal
 from certus.core.certus_strat_core import (
     SYM_DEFAULT_CONTINUITY_WEIGHT,
     SYM_DEFAULT_EXTREMA_WINDOW_OT,
@@ -22,13 +22,15 @@ from certus.core.certus_strat_core import (
     SYM_DEFAULT_TIE_EPS_REL,
     SYM_DEFAULT_WEIGHT,
 )
-from certus.ui.certus_ui import get_certus_last_dir, safe_ui_action, set_certus_last_dir
-from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
-from certus.workers.certus_strat_workers import StratTask, WorkerThread
-from certus.utils.certus_strat_service import NOISE_DISTRIBUTION_GAUSSIAN, rebuild_visualization_context
-from certus_physics import NON_MONOTONIC_MODE_REJECT
-from certus.utils.certus_strat_context import _validate_strategy_blocks_contract
 from certus.ui.certus_strat_json_ui import JsonViewerWindow
+from certus.ui.certus_ui import get_certus_last_dir, safe_ui_action, set_certus_last_dir
+from certus.utils.certus_dto import StratConfigDTO
+from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
+from certus.utils.certus_numeric_text import parse_decimal
+from certus.utils.certus_strat_context import _validate_strategy_blocks_contract
+from certus.utils.certus_strat_service import NOISE_DISTRIBUTION_GAUSSIAN, rebuild_visualization_context
+from certus.workers.certus_strat_workers import StratTask, WorkerThread
+from certus_physics import NON_MONOTONIC_MODE_ATTENUATE, NON_MONOTONIC_MODE_REJECT
 
 #: String values recognized as TRUE in a config file.
 _CONFIG_TRUE = frozenset({"1", "true", "yes", "on", "oui", "vrai"})
@@ -56,8 +58,8 @@ def _config_flag(config: object, key: str, default: bool = False) -> bool:
 
 
 from certus.core.certus_strat_robustness import INDEX_CORRIDOR_DEFAULT  # noqa: E402
-from certus_physics import PHOTOMETRIC_CURVATURE_AMP  # noqa: E402
 from certus.utils.certus_atomic_io import atomic_open
+from certus_physics import PHOTOMETRIC_CURVATURE_AMP  # noqa: E402
 
 
 def _config_float(config: object, key: str, default: float = 0.0) -> float:
@@ -268,7 +270,6 @@ class CertusStratStateMixin:
         # Reset workflow state
 
         self.opti_results = None
-
         self.undo_stack.clear()
 
         # Reset materials database
@@ -285,7 +286,6 @@ class CertusStratStateMixin:
 
         if hasattr(self, "widgets"):
             default_materials = {"substrate_choice": "Custom", "nSub_custom": "1.73", "l0": "550.0"}
-
             for widget_name, default_value in default_materials.items():
                 if widget_name in self.widgets:
                     if hasattr(self.widgets[widget_name], "setCurrentText"):

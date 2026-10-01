@@ -1,6 +1,7 @@
 """The run state of a CERTUS window: busy / idle, errors, the running workers and the confirmation before closing (moved out of certus_base_app.py, S5.3)."""
 
 import logging
+
 from PyQt6.QtCore import QThread
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS

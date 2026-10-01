@@ -1,8 +1,8 @@
-import sys
-import os
-import subprocess
-import re
 import json
+import os
+import re
+import subprocess
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent

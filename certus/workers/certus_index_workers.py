@@ -1,46 +1,27 @@
+import logging
 import time
 import traceback
-import logging
 from threading import Event
 from typing import Any
-from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot
+
 import numpy as np
 import pandas as pd
+from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot
+
 from certus.core.certus_core import (
-    NUMERICAL_FAULT_EXCEPTIONS,
     HC_EV_NM,
     N_MIN_LIMIT,
+    NUMERICAL_FAULT_EXCEPTIONS,
     SMALL_EPSILON,
     __version__,
     get_safe_worker_count,
 )
 from certus.core.certus_lazy_imports import lazy_scipy
+
 scipy = lazy_scipy()
-from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
-from certus.core.certus_index_core import TLU_SOFT_EDGE_MARGIN, TLU_PRIOR_TRANSPARENT_N_MIN_SOFT
-from certus_physics import (
-    TLUParameters,
-    calculate_reflection_array,
-    calculate_bare_substrate_RT,
-    calculate_bare_substrate_T_absorbing,
-    calculate_RT_single_layer_absorbing_substrate_array,
-    calculate_RT_single_layer_backside_array,
-    clip_to_bounds,
-    epsilon1_TL_analytic,
-    epsilon2_TLU_array,
-    epsilon_to_nk,
-    SplineBasisCache,
-)
-from certus.utils.certus_index_utils import (
-    sellmeier_2poles_eval_nj,
-    k_law_8p_eval,
-    DataType,
-    _get_substrate_n_array_index,
-    calculate_index_rmse,
-)
-from certus.core.certus_metrology import ValidationStatus
-from certus.utils.certus_services import IndexFitService, IndexFitRequest
 from certus.core.certus_index_core import (
+    TLU_PRIOR_TRANSPARENT_N_MIN_SOFT,
+    TLU_SOFT_EDGE_MARGIN,
     OptimizationConfig,
     OptimizationResults,
     calculate_relative_R_normalization,
@@ -53,6 +34,29 @@ from certus.core.certus_index_objectives import (
 from certus.core.certus_index_solvers import (
     PGlobalOptimizerINDEX,
     SubsetOptimTask,
+)
+from certus.core.certus_metrology import ValidationStatus
+from certus.utils.certus_index_utils import (
+    DataType,
+    _get_substrate_n_array_index,
+    calculate_index_rmse,
+    k_law_8p_eval,
+    sellmeier_2poles_eval_nj,
+)
+from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
+from certus.utils.certus_services import IndexFitRequest, IndexFitService
+from certus_physics import (
+    SplineBasisCache,
+    TLUParameters,
+    calculate_bare_substrate_RT,
+    calculate_bare_substrate_T_absorbing,
+    calculate_reflection_array,
+    calculate_RT_single_layer_absorbing_substrate_array,
+    calculate_RT_single_layer_backside_array,
+    clip_to_bounds,
+    epsilon1_TL_analytic,
+    epsilon2_TLU_array,
+    epsilon_to_nk,
 )
 
 

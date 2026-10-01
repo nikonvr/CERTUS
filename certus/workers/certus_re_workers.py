@@ -1,16 +1,19 @@
+import logging
 import time
 import traceback
-import logging
+
 logger = logging.getLogger(__name__)
 from typing import Any, Protocol
-import numpy as np
-from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
-from certus.core.certus_re_config import REWorkerRequest, REPhase4Result
-from certus.utils.certus_re_config import RE_RANKING_ALPHA_REF
 
-from certus.utils.certus_re_results_builder import REResultsBuilder as REResultsPayloadBuilder
+import numpy as np
 from PyQt6.QtCore import QThread
+
+from certus.core.certus_re_config import REPhase4Result, REWorkerRequest
+from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
+from certus.utils.certus_re_config import RE_RANKING_ALPHA_REF
+from certus.utils.certus_re_results_builder import REResultsBuilder as REResultsPayloadBuilder
 from certus.workers.certus_base_workers import WorkerSignals
+
 
 class REWorker(QThread):
     """Two-stage RE: (1) TRF Deltaln(lambda) trapezoidal, thicknesses only, tabulated n;

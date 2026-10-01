@@ -1,17 +1,42 @@
 from __future__ import annotations
+
+from pathlib import Path
+from threading import Event
+from typing import Any
+
+import pandas as pd
+from PyQt6.QtCore import pyqtSignal
+
+from certus.spline.certus_index_spline_core import SplineOptConfig
 from certus.ui.certus_index_spline_common import (
     SIO2_DEFAULT_RMSE_FIT_LAMBDA_ENABLED,
     SIO2_DEFAULT_RMSE_FIT_LAMBDA_HI_NM,
     SIO2_DEFAULT_RMSE_FIT_LAMBDA_LO_NM,
     _add_spectrum_thickness_badge,
+    _ConfigBuilderMixin,
+    _CorridorControlMixin,
+    _CorridorExportMixin,
+    _CorridorGenMixin,
+    _CorridorWorkerMixin,
+    _DataMixin,
+    _ExcelExportMixin,
+    _MeshOptimizationMixin,
+    _PlotMixin,
+    _RunMixin,
+    _SettingsMixin,
     _smart_init_pw_nk_clipboard_df,
+    _SmartInitDialogMixin,
+    _UIBuilderMixin,
+    _UIMixin,
     _worker_corridor_rmse_regular_grid,
 )
-from pathlib import Path
-from threading import Event
-from typing import Any
-import pandas as pd
-from PyQt6.QtCore import pyqtSignal
+from certus.ui.certus_index_spline_corridorui_mixin import CertusIndexSplineCorridorUIMixin
+from certus.ui.certus_index_spline_eventsextras_mixin import CertusIndexSplineEventsExtrasMixin
+from certus.ui.certus_index_spline_layoutextras_mixin import CertusIndexSplineLayoutExtrasMixin
+from certus.ui.certus_index_spline_manualmesh_mixin import CertusIndexSplineManualMeshMixin
+from certus.ui.certus_index_spline_smartinit_mixin import CertusIndexSplineSmartInitMixin
+from certus.ui.certus_index_spline_spectrumui_mixin import CertusIndexSplineSpectrumUIMixin
+from certus.ui.certus_index_spline_state_mixin import CertusIndexSplineStateMixin
 from certus.ui.certus_ui import (
     CertusBaseApp,
     GenericWorker,
@@ -22,30 +47,7 @@ from certus.ui.certus_ui import (
     show_toast,
 )
 from certus.utils.certus_ux import build_premium_overrides
-from certus.spline.certus_index_spline_core import SplineOptConfig
-from certus.ui.certus_index_spline_common import (
-    _CorridorControlMixin,
-    _SettingsMixin,
-    _CorridorGenMixin,
-    _DataMixin,
-    _RunMixin,
-    _CorridorExportMixin,
-    _UIBuilderMixin,
-    _PlotMixin,
-    _CorridorWorkerMixin,
-    _SmartInitDialogMixin,
-    _ConfigBuilderMixin,
-    _MeshOptimizationMixin,
-    _ExcelExportMixin,
-    _UIMixin,
-)
-from certus.ui.certus_index_spline_state_mixin import CertusIndexSplineStateMixin
-from certus.ui.certus_index_spline_smartinit_mixin import CertusIndexSplineSmartInitMixin
-from certus.ui.certus_index_spline_manualmesh_mixin import CertusIndexSplineManualMeshMixin
-from certus.ui.certus_index_spline_corridorui_mixin import CertusIndexSplineCorridorUIMixin
-from certus.ui.certus_index_spline_spectrumui_mixin import CertusIndexSplineSpectrumUIMixin
-from certus.ui.certus_index_spline_layoutextras_mixin import CertusIndexSplineLayoutExtrasMixin
-from certus.ui.certus_index_spline_eventsextras_mixin import CertusIndexSplineEventsExtrasMixin
+
 
 class CertusIndexSplineApp(
     _CorridorControlMixin,
@@ -213,6 +215,7 @@ class CertusIndexSplineApp(
 
 def main():
     import sys
+
     from certus.ui.certus_ui import init_certus_app
 
     app = init_certus_app()

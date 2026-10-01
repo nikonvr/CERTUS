@@ -1,4 +1,5 @@
 import logging
+
 import pyqtgraph.exporters  # pylint: disable=unused-import
 from PyQt6.QtCore import (
     Qt,
@@ -10,8 +11,10 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
 from certus.ui.certus_theme import CertusTheme
 from certus.utils.certus_ux import Typography
+
 
 class CertusCard(QFrame):
     """Flat card replacing heavy QGroupBox. Exposes .body (QVBoxLayout) for content."""

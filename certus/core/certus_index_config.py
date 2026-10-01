@@ -1,26 +1,29 @@
-from certus.core.certus_core import create_module_environment
 import scipy
 import scipy.optimize
+
+from certus.core.certus_core import create_module_environment
 
 _env = create_module_environment(__file__, 'CERTUS_INDEX_CORE')
 script_dir = _env['script_dir']
 
+from enum import Enum, auto
+from typing import Any
+
 import numpy as np
 import pandas as pd
-from enum import Enum, auto
 
 from certus.core.certus_core import (
     canonicalize_substrate_label,
     substrate_sellmeier_coeffs,
     substrate_sellmeier_id,
 )
-from certus_physics import (
-    TLUParameters,
-)
 from certus.utils.certus_index_utils import (
     DataType,
 )
-from typing import Any
+from certus_physics import (
+    TLUParameters,
+)
+
 
 class substrateMode(Enum):
     """substrate mode"""

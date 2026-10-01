@@ -5,51 +5,58 @@ Contains _SettingsMixin and _CorridorControlMixin.
 """
 
 from __future__ import annotations
+
 import logging
 import os
 import time
-from typing import Any
 from pathlib import Path
-from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
+from typing import Any
 
 import numpy as np
-from certus.spline.certus_index_spline_core import _log_index_spline_best_config
 import pyqtgraph as pg
-
 from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import (
-    QDialog, QMessageBox, QVBoxLayout, QWidget, QLabel,
-    QPushButton, QCheckBox, QDialogButtonBox, QDoubleSpinBox,
-    QFileDialog, QGridLayout, QScrollArea
+    QCheckBox,
+    QDialog,
+    QDialogButtonBox,
+    QDoubleSpinBox,
+    QFileDialog,
+    QGridLayout,
+    QLabel,
+    QMessageBox,
+    QPushButton,
+    QScrollArea,
+    QVBoxLayout,
+    QWidget,
 )
-
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
-from certus.ui.certus_ui import (
-    safe_ui_action,
-    GenericWorker,
-)
 from certus.spline.certus_index_spline_core import (
-    log_index_spline_d_trace,
-    _QS_SPLINE_ORG,
-    _QS_SPLINE_APP,
-    _QS_SPECTRUM_FIT_R,
-    _QS_SPECTRUM_FIT_TREL,
-    _QS_SPECTRUM_FIT_T,
-    _QS_SPECTRUM_WR,
-    _QS_SPECTRUM_WT,
-    _QS_SPLINE_UNCERTAINTY_DEFAULTS_REV,
+    _MAIN_SPLITTER_LAYOUT_REV,
     _QS_MAIN_SPLITTER_LAYOUT_REV,
     _QS_MAIN_SPLITTER_STATE,
     _QS_RIGHT_SPLITTER_STATE,
-    _MAIN_SPLITTER_LAYOUT_REV,
+    _QS_SPECTRUM_FIT_R,
+    _QS_SPECTRUM_FIT_T,
+    _QS_SPECTRUM_FIT_TREL,
+    _QS_SPECTRUM_WR,
+    _QS_SPECTRUM_WT,
+    _QS_SPLINE_APP,
+    _QS_SPLINE_ORG,
+    _QS_SPLINE_UNCERTAINTY_DEFAULTS_REV,
     _UNCERTAINTY_DEFAULTS_REV,
+    _log_index_spline_best_config,
+    log_index_spline_d_trace,
+    normalize_spectrum_dataframe,
 )
-
-from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
-from certus.utils.certus_data import read_data_file_robust
-from certus.spline.certus_index_spline_core import normalize_spectrum_dataframe
 from certus.spline.spline_pipeline import worker_run_corridor_profile_after_nl_choice
+from certus.ui.certus_ui import (
+    GenericWorker,
+    safe_ui_action,
+)
+from certus.utils.certus_data import read_data_file_robust
+from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
+from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
 from certus.utils.certus_qsettings import certus_settings
 
 _DEFAULT_CORRIDOR_RMSE_DELTA: float = 2.5e-4

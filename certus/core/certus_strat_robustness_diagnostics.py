@@ -1,8 +1,8 @@
 """CERTUS STRAT ROBUSTNESS - the layer diagnostics: margin profile, critical layer, forced layers, worst swing, witness resets (moved out of certus_strat_robustness.py, S5.2)."""
 
-import numpy as np
 from typing import Any
 
+import numpy as np
 
 #: 👤 The cause is named in PHYSICAL WORDS, never by its sentinel. `CRASH_TP_MISCOUNT`
 #: tells a chamber operator nothing about what to watch; "ripple too faint to be seen"

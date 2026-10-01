@@ -1,20 +1,22 @@
-import numpy as np
-import re
 import logging
+import re
 from typing import Any
+
+import numpy as np
 
 logger = logging.getLogger("CERTUS")
 
+from collections.abc import Callable
+
 from scipy.optimize import least_squares, minimize
 
-from certus.core.certus_substrate_helpers import norm_header
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
     SELLMEIER_COEFFS_BY_ID,
     canonicalize_substrate_label,
     substrate_sellmeier_coeffs,
 )
-from collections.abc import Callable
+from certus.core.certus_substrate_helpers import norm_header
 
 SELLMEIER_N_ACCEPT_LO = 1.05
 SELLMEIER_N_ACCEPT_HI = 6.5

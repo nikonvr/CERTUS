@@ -5,11 +5,12 @@ Entity representing an optical layer within a stack.
 """
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 
 from certus.domain.optical.value_objects import (
-    Thickness,
     RefractiveIndex,
+    Thickness,
     Wavelength,
 )
 

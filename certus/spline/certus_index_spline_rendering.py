@@ -5,6 +5,7 @@ Contains _PlotMixin and _UIBuilderMixin.
 """
 
 from __future__ import annotations
+
 import logging
 from pathlib import Path
 from typing import Any
@@ -14,45 +15,58 @@ import pyqtgraph as pg
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSplitter,
-    QScrollArea, QFrame, QTabWidget, QStackedWidget, QCheckBox,
-    QDoubleSpinBox, QSpinBox, QComboBox, QSlider, QGridLayout
+    QCheckBox,
+    QComboBox,
+    QDoubleSpinBox,
+    QFrame,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QScrollArea,
+    QSlider,
+    QSpinBox,
+    QSplitter,
+    QStackedWidget,
+    QTabWidget,
+    QVBoxLayout,
+    QWidget,
 )
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
+from certus.core.certus_design_tokens import slider_corridor_half_stylesheet
+from certus.spline.certus_corridor_fitter import _fit_local_quadratic_rmse_profile
+from certus.spline.certus_index_spline_core import (
+    SIO2_DEFAULT_D_HI_NM,
+    SIO2_DEFAULT_D_LO_NM,
+    allowed_substrate_names,
+)
+from certus.spline.certus_index_spline_corridor_contract import normalize_corridor_live_payload
 from certus.ui.certus_ui import (
-    CertusTheme,
-    CertusThemeToggle,
     CertusCard,
-    CertusStepper,
-    CertusStatusPill,
-    CertusScientificPlot,
-    create_header_logo_widget,
-    setup_pyqtgraph_defaults,
-    create_styled_button,
-    wrap_scientific_plot_with_toolbar,
-    ExcelTableWidget,
-    sanitize_xy_for_plot,
-    plot_widget_plot_finite,
-    EnhancedProgressWidget,
     CertusCollapsible,
     CertusLogPanel,
-    install_standard_shortcuts,
+    CertusScientificPlot,
+    CertusStatusPill,
+    CertusStepper,
+    CertusTheme,
+    CertusThemeToggle,
+    EnhancedProgressWidget,
+    ExcelTableWidget,
+    create_header_logo_widget,
+    create_styled_button,
     enable_file_drop,
-    show_toast,
+    install_standard_shortcuts,
     open_documentation,
+    plot_widget_plot_finite,
+    sanitize_xy_for_plot,
+    setup_pyqtgraph_defaults,
+    show_toast,
+    wrap_scientific_plot_with_toolbar,
 )
-from certus.utils.certus_ux import Typography, OBJ
 from certus.utils.certus_reset_framework import create_reset_button
-from certus.spline.certus_index_spline_core import (
-    allowed_substrate_names,
-    SIO2_DEFAULT_D_LO_NM,
-    SIO2_DEFAULT_D_HI_NM,
-)
-from certus.core.certus_design_tokens import slider_corridor_half_stylesheet
+from certus.utils.certus_ux import OBJ, Typography
 
-from certus.spline.certus_corridor_fitter import _fit_local_quadratic_rmse_profile
-from certus.spline.certus_index_spline_corridor_contract import normalize_corridor_live_payload
 logger = logging.getLogger("CERTUS_INDEX_SPLINE")
 
 def _apply_fixed_log_k_axis(plot_w: Any | None) -> None:
@@ -80,28 +94,21 @@ class _PlotMixin:
         ser: tuple[np.ndarray, ...] | None = None,
     ) -> None:
         """Data mini-graphs: all n / all k, table grid, synchronized lambda."""
-
         if not hasattr(self, "plot_data_preview_n") or not hasattr(self, "plot_data_preview_k"):
             return
-
         pn = self.plot_data_preview_n
         pk = self.plot_data_preview_k
-
         pn.clear()
         pk.clear()
-
         pn._certus_crosshair_label_fn = None
         pk._certus_crosshair_label_fn = None
         pn._certus_crosshair_vertical_only = False
         pk._certus_crosshair_vertical_only = False
-
         self._data_preview_series = None
-
         if ser is None:
             pn._apply_sensible_empty_range()
             pk._apply_sensible_empty_range()
             return
-
         (
             lam_g,
             n_g,
@@ -111,7 +118,6 @@ class _PlotMixin:
             k_lo_g,
             k_hi_g,
         ) = ser
-
         lam = np.asarray(lam_g, dtype=np.float64).ravel()
         nv = np.asarray(n_g, dtype=np.float64).ravel()
         kv = np.asarray(k_g, dtype=np.float64).ravel()
@@ -121,12 +127,10 @@ class _PlotMixin:
         n_hi_v = np.asarray(n_hi_g, dtype=np.float64).ravel()
         k_lo_v = np.asarray(k_lo_g, dtype=np.float64).ravel()
         k_hi_v = np.asarray(k_hi_g, dtype=np.float64).ravel()
-
         mk = np.isfinite(lam) & np.isfinite(kv) & (kv > 0.0)
         kk = kv[mk]
         k_pos = kk[kk > 0.0]
         k_floor = float(np.nanmin(k_pos)) if k_pos.size > 0 else 1e-30
-
         self._data_preview_series = {
             "lam": lam.copy(),
             "n": nv.copy(),
@@ -150,9 +154,7 @@ class _PlotMixin:
         y_n_all = [nv]
         if np.any(np.isfinite(n_nl_v)):
             y_n_all.append(n_nl_v)
-
         m_n_env = np.isfinite(n_lo_v) & np.isfinite(n_hi_v) & (n_hi_v >= n_lo_v)
-
         if np.any(m_n_env):
             y_n_all.extend([n_lo_v, n_hi_v])
             le = lam[m_n_env]
@@ -175,7 +177,6 @@ class _PlotMixin:
                 pn.plot(le, yhi, pen=p_hi_glow)
                 pn.plot(le, ylo, pen=p_lo)
                 pn.plot(le, yhi, pen=p_hi)
-
         xn, yn = sanitize_xy_for_plot(lam, nv)
         if xn.size >= 2:
             c_n = plot_widget_plot_finite(pn, xn, yn, pen=pg.mkPen("#0057ff", width=2.4), name="n")
@@ -1045,7 +1046,6 @@ class _PlotMixin:
 
         self._draw_corridor_curvature_label(curvature_label_spec, r_vis, r_plot, envelope_display)
         self._update_corridor_rmse_state_bar(src)
-
 
 
 class _UIBuilderMixin:

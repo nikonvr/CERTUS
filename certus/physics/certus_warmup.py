@@ -1,6 +1,7 @@
-import numpy as np
 import logging
 from collections.abc import Callable
+
+import numpy as np
 
 logger = logging.getLogger("CERTUS_WARMUP")
 

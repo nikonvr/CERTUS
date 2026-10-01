@@ -1,37 +1,40 @@
 from __future__ import annotations
+
 from .spline_pipeline_utils import (
     _log_manual_insert_decision,
-    _spl_rmse_improves_meaningfully,
-    _spl_rmse_regression_exceeds_tolerance,
-    _validated_extra_sigma_knots,
     _should_skip_manual_insert_for_equal_mesh,
     _sigma_mesh_change_summary_for_log,
+    _spl_rmse_improves_meaningfully,
+    _spl_rmse_regression_exceeds_tolerance,
     _sync_theoretical_tr_from_nk_dict,
+    _validated_extra_sigma_knots,
 )
 
 """Main spline pipeline: JSON logging, RMSE snapshots, worker orchestration."""
-from certus.utils.certus_copy_utils import copy_spline_result
-from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 import logging
 import time
 from threading import Event
+
 import numpy as np
 from scipy.interpolate import PchipInterpolator
+
+from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.spline.certus_index_spline_core import (
     SplineOptConfig,
     _bounds_x0_for_sigma_knots,
-    log_index_spline_d_trace,
     _log_spline_pipeline_json,
-    x_slice_n_to_physical_nodes,
+    log_index_spline_d_trace,
     physical_nodes_to_x_slice_n,
+    x_slice_n_to_physical_nodes,
+)
+from certus.spline.spline_finalize import (
+    _spectral_polish_node_mesh_profile,
 )
 from certus.spline.spline_objective import (
     build_segment_optimizer_x_vector,
     spectral_mse_rmse_masked_from_nk,
 )
-from certus.spline.spline_finalize import (
-    _spectral_polish_node_mesh_profile,
-)
+from certus.utils.certus_copy_utils import copy_spline_result
 
 
 def insert_manual_sigma_nodes(

@@ -1,8 +1,9 @@
-import os
 import logging
+import os
+from pathlib import Path, PureWindowsPath
+
 import numpy as np
 import pandas as pd
-from pathlib import Path, PureWindowsPath
 import pyqtgraph as pg
 from PyQt6.QtWidgets import QMessageBox
 

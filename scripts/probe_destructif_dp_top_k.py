@@ -76,6 +76,7 @@ SEED = 42
 def un_run(cfg: str, dp_top_k: int) -> dict:
     """Un run complet, `dp_top_k` impose APRES collect_params -- comme la campagne le fait."""
     import bench_examples as Bx
+
     from CERTUS_STRAT import CertusStratApp
 
     Bx.qapp()

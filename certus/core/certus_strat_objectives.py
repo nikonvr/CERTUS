@@ -1,63 +1,20 @@
 # =============================================================================
 # CERTUS STRAT - Core numerical and physics logic
 # =============================================================================
-import math
 import concurrent.futures
-
-
-
-
-
 import logging
-
-
+import math
 import threading
-
-
-
-
 from typing import Any
 
 import numpy as np
 
-
-
-
-
-
 # Import access config
-
 from certus.utils.certus_data import (
     PerformanceMonitor,
 )
 
-from certus_physics import (  # STRAT-specific kernels (previously imported from certus.core._certus_physics_impl)
-    K_MAX_LAYER_BACKSIDE,
-    K_MAX_SUBSTRATE_BACKSIDE,
-    MaterialDatabase,
-    NON_MONOTONIC_MODE_ATTENUATE,
-    NON_MONOTONIC_MODE_REJECT,
-    arange_inclusive,
-    calculate_detailed_growth,
-    calculate_RT_batch_kernel,
-    calculate_RT_vectorized_real_HL,
-    calculate_extrema_distances,
-    compute_batch_rmse,
-    compute_T_front_at_layer,
-    compute_T_front_profile,
-    compute_dT_dd_kernel,
-    find_nucleation_adaptive_kernel,
-    precompute_matrix_cache_kernel,
-    rank_nucleation_candidates_kernel,
-    simulate_growth_kernel,
-    simulate_stack_robustness_batch,
-    update_run_states_kernel,
-    validate_wavelengths_batch,
-    validate_backside_real_clues,
-)
-
 # Import context system (replaces global variables)
-
 from certus.utils.certus_strat_context import (
     SYM_MISSING_DISTANCE,
     _clamp01,
@@ -65,17 +22,38 @@ from certus.utils.certus_strat_context import (
 )
 
 # Robust db clues (fixed xlsx)
-
-
-
-
 from certus.utils.certus_strat_service import (
-    _select_candidates_phase_a,
-    _validate_candidates_phase_a as _service_validate_candidates_phase_a,
-    generate_noise_array,
     NOISE_DISTRIBUTION_GAUSSIAN,
+    _select_candidates_phase_a,
+    generate_noise_array,
 )
-
+from certus.utils.certus_strat_service import (
+    _validate_candidates_phase_a as _service_validate_candidates_phase_a,
+)
+from certus_physics import (  # STRAT-specific kernels (previously imported from certus.core._certus_physics_impl)
+    K_MAX_LAYER_BACKSIDE,
+    K_MAX_SUBSTRATE_BACKSIDE,
+    NON_MONOTONIC_MODE_ATTENUATE,
+    NON_MONOTONIC_MODE_REJECT,
+    MaterialDatabase,
+    arange_inclusive,
+    calculate_detailed_growth,
+    calculate_extrema_distances,
+    calculate_RT_batch_kernel,
+    calculate_RT_vectorized_real_HL,
+    compute_batch_rmse,
+    compute_dT_dd_kernel,
+    compute_T_front_at_layer,
+    compute_T_front_profile,
+    find_nucleation_adaptive_kernel,
+    precompute_matrix_cache_kernel,
+    rank_nucleation_candidates_kernel,
+    simulate_growth_kernel,
+    simulate_stack_robustness_batch,
+    update_run_states_kernel,
+    validate_backside_real_clues,
+    validate_wavelengths_batch,
+)
 
 _validate_phase_a_bridge_lock = threading.Lock()
 

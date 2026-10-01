@@ -1,20 +1,10 @@
 from __future__ import annotations
 
-
-
-
-
-
-
-
-from certus.core.certus_core import create_module_environment, NUMERICAL_FAULT_EXCEPTIONS
-
-
+from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, create_module_environment
 from certus.core.certus_re_worker_utils import (
     re_objective_wls_weight_log_trap,
     re_ranking_combined_rmse,
 )
-
 
 # =============================================================================
 
@@ -41,12 +31,24 @@ script_dir = env["script_dir"]
 
 
 from certus.utils.certus_re_config import RE_GUI_DEFAULT_BEAM_APERTURE_DEG, RE_SPLINE_CORREC_KINDS
-
 from certus.utils.certus_re_math import (
-    Any,
+    _RE_FT_COL_MAT,
+    _RE_FT_COL_N,
+    _RE_FT_COL_NUM,
+    _RE_FT_COL_QW,
+    _RE_FT_COL_THICK,
     RE_SPLINE_KNOTS_NM,
-    RE_SPLINE_NODE2_DEFAULT_NM,
     RE_SPLINE_N_KNOTS,
+    RE_SPLINE_NODE2_DEFAULT_NM,
+    Any,
+    _re_deadzone_excess_abs,
+    _re_p4_ap_band_intervals_str,
+    _re_p4_ap_staircase_polyline,
+    _re_p4_band_ap_deg,
+    _re_p4_beam_knots_lam_nm_from_wls,
+    _re_p4_chromatic_band_masks,
+    _re_p4_effective_half_width_deg,
+    _re_p4_sort_knot_pairs,
     dataclass,
     field,
     logging,
@@ -57,23 +59,6 @@ from certus.utils.certus_re_math import (
     re_knots_wavelengths,
     unicodedata,
 )
-
-from certus.utils.certus_re_math import (
-    _re_p4_beam_knots_lam_nm_from_wls,
-    _re_p4_sort_knot_pairs,
-    _re_p4_chromatic_band_masks,
-    _re_p4_band_ap_deg,
-    _re_p4_ap_staircase_polyline,
-    _re_p4_ap_band_intervals_str,
-    _re_p4_effective_half_width_deg,
-    _re_deadzone_excess_abs,
-    _RE_FT_COL_NUM,
-    _RE_FT_COL_MAT,
-    _RE_FT_COL_N,
-    _RE_FT_COL_QW,
-    _RE_FT_COL_THICK,
-)
-
 
 # =============================================================================
 
@@ -920,7 +905,6 @@ from certus_physics import (
     calc_spectrum_oblique_backside_vectorized,
     calc_spectrum_oblique_vectorized,
 )
-
 
 # --- 3. UI (Theme, Widgets) ---
 

@@ -1,25 +1,32 @@
-import numpy as np
 import logging
 from typing import Any
 
-from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, CFG, get_float_dtype
+import numpy as np
+
+from certus.core.certus_core import CFG, NUMERICAL_FAULT_EXCEPTIONS, get_float_dtype
+from certus.core.certus_design_core import (
+    _design_compute_oblique_error_and_grad_analytic_common,
+    _design_compute_oblique_error_common,
+    _design_gradient_func_pglobal_common,
+    _design_objective_wrapper_common,
+    _design_optimization_callback_common,
+)
 from certus.core.certus_design_worker_utils import (
-    build_pglobal_optimizer,
     build_pglobal_config_from_cfg,
+    build_pglobal_optimizer,
     prepare_pglobal_inputs_from_state,
     prepare_pglobal_optimizer_runtime,
     run_pglobal_restart_loop,
 )
-from certus_physics import cost_numba_fast, compute_gradient_all_layers_analytic, prepare_targets_vectorized, PGlobalConfig
 from certus.core.certus_design_workers_dto import OptimWorkerResult
-from certus.utils.certus_progress_tracker import build_progress_callback, build_progress_snapshot, StepState
-from certus.core.certus_design_core import (
-    _design_compute_oblique_error_common,
-    _design_compute_oblique_error_and_grad_analytic_common,
-    _design_objective_wrapper_common,
-    _design_gradient_func_pglobal_common,
-    _design_optimization_callback_common
+from certus.utils.certus_progress_tracker import StepState, build_progress_callback, build_progress_snapshot
+from certus_physics import (
+    PGlobalConfig,
+    compute_gradient_all_layers_analytic,
+    cost_numba_fast,
+    prepare_targets_vectorized,
 )
+
 
 class DesignOptimizationStrategy:
     @staticmethod

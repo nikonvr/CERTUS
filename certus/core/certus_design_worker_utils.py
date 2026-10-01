@@ -9,22 +9,20 @@
 
 from __future__ import annotations
 
-
 import logging
 import time
-
-from typing import Any
-
-from certus.core.certus_core import CFG, NUMERICAL_FAULT_EXCEPTIONS, get_float_dtype
-from certus_physics import PGlobalConfig, PGlobalOptimizer, prepare_targets_vectorized
-from certus.physics.certus_inputs import is_s_polarization
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
-from collections.abc import Callable
-from typing import TYPE_CHECKING
+
+from certus.core.certus_core import CFG, NUMERICAL_FAULT_EXCEPTIONS, get_float_dtype
+from certus.physics.certus_inputs import is_s_polarization
+from certus_physics import PGlobalConfig, PGlobalOptimizer, prepare_targets_vectorized
 
 if TYPE_CHECKING:
     from threading import Event
+
     from certus.physics.certus_optimizers import PGlobalOptimizer
     from certus_physics.structures import Sample
 
@@ -497,8 +495,8 @@ def build_pglobal_config_from_cfg(
         local_search_budget = 2000
         max_active_clusters = min(40, max(10, dim * 2))
         
-        import os
         import json
+        import os
         env_params = os.environ.get("CERTUS_PGLOBAL_PARAMS")
         if env_params:
             try:

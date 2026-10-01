@@ -130,6 +130,7 @@ def n_tp_exact(M: np.ndarray, n_layer: complex, n_sub: complex,
 
 def main() -> int:
     import bench_examples as Bx
+
     from certus.physics.certus_opt_tmm import arange_inclusive
     from certus.utils.certus_strat_service import (
         get_refractive_clues_vectorized,

@@ -2,14 +2,14 @@
 
 import logging
 from typing import Any
+
 import numpy as np
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QCheckBox, QDoubleSpinBox, QHBoxLayout, QTableWidget, QTableWidgetItem, QWidget
 
-from certus.core.certus_core import CFG
+from certus.core.certus_core import CFG, NUMERICAL_FAULT_EXCEPTIONS
 from certus_physics import init_thickness
 from certus_physics.structures import Layer
-from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 
 
 class CertusAppFrontStackMixin:
@@ -463,9 +463,9 @@ class CertusAppFrontStackMixin:
     def _create_combo(self, current: str) -> Any:
         """Creates material combo box"""
 
-        from certus.core.certus_core import CFG
-
         from PyQt6.QtWidgets import QComboBox
+
+        from certus.core.certus_core import CFG
 
         cb = QComboBox()
 

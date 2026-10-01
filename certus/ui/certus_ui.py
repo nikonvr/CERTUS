@@ -122,57 +122,30 @@ __all__ = [
 
 import copy
 import functools
-
-
 import logging
-
-
 import os
-from pathlib import Path
-
-
 import queue
-
-
 import sys
-
-
 import time
-
-
 import traceback
-
-
 import warnings
+from pathlib import Path
 
 warnings.filterwarnings("ignore", category=RuntimeWarning, message="overflow encountered in cast", module="pyqtgraph")
 
 from collections import deque
-
-
 from collections.abc import Callable
 from typing import Any
 
-
 import numpy as np
-from pydantic import ValidationError
-
-
 import pandas as pd
-
-
 import pyqtgraph as pg
-
+from pydantic import ValidationError
 
 from certus.core.certus_core import CFG, certus_timestamp_display
 from certus.utils.certus_dto import IndexSplineConfigDTO
-
-
 from certus_physics import init_thickness
-
-
 from certus_physics.structures import Layer, Target
-
 
 # PyQtGraph ViewBox vs NumPy/Python 3.14  cosmetic RuntimeWarning on cast (any emitting module)
 
@@ -185,27 +158,21 @@ warnings.filterwarnings(
 
 
 import pyqtgraph.exporters  # pylint: disable=unused-import
-
-
 from PyQt6.QtCore import (
+    Q_ARG,
+    QEasingCurve,
+    QMetaObject,
     QObject,
+    QPropertyAnimation,
+    QSettings,
     QSize,
     Qt,
     QThread,
     QTimer,
     QUrl,
     pyqtSignal,
-    QMetaObject,
-    Q_ARG,
-    QSettings,
-    QPropertyAnimation,
-    QEasingCurve,
 )
-
-
 from PyQt6.QtGui import QColor, QFont, QIcon, QKeySequence, QPalette, QShortcut
-
-
 from PyQt6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -231,28 +198,22 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-
 # Check optional dependencies
-
-
 # Import Core
-
-
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
     CertusRuntime,
+    QueueHandler,
     build_runtime,
-    handle_exception,
+    get_export_config,
     get_resource_path,
+    handle_exception,
     load_theme_config,
     save_theme_config,
-    get_export_config,
-    QueueHandler,
     setup_gui_logger,
     setup_module_logging,
 )
 from certus.ui.certus_qt_svg import SVG_AVAILABLE
-
 
 if SVG_AVAILABLE:
     from PyQt6.QtSvgWidgets import QSvgWidget
@@ -262,83 +223,77 @@ if SVG_AVAILABLE:
 
 
 from certus.core.certus_core import OPENPYXL_AVAILABLE
-
-
-from certus.utils.certus_data import read_data_file_robust
-
-
-# =============================================================================
-
-
-from certus.ui.certus_ui_widgets_cards import CertusCard, FlashyCard, CertusDashboardCard
-from certus.ui.certus_ui_widgets_utils import (
-    CertusToast,
-    CertusStatusPill,
-    CertusThemeToggle,
-    AutoShrinkTitleLabel,
-    CertusLogPanel,
-    ExcelTableWidget,
-    NumericTableWidgetItem,
-    DetachedPlotWindow,
-    SkeletonLoaderWidget,
-)
-from certus.ui.certus_theme import CertusTheme, get_standard_stylesheet
+from certus.ui.certus_base_app import CertusAppLogsMixin, CertusBaseApp, StatsCounter
 from certus.ui.certus_plot import (
     CertusScientificPlot,
-    clone_plot_widget,
-    wrap_scientific_plot_with_toolbar,
     ScientificPlotRefined,
-    sanitize_xy_for_plot,
+    clone_plot_widget,
     plot_widget_plot_finite,
+    sanitize_xy_for_plot,
+    wrap_scientific_plot_with_toolbar,
 )
-from certus.ui.certus_ui_widgets_layout import CertusCollapsible, CertusSectionHeader, CertusStepper, CertusActionBar
-from certus.ui.certus_ui_widgets_progress import DualStageProgressWidget, EnhancedProgressWidget, ProgressDialog
-from certus.ui.certus_ui_widgets_welcome import WelcomeGuideWidget
-from certus.workers.certus_base_workers import WorkerSignals, GenericWorker
-from certus.ui.certus_base_app import CertusBaseApp, CertusAppLogsMixin, StatsCounter
-from certus.ui.certus_ui_widgets_factory import (
-    create_flashy_grid,
-    create_log_widget,
-    create_header_logo_widget,
-    create_styled_button,
-    create_info_icon,
-    create_help_button,
-    create_styled_label,
-    create_colored_label,
-    create_top_actions_bar,
-)
+from certus.ui.certus_theme import CertusTheme, get_standard_stylesheet
 from certus.ui.certus_ui_utils import (
-    set_certus_window_icon,
     apply_certus_theme,
+    apply_os_window_effects,
+    attach_numeric_validator,
+    claim_shortcut_for_action,
     configure_theme_from_preference,
-    update_global_plot_config,
-    open_documentation,
+    confirm_and_stop,
+    confirm_stop_with_timeout,
+    copy_app_logs_to_clipboard,
+    enable_file_drop,
+    format_count_kmg,
+    get_export_settings,
+    init_certus_app,
+    install_skeleton_loader,
     install_standard_shortcuts,
     install_unique_shortcut,
-    claim_shortcut_for_action,
-    shortcut_owner,
     normalized_shortcut,
-    enable_file_drop,
-    show_toast,
-    show_status_feedback,
-    attach_numeric_validator,
-    get_export_settings,
+    open_documentation,
     open_file_explorer,
     process_log_queue_standard,
-    init_certus_app,
-    setup_pyqtgraph_defaults,
-    setup_gui_exception_handling,
-    safe_ui_action,
-    confirm_stop_with_timeout,
-    format_count_kmg,
-    stop_worker_and_thread,
-    confirm_and_stop,
-    copy_app_logs_to_clipboard,
-    install_skeleton_loader,
     remove_skeleton_loader,
-    apply_os_window_effects,
+    safe_ui_action,
+    set_certus_window_icon,
+    setup_gui_exception_handling,
+    setup_pyqtgraph_defaults,
+    shortcut_owner,
+    show_status_feedback,
+    show_toast,
+    stop_worker_and_thread,
+    update_global_plot_config,
 )
 
+# =============================================================================
+from certus.ui.certus_ui_widgets_cards import CertusCard, CertusDashboardCard, FlashyCard
+from certus.ui.certus_ui_widgets_factory import (
+    create_colored_label,
+    create_flashy_grid,
+    create_header_logo_widget,
+    create_help_button,
+    create_info_icon,
+    create_log_widget,
+    create_styled_button,
+    create_styled_label,
+    create_top_actions_bar,
+)
+from certus.ui.certus_ui_widgets_layout import CertusActionBar, CertusCollapsible, CertusSectionHeader, CertusStepper
+from certus.ui.certus_ui_widgets_progress import DualStageProgressWidget, EnhancedProgressWidget, ProgressDialog
+from certus.ui.certus_ui_widgets_utils import (
+    AutoShrinkTitleLabel,
+    CertusLogPanel,
+    CertusStatusPill,
+    CertusThemeToggle,
+    CertusToast,
+    DetachedPlotWindow,
+    ExcelTableWidget,
+    NumericTableWidgetItem,
+    SkeletonLoaderWidget,
+)
+from certus.ui.certus_ui_widgets_welcome import WelcomeGuideWidget
+from certus.utils.certus_data import read_data_file_robust
+from certus.workers.certus_base_workers import GenericWorker, WorkerSignals
 
 _LAZY_REEXPORTS: dict[str, tuple[str, str]] = {
     "get_certus_last_dir": ("certus.ui.certus_io_ui", "get_certus_last_dir"),
@@ -397,8 +352,8 @@ def secure_get_open_file_name(*args, **kwargs):
     path, sel_filter = original_get_open_file_name(*args, **kwargs)
     if path:
         file_filter, parent = _get_filter_and_parent(*args, **kwargs)
-        from certus.utils.certus_validation import PathValidator
         from certus.ui.certus_io_ui import extract_extensions_from_filter
+        from certus.utils.certus_validation import PathValidator
 
         allowed = extract_extensions_from_filter(file_filter)
         try:
@@ -413,8 +368,8 @@ def secure_get_save_file_name(*args, **kwargs):
     path, sel_filter = original_get_save_file_name(*args, **kwargs)
     if path:
         file_filter, parent = _get_filter_and_parent(*args, **kwargs)
-        from certus.utils.certus_validation import PathValidator
         from certus.ui.certus_io_ui import extract_extensions_from_filter
+        from certus.utils.certus_validation import PathValidator
 
         allowed = extract_extensions_from_filter(file_filter)
         try:
@@ -429,8 +384,8 @@ def secure_get_open_file_names(*args, **kwargs):
     paths, sel_filter = original_get_open_file_names(*args, **kwargs)
     if paths:
         file_filter, parent = _get_filter_and_parent(*args, **kwargs)
-        from certus.utils.certus_validation import PathValidator
         from certus.ui.certus_io_ui import extract_extensions_from_filter
+        from certus.utils.certus_validation import PathValidator
 
         allowed = extract_extensions_from_filter(file_filter)
         validated_paths = []

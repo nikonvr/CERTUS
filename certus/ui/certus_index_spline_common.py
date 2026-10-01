@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 # -*- coding: utf-8 -*-
 """
 CERTUS INDEX SPLINE UI
@@ -33,21 +34,13 @@ import pyqtgraph as pg
 from certus.core.certus_core import (
     create_module_environment,
 )
-from certus.utils.certus_index_utils import (
-    _get_substrate_n_array_spline,
-)
 from certus.ui.certus_ui import (
     CertusTheme,
 )
-
-
-
-
-
-
-
+from certus.utils.certus_index_utils import (
+    _get_substrate_n_array_spline,
+)
 from certus.utils.certus_ux import Typography
-
 
 # Bootstrap
 
@@ -131,41 +124,30 @@ AUTO_BEST_MANUAL_N_SEG: int = 11  # K = N_seg + 1 = 12 wavelengths via sigma=1/l
 from certus.spline.certus_index_spline_core import (
     SplineOptConfig,
 )
-
-
-
-
-
-
-from certus.spline.spline_profile_corridors import (
-    compute_regular_grid_rmse_profile,
-    quick_pwlnk_refit_result_dict,
+from certus.spline.certus_index_spline_corridors import (
+    _CorridorGenMixin,
+    _CorridorWorkerMixin,
+    _DataMixin,
 )
-
-
-
 from certus.spline.certus_index_spline_excel_export import (
     _ExcelExportMixin,
-)
-from certus.spline.certus_index_spline_rendering import (
-    _PlotMixin,
-    _UIBuilderMixin,
 )
 from certus.spline.certus_index_spline_execution import (
     _CorridorExportMixin,
     _RunMixin,
 )
-from certus.spline.certus_index_spline_corridors import (
-    _CorridorWorkerMixin,
-    _DataMixin,
-    _CorridorGenMixin,
+from certus.spline.certus_index_spline_rendering import (
+    _PlotMixin,
+    _UIBuilderMixin,
 )
 from certus.spline.certus_index_spline_settings import (
-    _SettingsMixin,
     _CorridorControlMixin,
+    _SettingsMixin,
 )
-
-
+from certus.spline.spline_profile_corridors import (
+    compute_regular_grid_rmse_profile,
+    quick_pwlnk_refit_result_dict,
+)
 
 _K_PLOT_YMIN: float = 1e-6
 _K_PLOT_YMAX: float = 1e-2
@@ -411,4 +393,9 @@ __all__ = [name for name in dir() if not name.startswith('__')] + [
     '_get_substrate_n_array_spline',
 ]
 
-from certus.ui.certus_index_spline_mixins_ui import _ConfigBuilderMixin, _MeshOptimizationMixin, _SmartInitDialogMixin, _UIMixin
+from certus.ui.certus_index_spline_mixins_ui import (
+    _ConfigBuilderMixin,
+    _MeshOptimizationMixin,
+    _SmartInitDialogMixin,
+    _UIMixin,
+)

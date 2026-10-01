@@ -1,20 +1,15 @@
 from __future__ import annotations
-from certus.ui.certus_index_spline_common import (
-    _QS_SMART_INIT_DEEP,
-    _QS_SMART_INIT_TWO_PHASE,
-    _QS_SPLINE_APP,
-    _QS_SPLINE_ORG,
-    logger,
-)
+
 import json
 import logging
 from collections.abc import Callable
 from typing import Any
+
 import numpy as np
 from PyQt6.QtCore import QThread, pyqtSlot
 from PyQt6.QtWidgets import QDialog
-from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, N_MAX_LIMIT, N_MIN_LIMIT
-from certus.ui.certus_index_spline_state_ui import SmartInitPayload, _SmartInitState
+
+from certus.core.certus_core import N_MAX_LIMIT, N_MIN_LIMIT, NUMERICAL_FAULT_EXCEPTIONS
 from certus.spline.certus_index_spline_core import (
     SplineOptConfig,
     bridge_sigma_knots_preserve_manual,
@@ -27,7 +22,16 @@ from certus.spline.spline_smart_init import (
     recalc_smart_init_spectral_preview,
     smart_init_sweep_node_thickness_rmse,
 )
+from certus.ui.certus_index_spline_common import (
+    _QS_SMART_INIT_DEEP,
+    _QS_SMART_INIT_TWO_PHASE,
+    _QS_SPLINE_APP,
+    _QS_SPLINE_ORG,
+    logger,
+)
+from certus.ui.certus_index_spline_state_ui import SmartInitPayload, _SmartInitState
 from certus.utils.certus_qsettings import certus_settings
+
 
 class CertusIndexSplineSmartInitMixin:
     """CertusIndexSplineSmartInitMixin."""
@@ -133,8 +137,8 @@ class CertusIndexSplineSmartInitMixin:
                 _k_wrk,
             )
 
-        from certus.spline.spline_workers import _pack_spline_stage_result
         from certus.spline.spline_objective import physical_nodes_to_x_slice_n
+        from certus.spline.spline_workers import _pack_spline_stage_result
 
         n_xi = physical_nodes_to_x_slice_n(n_phys_final, sk_final, cfg.n_mono_band_nm)
         x_final = np.concatenate(([d_final], n_xi, L_nodes_final))

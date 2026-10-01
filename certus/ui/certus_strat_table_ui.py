@@ -1,10 +1,11 @@
 from __future__ import annotations
-from certus.ui.certus_strat_common import QSvgWidget
-from pathlib import Path
+
 import json
 import logging
 import traceback
+from pathlib import Path
 from typing import Any
+
 import numpy as np
 import pandas as pd
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -19,9 +20,20 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, get_resource_path
-from certus.utils.certus_data import numpy_encoder, to_csv_robust
-from certus.core.certus_strat_core import APP_CONTEXT, SYM_DEFAULT_EXTREMA_WINDOW_OT
+from certus.core.certus_strat_core import (
+    APP_CONTEXT,
+    SYM_DEFAULT_EXTREMA_WINDOW_OT,
+    _compute_strategy_symmetry_score_percent,
+)
+
+# Crash tolerance threshold, 👤 "5% lost deposition is perfect". Imported
+#rather than copied: a column that colorizes using a threshold other than the one that
+# ELIMINATES would lie to the operator.
+from certus.core.certus_strat_robustness import CRASH_RATE_TOLERANCE
+from certus.ui.certus_strat_common import QSvgWidget
+from certus.ui.certus_strat_mixins_ui import CertusWindowSpyMixin
 from certus.ui.certus_ui import (
     CertusTheme,
     ExcelTableWidget,
@@ -31,14 +43,10 @@ from certus.ui.certus_ui import (
     set_certus_last_dir,
     set_certus_window_icon,
 )
-from certus.utils.certus_ux import Typography
-from certus.ui.certus_strat_mixins_ui import CertusWindowSpyMixin
-from certus.core.certus_strat_core import _compute_strategy_symmetry_score_percent
-# Crash tolerance threshold, 👤 "5% lost deposition is perfect". Imported
-#rather than copied: a column that colorizes using a threshold other than the one that
-# ELIMINATES would lie to the operator.
-from certus.core.certus_strat_robustness import CRASH_RATE_TOLERANCE
 from certus.utils.certus_atomic_io import atomic_open
+from certus.utils.certus_data import numpy_encoder, to_csv_robust
+from certus.utils.certus_ux import Typography
+
 
 class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
     strategy_selected = pyqtSignal(int, object)
@@ -986,7 +994,7 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
 
                 # We use a custom QDialog with QTextEdit for scrollable text if there are many layers
 
-                from PyQt6.QtWidgets import QDialog, QVBoxLayout, QTextEdit, QPushButton
+                from PyQt6.QtWidgets import QDialog, QPushButton, QTextEdit, QVBoxLayout
 
                 dlg = QDialog(self)
 

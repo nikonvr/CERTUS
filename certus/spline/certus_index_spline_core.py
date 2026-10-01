@@ -16,7 +16,6 @@ import numpy as np
 import pandas as pd
 
 from certus.core.certus_array_utils import as_float64_1d, sorted_float64
-
 from certus.core.certus_core import (
     K_MAX_LIMIT,
     N_MAX_LIMIT,
@@ -24,15 +23,14 @@ from certus.core.certus_core import (
     SUBSTRATE_LIST,
     create_module_environment,
 )
+from certus.utils.certus_index_utils import (
+    DataType,
+    log_structured_json_event,
+)
 from certus_physics import (
     calculate_RT_vectorized_real,
     clip_to_bounds,
 )
-from certus.utils.certus_index_utils import (
-    log_structured_json_event,
-    DataType,
-)
-
 
 # Bootstrap
 _env = create_module_environment(__file__, "CERTUS_INDEX_SPLINE")
@@ -577,7 +575,6 @@ def gui_perf_preset_only(preset_name: str) -> dict[str, float | int]:
     return d
 
 from certus.spline.certus_index_spline_io import export_spline_result_jsonable
-
 
 # --- sigma PWL Model ----------------------------------------------------------------
 #
@@ -1258,10 +1255,10 @@ def allowed_substrate_names() -> list[str]:
 
 # --- P4 Refactor: Sub-configs ---
 from certus.spline.certus_index_spline_config import (
+    SPLINE_MIN_RMSE_FIT_OBJECTIVE_POINTS,
     SmartInitPreviewCancelled,
     SplineOptConfig,
     corridor_profile_refit_maxfun,
-    SPLINE_MIN_RMSE_FIT_OBJECTIVE_POINTS,
     sol3_phase1_maxfun_effective,
 )
 

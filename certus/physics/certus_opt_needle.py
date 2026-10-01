@@ -1,6 +1,7 @@
 SMALL_EPSILON = 1e-12
 import numpy as np
 from numba import njit, prange
+
 from certus.domain.constants import TWO_PI
 
 

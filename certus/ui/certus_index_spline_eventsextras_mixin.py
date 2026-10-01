@@ -1,26 +1,37 @@
 from __future__ import annotations
+
+import logging
+from threading import Event
+from typing import Any
+
+import numpy as np
+import pyqtgraph as pg
+from PyQt6.QtCore import QAbstractAnimation, Qt, pyqtSlot
+from PyQt6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QMessageBox, QTableWidgetItem, QVBoxLayout, QWidget
+
+from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
+from certus.spline.certus_index_spline_core import (
+    SPLINE_PERF_PRESETS,
+    _to_fraction_T,
+    ensure_lam_nm_array,
+    log_index_spline_d_trace,
+)
+from certus.spline.certus_index_spline_execution import _plot_spectrum_raw_scatter
+from certus.spline.spline_profile_corridors import _fit_local_quadratic_rmse_profile
 from certus.ui.certus_index_spline_common import (
+    _QS_SPLINE_APP,
+    _QS_SPLINE_ORG,
+    _QS_SPLINE_SIMPLE_AUTO_UNCERTAINTY,
     SIO2_DEFAULT_D_HI_NM,
     SIO2_DEFAULT_D_LO_NM,
     SIO2_DEFAULT_RMSE_FIT_LAMBDA_ENABLED,
     SIO2_DEFAULT_RMSE_FIT_LAMBDA_HI_NM,
     SIO2_DEFAULT_RMSE_FIT_LAMBDA_LO_NM,
-    _QS_SPLINE_APP,
-    _QS_SPLINE_ORG,
-    _QS_SPLINE_SIMPLE_AUTO_UNCERTAINTY,
     CertusIndexSplineApp,
     _worker_curve_minimum_deep_refit,
     logger,
 )
-from certus.spline.certus_index_spline_execution import _plot_spectrum_raw_scatter
-import logging
-from threading import Event
-from typing import Any
-import numpy as np
-import pyqtgraph as pg
-from PyQt6.QtCore import QAbstractAnimation, Qt, pyqtSlot
-from PyQt6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QMessageBox, QTableWidgetItem, QVBoxLayout, QWidget
-from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
+from certus.ui.certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
 from certus.ui.certus_ui import (
     CertusScientificPlot,
     CertusTheme,
@@ -30,18 +41,10 @@ from certus.ui.certus_ui import (
     show_toast,
     wrap_scientific_plot_with_toolbar,
 )
-from certus.utils.certus_skeleton import uninstall_skeleton
-from certus.spline.certus_index_spline_core import (
-    SPLINE_PERF_PRESETS,
-    _to_fraction_T,
-    ensure_lam_nm_array,
-    log_index_spline_d_trace,
-)
-from certus.ui.certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
-from certus.spline.spline_profile_corridors import _fit_local_quadratic_rmse_profile
-from certus.utils.certus_ux import Typography
 from certus.utils.certus_index_utils import _lam_uniform_grid
 from certus.utils.certus_qsettings import certus_settings
+from certus.utils.certus_skeleton import uninstall_skeleton
+from certus.utils.certus_ux import Typography
 
 # Registry of workers that did not respond to cooperative stop. It maintains a
 # STRONG reference until QThread.finished() is emitted, which prevents Python from

@@ -1,8 +1,9 @@
 """CERTUS STRAT ROBUSTNESS - the finalization of the results and the transmission-floor check (moved out of certus_strat_robustness.py, S5.2)."""
 
 import logging
-import numpy as np
 from typing import Any
+
+import numpy as np
 
 from certus.core.certus_strat_robustness_wrappers import _IdxWrapper
 

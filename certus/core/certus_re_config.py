@@ -1,7 +1,9 @@
 from __future__ import annotations
-import numpy as np
+
 from dataclasses import dataclass, field
 from typing import Any
+
+import numpy as np
 
 RE_RESULT_LABEL_WITH_DRIFT = "Deltaln(lambda) trap + splines Re(H,L)"
 

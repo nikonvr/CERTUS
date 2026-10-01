@@ -1,13 +1,12 @@
 from __future__ import annotations
-from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_QWOT_ALPHA
-from certus.utils.certus_re_config import RE_SPEED_PRESETS
+
 import logging
 from pathlib import Path
 from typing import Any
+
 import numpy as np
 
 from certus.core.certus_core import CFG
-
 from certus.ui.certus_qt_widgets import (
     QAbstractSpinBox,
     QApplication,
@@ -20,24 +19,20 @@ from certus.ui.certus_qt_widgets import (
     QTextEdit,
     QVBoxLayout,
 )
-
-from certus_physics import ObliqueTarget, calc_spectrum_front_wrapper, calc_spectrum_full_exact_wrapper
-
-
-
 from certus.ui.certus_ui import (
     CertusCard,
     CertusTheme,
-    show_toast,
     remove_skeleton_loader,
+    show_toast,
 )
-
-
+from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_QWOT_ALPHA, RE_SPEED_PRESETS
 from certus.utils.certus_re_helpers import (
     RE_GUI_DEFAULT_BEAM_APERTURE_DEG,
-    re_qwot_penalty_weight_from_preset,
     RE_SPLINE_N_KNOTS,
+    re_qwot_penalty_weight_from_preset,
 )
+from certus_physics import ObliqueTarget, calc_spectrum_front_wrapper, calc_spectrum_full_exact_wrapper
+
 calc_spectrum_front = calc_spectrum_front_wrapper
 calc_spectrum_full_exact = calc_spectrum_full_exact_wrapper
 

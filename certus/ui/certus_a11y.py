@@ -52,7 +52,6 @@ from collections import Counter
 from collections.abc import Iterable, Mapping
 from typing import Any, Final
 
-
 # =============================================================================
 # Contrast math (pure-python)
 # =============================================================================

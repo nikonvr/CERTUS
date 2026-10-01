@@ -1,31 +1,33 @@
 from __future__ import annotations
+
 from .spline_pipeline_utils import (
     _sync_theoretical_tr_from_nk_dict,
 )
 
 """Main spline pipeline: JSON logging, RMSE snapshots, worker orchestration."""
-from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 import logging
 from threading import Event
+
 import numpy as np
-from certus.spline.certus_index_spline_core import (
-    SplineOptConfig,
-    _canonical_knots_min_lambda_kw,
-    canonical_spline_sigma_knots,
-    corridor_profile_refit_maxfun,
-    log_index_spline_d_trace,
-    apply_rmse_fit_window_nk_nan_to_result,
-    x_slice_n_to_physical_nodes,
-    physical_nodes_to_x_slice_n,
-)
+
+from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.spline.certus_corridor_config import ProfileCorridorConfig
-from certus.spline.spline_profile_corridors import compute_profiled_corridors_by_d
-from certus.spline.certus_corridor_utils import widen_corridor_envelope_to_include_nk_in_result
 from certus.spline.certus_corridor_logger import (
     log_coaching_corridor_pipeline_skip_empty,
     log_coaching_uncertainty_parameter_guide,
 )
-
+from certus.spline.certus_corridor_utils import widen_corridor_envelope_to_include_nk_in_result
+from certus.spline.certus_index_spline_core import (
+    SplineOptConfig,
+    _canonical_knots_min_lambda_kw,
+    apply_rmse_fit_window_nk_nan_to_result,
+    canonical_spline_sigma_knots,
+    corridor_profile_refit_maxfun,
+    log_index_spline_d_trace,
+    physical_nodes_to_x_slice_n,
+    x_slice_n_to_physical_nodes,
+)
+from certus.spline.spline_profile_corridors import compute_profiled_corridors_by_d
 
 
 def _corridor_seg_spline_sigma_pack_matches_nominal(out: dict) -> bool:

@@ -41,51 +41,35 @@ from certus.core.certus_core import configure_numba_env as _configure_numba_env
 
 _configure_numba_env()
 
-from certus.utils.certus_re_math import re_substrate_cauchy_n_re_from_theta
-from certus.utils.certus_re_config import RE_P4_BEAM_N_KNOTS
-from certus.utils.certus_re_config import RE_SUB_CAUCHY_TUBE_DELTA
-
-
 # RE: +/-% thickness search radius for L-BFGS-B (no toolbar control; fixed default).
 # Keeping this module tight: prefer helpers/tests over broad structural moves.
-
-
-
 import sys
 from typing import Any
 
-
 import numpy as np
 
-
+from certus.core.certus_core import (
+    create_module_environment,
+)
 from certus.ui.certus_qt_widgets import (
     QApplication,
 )
-
-from certus_physics import (  # TMM, targets, RMSE (same bundle as `certus_re_helpers`)
-    Layer,
-    ObliqueTarget,
-    init_thickness,
-    calc_spectrum_front_wrapper,
-    calc_spectrum_full_exact_wrapper,
-)
-
-from certus.workers.certus_spectral_workers import EvalWorker, WarmupWorker
-
-
 from certus.ui.certus_ui import (
     CertusBaseApp,
     CertusTheme,
     init_certus_app,
 )
-
-from certus.core.certus_core import (
-    create_module_environment,
-)
-
-
+from certus.utils.certus_re_config import RE_P4_BEAM_N_KNOTS, RE_SUB_CAUCHY_TUBE_DELTA
+from certus.utils.certus_re_math import re_substrate_cauchy_n_re_from_theta
 from certus.workers.certus_re_workers import REWorker
-
+from certus.workers.certus_spectral_workers import EvalWorker, WarmupWorker
+from certus_physics import (  # TMM, targets, RMSE (same bundle as `certus_re_helpers`)
+    Layer,
+    ObliqueTarget,
+    calc_spectrum_front_wrapper,
+    calc_spectrum_full_exact_wrapper,
+    init_thickness,
+)
 
 # =============================================================================
 
@@ -108,6 +92,7 @@ script_dir = env["script_dir"]
 
 from certus.utils.certus_re_helpers import (
     RE_SPLINE_NODE2_DEFAULT_NM,
+    TabularMaterial,
     _parse_re_rmse_combined_from_progress_message,
     _re_calc_spectrum_for_config,
     _re_find_measurement_wavelength_column,
@@ -120,7 +105,6 @@ from certus.utils.certus_re_helpers import (
     _re_rmse_oblique_weighted,
     parse_re_column_header,
     re_knots_wavelengths,
-    TabularMaterial,
 )
 
 # Configure GUI
@@ -170,11 +154,11 @@ calc_spectrum_full_exact = calc_spectrum_full_exact_wrapper
 
 
 
+from certus.ui.certus_re_excel_mixin import CertusREExcelMixin
 from certus.ui.certus_re_layout_mixin import CertusRELayoutMixin
+from certus.ui.certus_re_plot_mixin import CertusREPlotMixin
 from certus.ui.certus_re_state_mixin import CertusREStateMixin
 from certus.ui.certus_re_table_mixin import CertusRETableMixin
-from certus.ui.certus_re_plot_mixin import CertusREPlotMixin
-from certus.ui.certus_re_excel_mixin import CertusREExcelMixin
 from certus.ui.certus_re_workers_mixin import CertusREWorkersMixin
 
 

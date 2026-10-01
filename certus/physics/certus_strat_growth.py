@@ -1,5 +1,6 @@
 import numpy as np
 from numba import njit, prange
+
 from certus.domain.constants import TWO_PI
 
 NON_MONOTONIC_MODE_ATTENUATE = 0
@@ -27,7 +28,6 @@ from certus.physics.certus_substrate_absorption import K_MAX_LAYER_BACKSIDE, K_M
 #: 👤 "no layer will be off by more than 10 nm of thickness, or it is scrap"
 #: (2026-08-11). The margin the stopping point can need BEYOND the nominal thickness.
 SCAN_ERROR_MARGIN_NM: float = 15.0
-
 RATE_TURN_NM: float = 0.125
 
 #: Amplitude of the PHOTOMETRIC CURVATURE, in T units, at its maximum (T = 0.5).
@@ -91,9 +91,9 @@ CRASH_TP_MISCOUNT: int = 2
 #: Non-monotonic T(d) and REJECT mode requested: candidate is rejected.
 CRASH_NON_MONOTONIC: int = 3
 from .certus_strat_math import (
-    fit_parabola_vertex_3points,
     _seeded_noise_sample,
     _solve_quadratic_target,
+    fit_parabola_vertex_3points,
 )
 
 

@@ -6,14 +6,10 @@
 
 from __future__ import annotations
 
-
 from collections import defaultdict
-
 from typing import Any, Final
 
-
 import numpy as np
-
 
 # Nominal tabulated indices (no Deltan correction) - same tuple everywhere in RE.
 

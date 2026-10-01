@@ -1,7 +1,14 @@
+import logging
+
 import numpy as np
 from scipy.optimize import minimize
-from certus.core.certus_core import Any, NUMERICAL_FAULT_EXCEPTIONS
 
+from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, Any
+from certus.spline.certus_corridor_config import (
+    SplineOptConfig,
+    clip_to_bounds,
+    x_slice_n_to_physical_nodes,
+)
 from certus.spline.certus_corridor_utils import _robust_sigma_from_mad
 from certus.spline.spline_objective import (
     SplinePWLObjective,
@@ -9,13 +16,6 @@ from certus.spline.spline_objective import (
     spectral_mse_rmse_masked_from_nk,
 )
 
-from certus.spline.certus_corridor_config import (
-    SplineOptConfig,
-    clip_to_bounds,
-    x_slice_n_to_physical_nodes,
-)
-
-import logging
 log = logging.getLogger('CERTUS')
 _LOG_PREFIX = "INDEX_SPLINE [CORRIDOR FITTER]"
 
@@ -290,13 +290,13 @@ def _fit_nodes_at_fixed_d(
         _chi2_nk_cache["n_lam"] = np.asarray(n_lam, dtype=np.float64).ravel()
         _chi2_nk_cache["k_lam"] = np.asarray(k_lam, dtype=np.float64).ravel()
 
+        from certus.spline.certus_index_spline_core import _reflectance_absolute_backside_from_nk
+        from certus.spline.spline_objective import DataType
         from certus.utils.certus_index_utils import (
             _ratio_theoretical_from_nk,
             _reflectance_ratio_theoretical_from_nk,
             _transmittance_absolute_from_nk,
         )
-        from certus.spline.certus_index_spline_core import _reflectance_absolute_backside_from_nk
-        from certus.spline.spline_objective import DataType
 
         chi = 0.0
         d_nm = float(d_target_nm)

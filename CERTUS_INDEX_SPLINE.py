@@ -6,8 +6,10 @@ Forwards all attributes dynamically to modularized submodules.
 """
 
 from __future__ import annotations
-import sys
+
 import multiprocessing
+import sys
+
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QApplication
 
@@ -18,17 +20,16 @@ from certus.core.certus_core import configure_numba_env as _configure_numba_env
 
 _configure_numba_env()
 
+# Import the modular submodules
+import certus.spline.certus_index_spline_core as certus_index_spline_core
+import certus.spline.certus_index_spline_corridors as certus_index_spline_corridors
+import certus.spline.certus_index_spline_smart_init as certus_index_spline_smart_init
+import certus.ui.certus_index_spline_ui as certus_index_spline_ui
 from certus.core.certus_core import CertusFacadeModule, setup_module_logging
 from certus.ui.certus_ui import init_certus_app
 
-# Import the modular submodules
-import certus.spline.certus_index_spline_core as certus_index_spline_core
-import certus.spline.certus_index_spline_smart_init as certus_index_spline_smart_init
-import certus.spline.certus_index_spline_corridors as certus_index_spline_corridors
-import certus.ui.certus_index_spline_ui as certus_index_spline_ui
-
 # Preserve SplineReport exports (for external tools or back-compat)
-from certus.utils.certus_spline_report import SplineReportContext, SplineReportBuilder  # noqa: F401
+from certus.utils.certus_spline_report import SplineReportBuilder, SplineReportContext  # noqa: F401
 
 # Configure the facade to wrap and expose all underlying symbols
 sys.modules[__name__] = CertusFacadeModule(__name__, [

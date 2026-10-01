@@ -1,51 +1,54 @@
 import time
 from typing import Any
+
 import numpy as np
 import pandas as pd
+
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
     T_SUB_MIN_R_NORM,
     T_SUB_MIN_T_NORM,
 )
 from certus.core.certus_lazy_imports import lazy_scipy
+
 scipy = lazy_scipy()
-from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
-from certus_physics import (
-    PGlobalConfig,
-    calculate_single_interface_R,
-    calculate_bare_substrate_R,
-    calculate_bare_substrate_R_absorbing,
-    calculate_bare_substrate_RT,
-    calculate_bare_substrate_T_absorbing,
-    SplineBasisCache,
-)
-from certus.utils.certus_index_utils import (
-    sellmeier_2poles_eval_nj,
-    k_law_8p_eval,
-    _deduce_knots_from_k8p,
-    _ensure_strictly_increasing,
-    _merge_closest_knot_pair,
-    fit_sellmeier_global,
-    fit_k_global_8p,
-    _get_substrate_n_array_index,
-)
 from certus.core.certus_index_core import (
     OptimizationConfig,
     OptimizationResults,
 )
 from certus.core.certus_index_objectives import (
     IRGlobalObjective,
-    Phase23SplineObjective,
     Phase23Pass2SplineObjective,
+    Phase23SplineObjective,
 )
 from certus.core.certus_index_solvers import (
     PGlobalOptimizerINDEX,
 )
+from certus.utils.certus_index_utils import (
+    _deduce_knots_from_k8p,
+    _ensure_strictly_increasing,
+    _get_substrate_n_array_index,
+    _merge_closest_knot_pair,
+    fit_k_global_8p,
+    fit_sellmeier_global,
+    k_law_8p_eval,
+    sellmeier_2poles_eval_nj,
+)
+from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
 from certus.workers.certus_index_workers import (
-    _compute_RT_from_config,
     IRPGlobalCallback,
     IRSplineCallback,
     IRStage2Callback,
+    _compute_RT_from_config,
+)
+from certus_physics import (
+    PGlobalConfig,
+    SplineBasisCache,
+    calculate_bare_substrate_R,
+    calculate_bare_substrate_R_absorbing,
+    calculate_bare_substrate_RT,
+    calculate_bare_substrate_T_absorbing,
+    calculate_single_interface_R,
 )
 
 

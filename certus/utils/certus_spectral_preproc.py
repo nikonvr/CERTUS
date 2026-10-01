@@ -3,11 +3,12 @@
 
 from __future__ import annotations
 
+import logging
+
 import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 from scipy.signal import find_peaks, savgol_filter
-import logging
 
 
 def _ensure_odd(n: int) -> int:

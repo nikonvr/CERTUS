@@ -77,27 +77,17 @@ __all__ = [
 
 
 import logging
-
-
 import queue
-
-
 import warnings
 
 warnings.filterwarnings("ignore", category=RuntimeWarning, message="overflow encountered in cast", module="pyqtgraph")
 
 from collections import deque
-
-
 from typing import Any
 
-
+from certus.core.certus_core import CFG
 from certus.ui.certus_plot import clone_plot_widget
 from certus.ui.certus_ui_widgets_utils import DetachedPlotWindow
-
-
-from certus.core.certus_core import CFG
-
 
 # PyQtGraph ViewBox vs NumPy/Python 3.14  cosmetic RuntimeWarning on cast (any emitting module)
 
@@ -110,20 +100,12 @@ warnings.filterwarnings(
 
 
 from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
-
-
 from PyQt6.QtWidgets import QAbstractSpinBox, QApplication, QLabel, QLineEdit, QMainWindow, QSplitter
 
-
 # Check optional dependencies
-
-
 # Import Core
-
-
 from certus.core.certus_core import CertusRuntime, build_runtime
 from certus.ui.certus_qt_svg import SVG_AVAILABLE
-
 
 if SVG_AVAILABLE:
     from PyQt6.QtSvgWidgets import QSvgWidget
@@ -133,29 +115,26 @@ if SVG_AVAILABLE:
 
 
 from certus.core.certus_core import OPENPYXL_AVAILABLE
-
+from certus.ui.certus_theme import CertusTheme, get_standard_stylesheet
 
 # =============================================================================
-
-
 from certus.ui.certus_ui_utils import (
-    safe_ui_action,
-    show_toast,
-    confirm_stop_with_timeout,
-    process_log_queue_standard,
-    open_file_explorer,
-    stop_worker_and_thread,
-    format_count_kmg,
-    set_certus_window_icon,
-    copy_app_logs_to_clipboard,
-    install_standard_shortcuts,
-    install_unique_shortcut,
     apply_certus_theme,
     configure_theme_from_preference,
+    confirm_stop_with_timeout,
+    copy_app_logs_to_clipboard,
+    format_count_kmg,
+    install_standard_shortcuts,
+    install_unique_shortcut,
+    open_file_explorer,
+    process_log_queue_standard,
+    safe_ui_action,
+    set_certus_window_icon,
+    show_toast,
+    stop_worker_and_thread,
 )
 from certus.ui.certus_ui_widgets_factory import attach_splitter_capper, create_log_widget
 from certus.ui.certus_ui_widgets_utils import CertusLogPanel
-from certus.ui.certus_theme import CertusTheme, get_standard_stylesheet
 from certus.utils.certus_ux import Typography
 
 
@@ -270,23 +249,22 @@ class CertusAppLogsMixin:
                 self.right_splitter.setSizes([1000, 0])
 
 
-from certus.ui.mixins.certus_base_core_mixins import (
-    CertusZoomMixin,
-    CertusCommandPaletteMixin,
-    CertusPremiumExportMixin,
-    CertusEmptyStateMixin,
-    CertusRecentsMixin,
-    CertusDialogMixin,
-)
-
 # Mixins moved out of this class (S5.3): the methods live there, the names stay importable from here.
 from certus.ui.certus_base_app_config_mixin import CertusAppConfigMixin
 from certus.ui.certus_base_app_engine_mixin import CertusAppEngineMixin
-from certus.ui.certus_base_app_stack_mixin import CertusAppFrontStackMixin
-from certus.ui.certus_base_app_plot_mixin import CertusAppPlotMixin
-from certus.ui.certus_base_app_undo_mixin import CertusAppUndoMixin
-from certus.ui.certus_base_app_run_mixin import CertusAppRunStateMixin
 from certus.ui.certus_base_app_info_mixin import CertusAppStackInfoMixin
+from certus.ui.certus_base_app_plot_mixin import CertusAppPlotMixin
+from certus.ui.certus_base_app_run_mixin import CertusAppRunStateMixin
+from certus.ui.certus_base_app_stack_mixin import CertusAppFrontStackMixin
+from certus.ui.certus_base_app_undo_mixin import CertusAppUndoMixin
+from certus.ui.mixins.certus_base_core_mixins import (
+    CertusCommandPaletteMixin,
+    CertusDialogMixin,
+    CertusEmptyStateMixin,
+    CertusPremiumExportMixin,
+    CertusRecentsMixin,
+    CertusZoomMixin,
+)
 
 
 class CertusBaseApp(QMainWindow, CertusZoomMixin, CertusCommandPaletteMixin, CertusPremiumExportMixin, CertusEmptyStateMixin, CertusRecentsMixin, CertusDialogMixin, CertusAppConfigMixin, CertusAppEngineMixin, CertusAppFrontStackMixin, CertusAppPlotMixin, CertusAppUndoMixin, CertusAppRunStateMixin, CertusAppStackInfoMixin):
@@ -351,7 +329,7 @@ class CertusBaseApp(QMainWindow, CertusZoomMixin, CertusCommandPaletteMixin, Cer
         # Runtime container is injectable to avoid hidden globals.
         self.runtime: CertusRuntime = runtime if runtime is not None else build_runtime()
 
-        from certus.ui.certus_worker_manager import CertusWorkerManager, CertusNumbaWarmupManager
+        from certus.ui.certus_worker_manager import CertusNumbaWarmupManager, CertusWorkerManager
 
         self.worker_manager = worker_manager or CertusWorkerManager(self)
         self.numba_manager = numba_manager or CertusNumbaWarmupManager(logging.getLogger("CERTUS"), self)

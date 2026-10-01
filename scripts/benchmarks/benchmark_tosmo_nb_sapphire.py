@@ -15,42 +15,16 @@ Fichiers : example/IR/tosmo/H800-sapphire-TrelNB.xlsx, NBrel sur sapphire .xlsx
 
 from __future__ import annotations
 
-
-
-
-
 import json
-
-
 import logging
-
-
+import sys
+import time
 from pathlib import Path
 
-
-import sys
-
-
-import time
-
-
-
-
-
 import numpy as np
-
-
 import pandas as pd
-
-
-from PyQt6.QtCore import QEventLoop, QThread, Qt
-
-
+from PyQt6.QtCore import QEventLoop, Qt, QThread
 from PyQt6.QtWidgets import QApplication
-
-
-
-
 
 #Mandatory reference: without it, the PyQt wrapper can be GC -> no more QCoreApplication for QEventLoop
 
@@ -76,47 +50,19 @@ from certus.core.certus_core import ensure_numba_cache_dir  # noqa: E402
 
 ensure_numba_cache_dir()
 
-from CERTUS_INDEX import (  # noqa: E402
-
-
-    IRGlobalModelWorker,
-
-
-    OptimizationConfig,
-
-
-    OptimizationWorker,
-
-
-    DataType,
-
-
-    substrateMode,
-
-
-    SUBSTRATES,
-
-
-    get_n_substrate_array_by_id,
-
-
-)
-
-
 from certus.core._certus_physics_impl import (  # noqa: E402
-
-
     calculate_bare_substrate_RT,
-
-
     calculate_RT_single_layer_backside_array,
-
-
 )
-
-
-
-
+from CERTUS_INDEX import (  # noqa: E402
+    SUBSTRATES,
+    DataType,
+    IRGlobalModelWorker,
+    OptimizationConfig,
+    OptimizationWorker,
+    get_n_substrate_array_by_id,
+    substrateMode,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
 

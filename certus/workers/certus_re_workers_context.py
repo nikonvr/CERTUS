@@ -1,53 +1,69 @@
-from certus.utils.certus_re_math import re_envelope_max_delta_n
-from certus.utils.certus_re_config import RE_LBFGSB_GTOL
-from certus.utils.certus_re_config import RE_LBFGSB_FTOL
-from certus.utils.certus_re_math import re_substrate_cauchy_barrier_residuals_jac
-from certus.utils.certus_re_math import re_substrate_cauchy_phi_matrix
-from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_QWOT_ALPHA
-from certus.utils.certus_re_config import RE_SUB_CAUCHY_BARRIER_SQRT_W
-from certus.utils.certus_re_config import RE_SUB_CAUCHY_TUBE_DELTA
 import logging
 import time
-from pathlib import Path
 from functools import partial
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
-from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
+
 import numpy as np
+
+from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
+from certus.utils.certus_re_config import (
+    RE_GUI_DEFAULT_RE_QWOT_ALPHA,
+    RE_LBFGSB_FTOL,
+    RE_LBFGSB_GTOL,
+    RE_SUB_CAUCHY_BARRIER_SQRT_W,
+    RE_SUB_CAUCHY_TUBE_DELTA,
+)
+from certus.utils.certus_re_math import (
+    re_envelope_max_delta_n,
+    re_substrate_cauchy_barrier_residuals_jac,
+    re_substrate_cauchy_phi_matrix,
+)
 
 logger = logging.getLogger(__name__)
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.core.certus_re_config import REPhase4Result
-from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_PHASE1_RESTARTS, RE_GUI_DEFAULT_RE_PHASE2_TOP_K, RE_PHASE2_SPLINE_PREFIT_MAXITER, RE_PHASE2B_MAXITER
-from certus.utils.certus_re_helpers import (
-    _re_apply_correc,
-    _re_correc_to_nk_preview_payload,
-    _re_calc_spectrum_for_config,
-    _re_log_objective_diagnostic,
-    _re_sort_results_best_for_table_and_apply,
+from certus.core.certus_re_objectives import (
+    _build_qwot_helpers,
+    _build_re_mse_grad_helper,
+    _prepare_re_run_context_setup,
 )
 from certus.core.certus_re_worker_utils import (
+    RE_CORREC_NOMINAL_PCT,
     p2_result_to_correc_tuple,
-    re_enrich_results_ranking_fields,
-    re_finalize_ranking_log_suffix,
-    re_finalize_finished_main_log_line,
-    re_finalize_rmse_milestone_log_line,
-    re_finalize_progress_message_done,
-    re_trf_bounds_scipy_tuples,
     re_build_p2_progress_plan,
+    re_enrich_results_ranking_fields,
+    re_finalize_finished_main_log_line,
+    re_finalize_progress_message_done,
+    re_finalize_ranking_log_suffix,
+    re_finalize_rmse_milestone_log_line,
+    re_live_plot_wls_and_dispersion_nk,
+    re_phase1_trf_runs_multistart,
     re_progress_pct_p1,
     re_progress_pct_p2a,
     re_progress_pct_p2b,
     re_progress_pct_p3,
-    re_live_plot_wls_and_dispersion_nk,
+    re_trf_bounds_scipy_tuples,
     re_trf_thickness_bounds,
-    re_phase1_trf_runs_multistart,
-    RE_CORREC_NOMINAL_PCT,
     resolve_re_qwot_alphas,
 )
+from certus.utils.certus_re_config import (
+    RE_GUI_DEFAULT_RE_PHASE1_RESTARTS,
+    RE_GUI_DEFAULT_RE_PHASE2_TOP_K,
+    RE_PHASE2_SPLINE_PREFIT_MAXITER,
+    RE_PHASE2B_MAXITER,
+)
+from certus.utils.certus_re_helpers import (
+    _re_apply_correc,
+    _re_calc_spectrum_for_config,
+    _re_correc_to_nk_preview_payload,
+    _re_log_objective_diagnostic,
+    _re_sort_results_best_for_table_and_apply,
+)
 from certus.utils.certus_re_results_builder import REResultsBuilder as REResultsPayloadBuilder
-from certus.core.certus_re_objectives import _prepare_re_run_context_setup, _build_re_mse_grad_helper, _build_qwot_helpers
+
 
 class REContextStrategy:
     def _finalize_re_run(worker, *, results: list[dict], rmse_initial_sp: float, rmse_initial_q: float, rmse_initial_u: float, rmse_initial_milestone: list[float], rmse_phase1_milestone: list[float], rmse_final_milestone: list[float], _alpha_slot: list[float], _alpha_rank_ref: float, re_qwot_alphas: tuple[float, float, float, float], _compute_qwot_rmse_raw, _compute_qwot_rmse, _correc_nom: tuple, _emit_re_spectrum_live, _report_t0: float, _re_pct_hi: list[float], n_sub_nominal: np.ndarray, wls: np.ndarray, lambda_ref: float, ep0: np.ndarray) -> None:

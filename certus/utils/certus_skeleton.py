@@ -41,7 +41,6 @@ from __future__ import annotations
 
 from typing import Final
 
-
 SHIMMER_PERIOD_MS: Final[int] = 1200
 DEFAULT_LINES: Final[int] = 3
 DEFAULT_LINE_HEIGHT: Final[int] = 14

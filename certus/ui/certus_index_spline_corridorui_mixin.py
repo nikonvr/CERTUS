@@ -1,12 +1,16 @@
 from __future__ import annotations
-from certus.ui.certus_index_spline_common import _worker_corridor_rmse_healer, logger
+
 from threading import Event
 from typing import Any
+
 import numpy as np
 import pyqtgraph as pg
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QFrame, QHBoxLayout, QMessageBox, QScrollArea, QVBoxLayout, QWidget
+
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
+from certus.spline.certus_index_spline_corridor_contract import normalize_corridor_live_payload
+from certus.ui.certus_index_spline_common import _worker_corridor_rmse_healer, logger
 from certus.ui.certus_ui import (
     CertusCard,
     CertusScientificPlot,
@@ -16,8 +20,8 @@ from certus.ui.certus_ui import (
     create_styled_button,
     wrap_scientific_plot_with_toolbar,
 )
-from certus.spline.certus_index_spline_corridor_contract import normalize_corridor_live_payload
 from certus.utils.certus_atomic_io import atomic_open
+
 
 class CertusIndexSplineCorridorUIMixin:
     """CertusIndexSplineCorridorUIMixin."""

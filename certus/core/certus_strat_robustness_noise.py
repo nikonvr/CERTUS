@@ -1,7 +1,8 @@
 """CERTUS STRAT ROBUSTNESS - noise levels, resolution noise factor and the Sobol / stream seeds (moved out of certus_strat_robustness.py, S5.2)."""
 
-import numpy as np
 from typing import Any
+
+import numpy as np
 
 
 def _parse_noise_factors(raw_factors: Any) -> list[float]:
@@ -92,7 +93,8 @@ def _get_cached_sobol_noise(base_seed: int, noise_idx: int, num_runs: int, num_l
         return _SOBOL_NOISE_CACHE[key]
         
     import math
-    from scipy.stats import qmc, norm
+
+    from scipy.stats import norm, qmc
     # Multiplicative mixing, NOT a sum.
     #
     # `base_seed + noise_idx` makes distinct pairs collide: the consensus

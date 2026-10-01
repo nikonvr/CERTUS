@@ -9,29 +9,18 @@ Shared base classes and utilities for CERTUS-METAL and CERTUS-METAL SINGLE.
 """
 
 import functools
-
-
 import logging
-
 import os
-from pathlib import Path
-
-
 import traceback
-
-from dataclasses import dataclass, field
-
 from collections.abc import Callable
+from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
-
 import numpy as np
-import scipy.optimize
 import pyqtgraph as pg
-
-
+import scipy.optimize
 from PyQt6.QtCore import QEvent, QObject, Qt, QThread, QTimer, pyqtSignal, pyqtSlot
-
 from PyQt6.QtWidgets import (
     QComboBox,
     QFrame,
@@ -50,49 +39,11 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-
-from certus.utils.certus_data import (
-    ReportSection,
-    build_standard_report,
-    read_data_file_robust,
-)
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
     get_resource_path,
 )
-
-from certus.utils.certus_ux import build_premium_overrides, OBJ
 from certus.core.certus_metrology import ValidationStatus
-from certus.utils.certus_services import IndexFitRequest, IndexFitService
-from certus.ui.certus_plot import CertusScientificPlot
-from certus.ui.certus_ui import (
-    CertusBaseApp,
-    CertusTheme,
-    CertusThemeToggle,
-    CertusCard,
-    CertusActionBar,
-    CertusStatusPill,
-    create_styled_button,
-    DATA_FILES_FILTER_EXTENDED,
-    DetachedPlotWindow,
-    EnhancedProgressWidget,
-    apply_certus_theme,
-    confirm_stop_with_timeout,
-    format_count_kmg,
-    stop_worker_and_thread,
-    clone_plot_widget,
-    create_header_logo_widget,
-    open_data_file_and_read,
-    install_standard_shortcuts,
-    enable_file_drop,
-    get_export_config,
-    show_toast,
-    open_documentation,
-    CertusLogPanel,
-)
-
-from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
-
 
 # The shared defaults live in certus_metal_defaults, a module without Qt that the
 # METAL computation modules can import; they are re-exported here unchanged.
@@ -113,6 +64,40 @@ from certus.metal.certus_metal_defaults import (
     DEFAULT_UPDATING,
     DEFAULT_WORKERS,
 )
+from certus.ui.certus_plot import CertusScientificPlot
+from certus.ui.certus_ui import (
+    DATA_FILES_FILTER_EXTENDED,
+    CertusActionBar,
+    CertusBaseApp,
+    CertusCard,
+    CertusLogPanel,
+    CertusStatusPill,
+    CertusTheme,
+    CertusThemeToggle,
+    DetachedPlotWindow,
+    EnhancedProgressWidget,
+    apply_certus_theme,
+    clone_plot_widget,
+    confirm_stop_with_timeout,
+    create_header_logo_widget,
+    create_styled_button,
+    enable_file_drop,
+    format_count_kmg,
+    get_export_config,
+    install_standard_shortcuts,
+    open_data_file_and_read,
+    open_documentation,
+    show_toast,
+    stop_worker_and_thread,
+)
+from certus.utils.certus_data import (
+    ReportSection,
+    build_standard_report,
+    read_data_file_robust,
+)
+from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
+from certus.utils.certus_services import IndexFitRequest, IndexFitService
+from certus.utils.certus_ux import OBJ, build_premium_overrides
 
 METAL_GLOBAL_STATUS = "global"
 METAL_LOCAL_STATUS = "local"
@@ -2041,8 +2026,9 @@ class MetalBaseApp(CertusBaseApp):
         if widget is None:
             return ""
         try:
-            from PyQt6.QtCore import QBuffer, QIODevice
             import base64
+
+            from PyQt6.QtCore import QBuffer, QIODevice
 
             img = widget.grab().toImage()
             buf = QBuffer()

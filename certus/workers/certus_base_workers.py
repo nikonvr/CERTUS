@@ -1,14 +1,17 @@
 import traceback
 from collections.abc import Callable
+
 import pyqtgraph.exporters  # pylint: disable=unused-import
 from PyQt6.QtCore import (
     QObject,
     QThread,
     pyqtSignal,
 )
+
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
 )
+
 
 class WorkerSignals(QObject):
     """

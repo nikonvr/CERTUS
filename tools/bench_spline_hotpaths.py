@@ -21,9 +21,9 @@ from certus.spline.certus_index_spline_core import (
     n_lambda_rising_with_wavelength_penalty,
 )
 from certus.spline.spline_objective import (
-    sigma_knots_decode,
-    _interpolate_along_sigma,
     _cached_cubic_interp_matrix_inner,
+    _interpolate_along_sigma,
+    sigma_knots_decode,
 )
 from certus.spline.spline_smart_init import interp_n_L_pwlnk_to_sigmas
 

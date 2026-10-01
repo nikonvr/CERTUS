@@ -1,18 +1,19 @@
 import logging
-from typing import Any
+from typing import Any, ClassVar
+
 import pandas as pd
 import pyqtgraph.exporters  # pylint: disable=unused-import
 from PyQt6.QtCore import (
+    QEasingCurve,
     Qt,
     QTimer,
     pyqtSignal,
-    QEasingCurve,
 )
 from PyQt6.QtGui import QColor, QKeySequence
 from PyQt6.QtWidgets import (
     QApplication,
-    QHeaderView,
     QHBoxLayout,
+    QHeaderView,
     QLabel,
     QMainWindow,
     QPushButton,
@@ -21,18 +22,19 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
     load_theme_config,
     save_theme_config,
 )
-from certus.ui.certus_theme import CertusTheme
-from certus.utils.certus_ux import Typography
 from certus.ui.certus_io_ui import CERTUS_UI_STRINGS
-from certus.ui.certus_ui_widgets_factory import create_header_logo_widget, create_log_widget
+from certus.ui.certus_theme import CertusTheme
 from certus.ui.certus_ui_utils import apply_certus_theme, set_certus_window_icon, update_global_plot_config
+from certus.ui.certus_ui_widgets_factory import create_header_logo_widget, create_log_widget
 from certus.utils.certus_qsettings import certus_settings
-from typing import ClassVar
+from certus.utils.certus_ux import Typography
+
 
 class CertusToast(QLabel):
     """Non-modal transient notification auto-hiding after duration_ms."""
@@ -210,8 +212,8 @@ class AutoShrinkTitleLabel(QLabel):
     """A label that shrinks its font size to prevent being cut off."""
     def __init__(self, text: str, default_size: int = 16, min_size: int = 9, color: str = CertusTheme.TEXT_MAIN, weight: int | str = 800, parent=None):
         super().__init__(text, parent)
-        from PyQt6.QtWidgets import QSizePolicy
         from PyQt6.QtCore import Qt
+        from PyQt6.QtWidgets import QSizePolicy
         
         self._default_size = default_size
         self._min_size = min_size
@@ -719,8 +721,8 @@ class SkeletonLoaderWidget(QWidget):
         self.update()
 
     def paintEvent(self, event) -> None:
-        from PyQt6.QtGui import QPainter, QLinearGradient, QBrush, QPainterPath
         from PyQt6.QtCore import QRectF, Qt
+        from PyQt6.QtGui import QBrush, QLinearGradient, QPainter, QPainterPath
         
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)

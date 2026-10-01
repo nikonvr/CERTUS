@@ -13,10 +13,9 @@
 # =========================================================================================
 
 import logging
-from pathlib import Path
-
 import multiprocessing
 import sys
+from pathlib import Path
 
 #Numba configuration BEFORE any import using @njit (see CERTUS_HUB.py).
 #Without this call, NUMBA_CACHE_DIR is not defined and the JIT cache is written next
@@ -44,10 +43,28 @@ script_dir = env["script_dir"]
 
 
 
+import certus.core.certus_index_core as certus_index_core
+import certus.ui.certus_index_ui as certus_index_ui
+import certus.utils.certus_index_utils as certus_index_utils
+import certus.workers.certus_index_workers as certus_index_workers
+from certus.core.certus_core import (
+    HC_EV_NM,
+    K_MAX_LIMIT,
+    N_MAX_LIMIT,
+    N_MIN_LIMIT,
+    SUBSTRATES,
+    CertusFacadeModule,
+    __version__,
+)
 from certus.core.certus_index_config import (
-    substrateMode,
     OptimizationConfig,
     OptimizationResults,
+    substrateMode,
+)
+from certus.core.certus_index_core import (
+    _optimize_all_points_batch,
+    _optimize_point_kernel,
+    calculate_relative_R_normalization,
 )
 from certus.core.certus_index_objectives import (
     IRGlobalObjective,
@@ -56,39 +73,28 @@ from certus.core.certus_index_objectives import (
 from certus.core.certus_index_solvers import (
     PGlobalOptimizerINDEX,
 )
-from certus.core.certus_index_core import (
-    calculate_relative_R_normalization,
-    _optimize_point_kernel,
-    _optimize_all_points_batch,
-)
-from certus.workers.certus_index_workers import (
-    IRGlobalModelWorker,
-    Phase1Callback,
-    Phase2PolishCallback,
-    OptimizationWorker,
-)
 from certus.ui.certus_index_ui import CertusIndexApp
 from certus.ui.certus_index_ui_utils import (
     _detected_data_type_label,
-    _source_type_label,
     _prepare_nk_plot_inputs,
-    _update_lambda_bounds_from_target_data,
     _set_spectrum_plot_title,
+    _source_type_label,
+    _update_lambda_bounds_from_target_data,
     _update_loaded_file_label,
 )
-
-
-
-from certus.core.certus_core import (
-    HC_EV_NM,
-    K_MAX_LIMIT,
-    N_MAX_LIMIT,
-    N_MIN_LIMIT,
-    SUBSTRATES,
-    __version__,
+from certus.utils.certus_index_utils import (
+    DataType,
+    _detect_data_type_from_array,
+    _detect_type_from_column_name,
+    detect_data_type,
+    sellmeier_2poles_eval_nj,
 )
-
-
+from certus.workers.certus_index_workers import (
+    IRGlobalModelWorker,
+    OptimizationWorker,
+    Phase1Callback,
+    Phase2PolishCallback,
+)
 from certus_physics import (
     calculate_bare_substrate_RT,
     calculate_RT_single_layer_backside_array,
@@ -97,20 +103,6 @@ from certus_physics import (
     epsilon_to_nk,
     get_n_substrate_array_by_id,
 )
-
-from certus.utils.certus_index_utils import (
-    sellmeier_2poles_eval_nj,
-    DataType,
-    _detect_data_type_from_array,
-    _detect_type_from_column_name,
-    detect_data_type,
-)
-
-from certus.core.certus_core import CertusFacadeModule
-import certus.core.certus_index_core as certus_index_core
-import certus.workers.certus_index_workers as certus_index_workers
-import certus.ui.certus_index_ui as certus_index_ui
-import certus.utils.certus_index_utils as certus_index_utils
 
 sys.modules[__name__] = CertusFacadeModule(__name__, [
     certus_index_core,

@@ -1,9 +1,10 @@
 import numpy as np
 from numba import njit, prange
+
 from certus.domain.constants import TWO_PI
-from certus.physics.certus_opt_tmm import compute_RT_from_matrix
 from certus.physics.certus_inputs import check_incidence_angle, is_s_polarization, require_finite
 from certus.physics.certus_oblique_substrate import oblique_exit_admittance
+from certus.physics.certus_opt_tmm import compute_RT_from_matrix
 from certus.physics.certus_substrate_absorption import (
     DEFAULT_SUBSTRATE_THICKNESS_NM,
     substrate_internal_transmittance,
@@ -11,8 +12,7 @@ from certus.physics.certus_substrate_absorption import (
 
 SMALL_EPSILON = 1e-12
 
-from .certus_tmm_matrix import compute_complex_phase_components, calc_spectrum_front
-
+from .certus_tmm_matrix import calc_spectrum_front, compute_complex_phase_components
 
 # =============================================================================
 

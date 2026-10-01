@@ -10,43 +10,38 @@ Contains:
 - _apply_strategy_ranking (basic strategy ranking)
 """
 
-import logging
 import concurrent.futures
+import logging
 import math
-import numpy as np
+from collections.abc import Callable
 from typing import Any
 
-from certus_physics import _compute_valid_blocks_kernel, _dp_kernel
+import numpy as np
 
 from certus.core.certus_strat_config import (
     SYM_DEFAULT_CONTINUITY_WEIGHT,
-    SYM_DEFAULT_WEIGHT,
     SYM_DEFAULT_SAME_WL_BONUS,
     SYM_DEFAULT_SCORING_MODE,
     SYM_DEFAULT_TIE_EPS_ABS,
     SYM_DEFAULT_TIE_EPS_REL,
+    SYM_DEFAULT_WEIGHT,
 )
-
 from certus.core.certus_strat_utils import DP_DEFAULT_MIN_WL_SEPARATION_NM
-
-from certus.utils.certus_strat_service import select_best_strat_result
-
 from certus.utils.certus_strat_context import (
-    _validate_strategy_blocks_contract,
-    _origin_priority_from_map,
-    _strategy_id_sort_token,
-    _augment_solution_cost_with_sym,
-    _origin_family,
-    _apply_family_diversity,
     _apply_block_diversity,
+    _apply_family_diversity,
     _apply_wl_diversity,
-    _wl_set,
+    _augment_solution_cost_with_sym,
     _blocks_signature,
     _extract_rmse_p95_for_noise,
+    _origin_family,
+    _origin_priority_from_map,
+    _strategy_id_sort_token,
+    _validate_strategy_blocks_contract,
+    _wl_set,
 )
-from collections.abc import Callable
-
-
+from certus.utils.certus_strat_service import select_best_strat_result
+from certus_physics import _compute_valid_blocks_kernel, _dp_kernel
 
 #: Offset of the identifier range of the COVERAGE groupings, per origin.
 #: The plan is `n_blocks * 1000 + offset + rank`, offsets 0/100/200 for the cost maps and

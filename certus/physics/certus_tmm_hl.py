@@ -3,7 +3,7 @@ from numba import njit, prange
 
 SMALL_EPSILON = 1e-12
 
-from .certus_tmm_matrix import calculate_RT_with_backside_fused, calculate_RT_no_backside
+from .certus_tmm_matrix import calculate_RT_no_backside, calculate_RT_with_backside_fused
 
 # --- LOCKED --- Validated by test_tmm_coherence.py (test_analytical_hlh, test_vectorized_vs_reference) ───
 

@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
 
 from certus.core.certus_re_worker_utils import (
     REResultsBuilder as _LegacyREResultsBuilder,
+)
+from certus.core.certus_re_worker_utils import (
     re_result_dict_stop_before_first_trf,
 )
 

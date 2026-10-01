@@ -1,50 +1,52 @@
-import os
-from pathlib import Path
 import logging
+import os
 import traceback
-from certus.ui.certus_index_ui_utils import _notify_user
 from datetime import datetime
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-from certus.core.certus_core import (
-    get_resource_path,
-    HC_EV_NM,
-    N_MIN_LIMIT,
-    N_MAX_LIMIT,
-    K_MAX_LIMIT,
-    SMALL_EPSILON,
-    NUMERICAL_FAULT_EXCEPTIONS,
-    certus_timestamp_display,
-)
-from certus.utils.certus_data import generate_html_report
-from certus.utils.certus_index_utils import DataType
-from certus_physics import (
-    epsilon2_TLU_array,
-    epsilon1_TL_analytic,
-    epsilon_to_nk,
-)
-from certus.utils.certus_index_utils import _get_substrate_n_array_index
-from certus.core.certus_index_core import (
-    OptimizationConfig,
-    OptimizationResults,
-    calculate_relative_R_normalization,
-    _SAPPHIRE_FILE_HAS_K_COLUMN,
-)
-from certus.workers.certus_index_workers import (
-    _compute_RT_from_config,
-    _index_live_spectrum_visibility,
-)
-from certus.ui.certus_ui import (
-    CertusTheme,
-    copy_app_logs_to_clipboard,
-    get_export_config,
-)
 import pyqtgraph as pg
 import scipy.optimize
 from PyQt6.QtWidgets import (
     QApplication,
     QTableWidgetItem,
 )
+
+from certus.core.certus_core import (
+    HC_EV_NM,
+    K_MAX_LIMIT,
+    N_MAX_LIMIT,
+    N_MIN_LIMIT,
+    NUMERICAL_FAULT_EXCEPTIONS,
+    SMALL_EPSILON,
+    certus_timestamp_display,
+    get_resource_path,
+)
+from certus.core.certus_index_core import (
+    _SAPPHIRE_FILE_HAS_K_COLUMN,
+    OptimizationConfig,
+    OptimizationResults,
+    calculate_relative_R_normalization,
+)
+from certus.ui.certus_index_ui_utils import _notify_user
+from certus.ui.certus_ui import (
+    CertusTheme,
+    copy_app_logs_to_clipboard,
+    get_export_config,
+)
+from certus.utils.certus_data import generate_html_report
+from certus.utils.certus_index_utils import DataType, _get_substrate_n_array_index
+from certus.workers.certus_index_workers import (
+    _compute_RT_from_config,
+    _index_live_spectrum_visibility,
+)
+from certus_physics import (
+    epsilon1_TL_analytic,
+    epsilon2_TLU_array,
+    epsilon_to_nk,
+)
+
 
 class CertusIndexExportMixin:
     def _make_index_tlu_live_ctx(self, c: OptimizationConfig) -> dict | None:

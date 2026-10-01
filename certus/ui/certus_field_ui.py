@@ -1,16 +1,18 @@
 from __future__ import annotations
-from PyQt6.QtWidgets import QLabel
+
 from PyQt6.QtCore import QTimer
-from certus.ui.certus_base_app import CertusAppLogsMixin, CertusBaseApp
-from certus.ui.certus_ui_widgets_progress import EnhancedProgressWidget
+from PyQt6.QtWidgets import QLabel
+
 from certus.core._certus_physics_impl import MaterialDatabase
-from certus.workers.certus_strat_workers import _resolve_strat_indices_db_path
+from certus.ui.certus_base_app import CertusAppLogsMixin, CertusBaseApp
+from certus.ui.certus_field_events_mixin import CertusFieldEventsMixin
 from certus.ui.certus_field_layout_mixin import CertusFieldLayoutMixin
 from certus.ui.certus_field_plot_mixin import CertusFieldPlotMixin
-from certus.ui.certus_field_events_mixin import CertusFieldEventsMixin
-from certus.ui.certus_field_workers_mixin import CertusFieldWorkersMixin
 from certus.ui.certus_field_state_mixin import CertusFieldStateMixin
+from certus.ui.certus_field_workers_mixin import CertusFieldWorkersMixin
 from certus.ui.certus_ui_utils import install_standard_shortcuts
+from certus.ui.certus_ui_widgets_progress import EnhancedProgressWidget
+from certus.workers.certus_strat_workers import _resolve_strat_indices_db_path
 
 
 class CertusFieldApp(
@@ -86,6 +88,7 @@ class CertusFieldApp(
 
 def main():
     import sys
+
     from certus.ui.certus_ui import init_certus_app
 
     app = init_certus_app()

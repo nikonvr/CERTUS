@@ -1,7 +1,9 @@
+import logging
+
 import pyqtgraph as pg
 from PyQt6.QtCore import Qt
+
 from certus.ui.certus_plot import CertusScientificPlot
-import logging
 
 
 class CertusFieldPlotWidget(CertusScientificPlot):

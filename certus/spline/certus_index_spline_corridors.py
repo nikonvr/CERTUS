@@ -18,10 +18,8 @@ from __future__ import annotations
 
 import numpy as np
 import pyqtgraph as pg
-
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QMessageBox
-
 
 # What moved out is imported back here: the window class takes the three mixins from this module and the tests read these names.
 from certus.spline.certus_index_spline_corridor_common import (
@@ -31,14 +29,14 @@ from certus.spline.certus_index_spline_corridor_common import (
     _SCRIPT_DIR,
     _apply_fixed_log_k_axis,
 )
-from certus.spline.certus_index_spline_corridor_worker import (
-    _CorridorWorkerMixin,
-)
 from certus.spline.certus_index_spline_corridor_data import (
     _DataMixin,
 )
 from certus.spline.certus_index_spline_corridor_gen import (
     _CorridorGenMixin,
+)
+from certus.spline.certus_index_spline_corridor_worker import (
+    _CorridorWorkerMixin,
 )
 
 

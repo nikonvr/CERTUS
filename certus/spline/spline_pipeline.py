@@ -1,42 +1,18 @@
 from __future__ import annotations
+
 """Main spline pipeline: JSON logging, RMSE snapshots, worker orchestration."""
 import copy as _copy
 
-from .spline_pipeline_utils import (
-    _WorkerProgressCoordinator,
-    _log_manual_insert_decision,
-    _spl_rmse_improves_meaningfully,
-    _spl_rmse_regression_exceeds_tolerance,
-    _validated_extra_sigma_knots,
-    _should_skip_manual_insert_for_equal_mesh,
-    _sigma_knot_difference_for_log,
-    _sigma_knots_to_lambda_nm_for_log,
-    _format_lambda_knots_nm_for_log,
-    _sigma_mesh_change_summary_for_log,
-    _knots_cache_key,
-    _fmt_d_nm,
-    _meshes_match,
-    _candidate_mesh_matches_target,
-    _pipeline_mesh_dimensions,
-    _log_worker_start_payload,
-    _log_final_insert_enter,
-    _log_after_final_insert,
-    _log_fixed_mesh_stage_summary,
-    _log_after_final_stage_summary,
-    _emit_enter_fixed_mesh_stage,
-    _sync_theoretical_tr_from_nk_dict,
-    _stop_with_snapshot_if_requested,
-    enforce_local_optimization_policy,
-)
-from .spline_pipeline_mesh_insert import (
-    insert_manual_sigma_nodes,
-    insert_mwir_mid_sigma_node,
-    worker_spline_mwir_insert_node,
-    worker_spline_manual_sigma_insert,
-    worker_spline_auto_add_one_knot,
-    _sensitivity_rank_inner_indices,
-    _build_local_pull_variants,
-    _build_local_refine_variants,
+from .spline_pipeline_corridors_runner import (
+    _build_profile_corridor_config,
+    _corridor_seg_spline_sigma_pack_matches_nominal,
+    _maybe_promote_best_corridor_refit,
+    _resolve_corridor_mode,
+    _run_corridor_profile_block,
+    _run_corridor_profile_with_optional_rerun,
+    _select_corridor_base_result_for_profile,
+    _sync_promoted_corridor_seed_state,
+    worker_run_corridor_profile_after_nl_choice,
 )
 from .spline_pipeline_mesh_clean import (
     AutoCleanKnotsContext,
@@ -46,21 +22,46 @@ from .spline_pipeline_mesh_clean import (
     worker_spline_auto_clean_knots,
     worker_spline_autoshift_delta_ns,
 )
-from .spline_pipeline_corridors_runner import (
-    _corridor_seg_spline_sigma_pack_matches_nominal,
-    _select_corridor_base_result_for_profile,
-    _resolve_corridor_mode,
-    _build_profile_corridor_config,
-    _run_corridor_profile_block,
-    _run_corridor_profile_with_optional_rerun,
-    _sync_promoted_corridor_seed_state,
-    _maybe_promote_best_corridor_refit,
-    worker_run_corridor_profile_after_nl_choice,
+from .spline_pipeline_mesh_insert import (
+    _build_local_pull_variants,
+    _build_local_refine_variants,
+    _sensitivity_rank_inner_indices,
+    insert_manual_sigma_nodes,
+    insert_mwir_mid_sigma_node,
+    worker_spline_auto_add_one_knot,
+    worker_spline_manual_sigma_insert,
+    worker_spline_mwir_insert_node,
 )
 from .spline_pipeline_orchestrator import (
     _apply_k_floor_to_result,
     _run_sigma_mesh_polish,
     worker_spline_optimization,
+)
+from .spline_pipeline_utils import (
+    _candidate_mesh_matches_target,
+    _emit_enter_fixed_mesh_stage,
+    _fmt_d_nm,
+    _format_lambda_knots_nm_for_log,
+    _knots_cache_key,
+    _log_after_final_insert,
+    _log_after_final_stage_summary,
+    _log_final_insert_enter,
+    _log_fixed_mesh_stage_summary,
+    _log_manual_insert_decision,
+    _log_worker_start_payload,
+    _meshes_match,
+    _pipeline_mesh_dimensions,
+    _should_skip_manual_insert_for_equal_mesh,
+    _sigma_knot_difference_for_log,
+    _sigma_knots_to_lambda_nm_for_log,
+    _sigma_mesh_change_summary_for_log,
+    _spl_rmse_improves_meaningfully,
+    _spl_rmse_regression_exceeds_tolerance,
+    _stop_with_snapshot_if_requested,
+    _sync_theoretical_tr_from_nk_dict,
+    _validated_extra_sigma_knots,
+    _WorkerProgressCoordinator,
+    enforce_local_optimization_policy,
 )
 
 __all__ = [

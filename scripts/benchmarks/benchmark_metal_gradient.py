@@ -1,12 +1,8 @@
 import sys
-
+import time
 from pathlib import Path
 
-import time
-
 import numpy as np
-
-
 
 # Ensure parent directory is in path
 
@@ -21,9 +17,6 @@ from certus.core.certus_core import ensure_numba_cache_dir
 ensure_numba_cache_dir()
 
 from certus.core._certus_physics_impl import _compute_metal_tmm_gradient_kernel
-
-
-
 
 
 def benchmark_metal_gradient():

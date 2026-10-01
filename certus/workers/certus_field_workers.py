@@ -5,13 +5,14 @@ from __future__ import annotations
 
 import logging
 import traceback
-import numpy as np
 from collections.abc import Iterable
 
+import numpy as np
 from PyQt6.QtCore import QObject, QThread, pyqtSignal
-from certus.workers.certus_field_workers_dto import FieldWorkerRequest, FieldWorkerResult, FieldParamsDTO
+
 from certus.core.certus_field_core import calculate_electric_field, calculate_opt_metrics
-from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
+from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
+from certus.workers.certus_field_workers_dto import FieldParamsDTO, FieldWorkerRequest, FieldWorkerResult
 
 try:
     from scipy.optimize import minimize

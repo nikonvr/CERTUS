@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator, Mapping
 from dataclasses import dataclass, field
-from typing import Any, TYPE_CHECKING
-from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any
+
 from pydantic import BaseModel, ConfigDict
-from collections.abc import Iterator
 
 if TYPE_CHECKING:
     from certus.utils.certus_data import TimingLogger

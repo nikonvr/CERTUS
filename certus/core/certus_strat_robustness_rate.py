@@ -3,11 +3,11 @@
 import itertools
 import logging
 import time
-import numpy as np
 from typing import Any
 
-from certus.core.certus_strat_robustness_wrappers import _IdxWrapper
+import numpy as np
 
+from certus.core.certus_strat_robustness_wrappers import _IdxWrapper
 
 #: 🔴 RAISED FROM 3 TO 40 ON 2026-08-22, together with `RATE_VARIANT_TOP_N_DEFAUT`. The two go
 #: TOGETHER: 40 variants on 50 parents cost 2 000 evaluations, against 12 923 for 3 variants

@@ -3,16 +3,17 @@
 import functools
 import logging
 from typing import Any
+
 import numpy as np
 import pyqtgraph as pg
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QCheckBox, QLabel, QWidget
 
+from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.ui.certus_plot import clone_plot_widget
+from certus.ui.certus_theme import CertusTheme
 from certus.ui.certus_ui_widgets_utils import DetachedPlotWindow
 from certus_physics.structures import Target
-from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
-from certus.ui.certus_theme import CertusTheme
 
 
 class CertusAppPlotMixin:

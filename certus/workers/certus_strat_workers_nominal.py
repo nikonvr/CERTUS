@@ -1,5 +1,6 @@
 
 from typing import TYPE_CHECKING
+
 from certus.core.certus_strat_core import APP_CONTEXT
 from certus.core.certus_strat_workers_dto import WorkerThreadResult
 

@@ -1,21 +1,15 @@
 from __future__ import annotations
+
 import logging
-from certus.spline.certus_index_spline_settings import _DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN
 from threading import Event
 from typing import Any
+
 import numpy as np
 import pyqtgraph as pg
-from PyQt6.QtCore import QThread, Qt
+from PyQt6.QtCore import Qt, QThread
 from PyQt6.QtWidgets import QApplication, QDialog, QMessageBox, QVBoxLayout
+
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
-from certus.utils.certus_index_utils import _get_substrate_n_array_spline
-from certus.ui.certus_ui import (
-    CertusScientificPlot,
-    CertusTheme,
-    attach_excel_clipboard_context_menu,
-    wrap_scientific_plot_with_toolbar,
-)
-from certus.ui.certus_index_spline_state_ui import SmartInitPayload
 from certus.spline.certus_index_spline_core import (
     SPLINE_MIN_RMSE_FIT_OBJECTIVE_POINTS,
     DataType,
@@ -27,10 +21,19 @@ from certus.spline.certus_index_spline_core import (
     prepare_exp_TR_for_fit,
     substrate_id_from_name,
 )
+from certus.spline.certus_index_spline_settings import _DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN
 from certus.spline.spline_objective import _spline_objective_lam_mask
-from certus.ui.certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
 from certus.spline.spline_visual_utils import snap_spline_visual_dict as _snap_spline_visual_dict
 from certus.ui.certus_index_spline_managers_ui import Step4MeshOptimizerBuilder
+from certus.ui.certus_index_spline_state_ui import SmartInitPayload
+from certus.ui.certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
+from certus.ui.certus_ui import (
+    CertusScientificPlot,
+    CertusTheme,
+    attach_excel_clipboard_context_menu,
+    wrap_scientific_plot_with_toolbar,
+)
+from certus.utils.certus_index_utils import _get_substrate_n_array_spline
 
 # The logger of the whole window: the same object as `logger` of certus_index_spline_common (one name, one logger).
 logger = logging.getLogger("CERTUS_INDEX_SPLINE")

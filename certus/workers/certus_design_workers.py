@@ -5,27 +5,25 @@ CERTUS-DESIGN.py - Optical Filter Design & Optimization
 =========================================================
 
 """
-from certus.core.certus_core import __version__
-from certus.core.certus_core import create_module_environment
+from certus.core.certus_core import __version__, create_module_environment
+
 env = create_module_environment(__file__, 'CERTUS_DESIGN')
 script_dir = env['script_dir']
 import logging
 import traceback
-from certus.utils.certus_logging import get_structured_logger
-from certus.workers.certus_design_workers_strat import DesignOptimizationStrategy
-from certus.workers.certus_design_workers_needle_strat import NeedleOptimizationStrategy
 from threading import Event
 from typing import Any
+
 import numpy as np
 from PyQt6.QtCore import QObject, QThread
+
 from certus.core.certus_core import (
-    NUMERICAL_FAULT_EXCEPTIONS,
     CFG,
+    NUMERICAL_FAULT_EXCEPTIONS,
     ensure_numpy_array,
     get_complex_dtype,
     get_float_dtype,
 )
-from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState, build_progress_callback
 from certus.core.certus_design_worker_utils import (
     optim_backside_flags_from_cfg,
     optim_bounds_thickness_global,
@@ -42,19 +40,33 @@ from certus.core.certus_design_worker_utils import (
     run_coord_descent_5cycles,
     run_pglobal_restart_loop,
 )
-from certus.core.certus_design_workers_dto import ColorWorkerRequest, ColorWorkerResult, NeedleWorkerResult, NeedleWorkerRequest, OptimWorkerRequest, OptimWorkerResult
+from certus.core.certus_design_workers_dto import (
+    ColorWorkerRequest,
+    ColorWorkerResult,
+    NeedleWorkerRequest,
+    NeedleWorkerResult,
+    OptimWorkerRequest,
+    OptimWorkerResult,
+)
+from certus.utils.certus_index_utils import spectral_rmse_weights
+from certus.utils.certus_logging import get_structured_logger
+from certus.utils.certus_progress_tracker import StepState, build_progress_callback, build_progress_snapshot
+from certus.workers.certus_base_workers import WorkerSignals
+from certus.workers.certus_design_workers_needle_strat import NeedleOptimizationStrategy
+from certus.workers.certus_design_workers_strat import DesignOptimizationStrategy
 from certus_physics import (
     PGlobalConfig,
+    calc_spectrum_front_wrapper,
+    calc_spectrum_full_exact_wrapper,
     calc_spectrum_full_oblique_exact,
+    calc_spectrum_full_wrapper,
     calc_spectrum_oblique_backside_vectorized,
     calc_spectrum_oblique_vectorized,
     prepare_targets_vectorized,
     xyz_from_spectrum,
     xyz_to_lab,
 )
-from certus.utils.certus_index_utils import spectral_rmse_weights
-from certus.workers.certus_base_workers import WorkerSignals
-from certus_physics import calc_spectrum_front_wrapper, calc_spectrum_full_wrapper, calc_spectrum_full_exact_wrapper
+
 calc_spectrum_front = calc_spectrum_front_wrapper
 calc_spectrum_full = calc_spectrum_full_wrapper
 calc_spectrum_full_exact = calc_spectrum_full_exact_wrapper

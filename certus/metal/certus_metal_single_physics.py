@@ -14,9 +14,9 @@ import numpy as np
 from scipy.interpolate import CubicSpline
 
 from certus.core.certus_core import (
+    NUMERICAL_FAULT_EXCEPTIONS,
     canonicalize_substrate_label,
     substrate_sellmeier_id,
-    NUMERICAL_FAULT_EXCEPTIONS,
 )
 from certus.metal.certus_metal_defaults import (
     DEFAULT_NK_MAX,

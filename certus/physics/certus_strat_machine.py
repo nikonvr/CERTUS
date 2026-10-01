@@ -7,8 +7,9 @@ Centralized hardware specifications for optical deposition monitoring machines
 (e.g., Bühler Leybold Optics OMS 5100).
 """
 
-from dataclasses import dataclass
 from collections.abc import Callable
+from dataclasses import dataclass
+
 import numpy as np
 
 OMS5100_DEFAULT_READING_NOISE_PCT: float = 0.05

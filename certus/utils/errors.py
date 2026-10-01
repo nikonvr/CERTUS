@@ -35,13 +35,12 @@ import logging
 
 import numpy as np
 
-
 from certus.core.certus_core import (
-    ensure_numpy_arrays,
+    CertusConfigError,
     CertusError,
     CertusOptimizationError,
     CertusPhysicsError,
-    CertusConfigError,
+    ensure_numpy_arrays,
 )
 
 # ---------------------------------------------------------------------------
@@ -706,8 +705,8 @@ def show_error(parent, error_code: str, **kwargs) -> None:
     if suggestion:
         msg.setInformativeText(f"💡 {suggestion}")
 
-    from unittest.mock import Mock
     import sys
+    from unittest.mock import Mock
     if msg.__class__.__module__ == "PyQt6.QtWidgets" and not isinstance(msg.exec, Mock) and "pytest" in sys.modules:
         pass
     else:
@@ -744,8 +743,8 @@ def show_warning(parent, title: str, message: str, suggestion: str = "") -> None
     if suggestion:
         msg.setInformativeText(f"💡 {suggestion}")
 
-    from unittest.mock import Mock
     import sys
+    from unittest.mock import Mock
     if msg.__class__.__module__ == "PyQt6.QtWidgets" and not isinstance(msg.exec, Mock) and "pytest" in sys.modules:
         pass
     else:
@@ -781,8 +780,8 @@ def show_validation_error(parent, error: CertusValidationError) -> None:
     if error.suggestion:
         msg.setInformativeText(f"💡 {error.suggestion}")
 
-    from unittest.mock import Mock
     import sys
+    from unittest.mock import Mock
     if msg.__class__.__module__ == "PyQt6.QtWidgets" and not isinstance(msg.exec, Mock) and "pytest" in sys.modules:
         pass
     else:

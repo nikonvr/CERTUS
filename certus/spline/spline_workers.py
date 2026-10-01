@@ -7,35 +7,19 @@
 from __future__ import annotations
 
 import logging
-
 import time
-
 from threading import Event
-
-
 
 from scipy.optimize import minimize
 
-from certus.core.certus_core import N_MIN_LIMIT, N_MAX_LIMIT
-
-from certus.utils.certus_index_utils import (
-    _ratio_theoretical_from_nk,
-    _reflectance_ratio_theoretical_from_nk,
-    _transmittance_absolute_from_nk,
-)
-
-from certus_physics import (
-    PGlobalConfig,
-    PGlobalOptimizer,
-    clip_to_bounds,
-)
-
+from certus.core.certus_core import N_MAX_LIMIT, N_MIN_LIMIT
 from certus.spline.certus_index_spline_core import (
-    DataType,
     NUMERICAL_FAULT_EXCEPTIONS,
-    SplineOptConfig,
+    DataType,
     SmartInitPreviewCancelled,
+    SplineOptConfig,
     _log_spline_pipeline_json,
+    _reflectance_absolute_backside_from_nk,
     enforce_k_floor_on_nodes,
     make_bounds_and_x0,
     min_relative_lambda_spacing_ratio,
@@ -43,9 +27,7 @@ from certus.spline.certus_index_spline_core import (
     rmse_at_spline_stage_x0_init,
     snapshot_result_with_rmse_fit_meta,
     sol3_phase1_maxfun_effective,
-    _reflectance_absolute_backside_from_nk,
 )
-
 from certus.spline.spline_objective import (
     SplinePWLObjective,
     _spline_objective_lam_mask,
@@ -59,6 +41,16 @@ from certus.spline.spline_objective import (
     spline_pwl_analytic_grad_supported,
     spline_spectral_mse_from_xy_nk,
     x_slice_n_to_physical_nodes,
+)
+from certus.utils.certus_index_utils import (
+    _ratio_theoretical_from_nk,
+    _reflectance_ratio_theoretical_from_nk,
+    _transmittance_absolute_from_nk,
+)
+from certus_physics import (
+    PGlobalConfig,
+    PGlobalOptimizer,
+    clip_to_bounds,
 )
 
 
@@ -644,10 +636,12 @@ def _lbfgsb_phase_with_progress(
 # ---------------------------------------------------------------------------
 
 
-from dataclasses import dataclass, field
 from collections.abc import Callable
+from dataclasses import dataclass, field
 from typing import Any
+
 import numpy as np
+
 
 @dataclass
 class FreeKnotStageContext:

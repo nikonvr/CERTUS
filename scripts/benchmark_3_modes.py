@@ -21,8 +21,10 @@ from certus.core.certus_core import ensure_numba_cache_dir  # noqa: E402
 
 ensure_numba_cache_dir()
 
-from CERTUS_STRAT import CertusStratApp
 import math
+
+from CERTUS_STRAT import CertusStratApp
+
 
 def score_to_seel_nm(score: float, quantize: bool = True) -> float:
     """Calcul du SEEL à 0.01 nm près."""

@@ -1,24 +1,16 @@
 from __future__ import annotations
 
-
 import json
-
 import logging
-
 import time
-
 from enum import Enum, auto
-
 from typing import Any
 
-
 import numpy as np
-
 import pandas as pd
 
-
 from certus.utils.errors import NUMERICAL_FAULT_EXCEPTIONS
-from certus_physics import calculate_RT_vectorized_real, calculate_bare_substrate_RT
+from certus_physics import calculate_bare_substrate_RT, calculate_RT_vectorized_real
 
 
 class NumpyEncoder(json.JSONEncoder):
@@ -304,8 +296,8 @@ _D_SLIDER_STEPS_DEFAULT = 5000
 
 def _get_substrate_n_array_spline(substrate_id: int, wavelengths_nm: np.ndarray) -> np.ndarray:
     """Return substrate n(lambda), forcing Sapphire (id=3) to equation-based Sellmeier."""
-    from certus_physics import get_n_substrate_array_by_id
     from certus.core.certus_core import SELLMEIER_COEFFS_BY_ID
+    from certus_physics import get_n_substrate_array_by_id
 
     sid = int(substrate_id)
     wl_nm = np.asarray(wavelengths_nm, dtype=np.float64)
@@ -489,6 +481,7 @@ def _safe_int_from_mapping(m: Mapping[str, Any], key: str, default: int = -1) ->
 
 from numba import njit
 
+
 @njit(cache=True, fastmath=True, error_model="numpy")
 def sellmeier_2poles_eval_nj(params, wl_um) -> np.ndarray:
     """Numba-compatible Sellmeier 2-poles model with constant A.
@@ -639,6 +632,7 @@ def fit_sellmeier_global(
 ) -> tuple[np.ndarray, np.ndarray]:
     """Robust 3-pole Sellmeier fit using differential_evolution to find the global minimum."""
     from scipy.optimize import differential_evolution, least_squares
+
     from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 
     wl_um = wls_nm / 1000.0
@@ -1001,8 +995,8 @@ def analyze_loaded_data(df: pd.DataFrame) -> tuple[DataType, dict[str, np.ndarra
 
 def _get_substrate_n_array_index(substrate_id: int, wavelengths_nm: np.ndarray) -> np.ndarray:
     """Return substrate n(lambda), forcing Sapphire (id=3) to equation-based Sellmeier."""
-    from certus_physics import get_n_substrate_array_by_id
     from certus.core.certus_core import SELLMEIER_COEFFS_BY_ID, SUBSTRATES
+    from certus_physics import get_n_substrate_array_by_id
 
     sid = int(substrate_id)
 

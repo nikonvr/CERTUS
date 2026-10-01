@@ -6,7 +6,9 @@ Extracted from certus_index_spline_core to decouple mathematical kernels from fo
 """
 
 from __future__ import annotations
+
 import numpy as np
+
 
 def export_spline_result_jsonable(r: dict, *, full_arrays: bool = True, embed_child_stages: bool = True) -> dict:
     """JSON-serializable structure (lists instead of ndarrays)."""

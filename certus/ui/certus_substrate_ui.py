@@ -12,99 +12,84 @@ CERTUS Substrate Index - Substrate refractive index determination only
 
 
 import functools
-from pathlib import Path
-import sys
-
 import logging
+import sys
+from pathlib import Path
 
 import numpy as np
-
 import pandas as pd
-
 import pyqtgraph as pg
-
 from PyQt6.QtCore import Qt
-
-from PyQt6.QtGui import QFont, QColor, QBrush
-
+from PyQt6.QtGui import QBrush, QColor, QFont
 from PyQt6.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QVBoxLayout,
-    QHBoxLayout,
-    QWidget,
-    QLabel,
-    QFrame,
-    QMessageBox,
-    QCheckBox,
-    QDialog,
-    QTableWidgetItem,
-    QHeaderView,
-    QDoubleSpinBox,
-    QSpinBox,
-    QTextEdit,
-    QTabWidget,
-    QComboBox,
-    QTableWidget,
     QAbstractItemView,
+    QApplication,
+    QCheckBox,
+    QComboBox,
+    QDialog,
+    QDoubleSpinBox,
+    QFrame,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QMainWindow,
+    QMessageBox,
+    QSpinBox,
+    QTableWidget,
+    QTableWidgetItem,
+    QTabWidget,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
 )
 
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
     __version__,
 )
-from certus.utils.certus_ux import Typography
-
-from certus.ui.certus_measurement_excel_ui import open_measurement_excel_interactive
-from certus.ui.certus_a11y import install_accessible_names
-
-
-
-from certus.ui.certus_ui import (
-    CertusTheme,
-    CertusLogPanel,
-    EnhancedProgressWidget,
-    attach_excel_clipboard_context_menu,
-    CertusScientificPlot,
-    wrap_scientific_plot_with_toolbar,
-    init_certus_app,
-    create_styled_button,
-    create_styled_label,
-    create_header_logo_widget,
-    ExcelTableWidget,
-    install_standard_shortcuts,
-    open_documentation,
-)
-
-
-
 from certus.core.certus_substrate_index import (
-    IndexCore,
+    _MODEL_LABEL_TO_INDEX,
+    _N_SUBSTRATE_MODELS,
     SELLMEIER_DEFAULT_LOG_L1L2,
     SUBSTRATE_INDEX_MODELS,
-    _MODEL_LABEL_TO_INDEX,
-    logger,
-)
-
-from certus.ui.certus_substrate_plot_utils import (
-    _add_pg_fit_band_outside_shading,
-    _pg_plot_xy_split_band,
-    _pg_plot_scatter_split_band,
-)
-from certus.core.certus_substrate_index import (
-    _N_SUBSTRATE_MODELS,
-    _filter_dataframe_bare_substrate_columns,
+    IndexCore,
+    _align_xy_lengths,
     _bad_model_labels,
     _best_finite_rmse_from_triplet,
+    _filter_dataframe_bare_substrate_columns,
     _rms_triplet,
     _rmse_is_bad_vs_best,
     _rmse_is_best_fit,
     _substrate_index_geom_fit_mask,
     _substrate_index_models_ordered_by_rmse,
-    _align_xy_lengths,
+    logger,
 )
-from certus.utils.certus_qsettings import certus_settings
+from certus.ui.certus_a11y import install_accessible_names
+from certus.ui.certus_measurement_excel_ui import open_measurement_excel_interactive
+from certus.ui.certus_substrate_plot_utils import (
+    _add_pg_fit_band_outside_shading,
+    _pg_plot_scatter_split_band,
+    _pg_plot_xy_split_band,
+)
+from certus.ui.certus_ui import (
+    CertusLogPanel,
+    CertusScientificPlot,
+    CertusTheme,
+    EnhancedProgressWidget,
+    ExcelTableWidget,
+    attach_excel_clipboard_context_menu,
+    create_header_logo_widget,
+    create_styled_button,
+    create_styled_label,
+    init_certus_app,
+    install_standard_shortcuts,
+    open_documentation,
+    wrap_scientific_plot_with_toolbar,
+)
 from certus.utils.certus_atomic_io import atomic_open
+from certus.utils.certus_qsettings import certus_settings
+from certus.utils.certus_ux import Typography
+
 
 class IndexTableDialog(QDialog):
     def __init__(
@@ -871,9 +856,10 @@ class SubstrateIndexGUI(QMainWindow):
             QMessageBox.warning(self, "Export", "No result available. Run a Sellmeier fit first.")
             return
 
-        from PyQt6.QtWidgets import QFileDialog
         import json
         from datetime import datetime
+
+        from PyQt6.QtWidgets import QFileDialog
 
         default_fn = f"Substrate_Datasheet_{datetime.now().strftime('%Y%m%d_%H%M')}.json"
         path, _ = QFileDialog.getSaveFileName(self, "Export Datasheet", default_fn, "JSON Files (*.json)")

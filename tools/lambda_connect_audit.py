@@ -25,7 +25,6 @@ import re
 import sys
 from pathlib import Path
 
-
 # Files to skip (reference copies, build artefacts, etc.)
 _SKIP_NAMES = frozenset({"CERTUS_STRAT_OLD.py"})
 _PATTERN = re.compile(r"\.connect\s*\(\s*lambda\b")

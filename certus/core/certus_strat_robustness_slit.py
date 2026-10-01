@@ -1,11 +1,11 @@
 """CERTUS STRAT ROBUSTNESS - the spectral resolution of a strategy and its slit-bias profiles (moved out of certus_strat_robustness.py, S5.2)."""
 
 import logging
-import numpy as np
 from typing import Any
 
-from certus_physics import D_SCAN_VAL, MAX_LOOKBACK_VAL, SLIT_PROFILE_NODES
+import numpy as np
 
+from certus_physics import D_SCAN_VAL, MAX_LOOKBACK_VAL, SLIT_PROFILE_NODES
 
 #: Nominal slit, the one the measured noise amplitude corresponds to (👤 2026-08-09).
 NOMINAL_RESOLUTION_NM: float = 2.0

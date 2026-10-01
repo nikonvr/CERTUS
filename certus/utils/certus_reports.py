@@ -51,10 +51,10 @@ Public API
 from __future__ import annotations
 
 import logging
-from pathlib import Path
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import datetime
-from collections.abc import Iterable
+from pathlib import Path
 from typing import Any, Final
 
 import pandas as pd
@@ -641,6 +641,7 @@ def _render_pdf_chart(ax, sec: Section) -> None:
         return
     try:
         import io
+
         from certus.core.certus_lazy_imports import lazy_matplotlib
 
         matplotlib = lazy_matplotlib()

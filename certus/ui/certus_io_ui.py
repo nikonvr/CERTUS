@@ -2,7 +2,9 @@ import logging
 import os
 import sys
 from pathlib import Path
+
 from PyQt6.QtWidgets import QFileDialog, QMessageBox
+
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.utils.certus_data import read_data_file_robust
 from certus.utils.certus_qsettings import certus_settings

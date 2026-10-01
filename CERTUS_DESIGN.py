@@ -40,15 +40,11 @@ from certus.core.certus_core import configure_numba_env as _configure_numba_env
 
 _configure_numba_env()
 
-from certus.core.certus_core import __version__
-
-
+import multiprocessing
 import os
 from pathlib import Path
 
-import multiprocessing
-
-from certus.core.certus_core import create_module_environment
+from certus.core.certus_core import __version__, create_module_environment
 
 # =============================================================================
 
@@ -65,16 +61,16 @@ script_dir = env["script_dir"]
 # SUBSEQUENT IMPORTS
 
 
-import sys
-from certus.core.certus_core import CertusFacadeModule
-import certus.core.certus_design_core as certus_design_core
-import certus.workers.certus_design_workers as certus_design_workers
-import certus.ui.certus_design_ui as certus_design_ui
 import logging
-from certus.core.certus_core import setup_module_logging
-from certus.ui.certus_qt_widgets import QApplication, QTimer, Qt
-from certus.ui.certus_ui import CertusTheme, init_certus_app
+import sys
+
+import certus.core.certus_design_core as certus_design_core
+import certus.ui.certus_design_ui as certus_design_ui
+import certus.workers.certus_design_workers as certus_design_workers
+from certus.core.certus_core import CertusFacadeModule, setup_module_logging
 from certus.ui.certus_design_ui import CertusDesignApp
+from certus.ui.certus_qt_widgets import QApplication, Qt, QTimer
+from certus.ui.certus_ui import CertusTheme, init_certus_app
 
 sys.modules[__name__] = CertusFacadeModule(__name__, [
     certus_design_core,

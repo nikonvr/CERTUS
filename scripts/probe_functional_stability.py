@@ -40,9 +40,8 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from _artefact import avec_provenance  # noqa: E402
-
 import bench_examples as B  # noqa: E402
+from _artefact import avec_provenance  # noqa: E402
 
 OUT = ROOT / "reports" / "probe_functional_stability.json"
 RAW = ROOT / "reports" / "probe_functional_raw.npz"

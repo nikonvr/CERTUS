@@ -1,7 +1,11 @@
 from __future__ import annotations
-from pathlib import Path
+
 import logging
+from pathlib import Path
+
 import numpy as np
+
+from certus.core.certus_core import CFG, NUMERICAL_FAULT_EXCEPTIONS
 from certus.ui.certus_qt_widgets import (
     QApplication,
     QCheckBox,
@@ -10,11 +14,11 @@ from certus.ui.certus_qt_widgets import (
     QHBoxLayout,
     QKeySequence,
     QShortcut,
-    QWidget,
     Qt,
+    QWidget,
 )
-from certus.core.certus_core import CFG, NUMERICAL_FAULT_EXCEPTIONS
 from certus.ui.certus_ui import enable_file_drop, install_standard_shortcuts, open_documentation, show_toast
+
 
 class EventsManager:
     def __init__(self, ui):

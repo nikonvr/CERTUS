@@ -1,12 +1,15 @@
 from __future__ import annotations
-from certus.ui.certus_strat_mixins_ui import CertusWindowSpyMixin
+
 import logging
+
 import numpy as np
 import pyqtgraph as pg
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QLabel, QMainWindow, QVBoxLayout, QWidget
-from certus.ui.certus_ui import CertusTheme, set_certus_window_icon
-from certus.ui.certus_ui import CertusScientificPlot
+
+from certus.ui.certus_strat_mixins_ui import CertusWindowSpyMixin
+from certus.ui.certus_ui import CertusScientificPlot, CertusTheme, set_certus_window_icon
+
 
 class CertusStratGrowthWidget(QWidget):
     """Dynamic visual component of the optical growth and of the blocks in Phase B."""

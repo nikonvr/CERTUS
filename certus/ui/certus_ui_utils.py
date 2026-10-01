@@ -97,26 +97,12 @@ __all__ = [
 
 
 import functools
-
-
 import logging
-
-
 import os
-from pathlib import Path
-
-
 import queue
-
-
 import sys
-
-
-
-
-
-
 import warnings
+from pathlib import Path
 
 warnings.filterwarnings("ignore", category=RuntimeWarning, message="overflow encountered in cast", module="pyqtgraph")
 
@@ -124,19 +110,7 @@ warnings.filterwarnings("ignore", category=RuntimeWarning, message="overflow enc
 
 from typing import TYPE_CHECKING, Any
 
-
-
-
-
-
 import pyqtgraph as pg
-
-
-
-
-
-
-
 
 # PyQtGraph ViewBox vs NumPy/Python 3.14  cosmetic RuntimeWarning on cast (any emitting module)
 
@@ -149,21 +123,16 @@ warnings.filterwarnings(
 
 
 import pyqtgraph.exporters  # pylint: disable=unused-import
-
-
 from PyQt6.QtCore import (
+    Q_ARG,
+    QMetaObject,
     QObject,
     Qt,
     QThread,
     QTimer,
     QUrl,
-    QMetaObject,
-    Q_ARG,
 )
-
-
 from PyQt6.QtGui import QAction, QIcon, QKeySequence, QShortcut
-
 
 if TYPE_CHECKING:
     from certus.ui.certus_ui_widgets_utils import SkeletonLoaderWidget
@@ -175,21 +144,15 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-
 # Check optional dependencies
-
-
 # Import Core
-
-
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
-    handle_exception,
     get_resource_path,
+    handle_exception,
     start_jit_warmup,
 )
 from certus.ui.certus_qt_svg import SVG_AVAILABLE
-
 
 if SVG_AVAILABLE:
     from PyQt6.QtSvgWidgets import QSvgWidget
@@ -198,21 +161,11 @@ if SVG_AVAILABLE:
 # OPENPYXL_AVAILABLE imported from certus.core.certus_core (Single Source of Truth)
 
 
-from certus.core.certus_core import OPENPYXL_AVAILABLE
-
-
-
+from certus.core.certus_core import OPENPYXL_AVAILABLE, load_theme_config
 
 # =============================================================================
-
-
-
-
-
-
-
 from certus.ui.certus_theme import CertusTheme, get_standard_stylesheet
-from certus.core.certus_core import load_theme_config
+
 
 def set_certus_window_icon(window: QWidget, icon_name: str = "certus.ico") -> bool:
     """
@@ -716,6 +669,8 @@ def get_export_settings() -> dict[str, Any]:
     }
 
 from certus.ui.certus_io_ui import open_file_explorer
+
+
 def process_log_queue_standard(q: queue.Queue, widget: Any, max_items: int = 50) -> int:
     """
 
@@ -989,16 +944,18 @@ def safe_ui_action(func):
       and shows a general error message to the user to prevent crashing the UI loop.
     """
     import logging
+
     from PyQt6.QtWidgets import QApplication, QWidget
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
+        import inspect
+
         from certus.utils.errors import (
+            NUMERICAL_FAULT_EXCEPTIONS,
             CertusError,
             CertusValidationError,
-            NUMERICAL_FAULT_EXCEPTIONS,
         )
-        import inspect
 
         try:
             sig = inspect.signature(func)
@@ -1346,7 +1303,7 @@ def install_skeleton_loader(target_widget: QWidget, shape: str = "chart") -> Ske
     The loader dynamically resizes to match target_widget bounds.
     """
     remove_skeleton_loader(target_widget)
-    from PyQt6.QtCore import QObject, QEvent
+    from PyQt6.QtCore import QEvent, QObject
         
     loader = SkeletonLoaderWidget(target_widget, shape=shape)
     loader.setGeometry(target_widget.rect())

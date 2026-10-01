@@ -1,11 +1,12 @@
 from __future__ import annotations
-from pathlib import Path
+
 import logging
+from pathlib import Path
 from typing import Any
+
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
-from pyqtgraph.exporters import ImageExporter, SVGExporter
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QColor, QFont, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
@@ -20,8 +21,10 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from pyqtgraph.exporters import ImageExporter, SVGExporter
+
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
-from certus.utils.certus_data import to_csv_robust
+from certus.ui.certus_strat_mixins_ui import CertusWindowSpyMixin
 from certus.ui.certus_ui import (
     CERTUS_UI_STRINGS,
     CertusTheme,
@@ -33,8 +36,9 @@ from certus.ui.certus_ui import (
     set_certus_last_dir,
     set_certus_window_icon,
 )
+from certus.utils.certus_data import to_csv_robust
 from certus.utils.certus_export import show_copy_excel_feedback
-from certus.ui.certus_strat_mixins_ui import CertusWindowSpyMixin
+
 
 class CertusScientificPlot(pg.PlotWidget):
     def __init__(self, parent=None, title="", y_label="", x_label="") -> None:

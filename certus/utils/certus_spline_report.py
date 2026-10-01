@@ -7,17 +7,15 @@ from __future__ import annotations
 
 import datetime
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from collections.abc import Callable
 from typing import Any
 
 import numpy as np
 import pandas as pd
 
-from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, K_MAX_LIMIT
-from certus.utils.certus_index_utils import _lam_uniform_grid
-from certus_physics import calculate_bare_substrate_RT
+from certus.core.certus_core import K_MAX_LIMIT, NUMERICAL_FAULT_EXCEPTIONS
 from certus.spline.certus_index_spline_core import (
     _to_fraction_T,
     ensure_lam_nm_array,
@@ -28,6 +26,8 @@ from certus.spline.spline_objective import (
     spline_objective_mse_on_masked_grid,
 )
 from certus.spline.spline_profile_corridors import enforce_min_k_corridor_half_width
+from certus.utils.certus_index_utils import _lam_uniform_grid
+from certus_physics import calculate_bare_substrate_RT
 
 logger = logging.getLogger("CERTUS")
 

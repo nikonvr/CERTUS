@@ -1,12 +1,12 @@
-from typing import Any
+import threading
+from typing import TYPE_CHECKING, Any
+
+import certus.utils.certus_strat_service as _strat_service_module
+from certus.core._certus_physics_impl import get_refractive_clues_vectorized, get_refractive_index
+from certus.physics.certus_strat_kernels import update_run_states_kernel, validate_wavelengths_batch
 from certus.utils.certus_strat_context import StratContext, get_context
 from certus.utils.certus_strat_service import APP_CONTEXT
-from certus.core._certus_physics_impl import get_refractive_index, get_refractive_clues_vectorized
-import certus.utils.certus_strat_service as _strat_service_module
 from certus.utils.certus_strat_service import _validate_candidates_phase_a as _service_validate_candidates_phase_a
-from certus.physics.certus_strat_kernels import validate_wavelengths_batch, update_run_states_kernel
-import threading
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import numpy as np

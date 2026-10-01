@@ -1,26 +1,29 @@
 from __future__ import annotations
-from .spline_pipeline_utils import (
-    _knots_cache_key,
-    _fmt_d_nm,
-    _candidate_mesh_matches_target,
-)
+
 from .spline_pipeline_mesh_insert import (
-    insert_manual_sigma_nodes,
-    _sensitivity_rank_inner_indices,
     _build_local_pull_variants,
     _build_local_refine_variants,
+    _sensitivity_rank_inner_indices,
+    insert_manual_sigma_nodes,
+)
+from .spline_pipeline_utils import (
+    _candidate_mesh_matches_target,
+    _fmt_d_nm,
+    _knots_cache_key,
 )
 
 """Main spline pipeline: JSON logging, RMSE snapshots, worker orchestration."""
-from certus.utils.certus_copy_utils import copy_spline_result
 import logging
 from dataclasses import dataclass
 from threading import Event
 from typing import Any
+
 import numpy as np
+
 from certus.spline.certus_index_spline_core import (
     SplineOptConfig,
 )
+from certus.utils.certus_copy_utils import copy_spline_result
 
 
 @dataclass

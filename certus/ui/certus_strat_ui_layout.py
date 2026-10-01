@@ -1,7 +1,10 @@
 from __future__ import annotations
+
 import functools
 from typing import Any
-from PyQt6.QtCore import Qt
+
+from PyQt6.QtCore import QLocale, Qt
+from PyQt6.QtGui import QDoubleValidator
 from PyQt6.QtWidgets import (
     QApplication,
     QButtonGroup,
@@ -24,6 +27,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
 from certus.core.certus_core import SUBSTRATE_MAPPING, get_resource_path
 from certus.core.certus_strat_core import SYM_DEFAULT_SCORING_MODE
 from certus.ui.certus_ui import (
@@ -40,11 +44,8 @@ from certus.ui.certus_ui import (
     open_documentation,
     open_file_explorer,
 )
-from certus.utils.certus_ux import OBJ, build_premium_overrides
-from certus.utils.certus_ux import Typography
 from certus.ui.certus_ui_widgets_factory import CertusBooleanField
-from PyQt6.QtCore import QLocale
-from PyQt6.QtGui import QDoubleValidator
+from certus.utils.certus_ux import OBJ, Typography, build_premium_overrides
 
 #: Settings typed as a comma-separated LIST, not a single number: a number
 #: validator would stop the operator entering a valid value.
@@ -75,10 +76,10 @@ def _as_numeric_field(edit, label):
     edit.setValidator(validator)
     edit.setProperty("field_label", label)
     return edit
-from certus.ui.certus_ui import WelcomeGuideWidget, EnhancedProgressWidget
-from certus.ui.certus_strat_stack_progress_widget import CertusStratStackProgressWidget
-from certus.ui.certus_strat_monitor_ui import CertusStratGrowthWidget
 from certus.ui.certus_overview_tab import CertusKpiBanner
+from certus.ui.certus_strat_monitor_ui import CertusStratGrowthWidget
+from certus.ui.certus_strat_stack_progress_widget import CertusStratStackProgressWidget
+from certus.ui.certus_ui import EnhancedProgressWidget, WelcomeGuideWidget
 
 
 class CertusStratLayoutMixin:

@@ -124,6 +124,7 @@ def mesurer(a: int, b: int, mode: str = "fast", cache_dir: Path | None = None,
             seed: int = SEED) -> dict:
     """Un intervalle. Rend le dictionnaire consigne, echec compris."""
     import bench_examples as Bx
+
     from CERTUS_STRAT import CertusStratApp
 
     if cache_dir is None:

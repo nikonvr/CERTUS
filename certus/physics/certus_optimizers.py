@@ -1,19 +1,22 @@
 from __future__ import annotations
+
+import math
+import os
+import time
+from collections.abc import Callable
+from threading import Event, RLock
+from typing import TYPE_CHECKING
+
 import numpy as np
 from numba import njit, prange
-from collections.abc import Callable
-from typing import TYPE_CHECKING
-import time
-import os
-import math
 from scipy.optimize import minimize
-from threading import RLock
+
 from certus.domain.constants import PI
-from threading import Event
 
 if TYPE_CHECKING:
-    from certus_physics.structures import PGlobalConfig, Sample
     from concurrent.futures import ThreadPoolExecutor
+
+    from certus_physics.structures import PGlobalConfig, Sample
 
 
 # [MONOLITHIC BLOCK] PGLOBAL ALGORITHM

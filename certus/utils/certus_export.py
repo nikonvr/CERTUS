@@ -1,13 +1,13 @@
-from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
-
 import logging
+from typing import Any
+
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
-from typing import Any
-
-from PyQt6.QtWidgets import QApplication, QMenu, QMessageBox
 from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QApplication, QMenu, QMessageBox
+
+from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 
 # Import shared strings from certus.ui.certus_ui to avoid duplication
 from certus.ui.certus_ui import CERTUS_UI_STRINGS

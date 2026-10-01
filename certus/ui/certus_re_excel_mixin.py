@@ -1,22 +1,23 @@
 from __future__ import annotations
-import logging
-import time
-import os
+
 import functools
+import logging
+import os
+import time
 import traceback
 from pathlib import Path
 from typing import Any
+
 import numpy as np
 
 from certus.core.certus_core import (
-    certus_timestamp_display,
     NUMERICAL_FAULT_EXCEPTIONS,
-    get_resource_path,
+    __version__,
+    certus_timestamp_display,
     certus_timestamp_file,
+    get_resource_path,
 )
-from certus.core.certus_core import __version__
 from certus.core.version import APP_SUITE_VERSION
-
 from certus.ui.certus_qt_widgets import (
     QAbstractItemView,
     QAbstractSpinBox,
@@ -29,32 +30,27 @@ from certus.ui.certus_qt_widgets import (
     QHeaderView,
     QLabel,
     QPushButton,
+    Qt,
     QTableWidgetItem,
     QTextEdit,
     QTimer,
-    Qt,
     QVBoxLayout,
     QWidget,
 )
-
-from certus_physics import ObliqueTarget, calc_spectrum_front_wrapper, calc_spectrum_full_exact_wrapper
-
-
-
 from certus.ui.certus_ui import (
     ExcelTableWidget,
     get_certus_last_dir,
     safe_ui_action,
     set_certus_last_dir,
-    show_toast,
     set_certus_window_icon,
+    show_toast,
 )
-
 from certus.utils.certus_data import OPENPYXL_AVAILABLE
-
 from certus.utils.certus_re_helpers import (
-    RE_SPLINE_NODE2_DEFAULT_NM,
     _RE_CANONICAL_SHEETS,
+    RE_SPLINE_NODE2_DEFAULT_NM,
+    ParsedREColumn,
+    TabularMaterial,
     _re_cell_str,
     _re_find_measurement_wavelength_column,
     _re_header_is_wavelength_label,
@@ -68,9 +64,9 @@ from certus.utils.certus_re_helpers import (
     parse_re_column_header,
     re_interp_delta_knots_clamped,
     re_knots_wavelengths,
-    TabularMaterial,
-    ParsedREColumn,
 )
+from certus_physics import ObliqueTarget, calc_spectrum_front_wrapper, calc_spectrum_full_exact_wrapper
+
 calc_spectrum_front = calc_spectrum_front_wrapper
 calc_spectrum_full_exact = calc_spectrum_full_exact_wrapper
 
@@ -1935,7 +1931,7 @@ class CertusREExcelMixin:
             manifest: dict[str, Any] | None = None
             try:
                 from certus.core.certus_metrology import ValidationStatus
-                from certus.utils.certus_services import REFitService, REFitRequest
+                from certus.utils.certus_services import REFitRequest, REFitService
                 status_txt = str(getattr(self, "validation_status", "OK") or "OK")
                 try:
                     status_val = ValidationStatus(status_txt)
@@ -2082,9 +2078,9 @@ class CertusREExcelMixin:
 
         manifest_dict: dict[str, Any] = {}
         try:
-            from certus.utils.certus_data import get_missing_manifest_fields
             from certus.core.certus_metrology import ValidationStatus
-            from certus.utils.certus_services import REFitService, REFitRequest
+            from certus.utils.certus_data import get_missing_manifest_fields
+            from certus.utils.certus_services import REFitRequest, REFitService
 
             status_txt = str(getattr(self, "validation_status", "OK") or "OK")
             try:

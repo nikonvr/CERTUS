@@ -8,23 +8,16 @@
 
 from __future__ import annotations
 
-
+import functools
 import threading
-
-
 from typing import Any
 
-
 import numpy as np
-
 from scipy.interpolate import CubicSpline
 
-
-from certus.core.certus_core import N_MIN_LIMIT, N_MAX_LIMIT
 from certus.core.certus_array_utils import as_float64_1d
+from certus.core.certus_core import N_MAX_LIMIT, N_MIN_LIMIT
 from certus.utils.certus_index_utils import _transmittance_absolute_from_nk, spectral_rmse_weights
-
-import functools
 
 
 # Thread-safe LRU cache for weights, avoiding global thrashing
@@ -57,14 +50,16 @@ def _cached_cubic_interp_matrix(sk: np.ndarray, sig: np.ndarray) -> np.ndarray:
 
 
 from numba import njit
+
 from certus_physics import (
-    calculate_RT_single_layer_backside_array,
-    calculate_bare_substrate_RT,
-    batch_single_layer_T_mse,
-    batch_single_layer_RT_mse,
     _compute_single_layer_sensitivity_array,
+    batch_single_layer_RT_mse,
+    batch_single_layer_T_mse,
+    calculate_bare_substrate_RT,
+    calculate_RT_single_layer_backside_array,
     calculate_transmission_single,
 )
+
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def _njit_single_layer_mse_fused(
@@ -118,10 +113,10 @@ def _njit_single_layer_mse_fused(
 
 
 from certus.spline.certus_index_spline_core import (
-    DataType,
-    SplineOptConfig,
     K_MIN_PHYS,
     SIGMA_KNOTS_MIN_SEP_REL,
+    DataType,
+    SplineOptConfig,
     _reflectance_absolute_backside_from_nk,
     _to_fraction_T,
     n_lambda_rising_with_wavelength_penalty,

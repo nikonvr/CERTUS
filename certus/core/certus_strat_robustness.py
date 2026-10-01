@@ -24,56 +24,24 @@ None of them imports a module of the strat import cycle at module level (they do
 the cycle of tests/architecture_debt.json does not grow.
 """
 
-import logging
 import concurrent.futures
+import logging
 import time
-import numpy as np
 from typing import Any
 
-from certus_physics import SLIT_PROFILE_NODES, arange_inclusive, calculate_RT_vectorized_real_HL
+import numpy as np
 
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
     get_safe_worker_count,
 )
-
-from certus.utils.certus_exclusions import filter_params_for_gui
-
 from certus.core.certus_strat_config import (  # type: ignore[attr-defined]
     APP_CONTEXT,
     RobustnessContext,
-    precompute_clues_and_matrices,
     _emit_stat,
+    precompute_clues_and_matrices,
 )
-
 from certus.core.certus_strat_ranking import STRATEGY_ID_SLIT_BASE, _filter_valid_robustness_strategies
-
-# What moved out (S5.2) is imported back here, every name: this module stays the one place where the callers, the scripts and the
-# tests import them from, and where the tests PATCH the four names that the functions below look up (see `_execute_robustness_tasks`).
-from certus.core.certus_strat_robustness_wrappers import (
-    _IdxWrapper,
-    _SafeLocalClues,
-)
-from certus.core.certus_strat_robustness_noise import (
-    INDEX_CORRIDOR_DEFAULT,
-    RESOLUTION_NOISE_FACTOR,
-    _SOBOL_NOISE_CACHE,
-    _affine_stream_seed,
-    _get_cached_sobol_noise,
-    _index_stream_seed,
-    _parse_noise_factors,
-    _resolution_noise_factor,
-    _resolve_robustness_noise_levels,
-    _signal_noise_stream_seed,
-)
-from certus.core.certus_strat_robustness_gate import (
-    CRASH_GATE_CONFIDENCE_KEY,
-    CRASH_RATE_TOLERANCE,
-    _crash_gate_rejects,
-    _filter_finite_robustness_scores,
-    _worst_finite_rmse,
-    crash_rate_lower_bound,
-)
 from certus.core.certus_strat_robustness_diagnostics import (
     _CAUSE_WORDS,
     _MARGIN_REPORT_CEILING_A,
@@ -83,27 +51,53 @@ from certus.core.certus_strat_robustness_diagnostics import (
     _resolve_witness_resets,
     _worst_layer_swing,
 )
+from certus.core.certus_strat_robustness_gate import (
+    CRASH_GATE_CONFIDENCE_KEY,
+    CRASH_RATE_TOLERANCE,
+    _crash_gate_rejects,
+    _filter_finite_robustness_scores,
+    _worst_finite_rmse,
+    crash_rate_lower_bound,
+)
+from certus.core.certus_strat_robustness_noise import (
+    _SOBOL_NOISE_CACHE,
+    INDEX_CORRIDOR_DEFAULT,
+    RESOLUTION_NOISE_FACTOR,
+    _affine_stream_seed,
+    _get_cached_sobol_noise,
+    _index_stream_seed,
+    _parse_noise_factors,
+    _resolution_noise_factor,
+    _resolve_robustness_noise_levels,
+    _signal_noise_stream_seed,
+)
 from certus.core.certus_strat_robustness_rate import (
     RATE_MAX_VARIANTS_PER_STRATEGY,
     RATE_MIN_LAYER,
     RATE_MIN_LAYERS_PER_BLOCK,
     RATE_SWING_MIN_DEFAULT,
     RATE_VARIANT_TOP_N_DEFAUT,
-    _RateSwingContext,
     _expand_with_rate_variants,
     _optical_prefix_variants,
     _rate_candidate_layers,
     _rate_swing_candidates,
+    _RateSwingContext,
     _variant_id,
     _wl_de_la_couche,
 )
+from certus.core.certus_strat_robustness_results import (
+    _build_layer_wavelengths_from_strategy,
+    _finalize_robustness_results,
+    _get_best_noise_results,
+    _validate_strategy_min_transmission_floor,
+)
 from certus.core.certus_strat_robustness_slit import (
-    NOMINAL_RESOLUTION_NM,
-    RESOLUTION_SEARCH_SET,
     _SLIT_CACHE_MAX,
     _SLIT_GL_W,
     _SLIT_GL_X,
     _SLIT_PROFILE_CACHE,
+    NOMINAL_RESOLUTION_NM,
+    RESOLUTION_SEARCH_SET,
     _calculate_strategy_spectral_resolution,
     _slit_bias_profiles,
     _strategy_resolution,
@@ -112,12 +106,15 @@ from certus.core.certus_strat_robustness_slit import (
 from certus.core.certus_strat_robustness_task import (
     _test_strategy_robustness_task,
 )
-from certus.core.certus_strat_robustness_results import (
-    _build_layer_wavelengths_from_strategy,
-    _finalize_robustness_results,
-    _get_best_noise_results,
-    _validate_strategy_min_transmission_floor,
+
+# What moved out (S5.2) is imported back here, every name: this module stays the one place where the callers, the scripts and the
+# tests import them from, and where the tests PATCH the four names that the functions below look up (see `_execute_robustness_tasks`).
+from certus.core.certus_strat_robustness_wrappers import (
+    _IdxWrapper,
+    _SafeLocalClues,
 )
+from certus.utils.certus_exclusions import filter_params_for_gui
+from certus_physics import SLIT_PROFILE_NODES, arange_inclusive, calculate_RT_vectorized_real_HL
 
 
 def _prepare_robustness_nominal_optics(
@@ -673,25 +670,25 @@ def run_final_simulation_block(
 
     # Defer imports of solvers functions to run-time to completely avoid circular dependencies
     from certus.core.certus_strat_consensus import (
-        _unpack_consensus_cfg,
-        _init_consensus_runtime_state,
-        _should_apply_consensus_ranking,
-        _select_consensus_candidates,
-        _log_consensus_ranking_enabled,
-        _init_consensus_map,
-        _consensus_strategy_identity,
+        _apply_consensus_scores_to_results,
+        _apply_elite_refinement_if_enabled,
         _build_params_consensus,
         _consensus_cache_key,
-        _consume_cached_consensus_score,
-        _store_and_consume_consensus_score,
         _consensus_score_from_result,
-        _log_consensus_seed_failure,
-        _should_skip_consensus_registration,
-        _register_consensus_score_for_strategy,
-        _apply_consensus_scores_to_results,
+        _consensus_strategy_identity,
+        _consume_cached_consensus_score,
+        _init_consensus_map,
+        _init_consensus_runtime_state,
+        _log_consensus_ranking_enabled,
         _log_consensus_rescore_summary,
+        _log_consensus_seed_failure,
         _rank_and_filter_strategies,
-        _apply_elite_refinement_if_enabled,
+        _register_consensus_score_for_strategy,
+        _select_consensus_candidates,
+        _should_apply_consensus_ranking,
+        _should_skip_consensus_registration,
+        _store_and_consume_consensus_score,
+        _unpack_consensus_cfg,
     )
 
     all_strategies, noise_levels, p_thick_nominal, num_layers = _prepare_robustness_inputs(

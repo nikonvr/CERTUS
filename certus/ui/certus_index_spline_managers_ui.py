@@ -1,7 +1,9 @@
 from __future__ import annotations
+
 import multiprocessing
 from typing import Any
-from PyQt6.QtCore import QTimer, Qt
+
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -14,8 +16,10 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from certus.ui.certus_ui import CertusCard, create_styled_button
+
 from certus.spline.certus_index_spline_core import SPLINE_PERF_PRESETS
+from certus.ui.certus_ui import CertusCard, create_styled_button
+
 
 class Step4MeshOptimizerBuilder:
     # `app` is the CertusIndexSplineApp window (certus_index_spline_ui.py), typed loosely on purpose: that module

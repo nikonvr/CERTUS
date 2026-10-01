@@ -1,12 +1,13 @@
+import math
+
 import numpy as np
 from numba import njit, prange
-import math
+
 from certus.domain.constants import TWO_PI
 
 SMALL_EPSILON = 1e-12
 
 from .certus_tmm_matrix import compute_complex_phase_components
-
 
 # ─── LOCKED ─── Validated by test_tmm_coherence.py ───
 

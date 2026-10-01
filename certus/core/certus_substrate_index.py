@@ -14,54 +14,32 @@ CERTUS Substrate Index - Substrate refractive index determination only
 
 
 import re
-
-
-
-
-import numpy as np
-
-
-import pandas as pd
-
-
-
-
-
-
-
-
-
-
-from certus.core.certus_substrate_sellmeier import (
-    SELLMEIER_N_ACCEPT_LO,
-    SELLMEIER_N_ACCEPT_HI,
-    SELLMEIER_DEFAULT_LOG_L1L2,
-    _resolve_sellmeier_settings,
-    _fit_model_sellmeier3poles,
-    _sellmeier_prior_coeffs_for_column,
-    _sellmeier_3term_standard_eval,
-)
-
-from certus.core.certus_core import (
-    NUMERICAL_FAULT_EXCEPTIONS,
-    setup_module_logging,
-    __version__,
-    SELLMEIER_COEFFS_BY_ID,
-    canonicalize_substrate_label,
-)
-from certus.core.certus_substrate_helpers import filter_bare_substrate_columns, is_bare_substrate_column, norm_header
-from certus.core.certus_metrology import ValidationStatus
-from certus.utils.certus_services import SubstrateIndexRequest, SubstrateIndexService
-
-
-
-
-from certus.utils.certus_spectral_preproc import dynamic_savgol_blend
 from collections.abc import Callable
 from typing import Any
 
+import numpy as np
+import pandas as pd
 
-
+from certus.core.certus_core import (
+    NUMERICAL_FAULT_EXCEPTIONS,
+    SELLMEIER_COEFFS_BY_ID,
+    __version__,
+    canonicalize_substrate_label,
+    setup_module_logging,
+)
+from certus.core.certus_metrology import ValidationStatus
+from certus.core.certus_substrate_helpers import filter_bare_substrate_columns, is_bare_substrate_column, norm_header
+from certus.core.certus_substrate_sellmeier import (
+    SELLMEIER_DEFAULT_LOG_L1L2,
+    SELLMEIER_N_ACCEPT_HI,
+    SELLMEIER_N_ACCEPT_LO,
+    _fit_model_sellmeier3poles,
+    _resolve_sellmeier_settings,
+    _sellmeier_3term_standard_eval,
+    _sellmeier_prior_coeffs_for_column,
+)
+from certus.utils.certus_services import SubstrateIndexRequest, SubstrateIndexService
+from certus.utils.certus_spectral_preproc import dynamic_savgol_blend
 
 logger = setup_module_logging("CERTUS_SUBSTRATE_INDEX")
 
@@ -1356,7 +1334,6 @@ class IndexCore:
         progress_cb: Callable[..., Any] | None,
     ) -> tuple[np.ndarray | None, str, np.ndarray | None, dict]:
         from scipy.interpolate import make_lsq_spline
-
         from scipy.optimize import minimize
 
         # Cubic B-spline = piecewise polynomials; weighted least squares on the fit grid.

@@ -91,58 +91,41 @@ logging ``profile_d_rmse_thresh_nominal`` vs ``profile_d_rmse_thresh`` and ``pro
 """
 
 from __future__ import annotations
+
+import logging
+from concurrent.futures import ThreadPoolExecutor
+from typing import Any
+
+import numpy as np
+
+from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.spline.certus_corridor_config import (
     CorridorProfileContext,
     ProfileCorridorConfig,
     _log_coaching_corridor_failure,
 )
-
-from certus.spline.certus_corridor_fitter import _fit_nodes_at_fixed_d, _fit_local_quadratic_rmse_profile
 from certus.spline.certus_corridor_exploration import _corridor_profile_walk_side, compute_regular_grid_rmse_profile
-
+from certus.spline.certus_corridor_fitter import _fit_local_quadratic_rmse_profile, _fit_nodes_at_fixed_d
 from certus.spline.certus_corridor_logger import _log_coaching_corridor_outcome, _log_corridor_envelope_diagnostics
-from certus.spline.certus_corridor_orchestrator_utils import _setup_corridor_context
+from certus.spline.certus_corridor_orchestrator_utils import (
+    _manual_grid_tag_base_on_duplicate_discard,
+    _setup_corridor_context,
+    enforce_min_k_corridor_half_width,
+)
 from certus.spline.certus_corridor_utils import (
+    _bounds_for_nodes_only,
+    _detect_corridor_spike,
     _expand_corridor_envelope_with_reported_nk,
     _extract_knots_and_nodes_from_result,
     _spectral_rmse_at_packed_nodes,
     _x_nodes0_from_mesh_x_if_consistent,
-    _bounds_for_nodes_only,
-    _detect_corridor_spike,
     quick_pwlnk_refit_result_dict,
 )
-from certus.spline.certus_corridor_orchestrator_utils import enforce_min_k_corridor_half_width
-
-from certus.spline.certus_corridor_orchestrator_utils import (
-    _manual_grid_tag_base_on_duplicate_discard,
-)
-
-
-import logging
-
-
-
-
-from concurrent.futures import ThreadPoolExecutor
-
-
-from typing import Any
-
-import numpy as np
-
-
-
-from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
-
-from certus_physics import clip_to_bounds
-
 from certus.spline.certus_index_spline_core import (
     SplineOptConfig,
     corridor_profile_refit_maxfun,
 )
-
-
-
+from certus_physics import clip_to_bounds
 
 log = logging.getLogger("CERTUS")
 

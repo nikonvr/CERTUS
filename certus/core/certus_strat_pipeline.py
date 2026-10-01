@@ -11,28 +11,28 @@ Contains:
 """
 
 import traceback
-import numpy as np
 from typing import Any
 
-from certus_physics import arange_inclusive
+import numpy as np
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.core.certus_strat_config import (
     SYM_DEFAULT_EXTREMA_WINDOW_OT,
-    precompute_clues_and_matrices,
     get_refractive_index,
+    precompute_clues_and_matrices,
 )
 from certus.core.certus_strat_ranking import (
-    SYM_DEFAULT_WEIGHT,
-    SYM_DEFAULT_SAME_WL_BONUS,
     SYM_DEFAULT_CONTINUITY_WEIGHT,
+    SYM_DEFAULT_SAME_WL_BONUS,
     SYM_DEFAULT_SCORING_MODE,
+    SYM_DEFAULT_WEIGHT,
     mine_strategies_for_block_count,
 )
 from certus.core.certus_strat_robustness import (
-    run_final_simulation_block,
     _validate_strategy_min_transmission_floor,
+    run_final_simulation_block,
 )
+from certus_physics import arange_inclusive
 
 
 def _prepare_block_strategy_phase_a(
@@ -65,10 +65,10 @@ def _prepare_block_strategy_phase_a(
     
     # Import solvers helpers dynamically to prevent circular imports
     from certus.core.certus_strat_solvers import (
-        _run_phase_a_hybrid_loop,
-        _normalize_phase_a_results,
-        _build_symmetry_bonus_map,
         _build_layer_importance_map,
+        _build_symmetry_bonus_map,
+        _normalize_phase_a_results,
+        _run_phase_a_hybrid_loop,
     )
 
     raw_results_thickness, full_dynamics_grid, phase_a_observability, stop_requested = _run_phase_a_hybrid_loop(

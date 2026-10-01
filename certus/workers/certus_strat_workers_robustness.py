@@ -1,14 +1,13 @@
 
 from typing import TYPE_CHECKING
-from certus.core.certus_strat_core import APP_CONTEXT
-from certus.core.certus_strat_workers_dto import WorkerThreadResult
-from certus.utils.certus_strat_service import calculate_nominal_properties, extract_best_rmse
-from certus.core.certus_strat_core import generate_excel_report
+
 import numpy as np
 
-from certus.core.certus_strat_robustness import run_final_simulation_block, _get_best_noise_results
-from certus_physics import arange_inclusive
-from certus_physics import get_refractive_clues_vectorized, calculate_RT_batch_kernel
+from certus.core.certus_strat_core import APP_CONTEXT, generate_excel_report
+from certus.core.certus_strat_robustness import _get_best_noise_results, run_final_simulation_block
+from certus.core.certus_strat_workers_dto import WorkerThreadResult
+from certus.utils.certus_strat_service import calculate_nominal_properties, extract_best_rmse
+from certus_physics import arange_inclusive, calculate_RT_batch_kernel, get_refractive_clues_vectorized
 
 if TYPE_CHECKING:
     from certus.workers.certus_strat_workers import WorkerThread

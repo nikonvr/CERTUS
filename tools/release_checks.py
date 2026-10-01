@@ -8,7 +8,6 @@ import sys
 import time
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 #: Where `tools/build_frozen.ps1` leaves the build (PyInstaller's default).

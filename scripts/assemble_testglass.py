@@ -187,8 +187,8 @@ def _score(assembled: np.ndarray, n_runs: int) -> int:
     app.load_configuration(str(ROOT / FULL))
     prm = app.collect_params()
 
-    from certus.physics.certus_tmm_hl import calculate_RT_vectorized_real_HL
     from certus.physics.certus_opt_tmm import arange_inclusive
+    from certus.physics.certus_tmm_hl import calculate_RT_vectorized_real_HL
 
     wl0, wl1 = prm["wl_range"]
     wl = arange_inclusive(wl0, wl1, float(prm["wl_step"]))

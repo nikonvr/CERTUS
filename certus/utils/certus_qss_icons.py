@@ -33,9 +33,9 @@ a temp file, following the cache convention already used for the fonts and the n
 
 from __future__ import annotations
 
+import tempfile
 from functools import lru_cache
 from pathlib import Path
-import tempfile
 
 from PyQt6.QtCore import QPointF, Qt
 from PyQt6.QtGui import QColor, QPainter, QPen, QPixmap

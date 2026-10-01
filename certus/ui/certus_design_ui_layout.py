@@ -1,7 +1,12 @@
 from __future__ import annotations
+
 import functools
 from typing import Any
+
 import pyqtgraph as pg
+
+from certus.core.certus_core import CFG
+from certus.ui.certus_overview_tab import CertusKpiBanner, build_synthesis_tab
 from certus.ui.certus_qt_widgets import (
     QAbstractItemView,
     QAbstractSpinBox,
@@ -20,13 +25,12 @@ from certus.ui.certus_qt_widgets import (
     QStackedWidget,
     QStatusBar,
     QStyle,
-    QTabWidget,
+    Qt,
     QTableWidget,
+    QTabWidget,
     QVBoxLayout,
     QWidget,
-    Qt,
 )
-from certus.core.certus_core import CFG
 from certus.ui.certus_ui import (
     CertusCard,
     CertusCollapsible,
@@ -41,8 +45,7 @@ from certus.ui.certus_ui import (
     create_header_logo_widget,
     create_top_actions_bar,
 )
-from certus.ui.certus_overview_tab import CertusKpiBanner, build_synthesis_tab
-from certus.utils.certus_ux import Typography, OBJ
+from certus.utils.certus_ux import OBJ, Typography
 
 
 class LayoutManager:

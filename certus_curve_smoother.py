@@ -4,8 +4,9 @@ Thin facade delegator for the Curve Smoother app.
 """
 
 from __future__ import annotations
-import sys
+
 import multiprocessing
+import sys
 from pathlib import Path
 
 # Setup sys.path to locate dependencies correctly

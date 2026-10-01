@@ -31,17 +31,13 @@ Fixed: Header generation and Config loading robustness.
 """
 
 
-from collections.abc import Sequence
-from typing import Any, NamedTuple
 import functools
 import logging
 import multiprocessing
-
-from pathlib import Path
-
-
 import sys
-
+from collections.abc import Sequence
+from pathlib import Path
+from typing import Any, NamedTuple
 
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
@@ -89,6 +85,8 @@ bootstrap_env = create_module_environment(__file__, "CERTUS_HUB")
 script_dir = bootstrap_env["script_dir"]
 
 
+# Conditional SVG import for logo
+from certus.ui.certus_qt_svg import SVG_AVAILABLE
 from certus.ui.certus_qt_widgets import (
     QApplication,
     QCheckBox,
@@ -104,19 +102,12 @@ from certus.ui.certus_qt_widgets import (
     QProcess,
     QPushButton,
     QShortcut,
-    QTimer,
     Qt,
+    QTimer,
     QVBoxLayout,
     QWidget,
 )
-
-
-# Conditional SVG import for logo
-
-
-from certus.ui.certus_qt_svg import SVG_AVAILABLE
 from certus.utils.certus_ux import Typography
-
 
 if SVG_AVAILABLE:
     from PyQt6.QtSvgWidgets import QSvgWidget
@@ -135,52 +126,43 @@ else:
 # =============================================================================
 
 
-from certus.core.certus_core import get_export_config, get_resource_path, save_export_config, load_font_config, save_font_config
+from PyQt6.QtWidgets import QComboBox, QFileDialog
 
+from certus.core.certus_core import (
+    get_export_config,
+    get_resource_path,
+    load_font_config,
+    save_export_config,
+    save_font_config,
+)
 
+# Styled buttons/labels - Now imported from certus.ui.certus_ui
+# (create_styled_label & create_colored_label removed for DRY)
+# get_base_path rm (use get_resource_path)
+# =============================================================================
+# UI COMPONENTS
+# =============================================================================
+from certus.core.certus_hub_config import HUB_APP_CATALOG, RUN_MODULE_FLAG, HubAppCatalogItem, hub_grid_columns
 from certus.ui.certus_a11y import install_accessible_names
+from certus.ui.certus_hub_widgets import ApplicationCard, GroupedApplicationCard
 from certus.ui.certus_ui import (
-    claim_shortcut_for_action,
-    configure_theme_from_preference,
     SVG_AVAILABLE,
+    CertusLogPanel,
     CertusTheme,
     CertusThemeToggle,
+    apply_certus_theme,
+    claim_shortcut_for_action,
+    configure_theme_from_preference,
     init_certus_app,
     open_documentation,
     set_certus_window_icon,
-    apply_certus_theme,
-    CertusLogPanel,
 )
 from certus.ui.certus_ui_widgets_factory import (
     create_header_logo_widget,
     create_styled_label,
 )
-from PyQt6.QtWidgets import QComboBox, QFileDialog
-
-
-# Styled buttons/labels - Now imported from certus.ui.certus_ui
-
-
-# (create_styled_label & create_colored_label removed for DRY)
-
-
-# get_base_path rm (use get_resource_path)
-
-
-# =============================================================================
-
-
-# UI COMPONENTS
-
-
-# =============================================================================
-
-
-from certus.core.certus_hub_config import HubAppCatalogItem, HUB_APP_CATALOG, RUN_MODULE_FLAG, hub_grid_columns
-from certus.ui.certus_hub_widgets import ApplicationCard, GroupedApplicationCard
-from certus.utils.certus_qsettings import certus_settings
 from certus.ui.mixins.certus_base_core_mixins import CertusDialogMixin
-
+from certus.utils.certus_qsettings import certus_settings
 
 #: Lines of a dead module's error output that the hub shows and logs. A traceback opens with a header and
 #: ends with the error, so the END says why: the hub used to keep the first 200 characters, the header.

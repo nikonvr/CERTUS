@@ -19,17 +19,10 @@ actually used is exposed as SI_SOURCE."""
 import logging
 from pathlib import Path
 
-
 import numpy as np
-
-
 from numba import njit
 
 from certus.utils.errors import CertusError, CertusFileError, CertusMaterialError
-
-
-
-
 
 _log = logging.getLogger(__name__)
 

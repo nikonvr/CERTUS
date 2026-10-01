@@ -6,16 +6,16 @@
 # disguise, D44): ruff saw neither what it offered nor what others took from it.
 
 from certus.core.certus_strat_config import _emit_stat, _flush_sp_stats, _worker_init, precompute_clues_and_matrices
+from certus.core.certus_strat_consensus import _generate_elite_candidate_strategies, _test_strategy_robustness_task
 from certus.core.certus_strat_objectives import (
     _compute_strategy_symmetry_score_percent,
     _compute_theoretical_layer_profile,
     _extract_local_extrema_points,
 )
-from certus.core.certus_strat_solvers import generate_excel_report
-from certus.core.certus_strat_robustness import _get_best_noise_results, run_final_simulation_block
-from certus.core.certus_strat_ranking import _find_k_best_groupings_dp_sequential, mine_strategies_for_block_count
 from certus.core.certus_strat_pipeline import optimize_block_strategy_hybrid
-from certus.core.certus_strat_consensus import _generate_elite_candidate_strategies, _test_strategy_robustness_task
+from certus.core.certus_strat_ranking import _find_k_best_groupings_dp_sequential, mine_strategies_for_block_count
+from certus.core.certus_strat_robustness import _get_best_noise_results, run_final_simulation_block
+from certus.core.certus_strat_solvers import generate_excel_report
 from certus.core.certus_strat_utils import (
     APP_CONTEXT,
     DYNAMICS_METRIC_NAME,

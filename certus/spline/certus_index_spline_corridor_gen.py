@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import time
 from typing import Any
+
 import numpy as np
 import pyqtgraph as pg
 from PyQt6.QtWidgets import QMessageBox
@@ -704,8 +705,8 @@ class _CorridorGenMixin:
         m = int(lam_g.size)
         t.setRowCount(m)
 
-        from PyQt6.QtWidgets import QTableWidgetItem
         from PyQt6.QtCore import Qt
+        from PyQt6.QtWidgets import QTableWidgetItem
 
         def _cell(val: float, fmt: str = ".4f") -> QTableWidgetItem:
             if not np.isfinite(val):

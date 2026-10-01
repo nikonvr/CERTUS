@@ -3,21 +3,24 @@ CERTUS Substrate Presenter - MVC Architecture for Substrate Index
 """
 
 import logging
-from typing import Protocol, Any
+from typing import Any, Protocol
+
 import numpy as np
 import pandas as pd
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.core.certus_metrology import ValidationStatus
 from certus.core.certus_substrate_index import (
-    SUBSTRATE_INDEX_MODELS,
     _N_SUBSTRATE_MODELS,
+    SUBSTRATE_INDEX_MODELS,
+    IndexCore,
+    _finalize_substrate_run,
+    _fit_summary_line,
+    _model_selection_score,
     _prepare_substrate_index_input,
+    _rank_models_by_selection_score,
     _resolve_sellmeier_settings,
     _synthesize_validation_status,
-    _finalize_substrate_run,
-    _model_selection_score, _rank_models_by_selection_score, _fit_summary_line,
-    IndexCore,
 )
 
 logger = logging.getLogger("CERTUS")

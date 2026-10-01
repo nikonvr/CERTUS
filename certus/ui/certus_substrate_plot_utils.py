@@ -1,6 +1,7 @@
 import numpy as np
 import pyqtgraph as pg
 
+
 def _add_pg_fit_band_outside_shading(
     plot_widget: pg.PlotWidget,
     fit_lo_nm: float,

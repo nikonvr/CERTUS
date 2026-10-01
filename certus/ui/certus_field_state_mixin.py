@@ -1,5 +1,11 @@
 from __future__ import annotations
-from certus.ui.certus_field_common import DetachedStackWindow
+
+import json
+import logging
+from pathlib import Path
+
+import numpy as np
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -14,18 +20,16 @@ from PyQt6.QtWidgets import (
     QTableWidgetItem,
     QVBoxLayout,
 )
-from PyQt6.QtCore import QTimer, Qt
-from certus.ui.certus_ui_widgets_utils import ExcelTableWidget
+
+from certus.core.certus_field_core import calculate_opt_metrics, get_layer_properties_from_list
+from certus.ui.certus_field_common import DetachedStackWindow
+from certus.ui.certus_field_services import FieldPlotData, FieldStackService
 from certus.ui.certus_theme import CertusTheme
 from certus.ui.certus_ui_utils import show_toast
-from certus.ui.certus_field_services import FieldPlotData, FieldStackService
-from certus.workers.certus_field_workers_dto import FieldParamsDTO, FieldWorkerRequest
-from certus.core.certus_field_core import calculate_opt_metrics, get_layer_properties_from_list
-import logging
-import json
-from pathlib import Path
-import numpy as np
+from certus.ui.certus_ui_widgets_utils import ExcelTableWidget
 from certus.utils.certus_ux import Typography
+from certus.workers.certus_field_workers_dto import FieldParamsDTO, FieldWorkerRequest
+
 
 class CertusFieldStateMixin:
     """CertusFieldStateMixin."""
@@ -552,8 +556,17 @@ class CertusFieldStateMixin:
             summary_lines.append(f"  Total Physical Thickness: {total_thick:.2f} nm")
 
             # Create a vertical list popup mimicking CERTUS STRAT results
-            from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView, QHBoxLayout
             from PyQt6.QtCore import Qt
+            from PyQt6.QtWidgets import (
+                QDialog,
+                QHBoxLayout,
+                QHeaderView,
+                QLabel,
+                QPushButton,
+                QTableWidget,
+                QTableWidgetItem,
+                QVBoxLayout,
+            )
 
             dlg = QDialog(self)
             dlg.setWindowTitle("FIELD Load Summary")

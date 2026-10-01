@@ -6,9 +6,8 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
+from pydantic import BaseModel, ConfigDict, Field
 
-
-from pydantic import BaseModel, Field, ConfigDict
 
 class DesignParamsDTO(BaseModel):
     """Runtime-validated DTO for DESIGN calculation parameters."""

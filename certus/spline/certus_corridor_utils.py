@@ -1,25 +1,33 @@
 from typing import TYPE_CHECKING
+
 import numpy as np
 
 if TYPE_CHECKING:
     from certus.spline.certus_corridor_config import ProfileCorridorConfig
 import logging
+
 from scipy.optimize import minimize
-from certus.core.certus_core import Any, NUMERICAL_FAULT_EXCEPTIONS, N_MAX_LIMIT, N_MIN_LIMIT
+
+from certus.core.certus_core import N_MAX_LIMIT, N_MIN_LIMIT, NUMERICAL_FAULT_EXCEPTIONS, Any
 from certus.spline.certus_index_spline_config import SplineOptConfig
-from certus_physics import clip_to_bounds
 from certus.spline.certus_index_spline_core import (
     _reflectance_absolute_backside_from_nk,
     x_slice_n_to_physical_nodes,
 )
-from certus.utils.certus_index_utils import (
-    _ratio_theoretical_from_nk,
-    _transmittance_absolute_from_nk,
-    _reflectance_ratio_theoretical_from_nk,
-    DataType,
+from certus.spline.spline_objective import (
+    build_spline_objective_masked_grid,
+    nk_from_x_pwlnk,
+    spectral_mse_rmse_masked_from_nk,
+    spline_pwl_analytic_grad_supported,
 )
+from certus.utils.certus_index_utils import (
+    DataType,
+    _ratio_theoretical_from_nk,
+    _reflectance_ratio_theoretical_from_nk,
+    _transmittance_absolute_from_nk,
+)
+from certus_physics import clip_to_bounds
 
-from certus.spline.spline_objective import build_spline_objective_masked_grid, nk_from_x_pwlnk, spline_pwl_analytic_grad_supported, spectral_mse_rmse_masked_from_nk
 # _fit_local_quadratic_rmse_profile: lazy import to avoid circular dependency with certus_corridor_fitter
 
 log = logging.getLogger('CERTUS')
@@ -99,8 +107,8 @@ def _estimate_adaptive_rmse_abs_tolerance(
     sigma_t_f: np.ndarray | None,
     sigma_r_f: np.ndarray | None,
 ) -> dict[str, Any]:
-    from certus.spline.certus_corridor_orchestrator_utils import _best_fit_at_d
     from certus.spline.certus_corridor_fitter import _fit_local_quadratic_rmse_profile  # lazy: avoids circular import
+    from certus.spline.certus_corridor_orchestrator_utils import _best_fit_at_d
     out: dict[str, Any] = {
         "ok": False,
         "delta_rmse_tol": float("nan"),
@@ -982,7 +990,6 @@ def quick_pwlnk_refit_result_dict(
     """
 
     from certus.spline.certus_index_spline_core import _bounds_x0_for_sigma_knots, make_bounds_and_x0
-
     from certus.spline.spline_objective import (
         SplinePWLObjective,
         build_segment_optimizer_x_vector,

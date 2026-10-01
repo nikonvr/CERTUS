@@ -1,8 +1,27 @@
+import logging
+import threading
+import time
 from dataclasses import dataclass
-from pydantic import BaseModel, ConfigDict
-import numpy as np
-from certus.core.certus_core import Any
 
+import numpy as np
+from pydantic import BaseModel, ConfigDict
+from scipy.stats import chi2 as _chi2
+
+from certus.core.certus_core import Any
+from certus.spline.certus_corridor_logger import (
+    _log_coaching_corridor_failure,
+    _log_corridor_base_geometry,
+    _log_corridor_start_config,
+)
+from certus.spline.certus_corridor_orchestrator_utils import (
+    CorridorProfileContext,
+    _best_fit_at_d,
+    _compute_corridor_rmse_threshold,
+    _eval_adaptive_abs_tolerance,
+    _eval_corridor_threshold_fallback,
+    _prep_corridor_base_eff,
+)
+from certus.spline.certus_corridor_utils import _hetero_sigma_masked_from_base, _pick_rmse_reference_for_profile
 from certus.spline.certus_index_spline_config import (
     SplineOptConfig,
     corridor_profile_refit_maxfun,
@@ -15,27 +34,6 @@ from certus.spline.spline_objective import (
     nk_from_x_pwlnk,
     spectral_mse_rmse_masked_from_nk,
 )
-
-
-import logging
-import threading
-import time
-
-from certus.spline.certus_corridor_orchestrator_utils import (
-    _prep_corridor_base_eff,
-    _compute_corridor_rmse_threshold,
-    _eval_adaptive_abs_tolerance,
-    _eval_corridor_threshold_fallback,
-    _best_fit_at_d,
-    CorridorProfileContext
-)
-from certus.spline.certus_corridor_logger import (
-    _log_coaching_corridor_failure,
-    _log_corridor_base_geometry,
-    _log_corridor_start_config
-)
-from certus.spline.certus_corridor_utils import _pick_rmse_reference_for_profile, _hetero_sigma_masked_from_base
-from scipy.stats import chi2 as _chi2
 
 log = logging.getLogger('CERTUS')
 _LOG_PREFIX = "INDEX_SPLINE [CORRIDOR EXPLORE]"
@@ -572,6 +570,7 @@ class RegularGridProfileContext:
 
     def _fit_point_with_extra_polish(self, d_nm: float, x_seed_in: np.ndarray) -> dict | None:
         import numpy as np
+
         from certus.spline.certus_corridor_fitter import _fit_nodes_at_fixed_d
         fit0 = _fit_nodes_at_fixed_d(
             self.cfg, self.sk, float(d_nm), np.asarray(x_seed_in, dtype=np.float64).ravel().copy(),

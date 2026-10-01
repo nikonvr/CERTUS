@@ -1,15 +1,17 @@
-import numpy as np
 from typing import Any
-from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
 
-from certus_physics import needle_scan_cached, cost_numba_fast
+import numpy as np
+
 from certus.core.certus_design_core import (
-    _design_compute_oblique_error_common,
     _design_compute_oblique_error_and_grad_analytic_common,
-    _design_objective_wrapper_common,
+    _design_compute_oblique_error_common,
     _design_gradient_func_pglobal_common,
-    _design_optimization_callback_common
+    _design_objective_wrapper_common,
+    _design_optimization_callback_common,
 )
+from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
+from certus_physics import cost_numba_fast, needle_scan_cached
+
 
 class NeedleOptimizationStrategy:
     @staticmethod

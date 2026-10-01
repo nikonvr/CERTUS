@@ -13,6 +13,8 @@ from typing import Any
 import numpy as np
 
 from certus.core.certus_core import CFG
+from certus.core.certus_design_worker_utils import optim_calc_oblique_selected
+from certus.physics.certus_substrate_absorption import apply_plate_loss
 from certus_physics import (
     calc_spectrum_full_oblique_exact,
     calc_spectrum_oblique_backside_vectorized,
@@ -22,9 +24,6 @@ from certus_physics import (
     compute_oblique_rt_and_grads_analytic,
     cost_numba_fast,
 )
-
-from certus.core.certus_design_worker_utils import optim_calc_oblique_selected
-from certus.physics.certus_substrate_absorption import apply_plate_loss
 
 
 @dataclass

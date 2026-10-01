@@ -115,6 +115,7 @@ def main() -> int:
     delta = 0.030 if args.mode == "premium" else 0.051
 
     import bench_examples as Bx
+
     from certus.core.certus_strat_robustness import _index_stream_seed
     from certus.physics.certus_opt_tmm import arange_inclusive
     from certus.physics.certus_strat_batch import compute_batch_rmse

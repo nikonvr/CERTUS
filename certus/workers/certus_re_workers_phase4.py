@@ -1,32 +1,35 @@
-from certus.utils.certus_re_config import RE_PHASE4_TRF_TOL_FACTOR
-from certus.utils.certus_re_config import RE_PHASE4_TRF_MAX_NFEV
-from certus.utils.certus_re_config import RE_PHASE4_APERTURE_SCAN_POINTS
-from certus.utils.certus_re_config import RE_P4_BEAM_AP_BOUNDS_DEG
-from certus.utils.certus_re_config import RE_P4_AP_FD_STEP_DEG
-from certus.utils.certus_re_config import RE_LBFGSB_GTOL
-from certus.utils.certus_re_config import RE_LBFGSB_FTOL
 import logging
 import time
-import numpy as np
 from collections.abc import Callable
 from typing import Any
 
+import numpy as np
+
 from certus.core.certus_lazy_imports import lazy_scipy
+from certus.utils.certus_re_config import (
+    RE_LBFGSB_FTOL,
+    RE_LBFGSB_GTOL,
+    RE_P4_AP_FD_STEP_DEG,
+    RE_P4_BEAM_AP_BOUNDS_DEG,
+    RE_PHASE4_APERTURE_SCAN_POINTS,
+    RE_PHASE4_TRF_MAX_NFEV,
+    RE_PHASE4_TRF_TOL_FACTOR,
+)
+
 scipy = lazy_scipy()
-from certus.core.certus_re_config import REPhase4Result, RE_RESULT_LABEL_WITH_DRIFT, _prepend_result_dto
+from certus.core.certus_re_config import RE_RESULT_LABEL_WITH_DRIFT, REPhase4Result, _prepend_result_dto
+from certus.core.certus_re_worker_utils import p2_result_to_correc_tuple
+from certus.utils.certus_re_helpers import RE_GUI_DEFAULT_BEAM_APERTURE_DEG
+
+#
 from certus.utils.certus_re_math import (
     RE_P4_BEAM_N_KNOTS,
+    _re_p4_ap_band_intervals_str,
     re_compute_spline_basis_matrix,
     re_compute_tikhonov_weights,
     re_envelope_max_delta_n,
     re_knots_wavelengths,
 )
-
-#
-from certus.utils.certus_re_math import _re_p4_ap_band_intervals_str
-from certus.utils.certus_re_helpers import RE_GUI_DEFAULT_BEAM_APERTURE_DEG
-
-from certus.core.certus_re_worker_utils import p2_result_to_correc_tuple
 
 
 class REPhase4Strategy:

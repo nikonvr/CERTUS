@@ -1,57 +1,57 @@
-from certus.core.certus_core import create_module_environment
 import scipy
 import scipy.optimize
+
+from certus.core.certus_core import create_module_environment
 
 _env = create_module_environment(__file__, 'CERTUS_INDEX_CORE')
 script_dir = _env['script_dir']
 
-from certus.core.certus_index_core import TLU_SOFT_EDGE_MARGIN, TLU_PRIOR_TRANSPARENT_N_MIN_SOFT
-
-
-from numba import njit
 import logging
-import numpy as np
 from typing import Any
 
+import numpy as np
+from numba import njit
+
 from certus.core.certus_core import (
-    NUMERICAL_FAULT_EXCEPTIONS,
     HC_EV_NM,
     K_MAX_LIMIT,
     N_MAX_LIMIT,
     N_MIN_LIMIT,
+    NUMERICAL_FAULT_EXCEPTIONS,
     SMALL_EPSILON,
     T_SUB_MIN_R_NORM,
     T_SUB_MIN_T_NORM,
 )
+from certus.core.certus_index_core import TLU_PRIOR_TRANSPARENT_N_MIN_SOFT, TLU_SOFT_EDGE_MARGIN
+from certus.utils.certus_index_utils import (
+    DataType,
+    _ensure_strictly_increasing,
+    k_law_8p_eval,
+    sellmeier_2poles_eval_nj,
+    spectral_rmse_weights,
+)
 from certus_physics import (
+    SplineBasisCache,
+    _calculate_RT_absorbing_sub_single,
     _compute_index_cost_gradient_kernel,
-    _compute_tlu_derivatives_kernel,
-    _compute_phase2_derivatives_kernel,
     _compute_ir_global_cost_gradient_kernel,
-    calculate_single_interface_R,
+    _compute_phase2_derivatives_kernel,
+    _compute_single_layer_sensitivity_kernel,
+    _compute_tlu_derivatives_kernel,
     calculate_bare_substrate_R,
     calculate_bare_substrate_RT,
+    calculate_reflection_array,
+    calculate_reflection_infinite_substrate_single,
     calculate_RT_single_layer_absorbing_substrate_array,
     calculate_RT_single_layer_backside_array,
+    calculate_single_interface_R,
+    calculate_transmission_single,
     compute_mse_vectorized,
     epsilon1_TL_analytic,
     epsilon2_TLU_array,
     epsilon_to_nk,
-    SplineBasisCache,
-)
-from certus.utils.certus_index_utils import (
-    spectral_rmse_weights,
-    sellmeier_2poles_eval_nj,
-    k_law_8p_eval,
-    _ensure_strictly_increasing,
-    DataType,
 )
 
-from certus_physics import calculate_reflection_array
-from certus_physics import _calculate_RT_absorbing_sub_single
-from certus_physics import _compute_single_layer_sensitivity_kernel
-from certus_physics import calculate_reflection_infinite_substrate_single
-from certus_physics import calculate_transmission_single
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def _njit_ir_global_gradient_fused(

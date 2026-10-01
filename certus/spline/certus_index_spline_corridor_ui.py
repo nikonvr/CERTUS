@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from certus.ui.certus_ui import (
-    GenericWorker,
-    CertusTheme,
-    create_styled_button,
-    CertusScientificPlot,
-    EnhancedProgressWidget,
-)
-from certus.ui.certus_plot import plot_widget_plot_finite
 from certus.ui.certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
+from certus.ui.certus_plot import plot_widget_plot_finite
+from certus.ui.certus_ui import (
+    CertusScientificPlot,
+    CertusTheme,
+    EnhancedProgressWidget,
+    GenericWorker,
+    create_styled_button,
+)

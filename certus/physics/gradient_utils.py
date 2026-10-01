@@ -7,8 +7,8 @@ Contains shared utility functions for cost calculation and MSE computation.
 
 import numpy as np
 from numba import njit, prange
-import certus.physics.certus_tmm_core as tmm_core
 
+import certus.physics.certus_tmm_core as tmm_core
 
 SMALL_EPSILON = 1e-12
 

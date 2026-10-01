@@ -1,53 +1,46 @@
 from __future__ import annotations
-import sys
-from pathlib import Path
-import multiprocessing
+
 import ctypes
 import logging
+import multiprocessing
 import queue
+import sys
 import threading
 from collections import deque
+from pathlib import Path
 from typing import Any
-from PyQt6.QtCore import QThread, QTimer, Qt, pyqtSignal
+
+from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
 from PyQt6.QtWidgets import QApplication, QMessageBox
+
 from certus.core.certus_core import setup_module_logging
-from certus.utils.certus_data import TimingLogger
-from certus_physics import MaterialDatabase
-from certus.utils.certus_strat_db import RobustMaterialDatabase
 from certus.core.certus_strat_core import APP_CONTEXT, PlotCache, set_robust_material_db
-from certus.ui.certus_ui import CertusBaseApp, init_certus_app
-from certus.workers.certus_strat_workers import _resolve_strat_indices_db_path
-from certus.ui.certus_strat_mixins_ui import CertusWindowSpyMixin
-from certus.ui.certus_strat_table_ui import StrategiesTableWindow
-from certus.ui.certus_strat_plots_ui import UniversalPlotWindow
-from certus.ui.certus_strat_thickness_ui import TransmissionVsThicknessWindow
-from certus.ui.certus_strat_performance_ui import StrategySpectralPerformanceWindow
 from certus.ui.certus_strat_json_ui import JsonViewerWindow
-
-
-# =========================================================================================
-
-# [MONOLITHIC BLOCK] GUI CLASSES
-
-# DO NOT SPLIT - High coupling required for event handling and widget management
-
-# =========================================================================================
-
-# === GUI CLASSES (RECONSTITUTION STYLE VERSION D) ===
-
-
-# QueueHandler and setup_gui_logger are imported from certus.ui.certus_ui
-
-# === OPTIMIZATION: LiveMonitor with Convergence Plot ===
-
-
-from certus.ui.certus_strat_ui_layout import CertusStratLayoutMixin
-from certus.ui.certus_strat_ui_state import CertusStratStateMixin
-from certus.ui.certus_strat_ui_events import CertusStratEventsMixin
-from certus.ui.certus_strat_ui_worker import CertusStratWorkerMixin
-from certus.ui.certus_strat_ui_plot import CertusStratPlotMixin
-from certus.ui.certus_strat_ui_export import CertusStratExportMixin
+from certus.ui.certus_strat_mixins_ui import CertusWindowSpyMixin
 from certus.ui.certus_strat_multigraine_ui import CertusStratMultigraineMixin
+from certus.ui.certus_strat_performance_ui import StrategySpectralPerformanceWindow
+from certus.ui.certus_strat_plots_ui import UniversalPlotWindow
+from certus.ui.certus_strat_table_ui import StrategiesTableWindow
+from certus.ui.certus_strat_thickness_ui import TransmissionVsThicknessWindow
+from certus.ui.certus_strat_ui_events import CertusStratEventsMixin
+from certus.ui.certus_strat_ui_export import CertusStratExportMixin
+
+# =========================================================================================
+# [MONOLITHIC BLOCK] GUI CLASSES
+# DO NOT SPLIT - High coupling required for event handling and widget management
+# =========================================================================================
+# === GUI CLASSES (RECONSTITUTION STYLE VERSION D) ===
+# QueueHandler and setup_gui_logger are imported from certus.ui.certus_ui
+# === OPTIMIZATION: LiveMonitor with Convergence Plot ===
+from certus.ui.certus_strat_ui_layout import CertusStratLayoutMixin
+from certus.ui.certus_strat_ui_plot import CertusStratPlotMixin
+from certus.ui.certus_strat_ui_state import CertusStratStateMixin
+from certus.ui.certus_strat_ui_worker import CertusStratWorkerMixin
+from certus.ui.certus_ui import CertusBaseApp, init_certus_app
+from certus.utils.certus_data import TimingLogger
+from certus.utils.certus_strat_db import RobustMaterialDatabase
+from certus.workers.certus_strat_workers import _resolve_strat_indices_db_path
+from certus_physics import MaterialDatabase
 
 
 class CertusStratApp(

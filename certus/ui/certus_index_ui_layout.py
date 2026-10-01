@@ -1,26 +1,7 @@
-import logging
 import functools
+import logging
 from typing import Any
-from certus.ui.certus_ui_widgets_factory import attach_splitter_capper
-from certus.ui.certus_overview_tab import CertusKpiBanner, build_synthesis_tab
-from certus.ui.certus_ui import (
-    CertusCard,
-    CertusDashboardCard,
-    CertusLogPanel,
-    CertusScientificPlot,
-    CertusTheme,
-    CertusThemeToggle,
-    EnhancedProgressWidget,
-    ExcelTableWidget,
-    FlashyCard,
-    apply_certus_theme,
-    wrap_scientific_plot_with_toolbar,
-    create_styled_button,
-    create_header_logo_widget,
-    create_top_actions_bar,
-    open_documentation,
-)
-from certus.utils.certus_ux import Typography, build_premium_overrides, OBJ
+
 import pyqtgraph as pg
 import scipy.optimize
 from PyQt6.QtCore import Qt
@@ -44,6 +25,27 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+from certus.ui.certus_overview_tab import CertusKpiBanner, build_synthesis_tab
+from certus.ui.certus_ui import (
+    CertusCard,
+    CertusDashboardCard,
+    CertusLogPanel,
+    CertusScientificPlot,
+    CertusTheme,
+    CertusThemeToggle,
+    EnhancedProgressWidget,
+    ExcelTableWidget,
+    FlashyCard,
+    apply_certus_theme,
+    create_header_logo_widget,
+    create_styled_button,
+    create_top_actions_bar,
+    open_documentation,
+    wrap_scientific_plot_with_toolbar,
+)
+from certus.ui.certus_ui_widgets_factory import attach_splitter_capper
+from certus.utils.certus_ux import OBJ, Typography, build_premium_overrides
 
 
 class ResultRecapWidget(QWidget):

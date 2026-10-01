@@ -78,6 +78,7 @@ def charger() -> dict[tuple[int, int], np.ndarray]:
 
 def main() -> int:
     import bench_examples as Bx
+
     from certus.core.certus_strat_robustness import _index_stream_seed
     from certus.physics.certus_opt_tmm import arange_inclusive
     from certus.physics.certus_strat_batch import compute_batch_rmse

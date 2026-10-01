@@ -1,6 +1,7 @@
+import logging
+
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QApplication
-import logging
 
 _ZOOM_MIN: float = 0.5
 _ZOOM_MAX: float = 2.5

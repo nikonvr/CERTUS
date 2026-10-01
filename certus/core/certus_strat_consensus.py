@@ -11,41 +11,42 @@ Contains:
 """
 
 import collections
-import logging
 import concurrent.futures
-import numpy as np
+import logging
 from typing import Any
+
+import numpy as np
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, get_safe_worker_count
 from certus.core.certus_strat_config import RobustnessContext
 
 # Import helpers from context and ranking
 from certus.core.certus_strat_ranking import (
-    clamp_incremental_strategy_id,
-    _apply_strategy_ranking,
-    _apply_family_diversity_if_enabled,
     _apply_block_diversity_if_enabled,
+    _apply_family_diversity_if_enabled,
+    _apply_strategy_ranking,
     _apply_wl_diversity_if_enabled,
-    _resolve_monitoring_wavelength_grid,
-    _max_strategy_id,
     _existing_block_signatures,
+    _max_strategy_id,
     _resolve_elite_nominal_and_target_threshold,
+    _resolve_monitoring_wavelength_grid,
+    clamp_incremental_strategy_id,
 )
-
 from certus.utils.certus_strat_context import (
+    _blocks_signature,
     _dedupe_preserve_order_int,
     _default_consensus_seeds,
-    _resolve_consensus_top_k,
-    _resolve_consensus_num_seeds,
-    _resolve_consensus_seed_stride,
-    _resolve_consensus_num_runs,
-    _strategy_id_sort_token,
-    _strategy_signature,
     _extract_rmse_p95_for_noise,
     _parse_origin_priority_map,
+    _resolve_consensus_num_runs,
+    _resolve_consensus_num_seeds,
+    _resolve_consensus_seed_stride,
+    _resolve_consensus_top_k,
+    _strategy_id_sort_token,
+    _strategy_signature,
     _validate_strategy_blocks_contract,
-    _blocks_signature,
 )
+
 
 # Dynamic imports from robustness to prevent circular dependencies
 def _test_strategy_robustness_task(*args, **kwargs) -> Any:

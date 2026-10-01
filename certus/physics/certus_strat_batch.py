@@ -1,5 +1,6 @@
 import numpy as np
 from numba import njit, prange
+
 from certus.domain.constants import TWO_PI
 from certus.physics.certus_opt_kernels import compute_RT_from_matrix
 from certus.physics.certus_tmm_core import compute_TMM_single_point_k0_exact
@@ -7,8 +8,9 @@ from certus.physics.certus_tmm_core import compute_TMM_single_point_k0_exact
 NON_MONOTONIC_MODE_ATTENUATE = 0
 NON_MONOTONIC_MODE_REJECT = 1
 from certus.physics.certus_substrate_absorption import K_MAX_LAYER_BACKSIDE, K_MAX_SUBSTRATE_BACKSIDE
-from .certus_strat_math import _seeded_noise_sample
+
 from .certus_strat_growth import simulate_growth_kernel
+from .certus_strat_math import _seeded_noise_sample
 
 # Number of reading noise points consumed per (run, layer) in `simulate_growth_kernel`:
 # NPTS_PREV for historical re-scan + NPTS for current layer scan.

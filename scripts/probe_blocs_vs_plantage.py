@@ -287,6 +287,7 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
     defaut casserait la comparaison avec les 751 strategies deja consignees.
     """
     import bench_examples as Bx
+
     from CERTUS_STRAT import CertusStratApp
 
     cfg, n_layers = COMPOSANTS[nom]

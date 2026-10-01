@@ -1,9 +1,13 @@
 from __future__ import annotations
-from certus.ui.certus_strat_mixins_ui import CertusWindowSpyMixin
+
 import logging
+
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QMainWindow
+
+from certus.ui.certus_strat_mixins_ui import CertusWindowSpyMixin
 from certus.ui.certus_ui import CertusTheme, set_certus_window_icon
+
 
 class PopOutWindow(CertusWindowSpyMixin, QMainWindow):
     closed_signal = pyqtSignal()

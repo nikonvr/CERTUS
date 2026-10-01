@@ -3,15 +3,16 @@
 import logging
 from pathlib import Path
 from typing import Any
+
 from pydantic import ValidationError
 from PyQt6.QtCore import QSettings
 from PyQt6.QtWidgets import QFileDialog
-import certus.ui.certus_io_ui as certus_io_ui
 
-from certus.utils.certus_dto import IndexSplineConfigDTO
+import certus.ui.certus_io_ui as certus_io_ui
 from certus.ui.certus_ui_utils import safe_ui_action
-from certus.utils.certus_qsettings import certus_settings
 from certus.utils.certus_atomic_io import atomic_open
+from certus.utils.certus_dto import IndexSplineConfigDTO
+from certus.utils.certus_qsettings import certus_settings
 
 
 class CertusAppConfigMixin:

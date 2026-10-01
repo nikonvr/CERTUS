@@ -23,8 +23,8 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -175,10 +175,10 @@ def interactive_controls(win) -> list:
     """Les controles visibles d'une fenetre qui se manipulent, sans les champs internes des spinbox et des combos."""
     from PyQt6.QtWidgets import (
         QAbstractSpinBox,
+        QCheckBox,
         QComboBox,
         QLineEdit,
         QPushButton,
-        QCheckBox,
         QRadioButton,
         QSlider,
         QToolButton,
@@ -437,8 +437,8 @@ def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: in
         QRadioButton,
         QScrollArea,
         QSplitter,
-        QTabWidget,
         QTableView,
+        QTabWidget,
         QToolButton,
     )
 

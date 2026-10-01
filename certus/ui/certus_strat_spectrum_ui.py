@@ -1,12 +1,16 @@
 from __future__ import annotations
-from certus.ui.certus_strat_mixins_ui import CertusWindowSpyMixin
+
 import logging
+
 import numpy as np
 import pyqtgraph as pg
-from certus.ui.certus_ui import CertusScientificPlot, CertusTheme, set_certus_window_icon
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QMainWindow, QVBoxLayout, QWidget
+
+from certus.ui.certus_strat_mixins_ui import CertusWindowSpyMixin
+from certus.ui.certus_ui import CertusScientificPlot, CertusTheme, set_certus_window_icon
 from certus.utils.certus_ux import Typography
+
 
 class InteractiveSpectrumWindow(CertusWindowSpyMixin, QMainWindow):
 

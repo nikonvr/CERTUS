@@ -53,9 +53,8 @@ from certus.core.certus_core import ensure_numba_cache_dir  # noqa: E402
 
 ensure_numba_cache_dir()
 
-from _artefact import avec_provenance  # noqa: E402
-
 import numpy as np  # noqa: E402
+from _artefact import avec_provenance  # noqa: E402
 
 OUT = ROOT / "reports" / "probe_anchor_noise.json"
 EXAMPLE = ROOT / "example" / "example_strat" / "JSON-strat-example.json"

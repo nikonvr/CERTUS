@@ -3,37 +3,49 @@
 # Extracted from certus.ui.certus_ui.py to solve 8 circular imports
 # =============================================================================
 
-from typing import Any
+import logging
+import re
+from typing import Any, ClassVar
 
-from certus.ui.certus_qt_widgets import QColor, QGraphicsDropShadowEffect
-from PyQt6.QtGui import QPalette, QFont
+from PyQt6.QtGui import QFont, QPalette
 from PyQt6.QtWidgets import QApplication
 
 # Step 3.9 - the brand palette is defined once, in the low layer. See the comment on
 # `BRAND_INDEX` below for why it lives there rather than here.
 from certus.core.certus_hub_config import (
     HUB_BRAND_DESIGN as _HUB_BRAND_DESIGN,
+)
+from certus.core.certus_hub_config import (
     HUB_BRAND_FIELD as _HUB_BRAND_FIELD,
+)
+from certus.core.certus_hub_config import (
     HUB_BRAND_INDEX as _HUB_BRAND_INDEX,
+)
+from certus.core.certus_hub_config import (
     HUB_BRAND_METAL as _HUB_BRAND_METAL,
+)
+from certus.core.certus_hub_config import (
     HUB_BRAND_RE as _HUB_BRAND_RE,
+)
+from certus.core.certus_hub_config import (
     HUB_BRAND_SMOOTHER as _HUB_BRAND_SMOOTHER,
+)
+from certus.core.certus_hub_config import (
     HUB_BRAND_STRAT as _HUB_BRAND_STRAT,
+)
+from certus.core.certus_hub_config import (
     HUB_BRAND_SUBSTRATE as _HUB_BRAND_SUBSTRATE,
 )
+
+# The WCAG contrast is computed once, in `certus_a11y` (pure Python, imports nothing of `certus`).
+from certus.ui.certus_a11y import contrast_ratio as _contrast_ratio
+from certus.ui.certus_qt_widgets import QColor, QGraphicsDropShadowEffect
 
 # Step 3.1 - the typographic scale already exists in the UX token layer, so it is READ
 # here rather than restated. `certus/utils/certus_ux.py` imports only `dataclasses` and
 # `typing` at module level, so this cannot cycle back; and `ui -> utils` is the allowed
 # direction (it is `utils -> ui` that CLAUDE.md counts as an inversion).
 from certus.utils.certus_ux import Typography as _Typography
-
-# The WCAG contrast is computed once, in `certus_a11y` (pure Python, imports nothing of `certus`).
-from certus.ui.certus_a11y import contrast_ratio as _contrast_ratio
-import logging
-import re
-from typing import ClassVar
-
 
 #: The two inks a solid button's label is drawn in: white, and the dark ink of the light theme. A label is
 #: whichever of the two reads better on its fill (`CertusTheme.label_on`), never a colour chosen for one theme.
@@ -730,8 +742,8 @@ class CertusTheme:
 
     @classmethod
     def apply_to_app(cls, app: QApplication, dark_mode: bool | None = None) -> None:
-        from certus.ui.certus_ui import update_global_plot_config
         from certus.core.certus_core import load_font_config, load_theme_config
+        from certus.ui.certus_ui import update_global_plot_config
         """Apply the theme to the QApplication.
 
         🔴 `dark_mode` defaults to the PERSISTED PREFERENCE, not to light. It used
@@ -800,8 +812,9 @@ class CertusTheme:
 
         # Audit theme palette accessibility against surface background
         try:
-            from certus.ui.certus_a11y import audit_palette
             import logging
+
+            from certus.ui.certus_a11y import audit_palette
             logger = logging.getLogger("certus_theme")
             # Only audit foreground/accent colors against surface (not background-vs-surface,
             # which is a background-on-background pair and WCAG AA 4.5:1 does not apply).

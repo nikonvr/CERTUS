@@ -77,6 +77,7 @@ def cache_dir(comp: str) -> Path:
 
 def mesurer(comp: str, a: int, b: int) -> dict:
     import bench_examples as Bx
+
     from CERTUS_STRAT import CertusStratApp
 
     cfg_rel, n_tot, _, _ = COMPOSANTS[comp]

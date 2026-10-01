@@ -1,15 +1,10 @@
 import logging
-
 from pathlib import Path
 
-
 import numpy as np
-
-
 import pandas as pd
 
-
-from certus.core.certus_core import SELLMEIER_COEFFS_BY_ID, SUBSTRATES, NUMERICAL_FAULT_EXCEPTIONS
+from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, SELLMEIER_COEFFS_BY_ID, SUBSTRATES
 from certus.utils.certus_db_helpers import MergedMaterialDict
 
 

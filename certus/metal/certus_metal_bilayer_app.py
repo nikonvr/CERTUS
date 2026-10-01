@@ -16,9 +16,8 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import scipy.optimize
 import pyqtgraph as pg
-
+import scipy.optimize
 from PyQt6.QtCore import QObject, Qt, QTimer, pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import (
     QApplication,
@@ -31,14 +30,16 @@ from PyQt6.QtWidgets import (
 )
 
 from certus.core.certus_core import (
-    get_float_dtype,
+    NUMERICAL_FAULT_EXCEPTIONS,
     certus_timestamp_display,
     certus_timestamp_file,
-    NUMERICAL_FAULT_EXCEPTIONS,
+    get_float_dtype,
 )
-
-from certus.utils.certus_data import OPENPYXL_AVAILABLE
-
+from certus.metal.certus_metal_bilayer_physics import (
+    _build_bilayer_bounds,
+    _validate_bilayer_spline_state,
+    global_objective_function,
+)
 from certus.metal.certus_metal_common import (
     DEFAULT_EM_MAX,
     DEFAULT_EM_MIN,
@@ -59,28 +60,13 @@ from certus.metal.certus_metal_common import (
     MetalOptimizationWorker,
     build_metal_startup_log_lines,
     build_metal_target_data,
+    elevate_spline_knots,
     normalize_metal_progress_payload,
     setup_beam_analysis_thread,
-    teardown_beam_thread,
     setup_common_metal_plots,
-    elevate_spline_knots,
+    teardown_beam_thread,
 )
-
 from certus.metal.pglobal_adapter import run_pglobal_optimization
-
-from certus_physics import (
-    calculate_reflectance_bilayer_vectorized,
-    compute_metal_bilayer_gradient_analytic,
-    get_nk_cauchy_simple,
-    get_nk_from_spline,
-    get_nk_si,
-)
-from certus.metal.certus_metal_bilayer_physics import (
-    _build_bilayer_bounds,
-    _validate_bilayer_spline_state,
-    global_objective_function,
-)
-
 from certus.ui.certus_overview_tab import CertusKpiBanner, build_synthesis_tab
 from certus.ui.certus_ui import (
     CertusCard,
@@ -91,7 +77,14 @@ from certus.ui.certus_ui import (
     get_export_config,
     show_toast,
 )
-
+from certus.utils.certus_data import OPENPYXL_AVAILABLE
+from certus_physics import (
+    calculate_reflectance_bilayer_vectorized,
+    compute_metal_bilayer_gradient_analytic,
+    get_nk_cauchy_simple,
+    get_nk_from_spline,
+    get_nk_si,
+)
 
 # =============================================================================
 

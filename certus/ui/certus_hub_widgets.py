@@ -1,8 +1,10 @@
-from PyQt6.QtWidgets import QFrame, QLabel, QVBoxLayout, QGraphicsDropShadowEffect
-from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QRect, pyqtSignal
+from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, QRect, Qt, pyqtSignal
+from PyQt6.QtGui import QColor
+from PyQt6.QtWidgets import QFrame, QGraphicsDropShadowEffect, QLabel, QVBoxLayout
+
 from certus.ui.certus_ui import CertusTheme
 from certus.utils.certus_ux import Typography
-from PyQt6.QtGui import QColor
+
 
 class ModuleBadge(QLabel):
     """Professional Badge (CERTUS 2026)"""

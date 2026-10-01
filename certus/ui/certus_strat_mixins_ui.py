@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 import logging
+
 
 class CertusWindowSpyMixin:
     def showEvent(self, event) -> None:

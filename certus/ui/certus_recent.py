@@ -30,11 +30,11 @@ also accepted (the registry is schema-less).
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import Final
-from certus.utils.certus_qsettings import certus_settings
-import logging
 
+from certus.utils.certus_qsettings import certus_settings
 
 # =============================================================================
 # Constants

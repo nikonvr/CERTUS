@@ -1,9 +1,11 @@
-from certus.core.certus_core import create_module_environment
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Event
+
 import scipy
 import scipy.optimize
+
+from certus.core.certus_core import create_module_environment
 
 _env = create_module_environment(__file__, 'CERTUS_INDEX_CORE')
 script_dir = _env['script_dir']
@@ -13,13 +15,15 @@ def _numba_set_threads_clamped(n: int) -> int:
     """Numba enforces set_num_threads in [1, 31] (otherwise ValueError, e.g. Python 3.14 / large machine)."""
     return max(1, min(31, int(n)))
 import logging
-import numpy as np
+from collections.abc import Callable
 from typing import Any
+
+import numpy as np
 
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
-    get_safe_worker_count,
     _get_cpu_count,
+    get_safe_worker_count,
 )
 from certus_physics import (
     PGlobalConfig,
@@ -27,7 +31,6 @@ from certus_physics import (
     SingleLinkageClusterer,
     clip_to_bounds,
 )
-from collections.abc import Callable
 
 
 class GradientSearcher:

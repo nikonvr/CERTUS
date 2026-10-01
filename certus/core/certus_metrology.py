@@ -21,7 +21,6 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
 try:
     from certus.core.certus_core import __version__ as CERTUS_VERSION
     from certus.core.certus_core import get_materials_db_hash, numba_cache_key

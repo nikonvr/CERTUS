@@ -1,13 +1,13 @@
 SMALL_EPSILON = 1e-12
-import numpy as np
-from scipy.interpolate import CubicSpline
-
-from numba import njit, prange
 from collections import OrderedDict
 from functools import lru_cache
+from typing import TYPE_CHECKING, ClassVar
+
+import numpy as np
+from numba import njit, prange
+from scipy.interpolate import CubicSpline
+
 from certus.domain.constants import PI
-from typing import ClassVar
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from threading import Lock

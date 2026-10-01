@@ -9,69 +9,62 @@ from certus.core.certus_core import configure_numba_env as _configure_numba_env
 
 _configure_numba_env()
 
-from certus.core.certus_core import __version__
-
-import sys
-import multiprocessing
 import ctypes
-from pathlib import Path
 import logging
+import multiprocessing
+import sys
+from pathlib import Path
 
-from certus.core.certus_core import create_module_environment
+from certus.core.certus_core import __version__, create_module_environment
 
 env = create_module_environment(__file__, "STRAT")
 script_dir = env["script_dir"]
 
-from certus.core.certus_core import setup_module_logging
-
-from certus.utils.certus_strat_context import (
-    _compute_local_extrema_symmetry_score,
-    _build_symmetry_bonus_map,
-    _compute_blocks_range_contractual,
-    _validate_strategy_blocks_contract,
-    _augment_solution_cost_with_sym,
-)
-from certus_physics import (
-    validate_wavelengths_batch,
-    update_run_states_kernel,
-)
-
-# Backward Compatibility Imports from submodules
-from certus.core.certus_strat_core import (
-    DYNAMICS_METRIC_NAME,
-    set_robust_material_db,
-    get_refractive_clues_vectorized,
-    PlotCache,
-    ThreadSafeCounter,
-    APP_CONTEXT,
-    _generate_elite_candidate_strategies,
-    _find_k_best_groupings_dp_sequential,
-    mine_strategies_for_block_count,
-    _extract_local_extrema_points,
-    _compute_theoretical_layer_profile,
-    _test_strategy_robustness_task,
-    run_final_simulation_block,
-)
-from certus.utils.certus_strat_service import (
-    extract_best_rmse,
-    _select_candidates_phase_a,
-    _validate_candidates_phase_a,
-)
-from certus.core.certus_strat_ranking import _select_best_strat_result
-
-from certus.workers.certus_strat_workers import (
-    _resolve_strat_indices_db_path,
-    _parallel_block_worker,
-)
-
-
-from certus.core.certus_core import CertusFacadeModule
 import certus.core.certus_strat_core as certus_strat_core
-import certus.workers.certus_strat_workers as certus_strat_workers
 import certus.ui.certus_strat_ui as certus_strat_ui
 import certus.utils.certus_strat_context as certus_strat_context
 import certus.utils.certus_strat_db as certus_strat_db
 import certus.utils.certus_strat_service as certus_strat_service
+import certus.workers.certus_strat_workers as certus_strat_workers
+from certus.core.certus_core import CertusFacadeModule, setup_module_logging
+
+# Backward Compatibility Imports from submodules
+from certus.core.certus_strat_core import (
+    APP_CONTEXT,
+    DYNAMICS_METRIC_NAME,
+    PlotCache,
+    ThreadSafeCounter,
+    _compute_theoretical_layer_profile,
+    _extract_local_extrema_points,
+    _find_k_best_groupings_dp_sequential,
+    _generate_elite_candidate_strategies,
+    _test_strategy_robustness_task,
+    get_refractive_clues_vectorized,
+    mine_strategies_for_block_count,
+    run_final_simulation_block,
+    set_robust_material_db,
+)
+from certus.core.certus_strat_ranking import _select_best_strat_result
+from certus.utils.certus_strat_context import (
+    _augment_solution_cost_with_sym,
+    _build_symmetry_bonus_map,
+    _compute_blocks_range_contractual,
+    _compute_local_extrema_symmetry_score,
+    _validate_strategy_blocks_contract,
+)
+from certus.utils.certus_strat_service import (
+    _select_candidates_phase_a,
+    _validate_candidates_phase_a,
+    extract_best_rmse,
+)
+from certus.workers.certus_strat_workers import (
+    _parallel_block_worker,
+    _resolve_strat_indices_db_path,
+)
+from certus_physics import (
+    update_run_states_kernel,
+    validate_wavelengths_batch,
+)
 
 sys.modules[__name__] = CertusFacadeModule(__name__, [
     certus_strat_core,
@@ -90,9 +83,10 @@ if __name__ == "__main__":
 
     from PyQt6.QtCore import Qt, QTimer
     from PyQt6.QtWidgets import QApplication
+
+    from certus.ui.certus_strat_ui import CertusStratApp
     from certus.ui.certus_ui import init_certus_app
     from certus.utils.certus_strat_db import RobustMaterialDatabase
-    from certus.ui.certus_strat_ui import CertusStratApp
 
     # High DPI scaling (Must be set BEFORE creating QApplication)
     if hasattr(Qt, "HighDpiScaleFactorRoundingPolicy"):

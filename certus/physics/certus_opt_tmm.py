@@ -1,21 +1,23 @@
 SMALL_EPSILON = 1e-12
+from dataclasses import dataclass
+
 import numpy as np
 from numba import njit, prange
+
 from certus.domain.constants import (
-    WL_DECIMALS,
-    TWO_PI,
-    N_SUPERSTRATE,
-    get_complex_dtype,
     FROSTED_GLASS_CAUCHY_A,
     FROSTED_GLASS_CAUCHY_B,
-)
-from dataclasses import dataclass
-from certus.physics.certus_substrate_absorption import (
-    DEFAULT_SUBSTRATE_THICKNESS_NM,
-    substrate_internal_transmittance,
+    N_SUPERSTRATE,
+    TWO_PI,
+    WL_DECIMALS,
+    get_complex_dtype,
 )
 from certus.physics.certus_optical_models import (
     get_nk_cauchy_wrapper,
+)
+from certus.physics.certus_substrate_absorption import (
+    DEFAULT_SUBSTRATE_THICKNESS_NM,
+    substrate_internal_transmittance,
 )
 
 

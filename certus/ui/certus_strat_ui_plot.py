@@ -1,26 +1,30 @@
 from __future__ import annotations
+
 import logging
 import queue
 import time
 from typing import Any
+
 import numpy as np
-from PyQt6.QtCore import QThread, Qt, pyqtSlot
+from PyQt6.QtCore import Qt, QThread, pyqtSlot
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QMessageBox
+
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
-from certus.workers.certus_strat_workers import PlotRenderWorker
+from certus.ui.certus_strat_heatmap_ui import InteractiveHeatmapWindow
+from certus.ui.certus_strat_indices_ui import InteractiveIndicesWindow
+from certus.ui.certus_strat_performance_ui import StrategySpectralPerformanceWindow
+from certus.ui.certus_strat_plots_ui import UniversalPlotWindow
+from certus.ui.certus_strat_spectrum_ui import InteractiveSpectrumWindow
+from certus.ui.certus_strat_table_ui import StrategiesTableWindow
+from certus.ui.certus_strat_thickness_ui import TransmissionVsThicknessWindow
 from certus.utils.certus_strat_service import (
     calculate_nominal_properties,
     rebuild_visualization_context,
     simulate_detailed_growth_for_ui,
 )
-from certus.ui.certus_strat_plots_ui import UniversalPlotWindow
-from certus.ui.certus_strat_heatmap_ui import InteractiveHeatmapWindow
-from certus.ui.certus_strat_table_ui import StrategiesTableWindow
-from certus.ui.certus_strat_indices_ui import InteractiveIndicesWindow
-from certus.ui.certus_strat_thickness_ui import TransmissionVsThicknessWindow
-from certus.ui.certus_strat_spectrum_ui import InteractiveSpectrumWindow
-from certus.ui.certus_strat_performance_ui import StrategySpectralPerformanceWindow
+from certus.workers.certus_strat_workers import PlotRenderWorker
+
 
 class CertusStratPlotMixin:
     def on_plot_ready(self, fig: Any, fig_type: str) -> None:

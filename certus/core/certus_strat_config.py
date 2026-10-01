@@ -2,53 +2,38 @@
 # CERTUS STRAT - Core numerical and physics logic
 # =============================================================================
 import concurrent.futures
-
-
-
-
-
 import logging
-
-
 import threading
-
-
-
-
-from typing import Any
 from dataclasses import dataclass
-from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
+from typing import Any
 
 import numpy as np
 
-
-
-
-
-
-
-
 # Import access config
-
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
 )
-
 from certus.utils.certus_data import (
     PerformanceMonitor,
 )
+from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
 
+# Import context system (replaces global variables)
+from certus.utils.certus_strat_context import (
+    StratContext,
+    get_context,
+)
 from certus_physics import (  # STRAT-specific kernels (previously imported from certus.core._certus_physics_impl)
     K_MAX_LAYER_BACKSIDE,
     K_MAX_SUBSTRATE_BACKSIDE,
-    MaterialDatabase,
     NON_MONOTONIC_MODE_ATTENUATE,
     NON_MONOTONIC_MODE_REJECT,
+    MaterialDatabase,
     arange_inclusive,
     calculate_detailed_growth,
+    calculate_extrema_distances,
     calculate_RT_batch_kernel,
     calculate_RT_vectorized_real_HL,
-    calculate_extrema_distances,
     compute_batch_rmse,
     compute_T_front_at_layer,
     find_nucleation_adaptive_kernel,
@@ -57,15 +42,8 @@ from certus_physics import (  # STRAT-specific kernels (previously imported from
     simulate_growth_kernel,
     simulate_stack_robustness_batch,
     update_run_states_kernel,
-    validate_wavelengths_batch,
     validate_backside_real_clues,
-)
-
-# Import context system (replaces global variables)
-
-from certus.utils.certus_strat_context import (
-    StratContext,
-    get_context,
+    validate_wavelengths_batch,
 )
 
 # Robust db clues (fixed xlsx)
@@ -77,17 +55,17 @@ from certus.utils.certus_strat_context import (
 _validate_phase_a_bridge_lock = threading.Lock()
 
 from certus.core.certus_strat_utils import (
-    _IdxWrapper,
     APP_CONTEXT,
-    SYM_DEFAULT_EXTREMA_WINDOW_OT,
     SYM_DEFAULT_CONTINUITY_WEIGHT,
-    SYM_DEFAULT_WEIGHT,
+    SYM_DEFAULT_EXTREMA_WINDOW_OT,
     SYM_DEFAULT_SAME_WL_BONUS,
     SYM_DEFAULT_SCORING_MODE,
     SYM_DEFAULT_TIE_EPS_ABS,
     SYM_DEFAULT_TIE_EPS_REL,
-    get_refractive_index,
+    SYM_DEFAULT_WEIGHT,
+    _IdxWrapper,
     get_refractive_clues_vectorized,
+    get_refractive_index,
 )
 
 # Global scientific display configuration

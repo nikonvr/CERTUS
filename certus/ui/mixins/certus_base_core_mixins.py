@@ -7,22 +7,21 @@ cluttering the main application logic.
 """
 
 import functools
-from typing import Any
+from typing import Any, ClassVar
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QApplication
 
+import certus.ui.certus_io_ui as certus_io_ui
+from certus.core.certus_core import load_theme_config, save_theme_config
 from certus.ui.certus_theme import CertusTheme, get_standard_stylesheet
 from certus.ui.certus_ui_utils import (
     claim_shortcut_for_action,
     show_toast,
     update_global_plot_config,
 )
-from certus.core.certus_core import load_theme_config, save_theme_config
-import certus.ui.certus_io_ui as certus_io_ui
 from certus.utils.certus_qsettings import certus_settings
-from typing import ClassVar
 
 
 class CertusZoomMixin:
@@ -774,6 +773,7 @@ class CertusRecentsMixin:
             return
         try:
             from PyQt6.QtWidgets import QInputDialog
+
             from certus.ui.certus_recent import short_label
 
             items = [short_label(p, max_length=80) for p in paths]

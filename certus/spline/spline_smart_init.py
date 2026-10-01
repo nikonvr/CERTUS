@@ -8,46 +8,29 @@
 
 from __future__ import annotations
 
-
 import logging
-
-
-
-
 from typing import Any
 
-
 import numpy as np
-
-
 from scipy.optimize import minimize_scalar
 
-
-from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, K_MAX_LIMIT, N_MAX_LIMIT, N_MIN_LIMIT
-
-
-from certus.utils.certus_index_utils import _ratio_theoretical_from_nk, _transmittance_absolute_from_nk
-
-
-from certus_physics import calculate_bare_substrate_RT
-
-
+from certus.core.certus_core import K_MAX_LIMIT, N_MAX_LIMIT, N_MIN_LIMIT, NUMERICAL_FAULT_EXCEPTIONS
 from certus.spline.certus_index_spline_core import (
+    L_LNK_MIN_PHYS,
     DataType,
     SplineOptConfig,
-    L_LNK_MIN_PHYS,
     _to_fraction_T,
 )
-
-
 from certus.spline.spline_objective import (
     SplinePWLObjective,
+    _spline_objective_lam_mask,
     nk_from_x_pwlnk,
     physical_nodes_to_x_slice_n,
     spectral_rmse_weights,
     x_slice_n_to_physical_nodes,
-    _spline_objective_lam_mask,
 )
+from certus.utils.certus_index_utils import _ratio_theoretical_from_nk, _transmittance_absolute_from_nk
+from certus_physics import calculate_bare_substrate_RT
 
 
 def _build_smart_preview_grids(cfg: SplineOptConfig) -> dict[str, Any] | None:
@@ -1037,7 +1020,6 @@ def tune_d_and_rmse_for_manual_material_preset(
     """
 
     from certus.spline.certus_index_spline_core import rmse_at_spline_stage_x0_init
-
     from certus.spline.spline_presets import project_manual_material_preset
 
     sk_t = np.asarray(target_sigma_knots, dtype=np.float64).ravel().copy()

@@ -6,43 +6,37 @@
 
 from __future__ import annotations
 
-
 import logging
-
 import time
-
 import traceback
-
 from dataclasses import dataclass, field
 from typing import Any
 
-
 import numpy as np
-
 from PyQt6.QtCore import QThread, pyqtSignal
-
 from PyQt6.QtWidgets import QDialog, QVBoxLayout
 
-
-from certus.core.certus_core import CFG, NUMERICAL_FAULT_EXCEPTIONS, ensure_numpy_array, get_complex_dtype, get_float_dtype
-from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
+from certus.core.certus_core import (
+    CFG,
+    NUMERICAL_FAULT_EXCEPTIONS,
+    ensure_numpy_array,
+    get_complex_dtype,
+    get_float_dtype,
+)
 from certus.physics.certus_inputs import is_s_polarization
-
-from certus_physics import NKCache, calc_rmse
-
-from certus_physics import calc_spectrum_front as calc_spectrum_front_numba
-
+from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
+from certus.workers.certus_base_workers import WorkerSignals
 from certus_physics import (
+    NKCache,
+    calc_rmse,
+    calc_spectrum_front_wrapper,
+    calc_spectrum_full_exact_wrapper,
     calc_spectrum_full_oblique_exact,
     calc_spectrum_oblique_backside_vectorized,
     calc_spectrum_oblique_vectorized,
     get_nk_cauchy,
-    calc_spectrum_front_wrapper,
-    calc_spectrum_full_exact_wrapper,
 )
-
-from certus.workers.certus_base_workers import WorkerSignals
-
+from certus_physics import calc_spectrum_front as calc_spectrum_front_numba
 
 calc_spectrum_front = calc_spectrum_front_wrapper
 
@@ -122,7 +116,9 @@ class DetachedTableWindow(QDialog):
 
         super().__init__(parent)
 
-        from certus.ui.certus_ui import set_certus_window_icon  # a helper of the interface: loaded when the window opens
+        from certus.ui.certus_ui import (
+            set_certus_window_icon,  # a helper of the interface: loaded when the window opens
+        )
 
         set_certus_window_icon(self)
 

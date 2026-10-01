@@ -7,9 +7,9 @@ and generate a Markdown report that can be used as an offline audit artifact.
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from collections.abc import Iterable
 from typing import Any
 
 

@@ -155,227 +155,81 @@ __all__ = [
 
 import logging
 
-
 # =============================================================================
-
-
 # CRITICAL CONVENTION - DO NOT INVERT - ABSOLUTE LAW
-
-
 # =============================================================================
-
-
 # LAYER 1 = the layer closest to the substrate.
-
-
 # In all arrays (thicknesses, n_layers, etc.):
-
-
 #   index 0 = layer 1 = layer adjacent to the substrate.
-
-
 #   index N-1 = last layer = incident side (air).
-
-
 # All TMM kernels (compute_TMM_generic, compute_TMM_single_point_k0, etc.)
-
-
 # follow this convention. Any modification must preserve it.
-
-
 #
-
-
 # ╔══════════════════════════════════════════════════════════════════════╗
-
-
 # ║  COMPLEX INDEX: n̂ = n - ik  (k >= 0 for absorption)                ║
-
-
 # ║  Python: complex(n, -k)  ->  NEGATIVE imaginary part               ║
-
-
 # ║  FORBIDDEN: n + ik (positive imaginary part = unphysical gain)     ║
-
-
 # ║  With n+ik: R+T > 1, results are WRONG, physically impossible.     ║
-
-
 # ║  NEVER MODIFY THIS CONVENTION.                                     ║
-
-
 # ╚══════════════════════════════════════════════════════════════════════╝
-
-
 # =============================================================================
-
-
 # PHYSICS MANIFESTO - READ BEFORE MODIFYING
-
-
 # =============================================================================
-
-
 # 1. STANDARD MODE (Transparent Substrate):
-
-
 #    - Measurements ALWAYS include the substrate backside reflection.
-
-
 #    - R_measured = R_front + (T_front * T_prime * R_back) / (1 - R_prime * R_back) [Incoherent]
-
-
 #    - T_measured = (T_front * T_back) / (1 - R_prime * R_back)
-
-
 # - Note: R_prime = reflectance seen from substrate side, NOT R_front!
-
-
 #    - Kernels: calculate_bare_substrate_RT, calculate_single_interface_R, calculate_RT_single_layer_backside_array
-
-
 #
-
-
 # 2. FROSTED/INFINITE MODE (Frosted Glass / Opaque):
-
-
 #    - Backside is scattering/absorbing. No specular reflection returns.
-
-
 #    - R_measured = R_front (Single Interface).
-
-
 #    - Kernels: calculate_single_interface_R, calculate_single_interface_R
-
-
 #
-
-
 # 3. OPTICAL MONITORING (STRAT):
-
-
 #    - "Real World" Signal (calculate_detailed_growth): INCLUDES Backside.
-
-
 #    - "Heuristic" Simulation (simulate_growth_kernel): EXCLUDES Backside (Speed/Stability).
-
-
 #
-
-
 # 4. OPTIMIZATION (DESIGN):
-
-
 #    - Normal Incidence: Uses cost_numba_fast (Backside aware).
-
-
 #    - Oblique Incidence: Uses Front-Only (Backside usually spatially separated).
-
-
 #
-
-
 # DO NOT VIOLATE THESE LAWS. UNINTENDED REGRESSIONS WILL INVALIDATE CALCULATIONS.
-
-
 # =============================================================================
-
-
 #
-
-
 # =============================================================================
-
-
 # BACKSIDE VARIABLE NAMING CONVENTION - CRITICAL FOR CORRECT PHYSICS
-
-
 # =============================================================================
-
-
 # The incoherent cavity formulas require careful distinction between:
-
-
 #
-
-
 # FRONT-SIDE QUANTITIES (Air -> Stack -> Substrate):
-
-
 #   R_front (Rf): Reflectance seen from incident medium (Air)
-
-
 #   T_front (Tf): Transmittance into substrate
-
-
 #
-
-
 # BACK-SIDE QUANTITIES (Substrate -> Stack -> Air):
-
-
 #   R_prime (Rp): Reflectance seen from substrate looking back at stack
-
-
 #                 This is NOT the same as R_front in general!
-
-
 #   T_prime (Tp): Transmittance from substrate back to air
-
-
 #                 For lossless stacks: Tp ~ Tf (reciprocity)
-
-
 #
-
-
 # SUBSTRATE INTERFACE (Sub | Air):
-
-
 #   R_sub, R_back, Rb: Fresnel reflectance at substrate/air interface
-
-
 #   T_sub, T_back, Tb: Fresnel transmittance (= 1 - Rb for transparent)
-
-
 #
-
-
 # CORRECT FORMULA FOR TOTAL TRANSMISSION:
-
-
 #   T_total = (Tf * Tb) / (1 - R_prime * Rb)
-
-
 #             ^^^^^^^^      ^^^^^^^
-
-
 #             Forward T     Cavity uses R_prime NOT R_front!
-
-
 #
-
-
 # WRONG (but sometimes seen as approximation):
-
-
 #   T_total = (Tf * Tb) / (1 - Rf * Rb)  ← Only valid if Rf ~ R_prime
-
-
 #
-
-
 # In calculate_detailed_growth(), R_prime is computed correctly via
-
-
 # the reverse matrix product (R-matrix for Sub->Air direction).
-
-
 # =============================================================================
-
-
 import numpy as np
+
 from certus.utils.certus_db_helpers import (
     MergedMaterialDict,
 )
@@ -385,32 +239,29 @@ _SubProcessMaterialDB = MergedMaterialDict
 
 
 
-from pathlib import Path
+import importlib
 
-
+# =============================================================================
+# DATA STRUCTURES - Imported from structures module (Single Source of Truth)
+#
+# Why dynamic import + fallback paths:
+#   certus_physics/__init__.py loads this module (_certus_physics_impl); a direct import
+#   "from certus_physics.structures import ..." would create a circular dependency
+#   (init -> impl -> structures via package). We therefore load the submodule
+#   `certus_physics.structures` via importlib, with fallback on file paths for
+#   PyInstaller (_MEIPASS, _internal, exe dir).
+# =============================================================================
+# Import structures submodule - handle both dev and frozen (PyInstaller) modes
+import importlib.util
+import sys
 from collections import OrderedDict
-
-
-
-
+from pathlib import Path
 from threading import RLock
-
-
 from typing import Any, ClassVar
-
 
 from numba import njit, prange
 
-
-
-
-
-
-
-
 # Import from Core
-
-
 from certus.core.certus_core import (
     FROSTED_GLASS_CAUCHY_A,
     FROSTED_GLASS_CAUCHY_B,
@@ -419,49 +270,6 @@ from certus.core.certus_core import (
     TWO_PI,
     get_complex_dtype,
 )
-
-
-# =============================================================================
-
-
-# DATA STRUCTURES - Imported from structures module (Single Source of Truth)
-
-
-#
-
-
-# Why dynamic import + fallback paths:
-
-
-#   certus_physics/__init__.py loads this module (_certus_physics_impl); a direct import
-
-
-#   "from certus_physics.structures import ..." would create a circular dependency
-
-
-#   (init -> impl -> structures via package). We therefore load the submodule
-
-
-#   `certus_physics.structures` via importlib, with fallback on file paths for
-
-
-#   PyInstaller (_MEIPASS, _internal, exe dir).
-
-
-# =============================================================================
-
-
-# Import structures submodule - handle both dev and frozen (PyInstaller) modes
-
-
-import importlib.util
-
-
-import sys
-
-
-import importlib
-
 
 # Try importing as module first (works in both dev and frozen mode if PyInstaller included it)
 
@@ -673,81 +481,73 @@ def get_n_frosted_glass_array(wavelengths_nm: np.ndarray) -> np.ndarray:
 
 # =========================================================================================
 
-from certus.physics.certus_optical_models import (
-    epsilon1_TL_analytic,
-    epsilon2_TLU_array,
-    epsilon_to_nk,
-    get_nk_cauchy,
-    get_nk_cauchy_wrapper,
-    get_nk_cauchy_simple,
-    sellmeier_n_array,
-)
-
-
-from certus.physics.certus_colorimetry import lab_to_rgb, xyz_from_spectrum, xyz_to_lab
-
 from certus.physics.certus_colorimetry import (
     CIE_LAMBDA,
     D65_CIE_X,
     D65_CIE_Y,
     D65_CIE_Z,
     K_COLOR,
+    _gamma_correct_scalar,
     _lab_f,
     _lab_f_inv,
-    _gamma_correct_scalar,
     _xyz_from_spectrum_kernel,
     delta_e_2000,
+    lab_to_rgb,
+    xyz_from_spectrum,
+    xyz_to_lab,
 )
-
-from certus.physics.certus_tmm_core import (
-    calc_spectrum_full_oblique_exact,
-    calc_spectrum_oblique_backside_vectorized,
-    calc_spectrum_oblique_vectorized,
-    calculate_RT_single_layer_backside_array,
-    calculate_RT_vectorized_real_HL,
-    calculate_bare_substrate_RT,
-    calculate_single_interface_R,
-    oblique_front_char_matrix_single,
-    oblique_front_rt_from_char_matrix_nsub_real,
-)
-
-from certus.physics.certus_tmm_core import (
-    _calc_spectrum_oblique_parallel,
-)
-from certus.physics.certus_tmm_core import _calculate_RT_absorbing_sub_single
-from certus.physics.certus_opt_tmm import Material
 from certus.physics.certus_opt_kernels import (
     MaterialDatabase,
     PGlobalOptimizer,
     SingleLinkageClusterer,
+    _compute_epsilon1_gradient_kernel,
+    _compute_epsilon2_gradient_kernel,
+    _compute_gradient_analytic_kernel,
+    _compute_index_cost_gradient_kernel,
+    _compute_metal_tmm_gradient_kernel,
+    _compute_oblique_rt_and_grads_kernel,
+    _compute_single_layer_sensitivity_array,
+    _compute_single_layer_sensitivity_kernel,
+    _compute_tlu_derivatives_kernel,
     arange_inclusive,
-    calculate_RTRback_incoherent_vectorized,
+    calculate_reflectance_bilayer_vectorized,
     calculate_reflection_infinite_substrate_single,
+    calculate_RTRback_incoherent_vectorized,
     clip_to_bounds,
-    compute_TMM_generic,
     compute_gradient_all_layers_analytic,
+    compute_metal_bilayer_gradient_analytic,
     compute_mse_vectorized,
     compute_oblique_gradient_contrib_analytic,
     compute_oblique_rt_and_grads_analytic,
+    compute_TMM_generic,
     cost_numba_fast,
     make_cost_function,
     prepare_targets_vectorized,
     trim_worst_only,
-    calculate_reflectance_bilayer_vectorized,
-    compute_metal_bilayer_gradient_analytic,
 )
-
-from certus.physics.certus_opt_kernels import (
-    _compute_epsilon2_gradient_kernel,
-    _compute_epsilon1_gradient_kernel,
-    _compute_tlu_derivatives_kernel,
-    _compute_single_layer_sensitivity_array,
-    _compute_index_cost_gradient_kernel,
-    _compute_gradient_analytic_kernel,
-    _compute_oblique_rt_and_grads_kernel,
-    _compute_metal_tmm_gradient_kernel,
+from certus.physics.certus_opt_tmm import Material
+from certus.physics.certus_optical_models import (
+    epsilon1_TL_analytic,
+    epsilon2_TLU_array,
+    epsilon_to_nk,
+    get_nk_cauchy,
+    get_nk_cauchy_simple,
+    get_nk_cauchy_wrapper,
+    sellmeier_n_array,
 )
-from certus.physics.certus_opt_kernels import _compute_single_layer_sensitivity_kernel
+from certus.physics.certus_tmm_core import (
+    _calc_spectrum_oblique_parallel,
+    _calculate_RT_absorbing_sub_single,
+    calc_spectrum_full_oblique_exact,
+    calc_spectrum_oblique_backside_vectorized,
+    calc_spectrum_oblique_vectorized,
+    calculate_bare_substrate_RT,
+    calculate_RT_single_layer_backside_array,
+    calculate_RT_vectorized_real_HL,
+    calculate_single_interface_R,
+    oblique_front_char_matrix_single,
+    oblique_front_rt_from_char_matrix_nsub_real,
+)
 
 # MATERIAL DATABASE UTILS
 
@@ -897,39 +697,35 @@ def get_refractive_clues_vectorized(material_id: Any, wavelengths: np.ndarray, d
 from certus.physics.certus_strat_kernels import (
     CRASH_LEVEL_UNREACHABLE,
     CRASH_NON_MONOTONIC,
-    D_SCAN_VAL,
-    MAX_LOOKBACK_VAL,
-    PHOTOMETRIC_CURVATURE_AMP,
-    SLIT_PROFILE_NODES,
     CRASH_SENTINEL_MIN,
     CRASH_SENTINEL_UNIT,
     CRASH_TP_MISCOUNT,
+    D_SCAN_VAL,
     K_MAX_LAYER_BACKSIDE,
     K_MAX_SUBSTRATE_BACKSIDE,
+    MAX_LOOKBACK_VAL,
     NON_MONOTONIC_MODE_ATTENUATE,
     NON_MONOTONIC_MODE_REJECT,
+    PHOTOMETRIC_CURVATURE_AMP,
+    SLIT_PROFILE_NODES,
+    _calculate_RT_HL_single_point,
+    _compute_valid_blocks_kernel,
+    _dp_kernel,
     calculate_detailed_growth,
-    detect_turning_points,
-    next_turning_point_after,
     check_extrema_proximity,
+    compute_batch_rmse,
+    compute_dT_dd_kernel,
+    compute_dynamics_kernel,
     compute_T_front_at_layer,
     compute_T_front_profile,
-    compute_dT_dd_kernel,
-    compute_batch_rmse,
     corridor_wl_range,
-    compute_dynamics_kernel,
+    detect_turning_points,
+    next_turning_point_after,
     simulate_growth_kernel,
     simulate_stack_robustness_batch,
     validate_backside_real_clues,
     validate_wavelengths_batch,
 )
-
-from certus.physics.certus_strat_kernels import (
-    _compute_valid_blocks_kernel,
-    _dp_kernel,
-    _calculate_RT_HL_single_point,
-)
-
 
 # EXPORTS
 
@@ -1563,34 +1359,34 @@ def warmup_physics(silent: bool = True) -> None:
 
 
 # --- AUTO-PATCHED IMPORTS ---
+from certus.physics.certus_opt_needle import needle_scan_cached
 from certus.physics.certus_optical_models import SplineBasisCache, get_nk_from_spline
 from certus.physics.certus_optimizers import compute_critical_distance, fast_clustering_kernel
-from certus.physics.certus_opt_needle import needle_scan_cached
-from certus.physics.certus_strat_batch import precompute_matrix_cache_kernel, calculate_RT_batch_kernel
+from certus.physics.certus_strat_batch import calculate_RT_batch_kernel, precompute_matrix_cache_kernel
 from certus.physics.certus_strat_growth import prepare_dynamics_data_kernel, update_run_states_kernel
 from certus.physics.certus_strat_math import (
-    calculate_extrema_distances,
-    check_extrema_proximity_batch,
-    calculate_level_margins_to_extrema,
-    check_level_margin_batch,
     MARGIN_NONE,
+    calculate_extrema_distances,
+    calculate_level_margins_to_extrema,
+    check_extrema_proximity_batch,
+    check_level_margin_batch,
 )
-from certus.physics.certus_strat_nucleation import rank_nucleation_candidates_kernel, find_nucleation_adaptive_kernel
+from certus.physics.certus_strat_nucleation import find_nucleation_adaptive_kernel, rank_nucleation_candidates_kernel
+from certus.physics.certus_tmm_matrix import (
+    calc_spectrum_front_wrapper,
+    calc_spectrum_full_exact_wrapper,
+    calc_spectrum_full_wrapper,
+)
+from certus.physics.certus_tmm_single_layer import (
+    batch_single_layer_RT_mse,
+    batch_single_layer_T_mse,
+    calculate_reflection_array,
+    calculate_RT_single_layer_absorbing_substrate_array,
+)
 from certus.physics.certus_tmm_substrate import (
     calculate_bare_substrate_R,
     calculate_bare_substrate_R_absorbing,
     calculate_bare_substrate_T_absorbing,
-)
-from certus.physics.certus_tmm_single_layer import (
-    calculate_reflection_array,
-    batch_single_layer_T_mse,
-    batch_single_layer_RT_mse,
-    calculate_RT_single_layer_absorbing_substrate_array,
-)
-from certus.physics.certus_tmm_matrix import (
-    calc_spectrum_front_wrapper,
-    calc_spectrum_full_wrapper,
-    calc_spectrum_full_exact_wrapper,
 )
 from certus.physics.gradient_oblique import compute_oblique_backside_bundle_analytic
 
@@ -1626,25 +1422,25 @@ __all__.extend(
     ]
 )
 
+from certus.physics.certus_opt_tmm import compute_RT_from_matrix
+from certus.physics.certus_tmm_backside import _apply_exact_backside_generic, apply_exact_backside_combination
 from certus.physics.certus_tmm_matrix import (
-    compute_TMM_single_point_k0_exact,
-    compute_complex_phase_components,
-    compute_TMM_single_point_k0,
-    calculate_RT_with_backside_fused,
-    calculate_RT_vectorized_real,
-    calculate_RT_no_backside,
     calc_spectrum_front,
     calc_spectrum_full,
     calc_spectrum_full_exact,
+    calculate_RT_no_backside,
+    calculate_RT_vectorized_real,
+    calculate_RT_with_backside_fused,
+    compute_complex_phase_components,
+    compute_TMM_single_point_k0,
+    compute_TMM_single_point_k0_exact,
 )
 from certus.physics.certus_tmm_single_layer import (
-    calculate_RT_single_layer_single,
     calculate_reflection_single,
-    calculate_transmission_single,
+    calculate_RT_single_layer_single,
     calculate_transmission_array,
+    calculate_transmission_single,
 )
-from certus.physics.certus_tmm_backside import _apply_exact_backside_generic, apply_exact_backside_combination
-from certus.physics.certus_opt_tmm import compute_RT_from_matrix
 
 __all__.extend(
     [

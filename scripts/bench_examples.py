@@ -592,8 +592,8 @@ def run_index_spline():
 def run_re():
     qapp()
     import certus_physics
-    from CERTUS_RE import CertusREApp
     from certus.workers.certus_re_workers import REWorker
+    from CERTUS_RE import CertusREApp
 
     certus_physics.warmup_physics()
     patch_nk()
@@ -669,9 +669,10 @@ def run_field():
 
 def run_design():
     qapp()
+    from PyQt6.QtCore import QEventLoop, QTimer
+
     import certus_physics
     from CERTUS_DESIGN import CertusDesignApp
-    from PyQt6.QtCore import QEventLoop, QTimer
 
     certus_physics.warmup_physics()
     patch_nk()

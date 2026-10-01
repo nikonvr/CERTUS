@@ -33,7 +33,6 @@ from __future__ import annotations
 
 from typing import Final
 
-
 MAX_STACK_SIZE: Final[int] = 4
 DEFAULT_DURATION_MS: Final[int] = 3000
 MARGIN_PX: Final[int] = 18
@@ -341,7 +340,7 @@ def _build_stack_class():
                     target_pos = QPoint(max(MARGIN_PX, x), max(MARGIN_PX, y))
                     
                     if getattr(toast, "_init_positioned", False):
-                        from PyQt6.QtCore import QPropertyAnimation, QEasingCurve
+                        from PyQt6.QtCore import QEasingCurve, QPropertyAnimation
                         if hasattr(toast, "_pos_anim") and toast._pos_anim is not None:
                             toast._pos_anim.stop()
                         

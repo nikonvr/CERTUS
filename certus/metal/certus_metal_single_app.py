@@ -14,9 +14,8 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import scipy.optimize
 import pyqtgraph as pg
-
+import scipy.optimize
 from PyQt6.QtCore import QObject, Qt, QTimer, pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import (
     QApplication,
@@ -27,27 +26,16 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from certus.core._certus_physics_impl import get_n_substrate_array_by_id
 from certus.core.certus_core import (
+    NUMERICAL_FAULT_EXCEPTIONS,
     SUBSTRATE_CHOICES,
     canonicalize_substrate_label,
-    get_float_dtype,
-    get_resource_path,
     certus_timestamp_display,
     certus_timestamp_file,
-    NUMERICAL_FAULT_EXCEPTIONS,
+    get_float_dtype,
+    get_resource_path,
 )
-from certus.core._certus_physics_impl import get_n_substrate_array_by_id
-
-from certus.utils.certus_data import (
-    OPENPYXL_AVAILABLE,
-    to_excel_robust,
-)
-
-from certus.utils.errors import (
-    get_error_message,
-    show_error,
-)
-
 from certus.metal.certus_metal_common import (
     DEFAULT_EM_MAX,
     DEFAULT_EM_MIN,
@@ -68,17 +56,11 @@ from certus.metal.certus_metal_common import (
     build_metal_progress_status_text,
     build_metal_startup_log_lines,
     build_metal_target_data,
+    elevate_spline_knots,
     normalize_metal_progress_payload,
     setup_beam_analysis_thread,
-    teardown_beam_thread,
     setup_common_metal_plots,
-    elevate_spline_knots,
-)
-from certus.metal.pglobal_adapter import run_pglobal_optimization
-
-from certus_physics import (
-    calculate_RTRback_incoherent_vectorized,
-    get_nk_from_spline,
+    teardown_beam_thread,
 )
 from certus.metal.certus_metal_single_physics import (
     _build_single_bounds,
@@ -87,21 +69,31 @@ from certus.metal.certus_metal_single_physics import (
     gradient_function_fixed_eM,
     objective_function_fixed_eM,
 )
-
+from certus.metal.pglobal_adapter import run_pglobal_optimization
 from certus.ui.certus_overview_tab import CertusKpiBanner, build_synthesis_tab
 from certus.ui.certus_ui import (
+    DATA_FILES_FILTER_EXTENDED,
     CertusCard,
     CertusScientificPlot,
     CertusTheme,
-    DATA_FILES_FILTER_EXTENDED,
     FlashyCard,
     get_export_config,
     open_data_file_and_read,
     show_toast,
 )
-
+from certus.utils.certus_data import (
+    OPENPYXL_AVAILABLE,
+    to_excel_robust,
+)
 from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
-
+from certus.utils.errors import (
+    get_error_message,
+    show_error,
+)
+from certus_physics import (
+    calculate_RTRback_incoherent_vectorized,
+    get_nk_from_spline,
+)
 
 # =============================================================================
 

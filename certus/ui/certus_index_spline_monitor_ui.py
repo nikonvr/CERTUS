@@ -1,11 +1,15 @@
 from __future__ import annotations
+
 from typing import Any
+
 import numpy as np
 from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QApplication, QComboBox, QDialog, QHBoxLayout, QLabel, QMessageBox, QVBoxLayout, QWidget
-from certus.ui.certus_ui import CertusScientificPlot, CertusTheme, apply_certus_theme, create_styled_button
+
 from certus.spline.spline_visual_utils import live_monitor_nk_clipboard_tsv_2nm as _live_monitor_nk_clipboard_tsv_2nm
+from certus.ui.certus_ui import CertusScientificPlot, CertusTheme, apply_certus_theme, create_styled_button
 from certus.utils.certus_ux import Typography
+
 
 def _apply_fixed_log_k_axis(plot_w: Any | None) -> None:
     from certus.ui.certus_index_spline_common import _apply_fixed_log_k_axis as impl

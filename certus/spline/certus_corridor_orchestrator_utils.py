@@ -1,30 +1,34 @@
 from __future__ import annotations
-import typing
-import numpy as np
+
 import logging
 import time
+import typing
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
+import numpy as np
+
 from certus.core.certus_core import (
-    Any,
     NUMERICAL_FAULT_EXCEPTIONS,
+    Any,
     dataclass,
     get_safe_worker_count,
 )
-
 from certus.spline.certus_index_spline_config import SplineOptConfig
-from certus_physics import clip_to_bounds
 from certus.spline.certus_index_spline_core import (
     _reflectance_absolute_backside_from_nk,
     physical_nodes_to_x_slice_n,
     x_slice_n_to_physical_nodes,
 )
+from certus_physics import clip_to_bounds
 
 if typing.TYPE_CHECKING:
     from certus.spline.certus_corridor_config import CorridorLiveStreamer, ProfileCorridorConfig
 
 
 
-
+from certus.spline.certus_corridor_logger import (
+    _log_coaching_reg_sensitivity_outcome,
+)
 from certus.spline.certus_corridor_utils import (
     _bounds_for_nodes_only,
     _chi2_masked_constant_sigma,
@@ -35,22 +39,18 @@ from certus.spline.certus_corridor_utils import (
     enforce_min_k_corridor_half_width,
     quick_pwlnk_refit_result_dict,
 )
-
-from certus.spline.certus_corridor_logger import (
-    _log_coaching_reg_sensitivity_outcome,
-)
-
+from certus.spline.spline_finalize import extract_nominal_best_polished_corridor_reference
 from certus.spline.spline_objective import (
-    build_spline_objective_masked_grid,
     SplinePWLObjective,
+    build_spline_objective_masked_grid,
 )
 from certus.utils.certus_index_utils import (
-    _ratio_theoretical_from_nk,
-    _transmittance_absolute_from_nk,
-    _reflectance_ratio_theoretical_from_nk,
     DataType,
+    _ratio_theoretical_from_nk,
+    _reflectance_ratio_theoretical_from_nk,
+    _transmittance_absolute_from_nk,
 )
-from certus.spline.spline_finalize import extract_nominal_best_polished_corridor_reference
+
 log = logging.getLogger('CERTUS')
 _LOG_PREFIX = "INDEX_SPLINE [CORRIDOR ORCHESTRATOR]"
 
@@ -358,9 +358,9 @@ def _generate_iso_phase_seed(
     """Optical path invariant warm-start: projects n such that n * d ~ constant."""
     x_smart_seed = x_prev.copy()
     try:
-        from certus.spline.spline_objective import x_slice_n_to_physical_nodes
+        from certus.core.certus_core import N_MAX_LIMIT, N_MIN_LIMIT
         from certus.spline.certus_index_spline_core import physical_nodes_to_x_slice_n
-        from certus.core.certus_core import N_MIN_LIMIT, N_MAX_LIMIT
+        from certus.spline.spline_objective import x_slice_n_to_physical_nodes
 
         ratio_d = float(d_prev / d_try) if d_try >= 1.0 else 1.0
         k = int(np.asarray(sk, dtype=np.float64).size)
@@ -743,10 +743,10 @@ def _build_emergency_fit_record(
     """Last-resort record so each requested base-grid d has one sample."""
     try:
         from certus.spline.spline_objective import (
-            nk_from_x_pwlnk,
-            x_slice_n_to_physical_nodes,
-            spectral_mse_rmse_masked_from_nk,
             SplinePWLObjective,
+            nk_from_x_pwlnk,
+            spectral_mse_rmse_masked_from_nk,
+            x_slice_n_to_physical_nodes,
         )
         from certus.spline.spline_profile_corridors import clip_to_bounds
 

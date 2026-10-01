@@ -1,14 +1,18 @@
 from __future__ import annotations
-from certus.core.certus_core import APP_SUITE_VERSION, CFG
+
+import logging
 import os
 from pathlib import Path
-import logging
 from typing import Any
+
 import numpy as np
+
+from certus.core.certus_core import APP_SUITE_VERSION, CFG
 from certus.ui.certus_qt_widgets import QCheckBox
-from certus_physics import init_thickness
 from certus.ui.certus_ui import show_toast
 from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
+from certus_physics import init_thickness
+
 
 class StateManager:
     def __init__(self, ui):

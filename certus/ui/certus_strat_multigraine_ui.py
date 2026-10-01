@@ -268,9 +268,18 @@ class CertusStratMultigraineMixin:
     def _create_multigraine_tab(self) -> None:
         from PyQt6.QtCore import QProcess, Qt
         from PyQt6.QtWidgets import (
-            QAbstractItemView, QComboBox, QGridLayout, QHeaderView, QLabel, QLineEdit, QPushButton,
-            QTableWidget, QVBoxLayout, QWidget,
+            QAbstractItemView,
+            QComboBox,
+            QGridLayout,
+            QHeaderView,
+            QLabel,
+            QLineEdit,
+            QPushButton,
+            QTableWidget,
+            QVBoxLayout,
+            QWidget,
         )
+
         from certus.ui.certus_ui_widgets_cards import CertusCard
 
         self._mg_etat = EtatMultigraine()

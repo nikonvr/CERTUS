@@ -1,38 +1,40 @@
 from __future__ import annotations
+
 import logging
 import traceback
 from typing import Any
+
 import numpy as np
 
 from certus.core.certus_core import CFG, NUMERICAL_FAULT_EXCEPTIONS
-
 from certus.ui.certus_qt_widgets import (
     QApplication,
     QCheckBox,
     QComboBox,
     QDoubleSpinBox,
     QHBoxLayout,
-    QTableWidgetItem,
     Qt,
+    QTableWidgetItem,
     QWidget,
 )
-
-from certus_physics import Layer, ObliqueTarget, init_thickness, calc_spectrum_front_wrapper, calc_spectrum_full_exact_wrapper
-
-
-
-
-
 from certus.utils.certus_re_helpers import (
-    RE_SPLINE_N_KNOTS,
     _RE_FT_COL_MAT,
     _RE_FT_COL_N,
     _RE_FT_COL_NUM,
     _RE_FT_COL_QW,
     _RE_FT_COL_THICK,
+    RE_SPLINE_N_KNOTS,
     _re_calc_spectrum_for_config,
     re_apply_re_index_model,
 )
+from certus_physics import (
+    Layer,
+    ObliqueTarget,
+    calc_spectrum_front_wrapper,
+    calc_spectrum_full_exact_wrapper,
+    init_thickness,
+)
+
 calc_spectrum_front = calc_spectrum_front_wrapper
 calc_spectrum_full_exact = calc_spectrum_full_exact_wrapper
 

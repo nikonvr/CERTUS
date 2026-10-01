@@ -1,26 +1,34 @@
-from certus.core.certus_core import create_module_environment
 import scipy
 import scipy.optimize
+
+from certus.core.certus_core import create_module_environment
 
 _env = create_module_environment(__file__, 'CERTUS_INDEX_CORE')
 script_dir = _env['script_dir']
 
-from numba import njit, prange
 import numpy as np
 import pandas as pd
+from numba import njit, prange
 
 from certus.core.certus_core import (
-    NUMERICAL_FAULT_EXCEPTIONS,
     HC_EV_NM,
     K_MAX_LIMIT,
     N_MAX_LIMIT,
     N_MIN_LIMIT,
+    NUMERICAL_FAULT_EXCEPTIONS,
     SMALL_EPSILON,
+    SUBSTRATES,
     T_SUB_MIN_R_NORM,
     T_SUB_MIN_T_NORM,
-    SUBSTRATES,
     __version__,
     get_resource_path,
+)
+from certus.utils.certus_index_utils import (
+    DataType,
+    _detect_data_type_from_array,
+    _detect_type_from_column_name,
+    detect_data_type,
+    sellmeier_2poles_eval_nj,
 )
 from certus_physics import (
     calculate_bare_substrate_RT,
@@ -30,13 +38,6 @@ from certus_physics import (
     epsilon2_TLU_array,
     epsilon_to_nk,
     get_n_substrate_array_by_id,
-)
-from certus.utils.certus_index_utils import (
-    sellmeier_2poles_eval_nj,
-    DataType,
-    _detect_data_type_from_array,
-    _detect_type_from_column_name,
-    detect_data_type,
 )
 
 # Inner margin relative to the limits used in epsilon_to_nk (certus_core):
@@ -545,7 +546,7 @@ _SILICON_N: np.ndarray | None = None
 _SILICON_K: np.ndarray | None = None
 
 try:
-    from certus_physics.materials_data import SI_WAVELENGTH_NM, SI_N_DATA, SI_K_DATA
+    from certus_physics.materials_data import SI_K_DATA, SI_N_DATA, SI_WAVELENGTH_NM
 
     _SILICON_WLS = SI_WAVELENGTH_NM
 

@@ -1,11 +1,12 @@
-import numpy as np
 import logging
-from certus.core.certus_core import Any, NUMERICAL_FAULT_EXCEPTIONS
 
+import numpy as np
+
+from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, Any
 from certus.spline.certus_corridor_config import (
+    _LOG_PREFIX,
     ProfileCorridorConfig,
     SplineOptConfig,
-    _LOG_PREFIX,
 )
 from certus.spline.certus_corridor_utils import quick_pwlnk_refit_result_dict
 

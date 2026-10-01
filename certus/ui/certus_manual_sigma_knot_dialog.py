@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 import logging
+
 import numpy as np
 import pyqtgraph as pg
-
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
-    QGroupBox,
+    QApplication,
     QDialog,
     QDialogButtonBox,
     QDoubleSpinBox,
     QFrame,
+    QGroupBox,
     QHBoxLayout,
     QLabel,
     QMenu,
@@ -22,13 +23,11 @@ from PyQt6.QtWidgets import (
     QToolButton,
     QVBoxLayout,
     QWidget,
-    QApplication,
 )
 
 from certus.ui.certus_ui import CertusScientificPlot, CertusTheme
-from certus.utils.certus_ux import Typography
 from certus.ui.certus_ui_widgets_progress import EnhancedProgressWidget
-
+from certus.utils.certus_ux import Typography
 
 _LOG = logging.getLogger("CERTUS")
 

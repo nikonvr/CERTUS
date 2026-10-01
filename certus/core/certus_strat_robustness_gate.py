@@ -1,8 +1,8 @@
 """CERTUS STRAT ROBUSTNESS - the crash-rate gate and the filter of finite robustness scores (moved out of certus_strat_robustness.py, S5.2)."""
 
-import numpy as np
 from typing import Any
 
+import numpy as np
 
 # Non-terminating deposition rate beyond which a strategy is ELIMINATED.
 #

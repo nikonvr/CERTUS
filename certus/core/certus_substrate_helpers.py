@@ -4,12 +4,10 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from typing import Any
 
 import numpy as np
 import pandas as pd
-from typing import Any
-
-
 
 
 def norm_header(raw: Any) -> str:

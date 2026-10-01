@@ -1,43 +1,9 @@
-from pathlib import Path
-import logging
 import functools
+import logging
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-from certus.core.certus_core import (
-    NUMERICAL_FAULT_EXCEPTIONS,
-    SUBSTRATE_LIST,
-    OH_BAND_MIN,
-    OH_BAND_MAX,
-)
-from certus.ui.certus_ui_shared import apply_app_zoom
-from certus.ui.certus_index_ui_utils import (
-    _notify_user,
-    _update_loaded_file_label,
-    _set_spectrum_plot_title,
-    _log_loaded_spectrum_metadata,
-    _display_detected_data_type,
-    _update_lambda_bounds_from_target_data,
-    _is_qt_offscreen_mode,
-    _source_type_label,
-    KLogAxisItem,
-)
-from certus.ui.certus_ui import install_standard_shortcuts
-from certus.utils.certus_index_utils import DataType, analyze_loaded_data
-from certus.core.certus_index_core import (
-    _SILICON_WLS,
-)
-from certus.workers.certus_index_workers import (
-    _spectrum_visibility_target_traces,
-)
-from certus.ui.certus_ui import (
-    CertusScientificPlot,
-    CertusTheme,
-    DetachedPlotWindow,
-    ExcelTableWidget,
-    clone_plot_widget,
-    show_toast,
-)
-from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
 import pyqtgraph as pg
 import scipy.optimize
 from PyQt6.QtCore import QTimer
@@ -45,6 +11,42 @@ from PyQt6.QtWidgets import (
     QApplication,
     QMessageBox,
     QTableWidgetItem,
+)
+
+from certus.core.certus_core import (
+    NUMERICAL_FAULT_EXCEPTIONS,
+    OH_BAND_MAX,
+    OH_BAND_MIN,
+    SUBSTRATE_LIST,
+)
+from certus.core.certus_index_core import (
+    _SILICON_WLS,
+)
+from certus.ui.certus_index_ui_utils import (
+    KLogAxisItem,
+    _display_detected_data_type,
+    _is_qt_offscreen_mode,
+    _log_loaded_spectrum_metadata,
+    _notify_user,
+    _set_spectrum_plot_title,
+    _source_type_label,
+    _update_lambda_bounds_from_target_data,
+    _update_loaded_file_label,
+)
+from certus.ui.certus_ui import (
+    CertusScientificPlot,
+    CertusTheme,
+    DetachedPlotWindow,
+    ExcelTableWidget,
+    clone_plot_widget,
+    install_standard_shortcuts,
+    show_toast,
+)
+from certus.ui.certus_ui_shared import apply_app_zoom
+from certus.utils.certus_index_utils import DataType, analyze_loaded_data
+from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
+from certus.workers.certus_index_workers import (
+    _spectrum_visibility_target_traces,
 )
 
 
@@ -506,7 +508,7 @@ class CertusIndexEventsMixin:
     def load_file(self, filepath=None) -> None:
 
         if filepath is None or isinstance(filepath, bool):
-            from certus.ui.certus_ui import certus_get_open_file_name, DATA_FILE_FILTER
+            from certus.ui.certus_ui import DATA_FILE_FILTER, certus_get_open_file_name
 
             filepath = certus_get_open_file_name(self, "Open", DATA_FILE_FILTER)
 

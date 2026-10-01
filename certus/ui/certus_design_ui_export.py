@@ -1,23 +1,26 @@
 from __future__ import annotations
+
+import logging
+import os
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+
 from certus.core.certus_core import (
     APP_SUITE_VERSION,
     NUMERICAL_FAULT_EXCEPTIONS,
+    __version__,
     certus_timestamp_display,
     certus_timestamp_file,
     get_resource_path,
 )
-import os
-from pathlib import Path
-import logging
-from typing import Any
-import numpy as np
-from certus.utils.errors import safe_ui_action
-from certus.utils.certus_data import OPENPYXL_AVAILABLE, generate_html_report
-from certus.ui.certus_ui import certus_get_save_file_name
 from certus.core.certus_metrology import ValidationStatus
-from certus.utils.certus_services import IndexFitRequest, IndexFitService
-from certus.core.certus_core import __version__
+from certus.ui.certus_ui import certus_get_save_file_name
 from certus.utils.certus_copy_utils import copy_optimization_result
+from certus.utils.certus_data import OPENPYXL_AVAILABLE, generate_html_report
+from certus.utils.certus_services import IndexFitRequest, IndexFitService
+from certus.utils.errors import safe_ui_action
 
 
 class ExportManager:

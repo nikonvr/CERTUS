@@ -16,46 +16,34 @@ UX: large points, wide lambda target, closest in value, hover feedback + live dr
 """
 
 from __future__ import annotations
-from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
-from certus.utils.certus_ux import Typography
-
 
 from collections.abc import Callable
 
-
 import numpy as np
-
-
 import pyqtgraph as pg
-
-
 from PyQt6.QtCore import QEvent, QObject, Qt, QTimer
-
-
 from PyQt6.QtGui import QMouseEvent
-
-
 from PyQt6.QtWidgets import (
     QDialog,
     QDoubleSpinBox,
     QHBoxLayout,
     QLabel,
     QPushButton,
+    QScrollArea,
     QSplitter,
     QVBoxLayout,
     QWidget,
-    QScrollArea,
 )
 
-
+from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.ui.certus_ui import (
+    CertusScientificPlot,
     CertusTheme,
     apply_certus_theme,
     attach_excel_clipboard_context_menu,
-    CertusScientificPlot,
     wrap_scientific_plot_with_toolbar,
 )
-
+from certus.utils.certus_ux import Typography
 
 # Symbol sizes (pxMode = screen size, easier to aim)
 

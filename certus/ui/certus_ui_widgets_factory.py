@@ -68,41 +68,14 @@ __all__ = [
 
 
 import functools
-
-
-
-
-from pathlib import Path
-
-
-
-
-
-
-
-
-
-
 import warnings
+from pathlib import Path
 
 warnings.filterwarnings("ignore", category=RuntimeWarning, message="overflow encountered in cast", module="pyqtgraph")
 
 
 
 from typing import Any
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 # PyQtGraph ViewBox vs NumPy/Python 3.14  cosmetic RuntimeWarning on cast (any emitting module)
 
@@ -115,8 +88,6 @@ warnings.filterwarnings(
 
 
 import pyqtgraph.exporters  # pylint: disable=unused-import
-
-
 from PyQt6.QtCore import (
     QEvent,
     QObject,
@@ -124,11 +95,7 @@ from PyQt6.QtCore import (
     Qt,
     pyqtSignal,
 )
-
-
 from PyQt6.QtGui import QFont, QIcon
-
-
 from PyQt6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -144,18 +111,12 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-
 # Check optional dependencies
-
-
 # Import Core
-
-
 from certus.core.certus_core import (
     get_resource_path,
 )
 from certus.ui.certus_qt_svg import SVG_AVAILABLE
-
 
 if SVG_AVAILABLE:
     from PyQt6.QtSvgWidgets import QSvgWidget
@@ -165,12 +126,9 @@ if SVG_AVAILABLE:
 
 
 from certus.core.certus_core import OPENPYXL_AVAILABLE
-
-
 from certus.ui.certus_theme import CertusTheme
-from certus.utils.certus_ux import ClickTarget, Typography
 from certus.ui.certus_ui_utils import open_documentation
-
+from certus.utils.certus_ux import ClickTarget, Typography
 
 # =============================================================================
 

@@ -4,9 +4,9 @@ import logging
 from typing import Any
 
 from certus.core.certus_core import certus_timestamp_display
-from certus.ui.certus_ui_utils import show_toast, process_log_queue_standard
-from certus.ui.certus_ui_widgets_utils import CertusLogPanel
 from certus.ui.certus_theme import CertusTheme
+from certus.ui.certus_ui_utils import process_log_queue_standard, show_toast
+from certus.ui.certus_ui_widgets_utils import CertusLogPanel
 
 
 class CertusAppEngineMixin:

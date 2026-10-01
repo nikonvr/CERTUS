@@ -1,6 +1,7 @@
 """The undo stack and the evaluation scheduling of a CERTUS window (moved out of certus_base_app.py, S5.3)."""
 
 import logging
+
 from PyQt6.QtCore import QTimer
 
 from certus.utils.certus_copy_utils import copy_optimization_result

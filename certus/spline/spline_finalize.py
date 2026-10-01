@@ -7,48 +7,33 @@
 """Spline pipeline finalization: spectral polish on sigma mesh (cubic spline between knots)."""
 
 from __future__ import annotations
-from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
-
 
 import logging
-
-
 import time
-
-
-from threading import Event
-
-
 from collections.abc import Callable
+from threading import Event
 from typing import Any
 
-
 import numpy as np
-
-
 from scipy.optimize import minimize
 
-
-from certus_physics import (
-    clip_to_bounds,
-)
-
-
+from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.spline.certus_index_spline_core import (
     SplineOptConfig,
     _canonical_knots_min_lambda_kw,
-    canonical_spline_sigma_knots,
     _log_spline_pipeline_json,
+    canonical_spline_sigma_knots,
 )
-
-
 from certus.spline.spline_objective import (
+    SplinePWLObjective,
     build_spline_objective_masked_grid,
     nk_from_x_pwlnk,
     spectral_mse_rmse_masked_from_nk,
     spline_objective_mse_on_masked_grid,
-    SplinePWLObjective,
     spline_pwl_analytic_grad_supported,
+)
+from certus_physics import (
+    clip_to_bounds,
 )
 
 

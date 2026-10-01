@@ -2,9 +2,9 @@
 # ARCHITECTURE: LIGHTWEIGHT FACADE FOR FIELD MODULE
 # =========================================================================================
 
-import sys
-import multiprocessing
 import ctypes
+import multiprocessing
+import sys
 
 #Numba configuration BEFORE any import using @njit (see CERTUS_HUB.py).
 #Without this call, NUMBA_CACHE_DIR is not defined and the JIT cache is written next
@@ -22,14 +22,12 @@ script_dir = env["script_dir"]
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication
 
-from certus.core.certus_core import setup_module_logging
-from certus.ui.certus_ui import init_certus_app
-
-from certus.ui.certus_field_ui import CertusFieldApp
-from certus.core.certus_core import CertusFacadeModule
 import certus.core.certus_field_core as certus_field_core
-import certus.workers.certus_field_workers as certus_field_workers
 import certus.ui.certus_field_ui as certus_field_ui
+import certus.workers.certus_field_workers as certus_field_workers
+from certus.core.certus_core import CertusFacadeModule, setup_module_logging
+from certus.ui.certus_field_ui import CertusFieldApp
+from certus.ui.certus_ui import init_certus_app
 
 # Replace current module with a facade exposing core, workers, and ui components
 sys.modules[__name__] = CertusFacadeModule(__name__, [

@@ -32,7 +32,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Final
 
-
 # =============================================================================
 # Design tokens (namespaces, not dataclasses, to mirror `CertusTheme` style)
 # =============================================================================

@@ -1,9 +1,12 @@
 from __future__ import annotations
+
 import dataclasses
 from dataclasses import dataclass
 from typing import Any
+
 import numpy as np
 from pydantic import BaseModel, ConfigDict
+
 
 class SmartInitPayload(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)

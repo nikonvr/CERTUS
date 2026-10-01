@@ -1,67 +1,55 @@
 
 import pandas as pd
 
+# JIT Warmup (reduces first-call latency by ~90%)
+# JIT Warmup moved to main() with SplashScreen
+import scipy.optimize
+from PyQt6.QtCore import QThread, pyqtSignal
 
 from certus.core.certus_core import (
-    __version__,
     HC_EV_NM,
-    N_MIN_LIMIT,
-    N_MAX_LIMIT,
     K_MAX_LIMIT,
-)
-from certus.utils.certus_index_utils import DataType
-from certus_physics import (
-    epsilon2_TLU_array,
-    epsilon1_TL_analytic,
-    epsilon_to_nk,
-    get_n_substrate_array_by_id,
-    calculate_RT_single_layer_backside_array,
-    calculate_bare_substrate_RT,
+    N_MAX_LIMIT,
+    N_MIN_LIMIT,
+    __version__,
 )
 from certus.core.certus_index_core import (
     OptimizationConfig,
     OptimizationResults,
-    substrateMode,
-    calculate_relative_R_normalization,
-    _optimize_point_kernel,
     _optimize_all_points_batch,
+    _optimize_point_kernel,
+    calculate_relative_R_normalization,
+    substrateMode,
 )
-from certus.workers.certus_index_workers import (
-    IRGlobalModelWorker,
-    OptimizationWorker,
-    IndexBeamAnalysisWorker,
-)
-
 from certus.ui.certus_index_ui_utils import (
     _detected_data_type_label,
-    _update_lambda_bounds_from_target_data,
-    _source_type_label,
-    _update_loaded_file_label,
-    _set_spectrum_plot_title,
     _prepare_nk_plot_inputs,
+    _set_spectrum_plot_title,
+    _source_type_label,
+    _update_lambda_bounds_from_target_data,
+    _update_loaded_file_label,
 )
 
 # Import Modular Architecture
-
-
 from certus.ui.certus_ui import (
     CertusBaseApp,
     setup_gui_exception_handling,
     setup_pyqtgraph_defaults,
 )
-
-
-# JIT Warmup (reduces first-call latency by ~90%)
-
-# JIT Warmup moved to main() with SplashScreen
-
-
-
-
-import scipy.optimize
-
-from PyQt6.QtCore import QThread, pyqtSignal
-
+from certus.utils.certus_index_utils import DataType
+from certus.workers.certus_index_workers import (
+    IndexBeamAnalysisWorker,
+    IRGlobalModelWorker,
+    OptimizationWorker,
+)
+from certus_physics import (
+    calculate_bare_substrate_RT,
+    calculate_RT_single_layer_backside_array,
+    epsilon1_TL_analytic,
+    epsilon2_TLU_array,
+    epsilon_to_nk,
+    get_n_substrate_array_by_id,
+)
 
 # PyQtGraph configured via COMMON utility
 
@@ -75,12 +63,12 @@ setup_gui_exception_handling()
 
 # =============================================================================
 
-from certus.ui.certus_index_ui_layout import CertusIndexLayoutMixin
-from certus.ui.certus_index_ui_state import CertusIndexStateMixin
 from certus.ui.certus_index_ui_events import CertusIndexEventsMixin
-from certus.ui.certus_index_ui_worker import CertusIndexWorkerMixin
-from certus.ui.certus_index_ui_plot import CertusIndexPlotMixin
 from certus.ui.certus_index_ui_export import CertusIndexExportMixin
+from certus.ui.certus_index_ui_layout import CertusIndexLayoutMixin
+from certus.ui.certus_index_ui_plot import CertusIndexPlotMixin
+from certus.ui.certus_index_ui_state import CertusIndexStateMixin
+from certus.ui.certus_index_ui_worker import CertusIndexWorkerMixin
 
 
 class CertusIndexApp(CertusIndexLayoutMixin, CertusIndexStateMixin, CertusIndexEventsMixin, CertusIndexWorkerMixin, CertusIndexPlotMixin, CertusIndexExportMixin, CertusBaseApp):

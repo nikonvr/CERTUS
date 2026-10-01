@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 from scipy.interpolate import CubicSpline
+
 from certus.utils.certus_re_config import (
     RE_P4_BEAM_N_KNOTS,
     RE_SUB_CAUCHY_BARRIER_SQRT_W,
@@ -230,33 +232,13 @@ def format_re_drift_log_triplet_pct(a: float, b: float, f: float) -> str:
 
 
 import logging
-
-
-
-
-
-
-
-
-from dataclasses import dataclass, field
-
-
 import re
-
-
 import unicodedata
-
-
+from dataclasses import dataclass, field
 from typing import Any
 
-
-
-
 import numpy as np
-
-
 from numba import njit
-
 
 # RE front stack table: #, Mat, n@lambda0, QWOT, Thick(nm)
 

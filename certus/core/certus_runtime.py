@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-import os
 import logging
+import os
+from dataclasses import dataclass
 
 from certus.core.certus_logging import setup_logging
 

@@ -40,7 +40,6 @@ from __future__ import annotations
 
 from typing import Final
 
-
 DEFAULT_DURATION_MS: Final[int] = 200
 HOVER_DURATION_MS: Final[int] = 140
 PULSE_DURATION_MS: Final[int] = 420

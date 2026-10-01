@@ -1,25 +1,15 @@
 # =============================================================================
 # CERTUS STRAT - Asynchronous workers and threading loops
 # =============================================================================
-from pathlib import Path
-
-
 import logging
-
 import queue
-
-
 import time
-
 import traceback
-
-
+from enum import Enum
+from pathlib import Path
 from typing import Any
 
 import numpy as np
-
-
-from enum import Enum
 
 
 class StratTask(Enum):
@@ -40,81 +30,68 @@ from PyQt6.QtCore import (
     pyqtSlot,
 )
 
-
 # Import access config
-
 from certus.core.certus_core import (
     get_resource_path,
 )
-
-from certus.utils.certus_exclusions import filter_params_for_serialization
-
-from certus.core.certus_strat_utils import DP_DEFAULT_MIN_WL_SEPARATION_NM
-
 from certus.core.certus_strat_core import (
+    APP_CONTEXT,
+    SYM_DEFAULT_CONTINUITY_WEIGHT,
     SYM_DEFAULT_EXTREMA_WINDOW_OT,
+    SYM_DEFAULT_SAME_WL_BONUS,
     SYM_DEFAULT_SCORING_MODE,
     SYM_DEFAULT_WEIGHT,
-    SYM_DEFAULT_SAME_WL_BONUS,
-    SYM_DEFAULT_CONTINUITY_WEIGHT,
-    mine_strategies_for_block_count,
-    run_final_simulation_block,
     _emit_stat,
     _flush_sp_stats,
-    _worker_init,
-    _IdxWrapper,
-    APP_CONTEXT,
-    optimize_block_strategy_hybrid,
-    generate_excel_report,
     _get_best_noise_results,
+    _IdxWrapper,
+    _worker_init,
+    generate_excel_report,
+    mine_strategies_for_block_count,
+    optimize_block_strategy_hybrid,
     precompute_clues_and_matrices,
+    run_final_simulation_block,
 )
-
 from certus.core.certus_strat_ranking import STRATEGY_ID_DERIVED_BASE
+from certus.core.certus_strat_utils import DP_DEFAULT_MIN_WL_SEPARATION_NM
 
+# Robust db clues (fixed xlsx)
+from certus.core.certus_strat_workers_dto import WorkerThreadRequest, WorkerThreadResult
 from certus.utils.certus_data import (
     SharedArrayWorker,
     SharedIndicesWorker,
 )
-
-from certus_physics import (  # STRAT-specific kernels (previously imported from certus.core._certus_physics_impl)
-    MaterialDatabase,
-    NON_MONOTONIC_MODE_ATTENUATE,
-    arange_inclusive,
-    calculate_RT_batch_kernel,
-    find_nucleation_adaptive_kernel,
-    get_refractive_clues_vectorized,
-    rank_nucleation_candidates_kernel,
-)
+from certus.utils.certus_exclusions import filter_params_for_serialization
+from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
 
 # Import context system (replaces global variables)
-
 from certus.utils.certus_strat_context import (
     StratContext,
-    _build_symmetry_bonus_map,
     _build_layer_importance_map,
-    _validate_strategy_blocks_contract,
+    _build_symmetry_bonus_map,
     _strategy_signature,
+    _validate_strategy_blocks_contract,
 )
-
-# Robust db clues (fixed xlsx)
-
-
-from certus.core.certus_strat_workers_dto import WorkerThreadRequest, WorkerThreadResult
 from certus.utils.certus_strat_service import (
     StratStrategyService,
     calculate_nominal_properties,
     compute_probe_offset_nm_from_ratio,
     extract_best_rmse,
 )
-
-
-from certus.workers.certus_strat_workers_nominal import NominalAnalysisStrategy
-from certus.workers.certus_strat_workers_search import StrategySearchStrategy
-from certus.workers.certus_strat_workers_robustness import RobustnessEvaluationStrategy
-from certus.workers.certus_strat_workers_pipeline import FullPipelineStrategy
 from certus.workers.certus_strat_workers_external import ExternalEvaluationStrategy
-from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
+from certus.workers.certus_strat_workers_nominal import NominalAnalysisStrategy
+from certus.workers.certus_strat_workers_pipeline import FullPipelineStrategy
+from certus.workers.certus_strat_workers_robustness import RobustnessEvaluationStrategy
+from certus.workers.certus_strat_workers_search import StrategySearchStrategy
+from certus_physics import (  # STRAT-specific kernels (previously imported from certus.core._certus_physics_impl)
+    NON_MONOTONIC_MODE_ATTENUATE,
+    MaterialDatabase,
+    arange_inclusive,
+    calculate_RT_batch_kernel,
+    find_nucleation_adaptive_kernel,
+    get_refractive_clues_vectorized,
+    rank_nucleation_candidates_kernel,
+)
 
 # === WORKER SIGNALS ===
 
@@ -1446,9 +1423,8 @@ def _run_phaseB_parallel_execution(
     live_preview_queue: Any,
 ) -> list[dict[str, Any]]:
     """Runs Phase B multi-processed parallel exploration."""
-    import gc
-
     import concurrent.futures
+    import gc
     import threading
 
     def stop_check():

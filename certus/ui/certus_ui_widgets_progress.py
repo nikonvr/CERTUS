@@ -1,11 +1,12 @@
 import time
 from typing import Any
+
 import pyqtgraph.exporters  # pylint: disable=unused-import
 from PyQt6.QtCore import (
+    QEasingCurve,
+    QPropertyAnimation,
     Qt,
     pyqtSignal,
-    QPropertyAnimation,
-    QEasingCurve,
 )
 from PyQt6.QtWidgets import (
     QHBoxLayout,
@@ -15,13 +16,12 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
 from certus.ui.certus_theme import CertusTheme
-from certus.utils.certus_ux import Typography
-from certus.ui.certus_ui_utils import set_certus_window_icon
-
-
 from certus.ui.certus_ui_shared import _format_progress_duration
+from certus.ui.certus_ui_utils import set_certus_window_icon
 from certus.utils.certus_progress_tracker import ProgressSnapshot, smooth_progress
+from certus.utils.certus_ux import Typography
 
 
 def _format_progress_status(

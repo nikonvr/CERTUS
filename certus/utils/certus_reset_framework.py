@@ -8,10 +8,9 @@ import gc
 import logging
 from typing import Any
 
-from PyQt6.QtWidgets import QMessageBox, QPlainTextEdit, QTextEdit, QPushButton, QWidget
+from PyQt6.QtWidgets import QMessageBox, QPlainTextEdit, QPushButton, QTextEdit, QWidget
 
 from certus.utils.errors import NUMERICAL_FAULT_EXCEPTIONS
-
 
 __all__ = [
     "CertusResetManager",

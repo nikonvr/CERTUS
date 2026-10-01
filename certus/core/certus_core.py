@@ -29,10 +29,22 @@ Contains:
 
 """
 
+from certus.core.certus_config import (
+    ConfigManager,
+)
+from certus.core.certus_config import (
+    get_resource_path as config_get_resource_path,
+)
+from certus.core.certus_logging import get_logger, handle_exception, setup_logging
+from certus.core.certus_performance import PerformanceMonitor, log_perf, perf_monitor
+from certus.core.certus_runtime import CertusRuntime, build_runtime, set_num_threads, setup_numba_cache
 from certus.core.version import (
-    APP_VERSION as __version__,
     APP_SUITE_VERSION,
 )
+from certus.core.version import (
+    APP_VERSION as __version__,
+)
+
 # The constants that the physics layer reads live in a leaf that imports nothing of CERTUS (certus/domain/constants.py):
 # re-exported here, as before, so that the code that imports them from the core keeps working.
 from certus.domain.constants import (
@@ -46,14 +58,6 @@ from certus.domain.constants import (
     get_complex_dtype,
     get_float_dtype,
 )
-from certus.core.certus_config import (
-    ConfigManager,
-    get_resource_path as config_get_resource_path,
-)
-from certus.core.certus_runtime import CertusRuntime, build_runtime, setup_numba_cache, set_num_threads
-from certus.core.certus_logging import get_logger, handle_exception, setup_logging
-from certus.core.certus_performance import perf_monitor, log_perf, PerformanceMonitor
-
 
 __all__ = [
     "APP_SUITE_VERSION",
@@ -136,32 +140,21 @@ __all__ = [
 
 
 import hashlib
-
 import logging
-
 import logging.handlers
-
 import os
-
 import queue
-
 import sys
-
 import tempfile
-
+from dataclasses import dataclass
+from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
-
-from dataclasses import dataclass
-
-from datetime import datetime
-
 from typing import Any, Literal, overload
-
-from certus.utils.certus_logging import attach_jsonl_handler, get_structured_logger
 
 import numpy as np
 
+from certus.utils.certus_logging import attach_jsonl_handler, get_structured_logger
 
 # --- Dependencies Check ---
 
@@ -903,17 +896,16 @@ OH_BAND_MAX: float = 1460.0
 
 from certus.core.certus_substrate_db import (
     CANONICAL_SUBSTRATE_LABELS,
-    SUBSTRATES,
+    SELLMEIER_COEFFS_BY_ID,
     SUBSTRATE_CHOICES,
     SUBSTRATE_LIST,
     SUBSTRATE_MAPPING,
     SUBSTRATE_MIN_LAMBDA,
-    SELLMEIER_COEFFS_BY_ID,
+    SUBSTRATES,
     canonicalize_substrate_label,
     substrate_sellmeier_coeffs,
     substrate_sellmeier_id,
 )
-
 
 # =============================================================================
 

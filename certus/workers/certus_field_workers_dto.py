@@ -1,10 +1,13 @@
 """DTO boundaries for CERTUS_FIELD workers."""
 
 from __future__ import annotations
+
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any
+
 from pydantic import BaseModel, ConfigDict, field_validator
-from collections.abc import Mapping
+
 
 class _MappingBase(BaseModel, Mapping):
     model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)

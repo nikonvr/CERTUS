@@ -33,11 +33,7 @@ CERTUS-DESIGN.py - Optical Filter Design & Optimization
 
 """
 
-from certus.core.certus_core import __version__
-
-
-
-from certus.core.certus_core import create_module_environment
+from certus.core.certus_core import __version__, create_module_environment
 
 # =============================================================================
 
@@ -56,48 +52,50 @@ script_dir = env["script_dir"]
 # =============================================================================
 
 import logging
-
-import time
-
-
-
 import threading
-
+import time
 from typing import Any
-from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
 
 import numpy as np
 
 # Conditional SVG Import
-
 # =============================================================================
-
 # IMPORTS MODULAR ARCHITECTURE
-
 # =============================================================================
-
 # Import Modular Architecture
-
 # --- 1. CORE (Config, Constants, Utils) ---
-
 from certus.core.certus_core import (
-    NUMERICAL_FAULT_EXCEPTIONS,
     CFG,
+    NUMERICAL_FAULT_EXCEPTIONS,
 )
-
 from certus.core.certus_design_worker_utils import (
     optim_calc_oblique_selected,
 )
+from certus.physics.certus_substrate_absorption import apply_plate_loss
+from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
 
 # --- 4. DATA (IO, Reporting) ---
-
-
 # --- 5. ERRORS (Validation, Messages) ---
-
 # Direct import for warmup
-
 # --- 2. PHYSICS (Models, TMM, Optimization) ---
-
+# --- 3. UI (Theme, Widgets) ---
+# Configure GUI
+# =============================================================================
+# PGlobalConfig Methods (now provided by certus_physics.structures)
+# =============================================================================
+# Conditional Excel Import (OPENPYXL_AVAILABLE used elsewhere in module)
+# =============================================================================
+# LOGGING CONFIGURATION
+# =============================================================================
+# Logger initialized in CertusDesignApp
+# This ensures consistency with other CERTUS modules
+# script_dir already set by bootstrap_app()
+# =============================================================================
+# AUTOMATIC PRECISION ADAPTATION
+# =============================================================================
+# Use wrappers if single precision enabled
+# Note: cost_numba_fast handles precision internally
+# Wrappers enforce (d,n) consistency
 from certus_physics import (  # Cache & Utils; Gradient Logic (Analytic); Numba Functions
     Layer,
     Material,
@@ -105,12 +103,15 @@ from certus_physics import (  # Cache & Utils; Gradient Logic (Analytic); Numba 
     PGlobalConfig,
     PGlobalOptimizer,
     Target,
+    calc_spectrum_front_wrapper,
+    calc_spectrum_full_exact_wrapper,
     calc_spectrum_full_oblique_exact,
+    calc_spectrum_full_wrapper,
     calc_spectrum_oblique_backside_vectorized,
     calc_spectrum_oblique_vectorized,
     compute_gradient_all_layers_analytic,
-    compute_oblique_rt_and_grads_analytic,
     compute_oblique_gradient_contrib_analytic,
+    compute_oblique_rt_and_grads_analytic,
     cost_numba_fast,
     delta_e_2000,
     init_thickness,
@@ -119,58 +120,6 @@ from certus_physics import (  # Cache & Utils; Gradient Logic (Analytic); Numba 
     prepare_targets_vectorized,
     xyz_from_spectrum,
     xyz_to_lab,
-)
-
-
-from certus.physics.certus_substrate_absorption import apply_plate_loss
-
-
-# --- 3. UI (Theme, Widgets) ---
-
-
-
-
-
-
-
-# Configure GUI
-
-# =============================================================================
-
-# PGlobalConfig Methods (now provided by certus_physics.structures)
-
-# =============================================================================
-
-# Conditional Excel Import (OPENPYXL_AVAILABLE used elsewhere in module)
-
-# =============================================================================
-
-# LOGGING CONFIGURATION
-
-# =============================================================================
-
-# Logger initialized in CertusDesignApp
-
-# This ensures consistency with other CERTUS modules
-
-# script_dir already set by bootstrap_app()
-
-# =============================================================================
-
-# AUTOMATIC PRECISION ADAPTATION
-
-# =============================================================================
-
-# Use wrappers if single precision enabled
-
-# Note: cost_numba_fast handles precision internally
-
-# Wrappers enforce (d,n) consistency
-
-from certus_physics import (
-    calc_spectrum_front_wrapper,
-    calc_spectrum_full_wrapper,
-    calc_spectrum_full_exact_wrapper,
 )
 
 calc_spectrum_front = calc_spectrum_front_wrapper

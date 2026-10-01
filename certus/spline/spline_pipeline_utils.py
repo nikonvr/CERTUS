@@ -1,27 +1,30 @@
 from __future__ import annotations
 
 """Main spline pipeline: JSON logging, RMSE snapshots, worker orchestration."""
-from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 import logging
-from threading import Event
 from collections.abc import Callable
+from threading import Event
 from typing import Any
+
 import numpy as np
+
+from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.spline.certus_index_spline_core import (
     SplineOptConfig,
     _canonical_knots_min_lambda_kw,
-    canonical_spline_sigma_knots,
     _log_spline_pipeline_json,
     _reflectance_absolute_backside_from_nk,
+    canonical_spline_sigma_knots,
     snapshot_result_with_rmse_fit_meta,
 )
 from certus.utils.certus_index_utils import (
     _ratio_theoretical_from_nk,
     _reflectance_ratio_theoretical_from_nk,
-    _sorted_finite_sigma_knots as _sorted_finite_sigma_knots_for_log,
     _transmittance_absolute_from_nk,
 )
-
+from certus.utils.certus_index_utils import (
+    _sorted_finite_sigma_knots as _sorted_finite_sigma_knots_for_log,
+)
 
 
 class _WorkerProgressCoordinator:

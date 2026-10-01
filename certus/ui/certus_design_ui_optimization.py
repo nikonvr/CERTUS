@@ -1,16 +1,20 @@
 from __future__ import annotations
+
 import time
 from typing import Any
+
 import numpy as np
-from certus.ui.certus_qt_widgets import QCheckBox
-from certus.utils.errors import safe_ui_action
+
 from certus.core.certus_design_worker_utils import (
     optim_post_optim_time_budget_seconds,
     optim_qwot_values_from_ep_stack,
     optim_rmse_display_string,
     optim_rmse_is_valid_for_log,
 )
+from certus.ui.certus_qt_widgets import QCheckBox
 from certus.ui.certus_ui import get_export_config
+from certus.utils.errors import safe_ui_action
+
 
 class OptimizationManager:
     def __init__(self, ui):
@@ -877,9 +881,9 @@ class OptimizationManager:
 
         def _evaluate_test_stack(ep_test, stack_test):
             try:
+                from certus.core.certus_core import get_complex_dtype, get_float_dtype
                 from certus.core.certus_design_worker_utils import optim_prepare_stack_nk_back
                 from certus_physics import compute_gradient_all_layers_analytic
-                from certus.core.certus_core import get_complex_dtype, get_float_dtype
                 mats = self.ui._get_materials()
                 wls = self.ui._get_optim_wls()
                 tgts = [t for t in self.ui._get_tgts() if t.valid()]
@@ -1057,8 +1061,9 @@ class OptimizationManager:
 
     def _insert_needle_split_row(self, idx: int, mat_needle: str, n_needle: float, l0: float) -> float:
         """Insert the needle layer row in a split operation and return its target thickness."""
-        from PyQt6.QtWidgets import QWidget, QHBoxLayout
         from PyQt6.QtCore import Qt
+        from PyQt6.QtWidgets import QHBoxLayout, QWidget
+
         from certus.ui.certus_qt_widgets import QCheckBox, QTableWidgetItem
 
         insert_idx = idx + 1
@@ -1092,8 +1097,9 @@ class OptimizationManager:
 
     def _insert_right_split_row(self, idx: int, mat_orig: str, qw_right: float, d_right: float) -> None:
         """Insert the right-side row produced by a split operation."""
-        from PyQt6.QtWidgets import QWidget, QHBoxLayout
         from PyQt6.QtCore import Qt
+        from PyQt6.QtWidgets import QHBoxLayout, QWidget
+
         from certus.ui.certus_qt_widgets import QCheckBox, QTableWidgetItem
 
         right_idx = idx + 2
@@ -1137,6 +1143,7 @@ class OptimizationManager:
 
     def start_needle_worker(self, cfg, on_finished_callback) -> None:
         from PyQt6.QtCore import QThread
+
         from certus.workers.certus_design_workers import NeedleWorker
         
         self.ui.needle_worker = NeedleWorker(cfg)

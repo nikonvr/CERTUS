@@ -4,20 +4,20 @@ CERTUS-INDEX-SPLINE Excel Export Module.
 """
 
 from __future__ import annotations
+
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, __version__
 from certus.core.certus_metrology import ValidationStatus
-from certus.utils.certus_services import IndexFitRequest, IndexFitService
 from certus.utils.certus_data import (
     build_export_context,
     build_report_sections,
     export_optimization_report,
 )
+from certus.utils.certus_services import IndexFitRequest, IndexFitService
 
 
 class _ExcelExportMixin:

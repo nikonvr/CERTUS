@@ -1,6 +1,7 @@
+import math
+
 import numpy as np
 from numba import njit, prange
-import math
 
 SMALL_EPSILON = 1e-12
 

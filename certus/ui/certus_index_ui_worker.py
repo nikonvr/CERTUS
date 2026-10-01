@@ -1,56 +1,59 @@
-from pathlib import Path
 import logging
 import time
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-from certus.core.certus_core import (
-    get_resource_path,
-    HC_EV_NM,
-    NUMERICAL_FAULT_EXCEPTIONS,
-    SUBSTRATE_LIST,
-)
-from certus.ui.certus_overview_tab import PLACEHOLDER
-from certus.utils.certus_index_utils import (
-    DataType,
-    fit_sellmeier_global,
-    fit_k_global_8p,
-)
-from certus.ui.certus_index_ui_utils import _notify_user
-from certus.core.certus_index_core import _get_silicon_n_on_grid, _get_silicon_k_on_grid
-from certus_physics import (
-    get_n_substrate_array_by_id,
-    get_n_frosted_glass_array,
-    calculate_RT_single_layer_backside_array,
-    calculate_bare_substrate_RT,
-    calculate_single_interface_R,
-    calculate_bare_substrate_T_absorbing,
-    calculate_bare_substrate_R_absorbing,
-    calculate_RT_single_layer_absorbing_substrate_array,
-)
-from certus.core.certus_index_core import (
-    OptimizationConfig,
-    OptimizationResults,
-    substrateMode,
-    _optimize_point_kernel,
-    _optimize_all_points_batch,
-    _SAPPHIRE_DATA_FILE,
-    _SAPPHIRE_FILE_HAS_K_COLUMN,
-    _SILICON_WLS,
-)
-from certus.workers.certus_index_workers import (
-    IRGlobalModelWorker,
-    OptimizationWorker,
-)
-from certus.ui.certus_ui import (
-    confirm_stop_with_timeout,
-    stop_worker_and_thread,
-    show_toast,
-)
 import scipy.optimize
 from PyQt6.QtCore import QThread, QTimer, pyqtSlot
 from PyQt6.QtWidgets import (
     QMessageBox,
     QTableWidgetItem,
+)
+
+from certus.core.certus_core import (
+    HC_EV_NM,
+    NUMERICAL_FAULT_EXCEPTIONS,
+    SUBSTRATE_LIST,
+    get_resource_path,
+)
+from certus.core.certus_index_core import (
+    _SAPPHIRE_DATA_FILE,
+    _SAPPHIRE_FILE_HAS_K_COLUMN,
+    _SILICON_WLS,
+    OptimizationConfig,
+    OptimizationResults,
+    _get_silicon_k_on_grid,
+    _get_silicon_n_on_grid,
+    _optimize_all_points_batch,
+    _optimize_point_kernel,
+    substrateMode,
+)
+from certus.ui.certus_index_ui_utils import _notify_user
+from certus.ui.certus_overview_tab import PLACEHOLDER
+from certus.ui.certus_ui import (
+    confirm_stop_with_timeout,
+    show_toast,
+    stop_worker_and_thread,
+)
+from certus.utils.certus_index_utils import (
+    DataType,
+    fit_k_global_8p,
+    fit_sellmeier_global,
+)
+from certus.workers.certus_index_workers import (
+    IRGlobalModelWorker,
+    OptimizationWorker,
+)
+from certus_physics import (
+    calculate_bare_substrate_R_absorbing,
+    calculate_bare_substrate_RT,
+    calculate_bare_substrate_T_absorbing,
+    calculate_RT_single_layer_absorbing_substrate_array,
+    calculate_RT_single_layer_backside_array,
+    calculate_single_interface_R,
+    get_n_frosted_glass_array,
+    get_n_substrate_array_by_id,
 )
 
 
@@ -954,7 +957,7 @@ class CertusIndexWorkerMixin:
 
                     if res.tlu_params is not None:
                         try:
-                            from certus_physics import epsilon2_TLU_array, epsilon1_TL_analytic, epsilon_to_nk
+                            from certus_physics import epsilon1_TL_analytic, epsilon2_TLU_array, epsilon_to_nk
 
                             tlu = res.tlu_params
 

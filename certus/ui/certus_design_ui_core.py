@@ -1,6 +1,9 @@
 from __future__ import annotations
+
 import logging
+
 import numpy as np
+
 from certus.ui.certus_qt_widgets import (
     QCheckBox,
     QDialog,
@@ -9,13 +12,14 @@ from certus.ui.certus_qt_widgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
+    Qt,
     QTextEdit,
     QTimer,
     QVBoxLayout,
-    Qt,
 )
-from certus_physics import Material, ObliqueTarget, Target, init_thickness
 from certus.ui.certus_ui import CertusCard, CertusTheme, copy_app_logs_to_clipboard
+from certus_physics import Material, ObliqueTarget, Target, init_thickness
+
 
 class CoreManager:
     def __init__(self, ui):
@@ -717,7 +721,7 @@ class CoreManager:
 
         self.ui._stack_info_last_update = 0.0
 
-        from certus.core.certus_metrology import RunContext, CERTUS_VERSION
+        from certus.core.certus_metrology import CERTUS_VERSION, RunContext
         
         self.ui._workflow_run_ctx = RunContext.create(app_id="certus_design", app_version=CERTUS_VERSION)
 

@@ -71,6 +71,7 @@ N_PAS = 400          # pas de discretisation de la croissance, pour swing et t_m
 
 def analyse(nom: str, cfg: str) -> dict:
     import bench_examples as Bx
+
     from certus.physics.certus_opt_tmm import arange_inclusive
     from certus.utils.certus_strat_service import (
         get_refractive_clues_vectorized,

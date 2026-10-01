@@ -1,5 +1,5 @@
-import numpy as np
 import numba
+import numpy as np
 
 
 def _default_layer_types(n_layers: int) -> np.ndarray:

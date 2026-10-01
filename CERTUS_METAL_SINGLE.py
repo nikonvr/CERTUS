@@ -34,22 +34,20 @@ from certus.core.certus_core import configure_numba_env as _configure_numba_env
 
 _configure_numba_env()
 
+import certus.metal.certus_metal_single_app as certus_metal_single_app
+import certus.metal.certus_metal_single_physics as certus_metal_single_physics
 from certus.core.certus_core import (
-    __version__,
     SUBSTRATE_MIN_LAMBDA,
     CertusFacadeModule,
+    __version__,
     create_module_environment,
     setup_logging,
 )
-
-import certus.metal.certus_metal_single_app as certus_metal_single_app
-import certus.metal.certus_metal_single_physics as certus_metal_single_physics
 
 # Bound here, not only reached through the facade below: tests load this file by
 # path, and a module loaded that way is never replaced by its facade.
 from certus.metal.certus_metal_single_app import CertusMetalSingleApp
 from certus.metal.certus_metal_single_physics import _resolve_single_substrate_id
-
 from certus.ui.certus_ui import (
     init_certus_app,
     setup_gui_exception_handling,

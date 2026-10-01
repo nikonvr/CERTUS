@@ -7,10 +7,9 @@ import os
 import sys
 import traceback
 from pathlib import Path
-
+from types import TracebackType
 
 from certus.utils.certus_logging import attach_jsonl_handler
-from types import TracebackType
 
 MAX_LOG_FILE_SIZE_BYTES = 10 * 1024 * 1024
 MAX_LOG_BACKUP_FILES = 3

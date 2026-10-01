@@ -37,11 +37,9 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-from _artefact import avec_provenance  # noqa: E402
-
 import bench_examples as B  # noqa: E402
 import probe_spectral_error as PSE  # noqa: E402
-
+from _artefact import avec_provenance  # noqa: E402
 
 #: 5 sigma du bruit de lecture, exprime en multiple de l'amplitude crete a crete A.
 #: 👤 “it is indeed an amplitude threshold, which must be approximately 5 sigmas from the noise”

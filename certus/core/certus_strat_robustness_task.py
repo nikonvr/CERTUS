@@ -1,22 +1,10 @@
 """CERTUS STRAT ROBUSTNESS - the robustness task of ONE strategy, run in a worker (moved out of certus_strat_robustness.py, S5.2)."""
 
 import logging
-import numpy as np
 from typing import Any
 
-from certus_physics import (
-    CRASH_LEVEL_UNREACHABLE,
-    CRASH_NON_MONOTONIC,
-    CRASH_SENTINEL_MIN,
-    CRASH_SENTINEL_UNIT,
-    CRASH_TP_MISCOUNT,
-    PHOTOMETRIC_CURVATURE_AMP,
-    NON_MONOTONIC_MODE_ATTENUATE,
-    calculate_RT_batch_kernel,
-    compute_batch_rmse,
-    corridor_wl_range,
-    simulate_stack_robustness_batch,
-)
+import numpy as np
+
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.core.certus_strat_robustness_diagnostics import (
     _critical_layer,
@@ -41,6 +29,19 @@ from certus.core.certus_strat_robustness_noise import (
 )
 from certus.core.certus_strat_robustness_slit import _strategy_resolution
 from certus.core.certus_strat_robustness_wrappers import _IdxWrapper
+from certus_physics import (
+    CRASH_LEVEL_UNREACHABLE,
+    CRASH_NON_MONOTONIC,
+    CRASH_SENTINEL_MIN,
+    CRASH_SENTINEL_UNIT,
+    CRASH_TP_MISCOUNT,
+    NON_MONOTONIC_MODE_ATTENUATE,
+    PHOTOMETRIC_CURVATURE_AMP,
+    calculate_RT_batch_kernel,
+    compute_batch_rmse,
+    corridor_wl_range,
+    simulate_stack_robustness_batch,
+)
 
 
 def _test_strategy_robustness_task(
@@ -60,10 +61,16 @@ def _test_strategy_robustness_task(
     n_layers_matrix_precomp: Any = None,
     compute_layer_profile: bool = True,
 ) -> dict:
-    from certus.core.certus_strat_config import SYM_DEFAULT_EXTREMA_WINDOW_OT, _emit_stat
-    from certus.core.certus_strat_objectives import _compute_dT_dd_per_layer, _compute_strategy_symmetry_score_percent, _compute_theoretical_layer_profile, build_M_before_cache
-    from certus.utils.certus_strat_service import compute_probe_offset_nm_from_ratio
     import numba
+
+    from certus.core.certus_strat_config import SYM_DEFAULT_EXTREMA_WINDOW_OT, _emit_stat
+    from certus.core.certus_strat_objectives import (
+        _compute_dT_dd_per_layer,
+        _compute_strategy_symmetry_score_percent,
+        _compute_theoretical_layer_profile,
+        build_M_before_cache,
+    )
+    from certus.utils.certus_strat_service import compute_probe_offset_nm_from_ratio
 
     numba.set_num_threads(2)
     logger = logging.getLogger("certus_strat")
@@ -233,12 +240,10 @@ def _test_strategy_robustness_task(
                 "The ranking then DOES NOT measure compliance with the target.",
                 exc,
             )
-
     layer_wavelengths = np.zeros(num_layers, dtype=np.float64)
     n_H_vals = np.zeros(num_layers, dtype=np.complex128)
     n_L_vals = np.zeros(num_layers, dtype=np.complex128)
     n_Sub_vals = np.zeros(num_layers, dtype=np.complex128)
-
     if n_layers_matrix_precomp is not None:
         n_layers_matrix = n_layers_matrix_precomp
     else:
@@ -250,7 +255,6 @@ def _test_strategy_robustness_task(
             nH_c128[:, np.newaxis],
             nL_c128[:, np.newaxis],
         )
-
     idx_dict = _IdxWrapper(clues_at_wl)
     for block in blocks:
         b_wl = float(block["wavelength"])
@@ -278,7 +282,6 @@ def _test_strategy_robustness_task(
         p_thick_nom_arr,
         num_layers,
     )
-
     is_absolute = params.get("thickness_tolerance_nm") is not None
     dT_dd = None
     if is_absolute:
@@ -290,7 +293,6 @@ def _test_strategy_robustness_task(
             p_thick_nominal,
             M_before_all=_M_before_cache,
         )
-
     base_seed = int(params.get("robustness_seed", 42)) if params.get("robustness_seed") is not None else 42
 
     # ── AXIS 1.1: noise the monitoring SIGNAL, not only the stopping point ───────
@@ -344,7 +346,6 @@ def _test_strategy_robustness_task(
         raw_noise = _get_cached_sobol_noise(base_seed, noise_idx, num_runs, noise_total)
         if noise_total != num_layers:
             raw_noise = np.ascontiguousarray(raw_noise[:, noise_off:noise_off + num_layers])
-
         if is_absolute:
             noise_matrix = dT_dd * raw_noise * noise_val * penalty_vector
         else:

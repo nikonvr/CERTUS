@@ -40,8 +40,8 @@ from certus.ui.certus_ui import (
     set_certus_window_icon,
     wrap_scientific_plot_with_toolbar,
 )
-from certus.utils.certus_spectral_preproc import smooth_dataframe_auto, smooth_spectrum_auto
 from certus.utils.certus_qsettings import certus_settings
+from certus.utils.certus_spectral_preproc import smooth_dataframe_auto, smooth_spectrum_auto
 
 logger = setup_module_logging("CERTUS_CURVE_SMOOTHER")
 

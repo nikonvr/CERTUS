@@ -4,24 +4,25 @@ from __future__ import annotations
 
 import time
 from typing import Any
+
 import numpy as np
 from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QMessageBox
 
-from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
-from certus.spline.certus_index_spline_core import log_index_spline_d_trace, _log_index_spline_best_config
-from certus.utils.certus_index_utils import (
-    log_structured_json_event,
-    _safe_int_from_mapping,
-    _filter_rmse_peaks_iteratively,
-)
 from certus.spline.certus_corridor_utils import quick_pwlnk_refit_result_dict
-from certus.utils.certus_skeleton import uninstall_skeleton
-from certus.spline.certus_index_spline_corridor_ui import GenericWorker, ManualSigmaKnotDialog
+from certus.spline.certus_index_spline_core import _log_index_spline_best_config, log_index_spline_d_trace
 
 # Mixins moved out of this class (S5.3): the methods live there, the names stay importable from here.
 from certus.spline.certus_index_spline_corridor_tab import _CorridorTabMixin
+from certus.spline.certus_index_spline_corridor_ui import GenericWorker, ManualSigmaKnotDialog
+from certus.utils.certus_index_utils import (
+    _filter_rmse_peaks_iteratively,
+    _safe_int_from_mapping,
+    log_structured_json_event,
+)
+from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot
+from certus.utils.certus_skeleton import uninstall_skeleton
 
 
 class _CorridorWorkerMixin(_CorridorTabMixin):

@@ -1,15 +1,15 @@
 from __future__ import annotations
-from pathlib import Path
+
 import logging
 import time
+from pathlib import Path
+
 import numpy as np
-from certus.ui.certus_qt_widgets import QThread
+
 from certus.core.certus_core import CFG, NUMERICAL_FAULT_EXCEPTIONS
-from certus.utils.errors import safe_ui_action
 from certus.core.certus_design_worker_utils import optim_rmse_display_string, optim_rmse_is_valid_for_log
-from certus_physics import calc_spectrum_oblique_vectorized, delta_e_2000, lab_to_rgb
-from certus.ui.certus_ui import CertusTheme, confirm_stop_with_timeout, plot_widget_plot_finite
 from certus.ui.certus_overview_tab import PLACEHOLDER
+from certus.ui.certus_qt_widgets import QThread
 from certus.ui.certus_spectrum_eval_ui import (
     spectrum_eval_apply_axes_legend_scale,
     spectrum_eval_build_worker_cfg,
@@ -18,7 +18,10 @@ from certus.ui.certus_spectrum_eval_ui import (
     spectrum_eval_run_preamble,
     spectrum_eval_start_worker,
 )
+from certus.ui.certus_ui import CertusTheme, confirm_stop_with_timeout, plot_widget_plot_finite
+from certus.utils.errors import safe_ui_action
 from certus.workers.certus_design_workers import ColorWorker, OptimWorker
+from certus_physics import calc_spectrum_oblique_vectorized, delta_e_2000, lab_to_rgb
 
 
 class WorkerManager:

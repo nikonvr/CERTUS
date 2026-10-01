@@ -514,28 +514,7 @@ class REPhase4Strategy:
                     )
                     _prepend_result_dto(results, phase4_scan)
                     rmse_final_milestone[0] = float(rmse_c_scan)
-                _re_state["is_phase4"] = False
-                _pp_fin = _re_state.get("p4_prof")
-                _wall_p4_tot = float(time.perf_counter() - _t_p4_wall)
-                if _pp_fin is not None:
-                    logging.info(
-                        "RE phase 4 P4 profile (in each MSE_ep, blocks >= 10, lambda-stepped ap) - inner_physics_wall_s=%.4f | oblique_phi_calls=%d | meta_passes=%d | n_wls_union_max=%d | band_groups=%d band_mask_steps=%d | <=%d -calls/group (2×%d lambda knots); vectorizing by band reduces Python overhead",
-                        float(_pp_fin.get("phy_wall_s", 0.0)),
-                        int(_pp_fin.get("phi_calls", 0)),
-                        int(_pp_fin.get("meta_p4_count", 0)),
-                        int(_pp_fin.get("n_wls_union_max", 0)),
-                        int(_pp_fin.get("band_groups", 0)),
-                        int(_pp_fin.get("band_mask_steps", 0)),
-                        2 * int(RE_P4_BEAM_N_KNOTS),
-                        int(RE_P4_BEAM_N_KNOTS),
-                    )
-                logging.info(
-                    "RE phase 4 wall | total=%.3fs | scan=%.3fs | TRF=%.3fs | overheadmax(0,total-scan-TRF-inner_physics) | grep  RE phase 4  /  P4 profile  to retune cfg & code",
-                    _wall_p4_tot,
-                    float(_p4_scan_wall_s),
-                    float(_p4_trf_wall_s),
-                )
-                _re_state["p4_prof"] = None
+                self._close_phase4_profile(_re_state, _t_p4_wall, _p4_scan_wall_s, _p4_trf_wall_s)
             elif _has_high_angle:
                 logging.info(
                     "RE phase 4 skipped | reason=no_spline_state_on_best | need re_dH_knots/re_dL_knots on results[0] (phase 2 splines)"
@@ -547,3 +526,28 @@ class REPhase4Strategy:
                 )
                 _emit_re_prog(99.0, "RE phase 4  skipped (all angles < 10 deg)")
             _emit_re_prog(99.0, "RE phase 4  done")
+
+    def _close_phase4_profile(self, _re_state, _t_p4_wall, _p4_scan_wall_s, _p4_trf_wall_s):
+        """Switch the phase 4 profiling off and log the cost model: the P4 profile of the last scan and the wall-clock split between the scan and the TRF stage."""
+        _re_state["is_phase4"] = False
+        _pp_fin = _re_state.get("p4_prof")
+        _wall_p4_tot = float(time.perf_counter() - _t_p4_wall)
+        if _pp_fin is not None:
+            logging.info(
+                "RE phase 4 P4 profile (in each MSE_ep, blocks >= 10, lambda-stepped ap) - inner_physics_wall_s=%.4f | oblique_phi_calls=%d | meta_passes=%d | n_wls_union_max=%d | band_groups=%d band_mask_steps=%d | <=%d -calls/group (2×%d lambda knots); vectorizing by band reduces Python overhead",
+                float(_pp_fin.get("phy_wall_s", 0.0)),
+                int(_pp_fin.get("phi_calls", 0)),
+                int(_pp_fin.get("meta_p4_count", 0)),
+                int(_pp_fin.get("n_wls_union_max", 0)),
+                int(_pp_fin.get("band_groups", 0)),
+                int(_pp_fin.get("band_mask_steps", 0)),
+                2 * int(RE_P4_BEAM_N_KNOTS),
+                int(RE_P4_BEAM_N_KNOTS),
+            )
+        logging.info(
+            "RE phase 4 wall | total=%.3fs | scan=%.3fs | TRF=%.3fs | overheadmax(0,total-scan-TRF-inner_physics) | grep  RE phase 4  /  P4 profile  to retune cfg & code",
+            _wall_p4_tot,
+            float(_p4_scan_wall_s),
+            float(_p4_trf_wall_s),
+        )
+        _re_state["p4_prof"] = None

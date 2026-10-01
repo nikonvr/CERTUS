@@ -85,7 +85,6 @@
     "certus/utils/certus_strat_service.py::_validate_candidates_phase_a": 378,
     "certus/utils/certus_ux.py::build_premium_overrides": 574,
     "certus/workers/certus_field_workers.py::FieldWorkerThread._run_optimize": 432,
-    "certus/workers/certus_re_workers_phase4.py::REPhase4Strategy._execute_phase4_beam": 302,
     "certus/workers/certus_strat_workers.py::_parallel_block_worker": 369
   },
   "fonctions_complexes": {

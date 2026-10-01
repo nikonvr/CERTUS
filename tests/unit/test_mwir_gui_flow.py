@@ -36,6 +36,16 @@ class _Harness(_RealSimpleNamespace):
     def _post_optimization_ready_status(status_text):
         return CertusIndexSplineApp._post_optimization_ready_status(status_text)
 
+    # the steps `_on_worker_done` hands to methods of its own: the fake runs the real ones on itself
+    def _settle_a_run_that_returned_no_result_dict(self, *args):
+        return CertusIndexSplineApp._settle_a_run_that_returned_no_result_dict(self, *args)
+
+    def _log_the_result_dictionary_received(self, *args):
+        return CertusIndexSplineApp._log_the_result_dictionary_received(self, *args)
+
+    def _hand_the_result_to_the_manual_dialog(self, *args):
+        return CertusIndexSplineApp._hand_the_result_to_the_manual_dialog(self, *args)
+
 SimpleNamespace = _Harness
 
 import numpy as np

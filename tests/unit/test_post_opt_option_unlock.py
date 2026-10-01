@@ -37,6 +37,9 @@ class _Harness(_RealSimpleNamespace):
         return f"Ready: {status_text}"
 
     # the steps the handlers hand to methods of their own: the fake runs the real ones on itself
+    def _settle_a_run_that_returned_no_result_dict(self, *args):
+        return CertusIndexSplineApp._settle_a_run_that_returned_no_result_dict(self, *args)
+
     def _log_regular_grid_result(self, *args):
         return CertusIndexSplineApp._log_regular_grid_result(self, *args)
 

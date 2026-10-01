@@ -407,30 +407,7 @@ class _CorridorWorkerMixin(_CorridorTabMixin):
             return
 
         if not isinstance(result, dict):
-            if role in manual_pipeline_roles and isinstance(manual_dlg, ManualSigmaKnotDialog):
-                manual_dlg.set_runtime_busy(False)
-                manual_dlg.append_runtime_log("Re-optimization finished without usable result.")
-
-            self.lbl_status.setText("Canceled or no result (dict)")
-            self._worker_role = "idle"
-            self.btn_run.setEnabled(True)
-            self.btn_stop.setEnabled(False)
-
-            if self.logger:
-                if result is None:
-                    self.logger.warning(
-                        "[INDEX_SPLINE.GUI] worker finished without a result dictionary"
-                        "Common causes: Stop button during calculation, thread closure/interruption, "
-                        "or silent worker-side exception. Graphs are not updated since this signal."
-                    )
-
-                else:
-                    self.logger.warning(
-                        "[INDEX_SPLINE.GUI] worker returned %s instead of a result dictionary - result ignored",
-                        type(result).__name__,
-                    )
-
-            self._refresh_post_optimization_option_controls()
+            self._settle_a_run_that_returned_no_result_dict(result, role, manual_pipeline_roles, manual_dlg)
             return
 
         if role not in ("rmse_grid", "corridors"):
@@ -448,65 +425,7 @@ class _CorridorWorkerMixin(_CorridorTabMixin):
             if hasattr(self, "lbl_corridor_rmse_robust_compact"):
                 self.lbl_corridor_rmse_robust_compact.setText("Robust interval: -")
 
-        if self.logger:
-            op_id = result.get("op_id")
-
-            role_ctx = role if worker_name == "?" else f"{role}|worker={worker_name}"
-
-            op_id_ctx = str(op_id) if op_id is not None else "n/a"
-
-            _wm = result.get("pipeline_best_rmse_watermark")
-
-            _wms = result.get("pipeline_best_rmse_stage")
-
-            _wm_hint = ""
-
-            if _wm is not None and np.isfinite(float(_wm)):
-                _wm_hint = f" | pipeline watermark (best RMSE seen during run): {_wm:.6f} (@ {_wms!s})"
-
-            self.logger.info(
-                "[INDEX_SPLINE.GUI] result dictionary received | rmse_current_nk=%.6f | "
-                "d = %.4f nm | role = %s | worker = %s | op_id = %s%s",
-                float(np.sqrt(max(float(result.get("mse", 0.0)), 0.0))),
-                float(result.get("d_nm", float("nan"))),
-                role,
-                worker_name,
-                op_id_ctx,
-                _wm_hint,
-            )
-
-            log_index_spline_d_trace(
-                self.logger,
-                f"[INDEX_SPLINE.GUI] worker result received | role={role_ctx} | op_id={op_id_ctx}",
-                result.get("d_nm"),
-                detail=("worker=" + worker_name),
-            )
-
-            split_mesh = self._result_uses_split_mesh(result)
-
-            self.logger.info(
-                "[INDEX_SPLINE.GUI] worker details | mse=%.6e | split=%s | continuous=%s | adaptive=%s",
-                float(result.get("mse", float("nan"))),
-                bool(split_mesh),
-                bool(result.get("continuous_model")),
-                bool(result.get("adaptive_mesh")),
-            )
-
-            log_structured_json_event(
-                self.logger,
-                "AUTO_BEST_JSON",
-                "worker_done",
-                role=role,
-                worker=worker_name,
-                op_id=op_id_ctx,
-                mse=float(result.get("mse", float("nan"))),
-                rmse=float(np.sqrt(max(float(result.get("mse", 0.0)), 0.0))),
-                rmse_convention="sqrt(max(mse,0))",
-                d_nm=float(result.get("d_nm", float("nan"))),
-                split=bool(split_mesh),
-                continuous=bool(result.get("continuous_model")),
-                adaptive=bool(result.get("adaptive_mesh")),
-            )
+        self._log_the_result_dictionary_received(result, role, worker_name)
 
         # Auto-Best: trigger a 2nd local pass (free split n/logk knots) after the 1st warm pass.
 
@@ -611,6 +530,164 @@ class _CorridorWorkerMixin(_CorridorTabMixin):
                 "PIPELINE [05b/09] Manual pipeline stage completed (%s); proceeding to corridors only afterwards if requested.",
                 role,
             )
+        self._hand_the_result_to_the_manual_dialog(result, role, manual_pipeline_roles, manual_dlg, display)
+
+        # --- Manual extra-knot dialog (must occur before any deferred corridors) ---
+        if (
+            role not in ((*manual_pipeline_roles, "corridors"))
+            and self._can_offer_manual_extra_knots(result)
+            and getattr(self, "_corridor_auto_refine_plan", None) is None
+        ):
+            if self.logger:
+                self.logger.info(
+                    "PIPELINE [05b/09] Manual extra-knot stage available after optimization; this stage runs before deferred corridors."
+                )
+
+            dlg_ref = getattr(self, "_manual_knots_dialog", None)
+            if not isinstance(dlg_ref, ManualSigmaKnotDialog):
+                open_manual_fn = getattr(self, "_open_manual_extra_knots_dialog", None)
+                if callable(open_manual_fn):
+                    open_manual_fn(result)
+                    if self.logger:
+                        self.logger.info(
+                            "PIPELINE [05b/09] Manual extra-knot stage opened in keep-open mode; user closes dialog explicitly."
+                        )
+                else:
+                    # Fallback for test doubles/legacy call paths without non-blocking dialog helper.
+                    lambdas = self._prompt_manual_extra_knots(result)
+                    if lambdas:
+                        if self.logger:
+                            self.logger.info(
+                                "Manual extra-knot stage accepted; deferred corridors are postponed until manual insertion completes."
+                            )
+                        self._start_manual_sigma_insert_worker(result, lambdas)
+                        return
+            elif self.logger:
+                self.logger.info(
+                    "PIPELINE [05b/09] Manual extra-knot dialog already open; keeping current session active."
+                )
+
+        self._worker_role = "idle"
+
+        try:
+            self._refresh_post_optimization_option_controls()
+        except Exception as e:
+
+            import traceback as _tb
+            if self.logger:
+                self.logger.exception(
+                    "INDEX_SPLINE [CRASH GUARD] _refresh_post_optimization_option_controls failed: %s\n%s",
+                    type(e).__name__,
+                    _tb.format_exc(),
+                )
+
+        self.lbl_status.setText(self._post_optimization_ready_status(st))
+
+        try:
+            self.export_excel(auto_export=True)
+        except Exception as e:
+
+            import traceback as _tb
+            if self.logger:
+                self.logger.exception(
+                    "INDEX_SPLINE [CRASH GUARD] export_excel(auto_export=True) failed: %s\n%s",
+                    type(e).__name__,
+                    _tb.format_exc(),
+                )
+            else:
+                print(f"[CRASH GUARD] export_excel failed: {e}", file=__import__("sys").stderr)
+
+    def _settle_a_run_that_returned_no_result_dict(self, result, role, manual_pipeline_roles, manual_dlg):
+        """Free the manual dialog and the run buttons and log why, when the worker finished without a result dictionary."""
+        if role in manual_pipeline_roles and isinstance(manual_dlg, ManualSigmaKnotDialog):
+            manual_dlg.set_runtime_busy(False)
+            manual_dlg.append_runtime_log("Re-optimization finished without usable result.")
+
+        self.lbl_status.setText("Canceled or no result (dict)")
+        self._worker_role = "idle"
+        self.btn_run.setEnabled(True)
+        self.btn_stop.setEnabled(False)
+
+        if self.logger:
+            if result is None:
+                self.logger.warning(
+                    "[INDEX_SPLINE.GUI] worker finished without a result dictionary"
+                    "Common causes: Stop button during calculation, thread closure/interruption, "
+                    "or silent worker-side exception. Graphs are not updated since this signal."
+                )
+
+            else:
+                self.logger.warning(
+                    "[INDEX_SPLINE.GUI] worker returned %s instead of a result dictionary - result ignored",
+                    type(result).__name__,
+                )
+
+        self._refresh_post_optimization_option_controls()
+
+    def _log_the_result_dictionary_received(self, result, role, worker_name):
+        """Log the result dictionary the worker handed back: its RMSE, its thickness, the mesh kind and the structured JSON event."""
+        if self.logger:
+            op_id = result.get("op_id")
+
+            role_ctx = role if worker_name == "?" else f"{role}|worker={worker_name}"
+
+            op_id_ctx = str(op_id) if op_id is not None else "n/a"
+
+            _wm = result.get("pipeline_best_rmse_watermark")
+
+            _wms = result.get("pipeline_best_rmse_stage")
+
+            _wm_hint = ""
+
+            if _wm is not None and np.isfinite(float(_wm)):
+                _wm_hint = f" | pipeline watermark (best RMSE seen during run): {_wm:.6f} (@ {_wms!s})"
+
+            self.logger.info(
+                "[INDEX_SPLINE.GUI] result dictionary received | rmse_current_nk=%.6f | "
+                "d = %.4f nm | role = %s | worker = %s | op_id = %s%s",
+                float(np.sqrt(max(float(result.get("mse", 0.0)), 0.0))),
+                float(result.get("d_nm", float("nan"))),
+                role,
+                worker_name,
+                op_id_ctx,
+                _wm_hint,
+            )
+
+            log_index_spline_d_trace(
+                self.logger,
+                f"[INDEX_SPLINE.GUI] worker result received | role={role_ctx} | op_id={op_id_ctx}",
+                result.get("d_nm"),
+                detail=("worker=" + worker_name),
+            )
+
+            split_mesh = self._result_uses_split_mesh(result)
+
+            self.logger.info(
+                "[INDEX_SPLINE.GUI] worker details | mse=%.6e | split=%s | continuous=%s | adaptive=%s",
+                float(result.get("mse", float("nan"))),
+                bool(split_mesh),
+                bool(result.get("continuous_model")),
+                bool(result.get("adaptive_mesh")),
+            )
+
+            log_structured_json_event(
+                self.logger,
+                "AUTO_BEST_JSON",
+                "worker_done",
+                role=role,
+                worker=worker_name,
+                op_id=op_id_ctx,
+                mse=float(result.get("mse", float("nan"))),
+                rmse=float(np.sqrt(max(float(result.get("mse", 0.0)), 0.0))),
+                rmse_convention="sqrt(max(mse,0))",
+                d_nm=float(result.get("d_nm", float("nan"))),
+                split=bool(split_mesh),
+                continuous=bool(result.get("continuous_model")),
+                adaptive=bool(result.get("adaptive_mesh")),
+            )
+
+    def _hand_the_result_to_the_manual_dialog(self, result, role, manual_pipeline_roles, manual_dlg, display):
+        """Show the mesh the worker applied in the manual knot dialog, adopt its knots and offset, and remember its best configuration."""
         if role in manual_pipeline_roles and isinstance(manual_dlg, ManualSigmaKnotDialog):
             try:
                 manual_dlg.set_runtime_busy(False)
@@ -677,71 +754,6 @@ class _CorridorWorkerMixin(_CorridorTabMixin):
                         type(e).__name__,
                         __import__('traceback').format_exc(),
                     )
-
-        # --- Manual extra-knot dialog (must occur before any deferred corridors) ---
-        if (
-            role not in ((*manual_pipeline_roles, "corridors"))
-            and self._can_offer_manual_extra_knots(result)
-            and getattr(self, "_corridor_auto_refine_plan", None) is None
-        ):
-            if self.logger:
-                self.logger.info(
-                    "PIPELINE [05b/09] Manual extra-knot stage available after optimization; this stage runs before deferred corridors."
-                )
-
-            dlg_ref = getattr(self, "_manual_knots_dialog", None)
-            if not isinstance(dlg_ref, ManualSigmaKnotDialog):
-                open_manual_fn = getattr(self, "_open_manual_extra_knots_dialog", None)
-                if callable(open_manual_fn):
-                    open_manual_fn(result)
-                    if self.logger:
-                        self.logger.info(
-                            "PIPELINE [05b/09] Manual extra-knot stage opened in keep-open mode; user closes dialog explicitly."
-                        )
-                else:
-                    # Fallback for test doubles/legacy call paths without non-blocking dialog helper.
-                    lambdas = self._prompt_manual_extra_knots(result)
-                    if lambdas:
-                        if self.logger:
-                            self.logger.info(
-                                "Manual extra-knot stage accepted; deferred corridors are postponed until manual insertion completes."
-                            )
-                        self._start_manual_sigma_insert_worker(result, lambdas)
-                        return
-            elif self.logger:
-                self.logger.info(
-                    "PIPELINE [05b/09] Manual extra-knot dialog already open; keeping current session active."
-                )
-
-        self._worker_role = "idle"
-
-        try:
-            self._refresh_post_optimization_option_controls()
-        except Exception as e:
-
-            import traceback as _tb
-            if self.logger:
-                self.logger.exception(
-                    "INDEX_SPLINE [CRASH GUARD] _refresh_post_optimization_option_controls failed: %s\n%s",
-                    type(e).__name__,
-                    _tb.format_exc(),
-                )
-
-        self.lbl_status.setText(self._post_optimization_ready_status(st))
-
-        try:
-            self.export_excel(auto_export=True)
-        except Exception as e:
-
-            import traceback as _tb
-            if self.logger:
-                self.logger.exception(
-                    "INDEX_SPLINE [CRASH GUARD] export_excel(auto_export=True) failed: %s\n%s",
-                    type(e).__name__,
-                    _tb.format_exc(),
-                )
-            else:
-                print(f"[CRASH GUARD] export_excel failed: {e}", file=__import__("sys").stderr)
 
 
     def _start_corridor_rmse_grid_recalc(self) -> None:

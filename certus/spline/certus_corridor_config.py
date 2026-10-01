@@ -896,32 +896,19 @@ class CorridorContextBuilder:
         corridor_ref_n_lam = None
         corridor_ref_k_lam = None
 
-        if use_abs_delta and n_b.size == lam_full.size and k_b.size == lam_full.size:
-            if scientific_nominal and nom_pack is not None:
-                first_rmse = float(rmse_opt)
-            elif np.isfinite(rmse_spectral_curves):
-                first_rmse = float(rmse_spectral_curves)
-            else:
-                first_rmse = None
-
-            if first_rmse is not None:
-                self.d_vals.append(float(d0))
-                self.n_curves.append(n_b.copy())
-                self.k_curves.append(k_b.copy())
-                self.rmse_vals.append(first_rmse)
-                self.chi2_vals.append(float("nan"))
-                self.fit_nfev_values.append(float("nan"))
-                self.fit_nit_values.append(float("nan"))
-                self.fit_try_values.append(float("nan"))
-                self.fit_fail_values.append(float("nan"))
-                self.live_streamer.push_point(float(d0), float(first_rmse), n_b.copy(), k_b.copy(), float("nan"))
-
-                if scientific_nominal and nom_pack is not None:
-                    corridor_ref_n_lam = np.asarray(nom_pack["n_lam"], dtype=np.float64).ravel().copy()
-                    corridor_ref_k_lam = np.asarray(nom_pack["k_lam"], dtype=np.float64).ravel().copy()
-                else:
-                    corridor_ref_n_lam = n_b.copy()
-                    corridor_ref_k_lam = k_b.copy()
+        corridor_ref_k_lam, corridor_ref_n_lam = self._seed_corridor_with_the_nominal_point(
+            lam_full,
+            use_abs_delta,
+            d0,
+            scientific_nominal,
+            nom_pack,
+            n_b,
+            k_b,
+            rmse_spectral_curves,
+            rmse_opt,
+            corridor_ref_n_lam,
+            corridor_ref_k_lam,
+        )
 
         fit0, _, metric0 = _best_fit_at_d(
             self.cfg,
@@ -1189,6 +1176,36 @@ class CorridorContextBuilder:
             center_seed_gate_kept_count=center_seed_gate_kept_count,
             center_seed_gate_delta_refit_minus_seed=center_seed_gate_delta_refit_minus_seed,
         )
+
+    def _seed_corridor_with_the_nominal_point(self, lam_full, use_abs_delta, d0, scientific_nominal, nom_pack, n_b, k_b, rmse_spectral_curves, rmse_opt, corridor_ref_n_lam, corridor_ref_k_lam):
+        """Record the nominal profile as the first point of the corridor (and of the live plot), and pick the reference n / k curves the corridor is measured against."""
+        if use_abs_delta and n_b.size == lam_full.size and k_b.size == lam_full.size:
+            if scientific_nominal and nom_pack is not None:
+                first_rmse = float(rmse_opt)
+            elif np.isfinite(rmse_spectral_curves):
+                first_rmse = float(rmse_spectral_curves)
+            else:
+                first_rmse = None
+
+            if first_rmse is not None:
+                self.d_vals.append(float(d0))
+                self.n_curves.append(n_b.copy())
+                self.k_curves.append(k_b.copy())
+                self.rmse_vals.append(first_rmse)
+                self.chi2_vals.append(float("nan"))
+                self.fit_nfev_values.append(float("nan"))
+                self.fit_nit_values.append(float("nan"))
+                self.fit_try_values.append(float("nan"))
+                self.fit_fail_values.append(float("nan"))
+                self.live_streamer.push_point(float(d0), float(first_rmse), n_b.copy(), k_b.copy(), float("nan"))
+
+                if scientific_nominal and nom_pack is not None:
+                    corridor_ref_n_lam = np.asarray(nom_pack["n_lam"], dtype=np.float64).ravel().copy()
+                    corridor_ref_k_lam = np.asarray(nom_pack["k_lam"], dtype=np.float64).ravel().copy()
+                else:
+                    corridor_ref_n_lam = n_b.copy()
+                    corridor_ref_k_lam = k_b.copy()
+        return corridor_ref_k_lam, corridor_ref_n_lam
 
     def build(self) -> CorridorProfileContext | dict:
         """Compute d interval and n/k corridors by profiling (refit nodes at fixed d).

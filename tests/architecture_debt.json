@@ -55,7 +55,6 @@
     "certus/physics/gradient_oblique.py::_make_oblique_gradient_contrib_kernel.<locals>.kernel": 416,
     "certus/physics/gradient_oblique.py::_make_oblique_rt_and_grads_kernel": 417,
     "certus/physics/gradient_oblique.py::_make_oblique_rt_and_grads_kernel.<locals>.kernel": 406,
-    "certus/spline/certus_corridor_config.py::CorridorContextBuilder._process_center_solution": 305,
     "certus/spline/certus_corridor_exploration.py::_corridor_profile_walk_side": 506,
     "certus/spline/certus_corridor_exploration.py::compute_bootstrap_corridors_by_d": 444,
     "certus/spline/certus_corridor_exploration.py::compute_regular_grid_rmse_profile": 622,

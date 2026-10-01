@@ -295,6 +295,13 @@ def pytest_configure(config):
     )
 
 
+def pytest_collection_modifyitems(config, items):
+    """The slow tests of tests/slow_tests.json carry the `slow` marker: `pytest -m "not slow"` is the fast tier (tests/slow_tier.py)."""
+    from slow_tier import mark_slow, slow_test_ids
+
+    mark_slow(items, slow_test_ids(), pytest.mark.slow)
+
+
 @pytest.fixture(autouse=True)
 def isolate_environ():
     """Backup and restore os.environ between tests to prevent Numba env pollution."""

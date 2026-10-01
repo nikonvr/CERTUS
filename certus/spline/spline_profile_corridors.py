@@ -371,6 +371,88 @@ def compute_profiled_corridors_by_d(
     else:
         r_plus, r_minus = _run_walks_sequential()
 
+    neg_valid, pos_valid = _merge_the_two_walks_into_the_context(ctx, r_minus, r_plus)
+
+    min_req = int(max(1, ctx.pconf.min_valid_points))
+
+    if ctx.scientific_nominal:
+        min_req = 1
+
+    ctx.min_side = int(max(0, getattr(ctx.pconf, "min_valid_each_side", 0)))
+
+    if len(ctx.d_vals) < min_req:
+        if len(ctx.d_vals) >= 1 and ctx.auto_relaxed_alpha:
+            log.warning(
+                "%s Continuing with %d valid point(s) (< min_valid_points=%d) after automatic RMSE threshold lift "
+                "(envelope may be narrow or degenerate).",
+                _LOG_PREFIX,
+                len(ctx.d_vals),
+                min_req,
+            )
+
+        else:
+            # P1.2 FIX: Detect plateau scenario (RMSE almost flat -> threshold too strict)
+            _is_plateau = False
+            if len(ctx.d_vals) >= 2 and len(ctx.rmse_vals) >= 2:
+                _rmse_arr = np.asarray(ctx.rmse_vals, dtype=np.float64)
+                _rmse_mean = float(np.nanmean(_rmse_arr))
+                _rmse_std = float(np.nanstd(_rmse_arr))
+                _cv = _rmse_std / _rmse_mean if _rmse_mean > 0 else 0.0  # coefficient of variation
+                # Plateau: low CV (< 2%) and all points near threshold
+                _all_near_thresh = np.all(np.abs(_rmse_arr - ctx.rmse_thresh_active) < 0.01 * ctx.rmse_thresh_active)
+                if _cv < 0.02 and _all_near_thresh:
+                    _is_plateau = True
+
+            if _is_plateau:
+                log.warning(
+                    "%s PLATEAU DETECTED: RMSE nearly flat (CV<2%%) with all points near threshold. "
+                    "The tolerance is likely too strict for this data. Suggestions: "
+                    "(1) Increase rmse_abs_tolerance by ~2x; "
+                    "(2) Switch to mode='alpha' with alpha=1.05; "
+                    "(3) Enable use_heteroscedastic_sigma=True if noise varies with wavelength; "
+                    "(4) Check if data has sufficient spectral contrast for n/k inference. "
+                    "Current: %d valid points (min_req=%d), RMSE_mean=%.6f, thresh=%.6f",
+                    _LOG_PREFIX,
+                    len(ctx.d_vals),
+                    min_req,
+                    float(_rmse_mean),
+                    float(ctx.rmse_thresh_active),
+                )
+            else:
+                log.warning(
+                    "%s Abort: too few valid solutions (%d < %d).",
+                    _LOG_PREFIX,
+                    len(ctx.d_vals),
+                    min_req,
+                )
+
+            if ctx.log_coaching:
+                _log_coaching_corridor_failure(
+                    reason="too_few_valid",
+                    pconf=ctx.pconf,
+                    use_lr=ctx.use_lr,
+                    rmse_opt=ctx.rmse_opt,
+                    rmse_thresh=ctx.rmse_thresh_active,
+                    d0=float(ctx.d0),
+                )
+
+            return {"profile_d_status": "failed"}
+
+    if ctx.min_side > 0 and (pos_valid < ctx.min_side or neg_valid < ctx.min_side):
+        log.warning(
+            "%s Degenerate corridor: valid_side(+d=%d, -d=%d) < min_valid_each_side=%d.",
+            _LOG_PREFIX,
+            int(pos_valid),
+            int(neg_valid),
+            int(ctx.min_side),
+        )
+
+    ctx = _context_of_the_accepted_corridor(ctx)
+    return _package_corridor_results(ctx)
+
+
+def _merge_the_two_walks_into_the_context(ctx, r_minus, r_plus):
+    """Append the results of the walk towards larger d and of the walk towards smaller d to the context, sum their counters and merge their seed-gate statistics; return the number of valid points on each side."""
     ctx.d_vals.extend(r_plus["d_vals"])
 
     ctx.d_vals.extend(r_minus["d_vals"])
@@ -457,81 +539,11 @@ def compute_profiled_corridors_by_d(
     ctx.seed_gate_auto_escalated_global = bool(
         r_plus.get("seed_gate_auto_escalated", False) or r_minus.get("seed_gate_auto_escalated", False)
     )
+    return neg_valid, pos_valid
 
-    min_req = int(max(1, ctx.pconf.min_valid_points))
 
-    if ctx.scientific_nominal:
-        min_req = 1
-
-    ctx.min_side = int(max(0, getattr(ctx.pconf, "min_valid_each_side", 0)))
-
-    if len(ctx.d_vals) < min_req:
-        if len(ctx.d_vals) >= 1 and ctx.auto_relaxed_alpha:
-            log.warning(
-                "%s Continuing with %d valid point(s) (< min_valid_points=%d) after automatic RMSE threshold lift "
-                "(envelope may be narrow or degenerate).",
-                _LOG_PREFIX,
-                len(ctx.d_vals),
-                min_req,
-            )
-
-        else:
-            # P1.2 FIX: Detect plateau scenario (RMSE almost flat -> threshold too strict)
-            _is_plateau = False
-            if len(ctx.d_vals) >= 2 and len(ctx.rmse_vals) >= 2:
-                _rmse_arr = np.asarray(ctx.rmse_vals, dtype=np.float64)
-                _rmse_mean = float(np.nanmean(_rmse_arr))
-                _rmse_std = float(np.nanstd(_rmse_arr))
-                _cv = _rmse_std / _rmse_mean if _rmse_mean > 0 else 0.0  # coefficient of variation
-                # Plateau: low CV (< 2%) and all points near threshold
-                _all_near_thresh = np.all(np.abs(_rmse_arr - ctx.rmse_thresh_active) < 0.01 * ctx.rmse_thresh_active)
-                if _cv < 0.02 and _all_near_thresh:
-                    _is_plateau = True
-
-            if _is_plateau:
-                log.warning(
-                    "%s PLATEAU DETECTED: RMSE nearly flat (CV<2%%) with all points near threshold. "
-                    "The tolerance is likely too strict for this data. Suggestions: "
-                    "(1) Increase rmse_abs_tolerance by ~2x; "
-                    "(2) Switch to mode='alpha' with alpha=1.05; "
-                    "(3) Enable use_heteroscedastic_sigma=True if noise varies with wavelength; "
-                    "(4) Check if data has sufficient spectral contrast for n/k inference. "
-                    "Current: %d valid points (min_req=%d), RMSE_mean=%.6f, thresh=%.6f",
-                    _LOG_PREFIX,
-                    len(ctx.d_vals),
-                    min_req,
-                    float(_rmse_mean),
-                    float(ctx.rmse_thresh_active),
-                )
-            else:
-                log.warning(
-                    "%s Abort: too few valid solutions (%d < %d).",
-                    _LOG_PREFIX,
-                    len(ctx.d_vals),
-                    min_req,
-                )
-
-            if ctx.log_coaching:
-                _log_coaching_corridor_failure(
-                    reason="too_few_valid",
-                    pconf=ctx.pconf,
-                    use_lr=ctx.use_lr,
-                    rmse_opt=ctx.rmse_opt,
-                    rmse_thresh=ctx.rmse_thresh_active,
-                    d0=float(ctx.d0),
-                )
-
-            return {"profile_d_status": "failed"}
-
-    if ctx.min_side > 0 and (pos_valid < ctx.min_side or neg_valid < ctx.min_side):
-        log.warning(
-            "%s Degenerate corridor: valid_side(+d=%d, -d=%d) < min_valid_each_side=%d.",
-            _LOG_PREFIX,
-            int(pos_valid),
-            int(neg_valid),
-            int(ctx.min_side),
-        )
-
+def _context_of_the_accepted_corridor(ctx):
+    """Rebuild the corridor context from the accumulated one, now that the walks are merged and checked."""
     ctx = CorridorProfileContext(
         _use_hetero=ctx._use_hetero,
         _user_mask=ctx._user_mask,
@@ -594,7 +606,7 @@ def compute_profiled_corridors_by_d(
         center_seed_gate_kept_count=ctx.center_seed_gate_kept_count,
         center_seed_gate_delta_refit_minus_seed=ctx.center_seed_gate_delta_refit_minus_seed,
     )
-    return _package_corridor_results(ctx)
+    return ctx
 
 
 def _sorted_corridor_stacks(ctx: CorridorProfileContext) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:

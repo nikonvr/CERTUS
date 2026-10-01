@@ -64,7 +64,6 @@
     "certus/spline/spline_pipeline_mesh_clean.py::worker_spline_auto_clean_knots": 485,
     "certus/spline/spline_pipeline_mesh_insert.py::insert_manual_sigma_nodes": 490,
     "certus/spline/spline_pipeline_orchestrator.py::worker_spline_optimization": 446,
-    "certus/spline/spline_profile_corridors.py::compute_profiled_corridors_by_d": 373,
     "certus/spline/spline_workers.py::_run_free_knot_stage": 699,
     "certus/spline/spline_workers.py::_run_single_spline_stage": 620,
     "certus/ui/certus_index_spline_managers_ui.py::Step4MeshOptimizerBuilder.build": 804,

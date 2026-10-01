@@ -453,26 +453,42 @@ def test_K_couche_rate_ne_plante_pas() -> None:
     🔑 C'est le seul fait de mecanisme qui vienne du CODE et non d'un artefact -- donc le seul
     qui ne depende ni d'une graine ni d'un composant. §16 : un commentaire n'est pas une preuve,
     on verifie le retour anticipe lui-meme.
+
+    Depuis S5.1 (E11, 142f33d) l'epaisseur d'une couche posee au debit est calculee par
+    `_rate_layer_thickness` : la garde `n_ref > 0` et le retour `float(turns * RATE_TURN_NM)` y
+    vivent, et le bloc `if is_rate:` du noyau ne fait plus que rendre ce resultat. Le controle
+    suit le code la ou il est : il lisait l'ancien bloc en ligne et criait a une regression qui
+    n'en etait pas une (la garde etait devenue une aide).
     """
     src = (ROOT / "certus" / "physics" / "certus_strat_growth.py").read_text(encoding="utf-8")
     lignes = src.splitlines()
     i_rate = next((i for i, ln in enumerate(lignes) if ln.strip() == "if is_rate:"), None)
+    i_aide = next((i for i, ln in enumerate(lignes) if ln.startswith("def _rate_layer_thickness(")), None)
     if i_rate is None:
         verdict("K. une couche Rate ne peut pas planter", "FAIL", "le bloc `if is_rate:` a disparu de certus_strat_growth.py")
         return
-    bloc = "\n".join(lignes[i_rate:i_rate + 30])
+    if i_aide is None:
+        verdict("K. une couche Rate ne peut pas planter", "FAIL", "`_rate_layer_thickness` a disparu de certus_strat_growth.py")
+        return
+    bloc = "\n".join(lignes[i_rate:i_rate + 15])
+    # le corps de l'aide : jusqu'a la prochaine ligne de niveau module qui n'est ni vide, ni un commentaire
+    fin = next((i for i in range(i_aide + 1, len(lignes)) if lignes[i] and not lignes[i][0].isspace() and not lignes[i].startswith("#")), len(lignes))
+    aide = "\n".join(lignes[i_aide:fin])
     pbs = []
-    if "CRASH_SENTINEL_UNIT" in bloc:
+    if "CRASH_SENTINEL_UNIT" in bloc or "CRASH_SENTINEL_UNIT" in aide:
         pbs.append("une sentinelle de plantage est apparue dans le chemin Rate")
-    if "return (float(turns * RATE_TURN_NM)" not in bloc:
+    if "_rate_layer_thickness(" not in bloc:
+        pbs.append("le noyau ne demande plus l'epaisseur au debit a `_rate_layer_thickness`")
+    if "return (rate_thickness," not in bloc:
         pbs.append("le retour anticipe du chemin Rate a change de forme")
-    if "if n_ref > 0:" not in bloc:
+    if "return True, float(turns * RATE_TURN_NM)" not in aide:
+        pbs.append("`_rate_layer_thickness` ne rend plus l'epaisseur au debit")
+    if "if n_ref > 0:" not in aide:
         pbs.append("la garde `n_ref > 0` a disparu -- une couche Rate sans reference "
                    "retombe sur POEM et REDEVIENT plantable")
     verdict("K. une couche Rate ne peut pas planter", "FAIL" if pbs else "PASS",
-            " | ".join(pbs) or "retour anticipe intact, aucune sentinelle, garde n_ref>0 presente "
+            " | ".join(pbs) or "retour anticipe intact, aucune sentinelle, garde n_ref>0 presente dans `_rate_layer_thickness` "
             "(donc une couche Rate en TETE d'empilement reste plantable)")
-
 
 def test_L_les_deux_regles_gravees_du_rate() -> None:
     """L. 🔒 Les deux regles que 👤 a fait GRAVER le 2026-08-19.

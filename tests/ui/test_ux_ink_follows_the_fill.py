@@ -51,11 +51,14 @@ FILL_INK = [
 
 
 @pytest.fixture(autouse=True)
-def light_palette():
-    """Every test starts and ends in the light palette: `CertusTheme` is a class, its palette is process state."""
+def light_palette(qapp):
+    """Every test starts and ends in the light palette AND the light application style: the two are process state, and a toggle that an
+    earlier test clicked leaves the application dark (its palette, its sheet) whatever `CertusTheme.configure` says."""
     CertusTheme.configure("light")
+    CertusTheme.apply_to_app(qapp, False)
     yield
     CertusTheme.configure("light")
+    CertusTheme.apply_to_app(qapp, False)
 
 
 # =============================================================================

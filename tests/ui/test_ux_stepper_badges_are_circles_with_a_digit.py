@@ -28,10 +28,14 @@ from certus.ui.certus_theme import CertusTheme
 
 
 @pytest.fixture(autouse=True)
-def light_palette():
+def light_palette(qapp):
+    """Every test starts and ends in the light palette AND the light application style: the two are process state, and a toggle that an
+    earlier test clicked leaves the application dark (its palette, its sheet) whatever `CertusTheme.configure` says."""
     CertusTheme.configure("light")
+    CertusTheme.apply_to_app(qapp, False)
     yield
     CertusTheme.configure("light")
+    CertusTheme.apply_to_app(qapp, False)
 
 
 def digit_contrast(button: QWidget) -> float:

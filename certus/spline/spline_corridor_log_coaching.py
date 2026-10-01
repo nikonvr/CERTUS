@@ -131,7 +131,7 @@ def log_coaching_corridor_pipeline_skip_empty() -> None:
 
 def _log_coaching_corridor_outcome(
     *,
-    pconf: "ProfileCorridorConfig",
+    pconf: ProfileCorridorConfig,
     use_lr: bool,
     use_abs_delta: bool = False,
     d0: float,
@@ -265,7 +265,7 @@ def _log_coaching_corridor_outcome(
 def _log_coaching_corridor_failure(
     *,
     reason: str,
-    pconf: "ProfileCorridorConfig",
+    pconf: ProfileCorridorConfig,
     use_lr: bool,
     rmse_opt: float,
     rmse_thresh: float,

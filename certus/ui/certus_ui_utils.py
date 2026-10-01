@@ -1339,7 +1339,7 @@ def copy_app_logs_to_clipboard(app) -> bool:
 
     return False
 
-def install_skeleton_loader(target_widget: QWidget, shape: str = "chart") -> "SkeletonLoaderWidget":
+def install_skeleton_loader(target_widget: QWidget, shape: str = "chart") -> SkeletonLoaderWidget:
     from certus.ui.certus_ui_widgets_utils import SkeletonLoaderWidget
     """
     Overlays a premium SkeletonLoaderWidget on top of target_widget.

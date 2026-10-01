@@ -32,7 +32,7 @@ def _format_progress_status(
     elapsed: float | None = None,
     evals: int = 0,
     next_action: str = "",
-    run_context: "Any | None" = None,
+    run_context: Any | None = None,
 ) -> str:
     """Render a compact, premium status line shared by UX feedback widgets."""
     status_label = {
@@ -66,7 +66,7 @@ class ProgressDialog(QWidget):
 
     canceled = pyqtSignal()
 
-    def __init__(self, title: str = "Processing...", parent=None, run_id: str | None = None, run_context: "Any | None" = None) -> None:
+    def __init__(self, title: str = "Processing...", parent=None, run_id: str | None = None, run_context: Any | None = None) -> None:
 
         super().__init__(parent)
 
@@ -195,7 +195,7 @@ class DualStageProgressWidget(QWidget):
 
     canceled = pyqtSignal()
 
-    def __init__(self, parent=None, main_label: str = "", run_id: str | None = None, run_context: "Any | None" = None) -> None:
+    def __init__(self, parent=None, main_label: str = "", run_id: str | None = None, run_context: Any | None = None) -> None:
         super().__init__(parent)
         self._main_label = main_label
         self._run_context = run_context

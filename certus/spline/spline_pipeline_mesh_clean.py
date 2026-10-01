@@ -60,7 +60,7 @@ def _auto_clean_cache_result(
 
 def _auto_clean_prescreen_result(
     *,
-    log: "logging.Logger",
+    log: logging.Logger,
     cache: dict,
     cache_key: tuple[float, ...],
     cand: dict,
@@ -110,7 +110,7 @@ def _eval_clean_variant(
     prescreen_margin_abs: float,
     candidate_polish_maxfun: int,
     prescreen_maxfun: int,
-    log: "logging.Logger",
+    log: logging.Logger,
 ) -> tuple[dict | None, float]:
     """Evaluate a single knot-removal variant with optional prescreen + full polish.
 

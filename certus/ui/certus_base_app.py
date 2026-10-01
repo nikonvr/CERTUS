@@ -388,7 +388,7 @@ class CertusBaseApp(QMainWindow, CertusZoomMixin, CertusCommandPaletteMixin, Cer
 
         self.undo_stack: deque = deque(maxlen=getattr(CFG, "UNDO_LIMIT", 50))
 
-        self.detached_plot_windows: dict[str, "DetachedPlotWindow"] = {}
+        self.detached_plot_windows: dict[str, DetachedPlotWindow] = {}
 
         # Worker management
 

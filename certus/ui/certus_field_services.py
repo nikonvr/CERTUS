@@ -17,7 +17,7 @@ class FieldPlotData:
     ep_c1_cn: list[float]
 
     @classmethod
-    def from_any(cls, value) -> "FieldPlotData":
+    def from_any(cls, value) -> FieldPlotData:
         if isinstance(value, dict):
             return cls(
                 z_coords=list(value.get("z_coords", []) or []),

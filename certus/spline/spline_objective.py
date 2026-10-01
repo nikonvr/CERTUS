@@ -671,7 +671,7 @@ def spectral_mse_rmse_masked_from_nk(
 
 
 def spline_spectral_mse_from_xy_nk(
-    cfg: "SplineOptConfig",
+    cfg: SplineOptConfig,
     lam_full: np.ndarray,
     n_lam_full: np.ndarray,
     k_lam_full: np.ndarray,

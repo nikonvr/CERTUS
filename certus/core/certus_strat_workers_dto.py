@@ -120,7 +120,7 @@ class WorkerThreadRequest:
         params: dict[str, Any] | None,
         opti_results: dict[str, Any] | None = None,
         timing_logger: TimingLogger | None = None,
-    ) -> "WorkerThreadRequest":
+    ) -> WorkerThreadRequest:
         return WorkerThreadRequest(
             step=int(step),
             params=StratParamsDTO.model_validate(_copy_legacy_params(params)),
@@ -143,7 +143,7 @@ class WorkerThreadResult:
             object.__setattr__(self, "opti_results", StratOptiResultsDTO.model_validate(self.opti_results))
 
     @staticmethod
-    def _build(*, nominal_results=None, seel_data=None, opti_results=None, final_results=None) -> "WorkerThreadResult":
+    def _build(*, nominal_results=None, seel_data=None, opti_results=None, final_results=None) -> WorkerThreadResult:
         return WorkerThreadResult(
             nominal_results=dict(nominal_results) if nominal_results is not None else None,
             seel_data=dict(seel_data) if seel_data is not None else None,
@@ -152,15 +152,15 @@ class WorkerThreadResult:
         )
 
     @staticmethod
-    def for_step_0(nominal_results: dict[str, Any], seel_data: dict[str, Any]) -> "WorkerThreadResult":
+    def for_step_0(nominal_results: dict[str, Any], seel_data: dict[str, Any]) -> WorkerThreadResult:
         return WorkerThreadResult._build(nominal_results=nominal_results, seel_data=seel_data)
 
     @staticmethod
-    def for_step_2(opti_results: dict[str, Any]) -> "WorkerThreadResult":
+    def for_step_2(opti_results: dict[str, Any]) -> WorkerThreadResult:
         return WorkerThreadResult._build(opti_results=opti_results)
 
     @staticmethod
-    def for_step_3(final_results: dict[str, Any]) -> "WorkerThreadResult":
+    def for_step_3(final_results: dict[str, Any]) -> WorkerThreadResult:
         return WorkerThreadResult._build(final_results=final_results)
 
     @staticmethod
@@ -168,7 +168,7 @@ class WorkerThreadResult:
         *,
         opti_results: dict[str, Any],
         final_results: dict[str, Any],
-    ) -> "WorkerThreadResult":
+    ) -> WorkerThreadResult:
         return WorkerThreadResult._build(opti_results=opti_results, final_results=final_results)
 
     @staticmethod
@@ -176,7 +176,7 @@ class WorkerThreadResult:
         *,
         opti_results: dict[str, Any],
         final_results: dict[str, Any],
-    ) -> "WorkerThreadResult":
+    ) -> WorkerThreadResult:
         return WorkerThreadResult._build(opti_results=opti_results, final_results=final_results)
 
     def to_legacy_dict(self) -> dict[str, Any]:

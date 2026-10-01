@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from certus.workers.certus_strat_workers import WorkerThread
 
 class RobustnessEvaluationStrategy:
-    def execute(self, worker: "WorkerThread") -> None:
+    def execute(self, worker: WorkerThread) -> None:
         """Execute Step 3: Robustness Test (classical workflow, non-Step-23).
 
         Runs final Monte Carlo simulations with thickness noise, aggregates

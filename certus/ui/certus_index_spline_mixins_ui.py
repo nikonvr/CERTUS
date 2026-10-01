@@ -41,7 +41,7 @@ class _ConfigBuilderMixin:
 class _MeshOptimizationMixin:
     """Mixin extracting _build_basic_step4_mesh_optimizer logic."""
 
-    def _build_basic_step4_mesh_optimizer(self, parent_layout: "QVBoxLayout", style: str) -> None:
+    def _build_basic_step4_mesh_optimizer(self, parent_layout: QVBoxLayout, style: str) -> None:
         Step4MeshOptimizerBuilder(self, parent_layout, style).build()
     def _build_opt_config(self, *, notify: bool = True) -> SplineOptConfig | None:
 

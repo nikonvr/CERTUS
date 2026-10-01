@@ -278,7 +278,7 @@ def n_mono_segment_flags(sigma_knots: np.ndarray, lam_lo_nm: float, lam_hi_nm: f
 
 
 def n_lambda_rising_with_wavelength_penalty(
-    cfg: "SplineOptConfig",
+    cfg: SplineOptConfig,
     sigma_knots_n: np.ndarray,
     n_nodes: np.ndarray,
 ) -> float:

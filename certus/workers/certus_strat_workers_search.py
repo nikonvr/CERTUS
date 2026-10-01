@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from certus.workers.certus_strat_workers import WorkerThread
 
 class StrategySearchStrategy:
-    def execute(self, worker: "WorkerThread") -> None:
+    def execute(self, worker: WorkerThread) -> None:
         """
 
         Execute Step 2: Optimized Hybrid Strategy.

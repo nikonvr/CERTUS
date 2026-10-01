@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 class ExternalEvaluationStrategy:
-    def execute(self, worker: "WorkerThread") -> None:
+    def execute(self, worker: WorkerThread) -> None:
 
         worker.params["logger"].info("--- STEP 33: EXTERNAL STRATEGIES SIMULATION ---")
 

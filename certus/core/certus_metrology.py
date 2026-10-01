@@ -121,7 +121,7 @@ class InputFingerprint(BaseModel):
     mtime_utc: str
 
     @staticmethod
-    def from_path(path: str) -> "InputFingerprint":
+    def from_path(path: str) -> InputFingerprint:
         abs_path = str(Path(path).resolve(strict=False))
         st = Path(abs_path).stat()
         mtime = datetime.fromtimestamp(st.st_mtime, tz=UTC).isoformat()
@@ -149,7 +149,7 @@ class SoftwareEnv(BaseModel):
     certus_version: str = CERTUS_VERSION
 
     @staticmethod
-    def detect() -> "SoftwareEnv":
+    def detect() -> SoftwareEnv:
         return SoftwareEnv(
             python=platform.python_version(),
             numpy=_get_version("numpy"),
@@ -202,7 +202,7 @@ class RunContext(BaseModel):
         params: Any | None = None,
         warnings: list[str] | None = None,
         status: ValidationStatus = ValidationStatus.OK,
-    ) -> "RunContext":
+    ) -> RunContext:
         now_utc = started_at_utc or datetime.now(UTC).isoformat()
         rid = run_id or _default_run_id()
         fps: list[InputFingerprint] = []

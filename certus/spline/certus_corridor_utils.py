@@ -93,7 +93,7 @@ def _estimate_adaptive_rmse_abs_tolerance(
     x_seed_default: np.ndarray,
     bounds_nodes: np.ndarray,
     maxfun: int,
-    pconf: "ProfileCorridorConfig",
+    pconf: ProfileCorridorConfig,
     sig_t: float,
     sig_r: float,
     sigma_t_f: np.ndarray | None,

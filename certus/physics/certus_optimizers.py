@@ -940,7 +940,7 @@ class PGlobalOptimizer:
 
             self._pool = None
 
-    def optimize(self, max_iter: int = 50, callback: Callable | None = None) -> "Sample | None":
+    def optimize(self, max_iter: int = 50, callback: Callable | None = None) -> Sample | None:
         """
 
         Run the PGLOBAL optimization loop.

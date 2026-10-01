@@ -137,8 +137,8 @@ def fuzzy_score(query: str, haystack: str) -> float:
 
 
 def rank_commands(
-    query: str, actions: "list[CommandAction]", *, min_score: float = 0.0
-) -> "list[tuple[float, CommandAction]]":
+    query: str, actions: list[CommandAction], *, min_score: float = 0.0
+) -> list[tuple[float, CommandAction]]:
     """Return actions sorted by descending fuzzy score.
 
     Items with score < ``min_score`` are dropped. With an empty query the
@@ -204,7 +204,7 @@ def _build_palette_class():
             palette.exec()
         """
 
-        def __init__(self, parent, actions: "list[CommandAction]"):
+        def __init__(self, parent, actions: list[CommandAction]):
             super().__init__(parent)
             self._all_actions: list[CommandAction] = list(actions)
             self._filtered: list[CommandAction] = []
@@ -308,7 +308,7 @@ def _build_palette_class():
             if self.list.count() > 0:
                 self.list.setCurrentRow(0)
 
-        def _format_row(self, a: "CommandAction") -> str:
+        def _format_row(self, a: CommandAction) -> str:
             lines = [a.title]
             if a.subtitle:
                 lines.append(a.subtitle)
@@ -365,7 +365,7 @@ def _build_palette_class():
 _PALETTE_CLS = None
 
 
-def open_command_palette(parent, actions: "list[CommandAction]"):
+def open_command_palette(parent, actions: list[CommandAction]):
     """Convenience helper: open a modal palette with ``actions``."""
     global _PALETTE_CLS
     if _PALETTE_CLS is None:

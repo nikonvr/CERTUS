@@ -68,7 +68,7 @@ def attach_jsonl_handler(
 def get_structured_logger(
     logger: logging.Logger | logging.LoggerAdapter,
     *,
-    run_context: "Any | None" = None,
+    run_context: Any | None = None,
     run_id: str | None = None,
     app_id: str,
 ) -> logging.LoggerAdapter:

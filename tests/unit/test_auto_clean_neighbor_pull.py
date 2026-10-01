@@ -16,7 +16,7 @@ class _CfgStub:
     auto_clean_neighbor_pull_ratios: tuple[float, ...] = (0.20,)
     manual_node_insert_polish_maxfun: int | None = None
 
-    def replace(self, **changes: Any) -> "_CfgStub":
+    def replace(self, **changes: Any) -> _CfgStub:
         data = {
             "auto_clean_neighbor_pull_enabled": self.auto_clean_neighbor_pull_enabled,
             "auto_clean_neighbor_pull_ratios": self.auto_clean_neighbor_pull_ratios,

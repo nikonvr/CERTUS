@@ -87,7 +87,7 @@ class REWorkerRequest:
     cfg: dict[str, Any] = field(default_factory=dict)
 
     @staticmethod
-    def from_legacy(cfg: dict[str, Any] | None) -> "REWorkerRequest":
+    def from_legacy(cfg: dict[str, Any] | None) -> REWorkerRequest:
         if not isinstance(cfg, dict):
             return REWorkerRequest(cfg={})
         return REWorkerRequest(cfg=dict(cfg))
@@ -239,7 +239,7 @@ class REPhase4Result:
     re_sub_cauchy_a2: float | None = None
 
     @staticmethod
-    def from_legacy_dict(payload: dict[str, Any]) -> "REPhase4Result":
+    def from_legacy_dict(payload: dict[str, Any]) -> REPhase4Result:
         """Build a typed phase-4 result from existing legacy dict payload."""
         return REPhase4Result(
             label=str(payload.get("label", RE_RESULT_LABEL_WITH_DRIFT)),

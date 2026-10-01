@@ -72,19 +72,19 @@ class StratContext:
             self.sp_lock = threading.Lock()
 
     # --- Singleton pattern for global access ---
-    _current: "StratContext" | None = None
+    _current: StratContext | None = None
 
     @classmethod
-    def get_current(cls) -> "StratContext" | None:
+    def get_current(cls) -> StratContext | None:
         """Get the current active context (if any)."""
         return cls._current
 
     @classmethod
-    def set_current(cls, ctx: "StratContext" | None):
+    def set_current(cls, ctx: StratContext | None):
         """Set the current active context."""
         cls._current = ctx
 
-    def activate(self) -> "StratContextManager":
+    def activate(self) -> StratContextManager:
         """
         Activate this context as the current global context.
 

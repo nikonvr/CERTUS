@@ -292,7 +292,7 @@ class _CorridorTabMixin:
             if hasattr(self, "tabs_main") and hasattr(self, "_idx_tab_corridor"):
                 self.tabs_main.setCurrentIndex(int(self._idx_tab_corridor))
 
-    def _build_corridor_tab_rmse_controls(self, lay_rmse: "QVBoxLayout") -> None:
+    def _build_corridor_tab_rmse_controls(self, lay_rmse: QVBoxLayout) -> None:
         lay_rmse.setSpacing(6)
 
         lbl_intro = QLabel("Step 1: recalculate the RMSE(d) grid, then generate the corridor from that result.")

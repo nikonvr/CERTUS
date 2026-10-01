@@ -61,7 +61,7 @@ from certus.spline.spline_finalize import (
 
 
 def _apply_k_floor_to_result(
-    cfg: "SplineOptConfig",
+    cfg: SplineOptConfig,
     out: dict,
     log: logging.Logger,
 ) -> None:
@@ -168,11 +168,11 @@ def _apply_k_floor_to_result(
     )
 
 def _run_sigma_mesh_polish(
-    cfg: "SplineOptConfig",
+    cfg: SplineOptConfig,
     out: dict,
     log: logging.Logger,
-    coord: "_WorkerProgressCoordinator",
-    stop_event: "Event | None",
+    coord: _WorkerProgressCoordinator,
+    stop_event: Event | None,
 ) -> None:
     """Run sigma-mesh cubic spline polish (step 07c) on the result dict in-place."""
     # Clear stale polish keys

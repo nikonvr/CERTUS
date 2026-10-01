@@ -394,7 +394,7 @@ class CertusResetManager:
         # Intentionally keep logs empty after reset
 
 
-def create_reset_button(app_instance, use_app_reset: bool = False) -> "QPushButton":
+def create_reset_button(app_instance, use_app_reset: bool = False) -> QPushButton:
     """
     Create a standardized reset button for any CERTUS application.
 

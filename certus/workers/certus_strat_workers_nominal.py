@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     from certus.workers.certus_strat_workers import WorkerThread
 
 class NominalAnalysisStrategy:
-    def execute(self, worker: "WorkerThread") -> None:
+    def execute(self, worker: WorkerThread) -> None:
         """
 
         Execute Step 1: Nominal Calculation & Sensitivity Check.

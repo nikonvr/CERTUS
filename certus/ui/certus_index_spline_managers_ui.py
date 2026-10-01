@@ -20,7 +20,7 @@ from certus.spline.certus_index_spline_core import SPLINE_PERF_PRESETS
 class Step4MeshOptimizerBuilder:
     # `app` is the CertusIndexSplineApp window (certus_index_spline_ui.py), typed loosely on purpose: that module
     # imports this one, and the annotation must not import it back.
-    def __init__(self, app: Any, parent_layout: "QVBoxLayout", style: str):
+    def __init__(self, app: Any, parent_layout: QVBoxLayout, style: str):
         self.app = app
         self.parent_layout = parent_layout
         self.style = style

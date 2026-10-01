@@ -612,11 +612,11 @@ class SystemConfig:
         return get_resource_path(relative_path)
 
     @staticmethod
-    def setup_logging(log_file: str | None = None, level: int | None = None) -> "logging.Logger":
+    def setup_logging(log_file: str | None = None, level: int | None = None) -> logging.Logger:
         return setup_logging(log_file=log_file, level=level)
 
     @staticmethod
-    def get_logger() -> "logging.Logger":
+    def get_logger() -> logging.Logger:
         return get_logger()
 
     @staticmethod

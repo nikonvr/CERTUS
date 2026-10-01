@@ -54,7 +54,7 @@ def _resolve_single_substrate_id(sub_text: str) -> int:
 
 def _build_single_bounds(
     params: dict,
-    l_array: "np.ndarray | None" = None,
+    l_array: np.ndarray | None = None,
     include_eM: bool = True,
 ) -> list:
     """Build scipy bounds list for single-layer DE. If include_eM=False, omit first (eM) bound."""
@@ -99,11 +99,11 @@ def _single_RTRback_mse(
     min_knot_dist,
     nSub_complex_array,
     precomputed,
-    eM_fixed: "float | None" = None,
-    t_tgt: "np.ndarray | None" = None,
-    rb_tgt: "np.ndarray | None" = None,
+    eM_fixed: float | None = None,
+    t_tgt: np.ndarray | None = None,
+    rb_tgt: np.ndarray | None = None,
     use_cache: bool = False,
-    min_knot_diff: "float | None" = None,
+    min_knot_diff: float | None = None,
 ) -> float:
     """
 

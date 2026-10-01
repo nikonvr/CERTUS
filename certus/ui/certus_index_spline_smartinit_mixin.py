@@ -33,7 +33,7 @@ class CertusIndexSplineSmartInitMixin:
     """CertusIndexSplineSmartInitMixin."""
 
     def _on_smart_init_keep(
-        self, dlg: QDialog, cfg: "SplineOptConfig", state: _SmartInitState, ui_ctx: dict[str, Any]
+        self, dlg: QDialog, cfg: SplineOptConfig, state: _SmartInitState, ui_ctx: dict[str, Any]
     ) -> None:
         if cfg is None:
             dlg.accept()
@@ -143,7 +143,7 @@ class CertusIndexSplineSmartInitMixin:
         dlg.accept()
 
     def _execute_smart_init_preset_logic(
-        self, cfg: "SplineOptConfig", projector: Any, relax_si_mono: bool, state: "_SmartInitState"
+        self, cfg: SplineOptConfig, projector: Any, relax_si_mono: bool, state: _SmartInitState
     ) -> None:
         target_sk = np.asarray(state.sk, dtype=np.float64).ravel()
         new_sk, new_n, new_L, new_d = projector(target_sk)
@@ -173,13 +173,13 @@ class CertusIndexSplineSmartInitMixin:
 
     def _execute_smart_init_run_auto(
         self,
-        cfg: "SplineOptConfig",
+        cfg: SplineOptConfig,
         row: int,
         is_ln_k: bool,
         L_lo_g: float,
         L_hi_g: float,
         relax_si_mono: bool,
-        state: "_SmartInitState",
+        state: _SmartInitState,
     ) -> str | None:
         cur_sk = np.asarray(state.sk, dtype=np.float64).ravel()
         n_loc = np.asarray(state.n_phys, dtype=np.float64).ravel()
@@ -240,7 +240,7 @@ class CertusIndexSplineSmartInitMixin:
         return None
 
     def _execute_smart_init_recalc_logic(
-        self, cfg: "SplineOptConfig", grids: dict[str, Any], relax_si_mono: bool, state: "_SmartInitState"
+        self, cfg: SplineOptConfig, grids: dict[str, Any], relax_si_mono: bool, state: _SmartInitState
     ) -> dict[str, Any] | None:
         out = recalc_smart_init_spectral_preview(
             cfg,
@@ -279,12 +279,12 @@ class CertusIndexSplineSmartInitMixin:
 
     def _prepare_smart_init_autofind_config(
         self,
-        cfg: "SplineOptConfig",
+        cfg: SplineOptConfig,
         cur_sk: np.ndarray,
         n_loc: np.ndarray,
         L_loc: np.ndarray,
         preview_d_nm: float,
-    ) -> tuple["SplineOptConfig", np.ndarray, int]:
+    ) -> tuple[SplineOptConfig, np.ndarray, int]:
         auto_cfg = cfg.replace()
         k_loc = int(cur_sk.size)
         
@@ -308,7 +308,7 @@ class CertusIndexSplineSmartInitMixin:
         best: dict[str, Any],
         k_loc: int,
         sk_canon: np.ndarray,
-        state: "_SmartInitState",
+        state: _SmartInitState,
     ) -> bool:
         res_x = best.get("x")
         if res_x is None:
@@ -336,7 +336,7 @@ class CertusIndexSplineSmartInitMixin:
             return False
 
     def _pick_best_smart_init_material_preset(
-        self, cfg: "SplineOptConfig", target_sk: np.ndarray, preview_d_nm: float, relax_si_mono: bool
+        self, cfg: SplineOptConfig, target_sk: np.ndarray, preview_d_nm: float, relax_si_mono: bool
     ) -> tuple[str, float, float] | None:
         try:
             picked = pick_best_manual_material_preset(
@@ -368,13 +368,13 @@ class CertusIndexSplineSmartInitMixin:
 
     def _load_smart_init_index_config(
         self,
-        state: "_SmartInitState",
+        state: _SmartInitState,
         dlg,
         L_lo_g: float,
         L_hi_g: float,
         d_lo_nm: float,
         d_hi_nm: float,
-        refresh_knot_lines_and_ui_fn: "Callable[[], None]",
+        refresh_knot_lines_and_ui_fn: Callable[[], None],
         btn_load_cfg,
     ) -> None:
         """Load a Smart Init index configuration from JSON file and update state."""

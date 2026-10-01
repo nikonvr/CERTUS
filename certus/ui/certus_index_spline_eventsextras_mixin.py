@@ -816,7 +816,7 @@ class CertusIndexSplineEventsExtrasMixin:
 
     def _add_curve(
         self,
-        widget: "pg.PlotWidget",
+        widget: pg.PlotWidget,
         x: np.ndarray,
         y: np.ndarray,
         color: str,

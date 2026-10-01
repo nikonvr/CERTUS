@@ -549,7 +549,7 @@ def compute_reg_sensitivity_scan(
         "reg_sens_n_valid": np.asarray(out_n_valid, dtype=np.int64),
     }
 def _theoretical_TR_from_base_result(
-    cfg: "SplineOptConfig",
+    cfg: SplineOptConfig,
     base_result: dict,
 ) -> tuple[np.ndarray | None, np.ndarray | None]:
     """Compute theoretical T/R from the base result n/k model."""
@@ -1083,7 +1083,7 @@ def _package_profile_grid_result(
     rmse_nominal_baseline_for_grid: float,
     rmse_abs_ref: float,
     sk: np.ndarray,
-    cfg: "SplineOptConfig",
+    cfg: SplineOptConfig,
     base_eff: dict,
     k: int,
     coverage_complete: bool,
@@ -1355,7 +1355,7 @@ class CorridorProfileContext:
     center_seed_gate_kept_count: int = 0
     center_seed_gate_delta_refit_minus_seed: float = float("nan")
 def _compute_corridor_rmse_threshold(
-    cfg: "SplineOptConfig",
+    cfg: SplineOptConfig,
     pconf,
     rmse_opt: float,
     rmse_seed0: float,

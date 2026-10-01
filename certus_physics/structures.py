@@ -84,7 +84,7 @@ class TLUParameters:
     eps_inf: float
 
     @classmethod
-    def from_array(cls, arr: np.ndarray) -> "TLUParameters":
+    def from_array(cls, arr: np.ndarray) -> TLUParameters:
         return cls(Eg=arr[0], A=arr[1], E0=arr[2], C=arr[3], Eu=arr[4], eps_inf=arr[5])
 
 
@@ -124,13 +124,13 @@ class PGlobalConfig:
     @classmethod
     def for_index(
         cls, max_feval: int = 80000, max_time: float = 240.0
-    ) -> "PGlobalConfig":
+    ) -> PGlobalConfig:
         return cls(max_feval=max_feval, max_time=max_time)
 
     @classmethod
     def for_dimension(
         cls, dim: int, base_samples: int = 5000, max_feval: int = 50000000
-    ) -> "PGlobalConfig":
+    ) -> PGlobalConfig:
         """Config adapted to problem dimension.
 
         Values optimized via Bayesian HPO (Optuna, 50 trials × 3 repeats)
@@ -157,7 +157,7 @@ class PGlobalConfig:
     @classmethod
     def for_local(
         cls, dim: int, max_feval: int = 10000, convergence_tol: float = 1e-8
-    ) -> "PGlobalConfig":
+    ) -> PGlobalConfig:
         """Config optimized for local refinement (polish phase)."""
         return cls(
             max_feval=max_feval,
@@ -170,7 +170,7 @@ class PGlobalConfig:
             max_active_clusters=1,
         )
 
-    def with_overrides(self, **kwargs) -> "PGlobalConfig":
+    def with_overrides(self, **kwargs) -> PGlobalConfig:
         import dataclasses
 
         return dataclasses.replace(self, **kwargs)

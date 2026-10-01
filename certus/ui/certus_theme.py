@@ -88,7 +88,7 @@ class _Token(str):
     attribute) must not write the old palette back the next time the widget repaints itself.
     """
 
-    def __new__(cls, value: str, name: str) -> "_Token":
+    def __new__(cls, value: str, name: str) -> _Token:
         token = super().__new__(cls, value)
         token.name = name
         return token
@@ -629,12 +629,12 @@ class CertusTheme:
         built again from its variant (`get_button_style` marks it).
         """
 
-        def token(match: "re.Match[str]") -> str:
+        def token(match: re.Match[str]) -> str:
             name = match.group(2)
             value = getattr(cls, name, None) if name in _TOKEN_NAMES else None
             return f"{value!s}/*T:{name}*/" if isinstance(value, str) else match.group(0)
 
-        def tinted(match: "re.Match[str]") -> str:
+        def tinted(match: re.Match[str]) -> str:
             name = match.group(1)
             value = getattr(cls, name, None) if name in _TOKEN_NAMES else None
             return cls.tint(value, float(match.group(2))) if isinstance(value, _Token) else match.group(0)
@@ -927,7 +927,7 @@ class CertusTheme:
         return label, shifted(_HOVER_SHIFT), shifted(_PRESSED_SHIFT)
 
     @staticmethod
-    def get_shadow(parent=None) -> "QGraphicsDropShadowEffect":
+    def get_shadow(parent=None) -> QGraphicsDropShadowEffect:
         """Returns a standard drop shadow effect"""
 
         shadow = QGraphicsDropShadowEffect(parent)

@@ -1217,16 +1217,16 @@ class SpectrumLoadResult:
         Absolute path of the loaded file.
     """
 
-    dataframe: "pd.DataFrame"
-    x: "np.ndarray"
-    y_columns: dict[str, "np.ndarray"]
+    dataframe: pd.DataFrame
+    x: np.ndarray
+    y_columns: dict[str, np.ndarray]
     x_unit: str
     normalised_to_fraction: bool
     n_rows: int
     source_path: str
 
 
-def _detect_x_unit(x: "np.ndarray", hint: str | None = None) -> str:
+def _detect_x_unit(x: np.ndarray, hint: str | None = None) -> str:
     """Detect whether ``x`` is expressed in ``nm`` (≈ 200–20000) or ``um``
     (≈ 0.2–20). Falls back to ``hint`` or ``nm``."""
 

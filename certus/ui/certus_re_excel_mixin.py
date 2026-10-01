@@ -147,7 +147,7 @@ class CertusREExcelMixin:
 
         return out
 
-    def _re_builtin_substrate_tabular(self, substrate_name: str, l0_ref: float) -> "TabularMaterial | None":
+    def _re_builtin_substrate_tabular(self, substrate_name: str, l0_ref: float) -> TabularMaterial | None:
         """Tabular substrate from built-in analytical models (Sellmeier SiO2, Si table).
 
         Returns a TabularMaterial sampled on a fine grid [200, 6000] nm.
@@ -191,7 +191,7 @@ class CertusREExcelMixin:
 
     def _re_resolve_substrate_material(
         self, substrate_name: str, l0_ref: float, *, re_workbook_dir: str | None = None
-    ) -> tuple["TabularMaterial | None", str, str, str]:
+    ) -> tuple[TabularMaterial | None, str, str, str]:
         """Resolve the RE substrate material and return (material, source, raw_name, normalized_name)."""
 
         raw_name = str(substrate_name or "").strip()
@@ -317,7 +317,7 @@ class CertusREExcelMixin:
 
     def _load_re_substrate(
         self, substrate_name: str, l0_ref: float, *, re_workbook_dir: str | None = None
-    ) -> "TabularMaterial | None":
+    ) -> TabularMaterial | None:
         """Load substrate TabularMaterial."""
 
         mat, source, raw_name, sub_norm = self._re_resolve_substrate_material(

@@ -1720,7 +1720,7 @@ def worker_auto_best_split_knot_refinement(
 
 
 def _log_factual_sol2_analysis(
-    cfg: "SplineOptConfig",
+    cfg: SplineOptConfig,
     sigma_knots: np.ndarray,
     x0_init: np.ndarray,
     x0_pre_clip: np.ndarray,

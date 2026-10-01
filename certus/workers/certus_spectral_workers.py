@@ -603,7 +603,7 @@ class EvalWorkerRequest:
     cfg: dict[str, Any] = field(default_factory=dict)
 
     @staticmethod
-    def from_legacy(cfg: dict[str, Any] | None) -> "EvalWorkerRequest":
+    def from_legacy(cfg: dict[str, Any] | None) -> EvalWorkerRequest:
         if not isinstance(cfg, dict):
             return EvalWorkerRequest(cfg={})
         return EvalWorkerRequest(cfg=dict(cfg))
@@ -637,7 +637,7 @@ class EvalWorkerResult:
         spectra_vis: dict[str, Any] | None,
         spectra_optim: dict[str, Any] | None,
         oblique_tgts: Any | None,
-    ) -> "EvalWorkerResult":
+    ) -> EvalWorkerResult:
         return EvalWorkerResult(
             vis=vis,
             optimization=optimization,

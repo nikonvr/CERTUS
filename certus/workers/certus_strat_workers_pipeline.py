@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from certus.workers.certus_strat_workers import WorkerThread
 
 class FullPipelineStrategy:
-    def execute(self, worker: "WorkerThread") -> None:
+    def execute(self, worker: WorkerThread) -> None:
         """
         Execute the full optimized workflow in deep exploration mode.
 

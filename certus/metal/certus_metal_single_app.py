@@ -833,7 +833,7 @@ class CertusMetalSingleApp(MetalBaseApp):
         if hasattr(self, "status_label"):
             self.status_label.setText("JIT Init Error")
 
-    def on_file_loaded(self, data: "np.ndarray") -> None:
+    def on_file_loaded(self, data: np.ndarray) -> None:
         """Process loaded data (Hook from MetalBaseApp)"""
 
         try:

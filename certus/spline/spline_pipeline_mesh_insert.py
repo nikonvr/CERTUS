@@ -831,7 +831,7 @@ def worker_spline_auto_add_one_knot(
 
 
 def _sensitivity_rank_inner_indices(
-    cfg: "SplineOptConfig",
+    cfg: SplineOptConfig,
     active_knots: np.ndarray,
     best_result_out: dict,
     K: int,

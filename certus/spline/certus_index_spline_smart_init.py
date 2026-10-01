@@ -91,7 +91,7 @@ class SmartInitPayload(BaseModel):
     lam_nm: np.ndarray | None
 
     @classmethod
-    def from_dict(cls: type["SmartInitPayload"], d: dict[str, Any]) -> "SmartInitPayload":
+    def from_dict(cls: type[SmartInitPayload], d: dict[str, Any]) -> SmartInitPayload:
         clean_d = {}
         clean_d["cfg"] = d.get("cfg")
         clean_d["sigma_knots"] = np.asarray(d.get("sigma_knots", []), dtype=np.float64).ravel()

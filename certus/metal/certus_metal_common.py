@@ -346,7 +346,7 @@ def build_metal_startup_log_lines(app, *, variant_label: str, params: dict[str, 
     return lines
 
 
-def setup_beam_analysis_thread(app, worker) -> "QThread":
+def setup_beam_analysis_thread(app, worker) -> QThread:
     """Move a BeamAnalysisWorker onto a fresh QThread and wire standard signals.
 
     Factors the identical thread wiring used by both METAL apps

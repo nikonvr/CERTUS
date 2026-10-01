@@ -155,7 +155,7 @@ class REWorker(QThread):
 class REPhasesService:
     """Thin service layer to orchestrate RE worker phases."""
 
-    def __init__(self, worker: REWorker, steps: list['REPhaseStep'] | None=None, state_service: 'REPhaseStateService | None'=None) -> None:
+    def __init__(self, worker: REWorker, steps: list[REPhaseStep] | None=None, state_service: REPhaseStateService | None=None) -> None:
         self._worker = worker
         self._state_service = state_service or REPhaseStateService()
         self._steps = steps or [REPhase1Step(), REPhase1P4ScanStep(), REPhase2Step(), REPhase3Step(), REPhase4Step()]

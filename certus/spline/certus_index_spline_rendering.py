@@ -1382,7 +1382,7 @@ class _UIBuilderMixin:
         if isinstance(scroll, QScrollArea):
             scroll.ensureWidgetVisible(widget, 0, 24)
 
-    def _build_basic_step3_spectral_targets(self, parent_layout: "QVBoxLayout", style: str) -> None:
+    def _build_basic_step3_spectral_targets(self, parent_layout: QVBoxLayout, style: str) -> None:
         box3 = CertusCard("3 — What to fit on the spectrum (T, T/Tsub, R)")
         box3.setStyleSheet(style)
         box3.body.setContentsMargins(6, 4, 6, 4)
@@ -1462,7 +1462,7 @@ class _UIBuilderMixin:
         btn_rmse_win.clicked.connect(self._on_rmse_fit_window_dialog)
         parent_layout.addWidget(btn_rmse_win)
 
-    def _build_corridor_tab_generate(self, lay_generate: "QVBoxLayout") -> None:
+    def _build_corridor_tab_generate(self, lay_generate: QVBoxLayout) -> None:
         lay_generate.setSpacing(6)
 
         lbl_manual = QLabel("Alternative path: define a manual interval around d* and generate a corridor directly.")
@@ -1657,7 +1657,7 @@ class _UIBuilderMixin:
 
         return panel
 
-    def _build_basic_step2_substrate_thickness(self, parent_layout: "QVBoxLayout", style: str) -> None:
+    def _build_basic_step2_substrate_thickness(self, parent_layout: QVBoxLayout, style: str) -> None:
         box2 = CertusCard("2 — Substrate n(λ) & layer thickness d (nm)")
         box2.setStyleSheet(style)
         box2.body.setContentsMargins(6, 4, 6, 4)
@@ -1875,7 +1875,7 @@ class _UIBuilderMixin:
                 else:
                     self.info_split.setSizes([900, 0])
 
-    def _build_corridor_labels(self, ctx_lay: "QVBoxLayout") -> None:
+    def _build_corridor_labels(self, ctx_lay: QVBoxLayout) -> None:
         hint = QLabel(
             "<b>RMSE(d) corridor profile</b> at all points calculated during profiling. "
             "Raw scatter (unconnected). The <b>parabola</b> is fitted to the min-RMSE envelope by thickness.<br>"

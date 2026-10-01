@@ -58,7 +58,7 @@ def _wl_de_la_couche(strategy: dict[str, Any], layer: int) -> float | None:
 
 
 def _rate_swing_candidates(strategy: dict[str, Any], num_layers: int,
-                           swing_ctx: "_RateSwingContext") -> list[int]:
+                           swing_ctx: _RateSwingContext) -> list[int]:
     """Layers where a Rate is NEEDED: the growth-time swing is below `dynamics_threshold`.
 
     🔑 2026-08-19, docs/archives/CHANTIER_RATE.md contradiction C: `_rate_swing_candidates` and
@@ -97,7 +97,7 @@ def _rate_swing_candidates(strategy: dict[str, Any], num_layers: int,
 
 def _rate_candidate_layers(strategy: dict[str, Any], num_layers: int,
                            cap: int | None = None,
-                           swing_ctx: "_RateSwingContext | None" = None) -> list[int]:
+                           swing_ctx: _RateSwingContext | None = None) -> list[int]:
     """Layers where a Rate is CHEAPEST: the last layer of each block.
 
     👤 2026-08-11: *"test the rate on layers i whose control wavelength changes at layer

@@ -71,7 +71,6 @@ extend-ignore = [
   
   # Pyupgrade legacy
   
-  "UP037",
   "UP040", "UP042", "UP046",
   # Pytest legacy (tests already green — these are stylistic)
   "PT006", "PT011", "PT017", "PT018",

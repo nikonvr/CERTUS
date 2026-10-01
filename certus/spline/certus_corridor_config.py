@@ -242,7 +242,7 @@ class ProfileCorridorConfig(BaseModel):
     smoothstep_boundary_blend: bool = False
     smoothstep_blend_width_nm: float = 0.5
 
-    def replace(self, **changes: Any) -> "ProfileCorridorConfig":
+    def replace(self, **changes: Any) -> ProfileCorridorConfig:
         """Return a copy with selected fields updated (immutable dataclass helper)."""
         return self.model_copy(update=changes)
 @dataclass

@@ -975,7 +975,7 @@ def wrap_scientific_plot_with_toolbar(main_window: QMainWindow, plot: CertusScie
     return outer
 
 
-def clone_plot_widget(original: Any, title_override: str | None = None) -> "CertusScientificPlot":
+def clone_plot_widget(original: Any, title_override: str | None = None) -> CertusScientificPlot:
     """
     Creates a deep visual copy of a CertusScientificPlot or PlotWidget.
     Preserves curves, scatter points, colors, symbols, and labels.

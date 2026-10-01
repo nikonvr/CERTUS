@@ -47,6 +47,32 @@ from certus.utils.certus_atomic_io import atomic_open
 from certus.utils.certus_data import numpy_encoder, to_csv_robust
 from certus.utils.certus_ux import Typography
 
+#: The columns of the strategies table, left to right: the base columns, one SEEL column per noise level, one column per block, then the ten worst layers.
+#: The header builder and the row builder read these two lists, so a column added to the first one moves everything that follows it.
+BASE_HEADERS = (
+    "Rank",
+    "ID",
+    "Origin",
+    "Min Res (nm)",
+    "Th Rank",
+    "Sp Rank",
+    "Blocks",
+    "Changes",
+    "Unique lambda",
+    "Yield %",
+    "Robust Score",
+    "Sym Score",
+    "Comp. Factor",
+    "Next",
+    "Slit (nm)",
+    "Rate layers",
+    "Critical layer",
+    "Dominant defect",
+)
+NOISE_HEADERS = ("SEEL (0.5x)", "SEEL (1.0x)", "SEEL (2.0x)")
+SEEL_FIRST_COLUMN = len(BASE_HEADERS)
+BLOCKS_FIRST_COLUMN = SEEL_FIRST_COLUMN + len(NOISE_HEADERS)
+
 
 class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
     strategy_selected = pyqtSignal(int, object)
@@ -350,7 +376,7 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
         self._fill_seel_cells(row, _rmse_to_seel, noise_results)
 
         # Blocks
-        start_col_blocks = 17  # 14 base columns + 3 SEEL
+        start_col_blocks = BLOCKS_FIRST_COLUMN
         blocks = strat.get("blocks", [])
         for b_idx in range(max_blocks):
             col_idx = start_col_blocks + b_idx
@@ -615,7 +641,7 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
         """Fill the SEEL columns of one row, one per noise level."""
         # ---- SEEL, shifted by four by the columns above -----------------
         for col_idx, noise_idx in enumerate([0, 1, 2]):
-            target_col = 18 + col_idx
+            target_col = SEEL_FIRST_COLUMN + col_idx
             if noise_idx < len(noise_results):
                 rmse_val = noise_results[noise_idx].get("rmse_p95", noise_results[noise_idx]["rmse_mean"])
                 seel_val = _rmse_to_seel(rmse_val)
@@ -757,28 +783,9 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
 
             # Metric updated: Complexity out, Comp.Factor in
 
-            base_headers = [
-                "Rank",
-                "ID",
-                "Origin",
-                "Min Res (nm)",
-                "Th Rank",
-                "Sp Rank",
-                "Blocks",
-                "Changes",
-                "Unique lambda",
-                "Yield %",
-                "Robust Score",
-                "Sym Score",
-                "Comp. Factor",
-                "Next",
-                "Slit (nm)",
-                "Rate layers",
-                "Critical layer",
-                "Dominant defect",
-            ]
+            base_headers = list(BASE_HEADERS)
 
-            noise_headers = ["SEEL (0.5x)", "SEEL (1.0x)", "SEEL (2.0x)"]
+            noise_headers = list(NOISE_HEADERS)
 
             block_headers = [f"Block {i + 1}" for i in range(max_blocks)]
 

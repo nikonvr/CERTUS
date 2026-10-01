@@ -252,7 +252,6 @@ def _diagnostic_bilayer_penalty(reason: str, x: np.ndarray | None = None, *, log
         "x_head": x_head,
         "context": context or {},
     }
-    msg = f"BILAYER_DIAGNOSTIC penalty={penalty:.3e} reason={reason} x_dim={x_arr.size} x_head={x_head}"
     if logger is not None:
         pass # logger.debug(msg)
     else:

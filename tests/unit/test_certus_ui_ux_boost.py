@@ -462,8 +462,8 @@ class TestCertusBaseAppBoost:
         with patch("certus.ui.mixins.certus_base_core_mixins.load_theme_config", return_value="light"), \
              patch("certus.ui.mixins.certus_base_core_mixins.save_theme_config") as mock_save, \
              patch("certus.ui.certus_theme.CertusTheme.configure") as mock_conf, \
-             patch("certus.ui.certus_theme.CertusTheme.apply_to_app") as mock_apply, \
-             patch("certus.ui.certus_ui_utils.update_global_plot_config") as mock_plot:
+             patch("certus.ui.certus_theme.CertusTheme.apply_to_app"), \
+             patch("certus.ui.certus_ui_utils.update_global_plot_config"):
             
             app._toggle_theme()
             mock_save.assert_called_with("dark")
@@ -474,7 +474,7 @@ class TestCertusBaseAppBoost:
         app = DummyApp()
         
         # Onboarding tour
-        with patch("certus.ui.certus_tours_catalog.run_app_onboarding", return_value="success") as mock_run:
+        with patch("certus.ui.certus_tours_catalog.run_app_onboarding", return_value="success"):
             res = app.run_onboarding_tour(force=True)
             assert res == "success"
             

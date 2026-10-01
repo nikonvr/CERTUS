@@ -301,12 +301,7 @@ def build_metal_progress_status_text(payload: dict[str, Any]) -> str:
     progress_pct = int(p.get("progress_pct", 0) or 0)
     evaluation_count = int(p.get("evaluation_count", 0) or 0)
     best_cost = float(p.get("best_cost", float("inf")))
-    current_y = float(p.get("current_y", p.get("mse", best_cost)) or best_cost)
     elapsed_s = float(p.get("elapsed_s", 0.0) or 0.0)
-    message = str(p.get("message", "")).strip()
-    improved = bool(p.get("improved", False))
-    x_head = p.get("x_head", [])
-    best_head = p.get("best_head", [])
     return (
         f"[{mode}] {progress_pct}% | Gen: {iteration}/{max_iteration} | Evals: {format_count_kmg(evaluation_count)} | "
         f"Best RMSE: {np.sqrt(max(best_cost, 0.0)):.4f} | Time: {int(elapsed_s)}s"

@@ -59,7 +59,6 @@ from certus.ui.certus_qt_svg import check_svg_availability
 
 class TestConfigManager:
     def test_set_and_get(self, tmp_path, monkeypatch):
-        f = tmp_path / "test_cfg.json"
         monkeypatch.setattr("certus.core.certus_config.get_resource_path", lambda name: str(tmp_path / name))
         cm = ConfigManager("test_cfg.json", "default_val", "my_key")
         assert cm.get() == "default_val"

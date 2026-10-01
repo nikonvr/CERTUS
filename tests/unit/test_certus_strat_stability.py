@@ -57,7 +57,6 @@ def test_stability_robustness_with_malformed_input(tmp_path: Path) -> None:
     assert summary.is_stable is False
     assert summary.top5_overlap == 0
 
-    out_md = tmp_path / "audit_malformed.md"
     from certus.utils.certus_strat_stability import build_markdown_report
     report = build_markdown_report(payload, summary)
     assert "STRAT stability audit report" in report

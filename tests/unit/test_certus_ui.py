@@ -1388,7 +1388,7 @@ class TestProUXComponents:
         
         # Test helper functions
         widget = QWidget()
-        loader = install_skeleton_loader(widget, shape="chart")
+        install_skeleton_loader(widget, shape="chart")
         assert getattr(widget, "_certus_skeleton", None) is not None
         assert remove_skeleton_loader(widget) is True
         assert getattr(widget, "_certus_skeleton", None) is None

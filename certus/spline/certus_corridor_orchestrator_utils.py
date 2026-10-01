@@ -1677,7 +1677,6 @@ def _eval_adaptive_abs_tolerance(
     ):
         tol_abs_effective = float(adaptive_abs_meta.get("delta_rmse_tol", float(tol_abs)))
         _alpha_f = float(pconf.rmse_alpha) if use_alpha_factor else 1.0
-        rmse_thresh_active = _alpha_f * float(rmse_opt) + float(tol_abs_effective)
         _s_d = adaptive_abs_meta.get("sample_d_nm", np.asarray([]))
         _s_r = adaptive_abs_meta.get("sample_rmse", np.asarray([]))
         _s_n = adaptive_abs_meta.get("sample_n_curves", [])

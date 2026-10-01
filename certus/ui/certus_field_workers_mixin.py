@@ -143,7 +143,7 @@ class CertusFieldWorkersMixin:
                             try:
                                 params = self._get_params()
                                 self._start_worker(FieldWorkerRequest(action="needle", params=params))
-                            except ValueError as e:
+                            except ValueError:
                                 self._revert_to_synthesis_checkpoint()
                                 self._synthesis_active = False
                                 self._is_running = False
@@ -177,7 +177,7 @@ class CertusFieldWorkersMixin:
                             params.global_opt = False  # Local refinement after needle split
                             params.synthesis_mode = True
                             self._start_worker(FieldWorkerRequest(action="optimize", params=params))
-                        except ValueError as e:
+                        except ValueError:
                             self._revert_to_synthesis_checkpoint()
                             self._synthesis_active = False
                             self._is_running = False

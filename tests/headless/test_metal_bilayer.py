@@ -82,7 +82,7 @@ def test_metal_bilayer_headless():
                 print(f"RMSE: {rmse:.6f}")
         assert final_result, "METAL BILAYER finished without a result"
 
-    except Exception as e:
+    except Exception:
         import traceback
         traceback.print_exc()
         sys.exit(1)

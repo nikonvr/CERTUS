@@ -352,7 +352,6 @@ class TestSplinePWLObjectiveEvaluateBatch:
         sk = canonical_spline_sigma_knots(400, 1000)
         k = int(sk.size)
         obj = SplinePWLObjective(cfg, sk)
-        rng = np.random.default_rng(42)
         X = np.empty((5, 1 + 2 * k))
         for i in range(5):
             X[i] = np.concatenate(([150.0 + 50 * i], np.full(k, 1.5 + 0.1 * i), np.full(k, np.log(1e-3 + 1e-4 * i))))

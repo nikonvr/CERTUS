@@ -1172,7 +1172,6 @@ def _monotonicity_scan(
     is_non_monotonic = False
     T_mono = np.zeros(5, dtype=np.float64)
     T_mono_nom = np.zeros(5, dtype=np.float64)  # same scan, NOMINAL stack
-    k_ext = -1  # index of the last extremum crossed (swing), -1 if none
     if nominal_th > 0.0001:
         for k in range(5):
             th_frac = k / 4.0 * nominal_th
@@ -1894,7 +1893,6 @@ def simulate_growth_kernel(
             # and hands the cost to the next layer, which loses its anchors (14-10).
             return (rate_thickness, -1.0, 1e18, 1e18, 1e18)
 
-    TWO_PI_VAL = TWO_PI
     n_H_r = n_H if n_H_real.real < 0.0 else n_H_real
     n_L_r = n_L if n_L_real.real < 0.0 else n_L_real
 
@@ -1917,12 +1915,7 @@ def simulate_growth_kernel(
     )
 
     # POEM (percent of optical extrema monitoring) and the reading noise: see the notes above `_read_poem_anchors` and `_fill_history_signal`.
-    NPTS = SCAN_NPTS_CURRENT
-    NPTS_PREV = SCAN_NPTS_HISTORY
-    MAX_LOOKBACK = MAX_LOOKBACK_VAL
     # Module constant so the slit-bias profiles are sampled on exactly this axis.
-    D_SCAN = D_SCAN_VAL
-    SWING_MIN = 0.04
     apply_signal_noise = signal_noise_scale > 0.0
     poem_ok = False
     # A23 stage 2. Both in TRANSMISSION units, normalised to multiples of A upstream --

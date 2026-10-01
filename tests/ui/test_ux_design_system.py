@@ -190,7 +190,7 @@ def _font_worker_main(tag: str) -> None:
     from scripts.audit_ux_certus import MODULES
 
     modname, clsname = MODULES[tag]
-    app = _QApp.instance() or _QApp(sys.argv[:1])
+    _QApp.instance() or _QApp(sys.argv[:1])
     cls = getattr(__import__(modname, fromlist=[clsname]), clsname)
     win = cls()
     font = _QApp.font()

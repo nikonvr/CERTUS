@@ -1279,7 +1279,6 @@ class CertusMetalBilayerApp(MetalBaseApp):
         rmse = float(data.get("current_rmse", np.sqrt(mse) if mse > 0 else 0))
         best_rmse = float(data.get("best_rmse", np.sqrt(float(data.get("best_cost", mse))) if float(data.get("best_cost", mse)) > 0 else 0.0))
         xk = data.get("params", None)
-        eM = xk[0] if xk is not None else 0.0
         progress_pct = data.get("progress_pct", None)
         mode = str(data.get("mode", "global")).lower()
         best_cost = float(data.get("best_cost", mse))

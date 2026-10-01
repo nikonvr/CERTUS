@@ -919,7 +919,6 @@ class SplineReportBuilder:
             keep = np.isfinite(lam_src_full)
             spectre_filtre = False
             export_fallback_lam = True
-        cfg_ex = self.ctx.opt_config
         x_res = np.asarray(result.get("x", np.zeros(19)), dtype=np.float64)
         d_nm_val = result.get("d_nm")
         d_nm_c = float(d_nm_val) if isinstance(d_nm_val, (int, float)) and np.isfinite(float(d_nm_val)) else (float(x_res[0]) if x_res.size >= 1 and np.isfinite(float(x_res[0])) else float("nan"))
@@ -930,8 +929,6 @@ class SplineReportBuilder:
         if n_sp is not None and k_sp is not None and np.asarray(n_sp).size == lam_src_full.size and np.asarray(k_sp).size == lam_src_full.size:
             n_spl_full = np.asarray(n_sp, dtype=np.float64).ravel()
             k_spl_full = np.asarray(k_sp, dtype=np.float64).ravel()
-        d_spl_x = result.get("d_nm_seg_spline_sigma")
-        d_spl_f = float(d_spl_x) if isinstance(d_spl_x, (int, float)) and np.isfinite(float(d_spl_x)) else float("nan")
         cn_lo_f = np.asarray(result.get("corridor_n_lo", []), dtype=np.float64).ravel()
         cn_hi_f = np.asarray(result.get("corridor_n_hi", []), dtype=np.float64).ravel()
         ck_lo_f = np.asarray(result.get("corridor_k_lo", []), dtype=np.float64).ravel()
@@ -1041,7 +1038,6 @@ class SplineReportBuilder:
             srv = result.get("spectral_rmse_segments")
             if srv is not None and np.isfinite(float(srv)):
                 rmse_solver_txt = f"{float(srv):.6f}"
-            has_spl_cols = bool(np.any(np.isfinite(n_spl_full)) and np.any(np.isfinite(k_spl_full)))
             best_lbl = str(result.get("spectral_rmse_best_label", "")).strip()
             best_v = result.get("spectral_rmse_best_value")
 

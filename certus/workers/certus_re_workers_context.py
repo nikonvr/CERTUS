@@ -164,7 +164,6 @@ class REContextStrategy:
         float_dtype = np.float64
         complex_dtype = np.complex128
         n_layers_count = prep['n_layers_count']
-        n_layers_nominal = prep['n_layers_nominal']
         n_sub_nominal = prep['n_sub_nominal']
         is_H = prep['is_H']
         is_L = prep['is_L']

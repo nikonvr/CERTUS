@@ -127,7 +127,7 @@ def test_design_headless():
         assert design_app.front_table.rowCount() > 0  # the example stack was loaded
         assert signal_count[0] >= 1  # and the workflow's finished signal reached the window
 
-    except Exception as e:
+    except Exception:
         import traceback
         traceback.print_exc()
         sys.exit(1)

@@ -320,9 +320,7 @@ def compute_metal_bilayer_gradient_analytic(
     # a copy — the matrix is shared, do not write to it.
     basis = SplineBasisCache.get(knot_l, l_array, extrapolate=False).T
 
-    basis_n = basis
 
-    basis_k = basis
 
     grad[offset : offset + spline_knot_count] = basis @ dJ_dn
     grad[offset + spline_knot_count : offset + 2 * spline_knot_count] = basis @ dJ_dk

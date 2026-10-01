@@ -669,7 +669,6 @@ class FieldWorkerThread(QThread):
                     de_best["fun"] = cost
                     de_best["x"] = sample.x.copy()
                 
-                qwot_sum = float(sum(sample.x))
                 
                 try:
                     n_clusters = len(optimizer.clusterer.clusters)

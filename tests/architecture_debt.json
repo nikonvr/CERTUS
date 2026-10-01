@@ -85,8 +85,8 @@
     "certus/ui/certus_substrate_ui.py::IndexTableDialog.__init__": 457,
     "certus/utils/certus_strat_service.py::_validate_candidates_phase_a": 378,
     "certus/utils/certus_ux.py::build_premium_overrides": 574,
-    "certus/workers/certus_field_workers.py::FieldWorkerThread._run_optimize": 433,
-    "certus/workers/certus_re_workers_phase4.py::REPhase4Strategy._execute_phase4_beam": 303,
+    "certus/workers/certus_field_workers.py::FieldWorkerThread._run_optimize": 432,
+    "certus/workers/certus_re_workers_phase4.py::REPhase4Strategy._execute_phase4_beam": 302,
     "certus/workers/certus_strat_workers.py::_parallel_block_worker": 369
   },
   "fonctions_complexes": {
@@ -114,13 +114,13 @@
   "fichiers_longs": {
     "certus/core/certus_index_objectives.py": 1934,
     "certus/core/certus_substrate_index.py": 1945,
-    "certus/metal/certus_metal_bilayer_app.py": 2111,
-    "certus/metal/certus_metal_common.py": 2198,
+    "certus/metal/certus_metal_bilayer_app.py": 2110,
+    "certus/metal/certus_metal_common.py": 2193,
     "certus/metal/certus_metal_single_app.py": 2044,
-    "certus/physics/certus_strat_growth.py": 2570,
+    "certus/physics/certus_strat_growth.py": 2563,
     "certus/physics/gradient_analytic.py": 1802,
     "certus/spline/certus_corridor_exploration.py": 1615,
-    "certus/spline/certus_corridor_orchestrator_utils.py": 1792,
+    "certus/spline/certus_corridor_orchestrator_utils.py": 1791,
     "certus/spline/certus_index_spline_core.py": 2108,
     "certus/spline/certus_index_spline_rendering.py": 1969,
     "certus/spline/spline_workers.py": 2467,

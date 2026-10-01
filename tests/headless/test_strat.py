@@ -142,7 +142,7 @@ def test_strat_headless():
         else:
             print("RMSE: float('inf')")
         
-    except Exception as e:
+    except Exception:
         import traceback
         traceback.print_exc()
         sys.exit(1)

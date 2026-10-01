@@ -15,7 +15,7 @@ def test_watchdog_log_exception(tmp_path: Path):
     
     try:
         raise ValueError("Simulated computation fault")
-    except ValueError as e:
+    except ValueError:
         import sys
         exc_type, exc_val, exc_tb = sys.exc_info()
         watchdog.log_exception("UNIT_TEST", exc_type, exc_val, exc_tb)

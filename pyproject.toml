@@ -64,7 +64,6 @@ extend-ignore = [
   "E402", "E741",
   # Pyflakes legacy
   "F401",  # unused-import: some are deliberate re-exports
-  "F841",  # unused-variable
   # Bugbear legacy
   
   # Pyupgrade legacy

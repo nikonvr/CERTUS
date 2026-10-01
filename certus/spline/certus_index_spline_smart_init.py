@@ -862,7 +862,6 @@ class SmartInitPreviewManager:
     @safe_ui_action
     def apply_preset(self, preset_name: str) -> None:
         try:
-            target_sk = np.asarray(self.state.sk, dtype=np.float64).ravel()
             def projector(sk):
                 return project_manual_material_preset(
                     preset_name, sk, d_nm_hint=self.state.preview_d_nm

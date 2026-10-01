@@ -11,7 +11,6 @@ def find_matching_sheets(target_name: str, sheet_names: list[str]) -> list[str]:
     This makes material/database resolution more predictable and easier to
     reason about in production.
     """
-    normalized_target = str(target_name).lower().replace("-", " ").replace("_", " ").split()
 
     PROCESSES = {"h800", "h400", "syrus", "helios"}
     MATERIALS = {"sio2", "nb2o5", "nb", "ta2o5", "al2o3", "hfo2", "zns", "tio2", "yf3", "si"}
@@ -112,7 +111,7 @@ def merge_two_curves(c1, c2):
         n1, n2 = n2, n1
         k1, k2 = k2, k1
         
-    min_wl1, max_wl1 = wl1[0], wl1[-1]
+    _min_wl1, max_wl1 = wl1[0], wl1[-1]
     min_wl2, max_wl2 = wl2[0], wl2[-1]
     
     if max_wl1 < min_wl2:

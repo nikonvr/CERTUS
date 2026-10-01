@@ -312,7 +312,7 @@ def test_absorption_reduces_transmission(n_real, k, thickness_nm, wavelength_nm)
     where α = 4πk/λ
     """
     ri = RefractiveIndex(n_real, k)
-    t = Thickness(thickness_nm)
+    Thickness(thickness_nm)
 
     alpha = ri.absorption_coefficient(wavelength_nm)
     transmission_factor = np.exp(-alpha * thickness_nm)

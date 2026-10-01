@@ -545,9 +545,7 @@ def spline_objective_mse_on_masked_grid(
         Weighted average MSE (T and/or R channels).
     """
 
-    loss = 0.0
 
-    wsum = 0.0
 
     wt = float(cfg.weight_t)
 

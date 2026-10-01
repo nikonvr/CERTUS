@@ -292,7 +292,7 @@ def test_shared_indices_worker_exact_match_and_large_cache() -> None:
 
             # Force cache to not insert once size reaches 1000, using keys that do not include 500.0
             worker._cache = {float(i): {"H": 1.0} for i in range(1000, 2000)}
-            r_uncached = worker.get(500.0)
+            worker.get(500.0)
             # Wavelength not stored in cached dict because cache is full and key wasn't in cache
             assert 500.0 not in worker._cache
 

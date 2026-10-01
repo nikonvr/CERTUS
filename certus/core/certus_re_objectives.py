@@ -316,7 +316,7 @@ def _build_phase2b_output(
     dh_end = np.asarray(x_end[i0 : i0 + nk], dtype=np.float64).flatten()
     dl_end = np.asarray(x_end[i0 + nk : i_lam], dtype=np.float64).flatten()
     lam_end = float(x_end[i_lam])
-    knots_end = re_knots_wavelengths(lam_end)
+    re_knots_wavelengths(lam_end)
 
     if use_sub_c3:
         th_end = np.asarray(x_end[i_cu : i_cu + 3], dtype=np.float64).ravel()

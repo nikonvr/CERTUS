@@ -17,8 +17,6 @@ def test_numba_jit_warmup():
     
     # Dummy data
     lambda_array = np.array([400.0, 500.0, 600.0], dtype=float_dtype)
-    n_sub_array = np.array([1.5, 1.5, 1.5], dtype=float_dtype)
-    k_sub_array = np.array([0.0, 0.0, 0.0], dtype=float_dtype)
     
     # Layers (n_array, k_array, thickness)
     thicknesses = np.array([100.0], dtype=float_dtype)

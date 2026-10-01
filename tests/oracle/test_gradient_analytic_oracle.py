@@ -64,10 +64,9 @@ def test_compute_oblique_gradient_contrib_analytic_oracle():
 
     for is_s_pol in (True, False):
         for is_refl in (True, False):
-            err_sum, grad_raw, weight_sum = compute_oblique_gradient_contrib_analytic(
+            _err_sum, grad_raw, weight_sum = compute_oblique_gradient_contrib_analytic(
                 ep, n_layers_T, n_sub, wls, tgt_vals, tgt_weights, 45.0, is_s_pol, is_refl
             )
-            cost = err_sum / weight_sum
             grad = (2.0 / weight_sum) * grad_raw
 
             h = 1e-6

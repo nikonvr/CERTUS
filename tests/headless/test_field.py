@@ -118,7 +118,7 @@ def test_field_headless():
         if final_result:
             assert len(final_result.z_coords) > 0  # and a result carries its depth grid
 
-    except Exception as e:
+    except Exception:
         import traceback
         traceback.print_exc()
         sys.exit(1)

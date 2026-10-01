@@ -158,7 +158,6 @@ def main() -> int:
         print("\n  lambda servant TOUT le prefixe [0,b) -- intersection, monotone par construction")
         print("    b :", end="")
         bornes = [b for b in range(10, N + 1, 10)] + [N]
-        inter = p["adm_tp"].copy()
         cum = np.ones(nl, dtype=bool)
         courbe = []
         for i in range(N):

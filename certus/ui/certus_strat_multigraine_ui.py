@@ -66,7 +66,7 @@ def interpreteur_et_script() -> tuple[str | None, str]:
     hub starts its modules; it is not done, and it cannot be tried without building a bundle.
     So this DETECTS, and refuses saying why.
     """
-    if False:
+    if getattr(sys, "frozen", False):
         return None, (
             "🔴 The multi-seed search is not available in the COMPILED build: it runs each "
             "seed as a separate Python process, and the compiled build has no Python "

@@ -322,7 +322,6 @@ class _PlotMixin:
         delta_rb = float(delta_rb_raw) if delta_rb_raw is not None else 2e-4
         win_rb_raw = self.sp_corridor_rmse_win.value() if hasattr(self, "sp_corridor_rmse_win") else None
         win_rb = int(win_rb_raw) if win_rb_raw is not None else 3
-
         live_parab = (
             not hasattr(self, "chk_corridor_rmse_live_parabola") or self.chk_corridor_rmse_live_parabola.isChecked()
         )
@@ -343,9 +342,7 @@ class _PlotMixin:
             _r_parab_list.append(float(r_plot[_m][_best]))
         d_parab_arr = np.asarray(_d_parab_list, dtype=np.float64)
         r_parab_arr = np.asarray(_r_parab_list, dtype=np.float64)
-
         i_parab_best = int(np.argmin(r_parab_arr)) if r_parab_arr.size > 0 else int(i_best)
-
         parab_half_window_pts = int(max(int(win_rb), int(max(1, d_parab_arr.size))))
         parab_fit = (
             _fit_local_quadratic_rmse_profile(
@@ -358,11 +355,8 @@ class _PlotMixin:
             if live_parab
             else {"ok": False}
         )
-
         d_center = float(parab_fit.get("d_center", float("nan"))) if bool(parab_fit.get("ok", False)) else float(d_best)
-
         self._corridor_rmse_center_nm = float(d_center)
-
         self.plot_corridor_rmse_d.addItem(
             pg.InfiniteLine(
                 pos=d_best,
@@ -371,7 +365,6 @@ class _PlotMixin:
                 pen=pg.mkPen("#17a673", width=2, style=Qt.PenStyle.DashLine),
             )
         )
-
         self.plot_corridor_rmse_d.plot(
             [d_best],
             [rmse_best],
@@ -382,9 +375,7 @@ class _PlotMixin:
             symbolPen=pg.mkPen("#0a5f42", width=1),
             name="Best d*",
         )
-
         rmse_thr = src.get("profile_d_rmse_thresh")
-
         if rmse_thr is not None and np.isfinite(float(rmse_thr)):
             thr = float(rmse_thr)
 
@@ -783,7 +774,6 @@ class _PlotMixin:
         r_parab_arr = ctx.r_parab_arr
         win_rb = ctx.win_rb
         delta_rb = ctx.delta_rb
-
         rb_ok = ctx.rb_ok
         d_lo_rb = ctx.d_lo_rb
         d_hi_rb = ctx.d_hi_rb
@@ -793,11 +783,8 @@ class _PlotMixin:
         bp_events = ctx.bp_events
         bp_dir_left = ctx.bp_dir_left
         bp_dir_right = ctx.bp_dir_right
-
         self._corridor_rmse_robust_ok = bool(rb_ok)
-
         self._corridor_rmse_robust_lo = float(d_lo_rb)
-
         self._corridor_rmse_robust_hi = float(d_hi_rb)
 
         # --- Smart Deltad: automatic interval from profiling code (profile_d_interval_nm) ---
@@ -825,7 +812,6 @@ class _PlotMixin:
                             _int_ok = True
                 except (ValueError, TypeError, AttributeError):
                     logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
-
         if _int_ok:
             _d_int_lo = float(_int_nm[0])
             _d_int_hi = float(_int_nm[1])
@@ -870,9 +856,7 @@ class _PlotMixin:
             pen_rb = pg.mkPen("#7a3cff", width=1, style=Qt.PenStyle.DashLine)
             self.plot_corridor_rmse_d.addItem(pg.InfiniteLine(pos=float(d_lo_rb), angle=90, movable=False, pen=pen_rb))
             self.plot_corridor_rmse_d.addItem(pg.InfiniteLine(pos=float(d_hi_rb), angle=90, movable=False, pen=pen_rb))
-
         self._corridor_rmse_parab_export = dict(parab_fit)
-
         self._corridor_rmse_robust_export = {
             "ok": bool(rb_ok),
             "d_lo": float(d_lo_rb),
@@ -882,104 +866,39 @@ class _PlotMixin:
             "delta_rmse_setting": float(delta_rb),
             "half_window_pts": int(win_rb),
         }
-
         self._sync_corridor_manual_controls(d_plot, i_best)
-
         d_lo_man = float(getattr(self, "_corridor_rmse_manual_lo", float("nan")))
-
         d_hi_man = float(getattr(self, "_corridor_rmse_manual_hi", float("nan")))
-
         if np.isfinite(d_lo_man) and np.isfinite(d_hi_man) and d_hi_man >= d_lo_man:
             pen_man = pg.mkPen("#ff4d4f", width=1, style=Qt.PenStyle.DashLine)
-
             self.plot_corridor_rmse_d.addItem(
                 pg.InfiniteLine(pos=float(d_lo_man), angle=90, movable=False, pen=pen_man)
             )
-
             self.plot_corridor_rmse_d.addItem(
                 pg.InfiniteLine(pos=float(d_hi_man), angle=90, movable=False, pen=pen_man)
             )
-
         if hasattr(self, "lbl_corridor_rmse_summary"):
-            _grid_note = ""
-
-            if str(src.get("profile_d_status", "")) == "manual_grid":
-                _grid_note = " | manual grid (re-run)"
-
-                n_bp = int(src.get("profile_d_manual_grid_breakpoint_count", 0))
-
-                n_extra = int(src.get("profile_d_manual_grid_extra_points", 0))
-
-                if n_bp > 0 or n_extra > 0:
-                    _grid_note += f" | breakpoints detected={n_bp} | points extra={n_extra}"
-                if isinstance(bp_events, list) and bp_events:
-                    n_prevn = int(
-                        sum(1 for ev in bp_events if isinstance(ev, dict) and float(ev.get("trigger_prevN", 0.0)) > 0.5)
-                    )
-                    n_parab = int(
-                        sum(
-                            1
-                            for ev in bp_events
-                            if isinstance(ev, dict) and float(ev.get("trigger_parabola", 0.0)) > 0.5
-                        )
-                    )
-                    _grid_note += f" | causes(prevN={n_prevn}, parabola={n_parab})"
-                    _grid_note += f" | direction(chosen left={int(bp_dir_left)}, right={int(bp_dir_right)})"
-
-            _env_note = ""
-
-            if envelope_display:
-                _env_note = f" | plot: lower envelope ({int(d_vis.size)}/{int(d_plot.size)} pts)"
-
-            _smart_note = ""
-            if getattr(self, "_corridor_rmse_smart_interval", None) is not None:
-                _s_lo, _s_hi = self._corridor_rmse_smart_interval
-                _smart_note = f" | Deltad code ? [{_s_lo:.3f}, {_s_hi:.3f}] nm"
-
-            txt = (
-                (
-                    f"Best computed thickness: d* = {d_best:.3f} nm | RMSE(d*) = {rmse_best:.6f} | "
-                    f"samples = {int(d_plot.size)}"
-                )
-                + _env_note
-                + _grid_note
-                + _smart_note
+            _grid_note = self._manual_grid_note(src, bp_events, bp_dir_left, bp_dir_right)
+            self._write_the_rmse_summary(
+                src,
+                d_plot,
+                d_vis,
+                parab_fit,
+                envelope_display,
+                is_live_grid,
+                live_parab,
+                d_best,
+                rmse_best,
+                delta_rb,
+                rb_ok,
+                d_lo_rb,
+                d_hi_rb,
+                slope_b,
+                d_center,
+                d_lo_man,
+                d_hi_man,
+                _grid_note,
             )
-
-            if rb_ok:
-                txt += (
-                    f" | robust Delta={delta_rb:.6f} -> interval ? [{float(d_lo_rb):.3f}, {float(d_hi_rb):.3f}] nm"
-                    f" | slope@d*?{float(slope_b):+.2e} /nm"
-                )
-
-                if bool(parab_fit.get("ok", False)):
-                    txt += f" | parabola center?{float(d_center):.3f} nm"
-
-            else:
-                txt += " | robust interval unavailable (insufficient local convex fit)"
-
-            if np.isfinite(d_lo_man) and np.isfinite(d_hi_man):
-                man_state = "active" if bool(getattr(self, "_corridor_rmse_manual_active", False)) else "preview"
-
-                txt += f" | manual {man_state} ? [{float(d_lo_man):.3f}, {float(d_hi_man):.3f}] nm"
-
-                if bool(src.get("manual_corridor_active", False)):
-                    txt += f" ({int(src.get('manual_corridor_selected_count', 0))} profiled points)"
-
-                    d_sel_rng = src.get("manual_corridor_selected_d_range_nm", (float("nan"), float("nan")))
-
-                    if (
-                        isinstance(d_sel_rng, (tuple, list))
-                        and len(d_sel_rng) >= 2
-                        and np.isfinite(float(d_sel_rng[0]))
-                        and np.isfinite(float(d_sel_rng[1]))
-                    ):
-                        txt += f" | sampled in [{float(d_sel_rng[0]):.3f}, {float(d_sel_rng[1]):.3f}] nm"
-
-            if is_live_grid and not live_parab:
-                txt += " | live preview: points only (parabola/robust fit paused)"
-
-            self.lbl_corridor_rmse_summary.setText(txt)
         if hasattr(self, "lbl_corridor_rmse_robust_compact"):
             if rb_ok and np.isfinite(float(d_lo_rb)) and np.isfinite(float(d_hi_rb)):
                 d_mid_rb = 0.5 * float(d_lo_rb + d_hi_rb)
@@ -989,7 +908,6 @@ class _PlotMixin:
                 )
             else:
                 self.lbl_corridor_rmse_robust_compact.setText("Robust interval: -")
-
         try:
             self.plot_corridor_rmse_d.plotItem.setTitle(
                 f"Corridor profile RMSE(d) ? best d* = {d_best:.3f} nm (RMSE {rmse_best:.6f})",
@@ -999,7 +917,6 @@ class _PlotMixin:
 
         except (AttributeError, RuntimeError):
             logger.debug("Corridor RMSE(d) title set failed", exc_info=True)
-
         lock_scale = bool(
             hasattr(self, "chk_corridor_rmse_lock_scale") and self.chk_corridor_rmse_lock_scale.isChecked()
         )
@@ -1023,7 +940,6 @@ class _PlotMixin:
                 self.plot_corridor_rmse_d.setXRange(float(d_lo_rb), float(d_hi_rb), padding=0.0)
             else:
                 self.plot_corridor_rmse_d.autoRange()
-
         try:
             self.plot_corridor_rmse_d.repaint()
             self.plot_corridor_rmse_d.update()
@@ -1043,9 +959,93 @@ class _PlotMixin:
                 y_max_val = max(y_max_val, float(rmse_thr) + 0.5 * delta_rb_eff)
             y_min_val = max(1e-6, y_min_val)
             self.plot_corridor_rmse_d.plotItem.setYRange(y_min_val, y_max_val, padding=0.0)
-
         self._draw_corridor_curvature_label(curvature_label_spec, r_vis, r_plot, envelope_display)
         self._update_corridor_rmse_state_bar(src)
+
+    def _manual_grid_note(self, src, bp_events, bp_dir_left, bp_dir_right):
+        """Return the part of the summary that tells the d grid was a manual one, how many breakpoints and extra points it had, what triggered them and towards which side they broke."""
+        _grid_note = ""
+
+        if str(src.get("profile_d_status", "")) == "manual_grid":
+            _grid_note = " | manual grid (re-run)"
+
+            n_bp = int(src.get("profile_d_manual_grid_breakpoint_count", 0))
+
+            n_extra = int(src.get("profile_d_manual_grid_extra_points", 0))
+
+            if n_bp > 0 or n_extra > 0:
+                _grid_note += f" | breakpoints detected={n_bp} | points extra={n_extra}"
+            if isinstance(bp_events, list) and bp_events:
+                n_prevn = int(
+                    sum(1 for ev in bp_events if isinstance(ev, dict) and float(ev.get("trigger_prevN", 0.0)) > 0.5)
+                )
+                n_parab = int(
+                    sum(
+                        1
+                        for ev in bp_events
+                        if isinstance(ev, dict) and float(ev.get("trigger_parabola", 0.0)) > 0.5
+                    )
+                )
+                _grid_note += f" | causes(prevN={n_prevn}, parabola={n_parab})"
+                _grid_note += f" | direction(chosen left={int(bp_dir_left)}, right={int(bp_dir_right)})"
+        return _grid_note
+
+    def _write_the_rmse_summary(self, src, d_plot, d_vis, parab_fit, envelope_display, is_live_grid, live_parab, d_best, rmse_best, delta_rb, rb_ok, d_lo_rb, d_hi_rb, slope_b, d_center, d_lo_man, d_hi_man, _grid_note):
+        """Write the one-line summary of the RMSE(d) tab: the best thickness and its RMSE, the plot, grid and Deltad notes, the robust interval and the manual one when there is one."""
+        _env_note = ""
+
+        if envelope_display:
+            _env_note = f" | plot: lower envelope ({int(d_vis.size)}/{int(d_plot.size)} pts)"
+
+        _smart_note = ""
+        if getattr(self, "_corridor_rmse_smart_interval", None) is not None:
+            _s_lo, _s_hi = self._corridor_rmse_smart_interval
+            _smart_note = f" | Deltad code ? [{_s_lo:.3f}, {_s_hi:.3f}] nm"
+
+        txt = (
+            (
+                f"Best computed thickness: d* = {d_best:.3f} nm | RMSE(d*) = {rmse_best:.6f} | "
+                f"samples = {int(d_plot.size)}"
+            )
+            + _env_note
+            + _grid_note
+            + _smart_note
+        )
+
+        if rb_ok:
+            txt += (
+                f" | robust Delta={delta_rb:.6f} -> interval ? [{float(d_lo_rb):.3f}, {float(d_hi_rb):.3f}] nm"
+                f" | slope@d*?{float(slope_b):+.2e} /nm"
+            )
+
+            if bool(parab_fit.get("ok", False)):
+                txt += f" | parabola center?{float(d_center):.3f} nm"
+
+        else:
+            txt += " | robust interval unavailable (insufficient local convex fit)"
+
+        if np.isfinite(d_lo_man) and np.isfinite(d_hi_man):
+            man_state = "active" if bool(getattr(self, "_corridor_rmse_manual_active", False)) else "preview"
+
+            txt += f" | manual {man_state} ? [{float(d_lo_man):.3f}, {float(d_hi_man):.3f}] nm"
+
+            if bool(src.get("manual_corridor_active", False)):
+                txt += f" ({int(src.get('manual_corridor_selected_count', 0))} profiled points)"
+
+                d_sel_rng = src.get("manual_corridor_selected_d_range_nm", (float("nan"), float("nan")))
+
+                if (
+                    isinstance(d_sel_rng, (tuple, list))
+                    and len(d_sel_rng) >= 2
+                    and np.isfinite(float(d_sel_rng[0]))
+                    and np.isfinite(float(d_sel_rng[1]))
+                ):
+                    txt += f" | sampled in [{float(d_sel_rng[0]):.3f}, {float(d_sel_rng[1]):.3f}] nm"
+
+        if is_live_grid and not live_parab:
+            txt += " | live preview: points only (parabola/robust fit paused)"
+
+        self.lbl_corridor_rmse_summary.setText(txt)
 
 
 class _UIBuilderMixin:

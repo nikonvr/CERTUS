@@ -82,7 +82,6 @@
     "certus/spline/certus_corridor_exploration.py::compute_regular_grid_rmse_profile": 96,
     "certus/spline/certus_corridor_fitter.py::_fit_nodes_at_fixed_d": 83,
     "certus/spline/certus_index_spline_corridor_worker.py::_CorridorWorkerMixin._finish_corridor_rmse_d_grid_worker_done": 72,
-    "certus/spline/certus_index_spline_rendering.py::_PlotMixin._plot_corridor_rmse_tab": 68,
     "certus/spline/spline_pipeline_mesh_clean.py::worker_spline_auto_clean_knots": 98,
     "certus/spline/spline_workers.py::_run_free_knot_stage": 66,
     "certus/ui/certus_index_spline_manualmesh_mixin.py::CertusIndexSplineManualMeshMixin._open_manual_extra_knots_dialog": 75,

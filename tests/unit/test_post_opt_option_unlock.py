@@ -36,6 +36,10 @@ class _Harness(_RealSimpleNamespace):
     def _post_optimization_ready_status(status_text):
         return f"Ready: {status_text}"
 
+    # the steps the handlers hand to methods of their own: the fake runs the real ones on itself
+    def _log_regular_grid_result(self, *args):
+        return CertusIndexSplineApp._log_regular_grid_result(self, *args)
+
 SimpleNamespace = _Harness
 from unittest.mock import MagicMock
 

@@ -1077,19 +1077,16 @@ def _validate_candidates_phase_a(
     candidate_wls = [d["wl"] for d in candidates]
     cand_wls_arr = np.array(candidate_wls, dtype=np.float64)
     clues_by_wl_idx = build_wavelength_index_map(clues_at_wl)
-
     n_H_arr = np.array([clues_by_wl_idx[wavelength_to_index(w)]["H"] for w in candidate_wls], dtype=np.complex128)
     n_L_arr = np.array([clues_by_wl_idx[wavelength_to_index(w)]["L"] for w in candidate_wls], dtype=np.complex128)
     n_Sub_arr = np.array(
         [clues_by_wl_idx[wavelength_to_index(w)]["substrate"] for w in candidate_wls], dtype=np.complex128
     )
     p_thick_nom_arr = np.array(p_thick_nominal, dtype=np.float64)
-
     runs_history_matrix = np.zeros((num_runs, len(p_thick_nominal)), dtype=np.float64)
     if i_layer > 0:
         for r_idx in range(num_runs):
             runs_history_matrix[r_idx, :i_layer] = run_states[r_idx]["p_thick_sim"]
-
     if layer_noise_array is not None:
         noise_values = layer_noise_array
     else:
@@ -1103,7 +1100,6 @@ def _validate_candidates_phase_a(
             rng=fallback_rng,
             deterministic=deterministic_mode,
         )
-
     nm_mode = params.get("non_monotonic_mode", NON_MONOTONIC_MODE_ATTENUATE)
 
     # Start of monochromatic block, PER CANDIDATE. A candidate that takes up the
@@ -1120,7 +1116,6 @@ def _validate_candidates_phase_a(
             [running_block_start if abs(float(w) - prev_layer_wl) <= 0.1 else i_layer for w in candidate_wls],
             dtype=np.int64,
         )
-
     gain_probe_nm = float(params.get("phase_a_gain_probe_nm", 1.0))
 
     # ── 🔴 CONTROL WAVELENGTH ADMISSIBILITY RULE ──────────
@@ -1177,7 +1172,6 @@ def _validate_candidates_phase_a(
     # It applies even when the signal is not noisy: a machine always has
     # a reading rule. Default 0.0 = historical rule.
     tp_hysteresis = float(params.get("tp_hysteresis_factor", 0.0) or 0.0) * noise_val_pct
-
     affine_scale_amp = float(params.get("affine_scale_amp", 0.0) or 0.0)
     affine_offset_amp = float(params.get("affine_offset_amp", 0.0) or 0.0)
     # 12.1bis: Phase A must see the SAME photometric distortion as Phase B.
@@ -1248,7 +1242,6 @@ def _validate_candidates_phase_a(
         # 17-23, one parameter further.
         phase_a_slit_profiles(cand_wls_arr, list(p_thick_nom_arr), params, i_layer),
     )
-
     results_thickness = []
     p_thick_sim_updates = [[] for _ in range(len(candidate_wls))]
 
@@ -1293,7 +1286,72 @@ def _validate_candidates_phase_a(
     # of this order does not deserve to be propagated.
     if err_prev_nm < 0.05:
         err_prev_nm = 0.0
+    results_thickness = _apply_the_admissibility_rule(
+        candidates, i_layer, params, candidate_wls, results_fast, results_thickness, _EXT_KEYS, crash_tol, gain_weight, err_prev_nm
+    )
 
+    results_thickness.sort(key=lambda x: x["cost"])
+
+    # Propagate best-wl sim state for next layer
+    if results_thickness:
+        best_wl = float(results_thickness[0]["wl"])
+        best_idx_data = idx_dict[wavelength_to_index(best_wl)]
+        # Same block history as the one under which this wavelength was
+        # judged, otherwise Phase A would contradict itself from one step to another.
+        if i_layer == 0 or prev_layer_wl < 0.0 or abs(best_wl - prev_layer_wl) > 0.1:
+            best_block_start = i_layer
+        else:
+            best_block_start = running_block_start
+        _slit_best = phase_a_slit_profiles(
+            np.asarray([best_wl], dtype=np.float64), list(p_thick_nom_arr), params, i_layer
+        )
+        p_thick_sim_updates = _PhysicsBridge.update_run_states(
+            p_thick_nom_arr,
+            i_layer,
+            runs_history_matrix[:, :i_layer],
+            best_wl,
+            complex(best_idx_data["H"]),
+            complex(best_idx_data["L"]),
+            complex(best_idx_data["substrate"]),
+            offset_val,
+            noise_values,
+            factor_val,
+            nm_mode,
+            best_block_start,
+            signal_noise_scale,
+            signal_noise_seed,
+            tp_hysteresis,
+            # 17-23: the SAME six model parameters the candidates were judged under.
+            # Omitting them let the propagated history live in a clean world while the
+            # candidates lived in a perturbed one -- Phase A contradicting itself at
+            # every layer, exactly what the kernel docstring forbids.
+            affine_scale_amp,
+            affine_offset_amp,
+            photo_curvature_amp,
+            affine_seed,
+            poem_enabled,
+            smoothing_window,
+            index_corridor,
+            index_seed,
+            corridor_lo,
+            corridor_hi,
+            # ... and the slit is the seventh. The docstring of `simulate_growth_kernel`
+            # states the principle exactly: the states propagated here become the history
+            # on which the NEXT layer is judged. Propagating them through a perfect
+            # monochromator while the candidates were judged through a 2 nm slit would
+            # make Phase A contradict itself one layer later.
+            # 🟢 Free in practice: `best_wl` was one of the candidates, so its profile is
+            # already in the shared cache from the call above.
+            _slit_best[0] if _slit_best is not None else None,
+        ).tolist()
+    else:
+        p_thick_sim_updates = []
+
+    return results_thickness, p_thick_sim_updates
+
+
+def _apply_the_admissibility_rule(candidates, i_layer, params, candidate_wls, results_fast, results_thickness, _EXT_KEYS, crash_tol, gain_weight, err_prev_nm):
+    """Split the validated candidates into survivors and eliminated ones on their crash rate and compensation gain, record and log the census, and fall back on the least crashing ones when none survives; return the survivors."""
     eliminated = []
     # Census per layer of the two prohibition reasons. An aggregate counter would
     # not say if the filter sorts (intermediate regime) or if it is vacuous /
@@ -1379,65 +1437,7 @@ def _validate_candidates_phase_a(
             f"{crash_tol:.3%} unfinishable depositions. Fallback to the minimum "
             f"observed rate ({best_crash:.3%}) — the layer is a hard point."
         )
-
-    results_thickness.sort(key=lambda x: x["cost"])
-
-    # Propagate best-wl sim state for next layer
-    if results_thickness:
-        best_wl = float(results_thickness[0]["wl"])
-        best_idx_data = idx_dict[wavelength_to_index(best_wl)]
-        # Same block history as the one under which this wavelength was
-        # judged, otherwise Phase A would contradict itself from one step to another.
-        if i_layer == 0 or prev_layer_wl < 0.0 or abs(best_wl - prev_layer_wl) > 0.1:
-            best_block_start = i_layer
-        else:
-            best_block_start = running_block_start
-        _slit_best = phase_a_slit_profiles(
-            np.asarray([best_wl], dtype=np.float64), list(p_thick_nom_arr), params, i_layer
-        )
-        p_thick_sim_updates = _PhysicsBridge.update_run_states(
-            p_thick_nom_arr,
-            i_layer,
-            runs_history_matrix[:, :i_layer],
-            best_wl,
-            complex(best_idx_data["H"]),
-            complex(best_idx_data["L"]),
-            complex(best_idx_data["substrate"]),
-            offset_val,
-            noise_values,
-            factor_val,
-            nm_mode,
-            best_block_start,
-            signal_noise_scale,
-            signal_noise_seed,
-            tp_hysteresis,
-            # 17-23: the SAME six model parameters the candidates were judged under.
-            # Omitting them let the propagated history live in a clean world while the
-            # candidates lived in a perturbed one -- Phase A contradicting itself at
-            # every layer, exactly what the kernel docstring forbids.
-            affine_scale_amp,
-            affine_offset_amp,
-            photo_curvature_amp,
-            affine_seed,
-            poem_enabled,
-            smoothing_window,
-            index_corridor,
-            index_seed,
-            corridor_lo,
-            corridor_hi,
-            # ... and the slit is the seventh. The docstring of `simulate_growth_kernel`
-            # states the principle exactly: the states propagated here become the history
-            # on which the NEXT layer is judged. Propagating them through a perfect
-            # monochromator while the candidates were judged through a 2 nm slit would
-            # make Phase A contradict itself one layer later.
-            # 🟢 Free in practice: `best_wl` was one of the candidates, so its profile is
-            # already in the shared cache from the call above.
-            _slit_best[0] if _slit_best is not None else None,
-        ).tolist()
-    else:
-        p_thick_sim_updates = []
-
-    return results_thickness, p_thick_sim_updates
+    return results_thickness
 
 
 def select_best_strat_result(strategies_results: list[dict[str, Any]]) -> dict[str, Any] | None:

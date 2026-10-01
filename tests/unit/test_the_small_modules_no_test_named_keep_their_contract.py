@@ -242,10 +242,13 @@ def test_the_warmup_reports_each_step_in_order_and_the_kernels_still_accept_its_
     assert [r.getMessage() for r in caplog.records if r.name == "CERTUS_WARMUP"] == []
 
 
-def test_the_warmup_runs_without_a_callback():
+def test_the_warmup_runs_without_a_callback_and_logs_no_error(caplog):
+    """No callback is a normal call (every `if progress_callback` guards): the four steps run, and none of them fails quietly."""
     from certus.physics.certus_warmup import run_warmup
 
-    run_warmup()
+    with caplog.at_level(logging.ERROR, logger="CERTUS_WARMUP"):
+        assert run_warmup() is None
+    assert [r.getMessage() for r in caplog.records if r.name == "CERTUS_WARMUP"] == []
 
 
 # =============================================================================

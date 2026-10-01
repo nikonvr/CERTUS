@@ -20,7 +20,7 @@ from certus.spline.certus_corridor_utils import quick_pwlnk_refit_result_dict
 from certus.utils.certus_skeleton import uninstall_skeleton
 from certus.spline.certus_index_spline_corridor_ui import GenericWorker, ManualSigmaKnotDialog
 
-# Mixins sortis de cette classe (S5.3) : les methodes y sont, les noms restent importables d'ici.
+# Mixins moved out of this class (S5.3): the methods live there, the names stay importable from here.
 from certus.spline.certus_index_spline_corridor_tab import _CorridorTabMixin
 
 

@@ -95,7 +95,8 @@ def test_u4_collect_window_shortcuts_uses_commands(qapp):
     seqs = [e.sequence for e in entries]
     labels = [e.label for e in entries]
     # Bound sequences are advertised...
-    assert "F5" in seqs and "Ctrl+S" in seqs
+    assert "F5" in seqs
+    assert "Ctrl+S" in seqs
     # ...and a command with no shortcut contributes nothing.
     assert "Internal command" not in labels
 
@@ -166,7 +167,8 @@ def test_u4_collect_window_shortcuts_handles_fallback_label():
 
     entries = collect_window_shortcuts(_Proxy(w))
     raw = [e for e in entries if e.sequence == "Ctrl+Alt+Z"]
-    assert raw and raw[0].label == "Ctrl+Alt+Z"
+    assert raw
+    assert raw[0].label == "Ctrl+Alt+Z"
 
 
 # =============================================================================

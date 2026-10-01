@@ -57,7 +57,8 @@ def test_a_colour_is_a_plain_string_to_everything_but_an_fstring():
     token = CertusTheme.SURFACE
     assert isinstance(token, _Token)
     assert token == "#ffffff"
-    assert str(token) == "#ffffff" and type(str(token)) is str
+    assert str(token) == "#ffffff"
+    assert type(str(token)) is str
     assert "%s" % token == "#ffffff"  # noqa: UP031 - the percent operator IS what is tested
     assert token + "22" == "#ffffff22"
     assert token.lstrip("#") == "ffffff"
@@ -92,7 +93,8 @@ def test_every_colour_that_changes_with_the_theme_is_a_token_with_its_own_name()
     assert changing <= set(_TOKEN_NAMES), f"a colour of the palette is not a token: {sorted(changing - set(_TOKEN_NAMES))}"
     for name in _TOKEN_NAMES:
         token = getattr(CertusTheme, name)
-        assert isinstance(token, _Token) and token.name == name
+        assert isinstance(token, _Token)
+        assert token.name == name
 
 
 def test_the_tokens_stay_tokens_after_each_change_and_the_aliases_follow_their_target():
@@ -136,7 +138,8 @@ def test_qt_reads_a_comment_in_a_border_in_a_gradient_and_in_a_rich_text_span(qa
     box = QLabel("")
     box.setStyleSheet("QLabel { border: 3px solid #0000ff/*T:BORDER*/; background: #ffffff/*T:SURFACE*/; }")
     image = _grab(box)
-    assert image.pixelColor(1, 20).blue() == 255 and image.pixelColor(1, 20).red() == 0
+    assert image.pixelColor(1, 20).blue() == 255
+    assert image.pixelColor(1, 20).red() == 0
     assert image.pixelColor(80, 20).red() == 255
 
     bar = QProgressBar()
@@ -236,7 +239,8 @@ def test_a_button_style_inside_a_longer_sheet_is_rebuilt_in_place(qapp):
 
 def test_a_button_style_still_has_the_rules_it_had_with_its_markers_around_them():
     sheet = CertusTheme.get_button_style("primary")
-    assert sheet.startswith("/*B:primary*/") and sheet.rstrip().endswith("/*B-END*/")
+    assert sheet.startswith("/*B:primary*/")
+    assert sheet.rstrip().endswith("/*B-END*/")
     for rule in ("QPushButton {", "QPushButton:hover {", "QPushButton:pressed {", "QPushButton:focus {", "QPushButton:disabled {"):
         assert rule in sheet
 
@@ -354,7 +358,8 @@ def test_the_light_only_colours_are_those_of_the_light_palette_that_the_dark_one
     assert "#ffffff" in found  # the light surface
     dark = set(_palette("dark").values())
     CertusTheme.configure("light")
-    assert "#111827" in dark and "#111827" not in found  # the dark surface
+    assert "#111827" in dark
+    assert "#111827" not in found
     assert found.isdisjoint(dark)
 
 

@@ -209,8 +209,10 @@ def test_beyond_the_fit_range_the_nk_curves_are_blanked_unless_the_method_is_a_s
     log = logging.getLogger("test-index-nk3")
     n, k, method, lambda_max, tlu = _prepare_nk_plot_inputs(wls, frame, _nk_result(), log)
     assert (method, lambda_max, tlu) == ("Sellmeier", 900.0, True)
-    assert n.tolist()[:2] == [1.5, 1.5] and np.isnan(n[2:]).all()  # the infrared is blanked, 900 itself is kept
-    assert k.tolist()[:2] == [0.0, 0.0] and np.isnan(k[2:]).all()
+    assert n.tolist()[:2] == [1.5, 1.5]
+    assert np.isnan(n[2:]).all()
+    assert k.tolist()[:2] == [0.0, 0.0]
+    assert np.isnan(k[2:]).all()
     assert frame["n_calc"].tolist() == [1.5, 1.5, 1.4, 1.4]  # the frame is not modified
     for result in (_nk_result(method="B-Spline fit"), _nk_result(tlu_params=None), _nk_result(lambda_max_fit=None)):
         n2, _k2, _m, _l, tlu2 = _prepare_nk_plot_inputs(wls, frame, result, log)
@@ -281,8 +283,13 @@ def test_the_split_puts_nan_outside_the_mask_for_the_gray_curve_and_inside_it_fo
 
     y = np.array([1.0, 2.0, 3.0, 4.0])
     outside, inside = _nan_split_band_y(y, np.array([False, True, True, False]))
-    assert outside.tolist()[0] == 1.0 and np.isnan(outside[1]) and np.isnan(outside[2]) and outside[3] == 4.0
-    assert np.isnan(inside[0]) and inside[1:3].tolist() == [2.0, 3.0] and np.isnan(inside[3])
+    assert outside.tolist()[0] == 1.0
+    assert np.isnan(outside[1])
+    assert np.isnan(outside[2])
+    assert outside[3] == 4.0
+    assert np.isnan(inside[0])
+    assert inside[1:3].tolist() == [2.0, 3.0]
+    assert np.isnan(inside[3])
     assert _nan_split_band_y([1, 2], None)[0] is None
     assert _nan_split_band_y([1, 2], None)[1].tolist() == [1.0, 2.0]
 
@@ -314,8 +321,11 @@ def test_a_curve_with_a_mask_is_drawn_gray_outside_first_then_coloured_inside():
     assert handle == 2  # the handle of the second plot, the coloured one
     assert [c[2] for c in rec.calls] == [{"pen": "out"}, {"pen": "in", "name": "T"}]
     outside, inside = rec.calls[0][1], rec.calls[1][1]
-    assert outside[0] == 0.1 and np.isnan(outside[1]) and np.isnan(outside[2])
-    assert np.isnan(inside[0]) and inside[1:] == [0.2, 0.3]
+    assert outside[0] == 0.1
+    assert np.isnan(outside[1])
+    assert np.isnan(outside[2])
+    assert np.isnan(inside[0])
+    assert inside[1:] == [0.2, 0.3]
 
 
 def test_the_mask_follows_the_points_that_survive_the_finite_filter():
@@ -324,7 +334,8 @@ def test_the_mask_follows_the_points_that_survive_the_finite_filter():
     rec = _Recorder()
     _pg_plot_xy_split_band(rec, [400.0, np.nan, 600.0], [0.1, 0.2, 0.3], np.array([True, True, False]), "in", "out")
     assert rec.calls[0][0] == [400.0, 600.0]
-    assert rec.calls[1][1][0] == 0.1 and np.isnan(rec.calls[1][1][1])  # 600 is outside the mask
+    assert rec.calls[1][1][0] == 0.1
+    assert np.isnan(rec.calls[1][1][1])
 
 
 def test_a_scatter_is_drawn_as_symbols_without_a_line_and_outside_points_use_the_outside_symbol_pen():

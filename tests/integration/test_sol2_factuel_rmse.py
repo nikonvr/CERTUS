@@ -577,7 +577,8 @@ def test_smooth_profile_can_raise_rmse_vs_pwl_same_nodes() -> None:
     _, _, tot_p = decompose_spline_pwl_objective(cfg_base.replace(nk_profile_interp="pwl"), sk, x0c)
 
 
-    assert tot_s > 0 and tot_p > 0
+    assert tot_s > 0
+    assert tot_p > 0
 
 
     rel = abs(float(tot_s) - float(tot_p)) / max(float(tot_p), 1e-30)

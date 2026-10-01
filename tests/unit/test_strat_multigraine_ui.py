@@ -165,7 +165,9 @@ def test_le_bandeau_annonce_le_CITABLE_apres_notation() -> None:
     )
     t = resumer(e)
     # Meme propriete qu'avant : le chiffre citable, sa valeur, et la graine disjointe.
-    assert "QUOTABLE" in t and "0.5612" in t and "disjoint" in t
+    assert "QUOTABLE" in t
+    assert "0.5612" in t
+    assert "disjoint" in t
 
 
 def test_l_ecart_utilise_le_provisoire_VU_PAR_LE_SCRIPT() -> None:
@@ -209,14 +211,16 @@ def test_la_TRONCATURE_de_l_union_se_voit() -> None:
     verifiee est la meme.
     """
     e = _etat({"evt": "union", "plans": 200, "ecartes": 483})
-    assert "483" in resumer(e) and "DISCARDED" in resumer(e)
+    assert "483" in resumer(e)
+    assert "DISCARDED" in resumer(e)
 
 
 def test_les_graines_NON_ESSAYEES_se_voient() -> None:
     """Le mot a change avec l'anglicisation du bandeau (plan UX, 5.8) ; la propriete
     verifiee est la meme : les graines non essayees sont nommees."""
     e = _etat({"evt": "fin", "trouve": False, "non_essayees": [909, 1111]})
-    assert "NOT TRIED" in resumer(e) and "909" in resumer(e)
+    assert "NOT TRIED" in resumer(e)
+    assert "909" in resumer(e)
 
 
 def test_le_MOTIF_d_arret_se_voit() -> None:
@@ -417,7 +421,8 @@ def test_deux_composants_VOISINS_ne_se_confondent_pas() -> None:
 
 def test_hors_mode_gele_l_interpreteur_est_trouvable() -> None:
     py, motif = interpreteur_et_script()
-    assert py is not None and motif == ""
+    assert py is not None
+    assert motif == ""
 
 
 def test_en_mode_GELE_on_REFUSE_en_disant_pourquoi(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -429,7 +434,8 @@ def test_en_mode_GELE_on_REFUSE_en_disant_pourquoi(monkeypatch: pytest.MonkeyPat
     assert py is None
     # Le message est passe a l'anglais (plan UX, 5.8) ; il doit toujours nommer le
     # paquet compile ET la sortie de secours.
-    assert "COMPILED" in motif and "sources" in motif
+    assert "COMPILED" in motif
+    assert "sources" in motif
 
 
 def test_une_derniere_ligne_SANS_retour_chariot_n_est_pas_perdue() -> None:

@@ -44,7 +44,8 @@ def test_u8_easing_names_are_stable_and_validated():
     from certus.ui.certus_animations import easing_names, is_valid_easing
 
     names = easing_names()
-    assert "out_cubic" in names and "linear" in names
+    assert "out_cubic" in names
+    assert "linear" in names
     for n in names:
         assert is_valid_easing(n)
     assert not is_valid_easing("nope")
@@ -233,7 +234,8 @@ def test_u9_sample_data_lists_json_configs(tmp_path):
         assert sample_path(SampleCategory.CONFIG, "sample_b") == str(b.resolve()) or \
                sample_path(SampleCategory.CONFIG, "sample_b") == str(b)
         ds = default_sample(SampleCategory.CONFIG)
-        assert ds is not None and ds.name == "sample_a"
+        assert ds is not None
+        assert ds.name == "sample_a"
     finally:
         set_sample_root(None)
 
@@ -268,9 +270,12 @@ def test_u10_section_kind_predicates():
     t = Section(title="T", kind="table", rows=[[1]])
     x = Section(title="X", kind="text", text="hi")
     c = Section(title="C", kind="chart")
-    assert t.is_table() and not t.is_text()
-    assert x.is_text() and not x.is_chart()
-    assert c.is_chart() and not c.is_table()
+    assert t.is_table()
+    assert not t.is_text()
+    assert x.is_text()
+    assert not x.is_chart()
+    assert c.is_chart()
+    assert not c.is_table()
 
 
 def test_u10_summary_header_is_newline_joined():
@@ -279,7 +284,8 @@ def test_u10_summary_header_is_newline_joined():
     ctx = ReportContext(title="T", subtitle="S", app_name="A", author="B")
     txt = report_summary_header(ctx)
     assert "\n" in txt
-    assert "T" in txt and "S" in txt
+    assert "T" in txt
+    assert "S" in txt
 
 
 def test_u10_excel_export_is_produced(tmp_path):

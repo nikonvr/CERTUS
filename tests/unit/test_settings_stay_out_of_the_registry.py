@@ -30,7 +30,8 @@ def test_under_config_dir_the_settings_are_an_ini_file_there(qapp, tmp_path, mon
     s.setValue("probe/value", 42)
     s.sync()
     written = Path(s.fileName())
-    assert written.is_relative_to(tmp_path) and written.is_file(), s.fileName()
+    assert written.is_relative_to(tmp_path), s.fileName()
+    assert written.is_file(), s.fileName()
 
 
 def test_without_config_dir_it_is_the_native_settings_of_before(qapp, monkeypatch) -> None:

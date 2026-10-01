@@ -94,7 +94,8 @@ def test_ui_fixtures_destroy_windows_at_the_right_boundary(tmp_path, isolated):
     )
     output = run.stdout + run.stderr
     if isolated:
-        assert run.returncode == 0 and "3 passed" in output, output
+        assert run.returncode == 0, output
+        assert "3 passed" in output, output
     else:
         assert run.returncode == 1, output
         assert "a window built by a test outlived it" in output, output

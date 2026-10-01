@@ -111,7 +111,8 @@ def test_p4_audit_palette_reports_worst_pair():
         "primary": "#1F3A8A",
     }
     report = audit_palette(palette, background_key="surface")
-    assert "text" in report and report["text"]["passes_aa"] is True
+    assert "text" in report
+    assert report["text"]["passes_aa"] is True
     assert report["muted"]["passes_aa"] is False
     summary = report["_summary"]
     assert summary["worst_pair"] == "muted"

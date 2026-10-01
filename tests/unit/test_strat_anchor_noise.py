@@ -207,7 +207,8 @@ def test_signal_noise_scale_is_proportional_to_sigma():
     large = [abs(_grow(i_layer, prev, wl, noise=0.0, sig=SIG, seed=5, run=r) - ref) for r in range(16)]
     small = [v for v in small if v < CRASH_SENTINEL]
     large = [v for v in large if v < CRASH_SENTINEL]
-    assert small and large
+    assert small
+    assert large
     assert float(np.median(large)) > 3.0 * float(np.median(small)), (
         f"un sigma dix fois plus grand ne perturbe pas davantage : "
         f"median {np.median(small):.3g} -> {np.median(large):.3g} nm"
@@ -475,8 +476,11 @@ def test_monitoring_grid_is_the_scan_grid_not_the_display_grid():
     assert np.allclose(steps, 2.0), f"pas non uniforme : {sorted(set(np.round(steps, 6)))}"
     # Les quatre lambda du top 5 mesure — 551, 552, 553, 554 — ne peuvent plus
     #coexist: the 2 nm grid retains at most one out of two.
-    assert 551.0 not in grid and 553.0 not in grid, "des lambda hors grille subsistent"
-    assert 550.0 in grid and 552.0 in grid and 554.0 in grid
+    assert 551.0 not in grid, "des lambda hors grille subsistent"
+    assert 553.0 not in grid, "des lambda hors grille subsistent"
+    assert 550.0 in grid
+    assert 552.0 in grid
+    assert 554.0 in grid
     assert not any(abs(w - round(w / 2.0) * 2.0) > 1e-9 for w in grid)
 
 

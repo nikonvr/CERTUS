@@ -181,7 +181,8 @@ def test_a_dictionary_receives_its_provenance_and_its_owner_keeps_his_own() -> N
 
     written = avec_provenance(mine)
 
-    assert written["verdict"] == "ok" and written["n"] == 3
+    assert written["verdict"] == "ok"
+    assert written["n"] == 3
     assert written["provenance"]["python"] == ".".join(map(str, sys.version_info[:3]))
     assert "provenance" not in mine  # a copy
 

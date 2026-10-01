@@ -60,4 +60,5 @@ def test_the_guard_recognises_both_kinds_of_module() -> None:
     first_party = _first_party_names(["CERTUS_STRAT.py", "certus/ui/certus_measurement_excel_ui.py"])
     calls = _skipped_imports(ast.parse("pytest.importorskip('certus_measurement_excel_ui')\nimportorskip('PyQt6')"))
     assert [m.split(".")[0] in first_party for _, m in calls] == [True, False]
-    assert "CERTUS_STRAT" in first_party and "certus" in first_party
+    assert "CERTUS_STRAT" in first_party
+    assert "certus" in first_party

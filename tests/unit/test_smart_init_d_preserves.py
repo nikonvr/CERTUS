@@ -638,7 +638,8 @@ def test_interp_n_L_pwlnk_snaps_exact_sigma_no_float_drift() -> None:
 
     n2, L2 = interp_n_L_pwlnk_to_sigmas(sk, n, L, tgt)
 
-    assert n2[1] == 2.1 and L2[1] == -5.0
+    assert n2[1] == 2.1
+    assert L2[1] == -5.0
 
 
 

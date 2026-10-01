@@ -130,7 +130,8 @@ class TestStrategyPhaseTimeout:
         assert "strategy_phase_timeout" in cfg, "premise: the reference file carries the key"
         assert strat_window._loaded_config.get("strategy_phase_timeout") == cfg["strategy_phase_timeout"]
         told = _told_ignored(lines)
-        assert len(told) == 1 and "strategy_phase_timeout" in told[0], lines
+        assert len(told) == 1, lines
+        assert "strategy_phase_timeout" in told[0], lines
         assert "strategy_phase_timeout" not in strat_window.collect_params()
 
     def test_saving_no_longer_writes_it(self, strat_window, tmp_path, monkeypatch):
@@ -163,7 +164,8 @@ class TestMachineSamplingDd:
             _load(strat_window, tmp_path, machine_sampling_dd=0.125)
         assert strat_window._loaded_config.get("machine_sampling_dd") == 0.125
         told = _told_ignored(lines)
-        assert len(told) == 1 and "machine_sampling_dd" in told[0], lines
+        assert len(told) == 1, lines
+        assert "machine_sampling_dd" in told[0], lines
         assert "machine_sampling_dd" not in strat_window.collect_params()
 
     def test_saving_no_longer_writes_it(self, strat_window, tmp_path, monkeypatch):
@@ -197,7 +199,8 @@ class TestDpYieldWeight:
             _load(strat_window, tmp_path, dp_yield_weight=200.0)
         assert strat_window._loaded_config.get("dp_yield_weight") == 200.0
         told = _told_ignored(lines)
-        assert len(told) == 1 and "dp_yield_weight" in told[0], lines
+        assert len(told) == 1, lines
+        assert "dp_yield_weight" in told[0], lines
         assert "dp_yield_weight" not in strat_window.collect_params()
 
     def test_the_pipeline_no_longer_reads_it(self):

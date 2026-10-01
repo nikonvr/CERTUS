@@ -97,5 +97,6 @@ def test_a_launcher_and_two_file_utilities_do_not_owe_run_and_stop_keys() -> Non
     from scripts.audit_ux_certus import VITAL_KEYS, vital_keys_for
 
     for tag in ("CERTUS_HUB", "CERTUS_SMOOTHER", "CERTUS_SUBSTRATE_INDEX"):
-        assert "F5" not in vital_keys_for(tag) and "Esc" not in vital_keys_for(tag)
+        assert "F5" not in vital_keys_for(tag)
+        assert "Esc" not in vital_keys_for(tag)
     assert vital_keys_for("CERTUS_DESIGN") == VITAL_KEYS, "the windows that compute owe the whole set"

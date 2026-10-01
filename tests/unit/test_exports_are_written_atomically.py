@@ -82,7 +82,9 @@ def test_the_temporary_file_lives_next_to_the_target_so_that_the_move_stays_on_o
         during = sorted(p.name for p in tmp_path.iterdir())
         assert not target.exists()  # nothing at the target until the block has ended
 
-    assert len(during) == 1 and during[0].startswith(".export.txt.") and during[0].endswith(".tmp")
+    assert len(during) == 1
+    assert during[0].startswith(".export.txt.")
+    assert during[0].endswith(".tmp")
 
 
 def test_a_target_that_cannot_be_replaced_raises_and_leaves_no_temporary_file(tmp_path) -> None:

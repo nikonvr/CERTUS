@@ -56,9 +56,8 @@ class TestLaFlecheNEstPlusEffacee:
         zone = re.search(r"QComboBox::drop-down[^{}]*\{([^}]*)\}", qss)
         assert zone, "la zone de deroulement a disparu : la fleche native n'a plus de place"
         largeur = re.search(r"width\s*:\s*(\d+)px", zone.group(1))
-        assert largeur and int(largeur.group(1)) >= 16, (
-            f"zone de deroulement trop etroite : {zone.group(1)!r}"
-        )
+        assert largeur, f"zone de deroulement trop etroite : {zone.group(1)!r}"
+        assert int(largeur.group(1)) >= 16, f"zone de deroulement trop etroite : {zone.group(1)!r}"
 
 
 class TestLeControleLitBienLaFeuilleEtPasSesCommentaires:
@@ -81,6 +80,5 @@ class TestLeControleLitBienLaFeuilleEtPasSesCommentaires:
         feuille = "QComboBox::down-arrow { image: none; }\n"
         propre = COMMENTAIRE.sub("", feuille)
         fleche = re.search(r"QComboBox::down-arrow[^{}]*\{([^}]*)\}", propre)
-        assert fleche is not None and "image" in fleche.group(1), (
-            "le controle ne reconnait plus la regle qu'il existe pour interdire"
-        )
+        assert fleche is not None, "le controle ne reconnait plus la regle qu'il existe pour interdire"
+        assert "image" in fleche.group(1), "le controle ne reconnait plus la regle qu'il existe pour interdire"

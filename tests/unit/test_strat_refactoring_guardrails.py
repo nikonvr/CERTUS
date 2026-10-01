@@ -215,7 +215,8 @@ def test_robust_material_database_refactoring_guardrails():
 
         # Test standard Sellmeier fallback (e.g., N-BK7, Sapphire)
         idx_bk7 = db.get_refractive_index("N-BK7", 500.0)
-        assert idx_bk7.real > 1.40 and idx_bk7.real < 1.60
+        assert idx_bk7.real > 1.40
+        assert idx_bk7.real < 1.60
 
         # Unfound material must RISE, not fall back into the air.
         #

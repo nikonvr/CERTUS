@@ -311,7 +311,9 @@ def test_generate_html_report_dataframe(tmp_path):
     ]
     certus_data.generate_html_report(str(f), "Title", sections)
     html = f.read_text(encoding="utf-8")
-    assert "<table" in html and "DataFrame" in html and "col" in html
+    assert "<table" in html
+    assert "DataFrame" in html
+    assert "col" in html
 
 @pytest.mark.unit
 def test_generate_html_report_figures(tmp_path):

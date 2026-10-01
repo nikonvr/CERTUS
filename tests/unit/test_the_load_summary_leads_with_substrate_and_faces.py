@@ -54,7 +54,8 @@ def test_the_last_substrate_line_wins_and_only_a_flagged_line_is_marked() -> Non
         "T", ["Substrate: first", "Substrate: second", ("fine", False), ("odd", True), "plain"]
     )
 
-    assert "SUBSTRATE: second" in text and "first" not in text
+    assert "SUBSTRATE: second" in text
+    assert "first" not in text
     assert text.splitlines()[-3:] == ["fine", "!! odd", "plain"]
 
 
@@ -81,11 +82,13 @@ def test_the_dialog_shows_text_as_text_bolds_the_suspicious_lines_and_copies_the
     window = QWidget()  # every caller passes its window: without a parent the dialog would go with the call
     show_load_summary_dialog(window, "Title", plain)
     dialog = window.findChild(QDialog)
-    assert dialog.windowTitle() == "Title" and dialog.isVisible()
+    assert dialog.windowTitle() == "Title"
+    assert dialog.isVisible()
     box = dialog.findChild(QTextEdit)
 
     shown = box.toPlainText()
-    assert "<b>x</b> & y" in shown and "<i>note</i> & co" in shown  # what came from a file is displayed, not read
+    assert "<b>x</b> & y" in shown
+    assert "<i>note</i> & co" in shown
     bold = _bold_fragments(box)
     assert any("<b>x</b> & y" in text for text in bold)  # the flagged line is in bold...
     assert not any("note" in text for text in bold)  # ...and the ordinary one is not

@@ -159,7 +159,8 @@ def test_block_history_changes_the_compensation(wl):
     """
     sans = _gain(7, wl, block_start=-1)
     avec = _gain(7, wl, block_start=4)
-    assert not np.isnan(sans) and not np.isnan(avec)
+    assert not np.isnan(sans)
+    assert not np.isnan(avec)
     assert abs(avec - sans) > 1e-3, (
         f"l'historique du bloc n'a aucun effet a {wl:.0f} nm "
         f"(sans={sans:.4f}, avec={avec:.4f})"
@@ -170,7 +171,8 @@ def test_block_history_is_bounded_by_max_lookback():
     """The return is limited to 4 layers: beyond that, no more change."""
     a = _gain(7, 1300.0, block_start=3)
     b = _gain(7, 1300.0, block_start=0)
-    assert not np.isnan(a) and not np.isnan(b)
+    assert not np.isnan(a)
+    assert not np.isnan(b)
     assert abs(a - b) < 1e-9, (
         "un bloc demarrant 7 couches avant doit donner le meme resultat qu'un "
         "bloc demarrant 4 couches avant (MAX_LOOKBACK = 4)"

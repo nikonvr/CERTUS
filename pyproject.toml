@@ -73,7 +73,7 @@ extend-ignore = [
   
   "UP040", "UP042", "UP046",
   # Pytest legacy (tests already green — these are stylistic)
-  "PT011", "PT017", "PT018",
+  "PT011", "PT017",
   # Performance legacy
   "PERF401",
   # Ruff-specific legacy

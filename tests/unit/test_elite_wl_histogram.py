@@ -110,7 +110,8 @@ class TestFormatWlHistogram:
         hist = {float(450 + i): 1 for i in range(301)}
         out = _format_wl_histogram(hist)
         assert "OVER HARD CAP" not in out
-        assert "450:1" in out and "750:1" in out
+        assert "450:1" in out
+        assert "750:1" in out
 
 
 class TestLogEliteWl:

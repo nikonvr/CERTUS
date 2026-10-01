@@ -122,7 +122,8 @@ def test_a_valid_angle_still_computes_as_before() -> None:
 
     r, t = calc_spectrum_oblique_vectorized(WLS, LAYERS, THICKNESS, SUBSTRATE, 89.9, "p")
 
-    assert np.all(np.isfinite(r)) and np.all(np.isfinite(t))
+    assert np.all(np.isfinite(r))
+    assert np.all(np.isfinite(t))
 
 
 # =============================================================================

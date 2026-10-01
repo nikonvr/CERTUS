@@ -210,7 +210,8 @@ class TestBacksideConservation:
         assert R + T <= 1.0 + 1e-6, f"Energy not conserved: R+T = {R+T}"
 
 
-        assert R >= 0.0 and T >= 0.0, f"Negative values: R={R}, T={T}"
+        assert R >= 0.0, f"Negative values: R={R}, T={T}"
+        assert T >= 0.0, f"Negative values: R={R}, T={T}"
 
 
 
@@ -291,7 +292,8 @@ class TestBacksideConservation:
             assert R_total[i] + T_total[i] <= 1.0 + 1e-6, f"Energy not conserved at {wl}nm"
 
 
-            assert R_total[i] >= 0.0 and T_total[i] >= 0.0, f"Negative values at {wl}nm"
+            assert R_total[i] >= 0.0, f"Negative values at {wl}nm"
+            assert T_total[i] >= 0.0, f"Negative values at {wl}nm"
 
 
 

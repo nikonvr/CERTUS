@@ -95,7 +95,8 @@ def test_gui_module_syntax(module_name: str) -> None:
     import py_compile
 
     spec = importlib.util.find_spec(module_name)
-    assert spec is not None and spec.origin is not None, f"module {module_name} not found"
+    assert spec is not None, f"module {module_name} not found"
+    assert spec.origin is not None, f"module {module_name} not found"
     py_compile.compile(spec.origin, doraise=True)
 
 

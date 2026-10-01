@@ -52,7 +52,8 @@ def test_u7_theme_colors_return_three_strings():
 
     base, highlight, border = _theme_colors()
     for x in (base, highlight, border):
-        assert isinstance(x, str) and x
+        assert isinstance(x, str)
+        assert x
 
 
 def test_u7_constants_are_reasonable():

@@ -98,7 +98,8 @@ def test_the_dropped_file_is_the_command_line_of_the_module_that_reads_it(hub, s
     [(program, args)] = started
     assert program == sys.executable
     assert args[0] == str(ROOT / script)
-    assert len(args) == 2 and Path(args[1]) == dropped
+    assert len(args) == 2
+    assert Path(args[1]) == dropped
 
 
 def test_in_the_frozen_suite_the_file_follows_the_name_of_the_module(hub, started, tmp_path, monkeypatch) -> None:
@@ -110,7 +111,8 @@ def test_in_the_frozen_suite_the_file_follows_the_name_of_the_module(hub, starte
     [(program, args)] = started
     assert program == sys.executable
     assert args[:2] == ["--run-module", "CERTUS_STRAT"]
-    assert len(args) == 3 and Path(args[2]) == dropped
+    assert len(args) == 3
+    assert Path(args[2]) == dropped
 
 
 def test_only_the_first_of_several_dropped_files_is_opened(hub, started, tmp_path) -> None:
@@ -119,7 +121,8 @@ def test_only_the_first_of_several_dropped_files_is_opened(hub, started, tmp_pat
     hub.dropEvent(Drop(first, second))
 
     [(_program, args)] = started
-    assert len(args) == 2 and Path(args[1]) == first
+    assert len(args) == 2
+    assert Path(args[1]) == first
 
 
 def test_a_card_starts_its_module_with_nothing_to_open(hub, started) -> None:

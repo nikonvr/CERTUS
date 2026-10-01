@@ -110,10 +110,12 @@ class TestAucuneDataURLNeSubsisteDansLaFeuille:
         from certus.utils.certus_ux import build_premium_overrides
 
         qss = build_premium_overrides()
-        assert "url(\"data:" not in qss and "url('data:" not in qss and "url(data:" not in qss, (
-            "une data-URL est revenue dans la feuille. Qt ne les resout pas : la propriete "
-            "sera ignoree en silence et le glyphe ne s'affichera pas."
-        )
+        assert "url(\"data:" not in qss, ("une data-URL est revenue dans la feuille. Qt ne les resout pas : la propriete "
+            "sera ignoree en silence et le glyphe ne s'affichera pas.")
+        assert "url('data:" not in qss, ("une data-URL est revenue dans la feuille. Qt ne les resout pas : la propriete "
+            "sera ignoree en silence et le glyphe ne s'affichera pas.")
+        assert "url(data:" not in qss, ("une data-URL est revenue dans la feuille. Qt ne les resout pas : la propriete "
+            "sera ignoree en silence et le glyphe ne s'affichera pas.")
 
 
 class TestLeControleNegatif:

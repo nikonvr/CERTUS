@@ -42,7 +42,9 @@ def test_u6_variant_colors_returns_three_hex_strings():
     for variant in ("info", "success", "warning", "error", "unknown"):
         bg, fg, accent = _variant_colors(variant)
         for x in (bg, fg, accent):
-            assert isinstance(x, str) and x.startswith("#") and len(x) in (7, 9)
+            assert isinstance(x, str)
+            assert x.startswith("#")
+            assert len(x) in (7, 9)
 
 
 def test_u6_public_api_does_nothing_when_parent_is_none():

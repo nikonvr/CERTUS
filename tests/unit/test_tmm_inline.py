@@ -760,7 +760,8 @@ def test_compute_dynamics_kernel():
         assert t_min[iw] <= t_final[iw] + 1e-9, f"t_min <= t_final @{wl}nm"
 
 
-        assert dynamics[iw] >= 0 and t_min[iw] >= 0, f"dynamics/t_min non-neg @{wl}nm"
+        assert dynamics[iw] >= 0, f"dynamics/t_min non-neg @{wl}nm"
+        assert t_min[iw] >= 0, f"dynamics/t_min non-neg @{wl}nm"
 
 
 #  TEST 2: simulate_growth_kernel \u2014 real clues (float signature)

@@ -78,7 +78,8 @@ class TestDataFileFiltersAndHelper:
 
     def test_data_file_filter_constants_exist(self):
         assert isinstance(DATA_FILE_FILTER, str)
-        assert "csv" in DATA_FILE_FILTER.lower() and "xlsx" in DATA_FILE_FILTER.lower()
+        assert "csv" in DATA_FILE_FILTER.lower()
+        assert "xlsx" in DATA_FILE_FILTER.lower()
         assert isinstance(DATA_FILES_FILTER_EXTENDED, str)
         assert "csv" in DATA_FILES_FILTER_EXTENDED.lower()
 
@@ -463,7 +464,8 @@ class TestPlotExcelExportHelpers:
         ]
         df = build_wide_dataframe_for_export(series)
         assert df is not None
-        assert "S1_x" in df.columns and "S1_y" in df.columns
+        assert "S1_x" in df.columns
+        assert "S1_y" in df.columns
         assert "S1_2_x" in df.columns
 
     def test_plot_dataframe_from_widget(self, qapp):

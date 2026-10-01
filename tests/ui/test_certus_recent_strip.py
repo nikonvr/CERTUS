@@ -130,8 +130,10 @@ def test_u5plus_strip_emits_signal_and_invokes_callback(tmp_path):
     pills = strip.findChildren(QPushButton)
     assert pills
     pills[0].click()
-    assert received and "cfg.json" in received[0]
-    assert signal_received and "cfg.json" in signal_received[0]
+    assert received
+    assert "cfg.json" in received[0]
+    assert signal_received
+    assert "cfg.json" in signal_received[0]
 
 
 def test_u5plus_strip_refresh_reflects_latest_state(tmp_path):

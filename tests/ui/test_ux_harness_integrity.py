@@ -12,7 +12,8 @@ def test_harness_pins_a_resolved_font() -> None:
     src = Path("scripts/audit_ux_certus.py").read_text(encoding="utf-8")
     assert "QT_QPA_FONTDIR" in src
     assert "QFontDatabase.families()" in src
-    assert '"font_family"' in src and '"qpa_platform"' in src
+    assert '"font_family"' in src
+    assert '"qpa_platform"' in src
 
 
 def test_harness_covers_every_module_the_hub_can_launch() -> None:

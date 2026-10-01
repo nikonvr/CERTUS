@@ -216,7 +216,8 @@ def test_an_empty_replay_writes_nothing_and_leaves_the_matrices_alone() -> None:
 
     idx, *matrices = got["out"]
     assert idx == 0
-    assert not got["ts_r"].any() and not got["ts_n"].any()
+    assert not got["ts_r"].any()
+    assert not got["ts_n"].any()
     r = stack_matrix(_indices(0, 3, N_EVEN, N_ODD), got["th_real"][0:3], WL)
     np.testing.assert_allclose(matrices[:4], [r[0, 0], r[0, 1], r[1, 0], r[1, 1]], atol=1e-12)
 
@@ -312,7 +313,8 @@ def test_the_scan_writes_from_idx_and_only_there() -> None:
     got = _current(2, 12, 90.0, idx=5)
 
     for signal in (got["ts_r"], got["ts_n"]):
-        assert (signal[:5] == SENTINEL).all() and (signal[17:] == SENTINEL).all()
+        assert (signal[:5] == SENTINEL).all()
+        assert (signal[17:] == SENTINEL).all()
         assert (signal[5:17] != SENTINEL).all()
 
 
@@ -380,7 +382,8 @@ def test_the_fine_grid_has_a_reading_every_dd_over_the_history_and_three_thickne
     (ts_r, ts_n, n_tot, stop), _, _ = _fine(nominal, i_layer, j0, dd=dd)
 
     m_hist, m_tot = _sizes(nominal, i_layer, j0, dd)
-    assert n_tot == m_tot and len(ts_r) == len(ts_n) == m_tot
+    assert n_tot == m_tot
+    assert len(ts_r) == len(ts_n) == m_tot
     assert stop == m_hist + int(round(nominal[i_layer] / dd))  # the nominal stop, on the fine grid
 
 
@@ -480,7 +483,8 @@ def test_a_layer_alone_replays_nothing_and_is_swept_over_three_thicknesses_in_64
 def test_a_block_replays_its_layers_before_the_current_one_at_sixteen_points_each() -> None:
     got = _window(2, 5)
 
-    assert got["j0"] == 2 and got["n_hist"] == 3 * SCAN_NPTS_HISTORY
+    assert got["j0"] == 2
+    assert got["n_hist"] == 3 * SCAN_NPTS_HISTORY
     assert got["n_tot"] == 3 * SCAN_NPTS_HISTORY + SCAN_NPTS_CURRENT
 
 
@@ -522,7 +526,8 @@ def test_the_adaptive_window_of_an_index_of_zero_falls_back_on_one_more_thicknes
 def test_a_layer_of_no_thickness_is_swept_with_the_fixed_window_even_when_adaptive() -> None:
     got = _window(-1, 2, nominal_th=0.00005, adaptive=True)
 
-    assert got["npts_cur"] == SCAN_NPTS_CURRENT and got["d_max"] == pytest.approx(D_SCAN_VAL * 0.00005)
+    assert got["npts_cur"] == SCAN_NPTS_CURRENT
+    assert got["d_max"] == pytest.approx(D_SCAN_VAL * 0.00005)
 
 
 # =============================================================================
@@ -565,7 +570,8 @@ def test_a_layer_that_stays_under_a_quarter_wave_is_monotonic_and_one_that_cross
     short, _ = _monotonicity_scan(WL, n_layer + 0j, 0.6 * quarter_wave, N_SUB + 0j, *real, *nominal)
     crossing, t_mono = _monotonicity_scan(WL, n_layer + 0j, 1.6 * quarter_wave, N_SUB + 0j, *real, *nominal)
 
-    assert not short and crossing
+    assert not short
+    assert crossing
     assert t_mono.min() < t_mono[0]  # it went down and came back up: an extremum was crossed
 
 
@@ -780,7 +786,8 @@ def test_the_band_starts_at_the_first_reading_of_the_layer_not_at_the_start_of_t
 
     margin, reached = _reach(signal, 0.5, n_hist=2, stop=4)
 
-    assert reached and margin == pytest.approx(0.2)
+    assert reached
+    assert margin == pytest.approx(0.2)
     # Near the top of the band the history would show: it would lift the top edge to 9.0 and hide both the margin and a miss.
     assert _reach(signal, 0.65, n_hist=2, stop=4) == (pytest.approx(0.05), True)
     assert _reach(signal, 0.80, n_hist=2, stop=4)[1] is False

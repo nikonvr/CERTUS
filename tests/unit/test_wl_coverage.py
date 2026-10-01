@@ -283,7 +283,8 @@ class TestLesCompteursRemontent:
         carte = {0: {500.0: 1.0, 610.0: 2.0, 620.0: 3.0, 630.0: 4.0}}
         stats: dict = {}
         _couverture_wl_groupings(carte, [_sol(500)], lambda c, k: [_sol(610)], 1, LOGGER, stats)
-        assert stats["ajoutees"] == 1 and stats["non_traitees"] == 2, stats
+        assert stats["ajoutees"] == 1, stats
+        assert stats["non_traitees"] == 2, stats
 
     def test_RIEN_A_COUVRIR_se_distingue_de_PAS_TOURNE(self):
         """Le coeur du correctif. Ces deux etats se lisaient pareil, et ca a coute un run."""

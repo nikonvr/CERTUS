@@ -137,7 +137,8 @@ def test_get_n_substrate_array_by_id_handles_unknown_and_min_lambda() -> None:
     wls = np.array([min_lambda - 10.0, min_lambda + 10.0], dtype=np.float64)
     n_arr = get_n_substrate_array_by_id(int(substrate_id), wls)
     assert np.isnan(n_arr[0])
-    assert np.isfinite(n_arr[1]) and n_arr[1] > 1.0
+    assert np.isfinite(n_arr[1])
+    assert n_arr[1] > 1.0
 
 
 @pytest.mark.unit

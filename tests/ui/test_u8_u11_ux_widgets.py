@@ -124,7 +124,9 @@ def test_u9_variant_color_returns_three_hex_strings():
     for v in list(supported_variants()) + ["unknown"]:
         bg, fg, border = variant_color(v)
         for x in (bg, fg, border):
-            assert isinstance(x, str) and x.startswith("#") and 4 <= len(x) <= 9
+            assert isinstance(x, str)
+            assert x.startswith("#")
+            assert 4 <= len(x) <= 9
 
 
 def test_u9_widget_set_variant_changes_state():
@@ -261,7 +263,8 @@ def test_u11_step_color_returns_hex_string():
 
     for st in StepState:
         c = step_color(st)
-        assert isinstance(c, str) and c.startswith("#")
+        assert isinstance(c, str)
+        assert c.startswith("#")
 
 
 def test_u11_format_eta_variants():
@@ -413,7 +416,8 @@ def test_u11_design_worker_optimization_callback_emits_snapshot(monkeypatch):
     w.signals.progress_snapshot.emit = lambda snap: emitted.append(snap)
     out = OptimWorker._optimization_callback(w, SimpleNamespace(y=1.23))
     assert out == "ok"
-    assert emitted and emitted[0].module == "DESIGN"
+    assert emitted
+    assert emitted[0].module == "DESIGN"
     assert emitted[0].phase == "PGLOBAL"
 
 
@@ -449,7 +453,8 @@ def test_u11_index_phase1_callback_emits_snapshot(monkeypatch):
     )
     cb = Phase1Callback(worker, max_evals=100)
     cb(SimpleNamespace(y=1.0, x=[1.0]))
-    assert emitted and emitted[0].module == "INDEX"
+    assert emitted
+    assert emitted[0].module == "INDEX"
     assert emitted[0].phase == "PHASE1"
 
 
@@ -467,7 +472,8 @@ def test_u11_index_phase2_callback_emits_snapshot(monkeypatch):
     )
     cb = Phase2PolishCallback(worker)
     cb(SimpleNamespace())
-    assert emitted and emitted[0].module == "INDEX"
+    assert emitted
+    assert emitted[0].module == "INDEX"
     assert emitted[0].phase == "PHASE2"
 
 
@@ -486,7 +492,8 @@ def test_u11_index_irpglobal_callback_emits_snapshot(monkeypatch):
     )
     cb = IRPGlobalCallback(worker, opt_instance=SimpleNamespace(n_evals=12), obj=SimpleNamespace(wl_um=[500.0]), c=SimpleNamespace(use_normalized=False, is_frosted_glass=False), l_full=[500.0], thickness=1.0, n_sub_full=[1.5], emit_plot=False)
     cb(SimpleNamespace(y=1.0, x=[1, 2, 3, 4, 5, 6]))
-    assert emitted and emitted[0].module == "INDEX"
+    assert emitted
+    assert emitted[0].module == "INDEX"
     assert emitted[0].phase == "IRPGLOBAL"
 
 
@@ -530,7 +537,8 @@ def test_u11_re_worker_emits_progress_snapshot():
     worker._execute_re_phases = lambda: None
     worker._finalize_from_context = lambda *_: None
     worker._run_re_workflow()
-    assert emitted and emitted[0].module == "RE"
+    assert emitted
+    assert emitted[0].module == "RE"
 
 
 def test_u11_strat_worker_emits_progress_snapshot():
@@ -541,7 +549,8 @@ def test_u11_strat_worker_emits_progress_snapshot():
     sig = WorkerSignals()
     sig.progress_snapshot.connect(lambda snap: emitted.append(snap))
     sig.progress_snapshot.emit(build_progress_snapshot(message="Optimizing", sub_message="Completed 1/2", progress_ratio=0.55, display_ratio=0.55, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="STRAT", phase="BLOCK_OPT", metadata={"completed": 1, "total": 2, "block": 7}))
-    assert emitted and emitted[0].module == "STRAT"
+    assert emitted
+    assert emitted[0].module == "STRAT"
     assert emitted[0].phase == "BLOCK_OPT"
 
 
@@ -558,7 +567,8 @@ def test_u11_index_irstage2_callback_emits_snapshot(monkeypatch):
     )
     cb = IRStage2Callback(worker, obj=SimpleNamespace(wl_um=__import__('numpy').array([500.0], dtype=float)), c=SimpleNamespace(use_normalized=False, is_frosted_glass=False, data_type=SimpleNamespace()), l_full=__import__('numpy').array([500.0], dtype=float), thickness=1.0, n_sub_full=__import__('numpy').array([1.5], dtype=float))
     cb(__import__('numpy').array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], dtype=float))
-    assert emitted and emitted[0].module == "INDEX"
+    assert emitted
+    assert emitted[0].module == "INDEX"
     assert emitted[0].phase == "IRSTAGE2"
 
 
@@ -574,7 +584,8 @@ def test_u11_index_irspline_callback_emits_snapshot(monkeypatch):
     cb = IRSplineCallback(worker, obj=SimpleNamespace(wl_um=__import__('numpy').array([500.0], dtype=float)), c=SimpleNamespace(use_normalized=False, is_frosted_glass=False), l_full=__import__('numpy').array([500.0], dtype=float), thickness=1.0, n_sub_full=__import__('numpy').array([1.5], dtype=float), title="IR spline", phase23_obj=None, knot_lam=__import__('numpy').array([500.0], dtype=float), n_k=1, lk_lo=-10.0, lk_hi=10.0)
     monkeypatch.setattr(cb, "get_plot_data", lambda xk: {"mse": None})
     cb(__import__('numpy').array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], dtype=float))
-    assert emitted and emitted[0].module == "INDEX"
+    assert emitted
+    assert emitted[0].module == "INDEX"
     assert emitted[0].phase == "IRSPLINE"
 
 

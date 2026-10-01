@@ -492,7 +492,8 @@ def test_the_audit_counts_the_visible_controls_and_not_the_inner_editor_of_a_spi
     root.show()
     hidden.hide()
     found = interactive_controls(root)
-    assert spin in found and button in found
+    assert spin in found
+    assert button in found
     assert hidden not in found
     assert spin.lineEdit() not in found
     root.close()

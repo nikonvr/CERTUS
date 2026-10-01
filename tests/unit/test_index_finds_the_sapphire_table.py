@@ -16,4 +16,5 @@ def test_the_sapphire_table_is_read() -> None:
     import certus.core.certus_index_core as core
 
     assert Path(core._SAPPHIRE_DATA_FILE).is_file(), core._SAPPHIRE_DATA_FILE
-    assert core._SAPPHIRE_WLS is not None and len(core._SAPPHIRE_WLS) > 0
+    assert core._SAPPHIRE_WLS is not None
+    assert len(core._SAPPHIRE_WLS) > 0

@@ -199,7 +199,8 @@ def test_the_cache_files_of_the_base_keep_the_whole_key(tmp_path) -> None:
 
     npz, meta = c1._fichier_du_cache(entry, ".npz"), c1._fichier_du_cache(entry, ".json")
 
-    assert npz.name == key + ".npz" and meta.name == key + ".json"
+    assert npz.name == key + ".npz"
+    assert meta.name == key + ".json"
     assert key.split("_")[-1] in npz.name  # the hash of the script is in the name
 
 

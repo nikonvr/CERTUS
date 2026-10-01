@@ -34,11 +34,14 @@ def test_a_block_costs_the_sum_of_its_layers_at_a_common_wavelength_cheapest_fir
     costs, wls, counts = _blocks()
 
     assert counts[0, 1] == 3
-    assert costs[0, 1, :3].tolist() == [1.0, 2.0, 3.0] and wls[0, 1, :3].tolist() == [500.0, 600.0, 700.0]
+    assert costs[0, 1, :3].tolist() == [1.0, 2.0, 3.0]
+    assert wls[0, 1, :3].tolist() == [500.0, 600.0, 700.0]
     # layers 0 and 1: 500 -> 1 + 1.5, 600 -> 2 + 0.5, 700 -> 3 + 4 ; the tie keeps the grid order
-    assert costs[0, 2, :3].tolist() == [2.5, 2.5, 7.0] and wls[0, 2, :3].tolist() == [500.0, 600.0, 700.0]
+    assert costs[0, 2, :3].tolist() == [2.5, 2.5, 7.0]
+    assert wls[0, 2, :3].tolist() == [500.0, 600.0, 700.0]
     # layers 1 and 2: 500 -> 1.5 + 2, 600 -> 0.5 + 2, 700 -> 4 + 0.1
-    assert costs[1, 3, :3].tolist() == [2.5, 3.5, 4.1] and wls[1, 3, :3].tolist() == [600.0, 500.0, 700.0]
+    assert costs[1, 3, :3].tolist() == [2.5, 3.5, 4.1]
+    assert wls[1, 3, :3].tolist() == [600.0, 500.0, 700.0]
     assert costs[0, 3, :3] == pytest.approx([4.5, 4.5, 7.1])  # all three layers
 
 
@@ -49,8 +52,10 @@ def test_a_wavelength_invalid_in_one_layer_is_out_of_every_block_that_contains_t
     costs, wls, counts = _blocks(valid=valid)
 
     assert counts[0, 1] == 3  # layer 0 alone is untouched
-    assert counts[0, 2] == 2 and wls[0, 2, :2].tolist() == [600.0, 700.0]  # 500 is gone from [0, 2)
-    assert counts[1, 2] == 2 and counts[2, 3] == 3
+    assert counts[0, 2] == 2
+    assert wls[0, 2, :2].tolist() == [600.0, 700.0]
+    assert counts[1, 2] == 2
+    assert counts[2, 3] == 3
     assert costs[0, 2, :2].tolist() == [2.5, 7.0]
 
 
@@ -62,7 +67,8 @@ def test_a_wavelength_masked_in_another_layer_of_the_block_is_not_borrowed_from_
     costs, wls, counts = _blocks(valid=valid)
 
     assert counts[0, 2] == 1  # 500 is valid in layer 0 and masked in layer 1; 700 the other way round
-    assert wls[0, 2, 0] == 600.0 and costs[0, 2, 0] == pytest.approx(2.0 + 0.5)
+    assert wls[0, 2, 0] == 600.0
+    assert costs[0, 2, 0] == pytest.approx(2.0 + 0.5)
 
 
 def test_a_layer_with_no_valid_wavelength_empties_every_block_around_it() -> None:
@@ -71,7 +77,8 @@ def test_a_layer_with_no_valid_wavelength_empties_every_block_around_it() -> Non
 
     _, _, counts = _blocks(valid=valid)
 
-    assert counts[0, 1] == 3 and counts[2, 3] == 3
+    assert counts[0, 1] == 3
+    assert counts[2, 3] == 3
     assert counts[1, 2] == counts[0, 2] == counts[1, 3] == counts[0, 3] == 0
 
 
@@ -79,7 +86,8 @@ def test_only_the_top_k_cheapest_wavelengths_are_kept() -> None:
     costs, wls, counts = _blocks(top_k=2)
 
     assert counts[0, 1] == 2
-    assert costs[0, 1, :2].tolist() == [1.0, 2.0] and wls[0, 1, :2].tolist() == [500.0, 600.0]
+    assert costs[0, 1, :2].tolist() == [1.0, 2.0]
+    assert wls[0, 1, :2].tolist() == [500.0, 600.0]
 
 
 def _clustered(costs=(1.0, 1.1, 1.2, 3.0), wls=(500.0, 501.0, 502.0, 700.0)):
@@ -103,7 +111,8 @@ def test_when_the_spectrum_offers_too_few_regions_the_remaining_cheapest_complet
     costs, wls, counts = _blocks(top_k=3, min_wl_sep=50.0, wls=layer_wls, costs=layer_costs)
 
     assert counts[0, 1] == 3  # one region only, and the block is not left short
-    assert wls[0, 1, :3].tolist() == [500.0, 501.0, 502.0] and costs[0, 1, :3].tolist() == [1.0, 1.1, 1.2]
+    assert wls[0, 1, :3].tolist() == [500.0, 501.0, 502.0]
+    assert costs[0, 1, :3].tolist() == [1.0, 1.1, 1.2]
 
 
 def test_the_programme_cuts_the_layers_where_the_total_is_cheapest_and_keeps_the_runners_up() -> None:
@@ -115,10 +124,12 @@ def test_the_programme_cuts_the_layers_where_the_total_is_cheapest_and_keeps_the
     # tie kept in grid order), cut after layer 1 costs 1.0 + 2.5 = 3.5
     assert counts[2, 3] == 6  # 2 * top_k candidates, sorted by cost
     assert dp_costs[2, 3, :3] == pytest.approx([2.6, 2.6, 3.5])
-    assert starts[2, 3, 0].tolist() == [0, 2] and ends[2, 3, 0].tolist() == [2, 3]
+    assert starts[2, 3, 0].tolist() == [0, 2]
+    assert ends[2, 3, 0].tolist() == [2, 3]
     assert wls[2, 3, 0].tolist() == [500.0, 700.0]  # the last layer is monitored where it is cheap: 0.1 at 700 nm
     assert wls[2, 3, 1].tolist() == [600.0, 700.0]
-    assert starts[2, 3, 2].tolist() == [0, 1] and ends[2, 3, 2].tolist() == [1, 3]  # the other cut comes third
+    assert starts[2, 3, 2].tolist() == [0, 1]
+    assert ends[2, 3, 2].tolist() == [1, 3]
     assert list(dp_costs[2, 3, :6]) == sorted(dp_costs[2, 3, :6])
 
 
@@ -128,7 +139,8 @@ def test_one_block_over_all_the_layers_is_the_cheapest_common_wavelength() -> No
     dp_costs, starts, ends, wls, counts = _dp_kernel(block_costs, block_wls, block_counts, 1, 3, 3)
 
     assert dp_costs[1, 3, 0] == pytest.approx(4.5)
-    assert (starts[1, 3, 0, 0], ends[1, 3, 0, 0]) == (0, 3) and wls[1, 3, 0, 0] == 500.0
+    assert (starts[1, 3, 0, 0], ends[1, 3, 0, 0]) == (0, 3)
+    assert wls[1, 3, 0, 0] == 500.0
     assert counts[1, 3] == 3  # the three wavelengths can all serve the whole stack
 
 

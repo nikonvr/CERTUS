@@ -88,7 +88,8 @@ def test_prepare_nk_plot_inputs_masks_tlu_region():
     assert method_str == "Direct"
     assert lambda_max_fit == 550.0
     assert tlu_mode is True
-    assert np.isnan(n_values[1]) and np.isnan(k_values[1])
+    assert np.isnan(n_values[1])
+    assert np.isnan(k_values[1])
 
 
 def test_update_lambda_bounds_from_target_data_sets_spinboxes():
@@ -112,7 +113,8 @@ def test_update_lambda_bounds_from_target_data_sets_spinboxes():
     logger = DummyLogger()
 
     lmin, lmax = _update_lambda_bounds_from_target_data(df, sb_lmin, sb_lmax, logger)
-    assert lmin == 500.0 and lmax == 580.0
+    assert lmin == 500.0
+    assert lmax == 580.0
     assert sb_lmin.values == [500.0]
     assert sb_lmax.values == [580.0]
     assert logger.messages

@@ -74,9 +74,8 @@ def test_dropping_a_running_worker_kills_the_process() -> None:
 @pytest.mark.unit
 def test_retaining_it_keeps_the_process_alive() -> None:
     run = _run(retain=_RETAIN)
-    assert run.returncode == 0 and "SURVIVED" in run.stdout, (
-        f"rc={run.returncode} out={run.stdout!r} err={run.stderr[-800:]!r}"
-    )
+    assert run.returncode == 0, f"rc={run.returncode} out={run.stdout!r} err={run.stderr[-800:]!r}"
+    assert "SURVIVED" in run.stdout, f"rc={run.returncode} out={run.stdout!r} err={run.stderr[-800:]!r}"
 
 
 @pytest.mark.unit

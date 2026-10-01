@@ -16,7 +16,8 @@ MODULE_PATH = ROOT / "CERTUS_METAL_SINGLE.py"
 @pytest.mark.unit
 def test_certus_metal_single_module_imports_and_exports() -> None:
     spec = importlib.util.spec_from_file_location("certus_metal_siNGLE", MODULE_PATH)
-    assert spec is not None and spec.loader is not None
+    assert spec is not None
+    assert spec.loader is not None
 
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
@@ -29,7 +30,8 @@ def test_certus_metal_single_module_imports_and_exports() -> None:
 @pytest.mark.unit
 def test_certus_metal_single_substrate_resolution_and_fallback() -> None:
     spec = importlib.util.spec_from_file_location("certus_metal_siNGLE", MODULE_PATH)
-    assert spec is not None and spec.loader is not None
+    assert spec is not None
+    assert spec.loader is not None
 
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)

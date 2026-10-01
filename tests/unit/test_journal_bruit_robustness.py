@@ -69,7 +69,8 @@ class TestOnParleEncoreQuandCaCompte:
         assert len(erreurs) == 1, "le regime degenere d'une VRAIE population doit crier"
         assert "601" in erreurs[0]
         regime = [m for m in _lignes(caplog, logging.WARNING) if "REGIME" in m]
-        assert len(regime) == 1 and "601" in regime[0]
+        assert len(regime) == 1
+        assert "601" in regime[0]
         assert len(out) == 601, "et il rend toujours le classement de repli"
 
     def test_le_seuil_est_a_DEUX_pas_a_dix(self, caplog):

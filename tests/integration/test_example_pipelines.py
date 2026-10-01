@@ -216,7 +216,8 @@ def test_index_golden_reference_exists() -> None:
 
     # FIREWALL: golden values ​​for the example CSV-index-example
     # d ≈ 716 nm,  MSE ≈ 7.4e-3
-    assert "d" in data and "mse" in data
+    assert "d" in data
+    assert "mse" in data
     d = float(data["d"])
     mse = float(data["mse"])
     assert 600 < d < 900, f"Golden d hors limites : {d} nm"

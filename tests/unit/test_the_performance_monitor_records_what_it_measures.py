@@ -106,7 +106,8 @@ def test_the_decorator_records_under_the_function_name_or_a_given_one_and_keeps_
     def twice(x):
         return 2 * x
 
-    assert add(1, 2) == 3 and twice(4) == 8
+    assert add(1, 2) == 3
+    assert twice(4) == 8
     recorded = {op["operation"] for op in monitor.report()["operations"]}
     assert recorded == {f"{add.__module__}.add", "custom"}
     assert add.__name__ == "add"  # functools.wraps

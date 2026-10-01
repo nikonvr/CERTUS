@@ -22,7 +22,8 @@ def test_u1_tokens_exported():
     # 8-pt spacing scale is monotonic and matches the declared ratios
     values = [Spacing.XS, Spacing.SM, Spacing.MD, Spacing.LG, Spacing.XL, Spacing.XXL, Spacing.XXXL]
     assert values == sorted(values)
-    assert Spacing.XS == 4 and Spacing.SM == 8
+    assert Spacing.XS == 4
+    assert Spacing.SM == 8
 
     # Radius scale consistent
     assert Radius.SM < Radius.MD < Radius.LG < Radius.XL < Radius.PILL
@@ -38,10 +39,13 @@ def test_u1_tokens_exported():
 
     # Elevation tokens are 3-tuples of ints
     for tok in (Elevation.SM, Elevation.MD, Elevation.LG, Elevation.XL):
-        assert len(tok) == 3 and all(isinstance(x, int) for x in tok)
+        assert len(tok) == 3
+        assert all(isinstance(x, int) for x in tok)
 
     # Object-name contract is non-empty
-    assert OBJ.CARD and OBJ.PRIMARY_BUTTON and OBJ.SEARCH_INPUT
+    assert OBJ.CARD
+    assert OBJ.PRIMARY_BUTTON
+    assert OBJ.SEARCH_INPUT
 
     # ZIndex monotonic
     assert ZIndex.BASE < ZIndex.DROPDOWN < ZIndex.MODAL < ZIndex.TOOLTIP
@@ -111,7 +115,9 @@ def test_u2_certus_icon_renders_non_empty():
         return
     assert not ic.isNull()
     sizes = ic.availableSizes()
-    assert sizes and sizes[0].width() == 20 and sizes[0].height() == 20
+    assert sizes
+    assert sizes[0].width() == 20
+    assert sizes[0].height() == 20
 
 
 def test_u2_unknown_icon_never_raises():
@@ -227,7 +233,8 @@ def test_u3_command_action_search_haystack_includes_keywords():
     )
     hay = a.search_haystack()
     assert "export spectra" in hay
-    assert "xlsx" in hay and "report" in hay
+    assert "xlsx" in hay
+    assert "report" in hay
     # Searching on a keyword must score > 0
     assert fuzzy_score("xlsx", hay) > 0.0
 

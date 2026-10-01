@@ -166,7 +166,8 @@ def test_shake_sigmas_adaptive():
 
     ep, sp = shake_sigmas_adaptive(0.5, base_ep_sigma_pct=1.5, base_spl_sigma=0.01, ref_norm=1.0)
 
-    assert ep > 0 and sp > 0
+    assert ep > 0
+    assert sp > 0
 
 
 
@@ -322,7 +323,9 @@ def test_re_finalize_finished_main_and_milestone_log_lines():
 
     ms = re_finalize_rmse_milestone_log_line([0.5], [0.4], [0.35])
 
-    assert "initial0.500000" in ms and "after thickness0.400000" in ms and "final=0.350000" in ms
+    assert "initial0.500000" in ms
+    assert "after thickness0.400000" in ms
+    assert "final=0.350000" in ms
 
 
 
@@ -344,7 +347,8 @@ def test_re_finalize_progress_message_done():
 
     )
 
-    assert "RE stopped" in s_stop and "RMSE_sp=0.10000" in s_stop
+    assert "RE stopped" in s_stop
+    assert "RMSE_sp=0.10000" in s_stop
 
     s_fin = re_finalize_progress_message_done(
 
@@ -360,7 +364,8 @@ def test_re_finalize_progress_message_done():
 
     )
 
-    assert "RE finished in 12.3s" in s_fin and "RMSE_sp=0.10000" in s_fin
+    assert "RE finished in 12.3s" in s_fin
+    assert "RMSE_sp=0.10000" in s_fin
 
 
 
@@ -384,7 +389,8 @@ def test_re_result_dict_stop_before_first_trf():
 
     assert d["label"] == "initial (stop before first TRF iter)"
 
-    assert d["nfev"] == 0 and d["success"] is False
+    assert d["nfev"] == 0
+    assert d["success"] is False
 
     np.testing.assert_array_equal(d["ep"], ep)
 
@@ -658,7 +664,8 @@ def test_re_objective_wls_grid_uses_target_centers_when_on():
 
     wls, wmin, wmax = re_objective_wls_grid(cfg, tg)
 
-    assert wmin == 400.0 and wmax == 800.0
+    assert wmin == 400.0
+    assert wmax == 800.0
 
     assert wls.size == 1
 
@@ -822,7 +829,8 @@ def test_re_phase1_trf_runs_multistart_lhs_stays_in_bounds():
 
         np.testing.assert_array_equal(wti, wt)
 
-        assert np.all(xv >= lb - 1e-9) and np.all(xv <= ub + 1e-9)
+        assert np.all(xv >= lb - 1e-9)
+        assert np.all(xv <= ub + 1e-9)
 
 
 
@@ -858,9 +866,11 @@ def test_re_trf_thickness_bounds_pm_10pct():
 
     lb, ub = re_trf_thickness_bounds(ep, 10.0)
 
-    assert lb[0] == pytest.approx(90.0) and ub[0] == pytest.approx(110.0)
+    assert lb[0] == pytest.approx(90.0)
+    assert ub[0] == pytest.approx(110.0)
 
-    assert lb[1] == pytest.approx(45.0) and ub[1] == pytest.approx(55.0)
+    assert lb[1] == pytest.approx(45.0)
+    assert ub[1] == pytest.approx(55.0)
 
 
 

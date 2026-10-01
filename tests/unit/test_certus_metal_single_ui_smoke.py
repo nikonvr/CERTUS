@@ -29,7 +29,8 @@ def test_certus_metal_single_app_constructs_headless(monkeypatch, qapp) -> None:
     pytest.importorskip("PyQt6")
 
     spec = importlib.util.spec_from_file_location("certus_metal_siNGLE", MODULE_PATH)
-    assert spec is not None and spec.loader is not None
+    assert spec is not None
+    assert spec.loader is not None
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
 

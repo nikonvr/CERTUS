@@ -582,7 +582,8 @@ class TestStratSafetyFallback:
         for c in final_list:
 
 
-            assert "wl" in c and "dynamics" in c
+            assert "wl" in c
+            assert "dynamics" in c
 
 
 
@@ -1377,7 +1378,8 @@ class TestStratSymmetryContractAndStability:
         assert not ok
 
 
-        assert isinstance(reason, str) and len(reason) > 0
+        assert isinstance(reason, str)
+        assert len(reason) > 0
 
 
 

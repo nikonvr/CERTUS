@@ -100,7 +100,8 @@ def test_a_file_that_sets_it_still_loads_and_says_it_is_ignored(window, tmp_path
 
     assert window._loaded_config.get(key) == 7
     told = [line for line in lines if "no longer a setting" in line]
-    assert len(told) == 1 and key in told[0], lines
+    assert len(told) == 1, lines
+    assert key in told[0], lines
     assert key not in window.collect_params()
 
 

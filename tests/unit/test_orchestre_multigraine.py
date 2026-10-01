@@ -579,7 +579,8 @@ def test_une_defaillance_EN_AMONT_de_toute_coupure_est_refusee() -> None:
     peut, pourquoi = OM.multitemoin_peut_agir(75, 7, 4)
     assert peut is False
     assert "INUTILE PAR CONSTRUCTION" in pourquoi
-    assert "couche 7" in pourquoi and "couche 19" in pourquoi
+    assert "couche 7" in pourquoi
+    assert "couche 19" in pourquoi
 
 
 def test_le_cas_LIMITE_de_r75x0_5_est_refuse_lui_aussi() -> None:

@@ -10,7 +10,8 @@ import pytest
 
 _ROOT = Path(__file__).resolve().parents[2]
 _SPEC = util.spec_from_file_location("certus_metal_bilayer", _ROOT / "CERTUS_METAL_BILAYER.py")
-assert _SPEC and _SPEC.loader is not None
+assert _SPEC
+assert _SPEC.loader is not None
 _mod = util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(_mod)
 _validate_bilayer_spline_state = _mod._validate_bilayer_spline_state

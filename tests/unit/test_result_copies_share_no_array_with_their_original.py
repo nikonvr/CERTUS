@@ -59,7 +59,9 @@ def test_the_copy_holds_the_same_values_as_the_original_and_as_a_deepcopy(copier
     copied = copier(original)
 
     assert copied.keys() == reference.keys()
-    assert copied["rmse"] == 0.01 and copied["name"] == "run" and copied["missing"] is None
+    assert copied["rmse"] == 0.01
+    assert copied["name"] == "run"
+    assert copied["missing"] is None
     np.testing.assert_array_equal(copied["ep"], reference["ep"])
     np.testing.assert_array_equal(copied["nested"]["curve"], reference["nested"]["curve"])
     assert [a.tolist() for a in copied["arrays"]] == [a.tolist() for a in reference["arrays"]]
@@ -93,7 +95,8 @@ def test_copying_a_list_of_results_copies_each_result() -> None:
     copies = copy_list_of_results(originals)
     copies[0]["ep"][0] = -1.0
 
-    assert originals[0]["ep"][0] == 10.0 and copies[1]["ep"][0] == 10.0
+    assert originals[0]["ep"][0] == 10.0
+    assert copies[1]["ep"][0] == 10.0
     assert len(copies) == 2
 
 

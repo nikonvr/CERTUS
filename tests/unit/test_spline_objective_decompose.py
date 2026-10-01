@@ -38,7 +38,9 @@ def test_decompose_matches_spline_pwl_objective_call() -> None:
     obj = SplinePWLObjective(cfg, sk)
     total_obj = float(obj(x))
     msp, pen, tot = decompose_spline_pwl_objective(cfg, sk, x)
-    assert np.isfinite(msp) and np.isfinite(pen) and np.isfinite(tot)
+    assert np.isfinite(msp)
+    assert np.isfinite(pen)
+    assert np.isfinite(tot)
     assert abs(tot - (msp + pen)) < 1e-12
     assert abs(total_obj - tot) < 1e-9 * max(abs(total_obj), 1.0)
 

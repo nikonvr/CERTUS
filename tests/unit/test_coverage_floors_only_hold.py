@@ -46,8 +46,11 @@ def _report(**packages: tuple[int, int]) -> dict:
 def test_a_package_under_its_floor_fails_and_names_itself() -> None:
     below, to_raise, missing = floors_script.check(_report(core=(40, 100)), {"certus/core/": 50.0})
 
-    assert len(below) == 1 and "certus/core/" in below[0] and "40.0" in below[0]
-    assert to_raise == [] and missing == []
+    assert len(below) == 1
+    assert "certus/core/" in below[0]
+    assert "40.0" in below[0]
+    assert to_raise == []
+    assert missing == []
 
 
 def test_a_package_at_its_floor_passes_and_one_far_above_says_to_raise_it() -> None:
@@ -55,7 +58,8 @@ def test_a_package_at_its_floor_passes_and_one_far_above_says_to_raise_it() -> N
     far_above = floors_script.check(_report(core=(60, 100)), {"certus/core/": 50.0})
 
     assert at_floor == ([], [], [])
-    assert far_above[0] == [] and "a relever" in far_above[1][0]  # never raised for us: it is said
+    assert far_above[0] == []
+    assert "a relever" in far_above[1][0]
 
 
 def test_lines_are_read_not_the_percentage_that_mixes_branches() -> None:
@@ -101,7 +105,8 @@ def test_the_floors_on_disk_are_well_formed() -> None:
     for section in ("lignes", "noyaux"):
         assert floors[section], f"no floor in `{section}`"
         for prefix, floor in floors[section].items():
-            assert prefix.startswith("certus/") and prefix.endswith("/"), prefix
+            assert prefix.startswith("certus/"), prefix
+            assert prefix.endswith("/"), prefix
             assert 0.0 < floor <= 100.0, (prefix, floor)
 
 

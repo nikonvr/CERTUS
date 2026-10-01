@@ -277,5 +277,7 @@ def test_a_fill_qt_cannot_parse_keeps_what_it_always_had() -> None:
     css = CertusTheme.get_button_style("outline")
 
     assert CertusTheme.label_on("outline") == "#ffffff"
-    assert "background-color: outline;" in css and "color: #ffffff;" in css
-    assert "outlinee6" not in css and "outlinecc" not in css, "the old code glued an alpha to a name, which is no colour"
+    assert "background-color: outline;" in css
+    assert "color: #ffffff;" in css
+    assert "outlinee6" not in css, "the old code glued an alpha to a name, which is no colour"
+    assert "outlinecc" not in css, "the old code glued an alpha to a name, which is no colour"

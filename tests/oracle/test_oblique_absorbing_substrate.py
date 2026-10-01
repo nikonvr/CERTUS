@@ -205,7 +205,8 @@ def test_the_exit_admittance_refuses_a_p_wave_at_grazing_of_a_medium_that_cannot
 
     assert (eta, ok) == (0j, False)
     eta_s, ok_s = oblique_exit_admittance(complex(1.0, 0.0), 1.0, True)
-    assert ok_s and eta_s == 0j  # s at grazing: admittance 0, usable, and the caller sees it
+    assert ok_s
+    assert eta_s == 0j
 
 
 # =============================================================================

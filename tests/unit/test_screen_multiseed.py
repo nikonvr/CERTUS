@@ -301,7 +301,8 @@ class TestTheScoringSeedInsideTheGenerationSeeds:
         message = fautifs[0].getMessage()
         # BOTH numbers must be in the line: a reader who greps the journal must not have to
         # go and fetch the other half of the fact somewhere else.
-        assert "42" in message and "77" in message
+        assert "42" in message
+        assert "77" in message
         assert "winner's-curse" in message.lower()
 
     def test_it_stays_quiet_when_the_seeds_are_disjoint(self, monkeypatch, caplog):

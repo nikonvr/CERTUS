@@ -35,7 +35,8 @@ class TestAutoTuneSavgol:
         rng = np.random.default_rng(2)
         y_mat = rng.random((2, 120))
         w, p, hw = auto_tune_savgol_params(x, y_mat, "Medium (Balanced)")
-        assert w % 2 == 1 and hw % 2 == 1
+        assert w % 2 == 1
+        assert hw % 2 == 1
         assert hw >= w
         assert p in (2, 3, 4)
 
@@ -60,13 +61,16 @@ class TestAutoTuneSavgol:
         y_mat = np.random.default_rng(5).random((3, 120))
         w, p, hw = auto_tune_savgol_params(x, y_mat, "Extreme (Aggressive)")
         assert p == 2
-        assert w % 2 == 1 and hw % 2 == 1 and hw >= w
+        assert w % 2 == 1
+        assert hw % 2 == 1
+        assert hw >= w
 
     def test_auto_tune_single_curve_row(self) -> None:
         x = np.linspace(400, 800, 64, dtype=np.float64)
         y_mat = np.random.default_rng(6).random((1, 64))
         w, _p, hw = auto_tune_savgol_params(x, y_mat, "Soft (High Fidelity)")
-        assert w % 2 == 1 and hw % 2 == 1
+        assert w % 2 == 1
+        assert hw % 2 == 1
 
 
 @pytest.mark.unit

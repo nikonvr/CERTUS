@@ -59,7 +59,8 @@ def test_the_error_is_the_last_line_of_the_traceback() -> None:
     assert stop.cause == "ValueError: no such wavelength: 1550"
     assert stop.details.splitlines()[-1] == "ValueError: no such wavelength: 1550"
     assert stop.details.splitlines()[0].startswith("Traceback")
-    assert "CERTUS_STRAT" in stop.headline and "exit code 1" in stop.headline
+    assert "CERTUS_STRAT" in stop.headline
+    assert "exit code 1" in stop.headline
     assert not stop.crashed
 
 
@@ -85,7 +86,8 @@ def test_the_same_codes_say_it_when_the_module_wrote_an_error(code: int) -> None
 
     stop = describe_module_stop("CERTUS_STRAT", code, False, TRACEBACK)
 
-    assert stop is not None and stop.cause.startswith("ValueError")
+    assert stop is not None
+    assert stop.cause.startswith("ValueError")
 
 
 def test_a_module_killed_on_purpose_says_nothing_although_the_system_calls_it_a_crash() -> None:
@@ -101,8 +103,10 @@ def test_a_crash_is_reported_even_without_a_word_on_the_error_output() -> None:
 
     stop = describe_module_stop("CERTUS_STRAT", -1073741819, True, "")
 
-    assert stop is not None and stop.crashed
-    assert "crashed" in stop.headline and "0xC0000005" in stop.headline
+    assert stop is not None
+    assert stop.crashed
+    assert "crashed" in stop.headline
+    assert "0xC0000005" in stop.headline
     assert stop.cause == "It wrote no error message."
     assert stop.details == ""
 
@@ -112,7 +116,8 @@ def test_a_crash_after_an_error_line_keeps_the_line() -> None:
 
     stop = describe_module_stop("CERTUS_STRAT", 139, True, "Fatal Python error: Segmentation fault\n")
 
-    assert stop is not None and stop.cause == "Fatal Python error: Segmentation fault"
+    assert stop is not None
+    assert stop.cause == "Fatal Python error: Segmentation fault"
     assert "0x" not in stop.headline, "a POSIX exit code needs no hexadecimal: it is not an NTSTATUS"
 
 
@@ -134,7 +139,8 @@ def test_a_very_long_last_line_is_cut_and_blank_lines_are_dropped() -> None:
     stop = describe_module_stop("CERTUS_STRAT", 2, False, "first\r\n\r\n" + "x" * 5000 + "\r\n\r\n")
 
     assert stop is not None
-    assert len(stop.cause) <= 300 and stop.cause.endswith("...")
+    assert len(stop.cause) <= 300
+    assert stop.cause.endswith("...")
     assert stop.details.splitlines()[0] == "first", "Windows line endings and blank lines must not reach the dialog"
     assert len(stop.details.splitlines()) == 2
 
@@ -223,11 +229,14 @@ def test_a_module_that_raises_is_explained(hub, dialogs, tmp_path) -> None:
     boxes = boxes_of(hub)
     assert len(boxes) == 1, "a module that died on an exception left the user without a word"
     box = boxes[0]
-    assert "CERTUS_PROBE" in box.text() and "exit code 1" in box.text()
+    assert "CERTUS_PROBE" in box.text()
+    assert "exit code 1" in box.text()
     assert box.informativeText() == "ValueError: no such wavelength: 1550"
-    assert "Traceback" in box.detailedText() and "raise ValueError" in box.detailedText()
+    assert "Traceback" in box.detailedText()
+    assert "raise ValueError" in box.detailedText()
     log = hub.log_text.toPlainText()
-    assert "CERTUS_PROBE exited with code 1" in log and "ValueError: no such wavelength: 1550" in log
+    assert "CERTUS_PROBE exited with code 1" in log
+    assert "ValueError: no such wavelength: 1550" in log
     assert not dialogs, f"the hub used a blocking dialog: {dialogs}"
     for box in boxes:
         box.close()
@@ -248,7 +257,8 @@ def test_the_message_does_not_block_the_hub(hub, dialogs, tmp_path) -> None:
 def test_a_module_that_exits_normally_opens_no_dialog(hub, dialogs, tmp_path) -> None:
     run_module(hub, tmp_path, EXITS_NORMALLY)
 
-    assert not boxes_of(hub) and not dialogs
+    assert not boxes_of(hub)
+    assert not dialogs
     assert "CERTUS_PROBE exited normally." in hub.log_text.toPlainText()
 
 
@@ -256,7 +266,8 @@ def test_a_module_stopped_from_outside_opens_no_dialog(hub, dialogs, tmp_path) -
     """Exit code 1 with nothing on the error output: the user ended it, and the log says how."""
     run_module(hub, tmp_path, EXITS_WITH_ONE)
 
-    assert not boxes_of(hub) and not dialogs
+    assert not boxes_of(hub)
+    assert not dialogs
     assert "CERTUS_PROBE exited with code 1." in hub.log_text.toPlainText()
 
 
@@ -266,7 +277,8 @@ def test_a_module_that_crashes_is_reported_as_a_crash_not_as_a_launch_failure(hu
 
     assert not dialogs, f"the hub called a crash a launch failure: {dialogs}"
     (box,) = boxes_of(hub)
-    assert "crashed" in box.text() and "CERTUS_PROBE" in box.text()
+    assert "crashed" in box.text()
+    assert "CERTUS_PROBE" in box.text()
     assert box.informativeText() == "It wrote no error message."
     box.close()
 
@@ -280,7 +292,8 @@ def test_a_module_that_cannot_start_still_says_so(hub, dialogs, tmp_path, monkey
     hub.launch_module(str(script))
 
     assert wait_until(lambda: dialogs), "a module that could not start left the user without a word"
-    assert dialogs[0][:2] == ("warning", "Launch Error") and "CERTUS_PROBE" in dialogs[0][2]
+    assert dialogs[0][:2] == ("warning", "Launch Error")
+    assert "CERTUS_PROBE" in dialogs[0][2]
     assert not hub.active_processes
     assert not boxes_of(hub), "a module that never ran has no exit to explain"
 

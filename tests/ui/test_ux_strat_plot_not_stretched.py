@@ -84,10 +84,10 @@ def test_an_oversized_plot_is_fitted_without_distortion(strat):
     strat._apply_pixmap(source)
 
     shown = label.pixmap()
-    assert shown is not None and not shown.isNull(), "no pixmap ended up on the label"
-    assert shown.width() <= w and shown.height() <= h, (
-        f"the plot ({shown.width()}x{shown.height()}) overflows its label ({w}x{h}): it is being cropped, not fitted"
-    )
+    assert shown is not None, "no pixmap ended up on the label"
+    assert not shown.isNull(), "no pixmap ended up on the label"
+    assert shown.width() <= w, f"the plot ({shown.width()}x{shown.height()}) overflows its label ({w}x{h}): it is being cropped, not fitted"
+    assert shown.height() <= h, f"the plot ({shown.width()}x{shown.height()}) overflows its label ({w}x{h}): it is being cropped, not fitted"
     source_ratio = source.width() / source.height()
     shown_ratio = shown.width() / shown.height()
     assert abs(shown_ratio - source_ratio) < 0.02, (

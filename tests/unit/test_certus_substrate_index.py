@@ -784,7 +784,8 @@ class TestFitMeta:
         coef = meta.get("coeffs")
 
 
-        assert coef is not None and len(coef) >= 6
+        assert coef is not None
+        assert len(coef) >= 6
 
 
         assert float(coef[0]) == pytest.approx(4.0)
@@ -1062,7 +1063,8 @@ class TestSapphirenuexampleSellmeier:
         coeffs = meta.get("coeffs")
 
 
-        assert isinstance(coeffs, list) and len(coeffs) in (6, 7)
+        assert isinstance(coeffs, list)
+        assert len(coeffs) in (6, 7)
 
 
         fit_m = csi.IndexCore._fit_mask(x, wl_lo, wl_hi) & np.isfinite(n_raw)
@@ -1086,7 +1088,9 @@ class TestSapphirenuexampleSellmeier:
             L1, L2, L3 = float(coeffs[2]), float(coeffs[4]), float(coeffs[6])
 
 
-            assert L1 < lam_min_um and L2 < lam_min_um and L3 < lam_min_um, "Li < lambda_min(fit) required for lambda²-Li²>0 on the window"
+            assert L1 < lam_min_um, "Li < lambda_min(fit) required for lambda²-Li²>0 on the window"
+            assert L2 < lam_min_um, "Li < lambda_min(fit) required for lambda²-Li²>0 on the window"
+            assert L3 < lam_min_um, "Li < lambda_min(fit) required for lambda²-Li²>0 on the window"
 
 
 

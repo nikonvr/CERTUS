@@ -131,11 +131,14 @@ def test_objective_class_and_gradient_support(minimal_cfg: SplineOptConfig) -> N
 def test_extract_smart_preview_override_valid_and_invalid(minimal_cfg: SplineOptConfig) -> None:
     valid = (np.array([1.0, 2.0, 3.0, 4.0]), np.array([5.0, 6.0, 7.0, 8.0]))
     n_ov, L_ov, d_ov = _extract_smart_preview_override(minimal_cfg, valid, 4)
-    assert n_ov is not None and L_ov is not None
+    assert n_ov is not None
+    assert L_ov is not None
     assert d_ov is None
     invalid = (np.array([1.0, 2.0]), np.array([3.0, 4.0]))
     n_bad, L_bad, d_bad = _extract_smart_preview_override(minimal_cfg, invalid, 4)
-    assert n_bad is None and L_bad is None and d_bad is None
+    assert n_bad is None
+    assert L_bad is None
+    assert d_bad is None
 
 
 def test_apply_smart_preview_exact_mesh_consumes_cfg_state(minimal_cfg: SplineOptConfig, monkeypatch) -> None:
@@ -166,7 +169,8 @@ def test_make_bounds_and_x0_roundtrip_canonical_mesh(minimal_cfg: SplineOptConfi
     bounds, x0, sk = make_bounds_and_x0(minimal_cfg, skip_smart_init=True)
     assert bounds.shape[1] == 2
     assert x0.shape[0] == bounds.shape[0]
-    assert sk.ndim == 1 and sk.size >= 2
+    assert sk.ndim == 1
+    assert sk.size >= 2
     assert minimal_cfg.n_seg == sk.size - 1
 
 

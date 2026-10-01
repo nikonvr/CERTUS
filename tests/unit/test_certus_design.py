@@ -144,7 +144,8 @@ class TestDesignFunctionality:
         assert callable(grad_func)
         assert pg_conf is not None
         assert max_iter == 15
-        assert emitted and emitted[0][0] == 0
+        assert emitted
+        assert emitted[0][0] == 0
 
     def test_worker_helper_build_pglobal_config_global_mode_overrides(self):
         """Global mode should propagate explicit overrides into the config object."""

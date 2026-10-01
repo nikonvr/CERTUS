@@ -1076,13 +1076,13 @@ class CertusREExcelMixin:
             if parse_err is not None:
                 raise parse_err
 
+            assert lambda_ref is not None
+            assert qwot_list is not None
+            assert wls_idx is not None
+            assert wls_meas is not None
+            assert spectra_columns is not None
             assert (
-                lambda_ref is not None
-                and qwot_list is not None
-                and wls_idx is not None
-                and wls_meas is not None
-                and spectra_columns is not None
-                and re_header_warnings is not None
+                re_header_warnings is not None
             )
 
             if re_header_warnings:

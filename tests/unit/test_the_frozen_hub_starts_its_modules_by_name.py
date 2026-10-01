@@ -212,7 +212,8 @@ def test_a_windowed_executable_gets_standard_streams(entry, monkeypatch) -> None
     entry.main(["--run-module", "CERTUS_STRAT"])
 
     [(out, err)] = seen
-    assert out is not None and err is not None  # both were None: the entry point gave the module a stream
+    assert out is not None
+    assert err is not None
     try:
         for stream in (out, err):
             stream.reconfigure(encoding="utf-8", errors="replace")

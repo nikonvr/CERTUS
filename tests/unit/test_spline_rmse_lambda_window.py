@@ -286,7 +286,8 @@ def test_spline_objective_mse_on_masked_grid_finite() -> None:
 
     )
 
-    assert np.isfinite(m) and m < 1e30
+    assert np.isfinite(m)
+    assert m < 1e30
 
 
 
@@ -364,13 +365,16 @@ def test_apply_rmse_fit_window_nk_to_result_dict() -> None:
 
     assert np.isfinite(out["n_lam"][1])
 
-    assert np.isnan(out["n_lam"][0]) and np.isnan(out["n_lam"][2])
+    assert np.isnan(out["n_lam"][0])
+    assert np.isnan(out["n_lam"][2])
 
-    assert np.isnan(out["corridor_reference_n_lam"][0]) and np.isnan(out["corridor_reference_n_lam"][2])
+    assert np.isnan(out["corridor_reference_n_lam"][0])
+    assert np.isnan(out["corridor_reference_n_lam"][2])
 
     assert np.isfinite(out["corridor_reference_n_lam"][1])
 
-    assert np.isnan(out["corridor_reference_k_lam"][0]) and np.isfinite(out["corridor_reference_k_lam"][1])
+    assert np.isnan(out["corridor_reference_k_lam"][0])
+    assert np.isfinite(out["corridor_reference_k_lam"][1])
 
 
 
@@ -414,7 +418,8 @@ def test_default_n_mono_band_caps_at_2000_and_follows_spectrum() -> None:
 
     assert b is not None
 
-    assert b[0] == pytest.approx(400.0) and b[1] == pytest.approx(1500.0)
+    assert b[0] == pytest.approx(400.0)
+    assert b[1] == pytest.approx(1500.0)
 
     lam_long = np.linspace(500.0, 8000.0, 50)
 
@@ -422,7 +427,8 @@ def test_default_n_mono_band_caps_at_2000_and_follows_spectrum() -> None:
 
     assert b2 is not None
 
-    assert b2[0] == pytest.approx(500.0) and b2[1] == pytest.approx(N_MONO_BAND_HI_CAP_NM)
+    assert b2[0] == pytest.approx(500.0)
+    assert b2[1] == pytest.approx(N_MONO_BAND_HI_CAP_NM)
 
     assert default_n_mono_band_nm_from_spectrum(np.array([2500.0, 3000.0])) is None
 

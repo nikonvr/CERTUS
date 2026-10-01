@@ -118,9 +118,8 @@ def test_every_screening_inside_the_multiseed_helper_runs_at_the_screening_depth
         "CHAQUE criblage doit refuser l'expansion de variantes : le criblage choisit des "
         "strategies, pas des variantes"
     )
-    assert "num_runs=num_runs" not in corps and "robustness_num_runs" not in corps, (
-        "la profondeur de NOTATION ne doit jamais apparaitre dans le criblage"
-    )
+    assert "num_runs=num_runs" not in corps, "la profondeur de NOTATION ne doit jamais apparaitre dans le criblage"
+    assert "robustness_num_runs" not in corps, "la profondeur de NOTATION ne doit jamais apparaitre dans le criblage"
 
 
 def test_the_multiseed_helper_is_called_with_the_screening_depth_not_the_scoring_one():
@@ -129,9 +128,8 @@ def test_the_multiseed_helper_is_called_with_the_screening_depth_not_the_scoring
     i = src.index("survivors_dp = _screen_with_seeds(")
     call = src[i : src.index(")", i)]
     assert "n_screen" in call, "le criblage DP doit recevoir n_screen"
-    assert "n_full" not in call and "num_runs" not in call, (
-        "le criblage DP ne doit JAMAIS recevoir la profondeur de notation"
-    )
+    assert "n_full" not in call, "le criblage DP ne doit JAMAIS recevoir la profondeur de notation"
+    assert "num_runs" not in call, "le criblage DP ne doit JAMAIS recevoir la profondeur de notation"
 
 
 def test_the_multiseed_union_never_reranks_across_seeds():

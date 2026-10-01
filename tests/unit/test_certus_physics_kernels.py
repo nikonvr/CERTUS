@@ -19,7 +19,8 @@ def test_sellmeier_n_array():
     
     n = sellmeier_n_array(wls, B1, C1, B2, C2, B3, C3, min_wl)
     assert len(n) == 3
-    assert np.all(n > 1.4) and np.all(n < 1.55) # SiO2 is ~1.46
+    assert np.all(n > 1.4)
+    assert np.all(n < 1.55)
     
     # Test min_wl logic
     wls_low = np.array([50.0])
@@ -92,7 +93,8 @@ def test_calculate_bare_substrate_RT():
     assert len(T) == 2
     # R for n=1.5 is approx 0.04 (single interface)
     # T_total = (1-R)/(1+R) = (0.96)/(1.04) ~ 0.923
-    assert np.all(T > 0.92) and np.all(T < 0.93)
+    assert np.all(T > 0.92)
+    assert np.all(T < 0.93)
     
 def test_calculate_reflection_single():
     # Vacuum to 100nm film of n=1.5, k=0 on substrate n=1.5

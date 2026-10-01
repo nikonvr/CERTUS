@@ -125,7 +125,8 @@ def test_the_cache_holds_the_matrix_of_the_layers_deposited_so_far_for_every_wav
 
     cache = precompute_matrix_cache_kernel(wls, n_h, n_l, thicknesses, len(thicknesses))
 
-    assert cache.shape == (5, 3, 2, 2) and cache.dtype == np.complex128
+    assert cache.shape == (5, 3, 2, 2)
+    assert cache.dtype == np.complex128
     for i in range(5):
         for col, wl in enumerate(wls):
             expected = stack_matrix(_hl(i + 1), thicknesses[: i + 1], wl)

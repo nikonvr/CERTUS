@@ -37,7 +37,8 @@ def design_app(qapp, monkeypatch):
 def test_the_needle_scan_moves_the_bar_and_the_status_line(design_app) -> None:
     design_app.worker_manager._on_needle_progress(40, "scan 4/10")
 
-    assert design_app.bar and design_app.bar[-1]["phase"] == "NEEDLE SCAN"
+    assert design_app.bar
+    assert design_app.bar[-1]["phase"] == "NEEDLE SCAN"
     assert design_app.status_label.text() == "scan 4/10"
 
 

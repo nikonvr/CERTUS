@@ -274,13 +274,16 @@ def test_optim_oblique_configs_from_groups_and_local_positions():
     c0 = cfgs[0]
 
 
-    assert c0["angle"] == 10.0 and c0["pol"] == "s" and c0["is_s_pol"] is True
+    assert c0["angle"] == 10.0
+    assert c0["pol"] == "s"
+    assert c0["is_s_pol"] is True
 
 
     np.testing.assert_array_equal(c0["all_clues"], np.array([0, 2], dtype=np.int64))
 
 
-    assert c0["wls_config"].shape == (2,) and c0["n_sub_config"].shape == (2,)
+    assert c0["wls_config"].shape == (2,)
+    assert c0["n_sub_config"].shape == (2,)
 
 
     assert c0["n_layers_T_config"].shape == (2, 2)
@@ -352,7 +355,9 @@ def test_optim_backside_flags_defaults():
     hbs, hbc, sb = optim_backside_flags_from_cfg({})
 
 
-    assert hbs is False and hbc is False and sb == []
+    assert hbs is False
+    assert hbc is False
+    assert sb == []
 
 
 
@@ -370,7 +375,9 @@ def test_optim_backside_flags_stack_requires_coat_flag():
     hbs, hbc, sb = optim_backside_flags_from_cfg(cfg)
 
 
-    assert hbc is True and hbs is False and len(sb) == 1
+    assert hbc is True
+    assert hbs is False
+    assert len(sb) == 1
 
 
 
@@ -388,7 +395,8 @@ def test_optim_backside_flags_none_stack_back_normalized():
     hbs, _hbc, sb = optim_backside_flags_from_cfg(cfg)
 
 
-    assert sb == [] and hbs is False
+    assert sb == []
+    assert hbs is False
 
 
 
@@ -406,7 +414,9 @@ def test_optim_backside_flags_coated_stack():
     hbs, hbc, sb = optim_backside_flags_from_cfg(cfg)
 
 
-    assert hbs is True and hbc is True and sb == [1, 2]
+    assert hbs is True
+    assert hbc is True
+    assert sb == [1, 2]
 
 
 
@@ -562,7 +572,8 @@ def test_optim_bounds_thickness_local():
     assert b.shape == (1, 2)
 
 
-    assert b[0, 0] == pytest.approx(90.0) and b[0, 1] == pytest.approx(110.0)
+    assert b[0, 0] == pytest.approx(90.0)
+    assert b[0, 1] == pytest.approx(110.0)
 
 
     b2 = optim_bounds_thickness_local(np.array([5.0]), np.array([0]), 10.0)
@@ -610,7 +621,8 @@ def test_optim_bounds_thickness_healing():
     )
 
 
-    assert b[0, 0] == pytest.approx(75.0) and b[0, 1] == pytest.approx(125.0)
+    assert b[0, 0] == pytest.approx(75.0)
+    assert b[0, 1] == pytest.approx(125.0)
 
 
 

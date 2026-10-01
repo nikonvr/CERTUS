@@ -140,7 +140,8 @@ def test_poem_can_be_switched_off_in_the_propagated_state():
         )
 
     on, off = run(True), run(False)
-    assert np.all(on < 1e5) and np.all(off < 1e5), "montage plantant, le test ne prouve rien"
+    assert np.all(on < 1e5), "montage plantant, le test ne prouve rien"
+    assert np.all(off < 1e5), "montage plantant, le test ne prouve rien"
     assert not np.array_equal(on, off), (
         "poem_enabled n'atteint pas la propagation d'etat : les bras POEM-off "
         "propageaient un historique obtenu AVEC POEM"

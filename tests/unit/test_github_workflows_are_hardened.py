@@ -51,10 +51,10 @@ def test_the_workflows_are_found() -> None:
 def test_every_action_is_pinned_to_a_commit(path) -> None:
     for match in _uses(path):
         assert SHA.match(match["ref"]), f"{path.name}: {match['action']}@{match['ref']} is a tag, not a commit"
-        assert match["comment"] and re.search(r"#\s*v\d", match["comment"]), (
-            f"{path.name}: {match['action']} is pinned but does not say which release: "
-            "Dependabot and the reader need `# vX.Y.Z`"
-        )
+        assert match["comment"], (f"{path.name}: {match['action']} is pinned but does not say which release: "
+            "Dependabot and the reader need `# vX.Y.Z`")
+        assert re.search(r"#\s*v\d", match["comment"]), (f"{path.name}: {match['action']} is pinned but does not say which release: "
+            "Dependabot and the reader need `# vX.Y.Z`")
 
 
 @pytest.mark.parametrize("path", WORKFLOWS, ids=lambda p: p.name)

@@ -267,7 +267,8 @@ def test_the_module_badge_tints_its_colour_instead_of_gluing_digits_to_it(qapp):
     CertusTheme.refresh_widget_sheets()
     assert "background-color: rgba(96, 165, 250, 0.08)/*A:PRIMARY:0.08*/" in badge.styleSheet()
     plain = ModuleBadge("X", "#336699").styleSheet()
-    assert "background-color: rgba(51, 102, 153, 0.08);" in plain and "/*A:" not in plain
+    assert "background-color: rgba(51, 102, 153, 0.08);" in plain
+    assert "/*A:" not in plain
 
 
 # =============================================================================

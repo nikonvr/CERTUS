@@ -91,7 +91,9 @@ def test_the_two_inks_that_were_set_by_hand_are_what_the_derivation_gives_too():
 def test_an_ink_is_a_token_with_its_own_name_and_changes_with_the_theme():
     for fill, ink in FILL_INK:
         token = getattr(CertusTheme, ink)
-        assert isinstance(token, _Token) and token.name == ink and ink in _TOKEN_NAMES, (fill, ink)
+        assert isinstance(token, _Token), (fill, ink)
+        assert token.name == ink, (fill, ink)
+        assert ink in _TOKEN_NAMES, (fill, ink)
     CertusTheme.configure("light")
     light = {ink: str(getattr(CertusTheme, ink)) for _f, ink in FILL_INK}
     CertusTheme.configure("dark")

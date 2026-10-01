@@ -70,7 +70,8 @@ def stepper_in_a_window(qapp):
 def test_the_window_sheet_does_carry_the_generic_button_rule_that_crushes_a_small_button(stepper_in_a_window):
     """Why the badge must say `padding` and `min-height` itself: a plain 24 px button in the same window is crushed the same way."""
     window = stepper_in_a_window.window()
-    assert "padding: 8px 16px" in window.styleSheet() and "min-height: 28px" in window.styleSheet()
+    assert "padding: 8px 16px" in window.styleSheet()
+    assert "min-height: 28px" in window.styleSheet()
     crushed = QPushButton("2", window)
     crushed.setFixedSize(24, 24)
     crushed.setStyleSheet("QPushButton { background: #0f62fe; color: #ffffff; border: 2px solid #0f62fe; border-radius: 12px; font-weight: 700; }")

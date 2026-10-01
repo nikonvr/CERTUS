@@ -256,7 +256,8 @@ def test_rate_is_refused_without_a_measured_reference():
     """
     th_rate, dyn_rate, _, _, _ = _grow(0, np.zeros(0, dtype=np.float64), True)
     th_poem, dyn_poem, _, _, _ = _grow(0, np.zeros(0, dtype=np.float64), False)
-    assert th_rate == th_poem and dyn_rate == dyn_poem
+    assert th_rate == th_poem
+    assert dyn_rate == dyn_poem
 
 
 # --------------------------------------------------------------------------- #
@@ -422,7 +423,8 @@ def test_the_curvature_vanishes_at_both_ends_of_the_scale():
     assert delta(0.0) == 0.0
     assert delta(1.0) == 0.0
     assert delta(0.5) == pytest.approx(PHOTOMETRIC_CURVATURE_AMP)
-    assert delta(0.3) < delta(0.5) and delta(0.7) < delta(0.5)
+    assert delta(0.3) < delta(0.5)
+    assert delta(0.7) < delta(0.5)
 
 
 def test_the_amplitude_is_the_one_the_physicist_specified():

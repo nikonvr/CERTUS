@@ -112,7 +112,8 @@ def test_a_perfectly_flat_signal_has_no_ripple_but_maximal_fabrication_margin():
 
 def test_a_disabled_threshold_constrains_nothing():
     missed, fab = turning_point_margins(_sine(10.0), 900, 0.0)
-    assert missed > SENTINEL and fab > SENTINEL
+    assert missed > SENTINEL
+    assert fab > SENTINEL
 
 
 def test_a_single_extremum_gives_no_ripple():

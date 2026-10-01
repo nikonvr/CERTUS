@@ -782,12 +782,44 @@ class FieldWorkerThread(QThread):
             logger.info("Optimization stopped by user.")
             return
 
+        all_solutions, best_cost, best_x = self._clean_the_thin_layers_of_the_solutions(params, logger, best_cost, best_x, all_solutions)
+
+        all_solutions.sort(key=lambda s: s['cost'])
+        logger.info(
+            f"Optimization Finished:\n"
+            f"  - Total Elapsed Time: {dt:.2f}s\n"
+            f"  - Total Evaluations: {state.eval_count}\n"
+            f"  - Initial Cost: {initial_cost:.6f}\n"
+            f"  - Final Best Cost: {best_cost:.6f}\n"
+            f"  - Optimized thicknesses: {best_x}\n"
+            f"  - Final QWOT sum: {sum(best_x):.4f}\n"
+            f"  - Improvements: Cost reduced by {initial_cost - best_cost:.6f} ({((initial_cost - best_cost) / max(initial_cost, 1e-6)) * 100:.1f}%)"
+        )
+        self.signals.progress_snapshot.emit(build_progress_snapshot(message="Generating final metrics...", display_ratio=0.90, progress_ratio=0.90, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="FINAL_METRICS"))
+
+        E2_values_list, ep_c_final, final_metrics, z_coords_final = self._field_of_the_best_solution(params, best_x)
+
+        logger.debug(f"Final metrics: {final_metrics}")
+        self.signals.finished.emit(FieldWorkerResult(
+            z_coords=z_coords_final or [],
+            E2_values_list=E2_values_list,
+            lambda_calcs=params.lambda_calcs,
+            ep_c1_cn=ep_c_final or [],
+            opt_emp_factors=best_x,
+            opt_metrics=final_metrics,
+            pareto_solutions=all_solutions,
+            success=True,
+            message="Optimization finished successfully.",
+        ))
+
+    def _clean_the_thin_layers_of_the_solutions(self, params, logger, best_cost, best_x, all_solutions):
+        """Remove the layers thinner than the minimum thickness from the best solution and from every other solution found, re-optimizing each one; return the best solution, its cost and the other solutions."""
         dmin = getattr(params, 'dmin', 5.0)
         if dmin > 0.0:
 
             self.signals.progress_snapshot.emit(build_progress_snapshot(message=f"Auto-cleaning layers thinner than {dmin} nm...", display_ratio=0.85, progress_ratio=0.85, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="OPTIMIZATION", metadata={"mode": "CLEANUP", "dmin": dmin}))
             self.signals.progress_snapshot.emit(build_progress_snapshot(message=f"Auto-cleaning layers thinner than {dmin} nm...", display_ratio=0.85, progress_ratio=0.85, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="AUTO_CLEAN"))
-            
+
             new_best_x, new_best_types, was_cleaned, new_best_cost = self._clean_and_reoptimize(best_x, params.layer_types, dmin, params)
             if was_cleaned:
                 logger.info(f"Auto-cleaned best solution: reduced layers from {len(best_x)} to {len(new_best_x)}, cost: {new_best_cost:.6f}")
@@ -805,20 +837,10 @@ class FieldWorkerThread(QThread):
                 else:
                     cleaned_solutions.append(sol)
             all_solutions = cleaned_solutions
+        return all_solutions, best_cost, best_x
 
-        all_solutions.sort(key=lambda s: s['cost'])
-        logger.info(
-            f"Optimization Finished:\n"
-            f"  - Total Elapsed Time: {dt:.2f}s\n"
-            f"  - Total Evaluations: {state.eval_count}\n"
-            f"  - Initial Cost: {initial_cost:.6f}\n"
-            f"  - Final Best Cost: {best_cost:.6f}\n"
-            f"  - Optimized thicknesses: {best_x}\n"
-            f"  - Final QWOT sum: {sum(best_x):.4f}\n"
-            f"  - Improvements: Cost reduced by {initial_cost - best_cost:.6f} ({((initial_cost - best_cost) / max(initial_cost, 1e-6)) * 100:.1f}%)"
-        )
-        self.signals.progress_snapshot.emit(build_progress_snapshot(message="Generating final metrics...", display_ratio=0.90, progress_ratio=0.90, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="FINAL_METRICS"))
-
+    def _field_of_the_best_solution(self, params, best_x):
+        """Compute the electric field of the best solution at every calculation wavelength, and the final optimization metrics at the first one."""
         E2_values_list = []
         z_coords_final = None
         ep_c_final = None
@@ -854,19 +876,7 @@ class FieldWorkerThread(QThread):
             params.pol_flag,
             params.lambda_calcs[0],
         )
-
-        logger.debug(f"Final metrics: {final_metrics}")
-        self.signals.finished.emit(FieldWorkerResult(
-            z_coords=z_coords_final or [],
-            E2_values_list=E2_values_list,
-            lambda_calcs=params.lambda_calcs,
-            ep_c1_cn=ep_c_final or [],
-            opt_emp_factors=best_x,
-            opt_metrics=final_metrics,
-            pareto_solutions=all_solutions,
-            success=True,
-            message="Optimization finished successfully.",
-        ))
+        return E2_values_list, ep_c_final, final_metrics, z_coords_final
 
     def _clean_and_reoptimize(self, x_opt, layer_types, dmin, params):
         current_x = list(x_opt)

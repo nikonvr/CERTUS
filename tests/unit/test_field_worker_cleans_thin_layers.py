@@ -141,6 +141,11 @@ def test_a_stopped_worker_interrupts_the_re_optimisation(cost):
 
 
 def test_the_optimisation_hands_it_the_minimum_thickness_and_the_parameters():
-    source = inspect.getsource(FieldWorkerThread._run_optimize)
-    assert "self._clean_and_reoptimize(" in source
-    assert "dmin" in source.split("self._clean_and_reoptimize(")[1].split(")")[0]
+    # the calls live in the cleaning stage of the optimization since it became a method of its own (S5.2)
+    source = inspect.getsource(FieldWorkerThread._clean_the_thin_layers_of_the_solutions)
+    calls = source.split("self._clean_and_reoptimize(")[1:]
+    assert len(calls) == 2  # the best solution, then every other one
+    for call in calls:
+        arguments = call.split(")")[0]
+        assert "dmin" in arguments
+        assert "params" in arguments

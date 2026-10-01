@@ -71,8 +71,7 @@
     "certus/ui/certus_re_excel_mixin.py::CertusREExcelMixin.load_reverse_engineering_from_path": 514,
     "certus/ui/certus_re_ui.py::CertusREResultsDialog.__init__": 531,
     "certus/ui/certus_strat_ui_state.py::CertusStratStateMixin.collect_params": 538,
-    "certus/utils/certus_ux.py::build_premium_overrides": 574,
-    "certus/workers/certus_field_workers.py::FieldWorkerThread._run_optimize": 347
+    "certus/utils/certus_ux.py::build_premium_overrides": 574
   },
   "fonctions_complexes": {
     "certus/core/certus_strat_robustness_task.py::_test_strategy_robustness_task": 74,

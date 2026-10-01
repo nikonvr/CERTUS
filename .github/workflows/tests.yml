@@ -114,6 +114,24 @@ jobs:
           source .venv/bin/activate
           python -m pytest tests/ -q --no-cov --ignore=tests/oracle --ignore=tests/unit --ignore=tests/ui
 
+      - name: Coût des noyaux en références NumPy
+        # S7.5. `tools/bench_kernels.py` chronomètre chaque noyau à côté d'une charge NumPy fixe (médiane de 7 passes, un seul fil Numba) et sort
+        # avec 1 quand l'un coûte plus de 30 % au-dessus de `tests/performance/kernel_baseline.json`. NON BLOQUANT pour l'instant : la base a été
+        # mesurée sous Windows, et une exécution de la CI doit d'abord montrer que les rapports tiennent sous Linux (autre machine, autre
+        # compilateur). Le rapport JSON est gardé dans tous les cas, à l'étape suivante.
+        continue-on-error: true
+        run: |
+          source .venv/bin/activate
+          python tools/bench_kernels.py --json bench_kernels.json --baseline tests/performance/kernel_baseline.json
+
+      - name: Rapport des noyaux
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: bench-kernels-linux
+          path: bench_kernels.json
+          if-no-files-found: ignore
+
   interface:
     name: interface (windows, py3.14)
     # 🔴 L'INTERFACE SE MESURE SUR WINDOWS : l'audit d'ergonomie mesure des largeurs en

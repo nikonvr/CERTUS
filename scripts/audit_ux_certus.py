@@ -22,6 +22,7 @@ Usage
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import os
 import re
@@ -731,7 +732,17 @@ def _verdicts(row: dict) -> list[str]:
     return bad
 
 
-def _run_worker(tag: str, width: int = 1920, height: int = 1080) -> dict:
+#: Les lignes deja mesurees, par (module, largeur, hauteur). Une fenetre coute 10 a 15 s a mesurer (un processus, la construction, l'attente que les
+#: minuteries se vident), et quatre fichiers de `tests/ui/` (squelette, hauteur des boutons, ordre des onglets, cliquet) demandaient les MEMES onze
+#: lignes a 1920 x 1080 : l'arbre ne change pas pendant une session, la mesure non plus. Les lecteurs recoivent une COPIE : aucun ne peut abimer celle des autres.
+_ROWS: dict[tuple[str, int, int], dict] = {}
+
+
+def _run_worker(tag: str, width: int = 1920, height: int = 1080, fresh: bool = False) -> dict:
+    """La mesure d'un module a une taille. `fresh=True` la refait meme si elle est en memoire (jamais une ligne en ERROR n'est gardee)."""
+    key = (tag, width, height)
+    if not fresh and key in _ROWS:
+        return copy.deepcopy(_ROWS[key])
     env = dict(
         os.environ,
         PYTHONIOENCODING="utf-8",
@@ -745,7 +756,8 @@ def _run_worker(tag: str, width: int = 1920, height: int = 1080) -> dict:
     for _ in range(3):
         row = _run_worker_once(tag, env, width, height)
         if "ERROR" not in row:
-            return row
+            _ROWS[key] = row
+            return copy.deepcopy(row)
     sys.exit(f"AUDIT CRITICAL: {tag} worker failed 3 times: {row.get('ERROR')}")
 
 

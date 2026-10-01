@@ -831,21 +831,6 @@ class SubstrateIndexGUI(QMainWindow):
 
     def display_results(self, x, n_results_raw, n_results_by_model, rmse_row, n_fit_meta, wl_min_fit, wl_max_fit, quality_summary) -> None:
         self._last_quality_summary = quality_summary
-        
-        spec_lo = float(np.nanmin(x)) if x.size else float("nan")
-        spec_hi = float(np.nanmax(x)) if x.size else float("nan")
-
-        dialog = IndexTableDialog(
-            x,
-            n_results_raw,
-            n_results_by_model,
-            rmse_row,
-            fit_meta_by_key=n_fit_meta,
-            fit_wl_lo=float(wl_min_fit),
-            fit_wl_hi=float(wl_max_fit),
-            spectral_wl_lo=spec_lo,
-            spectral_wl_hi=spec_hi,
-        )
 
         self._plot_output_results(x, n_results_raw, n_results_by_model, rmse_row, wl_min_fit, wl_max_fit)
         self.main_tabs.setCurrentIndex(1)

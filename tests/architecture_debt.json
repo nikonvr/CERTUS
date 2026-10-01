@@ -127,7 +127,7 @@
     "certus/ui/certus_re_excel_mixin.py": 2241,
     "certus/ui/certus_re_layout_mixin.py": 1762,
     "certus/ui/certus_strat_ui_state.py": 1809,
-    "certus/ui/certus_substrate_ui.py": 1641,
+    "certus/ui/certus_substrate_ui.py": 1626,
     "certus/utils/certus_re_helpers.py": 1973,
     "certus/utils/certus_strat_service.py": 1657,
     "certus/workers/certus_strat_workers.py": 1904

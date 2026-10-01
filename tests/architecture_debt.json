@@ -45,7 +45,6 @@
     "certus/core/certus_strat_robustness_task.py::_test_strategy_robustness_task": 814,
     "certus/core/certus_substrate_index.py::IndexCore._fit_model_spline_adaptive": 357,
     "certus/core/certus_substrate_sellmeier.py::_fit_model_sellmeier3poles": 389,
-    "certus/metal/certus_metal_bilayer_app.py::BeamAnalysisWorker.run": 397,
     "certus/physics/certus_opt_needle.py::needle_scan_cached": 416,
     "certus/physics/gradient_analytic.py::_compute_epsilon1_gradient_kernel": 372,
     "certus/physics/gradient_analytic.py::_compute_single_layer_sensitivity_kernel": 333,

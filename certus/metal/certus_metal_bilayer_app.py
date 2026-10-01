@@ -13,6 +13,7 @@ import logging
 import time
 import traceback
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
@@ -483,212 +484,34 @@ class BeamAnalysisWorker(QObject):
 
             beam_min_rel_gain = float(self.params.get("beam_min_rel_gain", 2e-4))
 
-            # Generic function to process thickness list
-
-            def process_scan_range(eM_list, start_x0, _direction_label=""):
-
-                nonlocal processed_steps, last_beam_emit_t
-
-                current_x0 = start_x0.copy()
-
-                branch_best_mse = float(self.optimal_mse)
-
-                no_gain_steps = 0
-
-                poor_quality_steps = 0
-
-                for eM_test in eM_list:
-                    if not self.is_running:
-                        return
-
-                    # L-BFGS-B optimization (fast and precise if close)
-
-                    try:
-                        # Coupled objective+gradient: avoids duplicate heavy evaluations in SciPy
-
-                        # (otherwise fun(x) and jac(x) call the same expensive kernel separately).
-
-                        def obj_and_grad_fixed_eM(x, eM_test=eM_test):
-
-                            x_full = np.concatenate(([eM_test], x))
-
-                            cost_full, g_full = compute_metal_bilayer_gradient_analytic(
-                                x_full,
-                                num_knots,
-                                l_array,
-                                r_tgt_array,
-                                min_knot_dist,
-                                nSub_precomputed,
-                            )
-
-                            return float(cost_full), g_full[1:]  # Exclude eM gradient
-
-                        res = scipy.optimize.minimize(
-                            obj_and_grad_fixed_eM,
-                            current_x0,
-                            method="L-BFGS-B",
-                            bounds=bounds,
-                            jac=True,
-                            options={"ftol": 1e-9, "gtol": 1e-9, "maxiter": 2000},
-                        )
-
-                        # If failed or bad MSE, retry L-BFGS-B with relaxed tolerances (analytic jac kept)
-
-                        if (not res.success) or (res.fun > mse_threshold * 1.5):
-                            res_retry_grad = scipy.optimize.minimize(
-                                obj_and_grad_fixed_eM,
-                                current_x0,
-                                method="L-BFGS-B",
-                                bounds=bounds,
-                                jac=True,
-                                options={"ftol": 1e-7, "gtol": 1e-7, "maxiter": 3000},
-                            )
-
-                            if res_retry_grad.fun < res.fun:
-                                res = res_retry_grad
-
-                        mse = res.fun
-
-                        has_meaningful_gain = np.isfinite(mse) and (mse < branch_best_mse * (1.0 - beam_min_rel_gain))
-
-                        if has_meaningful_gain:
-                            branch_best_mse = float(mse)
-
-                            no_gain_steps = 0
-
-                        else:
-                            no_gain_steps += 1
-
-                        # Track consecutive low-quality points (outside useful beam region)
-
-                        if np.isfinite(mse) and mse <= mse_threshold:
-                            poor_quality_steps = 0
-
-                        else:
-                            poor_quality_steps += 1
-
-                        # Verify validity
-
-                        if np.isfinite(mse) and mse <= mse_threshold * 2.0:  # Accept wide for continuity
-                            # Reconstruct solution
-
-                            x_opt = res.x
-
-                            eL_v, n_inf_v, A_v = x_opt[0], x_opt[1], x_opt[2]
-
-                            spline_knot_count = num_knots
-                            n_k_v = x_opt[3 : 3 + spline_knot_count]
-
-                            k_k_v = x_opt[3 + spline_knot_count : 3 + 2 * spline_knot_count]
-
-                            l_int_v = x_opt[3 + 2 * spline_knot_count :]
-                            if n_k_v.size != spline_knot_count or k_k_v.size != spline_knot_count:
-                                raise ValueError(
-                                    f"Invalid beam spline state: n_size={n_k_v.size} k_size={k_k_v.size} expected={spline_knot_count}"
-                                )
-
-                            knot_l = np.concatenate(([l_min_val], np.sort(l_int_v), [l_max_val]))
-
-                            p_spline = np.concatenate((n_k_v, k_k_v))
-
-                            if p_spline.size != 2 * knot_l.size:
-                                raise ValueError(
-                                    f"Invalid spline state during beam scan: coeff_size={p_spline.size} knot_size={knot_l.size}"
-                                )
-
-                            n_c, k_c = get_nk_from_spline(p_spline, knot_l, plot_lambda)
-
-                            # If MSE acceptable for final beam
-
-                            if mse <= mse_threshold:
-                                all_solutions.append(
-                                    {
-                                        "mse": mse,
-                                        "n": n_c,
-                                        "k": k_c,
-                                        "eM": eM_test,
-                                        "eL": eL_v,
-                                        "n_infini": n_inf_v,
-                                        "A_diel": A_v,
-                                        "params": np.concatenate(([eM_test], x_opt)),
-                                    }
-                                )
-
-                            # Update start point for next step (Continuity)
-
-                            current_x0 = x_opt.copy()
-
-                        else:
-                            # If trace lost (MSE explodes), retry with x0_optimal
-
-                            # If fails again, stop branch
-
-                            logger.debug(f"Continuity loss at {eM_test:.2f} nm (MSE={mse:.2e}). Resetting.")
-
-                            res_retry = scipy.optimize.minimize(
-                                obj_and_grad_fixed_eM,
-                                x0_optimal_reduced,
-                                method="L-BFGS-B",
-                                bounds=bounds,
-                                jac=True,  # Keep analytic gradient in all retries
-                                options={"ftol": 1e-7, "gtol": 1e-7, "maxiter": 3000},
-                            )
-
-                            if res_retry.fun < mse_threshold:
-                                current_x0 = res_retry.x.copy()  # Found a valley
-
-                            else:
-                                # Stop branch if nothing good found
-
-                                # logger.info(f"Stopping branch {direction_label} at {eM_test:.2f} nm")
-
-                                # Continue a bit just in case
-
-                                current_x0 = x0_optimal_reduced.copy()
-
-                                poor_quality_steps += 1
-
-                    except (
-                        ValueError,
-                        TypeError,
-                        RuntimeError,
-                        AttributeError,
-                        KeyError,
-                        IndexError,
-                        FileNotFoundError,
-                    ) as e:
-                        logger.error(f"Error at {eM_test:.2f}: {e}", exc_info=True)
-
-                        current_x0 = x0_optimal_reduced.copy()
-
-                        no_gain_steps += 1
-
-                        poor_quality_steps += 1
-
-                    processed_steps += 1
-
-                    now = time.time()
-
-                    if processed_steps >= total_steps or now - last_beam_emit_t >= beam_emit_interval_s:
-                        last_beam_emit_t = now
-
-                        self.progress.emit(processed_steps, total_steps, self.optimal_mse)
-
-                    # Early stop for this branch when scan is both stagnant and low-quality.
-
-                    if no_gain_steps >= beam_stall_patience and poor_quality_steps >= beam_fail_patience:
-                        logger.info(
-                            f"Early stop {_direction_label}: stagnation at eM={eM_test:.2f} nm "
-                            f"(no_gain={no_gain_steps}, poor={poor_quality_steps})"
-                        )
-
-                        break
+            scan = SimpleNamespace(
+                num_knots=num_knots,
+                l_array=l_array,
+                r_tgt_array=r_tgt_array,
+                min_knot_dist=min_knot_dist,
+                x0_optimal_reduced=x0_optimal_reduced,
+                total_steps=total_steps,
+                bounds=bounds,
+                l_min_val=l_min_val,
+                l_max_val=l_max_val,
+                mse_threshold=mse_threshold,
+                nSub_precomputed=nSub_precomputed,
+                logger=logger,
+                all_solutions=all_solutions,
+                plot_lambda=plot_lambda,
+                processed_steps=processed_steps,
+                beam_emit_interval_s=beam_emit_interval_s,
+                last_beam_emit_t=last_beam_emit_t,
+                beam_stall_patience=beam_stall_patience,
+                beam_fail_patience=beam_fail_patience,
+                beam_min_rel_gain=beam_min_rel_gain,
+            )
 
             # Start both scans
 
-            process_scan_range(eM_range_up, x0_optimal_reduced, "UP")
+            self._scan_the_thickness_range(scan, eM_range_up, x0_optimal_reduced, "UP")
 
-            process_scan_range(eM_range_down, x0_optimal_reduced, "DOWN")
+            self._scan_the_thickness_range(scan, eM_range_down, x0_optimal_reduced, "DOWN")
 
             self.progress.emit(total_steps, total_steps, self.optimal_mse)
 
@@ -747,6 +570,183 @@ class BeamAnalysisWorker(QObject):
             logging.error(f"Beam analysis error: {e}", exc_info=True)
 
             self.error.emit(f"Beam analysis error:\n{traceback.format_exc()}")
+
+    def _scan_the_thickness_range(self, scan, eM_list, start_x0, _direction_label=""):
+        """Re-optimize the stack at each metal thickness of one list, starting from a point and following the valley from one step to the next; stop the branch when it stagnates and its fits are poor."""
+        current_x0 = start_x0.copy()
+        branch_best_mse = float(self.optimal_mse)
+        no_gain_steps = 0
+        poor_quality_steps = 0
+        for eM_test in eM_list:
+            if not self.is_running:
+                return
+
+            # L-BFGS-B optimization (fast and precise if close)
+
+            try:
+                # Coupled objective+gradient: avoids duplicate heavy evaluations in SciPy
+
+                # (otherwise fun(x) and jac(x) call the same expensive kernel separately).
+
+                def obj_and_grad_fixed_eM(x, eM_test=eM_test):
+
+                    x_full = np.concatenate(([eM_test], x))
+                    cost_full, g_full = compute_metal_bilayer_gradient_analytic(
+                        x_full,
+                        scan.num_knots,
+                        scan.l_array,
+                        scan.r_tgt_array,
+                        scan.min_knot_dist,
+                        scan.nSub_precomputed,
+                    )
+                    return float(cost_full), g_full[1:]  # Exclude eM gradient
+                res = scipy.optimize.minimize(
+                    obj_and_grad_fixed_eM,
+                    current_x0,
+                    method="L-BFGS-B",
+                    bounds=scan.bounds,
+                    jac=True,
+                    options={"ftol": 1e-9, "gtol": 1e-9, "maxiter": 2000},
+                )
+
+                # If failed or bad MSE, retry L-BFGS-B with relaxed tolerances (analytic jac kept)
+
+                if (not res.success) or (res.fun > scan.mse_threshold * 1.5):
+                    res_retry_grad = scipy.optimize.minimize(
+                        obj_and_grad_fixed_eM,
+                        current_x0,
+                        method="L-BFGS-B",
+                        bounds=scan.bounds,
+                        jac=True,
+                        options={"ftol": 1e-7, "gtol": 1e-7, "maxiter": 3000},
+                    )
+                    if res_retry_grad.fun < res.fun:
+                        res = res_retry_grad
+                mse = res.fun
+                has_meaningful_gain = np.isfinite(mse) and (mse < branch_best_mse * (1.0 - scan.beam_min_rel_gain))
+                if has_meaningful_gain:
+                    branch_best_mse = float(mse)
+                    no_gain_steps = 0
+
+                else:
+                    no_gain_steps += 1
+
+                # Track consecutive low-quality points (outside useful beam region)
+
+                if np.isfinite(mse) and mse <= scan.mse_threshold:
+                    poor_quality_steps = 0
+
+                else:
+                    poor_quality_steps += 1
+
+                # Verify validity
+
+                if np.isfinite(mse) and mse <= scan.mse_threshold * 2.0:  # Accept wide for continuity
+                    # Reconstruct solution
+
+                    x_opt = res.x
+                    eL_v, n_inf_v, A_v = x_opt[0], x_opt[1], x_opt[2]
+                    spline_knot_count = scan.num_knots
+                    n_k_v = x_opt[3 : 3 + spline_knot_count]
+                    k_k_v = x_opt[3 + spline_knot_count : 3 + 2 * spline_knot_count]
+                    l_int_v = x_opt[3 + 2 * spline_knot_count :]
+                    if n_k_v.size != spline_knot_count or k_k_v.size != spline_knot_count:
+                        raise ValueError(
+                            f"Invalid beam spline state: n_size={n_k_v.size} k_size={k_k_v.size} expected={spline_knot_count}"
+                        )
+                    knot_l = np.concatenate(([scan.l_min_val], np.sort(l_int_v), [scan.l_max_val]))
+                    p_spline = np.concatenate((n_k_v, k_k_v))
+                    if p_spline.size != 2 * knot_l.size:
+                        raise ValueError(
+                            f"Invalid spline state during beam scan: coeff_size={p_spline.size} knot_size={knot_l.size}"
+                        )
+                    n_c, k_c = get_nk_from_spline(p_spline, knot_l, scan.plot_lambda)
+
+                    # If MSE acceptable for final beam
+
+                    if mse <= scan.mse_threshold:
+                        scan.all_solutions.append(
+                            {
+                                "mse": mse,
+                                "n": n_c,
+                                "k": k_c,
+                                "eM": eM_test,
+                                "eL": eL_v,
+                                "n_infini": n_inf_v,
+                                "A_diel": A_v,
+                                "params": np.concatenate(([eM_test], x_opt)),
+                            }
+                        )
+
+                    # Update start point for next step (Continuity)
+
+                    current_x0 = x_opt.copy()
+
+                else:
+                    # If trace lost (MSE explodes), retry with x0_optimal
+
+                    # If fails again, stop branch
+
+                    scan.logger.debug(f"Continuity loss at {eM_test:.2f} nm (MSE={mse:.2e}). Resetting.")
+
+                    res_retry = scipy.optimize.minimize(
+                        obj_and_grad_fixed_eM,
+                        scan.x0_optimal_reduced,
+                        method="L-BFGS-B",
+                        bounds=scan.bounds,
+                        jac=True,  # Keep analytic gradient in all retries
+                        options={"ftol": 1e-7, "gtol": 1e-7, "maxiter": 3000},
+                    )
+
+                    if res_retry.fun < scan.mse_threshold:
+                        current_x0 = res_retry.x.copy()  # Found a valley
+
+                    else:
+                        # Stop branch if nothing good found
+
+                        # logger.info(f"Stopping branch {direction_label} at {eM_test:.2f} nm")
+
+                        # Continue a bit just in case
+
+                        current_x0 = scan.x0_optimal_reduced.copy()
+
+                        poor_quality_steps += 1
+
+            except (
+                ValueError,
+                TypeError,
+                RuntimeError,
+                AttributeError,
+                KeyError,
+                IndexError,
+                FileNotFoundError,
+            ) as e:
+                scan.logger.error(f"Error at {eM_test:.2f}: {e}", exc_info=True)
+
+                current_x0 = scan.x0_optimal_reduced.copy()
+
+                no_gain_steps += 1
+
+                poor_quality_steps += 1
+
+            scan.processed_steps += 1
+
+            now = time.time()
+
+            if scan.processed_steps >= scan.total_steps or now - scan.last_beam_emit_t >= scan.beam_emit_interval_s:
+                scan.last_beam_emit_t = now
+
+                self.progress.emit(scan.processed_steps, scan.total_steps, self.optimal_mse)
+
+            # Early stop for this branch when scan is both stagnant and low-quality.
+
+            if no_gain_steps >= scan.beam_stall_patience and poor_quality_steps >= scan.beam_fail_patience:
+                scan.logger.info(
+                    f"Early stop {_direction_label}: stagnation at eM={eM_test:.2f} nm "
+                    f"(no_gain={no_gain_steps}, poor={poor_quality_steps})"
+                )
+
+                break
 
     def stop(self):
 

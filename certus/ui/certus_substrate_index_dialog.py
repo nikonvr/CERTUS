@@ -51,6 +51,18 @@ from certus.ui.certus_ui import (
 from certus.utils.certus_ux import Typography
 
 
+def _quality_of_a_series(rms_by_label: dict[str, float]) -> tuple[float, str]:
+    """The best finite RMSE of a series and what it says of the series: good up to 0.02, degraded up to 0.05, poor above; a series without a finite RMSE counts as good."""
+    best_v = _best_finite_rmse_from_triplet(_rms_triplet(rms_by_label))
+    q_label = "good"
+    if np.isfinite(best_v):
+        if best_v > 0.02:
+            q_label = "degraded"
+        if best_v > 0.05:
+            q_label = "poor"
+    return best_v, q_label
+
+
 class IndexTableDialog(QDialog):
     def __init__(
         self,
@@ -124,14 +136,7 @@ class IndexTableDialog(QDialog):
 
         summary_rows: list[str] = []
         for bk in self._series_order:
-            rms = rmse_row.get(bk, {})
-            best_v = _best_finite_rmse_from_triplet(_rms_triplet(rms))
-            q_label = "good"
-            if np.isfinite(best_v):
-                if best_v > 0.02:
-                    q_label = "degraded"
-                if best_v > 0.05:
-                    q_label = "poor"
+            best_v, q_label = _quality_of_a_series(rmse_row.get(bk, {}))
             self._series_quality[bk] = {"best_rmse": float(best_v), "quality_label": q_label}
             summary_rows.append(f"{bk}: best RMSE={best_v:.6g} | quality={q_label}")
 
@@ -178,10 +183,8 @@ class IndexTableDialog(QDialog):
             (2.0, Qt.PenStyle.DotLine),
         ]
 
-        summary_rows: list[str] = []
-
         self._plot_the_index_series(
-            wl, n_results_raw, n_results_by_model, rmse_row, bad_model, summary_rows, fit_mask_plot, colors, _fit_pen_styles
+            wl, n_results_raw, n_results_by_model, bad_model, fit_mask_plot, colors, _fit_pen_styles
         )
 
         if fit_wl_lo is not None and fit_wl_hi is not None and wl_plot.size:
@@ -337,8 +340,8 @@ class IndexTableDialog(QDialog):
         self._last_table_summary = summary_parts
         self._last_quality_summary = " | ".join(summary_rows)
 
-    def _plot_the_index_series(self, wl, n_results_raw, n_results_by_model, rmse_row, bad_model, summary_rows, fit_mask_plot, colors, _fit_pen_styles):
-        """Plot the raw points and the three fitted laws of every substrate series, colour the best law by the quality of its fit, and note each series' quality."""
+    def _plot_the_index_series(self, wl, n_results_raw, n_results_by_model, bad_model, fit_mask_plot, colors, _fit_pen_styles):
+        """Plot the raw points and the three fitted laws of every substrate series, colouring the best law by the quality of its fit (kept in `_series_quality`)."""
         for i, key in enumerate(n_results_raw.keys()):
             y_raw = n_results_raw[key]
 
@@ -361,16 +364,7 @@ class IndexTableDialog(QDialog):
             self.raw_items.append(raw_item)
 
             bym = n_results_by_model.get(key, {})
-            rms = rmse_row.get(key, {})
-            best_v = _best_finite_rmse_from_triplet(_rms_triplet(rms))
-            q_label = "good"
-            if np.isfinite(best_v):
-                if best_v > 0.02:
-                    q_label = "degraded"
-                if best_v > 0.05:
-                    q_label = "poor"
-            self._series_quality[key] = {"best_rmse": float(best_v), "quality_label": q_label}
-            summary_rows.append(f"{key}: best RMSE={best_v:.6g} | quality={q_label}")
+            q_label = self._series_quality[key]["quality_label"]
 
             for pi, (_mk, mlabel) in enumerate(SUBSTRATE_INDEX_MODELS):
                 arr = bym.get(mlabel)

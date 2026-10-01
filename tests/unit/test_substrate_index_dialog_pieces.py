@@ -3,7 +3,7 @@
 The substrate-index dialog plots the raw index of every substrate series with the three laws fitted on it, then fills a table with the same figures. `__init__` was 457 lines
 (complexity 64); three loops come out, each pinned here on a namespace in place of the dialog, recorders in place of the plot and the table:
 
-    _plot_the_index_series   the raw points and the three laws of every series, the best law coloured by the quality of its fit; the quality of each series is noted
+    _plot_the_index_series   the raw points and the three laws of every series, the best law coloured by the quality label the constructor kept for its series
     _fill_the_rmse_row       the RMSE of every law under its column, in the first row: green for the best, grey for the clearly worse ones
     _fill_the_data_rows      one row per wavelength, rows outside the fit window shaded, the wavelength of rows inside it in bold, bad columns greyed
 """
@@ -22,7 +22,7 @@ from PyQt6.QtGui import QColor, QFont
 
 from certus.core.certus_substrate_index import SUBSTRATE_INDEX_MODELS
 from certus.ui import certus_substrate_index_dialog as module
-from certus.ui.certus_substrate_index_dialog import IndexTableDialog
+from certus.ui.certus_substrate_index_dialog import IndexTableDialog, _quality_of_a_series
 from certus.ui.certus_ui import CertusTheme
 
 pytestmark = pytest.mark.usefixtures("qapp")
@@ -273,24 +273,21 @@ def curves(monkeypatch):
     return seen
 
 
-def plot_series(raw, by_model, rmse, bad_model=None, colors=COLORS):
+def plot_series(raw, by_model, quality=None, bad_model=None, colors=COLORS):
+    """Run the plot stage; `quality` gives the label the constructor kept for each series (good by default)."""
     plot = object()
-    window = SimpleNamespace(plot=plot, raw_items=[], _series_quality={})
-    summary: list[str] = []
-    IndexTableDialog._plot_the_index_series(window, WL_AXIS, raw, by_model, rmse, bad_model or {}, summary, MASK, colors, PEN_STYLES)
-    return window, summary, plot
+    kept = {key: {"best_rmse": 0.001, "quality_label": (quality or {}).get(key, "good")} for key in raw}
+    window = SimpleNamespace(plot=plot, raw_items=[], _series_quality=kept)
+    IndexTableDialog._plot_the_index_series(window, WL_AXIS, raw, by_model, bad_model or {}, MASK, colors, PEN_STYLES)
+    return window, plot
 
 
 def three_laws(bias=0.0):
     return {label: np.array([1.5, 1.6, 1.7]) + bias + 0.01 * k for k, label in enumerate(LABELS)}
 
 
-def rmse_of(best, others=0.5):
-    return {LABELS[0]: best, LABELS[1]: others, LABELS[2]: others}
-
-
 def test_the_raw_points_of_a_series_are_scattered_in_its_colour_with_an_outside_pen_in_grey(curves):
-    window, _summary, plot = plot_series({"A": np.array([1.5, 1.6, 1.7])}, {"A": three_laws()}, {"A": rmse_of(0.001)})
+    window, plot = plot_series({"A": np.array([1.5, 1.6, 1.7])}, {"A": three_laws()})
     (raw,) = curves.scatter
     assert raw.plot is plot
     assert raw.wl is WL_AXIS
@@ -306,12 +303,12 @@ def test_the_raw_points_of_a_series_are_scattered_in_its_colour_with_an_outside_
 
 def test_the_colour_of_a_series_cycles_through_the_palette(curves):
     raw = {f"S{k}": np.array([1.5, 1.6, 1.7]) for k in range(5)}
-    plot_series(raw, {}, {})
+    plot_series(raw, {})
     assert [hex_of(item.pen_in.color()) for item in curves.scatter] == ["#112233", "#445566", "#778899", "#aabbcc", "#112233"]
 
 
 def test_every_law_present_is_drawn_after_the_raw_points_with_its_own_pen_style(curves):
-    plot_series({"A": np.array([1.5, 1.6, 1.7])}, {"A": three_laws()}, {"A": rmse_of(0.001)})
+    plot_series({"A": np.array([1.5, 1.6, 1.7])}, {"A": three_laws()})
     assert [line.name for line in curves.lines] == [f"A ({label})" for label in LABELS]
     assert [line.pen_in.widthF() for line in curves.lines] == [2.4, 2.0, 2.0]
     assert [line.pen_in.style() for line in curves.lines] == [Qt.PenStyle.SolidLine, Qt.PenStyle.DashLine, Qt.PenStyle.DotLine]
@@ -324,41 +321,38 @@ def test_every_law_present_is_drawn_after_the_raw_points_with_its_own_pen_style(
 def test_a_law_without_values_is_skipped_and_the_others_keep_their_pen_style(curves):
     laws = three_laws()
     laws.pop(LABELS[0])
-    plot_series({"A": np.array([1.5, 1.6, 1.7])}, {"A": laws}, {"A": rmse_of(0.001)})
+    plot_series({"A": np.array([1.5, 1.6, 1.7])}, {"A": laws})
     assert [line.name for line in curves.lines] == [f"A ({LABELS[1]})", f"A ({LABELS[2]})"]
     assert [line.pen_in.style() for line in curves.lines] == [Qt.PenStyle.DashLine, Qt.PenStyle.DotLine]
 
 
 def test_the_values_of_a_law_are_plotted_as_given(curves):
     laws = three_laws()
-    plot_series({"A": np.array([1.5, 1.6, 1.7])}, {"A": laws}, {"A": rmse_of(0.001)})
+    plot_series({"A": np.array([1.5, 1.6, 1.7])}, {"A": laws})
     assert curves.lines[1].y is laws[LABELS[1]]
 
 
 @pytest.mark.parametrize(
-    ("best", "label", "colour", "alpha"),
-    [
-        (0.005, "good", CertusTheme.SUCCESS, 230),
-        (0.02, "good", CertusTheme.SUCCESS, 230),
-        (0.0201, "degraded", CertusTheme.WARNING, 230),
-        (0.05, "degraded", CertusTheme.WARNING, 230),
-        (0.0501, "poor", CertusTheme.ERROR, 220),
-        (float("nan"), "good", CertusTheme.SUCCESS, 230),
-    ],
-    ids=["good", "good at the limit", "degraded", "degraded at the limit", "poor", "no rmse"],
+    ("label", "colour", "alpha"),
+    [("good", CertusTheme.SUCCESS, 230), ("degraded", CertusTheme.WARNING, 230), ("poor", CertusTheme.ERROR, 220)],
 )
-def test_the_first_law_is_coloured_by_the_quality_of_the_best_fit(curves, best, label, colour, alpha):
-    rmse = rmse_of(best, others=1.0) if np.isfinite(best) else {}
-    window, _summary, _plot = plot_series({"A": np.array([1.5, 1.6, 1.7])}, {"A": three_laws()}, {"A": rmse})
+def test_the_first_law_is_coloured_by_the_quality_label_kept_for_its_series(curves, label, colour, alpha):
+    plot_series({"A": np.array([1.5, 1.6, 1.7])}, {"A": three_laws()}, quality={"A": label})
     first = curves.lines[0].pen_in.color()
     assert hex_of(first) == hex_of(colour)
     assert first.alpha() == alpha
-    assert window._series_quality["A"]["quality_label"] == label
+
+
+def test_every_series_is_coloured_by_its_own_label(curves):
+    raw = {"A": np.array([1.5, 1.6, 1.7]), "B": np.array([1.5, 1.6, 1.7])}
+    plot_series(raw, {"A": three_laws(), "B": three_laws()}, quality={"A": "good", "B": "poor"})
+    firsts = [line for line in curves.lines if line.name.endswith(f"({LABELS[0]})")]
+    assert [hex_of(line.pen_in.color()) for line in firsts] == [hex_of(CertusTheme.SUCCESS), hex_of(CertusTheme.ERROR)]
 
 
 def test_the_other_laws_take_the_colour_of_the_series_and_the_bad_ones_a_grey(curves):
     bad = {"A": {LABELS[2]}}
-    plot_series({"A": np.array([1.5, 1.6, 1.7])}, {"A": three_laws()}, {"A": rmse_of(0.001)}, bad_model=bad)
+    plot_series({"A": np.array([1.5, 1.6, 1.7])}, {"A": three_laws()}, bad_model=bad)
     second, third = curves.lines[1].pen_in.color(), curves.lines[2].pen_in.color()
     assert (hex_of(second), second.alpha()) == ("#112233", 220)
     assert (hex_of(third), third.alpha()) == (hex_of(CertusTheme.TEXT_SUB), 160)
@@ -366,40 +360,43 @@ def test_the_other_laws_take_the_colour_of_the_series_and_the_bad_ones_a_grey(cu
 
 def test_the_first_law_keeps_its_quality_colour_even_when_it_is_a_bad_one(curves):
     bad = {"A": {LABELS[0]}}
-    plot_series({"A": np.array([1.5, 1.6, 1.7])}, {"A": three_laws()}, {"A": rmse_of(0.001)}, bad_model=bad)
+    plot_series({"A": np.array([1.5, 1.6, 1.7])}, {"A": three_laws()}, bad_model=bad)
     assert hex_of(curves.lines[0].pen_in.color()) == hex_of(CertusTheme.SUCCESS)
 
 
-def test_the_quality_of_each_series_is_noted_with_its_best_rmse():
-    window, _summary, _plot = plot_series(
-        {"A": np.array([1.5, 1.6, 1.7]), "B": np.array([1.5, 1.6, 1.7])},
-        {},
-        {"A": rmse_of(0.003, others=0.5), "B": rmse_of(0.08, others=0.2)},
-    )
-    assert window._series_quality == {"A": {"best_rmse": 0.003, "quality_label": "good"}, "B": {"best_rmse": 0.08, "quality_label": "poor"}}
+def test_the_plot_stage_only_reads_the_quality_of_the_series():
+    window, _plot = plot_series({"A": np.array([1.5, 1.6, 1.7])}, {"A": three_laws()}, quality={"A": "degraded"})
+    assert window._series_quality == {"A": {"best_rmse": 0.001, "quality_label": "degraded"}}
 
 
-def test_the_best_rmse_of_a_series_without_figures_is_nan_and_its_quality_good():
-    window, _summary, _plot = plot_series({"A": np.array([1.5, 1.6, 1.7])}, {}, {})
-    assert math.isnan(window._series_quality["A"]["best_rmse"])
-    assert window._series_quality["A"]["quality_label"] == "good"
+# --- _quality_of_a_series ------------------------------------------------------------------------------------------------------------------
 
 
-def test_one_summary_line_per_series_in_order():
-    _window, summary, _plot = plot_series(
-        {"A": np.array([1.5, 1.6, 1.7]), "B": np.array([1.5, 1.6, 1.7])},
-        {},
-        {"A": rmse_of(0.003, others=0.5), "B": rmse_of(0.0300001234, others=0.5)},
-    )
-    assert summary == ["A: best RMSE=0.003 | quality=good", "B: best RMSE=0.0300001 | quality=degraded"]
+@pytest.mark.parametrize(
+    ("best", "label"),
+    [(0.005, "good"), (0.02, "good"), (0.0201, "degraded"), (0.05, "degraded"), (0.0501, "poor"), (0.5, "poor")],
+    ids=["good", "good at the limit", "degraded", "degraded at the limit", "poor", "far worse"],
+)
+def test_the_quality_label_follows_the_best_rmse_of_the_series(best, label):
+    best_v, got = _quality_of_a_series({LABELS[0]: best, LABELS[1]: 1.0, LABELS[2]: float("nan")})
+    assert (best_v, got) == (best, label)
 
 
-def test_the_summary_is_prolonged_not_replaced():
-    window = SimpleNamespace(plot=object(), raw_items=[], _series_quality={})
-    summary = ["earlier"]
-    IndexTableDialog._plot_the_index_series(window, WL_AXIS, {"A": np.array([1.5, 1.6, 1.7])}, {}, {}, {}, summary, MASK, COLORS, PEN_STYLES)
-    assert summary[0] == "earlier"
-    assert len(summary) == 2
+def test_the_best_rmse_is_the_smallest_finite_one():
+    assert _quality_of_a_series({LABELS[0]: 0.3, LABELS[1]: 0.01, LABELS[2]: float("nan")})[0] == 0.01
+
+
+@pytest.mark.parametrize("rms", [{}, {LABELS[0]: float("nan")}, dict.fromkeys(LABELS, float("nan"))], ids=["empty", "one nan", "all nan"])
+def test_a_series_without_a_finite_rmse_counts_as_good_with_a_nan_best(rms):
+    best_v, label = _quality_of_a_series(rms)
+    assert math.isnan(best_v)
+    assert label == "good"
+
+
+def test_the_two_thresholds_are_written_once_in_the_module():
+    source = inspect.getsource(module)
+    assert source.count("best_v > 0.02") == 1
+    assert source.count("best_v > 0.05") == 1
 
 
 # --- the constructor ---------------------------------------------------------------------------------------------------------------------
@@ -425,6 +422,27 @@ def test_the_plot_comes_before_the_table_and_the_header_row_before_the_data_rows
 
 def test_pg_is_the_module_pyqtgraph():
     assert module.pg is pg
+
+
+def test_the_real_dialog_classifies_each_series_once_and_says_so_on_top_and_in_the_quality_line(monkeypatch):
+    # undo the autouse recorder: here the real plot helpers run on a real plot
+    monkeypatch.undo()
+    wl = np.array([500.0, 600.0, 700.0])
+    raw = {key: np.array([1.50, 1.51, 1.52]) + k for k, key in enumerate("ABC")}
+    by_model = {key: {label: arr + 0.001 * k for k, label in enumerate(LABELS)} for key, arr in raw.items()}
+    rmse = {"A": dict.fromkeys(LABELS, 0.02), "B": dict.fromkeys(LABELS, 0.0300001234), "C": dict.fromkeys(LABELS, 0.0501)}
+    dialog = IndexTableDialog(wl, raw, by_model, rmse)
+    try:
+        assert [dialog._series_quality[key]["quality_label"] for key in "ABC"] == ["good", "degraded", "poor"]
+        assert dialog._series_summary_text == [
+            "A: best RMSE=0.02 | quality=good",
+            "B: best RMSE=0.0300001 | quality=degraded",
+            "C: best RMSE=0.0501 | quality=poor",
+        ]
+        assert dialog._last_quality_summary == " | ".join(dialog._series_summary_text)
+        assert dialog.summary_label.text().endswith(" | Series status: 1 good, 1 degraded, 1 poor")
+    finally:
+        dialog.deleteLater()
 
 
 def test_the_real_dialog_runs_its_three_pieces(monkeypatch):

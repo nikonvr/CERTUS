@@ -74,7 +74,6 @@
     "certus/ui/certus_manual_sigma_knot_dialog.py::ManualSigmaKnotDialog.__init__": 461,
     "certus/ui/certus_re_excel_mixin.py::CertusREExcelMixin.load_reverse_engineering_from_path": 514,
     "certus/ui/certus_re_ui.py::CertusREResultsDialog.__init__": 531,
-    "certus/ui/certus_strat_ui_layout.py::CertusStratLayoutMixin._create_design_tab": 366,
     "certus/ui/certus_strat_ui_state.py::CertusStratStateMixin.collect_params": 538,
     "certus/ui/certus_substrate_index_dialog.py::IndexTableDialog.__init__": 457,
     "certus/utils/certus_strat_service.py::_validate_candidates_phase_a": 378,

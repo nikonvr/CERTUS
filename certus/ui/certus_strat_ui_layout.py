@@ -453,94 +453,7 @@ class CertusStratLayoutMixin:
 
         self.design_layout.addWidget(materials_container)
 
-        top_settings_widget = QWidget()
-
-        top_settings_layout = QVBoxLayout(top_settings_widget)
-
-        top_settings_layout.setContentsMargins(0, 5, 0, 5)
-
-        top_settings_layout.setSpacing(6)
-
-        gb_sub = CertusCard("Base Wavelength")
-
-        gb_sub_layout = QHBoxLayout()
-
-        gb_sub_layout.setContentsMargins(10, 15, 10, 8)
-
-        gb_sub.body.addLayout(gb_sub_layout)
-
-        gb_sub_layout.setSpacing(10)
-
-        lbl_sub = QLabel("substrate:")
-
-        self.widgets["substrate_choice"] = QComboBox()
-
-        self.widgets["substrate_choice"].addItems(["Custom"] + list(SUBSTRATE_MAPPING.keys()))
-
-        self.widgets["substrate_choice"].setMinimumWidth(100)
-
-        self.widgets["substrate_choice"].setToolTip(
-            "substrate material. 'Custom' lets you enter a fixed real index below.\n"
-            "Predefined substrates fill the index field automatically."
-        )
-
-        self.widgets["substrate_choice"].currentTextChanged.connect(self._on_substrate_choice_changed)
-
-        lbl_idx = QLabel("Index:")
-
-        self.widgets["nSub_custom"] = _as_numeric_field(QLineEdit(), "Substrate index")
-
-        self.widgets["nSub_custom"].setPlaceholderText("1.73")
-
-        self.widgets["nSub_custom"].setFixedWidth(50)
-
-        self.widgets["nSub_custom"].setToolTip(
-            "Real part of the substrate refractive index (used when substrate = Custom)."
-        )
-
-        gb_sub_layout.addWidget(lbl_sub)
-
-        gb_sub_layout.addWidget(self.widgets["substrate_choice"])
-
-        gb_sub_layout.addWidget(lbl_idx)
-
-        gb_sub_layout.addWidget(self.widgets["nSub_custom"])
-
-        gb_lam = CertusCard("Reference")
-
-        gb_lam_layout = QHBoxLayout()
-
-        gb_lam_layout.setContentsMargins(10, 15, 10, 8)
-
-        gb_lam.body.addLayout(gb_lam_layout)
-
-        lbl_l0 = QLabel("Center λ₀ (nm):")
-
-        lbl_l0.setStyleSheet(f"font-weight: bold; font-size: {Typography.H3}pt; color: {CertusTheme.INFO_TEXT};")
-
-        self.widgets["l0"] = _as_numeric_field(QLineEdit(), lbl_l0.text().rstrip(":"))
-
-        self.widgets["l0"].setFixedWidth(70)
-
-        self.widgets["l0"].setStyleSheet(
-            f"font-weight: bold; background-color: {CertusTheme.WARNING_BG}; border: 1px solid {CertusTheme.BORDER}; border-radius: 4px; color: {CertusTheme.TEXT_MAIN};"
-        )
-
-        self.widgets["l0"].setToolTip(
-            "Reference (center) wavelength λ₀ in nanometres.\n"
-            "Used as the nucleation anchor and to convert optical thicknesses (QWOT = λ₀/4n).\n"
-            "Also used as the nucleation wavelength for the first monochromatic monitoring block."
-        )
-
-        gb_lam_layout.addWidget(lbl_l0)
-
-        gb_lam_layout.addWidget(self.widgets["l0"])
-
-        top_settings_layout.addWidget(gb_sub)
-
-        top_settings_layout.addWidget(gb_lam)
-
-        self.design_layout.addWidget(top_settings_widget)
+        self._build_design_top_settings()
 
         self.stack_group = CertusCard("Stack Control & Workflow")
 
@@ -783,6 +696,97 @@ class CertusStratLayoutMixin:
         cockpit_layout.addWidget(self.widgets["stack_table"])
 
         self.design_layout.addWidget(self.stack_group)
+
+    def _build_design_top_settings(self):
+        """Build the two cards above the stack controls of the design tab, the substrate (a material and its index) and the reference wavelength, and add them to the tab."""
+        top_settings_widget = QWidget()
+
+        top_settings_layout = QVBoxLayout(top_settings_widget)
+
+        top_settings_layout.setContentsMargins(0, 5, 0, 5)
+
+        top_settings_layout.setSpacing(6)
+
+        gb_sub = CertusCard("Base Wavelength")
+
+        gb_sub_layout = QHBoxLayout()
+
+        gb_sub_layout.setContentsMargins(10, 15, 10, 8)
+
+        gb_sub.body.addLayout(gb_sub_layout)
+
+        gb_sub_layout.setSpacing(10)
+
+        lbl_sub = QLabel("substrate:")
+
+        self.widgets["substrate_choice"] = QComboBox()
+
+        self.widgets["substrate_choice"].addItems(["Custom"] + list(SUBSTRATE_MAPPING.keys()))
+
+        self.widgets["substrate_choice"].setMinimumWidth(100)
+
+        self.widgets["substrate_choice"].setToolTip(
+            "substrate material. 'Custom' lets you enter a fixed real index below.\n"
+            "Predefined substrates fill the index field automatically."
+        )
+
+        self.widgets["substrate_choice"].currentTextChanged.connect(self._on_substrate_choice_changed)
+
+        lbl_idx = QLabel("Index:")
+
+        self.widgets["nSub_custom"] = _as_numeric_field(QLineEdit(), "Substrate index")
+
+        self.widgets["nSub_custom"].setPlaceholderText("1.73")
+
+        self.widgets["nSub_custom"].setFixedWidth(50)
+
+        self.widgets["nSub_custom"].setToolTip(
+            "Real part of the substrate refractive index (used when substrate = Custom)."
+        )
+
+        gb_sub_layout.addWidget(lbl_sub)
+
+        gb_sub_layout.addWidget(self.widgets["substrate_choice"])
+
+        gb_sub_layout.addWidget(lbl_idx)
+
+        gb_sub_layout.addWidget(self.widgets["nSub_custom"])
+
+        gb_lam = CertusCard("Reference")
+
+        gb_lam_layout = QHBoxLayout()
+
+        gb_lam_layout.setContentsMargins(10, 15, 10, 8)
+
+        gb_lam.body.addLayout(gb_lam_layout)
+
+        lbl_l0 = QLabel("Center λ₀ (nm):")
+
+        lbl_l0.setStyleSheet(f"font-weight: bold; font-size: {Typography.H3}pt; color: {CertusTheme.INFO_TEXT};")
+
+        self.widgets["l0"] = _as_numeric_field(QLineEdit(), lbl_l0.text().rstrip(":"))
+
+        self.widgets["l0"].setFixedWidth(70)
+
+        self.widgets["l0"].setStyleSheet(
+            f"font-weight: bold; background-color: {CertusTheme.WARNING_BG}; border: 1px solid {CertusTheme.BORDER}; border-radius: 4px; color: {CertusTheme.TEXT_MAIN};"
+        )
+
+        self.widgets["l0"].setToolTip(
+            "Reference (center) wavelength λ₀ in nanometres.\n"
+            "Used as the nucleation anchor and to convert optical thicknesses (QWOT = λ₀/4n).\n"
+            "Also used as the nucleation wavelength for the first monochromatic monitoring block."
+        )
+
+        gb_lam_layout.addWidget(lbl_l0)
+
+        gb_lam_layout.addWidget(self.widgets["l0"])
+
+        top_settings_layout.addWidget(gb_sub)
+
+        top_settings_layout.addWidget(gb_lam)
+
+        self.design_layout.addWidget(top_settings_widget)
 
     def _create_optimization_tab(self) -> None:
 

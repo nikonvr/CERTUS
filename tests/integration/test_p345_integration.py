@@ -123,18 +123,16 @@ def test_p4_apply_accessibility_defaults_names_widgets_without_name(qapp):
     from certus.ui.certus_a11y import apply_accessibility_defaults
 
     root = QWidget()
-    e1 = QLineEdit(root); e1.setObjectName("sampleSpin")
-    e2 = QLineEdit(root); e2.setObjectName("")  # no objectName, no tooltip
+    e1 = QLineEdit(root); e1.setObjectName("sampleSpin")  # an object name is a hook for the style sheet, not a name
+    e2 = QLineEdit(root); e2.setObjectName("")  # no objectName, a tooltip: that names it
     e2.setToolTip("Sample tooltip text")
     e3 = QLineEdit(root); e3.setAccessibleName("Already set")
 
     touched = apply_accessibility_defaults(root)
-    # At least e1 + e2 received a name; e3 preserved.
-    assert touched >= 1
-    assert e1.accessibleName()  # non-empty
-    assert "Sample" in e1.accessibleName() or "Sample" in e1.accessibleName().lower()
+    assert touched == 1  # e2 only
+    assert e1.accessibleName() == ""  # nothing the interface wrote can name it: unnamed, not "Sample spin"
+    assert e2.accessibleName() == "Sample tooltip text"
     assert e3.accessibleName() == "Already set"
-
 
 def test_p4_compute_tab_order_pairs_sequentially():
     from certus.ui.certus_a11y import compute_tab_order

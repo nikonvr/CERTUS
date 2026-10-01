@@ -138,6 +138,7 @@ else:
 from certus.core.certus_core import get_export_config, get_resource_path, save_export_config, load_font_config, save_font_config
 
 
+from certus.ui.certus_a11y import install_accessible_names
 from certus.ui.certus_ui import (
     claim_shortcut_for_action,
     configure_theme_from_preference,
@@ -620,6 +621,9 @@ class CertusHub(CertusDialogMixin, QMainWindow):
         # A launcher should accept a dropped file and open the module that can
         # read it - see dragEnterEvent / dropEvent below.
         self.setAcceptDrops(True)
+
+        # It does not inherit CertusBaseApp: the font list, with a tooltip and no label, is named by this pass.
+        install_accessible_names(self)
 
         # The hub is the first window opened every session, and the only one in
         # the suite that forgets its size and position: it does not inherit

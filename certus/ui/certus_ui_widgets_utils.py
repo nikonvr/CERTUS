@@ -133,6 +133,9 @@ class CertusThemeToggle(QPushButton):
 
         self.setToolTip("Switch to dark theme" if mode == "light" else "Switch to light theme")
 
+        # The caption is a glyph: the reader says the tooltip, and it must say the CURRENT action after a toggle.
+        self.setAccessibleName(self.toolTip())
+
         self.setStyleSheet(f"""
             QPushButton {{
                 background: {CertusTheme.SURFACE};

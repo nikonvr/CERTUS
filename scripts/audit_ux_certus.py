@@ -133,6 +133,60 @@ def is_inner_line_edit(widget) -> bool:
     return isinstance(widget, QLineEdit) and isinstance(widget.parentWidget(), QAbstractSpinBox | QComboBox)
 
 
+#: Les controles qu'un utilisateur de lecteur d'ecran doit pouvoir nommer : tout ce qui prend le focus ou se manipule.
+def interactive_controls(win) -> list:
+    """Les controles visibles d'une fenetre qui se manipulent, sans les champs internes des spinbox et des combos."""
+    from PyQt6.QtWidgets import (
+        QAbstractSpinBox,
+        QComboBox,
+        QLineEdit,
+        QPushButton,
+        QCheckBox,
+        QRadioButton,
+        QSlider,
+        QToolButton,
+    )
+
+    kinds = (QPushButton, QToolButton, QCheckBox, QRadioButton, QLineEdit, QComboBox, QAbstractSpinBox, QSlider)
+    return [w for w in win.findChildren(kinds) if w.isVisible() and not is_inner_line_edit(w)]
+
+
+def screen_reader_name(widget) -> str:
+    """Ce qu'un lecteur d'ecran annonce pour ce controle, selon la regle de Qt (PyQt6 n'expose pas QAccessible).
+
+    Le nom accessible ; a defaut le texte du QLabel dont il est le compagnon (`setBuddy`) parmi les freres ; a defaut,
+    pour un bouton, sa legende. Une chaine vide : le lecteur dit seulement « champ de saisie ». Le nom d'une classe
+    (`QDoubleSpinBox`) n'est pas un nom : c'est ce que le parcours generique de `certus_a11y` pose faute de mieux.
+    """
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtWidgets import QAbstractButton, QLabel
+
+    name = widget.accessibleName().strip()
+    if not name and widget.parentWidget() is not None:
+        for label in widget.parentWidget().findChildren(QLabel, options=Qt.FindChildOption.FindDirectChildrenOnly):
+            if label.buddy() is widget:
+                name = label.text()
+                break
+    if not name and isinstance(widget, QAbstractButton):
+        name = widget.text()
+    return re.sub(r"&(.)", r"\1", name).strip()
+
+
+def is_poor_name(widget, name: str) -> bool:
+    """Un nom qui ne dit rien : vide, sans une lettre ni un chiffre (`◐`, `✕`), le nom de la classe (`QSpinBox`), ou celui
+    de l'objet (`certus_primary_btn`).
+
+    Les deux derniers sont pires qu'un nom vide : le lecteur d'ecran les dit A LA PLACE de la legende que Qt aurait lue.
+    """
+
+    def squash(text: str) -> str:
+        return re.sub(r"[\W_]+", "", text).lower()
+
+    object_name = widget.objectName() or ""
+    nothing_to_say = not re.search(r"[^\W_]", name)
+    return nothing_to_say or name == type(widget).__name__ or (bool(object_name) and squash(name) == squash(object_name))
+
+
 def owns_undo_machinery(win) -> bool:
     """La fenetre peut-elle annuler ? `undo_stack` seul ne le dit pas : CertusBaseApp le donne a TOUTES les fenetres.
 
@@ -410,6 +464,14 @@ def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: in
     out["n_inputs"] = len(inputs)
     out["input_no_tooltip"] = sum(1 for w in inputs if not w.toolTip().strip())
 
+    # --- accessible names: what a screen reader says -------------------------------
+    controls = interactive_controls(win)
+    unnamed = [w for w in controls if is_poor_name(w, screen_reader_name(w))]
+    out["n_interactive"] = len(controls)
+    out["a11y_unnamed"] = [f"{type(w).__name__}|{w.objectName() or '-'}|{w.toolTip()[:40]}" for w in unnamed]
+    out["a11y_named_pct"] = round(100.0 * (len(controls) - len(unnamed)) / len(controls), 1) if controls else None
+    out["a11y_names"] = [f"{type(w).__name__}|{screen_reader_name(w)[:60]}" for w in controls]
+
     # --- tables ---------------------------------------------------------------
     # QTableWidget IS-A QTableView: findChildren(QTableView) already returns every
     # QTableWidget. Adding the two lists counted every table twice, which is why the
@@ -492,6 +554,8 @@ def _verdicts(row: dict) -> list[str]:
         bad.append(f"{row['input_no_tooltip']} inputs without a tooltip")
     if row.get("btn_no_tooltip"):
         bad.append(f"{row['btn_no_tooltip']} buttons without a tooltip")
+    if row.get("a11y_unnamed"):
+        bad.append(f"{len(row['a11y_unnamed'])} of {row['n_interactive']} controls have no name for a screen reader")
     # A permanent KPI strip answers the same need as a synthesis tab - CERTUS-STRAT
     # uses one because its plot area is a QStackedWidget, not a QTabWidget.
     if not row.get("has_synthesis") and not row.get("has_kpi_banner"):

@@ -546,9 +546,9 @@ class CertusCommandPaletteMixin:
 
     def _apply_accessibility_defaults(self) -> int:
         try:
-            from certus.ui.certus_a11y import apply_accessibility_defaults
+            from certus.ui.certus_a11y import install_accessible_names
 
-            return apply_accessibility_defaults(self, label_map=getattr(self, "_A11Y_LABEL_MAP", {}))
+            return install_accessible_names(self, label_map=getattr(self, "_A11Y_LABEL_MAP", {}))
         except ImportError, RuntimeError, AttributeError, TypeError, ValueError:
             return 0
 

@@ -62,7 +62,7 @@ def _worker_main(tag: str) -> None:
     from PyQt6.QtGui import QShortcut
     from PyQt6.QtWidgets import QAbstractSpinBox, QApplication, QLineEdit, QMenuBar
 
-    from scripts.audit_ux_certus import MODULES
+    from scripts.audit_ux_certus import MODULES, is_inner_line_edit, is_poor_name, screen_reader_name
 
     modname, clsname = MODULES[tag]
     app = QApplication.instance() or QApplication(sys.argv[:1])
@@ -82,14 +82,16 @@ def _worker_main(tag: str) -> None:
     for bar in win.findChildren(QMenuBar):
         for act in bar.actions():
             menus.add((act.text() or "").replace("&", "").strip().lower())
-    fields = win.findChildren(QLineEdit) + win.findChildren(QAbstractSpinBox)
+    # The QLineEdit inside a spin box is a part of it, not a field (a reader announces the spin box); and the name a
+    # reader says is the accessible name, the label tied to the field, or a button's caption - never the name of a class.
+    fields = [f for f in win.findChildren(QLineEdit) + win.findChildren(QAbstractSpinBox) if not is_inner_line_edit(f)]
 
     out = {
         "palette": "Ctrl+K" in keys,
         "overlay": "F1" in keys,
         "help_menu": "help" in menus,
         "fields": len(fields),
-        "named": sum(1 for f in fields if f.accessibleName()),
+        "named": sum(1 for f in fields if not is_poor_name(f, screen_reader_name(f))),
     }
     win.close()
     print(MARKER + json.dumps(out))

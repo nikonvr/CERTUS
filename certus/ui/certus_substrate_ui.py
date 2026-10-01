@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
-
 # -*- coding: utf-8 -*-
-
 
 """
 
@@ -58,7 +56,7 @@ from certus.core.certus_core import (
 from certus.utils.certus_ux import Typography
 
 from certus.ui.certus_measurement_excel_ui import open_measurement_excel_interactive
-
+from certus.ui.certus_a11y import install_accessible_names
 
 
 
@@ -1269,6 +1267,8 @@ class SubstrateIndexGUI(QMainWindow):
         self.statusBar().addPermanentWidget(self.progress_widget)
 
         self._apply_full_auto_sellmeier_mode()
+
+        install_accessible_names(self)  # the two wavelength spin boxes have a tooltip and no label
 
     def _is_cancel_requested(self) -> bool:
 

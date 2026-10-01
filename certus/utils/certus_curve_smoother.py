@@ -260,6 +260,10 @@ class CurveSmootherGUI(QMainWindow):
         install_standard_shortcuts(
             self, save=self.btn_save.click, load=self.btn_load.click, help=self.btn_help.click
         )
+        # Inside the function: a utility does not import the interface at module level (the layering ratchet).
+        from certus.ui.certus_a11y import install_accessible_names
+
+        install_accessible_names(self)  # the two combo boxes have a tooltip and no label
 
     def _smooth_y(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
         y_smoothed, _info = smooth_spectrum_auto(x, y, level=self.current_level)

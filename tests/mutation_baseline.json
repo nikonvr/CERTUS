@@ -1,0 +1,97 @@
+{
+ "_comment": "Base du pilote de mutation (S3.6) : `python scripts/mutation_pilot.py <modules> --baseline tests/mutation_baseline.json`. `accepted_survivors` nomme les fautes que les tests laissent passer ET que l'on a jugees equivalentes ; toute autre faute qui survit fait sortir le code 1. `avant` : les memes modules avant les tests de limites de 2026-10-01.",
+ "commit": "f9c8dd8 + les tests de limites du 2026-10-01",
+ "runner": "NUMBA_DISABLE_JIT=1 pytest -x, une copie du depot par fil",
+ "avant": {
+  "certus/physics/certus_inputs.py": {
+   "mutants": 63,
+   "score": 0.6984,
+   "score_sans_chaines": 0.7917,
+   "killed": 44,
+   "timeout": 0,
+   "survived": 19,
+   "error": 0
+  },
+  "certus/physics/certus_oblique_substrate.py": {
+   "mutants": 19,
+   "score": 0.8947,
+   "score_sans_chaines": 0.8947,
+   "killed": 17,
+   "timeout": 0,
+   "survived": 2,
+   "error": 0
+  },
+  "certus/physics/certus_substrate_absorption.py": {
+   "mutants": 42,
+   "score": 0.881,
+   "score_sans_chaines": 0.881,
+   "killed": 37,
+   "timeout": 0,
+   "survived": 5,
+   "error": 0
+  }
+ },
+ "modules": {
+  "certus/physics/certus_inputs.py": {
+   "mutants": 63,
+   "score": 0.9841,
+   "score_sans_chaines": 0.9792,
+   "killed": 62,
+   "timeout": 0,
+   "survived": 1,
+   "error": 0
+  },
+  "certus/physics/certus_oblique_substrate.py": {
+   "mutants": 19,
+   "score": 0.9474,
+   "score_sans_chaines": 0.9474,
+   "killed": 18,
+   "timeout": 0,
+   "survived": 1,
+   "error": 0
+  },
+  "certus/physics/certus_substrate_absorption.py": {
+   "mutants": 42,
+   "score": 0.9524,
+   "score_sans_chaines": 0.9524,
+   "killed": 40,
+   "timeout": 0,
+   "survived": 2,
+   "error": 0
+  }
+ },
+ "accepted_survivors": [
+  {
+   "module": "certus/physics/certus_inputs.py",
+   "text": "if reach[worst] > PHASE_IMAG_OVERFLOW:",
+   "kind": "compare",
+   "old": ">",
+   "new": ">=",
+   "reason": "L'egalite reach == 700.0 : `reach` est 2 pi k d / lambda, un produit et un quotient de flottants ; aucune entree ne tombe sur 700.0 au bit pres. Faute equivalente en pratique."
+  },
+  {
+   "module": "certus/physics/certus_oblique_substrate.py",
+   "text": "if abs(cos_t) < SMALL_EPSILON:",
+   "kind": "compare",
+   "old": "<",
+   "new": "<=",
+   "reason": "L'egalite |cos theta| == 1e-12 : un racine carree d'un complexe ne tombe pas sur la garde au bit pres. Faute equivalente en pratique."
+  },
+  {
+   "module": "certus/physics/certus_substrate_absorption.py",
+   "text": "if cos_theta < SMALL_EPSILON or wavelength_nm <= 0.0:",
+   "kind": "compare",
+   "old": "<",
+   "new": "<=",
+   "reason": "L'egalite cos theta == 1e-12 : la garde du rasant ; aucun angle ne la touche au bit pres. Faute equivalente en pratique."
+  },
+  {
+   "module": "certus/physics/certus_substrate_absorption.py",
+   "text": "if n_real > SMALL_EPSILON:",
+   "kind": "compare",
+   "old": ">",
+   "new": ">=",
+   "reason": "L'egalite Re(n) == 1e-12 : la garde d'un indice reel qui ne porte pas le rayon ; aucun indice ne la touche au bit pres. Faute equivalente en pratique."
+  }
+ ]
+}

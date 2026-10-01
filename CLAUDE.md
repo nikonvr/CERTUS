@@ -65,6 +65,13 @@ Les **types** : `python -m mypy` depuis la racine (réglages dans `[tool.mypy]` 
 mypy`, et `--python-executable` vers le Python du projet s'il n'y est pas). Le même registre nomme les fonctions de ces trois
 paquets sans annotation complète (`fonctions_non_annotees`) : une fonction nouvelle vient annotée, une fonction annotée sort du
 registre dans le même commit. La CI lance mypy sans bloquer tant qu'elle ne l'a pas vu vert.
+Les **tests qui gardent vraiment** : `python scripts\mutation_pilot.py certus/physics/certus_inputs.py` pose une faute à la fois
+(`<` → `<=`, `raise` → `pass`, `max` → `min`, `.real` → `.imag`…) dans une copie du dépôt et compte celles que les tests voient
+(mutmut 3 ne tourne pas sous Windows). Les tests tournent sans compilation (`NUMBA_DISABLE_JIT=1`) ; `--rerun mutation.json` rejoue
+les survivants, `--baseline tests\mutation_baseline.json` sort 1 sur un survivant que la base n'a pas jugé équivalent. Trois modules
+de physique sont joués (`certus_inputs`, `certus_substrate_absorption`, `certus_oblique_substrate`) ;
+`tests/unit/test_the_mutation_baseline_describes_the_code_as_it_is.py` dit en une seconde si la base décrit encore leur code (sinon :
+relancer le pilote et juger les nouveaux survivants, ne pas retoucher un chiffre).
 
 | échec | ce que c'est |
 |---|---|

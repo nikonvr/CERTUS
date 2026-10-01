@@ -198,10 +198,13 @@ mais **synchronisés par Drive**) : supprime-les ensuite.
   `_Token` : une chaîne ordinaire pour tout (Qt, JSON, `==`, `str()`, `%`, `+`) SAUF pour un f-string, qui l'écrit avec son nom
   (`#ffffff/*T:SURFACE*/`, un commentaire que Qt lit comme du blanc) ; `CertusTheme.refresh_widget_sheets()`, appelé par la bascule de
   thème, réécrit toute feuille posée sur un widget d'après ces noms. Écris donc `f"color: {CertusTheme.TEXT_MAIN}"`, jamais
-  `str(CertusTheme.TEXT_MAIN)`, une concaténation ou un hexadécimal. Une couleur DÉRIVÉE d'un jeton (un survol, l'encre d'un fond)
-  n'est pas un jeton : le style d'un bouton plein est entre deux marqueurs que `get_button_style` pose et que le rafraîchissement
-  reconstruit. `test_ux_dark_toggle_reaches_the_widgets.py` et `python scripts\audit_ux_certus.py` comptent les feuilles restées
-  claires après un clic sur la bascule. **Une transparence s'écrit `CertusTheme.tint(couleur, 0.18)`** (un `rgba()` qui garde le nom du
+  `str(CertusTheme.TEXT_MAIN)`, une concaténation ou un hexadécimal. **L'encre posée sur un remplissage de la palette est un jeton
+  de la palette** (`PRIMARY_TEXT`, `DANGER_LABEL`, `SUCCESS_LABEL`, `WARNING_LABEL`, `SECONDARY_LABEL`, `INFO_LABEL`, dérivées du
+  remplissage par `label_on`), jamais `white` : blanc sur le PRIMARY du thème sombre fait 2,54:1 (`test_ux_ink_follows_the_fill.py`
+  refuse tout `color: white` hors trois exceptions listées). Un survol n'est pas un jeton : le style d'un bouton plein est entre deux
+  marqueurs que `get_button_style` pose et que le rafraîchissement reconstruit. `test_ux_dark_toggle_reaches_the_widgets.py` et
+  `python scripts\audit_ux_certus.py` comptent les feuilles restées claires après un clic sur la bascule, et celles dont une règle
+  apparie une encre et un fond sous 4,5:1. **Une transparence s'écrit `CertusTheme.tint(couleur, 0.18)`** (un `rgba()` qui garde le nom du
   jeton), jamais `f"{couleur}2e"` ni `couleur + "2e"` : Qt lit huit chiffres hexadécimaux à l'envers (`#aarrggbb`), et le commentaire du
   jeton tomberait dans le nombre (`test_ux_alpha_is_written_the_way_qt_reads_it.py` cherche les deux écritures dans tout le dépôt).
 - **Le premier calcul est lent** (compilation numba, +30 s) : chauffe, puis mesure.

@@ -19,6 +19,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from certus.ui.certus_ui_widgets_factory import create_styled_button
 
 from certus.ui.certus_icons import certus_icon
+from certus.ui.certus_theme import CertusTheme
 from certus.core.certus_core import SUBSTRATE_CHOICES
 
 # certus_load_summary helpers reserved for future use (not yet wired in FIELD)
@@ -486,11 +487,11 @@ class OptimizationPanelWidget(QWidget):
         btn_actions_layout.setSpacing(6)
 
         self.btn_calc = create_styled_button(
-            "Calculate Field", variant="primary", icon=certus_icon("activity", color="#FFFFFF")
+            "Calculate Field", variant="primary", icon=certus_icon("activity", color=CertusTheme.PRIMARY_TEXT)
         )
         self.btn_calc.setToolTip("Compute and plot the electric field profile for the current design")
         self.btn_opt = create_styled_button(
-            "Run Optimization", variant="success", icon=certus_icon("sparkles", color="#FFFFFF")
+            "Run Optimization", variant="success", icon=certus_icon("sparkles", color=CertusTheme.SUCCESS_LABEL)
         )
         self.btn_opt.setToolTip("Run thickness optimization to minimize electric field intensity")
         self.btn_mc = create_styled_button("Sensitivity (MC)", variant="secondary", icon=certus_icon("sliders"))

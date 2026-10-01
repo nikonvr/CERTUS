@@ -285,7 +285,7 @@ def _build_palette_class():
                 }}
                 QListWidget::item:selected {{
                     background-color: {T.PRIMARY};
-                    color: #ffffff;
+                    color: {T.PRIMARY_TEXT};
                 }}
                 """
             )

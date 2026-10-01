@@ -60,12 +60,27 @@ def variant_icon_name(variant: str) -> str:
     return _VARIANT_ICONS.get(variant, "circle")
 
 
-def variant_color(variant: str) -> tuple[str, str, str]:
-    """Return ``(bg, fg, border)`` hex strings for ``variant``.
+#: Variant -> (fill, ink, edge), NAMES of colours of the palette. The fill and the ink of a status are the `*_BG` / `*_TEXT` pair the
+#: palette keeps for it (the stacked toasts use the same), so the pair reads in both themes; the edge is the accent. A fixed pastel fill
+#: under the theme's accent as ink was 1.5 to 2.26:1 in the dark theme, and 3.95:1 for the error badge even in the light one.
+_VARIANT_TOKENS: Final[dict[str, tuple[str, str, str]]] = {
+    "idle": ("SURFACE_HOVER", "TEXT_SUB", "BORDER"),
+    "running": ("INFO_BG", "INFO_TEXT", "INFO"),
+    "success": ("SUCCESS_BG", "SUCCESS_TEXT", "SUCCESS"),
+    "error": ("DANGER_BG", "DANGER_TEXT", "DANGER"),
+    "warning": ("WARNING_BG", "WARNING_TEXT", "WARNING"),
+    "info": ("INFO_BG", "INFO_TEXT", "INFO"),
+    "neutral": ("SURFACE", "TEXT_MAIN", "BORDER"),
+}
 
-    Falls back to ``neutral`` when the variant is unknown. Reads from
-    :class:`CertusTheme` when available, and uses a hard-coded fallback
-    palette otherwise so the function remains pure-python.
+
+def variant_color(variant: str) -> tuple[str, str, str]:
+    """Return ``(bg, fg, border)`` colours for ``variant``.
+
+    Falls back to ``neutral`` when the variant is unknown. Reads the colours
+    of :class:`CertusTheme` when available (they follow the theme, see
+    ``_VARIANT_TOKENS``), and uses a hard-coded fallback palette otherwise
+    so the function remains pure-python.
     """
     fallback = {
         "idle": ("#F3F4F6", "#6B7280", "#D1D5DB"),
@@ -80,17 +95,8 @@ def variant_color(variant: str) -> tuple[str, str, str]:
     try:
         from certus.ui.certus_ui import CertusTheme as T
 
-        accent_map = {
-            "idle": getattr(T, "MID", base[1]),
-            "running": getattr(T, "INFO", base[1]),
-            "success": getattr(T, "SUCCESS", base[1]),
-            "error": getattr(T, "DANGER", base[1]),
-            "warning": getattr(T, "WARNING", base[1]),
-            "info": getattr(T, "INFO", base[1]),
-            "neutral": getattr(T, "MID", base[1]),
-        }
-        fg = accent_map.get(variant, base[1])
-        return base[0], str(fg), base[2]
+        fill, ink, edge = _VARIANT_TOKENS.get(variant, _VARIANT_TOKENS["neutral"])
+        return getattr(T, fill), getattr(T, ink), getattr(T, edge)
     except (ImportError, AttributeError, TypeError):
         return base
 
@@ -168,6 +174,10 @@ def _build_badge_class():
             self._text_lbl.setText(formatted or "")
             self._text_lbl.setVisible(bool(formatted))
             self.adjustSize()
+
+        def refresh_theme(self) -> None:
+            """The sheet follows the theme by itself; the icon is a pixmap painted once, so it is painted again."""
+            self._refresh_icon()
 
         def variant(self) -> str:
             return self._variant

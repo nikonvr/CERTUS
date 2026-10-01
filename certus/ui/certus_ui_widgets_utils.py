@@ -37,17 +37,20 @@ from typing import ClassVar
 class CertusToast(QLabel):
     """Non-modal transient notification auto-hiding after duration_ms."""
 
+    #: Level -> (fill, ink on that fill), both NAMES of palette colours: the ink is a colour of its own, so it follows its fill with
+    #: the theme. A literal white was 2.54 / 1.92 / 2.77:1 on the dark fills, and the warning's dark grey was 3.17:1 even on the light one.
     _LEVELS: ClassVar[dict[str, tuple[str, str]]] = {
-        "info": ("PRIMARY", "#fff"),
-        "success": ("SUCCESS", "#fff"),
-        "warning": ("WARNING", "#222"),
-        "error": ("DANGER", "#fff"),
+        "info": ("PRIMARY", "PRIMARY_TEXT"),
+        "success": ("SUCCESS", "SUCCESS_LABEL"),
+        "warning": ("WARNING", "WARNING_LABEL"),
+        "error": ("DANGER", "DANGER_LABEL"),
     }
 
     def __init__(self, parent: QWidget, text: str, level: str = "info", duration_ms: int = 2800) -> None:
         super().__init__(parent)
-        color_key, fg = self._LEVELS.get(level, self._LEVELS["info"])
+        color_key, ink_key = self._LEVELS.get(level, self._LEVELS["info"])
         bg = getattr(CertusTheme, color_key, CertusTheme.PRIMARY)
+        fg = getattr(CertusTheme, ink_key, CertusTheme.PRIMARY_TEXT)
         self.setText(text)
         self.setStyleSheet(
             f"background: {bg}; color: {fg}; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: {Typography.BODY_LG}pt;"

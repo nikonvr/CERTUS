@@ -1025,9 +1025,9 @@ class CertusIndexLayoutMixin:
 
         self.toggle_details_btn.setStyleSheet(f"""
 
-            QPushButton {{ background-color: {CertusTheme.SECONDARY}; color: white; border: 1px solid {CertusTheme.BORDER}; border-radius: 3px; padding: 2px; font-size: {Typography.BODY_LG}pt; font-weight: bold; }}
+            QPushButton {{ background-color: {CertusTheme.SECONDARY}; color: {CertusTheme.SECONDARY_LABEL}; border: 1px solid {CertusTheme.BORDER}; border-radius: 3px; padding: 2px; font-size: {Typography.BODY_LG}pt; font-weight: bold; }}
 
-            QPushButton:checked {{ background-color: {CertusTheme.PRIMARY}; }}
+            QPushButton:checked {{ background-color: {CertusTheme.PRIMARY}; color: {CertusTheme.PRIMARY_TEXT}; }}
 
             QPushButton:hover {{ background-color: {CertusTheme.SURFACE_HOVER}; color: {CertusTheme.PRIMARY}; }}
 

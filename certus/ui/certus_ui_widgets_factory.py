@@ -401,7 +401,7 @@ def create_info_icon(tooltip: str, parent=None) -> QPushButton:
 
             background: {CertusTheme.INFO};
 
-            color: white;
+            color: {CertusTheme.INFO_LABEL};
 
             border-color: {CertusTheme.INFO};
 
@@ -428,11 +428,11 @@ def create_help_button(module_name: str) -> QToolButton:
 
         QToolButton {{
 
-            background: {CertusTheme.SECONDARY}; color: white; border-radius: 12px; font-weight: bold;
+            background: {CertusTheme.SECONDARY}; color: {CertusTheme.SECONDARY_LABEL}; border-radius: 12px; font-weight: bold;
 
         }}
 
-        QToolButton:hover {{ background: {CertusTheme.PRIMARY}; }}
+        QToolButton:hover {{ background: {CertusTheme.PRIMARY}; color: {CertusTheme.PRIMARY_TEXT}; }}
 
     """)
 

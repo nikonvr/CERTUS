@@ -228,6 +228,75 @@ def frozen_light_sheets(win, light_only: set[str]) -> list[str]:
     return stale
 
 
+_SHEET_COMMENT = re.compile(r"/\*.*?\*/", re.S)
+_SHEET_RULE = re.compile(r"([^{}]*)\{([^{}]*)\}")
+_INK_OR_FILL = re.compile(r"(?<![\w-])(color|background-color|background)\s*:\s*([^;}]+)")
+
+
+def declared_colour(value: str) -> str | None:
+    """`#rrggbb` d'une valeur de feuille de style ; None si ce n'est pas une couleur PLEINE que l'on sait lire (degrade, transparent, translucide).
+
+    Qt lit huit chiffres comme `#aarrggbb` et un alpha de `rgba()` jusqu'a 1 comme une fraction, au-dela comme un octet : mesure du 2026-10-01.
+    """
+    from PyQt6.QtGui import QColor
+
+    text = _SHEET_COMMENT.sub("", value).replace("!important", "").strip()
+    if not text or "gradient" in text or text.lower() in ("transparent", "inherit", "none"):
+        return None
+    rgba = re.fullmatch(r"rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)(%?)\s*\)", text)
+    if rgba:
+        raw = float(rgba.group(4))
+        alpha = raw / 100 if rgba.group(5) else (raw if raw <= 1 else raw / 255)
+        opaque = QColor(int(rgba.group(1)), int(rgba.group(2)), int(rgba.group(3)))
+        return opaque.name() if alpha >= 0.99 else None
+    colour = QColor(text)
+    return colour.name() if colour.isValid() and colour.alpha() == 255 else None
+
+
+def sheet_contrast_pairs(sheet: str) -> list[tuple[str, str, str]]:
+    """`(selecteur, encre, fond)` de chaque regle de `sheet` qui declare une encre ET un fond pleins.
+
+    Sont ecartees les regles `:disabled` (une commande inactive n'a pas a etre lisible, WCAG 1.4.3) et celle des infobulles (fond
+    sombre, encre claire dans les DEUX themes). Une feuille sans accolades est une seule regle ; la derniere declaration d'une
+    propriete l'emporte, et une declaration que l'on ne sait pas lire (degrade) efface la precedente : on ne juge que ce qu'on lit.
+    """
+    text = _SHEET_COMMENT.sub("", sheet)
+    blocks = _SHEET_RULE.findall(text)
+    if not blocks and "{" not in text and text.strip():
+        blocks = [("", text)]
+    pairs = []
+    for selector, body in blocks:
+        if ":disabled" in selector or "QToolTip" in selector:
+            continue
+        ink = fill = None
+        for key, value in _INK_OR_FILL.findall(body):
+            colour = declared_colour(value)
+            if key == "color":
+                ink = colour
+            else:
+                fill = colour
+        if ink and fill:
+            pairs.append((selector.strip(), ink, fill))
+    return pairs
+
+
+def low_contrast_sheets(win, minimum: float = 4.5) -> list[str]:
+    """Les feuilles de `win` dont une regle apparie une encre et un fond sous `minimum`:1 : `Classe|nomObjet|selecteur|encre sur fond = rapport`."""
+    from PyQt6.QtWidgets import QWidget
+
+    from certus.ui.certus_a11y import contrast_ratio
+
+    found = []
+    for widget in [win, *win.findChildren(QWidget)]:
+        for selector, ink, fill in sheet_contrast_pairs(widget.styleSheet()):
+            if ink == fill:  # un filet dessine d'une seule couleur (QFrame HLine : `color` et `background` pareils), pas un texte
+                continue
+            ratio = contrast_ratio(ink, fill)
+            if ratio < minimum:
+                found.append(f"{type(widget).__name__}|{widget.objectName() or '-'}|{selector[:60]}|{ink} sur {fill} = {ratio:.2f}")
+    return found
+
+
 def owns_undo_machinery(win) -> bool:
     """La fenetre peut-elle annuler ? `undo_stack` seul ne le dit pas : CertusBaseApp le donne a TOUTES les fenetres.
 
@@ -575,6 +644,8 @@ def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: in
 
     toggles = [w for w in win.findChildren(QWidget) if type(w).__name__ == "CertusThemeToggle"]
     out["dark_stale"] = None
+    out["low_contrast_light"] = low_contrast_sheets(win)
+    out["low_contrast_dark"] = None
     if toggles:
         light_only = light_only_colours()
         toggles[0].toggle()
@@ -583,6 +654,7 @@ def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: in
             app.processEvents()
             time.sleep(0.02)
         out["dark_stale"] = frozen_light_sheets(win, light_only)
+        out["low_contrast_dark"] = low_contrast_sheets(win)
 
     win.close()
     return out
@@ -623,6 +695,9 @@ def _verdicts(row: dict) -> list[str]:
         bad.append(f"{row['btn_no_tooltip']} buttons without a tooltip")
     if row.get("dark_stale"):
         bad.append(f"{len(row['dark_stale'])} widget sheets keep a light colour after the dark toggle")
+    for theme in ("light", "dark"):
+        if row.get(f"low_contrast_{theme}"):
+            bad.append(f"{len(row[f'low_contrast_{theme}'])} widget sheets pair an ink and a fill under 4.5:1 in the {theme} theme")
     if row.get("a11y_unnamed"):
         bad.append(f"{len(row['a11y_unnamed'])} of {row['n_interactive']} controls have no name for a screen reader")
     # A permanent KPI strip answers the same need as a synthesis tab - CERTUS-STRAT

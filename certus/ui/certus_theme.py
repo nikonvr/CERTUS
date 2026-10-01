@@ -52,7 +52,17 @@ _TOKEN_NAMES = (
     "DANGER_HOVER", "INFO", "SUCCESS_BG", "SUCCESS_TEXT", "WARNING_BG", "WARNING_TEXT", "DANGER_BG", "DANGER_TEXT",
     "INFO_BG", "INFO_TEXT", "BASE_ELEVATED", "ACCENT", "ERROR", "ELEVATED", "CHART_PRIMARY", "CHART_SECONDARY",
     "CHART_DANGER", "CHART_SUCCESS", "CHART_WARNING", "CHART_INFO", "CHART_ACCENT",
+    "SUCCESS_LABEL", "WARNING_LABEL", "SECONDARY_LABEL", "INFO_LABEL",
 )  # fmt: skip
+
+#: The ink drawn ON a solid fill of the palette, derived from the fill (`label_on`) each time the palette is written: `(fill, ink)`.
+#: `PRIMARY_TEXT` and `DANGER_LABEL` are the same thing for the two fills that had a name first, set by hand in `configure`.
+_DERIVED_LABELS = (
+    ("SUCCESS", "SUCCESS_LABEL"),
+    ("WARNING", "WARNING_LABEL"),
+    ("SECONDARY", "SECONDARY_LABEL"),
+    ("INFO", "INFO_LABEL"),
+)
 
 #: What an f-string leaves after a colour of the palette (`{CertusTheme.SURFACE}` -> `#ffffff/*T:SURFACE*/`): a CSS comment
 #: that Qt reads as white space, in a style sheet and in the style attribute of rich text alike.
@@ -193,6 +203,14 @@ class CertusTheme:
     DANGER = "#dc2626"
 
     INFO = "#0369a1"
+
+    #: The ink ON a solid fill of the palette, one name per fill, so a label or an icon drawn on it follows the theme. DERIVED from the
+    #: fill by `label_on` (`_annotate_tokens`), never a literal white: white on the dark theme's PRIMARY or INFO is 2.54:1, on SECONDARY
+    #: 2.56:1, on SUCCESS 1.92:1. The light values below are what the derivation gives for the light fills.
+    SUCCESS_LABEL = "#ffffff"
+    WARNING_LABEL = "#ffffff"
+    SECONDARY_LABEL = "#ffffff"
+    INFO_LABEL = "#ffffff"
 
     ACCENT = PRIMARY  # Alias for backward compatibility
 
@@ -571,6 +589,8 @@ class CertusTheme:
     @classmethod
     def _annotate_tokens(cls) -> None:
         """Make each colour of the active palette a `_Token` carrying its own name (see `_Token`)."""
+        for fill, label in _DERIVED_LABELS:
+            setattr(cls, label, cls.label_on(str(getattr(cls, fill))))
         for name in _TOKEN_NAMES:
             setattr(cls, name, _Token(str(getattr(cls, name)), name))
         cls.CHART_COLORS = [cls.PRIMARY, cls.SECONDARY, cls.DANGER, cls.CHART_PURPLE, cls.WARNING, cls.INFO]
@@ -962,7 +982,7 @@ class CertusTheme:
                 border-radius: 10px;
                 color: {CertusTheme.TEXT_MAIN};
                 selection-background-color: {CertusTheme.PRIMARY};
-                selection-color: white;
+                selection-color: {CertusTheme.PRIMARY_TEXT};
             }}
             QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus {{
                 border: 1px solid {CertusTheme.PRIMARY};
@@ -1135,7 +1155,7 @@ class CertusTheme:
                 padding: 4px 0;
             }}
             QMenu::item {{ padding: 5px 24px; color: {CertusTheme.TEXT_MAIN}; }}
-            QMenu::item:selected {{ background-color: {CertusTheme.PRIMARY}; color: white; border-radius: 4px; }}
+            QMenu::item:selected {{ background-color: {CertusTheme.PRIMARY}; color: {CertusTheme.PRIMARY_TEXT}; border-radius: 4px; }}
             QMenu::separator {{ height: 1px; background: {CertusTheme.BORDER}; margin: 4px 8px; }}
 
             /* ── ToolTip ──────────────────────────────────────────────────────── */

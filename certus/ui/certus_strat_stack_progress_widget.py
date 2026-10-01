@@ -132,7 +132,7 @@ class CertusStratStackProgressWidget(QWidget):
         self.lbl_layer_pill = QLabel("Prêt")
         self.lbl_layer_pill.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
         self.lbl_layer_pill.setStyleSheet(
-            f"background-color: {CertusTheme.PRIMARY}; color: white; "
+            f"background-color: {CertusTheme.PRIMARY}; color: {CertusTheme.PRIMARY_TEXT}; "
             "padding: 4px 12px; border-radius: 12px;"
         )
         header_layout.addWidget(self.lbl_layer_pill)

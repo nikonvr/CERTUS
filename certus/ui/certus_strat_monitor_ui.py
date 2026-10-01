@@ -19,7 +19,7 @@ class CertusStratGrowthWidget(QWidget):
 
         self.header_label = QLabel("PHASE B — Optimisation des blocs en cours...")
         self.header_label.setStyleSheet(
-            f"background-color: {CertusTheme.PRIMARY}; color: white; padding: 8px 12px; "
+            f"background-color: {CertusTheme.PRIMARY}; color: {CertusTheme.PRIMARY_TEXT}; padding: 8px 12px; "
             "font-weight: bold; font-size: 13px; border-radius: 6px;"
         )
         self.header_label.setAlignment(Qt.AlignmentFlag.AlignCenter)

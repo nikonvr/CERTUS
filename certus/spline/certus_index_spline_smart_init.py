@@ -439,7 +439,7 @@ class SmartInitPreviewManager:
                 }}
                 QPushButton:pressed {{
                     background: {CertusTheme.PRIMARY};
-                    color: white;
+                    color: {CertusTheme.PRIMARY_TEXT};
                 }}
             """)
             return btn

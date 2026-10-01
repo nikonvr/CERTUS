@@ -74,7 +74,7 @@ def count_user_facing_emoji() -> int:
 
 
 def test_no_new_hardcoded_hex_outside_the_theme() -> None:
-    """Ratchet. Remesure 2026-09-07 apres la SECONDE passe de l'etape 3.10 : <= 294.
+    """Ratchet. Remesure 2026-10-01 apres l'etape S6.4b : <= 272.
 
     Historique des paliers, parce que chacun dit ce qui l'a fait bouger : 315 avec deux
     fichiers de palette exemptes · 310 quand un troisieme les a rejoints a l'etape 3.9,
@@ -111,10 +111,16 @@ def test_no_new_hardcoded_hex_outside_the_theme() -> None:
     couleurs d'un HTML EXPORTE -- qui ne doit surtout pas suivre le theme de
     l'application -- et celles qu'un commentaire cite pour expliquer un defaut.
     `scripts/sonde_couleurs_en_dur.py` fait la separation et la chiffre.
+
+    📏 281 le 2026-10-01 au debut de S6.4 (le plafond de 294 n'avait pas suivi : 13 de mou), 272 apres S6.4b, qui retire NEUF
+    hexadecimaux : les encres litterales `#fff` du stepper (deux) et des toasts (trois, plus un `#222`), le `#ffffff` de la
+    ligne choisie de la palette de commandes, le `#FFFFFF` des deux icones de FIELD, devenus des jetons d'encre
+    (`PRIMARY_TEXT`, `SUCCESS_LABEL`...). Le mecanisme des jetons de S6.4 n'en avait retire AUCUN : il fait suivre le theme a des
+    couleurs qui sont deja des jetons, il ne dit rien de celles qui n'en sont pas. Le plafond est le compte, au hexadecimal pres.
     """
     count = count_hex_outside_theme()
-    assert count <= 294, (
-        f"Hardcoded hex colors ratchet violated! Found {count} > 294. "
+    assert count <= 272, (
+        f"Hardcoded hex colors ratchet violated! Found {count} > 272. "
         "Use CertusTheme tokens instead of hardcoded hex values."
     )
 

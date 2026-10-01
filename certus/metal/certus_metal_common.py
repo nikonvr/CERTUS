@@ -671,7 +671,7 @@ class MetalBaseApp(CertusBaseApp):
             info_btn.setToolTip(tooltip_text)
 
             info_btn.setStyleSheet(
-                f"border-radius: 8px; background: {CertusTheme.SECONDARY}; color: white; font-weight: bold; border: none;"
+                f"border-radius: 8px; background: {CertusTheme.SECONDARY}; color: {CertusTheme.SECONDARY_LABEL}; font-weight: bold; border: none;"
             )
 
             layout.addWidget(info_btn)

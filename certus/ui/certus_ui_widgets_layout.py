@@ -135,9 +135,9 @@ class CertusStepper(QWidget):
         active = i == self._current
         done = i < self._current
         if active:
-            bg, fg, border = CertusTheme.PRIMARY, "#fff", CertusTheme.PRIMARY
+            bg, fg, border = CertusTheme.PRIMARY, CertusTheme.PRIMARY_TEXT, CertusTheme.PRIMARY
         elif done:
-            bg, fg, border = CertusTheme.SUCCESS, "#fff", CertusTheme.SUCCESS
+            bg, fg, border = CertusTheme.SUCCESS, CertusTheme.SUCCESS_LABEL, CertusTheme.SUCCESS
         else:
             bg, fg, border = CertusTheme.SURFACE, CertusTheme.TEXT_SUB, CertusTheme.BORDER
         return (

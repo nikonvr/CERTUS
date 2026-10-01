@@ -76,7 +76,7 @@ def test_design_gradient_func_pglobal_common_oblique_dispatch():
     app = MockApp()
     app._oblique_mode = True
     x = np.array([15.0])
-    cost, grad = _design_gradient_func_pglobal_common(app, x)
+    cost, _grad = _design_gradient_func_pglobal_common(app, x)
     assert cost == 42.0
     assert app._compute_oblique_error_and_grad_called
 

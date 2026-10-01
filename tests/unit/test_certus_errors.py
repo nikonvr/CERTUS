@@ -279,16 +279,16 @@ class TestValidateParameterRange:
 
 class TestErrorMessages:
     def test_known_code(self):
-        title, details, suggestion = get_error_message("file_not_found", path="/test.csv")
+        title, details, _suggestion = get_error_message("file_not_found", path="/test.csv")
         assert "not found" in title.lower()
         assert "/test.csv" in details
 
     def test_unknown_code_falls_back(self):
-        title, details, suggestion = get_error_message("nonexistent_code")
+        title, _details, _suggestion = get_error_message("nonexistent_code")
         assert "unexpected" in title.lower()
 
     def test_format_kwargs_missing(self):
-        title, details, suggestion = get_error_message("file_not_found")
+        _title, details, _suggestion = get_error_message("file_not_found")
         assert isinstance(details, str)
 
     def test_format_validation_error(self):

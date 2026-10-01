@@ -946,7 +946,7 @@ def test_re_nominal_indices_at_wls_shapes():
 
     wls = np.linspace(400.0, 800.0, 50)
 
-    n_lay, n_sub, is_h, is_l, n_ref, _lref = re_nominal_indices_at_wls(
+    n_lay, n_sub, is_h, _is_l, n_ref, _lref = re_nominal_indices_at_wls(
 
         mats, stack, wls, lambda_ref=550.0
 

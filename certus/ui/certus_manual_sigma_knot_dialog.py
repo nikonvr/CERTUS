@@ -1369,7 +1369,7 @@ class ManualSigmaKnotDialog(QDialog):
             f"Arrow: choose a specific knot count K"
         )
         for K in sorted(self._best_per_k.keys()):
-            _, sk, rmse = self._best_per_k[K]
+            _, _sk, rmse = self._best_per_k[K]
             marker = " ★" if K == abs_best_k else ""
             action = self._recall_menu.addAction(f"K={K}  |  RMSE={rmse:.6f}{marker}")
             action.setData(K)

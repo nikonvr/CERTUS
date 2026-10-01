@@ -140,7 +140,7 @@ class TestTransmissionReflection:
         """For a transparent film, T should be in (0, 1]."""
         result = calculate_transmission_single(550.0, 1.46, 0.0, 200.0, 1.52)
         # Returns (R, T) tuple
-        R_val, T_val = result
+        _R_val, T_val = result
         assert np.isfinite(T_val), "T not finite"
         assert 0.0 < T_val <= 1.0, f"T out of range: {T_val}"
 
@@ -195,7 +195,7 @@ class TestMultiLayerHL:
         d_H = lam0 / (4 * nH_val)
         d_L = lam0 / (4 * nL_val)
         d = np.array([d_H, d_L, d_H, d_L, d_H, d_L, d_H], dtype=np.float64)
-        R, T = calculate_RT_vectorized_real_HL(wls, nH, nL, nSub, d)
+        R, _T = calculate_RT_vectorized_real_HL(wls, nH, nL, nSub, d)
         # With backside correction, 7-layer QW mirror gives R ~ 0.93-0.94
         assert float(R[0]) > 0.90, f"7-layer QW mirror R = {R[0]:.4f}, expected > 0.90"
 
@@ -230,7 +230,7 @@ class TestEdgeCases:
 
     def test_high_extinction(self) -> None:
         """Very absorbing film (metal-like): T should approach 0."""
-        R_t, T_t = calculate_transmission_single(550.0, 1.5, 3.0, 200.0, 1.52)
+        _R_t, T_t = calculate_transmission_single(550.0, 1.5, 3.0, 200.0, 1.52)
         assert np.isfinite(T_t)
         assert T_t < 0.01, f"Expected near-zero T for metal-like film, got {T_t}"
 

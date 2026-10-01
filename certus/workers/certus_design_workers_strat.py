@@ -80,7 +80,7 @@ class DesignOptimizationStrategy:
             if worker._stop_event.is_set():
                 break
             if can_use_grad:
-                c, g = gradient_func_to_use(pp_current_x)
+                _c, g = gradient_func_to_use(pp_current_x)
             g_norm = np.linalg.norm(g)
             if g_norm < 1e-08:
                 break

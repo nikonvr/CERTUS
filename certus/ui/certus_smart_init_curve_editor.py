@@ -225,7 +225,7 @@ class _PlotDragFilter(QObject):
                 if j is None:
                     return False
                 self._drag_j = j
-                xd, yd = self._scatter.getData()
+                _xd, yd = self._scatter.getData()
                 yd = np.asarray(yd, dtype=np.float64)
                 self._y_at_press = float(yd[j]) if j < yd.size else float("nan")
                 self._my_press = float(my)
@@ -518,7 +518,7 @@ class SmartInitNKCurveEditorDialog(QDialog):
         self._paint_sizes()
 
     def _paint_sizes(self) -> None:
-        sk, lam, oi = self._lam_and_order()
+        _sk, lam, oi = self._lam_and_order()
         k = int(oi.size)
         if k == 0:
             return

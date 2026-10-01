@@ -247,7 +247,7 @@ class OptimWorker(QObject):
             mode = self.cfg.get('mode', 'global')
             ep_back = ensure_numpy_array(self.cfg.get('ep_back', []), dtype=float_dtype)
             has_back_stack, has_back_calc, stack_back = optim_backside_flags_from_cfg(self.cfg)
-            mats_nk, n_sub, n_layers_T, n_back_T, d_back = optim_prepare_stack_nk_back(mats, stack, wls, stack_back=stack_back, ep_back=ep_back, has_back_stack=has_back_stack, complex_dtype=complex_dtype, float_dtype=float_dtype)
+            _mats_nk, n_sub, n_layers_T, n_back_T, d_back = optim_prepare_stack_nk_back(mats, stack, wls, stack_back=stack_back, ep_back=ep_back, has_back_stack=has_back_stack, complex_dtype=complex_dtype, float_dtype=float_dtype)
             oblique_mode = self.cfg.get('oblique_mode', False)
             oblique_tgts = self.cfg.get('oblique_tgts', [])
             if oblique_mode and has_back_calc and has_back_stack:

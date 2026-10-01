@@ -547,7 +547,7 @@ def _flips(values, tol=1e-9) -> bool:
 
 @pytest.mark.parametrize(("i_layer", "base"), [(0, 0), (1, 0), (3, 1)])
 def test_the_monotonicity_scan_reads_five_depths_of_the_real_stack_from_the_oracle(i_layer, base) -> None:
-    th_real, th_nom, real, nominal, n_layer = _stacks_under(i_layer, base)
+    th_real, _th_nom, real, nominal, n_layer = _stacks_under(i_layer, base)
     nominal_th = 90.0
 
     non_monotonic, t_mono = _monotonicity_scan(WL, n_layer + 0j, nominal_th, N_SUB + 0j, *real, *nominal)
@@ -580,7 +580,7 @@ def test_a_layer_of_no_thickness_has_nothing_to_scan() -> None:
 
 @pytest.mark.parametrize(("i_layer", "base"), [(0, 0), (2, 0), (3, 1)])
 def test_the_trigger_level_is_the_nominal_stack_at_the_nominal_thickness(i_layer, base) -> None:
-    th_real, th_nom, real, nominal, n_layer = _stacks_under(i_layer, base)
+    _th_real, th_nom, _real, nominal, _n_layer = _stacks_under(i_layer, base)
     nominal_th = 77.0
     n_nominal_layer = NOMINAL_EVEN if i_layer % 2 == 0 else NOMINAL_ODD
 

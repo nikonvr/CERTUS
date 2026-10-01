@@ -545,7 +545,7 @@ class TestPerformanceIntegration:
 
             # Measure memory usage
 
-            current, peak = tracemalloc.get_traced_memory()
+            _current, peak = tracemalloc.get_traced_memory()
 
             tracemalloc.stop()
 

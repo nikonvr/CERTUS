@@ -274,7 +274,7 @@ def _tlu_reference_rt_norm(wls, n_sub, params):
     """Reference identical to _package_results / _index_tlu_live_payload_from_params (unfrosted)."""
     p = np.asarray(params, dtype=np.float64).ravel()
     thickness = float(p[0])
-    Eg, A, E0, C, Eu, eps_inf = (float(p[i]) for i in range(1, 7))
+    Eg, A, E0, C, Eu, _eps_inf = (float(p[i]) for i in range(1, 7))
     E_arr = HC_EV_NM / wls
     eps2 = epsilon2_TLU_array(E_arr, Eg, A, E0, C, Eu)
     eps1 = epsilon1_TL_analytic(E_arr, Eg, A, E0, C, Eu)

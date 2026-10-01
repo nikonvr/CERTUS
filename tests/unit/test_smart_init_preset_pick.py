@@ -44,7 +44,7 @@ def test_pick_best_manual_material_preset_returns_a_known_id() -> None:
         cfg, sk, d_nm_hint=900.0, relax_n_mono=False
     )
     assert out is not None
-    best_id, rm, d_o, n_p, L_p, rows = out
+    best_id, rm, _d_o, n_p, L_p, rows = out
     assert best_id in MANUAL_MATERIAL_PRESET_IDS
     assert np.isfinite(rm)
     assert n_p.size == sk.size == L_p.size

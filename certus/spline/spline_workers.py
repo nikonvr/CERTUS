@@ -171,7 +171,7 @@ def _build_live_dict(
 ) -> dict:
     """Same spectral grid as file / cfg.lam_nm (not only masked lam_f) for GUI display."""
 
-    lam, sk, xv, n_l, k_l, d_nm, n_sub_full, t_th, r_th = _build_spline_view_payload(cfg, sigma_knots, xv)
+    lam, sk, xv, n_l, k_l, d_nm, _n_sub_full, t_th, r_th = _build_spline_view_payload(cfg, sigma_knots, xv)
     t_is_ratio_val = bool(cfg.t_is_ratio)
 
     k_nodes = int(sk.size)

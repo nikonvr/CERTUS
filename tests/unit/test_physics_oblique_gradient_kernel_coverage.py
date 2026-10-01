@@ -60,7 +60,7 @@ def _check_triple_finite(err_sum, grad_raw, weight_sum, n_vars):
 
 def test_tir_branch_reflectance_target():
     """At angle > critical, sin_theta_sub > 1 -> y forced to 1.0 for R-target."""
-    ep, n_layers_T, n_sub, wls, tgt_vals, tgt_weights, var_idx = _build_simple_oblique_stack()
+    ep, n_layers_T, _n_sub, wls, tgt_vals, tgt_weights, var_idx = _build_simple_oblique_stack()
     # Substrate index 1.52, n0 = 1.0 -> critical angle ~41.1deg from substrate side,
     # but the kernel uses (n0 / n_sub) * sin(theta0). For the kernel's TIR branch
     # to fire, we need sin_theta_sub > 1, i.e. n0 * sin(theta0) > n_sub.
@@ -79,7 +79,7 @@ def test_tir_branch_reflectance_target():
 
 def test_tir_branch_transmittance_target():
     """At angle > critical, sin_theta_sub > 1 -> y forced to 0.0 for T-target."""
-    ep, n_layers_T, n_sub, wls, tgt_vals, tgt_weights, var_idx = _build_simple_oblique_stack()
+    ep, n_layers_T, _n_sub, wls, tgt_vals, tgt_weights, var_idx = _build_simple_oblique_stack()
     n_sub_low = np.array([complex(0.5)] * len(wls), dtype=np.complex128)
     err_sum, grad_raw, weight_sum = compute_oblique_gradient_contrib_analytic(
         ep, n_layers_T, n_sub_low, wls, tgt_vals, tgt_weights,

@@ -27,7 +27,7 @@ def test_design_orchestrator_shows_guided_error_on_optimization_failure() -> Non
     # 4. Verify that the user is guided with a dialog rather than just a console log
     mock_ui.show_error_dialog.assert_called_once()
     
-    args, kwargs = mock_ui.show_error_dialog.call_args
+    args, _kwargs = mock_ui.show_error_dialog.call_args
     
     assert args[0] == "Optimization Failed"  # Expected title
     

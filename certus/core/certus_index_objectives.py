@@ -1425,7 +1425,7 @@ class TLUObjective:
 
         eps1 = epsilon1_TL_analytic(self.E_array, Eg, A, E0, C, eps_inf)
 
-        n_calc, k_calc, _ = epsilon_to_nk(eps1, eps2, N_MIN_LIMIT, N_MAX_LIMIT, K_MAX_LIMIT)
+        _n_calc, k_calc, _ = epsilon_to_nk(eps1, eps2, N_MIN_LIMIT, N_MAX_LIMIT, K_MAX_LIMIT)
 
         ik = int(np.argmax(k_calc))
 

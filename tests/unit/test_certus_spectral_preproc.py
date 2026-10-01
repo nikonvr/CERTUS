@@ -65,7 +65,7 @@ class TestAutoTuneSavgol:
     def test_auto_tune_single_curve_row(self) -> None:
         x = np.linspace(400, 800, 64, dtype=np.float64)
         y_mat = np.random.default_rng(6).random((1, 64))
-        w, p, hw = auto_tune_savgol_params(x, y_mat, "Soft (High Fidelity)")
+        w, _p, hw = auto_tune_savgol_params(x, y_mat, "Soft (High Fidelity)")
         assert w % 2 == 1 and hw % 2 == 1
 
 

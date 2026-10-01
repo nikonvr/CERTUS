@@ -79,7 +79,7 @@ extend-ignore = [
   # Ruff-specific legacy
   "RUF001", "RUF002", "RUF003", "RUF005",
   "RUF022",
-  "RUF046", "RUF059", "RUF100",
+  "RUF046", "RUF100",
 ]
 
 [tool.ruff.lint.per-file-ignores]

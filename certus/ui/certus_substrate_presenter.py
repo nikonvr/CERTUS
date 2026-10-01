@@ -207,7 +207,7 @@ class CertusSubstratePresenter:
                 arr_np = np.asarray(arr, dtype=np.float64)
                 score_v = _model_selection_score(rmse_fit=rmse_v, n_fit=arr_np, wl_nm=xa, fit_mask=m_rmse_mask, fit_meta=meta_m.get(_ml, {}), col_name=str(col_name))
                 score_m[_ml] = score_v
-                mono_cnt, mono_frac = IndexCore._monotonic_violation_stats(arr_np[m_rmse_mask]) if np.any(m_rmse_mask) else (0, 0.0)
+                _mono_cnt, mono_frac = IndexCore._monotonic_violation_stats(arr_np[m_rmse_mask]) if np.any(m_rmse_mask) else (0, 0.0)
                 selection_debug[_ml] = {'rmse': rmse_v, 'score': score_v, 'mono_frac': float(mono_frac), 'prior_rmse': float('nan')}
             best_lab, best_score, best_rmse, ranked_models = _rank_models_by_selection_score(score_m=score_m, rms_m=rms_m, by_model=by_model, fit_mask=m_rmse_mask)
             if len(ranked_models) > 1 and np.isfinite(best_score):

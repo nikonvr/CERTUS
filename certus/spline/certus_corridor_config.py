@@ -1189,12 +1189,12 @@ class CorridorContextBuilder:
         (
             maxfun_prof, lam_full, use_lr, rmse_thr_sub, use_abs_delta,
             use_alpha_factor, use_adaptive_abs_delta, tol_abs,
-            base_eff, sk, n_nodes_phys0, L_nodes0, d0, _prof_geom,
-            x_nodes0, corridor_seed_x_source, bounds_nodes, x0_default,
-            mse_seed0, rmse_seed0, scientific_nominal, nom_pack, sk_n_log,
-            k, n_b, k_b, rmse_spectral_curves, rmse_opt, rmse_ref_tag,
-            rmse_thresh, rmse_thresh_active, auto_relaxed_alpha,
-            threshold_fallback_reason, threshold_basis_eff, delta_chi2,
+            base_eff, sk, _n_nodes_phys0, _L_nodes0, d0, _prof_geom,
+            x_nodes0, _corridor_seed_x_source, bounds_nodes, x0_default,
+            _mse_seed0, rmse_seed0, scientific_nominal, nom_pack, _sk_n_log,
+            _k, n_b, k_b, rmse_spectral_curves, rmse_opt, rmse_ref_tag,
+            rmse_thresh, _rmse_thresh_active, _auto_relaxed_alpha,
+            _threshold_fallback_reason, threshold_basis_eff, delta_chi2,
             sig_t, sig_r, sigma_t_f_hetero, sigma_r_f_hetero, _use_hetero,
             _user_mask, t0
         ) = self._resolve_config_and_base()

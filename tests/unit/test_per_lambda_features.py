@@ -223,7 +223,7 @@ def test_kernel_n_bounds_relative(n_init):
 
 
 
-    n_result, k_result, cost = _optimize_point_kernel(
+    n_result, _k_result, _cost = _optimize_point_kernel(
 
         n_init,
 

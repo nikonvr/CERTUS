@@ -110,7 +110,7 @@ def _ratio_theoretical_from_nk(lam, n_l, k_l, d_nm, n_sub):
 
     # Exact R and T calculation (with backside)
 
-    r_film_tot, t_film_tot = calculate_RT_vectorized_real(_THICK_BUF, n_layers_all, n_sub, lam, with_backside=True)
+    _r_film_tot, t_film_tot = calculate_RT_vectorized_real(_THICK_BUF, n_layers_all, n_sub, lam, with_backside=True)
 
     # Bare substrate T (with backside) - 1e-7 safety bound to prevent NaN
 
@@ -145,7 +145,7 @@ def _transmittance_absolute_from_nk(lam, n_l, k_l, d_nm, n_sub):
 
     # Exact R and T calculation (with backside)
 
-    r_film_tot, t_film_tot = calculate_RT_vectorized_real(_THICK_BUF, n_layers_all, n_sub, lam, with_backside=True)
+    _r_film_tot, t_film_tot = calculate_RT_vectorized_real(_THICK_BUF, n_layers_all, n_sub, lam, with_backside=True)
 
     return t_film_tot
 
@@ -173,7 +173,7 @@ def _reflectance_ratio_theoretical_from_nk(lam, n_l, k_l, d_nm, n_sub):
 
     n_layers_all = (n_l - 1j * k_l).reshape(n_pts, 1)
 
-    r_film_tot, t_film_tot = calculate_RT_vectorized_real(_THICK_BUF, n_layers_all, n_sub, lam, with_backside=True)
+    r_film_tot, _t_film_tot = calculate_RT_vectorized_real(_THICK_BUF, n_layers_all, n_sub, lam, with_backside=True)
 
     t_sub_nu = np.maximum(calculate_bare_substrate_RT(lam, n_sub), 1e-7)
 

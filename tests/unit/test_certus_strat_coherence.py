@@ -3512,7 +3512,7 @@ class TestStratCorridorSensitivity:
             center_seed_gate_delta_refit_minus_seed=float("nan"),
         )
 
-        d_arr, rm_arr, c_arr, n_stack, k_stack = _sorted_corridor_stacks(ctx)
+        d_arr, rm_arr, _c_arr, n_stack, k_stack = _sorted_corridor_stacks(ctx)
         assert list(d_arr) == [4.0, 5.0, 6.0]
         assert list(rm_arr) == [0.1, 0.2, 0.3]
         assert n_stack[0, 0] == pytest.approx(1.1)

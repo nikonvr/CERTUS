@@ -156,7 +156,7 @@ class TestNkFromXPwlnk:
         sk = canonical_spline_sigma_knots(400, 1000)
         k = int(sk.size)
         x = np.concatenate(([200.0], np.full(k, 2.0), np.full(k, np.log(1e-3))))
-        n_l, k_l = nk_from_x_pwlnk(x, lam, sk, 1e-8, 10.0, sig_pre=sig)
+        n_l, _k_l = nk_from_x_pwlnk(x, lam, sk, 1e-8, 10.0, sig_pre=sig)
         assert n_l.shape == lam.shape
 
 
@@ -203,7 +203,7 @@ class TestBuildSplineObjectiveMaskedGrid:
         cfg = _make_cfg(50)
         result = build_spline_objective_masked_grid(cfg)
         assert result is not None
-        lam_f, sig_f, n_sub_f, w, inv_npix, t_exp_f, r_exp_f = result
+        lam_f, sig_f, _n_sub_f, w, inv_npix, _t_exp_f, _r_exp_f = result
         assert lam_f.size > 0
         assert sig_f.size == lam_f.size
         assert w.size == lam_f.size
@@ -252,7 +252,7 @@ class TestDecomposeSplinePwlObjective:
     def test_wrong_x_size_returns_nan(self) -> None:
         cfg = _make_cfg(50)
         sk = canonical_spline_sigma_knots(400, 1000)
-        mse_sp, pen, tot = decompose_spline_pwl_objective(cfg, sk, np.array([1.0, 2.0]))
+        mse_sp, _pen, _tot = decompose_spline_pwl_objective(cfg, sk, np.array([1.0, 2.0]))
         assert np.isnan(mse_sp)
 
 
@@ -288,7 +288,7 @@ class TestBuildSegmentOptimizerXVector:
         x = np.concatenate(([200.0], np.full(k, 2.0), np.full(k, np.log(1e-3))))
         result = build_segment_optimizer_x_vector({"sigma_knots": sk, "x": x}, cfg)
         assert result is not None
-        xb, sk_out = result
+        xb, _sk_out = result
         np.testing.assert_allclose(xb, x)
 
     def test_from_nodes(self) -> None:
@@ -303,7 +303,7 @@ class TestBuildSegmentOptimizerXVector:
         }
         result = build_segment_optimizer_x_vector(out, cfg)
         assert result is not None
-        xb, sk_out = result
+        xb, _sk_out = result
         assert xb.size == 1 + 2 * k
 
 
@@ -318,7 +318,7 @@ class TestSplinePWLObjectiveCostAndGrad:
         obj = SplinePWLObjective(cfg, sk)
         x = np.concatenate(([200.0], np.full(k, 2.0), np.full(k, np.log(1e-3))))
         cost_call = obj(x)
-        cost_cag, grad = obj.cost_and_grad(x)
+        cost_cag, _grad = obj.cost_and_grad(x)
         assert abs(cost_call - cost_cag) < 1e-12
 
     def test_grad_returns_array(self) -> None:

@@ -802,7 +802,7 @@ def test_simulate_growth_kernel():
 
 
 
-    calc_thick, dyn, _, _, _ = simulate_growth_kernel(
+    calc_thick, _dyn, _, _, _ = simulate_growth_kernel(
 
 
         p_thick,
@@ -949,7 +949,7 @@ def test_calculate_detailed_growth():
 
 
 
-    x_pts, y_pts, boundaries = calculate_detailed_growth(
+    x_pts, y_pts, _boundaries = calculate_detailed_growth(
 
 
         num_layers, p_thick, layer_wls, n_H_arr, n_L_arr, n_Sub_arr, steps
@@ -1306,7 +1306,7 @@ def test_cost_numba_fast():
     # Coh\u00e9rence interne: cost == MSE de calculate_RT_no_backside
 
 
-    R_arr, T_arr = calculate_RT_no_backside(ep, n_layers_T, n_sub, wls)
+    _R_arr, T_arr = calculate_RT_no_backside(ep, n_layers_T, n_sub, wls)
 
 
     mse_ref, _ = compute_mse_vectorized(T_arr, tgt_vals, tgt_weights)

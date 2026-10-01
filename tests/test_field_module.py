@@ -354,7 +354,7 @@ def test_get_layer_properties_from_list_empty():
 def test_get_layer_properties_from_list_mismatched():
     from certus.core.certus_field_core import get_layer_properties_from_list
     # mismatched layer_types length should fall back to default alternating
-    res_indices, res_ep = get_layer_properties_from_list(2.0, 1.5, [1.0, 2.0], [0], 1000.0)
+    res_indices, _res_ep = get_layer_properties_from_list(2.0, 1.5, [1.0, 2.0], [0], 1000.0)
     assert len(res_indices) == 2
     assert np.isclose(res_indices[0].real, 2.0)
     assert np.isclose(res_indices[1].real, 1.5)

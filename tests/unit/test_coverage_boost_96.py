@@ -253,7 +253,7 @@ def test_to_excel_robust_engine(tmp_path, monkeypatch):
 @pytest.mark.unit
 def test_export_optimization_report_branches(tmp_path, monkeypatch):
     import certus.utils.certus_data as certus_data
-    res_excel, res_html = certus_data.export_optimization_report(
+    res_excel, _res_html = certus_data.export_optimization_report(
         reports_dir=str(tmp_path),
         module_name="METAL",
         rmse=0.01,
@@ -268,7 +268,7 @@ def test_export_optimization_report_branches(tmp_path, monkeypatch):
     monkeypatch.setattr("certus.utils.certus_data.OPENPYXL_AVAILABLE", False)
     mock_to_excel = Mock()
     monkeypatch.setattr(certus_data, "to_excel_robust", mock_to_excel)
-    res_excel, res_html = certus_data.export_optimization_report(
+    res_excel, _res_html = certus_data.export_optimization_report(
         reports_dir=str(tmp_path),
         module_name="METAL",
         rmse=0.01,
@@ -280,7 +280,7 @@ def test_export_optimization_report_branches(tmp_path, monkeypatch):
     mock_to_excel.assert_called_once()
 
     monkeypatch.setattr(pd, "DataFrame", Mock(side_effect=ValueError("raise error")))
-    res_excel, res_html = certus_data.export_optimization_report(
+    res_excel, _res_html = certus_data.export_optimization_report(
         reports_dir=str(tmp_path),
         module_name="METAL",
         rmse=0.01,
@@ -552,7 +552,7 @@ def test_spectral_mse_rmse_masked_from_nk_interpolation_fallback():
     lam_full = np.linspace(400, 1000, 30)
     n_lam = np.full_like(lam_full, 2.0)
     k_lam = np.full_like(lam_full, 1e-3)
-    mse, rmse = spectral_mse_rmse_masked_from_nk(cfg, {}, lam_full, n_lam, k_lam, 200.0)
+    mse, _rmse = spectral_mse_rmse_masked_from_nk(cfg, {}, lam_full, n_lam, k_lam, 200.0)
     assert np.isfinite(mse)
 
 @pytest.mark.unit
@@ -572,7 +572,7 @@ def test_decompose_spline_pwl_objective_empty_lambda():
         substrate_name="SiO2",
     )
     sk = np.array([0.001, 0.002])
-    mse_sp, pen, tot = decompose_spline_pwl_objective(cfg, sk, np.array([100.0, 2.0, 2.0, -5.0, -5.0]))
+    mse_sp, _pen, _tot = decompose_spline_pwl_objective(cfg, sk, np.array([100.0, 2.0, 2.0, -5.0, -5.0]))
     assert mse_sp == 1e30
 
 @pytest.mark.unit
@@ -725,7 +725,7 @@ def test_spline_objective_more_branches():
     from certus.spline.spline_objective import nk_from_x_pwlnk, objective_lam_mask_on_target_grid
     x = np.array([100.0, 2.0, 2.0, -5.0, -5.0])
     sk = np.array([0.001, 0.002])
-    n_lam, k_lam = nk_from_x_pwlnk(x, np.array([400.0, 500.0]), sk, 1e-4, 1.0, profile_interp="invalid_profile_name")
+    n_lam, _k_lam = nk_from_x_pwlnk(x, np.array([400.0, 500.0]), sk, 1e-4, 1.0, profile_interp="invalid_profile_name")
     assert n_lam.size == 2
     
     lam = np.linspace(400, 1000, 20)
@@ -853,7 +853,7 @@ def test_spectral_mse_rmse_masked_from_nk_empty_mgf():
         weight_r=0.0,
         substrate_name="SiO2",
     )
-    mse, rmse = spectral_mse_rmse_masked_from_nk(cfg, {}, np.array([]), np.array([]), np.array([]), 100.0)
+    mse, _rmse = spectral_mse_rmse_masked_from_nk(cfg, {}, np.array([]), np.array([]), np.array([]), 100.0)
     assert np.isnan(mse)
 
 @pytest.mark.unit
@@ -874,7 +874,7 @@ def test_spectral_mse_rmse_masked_from_nk_mask_differs():
         substrate_name="SiO2",
         rmse_fit_lambda_nm=(450.0, 550.0),
     )
-    mse, rmse = spectral_mse_rmse_masked_from_nk(cfg, {}, lam, np.array([2.0, 2.0]), np.array([1e-3, 1e-3]), 100.0)
+    mse, _rmse = spectral_mse_rmse_masked_from_nk(cfg, {}, lam, np.array([2.0, 2.0]), np.array([1e-3, 1e-3]), 100.0)
     assert np.isfinite(mse)
 
 @pytest.mark.unit
@@ -919,7 +919,7 @@ def test_decompose_spline_pwl_objective_non_finite(monkeypatch):
     sk = canonical_spline_sigma_knots(400, 1000)
     k = int(sk.size)
     x = np.concatenate(([200.0], np.full(k, 2.0), np.full(k, np.log(1e-3))))
-    mse, pen, tot = decompose_spline_pwl_objective(cfg, sk, x)
+    mse, _pen, _tot = decompose_spline_pwl_objective(cfg, sk, x)
     assert mse == 1e30
 
 @pytest.mark.unit

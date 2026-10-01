@@ -894,7 +894,7 @@ class SmartInitPreviewManager:
                 )
                 return
 
-            winner, rm_w, d_w = picked
+            winner, _rm_w, _d_w = picked
             self.apply_preset(winner)
         except NUMERICAL_FAULT_EXCEPTIONS as exc:
             QMessageBox.warning(self.dlg, "Auto Select Preset", f"Preset failed: {exc}")

@@ -476,7 +476,7 @@ class IRGlobalModelWorker(QObject):
         try:
             start_time = time.time()
             c = self.config
-            l_full, n_sub_full, target_T, target_R, df_tlu, n_tlu_ref, obj, thickness = self._prepare_ir_phase2_inputs()
+            l_full, n_sub_full, target_T, _target_R, df_tlu, n_tlu_ref, obj, thickness = self._prepare_ir_phase2_inputs()
             stage02 = self._run_ir_stage0_to_stage2(c, l_full, n_sub_full, df_tlu, n_tlu_ref, obj, thickness)
             if stage02 is None:
                 return

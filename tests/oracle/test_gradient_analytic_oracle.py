@@ -25,7 +25,7 @@ def test_compute_gradient_all_layers_analytic_oracle():
     tgt_vals = np.array([0.92, 0.85, 0.10, 0.05, 0.01], dtype=np.float64)
     tgt_weights = np.array([2.5, 1.0, 3.0, 4.0, 0.5], dtype=np.float64)
 
-    cost, grad = compute_gradient_all_layers_analytic(
+    _cost, grad = compute_gradient_all_layers_analytic(
         ep, n_layers_T, n_sub, wls, tgt_vals, tgt_weights, 0.0, False, n_back_T, d_back
     )
 
@@ -108,7 +108,7 @@ def test_compute_metal_tmm_gradient_kernel_oracle():
     nSub_complex = np.array([1.52 + 0j, 1.52 + 0j, 1.52 + 0j], dtype=np.complex128)
     r_tgt = np.array([0.95, 0.90, 0.85], dtype=np.float64)
 
-    mse, g_eM, g_eL, _, _, _ = _compute_metal_tmm_gradient_kernel(
+    _mse, g_eM, g_eL, _, _, _ = _compute_metal_tmm_gradient_kernel(
         wls, nM_complex, eM, eL, nL_complex, nSub_complex, r_tgt
     )
 

@@ -385,7 +385,7 @@ def test_optim_backside_flags_none_stack_back_normalized():
     cfg = {"use_back_coat": True, "stack_back": None}
 
 
-    hbs, hbc, sb = optim_backside_flags_from_cfg(cfg)
+    hbs, _hbc, sb = optim_backside_flags_from_cfg(cfg)
 
 
     assert sb == [] and hbs is False

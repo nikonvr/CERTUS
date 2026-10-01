@@ -59,7 +59,7 @@ def _run(sigma: float, hysteresis: float = 1.66 * 5e-4):
 
 def test_the_margins_come_out_of_the_batch_at_all():
     """Shape first: a margin that never leaves the kernel cannot be wrong, only absent."""
-    thick, dyns, m_level, m_missed, m_fab = _run(5e-4)
+    _thick, _dyns, m_level, m_missed, m_fab = _run(5e-4)
     assert m_level.shape == (N_RUNS, N_LAYERS)
     assert m_missed.shape == (N_RUNS, N_LAYERS)
     assert m_fab.shape == (N_RUNS, N_LAYERS)

@@ -298,7 +298,7 @@ def test_design_gradient():
 
     # Analytical gradient
 
-    cost_a, grad_a, T_arr = _compute_gradient_analytic_kernel(
+    _cost_a, grad_a, _T_arr = _compute_gradient_analytic_kernel(
 
         ep, n_layers_T, n_sub, wls, tgt_vals, tgt_weights, var_idx
 
@@ -402,7 +402,7 @@ def test_design_gradient_all_absorbing():
 
 
 
-    cost_a, grad_a, _ = _compute_gradient_analytic_kernel(
+    _cost_a, grad_a, _ = _compute_gradient_analytic_kernel(
 
         ep, n_layers_T, n_sub, wls, tgt_vals, tgt_weights, var_idx
 
@@ -528,7 +528,7 @@ def test_metal_gradient():
 
     # Analytical
 
-    mse_a, g_eM_a, g_eL_a, dJ_dnM_r, dJ_dnM_i, dJ_dnL_r = (
+    _mse_a, g_eM_a, g_eL_a, dJ_dnM_r, dJ_dnM_i, dJ_dnL_r = (
 
         _compute_metal_tmm_gradient_kernel(wls, nM_arr, eM, eL, nL_arr, nS_arr, r_tgt)
 
@@ -1002,7 +1002,7 @@ def test_oblique_full_exact_zero_degree_matches_normal():
 
     # Normal exact reference
 
-    Rf, Tf, Rf_prime, Rb_prime, Tb = calc_spectrum_full_exact(
+    _Rf, Tf, Rf_prime, Rb_prime, Tb = calc_spectrum_full_exact(
 
         wls, d_front, n_front, d_back, n_back, n_sub
 
@@ -1158,13 +1158,13 @@ def test_oblique_backside_analytic_chain_gradient():
 
     def cost_and_grad(ep):
 
-        Rf, Tf, _, dTf = compute_oblique_rt_and_grads_analytic(
+        _Rf, Tf, _, dTf = compute_oblique_rt_and_grads_analytic(
 
             ep, n_front, n_sub, wls, var_idx, angle, is_s, False
 
         )
 
-        Rfp, Tfr, dRfp, _ = compute_oblique_rt_and_grads_analytic(
+        Rfp, _Tfr, dRfp, _ = compute_oblique_rt_and_grads_analytic(
 
             ep, n_front, n_sub, wls, var_idx, angle, is_s, True
 

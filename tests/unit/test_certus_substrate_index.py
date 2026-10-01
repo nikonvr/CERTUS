@@ -987,7 +987,7 @@ class TestSapphirenuexampleSellmeier:
     def test_columns_classified_as_two_face(self, sapphire_ctx) -> None:
 
 
-        df2, _x, groups = sapphire_ctx
+        _df2, _x, groups = sapphire_ctx
 
 
         assert groups["t_2f"] == ["T 7157 sapphire_nu_2f"]

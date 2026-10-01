@@ -70,7 +70,7 @@ def test_single_wavelength_kernel():
     tgt_vals = np.array([0.5], dtype=np.float64)
     tgt_weights = np.array([1.0], dtype=np.float64)
     var_idx = np.arange(3, dtype=np.int64)
-    cost, grad, T_arr = _compute_gradient_analytic_kernel(
+    _cost, grad, T_arr = _compute_gradient_analytic_kernel(
         ep, n_layers_T, n_sub, wls, tgt_vals, tgt_weights, var_idx
     )
     assert T_arr.shape == (1,)
@@ -84,7 +84,7 @@ def test_single_layer_stack_kernel():
     tgt_vals = np.full(len(wls), 0.5, dtype=np.float64)
     tgt_weights = np.ones(len(wls), dtype=np.float64)
     var_idx = np.array([0], dtype=np.int64)
-    cost, grad, T_arr = _compute_gradient_analytic_kernel(
+    _cost, grad, T_arr = _compute_gradient_analytic_kernel(
         ep, n_layers_T, n_sub, wls, tgt_vals, tgt_weights, var_idx
     )
     assert T_arr.shape == (len(wls),)
@@ -99,7 +99,7 @@ def test_absorbing_substrate_does_not_break_kernel():
     tgt_vals = np.full(len(wls), 0.4, dtype=np.float64)
     tgt_weights = np.ones(len(wls), dtype=np.float64)
     var_idx = np.arange(4, dtype=np.int64)
-    cost, grad, T_arr = _compute_gradient_analytic_kernel(
+    _cost, grad, T_arr = _compute_gradient_analytic_kernel(
         ep, n_layers_T, n_sub, wls, tgt_vals, tgt_weights, var_idx
     )
     assert np.all(np.isfinite(T_arr))
@@ -151,7 +151,7 @@ def test_uniform_weight_scaling_scales_cost_and_grad(scale):
     tgt_vals = np.full(len(wls), 0.5, dtype=np.float64)
     base_w = np.ones(len(wls), dtype=np.float64)
     var_idx = np.arange(3, dtype=np.int64)
-    cost_1, grad_1, _ = _compute_gradient_analytic_kernel(
+    _cost_1, grad_1, _ = _compute_gradient_analytic_kernel(
         ep, n_layers_T, n_sub, wls, tgt_vals, base_w, var_idx
     )
     cost_s, grad_s, _ = _compute_gradient_analytic_kernel(

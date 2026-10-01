@@ -321,7 +321,7 @@ def test_analytical_quarter_wave():
     # compute_TMM_single_point_k0_exact (front only)
 
 
-    Rf_ex, Tf_ex, Rb_ex = compute_TMM_single_point_k0_exact(
+    Rf_ex, Tf_ex, _Rb_ex = compute_TMM_single_point_k0_exact(
 
 
         k0, thicknesses, n_layers, complex(N_SUB)
@@ -1068,7 +1068,7 @@ def test_reciprocity():
         # Forward: Air -> Sub
 
 
-        R_fwd, T_fwd = compute_TMM_generic(
+        _R_fwd, T_fwd = compute_TMM_generic(
 
 
             k0, thicknesses, n_layers_fwd, complex(1.0), complex(N_SUB)
@@ -1089,7 +1089,7 @@ def test_reciprocity():
         n_layers_rev = n_layers_fwd[::-1].copy()
 
 
-        R_bwd, T_bwd = compute_TMM_generic(
+        _R_bwd, T_bwd = compute_TMM_generic(
 
 
             k0, thicknesses_rev, n_layers_rev, complex(N_SUB), complex(1.0)
@@ -1176,7 +1176,7 @@ def test_analytical_hlh():
 
 
 
-    R2, T2 = compute_TMM_single_point_k0(k0, thicknesses, n_layers, complex(N_SUB))
+    R2, _T2 = compute_TMM_single_point_k0(k0, thicknesses, n_layers, complex(N_SUB))
 
 
     check("k0 HLH R @ design wl", R2, R_analytical)
@@ -1185,7 +1185,7 @@ def test_analytical_hlh():
 
 
 
-    Rf, Tf, _ = compute_TMM_single_point_k0_exact(
+    Rf, _Tf, _ = compute_TMM_single_point_k0_exact(
 
 
         k0, thicknesses, n_layers, complex(N_SUB)

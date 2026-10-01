@@ -61,7 +61,7 @@ def test_the_pareto_summary_names_its_configuration_and_fingerprints_its_front(t
     config = tmp_path / "design.json"
     config.write_text("{}", encoding="utf-8")
     record = {"best_rmse": 0.01, "dmin_rmse": 12.0, "best_mc": 0.02, "dmin_mc": 11.0, "best_fab": 0.015, "dmin_fab": 6.0}
-    ui, logs = _fake_ui(config, pareto_history={4: record}, _workflow_best_rmse=0.01)
+    ui, _logs = _fake_ui(config, pareto_history={4: record}, _workflow_best_rmse=0.01)
 
     PlotManager(ui)._export_pareto_report()
 

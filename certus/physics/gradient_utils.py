@@ -95,7 +95,7 @@ def cost_numba_fast(
     """
     # 1. Calc Optical Properties (T)
     if has_back:
-        Rf, Tf, Rf_prime, Rb_prime, Tb = tmm_core.calc_spectrum_full_exact(wls, ep, n_layers_T, d_back, n_back_T, n_sub)
+        _Rf, Tf, Rf_prime, Rb_prime, Tb = tmm_core.calc_spectrum_full_exact(wls, ep, n_layers_T, d_back, n_back_T, n_sub)
 
         # Exact incoherent: T = (Tf * Tb) / (1 - Rf' * Rb')
         n_wls = len(wls)
@@ -110,7 +110,7 @@ def cost_numba_fast(
             T[i] = (Tf[i] * Tb[i]) / d_val
 
     else:
-        R, T = tmm_core.calculate_RT_no_backside(ep, n_layers_T, n_sub, wls)
+        _R, T = tmm_core.calculate_RT_no_backside(ep, n_layers_T, n_sub, wls)
 
     # 2. MSE
     mse, count = compute_mse_vectorized(T, tgt_vals, tgt_weights)

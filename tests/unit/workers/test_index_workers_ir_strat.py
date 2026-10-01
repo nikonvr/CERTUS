@@ -44,7 +44,7 @@ class TestIRGlobalModelStrategy:
         mock_RT.return_value = np.array([0.9, 0.9])
         mock_R.return_value = np.array([0.1, 0.1])
         
-        l_full, n_sub_full, target_T, target_R, df_tlu, n_tlu_ref, obj, thickness = strat._prepare_ir_phase2_inputs(mock_worker)
+        l_full, _n_sub_full, target_T, target_R, _df_tlu, _n_tlu_ref, _obj, thickness = strat._prepare_ir_phase2_inputs(mock_worker)
         assert len(l_full) == 2
         assert thickness == 100.0
         assert target_T is not None

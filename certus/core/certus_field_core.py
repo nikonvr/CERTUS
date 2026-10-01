@@ -178,7 +178,7 @@ def _calculate_metrics_and_field_numba(indices_c1_cn: np.ndarray, ep_c1_cn: np.n
         R, averages, integrals, fields, cos_theta, Y, peaks = _calculate_field_single_pol(indices_for_efield, ep_for_efield, nSub_r, lambda_calc, n_super, integral_points, theta_inc, True)
     else:
         Rs, avg_s, int_s, fields_s, cos_theta, Ys, peaks_s = _calculate_field_single_pol(indices_for_efield, ep_for_efield, nSub_r, lambda_calc, n_super, integral_points, theta_inc, False)
-        Rp, avg_p, int_p, fields_p, _, Yp, peaks_p = _calculate_field_single_pol(indices_for_efield, ep_for_efield, nSub_r, lambda_calc, n_super, integral_points, theta_inc, True)
+        Rp, avg_p, int_p, _fields_p, _, _Yp, peaks_p = _calculate_field_single_pol(indices_for_efield, ep_for_efield, nSub_r, lambda_calc, n_super, integral_points, theta_inc, True)
         R = 0.5 * (Rs + Rp)
         averages = 0.5 * (avg_s + avg_p)
         integrals = 0.5 * (int_s + int_p)

@@ -83,7 +83,7 @@ def test_index_spline():
             if pk is None:
                 record(f"spline/{fname}/preset", False, "no preset found")
                 continue
-            bid, rm0, d_opt, n_p, L_p, rows = pk
+            bid, rm0, _d_opt, _n_p, _L_p, _rows = pk
             record(f"spline/{fname}/preset", True, f"mat={bid}, RMSE0={rm0:.5f}")
 
             # Full pipeline with reduced budget for headless

@@ -179,7 +179,7 @@ def main() -> int:
     eps_s = max(1e-10, SIGMA_KNOTS_MIN_SEP_REL * max(s_hi - s_lo, 1e-12))
     dt_old_d, out_old_d = bench("decode_old", lambda: sigma_knots_decode_old(raw, s_lo, s_hi, eps_s), n_iter=10000)
     dt_new_d, out_new_d = bench("decode_new", lambda: sigma_knots_decode(raw, s_lo, s_hi, eps_s=eps_s), n_iter=10000)
-    dt_new_dw, out_new_dw = bench(
+    dt_new_dw, _out_new_dw = bench(
         "decode_new_work",
         lambda: sigma_knots_decode(raw, s_lo, s_hi, eps_s=eps_s, work=work, reuse_output=True),
         n_iter=10000,

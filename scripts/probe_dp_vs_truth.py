@@ -122,7 +122,7 @@ def analyse() -> dict:
             if len(xs) < 5:
                 continue
             rho, p_rho = stats.spearmanr(xs, ys)
-            tau, p_tau = stats.kendalltau(xs, ys)
+            tau, _p_tau = stats.kendalltau(xs, ys)
             per_group.append(
                 {
                     "num_runs": cap["num_runs"],

@@ -59,7 +59,7 @@ def test_spectral_sanity_dichroic_guardrail():
             s = np.sin(phi)
             m = np.array([[c, 1j * s / n_i], [1j * n_i * s, c]], dtype=np.complex128)
             M = M @ m
-        R, T = compute_RT_from_matrix(M[0, 0], M[0, 1], M[1, 0], M[1, 1], 1.0 + 0j, complex(n_sub, 0.0))
+        _R, T = compute_RT_from_matrix(M[0, 0], M[0, 1], M[1, 0], M[1, 1], 1.0 + 0j, complex(n_sub, 0.0))
         T_vals.append(T)
 
     assert T_vals[0] > 0.80, f"Dichroic passband transmission @ 450nm too low: {T_vals[0]:.4f}"

@@ -89,7 +89,7 @@ def re_execute_phase1(worker: Any) -> list[dict]:
                 raise REUserStopRequested()
             if _cache["x"] is not None and np.array_equal(x, _cache["x"]):
                 return
-            mse, grad, r_out, j_out = c._mse_grad_accumulate_ep(
+            mse, _grad, r_out, j_out = c._mse_grad_accumulate_ep(
                 x, wt_wls, True, c._correc_nom, return_residuals=True
             )
             _cache["x"] = x.copy()

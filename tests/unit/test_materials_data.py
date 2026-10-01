@@ -178,7 +178,7 @@ def test_get_nk_si_returns_the_sheet_with_the_macleod_sign() -> None:
 def test_stub_fallback_is_a_warning_not_an_info(monkeypatch, caplog) -> None:
     monkeypatch.setattr(md, "_si_candidate_paths", lambda: [])
     with caplog.at_level(logging.INFO):
-        wl, n, k, source = md._load_si_data()
+        wl, _n, _k, source = md._load_si_data()
     stub_wl, _, _ = md._silicon_stub_arrays()
     assert source == "built-in stub"
     assert len(wl) == len(stub_wl)

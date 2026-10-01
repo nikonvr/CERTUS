@@ -662,7 +662,7 @@ def compute_batch_rmse(
                 for j in range(n_layers):
                     n_pert[j] = n_row[j] + (d_h if j % 2 == 0 else d_l)
                 n_row = n_pert
-            Rf, Tf, Rb = compute_TMM_single_point_k0_exact(
+            _Rf, Tf, Rb = compute_TMM_single_point_k0_exact(
                 k0_arr[i_wl], thicknesses, n_row, nSub_arr[i_wl]
             )
             ns_real = nSub_arr[i_wl].real

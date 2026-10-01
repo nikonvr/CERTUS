@@ -437,7 +437,7 @@ class FieldWorkerThread(QThread):
                     executor.shutdown(wait=False, cancel_futures=True)
                     return
                 
-                idx, lay_i, lay_z, cost, emp_test, types_test = future.result()
+                _idx, lay_i, lay_z, cost, emp_test, types_test = future.result()
                 
                 if total_candidates <= 20 or i_f % max(1, total_candidates // 20) == 0 or i_f == total_candidates - 1:
                     pct = 5 + int(85 * (i_f / total_candidates))

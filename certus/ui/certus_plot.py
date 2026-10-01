@@ -231,7 +231,7 @@ class CertusScientificPlot(pg.PlotWidget):
             if isinstance(item, (pg.PlotDataItem, pg.PlotCurveItem, pg.ScatterPlotItem)):
                 if hasattr(item, "getData"):
                     try:
-                        xData, yData = item.getData()
+                        xData, _yData = item.getData()
                         if xData is not None and len(xData) > 0:
                             return True
                     except Exception:

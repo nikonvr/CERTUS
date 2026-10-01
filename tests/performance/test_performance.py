@@ -210,7 +210,7 @@ class TestMemoryPerformance:
             run_tmm_wrapper(layers, sample_wavelengths)
 
             # Measure memory usage
-            current, peak = tracemalloc.get_traced_memory()
+            _current, peak = tracemalloc.get_traced_memory()
             tracemalloc.stop()
 
             # Memory usage should be low
@@ -248,7 +248,7 @@ class TestMemoryPerformance:
                 spectra.append(spectrum)
 
             # Measure memory usage
-            current, peak = tracemalloc.get_traced_memory()
+            _current, peak = tracemalloc.get_traced_memory()
             tracemalloc.stop()
 
             # Memory usage should be reasonable
@@ -282,7 +282,7 @@ class TestMemoryPerformance:
             gc.collect()
 
             # Measure memory usage
-            current, peak = tracemalloc.get_traced_memory()
+            _current, peak = tracemalloc.get_traced_memory()
             tracemalloc.stop()
 
             # Memory usage should be stable
@@ -509,7 +509,7 @@ class TestPerformanceRegression:
 
             tracemalloc.start()
             spectrum = run_tmm_wrapper(layers, sample_wavelengths)
-            current, peak = tracemalloc.get_traced_memory()
+            _current, peak = tracemalloc.get_traced_memory()
             tracemalloc.stop()
 
             assert (

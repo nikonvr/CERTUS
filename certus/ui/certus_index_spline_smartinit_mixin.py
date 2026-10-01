@@ -146,7 +146,7 @@ class CertusIndexSplineSmartInitMixin:
         self, cfg: SplineOptConfig, projector: Any, relax_si_mono: bool, state: _SmartInitState
     ) -> None:
         target_sk = np.asarray(state.sk, dtype=np.float64).ravel()
-        new_sk, new_n, new_L, new_d = projector(target_sk)
+        new_sk, new_n, new_L, _new_d = projector(target_sk)
         state.sk = np.asarray(new_sk, dtype=np.float64).ravel().copy()
         state.n_phys = new_n.copy()
         state.L_nodes = new_L.copy()

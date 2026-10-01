@@ -1000,7 +1000,7 @@ class SplineReportBuilder:
                 lam_src_full,
                 n_res_full,
                 k_res_full,
-                t_theo_full,
+                _t_theo_full,
                 ratio_exp_pct_full,
                 ratio_theo_pct_full,
                 n_spl_full,

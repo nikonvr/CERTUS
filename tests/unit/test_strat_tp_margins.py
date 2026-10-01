@@ -95,7 +95,7 @@ def test_a_margin_is_never_negative_without_a_real_crossing():
     It would mean an excursion exceeded the threshold and did not emit.
     """
     for k in (0.5, 1.2, 5.0, 50.0):
-        missed, fab = turning_point_margins(_sine(k), 900, HY)
+        _missed, fab = turning_point_margins(_sine(k), 900, HY)
         if fab < SENTINEL:
             assert fab >= 0.0, f"marge de fabrication negative ({fab / A:.2f} A) a {k} A"
 

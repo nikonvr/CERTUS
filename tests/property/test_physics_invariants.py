@@ -220,7 +220,7 @@ def test_fresnel_limit_thin_layer(
     
     # Very thin layer (near Fresnel limit)
     epsilon = 0.01  # nm, essentially interface-only
-    r_thin, t_thin = calculate_transmission_single(
+    r_thin, _t_thin = calculate_transmission_single(
         wavelength=wavelength,
         n_film_real=n_layer,
         n_film_imag=0.0,  # Transparent layer

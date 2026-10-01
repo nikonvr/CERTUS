@@ -56,7 +56,7 @@ def test_tmm_thickness_continuity(d_base, epsilon):
         [d_base + epsilon, d_base]
     ], dtype=np.float64)
     
-    R_batch, T_batch = calculate_RT_batch_kernel(wls, nH_arr, nL_arr, nSub_arr, thicknesses_batch)
+    R_batch, _T_batch = calculate_RT_batch_kernel(wls, nH_arr, nL_arr, nSub_arr, thicknesses_batch)
     
     R_base = R_batch[0, 0]
     R_eps  = R_batch[1, 0]

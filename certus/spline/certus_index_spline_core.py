@@ -2009,7 +2009,7 @@ def log_rmse_mesh_bridge_diagnosis(
 
             x_cr = np.concatenate((x_c[0:1], n_phys_c, L_blk))
 
-            msp_cr, _, tot_cr = decompose_spline_pwl_objective(cfg_canon_relax, sk_c, x_cr)
+            _msp_cr, _, tot_cr = decompose_spline_pwl_objective(cfg_canon_relax, sk_c, x_cr)
 
         else:
             _, _, tot_cr = float("nan"), float("nan"), float("nan")

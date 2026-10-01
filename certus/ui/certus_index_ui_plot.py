@@ -231,7 +231,7 @@ class CertusIndexPlotMixin:
         prepared = _prepare_nk_plot_inputs(wls, sub_df, res, self.logger)
         if prepared is None:
             return
-        n_values, k_values, method_str, lambda_max_fit, tlu_mode = prepared
+        n_values, k_values, _method_str, lambda_max_fit, tlu_mode = prepared
 
         try:
             # k curve refs for legend

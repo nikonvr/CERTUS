@@ -422,7 +422,7 @@ def dynamic_savgol_blend(x: np.ndarray, y: np.ndarray, base_window: int, poly: i
             if heavy_window % 2 == 0:
                 heavy_window += 1
 
-            x_prep, k_uniform, y_uniform = _interpolate_uniform_in_k(x, y)
+            _x_prep, k_uniform, y_uniform = _interpolate_uniform_in_k(x, y)
             y_uniform = _remove_spikes(y_uniform, z_thresh=5.0)
 
             max_valid = len(k_uniform) - 1 if len(k_uniform) % 2 == 0 else len(k_uniform)

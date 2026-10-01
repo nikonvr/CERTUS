@@ -38,7 +38,7 @@ def test_substrate_presenter_headless():
     
     # Verify display_results was called with expected types
     assert mock_view.display_results.called
-    args, kwargs = mock_view.display_results.call_args
+    args, _kwargs = mock_view.display_results.call_args
     x_result = args[0]
     n_results_raw = args[1]
     

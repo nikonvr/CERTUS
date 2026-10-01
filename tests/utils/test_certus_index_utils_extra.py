@@ -73,7 +73,7 @@ def test_ensure_strictly_increasing():
 def test_merge_closest_knot_pair():
     lam = np.array([1.0, 2.0, 2.1, 4.0])
     k = np.array([0.1, 0.2, 0.3, 0.4])
-    new_lam, new_k = _merge_closest_knot_pair(lam, k)
+    new_lam, _new_k = _merge_closest_knot_pair(lam, k)
     assert len(new_lam) == 3
     assert new_lam[1] == 2.05
 
@@ -105,7 +105,7 @@ def test_compute_study_lambda_window_nm():
 def test_filter_rmse_peaks_iteratively():
     d = np.array([1, 2, 3, 4, 5])
     r = np.array([0.1, 0.5, 0.2, 0.6, 0.1]) # peaks at idx 1 and 3
-    df, rf = _filter_rmse_peaks_iteratively(d, r)
+    df, _rf = _filter_rmse_peaks_iteratively(d, r)
     assert len(df) == 2
     assert np.array_equal(df, np.array([1, 5]))
 

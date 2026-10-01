@@ -252,10 +252,8 @@ class _PlotMixin:
         r_vis = np.asarray(ctx.r_vis, dtype=np.float64).ravel()
         kind_vis = np.asarray(getattr(ctx, "kind_vis", np.zeros_like(d_vis, dtype=np.int8)), dtype=np.int8).ravel()
         status_vis = np.asarray(getattr(ctx, "status_vis", np.zeros_like(d_vis, dtype=np.int8)), dtype=np.int8).ravel()
-
         if hasattr(self, "plot_corridor_rmse_d"):
             self.plot_corridor_rmse_d.clear()
-
         if d_vis.size != r_vis.size:
             n = min(d_vis.size, r_vis.size)
             d_vis = d_vis[:n]
@@ -275,23 +273,19 @@ class _PlotMixin:
             max_r = 1.5 * _r_min if np.isfinite(_r_min) else float("inf")
         else:
             max_r = float("inf")
-
         m_valid_plot = np.isfinite(d_plot) & np.isfinite(r_plot) & (r_plot <= max_r)
         d_plot = d_plot[m_valid_plot]
         r_plot = r_plot[m_valid_plot]
-
         if hasattr(self, "_corridor_rmse_curve"):
             try:
                 self._corridor_rmse_curve.setData(d_plot, r_plot)
             except (AttributeError, RuntimeError, TypeError, ValueError):
                 logger.debug("Failed to update corridor RMSE line curve", exc_info=True)
-
         m_valid_vis = np.isfinite(d_vis) & np.isfinite(r_vis) & (r_vis <= max_r)
         d_vis = d_vis[m_valid_vis]
         r_vis = r_vis[m_valid_vis]
         kind_vis = kind_vis[m_valid_vis]
         status_vis = status_vis[m_valid_vis]
-
         i_best = ctx.i_best
         m_rev = np.asarray(kind_vis == 1, dtype=bool)
         m_main = ~m_rev
@@ -307,133 +301,13 @@ class _PlotMixin:
             symbolPen=pg.mkPen(CertusTheme.PRIMARY, width=1),
             name="RMSE(d)",
         )
-
-        if np.any(m_rev):
-            self.plot_corridor_rmse_d.plot(
-                d_vis[m_rev],
-                r_vis[m_rev],
-                pen=None,
-                symbol="t",
-                symbolSize=11,
-                symbolBrush=pg.mkBrush(255, 140, 0, 200),
-                symbolPen=pg.mkPen(255, 140, 0, 220),
-                name="RMSE(d) reprise cassure",
-            )
-
-        # Overlay fallback points so users can immediately see where strict Deltad
-        # sampling used non-standard evaluation paths.
-        m_fb_seed = np.asarray(status_vis == 1, dtype=bool)
-        m_fb_obj = np.asarray(status_vis == 2, dtype=bool)
-        m_fb_emg = np.asarray(status_vis == 3, dtype=bool)
-        if np.any(m_fb_seed):
-            self.plot_corridor_rmse_d.plot(
-                d_vis[m_fb_seed],
-                r_vis[m_fb_seed],
-                pen=None,
-                symbol="x",
-                symbolSize=12,
-                symbolBrush=pg.mkBrush(255, 255, 255, 0),
-                symbolPen=pg.mkPen("#ff8c00", width=2),
-                name="Fallback seed",
-            )
-        if np.any(m_fb_obj):
-            self.plot_corridor_rmse_d.plot(
-                d_vis[m_fb_obj],
-                r_vis[m_fb_obj],
-                pen=None,
-                symbol="d",
-                symbolSize=13,
-                symbolBrush=pg.mkBrush(255, 255, 255, 0),
-                symbolPen=pg.mkPen("#c2185b", width=2),
-                name="Fallback objectif",
-            )
-        if np.any(m_fb_emg):
-            self.plot_corridor_rmse_d.plot(
-                d_vis[m_fb_emg],
-                r_vis[m_fb_emg],
-                pen=None,
-                symbol="s",
-                symbolSize=14,
-                symbolBrush=pg.mkBrush(255, 255, 255, 0),
-                symbolPen=pg.mkPen("#6a1b9a", width=2),
-                name="Fallback urgence",
-            )
-
-        bp_events = src.get("profile_d_manual_grid_breakpoint_events", [])
-        bp_d_vals: list[float] = []
-        bp_r_vals: list[float] = []
-        bp_d_prevn: list[float] = []
-        bp_r_prevn: list[float] = []
-        bp_d_parab: list[float] = []
-        bp_r_parab: list[float] = []
-        bp_dir_left = 0
-        bp_dir_right = 0
-        if isinstance(bp_events, list) and d_plot.size > 0:
-            for ev in bp_events:
-                if not isinstance(ev, dict):
-                    continue
-                d_b = float(ev.get("d_break_nm", float("nan")))
-                if not np.isfinite(d_b):
-                    continue
-                i_b = int(np.argmin(np.abs(d_plot - d_b)))
-                bp_d_vals.append(float(d_plot[i_b]))
-                bp_r_vals.append(float(r_plot[i_b]))
-                trg_prevn = bool(float(ev.get("trigger_prevN", 0.0)) > 0.5)
-                trg_parab = bool(float(ev.get("trigger_parabola", 0.0)) > 0.5)
-                if trg_parab:
-                    bp_d_parab.append(float(d_plot[i_b]))
-                    bp_r_parab.append(float(r_plot[i_b]))
-                elif trg_prevn:
-                    bp_d_prevn.append(float(d_plot[i_b]))
-                    bp_r_prevn.append(float(r_plot[i_b]))
-                dir_s = float(ev.get("branch_dir_sign", float("nan")))
-                if np.isfinite(dir_s):
-                    if dir_s > 0:
-                        bp_dir_right += 1
-                    elif dir_s < 0:
-                        bp_dir_left += 1
-        if bp_d_vals:
-            self.plot_corridor_rmse_d.plot(
-                np.asarray(bp_d_vals, dtype=np.float64),
-                np.asarray(bp_r_vals, dtype=np.float64),
-                pen=None,
-                symbol="o",
-                symbolSize=15,
-                symbolBrush=pg.mkBrush(255, 236, 139, 220),
-                symbolPen=pg.mkPen("#9b111e", width=2),
-                name="Breakpoints",
-            )
-        if bp_d_prevn:
-            self.plot_corridor_rmse_d.plot(
-                np.asarray(bp_d_prevn, dtype=np.float64),
-                np.asarray(bp_r_prevn, dtype=np.float64),
-                pen=None,
-                symbol="d",
-                symbolSize=13,
-                symbolBrush=pg.mkBrush(255, 255, 255, 0),
-                symbolPen=pg.mkPen("#9b111e", width=2),
-                name="Breakpoint prevN",
-            )
-        if bp_d_parab:
-            self.plot_corridor_rmse_d.plot(
-                np.asarray(bp_d_parab, dtype=np.float64),
-                np.asarray(bp_r_parab, dtype=np.float64),
-                pen=None,
-                symbol="t",
-                symbolSize=14,
-                symbolBrush=pg.mkBrush(255, 255, 255, 0),
-                symbolPen=pg.mkPen("#7a3cff", width=2),
-                name="Breakpoint parabola",
-            )
-
+        self._plot_the_reversal_and_fallback_points(d_vis, r_vis, status_vis, m_rev)
+        bp_dir_left, bp_dir_right, bp_events = self._plot_the_breakpoint_events(src, d_plot, r_plot)
         if r_plot.size == 0 or d_plot.size == 0:
             self._corridor_rmse_best_idx = None
             return
-
         i_best = int(np.argmin(r_plot))
-
         self._corridor_rmse_best_idx = i_best
-
         d_best = float(d_plot[i_best])
         if hasattr(self, "_corridor_rmse_best_marker"):
             try:
@@ -444,10 +318,8 @@ class _PlotMixin:
 
 
         rmse_best = float(r_plot[i_best])
-
         delta_rb_raw = self.sp_corridor_rmse_delta.value() if hasattr(self, "sp_corridor_rmse_delta") else None
         delta_rb = float(delta_rb_raw) if delta_rb_raw is not None else 2e-4
-
         win_rb_raw = self.sp_corridor_rmse_win.value() if hasattr(self, "sp_corridor_rmse_win") else None
         win_rb = int(win_rb_raw) if win_rb_raw is not None else 3
 
@@ -537,6 +409,154 @@ class _PlotMixin:
         else:
             rb_ok, d_lo_rb, d_hi_rb, slope_b, _curv_b = False, float("nan"), float("nan"), float("nan"), float("nan")
 
+        curvature_label_spec = self._draw_the_local_parabola(d_plot, d_best, curvature_label_spec, d_parab_arr, parab_fit, d_center)
+
+        ctx.parab_fit = parab_fit
+        ctx.curvature_label_spec = curvature_label_spec
+        ctx.live_parab = live_parab
+        ctx.d_best = d_best
+        ctx.rmse_best = rmse_best
+        ctx.rmse_thr = rmse_thr
+        ctx.d_parab_arr = d_parab_arr
+        ctx.r_parab_arr = r_parab_arr
+        ctx.win_rb = win_rb
+        ctx.delta_rb = delta_rb
+        ctx.i_parab_best = i_parab_best
+        ctx.rb_ok = bool(rb_ok)
+        ctx.d_lo_rb = float(d_lo_rb)
+        ctx.d_hi_rb = float(d_hi_rb)
+        ctx.slope_b = float(slope_b)
+        ctx.curv_b = float(_curv_b)
+        ctx.d_center = float(d_center) if bool(parab_fit.get("ok", False)) else float(d_best)
+        ctx.bp_events = bp_events if isinstance(bp_events, list) else []
+        ctx.bp_dir_left = int(bp_dir_left)
+        ctx.bp_dir_right = int(bp_dir_right)
+
+    def _plot_the_reversal_and_fallback_points(self, d_vis, r_vis, status_vis, m_rev):
+        """Overlay the points taken after a break (reversal) and the three kinds of fallback evaluation on the RMSE(d) scatter."""
+        if np.any(m_rev):
+            self.plot_corridor_rmse_d.plot(
+                d_vis[m_rev],
+                r_vis[m_rev],
+                pen=None,
+                symbol="t",
+                symbolSize=11,
+                symbolBrush=pg.mkBrush(255, 140, 0, 200),
+                symbolPen=pg.mkPen(255, 140, 0, 220),
+                name="RMSE(d) reprise cassure",
+            )
+
+        # Overlay fallback points so users can immediately see where strict Deltad
+        # sampling used non-standard evaluation paths.
+        m_fb_seed = np.asarray(status_vis == 1, dtype=bool)
+        m_fb_obj = np.asarray(status_vis == 2, dtype=bool)
+        m_fb_emg = np.asarray(status_vis == 3, dtype=bool)
+        if np.any(m_fb_seed):
+            self.plot_corridor_rmse_d.plot(
+                d_vis[m_fb_seed],
+                r_vis[m_fb_seed],
+                pen=None,
+                symbol="x",
+                symbolSize=12,
+                symbolBrush=pg.mkBrush(255, 255, 255, 0),
+                symbolPen=pg.mkPen("#ff8c00", width=2),
+                name="Fallback seed",
+            )
+        if np.any(m_fb_obj):
+            self.plot_corridor_rmse_d.plot(
+                d_vis[m_fb_obj],
+                r_vis[m_fb_obj],
+                pen=None,
+                symbol="d",
+                symbolSize=13,
+                symbolBrush=pg.mkBrush(255, 255, 255, 0),
+                symbolPen=pg.mkPen("#c2185b", width=2),
+                name="Fallback objectif",
+            )
+        if np.any(m_fb_emg):
+            self.plot_corridor_rmse_d.plot(
+                d_vis[m_fb_emg],
+                r_vis[m_fb_emg],
+                pen=None,
+                symbol="s",
+                symbolSize=14,
+                symbolBrush=pg.mkBrush(255, 255, 255, 0),
+                symbolPen=pg.mkPen("#6a1b9a", width=2),
+                name="Fallback urgence",
+            )
+
+    def _plot_the_breakpoint_events(self, src, d_plot, r_plot):
+        """Mark the breakpoint events of the manual grid on the RMSE(d) scatter by what triggered them; return the events and how many broke towards each side."""
+        bp_events = src.get("profile_d_manual_grid_breakpoint_events", [])
+        bp_d_vals: list[float] = []
+        bp_r_vals: list[float] = []
+        bp_d_prevn: list[float] = []
+        bp_r_prevn: list[float] = []
+        bp_d_parab: list[float] = []
+        bp_r_parab: list[float] = []
+        bp_dir_left = 0
+        bp_dir_right = 0
+        if isinstance(bp_events, list) and d_plot.size > 0:
+            for ev in bp_events:
+                if not isinstance(ev, dict):
+                    continue
+                d_b = float(ev.get("d_break_nm", float("nan")))
+                if not np.isfinite(d_b):
+                    continue
+                i_b = int(np.argmin(np.abs(d_plot - d_b)))
+                bp_d_vals.append(float(d_plot[i_b]))
+                bp_r_vals.append(float(r_plot[i_b]))
+                trg_prevn = bool(float(ev.get("trigger_prevN", 0.0)) > 0.5)
+                trg_parab = bool(float(ev.get("trigger_parabola", 0.0)) > 0.5)
+                if trg_parab:
+                    bp_d_parab.append(float(d_plot[i_b]))
+                    bp_r_parab.append(float(r_plot[i_b]))
+                elif trg_prevn:
+                    bp_d_prevn.append(float(d_plot[i_b]))
+                    bp_r_prevn.append(float(r_plot[i_b]))
+                dir_s = float(ev.get("branch_dir_sign", float("nan")))
+                if np.isfinite(dir_s):
+                    if dir_s > 0:
+                        bp_dir_right += 1
+                    elif dir_s < 0:
+                        bp_dir_left += 1
+        if bp_d_vals:
+            self.plot_corridor_rmse_d.plot(
+                np.asarray(bp_d_vals, dtype=np.float64),
+                np.asarray(bp_r_vals, dtype=np.float64),
+                pen=None,
+                symbol="o",
+                symbolSize=15,
+                symbolBrush=pg.mkBrush(255, 236, 139, 220),
+                symbolPen=pg.mkPen("#9b111e", width=2),
+                name="Breakpoints",
+            )
+        if bp_d_prevn:
+            self.plot_corridor_rmse_d.plot(
+                np.asarray(bp_d_prevn, dtype=np.float64),
+                np.asarray(bp_r_prevn, dtype=np.float64),
+                pen=None,
+                symbol="d",
+                symbolSize=13,
+                symbolBrush=pg.mkBrush(255, 255, 255, 0),
+                symbolPen=pg.mkPen("#9b111e", width=2),
+                name="Breakpoint prevN",
+            )
+        if bp_d_parab:
+            self.plot_corridor_rmse_d.plot(
+                np.asarray(bp_d_parab, dtype=np.float64),
+                np.asarray(bp_r_parab, dtype=np.float64),
+                pen=None,
+                symbol="t",
+                symbolSize=14,
+                symbolBrush=pg.mkBrush(255, 255, 255, 0),
+                symbolPen=pg.mkPen("#7a3cff", width=2),
+                name="Breakpoint parabola",
+            )
+        return bp_dir_left, bp_dir_right, bp_events
+
+    def _draw_the_local_parabola(self, d_plot, d_best, curvature_label_spec, d_parab_arr, parab_fit, d_center):
+        """Draw the local parabolic fit of RMSE(d), its centre line, and return the label spec of its curvature when the fit has a minimum."""
         if bool(parab_fit.get("ok", False)):
             if d_parab_arr.size > 0:
                 _parab_default = (float(np.min(d_parab_arr)), float(np.max(d_parab_arr)))
@@ -607,27 +627,7 @@ class _PlotMixin:
                     pen=pg.mkPen("#7a3cff", width=1, style=Qt.PenStyle.DotLine),
                 )
             )
-
-        ctx.parab_fit = parab_fit
-        ctx.curvature_label_spec = curvature_label_spec
-        ctx.live_parab = live_parab
-        ctx.d_best = d_best
-        ctx.rmse_best = rmse_best
-        ctx.rmse_thr = rmse_thr
-        ctx.d_parab_arr = d_parab_arr
-        ctx.r_parab_arr = r_parab_arr
-        ctx.win_rb = win_rb
-        ctx.delta_rb = delta_rb
-        ctx.i_parab_best = i_parab_best
-        ctx.rb_ok = bool(rb_ok)
-        ctx.d_lo_rb = float(d_lo_rb)
-        ctx.d_hi_rb = float(d_hi_rb)
-        ctx.slope_b = float(slope_b)
-        ctx.curv_b = float(_curv_b)
-        ctx.d_center = float(d_center) if bool(parab_fit.get("ok", False)) else float(d_best)
-        ctx.bp_events = bp_events if isinstance(bp_events, list) else []
-        ctx.bp_dir_left = int(bp_dir_left)
-        ctx.bp_dir_right = int(bp_dir_right)
+        return curvature_label_spec
 
 
     @staticmethod

@@ -49,55 +49,7 @@ class _CorridorWorkerMixin(_CorridorTabMixin):
 
             return
 
-        if self.logger:
-            d_dbg = np.asarray(result.get("profile_d_values_nm", []), dtype=np.float64).ravel()
-            r_dbg = np.asarray(result.get("profile_d_rmse_values", []), dtype=np.float64).ravel()
-            n_nan_d = int(np.sum(~np.isfinite(d_dbg))) if d_dbg.size else 0
-            n_nan_r = int(np.sum(~np.isfinite(r_dbg))) if r_dbg.size else 0
-            cov_req = _safe_int_from_mapping(result, "profile_d_manual_grid_requested_base_points", -1)
-            cov_ret = _safe_int_from_mapping(result, "profile_d_manual_grid_returned_base_points", -1)
-            cov_miss = _safe_int_from_mapping(result, "profile_d_manual_grid_missing_after_emergency", -1)
-            cov_ok = bool(result.get("profile_d_manual_grid_coverage_complete", False))
-            self.logger.info(
-                "GUI RMSE(d) regular grid done [order A:result-received] | points=%d | nan(d)=%d | nan(rmse)=%d | coverage requested/returned/missing=%d/%d/%d | complete=%s",
-                int(d_dbg.size),
-                int(n_nan_d),
-                int(n_nan_r),
-                int(cov_req),
-                int(cov_ret),
-                int(cov_miss),
-                "yes" if cov_ok else "no",
-            )
-            if d_dbg.size and r_dbg.size == d_dbg.size:
-                fg_c = np.isfinite(d_dbg) & np.isfinite(r_dbg)
-                if np.any(fg_c):
-                    df = d_dbg[fg_c]
-                    rf = r_dbg[fg_c]
-                    j_min = int(np.argmin(rf))
-                    j_max = int(np.argmax(rf))
-                    d0_seed = result.get("profile_d_manual_grid_d0_seed_nm")
-                    d_nom_pack = result.get("profile_d_manual_grid_nominal_pack_d_nm")
-                    d0_txt = f"{float(d0_seed):.6f}" if d0_seed is not None and np.isfinite(float(d0_seed)) else "n/a"
-                    d_nom_txt = (
-                        f"{float(d_nom_pack):.6f}"
-                        if d_nom_pack is not None and np.isfinite(float(d_nom_pack))
-                        else "n/a"
-                    )
-                    self.logger.info(
-                        "GUI RMSE(d) regular grid done [order A-ext:curve-on-receive] | d_nm[min,max]=[%.6f,%.6f] | "
-                        "rmse[min,max]=[%.8f,%.8f] | curve_min(d,rmse)=(%.6f,%.8f) | curve_max(d,rmse)=(%.6f,%.8f) | "
-                        "visit_first_d_nm=%s | nominal_pack_d_nm=%s",
-                        float(np.min(df)),
-                        float(np.max(df)),
-                        float(np.min(rf)),
-                        float(np.max(rf)),
-                        float(df[j_min]),
-                        float(rf[j_min]),
-                        float(df[j_max]),
-                        float(rf[j_max]),
-                        d0_txt,
-                        d_nom_txt,
-                    )
+        self._log_regular_grid_result(result)
 
         # --- GAP HEALING LOGIC (UX) ---
         # 1. Identify what we have and remove peaks for baseline
@@ -358,6 +310,58 @@ class _CorridorWorkerMixin(_CorridorTabMixin):
                     )
 
         return
+
+    def _log_regular_grid_result(self, result):
+        """Log what the regular d grid returned: its size, its NaNs, its coverage, and the extremes of its RMSE curve."""
+        if self.logger:
+            d_dbg = np.asarray(result.get("profile_d_values_nm", []), dtype=np.float64).ravel()
+            r_dbg = np.asarray(result.get("profile_d_rmse_values", []), dtype=np.float64).ravel()
+            n_nan_d = int(np.sum(~np.isfinite(d_dbg))) if d_dbg.size else 0
+            n_nan_r = int(np.sum(~np.isfinite(r_dbg))) if r_dbg.size else 0
+            cov_req = _safe_int_from_mapping(result, "profile_d_manual_grid_requested_base_points", -1)
+            cov_ret = _safe_int_from_mapping(result, "profile_d_manual_grid_returned_base_points", -1)
+            cov_miss = _safe_int_from_mapping(result, "profile_d_manual_grid_missing_after_emergency", -1)
+            cov_ok = bool(result.get("profile_d_manual_grid_coverage_complete", False))
+            self.logger.info(
+                "GUI RMSE(d) regular grid done [order A:result-received] | points=%d | nan(d)=%d | nan(rmse)=%d | coverage requested/returned/missing=%d/%d/%d | complete=%s",
+                int(d_dbg.size),
+                int(n_nan_d),
+                int(n_nan_r),
+                int(cov_req),
+                int(cov_ret),
+                int(cov_miss),
+                "yes" if cov_ok else "no",
+            )
+            if d_dbg.size and r_dbg.size == d_dbg.size:
+                fg_c = np.isfinite(d_dbg) & np.isfinite(r_dbg)
+                if np.any(fg_c):
+                    df = d_dbg[fg_c]
+                    rf = r_dbg[fg_c]
+                    j_min = int(np.argmin(rf))
+                    j_max = int(np.argmax(rf))
+                    d0_seed = result.get("profile_d_manual_grid_d0_seed_nm")
+                    d_nom_pack = result.get("profile_d_manual_grid_nominal_pack_d_nm")
+                    d0_txt = f"{float(d0_seed):.6f}" if d0_seed is not None and np.isfinite(float(d0_seed)) else "n/a"
+                    d_nom_txt = (
+                        f"{float(d_nom_pack):.6f}"
+                        if d_nom_pack is not None and np.isfinite(float(d_nom_pack))
+                        else "n/a"
+                    )
+                    self.logger.info(
+                        "GUI RMSE(d) regular grid done [order A-ext:curve-on-receive] | d_nm[min,max]=[%.6f,%.6f] | "
+                        "rmse[min,max]=[%.8f,%.8f] | curve_min(d,rmse)=(%.6f,%.8f) | curve_max(d,rmse)=(%.6f,%.8f) | "
+                        "visit_first_d_nm=%s | nominal_pack_d_nm=%s",
+                        float(np.min(df)),
+                        float(np.max(df)),
+                        float(np.min(rf)),
+                        float(np.max(rf)),
+                        float(df[j_min]),
+                        float(rf[j_min]),
+                        float(df[j_max]),
+                        float(rf[j_max]),
+                        d0_txt,
+                        d_nom_txt,
+                    )
 
     def _on_worker_done(self, result: object) -> None:
 

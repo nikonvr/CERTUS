@@ -103,7 +103,6 @@ from certus.core.certus_strat_robustness_slit import (
     _SLIT_CACHE_MAX,
     _SLIT_GL_W,
     _SLIT_GL_X,
-    _SLIT_PHASE_A_WARNED,
     _SLIT_PROFILE_CACHE,
     _calculate_strategy_spectral_resolution,
     _slit_bias_profiles,

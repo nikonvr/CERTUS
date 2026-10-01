@@ -53,6 +53,10 @@ LOOK_UP_IN_THE_FACADE = (
 )
 
 
+#: Module globals that a function REBINDS (`global x`): they live in the part and the facade holds no copy (an immutable copy goes stale).
+REBOUND_FLAGS = ("_SLIT_PHASE_A_WARNED",)
+
+
 def top_level_names(path: Path) -> list[str]:
     """What a module DEFINES at its top level: functions, classes, assigned names (not its imports)."""
     names = []
@@ -85,9 +89,20 @@ def test_every_name_that_a_part_defines_is_the_same_object_in_the_facade(part):
     defined = top_level_names(CORE / f"{part}.py")
     assert defined, f"{part} defines nothing"
     for name in defined:
+        if name in REBOUND_FLAGS:
+            continue  # tested below: the facade must NOT hold a copy of a flag that its function rebinds
         assert hasattr(facade, name), f"{FACADE}.{name} is gone (defined in {part})"
         mine, theirs = getattr(module, name), getattr(facade, name)
         assert mine is theirs or (isinstance(mine, (int, float, str, tuple, bool)) and mine == theirs), (part, name)
+
+
+def test_a_flag_that_a_function_rebinds_has_no_stale_copy_in_the_facade():
+    """`phase_a_slit_profiles` writes `global _SLIT_PHASE_A_WARNED`: a copy in the facade would show the value of the import, forever."""
+    facade = importlib.import_module(FACADE)
+    slit = importlib.import_module("certus.core.certus_strat_robustness_slit")
+    for name in REBOUND_FLAGS:
+        assert hasattr(slit, name)
+        assert not hasattr(facade, name), f"{FACADE}.{name} would be a stale copy"
 
 
 def test_a_mutable_cache_is_one_dictionary_for_the_part_and_the_facade():

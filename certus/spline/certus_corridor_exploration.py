@@ -1174,7 +1174,7 @@ def compute_regular_grid_rmse_profile(
 
     x_seed_left = np.asarray(x_nodes0, dtype=np.float64).ravel().copy()
 
-    n_tot = int(len(visit_indices))
+    n_tot = len(visit_indices)
 
     step_ref = float(np.nanmedian(np.abs(np.diff(d_arr)))) if d_arr.size >= 2 else 1.0
 

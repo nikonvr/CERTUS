@@ -1052,7 +1052,7 @@ def _resample_on_machine_grid(
     n_tot = M_tot
     Ts_r = Ts_r_samp
     Ts_n = Ts_n_samp
-    idx_nom_stop = M_hist + int(round(nominal_th / SAMPLE_DD))
+    idx_nom_stop = M_hist + round(nominal_th / SAMPLE_DD)
     return Ts_r, Ts_n, n_tot, idx_nom_stop
 
 
@@ -1140,7 +1140,7 @@ def _scan_window(
         half_period = wl / (4.0 * n_cur_n_w.real) if n_cur_n_w.real > 1e-9 else nominal_th
         d_max = nominal_th + SCAN_ERROR_MARGIN_NM + half_period
         density = NPTS / (D_SCAN * nominal_th)          # points per nm, UNCHANGED
-        npts_cur = int(round(density * d_max))
+        npts_cur = round(density * d_max)
         if npts_cur < 8:
             npts_cur = 8
     n_tot = n_hist + npts_cur
@@ -1981,7 +1981,7 @@ def simulate_growth_kernel(
             # exact because 63/3 is an integer. With a window that varies per layer the
             # nominal sits at the fraction `nominal_th / d_max` of the scan, and the
             # index has to be derived from that or the stop drifts by a sub-step.
-            idx_nom_stop = n_hist + int(round((npts_cur - 1) * nominal_th / d_max))
+            idx_nom_stop = n_hist + round((npts_cur - 1) * nominal_th / d_max)
 
         if smoothing_window > 1:
             _apply_photometric_drift(

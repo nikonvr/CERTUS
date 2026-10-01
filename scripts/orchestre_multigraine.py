@@ -378,7 +378,7 @@ def partition_temoins(n_couches: int, n_temoins: int) -> list[int]:
     if n_temoins < 2 or n_couches < 2:
         return []
     pas = n_couches / n_temoins
-    return sorted({c for i in range(1, n_temoins) if 0 < (c := int(round(i * pas))) < n_couches})
+    return sorted({c for i in range(1, n_temoins) if 0 < (c := round(i * pas)) < n_couches})
 
 
 def _escalade_multitemoin(a, jdir: Path) -> int:

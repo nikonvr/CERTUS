@@ -524,7 +524,7 @@ class ExportManager:
                     config={
                         "module": "CERTUS_DESIGN",
                         "l0_nm": float(self.ui.l0_spin.value()),
-                        "layers_count": int(len(stack_rows)),
+                        "layers_count": len(stack_rows),
                     },
                     source_paths=[
                         p

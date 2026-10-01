@@ -71,7 +71,7 @@ class CertusIndexEventsMixin:
         if factor is None:
             factor = getattr(self, "_zoom_factor", 1.0)
         if hasattr(self, "lbl_zoom"):
-            self.lbl_zoom.setText(f"Zoom {int(round(factor * 100))}%")
+            self.lbl_zoom.setText(f"Zoom {round(factor * 100)}%")
 
     def _apply_ui_zoom(self, factor: float) -> None:
         apply_app_zoom(
@@ -570,7 +570,7 @@ class CertusIndexEventsMixin:
             if not _is_qt_offscreen_mode():
                 src_type = _source_type_label(self.data_type)
 
-                n_rows = int(len(self.target_data))
+                n_rows = len(self.target_data)
 
                 has_t = "T" in self.target_data.columns
 

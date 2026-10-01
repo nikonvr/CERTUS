@@ -625,8 +625,8 @@ def _generate_structured_seed_strategies(
         block_size = num_layers / float(n_blocks)
         mono_blocks = []
         for b_idx in range(n_blocks):
-            b_start = int(round(b_idx * block_size))
-            b_end = int(round((b_idx + 1) * block_size)) if b_idx < n_blocks - 1 else num_layers
+            b_start = round(b_idx * block_size)
+            b_end = round((b_idx + 1) * block_size) if b_idx < n_blocks - 1 else num_layers
             if b_end > b_start:
                 mono_blocks.append({"start": b_start, "end": b_end, "wavelength": best_wl_global})
         if mono_blocks:
@@ -649,8 +649,8 @@ def _generate_structured_seed_strategies(
     block_size = num_layers / float(n_blocks)
     reg_blocks = []
     for b_idx in range(n_blocks):
-        b_start = int(round(b_idx * block_size))
-        b_end = int(round((b_idx + 1) * block_size)) if b_idx < n_blocks - 1 else num_layers
+        b_start = round(b_idx * block_size)
+        b_end = round((b_idx + 1) * block_size) if b_idx < n_blocks - 1 else num_layers
         if b_end > b_start:
             wl = _best_wl_for_block(b_start, b_end)
             reg_blocks.append({"start": b_start, "end": b_end, "wavelength": wl})

@@ -15,7 +15,7 @@ PYPROJECT_PATH = ROOT / "pyproject.toml"
 ALLOWED_EXTEND_IGNORE = frozenset({
     "E402", "E741", "F401", "F841", "I001",
     "PERF401", "PT011", "PT017",
-    "RUF001", "RUF002", "RUF003", "RUF005", "RUF022", "RUF046", "RUF100",
+    "RUF001", "RUF002", "RUF003", "RUF005", "RUF022", "RUF100",
     "UP040", "UP042", "UP046",
 })
 

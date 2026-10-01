@@ -417,7 +417,7 @@ def dynamic_savgol_blend(x: np.ndarray, y: np.ndarray, base_window: int, poly: i
         if base_window >= 3 and base_window > poly:
             base_window = _ensure_odd(base_window)
             if heavy_window < base_window:
-                heavy_window = _ensure_odd(max(base_window + 2, int(round(base_window * 1.6))))
+                heavy_window = _ensure_odd(max(base_window + 2, round(base_window * 1.6)))
             heavy_window = max(heavy_window, base_window)
             if heavy_window % 2 == 0:
                 heavy_window += 1

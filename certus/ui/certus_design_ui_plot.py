@@ -94,7 +94,7 @@ class PlotManager:
                     config={
                         "module": "CERTUS_DESIGN",
                         "export_kind": "pareto_summary",
-                        "pareto_count": int(len(self.ui.pareto_history)),
+                        "pareto_count": len(self.ui.pareto_history),
                     },
                     source_paths=[
                         p

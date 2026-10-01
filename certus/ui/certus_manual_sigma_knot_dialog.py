@@ -673,7 +673,7 @@ class ManualSigmaKnotDialog(QDialog):
 
     def _refresh_runtime_titles(self) -> None:
         k_before = int(self._base_sigma_knots.size)
-        k_after = int(len(self._row_widgets))
+        k_after = len(self._row_widgets)
         d_txt = f"{float(self._runtime_d_nm):.1f}" if np.isfinite(float(self._runtime_d_nm)) else "-"
         rmse_txt = f"{float(self._runtime_rmse):.6f}" if np.isfinite(float(self._runtime_rmse)) else "-"
         title_plain = f"K {k_before}->{k_after} | d {d_txt} nm | RMSE {rmse_txt} | axis {self._preview_axis}"
@@ -1298,7 +1298,7 @@ class ManualSigmaKnotDialog(QDialog):
             sb.setValue(sb.maximum())
 
     def set_runtime_progress(self, percent: float, message: str | None = None) -> None:
-        p = int(round(float(np.clip(percent, 0.0, 100.0)) * 100.0))
+        p = round(float(np.clip(percent, 0.0, 100.0)) * 100.0)
         self.progress_runtime.update(iteration=p, max_iter=10000, phase="Optimizing...", progress_pct=int(p/100))
         if message:
             self.progress_runtime.setToolTip(str(message))

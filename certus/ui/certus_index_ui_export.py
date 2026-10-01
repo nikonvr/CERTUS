@@ -466,7 +466,7 @@ class CertusIndexExportMixin:
 
             src_name_base = Path(res.config.source_file).stem
 
-            d_val = int(round(res.thickness)) if hasattr(res, "thickness") and res.thickness else 0
+            d_val = round(res.thickness) if hasattr(res, "thickness") and res.thickness else 0
 
             n_colname = f"n_{src_name_base}_{d_val}"
 
@@ -738,7 +738,7 @@ class CertusIndexExportMixin:
 
             src_base = Path(res.config.source_file).stem
 
-            d_val = int(round(res.thickness)) if hasattr(res, "thickness") and res.thickness else 0
+            d_val = round(res.thickness) if hasattr(res, "thickness") and res.thickness else 0
 
             n_col = f"n_{src_base}_{d_val}"
 

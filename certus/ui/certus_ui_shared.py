@@ -18,7 +18,7 @@ def apply_app_zoom(owner, factor: float, *, label_attr: str, stylesheet_fn=None,
         app.setFont(QFont("Segoe UI", max(9, round(base_font_size * factor))))
     label = getattr(owner, label_attr, None)
     if label is not None and hasattr(label, "setText"):
-        label.setText(f"Zoom {int(round(factor * 100))}%")
+        label.setText(f"Zoom {round(factor * 100)}%")
     if stylesheet_fn is not None:
         try:
             owner.setStyleSheet(stylesheet_fn())
@@ -26,7 +26,7 @@ def apply_app_zoom(owner, factor: float, *, label_attr: str, stylesheet_fn=None,
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
     if toast_fn is not None:
         try:
-            toast_fn(owner, f"Zoom {int(round(factor * 100))}%", "info", duration_ms=1200)
+            toast_fn(owner, f"Zoom {round(factor * 100)}%", "info", duration_ms=1200)
         except Exception:
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
     return factor
@@ -36,7 +36,7 @@ def _format_progress_duration(seconds: float) -> str:
     """Standardized duration formatter for UI progress widgets."""
     if seconds is None or seconds < 0:
         return "0 s"
-    total = int(round(seconds))
+    total = round(seconds)
     if total < 60:
         return f"{total} s"
     m, s = divmod(total, 60)

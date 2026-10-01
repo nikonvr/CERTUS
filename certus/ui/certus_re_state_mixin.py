@@ -303,7 +303,7 @@ class CertusREStateMixin:
 
     def _update_zoom_label(self, factor: float) -> None:
         if hasattr(self, "zoom_label"):
-            self.zoom_label.setText(f"Zoom {int(round(factor * 100))}%")
+            self.zoom_label.setText(f"Zoom {round(factor * 100)}%")
 
     def _apply_ui_zoom(self, factor: float) -> None:
         factor = max(0.85, min(1.30, float(factor)))
@@ -314,7 +314,7 @@ class CertusREStateMixin:
             app.setFont(QFont("Segoe UI", max(9, round(base_pt * factor))))
         self._update_zoom_label(factor)
         try:
-            show_toast(self, f"Zoom {int(round(factor * 100))}%", "info", duration_ms=1200)
+            show_toast(self, f"Zoom {round(factor * 100)}%", "info", duration_ms=1200)
         except (RuntimeError, AttributeError, TypeError, ValueError):
             pass
 

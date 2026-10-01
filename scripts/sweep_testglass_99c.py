@@ -118,7 +118,7 @@ CUT_MUST_BE_EVEN = True
 #: preset on another component with --config and the fractions follow.
 def at(frac: float, n_layers: int) -> int:
     """Layer index at a fraction of the stack, snapped DOWN to an admissible (even) cut."""
-    p = int(round(frac * n_layers))
+    p = round(frac * n_layers)
     p -= p % 2                      # even: a campaign must open on H, see CUT_MUST_BE_EVEN
     return max(2, min(p, n_layers - 2))
 

@@ -658,7 +658,7 @@ class CertusIndexWorkerMixin:
                     src_name_base = Path(self.latest_results.config.source_file).stem
 
                     d_val = (
-                        int(round(self.latest_results.thickness))
+                        round(self.latest_results.thickness)
                         if hasattr(self.latest_results, "thickness") and self.latest_results.thickness
                         else 0
                     )

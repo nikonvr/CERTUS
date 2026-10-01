@@ -193,7 +193,7 @@ class REResultsBuilder:
         return {
             "res_norm": float(np.linalg.norm(rbf)),
             "n_active": n_active,
-            "n_total": int(len(rbf)),
+            "n_total": len(rbf),
             "tube_delta": float(tube_delta),
         }
 

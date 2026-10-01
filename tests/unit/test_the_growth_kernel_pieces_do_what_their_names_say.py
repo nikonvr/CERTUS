@@ -384,7 +384,7 @@ def test_the_fine_grid_has_a_reading_every_dd_over_the_history_and_three_thickne
     m_hist, m_tot = _sizes(nominal, i_layer, j0, dd)
     assert n_tot == m_tot
     assert len(ts_r) == len(ts_n) == m_tot
-    assert stop == m_hist + int(round(nominal[i_layer] / dd))  # the nominal stop, on the fine grid
+    assert stop == m_hist + round(nominal[i_layer] / dd)  # the nominal stop, on the fine grid
 
 
 def test_smoothing_alone_reads_the_default_grid_of_a_eighth_of_a_nanometre() -> None:
@@ -513,7 +513,7 @@ def test_the_adaptive_window_is_the_thickness_plus_the_error_margin_plus_half_a_
     half_period = wl / (4.0 * n_layer)  # from an extremum to the next: lambda / 4n
     assert got["d_max"] == pytest.approx(nominal + SCAN_ERROR_MARGIN_NM + half_period)
     density = SCAN_NPTS_CURRENT / (D_SCAN_VAL * nominal)  # the density in points per nm is that of the fixed window
-    assert got["npts_cur"] == int(round(density * got["d_max"]))
+    assert got["npts_cur"] == round(density * got["d_max"])
     assert got["n_tot"] == got["n_hist"] + got["npts_cur"]
 
 

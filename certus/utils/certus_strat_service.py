@@ -1345,10 +1345,10 @@ def _validate_candidates_phase_a(
     crash_min = min(crash_rates_all) if crash_rates_all else float("nan")
     admissibility_stats = {
         "layer": int(i_layer + 1),
-        "offered": int(len(candidate_wls)),
+        "offered": len(candidate_wls),
         "forbidden_crash": int(n_forbidden_crash),
         "forbidden_gain_negative": int(n_forbidden_gain),
-        "survivors": int(len(results_thickness)),
+        "survivors": len(results_thickness),
         "crash_rate_min_observed": crash_min,
         "crash_tolerance": float(crash_tol),
     }
@@ -1374,7 +1374,7 @@ def _validate_candidates_phase_a(
         best_crash = min(e["crash_rate"] for e in eliminated)
         results_thickness = [e for e in eliminated if e["crash_rate"] <= best_crash + 1e-12]
         admissibility_stats["fallback_on_min_crash"] = True
-        admissibility_stats["survivors"] = int(len(results_thickness))
+        admissibility_stats["survivors"] = len(results_thickness)
         logger.warning(
             f"   [CRASH] Layer {i_layer + 1}: NO wavelength under the threshold of "
             f"{crash_tol:.3%} unfinishable depositions. Fallback to the minimum "

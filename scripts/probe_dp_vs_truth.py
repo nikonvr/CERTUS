@@ -127,7 +127,7 @@ def analyse() -> dict:
                 {
                     "num_runs": cap["num_runs"],
                     "n_blocks": nb,
-                    "n": int(len(xs)),
+                    "n": len(xs),
                     "spearman_rho": float(rho),
                     "spearman_p": float(p_rho),
                     "kendall_tau": float(tau),
@@ -144,7 +144,7 @@ def analyse() -> dict:
     if len(xs) >= 5:
         rho, p = stats.spearmanr(xs, ys)
         pooled = {
-            "n": int(len(xs)),
+            "n": len(xs),
             "spearman_rho": float(rho),
             "spearman_p": float(p),
             "note": "populations melangees (n_blocks differents) — indicatif seulement",

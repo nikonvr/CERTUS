@@ -154,7 +154,7 @@ def calculate_level_margins_to_extrema(
     for k in range(_MARGIN_NPTS):
         Ts[k] = _calc_T_added_layer(wl, n_current, k * step, n_Sub, m00, m01, m10, m11)
 
-    i_stop = int(round((_MARGIN_NPTS - 1) / _MARGIN_D_SCAN))
+    i_stop = round((_MARGIN_NPTS - 1) / _MARGIN_D_SCAN)
     T_stop = Ts[i_stop]
 
     # Backwards: we go back as long as the signal progresses in the same

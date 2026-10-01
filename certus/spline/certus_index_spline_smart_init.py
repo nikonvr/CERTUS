@@ -460,7 +460,7 @@ class SmartInitPreviewManager:
             # n slider
             sl_n = QSlider(Qt.Orientation.Horizontal)
             sl_n.setRange(int(1.0 * self.scale_n), int(3.3 * self.scale_n))
-            sl_n.setValue(int(round(float(self.n_phys[i]) * self.scale_n)))
+            sl_n.setValue(round(float(self.n_phys[i]) * self.scale_n))
             sl_n.setMaximumWidth(100)
             self.sliders_n.append(sl_n)
 
@@ -482,7 +482,7 @@ class SmartInitPreviewManager:
             # k slider
             sl_L = QSlider(Qt.Orientation.Horizontal)
             sl_L.setRange(int(self.L_lo_g * self.scale_L), int(self.L_hi_g * self.scale_L))
-            sl_L.setValue(int(round(float(self.L_nodes[i]) * self.scale_L)))
+            sl_L.setValue(round(float(self.L_nodes[i]) * self.scale_L))
             sl_L.setMaximumWidth(100)
             self.sliders_L.append(sl_L)
 
@@ -539,7 +539,7 @@ class SmartInitPreviewManager:
         self.sl_d = QSlider(Qt.Orientation.Horizontal)
         self.scale_d = 100.0
         self.sl_d.setRange(int(float(self.cfg.d_lo) * self.scale_d), int(float(self.cfg.d_hi) * self.scale_d))
-        self.sl_d.setValue(int(round(self.preview_d_nm * self.scale_d)))
+        self.sl_d.setValue(round(self.preview_d_nm * self.scale_d))
         h_d.addWidget(self.sl_d)
 
         self.lbl_d = QLabel(f"{self.preview_d_nm:.2f} nm")
@@ -847,14 +847,14 @@ class SmartInitPreviewManager:
 
         for i in range(self.k_n):
             if i < len(self.sliders_n):
-                self.sliders_n[i].setValue(int(round(float(self.n_phys[i]) * self.scale_n)))
+                self.sliders_n[i].setValue(round(float(self.n_phys[i]) * self.scale_n))
                 self.lbls_n[i].setText(f"{float(self.n_phys[i]):.3f}")
             if i < len(self.sliders_L):
-                self.sliders_L[i].setValue(int(round(float(self.L_nodes[i]) * self.scale_L)))
+                self.sliders_L[i].setValue(round(float(self.L_nodes[i]) * self.scale_L))
             if i < len(self.lbls_k):
                 self.lbls_k[i].setText(f"{np.exp(float(self.L_nodes[i])):.1e}")
 
-        self.sl_d.setValue(int(round(self.preview_d_nm * self.scale_d)))
+        self.sl_d.setValue(round(self.preview_d_nm * self.scale_d))
         self.lbl_d.setText(f"{self.preview_d_nm:.2f} nm")
 
         for sl in self.sliders_n:
@@ -1109,14 +1109,14 @@ class SmartInitPreviewManager:
             def set_n_at(idx, val):
                 self.state.n_phys[idx] = float(val)
                 if 0 <= idx < len(self.sliders_n):
-                    self.sliders_n[idx].setValue(int(round(float(val) * self.scale_n)))
+                    self.sliders_n[idx].setValue(round(float(val) * self.scale_n))
                     if idx < len(self.lbls_n):
                         self.lbls_n[idx].setText(f"{float(val):.3f}")
 
             def set_L_at(idx, val):
                 self.state.L_nodes[idx] = float(val)
                 if 0 <= idx < len(self.sliders_L):
-                    self.sliders_L[idx].setValue(int(round(float(val) * self.scale_L)))
+                    self.sliders_L[idx].setValue(round(float(val) * self.scale_L))
                     if idx < len(self.lbls_k):
                         self.lbls_k[idx].setText(f"{np.exp(float(val)):.1e}")
 

@@ -414,7 +414,7 @@ class DesignOrchestrator:
             self._original_target_count = self._target_layer_count
             if self._target_layer_count < CFG.MAX_LAYERS:
                 ratio = getattr(self.ui, "_needle_overshoot_ratio", 0.30)
-                extra_layers = max(int(math.ceil(self._target_layer_count * ratio)), 4)
+                extra_layers = max(math.ceil(self._target_layer_count * ratio), 4)
                 overshoot = min(self._target_layer_count + extra_layers, CFG.MAX_LAYERS)
                 self._target_layer_count = overshoot
                 self._overshoot_active = True

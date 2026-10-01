@@ -720,7 +720,7 @@ class _RunMixin:
 
         _wsig_ab = self._worker.signals
         def _ab_progress(p: float | int, m: str) -> None:
-            pv = int(round(float(p) * 100.0))
+            pv = round(float(p) * 100.0)
             _wsig_ab.progress_snapshot.emit(build_progress_snapshot(message=m, display_ratio=max(0.0, min(1.0, pv / 10000.0)), progress_ratio=max(0.0, min(1.0, pv / 10000.0)), eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module='INDEX_SPLINE', phase='EXECUTION', metadata={'pv': pv}))
 
         self._worker.kwargs["progress_cb"] = _ab_progress

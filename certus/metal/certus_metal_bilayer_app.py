@@ -1446,7 +1446,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
         # Safely deduce the number of knots from the incoming parameter vector length.
         # Vector structure for bilayer: 4 (eM, eL, n_inf, A) + 2k (n and k) + (k - 2) (lambdas) = 3k + 2.
         # Therefore, k = (size - 2) / 3.
-        num_knots = int(round((len(xk) - 2) / 3.0))
+        num_knots = round((len(xk) - 2) / 3.0)
         offset = 4
         
         spline_knot_count = num_knots

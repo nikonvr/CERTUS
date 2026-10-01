@@ -991,7 +991,7 @@ def _profile_manual_grid_coverage_audit(
         log.warning(
             "%s manual RMSE(d) grid coverage | missing requested base points=%d -> emergency recovery",
             _LOG_PREFIX,
-            int(len(missing_base_targets)),
+            len(missing_base_targets),
         )
         x_seed_emergency = np.asarray(x_seed_center, dtype=np.float64).ravel().copy()
         if x_seed_emergency.size != 2 * int(k):

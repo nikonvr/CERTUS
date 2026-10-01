@@ -662,7 +662,7 @@ class RegularGridProfileContext:
         best_sign, best_rmse, _ = probes[0]
         if np.isfinite(rmse_break) and (best_rmse <= float(rmse_break) - 1e-12):
             return int(best_sign)
-        return int(-1 if side_origin > 0 else +1)
+        return -1 if side_origin > 0 else +1
 
     def _branch_reverse_from_breakpoint(
         self, *, d_break: float, x_seed_start: np.ndarray, side_origin: int, branch_sign: int, primary_step_idx: int,

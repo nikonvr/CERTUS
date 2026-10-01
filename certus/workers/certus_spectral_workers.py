@@ -868,7 +868,7 @@ class EvalWorker(QThread):
                         spectra_vis[k] = {"R": R_vis, "T": T_vis}
                         _log_oblique_eval_done(
                             phase="VIS", angle=k[0], pol=k[1], inc_back=bool(k[2]),
-                            n_lambda=int(len(wls_vis)), elapsed_ms=_elapsed_ms_since(_t0)
+                            n_lambda=len(wls_vis), elapsed_ms=_elapsed_ms_since(_t0)
                         )
 
                 Ts_vis = _pick_transmission_from_spectra_or_front(
@@ -923,7 +923,7 @@ class EvalWorker(QThread):
                             spectra_optim[k] = {"R": R_opt, "T": T_opt}
                             _log_oblique_eval_done(
                                 phase="OPT", angle=k[0], pol=k[1], inc_back=bool(k[2]),
-                                n_lambda=int(len(wls_optim)), elapsed_ms=_elapsed_ms_since(_to0)
+                                n_lambda=len(wls_optim), elapsed_ms=_elapsed_ms_since(_to0)
                             )
 
                     Ts_optim = _pick_transmission_from_spectra_or_front(

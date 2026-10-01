@@ -779,7 +779,7 @@ def worker_spline_auto_add_one_knot(
                     log.info(
                         "INDEX_SPLINE [AUTO_ADD_ONE] deep re-polish promoted=%d/%d | gap=%d | scan_rmse=%.8f | deep_rmse=%.8f",
                         int(j_pr + 1),
-                        int(len(promoted)),
+                        len(promoted),
                         int(gap_idx_pr + 1),
                         float(scan_rmse),
                         float(deep_rmse),

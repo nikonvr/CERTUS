@@ -86,7 +86,7 @@ def live_monitor_nk_clipboard_tsv_2nm(lam: np.ndarray, n_: np.ndarray, k_: np.nd
     i_hi = int(np.floor(hi))
 
     if i_hi < i_lo:
-        lam_i = np.array([int(round(0.5 * (lo + hi)))], dtype=np.int64)
+        lam_i = np.array([round(0.5 * (lo + hi))], dtype=np.int64)
 
     else:
         lam_i = np.arange(i_lo, i_hi + 1, 2, dtype=np.int64)

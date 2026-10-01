@@ -342,7 +342,7 @@ class CertusIndexSplineCorridorUIMixin:
         half = float(min(max(0.0, half), max_half))
 
         if hasattr(self, "sl_corridor_manual_half"):
-            self.sl_corridor_manual_half.setValue(int(round(half * scale)))
+            self.sl_corridor_manual_half.setValue(round(half * scale))
             # setValue does not emit valueChanged if unchanged: force visual sync
             # so vertical interval bars always reflect current robust bounds.
             self._on_corridor_manual_slider_changed(self.sl_corridor_manual_half.value())

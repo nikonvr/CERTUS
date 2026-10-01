@@ -372,7 +372,7 @@ def worker_spline_auto_clean_knots(
                 int(step + 1),
                 int(i),
                 int(K - 2),
-                int(len(variants)),
+                len(variants),
             )
             local_best_rmse = float("inf")
             local_best_knots = None

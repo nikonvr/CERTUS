@@ -105,7 +105,7 @@ def build_wide_dataframe_for_export(series: list[tuple[str, np.ndarray, np.ndarr
         data[f"{stem}_x"] = np.asarray(x, dtype=float).reshape(-1)
         data[f"{stem}_y"] = np.asarray(y, dtype=float).reshape(-1)
 
-    max_len = max(int(len(v)) for v in data.values())
+    max_len = max(len(v) for v in data.values())
     for k in list(data.keys()):
         v = data[k]
         if len(v) < max_len:

@@ -112,7 +112,7 @@ def _run_phase_a_hybrid_loop(
     num_runs = int(params.get("mc_runs_block", 100))
     phase_a_observability: dict[str, Any] = {
         "layers": [],
-        "scan_wl_count": int(len(scan_wl_range)),
+        "scan_wl_count": len(scan_wl_range),
         "mc_runs_block": int(num_runs),
     }
     run_states: list[dict[str, Any]] = [{"p_thick_sim": [], "M_cache_sim": {}} for _ in range(num_runs)]
@@ -250,8 +250,8 @@ def _run_phase_a_hybrid_loop(
         phase_a_observability["layers"].append(
             {
                 "layer": int(i_layer + 1),
-                "selected_candidates_count": int(len(candidates)),
-                "validated_candidates_count": int(len(results_thickness)),
+                "selected_candidates_count": len(candidates),
+                "validated_candidates_count": len(results_thickness),
                 "best_wl": best_wl,
                 "best_cost": best_cost,
                 # The three quantities that now decide the ranking, so that
@@ -575,7 +575,7 @@ def _compute_theoretical_layer_profile(
         "nearest_end_type": nearest_end_type,
         "nearest_end_dist_nm": nearest_curve_dist,
         "tfinal_class": tfinal_class,
-        "extrema_count": int(len(extrema)),
+        "extrema_count": len(extrema),
     }
 
 def _compute_strategy_symmetry_score_percent(

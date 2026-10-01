@@ -729,7 +729,7 @@ class CertusREExcelMixin:
 
         lines.append("Index")
 
-        _push(f"- points: {int(len(wls_idx))}", suspicious=int(len(wls_idx)) < 20)
+        _push(f"- points: {len(wls_idx)}", suspicious=len(wls_idx) < 20)
 
         if len(wls_idx) > 0:
             wi = np.asarray(wls_idx, dtype=np.float64).ravel()
@@ -2117,7 +2117,7 @@ class CertusREExcelMixin:
                 config={
                     "module": "CERTUS_RE",
                     "export_kind": "targets_vs_theory",
-                    "rows_count": int(len(rows)),
+                    "rows_count": len(rows),
                 },
                 source_paths=[
                     p

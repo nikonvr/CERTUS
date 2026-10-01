@@ -382,7 +382,7 @@ def _slider_int_from_d_nm(dv: float, d_lo_nm: float, d_hi_nm: float, steps: int 
         return 0
     dv = float(np.clip(dv, d_lo_nm, d_hi_nm))
     t = (dv - d_lo_nm) / (d_hi_nm - d_lo_nm)
-    return int(round(t * steps))
+    return round(t * steps)
 
 
 def _get_xv_spectral_coord(sx: float, mode: str) -> float:

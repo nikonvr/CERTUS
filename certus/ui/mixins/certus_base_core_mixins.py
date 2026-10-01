@@ -41,7 +41,7 @@ class CertusZoomMixin:
         self._apply_ui_zoom(1.0)
 
     def _zoom_feedback_text(self, factor: float) -> str:
-        percent = int(round(factor * 100))
+        percent = round(factor * 100)
         return f"Zoom {percent}%"
 
     def _ensure_zoom_status_widget(self) -> None:

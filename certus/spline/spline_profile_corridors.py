@@ -488,7 +488,7 @@ def compute_profiled_corridors_by_d(
                 "%s Continuing with %d valid point(s) (< min_valid_points=%d) after automatic RMSE threshold lift "
                 "(envelope may be narrow or degenerate).",
                 _LOG_PREFIX,
-                int(len(ctx.d_vals)),
+                len(ctx.d_vals),
                 min_req,
             )
 
@@ -515,7 +515,7 @@ def compute_profiled_corridors_by_d(
                     "(4) Check if data has sufficient spectral contrast for n/k inference. "
                     "Current: %d valid points (min_req=%d), RMSE_mean=%.6f, thresh=%.6f",
                     _LOG_PREFIX,
-                    int(len(ctx.d_vals)),
+                    len(ctx.d_vals),
                     min_req,
                     float(_rmse_mean),
                     float(ctx.rmse_thresh_active),
@@ -524,7 +524,7 @@ def compute_profiled_corridors_by_d(
                 log.warning(
                     "%s Abort: too few valid solutions (%d < %d).",
                     _LOG_PREFIX,
-                    int(len(ctx.d_vals)),
+                    len(ctx.d_vals),
                     min_req,
                 )
 

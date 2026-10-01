@@ -1603,7 +1603,7 @@ class CertusRELayoutMixin:
 
                 wmx = float(np.max(wls))
 
-                w_den = np.linspace(wmn, wmx, max(200, int(len(wls)) * 5))
+                w_den = np.linspace(wmn, wmx, max(200, len(wls) * 5))
 
                 lr = float(self.l0_spin.value())
 

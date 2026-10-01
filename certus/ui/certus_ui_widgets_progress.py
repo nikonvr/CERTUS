@@ -147,7 +147,7 @@ class ProgressDialog(QWidget):
             self._stage_value_label.setText(snapshot.phase)
         if snapshot.display_ratio is not None:
             self._display_progress = smooth_progress(self._display_progress, snapshot.display_ratio)
-            target_val = int(round(100 * self._display_progress))
+            target_val = round(100 * self._display_progress)
             self._overall_value_label.setText(f"{target_val}%")
             self.progress_bar.setValue(target_val)
         if snapshot.eta_seconds is not None:
@@ -387,7 +387,7 @@ class DualStageProgressWidget(QWidget):
             target_val = int(100 * iteration / max_iter) if max_iter > 0 else 0
             target_val = min(100, max(0, target_val))
         self._display_progress = smooth_progress(self._display_progress, target_val / 100.0)
-        target_val = int(round(100 * (self._display_progress if self._display_progress is not None else 0.0)))
+        target_val = round(100 * (self._display_progress if self._display_progress is not None else 0.0))
 
         self._overall_value_label.setText(f"{target_val}%")
         if self.progress_bar.value() != target_val:

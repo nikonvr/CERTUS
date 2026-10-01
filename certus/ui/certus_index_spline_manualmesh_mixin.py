@@ -426,7 +426,7 @@ class CertusIndexSplineManualMeshMixin:
                     float(tolerance),
                     float(CertusIndexSplineApp._rmse_from_result_dict(seed_current)),
                     float(seed_current.get("d_nm", float("nan"))),
-                    int(len(selected_lambda_knots_nm)),
+                    len(selected_lambda_knots_nm),
                     float(delta_ns),
                     str(force_clean),
                 )
@@ -665,7 +665,7 @@ class CertusIndexSplineManualMeshMixin:
         )
 
         def _manual_progress(p: float | int, m: str) -> None:
-            pv = int(round(float(p) * 100.0))
+            pv = round(float(p) * 100.0)
             self._worker.signals.progress_snapshot.emit(build_progress_snapshot(message=f"[{float(p):6.2f}%] {m!s}", display_ratio=max(0.0, min(1.0, pv / 10000.0)), progress_ratio=max(0.0, min(1.0, pv / 10000.0)), eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module='INDEX_SPLINE', phase='MANUAL_MESH', metadata={'pv': pv}))
 
         self._wire_worker_signals(_manual_progress)
@@ -772,7 +772,7 @@ class CertusIndexSplineManualMeshMixin:
         )
 
         def _manual_progress(p: float | int, m: str) -> None:
-            pv = int(round(float(p) * 100.0))
+            pv = round(float(p) * 100.0)
             self._worker.signals.progress_snapshot.emit(build_progress_snapshot(message=f"[{float(p):6.2f}%] {m!s}", display_ratio=max(0.0, min(1.0, pv / 10000.0)), progress_ratio=max(0.0, min(1.0, pv / 10000.0)), eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module='INDEX_SPLINE', phase='MANUAL_MESH', metadata={'pv': pv}))
 
         self._wire_worker_signals(_manual_progress)
@@ -842,7 +842,7 @@ class CertusIndexSplineManualMeshMixin:
         )
 
         def _manual_progress(p: float | int, m: str) -> None:
-            pv = int(round(float(p) * 100.0))
+            pv = round(float(p) * 100.0)
             self._worker.signals.progress_snapshot.emit(build_progress_snapshot(message=f"[{float(p):6.2f}%] {m!s}", display_ratio=max(0.0, min(1.0, pv / 10000.0)), progress_ratio=max(0.0, min(1.0, pv / 10000.0)), eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module='INDEX_SPLINE', phase='MANUAL_MESH', metadata={'pv': pv}))
 
         self._wire_worker_signals(_manual_progress)
@@ -913,7 +913,7 @@ class CertusIndexSplineManualMeshMixin:
             if p < 0:
                 self._worker.signals.progress_snapshot.emit(build_progress_snapshot(message=str(m), display_ratio=None, progress_ratio=None, eta_seconds=None, confidence=0.0, state=StepState.ERROR, module='INDEX_SPLINE', phase='MANUAL_MESH', metadata={'pv': -1}))
             else:
-                pv = int(round(float(np.clip(p, 0.0, 100.0)) * 100.0))
+                pv = round(float(np.clip(p, 0.0, 100.0)) * 100.0)
                 self._worker.signals.progress_snapshot.emit(build_progress_snapshot(message=str(m), display_ratio=max(0.0, min(1.0, pv / 10000.0)), progress_ratio=max(0.0, min(1.0, pv / 10000.0)), eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module='INDEX_SPLINE', phase='MANUAL_MESH', metadata={'pv': pv}))
 
         self._wire_worker_signals(_manual_progress)
@@ -987,7 +987,7 @@ class CertusIndexSplineManualMeshMixin:
             if p < 0:
                 self._worker.signals.progress_snapshot.emit(build_progress_snapshot(message=str(m), display_ratio=None, progress_ratio=None, eta_seconds=None, confidence=0.0, state=StepState.ERROR, module='INDEX_SPLINE', phase='MANUAL_MESH', metadata={'pv': -1}))
             else:
-                pv = int(round(float(np.clip(p, 0.0, 100.0)) * 100.0))
+                pv = round(float(np.clip(p, 0.0, 100.0)) * 100.0)
                 self._worker.signals.progress_snapshot.emit(build_progress_snapshot(message=str(m), display_ratio=max(0.0, min(1.0, pv / 10000.0)), progress_ratio=max(0.0, min(1.0, pv / 10000.0)), eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module='INDEX_SPLINE', phase='MANUAL_MESH', metadata={'pv': pv}))
 
         self._wire_worker_signals(_manual_progress)

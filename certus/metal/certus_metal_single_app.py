@@ -1057,7 +1057,7 @@ class CertusMetalSingleApp(MetalBaseApp):
         self.logger.info(
             "AUTO_BATCH target loaded path=%s rows=%d finite_R=%d finite_T=%d finite_Rback=%d",
             filepath,
-            int(len(wls)),
+            len(wls),
             int(np.count_nonzero(np.isfinite(R_val))),
             int(np.count_nonzero(np.isfinite(T_val))),
             int(np.count_nonzero(np.isfinite(Rb_val))),
@@ -1437,7 +1437,7 @@ class CertusMetalSingleApp(MetalBaseApp):
         # Safely deduce the number of knots from the incoming parameter vector length.
         # Vector structure for single metal: 1 (eM) + 2k (n and k) + (k - 2) (lambdas) = 3k - 1.
         # Therefore, k = (size + 1) / 3.
-        num_knots = int(round((len(xk) + 1) / 3.0))
+        num_knots = round((len(xk) + 1) / 3.0)
         offset = 1
 
         n_knots = xk[offset : offset + num_knots]

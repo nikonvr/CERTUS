@@ -382,7 +382,7 @@ class CertusIndexSplineEventsExtrasMixin:
             return False
         cfg = self._cfg_with_result_substrate(cfg, seed)
         polish = int(getattr(cfg, "polish_maxfun", 10000) or 10000)
-        deep_maxfun = int(max(4000, min(24000, int(round(1.5 * float(polish))))))
+        deep_maxfun = int(max(4000, min(24000, round(1.5 * float(polish)))))
         CertusIndexSplineApp._prepare_worker_restart(self)
         self._worker = GenericWorker(
             _worker_curve_minimum_deep_refit,

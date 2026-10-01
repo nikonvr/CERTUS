@@ -228,7 +228,7 @@ def format_eta(seconds: float | None) -> str:
     """Return a compact human-friendly ETA string."""
     if seconds is None or seconds < 0:
         return ""
-    s = int(round(seconds))
+    s = round(seconds)
     if s == 0:
         return "ETA ~0s"
     if s < 5:

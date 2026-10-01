@@ -80,15 +80,15 @@ class _SettingsMixin:
 
         panel_h = int(max(0, spl.height()))
         if panel_h <= 0:
-            panel_h = int(round(0.58 * float(total)))
+            panel_h = round(0.58 * float(total))
 
         # Keep the right panel width near the visible height so the active plot
         # starts close to a square aspect by default.
-        target_right = int(round(0.88 * float(panel_h)))
+        target_right = round(0.88 * float(panel_h))
         target_right = int(
             min(
-                max(target_right, int(round(0.20 * float(total)))),
-                int(round(0.95 * float(total))),
+                max(target_right, round(0.20 * float(total))),
+                round(0.95 * float(total)),
             )
         )
         target_left = int(max(1, total - target_right))
@@ -132,8 +132,8 @@ class _SettingsMixin:
                 self._persist_splitter_states()
             return
 
-        min_left = max(1, int(round(0.05 * total)))
-        max_left = max(min_left, int(round(0.95 * total)))
+        min_left = max(1, round(0.05 * total))
+        max_left = max(min_left, round(0.95 * total))
         clamped_left = int(min(max(left, min_left), max_left))
 
         if clamped_left != left:
@@ -379,7 +379,7 @@ class _SettingsMixin:
                         f"File: {Path(path).resolve(strict=False)}",
                         "",
                         "General",
-                        (f"Rows: {int(len(self.df))}", int(len(self.df)) <= 0),
+                        (f"Rows: {len(self.df)}", len(self.df) <= 0),
                         "",
                         "Data",
                         f"Columns: {', '.join(cols)}",
@@ -795,7 +795,7 @@ class _CorridorControlMixin:
 
         def _corr_progress(p: float | int, m: str) -> None:
 
-            pv = int(round(float(p) * 100.0))
+            pv = round(float(p) * 100.0)
 
             self._worker.signals.progress_snapshot.emit(build_progress_snapshot(message=m, display_ratio=max(0.0, min(1.0, pv / 10000.0)), progress_ratio=max(0.0, min(1.0, pv / 10000.0)), eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module='INDEX_SPLINE', phase='SETTINGS', metadata={'pv': pv}))
 
@@ -1131,7 +1131,7 @@ class _CorridorControlMixin:
             )
 
         if hasattr(self, "pb_corridor_rmse_grid"):
-            self.pb_corridor_rmse_grid.update(iteration=dn, max_iter=tot, phase=f"Scanning grid... {dn}/{tot}", progress_pct=int(round(100.0 * frac)))
+            self.pb_corridor_rmse_grid.update(iteration=dn, max_iter=tot, phase=f"Scanning grid... {dn}/{tot}", progress_pct=round(100.0 * frac))
 
         t0 = float(getattr(self, "_corridor_rmse_grid_live_t0", float("nan")))
 
@@ -1198,7 +1198,7 @@ class _CorridorControlMixin:
 
         scale = max(1, int(getattr(self, "_corridor_rmse_manual_slider_scale", 100) or 100))
 
-        max_steps = max(1, int(round(max_half * scale)))
+        max_steps = max(1, round(max_half * scale))
 
         cur_half = self._corridor_manual_half_width_nm()
         if has_manual_interval:
@@ -1222,7 +1222,7 @@ class _CorridorControlMixin:
 
         self.sl_corridor_manual_half.setTickInterval(max(1, max_steps // 8))
 
-        self.sl_corridor_manual_half.setValue(int(round(cur_half * scale)))
+        self.sl_corridor_manual_half.setValue(round(cur_half * scale))
 
         self.sl_corridor_manual_half.setEnabled(max_steps > 0)
 

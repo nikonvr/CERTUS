@@ -1361,7 +1361,7 @@ def load_spectrum_columns(
         y_columns=y_columns,
         x_unit=result_unit,
         normalised_to_fraction=normalised,
-        n_rows=int(len(df)),
+        n_rows=len(df),
         source_path=str(abs_path),
     )
 

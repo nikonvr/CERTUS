@@ -1091,18 +1091,18 @@ class IndexCore:
             return "Coefficients: " + " ; ".join(parts)
 
         if str(source or "").startswith("analytic-bspline-lsq") and c.size >= 6:
-            kdeg = int(round(float(c[1])))
+            kdeg = round(float(c[1]))
 
             lo_nm, hi_nm = float(c[2]), float(c[3])
 
-            nt = int(round(float(c[4])))
+            nt = round(float(c[4]))
 
             min_nt = 2 * (kdeg + 1)  # minimal valid knot vector for a B-spline of degree k
 
             if nt < min_nt or kdeg < 0 or c.size < 5 + nt + 1:
                 return f"Coefficients (B-spline LSQ, raw): {np.array2string(c, precision=9, separator=', ')}"
 
-            nc_hdr = int(round(float(c[5 + nt])))
+            nc_hdr = round(float(c[5 + nt]))
 
             if nc_hdr < 1 or c.size < 6 + nt + nc_hdr:
                 return f"Coefficients (B-spline LSQ, raw): {np.array2string(c, precision=9, separator=', ')}"
@@ -1737,7 +1737,7 @@ class IndexCore:
         logger.info(
             "Polynomial model selection: terms=%s | n_vars=%d | rmse_fit=%.6g | target<=%.6g",
             ",".join(active_terms),
-            int(len(active_terms)),
+            len(active_terms),
             float(rmse_compact),
             float(rmse_target_compact),
         )

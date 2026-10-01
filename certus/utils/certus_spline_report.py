@@ -996,7 +996,7 @@ class SplineReportBuilder:
         d_nm_fn = result.get("d_nm")
 
         if isinstance(d_nm_fn, (int, float)) and np.isfinite(float(d_nm_fn)):
-            d_ang_int = int(round(float(d_nm_fn) * 10.0))
+            d_ang_int = round(float(d_nm_fn) * 10.0)
 
             fname = f"IndexSpline_Result_{ts}_d{d_ang_int}Ang.xlsx"
 

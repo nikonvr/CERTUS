@@ -135,7 +135,7 @@ class CertusStratEventsMixin:
 
     def _update_zoom_label(self, factor: float) -> None:
         if hasattr(self, "zoom_label"):
-            self.zoom_label.setText(f"Zoom {int(round(factor * 100))}%")
+            self.zoom_label.setText(f"Zoom {round(factor * 100)}%")
 
     def _apply_ui_zoom(self, factor: float) -> None:
         apply_app_zoom(

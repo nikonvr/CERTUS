@@ -197,6 +197,8 @@ def _build_overlay_class():
         QWidget,
     )
 
+    from certus.utils.certus_ux import ClickTarget
+
     class _CoachMark(QFrame):
         def __init__(self, parent, step: TourStep, index: int, total: int):
             super().__init__(parent)
@@ -237,7 +239,8 @@ def _build_overlay_class():
             self.btn_next = QPushButton("Finish" if index == total - 1 else "Next", self)
             self.btn_next.setToolTip("Complete tour" if index == total - 1 else "Go to next step")
             for _b in (self.btn_skip, self.btn_back, self.btn_next):
-                _b.setMinimumHeight(24)
+                _b.setMinimumHeight(ClickTarget.MIN_HEIGHT)
+                _b.setMinimumWidth(ClickTarget.MIN_WIDTH)
             row.addWidget(self.btn_skip)
             row.addStretch(1)
             row.addWidget(self.btn_back)

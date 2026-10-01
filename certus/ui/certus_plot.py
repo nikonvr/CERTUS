@@ -22,6 +22,7 @@ from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtCore import Qt, QTimer
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.utils.certus_atomic_io import atomic_open
+from certus.utils.certus_ux import ClickTarget
 
 # Late imports from certus.utils.certus_export in methods to avoid circular dependency
 
@@ -760,6 +761,11 @@ class CertusScientificPlot(pg.PlotWidget):
 
         export_btn.setMenu(menu)
         toolbar.addWidget(export_btn)
+        # "CSV" was 42 px and "Reset" 52: a caption of three letters or more gets the click
+        # target of the suite's other buttons, not the width of its own letters.
+        for button in toolbar.findChildren(QToolButton):
+            if button.text().strip():
+                button.setMinimumWidth(ClickTarget.MIN_WIDTH)
         return toolbar
 
     def _export_png(self):

@@ -115,6 +115,17 @@ class Typography:
     BOLD: Final[int] = 75
 
 
+class ClickTarget:
+    """Smallest click target (px) the suite accepts for a button that carries a caption.
+
+    scripts/audit_ux_certus.py (BUTTON_MIN_W, BUTTON_MIN_H) measures against these two
+    figures and tests/ui/test_ux_click_target_width.py pins that they stay equal.
+    """
+
+    MIN_WIDTH: Final[int] = 60
+    MIN_HEIGHT: Final[int] = 24
+
+
 class ZIndex:
     """Logical z-order (mapped to WindowStaysOnTopHint layering hints)."""
 

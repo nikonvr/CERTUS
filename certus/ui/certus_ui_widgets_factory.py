@@ -168,7 +168,7 @@ from certus.core.certus_core import OPENPYXL_AVAILABLE
 
 
 from certus.ui.certus_theme import CertusTheme
-from certus.utils.certus_ux import Typography
+from certus.utils.certus_ux import ClickTarget, Typography
 from certus.ui.certus_ui_utils import open_documentation
 
 
@@ -271,9 +271,12 @@ def create_header_logo_widget(
         lbl.setStyleSheet(f"font-weight: 800; color: {CertusTheme.PRIMARY}; font-size: 20px;")
         layout.addWidget(lbl)
 
+    # The header sits at the top of the control panel and sets its minimum width. The Help button is 60 px
+    # (ClickTarget.MIN_WIDTH) where it was 45, and the header gives the 15 px back by the space after the logo,
+    # 5 px where it was 20, so that the panel is not wider (left_min_px of tests/ui/ux_baseline*.json).
     if title_text:
         from certus.ui.certus_ui_widgets_utils import AutoShrinkTitleLabel
-        layout.addSpacing(20)
+        layout.addSpacing(5)
         vbox = QVBoxLayout()
         vbox.setSpacing(0)
         vbox.setAlignment(Qt.AlignmentFlag.AlignVCenter)
@@ -320,7 +323,7 @@ def create_header_logo_widget(
 
         btn_help.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
 
-        btn_help.setFixedSize(45, 45)
+        btn_help.setFixedSize(ClickTarget.MIN_WIDTH, 45)
 
         btn_help.setIconSize(QSize(18, 18))
 
@@ -530,7 +533,7 @@ def create_top_actions_bar(
         # these; the tab chain should start at the first field instead.
         btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         btn.setProperty("certus_chrome", True)
-        btn.setMinimumWidth(60)
+        btn.setMinimumWidth(ClickTarget.MIN_WIDTH)
 
         btn.setStyleSheet(f"""
             QPushButton {{

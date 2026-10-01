@@ -1,5 +1,12 @@
 """Performance tests for CERTUS Suite
-Covers benchmarks and performance regression tests."""
+Covers benchmarks and performance regression tests.
+
+Costs are counted in NumPy references, not in seconds (audit v2, plan S3.5; ETAT D38). A threshold in seconds fails on a loaded machine and says
+nothing on a fast one, and these were 100 to 500 times the cost they guarded (one layer: 0.2 ms measured for 100 ms allowed): they caught nothing
+short of a catastrophe, and still failed once, on 2026-09-27, with three agents running tests at once. `tools/bench_kernels.py` times a call beside a
+fixed NumPy workload, a pass at a time, and the quotient moves with the code, not with the machine. A test fails when its case costs more than
+30 % above its number in `BASELINE`, measured twice; the tests that say "grows linearly" compare a case with a smaller one.
+"""
 
 import sys
 import time
@@ -33,6 +40,49 @@ except ImportError:
 
 # Add root directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
+
+import bench_kernels as bench  # noqa: E402
+
+#: What each timed case costs in NumPy references (the cost of the call over the cost of a fixed NumPy workload timed right beside it; median of
+#: 21 passes of 20 ms, one Numba thread), measured on 2026-10-01 (Windows 11, Python 3.14.7), the median of three runs that agreed within 5 %.
+#: A test fails above these numbers + 30 %. A change that makes the code legitimately slower rewrites the number, in a commit that says why.
+BASELINE = {
+    "tmm_1_layer": 0.0545,
+    "tmm_2_layers": 0.0668,
+    "tmm_3_layers": 0.0754,
+    "tmm_5_layers": 0.0983,
+    "layer_creation": 0.000223,
+    "array_operations": 0.00692,
+    # four threads sharing one pool, over the same ten calculations one after the other (the GIL costs a little, a convoy of locks costs a lot)
+    "concurrent_over_sequential": 1.4,
+}
+REFERENCE = bench.numpy_reference()
+
+
+def cost(call, passes: int = bench.PASSES) -> float:
+    """The cost of `call` in NumPy references (Numba on one thread, like the baselines)."""
+    with bench.single_numba_thread():
+        return bench.measure_ratio(call, REFERENCE, passes).ratio
+
+
+def assert_costs_no_more_than_its_baseline(case: str, call) -> float:
+    """Fails when `call` costs more than 30 % above `BASELINE[case]`; a regression has to show on two measurements (the second on twice the passes)."""
+    limit = BASELINE[case] * (1 + bench.TOLERANCE)
+    ratio = cost(call)
+    if ratio > limit:
+        ratio = min(ratio, cost(call, 2 * bench.PASSES))
+    assert ratio <= limit, f"{case}: {ratio:.3g} references, baseline {BASELINE[case]:.3g}, limit {limit:.3g} (+{100 * bench.TOLERANCE:.0f} %)"
+    return ratio
+
+
+def assert_grows_at_most_linearly(call_for, small: int, large: int) -> None:
+    """The cost of `call_for(large)` is at most `large / small` times (+30 %) the cost of `call_for(small)`."""
+    allowed = (large / small) * (1 + bench.TOLERANCE)
+    growth = cost(call_for(large)) / cost(call_for(small))
+    if growth > allowed:
+        growth = min(growth, cost(call_for(large), 2 * bench.PASSES) / cost(call_for(small), 2 * bench.PASSES))
+    assert growth <= allowed, f"x{large / small:g} the size costs x{growth:.2f}, more than the x{allowed:.2f} that linear growth allows"
 
 
 def _as_complex_per_wavelength(n_val, n_pts: int) -> np.ndarray:
@@ -115,17 +165,10 @@ class TestCalculationPerformance:
         layers = [layer]
 
         # Warmup (JIT + Cache)
-        run_tmm_wrapper(layers, sample_wavelengths)
-
-        # Measure le temps de calculation
-        start_time = time.time()
         spectrum = run_tmm_wrapper(layers, sample_wavelengths)
-        end_time = time.time()
-
-        calculationation_time = end_time - start_time
 
         # The calculation should be very fast
-        assert calculationation_time < 0.1
+        assert_costs_no_more_than_its_baseline("tmm_1_layer", lambda: run_tmm_wrapper(layers, sample_wavelengths))
         assert isinstance(spectrum, np.ndarray)
         assert len(spectrum) == len(sample_wavelengths)
 
@@ -139,56 +182,49 @@ class TestCalculationPerformance:
             Layer(mat="TiO2", qwot=50.0 / 100.0),
         ]
 
-        start_time = time.time()
         spectrum = run_tmm_wrapper(layers, sample_wavelengths)
-        end_time = time.time()
-
-        calculationation_time = end_time - start_time
 
         # The calculation should be fast even for several layers
-        assert calculationation_time < 0.5
+        assert_costs_no_more_than_its_baseline("tmm_5_layers", lambda: run_tmm_wrapper(layers, sample_wavelengths))
         assert isinstance(spectrum, np.ndarray)
 
-    @pytest.mark.parametrize("n_layers", [10, 25, 50, 100])
-    def test_scalability_performance(self, n_layers, sample_wavelengths):
-        """Test scalability with the number of layers."""
-        # Create n alternating layers
+    @staticmethod
+    def _alternating_layers(n_layers):
         layers = []
         for i in range(n_layers):
             material = "SiO2" if i % 2 == 0 else "TiO2"
             thickness = 100.0 if material == "SiO2" else 50.0
             layers.append(Layer(mat=material, qwot=thickness / 100.0))
+        return layers
 
-        start_time = time.time()
-        spectrum = run_tmm_wrapper(layers, sample_wavelengths)
-        end_time = time.time()
+    @pytest.mark.parametrize("n_layers", [10, 25, 50, 100])
+    def test_scalability_performance(self, n_layers, sample_wavelengths):
+        """Test scalability with the number of layers."""
+        spectrum = run_tmm_wrapper(self._alternating_layers(n_layers), sample_wavelengths)
 
-        calculationation_time = end_time - start_time
+        # Calculation time should increase (at most) linearly: n layers cost at most n / 10 times what 10 layers cost
+        def call_for(n):
+            layers = self._alternating_layers(n)
+            run_tmm_wrapper(layers, sample_wavelengths)  # warm-up
+            return lambda: run_tmm_wrapper(layers, sample_wavelengths)
 
-        # Calculation time should increase linearly
-        expected_max_time = 0.1 * (n_layers / 10)  # 0.1s per 10 layers
-        assert calculationation_time < expected_max_time
+        assert_grows_at_most_linearly(call_for, 10, n_layers)
         assert isinstance(spectrum, np.ndarray)
 
     def test_wavelength_array_size_performance(self):
         """Test performance with different wavelength array sizes."""
         sizes = [100, 500, 1000, 2000]
+        layers = [Layer(mat="SiO2", qwot=100.0 / 100.0)]
+
+        def call_for(size):
+            wavelengths = np.linspace(400, 800, size)
+            run_tmm_wrapper(layers, wavelengths)  # warm-up
+            return lambda: run_tmm_wrapper(layers, wavelengths)
 
         for size in sizes:
-            wavelengths = np.linspace(400, 800, size)
-            layers = [Layer(mat="SiO2", qwot=100.0 / 100.0)]
-
-            start_time = time.time()
-            spectrum = run_tmm_wrapper(layers, wavelengths)
-            end_time = time.time()
-
-            calculationation_time = end_time - start_time
-
-            # Time should increase linearly with size
-            # Increased tolerance slightly for overhead
-            expected_max_time = 0.02 * (size / 100)  # 0.02s per 100 pts
-            assert calculationation_time < expected_max_time
-            assert len(spectrum) == size
+            # Time should increase (at most) linearly with size: size / 100 times what 100 points cost
+            assert_grows_at_most_linearly(call_for, 100, size)
+            assert len(run_tmm_wrapper(layers, np.linspace(400, 800, size))) == size
 
 
 @pytest.mark.performance
@@ -376,28 +412,28 @@ class TestParallelPerformance:
 
         #Testing with multiple threads
         n_calculationations = 10
-        start_time = time.time()
 
         with ThreadPoolExecutor(max_workers=4) as executor:
-            futures = [
-                executor.submit(single_calculationation)
-                for _ in range(n_calculationations)
-            ]
-            results = [future.result() for future in futures]
 
-        total_time = time.time() - start_time
+            def concurrently():
+                futures = [executor.submit(single_calculationation) for _ in range(n_calculationations)]
+                return [future.result() for future in futures]
 
-        # Calculations should be parallelized efficiently
-        assert len(results) == n_calculationations
-        assert all(isinstance(result, np.ndarray) for result in results)
+            def one_after_the_other():
+                return [single_calculationation() for _ in range(n_calculationations)]
 
-        # Total time should be less than the sum of individual times
-        # Relaxed timing for wrapper overhead
-        single_time = 0.1
-        expected_max_time = (
-            single_time * n_calculationations
-        )  # Just ensure it finishes reasonably
-        assert total_time < expected_max_time
+            results = concurrently()
+
+            # Calculations should be parallelized efficiently
+            assert len(results) == n_calculationations
+            assert all(isinstance(result, np.ndarray) for result in results)
+
+            # The threads share the GIL: they cost a little more than the same calculations one after the other, not a multiple of it
+            limit = BASELINE["concurrent_over_sequential"] * (1 + bench.TOLERANCE)
+            overhead = cost(concurrently) / cost(one_after_the_other)
+            if overhead > limit:  # a regression has to show twice
+                overhead = min(overhead, cost(concurrently, 2 * bench.PASSES) / cost(one_after_the_other, 2 * bench.PASSES))
+            assert overhead <= limit, f"four threads cost x{overhead:.2f} the same calculations in a row, limit x{limit:.2f}"
 
 
 @pytest.mark.benchmark
@@ -412,64 +448,32 @@ class TestBenchmarks:
             Layer(mat="Al2O3", qwot=25.0 / 100.0),
         ]
 
-        # Benchmark
-        times = []
-        for _ in range(10):
-            start_time = time.time()
-            run_tmm_wrapper(layers, sample_wavelengths)
-            end_time = time.time()
-            times.append(end_time - start_time)
+        run_tmm_wrapper(layers, sample_wavelengths)  # warm-up
 
-        # Statistiques
-        avg_time = np.mean(times)
-        std_time = np.std(times)
-        min_time = np.min(times)
-        max_time = np.max(times)
+        # The median of the passes is the cost; its variance is what the median absorbs
+        ratio = assert_costs_no_more_than_its_baseline("tmm_3_layers", lambda: run_tmm_wrapper(layers, sample_wavelengths))
 
-        # Average time should be low
-        assert avg_time < 0.2  # Increased from 0.1 due to wrapper lookup overhead
-        assert std_time < 0.1  # Faible variance
-
-        print(
-            f"TMM Benchmark - Avg: {avg_time:.4f}s, Std: {std_time:.4f}s, Min: {min_time:.4f}s, Max: {max_time:.4f}s"
-        )
+        print(f"TMM Benchmark - {ratio:.4f} NumPy references")
 
     def test_benchmark_layer_creation(self):
         """Benchmark for creating layers."""
-        times = []
-
-        for _ in range(100):
-            start_time = time.time()
-            Layer(mat="SiO2", qwot=100.0 / 100.0)
-            end_time = time.time()
-            times.append(end_time - start_time)
-
-        avg_time = np.mean(times)
-
         # Layer creation should be very fast
-        assert avg_time < 0.001  # < 1ms
+        ratio = assert_costs_no_more_than_its_baseline("layer_creation", lambda: Layer(mat="SiO2", qwot=100.0 / 100.0))
 
-        print(f"Layer Creation Benchmark - Avg: {avg_time:.6f}s")
+        print(f"Layer Creation Benchmark - {ratio:.6f} NumPy references")
 
     def test_benchmark_array_operations(self, sample_wavelengths):
         """Benchmark for array operations."""
-        times = []
 
-        for _ in range(50):
-            start_time = time.time()
-            # Typical operations
+        def typical_operations():
             spectrum = np.random.uniform(0, 1, len(sample_wavelengths))
             spectrum[spectrum > 0.5]
             np.mean(spectrum)
-            end_time = time.time()
-            times.append(end_time - start_time)
-
-        avg_time = np.mean(times)
 
         # Array operations should be fast
-        assert avg_time < 0.01  # < 10ms
+        ratio = assert_costs_no_more_than_its_baseline("array_operations", typical_operations)
 
-        print(f"Array Operations Benchmark - Avg: {avg_time:.4f}s")
+        print(f"Array Operations Benchmark - {ratio:.5f} NumPy references")
 
 
 @pytest.mark.performance
@@ -479,8 +483,7 @@ class TestPerformanceRegression:
 
     def test_performance_regression_tmm(self, sample_wavelengths):
         """Regression test for TMM calculations."""
-        # Performance thresholds (to be adjusted as needed)
-        TIME_THRESHOLD = 0.2  # 200ms maximum (Wrapper overhead included)
+        # Performance thresholds (to be adjusted as needed): the time is BASELINE["tmm_2_layers"] + 30 %, in NumPy references
         MEMORY_THRESHOLD = 20 * 1024 * 1024  # 20MB maximum
 
         layers = [
@@ -489,16 +492,10 @@ class TestPerformanceRegression:
         ]
 
         # Test de performance
-        start_time = time.time()
         spectrum = run_tmm_wrapper(layers, sample_wavelengths)
-        end_time = time.time()
-
-        calculationation_time = end_time - start_time
 
         # Check thresholds
-        assert (
-            calculationation_time < TIME_THRESHOLD
-        ), f"Performance regression: {calculationation_time:.3f}s > {TIME_THRESHOLD:.3f}s"
+        assert_costs_no_more_than_its_baseline("tmm_2_layers", lambda: run_tmm_wrapper(layers, sample_wavelengths))
         assert isinstance(spectrum, np.ndarray)
         assert len(spectrum) == len(sample_wavelengths)
 

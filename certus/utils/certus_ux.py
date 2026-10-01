@@ -301,8 +301,8 @@ def build_premium_overrides(_theme: str | None = None) -> str:
         legacy stylesheet returned by ``certus_ui.get_standard_stylesheet``.
     """
     # Lazy import to avoid a circular dep at module load time and to read
-    # the *current* _theme palette at call time.
-    from certus.ui.certus_ui import CertusTheme as T
+    # the *current* _theme palette at call time. The theme itself, not the `certus_ui` facade: that one loads pandas, pyqtgraph and the physics.
+    from certus.ui.certus_theme import CertusTheme as T
 
     primary = T.PRIMARY
     # The label of a filled button follows the fill, so it must be a TOKEN.

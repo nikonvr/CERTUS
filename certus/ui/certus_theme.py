@@ -743,7 +743,7 @@ class CertusTheme:
     @classmethod
     def apply_to_app(cls, app: QApplication, dark_mode: bool | None = None) -> None:
         from certus.core.certus_core import load_font_config, load_theme_config
-        from certus.ui.certus_ui import update_global_plot_config
+        from certus.ui.certus_ui_utils import update_global_plot_config
         """Apply the theme to the QApplication.
 
         🔴 `dark_mode` defaults to the PERSISTED PREFERENCE, not to light. It used

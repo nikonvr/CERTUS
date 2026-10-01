@@ -1,8 +1,6 @@
 import logging
 from typing import Any, ClassVar
 
-import pandas as pd
-import pyqtgraph.exporters  # pylint: disable=unused-import
 from PyQt6.QtCore import (
     QEasingCurve,
     Qt,
@@ -602,6 +600,8 @@ class ExcelTableWidget(QTableWidget):
                     row_data.append(item.text() if item else "")
 
                 data.append(row_data)
+
+            import pandas as pd  # here, not at the top: pandas is heavy and only this export needs it
 
             df = pd.DataFrame(data, columns=headers)
 

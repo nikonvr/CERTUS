@@ -145,11 +145,8 @@ from certus.core.certus_core import (
 from certus.core.certus_hub_config import HUB_APP_CATALOG, RUN_MODULE_FLAG, HubAppCatalogItem, hub_grid_columns
 from certus.ui.certus_a11y import install_accessible_names
 from certus.ui.certus_hub_widgets import ApplicationCard, GroupedApplicationCard
-from certus.ui.certus_ui import (
-    SVG_AVAILABLE,
-    CertusLogPanel,
-    CertusTheme,
-    CertusThemeToggle,
+from certus.ui.certus_theme import CertusTheme
+from certus.ui.certus_ui_utils import (
     apply_certus_theme,
     claim_shortcut_for_action,
     configure_theme_from_preference,
@@ -161,6 +158,7 @@ from certus.ui.certus_ui_widgets_factory import (
     create_header_logo_widget,
     create_styled_label,
 )
+from certus.ui.certus_ui_widgets_utils import CertusLogPanel, CertusThemeToggle
 from certus.ui.mixins.certus_base_core_mixins import CertusDialogMixin
 from certus.utils.certus_qsettings import certus_settings
 
@@ -1301,7 +1299,7 @@ class CertusApp:
 
         try:
             if "init_certus_app" in globals():
-                init_certus_app("CERTUS Hub", app=self.app)
+                init_certus_app("CERTUS Hub", app=self.app, plots=False, jit_warmup=False)
 
         except (RuntimeError, AttributeError):
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)

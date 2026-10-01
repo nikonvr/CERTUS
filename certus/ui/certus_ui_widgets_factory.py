@@ -87,7 +87,6 @@ warnings.filterwarnings(
 )
 
 
-import pyqtgraph.exporters  # pylint: disable=unused-import
 from PyQt6.QtCore import (
     QEvent,
     QObject,

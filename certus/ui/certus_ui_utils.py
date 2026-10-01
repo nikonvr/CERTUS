@@ -110,8 +110,6 @@ warnings.filterwarnings("ignore", category=RuntimeWarning, message="overflow enc
 
 from typing import TYPE_CHECKING, Any
 
-import pyqtgraph as pg
-
 # PyQtGraph ViewBox vs NumPy/Python 3.14  cosmetic RuntimeWarning on cast (any emitting module)
 
 
@@ -122,7 +120,6 @@ warnings.filterwarnings(
 )
 
 
-import pyqtgraph.exporters  # pylint: disable=unused-import
 from PyQt6.QtCore import (
     Q_ARG,
     QMetaObject,
@@ -297,6 +294,12 @@ def update_global_plot_config(dark_mode: bool = False) -> None:
 
 
     from PyQt6.QtWidgets import QApplication
+
+    pg = sys.modules.get("pyqtgraph")
+    if pg is None:
+        # Nothing has loaded pyqtgraph, so no plot exists and none can be themed: the hub never loads it. `setup_pyqtgraph_defaults` runs this again,
+        # with pyqtgraph imported, for every module that draws.
+        return
 
     bg = CertusTheme.SURFACE
 
@@ -777,7 +780,9 @@ def process_log_queue_standard(q: queue.Queue, widget: Any, max_items: int = 50)
 
     return count
 
-def init_certus_app(app_name: str = "CERTUS", app: QApplication | None = None, *args, **kwargs) -> QApplication:
+def init_certus_app(
+    app_name: str = "CERTUS", app: QApplication | None = None, *args, plots: bool = True, jit_warmup: bool = True, **kwargs
+) -> QApplication:
     """
 
     Initialize Qt Application with Theme and High DPI scaling.
@@ -789,6 +794,11 @@ def init_certus_app(app_name: str = "CERTUS", app: QApplication | None = None, *
         app_name: Application name
 
         app: Optional QApplication instance (creates if None)
+
+        plots: configure pyqtgraph (theme colours, antialiasing). The hub draws no plot and leaves it out: it would load pyqtgraph and the
+            scientific stack for nothing.
+
+        jit_warmup: start the background compilation of the physics kernels. The hub leaves it out too: its modules are other processes.
 
         *args, **kwargs: Ignored (for legacy compatibility)
 
@@ -855,10 +865,12 @@ def init_certus_app(app_name: str = "CERTUS", app: QApplication | None = None, *
 
     app.setApplicationName(app_name)
 
-    setup_pyqtgraph_defaults()
+    if plots:
+        setup_pyqtgraph_defaults()
 
     # The imports of the application are done by now: the JIT warmup can run beside it.
-    start_jit_warmup()
+    if jit_warmup:
+        start_jit_warmup()
 
     return app
 

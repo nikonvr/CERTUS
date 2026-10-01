@@ -140,6 +140,7 @@ __all__ = [
 
 
 import hashlib
+import importlib.util
 import logging
 import logging.handlers
 import os
@@ -158,13 +159,9 @@ from certus.utils.certus_logging import attach_jsonl_handler, get_structured_log
 
 # --- Dependencies Check ---
 
-try:
-    import openpyxl  # noqa: F401  # availability check
-
-    OPENPYXL_AVAILABLE = True
-
-except ImportError:
-    OPENPYXL_AVAILABLE = False
+# Asked of the import system, not tried: importing openpyxl here cost every module (the hub too) half a second at start-up, and the
+# code that writes a workbook imports it where it writes.
+OPENPYXL_AVAILABLE = importlib.util.find_spec("openpyxl") is not None
 
 
 

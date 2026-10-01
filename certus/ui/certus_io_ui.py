@@ -6,7 +6,6 @@ from pathlib import Path
 from PyQt6.QtWidgets import QFileDialog, QMessageBox
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
-from certus.utils.certus_data import read_data_file_robust
 from certus.utils.certus_qsettings import certus_settings
 
 DATA_FILE_FILTER = "Data (*.csv *.txt *.xlsx)"
@@ -14,6 +13,13 @@ DATA_FILES_FILTER_EXTENDED = "Data Files (*.csv *.txt *.xlsx *.xls);;All Files (
 CERTUS_SETTINGS_ORG = "CERTUS"
 CERTUS_SETTINGS_APP = "Common"
 CERTUS_LAST_DIR_KEY = "last_dir"
+
+
+def read_data_file_robust(*args, **kwargs):
+    """`certus.utils.certus_data.read_data_file_robust`, loaded on the first call: that module brings pandas in, which the hub's start-up does not need."""
+    from certus.utils.certus_data import read_data_file_robust as reader
+
+    return reader(*args, **kwargs)
 
 CERTUS_UI_STRINGS = {
     "export": "Export",

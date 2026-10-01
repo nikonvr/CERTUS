@@ -93,7 +93,7 @@ def _build_widget_class():
             content_layout.setContentsMargins(0, 0, 0, 0)
             content_layout.setSpacing(12)
 
-            self.setAccessibleName("Empty state panel")
+            self.setAccessibleName(title)
             self.setToolTip(description)
 
             # Icon
@@ -104,7 +104,6 @@ def _build_widget_class():
             icon_label.setFixedSize(int(icon_size_px), int(icon_size_px))
             icon_label.setStyleSheet("font-size: 20px; font-weight: 600;")
             icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            icon_label.setAccessibleName("Empty state icon")
             try:
                 from certus.ui.certus_icons import certus_icon
                 from certus.ui.certus_ui import CertusTheme
@@ -127,7 +126,6 @@ def _build_widget_class():
             title_lbl.setObjectName("empty-title")
             title_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
             title_lbl.setWordWrap(True)
-            title_lbl.setAccessibleName("Empty state title")
             title_lbl.setStyleSheet("#empty-title { color: palette(text); font-size: 13pt; font-weight: 650; }")
             content_layout.addWidget(title_lbl)
 
@@ -136,7 +134,6 @@ def _build_widget_class():
             desc_lbl.setObjectName("empty-desc")
             desc_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
             desc_lbl.setWordWrap(True)
-            desc_lbl.setAccessibleName("Empty state description")
             desc_lbl.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             desc_lbl.setStyleSheet("#empty-desc { color: palette(mid); font-size: 10pt; }")
             content_layout.addWidget(desc_lbl)
@@ -147,7 +144,6 @@ def _build_widget_class():
                 btn_row.addStretch(1)
                 btn = QPushButton(action_label, self)
                 btn.setObjectName("empty-cta")
-                btn.setAccessibleName("Empty state action")
                 # The description above the button explains what it does; without
                 # it here the button is the only one in the window with no
                 # tooltip. Measured 2026-09-04: wiring the empty states into RE

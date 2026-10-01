@@ -774,37 +774,7 @@ class CertusREWorkersMixin:
 
         # and the (non-modal) results window often ended up behind other windows.
 
-        _ak_b = best.get("re_p4_beam_ap_knots_deg")
-
-        _anm_b = best.get("re_p4_beam_ap_knots_nm")
-
-        if _ak_b is not None and _anm_b is not None:
-            _aka = np.asarray(_ak_b, dtype=np.float64).ravel()
-
-            _anma = np.asarray(_anm_b, dtype=np.float64).ravel()
-
-            _np4 = int(min(_aka.size, _anma.size))
-
-            if _np4 >= 2:
-                self._re_p4_display_beam_active = True
-
-                self._re_p4_display_ap_knots_deg = _aka[:_np4].copy()
-
-                self._re_p4_display_ap_knots_nm = _anma[:_np4].copy()
-
-            else:
-                self._re_p4_display_beam_active = False
-
-                self._re_p4_display_ap_knots_deg = None
-
-                self._re_p4_display_ap_knots_nm = None
-
-        else:
-            self._re_p4_display_beam_active = False
-
-            self._re_p4_display_ap_knots_deg = None
-
-            self._re_p4_display_ap_knots_nm = None
+        self._remember_beam_aperture_knots(best)
 
         self._re_opt_a_pct = float(best.get("a", 0.0))
 
@@ -942,6 +912,40 @@ class CertusREWorkersMixin:
                 )
 
         QTimer.singleShot(400, _show_final_re_title)
+
+    def _remember_beam_aperture_knots(self, best):
+        """Remember the aperture knots of the phase 4 beam for the display, or forget them when the best candidate has none."""
+        _ak_b = best.get("re_p4_beam_ap_knots_deg")
+
+        _anm_b = best.get("re_p4_beam_ap_knots_nm")
+
+        if _ak_b is not None and _anm_b is not None:
+            _aka = np.asarray(_ak_b, dtype=np.float64).ravel()
+
+            _anma = np.asarray(_anm_b, dtype=np.float64).ravel()
+
+            _np4 = int(min(_aka.size, _anma.size))
+
+            if _np4 >= 2:
+                self._re_p4_display_beam_active = True
+
+                self._re_p4_display_ap_knots_deg = _aka[:_np4].copy()
+
+                self._re_p4_display_ap_knots_nm = _anma[:_np4].copy()
+
+            else:
+                self._re_p4_display_beam_active = False
+
+                self._re_p4_display_ap_knots_deg = None
+
+                self._re_p4_display_ap_knots_nm = None
+
+        else:
+            self._re_p4_display_beam_active = False
+
+            self._re_p4_display_ap_knots_deg = None
+
+            self._re_p4_display_ap_knots_nm = None
 
     def _compute_re_rmse(self, a_pct=0.0, b_pct=0.0, f_pct=0.0):
         """RMSE of current design vs RE targets (same lambda grouping / backside as REWorker)."""

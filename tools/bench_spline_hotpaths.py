@@ -10,6 +10,12 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+# The Numba cache of the compiled kernels is keyed by their sources (ETAT D49): without this call a script reads the one
+# next to the sources, where a caller keeps the machine code of an OLD callee of another file.
+from certus.core.certus_core import ensure_numba_cache_dir  # noqa: E402
+
+ensure_numba_cache_dir()
+
 from certus.spline.certus_index_spline_core import (
     SIGMA_KNOTS_MIN_SEP_REL,
     n_lambda_rising_with_wavelength_penalty,

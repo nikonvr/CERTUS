@@ -298,6 +298,11 @@ def _measure(tag: str, modname: str, clsname: str, width: int = 1920, height: in
     )
 
     app = QApplication.instance() or QApplication(sys.argv[:1])
+
+    # After the QApplication, before any certus module: the cache of the compiled kernels is keyed by their sources (ETAT D49).
+    from certus.core.certus_core import ensure_numba_cache_dir
+
+    ensure_numba_cache_dir()
     _PINNED_FAMILY = "Segoe UI"
     if _PINNED_FAMILY not in QFontDatabase.families():
         raise SystemExit(

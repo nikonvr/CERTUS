@@ -53,6 +53,13 @@ os.chdir(ROOT)
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
 
+# The Numba cache of the compiled kernels is keyed by their sources (ETAT D49): without this call a script reads the one
+# next to the sources, where a caller keeps the machine code of an OLD callee of another file.
+from certus.core.certus_core import ensure_numba_cache_dir  # noqa: E402
+
+ensure_numba_cache_dir()
+
+
 CACHE = ROOT / "reports" / "controle_random75"
 FULL = "example/example_strat/JSON-strat-random75.json"
 N = 75

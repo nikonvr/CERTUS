@@ -54,6 +54,13 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import bench_examples as B  # noqa: E402
+
+# The Numba cache of the compiled kernels is keyed by their sources (ETAT D49): without this call a script reads the one
+# next to the sources, where a caller keeps the machine code of an OLD callee of another file.
+from certus.core.certus_core import ensure_numba_cache_dir  # noqa: E402
+
+ensure_numba_cache_dir()
+
 from CERTUS_STRAT import CertusStratApp  # noqa: E402
 
 #: Bac a sable de 8 couches : assez petit pour enchainer les runs, assez vrai pour porter

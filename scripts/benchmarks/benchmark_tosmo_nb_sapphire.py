@@ -70,6 +70,12 @@ sys.path.insert(0, str(_ROOT))
 
 
 
+# The Numba cache of the compiled kernels is keyed by their sources (ETAT D49): without this call a script reads the one
+# next to the sources, where a caller keeps the machine code of an OLD callee of another file.
+from certus.core.certus_core import ensure_numba_cache_dir  # noqa: E402
+
+ensure_numba_cache_dir()
+
 from CERTUS_INDEX import (  # noqa: E402
 
 

@@ -94,6 +94,11 @@ def qapp():
 
     if _QAPP is None:
         _QAPP = QApplication.instance() or QApplication(sys.argv[:1])
+        # Here and not at the head of the file (trap 3): the QApplication exists, and every script that calls qapp() imports the
+        # kernels after it. The cache of the compiled kernels is keyed by their sources (ETAT D49).
+        from certus.core.certus_core import ensure_numba_cache_dir
+
+        ensure_numba_cache_dir()
     return _QAPP
 
 

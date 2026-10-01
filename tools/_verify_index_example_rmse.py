@@ -28,8 +28,9 @@ def main() -> int:
 
     QApplication(sys.argv)
 
-    from certus.core.certus_core import SUBSTRATE_LIST, wait_warmup
+    from certus.core.certus_core import SUBSTRATE_LIST, ensure_numba_cache_dir, wait_warmup
 
+    ensure_numba_cache_dir()  # keyed by the sources (ETAT D49), before the first import that loads the kernels
     wait_warmup()
 
     from CERTUS_INDEX import CertusIndexApp

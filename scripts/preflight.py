@@ -79,6 +79,10 @@ print("=" * 72)
 #    editing one while measuring another produces no error message at all.
 print("\n1. WORKING DIRECTORY")
 try:
+    # In the check, not at the head: a diagnostic must survive a broken import and say so. Keyed by the sources (ETAT D49).
+    from certus.core.certus_core import ensure_numba_cache_dir
+
+    ensure_numba_cache_dir()
     import certus.physics.certus_opt_tmm as tmm_mod
 
     tmm_path = Path(tmm_mod.__file__).resolve()

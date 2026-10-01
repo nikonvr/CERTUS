@@ -266,9 +266,9 @@ class CertusStratMultigraineMixin:
     """« Multi-realisation » tab. Mixed into `CertusStratApp`."""
 
     def _create_multigraine_tab(self) -> None:
-        from PyQt6.QtCore import QProcess
+        from PyQt6.QtCore import QProcess, Qt
         from PyQt6.QtWidgets import (
-            QComboBox, QGridLayout, QHeaderView, QLabel, QLineEdit, QPushButton,
+            QAbstractItemView, QComboBox, QGridLayout, QHeaderView, QLabel, QLineEdit, QPushButton,
             QTableWidget, QVBoxLayout, QWidget,
         )
         from certus.ui.certus_ui_widgets_cards import CertusCard
@@ -385,6 +385,13 @@ class CertusStratMultigraineMixin:
             ["Seed", "Status", "SEEL (nm)", "Blocks", "Crash rate", "Duration"]
         )
         self._mg_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        # A results table: the operator reads and sorts it (best SEEL first, say), never types in it.
+        # The refresh rewrites every cell from the state, so an edit would be lost at the next event.
+        self._mg_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        # Seeds in increasing order until the operator picks another column: enabling the sort
+        # applies the header's current indicator, and Qt's default is descending.
+        self._mg_table.horizontalHeader().setSortIndicator(0, Qt.SortOrder.AscendingOrder)
+        self._mg_table.setSortingEnabled(True)
         v.addWidget(self._mg_table, 1)
 
         # Empty at construction: `_mg_rafraichir` just below writes it at once.
@@ -539,21 +546,26 @@ class CertusStratMultigraineMixin:
         self._mg_rafraichir()
 
     def _mg_rafraichir(self) -> None:
-        from PyQt6.QtWidgets import QTableWidgetItem
+        from certus.ui.certus_ui_widgets_utils import SortKeyItem
 
         e = self._mg_etat
         lignes = sorted(e.lignes.values(), key=lambda li: li.graine)
+        # The cells are written one at a time: with the sort live, the first cell of a row would
+        # send it elsewhere and the next five would land in another seed's row. Re-enabling the
+        # sort at the end applies the column and the order the operator had picked.
+        self._mg_table.setSortingEnabled(False)
         self._mg_table.setRowCount(len(lignes))
         for r, li in enumerate(lignes):
-            for c, txt in enumerate((
-                str(li.graine),
-                ETAT_AFFICHE.get(li.etat, li.etat),
-                f"{li.seel:.4f}" if li.seel is not None else "--",
-                str(li.n_blocs) if li.n_blocs is not None else "--",
-                f"{100 * li.crash:.2f} %" if li.crash is not None else "--",
-                f"{li.minutes:.0f} min" if li.minutes is not None else "--",
+            for c, (txt, cle) in enumerate((
+                (str(li.graine), li.graine),
+                (ETAT_AFFICHE.get(li.etat, li.etat), None),
+                (f"{li.seel:.4f}" if li.seel is not None else "--", li.seel),
+                (str(li.n_blocs) if li.n_blocs is not None else "--", li.n_blocs),
+                (f"{100 * li.crash:.2f} %" if li.crash is not None else "--", li.crash),
+                (f"{li.minutes:.0f} min" if li.minutes is not None else "--", li.minutes),
             )):
-                self._mg_table.setItem(r, c, QTableWidgetItem(txt))
+                self._mg_table.setItem(r, c, SortKeyItem(txt, cle))
+        self._mg_table.setSortingEnabled(True)
         self._mg_resume.setText(resumer(e))
 
 

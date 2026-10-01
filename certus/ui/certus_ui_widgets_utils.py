@@ -395,6 +395,33 @@ class NumericAwareItem(QTableWidgetItem):
         return mine < theirs
 
 
+class SortKeyItem(QTableWidgetItem):
+    """A cell that sorts on the number it stands for, not on how its text is spelt.
+
+    As text "12.00 %" comes before "5.00 %", and "--" (not measured yet) before every digit.
+    The key lives in ``Qt.ItemDataRole.UserRole``. A cell with no key is a cell with no figure:
+    it goes after every cell that has one, whichever way the column is sorted. Two cells with
+    no key (a status column, say) compare as text, as Qt does.
+    """
+
+    def __init__(self, text: str, key: float | None = None) -> None:
+        super().__init__(text)
+        if key is not None:
+            self.setData(Qt.ItemDataRole.UserRole, key)
+
+    def __lt__(self, other) -> bool:
+        mine = self.data(Qt.ItemDataRole.UserRole)
+        theirs = other.data(Qt.ItemDataRole.UserRole)
+        if mine is None and theirs is None:
+            return super().__lt__(other)
+        if mine is None or theirs is None:
+            table = self.tableWidget()
+            descending = table is not None and table.horizontalHeader().sortIndicatorOrder() == Qt.SortOrder.DescendingOrder
+            # Qt sorts a descending column by asking the opposite question, so the answer flips with the order to keep the empty cells last.
+            return mine is None if descending else theirs is None
+        return mine < theirs
+
+
 class ExcelTableWidget(QTableWidget):
     """Table with copy-paste, sortable columns and draggable column borders."""
 

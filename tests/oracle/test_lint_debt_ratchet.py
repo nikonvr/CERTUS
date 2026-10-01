@@ -13,13 +13,10 @@ PYPROJECT_PATH = ROOT / "pyproject.toml"
 # The rules still ignored, by NAME: a bare count let one rule be swapped for another.
 # When a rule leaves pyproject.toml, delete it here too, so that it cannot come back.
 ALLOWED_EXTEND_IGNORE = frozenset({
-    
-    "E402", "E701", "E702", "E741", "F401",
-    "F841", "I001", "PERF401", "PT006", "PT011",
-    "PT017", "PT018", "RUF001", "RUF002", "RUF003", "RUF005",
-    "RUF022", "RUF046",
-    "RUF059", "RUF100",
-    "UP037", "UP040", "UP042", "UP046",
+    "E402", "E741", "F401", "F841", "I001",
+    "PERF401", "PT011", "PT017",
+    "RUF001", "RUF002", "RUF003", "RUF005", "RUF022", "RUF046", "RUF100",
+    "UP040", "UP042", "UP046",
 })
 
 

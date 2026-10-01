@@ -142,7 +142,9 @@ class CertusStepper(QWidget):
             bg, fg, border = CertusTheme.SURFACE, CertusTheme.TEXT_SUB, CertusTheme.BORDER
         return (
             f"QPushButton {{ background: {bg}; color: {fg}; border: 2px solid {border}; "
-            f"border-radius: 12px; font-weight: 700; font-size: {Typography.BODY}pt; }}"
+            # `padding` and `min-height` are the window sheet's generic QPushButton rule (8px 16px, 28px): on a 24 px badge the first
+            # leaves no room for the digit and the second stretches the circle to 24 x 48. Measured 2026-10-01 in INDEX SPLINE.
+            f"border-radius: 12px; padding: 0px; min-height: 0px; font-weight: 700; font-size: {Typography.BODY}pt; }}"
         )
 
     def _btn_style(self, i: int) -> str:

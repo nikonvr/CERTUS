@@ -64,16 +64,7 @@ class _MeshOptimizationMixin:
 
         # same rule as ``make_bounds_and_x0`` (IR extension if max(lambda) > 4000 nm), plus optional Deltalambda/lambda? min (Advanced).
 
-        _mesh_mdl = float(self.sp_mesh_min_dlam.value()) if hasattr(self, "sp_mesh_min_dlam") else 0.02
-
-        _kmd_mesh: dict[str, float] = {}
-
-        if _mesh_mdl > 0.0:
-            _kmd_mesh["min_delta_lambda_over_lambda_mean"] = _mesh_mdl
-
-        k_mesh_sigma = int(canonical_spline_sigma_knots(float(np.min(lam)), float(np.max(lam)), **_kmd_mesh).size)
-
-        n_seg_mesh = max(1, k_mesh_sigma - 1)
+        _mesh_mdl, n_seg_mesh = self._sigma_mesh_segments_of_the_spectrum(lam)
 
         try:
             n_sub = _get_substrate_n_array_spline(sid, lam)
@@ -98,14 +89,7 @@ class _MeshOptimizationMixin:
 
             return None
 
-        if use_t and use_r:
-            dt = DataType.BOTH
-
-        elif use_r:
-            dt = DataType.REFLECTION
-
-        else:
-            dt = DataType.TRANSMISSION
+        dt = self._data_type_of_the_fit(use_t, use_r)
 
         t_raw = self.df["T"].to_numpy(dtype=np.float64) if has_t else None
 
@@ -121,14 +105,7 @@ class _MeshOptimizationMixin:
         # so no dialog-scoped tolerance variable is guaranteed here.
         auto_clean_tol_ui = float(getattr(self, "_auto_clean_ui_tolerance", 5e-5) or 5e-5)
 
-        rmse_fit_lambda_nm: tuple[float, float] | None = None
-
-        if getattr(self, "_rmse_fit_lambda_enabled", False):
-            rl0 = float(self._rmse_fit_lambda_lo)
-
-            rl1 = float(self._rmse_fit_lambda_hi)
-
-            rmse_fit_lambda_nm = (min(rl0, rl1), max(rl0, rl1))
+        rmse_fit_lambda_nm = self._rmse_fit_band_nm()
 
         _n_mono_band = default_n_mono_band_nm_from_spectrum(lam)
 
@@ -347,6 +324,44 @@ class _MeshOptimizationMixin:
                 return None
 
         return cfg
+
+    def _sigma_mesh_segments_of_the_spectrum(self, lam):
+        """Read the minimum relative spacing of the mesh from the window and count the segments of the sigma mesh that the spectrum gets; return the spacing and the count."""
+        _mesh_mdl = float(self.sp_mesh_min_dlam.value()) if hasattr(self, "sp_mesh_min_dlam") else 0.02
+
+        _kmd_mesh: dict[str, float] = {}
+
+        if _mesh_mdl > 0.0:
+            _kmd_mesh["min_delta_lambda_over_lambda_mean"] = _mesh_mdl
+
+        k_mesh_sigma = int(canonical_spline_sigma_knots(float(np.min(lam)), float(np.max(lam)), **_kmd_mesh).size)
+
+        n_seg_mesh = max(1, k_mesh_sigma - 1)
+        return _mesh_mdl, n_seg_mesh
+
+    def _data_type_of_the_fit(self, use_t, use_r):
+        """Name the measurement the fit compares with the model: both transmission and reflection, reflection alone, or transmission alone."""
+        if use_t and use_r:
+            dt = DataType.BOTH
+
+        elif use_r:
+            dt = DataType.REFLECTION
+
+        else:
+            dt = DataType.TRANSMISSION
+        return dt
+
+    def _rmse_fit_band_nm(self):
+        """Return the band of wavelengths the RMSE is restricted to, lowest bound first, or None when the user did not restrict it."""
+        rmse_fit_lambda_nm: tuple[float, float] | None = None
+
+        if getattr(self, "_rmse_fit_lambda_enabled", False):
+            rl0 = float(self._rmse_fit_lambda_lo)
+
+            rl1 = float(self._rmse_fit_lambda_hi)
+
+            rmse_fit_lambda_nm = (min(rl0, rl1), max(rl0, rl1))
+        return rmse_fit_lambda_nm
 
 class _SmartInitDialogMixin:
     """Mixin extracting _show_smart_init_preview_dialog logic."""

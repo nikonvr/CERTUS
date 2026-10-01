@@ -66,7 +66,6 @@
     "certus/spline/spline_workers.py::_run_single_spline_stage": 620,
     "certus/ui/certus_index_spline_managers_ui.py::Step4MeshOptimizerBuilder.build": 804,
     "certus/ui/certus_index_spline_manualmesh_mixin.py::CertusIndexSplineManualMeshMixin._open_manual_extra_knots_dialog": 433,
-    "certus/ui/certus_index_spline_mixins_ui.py::_MeshOptimizationMixin._build_opt_config": 301,
     "certus/ui/certus_index_ui_plot.py::CertusIndexPlotMixin._update_nk_plot": 383,
     "certus/ui/certus_manual_sigma_knot_dialog.py::ManualSigmaKnotDialog.__init__": 461,
     "certus/ui/certus_re_excel_mixin.py::CertusREExcelMixin.load_reverse_engineering_from_path": 514,
@@ -89,7 +88,7 @@
     "certus/spline/spline_pipeline_mesh_insert.py::insert_manual_sigma_nodes": 61,
     "certus/spline/spline_workers.py::_run_free_knot_stage": 66,
     "certus/ui/certus_index_spline_manualmesh_mixin.py::CertusIndexSplineManualMeshMixin._open_manual_extra_knots_dialog": 75,
-    "certus/ui/certus_index_spline_mixins_ui.py::_MeshOptimizationMixin._build_opt_config": 82,
+    "certus/ui/certus_index_spline_mixins_ui.py::_MeshOptimizationMixin._build_opt_config": 76,
     "certus/ui/certus_re_excel_mixin.py::CertusREExcelMixin.load_reverse_engineering_from_path": 67,
     "certus/ui/certus_substrate_index_dialog.py::IndexTableDialog.__init__": 64
   },

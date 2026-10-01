@@ -333,13 +333,14 @@ def test_the_values_of_a_law_are_plotted_as_given(curves):
 
 
 @pytest.mark.parametrize(
-    ("label", "colour", "alpha"),
-    [("good", CertusTheme.SUCCESS, 230), ("degraded", CertusTheme.WARNING, 230), ("poor", CertusTheme.ERROR, 220)],
+    ("label", "token", "alpha"),
+    [("good", "SUCCESS", 230), ("degraded", "WARNING", 230), ("poor", "ERROR", 220)],
 )
-def test_the_first_law_is_coloured_by_the_quality_label_kept_for_its_series(curves, label, colour, alpha):
+def test_the_first_law_is_coloured_by_the_quality_label_kept_for_its_series(curves, label, token, alpha):
+    # the token is read when the test runs, not when it is collected: another test may have switched the theme in between
     plot_series({"A": np.array([1.5, 1.6, 1.7])}, {"A": three_laws()}, quality={"A": label})
     first = curves.lines[0].pen_in.color()
-    assert hex_of(first) == hex_of(colour)
+    assert hex_of(first) == hex_of(getattr(CertusTheme, token))
     assert first.alpha() == alpha
 
 

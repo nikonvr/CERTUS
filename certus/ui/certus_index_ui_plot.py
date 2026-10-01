@@ -234,16 +234,12 @@ class CertusIndexPlotMixin:
         prepared = _prepare_nk_plot_inputs(wls, sub_df, res, self.logger)
         if prepared is None:
             return
-        n_values, k_values, _method_str, lambda_max_fit, tlu_mode = prepared
+        n_values, k_values, *_ = prepared
 
         try:
             # k curve refs for legend
 
-            c_k_main = None
-
             c_kt = None
-
-            c_kr = None
 
             # --- Primary axis (left): n ---
 
@@ -251,126 +247,21 @@ class CertusIndexPlotMixin:
 
             self.plot_nk.setLabel("left", "n", color=CertusTheme.PRIMARY)
 
-            if "n_calc_005" in sub_df.columns:
-                n1 = sub_df["n_calc_005"].values.copy()
+            c_n = self.plot_nk.plot(wls, n_values, pen=pg.mkPen(CertusTheme.PRIMARY, width=3), name="n (R+T)")
 
-                n2 = sub_df["n_calc_0025"].values.copy()
+            self.plot_nk.add_tracked_curve(c_n, "n (R+T)")
 
-                n3 = sub_df["n_calc_001"].values.copy()
+            # --- EXTRA FITS: Visualization ---
 
-                if tlu_mode:
-                    ir_mask_ui = wls > lambda_max_fit
+            if "n_fit_T_only" in sub_df.columns:
+                c_nt = self.plot_nk.plot(
+                    wls,
+                    sub_df["n_fit_T_only"].values,
+                    pen=pg.mkPen(color="#10b981", width=2, style=Qt.PenStyle.DashLine),
+                    name="n (90% T)",
+                )
 
-                    n1[ir_mask_ui] = np.nan
-
-                    n2[ir_mask_ui] = np.nan
-
-                    n3[ir_mask_ui] = np.nan
-
-                self.plot_nk.plot(wls, n1, pen=pg.mkPen(color="#93c5fd", width=2), name="n (tol=0.005)")
-
-                self.plot_nk.plot(wls, n2, pen=pg.mkPen(color="#3b82f6", width=2), name="n (tol=0.0025)")
-
-                c_n3 = self.plot_nk.plot(wls, n3, pen=pg.mkPen(color="#1e3a8a", width=3), name="n (tol=0.001)")
-
-                self.plot_nk.add_tracked_curve(c_n3, "n")
-
-                self.plot_nk.plotItem.addLegend(offset=(10, 10), labelTextSize="9pt")
-
-            else:
-                c_n = self.plot_nk.plot(wls, n_values, pen=pg.mkPen(CertusTheme.PRIMARY, width=3), name="n (R+T)")
-
-                self.plot_nk.add_tracked_curve(c_n, "n (R+T)")
-
-                if "n_center" in sub_df.columns and "n_hi" in sub_df.columns and "n_lo" in sub_df.columns:
-                    n_cen = sub_df["n_center"].values.copy()
-
-                    if tlu_mode:
-                        n_cen[ir_mask_ui] = np.nan
-
-                    c_nc = self.plot_nk.plot(
-                        wls,
-                        n_cen,
-                        pen=pg.mkPen(color=CertusTheme.SUCCESS, width=2, style=Qt.PenStyle.DashLine),
-                        name="n (center)",
-                    )
-
-                    self.plot_nk.add_tracked_curve(c_nc, "n (center)")
-
-                    n_err_center = sub_df["n_raw"].values if "n_raw" in sub_df.columns else n_values
-
-                    top_n = sub_df["n_hi"].values - n_err_center
-
-                    bot_n = n_err_center - sub_df["n_lo"].values
-
-                    top_n = np.where(np.isfinite(top_n), top_n, 0)
-
-                    bot_n = np.where(np.isfinite(bot_n), bot_n, 0)
-
-                    if "n_hi_2" in sub_df.columns and "n_lo_2" in sub_df.columns:
-                        top_n2 = sub_df["n_hi_2"].values - n_err_center
-
-                        bot_n2 = n_err_center - sub_df["n_lo_2"].values
-
-                        top_n2 = np.where(np.isfinite(top_n2), top_n2, 0)
-
-                        bot_n2 = np.where(np.isfinite(bot_n2), bot_n2, 0)
-
-                        err_n2 = pg.ErrorBarItem(
-                            x=wls,
-                            y=n_err_center,
-                            top=top_n2,
-                            bottom=bot_n2,
-                            beam=0.5,
-                            pen=pg.mkPen(color=(30, 136, 229, 80), width=3),
-                        )
-
-                        self.plot_nk.plotItem.addItem(err_n2)
-
-                    err_n = pg.ErrorBarItem(
-                        x=wls,
-                        y=n_err_center,
-                        top=top_n,
-                        bottom=bot_n,
-                        beam=0.5,
-                        pen=pg.mkPen(CertusTheme.PRIMARY, width=1),
-                    )
-
-                    self.plot_nk.plotItem.addItem(err_n)
-
-                    if "n_raw" in sub_df.columns:
-                        # Plot the raw bisection cloud as a translucent scattered layer underneath the clean Line
-
-                        c_raw = self.plot_nk.plot(
-                            wls,
-                            n_err_center,
-                            pen=pg.mkPen(color=(30, 136, 229, 120), width=1, style=Qt.PenStyle.DotLine),
-                            name="n (Raw point-by-point)",
-                        )
-
-                        self.plot_nk.add_tracked_curve(c_raw, "n (Raw)")
-
-                # --- EXTRA FITS: Visualization ---
-
-                if "n_fit_T_only" in sub_df.columns:
-                    c_nt = self.plot_nk.plot(
-                        wls,
-                        sub_df["n_fit_T_only"].values,
-                        pen=pg.mkPen(color="#10b981", width=2, style=Qt.PenStyle.DashLine),
-                        name="n (90% T)",
-                    )
-
-                    self.plot_nk.add_tracked_curve(c_nt, "n (90% T)")
-
-                if "n_fit_R_only" in sub_df.columns:
-                    c_nr = self.plot_nk.plot(
-                        wls,
-                        sub_df["n_fit_R_only"].values,
-                        pen=pg.mkPen(color="#ef4444", width=2, style=Qt.PenStyle.DashLine),
-                        name="n (90% R)",
-                    )
-
-                    self.plot_nk.add_tracked_curve(c_nr, "n (90% R)")
+                self.plot_nk.add_tracked_curve(c_nt, "n (90% T)")
 
             # Legend n (left axis)
 
@@ -424,118 +315,17 @@ class CertusIndexPlotMixin:
 
             # so we must NOT pass NaN for k=0; instead we floor at 1e-7.
 
-            if "k_calc_005" in sub_df.columns:
-                k1 = sub_df["k_calc_005"].values.copy()
+            k_plot = np.where(
+                np.isfinite(k_values) & (k_values >= 1e-8), np.log10(np.maximum(k_values, 1e-7)), -7.0
+            )
 
-                k2 = sub_df["k_calc_0025"].values.copy()
+            c_k = pg.PlotCurveItem(wls, k_plot, pen=pg.mkPen(CertusTheme.WARNING, width=3), name="k (R+T)")
 
-                k3 = sub_df["k_calc_001"].values.copy()
+            self._vb_k.addItem(c_k)
 
-                if tlu_mode:
-                    ir_mask_ui = wls > lambda_max_fit
+            self.plot_nk.add_tracked_curve(c_k, "log10(k)")
 
-                    k1[ir_mask_ui] = np.nan
-
-                    k2[ir_mask_ui] = np.nan
-
-                    k3[ir_mask_ui] = np.nan
-
-                k1_p = np.where(np.isfinite(k1) & (k1 >= 1e-8), np.log10(np.maximum(k1, 1e-7)), -7.0)
-
-                k2_p = np.where(np.isfinite(k2) & (k2 >= 1e-8), np.log10(np.maximum(k2, 1e-7)), -7.0)
-
-                k3_p = np.where(np.isfinite(k3) & (k3 >= 1e-8), np.log10(np.maximum(k3, 1e-7)), -7.0)
-
-                c_k1 = pg.PlotCurveItem(wls, k1_p, pen=pg.mkPen(color="#fcd34d", width=2), name="log10(k) (tol=0.005)")
-
-                c_k2 = pg.PlotCurveItem(wls, k2_p, pen=pg.mkPen(color="#f59e0b", width=2), name="log10(k) (tol=0.0025)")
-
-                c_k3 = pg.PlotCurveItem(wls, k3_p, pen=pg.mkPen(color="#b45309", width=3), name="log10(k) (tol=0.001)")
-
-                self._vb_k.addItem(c_k1)
-
-                self._vb_k.addItem(c_k2)
-
-                self._vb_k.addItem(c_k3)
-
-                self.plot_nk.add_tracked_curve(c_k3, "log10(k)")
-
-            else:
-                k_plot = np.where(
-                    np.isfinite(k_values) & (k_values >= 1e-8), np.log10(np.maximum(k_values, 1e-7)), -7.0
-                )
-
-                c_k = pg.PlotCurveItem(wls, k_plot, pen=pg.mkPen(CertusTheme.WARNING, width=3), name="k (R+T)")
-
-                self._vb_k.addItem(c_k)
-
-                self.plot_nk.add_tracked_curve(c_k, "log10(k)")
-
-                c_k_main = c_k
-
-                if "k_center" in sub_df.columns and "k_hi" in sub_df.columns and "k_lo" in sub_df.columns:
-                    kc = sub_df["k_center"].values.copy()
-
-                    if tlu_mode:
-                        kc[ir_mask_ui] = np.nan
-
-                    kc_plot = np.where(np.isfinite(kc) & (kc >= 0), np.maximum(kc, 1e-7), np.nan)
-
-                    c_kc = pg.PlotCurveItem(
-                        wls,
-                        kc_plot,
-                        pen=pg.mkPen(color=CertusTheme.WARNING, width=2, style=Qt.PenStyle.DashLine),
-                        name="k (center)",
-                    )
-
-                    self._vb_k.addItem(c_kc)
-
-                    self.plot_nk.add_tracked_curve(c_kc, "log10(k) (center)")
-
-                    k_err_center = sub_df["k_raw"].values if "k_raw" in sub_df.columns else k_plot
-
-                    k_err_center_plot = np.where(
-                        np.isfinite(k_err_center) & (k_err_center >= 0), np.maximum(k_err_center, 1e-7), np.nan
-                    )
-
-                    top_k = sub_df["k_hi"].values - k_err_center_plot
-
-                    bot_k = k_err_center_plot - sub_df["k_lo"].values
-
-                    top_k = np.where(np.isfinite(top_k), top_k, 0)
-
-                    bot_k = np.where(np.isfinite(bot_k), bot_k, 0)
-
-                    if "k_hi_2" in sub_df.columns and "k_lo_2" in sub_df.columns:
-                        top_k2 = sub_df["k_hi_2"].values - k_err_center_plot
-
-                        bot_k2 = k_err_center_plot - sub_df["k_lo_2"].values
-
-                        top_k2 = np.where(np.isfinite(top_k2), top_k2, 0)
-
-                        bot_k2 = np.where(np.isfinite(bot_k2), bot_k2, 0)
-
-                        err_k2 = pg.ErrorBarItem(
-                            x=wls,
-                            y=k_err_center_plot,
-                            top=top_k2,
-                            bottom=bot_k2,
-                            beam=0.5,
-                            pen=pg.mkPen(color=(255, 179, 0, 80), width=3),
-                        )
-
-                        self._vb_k.addItem(err_k2)
-
-                    err_k = pg.ErrorBarItem(
-                        x=wls,
-                        y=k_err_center_plot,
-                        top=top_k,
-                        bottom=bot_k,
-                        beam=0.5,
-                        pen=pg.mkPen(CertusTheme.WARNING, width=1),
-                    )
-
-                    self._vb_k.addItem(err_k)
+            c_k_main = c_k
 
             # --- EXTRA FITS: k Visualization ---
 
@@ -552,46 +342,16 @@ class CertusIndexPlotMixin:
 
                 self.plot_nk.add_tracked_curve(c_kt, "log10(k) (90% T)")
 
-            if "k_fit_R_only" in sub_df.columns:
-                kr = sub_df["k_fit_R_only"].values
-
-                kr_p = np.where(np.isfinite(kr) & (kr >= 1e-8), np.log10(np.maximum(kr, 1e-7)), -7.0)
-
-                c_kr = pg.PlotCurveItem(
-                    wls, kr_p, pen=pg.mkPen(color="#ef4444", width=2, style=Qt.PenStyle.DashLine), name="k (90% R)"
-                )
-
-                self._vb_k.addItem(c_kr)
-
-                self.plot_nk.add_tracked_curve(c_kr, "log10(k) (90% R)")
-
-            if "k_raw" in sub_df.columns:
-                c_k_raw = pg.PlotCurveItem(
-                    wls,
-                    k_err_center_plot,
-                    pen=pg.mkPen(color=(255, 179, 0, 120), width=1, style=Qt.PenStyle.DotLine),
-                    name="k (Raw point-by-point)",
-                )
-
-                self._vb_k.addItem(c_k_raw)
-
-                self.plot_nk.add_tracked_curve(c_k_raw, "log10(k) (Raw)")
-
             # Legend k (right axis)
 
-            if c_k_main is not None or c_kt is not None or c_kr is not None:
-                leg_k = pg.LegendItem(offset=(10, 120), labelTextSize="9pt")
+            leg_k = pg.LegendItem(offset=(10, 120), labelTextSize="9pt")
 
-                leg_k.setParentItem(self.plot_nk.plotItem)
+            leg_k.setParentItem(self.plot_nk.plotItem)
 
-                if c_k_main is not None:
-                    leg_k.addItem(c_k_main, "k (R+T)")
+            leg_k.addItem(c_k_main, "k (R+T)")
 
-                if c_kt is not None:
-                    leg_k.addItem(c_kt, "k (90% T)")
-
-                if c_kr is not None:
-                    leg_k.addItem(c_kr, "k (90% R)")
+            if c_kt is not None:
+                leg_k.addItem(c_kt, "k (90% T)")
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error("[INDEX.UI] display failed | component=nk | reason=%s", e, exc_info=True)

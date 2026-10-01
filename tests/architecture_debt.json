@@ -78,7 +78,7 @@
     "certus/ui/certus_substrate_index_dialog.py::IndexTableDialog.__init__": 457,
     "certus/utils/certus_strat_service.py::_validate_candidates_phase_a": 378,
     "certus/utils/certus_ux.py::build_premium_overrides": 574,
-    "certus/workers/certus_field_workers.py::FieldWorkerThread._run_optimize": 432,
+    "certus/workers/certus_field_workers.py::FieldWorkerThread._run_optimize": 347,
     "certus/workers/certus_strat_workers.py::_parallel_block_worker": 369
   },
   "fonctions_complexes": {
@@ -98,8 +98,7 @@
     "certus/ui/certus_index_spline_manualmesh_mixin.py::CertusIndexSplineManualMeshMixin._open_manual_extra_knots_dialog": 75,
     "certus/ui/certus_index_spline_mixins_ui.py::_MeshOptimizationMixin._build_opt_config": 82,
     "certus/ui/certus_re_excel_mixin.py::CertusREExcelMixin.load_reverse_engineering_from_path": 67,
-    "certus/ui/certus_substrate_index_dialog.py::IndexTableDialog.__init__": 64,
-    "certus/workers/certus_field_workers.py::FieldWorkerThread._run_optimize": 61
+    "certus/ui/certus_substrate_index_dialog.py::IndexTableDialog.__init__": 64
   },
   "fonctions_non_annotees": [],
   "fichiers_longs": {

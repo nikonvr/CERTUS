@@ -784,96 +784,11 @@ class FieldWorkerThread(QThread):
 
         dmin = getattr(params, 'dmin', 5.0)
         if dmin > 0.0:
-            def clean_and_reoptimize(x_opt, layer_types):
-                current_x = list(x_opt)
-                current_types = list(layer_types)
-                any_cleaned = False
-                final_cost = None
-                
-                while True:
-                    if not current_x:
-                        break
-                        
-                    all_thin = True
-                    for i, qwot in enumerate(current_x):
-                        n_idx = params.n1_rs[0] if current_types[i] == 0 else params.n2_rs[0]
-                        thick_nm = qwot * (params.l0 / 4.0) / n_idx
-                        if thick_nm >= dmin:
-                            all_thin = False
-                            break
-                    if all_thin:
-                        break
-                        
-                    thinnest_idx = -1
-                    min_thick = float('inf')
-                    for i, qwot in enumerate(current_x):
-                        n_idx = params.n1_rs[0] if current_types[i] == 0 else params.n2_rs[0]
-                        thick_nm = qwot * (params.l0 / 4.0) / n_idx
-                        if thick_nm < dmin and thick_nm < min_thick:
-                            min_thick = thick_nm
-                            thinnest_idx = i
-                            
-                    if thinnest_idx == -1:
-                        break
-                        
-                    any_cleaned = True
-                    current_x.pop(thinnest_idx)
-                    current_types.pop(thinnest_idx)
-                    
-                    if not current_x:
-                        break
-                        
-                    merged_x = []
-                    merged_types = []
-                    for i in range(len(current_x)):
-                        if not merged_types:
-                            merged_x.append(current_x[i])
-                            merged_types.append(current_types[i])
-                        else:
-                            if current_types[i] == merged_types[-1]:
-                                merged_x[-1] += current_x[i]
-                            else:
-                                merged_x.append(current_x[i])
-                                merged_types.append(current_types[i])
-                                
-                    current_x = merged_x
-                    current_types = merged_types
-                    
-                    clean_bounds = [(0.01, 5.0) for _ in range(len(current_x))]
-                    
-                    def make_cost_func(types_capture):
-                        def clean_cost_func(p: np.ndarray) -> float:
-                            if not self._is_running:
-                                raise InterruptedError()
-                            return top_level_objective_function(
-                                p, params.n1_rs, params.n2_rs, params.nSub_rs, params.l0,
-                                params.seuil_int_1, params.seuil_int_2, params.alpha,
-                                min(10, params.integral_points), params.n_supers,
-                                params.theta_inc, params.pol_flag, params.lambda_calcs,
-                                types_capture, rmin=params.rmin if params.rmin is not None else 1.0,
-                                rmax=params.rmax if params.rmax is not None else 1.0,
-                                min_field_active=bool(params.min_field_active)
-                            )
-                        return clean_cost_func
-                    
-                    res_clean = minimize(
-                        make_cost_func(current_types), np.asarray(current_x, dtype=float),
-                        method='L-BFGS-B', bounds=clean_bounds,
-                        options={'maxiter': params.maxiter}
-                    )
-                    
-                    if res_clean.fun < float('inf'):
-                        current_x = res_clean.x.tolist()
-                        final_cost = float(res_clean.fun)
-                    else:
-                        break
-                        
-                return current_x, current_types, any_cleaned, final_cost
 
             self.signals.progress_snapshot.emit(build_progress_snapshot(message=f"Auto-cleaning layers thinner than {dmin} nm...", display_ratio=0.85, progress_ratio=0.85, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="OPTIMIZATION", metadata={"mode": "CLEANUP", "dmin": dmin}))
             self.signals.progress_snapshot.emit(build_progress_snapshot(message=f"Auto-cleaning layers thinner than {dmin} nm...", display_ratio=0.85, progress_ratio=0.85, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="AUTO_CLEAN"))
             
-            new_best_x, new_best_types, was_cleaned, new_best_cost = clean_and_reoptimize(best_x, params.layer_types)
+            new_best_x, new_best_types, was_cleaned, new_best_cost = self._clean_and_reoptimize(best_x, params.layer_types, dmin, params)
             if was_cleaned:
                 logger.info(f"Auto-cleaned best solution: reduced layers from {len(best_x)} to {len(new_best_x)}, cost: {new_best_cost:.6f}")
                 best_x = new_best_x
@@ -884,7 +799,7 @@ class FieldWorkerThread(QThread):
             cleaned_solutions = []
             for sol in all_solutions:
                 sol_types = sol.get('layer_types', params.layer_types)
-                new_x, new_types, s_cleaned, new_cost = clean_and_reoptimize(sol['emp_factors'], sol_types)
+                new_x, new_types, s_cleaned, new_cost = self._clean_and_reoptimize(sol['emp_factors'], sol_types, dmin, params)
                 if s_cleaned and new_cost is not None:
                     cleaned_solutions.append({'cost': new_cost, 'qwot_sum': float(sum(new_x)), 'emp_factors': new_x, 'layer_types': new_types})
                 else:
@@ -952,3 +867,89 @@ class FieldWorkerThread(QThread):
             success=True,
             message="Optimization finished successfully.",
         ))
+
+    def _clean_and_reoptimize(self, x_opt, layer_types, dmin, params):
+        current_x = list(x_opt)
+        current_types = list(layer_types)
+        any_cleaned = False
+        final_cost = None
+
+        while True:
+            if not current_x:
+                break
+
+            all_thin = True
+            for i, qwot in enumerate(current_x):
+                n_idx = params.n1_rs[0] if current_types[i] == 0 else params.n2_rs[0]
+                thick_nm = qwot * (params.l0 / 4.0) / n_idx
+                if thick_nm >= dmin:
+                    all_thin = False
+                    break
+            if all_thin:
+                break
+
+            thinnest_idx = -1
+            min_thick = float('inf')
+            for i, qwot in enumerate(current_x):
+                n_idx = params.n1_rs[0] if current_types[i] == 0 else params.n2_rs[0]
+                thick_nm = qwot * (params.l0 / 4.0) / n_idx
+                if thick_nm < dmin and thick_nm < min_thick:
+                    min_thick = thick_nm
+                    thinnest_idx = i
+
+            if thinnest_idx == -1:
+                break
+
+            any_cleaned = True
+            current_x.pop(thinnest_idx)
+            current_types.pop(thinnest_idx)
+
+            if not current_x:
+                break
+
+            merged_x = []
+            merged_types = []
+            for i in range(len(current_x)):
+                if not merged_types:
+                    merged_x.append(current_x[i])
+                    merged_types.append(current_types[i])
+                else:
+                    if current_types[i] == merged_types[-1]:
+                        merged_x[-1] += current_x[i]
+                    else:
+                        merged_x.append(current_x[i])
+                        merged_types.append(current_types[i])
+
+            current_x = merged_x
+            current_types = merged_types
+
+            clean_bounds = [(0.01, 5.0) for _ in range(len(current_x))]
+
+            def make_cost_func(types_capture):
+                def clean_cost_func(p: np.ndarray) -> float:
+                    if not self._is_running:
+                        raise InterruptedError()
+                    return top_level_objective_function(
+                        p, params.n1_rs, params.n2_rs, params.nSub_rs, params.l0,
+                        params.seuil_int_1, params.seuil_int_2, params.alpha,
+                        min(10, params.integral_points), params.n_supers,
+                        params.theta_inc, params.pol_flag, params.lambda_calcs,
+                        types_capture, rmin=params.rmin if params.rmin is not None else 1.0,
+                        rmax=params.rmax if params.rmax is not None else 1.0,
+                        min_field_active=bool(params.min_field_active)
+                    )
+                return clean_cost_func
+
+            res_clean = minimize(
+                make_cost_func(current_types), np.asarray(current_x, dtype=float),
+                method='L-BFGS-B', bounds=clean_bounds,
+                options={'maxiter': params.maxiter}
+            )
+
+            if res_clean.fun < float('inf'):
+                current_x = res_clean.x.tolist()
+                final_cost = float(res_clean.fun)
+            else:
+                break
+
+        return current_x, current_types, any_cleaned, final_cost

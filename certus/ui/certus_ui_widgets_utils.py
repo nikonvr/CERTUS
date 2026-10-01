@@ -78,12 +78,15 @@ class CertusStatusPill(QLabel):
         self._apply()
 
     def _levels(self) -> dict:
+        # "22" and "55" were meant as alpha bytes (13 % and 33 %) and appended to the colour: Qt reads eight digits as
+        # #aarrggbb, so the fill was a brown at 8 % under a green label. `tint` writes the alpha where Qt reads it.
+        tint = CertusTheme.tint
         return {
-            "ready": (CertusTheme.SUCCESS + "22", CertusTheme.SUCCESS, CertusTheme.SUCCESS + "55"),
-            "running": (CertusTheme.PRIMARY + "22", CertusTheme.PRIMARY, CertusTheme.PRIMARY + "55"),
-            "done": (CertusTheme.SECONDARY + "22", CertusTheme.TEXT_MAIN, CertusTheme.BORDER),
-            "error": (CertusTheme.DANGER + "22", CertusTheme.DANGER, CertusTheme.DANGER + "55"),
-            "warning": (CertusTheme.WARNING + "22", CertusTheme.TEXT_MAIN, CertusTheme.WARNING + "55"),
+            "ready": (tint(CertusTheme.SUCCESS, 0.13), CertusTheme.SUCCESS, tint(CertusTheme.SUCCESS, 0.33)),
+            "running": (tint(CertusTheme.PRIMARY, 0.13), CertusTheme.PRIMARY, tint(CertusTheme.PRIMARY, 0.33)),
+            "done": (tint(CertusTheme.SECONDARY, 0.13), CertusTheme.TEXT_MAIN, CertusTheme.BORDER),
+            "error": (tint(CertusTheme.DANGER, 0.13), CertusTheme.DANGER, tint(CertusTheme.DANGER, 0.33)),
+            "warning": (tint(CertusTheme.WARNING, 0.13), CertusTheme.TEXT_MAIN, tint(CertusTheme.WARNING, 0.33)),
             "default": (CertusTheme.SURFACE_HOVER, CertusTheme.TEXT_SUB, CertusTheme.BORDER),
         }
 

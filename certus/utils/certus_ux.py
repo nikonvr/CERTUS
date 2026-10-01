@@ -165,13 +165,17 @@ OBJ: Final[Objects] = Objects()
 
 
 def _hex_with_alpha(hex_color: str, alpha_pct: int) -> str:
-    """Return ``#RRGGBBAA`` from ``#RRGGBB`` + alpha percentage (0-100)."""
+    """Return ``rgba(r, g, b, a)`` from ``#RRGGBB`` + alpha percentage (0-100).
+
+    Not ``#RRGGBBAA``, the CSS spelling: Qt reads eight digits as ``#AARRGGBB``, so ``#0f62fe2e`` painted a lime green at
+    6 % on the hover of every ghost button and header section, and in the dark theme a yellow-green at 38 % (measured
+    2026-10-01), where an 18 % tint of the primary colour was meant.
+    """
     c = hex_color.lstrip("#")
     if len(c) != 6:
         return hex_color
     a = max(0, min(100, int(alpha_pct)))
-    aa = f"{int(round(a * 255 / 100)):02x}"
-    return f"#{c}{aa}"
+    return f"rgba({int(c[0:2], 16)}, {int(c[2:4], 16)}, {int(c[4:6], 16)}, {a / 100:g})"
 
 
 def _darken_color(hex_color: str, factor: float = 0.1) -> str:

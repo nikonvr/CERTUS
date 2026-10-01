@@ -58,6 +58,9 @@ _TOKEN_NAMES = (
 #: that Qt reads as white space, in a style sheet and in the style attribute of rich text alike.
 _SHEET_TOKEN = re.compile(r"(#[0-9a-fA-F]{3,8}|rgba?\([^)]*\))/\*T:(\w+)\*/")
 
+#: A colour of the palette at a given opacity (`CertusTheme.tint`): `rgba(15, 98, 254, 0.18)/*A:PRIMARY:0.18*/`.
+_SHEET_TINT = re.compile(r"rgba\([^)]*\)/\*A:(\w+):([0-9.]+)\*/")
+
 #: The style of a solid button, between two markers that say how to build it again: its label and its hover and pressed
 #: fills are DERIVED from its fill (`button_states`), so the colour of a token cannot be rewritten in place.
 _BUTTON_SEGMENT = re.compile(r"/\*B:([^*]*)\*/.*?/\*B-END\*/", re.DOTALL)
@@ -581,13 +584,50 @@ class CertusTheme:
     def _button_from_reference(cls, reference: str) -> str:
         return cls.get_button_style(getattr(cls, reference[6:]) if reference.startswith("token:") else reference)
 
+    @staticmethod
+    def tint(colour: str, alpha: float) -> str:
+        """`colour` at `alpha` (0 to 1) opacity, written the way a Qt style sheet reads it: `rgba(r, g, b, a)`.
+
+        Never `#rrggbbaa`: Qt reads eight digits as `#aarrggbb`, so `#0f62fe2e` is a lime green at 6 %, not a blue at 18 %
+        (what `certus_ux._hex_with_alpha` wrote for the hover of every ghost button and header section, measured 2026-10-01),
+        and `f"{token}11"` is worse, the comment of the token sitting inside the number. A colour of the palette keeps its
+        name, `rgba(15, 98, 254, 0.18)/*A:PRIMARY:0.18*/`, so the tint follows the theme like the colour itself.
+        """
+        shade = QColor(str(colour))
+        if not shade.isValid():
+            return str(colour)
+        text = f"rgba({shade.red()}, {shade.green()}, {shade.blue()}, {alpha:g})"
+        return f"{text}/*A:{colour.name}:{alpha:g}*/" if isinstance(colour, _Token) else text
+
+    @classmethod
+    def current_sheet(cls, sheet: str) -> str:
+        """`sheet` with the colours of the ACTIVE palette: what `refresh_widget_sheets` writes on a widget, for a text kept elsewhere.
+
+        A sheet kept as a string (a validator keeps the one of its field, to put it back) holds the palette of the day it
+        was written: applied later, it would bring that palette back. `#hex/*T:NAME*/` takes the present value of NAME (the
+        annotation is kept, a second change works the same), a tint is computed again, and the style of a solid button is
+        built again from its variant (`get_button_style` marks it).
+        """
+
+        def token(match: "re.Match[str]") -> str:
+            name = match.group(2)
+            value = getattr(cls, name, None) if name in _TOKEN_NAMES else None
+            return f"{value!s}/*T:{name}*/" if isinstance(value, str) else match.group(0)
+
+        def tinted(match: "re.Match[str]") -> str:
+            name = match.group(1)
+            value = getattr(cls, name, None) if name in _TOKEN_NAMES else None
+            return cls.tint(value, float(match.group(2))) if isinstance(value, _Token) else match.group(0)
+
+        sheet = _BUTTON_SEGMENT.sub(lambda m: cls._button_from_reference(m.group(1)), sheet)
+        return _SHEET_TINT.sub(tinted, _SHEET_TOKEN.sub(token, sheet))
+
     @classmethod
     def refresh_widget_sheets(cls, app: QApplication | None = None) -> int:
         """Rewrite the style sheet of every widget that carries palette colours with those of the active palette.
 
-        Called when the theme changes, after `configure`. A sheet that holds `#hex/*T:NAME*/` takes the present value of
-        NAME (the annotation is kept, a second change works the same), the style of a solid button is built again from its
-        variant (`get_button_style` marks it), a label that spells a colour in rich text is written again. Returns how many widgets were rewritten.
+        Called when the theme changes, after `configure`: each sheet goes through `current_sheet`, and so does a label
+        that spells a colour in rich text. Returns how many widgets were rewritten.
         """
         from PyQt6.QtWidgets import QLabel
 
@@ -595,21 +635,15 @@ class CertusTheme:
         if app is None:
             return 0
 
-        def current(match: "re.Match[str]") -> str:
-            name = match.group(2)
-            value = getattr(cls, name, None) if name in _TOKEN_NAMES else None
-            return f"{value!s}/*T:{name}*/" if isinstance(value, str) else match.group(0)
-
         rewritten = 0
         for widget in app.allWidgets():
             try:
-                new_sheet = _BUTTON_SEGMENT.sub(lambda m: cls._button_from_reference(m.group(1)), widget.styleSheet())
-                new_sheet = _SHEET_TOKEN.sub(current, new_sheet)
+                new_sheet = cls.current_sheet(widget.styleSheet())
                 if new_sheet != widget.styleSheet():
                     widget.setStyleSheet(new_sheet)
                     rewritten += 1
-                if isinstance(widget, QLabel) and "/*T:" in widget.text():
-                    new_text = _SHEET_TOKEN.sub(current, widget.text())
+                if isinstance(widget, QLabel) and "/*" in widget.text():
+                    new_text = cls.current_sheet(widget.text())
                     if new_text != widget.text():
                         widget.setText(new_text)
                         rewritten += 1

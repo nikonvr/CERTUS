@@ -201,7 +201,9 @@ mais **synchronisés par Drive**) : supprime-les ensuite.
   `str(CertusTheme.TEXT_MAIN)`, une concaténation ou un hexadécimal. Une couleur DÉRIVÉE d'un jeton (un survol, l'encre d'un fond)
   n'est pas un jeton : le style d'un bouton plein est entre deux marqueurs que `get_button_style` pose et que le rafraîchissement
   reconstruit. `test_ux_dark_toggle_reaches_the_widgets.py` et `python scripts\audit_ux_certus.py` comptent les feuilles restées
-  claires après un clic sur la bascule.
+  claires après un clic sur la bascule. **Une transparence s'écrit `CertusTheme.tint(couleur, 0.18)`** (un `rgba()` qui garde le nom du
+  jeton), jamais `f"{couleur}2e"` ni `couleur + "2e"` : Qt lit huit chiffres hexadécimaux à l'envers (`#aarrggbb`), et le commentaire du
+  jeton tomberait dans le nombre (`test_ux_alpha_is_written_the_way_qt_reads_it.py` cherche les deux écritures dans tout le dépôt).
 - **Le premier calcul est lent** (compilation numba, +30 s) : chauffe, puis mesure.
 - **N'écris pas l'artefact que tu décris** : un hexadécimal cité dans un commentaire fait
   bouger le cliquet des couleurs, une règle QSS citée dans une f-string est recrachée dans la

@@ -24,11 +24,11 @@ class ModuleBadge(QLabel):
 
         self.setStyleSheet(f"""
 
-            background-color: {color}15;
+            background-color: {CertusTheme.tint(color, 0.08)};
 
             color: {color};
 
-            border: 1px solid {color}60;
+            border: 1px solid {CertusTheme.tint(color, 0.38)};
 
             border-radius: {CertusTheme.RADIUS_MD}px;
 

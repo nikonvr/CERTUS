@@ -667,29 +667,31 @@ def attach_numeric_validator(
 ) -> None:
     """Visually flag invalid numeric input without blocking typing."""
     base_ss = line_edit.styleSheet()
-    err_ss = base_ss + (f" QLineEdit {{ border: 1px solid {CertusTheme.DANGER}; background: {CertusTheme.DANGER}11; }}")
+    err_ss = base_ss + (
+        f" QLineEdit {{ border: 1px solid {CertusTheme.DANGER}; background: {CertusTheme.tint(CertusTheme.DANGER, 0.07)}; }}"
+    )
 
     def _validate() -> None:
         txt = line_edit.text().strip()
         if not txt:
-            line_edit.setStyleSheet(base_ss)
+            line_edit.setStyleSheet(CertusTheme.current_sheet(base_ss))
             line_edit.setToolTip("")
             return
         try:
             val = float(txt) if kind == "float" else int(txt)
         except ValueError:
-            line_edit.setStyleSheet(err_ss)
+            line_edit.setStyleSheet(CertusTheme.current_sheet(err_ss))
             line_edit.setToolTip(f"Invalid {kind} value")
             return
         if minimum is not None and val < minimum:
-            line_edit.setStyleSheet(err_ss)
+            line_edit.setStyleSheet(CertusTheme.current_sheet(err_ss))
             line_edit.setToolTip(f"Value must be >= {minimum}")
             return
         if maximum is not None and val > maximum:
-            line_edit.setStyleSheet(err_ss)
+            line_edit.setStyleSheet(CertusTheme.current_sheet(err_ss))
             line_edit.setToolTip(f"Value must be <= {maximum}")
             return
-        line_edit.setStyleSheet(base_ss)
+        line_edit.setStyleSheet(CertusTheme.current_sheet(base_ss))
         line_edit.setToolTip("")
 
     def _on_text_changed(*_args) -> None:

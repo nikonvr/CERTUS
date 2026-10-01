@@ -114,6 +114,17 @@ def test_a_cleaned_best_solution_replaces_the_best_one_its_cost_and_the_layer_ty
     assert logger.infos == ["Auto-cleaned best solution: reduced layers from 3 to 2, cost: 0.250000"]
 
 
+def test_a_cleaned_best_solution_without_a_cost_keeps_the_old_cost_and_says_n_a_in_the_log():
+    # `_clean_and_reoptimize` returns `cleaned` true and no cost when the re-optimization finds only infinite values
+    params = thin_params()
+    cleaner = Cleaner({(1.0, 2.0, 3.0): ([4.0, 5.0], [1, 0], True, None)})
+    (_solutions, best_cost, best_x), _signal, logger = clean(cleaner=cleaner, params=params)
+    assert best_x == [4.0, 5.0]
+    assert best_cost == 0.5
+    assert params.layer_types == [1, 0]
+    assert logger.infos == ["Auto-cleaned best solution: reduced layers from 3 to 2, cost: n/a"]
+
+
 def test_a_best_solution_that_nothing_was_removed_from_stays_as_it_was():
     params = thin_params()
     (_solutions, best_cost, best_x), _signal, logger = clean(cleaner=Cleaner(), params=params)

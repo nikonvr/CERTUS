@@ -822,7 +822,8 @@ class FieldWorkerThread(QThread):
 
             new_best_x, new_best_types, was_cleaned, new_best_cost = self._clean_and_reoptimize(best_x, params.layer_types, dmin, params)
             if was_cleaned:
-                logger.info(f"Auto-cleaned best solution: reduced layers from {len(best_x)} to {len(new_best_x)}, cost: {new_best_cost:.6f}")
+                cost_text = f"{new_best_cost:.6f}" if new_best_cost is not None else "n/a"  # the re-optimization may have found no finite cost
+                logger.info(f"Auto-cleaned best solution: reduced layers from {len(best_x)} to {len(new_best_x)}, cost: {cost_text}")
                 best_x = new_best_x
                 params.layer_types = new_best_types
                 if new_best_cost is not None:

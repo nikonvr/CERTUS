@@ -27,6 +27,8 @@ import pytest
 from certus.physics.certus_strat_batch import simulate_stack_robustness_batch
 from certus_physics import corridor_wl_range, validate_wavelengths_batch
 
+pytestmark = pytest.mark.kernels
+
 SPECTRAL = np.array([400.0, 700.0], dtype=np.float64)
 
 

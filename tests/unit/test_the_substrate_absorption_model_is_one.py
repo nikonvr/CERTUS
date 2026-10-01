@@ -15,6 +15,8 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = pytest.mark.kernels
+
 ROOT = Path(__file__).resolve().parents[2]
 LIMITS = ("K_MAX_LAYER_BACKSIDE", "K_MAX_SUBSTRATE_BACKSIDE")
 STRAT_MODULES = ("batch", "dp", "growth", "math", "nucleation")

@@ -32,6 +32,8 @@ from certus.physics.certus_strat_growth import (
     slit_bias_at,
 )
 
+pytestmark = pytest.mark.kernels
+
 QWOT_500 = np.array([53.19, 85.62, 53.19, 85.62, 53.19, 85.62], dtype=np.float64)
 
 

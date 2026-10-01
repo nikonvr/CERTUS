@@ -1,8 +1,11 @@
 import numpy as np
+import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from certus.physics.certus_strat_batch import calculate_RT_batch_kernel
+
+pytestmark = pytest.mark.kernels
 
 
 @settings(max_examples=100, deadline=None)

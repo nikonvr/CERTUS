@@ -25,6 +25,8 @@ from certus.physics.certus_colorimetry import lab_to_xyz
 from certus.physics.certus_material_db import numba_interp_scalar, numba_interp_vectorized
 from certus.physics.certus_strat_math import fit_parabola_vertex_3points
 
+pytestmark = pytest.mark.kernels
+
 
 class _DummyTarget:
     def __init__(self, lmin: float, lmax: float, tmin: float, tmax: float, w: float = 1.0) -> None:

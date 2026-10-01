@@ -38,6 +38,8 @@ import pytest
 
 from certus.physics.certus_strat_growth import turning_point_margins
 
+pytestmark = pytest.mark.kernels
+
 A = 5e-4                      # reading noise amplitude, 9bis-2
 HY = 1.66 * A                 # configured hysteresis
 SENTINEL = 1e17               # anything above this means "no constraint"

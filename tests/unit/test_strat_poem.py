@@ -33,6 +33,8 @@ import pytest
 import certus_physics  # noqa: F401  (facade : evite l'import circulaire)
 from certus_physics import simulate_growth_kernel
 
+pytestmark = pytest.mark.kernels
+
 # --------------------------------------------------------------------------- #
 #Reference stack: 8 quarter-wave layers at 1500 nm.
 # Volontairement le meme materiau que tests/integration/test_strat_robustness.py

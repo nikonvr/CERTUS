@@ -20,6 +20,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+pytestmark = pytest.mark.kernels
+
 ROOT = Path(__file__).resolve().parents[2]
 
 

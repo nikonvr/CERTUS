@@ -36,6 +36,8 @@ from certus.physics.certus_inputs import (
 from certus.physics.certus_oblique_substrate import oblique_exit_admittance
 from certus.physics.certus_substrate_absorption import plate_internal_transmittance, substrate_internal_transmittance
 
+pytestmark = pytest.mark.kernels
+
 WAVELENGTH = 500.0
 K = 3.5
 

@@ -17,6 +17,8 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 import numpy as np
 import pytest
 
+pytestmark = pytest.mark.kernels
+
 WLS = np.array([500.0, 600.0, 700.0])
 LAYERS = np.full((3, 2), complex(1.9, 0.0))
 THICKNESS = np.array([100.0, 120.0])

@@ -18,8 +18,11 @@ from __future__ import annotations
 from itertools import pairwise
 
 import numpy as np
+import pytest
 
 from certus.physics.certus_strat_batch import simulate_stack_robustness_batch
+
+pytestmark = pytest.mark.kernels
 
 N_LAYERS = 4
 N_RUNS = 8

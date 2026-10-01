@@ -32,6 +32,8 @@ import pytest
 from certus.physics.certus_strat_batch import simulate_stack_robustness_batch
 from certus.physics.certus_strat_growth import simulate_growth_kernel
 
+pytestmark = pytest.mark.kernels
+
 N_LAYERS = 12
 NOMINAL_TH = 100.0
 WL = 633.0

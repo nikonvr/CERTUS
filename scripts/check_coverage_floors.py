@@ -3,10 +3,11 @@
     python scripts\\check_coverage_floors.py cov.json
     python scripts\\check_coverage_floors.py cov.json --noyaux cov_noyaux.json
 
-`cov.json` sort de `coverage json` apres la suite ordinaire (`pytest --cov=certus`), `cov_noyaux.json`
-apres `NUMBA_DISABLE_JIT=1 pytest tests/oracle tests/core --cov=certus` : sans elle, Numba compile les
-noyaux et `coverage` ne voit pas une ligne de `certus/physics/` (mesure du 2026-09-30 : 20,3 % avec la
-compilation, 45,9 % sans).
+`cov.json` sort de `coverage json` apres la suite ordinaire (`pytest --cov=certus`), `cov_noyaux.json` de
+`python scripts/measure_kernel_coverage.py --json cov_noyaux.json` (oracle, core, property et les tests de unit
+marques `kernels`, avec NUMBA_DISABLE_JIT=1) : sans elle, Numba compile les noyaux et `coverage` ne voit pas une
+ligne de `certus/physics/` (20,3 % avec la compilation le 2026-09-30 ; 45,9 % sans, avec oracle + core seuls ;
+74,0 % avec les tests de unit des noyaux, le 2026-10-01).
 
 🔑 Ce que le cliquet fait, et ne fait pas. Un plancher par paquet, dans `tests/coverage_floors.json` :
 la commande echoue (code 1) quand un paquet mesure MOINS que son plancher. Elle ne fait jamais monter un
@@ -74,7 +75,7 @@ def main(argv: list[str] | None = None) -> int:
             stream.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description="Aucun paquet ne descend sous son plancher de couverture.")
     parser.add_argument("couverture", type=Path, help="JSON de `coverage json` de la suite ordinaire")
-    parser.add_argument("--noyaux", type=Path, help="JSON pris avec NUMBA_DISABLE_JIT=1 (oracle + core)")
+    parser.add_argument("--noyaux", type=Path, help="JSON de scripts/measure_kernel_coverage.py (NUMBA_DISABLE_JIT=1)")
     parser.add_argument("--planchers", type=Path, default=FLOORS, help="le fichier des planchers")
     args = parser.parse_args(argv)
 

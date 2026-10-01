@@ -125,7 +125,6 @@
     "certus/spline/certus_index_spline_core.py": 2111,
     "certus/spline/certus_index_spline_rendering.py": 1969,
     "certus/spline/spline_workers.py": 2473,
-    "certus/ui/certus_base_app.py": 2654,
     "certus/ui/certus_re_excel_mixin.py": 2245,
     "certus/ui/certus_re_layout_mixin.py": 1767,
     "certus/ui/certus_strat_ui_state.py": 1809,

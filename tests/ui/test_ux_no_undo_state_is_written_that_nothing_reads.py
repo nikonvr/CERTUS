@@ -31,7 +31,8 @@ def test_no_module_writes_an_undo_state_that_nothing_reads() -> None:
     `front_table`, bound by DESIGN and RE) and STRAT (its own stack, Ctrl+Z). A new writer comes with its consumer and its
     key, and with its file in this set.
     """
-    allowed = {"certus/ui/certus_base_app.py", "certus/ui/certus_strat_ui_state.py"}
+    # the base app's undo moved to its mixin in S5.3 (certus_base_app_undo_mixin.py): the writer is the same code
+    allowed = {"certus/ui/certus_base_app_undo_mixin.py", "certus/ui/certus_strat_ui_state.py"}
     writers = {
         path.relative_to(ROOT).as_posix()
         for path in (ROOT / "certus").rglob("*.py")

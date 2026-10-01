@@ -41,6 +41,7 @@ from unittest.mock import MagicMock
 import numpy as np
 
 import CERTUS_INDEX_SPLINE as spline_gui
+import certus.spline.certus_index_spline_corridor_worker as corridor_worker
 from CERTUS_INDEX_SPLINE import CertusIndexSplineApp
 
 
@@ -121,7 +122,8 @@ def test_corridor_state_label_reports_completed_when_profile_exists() -> None:
 
 
 def test_worker_done_non_dict_restores_idle_and_unlocks_post_opt_controls(monkeypatch) -> None:
-    monkeypatch.setattr(spline_gui, "uninstall_skeleton", lambda *_args, **_kwargs: None)
+    # patched where the handler LOOKS THE NAME UP: `_on_worker_done` lives in the corridor worker module since S5.3
+    monkeypatch.setattr(corridor_worker, "uninstall_skeleton", lambda *_args, **_kwargs: None)
     app = SimpleNamespace(
         _last_result={"rmse": 1e-3},
         _worker_role="main",

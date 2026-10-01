@@ -150,13 +150,13 @@ ONLY_WHERE_PROVIDED = {
     "CertusBaseApp._build_ui -> _build_left_panel",
     "CertusBaseApp._build_ui -> _build_right_panel",
     # Reached from the front-layer table and its QWOT/thickness columns: DESIGN and RE only.
-    "CertusBaseApp._schedule_eval -> run_eval",
-    "CertusBaseApp._update_thickness_display -> _get_materials",
-    "CertusBaseApp._ep_nm_to_qwot -> _get_materials",
+    "CertusAppUndoMixin._schedule_eval -> run_eval",  # these hooks moved from CertusBaseApp to its mixins in S5.3
+    "CertusAppFrontStackMixin._update_thickness_display -> _get_materials",
+    "CertusAppFrontStackMixin._ep_nm_to_qwot -> _get_materials",
     "CertusBaseApp.eventFilter -> _paste_from_excel",
     # Reached in oblique mode only, which only DESIGN and RE set.
-    "CertusBaseApp._auto_scale_spectrum_y -> _get_oblique_tgts",
-    "CertusBaseApp._rebuild_target_scatter -> _get_oblique_tgts",
+    "CertusAppPlotMixin._auto_scale_spectrum_y -> _get_oblique_tgts",
+    "CertusAppPlotMixin._rebuild_target_scatter -> _get_oblique_tgts",
 }
 
 

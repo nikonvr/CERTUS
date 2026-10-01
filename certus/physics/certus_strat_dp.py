@@ -32,10 +32,10 @@ def _compute_valid_blocks_kernel(
     for i in range(num_layers):
         for j in range(i + 1, num_layers + 1):
             bl_ok = True
-            for l in range(i, j):
+            for layer_idx in range(i, j):
                 has_any = False
                 for w in range(max_W):
-                    if valid_mask[l, w]:
+                    if valid_mask[layer_idx, w]:
                         has_any = True
                         break
                 if not has_any:
@@ -45,14 +45,14 @@ def _compute_valid_blocks_kernel(
                 continue
             base_l = i
             min_count = 999999
-            for l in range(i, j):
+            for layer_idx in range(i, j):
                 c = 0
                 for w in range(max_W):
-                    if valid_mask[l, w]:
+                    if valid_mask[layer_idx, w]:
                         c += 1
                 if c < min_count:
                     min_count = c
-                    base_l = l
+                    base_l = layer_idx
             temp_costs = np.zeros(max_W, dtype=np.float64)
             temp_wls = np.zeros(max_W, dtype=np.float64)
             temp_count = 0
@@ -62,13 +62,13 @@ def _compute_valid_blocks_kernel(
                 wl = layer_wls[base_l, base_w_idx]
                 total_cost = layer_costs[base_l, base_w_idx]
                 is_valid = True
-                for l in range(i, j):
-                    if l == base_l:
+                for layer_idx in range(i, j):
+                    if layer_idx == base_l:
                         continue
                     found = False
                     for w in range(max_W):
-                        if valid_mask[l, w] and abs(layer_wls[l, w] - wl) < 1e-05:
-                            total_cost += layer_costs[l, w]
+                        if valid_mask[layer_idx, w] and abs(layer_wls[layer_idx, w] - wl) < 1e-05:
+                            total_cost += layer_costs[layer_idx, w]
                             found = True
                             break
                     if not found:

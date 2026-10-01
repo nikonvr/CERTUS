@@ -85,7 +85,7 @@ def test_u5plus_strip_renders_empty_state_when_no_recents():
     strip = build_recent_files_strip(None, limit=3)
     # The empty sentinel label "(none yet)" must exist
     labels = strip.findChildren(QLabel)
-    texts = [l.text() for l in labels]
+    texts = [label.text() for label in labels]
     assert any("(none" in t for t in texts)
 
 

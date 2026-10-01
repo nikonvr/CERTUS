@@ -327,12 +327,12 @@ def _controle_negatif() -> tuple[bool, str]:
     try:
         vues = set()
         for f in _md():
-            for l in f.read_text(encoding="utf-8", errors="replace").splitlines():
-                if not re.search(r"48\s*(?:couches|c)|JSON-strat-example", l):
+            for ligne in f.read_text(encoding="utf-8", errors="replace").splitlines():
+                if not re.search(r"48\s*(?:couches|c)|JSON-strat-example", ligne):
                     continue
-                if _est_correction(l) or not _un_seul_composant(l) or re.search(r"cible", l, re.I):
+                if _est_correction(ligne) or not _un_seul_composant(ligne) or re.search(r"cible", ligne, re.I):
                     continue
-                for m in re.finditer(r"0,(\d{3})\s*nm", l):
+                for m in re.finditer(r"0,(\d{3})\s*nm", ligne):
                     vues.add(m.group(0).strip())
         return (len(vues) > 1, f"{len(vues)} valeurs vues : {sorted(vues)}")
     finally:
@@ -438,10 +438,10 @@ def _sweep_symboles(fichiers, sym) -> tuple[int, int]:
     rx = re.compile(r"`?\*{0,2}(" + noms + r")\*{0,2}`?\s*(?:=|vaut|:)\s*\*{0,2}"
                     r"(-?\d+(?:[.,]\d+)?)", re.I)
     for f in fichiers:
-        for i, l in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
-            if _est_correction(l):
+        for i, ligne in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            if _est_correction(ligne):
                 continue
-            for m in rx.finditer(l):
+            for m in rx.finditer(ligne):
                 nom, brut = m.group(1), m.group(2).replace(",", ".")
                 # 🔴 TROIS CONSTRUCTIONS QUE L'OUTIL NE SAIT PAS LIRE, et qui produisaient
                 # SIX faux positifs a la premiere execution (2026-08-19) :
@@ -451,7 +451,7 @@ def _sweep_symboles(fichiers, sym) -> tuple[int, int]:
                 #   « phase_a_keep_limit ×4 »    -> un MULTIPLICATEUR
                 # On les compte a part : ce ne sont NI des conformites NI des erreurs, et les
                 # noyer dans l'un ou l'autre mentirait sur la couverture.
-                autour = l[max(0, m.start() - 12): m.end() + 14]
+                autour = ligne[max(0, m.start() - 12): m.end() + 14]
                 if re.search(r"→|->|×|\bx\s*\d|\d\s*/\s*\d|\(\s*i\s*[−-]", autour):
                     n_nc += 1
                     continue
@@ -483,11 +483,11 @@ def _sweep_modes(fichiers, modes) -> tuple[int, int, int]:
             rx = re.compile(re.escape(mode) + r".{0,80}?" + re.escape(cle)
                             + r".{0,20}?\*{0,2}(\d+)", re.I)
             for f in fichiers:
-                for i, l in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
-                    if _est_correction(l):
+                for i, ligne in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+                    if _est_correction(ligne):
                         continue
-                    for m in rx.finditer(l):
-                        autour = l[max(0, m.start() - 12): m.end() + 14]
+                    for m in rx.finditer(ligne):
+                        autour = ligne[max(0, m.start() - 12): m.end() + 14]
                         if re.search(r"→|->|×|x\s*\d|\d\s*/\s*\d", autour):
                             n_nc += 1
                             continue
@@ -520,10 +520,10 @@ def main() -> int:
             continue
         ecarts = []
         for f in fichiers:
-            for i, l in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
-                if not re.search(motif, l) or _est_correction(l):
+            for i, ligne in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+                if not re.search(motif, ligne) or _est_correction(ligne):
                     continue
-                for v in re.findall(r"\*\*(\d+(?:[.,]\d+)?)\*\*|`(\d+(?:[.,]\d+)?)`", l):
+                for v in re.findall(r"\*\*(\d+(?:[.,]\d+)?)\*\*|`(\d+(?:[.,]\d+)?)`", ligne):
                     t = (v[0] or v[1]).replace(",", ".")
                     try:
                         x = float(t)
@@ -544,23 +544,23 @@ def main() -> int:
         # et une vitrine qui contredit le corpus est pire qu'un dossier qui le contredit,
         # parce qu'un evaluateur qui prend un chiffre en defaut cesse de croire le reste.
         for f in list(fichiers) + _pages():
-            for i, l in enumerate(_lignes(f), 1):
-                if not re.search(ctx, l) or _est_correction(l):
+            for i, ligne in enumerate(_lignes(f), 1):
+                if not re.search(ctx, ligne) or _est_correction(ligne):
                     continue
                 # 🔴 Sans cette garde, « SEEL 0,583 sur 35c et 0,173 sur 48c » declenche DEUX
                 # faux positifs. Une ligne qui compare n'affirme pas.
-                if lib.startswith("SEEL") and not _un_seul_composant(l):
+                if lib.startswith("SEEL") and not _un_seul_composant(ligne):
                     continue
-                if excl and re.search(excl, l, re.I):
+                if excl and re.search(excl, ligne, re.I):
                     continue
                 # 🔑 UNE LIGNE QUI PORTE DEUX VALEURS DU MEME FAIT COMPARE, elle n'affirme
                 # pas. Generalisation de la garde `_un_seul_composant` a tous les faits,
                 # posee le 2026-08-19 apres un faux positif sur « prefere-t-on une fente de
                 # 1 nm ... ou la fente NOMINALE ? ». Sans elle, chaque arbitrage ecrit dans
                 # un dossier ressort comme une contradiction.
-                if len({m.group(0).strip() for m in re.finditer(val, l)}) > 1:
+                if len({m.group(0).strip() for m in re.finditer(val, ligne)}) > 1:
                     continue
-                for m in re.finditer(val, l):
+                for m in re.finditer(val, ligne):
                     vues.setdefault(m.group(0).strip(), []).append(f"{f.name}:{i}")
         if len(vues) > 1:
             n_pb += 1
@@ -590,21 +590,21 @@ def main() -> int:
     rx3 = re.compile(r"(\d{1,4})\s*/\s*(\d{1,4})\s*/\s*(\d{1,4})")
     ordre = ("fast", "premium", "deep")
     for f in fichiers:
-        for i, l in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
-            if _est_correction(l):
+        for i, ligne in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            if _est_correction(ligne):
                 continue
             # 🔴 APPARIEMENT PAR PROXIMITE, et il le faut. Une seule ligne porte souvent DEUX
             # triplets — « $N = 50 / 150 / 300$ et `dp_top_k` = 20 / 40 / 100 » — et un
             # appariement naif les CROISE, produisant deux faux desaccords sur une ligne
             # parfaitement juste. Mesure du 2026-08-19 : 4 faux positifs sur 6.
-            trios = [(m.start(), [float(x) for x in m.groups()]) for m in rx3.finditer(l)]
+            trios = [(m.start(), [float(x) for x in m.groups()]) for m in rx3.finditer(ligne)]
             if not trios:
                 continue
             for cle in ("robustness_num_runs", "dp_top_k", "n_screen_runs", "consensus_num_runs",
                         "k_keep_survivors", "elite_rounds"):
-                pos = l.find(cle)
+                pos = ligne.find(cle)
                 if pos < 0 and cle == "robustness_num_runs":
-                    m_n = re.search(r"\bN\s*=", l)
+                    m_n = re.search(r"\bN\s*=", ligne)
                     pos = m_n.start() if m_n else -1
                 if pos < 0:
                     continue
@@ -661,12 +661,12 @@ def main() -> int:
     # Trouve le 2026-09-08, apres que les `.md` eurent ete nettoyes.
     a_lire = list(fichiers) + sorted((ROOT / "scripts").glob("*.py"))
     for f in a_lire:
-        for i, l in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
-            if _est_correction(l):
+        for i, ligne in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            if _est_correction(ligne):
                 continue
-            for m in rx_py.finditer(l):
+            for m in rx_py.finditer(ligne):
                 vus_i.setdefault(m.group(1).replace("\\\\", "\\"), []).append(f"{f.name}:{i}")
-            for m in rx_script.finditer(l):
+            for m in rx_script.finditer(ligne):
                 vus_s.setdefault(m.group(1).replace("\\", "/"), []).append(f"{f.name}:{i}")
     ko_i = 0
     for chemin, ou in sorted(vus_i.items()):
@@ -703,10 +703,10 @@ def main() -> int:
         idx.setdefault(q.name, []).append(q)
     n_ok = n_ko = n_sans = 0
     for f in fichiers:
-        for i, l in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
-            if _est_correction(l):
+        for i, ligne in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            if _est_correction(ligne):
                 continue
-            for m in rx_ref.finditer(l):
+            for m in rx_ref.finditer(ligne):
                 cands = idx.get(Path(m.group(1).replace("\\", "/")).name, [])
                 if not cands:
                     continue
@@ -716,7 +716,7 @@ def main() -> int:
                 # (`consensus.py:111`) ... (`robustness.py:2162`) » -- fait apparier le second
                 # avec le symbole du premier, et crie au faux. 3 des 13 signalements de la
                 # premiere execution etaient de cette forme (2026-08-19).
-                avant = l[max(0, m.start() - 90): m.start()]
+                avant = ligne[max(0, m.start() - 90): m.start()]
                 syms = [x.group(1) for x in rx_sym.finditer(avant)][-2:]
                 syms = [x for x in syms if not x.endswith(".py")]
                 if not syms:

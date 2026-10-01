@@ -667,7 +667,7 @@ class DesignOrchestrator:
         if has_back_stack:
             mats_nk = {k: m.get_nk(wls) for k, m in mats.items()}
 
-            n_back = np.array([mats_nk[l.mat] for l in stack_back], dtype=complex_dtype)
+            n_back = np.array([mats_nk[layer.mat] for layer in stack_back], dtype=complex_dtype)
 
             n_back_T = np.ascontiguousarray(n_back.T)
 

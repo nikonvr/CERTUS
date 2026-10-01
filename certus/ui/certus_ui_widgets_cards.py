@@ -117,7 +117,7 @@ class FlashyCard(QFrame):
 
         self.refresh_theme()
 
-        l = QVBoxLayout(self)
+        lay = QVBoxLayout(self)
 
         if icon:
             lbl = QLabel(icon)
@@ -126,7 +126,7 @@ class FlashyCard(QFrame):
 
             lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-            l.addWidget(lbl)
+            lay.addWidget(lbl)
 
         t = QLabel(title)
 
@@ -134,7 +134,7 @@ class FlashyCard(QFrame):
 
         t.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        l.addWidget(t)
+        lay.addWidget(t)
 
         s = QLabel(subtitle)
 
@@ -144,7 +144,7 @@ class FlashyCard(QFrame):
 
         s.setWordWrap(True)
 
-        l.addWidget(s)
+        lay.addWidget(s)
 
         try:
             from certus.ui.certus_animations import hover_lift

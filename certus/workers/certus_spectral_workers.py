@@ -183,8 +183,8 @@ def _re_index_eval_params(
 ) -> tuple[float, np.ndarray, np.ndarray, float, float, float, Any, Any, Any, float, Any]:
     """Extract RE index-model parameters from worker config and stack."""
     l0 = float(cfg.get("l0", 500.0))
-    is_H = np.array([l.mat == "H" for l in stack], dtype=bool)
-    is_L = np.array([l.mat == "L" for l in stack], dtype=bool)
+    is_H = np.array([layer.mat == "H" for layer in stack], dtype=bool)
+    is_L = np.array([layer.mat == "L" for layer in stack], dtype=bool)
     a_b = float(cfg.get("a_pct", 0.0))
     b_b = float(cfg.get("b_pct", 0.0))
     f_b = float(cfg.get("f_pct", 0.0))
@@ -405,7 +405,7 @@ def _build_back_stack_arrays(
     """Build transposed backside refractive-index stack array or empty shape."""
     if not (len(stack_back) > 0):
         return np.zeros((int(wls_len), 0), dtype=complex_dtype)
-    return np.ascontiguousarray(np.array([mats_map[l.mat] for l in stack_back], dtype=complex_dtype).T)
+    return np.ascontiguousarray(np.array([mats_map[layer.mat] for layer in stack_back], dtype=complex_dtype).T)
 
 
 def _build_back_thickness_array(
@@ -443,7 +443,7 @@ def _build_front_stack_arrays(
 ) -> tuple[np.ndarray, np.ndarray]:
     """Build transposed front stack and possibly adjusted substrate array."""
     if stack:
-        n_front = np.array([mats_map[l.mat] for l in stack], dtype=complex_dtype)
+        n_front = np.array([mats_map[layer.mat] for layer in stack], dtype=complex_dtype)
         n_front, n_sub = apply_re_index_fn(n_front, n_sub, wls)
         n_front_T = np.ascontiguousarray(n_front.T)
         return n_front_T, n_sub

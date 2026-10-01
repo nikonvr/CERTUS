@@ -110,6 +110,6 @@ def live_monitor_nk_clipboard_tsv_2nm(lam: np.ndarray, n_: np.ndarray, k_: np.nd
 
     lines = ["lambda_nm\tn\tk"]
 
-    lines.extend(f"{l}\t{n:.10f}\t{k:.10e}" for l, n, k in zip(lam_i, n_i, k_i, strict=False))
+    lines.extend(f"{wl}\t{n:.10f}\t{k:.10e}" for wl, n, k in zip(lam_i, n_i, k_i, strict=False))
 
     return "\n".join(lines)

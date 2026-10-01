@@ -268,12 +268,12 @@ def optim_prepare_stack_nk_back(
 
     n_sub = np.ascontiguousarray(mats_nk[substrate_key])
 
-    n_layers = np.array([mats_nk[l.mat] for l in stack], dtype=complex_dtype)
+    n_layers = np.array([mats_nk[layer.mat] for layer in stack], dtype=complex_dtype)
 
     n_layers_T = np.ascontiguousarray(n_layers.T)
 
     if has_back_stack:
-        n_back = np.array([mats_nk[l.mat] for l in stack_back], dtype=complex_dtype)
+        n_back = np.array([mats_nk[layer.mat] for layer in stack_back], dtype=complex_dtype)
 
         n_back_T = np.ascontiguousarray(n_back.T)
 
@@ -923,10 +923,10 @@ def maybe_upgrade_grid_tikhonravov(
                 mats_nk = {k: m.get_nk(wls) for k, m in mats.items()}
                 _sub_key = "substrate" if "substrate" in mats_nk else "Substrate"
                 n_sub = np.ascontiguousarray(mats_nk[_sub_key])
-                n_layers = np.array([mats_nk[l.mat] for l in stack], dtype=complex_dtype)
+                n_layers = np.array([mats_nk[lyr.mat] for lyr in stack], dtype=complex_dtype)
                 n_layers_T = np.ascontiguousarray(n_layers.T)
                 if has_back_stack:
-                    n_back = np.array([mats_nk[l.mat] for l in stack_back], dtype=complex_dtype)
+                    n_back = np.array([mats_nk[lyr.mat] for lyr in stack_back], dtype=complex_dtype)
                     n_back_T = np.ascontiguousarray(n_back.T)
                 if not oblique_mode:
                     tgt_vals, tgt_weights = prepare_targets_vectorized(wls, tgts)

@@ -268,7 +268,7 @@ def test_u10_report_context_header_lines():
     assert lines[0] == "Report"
     assert "Sub" in lines[1]
     # Third line includes INDEX, author, timestamp
-    assert any("INDEX" in l for l in lines)
+    assert any("INDEX" in line for line in lines)
 
 
 def test_u10_section_kind_predicates():

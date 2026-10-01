@@ -153,10 +153,10 @@ class StateManager:
                 }
                 for n, w in self.ui.mat_widgets.items()
             },
-            "front": [{"mat": l.mat, "qw": l.qwot, "var": l.var} for l in self.ui._get_front_stack()],
+            "front": [{"mat": layer.mat, "qw": layer.qwot, "var": layer.var} for layer in self.ui._get_front_stack()],
             "back_en": self.ui.back_check.isChecked(),
             "back_coat": self.ui.back_coat_check.isChecked(),
-            "back": [{"mat": l.mat, "qw": l.qwot} for l in self.ui._get_back_stack()],
+            "back": [{"mat": layer.mat, "qw": layer.qwot} for layer in self.ui._get_back_stack()],
             "targets": (
                 [
                     {

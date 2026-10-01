@@ -155,13 +155,13 @@ def re_nominal_indices_at_wls(
 
     mats_nk = {k: m.get_nk(wls) for k, m in mats.items()}
 
-    n_layers_nominal = np.array([mats_nk[l.mat] for l in stack], dtype=complex_dtype)
+    n_layers_nominal = np.array([mats_nk[layer.mat] for layer in stack], dtype=complex_dtype)
 
     n_sub_nominal = np.ascontiguousarray(mats_nk["Substrate"])
 
-    is_H = np.array([l.mat == "H" for l in stack], dtype=bool)
+    is_H = np.array([layer.mat == "H" for layer in stack], dtype=bool)
 
-    is_L = np.array([l.mat == "L" for l in stack], dtype=bool)
+    is_L = np.array([layer.mat == "L" for layer in stack], dtype=bool)
 
     n_layers_count = len(stack)
 
@@ -405,7 +405,7 @@ def re_live_plot_wls_and_dispersion_nk(
 
     n_sub_disp = np.ascontiguousarray(mats_disp["Substrate"])
 
-    n_lay_disp = np.array([mats_disp[l.mat] for l in stack], dtype=complex_dtype)
+    n_lay_disp = np.array([mats_disp[layer.mat] for layer in stack], dtype=complex_dtype)
 
     return wls_display, n_sub_disp, n_lay_disp
 

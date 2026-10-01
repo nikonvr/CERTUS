@@ -130,15 +130,15 @@ def install_probe() -> None:
 
         #--- the cost curve (lambda) of a few layers ---------------------------
         curves = {}
-        for l in (0, 1, 12, 24, 36, num_layers - 1):
-            if l < 0 or l >= num_layers:
+        for layer_idx in (0, 1, 12, 24, 36, num_layers - 1):
+            if layer_idx < 0 or layer_idx >= num_layers:
                 continue
             pts = []
             for w in range(max_W):
-                if valid_mask[l, w]:
-                    pts.append((float(layer_wls[l, w]), float(layer_costs[l, w])))
+                if valid_mask[layer_idx, w]:
+                    pts.append((float(layer_wls[layer_idx, w]), float(layer_costs[layer_idx, w])))
             pts.sort()
-            curves[str(l)] = {
+            curves[str(layer_idx)] = {
                 "n_valid": len(pts),
                 "wl": [p[0] for p in pts],
                 "cost": [p[1] for p in pts],

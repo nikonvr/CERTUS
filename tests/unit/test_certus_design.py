@@ -187,7 +187,7 @@ class TestDesignFunctionality:
         wls = np.linspace(500.0, 510.0, 20)
         ep_current = np.array([100.0, 120.0], dtype=float)
         n_sub = mats["Substrate"].get_nk(wls)
-        n_layers_T = np.ascontiguousarray(np.array([mats[l.mat].get_nk(wls) for l in stack], dtype=np.complex128).T)
+        n_layers_T = np.ascontiguousarray(np.array([mats[layer.mat].get_nk(wls) for layer in stack], dtype=np.complex128).T)
         n_back_T = np.zeros((len(wls), 0), dtype=np.complex128)
         tgt_vals, tgt_weights = np.linspace(0.2, 0.8, len(wls)), np.ones(len(wls))
 

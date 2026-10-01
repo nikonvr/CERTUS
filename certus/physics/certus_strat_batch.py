@@ -545,11 +545,11 @@ def simulate_stack_robustness_batch(
             all_m_missed[r, i_layer] = m_mis
             all_m_fab[r, i_layer] = m_fab
     avg_dyns = np.zeros(n_layers, dtype=np.float64)
-    for l in range(n_layers):
+    for layer_idx in range(n_layers):
         sum_dyn = 0.0
         for r in range(n_runs):
-            sum_dyn += all_dyns[r, l]
-        avg_dyns[l] = sum_dyn / n_runs
+            sum_dyn += all_dyns[r, layer_idx]
+        avg_dyns[layer_idx] = sum_dyn / n_runs
     return (results, avg_dyns, all_m_level, all_m_missed, all_m_fab)
 
 

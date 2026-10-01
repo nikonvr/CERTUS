@@ -771,7 +771,7 @@ class WorkerManager:
                 animate=False,
             )
 
-            de = [delta_e_2000(nom, l) for l in labs]
+            de = [delta_e_2000(nom, lab) for lab in labs]
 
             rgb = lab_to_rgb(nom)
 

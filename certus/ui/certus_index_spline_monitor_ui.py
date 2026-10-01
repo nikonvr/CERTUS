@@ -24,7 +24,7 @@ class LiveIndexMonitor(QDialog):
         self.setWindowTitle("Monitoring Indices (Live)")
         self.resize(550, 700)
 
-        l = QVBoxLayout(self)
+        lay = QVBoxLayout(self)
         h = QHBoxLayout()
         h.addWidget(QLabel("X Axis Unit:"))
 
@@ -46,19 +46,19 @@ class LiveIndexMonitor(QDialog):
         h.addWidget(self._btn_copy_nk_2nm)
 
         h.addStretch()
-        l.addLayout(h)
+        lay.addLayout(h)
 
         self.lbl_d = QLabel("d =  nm")
         self.lbl_d.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt;")
-        l.addWidget(self.lbl_d)
+        lay.addWidget(self.lbl_d)
 
         self.p_n = CertusScientificPlot(title="Index n")
         self.p_k = CertusScientificPlot(title="Index k  Log Scale")
 
         _apply_fixed_log_k_axis(self.p_k)
 
-        l.addWidget(self.p_n)
-        l.addWidget(self.p_k)
+        lay.addWidget(self.p_n)
+        lay.addWidget(self.p_k)
 
         apply_certus_theme(self)
 

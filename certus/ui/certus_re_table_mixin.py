@@ -878,15 +878,15 @@ class CertusRETableMixin:
 
         mats_nk = {k: m.get_nk(wls) for k, m in mats.items()}
 
-        n_layers_nominal = np.array([mats_nk[l.mat] for l in stack], dtype=complex_dtype)
+        n_layers_nominal = np.array([mats_nk[layer.mat] for layer in stack], dtype=complex_dtype)
 
         n_sub = np.ascontiguousarray(mats_nk["Substrate"])
 
         lambda_ref = float(self.l0_spin.value())
 
-        is_H = np.array([l.mat == "H" for l in stack], dtype=bool)
+        is_H = np.array([layer.mat == "H" for layer in stack], dtype=bool)
 
-        is_L = np.array([l.mat == "L" for l in stack], dtype=bool)
+        is_L = np.array([layer.mat == "L" for layer in stack], dtype=bool)
 
         _sct0 = getattr(self, "_re_sub_cauchy_a0", None)
 

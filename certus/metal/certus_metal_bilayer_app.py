@@ -923,11 +923,11 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
         c = CertusCard("Physical Parameters")
 
-        l = c.body
+        lay = c.body
 
-        l.setSpacing(4)
+        lay.setSpacing(4)
 
-        l.setContentsMargins(8, 12, 8, 8)
+        lay.setContentsMargins(8, 12, 8, 8)
 
         self.widgets["eM_min"] = QLineEdit(str(DEFAULT_EM_MIN))
 
@@ -945,7 +945,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
         self.widgets["eL_variation"].setFixedHeight(24)
 
-        l.addLayout(
+        lay.addLayout(
             self._create_labeled_input(
                 "eM min:",
                 self.widgets["eM_min"],
@@ -953,7 +953,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
             )
         )
 
-        l.addLayout(
+        lay.addLayout(
             self._create_labeled_input(
                 "eM max:",
                 self.widgets["eM_max"],
@@ -961,7 +961,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
             )
         )
 
-        l.addLayout(
+        lay.addLayout(
             self._create_labeled_input(
                 "eL nom:",
                 self.widgets["eL_nominal"],
@@ -969,7 +969,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
             )
         )
 
-        l.addLayout(
+        lay.addLayout(
             self._create_labeled_input(
                 "eL +/-:",
                 self.widgets["eL_variation"],
@@ -984,11 +984,11 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
         c = CertusCard("Material Parameters")
 
-        l = c.body
+        lay = c.body
 
-        l.setSpacing(4)
+        lay.setSpacing(4)
 
-        l.setContentsMargins(8, 12, 8, 8)
+        lay.setContentsMargins(8, 12, 8, 8)
 
         # SiO2 Inputs
 
@@ -1026,7 +1026,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
         self.widgets["min_knot_dist"].setFixedHeight(24)
 
-        l.addLayout(
+        lay.addLayout(
             self._create_labeled_input(
                 "n∞ min:",
                 self.widgets["n_infini_min"],
@@ -1034,7 +1034,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
             )
         )
 
-        l.addLayout(
+        lay.addLayout(
             self._create_labeled_input(
                 "n∞ max:",
                 self.widgets["n_infini_max"],
@@ -1042,13 +1042,13 @@ class CertusMetalBilayerApp(MetalBaseApp):
             )
         )
 
-        l.addLayout(self._create_labeled_input("A min:", self.widgets["A_diel_min"], "Min Cauchy Dispersion A term."))
+        lay.addLayout(self._create_labeled_input("A min:", self.widgets["A_diel_min"], "Min Cauchy Dispersion A term."))
 
-        l.addLayout(self._create_labeled_input("A max:", self.widgets["A_diel_max"], "Max Cauchy Dispersion A term."))
+        lay.addLayout(self._create_labeled_input("A max:", self.widgets["A_diel_max"], "Max Cauchy Dispersion A term."))
 
-        l.addSpacing(10)
+        lay.addSpacing(10)
 
-        l.addLayout(
+        lay.addLayout(
             self._create_labeled_input(
                 "Knots:",
                 self.widgets["num_knots"],
@@ -1056,11 +1056,11 @@ class CertusMetalBilayerApp(MetalBaseApp):
             )
         )
 
-        l.addLayout(self._create_labeled_input("n,k min:", self.widgets["nk_min"], "Lower bound for n and k."))
+        lay.addLayout(self._create_labeled_input("n,k min:", self.widgets["nk_min"], "Lower bound for n and k."))
 
-        l.addLayout(self._create_labeled_input("n,k max:", self.widgets["nk_max"], "Upper bound for n and k."))
+        lay.addLayout(self._create_labeled_input("n,k max:", self.widgets["nk_max"], "Upper bound for n and k."))
 
-        l.addLayout(
+        lay.addLayout(
             self._create_labeled_input(
                 "Knot Dist:",
                 self.widgets["min_knot_dist"],
@@ -1075,13 +1075,13 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
         c = CertusCard("Live Parameters")
 
-        l = QGridLayout()
+        lay = QGridLayout()
 
-        l.setSpacing(4)
+        lay.setSpacing(4)
 
-        l.setContentsMargins(8, 12, 8, 8)
+        lay.setContentsMargins(8, 12, 8, 8)
 
-        c.body.addLayout(l)
+        c.body.addLayout(lay)
 
         self.widgets["live_eM_label"] = QLabel("N/A")
 
@@ -1109,35 +1109,35 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
         row = 0
 
-        l.addWidget(QLabel("eM:"), row, 0)
+        lay.addWidget(QLabel("eM:"), row, 0)
 
-        l.addWidget(self.widgets["live_eM_label"], row, 1)
-
-        row += 1
-
-        l.addWidget(QLabel("eL:"), row, 0)
-
-        l.addWidget(self.widgets["live_eL_label"], row, 1)
+        lay.addWidget(self.widgets["live_eM_label"], row, 1)
 
         row += 1
 
-        l.addWidget(QLabel("n∞:"), row, 0)
+        lay.addWidget(QLabel("eL:"), row, 0)
 
-        l.addWidget(self.widgets["live_n_infini_label"], row, 1)
-
-        row += 1
-
-        l.addWidget(QLabel("A:"), row, 0)
-
-        l.addWidget(self.widgets["live_A_diel_label"], row, 1)
+        lay.addWidget(self.widgets["live_eL_label"], row, 1)
 
         row += 1
 
-        l.addWidget(QLabel("RMSE:"), row, 0)
+        lay.addWidget(QLabel("n∞:"), row, 0)
 
-        l.addWidget(self.widgets["live_mse_label"], row, 1)
+        lay.addWidget(self.widgets["live_n_infini_label"], row, 1)
 
-        l.setColumnStretch(1, 1)
+        row += 1
+
+        lay.addWidget(QLabel("A:"), row, 0)
+
+        lay.addWidget(self.widgets["live_A_diel_label"], row, 1)
+
+        row += 1
+
+        lay.addWidget(QLabel("RMSE:"), row, 0)
+
+        lay.addWidget(self.widgets["live_mse_label"], row, 1)
+
+        lay.setColumnStretch(1, 1)
 
         return c
 

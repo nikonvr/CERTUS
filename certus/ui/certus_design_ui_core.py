@@ -760,7 +760,7 @@ class CoreManager:
 
         stack = self.ui._get_front_stack()
 
-        if not [l for l in stack if l.var]:
+        if not [layer for layer in stack if layer.var]:
             self.ui.log("No variable layers.", "WARNING")
 
             return None, None, None, None, None

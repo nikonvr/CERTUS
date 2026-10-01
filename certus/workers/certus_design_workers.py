@@ -352,7 +352,7 @@ class ColorWorker(QObject):
             rng = np.random.default_rng(rng_seed)
             wls = np.linspace(380, 780, 81).astype(float_dtype)
             mats_nk = {k: m.get_nk(wls) for k, m in mats.items()}
-            n_layers = np.array([mats_nk[l.mat] for l in stack], dtype=complex_dtype)
+            n_layers = np.array([mats_nk[layer.mat] for layer in stack], dtype=complex_dtype)
             n_layers_T = np.ascontiguousarray(n_layers.T)
             _sub_key_c = 'substrate' if 'substrate' in mats_nk else 'Substrate'
             n_sub = np.ascontiguousarray(mats_nk[_sub_key_c])
@@ -439,7 +439,7 @@ class NeedleWorker(QObject):
             if d_back is None:
                 d_back = np.zeros(0, dtype=float_dtype)
             has_back_stack = n_back_T.shape[1] > 0 and len(d_back) > 0
-            n_lay_list = [mats_nk[l.mat] for l in stack]
+            n_lay_list = [mats_nk[layer.mat] for layer in stack]
             if not n_lay_list:
                 self.signals.finished.emit(NeedleWorkerResult.action_only(
                     'empty_init',

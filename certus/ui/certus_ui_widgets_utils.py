@@ -659,15 +659,15 @@ class DetachedPlotWindow(QMainWindow):
 
         self.setCentralWidget(c)
 
-        l = QVBoxLayout(c)
+        lay = QVBoxLayout(c)
 
-        l.setContentsMargins(0, 0, 0, 0)
+        lay.setContentsMargins(0, 0, 0, 0)
 
-        l.setSpacing(0)
+        lay.setSpacing(0)
 
         # Header with Logo (Systematic)
 
-        l.addWidget(create_header_logo_widget(title_text=title, logo_width=180))
+        lay.addWidget(create_header_logo_widget(title_text=title, logo_width=180))
 
         # Optional toolbar from the widget itself
 
@@ -675,11 +675,11 @@ class DetachedPlotWindow(QMainWindow):
             tb = plot_widget.get_toolbar(self)
 
             if tb:
-                l.addWidget(tb)
+                lay.addWidget(tb)
 
         # The Plot Logic
 
-        l.addWidget(plot_widget)
+        lay.addWidget(plot_widget)
 
         # Apply Theme
 

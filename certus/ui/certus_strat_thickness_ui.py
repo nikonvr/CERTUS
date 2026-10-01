@@ -252,12 +252,12 @@ class TransmissionVsThicknessWindow(CertusWindowSpyMixin, QMainWindow):
                 if curve_item is not None:
                     self.plot_widget.add_curve_for_tracking(curve_item, f"{wl:.0f}nm")
 
-                for l in range(block["start"], block["end"]):
-                    l_start_thick = boundaries[l]
+                for layer_idx in range(block["start"], block["end"]):
+                    l_start_thick = boundaries[layer_idx]
 
-                    l_end_thick = boundaries[l + 1]
+                    l_end_thick = boundaries[layer_idx + 1]
 
-                    if l in block_start_clues and l > 0:
+                    if layer_idx in block_start_clues and layer_idx > 0:
                         idx_start = np.searchsorted(x_detailed, l_start_thick)
 
                         idx_start = min(idx_start, len(y_detailed) - 1)
@@ -304,8 +304,8 @@ class TransmissionVsThicknessWindow(CertusWindowSpyMixin, QMainWindow):
 
                     ext_dists = strategy.get("extrema_distances", [])
 
-                    if l < len(ext_dists):
-                        d = ext_dists[l]
+                    if layer_idx < len(ext_dists):
+                        d = ext_dists[layer_idx]
 
                         p_s = d.get("prev_start", 999.0)
 

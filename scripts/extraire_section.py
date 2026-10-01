@@ -45,8 +45,8 @@ DOC = ROOT / "CLAUDE.md"
 def bornes(lines: list[str], prefixe: str) -> tuple[int, int]:
     """Indices [debut, fin) de la section dont le titre commence par `prefixe`."""
     debut = None
-    for i, l in enumerate(lines):
-        if l.startswith(prefixe):
+    for i, ligne in enumerate(lines):
+        if ligne.startswith(prefixe):
             if debut is not None:
                 raise SystemExit(f"prefixe ambigu, {prefixe!r} apparait deux fois (l. {debut+1} et {i+1})")
             debut = i

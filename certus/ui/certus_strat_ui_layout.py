@@ -1325,7 +1325,7 @@ class CertusStratLayoutMixin:
         # Connect toggle signals to enable/disable widgets
 
         self.widgets[f"{prefix}_type_custom"].toggled.connect(
-            lambda checked, p=prefix, l=label: self._on_material_mode_changed(p, l)
+            lambda checked, p=prefix, lbl=label: self._on_material_mode_changed(p, lbl)
         )
 
         parent_layout.addWidget(group)

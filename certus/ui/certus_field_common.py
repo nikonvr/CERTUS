@@ -53,10 +53,10 @@ class DetachedStackWindow(QMainWindow):
 
         c = QWidget()
         self.setCentralWidget(c)
-        l = QVBoxLayout(c)
-        l.setContentsMargins(8, 8, 8, 8)
-        l.setSpacing(0)
-        l.addWidget(self.stack_panel)
+        lay = QVBoxLayout(c)
+        lay.setContentsMargins(8, 8, 8, 8)
+        lay.setSpacing(0)
+        lay.addWidget(self.stack_panel)
 
         from certus.ui.certus_ui import apply_certus_theme, set_certus_window_icon
 

@@ -25,7 +25,7 @@ class WelcomeGuideWidget(QWidget):
 
         steps = steps or []
 
-        l = QVBoxLayout(self)
+        lay = QVBoxLayout(self)
 
-        l.addWidget(QLabel(f"Welcome to {app_name}"))
+        lay.addWidget(QLabel(f"Welcome to {app_name}"))
 

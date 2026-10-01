@@ -55,7 +55,7 @@ class CertusREPlotMixin:
             if ep is not None and len(ep) > 0:
                 cs = np.cumsum(ep)
 
-                n_vals = [mats[l.mat].n4 for l in stack]
+                n_vals = [mats[layer.mat].n4 for layer in stack]
 
                 # Protection against index out of bounds (oblique mode may have more thicknesses than layers)
 

@@ -1825,14 +1825,14 @@ class CertusREExcelMixin:
 
             ep = self.ep_current if self.ep_current is not None else []
 
-            for i, l in enumerate(self._get_front_stack()):
+            for i, layer in enumerate(self._get_front_stack()):
                 ws.append(
                     [
                         i + 1,
-                        l.mat,
-                        l.qwot,
+                        layer.mat,
+                        layer.qwot,
                         ep[i] if i < len(ep) else 0,
-                        "Yes" if l.var else "No",
+                        "Yes" if layer.var else "No",
                     ]
                 )
 

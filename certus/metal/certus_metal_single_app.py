@@ -851,11 +851,11 @@ class CertusMetalSingleApp(MetalBaseApp):
 
         c = CertusCard("Physical Parameters")
 
-        l = c.body
+        lay = c.body
 
-        l.setSpacing(4)
+        lay.setSpacing(4)
 
-        l.setContentsMargins(8, 12, 8, 8)
+        lay.setContentsMargins(8, 12, 8, 8)
 
         self.widgets["eM_min"] = QLineEdit(str(DEFAULT_EM_MIN))
 
@@ -865,7 +865,7 @@ class CertusMetalSingleApp(MetalBaseApp):
 
         self.widgets["eM_max"].setFixedHeight(24)
 
-        l.addLayout(
+        lay.addLayout(
             self._create_labeled_input(
                 "eM min:",
                 self.widgets["eM_min"],
@@ -873,7 +873,7 @@ class CertusMetalSingleApp(MetalBaseApp):
             )
         )
 
-        l.addLayout(
+        lay.addLayout(
             self._create_labeled_input(
                 "eM max:",
                 self.widgets["eM_max"],
@@ -888,11 +888,11 @@ class CertusMetalSingleApp(MetalBaseApp):
 
         c = CertusCard("Material Parameters")
 
-        l = c.body
+        lay = c.body
 
-        l.setSpacing(4)
+        lay.setSpacing(4)
 
-        l.setContentsMargins(8, 12, 8, 8)
+        lay.setContentsMargins(8, 12, 8, 8)
 
         # substrate Selector
 
@@ -906,7 +906,7 @@ class CertusMetalSingleApp(MetalBaseApp):
 
         self.combo_substrate.setFixedHeight(24)
 
-        l.addLayout(self._create_labeled_input("substrate:", self.combo_substrate, "substrate Material (Transparent)."))
+        lay.addLayout(self._create_labeled_input("substrate:", self.combo_substrate, "substrate Material (Transparent)."))
 
         self.substrate_info_label = QLabel("")
 
@@ -929,9 +929,9 @@ class CertusMetalSingleApp(MetalBaseApp):
 
         self.widgets["min_knot_dist"].setFixedHeight(24)
 
-        l.addSpacing(10)
+        lay.addSpacing(10)
 
-        l.addLayout(
+        lay.addLayout(
             self._create_labeled_input(
                 "Knots:",
                 self.widgets["num_knots"],
@@ -939,11 +939,11 @@ class CertusMetalSingleApp(MetalBaseApp):
             )
         )
 
-        l.addLayout(self._create_labeled_input("n,k min:", self.widgets["nk_min"], "Lower bound for n and k."))
+        lay.addLayout(self._create_labeled_input("n,k min:", self.widgets["nk_min"], "Lower bound for n and k."))
 
-        l.addLayout(self._create_labeled_input("n,k max:", self.widgets["nk_max"], "Upper bound for n and k."))
+        lay.addLayout(self._create_labeled_input("n,k max:", self.widgets["nk_max"], "Upper bound for n and k."))
 
-        l.addLayout(
+        lay.addLayout(
             self._create_labeled_input(
                 "Knot Dist:",
                 self.widgets["min_knot_dist"],

@@ -1206,13 +1206,13 @@ class MetalBaseApp(CertusBaseApp):
 
         c = CertusCard(title)
 
-        l = c.body
+        lay = c.body
 
-        l.setSpacing(10)
+        lay.setSpacing(10)
 
-        l.setContentsMargins(8, 12, 8, 8)
+        lay.setContentsMargins(8, 12, 8, 8)
 
-        return c, l
+        return c, lay
 
     def _create_divider(self) -> QWidget:
         """Create a subtle horizontal divider for premium grouping."""
@@ -1226,7 +1226,7 @@ class MetalBaseApp(CertusBaseApp):
 
     def _create_input_group(self) -> Any:
 
-        c, l = self._create_group_box("Input Data")
+        c, lay = self._create_group_box("Input Data")
 
         self.btn_load = create_styled_button(" Load File...", "secondary")
         self.btn_load.setToolTip(
@@ -1234,18 +1234,18 @@ class MetalBaseApp(CertusBaseApp):
             "λ (nm), R, [T], [Rback] — percentage or 0-1 scale accepted."
         )
         self.btn_load.clicked.connect(self.load_target_file)
-        l.addWidget(self.btn_load)
+        lay.addWidget(self.btn_load)
 
         self.lbl_file = QLabel("No file loaded")
         self.lbl_file.setStyleSheet(CertusTheme.get_hint_text_style())
-        l.addWidget(self.lbl_file)
+        lay.addWidget(self.lbl_file)
 
         self.workflow_status = QLabel("Ready to load a spectrum")
         self.workflow_status.setStyleSheet(CertusTheme.get_hint_text_style())
-        l.addWidget(self.workflow_status)
-        l.addWidget(self._create_divider())
+        lay.addWidget(self.workflow_status)
+        lay.addWidget(self._create_divider())
 
-        l.addWidget(QLabel("Wavelength filter"))
+        lay.addWidget(QLabel("Wavelength filter"))
 
         fl = QGridLayout()
         fl.setContentsMargins(0, 0, 0, 0)
@@ -1266,23 +1266,23 @@ class MetalBaseApp(CertusBaseApp):
         )
         fl.addWidget(self.widgets["lmax_filter"], 1, 1)
 
-        l.addLayout(fl)
+        lay.addLayout(fl)
         return c
 
     def _create_output_group(self) -> Any:
 
         c = CertusCard("Output")
-        l = QGridLayout()
-        l.setContentsMargins(8, 12, 8, 8)
-        l.setHorizontalSpacing(8)
-        l.setVerticalSpacing(6)
-        c.body.addLayout(l)
+        lay = QGridLayout()
+        lay.setContentsMargins(8, 12, 8, 8)
+        lay.setHorizontalSpacing(8)
+        lay.setVerticalSpacing(6)
+        c.body.addLayout(lay)
 
         self.widgets["excel_filename"] = QLineEdit(DEFAULT_EXCEL_FILENAME)
         self.widgets["excel_filename"].setToolTip("Name of the Excel output file. Written to the reports/ directory.")
 
-        l.addWidget(QLabel("File"), 0, 0)
-        l.addWidget(self.widgets["excel_filename"], 0, 1)
+        lay.addWidget(QLabel("File"), 0, 0)
+        lay.addWidget(self.widgets["excel_filename"], 0, 1)
         return c
 
     def _create_physical_params_group(self, show_el: bool = False, el_defaults: tuple = ("900", "20")) -> CertusCard:
@@ -1302,7 +1302,7 @@ class MetalBaseApp(CertusBaseApp):
 
         """
 
-        c, l = self._create_group_box("Physical Parameters")
+        c, lay = self._create_group_box("Physical Parameters")
 
         self.widgets["eM_min"] = QLineEdit(str(DEFAULT_EM_MIN))
         self.widgets["eM_max"] = QLineEdit(str(DEFAULT_EM_MAX))
@@ -1314,7 +1314,7 @@ class MetalBaseApp(CertusBaseApp):
         row.addWidget(self.widgets["eM_min"])
         row.addWidget(QLabel("Max"))
         row.addWidget(self.widgets["eM_max"])
-        l.addLayout(row)
+        lay.addLayout(row)
 
         if show_el:
             self.widgets["eL_nominal"] = QLineEdit(el_defaults[0])
@@ -1327,7 +1327,7 @@ class MetalBaseApp(CertusBaseApp):
             row2.addWidget(self.widgets["eL_nominal"])
             row2.addWidget(QLabel("±"))
             row2.addWidget(self.widgets["eL_variation"])
-            l.addLayout(row2)
+            lay.addLayout(row2)
 
         return c
 
@@ -1350,7 +1350,7 @@ class MetalBaseApp(CertusBaseApp):
 
         """
 
-        c, l = self._create_group_box("Material Parameters")
+        c, lay = self._create_group_box("Material Parameters")
 
         row1 = QHBoxLayout()
         row1.addWidget(QLabel("Spline knots"))
@@ -1370,7 +1370,7 @@ class MetalBaseApp(CertusBaseApp):
         row1.addWidget(self.widgets["nk_min"])
         row1.addWidget(QLabel("to"))
         row1.addWidget(self.widgets["nk_max"])
-        l.addLayout(row1)
+        lay.addLayout(row1)
 
         row2 = QHBoxLayout()
         row2.addWidget(QLabel("Minimum knot distance (nm)"))
@@ -1378,7 +1378,7 @@ class MetalBaseApp(CertusBaseApp):
         self.widgets["min_knot_dist"] = QLineEdit(str(DEFAULT_MIN_KNOT_DISTANCE))
         self.widgets["min_knot_dist"].setFixedWidth(60)
         row2.addWidget(self.widgets["min_knot_dist"])
-        l.addLayout(row2)
+        lay.addLayout(row2)
 
         if show_diel_model:
             row3 = QHBoxLayout()
@@ -1392,7 +1392,7 @@ class MetalBaseApp(CertusBaseApp):
             self.widgets["A_coeff"] = QLineEdit("3500")
             self.widgets["A_coeff"].setFixedWidth(60)
             row3.addWidget(self.widgets["A_coeff"])
-            l.addLayout(row3)
+            lay.addLayout(row3)
 
         if substrate_options:
             row4 = QHBoxLayout()
@@ -1401,7 +1401,7 @@ class MetalBaseApp(CertusBaseApp):
             self.widgets["substrate"] = QComboBox()
             self.widgets["substrate"].addItems(substrate_options)
             row4.addWidget(self.widgets["substrate"])
-            l.addLayout(row4)
+            lay.addLayout(row4)
 
         return c
 
@@ -1416,7 +1416,7 @@ class MetalBaseApp(CertusBaseApp):
 
         """
 
-        c, l = self._create_group_box("Live Parameters")
+        c, lay = self._create_group_box("Live Parameters")
 
         row1 = QHBoxLayout()
         row1.addWidget(QLabel("Thickness"))
@@ -1425,7 +1425,7 @@ class MetalBaseApp(CertusBaseApp):
         self.widgets["live_eM"].setStyleSheet(f"font-weight: bold; color: {CertusTheme.PRIMARY};")
         row1.addWidget(self.widgets["live_eM"])
         row1.addWidget(QLabel("nm"))
-        l.addLayout(row1)
+        lay.addLayout(row1)
 
         row2 = QHBoxLayout()
         row2.addWidget(QLabel("RMSE"))
@@ -1433,14 +1433,14 @@ class MetalBaseApp(CertusBaseApp):
         self.widgets["live_MSE"] = QLabel("--")
         self.widgets["live_MSE"].setStyleSheet(f"font-weight: bold; color: {CertusTheme.SUCCESS};")
         row2.addWidget(self.widgets["live_MSE"])
-        l.addLayout(row2)
+        lay.addLayout(row2)
 
         row3 = QHBoxLayout()
         row3.addWidget(QLabel("Iterations"))
         row3.addStretch()
         self.widgets["live_iter"] = QLabel("--")
         row3.addWidget(self.widgets["live_iter"])
-        l.addLayout(row3)
+        lay.addLayout(row3)
 
         return c
 

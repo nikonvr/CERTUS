@@ -37,8 +37,8 @@ class CertusFieldPlotWidget(CertusScientificPlot):
         # 1. Draw Substrate region (z < 0)
         region_sub = pg.LinearRegionItem(values=(-100000.0, 0.0), movable=False, brush=pg.mkBrush(pg.mkColor(75, 85, 99, 35)))
         if hasattr(region_sub, 'lines'):
-            for l in region_sub.lines:
-                l.setPen(pg.mkPen(None))
+            for ln in region_sub.lines:
+                ln.setPen(pg.mkPen(None))
         self.addItem(region_sub, ignoreBounds=True)
         self._boundary_items.append(region_sub)
 
@@ -86,8 +86,8 @@ class CertusFieldPlotWidget(CertusScientificPlot):
                 color = pg.mkColor(239, 68, 68, 20) if layer_types[i] == 0 else pg.mkColor(59, 130, 246, 20)
                 region = pg.LinearRegionItem(values=(z_start, z_end), movable=False, brush=pg.mkBrush(color))
                 if hasattr(region, 'lines'):
-                    for l in region.lines:
-                        l.setPen(pg.mkPen(None))
+                    for ln in region.lines:
+                        ln.setPen(pg.mkPen(None))
                 self.addItem(region, ignoreBounds=True)
                 self._boundary_items.append(region)
 
@@ -105,8 +105,8 @@ class CertusFieldPlotWidget(CertusScientificPlot):
         # 2. Draw Superstrate/Air region (z > z_cur)
         region_sup = pg.LinearRegionItem(values=(z_cur, 100000.0), movable=False, brush=pg.mkBrush(pg.mkColor(251, 191, 36, 25)))
         if hasattr(region_sup, 'lines'):
-            for l in region_sup.lines:
-                l.setPen(pg.mkPen(None))
+            for ln in region_sup.lines:
+                ln.setPen(pg.mkPen(None))
         self.addItem(region_sup, ignoreBounds=True)
         self._boundary_items.append(region_sup)
 

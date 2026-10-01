@@ -1208,16 +1208,16 @@ class SplashScreen(QWidget):
 
         container.setGraphicsEffect(shadow)
 
-        l = QVBoxLayout(container)
+        lay = QVBoxLayout(container)
 
-        l.setContentsMargins(
+        lay.setContentsMargins(
             CertusTheme.SPACING_XL * 2,
             CertusTheme.SPACING_XL * 2,
             CertusTheme.SPACING_XL * 2,
             CertusTheme.SPACING_XL * 2,
         )
 
-        l.setSpacing(CertusTheme.SPACING_LG)
+        lay.setSpacing(CertusTheme.SPACING_LG)
 
         # CERTUS SVG Logo - Try multiple paths
 
@@ -1237,7 +1237,7 @@ class SplashScreen(QWidget):
 
                     logo_widget.setFixedSize(400, 85)  # Ratio adapted for splash
 
-                    l.addWidget(logo_widget, alignment=Qt.AlignmentFlag.AlignCenter)
+                    lay.addWidget(logo_widget, alignment=Qt.AlignmentFlag.AlignCenter)
 
                     break
 
@@ -1257,7 +1257,7 @@ class SplashScreen(QWidget):
 
             icon_label.setStyleSheet(f"color: {CertusTheme.PRIMARY};")
 
-            l.addWidget(icon_label)
+            lay.addWidget(icon_label)
 
             title = create_styled_label("CERTUS", style="bold")
 
@@ -1267,7 +1267,7 @@ class SplashScreen(QWidget):
 
             title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-            l.addWidget(title)
+            lay.addWidget(title)
 
         sub = create_styled_label("HUB INITIALIZATION", style="subtitle", color=CertusTheme.PRIMARY)
 
@@ -1279,9 +1279,9 @@ class SplashScreen(QWidget):
 
         sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        l.addWidget(sub)
+        lay.addWidget(sub)
 
-        l.addStretch()
+        lay.addStretch()
 
         layout.addWidget(container)
 

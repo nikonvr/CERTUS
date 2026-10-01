@@ -561,7 +561,7 @@ class CertusIndexLayoutMixin:
 
         c = CertusCard("Input Data")
 
-        l = c.body
+        lay = c.body
 
         self.btn_load = QPushButton(" Load Spectrum File")
 
@@ -572,13 +572,13 @@ class CertusIndexLayoutMixin:
 
         self.btn_load.clicked.connect(self.load_file)
 
-        l.addWidget(self.btn_load)
+        lay.addWidget(self.btn_load)
 
         self.lbl_file = QLabel("No file loaded")
 
         self.lbl_file.setStyleSheet(f"font-style: italic; color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt;")
 
-        l.addWidget(self.lbl_file)
+        lay.addWidget(self.lbl_file)
 
         # Label to display detected data type
 
@@ -586,7 +586,7 @@ class CertusIndexLayoutMixin:
 
         self.lbl_data_type.setStyleSheet(f"color: {CertusTheme.PRIMARY}; font-weight: bold; font-size: {Typography.BODY_LG}pt;")
 
-        l.addWidget(self.lbl_data_type)
+        lay.addWidget(self.lbl_data_type)
 
         # Normalization options
 
@@ -603,7 +603,7 @@ class CertusIndexLayoutMixin:
 
         h_norm.addWidget(self.chk_normalized)
 
-        l.addLayout(h_norm)
+        lay.addLayout(h_norm)
 
         return c
 
@@ -612,7 +612,7 @@ class CertusIndexLayoutMixin:
 
         c = CertusCard("substrate")
 
-        l = c.body
+        lay = c.body
 
         self.rb_standard = QRadioButton("Standard (transparent substrate)")
 
@@ -638,9 +638,9 @@ class CertusIndexLayoutMixin:
 
         self.substrate_mode_group.addButton(self.rb_frosted_glass, 1)
 
-        l.addWidget(self.rb_standard)
+        lay.addWidget(self.rb_standard)
 
-        l.addWidget(self.rb_frosted_glass)
+        lay.addWidget(self.rb_frosted_glass)
 
         # substrate ComboBox (always enabled now)
 
@@ -661,7 +661,7 @@ class CertusIndexLayoutMixin:
 
         h_sub.addWidget(self.cb_sub)
 
-        l.addLayout(h_sub)
+        lay.addLayout(h_sub)
 
         # Connection for mode change
 
@@ -677,7 +677,7 @@ class CertusIndexLayoutMixin:
 
         self.lbl_frosted_info.setVisible(False)
 
-        l.addWidget(self.lbl_frosted_info)
+        lay.addWidget(self.lbl_frosted_info)
 
         #  Absorbing substrate section
 
@@ -694,7 +694,7 @@ class CertusIndexLayoutMixin:
         # any other substrate.
         self.chk_absorbing_sub.setVisible(False)
 
-        l.addWidget(self.chk_absorbing_sub)
+        lay.addWidget(self.chk_absorbing_sub)
 
         self._absorbing_sub_widget = QWidget()
 
@@ -747,7 +747,7 @@ class CertusIndexLayoutMixin:
 
         self._absorbing_sub_widget.setVisible(False)
 
-        l.addWidget(self._absorbing_sub_widget)
+        lay.addWidget(self._absorbing_sub_widget)
 
         self.chk_absorbing_sub.toggled.connect(self._on_absorbing_sub_toggled)
 
@@ -761,13 +761,13 @@ class CertusIndexLayoutMixin:
 
         c = CertusCard("Configuration")
 
-        l = QGridLayout()
+        lay = QGridLayout()
 
-        c.body.addLayout(l)
+        c.body.addLayout(lay)
 
-        l.setVerticalSpacing(8)
+        lay.setVerticalSpacing(8)
 
-        l.addWidget(QLabel("Thickness (nm):"), 0, 0)
+        lay.addWidget(QLabel("Thickness (nm):"), 0, 0)
 
         h = QHBoxLayout()
 
@@ -801,9 +801,9 @@ class CertusIndexLayoutMixin:
 
         h.addWidget(self.sb_dmax)
 
-        l.addLayout(h, 0, 1)
+        lay.addLayout(h, 0, 1)
 
-        l.addWidget(QLabel("λ Range (nm):"), 1, 0)
+        lay.addWidget(QLabel("λ Range (nm):"), 1, 0)
 
         h2 = QHBoxLayout()
 
@@ -837,11 +837,11 @@ class CertusIndexLayoutMixin:
 
         h2.addWidget(self.sb_lmax)
 
-        l.addLayout(h2, 1, 1)
+        lay.addLayout(h2, 1, 1)
 
         # R/T Weights
 
-        l.addWidget(QLabel("Weights (T/R):"), 2, 0)
+        lay.addWidget(QLabel("Weights (T/R):"), 2, 0)
 
         h_weights = QHBoxLayout()
 
@@ -883,7 +883,7 @@ class CertusIndexLayoutMixin:
 
         h_weights.addWidget(self.sb_weight_R)
 
-        l.addLayout(h_weights, 2, 1)
+        lay.addLayout(h_weights, 2, 1)
 
         sep = QFrame()
 
@@ -891,7 +891,7 @@ class CertusIndexLayoutMixin:
 
         sep.setStyleSheet(f"color: {CertusTheme.BORDER};")
 
-        l.addWidget(sep, 3, 0, 1, 2)
+        lay.addWidget(sep, 3, 0, 1, 2)
 
         self.chk_exclude = QCheckBox("Exclude Data Range")
 
@@ -902,7 +902,7 @@ class CertusIndexLayoutMixin:
 
         self.chk_exclude.toggled.connect(self._toggle_exclude)
 
-        l.addWidget(self.chk_exclude, 4, 0, 1, 2)
+        lay.addWidget(self.chk_exclude, 4, 0, 1, 2)
 
         h_ex = QHBoxLayout()
 
@@ -940,7 +940,7 @@ class CertusIndexLayoutMixin:
 
         h_ex.addWidget(self.sb_ex_max)
 
-        l.addLayout(h_ex, 5, 0, 1, 2)
+        lay.addLayout(h_ex, 5, 0, 1, 2)
 
         self.sb_ex_min.valueChanged.connect(self._update_plot_exclusion)
 
@@ -959,7 +959,7 @@ class CertusIndexLayoutMixin:
 
         self.chk_oh_band.toggled.connect(self._toggle_oh_band)
 
-        l.addWidget(self.chk_oh_band, 6, 0, 1, 2)
+        lay.addWidget(self.chk_oh_band, 6, 0, 1, 2)
 
         # High Precision Toggle
 
@@ -974,7 +974,7 @@ class CertusIndexLayoutMixin:
 
         self._core_logger = logging.getLogger("CERTUS")
 
-        l.addWidget(self.chk_high_precision, 7, 0, 1, 2)
+        lay.addWidget(self.chk_high_precision, 7, 0, 1, 2)
 
         return c
 
@@ -988,9 +988,9 @@ class CertusIndexLayoutMixin:
 
         container = QWidget()
 
-        l = QHBoxLayout(container)
+        lay = QHBoxLayout(container)
 
-        l.setContentsMargins(10, 0, 10, 0)
+        lay.setContentsMargins(10, 0, 10, 0)
 
         self.lbl_status = QLabel("Initializing...")
 
@@ -1003,15 +1003,15 @@ class CertusIndexLayoutMixin:
         self.lbl_zoom = QLabel("Zoom 100%")
         self.lbl_zoom.setStyleSheet(f"font-weight: 600; color: {CertusTheme.TEXT_SUB};")
 
-        l.addWidget(self.lbl_status)
+        lay.addWidget(self.lbl_status)
 
-        l.addStretch()
+        lay.addStretch()
 
-        l.addWidget(self.lbl_zoom)
+        lay.addWidget(self.lbl_zoom)
 
-        l.addWidget(self.lbl_dice)
+        lay.addWidget(self.lbl_dice)
 
-        l.addWidget(self.progress_widget)
+        lay.addWidget(self.progress_widget)
 
         sb.addPermanentWidget(container, 1)
 

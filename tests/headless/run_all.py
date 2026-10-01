@@ -67,7 +67,7 @@ def main():
 
         # Extract key line from output
         key_line = next(
-            (l.strip() for l in output.splitlines() if key in l),
+            (ln.strip() for ln in output.splitlines() if key in ln),
             "(no output)"
         )
 
@@ -82,8 +82,8 @@ def main():
             failed += 1
             # Print last 5 lines of output for context
             tail = output.strip().splitlines()[-5:]
-            for l in tail:
-                print(f"  | {l}")
+            for ln in tail:
+                print(f"  | {ln}")
 
     print("\n" + "=" * 60)
     print(f"  RESULTS: {passed} passed, {failed} failed")

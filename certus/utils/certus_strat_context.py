@@ -415,10 +415,10 @@ def _augment_solution_cost_with_sym(
     total_layers = 0
     for start, end, wl in blocks_info:
         wlf = float(wl)
-        for l in range(int(start), int(end)):
+        for layer_idx in range(int(start), int(end)):
             total_layers += 1
             if sym_bonus_map:
-                total_sym += float(sym_bonus_map.get(l, {}).get(wlf, 0.0))
+                total_sym += float(sym_bonus_map.get(layer_idx, {}).get(wlf, 0.0))
     mean_sym = (total_sym / total_layers) if total_layers > 0 else 0.0
     same_wl_kept = 0
     continuity_gain = 0.0

@@ -55,10 +55,10 @@ class CertusAppUndoMixin:
 
         self.front_table.setRowCount(0)
 
-        for l in state:
+        for layer in state:
             # mat, qwot, var, del_checked
 
-            self._add_front_row(l.mat, l.qwot, l.var)
+            self._add_front_row(layer.mat, layer.qwot, layer.var)
 
         self.front_table.blockSignals(False)
 

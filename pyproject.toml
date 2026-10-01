@@ -61,7 +61,7 @@ ignore = [
 # Re-audit by running:  python -m ruff check . --statistics
 extend-ignore = [
   # Style legacy
-  "E402", "E741",
+  "E402",
   # Pyflakes legacy
   "F401",  # unused-import: some are deliberate re-exports
   # Bugbear legacy

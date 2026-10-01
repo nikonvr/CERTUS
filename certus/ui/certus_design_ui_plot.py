@@ -1307,7 +1307,7 @@ class PlotManager:
                 if ep is not None and len(ep) > 0:
                     cs = np.cumsum(ep)
 
-                    n_vals = [mats[l.mat].n4 for l in stack]
+                    n_vals = [mats[layer.mat].n4 for layer in stack]
 
                     # Protection against index out of bounds (oblique mode may have more thicknesses than layers)
 
@@ -1347,7 +1347,7 @@ class PlotManager:
 
                     csb = np.cumsum(ep_back)
 
-                    nb = [mats[l.mat].n4 for l in stack_back]
+                    nb = [mats[layer.mat].n4 for layer in stack_back]
 
                     # Protection against index out of bounds
 

@@ -307,8 +307,8 @@ def _find_k_best_groupings_dp_sequential(
 
         assignments = {}
         for start, end, wl in blocks_info:
-            for l in range(start, end):
-                assignments[l] = wl
+            for layer_index in range(start, end):
+                assignments[layer_index] = wl
 
         solutions.append(
             {

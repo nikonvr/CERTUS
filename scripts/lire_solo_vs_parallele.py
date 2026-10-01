@@ -159,9 +159,9 @@ def main() -> int:
         print("     Relance la mesure par : bash scripts/mesure_solo_vs_parallele.sh")
         return 1
     releve = dict(
-        l.split("#")[0].strip().split("=", 1)
-        for l in ctx.read_text(encoding="utf-8", errors="replace").splitlines()
-        if "=" in l.split("#")[0]
+        ligne.split("#")[0].strip().split("=", 1)
+        for ligne in ctx.read_text(encoding="utf-8", errors="replace").splitlines()
+        if "=" in ligne.split("#")[0]
     )
     n_sondes = int(releve.get("max_processus_sonde", "0") or 0)
     n_autres = int(releve.get("max_autres_python", "0") or 0)

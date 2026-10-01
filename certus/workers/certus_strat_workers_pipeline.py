@@ -95,7 +95,7 @@ class FullPipelineStrategy:
             # term built from it is zero everywhere -- which is why `dp_yield_weight` changed
             # nothing at any weight, and was removed.
             cost_map_sq_clean = {
-                l: {x["wl"]: x["cost"] for x in items} for l, items in pre_calc_data["raw_results_sq"].items()
+                layer_idx: {x["wl"]: x["cost"] for x in items} for layer_idx, items in pre_calc_data["raw_results_sq"].items()
             }
 
             materials_db = worker.params.get("materials_db") or APP_CONTEXT.get("materials_db")

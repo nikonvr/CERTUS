@@ -62,17 +62,17 @@ class InteractiveIndicesWindow(CertusWindowSpyMixin, QMainWindow):
 
         def add_legend(color, text) -> None:
 
-            l = QLabel()
+            lbl = QLabel()
 
-            l.setFixedSize(10, 10)
+            lbl.setFixedSize(10, 10)
 
-            l.setStyleSheet(f"background-color: {color}; border-radius: 5px;")
+            lbl.setStyleSheet(f"background-color: {color}; border-radius: 5px;")
 
             t = QLabel(text)
 
             t.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt; font-weight: bold;")
 
-            h_layout.addWidget(l)
+            h_layout.addWidget(lbl)
 
             h_layout.addWidget(t)
 

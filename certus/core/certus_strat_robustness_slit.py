@@ -43,8 +43,8 @@ def _calculate_strategy_spectral_resolution(strategy: dict[str, Any], p_thick_no
     layer_to_wl = {}
 
     for block in blocks:
-        for l in range(block["start"], block["end"]):
-            layer_to_wl[l] = float(block["wavelength"])
+        for layer_idx in range(block["start"], block["end"]):
+            layer_to_wl[layer_idx] = float(block["wavelength"])
 
     num_layers = len(p_thick_nominal)
     for i_layer in range(num_layers):
@@ -173,8 +173,8 @@ def _slit_bias_profiles(
     )
     layer_to_wl: dict[int, float] = {}
     for block in strategy["blocks"]:
-        for l in range(block["start"], block["end"]):
-            layer_to_wl[l] = float(block["wavelength"])
+        for layer_idx in range(block["start"], block["end"]):
+            layer_to_wl[layer_idx] = float(block["wavelength"])
 
     n_layers = len(p_thick_nominal)
     out = np.zeros((n_layers, SLIT_PROFILE_NODES), dtype=np.float64)

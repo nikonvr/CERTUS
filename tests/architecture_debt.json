@@ -71,7 +71,6 @@
     "certus/ui/certus_re_excel_mixin.py::CertusREExcelMixin.load_reverse_engineering_from_path": 514,
     "certus/ui/certus_re_ui.py::CertusREResultsDialog.__init__": 531,
     "certus/ui/certus_strat_ui_state.py::CertusStratStateMixin.collect_params": 538,
-    "certus/ui/certus_substrate_index_dialog.py::IndexTableDialog.__init__": 457,
     "certus/utils/certus_ux.py::build_premium_overrides": 574,
     "certus/workers/certus_field_workers.py::FieldWorkerThread._run_optimize": 347
   },
@@ -89,8 +88,7 @@
     "certus/spline/spline_workers.py::_run_free_knot_stage": 66,
     "certus/ui/certus_index_spline_manualmesh_mixin.py::CertusIndexSplineManualMeshMixin._open_manual_extra_knots_dialog": 75,
     "certus/ui/certus_index_spline_mixins_ui.py::_MeshOptimizationMixin._build_opt_config": 76,
-    "certus/ui/certus_re_excel_mixin.py::CertusREExcelMixin.load_reverse_engineering_from_path": 67,
-    "certus/ui/certus_substrate_index_dialog.py::IndexTableDialog.__init__": 64
+    "certus/ui/certus_re_excel_mixin.py::CertusREExcelMixin.load_reverse_engineering_from_path": 67
   },
   "fonctions_non_annotees": [],
   "fichiers_longs": {

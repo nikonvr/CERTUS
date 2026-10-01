@@ -180,82 +180,9 @@ class IndexTableDialog(QDialog):
 
         summary_rows: list[str] = []
 
-        for i, key in enumerate(n_results_raw.keys()):
-            y_raw = n_results_raw[key]
-
-            c = pg.mkColor(colors[i % len(colors)])
-
-            c_raw = pg.mkColor(c)
-
-            c_raw.setAlpha(150)
-
-            raw_item = _pg_plot_scatter_split_band(
-                self.plot,
-                wl,
-                y_raw,
-                fit_mask_plot,
-                pg.mkPen(color=c_raw, width=1.5),
-                pg.mkPen(color=CertusTheme.TEXT_SUB, width=1.2),
-                name=f"{key} (Raw)",
-            )
-
-            self.raw_items.append(raw_item)
-
-            bym = n_results_by_model.get(key, {})
-            rms = rmse_row.get(key, {})
-            best_v = _best_finite_rmse_from_triplet(_rms_triplet(rms))
-            q_label = "good"
-            if np.isfinite(best_v):
-                if best_v > 0.02:
-                    q_label = "degraded"
-                if best_v > 0.05:
-                    q_label = "poor"
-            self._series_quality[key] = {"best_rmse": float(best_v), "quality_label": q_label}
-            summary_rows.append(f"{key}: best RMSE={best_v:.6g} | quality={q_label}")
-
-            for pi, (_mk, mlabel) in enumerate(SUBSTRATE_INDEX_MODELS):
-                arr = bym.get(mlabel)
-
-                if arr is None:
-                    continue
-
-                if mlabel in bad_model.get(key, set()):
-                    pc = pg.mkColor(CertusTheme.TEXT_SUB)
-
-                    pc.setAlpha(160)
-
-                else:
-                    pc = pg.mkColor(c)
-
-                    pc.setAlpha(220)
-
-                if pi == 0:
-                    pc.setAlpha(245)
-                    if q_label == "good":
-                        pc = pg.mkColor(CertusTheme.SUCCESS)
-                        pc.setAlpha(230)
-                    elif q_label == "degraded":
-                        pc = pg.mkColor(CertusTheme.WARNING)
-                        pc.setAlpha(230)
-                    elif q_label == "poor":
-                        pc = pg.mkColor(CertusTheme.ERROR)
-                        pc.setAlpha(220)
-
-                pw, pst = _fit_pen_styles[pi % 3]
-
-                _pg_plot_xy_split_band(
-                    self.plot,
-                    wl,
-                    arr,
-                    fit_mask_plot,
-                    pg.mkPen(color=pc, width=pw, style=pst),
-                    pg.mkPen(
-                        color=CertusTheme.TEXT_SUB,
-                        width=max(1.2, pw - 0.5),
-                        style=pst,
-                    ),
-                    name=f"{key} ({mlabel})",
-                )
+        self._plot_the_index_series(
+            wl, n_results_raw, n_results_by_model, rmse_row, bad_model, summary_rows, fit_mask_plot, colors, _fit_pen_styles
+        )
 
         if fit_wl_lo is not None and fit_wl_hi is not None and wl_plot.size:
             _wmn = float(np.nanmin(wl_plot))
@@ -378,6 +305,119 @@ class IndexTableDialog(QDialog):
 
         table.setItem(0, 0, it0)
 
+        self._fill_the_rmse_row(table, rmse_font, _col_base_raw)
+
+        self._fill_the_data_rows(wl, bad_column, table, n_data_rows)
+
+        layout.addWidget(table)
+
+        btn_row = QHBoxLayout()
+
+        btn_params = create_styled_button("Law parameters (Poly., Sellmeier, Spline)", variant="secondary")
+
+        btn_params.clicked.connect(self.show_model_params_dialog)
+
+        btn_copy = create_styled_button(" Copy to Clipboard", variant="primary")
+
+        btn_copy.clicked.connect(functools.partial(self.copy_to_clipboard, col_names))
+
+        btn_export = create_styled_button("Export summary", variant="outline")
+        btn_export.setToolTip("Copy a concise summary of the current fit status to the clipboard.")
+        btn_export.clicked.connect(self.copy_summary_to_clipboard)
+
+        btn_row.addWidget(btn_params)
+        btn_row.addWidget(btn_export)
+
+        btn_row.addStretch()
+
+        btn_row.addWidget(btn_copy)
+
+        layout.addLayout(btn_row)
+
+        self._last_table_summary = summary_parts
+        self._last_quality_summary = " | ".join(summary_rows)
+
+    def _plot_the_index_series(self, wl, n_results_raw, n_results_by_model, rmse_row, bad_model, summary_rows, fit_mask_plot, colors, _fit_pen_styles):
+        """Plot the raw points and the three fitted laws of every substrate series, colour the best law by the quality of its fit, and note each series' quality."""
+        for i, key in enumerate(n_results_raw.keys()):
+            y_raw = n_results_raw[key]
+
+            c = pg.mkColor(colors[i % len(colors)])
+
+            c_raw = pg.mkColor(c)
+
+            c_raw.setAlpha(150)
+
+            raw_item = _pg_plot_scatter_split_band(
+                self.plot,
+                wl,
+                y_raw,
+                fit_mask_plot,
+                pg.mkPen(color=c_raw, width=1.5),
+                pg.mkPen(color=CertusTheme.TEXT_SUB, width=1.2),
+                name=f"{key} (Raw)",
+            )
+
+            self.raw_items.append(raw_item)
+
+            bym = n_results_by_model.get(key, {})
+            rms = rmse_row.get(key, {})
+            best_v = _best_finite_rmse_from_triplet(_rms_triplet(rms))
+            q_label = "good"
+            if np.isfinite(best_v):
+                if best_v > 0.02:
+                    q_label = "degraded"
+                if best_v > 0.05:
+                    q_label = "poor"
+            self._series_quality[key] = {"best_rmse": float(best_v), "quality_label": q_label}
+            summary_rows.append(f"{key}: best RMSE={best_v:.6g} | quality={q_label}")
+
+            for pi, (_mk, mlabel) in enumerate(SUBSTRATE_INDEX_MODELS):
+                arr = bym.get(mlabel)
+
+                if arr is None:
+                    continue
+
+                if mlabel in bad_model.get(key, set()):
+                    pc = pg.mkColor(CertusTheme.TEXT_SUB)
+
+                    pc.setAlpha(160)
+
+                else:
+                    pc = pg.mkColor(c)
+
+                    pc.setAlpha(220)
+
+                if pi == 0:
+                    pc.setAlpha(245)
+                    if q_label == "good":
+                        pc = pg.mkColor(CertusTheme.SUCCESS)
+                        pc.setAlpha(230)
+                    elif q_label == "degraded":
+                        pc = pg.mkColor(CertusTheme.WARNING)
+                        pc.setAlpha(230)
+                    elif q_label == "poor":
+                        pc = pg.mkColor(CertusTheme.ERROR)
+                        pc.setAlpha(220)
+
+                pw, pst = _fit_pen_styles[pi % 3]
+
+                _pg_plot_xy_split_band(
+                    self.plot,
+                    wl,
+                    arr,
+                    fit_mask_plot,
+                    pg.mkPen(color=pc, width=pw, style=pst),
+                    pg.mkPen(
+                        color=CertusTheme.TEXT_SUB,
+                        width=max(1.2, pw - 0.5),
+                        style=pst,
+                    ),
+                    name=f"{key} ({mlabel})",
+                )
+
+    def _fill_the_rmse_row(self, table, rmse_font, _col_base_raw):
+        """Write the RMSE of every law under its column in the first row of the table: green for the best, grey for the clearly worse ones."""
         for bk in self.n_results_raw.keys():
             base = _col_base_raw[bk]
 
@@ -421,6 +461,8 @@ class IndexTableDialog(QDialog):
 
                 table.setItem(0, base + 1 + j, cell)
 
+    def _fill_the_data_rows(self, wl, bad_column, table, n_data_rows):
+        """Write one row per wavelength: its index under every series and law, outside-the-fit rows shaded, the wavelength of in-fit rows in bold, bad columns greyed."""
         wl_arr = np.asarray(wl, dtype=np.float64)
 
         row_outside_fit_brush = QBrush(QColor(CertusTheme.BORDER))
@@ -481,34 +523,6 @@ class IndexTableDialog(QDialog):
                     it.setBackground(QBrush(QColor(CertusTheme.SURFACE)))
 
                 table.setItem(r, j, it)
-
-        layout.addWidget(table)
-
-        btn_row = QHBoxLayout()
-
-        btn_params = create_styled_button("Law parameters (Poly., Sellmeier, Spline)", variant="secondary")
-
-        btn_params.clicked.connect(self.show_model_params_dialog)
-
-        btn_copy = create_styled_button(" Copy to Clipboard", variant="primary")
-
-        btn_copy.clicked.connect(functools.partial(self.copy_to_clipboard, col_names))
-
-        btn_export = create_styled_button("Export summary", variant="outline")
-        btn_export.setToolTip("Copy a concise summary of the current fit status to the clipboard.")
-        btn_export.clicked.connect(self.copy_summary_to_clipboard)
-
-        btn_row.addWidget(btn_params)
-        btn_row.addWidget(btn_export)
-
-        btn_row.addStretch()
-
-        btn_row.addWidget(btn_copy)
-
-        layout.addLayout(btn_row)
-
-        self._last_table_summary = summary_parts
-        self._last_quality_summary = " | ".join(summary_rows)
 
     def toggle_raw_plots(self, state):
 

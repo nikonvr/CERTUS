@@ -234,7 +234,7 @@ def _prepare_robustness_inputs(
                 _st["slit_profile"] = _slit_bias_profiles(
                     _st, p_thick_nominal, params, _strategy_resolution(_st, params)
                 )
-            except Exception:  # noqa: BLE001 -- a missing profile disables the bias
+            except Exception:  # a missing profile disables the bias
                 _st["slit_profile"] = None                    # for that strategy alone
         n_ok = sum(1 for _st in all_strategies if _st.get("slit_profile") is not None)
         logger.info(
@@ -310,7 +310,7 @@ def _expand_with_resolution_variants(
                 res_lim = float(
                     _calculate_strategy_spectral_resolution(strat, p_thick_nominal, params)[0]
                 )
-            except Exception:  # noqa: BLE001 -- an unavailable criterion filters nothing
+            except Exception:  # an unavailable criterion filters nothing
                 res_lim = None
         # The strategy as given keeps its identity and the run's slit: the comparison is
         # against itself, so the baseline must stay bit-identical to a no-search run.
@@ -455,7 +455,7 @@ def _ablation_profile(
                 # clipped to zero: a source can MASK another one.
                 "contribution": 1.0 - s2 / base_score,
             })
-        except Exception as exc:  # noqa: BLE001 -- a diagnostic never breaks a run
+        except Exception as exc:  # a diagnostic never breaks a run
             logger.debug(f"[ABLATION] {label} : {exc!r}")
     out.sort(key=lambda d: -d["contribution"])
     return out

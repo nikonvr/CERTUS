@@ -76,7 +76,7 @@ def _nominal_thicknesses(prm: dict) -> np.ndarray:
     formule, sans la reinventer -- une QWOT est `m * l0 / (4 n)`, avec n = nH aux indices
     PAIRS et nL aux impairs, ce qui est la convention de parite du noyau.
     """
-    from certus.utils.certus_strat_service import get_refractive_index  # noqa: PLC0415
+    from certus.utils.certus_strat_service import get_refractive_index
 
     got = prm.get("p_thick_nominal")
     if got is not None:
@@ -180,19 +180,19 @@ def main() -> int:
 
 def _score(assembled: np.ndarray, n_runs: int) -> int:
     """Note l'assemblage par le code qui note toutes les strategies du projet."""
-    from certus.core.certus_strat_robustness import _index_stream_seed  # noqa: PLC0415
+    from certus.core.certus_strat_robustness import _index_stream_seed
 
     B.qapp()
     app = CertusStratApp()
     app.load_configuration(str(ROOT / FULL))
     prm = app.collect_params()
 
-    from certus.physics.certus_tmm_hl import calculate_RT_vectorized_real_HL  # noqa: PLC0415
-    from certus.physics.certus_opt_tmm import arange_inclusive  # noqa: PLC0415
+    from certus.physics.certus_tmm_hl import calculate_RT_vectorized_real_HL
+    from certus.physics.certus_opt_tmm import arange_inclusive
 
     wl0, wl1 = prm["wl_range"]
     wl = arange_inclusive(wl0, wl1, float(prm["wl_step"]))
-    from certus.utils.certus_strat_service import get_refractive_clues_vectorized  # noqa: PLC0415
+    from certus.utils.certus_strat_service import get_refractive_clues_vectorized
     db = prm.get("materials_db_instance") or prm.get("materials_db")
     nH = np.asarray(get_refractive_clues_vectorized(prm["nH_id"], wl, db_instance=db), dtype=np.complex128)
     nL = np.asarray(get_refractive_clues_vectorized(prm["nL_id"], wl, db_instance=db), dtype=np.complex128)

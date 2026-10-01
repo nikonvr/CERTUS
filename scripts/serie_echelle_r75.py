@@ -179,7 +179,7 @@ def mesurer(facteur: float, mode: str = "fast") -> dict:
             sc = float(ok[0].get("robustness_score", 0.0))
             row["rmse"] = sc
             row["seel"] = round(2.0 * math.sqrt(sc), 3) if sc > 0 else None
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         row["verdict"] = "EXCEPTION"
         row["erreur"] = repr(exc)[:300]
         row["run_s"] = round(time.perf_counter() - t0, 1)

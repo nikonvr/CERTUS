@@ -20,11 +20,11 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from gradient_harness import check_gradient  # noqa: E402
+from gradient_harness import check_gradient
 
-from certus.core.certus_index_config import DataType  # noqa: E402
-from certus.spline.certus_index_spline_config import SplineOptConfig  # noqa: E402
-from certus.spline.spline_objective import SplinePWLObjective  # noqa: E402
+from certus.core.certus_index_config import DataType
+from certus.spline.certus_index_spline_config import SplineOptConfig
+from certus.spline.spline_objective import SplinePWLObjective
 
 
 def _make_config(n_points: int = 40) -> SplineOptConfig:

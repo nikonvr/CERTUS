@@ -581,7 +581,7 @@ def main() -> int:
               test_H_controle_negatif, test_D_modes_existants_inchanges):
         try:
             t()
-        except Exception as e:  # noqa: BLE001 -- un test qui plante est une information
+        except Exception as e:  # un test qui plante est une information
             verdict(t.__name__, "ERREUR", f"{type(e).__name__}: {e}")
 
     print("=" * 100)

@@ -273,7 +273,7 @@ class _RateSwingContext:
                 np.array([wl], dtype=np.float64), layer, float(self.p_thick_nominal[layer]),
                 {float(wl): clue}, self.nominal_matrix_cache, self.all_wls,
             )
-        except Exception:                                   # noqa: BLE001
+        except Exception:
             # Same rule: degrade, count, do not kill a 25-minute run.
             self.n_absents += 1
             self._cache[key] = float("inf")

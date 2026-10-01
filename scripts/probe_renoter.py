@@ -356,7 +356,7 @@ def main() -> int:
             try:
                 _renoter(dict(opti_results), params, plans, nom, graine, mode_ctx, fichier,
                          surcharges)
-            except Exception as e:  # noqa: BLE001 -- on ne doit JAMAIS tuer le run porteur
+            except Exception as e:  # on ne doit JAMAIS tuer le run porteur
                 import traceback
                 print(f"  🔴 re-notation en echec : {type(e).__name__}: {e}", flush=True)
                 traceback.print_exc()

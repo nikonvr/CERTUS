@@ -16,9 +16,9 @@ def test_import_spline_module_chain() -> None:
     import certus.spline.spline_visual_utils as spline_visual_utils  # noqa: F401
     import certus.spline.spline_workers as spline_workers  # noqa: F401
 
-    from certus.spline.certus_index_spline_core import SplineOptConfig  # noqa: F401
-    from certus.spline.spline_pipeline import worker_spline_optimization  # noqa: F401
-    from certus.spline.spline_workers import worker_auto_best_split_knot_refinement  # noqa: F401
+    from certus.spline.certus_index_spline_core import SplineOptConfig
+    from certus.spline.spline_pipeline import worker_spline_optimization
+    from certus.spline.spline_workers import worker_auto_best_split_knot_refinement
 
     assert callable(worker_spline_optimization)
     assert callable(worker_auto_best_split_knot_refinement)
@@ -26,7 +26,7 @@ def test_import_spline_module_chain() -> None:
 
 
 def test_import_certus_index_spline_app() -> None:
-    from CERTUS_INDEX_SPLINE import CertusIndexSplineApp  # noqa: F401
+    from CERTUS_INDEX_SPLINE import CertusIndexSplineApp
 
     assert CertusIndexSplineApp is not None
 

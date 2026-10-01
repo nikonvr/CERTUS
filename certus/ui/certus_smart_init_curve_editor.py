@@ -209,7 +209,7 @@ class _PlotDragFilter(QObject):
         drag_p = self._physical_index(self._drag_j) if self._drag_j is not None else None
         self._sizes_cb(self._kind, phys, drag_p)
 
-    def eventFilter(self, obj: QObject, ev: QEvent) -> bool:  # noqa: ANN001
+    def eventFilter(self, obj: QObject, ev: QEvent) -> bool:
         try:
             if obj is not self._vp:
                 return False
@@ -630,7 +630,7 @@ class SmartInitNKCurveEditorDialog(QDialog):
 
         self._update_live_label()
 
-    def closeEvent(self, event) -> None:  # noqa: ANN001
+    def closeEvent(self, event) -> None:
         self._debounce_main.stop()
         self._f_n.detach()
         self._f_k.detach()

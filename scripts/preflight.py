@@ -86,7 +86,7 @@ try:
     import certus.physics.certus_opt_tmm as tmm_mod
 
     tmm_path = Path(tmm_mod.__file__).resolve()
-except Exception as exc:  # noqa: BLE001 -- any import failure is a stop
+except Exception as exc:  # any import failure is a stop
     tmm_path = None
     check("import certus.physics.certus_opt_tmm", False, f"FAILED: {exc}")
 if tmm_path is not None:

@@ -123,7 +123,7 @@ def _build_block_class():
 
         offset = pyqtProperty(float, fget=_get_offset, fset=_set_offset)
 
-        def paintEvent(self, _event):  # noqa: N802 - Qt
+        def paintEvent(self, _event):  # Qt
             p = QPainter()
             if not p.begin(self):
                 return
@@ -148,11 +148,11 @@ def _build_block_class():
             finally:
                 p.end()
 
-        def showEvent(self, e):  # noqa: N802 - Qt
+        def showEvent(self, e):  # Qt
             super().showEvent(e)
             self.start()
 
-        def hideEvent(self, e):  # noqa: N802 - Qt
+        def hideEvent(self, e):  # Qt
             self.stop()
             super().hideEvent(e)
 

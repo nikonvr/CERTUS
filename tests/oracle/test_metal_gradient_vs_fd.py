@@ -27,9 +27,9 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from gradient_harness import check_gradient  # noqa: E402
+from gradient_harness import check_gradient
 
-from certus.physics.gradient_metal import (  # noqa: E402
+from certus.physics.gradient_metal import (
     compute_metal_bilayer_gradient_analytic,
 )
 

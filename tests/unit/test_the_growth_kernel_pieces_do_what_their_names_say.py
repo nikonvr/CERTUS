@@ -17,9 +17,9 @@ import numpy as np
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "oracle"))
-from tmm_reference import rt_stack, stack_matrix  # noqa: E402
+from tmm_reference import rt_stack, stack_matrix
 
-from certus.physics.certus_strat_growth import (  # noqa: E402
+from certus.physics.certus_strat_growth import (
     D_SCAN_VAL,
     MAX_LOOKBACK_VAL,
     RATE_TURN_NM,
@@ -43,7 +43,7 @@ from certus.physics.certus_strat_growth import (  # noqa: E402
     _stack_matrix_pair,
     turning_point_margins,
 )
-from certus.physics.certus_strat_math import _seeded_noise_sample  # noqa: E402
+from certus.physics.certus_strat_math import _seeded_noise_sample
 
 pytestmark = pytest.mark.kernels
 

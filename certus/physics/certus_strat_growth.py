@@ -1973,7 +1973,7 @@ def simulate_growth_kernel(
                 machine_sampling_dd, j0, i_layer, nominal_th, n_hist, p_thick_nominal, prev_thicknesses_sim,
                 Ts_r, Ts_n, apply_signal_noise, signal_noise_scale, signal_noise_seed, signal_noise_run,
             )
-        else:  # noqa: RET505 -- coarse TMM grid, the historical path
+        else:  # coarse TMM grid, the historical path
             _apply_photometric_drift(
                 Ts_r, n_tot, affine_scale, affine_offset, photo_curvature,
             )

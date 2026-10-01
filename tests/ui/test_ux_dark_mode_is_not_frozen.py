@@ -102,7 +102,7 @@ class _Holder:
     def __init__(self, child) -> None:
         self._child = child
 
-    def findChildren(self, _cls):  # noqa: N802 - Qt naming
+    def findChildren(self, _cls):  # Qt naming
         return [self._child]
 
 
@@ -115,7 +115,7 @@ def test_the_probe_catches_a_rigged_widget(qapp):
     assert _frozen(_Holder(rigged), "#ffffff"), "the probe cannot see a widget painting the light surface"
 
 
-def test_the_probe_ignores_white_TEXT_on_a_dark_widget(qapp):  # noqa: N802 - reads better capitalised
+def test_the_probe_ignores_white_TEXT_on_a_dark_widget(qapp):  # reads better capitalised
     """Contrôle positif : white as a LABEL colour is legitimate and must not fire.
 
     Without this, the guard would condemn every button whose label is white.

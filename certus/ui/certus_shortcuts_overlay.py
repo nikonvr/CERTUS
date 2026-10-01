@@ -332,7 +332,7 @@ def _build_dialog_class() -> Any:
                 """
             )
 
-        def keyPressEvent(self, e) -> None:  # noqa: N802 - Qt naming
+        def keyPressEvent(self, e) -> None:  # Qt naming
             if e.key() == Qt.Key.Key_Escape:
                 self.reject()
                 return

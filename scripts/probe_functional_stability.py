@@ -89,7 +89,7 @@ def install_probe() -> None:
                             "rmse_all": [float(x) for x in allr],
                         }
                     )
-        except Exception as exc:  # noqa: BLE001 - une sonde ne tue jamais le calcul
+        except Exception as exc:  # une sonde ne tue jamais le calcul
             B.emit(f"PROBE_CAPTURE_FAILED={exc!r}")
         return out
 

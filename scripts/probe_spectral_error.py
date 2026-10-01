@@ -132,7 +132,7 @@ def install_probe() -> None:
             return data
 
         S.calculate_seel_analysis = patched_seel
-    except Exception as exc:  # noqa: BLE001 -- the readout must never break the run
+    except Exception as exc:  # the readout must never break the run
         B.emit(f"PROBE_SEEL_HOOK_FAILED={exc!r}")
 
     orig_blk = W.run_final_simulation_block
@@ -162,7 +162,7 @@ def install_probe() -> None:
                     "score": it.get("robustness_score"), "crash": it.get("crash_rate"),
                     "noise": r.get("noise_level"), "thick": np.asarray(th, dtype=np.float64),
                 })
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             B.emit(f"PROBE_CAPTURE_FAILED={exc!r}")
         return out
 
@@ -251,7 +251,7 @@ def install_probe() -> None:
                     "margin_by_layer": it.get("margin_by_layer") or {},
                 })
             B.emit(f"RANKING capture : {len(RANKING)} strategies, gagnante id={best_id}")
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             B.emit(f"PROBE_RANKING_FAILED={exc!r}")
         return orig_dump(strategies, *a, **kw)
 

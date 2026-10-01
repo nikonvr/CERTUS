@@ -23,9 +23,9 @@ import numpy as np
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "oracle"))
-from tmm_reference import rt_stack  # noqa: E402
+from tmm_reference import rt_stack
 
-from certus.physics.certus_opt_needle import needle_scan_cached  # noqa: E402
+from certus.physics.certus_opt_needle import needle_scan_cached
 
 pytestmark = pytest.mark.kernels
 

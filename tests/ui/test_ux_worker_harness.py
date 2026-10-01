@@ -19,7 +19,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from _ux_worker import describe_exit_status, run_ux_worker  # noqa: E402
+from _ux_worker import describe_exit_status, run_ux_worker
 
 MARKER = "__FAKE_WORKER__"
 

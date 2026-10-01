@@ -22,15 +22,15 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from tmm_reference import (  # noqa: E402
+from tmm_reference import (
     n_hat,
     r_single_layer_front,
     rt_stack,
     rt_stack_oblique,
 )
 
-from certus.physics.certus_opt_tmm import compute_TMM_generic  # noqa: E402
-from certus.physics.certus_tmm_single_layer import (  # noqa: E402
+from certus.physics.certus_opt_tmm import compute_TMM_generic
+from certus.physics.certus_tmm_single_layer import (
     calculate_RT_single_layer_single,
 )
 

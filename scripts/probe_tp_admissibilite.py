@@ -167,7 +167,7 @@ def main() -> int:
     for nom, cfg in COMPOSANTS.items():
         try:
             r = analyse(nom, cfg)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             print(f"  {nom:18s} EXCEPTION {exc!r}"[:110])
             continue
         out.append(r)

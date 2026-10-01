@@ -137,7 +137,7 @@ def mesurer(comp: str, a: int, b: int) -> dict:
                 th = ch.get("thicknesses_all")
                 if th:
                     np.save(d / f"th_{a:03d}_{b:03d}.npy", np.asarray(th, dtype=np.float64))
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         row["verdict"] = "EXCEPTION"
         row["erreur"] = repr(exc)[:200]
     return row

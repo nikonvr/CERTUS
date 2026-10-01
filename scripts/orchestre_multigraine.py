@@ -458,7 +458,7 @@ def _passe_multitemoin(a, jdir: Path, n_temoins: int, n: int) -> int:
     p.wait()
     try:
         p._certus_journal.close()  # type: ignore[attr-defined]
-    except Exception:  # noqa: BLE001
+    except Exception:
         pass
     art = _lire_artefact(_resoudre_artefact(a.composant, a.mode, graine, tag))
     dep = _deposables(art) if art else []
@@ -850,7 +850,7 @@ def main(argv: list[str] | None = None) -> int:
                 del en_vol[g]
                 try:
                     p._certus_journal.close()  # type: ignore[attr-defined]
-                except Exception:  # noqa: BLE001 -- fermer un journal ne doit rien casser
+                except Exception:  # fermer un journal ne doit rien casser
                     pass
                 mins = (time.monotonic() - tg) / 60.0
                 if duree_reelle is None and p.returncode == 0:
@@ -975,7 +975,7 @@ def main(argv: list[str] | None = None) -> int:
     p.wait()
     try:
         p._certus_journal.close()  # type: ignore[attr-defined]
-    except Exception:  # noqa: BLE001
+    except Exception:
         pass
     art = _lire_artefact(_resoudre_artefact(a.composant, a.mode, a.graine_notation, tag))
     if art is None:

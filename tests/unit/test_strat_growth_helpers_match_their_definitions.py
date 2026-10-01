@@ -20,9 +20,9 @@ import numpy as np
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "oracle"))
-from tmm_reference import rt_stack, stack_matrix  # noqa: E402
+from tmm_reference import rt_stack, stack_matrix
 
-from certus.physics.certus_strat_growth import (  # noqa: E402
+from certus.physics.certus_strat_growth import (
     D_SCAN_VAL,
     compute_T_front_at_layer,
     compute_T_front_profile,

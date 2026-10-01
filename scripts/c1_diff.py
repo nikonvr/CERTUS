@@ -91,7 +91,7 @@ class Enregistreur:
             return
         try:
             sortie = fonction(*args)
-        except Exception as exc:  # noqa: BLE001 - ce qu'un arbre refuse est une mesure, pas un accident
+        except Exception as exc:  # ce qu'un arbre refuse est une mesure, pas un accident
             self.erreurs[f"{entree}#{cas:03d}"] = f"{type(exc).__name__}: {str(exc)[:100]}"
             return
         for k, tableau in enumerate(sortie if isinstance(sortie, tuple) else (sortie,)):
@@ -144,7 +144,7 @@ def corpus_normal(rec: Enregistreur) -> None:
                 rec.appeler(f"normal.vecreal{int(avec)}" + suffixe, cas, f_vecreal, d, nl, ns, wls, avec)
             try:
                 rf, tf = f_noback(d, nl, ns, wls) if f_noback else (None, None)
-            except Exception:  # noqa: BLE001 - deja dit par l'appel ci-dessus
+            except Exception:  # deja dit par l'appel ci-dessus
                 rf = tf = None
             if rf is not None:
                 rec.appeler("normal.generic" + suffixe, cas, f_generic, rf, tf, d, nl, ns, wls)

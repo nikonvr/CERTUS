@@ -77,7 +77,7 @@ def install_probe() -> None:
             return block_costs, block_wls, block_counts
         try:
             return _capture(a, kw, block_costs, block_wls, block_counts)
-        except BaseException as exc:  # noqa: BLE001
+        except BaseException as exc:
             #🔴 A PROBE SHOULD NEVER BREAK WHAT IT OBSERVES. Two incidents
             # on 2026-08-05: signature frozen at 6 arguments after adding
             # min_wl_sep (TypeError -> « No strategies found », run perdu), puis

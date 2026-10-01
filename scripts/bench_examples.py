@@ -228,7 +228,7 @@ def wait_for(worker, timeout_ms: int | None = None):
 
             if isinstance(box["error"], tuple) and len(box["error"]) == 3:
                 emit("WORKER_TRACEBACK:\n" + "".join(_tb.format_exception(*box["error"])))
-        except BaseException as exc:  # noqa: BLE001 - le diagnostic ne doit pas tuer le banc
+        except BaseException as exc:  # le diagnostic ne doit pas tuer le banc
             emit(f"WORKER_TRACEBACK_FAILED={exc!r}")
     return box["result"]
 
@@ -776,7 +776,7 @@ def run_strat():
 
         try:
             val = float(extract_best_rmse(final_results.get("all_strategies_results", [])))
-        except BaseException as exc:  # noqa: BLE001 - un ancrage manquant doit se voir, pas tuer le banc
+        except BaseException as exc:  # un ancrage manquant doit se voir, pas tuer le banc
             emit(f"WARN_RESULT_EXTRACTION={exc!r}")
         dump_strat_ranking(final_results.get("all_strategies_results", []))
     return setup, run, val
@@ -824,7 +824,7 @@ def dump_strat_ranking(strategies: list, top: int = 10) -> None:
                 f"nblocks={len(blocks)} nwl={s.get('num_unique_wavelengths', '?')} "
                 f"wl=[{wls}]"
             )
-    except BaseException as exc:  # noqa: BLE001 - le classement est un diagnostic, il ne doit pas tuer le banc
+    except BaseException as exc:  # le classement est un diagnostic, il ne doit pas tuer le banc
         emit(f"WARN_RANKING_DUMP={exc!r}")
 
 
@@ -878,7 +878,7 @@ def main() -> None:
 
     try:
         setup, run, val = RUNNERS[args.module]()
-    except BaseException as exc:  # noqa: BLE001 - on veut la trace, quoi qu'il arrive
+    except BaseException as exc:  # on veut la trace, quoi qu'il arrive
         emit(f"EXC {exc!r}")
         emit(traceback.format_exc())
         os._exit(3)

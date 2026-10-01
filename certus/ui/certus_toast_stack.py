@@ -230,14 +230,14 @@ def _build_toast_class():
             self._fade_in.setEndValue(1.0)
             self._fade_in.setEasingCurve(QEasingCurve.Type.OutCubic)
 
-        def showEvent(self, e):  # noqa: N802 - Qt
+        def showEvent(self, e):  # Qt
             super().showEvent(e)
             try:
                 self._fade_in.start()
             except (RuntimeError, AttributeError, TypeError):
                 pass
 
-        def mousePressEvent(self, e):  # noqa: N802 - Qt
+        def mousePressEvent(self, e):  # Qt
             if e.button() == Qt.MouseButton.LeftButton:
                 self._dismiss()
             super().mousePressEvent(e)

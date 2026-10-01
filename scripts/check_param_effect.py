@@ -140,7 +140,7 @@ def main() -> int:
         try:
             sa, na, ca = run_once({key: va}, args.seed)
             sb, nb, cb = run_once({key: vb}, args.seed)
-        except Exception as exc:  # noqa: BLE001 -- un cas rate ne doit pas perdre les autres
+        except Exception as exc:  # un cas rate ne doit pas perdre les autres
             sys.stderr.write(f"    ECHEC : {exc!r}\n")
             unclear.append((key, f"exception {exc!r}"))
             continue

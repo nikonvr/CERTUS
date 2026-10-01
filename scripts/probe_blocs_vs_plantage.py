@@ -777,7 +777,7 @@ def main() -> int:
         print("=" * 74)
         contraintes_communes(r["strategies"])
 
-    except Exception as exc:  # noqa: BLE001 -- volontaire, voir le bandeau ci-dessus
+    except Exception as exc:  # volontaire, voir le bandeau ci-dessus
         print(f"\n🟠 la synthese a echoue ({type(exc).__name__}: {exc}).")
         print(f"   🟢 LA MESURE EST SAUVE : {out.relative_to(ROOT)}")
         print("   Relis-la avec un lecteur d'artefact ; il n'y a rien a relancer.")

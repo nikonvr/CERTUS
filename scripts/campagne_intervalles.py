@@ -187,7 +187,7 @@ def mesurer(a: int, b: int, mode: str = "fast", cache_dir: Path | None = None,
             if th is not None:
                 np.save(cache_dir / f"th_{a:03d}_{b:03d}{_suffixe_graine(seed)}.npy", th)
                 row["tirages"] = int(th.shape[0])
-    except Exception as exc:  # noqa: BLE001 -- un intervalle rate ne doit pas perdre la campagne
+    except Exception as exc:  # un intervalle rate ne doit pas perdre la campagne
         row["verdict"] = "EXCEPTION"
         row["erreur"] = repr(exc)[:300]
         row["run_s"] = round(time.perf_counter() - t0, 1)

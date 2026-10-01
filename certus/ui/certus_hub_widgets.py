@@ -58,7 +58,7 @@ class BaseApplicationCard(QFrame):
         # Set by a left press, cleared by the matching release.
         self._armed = False
 
-    def mousePressEvent(self, event):  # noqa: N802 - Qt naming
+    def mousePressEvent(self, event):  # Qt naming
         """Arm on the left button only; nothing is launched yet."""
         if event.button() == Qt.MouseButton.LeftButton:
             self._armed = True
@@ -66,7 +66,7 @@ class BaseApplicationCard(QFrame):
             return
         super().mousePressEvent(event)
 
-    def mouseReleaseEvent(self, event):  # noqa: N802 - Qt naming
+    def mouseReleaseEvent(self, event):  # Qt naming
         """Activate only if the same click ends inside the card.
 
         Acting on release is what lets a mis-click be undone: press, slide
@@ -80,7 +80,7 @@ class BaseApplicationCard(QFrame):
             self.activated.emit()
         event.accept()
 
-    def keyPressEvent(self, event):  # noqa: N802 - Qt naming
+    def keyPressEvent(self, event):  # Qt naming
         """Activate on Enter or Space, the way any button would."""
         if event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space):
             self.activated.emit()

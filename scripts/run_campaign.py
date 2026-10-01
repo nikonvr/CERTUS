@@ -676,7 +676,7 @@ def _read_report(written: str | None) -> dict:
         return {}
     try:
         return json.loads(Path(written).read_text(encoding="utf-8"))
-    except Exception:  # noqa: BLE001
+    except Exception:
         return {}
 
 

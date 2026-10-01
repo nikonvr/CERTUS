@@ -23,9 +23,9 @@ import numpy as np
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "oracle"))
-from tmm_reference import rt_plate_incoherent, stack_matrix  # noqa: E402
+from tmm_reference import rt_plate_incoherent, stack_matrix
 
-from certus.physics.certus_strat_batch import (  # noqa: E402
+from certus.physics.certus_strat_batch import (
     _calculate_RT_HL_single_point,
     calculate_RT_batch_kernel,
     compute_batch_rmse,

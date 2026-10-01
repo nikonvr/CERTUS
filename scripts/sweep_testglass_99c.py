@@ -429,7 +429,7 @@ def main() -> None:
             row = run_one(cuts, args.mode, args.config, args.seed)
         except SystemExit:
             raise
-        except Exception as exc:  # noqa: BLE001 -- one failed batch must not lose the others
+        except Exception as exc:  # one failed batch must not lose the others
             sys.stderr.write(f"  ⚠️ batch {_tag(cuts)} FAILED: {exc!r}\n")
             row = {"tag": _tag(cuts), "cuts": ",".join(map(str, cuts)) or "-",
                    "n_cuts": len(cuts), "seel_nm": float("nan"), "rmse_p95": float("nan"),

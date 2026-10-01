@@ -249,7 +249,7 @@ def main() -> int:
     # La resolution du composant vient de SON fichier, jamais d'un defaut de ce script :
     # une fente supposee est exactement le genre d'erreur qui rend un run incomparable.
     sys.path.insert(0, str(ROOT / "scripts"))
-    from probe_blocs_vs_plantage import COMPOSANTS  # noqa: PLC0415
+    from probe_blocs_vs_plantage import COMPOSANTS
     if composant not in COMPOSANTS:
         print(f"🔴 composant {composant!r} inconnu. Connus : {sorted(COMPOSANTS)}")
         return 2
@@ -330,7 +330,7 @@ def main() -> int:
     sortie.parent.mkdir(parents=True, exist_ok=True)
     if sortie.exists():
         # 🔴 On n'ecrase JAMAIS -- interdit 3 : `reports/` n'est presque pas protege.
-        from datetime import datetime  # noqa: PLC0415
+        from datetime import datetime
         garde = sortie.with_name(f"{sortie.stem}_{datetime.now():%Y%m%d_%H%M%S}{sortie.suffix}")
         print(f"\n🟠 {sortie.name} existe deja -- le precedent est CONSERVE, le nouveau va dans {garde.name}")
         sortie = garde

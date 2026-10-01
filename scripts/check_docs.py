@@ -114,7 +114,7 @@ class Balises(HTMLParser):
         self.pile: list[str] = []
         self.orphelines: list[str] = []
 
-    def handle_starttag(self, tag: str, attrs) -> None:  # noqa: ANN001
+    def handle_starttag(self, tag: str, attrs) -> None:
         if tag not in self.VIDES:
             self.pile.append(tag)
 
@@ -193,7 +193,7 @@ def check_html(p: Path, s: str) -> list[str]:
     b = Balises()
     try:
         b.feed(s)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return [f"{p.relative_to(ROOT)}  PARSEUR EN ECHEC  {exc!r}"]
     out = []
     if b.pile:

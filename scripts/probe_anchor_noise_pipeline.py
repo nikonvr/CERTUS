@@ -443,7 +443,7 @@ def seel_block(result: float | None, report: dict) -> dict:
         # read the same SEEL. The continuous order is separating noise.
         out["ranking_seel_rule"] = _rank_by_seel_rule(ranking)
         out["status"] = "ok"
-    except Exception as exc:  # noqa: BLE001 -- never let the readout kill a 25-min run
+    except Exception as exc:  # never let the readout kill a 25-min run
         out["status"] = f"failed: {exc!r}"
     return out
 

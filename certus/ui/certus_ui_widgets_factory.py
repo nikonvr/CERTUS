@@ -644,14 +644,14 @@ class CertusBooleanField(QCheckBox):
         super().__init__(*args, **kwargs)
         self.toggled.connect(lambda _checked: self.textChanged.emit(self.text()))
 
-    def text(self) -> str:  # noqa: D102 - Qt override
+    def text(self) -> str:  # Qt override
         return "1" if self.isChecked() else "0"
 
-    def setText(self, value) -> None:  # noqa: N802, D102 - Qt override
+    def setText(self, value) -> None:  # Qt override
         raw = str(value).strip().lower()
         self.setChecked(raw not in ("", "0", "false", "no", "off"))
 
-    def setReadOnly(self, read_only) -> None:  # noqa: N802
+    def setReadOnly(self, read_only) -> None:
         """QLineEdit compatibility: a read-only switch cannot be toggled.
 
         Callers disable settings this way; a check box has no read-only mode,

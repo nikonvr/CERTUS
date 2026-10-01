@@ -24,11 +24,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-import numpy as np  # noqa: E402
+import numpy as np
 
 # The Numba cache of the compiled kernels is keyed by their sources (ETAT D49): without this call a script reads the one
 # next to the sources, where a caller keeps the machine code of an OLD callee of another file.
-from certus.core.certus_core import ensure_numba_cache_dir  # noqa: E402
+from certus.core.certus_core import ensure_numba_cache_dir
 
 ensure_numba_cache_dir()
 

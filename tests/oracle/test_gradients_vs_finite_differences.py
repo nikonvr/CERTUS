@@ -16,7 +16,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from gradient_harness import check_gradient, non_uniform_weights  # noqa: E402
+from gradient_harness import check_gradient, non_uniform_weights
 
 
 # ── Corpus commun ────────────────────────────────────────────────────────────

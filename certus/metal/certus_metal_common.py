@@ -2049,7 +2049,7 @@ class MetalBaseApp(CertusBaseApp):
             buf.open(QIODevice.OpenModeFlag.WriteOnly)
             img.save(buf, "PNG")
             return base64.b64encode(buf.data()).decode()
-        except (RuntimeError, AttributeError, TypeError, ValueError, OSError):  # noqa: BLE001 — QBuffer / grab may fail headless
+        except (RuntimeError, AttributeError, TypeError, ValueError, OSError):  # QBuffer / grab may fail headless
             return ""
 
     # --- Shared by METAL_SINGLE and METAL_BILAYER ----------------------------------

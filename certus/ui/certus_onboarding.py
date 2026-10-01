@@ -278,7 +278,7 @@ def _build_overlay_class():
             self.setGeometry(0, 0, self._parent.width(), self._parent.height())
 
         # -- Drawing ---------------------------------------------------------
-        def paintEvent(self, _event):  # noqa: N802 Qt
+        def paintEvent(self, _event):  # N802 Qt
             p = QPainter()
             if not p.begin(self):
                 return

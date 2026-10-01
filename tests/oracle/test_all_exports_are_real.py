@@ -61,7 +61,7 @@ def test_all_ne_declare_que_des_noms_existants(module_name: str) -> None:
     """
     try:
         module = importlib.import_module(module_name)
-    except Exception as exc:  # noqa: BLE001 — l'importabilite est testee ailleurs
+    except Exception as exc:  # l'importabilite est testee ailleurs
         pytest.skip(f"module non importable ({type(exc).__name__}) : hors sujet ici")
 
     declared = getattr(module, "__all__", None)

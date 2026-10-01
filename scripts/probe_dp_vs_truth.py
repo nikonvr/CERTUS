@@ -77,7 +77,7 @@ def install_probe() -> None:
                         }
                     )
                 CAPTURED.append({"num_runs": num_runs, "n": len(batch), "items": batch})
-        except Exception as exc:  # noqa: BLE001 - une sonde ne doit jamais tuer le calcul
+        except Exception as exc:  # une sonde ne doit jamais tuer le calcul
             B.emit(f"PROBE_CAPTURE_FAILED={exc!r}")
         return out
 

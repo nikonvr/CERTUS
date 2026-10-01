@@ -7,7 +7,6 @@ flag naturally rising RMSE trends. The B4 fix feeds *all* evaluated points
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from certus.spline.spline_profile_corridors import _detect_corridor_spike
 

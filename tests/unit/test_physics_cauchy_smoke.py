@@ -1,5 +1,4 @@
 import numpy as np
-import pytest
 
 from certus.core._certus_physics_impl import get_nk_cauchy_wrapper
 

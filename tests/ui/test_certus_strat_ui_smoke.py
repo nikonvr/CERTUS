@@ -1,6 +1,4 @@
-import numpy as np
-import pytest
-from PyQt6.QtWidgets import QMainWindow, QWidget
+from PyQt6.QtWidgets import QWidget
 
 
 def test_strat_ui_windows_import_and_construct(qapp):

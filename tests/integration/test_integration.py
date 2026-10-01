@@ -22,13 +22,12 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from spectrum_helpers import compute_spectrum_simple
 
 from certus.core.certus_core import get_logger, get_resource_path, setup_logging
-from certus.ui.certus_ui import CertusTheme, apply_certus_theme
+from certus.ui.certus_ui import CertusTheme
 from certus.utils.errors import (
-    CertusError,
     CertusValidationError,
     validate_wavelength_range,
 )
-from certus_physics import Layer, Sample, Target
+from certus_physics import Layer, Target
 
 
 @pytest.mark.integration

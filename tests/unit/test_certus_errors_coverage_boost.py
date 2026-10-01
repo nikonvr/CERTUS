@@ -1,8 +1,6 @@
 """Additional coverage tests for certus_errors.py — validation branches and error helpers."""
 
 import importlib
-from types import SimpleNamespace
-from unittest.mock import Mock
 
 import numpy as np
 import pytest

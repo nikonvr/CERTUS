@@ -1,9 +1,7 @@
-from certus.utils.certus_re_config import RE_P4_BEAM_N_KNOTS
 from certus.utils.certus_re_math import (
     re_envelope_max_delta_n,
     re_substrate_cauchy_barrier_residuals_jac,
     re_substrate_cauchy_initial_theta,
-    re_substrate_cauchy_n_re_from_theta,
     re_substrate_cauchy_phi_matrix,
 )
 
@@ -18,9 +16,6 @@ import pytest
 # Add root directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-import CERTUS_RE
-from certus.core.certus_core import get_logger
-from certus_physics import Layer, Sample, Target
 
 
 @pytest.mark.unit

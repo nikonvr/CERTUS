@@ -1,10 +1,7 @@
 import json
-import os
 from pathlib import Path
 
 import pytest
-
-from certus.core.certus_core import get_resource_path
 
 
 @pytest.fixture(autouse=True)

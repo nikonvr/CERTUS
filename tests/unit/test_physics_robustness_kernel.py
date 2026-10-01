@@ -8,7 +8,6 @@ Invariants verified:
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from certus_physics import simulate_stack_robustness_batch
 

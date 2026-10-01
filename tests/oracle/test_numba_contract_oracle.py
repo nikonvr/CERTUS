@@ -5,7 +5,6 @@ import os
 import pytest
 from numba.core.registry import CPUDispatcher
 
-import certus_physics
 from certus.physics.certus_opt_tmm import compute_RT_from_matrix
 from certus.physics.certus_strat_growth import simulate_growth_kernel
 from certus.physics.certus_strat_math import _solve_quadratic_target

@@ -14,8 +14,6 @@ from __future__ import annotations
 
 import inspect
 
-import pytest
-
 
 def test_certus_base_app_exposes_config_hooks():
     from certus.ui.certus_ui import CertusBaseApp

@@ -8,7 +8,6 @@ builder is opt-in, so these tests only verify the scaffolding API.
 from __future__ import annotations
 
 import os
-import tempfile
 from pathlib import Path
 
 import pandas as pd

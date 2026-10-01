@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import os
-
 import numpy as np
-import pytest
 
 from certus.core.certus_core import (
     HC_EV_NM,
@@ -19,7 +16,6 @@ from certus.core.certus_core import (
     TIMESTAMP_FMT_DISPLAY,
     TIMESTAMP_FMT_FILE,
     TWO_PI,
-    WL_DECIMALS,
     CertusConfigError,
     CertusError,
     CertusOptimizationError,

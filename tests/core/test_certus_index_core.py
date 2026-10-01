@@ -1,7 +1,6 @@
 from unittest.mock import MagicMock
 
 import numpy as np
-import pytest
 
 from certus.core.certus_index_objectives import (
     Phase23SplineObjective,

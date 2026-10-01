@@ -15,7 +15,6 @@ from CERTUS_INDEX import (
     CertusIndexApp,
     DataType,
     OptimizationConfig,
-    OptimizationWorker,
     Phase1Callback,
     Phase2PolishCallback,
     _detect_type_from_column_name,

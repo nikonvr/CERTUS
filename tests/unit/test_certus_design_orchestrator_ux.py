@@ -1,6 +1,6 @@
 """Unit tests for the DesignOrchestrator UX/UI workflows."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 

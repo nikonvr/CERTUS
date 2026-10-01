@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import pytest
-
 from certus.ui.certus_a11y import contrast_ratio
 from certus.ui.certus_ui import CertusBaseApp, CertusTheme
 

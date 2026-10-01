@@ -3,15 +3,12 @@
 from __future__ import annotations
 
 import os
-import sys
-from pathlib import Path
 
 import pytest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PyQt6.QtGui import QPixmap
-from PyQt6.QtWidgets import QApplication, QSplashScreen
+from PyQt6.QtWidgets import QSplashScreen
 
 import certus.ui.certus_splash as splash_mod
 from certus.ui.certus_splash import create_splash

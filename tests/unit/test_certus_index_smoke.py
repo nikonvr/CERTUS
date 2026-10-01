@@ -1,5 +1,3 @@
-import numpy as np
-import pytest
 
 # Import the main module to verify it is a valid facade (or the original file)
 import CERTUS_INDEX

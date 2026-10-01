@@ -4,16 +4,13 @@ Targets lines 713-714 (ConfigManager error), 1045-1058 (QueueHandler), 1288 (fro
 ensure_numpy_array/arrays, CertusError full_message formatting, export/theme config.
 """
 
-import json
 import logging
 import queue
 import sys
-import tempfile
 from pathlib import Path
 from unittest.mock import Mock
 
 import numpy as np
-import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -22,7 +19,6 @@ from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
     SELLMEIER_COEFFS_BY_ID,
     SUBSTRATE_LIST,
-    SUBSTRATE_MIN_LAMBDA,
     SUBSTRATES,
     CertusConfigError,
     CertusError,
@@ -37,9 +33,7 @@ from certus.core.certus_core import (
     ensure_numpy_array,
     ensure_numpy_arrays,
     get_complex_dtype,
-    get_export_config,
     get_float_dtype,
-    get_logger,
     get_materials_db_hash,
     get_precision_config,
     get_resource_path,

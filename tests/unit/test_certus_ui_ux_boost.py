@@ -4,14 +4,10 @@ Focuses on custom widgets and base application lifecycle.
 """
 from __future__ import annotations
 
-import os
-import sys
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QWidget
+from PyQt6.QtWidgets import QApplication, QPushButton, QWidget
 
 from certus.ui.certus_ui import (
     CertusActionBar,

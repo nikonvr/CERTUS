@@ -1,9 +1,7 @@
 """Oracle tests verifying analytic gradients against central finite differences (Lot B)."""
 
 import numpy as np
-import pytest
 
-from certus.physics.gradient_metal import compute_metal_bilayer_gradient_analytic
 from certus.physics.gradient_oblique import (
     compute_gradient_all_layers_analytic,
     compute_oblique_gradient_contrib_analytic,

@@ -11,7 +11,6 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import CERTUS_HUB
-from certus.core.certus_core import bootstrap_app, get_logger
 
 
 class TestCERTUSHUB:

@@ -21,11 +21,8 @@ from certus.core._certus_physics_impl import (
     calculate_RT_single_layer_single,
 )
 from certus_physics import (
-    calc_spectrum_front,
-    calc_spectrum_full,
     calculate_bare_substrate_RT,
     calculate_RT_vectorized_real_HL,
-    calculate_single_interface_R,
     calculate_transmission_single,
 )
 

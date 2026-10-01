@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 
 import pytest
-from PyQt6.QtWidgets import QDialog, QMainWindow, QWidget
+from PyQt6.QtWidgets import QWidget
 
 APPS_REGISTRY = [
     ("HUB", "CERTUS_HUB", "CertusHub"),

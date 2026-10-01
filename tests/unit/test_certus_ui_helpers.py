@@ -9,8 +9,6 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-import pytest
-
 from certus.ui.certus_ui import StatsCounter, confirm_and_stop, format_count_kmg
 
 # ---------------------------------------------------------------------------

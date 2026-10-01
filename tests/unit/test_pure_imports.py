@@ -4,8 +4,6 @@ Acceptance criterion for action #32 — eradicate import-time side effects.
 """
 from __future__ import annotations
 
-import importlib
-import io
 import logging
 import sys
 from pathlib import Path

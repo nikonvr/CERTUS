@@ -1,5 +1,4 @@
 import numpy as np
-import pytest
 
 from certus.core._certus_physics_impl import (
     calc_spectrum_front,

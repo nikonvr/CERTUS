@@ -20,7 +20,6 @@ from certus.core.certus_core import (
     GlobalConfig,
     _get_cpu_count,
     bootstrap_app,
-    configure_numba_env,
     create_module_environment,
     get_complex_dtype,
     get_export_config,

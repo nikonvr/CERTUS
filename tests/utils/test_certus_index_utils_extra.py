@@ -2,7 +2,6 @@ from typing import ClassVar
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from certus.utils.certus_index_utils import (
     DataType,
@@ -21,7 +20,6 @@ from certus.utils.certus_index_utils import (
     _stretch_sig_to_px,
     analyze_loaded_data,
     calculate_index_rmse,
-    detect_data_type,
     normalize_index_config,
     spectral_rmse_weights,
 )

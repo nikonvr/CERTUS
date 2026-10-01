@@ -49,7 +49,6 @@ or Needle logic in NeedleWorker."""
 
 
 
-import os
 import sys
 import time
 from pathlib import Path

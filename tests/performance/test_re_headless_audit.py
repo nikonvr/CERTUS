@@ -14,7 +14,6 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-import numpy as np
 import pytest
 
 _perf_dir = str(Path(__file__).resolve().parent)

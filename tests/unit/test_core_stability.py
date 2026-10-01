@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 import pytest
 
 from certus.utils.certus_data import SharedIndicesManager, SharedIndicesWorker, numpy_encoder

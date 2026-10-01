@@ -1,8 +1,6 @@
 from unittest.mock import MagicMock
 
 import numpy as np
-import pandas as pd
-import pytest
 
 from certus.utils.certus_export import (
     _export_series_label,

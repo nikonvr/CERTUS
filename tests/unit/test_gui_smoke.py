@@ -24,11 +24,8 @@ from __future__ import annotations
 import importlib
 import logging
 import os
-import sys
-import tempfile
 
 import numpy as np
-import pandas as pd
 import pytest
 
 # ═══════════════════════════════════════════════════════════════════════════════

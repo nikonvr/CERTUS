@@ -22,7 +22,6 @@ from certus.spline.spline_objective import (
     sigma_knots_decode,
     sigma_knots_encode,
     spectral_mse_rmse_masked_from_nk,
-    spline_objective_mse_on_masked_grid,
 )
 
 

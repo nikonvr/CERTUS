@@ -26,7 +26,6 @@ or the sign convention has been changed incorrectly."""
 
 
 
-import os
 import sys
 from pathlib import Path
 

@@ -3,8 +3,6 @@ import hashlib
 import os
 from collections import defaultdict
 
-import pytest
-
 CHUNK_SIZE = 6
 
 def test_no_ultra_fine_duplicates():

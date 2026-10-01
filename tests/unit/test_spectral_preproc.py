@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from certus.utils.certus_spectral_preproc import (
     dynamic_savgol_blend,

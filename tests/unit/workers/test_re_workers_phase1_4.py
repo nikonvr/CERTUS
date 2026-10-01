@@ -1,6 +1,5 @@
 from unittest.mock import MagicMock, patch
 
-import numpy as np
 import pytest
 
 from certus.core.certus_re_config import REWorkerRequest

@@ -37,7 +37,6 @@ Run: python test_tmm_coherence.py
 
 
 
-import os
 import sys
 from pathlib import Path
 

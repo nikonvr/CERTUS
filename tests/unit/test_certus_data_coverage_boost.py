@@ -14,7 +14,6 @@ Targets gaps in:
 
 import logging
 import sys
-import tempfile
 from multiprocessing import shared_memory
 from pathlib import Path
 

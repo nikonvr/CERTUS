@@ -31,7 +31,7 @@ os.environ.setdefault("QT_QPA_FONTDIR", r"C:\Windows\Fonts")
 import pytest
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
-from PyQt6.QtWidgets import QLabel, QProgressBar, QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QLabel, QProgressBar, QPushButton, QWidget
 
 from certus.ui.certus_theme import _TOKEN_NAMES, CertusTheme, _Token
 

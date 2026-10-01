@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
 
-from PyQt6.QtCore import QEvent, QMimeData, QPoint, QPointF, Qt, QUrl
-from PyQt6.QtGui import QDragEnterEvent, QMouseEvent
+from PyQt6.QtCore import QEvent, QPointF, Qt
+from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import QApplication
 
 os.environ["QT_QPA_PLATFORM"] = "offscreen"

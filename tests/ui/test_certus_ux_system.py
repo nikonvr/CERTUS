@@ -9,7 +9,6 @@ import types
 # Ensure any Qt-using test runs headless
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-import pytest
 
 # =============================================================================
 # U1 - Design tokens + premium QSS

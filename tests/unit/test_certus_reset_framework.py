@@ -1,9 +1,7 @@
 """Unit tests for certus_reset_framework.
 Covers create_reset_button, CertusResetManager, and Clear/Reset behavior of the CERTUS suite."""
 
-import json
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 

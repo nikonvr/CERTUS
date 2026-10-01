@@ -1,5 +1,4 @@
 import numpy as np
-import pytest
 
 from certus.core.certus_array_utils import (
     as_float64_1d,

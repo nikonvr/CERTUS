@@ -1,9 +1,7 @@
 """Unit tests for MachineModel and wavelength-dependent noise sigma(lambda) (Actions 5.8 & 5.9)."""
 
 import numpy as np
-import pytest
 
-import certus_physics
 from certus_physics import MachineModel
 
 

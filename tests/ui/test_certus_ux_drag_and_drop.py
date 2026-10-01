@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from PyQt6.QtCore import QMimeData, QPoint, QPointF, Qt, QUrl
+from PyQt6.QtCore import QMimeData, QPoint, Qt, QUrl
 from PyQt6.QtGui import QDragEnterEvent
 from PyQt6.QtWidgets import QApplication
 

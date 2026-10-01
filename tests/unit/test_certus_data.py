@@ -22,7 +22,6 @@ from certus.utils.certus_data import (
     SharedArrayWorker,
     SharedIndicesManager,
     SharedIndicesWorker,
-    SpectrumLoadResult,
     TimingLogger,
     build_standard_report,
     get_missing_manifest_fields,

@@ -4,7 +4,6 @@ This test verifies that the optimized implementation (Numba) in _certus_physics_
 yields EXACTLY the same results as the theoretical formulas from the HTML Guide.
 """
 
-import os
 import sys
 from pathlib import Path
 

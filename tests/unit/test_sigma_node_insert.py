@@ -2,10 +2,9 @@
 from __future__ import annotations
 
 from threading import Event
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import numpy as np
-import pytest
 
 from certus.spline.certus_index_spline_core import DataType, SplineOptConfig, canonical_spline_sigma_knots
 from certus.spline.spline_pipeline import (

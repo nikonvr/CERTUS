@@ -2,10 +2,7 @@
 
 import logging
 import os
-import queue
 import sys
-import tempfile
-from importlib.machinery import SourceFileLoader
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -22,7 +19,6 @@ from certus.spline.spline_objective import (
     decompose_spline_pwl_objective,
     sigma_knots_decode,
     spectral_mse_rmse_masked_from_nk,
-    spline_spectral_mse_from_xy_nk,
 )
 
 # PyQt Imports

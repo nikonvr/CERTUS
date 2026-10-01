@@ -9,7 +9,6 @@ Invariants verified:
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from certus_physics import get_refractive_clues_vectorized, get_refractive_index
 

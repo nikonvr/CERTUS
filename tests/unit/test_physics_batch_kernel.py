@@ -8,7 +8,6 @@ Invariants verified:
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from certus_physics import calculate_RT_batch_kernel, calculate_RT_vectorized_real_HL
 

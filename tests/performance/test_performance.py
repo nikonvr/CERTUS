@@ -8,13 +8,11 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from certus.core.certus_core import get_complex_dtype, get_float_dtype, get_safe_worker_count
+from certus.core.certus_core import get_safe_worker_count
 
 # Ajouter les imports conditionnels
 from certus_physics import (
     Layer,
-    Sample,
-    Target,
     calculate_RT_vectorized_real,
     get_refractive_index,
 )

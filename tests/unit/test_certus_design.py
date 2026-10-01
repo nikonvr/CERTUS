@@ -6,14 +6,11 @@ import sys
 from pathlib import Path
 
 import numpy as np
-import pytest
 
 # Add root directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import CERTUS_DESIGN
-from certus.core.certus_core import get_logger
-from certus_physics import Layer, Sample, Target
 
 
 class TestCERTUSDesign:

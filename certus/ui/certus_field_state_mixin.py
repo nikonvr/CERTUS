@@ -84,10 +84,14 @@ class CertusFieldStateMixin:
             except Exception:
                 logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
         # Fallbacks to avoid crashes if DB is empty or fails
-        if "Ta2O5" in mat_name: return 2.10
-        if "Nb" in mat_name: return 2.20
-        if "SiO2" in mat_name: return 1.46
-        if "BK7" in mat_name: return 1.52
+        if "Ta2O5" in mat_name:
+            return 2.10
+        if "Nb" in mat_name:
+            return 2.20
+        if "SiO2" in mat_name:
+            return 1.46
+        if "BK7" in mat_name:
+            return 1.52
         return 1.5
 
     def _update_thicknesses(self):

@@ -503,11 +503,16 @@ def build_pglobal_config_from_cfg(
         if env_params:
             try:
                 p = json.loads(env_params)
-                if "n_samples" in p: n_samples = int(p["n_samples"] * scale)
-                if "alpha" in p: alpha = float(p["alpha"])
-                if "reduction_ratio" in p: reduction_ratio = float(p["reduction_ratio"])
-                if "local_budget" in p: local_search_budget = int(p["local_budget"])
-                if "max_clusters" in p: max_active_clusters = int(p["max_clusters"])
+                if "n_samples" in p:
+                    n_samples = int(p["n_samples"] * scale)
+                if "alpha" in p:
+                    alpha = float(p["alpha"])
+                if "reduction_ratio" in p:
+                    reduction_ratio = float(p["reduction_ratio"])
+                if "local_budget" in p:
+                    local_search_budget = int(p["local_budget"])
+                if "max_clusters" in p:
+                    max_active_clusters = int(p["max_clusters"])
             except Exception as e:
                 import logging
                 logging.error(f"Failed to parse CERTUS_PGLOBAL_PARAMS: {e}")

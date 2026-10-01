@@ -97,8 +97,10 @@ def test_u5plus_strip_lists_pills_after_recording(tmp_path):
 
     _qapp = QApplication.instance() or QApplication(sys.argv)
 
-    a = tmp_path / "alpha.json"; a.write_text("{}")
-    b = tmp_path / "beta.json"; b.write_text("{}")
+    a = tmp_path / "alpha.json"
+    a.write_text("{}")
+    b = tmp_path / "beta.json"
+    b.write_text("{}")
     record_recent(RecentCategories.CONFIG, str(a))
     record_recent(RecentCategories.CONFIG, str(b))
 
@@ -118,7 +120,8 @@ def test_u5plus_strip_emits_signal_and_invokes_callback(tmp_path):
 
     _qapp = QApplication.instance() or QApplication(sys.argv)
 
-    target = tmp_path / "cfg.json"; target.write_text("{}")
+    target = tmp_path / "cfg.json"
+    target.write_text("{}")
     record_recent(RecentCategories.CONFIG, str(target))
 
     received: list[str] = []
@@ -147,7 +150,8 @@ def test_u5plus_strip_refresh_reflects_latest_state(tmp_path):
     strip = build_recent_files_strip(None)
     assert len(strip.findChildren(QPushButton)) == 0  # nothing yet
 
-    f = tmp_path / "late.json"; f.write_text("{}")
+    f = tmp_path / "late.json"
+    f.write_text("{}")
     record_recent(RecentCategories.CONFIG, str(f))
     strip.refresh()
     pills = strip.findChildren(QPushButton)

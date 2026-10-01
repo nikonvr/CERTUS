@@ -582,7 +582,8 @@ class RegularGridProfileContext:
         if fit0 is None:
             try:
                 x_seed = clip_to_bounds(np.asarray(x_seed_in, dtype=np.float64).ravel().copy(), self.bounds_nodes[:, 0], self.bounds_nodes[:, 1])
-                if x_seed.size != 2 * int(self.k): return None
+                if x_seed.size != 2 * int(self.k):
+                    return None
                 x_full_seed = np.concatenate((np.asarray([float(d_nm)], dtype=np.float64), x_seed))
                 n_lam_seed, k_lam_seed = nk_from_x_pwlnk(
                     x_full_seed, self.lam_full, self.sk, self.cfg.k_clip_lo, self.cfg.k_clip_hi,
@@ -600,8 +601,10 @@ class RegularGridProfileContext:
                     m_obj_seed = float(obj_seed(x_full_seed))
                     if np.isfinite(m_obj_seed) and m_obj_seed < 1e29:
                         rmse_seed_f = float(np.sqrt(max(m_obj_seed, 0.0)))
-                        if not np.isfinite(mse_seed_f): mse_seed_f = float(m_obj_seed)
-                    else: return None
+                        if not np.isfinite(mse_seed_f):
+                            mse_seed_f = float(m_obj_seed)
+                    else:
+                        return None
                 n_slice_seed = x_seed[:self.k]
                 n_nodes_phys_seed = (np.asarray(n_slice_seed, dtype=np.float64).copy() if self.cfg.n_mono_band_nm is None else x_slice_n_to_physical_nodes(n_slice_seed, self.sk, self.cfg.n_mono_band_nm))
                 L_nodes_seed = np.asarray(x_seed[self.k:], dtype=np.float64).copy()
@@ -626,7 +629,8 @@ class RegularGridProfileContext:
             keep_nominal_seed_if_refit_worse=True, seed_keep_tol_rel=0.0, seed_keep_tol_abs=1e-5, pure_spectral=True,
         )
 
-        if fit1 is None: return fit0
+        if fit1 is None:
+            return fit0
         rm0 = float(fit0.get("rmse", float("nan")))
         rm1 = float(fit1.get("rmse", float("nan")))
         if np.isfinite(rm1) and (not np.isfinite(rm0) or rm1 <= rm0):
@@ -643,16 +647,21 @@ class RegularGridProfileContext:
         probes = []
         for sgn in (+1, -1):
             d_try = float(d_break + float(sgn) * d_step)
-            if not (self.d_lo_b - 1e-12 <= d_try <= self.d_hi_b + 1e-12): continue
+            if not (self.d_lo_b - 1e-12 <= d_try <= self.d_hi_b + 1e-12):
+                continue
             fit_p = self._fit_point_with_extra_polish(float(d_try), np.asarray(x_seed_start, dtype=np.float64).ravel().copy())
-            if fit_p is None: continue
+            if fit_p is None:
+                continue
             rm_p = float(fit_p.get("rmse", float("nan")))
-            if not np.isfinite(rm_p): continue
+            if not np.isfinite(rm_p):
+                continue
             probes.append((int(sgn), float(rm_p), fit_p))
-        if not probes: return 0
+        if not probes:
+            return 0
         probes.sort(key=lambda t: t[1])
         best_sign, best_rmse, _ = probes[0]
-        if np.isfinite(rmse_break) and (best_rmse <= float(rmse_break) - 1e-12): return int(best_sign)
+        if np.isfinite(rmse_break) and (best_rmse <= float(rmse_break) - 1e-12):
+            return int(best_sign)
         return int(-1 if side_origin > 0 else +1)
 
     def _branch_reverse_from_breakpoint(
@@ -666,15 +675,21 @@ class RegularGridProfileContext:
 
         d_step = float(max(0.5 * float(self.step_ref), 1e-4))
         for j in range(1, int(self.max_extra_per_event) + 1):
-            if self.stop_check is not None and bool(self.stop_check()): break
+            if self.stop_check is not None and bool(self.stop_check()):
+                break
             d_try = float(d_break + reverse_sign * d_step * float(j))
-            if not (self.d_lo_b - 1e-12 <= d_try <= self.d_hi_b + 1e-12): break
+            if not (self.d_lo_b - 1e-12 <= d_try <= self.d_hi_b + 1e-12):
+                break
             fit_b = self._fit_point_with_extra_polish(float(d_try), x_seed_start)
-            if fit_b is None: continue
+            if fit_b is None:
+                continue
             st_code_b = 0
-            if bool(fit_b.get("fallback_from_objective", False)): st_code_b = 2
-            elif bool(fit_b.get("fallback_from_seed", False)): st_code_b = 1
-            if not self._append_fit_record(d_try, fit_b, point_kind=1, point_status_code=int(st_code_b)): continue
+            if bool(fit_b.get("fallback_from_objective", False)):
+                st_code_b = 2
+            elif bool(fit_b.get("fallback_from_seed", False)):
+                st_code_b = 1
+            if not self._append_fit_record(d_try, fit_b, point_kind=1, point_status_code=int(st_code_b)):
+                continue
             extra_ok += 1
             x_seed_start = np.asarray(fit_b.get("x_nodes_best", x_seed_start), dtype=np.float64).ravel().copy()
             self._emit_live(float(d_try), float(primary_step_idx + 1) / float(max(1, self.n_tot)))

@@ -928,10 +928,20 @@ class SplineReportBuilder:
         n_sp = result.get("n_lam_seg_spline_sigma")
         k_sp = result.get("k_lam_seg_spline_sigma")
         if n_sp is not None and k_sp is not None and np.asarray(n_sp).size == lam_src_full.size and np.asarray(k_sp).size == lam_src_full.size:
-            n_spl_full = np.asarray(n_sp, dtype=np.float64).ravel(); k_spl_full = np.asarray(k_sp, dtype=np.float64).ravel()
+            n_spl_full = np.asarray(n_sp, dtype=np.float64).ravel()
+            k_spl_full = np.asarray(k_sp, dtype=np.float64).ravel()
         d_spl_x = result.get("d_nm_seg_spline_sigma")
         d_spl_f = float(d_spl_x) if isinstance(d_spl_x, (int, float)) and np.isfinite(float(d_spl_x)) else float("nan")
-        cn_lo_f = np.asarray(result.get("corridor_n_lo", []), dtype=np.float64).ravel(); cn_hi_f = np.asarray(result.get("corridor_n_hi", []), dtype=np.float64).ravel(); ck_lo_f = np.asarray(result.get("corridor_k_lo", []), dtype=np.float64).ravel(); ck_hi_f = np.asarray(result.get("corridor_k_hi", []), dtype=np.float64).ravel(); cn_ref_f = np.asarray(result.get("corridor_reference_n_lam", []), dtype=np.float64).ravel(); ck_ref_f = np.asarray(result.get("corridor_reference_k_lam", []), dtype=np.float64).ravel(); bsn_lo = np.asarray(result.get("boot_corridor_n_lo", []), dtype=np.float64).ravel(); bsn_hi = np.asarray(result.get("boot_corridor_n_hi", []), dtype=np.float64).ravel(); bsk_lo = np.asarray(result.get("boot_corridor_k_lo", []), dtype=np.float64).ravel(); bsk_hi = np.asarray(result.get("boot_corridor_k_hi", []), dtype=np.float64).ravel()
+        cn_lo_f = np.asarray(result.get("corridor_n_lo", []), dtype=np.float64).ravel()
+        cn_hi_f = np.asarray(result.get("corridor_n_hi", []), dtype=np.float64).ravel()
+        ck_lo_f = np.asarray(result.get("corridor_k_lo", []), dtype=np.float64).ravel()
+        ck_hi_f = np.asarray(result.get("corridor_k_hi", []), dtype=np.float64).ravel()
+        cn_ref_f = np.asarray(result.get("corridor_reference_n_lam", []), dtype=np.float64).ravel()
+        ck_ref_f = np.asarray(result.get("corridor_reference_k_lam", []), dtype=np.float64).ravel()
+        bsn_lo = np.asarray(result.get("boot_corridor_n_lo", []), dtype=np.float64).ravel()
+        bsn_hi = np.asarray(result.get("boot_corridor_n_hi", []), dtype=np.float64).ravel()
+        bsk_lo = np.asarray(result.get("boot_corridor_k_lo", []), dtype=np.float64).ravel()
+        bsk_hi = np.asarray(result.get("boot_corridor_k_hi", []), dtype=np.float64).ravel()
         corr_grid_ok = cn_lo_f.size == lam_src_full.size and cn_hi_f.size == lam_src_full.size and ck_lo_f.size == lam_src_full.size and ck_hi_f.size == lam_src_full.size and cn_lo_f.size > 0
         boot_spec_ok = bsn_lo.size == lam_src_full.size and bsn_hi.size == lam_src_full.size and bsk_lo.size == lam_src_full.size and bsk_hi.size == lam_src_full.size and bsn_lo.size > 0
         return (lam_src_full, n_res_full, k_res_full, t_theo_full, ratio_exp_pct_full, ratio_theo_pct_full, n_spl_full, k_spl_full, rw_rep, d_nm_c, keep, cn_lo_f, cn_hi_f, ck_lo_f, ck_hi_f, corr_grid_ok, spectre_filtre, cn_ref_f, ck_ref_f, bsn_lo, bsn_hi, bsk_lo, bsk_hi, boot_spec_ok, export_fallback_lam)

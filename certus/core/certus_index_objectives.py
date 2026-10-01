@@ -87,8 +87,10 @@ def _njit_ir_global_gradient_fused(
             if use_R and not np.isnan(target_R[i]): 
                 w_sum_R += weights[i]
 
-    if w_sum_T < 1e-12: w_sum_T = 1.0
-    if w_sum_R < 1e-12: w_sum_R = 1.0
+    if w_sum_T < 1e-12:
+        w_sum_T = 1.0
+    if w_sum_R < 1e-12:
+        w_sum_R = 1.0
 
     DELTA = 1e-7
     _lo, _hi = -25.0, 5.0
@@ -184,7 +186,6 @@ def _njit_ir_global_gradient_fused(
             else:
                 vR_dn_k = calculate_reflection_infinite_substrate_single(wl_nm, nr, ni - DELTA, d, ns_cmplx)
                 dRdk = (vR_up_k - vR_dn_k) / (2.0 * DELTA)
-
         elif abs_sub:
             ks = k_sub_f[i]
             val_R, val_T = _calculate_RT_absorbing_sub_single(wl_nm, nr, ni, d, ns, ks, D_sub)
@@ -200,7 +201,6 @@ def _njit_ir_global_gradient_fused(
                 vR_dn_k, vT_dn_k = _calculate_RT_absorbing_sub_single(wl_nm, nr, ni - DELTA, d, ns, ks, D_sub)
                 dRdk = (vR_up_k - vR_dn_k) / (2.0 * DELTA)
                 dTdk = (vT_up_k - vT_dn_k) / (2.0 * DELTA)
-
         else:
             ns_cmplx = ns + 0j
             val_R, val_T = calculate_transmission_single(wl_nm, nr, ni, d, ns_cmplx)

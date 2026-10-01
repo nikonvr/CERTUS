@@ -40,8 +40,10 @@ def test_record_and_list_simple(tmp_path):
 def test_record_moves_existing_to_top(tmp_path):
     from certus.ui.certus_recent import RecentCategories, list_recent, record_recent
 
-    a = tmp_path / "a.json"; a.write_text("{}")
-    b = tmp_path / "b.json"; b.write_text("{}")
+    a = tmp_path / "a.json"
+    a.write_text("{}")
+    b = tmp_path / "b.json"
+    b.write_text("{}")
 
     record_recent(RecentCategories.CONFIG, str(a))
     record_recent(RecentCategories.CONFIG, str(b))
@@ -92,8 +94,10 @@ def test_list_recent_drops_missing_by_default(tmp_path):
 def test_forget_and_clear(tmp_path):
     from certus.ui.certus_recent import RecentCategories, clear_recent, forget_recent, list_recent, record_recent
 
-    a = tmp_path / "a.json"; a.write_text("{}")
-    b = tmp_path / "b.json"; b.write_text("{}")
+    a = tmp_path / "a.json"
+    a.write_text("{}")
+    b = tmp_path / "b.json"
+    b.write_text("{}")
     record_recent(RecentCategories.CONFIG, str(a))
     record_recent(RecentCategories.CONFIG, str(b))
 
@@ -108,7 +112,8 @@ def test_forget_and_clear(tmp_path):
 def test_categories_are_isolated(tmp_path):
     from certus.ui.certus_recent import RecentCategories, list_recent, record_recent
 
-    a = tmp_path / "a.json"; a.write_text("{}")
+    a = tmp_path / "a.json"
+    a.write_text("{}")
     record_recent(RecentCategories.CONFIG, str(a))
     assert list_recent(RecentCategories.SPECTRUM) == []
     assert len(list_recent(RecentCategories.CONFIG)) == 1
@@ -168,7 +173,8 @@ def test_u5_record_recent_config_is_called_on_save(tmp_path, monkeypatch):
     class _Stub:
         logger = None
 
-    f = tmp_path / "cfg.json"; f.write_text("{}")
+    f = tmp_path / "cfg.json"
+    f.write_text("{}")
     CertusBaseApp._record_recent_config(_Stub(), str(f))
     items = list_recent(RecentCategories.CONFIG)
     assert str(f.resolve()) in items
@@ -178,7 +184,8 @@ def test_u5_list_recent_configs_reads_from_registry(tmp_path):
     from certus.ui.certus_recent import RecentCategories, record_recent
     from certus.ui.certus_ui import CertusBaseApp
 
-    f = tmp_path / "c.json"; f.write_text("{}")
+    f = tmp_path / "c.json"
+    f.write_text("{}")
     record_recent(RecentCategories.CONFIG, str(f))
 
     class _Stub:
@@ -193,7 +200,8 @@ def test_u5_default_commands_surface_recent_when_available(tmp_path):
     from certus.ui.certus_recent import RecentCategories, record_recent
     from certus.ui.certus_ui import CertusBaseApp
 
-    f = tmp_path / "c.json"; f.write_text("{}")
+    f = tmp_path / "c.json"
+    f.write_text("{}")
     record_recent(RecentCategories.CONFIG, str(f))
 
     class _Stub:

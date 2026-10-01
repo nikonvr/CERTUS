@@ -448,7 +448,8 @@ def main() -> None:
     B.emit(f"SETUP_S={setup:.3f}  RUN_S={run:.3f}  RESULT={val}")
     if not CAPTURED or not OPTICS:
         B.emit(f"PROBE_INCOMPLETE captured={len(CAPTURED)} optics={bool(OPTICS)}")
-        sys.stdout.flush(); os._exit(0)
+        sys.stdout.flush()
+        os._exit(0)
 
     r = analyse()
     OUT.parent.mkdir(parents=True, exist_ok=True)

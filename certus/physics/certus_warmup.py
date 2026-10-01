@@ -19,14 +19,16 @@ def run_warmup(progress_callback: Callable[[str], None] | None = None) -> None:
     n_sub = np.full_like(wls, 1.5)
     
     try:
-        if progress_callback: progress_callback("Warming up TMM Matrix functions...")
+        if progress_callback:
+            progress_callback("Warming up TMM Matrix functions...")
         from certus.physics.certus_tmm_matrix import calculate_bare_substrate_R
         calculate_bare_substrate_R(wls, n_sub)
     except Exception as e:
         logger.error(f"Warmup TMM Matrix failed: {e}")
         
     try:
-        if progress_callback: progress_callback("Warming up TMM Oblique functions...")
+        if progress_callback:
+            progress_callback("Warming up TMM Oblique functions...")
         from certus.physics.certus_tmm_oblique import calc_spectrum_oblique_vectorized
         n_layers_T = np.full((len(wls), 1), 1.5 + 0j, dtype=np.complex128)
         d_layers = np.array([100.0], dtype=np.float64)
@@ -35,18 +37,21 @@ def run_warmup(progress_callback: Callable[[str], None] | None = None) -> None:
         logger.error(f"Warmup TMM Oblique failed: {e}")
 
     try:
-        if progress_callback: progress_callback("Warming up TMM Single Layer functions...")
+        if progress_callback:
+            progress_callback("Warming up TMM Single Layer functions...")
         from certus.physics.certus_tmm_single_layer import calculate_reflection_array
         calculate_reflection_array(wls, n_sub, np.zeros_like(wls), 100.0, n_sub)
     except Exception as e:
         logger.error(f"Warmup TMM Single Layer failed: {e}")
         
     try:
-        if progress_callback: progress_callback("Warming up Colorimetry functions...")
+        if progress_callback:
+            progress_callback("Warming up Colorimetry functions...")
         from certus.physics.certus_colorimetry import xyz_from_spectrum
         xyz_from_spectrum(wls, np.ones_like(wls))
     except Exception as e:
         logger.error(f"Warmup Colorimetry failed: {e}")
 
-    if progress_callback: progress_callback("Numba warmup completed.")
+    if progress_callback:
+        progress_callback("Numba warmup completed.")
     logger.info("Numba JIT pre-warming finished successfully.")

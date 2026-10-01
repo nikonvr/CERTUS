@@ -219,7 +219,8 @@ def test_u9_sample_data_lists_json_configs(tmp_path):
     (tmp_path / SampleCategory.CONFIG).mkdir(parents=True)
     a = tmp_path / SampleCategory.CONFIG / "sample_a.json"
     b = tmp_path / SampleCategory.CONFIG / "sample_b.json"
-    a.write_text("{}"); b.write_text("{}")
+    a.write_text("{}")
+    b.write_text("{}")
     # Description file for a
     (tmp_path / SampleCategory.CONFIG / "sample_a.txt").write_text("Demo config A")
 

@@ -124,10 +124,13 @@ def test_p4_apply_accessibility_defaults_names_widgets_without_name(qapp):
     from certus.ui.certus_a11y import apply_accessibility_defaults
 
     root = QWidget()
-    e1 = QLineEdit(root); e1.setObjectName("sampleSpin")  # an object name is a hook for the style sheet, not a name
-    e2 = QLineEdit(root); e2.setObjectName("")  # no objectName, a tooltip: that names it
+    e1 = QLineEdit(root)
+    e1.setObjectName("sampleSpin")  # an object name is a hook for the style sheet, not a name
+    e2 = QLineEdit(root)
+    e2.setObjectName("")  # no objectName, a tooltip: that names it
     e2.setToolTip("Sample tooltip text")
-    e3 = QLineEdit(root); e3.setAccessibleName("Already set")
+    e3 = QLineEdit(root)
+    e3.setAccessibleName("Already set")
 
     touched = apply_accessibility_defaults(root)
     assert touched == 1  # e2 only

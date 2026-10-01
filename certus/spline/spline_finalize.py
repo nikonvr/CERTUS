@@ -287,6 +287,64 @@ def _spectral_polish_node_mesh_profile(
             "Analytic gradient probe failed in mesh polish, using FD fallback",
             exc_info=True,
         )
+    m_best, used, x_best = _run_mesh_polish_minimizer(
+        x0,
+        _cb_progress,
+        _emit_progress,
+        _obj,
+        log,
+        bds,
+        mf_use,
+        m0,
+        prog,
+        rm0,
+        _minimize_fn,
+        _minimize_jac,
+    )
+
+    lam_full = np.asarray(out.get("lam_nm", cfg.lam_nm), dtype=np.float64).ravel()
+
+    sig_full = 1.0 / np.maximum(lam_full, 1e-9)
+
+    n_full, k_full = nk_from_x_pwlnk(
+        x_best,
+        lam_full,
+        sk_a,
+        cfg.k_clip_lo,
+        cfg.k_clip_hi,
+        sig_pre=sig_full,
+        n_mono_band_nm=cfg.n_mono_band_nm,
+        profile_interp=mode,
+    )
+
+    d_best = float(x_best[0])
+
+    mse_r, rmse_r = spectral_mse_rmse_masked_from_nk(cfg, out, lam_full, n_full, k_full, d_best)
+
+    log.debug(
+        "INDEX_SPLINE [sigma MESH POLISH] Final summary (%s) | internal objective MSE=%.6e | "
+        "recalculated RMSE (spectral_mse_rmse_masked_from_nk, full lambda grid)=%.8f | d=%.6f nm | "
+        "n(lambda),k(lambda) curves exported under keys n_lam_seg_spline_sigma / k_lam_seg_spline_sigma",
+        used,
+        float(m_best),
+        float(rmse_r) if np.isfinite(rmse_r) else float("nan"),
+        d_best,
+    )
+
+    return {
+        "x_best": np.asarray(x_best, dtype=np.float64).copy(),
+        "n_lam": np.asarray(n_full, dtype=np.float64).copy(),
+        "k_lam": np.asarray(k_full, dtype=np.float64).copy(),
+        "d_nm": d_best,
+        "spectral_rmse": float(rmse_r) if np.isfinite(rmse_r) else None,
+        "spectral_mse": float(mse_r) if np.isfinite(mse_r) else None,
+        "used": str(used),
+        "profile_interp": mode,
+    }
+
+
+def _run_mesh_polish_minimizer(x0, _cb_progress, _emit_progress, _obj, log, bds, mf_use, m0, prog, rm0, _minimize_fn, _minimize_jac):
+    """Run the L-BFGS-B polish itself and report the vector, the cost and the counters it reached; on a failure keep the start."""
     try:
         ftol_val = 1e-11 if _minimize_jac is True else 1e-9
         gtol_val = 1e-8 if _minimize_jac is True else 1e-6
@@ -353,46 +411,7 @@ def _spectral_polish_node_mesh_profile(
         )
 
         x_best, m_best, used = x0, m0, "exception_fallback"
-
-    lam_full = np.asarray(out.get("lam_nm", cfg.lam_nm), dtype=np.float64).ravel()
-
-    sig_full = 1.0 / np.maximum(lam_full, 1e-9)
-
-    n_full, k_full = nk_from_x_pwlnk(
-        x_best,
-        lam_full,
-        sk_a,
-        cfg.k_clip_lo,
-        cfg.k_clip_hi,
-        sig_pre=sig_full,
-        n_mono_band_nm=cfg.n_mono_band_nm,
-        profile_interp=mode,
-    )
-
-    d_best = float(x_best[0])
-
-    mse_r, rmse_r = spectral_mse_rmse_masked_from_nk(cfg, out, lam_full, n_full, k_full, d_best)
-
-    log.debug(
-        "INDEX_SPLINE [sigma MESH POLISH] Final summary (%s) | internal objective MSE=%.6e | "
-        "recalculated RMSE (spectral_mse_rmse_masked_from_nk, full lambda grid)=%.8f | d=%.6f nm | "
-        "n(lambda),k(lambda) curves exported under keys n_lam_seg_spline_sigma / k_lam_seg_spline_sigma",
-        used,
-        float(m_best),
-        float(rmse_r) if np.isfinite(rmse_r) else float("nan"),
-        d_best,
-    )
-
-    return {
-        "x_best": np.asarray(x_best, dtype=np.float64).copy(),
-        "n_lam": np.asarray(n_full, dtype=np.float64).copy(),
-        "k_lam": np.asarray(k_full, dtype=np.float64).copy(),
-        "d_nm": d_best,
-        "spectral_rmse": float(rmse_r) if np.isfinite(rmse_r) else None,
-        "spectral_mse": float(mse_r) if np.isfinite(mse_r) else None,
-        "used": str(used),
-        "profile_interp": mode,
-    }
+    return m_best, used, x_best
 
 
 def _finalize_spectral_rmse_mesh_polish_and_best(out: dict[str, Any]) -> None:

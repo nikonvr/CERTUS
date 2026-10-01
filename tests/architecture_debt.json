@@ -61,7 +61,6 @@
     "certus/spline/certus_index_spline_corridor_worker.py::_CorridorWorkerMixin._on_worker_done": 379,
     "certus/spline/certus_index_spline_rendering.py::_PlotMixin._plot_rmse_data_scatter": 383,
     "certus/spline/certus_index_spline_smart_init.py::SmartInitPreviewManager.__init__": 572,
-    "certus/spline/spline_finalize.py::_spectral_polish_node_mesh_profile": 305,
     "certus/spline/spline_pipeline_mesh_clean.py::worker_spline_auto_clean_knots": 485,
     "certus/spline/spline_pipeline_mesh_insert.py::insert_manual_sigma_nodes": 490,
     "certus/spline/spline_pipeline_orchestrator.py::worker_spline_optimization": 446,

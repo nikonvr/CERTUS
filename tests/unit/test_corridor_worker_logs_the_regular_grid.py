@@ -43,7 +43,8 @@ def log(res: dict) -> list[str]:
 
 
 def test_without_a_logger_nothing_is_read_and_nothing_fails():
-    _CorridorWorkerMixin._log_regular_grid_result(SimpleNamespace(logger=None), {"profile_d_values_nm": "not an array"})
+    # a result that could not be read (a string where an array belongs) proves that nothing is read: the call returns, and says nothing
+    assert _CorridorWorkerMixin._log_regular_grid_result(SimpleNamespace(logger=None), {"profile_d_values_nm": "not an array"}) is None
 
 
 def test_the_first_line_counts_the_points_the_nans_and_the_coverage():

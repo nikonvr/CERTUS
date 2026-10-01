@@ -251,9 +251,9 @@ __all__ = [
     "MAX_RECENTS_PER_CATEGORY",
     "RecentCategories",
     "RecentFilesRegistry",
-    "record_recent",
-    "list_recent",
-    "forget_recent",
     "clear_recent",
+    "forget_recent",
+    "list_recent",
+    "record_recent",
     "short_label",
 ]

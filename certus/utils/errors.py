@@ -99,34 +99,34 @@ def safe_ui_action(func):
 
 
 __all__ = [
+    "CertusComputationError",
+    "CertusConfigError",
+    "CertusConvergenceError",
+    "CertusDataError",
+    "CertusDomainError",
     # Exceptions
     "CertusError",
-    "CertusValidationError",
     "CertusFileError",
+    "CertusMaterialError",
     "CertusOptimizationError",
     "CertusPhysicsError",
-    "CertusConfigError",
-    "CertusDataError",
-    "CertusComputationError",
-    "CertusConvergenceError",
-    "CertusMaterialError",
-    "CertusDomainError",
-    "PhysicsConvergenceError",
+    "CertusValidationError",
     "ConfigurationCorruptionError",
     "CorruptedProjectError",
-    # Validation functions
-    "validate_wavelength_range",
-    "validate_thickness",
-    "validate_refractive_index",
-    "validate_spectral_data",
-    "validate_parameter_range",
+    "PhysicsConvergenceError",
+    "format_validation_error",
     # Error messages
     "get_error_message",
-    "format_validation_error",
     # UI helpers
     "show_error",
-    "show_warning",
     "show_validation_error",
+    "show_warning",
+    "validate_parameter_range",
+    "validate_refractive_index",
+    "validate_spectral_data",
+    "validate_thickness",
+    # Validation functions
+    "validate_wavelength_range",
 ]
 
 

@@ -43,19 +43,7 @@ Domain map:
 """
 
 __all__ = [
-    # Theme
-    "CertusTheme",
-    # Widgets
-    # Factory Functions
-    "create_header_logo_widget",
-    "create_styled_button",
-    "create_info_icon",
-    "create_help_button",
-    "open_documentation",
-    "create_flashy_grid",
-    "create_log_widget",
-    "SplitterCapper",
-    "attach_splitter_capper",
+    "OPENPYXL_AVAILABLE",
     # Pro UX Design System components
     # Threading
     # App Base
@@ -63,7 +51,19 @@ __all__ = [
     # Re-exports from certus.core.certus_core
     # Flags
     "SVG_AVAILABLE",
-    "OPENPYXL_AVAILABLE",
+    # Theme
+    "CertusTheme",
+    "SplitterCapper",
+    "attach_splitter_capper",
+    "create_flashy_grid",
+    # Widgets
+    # Factory Functions
+    "create_header_logo_widget",
+    "create_help_button",
+    "create_info_icon",
+    "create_log_widget",
+    "create_styled_button",
+    "open_documentation",
 ]
 
 

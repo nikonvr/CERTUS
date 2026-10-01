@@ -377,6 +377,6 @@ def open_command_palette(parent, actions: list[CommandAction]):
 __all__ = [
     "CommandAction",
     "fuzzy_score",
-    "rank_commands",
     "open_command_palette",
+    "rank_commands",
 ]

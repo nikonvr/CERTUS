@@ -348,15 +348,15 @@ def unhover_lift(widget) -> bool:
 
 __all__ = [
     "DEFAULT_DURATION_MS",
+    "DEFAULT_HOVER_LIFT_PX",
     "HOVER_DURATION_MS",
     "PULSE_DURATION_MS",
-    "DEFAULT_HOVER_LIFT_PX",
     "easing_names",
-    "is_valid_easing",
     "fade_in",
     "fade_out",
-    "slide_in",
-    "pulse",
     "hover_lift",
+    "is_valid_easing",
+    "pulse",
+    "slide_in",
     "unhover_lift",
 ]

@@ -43,36 +43,36 @@ Domain map:
 """
 
 __all__ = [
-    # Theme
-    "CertusTheme",
-    "get_standard_stylesheet",
-    "apply_certus_theme",
-    # Widgets
-    "DetachedPlotWindow",
-    # Factory Functions
-    "set_certus_window_icon",
-    "create_log_widget",
-    "CertusLogPanel",
-    "clone_plot_widget",
-    # Pro UX Design System components
-    "install_standard_shortcuts",
-    "show_toast",
-    # Threading
-    # App Base
-    "CertusBaseApp",
-    # Utilities
-    "open_file_explorer",
-    "process_log_queue_standard",
-    "confirm_stop_with_timeout",
-    "copy_app_logs_to_clipboard",
-    "format_count_kmg",
-    "StatsCounter",
-    "stop_worker_and_thread",
-    "safe_ui_action",
+    "OPENPYXL_AVAILABLE",
     # Re-exports from certus.core.certus_core
     # Flags
     "SVG_AVAILABLE",
-    "OPENPYXL_AVAILABLE",
+    # Threading
+    # App Base
+    "CertusBaseApp",
+    "CertusLogPanel",
+    # Theme
+    "CertusTheme",
+    # Widgets
+    "DetachedPlotWindow",
+    "StatsCounter",
+    "apply_certus_theme",
+    "clone_plot_widget",
+    "confirm_stop_with_timeout",
+    "copy_app_logs_to_clipboard",
+    "create_log_widget",
+    "format_count_kmg",
+    "get_standard_stylesheet",
+    # Pro UX Design System components
+    "install_standard_shortcuts",
+    # Utilities
+    "open_file_explorer",
+    "process_log_queue_standard",
+    "safe_ui_action",
+    # Factory Functions
+    "set_certus_window_icon",
+    "show_toast",
+    "stop_worker_and_thread",
 ]
 
 

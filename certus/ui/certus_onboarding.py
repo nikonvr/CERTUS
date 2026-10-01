@@ -431,12 +431,12 @@ def run_onboarding(
 
 
 __all__ = [
-    "TourStep",
     "OnboardingResult",
+    "TourStep",
+    "filter_resolvable_steps",
     "is_completed",
     "mark_completed",
     "reset_onboarding",
     "resolve_target",
-    "filter_resolvable_steps",
     "run_onboarding",
 ]

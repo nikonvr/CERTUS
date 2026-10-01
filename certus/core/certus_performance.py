@@ -284,10 +284,10 @@ def log_perf(func: Callable | None = None, *, operation: str | None = None, thre
 
 
 __all__ = [
-    "perf_monitor",
-    "log_perf",
-    "PerformanceMonitor",
-    "OperationMetrics",
     "ENABLE_PERF_LOGGING",
     "PERF_LOG_THRESHOLD",
+    "OperationMetrics",
+    "PerformanceMonitor",
+    "log_perf",
+    "perf_monitor",
 ]

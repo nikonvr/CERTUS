@@ -148,10 +148,10 @@ fast_deepcopy = copy_result_dict
 
 
 __all__ = [
-    "copy_spline_result",
+    "copy_dict_result",
+    "copy_list_of_results",
     "copy_optimization_result",
     "copy_result_dict",
-    "copy_list_of_results",
-    "copy_dict_result",
+    "copy_spline_result",
     "fast_deepcopy",
 ]

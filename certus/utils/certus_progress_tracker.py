@@ -559,15 +559,15 @@ def build_progress_tracker(
 
 __all__ = [
     "SPINNER_PERIOD_MS",
-    "StepState",
-    "ProgressSnapshot",
-    "build_progress_snapshot",
-    "build_progress_callback",
     "ProgressCallback",
+    "ProgressSnapshot",
     "ProgressStep",
-    "step_icon_name",
-    "step_color",
+    "StepState",
+    "build_progress_callback",
+    "build_progress_snapshot",
+    "build_progress_tracker",
     "format_eta",
     "smooth_progress",
-    "build_progress_tracker",
+    "step_color",
+    "step_icon_name",
 ]

@@ -368,10 +368,10 @@ def detach_empty_state_from(view) -> bool:
 
 
 __all__ = [
+    "DEFAULT_DESCRIPTION",
     "DEFAULT_ICON_SIZE_PX",
     "DEFAULT_TITLE",
-    "DEFAULT_DESCRIPTION",
-    "build_empty_state",
     "attach_empty_state_to",
+    "build_empty_state",
     "detach_empty_state_from",
 ]

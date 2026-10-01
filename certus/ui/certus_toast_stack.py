@@ -453,10 +453,10 @@ def supported_variants() -> list[str]:
 
 
 __all__ = [
-    "MAX_STACK_SIZE",
     "DEFAULT_DURATION_MS",
+    "MAX_STACK_SIZE",
     "get_toast_stack",
     "show_toast_stack",
-    "variant_icon_name",
     "supported_variants",
+    "variant_icon_name",
 ]

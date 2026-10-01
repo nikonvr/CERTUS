@@ -49,7 +49,7 @@ from collections.abc import Callable
 
 import numpy as np
 
-__all__ = ["central_difference", "check_gradient", "GradientMismatch"]
+__all__ = ["GradientMismatch", "central_difference", "check_gradient"]
 
 
 class GradientMismatch(AssertionError):

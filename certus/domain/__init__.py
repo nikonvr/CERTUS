@@ -6,8 +6,8 @@ Core optical business rules.
 """
 
 __all__ = [
-    "value_objects",
     "entities",
-    "services",
     "events",
+    "services",
+    "value_objects",
 ]

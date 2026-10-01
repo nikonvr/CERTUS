@@ -319,8 +319,8 @@ def get_tooltip_spec(widget) -> TooltipSpec | None:
 
 
 __all__ = [
-    "HOVER_DELAY_MS",
     "HIDE_DELAY_MS",
+    "HOVER_DELAY_MS",
     "MAX_WIDTH_PX",
     "TooltipSpec",
     "attach_rich_tooltip",

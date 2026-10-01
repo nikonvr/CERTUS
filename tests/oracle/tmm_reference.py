@@ -39,15 +39,15 @@ import numpy as np
 
 __all__ = [
     "characteristic_matrix",
-    "stack_matrix",
-    "rt_from_assembly",
-    "rt_stack",
-    "r_single_layer_front",
     "n_hat",
-    "tilted_admittance",
-    "rt_stack_oblique",
-    "rt_plate_incoherent",
+    "r_single_layer_front",
+    "rt_from_assembly",
     "rt_plate_coherent_mean",
+    "rt_plate_incoherent",
+    "rt_stack",
+    "rt_stack_oblique",
+    "stack_matrix",
+    "tilted_admittance",
 ]
 
 

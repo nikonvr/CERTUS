@@ -7,9 +7,9 @@ from .thickness import Thickness
 from .refractive_index import RefractiveIndex, RefractiveIndexDispersion
 
 __all__ = [
-    "Wavelength",
-    "WavelengthRange",
-    "Thickness",
     "RefractiveIndex",
     "RefractiveIndexDispersion",
+    "Thickness",
+    "Wavelength",
+    "WavelengthRange",
 ]

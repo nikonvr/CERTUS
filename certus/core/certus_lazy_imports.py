@@ -259,19 +259,19 @@ def check_openpyxl_available() -> bool:
 
 
 __all__ = [
-    # Lazy loaders
-    "lazy_scipy",
-    "lazy_scipy_optimize",
-    "lazy_scipy_interpolate",
-    "lazy_scipy_ndimage",
+    # Core class
+    "LazyModule",
+    "check_matplotlib_available",
+    "check_openpyxl_available",
+    "check_scipy_available",
+    # Availability checks
+    "is_available",
     "lazy_matplotlib",
     "lazy_matplotlib_pyplot",
     "lazy_openpyxl",
-    # Availability checks
-    "is_available",
-    "check_scipy_available",
-    "check_matplotlib_available",
-    "check_openpyxl_available",
-    # Core class
-    "LazyModule",
+    # Lazy loaders
+    "lazy_scipy",
+    "lazy_scipy_interpolate",
+    "lazy_scipy_ndimage",
+    "lazy_scipy_optimize",
 ]

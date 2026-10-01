@@ -237,8 +237,8 @@ def build_status_badge(
 
 __all__ = [
     "VARIANT_LABELS",
-    "supported_variants",
-    "variant_icon_name",
-    "variant_color",
     "build_status_badge",
+    "supported_variants",
+    "variant_color",
+    "variant_icon_name",
 ]

@@ -399,11 +399,11 @@ def is_skeleton_active(widget) -> bool:
 
 
 __all__ = [
-    "SHIMMER_PERIOD_MS",
     "DEFAULT_LINES",
     "DEFAULT_LINE_HEIGHT",
-    "skeleton_for",
+    "SHIMMER_PERIOD_MS",
     "install_skeleton",
-    "uninstall_skeleton",
     "is_skeleton_active",
+    "skeleton_for",
+    "uninstall_skeleton",
 ]

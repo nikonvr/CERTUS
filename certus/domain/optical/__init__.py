@@ -6,10 +6,10 @@ Core domain of CERTUS.
 """
 
 __all__ = [
-    "Wavelength",
-    "Thickness",
-    "RefractiveIndex",
-    "OpticalStack",
     "Layer",
+    "OpticalStack",
+    "RefractiveIndex",
     "Spectrum",
+    "Thickness",
+    "Wavelength",
 ]

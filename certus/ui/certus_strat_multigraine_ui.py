@@ -616,8 +616,8 @@ def resumer(e: EtatMultigraine) -> str:
 
 __all__ = [
     "BRUIT_DIFFERENCE_SEEL_PCT",
-    "CertusStratMultigraineMixin",
     "ECHELLE_GRAINES",
+    "CertusStratMultigraineMixin",
     "EtatMultigraine",
     "LigneGraine",
     "construire_arguments",

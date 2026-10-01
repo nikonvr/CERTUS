@@ -279,7 +279,7 @@ def run_app_onboarding(app, *, force: bool = False) -> str:
 
 
 __all__ = [
-    "steps_for_app",
     "registered_app_names",
     "run_app_onboarding",
+    "steps_for_app",
 ]

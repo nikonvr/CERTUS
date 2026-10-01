@@ -58,6 +58,6 @@ __all__ = [
     "PARAMS_EXCLUDE_LOGGER_DB",
     "PARAMS_EXCLUDE_LOGGER_DB_GUI",
     "PARAMS_EXCLUDE_NON_SERIALIZABLE",
-    "filter_params_for_serialization",
     "filter_params_for_gui",
+    "filter_params_for_serialization",
 ]

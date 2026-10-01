@@ -851,13 +851,13 @@ QToolTip {{
 
 
 __all__ = [
-    "Spacing",
-    "Radius",
-    "Motion",
+    "OBJ",
     "Elevation",
+    "Motion",
+    "Objects",
+    "Radius",
+    "Spacing",
     "Typography",
     "ZIndex",
-    "Objects",
-    "OBJ",
     "build_premium_overrides",
 ]

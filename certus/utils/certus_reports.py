@@ -660,7 +660,7 @@ __all__ = [
     "BRAND_COLORS",
     "ReportContext",
     "Section",
-    "report_summary_header",
     "build_excel_report",
     "build_pdf_report",
+    "report_summary_header",
 ]

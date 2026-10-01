@@ -43,15 +43,28 @@ Domain map:
 """
 
 __all__ = [
-    "configure_theme_from_preference",
+    "OPENPYXL_AVAILABLE",
+    # Re-exports from certus.core.certus_core
+    # Flags
+    "SVG_AVAILABLE",
     # Theme
     "CertusTheme",
-    "get_standard_stylesheet",
     "apply_certus_theme",
-    # Widgets
-    # Factory Functions
-    "set_certus_window_icon",
-    "open_documentation",
+    "apply_os_window_effects",
+    "attach_numeric_validator",
+    "claim_shortcut_for_action",
+    "configure_theme_from_preference",
+    "confirm_and_stop",
+    "confirm_stop_with_timeout",
+    "copy_app_logs_to_clipboard",
+    "enable_file_drop",
+    "format_count_kmg",
+    # Threading
+    # App Base
+    # Utilities
+    "get_export_settings",
+    "get_standard_stylesheet",
+    "init_certus_app",
     # Pro UX Design System components
     # SkeletonLoaderWidget removed from __all__: it is NOT an export of this module at
     # runtime. It comes from certus_ui_widgets_utils, which itself imports from
@@ -64,35 +77,22 @@ __all__ = [
     # Consumers must import it from certus_ui_widgets_utils, which is what
     # certus_ui.py:274 already does.
     "install_skeleton_loader",
-    "remove_skeleton_loader",
-    "apply_os_window_effects",
     "install_standard_shortcuts",
     "install_unique_shortcut",
-    "claim_shortcut_for_action",
-    "shortcut_owner",
     "normalized_shortcut",
-    "enable_file_drop",
-    "show_toast",
-    "attach_numeric_validator",
-    # Threading
-    # App Base
-    # Utilities
-    "get_export_settings",
+    "open_documentation",
     "open_file_explorer",
     "process_log_queue_standard",
-    "confirm_stop_with_timeout",
-    "copy_app_logs_to_clipboard",
-    "format_count_kmg",
-    "stop_worker_and_thread",
-    "confirm_and_stop",
-    "init_certus_app",
-    "setup_pyqtgraph_defaults",
-    "setup_gui_exception_handling",
+    "remove_skeleton_loader",
     "safe_ui_action",
-    # Re-exports from certus.core.certus_core
-    # Flags
-    "SVG_AVAILABLE",
-    "OPENPYXL_AVAILABLE",
+    # Widgets
+    # Factory Functions
+    "set_certus_window_icon",
+    "setup_gui_exception_handling",
+    "setup_pyqtgraph_defaults",
+    "shortcut_owner",
+    "show_toast",
+    "stop_worker_and_thread",
 ]
 
 

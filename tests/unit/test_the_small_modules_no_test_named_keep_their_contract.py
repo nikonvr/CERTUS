@@ -335,7 +335,7 @@ def test_the_orchestrator_exposes_the_two_job_specs_of_the_common_module():
     import certus.metal.certus_metal_common as common
     import certus.metal.certus_metal_orchestrator as orchestrator
 
-    assert orchestrator.__all__ == ["MetalJobSpec", "METAL_SINGLE_SPEC", "METAL_BILAYER_SPEC"]
+    assert sorted(orchestrator.__all__) == sorted(["MetalJobSpec", "METAL_SINGLE_SPEC", "METAL_BILAYER_SPEC"])  # the order of `__all__` is not the contract
     assert orchestrator.METAL_SINGLE_SPEC is common.METAL_SINGLE_SPEC
     assert orchestrator.METAL_BILAYER_SPEC is common.METAL_BILAYER_SPEC
     assert isinstance(orchestrator.METAL_SINGLE_SPEC, orchestrator.MetalJobSpec)

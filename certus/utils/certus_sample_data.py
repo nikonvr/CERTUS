@@ -179,9 +179,9 @@ def _read_description(path: Path) -> str:
 __all__ = [
     "SampleCategory",
     "SampleEntry",
-    "list_samples",
-    "sample_path",
     "default_sample",
     "has_any_samples",
+    "list_samples",
+    "sample_path",
     "set_sample_root",
 ]

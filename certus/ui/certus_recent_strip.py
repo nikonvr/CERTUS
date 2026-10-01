@@ -209,7 +209,7 @@ def build_recent_files_strip(
 
 
 __all__ = [
-    "STRIP_MAX_ITEMS",
     "PILL_MAX_CHARS",
+    "STRIP_MAX_ITEMS",
     "build_recent_files_strip",
 ]

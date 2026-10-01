@@ -11,4 +11,4 @@ from certus.metal.certus_metal_common import (
     MetalJobSpec,
 )
 
-__all__ = ["MetalJobSpec", "METAL_SINGLE_SPEC", "METAL_BILAYER_SPEC"]
+__all__ = ["METAL_BILAYER_SPEC", "METAL_SINGLE_SPEC", "MetalJobSpec"]

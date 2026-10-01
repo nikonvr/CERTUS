@@ -101,7 +101,7 @@ def _prev_with_error(i_layer, err_nm=2.0):
 # =========================================================================== #
 
 
-@pytest.mark.parametrize("i_layer, wl", POEM_ACTIVE + POEM_INACTIVE)
+@pytest.mark.parametrize(("i_layer", "wl"), POEM_ACTIVE + POEM_INACTIVE)
 @pytest.mark.parametrize("block_start", [-1, 4])
 def test_disabled_flag_ignores_seed_and_run_bit_for_bit(i_layer, wl, block_start):
     """A echelle nulle, ni la graine ni l'indice de tirage ne doivent exister.
@@ -142,7 +142,7 @@ def test_disabled_flag_matches_the_legacy_call_signature():
 # =========================================================================== #
 
 
-@pytest.mark.parametrize("i_layer, wl", POEM_ACTIVE)
+@pytest.mark.parametrize(("i_layer", "wl"), POEM_ACTIVE)
 def test_enabled_flag_moves_the_poem_anchors_at_zero_trigger_noise(i_layer, wl):
     """A bruit d'ARRET nul, le resultat doit quand meme bouger.
 
@@ -159,7 +159,7 @@ def test_enabled_flag_moves_the_poem_anchors_at_zero_trigger_noise(i_layer, wl):
     )
 
 
-@pytest.mark.parametrize("i_layer, wl", POEM_INACTIVE)
+@pytest.mark.parametrize(("i_layer", "wl"), POEM_INACTIVE)
 def test_enabled_flag_leaves_the_frozen_nominal_level_alone(i_layer, wl):
     """La ou POEM est inactif et le niveau atteignable, le resultat ne doit PAS bouger.
 

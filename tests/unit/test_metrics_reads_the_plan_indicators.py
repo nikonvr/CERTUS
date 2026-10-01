@@ -245,7 +245,7 @@ def test_dette_writes_the_ledger_from_the_folders_the_cache_key_reads_and_stops(
 
 
 @pytest.mark.parametrize(
-    "source, annotated",
+    ("source", "annotated"),
     [
         ("def f(x: int) -> int: ...", True),
         ("def f(x) -> int: ...", False),

@@ -61,7 +61,7 @@ BUTTON_ROLES = [("PRIMARY", "PRIMARY_TEXT"), ("DANGER", "DANGER_LABEL")]
 
 
 @pytest.mark.parametrize("mode", ["light", "dark"])
-@pytest.mark.parametrize("fill,label", BUTTON_ROLES)
+@pytest.mark.parametrize(("fill", "label"), BUTTON_ROLES)
 def test_button_label_meets_aa_in_both_modes(mode: str, fill: str, label: str) -> None:
     """Every action button must reach 4.5:1 in the theme the operator chose."""
     from certus.ui.certus_theme import CertusTheme

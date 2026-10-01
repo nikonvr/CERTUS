@@ -79,7 +79,7 @@ class TestPrendreLeFocusNeDeplaceRien:
     """
 
     @pytest.mark.parametrize(
-        "selecteur,repos",
+        ("selecteur", "repos"),
         [
             ("QPushButton:focus", "QPushButton {"),
             ("QPushButton#CertusPrimaryBtn:focus", "QPushButton#CertusPrimaryBtn {"),

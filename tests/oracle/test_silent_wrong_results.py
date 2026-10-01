@@ -64,7 +64,7 @@ class TestDetectionTypeDonnees:
     """A "Reflectance" header was classified as TRANSMISSION."""
 
     @pytest.mark.parametrize(
-        "header, expected",
+        ("header", "expected"),
         [
             ("Transmittance", "T"),
             ("Transmission", "T"),

@@ -166,7 +166,7 @@ class TestCrashBucket:
     """
 
     @pytest.mark.parametrize(
-        "rate,expected",
+        ("rate", "expected"),
         [
             (0.0, "<=1%"),
             (0.0033, "<=1%"),

@@ -63,7 +63,7 @@ def test_no_french_word_reaches_the_screen(smoother, word: str):
 
 
 @pytest.mark.parametrize(
-    "french,english",
+    ("french", "english"),
     [("faible", "low"), ("moyen", "medium"), ("fort", "high")],
 )
 def test_renaming_a_level_does_not_change_the_smoothing(french: str, english: str):

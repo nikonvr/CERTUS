@@ -43,7 +43,7 @@ BASELINE_1366 = _load_baseline(BASELINE_1366_PATH)
 
 @pytest.mark.parametrize("app_name", list(MODULES.keys()))
 @pytest.mark.parametrize(
-    "width,height,baseline_dict",
+    ("width", "height", "baseline_dict"),
     [
         (1920, 1080, BASELINE_1920),
         (1366, 768, BASELINE_1366),

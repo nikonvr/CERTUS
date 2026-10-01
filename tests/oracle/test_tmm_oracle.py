@@ -62,7 +62,7 @@ THICKNESSES_NM = [5.0, 20.0, 59.8, 120.0, 400.0, 1000.0]
 WAVELENGTHS_NM = [400.0, 550.0, 700.0, 1000.0]
 
 
-@pytest.mark.parametrize("n_real, k_val", MATERIALS)
+@pytest.mark.parametrize(("n_real", "k_val"), MATERIALS)
 @pytest.mark.parametrize("thickness_nm", THICKNESSES_NM)
 def test_single_layer_front_matches_oracle(n_real: float, k_val: float, thickness_nm: float) -> None:
     """``calculate_RT_single_layer_single`` must reproduce the oracle to machine precision.
@@ -81,7 +81,7 @@ def test_single_layer_front_matches_oracle(n_real: float, k_val: float, thicknes
     )
 
 
-@pytest.mark.parametrize("n_real, k_val", MATERIALS)
+@pytest.mark.parametrize(("n_real", "k_val"), MATERIALS)
 @pytest.mark.parametrize("thickness_nm", THICKNESSES_NM)
 def test_infinite_substrate_matches_oracle(n_real: float, k_val: float, thickness_nm: float) -> None:
     """``calculate_reflection_infinite_substrate_single`` doit reproduire l'oracle.
@@ -107,7 +107,7 @@ def test_infinite_substrate_matches_oracle(n_real: float, k_val: float, thicknes
     )
 
 
-@pytest.mark.parametrize("n_real, k_val", MATERIALS)
+@pytest.mark.parametrize(("n_real", "k_val"), MATERIALS)
 @pytest.mark.parametrize("wavelength_nm", WAVELENGTHS_NM)
 def test_monolayer_generic_matches_oracle(n_real: float, k_val: float, wavelength_nm: float) -> None:
     """``compute_TMM_generic`` — production multi-layer path — on one layer."""
@@ -148,7 +148,7 @@ STACKS = [
 ]
 
 
-@pytest.mark.parametrize("layers_nk, thicknesses", STACKS)
+@pytest.mark.parametrize(("layers_nk", "thicknesses"), STACKS)
 @pytest.mark.parametrize("wavelength_nm", WAVELENGTHS_NM)
 def test_multilayer_matches_oracle(
     layers_nk: list[tuple[float, float]], thicknesses: list[float], wavelength_nm: float
@@ -169,7 +169,7 @@ def test_multilayer_matches_oracle(
     assert t_prod == pytest.approx(t_ref, abs=ATOL), f"T : {t_prod} vs {t_ref}"
 
 
-@pytest.mark.parametrize("layers_nk, thicknesses", STACKS)
+@pytest.mark.parametrize(("layers_nk", "thicknesses"), STACKS)
 @pytest.mark.parametrize("wavelength_nm", WAVELENGTHS_NM)
 def test_energy_conservation(
     layers_nk: list[tuple[float, float]], thicknesses: list[float], wavelength_nm: float

@@ -23,7 +23,7 @@ def _windows_end_with_the_test(qapp, monkeypatch):
     yield from qt_lifecycle(qapp, monkeypatch, "UI instantiation", main_windows_only=True)
 
 
-@pytest.mark.parametrize("module_name, class_name", CERTUS_APPS_MAPPING.items())
+@pytest.mark.parametrize(("module_name", "class_name"), CERTUS_APPS_MAPPING.items())
 def test_ui_instantiation(qapp, module_name, class_name):
     """
     Test that the main UI classes can be instantiated and shown without crashing.

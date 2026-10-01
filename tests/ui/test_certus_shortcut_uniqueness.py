@@ -58,7 +58,7 @@ def _window_level_bindings(window) -> Counter:
 
 
 @pytest.mark.ui
-@pytest.mark.parametrize("name,module,cls_name", APP_TARGETS)
+@pytest.mark.parametrize(("name", "module", "cls_name"), APP_TARGETS)
 def test_no_ambiguous_window_shortcut(qapp, name, module, cls_name) -> None:
     """Every vital sequence resolves to at most one window-level handler."""
     _ = qapp

@@ -35,7 +35,7 @@ def test_validate_payload_returns_normalized_copy() -> None:
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    "payload, message",
+    ("payload", "message"),
     [
         ([], "payload must be a mapping"),
         ({"step": "bad", "params": {}}, "payload.step must be an integer"),

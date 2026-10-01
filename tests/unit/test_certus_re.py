@@ -25,7 +25,7 @@ class TestParseREColumnHeader:
     """RE header parser (incidence, polarization, R/T, backside)."""
 
     @pytest.mark.parametrize(
-        "header,expect",
+        ("header", "expect"),
         [
             ("R", ("R", 0.0, "s", True)),
             ("T", ("T", 0.0, "s", True)),
@@ -89,7 +89,7 @@ class TestRERmseProgressParsing:
     """Pure parsing of RE RMSE progress messages."""
 
     @pytest.mark.parametrize(
-        "message, expected",
+        ("message", "expected"),
         [
             ("Phase 2 RMSE_facade(curr)=0.123456", 0.123456),
             ("done RMSE_facade=1.25e-3", 0.00125),

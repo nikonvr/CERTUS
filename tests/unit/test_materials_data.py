@@ -10,7 +10,7 @@ import certus_physics.materials_data as md
 
 
 @pytest.mark.parametrize(
-    "file_to_simulate,expected_in_log",
+    ("file_to_simulate", "expected_in_log"),
     [
         ("material_constants.xlsx", "material_constants.xlsx"),
         ("clues.xlsx", "clues.xlsx"),

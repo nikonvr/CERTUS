@@ -58,7 +58,7 @@ def test_there_are_labels_to_inspect():
     assert len(_visible_label_lines()) >= 20, "no label-bearing line found - has the API changed?"
 
 
-@pytest.mark.parametrize("pattern,why", FORBIDDEN)
+@pytest.mark.parametrize(("pattern", "why"), FORBIDDEN)
 def test_no_visible_label_carries_a_technical_identifier(pattern: str, why: str):
     rx = re.compile(pattern)
     offenders = [f"{p.relative_to(ROOT)}:{num}" for p, num, line in _visible_label_lines() if rx.search(line)]

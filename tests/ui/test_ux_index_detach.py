@@ -53,7 +53,7 @@ def test_index_opens_on_the_spectrum_tab(index_window) -> None:
 
 
 @pytest.mark.parametrize(
-    "tab_needle,expected_key",
+    ("tab_needle", "expected_key"),
     [
         ("Spectrum", "spectrum"),
         ("Data", "data_table"),

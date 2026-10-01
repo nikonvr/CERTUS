@@ -35,7 +35,7 @@ class _FakeRunningWorker:
         return True
 
 
-@pytest.mark.parametrize("mod_path,cls_name", MODULES_UNDER_TEST)
+@pytest.mark.parametrize(("mod_path", "cls_name"), MODULES_UNDER_TEST)
 def test_close_is_refused_when_the_operator_declines(qapp, monkeypatch, mod_path, cls_name) -> None:
     """A running worker plus a declined confirmation must leave the window open."""
     from PyQt6.QtGui import QCloseEvent
@@ -59,7 +59,7 @@ def test_close_is_refused_when_the_operator_declines(qapp, monkeypatch, mod_path
         win.close()
 
 
-@pytest.mark.parametrize("mod_path,cls_name", MODULES_UNDER_TEST)
+@pytest.mark.parametrize(("mod_path", "cls_name"), MODULES_UNDER_TEST)
 def test_close_is_silent_when_nothing_is_running(qapp, monkeypatch, mod_path, cls_name) -> None:
     """No run, no question: a false positive would block a harmless close."""
     from PyQt6.QtGui import QCloseEvent

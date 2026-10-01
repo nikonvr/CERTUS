@@ -88,7 +88,7 @@ def test_a_window_of_layers_keeps_the_parity_of_the_layers_it_takes() -> None:
     assert not np.allclose(got, [wrong_parity[0, 0], wrong_parity[0, 1], wrong_parity[1, 0], wrong_parity[1, 1]])
 
 
-@pytest.mark.parametrize("first, last", [(0, 0), (3, 3), (4, 2)])
+@pytest.mark.parametrize(("first", "last"), [(0, 0), (3, 3), (4, 2)])
 def test_an_empty_run_of_layers_is_the_identity(first, last) -> None:
     got = _stack_matrix(550.0, N_EVEN, N_ODD, np.array([60.0] * 6), first, last)
 
@@ -185,7 +185,7 @@ def _oracle_point(j: int, k: int, base: int, n_even, n_odd, thicknesses) -> floa
 
 
 @pytest.mark.parametrize("imag", [0.0, 0.01])  # the closed form (k < 1e-4) and the matrix path take turns
-@pytest.mark.parametrize("j0, i_layer, base", [(0, 3, 0), (2, 5, 0), (3, 6, 1)])
+@pytest.mark.parametrize(("j0", "i_layer", "base"), [(0, 3, 0), (2, 5, 0), (3, 6, 1)])
 def test_each_point_of_each_replayed_layer_is_the_oracles_transmission(j0, i_layer, base, imag) -> None:
     n_even, n_odd = N_EVEN - 1j * imag, N_ODD - 1j * imag
 
@@ -293,7 +293,7 @@ def _oracle_current(i_layer, d, base, n_even, n_odd, thicknesses) -> float:
 
 
 @pytest.mark.parametrize("imag", [0.0, 0.01])  # the closed form and the matrix path take turns
-@pytest.mark.parametrize("i_layer, base", [(0, 0), (3, 0), (4, 2)])
+@pytest.mark.parametrize(("i_layer", "base"), [(0, 0), (3, 0), (4, 2)])
 def test_each_point_of_the_current_scan_is_the_oracles_transmission_from_zero_to_d_max(i_layer, base, imag) -> None:
     npts, d_max = 21, 150.0
     n_even, n_odd = N_EVEN - 1j * imag, N_ODD - 1j * imag
@@ -373,7 +373,7 @@ def _sizes(nominal, i_layer, j0, dd=DD) -> tuple[int, int]:
 
 
 @pytest.mark.parametrize("dd", [0.125, 0.2])
-@pytest.mark.parametrize("i_layer, j0", [(1, 0), (3, 1), (2, 2)])
+@pytest.mark.parametrize(("i_layer", "j0"), [(1, 0), (3, 1), (2, 2)])
 def test_the_fine_grid_has_a_reading_every_dd_over_the_history_and_three_thicknesses_of_the_layer(i_layer, j0, dd) -> None:
     nominal = [50.0, 60.0, 42.5, 71.3]
 
@@ -500,7 +500,7 @@ def test_a_block_never_starts_below_the_witness_it_is_read_on() -> None:
     assert _window(1, 4, base=0)["j0"] == 1
 
 
-@pytest.mark.parametrize("i_layer, n_layer", [(2, N_EVEN), (3, N_ODD)])
+@pytest.mark.parametrize(("i_layer", "n_layer"), [(2, N_EVEN), (3, N_ODD)])
 def test_the_adaptive_window_is_the_thickness_plus_the_error_margin_plus_half_a_period(i_layer, n_layer) -> None:
     nominal, wl = 80.0, 610.0
 
@@ -545,7 +545,7 @@ def _flips(values, tol=1e-9) -> bool:
     return any(a != b for a, b in pairwise(signs))
 
 
-@pytest.mark.parametrize("i_layer, base", [(0, 0), (1, 0), (3, 1)])
+@pytest.mark.parametrize(("i_layer", "base"), [(0, 0), (1, 0), (3, 1)])
 def test_the_monotonicity_scan_reads_five_depths_of_the_real_stack_from_the_oracle(i_layer, base) -> None:
     th_real, th_nom, real, nominal, n_layer = _stacks_under(i_layer, base)
     nominal_th = 90.0
@@ -578,7 +578,7 @@ def test_a_layer_of_no_thickness_has_nothing_to_scan() -> None:
     np.testing.assert_array_equal(t_mono, np.zeros(5))
 
 
-@pytest.mark.parametrize("i_layer, base", [(0, 0), (2, 0), (3, 1)])
+@pytest.mark.parametrize(("i_layer", "base"), [(0, 0), (2, 0), (3, 1)])
 def test_the_trigger_level_is_the_nominal_stack_at_the_nominal_thickness(i_layer, base) -> None:
     th_real, th_nom, real, nominal, n_layer = _stacks_under(i_layer, base)
     nominal_th = 77.0
@@ -611,7 +611,7 @@ def test_the_identity_drift_leaves_the_signal_alone() -> None:
     np.testing.assert_array_equal(signal, np.linspace(0.05, 0.95, 12))
 
 
-@pytest.mark.parametrize("scale, offset, curvature", [(0.98, 0.0, 0.0), (1.0, 0.01, 0.0), (0.95, -0.02, 0.0), (1.0, 0.0, 0.5)])
+@pytest.mark.parametrize(("scale", "offset", "curvature"), [(0.98, 0.0, 0.0), (1.0, 0.01, 0.0), (0.95, -0.02, 0.0), (1.0, 0.0, 0.5)])
 def test_the_drift_is_an_affine_change_of_T_and_then_the_curvature_no_affine_change_absorbs(scale, offset, curvature) -> None:
     signal = np.linspace(0.05, 0.95, 12)
 
@@ -704,7 +704,7 @@ def test_poem_can_be_switched_off_and_the_anchors_are_still_read() -> None:
     assert got["T_prev_real"] == pytest.approx(0.3)
 
 
-@pytest.mark.parametrize("real_swing, nominal_swing", [(0.03, 0.30), (0.30, 0.03), (0.03, 0.03)])
+@pytest.mark.parametrize(("real_swing", "nominal_swing"), [(0.03, 0.30), (0.30, 0.03), (0.03, 0.03)])
 def test_poem_needs_a_swing_above_the_floor_on_the_real_and_on_the_nominal_signal(real_swing, nominal_swing) -> None:
     # 0.04, in MEASURED units: below it POEM is ill-conditioned against the reading noise. Both signals are tested.
     got = _anchors(0.5 + real_swing * SIGNAL / 2, 0.5 + nominal_swing * SIGNAL / 2)
@@ -839,7 +839,7 @@ def test_the_level_of_the_nominal_thickness_is_inverted_to_no_error_whatever_the
     assert _error(_t_of(NOMINAL_TH), probe=probe) == pytest.approx(0.0, abs=1e-7)
 
 
-@pytest.mark.parametrize("scale, offset", [(0.9574, 0.0), (1.0, 0.02), (0.95, -0.03)])
+@pytest.mark.parametrize(("scale", "offset"), [(0.9574, 0.0), (1.0, 0.02), (0.95, -0.03)])
 def test_an_affine_drift_changes_nothing_when_the_level_is_read_with_the_same_instrument(scale, offset) -> None:
     # POEM reports its level on the drifted extrema: the level carries the drift, and so must the probes.
     target = _t_of(NOMINAL_TH + 0.4)

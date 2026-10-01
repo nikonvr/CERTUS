@@ -8,7 +8,7 @@ from CERTUS_STRAT import _select_best_strat_result
 
 
 @pytest.mark.parametrize(
-    "items, expected",
+    ("items", "expected"),
     [
         ([{"robustness_score": 0.0}, {"robustness_score": 0.031}], 0.031),
         ([{"rmse_p95": 0.0}, {"rmse_mean": 0.042}], 0.042),

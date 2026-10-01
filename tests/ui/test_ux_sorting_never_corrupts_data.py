@@ -131,7 +131,7 @@ def _measure(mod_path: str, cls_name: str, path: str) -> dict:
     )
 
 
-@pytest.mark.parametrize("mod_path,cls_name,path", STACK_TABLES)
+@pytest.mark.parametrize(("mod_path", "cls_name", "path"), STACK_TABLES)
 def test_stack_table_is_never_sortable(mod_path: str, cls_name: str, path: str) -> None:
     """A table holding an optical stack must not offer sorting.
 
@@ -146,7 +146,7 @@ def test_stack_table_is_never_sortable(mod_path: str, cls_name: str, path: str) 
     )
 
 
-@pytest.mark.parametrize("mod_path,cls_name,path", CELL_WIDGET_TABLES)
+@pytest.mark.parametrize(("mod_path", "cls_name", "path"), CELL_WIDGET_TABLES)
 def test_cell_widget_table_is_never_sortable(mod_path: str, cls_name: str, path: str) -> None:
     """A table whose cells are widgets must not offer sorting.
 

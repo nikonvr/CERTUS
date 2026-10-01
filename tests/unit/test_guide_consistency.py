@@ -144,7 +144,7 @@ d_layers = np.array([85.0, 90.0, 15.0, 85.0, 90.0])
 
 
 @pytest.mark.parametrize(
-    "angle, pol, R_inf_ref, T_inf_ref, R_fin_ref, _T_fin_ref", CASES
+    ("angle", "pol", "R_inf_ref", "T_inf_ref", "R_fin_ref", "_T_fin_ref"), CASES
 )
 def test_guide_vs_code_consistency(
     angle, pol, R_inf_ref, T_inf_ref, R_fin_ref, _T_fin_ref

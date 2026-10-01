@@ -21,7 +21,7 @@ def _consensus_seeds(base_seed: int, num_seeds: int, stride: int = 1) -> list[in
 
 
 @pytest.mark.parametrize(
-    "num_seeds, num_levels",
+    ("num_seeds", "num_levels"),
     [(3, 3), (5, 4), (8, 5)],
 )
 def test_pas_de_bruit_partage_entre_membres_du_consensus(

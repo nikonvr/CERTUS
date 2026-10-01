@@ -76,7 +76,7 @@ def test_a_requested_binding_that_cannot_be_installed_is_reported(qapp, caplog) 
         window.deleteLater()
 
 
-@pytest.mark.parametrize("mod_path,cls_name", [("CERTUS_RE", "CertusREApp")])
+@pytest.mark.parametrize(('mod_path', 'cls_name'), [("CERTUS_RE", "CertusREApp")])
 def test_re_can_export_from_the_keyboard(qapp, mod_path, cls_name) -> None:
     """RE advertises an Excel export; a keyboard user must be able to reach it."""
     from certus.ui.certus_ui_utils import shortcut_owner

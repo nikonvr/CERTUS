@@ -27,7 +27,7 @@ def dialogs(monkeypatch):
     return opened
 
 
-@pytest.mark.parametrize("module_name, class_name", [
+@pytest.mark.parametrize(("module_name", "class_name"), [
     ("certus.metal.certus_metal_single_app", "CertusMetalSingleApp"),
     ("certus.metal.certus_metal_bilayer_app", "CertusMetalBilayerApp"),
 ])

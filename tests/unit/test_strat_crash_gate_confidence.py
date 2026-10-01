@@ -37,7 +37,7 @@ from certus.core.certus_strat_robustness import (
 @pytest.mark.parametrize("params", [{}, {CRASH_GATE_CONFIDENCE_KEY: 0.0},
                                     {CRASH_GATE_CONFIDENCE_KEY: None},
                                     {CRASH_GATE_CONFIDENCE_KEY: "pas un nombre"}])
-@pytest.mark.parametrize("n_crash,n_runs", [(0, 150), (7, 150), (8, 150), (30, 150),
+@pytest.mark.parametrize(("n_crash", "n_runs"), [(0, 150), (7, 150), (8, 150), (30, 150),
                                             (1, 10), (2, 25), (3, 50)])
 def test_inactive_gate_is_the_historical_comparison(params, n_crash, n_runs):
     """🔴 C1. Absent, zero, null or unreadable -- all fall back on the point estimate.

@@ -50,7 +50,7 @@ def _res(strategy: dict, score: float) -> dict:
 
 class TestResolveScreenSeeds:
     @pytest.mark.parametrize(
-        "params,attendu",
+        ("params", "attendu"),
         [
             ({}, []),
             ({"screen_seed_list": None}, []),

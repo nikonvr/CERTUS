@@ -68,7 +68,7 @@ def test_closing_field_during_a_run_asks_first(qapp, monkeypatch) -> None:
         qapp.processEvents()
 
 
-@pytest.mark.parametrize("path, function", [
+@pytest.mark.parametrize(("path", "function"), [
     ("certus/ui/certus_strat_ui_worker.py", "run_workflow"),
     ("certus/ui/certus_strat_ui_state.py", "load_external_strategies"),
     ("certus/ui/certus_field_workers_mixin.py", "_start_worker"),

@@ -61,7 +61,7 @@ def test_re_binds_ctrl_z(qapp) -> None:
 
 
 @pytest.mark.parametrize(
-    "mod_path,cls_name",
+    ("mod_path", "cls_name"),
     [
         ("certus.ui.certus_field_ui", "CertusFieldApp"),
         ("certus.ui.certus_index_ui", "CertusIndexApp"),

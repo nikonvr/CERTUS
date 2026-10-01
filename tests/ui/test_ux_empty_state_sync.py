@@ -80,7 +80,7 @@ def test_overlay_returns_when_the_table_is_emptied(table, qapp) -> None:
 # exists - which is what stops the coverage from expiring at the next rename.
 
 @pytest.mark.parametrize(
-    "mod_path,cls_name",
+    ("mod_path", "cls_name"),
     [
         ("certus.ui.certus_index_ui", "CertusIndexApp"),
         ("certus.ui.certus_field_ui", "CertusFieldApp"),

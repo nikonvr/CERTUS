@@ -50,7 +50,7 @@ CORRESPONDANCE = {
 
 
 class TestUneSeuleEchelle:
-    @pytest.mark.parametrize("jeton,source", sorted(CORRESPONDANCE.items()))
+    @pytest.mark.parametrize(("jeton", "source"), sorted(CORRESPONDANCE.items()))
     def test_le_theme_est_une_VUE_sur_l_echelle_existante(self, jeton: str, source: str) -> None:
         from certus.ui.certus_theme import CertusTheme
         from certus.utils.certus_ux import Typography

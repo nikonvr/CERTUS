@@ -196,7 +196,7 @@ class TestEnergyConservation:
 
 
 
-    @pytest.mark.parametrize("d,n_layers,n_sub,label", ABSORBING_CASES)
+    @pytest.mark.parametrize(("d", "n_layers", "n_sub", "label"), ABSORBING_CASES)
 
     def test_RT_sum_leq_1_compute_TMM_generic(self, d, n_layers, n_sub, label):
 
@@ -226,7 +226,7 @@ class TestEnergyConservation:
 
 
 
-    @pytest.mark.parametrize("d,n_layers,n_sub,label", ABSORBING_CASES)
+    @pytest.mark.parametrize(("d", "n_layers", "n_sub", "label"), ABSORBING_CASES)
 
     def test_RT_sum_leq_1_single_point_k0(self, d, n_layers, n_sub, label):
 
@@ -302,7 +302,7 @@ class TestMacleodReciprocity:
 
 
 
-    @pytest.mark.parametrize("d,n_layers,n_sub,label", CASES)
+    @pytest.mark.parametrize(("d", "n_layers", "n_sub", "label"), CASES)
 
     def test_T_reciprocity(self, d, n_layers, n_sub, label):
 

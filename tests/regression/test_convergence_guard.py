@@ -103,7 +103,7 @@ def test_the_declared_list_matches_what_is_measurable():
 
 @pytest.mark.slow
 @pytest.mark.parametrize(
-    "name,script",
+    ("name", "script"),
     [(n, s) for n, s in TESTS if n not in NON_MESURABLES],
     ids=[n for n, _ in TESTS if n not in NON_MESURABLES],
 )

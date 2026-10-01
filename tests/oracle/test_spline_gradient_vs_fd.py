@@ -69,7 +69,7 @@ def _pack(thickness_nm: float, n_values: np.ndarray, k_values: np.ndarray) -> np
 
 # K >= 4 triggers “smooth” mode; K = 3 forces the "pwl" fallback.
 @pytest.mark.parametrize(
-    "knot_count, expected_mode",
+    ("knot_count", "expected_mode"),
     [(3, "pwl"), (4, "smooth"), (6, "smooth")],
     ids=["K3-pwl", "K4-smooth", "K6-smooth"],
 )

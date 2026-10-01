@@ -27,7 +27,7 @@ APPS_REGISTRY = [
 ]
 
 
-@pytest.mark.parametrize("app_name,mod_path,cls_name", APPS_REGISTRY)
+@pytest.mark.parametrize(("app_name", "mod_path", "cls_name"), APPS_REGISTRY)
 def test_app_import_does_not_poison_qpa_platform(app_name: str, mod_path: str, cls_name: str) -> None:
     """Garantit qu'aucun import ne force QT_QPA_PLATFORM=offscreen."""
     os.environ.pop("QT_QPA_PLATFORM", None)
@@ -239,7 +239,7 @@ def test_design_clear_button_actually_clears(qapp, monkeypatch):
     window.deleteLater()
 
 
-@pytest.mark.parametrize("mod_name,app_cls_name", [
+@pytest.mark.parametrize(("mod_name", "app_cls_name"), [
     ("CERTUS_METAL_SINGLE", "CertusMetalSingleApp"),
     ("CERTUS_METAL_BILAYER", "CertusMetalBilayerApp"),
 ])

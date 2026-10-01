@@ -90,7 +90,7 @@ def _worker_main(mod_path: str, cls_name: str, width: int, height: int) -> None:
     print(MARKER + json.dumps({"hscroll_px": hscroll_px}))
 
 
-@pytest.mark.parametrize("mod_path,cls_name", SPLITTER_APPS)
+@pytest.mark.parametrize(("mod_path", "cls_name"), SPLITTER_APPS)
 @pytest.mark.parametrize("size", [(1920, 1080), (1366, 768)])
 def test_control_panel_never_scrolls_sideways(mod_path: str, cls_name: str, size: tuple[int, int], request) -> None:
     """Part of a control panel must never be unreachable without scrolling sideways."""

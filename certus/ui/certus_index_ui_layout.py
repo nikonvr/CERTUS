@@ -321,7 +321,7 @@ class CertusIndexLayoutMixin:
 
         self.lbl_final_eq = QLabel("Run optimization to see final equations.")
 
-        self.lbl_final_eq.setStyleSheet("font-size: 11pt; color: #1e293b;")
+        self.lbl_final_eq.setStyleSheet(f"font-size: 11pt; color: {CertusTheme.TEXT_MAIN};")
 
         self.lbl_final_eq.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
 

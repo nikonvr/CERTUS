@@ -702,11 +702,13 @@ class CertusScientificPlot(pg.PlotWidget):
         self.add_tracked_curve(curve, name, unit)
 
     def get_toolbar(self, parent_widget: QWidget) -> QToolBar:
-        from certus.ui.certus_ui import CERTUS_UI_STRINGS
+        from certus.ui.certus_ui import CERTUS_UI_STRINGS, CertusTheme
 
         toolbar = QToolBar(parent_widget)
         toolbar.setStyleSheet(
-            "QToolBar { background: #f8f9fa; border-bottom: 1px solid #ddd; spacing: 5px; } QToolButton { padding: 4px; border-radius: 3px; } QToolButton:hover { background-color: #e2e6ea; }"
+            f"QToolBar {{ background: {CertusTheme.SURFACE_HOVER}; border-bottom: 1px solid {CertusTheme.BORDER}; spacing: 5px; }} "
+            f"QToolButton {{ padding: 4px; border-radius: 3px; }} "
+            f"QToolButton:hover {{ background-color: {CertusTheme.BORDER}; }}"
         )
         act_reset = toolbar.addAction(" Reset")
         act_reset.triggered.connect(self.plotItem.autoRange)

@@ -74,7 +74,7 @@ def count_user_facing_emoji() -> int:
 
 
 def test_no_new_hardcoded_hex_outside_the_theme() -> None:
-    """Ratchet. Remesure 2026-10-01 apres l'etape S6.4b : <= 272.
+    """Ratchet. Remesure 2026-10-01 apres l'etape S6.4b : <= 265.
 
     Historique des paliers, parce que chacun dit ce qui l'a fait bouger : 315 avec deux
     fichiers de palette exemptes · 310 quand un troisieme les a rejoints a l'etape 3.9,
@@ -117,10 +117,14 @@ def test_no_new_hardcoded_hex_outside_the_theme() -> None:
     ligne choisie de la palette de commandes, le `#FFFFFF` des deux icones de FIELD, devenus des jetons d'encre
     (`PRIMARY_TEXT`, `SUCCESS_LABEL`...). Le mecanisme des jetons de S6.4 n'en avait retire AUCUN : il fait suivre le theme a des
     couleurs qui sont deja des jetons, il ne dit rien de celles qui n'en sont pas. Le plafond est le compte, au hexadecimal pres.
+
+    📏 265 apres le dernier lot de S6.4b : sept de plus, des encres et des fonds ecrits pour le seul theme clair (`#1e293b` des
+    equations finales d'INDEX, `#475569` du libelle de Pareto de FIELD, `#15803d` et `#bbf7d0` d'une couche faite, `#f8f9fa`, `#ddd`
+    et `#e2e6ea` de la barre d'outils des graphiques), routes vers les jetons ou vers une teinte de jeton.
     """
     count = count_hex_outside_theme()
-    assert count <= 272, (
-        f"Hardcoded hex colors ratchet violated! Found {count} > 272. "
+    assert count <= 265, (
+        f"Hardcoded hex colors ratchet violated! Found {count} > 265. "
         "Use CertusTheme tokens instead of hardcoded hex values."
     )
 

@@ -88,14 +88,14 @@ class LayerCard(QFrame):
         elif state == "done":
             self.setStyleSheet(
                 f"#LayerCard {{ background-color: {CertusTheme.SURFACE}; "
-                f"border: 1px solid #bbf7d0; border-radius: 6px; }}"
+                f"border: 1px solid {CertusTheme.tint(CertusTheme.SUCCESS, 0.3)}; border-radius: 6px; }}"
             )
             self.lbl_num.setStyleSheet(f"color: {CertusTheme.TEXT_SUB};")
             self.lbl_status.setText("✓ Admissible")
-            self.lbl_status.setStyleSheet("color: #15803d; font-weight: 600;")
+            self.lbl_status.setStyleSheet(f"color: {CertusTheme.SUCCESS}; font-weight: 600;")
         else:
             self.setStyleSheet(
-                f"#LayerCard {{ background-color: rgba(255, 255, 255, 0.4); "
+                f"#LayerCard {{ background-color: {CertusTheme.tint(CertusTheme.SURFACE, 0.4)}; "
                 f"border: 1px solid {CertusTheme.BORDER}; border-radius: 6px; opacity: 0.6; }}"
             )
             self.lbl_num.setStyleSheet(f"color: {CertusTheme.TEXT_DISABLED};")

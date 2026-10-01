@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from PyQt6.QtWidgets import QApplication
-from PyQt6.QtCore import Qt, QPoint, QMimeData, QUrl, QPointF
+
+from PyQt6.QtCore import QMimeData, QPoint, QPointF, Qt, QUrl
 from PyQt6.QtGui import QDragEnterEvent
+from PyQt6.QtWidgets import QApplication
 
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 app = QApplication.instance() or QApplication([])
@@ -51,7 +52,7 @@ def test_drag_and_drop_event_handling():
     test_json = Path("example/rampe_1_55_400_900_30c.json").resolve()
     mime.setUrls([QUrl.fromLocalFile(str(test_json))])
 
-    from PyQt6.QtCore import Qt, QPoint
+    from PyQt6.QtCore import QPoint, Qt
     event = QDragEnterEvent(
         QPoint(100, 100),
         Qt.DropAction.CopyAction,
@@ -82,9 +83,10 @@ def test_stack_progress_auto_scroll():
 
 def test_plot_double_click_auto_range():
     """Vérifier que le double-clic sur CertusScientificPlot réinitialise l'échelle."""
-    from certus.ui.certus_plot import CertusScientificPlot
-    from PyQt6.QtGui import QMouseEvent
     from PyQt6.QtCore import QEvent, QPointF
+    from PyQt6.QtGui import QMouseEvent
+
+    from certus.ui.certus_plot import CertusScientificPlot
 
     plot = CertusScientificPlot(title="Test Plot")
     event = QMouseEvent(

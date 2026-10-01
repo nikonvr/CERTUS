@@ -1,7 +1,8 @@
 import subprocess
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 # Applications principales de CERTUS
 CERTUS_APPS = [

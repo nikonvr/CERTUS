@@ -3,11 +3,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import QEventLoop
+from PyQt6.QtWidgets import QApplication
 
-from CERTUS_METAL_BILAYER import CertusMetalBilayerApp
 import certus_physics
+from CERTUS_METAL_BILAYER import CertusMetalBilayerApp
 
 
 def test_metal_bilayer_headless():

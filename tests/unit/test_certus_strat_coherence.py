@@ -13,31 +13,16 @@
 
 
 
-import pytest
-
-
 import sys
-
-
-import numpy as np
-
-
 from pathlib import Path
 
-
-
-
+import numpy as np
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 
 import CERTUS_STRAT as STRAT
-
-
-
-
-
-
 
 
 class TestStratDynamicsMetric:
@@ -3391,7 +3376,6 @@ class TestStratResetIntegration:
 
         from unittest.mock import Mock
 
-
         from CERTUS_STRAT import CertusStratApp
 
 
@@ -4001,8 +3985,8 @@ class TestStratPipelineOrchestration:
         assert "all_strategies" not in res
 
     def test_pipeline_stop_requested(self, monkeypatch):
-        from certus.core.certus_strat_pipeline import optimize_block_strategy_hybrid
         import certus.core.certus_strat_solvers as solvers
+        from certus.core.certus_strat_pipeline import optimize_block_strategy_hybrid
 
         params = {
             "logger": __import__("logging").getLogger("test"),
@@ -4027,8 +4011,8 @@ class TestStratPipelineOrchestration:
         assert "raw_results_thickness" in res
 
     def test_pipeline_full_sequence(self, monkeypatch):
-        from certus.core.certus_strat_pipeline import optimize_block_strategy_hybrid
         import certus.core.certus_strat_solvers as solvers
+        from certus.core.certus_strat_pipeline import optimize_block_strategy_hybrid
 
         params = {
             "logger": __import__("logging").getLogger("test"),
@@ -4078,8 +4062,8 @@ class TestStratPipelineOrchestration:
         assert res.get("best_strategy_tmin_report") == {"report": "ok"}
 
     def test_pipeline_numerical_error(self, monkeypatch):
-        from certus.core.certus_strat_pipeline import optimize_block_strategy_hybrid
         from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
+        from certus.core.certus_strat_pipeline import optimize_block_strategy_hybrid
 
         params = {
             "logger": __import__("logging").getLogger("test"),
@@ -4104,8 +4088,8 @@ class TestStratPipelineOrchestration:
         assert "Simulated numerical crash" in res["error"]
 
     def test_pipeline_phase_b_empty(self, monkeypatch):
-        from certus.core.certus_strat_pipeline import optimize_block_strategy_hybrid
         import certus.core.certus_strat_solvers as solvers
+        from certus.core.certus_strat_pipeline import optimize_block_strategy_hybrid
 
         params = {
             "logger": __import__("logging").getLogger("test"),
@@ -4203,9 +4187,10 @@ class TestStratConsensusAndElite:
         assert seed_scores == [0.015]
 
     def test_elite_without_gain(self, monkeypatch):
-        from certus.core.certus_strat_consensus import _apply_elite_refinement_if_enabled
-        from certus.core.certus_strat_config import RobustnessContext
         import logging
+
+        from certus.core.certus_strat_config import RobustnessContext
+        from certus.core.certus_strat_consensus import _apply_elite_refinement_if_enabled
 
         params = {
             "elite_parent_top_k": 10,
@@ -4239,9 +4224,10 @@ class TestStratConsensusAndElite:
         assert res == []
 
     def test_elite_with_gain(self, monkeypatch):
-        from certus.core.certus_strat_consensus import _apply_elite_refinement_if_enabled
-        from certus.core.certus_strat_config import RobustnessContext
         import logging
+
+        from certus.core.certus_strat_config import RobustnessContext
+        from certus.core.certus_strat_consensus import _apply_elite_refinement_if_enabled
 
         params = {
             "elite_parent_top_k": 2,

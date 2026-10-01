@@ -23,6 +23,7 @@ def test_harness_covers_every_module_the_hub_can_launch() -> None:
     the only two modules still carrying a 20 px-high button after T8.
     """
     import importlib.util
+
     from certus.core.certus_hub_config import HUB_APP_CATALOG
 
     spec = importlib.util.spec_from_file_location("_audit", "scripts/audit_ux_certus.py")

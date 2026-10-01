@@ -15,6 +15,7 @@ from certus.spline.certus_index_spline_core import (
 from certus.spline.spline_objective import (
     SplinePWLObjective,
     _cached_spectral_rmse_weights,
+    _interpolate_along_sigma,
     build_segment_optimizer_x_vector,
     build_spline_objective_masked_grid,
     decompose_spline_pwl_objective,
@@ -23,7 +24,6 @@ from certus.spline.spline_objective import (
     sigma_knots_encode,
     spline_pwl_analytic_grad_supported,
     spline_spectral_mse_from_xy_nk,
-    _interpolate_along_sigma,
 )
 
 

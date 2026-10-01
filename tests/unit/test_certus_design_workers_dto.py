@@ -7,8 +7,8 @@ import pytest
 from certus.core.certus_design_workers_dto import (
     ColorWorkerRequest,
     ColorWorkerResult,
-    NeedleWorkerResult,
     NeedleWorkerRequest,
+    NeedleWorkerResult,
     OptimWorkerRequest,
     OptimWorkerResult,
     TracePayload,

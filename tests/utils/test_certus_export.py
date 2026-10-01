@@ -1,7 +1,8 @@
-import pytest
+from unittest.mock import MagicMock
+
 import numpy as np
 import pandas as pd
-from unittest.mock import MagicMock
+import pytest
 
 from certus.utils.certus_export import (
     _export_series_label,
@@ -9,6 +10,7 @@ from certus.utils.certus_export import (
     build_wide_dataframe_for_export,
     iter_plot_data_series,
 )
+
 
 class MockPlotItem:
     def __init__(self, name=None, opts=None):

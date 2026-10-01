@@ -33,7 +33,6 @@ from certus.physics.gradient_metal import (
     compute_metal_bilayer_gradient_analytic,
 )
 
-
 WAVELENGTHS = np.linspace(400.0, 900.0, 60)
 TARGET_REFLECTANCE = np.full(WAVELENGTHS.size, 0.35)
 # Silicon type substrate: highly refractive and slightly absorbent.

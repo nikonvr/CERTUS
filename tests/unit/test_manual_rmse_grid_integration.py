@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
+import time
 from typing import Any
 
 import numpy as np
-import time
 import pytest
-from certus.spline.certus_corridor_orchestrator_utils import _manual_grid_tag_base_on_duplicate_discard
 
-from certus.spline.certus_index_spline_core import DataType, SplineOptConfig, canonical_spline_sigma_knots
 import certus.spline.spline_profile_corridors as spc
+from certus.spline.certus_corridor_orchestrator_utils import _manual_grid_tag_base_on_duplicate_discard
+from certus.spline.certus_index_spline_core import DataType, SplineOptConfig, canonical_spline_sigma_knots
 
 
 @pytest.fixture(autouse=True)

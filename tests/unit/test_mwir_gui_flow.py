@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace as _RealSimpleNamespace
 
+
 class _Harness(_RealSimpleNamespace):
     @staticmethod
     def _format_post_optimization_status(display, fallback_result=None):
@@ -39,8 +40,8 @@ SimpleNamespace = _Harness
 
 import numpy as np
 
-from CERTUS_INDEX_SPLINE import CertusIndexSplineApp
 from certus.ui.certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
+from CERTUS_INDEX_SPLINE import CertusIndexSplineApp
 
 
 class _Signal:

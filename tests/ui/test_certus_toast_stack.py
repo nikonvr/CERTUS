@@ -8,7 +8,6 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import pytest
 
-
 # =============================================================================
 # Pure-python: variants + icon mapping + API surface
 # =============================================================================

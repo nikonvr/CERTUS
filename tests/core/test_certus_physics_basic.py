@@ -1,13 +1,15 @@
-import pytest
 import numpy as np
+import pytest
+
 from certus.core._certus_physics_impl import (
-    sellmeier_n_array,
-    get_nk_cauchy,
-    get_nk_cauchy_wrapper,
-    get_nk_cauchy_simple,
-    epsilon2_TLU_array,
     epsilon1_TL_analytic,
+    epsilon2_TLU_array,
+    get_nk_cauchy,
+    get_nk_cauchy_simple,
+    get_nk_cauchy_wrapper,
+    sellmeier_n_array,
 )
+
 
 def test_sellmeier_n_array():
     wls = np.array([100.0, 500.0, 1000.0]) # 100 is below min_wl

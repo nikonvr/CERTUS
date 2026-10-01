@@ -3,48 +3,47 @@ Covers all remaining import exceptions, OSError/ValueError fallbacks, PyQt visua
 and sheet de-duplication branches.
 """
 
-import sys
-import os
 import base64
-import logging
 import importlib
+import logging
+import os
+import sys
+from importlib.machinery import SourceFileLoader
 from pathlib import Path
 from unittest.mock import Mock, patch
-from importlib.machinery import SourceFileLoader
 
-import pytest
 import numpy as np
 import pandas as pd
-
+import pytest
 from PyQt6.QtCore import QBuffer, QIODevice
 from PyQt6.QtGui import QImage
 
-import certus.utils.certus_data as certus_data
-from certus.utils.certus_data import (
-    read_csv_robust,
-    read_excel_robust,
-    read_data_file_robust,
-    to_excel_robust,
-    export_optimization_report,
-    SharedIndicesManager,
-    SharedIndicesWorker,
-    SharedArrayManager,
-    SharedArrayWorker,
-    TimingLogger,
-    PerformanceMonitor,
-    generate_html_report,
-    ReportSection,
-    build_standard_report,
-    get_missing_manifest_fields,
-    load_spectrum_columns,
-    _detect_x_unit,
-)
 import certus.core.certus_metrology as certus_metrology
+import certus.utils.certus_data as certus_data
 from certus.core.certus_metrology import (
     RunContext,
     RunManifest,
     ValidationStatus,
     compute_params_hash,
+)
+from certus.utils.certus_data import (
+    PerformanceMonitor,
+    ReportSection,
+    SharedArrayManager,
+    SharedArrayWorker,
+    SharedIndicesManager,
+    SharedIndicesWorker,
+    TimingLogger,
+    _detect_x_unit,
+    build_standard_report,
+    export_optimization_report,
+    generate_html_report,
+    get_missing_manifest_fields,
+    load_spectrum_columns,
+    read_csv_robust,
+    read_data_file_robust,
+    read_excel_robust,
+    to_excel_robust,
 )
 
 # ─────────────────────────────────────────────────────────────────────

@@ -9,11 +9,11 @@ from certus.spline.certus_index_spline_core import (
     SIGMA_KNOTS_MIN_SEP_REL,
     _enforce_sigma_min_sep,
     canonical_spline_sigma_knots,
+    decode_xi_n_to_physical_n,
+    encode_physical_n_to_xi_n,
     enforce_k_floor_on_nodes,
     n_mono_knot_chains,
     n_mono_segment_flags,
-    decode_xi_n_to_physical_n,
-    encode_physical_n_to_xi_n,
 )
 from certus.spline.spline_objective import (
     physical_nodes_to_x_slice_n,

@@ -22,6 +22,7 @@ Data, an empty tab. One fix puts out both.
 from __future__ import annotations
 
 import pytest
+
 from scripts.audit_ux_certus import libelle_affiche
 
 

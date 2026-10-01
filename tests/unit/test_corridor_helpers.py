@@ -17,7 +17,6 @@ from certus.spline.certus_corridor_fitter import (
 from certus.spline.certus_corridor_orchestrator_utils import _generate_iso_phase_seed
 from certus.spline.certus_corridor_utils import _robust_sigma_from_mad
 
-
 # ────────────────────────────────────────────────────────────────────
 # _fit_local_quadratic_rmse_profile tests
 # ────────────────────────────────────────────────────────────────────

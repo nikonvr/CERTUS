@@ -26,35 +26,25 @@ or the sign convention has been changed incorrectly."""
 
 
 
-import sys
-
 import os
+import sys
 from pathlib import Path
-
-
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 
 
-import numpy as np
-
-import pytest
-
-from certus.core.certus_core import TWO_PI
-
-from certus.core._certus_physics_impl import (
-
-    compute_TMM_generic,
-
-    compute_TMM_single_point_k0,
-
-    calculate_RT_no_backside,
-
-)
 from typing import ClassVar
 
+import numpy as np
+import pytest
 
+from certus.core._certus_physics_impl import (
+    calculate_RT_no_backside,
+    compute_TMM_generic,
+    compute_TMM_single_point_k0,
+)
+from certus.core.certus_core import TWO_PI
 
 # ═══════════════════════════════════════════════════════════════
 

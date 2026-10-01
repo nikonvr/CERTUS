@@ -1,9 +1,10 @@
-import sys
 import os
-import pytest
+import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+
 import numpy as np
+import pytest
 
 # Ensure the workspace root is in sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -11,11 +12,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 # Force headless Qt for testing if needed
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
-from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import QThread
-from certus.workers.certus_strat_workers import LiveFeedMonitor
-from certus.ui.certus_strat_ui import StrategySpectralPerformanceWindow
+from PyQt6.QtWidgets import QApplication
+
 from certus.core.certus_strat_core import APP_CONTEXT
+from certus.ui.certus_strat_ui import StrategySpectralPerformanceWindow
+from certus.workers.certus_strat_workers import LiveFeedMonitor
 
 # Initialize session-wide QApplication to avoid crashes
 _qapp = QApplication.instance() or QApplication([])
@@ -153,8 +155,9 @@ def test_worker_block_calculation_db_assertion_guardrail():
 def test_robust_material_database_refactoring_guardrails():
     """Verify that RobustMaterialDatabase standardizes, merges, and queries Excel sheets correctly,
     and falls back to Sellmeier coefficients or Air when appropriate."""
-    import pandas as pd
     import numpy as np
+    import pandas as pd
+
     from certus.utils.certus_strat_db import RobustMaterialDatabase
 
     # 1. Prepare fake Excel sheet data

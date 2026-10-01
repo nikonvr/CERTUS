@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from certus.utils.certus_strat_stability import load_stability_reference, run_reference_audit, summarize_stability_reference
+from certus.utils.certus_strat_stability import (
+    load_stability_reference,
+    run_reference_audit,
+    summarize_stability_reference,
+)
 
 
 def test_reference_stability_json_reports_same_best_strategy(tmp_path: Path) -> None:

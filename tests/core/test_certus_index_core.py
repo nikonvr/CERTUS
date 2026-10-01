@@ -1,11 +1,14 @@
-import pytest
-import numpy as np
 from unittest.mock import MagicMock
+
+import numpy as np
+import pytest
+
 from certus.core.certus_index_objectives import (
+    Phase23SplineObjective,
     _phase23_cached_get,
     _phase23_cached_set,
-    Phase23SplineObjective,
 )
+
 
 def test_phase23_cached_get_set():
     cache = None

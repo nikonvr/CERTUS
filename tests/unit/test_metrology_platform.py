@@ -9,21 +9,20 @@ from pathlib import Path
 import pytest
 
 from certus.core.certus_metrology import (
-    ValidationStatus,
     InputFingerprint,
-    SoftwareEnv,
     RunContext,
     RunManifest,
-    compute_params_hash,
-    _sha256_file,
+    SoftwareEnv,
+    ValidationStatus,
     _default_run_id,
-    _get_version,
-    _detect_locale,
     _detect_cpu_brand,
-    _detect_threading_layer,
+    _detect_locale,
     _detect_pyqt_version,
+    _detect_threading_layer,
+    _get_version,
+    _sha256_file,
+    compute_params_hash,
 )
-
 
 # ── ValidationStatus ──
 

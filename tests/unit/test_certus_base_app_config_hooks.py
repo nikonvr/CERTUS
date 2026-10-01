@@ -43,8 +43,8 @@ def test_post_save_and_post_load_hooks_signatures():
 
 def test_certus_index_app_overrides_hooks():
     """INDEX must override _collect_config / _apply_config (Lot C migration)."""
-    from CERTUS_INDEX import CertusIndexApp
     from certus.ui.certus_ui import CertusBaseApp
+    from CERTUS_INDEX import CertusIndexApp
 
     # The override replaces the base no-op with a real implementation.
     assert CertusIndexApp._collect_config is not CertusBaseApp._collect_config
@@ -55,8 +55,8 @@ def test_certus_index_app_overrides_hooks():
 
 def test_certus_index_app_does_not_override_save_load():
     """After Lot C migration, INDEX must inherit save_config / load_config."""
-    from CERTUS_INDEX import CertusIndexApp
     from certus.ui.certus_ui import CertusBaseApp
+    from CERTUS_INDEX import CertusIndexApp
 
     assert CertusIndexApp.save_config is CertusBaseApp.save_config
     assert CertusIndexApp.load_config is CertusBaseApp.load_config

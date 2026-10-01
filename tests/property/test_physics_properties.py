@@ -4,9 +4,10 @@ CERTUS Property-Based Testing with Hypothesis
 Rigorous mathematical tests of fundamental properties.
 """
 
-import pytest
 import numpy as np
-from hypothesis import given, strategies as st, assume, settings
+import pytest
+from hypothesis import assume, given, settings
+from hypothesis import strategies as st
 from hypothesis.extra.numpy import arrays
 
 # Strategies for realistic wavelengths

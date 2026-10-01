@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace as _RealSimpleNamespace
 
+
 class _Harness(_RealSimpleNamespace):
     @staticmethod
     def _format_post_optimization_status(display, fallback_result=None):
@@ -40,8 +41,8 @@ from unittest.mock import MagicMock
 
 import numpy as np
 
-import CERTUS_INDEX_SPLINE as spline_gui
 import certus.spline.certus_index_spline_corridor_worker as corridor_worker
+import CERTUS_INDEX_SPLINE as spline_gui
 from CERTUS_INDEX_SPLINE import CertusIndexSplineApp
 
 

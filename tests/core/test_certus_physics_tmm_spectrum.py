@@ -1,9 +1,11 @@
-import pytest
 import numpy as np
+import pytest
+
 from certus.core._certus_physics_impl import (
     calc_spectrum_front,
     calc_spectrum_full,
 )
+
 
 def test_calc_spectrum_front():
     wls = np.array([500.0])

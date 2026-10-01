@@ -13,8 +13,8 @@ from pathlib import Path
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import dataclasses
-import pytest
 
+import pytest
 
 # =============================================================================
 # U8 - Micro-animations (mostly pure-python / lightweight Qt)
@@ -214,7 +214,13 @@ def test_u9_sample_data_discovery_on_empty_root(tmp_path):
 
 
 def test_u9_sample_data_lists_json_configs(tmp_path):
-    from certus.utils.certus_sample_data import SampleCategory, default_sample, list_samples, sample_path, set_sample_root
+    from certus.utils.certus_sample_data import (
+        SampleCategory,
+        default_sample,
+        list_samples,
+        sample_path,
+        set_sample_root,
+    )
 
     (tmp_path / SampleCategory.CONFIG).mkdir(parents=True)
     a = tmp_path / SampleCategory.CONFIG / "sample_a.json"

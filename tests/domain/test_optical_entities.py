@@ -4,17 +4,17 @@ Property-Based Tests for Domain Entities (Layer, OpticalStack)
 Tests exhaustifs avec Hypothesis.
 """
 
-import pytest
 import numpy as np
-from hypothesis import given, strategies as st, assume, settings
+import pytest
+from hypothesis import assume, given, settings
+from hypothesis import strategies as st
 
 from certus.domain.optical.entities import Layer, OpticalStack
 from certus.domain.optical.value_objects import (
-    Thickness,
     RefractiveIndex,
+    Thickness,
     Wavelength,
 )
-
 
 # ============================================================================
 # Layer Entity Tests

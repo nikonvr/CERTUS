@@ -1,9 +1,12 @@
-import pytest
+from unittest.mock import MagicMock, patch
+
 import numpy as np
 import pandas as pd
-from unittest.mock import MagicMock, patch
-from certus.workers.certus_index_workers_ir_strat import IRGlobalModelStrategy
+import pytest
+
 from certus.utils.certus_index_utils import DataType
+from certus.workers.certus_index_workers_ir_strat import IRGlobalModelStrategy
+
 
 class TestIRGlobalModelStrategy:
     @pytest.fixture

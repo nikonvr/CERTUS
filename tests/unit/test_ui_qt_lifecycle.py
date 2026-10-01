@@ -8,12 +8,11 @@ and a loose widget keeps the lifetime its test gave it.
 """
 
 import os
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
-
 
 _STATE = "state = {}\n"
 

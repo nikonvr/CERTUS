@@ -3,8 +3,9 @@ from __future__ import annotations
 import importlib
 import logging
 from pathlib import Path
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 import certus_physics.materials_data as md
 
@@ -97,8 +98,9 @@ def test_find_materials_xlsx_path_priority() -> None:
 
 def test_load_si_from_xlsx_exceptions() -> None:
     """Verify that _load_si_from_xlsx raises specific Certus exceptions on failures."""
-    from certus.utils.errors import CertusFileError, CertusMaterialError
     import pandas as pd
+
+    from certus.utils.errors import CertusFileError, CertusMaterialError
 
     # Case 1: File does not exist
     with pytest.raises(CertusFileError, match="Silicon spreadsheet not found"):

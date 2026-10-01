@@ -3,11 +3,12 @@ Shared fixtures for CERTUS tests.
 Provides common test data and configurations.
 """
 
-import pytest
-import numpy as np
-import tempfile
 import sys
+import tempfile
 from pathlib import Path
+
+import numpy as np
+import pytest
 
 # Add root directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -100,9 +101,9 @@ except ImportError:
 
 # First-party imports are never guarded: a module that no longer imports must fail the
 # suite, not turn the tests that need it into skips.
-from certus_physics import Layer, Target, Sample
-from certus.core.certus_core import get_float_dtype, get_complex_dtype
+from certus.core.certus_core import get_complex_dtype, get_float_dtype
 from certus.utils.errors import CertusError, CertusValidationError
+from certus_physics import Layer, Sample, Target
 
 
 @pytest.fixture(scope="session")
@@ -262,7 +263,7 @@ def ui_test_widgets(qapp):
     if not QT_AVAILABLE:
         pytest.skip("PyQt6 non disponible")
 
-    from PyQt6.QtWidgets import QWidget, QPushButton, QLabel, QVBoxLayout
+    from PyQt6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QWidget
 
     widget = QWidget()
     layout = QVBoxLayout()

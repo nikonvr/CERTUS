@@ -14,20 +14,11 @@ Does not launch STRAT GUI or DB; useful to track tracemalloc peak and GC cost.
 
 from __future__ import annotations
 
-
-
 import gc
-
 import time
 
-
-
 import numpy as np
-
 import pytest
-
-
-
 
 
 @pytest.mark.performance

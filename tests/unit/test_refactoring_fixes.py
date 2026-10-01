@@ -5,9 +5,10 @@ from unittest.mock import MagicMock
 # Add root directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from certus.utils.certus_progress_tracker import build_progress_callback, StepState
 from certus.ui.certus_base_app import CertusBaseApp
 from certus.ui.certus_design_ui import CertusDesignApp
+from certus.utils.certus_progress_tracker import StepState, build_progress_callback
+
 
 def test_progress_callback_adapter():
     """Verify that build_progress_callback creates an adapter that emits correct snapshots."""
@@ -111,8 +112,9 @@ def test_pareto_table_sorting_by_rmse():
 
 def test_smart_decimation_loads_best_overall_rmse():
     """Verify that _finish_smart_decimation restores the absolute best solution by RMSE."""
-    from certus.ui.certus_design_ui_optimization import OptimizationManager
     import numpy as np
+
+    from certus.ui.certus_design_ui_optimization import OptimizationManager
     
     mock_ui = MagicMock()
     # Design before decimation had N=27, RMSE=0.0042

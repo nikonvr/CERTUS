@@ -1,9 +1,10 @@
 """Tests for remaining modules - INDEX, STRAT, METAL
 Covers core modules without specific tests."""
 
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 # Add root directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -39,7 +40,7 @@ class TestCERTUSIndex:
 
     def test_physics_integration(self):
         """Test the integration with certus_physics."""
-        from certus_physics import Layer, Target, Sample
+        from certus_physics import Layer, Sample, Target
 
         assert Layer is not None
         assert Target is not None
@@ -162,7 +163,7 @@ class TestModulesIntegration:
 
     def test_modules_physics_integration(self):
         """Test the integration of modules ↔ physics."""
-        from certus_physics import Layer, Target, Sample
+        from certus_physics import Layer, Sample, Target
 
         # Create test objects
         layer = Layer(mat="SiO2", qwot=1.0)

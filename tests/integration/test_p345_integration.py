@@ -9,7 +9,6 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import pytest
 
-
 # =============================================================================
 # P3 - Premium reports wired on CertusBaseApp
 # =============================================================================

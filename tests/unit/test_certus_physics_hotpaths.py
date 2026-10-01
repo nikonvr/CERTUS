@@ -1,17 +1,14 @@
 """Targeted hot-path tests for _certus_physics_impl utilities."""
 
 from __future__ import annotations
-from certus.physics.certus_material_db import numba_interp_vectorized
-from certus.physics.certus_material_db import numba_interp_scalar
-from certus.physics.certus_colorimetry import lab_to_xyz
 
 import numpy as np
 import pytest
 
 from certus.core._certus_physics_impl import (
-    MaterialDatabase,
     SELLMEIER_COEFFS_BY_ID,
     SUBSTRATE_MIN_LAMBDA,
+    MaterialDatabase,
     arange_inclusive,
     calc_qwot,
     calc_rmse,
@@ -24,6 +21,8 @@ from certus.core._certus_physics_impl import (
     xyz_from_spectrum,
     xyz_to_lab,
 )
+from certus.physics.certus_colorimetry import lab_to_xyz
+from certus.physics.certus_material_db import numba_interp_scalar, numba_interp_vectorized
 from certus.physics.certus_strat_math import fit_parabola_vertex_3points
 
 

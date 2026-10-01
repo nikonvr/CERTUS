@@ -10,52 +10,27 @@ so ``SPLINE_PWL_K_NODES`` and ``sk_out`` size coincide.
 
 from __future__ import annotations
 
-
-
 import numpy as np
 
-from certus_physics import clip_to_bounds
-
-from certus.utils.certus_index_utils import _transmittance_absolute_from_nk
-
-
-
 from certus.spline.certus_index_spline_core import (
-
     SPLINE_PWL_K_NODES,
-
     SPLINE_PWL_N_SEG,
-
     DataType,
-
     SplineOptConfig,
-
     bridge_sigma_knots_preserve_manual,
-
     build_sigma_knots,
-
     canonical_spline_sigma_knots,
-
     make_bounds_and_x0,
-
     rmse_at_spline_stage_x0_init,
-
 )
-
 from certus.spline.spline_objective import SplinePWLObjective
-
 from certus.spline.spline_smart_init import (
-
     _build_smart_preview_grids,
-
     interp_n_L_pwlnk_to_sigmas,
-
     recalc_smart_init_spectral_preview,
-
 )
-
-
-
+from certus.utils.certus_index_utils import _transmittance_absolute_from_nk
+from certus_physics import clip_to_bounds
 
 
 def test_sk_exact_d_not_overwritten_by_x0_warm() -> None:

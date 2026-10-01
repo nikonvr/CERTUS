@@ -1,23 +1,26 @@
-from certus.utils.certus_re_math import re_envelope_max_delta_n
-from certus.utils.certus_re_math import re_substrate_cauchy_n_re_from_theta
-from certus.utils.certus_re_math import re_substrate_cauchy_initial_theta
-from certus.utils.certus_re_math import re_substrate_cauchy_barrier_residuals_jac
-from certus.utils.certus_re_math import re_substrate_cauchy_phi_matrix
 from certus.utils.certus_re_config import RE_P4_BEAM_N_KNOTS
+from certus.utils.certus_re_math import (
+    re_envelope_max_delta_n,
+    re_substrate_cauchy_barrier_residuals_jac,
+    re_substrate_cauchy_initial_theta,
+    re_substrate_cauchy_n_re_from_theta,
+    re_substrate_cauchy_phi_matrix,
+)
+
 """Unit tests for CERTUS_RE.py (reverse engineering, Excel entries)."""
 
-import pytest
-import numpy as np
 import sys
 from pathlib import Path
+
+import numpy as np
+import pytest
 
 # Add root directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import CERTUS_RE
-from certus_physics import Layer, Target, Sample
 from certus.core.certus_core import get_logger
-
+from certus_physics import Layer, Sample, Target
 
 
 @pytest.mark.unit
@@ -306,8 +309,8 @@ class TestREPhase4BeamKnots:
     """Phase-4 chromatic beam helpers and spectrum path (no full REWorker)."""
 
     def test_sort_knot_pairs_permutes_ap_with_lam(self):
-        from CERTUS_RE import _re_p4_sort_knot_pairs
         from certus.utils.certus_re_helpers import _re_p4_band_ap_deg
+        from CERTUS_RE import _re_p4_sort_knot_pairs
 
         lam = np.array([800.0, 400.0, 600.0], dtype=np.float64)
         ap = np.array([1.0, 2.0, 3.0], dtype=np.float64)
@@ -318,8 +321,8 @@ class TestREPhase4BeamKnots:
         assert abs(_re_p4_band_ap_deg(lam, ap, 800.0) - 1.0) < 1e-9
 
     def test_chromatic_band_masks_do_not_mutate_knots(self):
-        from CERTUS_RE import RE_P4_BEAM_N_KNOTS
         from certus.utils.certus_re_helpers import _re_p4_chromatic_band_masks
+        from CERTUS_RE import RE_P4_BEAM_N_KNOTS
 
         knots = np.array([700.0, 500.0, 600.0], dtype=np.float64)
         ref = knots.copy()
@@ -380,8 +383,8 @@ assert np.allclose(Ta, Tb)
 
     def test_ap_staircase_polyline_matches_band_model(self):
         """Polyline of the ap(lambda) plot: each horizontal step = _re_p4_band_ap_deg (same physics as P4)."""
-        from CERTUS_RE import _re_p4_ap_staircase_polyline
         from certus.utils.certus_re_helpers import _re_p4_band_ap_deg
+        from CERTUS_RE import _re_p4_ap_staircase_polyline
 
         rng = np.random.default_rng(42)
         for n in (2, 3, 4, 6):
@@ -509,8 +512,9 @@ class TestREAppSkeletonLoaders:
     """Validate skeleton loader integration on CertusREApp."""
 
     def test_re_app_skeletons_methods(self, qapp, monkeypatch):
-        from CERTUS_RE import CertusREApp
         from unittest.mock import MagicMock
+
+        from CERTUS_RE import CertusREApp
         
         # We can mock or instantiate CertusREApp
         app = MagicMock(spec=CertusREApp)
@@ -538,8 +542,9 @@ class TestCertusREResultsDialogSmoke:
     """Smoke test for CertusREResultsDialog initialization."""
 
     def test_dialog_init(self, qapp, monkeypatch):
-        from certus.ui.certus_re_ui import CertusREResultsDialog
         from unittest.mock import MagicMock
+
+        from certus.ui.certus_re_ui import CertusREResultsDialog
 
         # Mock l0_spin spinbox
         mock_l0_spin = MagicMock()

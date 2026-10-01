@@ -4,18 +4,19 @@ This test verifies that the optimized implementation (Numba) in _certus_physics_
 yields EXACTLY the same results as the theoretical formulas from the HTML Guide.
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import numpy as np
 import pytest
+
 from certus.core._certus_physics_impl import (
-    compute_TMM_single_point_k0_exact,
-    calculate_RT_vectorized_real,
     calc_spectrum_oblique_vectorized,
+    calculate_RT_vectorized_real,
+    compute_TMM_single_point_k0_exact,
 )
 
 

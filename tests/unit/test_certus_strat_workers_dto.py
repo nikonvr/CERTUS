@@ -5,7 +5,6 @@ from __future__ import annotations
 import pytest
 
 from certus.core.certus_strat_workers_dto import WorkerThreadRequest, WorkerThreadResult
-
 from certus.workers.certus_strat_workers import LiveFeedMonitor
 
 
@@ -83,8 +82,8 @@ def test_worker_thread_result_step33_to_legacy_dict() -> None:
 
 class TestLiveFeedMonitor:
     def test_poll_emits_latest_package(self) -> None:
-        from unittest.mock import Mock
         import queue as queue_mod
+        from unittest.mock import Mock
 
         class DummyQueue:
             def __init__(self, items):
@@ -109,8 +108,8 @@ class TestLiveFeedMonitor:
         assert signals.update_live_growth.emit.called
 
     def test_stop_emits_finished(self) -> None:
-        from unittest.mock import Mock
         import queue as queue_mod
+        from unittest.mock import Mock
 
         class DummyQueue:
             def empty(self):

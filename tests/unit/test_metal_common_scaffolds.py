@@ -15,7 +15,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # MetalJobSpec (P3 scaffold)
 # ---------------------------------------------------------------------------
@@ -123,8 +122,9 @@ class TestResetAppToDefaults:
         mock_box.question.assert_not_called()
 
     def test_confirm_true_shows_dialog_and_respects_no(self):
-        from certus.utils.certus_reset_framework import reset_app_to_defaults
         from PyQt6.QtWidgets import QMessageBox as RealQMessageBox
+
+        from certus.utils.certus_reset_framework import reset_app_to_defaults
         app = MagicMock()
         with patch("certus.utils.certus_reset_framework.QMessageBox") as mock_box:
             mock_box.StandardButton = RealQMessageBox.StandardButton

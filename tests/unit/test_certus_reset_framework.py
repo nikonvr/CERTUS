@@ -3,13 +3,13 @@ Covers create_reset_button, CertusResetManager, and Clear/Reset behavior of the 
 
 import json
 from pathlib import Path
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
 try:
-    from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QTableWidget, QVBoxLayout
     from PyQt6.QtCore import Qt
+    from PyQt6.QtWidgets import QApplication, QLabel, QTableWidget, QVBoxLayout, QWidget
     QT_AVAILABLE = True
 except ImportError:
     QT_AVAILABLE = False

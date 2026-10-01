@@ -1,9 +1,11 @@
-import pytest
 import numpy as np
+import pytest
+
+from certus.core.certus_core import get_complex_dtype, get_float_dtype
 
 # Skip test if certus_physics is missing
 from certus_physics import calculate_RT_vectorized_real
-from certus.core.certus_core import get_float_dtype, get_complex_dtype
+
 
 def test_numba_jit_warmup():
     """

@@ -359,10 +359,10 @@ def test_hot_kernels_are_jit_compiled() -> None:
     """
     from numba.core.registry import CPUDispatcher
 
+    import certus.physics.certus_opt_tmm as opt_tmm
     import certus.physics.gradient_analytic as grad_analytic
     import certus.physics.gradient_metal as grad_metal
     import certus.physics.gradient_oblique as grad_oblique
-    import certus.physics.certus_opt_tmm as opt_tmm
 
     required = [
         (opt_tmm, "compute_TMM_generic"),

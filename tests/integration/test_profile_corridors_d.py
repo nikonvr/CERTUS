@@ -16,64 +16,34 @@ unless the scenario requires it.
 
 from __future__ import annotations
 
-
-
 import numpy as np
-
 import pytest
-
 from scipy.optimize import OptimizeResult
 
-
-
 import certus.spline.certus_index_spline_core as _core_mod
-
 import certus.spline.spline_profile_corridors as _spc_mod
-
-
-
 from certus.spline.certus_index_spline_core import (
-
     DataType,
-
     SplineOptConfig,
-
     canonical_spline_sigma_knots,
-
     corridor_profile_refit_maxfun,
-
 )
-
-from certus.spline.spline_objective import spectral_mse_rmse_masked_from_nk
-
-from certus.spline.spline_finalize import extract_nominal_best_polished_corridor_reference
-
-from certus.spline.spline_profile_corridors import (
-
-    ProfileCorridorConfig,
-
-    _expand_corridor_envelope_with_reported_nk,
-
-    _extract_knots_and_nodes_from_result,
-
-    _bounds_for_nodes_only,
-
-    _fit_nodes_at_fixed_d,
-
-    _spectral_rmse_at_packed_nodes,
-
-    _x_nodes0_from_mesh_x_if_consistent,
-
-    compute_profiled_corridors_by_d,
-
-)
-
 from certus.spline.certus_index_spline_corridor_contract import (
     CORRIDOR_LIVE_STATUS,
     normalize_corridor_live_payload,
 )
-
-
+from certus.spline.spline_finalize import extract_nominal_best_polished_corridor_reference
+from certus.spline.spline_objective import spectral_mse_rmse_masked_from_nk
+from certus.spline.spline_profile_corridors import (
+    ProfileCorridorConfig,
+    _bounds_for_nodes_only,
+    _expand_corridor_envelope_with_reported_nk,
+    _extract_knots_and_nodes_from_result,
+    _fit_nodes_at_fixed_d,
+    _spectral_rmse_at_packed_nodes,
+    _x_nodes0_from_mesh_x_if_consistent,
+    compute_profiled_corridors_by_d,
+)
 
 # --- Fast suite defaults (total runtime target ~15-20s) ---
 # ── PARE-FEU ──────────────────────────────────────────────────────────────────

@@ -2,13 +2,14 @@
 
 import json
 from pathlib import Path
+
 import numpy as np
 import pytest
 
 import certus_physics
-from certus_physics import simulate_growth_kernel
 from certus.physics.certus_opt_tmm import compute_RT_from_matrix
 from certus.physics.certus_strat_math import _solve_quadratic_target
+from certus_physics import simulate_growth_kernel
 
 ROOT = Path(__file__).resolve().parents[2]
 REF_JSON_PATH = ROOT / "example" / "example_strat" / "JSON-strat-example.json"

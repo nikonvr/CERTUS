@@ -6,77 +6,27 @@
 
 from types import SimpleNamespace
 
-
-
-
-
 import numpy as np
-
-
 import pytest
 
-
-
-
-
 from certus.core.certus_design_worker_utils import (
-
-
     optim_backside_flags_from_cfg,
-
-
     optim_bounds_thickness_global,
-
-
     optim_bounds_thickness_healing,
-
-
     optim_bounds_thickness_local,
-
-
     optim_calc_oblique_selected,
-
-
     optim_display_wavelength_grid,
-
-
-    optim_qwot_values_from_ep_stack,
-
-
-    optim_rmse_display_string,
-
-
-    optim_rmse_is_valid_for_log,
-
-
-    optim_var_indices_from_stack,
-
-
-    optim_post_optim_time_budget_seconds,
-
-
     optim_oblique_attach_local_positions,
-
-
     optim_oblique_configs_from_groups,
-
-
     optim_oblique_group_targets_on_wavelengths,
-
-
     optim_oblique_unique_display_keys,
-
-
+    optim_post_optim_time_budget_seconds,
     optim_prepare_stack_nk_back,
-
-
+    optim_qwot_values_from_ep_stack,
+    optim_rmse_display_string,
+    optim_rmse_is_valid_for_log,
+    optim_var_indices_from_stack,
 )
-
-
-
-
-
-
 
 
 def _mat_const(ncomplex: complex):

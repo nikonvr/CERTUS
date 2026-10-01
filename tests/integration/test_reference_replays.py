@@ -5,7 +5,9 @@ import json
 from pathlib import Path
 
 import numpy as np
+
 from certus.core._certus_physics_impl import calculate_transmission_single
+
 
 def _sha256(path: Path) -> str:
     content = path.read_bytes().replace(b"\r\n", b"\n")

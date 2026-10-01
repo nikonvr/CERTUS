@@ -8,32 +8,32 @@ import os
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
-import pytest
 
+import pytest
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QMainWindow
+from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QWidget
 
 from certus.ui.certus_ui import (
-    CertusStepper,
-    CertusCollapsible,
-    CertusStatusPill,
     CertusActionBar,
+    CertusBaseApp,
+    CertusCollapsible,
+    CertusLogPanel,
+    CertusStatusPill,
+    CertusStepper,
+    CertusThemeToggle,
     CertusToast,
-    SkeletonLoaderWidget,
-    install_skeleton_loader,
-    remove_skeleton_loader,
     EnhancedProgressWidget,
     ProgressDialog,
-    CertusBaseApp,
-    copy_app_logs_to_clipboard,
-    open_file_explorer,
-    show_toast,
+    SkeletonLoaderWidget,
     apply_certus_theme,
-    update_global_plot_config,
-    CertusThemeToggle,
+    copy_app_logs_to_clipboard,
     create_flashy_grid,
     create_log_widget,
-    CertusLogPanel,
+    install_skeleton_loader,
+    open_file_explorer,
+    remove_skeleton_loader,
+    show_toast,
+    update_global_plot_config,
 )
 
 # Skip all tests if PyQt6 is not available
@@ -262,8 +262,9 @@ class TestUXComponentsBoost:
 
     def test_custom_formatters(self, qapp) -> None:
         _ = qapp
-        from certus.core.certus_core import CertusConsoleFormatter, CertusGuiFormatter
         import logging
+
+        from certus.core.certus_core import CertusConsoleFormatter, CertusGuiFormatter
         
         # Test CertusConsoleFormatter with color
         fmt_color = CertusConsoleFormatter(use_color=True)
@@ -285,8 +286,10 @@ class TestUXComponentsBoost:
     def test_process_log_queue_standard(self, qapp) -> None:
         _ = qapp
         import queue
-        from certus.ui.certus_ui_utils import process_log_queue_standard
+
         from PyQt6.QtWidgets import QTextEdit
+
+        from certus.ui.certus_ui_utils import process_log_queue_standard
         
         widget = QTextEdit()
         q = queue.Queue()

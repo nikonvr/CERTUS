@@ -3,56 +3,55 @@ Unit tests for certus_ui.py
 Covers UI components, the theme system, and widgets.
 """
 
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, MagicMock, patch
 
 # Conditional imports depending on PyQt6 availability
 try:
     from PyQt6.QtWidgets import (
         QApplication,
-        QWidget,
-        QPushButton,
         QLabel,
-        QVBoxLayout,
+        QPushButton,
         QTableWidget,
+        QVBoxLayout,
+        QWidget,
     )
 
     QT_AVAILABLE = True
 except ImportError:
     QT_AVAILABLE = False
 
+# Conditional imports for components that may not be available
 from certus.ui.certus_ui import (
-    CertusTheme,
     DATA_FILE_FILTER,
     DATA_FILES_FILTER_EXTENDED,
-    ExcelTableWidget,
     CertusLogPanel,
+    CertusScientificPlot,
+    CertusTheme,
+    ExcelTableWidget,
+    StatsCounter,
+    apply_certus_theme,
+    attach_numeric_validator,
     certus_confirm_yes_no,
     certus_get_open_file_name,
     certus_get_save_file_name,
-    create_styled_button,
-    apply_certus_theme,
-    setup_pyqtgraph_defaults,
-    open_data_file_and_read,
-    format_count_kmg,
-    StatsCounter,
-    create_log_widget,
-    create_header_logo_widget,
-    create_info_icon,
-    create_help_button,
-    set_certus_last_dir,
-    get_certus_last_dir,
-    open_file_explorer,
-    stop_worker_and_thread,
     confirm_stop_with_timeout,
     copy_app_logs_to_clipboard,
-    attach_numeric_validator,
+    create_header_logo_widget,
+    create_help_button,
+    create_info_icon,
+    create_log_widget,
+    create_styled_button,
+    format_count_kmg,
+    get_certus_last_dir,
+    open_data_file_and_read,
+    open_file_explorer,
+    set_certus_last_dir,
+    setup_pyqtgraph_defaults,
     show_toast,
+    stop_worker_and_thread,
 )
-
-# Conditional imports for components that may not be available
-from certus.ui.certus_ui import CertusScientificPlot
-
 
 try:
     import pyqtgraph as pg  # noqa: F401
@@ -456,6 +455,7 @@ class TestPlotExcelExportHelpers:
 
     def test_build_wide_dataframe_for_export(self):
         import numpy as np
+
         from certus.ui.certus_ui import build_wide_dataframe_for_export
 
         series = [
@@ -471,6 +471,7 @@ class TestPlotExcelExportHelpers:
     def test_plot_dataframe_from_widget(self, qapp):
         _ = qapp
         import pyqtgraph as pg
+
         from certus.ui.certus_ui import plot_dataframe_from_widget, setup_pyqtgraph_defaults
 
         setup_pyqtgraph_defaults()
@@ -484,6 +485,7 @@ class TestPlotExcelExportHelpers:
     def test_copy_plot_to_clipboard_excel(self, qapp):
         _ = qapp
         import pyqtgraph as pg
+
         from certus.ui.certus_ui import copy_plot_to_clipboard_excel, setup_pyqtgraph_defaults
 
         setup_pyqtgraph_defaults()
@@ -757,8 +759,8 @@ class TestUIExceptionHandling:
     """Tests for @safe_ui_action and exception translation in UI classes."""
 
     def test_safe_ui_action_validation_error(self, qapp):
-        from certus.utils.errors import CertusValidationError
         from certus.ui.certus_ui import safe_ui_action
+        from certus.utils.errors import CertusValidationError
 
         class DummyWidget(QWidget):
             @safe_ui_action
@@ -774,9 +776,10 @@ class TestUIExceptionHandling:
             assert kwargs.get("level") == "warning"
 
     def test_safe_ui_action_domain_error(self, qapp):
-        from certus.utils.errors import CertusDomainError
-        from certus.ui.certus_ui import safe_ui_action
         from PyQt6.QtWidgets import QMessageBox
+
+        from certus.ui.certus_ui import safe_ui_action
+        from certus.utils.errors import CertusDomainError
 
         class DummyWidget(QWidget):
             @safe_ui_action
@@ -821,8 +824,9 @@ class TestUIExceptionHandling:
             assert kwargs.get("level") == "error"
 
     def test_base_app_save_load_config_corruption(self, qapp):
-        from certus.ui.certus_ui import CertusBaseApp
         from PyQt6.QtWidgets import QMessageBox
+
+        from certus.ui.certus_ui import CertusBaseApp
 
         class DummyApp(CertusBaseApp):
             def _collect_config(self):
@@ -969,6 +973,7 @@ class TestUIExceptionHandling:
     def test_base_app_save_and_load_config(self, qapp, tmp_path):
         _ = qapp
         import json
+
         from certus.ui.certus_ui import CertusBaseApp
 
         class DummyApp(CertusBaseApp):
@@ -999,8 +1004,8 @@ class TestUIExceptionHandling:
 
     def test_base_app_menus_and_recent_helpers(self, qapp, tmp_path):
         _ = qapp
+        from certus.ui.certus_recent import RecentCategories, clear_recent
         from certus.ui.certus_ui import CertusBaseApp
-        from certus.ui.certus_recent import clear_recent, RecentCategories
 
         class DummyApp(CertusBaseApp):
             APP_NAME = "DUMMY"
@@ -1061,8 +1066,9 @@ class TestUIExceptionHandling:
 
     def test_base_app_help_menu_and_about(self, qapp):
         _ = qapp
-        from certus.ui.certus_ui import CertusBaseApp
         from PyQt6.QtWidgets import QMessageBox
+
+        from certus.ui.certus_ui import CertusBaseApp
 
         class DummyApp(CertusBaseApp):
             APP_NAME = "DUMMY"
@@ -1092,9 +1098,10 @@ class TestUIExceptionHandling:
 
     def test_base_app_recent_and_reports(self, qapp, tmp_path):
         _ = qapp
-        from certus.ui.certus_ui import CertusBaseApp
-        from certus.ui.certus_recent import clear_recent, RecentCategories
         from PyQt6.QtWidgets import QInputDialog
+
+        from certus.ui.certus_recent import RecentCategories, clear_recent
+        from certus.ui.certus_ui import CertusBaseApp
 
         class DummyApp(CertusBaseApp):
             APP_NAME = "DUMMY"
@@ -1143,6 +1150,7 @@ class TestProUXComponents:
     def test_certus_stepper(self, qapp):
         _ = qapp
         from PyQt6.QtCore import Qt
+
         from certus.ui.certus_ui import CertusStepper
         # 1 column
         stepper1 = CertusStepper(["Step 1", "Step 2"], columns=1)
@@ -1165,8 +1173,9 @@ class TestProUXComponents:
 
     def test_certus_collapsible(self, qapp):
         _ = qapp
-        from certus.ui.certus_ui import CertusCollapsible
         from PyQt6.QtWidgets import QWidget
+
+        from certus.ui.certus_ui import CertusCollapsible
         win = QWidget()
         content = QWidget(parent=win)
         collapsible = CertusCollapsible("Section", content, expanded=True, parent=win)
@@ -1195,8 +1204,9 @@ class TestProUXComponents:
 
     def test_certus_action_bar(self, qapp):
         _ = qapp
-        from certus.ui.certus_ui import CertusActionBar
         from PyQt6.QtWidgets import QPushButton
+
+        from certus.ui.certus_ui import CertusActionBar
         bar = CertusActionBar()
         btn = QPushButton("Action")
         bar.add_widget(btn)
@@ -1207,8 +1217,9 @@ class TestProUXComponents:
     def test_install_shortcuts(self, qapp):
         _ = qapp
         from PyQt6.QtCore import Qt
-        from certus.ui.certus_ui import install_standard_shortcuts
         from PyQt6.QtWidgets import QWidget
+
+        from certus.ui.certus_ui import install_standard_shortcuts
         win = QWidget()
         called = []
         shortcuts = install_standard_shortcuts(
@@ -1223,9 +1234,10 @@ class TestProUXComponents:
 
     def test_file_drop_filter(self, qapp):
         _ = qapp
-        from PyQt6.QtCore import QUrl, QEvent, Qt
-        from certus.ui.certus_ui import enable_file_drop
+        from PyQt6.QtCore import QEvent, Qt, QUrl
         from PyQt6.QtWidgets import QWidget
+
+        from certus.ui.certus_ui import enable_file_drop
 
         win = QWidget()
         dropped_paths = []
@@ -1269,8 +1281,9 @@ class TestProUXComponents:
 
     def test_certus_toast(self, qapp):
         _ = qapp
-        from certus.ui.certus_ui import CertusToast, show_toast
         from PyQt6.QtWidgets import QWidget
+
+        from certus.ui.certus_ui import CertusToast, show_toast
         parent = QWidget()
         toast = CertusToast(parent, "Test Notification", level="success", duration_ms=10)
         assert toast.text() == "Test Notification"
@@ -1357,8 +1370,9 @@ class TestProUXComponents:
 
     def test_skeleton_loader(self, qapp):
         _ = qapp
-        from certus.ui.certus_ui import SkeletonLoaderWidget, install_skeleton_loader, remove_skeleton_loader
         from PyQt6.QtWidgets import QWidget
+
+        from certus.ui.certus_ui import SkeletonLoaderWidget, install_skeleton_loader, remove_skeleton_loader
 
         parent = QWidget()
         loader1 = SkeletonLoaderWidget(parent, shape="chart")
@@ -1382,8 +1396,9 @@ class TestProUXComponents:
 
     def test_apply_os_window_effects(self, qapp):
         _ = qapp
-        from certus.ui.certus_ui import apply_os_window_effects
         from PyQt6.QtWidgets import QWidget
+
+        from certus.ui.certus_ui import apply_os_window_effects
         
         window = QWidget()
         window.show()
@@ -1392,9 +1407,10 @@ class TestProUXComponents:
         apply_os_window_effects(window, dark_mode=False)
         apply_os_window_effects(window, dark_mode=True)
         
-        from PyQt6.QtCore import Qt
         import os
         import platform
+
+        from PyQt6.QtCore import Qt
 
         translucent = window.testAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         if os.name == "nt" and int(platform.version().split(".")[-1]) >= 22000:

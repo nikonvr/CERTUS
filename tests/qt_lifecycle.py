@@ -13,7 +13,6 @@ from PyQt6 import sip
 from PyQt6.QtCore import QCoreApplication, QEvent, QObject, QThread, QTimer
 from PyQt6.QtWidgets import QApplication, QMainWindow
 
-
 # On a join timeout, keep the owners alive and stop the suite. Destroying them or
 # continuing with the next test would turn a useful error into a native crash.
 # 180 s, not 30: INDEX's second stage refines after PGLOBAL without reading the stop

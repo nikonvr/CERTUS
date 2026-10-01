@@ -37,17 +37,12 @@ PHYSICAL REMINDER:
 
 
 
+import os
+import sys
+from pathlib import Path
+
 import numpy as np
 
-
-import sys
-import os
-
-
-
-
-
-from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 
@@ -55,49 +50,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 
 from certus.core._certus_physics_impl import (
-
-
-    compute_TMM_generic,
-
-
-    calculate_RT_no_backside,
-
-
-    _compute_index_cost_gradient_kernel,
-
-
-    cost_numba_fast,
-
-
-    calculate_RTRback_incoherent_vectorized,
-
-
-    compute_dynamics_kernel,
-
-
-    calculate_detailed_growth,
-
-
-    simulate_growth_kernel,
-
-
-    check_extrema_proximity,
-
-
-    compute_mse_vectorized,
-
-
-    calculate_transmission_single,
-
-
     TWO_PI,
-
-
+    _compute_index_cost_gradient_kernel,
+    calculate_detailed_growth,
+    calculate_RT_no_backside,
+    calculate_RTRback_incoherent_vectorized,
+    calculate_transmission_single,
+    check_extrema_proximity,
+    compute_dynamics_kernel,
+    compute_mse_vectorized,
+    compute_TMM_generic,
+    cost_numba_fast,
+    simulate_growth_kernel,
 )
-
-
-
-
 
 PASS = 0
 

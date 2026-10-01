@@ -4,17 +4,17 @@ Property-Based Tests for Optical Domain Value Objects
 Tests exhaustifs des invariants avec Hypothesis.
 """
 
-import pytest
 import numpy as np
-from hypothesis import given, strategies as st, assume, settings
+import pytest
+from hypothesis import assume, given, settings
+from hypothesis import strategies as st
 
 from certus.domain.optical.value_objects import (
+    RefractiveIndex,
+    Thickness,
     Wavelength,
     WavelengthRange,
-    Thickness,
-    RefractiveIndex,
 )
-
 
 # ============================================================================
 # Wavelength Tests

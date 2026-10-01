@@ -2,50 +2,26 @@
 
 from __future__ import annotations
 
-
-
 import numpy as np
-
 import pytest
 
-
-
 from certus.spline.certus_index_spline_core import (
-
-    DataType,
-
-    SPLINE_MIN_RMSE_FIT_OBJECTIVE_POINTS,
-
-    SplineOptConfig,
-
     N_MONO_BAND_HI_CAP_NM,
-
+    SPLINE_MIN_RMSE_FIT_OBJECTIVE_POINTS,
+    DataType,
+    SplineOptConfig,
     apply_rmse_fit_window_nk_nan_to_result,
-
-    export_spline_result_jsonable,
-
-    nan_nk_outside_rmse_lambda_window,
-
-    snapshot_result_with_rmse_fit_meta,
-
     default_n_mono_band_nm_from_spectrum,
-
+    export_spline_result_jsonable,
+    nan_nk_outside_rmse_lambda_window,
+    snapshot_result_with_rmse_fit_meta,
 )
-
 from certus.spline.spline_objective import (
-
     _spline_objective_lam_mask,
-
     build_spline_objective_masked_grid,
-
     objective_lam_mask_on_target_grid,
-
     spline_objective_mse_on_masked_grid,
-
 )
-
-
-
 
 
 def _minimal_cfg(**kwargs) -> SplineOptConfig:

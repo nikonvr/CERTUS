@@ -1,7 +1,8 @@
 import ast
 import hashlib
-from collections import defaultdict
 import os
+from collections import defaultdict
+
 import pytest
 
 CHUNK_SIZE = 6

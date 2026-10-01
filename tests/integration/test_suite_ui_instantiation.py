@@ -1,6 +1,7 @@
+import importlib
+
 import pytest
 from PyQt6.QtCore import QTimer
-import importlib
 
 CERTUS_APPS_MAPPING = {
     "CERTUS_DESIGN": "CertusDesignApp",

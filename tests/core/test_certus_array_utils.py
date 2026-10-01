@@ -3,9 +3,10 @@ import pytest
 
 from certus.core.certus_array_utils import (
     as_float64_1d,
-    sorted_float64,
     interp_sorted,
+    sorted_float64,
 )
+
 
 def test_as_float64_1d():
     # Test simple list

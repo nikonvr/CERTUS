@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+
 from certus.utils.certus_reset_framework import reset_app_to_defaults
 
 

@@ -6,7 +6,6 @@ builder is opt-in, so these tests only verify the scaffolding API.
 """
 
 from __future__ import annotations
-from certus.core.version import APP_VERSION
 
 import os
 import tempfile
@@ -15,14 +14,14 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+from certus.core.certus_metrology import RunContext, RunManifest
+from certus.core.version import APP_VERSION
 from certus.utils.certus_data import (
     EXCEL_SHEET_NAME_MAX_LENGTH,
     ReportSection,
     build_standard_report,
     get_missing_manifest_fields,
 )
-from certus.core.certus_metrology import RunContext, RunManifest
-
 
 # ---------------------------------------------------------------------------
 # ReportSection

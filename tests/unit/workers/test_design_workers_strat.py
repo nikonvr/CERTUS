@@ -1,8 +1,11 @@
-import pytest
-import numpy as np
 from unittest.mock import MagicMock
-from certus.workers.certus_design_workers_strat import DesignOptimizationStrategy
+
+import numpy as np
+import pytest
+
 from certus.core.certus_core import CFG
+from certus.workers.certus_design_workers_strat import DesignOptimizationStrategy
+
 
 class TestDesignOptimizationStrategy:
     @pytest.fixture

@@ -1,6 +1,6 @@
-import sys
-import os
 import json
+import os
+import sys
 from pathlib import Path
 
 # Add repo root to path
@@ -8,9 +8,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from PyQt6.QtWidgets import QApplication
 
-from CERTUS_RE import CertusREApp
-from certus.workers.certus_re_workers import REWorker
 import certus_physics
+from certus.workers.certus_re_workers import REWorker
+from CERTUS_RE import CertusREApp
+
 
 def test_re_headless():
     app = QApplication.instance()

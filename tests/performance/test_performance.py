@@ -1,22 +1,23 @@
 """Performance tests for CERTUS Suite
 Covers benchmarks and performance regression tests."""
 
-import pytest
-import numpy as np
-import time
 import sys
+import time
 from pathlib import Path
+
+import numpy as np
+import pytest
+
+from certus.core.certus_core import get_complex_dtype, get_float_dtype, get_safe_worker_count
 
 # Ajouter les imports conditionnels
 from certus_physics import (
     Layer,
-    Target,
     Sample,
+    Target,
     calculate_RT_vectorized_real,
     get_refractive_index,
 )
-from certus.core.certus_core import get_safe_worker_count, get_float_dtype, get_complex_dtype
-
 
 try:
     import tracemalloc

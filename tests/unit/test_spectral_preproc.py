@@ -10,7 +10,6 @@ from certus.utils.certus_spectral_preproc import (
     smooth_spectrum_auto,
 )
 
-
 # ---------------------------------------------------------------------------
 # Formerly: auto_tune_savgol_params (function deleted/merged into
 # smooth_spectrum_auto which returns parameters in its diagnostics).

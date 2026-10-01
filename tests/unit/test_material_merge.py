@@ -2,10 +2,10 @@ import numpy as np
 import pytest
 
 from certus.utils.certus_db_helpers import (
-    find_matching_sheets,
-    merge_two_curves,
-    merge_multiple_curves,
     MergedMaterialDict,
+    find_matching_sheets,
+    merge_multiple_curves,
+    merge_two_curves,
 )
 
 

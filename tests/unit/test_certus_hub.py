@@ -1,17 +1,17 @@
 """Unit tests for CERTUS_HUB.py
 Covers the main hub and launcher features."""
 
-import pytest
 import sys
 from pathlib import Path
 from unittest.mock import Mock, patch
+
+import pytest
 
 # Add root directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import CERTUS_HUB
 from certus.core.certus_core import bootstrap_app, get_logger
-
 
 
 class TestCERTUSHUB:

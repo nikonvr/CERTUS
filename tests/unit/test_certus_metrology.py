@@ -1,7 +1,6 @@
 """Unit tests for certus_metrology primitives."""
 
 from __future__ import annotations
-from certus.core.version import APP_VERSION
 
 import json
 
@@ -13,6 +12,7 @@ from certus.core.certus_metrology import (
     ValidationStatus,
     compute_params_hash,
 )
+from certus.core.version import APP_VERSION
 
 
 @pytest.mark.unit

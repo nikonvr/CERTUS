@@ -39,41 +39,15 @@ These tests guarantee:
 
 from __future__ import annotations
 
-
-
-
-
 import numpy as np
 
-
-
-
-
 from certus.spline.certus_index_spline_core import (
-
-
     SPLINE_EXTRA_IR_KNOTS_LAM_MAX_THRESHOLD_NM,
-
-
     SPLINE_PWL_N_SEG,
-
-
     build_sigma_knots,
-
-
     canonical_spline_sigma_knots,
-
-
     min_relative_lambda_spacing_ratio,
-
-
 )
-
-
-
-
-
-
 
 
 def test_no_extension_when_lam_max_at_threshold() -> None:

@@ -3,11 +3,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import QEventLoop
+from PyQt6.QtWidgets import QApplication
 
-from CERTUS_METAL_SINGLE import CertusMetalSingleApp
 import certus_physics
+from CERTUS_METAL_SINGLE import CertusMetalSingleApp
+
 
 def test_metal_single_headless():
     print("TEST STARTING!")

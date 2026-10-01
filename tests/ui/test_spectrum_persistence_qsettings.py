@@ -32,13 +32,13 @@ def isolated_qsettings_path(tmp_path, monkeypatch):
 
 def test_spline_spectrum_step3_keys_roundtrip(isolated_qsettings_path):
     from CERTUS_INDEX_SPLINE import (
-        _QS_SPLINE_APP,
-        _QS_SPLINE_ORG,
         _QS_SPECTRUM_FIT_R,
         _QS_SPECTRUM_FIT_T,
         _QS_SPECTRUM_FIT_TREL,
         _QS_SPECTRUM_WR,
         _QS_SPECTRUM_WT,
+        _QS_SPLINE_APP,
+        _QS_SPLINE_ORG,
     )
 
     s = certus_settings(_QS_SPLINE_ORG, _QS_SPLINE_APP)

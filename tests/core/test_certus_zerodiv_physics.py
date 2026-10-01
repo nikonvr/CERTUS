@@ -1,6 +1,8 @@
-import pytest
 import numpy as np
+import pytest
+
 from certus_physics import calculate_transmission_single
+
 
 def test_calculate_transmission_single_zero_div_protection():
     """

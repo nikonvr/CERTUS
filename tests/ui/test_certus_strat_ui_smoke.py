@@ -1,21 +1,22 @@
-import pytest
-from PyQt6.QtWidgets import QWidget, QMainWindow
 import numpy as np
+import pytest
+from PyQt6.QtWidgets import QMainWindow, QWidget
+
 
 def test_strat_ui_windows_import_and_construct(qapp):
     """Smoke test to verify that strategy UI window classes can be imported and instantiated without NameError."""
     # Ensure QApp exists
     _ = qapp
 
-    from certus.ui.certus_strat_plots_ui import UniversalPlotWindow, CertusScientificPlot
     from certus.ui.certus_strat_heatmap_ui import InteractiveHeatmapWindow
-    from certus.ui.certus_strat_table_ui import StrategiesTableWindow
     from certus.ui.certus_strat_indices_ui import InteractiveIndicesWindow
-    from certus.ui.certus_strat_monitor_ui import LiveMonitorWindow, CertusStratGrowthWidget
-    from certus.ui.certus_strat_thickness_ui import TransmissionVsThicknessWindow
-    from certus.ui.certus_strat_spectrum_ui import InteractiveSpectrumWindow
+    from certus.ui.certus_strat_monitor_ui import CertusStratGrowthWidget, LiveMonitorWindow
     from certus.ui.certus_strat_performance_ui import StrategySpectralPerformanceWindow
+    from certus.ui.certus_strat_plots_ui import CertusScientificPlot, UniversalPlotWindow
+    from certus.ui.certus_strat_spectrum_ui import InteractiveSpectrumWindow
     from certus.ui.certus_strat_stack_progress_widget import CertusStratStackProgressWidget
+    from certus.ui.certus_strat_table_ui import StrategiesTableWindow
+    from certus.ui.certus_strat_thickness_ui import TransmissionVsThicknessWindow
 
     # 1. Verify class definitions exist
     assert UniversalPlotWindow is not None
@@ -120,8 +121,8 @@ def test_strat_imports_do_not_poison_qpa_platform():
     # Clean env before test
     os.environ.pop("QT_QPA_PLATFORM", None)
 
-    import certus.ui.certus_strat_ui
     import certus.ui.certus_strat_multigraine_ui
+    import certus.ui.certus_strat_ui
     import certus.ui.certus_strat_ui_plot
 
     assert os.environ.get("QT_QPA_PLATFORM") != "offscreen", (

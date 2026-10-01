@@ -1,6 +1,8 @@
-import pytest
 import json
 from pathlib import Path
+
+import pytest
+
 
 def get_all_json_files():
     """Retrieve all JSON files from the 'example' directory."""

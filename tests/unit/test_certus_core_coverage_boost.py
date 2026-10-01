@@ -19,17 +19,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from certus.core.certus_core import (
     CFG,
+    NUMERICAL_FAULT_EXCEPTIONS,
+    SELLMEIER_COEFFS_BY_ID,
+    SUBSTRATE_LIST,
+    SUBSTRATE_MIN_LAMBDA,
+    SUBSTRATES,
     CertusConfigError,
     CertusError,
     CertusOptimizationError,
     CertusPhysicsError,
     ConfigManager,
-    NUMERICAL_FAULT_EXCEPTIONS,
     QueueHandler,
-    SELLMEIER_COEFFS_BY_ID,
-    SUBSTRATES,
-    SUBSTRATE_LIST,
-    SUBSTRATE_MIN_LAMBDA,
     SystemConfig,
     _get_cpu_count,
     certus_timestamp_display,
@@ -40,18 +40,17 @@ from certus.core.certus_core import (
     get_export_config,
     get_float_dtype,
     get_logger,
+    get_materials_db_hash,
     get_precision_config,
     get_resource_path,
     get_safe_worker_count,
     handle_exception,
     is_frozen,
     setup_gui_logger,
-    wait_warmup,
-    get_materials_db_hash,
     setup_logging,
+    wait_warmup,
 )
 from certus.ui.certus_qt_svg import check_svg_availability
-
 
 # ─────────────────────────────────────────────────────────────────────
 # ConfigManager
@@ -400,7 +399,7 @@ class TestCoreCoverageBoost:
             return str(tmp_path / name)
         monkeypatch.setattr("certus.core.certus_core.get_resource_path", _rp)
         monkeypatch.setattr("certus.core.certus_config.get_resource_path", _rp)
-        from certus.core.certus_core import load_export_config, save_export_config, get_export_config
+        from certus.core.certus_core import get_export_config, load_export_config, save_export_config
         load_export_config.cache_clear()
         save_export_config(False)
         assert get_export_config() is False
@@ -440,6 +439,7 @@ class TestCoreCoverageBoost:
 
     def test_wait_warmup_with_thread(self):
         import threading
+
         from certus.core.certus_core import _WarmupRegistry
         t = threading.Thread(target=lambda: None)
         t.start()

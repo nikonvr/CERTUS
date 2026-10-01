@@ -1,12 +1,15 @@
-import pytest
-import numpy as np
 from unittest.mock import MagicMock
+
+import numpy as np
+import pytest
+
+from certus.core.certus_core import CFG
 from certus.core.certus_design_core import (
-    _design_objective_wrapper_common,
     _design_compute_oblique_error_common,
     _design_gradient_func_pglobal_common,
+    _design_objective_wrapper_common,
 )
-from certus.core.certus_core import CFG
+
 
 class MockApp:
     def __init__(self):
@@ -110,8 +113,10 @@ def test_design_compute_oblique_error_common_no_weight():
     assert cost == 1e30 # Weight is 0 -> 1e30 fallback
 
 
-from certus.core.certus_design_core import _design_optimization_callback_common
 from typing import ClassVar
+
+from certus.core.certus_design_core import _design_optimization_callback_common
+
 
 class MockSample:
     def __init__(self, y, x, gen):

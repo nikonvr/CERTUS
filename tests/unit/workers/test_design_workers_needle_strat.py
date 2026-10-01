@@ -1,7 +1,10 @@
-import pytest
-import numpy as np
 from unittest.mock import MagicMock, patch
+
+import numpy as np
+import pytest
+
 from certus.workers.certus_design_workers_needle_strat import NeedleOptimizationStrategy
+
 
 class TestNeedleOptimizationStrategy:
     @pytest.fixture

@@ -21,8 +21,9 @@ three times before this (no factors, non-finite cost, cost out of range).
 
 from __future__ import annotations
 
-import pytest
 from typing import ClassVar
+
+import pytest
 
 
 @pytest.fixture

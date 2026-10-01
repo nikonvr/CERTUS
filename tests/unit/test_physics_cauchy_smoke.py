@@ -1,6 +1,8 @@
 import numpy as np
 import pytest
+
 from certus.core._certus_physics_impl import get_nk_cauchy_wrapper
+
 
 def test_cauchy_values_at_anchors():
     """Verify Cauchy model returns expected values at anchor points (400, 700 nm)."""

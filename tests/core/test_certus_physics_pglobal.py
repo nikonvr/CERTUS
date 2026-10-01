@@ -1,6 +1,8 @@
-import pytest
 import numpy as np
+import pytest
+
 from certus.core._certus_physics_impl import make_cost_function
+
 
 def test_make_cost_function_creates_callable():
     wls = np.array([400.0, 500.0, 600.0])

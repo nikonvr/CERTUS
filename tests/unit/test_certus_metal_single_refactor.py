@@ -1,10 +1,11 @@
-import pytest
 import numpy as np
+import pytest
 
 # Mock implementation of get_nk_from_spline if not available directly for test
 # We'll just import it from the module
 from certus.metal.certus_metal_common import elevate_spline_knots
 from certus.metal.certus_metal_single_physics import _single_RTRback_mse
+
 
 def test_elevate_spline_knots_linear():
     """

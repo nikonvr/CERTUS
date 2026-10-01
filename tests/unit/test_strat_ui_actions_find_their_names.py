@@ -52,8 +52,9 @@ def test_the_reject_mode_reaches_the_parameters(window) -> None:
 
 
 def test_external_strategies_are_validated_and_handed_to_the_worker(window, tmp_path, monkeypatch) -> None:
-    import certus.ui.certus_strat_ui_state as state
     from PyQt6.QtWidgets import QFileDialog
+
+    import certus.ui.certus_strat_ui_state as state
 
     n_layers = window.widgets["stack_table"].rowCount()
     assert n_layers > 0

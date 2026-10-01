@@ -1,10 +1,12 @@
-import pytest
 import numpy as np
+import pytest
+
 from certus.core._certus_physics_impl import (
     calculate_bare_substrate_RT,
     calculate_single_interface_R,
     compute_complex_phase_components,
 )
+
 
 def test_calculate_bare_substrate_RT():
     wavelengths = np.array([400.0, 500.0])

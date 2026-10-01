@@ -1,7 +1,6 @@
 """Unit tests for headless service scaffolding."""
 
 from __future__ import annotations
-from certus.core.version import APP_VERSION
 
 import inspect
 from dataclasses import fields
@@ -10,10 +9,11 @@ import pytest
 
 import certus.utils.certus_services as cs
 from certus.core.certus_metrology import ValidationStatus
+from certus.core.version import APP_VERSION
 from certus.utils.certus_services import (
-    BaseHeadlessService,
     BaseHeadlessRequest,
     BaseHeadlessResponse,
+    BaseHeadlessService,
     IndexFitRequest,
     IndexFitResponse,
     IndexFitService,

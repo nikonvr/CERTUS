@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-import pytest
-
 import numpy as np
+import pytest
 
 from certus.core.certus_re_config import (
     REPhase1Result,
@@ -20,22 +19,17 @@ from certus.core.certus_re_config import (
     _set_top_result_dto,
     _top_result_dto,
 )
-
 from certus.core.certus_re_objectives import (
+    _build_p2_prefit_bounds,
     _build_phase2_result,
     _build_phase2b_output,
-    _build_p2_prefit_bounds,
     _build_phase4_aperture_bounds,
     _phase4_aperture_slice,
-)
-
-from certus.core.certus_re_objectives import (
     _prepare_phase2_fd_settings,
 )
-
 from certus.workers.certus_re_workers import (
-    REPhaseStateService,
     REPhasesService,
+    REPhaseStateService,
 )
 
 

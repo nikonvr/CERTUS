@@ -3,17 +3,18 @@
 from __future__ import annotations
 
 import logging
+
 import numpy as np
 import pytest
 
 import certus.utils.certus_strat_service as strat_service
+from certus.core.certus_strat_workers_dto import StratParamsDTO
 from certus.utils.certus_strat_service import (
     StratStrategyService,
     build_wavelength_index_map,
     generate_noise_array,
     wavelength_to_index,
 )
-from certus.core.certus_strat_workers_dto import StratParamsDTO
 
 
 def test_validate_payload_rejects_invalid_step() -> None:

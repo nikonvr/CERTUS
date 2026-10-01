@@ -10,9 +10,8 @@ through (`monkeypatch` restores an inherited method properly).
 from __future__ import annotations
 
 import pytest
-from qt_leaks import INHERITED_QT_METHODS, leaked_inherited_methods, repair
-
 from PyQt6 import QtWidgets
+from qt_leaks import INHERITED_QT_METHODS, leaked_inherited_methods, repair
 
 
 def test_the_pristine_qt_classes_carry_none_of_the_inherited_methods() -> None:

@@ -6,9 +6,10 @@ platform to verify structural wiring and ensure no crashes occur during startup.
 
 from __future__ import annotations
 
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 
 # Add root directory to sys.path
 ROOT = Path(__file__).resolve().parent.parent.parent
@@ -31,6 +32,7 @@ def test_certus_design_app_constructs_headless(monkeypatch, qapp) -> None:
     pytest.importorskip("PyQt6")
 
     from PyQt6.QtWidgets import QMainWindow
+
     from certus.ui.certus_design_ui import CertusDesignApp
 
     app = qapp  # the session's: a local one would die with the first Qt test
@@ -50,6 +52,7 @@ def test_certus_index_app_constructs_headless(monkeypatch, qapp) -> None:
     pytest.importorskip("PyQt6")
 
     from PyQt6.QtWidgets import QMainWindow
+
     from certus.ui.certus_index_ui import CertusIndexApp
 
     app = qapp  # the session's: a local one would die with the first Qt test
@@ -69,6 +72,7 @@ def test_certus_strat_app_constructs_headless(monkeypatch, qapp) -> None:
     pytest.importorskip("PyQt6")
 
     from PyQt6.QtWidgets import QMainWindow
+
     from certus.ui.certus_strat_ui import CertusStratApp
 
     app = qapp  # the session's: a local one would die with the first Qt test
@@ -88,6 +92,7 @@ def test_certus_index_spline_app_constructs_headless(monkeypatch, qapp) -> None:
     pytest.importorskip("PyQt6")
 
     from PyQt6.QtWidgets import QMainWindow
+
     from certus.ui.certus_index_spline_ui import CertusIndexSplineApp
 
     app = qapp  # the session's: a local one would die with the first Qt test
@@ -107,6 +112,7 @@ def test_certus_hub_app_constructs_headless(monkeypatch, qapp) -> None:
     pytest.importorskip("PyQt6")
 
     from PyQt6.QtWidgets import QMainWindow
+
     from CERTUS_HUB import CertusHub
 
     app = qapp  # the session's: a local one would die with the first Qt test

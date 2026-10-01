@@ -14,22 +14,20 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from certus_physics import (
-    calculate_bare_substrate_RT,
-    calculate_RT_vectorized_real_HL,
-    calculate_single_interface_R,
-    calculate_transmission_single,
-    calc_spectrum_front,
-    calc_spectrum_full,
-)
-
 # Non-exported kernels: import directly from impl
 from certus.core._certus_physics_impl import (
     calculate_bare_substrate_R,
     calculate_reflection_single,
     calculate_RT_single_layer_single,
 )
-
+from certus_physics import (
+    calc_spectrum_front,
+    calc_spectrum_full,
+    calculate_bare_substrate_RT,
+    calculate_RT_vectorized_real_HL,
+    calculate_single_interface_R,
+    calculate_transmission_single,
+)
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 

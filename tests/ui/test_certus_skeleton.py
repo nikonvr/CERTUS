@@ -12,7 +12,6 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import pytest
 
-
 # =============================================================================
 # Introspection (no Qt required)
 # =============================================================================
@@ -59,8 +58,8 @@ def test_u7_theme_colors_return_three_strings():
 def test_u7_constants_are_reasonable():
     from certus.utils.certus_skeleton import (
         DEFAULT_GAP_PX,
-        DEFAULT_LINES,
         DEFAULT_LINE_HEIGHT,
+        DEFAULT_LINES,
         DEFAULT_RADIUS_PX,
         SHIMMER_PERIOD_MS,
     )

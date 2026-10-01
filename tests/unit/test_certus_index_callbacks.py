@@ -1,34 +1,36 @@
-import pytest
-from unittest.mock import MagicMock
 import time
+from unittest.mock import MagicMock
+
 import numpy as np
 import pandas as pd
+import pytest
 
 # We mock what we need from CERTUS_INDEX to test the logic of the callbacks independently
 from certus.core.certus_core import SMALL_EPSILON, SUBSTRATES
-from certus_physics import get_n_substrate_array_by_id
 from CERTUS_INDEX import (
-    CertusIndexApp,
-    DataType,
-    _detected_data_type_label,
-    _source_type_label,
-    _detect_type_from_column_name,
     HC_EV_NM,
     K_MAX_LIMIT,
     N_MAX_LIMIT,
     N_MIN_LIMIT,
+    CertusIndexApp,
+    DataType,
     OptimizationConfig,
+    OptimizationWorker,
     Phase1Callback,
     Phase2PolishCallback,
-    OptimizationWorker,
+    _detect_type_from_column_name,
+    _detected_data_type_label,
+    _source_type_label,
+    calculate_bare_substrate_RT,
     calculate_relative_R_normalization,
     calculate_RT_single_layer_backside_array,
-    calculate_bare_substrate_RT,
     detect_data_type,
     epsilon1_TL_analytic,
     epsilon2_TLU_array,
     epsilon_to_nk,
 )
+from certus_physics import get_n_substrate_array_by_id
+
 
 def test_index_data_type_labels_are_stable():
     assert "TRANSMISSION" in _detected_data_type_label(DataType.TRANSMISSION)

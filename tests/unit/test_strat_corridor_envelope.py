@@ -24,8 +24,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from certus_physics import corridor_wl_range, validate_wavelengths_batch
 from certus.physics.certus_strat_batch import simulate_stack_robustness_batch
+from certus_physics import corridor_wl_range, validate_wavelengths_batch
 
 SPECTRAL = np.array([400.0, 700.0], dtype=np.float64)
 

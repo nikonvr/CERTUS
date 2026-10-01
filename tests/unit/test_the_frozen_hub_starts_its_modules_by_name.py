@@ -45,10 +45,10 @@ def started(monkeypatch):
     A dialog would block the suite for good (nobody answers it): the hub reports a script it cannot
     find with `QMessageBox.critical`, so here that is a failure.
     """
-    import CERTUS_HUB
     from PyQt6.QtCore import QProcess
     from PyQt6.QtWidgets import QMessageBox
 
+    import CERTUS_HUB
     from certus.core.certus_core import get_resource_path
 
     def no_dialog(_parent, title, text, *_a, **_k):

@@ -13,7 +13,6 @@ import pytest
 
 from certus.ui.certus_ui import StatsCounter, confirm_and_stop, format_count_kmg
 
-
 # ---------------------------------------------------------------------------
 # StatsCounter (P7)
 # ---------------------------------------------------------------------------

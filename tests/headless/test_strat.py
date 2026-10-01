@@ -3,11 +3,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import QEventLoop, QTimer
+from PyQt6.QtWidgets import QApplication
 
-from CERTUS_STRAT import CertusStratApp
 import certus_physics
+from CERTUS_STRAT import CertusStratApp
+
 
 def test_strat_headless():
     print("TEST STRAT STARTING!")

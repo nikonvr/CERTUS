@@ -15,7 +15,6 @@ import pytest
 # --- Import from the target module (direct path after extraction) ---
 from certus.utils.certus_strat_context import PlotCache, ThreadSafeCounter
 
-
 # =============================================================================
 # PlotCache
 # =============================================================================

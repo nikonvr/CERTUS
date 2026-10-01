@@ -17,7 +17,6 @@ import sys
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Collect every certus.ui sub-module at collection time (no QApp needed yet)
 # ---------------------------------------------------------------------------

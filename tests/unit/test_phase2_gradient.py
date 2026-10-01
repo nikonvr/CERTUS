@@ -1,7 +1,9 @@
 import numpy as np
 import pytest
 from scipy.optimize._numdiff import approx_derivative
-from CERTUS_INDEX import IRGlobalObjective, DataType, substrateMode
+
+from CERTUS_INDEX import DataType, IRGlobalObjective, substrateMode
+
 
 def test_phase2_gradient_analytic_vs_fd():
     np.random.seed(42)

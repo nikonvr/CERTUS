@@ -1,8 +1,11 @@
-import pytest
-import numpy as np
 from unittest.mock import MagicMock, patch
-from certus.workers.certus_re_workers import REWorker
+
+import numpy as np
+import pytest
+
 from certus.core.certus_re_config import REWorkerRequest
+from certus.workers.certus_re_workers import REWorker
+
 
 @pytest.fixture
 def mock_re_worker():

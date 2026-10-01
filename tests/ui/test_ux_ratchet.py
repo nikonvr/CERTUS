@@ -7,7 +7,9 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+
 import pytest
+
 from scripts.audit_ux_certus import MODULES, _run_worker
 
 BASELINE_1920_PATH = Path(__file__).parent / "ux_baseline.json"

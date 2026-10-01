@@ -8,9 +8,9 @@ from numba.core.registry import CPUDispatcher
 import certus_physics
 from certus.physics.certus_opt_tmm import compute_RT_from_matrix
 from certus.physics.certus_strat_growth import simulate_growth_kernel
-from certus.physics.gradient_oblique import _compute_oblique_gradient_contrib_kernel
-from certus.physics.gradient_metal import _compute_metal_tmm_gradient_kernel
 from certus.physics.certus_strat_math import _solve_quadratic_target
+from certus.physics.gradient_metal import _compute_metal_tmm_gradient_kernel
+from certus.physics.gradient_oblique import _compute_oblique_gradient_contrib_kernel
 
 
 @pytest.mark.skipif(

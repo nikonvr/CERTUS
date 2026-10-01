@@ -49,17 +49,12 @@ or Needle logic in NeedleWorker."""
 
 
 
-import numpy as np
-
-
-import sys
 import os
+import sys
 import time
 from pathlib import Path
 
-
-
-
+import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -68,22 +63,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 
 from certus.core._certus_physics_impl import (
-
-
     cost_numba_fast,
-
-
     needle_scan_cached,
-
-
     prepare_targets_vectorized,
-
-
 )
-
-
-
-
 
 PASS = 0
 

@@ -1,8 +1,11 @@
-﻿import pytest
+﻿from unittest.mock import MagicMock, patch
+
 import numpy as np
-from unittest.mock import MagicMock, patch
+import pytest
+
+from certus.core.certus_index_core import DataType, OptimizationConfig
 from certus.workers.certus_index_workers_opt_strat import IndexOptimizationStrategy
-from certus.core.certus_index_core import OptimizationConfig, DataType
+
 
 @pytest.fixture
 def mock_worker():

@@ -12,8 +12,8 @@ import sys
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import dataclasses
-import pytest
 
+import pytest
 
 # =============================================================================
 # U8 - Empty state
@@ -110,8 +110,8 @@ def test_u9_variants_and_icon_mapping():
 
 
 def test_u9_icons_are_real_lucide_names():
-    from certus.utils.certus_badges import supported_variants, variant_icon_name
     from certus.ui.certus_icons import available_icon_names
+    from certus.utils.certus_badges import supported_variants, variant_icon_name
 
     names = set(available_icon_names())
     for v in supported_variants():
@@ -406,6 +406,7 @@ def test_u11_warmup_worker_snapshot_shape():
 
 def test_u11_design_worker_optimization_callback_emits_snapshot(monkeypatch):
     from types import SimpleNamespace
+
     from certus.workers.certus_design_workers import OptimWorker
 
     w = OptimWorker.__new__(OptimWorker)
@@ -439,6 +440,7 @@ def test_u11_field_worker_emits_progress_snapshot():
 
 def test_u11_index_phase1_callback_emits_snapshot(monkeypatch):
     from types import SimpleNamespace
+
     from certus.workers.certus_index_workers import Phase1Callback
 
     emitted = []
@@ -460,6 +462,7 @@ def test_u11_index_phase1_callback_emits_snapshot(monkeypatch):
 
 def test_u11_index_phase2_callback_emits_snapshot(monkeypatch):
     from types import SimpleNamespace
+
     from certus.workers.certus_index_workers import Phase2PolishCallback
 
     emitted = []
@@ -479,6 +482,7 @@ def test_u11_index_phase2_callback_emits_snapshot(monkeypatch):
 
 def test_u11_index_irpglobal_callback_emits_snapshot(monkeypatch):
     from types import SimpleNamespace
+
     from certus.workers.certus_index_workers import IRPGlobalCallback
 
     emitted = []
@@ -499,6 +503,7 @@ def test_u11_index_irpglobal_callback_emits_snapshot(monkeypatch):
 
 def test_u11_index_irglobal_done_emits_final_snapshot():
     from types import SimpleNamespace
+
     from certus.workers.certus_index_workers import IRGlobalModelWorker
 
     emitted = []
@@ -521,6 +526,7 @@ def test_u11_index_irglobal_done_emits_final_snapshot():
 
 def test_u11_re_worker_emits_progress_snapshot():
     from types import SimpleNamespace
+
     from certus.workers.certus_re_workers import REWorker
 
     emitted = []
@@ -543,7 +549,8 @@ def test_u11_re_worker_emits_progress_snapshot():
 
 def test_u11_strat_worker_emits_progress_snapshot():
     from types import SimpleNamespace
-    from certus.workers.certus_strat_workers import WorkerSignals, build_progress_snapshot, StepState
+
+    from certus.workers.certus_strat_workers import StepState, WorkerSignals, build_progress_snapshot
 
     emitted = []
     sig = WorkerSignals()
@@ -556,6 +563,7 @@ def test_u11_strat_worker_emits_progress_snapshot():
 
 def test_u11_index_irstage2_callback_emits_snapshot(monkeypatch):
     from types import SimpleNamespace
+
     from certus.workers.certus_index_workers import IRStage2Callback
 
     emitted = []
@@ -574,6 +582,7 @@ def test_u11_index_irstage2_callback_emits_snapshot(monkeypatch):
 
 def test_u11_index_irspline_callback_emits_snapshot(monkeypatch):
     from types import SimpleNamespace
+
     from certus.workers.certus_index_workers import IRSplineCallback
 
     emitted = []
@@ -591,6 +600,7 @@ def test_u11_index_irspline_callback_emits_snapshot(monkeypatch):
 
 def test_u11_index_phase1_callback_emits_snapshot(monkeypatch):
     from types import SimpleNamespace
+
     from certus.workers.certus_index_workers import Phase1Callback
 
     emitted = []

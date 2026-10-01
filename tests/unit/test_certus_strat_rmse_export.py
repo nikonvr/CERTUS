@@ -47,8 +47,8 @@ def test_extract_best_rmse_from_final_results():
 
 
 def test_extract_best_rmse_raises_on_null_rmse():
-    from CERTUS_STRAT import extract_best_rmse
     from certus.utils.errors import PhysicsConvergenceError
+    from CERTUS_STRAT import extract_best_rmse
     
     # An RMSE of 0.0 is physically impossible for a real noisy deposition signal
     final_results = {

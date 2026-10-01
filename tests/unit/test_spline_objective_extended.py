@@ -11,18 +11,18 @@ from certus.spline.certus_index_spline_core import (
     canonical_spline_sigma_knots,
 )
 from certus.spline.spline_objective import (
-    sigma_knots_encode,
-    sigma_knots_decode,
-    nk_from_x_pwlnk,
-    build_segment_optimizer_x_vector,
-    _spline_objective_lam_mask,
-    _interpolate_along_sigma,
-    build_spline_objective_masked_grid,
-    spline_objective_mse_on_masked_grid,
-    spectral_mse_rmse_masked_from_nk,
-    decompose_spline_pwl_objective,
     SplinePWLObjective,
+    _interpolate_along_sigma,
+    _spline_objective_lam_mask,
+    build_segment_optimizer_x_vector,
+    build_spline_objective_masked_grid,
+    decompose_spline_pwl_objective,
+    nk_from_x_pwlnk,
     objective_lam_mask_on_target_grid,
+    sigma_knots_decode,
+    sigma_knots_encode,
+    spectral_mse_rmse_masked_from_nk,
+    spline_objective_mse_on_masked_grid,
 )
 
 

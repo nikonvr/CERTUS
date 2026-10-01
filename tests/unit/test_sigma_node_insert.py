@@ -8,9 +8,6 @@ import numpy as np
 import pytest
 
 from certus.spline.certus_index_spline_core import DataType, SplineOptConfig, canonical_spline_sigma_knots
-
-from certus.utils.certus_index_utils import _transmittance_absolute_from_nk
-
 from certus.spline.spline_pipeline import (
     insert_manual_sigma_nodes,
     insert_mwir_mid_sigma_node,
@@ -18,7 +15,7 @@ from certus.spline.spline_pipeline import (
     worker_spline_manual_sigma_insert,
     worker_spline_mwir_insert_node,
 )
-
+from certus.utils.certus_index_utils import _transmittance_absolute_from_nk
 
 # ---------------------------------------------------------------------------
 # Helpers

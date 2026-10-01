@@ -16,30 +16,21 @@ Tests for Per-Lambda refinement features:
 
 
 
-import sys
-
 import os
+import sys
 from pathlib import Path
 
 import numpy as np
-
 import pytest
-
-
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 
 
 from CERTUS_INDEX import (
-
-    _optimize_point_kernel,
-
     _optimize_all_points_batch,
-
+    _optimize_point_kernel,
 )
-
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 

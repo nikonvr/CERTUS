@@ -35,6 +35,7 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 import orchestre_multigraine as OM  # noqa: E402
+
 from certus.ui.certus_strat_multigraine_ui import (  # noqa: E402
     BRUIT_DIFFERENCE_SEEL_PCT,
     EtatMultigraine,

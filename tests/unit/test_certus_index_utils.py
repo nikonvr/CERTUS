@@ -14,7 +14,6 @@ from certus.utils.certus_index_utils import (
     spectral_rmse_weights,
 )
 
-
 # ── log_structured_json_event ──
 
 

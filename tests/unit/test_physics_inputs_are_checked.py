@@ -52,7 +52,10 @@ def test_anything_else_is_refused_and_not_computed_as_p(name) -> None:
 
 @pytest.mark.parametrize("name", ["", "Avg", "TE?"])
 def test_the_spectrum_wrappers_refuse_an_unknown_polarization(name) -> None:
-    from certus.physics.certus_tmm_oblique import calc_spectrum_oblique_backside_vectorized, calc_spectrum_oblique_vectorized
+    from certus.physics.certus_tmm_oblique import (
+        calc_spectrum_oblique_backside_vectorized,
+        calc_spectrum_oblique_vectorized,
+    )
 
     with pytest.raises(ValueError, match="polarization"):
         calc_spectrum_oblique_vectorized(WLS, LAYERS, THICKNESS, SUBSTRATE, 30.0, name)
@@ -93,7 +96,10 @@ def test_no_other_angle_is_one(angle) -> None:
 
 @pytest.mark.parametrize("angle", [float("nan"), 95.0])
 def test_every_oblique_entry_point_refuses_a_bad_angle(angle) -> None:
-    from certus.physics.certus_tmm_oblique import calc_spectrum_oblique_backside_vectorized, calc_spectrum_oblique_vectorized
+    from certus.physics.certus_tmm_oblique import (
+        calc_spectrum_oblique_backside_vectorized,
+        calc_spectrum_oblique_vectorized,
+    )
     from certus.physics.gradient_oblique import (
         compute_oblique_backside_bundle_analytic,
         compute_oblique_gradient_contrib_analytic,
@@ -134,7 +140,10 @@ def test_a_valid_angle_still_computes_as_before() -> None:
 @pytest.mark.parametrize("bad", [float("nan"), float("inf")])
 @pytest.mark.parametrize("which", ["wls", "thickness", "substrate"])
 def test_the_spectrum_wrappers_refuse_a_non_finite_input(which, bad) -> None:
-    from certus.physics.certus_tmm_oblique import calc_spectrum_oblique_backside_vectorized, calc_spectrum_oblique_vectorized
+    from certus.physics.certus_tmm_oblique import (
+        calc_spectrum_oblique_backside_vectorized,
+        calc_spectrum_oblique_vectorized,
+    )
 
     wls, thickness, substrate = WLS.copy(), THICKNESS.copy(), SUBSTRATE.copy()
     {"wls": wls, "thickness": thickness, "substrate": substrate}[which][0] = bad

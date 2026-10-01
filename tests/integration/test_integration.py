@@ -4,15 +4,11 @@ Covers interactions between modules and complete workflows."""
 
 
 
-import pytest
-
-import numpy as np
-
 import sys
-
 from pathlib import Path
 
-
+import numpy as np
+import pytest
 
 # Add root directory to path
 
@@ -23,32 +19,16 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 # Imports conditionnels
 
 
-from certus_physics import Layer, Target, Sample
-
-from certus.core.certus_core import get_logger, get_resource_path, setup_logging
-
-from certus.ui.certus_ui import CertusTheme, apply_certus_theme
-
-from certus.utils.errors import (
-
-    CertusError,
-
-    CertusValidationError,
-
-    validate_wavelength_range,
-
-)
-
-
-
-
-
-
-
 from spectrum_helpers import compute_spectrum_simple
 
-
-
+from certus.core.certus_core import get_logger, get_resource_path, setup_logging
+from certus.ui.certus_ui import CertusTheme, apply_certus_theme
+from certus.utils.errors import (
+    CertusError,
+    CertusValidationError,
+    validate_wavelength_range,
+)
+from certus_physics import Layer, Sample, Target
 
 
 @pytest.mark.integration
@@ -299,7 +279,7 @@ class TestModuleInteraction:
 
         # Test theme configuration
 
-        from certus.core.certus_core import save_theme_config, load_theme_config
+        from certus.core.certus_core import load_theme_config, save_theme_config
 
 
 
@@ -456,7 +436,7 @@ class TestWorkflowIntegration:
 
         # 3. Saver la configuration
 
-        from certus.core.certus_core import save_theme_config, load_theme_config
+        from certus.core.certus_core import load_theme_config, save_theme_config
 
 
 

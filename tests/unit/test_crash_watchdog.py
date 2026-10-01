@@ -1,8 +1,10 @@
 """Tests for the CERTUS crash and freeze watchdog."""
 
 import time
-import pytest
 from pathlib import Path
+
+import pytest
+
 from certus.utils.certus_watchdog import CrashAndFreezeWatchdog
 
 

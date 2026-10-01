@@ -1,21 +1,23 @@
-import pytest
+from unittest.mock import MagicMock, patch
+
 import numpy as np
-from unittest.mock import patch, MagicMock
+import pytest
 
 from certus.utils.errors import (
-    validate_wavelength_range,
-    validate_thickness,
+    CertusValidationError,
+    format_validation_error,
+    get_error_message,
+    safe_ui_action,
+    show_error,
+    show_validation_error,
+    show_warning,
+    validate_parameter_range,
     validate_refractive_index,
     validate_spectral_data,
-    validate_parameter_range,
-    CertusValidationError,
-    get_error_message,
-    format_validation_error,
-    show_error,
-    show_warning,
-    show_validation_error,
-    safe_ui_action,
+    validate_thickness,
+    validate_wavelength_range,
 )
+
 
 def test_validate_wavelength_range():
     validate_wavelength_range(400.0, 700.0)

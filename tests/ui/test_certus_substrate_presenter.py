@@ -1,8 +1,11 @@
-import pytest
+from unittest.mock import Mock, call
+
 import numpy as np
 import pandas as pd
-from unittest.mock import Mock, call
+import pytest
+
 from certus.ui.certus_substrate_presenter import CertusSubstratePresenter
+
 
 def test_substrate_presenter_headless():
     """Test the CertusSubstratePresenter in headless mode (no GUI)."""

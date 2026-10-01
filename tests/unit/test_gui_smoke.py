@@ -21,16 +21,15 @@ of the GUI modules after refactoring.
 """
 from __future__ import annotations
 
+import importlib
+import logging
 import os
 import sys
-import importlib
 import tempfile
-import logging
 
 import numpy as np
 import pandas as pd
 import pytest
-
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # FIXTURE — Isolation JIT (module-scoped, auto-restauration)
@@ -125,8 +124,9 @@ def test_spline_report_context_fields() -> None:
 
 def test_spline_report_builder_has_build_report() -> None:
     """SplineReportBuilder must expose build_report(auto=bool)."""
-    from certus.utils.certus_spline_report import SplineReportBuilder
     import inspect
+
+    from certus.utils.certus_spline_report import SplineReportBuilder
 
     sig = inspect.signature(SplineReportBuilder.build_report)
     params = list(sig.parameters.keys())
@@ -136,7 +136,7 @@ def test_spline_report_builder_has_build_report() -> None:
 
 def test_spline_report_builder_no_result_returns_silently(caplog) -> None:
     """build_report(auto=True) with result=None should return without error."""
-    from certus.utils.certus_spline_report import SplineReportContext, SplineReportBuilder
+    from certus.utils.certus_spline_report import SplineReportBuilder, SplineReportContext
 
     ctx = SplineReportContext(
         result=None,
@@ -157,6 +157,7 @@ def test_spline_report_builder_no_result_returns_silently(caplog) -> None:
 def test_spline_report_builder_uses_ctx_spectrum_path() -> None:
     """build_report must use self.ctx.spectrum_path (not self._last_spectrum_path)."""
     import inspect
+
     from certus.utils.certus_spline_report import SplineReportBuilder
 
     source = inspect.getsource(SplineReportBuilder.build_report)
@@ -170,16 +171,15 @@ def test_spline_report_builder_uses_ctx_spectrum_path() -> None:
 
 def test_spline_report_required_symbols_importable() -> None:
     """All symbols used by build_report must be importable from certus.utils.certus_spline_report."""
-    from certus.utils.certus_spline_report import (
-        SplineReportContext,
-        SplineReportBuilder,
-        _mergesort_order_lambda,
-        _get_script_dir,
-        _get_substrate_n_array_spline,
-    )
-
     # K_MAX_LIMIT must be available in the module scope
     import certus.utils.certus_spline_report as mod
+    from certus.utils.certus_spline_report import (
+        SplineReportBuilder,
+        SplineReportContext,
+        _get_script_dir,
+        _get_substrate_n_array_spline,
+        _mergesort_order_lambda,
+    )
 
     assert hasattr(mod, "K_MAX_LIMIT"), "K_MAX_LIMIT not found in certus_spline_report"
     assert hasattr(mod, "build_spline_objective_masked_grid"), (
@@ -243,7 +243,7 @@ def test_index_spline_app_inherits_all_mixins() -> None:
 
 def test_spline_report_accessible_from_index_spline() -> None:
     """SplineReportContext and SplineReportBuilder must be importable from CERTUS_INDEX_SPLINE."""
-    from CERTUS_INDEX_SPLINE import SplineReportContext, SplineReportBuilder
+    from CERTUS_INDEX_SPLINE import SplineReportBuilder, SplineReportContext
 
     assert SplineReportContext is not None
     assert SplineReportBuilder is not None

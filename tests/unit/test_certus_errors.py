@@ -21,30 +21,29 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from certus.utils.errors import (
     CertusComputationError,
+    CertusConfigError,
     CertusConvergenceError,
     CertusDataError,
+    CertusDomainError,
     CertusError,
     CertusFileError,
     CertusMaterialError,
     CertusValidationError,
-    CertusDomainError,
-    PhysicsConvergenceError,
     ConfigurationCorruptionError,
     CorruptedProjectError,
-    CertusConfigError,
+    PhysicsConvergenceError,
     format_validation_error,
     get_error_message,
+    safe_ui_action,
+    show_error,
+    show_validation_error,
+    show_warning,
     validate_parameter_range,
     validate_refractive_index,
     validate_spectral_data,
     validate_thickness,
     validate_wavelength_range,
-    safe_ui_action,
-    show_error,
-    show_warning,
-    show_validation_error,
 )
-
 
 # ─────────────────────────────────────────────────────────────────────
 # Exception hierarchy

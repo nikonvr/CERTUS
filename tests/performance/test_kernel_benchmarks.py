@@ -23,11 +23,11 @@ import pytest
 pytest.importorskip("pytest_benchmark")
 
 from certus.core._certus_physics_impl import (
-    calculate_RT_no_backside,
     calculate_bare_substrate_RT,
     calculate_reflection_array,
-    calculate_transmission_array,
+    calculate_RT_no_backside,
     calculate_RT_single_layer_single,
+    calculate_transmission_array,
 )
 
 

@@ -1,33 +1,33 @@
 """Extra unit tests targeting all remaining missing lines and branches to boost test coverage to 96%+."""
 
-import sys
-import os
-import tempfile
-import queue
 import logging
-from pathlib import Path
+import os
+import queue
+import sys
+import tempfile
 from importlib.machinery import SourceFileLoader
-from unittest.mock import patch, Mock
+from pathlib import Path
+from unittest.mock import Mock, patch
 
-import pytest
 import numpy as np
 import pandas as pd
+import pytest
 
 from certus.spline.certus_index_spline_core import DataType, SplineOptConfig, canonical_spline_sigma_knots
 from certus.spline.spline_objective import (
-    sigma_knots_decode,
+    SplinePWLObjective,
     _interpolate_along_sigma,
-    build_segment_optimizer_x_vector,
     _spline_objective_lam_mask,
+    build_segment_optimizer_x_vector,
+    decompose_spline_pwl_objective,
+    sigma_knots_decode,
     spectral_mse_rmse_masked_from_nk,
     spline_spectral_mse_from_xy_nk,
-    decompose_spline_pwl_objective,
-    SplinePWLObjective,
 )
 
 # PyQt Imports
 try:
-    from PyQt6.QtWidgets import QMessageBox, QApplication, QWidget, QTableWidget
+    from PyQt6.QtWidgets import QApplication, QMessageBox, QTableWidget, QWidget
     QT_AVAILABLE = True
 except ImportError:
     QT_AVAILABLE = False
@@ -50,8 +50,9 @@ def test_core_openpyxl_import_error(monkeypatch):
 
 @pytest.mark.unit
 def test_setup_numba_cache_value_error(monkeypatch):
-    import certus.core.certus_core as certus_core
     import numba
+
+    import certus.core.certus_core as certus_core
     monkeypatch.setitem(sys.modules, "numba", numba)
     broken = Mock(side_effect=ValueError("Simulated Error"))
     monkeypatch.setattr(numba, "get_num_threads", broken)
@@ -155,8 +156,9 @@ def test_set_num_threads_env_missing(monkeypatch):
 
 @pytest.mark.unit
 def test_get_logger_fallback(monkeypatch):
-    import certus.core.certus_core as certus_core
     import logging
+
+    import certus.core.certus_core as certus_core
     logger = logging.getLogger("CERTUS")
     old_handlers = logger.handlers.copy()
     logger.handlers.clear()
@@ -174,9 +176,10 @@ def test_system_config_setup_logging():
 
 @pytest.mark.unit
 def test_queue_handler_broken_pipe():
-    import queue
-    from certus.core.certus_core import QueueHandler
     import logging
+    import queue
+
+    from certus.core.certus_core import QueueHandler
     q = queue.Queue()
     qh = QueueHandler(q)
     qh.log_queue = Mock()
@@ -196,6 +199,7 @@ def test_setup_module_logging_default():
 @pytest.mark.unit
 def test_bootstrap_app_frozen(monkeypatch):
     import sys
+
     import certus.core.certus_core as certus_core
     monkeypatch.setattr(sys, "frozen", True, raising=False)
     monkeypatch.setattr(sys, "executable", "dummy_executable.exe")
@@ -217,8 +221,9 @@ def test_bg_warmup_import_error(monkeypatch):
 
 @pytest.mark.unit
 def test_to_numeric_exception_handling(tmp_path, monkeypatch):
-    import certus.utils.certus_data as certus_data
     import pandas as pd
+
+    import certus.utils.certus_data as certus_data
     f = tmp_path / "test2.csv"
     f.write_text("a,b\n1,2\n3,4\n", encoding="utf-8")
     monkeypatch.setattr(pd, "to_numeric", Mock(side_effect=TypeError("TypeError")))
@@ -227,8 +232,9 @@ def test_to_numeric_exception_handling(tmp_path, monkeypatch):
 
 @pytest.mark.unit
 def test_read_excel_robust_numeric_error(tmp_path, monkeypatch):
-    import certus.utils.certus_data as certus_data
     import pandas as pd
+
+    import certus.utils.certus_data as certus_data
     monkeypatch.setattr("certus.utils.certus_data.OPENPYXL_AVAILABLE", True)
     f = tmp_path / "dummy.xlsx"
     f.write_text("dummy")
@@ -239,8 +245,9 @@ def test_read_excel_robust_numeric_error(tmp_path, monkeypatch):
 
 @pytest.mark.unit
 def test_to_excel_robust_engine(tmp_path, monkeypatch):
-    import certus.utils.certus_data as certus_data
     import pandas as pd
+
+    import certus.utils.certus_data as certus_data
     monkeypatch.setattr("certus.utils.certus_data.OPENPYXL_AVAILABLE", True)
     df = pd.DataFrame({"a": [1]})
     f = tmp_path / "out.xlsx"
@@ -303,8 +310,9 @@ def test_shared_indices_worker_exact_wl():
 
 @pytest.mark.unit
 def test_generate_html_report_dataframe(tmp_path):
-    import certus.utils.certus_data as certus_data
     import pandas as pd
+
+    import certus.utils.certus_data as certus_data
     f = tmp_path / "report.html"
     sections = [
         {"title": "DataFrame", "type": "table", "content": pd.DataFrame({"col": [1, 2]})}
@@ -363,15 +371,16 @@ def test_build_standard_report_duplicate_kv(tmp_path):
 
 @pytest.mark.unit
 def test_errors_validation_wavelength_negative():
-    from certus.utils.errors import validate_wavelength_range, CertusValidationError
+    from certus.utils.errors import CertusValidationError, validate_wavelength_range
     with pytest.raises(CertusValidationError):
         validate_wavelength_range(-10.0, 500.0)
 
 @pytest.mark.unit
 @pytest.mark.skipif(not QT_AVAILABLE, reason="Qt not available")
 def test_errors_show_helpers(qapp):
-    from certus.utils.errors import show_error, show_warning, show_validation_error, CertusValidationError
     from PyQt6.QtWidgets import QMessageBox
+
+    from certus.utils.errors import CertusValidationError, show_error, show_validation_error, show_warning
     with patch.object(QMessageBox, "exec", return_value=0) as box_exec:
         show_error(None, "generic_error", details="some detail")
         show_warning(None, "title", "msg", "suggestion")
@@ -686,8 +695,8 @@ def test_dynamic_savgol_blend_value_error():
 
 @pytest.mark.unit
 def test_auto_tune_savgol_params_value_error(monkeypatch):
-    from certus.utils.certus_spectral_preproc import auto_tune_savgol_params
     import certus.utils.certus_spectral_preproc as certus_spectral_preproc
+    from certus.utils.certus_spectral_preproc import auto_tune_savgol_params
     x = np.linspace(400, 1000, 20)
     y_mat = np.ones((2, 20))
     # Monkeypatch savgol_filter to raise ValueError only for y_macro call
@@ -705,8 +714,9 @@ def test_auto_tune_savgol_params_value_error(monkeypatch):
 
 @pytest.mark.unit
 def test_reset_framework_reset_app_to_defaults(qapp):
-    from certus.utils.certus_reset_framework import reset_app_to_defaults, create_reset_button
     from PyQt6.QtWidgets import QWidget
+
+    from certus.utils.certus_reset_framework import create_reset_button, reset_app_to_defaults
     
     # We must use a real QWidget to avoid QMessageBox C++ type errors
     app = QWidget()
@@ -790,8 +800,9 @@ def test_spline_objective_reflection_grad():
 
 @pytest.mark.unit
 def test_reset_framework_pyqtgraph_import_error(monkeypatch):
-    from certus.utils.certus_reset_framework import CertusResetManager
     import sys
+
+    from certus.utils.certus_reset_framework import CertusResetManager
     monkeypatch.setitem(sys.modules, "pyqtgraph", None)
     app = Mock()
     app.spectrum_plot = None
@@ -901,8 +912,8 @@ def test_spline_spectral_mse_from_xy_nk_non_finite():
 
 @pytest.mark.unit
 def test_decompose_spline_pwl_objective_non_finite(monkeypatch):
-    from certus.spline.spline_objective import decompose_spline_pwl_objective
     import certus.spline.spline_objective as spline_objective
+    from certus.spline.spline_objective import decompose_spline_pwl_objective
     monkeypatch.setattr(spline_objective, "spline_objective_mse_on_masked_grid", lambda *args, **kwargs: float("nan"))
     lam = np.linspace(400, 1000, 20)
     cfg = SplineOptConfig(
@@ -951,8 +962,8 @@ def test_fast_penalty_grad_no_active():
 
 @pytest.mark.unit
 def test_spline_pwl_objective_call_non_finite(monkeypatch):
-    from certus.spline.spline_objective import SplinePWLObjective
     import certus.spline.spline_objective as spline_objective
+    from certus.spline.spline_objective import SplinePWLObjective
     monkeypatch.setattr(spline_objective, "spline_objective_mse_on_masked_grid", lambda *args, **kwargs: float("nan"))
     lam = np.linspace(400, 1000, 20)
     cfg = SplineOptConfig(

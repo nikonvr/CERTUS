@@ -29,7 +29,6 @@ from certus.core.certus_strat_robustness import (
     crash_rate_lower_bound,
 )
 
-
 # --------------------------------------------------------------------------- #
 # C1: the inactive path is the historical one, exactly
 # --------------------------------------------------------------------------- #

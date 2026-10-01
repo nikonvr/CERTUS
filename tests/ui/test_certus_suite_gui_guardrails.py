@@ -8,9 +8,9 @@ Vérifie systématiquement :
 from __future__ import annotations
 
 import os
-import pytest
-from PyQt6.QtWidgets import QWidget, QDialog, QMainWindow
 
+import pytest
+from PyQt6.QtWidgets import QDialog, QMainWindow, QWidget
 
 APPS_REGISTRY = [
     ("HUB", "CERTUS_HUB", "CertusHub"),
@@ -55,6 +55,7 @@ def test_suite_auxiliary_windows_and_dialogs_instantiate(qapp, monkeypatch) -> N
 
     # 2. INDEX / SPLINE — Dialogues de nœuds manuels et d'initialisation
     import numpy as np
+
     from certus.ui.certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
     diag = ManualSigmaKnotDialog(
         sigma_knots=np.array([500.0]),
@@ -88,8 +89,8 @@ def test_suite_auxiliary_windows_and_dialogs_instantiate(qapp, monkeypatch) -> N
     diag_nk.deleteLater()
 
     # 3. RE — Dialogue de résultats
-    from certus.ui.certus_re_ui import CertusREResultsDialog
     from certus.ui.certus_qt_widgets import QDoubleSpinBox
+    from certus.ui.certus_re_ui import CertusREResultsDialog
     monkeypatch.setattr(CertusREResultsDialog, "exec", lambda self: 0)
     monkeypatch.setattr(CertusREResultsDialog, "show", lambda self: None)
     dummy_re = QWidget(parent)
@@ -124,16 +125,16 @@ def test_suite_auxiliary_windows_and_dialogs_instantiate(qapp, monkeypatch) -> N
     det_plot.deleteLater()
 
     # 6. STRAT — Toutes les fenêtres satellites
-    from certus.ui.certus_strat_json_ui import JsonViewerWindow
-    from certus.ui.certus_strat_popout_ui import PopOutWindow
-    from certus.ui.certus_strat_monitor_ui import LiveMonitorWindow
-    from certus.ui.certus_strat_thickness_ui import TransmissionVsThicknessWindow
-    from certus.ui.certus_strat_spectrum_ui import InteractiveSpectrumWindow
-    from certus.ui.certus_strat_performance_ui import StrategySpectralPerformanceWindow
-    from certus.ui.certus_strat_table_ui import StrategiesTableWindow
     from certus.ui.certus_strat_heatmap_ui import InteractiveHeatmapWindow
     from certus.ui.certus_strat_indices_ui import InteractiveIndicesWindow
+    from certus.ui.certus_strat_json_ui import JsonViewerWindow
+    from certus.ui.certus_strat_monitor_ui import LiveMonitorWindow
+    from certus.ui.certus_strat_performance_ui import StrategySpectralPerformanceWindow
+    from certus.ui.certus_strat_popout_ui import PopOutWindow
+    from certus.ui.certus_strat_spectrum_ui import InteractiveSpectrumWindow
     from certus.ui.certus_strat_stack_progress_widget import CertusStratStackProgressWidget
+    from certus.ui.certus_strat_table_ui import StrategiesTableWindow
+    from certus.ui.certus_strat_thickness_ui import TransmissionVsThicknessWindow
 
     dummy_strategy = {"strategy": {"strategy_id": 900000001, "blocks": [], "layers": []}}
     strat_spectral_data = {"wavelengths": np.array([500.0]), "T_nominal": np.array([0.5])}
@@ -163,6 +164,7 @@ def test_curve_smoother_save_file_guardrail(qapp, tmp_path, monkeypatch):
     """Ensure CurveSmoother prompts for save path, does not overwrite source silently, and handles save."""
     import pandas as pd
     from PyQt6.QtWidgets import QFileDialog, QMessageBox
+
     from certus.utils.certus_curve_smoother import CurveSmootherGUI
 
     smoother = CurveSmootherGUI()
@@ -204,6 +206,7 @@ def test_design_clear_button_actually_clears(qapp, monkeypatch):
     into a Qt slot, where it was swallowed."""
     import pytest
     from PyQt6.QtWidgets import QMessageBox
+
     from certus.ui.certus_design_ui import CertusDesignApp
     from certus.utils.certus_reset_framework import create_reset_button
 
@@ -247,8 +250,9 @@ def test_metal_run_button_visible_and_cards_painted_at_1366(qapp, mod_name, app_
     """Measured 2026-09-04: in both METAL apps at 1366x768, the '▶ Run' button was
     469-700 px below the window viewport because actions were buried inside the
     scroll area, and nested cards had conflicting opacity effects."""
-    from PyQt6.QtCore import Qt
     import importlib
+
+    from PyQt6.QtCore import Qt
 
     mod = importlib.import_module(mod_name)
     app_cls = getattr(mod, app_cls_name)
@@ -284,6 +288,7 @@ def test_metal_run_button_visible_and_cards_painted_at_1366(qapp, mod_name, app_
 
 def _find_window_shortcut(window, sequence: str):
     from PyQt6.QtGui import QKeySequence, QShortcut
+
     from certus.ui.certus_ui_utils import normalized_shortcut
     target = normalized_shortcut(sequence)
     for sc in window.findChildren(QShortcut):

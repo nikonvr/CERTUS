@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-from certus.core._certus_physics_impl import compute_metal_bilayer_gradient_analytic, SplineBasisCache
+
+from certus.core._certus_physics_impl import SplineBasisCache, compute_metal_bilayer_gradient_analytic
 from certus.core.certus_core import canonicalize_substrate_label, substrate_sellmeier_id
 from certus.metal.certus_metal_single_physics import (
-    objective_function_fixed_eM,
-    gradient_function_fixed_eM,
     _resolve_single_substrate_id,
+    gradient_function_fixed_eM,
+    objective_function_fixed_eM,
 )
 
 

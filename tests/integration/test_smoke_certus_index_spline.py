@@ -15,7 +15,6 @@ def test_import_spline_module_chain() -> None:
     import certus.spline.spline_smart_init as spline_smart_init  # noqa: F401
     import certus.spline.spline_visual_utils as spline_visual_utils  # noqa: F401
     import certus.spline.spline_workers as spline_workers  # noqa: F401
-
     from certus.spline.certus_index_spline_core import SplineOptConfig
     from certus.spline.spline_pipeline import worker_spline_optimization
     from certus.spline.spline_workers import worker_auto_best_split_knot_refinement
@@ -32,9 +31,11 @@ def test_import_certus_index_spline_app() -> None:
 
 
 def test_live_index_monitor_ui(qapp) -> None:
-    from certus.ui.certus_index_spline_monitor_ui import LiveIndexMonitor
     from unittest.mock import MagicMock
+
     import numpy as np
+
+    from certus.ui.certus_index_spline_monitor_ui import LiveIndexMonitor
 
     # Ensure mock/None elements are supported safely
     dialog = LiveIndexMonitor(None)

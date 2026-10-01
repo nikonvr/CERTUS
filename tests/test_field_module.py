@@ -1,15 +1,12 @@
-import pytest
-import numpy as np
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-from certus.core.certus_field_core import (
-    _trapz_numba, 
-    calculate_electric_field, 
-    calculate_opt_metrics
-)
-from certus.workers.certus_field_workers_dto import FieldParamsDTO, FieldWorkerRequest
-from certus.workers.certus_field_workers import FieldWorkerThread, top_level_objective_function
+import numpy as np
+import pytest
+
+from certus.core.certus_field_core import _trapz_numba, calculate_electric_field, calculate_opt_metrics
 from certus.ui.certus_field_services import FieldExportService, FieldPlotData, FieldStackService
+from certus.workers.certus_field_workers import FieldWorkerThread, top_level_objective_function
+from certus.workers.certus_field_workers_dto import FieldParamsDTO, FieldWorkerRequest
 
 
 @pytest.fixture(autouse=True)
@@ -423,6 +420,7 @@ def test_top_level_objective_function_active_field_minimization():
 
 def test_field_smart_cleanup():
     from PyQt6.QtWidgets import QTableWidget, QTableWidgetItem
+
     from certus.ui.certus_field_ui import CertusFieldApp
     app = CertusFieldApp()
     table = app.table_layers
@@ -454,7 +452,7 @@ def test_field_smart_cleanup():
 
 def test_field_worker_needle():
     from certus.workers.certus_field_workers import FieldWorkerThread
-    from certus.workers.certus_field_workers_dto import FieldWorkerRequest, FieldParamsDTO
+    from certus.workers.certus_field_workers_dto import FieldParamsDTO, FieldWorkerRequest
     
     params = FieldParamsDTO(
         emp_factors=[2.0, 2.0],
@@ -582,8 +580,9 @@ def test_field_synthesis_loop_callbacks():
 
 def test_field_pareto_front():
     """Verify Pareto Front recording, UI initialization, loading, and clearing."""
-    from certus.ui.certus_field_ui import CertusFieldApp
     from unittest.mock import MagicMock
+
+    from certus.ui.certus_field_ui import CertusFieldApp
     
     app = CertusFieldApp()
     

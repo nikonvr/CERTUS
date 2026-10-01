@@ -20,39 +20,24 @@ Kernels tested:
 
 
 
-import numpy as np
-
 import sys
 from pathlib import Path
 
-
+import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from certus.core._certus_physics_impl import (
-
-    _compute_gradient_analytic_kernel,
-
-    compute_oblique_gradient_contrib_analytic,
-
-    compute_oblique_rt_and_grads_analytic,
-
-    calc_spectrum_full_oblique_exact,
-
-    calc_spectrum_full_exact,
-
-    calc_spectrum_oblique_backside_vectorized,
-
-    _compute_metal_tmm_gradient_kernel,
-
-    _compute_single_layer_sensitivity_kernel,
-
     TWO_PI,
-
+    _compute_gradient_analytic_kernel,
+    _compute_metal_tmm_gradient_kernel,
+    _compute_single_layer_sensitivity_kernel,
+    calc_spectrum_full_exact,
+    calc_spectrum_full_oblique_exact,
+    calc_spectrum_oblique_backside_vectorized,
+    compute_oblique_gradient_contrib_analytic,
+    compute_oblique_rt_and_grads_analytic,
 )
-
-
-
 
 
 def _ref_RT_backside(wl, nr, ni, d, ns):

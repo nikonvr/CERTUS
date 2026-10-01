@@ -3,62 +3,22 @@
 
 from __future__ import annotations
 
-
-
-
-
 import numpy as np
-
-
 import pytest
 
-
-from certus_physics import clip_to_bounds
-
-
-
-
-
 from certus.spline.certus_index_spline_core import (
-
-
-    DataType,
-
-
-    SplineOptConfig,
-
-
-    bridge_sigma_knots_preserve_manual,
-
-
-    build_sigma_knots,
-
-
-    canonical_spline_sigma_knots,
-
-
-    make_bounds_and_x0,
-
-
-    rmse_at_spline_stage_x0_init,
-
-
     SPLINE_PWL_N_SEG,
-
-
+    DataType,
+    SplineOptConfig,
+    bridge_sigma_knots_preserve_manual,
+    build_sigma_knots,
+    canonical_spline_sigma_knots,
+    make_bounds_and_x0,
+    rmse_at_spline_stage_x0_init,
 )
-
-
 from certus.spline.spline_objective import SplinePWLObjective, decompose_spline_pwl_objective
-
-
 from certus.spline.spline_smart_init import interp_n_L_pwlnk_to_sigmas
-
-
-
-
-
-
+from certus_physics import clip_to_bounds
 
 
 def test_rmse_keep_worker_mesh_matches_sol2_first_cost_ir_extended() -> None:

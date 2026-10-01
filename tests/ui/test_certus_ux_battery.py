@@ -4,23 +4,24 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from PyQt6.QtWidgets import QApplication
-from PyQt6.QtCore import Qt, QPoint, QMimeData, QUrl, QEvent, QPointF
+
+from PyQt6.QtCore import QEvent, QMimeData, QPoint, QPointF, Qt, QUrl
 from PyQt6.QtGui import QDragEnterEvent, QMouseEvent
+from PyQt6.QtWidgets import QApplication
 
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 app = QApplication.instance() or QApplication([])
 
-from CERTUS_HUB import CertusHub
 from certus.ui.certus_design_ui import CertusDesignApp
-from certus.ui.certus_strat_ui import CertusStratApp
-from certus.ui.certus_index_ui import CertusIndexApp
-from CERTUS_RE import CertusREApp
 from certus.ui.certus_field_ui import CertusFieldApp
-from CERTUS_METAL_SINGLE import CertusMetalSingleApp
-from CERTUS_METAL_BILAYER import CertusMetalBilayerApp
 from certus.ui.certus_index_spline_ui import CertusIndexSplineApp
+from certus.ui.certus_index_ui import CertusIndexApp
 from certus.ui.certus_plot import CertusScientificPlot
+from certus.ui.certus_strat_ui import CertusStratApp
+from CERTUS_HUB import CertusHub
+from CERTUS_METAL_BILAYER import CertusMetalBilayerApp
+from CERTUS_METAL_SINGLE import CertusMetalSingleApp
+from CERTUS_RE import CertusREApp
 
 
 def test_universal_drag_and_drop_enabled():

@@ -18,7 +18,6 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from gradient_harness import check_gradient, non_uniform_weights
 
-
 # ── Corpus commun ────────────────────────────────────────────────────────────
 
 WAVELENGTHS = np.linspace(450.0, 750.0, 14)
@@ -152,6 +151,7 @@ def test_le_harnais_detecte_un_gradient_faux() -> None:
     this deposit — and we demand that he refuse it.
     """
     from gradient_harness import GradientMismatch
+
     from certus.physics.gradient_oblique import compute_gradient_all_layers_analytic
 
     n_wls = WAVELENGTHS.size

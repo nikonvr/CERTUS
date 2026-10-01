@@ -1,7 +1,6 @@
 """Unit tests for CERTUS_DESIGN headless service scaffolding."""
 
 from __future__ import annotations
-from certus.core.version import APP_VERSION
 
 import inspect
 from dataclasses import fields
@@ -9,6 +8,7 @@ from dataclasses import fields
 import pytest
 
 from certus.core.certus_metrology import ValidationStatus
+from certus.core.version import APP_VERSION
 from certus.utils.certus_design_services import (
     DesignStrategyRequest,
     DesignStrategyResponse,

@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from certus.core.certus_strat_ranking import rank_key_seel_yield_margin
 
-
 # --------------------------------------------------------------------------- #
 # The rule itself.
 # --------------------------------------------------------------------------- #

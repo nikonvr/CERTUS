@@ -14,7 +14,6 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import pytest
 
-
 # =============================================================================
 # Module surface
 # =============================================================================
@@ -28,10 +27,10 @@ def test_u5plus_module_exposes_public_api():
 
 
 def test_u5plus_build_factory_is_callable_without_parent():
-    from certus.ui.certus_recent_strip import build_recent_files_strip
-
     # Should not raise even if no app exists yet (factory should resolve Qt lazily)
     from PyQt6.QtWidgets import QApplication
+
+    from certus.ui.certus_recent_strip import build_recent_files_strip
     _qapp = QApplication.instance() or QApplication(sys.argv)
 
     strip = build_recent_files_strip(None)
@@ -79,6 +78,7 @@ def _isolated_recent_store(monkeypatch, tmp_path):
 
 def test_u5plus_strip_renders_empty_state_when_no_recents():
     from PyQt6.QtWidgets import QApplication, QLabel
+
     from certus.ui.certus_recent_strip import build_recent_files_strip
 
     _qapp = QApplication.instance() or QApplication(sys.argv)

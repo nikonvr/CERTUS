@@ -4,70 +4,36 @@
 
 from types import SimpleNamespace
 
-
-
 import numpy as np
-
 import pytest
 
-
-
-from certus.utils.certus_re_helpers import _parse_re_rmse_combined_from_progress_message
-
 from certus.core.certus_re_worker_utils import (
-
     RE_CORREC_NOMINAL_PCT,
-
     REResultsBuilder,
-
     p2_result_to_correc_tuple,
-
     re_build_finished_payload_re,
-
-    re_enrich_results_ranking_fields,
-
-    re_finalize_ranking_log_suffix,
-
-    re_result_dict_stop_before_first_trf,
-
-    re_finalize_progress_message_done,
-
-    re_finalize_finished_main_log_line,
-
-    re_finalize_rmse_milestone_log_line,
-
     re_build_p2_progress_plan,
-
+    re_enrich_results_ranking_fields,
+    re_finalize_finished_main_log_line,
+    re_finalize_progress_message_done,
+    re_finalize_ranking_log_suffix,
+    re_finalize_rmse_milestone_log_line,
     re_interpolate_progress_segment,
-
     re_live_plot_wls_and_dispersion_nk,
-
     re_nominal_indices_at_wls,
-
     re_objective_wls_grid,
-
     re_objective_wls_weight_log_trap,
-
     re_oblique_config_meta_from_wls,
-
     re_phase1_trf_runs_multistart,
-
     re_progress_pct_p1,
-
     re_ranking_combined_rmse,
-
+    re_result_dict_stop_before_first_trf,
     re_trf_bounds_scipy_tuples,
-
     re_trf_thickness_bounds,
-
     resolve_re_qwot_alphas,
-
     shake_sigmas_adaptive,
-
 )
-
-
-
+from certus.utils.certus_re_helpers import _parse_re_rmse_combined_from_progress_message
 
 
 def test_resolve_uniform_when_schedule_off():

@@ -39,8 +39,8 @@ WINDOWS = {
 
 @pytest.mark.parametrize("tag", list(WINDOWS))
 def test_a_window_carries_the_keys_it_owes(qapp, tag) -> None:
-    from scripts.audit_ux_certus import vital_keys_for
     from certus.ui.certus_ui_utils import shortcut_owner
+    from scripts.audit_ux_certus import vital_keys_for
 
     module, cls = WINDOWS[tag]
     win = getattr(__import__(module, fromlist=[cls]), cls)()

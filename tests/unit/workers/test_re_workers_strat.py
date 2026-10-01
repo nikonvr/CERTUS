@@ -1,12 +1,14 @@
-import pytest
-import numpy as np
-from unittest.mock import MagicMock, patch
 from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
 
-from certus.workers.certus_re_workers_phase3 import REPhase3Strategy
-from certus.workers.certus_re_workers_phase4 import REPhase4Strategy
+import numpy as np
+import pytest
+
 from certus.workers.certus_re_workers_context import REContextStrategy
 from certus.workers.certus_re_workers_math import REMathStrategy
+from certus.workers.certus_re_workers_phase3 import REPhase3Strategy
+from certus.workers.certus_re_workers_phase4 import REPhase4Strategy
+
 
 class MockMaterial:
     def get_nk(self, wls):

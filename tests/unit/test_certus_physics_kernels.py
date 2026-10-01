@@ -1,12 +1,14 @@
-import pytest
 import numpy as np
+import pytest
+
 from certus.core._certus_physics_impl import (
-    sellmeier_n_array,
+    epsilon1_TL_analytic,
+    epsilon_to_nk,
     get_nk_cauchy,
     get_nk_cauchy_simple,
-    epsilon_to_nk,
-    epsilon1_TL_analytic
+    sellmeier_n_array,
 )
+
 
 def test_sellmeier_n_array():
     # Test valid sellmeier calculation (similar to SiO2)
@@ -81,8 +83,9 @@ def test_epsilon1_TL_analytic():
 from certus.core._certus_physics_impl import (
     calculate_bare_substrate_RT,
     calculate_reflection_single,
-    calculate_transmission_single
+    calculate_transmission_single,
 )
+
 
 def test_calculate_bare_substrate_RT():
     wls = np.array([500.0, 600.0])

@@ -5,12 +5,10 @@ from types import SimpleNamespace
 import numpy as np
 import numpy.testing as npt
 
-from CERTUS_INDEX_SPLINE import CertusIndexSplineApp
 from certus.spline.certus_index_spline_core import DataType, SplineOptConfig
-
-from certus.utils.certus_index_utils import _transmittance_absolute_from_nk
-
 from certus.spline.spline_pipeline import _should_skip_manual_insert_for_equal_mesh, _sync_theoretical_tr_from_nk_dict
+from certus.utils.certus_index_utils import _transmittance_absolute_from_nk
+from CERTUS_INDEX_SPLINE import CertusIndexSplineApp
 
 
 def test_sync_theoretical_tr_uses_effective_substrate_index_from_result() -> None:

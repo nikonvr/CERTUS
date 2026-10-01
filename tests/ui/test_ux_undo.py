@@ -50,8 +50,8 @@ def test_re_records_and_restores_its_stack(qapp) -> None:
 
 def test_re_binds_ctrl_z(qapp) -> None:
     """A working undo the keyboard cannot reach is not an undo."""
-    from CERTUS_RE import CertusREApp
     from certus.ui.certus_ui_utils import shortcut_owner
+    from CERTUS_RE import CertusREApp
 
     win = CertusREApp()
     try:

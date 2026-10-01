@@ -1,7 +1,9 @@
 import numpy as np
-from hypothesis import given, settings, strategies as st
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from certus.physics.certus_strat_batch import calculate_RT_batch_kernel
+
 
 @settings(max_examples=100, deadline=None)
 @given(

@@ -25,13 +25,13 @@ import numpy as np
 import pytest
 
 from certus.core._certus_physics_impl import (
-    calculate_RT_single_layer_single,
-    calculate_reflection_single,
     calculate_reflection_array,
-    calculate_transmission_single,
-    calculate_transmission_array,
     calculate_reflection_infinite_substrate_single,
+    calculate_reflection_single,
+    calculate_RT_single_layer_single,
     calculate_single_interface_R,
+    calculate_transmission_array,
+    calculate_transmission_single,
     compute_complex_phase_components,
 )
 

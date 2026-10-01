@@ -11,7 +11,6 @@ import pytest
 
 from certus.spline.spline_profile_corridors import _detect_corridor_spike
 
-
 # ────────────────────────────────────────────────────────────────────
 # Helpers
 # ────────────────────────────────────────────────────────────────────

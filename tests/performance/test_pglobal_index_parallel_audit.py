@@ -8,7 +8,6 @@ Checks parallel vs sequential mode of PGlobalOptimizerINDEX (CERTUS_INDEX).
 
 from __future__ import annotations
 
-
 import numpy as np
 import pytest
 
@@ -62,8 +61,8 @@ class TestPGlobalIndexParallelModeAudit:
     def test_default_workers_use_certus_index_get_safe_worker_count(
         self, monkeypatch, tiny_config
     ):
-        import CERTUS_INDEX as cidx
         import certus.core.certus_index_solvers as solvers
+        import CERTUS_INDEX as cidx
 
         monkeypatch.setattr(solvers, "get_safe_worker_count", lambda: 7)
         bounds = np.array([[0.0, 1.0]], dtype=np.float64)

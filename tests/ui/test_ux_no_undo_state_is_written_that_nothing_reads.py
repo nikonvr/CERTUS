@@ -50,8 +50,8 @@ def test_no_module_writes_an_undo_state_that_nothing_reads() -> None:
 
 
 def test_every_window_that_can_undo_has_ctrl_z(qapp) -> None:
-    from scripts.audit_ux_certus import MODULES, owns_undo_machinery
     from certus.ui.certus_ui_utils import shortcut_owner
+    from scripts.audit_ux_certus import MODULES, owns_undo_machinery
 
     failures = []
     for tag in ("CERTUS_DESIGN", "CERTUS_STRAT", "CERTUS_RE", "CERTUS_INDEX_SPLINE", "CERTUS_INDEX", "CERTUS_FIELD"):

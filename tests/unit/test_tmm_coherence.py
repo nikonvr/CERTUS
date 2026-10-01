@@ -37,18 +37,11 @@ Run: python test_tmm_coherence.py
 
 
 
-import sys
-
-
 import os
+import sys
 from pathlib import Path
 
-
 import numpy as np
-
-
-
-
 
 # Bootstrap path
 
@@ -72,43 +65,17 @@ if str(project_root) not in sys.path:
 
 
 from certus.core._certus_physics_impl import (
-
-
-    compute_TMM_generic,
-
-
-    compute_RT_from_matrix,
-
-
-    compute_TMM_single_point_k0,
-
-
-    compute_TMM_single_point_k0_exact,
-
-
-    calculate_RT_no_backside,
-
-
-    calculate_reflectance_bilayer_vectorized,
-
-
-    _calculate_RT_HL_single_point,
-
-
-    calculate_RT_batch_kernel,
-
-
-    calculate_transmission_single,
-
-
     TWO_PI,
-
-
+    _calculate_RT_HL_single_point,
+    calculate_reflectance_bilayer_vectorized,
+    calculate_RT_batch_kernel,
+    calculate_RT_no_backside,
+    calculate_transmission_single,
+    compute_RT_from_matrix,
+    compute_TMM_generic,
+    compute_TMM_single_point_k0,
+    compute_TMM_single_point_k0_exact,
 )
-
-
-
-
 
 # ─────────────────────────────────────────────────────────────
 

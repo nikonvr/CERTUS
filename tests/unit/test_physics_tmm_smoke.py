@@ -13,10 +13,10 @@ import pytest
 
 from certus.core._certus_physics_impl import (
     TWO_PI,
+    calculate_transmission_single,
     compute_TMM_generic,
     compute_TMM_single_point_k0,
     compute_TMM_single_point_k0_exact,
-    calculate_transmission_single,
 )
 
 

@@ -232,8 +232,8 @@ def test_index_golden_reference_exists() -> None:
 def test_index_spline_xlsx_loads_transmission() -> None:
     """Le XLSX index spline doit charger un spectre T(λ) valide."""
     p = _example("example_index_spline/TOTAL.xlsx")
-    from certus.utils.certus_data import read_data_file_robust
     from certus.spline.certus_index_spline_core import normalize_spectrum_dataframe
+    from certus.utils.certus_data import read_data_file_robust
 
     df = read_data_file_robust(str(p))
     df = normalize_spectrum_dataframe(df)
@@ -256,10 +256,9 @@ def test_index_spline_total_optimization_converges() -> None:
     If the RMSE exceeds the threshold, it is a regression in the physical kernels
     ou dans la logique d'optimisation spline.
     """
-    from threading import Event
     from dataclasses import replace
+    from threading import Event
 
-    from certus.utils.certus_data import read_data_file_robust
     from certus.spline.certus_index_spline_core import (
         DataType,
         SplineOptConfig,
@@ -270,9 +269,10 @@ def test_index_spline_total_optimization_converges() -> None:
         prepare_exp_TR_for_fit,
         substrate_id_from_name,
     )
-    from certus_physics import get_n_substrate_array_by_id, warmup_physics
     from certus.spline.spline_pipeline import worker_spline_optimization
     from certus.spline.spline_smart_init import pick_best_manual_material_preset
+    from certus.utils.certus_data import read_data_file_robust
+    from certus_physics import get_n_substrate_array_by_id, warmup_physics
 
     warmup_physics()
 

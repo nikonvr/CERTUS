@@ -1,6 +1,6 @@
 import pytest
-from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import QApplication
 
 from certus.core.certus_core import load_font_config, save_font_config
 from certus.ui.certus_theme import CertusTheme

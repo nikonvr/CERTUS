@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import logging
+
 import pytest
-from certus.core.certus_strat_workers_dto import StratParamsDTO, StratOptiResultsDTO
+
+from certus.core.certus_strat_workers_dto import StratOptiResultsDTO, StratParamsDTO
 
 
 class MockDB:

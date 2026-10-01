@@ -1,29 +1,31 @@
 from typing import ClassVar
 
-import pytest
 import numpy as np
 import pandas as pd
+import pytest
+
 from certus.utils.certus_index_utils import (
+    DataType,
+    _compute_study_lambda_window_nm,
+    _d_from_slider_int,
     _detect_data_type_from_array,
     _detect_type_from_column_name,
-    detect_data_type,
-    _lam_uniform_grid,
-    spectral_rmse_weights,
-    _sorted_finite_sigma_knots,
     _ensure_strictly_increasing,
-    _merge_closest_knot_pair,
-    _d_from_slider_int,
-    _slider_int_from_d_nm,
-    _get_xv_spectral_coord,
-    _stretch_sig_to_px,
-    _compute_study_lambda_window_nm,
     _filter_rmse_peaks_iteratively,
+    _get_xv_spectral_coord,
+    _lam_uniform_grid,
+    _merge_closest_knot_pair,
     _safe_int_from_mapping,
-    normalize_index_config,
-    calculate_index_rmse,
+    _slider_int_from_d_nm,
+    _sorted_finite_sigma_knots,
+    _stretch_sig_to_px,
     analyze_loaded_data,
-    DataType,
+    calculate_index_rmse,
+    detect_data_type,
+    normalize_index_config,
+    spectral_rmse_weights,
 )
+
 
 def test_detect_data_type_from_array():
     # Empty array defaults to T
@@ -143,7 +145,8 @@ def test_analyze_loaded_data():
     assert res["T"] is not None
     assert res["R"] is not None
 
-from certus.utils.certus_index_utils import fit_sellmeier_global, fit_k_global_8p
+from certus.utils.certus_index_utils import fit_k_global_8p, fit_sellmeier_global
+
 
 def test_fit_sellmeier_global():
     # Synthetic constant index n = 1.5

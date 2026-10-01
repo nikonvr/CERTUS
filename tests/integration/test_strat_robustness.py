@@ -22,19 +22,12 @@ Tests covered:
 
 
 
+import os
+import sys
+from pathlib import Path
+
 import numpy as np
 
-
-import sys
-
-
-import os
-
-
-
-
-
-from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 
@@ -42,39 +35,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 
 from certus.core._certus_physics_impl import (
-
-
-    simulate_growth_kernel,
-
-
-    validate_wavelengths_batch,
-
-
-    simulate_stack_robustness_batch,
-
-
-    _apply_exact_backside_generic,
-
-
-    calculate_RT_no_backside,
-
-
-    calculate_transmission_single,
-
-
     NON_MONOTONIC_MODE_ATTENUATE,
-
-
     NON_MONOTONIC_MODE_REJECT,
-
-
+    _apply_exact_backside_generic,
+    calculate_RT_no_backside,
+    calculate_transmission_single,
+    simulate_growth_kernel,
+    simulate_stack_robustness_batch,
+    validate_wavelengths_batch,
 )
-
-
-
-
-
-
 
 
 class TestNoiseDistribution:

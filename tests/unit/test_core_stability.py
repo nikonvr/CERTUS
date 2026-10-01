@@ -1,13 +1,15 @@
 import numpy as np
-import pytest
 import pandas as pd
+import pytest
+
+from certus.utils.certus_data import SharedIndicesManager, SharedIndicesWorker, numpy_encoder
 from certus.utils.errors import (
-    validate_wavelength_range,
-    validate_thickness,
+    CertusValidationError,
     validate_refractive_index,
-    CertusValidationError
+    validate_thickness,
+    validate_wavelength_range,
 )
-from certus.utils.certus_data import numpy_encoder, SharedIndicesManager, SharedIndicesWorker
+
 
 def test_validate_wavelength_range():
     # Success cases

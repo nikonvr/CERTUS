@@ -17,7 +17,7 @@ import pytest
 
 
 def test_u1_tokens_exported():
-    from certus.utils.certus_ux import Elevation, Motion, OBJ, Radius, Spacing, Typography, ZIndex
+    from certus.utils.certus_ux import OBJ, Elevation, Motion, Radius, Spacing, Typography, ZIndex
 
     # 8-pt spacing scale is monotonic and matches the declared ratios
     values = [Spacing.XS, Spacing.SM, Spacing.MD, Spacing.LG, Spacing.XL, Spacing.XXL, Spacing.XXXL]
@@ -52,7 +52,7 @@ def test_u1_tokens_exported():
 
 
 def test_u1_premium_overrides_shape():
-    from certus.utils.certus_ux import build_premium_overrides, OBJ
+    from certus.utils.certus_ux import OBJ, build_premium_overrides
 
     css = build_premium_overrides()
     # Well-formed QSS substrings
@@ -254,8 +254,8 @@ def test_u3_certus_base_app_exposes_palette_hooks():
 
 def test_u3_default_commands_include_toggle_theme_and_quit():
     """Even without save/load hooks, baseline commands must exist."""
-    from certus.utils.certus_command_palette import CommandAction
     from certus.ui.certus_ui import CertusBaseApp
+    from certus.utils.certus_command_palette import CommandAction
 
     class _Stub:
         # Minimal duck to call the unbound method

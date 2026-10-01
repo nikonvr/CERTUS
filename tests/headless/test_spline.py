@@ -2,16 +2,18 @@
 Test headless CERTUS INDEX SPLINE
 Calls worker_spline_optimization directly without a UI thread.
 """
-import sys
 import os
+import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from PyQt6.QtWidgets import QApplication
-import certus_physics
 import threading
+
 import numpy as np
+from PyQt6.QtWidgets import QApplication
+
+import certus_physics
 
 
 def test_spline_headless():
@@ -24,8 +26,8 @@ def test_spline_headless():
     certus_physics.warmup_physics()
     print("warmup_physics done")
 
-    from certus.ui.certus_index_spline_ui import CertusIndexSplineApp
     from certus.spline.spline_pipeline_orchestrator import worker_spline_optimization
+    from certus.ui.certus_index_spline_ui import CertusIndexSplineApp
 
     spline_app = CertusIndexSplineApp()
     print("CertusIndexSplineApp created")

@@ -1,6 +1,8 @@
-import pytest
 import numpy as np
+import pytest
+
 from certus.core._certus_physics_impl import PGlobalConfig, PGlobalOptimizer
+
 
 def test_pglobal_optimizer_init():
     config = PGlobalConfig(

@@ -5,11 +5,12 @@ Tests event sourcing pattern avec Hypothesis.
 """
 
 import dataclasses
+
 import pytest
-from hypothesis import given, strategies as st, settings
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from certus.domain.optical.events import DomainEvent, EventBus, get_event_bus
-
 
 # ============================================================================
 # DomainEvent Tests

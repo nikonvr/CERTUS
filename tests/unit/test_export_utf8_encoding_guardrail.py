@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 import tempfile
+from pathlib import Path
+
 import pytest
 
 # Caractères optiques et scientifiques fréquents dans la suite CERTUS

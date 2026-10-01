@@ -60,8 +60,8 @@ def test_u4_collect_window_shortcuts_uses_commands(qapp):
     from PyQt6.QtGui import QKeySequence, QShortcut
     from PyQt6.QtWidgets import QWidget
 
-    from certus.utils.certus_command_palette import CommandAction
     from certus.ui.certus_shortcuts_overlay import collect_window_shortcuts
+    from certus.utils.certus_command_palette import CommandAction
 
     def _FakeWindow(cmds):
         win = QWidget()
@@ -107,8 +107,8 @@ def test_u4_collect_window_shortcuts_dedup_qshortcut_vs_command():
     from PyQt6.QtWidgets import QApplication, QWidget
 
     _app = QApplication.instance() or QApplication([])
-    from certus.utils.certus_command_palette import CommandAction
     from certus.ui.certus_shortcuts_overlay import collect_window_shortcuts
+    from certus.utils.certus_command_palette import CommandAction
 
     w = QWidget()
     _sc = QShortcut(QKeySequence("Ctrl+S"), w)  # will appear as "Save configuration"
@@ -203,8 +203,8 @@ def test_u4_open_shortcuts_overlay_builds_dialog():
 
     _app = QApplication.instance() or QApplication([])
 
-    from certus.utils.certus_command_palette import CommandAction
     from certus.ui.certus_shortcuts_overlay import ShortcutEntry, _build_dialog_class
+    from certus.utils.certus_command_palette import CommandAction
 
     entries = [
         ShortcutEntry("Ctrl+S", "Save configuration", "File"),

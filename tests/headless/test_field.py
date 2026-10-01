@@ -1,14 +1,14 @@
-import sys
 import json
+import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import QEventLoop
+from PyQt6.QtWidgets import QApplication
 
-from certus.ui.certus_field_ui import CertusFieldApp
 import certus_physics
+from certus.ui.certus_field_ui import CertusFieldApp
 
 
 def test_field_headless():

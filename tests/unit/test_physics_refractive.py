@@ -13,7 +13,6 @@ import pytest
 
 from certus_physics import get_refractive_clues_vectorized, get_refractive_index
 
-
 WAVELENGTHS = np.array([400.0, 500.0, 550.0, 700.0, 900.0], dtype=np.float64)
 N_CONST = 2.3  # constant refractive index (acts as a "material ID" for fixed-n material)
 

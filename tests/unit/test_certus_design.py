@@ -2,17 +2,18 @@
 
 Covers optical design features."""
 
-import pytest
-import numpy as np
 import sys
 from pathlib import Path
+
+import numpy as np
+import pytest
 
 # Add root directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import CERTUS_DESIGN
-from certus_physics import Layer, Target, Sample
 from certus.core.certus_core import get_logger
+from certus_physics import Layer, Sample, Target
 
 
 class TestCERTUSDesign:
@@ -39,7 +40,7 @@ class TestCERTUSDesign:
 
     def test_physics_integration(self):
         """Test the integration with certus_physics."""
-        from certus_physics import Layer, Target, Sample
+        from certus_physics import Layer, Sample, Target
 
         assert Layer is not None
         assert Target is not None

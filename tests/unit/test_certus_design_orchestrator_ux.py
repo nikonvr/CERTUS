@@ -1,7 +1,8 @@
 """Unit tests for the DesignOrchestrator UX/UI workflows."""
 
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 from certus.core.certus_design_orchestrator import DesignOrchestrator
 

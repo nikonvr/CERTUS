@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
+
 import numpy as np
 import pytest
 
@@ -48,11 +49,11 @@ def test_certus_metal_bilayer_app_constructs_headless(monkeypatch, qapp) -> None
         window._warmup_numba_thread_runner()
 
         # Verify that Numba has compiled the critical bilayer JIT functions
-        from certus_physics.materials_data import get_nk_si
         from certus.core._certus_physics_impl import (
-            get_nk_cauchy_simple,
             calculate_reflectance_bilayer_vectorized,
+            get_nk_cauchy_simple,
         )
+        from certus_physics.materials_data import get_nk_si
 
                         
     finally:

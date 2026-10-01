@@ -154,7 +154,7 @@ def test_more_noise_costs_more_error():
 # --- the adaptive search -------------------------------------------------------------------------------------------------------------------
 
 
-def expected_search(degradation, max_rmse, **kw):
+def plain_search_of_every_candidate(degradation, max_rmse, **kw):
     sizes, errors = [], []
     for i, wl in enumerate(CANDIDATES):
         values = rmse_by_size(i, wl, SMALLEST, LARGEST, 3, kw.get("gaussian", True), kw.get("mode", NON_MONOTONIC_MODE_ATTENUATE), kw.get("seed", 11))
@@ -169,7 +169,7 @@ def expected_search(degradation, max_rmse, **kw):
 @pytest.mark.parametrize("mode", [NON_MONOTONIC_MODE_ATTENUATE, NON_MONOTONIC_MODE_REJECT])
 def test_the_search_is_that_of_a_plain_python_search(gaussian, mode, seed):
     sizes, errors = search(gaussian=gaussian, mode=mode, seed=seed)
-    want_sizes, want_errors = expected_search(1.5, 1e9, gaussian=gaussian, mode=mode, seed=seed)
+    want_sizes, want_errors = plain_search_of_every_candidate(1.5, 1e9, gaussian=gaussian, mode=mode, seed=seed)
     np.testing.assert_array_equal(sizes, want_sizes)
     np.testing.assert_allclose(errors, want_errors, rtol=1e-9, atol=1e-12)
 
@@ -200,7 +200,7 @@ def test_the_search_stops_at_each_size_in_turn_as_the_threshold_comes_down():
     assert max(ratios) > 1e5  # a size that ends on its nominal, then one that does not: the ratio is a sentinel over the floor
     for threshold in [*(r * 0.999 for r in ratios), *(r * 1.001 for r in ratios)]:
         sizes, _ = search(degradation=threshold, seed=SEED_WITH_CLEAN_SIZES)
-        want_sizes, _ = expected_search(threshold, 1e9, seed=SEED_WITH_CLEAN_SIZES)
+        want_sizes, _ = plain_search_of_every_candidate(threshold, 1e9, seed=SEED_WITH_CLEAN_SIZES)
         np.testing.assert_array_equal(sizes, want_sizes, err_msg=f"threshold {threshold}")
 
 
@@ -208,7 +208,7 @@ def test_the_search_stops_when_the_error_of_a_size_passes_the_limit():
     values = [rmse_by_size(i, wl, SMALLEST, LARGEST, 3, True, NON_MONOTONIC_MODE_ATTENUATE, 11) for i, wl in enumerate(CANDIDATES)]
     limit = float(np.median([values[i][5] for i in range(len(CANDIDATES))]))
     sizes, _ = search(degradation=1e9, max_rmse=limit)
-    want_sizes, _ = expected_search(1e9, limit)
+    want_sizes, _ = plain_search_of_every_candidate(1e9, limit)
     np.testing.assert_array_equal(sizes, want_sizes)
     assert set(sizes) != {LARGEST}  # the limit did stop at least one candidate before the largest size
 

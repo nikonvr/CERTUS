@@ -8,7 +8,8 @@ these was: a swapped index in a batch kernel gives a smooth objective that the s
 What is pinned here, against `tests/oracle/tmm_reference.py` (`rt_plate_incoherent` and `rt_stack_oblique`, written from Macleod, sharing no code with `certus.physics`):
 
     the film on a transparent plate: R with the back face and T, at 1e-11, over random films (absorbing or not, thickness zero included) and substrates
-    the array wrappers, point by point, and the reflectance wrappers (which are the plate's R, back face included - the docstrings say "front-surface", see ETAT D75)
+    the array wrappers of the plate, point by point; and the reflectance wrappers, which are the FRONT SURFACE alone, an infinite back face (the frosted glass, ETAT D75: they used to return
+    the plate's R, back face included, while their docstrings said "front-surface")
     the sentinels INDEX relies on (an index below one, a zero film index) and the conservation of energy
     the film on an absorbing substrate, exactly, against the oracle's plate with the substrate read by its real index at the front; and the size of the difference with the oracle's
     complex front index, which is first order in the extinction of the substrate (0.25 k at most) because the kernel reads the film with the real index only
@@ -139,22 +140,43 @@ def test_the_array_kernels_are_the_oracles_plate_at_every_point(thickness):
     wavelength, n, k, _d, n_sub = random_cases(40, seed=int(thickness) + 7)
     r, t = calculate_RT_single_layer_backside_array(wavelength, n, k, thickness, n_sub)
     t_only = calculate_transmission_array(wavelength, n, k, thickness, n_sub)
-    r_only = calculate_reflection_array(wavelength, n, k, thickness, n_sub)
     expected = np.array([plate(w, n_i, k_i, thickness, ns_i) for w, n_i, k_i, ns_i in zip(wavelength, n, k, n_sub, strict=True)])
     np.testing.assert_allclose(r, expected[:, 0], rtol=0.0, atol=1e-11)
     np.testing.assert_allclose(t, expected[:, 1], rtol=0.0, atol=1e-11)
     np.testing.assert_allclose(t_only, expected[:, 1], rtol=0.0, atol=1e-11)
-    np.testing.assert_allclose(r_only, expected[:, 0], rtol=0.0, atol=1e-11)
 
 
-def test_the_scalar_reflectance_is_the_plates_reflectance_with_its_back_face():
-    # the docstrings of `calculate_reflection_*` and of `calculate_transmission_single` speak of the front surface; the answer is the plate's R, back face included (ETAT D75)
-    for wavelength, n, k, d, n_sub in cases()[:40]:
+def front_surface(wavelength, n, k, d, n_sub):
+    """R of the film on an infinite substrate by the oracle: the front surface alone."""
+    return oracle.rt_stack(float(wavelength), [complex(n, -k)], [float(d)], 1.0 + 0.0j, complex(n_sub, 0.0))[0]
+
+
+def test_the_scalar_reflectance_is_the_front_surface_alone():
+    # a frosted glass is an infinite back face (ETAT D75, decided by the owner): nothing comes back from the rough back, the front surface alone reflects
+    for wavelength, n, k, d, n_sub in cases():
         r = calculate_reflection_single(wavelength, n, k, d, n_sub)
-        assert r == pytest.approx(plate(wavelength, n, k, d, n_sub)[0], abs=1e-11)
-        front_only = oracle.rt_stack(wavelength, [complex(n, -k)], [d], 1.0 + 0.0j, complex(n_sub, 0.0))[0]
+        assert r == pytest.approx(front_surface(wavelength, n, k, d, n_sub), abs=1e-11), (wavelength, n, k, d, n_sub)
+
+
+def test_the_front_surface_is_not_the_plate():
+    # the two differ by the back face for a film that lets light through, so the test above tells them apart
+    gaps = []
+    for wavelength, n, k, d, n_sub in cases():
         if k == 0.0 and d > 50.0 and n_sub > 1.3:
-            assert abs(r - front_only) > 1e-4  # the back face is in it: the front surface alone is another number
+            gaps.append(abs(calculate_reflection_single(wavelength, n, k, d, n_sub) - plate(wavelength, n, k, d, n_sub)[0]))
+    assert min(gaps) > 1e-4
+
+
+@pytest.mark.parametrize("thickness", [0.0, 35.0, 120.0, 480.0, 1400.0])
+def test_the_reflectance_array_is_the_front_surface_at_every_point(thickness):
+    wavelength, n, k, _d, n_sub = random_cases(40, seed=int(thickness) + 13)
+    expected = np.array([front_surface(w, n_i, k_i, thickness, ns_i) for w, n_i, k_i, ns_i in zip(wavelength, n, k, n_sub, strict=True)])
+    np.testing.assert_allclose(calculate_reflection_array(wavelength, n, k, thickness, n_sub), expected, rtol=0.0, atol=1e-11)
+
+
+def test_a_film_of_no_thickness_reflects_the_bare_interface_alone():
+    for n_sub in (1.0, 1.33, 1.52, 2.4, 3.42):
+        assert calculate_reflection_single(550.0, 2.2, 0.3, 0.0, n_sub) == pytest.approx(((1.0 - n_sub) / (1.0 + n_sub)) ** 2, abs=1e-12)
 
 
 def test_the_reflectance_wrappers_refuse_a_substrate_below_one_at_that_point_only():

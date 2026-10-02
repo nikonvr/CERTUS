@@ -99,9 +99,11 @@ def test_calculate_bare_substrate_RT():
     assert np.all(T < 0.93)
     
 def test_calculate_reflection_single():
-    # Vacuum to 100nm film of n=1.5, k=0 on substrate n=1.5
+    # Vacuum to 100nm film of n=1.5, k=0 on substrate n=1.5: the front surface alone (an infinite back face, ETAT D75), so the
+    # film is the substrate and only the air interface reflects, ((1 - 1.5) / (1 + 1.5))**2; the plate (back face included) is
+    # calculate_transmission_single below, 0.0769
     R = calculate_reflection_single(500.0, 1.5, 0.0, 100.0, 1.5)
-    assert np.isclose(R, 0.07692307692307696)
+    assert np.isclose(R, 0.04)
     
 def test_calculate_transmission_single():
     # Vacuum to 100nm film of n=1.5, k=0 on substrate n=1.5

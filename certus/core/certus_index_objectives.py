@@ -326,10 +326,8 @@ def _njit_ir_global_mse_fused(
         
         # 2. Transmission single point calculation
         if is_frosted:
-            # Frosted Glass: calculate reflection only
-            r_th, _ = calculate_transmission_single(
-                wl_nm, n_val, k_val, d, complex(n_sub_f[j], 0.0)
-            )
+            # Frosted Glass: an infinite back face (ETAT D75, decided by the owner on 2026-10-02): the front surface alone reflects, as in the gradient
+            r_th = calculate_reflection_infinite_substrate_single(wl_nm, n_val, k_val, d, complex(n_sub_f[j], 0.0))
             t_th = 0.0
         elif abs_sub:
             r_th, t_th = _calculate_RT_absorbing_sub_single(wl_nm, n_val, k_val, d, n_sub_f[j], k_sub_f[j], D_sub)
@@ -1637,8 +1635,9 @@ class TLUObjective:
 
         # Call kernel with full normalization support
 
-        if self.has_absorbing_substrate:
-            # Use the more general IR global gradient kernel which supports absorption.
+        if self.has_absorbing_substrate or self.is_frosted_glass:
+            # Use the more general IR global gradient kernel, which supports absorption and the frosted glass (an infinite back face: its gradient
+            # is that of the front surface alone, as its cost is, ETAT D75).
             # _compute_ir_global_cost_gradient_kernel returns a vector of size
             # (1 + dn_dp.shape[0] + dk_dp.shape[0]) when compute_thickness_gradient=True.
             # For TLU, dn_dp and dk_dp SHARE the same 6 parameters [Eg, A, E0, C, Eu, eps_inf].
@@ -1663,9 +1662,9 @@ class TLUObjective:
                 wT_norm,
                 wR_norm,
                 self.is_frosted_glass,
-                True,  # has_absorbing_substrate
-                self.k_sub_data,
-                self.substrate_thickness_nm,
+                self.has_absorbing_substrate,
+                self.k_sub_data if self.k_sub_data is not None else np.zeros(0, dtype=np.float64),
+                self.substrate_thickness_nm if self.substrate_thickness_nm is not None else 0.0,
                 True,  # compute_thickness_gradient
             )
 

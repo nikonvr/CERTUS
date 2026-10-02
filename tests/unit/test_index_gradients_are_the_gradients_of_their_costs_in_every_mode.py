@@ -12,10 +12,10 @@ Every mode is compared here with central finite differences of its own cost, at 
     the two spline objectives, the same twelve each: 1e-6 (measured 1e-8)
     TLUObjective, the same twelve: 5e-3 (measured 1.4e-4) with a step ten times larger (the cost itself is noisy near 1e-10: its k is a difference of two nearly equal numbers wherever it is small, ETAT D71,
     and a step of 1e-5 turns that noise into a 1e-3 error of the numerical slope; a wrong sign or scale of the gradient is off by 0.1 or more)
-    the frosted glass (reflection only, no normalisation), which is where the two disagree today: `xfail(strict)`, ETAT D75
-        IRGlobalObjective and the two spline objectives, transparent or absorbing substrate: relative gap 2.9
-        TLUObjective with an absorbing substrate: relative gap 0.046
-      the cost is the plate (back face included), the gradient the infinite substrate; which of the two the mode means is the owner's, and the day it is decided the marker has to go
+    the frosted glass (reflection only, no normalisation): an infinite back face (ETAT D75, decided by the owner on 2026-10-02: only the front surface reflects, nothing comes back from the
+    rough back), for the cost and the gradient alike, with the three objectives of the stage and `TLUObjective` alone and with an absorbing substrate, which a frosted glass does not read.
+    Before the decision the cost was the plate's (back face included, 0.03 to 0.04 of reflectance more) and the gradient the infinite substrate's: a relative gap of 2.9 for the stage and
+    0.046 for `TLUObjective` with an absorbing substrate; the seven tests of this mode were `xfail(strict)` until the cost was changed
 """
 
 from __future__ import annotations
@@ -46,8 +46,6 @@ K_MAX = 0.2
 SUBSTRATE_INDEX = 1.52
 SUBSTRATE_EXTINCTION = 3e-5
 SUBSTRATE_THICKNESS_NM = 1.0e6
-
-D75 = pytest.mark.xfail(strict=True, reason="D75: in the frosted-glass mode the cost is the plate (back face included), the gradient the infinite substrate")
 
 DATA_TYPES = [DataType.TRANSMISSION, DataType.REFLECTION, DataType.BOTH]
 
@@ -159,7 +157,7 @@ def test_the_tauc_lorentz_fit_follows_the_slope_of_its_cost(data_type, normalise
     assert relative_gap_to_finite_differences(obj, p, relative_step=1e-4) < 5e-3
 
 
-@pytest.mark.parametrize("absorbing", [pytest.param(False, marks=D75, id="transparent"), pytest.param(True, marks=D75, id="absorbing")])
+@pytest.mark.parametrize("absorbing", [False, True], ids=["transparent", "absorbing"])
 def test_the_infrared_stage_follows_the_slope_of_its_cost_on_frosted_glass(absorbing):
     obj, p = ir_objective(True, DataType.REFLECTION, False, absorbing)
     assert relative_gap_to_finite_differences(obj, p, relative_step=1e-5) < 1e-6
@@ -170,7 +168,6 @@ def test_the_tauc_lorentz_fit_follows_the_slope_of_its_cost_on_frosted_glass():
     assert relative_gap_to_finite_differences(obj, p, relative_step=1e-4) < 5e-3
 
 
-@D75
 def test_the_tauc_lorentz_fit_follows_the_slope_of_its_cost_on_frosted_glass_with_an_absorbing_substrate():
     obj, p = tlu_objective(True, DataType.REFLECTION, False, True)
     assert relative_gap_to_finite_differences(obj, p, relative_step=1e-4) < 5e-3
@@ -189,7 +186,7 @@ def test_the_spline_stages_follow_the_slope_of_their_cost(data_type, normalised,
 
 
 @SPLINE_STAGES
-@pytest.mark.parametrize("absorbing", [pytest.param(False, marks=D75, id="transparent"), pytest.param(True, marks=D75, id="absorbing")])
+@pytest.mark.parametrize("absorbing", [False, True], ids=["transparent", "absorbing"])
 def test_the_spline_stages_follow_the_slope_of_their_cost_on_frosted_glass(absorbing, build):
     obj, x = build(True, DataType.REFLECTION, False, absorbing)
     assert relative_gap_to_finite_differences(obj, x, relative_step=1e-5) < 1e-6

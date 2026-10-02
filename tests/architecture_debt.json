@@ -87,7 +87,7 @@
   },
   "fonctions_non_annotees": [],
   "fichiers_longs": {
-    "certus/core/certus_index_objectives.py": 1934,
+    "certus/core/certus_index_objectives.py": 1933,
     "certus/core/certus_substrate_index.py": 1945,
     "certus/metal/certus_metal_bilayer_app.py": 2110,
     "certus/metal/certus_metal_common.py": 2193,

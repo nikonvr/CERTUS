@@ -4,6 +4,7 @@ import numpy as np
 from numba import njit, prange
 
 from certus.domain.constants import TWO_PI
+from certus.physics.certus_opt_tmm import calculate_reflection_infinite_substrate_single
 
 SMALL_EPSILON = 1e-12
 
@@ -149,7 +150,8 @@ def calculate_transmission_single(
 
     Returns:
 
-        (R_front, T_total_with_backside)
+        (R_total, T_total): the plate, back face included - R carries the back-face contribution, T crosses both faces.
+        The front surface alone is `calculate_reflection_single`.
 
     CRITICAL PHYSICS NOTE:
 
@@ -315,10 +317,11 @@ def calculate_transmission_single(
     return R_total, T_total
 
 
-# ─── LOCKED ─── Delegates to calculate_transmission_single (R′ at denominator) ───
+# ─── Front surface only: the film on an INFINITE substrate (a frosted glass: its rough back face returns nothing) ───
 
 
-# Former version erroneously used 1 - R_front·R_back instead of 1 - R′·R_sub (see file header).
+# Delegates to the kernel whose finite differences are the gradient of the frosted mode, so that cost and gradient are one function (ETAT D75).
+# It used to delegate to calculate_transmission_single and returned the plate's R, back face included, which is what a polished glass measures.
 
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
@@ -333,12 +336,10 @@ def calculate_reflection_single(
     if not np.isfinite(n_sub) or n_sub < 1.0:
         return np.nan
 
-    _rf, _t_tot = calculate_transmission_single(wavelength, n_film_real, n_film_imag, thickness_nm, complex(n_sub, 0.0))
-
-    if not np.isfinite(_rf):
+    if n_film_real * n_film_real + n_film_imag * n_film_imag < SMALL_EPSILON:
         return np.nan
 
-    return max(0.0, min(1.0, _rf))
+    return calculate_reflection_infinite_substrate_single(wavelength, n_film_real, n_film_imag, thickness_nm, complex(n_sub, 0.0))
 
 
 # ─── LOCKED ─── Vectorized wrapper of calculate_transmission_single ───

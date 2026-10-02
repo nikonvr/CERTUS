@@ -32,6 +32,7 @@ from certus.utils.certus_index_utils import (
 )
 from certus_physics import (
     calculate_bare_substrate_RT,
+    calculate_reflection_infinite_substrate_single,
     calculate_RT_single_layer_backside_array,
     calculate_transmission_single,
     epsilon1_TL_analytic,
@@ -85,7 +86,8 @@ def _point_cost_kernel(
     w_sum = 0.0
 
     if is_frosted_glass:
-        Rc, _ = calculate_transmission_single(wl, n_val, k_val, d, n_sub + 0j)
+        # an infinite back face: the front surface alone reflects (ETAT D75)
+        Rc = calculate_reflection_infinite_substrate_single(wl, n_val, k_val, d, n_sub + 0j)
         if use_R and not np.isnan(Rc) and not np.isnan(target_R):
             diff_r = Rc - target_R
             c_val += (diff_r * diff_r) * weight_R

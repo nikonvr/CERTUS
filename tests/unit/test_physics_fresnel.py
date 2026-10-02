@@ -56,14 +56,10 @@ def test_b3_normal_incidence_interface_reflectance():
         thickness_nm=0.0,
         n_sub=1.5,
     )
-    # calculate_reflection_single delegates to calculate_transmission_single
-    # which includes incoherent backside combination.
-    # For n_film == n_sub and d=0: stack reduces to bare substrate,
-    # R_total = 2*R_single / (1 + R_single) where R_single = ((1-1.5)/(1+1.5))^2 = 0.04
-    # → R_total = 2*0.04 / 1.04 ≈ 0.07692
-    R_single = ((1.0 - n) / (1.0 + n)) ** 2
-    R_backside = 2.0 * R_single / (1.0 + R_single)
-    assert r == pytest.approx(R_backside, abs=1e-12)
+    # calculate_reflection_single is the FRONT SURFACE alone (an infinite back face, ETAT D75): it used to delegate to
+    # calculate_transmission_single, whose R carries the back face (2 R1 / (1 + R1) = 0.0769 here), and this test checked that value
+    # while its docstring said 0.04. For n_film == n_sub and d=0 the stack is the bare air | substrate interface.
+    assert r == pytest.approx(((1.0 - n) / (1.0 + n)) ** 2, abs=1e-12)
 
 
 def test_b3_infinite_substrate_zero_thickness_matches_single_interface():

@@ -409,7 +409,8 @@ def configure_numba_env() -> None:
     if is_frozen():
         # In frozen mode: force workqueue (standard python threading)
         # TBB is hard to bundle correctly with PyInstaller.
-        # workqueue is safe because we enforce max_workers=1 in get_safe_worker_count() below.
+        # One Numba worker does not make workqueue safe across Python threads: RE must not
+        # overlap its QThread warmup with the global background warmup.
         os.environ["NUMBA_THREADING_LAYER"] = "workqueue"
         os.environ.setdefault("NUMBA_NUM_THREADS", "1")
         for env_var in [

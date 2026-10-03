@@ -351,7 +351,8 @@ class CertusREApp(
 
 def main():
 
-    app = init_certus_app()
+    # RE starts WarmupWorker itself; a second JIT warmup thread races frozen Numba workqueue.
+    app = init_certus_app(jit_warmup=False)
     certus_app = CertusREApp()
     certus_app.show()
     open_command_line_file(certus_app)

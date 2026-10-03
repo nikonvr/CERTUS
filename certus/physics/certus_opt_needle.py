@@ -5,6 +5,12 @@ from numba import njit, prange
 from certus.domain.constants import TWO_PI
 
 
+@njit(fastmath=False, inline="never")
+def _is_finite_scalar(x: float) -> bool:
+    """Check finiteness safely without fastmath folding."""
+    return np.isfinite(x)
+
+
 @njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
 def needle_scan_cached(
     wls: np.ndarray,  # (W,) float64
@@ -395,7 +401,7 @@ def needle_scan_cached(
 
             # ── Accumulate weighted MSE ──
 
-            if np.isfinite(T_val) and np.isfinite(tgt_vals[w]):
+            if _is_finite_scalar(T_val) and _is_finite_scalar(tgt_vals[w]):
                 diff = T_val - tgt_vals[w]
 
                 mse_sum += diff * diff * w_tgt

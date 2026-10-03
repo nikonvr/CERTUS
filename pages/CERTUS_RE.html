@@ -231,6 +231,16 @@
             trajectory; \(\alpha_\mathrm{ref}\) does <em>not</em> change the optimiser — it only harmonises leaderboard
             scores.
         </p>
+        <div class="mermaid">
+            flowchart LR
+            A["Measured spectra and wavelength masks"] --> B["Log-wavelength weights and spectral residuals"]
+            C["Workbook seed and reference wavelength"] --> D["QWOT drift with dead zone"]
+            B --> E["TRF residual vector for the current phase"]
+            D --> E
+            E --> F["Fit thickness and optional dispersion corrections"]
+            F --> G["Recompute spectral RMSE and raw QWOT RMS"]
+            G --> H["Rank candidates with fixed reference alpha"]
+        </div>
 
         <h2>6. Parametrisation of Dispersion Corrections</h2>
         <h3>6.1 Spline knots on \(\Delta\mathrm{Re}\) for H and L materials</h3>

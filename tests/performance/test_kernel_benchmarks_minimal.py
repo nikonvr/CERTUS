@@ -157,10 +157,9 @@ def test_bench_simulate_growth_kernel(benchmark) -> None:
     # Warmup.
     simulate_growth_kernel(*args)
     out = benchmark(simulate_growth_kernel, *args)
-    # Kernel returns (float, float).
-    assert len(out) == 2
-    assert np.isfinite(out[0])
-    assert np.isfinite(out[1])
+    # Thickness, dynamics, and the three stopping margins form the result.
+    thickness, dynamics, margin_level, margin_missed, margin_fab = out
+    assert np.all(np.isfinite((thickness, dynamics, margin_level, margin_missed, margin_fab)))
 
 
 @pytest.mark.performance

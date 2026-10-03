@@ -301,6 +301,10 @@
     h1 { font-size: 1.9em; }
     h2 { font-size: 1.4em; }
     .eq-box, .mermaid { overflow-x: auto; max-width: 100%; }
+    .mermaid { -webkit-overflow-scrolling: touch; }
+    .mermaid::before { content: "Swipe sideways to read the flowchart"; display: block; position: sticky; left: 0; width: max-content; font-size: 0.8rem; color: #475569; }
+    /* Keep flowchart labels legible on phones; scroll within the diagram. */
+    .mermaid svg { min-width: 760px; max-width: none !important; }
 }
 
 @media print {

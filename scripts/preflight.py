@@ -44,7 +44,7 @@ sys.path.insert(0, str(ROOT))
 #: The one interpreter version this project targets. A different patch level is not
 #: fatal, but it invalidates the numba caches and can move the last digits of a
 #: RESULT -- which would otherwise be blamed on whatever was edited last.
-REFERENCE_PYTHON = "3.14.7"
+REFERENCE_PYTHON = "3.14.8"
 
 #: Files whose modification invalidates every subsequent measurement.
 #: CLAUDE.md forbid 4: the example file drifted four times, always permissively.

@@ -137,14 +137,15 @@ def test_b3_reflection_array_returns_nan_for_invalid_substrate_entries():
     assert np.isnan(result[1])
 
 
-def test_b3_reflection_single_returns_nan_for_invalid_substrate():
+@pytest.mark.parametrize("invalid_n_sub", [0.95, float("nan"), float("inf")])
+def test_b3_reflection_single_returns_nan_for_invalid_substrate(invalid_n_sub: float):
     """The scalar reflection kernel should fail safely on invalid substrate index."""
     result = calculate_reflection_single(
         wavelength=550.0,
         n_film_real=1.5,
         n_film_imag=0.0,
         thickness_nm=120.0,
-        n_sub=0.95,
+        n_sub=invalid_n_sub,
     )
     assert np.isnan(result)
 
@@ -205,13 +206,14 @@ def test_b3_transmission_array_returns_nan_for_invalid_substrate_entries():
     assert np.isnan(result[1])
 
 
-def test_b3_transmission_single_returns_nan_for_invalid_substrate():
+@pytest.mark.parametrize("invalid_n_sub", [0.95, float("nan"), float("inf")])
+def test_b3_transmission_single_returns_nan_for_invalid_substrate(invalid_n_sub: float):
     """Scalar transmission kernel should fail safely on invalid substrate index."""
     _, result = calculate_transmission_single(
         wavelength=550.0,
         n_film_real=1.5,
         n_film_imag=0.0,
         thickness_nm=120.0,
-        n_sub=0.95,
+        n_sub=invalid_n_sub,
     )
     assert np.isnan(result)

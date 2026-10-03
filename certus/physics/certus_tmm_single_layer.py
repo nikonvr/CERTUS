@@ -4,7 +4,10 @@ import numpy as np
 from numba import njit, prange
 
 from certus.domain.constants import TWO_PI
-from certus.physics.certus_opt_tmm import calculate_reflection_infinite_substrate_single
+from certus.physics.certus_opt_tmm import (
+    _is_valid_substrate_index,
+    calculate_reflection_infinite_substrate_single,
+)
 
 SMALL_EPSILON = 1e-12
 
@@ -26,7 +29,7 @@ def calculate_RT_single_layer_single(
 ) -> float:
     """Calculates front-surface reflectance for a single layer on substrate."""
 
-    if not np.isfinite(n_sub) or n_sub < 1.0:
+    if not _is_valid_substrate_index(n_sub):
         return np.nan
 
     n0 = 1.0  # Air
@@ -163,7 +166,7 @@ def calculate_transmission_single(
 
     """
 
-    if not np.isfinite(n_sub.real) or n_sub.real < 1.0:
+    if not _is_valid_substrate_index(n_sub.real):
         return np.nan, np.nan
 
     n_film = complex(n_film_real, -n_film_imag)  # Macleod: n̂ = n - ik
@@ -333,7 +336,7 @@ def calculate_reflection_single(
     n_sub: float,
 ) -> float:
 
-    if not np.isfinite(n_sub) or n_sub < 1.0:
+    if not _is_valid_substrate_index(n_sub):
         return np.nan
 
     if n_film_real * n_film_real + n_film_imag * n_film_imag < SMALL_EPSILON:
@@ -545,7 +548,7 @@ def _calculate_RT_absorbing_sub_single(
 ) -> tuple[float, float]:
     """Scalar: R+T for one layer on absorbing substrate (Beer-Lambert incoherent)."""
 
-    if not np.isfinite(n_sub_real) or n_sub_real < 1.0:
+    if not _is_valid_substrate_index(n_sub_real):
         return np.nan, np.nan
 
     ns = complex(n_sub_real, 0.0)  # the substrate seen from inside the plate: the real part of its index

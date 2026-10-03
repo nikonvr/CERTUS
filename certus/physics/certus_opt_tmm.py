@@ -331,6 +331,12 @@ def calculate_RTRback_incoherent_vectorized(
     return R_total, T_total, Rback_total
 
 
+@njit(cache=True, fastmath=False, inline="never")
+def _is_valid_substrate_index(n: float) -> bool:
+    """Return True if n is finite and >= 1.0 (resists fastmath folding, ETAT D75)."""
+    return np.isfinite(n) and n >= 1.0
+
+
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def calculate_reflection_infinite_substrate_single(
     wavelength: float,
@@ -355,7 +361,7 @@ def calculate_reflection_infinite_substrate_single(
 
     """
 
-    if not np.isfinite(n_sub.real) or n_sub.real < 1.0:
+    if not _is_valid_substrate_index(n_sub.real):
         return np.nan
 
     # Delegation to compute_TMM_generic: single source of truth for the project.

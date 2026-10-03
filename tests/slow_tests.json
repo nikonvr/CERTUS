@@ -176,6 +176,7 @@
   "tests/unit/test_gui_apps_smoke.py::test_certus_design_app_constructs_headless": 1.8,
   "tests/unit/test_gui_apps_smoke.py::test_certus_strat_app_constructs_headless": 1.1,
   "tests/unit/test_headless_qt_lifecycle.py::test_headless_teardown_joins_before_deleting": 3.0,
+  "tests/unit/test_index_cleanup_keeps_a_running_thread_alive.py::test_cleanup_keeps_a_thread_that_ignores_stop_until_it_ends": 7.6,
   "tests/unit/test_index_gradients_are_the_gradients_of_their_costs_in_every_mode.py::test_the_infrared_stage_follows_the_slope_of_its_cost": 5.8,
   "tests/unit/test_index_gradients_are_the_gradients_of_their_costs_in_every_mode.py::test_the_tauc_lorentz_fit_follows_the_slope_of_its_cost": 6.6,
   "tests/unit/test_library_modules_leave_sys_path_alone.py::test_library_modules_put_no_package_folder_on_sys_path": 4.1,

@@ -234,6 +234,17 @@
             <li><strong>Constraint scan:</strong> vary thickness in both directions by 0.5 nm, up to 20 nm from the optimum (and no lower than 1 nm). Hold the internal knot wavelengths fixed and re-optimize the $n$ and $k$ knot values against the reflectance channel.</li>
             <li><strong>Valley Mapping:</strong> plot the minimum MSE as a function of thickness.</li>
         </ol>
+        <div class="mermaid">
+            flowchart TD
+            A["Best fitted metal thickness"] --> B["Sample both sides in 0.5 nm steps"]
+            B --> C["Fix thickness and internal knot wavelengths"]
+            C --> D["Refit metal n and k knot values against reflectance"]
+            D --> E{"Objective within heuristic threshold?"}
+            E -->|Yes| F["Retain fitted curves"]
+            E -->|No| G["Discard this scan point"]
+            F --> H["Plot MSE by thickness and retained n/k envelopes"]
+            G --> H
+        </div>
 
         <h3>4.3 Interpretation</h3>
         <div class="highlight-box">

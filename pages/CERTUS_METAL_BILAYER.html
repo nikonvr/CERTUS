@@ -255,6 +255,20 @@
             in both directions with a default 0.5 nm step. At each fixed metal thickness, bounded L-BFGS-B refits
             the remaining vector: SiO₂ thickness, $n_\infty$, $A$, metal $n/k$ knot values, and internal knot
             wavelengths. It uses an analytic objective/gradient pair and retries with relaxed tolerances if needed.</p>
+        <div class="mermaid">
+            flowchart TD
+            A["Best fitted metal thickness"] --> B["Sample both sides in 0.5 nm steps"]
+            B --> C["Fix metal thickness"]
+            C --> D["Refit buffer thickness, Cauchy terms, metal n/k values and knot positions"]
+            D --> E{"First local fit acceptable?"}
+            E -->|No| F["Retry L-BFGS-B with relaxed tolerances"]
+            E -->|Yes| G{"Objective within heuristic threshold?"}
+            F --> G
+            G -->|Yes| H["Retain fitted n/k curves"]
+            G -->|No| I["Discard this scan point"]
+            H --> J["Display envelopes over retained refits"]
+            I --> J
+        </div>
         <p>Accepted solutions satisfy the implementation's heuristic threshold:</p>
         <div class="eq-box">
             $$ D=\{d_M\text{ sampled}\mid J(d_M)\leq

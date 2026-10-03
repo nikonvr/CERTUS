@@ -80,7 +80,9 @@ __all__ = [
     "install_standard_shortcuts",
     "install_unique_shortcut",
     "normalized_shortcut",
+    "open_command_line_file",
     "open_documentation",
+    "open_dropped_file",
     "open_file_explorer",
     "process_log_queue_standard",
     "remove_skeleton_loader",
@@ -577,6 +579,36 @@ def enable_file_drop(widget: QWidget, handler, extensions=None) -> QObject:
     flt = _CertusDropFilter(widget, handler, extensions)
     widget.installEventFilter(flt)
     return flt
+
+def open_command_line_file(win, argv=None) -> None:
+    """Open the file the hub put on the command line (``sys.argv[1]``) once the window is up.
+
+    The hub names to a module the file it chose (a dropped file, File > Open): the module opens it as if it had been
+    dropped on its window, so that the answer is the same and says whether it worked.
+    """
+    args = sys.argv if argv is None else argv
+    if len(args) < 2 or not Path(args[1]).is_file():
+        return
+    path = args[1]
+    QTimer.singleShot(100, lambda: win._handle_dropped_file(path))
+
+
+def open_dropped_file(parent: QWidget, file_path: str, loader) -> bool:
+    """Open a dropped file with ``loader`` and tell the operator how it went.
+
+    A loader returns True once the file is loaded. Anything else (False, or the None that ``safe_ui_action``
+    returns after it has absorbed an error) is a refusal, and the loader has shown why. A loader that raises is
+    reported too: the drop filter silences whatever a handler raises.
+    """
+    name = Path(file_path).name
+    try:
+        loaded = bool(loader(file_path))
+    except Exception:
+        logging.getLogger("CERTUS").exception("Dropped file %s could not be loaded", name)
+        loaded = False
+    show_toast(parent, f"Loaded: {name}" if loaded else f"Load failed: {name}", "success" if loaded else "error")
+    return loaded
+
 
 def show_toast(parent: QWidget, text: str, level: str = "info", duration_ms: int = 2800) -> Any:
     """Convenience wrapper. Silently no-ops if parent is None.

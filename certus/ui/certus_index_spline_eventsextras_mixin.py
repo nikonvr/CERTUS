@@ -36,6 +36,7 @@ from certus.ui.certus_ui import (
     CertusScientificPlot,
     CertusTheme,
     GenericWorker,
+    confirm_stop_with_timeout,
     plot_widget_plot_finite,
     sanitize_xy_for_plot,
     show_toast,
@@ -632,7 +633,7 @@ class CertusIndexSplineEventsExtrasMixin:
 
         self.cb_spectrum_xmode = QComboBox()
         self.cb_spectrum_xmode.setFixedHeight(24)
-        self.cb_spectrum_xmode.addItem("Longueur d'onde λ (nm)", "lambda")
+        self.cb_spectrum_xmode.addItem("Wavelength λ (nm)", "lambda")
         self.cb_spectrum_xmode.addItem("Nombre d'onde sigma = 1/λ (nm-1)", "sigma")
         self.cb_spectrum_xmode.addItem("Dispersion sigma2 (nm-2)", "sigma2")
         self.cb_spectrum_xmode.currentIndexChanged.connect(self._on_spectrum_x_mode_changed)
@@ -648,7 +649,7 @@ class CertusIndexSplineEventsExtrasMixin:
         lay.addWidget(wrap_scientific_plot_with_toolbar(self, self.plot_T), 1)
 
         # Empty context page so sync logic collapses the bottom panel
-        self._add_context_page(self._create_empty_context_widget("Spectre T / R"))
+        self._add_context_page(self._create_empty_context_widget("Spectrum T / R"))
 
         return panel
 
@@ -942,7 +943,14 @@ class CertusIndexSplineEventsExtrasMixin:
 
             self._rmse_fit_lambda_hi = hi
 
+    def has_running_computation(self) -> bool:
+        """True while a run of this window is going: the Stop button is enabled only then."""
+        return bool(self.btn_stop.isEnabled())
+
     def _on_stop(self) -> None:
+
+        if not confirm_stop_with_timeout(self):
+            return
 
         self._stop_event.set()
 

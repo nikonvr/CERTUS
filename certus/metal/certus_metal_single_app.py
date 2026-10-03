@@ -953,22 +953,21 @@ class CertusMetalSingleApp(MetalBaseApp):
 
         return c
 
-    def load_target_file(self, filepath=None):
-        """Loads target file (robust CSV/Excel)"""
-
+    def load_target_file(self, filepath=None) -> bool:
+        """Loads target file (robust CSV/Excel). Returns True once it is loaded."""
         filepath = self._resolve_target_filepath(filepath)
         if not filepath:
-            return
+            return False
 
         try:
             parsed = self._parse_and_validate_target_data(filepath)
             if not parsed:
-                return
+                return False
 
             res, wls, R_val, T_val, Rb_val = parsed
-
             self._show_target_load_summary(filepath, res, wls, R_val, T_val, Rb_val)
             self._plot_target_data(wls, R_val, T_val, Rb_val)
+            return True
 
         except FileNotFoundError:
             show_error(self, "file_not_found", path=filepath)
@@ -986,6 +985,7 @@ class CertusMetalSingleApp(MetalBaseApp):
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             show_error(self, "generic_error", details=str(e))
             self.target_data = None
+        return False
 
     def _resolve_target_filepath(self, filepath):
         if filepath is None or isinstance(filepath, bool):

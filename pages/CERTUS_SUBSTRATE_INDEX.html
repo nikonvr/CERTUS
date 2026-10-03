@@ -61,7 +61,7 @@
             <p style="font-size: 1.3em; color: #37474f; font-weight: 300;">Bare-substrate spectra → $n(\lambda)$
                 (polynomial, Sellmeier, spline)</p>
             <p style="font-size: 1.0em; color: #546e7a; font-weight: 300;">Module <code>certus_substrate_index.py</code>
-                · Scientific Revision 2026.04.17</p>
+                · Implementation review: 2026-10-03</p>
         </header>
 
         <div class="abstract">
@@ -70,7 +70,7 @@
             It does <strong>not</strong> fit a film stack: it targets columns that describe the <strong>bare
                 substrate</strong> only, using bilingual heuristics (FR/EN) on sheet and column headers (e.g. RNU, TNU,
                 “substrate nu”, “bare sub”). For each valid trace, the app inverts the double-sided incoherent slab model
-            to obtain $n(\lambda)$, then fits <strong>three dispersion laws in parallel</strong>—<strong>polynomial</strong>,
+            to obtain $n(\lambda)$, then compares fits from <strong>three dispersion laws</strong>—<strong>polynomial</strong>,
             <strong>Sellmeier (3-pole and catalogue-aware variants)</strong>, and <strong>spline</strong>—and reports
             RMSE so you can pick the most stable law for your band. Optional <strong>Savitzky–Golay</strong> smoothing
             blends with the raw trace before inversion. Use this as the <strong>substrate reference</strong> before INDEX,
@@ -135,7 +135,7 @@
             SG -->|Yes| SFILTER["2. Dynamic Savitzky-Golay<br>Smooth high-freq noise"]:::process
             SG -->|No| INV
             SFILTER --> INV["3. Reverse Incoherent Model<br>Invert T → n(λ) pointwise"]:::process
-            INV --> FIT{"Fit 3 Dispersion Laws<br>(Parallel Execution)"}:::decision
+            INV --> FIT{"Compare 3 Dispersion Laws"}:::decision
             
             FIT --> POL["4a. Polynomial Fit<br>Linear least squares"]:::process
             FIT --> SEL["4b. Sellmeier 3-Pole Fit<br>Multistart L-BFGS-B + least squares"]:::process
@@ -179,9 +179,7 @@
         </ul>
 
         <footer style="margin-top: 48px; padding-top: 24px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 0.9em;">
-            <p><em>CERTUS-SUBSTRATE-INDEX — launched via <code>python certus_substrate_index.py</code> (standalone). Not
-                    listed on the HUB launcher card grid by default; keep this HTML beside other <code>pages/</code>
-                    assets for packaging. Revision 2026.04.17</em></p>
+            <p><em>CERTUS-SUBSTRATE-INDEX is available in the HUB support-tool catalogue and can also be launched via <code>python certus_substrate_index.py</code>. Keep this page beside the other <code>pages/</code> assets for packaging. Implementation review: 2026-10-03.</em></p>
         </footer>
     </div>
 </body>

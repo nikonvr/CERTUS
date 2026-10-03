@@ -942,14 +942,14 @@ class _RunMixin:
                     lam_s,
                     tt_s * 100.0,
                     pen=pg.mkPen(CertusTheme.PRIMARY, width=2.5),
-                    name="T Modèle (%)",
+                    name="T model (%)",
                 )
             if rt_s is not None and lam_s is not None:
                 self.plot_ov_T.plot(
                     lam_s,
                     rt_s * 100.0,
                     pen=pg.mkPen(CertusTheme.SECONDARY, width=2.0),
-                    name="R Modèle (%)",
+                    name="R model (%)",
                 )
             self.plot_ov_T.autoRange()
 
@@ -983,7 +983,7 @@ class _RunMixin:
                     self.kpi_k550.setText(f"{k550:.2e}")
 
             if hasattr(self, "kpi_status"):
-                self.kpi_status.setText("Convergence Optimale (L-BFGS-B)")
+                self.kpi_status.setText("Converged (L-BFGS-B)")
                 self.kpi_status.setStyleSheet(f"color: {CertusTheme.SUCCESS}; font-size: 13px; font-weight: 700;")
         except (AttributeError, RuntimeError, ValueError, TypeError):
             pass

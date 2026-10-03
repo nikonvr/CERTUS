@@ -58,6 +58,7 @@ from certus.ui.certus_ui import (
     CertusBaseApp,
     CertusTheme,
     init_certus_app,
+    open_command_line_file,
 )
 from certus.utils.certus_re_config import RE_P4_BEAM_N_KNOTS, RE_SUB_CAUCHY_TUBE_DELTA
 from certus.utils.certus_re_math import re_substrate_cauchy_n_re_from_theta
@@ -350,9 +351,11 @@ class CertusREApp(
 
 def main():
 
-    app = init_certus_app()
+    # RE starts WarmupWorker itself; a second JIT warmup thread races frozen Numba workqueue.
+    app = init_certus_app(jit_warmup=False)
     certus_app = CertusREApp()
     certus_app.show()
+    open_command_line_file(certus_app)
 
     try:
         sys.exit(app.exec())

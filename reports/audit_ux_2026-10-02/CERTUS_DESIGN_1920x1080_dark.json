@@ -1,0 +1,1202 @@
+{
+  "controls": [
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "",
+      "accessible": "Enable or disable this target",
+      "tooltip": "Enable or disable this target.",
+      "enabled": true,
+      "geometry": [
+        1081,
+        776,
+        26,
+        18
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "400.0",
+      "accessible": "Target wavelength range start (nm)",
+      "tooltip": "Target wavelength range start (nm).",
+      "enabled": true,
+      "geometry": [
+        1169,
+        771,
+        148,
+        36
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "700.0",
+      "accessible": "Target wavelength range end (nm)",
+      "tooltip": "Target wavelength range end (nm).",
+      "enabled": true,
+      "geometry": [
+        1318,
+        771,
+        147,
+        36
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "0.000",
+      "accessible": "Minimum target Transmittance (0-1)",
+      "tooltip": "Minimum target Transmittance (0-1).",
+      "enabled": true,
+      "geometry": [
+        1466,
+        771,
+        147,
+        36
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "0.500",
+      "accessible": "Maximum target Transmittance (0-1)",
+      "tooltip": "Maximum target Transmittance (0-1).",
+      "enabled": true,
+      "geometry": [
+        1614,
+        771,
+        147,
+        36
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "1.0",
+      "accessible": "Weight multiplier for this target",
+      "tooltip": "Weight multiplier for this target.",
+      "enabled": true,
+      "geometry": [
+        1762,
+        771,
+        147,
+        36
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Add Target",
+      "accessible": "Add Target",
+      "tooltip": "Add a new spectral target row (lambdamin, lambdamax, Tmin, Tmax, Weight).\nDouble-click a cell to edit values directly.",
+      "enabled": true,
+      "geometry": [
+        981,
+        976,
+        462,
+        40
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Remove",
+      "accessible": "Remove",
+      "tooltip": "Remove the selected spectral target row.",
+      "enabled": true,
+      "geometry": [
+        1449,
+        976,
+        462,
+        40
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusPrimaryBtn",
+      "text": "Detach",
+      "accessible": "Detach",
+      "tooltip": "Open the front layer table in a separate floating window.",
+      "enabled": true,
+      "geometry": [
+        820,
+        741,
+        80,
+        44
+      ]
+    },
+    {
+      "class": "QComboBox",
+      "name": "",
+      "text": "",
+      "accessible": "Select material",
+      "tooltip": "Select material.",
+      "enabled": true,
+      "geometry": [
+        517,
+        833,
+        54,
+        36
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "1.000000",
+      "accessible": "Layer optical thickness in QWOT (Quarter-Wave Optical Thickness)",
+      "tooltip": "Layer optical thickness in QWOT (Quarter-Wave Optical Thickness).",
+      "enabled": true,
+      "geometry": [
+        572,
+        833,
+        69,
+        36
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "",
+      "accessible": "Toggle optimization for this layer",
+      "tooltip": "Toggle optimization for this layer.",
+      "enabled": true,
+      "geometry": [
+        728,
+        838,
+        26,
+        18
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "",
+      "accessible": "Mark this layer for removal",
+      "tooltip": "Mark this layer for removal.",
+      "enabled": true,
+      "geometry": [
+        768,
+        838,
+        26,
+        18
+      ]
+    },
+    {
+      "class": "QComboBox",
+      "name": "",
+      "text": "",
+      "accessible": "Select material",
+      "tooltip": "Select material.",
+      "enabled": true,
+      "geometry": [
+        517,
+        863,
+        54,
+        36
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "1.000000",
+      "accessible": "Layer optical thickness in QWOT (Quarter-Wave Optical Thickness)",
+      "tooltip": "Layer optical thickness in QWOT (Quarter-Wave Optical Thickness).",
+      "enabled": true,
+      "geometry": [
+        572,
+        863,
+        69,
+        36
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "",
+      "accessible": "Toggle optimization for this layer",
+      "tooltip": "Toggle optimization for this layer.",
+      "enabled": true,
+      "geometry": [
+        728,
+        868,
+        26,
+        18
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "",
+      "accessible": "Mark this layer for removal",
+      "tooltip": "Mark this layer for removal.",
+      "enabled": true,
+      "geometry": [
+        768,
+        868,
+        26,
+        18
+      ]
+    },
+    {
+      "class": "QComboBox",
+      "name": "",
+      "text": "",
+      "accessible": "Select material",
+      "tooltip": "Select material.",
+      "enabled": true,
+      "geometry": [
+        517,
+        893,
+        54,
+        36
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "1.000000",
+      "accessible": "Layer optical thickness in QWOT (Quarter-Wave Optical Thickness)",
+      "tooltip": "Layer optical thickness in QWOT (Quarter-Wave Optical Thickness).",
+      "enabled": true,
+      "geometry": [
+        572,
+        893,
+        69,
+        36
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "",
+      "accessible": "Toggle optimization for this layer",
+      "tooltip": "Toggle optimization for this layer.",
+      "enabled": true,
+      "geometry": [
+        728,
+        898,
+        26,
+        18
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "",
+      "accessible": "Mark this layer for removal",
+      "tooltip": "Mark this layer for removal.",
+      "enabled": true,
+      "geometry": [
+        768,
+        898,
+        26,
+        18
+      ]
+    },
+    {
+      "class": "QComboBox",
+      "name": "",
+      "text": "",
+      "accessible": "Select material",
+      "tooltip": "Select material.",
+      "enabled": true,
+      "geometry": [
+        517,
+        923,
+        54,
+        36
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "1.000000",
+      "accessible": "Layer optical thickness in QWOT (Quarter-Wave Optical Thickness)",
+      "tooltip": "Layer optical thickness in QWOT (Quarter-Wave Optical Thickness).",
+      "enabled": true,
+      "geometry": [
+        572,
+        923,
+        69,
+        36
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "",
+      "accessible": "Toggle optimization for this layer",
+      "tooltip": "Toggle optimization for this layer.",
+      "enabled": true,
+      "geometry": [
+        728,
+        928,
+        26,
+        18
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "",
+      "accessible": "Mark this layer for removal",
+      "tooltip": "Mark this layer for removal.",
+      "enabled": true,
+      "geometry": [
+        768,
+        928,
+        26,
+        18
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Add",
+      "accessible": "Add",
+      "tooltip": "Add a new layer below the current selection.",
+      "enabled": true,
+      "geometry": [
+        516,
+        925,
+        80,
+        40
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Remove",
+      "accessible": "Remove",
+      "tooltip": "Remove the selected layer from the stack.",
+      "enabled": true,
+      "geometry": [
+        602,
+        925,
+        96,
+        40
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Undo",
+      "accessible": "Undo",
+      "tooltip": "Undo the last change to the layer table.",
+      "enabled": false,
+      "geometry": [
+        704,
+        925,
+        80,
+        40
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Thin",
+      "accessible": "Thin",
+      "tooltip": "Remove the thinnest layer (useful for topology simplification).",
+      "enabled": true,
+      "geometry": [
+        790,
+        925,
+        80,
+        40
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Reset",
+      "accessible": "Reset",
+      "tooltip": "Reset all QWOT values to 1.0 (quarter-wave optical thickness).",
+      "enabled": true,
+      "geometry": [
+        876,
+        925,
+        80,
+        40
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusPrimaryBtn",
+      "text": "🏆 Open Pareto Front",
+      "accessible": "🏆 Open Pareto Front",
+      "tooltip": "Open the Pareto Front window: trade-off between RMSE and number of layers N.\nDouble-click a row to load the corresponding design.",
+      "enabled": true,
+      "geometry": [
+        516,
+        971,
+        440,
+        44
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "Help",
+      "accessible": "Help",
+      "tooltip": "Open documentation for CERTUS_DESIGN (F1)",
+      "enabled": true,
+      "geometry": [
+        384,
+        37,
+        60,
+        45
+      ]
+    },
+    {
+      "class": "CertusThemeToggle",
+      "name": "",
+      "text": "◑",
+      "accessible": "Switch to light theme",
+      "tooltip": "Switch to light theme",
+      "enabled": true,
+      "geometry": [
+        450,
+        43,
+        32,
+        40
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Save",
+      "accessible": "Save",
+      "tooltip": "Save current configuration to a file.",
+      "enabled": true,
+      "geometry": [
+        10,
+        99,
+        74,
+        42
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Load",
+      "accessible": "Load",
+      "tooltip": "Load configuration from a file.",
+      "enabled": true,
+      "geometry": [
+        89,
+        99,
+        75,
+        42
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Export",
+      "accessible": "Export",
+      "tooltip": "Export current results.",
+      "enabled": true,
+      "geometry": [
+        169,
+        99,
+        88,
+        42
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "▸  1  Materials",
+      "accessible": "▸  1  Materials",
+      "tooltip": "Expand 1  Materials section",
+      "enabled": true,
+      "geometry": [
+        0,
+        262,
+        486,
+        36
+      ]
+    },
+    {
+      "class": "QComboBox",
+      "name": "",
+      "text": "",
+      "accessible": "H: Select the material preset or 'Custom'",
+      "tooltip": "Select the material preset or 'Custom'.",
+      "enabled": true,
+      "geometry": [
+        138,
+        387,
+        102,
+        36
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "2.350",
+      "accessible": "Refractive index of H at 400 nm, between 1.000 and 4.000",
+      "tooltip": "Refractive index of H at 400 nm, between 1.000 and 4.000. Changing it re-evaluates the design.",
+      "enabled": true,
+      "geometry": [
+        246,
+        386,
+        103,
+        39
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "2.300",
+      "accessible": "Refractive index of H at 700 nm, between 1.000 and 4.000",
+      "tooltip": "Refractive index of H at 700 nm, between 1.000 and 4.000. Changing it re-evaluates the design.",
+      "enabled": true,
+      "geometry": [
+        355,
+        386,
+        102,
+        39
+      ]
+    },
+    {
+      "class": "QComboBox",
+      "name": "",
+      "text": "",
+      "accessible": "L: Select the material preset or 'Custom'",
+      "tooltip": "Select the material preset or 'Custom'.",
+      "enabled": true,
+      "geometry": [
+        138,
+        432,
+        102,
+        36
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "1.460",
+      "accessible": "Refractive index of L at 400 nm, between 1.000 and 4.000",
+      "tooltip": "Refractive index of L at 400 nm, between 1.000 and 4.000. Changing it re-evaluates the design.",
+      "enabled": true,
+      "geometry": [
+        246,
+        431,
+        103,
+        39
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "1.460",
+      "accessible": "Refractive index of L at 700 nm, between 1.000 and 4.000",
+      "tooltip": "Refractive index of L at 700 nm, between 1.000 and 4.000. Changing it re-evaluates the design.",
+      "enabled": true,
+      "geometry": [
+        355,
+        431,
+        102,
+        39
+      ]
+    },
+    {
+      "class": "QComboBox",
+      "name": "",
+      "text": "",
+      "accessible": "A: Select the material preset or 'Custom'",
+      "tooltip": "Select the material preset or 'Custom'.",
+      "enabled": true,
+      "geometry": [
+        138,
+        477,
+        102,
+        36
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "2.050",
+      "accessible": "Refractive index of A at 400 nm, between 1.000 and 4.000",
+      "tooltip": "Refractive index of A at 400 nm, between 1.000 and 4.000. Changing it re-evaluates the design.",
+      "enabled": true,
+      "geometry": [
+        246,
+        476,
+        103,
+        39
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "2.000",
+      "accessible": "Refractive index of A at 700 nm, between 1.000 and 4.000",
+      "tooltip": "Refractive index of A at 700 nm, between 1.000 and 4.000. Changing it re-evaluates the design.",
+      "enabled": true,
+      "geometry": [
+        355,
+        476,
+        102,
+        39
+      ]
+    },
+    {
+      "class": "QComboBox",
+      "name": "",
+      "text": "",
+      "accessible": "B: Select the material preset or 'Custom'",
+      "tooltip": "Select the material preset or 'Custom'.",
+      "enabled": true,
+      "geometry": [
+        138,
+        522,
+        102,
+        36
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "1.750",
+      "accessible": "Refractive index of B at 400 nm, between 1.000 and 4.000",
+      "tooltip": "Refractive index of B at 400 nm, between 1.000 and 4.000. Changing it re-evaluates the design.",
+      "enabled": true,
+      "geometry": [
+        246,
+        521,
+        103,
+        39
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "1.730",
+      "accessible": "Refractive index of B at 700 nm, between 1.000 and 4.000",
+      "tooltip": "Refractive index of B at 700 nm, between 1.000 and 4.000. Changing it re-evaluates the design.",
+      "enabled": true,
+      "geometry": [
+        355,
+        521,
+        102,
+        39
+      ]
+    },
+    {
+      "class": "QComboBox",
+      "name": "",
+      "text": "",
+      "accessible": "C: Select the material preset or 'Custom'",
+      "tooltip": "Select the material preset or 'Custom'.",
+      "enabled": true,
+      "geometry": [
+        138,
+        567,
+        102,
+        36
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "1.600",
+      "accessible": "Refractive index of C at 400 nm, between 1.000 and 4.000",
+      "tooltip": "Refractive index of C at 400 nm, between 1.000 and 4.000. Changing it re-evaluates the design.",
+      "enabled": true,
+      "geometry": [
+        246,
+        566,
+        103,
+        39
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "1.580",
+      "accessible": "Refractive index of C at 700 nm, between 1.000 and 4.000",
+      "tooltip": "Refractive index of C at 700 nm, between 1.000 and 4.000. Changing it re-evaluates the design.",
+      "enabled": true,
+      "geometry": [
+        355,
+        566,
+        102,
+        39
+      ]
+    },
+    {
+      "class": "QComboBox",
+      "name": "",
+      "text": "",
+      "accessible": "Substrate",
+      "tooltip": "Select the material preset or 'Custom'.",
+      "enabled": true,
+      "geometry": [
+        138,
+        612,
+        102,
+        36
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "1.520",
+      "accessible": "Refractive index of Substrate at 400 nm, between 1.000 and 4.000",
+      "tooltip": "Refractive index of Substrate at 400 nm, between 1.000 and 4.000. Changing it re-evaluates the design.",
+      "enabled": true,
+      "geometry": [
+        246,
+        611,
+        103,
+        39
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "1.510",
+      "accessible": "Refractive index of Substrate at 700 nm, between 1.000 and 4.000",
+      "tooltip": "Refractive index of Substrate at 700 nm, between 1.000 and 4.000. Changing it re-evaluates the design.",
+      "enabled": true,
+      "geometry": [
+        355,
+        611,
+        102,
+        39
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "▸  2  Back-side structure",
+      "accessible": "▸  2  Back-side structure",
+      "tooltip": "Expand 2  Back-side structure section",
+      "enabled": true,
+      "geometry": [
+        0,
+        689,
+        486,
+        36
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "▸  3  Parameters",
+      "accessible": "▸  3  Parameters",
+      "tooltip": "Expand 3  Parameters section",
+      "enabled": true,
+      "geometry": [
+        0,
+        737,
+        486,
+        36
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "500.0 nm",
+      "accessible": "λ₀ ref.",
+      "tooltip": "Reference wavelength λ₀ (nm) for converting QWOT to physical thickness.",
+      "enabled": true,
+      "geometry": [
+        246,
+        835,
+        211,
+        39
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "substrate back face (Fresnel)",
+      "accessible": "substrate back face (Fresnel)",
+      "tooltip": "Include reflection from the untreated back face of the substrate.",
+      "enabled": true,
+      "geometry": [
+        29,
+        880,
+        428,
+        20
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "Back-side stack",
+      "accessible": "Back-side stack",
+      "tooltip": "Show the back-side layer editor and include those layers in the calculation when checked.",
+      "enabled": true,
+      "geometry": [
+        29,
+        906,
+        428,
+        20
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "Oblique incidence mode",
+      "accessible": "Oblique incidence mode",
+      "tooltip": "R/T targets with angle and s / p / average polarization per row.",
+      "enabled": true,
+      "geometry": [
+        29,
+        932,
+        428,
+        20
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "Auto Y scale",
+      "accessible": "Auto Y scale",
+      "tooltip": "Fit the Y axis to the spectrum data on display.",
+      "enabled": true,
+      "geometry": [
+        29,
+        958,
+        428,
+        20
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "Topology growth (deep Needle)",
+      "accessible": "Topology growth (deep Needle)",
+      "tooltip": "Allow thin-layer insertion during optimization (Needle mode).",
+      "enabled": true,
+      "geometry": [
+        29,
+        984,
+        428,
+        20
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "Local polish before PGLOBAL",
+      "accessible": "Local polish before PGLOBAL",
+      "tooltip": "Run a local gradient polish before the multi-minima global phase.",
+      "enabled": true,
+      "geometry": [
+        29,
+        1010,
+        428,
+        20
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "▸  4  Optimization",
+      "accessible": "▸  4  Optimization",
+      "tooltip": "Expand 4  Optimization section",
+      "enabled": true,
+      "geometry": [
+        0,
+        1069,
+        486,
+        36
+      ]
+    },
+    {
+      "class": "QSpinBox",
+      "name": "",
+      "text": "6000",
+      "accessible": "Samples / Iter",
+      "tooltip": "Number of random starting points evaluated per global iteration.\nHigher values improve exploration but increase computation time.",
+      "enabled": true,
+      "geometry": [
+        249,
+        1167,
+        208,
+        39
+      ]
+    },
+    {
+      "class": "QSpinBox",
+      "name": "",
+      "text": "40",
+      "accessible": "Max Clusters",
+      "tooltip": "Maximum number of local minima (clusters) tracked simultaneously.\nLimits memory usage and ensures the best basins are retained.",
+      "enabled": true,
+      "geometry": [
+        249,
+        1218,
+        208,
+        39
+      ]
+    },
+    {
+      "class": "QSpinBox",
+      "name": "",
+      "text": "50",
+      "accessible": "Max Iterations",
+      "tooltip": "Maximum number of global optimization cycles before auto-stopping.",
+      "enabled": true,
+      "geometry": [
+        249,
+        1269,
+        208,
+        39
+      ]
+    },
+    {
+      "class": "QSpinBox",
+      "name": "",
+      "text": "11",
+      "accessible": "Points / Target",
+      "tooltip": "Number of spectral evaluation points per target region.\nHigher values increase spectral accuracy but slow down evaluation.",
+      "enabled": true,
+      "geometry": [
+        249,
+        1320,
+        208,
+        39
+      ]
+    },
+    {
+      "class": "QSpinBox",
+      "name": "",
+      "text": "11",
+      "accessible": "Spectrum Points",
+      "tooltip": "Total number of spectrum points evaluated (read-only).",
+      "enabled": true,
+      "geometry": [
+        249,
+        1371,
+        208,
+        39
+      ]
+    },
+    {
+      "class": "QSpinBox",
+      "name": "",
+      "text": "200",
+      "accessible": "Samples",
+      "tooltip": "Number of Monte Carlo samples.",
+      "enabled": true,
+      "geometry": [
+        249,
+        1454,
+        208,
+        39
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "2.00",
+      "accessible": "Sigma (nm)",
+      "tooltip": "Standard deviation of the Gaussian thickness perturbation for Monte Carlo\nsensitivity analysis (nm). Simulates manufacturing thickness errors.",
+      "enabled": true,
+      "geometry": [
+        249,
+        1505,
+        208,
+        39
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusPrimaryBtn",
+      "text": "Evaluate (Ctrl+E)",
+      "accessible": "Evaluate (Ctrl+E)",
+      "tooltip": "Compute the spectrum for the current stack (instant).",
+      "enabled": true,
+      "geometry": [
+        27,
+        1645,
+        432,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusPrimaryBtn",
+      "text": "Polish local (+/-2 nm)",
+      "accessible": "Polish local (+/-2 nm)",
+      "tooltip": "Run a local gradient polish (L-BFGS) on the current design.\nPerturbs each layer by +/-2 nm and refines thickness values.",
+      "enabled": true,
+      "geometry": [
+        27,
+        1701,
+        210,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusPrimaryBtn",
+      "text": "PGLOBAL (global)",
+      "accessible": "PGLOBAL (global)",
+      "tooltip": "Run the full global PGLOBAL optimization:\nmulti-start random sampling, single-linkage clustering, and local polish.",
+      "enabled": true,
+      "geometry": [
+        249,
+        1701,
+        210,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusPrimaryBtn",
+      "text": "▼ Drop thinnest layer",
+      "accessible": "▼ Drop thinnest layer",
+      "tooltip": "Removes the thinnest layer, merges adjacent layers (except 1 and N), and runs a local polish to optimize the resulting design.",
+      "enabled": true,
+      "geometry": [
+        27,
+        1757,
+        432,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusDangerBtn",
+      "text": "Stop",
+      "accessible": "Stop",
+      "tooltip": "Stop the running optimization and keep the best design found so far.",
+      "enabled": false,
+      "geometry": [
+        27,
+        1813,
+        432,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusPrimaryBtn",
+      "text": "Colorimetric analysis",
+      "accessible": "Colorimetric analysis",
+      "tooltip": "Run a Monte Carlo colorimetric analysis on the current design.\nShows CIE Lab a*b* distribution and DeltaE stability.",
+      "enabled": true,
+      "geometry": [
+        27,
+        1869,
+        432,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusPrimaryBtn",
+      "text": "🔬 Stack info",
+      "accessible": "🔬 Stack info",
+      "tooltip": "substrate summary and stack structure in QWOT (best design if optimization is running).",
+      "enabled": true,
+      "geometry": [
+        27,
+        1925,
+        432,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "🔄  Clear / Reset",
+      "accessible": "🔄  Clear / Reset",
+      "tooltip": "Reset the entire application to factory defaults.\nStops any running processes, clears all data and results,\nand reloads the default configuration.",
+      "enabled": true,
+      "geometry": [
+        27,
+        1981,
+        432,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusPrimaryBtn",
+      "text": "Logs",
+      "accessible": "Logs",
+      "tooltip": "Show or hide the log panel and optimization detail.",
+      "enabled": true,
+      "geometry": [
+        2,
+        1031,
+        63,
+        44
+      ]
+    }
+  ],
+  "tabs": [
+    {
+      "name": "",
+      "current": 0,
+      "tabs": [
+        "Structure"
+      ]
+    },
+    {
+      "name": "",
+      "current": 0,
+      "tabs": [
+        "✦ Synthesis",
+        "Spectrum (T)",
+        "Profile",
+        "n(λ)",
+        "Color",
+        "Convergence",
+        "Why CERTUS?"
+      ]
+    }
+  ],
+  "labels": [
+    "<b>SPECTRAL TARGETS</b>",
+    "<b>FRONT STRUCTURE</b>",
+    "4 layers",
+    "Welcome to CERTUS-DESIGN",
+    "DESIGN",
+    "Optical Filter Design & Optimization",
+    "Workflow",
+    "1 Configure materials  →  2 Define stack  →  3 Set optimizer  →  4 Evaluate / Run",
+    "Materials",
+    "<b>Material</b>",
+    "<b>Preset</b>",
+    "<b>n@400</b>",
+    "<b>n@700</b>",
+    "<b>H</b>",
+    "<b>L</b>",
+    "<b>A</b>",
+    "<b>B</b>",
+    "<b>C</b>",
+    "<b>Substrate</b>",
+    "Parameters",
+    "λ₀ ref.:",
+    "Optimization (PGLOBAL)",
+    "Samples / Iter:",
+    "Max Clusters:",
+    "Max Iterations:",
+    "Points / Target:",
+    "Spectrum Points:",
+    "<b>MC ANALYSIS: </b>",
+    "Samples:",
+    "Sigma (nm):",
+    "Actions",
+    "Compiling JIT kernels…",
+    "Zoom 100%",
+    "♟️ 0 minima  | 🎲 0 evals  | 🌈️ 0",
+    "Best RMSE: N/A",
+    "Overall progress",
+    "0%",
+    "",
+    "Status: Idle • Next: start run",
+    "Zoom 100%"
+  ]
+}

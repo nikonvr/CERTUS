@@ -1,0 +1,17 @@
+============================= test session starts =============================
+platform win32 -- Python 3.14.7, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.3.0 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: <WORKSPACE>\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\2709
+configfile: pyproject.toml
+plugins: anyio-4.15.1, hypothesis-6.168.3, benchmark-5.3.0, cov-7.1.0, xdist-3.8.0
+collected 40 items
+
+tests\ui\test_ux_stop_confirmation.py ....                               [ 10%]
+tests\ui\test_ux_close_during_run.py ....                                [ 20%]
+tests\ui\test_ux_hub_commands_do_something.py ....                       [ 30%]
+tests\ui\test_ux_sorting_never_corrupts_data.py ........                 [ 50%]
+tests\ui\test_ux_numeric_field_validators.py ........                    [ 70%]
+tests\ui\test_ux_progress_bar_reaches_the_end.py ........                [ 90%]
+tests\ui\test_ux_empty_state_sync.py ....                                [100%]
+
+======================= 40 passed in 135.10s (0:02:15) ========================

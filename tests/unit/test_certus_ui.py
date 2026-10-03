@@ -997,7 +997,7 @@ class TestUIExceptionHandling:
         assert json.loads(save_path.read_text(encoding="utf-8")) == {"hello": "world"}
 
         with patch("certus.ui.certus_io_ui.QFileDialog.getOpenFileName", return_value=(str(save_path), "")):
-            assert app.load_config() is None
+            assert app.load_config() is True
         assert getattr(app, "_applied", None) == {"hello": "world"}
 
     def test_base_app_menus_and_recent_helpers(self, qapp, tmp_path):

@@ -1,0 +1,45 @@
+{
+  "app": "CERTUS_FIELD",
+  "dark_palette_labels": [
+    {
+      "text": "Welcome",
+      "name": "coach-title",
+      "text_colour": "#000000",
+      "mid_colour": "#b8b8b8",
+      "style": "#coach-title { font-size: 11pt; font-weight: 700; color: palette(text); }"
+    },
+    {
+      "text": "Every CERTUS app has a command palette (Ctrl+K), a shortcuts cheatsheet (F1) and a recent-files MRU via File → Open recent.",
+      "name": "coach-body",
+      "text_colour": "#b8b8b8",
+      "mid_colour": "#b8b8b8",
+      "style": "#coach-body { font-size: 9pt; color: palette(mid); }"
+    }
+  ],
+  "invalid_drop": {
+    "error_dialogs": [
+      "Failed to load configuration: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)"
+    ],
+    "toasts": [
+      {
+        "text": "Fichier chargé : invalide_field.json",
+        "level": "success"
+      }
+    ]
+  },
+  "unsaved_idle_close_guard": {
+    "before": "1064.0",
+    "edited": "1234.0",
+    "workers_running": 0,
+    "close_allowed": true,
+    "prompts": []
+  },
+  "escape_action": {
+    "shortcuts": 1,
+    "stop_calls": [
+      "stop_all"
+    ],
+    "confirmation_dialogs": []
+  },
+  "render_note": "Qt offscreen; onboarding skipped by its normal callback; no calculation launched."
+}

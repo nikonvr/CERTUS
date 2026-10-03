@@ -1226,13 +1226,18 @@ def warmup_physics(silent: bool = True) -> None:
             pass
 
         # Warm single-layer T/R and fused R+T (INDEX hot path)
+        #
+        # Every array has the length of wls. The kernel reads n, k and n_sub at every index of wls and
+        # Numba compiles no bounds check: with 10 values for 50 wavelengths it read past their end, and
+        # past the end of an allocation that is an access violation in every thread of its parallel loop
+        # at once (D23, test_warmup_reads_no_array_past_its_end.py).
 
         try:
-            n_real = np.full(10, 1.5, dtype=np.float64)
+            n_real = np.full(wls.size, 1.5, dtype=np.float64)
 
-            k_real = np.full(10, 0.001, dtype=np.float64)
+            k_real = np.full(wls.size, 0.001, dtype=np.float64)
 
-            n_sub_real = np.full(10, 1.52, dtype=np.float64)
+            n_sub_real = np.full(wls.size, 1.52, dtype=np.float64)
 
             calculate_RT_single_layer_backside_array(wls, n_real, k_real, 100.0, n_sub_real)
 
@@ -1259,12 +1264,12 @@ def warmup_physics(silent: bool = True) -> None:
         except RuntimeError, ValueError:
             pass
 
-        # Warm MSE
+        # Warm MSE (the kernel reads target and weights at every index of n_real)
 
         try:
-            target = np.full(10, 0.9, dtype=np.float64)
+            target = np.full(n_real.size, 0.9, dtype=np.float64)
 
-            weights = np.ones(10, dtype=np.float64)
+            weights = np.ones(n_real.size, dtype=np.float64)
 
             compute_mse_vectorized(n_real, target, weights)
 

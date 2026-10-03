@@ -1,0 +1,538 @@
+{
+  "controls": [
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Copy Logs",
+      "accessible": "Copy Logs",
+      "tooltip": "Copy all logs to clipboard",
+      "enabled": true,
+      "geometry": [
+        1285,
+        553,
+        76,
+        32
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": " Detach Plot",
+      "accessible": "Detach Plot",
+      "tooltip": "Detach current plot to separate window",
+      "enabled": true,
+      "geometry": [
+        473,
+        27,
+        105,
+        46
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "Reset",
+      "accessible": "Reset",
+      "tooltip": "Reset",
+      "enabled": true,
+      "geometry": [
+        469,
+        119,
+        60,
+        28
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "Detach",
+      "accessible": "Detach",
+      "tooltip": "Large resizable window (Ctrl+Shift+D)",
+      "enabled": true,
+      "geometry": [
+        534,
+        119,
+        60,
+        28
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "Copy data",
+      "accessible": "Copy data",
+      "tooltip": "Copy all displayed plot data to clipboard (Excel TSV)",
+      "enabled": true,
+      "geometry": [
+        610,
+        119,
+        79,
+        28
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "Pub copy",
+      "accessible": "Pub copy",
+      "tooltip": "Copy publication-ready TSV (fixed decimals)",
+      "enabled": true,
+      "geometry": [
+        694,
+        119,
+        74,
+        28
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "CSV",
+      "accessible": "CSV",
+      "tooltip": "Export all displayed plot data to CSV",
+      "enabled": true,
+      "geometry": [
+        773,
+        119,
+        60,
+        28
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": " Export",
+      "accessible": "Export",
+      "tooltip": "Export the plot or its data: PNG, SVG, CSV or TSV.",
+      "enabled": true,
+      "geometry": [
+        849,
+        119,
+        62,
+        28
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "Help",
+      "accessible": "Help",
+      "tooltip": "Open documentation for CERTUS_INDEX (F1)",
+      "enabled": true,
+      "geometry": [
+        384,
+        34,
+        60,
+        45
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Save",
+      "accessible": "Save",
+      "tooltip": "Save current configuration to a file.",
+      "enabled": true,
+      "geometry": [
+        10,
+        96,
+        74,
+        42
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Load",
+      "accessible": "Load",
+      "tooltip": "Load configuration from a file.",
+      "enabled": true,
+      "geometry": [
+        89,
+        96,
+        75,
+        42
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": " Load Spectrum File",
+      "accessible": "Load Spectrum File",
+      "tooltip": "Load a CSV/Excel file with Transmission and/or Reflectance data.\nExpected columns: λ (nm), T (%), R (%) — or any subset.",
+      "enabled": true,
+      "geometry": [
+        39,
+        215,
+        374,
+        46
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "Normalized (T/T_sub, R/T_sub)",
+      "accessible": "Normalized (T/T_sub, R/T_sub)",
+      "tooltip": "If checked, the measured T and R are normalized by reference to the bare substrate.\nUncheck for absolute transmittance/reflectance data.",
+      "enabled": true,
+      "geometry": [
+        39,
+        319,
+        374,
+        18
+      ]
+    },
+    {
+      "class": "QRadioButton",
+      "name": "",
+      "text": "Standard (transparent substrate)",
+      "accessible": "Standard (transparent substrate)",
+      "tooltip": "Use for transparent substrates (SiO2, BK7, D263T, B270i).\nBoth T and R data are used for fitting.",
+      "enabled": true,
+      "geometry": [
+        39,
+        441,
+        374,
+        18
+      ]
+    },
+    {
+      "class": "QRadioButton",
+      "name": "",
+      "text": "Frosted glass",
+      "accessible": "Frosted glass",
+      "tooltip": "Use for opaque / frosted glass substrates where only reflectance (R) is measured.\nT data is ignored in this mode.",
+      "enabled": true,
+      "geometry": [
+        39,
+        465,
+        374,
+        18
+      ]
+    },
+    {
+      "class": "QComboBox",
+      "name": "",
+      "text": "",
+      "accessible": "Material",
+      "tooltip": "substrate material. Determines the dispersion model used for n_substrate(λ).\nAl2O3: n(λ) via Sellmeier equation (materials DB). Absorbing mode uses sapphire fresnel.xlsx only for k(λ).\nSi (Silicon): absorbing mode auto from clues.xlsx.",
+      "enabled": true,
+      "geometry": [
+        229,
+        489,
+        184,
+        40
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "50.0",
+      "accessible": "Minimum film thickness to search (nm)",
+      "tooltip": "Minimum film thickness to search (nm). Optimization will not go below this.",
+      "enabled": true,
+      "geometry": [
+        229,
+        633,
+        75,
+        40
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "1000.0",
+      "accessible": "Maximum film thickness to search (nm)",
+      "tooltip": "Maximum film thickness to search (nm). Optimization will not exceed this.",
+      "enabled": true,
+      "geometry": [
+        338,
+        633,
+        75,
+        40
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "300.0",
+      "accessible": "Start of the optimization wavelength range (nm)",
+      "tooltip": "Start of the optimization wavelength range (nm).",
+      "enabled": true,
+      "geometry": [
+        229,
+        681,
+        68,
+        40
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "900.0",
+      "accessible": "End of the optimization wavelength range (nm)",
+      "tooltip": "End of the optimization wavelength range (nm).",
+      "enabled": true,
+      "geometry": [
+        345,
+        681,
+        68,
+        40
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "1.00",
+      "accessible": "T: Relative weight given to Transmittance (T) in the cost function",
+      "tooltip": "Relative weight given to Transmittance (T) in the cost function.\nSet to 0 to ignore T data during optimization.",
+      "enabled": true,
+      "geometry": [
+        262,
+        729,
+        59,
+        40
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "1.00",
+      "accessible": "R: Relative weight given to Reflectance (R) in the cost function",
+      "tooltip": "Relative weight given to Reflectance (R) in the cost function.\nSet to 0 to ignore R data during optimization.",
+      "enabled": true,
+      "geometry": [
+        354,
+        729,
+        59,
+        40
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "Exclude Data Range",
+      "accessible": "Exclude Data Range",
+      "tooltip": "Exclude a specific wavelength range from the cost function.\nUseful for masking saturated or noisy regions (e.g. laser line).",
+      "enabled": true,
+      "geometry": [
+        39,
+        788,
+        374,
+        18
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "400.0",
+      "accessible": "Start of the excluded wavelength range (nm)",
+      "tooltip": "Start of the excluded wavelength range (nm).",
+      "enabled": false,
+      "geometry": [
+        39,
+        814,
+        125,
+        40
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "450.0",
+      "accessible": "End of the excluded wavelength range (nm)",
+      "tooltip": "End of the excluded wavelength range (nm).",
+      "enabled": false,
+      "geometry": [
+        288,
+        814,
+        125,
+        40
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "Remove OH⁻ band (E-band)",
+      "accessible": "Remove OH⁻ band (E-band)",
+      "tooltip": "Automatically excludes 1360-1460 nm range.\nThis corresponds to the E-band, the 2nd harmonic (overtone)\nof the OH⁻ stretching vibration in silica optical fibers.\nThis absorption band can interfere with optical measurements.",
+      "enabled": true,
+      "geometry": [
+        39,
+        862,
+        374,
+        18
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "High Precision (Slower)",
+      "accessible": "High Precision (Slower)",
+      "tooltip": "Increases global search evaluations from 20k to 80k.\nUse this if the solution seems stuck in a local minimum.",
+      "enabled": true,
+      "geometry": [
+        39,
+        888,
+        374,
+        18
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusPrimaryBtn",
+      "text": "START OPTIMIZATION",
+      "accessible": "START OPTIMIZATION",
+      "tooltip": "Start the global optimization process.",
+      "enabled": true,
+      "geometry": [
+        10,
+        948,
+        432,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusDangerBtn",
+      "text": "STOP Calculation",
+      "accessible": "STOP Calculation",
+      "tooltip": "Stop the current optimization safely.",
+      "enabled": false,
+      "geometry": [
+        10,
+        1007,
+        432,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "🔄  Clear / Reset",
+      "accessible": "🔄  Clear / Reset",
+      "tooltip": "Reset the entire application to factory defaults.\nStops any running processes, clears all data and results,\nand reloads the default configuration.",
+      "enabled": true,
+      "geometry": [
+        10,
+        1066,
+        432,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Show Details",
+      "accessible": "Show Details",
+      "tooltip": "Toggle optimization details log display.",
+      "enabled": true,
+      "geometry": [
+        1204,
+        726,
+        100,
+        34
+      ]
+    },
+    {
+      "class": "CertusThemeToggle",
+      "name": "",
+      "text": "◑",
+      "accessible": "Switch to light theme",
+      "tooltip": "Switch to light theme",
+      "enabled": true,
+      "geometry": [
+        1310,
+        727,
+        32,
+        46
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Skip",
+      "accessible": "Skip",
+      "tooltip": "Skip the guided tour",
+      "enabled": true,
+      "geometry": [
+        568,
+        406,
+        60,
+        46
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Back",
+      "accessible": "Back",
+      "tooltip": "Go back to previous step",
+      "enabled": false,
+      "geometry": [
+        666,
+        406,
+        61,
+        46
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Next",
+      "accessible": "Next",
+      "tooltip": "Go to next step",
+      "enabled": true,
+      "geometry": [
+        735,
+        406,
+        62,
+        46
+      ]
+    }
+  ],
+  "tabs": [
+    {
+      "name": "",
+      "current": 2,
+      "tabs": [
+        "Data",
+        "✦ Synthesis",
+        "Spectrum",
+        "n, k",
+        "Convergence ↘",
+        "Final Equations"
+      ]
+    }
+  ],
+  "labels": [
+    "LOGS",
+    "CERTUS INDEX",
+    "Material Database & Analysis",
+    "Input Data",
+    "No file loaded",
+    "",
+    "substrate",
+    "Material:",
+    "Configuration",
+    "Thickness (nm):",
+    "-",
+    "λ Range (nm):",
+    "-",
+    "Weights (T/R):",
+    "T: ",
+    "R: ",
+    "-",
+    "System warming up (compiling JIT)...",
+    "Zoom 100%",
+    " 0",
+    "Overall progress",
+    "0%",
+    "",
+    "Status: Idle • Next: start run",
+    "",
+    "Welcome to CERTUS-INDEX",
+    "Characterise the n(λ), k(λ), d and d_variance of a dielectric thin film from a spectrum.",
+    "Step 1 / 5"
+  ]
+}

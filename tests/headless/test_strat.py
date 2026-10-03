@@ -83,7 +83,11 @@ def test_strat_headless():
         timeout_timer = QTimer()
         timeout_timer.setSingleShot(True)
         timeout_timer.timeout.connect(loop.quit)
-        timeout_timer.start(5000)  # 5 seconds timeout
+        # 120 s, not 5. On a Numba cache cold for the STRAT kernels (any change to a source the cache key reads),
+        # the window's background JIT warmup compiles them and the workflow's finished signal waited for it:
+        # measured 2026-10-03, delivered 49 s after the worker started, during teardown, and 5 s failed the test.
+        # Which of the two takes Numba's compiler lock first decides; a waiting time is not an assertion (D23).
+        timeout_timer.start(120_000)
         
         loop.exec()
         timeout_timer.stop()

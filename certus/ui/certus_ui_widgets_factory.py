@@ -221,7 +221,12 @@ def create_header_logo_widget(
     # Logo
     if SVG_AVAILABLE and Path(get_resource_path("certus.svg")).exists():
         logo = QSvgWidget(get_resource_path("certus.svg"))
-        logo.setFixedSize(logo_width, 40)
+        # `logo_width` is the size it takes when there is room; the header may give some back before the panel
+        # that holds it has to clip a button (measured 2026-10-02: a fixed logo made the header 442-453 px wide).
+        logo.setMaximumSize(logo_width, 40)
+        logo.setMinimumSize(int(logo_width * 0.45), 22)
+        # Qt stretches an SVG to its widget by default: a logo squeezed in width would come out tall and thin.
+        logo.renderer().setAspectRatioMode(Qt.AspectRatioMode.KeepAspectRatio)
         layout.addWidget(logo)
     else:
         lbl = QLabel("CERTUS")

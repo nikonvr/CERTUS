@@ -17,7 +17,8 @@ Mapping of app names
 - ``CERTUS-DESIGN`` / ``CertusDesignApp``
 - ``CERTUS-INDEX`` / ``CertusIndexApp``
 - ``CERTUS-STRAT`` / ``CertusStratApp``
-- ``CERTUS-INDEX-SPLINE`` / ``CertusIndexSplineApp``
+- ``CERTUS_INDEX_SPLINE`` / ``CertusIndexSplineApp``
+- ``CERTUS-FIELD`` / ``CertusFieldApp``
 - ``CERTUS-METAL-SINGLE`` / ``CertusMetalSingleApp``
 - ``CERTUS-METAL-BILAYER`` / ``CertusMetalBilayerApp``
 - ``CERTUS-RE`` / ``CertusREApp``
@@ -134,7 +135,7 @@ def _steps_index_spline() -> list:
 
     return [
         TourStep(
-            title="Welcome to CERTUS-INDEX+",
+            title="Welcome to CERTUS-INDEX-SPLINE",
             body=(
                 "The spline-based thickness and index recovery tool. Use Smart Init on a new "
                 "dataset to seed the solver reliably."
@@ -160,6 +161,45 @@ def _steps_index_spline() -> list:
             title="Cheatsheet",
             body="Press F1 any time to see every shortcut - the tool exposes many power features.",
             icon_name="keyboard",
+        ),
+    ]
+
+
+def _steps_field() -> list:
+    from certus.ui.certus_onboarding import TourStep
+
+    return [
+        TourStep(
+            title="Welcome to CERTUS-FIELD",
+            body=(
+                "Compute the electric field inside a multilayer stack, then optimize the stack to lower its "
+                "peak field (laser damage threshold). Press F1 at any time to see every keyboard shortcut."
+            ),
+            icon_name="activity",
+        ),
+        TourStep(
+            title="Stack table",
+            body=(
+                "Each row is a layer: its material (H or L) and its thickness in QWOT. Edit the rows, load a "
+                "configuration with Ctrl+O, or drop a JSON file on the window."
+            ),
+            target_attr="table_layers",
+            icon_name="layers",
+        ),
+        TourStep(
+            title="Calculate",
+            body=(
+                "Computes the electric-field profile through the stack. It also runs by itself after a change "
+                "of wavelength or angle; F5 runs it on demand."
+            ),
+            target_attr="btn_calc",
+            icon_name="play",
+        ),
+        TourStep(
+            title="Optimize",
+            body="Optimizes the layer thicknesses against the field criterion. Esc stops a run, after a confirmation.",
+            target_attr="btn_opt",
+            icon_name="target",
         ),
     ]
 
@@ -234,6 +274,8 @@ _TOURS_BY_APP_NAME: dict[str, Callable] = {
     "CERTUS-INDEX": _steps_index,
     "CERTUS-STRAT": _steps_strat,
     "CERTUS-INDEX-SPLINE": _steps_index_spline,
+    "CERTUS_INDEX_SPLINE": _steps_index_spline,  # the name the window really has
+    "CERTUS-FIELD": _steps_field,
     "CERTUS-METAL-SINGLE": _steps_metal,
     "CERTUS-METAL-BILAYER": _steps_metal,
     "CERTUS_RE": _steps_re,

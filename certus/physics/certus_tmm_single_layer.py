@@ -548,7 +548,7 @@ def _calculate_RT_absorbing_sub_single(
     if not np.isfinite(n_sub_real) or n_sub_real < 1.0:
         return np.nan, np.nan
 
-    ns = complex(n_sub_real, 0.0)  # substrate optical index (real part only for TMM)
+    ns = complex(n_sub_real, 0.0)  # the substrate seen from inside the plate: the real part of its index
 
     n_film = complex(n_film_real, -n_film_imag)  # Macleod: n̂ = n - ik
 
@@ -566,10 +566,16 @@ def _calculate_RT_absorbing_sub_single(
     M10 = +1j * n_film * sp
 
     # --- Forward: Air -> Film -> Sub ---
+    #
+    # Seen from air, the film exits into the COMPLEX index of the substrate (Macleod: n - ik), as in the
+    # common plate model and the oracle's `rt_plate_incoherent`; the interfaces seen from inside keep the
+    # real part. Reading the front with the real part too was wrong at first order in k (D75).
 
-    B = cp + M01 * ns
+    ns_front = complex(n_sub_real, -k_sub)
 
-    C = M10 + cp * ns
+    B = cp + M01 * ns_front
+
+    C = M10 + cp * ns_front
 
     Y = B + C
 
@@ -582,7 +588,7 @@ def _calculate_RT_absorbing_sub_single(
 
     R_front = (r_num.real * r_num.real + r_num.imag * r_num.imag) / Y_mag_sq
 
-    T_front = 4.0 * ns.real / Y_mag_sq
+    T_front = 4.0 * ns_front.real / Y_mag_sq
 
     # --- Reverse: Sub -> Film -> Air (R_prime for denom) ---
 

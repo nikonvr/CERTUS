@@ -1,3 +1,5 @@
+import re
+from collections.abc import Mapping
 from typing import Final, TypedDict
 
 # =============================================================================
@@ -61,6 +63,8 @@ class HubAppCatalogItem(TypedDict, total=False):
     title: str
     sub: str
     desc: str
+    #: One sentence on what the operator does in the module: the tile writes it under the name.
+    task: str
     script: str
     icon: str
     color: str
@@ -76,6 +80,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "title": "DESIGN",
         "sub": "Synthesis",
         "desc": "Stochastic Global Optimization. PGLOBAL algorithm with Single-Linkage Clustering.",
+        "task": "Design a multilayer optical filter from spectral targets.",
         "script": "CERTUS_DESIGN.py",
         "icon": "🧩",
         "color": HUB_BRAND_DESIGN,
@@ -88,6 +93,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "title": "RE",
         "sub": "Reverse Engineering",
         "desc": "Extraction of refractive indices from experimental curves using spline networks.",
+        "task": "Reverse-engineer a deposited filter from its measured spectrum.",
         "script": "CERTUS_RE.py",
         "icon": "🕵️",
         "color": HUB_BRAND_RE,
@@ -100,6 +106,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "title": "STRAT",
         "sub": "Manufacturing",
         "desc": "Predictive Monitoring Strategy. Error self-compensation analysis.",
+        "task": "Choose the monitoring wavelength of each layer and test the strategy.",
         "script": "CERTUS_STRAT.py",
         "icon": "🏭",
         "color": HUB_BRAND_STRAT,
@@ -112,6 +119,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "title": "INDEX",
         "sub": "Dielectrics",
         "desc": "Advanced Tauc-Lorentz Characterization. Kramers-Kronig consistent extraction.",
+        "task": "Extract the refractive index of a film from a measured spectrum.",
         "script": "CERTUS_INDEX.py",
         "icon": "🧪",
         "color": HUB_BRAND_INDEX,
@@ -124,6 +132,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "title": "INDEX SPLINE",
         "sub": "Spline Model",
         "desc": "Non-parametric n,k extraction using PWL splines. Ideal for complex IR absorption.",
+        "task": "Extract n and k of a film from a spectrum, without a dispersion model.",
         "script": "CERTUS_INDEX_SPLINE.py",
         "icon": "〰️",
         "color": HUB_BRAND_INDEX,
@@ -136,6 +145,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "title": "FIELD",
         "sub": "Field & LIDT",
         "desc": "Electric field profile computation and active minimax LIDT optimization.",
+        "task": "Compute the electric field in a stack and optimize it for damage threshold.",
         "script": "CERTUS_FIELD.py",
         "icon": "⚡",
         "color": HUB_BRAND_FIELD,
@@ -148,6 +158,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "title": "SMOOTHER",
         "sub": "Processing",
         "desc": "Parametric smoothing of spectral measurement data.",
+        "task": "Smooth noisy spectral curves before using them.",
         "script": "certus_curve_smoother.py",
         "icon": "🫧",
         "color": HUB_BRAND_SMOOTHER,
@@ -160,6 +171,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "title": "SUBSTRATE INDEX",
         "sub": "Characterization",
         "desc": "Substrate refractive index determination from spectral measurements.",
+        "task": "Find the refractive index of a substrate from bare-substrate spectra.",
         "script": "certus_substrate_index.py",
         "icon": "📏",
         "color": HUB_BRAND_SUBSTRATE,
@@ -172,6 +184,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "title": "METAL BILAYER",
         "sub": "Opaque Substrate",
         "desc": "Opaque substrate strategy (Legacy).",
+        "task": "Characterize a metal film on an opaque substrate.",
         "script": "CERTUS_METAL_BILAYER.py",
         "icon": "🛡️",
         "color": HUB_BRAND_METAL,
@@ -184,6 +197,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "title": "METAL SINGLE",
         "sub": "Transparent Substrate",
         "desc": "Transparent substrate strategy (R/T/Rb).",
+        "task": "Characterize a metal film on a transparent substrate (R, T, Rb).",
         "script": "CERTUS_METAL_SINGLE.py",
         "icon": "🛡️",
         "color": HUB_BRAND_METAL,
@@ -193,6 +207,52 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "contract": "material_workflow",
     },
 )
+
+
+_METAL_PAIR: Final[tuple[str, ...]] = ("CERTUS_METAL_SINGLE.py", "CERTUS_METAL_BILAYER.py")
+
+#: What a JSON configuration says about the module that wrote it, by the keys it holds: (scripts, keys that must all
+#: be there, keys of which one must be there). The name of a file is a hint that anyone can change; what it holds is
+#: what the module will read. The two METAL modules write the same keys: the content cannot tell them apart.
+_CONFIG_SIGNATURES: Final[tuple[tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]], ...]] = (
+    (("CERTUS_DESIGN.py",), ("front", "targets"), ()),
+    (("CERTUS_STRAT.py",), (), ("stack_multipliers", "h_type_custom")),
+    (("CERTUS_STRAT.py",), ("strategy_id", "blocks"), ()),
+    (("CERTUS_FIELD.py",), ("emp_factors", "lcalc"), ()),
+    (_METAL_PAIR, ("physical_params", "material_params"), ()),
+    (("CERTUS_INDEX_SPLINE.py",), (), ("knot_mode", "knot_count", "use_spline_interp", "optimize_n", "optimize_k")),
+    (("CERTUS_INDEX.py",), ("thickness_min", "thickness_max"), ()),
+    (("CERTUS_RE.py",), (), ("re_gui", "re_workbook_path", "workbook_path")),
+)
+
+#: The words of a file name that name a module, in the order they are tried ("bilayer" before "metal").
+_NAME_TOKENS: Final[tuple[tuple[str, str], ...]] = (
+    ("bilayer", "CERTUS_METAL_BILAYER.py"),
+    ("single", "CERTUS_METAL_SINGLE.py"),
+    ("strat", "CERTUS_STRAT.py"),
+    ("field", "CERTUS_FIELD.py"),
+    ("spline", "CERTUS_INDEX_SPLINE.py"),
+    ("metal", "CERTUS_METAL_SINGLE.py"),
+    ("index", "CERTUS_INDEX.py"),
+)
+
+
+def script_for_name(name: str) -> str | None:
+    """The module that the name of a file refers to, or None. "RE" counts only as a word of its own."""
+    lowered = name.lower()
+    for token, script in _NAME_TOKENS:
+        if token in lowered:
+            return script
+    return "CERTUS_RE.py" if re.search("(?<![a-z])re(?![a-z])", lowered) else None
+
+
+def scripts_for_config(data: Mapping[str, object]) -> tuple[str, ...]:
+    """Every module whose configuration looks like ``data``: none, one, or several when the content cannot tell."""
+    found: list[str] = []
+    for scripts, needs_all, needs_one in _CONFIG_SIGNATURES:
+        if all(key in data for key in needs_all) and (not needs_one or any(key in data for key in needs_one)):
+            found += [script for script in scripts if script not in found]
+    return tuple(found)
 
 
 def hub_grid_columns(n_modules: int, max_cols: int = 5) -> int:

@@ -468,6 +468,13 @@ class SubstrateIndexGUI(QMainWindow):
 
         c_layout.addWidget(hint)
 
+        # Which columns the last workbook gave (and which it did not): filled by `_show_column_recap` at each load.
+        self.columns_recap = QLabel("")
+        self.columns_recap.setWordWrap(True)
+        self.columns_recap.setStyleSheet(f"color: {CertusTheme.TEXT_SUB};")
+        self.columns_recap.setVisible(False)
+        c_layout.addWidget(self.columns_recap)
+
         self.main_tabs = QTabWidget()
 
         self.plot_widget = CertusScientificPlot(title="Spectra")
@@ -555,6 +562,20 @@ class SubstrateIndexGUI(QMainWindow):
             and self.progress_widget.is_canceled()
         )
 
+    def _show_column_recap(self, kept: list[str], dropped: list[str]) -> None:
+        """Say which columns were read as a bare substrate and which were left out: the name of a column decides."""
+        from html import escape
+
+        def names(items: list[str], limit: int = 40) -> str:
+            shown = ", ".join(escape(str(c)) for c in items[:limit])
+            return shown + (", ..." if len(items) > limit else "")
+
+        text = f"<b>Read as bare substrate ({len(kept)}):</b> {names(kept) or 'none'}"
+        if dropped:
+            text += f"<br><b>Left out ({len(dropped)}):</b> {names(dropped)} - the name does not indicate a bare substrate."
+        self.columns_recap.setText(text)
+        self.columns_recap.setVisible(True)
+
     def load_file(self):
 
         self.progress_widget.start()
@@ -584,6 +605,8 @@ class SubstrateIndexGUI(QMainWindow):
             self.settings.setValue("last_dir", self.last_dir)
 
             self.df, kept_spec, dropped_spec = _filter_dataframe_bare_substrate_columns(raw_df)
+
+            self._show_column_recap(kept_spec, dropped_spec)
 
             if dropped_spec:
                 logger.info(

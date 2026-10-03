@@ -457,7 +457,9 @@ class CertusStratLayoutMixin:
 
         self.stack_group = CertusCard("Stack Control & Workflow")
 
-        cockpit_layout = QHBoxLayout()
+        # Buttons over the table, not side by side: next to the 3-column grid of buttons (300 px) the fixed 135 px table
+        # made the page ask 525 px of a 549 px panel, which left 59.6 % of the window to the plots at 1366x768.
+        cockpit_layout = QVBoxLayout()
 
         self.stack_group.body.addLayout(cockpit_layout)
 
@@ -659,7 +661,7 @@ class CertusStratLayoutMixin:
 
         self.widgets["stack_table"].setHorizontalHeaderLabels(["#", "Mat.", "Mult."])
 
-        self.widgets["stack_table"].setFixedWidth(135)
+        self.widgets["stack_table"].setMinimumWidth(135)
 
         # Column header tooltips
 
@@ -685,7 +687,7 @@ class CertusStratLayoutMixin:
 
         h_header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
 
-        self.widgets["stack_table"].setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
+        self.widgets["stack_table"].setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
         self.widgets["stack_table"].setMinimumHeight(200)
 

@@ -133,3 +133,14 @@ jobs:
           path: |
             dist/CERTUS_HUB/**
             build/certus_hub/warn-certus_hub.txt
+
+      - name: Upload frozen diagnostics
+        if: always() && matrix.python-version == '3.14.5'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: certus-frozen-diagnostics-py314
+          if-no-files-found: ignore
+          path: |
+            dist/CERTUS_HUB/logs/**
+            dist/CERTUS_HUB/*.log
+            build/certus_hub/warn-certus_hub.txt

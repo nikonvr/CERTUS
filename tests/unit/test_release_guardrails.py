@@ -143,6 +143,54 @@ def test_the_refusal_quotes_the_log_the_process_wrote(tmp_path, rc) -> None:
 
 
 @pytest.mark.unit
+def test_a_frozen_crash_reports_native_stderr_and_watchdog_dump(tmp_path, rc) -> None:
+    _frozen_folder(tmp_path, rc)
+    code = (
+        "from pathlib import Path; import sys; "
+        "Path('logs').mkdir(exist_ok=True); "
+        "Path('logs/crash_dump.log').write_text('Fatal Python error: Aborted'); "
+        "sys.stderr.write('QThread: Destroyed while thread is still running\\n'); "
+        "sys.stderr.flush(); sys.exit(3)"
+    )
+
+    errors = rc._process_stays_up([sys.executable, "-c", code], "Frozen module CERTUS_RE", 30)
+
+    assert len(errors) == 1
+    assert "code 3" in errors[0]
+    assert "QThread: Destroyed while thread is still running" in errors[0]
+    assert "Fatal Python error: Aborted" in errors[0]
+
+
+@pytest.mark.unit
+def test_a_living_module_that_reports_unsafe_numba_concurrency_is_refused(tmp_path, rc) -> None:
+    _frozen_folder(tmp_path, rc)
+    code = (
+        "import sys, time; "
+        "sys.stderr.write('Numba workqueue threading layer is terminating: '",
+        "'Concurrent access has been detected.\\n'); "
+        "sys.stderr.flush(); time.sleep(60)"
+    )
+
+    errors = rc._process_stays_up([sys.executable, "-c", "".join(code)], "Frozen module CERTUS_RE", 1)
+
+    assert len(errors) == 1
+    assert "Concurrent access has been detected" in errors[0]
+
+
+@pytest.mark.unit
+def test_release_keeps_frozen_diagnostics_after_a_failed_startup() -> None:
+    workflow = (Path(__file__).resolve().parents[2] / ".github/workflows/release-windows.yml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "name: Upload frozen diagnostics" in workflow
+    diagnostics = workflow.split("name: Upload frozen diagnostics", 1)[1]
+    assert "always()" in diagnostics
+    assert "dist/CERTUS_HUB/logs/**" in diagnostics
+    assert "dist/CERTUS_HUB/*.log" in diagnostics
+
+
+@pytest.mark.unit
 def test_every_module_of_the_catalog_is_started_the_way_the_hub_starts_it(tmp_path, rc, monkeypatch) -> None:
     from certus.core.certus_hub_config import RUN_MODULE_FLAG
 

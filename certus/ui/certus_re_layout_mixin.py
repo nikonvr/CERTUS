@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import functools
 import logging
-from pathlib import Path
 
 import numpy as np
 import pyqtgraph as pg
@@ -56,8 +55,8 @@ from certus.ui.certus_ui import (
     create_top_actions_bar,
     enable_file_drop,
     install_standard_shortcuts,
+    open_dropped_file,
     set_certus_window_icon,
-    show_toast,
     wrap_scientific_plot_with_toolbar,
 )
 from certus.utils.certus_re_helpers import (
@@ -234,14 +233,6 @@ class CertusRELayoutMixin:
 
         lay.setSpacing(12)
 
-        hint = QLabel("<b>1</b> Load workbook &nbsp;&nbsp; <b>2</b> Evaluate spectrum &nbsp;&nbsp; <b>3</b> Run RE")
-
-        hint.setWordWrap(True)
-
-        hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt;")
-
-        lay.addWidget(hint)
-
         btn_lay = QHBoxLayout()
 
         btn_lay.setContentsMargins(0, 0, 0, 0)
@@ -302,10 +293,8 @@ class CertusRELayoutMixin:
         lay.setSpacing(12)
 
         hint = QLabel(
-            "Modes below are left to right: <b>Slow</b> -> <b>Medium</b> -> <b>Fast</b>. "
-            "<b>Slow</b> = larger budget (more multistarts, top-K, shakes, iterations) to seek a better minimum. "
-            "<b>Medium</b> = settings validated on the optimal batch (exploration + iterations). "
-            "<b>Fast</b> = fewer restarts / top-K / shakes and reduced iterations — quick run."
+            "Modes run from <b>Slow</b> (largest budget, best minimum) to <b>Fast</b> (quick run). "
+            "Hover a mode for its budget."
         )
 
         hint.setWordWrap(True)
@@ -992,8 +981,7 @@ class CertusRELayoutMixin:
 
         def _on_re_drop(paths):
             if paths and hasattr(self, "load_reverse_engineering_from_path"):
-                self.load_reverse_engineering_from_path(paths[0])
-                show_toast(self, f"Loaded: {Path(paths[0]).name}", "success")
+                open_dropped_file(self, paths[0], self.load_reverse_engineering_from_path)
 
         enable_file_drop(self, _on_re_drop, extensions=("xlsx", "xls", "csv"))
 

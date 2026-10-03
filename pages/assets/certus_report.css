@@ -278,6 +278,8 @@
         padding: 22px 16px;
         margin: 16px auto;
         border-radius: 8px;
+        /* Keep long MathJax formulas inside the report instead of widening the phone viewport. */
+        overflow-x: auto;
     }
     /* Wide tables become their own scroll region rather than pushing the page
        sideways. They are direct children of .container throughout these pages. */
@@ -289,14 +291,20 @@
         -webkit-overflow-scrolling: touch;
         max-width: 100%;
     }
+    .navbar { flex-wrap: wrap; gap: 8px; }
     .nav-links {
+        width: 100%;
         flex-wrap: wrap;
         gap: 10px;
         margin-right: 0;
     }
     h1 { font-size: 1.9em; }
     h2 { font-size: 1.4em; }
-    .eq-box { overflow-x: auto; }
+    .eq-box, .mermaid { overflow-x: auto; max-width: 100%; }
+    .mermaid { -webkit-overflow-scrolling: touch; }
+    .mermaid::before { content: "Swipe sideways to read the flowchart"; display: block; position: sticky; left: 0; width: max-content; font-size: 0.8rem; color: #475569; }
+    /* Keep flowchart labels legible on phones; scroll within the diagram. */
+    .mermaid svg { min-width: 760px; max-width: none !important; }
 }
 
 @media print {

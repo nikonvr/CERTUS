@@ -6,7 +6,7 @@ from typing import Any
 
 from pydantic import ValidationError
 from PyQt6.QtCore import QSettings
-from PyQt6.QtWidgets import QFileDialog
+from PyQt6.QtWidgets import QFileDialog, QMessageBox
 
 import certus.ui.certus_io_ui as certus_io_ui
 from certus.ui.certus_ui_utils import safe_ui_action
@@ -149,6 +149,63 @@ class CertusAppConfigMixin:
 
         pass
 
+    # ---- unsaved work: what the operator has on file, compared with what the window holds now ------------------------
+
+    def _config_snapshot(self) -> str | None:
+        """The configuration as text that can be compared, or None when this window has none to save."""
+        import json
+
+        try:
+            config = self._collect_config()
+        except Exception:
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+            return None
+        return json.dumps(config, sort_keys=True, default=str) if config else None
+
+    def mark_config_saved(self) -> None:
+        """Take the configuration as it is now for the one the operator has on file: a later close compares with it."""
+        self._saved_config_snapshot = self._config_snapshot()
+
+    def has_unsaved_config(self) -> bool:
+        """True when the configuration is not the one last saved, loaded or settled at the opening of the window."""
+        saved = getattr(self, "_saved_config_snapshot", None)
+        return saved is not None and self._config_snapshot() != saved
+
+    def _ask_about_unsaved_config(self) -> str:
+        """Ask what to do with a changed configuration: "save", "discard" or "cancel"."""
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Icon.Question)
+        box.setWindowTitle("Unsaved configuration")
+        box.setText("The configuration has changed since it was last saved or loaded.")
+        box.setInformativeText("Save it before closing?")
+        save = box.addButton("Save…", QMessageBox.ButtonRole.AcceptRole)
+        discard = box.addButton("Close without saving", QMessageBox.ButtonRole.DestructiveRole)
+        cancel = box.addButton("Cancel", QMessageBox.ButtonRole.RejectRole)
+        box.setDefaultButton(save)
+        box.setEscapeButton(cancel)
+        box.exec()
+        clicked = box.clickedButton()
+        return "save" if clicked is save else "discard" if clicked is discard else "cancel"
+
+    def confirm_close_unsaved(self, event) -> bool:
+        """Ask before a close throws away a configuration changed since it was last saved or loaded.
+
+        Returns True when the close may go on: nothing changed, a run is going (the close asks its own question,
+        `confirm_close_during_run`), the operator chose to close without saving, or the configuration was saved.
+        A window that collects no configuration has nothing to compare and is never asked.
+        """
+        if getattr(self, "running_worker_count", lambda: 0)() or not self.has_unsaved_config():
+            return True
+        answer = self._ask_about_unsaved_config()
+        if answer == "discard":
+            return True
+        if answer == "save":
+            self.save_config()
+            if not self.has_unsaved_config():
+                return True
+        event.ignore()
+        return False
+
     @safe_ui_action
     def save_config(self) -> None:
         """Save current configuration to JSON file."""
@@ -182,6 +239,8 @@ class CertusAppConfigMixin:
 
                 self._post_save_config(filename)
 
+                self.mark_config_saved()
+
             except Exception as e:
                 from certus.utils.errors import ConfigurationCorruptionError
 
@@ -195,8 +254,12 @@ class CertusAppConfigMixin:
                 ) from e
 
     @safe_ui_action
-    def load_config(self, filename: str | None = None) -> None:
-        """Load configuration from JSON file."""
+    def load_config(self, filename: str | None = None) -> bool:
+        """Load configuration from JSON file.
+
+        Returns True once the file is loaded, False when no file was chosen. An error is raised to
+        ``safe_ui_action``, which shows it and returns None.
+        """
 
         import json
 
@@ -240,6 +303,10 @@ class CertusAppConfigMixin:
 
                 self._post_load_config(filename, config)
 
+                self.mark_config_saved()
+
+                return True
+
             except Exception as e:
                 from certus.utils.errors import ConfigurationCorruptionError
 
@@ -253,3 +320,5 @@ class CertusAppConfigMixin:
                     details=str(e),
                     suggestion="Ensure the configuration file exists, is valid JSON, and has correct file permissions.",
                 ) from e
+
+        return False

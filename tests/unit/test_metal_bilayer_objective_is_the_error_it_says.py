@@ -13,9 +13,8 @@ What is pinned here, against `tests/oracle/tmm_reference.py` and scipy's natural
     the guards: a wrong size, a negative thickness, knots that are too close, values that are not finite - infinity inside, the penalty of the search (1e12) outside
     the input validator, the spline-state validator, the bounds, the diagnostic penalty
 
-One defect is described and not fixed (`xfail(strict)`, ETAT D76): when `_validate_bilayer_spline_state` repairs a bad set of internal knots it returns knots of equal spacing over NUM_KNOTS
-points and, as "the internal knots", an equal spacing over NUM_KNOTS + 1 points - four values for five knots, not the three that sit inside the knots it returns. The two callers of the window
-use the knots and drop the other value, so nothing is wrong on screen today.
+The spline-state validator returns internal knots consistent with the full knot vector,
+including after it repairs an invalid input.
 """
 
 from __future__ import annotations
@@ -247,10 +246,6 @@ def test_the_wrong_number_of_internal_knots_gives_equally_spaced_knots():
     np.testing.assert_allclose(knots, np.linspace(400.0, 880.0, NUM_KNOTS))
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="D76: after a repair the internal knots returned (equal spacing of NUM_KNOTS + 1 points) are not the internal knots of the knots returned (NUM_KNOTS points)",
-)
 @pytest.mark.parametrize("given", [np.array([500.0]), np.array([400.0, 640.0, 760.0])], ids=["wrong_count", "knot_on_an_end"])
 def test_the_internal_knots_returned_after_a_repair_are_those_of_the_knots_returned(given):
     knots, internal = _validate_bilayer_spline_state(N_KNOTS, K_KNOTS, given, 400.0, 880.0, NUM_KNOTS)

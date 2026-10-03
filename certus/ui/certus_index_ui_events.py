@@ -505,7 +505,8 @@ class CertusIndexEventsMixin:
 
             self.sb_ex_max.setEnabled(self.chk_exclude.isChecked())
 
-    def load_file(self, filepath=None) -> None:
+    def load_file(self, filepath=None) -> bool:
+        """Load a spectrum. Returns True once the file is loaded, False when none was chosen or it was refused."""
 
         if filepath is None or isinstance(filepath, bool):
             from certus.ui.certus_ui import DATA_FILE_FILTER, certus_get_open_file_name
@@ -513,10 +514,10 @@ class CertusIndexEventsMixin:
             filepath = certus_get_open_file_name(self, "Open", DATA_FILE_FILTER)
 
             if not filepath:
-                return
+                return False
 
         if not filepath:
-            return
+            return False
 
         try:
             from certus.utils.certus_data import load_spectrum_columns
@@ -698,6 +699,8 @@ class CertusIndexEventsMixin:
 
             self.latest_results = None
 
+            return True
+
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             # Do not show error for tracking issues (non-critical)
 
@@ -708,11 +711,14 @@ class CertusIndexEventsMixin:
 
                 self.logger.debug(f"Non-critical tracking error during file load: {e}")
 
-            else:
-                # Critical error - show user
-                _notify_user(self, "Load Error", error_msg, level="error")
+                return True
 
-                self.logger.error("File load error", exc_info=True)
+            # Critical error - show user
+            _notify_user(self, "Load Error", error_msg, level="error")
+
+            self.logger.error("File load error", exc_info=True)
+
+            return False
 
     def _apply_dynamic_ir_smoothing(
         self,

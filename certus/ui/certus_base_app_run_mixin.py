@@ -5,7 +5,7 @@ import logging
 from PyQt6.QtCore import QThread
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
-from certus.ui.certus_ui_utils import show_toast
+from certus.ui.certus_ui_utils import open_dropped_file, show_toast
 
 
 class CertusAppRunStateMixin:
@@ -162,26 +162,24 @@ class CertusAppRunStateMixin:
         """Called when a worker finishes."""
         self.worker_manager.unregister_worker(worker)
 
+    #: What loads a dropped file, by kind: a configuration (.json) or a data file (spectrum, workbook, table).
+    _CONFIG_LOADERS = ("load_configuration", "load_config", "load_design")
+    _DATA_LOADERS = ("load_file", "_on_load", "load_target_file", "load_reverse_engineering_from_path")
+
     def _handle_dropped_file(self, file_path: str) -> None:
-        """Universal router for loading a dropped file."""
+        """Universal router for loading a dropped file: a configuration (.json) or a data file.
+
+        The kind of file picks the loader, not the mere existence of a method: a spectrum dropped on a window that
+        also reads configurations used to go to the configuration reader. A loader returns True once the file is
+        loaded (see ``open_dropped_file``).
+        """
         from pathlib import Path
 
-        name = Path(file_path).name
-        try:
-            if hasattr(self, "load_configuration") and callable(self.load_configuration):
-                self.load_configuration(file_path)
-            elif hasattr(self, "load_config") and callable(self.load_config):
-                self.load_config(file_path)
-            elif hasattr(self, "load_design") and callable(self.load_design):
-                self.load_design(file_path)
-            elif hasattr(self, "_on_load") and callable(self._on_load):
-                self._on_load(file_path)
-            elif hasattr(self, "load_file") and callable(self.load_file):
-                self.load_file(file_path)
-            else:
-                return
-            show_toast(self, f"Fichier chargé : {name}", "success")
-        except Exception as exc:
-            if hasattr(self, "logger") and self.logger:
-                self.logger.error("Erreur chargement Drag & Drop: %s", exc)
-            show_toast(self, f"Erreur de chargement: {name}", "error")
+        path = Path(file_path)
+        names = self._CONFIG_LOADERS if path.suffix.lower() == ".json" else self._DATA_LOADERS
+        loader = next((getattr(self, n) for n in names if callable(getattr(self, n, None))), None)
+        if loader is None:
+            kind = path.suffix.lower() or "such"
+            show_toast(self, f"Cannot open {path.name}: this window does not read {kind} files", "error")
+            return
+        open_dropped_file(self, file_path, loader)

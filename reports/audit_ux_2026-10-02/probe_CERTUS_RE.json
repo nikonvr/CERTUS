@@ -1,0 +1,34 @@
+{
+  "app": "CERTUS_RE",
+  "dark_palette_labels": [
+    {
+      "text": "No spectral targets",
+      "name": "empty-title",
+      "text_colour": "#000000",
+      "mid_colour": "#b8b8b8",
+      "style": "#empty-title { color: palette(text); font-size: 13pt; font-weight: 650; }"
+    },
+    {
+      "text": "Click 'Add target' to define the first wavelength window.",
+      "name": "empty-desc",
+      "text_colour": "#b8b8b8",
+      "mid_colour": "#b8b8b8",
+      "style": "#empty-desc { color: palette(mid); font-size: 10pt; }"
+    },
+    {
+      "text": "No layers yet",
+      "name": "empty-title",
+      "text_colour": "#000000",
+      "mid_colour": "#b8b8b8",
+      "style": "#empty-title { color: palette(text); font-size: 13pt; font-weight: 650; }"
+    },
+    {
+      "text": "Add a layer from the toolbar above, or load a configuration.",
+      "name": "empty-desc",
+      "text_colour": "#b8b8b8",
+      "mid_colour": "#b8b8b8",
+      "style": "#empty-desc { color: palette(mid); font-size: 10pt; }"
+    }
+  ],
+  "render_note": "Qt offscreen; onboarding skipped by its normal callback; no calculation launched."
+}

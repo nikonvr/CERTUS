@@ -335,7 +335,8 @@ class _SettingsMixin:
         reset_app_to_defaults(self)
 
     @safe_ui_action
-    def _on_load(self, path: str | None = None) -> None:
+    def _on_load(self, path: str | None = None) -> bool:
+        """Load a spectrum. Returns True once the file is loaded, False when none was chosen or it was refused."""
 
         if not path:
             path, _ = QFileDialog.getOpenFileName(
@@ -346,7 +347,7 @@ class _SettingsMixin:
             )
 
         if not path:
-            return
+            return False
 
         try:
             raw = read_data_file_robust(path)
@@ -405,10 +406,14 @@ class _SettingsMixin:
 
                 show_load_summary_dialog(self, "INDEX SPLINE Load Summary", summary)
 
+            return True
+
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             QMessageBox.critical(self, "Loading", str(e))
 
             logger.exception("load")
+
+            return False
 
     def _update_rmse_fit_region_overlay(self) -> None:
 

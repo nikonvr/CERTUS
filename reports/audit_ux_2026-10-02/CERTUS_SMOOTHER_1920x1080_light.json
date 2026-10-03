@@ -1,0 +1,223 @@
+{
+  "controls": [
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "Help",
+      "accessible": "Help",
+      "tooltip": "Open documentation for SMOOTHER (F1)",
+      "enabled": true,
+      "geometry": [
+        1842,
+        8,
+        60,
+        45
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Load Data (.xlsx/.xls)",
+      "accessible": "Load Data (.xlsx/.xls)",
+      "tooltip": "Load a spectral data file. Each column is plotted as a curve.",
+      "enabled": true,
+      "geometry": [
+        33,
+        100,
+        160,
+        42
+      ]
+    },
+    {
+      "class": "QComboBox",
+      "name": "",
+      "text": "",
+      "accessible": "Filtering Mode",
+      "tooltip": "Smoothing strength. Low preserves narrow features, High suppresses more noise. The filter parameters are then tuned automatically on the loaded data.",
+      "enabled": false,
+      "geometry": [
+        347,
+        106,
+        160,
+        29
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Quick guide",
+      "accessible": "Quick guide",
+      "tooltip": "Show a short usage reminder (F1).",
+      "enabled": true,
+      "geometry": [
+        1785,
+        100,
+        102,
+        42
+      ]
+    },
+    {
+      "class": "QComboBox",
+      "name": "",
+      "text": "",
+      "accessible": "Isolate Graph",
+      "tooltip": "Curve to open in the isolated view.",
+      "enabled": true,
+      "geometry": [
+        155,
+        154,
+        150,
+        29
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "View Isolated",
+      "accessible": "View Isolated",
+      "tooltip": "Open the curve selected on the left in its own window.",
+      "enabled": false,
+      "geometry": [
+        311,
+        148,
+        111,
+        42
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "Show Raw Traces",
+      "accessible": "Show Raw Traces",
+      "tooltip": "Overlay the unsmoothed measurements on the plot.",
+      "enabled": true,
+      "geometry": [
+        428,
+        159,
+        122,
+        19
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Save Clean Data",
+      "accessible": "Save Clean Data",
+      "tooltip": "Write the smoothed curves to a new file. The source file is left untouched.",
+      "enabled": false,
+      "geometry": [
+        1760,
+        148,
+        127,
+        42
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "Reset",
+      "accessible": "Reset",
+      "tooltip": "Reset",
+      "enabled": true,
+      "geometry": [
+        24,
+        205,
+        60,
+        28
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "Detach",
+      "accessible": "Detach",
+      "tooltip": "Large resizable window (Ctrl+Shift+D)",
+      "enabled": true,
+      "geometry": [
+        89,
+        205,
+        60,
+        28
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "Copy data",
+      "accessible": "Copy data",
+      "tooltip": "Copy all displayed plot data to clipboard (Excel TSV)",
+      "enabled": true,
+      "geometry": [
+        165,
+        205,
+        79,
+        28
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "Pub copy",
+      "accessible": "Pub copy",
+      "tooltip": "Copy publication-ready TSV (fixed decimals)",
+      "enabled": true,
+      "geometry": [
+        249,
+        205,
+        74,
+        28
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "CSV",
+      "accessible": "CSV",
+      "tooltip": "Export all displayed plot data to CSV",
+      "enabled": true,
+      "geometry": [
+        328,
+        205,
+        60,
+        28
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": " Export",
+      "accessible": "Export",
+      "tooltip": "Export the plot or its data: PNG, SVG, CSV or TSV.",
+      "enabled": true,
+      "geometry": [
+        404,
+        205,
+        62,
+        28
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Copy Logs",
+      "accessible": "Copy Logs",
+      "tooltip": "Copy all logs to clipboard",
+      "enabled": true,
+      "geometry": [
+        1815,
+        770,
+        76,
+        24
+      ]
+    }
+  ],
+  "tabs": [],
+  "labels": [
+    "CERTUS CURVE SMOOTHER",
+    "Precision Spectral Smoothing",
+    "Filtering Mode:",
+    "   [ Level: Medium ]",
+    "Isolate Graph:",
+    "LOGS"
+  ]
+}

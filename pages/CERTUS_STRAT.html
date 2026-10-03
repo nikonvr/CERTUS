@@ -63,28 +63,7 @@
                 Algorithm Documentation</p>
         </header>
 
-        <details style="border:1px solid #e0b4b4; background:#fffafa; padding:10px 16px; margin:18px 0; border-radius:6px;">
-            <summary style="cursor:pointer; font-weight:600; color:#b00;">
-                Note for AI agents working on this repository — not part of the report
-            </summary>
-            <p style="margin:10px 0 10px 0; font-size:1.05em; font-weight:700; color:#b00;">
-                If you are an AI working on this repository — read this before this page
-            </p>
-            <p style="margin:0 0 10px 0;">
-                <strong>This page explains <em>why</em> the code does what it does. It does not dictate instructions.</strong>
-                Work instructions are elsewhere, and that is where you must begin:
-            </p>
-            <ol style="margin:0 0 12px 0; padding-left:22px;">
-                <li><code>AGENTS.md</code> — <strong>read entirely first.</strong> Environment verification, top directives, known traps.</li>
-                <li><code>CLAUDE.md</code> — single project document: work framework, physical conventions, machine specifications, baseline reference, and sequential tasks.</li>
-            </ol>
-            <p style="margin:0 0 10px 0;">
-                <strong>Work in the repository you opened, and only that one.</strong> Multiple copies of this repository exist on the machine. Modifying one and measuring another produces no error message — only false results. The verification command is at the top of <code>AGENTS.md</code>.
-            </p>
-            <p style="margin:0;">
-                <strong>Only one benchmark is valid for physical conclusions:</strong> the 48-layer dichroic, <code>example/example_strat/JSON-strat-example.json</code>. The 8-layer stacks in unit tests serve to verify code mechanisms, never to settle a physics question.
-            </p>
-        </details>
+
 
         <div class="abstract">
             <strong>Abstract:</strong> CERTUS-STRAT evaluates optical monitoring strategies by simulating nominal
@@ -218,7 +197,7 @@
             <strong>Nucleation (optional):</strong> pre-rank initial block candidates using a parallel Numba kernel,
             then expand the block size adaptively with a 40% degradation threshold.<br>
             <strong>Phase A (per layer):</strong> for each layer, compute dynamics $\Delta T(\lambda)$ at all candidate
-            wavelengths, apply safety filters, validate the survivors using <a href="https://en.wikipedia.org/wiki/Monte_Carlo_method" target="_blank">Monte Carlo</a> simulations, and propagate the
+            wavelengths, apply safety filters, validate the survivors using <a href="https://en.wikipedia.org/wiki/Monte_Carlo_method" target="_blank" rel="noopener noreferrer">Monte Carlo</a> simulations, and propagate the
             resulting thickness errors into the TMM matrix cache for the next layer.<br>
             <strong>Phase B (global):</strong> dynamic programming groups layers into monochromatic blocks across three
             cost modes (THICKNESS, THICKNESS², SYM). Elite candidate mutations refine the top solutions. Each strategy
@@ -1147,6 +1126,21 @@
                 the turning points? do we risk miscounting them? do we risk never reaching the level?</i> —
                 become <b>three numbers</b> instead of an aggregated scalar.
             </p>
+        </div>
+
+        <div class="mermaid">
+            flowchart TD
+            A["Noisy monitoring trace and stopping level"] --> B{"Stopping level reached?"}
+            B -->|No| C["Level unreachable: sentinel 1e6"]
+            B -->|Yes| D{"POEM active and turning-point count differs?"}
+            D -->|Yes| E["Turning-point miscount: sentinel 2e6"]
+            D -->|No| F["Invert stopping thickness"]
+            F --> G{"Non-monotonic path rejected by configuration?"}
+            G -->|Yes| H["Non-monotonic: sentinel 3e6"]
+            G -->|No| I["Return deposited thickness"]
+            C --> J["Count crash and record its cause"]
+            E --> J
+            H --> J
         </div>
 
         <h3>2.7 🟢 The method — how to distinguish a measurement from an artifact</h3>
@@ -2753,6 +2747,17 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
         </div>
 
         <h2 id="sec-4">4. Phase B: Block Grouping &amp; Robustness Screening</h2>
+        <div class="mermaid">
+            flowchart LR
+            A["Phase A: admissible wavelengths and per-layer costs"] --> B["Dynamic programming: contiguous monitoring blocks"]
+            B --> C["ELITE candidate generation"]
+            C --> D["Full Monte Carlo robustness screening"]
+            D --> E{"Deposition terminates often enough?"}
+            E -->|No| F["Reject strategy"]
+            E -->|Yes| G["Rank by equivalent thickness error per layer"]
+            G --> H["Optional multi-seed consensus"]
+            H --> I["Post-check minimum transmission of best strategy"]
+        </div>
 
         <h3>4.1 Dynamic Programming Segmentation</h3>
         <p>
@@ -3468,14 +3473,14 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         (♟ MS | 🎲 MCS | 🌈 SP), progress bar, theme toggle.</li>
                 </ul>
 
-                <h3>9.2 Global Keyboard Shortcuts</h3>
+                <h3>9.2 STRAT Keyboard Shortcuts</h3>
                 <p>The interface maps the following shortcuts to the main workflow actions:</p>
                 <ul>
                     <li><kbd>Ctrl</kbd> + <kbd>S</kbd>: save the current configuration.</li>
                     <li><kbd>Ctrl</kbd> + <kbd>O</kbd>: load an existing configuration.</li>
                     <li><kbd>F5</kbd> or <kbd>Ctrl</kbd> + <kbd>R</kbd>: launch the primary optimization step if enabled.</li>
                     <li><kbd>Ctrl</kbd> + <kbd>Z</kbd>: undo the last configuration change.</li>
-                    <li><kbd>Esc</kbd>: close auxiliary floating windows.</li>
+                    <li><kbd>Ctrl</kbd> + <kbd>W</kbd>: close auxiliary floating windows.</li>
                 </ul>
                 <h3>9.3 Dynamic Processing Feedback</h3>
                 <p>Long-running tasks are isolated in worker threads. The interface uses wait cursors and tooltips

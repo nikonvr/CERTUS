@@ -227,6 +227,10 @@ class CertusDesignApp(
 
         self.warmup_worker.start()
 
+    def _on_warmup_done(self) -> None:
+        super()._on_warmup_done()
+        self.orchestrator.schedule_update_tikhonravov_points(0)
+
     @safe_ui_action
     def export_results(self) -> None:
         self.export_manager.export_results()

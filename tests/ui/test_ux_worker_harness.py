@@ -67,7 +67,9 @@ def test_a_worker_that_always_aborts_names_its_exit_status(tmp_path):
     """The whole point: an abort must not look like an empty assertion.
 
     ``os.abort()`` reproduces the measured signature - the process dies without
-    unwinding Python, so stderr stays empty (Windows: 0xC0000409).
+    unwinding Python. The worker runs with faulthandler on, so the failure quotes
+    the Python stack of the abort instead of an empty stderr (on Windows the status
+    is then 3, the C runtime's abort, rather than 0xC0000409).
     """
     script = _write_worker(tmp_path, "import os\nos.abort()\n")
 
@@ -75,9 +77,9 @@ def test_a_worker_that_always_aborts_names_its_exit_status(tmp_path):
         run_ux_worker([sys.executable, script], MARKER, context="always aborts")
 
     message = str(excinfo.value)
-    assert "native abort" in message or "killed by signal" in message, message
     assert "2 attempts" in message, message
-    assert "stderr empty" in message, message
+    assert "exit status 0)" not in message, message
+    assert "Fatal Python error: Aborted" in message, message
 
 
 def test_a_worker_that_exits_quietly_is_not_reported_as_an_abort(tmp_path):
@@ -105,10 +107,15 @@ def test_a_transient_abort_is_retried_and_reported(tmp_path):
         f'print("{MARKER}" + \'{{"value": 7}}\')\n',
     )
 
-    with pytest.warns(UserWarning, match="attempt 1"):
+    with pytest.warns(UserWarning, match="attempt 1") as caught:
         result = run_ux_worker([sys.executable, script], MARKER, context="transient")
 
     assert result == {"value": 7}
+    # The warning names the attempt that FAILED, and quotes its stack: it used to give the status of the
+    # attempt that succeeded, "exit status 0", which hid the abort it reported (D23).
+    warning = str(caught[0].message)
+    assert "exit status 0)" not in warning, warning
+    assert "Fatal Python error: Aborted" in warning, warning
 
 
 def test_a_healthy_worker_does_not_warn(tmp_path):

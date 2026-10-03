@@ -26,7 +26,7 @@ import certus.spline.certus_index_spline_corridors as certus_index_spline_corrid
 import certus.spline.certus_index_spline_smart_init as certus_index_spline_smart_init
 import certus.ui.certus_index_spline_ui as certus_index_spline_ui
 from certus.core.certus_core import CertusFacadeModule, setup_module_logging
-from certus.ui.certus_ui import init_certus_app
+from certus.ui.certus_ui import init_certus_app, open_command_line_file
 
 # Preserve SplineReport exports (for external tools or back-compat)
 from certus.utils.certus_spline_report import SplineReportBuilder, SplineReportContext  # noqa: F401
@@ -61,6 +61,7 @@ def main() -> None:
 
     # Ensure the first meaningful redraw happens after the window is visible.
     QTimer.singleShot(0, lambda: (win.raise_(), win.activateWindow()))
+    open_command_line_file(win)
 
     sys.exit(app.exec())
 

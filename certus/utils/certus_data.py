@@ -156,7 +156,7 @@ def read_csv_robust(filepath: str, **kwargs) -> pd.DataFrame:
             if df[col].dtype not in ["float64", "int64"]:
                 try:
                     c = pd.to_numeric(df[col], errors="coerce")
-                    if c.notna().sum() / len(c) > 0.5:
+                    if not c.empty and c.notna().sum() / len(c) > 0.5:
                         df[col] = c
                 except (ValueError, TypeError):
                     # Skip columns that cannot be converted to numeric

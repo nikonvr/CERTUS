@@ -202,7 +202,11 @@ def _font_worker_main(tag: str) -> None:
         "resolved": font.family() in _QFD.families(),
     }
     win.close()
-    print(FONT_MARKER + json.dumps(out))
+    # D23: the native abort (0xC0000005) came after this line, while the return freed the locals (the
+    # QApplication before the window) or during interpreter teardown; the marker, still in the pipe buffer,
+    # was lost with it. Flush it, then leave without the teardown: it is not what this worker measures.
+    print(FONT_MARKER + json.dumps(out), flush=True)
+    os._exit(0)
 
 
 def _measure_font(tag: str) -> dict:

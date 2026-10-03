@@ -106,7 +106,11 @@ def _worker_main(tag: str, width: int, height: int) -> None:
         if total:
             out = {"pct": round(100.0 * right.width() / total, 1), "left": left.width(), "right": right.width()}
     win.close()
-    print(MARKER + json.dumps(out))
+    # D23: the native abort (0xC0000005) came after this line, while the return freed the locals (the
+    # QApplication before the window) or during interpreter teardown; the marker, still in the pipe buffer,
+    # was lost with it. Flush it, then leave without the teardown: it is not what this worker measures.
+    print(MARKER + json.dumps(out), flush=True)
+    os._exit(0)
 
 
 #: (module, size) pairs known to be under the threshold: each carries a strict

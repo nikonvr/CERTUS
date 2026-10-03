@@ -88,7 +88,11 @@ def _worker_main(mod_path: str, cls_name: str, width: int, height: int) -> None:
             if hbar.maximum() > 0:
                 hscroll_px = max(hscroll_px, int(hbar.maximum()))
     win.close()
-    print(MARKER + json.dumps({"hscroll_px": hscroll_px}))
+    # D23: the native abort (0xC0000005) came after this line, while the return freed the locals (the
+    # QApplication before the window) or during interpreter teardown; the marker, still in the pipe buffer,
+    # was lost with it. Flush it, then leave without the teardown: it is not what this worker measures.
+    print(MARKER + json.dumps({"hscroll_px": hscroll_px}), flush=True)
+    os._exit(0)
 
 
 @pytest.mark.parametrize(("mod_path", "cls_name"), SPLITTER_APPS)

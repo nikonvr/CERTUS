@@ -1128,6 +1128,21 @@
             </p>
         </div>
 
+        <div class="mermaid">
+            flowchart TD
+            A["Noisy monitoring trace and stopping level"] --> B{"Stopping level reached?"}
+            B -->|No| C["Level unreachable: sentinel 1e6"]
+            B -->|Yes| D{"POEM active and turning-point count differs?"}
+            D -->|Yes| E["Turning-point miscount: sentinel 2e6"]
+            D -->|No| F["Invert stopping thickness"]
+            F --> G{"Non-monotonic path rejected by configuration?"}
+            G -->|Yes| H["Non-monotonic: sentinel 3e6"]
+            G -->|No| I["Return deposited thickness"]
+            C --> J["Count crash and record its cause"]
+            E --> J
+            H --> J
+        </div>
+
         <h3>2.7 🟢 The method — how to distinguish a measurement from an artifact</h3>
         <div style="border:3px solid #15803d;border-radius:10px;padding:16px 20px;margin:20px 0;background:#f0fdf4;">
             <p style="margin:0 0 12px;">
@@ -2732,6 +2747,17 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
         </div>
 
         <h2 id="sec-4">4. Phase B: Block Grouping &amp; Robustness Screening</h2>
+        <div class="mermaid">
+            flowchart LR
+            A["Phase A: admissible wavelengths and per-layer costs"] --> B["Dynamic programming: contiguous monitoring blocks"]
+            B --> C["ELITE candidate generation"]
+            C --> D["Full Monte Carlo robustness screening"]
+            D --> E{"Deposition terminates often enough?"}
+            E -->|No| F["Reject strategy"]
+            E -->|Yes| G["Rank by equivalent thickness error per layer"]
+            G --> H["Optional multi-seed consensus"]
+            H --> I["Post-check minimum transmission of best strategy"]
+        </div>
 
         <h3>4.1 Dynamic Programming Segmentation</h3>
         <p>

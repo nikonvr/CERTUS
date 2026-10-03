@@ -173,11 +173,11 @@ flowchart TD
     D --> E[Phase 03 SOL 3 free-knot refinement]:::stage
     E --> F[Phase 04 transparent-subband stabilization]:::refine
     F --> G[Final spectral mesh polish]:::refine
-    G --> H[Profile likelihood around d_opt]:::uncert
+    G --> H[Local thickness-profile corridor around d_opt]:::uncert
     H --> I[Nominal solution and uncertainty corridors]:::out
                 </div>
                 <figcaption>
-                    <strong>Figure 1.</strong> Overview of the staged inversion workflow used for spline-based reconstruction from the measured relative transmittance spectrum. The flowchart emphasizes the progressive release of degrees of freedom, from deterministic initialization to rigid-knot optimization, free-knot refinement, transparent-subband stabilization, final mesh polishing, and profile-likelihood uncertainty estimation.
+                    <strong>Figure 1.</strong> Overview of the staged inversion workflow used for spline-based reconstruction from the measured relative transmittance spectrum. The flowchart emphasizes the progressive release of degrees of freedom, from deterministic initialization to rigid-knot optimization, free-knot refinement, transparent-subband stabilization, final mesh polishing, and local thickness-profile exploration.
                 </figcaption>
             </figure>
 
@@ -317,9 +317,9 @@ flowchart LR
                 Local optimization is accelerated by analytic sensitivities of the optical model. Instead of relying exclusively on finite-difference perturbations, the implementation evaluates explicit derivatives of the transfer-matrix response with respect to thickness and spline parameters. This substantially improves efficiency and numerical robustness in the high-dimensional local stages, especially once free-knot relocation has been activated.
             </p>
 
-            <h2>4.5 Profile likelihood and uncertainty corridors</h2>
+            <h2>4.5 Thickness-profile corridors and optional likelihood-ratio mode</h2>
             <p>
-                The uncertainty analysis is based on profile likelihood with thickness as the profiled parameter. This choice is motivated by the strong coupling between thickness and the oscillatory structure of the relative transmittance spectrum. Rather than estimating uncertainty only from local curvature at the optimum, the algorithm explicitly measures how far the thickness can be displaced while the remaining spline degrees of freedom are allowed to re-accommodate the spectral fit.
+                The implementation profiles thickness through local refits of the remaining spline parameters. The default <code>ProfileCorridorConfig.mode="alpha"</code> uses a heuristic RMSE acceptance threshold, with an adaptive absolute-delta policy by default. This threshold has no probability or confidence-level interpretation. The optional <code>mode="lr"</code> applies a likelihood-ratio threshold using constant <code>sigma_t</code> and <code>sigma_r</code> values. Both modes measure how far thickness can be displaced while the other spline degrees of freedom re-accommodate the spectral fit.
             </p>
             <div class="step-box">
                 <strong>Step-by-step construction of the uncertainty corridors</strong>
@@ -327,11 +327,12 @@ flowchart LR
                     <li>The nominal optimum $d_{opt}$ and its associated spline solution are selected as the reference state.</li>
                     <li>A family of trial thickness values is generated around $d_{opt}$.</li>
                     <li>For each imposed thickness, $d$ is frozen and the remaining spline parameters are re-optimized locally.</li>
-                    <li>The resulting profiled objective values define the function $\chi^2(d)$, or equivalently the profiled RMSE curve.</li>
-                    <li>All solutions satisfying the likelihood-ratio acceptance rule are retained.</li>
-                    <li>The accepted family of solutions defines both the confidence interval on thickness and the wavelength-dependent uncertainty corridors for $n(\lambda)$ and $k(\lambda)$.</li>
+                    <li>The resulting profiled objective values define an RMSE curve, or a $\chi^2(d)$ curve in likelihood-ratio mode.</li>
+                    <li>Solutions satisfying the configured RMSE or likelihood-ratio acceptance rule are retained.</li>
+                    <li>The accepted family defines a local thickness range and wavelength-dependent corridors for $n(\lambda)$ and $k(\lambda)$.</li>
                 </ol>
             </div>
+            <p>Only the optional likelihood-ratio mode uses the following threshold (shown at its default 95% setting):</p>
             <div class="math-block">
                 $$
                 \Delta\chi^2 = \chi^2(d) - \chi^2(d_{opt}) \le \chi^2_{1,0.95}.
@@ -349,18 +350,18 @@ flowchart TD
     A[Reference optimum d_opt]:::ref --> B[Generate trial thickness values]:::test
     B --> C[Freeze d at one trial value]:::test
     C --> D[Re-optimize remaining spline parameters locally]:::fit
-    D --> E[Evaluate profiled chi-square]:::fit
-    E --> F{Likelihood-ratio criterion satisfied}:::gate
+    D --> E[Evaluate profiled RMSE or chi-square]:::fit
+    E --> F{Configured acceptance criterion satisfied}:::gate
     F -- Yes --> G[Retain admissible solution]:::keep
     F -- No --> H[Reject solution]:::gate
     G --> I[Aggregate retained solutions into corridors]:::keep
                 </div>
                 <figcaption>
-                    <strong>Figure 3.</strong> Flowchart of the profile-likelihood uncertainty analysis. Thickness is perturbed away from its optimum, the remaining spline parameters are re-optimized locally, and all spectrally admissible solutions are retained to construct confidence intervals and optical-constant corridors.
+                    <strong>Figure 3.</strong> Flowchart of the thickness-profile analysis. Thickness is perturbed away from its optimum, the remaining spline parameters are re-optimized locally, and accepted solutions form a local thickness range and optical-constant corridors.
                 </figcaption>
             </figure>
             <p>
-                The important point is that these corridors are not obtained from independent pointwise perturbations of optical constants. They are produced by families of compensating solutions that remain spectrally acceptable after a controlled perturbation of thickness. The resulting envelopes therefore reflect the actual coupling structure of the inverse problem and provide a more informative uncertainty description than local standard errors alone.
+                These corridors are not obtained from independent pointwise perturbations of optical constants. They are produced by families of compensating solutions that remain spectrally acceptable after a controlled perturbation of thickness. Their envelopes describe the coupling seen by these local refits; a statistical confidence claim would require a justified noise model and coverage validation.
             </p>
             <p>
                 Because the profiled re-optimization is intentionally local rather than fully global, the resulting corridors should be interpreted as structured local uncertainty manifolds around the nominal optimum. This interpretation is particularly well suited to thin-film inversion, where the dominant uncertainty mechanism is often the partial compensation between thickness and dispersion rather than isolated pointwise noise on individual optical constants.

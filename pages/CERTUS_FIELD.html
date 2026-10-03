@@ -188,7 +188,7 @@
         <ol>
             <li><strong>Nominal Run:</strong> Enters optimization using the current design thicknesses as the starting vector $x_0$.</li>
             <li><strong>Perturbed Runs (2x):</strong> Generates two additional starting points by applying a random uniform scaling factor between $0.85$ and $1.15$ to each layer thickness.</li>
-            <li><strong>Selection:</strong> Minimizes each start point separately. Once all runs finish, it ranks the solutions by cost and returns the absolute best configuration.</li>
+            <li><strong>Selection:</strong> Minimizes each start point separately. Once all runs finish, it ranks the solutions by cost and returns the best configuration found in those runs.</li>
         </ol>
         </p>
 
@@ -197,8 +197,8 @@
         <ul>
             <li><strong>Sobol Quasi-Random Adaptive Sampling:</strong> Draws highly balanced, low-discrepancy candidate points across the thickness boundaries using scrambled Sobol sequences.</li>
             <li><strong>Batch Evaluation & Reduction:</strong> Evaluates candidate points in parallel and keeps the top fraction (e.g., 20% to 30%) by sorting and partitioning their objective values.</li>
-            <li><strong>Single-Linkage Clustering (MLSL):</strong> Performs distance-based clustering on the unit hypercube to group candidates near known minima, identifying unique search basins and preventing redundant local searches.</li>
-            <li><strong>Parallel Local Sweeps:</strong> Launches box-constrained local refinement runs (L-BFGS-B) from each unclustered candidate seed in parallel to converge precisely to the best global optimum.</li>
+            <li><strong>Single-Linkage Clustering (MLSL):</strong> Performs distance-based clustering on the unit hypercube to group nearby candidates and reduce redundant local searches.</li>
+            <li><strong>Parallel Local Sweeps:</strong> Launches box-constrained local refinement runs (L-BFGS-B) from unclustered candidate seeds in parallel and retains the best result found under the configured budget. This search does not certify a global optimum.</li>
         </ul>
         </p>
 

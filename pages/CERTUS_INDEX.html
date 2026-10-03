@@ -741,14 +741,13 @@
     This provides:
 </p>
 <ul>
-    <li><strong>Absolute Precision:</strong> Elimination of artifacts tied to differential step size
-        ($\Delta p$). The algorithm no longer gets "stuck" in numerical noise.</li>
+    <li><strong>Derivative precision:</strong> The analytic gradient avoids the step-size error of finite
+        differences; floating-point error and difficult optimization landscapes still remain.</li>
     <li><strong>Massive Speed:</strong> The full gradient vector (all 7 derivatives) is calculated in a
         single
         algorithmic pass (vs 7+ for numeric).</li>
-    <li><strong>Robustness:</strong> Guaranteed convergence toward the exact bottom of the well, even in
-        very
-        "flat" valleys of the parameter space.</li>
+    <li><strong>Local refinement:</strong> The gradient gives L-BFGS-B a descent direction where the
+        derivatives are well conditioned; it does not certify convergence or a global minimum.</li>
 </ul>
 
 <h2>5. Optimization Pipeline — Two-Stage Architecture</h2>
@@ -851,9 +850,8 @@
     Hessian
     matrix
     ($H^{-1}$).
-    Coupled with the exact analytic gradient, the optimizer determines a near-perfect descent direction
-    and
-    rigorously handles boundaries (e.g., $E_g > 0.1$) via projection onto active constraints.
+    Coupled with the analytic gradient, the optimizer estimates a local descent direction and
+    handles box bounds via projection onto active constraints. It does not guarantee the best basin.
 </p>
 
 <h4>Phase 3: L-BFGS-B Local Polish</h4>
@@ -877,7 +875,8 @@
             $$ \Delta n_{res}(\lambda) = \max_{1 \le i < j \le 3} |n_i(\lambda) - n_j(\lambda)| $$
             $$ \Delta k_{res}(\lambda) = \max_{1 \le i < j \le 3} |k_i(\lambda) - k_j(\lambda)| $$
         </div>
-        This defines the maximum absolute deviation across all 3 independent decimations, rigorously quantifying the structural instability of the fit.
+        This defines the maximum absolute deviation across the 3 decimations: an empirical sensitivity
+        measure for this split, not a calibrated uncertainty interval.
     </li>
 </ol>
 
@@ -889,7 +888,7 @@
     <li><strong>L-BFGS-B</strong> with extreme tolerances (<code>ftol=1e-14</code>,
         <code>gtol=1e-14</code>).
     </li>
-    <li>The exact analytical gradient ensures the local minimum is robustly polished to convergence.</li>
+    <li>The analytic gradient supports local polishing; convergence depends on the objective and stopping criteria.</li>
 </ol>
 
 <h2>6. IR Pipeline (Spectrum &gt; 2500 nm) — Workflow and Implementation</h2>
@@ -965,8 +964,10 @@
     <li><strong>Cost:</strong> Weighted MSE on full range: $\text{MSE} = (w_T \cdot \text{MSE}_T + w_R \cdot \text{MSE}_R)/(w_T + w_R)$.
         Normalized mode: $T_{val} = T_{calc}/T_{sub}$, $R_{val} = R_{calc}/T_{sub}$. Spectral weight $1/\lambda$ (normalized)
         to balance fit across wavelength.</li>
-    <li><strong>Substrate:</strong> If <code>k_sub_data</code> and <code>substrate_thickness_nm</code> are set (e.g. Sapphire),
-        R and T use <code>calculate_RT_single_layer_absorbing_substrate_array</code> (Beer-Lambert in substrate).</li>
+    <li><strong>Substrate:</strong> If <code>k_sub_data</code> and <code>substrate_thickness_nm</code> are set,
+        R and T use <code>calculate_RT_single_layer_absorbing_substrate_array</code>. The front film/substrate
+        interface uses the complex index $n-ik$; interfaces seen from inside the plate use its real part,
+        with Beer–Lambert attenuation through the substrate.</li>
     <li><strong>Guards (return $10^{12}$ if violated):</strong>
         <br/>1) Sellmeier poles: $L_1$ or $L_2$ must not lie inside $[\lambda_{min}, \lambda_{max}]$ (µm).
         <br/>2) VIS continuity: On $\lambda \leq 2500$ nm, $|n_{Sellmeier} - n_{TLU ref}| \leq 0.20$.
@@ -1049,7 +1050,7 @@
     <li><strong>Normalization:</strong> When substrate is absorbing, $T_{sub}$ and $R_{sub}$ are computed (Beer-Lambert);
         display uses $R_{norm} = R_{calc}/T_{sub}$ (and $T_{norm} = T_{calc}/T_{sub}$) when <code>use_normalized</code> is True.</li>
     <li><strong>Phase 5 (TLU) overwrite skipped:</strong> When the result comes from IR Global Model
-        (<code>optimization_stats.method</code> contains &quot;PGLOBAL&quot; or &quot;Sellmeier+k&quot>), the optional Phase 5
+        (<code>optimization_stats.method</code> contains &quot;PGLOBAL&quot; or &quot;Sellmeier+k&quot;), the optional Phase 5
         overwrite (global Sellmeier fit on $n$, k re-optimization) is <strong>skipped</strong> so that the Phase 2
         $n$/k are kept as-is.</li>
 </ul>
@@ -1384,7 +1385,8 @@
     </tr>
     <tr>
         <td><strong>Backside Correction</strong></td>
-        <td>Incoherent substrate via dual-matrix approach (forward + reverse TMM).</td>
+        <td>Incoherent substrate via forward and reverse TMM; for an absorbing plate, the front
+            film/substrate interface uses $n-ik$ and attenuation applies in the bulk.</td>
     </tr>
     <tr>
         <td><strong>Export</strong></td>

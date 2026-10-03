@@ -131,6 +131,8 @@ Dernière validation Python locale complète, le 2026-10-03 sur les corrections 
 
 | R107 | RE gelé : deux préchauffages JIT en parallèle sur Numba `workqueue` (D77) | **correctif local, CI à vérifier** : `init_certus_app(jit_warmup=False)` laisse le `WarmupWorker` de RE seul. Le test de démarrage a échoué avant puis passe ; les tests ciblés donnent `21 passed in 8.19s`. Gel neuf PyInstaller 6.22.3, hooks 2026.7, `PATH` assaini : `[CERTUS] release checks PASSED` (hub et dix modules, 12 s chacun), puis cinq démarrages RE supplémentaires passent sans l'alerte Numba. L'ancien gel peut rester vivant malgré l'alerte et ses répétitions suivantes étaient propres : l'origine du code 3 sur le runner reste une hypothèse à confirmer en CI. | `CERTUS_RE.py`, `tests/unit/test_warmup_starts_once_per_process.py` | 2026-10-03 |
 
+| R108 | DESIGN : supprimer le même chevauchement des préchauffages JIT que dans RE | **correctif local, gel à vérifier** : DESIGN possède son WarmupWorker et passe désormais jit_warmup=False à init_certus_app. Le test de démarrage a échoué avant (ssert None is False), puis 	est_warmup_starts_once_per_process.py donne 5 passed in 5.08s. | CERTUS_DESIGN.py, 	ests/unit/test_warmup_starts_once_per_process.py | 2026-10-03 |
+
 ## 1. Où en sont les programmes
 
 | programme | état | prochaine action |

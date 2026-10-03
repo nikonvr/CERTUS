@@ -102,7 +102,8 @@ def main() -> None:
 
     # Standardized initialization with COMMON
 
-    init_certus_app("CERTUS-DESIGN", app=app)
+    # DESIGN starts its own WarmupWorker; keep the global JIT thread off.
+    init_certus_app("CERTUS-DESIGN", app=app, jit_warmup=False)
 
     try:
         from certus.utils.certus_ux import build_premium_overrides

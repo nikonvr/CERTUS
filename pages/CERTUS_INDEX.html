@@ -977,6 +977,18 @@
     </li>
 </ul>
 
+<div class="mermaid">
+    flowchart LR
+    A["IR candidate: film n, k and thickness"] --> B{"Absorbing substrate data supplied?"}
+    B -->|Yes| C["Front film interface: substrate n minus i k"]
+    C --> D["Bulk Beer-Lambert attenuation"]
+    D --> E["Inner and rear interfaces: real substrate n"]
+    E --> F["Incoherent plate R and T"]
+    B -->|No| G["Transparent-substrate R and T"]
+    F --> H["Compare with measured spectra"]
+    G --> H
+</div>
+
 <h3>6.5 Optimization Sequence — Exact Code Flow</h3>
 
 <div class="mermaid">

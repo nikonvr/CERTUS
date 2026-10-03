@@ -272,11 +272,10 @@
             Phase 04 (SOL 3b) resolves this structurally. The $n(\sigma)$ nodes are frozen, and the vector is reduced to the absorptive variables $L_i$ and $\sigma_L$. A continuous penalty is applied to the second derivative of the absorptive profile:
             $$ P_{reg} = W_{reg} \cdot \sum \left( L_{i+1} - 2L_i + L_{i-1} \right)^2 $$
             This penalizes oscillatory behavior and keeps low-sensitivity sub-arrays smooth and physically stable.
-            <br><br>
+        </p>
             <div style="background-color: #e2e3e5; border-left: 4px solid #d6d8db; padding: 10px; margin-bottom: 15px;">
                 <strong>Scientific Note (Tikhonov Bias):</strong> Tikhonov regularization intrinsically introduces a bias-variance trade-off. Penalizing curvature mathematically introduces a deliberate smoothing bias, meaning it suppresses noise but may also artificially broaden true, narrow physical absorption peaks.
             </div>
-        </p>
         <h3>7.1 Step-by-Step Role of SOL 3b</h3>
         <p>
             SOL 3b is a sensitivity-conditioned sub-problem. The incoming state from the broader optimization is projected onto a representation in which the refractive structure is fixed. The algorithm then optimizes only the absorptive geometry and amplitudes in regions where the transmission sensitivity to $k$ would otherwise be too weak to constrain them robustly. If the projected warm start is already worse than the incoming incumbent by a meaningful margin, the code can skip the stage rather than force a degrading refinement.
@@ -426,7 +425,7 @@
             <strong>Scientific nominal mode</strong> (when enabled): $\mathrm{RMSE}_{\mathrm{ref}}$ is tied to <code>spectral_rmse_best_value</code> on the polished nominal $n(\lambda),k(\lambda)$; the nominal curves are included as the first family member without widening the envelope toward a separate solver export. After that, the pipeline runs a <strong>center refit</strong> at $d_{\mathrm{opt}}$ as a <strong>best-of-$N$</strong> multi-start (label <code>Center</code> in logs). With adaptive absolute tolerance, auxiliary probes (<code>AdaptiveTol ±i</code>) sample nearby thicknesses to stabilize an effective $\Delta$ before the walks.
         </p>
         <p>
-            <strong>Default absolute slack (code defaults, 2026.05.08):</strong> for <code>rmse_threshold_mode = abs_delta_adaptive</code> (INDEX-SPLINE default), the nominal additive slack <code>rmse_abs_tolerance</code> / <code>corridor_profile_d_rmse_abs_tolerance</code> is <strong>$2.5\times 10^{-4}$</strong> on the masked spectral RMSE scale. The adaptive floor <code>adaptive_rmse_abs_min</code> is <strong>$2.5\times 10^{-5}$</strong>. Crucially, the algorithm determines the active tolerance $\Delta_{\mathrm{eff}}$ dynamically by fitting a local quadratic $\text{RMSE}(d)$ valley using a probing step of <strong>0.5 nm</strong>. It then multiplies the residual noise (MAD) of this parabola by a <strong>noise factor of 2.0</strong>. This physically meaningful "Profile Likelihood" approach ties the corridor width directly to the physical rigidity of the index/thickness coupling and the experimental noise floor, rejecting arbitrary hardcoded thresholds.
+            <strong>Default heuristic slack (code defaults, 2026.05.08):</strong> for <code>rmse_threshold_mode = abs_delta_adaptive</code> (INDEX-SPLINE default), the nominal additive slack <code>rmse_abs_tolerance</code> / <code>corridor_profile_d_rmse_abs_tolerance</code> is <strong>$2.5\times 10^{-4}$</strong> on the masked spectral RMSE scale. The adaptive floor <code>adaptive_rmse_abs_min</code> is <strong>$2.5\times 10^{-5}$</strong>. The algorithm estimates an active tolerance $\Delta_{\mathrm{eff}}$ by fitting a local quadratic to $\text{RMSE}(d)$ with a probing step of <strong>0.5 nm</strong>, then scales the residual MAD by <strong>2.0</strong>. This is a local numerical heuristic, not a likelihood-ratio threshold or a measured experimental noise floor. The separate <code>mode="lr"</code> enables a likelihood-ratio rule when its noise assumptions are supplied.
         </p>
         <div class="eq-box">
             <strong>Parabolic Approximation & Robust Noise Estimation:</strong>
@@ -446,34 +445,17 @@
             <strong>Walk phase:</strong> two thickness marches proceed from the center seed, typically <strong>in parallel</strong> ($+d$ and $-d$, configurable). Each step applies the same fixed-$d$ refit budget; continuation may <strong>auto-extend the span</strong> when the RMSE slope toward the threshold implies a longer excursion. When a trial crosses the active threshold, the code can <strong>bisection-refine</strong> the admissible boundary. The outcome is a reported $d$ interval plus $n(\lambda),k(\lambda)$ envelopes over accepted refits.
         </p>
         <div class="mermaid">
-        flowchart TD
-            classDef start fill:#f1f5f9,stroke:#475569,stroke-width:2px,font-weight:bold
-            classDef process fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px
-            classDef decision fill:#fff3e0,stroke:#f59e0b,stroke-width:2px
-            classDef terminal fill:#1e293b,stroke:none,color:#fff,font-weight:bold
-
-            A(["Nominal Solution: d_opt, RMSE_ref"]):::start --> B
-            B["Center Refit (Best-of-N)"]:::process --> C{"Adaptive Δ?"}:::decision
-            C -- Yes --> D["Sample Adaptive Probes"]:::process
-            C -- No --> E
-            D --> E["Initialize Acceptance Threshold:<br>RMSE_max = RMSE_ref + Δ_eff"]:::process
-            E --> F1["Parallel Walk: +Δd"]:::process
-            E --> F2["Parallel Walk: -Δd"]:::process
-            
-            F1 --> G1{"RMSE(d) <= RMSE_max?"}:::decision
-            F2 --> G2{"RMSE(d) <= RMSE_max?"}:::decision
-            
-            G1 -- Yes --> H1["Accept (d, n, k)<br>Store to Envelope"]:::process
-            G1 -- No --> I1["Bisection Boundary Refinement"]:::process
-            
-            G2 -- Yes --> H2["Accept (d, n, k)<br>Store to Envelope"]:::process
-            G2 -- No --> I2["Bisection Boundary Refinement"]:::process
-            
-            H1 --> F1
-            H2 --> F2
-            
-            I1 --> J(["Merge Envelopes:<br>Δn(λ), Δk(λ), d_min, d_max"]):::terminal
-            I2 --> J
+            flowchart TD
+            A["Nominal solution and center refit"] --> B{"Corridor acceptance mode?"}
+            B -->|Default RMSE heuristic| C["Resolve fixed or adaptive RMSE threshold"]
+            B -->|Optional likelihood ratio| D["Resolve chi-square threshold"]
+            C --> E["Walk thickness in both directions; refit at fixed d"]
+            D --> E
+            E --> F{"Configured metric accepted?"}
+            F -->|Yes| G["Retain thickness and fitted n/k curves"]
+            G --> E
+            F -->|No| H["Refine boundary when enabled"]
+            H --> I["Report local thickness interval and n/k envelopes"]
         </div>
         <p>
             <strong>Minimum half-width on $k$ (method floor):</strong> after the algorithmic $k(\lambda)$ envelope $[k_{\text{lo}}(\lambda),\, k_{\text{hi}}(\lambda)]$ is assembled, the engine enforces a minimum linear half-width $\text{hw} = 10^{-4}$ relative to the spectral reference $k_{\text{ref}}(\lambda)$ using the following bounds-widening equations:

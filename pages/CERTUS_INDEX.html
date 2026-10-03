@@ -60,19 +60,20 @@
             <h1>CERTUS-INDEX</h1>
             <p style="font-size: 1.3em; color: #6a1b9a; font-weight: 300;">Advanced Tauc-Lorentz-Urbach Characterization
                 Engine</p>
-            <p style="font-size: 1.0em; color: #ab47bc; font-weight: 300;">Scientific Revision Pro 2026.04.17 — Complete Algorithm Documentation</p>
+            <p style="font-size: 1.0em; color: #ab47bc; font-weight: 300;">Implementation review: 2026-10-03 — algorithm documentation</p>
         </header>
 
         <div class="abstract">
             <strong>Executive Summary:</strong> CERTUS-INDEX is a high-level scientific tool for extracting the optical
             constants ($n, k$) of semiconductors and dielectrics over the full VIS–IR spectral range (300–5000 nm).
-            It combines a rigorous <a href="CERTUS_Optical_Theory_Guide.html" target="_blank"><strong>Tauc-Lorentz-Urbach (TLU) global fit</strong></a> (<a href="https://en.wikipedia.org/wiki/Kramers%E2%80%93Kronig_relations" target="_blank">Kramers-Kronig consistent</a>)
-            with an optional <a href="CERTUS_INDEX_SPLINE.html" target="_blank"><strong>Spline Refinement pipeline</strong></a> that achieves RMSE &lt; 0.005 on real-world
-            data.
+            It combines a rigorous <a href="CERTUS_Optical_Theory_Guide.html" target="_blank" rel="noopener noreferrer"><strong>Tauc-Lorentz-Urbach (TLU) global fit</strong></a> (<a href="https://en.wikipedia.org/wiki/Kramers%E2%80%93Kronig_relations" target="_blank" rel="noopener noreferrer">Kramers-Kronig consistent</a>)
+            with an optional <a href="CERTUS_INDEX_SPLINE.html"><strong>Spline Refinement pipeline</strong></a>.
+            Fit error depends on the material, measurement channels, spectral mask and selected model; no universal
+            RMSE threshold is implied.
             When the spectrum extends beyond 2500 nm, a <strong>two-stage pipeline</strong> runs automatically: TLU is
             fitted on 1000–2200 nm only, then <strong>IR Global Model (Phase 2)</strong> refines $n$, $k$ over the full
-            range: <strong>Stage 0–2</strong> (<a href="https://en.wikipedia.org/wiki/Sellmeier_equation" target="_blank">Sellmeier</a> 5p + empirical k 8p with PGlobal + <a href="https://en.wikipedia.org/wiki/Limited-memory_BFGS" target="_blank">L-BFGS-B</a>), then
-            <strong>Phase 2.3</strong> (<a href="https://en.wikipedia.org/wiki/B-spline" target="_blank">spline</a> $k$ in $\log k$ with knot deduction, Pass 1 + Pass 2, optional knot
+            range: <strong>Stage 0–2</strong> (<a href="https://en.wikipedia.org/wiki/Sellmeier_equation" target="_blank" rel="noopener noreferrer">Sellmeier</a> 5p + empirical k 8p with PGlobal + <a href="https://en.wikipedia.org/wiki/Limited-memory_BFGS" target="_blank" rel="noopener noreferrer">L-BFGS-B</a>), then
+            <strong>Phase 2.3</strong> (<a href="https://en.wikipedia.org/wiki/B-spline" target="_blank" rel="noopener noreferrer">spline</a> $k$ in $\log k$ with knot deduction, Pass 1 + Pass 2, optional knot
             reduction 8→4), then <strong>Phase 2.1</strong> (90% T / 10% R refinement from the spline result).
             The optional Spline stage (spectrum ≤2500 nm) uses pointwise IR inversion, L-BFGS-B knot optimization,
             and a final joint re-optimization of thickness, knot positions, and $n$/$k$ values.
@@ -546,7 +547,7 @@
     noise from
     interfering with the optimization algorithms without artificially flattening the relevant
     interference
-    fringes, CERTUS-INDEX implements a <a href="https://en.wikipedia.org/wiki/Savitzky%E2%80%93Golay_filter" target="_blank"><strong>Progressive Blended Savitzky-Golay</strong></a> filter upon
+    fringes, CERTUS-INDEX implements a <a href="https://en.wikipedia.org/wiki/Savitzky%E2%80%93Golay_filter" target="_blank" rel="noopener noreferrer"><strong>Progressive Blended Savitzky-Golay</strong></a> filter upon
     data
     loading.
 </p>
@@ -836,7 +837,7 @@
 
 <h4>Phase 2: L-BFGS-B Polish (Quasi-Newton)</h4>
 <p>
-    The PGLOBAL result is refined using the <a href="https://en.wikipedia.org/wiki/Limited-memory_BFGS" target="_blank"><strong>L-BFGS-B (Limited-memory
+    The PGLOBAL result is refined using the <a href="https://en.wikipedia.org/wiki/Limited-memory_BFGS" target="_blank" rel="noopener noreferrer"><strong>L-BFGS-B (Limited-memory
         Broyden-Fletcher-Goldfarb-Shanno
         with Bounds)</strong></a> algorithm.
     It is a Quasi-Newton method that does not directly evaluate the second-derivative matrix (the
@@ -1162,7 +1163,7 @@
     ($C^2$).
 </p>
 <p>To avoid "overfitting" optical noise, which would result in non-physical ripples in the index
-    profile, a <a href="https://en.wikipedia.org/wiki/Tikhonov_regularization" target="_blank"><strong>Tikhonov smoothing penalty (Regularization)</strong></a> is added to the global
+    profile, a <a href="https://en.wikipedia.org/wiki/Tikhonov_regularization" target="_blank" rel="noopener noreferrer"><strong>Tikhonov smoothing penalty (Regularization)</strong></a> is added to the global
     objective function.</p>
 <table>
     <tr>
@@ -1235,22 +1236,20 @@
 <h2>8. Frosted Glass Mode</h2>
 
 <h3>8.1 Physical Problem</h3>
-<p>For single-side polished wafers or intentionally roughened substrates, the back surface scatters
-    light
-    instead of reflecting it coherently. Standard TMM equations are invalid.</p>
+<p>For a deliberately roughened back face, the measured specular reflectance can be modeled without a returning
+    back-face contribution. The film's front-surface TMM still applies.</p>
 
 <h3>8.2 Mathematical Treatment</h3>
 <p>CERTUS-INDEX models this as an <strong>infinite substrate</strong> where back-reflections are
     eliminated:</p>
 <div class="eq-box">
-    $$ R_{frosted} = \left| \frac{n_{film} - n_0}{n_{film} + n_0} \right|^2 + \text{(thin-film
-    interference
-    terms)} $$
+    $$ R_{frosted}(\lambda)=\left|r_{\mathrm{front\ stack}}(\lambda)\right|^2, $$
 </div>
 <p>The code uses <code>calculate_reflection_infinite_substrate_array</code> which:</p>
 <ul>
     <li>Computes front-surface reflection via TMM.</li>
-    <li>Adds incoherent substrate absorption (no interference).</li>
+    <li>Uses the front-surface stack response without a back-face term; the frosted-glass mode does not add an
+        incoherent return from the substrate.</li>
     <li>Ignores back-surface Fresnel contribution.</li>
 </ul>
 
@@ -1259,7 +1258,8 @@
 <div class="eq-box">
     $$ R_{substrate}^{frosted} = \left| \frac{n_{sub} - 1}{n_{sub} + 1} \right|^2 $$
 </div>
-<p>Unlike polished substrates where back-reflection creates interference fringes.</p>
+<p>The polished-plate mode includes an incoherent rear-face contribution; its intensity does not form coherent
+    substrate fringes in this model.</p>
 
 
 
@@ -1408,38 +1408,23 @@
 <!-- ================================================================ -->
 <!--  PRO 2026 ERGONOMICS & UX                                         -->
 <!-- ================================================================ -->
-<h2>11. Pro 2026 Ergonomics & UI Upgrades</h2>
-<p>
-    The CERTUS Suite features a fundamentally modernized UI engineered for high-speed scientific
-    workflows.
-    All mathematical kernels (TMM, Monte Carlo, SEEL) are JIT-compiled to native machine code via
-    <strong>Numba</strong>, strictly enforcing <code>float64</code> and <code>complex128</code>
-    datatypes for
-    maximum numerical stability (15 significant digits).
-</p>
-<h3>11.1 Global Keyboard Shortcuts</h3>
-<p>To maximize efficiency, the interface actively maps physical keystrokes to core pipeline triggers:
-</p>
+<h2>11. Interface Controls</h2>
+<p>The INDEX window registers shortcuts through <code>install_standard_shortcuts</code> for actions whose callbacks
+    are available in the current window.</p>
+<h3>11.1 INDEX Keyboard Shortcuts</h3>
 <ul>
-    <li><kbd>Ctrl</kbd> + <kbd>S</kbd> : Save current configuration natively.</li>
-    <li><kbd>Ctrl</kbd> + <kbd>O</kbd> : Load an existing configuration.</li>
-    <li><kbd>F5</kbd> or <kbd>Ctrl</kbd> + <kbd>R</kbd> : Instantly launch the primary optimization or
-        fitting Step (Step 2).</li>
-    <li><kbd>Ctrl</kbd> + <kbd>Z</kbd> : Undo last configuration change (5-level stack via <code>CertusBaseApp</code>).</li>
-    <li><kbd>Esc</kbd> : Quickly dismiss detached windows, live monitors, and auxiliary floating charts.
-    </li>
+    <li><kbd>Ctrl</kbd> + <kbd>S</kbd>: save configuration; <kbd>Ctrl</kbd> + <kbd>O</kbd>: load configuration.</li>
+    <li><kbd>F5</kbd>: start optimization; <kbd>Esc</kbd>: request a stop.</li>
+    <li><kbd>Ctrl</kbd> + <kbd>+</kbd>, <kbd>Ctrl</kbd> + <kbd>-</kbd>, <kbd>Ctrl</kbd> + <kbd>0</kbd>: zoom in, zoom out, reset zoom.</li>
 </ul>
 <h3>11.2 Dynamic Processing Feedback</h3>
-<p>Heavy Background Tasks (like full DP Strategy extraction or Numba lazy-compilation hooks) are
-    completely
-    thread-isolated. The architecture enforces <strong>Dynamic Wait Cursors (Spinners)</strong> and rich
-    button
-    Tooltips to provide absolute real-time state awareness without locking the application's event loop.
+<p>The worker reports progress to the window while numerical fitting runs. Inspect the displayed state and logs
+    before interpreting an incomplete result.
 </p>
 
 <div class="footer">
     <p>Generated from source analysis of <code>CERTUS_INDEX.py</code>, <code>certus_ui.py</code>,
-        <code>certus_pointwise_ir.py</code> &mdash; Revision 2026.04.17</p>
+        <code>certus_pointwise_ir.py</code> &mdash; implementation review: 2026-10-03</p>
     <p>&copy; CERTUS Scientific Suite v26-04 &bull; Scientific Analysis Report</p>
 </div>
     </div>

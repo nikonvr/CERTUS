@@ -60,18 +60,18 @@
         <header>
             <h1>CERTUS-RE</h1>
             <p style="font-size: 1.2em; color: #555;">Reverse Engineering from Measured Spectra</p>
-            <p style="font-size: 1.0em; color: #777; font-weight: 300;">Scientific Revision Pro 2026.04.17 — RE Worker &amp;
+            <p style="font-size: 1.0em; color: #777; font-weight: 300;">Implementation review: 2026-10-03 — RE worker &amp;
                 Batch Tooling</p>
         </header>
 
         <div class="abstract">
-            <strong>Executive Summary:</strong> CERTUS-RE solves a <a href="https://en.wikipedia.org/wiki/Non-linear_least_squares" target="_blank"><strong>constrained nonlinear least-squares</strong></a>
+            <strong>Executive Summary:</strong> CERTUS-RE solves a <a href="https://en.wikipedia.org/wiki/Non-linear_least_squares" target="_blank" rel="noopener noreferrer"><strong>constrained nonlinear least-squares</strong></a>
             inverse problem: find physical layer thicknesses and smooth corrections \(\Delta\mathrm{Re}\) to high/low
             index dispersions (and optionally a Cauchy substrate tail) such that simulated <strong>R/T</strong> from the
             shared oblique <strong>transfer-matrix</strong> stack matches tabulated measurements. The optimiser is
-            <strong>TRF</strong> (<a href="https://en.wikipedia.org/wiki/Trust_region" target="_blank">trust-region reflective</a>) on a vector residual built from <strong>\(1/\sqrt{\lambda}\)</strong>-weighted
+            <strong>TRF</strong> (<a href="https://en.wikipedia.org/wiki/Trust_region" target="_blank" rel="noopener noreferrer">trust-region reflective</a>) on a vector residual with <strong>trapezoidal $\Delta\ln\lambda$ spectral weights</strong>,
             spectral error plus a <strong>QWOT</strong> channel at a reference wavelength, with <strong>dead zones</strong>,
-            <a href="https://en.wikipedia.org/wiki/Tikhonov_regularization" target="_blank"><strong>Tikhonov</strong></a> curvature on spline knots, and an <strong>HL \(\sqrt{w}\)</strong> penalty on
+            <a href="https://en.wikipedia.org/wiki/Tikhonov_regularization" target="_blank" rel="noopener noreferrer"><strong>Tikhonov</strong></a> curvature on spline knots, and an <strong>HL \(\sqrt{w}\)</strong> penalty on
             \(\Delta\mathrm{Re}\) relative to a wavelength-dependent envelope. <strong>RMSE*</strong> is a
             <em>post-hoc</em> ranking scalar with fixed \(\alpha_\mathrm{ref}\), independent of phase-varying \(\alpha\)
             used inside the fit. This document ties each mechanism to what you configure in the GUI or Excel and what
@@ -182,13 +182,14 @@
         </ul>
 
         <h2>5. Objective Function — Spectral + QWOT (How RMSE∑ Is Built)</h2>
-        <h3>5.1 Spectral channel (1/√λ weighting)</h3>
+        <h3>5.1 Spectral channel (log-wavelength quadrature)</h3>
         <p>
-            For each target, contributions inside its wavelength mask use a per-point weight
-            \(w_\lambda(\lambda_i)=1/\sqrt{\max(\lambda_i,1\,\mathrm{nm})}\), <em>the same</em> as in
-            <code>_re_rmse_oblique_weighted</code>. This down-weights noisy short-λ channels relative to a uniform RMS
-            and matches the TRF residual assembly. The GUI spin for target importance maps to an extra per-target scalar
-            multiplier on top of \(w_\lambda\).
+            For each target, contributions inside its wavelength mask use weights from
+            <code>re_objective_wls_weight_log_trap</code>, which delegates to
+            <code>spectral_rmse_weights</code>. The weights approximate trapezoidal integration over $\ln\lambda$
+            and are normalized to sum to the number of grid points. This reduces dependence on nonuniform wavelength
+            sampling. The target-importance control adds a per-target multiplier; the same spectral weights enter
+            the TRF residual and <code>_re_rmse_oblique_weighted</code>.
         </p>
         <div class="eq-box">
             \[
@@ -517,7 +518,7 @@
 
         <div class="footer">
             <p>CERTUS Optical Framework — RE Module Technical Datasheet</p>
-            <p>Revision 2026.04.17 (expanded scientific spec) | CERTUS_RE.py · certus_re_workers.py · certus_re_helpers.py · certus_re_worker_utils.py</p>
+            <p>Implementation review: 2026-10-03 | CERTUS_RE.py · certus_re_workers.py · certus_re_helpers.py · certus_re_worker_utils.py</p>
         </div>
     </div>
 

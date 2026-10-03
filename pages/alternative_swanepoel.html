@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,11 +20,11 @@
 <body class="antialiased">
 
 <nav class="bg-white border-b border-slate-200">
-    <div class="max-w-5xl mx-auto px-6 py-3 flex justify-between items-center">
+    <div class="max-w-5xl mx-auto px-6 py-3 flex flex-wrap justify-between items-center gap-y-3">
         <a href="CERTUS_HUB.html" class="flex items-center text-slate-800 font-bold font-sans text-xl tracking-wider hover:text-pink-600 transition-colors">
             <span class="text-pink-600 mr-2">◭</span> CERTUS
         </a>
-        <div class="text-sm font-sans space-x-6 text-slate-600 font-medium hidden md:flex">
+        <div class="text-sm font-sans flex flex-wrap w-full md:w-auto justify-start md:justify-end gap-x-4 gap-y-2 text-slate-600 font-medium">
             <a href="CERTUS_HUB.html" class="hover:text-pink-600 transition-colors">HUB</a>
             <a href="CERTUS_DESIGN.html" class="hover:text-pink-600 transition-colors">DESIGN</a>
             <a href="metrology.html" class="hover:text-pink-600 transition-colors">Metrology</a>
@@ -42,7 +42,7 @@
             Overcoming Photometric Amplitude
         </h1>
         <p class="text-xl md:text-2xl font-light text-slate-300 font-sans max-w-3xl leading-relaxed">
-            The Topological Revolution: Why the pure spectral localization of extrema historically outclasses the Swanepoel envelope method.
+            A comparison of fringe-position and envelope-amplitude methods, with a historical synthetic result whose run data are not linked here.
         </p>
     </div>
 </header>
@@ -56,40 +56,40 @@
                 The Swanepoel Limit
             </h2>
             <p class="mb-4 text-slate-700">
-                The classic Swanepoel method (1983) extracts the refractive index $n$ and the extinction coefficient $k$ by postulating that the amplitudes of the extrema ($T_{max}$, $T_{min}$) are exact and free of defects. 
+                The Swanepoel envelope method estimates optical constants from measured transmission maxima and minima. Amplitude calibration, scattering and spectral resolution can affect those envelopes.
             </p>
             <p class="mb-4 text-slate-700">
-                <strong>However, this is an experimental fallacy.</strong> Transmission amplitude levels are heavily altered by atomic roughness (scattering effect), sample holder parallelism, spectral convolution due to detector resolution (slit width), and photomultiplier non-linearity.
+                Transmission amplitude can be affected by roughness, alignment, finite spectral resolution and detector response. These effects need an uncertainty budget before an envelope-derived $n$ or $k$ is interpreted.
             </p>
             <p class="text-slate-700">
-                Result: an amplitude loss of purely geometric or material origin is immediately – and falsely – interpreted cartographically by Swanepoel as a severe increase in the absorption parameter (a false $k$) and a distortion of the index $n$.
+                If unmodeled transmission loss is attributed entirely to film absorption, an envelope inversion can bias $k$ and $n$. The size and direction of that bias depend on the measurement and model.
             </p>
         </div>
 
         <div class="bg-pink-50 p-6 rounded-xl border border-pink-100 shadow-sm">
             <h2 class="text-2xl font-bold font-sans text-pink-900 mb-4 flex items-center">
                 <svg class="w-6 h-6 mr-2 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                The Topological Paradigm
+                Fringe-Position Approach
             </h2>
             <p class="mb-4 text-pink-800">
-                The new CERTUS approach completely ignores peak amplitude. It exploits the only physically unshakable information: <strong>the spectral abscissa ($\lambda$) of interference maxima and minima.</strong>
+                A position-based approach uses the wavelengths of detected interference extrema. Those positions can provide information about optical thickness, provided the fringes remain resolved and correctly assigned.
             </p>
             <p class="mb-4 text-pink-800">
-                Even if the actual amplitude of a fringe is blurred, destroyed, or halved by a spectrophotometer slit or surface scattering (Rayleigh), <strong>the central position of its zero derivative $\frac{dT_{rel}}{d\lambda} = 0$ remains mathematically invariant</strong>.
+                Peak locations are not invariant to asymmetric noise, overlapping features or convolution. A position-based method therefore needs a check of wavelength calibration and peak-detection uncertainty.
             </p>
             <ul class="list-disc list-inside space-y-2 text-pink-800">
-                <li>Stability to intensity variations</li>
-                <li>Independence from spectral detection resolution</li>
-                <li>Utilization of grating calibration (accuracy $< 0.1$ nm)</li>
+                <li>Less direct dependence on absolute intensity calibration</li>
+                <li>Dependence on resolved fringe positions and wavelength calibration</li>
+                <li>Need for an explicit position-error model</li>
             </ul>
         </div>
     </section>
 
     <!-- Rest of the report with static placeholder for json data -->
     <section>
-        <h2 class="text-3xl font-bold font-sans text-slate-800 mb-6">Monte-Carlo Robustness Statistical Simulation</h2>
+        <h2 class="text-3xl font-bold font-sans text-slate-800 mb-6">Historical Synthetic Inversion Snapshot</h2>
         <p class="mb-6 text-xl text-slate-600 font-light max-w-4xl">
-            To prove the absolute supremacy of topological inversion, an exhaustive statistical audit was conducted. This protocol tests the simultaneous extraction of 6 parameters (dispersion <span class="font-bold">Continuous Spline</span> model and $d$) against exclusive instrumental noise on the $\lambda$ axis.
+            The table below is a preserved synthetic snapshot for a six-parameter spline-and-thickness inversion. Its generating script and input files are not linked in this page, so the values should be treated as historical results rather than a reproduced benchmark. The rows themselves show no valid inversion at every listed nonzero wavelength-noise level.
         </p>
         
         <div class="grid md:grid-cols-3 gap-6 mb-12">
@@ -105,8 +105,8 @@
             </div>
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                 <div class="text-slate-400 text-sm font-sans uppercase font-bold tracking-wider mb-2">Iterations per level</div>
-                <div class="text-2xl font-bold text-slate-800">50 Random Draws</div>
-                <div class="text-sm mt-2 text-slate-500">Global Optimizer (PGlobal)</div>
+                <div class="text-2xl font-bold text-slate-800">Run data unavailable</div>
+                <div class="text-sm mt-2 text-slate-500">The zero-noise row reports 100/100; its sampling protocol is not linked.</div>
             </div>
         </div>
 
@@ -120,7 +120,7 @@
                         <th class="p-4 border-b">Noise $\sigma_\lambda$</th>
                         <th class="p-4 border-b">Thickness d (µm)</th>
                         <th class="p-4 border-b">Nominal index (n₁)</th>
-                        <th class="p-4 border-b">Validated Success</th>
+                        <th class="p-4 border-b">Reported outcome</th>
                     </tr>
                 </thead>
                 <tbody id="stats-body" class="text-slate-800">
@@ -130,10 +130,10 @@
         <td class="p-4 border-b font-mono">3.037533 ± 0.029543 um <span class="text-xs text-slate-400">(0.98%)</span></td>
         <td class="p-4 border-b font-mono">2.539715 ± 0.025028</td>
         <td class="p-4 border-b"><span class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-xs font-bold uppercase">100/100 OK</span></td>
-    </tr><tr><td class="p-4 border-b font-mono font-bold text-pink-600">0.05 nm</td><td colspan="3" class="p-4 border-b text-red-400 italic font-mono">No valid inversion (MSE criteria &lt; 1.0)</td></tr>
-<tr><td class="p-4 border-b font-mono font-bold text-pink-600">0.1 nm</td><td colspan="3" class="p-4 border-b text-red-400 italic font-mono">No valid inversion (MSE criteria &lt; 1.0)</td></tr>
-<tr><td class="p-4 border-b font-mono font-bold text-pink-600">0.2 nm</td><td colspan="3" class="p-4 border-b text-red-400 italic font-mono">No valid inversion (MSE criteria &lt; 1.0)</td></tr>
-<tr><td class="p-4 border-b font-mono font-bold text-pink-600">0.5 nm</td><td colspan="3" class="p-4 border-b text-red-400 italic font-mono">No valid inversion (MSE criteria &lt; 1.0)</td></tr>
+    </tr><tr><td class="p-4 border-b font-mono font-bold text-pink-600">0.05 nm</td><td colspan="3" class="p-4 border-b text-red-400 italic font-mono">No valid inversion (MSE criterion &lt; 1.0)</td></tr>
+<tr><td class="p-4 border-b font-mono font-bold text-pink-600">0.1 nm</td><td colspan="3" class="p-4 border-b text-red-400 italic font-mono">No valid inversion (MSE criterion &lt; 1.0)</td></tr>
+<tr><td class="p-4 border-b font-mono font-bold text-pink-600">0.2 nm</td><td colspan="3" class="p-4 border-b text-red-400 italic font-mono">No valid inversion (MSE criterion &lt; 1.0)</td></tr>
+<tr><td class="p-4 border-b font-mono font-bold text-pink-600">0.5 nm</td><td colspan="3" class="p-4 border-b text-red-400 italic font-mono">No valid inversion (MSE criterion &lt; 1.0)</td></tr>
 
                     <!-- JSON data ends -->
                 </tbody>
@@ -141,9 +141,9 @@
         </div>
         
         <div class="mt-8 bg-sky-50 border border-sky-100 p-8 rounded-2xl">
-            <h3 class="text-xl font-bold font-sans text-sky-900 mb-4">Fundamental Conclusion</h3>
+            <h3 class="text-xl font-bold font-sans text-sky-900 mb-4">What This Table Supports</h3>
             <p class="text-sky-800 font-sans">
-                The observed variance on the final refractive index and the extracted thickness demonstrates that <strong>even with an enormous and unrealistic noise of 0.5 nm</strong> on the fringe positions, the physics of the thickness is preserved. Swanepoel would have exploded at the slightest blur on the amplitudes, whereas here, the thickness varies by <span id="mc-stat-d-pct">0.985</span>% (max. relative standard deviation on \(d\), all conditions) and the profile index by <span id="mc-stat-n-std">0.0250</span> (max. standard deviation on \(n_1\)). This topological firing protocol formally validates this approach as the worthy and more robust successor to Swanepoel for the ultra-precise characterization of thick materials.
+                The zero-noise row reports a thickness standard deviation of 0.029543 µm and an index standard deviation of 0.025028. All four nonzero-noise rows report “No valid inversion” under the stated MSE criterion. These entries do not establish robustness at 0.5 nm or a general advantage over an envelope method; that comparison would require a reproducible, matched benchmark.
             </p>
         </div>
 

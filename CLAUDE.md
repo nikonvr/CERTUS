@@ -278,9 +278,7 @@ mais **synchronisés par Drive**) : supprime-les ensuite.
   instruire » ne veut pas dire « tout est cohérent » : ils ne lisent pas les phrases.
 - `pages/*.html` sont des rapports scientifiques **en anglais**, fidèles à ce que le code fait, sans
   affirmation non étayée : chaque page doit répondre « oui » à *décrit-elle exactement ce que fait le
-  code, sans enjolivement ?* Deux pages sont en français à ce jour (`alternative_swanepoel.html`,
-  `rapport_certus_complet.html`) : les traduire, ou déclarer l'exception — pas une règle que deux fichiers
-  contredisent. Ordre de relecture : METAL, STRAT, INDEX et INDEX SPLINE, RE et DESIGN, le reste.
+  code, sans enjolivement ?* Ordre de relecture : METAL, STRAT, INDEX et INDEX SPLINE, RE et DESIGN, le reste.
 - La vitrine `pages/CERTUS_STRAT.html` a un régime strict : tout nombre sourçable dans le code
   ou dans `reports/`, la limite montrée, la structure revérifiée (`python scripts\verifier_html.py pages\CERTUS_STRAT.html`).
 

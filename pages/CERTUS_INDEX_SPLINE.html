@@ -69,7 +69,7 @@
         <header style="margin-top:20px;">
             <h1 style="font-size: 3rem; margin-bottom:0;">CERTUS-INDEX-SPLINE</h1>
             <h2 style="border:none; color: #0f172a; margin-top: 10px;">Scientific report on the spline-based index inversion pipeline</h2>
-            <p style="font-size: 1.2em; font-weight: 300;">This document describes the mathematical structure, parameterization, optimization flow, and uncertainty analysis used by CERTUS-INDEX-SPLINE (Revision 2026.04.17).</p>
+            <p style="font-size: 1.2em; font-weight: 300;">This document describes the mathematical structure, parameterization, optimization flow, and uncertainty analysis used by CERTUS-INDEX-SPLINE (implementation review: 2026-10-03).</p>
         </header>
 
         <div class="abstract" style="margin-top: 30px;">
@@ -80,11 +80,12 @@
         <h2>1. Motivation for a Model-Free Spline Representation</h2>
         <p>
             Classical thin-film models such as Lorentzian, Gaussian, Drude, and related oscillator forms encode strong physical assumptions about symmetry and band structure. These assumptions can be useful, but they can also be too restrictive for materials with complex absorption features.
-            <br><br>
-            <div style="background-color: #fff3cd; border-left: 4px solid #ffecb5; padding: 10px; margin-bottom: 15px;">
-                <strong>Scientific Note (Causality vs. Expressivity):</strong> By moving away from classical parametric models (like TLU), the B-spline parameterization intentionally sacrifices rigorous <a href="https://en.wikipedia.org/wiki/Kramers%E2%80%93Kronig_relations" target="_blank">Kramers-Kronig (KK) causality</a> in favor of maximal empirical expressivity. The spline fits the observed data with high fidelity but does not strictly enforce the fundamental interdependent physics between $n$ and $k$.
-            </div>
         </p>
+        <div style="background-color: #fff3cd; border-left: 4px solid #ffecb5; padding: 10px; margin-bottom: 15px;">
+            <strong>Scientific note (causality versus expressivity):</strong> The B-spline parameterization does not
+            strictly enforce <a href="https://en.wikipedia.org/wiki/Kramers%E2%80%93Kronig_relations" target="_blank" rel="noopener noreferrer">Kramers–Kronig causality</a>
+            between $n$ and $k$. A close spectral fit alone is therefore not proof of a causal material model.
+        </div>
         <p>
             In practice, materials such as non-stoichiometric oxynitrides, porous sol-gel matrices, or nanostructured transparent conducting oxides may not be well described by a small number of parametric oscillators. A spline-based representation allows the optical constants to follow the measured spectral curvature without imposing a rigid analytic shape.
         </p>
@@ -384,6 +385,12 @@
         <p>
             In a manuscript, the practical rule is straightforward: if the fitted spectrum remains below the far-IR trigger, report the <strong>12-node canonical topology</strong>; if the spectral support extends beyond the trigger and the last sigma segment is subdivided, report the <strong>14-node IR-extended topology</strong>. This distinction changes both the dimension of the inverse problem and the class of long-wave absorption and dispersion shapes that the model can represent.
         </p>
+        <h2>Section 11: Limits of the Empirical Fit</h2>
+        <p>The spline stages estimate curves from the supplied spectral channels and active wavelength mask. Similar
+            spectra may be reproduced by different thickness and spline parameters. Report the fit mask, model
+            topology and objective alongside the curves; independent measurements are needed to test extrapolation
+            or material causality.</p>
+
         <h2>Section 12: Phase 09 Corridor Engine</h2>
         <p>
             The corridor stage implemented in <code>spline_profile_corridors.py</code> is not a generic post-processing utility. It is a dedicated profiled-refit engine designed to quantify local identifiability of thickness $d$ while preserving the same spectral forward model and masking conventions as the main spline inversion pipeline.
@@ -604,7 +611,7 @@
         </p>
         <h3>14.2 Auto-clean</h3>
         <p>
-            The <strong>Auto-clean</strong> button activates a sparsity-enforcing workflow. Rather than running a full $O(N)$ solver pass for each knot, it uses <a href="https://en.wikipedia.org/wiki/Monotone_cubic_interpolation" target="_blank"><strong>PCHIP interpolation</strong></a> to pre-screen and rank node sensitivity. Only the top candidates are promoted to a full L-BFGS-B polish. It also applies a <strong>2D Neighbor Pull</strong> strategy: when a node is removed, the engine tests inward micro-shifts of adjacent nodes to compensate for the lost degree of freedom and reduce artificial RMSE spikes.
+            The <strong>Auto-clean</strong> button activates a sparsity-enforcing workflow. Rather than running a full $O(N)$ solver pass for each knot, it uses <a href="https://en.wikipedia.org/wiki/Monotone_cubic_interpolation" target="_blank" rel="noopener noreferrer"><strong>PCHIP interpolation</strong></a> to pre-screen and rank node sensitivity. Only the top candidates are promoted to a full L-BFGS-B polish. It also applies a <strong>2D Neighbor Pull</strong> strategy: when a node is removed, the engine tests inward micro-shifts of adjacent nodes to compensate for the lost degree of freedom and reduce artificial RMSE spikes.
         </p>
         <div class="mermaid">
         flowchart LR
@@ -736,7 +743,7 @@
         </table>
         <div style="margin-top: 40px; text-align: center; color: #64748b; font-size: 0.9em; padding-bottom: 20px;">
             <hr style="margin-bottom: 10px; border-top: 1px solid #cbd5e1;">
-            <i>Report generated via CERTUS scientific internal code audit routine • Core system module data integrity version 2026.04.17</i>
+            <i>Implementation review: 2026-10-03. Confirm scientific conclusions against the cited model and input data.</i>
         </div>
     </div>
 </body>

@@ -35,9 +35,10 @@ gel PyInstaller 6.22.3 isolé, `[CERTUS] release checks PASSED` pour le hub et l
 natifs distincts en §4. R117 (`121b08f8`) corrige l'interface avant d'INDEX sur lame
 absorbante : oracle `1113 passed`, C1 `8 008` tableaux inchangés au bit hors noyau corrigé.
 R118 (`f37bbaf8`) active `faulthandler` dans les workers UI : suite complète verte ci-dessus.
-R119 (`e58aff16`, `463cc6f9`, `eafe4155`, `4498a702`, `37d28259`) corrige les affirmations
+R119 (`e58aff16`, `463cc6f9`, `eafe4155`, `4498a702`, `37d28259`, `1966912e`) corrige les affirmations
 non étayées et ajoute neuf logigrammes aux rapports HTML : 15 pages, 32 schémas Mermaid rendus
-sur 32 dans Chrome, 0 erreur JavaScript ; `verifier_html.py` et `check_docs.py` à 0 défaut.
+sur 32 dans Chrome, 0 erreur JavaScript ; à 390 px, les schémas défilent dans leur cadre sans
+élargir la page ; `verifier_html.py` et `check_docs.py` à 0 défaut.
 
 | ordre | difficulté / action ouverte | première action précise | fini quand |
 |---|---|---|---|

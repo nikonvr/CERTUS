@@ -1,0 +1,449 @@
+{
+  "controls": [
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "Help",
+      "accessible": "Help",
+      "tooltip": "Open documentation for CERTUS_STRAT (F1)",
+      "enabled": true,
+      "geometry": [
+        433,
+        34,
+        60,
+        45
+      ]
+    },
+    {
+      "class": "CertusThemeToggle",
+      "name": "",
+      "text": "◐",
+      "accessible": "Switch to dark theme",
+      "tooltip": "Switch to dark theme",
+      "enabled": true,
+      "geometry": [
+        499,
+        40,
+        32,
+        46
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Save",
+      "accessible": "Save",
+      "tooltip": "Save current configuration to a file.",
+      "enabled": true,
+      "geometry": [
+        10,
+        96,
+        74,
+        42
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Load",
+      "accessible": "Load",
+      "tooltip": "Load configuration from a file.",
+      "enabled": true,
+      "geometry": [
+        89,
+        96,
+        75,
+        42
+      ]
+    },
+    {
+      "class": "QRadioButton",
+      "name": "",
+      "text": "Custom (Constant)",
+      "accessible": "Custom (Constant)",
+      "tooltip": "",
+      "enabled": true,
+      "geometry": [
+        61,
+        473,
+        413,
+        18
+      ]
+    },
+    {
+      "class": "QRadioButton",
+      "name": "",
+      "text": "Dispersive (File)",
+      "accessible": "Dispersive (File)",
+      "tooltip": "",
+      "enabled": true,
+      "geometry": [
+        61,
+        495,
+        413,
+        18
+      ]
+    },
+    {
+      "class": "QLineEdit",
+      "name": "",
+      "text": "2.3",
+      "accessible": "n (real)",
+      "tooltip": "Fixed real part of the refractive index n (constant, wavelength-independent).\nActive only in 'Custom' mode.",
+      "enabled": true,
+      "geometry": [
+        113,
+        521,
+        50,
+        40
+      ]
+    },
+    {
+      "class": "QComboBox",
+      "name": "",
+      "text": "",
+      "accessible": "Material File",
+      "tooltip": "Dispersive material file from the refractive-index database (wavelength-dependent n & k).\nActive only in 'Dispersive (File)' mode.",
+      "enabled": false,
+      "geometry": [
+        143,
+        569,
+        331,
+        40
+      ]
+    },
+    {
+      "class": "QRadioButton",
+      "name": "",
+      "text": "Custom (Constant)",
+      "accessible": "Custom (Constant)",
+      "tooltip": "",
+      "enabled": true,
+      "geometry": [
+        61,
+        704,
+        413,
+        18
+      ]
+    },
+    {
+      "class": "QRadioButton",
+      "name": "",
+      "text": "Dispersive (File)",
+      "accessible": "Dispersive (File)",
+      "tooltip": "",
+      "enabled": true,
+      "geometry": [
+        61,
+        726,
+        413,
+        18
+      ]
+    },
+    {
+      "class": "QLineEdit",
+      "name": "",
+      "text": "1.45",
+      "accessible": "n (real)",
+      "tooltip": "Fixed real part of the refractive index n (constant, wavelength-independent).\nActive only in 'Custom' mode.",
+      "enabled": true,
+      "geometry": [
+        113,
+        752,
+        50,
+        40
+      ]
+    },
+    {
+      "class": "QComboBox",
+      "name": "",
+      "text": "",
+      "accessible": "Material File",
+      "tooltip": "Dispersive material file from the refractive-index database (wavelength-dependent n & k).\nActive only in 'Dispersive (File)' mode.",
+      "enabled": false,
+      "geometry": [
+        143,
+        800,
+        331,
+        40
+      ]
+    },
+    {
+      "class": "QComboBox",
+      "name": "",
+      "text": "",
+      "accessible": "substrate",
+      "tooltip": "substrate material. 'Custom' lets you enter a fixed real index below.\nPredefined substrates fill the index field automatically.",
+      "enabled": true,
+      "geometry": [
+        167,
+        987,
+        141,
+        40
+      ]
+    },
+    {
+      "class": "QLineEdit",
+      "name": "",
+      "text": "1.73",
+      "accessible": "Index",
+      "tooltip": "Real part of the substrate refractive index (used when substrate = Custom).",
+      "enabled": true,
+      "geometry": [
+        440,
+        987,
+        50,
+        40
+      ]
+    },
+    {
+      "class": "QLineEdit",
+      "name": "",
+      "text": "1500.0",
+      "accessible": "Center λ₀ (nm)",
+      "tooltip": "Reference (center) wavelength λ₀ in nanometres.\nUsed as the nucleation anchor and to convert optical thicknesses (QWOT = λ₀/4n).\nAlso used as the nucleation wavelength for the first monochromatic monitoring block.",
+      "enabled": true,
+      "geometry": [
+        420,
+        1145,
+        70,
+        40
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusSuccessBtn",
+      "text": "Add Layer",
+      "accessible": "Add Layer",
+      "tooltip": "Add a new layer at the bottom of the stack table.",
+      "enabled": true,
+      "geometry": [
+        40,
+        1320,
+        151,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusDangerBtn",
+      "text": "Remove Layer",
+      "accessible": "Remove Layer",
+      "tooltip": "Remove the last (bottom) layer from the stack table.",
+      "enabled": true,
+      "geometry": [
+        203,
+        1320,
+        145,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Save Config",
+      "accessible": "Save Config",
+      "tooltip": "Save the current stack & all parameters to a JSON config file (Ctrl+S).",
+      "enabled": true,
+      "geometry": [
+        40,
+        1378,
+        151,
+        46
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Load Config",
+      "accessible": "Load Config",
+      "tooltip": "Load a previously saved JSON config file, restoring stack & parameters (Ctrl+O).",
+      "enabled": true,
+      "geometry": [
+        203,
+        1378,
+        145,
+        46
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Import Strat.",
+      "accessible": "Import Strat.",
+      "tooltip": "Import an external strategies JSON file generated by a previous CERTUS-STRAT run.\nAllows direct comparison of strategies without re-running the full workflow.",
+      "enabled": true,
+      "geometry": [
+        40,
+        1436,
+        151,
+        46
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Pop-Out",
+      "accessible": "Pop-Out",
+      "tooltip": "Detach the Stack Definition table into its own floating window for easier editing.",
+      "enabled": true,
+      "geometry": [
+        203,
+        1436,
+        145,
+        46
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusPrimaryBtn",
+      "text": "Step 1 (Nominal)",
+      "accessible": "Step 1 (Nominal)",
+      "tooltip": "Step 0: Computes the basic optical response of the nominal layer stack without exploration.",
+      "enabled": false,
+      "geometry": [
+        40,
+        1501,
+        151,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusPrimaryBtn",
+      "text": "Step 2 (Opti)",
+      "accessible": "Step 2 (Opti)",
+      "tooltip": "Step 2: Launches the primary DP Optimization kernel based on the Target Spectrum.",
+      "enabled": false,
+      "geometry": [
+        203,
+        1501,
+        145,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusPrimaryBtn",
+      "text": "Step 3 (Rob)",
+      "accessible": "Step 3 (Rob)",
+      "tooltip": "Step 3: Simulates thousands of robust Monte-Carlo growth scenarios for yield estimation.",
+      "enabled": false,
+      "geometry": [
+        40,
+        1557,
+        151,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusFeaturedBtn",
+      "text": " RUN FULL WORKFLOW",
+      "accessible": "RUN FULL WORKFLOW",
+      "tooltip": "Run the complete workflow in one click:\nStep 2 (DP Strategy Search) -> Step 3 (Monte Carlo Robustness Validation).\nEquivalent to pressing Step 2 then Step 3 sequentially.",
+      "enabled": false,
+      "geometry": [
+        27,
+        595,
+        293,
+        52
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusDangerBtn",
+      "text": "STOP Calculation",
+      "accessible": "STOP Calculation",
+      "tooltip": "Gracefully interrupt the running optimization.\nThe engine will finish its current block and then proceed directly to Step 3 (robustness test).",
+      "enabled": false,
+      "geometry": [
+        326,
+        594,
+        196,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "🔄  Clear / Reset",
+      "accessible": "🔄  Clear / Reset",
+      "tooltip": "Reset the entire application to factory defaults.\nStops any running processes, clears all data and results,\nand reloads the default configuration.",
+      "enabled": true,
+      "geometry": [
+        27,
+        654,
+        495,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusPrimaryBtn",
+      "text": "Show Details",
+      "accessible": "Show Details",
+      "tooltip": "Show/hide the computation log panel below the plot area.",
+      "enabled": true,
+      "geometry": [
+        2,
+        722,
+        118,
+        44
+      ]
+    }
+  ],
+  "tabs": [
+    {
+      "name": "",
+      "current": 0,
+      "tabs": [
+        "Design",
+        "Strategy Loop",
+        "Advanced",
+        "Multi-seed"
+      ]
+    }
+  ],
+  "labels": [
+    "SEEL (nm/layer)",
+    "—",
+    "ROBUSTNESS SCORE",
+    "—",
+    "CRASH RATE",
+    "—",
+    "BLOCKS",
+    "—",
+    "STRATEGIES RANKED",
+    "—",
+    "RUN STATUS",
+    "—",
+    "Welcome to CERTUS",
+    "STRAT",
+    "Predictive Monitoring Strategy",
+    "Workflow",
+    "1 Build stack · 2 Configure optimization · 3 Run workflow · 4 Inspect strategies",
+    "Material Refractive Indices",
+    "High-Index (H)",
+    "n (real):",
+    "Material File:",
+    "Low-Index (L)",
+    "n (real):",
+    "Material File:",
+    "Base Wavelength",
+    "substrate:",
+    "Index:",
+    "Reference",
+    "Center λ₀ (nm):",
+    "Stack Control & Workflow",
+    "Workflow Actions",
+    "Zoom 100%",
+    "System warming up (compiling JIT)...",
+    "♟️ 0  | 🎲 0  |  🌈️ 0",
+    "Overall progress",
+    "0%",
+    "STRAT Execution",
+    "Status: Idle • Next: start run",
+    "Zoom 100%"
+  ]
+}

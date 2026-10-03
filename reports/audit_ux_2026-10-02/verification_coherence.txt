@@ -1,0 +1,57 @@
+================================================================================================
+COHERENCE DE 8 FICHIERS .md + 15 PAGES HTML
+================================================================================================
+
+=== A. LES CONSTANTES DU CODE, ET CE QUE LES DOCUMENTS EN DISENT ===
+  (la reference vient de la SOURCE : un document qui s'en ecarte a tort, meme seul)
+  🟢 RATE_MIN_LAYER                     code = 2 | aucun document ne le contredit
+  🟢 RATE_TURN_NM                       code = 0.125 | aucun document ne le contredit
+  🟢 RATE_MIN_LAYERS_PER_BLOCK          code = 3.0 | aucun document ne le contredit
+  🟢 RATE_MAX_VARIANTS_PER_STRATEGY     code = 40 | aucun document ne le contredit
+  🟢 RATE_SWING_MIN_DEFAULT             code = 0.025 | aucun document ne le contredit
+  🟢 PHOTOMETRIC_CURVATURE_AMP          code = 0.00375 | aucun document ne le contredit
+
+=== B. LES GRANDEURS PHYSIQUES : le meme fait, plusieurs valeurs ? ===
+  🟢 SEEL du 48c                      valeur unique 0,173 nm (1 citation(s))
+  🟢 SEEL du 35c                      valeur unique 0,482 nm (1 citation(s))
+  🟢 SEEL du 75c                      valeur unique 0,272 nm (1 citation(s))
+  🟢 SEEL du 99c multi-temoins        valeur unique 0,81 nm (1 citation(s))
+  ·  cible posee par le physicien     aucune citation trouvee
+  🟢 cadence machine                  valeur unique 4 Hz (6 citation(s))
+  🟢 pas d'echantillonnage machine    valeur unique 0,125 nm (3 citation(s))
+  🟢 amplitude du bruit de lecture    valeur unique 5e-4 (1 citation(s))
+  🟢 fente nominale                   valeur unique 2 nm (1 citation(s))
+  ·  objectif de rendement (👤)        aucune citation trouvee
+
+=== C. TOUT SYMBOLE DU CODE CITE `NOM = N` DANS UN .md ===
+  300 symboles numeriques dans certus/, 9 cites dans les .md.
+  🟢 3 conforme(s) au code · 0 en desaccord · 0 NON CONCLUANTE(S) (transition, liste, multiplicateur ou formule)
+
+=== D. LES PROFONDEURS PAR MODE, lues dans l'interface ===
+  🟢 triplets fast/premium/deep : 0 conforme(s), 0 en desaccord
+  🟢 0 conforme(s) · 0 en desaccord · 0 non concluante(s)
+
+=== E. LES COMMANDES DOCUMENTEES S'EXECUTENT-ELLES ? ===
+  🟢 aucun chemin d'interpreteur cite -- les commandes disent `python`, ce qui est la consigne
+  🟢 65 script(s) cite(s) dans une commande, 0 chemin(s) mort(s)
+
+=== F. UN `fichier.py:N` CITE A COTE D'UN SYMBOLE POINTE-T-IL DESSUS ? ===
+  🟢 0 renvoi(s) confirme(s) · 0 qui pointent ailleurs · 0 sans symbole cite a cote (non verifiables)
+
+=== G. LES ENTREES NUMEROTEES DU §24 SONT-ELLES UNIQUES ? ===
+  🟢 0 entrees, 0 numeros distincts, aucun doublon
+
+=== I. UN RENVOI `§N` INTERNE POINTE-T-IL SUR LE SUJET QU'IL ANNONCE ? ===
+  ⚠️ L'outil NE JUGE PAS le sujet. Passe --detail pour voir le TITRE de chaque cible
+     et relire toi-meme les rapprochements -- c'est ainsi qu'on attrape un renvoi
+     qui existe mais parle d'autre chose, ce qu'aucun controle ne sait faire.
+  🟢 0 renvoi(s) interne(s) · 0 vers une section INEXISTANTE · 0 ambigu(s) (a nommer)
+
+=== H. CONTROLE NEGATIF -- l'outil sait-il seulement DETECTER ? ===
+  🟢 contradiction plantee DETECTEE (2 valeurs vues : ['0,173 nm', '0,999 nm']) -- l'outil mord
+
+================================================================================================
+  0 point(s) a instruire.
+  ⚠️ Un signalement n'est PAS une erreur : c'est une phrase a LIRE. L'outil ne
+     comprend pas le francais, il rapproche un mot et un nombre.
+================================================================================================

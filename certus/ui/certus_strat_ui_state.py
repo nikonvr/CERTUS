@@ -623,6 +623,103 @@ class CertusStratStateMixin:
             except NUMERICAL_FAULT_EXCEPTIONS as e:
                 self.logger.error(f"Error populating table: {e}")
 
+    def _collect_config(self) -> dict[str, Any]:
+        """Collect exactly the STRAT session format used by Save Configuration."""
+        config = {
+            "h_type_custom": self.widgets["h_type_custom"].isChecked(),
+            "l_type_custom": self.widgets["l_type_custom"].isChecked(),
+            "substrate_choice": self.widgets["substrate_choice"].currentText(),
+            "l0": self.widgets["l0"].text(),
+        }
+        # Save only relevant H-index data
+        if self.widgets["h_type_custom"].isChecked():
+            config["nH_r"] = self.widgets["nH_r"].text()
+        else:
+            config["h_material_file"] = self.widgets["h_material_file"].currentText()
+        # Save only relevant L-index data
+        if self.widgets["l_type_custom"].isChecked():
+            config["nL_r"] = self.widgets["nL_r"].text()
+        else:
+            config["l_material_file"] = self.widgets["l_material_file"].currentText()
+        # Save custom substrate only if "Custom" is selected
+        if self.widgets["substrate_choice"].currentText() == "Custom":
+            config["nSub_custom"] = self.widgets["nSub_custom"].text()
+        table = self.widgets["stack_table"]
+        stack_multipliers = []
+        for row in range(table.rowCount()):
+            item = table.item(row, 2)
+            if item:
+                try:
+                    stack_multipliers.append(float(item.text()))
+                except ValueError:
+                    stack_multipliers.append(1.0)
+        config["stack_multipliers"] = stack_multipliers
+        for key in [
+            "wl_range_start",
+            "wl_range_end",
+            "wl_step",
+            "scan_wl_min",
+            "scan_wl_max",
+            "scan_wl_step",
+            "dynamics_threshold",
+            "min_transmission_floor",
+            "mc_runs_block",
+            "iter_divider_start",
+            "iter_divider_end",
+            "trigger_tolerance",
+            "sim_thickness_probe_offset_ratio",
+            "non_monotonic_error_factor",
+            "wavelength_change_penalty",
+            "extrema_exclusion_ratio",
+            "robustness_noise_factors",
+            "robustness_num_runs",
+            "nucleation_mc_runs",
+            "mining_candidates_limit",
+            "slit_bias_enabled",
+            "monochromator_resolution_nm",
+            "search_resolution",
+            "index_corridor",
+            "photometric_curvature_amp",
+            "allow_rate",
+            "reading_smoothing_window",
+            "n_screen_runs",
+            "k_keep_survivors",
+            "top_k_parents",
+            "max_fusions_per_parent",
+            "phase_a_scan_limit",
+            "nucleation_max_rmse",
+            "nucleation_degradation",
+            "sym_enable",
+            "sym_weight",
+            "sym_same_wl_bonus",
+            "sym_extrema_window",
+            "sym_continuity_weight",
+            "sym_adaptive_same_wl",
+            "sym_allow_hybrid",
+            "sym_prefer_on_tie",
+            "sym_tie_epsilon",
+            "sym_tie_epsilon_rel",
+        ]:
+            if key in self.widgets:
+                config[key] = self.widgets[key].text()
+        # Save ComboBox values
+        if "noise_distribution" in self.widgets:
+            config["noise_distribution"] = self.widgets["noise_distribution"].currentText()
+        if "non_monotonic_mode" in self.widgets:
+            config["non_monotonic_mode"] = self.widgets["non_monotonic_mode"].currentText()
+        if "sym_scoring_mode" in self.widgets:
+            config["sym_scoring_mode"] = self.widgets["sym_scoring_mode"].currentText()
+        if "execution_mode" in self.widgets:
+            config["execution_mode"] = self.widgets["execution_mode"].currentText()
+        config["show_plots"] = True
+        config["export_excel"] = True
+        config["force_first_layer_same_wl"] = True
+        return config
+
+    def save_config(self) -> None:
+        """Use the STRAT session saver when closing over unsaved work."""
+        self.save_configuration()
+
     @safe_ui_action
     def save_configuration(self) -> None:
         """Save current GUI configuration to a JSON file.
@@ -647,130 +744,22 @@ class CertusStratStateMixin:
         set_certus_last_dir(filename)
 
         try:
-            config = {
-                "h_type_custom": self.widgets["h_type_custom"].isChecked(),
-                "l_type_custom": self.widgets["l_type_custom"].isChecked(),
-                "substrate_choice": self.widgets["substrate_choice"].currentText(),
-                "l0": self.widgets["l0"].text(),
-            }
-
-            # Save only relevant H-index data
-
-            if self.widgets["h_type_custom"].isChecked():
-                config["nH_r"] = self.widgets["nH_r"].text()
-
-            else:
-                config["h_material_file"] = self.widgets["h_material_file"].currentText()
-
-            # Save only relevant L-index data
-
-            if self.widgets["l_type_custom"].isChecked():
-                config["nL_r"] = self.widgets["nL_r"].text()
-
-            else:
-                config["l_material_file"] = self.widgets["l_material_file"].currentText()
-
-            # Save custom substrate only if "Custom" is selected
-
-            if self.widgets["substrate_choice"].currentText() == "Custom":
-                config["nSub_custom"] = self.widgets["nSub_custom"].text()
-
-            table = self.widgets["stack_table"]
-
-            stack_multipliers = []
-
-            for row in range(table.rowCount()):
-                item = table.item(row, 2)
-
-                if item:
-                    try:
-                        stack_multipliers.append(float(item.text()))
-
-                    except ValueError:
-                        stack_multipliers.append(1.0)
-
-            config["stack_multipliers"] = stack_multipliers
-
-            for key in [
-                "wl_range_start",
-                "wl_range_end",
-                "wl_step",
-                "scan_wl_min",
-                "scan_wl_max",
-                "scan_wl_step",
-                "dynamics_threshold",
-                "min_transmission_floor",
-                "mc_runs_block",
-                "iter_divider_start",
-                "iter_divider_end",
-                "trigger_tolerance",
-                "sim_thickness_probe_offset_ratio",
-                "non_monotonic_error_factor",
-                "wavelength_change_penalty",
-                "extrema_exclusion_ratio",
-                "robustness_noise_factors",
-                "robustness_num_runs",
-                "nucleation_mc_runs",
-                "mining_candidates_limit",
-                "slit_bias_enabled",
-                "monochromator_resolution_nm",
-                "search_resolution",
-                "index_corridor",
-                "photometric_curvature_amp",
-                "allow_rate",
-                "reading_smoothing_window",
-                "n_screen_runs",
-                "k_keep_survivors",
-                "top_k_parents",
-                "max_fusions_per_parent",
-                "phase_a_scan_limit",
-                "nucleation_max_rmse",
-                "nucleation_degradation",
-                "sym_enable",
-                "sym_weight",
-                "sym_same_wl_bonus",
-                "sym_extrema_window",
-                "sym_continuity_weight",
-                "sym_adaptive_same_wl",
-                "sym_allow_hybrid",
-                "sym_prefer_on_tie",
-                "sym_tie_epsilon",
-                "sym_tie_epsilon_rel",
-            ]:
-                if key in self.widgets:
-                    config[key] = self.widgets[key].text()
-
-            # Save ComboBox values
-
-            if "noise_distribution" in self.widgets:
-                config["noise_distribution"] = self.widgets["noise_distribution"].currentText()
-
-            if "non_monotonic_mode" in self.widgets:
-                config["non_monotonic_mode"] = self.widgets["non_monotonic_mode"].currentText()
-
-            if "sym_scoring_mode" in self.widgets:
-                config["sym_scoring_mode"] = self.widgets["sym_scoring_mode"].currentText()
-
-            if "execution_mode" in self.widgets:
-                config["execution_mode"] = self.widgets["execution_mode"].currentText()
-
-            config["show_plots"] = True
-
-            config["export_excel"] = True
-
-            config["force_first_layer_same_wl"] = True
+            config = self._collect_config()
 
             with atomic_open(filename, "w", encoding="utf-8") as f:
                 json.dump(config, f, indent=4, ensure_ascii=False)
 
             self.logger.info("Configuration saved: %s", filename)
+            self.mark_config_saved()
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Error saving: {e}")
 
     @safe_ui_action
-    def load_configuration(self, filename=None) -> None:
+    def load_configuration(self, filename=None) -> bool:
         """Load configuration from a JSON file and populate the GUI.
+
+        Returns True once the file is loaded, False when it was refused or none was chosen.
 
         Handles both new format (stack_multipliers list) and legacy format (stack_string).
 
@@ -788,7 +777,7 @@ class CertusStratStateMixin:
             )
 
         if not filename:
-            return
+            return False
 
         set_certus_last_dir(filename)
 
@@ -815,7 +804,7 @@ class CertusStratStateMixin:
                 msg = f"Invalid STRAT configuration: {e}"
                 self.logger.error(msg)
                 QMessageBox.critical(self, "Invalid configuration", msg)
-                return
+                return False
 
             self._loaded_config = dict(config)
 
@@ -947,13 +936,12 @@ class CertusStratStateMixin:
 
                 show_load_summary_dialog(self, "STRAT Load Summary", summary)
 
+            self.mark_config_saved()
+            return True
         except Exception as e:
             self.logger.error(f"Error loading: {e}\n{traceback.format_exc()}")
-            QMessageBox.critical(
-                self,
-                "Error Loading Configuration",
-                f"Could not load configuration file:\n{e}"
-            )
+            QMessageBox.critical(self, "Error Loading Configuration", f"Could not load configuration file:\n{e}")
+            return False
 
     def load_external_strategies(self) -> None:
 

@@ -39,9 +39,7 @@ from certus.ui.certus_ui import (
     CertusTheme,
     CertusThemeToggle,
     EnhancedProgressWidget,
-    FlashyCard,
     WelcomeGuideWidget,
-    create_flashy_grid,
     create_header_logo_widget,
     create_top_actions_bar,
 )
@@ -771,35 +769,7 @@ class LayoutManager:
 
         self.ui.plot_tabs.addTab(self.ui.plot_convergence, "Convergence")
 
-        # Why CERTUS? tab (matching INDEX/METAL style)
-
-        c1 = FlashyCard(
-            "Global Optimization PGLOBAL",
-            "Multi-start + real-time callback\nKeeps the best RMSE over the entire workflow",
-            icon="🚀",
-        )
-
-        c2 = FlashyCard(
-            "Solution Topology",
-            "Single-linkage clustering of minima\nAvoids missing design valleys",
-            icon="⚡",
-        )
-
-        c3 = FlashyCard(
-            "Automatic Needle + Healing",
-            "Variational layer insertion\nLocal refinement to converge cleanly",
-            icon="🎯",
-        )
-
-        c4 = FlashyCard(
-            "Optical Performance + Color",
-            "Spectrum, n(lambda) profile, CIE Lab\nDeltaE tracking for visual stability",
-            icon="🔮",
-        )
-
-        self.ui.perf_tab = create_flashy_grid([c1, c2, c3, c4])
-
-        self.ui.plot_tabs.addTab(self.ui.perf_tab, "Why CERTUS?")
+        # "Why CERTUS?" marketing content moved out of scientific plot tabs (Option A)
 
         v_lay.addWidget(plot_container)
 
@@ -822,7 +792,9 @@ class LayoutManager:
 
         right_splitter.addWidget(bottom_splitter)
 
-        right_splitter.setSizes([600, 300])
+        # The tables hold what the operator edits (the stack, the targets), and at 1366x768 a 600:300 split left the
+        # stack table one row high; the plots keep the larger share of the window when it is tall.
+        right_splitter.setSizes([440, 460])
 
         right_layout.addWidget(right_splitter)
 

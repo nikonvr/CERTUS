@@ -397,7 +397,7 @@ class _DataMixin:
 
         t = self.table_data_th
         if t.rowCount() <= 0 or t.columnCount() <= 0:
-            QMessageBox.information(self, "Clipboard", "Data TH empty.")
+            QMessageBox.information(self, "Clipboard", "Theory data table is empty.")
             return
 
         headers = [
@@ -415,13 +415,13 @@ class _DataMixin:
             return
 
         cb.setText("\n".join(lines))
-        self.lbl_status.setText("Data TH copied (TSV).")
+        self.lbl_status.setText("Theory data copied (TSV).")
 
         if hasattr(self, "btn_copy_data_th"):
             self.btn_copy_data_th.setText(" Copied!")
             QTimer.singleShot(
                 1800,
-                lambda: self.btn_copy_data_th.setText("Copy Data TH table (TSV)"),
+                lambda: self.btn_copy_data_th.setText("Copy theory data table (TSV)"),
             )
 
     def _on_data_preview_plot_mouse_moved(

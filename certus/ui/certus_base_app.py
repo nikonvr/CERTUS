@@ -77,6 +77,7 @@ __all__ = [
 
 
 import logging
+import os
 import queue
 import warnings
 
@@ -225,6 +226,11 @@ class StatsCounter:
 
     def __repr__(self) -> str:
         return f"StatsCounter({self._data!r})"
+
+
+def _prompts_are_off() -> bool:
+    """True under the offscreen platform: nobody answers a box there, and the test suite closes windows it modified."""
+    return os.environ.get("QT_QPA_PLATFORM", "").lower() == "offscreen"
 
 
 class CertusAppLogsMixin:
@@ -486,6 +492,11 @@ class CertusBaseApp(QMainWindow, CertusZoomMixin, CertusCommandPaletteMixin, Cer
         except RuntimeError, AttributeError, TypeError:  # pragma: no cover - defensive
             pass
 
+        # A window with a configuration to save asks before a close discards a change (CertusAppConfigMixin): the filter
+        # sees the close first, and the configuration of the first settled moment is the one the window opened with.
+        self.installEventFilter(self)
+        QTimer.singleShot(1500, self.mark_config_saved)
+
         # P1.3 - Auto-wire empty-state overlays on well-known table widgets.
         self._auto_install_empty_states()
 
@@ -698,6 +709,9 @@ class CertusBaseApp(QMainWindow, CertusZoomMixin, CertusCommandPaletteMixin, Cer
         # This raised AttributeError the first time an event filter was installed
         # on them (2026-09-04), and Qt reported it as an uncaught exception on
         # every single resize event.
+        if obj is self and event.type() == event.Type.Close and not _prompts_are_off() and not self.confirm_close_unsaved(event):
+            return True
+
         front_table = getattr(self, "front_table", None)
         if front_table is not None and obj == front_table and event.type() == event.Type.KeyPress:
             if event.key() == Qt.Key.Key_V and event.modifiers() == Qt.KeyboardModifier.ControlModifier:

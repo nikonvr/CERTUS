@@ -92,6 +92,10 @@ class BaseApplicationCard(QFrame):
 
 class ApplicationCard(BaseApplicationCard):
     """iPhone-style application icon card for the HUB 3x3 matrix."""
+
+    TILE_WIDTH = 156
+    TILE_HEIGHT = 184
+
     def __init__(
         self,
         title: str,
@@ -102,22 +106,27 @@ class ApplicationCard(BaseApplicationCard):
         accent_color: str,
         badge_text: str | None = None,
         parent=None,
+        *,
+        task: str = "",
     ) -> None:
         super().__init__(accent_color, parent)
         self.script_name = script_name
-        self.setFixedSize(112, 130)
+        self.setFixedSize(self.TILE_WIDTH, self.TILE_HEIGHT)
         self.setObjectName("AppCard")
         self.setAccessibleName(title)
-        self.setAccessibleDescription(f"{subtitle} - {description}")
-        
-        self.setToolTip(f"<b>{title}</b><br>{subtitle}<br><br>{description}")
+        self.setAccessibleDescription(f"{task} {subtitle} - {description}" if task else f"{subtitle} - {description}")
+
+        if task:
+            self.setToolTip(f"<b>{title}</b><br>{task}<br><br>{subtitle} - {description}")
+        else:
+            self.setToolTip(f"<b>{title}</b><br>{subtitle}<br><br>{description}")
         
         self.setStyleSheet("#AppCard { background: transparent; }")
         
         # Inner Squircle (the iPhone icon itself)
         self.icon_bg = QFrame(self)
         self.icon_bg.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-        self.icon_bg.setGeometry(14, 7, 84, 84)
+        self.icon_bg.setGeometry((self.TILE_WIDTH - 84) // 2, 7, 84, 84)
         self.icon_bg.setStyleSheet(f"""
             QFrame {{
                 background-color: {accent_color};
@@ -148,7 +157,7 @@ class ApplicationCard(BaseApplicationCard):
         self.title_lbl = QLabel(title, self)
         self.title_lbl.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.title_lbl.setObjectName("AppCardTitle")
-        self.title_lbl.setGeometry(0, 95, 112, 35)
+        self.title_lbl.setGeometry(0, 95, self.TILE_WIDTH, 35)
         self.title_lbl.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
         self.title_lbl.setStyleSheet(f"""
             QLabel {{
@@ -159,7 +168,18 @@ class ApplicationCard(BaseApplicationCard):
             }}
         """)
         self.title_lbl.setWordWrap(True)
-        
+
+        # What the module is for, readable without hovering (the tooltip keeps the method and the description).
+        self.task_lbl = QLabel(task, self)
+        self.task_lbl.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.task_lbl.setObjectName("AppCardTask")
+        self.task_lbl.setGeometry(6, 132, self.TILE_WIDTH - 12, 48)
+        self.task_lbl.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+        self.task_lbl.setWordWrap(True)
+        self.task_lbl.setStyleSheet(
+            f"QLabel {{ color: {CertusTheme.TEXT_SUB}; font-size: {Typography.CAPTION}pt; background: transparent; }}"
+        )
+
         self.content_container = self  # For the fade-in stagger
 
         self.anim = QPropertyAnimation(self.icon_bg, b"geometry")
@@ -169,14 +189,14 @@ class ApplicationCard(BaseApplicationCard):
     def enterEvent(self, event) -> None:
         self.anim.stop()
         self.anim.setStartValue(self.icon_bg.geometry())
-        self.anim.setEndValue(QRect(7, 0, 98, 98)) # Zoom in
+        self.anim.setEndValue(QRect((self.TILE_WIDTH - 98) // 2, 0, 98, 98)) # Zoom in
         self.anim.start()
         super().enterEvent(event)
         
     def leaveEvent(self, event) -> None:
         self.anim.stop()
         self.anim.setStartValue(self.icon_bg.geometry())
-        self.anim.setEndValue(QRect(14, 7, 84, 84)) # Zoom out
+        self.anim.setEndValue(QRect((self.TILE_WIDTH - 84) // 2, 7, 84, 84)) # Zoom out
         self.anim.start()
         super().leaveEvent(event)
 

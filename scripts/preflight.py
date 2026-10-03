@@ -205,6 +205,35 @@ check(
     sys.executable if not _missing else f"{sys.executable}  ->  missing: {', '.join(_missing)}",
     fatal=False,
 )
+# 🔴 `find_spec` ne dit pas qu'un import REUSSIT. Le 2026-10-02 (ETAT D78), pydantic 2.14.0a1 exigeait
+# pydantic-core 2.47.0 avec 2.49.0 installe : le module existait, sa garde de version levait `SystemError`
+# a l'import, sept fenetres sur sept mouraient avant de s'afficher -- et ce script disait GO, car il
+# n'importait que le calcul optique. On IMPORTE donc ce que l'interface importe, et l'exception dit pourquoi.
+# `tests/unit/test_preflight_imports_the_runtime_dependencies.py` y met une dependance qui leve.
+_RUNTIME_IMPORTS = (
+    "pydantic",
+    "PyQt6.QtWidgets",
+    "pyqtgraph",
+    "matplotlib",
+    "pandas",
+    "openpyxl",
+    "xlsxwriter",
+    "joblib",
+)
+_broken: list[str] = []
+for _name in _RUNTIME_IMPORTS:
+    try:
+        importlib.import_module(_name)
+    except Exception as exc:  # a version guard raises SystemError, which is not an ImportError
+        _first_line = (str(exc).splitlines() or [""])[0][:300]
+        _broken.append(f"{_name} -> {type(exc).__name__}: {_first_line}")
+check(
+    "runtime dependencies import (" + ", ".join(_RUNTIME_IMPORTS) + ")",
+    not _broken,
+    "all import"
+    if not _broken
+    else "; ".join(_broken) + "  [`python -m pip check`; pinned versions: requirements.lock]",
+)
 
 # 4. Lint must already be clean, otherwise a later failure cannot be attributed.
 print("\n4. LINT")

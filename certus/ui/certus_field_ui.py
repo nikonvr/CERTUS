@@ -10,7 +10,7 @@ from certus.ui.certus_field_layout_mixin import CertusFieldLayoutMixin
 from certus.ui.certus_field_plot_mixin import CertusFieldPlotMixin
 from certus.ui.certus_field_state_mixin import CertusFieldStateMixin
 from certus.ui.certus_field_workers_mixin import CertusFieldWorkersMixin
-from certus.ui.certus_ui_utils import install_standard_shortcuts
+from certus.ui.certus_ui_utils import confirm_stop_with_timeout, install_standard_shortcuts
 from certus.ui.certus_ui_widgets_progress import EnhancedProgressWidget
 from certus.workers.certus_strat_workers import _resolve_strat_indices_db_path
 
@@ -75,7 +75,7 @@ class CertusFieldApp(
         install_standard_shortcuts(
             self,
             run=getattr(self, "on_calc_clicked", None),
-            stop=getattr(self, "_stop_all_workers", None),
+            stop=getattr(self, "request_stop", None),
             save=getattr(self, "save_config", None),
             load=getattr(self, "load_config", None),
             export=getattr(self, "export_data", None),
@@ -84,6 +84,15 @@ class CertusFieldApp(
         # Connect additional signals for auto-calculation
         self.optics_panel.edit_lcalc.textChanged.connect(self.trigger_auto_calc)
         self.optics_panel.edit_angle.valueChanged.connect(self.trigger_auto_calc)
+
+    def has_running_computation(self) -> bool:
+        """True while a worker of this window runs: the stop confirmation is asked only then."""
+        return self.running_worker_count() > 0
+
+    def request_stop(self) -> None:
+        """Stop the running calculation once the operator has confirmed (Esc: this window has no Stop button)."""
+        if confirm_stop_with_timeout(self):
+            self._stop_all_workers()
 
 
 def main():

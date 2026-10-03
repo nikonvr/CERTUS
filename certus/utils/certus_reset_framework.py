@@ -409,11 +409,11 @@ def create_reset_button(app_instance, use_app_reset: bool = False) -> QPushButto
             f"app_instance must be a QWidget to host dialogs safely, got {type(app_instance).__name__}"
         )
 
-    from PyQt6.QtWidgets import QPushButton, QStyle
+    from PyQt6.QtWidgets import QPushButton
 
-    # Create button
+    # Create button. The label carries its own symbol: the standard icon that used to sit beside it said the same
+    # thing a second time, and cost 24 px of a control panel that has 394 at 1366x768.
     reset_btn = QPushButton("🔄  Clear / Reset")
-    reset_btn.setIcon(reset_btn.style().standardIcon(QStyle.StandardPixmap.SP_DialogResetButton))
 
     # Set tooltip
     reset_btn.setToolTip(

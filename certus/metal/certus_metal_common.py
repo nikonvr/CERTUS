@@ -87,6 +87,7 @@ from certus.ui.certus_ui import (
     install_standard_shortcuts,
     open_data_file_and_read,
     open_documentation,
+    open_dropped_file,
     show_toast,
     stop_worker_and_thread,
 )
@@ -918,8 +919,7 @@ class MetalBaseApp(CertusBaseApp):
 
         def _on_data_drop(paths) -> None:
             if paths and hasattr(self, "load_target_file"):
-                self.load_target_file(paths[0])
-                show_toast(self, f"Loaded: {Path(paths[0]).name}", "success")
+                open_dropped_file(self, paths[0], self.load_target_file)
 
         enable_file_drop(self, _on_data_drop, extensions=("csv", "xlsx", "xls", "txt"))
 
@@ -1477,8 +1477,8 @@ class MetalBaseApp(CertusBaseApp):
 
         self.status_bar.addPermanentWidget(self.btn_theme)
 
-    def load_target_file(self, filepath=None) -> None:
-        """robust loading logic (Shared)"""
+    def load_target_file(self, filepath=None) -> bool:
+        """robust loading logic (Shared). Returns True once the file is loaded, False when none was chosen or it failed."""
 
         if filepath is None or isinstance(filepath, bool):
             filepath, df = open_data_file_and_read(
@@ -1488,22 +1488,20 @@ class MetalBaseApp(CertusBaseApp):
             )
 
             if filepath is None:
-                return
+                return False
 
         else:
             df = read_data_file_robust(filepath)
 
         if not filepath:
-            return
+            return False
 
         try:
             # Basic validation
-
             if len(df.columns) < 2:
                 raise ValueError("Files needs >= 2 cols")
 
             # Store raw data (subclass processes it)
-
             self._last_target_file = filepath
             self.lbl_file.setText(Path(filepath).name)
             if hasattr(self, "workflow_status"):
@@ -1560,9 +1558,11 @@ class MetalBaseApp(CertusBaseApp):
 
             if hasattr(self, "on_file_loaded"):
                 self.on_file_loaded(data)
+            return True
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             QMessageBox.warning(self, "Load Error", str(e))
+            return False
 
     def update_stats_display(self) -> None:
 

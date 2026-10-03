@@ -121,11 +121,13 @@ def _build_widget_class():
             content_layout.addLayout(icon_row)
 
             # Title
+            from certus.ui.certus_theme import CertusTheme
+
             title_lbl = QLabel(title, content)
             title_lbl.setObjectName("empty-title")
             title_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
             title_lbl.setWordWrap(True)
-            title_lbl.setStyleSheet("#empty-title { color: palette(text); font-size: 13pt; font-weight: 650; }")
+            title_lbl.setStyleSheet(f"#empty-title {{ color: {CertusTheme.TEXT_MAIN}; font-size: 13pt; font-weight: 650; }}")
             content_layout.addWidget(title_lbl)
 
             # Description
@@ -134,7 +136,7 @@ def _build_widget_class():
             desc_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
             desc_lbl.setWordWrap(True)
             desc_lbl.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-            desc_lbl.setStyleSheet("#empty-desc { color: palette(mid); font-size: 10pt; }")
+            desc_lbl.setStyleSheet(f"#empty-desc {{ color: {CertusTheme.TEXT_SUB}; font-size: 10pt; }}")
             content_layout.addWidget(desc_lbl)
 
             # Action button

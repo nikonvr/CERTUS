@@ -23,7 +23,8 @@ python scripts\preflight.py
 
 Elle doit finir par `PREFLIGHT=GO`. Elle vérifie les deux **propriétés** qui comptent :
 `import certus` résout **dans l'arbre où tu édites**, et l'interpréteur porte les dépendances
-(PyQt6, numpy, scipy, numba). Aucun chemin d'interpréteur ni de racine n'est écrit en dur, et
+(PyQt6, numpy, scipy, numba) **et les importe sans erreur** (pydantic, PyQt6, pyqtgraph, matplotlib,
+pandas, openpyxl, xlsxwriter, joblib : une version incompatible lève à l'import, ETAT D78). Aucun chemin d'interpréteur ni de racine n'est écrit en dur, et
 c'est délibéré : les chemins se sont périmés à chaque déménagement. En cas de doute,
 `python -c "import sys; print(sys.executable)"`.
 

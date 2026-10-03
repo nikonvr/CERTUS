@@ -7,7 +7,6 @@ Contains _PlotMixin and _UIBuilderMixin.
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -58,10 +57,10 @@ from certus.ui.certus_ui import (
     enable_file_drop,
     install_standard_shortcuts,
     open_documentation,
+    open_dropped_file,
     plot_widget_plot_finite,
     sanitize_xy_for_plot,
     setup_pyqtgraph_defaults,
-    show_toast,
     wrap_scientific_plot_with_toolbar,
 )
 from certus.utils.certus_reset_framework import create_reset_button
@@ -1161,7 +1160,7 @@ class _UIBuilderMixin:
         self.btn_stop.setObjectName(OBJ.DANGER_BUTTON)
         self.btn_stop.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_stop.setFixedHeight(38)
-        self.btn_stop.setToolTip("Stop and keep best result found so far. Raccourci : Échap.")
+        self.btn_stop.setToolTip("Stop and keep the best result found so far. Shortcut: Esc.")
         self.btn_stop.setEnabled(False)
         self.btn_stop.clicked.connect(self._on_stop)
 
@@ -1306,8 +1305,7 @@ class _UIBuilderMixin:
 
         def _on_spline_file_dropped(paths) -> None:
             if paths and hasattr(self, "_on_load"):
-                self._on_load(paths[0])
-                show_toast(self, f"Fichier chargé : {Path(paths[0]).name}", "success")
+                open_dropped_file(self, paths[0], self._on_load)
 
         enable_file_drop(self, _on_spline_file_dropped, extensions=("csv", "xlsx", "xls", "txt", "dat"))
 
@@ -1626,9 +1624,9 @@ class _UIBuilderMixin:
         lay.setContentsMargins(0, 0, 0, 0)
 
         tb = QHBoxLayout()
-        self.btn_copy_data_th = create_styled_button("Copy Data TH table (TSV)", "secondary")
+        self.btn_copy_data_th = create_styled_button("Copy theory data table (TSV)", "secondary")
         self.btn_copy_data_th.setEnabled(False)
-        self.btn_copy_data_th.setToolTip("Copie toutes les colonnes de Data TH (TSV) vers le clipboard.")
+        self.btn_copy_data_th.setToolTip("Copy every column of the theory data table to the clipboard (TSV).")
         self.btn_copy_data_th.clicked.connect(self._copy_data_th_to_clipboard)
         tb.addWidget(self.btn_copy_data_th)
         tb.addStretch(1)
@@ -1679,7 +1677,7 @@ class _UIBuilderMixin:
         row_d = QHBoxLayout()
         row_d.setSpacing(6)
 
-        lb_dnom = QLabel("d_nominal (nm) :")
+        lb_dnom = QLabel("Nominal thickness (nm):")
         lb_dnom.setToolTip("Nominal layer thickness around which search bounds are built.")
         row_d.addWidget(lb_dnom)
 
@@ -1690,13 +1688,13 @@ class _UIBuilderMixin:
         row_d.addWidget(self.d_lo)
 
         lb_dpm = QLabel("+/- (nm) :")
-        lb_dpm.setToolTip("Half-width Delta (nm) around d_nominal used for optimization bounds.")
+        lb_dpm.setToolTip("Half-width Delta (nm) around the nominal thickness used for optimization bounds.")
         row_d.addWidget(lb_dpm)
 
         self.d_hi = QDoubleSpinBox()
         self.d_hi.setRange(0.1, 25000.0)
         self.d_hi.setValue(0.5 * float(SIO2_DEFAULT_D_HI_NM - SIO2_DEFAULT_D_LO_NM))
-        self.d_hi.setToolTip("Half-width Delta (nm): optimization bounds are [d_nominal - Delta, d_nominal + Delta].")
+        self.d_hi.setToolTip("Half-width Delta (nm): optimization bounds are [nominal - Delta, nominal + Delta].")
         row_d.addWidget(self.d_hi)
 
         row_d.addStretch(1)
@@ -1736,18 +1734,18 @@ class _UIBuilderMixin:
 
         # Left: Spectrum Fit
         self.plot_ov_T = CertusScientificPlot(
-            title="Spectre Photométrique (Mesure vs Modèle)",
+            title="Photometric spectrum (measurement vs model)",
             y_label="T / R (%)",
-            x_label="Longueur d'onde lambda (nm)",
+            x_label="Wavelength (nm)",
         )
         self.plot_ov_T.showGrid(x=True, y=True, alpha=0.25)
         spl.addWidget(wrap_scientific_plot_with_toolbar(self, self.plot_ov_T))
 
         # Right: Extracted n & k
         self.plot_ov_nk = CertusScientificPlot(
-            title="Constantes Optiques Extraites n(lambda)",
-            y_label="Indice de Réfraction (n)",
-            x_label="Longueur d'onde lambda (nm)",
+            title="Extracted optical constants n(λ)",
+            y_label="Refractive index (n)",
+            x_label="Wavelength (nm)",
         )
         self.plot_ov_nk.showGrid(x=True, y=True, alpha=0.25)
         spl.addWidget(wrap_scientific_plot_with_toolbar(self, self.plot_ov_nk))
@@ -1777,16 +1775,16 @@ class _UIBuilderMixin:
             kpi_lay.addLayout(box)
             return lbl_val
 
-        self.kpi_rmse = _make_kpi("RMSE GLOBALE", "—", CertusTheme.CHART_PRIMARY)
-        self.kpi_d = _make_kpi("ÉPAISSEUR d", "—", CertusTheme.PRIMARY)
-        self.kpi_n550 = _make_kpi("INDICE n (550 nm)", "—", "#0057ff")
+        self.kpi_rmse = _make_kpi("GLOBAL RMSE", "—", CertusTheme.CHART_PRIMARY)
+        self.kpi_d = _make_kpi("THICKNESS d", "—", CertusTheme.PRIMARY)
+        self.kpi_n550 = _make_kpi("INDEX n (550 nm)", "—", "#0057ff")
         self.kpi_k550 = _make_kpi("EXTINCTION k (550 nm)", "—", CertusTheme.CHART_DANGER)
-        self.kpi_status = _make_kpi("STATUT AJUSTEMENT", "Prêt pour calcul", CertusTheme.SUCCESS)
+        self.kpi_status = _make_kpi("FIT STATUS", "Ready to run", CertusTheme.SUCCESS)
         kpi_lay.addStretch(1)
 
         lay.addWidget(kpi_bar)
 
-        self._add_context_page(self._create_empty_context_widget("Vue de Synthèse Complète"))
+        self._add_context_page(self._create_empty_context_widget("Full synthesis view"))
         return panel
 
     def _build_plot_tabs_panel(self) -> QWidget:
@@ -1795,7 +1793,7 @@ class _UIBuilderMixin:
         self._tab_context_widgets: dict[QWidget, QWidget] = {}
         self._pending_context_page: QWidget | None = None
 
-        self._idx_tab_overview = self._add_plot_tab(self._build_tab_overview(), "✦ Synthèse (Overview)")
+        self._idx_tab_overview = self._add_plot_tab(self._build_tab_overview(), "✦ Synthesis")
         self._add_plot_tab(self._build_tab_spectrum(), "Spectrum T / R")
         self._idx_tab_indices = self._add_plot_tab(self._build_tab_indices(), "n, k")
         self._tab_corridor_panel = self._build_tab_corridor()
@@ -1803,7 +1801,7 @@ class _UIBuilderMixin:
         self._tab_corridor_rmse_panel = self._build_tab_corridor_rmse()
         self._idx_tab_corridor_rmse = self._add_plot_tab(self._tab_corridor_rmse_panel, "Corridor RMSE(d)")
         self._add_plot_tab(self._build_tab_data(), "Data")
-        self._add_plot_tab(self._build_tab_data_th(), "Data TH")
+        self._add_plot_tab(self._build_tab_data_th(), "Data (theory)")
         self._add_plot_tab(self._build_tab_data_corridor(), "Data Corridor")
 
         self._add_plot_tab(

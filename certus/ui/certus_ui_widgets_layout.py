@@ -69,7 +69,7 @@ class CertusStepper(QWidget):
                 badge.setObjectName(f"StepBadge_{i}")
                 badge.setStyleSheet(self._badge_style(i))
                 # Label
-                btn = QPushButton(label)
+                btn = QPushButton(label.replace("&", "&&"))  # a mnemonic marker otherwise
                 btn.setToolTip(f"Go to step {i + 1}: {label}")
                 btn.setFlat(True)
                 btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -113,7 +113,7 @@ class CertusStepper(QWidget):
                 badge.setEnabled(False)
                 badge.setObjectName(f"StepBadge_{i}")
                 badge.setStyleSheet(self._badge_style(i))
-                btn = QPushButton(label)
+                btn = QPushButton(label.replace("&", "&&"))  # a mnemonic marker otherwise
                 btn.setToolTip(f"Go to step {i + 1}: {label}")
                 btn.setFlat(True)
                 btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -249,8 +249,8 @@ class CertusActionBar(QWidget):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self._layout = QHBoxLayout(self)
-        self._layout.setContentsMargins(8, 6, 8, 6)
-        self._layout.setSpacing(6)
+        self._layout.setContentsMargins(6, 6, 6, 6)
+        self._layout.setSpacing(4)
         self.setObjectName("CertusActionBar")
         self.setStyleSheet(
             f"#CertusActionBar {{ background: {CertusTheme.SURFACE}; "

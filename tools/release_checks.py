@@ -171,6 +171,27 @@ def _newest_log_tail(folder: Path, since: float, lines: int = 6) -> str:
     return f" [{newest.name}: " + " | ".join(line.strip() for line in tail if line.strip()) + "]"
 
 
+def _diagnostic_tail(folder: Path, since: float, captured_output: Path) -> str:
+    """Quote recent native output and watchdog reports beside the application's own log."""
+    parts = [_newest_log_tail(folder, since)]
+    for path in (
+        captured_output,
+        folder / "logs" / "crash_dump.log",
+        folder / "logs" / "crash.log",
+        folder / "logs" / "freeze_dump.log",
+    ):
+        try:
+            if path.stat().st_mtime < since:
+                continue
+            lines = path.read_text(encoding="utf-8", errors="replace").splitlines()[-12:]
+        except OSError:
+            continue
+        content = " | ".join(line.strip()[:300] for line in lines if line.strip())
+        if content:
+            parts.append(f" [{path.relative_to(folder)}: {content}]")
+    return "".join(parts)
+
+
 def _window_titles_of(pid: int) -> list[str]:
     """Titles of the visible windows that process `pid` owns (Windows only).
 
@@ -210,29 +231,38 @@ def _process_stays_up(command: list[str], label: str, timeout_sec: float) -> lis
     folder = _frozen_folder()
     env = os.environ.copy()
     env["QT_QPA_PLATFORM"] = "offscreen"
+    env["QT_FORCE_STDERR_LOGGING"] = "1"
 
     start = time.time()
-    proc = subprocess.Popen(command, env=env, cwd=str(folder))
-    try:
-        while (time.time() - start) < float(timeout_sec):
-            code = proc.poll()
-            if code is not None:
-                return [
-                    f"{label} stopped by itself after {time.time() - start:.1f}s with code {code}"
-                    + _newest_log_tail(folder, start - 1.0)
-                ]
-            titles = _window_titles_of(proc.pid)
-            if titles:
-                return [f"{label} opened a dialog: {titles}" + _newest_log_tail(folder, start - 1.0)]
-            time.sleep(POLL_SEC)
-        return []
-    finally:
-        if proc.poll() is None:
-            proc.terminate()
-            try:
-                proc.wait(timeout=3)
-            except subprocess.TimeoutExpired:
-                proc.kill()
+    logs_dir = folder / "logs"
+    logs_dir.mkdir(exist_ok=True)
+    output_path = logs_dir / (re.sub(r"[^a-z0-9_.-]+", "_", label.lower()) + ".stderr.log")
+    with output_path.open("wb") as output:
+        proc = subprocess.Popen(command, env=env, cwd=str(folder), stdout=output, stderr=subprocess.STDOUT)
+        try:
+            while (time.time() - start) < float(timeout_sec):
+                code = proc.poll()
+                if code is not None:
+                    return [
+                        f"{label} stopped by itself after {time.time() - start:.1f}s with code {code}"
+                        + _diagnostic_tail(folder, start - 1.0, output_path)
+                    ]
+                titles = _window_titles_of(proc.pid)
+                if titles:
+                    return [f"{label} opened a dialog: {titles}" + _diagnostic_tail(folder, start - 1.0, output_path)]
+                time.sleep(POLL_SEC)
+            if "Numba workqueue threading layer is terminating" in output_path.read_text(
+                encoding="utf-8", errors="replace"
+            ):
+                return [f"{label} reported unsafe Numba workqueue concurrency" + _diagnostic_tail(folder, start - 1.0, output_path)]
+            return []
+        finally:
+            if proc.poll() is None:
+                proc.terminate()
+                try:
+                    proc.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
 
 
 def _hub_catalog() -> tuple[str, tuple[str, ...]]:

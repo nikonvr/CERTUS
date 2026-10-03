@@ -33,7 +33,7 @@ from certus.core.certus_core import ensure_numba_cache_dir
 ensure_numba_cache_dir()
 
 import certus_physics  # noqa: E402,F401  (facade : evite l'import circulaire)
-from certus_physics import simulate_growth_kernel  # noqa: E402
+from certus_physics import CRASH_SENTINEL_UNIT, simulate_growth_kernel  # noqa: E402
 
 NM_ATTENUATE = 0
 PROBE_OFFSET = 0.5
@@ -49,12 +49,14 @@ def compensation_gain(p_thick, i_layer, wl, n_H, n_L, n_Sub, probe_err=2.0):
     prev_err[i_layer - 1] += probe_err
     d_nom = float(p_thick[i_layer])
 
-    v_ref, _ = simulate_growth_kernel(
+    v_ref, _, _, _, _ = simulate_growth_kernel(
         p_thick, i_layer, prev_nom, wl, n_H, n_L, n_Sub, PROBE_OFFSET, 0.0, FACTOR, NM_ATTENUATE
     )
-    v_err, _ = simulate_growth_kernel(
+    v_err, _, _, _, _ = simulate_growth_kernel(
         p_thick, i_layer, prev_err, wl, n_H, n_L, n_Sub, PROBE_OFFSET, 0.0, FACTOR, NM_ATTENUATE
     )
+    if v_ref - d_nom >= CRASH_SENTINEL_UNIT or v_err - d_nom >= CRASH_SENTINEL_UNIT:
+        return float("nan"), float("nan")
     delta = (v_err - d_nom) - (v_ref - d_nom)
     return abs(delta) / probe_err, delta
 
@@ -72,6 +74,9 @@ def main() -> None:
     rows = []
     for wl in range(420, 1021, 40):
         g, d = compensation_gain(p_thick, i_layer, float(wl), n_H, n_L, n_Sub)
+        if not np.isfinite(g):
+            print(f"{wl:>8} {'n/a':>8} {'n/a':>10}   non deposable")
+            continue
         if g < 0.8:
             verdict = "AMORTIT"
         elif g < 1.2:
@@ -81,6 +86,9 @@ def main() -> None:
         print(f"{wl:>8} {g:>8.3f} {d:>+10.4f}   {verdict}")
         rows.append((g, wl))
 
+    if not rows:
+        print("Aucune longueur d'onde deposable dans cette plage.")
+        return
     rows.sort()
     print()
     print(f"meilleure : {rows[0][1]} nm  (gain {rows[0][0]:.3f})")

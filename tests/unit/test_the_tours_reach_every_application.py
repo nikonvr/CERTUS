@@ -16,6 +16,13 @@ from certus.ui.certus_tours_catalog import registered_app_names, steps_for_app
 
 DEFAULT_TITLE = steps_for_app("an application that has no tour")[0].title
 
+@pytest.fixture(autouse=True)
+def _window_ends_with_the_test(qapp, monkeypatch):
+    from qt_lifecycle import qt_lifecycle
+
+    yield from qt_lifecycle(qapp, monkeypatch, "tour targets", main_windows_only=True)
+
+
 APPLICATIONS = [
     ("certus.ui.certus_design_ui", "CertusDesignApp"),
     ("certus.ui.certus_field_ui", "CertusFieldApp"),

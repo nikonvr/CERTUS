@@ -189,6 +189,12 @@
 
         /* ── SVG Diagrams ── */
         svg { max-width: 100%; height: auto; }
+        .theory-flow { max-width: 100%; overflow-x: auto; text-align: center; -webkit-overflow-scrolling: touch; }
+        @media (max-width: 820px) {
+            details.advanced-box { max-width: 100%; overflow-x: auto; }
+            .theory-flow::before { content: "Swipe sideways to read the flowchart"; display: block; text-align: left; font: 12px Inter, sans-serif; color: #475569; }
+            .theory-flow > svg { min-width: 760px; max-width: none; }
+        }
         .code-val { font-family: var(--mono); font-size: 13px; }
             kbd {
             background-color: #eee;
@@ -721,7 +727,7 @@ def apply_incoherent_backside(R_front, T_front, R_back, T_back, thickness_sub=0.
 
     <details class="advanced-box">
         <summary>TMM computation flow diagram</summary>
-        <div style="text-align: center;">
+        <div class="theory-flow">
             <svg width="900" height="1320" viewBox="0 0 900 1320" style="background: #fdfdfd; border: 1px solid #eee; border-radius: 8px;">
                 <defs>
                     <marker id="arrow-flow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#546e7a" /></marker>
@@ -824,7 +830,7 @@ def apply_incoherent_backside(R_front, T_front, R_back, T_back, thickness_sub=0.
 
     <details class="advanced-box">
         <summary>Module architecture (CERTUS HUB)</summary>
-        <div style="text-align: center;">
+        <div class="theory-flow">
             <svg width="900" height="620" viewBox="0 0 900 620" style="background: #fdfdfd; border: 1px solid #eee; border-radius: 8px;">
                 <defs>
                     <linearGradient id="grad-mod-blue" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#e3f2fd" /><stop offset="100%" style="stop-color:#90caf9" /></linearGradient>

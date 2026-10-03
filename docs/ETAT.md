@@ -35,14 +35,15 @@ gel PyInstaller 6.22.3 isolé, `[CERTUS] release checks PASSED` pour le hub et l
 natifs distincts en §4. R117 (`121b08f8`) corrige l'interface avant d'INDEX sur lame
 absorbante : oracle `1113 passed`, C1 `8 008` tableaux inchangés au bit hors noyau corrigé.
 R118 (`f37bbaf8`) active `faulthandler` dans les workers UI : suite complète verte ci-dessus.
-R119 (`e58aff16`, `463cc6f9`, `eafe4155`, `4498a702`, `37d28259`, `1966912e`) corrige les affirmations
-non étayées et ajoute neuf logigrammes aux rapports HTML : 15 pages, 32 schémas Mermaid rendus
-sur 32 dans Chrome, 0 erreur JavaScript ; à 390 px, les schémas défilent dans leur cadre sans
-élargir la page ; `verifier_html.py` et `check_docs.py` à 0 défaut.
+R119 (`e58aff16` à `1966912e`, puis le lot de couverture des rapports historiques) corrige les affirmations
+non étayées et ajoute onze logigrammes aux rapports HTML : 15 pages, 34 schémas Mermaid rendus
+sur 34 dans Chrome, 0 erreur JavaScript ; deux grands schémas SVG du guide théorique sont aussi
+lisibles par défilement horizontal à 390 px, sans élargir la page ; `verifier_html.py` et
+`check_docs.py` à 0 défaut.
 
 | ordre | difficulté / action ouverte | première action précise | fini quand |
 |---|---|---|---|
-| **1 · R110** | **simple, long : publier et lire la CI** | [PR #5](https://github.com/nikonvr/CERTUS/pull/5), branche `refactor-corridors-mixins`. Sur l'ancien `6ea0a836`, `validate-and-build` est vert, mais le job PR `interface (windows, py3.14)` a perdu DESIGN deux fois avec `0xC0000005` ; le job `push` était vert. Lire `gh pr checks 5` sur le nouveau HEAD. | CI lue, résultat exact inscrit ici ; traiter D23 si interface rouge. |
+| **1 · R110** | **simple, long : publier et lire la CI** | [PR #5](https://github.com/nikonvr/CERTUS/pull/5), branche `refactor-corridors-mixins`. Au 2026-10-03 20 h 02 (Paris), sur `1c5b4f69`, lint et sécurité sont verts ; tests Linux/Windows et build Windows tournent encore. Sur l'ancien `6ea0a836`, `validate-and-build` est vert, mais le job PR `interface (windows, py3.14)` a perdu DESIGN deux fois avec `0xC0000005` ; le job `push` était vert. **Après redémarrage :** lire `gh pr checks 5` sur le nouveau HEAD. | CI lue, résultat exact inscrit ici ; traiter D23 si interface rouge. |
 | **2 · D23 si interface rouge** | **complexe : arrêt natif intermittent de DESIGN** | [Ancien job rouge](https://github.com/nikonvr/CERTUS/actions/runs/37133746204/job/111233904232) : `test_ux_help_matches_reality.py::test_help_announces_no_shortcut_the_window_lacks[CERTUS_DESIGN]`. R114 a corrigé une autre lecture hors bornes ; R118 imprime les piles à la prochaine occurrence. **Lire d'abord le stderr du job rouge, puis reproduire le chemin indiqué.** | Cause isolée, correctif vérifié, CI d'interface verte. |
 | **3 · D52/D67** | **complexe : reproductibilité Numba / METAL** | `python scripts\c1_diff.py . --froid-contre-chaud` : 220/5 505 tableaux diffèrent, max 424 ulp ; `fastmath=False` donne 0/5 505 mais coûte 7–19 %. METAL diffère de quelques % au premier run (`certus/physics/gradient_metal.py`). **Mesurer l'effet sur le résultat d'optimisation et isoler le noyau METAL**, avec échauffement contrôlé. | Effet et coût chiffrés pour 👤 ; ne pas basculer globalement `fastmath` sans sa décision (§5). |
 | **4 · D75(2)** | **complexe : valeurs invalides dans INDEX** | Les noyaux compilés rendent `(0, 0)` pour un indice de substrat NaN ou inf : `fastmath` replie `np.isfinite` (§4). Partir du test de sentinelle dans `certus/physics/certus_tmm_single_layer.py`, isoler le contrôle des entrées sans modifier les résultats valides ; mesurer C1 avant et après. | NaN/inf rejetés explicitement, corpus valide identique au bit, oracle vert. |

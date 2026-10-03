@@ -10,8 +10,15 @@
   .gradient-text { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
   @keyframes slide { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   .animate-fade-in { animation: slide 0.8s ease-out forwards; }
+  .flowchart-frame { overflow-x: auto; background: white; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1rem; margin-bottom: 3rem; }
+  @media (max-width: 820px) {
+    .flowchart-frame::before { content: "Swipe sideways to read the flowchart"; display: block; font-size: 0.8rem; color: #475569; }
+    .flowchart-frame .mermaid svg { min-width: 760px; max-width: none !important; }
+  }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script src="assets/certus_report_init.js"></script>
 </head>
 <body class="antialiased min-h-screen pb-24">
 <nav class="bg-white border-b border-slate-200 shadow-sm">
@@ -33,6 +40,19 @@
         <h1 class="text-4xl md:text-6xl font-display font-bold text-slate-900 mb-8 tracking-tight">Topological <span class="gradient-text">Diagnostic</span></h1>
         <p class="text-xl text-slate-500 font-light max-w-3xl leading-relaxed">Preserved synthetic inversion snapshot for a <strong>3.00 µm</strong> layer. The generating script and inputs are not linked here; these numbers are not a reproduced validation.</p>
     </header>
+    <section aria-labelledby="snapshot-flow-title">
+        <h2 id="snapshot-flow-title" class="text-2xl font-bold text-slate-900 mb-4">How to read this archived snapshot</h2>
+        <p class="text-slate-600 mb-4">This diagram describes how to interpret the displayed results; the original inversion procedure cannot be reconstructed from this page.</p>
+        <div class="flowchart-frame"><div class="mermaid">
+            flowchart LR
+            A["Read metadata and tabulated extrema"] --> B["Read the reported status for each noise level"]
+            B --> C{"Valid inversion reported?"}
+            C -->|Yes: zero-noise row| D["Inspect MSE, thickness and index errors"]
+            C -->|No: other rows| E["Record no valid inversion under the stated criterion"]
+            D --> F["Reproduction requires generating script and inputs"]
+            E --> F
+        </div></div>
+    </section>
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
         <div class="lg:col-span-4 space-y-8 animate-fade-in">
             <div class="bg-slate-900 text-white rounded-[2rem] p-10 shadow-2xl relative overflow-hidden">

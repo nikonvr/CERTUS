@@ -32,7 +32,7 @@ sans alerte. CI du lot à lancer. D23 reste intermittent malgré le passage loca
 | 1 · R111 | Décaler le calcul automatique de Tikhonravov après le préchauffage DESIGN | simple, **fait** (`90f5adf1`) | Test rouge avant, puis `11 passed in 10.24s` ; gel et 8 relances verts. CI à confirmer. |
 | R112 | Réparer `scripts/check_compensation_gain.py` (ancien D57) | simple, **fait** (`4b02d23c`) | Échec reproduit (`ValueError: too many values to unpack`) ; le script termine maintenant avec code 0, écarte le cas non déposable à 420 nm et classe 15 longueurs d'onde valides. |
 | 2 · R109 | Élaguer cet état et baliser la reprise pour Opus | simple, **fait** (`76949c5d`) | `check_docs.py` : 0 défaut ; `coherence_md.py` : 0 point ; `check_claude_md.py` : 0 contradiction. |
-| 3 · R110 | Valider et publier le lot autorisé par 👤 (« go ! » le 2026-10-03) | simple, long, **en cours** | Quatre suites et gel local verts (chiffres ci-dessus). Actualiser le bundle, pousser la branche, ouvrir la PR vers `master`, lire la CI, puis copier le dossier entier dans `..\certus0310`. |
+| 3 · R110 | Valider et publier le lot autorisé par 👤 (« go ! » le 2026-10-03) | simple, long, **en cours** | Quatre suites et gel local verts (chiffres ci-dessus) ; bundle complet vérifié ; branche poussée ; [PR #5](https://github.com/nikonvr/CERTUS/pull/5) ouverte vers `master`. Lire `gh pr checks 5`, puis copier le dossier entier dans `..\certus0310`. |
 
 **Déjà fait dans ce lot :** R100 `48f6095e` (stderr, watchdog et artefact CI du gel ;
 `17 passed`), R107 `4c41dba2` (un seul préchauffage RE ; `21 passed`), R108 `44e9eef2`
@@ -41,6 +41,11 @@ un calcul Numba en parallèle du préchauffage ; R111 le décale. Ces trois comm
 CI. Aucun travail supplémentaire à y consacrer si le gel CI est vert.
 
 ### Pour Opus 5.5 — enquêtes complexes, commencer directement par la première applicable
+
+**Départ en deux commandes dans `certus0310` :** `python scripts\preflight.py` (attendu :
+`PREFLIGHT=GO`), puis `gh pr checks 5`. Si `release-windows` est vert, commencer D23 ;
+s'il est rouge, commencer D77 par l'artefact stderr/watchdog du job. Ne relire les autres
+sections que si l'enquête le demande.
 
 | ordre | difficulté / tâche | faits acquis → première action précise | fini quand |
 |---|---|---|---|

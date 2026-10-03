@@ -272,6 +272,7 @@
   "tests/unit/test_tmm_inline.py::test_simulate_growth_kernel": 5.6,
   "tests/unit/test_ui_qt_lifecycle.py::test_ui_fixtures_destroy_windows_at_the_right_boundary": 1.9,
   "tests/unit/test_user_preferences_are_isolated.py::test_a_pytest_session_leaves_no_private_directory_behind": 6.5,
+  "tests/unit/test_warmup_reads_no_array_past_its_end.py::test_warmup_physics_reads_no_array_past_its_end": 3.6,
   "tests/unit/test_warmup_starts_once_per_process.py::test_importing_an_entry_script_starts_no_warmup": 5.0
  }
 }

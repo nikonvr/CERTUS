@@ -389,13 +389,14 @@ def _validate_bilayer_spline_state(
     lambda_internes = np.unique(np.sort(lambda_internes))
     target_internal = expected_knot_count - 2
     if lambda_internes.size != target_internal:
-        lambda_internes = np.linspace(min_l, max_l, expected_knot_count + 1)[1:-1]
+        lambda_internes = np.linspace(min_l, max_l, expected_knot_count)[1:-1]
     knot_l = np.concatenate(([min_l], lambda_internes, [max_l]))
     knot_l = np.unique(np.sort(knot_l))
     if knot_l.size != expected_knot_count or not np.all(np.diff(knot_l) > 0):
         knot_l = np.linspace(min_l, max_l, expected_knot_count)
     if knot_l.size != expected_knot_count or not np.all(np.diff(knot_l) > 0):
         raise ValueError("Invalid spline knot sequence: knots must be strictly increasing")
+    lambda_internes = knot_l[1:-1]
     return knot_l, lambda_internes
 
 

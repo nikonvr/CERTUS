@@ -50,7 +50,7 @@ Node, hors pytest.
 |---|---|---|---|
 | 1 · arbitrages STRAT | **complexe · Claude, délégués par 👤 le 2026-10-04** (« tranche au plus logique ») ; D73, D20, D70, D17 faits (R129–R132), six défauts clos par raisonnement ; reste l'hystérésis, D14, D15, D54, D55 (et D21, simple) | Hystérésis : sur `r75x2` en `deep`, où l'anomalie a été mesurée, comparer le seuil qui suit le niveau de bruit au seuil fixé par le bruit nominal (§3, STRAT) ; la clé `tp_hysteresis_reference` n'existe que dans un arbre jetable, à recréer. | Chaque décision écrite en §3 avec sa raison et sa mesure ; un commit par décision. |
 | 2 · Zenodo spline et RE | **complexe · Claude, demandé par 👤 le 2026-10-04** : faire bénéficier certus0310 du meilleur de `optics continuum/05_CODE_ET_ZENODO` et de `publication_reverse/07_PAQUET_ZENODO` (`certus_re`). Spline fait (R133) ; RE : incertitudes d'épaisseur faites (R135). L'inversion conjointe de plusieurs échantillons est écartée par 👤 | RE : budget de paramètres déclaré (blocs libres comptés, points par paramètre), puis préréglage d'instrument (ouverture imposée plutôt qu'ajustée), puis σ(d) dans le tableau et l'export Excel. | Écarts mesurés, portages testés et validés, sources Zenodo citées. |
-| 3 · D45 / D46 | **complexe · décision 👤 préalable** : modifications de physique qui changent des résultats | Lire les mesures et les tests `xfail(strict)` en §4, puis obtenir le choix de 👤 en §5 avant de toucher aux noyaux. | Décision inscrite en §3, oracle avant/après, C1 du chemin inactif. |
+| 3 · D46 | **complexe · Claude, sur l'ordre « go » de 👤 du 2026-10-04** ; D45 fait (R136, §3) | Arrêter les bornes d'épaisseur de DESIGN avant l'opacité plutôt que borner la phase dans les noyaux, pour garder C1. | Décision inscrite en §3, oracle avant/après, C1 du chemin inactif. |
 | 4 · D11 / reste de D23 | **complexe · Opus** : cycle de vie Qt et collecte hors du thread GUI | Rejouer `scripts/sonde_retenants_fenetre.py` ; inventorier les cinq `gc.collect()` des workers STRAT et les `QThread` retenus avant tout `WA_DeleteOnClose`. R121 a déjà clos l'arrêt des workers UI. | Fenêtres libérées après fermeture sans destruction de thread actif ; boucle de fermetures et suite UI sans arrêt natif. |
 | contingence · D77 | **complexe, seulement si la CI release devient rouge** | Lire stderr et l'artefact watchdog du premier job rouge ; le gel est vert sur `52de082c`. | Nouveau gel Windows vert sur le code en cause. |
 
@@ -69,6 +69,7 @@ R132 `ad180e34` : le recensement de la Phase A compte chaque gain négatif (D17)
 R133 `37f6cd57` : INDEX SPLINE part des constantes publiées (tables SiO₂, Ta₂O₅, Nb₂O₅ du dépôt Zenodo de l'article). Mesuré le 2026-10-04 en pilotant la vraie fenêtre sur les trois spectres de l'article (nominale 1700 nm, tolérance 200 nm) : avec « Auto preset && d », d = 1681,78 / 1707,96 / 1716,02 nm et résidus 0,001535 / 0,002727 / 0,002105, ceux du dépôt, sous leur nom comme sous un nom neutre ; avec les anciens profils, 1699,6 nm et 0,00177 pour SiO₂, 0,0084 pour Ta₂O₅. À froid, certus0310 fait mieux que le dépôt (SiO₂ 0,00178 contre 0,0288 ; Ta₂O₅ 0,0276 contre 0,0399).
 R134 `5262a81f` : le RE va au bout de sa phase 4. Depuis le découpage S5.2 (`849a3c2e`), `_execute_phase4_beam` appelait `self._close_phase4_profile` alors que le worker passe `None` comme `self` : tout run dont la phase 4 atteignait sa branche des grands angles finissait en `AttributeError`, sans résultat (l'exemple `reverse_sample.xlsx` compris). Les tests écoutaient `result`, émis avant la phase 4, et l'un épinglait l'appel fautif ; le test sans écran exige désormais `finished` avec `ok`.
 R135 `eca32af0` : le RE rend l'incertitude de chaque épaisseur (`thickness_uncertainty`, une ligne de journal par couche), portée de `certus_re` (Zenodo) : covariance `s² (JᵀJ)⁺` du Jacobien des seuls résidus de données, directions non contraintes sans barre, conditionnelle aux corrections d'indice et à l'ouverture ajustées. Sur `reverse_sample.xlsx` : σ(d) de 0,22 à 0,70 nm pour 17 couches et 1 200 points ; le Jacobien analytique colle aux différences finies à 3,4·10⁻¹⁰.
+R136 : le gradient de DESIGN avec pile arrière est la dérivée de son coût (D45, §3).
 Le choix de 👤 « on garde fastmath » clôt l'arbitrage D52/D67 ; les écarts
 froid/chaud restent documentés en §3.
 
@@ -275,6 +276,21 @@ logique ». Chaque ligne donne la décision, sa raison et sa mesure ; une mesure
     à laquelle elle s'ajoute en quadrature (calcul, non mesuré). La compensation par la couche suivante
     dépend de la stratégie : à implanter si une mesure réelle le demande, pas avant.
 
+### DESIGN — D45 et D46, tranchés par Claude sur l'ordre de 👤, 2026-10-04
+
+👤 : « go et lance-toi dans la résolution des actions complexes », en réponse à la liste qui disait ces deux-là
+bloquées par sa décision. Chaque correctif est un commit qu'un `git revert` annule seul.
+
+- **D45, le gradient de DESIGN avec pile arrière est la dérivée de son coût** (R136). Il divisait par le nombre de
+  points valides là où le coût divise par la somme de leurs poids : trop grand du poids moyen, de 1,07 à 1,94 sur les
+  cas mesurés le 2026-09-30. Raison : l'optimiseur doit recevoir la dérivée de la fonction qu'il rapporte ; la valeur
+  du coût et la direction du gradient étaient justes, pas son échelle. Mesuré : C1 froid contre froid, 7 915 tableaux
+  sur 8 008 identiques au bit, dont les 240 du gradient sans pile arrière (`normal.gradall0`) ; les 93 autres sont le
+  gradient avec pile arrière (`normal.gradall1`), qui change de 26 à 62 %. Oracle `1117 passed` ; le nouveau test
+  (poids 1 et 3, points hors cible, k = 0 et 10⁻⁶) échoue sur le code d'avant et colle après aux différences finies
+  à 10⁻⁵. Avec l'ancien gradient, L-BFGS-B atteignait les mêmes coûts finaux en jusqu'à 25 % d'évaluations de plus
+  (2026-09-30) ; l'effet du correctif sur un design réel n'est pas mesuré.
+
 ## 4. Défauts ouverts
 
 Numérotés ici ; un défaut corrigé sort de la liste et son numéro n'est pas réattribué. Les
@@ -290,7 +306,6 @@ numéros de l'ancien registre sont entre parenthèses
 | D8 | `scripts/campagne_intervalles.py` forçait `search_resolution` à faux alors que 👤 en a fait un prérequis : les campagnes d'intervalles ont tourné sans recherche de fente (n° 49) | refaire les intervalles utiles avec la fente cherchée |
 | D9 | Restreindre la plage de blocs vide la DP ; cause non établie (n° 54) | mesurer la recherche à plage complète |
 | D10 | **L'ajustement Sellmeier 3 pôles est chaotique sur le saphir** : un ulp sur les données change le minimum atteint (RMSE de 0,00126 à 0,00208 sur 41 essais, 2026-09-26) ; deux machines rendent deux indices pour les mêmes données. SiO2 et BK7 sont stables | élargir le multistart ou reconditionner — change les résultats, décision de 👤 |
-| D45 | **PHY-12** : le gradient analytique de DESIGN **avec pile arrière** divise par le nombre de points valides là où le coût divise par la somme des poids : il est trop grand d'un facteur Σw / nombre de points, le poids moyen sur les points des cibles. Mesuré le 2026-09-30 sur les vrais poids de DESIGN (`t.w` × poids en ln λ, nuls hors des cibles ; grille de 400 à 1 100 nm au pas de 5 nm) : facteur 1,271 pour une bande de 450 à 650 nm, 1,070 pour deux bandes, 1,939 avec des poids 1 et 3 ; exact (1,000) pour une cible qui couvre toute la grille, et **sans pile arrière dans tous les cas**. La valeur du coût est juste et la direction du gradient aussi ; ce qui manque est l'échelle : l'optimiseur reçoit un gradient qui n'est pas la dérivée du coût. Effet mesuré le 2026-09-30 sur L-BFGS-B (douze départs, huit couches, avec pile arrière) : mêmes coûts finaux, jusqu'à 25 % d'évaluations en plus (médianes 25 contre 20 pour deux bandes de poids 1 et 3). `test_normal_cost_and_gradient_agree` normalise ses poids pour cette raison | corriger en `2/Σw` ne touche que la branche avec pile arrière (le chemin sans pile reste identique au bit) mais **change les résultats de ces optimisations** : décision de 👤 |
 | D46 | Une couche opaque et épaisse (un métal de k = 7 au-delà de 10 µm, k = 3,5 au-delà de 20 µm) fait déborder le cos et le sin de la phase : les noyaux rendent (R, T) = (0, 0) au lieu de l'absorbeur semi-infini. Les enveloppes Python refusent une telle couche (`require_layers_below_overflow`) ; les noyaux appelés depuis du code compilé, dont le coût de DESIGN, répondent encore (0, 0). Une borne de la phase dans les noyaux a changé les bits de 1e-15 sur les chemins à substrat réel (mesuré, puis retirée) | décision de 👤 (C1) |
 | D47 | DESIGN n'a pas de polarisation moyenne « Avg » : le tableau des cibles n'offre que s et p, et une configuration ancienne « Avg » se charge en s avec un avertissement (elle était calculée en p) | la calculer demande les deux ondes, chacune avec son gradient : décision de 👤 |
 | D48 | L'épaisseur du substrat (1 mm par défaut, `DEFAULT_SUBSTRATE_THICKNESS_NM`) n'est un champ ni de DESIGN ni de STRAT : un substrat qui absorbe perd du flux selon cette épaisseur | exposer le champ : décision de 👤 (section 5) |
@@ -350,7 +365,7 @@ Ces sujets demandent un jugement de physicien ou de propriétaire du produit. Le
 | **protection de `master` et Dependabot** | Décider si l’épinglage des actions par SHA devient obligatoire, si une relecture ou `release-windows` devient un contrôle requis (après D77), et quoi faire des PR Dependabot #1 à #4. |
 | **avis de tiers** | Écrire `THIRD_PARTY_NOTICES` pour les éléments redistribués sous licence propre (icônes Lucide, données d’indices, textes tiers). |
 | **le substrat qui absorbe (D48)** | Confirmer l’épaisseur par défaut de 1 mm, ou en faire un champ de DESIGN et STRAT ; elle décide de la perte de flux. |
-| **D45 et D46** | **D45** : corriger le gradient avec pile arrière (`2/Σw`) change les résultats des optimisations avec pile arrière (le facteur mesuré va de 1,07 à 1,94 sur les cas de D45) ; **D46** : borner la phase dans les noyaux change les derniers bits (1e-15, mesuré) des chemins à substrat réel, pour un cas qu'aucun design courant n'atteint. Deux décisions distinctes ; la règle du chemin inactif au bit près (C1) demande ton accord pour les deux |
+| **D46** | borner la phase dans les noyaux change les derniers bits (1e-15, mesuré) des chemins à substrat réel, pour un cas qu'aucun design courant n'atteint ; la règle du chemin inactif au bit près (C1) demande ton accord. D45 est tranché (§3, DESIGN) |
 | **la polarisation « Avg » (D47)** | la retirer du tableau des cibles de DESIGN, comme aujourd'hui, ou la calculer : les deux ondes, leur moyenne et leurs gradients |
 
 D54 et D55 ne sont plus en attente de 👤 : délégués à Claude le 2026-10-04 avec les autres questions STRAT (ligne 1 du §0).

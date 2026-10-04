@@ -1215,7 +1215,10 @@ def compute_gradient_all_layers_analytic(
 
         diff_w[~valid] = 0.0
 
-        grad = (2.0 / max(count, 1)) * np.sum(diff_w[:, None] * dy, axis=0)
+        # The cost divides by the sum of the weights of the valid points (`compute_mse_vectorized`), so its derivative
+        # does too; dividing by their number scaled the gradient by the mean weight (D45).
+        weight_sum = float(np.sum(tgt_weights_f64[valid]))
+        grad = (2.0 / max(weight_sum, 1e-18)) * np.sum(diff_w[:, None] * dy, axis=0)
 
         # Keep penalty and its analytic derivative consistent with cost_numba_fast.
 

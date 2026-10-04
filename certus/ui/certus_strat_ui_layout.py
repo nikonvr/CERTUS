@@ -815,7 +815,6 @@ class CertusStratLayoutMixin:
                     "wl_step",
                     "Spectral Step (nm):",
                 ),
-                ("extrema_exclusion_ratio", "Extrema Exclusion Ratio (1:X):"),
             ],
         )
 
@@ -827,7 +826,6 @@ class CertusStratLayoutMixin:
             "wl_range_start": "Start of the optical simulation wavelength range (nm). Must be within the available dispersive data range for H and L materials.",
             "wl_range_end": "End of the optical simulation wavelength range (nm).",
             "wl_step": "Spectral step (nm) used to build the simulation grid. Smaller = more precise but slower.",
-            "extrema_exclusion_ratio": "Ratio 1:X - exclude 1 in X extremum from monitoring candidates to avoid crowded regions near turning points.",
         }
 
         for _k, _tip in _tips_scan.items():

@@ -175,6 +175,7 @@ _RETIRED_CONFIG_KEYS: tuple[str, ...] = (
     "screening_keep_top_k",
     "phase_a_keep_limit",
     "step0_sigma",
+    "extrema_exclusion_ratio",
 )
 
 
@@ -352,7 +353,6 @@ class CertusStratStateMixin:
             "non_monotonic_error_factor": "2.0",
             "wavelength_change_penalty": "1.2",
             "force_first_layer_same_wl": False,
-            "extrema_exclusion_ratio": "60.0",
             "nucleation_mc_runs": "40",
             "mining_candidates_limit": "3000",
             # ── MACHINE MODEL: the six error sources, 2026-08-12 ──────────
@@ -670,7 +670,6 @@ class CertusStratStateMixin:
             "sim_thickness_probe_offset_ratio",
             "non_monotonic_error_factor",
             "wavelength_change_penalty",
-            "extrema_exclusion_ratio",
             "robustness_noise_factors",
             "robustness_num_runs",
             "nucleation_mc_runs",
@@ -1253,7 +1252,6 @@ class CertusStratStateMixin:
             "nucleation_degradation": self._get_float_safe("nucleation_degradation", 1.4),
             "show_plots": True,
             "export_excel": True,
-            "extrema_exclusion_ratio": self._get_float_safe("extrema_exclusion_ratio", 60.0),
             # ── AXIS 1.1: READING noise of monitoring signal ─────────────
             #
             # BY DEFAULT INACTIVE, and not due to superficial caution: it is a

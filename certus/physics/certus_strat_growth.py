@@ -1448,9 +1448,9 @@ def _read_poem_anchors(
 #
 # This is why stopping AFTER a turning point is much safer: the extremum
 # is already counted, the signal moves away from it monotonically, and the
-# level is inevitably reached. This is also the justification for the
-# asymmetry of check_extrema_proximity -- forbidden zone 3x wider BEFORE
-# a turning point than AFTER.
+# level is inevitably reached. The Phase A margin counts it in transmission
+# (`calculate_level_margins_to_extrema`); the former thickness criterion,
+# `check_extrema_proximity`, refused 2 widths before a turning point and half after.
 #
 # We model the failure here as it happens: if the targeted level is not
 # bracketed by the real signal between the start of the layer and the next
@@ -1508,7 +1508,7 @@ def _level_reachability(Ts_r: np.ndarray, n_tot: int, n_hist: int, idx_nom_stop:
     # realizations place the target beyond the extremum, where it will never
     # be reached. This is exactly why a QWOT is not monitored at its lambda_0
     # by level cut-off -- and it is STRAT's job to go look elsewhere.
-    # check_extrema_proximity exists for the same reason.
+    # The Phase A margin in transmission exists for the same reason.
     # A23 stage 2, level side: how far INSIDE the reachable band the target sits.
     # Positive = that much room to spare, negative = missed by that much. Signed on
     # purpose: a crashed layer still carries how badly, which is what lets the 2x

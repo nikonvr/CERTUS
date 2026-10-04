@@ -37,24 +37,18 @@ def _calc_T_added_layer(
 def check_extrema_proximity(
     wl: float, n_current: complex, n_previous: complex, n_Sub: complex, thickness_nominal: float, M_before: np.ndarray, exclusion_width: float, check_start: bool, wl_changed: bool = False
 ) -> bool:
-    """
+    """Whether a stop is clear of the transmission extrema, judged in THICKNESS space.
 
-    Checks if wavelength is too close to a transmission extremum.
+    STRAT no longer calls it: the margin to a turning point is counted in transmission
+    (`calculate_level_margins_to_extrema`), never in nanometres (D70).
 
-    ARRIVAL CHECK is asymmetric (Opus 4.7):
+    ARRIVAL CHECK, as the code does it (measured against the independent TMM oracle): T is sampled at
+    d - w, d, d + w and d + 3w, and the stop is refused when the signs of the three slopes centred at
+    d - w/2, d + w/2 and d + 2w change -- that is, from 2 widths BEFORE a turning point to half a width
+    AFTER it, whatever the width. A stop exactly half a width before a turning point passes (zero slope).
 
-      - Forbidden zone BEFORE a turning point: 3 * exclusion_width  (wide)
-
-      - Forbidden zone AFTER  a turning point: 1 * exclusion_width  (narrow)
-
-    START CHECK (Opus 4.7b) - asymmetric only when wl_changed=True:
-
-      - Symmetric +/-δe check always applied (unchanged behaviour)
-
-      - If wl_changed: also reject if TP is AHEAD within [0, 3δe] (new wavelength
-
-        starts with no prior monitoring info -> be more cautious before a TP)
-
+    START CHECK: a reversal within +/- w of the start of the layer; with `wl_changed`, also a reversal
+    within [0, 3w] ahead, since a new wavelength starts with no monitoring history.
     """
     m00, m01 = (M_before[0, 0], M_before[0, 1])
     m10, m11 = (M_before[1, 0], M_before[1, 1])

@@ -18,7 +18,6 @@ from certus_physics import (
     calculate_detailed_growth,
     calculate_RT_batch_kernel,
     calculate_RT_vectorized_real_HL,
-    check_extrema_proximity_batch,
     check_level_margin_batch,
     compute_dynamics_kernel,
     corridor_wl_range,
@@ -100,22 +99,6 @@ class _PhysicsBridge:
         M_befores: np.ndarray,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         return compute_dynamics_kernel(wls, n_layers, n_subs, thicknesses, M_befores)
-
-    @staticmethod
-    def check_extrema_proximity(
-        wls: np.ndarray,
-        n_curr: np.ndarray,
-        n_prev: np.ndarray,
-        n_sub: np.ndarray,
-        thickness: float,
-        M_befores: np.ndarray,
-        exclusion_ratio: float,
-        is_not_first_layer: bool,
-        wl_changed: np.ndarray,
-    ) -> np.ndarray:
-        return check_extrema_proximity_batch(
-            wls, n_curr, n_prev, n_sub, thickness, M_befores, exclusion_ratio, is_not_first_layer, wl_changed
-        )
 
     @staticmethod
     def check_level_margin(
@@ -916,14 +899,11 @@ def _select_candidates_phase_a(
 
     # Extrema Safety Check & Resolution Filtering
     valid_candidates_data = []
-    exclusion_ratio = float(params.get("extrema_exclusion_ratio", 60.0))
-
 
     # Vectorized Extrema Check
     n_check = len(check_list)
     wls_arr = np.array([float(d["wl"]) for d in check_list], dtype=np.float64)
     n_curr_arr = np.zeros(n_check, dtype=np.complex128)
-    n_prev_arr = np.zeros(n_check, dtype=np.complex128)
     n_sub_arr = np.zeros(n_check, dtype=np.complex128)
     is_h_layer = i_layer % 2 == 0
     clues_by_wl_idx = build_wavelength_index_map(clues_at_wl)
@@ -932,18 +912,7 @@ def _select_candidates_phase_a(
         clue = clues_by_wl_idx.get(wavelength_to_index(wl))
         if clue:
             n_curr_arr[idx] = clue["H" if is_h_layer else "L"]
-            n_prev_arr[idx] = clue["L" if is_h_layer else "H"] if i_layer > 0 else 1.0 + 0j
             n_sub_arr[idx] = clue["substrate"]
-
-    # wl_changed_arr: True if candidate wl differs from previous layer's wl
-    prev_layer_wl = float(params.get("prev_layer_wl", -1.0))
-    if i_layer == 0 or prev_layer_wl < 0.0:
-        wl_changed_arr = np.zeros(n_check, dtype=np.bool_)
-    else:
-        wl_changed_arr = np.array(
-            [abs(wls_arr[j] - prev_layer_wl) > 0.1 for j in range(n_check)],
-            dtype=np.bool_,
-        )
 
     # ── 🔴 TURNING POINT SECURITY MARGIN ─────────────────────────────
     #
@@ -1016,25 +985,10 @@ def _select_candidates_phase_a(
                 valid_candidates_data.append(d)
         return valid_candidates_data, full_dyn_map
 
-    # M_befores: zeros placeholder when not precomputed (conservative: no extrema filtering)
-    M_befores = np.zeros((n_check, 2, 2), dtype=np.complex128)
-
-    extrema_results = _PhysicsBridge.check_extrema_proximity(
-        wls_arr,
-        n_curr_arr,
-        n_prev_arr,
-        n_sub_arr,
-        float(p_thick_nominal[i_layer]),
-        M_befores,
-        exclusion_ratio,
-        (i_layer > 0),
-        wl_changed_arr,
-    )
-
-    for idx, d in enumerate(check_list):
-        if not extrema_results[idx]:
-            continue
-        valid_candidates_data.append(d)
+    # Without the transmission margin (`phase_a_level_margin_factor = 0`) no candidate is refused here.
+    # The thickness criterion that used to run on this path received zero matrices and refused none
+    # (D70); the margin is counted in transmission, never in nanometres.
+    valid_candidates_data.extend(check_list)
 
     return valid_candidates_data, full_dyn_map
 

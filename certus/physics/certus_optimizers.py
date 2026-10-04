@@ -47,6 +47,10 @@ def get_lbfgsb_params(dim: int) -> dict:
     return {"ftol": tol, "gtol": 1e-10, "maxcor": min(50, max(20, dim + 5))}
 
 
+class _SetulbIncompatible(Exception):
+    """The installed private scipy setulb API cannot run this fast path."""
+
+
 class LBFGSBSearcher:
     """Local Search via L-BFGS-B (direct Fortran setulb for 2× less overhead)."""
 
@@ -160,25 +164,28 @@ class LBFGSBSearcher:
 
         _setulb = self._setulb
         while True:
-            _setulb(
-                m,
-                x,
-                self._low_bnd,
-                self._upper_bnd,
-                self._nbd,
-                f,
-                g,
-                factr,
-                gtol,
-                wa,
-                iwa,
-                task,
-                lsave,
-                isave,
-                dsave,
-                maxls,
-                ln_task,
-            )
+            try:
+                _setulb(
+                    m,
+                    x,
+                    self._low_bnd,
+                    self._upper_bnd,
+                    self._nbd,
+                    f,
+                    g,
+                    factr,
+                    gtol,
+                    wa,
+                    iwa,
+                    task,
+                    lsave,
+                    isave,
+                    dsave,
+                    maxls,
+                    ln_task,
+                )
+            except (TypeError, AttributeError) as exc:
+                raise _SetulbIncompatible from exc
             if task[0] == 3:  # FG request — evaluate objective + gradient
                 result = fun_and_grad(x)
                 if isinstance(result, tuple):
@@ -211,7 +218,10 @@ class LBFGSBSearcher:
             # Used when: gradient is available (jac=True) and no callback needed
             # (PGlobal never uses callback on local searches).
             if self._setulb is not None and self._jac_arg is True and callback is None:
-                return self._search_direct(x0, max_feval, self._objective_fn)
+                try:
+                    return self._search_direct(x0, max_feval, self._objective_fn)
+                except _SetulbIncompatible:
+                    pass
 
             # Fallback: scipy.optimize.minimize (handles FD gradient, callbacks, etc.)
             options = {

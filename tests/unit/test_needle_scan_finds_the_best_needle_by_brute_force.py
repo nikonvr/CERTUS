@@ -15,7 +15,6 @@ candidate the answer is `(-1, 0.0, 1e30)`.
 
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 

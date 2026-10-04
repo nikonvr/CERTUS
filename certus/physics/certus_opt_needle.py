@@ -5,9 +5,9 @@ from numba import njit, prange
 from certus.domain.constants import TWO_PI
 
 
-@njit(fastmath=False, inline="never")
+@njit(cache=True, fastmath=False, inline="never")
 def _is_finite_scalar(x: float) -> bool:
-    """Check finiteness safely without fastmath folding."""
+    """Return True if x is finite (resists fastmath folding, ETAT D53)."""
     return np.isfinite(x)
 
 

@@ -1312,6 +1312,10 @@ def _apply_the_admissibility_rule(candidates, i_layer, params, candidate_wls, re
     # total: it is the layer-by-layer distribution that answers.
     n_forbidden_crash = 0
     n_forbidden_gain = 0
+    # Each candidate is counted under ONE prohibition reason, crash first; a negative gain is also
+    # counted on its own, so the census shows whether the gain rule ever sees a case the crash gate
+    # has not already caught (D17).
+    n_gain_negative = 0
     crash_rates_all: list[float] = []
     for idx, wl in enumerate(candidate_wls):
         rmse = float(results_fast[idx, 0])
@@ -1335,6 +1339,8 @@ def _apply_the_admissibility_rule(candidates, i_layer, params, candidate_wls, re
             if k in src:
                 entry[k] = src[k]
         # gain < 0: not measurable (deposition does not finish even with zero noise)
+        if gain < 0.0:
+            n_gain_negative += 1
         if crash_rate >= crash_tol or gain < 0.0:
             if crash_rate >= crash_tol:
                 n_forbidden_crash += 1
@@ -1359,6 +1365,7 @@ def _apply_the_admissibility_rule(candidates, i_layer, params, candidate_wls, re
         "offered": len(candidate_wls),
         "forbidden_crash": int(n_forbidden_crash),
         "forbidden_gain_negative": int(n_forbidden_gain),
+        "gain_negative_any": int(n_gain_negative),
         "survivors": len(results_thickness),
         "crash_rate_min_observed": crash_min,
         "crash_tolerance": float(crash_tol),
@@ -1373,7 +1380,7 @@ def _apply_the_admissibility_rule(candidates, i_layer, params, candidate_wls, re
     logger.info(
         f"   [ADMISSIBILITY] Layer {i_layer + 1}: {len(candidate_wls)} offered "
         f"-> forbidden crash>={crash_tol:.3%}: {n_forbidden_crash} "
-        f"| forbidden gain<0: {n_forbidden_gain} "
+        f"| forbidden gain<0: {n_forbidden_gain} of {n_gain_negative} with gain<0 "
         f"| survivors: {len(results_thickness)} "
         f"| min crash rate observed: {crash_min:.3%}"
     )

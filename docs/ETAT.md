@@ -41,7 +41,7 @@ Node, hors pytest.
 
 | priorité | difficulté / responsable | première action précise | fini quand |
 |---|---|---|---|
-| 1 · arbitrages STRAT | **complexe · Claude, délégués par 👤 le 2026-10-04** (« tranche au plus logique ») ; D73, D20, D70 faits (R129–R131), reste D17, hystérésis, puis D14, D15, D54, D55 | D17 : compter chaque gain négatif au recensement de la Phase A, même quand la porte de plantage a déjà écarté la candidate. | Chaque décision écrite en §3 avec sa raison et sa mesure ; un commit par décision. |
+| 1 · arbitrages STRAT | **complexe · Claude, délégués par 👤 le 2026-10-04** (« tranche au plus logique ») ; D73, D20, D70, D17 faits (R129–R132), reste l'hystérésis, puis D14, D15, D54, D55 | Hystérésis : mesurer sur `r75x2`, où l'anomalie a été vue, le seuil référé au bruit nominal (`tp_hysteresis_reference`) contre le seuil qui suit le niveau. | Chaque décision écrite en §3 avec sa raison et sa mesure ; un commit par décision. |
 | 2 · Zenodo spline et RE | **complexe · Claude, demandé par 👤 le 2026-10-04** : faire bénéficier certus0310 du meilleur de `optics continuum/05_CODE_ET_ZENODO` et de `publication_reverse/07_PAQUET_ZENODO` (`certus_re`). L'inversion conjointe de plusieurs échantillons est écartée par 👤 | Spline : les trois spectres de l'article, à chaud puis sous un nom neutre, contre les valeurs publiées. RE : incertitudes d'épaisseur (covariance du Jacobien des seules données) et budget de paramètres, puis préréglage d'instrument. | Écarts mesurés, portages testés et validés, sources Zenodo citées. |
 | 3 · D45 / D46 | **complexe · décision 👤 préalable** : modifications de physique qui changent des résultats | Lire les mesures et les tests `xfail(strict)` en §4, puis obtenir le choix de 👤 en §5 avant de toucher aux noyaux. | Décision inscrite en §3, oracle avant/après, C1 du chemin inactif. |
 | 4 · D11 / reste de D23 | **complexe · Opus** : cycle de vie Qt et collecte hors du thread GUI | Rejouer `scripts/sonde_retenants_fenetre.py` ; inventorier les cinq `gc.collect()` des workers STRAT et les `QThread` retenus avant tout `WA_DeleteOnClose`. R121 a déjà clos l'arrêt des workers UI. | Fenêtres libérées après fermeture sans destruction de thread actif ; boucle de fermetures et suite UI sans arrêt natif. |
@@ -57,7 +57,8 @@ R127 `da0ca5b5` : garde des configurations RE et INDEX SPLINE modifiées (D80).
 R128 `fabb9f22` : `strategy_id` unique sur tout un run (D5).
 R129 `f12fe0d9` : la marge en transmission voit le point tournant sous l'arrêt (D73).
 R130 `9667b189` : le classement final suit la règle de tri de 👤 (D20).
-R131 : le critère en épaisseur et son réglage inerte sont retirés (D70).
+R131 `d1b2684b` : le critère en épaisseur et son réglage inerte sont retirés (D70).
+R132 : le recensement de la Phase A compte chaque gain négatif (D17).
 Le choix de 👤 « on garde fastmath » clôt l'arbitrage D52/D67 ; les écarts
 froid/chaud restent documentés en §3.
 
@@ -231,6 +232,13 @@ logique ». Chaque ligne donne la décision, sa raison et sa mesure ; une mesure
   avec D70 et un cache Numba vierge est identique au bit au run D20 (194 stratégies, IDs, ordre, scores) ;
   sept cas du test des réglages retirés échouent sur le code d'avant. Un premier run avait relu des noyaux
   mis en cache par les tests : sept scores différaient au dernier bit, l'écart froid/chaud de D52.
+- **D17, le critère du gain négatif est gardé ; le défaut est réfuté** (R132). Le gain négatif signale une
+  couche qui ne se termine pas, sans bruit, après 1 nm d'erreur amont : une fragilité que la porte de
+  plantage ne voit pas toujours. Le recensement compte désormais chaque gain négatif, même quand la porte de
+  plantage a déjà écarté la candidate (`gain_negative_any`, et « of N with gain<0 » dans la ligne
+  `[ADMISSIBILITY]`). Mesuré sur le juge de paix en `fast` : 159 candidates à gain négatif sur 48 couches,
+  dont 146 déjà écartées pour plantage et 13 par ce seul critère ; les runs d'avant comptaient déjà ces 13.
+  Le constat « n'a jamais rejeté une candidate » (n° 38) ne tient pas sur ce composant.
 
 ## 4. Défauts ouverts
 
@@ -261,7 +269,6 @@ numéros de l'ancien registre sont entre parenthèses
 | D14 | L'historique est échantillonné 1,33× plus grossièrement que la couche courante (`NPTS_PREV = 16` contre `NPTS = 64` sur trois épaisseurs nominales) (n° 22) |
 | D15 | POEM ne rejoue que les quatre dernières couches d'un bloc (`MAX_LOOKBACK_VAL = 4`) : la valeur d'un bloc long est plafonnée par construction (n° 21) |
 | D16 | Le bonus « block-aware » de la Phase A écrase le coût en place, avant la normalisation, qui l'élève au carré (n° 45) |
-| D17 | Le critère `forbidden_gain_negative` n'a jamais rejeté une candidate (n° 38) |
 | D18 | Deux seuils de swing : `RATE_SWING_MIN_DEFAULT = 0,025` admet une λ, et 0,04 codé en dur fait abandonner POEM ; entre les deux, une couche perd POEM en silence |
 | D19 | La Phase A ne vérifie jamais qu'une λ offre un point tournant ; proposition de 👤 : les compter, en coût non monotone |
 | D21 | `MachineModel` n'a aucun consommateur, et `trigger_tolerance` y est documenté en unités T alors que ses lecteurs divisent par 100 (n° 9) |

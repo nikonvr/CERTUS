@@ -19,12 +19,11 @@ Première commande : `python scripts\preflight.py` → `PREFLIGHT=GO`. Dernier c
 arbre propre ; R128 à R135 et `af2d521d` sont **locaux, non poussés** (pousser attend l'ordre de 👤) ;
 sauvegarde : `../CERTUS_certus0310_<date>_<commit>.bundle`, refait après chaque lot (le plus récent porte le dernier commit).
 
-**Validation de R128 à R135 : partielle, la suite complète reste à passer.** Faites : R128 (D5) ruff, C1
-8 008/8 008 identiques au bit, oracle `1114 passed`, unit `4851 passed`, reste de `tests/` `347 passed` ;
-R129 + R130 ruff, C1 8 008/8 008, oracle `1114 passed`, unit `4858 passed` ; R131 C1 8 008/8 008 et tests
-ciblés ; R132 à R135 tests ciblés (spline : unit 322, intégration 3, UI 56 ; RE : sélection unit 3 333,
-sans échec hors le cliquet corrigé par `af2d521d`). La suite UI n'a pas tourné depuis la première version
-de D5.
+**Validation de R128 à R135 sur `b60d80e2` (Windows 11, Python 3.14.8, 2026-10-04) : complète, `0 failed`.**
+Ruff : 0 défaut ; C1 froid contre froid depuis `fabb9f22` (R128) : **8 008/8 008 tableaux identiques au bit** ;
+oracle `1115 passed` ; unit `4879 passed, 5 skipped, 2 xfailed` en 12 min 40 ; reste de `tests/`
+`347 passed, 2 skipped` en 8 min 42 (19 `DeprecationWarning` de `pyqtgraph`) ; UI
+`1288 passed, 12 skipped, 2 xfailed` en 21 min 46 ; trois contrôles documentaires : 0.
 
 **Validation du lot R122–R126 (Windows 11, Python 3.14.8, 2026-10-04).**
 Oracle sur R124 : `1113 passed` ; unitaires sur R125 :
@@ -49,14 +48,13 @@ Node, hors pytest.
 
 | priorité | difficulté / responsable | première action précise | fini quand |
 |---|---|---|---|
-| 0 · validation | **simple, long (~50 min)** : passer les cinq commandes du §2 de CLAUDE.md sur le dernier commit | `python -m pytest tests/ui/ -q --no-cov` d'abord : c'est la seule suite qui n'a pas vu R128 à R135. | `0 failed` partout ; ETAT dit les comptes. |
 | 1 · arbitrages STRAT | **complexe · Claude, délégués par 👤 le 2026-10-04** (« tranche au plus logique ») ; D73, D20, D70, D17 faits (R129–R132), six défauts clos par raisonnement ; reste l'hystérésis, D14, D15, D54, D55 (et D21, simple) | Hystérésis : sur `r75x2` en `deep`, où l'anomalie a été mesurée, comparer le seuil qui suit le niveau de bruit au seuil fixé par le bruit nominal (§3, STRAT) ; la clé `tp_hysteresis_reference` n'existe que dans un arbre jetable, à recréer. | Chaque décision écrite en §3 avec sa raison et sa mesure ; un commit par décision. |
 | 2 · Zenodo spline et RE | **complexe · Claude, demandé par 👤 le 2026-10-04** : faire bénéficier certus0310 du meilleur de `optics continuum/05_CODE_ET_ZENODO` et de `publication_reverse/07_PAQUET_ZENODO` (`certus_re`). Spline fait (R133) ; RE : incertitudes d'épaisseur faites (R135). L'inversion conjointe de plusieurs échantillons est écartée par 👤 | RE : budget de paramètres déclaré (blocs libres comptés, points par paramètre), puis préréglage d'instrument (ouverture imposée plutôt qu'ajustée), puis σ(d) dans le tableau et l'export Excel. | Écarts mesurés, portages testés et validés, sources Zenodo citées. |
 | 3 · D45 / D46 | **complexe · décision 👤 préalable** : modifications de physique qui changent des résultats | Lire les mesures et les tests `xfail(strict)` en §4, puis obtenir le choix de 👤 en §5 avant de toucher aux noyaux. | Décision inscrite en §3, oracle avant/après, C1 du chemin inactif. |
 | 4 · D11 / reste de D23 | **complexe · Opus** : cycle de vie Qt et collecte hors du thread GUI | Rejouer `scripts/sonde_retenants_fenetre.py` ; inventorier les cinq `gc.collect()` des workers STRAT et les `QThread` retenus avant tout `WA_DeleteOnClose`. R121 a déjà clos l'arrêt des workers UI. | Fenêtres libérées après fermeture sans destruction de thread actif ; boucle de fermetures et suite UI sans arrêt natif. |
 | contingence · D77 | **complexe, seulement si la CI release devient rouge** | Lire stderr et l'artefact watchdog du premier job rouge ; le gel est vert sur `52de082c`. | Nouveau gel Windows vert sur le code en cause. |
 
-**Correctifs récents** (validés jusqu'à R127 ; R128 à R135 : voir la validation ci-dessus). R121 `21e62841` : arrêt natif des workers
+**Correctifs récents** (validés jusqu'à R135, voir ci-dessus). R121 `21e62841` : arrêt natif des workers
 UI (D23, partie harnais). R122 `9ab37980` : indices de substrat non finis (D75).
 R123 `466c31cc` : cibles non finies de `needle_scan_cached` (D53).
 R124 `73df4a3e` : repli `minimize` si l'API privée SciPy change (D74).

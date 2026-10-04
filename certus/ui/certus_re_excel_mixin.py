@@ -1446,6 +1446,7 @@ class CertusREExcelMixin:
 
             show_toast(self, f"Loaded: {Path(path).name}", "success")
 
+            self.mark_config_saved()
             return True
 
         except NUMERICAL_FAULT_EXCEPTIONS :

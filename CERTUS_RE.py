@@ -342,6 +342,7 @@ class CertusREApp(
         self.warmup_worker.finished.connect(self._on_warmup_done)
 
         self.warmup_worker.start()
+        self.mark_config_saved()
 
     def _get_optim_wls(self) -> np.ndarray:
         if self._re_targets and len(self._re_targets) > 0:

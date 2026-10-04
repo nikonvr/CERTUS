@@ -20,6 +20,61 @@ from certus.utils.certus_qsettings import certus_settings
 class CertusIndexSplineStateMixin:
     """CertusIndexSplineStateMixin."""
 
+    def _collect_config(self) -> dict:
+        """Collect the fit controls restored by ``_apply_config``."""
+        return {
+            "fit_t": self.chk_t.isChecked(),
+            "fit_t_ratio": self.chk_trel.isChecked(),
+            "fit_r": self.chk_r.isChecked(),
+            "weight_t": float(self.w_t.value()),
+            "weight_r": float(self.w_r.value()),
+            "substrate": self.cb_sub.currentData(),
+            "profile": self.cb_profilee.currentData(),
+            "d_nominal_nm": float(self.d_lo.value()),
+            "d_tolerance_nm": float(self.d_hi.value()),
+            "mesh_min_dlambda_over_lambda": float(self.sp_mesh_min_dlam.value()),
+            "rmse_fit_lambda_enabled": bool(self._rmse_fit_lambda_enabled),
+            "rmse_fit_lambda_lo_nm": float(self._rmse_fit_lambda_lo),
+            "rmse_fit_lambda_hi_nm": float(self._rmse_fit_lambda_hi),
+        }
+
+    def _apply_config(self, config: dict) -> None:
+        """Restore the controls saved in an INDEX SPLINE settings JSON."""
+        toggles = {
+            "fit_t": self.chk_t,
+            "fit_t_ratio": self.chk_trel,
+            "fit_r": self.chk_r,
+        }
+        for key, widget in toggles.items():
+            if key in config:
+                widget.setChecked(bool(config[key]))
+
+        numbers = {
+            "weight_t": self.w_t,
+            "weight_r": self.w_r,
+            "d_nominal_nm": self.d_lo,
+            "d_tolerance_nm": self.d_hi,
+            "mesh_min_dlambda_over_lambda": self.sp_mesh_min_dlam,
+        }
+        for key, widget in numbers.items():
+            if key in config:
+                widget.setValue(float(config[key]))
+
+        for key, widget in (("substrate", self.cb_sub), ("profile", self.cb_profilee)):
+            if key in config:
+                index = widget.findData(config[key])
+                if index < 0:
+                    raise ValueError(f"Unknown INDEX SPLINE {key}: {config[key]!r}")
+                widget.setCurrentIndex(index)
+
+        if "rmse_fit_lambda_enabled" in config:
+            self._rmse_fit_lambda_enabled = bool(config["rmse_fit_lambda_enabled"])
+        if "rmse_fit_lambda_lo_nm" in config:
+            self._rmse_fit_lambda_lo = float(config["rmse_fit_lambda_lo_nm"])
+        if "rmse_fit_lambda_hi_nm" in config:
+            self._rmse_fit_lambda_hi = float(config["rmse_fit_lambda_hi_nm"])
+        self._update_rmse_fit_region_overlay()
+
     def _load_defaults(self) -> None:
 
         self.df = None

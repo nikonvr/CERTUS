@@ -166,6 +166,11 @@ class CertusAppConfigMixin:
         """Take the configuration as it is now for the one the operator has on file: a later close compares with it."""
         self._saved_config_snapshot = self._config_snapshot()
 
+    def _mark_initial_config_saved(self) -> None:
+        """Take the delayed initial snapshot only if no save or load established one already."""
+        if getattr(self, "_saved_config_snapshot", None) is None:
+            self.mark_config_saved()
+
     def has_unsaved_config(self) -> bool:
         """True when the configuration is not the one last saved, loaded or settled at the opening of the window."""
         saved = getattr(self, "_saved_config_snapshot", None)

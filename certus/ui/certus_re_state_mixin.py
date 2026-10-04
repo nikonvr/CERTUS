@@ -40,6 +40,24 @@ calc_spectrum_full_exact = calc_spectrum_full_exact_wrapper
 class CertusREStateMixin:
     """CertusREStateMixin for CERTUS_RE."""
 
+    def _collect_config(self) -> dict[str, Any]:
+        """Save only RE settings that ``load_config`` can restore."""
+        config = {
+            "l0": float(self.l0_spin.value()),
+            "re_gui": {
+                "re_speed_mode": self._re_speed_mode(),
+                "re_phase2b_substrate_cauchy": self.sub_refine_check.isChecked(),
+                "re_refine_h": self.h_refine_check.isChecked(),
+                "re_refine_l": self.l_refine_check.isChecked(),
+                "re_enable_qwot_penalty": self.re_qwot_penalty_chk.isChecked(),
+                "re_fit_lambda_min_nm": float(self.re_fit_lambda_min_spin.value()),
+                "re_fit_lambda_max_nm": float(self.re_fit_lambda_max_spin.value()),
+            },
+        }
+        if getattr(self, "_re_loaded", False) and getattr(self, "_re_workbook_path", None):
+            config["workbook_path"] = self._re_workbook_path
+        return config
+
     def reset_to_defaults(self):
         """Reset the application (tables, results, RE state, workers stopped)."""
 
@@ -137,13 +155,16 @@ class CertusREStateMixin:
             raw = json.loads(p.read_text(encoding="utf-8-sig"))
             cfg = self._normalize_re_config(raw if isinstance(raw, dict) else {})
             workbook_path = cfg.get("workbook_path") or cfg.get("re_workbook_path")
-            if workbook_path and Path(str(workbook_path)).is_file():
-                return self.load_reverse_engineering_from_path(str(workbook_path))
+            if workbook_path:
+                if not Path(str(workbook_path)).is_file() or not self.load_reverse_engineering_from_path(str(workbook_path)):
+                    self.log(f"RE: workbook could not be loaded: {workbook_path!r}", "ERROR")
+                    return False
             if "l0" in cfg and hasattr(self, "l0_spin"):
                 self.l0_spin.setValue(float(cfg["l0"]))
             if "re_gui" in raw and isinstance(raw["re_gui"], dict):
                 self._re_apply_gui_prefs_from_dict(raw["re_gui"])
             self.log("RE JSON loaded and normalized.", "INFO")
+            self.mark_config_saved()
             return True
         except Exception as e:
             self.log(f"RE JSON load error: {e}", "ERROR")
@@ -481,6 +502,10 @@ class CertusREStateMixin:
                     self.l_refine_check.setChecked(bool(d["re_refine_l"]))
             if hasattr(self, "re_qwot_penalty_chk") and "re_enable_qwot_penalty" in d:
                 self.re_qwot_penalty_chk.setChecked(bool(d["re_enable_qwot_penalty"]))
+            if "re_fit_lambda_min_nm" in d and hasattr(self, "re_fit_lambda_min_spin"):
+                self.re_fit_lambda_min_spin.setValue(float(d["re_fit_lambda_min_nm"]))
+            if "re_fit_lambda_max_nm" in d and hasattr(self, "re_fit_lambda_max_spin"):
+                self.re_fit_lambda_max_spin.setValue(float(d["re_fit_lambda_max_nm"]))
         except (KeyError, ValueError, TypeError) as e:
             logging.warning("RE GUI prefs restore skipped: %s", e)
 

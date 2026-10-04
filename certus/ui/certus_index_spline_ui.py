@@ -209,6 +209,7 @@ class CertusIndexSplineApp(
         )
 
         self._finalize_init()
+        self.mark_config_saved()
 
 
 def main():

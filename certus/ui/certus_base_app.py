@@ -495,7 +495,7 @@ class CertusBaseApp(QMainWindow, CertusZoomMixin, CertusCommandPaletteMixin, Cer
         # A window with a configuration to save asks before a close discards a change (CertusAppConfigMixin): the filter
         # sees the close first, and the configuration of the first settled moment is the one the window opened with.
         self.installEventFilter(self)
-        QTimer.singleShot(1500, self.mark_config_saved)
+        QTimer.singleShot(1500, self._mark_initial_config_saved)
 
         # P1.3 - Auto-wire empty-state overlays on well-known table widgets.
         self._auto_install_empty_states()

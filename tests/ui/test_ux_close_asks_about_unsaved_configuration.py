@@ -5,9 +5,8 @@ close without a word: the only protection was against a running worker, and `_qs
 (geometry, splitters, table columns), never the configuration. An operator who had built a stack and not saved it
 lost it by clicking the cross.
 
-A window that can say what its configuration is (`_collect_config()` not empty: DESIGN, FIELD, INDEX, STRAT and the two
-METAL) now remembers it as of its last save, load or first settled state, and asks on a close that would discard a
-change: save, close without saving, or cancel. RE and INDEX SPLINE collect nothing yet and are not asked.
+A window that can say what its configuration is remembers it as of its last save, load or first settled state, and asks
+on a close that would discard a change: save, close without saving, or cancel.
 """
 
 from __future__ import annotations
@@ -197,3 +196,52 @@ def test_offscreen_a_close_asks_nothing(window, asked) -> None:
     window.close()
 
     assert asked["count"] == 0
+
+
+@pytest.mark.parametrize("kind", ["re", "index_spline"])
+def test_re_and_index_spline_saved_settings_are_guarded_and_round_trip(kind, qapp, monkeypatch, tmp_path) -> None:
+    if kind == "re":
+        from CERTUS_RE import CertusREApp
+
+        win = CertusREApp()
+        control = win.re_speed_fast_radio
+    else:
+        from certus.ui.certus_index_spline_ui import CertusIndexSplineApp
+
+        win = CertusIndexSplineApp()
+        control = win.chk_r
+
+    try:
+        assert win._saved_config_snapshot is not None, "the window must protect edits made immediately after opening"
+        assert not win.has_unsaved_config()
+        initial = control.isChecked()
+        control.setChecked(not initial)
+        assert win.has_unsaved_config()
+        win._mark_initial_config_saved()
+        assert win.has_unsaved_config(), "a delayed initial snapshot must not erase the user's early edit"
+
+        answers = []
+        monkeypatch.setattr(base_app, "_prompts_are_off", lambda: False)
+        monkeypatch.setattr(win, "_ask_about_unsaved_config", lambda: answers.append("asked") or "cancel")
+        win.show()
+        assert win.close() is False
+        assert answers == ["asked"]
+        assert win.isVisible()
+
+        target = tmp_path / f"{kind}_config.json"
+        monkeypatch.setattr(QFileDialog, "getSaveFileName", staticmethod(lambda *_a, **_k: (str(target), "")))
+        win.save_config()
+        assert json.loads(target.read_text(encoding="utf-8"))
+        assert not win.has_unsaved_config()
+
+        if kind == "re":
+            win.re_speed_medium_radio.setChecked(True)
+        else:
+            control.setChecked(initial)
+        assert win.has_unsaved_config()
+        assert win.load_config(str(target)) is True
+        assert control.isChecked() is not initial
+        assert not win.has_unsaved_config()
+    finally:
+        win.hide()
+        win.close()

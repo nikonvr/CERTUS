@@ -315,6 +315,21 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
         else:
             origin_item.setForeground(QColor(80, 80, 80))
             origin_item.setToolTip(origin)
+        forced = result.get("phase_a_forced") or {}
+        if forced:
+            n_forced = int(forced.get("n_forced", 0))
+            n_layers = int(forced.get("n_layers", 0))
+            layers = forced.get("layers") or []
+            layer_names = ", ".join(f"L{layer}" for layer in layers)
+            forced_detail = f"Phase A forced layers: {n_forced}/{n_layers}"
+            if layer_names:
+                forced_detail += f" ({layer_names})"
+            origin_item.setToolTip(f"{origin_item.toolTip()}\n{forced_detail}")
+            if n_forced:
+                origin_item.setText(f"⚠ {display_text}")
+                origin_item.setBackground(QColor(CertusTheme.WARNING_BG))
+                origin_item.setForeground(QColor(CertusTheme.WARNING_TEXT))
+                origin_item.setFont(CertusTheme.get_font(9, QFont.Weight.Bold))
         self.table.setItem(row, 2, origin_item)
 
         # 3: Min Res
@@ -1166,6 +1181,7 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
 
                 for rank, result in enumerate(strategies_results, 1):
                     strat = result["strategy"]
+                    forced = result.get("phase_a_forced") or {}
 
                     noise_results = result.get("results_per_noise", [])
 
@@ -1214,6 +1230,9 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
                         "Rank": rank,
                         "Strategy_ID": strat["strategy_id"],
                         "Origin": origin.upper(),
+                        "Phase_A_Forced_Count": forced.get("n_forced", ""),
+                        "Phase_A_Total_Layers": forced.get("n_layers", ""),
+                        "Phase_A_Forced_Layers": ",".join(str(layer) for layer in forced.get("layers") or []),
                         "Min_Resolution_nm": result.get("min_resolution", ""),
                         "Limiting_Layer": result.get("limiting_layer", ""),
                         "Thickness_Rank": strat.get("thickness_rank", ""),

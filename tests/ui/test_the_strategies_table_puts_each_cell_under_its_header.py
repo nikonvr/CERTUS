@@ -13,6 +13,7 @@ The row builder and the header builder now read the same lists (`BASE_HEADERS`, 
 
 from __future__ import annotations
 
+import csv
 import os
 import re
 
@@ -137,6 +138,49 @@ def test_yield_does_not_invent_a_nominal_rate_for_an_old_result(window):
     tooltip = window.table.item(0, headers(window).index("Yield %")).toolTip()
     assert "Worst-case non-completion rate: 3.00%" in tooltip
     assert "Nominal noise (1x) non-completion rate: not available" in tooltip
+
+
+def test_origin_marks_forced_phase_a_layers_without_inventing_a_zero(qapp):
+    forced = result()
+    forced["phase_a_forced"] = {"n_forced": 3, "n_layers": 48, "layers": [35, 41, 47]}
+    clean = result()
+    clean["phase_a_forced"] = {"n_forced": 0, "n_layers": 48, "layers": []}
+    unknown = result()
+    windows = [StrategiesTableWindow(None, [data], [100.0, 80.0, 60.0]) for data in (forced, clean, unknown)]
+    try:
+        items = [win.table.item(0, headers(win).index("Origin")) for win in windows]
+        assert items[0].text().startswith("⚠ ")
+        assert "Phase A forced layers: 3/48" in items[0].toolTip()
+        assert "L35, L41, L47" in items[0].toolTip()
+        assert items[1].text() == "SMART"
+        assert "Phase A forced layers: 0/48" in items[1].toolTip()
+        assert items[2].text() == "SMART"
+        assert "Phase A forced layers" not in items[2].toolTip()
+    finally:
+        for win in windows:
+            win.close()
+
+
+def test_csv_keeps_forced_layers_and_distinguishes_unknown_from_zero(qapp, monkeypatch, tmp_path):
+    forced = result()
+    forced["phase_a_forced"] = {"n_forced": 3, "n_layers": 48, "layers": [35, 41, 47]}
+    clean = result()
+    clean["phase_a_forced"] = {"n_forced": 0, "n_layers": 48, "layers": []}
+    unknown = result()
+    results = [forced, clean, unknown]
+    destination = tmp_path / "strategies.csv"
+    monkeypatch.setattr(certus_strat_table_ui.QFileDialog, "getSaveFileName", lambda *args: (str(destination), "CSV"))
+    monkeypatch.setattr(certus_strat_table_ui, "set_certus_last_dir", lambda path: None)
+    win = StrategiesTableWindow(None, results, [100.0, 80.0, 60.0])
+    try:
+        win.export_csv(results, max_blocks=2)
+        with destination.open(encoding="utf-8-sig", newline="") as stream:
+            rows = list(csv.DictReader(stream))
+        assert [row["Phase_A_Forced_Count"] for row in rows] == ["3", "0", ""]
+        assert [row["Phase_A_Total_Layers"] for row in rows] == ["48", "48", ""]
+        assert [row["Phase_A_Forced_Layers"] for row in rows] == ["35,41,47", "", ""]
+    finally:
+        win.close()
 
 
 def test_a_table_with_no_block_still_puts_the_worst_layers_after_the_seel_columns(qapp):

@@ -14,9 +14,17 @@
 > [CLAUDE.md](../CLAUDE.md) ; les décisions scientifiques appartiennent à 👤 (§5).
 
 **Point de départ (2026-10-04).** Travailler dans `certus0310`, branche
-`refactor-corridors-mixins`, code validé localement `da0ca5b5`, [PR #5](https://github.com/nikonvr/CERTUS/pull/5).
-Première commande : `python scripts\preflight.py` → `PREFLIGHT=GO`. Dernier lot commité :
-R128 (D5) ; les arbitrages STRAT délégués par 👤 suivent (ligne 1 du tableau).
+`refactor-corridors-mixins`, [PR #5](https://github.com/nikonvr/CERTUS/pull/5).
+Première commande : `python scripts\preflight.py` → `PREFLIGHT=GO`. Dernier commit `eca32af0` (R135),
+arbre propre ; R128 à R135 et `af2d521d` sont **locaux, non poussés** (pousser attend l'ordre de 👤) ;
+sauvegarde : `../CERTUS_certus0310_<date>_<commit>.bundle`, refait après chaque lot (le plus récent porte le dernier commit).
+
+**Validation de R128 à R135 : partielle, la suite complète reste à passer.** Faites : R128 (D5) ruff, C1
+8 008/8 008 identiques au bit, oracle `1114 passed`, unit `4851 passed`, reste de `tests/` `347 passed` ;
+R129 + R130 ruff, C1 8 008/8 008, oracle `1114 passed`, unit `4858 passed` ; R131 C1 8 008/8 008 et tests
+ciblés ; R132 à R135 tests ciblés (spline : unit 322, intégration 3, UI 56 ; RE : sélection unit 3 333,
+sans échec hors le cliquet corrigé par `af2d521d`). La suite UI n'a pas tourné depuis la première version
+de D5.
 
 **Validation du lot R122–R126 (Windows 11, Python 3.14.8, 2026-10-04).**
 Oracle sur R124 : `1113 passed` ; unitaires sur R125 :
@@ -41,13 +49,14 @@ Node, hors pytest.
 
 | priorité | difficulté / responsable | première action précise | fini quand |
 |---|---|---|---|
-| 1 · arbitrages STRAT | **complexe · Claude, délégués par 👤 le 2026-10-04** (« tranche au plus logique ») ; D73, D20, D70, D17 faits (R129–R132), reste l'hystérésis, puis D14, D15, D54, D55 | Hystérésis : mesurer sur `r75x2`, où l'anomalie a été vue, le seuil référé au bruit nominal (`tp_hysteresis_reference`) contre le seuil qui suit le niveau. | Chaque décision écrite en §3 avec sa raison et sa mesure ; un commit par décision. |
+| 0 · validation | **simple, long (~50 min)** : passer les cinq commandes du §2 de CLAUDE.md sur le dernier commit | `python -m pytest tests/ui/ -q --no-cov` d'abord : c'est la seule suite qui n'a pas vu R128 à R135. | `0 failed` partout ; ETAT dit les comptes. |
+| 1 · arbitrages STRAT | **complexe · Claude, délégués par 👤 le 2026-10-04** (« tranche au plus logique ») ; D73, D20, D70, D17 faits (R129–R132), six défauts clos par raisonnement ; reste l'hystérésis, D14, D15, D54, D55 (et D21, simple) | Hystérésis : sur `r75x2` en `deep`, où l'anomalie a été mesurée, comparer le seuil qui suit le niveau de bruit au seuil fixé par le bruit nominal (§3, STRAT) ; la clé `tp_hysteresis_reference` n'existe que dans un arbre jetable, à recréer. | Chaque décision écrite en §3 avec sa raison et sa mesure ; un commit par décision. |
 | 2 · Zenodo spline et RE | **complexe · Claude, demandé par 👤 le 2026-10-04** : faire bénéficier certus0310 du meilleur de `optics continuum/05_CODE_ET_ZENODO` et de `publication_reverse/07_PAQUET_ZENODO` (`certus_re`). Spline fait (R133) ; RE : incertitudes d'épaisseur faites (R135). L'inversion conjointe de plusieurs échantillons est écartée par 👤 | RE : budget de paramètres déclaré (blocs libres comptés, points par paramètre), puis préréglage d'instrument (ouverture imposée plutôt qu'ajustée), puis σ(d) dans le tableau et l'export Excel. | Écarts mesurés, portages testés et validés, sources Zenodo citées. |
 | 3 · D45 / D46 | **complexe · décision 👤 préalable** : modifications de physique qui changent des résultats | Lire les mesures et les tests `xfail(strict)` en §4, puis obtenir le choix de 👤 en §5 avant de toucher aux noyaux. | Décision inscrite en §3, oracle avant/après, C1 du chemin inactif. |
 | 4 · D11 / reste de D23 | **complexe · Opus** : cycle de vie Qt et collecte hors du thread GUI | Rejouer `scripts/sonde_retenants_fenetre.py` ; inventorier les cinq `gc.collect()` des workers STRAT et les `QThread` retenus avant tout `WA_DeleteOnClose`. R121 a déjà clos l'arrêt des workers UI. | Fenêtres libérées après fermeture sans destruction de thread actif ; boucle de fermetures et suite UI sans arrêt natif. |
 | contingence · D77 | **complexe, seulement si la CI release devient rouge** | Lire stderr et l'artefact watchdog du premier job rouge ; le gel est vert sur `52de082c`. | Nouveau gel Windows vert sur le code en cause. |
 
-**Correctifs récents clos et validés.** R121 `21e62841` : arrêt natif des workers
+**Correctifs récents** (validés jusqu'à R127 ; R128 à R135 : voir la validation ci-dessus). R121 `21e62841` : arrêt natif des workers
 UI (D23, partie harnais). R122 `9ab37980` : indices de substrat non finis (D75).
 R123 `466c31cc` : cibles non finies de `needle_scan_cached` (D53).
 R124 `73df4a3e` : repli `minimize` si l'API privée SciPy change (D74).
@@ -61,7 +70,7 @@ R131 `d1b2684b` : le critère en épaisseur et son réglage inerte sont retirés
 R132 `ad180e34` : le recensement de la Phase A compte chaque gain négatif (D17).
 R133 `37f6cd57` : INDEX SPLINE part des constantes publiées (tables SiO₂, Ta₂O₅, Nb₂O₅ du dépôt Zenodo de l'article). Mesuré le 2026-10-04 en pilotant la vraie fenêtre sur les trois spectres de l'article (nominale 1700 nm, tolérance 200 nm) : avec « Auto preset && d », d = 1681,78 / 1707,96 / 1716,02 nm et résidus 0,001535 / 0,002727 / 0,002105, ceux du dépôt, sous leur nom comme sous un nom neutre ; avec les anciens profils, 1699,6 nm et 0,00177 pour SiO₂, 0,0084 pour Ta₂O₅. À froid, certus0310 fait mieux que le dépôt (SiO₂ 0,00178 contre 0,0288 ; Ta₂O₅ 0,0276 contre 0,0399).
 R134 `5262a81f` : le RE va au bout de sa phase 4. Depuis le découpage S5.2 (`849a3c2e`), `_execute_phase4_beam` appelait `self._close_phase4_profile` alors que le worker passe `None` comme `self` : tout run dont la phase 4 atteignait sa branche des grands angles finissait en `AttributeError`, sans résultat (l'exemple `reverse_sample.xlsx` compris). Les tests écoutaient `result`, émis avant la phase 4, et l'un épinglait l'appel fautif ; le test sans écran exige désormais `finished` avec `ok`.
-R135 : le RE rend l'incertitude de chaque épaisseur (`thickness_uncertainty`, une ligne de journal par couche), portée de `certus_re` (Zenodo) : covariance `s² (JᵀJ)⁺` du Jacobien des seuls résidus de données, directions non contraintes sans barre, conditionnelle aux corrections d'indice et à l'ouverture ajustées. Sur `reverse_sample.xlsx` : σ(d) de 0,22 à 0,70 nm pour 17 couches et 1 200 points ; le Jacobien analytique colle aux différences finies à 3,4·10⁻¹⁰.
+R135 `eca32af0` : le RE rend l'incertitude de chaque épaisseur (`thickness_uncertainty`, une ligne de journal par couche), portée de `certus_re` (Zenodo) : covariance `s² (JᵀJ)⁺` du Jacobien des seuls résidus de données, directions non contraintes sans barre, conditionnelle aux corrections d'indice et à l'ouverture ajustées. Sur `reverse_sample.xlsx` : σ(d) de 0,22 à 0,70 nm pour 17 couches et 1 200 points ; le Jacobien analytique colle aux différences finies à 3,4·10⁻¹⁰.
 Le choix de 👤 « on garde fastmath » clôt l'arbitrage D52/D67 ; les écarts
 froid/chaud restent documentés en §3.
 
@@ -242,6 +251,13 @@ logique ». Chaque ligne donne la décision, sa raison et sa mesure ; une mesure
   `[ADMISSIBILITY]`). Mesuré sur le juge de paix en `fast` : 159 candidates à gain négatif sur 48 couches,
   dont 146 déjà écartées pour plantage et 13 par ce seul critère ; les runs d'avant comptaient déjà ces 13.
   Le constat « n'a jamais rejeté une candidate » (n° 38) ne tient pas sur ce composant.
+- **Hystérésis du détecteur, non tranché faute de mesure décisive.** Le seuil vaut `tp_hysteresis_factor ×
+  bruit` du niveau Monte-Carlo (0,5×, 1×, 2×) en Phase B, et du bruit nominal en Phase A : à 0,5× et 2× les deux
+  phases ne simulent pas la même machine. Principe retenu : un seul réglage, celui du bruit nominal de la fente.
+  Mesuré sur le juge de paix en `fast` avec ce seuil fixe (clé `tp_hysteresis_reference`, arbre jetable, trace qui
+  prouve que la clé atteint le calcul) : aucun durcissement — le plantage au bruit ×2 baisse pour 8 stratégies
+  communes et ne monte pour aucune — et ce composant ne montre presque pas l'anomalie (26 croissantes, 167 plates,
+  1 décroissante). Le test décisif est `r75x2`, où l'anomalie a été mesurée (8,7 contre 1) ; rien n'est activé avant.
 - **Clos sans changement de code** (raisonnement sur le code, sans mesure nouvelle) :
   - **D16** : la carte THICKNESS² est le carré du coût boosté, par construction (un bonus en 1/√s y
     devient 1/s), et la normalisation par la moyenne est un facteur commun, qui ne change aucun ordre de
@@ -337,9 +353,9 @@ Ces sujets demandent un jugement de physicien ou de propriétaire du produit. Le
 | **avis de tiers** | Écrire `THIRD_PARTY_NOTICES` pour les éléments redistribués sous licence propre (icônes Lucide, données d’indices, textes tiers). |
 | **le substrat qui absorbe (D48)** | Confirmer l’épaisseur par défaut de 1 mm, ou en faire un champ de DESIGN et STRAT ; elle décide de la perte de flux. |
 | **D45 et D46** | **D45** : corriger le gradient avec pile arrière (`2/Σw`) change les résultats des optimisations avec pile arrière (le facteur mesuré va de 1,07 à 1,94 sur les cas de D45) ; **D46** : borner la phase dans les noyaux change les derniers bits (1e-15, mesuré) des chemins à substrat réel, pour un cas qu'aucun design courant n'atteint. Deux décisions distinctes ; la règle du chemin inactif au bit près (C1) demande ton accord pour les deux |
-| **l'option `adaptive_scan` du noyau de croissance (D54)** | morte (personne ne la passe) et fausse avec la grille fine : la supprimer, ou la réparer ; tant que 👤 n'a pas tranché, le corpus de `c1_diff` évite la combinaison |
-| **la lecture des couches rejouées sur la grille fine (D55)** | décalée d'un pas grossier (d/16) puis plate sur le dernier seizième : corriger change ce que voit la grille de la machine dès que `smoothing_window > 1` ; sans effet tant que le lissage vaut 1 |
 | **la polarisation « Avg » (D47)** | la retirer du tableau des cibles de DESIGN, comme aujourd'hui, ou la calculer : les deux ondes, leur moyenne et leurs gradients |
+
+D54 et D55 ne sont plus en attente de 👤 : délégués à Claude le 2026-10-04 avec les autres questions STRAT (ligne 1 du §0).
 
 ## 6. Chantiers spécifiés, en attente
 

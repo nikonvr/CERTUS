@@ -198,6 +198,16 @@
         <p>
             A manuscript should state explicitly that CERTUS does not start from a flat optical-constant prior. It starts from a Swanepoel-derived estimate extracted from measured extrema, then re-sampled on the optimization mesh. This point is essential because the downstream convergence behavior, the probability of fringe-order mistakes, and the stability of the free-knot stages all depend strongly on that informed initialization. In comparative studies, any baseline method should therefore be distinguished according to whether it uses the same informed warm start or a generic initial guess.
         </p>
+        <p>
+            The Smart Init window also offers three <strong>tabulated starting profiles</strong>: the optical constants of the PARMS
+            SiO<sub>2</sub>, Ta<sub>2</sub>O<sub>5</sub> and Nb<sub>2</sub>O<sub>5</sub> films published with the <i>Optics Continuum</i> article
+            and its Zenodo deposit (Certus Index Spline 1.1-revised), projected onto the sigma mesh by linear interpolation of $n$ and
+            $\ln k$ in $\sigma$. One is chosen by hand, or by <strong>Auto preset &amp; d</strong>, which keeps the profile with the best initial
+            fit, together with its thickness; the file name plays no part. A result started from such a profile is a <em>refinement</em> of known
+            constants, not a determination from scratch, and a paper must say so. Measured on 2026-10-04 by driving the real window on the three
+            spectra of the article (nominal 1700 nm, tolerance 200 nm, relative transmittance on sapphire), under their own names and under neutral
+            ones: d = 1681.78, 1707.96 and 1716.02 nm, weighted residuals 0.001535, 0.002727 and 0.002105 &mdash; the values of the deposit.
+        </p>
         <h2>Section 5: Phase 02 Vector Grids - The Rigid SOL 2 Architecture</h2>
         <p>
             Post-Phase 01 setup, the framework migrates into Phase 02 (<code>SOL 2</code>). Interference fringes possess severe harmonic redundancies: absolute physical depth ($d$) can slip into a neighboring fringe order without immediately inflating RMSE significantly if the nodes are completely uncoupled and capable of compensating instantly.

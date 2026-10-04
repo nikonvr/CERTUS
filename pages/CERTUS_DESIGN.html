@@ -99,7 +99,8 @@
             SAMP["2. Latin Hypercube Sampling<br>N_pop random thickness vectors<br>in [0, 1.2×QWOT]^N"]:::process --> EVAL["3. Evaluate Cost (Numba JIT)<br>TMM → R/T(λ), RMSE vs target"]:::process
             EVAL --> SORT["4. Sort by RMSE<br>Keep top σ% lowest-error"]:::process
             SORT --> DC["5. Critical distance d_c<br>from Γ, D, N, α"]:::process
-            DC --> CLUSTER["6. Single-Linkage Clustering<br>dist < d_c AND descent"]:::process CLUSTER --> NEW{"7. New basin?"}:::decision
+            DC --> CLUSTER["6. Single-Linkage Clustering<br>dist &lt; d_c AND descent"]:::process
+            CLUSTER --> NEW{"7. New basin?"}:::decision
                 NEW -->|"Yes"| LBFGS["8. L-BFGS-B Refinement<br>Analytic gradient ∇MSE<br>(Adjoint Method, O(N))"]:::highlight
                 NEW -->|"No"| SKIP["Discard"]:::process
                 LBFGS --> UPDATE["9. Update global best"]:::process
@@ -128,7 +129,8 @@
                         OVERSHOOT["12. Overshoot Setup<br>Temporary target = ⌈N × 1.20⌉<br>(+20% to enrich design space)"]:::process
                         OVERSHOOT --> NP["13. Needle Scan: P(z)<br>Topological derivative<br>at 1000 positions"]:::process
                         NP --> NMIN["14. Find z* = argmin P(z)"]:::process
-                        NMIN --> NCHECK{"P(z*) < −ε ?"}:::decision NCHECK -->|"Yes"| NINSERT["15. Split layer at z*<br>Insert needle (0.1 nm)"]:::highlight
+                        NMIN --> NCHECK{"P(z*) &lt; −ε ?"}:::decision
+                        NCHECK -->|"Yes"| NINSERT["15. Split layer at z*<br>Insert needle (0.1 nm)"]:::highlight
                             NINSERT --> NLBFGS["16. L-BFGS-B Polish<br>(step 1)"]:::process
                             NLBFGS --> NCLEAN["17. Cleanup + Merge<br>(step 2)"]:::process
                             NCLEAN --> NEVAL["18. Evaluate RMSE<br>improvement > 1%?<br>(step 3)"]:::process
@@ -361,11 +363,30 @@
             \frac{d\mathbf{M}_j}{d d_j} \cdot \mathbf{M}_{before}[j] $$
         </div>
         <div class="eq-box">
-            $$ \frac{\partial \text{MSE}}{\partial d_j} = \frac{1}{M} \sum_{k=1}^{M} w_k \left(S_{calc}(\lambda_k) - S_{target}(\lambda_k)\right) \frac{\partial S_{calc}}{\partial d_j} $$
+            $$ \text{MSE} = \frac{\sum_{k\in V} w_k\,[S_{calc}(\lambda_k)-S_{target}(\lambda_k)]^2}{\sum_{k\in V} w_k}, \qquad
+            \frac{\partial \text{MSE}}{\partial d_j} = \frac{2}{\sum_{k\in V} w_k}
+            \sum_{k\in V} w_k\,[S_{calc}(\lambda_k)-S_{target}(\lambda_k)]
+            \frac{\partial S_{calc}(\lambda_k)}{\partial d_j} $$
         </div>
         <p>
             Where $\frac{\partial S_{calc}}{\partial d_j}$ is extracted directly from the components of $\frac{\partial \mathbf{M}_{total}}{\partial d_j}$. This explicit Jacobian $\nabla_{\mathbf{d}} \text{MSE}$ is what feeds the L-BFGS-B quasi-Newton step.
+            Here $V$ contains valid weighted target points. The backside path uses the same sum of valid weights
+            in its cost and gradient; dividing the gradient by the number of points would scale it incorrectly.
         </p>
+        <div class="mermaid">
+            flowchart LR
+            A[Trial layer thicknesses] --> B{Backside calculation enabled?}
+            B -->|No| C[Front-stack TMM and analytic sensitivities]
+            B -->|Yes, bare or coated back| D[Backside oblique TMM and analytic sensitivities]
+            C --> E[Keep valid target points and their weights]
+            D --> E
+            E --> F[Sum weighted squared errors and weighted derivatives]
+            F --> G{Sum of valid weights sufficient?}
+            G -->|Yes| H[Cost: error sum / weight sum; gradient: 2 x derivative sum / weight sum]
+            G -->|No| I[Large penalty cost; zero gradient]
+            H --> J[L-BFGS-B step inside thickness bounds]
+            I --> J
+        </div>
         <p>
             The derivative of a single layer matrix $\mathbf{M}_j$ is analytically simple:
         </p>
@@ -379,6 +400,34 @@
             forward + backward pass, resulting in a <strong>50×–100× speedup</strong> compared to numerical
             differentiation. All gradient kernels are JIT-compiled via Numba in Float64/Complex128.
         </div>
+
+        <h3>5.3 Bounds for absorbing layers</h3>
+        <p>
+            Before global, local or healing optimisation, <code>optim_opaque_thickness_limits</code> computes a
+            per-layer upper thickness from the shortest wavelength and the largest absolute imaginary index on
+            the grid. For an absorbing layer it caps the mode's upper bound at
+            $0.99\times700\lambda_{min}/(2\pi k_{max})$ nm, one percent below the phase-overflow threshold.
+            A nonabsorbing layer has no additional cap. The cap is applied without moving a mode's lower bound;
+            when that lower bound permits it, this keeps the optimiser inside the range accepted by the existing
+            physics kernels, whose guard otherwise returns $(R,T)=(0,0)$ beyond that threshold.
+        </p>
+        <div class="mermaid">
+            flowchart TD
+            A[Variable layers and wavelength grid] --> B[Build usual mode bounds: global, local or healing]
+            A --> C[For each layer: maximum absolute imaginary index and minimum wavelength]
+            C --> D{Absorbing layer?}
+            D -->|No| E[Infinite opacity limit]
+            D -->|Yes| F[Limit = 0.99 x 700 x shortest wavelength / 2 pi x maximum k]
+            B --> G[Cap each upper bound by its layer opacity limit]
+            E --> G
+            F --> G
+            G --> H[Bounded global search or local L-BFGS-B]
+        </div>
+        <p>
+            On the measured infrared metal case ($n=0.02-60i$, 8&ndash;12 &micro;m), this removed a
+            global upper bound above 100 &micro;m; bounds for a nonabsorbing layer were bit-identical.
+            The corrected backside gradient matched finite differences to $10^{-5}$ in its regression cases.
+        </p>
 
         <!-- ================================================================ -->
         <!--  5. HEALING                                                       -->
@@ -660,7 +709,7 @@
             logs before using an exported result.</p>
 
         <div class="footer">
-            <p>Generated from source analysis of <code>CERTUS_DESIGN.py</code> (Facade), <code>certus_design_core.py</code>, <code>certus_design_ui.py</code> &mdash; implementation review: 2026-10-03
+            <p>Generated from source analysis of <code>CERTUS_DESIGN.py</code> (Facade), <code>certus_design_core.py</code>, <code>certus_design_ui.py</code> &mdash; implementation review: 2026-10-04
             </p>
             <p>&copy; CERTUS Scientific Suite v26-04 &bull; Scientific Analysis Report</p>
         </div>

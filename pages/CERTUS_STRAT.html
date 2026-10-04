@@ -4143,8 +4143,38 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     therefore <i>not</i> distinguishable by that alone. A second, statistical bound
                     (<code>seel_equivalence_half_width</code>) was written but never called in production,
                     and was removed on 2026-09-27: the ranking key uses the absolute step only. Treat a
-                    one-bin difference as a tie.
+                    one-bin difference as an equivalence for the final ranking rule below.
                 </div>
+
+                <h3>10.6.1 Final displayed and exported ranking</h3>
+                <p>
+                    <code>rank_final_results</code> first checks that every strategy ID is unique. It then orders
+                    candidates by SEEL and forms each equivalence class from the smallest SEEL still unranked:
+                    every following candidate at most 0.01 nm above that leader enters the same class. Inside the
+                    class, lower crash rate wins, followed by larger critical-layer transmission margin (clamped to
+                    0&ndash;2 instrument-amplitude units), then lower raw robustness score. This deterministic
+                    order is what the final table and export receive. ELITE parent choice and consensus keep their
+                    internal ranking logic.
+                </p>
+                <div class="mermaid">
+                    flowchart TD
+                    A[Monte-Carlo strategy results] --> B[Reject missing or duplicate strategy IDs]
+                    B --> C[Sort remaining candidates by SEEL, then raw robustness score]
+                    C --> D[Take smallest SEEL still unranked as class leader]
+                    D --> E[Collect candidates no more than 0.01 nm above leader]
+                    E --> F[Within class: lower crash rate]
+                    F --> G[Then larger critical-layer margin, clipped to 0 to 2 A]
+                    G --> H[Then lower raw robustness score]
+                    H --> I{Candidates remain?}
+                    I -->|Yes| D
+                    I -->|No| J[Final order shown and exported]
+                </div>
+                <p>
+                    On the 2026-10-04 <code>fast</code> reference run, the same 194 strategies produced 147 changed
+                    positions. The winner moved from a one-block fusion (SEEL 0.1843 nm, 2&nbsp;% crashes) to an
+                    eight-block ELITE strategy (0.1892 nm, 0&nbsp;% crashes); <code>RESULT</code> moved from
+                    0.008495 to 0.008950. Those figures describe the final ordering change, not a new search.
+                </p>
 
                 <h3>10.7 How many Monte-Carlo draws are actually needed</h3>
                 <p>
@@ -4908,8 +4938,9 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         <li>On that same stack, 6 blocks wins only under <b>DEEP</b>. FAST and PREMIUM
                             both return <b>5 blocks</b>.</li>
                         <li>The 6-vs-5 gap on the dichroic is <b>smaller than the statistical
-                            resolution</b> of the score itself (§10.6). Within one bin, the ranking is
-                            a coin toss dressed as a decision.</li>
+                            resolution</b> of the score itself (§10.6). A one-bin score difference does not
+                            statistically resolve the pair; the current final ordering applies the explicit
+                            crash-rate and critical-margin rule of §10.6.1.</li>
                     </ul>
                     And the 99-layer filter of §10.15 shows the window moves with the stack: there the
                     best partition is <b>4 blocks</b>, not 6.
@@ -5881,7 +5912,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 <div class="footer">
                     <p>Generated from strict source code analysis of <code>CERTUS_STRAT.py</code>,
                         <code>certus_strat_context.py</code>, <code>certus_strat_db.py</code> and
-                        <code>_certus_physics_impl.py</code> — Revision 2026-08-14
+                        <code>_certus_physics_impl.py</code> — Revision 2026-10-04
                     </p>
                     <p>&copy; CERTUS Scientific Suite v26-08 • Scientific Report</p>
                 </div>

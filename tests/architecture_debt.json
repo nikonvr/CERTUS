@@ -104,6 +104,6 @@
     "certus/ui/certus_strat_ui_state.py": 1797,
     "certus/utils/certus_re_helpers.py": 1973,
     "certus/utils/certus_strat_service.py": 1657,
-    "certus/workers/certus_strat_workers.py": 1752
+    "certus/workers/certus_strat_workers.py": 1750
   }
 }

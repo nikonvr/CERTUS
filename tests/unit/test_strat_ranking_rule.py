@@ -63,3 +63,78 @@ def test_the_rule_actually_reorders_a_measured_case():
         cloud, key=lambda s: rank_key_seel_yield_margin(s["seel"], s["crash"], s["margin"])
     )
     assert [s["id"] for s in ordered] == [9208, 2218, 2228, 2226]
+
+
+# --- the final order of a run: one step of SEEL is an equality, then the yield decides (D20) ---------------------------------
+
+
+def _row(seel_nm: float, crash: float, margin: float = 1.0, sid: int = 0) -> dict:
+    score = (seel_nm / 2.0) ** 2 if seel_nm == seel_nm and seel_nm != float("inf") else float("inf")
+    return {"strategy": {"strategy_id": sid, "blocks": []}, "robustness_score": score, "crash_rate": crash,
+            "critical_layer": {"margin_in_A": margin}, "results_per_noise": []}
+
+
+def _seels(rows: list[dict]) -> list[float]:
+    return [round(2.0 * (r["robustness_score"] ** 0.5), 4) if r["robustness_score"] != float("inf") else float("inf") for r in rows]
+
+
+def test_within_one_step_of_the_best_seel_the_yield_decides():
+    """The dichroic in `fast` mode, 2026-10-04: 0.1843 nm at 2 % crashes against 0.1892 nm at 0 %; fixed bins put them in 18 and 19."""
+    from certus.core.certus_strat_ranking import order_by_the_ranking_rule
+
+    ordered = order_by_the_ranking_rule([_row(0.1843, 0.02, sid=1), _row(0.1892, 0.0, sid=2)])
+    assert [r["strategy"]["strategy_id"] for r in ordered] == [2, 1]
+
+
+def test_two_steps_apart_the_seel_decides_whatever_the_yield():
+    from certus.core.certus_strat_ranking import order_by_the_ranking_rule
+
+    ordered = order_by_the_ranking_rule([_row(0.19, 0.0, sid=2), _row(0.17, 0.04, sid=1)])
+    assert [r["strategy"]["strategy_id"] for r in ordered] == [1, 2]
+
+
+def test_the_class_is_measured_from_its_best_member():
+    """0.178 is within a step of 0.170, 0.186 is not (0.016): two classes, the yield decides inside the first one only."""
+    from certus.core.certus_strat_ranking import order_by_the_ranking_rule
+
+    ordered = order_by_the_ranking_rule([_row(0.186, 0.0, sid=3), _row(0.170, 0.04, sid=1), _row(0.178, 0.0, sid=2)])
+    assert [r["strategy"]["strategy_id"] for r in ordered] == [2, 1, 3]
+
+
+def test_at_equal_yield_the_larger_margin_comes_first_and_then_the_raw_score():
+    from certus.core.certus_strat_ranking import order_by_the_ranking_rule
+
+    ordered = order_by_the_ranking_rule(
+        [_row(0.171, 0.0, margin=0.4, sid=1), _row(0.175, 0.0, margin=1.8, sid=2), _row(0.173, 0.0, margin=1.8, sid=3)]
+    )
+    assert [r["strategy"]["strategy_id"] for r in ordered] == [3, 2, 1]
+
+
+def test_strategies_without_a_finite_score_come_last_in_their_order():
+    from certus.core.certus_strat_ranking import order_by_the_ranking_rule
+
+    rows = [_row(float("inf"), 1.0, sid=9), _row(0.2, 0.0, sid=1), _row(float("inf"), 0.5, sid=8)]
+    assert [r["strategy"]["strategy_id"] for r in order_by_the_ranking_rule(rows)] == [1, 9, 8]
+
+
+def test_a_run_shows_and_exports_its_strategies_in_the_order_of_the_rule():
+    """The full pipeline sorted its final list by the raw score: the rule of 👤 reached no table, no export, no `best_strategy`."""
+    import logging
+
+    from certus.workers.certus_strat_workers import _finalize_and_export_pipeline_results
+
+    shown: list[list] = []
+
+    class _Signal:
+        def emit(self, *args):
+            shown.append(list(args[0]))
+
+    class _Signals:
+        show_strategies_table = _Signal()
+
+    rows = [_row(0.1843, 0.02, sid=1), _row(0.1892, 0.0, sid=2)]
+    out = _finalize_and_export_pipeline_results(
+        rows, {}, {}, {"logger": logging.getLogger("test"), "show_plots": False, "export_excel": False}, _Signals(), None
+    )
+    assert [r["strategy"]["strategy_id"] for r in shown[0]] == [2, 1]
+    assert out["final_results"]["best_strategy"]["strategy_id"] == 2

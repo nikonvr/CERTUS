@@ -41,8 +41,8 @@ Node, hors pytest.
 
 | priorité | difficulté / responsable | première action précise | fini quand |
 |---|---|---|---|
-| 1 · arbitrages STRAT | **complexe · Claude, délégués par 👤 le 2026-10-04** (« tranche au plus logique ») ; D73 fait (R129), reste D20, D70, D17, hystérésis, puis D14, D15, D54, D55 | D20 : faire suivre la règle de tri gravée au classement final, qui trie aujourd'hui par score brut. | Chaque décision écrite en §3 avec sa raison et sa mesure ; un commit par décision. |
-| 2 · Zenodo spline et RE | **complexe · Claude, demandé par 👤 le 2026-10-04** : faire bénéficier certus0310 du meilleur de `optics continuum/05_CODE_ET_ZENODO` et de `publication_reverse/07_PAQUET_ZENODO` (`certus_re`) | Mesurer avant de porter : même exemple sur les deux codes spline ; tableau des capacités de `certus_re` (inversion conjointe, prior MAP, instrument, incertitudes) face au RE de certus0310. | Écarts mesurés, portages testés et validés, sources Zenodo citées. |
+| 1 · arbitrages STRAT | **complexe · Claude, délégués par 👤 le 2026-10-04** (« tranche au plus logique ») ; D73 et D20 faits (R129, R130), reste D70, D17, hystérésis, puis D14, D15, D54, D55 | D70 : retirer « Extrema Exclusion Ratio » comme les deux lots de `_RETIRED_CONFIG_KEYS`, et l'appel inerte de `check_extrema_proximity`. | Chaque décision écrite en §3 avec sa raison et sa mesure ; un commit par décision. |
+| 2 · Zenodo spline et RE | **complexe · Claude, demandé par 👤 le 2026-10-04** : faire bénéficier certus0310 du meilleur de `optics continuum/05_CODE_ET_ZENODO` et de `publication_reverse/07_PAQUET_ZENODO` (`certus_re`). L'inversion conjointe de plusieurs échantillons est écartée par 👤 | Spline : les trois spectres de l'article, à chaud puis sous un nom neutre, contre les valeurs publiées. RE : incertitudes d'épaisseur (covariance du Jacobien des seules données) et budget de paramètres, puis préréglage d'instrument. | Écarts mesurés, portages testés et validés, sources Zenodo citées. |
 | 3 · D45 / D46 | **complexe · décision 👤 préalable** : modifications de physique qui changent des résultats | Lire les mesures et les tests `xfail(strict)` en §4, puis obtenir le choix de 👤 en §5 avant de toucher aux noyaux. | Décision inscrite en §3, oracle avant/après, C1 du chemin inactif. |
 | 4 · D11 / reste de D23 | **complexe · Opus** : cycle de vie Qt et collecte hors du thread GUI | Rejouer `scripts/sonde_retenants_fenetre.py` ; inventorier les cinq `gc.collect()` des workers STRAT et les `QThread` retenus avant tout `WA_DeleteOnClose`. R121 a déjà clos l'arrêt des workers UI. | Fenêtres libérées après fermeture sans destruction de thread actif ; boucle de fermetures et suite UI sans arrêt natif. |
 | contingence · D77 | **complexe, seulement si la CI release devient rouge** | Lire stderr et l'artefact watchdog du premier job rouge ; le gel est vert sur `52de082c`. | Nouveau gel Windows vert sur le code en cause. |
@@ -55,7 +55,8 @@ R125 `6568d887` : taux de plantage au bruit nominal visible (D2).
 R126 `52de082c` : couches forcées visibles dans le tableau et le CSV (D4).
 R127 `da0ca5b5` : garde des configurations RE et INDEX SPLINE modifiées (D80).
 R128 `fabb9f22` : `strategy_id` unique sur tout un run (D5).
-R129 : la marge en transmission voit le point tournant sous l'arrêt (D73).
+R129 `f12fe0d9` : la marge en transmission voit le point tournant sous l'arrêt (D73).
+R130 : le classement final suit la règle de tri de 👤 (D20).
 Le choix de 👤 « on garde fastmath » clôt l'arbitrage D52/D67 ; les écarts
 froid/chaud restent documentés en §3.
 
@@ -93,6 +94,8 @@ Le passe-bande de 99 couches est chiffré en moyenne de trois graines, jamais pa
   d'équivalence SEEL**. Sur `r75x2`, σ ≈ 1,8 % mesuré en changeant le triplet de graines de
   consensus : un bruit emprunté à un autre composant ne vaut rien.
 - Ces repères comprennent le **biais de fente** ; une mesure sans ce biais ne leur est pas comparable.
+- Ces repères sont antérieurs à R130 : depuis, la gagnante est prise dans la classe du meilleur SEEL
+  (à un pas de 0,01 nm près) par rendement puis marge ; son SEEL dépasse le meilleur d'au plus un pas.
 - La longueur seule ne met pas le monitoring optique en échec, la **structure** si :
   75 couches aléatoires passent, 99 couches à cavités et miroirs non. Sur un empilement
   structuré, la longueur pèse ensuite : sur 270 sous-intervalles du passe-bande de 99 couches,
@@ -182,7 +185,7 @@ du dichroïque dont le plantage s'écarterait nettement du prédit rouvrirait ce
   ouverte à tout ce qui la suit, la dernière n'a rien en aval.
 - **SEEL** est la seule grandeur à rapporter : `SEEL = 2 × √score` (`_apply_strategy_ranking`),
   en nanomètres d'erreur d'épaisseur par couche. Tri : SEEL quantifié au pas de 0,01 nm, puis
-  rendement, puis marge de la couche critique. Un écart d'un pas est une égalité.
+  rendement, puis marge de la couche critique. Un écart d'un pas est une égalité (classement final, R130).
 - **`fast` crible, il ne publie pas** : il est quantifié à 10 % sur le plantage, et un SEEL
   retenu en `fast` se rejoue en `premium`. **`extreme` n'a aucune justification mesurée** —
   zéro amélioration sur cinq configurations, `deep` seul fait aussi bien pour un cinquième du coût.
@@ -205,6 +208,15 @@ logique ». Chaque ligne donne la décision, sa raison et sa mesure ; une mesure
   et toujours vers le bas, 1 148 passent sous le seuil `1,66 × A`. Sur le juge de paix en `fast`, la
   Phase A refuse 241 candidates sur 24 couches au lieu de 96 sur 21, et les 194 stratégies finales, leur
   ordre, leurs scores et `RESULT` sont identiques au bit : ces λ mouraient plus tard au Monte-Carlo.
+- **D20, le classement montré et exporté suit la règle gravée** (R130) : les stratégies à moins d'un pas
+  (0,01 nm) du meilleur SEEL restant forment une classe, ordonnée par plantage, puis marge de la couche
+  critique, puis score brut (`order_by_the_ranking_rule`). Raison : la règle « un écart d'un pas est une
+  égalité » n'atteignait aucun tableau — le run final triait par score brut, et les cases fixes de
+  `rank_key_seel_yield_margin` séparent deux SEEL distants de 0,005 nm. La recherche interne (parents
+  d'ELITE, diversité, consensus) garde son tri ; `use_margin_ranking` reste inactif. Mesuré sur le juge
+  de paix en `fast` : même population de 194 stratégies, 147 positions changent, et la gagnante passe de
+  la fusion à un bloc (SEEL 0,1843 nm, 2 % de plantage) à la stratégie ELITE à huit blocs (0,1892 nm, 0 %) ;
+  `RESULT` passe de 0,008495 à 0,008950.
 
 ## 4. Défauts ouverts
 
@@ -238,7 +250,6 @@ numéros de l'ancien registre sont entre parenthèses
 | D17 | Le critère `forbidden_gain_negative` n'a jamais rejeté une candidate (n° 38) |
 | D18 | Deux seuils de swing : `RATE_SWING_MIN_DEFAULT = 0,025` admet une λ, et 0,04 codé en dur fait abandonner POEM ; entre les deux, une couche perd POEM en silence |
 | D19 | La Phase A ne vérifie jamais qu'une λ offre un point tournant ; proposition de 👤 : les compter, en coût non monotone |
-| D20 | `turning_point_margins` est calculé, mais `use_margin_ranking` est inactif par défaut |
 | D21 | `MachineModel` n'a aucun consommateur, et `trigger_tolerance` y est documenté en unités T alors que ses lecteurs divisent par 100 (n° 9) |
 | D22 | La Phase A ignore qu'une couche Rate efface l'historique ; effet borné à une couche |
 | D51 | INDEX garde sa propre lame de Beer-Lambert pour le substrat (`_calculate_RT_absorbing_sub_single`) : elle s'accorde avec le modèle commun `certus_substrate_absorption` à 1e-12 (k de 1e-7 à 1e-3, à 450 et 800 nm, testé, interface avant comprise depuis R117), mais c'est une seconde formule à tenir à jour |

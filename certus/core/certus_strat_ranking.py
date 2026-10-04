@@ -703,6 +703,65 @@ def _generate_structured_seed_strategies(
 
 #: Measurement limit on an equivalent per-layer error. 👤 "SEEL a 0.01 nm pres partout" (2026-08-14). Half-width, hence 0.005.
 SEEL_RESOLUTION_NM = 0.005
+#: 👤's equivalence step on the SEEL: "SEEL to 0.01 nm everywhere", and "a gap of one step is an equality".
+SEEL_EQUALITY_STEP_NM: float = 2.0 * SEEL_RESOLUTION_NM
+
+
+def order_by_the_ranking_rule(strategies_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The final order, by the ranking rule of 👤: SEEL, then yield, then the margin of the critical layer.
+
+    "A gap of one step is an equality": the strategies whose SEEL lies within one step (0.01 nm) of the best
+    SEEL still unranked form one class, ordered by crash rate, then by the critical margin (clamped to
+    [0, 2] A, as in `rank_key_seel_yield_margin`), then by the raw score. The fixed bins of
+    `rank_key_seel_yield_margin` split two SEELs 0.005 nm apart whenever a bin edge falls between them:
+    on the dichroic in `fast` mode (2026-10-04), 0.1843 nm at 2 % crashes and 0.1892 nm at 0 % fell in
+    bins 18 and 19, and the SEEL decided where the rule gives the decision to the yield.
+    """
+
+    def _seel(item: dict[str, Any]) -> float:
+        try:
+            score = float(item.get("robustness_score", math.inf))
+        except (TypeError, ValueError):
+            return math.inf
+        return 2.0 * math.sqrt(score) if math.isfinite(score) and score > 0.0 else math.inf
+
+    def _raw(item: dict[str, Any]) -> float:
+        try:
+            return float(item.get("robustness_score", math.inf))
+        except (TypeError, ValueError):
+            return math.inf
+
+    def _inside_a_class(item: dict[str, Any]) -> tuple[float, float, float]:
+        critical = item.get("critical_layer") or {}
+        try:
+            margin = float(critical.get("margin_in_A", item.get("critical_margin", 0.0)) or 0.0)
+        except (TypeError, ValueError):
+            margin = 0.0
+        try:
+            crash = float(item.get("crash_rate", 1.0))
+        except (TypeError, ValueError):
+            crash = 1.0
+        return (crash, -min(max(margin, 0.0), 2.0), _raw(item))
+
+    pending = sorted(strategies_results, key=lambda item: (_seel(item), _raw(item)))
+    ordered: list[dict[str, Any]] = []
+    while pending:
+        leader = _seel(pending[0])
+        if not math.isfinite(leader):
+            ordered.extend(pending)
+            break
+        cut = 1
+        while cut < len(pending) and _seel(pending[cut]) <= leader + SEEL_EQUALITY_STEP_NM:
+            cut += 1
+        ordered.extend(sorted(pending[:cut], key=_inside_a_class))
+        pending = pending[cut:]
+    return ordered
+
+
+def rank_final_results(strategies_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The list a run shows and exports: every id checked unique, then ordered by the ranking rule of 👤."""
+    validate_unique_strategy_ids(strategies_results)
+    return order_by_the_ranking_rule(strategies_results)
 
 
 def rank_key_seel_yield_margin(

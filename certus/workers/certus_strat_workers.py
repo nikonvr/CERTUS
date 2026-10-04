@@ -52,7 +52,7 @@ from certus.core.certus_strat_core import (
     precompute_clues_and_matrices,
     run_final_simulation_block,
 )
-from certus.core.certus_strat_ranking import validate_unique_strategy_ids, with_strategy_id_namespace
+from certus.core.certus_strat_ranking import rank_final_results, with_strategy_id_namespace
 from certus.core.certus_strat_utils import DP_DEFAULT_MIN_WL_SEPARATION_NM
 
 # Robust db clues (fixed xlsx)
@@ -1548,9 +1548,7 @@ def _finalize_and_export_pipeline_results(
     if not accumulated_strategies_results:
         raise RuntimeError("No strategies found.")
 
-    validate_unique_strategy_ids(accumulated_strategies_results)
-
-    accumulated_strategies_results.sort(key=lambda x: x["robustness_score"])
+    accumulated_strategies_results[:] = rank_final_results(accumulated_strategies_results)
 
     if timing_logger:
         timing_logger.end_global("STRAT_Workflow")

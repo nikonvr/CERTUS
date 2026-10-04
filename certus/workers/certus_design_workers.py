@@ -35,6 +35,7 @@ from certus.core.certus_design_worker_utils import (
     optim_oblique_configs_from_groups,
     optim_oblique_group_targets_on_wavelengths,
     optim_oblique_unique_display_keys,
+    optim_opaque_thickness_limits,
     optim_prepare_stack_nk_back,
     optim_var_indices_from_stack,
     run_coord_descent_5cycles,
@@ -287,11 +288,11 @@ class OptimWorker(QObject):
             float_dtype = get_float_dtype()
             if mode == 'local':
                 delta_nm = self.cfg.get('local_delta_nm', 2.0)
-                bounds = optim_bounds_thickness_local(ep0, var_idx, delta_nm, float_dtype=float_dtype)
+                bounds = optim_bounds_thickness_local(ep0, var_idx, delta_nm, float_dtype=float_dtype, opaque_limits=optim_opaque_thickness_limits(n_layers_T, wls))
             elif mode == 'healing':
-                bounds = optim_bounds_thickness_healing(ep0, var_idx, stack, mats, l0, float_dtype=float_dtype)
+                bounds = optim_bounds_thickness_healing(ep0, var_idx, stack, mats, l0, float_dtype=float_dtype, opaque_limits=optim_opaque_thickness_limits(n_layers_T, wls))
             else:
-                bounds = optim_bounds_thickness_global(ep0, var_idx, stack, mats, l0, float_dtype=float_dtype)
+                bounds = optim_bounds_thickness_global(ep0, var_idx, stack, mats, l0, float_dtype=float_dtype, opaque_limits=optim_opaque_thickness_limits(n_layers_T, wls))
             complex_dtype = get_complex_dtype()
             _mats_disp, n_sub_disp, n_lay_T_disp, n_back_T_disp, _d_back_disp = optim_prepare_stack_nk_back(mats, stack, self._wls_display, stack_back=stack_back, ep_back=ep_back, has_back_stack=has_back_stack, complex_dtype=complex_dtype, float_dtype=float_dtype)
             self._initialize_runtime_state_for_optimization(has_back_calc=has_back_calc, has_back_stack=has_back_stack, d_back=d_back, n_back_T=n_back_T, var_idx=var_idx, ep0=ep0, wls=wls, tgt_vals=tgt_vals, tgt_weights=tgt_weights, n_layers_T=n_layers_T, n_sub=n_sub, oblique_mode=oblique_mode, oblique_configs=oblique_configs if oblique_mode else None, display_oblique_keys=display_oblique_keys, oblique_tgts=oblique_tgts, n_lay_T_disp=n_lay_T_disp, n_sub_disp=n_sub_disp, n_back_T_disp=n_back_T_disp)

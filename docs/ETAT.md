@@ -50,7 +50,6 @@ Node, hors pytest.
 |---|---|---|---|
 | 1 · arbitrages STRAT | **complexe · Claude, délégués par 👤 le 2026-10-04** (« tranche au plus logique ») ; D73, D20, D70, D17 faits (R129–R132), six défauts clos par raisonnement ; reste l'hystérésis, D14, D15, D54, D55 (et D21, simple) | Hystérésis : sur `r75x2` en `deep`, où l'anomalie a été mesurée, comparer le seuil qui suit le niveau de bruit au seuil fixé par le bruit nominal (§3, STRAT) ; la clé `tp_hysteresis_reference` n'existe que dans un arbre jetable, à recréer. | Chaque décision écrite en §3 avec sa raison et sa mesure ; un commit par décision. |
 | 2 · Zenodo spline et RE | **complexe · Claude, demandé par 👤 le 2026-10-04** : faire bénéficier certus0310 du meilleur de `optics continuum/05_CODE_ET_ZENODO` et de `publication_reverse/07_PAQUET_ZENODO` (`certus_re`). Spline fait (R133) ; RE : incertitudes d'épaisseur faites (R135). L'inversion conjointe de plusieurs échantillons est écartée par 👤 | RE : budget de paramètres déclaré (blocs libres comptés, points par paramètre), puis préréglage d'instrument (ouverture imposée plutôt qu'ajustée), puis σ(d) dans le tableau et l'export Excel. | Écarts mesurés, portages testés et validés, sources Zenodo citées. |
-| 3 · D46 | **complexe · Claude, sur l'ordre « go » de 👤 du 2026-10-04** ; D45 fait (R136, §3) | Arrêter les bornes d'épaisseur de DESIGN avant l'opacité plutôt que borner la phase dans les noyaux, pour garder C1. | Décision inscrite en §3, oracle avant/après, C1 du chemin inactif. |
 | 4 · D11 / reste de D23 | **complexe · Opus** : cycle de vie Qt et collecte hors du thread GUI | Rejouer `scripts/sonde_retenants_fenetre.py` ; inventorier les cinq `gc.collect()` des workers STRAT et les `QThread` retenus avant tout `WA_DeleteOnClose`. R121 a déjà clos l'arrêt des workers UI. | Fenêtres libérées après fermeture sans destruction de thread actif ; boucle de fermetures et suite UI sans arrêt natif. |
 | contingence · D77 | **complexe, seulement si la CI release devient rouge** | Lire stderr et l'artefact watchdog du premier job rouge ; le gel est vert sur `52de082c`. | Nouveau gel Windows vert sur le code en cause. |
 
@@ -70,6 +69,7 @@ R133 `37f6cd57` : INDEX SPLINE part des constantes publiées (tables SiO₂, Ta�
 R134 `5262a81f` : le RE va au bout de sa phase 4. Depuis le découpage S5.2 (`849a3c2e`), `_execute_phase4_beam` appelait `self._close_phase4_profile` alors que le worker passe `None` comme `self` : tout run dont la phase 4 atteignait sa branche des grands angles finissait en `AttributeError`, sans résultat (l'exemple `reverse_sample.xlsx` compris). Les tests écoutaient `result`, émis avant la phase 4, et l'un épinglait l'appel fautif ; le test sans écran exige désormais `finished` avec `ok`.
 R135 `eca32af0` : le RE rend l'incertitude de chaque épaisseur (`thickness_uncertainty`, une ligne de journal par couche), portée de `certus_re` (Zenodo) : covariance `s² (JᵀJ)⁺` du Jacobien des seuls résidus de données, directions non contraintes sans barre, conditionnelle aux corrections d'indice et à l'ouverture ajustées. Sur `reverse_sample.xlsx` : σ(d) de 0,22 à 0,70 nm pour 17 couches et 1 200 points ; le Jacobien analytique colle aux différences finies à 3,4·10⁻¹⁰.
 R136 : le gradient de DESIGN avec pile arrière est la dérivée de son coût (D45, §3).
+R137 : les bornes d'épaisseur de DESIGN s'arrêtent avant l'opacité (D46, §3).
 Le choix de 👤 « on garde fastmath » clôt l'arbitrage D52/D67 ; les écarts
 froid/chaud restent documentés en §3.
 
@@ -290,6 +290,16 @@ bloquées par sa décision. Chaque correctif est un commit qu'un `git revert` an
   (poids 1 et 3, points hors cible, k = 0 et 10⁻⁶) échoue sur le code d'avant et colle après aux différences finies
   à 10⁻⁵. Avec l'ancien gradient, L-BFGS-B atteignait les mêmes coûts finaux en jusqu'à 25 % d'évaluations de plus
   (2026-09-30) ; l'effet du correctif sur un design réel n'est pas mesuré.
+- **D46, les bornes d'épaisseur de DESIGN s'arrêtent avant l'opacité** (R137). Au-delà de |Im φ| = 700 sur la
+  grille (`PHASE_IMAG_OVERFLOW`), les noyaux rendent (R, T) = (0, 0) au lieu de l'absorbeur semi-infini ; or la borne
+  haute du mode global, 1,2 × max(quart d'onde à λ₀, départ), vaut des centaines de micromètres pour un métal dans
+  l'infrarouge, dont la partie réelle est minuscule. Les trois modes (global, local, healing) arrêtent désormais la
+  borne haute à 1 % sous l'épaisseur d'opacité de la couche (`optim_opaque_thickness_limits`), où sa réponse ne bouge
+  plus avec d. Raison : borner la phase dans les noyaux changeait les derniers bits (1e-15) des chemins à substrat
+  réel ; borner les épaisseurs ne touche aucun noyau. Mesuré : une couche qui n'absorbe pas garde ses bornes au bit
+  dans les trois modes ; pour un métal infrarouge (n = 0,02 − 60i, de 8 à 12 µm), la borne globale passait de plus
+  de 100 µm à une épaisseur que `require_layers_below_overflow` accepte, et 2 % au-delà est refusé. Les noyaux
+  répondent toujours (0, 0) au-delà ; les optimisations de DESIGN ne le leur demandent plus.
 
 ## 4. Défauts ouverts
 
@@ -306,7 +316,6 @@ numéros de l'ancien registre sont entre parenthèses
 | D8 | `scripts/campagne_intervalles.py` forçait `search_resolution` à faux alors que 👤 en a fait un prérequis : les campagnes d'intervalles ont tourné sans recherche de fente (n° 49) | refaire les intervalles utiles avec la fente cherchée |
 | D9 | Restreindre la plage de blocs vide la DP ; cause non établie (n° 54) | mesurer la recherche à plage complète |
 | D10 | **L'ajustement Sellmeier 3 pôles est chaotique sur le saphir** : un ulp sur les données change le minimum atteint (RMSE de 0,00126 à 0,00208 sur 41 essais, 2026-09-26) ; deux machines rendent deux indices pour les mêmes données. SiO2 et BK7 sont stables | élargir le multistart ou reconditionner — change les résultats, décision de 👤 |
-| D46 | Une couche opaque et épaisse (un métal de k = 7 au-delà de 10 µm, k = 3,5 au-delà de 20 µm) fait déborder le cos et le sin de la phase : les noyaux rendent (R, T) = (0, 0) au lieu de l'absorbeur semi-infini. Les enveloppes Python refusent une telle couche (`require_layers_below_overflow`) ; les noyaux appelés depuis du code compilé, dont le coût de DESIGN, répondent encore (0, 0). Une borne de la phase dans les noyaux a changé les bits de 1e-15 sur les chemins à substrat réel (mesuré, puis retirée) | décision de 👤 (C1) |
 | D47 | DESIGN n'a pas de polarisation moyenne « Avg » : le tableau des cibles n'offre que s et p, et une configuration ancienne « Avg » se charge en s avec un avertissement (elle était calculée en p) | la calculer demande les deux ondes, chacune avec son gradient : décision de 👤 |
 | D48 | L'épaisseur du substrat (1 mm par défaut, `DEFAULT_SUBSTRATE_THICKNESS_NM`) n'est un champ ni de DESIGN ni de STRAT : un substrat qui absorbe perd du flux selon cette épaisseur | exposer le champ : décision de 👤 (section 5) |
 
@@ -365,7 +374,6 @@ Ces sujets demandent un jugement de physicien ou de propriétaire du produit. Le
 | **protection de `master` et Dependabot** | Décider si l’épinglage des actions par SHA devient obligatoire, si une relecture ou `release-windows` devient un contrôle requis (après D77), et quoi faire des PR Dependabot #1 à #4. |
 | **avis de tiers** | Écrire `THIRD_PARTY_NOTICES` pour les éléments redistribués sous licence propre (icônes Lucide, données d’indices, textes tiers). |
 | **le substrat qui absorbe (D48)** | Confirmer l’épaisseur par défaut de 1 mm, ou en faire un champ de DESIGN et STRAT ; elle décide de la perte de flux. |
-| **D46** | borner la phase dans les noyaux change les derniers bits (1e-15, mesuré) des chemins à substrat réel, pour un cas qu'aucun design courant n'atteint ; la règle du chemin inactif au bit près (C1) demande ton accord. D45 est tranché (§3, DESIGN) |
 | **la polarisation « Avg » (D47)** | la retirer du tableau des cibles de DESIGN, comme aujourd'hui, ou la calculer : les deux ondes, leur moyenne et leurs gradients |
 
 D54 et D55 ne sont plus en attente de 👤 : délégués à Claude le 2026-10-04 avec les autres questions STRAT (ligne 1 du §0).

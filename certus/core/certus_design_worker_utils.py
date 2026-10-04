@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 
 from certus.core.certus_core import CFG, NUMERICAL_FAULT_EXCEPTIONS, get_float_dtype
-from certus.physics.certus_inputs import is_s_polarization
+from certus.physics.certus_inputs import PHASE_IMAG_OVERFLOW, is_s_polarization
 from certus_physics import PGlobalConfig, PGlobalOptimizer, prepare_targets_vectorized
 
 if TYPE_CHECKING:
@@ -369,14 +369,36 @@ def optim_bounds_thickness_local(
     delta_nm: float,
     *,
     float_dtype=np.float64,
+    opaque_limits: np.ndarray | None = None,
 ) -> np.ndarray:
-    """Bounds +/-Deltanm around initial thicknesses (local mode of OptimWorker)."""
+    """Bounds +/-Deltanm around initial thicknesses (local mode of OptimWorker); the upper one capped at
+    ``opaque_limits`` when given (``optim_opaque_thickness_limits``)."""
 
     ep = np.asarray(ep0, dtype=float_dtype).ravel()
 
     rows = [(max(0.0, float(ep[int(i)]) - delta_nm), float(ep[int(i)]) + delta_nm) for i in var_idx]
 
+    if opaque_limits is not None:
+        rows = [(lo, max(min(hi, float(opaque_limits[int(i)])), lo)) for (lo, hi), i in zip(rows, var_idx, strict=True)]
+
     return np.array(rows, dtype=float_dtype)
+
+
+def optim_opaque_thickness_limits(n_layers_T: np.ndarray | None, wls: np.ndarray | None) -> np.ndarray | None:
+    """Per layer, the thickness at which the layer becomes opaque for the kernels (D46).
+
+    Beyond it, ``|Im phase| = 2 pi |Im n| d / lambda`` passes ``PHASE_IMAG_OVERFLOW`` somewhere on the grid: the layer
+    is the semi-infinite absorber, its response no longer moves with ``d``, and the kernels would answer
+    ``(R, T) = (0, 0)``. An upper bound past it lets the optimiser ask for that answer -- a metal in the infrared, whose
+    real index is tiny, gets a "quarter wave" of hundreds of micrometres. 1 % under the limit, ``inf`` for a layer that
+    does not absorb; ``None`` when the indices are not given.
+    """
+    if n_layers_T is None or wls is None:
+        return None
+    k_max = np.max(np.abs(np.asarray(n_layers_T).imag), axis=0)
+    lam_min = float(np.min(np.asarray(wls, dtype=np.float64)))
+    with np.errstate(divide="ignore"):
+        return np.where(k_max > 0.0, 0.99 * PHASE_IMAG_OVERFLOW * lam_min / (2.0 * np.pi * k_max), np.inf)
 
 
 def optim_bounds_thickness_healing(
@@ -387,10 +409,12 @@ def optim_bounds_thickness_healing(
     l0: float,
     *,
     float_dtype=np.float64,
+    opaque_limits: np.ndarray | None = None,
 ) -> np.ndarray:
     """
 
-    Healing bounds: Deltad = lambda₀/(10·n(lambda₀)) (healing mode of OptimWorker).
+    Healing bounds: Deltad = lambda₀/(10·n(lambda₀)) (healing mode of OptimWorker), the upper one capped at
+    ``opaque_limits`` when given (``optim_opaque_thickness_limits``).
 
     """
 
@@ -416,12 +440,11 @@ def optim_bounds_thickness_healing(
 
         delta_d = float(l0) / (10.0 * max(n_val, 1.0))
 
-        bounds_list.append(
-            (
-                max(0.0, float(ep[ii]) - delta_d),
-                max(float(ep[ii]) + delta_d, delta_d),
-            )
-        )
+        lower = max(0.0, float(ep[ii]) - delta_d)
+        upper = max(float(ep[ii]) + delta_d, delta_d)
+        if opaque_limits is not None:
+            upper = max(min(upper, float(opaque_limits[ii])), lower)
+        bounds_list.append((lower, upper))
 
     return np.array(bounds_list, dtype=float_dtype)
 
@@ -434,8 +457,9 @@ def optim_bounds_thickness_global(
     l0: float,
     *,
     float_dtype=np.float64,
+    opaque_limits: np.ndarray | None = None,
 ) -> np.ndarray:
-    """Lower bound 0, upper max(physical limit, 1.2xep₀) - global mode of OptimWorker."""
+    """Lower bound 0, upper max(physical limit, 1.2xep₀) - global mode of OptimWorker; capped at ``opaque_limits`` when given."""
 
     ep = np.asarray(ep0, dtype=float_dtype).ravel()
 
@@ -449,6 +473,8 @@ def optim_bounds_thickness_global(
         n4 = float(mats[stack[ii].mat].n4)
 
         upper = max(1.2 * lf / (4.0 * n4), float(ep[ii]) * 1.2)
+        if opaque_limits is not None:
+            upper = min(upper, float(opaque_limits[ii]))
 
         rows.append((0.0, upper))
 

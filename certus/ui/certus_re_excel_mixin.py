@@ -37,6 +37,7 @@ from certus.ui.certus_qt_widgets import (
     QVBoxLayout,
     QWidget,
 )
+from certus.ui.certus_re_snapshot import retained_report_for, write_front_stack
 from certus.ui.certus_ui import (
     ExcelTableWidget,
     get_certus_last_dir,
@@ -1821,25 +1822,11 @@ class CertusREExcelMixin:
 
             ws.append(["FRONT STACK", f"L0 = {self.l0_spin.value()} nm"])
 
-            ws.append(["#", "Material", "QWOT", "Thickness (nm)", "Variable"])
-
             ep = self.ep_current if self.ep_current is not None else []
 
-            for i, layer in enumerate(self._get_front_stack()):
-                ws.append(
-                    [
-                        i + 1,
-                        layer.mat,
-                        layer.qwot,
-                        ep[i] if i < len(ep) else 0,
-                        "Yes" if layer.var else "No",
-                    ]
-                )
+            _retained = retained_report_for(getattr(self, "_re_retained_report", None), ep)
 
-            if len(ep) > 0:
-                ws.append([])
-
-                ws.append(["Total Thickness (nm)", float(np.sum(ep))])
+            write_front_stack(ws, self._get_front_stack(), ep, _retained)
 
             ws.append([])
 

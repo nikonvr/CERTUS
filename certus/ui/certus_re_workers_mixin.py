@@ -776,6 +776,8 @@ class CertusREWorkersMixin:
 
         self._remember_beam_aperture_knots(best)
 
+        self._remember_retained_report(best, ep_best)
+
         self._re_opt_a_pct = float(best.get("a", 0.0))
 
         self._re_opt_b_pct = float(best.get("b", 0.0))
@@ -912,6 +914,15 @@ class CertusREWorkersMixin:
                 )
 
         QTimer.singleShot(400, _show_final_re_title)
+
+    def _remember_retained_report(self, best, ep_best):
+        """Remember the thickness uncertainties and the parameter budget of the retained result, with the thicknesses they
+        belong to: the snapshot export writes them only while the stack still holds those thicknesses."""
+        self._re_retained_report = {
+            "ep": np.asarray(ep_best, dtype=np.float64).copy(),
+            "thickness_uncertainty": best.get("thickness_uncertainty"),
+            "parameter_budget": best.get("parameter_budget"),
+        }
 
     def _remember_beam_aperture_knots(self, best):
         """Remember the aperture knots of the phase 4 beam for the display, or forget them when the best candidate has none."""

@@ -49,7 +49,7 @@ Node, hors pytest.
 | priorité | difficulté / responsable | première action précise | fini quand |
 |---|---|---|---|
 | 1 · arbitrages STRAT | **complexe · Claude, délégués par 👤 le 2026-10-04** (« tranche au plus logique ») ; D73, D20, D70, D17 faits (R129–R132), six défauts clos par raisonnement ; reste l'hystérésis, D14, D15, D54, D55 (et D21, simple) | Hystérésis : sur `r75x2` en `deep`, où l'anomalie a été mesurée, comparer le seuil qui suit le niveau de bruit au seuil fixé par le bruit nominal (§3, STRAT) ; la clé `tp_hysteresis_reference` n'existe que dans un arbre jetable, à recréer. | Chaque décision écrite en §3 avec sa raison et sa mesure ; un commit par décision. |
-| 2 · Zenodo spline et RE | **complexe · Claude, demandé par 👤 le 2026-10-04** : faire bénéficier certus0310 du meilleur de `optics continuum/05_CODE_ET_ZENODO` et de `publication_reverse/07_PAQUET_ZENODO` (`certus_re`). Spline fait (R133) ; RE : incertitudes d'épaisseur (R135) et budget de paramètres (R138) faits. L'inversion conjointe de plusieurs échantillons est écartée par 👤 | RE : préréglage d'instrument (ouverture imposée plutôt qu'ajustée), puis σ(d) et le budget dans le tableau et l'export Excel. | Écarts mesurés, portages testés et validés, sources Zenodo citées. |
+| 2 · Zenodo spline et RE | **complexe · Claude, demandé par 👤 le 2026-10-04** : faire bénéficier certus0310 du meilleur de `optics continuum/05_CODE_ET_ZENODO` et de `publication_reverse/07_PAQUET_ZENODO` (`certus_re`). Spline fait (R133) ; RE : incertitudes d'épaisseur (R135), budget de paramètres (R138) et leur affichage (R139) faits. L'inversion conjointe de plusieurs échantillons est écartée par 👤 | RE : préréglage d'instrument (ouverture imposée plutôt qu'ajustée). | Écarts mesurés, portages testés et validés, sources Zenodo citées. |
 | 4 · D11 / reste de D23 | **complexe · Opus** : cycle de vie Qt et collecte hors du thread GUI | Rejouer `scripts/sonde_retenants_fenetre.py` ; inventorier les cinq `gc.collect()` des workers STRAT et les `QThread` retenus avant tout `WA_DeleteOnClose`. R121 a déjà clos l'arrêt des workers UI. | Fenêtres libérées après fermeture sans destruction de thread actif ; boucle de fermetures et suite UI sans arrêt natif. |
 | contingence · D77 | **complexe, seulement si la CI release devient rouge** | Lire stderr et l'artefact watchdog du premier job rouge ; le gel est vert sur `52de082c`. | Nouveau gel Windows vert sur le code en cause. |
 
@@ -71,6 +71,7 @@ R135 `eca32af0` : le RE rend l'incertitude de chaque épaisseur (`thickness_unce
 R136 : le gradient de DESIGN avec pile arrière est la dérivée de son coût (D45, §3).
 R137 : les bornes d'épaisseur de DESIGN s'arrêtent avant l'opacité (D46, §3).
 R138 : le RE déclare le budget de paramètres du résultat retenu (`parameter_budget`, porté de `certus_re`, Zenodo) : chaque bloc, tenu ou libéré, avec son compte et sa raison, le total des paramètres libres et les points de données par paramètre libre.
+R139 : le tableau des résultats RE donne σ(d) par couche du run retenu (n/a pour une combinaison que les spectres ne contraignent pas), et l'export « snapshot » écrit σ(d) et le budget tant que l'empilement porte les épaisseurs retenues.
 Le choix de 👤 « on garde fastmath » clôt l'arbitrage D52/D67 ; les écarts
 froid/chaud restent documentés en §3.
 

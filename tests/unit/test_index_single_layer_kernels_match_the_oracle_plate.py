@@ -108,8 +108,8 @@ def test_a_film_of_no_thickness_is_the_bare_plate():
 
 
 def test_a_substrate_index_below_one_is_refused_with_nan():
-    # NaN and inf are not pinned: the `np.isfinite` of the same guard is folded away by `fastmath` once compiled, and they answer (0, 0) (the fastmath question is D52)
-    for n_sub in (0.99, 0.5, 0.0, -1.5):
+    # NaN and inf too: the guard lives in a kernel compiled without fastmath, which cannot fold `np.isfinite` (R122, D75)
+    for n_sub in (0.99, 0.5, 0.0, -1.5, np.nan, np.inf, -np.inf):
         r, t = calculate_transmission_single(550.0, 1.5, 0.0, 100.0, complex(n_sub, 0.0))
         assert np.isnan(r)
         assert np.isnan(t)

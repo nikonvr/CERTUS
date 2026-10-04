@@ -90,5 +90,23 @@ def test_re_headless_with_an_imposed_aperture():
     aperture = next(b for b in finished["results"][0]["parameter_budget"]["blocks"] if b["name"] == "beam aperture")
     assert aperture["count"] == 0
 
+
+def test_re_headless_with_refined_indices(qapp):
+    """The index-spline path must return a result and finish successfully."""
+    certus_physics.warmup_physics()
+    re_app = CertusREApp()
+    re_app.load_reverse_engineering_from_path(str(Path("example/example_RE/reverse_sample.xlsx").resolve()))
+    cfg = re_app.build_re_worker_cfg({"re_refine_h": True, "re_refine_l": True})
+    received = []
+    finished: dict = {}
+    worker = REWorker(cfg)
+    worker.signals.result.connect(received.append)
+    worker.signals.finished.connect(finished.update)
+    worker.run()
+    re_app.close()
+    assert finished.get("ok") is True, finished
+    assert received, finished
+    assert finished.get("results"), finished
+
 if __name__ == "__main__":
     test_re_headless()

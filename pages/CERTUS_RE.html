@@ -300,10 +300,13 @@
             classDef decision fill:#fef08a,stroke:#eab308,stroke-width:2px,color:#854d0e
             classDef output fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#166534
 
-            S([Seed $d^{(0)}$ from workbook]):::node --> P1
+            S(["Seed thicknesses from workbook"]):::node --> P1
             
             subgraph TRF_CORE ["Trust-Region Reflective Core (scipy.optimize)"]
-                P1["<b>Phase 1: TRF</b><br>Thicknesses only"]:::solver --> M
+                P1["<b>Phase 1: TRF</b><br>Thicknesses only"]:::solver --> S2{"Staged order and incidence at least 10 deg?"}
+                S2 -->|Yes| A2["Pre-joint aperture and thickness TRF<br>with nominal indices"]
+                S2 -->|No| M
+                A2 --> M
                 M{"Merge Top-K<br>if ΔRMSE < tol"}:::decision --> P2a
                 P2a["<b>Phase 2a: TRF Prefit</b><br>Splines + λ₂ (Fixed $d$)"]:::solver --> P2b
                 P2b["<b>Phase 2b: Joint TRF</b><br>$d$ + Splines + Cauchy"]:::solver
@@ -315,10 +318,13 @@
             P3 -->|Yes| SH["Adaptive Gaussian Shake<br>+ Local TRF Polish"]:::node
             SH --> P3_CHECK{"Improved?"}:::decision
             P3_CHECK -->|Yes| SH
-            P3_CHECK -->|No| OUT
-            P3 -->|No| OUT
-            
-            OUT(["Emit final RMSE*<br>& Export Data"]):::output
+            P3_CHECK -->|No| P4
+            P3 -->|No| P4
+            P4{"High-angle targets and phase-2 spline context?"}:::decision
+            P4 -->|Yes| B4["Phase 4: beam aperture scan or imposed value<br>then joint TRF"]:::solver
+            P4 -->|No| OUT
+            B4 --> OUT
+            OUT(["Retain ranked result, uncertainties and budget<br>then offer GUI and snapshot export"]):::output
         </div>
         <div class="algo-step">
             <span class="algo-title">Phase 1 — thickness multistart</span>
@@ -344,6 +350,22 @@
             Tikhonov rows, HL terms, substrate barrier violations, etc., into one least-squares problem — this is why
             iteration logs show many “FD residual blocks”.
         </div>
+        <div class="mermaid">
+            flowchart LR
+            A[Phase 2 residual at current parameters] --> B{Parameter block}
+            B -->|Layer thickness| C[Analytic thickness derivative]
+            B -->|H or L spline knot| D[Build corrected index from cached spline basis]
+            B -->|Spline lambda2| D
+            D --> E[Evaluate perturbed spectral and regularisation residuals]
+            E --> F[Finite difference column]
+            C --> G[Assemble Jacobian for bounded TRF]
+            F --> G
+        </div>
+        <p>
+            The H/L refinement path calls <code>_build_cached_spline_correc</code> and
+            <code>_evaluate_p2_fd_derivative</code> for its spline and \(\lambda_2\) columns. A headless run with both
+            refinements active verifies that this path reaches <code>finished.ok</code> and returns a result.
+        </p>
         <div class="algo-step">
             <span class="algo-title">Phase 3 — shake rounds</span>
             <code>re_phase3_shake_rounds</code> applies stochastic perturbations to thicknesses and spline amplitudes;
@@ -369,6 +391,77 @@
             global identifiability. On <code>example/example_RE/reverse_sample.xlsx</code> (measured 2026-10-04: 17 layers,
             1200 data points, phase-4 result): &sigma;(<i>d</i>) from 0.22 to 0.70 nm, about 0.1&nbsp;% of each thickness; the
             analytic Jacobian matches central finite differences to 3.4&times;10<sup>&minus;10</sup>.
+        </p>
+
+        <h3>7.2 Phase-4 aperture: fitted or imposed</h3>
+        <p>
+            The GUI defaults to <strong>fitted (4 plateaus)</strong>. Its instrument choice can instead impose the
+            <strong>PHOTON RT, 2.0 deg</strong> total cone angle through
+            <code>re_beam_aperture_imposed_deg</code>. Cone averaging applies from 10&deg; incidence; lower angles retain
+            the ordinary oblique calculation. The fitted branch scans a single flat aperture over the configured
+            range, then lets four wavelength plateaus vary in joint TRF. The imposed branch skips the scan and fixes
+            all plateaus at the instrument value: it consumes no aperture parameter in phase 2 or phase 4.
+        </p>
+        <div class="mermaid">
+            flowchart TD
+            A[RE settings and oblique targets] --> B{Imposed total aperture?}
+            B -->|No: GUI default| C[Phase-4 scalar scan: one aperture copied to four plateaus]
+            C --> D[Joint TRF: four wavelength plateaus free]
+            B -->|Yes: PHOTON RT 2.0 deg| E[Skip scan; set four plateaus to imposed value]
+            E --> F[Joint TRF: aperture fixed, zero aperture degrees of freedom]
+            D --> G{Incidence at least 10 deg?}
+            F --> G
+            G -->|Yes| H[Cone-averaged oblique spectrum]
+            G -->|No| I[Ordinary oblique spectrum]
+            H --> J[Retained result]
+            I --> J
+        </div>
+        <p>
+            On <code>reverse_sample.xlsx</code> (2026-10-04, index refinements off), the fitted aperture was
+            1.62&ndash;1.71&deg; with RMSE<sub>sp</sub> 0.007730 and 21 free parameters; imposing 2.0&deg; gave
+            RMSE<sub>sp</sub> 0.008853 and 17 free parameters. The maximum thickness difference was 1.25 nm.
+        </p>
+
+        <h3>7.3 Parameter budget and reported result</h3>
+        <p>
+            <code>parameter_budget</code> counts the blocks of the <em>retained result</em>: layer thicknesses,
+            released H/L spline knots, a free spline \(\lambda_2\) when either index is refined, substrate Cauchy
+            coefficients if present, and beam-aperture plateaus only when fitted. Held blocks appear with a zero and
+            a reason. The data-point count comes from the thickness-uncertainty calculation; the final ratio is
+            data points divided by free parameters, not a proof of uniqueness.
+        </p>
+        <div class="mermaid">
+            flowchart TD
+            A[Retained RE result and run settings] --> B[Count layer thicknesses]
+            B --> C{H/L refinement enabled and splines present?}
+            C -->|Yes| D[Count enabled H/L knots and one lambda2]
+            C -->|No| E[Record held or absent index blocks as zero]
+            D --> F{Substrate Cauchy present?}
+            E --> F
+            F -->|Yes| G[Add three Cauchy parameters]
+            F -->|No| H[Record tabulated substrate]
+            G --> I{Aperture state}
+            H --> I
+            I -->|Fitted phase 4| J[Count aperture plateaus]
+            I -->|Imposed or absent| K[Zero aperture parameters with reason]
+            J --> L[Sum free parameters and divide data points by sum]
+            K --> L
+        </div>
+        <div class="mermaid">
+            flowchart LR
+            A[Retained result] --> B[Compute sigma of each thickness from data rows]
+            B --> C[GUI: sigma column, n/a for unconstrained layers]
+            B --> D{Current stack thicknesses exactly match retained result?}
+            D -->|Yes| E[Snapshot: sigma column and parameter budget]
+            D -->|No| F[Snapshot: stack without retained sigma or budget]
+        </div>
+        <p>
+            The snapshot comparison uses exact equality of the thickness vector. Editing an exported stack therefore
+            prevents stale uncertainty bars and budget from being attached to a different stack. These ports come from
+            the local <code>certus_re</code> package associated with
+            <a href="https://doi.org/10.5281/zenodo.22756244">Zenodo concept DOI 10.5281/zenodo.22756244</a>.
+            The local source is version 1.2.0.dev0, still unreleased on 2026-10-04; the earlier archived version is
+            1.1.1. Joint inversion of multiple samples in the local package is outside the current CERTUS-RE workflow.
         </p>
 
         <h2>8. Using the GUI vs Headless — Concrete Operator View</h2>
@@ -547,7 +640,7 @@
 
         <div class="footer">
             <p>CERTUS Optical Framework — RE Module Technical Datasheet</p>
-            <p>Implementation review: 2026-10-03 | CERTUS_RE.py · certus_re_workers.py · certus_re_helpers.py · certus_re_worker_utils.py</p>
+            <p>Implementation review: 2026-10-04 | CERTUS_RE.py · certus_re_workers.py · certus_re_helpers.py · certus_re_worker_utils.py · certus_re_budget.py</p>
         </div>
     </div>
 

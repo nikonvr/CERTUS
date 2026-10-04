@@ -374,6 +374,14 @@ def mine_strategies_for_block_count(
     if n_blocks <= 0 or num_layers <= 0:
         return []
     log = logger if logger is not None else logging.getLogger("ThinFilm")
+    # Each cost map numbers its groupings `n_blocks * 1000 + offset + rank`, the offsets 100 apart:
+    # a deeper beam would give the 101st grouping of one map the id of the first of the next.
+    if int(top_k) > _COUVERTURE_ID_STRIDE:
+        log.warning(
+            f"[MINING] dp_top_k {int(top_k)} clipped to {_COUVERTURE_ID_STRIDE}: it is the width of "
+            f"the identifier range reserved per cost map, not a search setting."
+        )
+        top_k = _COUVERTURE_ID_STRIDE
 
     strategies_collected = []
     strategy_id_base = n_blocks * 1000
@@ -1087,21 +1095,147 @@ STRATEGY_ID_DERIVED_BASE: int = 900_000_000
 STRATEGY_ID_SLIT_BASE: int = 970_000_000
 #: Base of the RATE variants.
 STRATEGY_ID_RATE_BASE: int = 990_000_000
+
+# One campaign evaluates several block counts. Each generator therefore needs a
+# separate range for every source block count, including variants whose own block
+# count changes (optical prefixes and local search splits/merges).
+STRATEGY_ID_BLOCK_STRIDE: int = 100_000
+STRATEGY_ID_REFINEMENT_OFFSET: int = 50_000
+# The slit range holds 20M ids: at the common stride it would stop at 199 blocks, and
+# the layer-by-layer block count (always in `blocks_range`) of a 200-layer design would
+# lose its slit variants. A narrower stride keeps 1 000 block counts, each with room for
+# 20 000 slit variants (the default Rate expansion yields about 2 000 parents, times 4 slits).
+STRATEGY_ID_SLIT_BLOCK_STRIDE: int = 20_000
 #: Cap beyond which an incremental generator must never climb: it would enter
 #: the ranges reserved above.
 STRATEGY_ID_INCREMENTAL_CEILING: int = STRATEGY_ID_SLIT_BASE
 
 
 def clamp_incremental_strategy_id(next_id: int) -> int:
-    """Prevents a `max_sid + 1` counter from entering a reserved range.
+    """Keep a legacy incremental counter below the slit and Rate ranges.
 
-    The incremental generators (consensus, ELITE, local search) start from the largest
-    identifier already seen, so as not to collide with what exists. But once variants at
-    970M or 990M are in the list, that `max + 1` follows them and the number stops
-    meaning anything.
-
-    It is therefore brought back under the cap. The residual risk -- reusing a number
-    already taken under the cap -- is ruled out by the strategy signatures, which are what
-    really deduplicates (`_existing_block_signatures`).
+    This clamp alone does not establish uniqueness: wrapping to the base can reuse an
+    identifier already assigned to another block count. New generators allocate through
+    `strategy_id_for_block` and `next_refinement_strategy_id`.
     """
     return next_id if next_id < STRATEGY_ID_INCREMENTAL_CEILING else STRATEGY_ID_DERIVED_BASE
+
+
+def strategy_id_for_block(base: int, source_n_blocks: int, serial: int = 0) -> int:
+    """Allocate one id in a generator's source-block range, refusing overflow."""
+    n_blocks = int(source_n_blocks)
+    serial = int(serial)
+    stride = STRATEGY_ID_SLIT_BLOCK_STRIDE if base == STRATEGY_ID_SLIT_BASE else STRATEGY_ID_BLOCK_STRIDE
+    if n_blocks < 0 or not 0 <= serial < stride:
+        raise ValueError("Strategy id block count or serial is outside its range")
+    result = base + n_blocks * stride + serial
+    upper = {
+        STRATEGY_ID_DERIVED_BASE: STRATEGY_ID_SLIT_BASE,
+        STRATEGY_ID_SLIT_BASE: STRATEGY_ID_RATE_BASE,
+    }.get(base)
+    if upper is not None and result >= upper:
+        raise ValueError("Strategy id block range overlaps the next generator")
+    return result
+
+
+def strategy_id_source_block_count(
+    strategies: list[dict[str, Any]], configured_count: int | None = None
+) -> int:
+    """Keep variant ids in the worker's block range even when a variant changes shape."""
+    if configured_count is not None:
+        return int(configured_count)
+    return len(strategies[0].get("blocks") or []) if strategies else 0
+
+
+def validate_unique_strategy_ids(strategies_results: list[dict[str, Any]]) -> None:
+    """Refuse ambiguous ids before a result can be shown or exported."""
+    seen_ids: dict[str, int] = {}
+    for row_idx, item in enumerate(strategies_results):
+        raw_id = item.get("strategy", {}).get("strategy_id")
+        sid = str(raw_id).strip() if raw_id is not None else ""
+        if not sid or sid in seen_ids:
+            raise ValueError(
+                f"Missing or duplicate strategy_id {sid!r} in result rows "
+                f"{seen_ids.get(sid, '?')} and {row_idx}; table and export withheld"
+            )
+        seen_ids[sid] = row_idx
+
+
+def next_refinement_strategy_id(
+    strategies_results: list[dict[str, Any]], source_n_blocks: int | None = None
+) -> int:
+    """Find the next ELITE/local-search id after children already retained in this block range."""
+    if source_n_blocks is None:
+        source_n_blocks = max(
+            (len(item.get("strategy", {}).get("blocks") or []) for item in strategies_results),
+            default=0,
+        )
+    start = strategy_id_for_block(
+        STRATEGY_ID_DERIVED_BASE, source_n_blocks, STRATEGY_ID_REFINEMENT_OFFSET
+    )
+    end = strategy_id_for_block(STRATEGY_ID_DERIVED_BASE, source_n_blocks, STRATEGY_ID_BLOCK_STRIDE - 1) + 1
+    in_range = []
+    for item in strategies_results:
+        try:
+            sid = int(item.get("strategy", {}).get("strategy_id", -1))
+        except (TypeError, ValueError):
+            continue
+        if start <= sid < end:
+            in_range.append(item)
+    candidate = max(start, _max_strategy_id(in_range) + 1)
+    if candidate >= end or clamp_incremental_strategy_id(candidate) != candidate:
+        raise ValueError("Refinement strategy id range exhausted")
+    return candidate
+
+
+class RefinementIdCursor:
+    """The next free ELITE / local-search id of ONE worker, shared by all its simulation calls.
+
+    A worker scores its block count in several calls -- the screening of the mined plans, of
+    the inherited ones (once per screening seed), then the full pass -- and each call runs
+    ELITE. Started from the ids present in its own list only, every call began again at the
+    base of the range: on the dichroic in `fast` mode (2026-10-04) the ELITE children of two
+    screenings both reached the full pass under id 900850014, and the uniqueness guard
+    withheld the whole run. The cursor remembers what the earlier calls handed out, whether
+    or not their children survived.
+    """
+
+    def __init__(self, source_n_blocks: int) -> None:
+        self.source_n_blocks = int(source_n_blocks)
+        self._next_free = strategy_id_for_block(
+            STRATEGY_ID_DERIVED_BASE, self.source_n_blocks, STRATEGY_ID_REFINEMENT_OFFSET
+        )
+
+    def start(self, strategies_results: list[dict[str, Any]]) -> int:
+        """First id of a new batch: after everything this worker handed out and everything in the list."""
+        candidate = max(self._next_free, next_refinement_strategy_id(strategies_results, self.source_n_blocks))
+        end = strategy_id_for_block(STRATEGY_ID_DERIVED_BASE, self.source_n_blocks, STRATEGY_ID_BLOCK_STRIDE - 1) + 1
+        if candidate >= end:
+            raise ValueError("Refinement strategy id range exhausted")
+        return candidate
+
+    def advance(self, next_free: int) -> None:
+        """Record that every id below `next_free` has been handed out."""
+        self._next_free = max(self._next_free, int(next_free))
+
+
+def with_strategy_id_namespace(pre_calc_data: dict[str, Any], n_blocks: int) -> dict[str, Any]:
+    """The block worker's context: its id namespace and ONE refinement cursor for all its simulation calls.
+
+    `pre_calc_data.copy()` is shallow, so every screening context and the full pass hold this same cursor.
+    """
+    return {
+        **pre_calc_data,
+        "strategy_id_namespace_n_blocks": int(n_blocks),
+        "strategy_id_cursor": RefinementIdCursor(int(n_blocks)),
+    }
+
+
+def strategy_id_context(opti_results: dict[str, Any]) -> dict[str, Any]:
+    """The two `RobustnessContext` fields that number the ELITE and local-search children of one simulation call."""
+    return {
+        "strategy_id_namespace_n_blocks": strategy_id_source_block_count(
+            opti_results["all_strategies"], opti_results.get("strategy_id_namespace_n_blocks")
+        ),
+        "strategy_id_cursor": opti_results.get("strategy_id_cursor"),
+    }

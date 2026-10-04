@@ -27,10 +27,9 @@ from certus.core.certus_strat_ranking import (
     _apply_strategy_ranking,
     _apply_wl_diversity_if_enabled,
     _existing_block_signatures,
-    _max_strategy_id,
     _resolve_elite_nominal_and_target_threshold,
     _resolve_monitoring_wavelength_grid,
-    clamp_incremental_strategy_id,
+    next_refinement_strategy_id,
 )
 from certus.utils.certus_strat_context import (
     _blocks_signature,
@@ -732,6 +731,13 @@ def _log_elite_parents(
         )
 
 
+def _refinement_start(strategies_results: list[dict[str, Any]], ctx: RobustnessContext) -> int:
+    """First id of an ELITE or local-search batch: from the worker's cursor when it has one."""
+    if ctx.strategy_id_cursor is not None:
+        return ctx.strategy_id_cursor.start(strategies_results)
+    return next_refinement_strategy_id(strategies_results, ctx.strategy_id_namespace_n_blocks)
+
+
 def _apply_elite_refinement_if_enabled(
     strategies_results: list[dict[str, Any]],
     ctx: RobustnessContext,
@@ -779,7 +785,6 @@ def _apply_elite_refinement_if_enabled(
             ctx.logger.info(f"[ELITE] Round {elite_round}: skipped (non-finite nominal threshold).")
             break
         nominal_threshold, target_threshold = nominal_target_pair
-        max_sid = _max_strategy_id(strategies_results)
         existing_signatures = _existing_block_signatures(strategies_results)
         # 🔑 WHAT ELITE TAKES AS ITS STARTING POINT -- pure logging. Its mutation being
         # deterministic, local and one-at-a-time, the whole result is decided here.
@@ -788,11 +793,13 @@ def _apply_elite_refinement_if_enabled(
             parent_results=strategies_results[:parent_count],
             available_wls=available_wls,
             num_layers=ctx.num_layers,
-            start_strategy_id=clamp_incremental_strategy_id(max_sid + 1),
+            start_strategy_id=_refinement_start(strategies_results, ctx),
             max_candidates=elite_max_candidates,
             wl_neighbor_span=elite_wl_neighbor_span,
             existing_signatures=existing_signatures,
         )
+        if ctx.strategy_id_cursor is not None:
+            ctx.strategy_id_cursor.advance(_next_sid)
         ctx.logger.info(
             "[ELITE] Round "
             f"{elite_round}/{elite_rounds}: generated={len(elite_candidates)} "
@@ -1185,7 +1192,7 @@ def _apply_local_search_p_conforme(
 
     available_wls = _resolve_monitoring_wavelength_grid(ctx.params, ctx.clues_at_wl, ctx.wl_arr)
     existing_signatures = _existing_block_signatures(strategies_results)
-    max_sid = _max_strategy_id(strategies_results)
+    next_sid = _refinement_start(strategies_results, ctx)
 
     ctx.logger.info(
         f"[LOCAL_SEARCH] Starting direct Monte-Carlo local search on top {top_k} parents "
@@ -1202,13 +1209,15 @@ def _apply_local_search_p_conforme(
 
         for step in range(1, max_steps + 1):
             parent_strat = current_res.get("strategy", {})
-            neighborhood, max_sid = _generate_local_search_neighborhood(
+            neighborhood, next_sid = _generate_local_search_neighborhood(
                 parent_strat=parent_strat,
                 available_wls=available_wls,
                 num_layers=ctx.num_layers,
-                start_strategy_id=clamp_incremental_strategy_id(max_sid + 1),
+                start_strategy_id=next_sid,
                 seen_signatures=existing_signatures,
             )
+            if ctx.strategy_id_cursor is not None:
+                ctx.strategy_id_cursor.advance(next_sid)
             if not neighborhood:
                 break
 

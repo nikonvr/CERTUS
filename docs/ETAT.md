@@ -15,7 +15,8 @@
 
 **Point de départ (2026-10-04).** Travailler dans `certus0310`, branche
 `refactor-corridors-mixins`, code validé localement `da0ca5b5`, [PR #5](https://github.com/nikonvr/CERTUS/pull/5).
-Première commande : `python scripts\preflight.py` → `PREFLIGHT=GO`. Arbre Git propre.
+Première commande : `python scripts\preflight.py` → `PREFLIGHT=GO`. Dernier lot commité :
+R128 (D5) ; les arbitrages STRAT délégués par 👤 suivent (ligne 1 du tableau).
 
 **Validation du lot R122–R126 (Windows 11, Python 3.14.8, 2026-10-04).**
 Oracle sur R124 : `1113 passed` ; unitaires sur R125 :
@@ -36,13 +37,14 @@ Node, hors pytest.
 
 **D80 clos le 2026-10-04, R127 `da0ca5b5` (local).** RE et INDEX SPLINE sauvegardent et relisent leurs réglages JSON et demandent confirmation avant de perdre une configuration modifiée. Le test échouait sur les deux fenêtres avant le correctif ; après, 16/16 tests de fermeture et 52/52 tests ciblés passent. Suite UI complète : `1288 passed, 12 skipped, 2 xfailed` en 22 min 20 sur Windows 11 / Python 3.14.8. Ruff et les trois contrôles documentaires : 0 défaut.
 
-**En cours (2026-10-04) : D5, Codex.** Reproduire les collisions de `strategy_id` sur deux nombres de blocs, puis corriger les attributions des stratégies dérivées et des variantes sans perdre les liens vers leurs parentes. Aucun changement de physique avant la mesure au bit C1.
+**D5 clos le 2026-10-04, R128 (local).** Chaque générateur d'IDs dérivés, Rate, fente, ELITE et recherche locale numérote dans une plage propre au nombre de blocs source (`strategy_id_for_block`) ; la fente a son propre pas (`STRATEGY_ID_SLIT_BLOCK_STRIDE`, 1 000 nombres de blocs), sans quoi le travailleur « couche par couche » d'un design de 200 couches ou plus perdait ses variantes sur une `ValueError` ; chaque travailleur porte un curseur unique (`RefinementIdCursor`) que partagent ses appels successifs (criblages DP et hérités, graines de criblage, passe complète) ; `dp_top_k` est écrêté à 100, la largeur de plage d'une carte de coût, avec un avertissement ; `validate_unique_strategy_ids` refuse tout ID absent ou répété avant tableau et export. Le premier correctif (Codex) passait la suite mais pas un vrai run : sur le juge de paix en `fast`, deux criblages du travailleur à 8 blocs rendaient chacun l'ID 900850014 et la garde retenait tout le run ; le curseur le règle. Neuf tests de collision échouent sur le code d'avant. Run réel, juge de paix `fast`, Windows 11, Python 3.14.8 : `RESULT=0.008495264385191466` et 194 stratégies, identiques au run sans D5 ; même top 10, IDs exceptés. Arbre final, même poste : Ruff 0 défaut ; C1 contre `3313461d` : **8 008/8 008 tableaux identiques au bit** ; oracle `1114 passed` ; unit `4851 passed, 5 skipped, 3 xfailed` ; reste de `tests/` `347 passed, 2 skipped` ; trois contrôles documentaires : 0. La suite UI (`1288 passed, 12 skipped, 2 xfailed`) a tourné sur la première version, sans curseur ni écrêtage ; elle sera rejouée avec les lots suivants.
 
 | priorité | difficulté / responsable | première action précise | fini quand |
 |---|---|---|---|
-| 1 · D5 | **complexe · Codex** : `strategy_id` non unique (21 identifiants sur 79 stratégies mesurées) | Reproduire les collisions avant de modifier les IDs ; tracer l'attribution dans `certus/core/certus_strat_consensus.py`, `certus/core/certus_strat_ranking.py` et `certus/workers/certus_strat_workers.py`, puis les appariements parent/enfant. | IDs non ambigus dans le corpus et l'export ; filiation préservée, tests de non-régression et C1 verts. |
-| 2 · D11 / reste de D23 | **complexe · Opus** : cycle de vie Qt et collecte hors du thread GUI | Rejouer `scripts/sonde_retenants_fenetre.py` ; inventorier les cinq `gc.collect()` des workers STRAT et les `QThread` retenus avant tout `WA_DeleteOnClose`. R121 a déjà clos l'arrêt des workers UI. | Fenêtres libérées après fermeture sans destruction de thread actif ; boucle de fermetures et suite UI sans arrêt natif. |
-| 3 · D73 / D45 / D46 | **complexe · décision 👤 préalable** : modifications de physique qui changent des résultats | Lire les mesures et les tests `xfail(strict)` en §4, puis obtenir le choix de 👤 en §5 avant de toucher aux noyaux. | Décision inscrite en §3, oracle avant/après, C1 du chemin inactif. |
+| 1 · arbitrages STRAT | **complexe · Claude, délégués par 👤 le 2026-10-04** (« tranche au plus logique ») : D73, D20, D70, D17, hystérésis, puis D14, D15, D54, D55 | Commencer par D73 : la marge en transmission ignore le point tournant sous l'arrêt, sur toutes les configurations livrées. | Chaque décision écrite en §3 avec sa raison et sa mesure ; un commit par décision. |
+| 2 · Zenodo spline et RE | **complexe · Claude, demandé par 👤 le 2026-10-04** : faire bénéficier certus0310 du meilleur de `optics continuum/05_CODE_ET_ZENODO` et de `publication_reverse/07_PAQUET_ZENODO` (`certus_re`) | Mesurer avant de porter : même exemple sur les deux codes spline ; tableau des capacités de `certus_re` (inversion conjointe, prior MAP, instrument, incertitudes) face au RE de certus0310. | Écarts mesurés, portages testés et validés, sources Zenodo citées. |
+| 3 · D45 / D46 | **complexe · décision 👤 préalable** : modifications de physique qui changent des résultats | Lire les mesures et les tests `xfail(strict)` en §4, puis obtenir le choix de 👤 en §5 avant de toucher aux noyaux. | Décision inscrite en §3, oracle avant/après, C1 du chemin inactif. |
+| 4 · D11 / reste de D23 | **complexe · Opus** : cycle de vie Qt et collecte hors du thread GUI | Rejouer `scripts/sonde_retenants_fenetre.py` ; inventorier les cinq `gc.collect()` des workers STRAT et les `QThread` retenus avant tout `WA_DeleteOnClose`. R121 a déjà clos l'arrêt des workers UI. | Fenêtres libérées après fermeture sans destruction de thread actif ; boucle de fermetures et suite UI sans arrêt natif. |
 | contingence · D77 | **complexe, seulement si la CI release devient rouge** | Lire stderr et l'artefact watchdog du premier job rouge ; le gel est vert sur `52de082c`. | Nouveau gel Windows vert sur le code en cause. |
 
 **Correctifs récents clos et validés.** R121 `21e62841` : arrêt natif des workers
@@ -52,6 +54,7 @@ R124 `73df4a3e` : repli `minimize` si l'API privée SciPy change (D74).
 R125 `6568d887` : taux de plantage au bruit nominal visible (D2).
 R126 `52de082c` : couches forcées visibles dans le tableau et le CSV (D4).
 R127 `da0ca5b5` : garde des configurations RE et INDEX SPLINE modifiées (D80).
+R128 : `strategy_id` unique sur tout un run (D5).
 Le choix de 👤 « on garde fastmath » clôt l'arbitrage D52/D67 ; les écarts
 froid/chaud restent documentés en §3.
 
@@ -197,7 +200,6 @@ numéros de l'ancien registre sont entre parenthèses
 
 | # | défaut | piste |
 |---|---|---|
-| D5 | `strategy_id` n'est pas unique : 21 identifiants sur 79 portés par plusieurs stratégies (n° 51) | vérifier l'unicité avant tout appariement parente/enfant |
 | D6 | Le consensus ignore `robustness_num_runs`, et `robustness_seed` dès que `consensus_seed_list` est renseignée (n° 18, 47) | exposer `consensus_num_runs` |
 | D7 | Deux configurations rendent le même `RESULT` au bit alors qu'une bande diffère de 38 % (n° 15) | vérifier dans le code ce que `RESULT` agrège |
 | D8 | `scripts/campagne_intervalles.py` forçait `search_resolution` à faux alors que 👤 en a fait un prérequis : les campagnes d'intervalles ont tourné sans recherche de fente (n° 49) | refaire les intervalles utiles avec la fente cherchée |

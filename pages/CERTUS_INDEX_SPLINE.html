@@ -208,6 +208,29 @@
             spectra of the article (nominal 1700 nm, tolerance 200 nm, relative transmittance on sapphire), under their own names and under neutral
             ones: d = 1681.78, 1707.96 and 1716.02 nm, weighted residuals 0.001535, 0.002727 and 0.002105 &mdash; the values of the deposit.
         </p>
+        <div class="mermaid">
+            flowchart TD
+            A[Measured relative transmission and current sigma-knot mesh] --> B{Smart Init choice}
+            B -->|Swanepoel| C[Find transmission extrema and estimate index and thickness]
+            B -->|Manual SiO2, Ta2O5 or Nb2O5| D[Project selected published n and log k tables onto current sigma knots]
+            B -->|Auto preset and d| E[Project each of the three published tables onto the same sigma mesh]
+            E --> F[For each table: bounded scalar thickness minimisation using Smart Init RMSE]
+            F --> G{Any finite preset score?}
+            G -->|No| H[Keep current profile]
+            G -->|Yes| I[Choose lowest RMSE among the three presets]
+            I --> J[Apply winning table and optimise its thickness again]
+            D --> K[Optimise thickness for selected table]
+            C --> L[Smart Init preview and later SOL 2]
+            J --> L
+            K --> L
+            H --> L
+        </div>
+        <p>
+            The auto choice compares the <em>three presets</em> on the same current mesh. When one has a finite
+            score, the window applies it; the existing profile is not a fourth candidate in that comparison.
+            Thus the diagram describes the present code path, rather than a promise that every auto choice improves
+            an already edited profile.
+        </p>
         <h2>Section 5: Phase 02 Vector Grids - The Rigid SOL 2 Architecture</h2>
         <p>
             Post-Phase 01 setup, the framework migrates into Phase 02 (<code>SOL 2</code>). Interference fringes possess severe harmonic redundancies: absolute physical depth ($d$) can slip into a neighboring fringe order without immediately inflating RMSE significantly if the nodes are completely uncoupled and capable of compensating instantly.
@@ -735,7 +758,7 @@
         </table>
         <div style="margin-top: 40px; text-align: center; color: #64748b; font-size: 0.9em; padding-bottom: 20px;">
             <hr style="margin-bottom: 10px; border-top: 1px solid #cbd5e1;">
-            <i>Implementation review: 2026-10-03. Confirm scientific conclusions against the cited model and input data.</i>
+            <i>Implementation review: 2026-10-04. Confirm scientific conclusions against the cited model and input data.</i>
         </div>
     </div>
 </body>

@@ -63,6 +63,11 @@ def test_re_headless():
     assert len(report["sigma_nm"]) == len(top["ep"])
     assert all(0.0 < s < 50.0 for s in report["sigma_nm"]), report["sigma_nm"]
     assert report["n_data"] > report["n_parameters"]
+    # And its parameter budget: every block, the thicknesses at least, against the same data count.
+    budget = top.get("parameter_budget")
+    assert budget is not None, "the retained result carries no parameter budget"
+    assert budget["n_free_parameters"] >= len(top["ep"])
+    assert budget["n_data_points"] == report["n_data"]
 
 if __name__ == "__main__":
     test_re_headless()

@@ -24,6 +24,7 @@ from certus.utils.certus_re_math import (
 logger = logging.getLogger(__name__)
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
+from certus.core.certus_re_budget import attach_parameter_budget
 from certus.core.certus_re_config import REPhase4Result
 from certus.core.certus_re_objectives import (
     _build_qwot_helpers,
@@ -93,6 +94,7 @@ class REContextStrategy:
             if _cauchy_diag is not None:
                 logging.info('RE diag [Cauchy substrate barrier] ||r||=%.4g, %d/%d non-zero residuals (tube |nn_tab|<=%.3g)  active boundary -> constraint saturated; zeros -> inside tube.', _cauchy_diag['res_norm'], _cauchy_diag['n_active'], _cauchy_diag['n_total'], _cauchy_diag['tube_delta'])
         attach_thickness_uncertainty(_top_result, _thickness_uncertainty, logging.getLogger())
+        attach_parameter_budget(_top_result, worker.cfg, logging.getLogger())
         _tail = REResultsPayloadBuilder.finalize_tail_bundle(results=results, top_result=_top_result, ep0=ep0, alpha_rank_ref=_alpha_rank_ref, elapsed_s=_tot, best_sp=_best_sp, best_ot=_best_ot, best_combined=_best, rmse_initial_milestone=rmse_initial_milestone, rmse_phase1_milestone=rmse_phase1_milestone, rmse_final_milestone=rmse_final_milestone, stopped_by_user=bool(worker._stop), re_qwot_alphas=re_qwot_alphas, ranking_log_suffix=re_finalize_ranking_log_suffix, finished_main_log_line=re_finalize_finished_main_log_line, rmse_milestone_log_line=re_finalize_rmse_milestone_log_line, progress_message_done=re_finalize_progress_message_done)
         logging.info(_tail['finished_main_log'])
         logging.info(_tail['rmse_milestone_log'])

@@ -34,8 +34,10 @@ def test_re_headless():
         nonlocal final_result
         final_result = res
         
+    finished: dict = {}
     worker = REWorker(cfg)
     worker.signals.result.connect(on_result)
+    worker.signals.finished.connect(finished.update)
     worker.run()
     
     if final_result:
@@ -50,6 +52,10 @@ def test_re_headless():
         print("No result received.")
     assert final_result is not None, "the RE worker returned no result"
     assert 0.0 <= final_result["rmse"] < 1.0  # a finite fit, far below 100 %
+    # The run must also FINISH: `result` is emitted before phase 4, and until 2026-10-04 every phase 4 that reached its
+    # high-angle branch ended on an AttributeError -- `finished` then carried ok=False and no result at all.
+    assert finished.get("ok") is True, "the RE worker did not finish its run"
+    assert finished.get("results"), "the finished payload carries no result"
 
 if __name__ == "__main__":
     test_re_headless()

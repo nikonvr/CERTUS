@@ -77,4 +77,25 @@ def test_without_a_profile_only_the_wall_clock_line_is_logged(clock, caplog):
 def test_the_helper_is_called_by_the_beam_method():
     import inspect
 
-    assert "self._close_phase4_profile(" in inspect.getsource(REPhase4Strategy._execute_phase4_beam)
+    assert "REPhase4Strategy._close_phase4_profile(None," in inspect.getsource(REPhase4Strategy._execute_phase4_beam)
+
+
+def test_no_method_of_the_strategy_reads_self_since_the_worker_passes_none():
+    """`REWorker` calls every method as `REPhase4Strategy._x(None, worker, ...)`. Until 2026-10-04 the beam method called
+    `self._close_phase4_profile(...)`, so every RE run whose phase 4 went through its high-angle branch ended on an
+    AttributeError and returned no result; the test above pinned that call."""
+    import ast
+    import inspect
+    import textwrap
+
+    tree = ast.parse(textwrap.dedent(inspect.getsource(REPhase4Strategy)))
+    reads = sorted(
+        {
+            f"{method.name}: self.{node.attr}"
+            for method in ast.walk(tree)
+            if isinstance(method, ast.FunctionDef)
+            for node in ast.walk(method)
+            if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id == "self"
+        }
+    )
+    assert reads == []

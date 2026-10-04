@@ -514,7 +514,8 @@ class REPhase4Strategy:
                     )
                     _prepend_result_dto(results, phase4_scan)
                     rmse_final_milestone[0] = float(rmse_c_scan)
-                self._close_phase4_profile(_re_state, _t_p4_wall, _p4_scan_wall_s, _p4_trf_wall_s)
+                # Called on the class, like every method of this strategy: the worker passes None as `self`.
+                REPhase4Strategy._close_phase4_profile(None, _re_state, _t_p4_wall, _p4_scan_wall_s, _p4_trf_wall_s)
             elif _has_high_angle:
                 logging.info(
                     "RE phase 4 skipped | reason=no_spline_state_on_best | need re_dH_knots/re_dL_knots on results[0] (phase 2 splines)"

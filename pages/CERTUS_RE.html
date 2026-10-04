@@ -352,6 +352,25 @@
             shakes. Each round accepts improvements that lower RMSE∑ and can re-enter local TRF.
         </div>
 
+        <h3>7.1 Thickness uncertainties of the retained result</h3>
+        <p>
+            When the run ends, the retained result carries <code>thickness_uncertainty</code> and the log prints one line per
+            layer, <i>d</i> &plusmn; &sigma;(<i>d</i>). The covariance is \( s^2 (J^\top J)^{+} \), with \( J \) the Jacobian of
+            the weighted <strong>data residuals alone</strong> &mdash; the QWOT channel and the Tikhonov and envelope rows select
+            the solution but are not measurements &mdash; evaluated at the retained thicknesses with that result's own dispersion
+            corrections and, for a phase-4 result, its own beam aperture. \( s^2 = \chi^2/(m-n) \) widens the bars when the model
+            does not reproduce the data within their weights. The inverse goes through the singular values: a direction the
+            data leave free is reported, and the thicknesses it involves get no bar rather than one that is too small. The
+            method is ported from <code>certus_re</code> (Zenodo, concept DOI 10.5281/zenodo.22756244).
+        </p>
+        <p>
+            What the bars are not: the dispersion corrections and the aperture are held at their fitted values, so the bars are
+            conditional on them &mdash; a lower bound when those were fitted too &mdash; and finite local bars do not establish
+            global identifiability. On <code>example/example_RE/reverse_sample.xlsx</code> (measured 2026-10-04: 17 layers,
+            1200 data points, phase-4 result): &sigma;(<i>d</i>) from 0.22 to 0.70 nm, about 0.1&nbsp;% of each thickness; the
+            analytic Jacobian matches central finite differences to 3.4&times;10<sup>&minus;10</sup>.
+        </p>
+
         <h2>8. Using the GUI vs Headless — Concrete Operator View</h2>
         <table>
             <thead>

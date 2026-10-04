@@ -56,6 +56,13 @@ def test_re_headless():
     # high-angle branch ended on an AttributeError -- `finished` then carried ok=False and no result at all.
     assert finished.get("ok") is True, "the RE worker did not finish its run"
     assert finished.get("results"), "the finished payload carries no result"
+    # The retained result carries its thickness uncertainties, from the data rows alone (certus_re port).
+    top = finished["results"][0]
+    report = top.get("thickness_uncertainty")
+    assert report is not None, "the retained result carries no thickness uncertainty"
+    assert len(report["sigma_nm"]) == len(top["ep"])
+    assert all(0.0 < s < 50.0 for s in report["sigma_nm"]), report["sigma_nm"]
+    assert report["n_data"] > report["n_parameters"]
 
 if __name__ == "__main__":
     test_re_headless()

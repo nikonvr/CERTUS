@@ -154,8 +154,8 @@ def _prepare_re_run_context_setup(self, _re_t0: float) -> tuple[Any, dict[str, A
     return ctx, prep
 
 def _build_re_mse_grad_helper(self, ctx: Any) -> Callable[..., Any]:
-    def _mse_grad_accumulate_ep(ep_arr: np.ndarray, wt: np.ndarray, want_grad: bool, correc: tuple, return_residuals: bool = False) -> tuple | None:
-        return _global_compute_re_mse_gradient(self.cfg, ctx, ep_arr, wt, want_grad, correc, return_residuals=return_residuals)
+    def _mse_grad_accumulate_ep(ep_arr: np.ndarray, wt: np.ndarray, want_grad: bool, correc: tuple, return_residuals: bool = False, data_only: bool = False) -> tuple | None:
+        return _global_compute_re_mse_gradient(self.cfg, ctx, ep_arr, wt, want_grad, correc, return_residuals=return_residuals, data_only=data_only)
     return _mse_grad_accumulate_ep
 
 def _build_qwot_helpers(self, ep0: Any, n_ref_nom_per_layer: Any, is_H: Any, is_L: Any, lambda_ref: Any, re_env_s: Any, _lref_arr: Any, _alpha_slot: Any) -> dict[str, Callable[..., Any]]:
@@ -397,6 +397,7 @@ def _global_compute_re_mse_gradient(cfg: Any, ctx: Any,
     want_grad: bool,
     correc: tuple,
     return_residuals: bool = False,
+    data_only: bool = False,
 ) -> tuple | None:
 
     n_lay_m, n_sub_m = _re_apply_correc(
@@ -468,7 +469,9 @@ def _global_compute_re_mse_gradient(cfg: Any, ctx: Any,
         _accum_from_stats,
     )
 
-    if return_residuals:
+    # `data_only` keeps the measured rows alone: the regularisation selects the solution but is not data, and the
+    # covariance of `certus_re_uncertainty` must not count it.
+    if return_residuals and not data_only:
         _global_add_regularization_residuals(
             cfg,
             ctx,

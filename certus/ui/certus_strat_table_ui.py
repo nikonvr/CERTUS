@@ -430,6 +430,13 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
             f"⚠ {yield_pct:.1f}" if rescued else f"{yield_pct:.1f}"
         )
         causes = result.get("crash_causes") or {}
+        rates_by_noise = result.get("crash_rates_by_noise") or {}
+        nominal_rate = rates_by_noise.get("1")
+        nominal_line = (
+            f"Nominal noise (1x) non-completion rate: {float(nominal_rate):.2%}\n"
+            if nominal_rate is not None
+            else "Nominal noise (1x) non-completion rate: not available\n"
+        )
         yield_item.setToolTip(
             ("🔴 RESCUED STRATEGY — it did NOT pass the crash filter.\n"
              "No strategy of its block did, so all were re-injected rather than\n"
@@ -437,8 +444,9 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
              "a robustness score: never compare it with a ranked strategy's, and\n"
              "never average the two.\n\n" if rescued else "")
             + "Depositions completing successfully, out of 100.\n"
-            f"Non-completion rate: {crash_rate:.2%}\n"
-            "\nThe three failure modes, separately:\n"
+            f"Worst-case non-completion rate: {crash_rate:.2%}\n"
+            + nominal_line
+            + "\nThe three failure modes, separately:\n"
             f"  level never reached       : {float(causes.get('p_level_unreachable', 0.0)):.2%}\n"
             f"  divergent TP count        : {float(causes.get('p_tp_miscount', 0.0)):.2%}\n"
             f"  non-monotonic T(d)        : {float(causes.get('p_non_monotonic', 0.0)):.2%}\n"

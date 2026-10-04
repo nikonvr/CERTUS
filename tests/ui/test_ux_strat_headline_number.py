@@ -102,6 +102,13 @@ def test_the_strip_exists_and_can_be_read(strat):
     assert strat.kpi_banner._values, "the KPI strip carries no field"
 
 
+def test_the_crash_headline_identifies_the_worst_noise_level(strat):
+    from PyQt6.QtWidgets import QLabel
+
+    captions = {label.text() for label in strat.kpi_banner.findChildren(QLabel)}
+    assert "WORST CRASH RATE" in captions
+
+
 def test_the_strip_reports_a_finished_run_at_all(strat):
     """The harness must be able to make the strip say something."""
     _refresh(strat, [_result(1, 0.0123, 0.0, 6, 0.09)])

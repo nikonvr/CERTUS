@@ -133,7 +133,7 @@ def _test_strategy_robustness_task(
     results_per_noise = []
     crash_rate_max = 0.0  # worst non-terminating deposition rate across noise levels
     crash_count_max = 0    # ... and the COUNT behind it, which the rate throws away
-    # 🔑 THE RATE PER NOISE LEVEL, AND IT EXISTED NOWHERE.
+    # Keep the rate at each noise level alongside the worst-case gate rate.
     #
     # `crash_rate_max` is a MAX over the three levels (`robustness_noise_factors`, by
     # default [0.5 · 1.0 · 2.0]), and it is what the crash gate compares with the 5 %
@@ -141,9 +141,9 @@ def _test_strategy_robustness_task(
     # which is TWICE the measured reading noise (§18-2: ±0.05 point, A = 5e-4). The 1x is
     # the machine; the 0.5x and 2x are robustness multipliers.
     #
-    # 🔴 And the reduction by `max` is IRREVERSIBLE: no artefact of this repository carries
-    # the rate at the REAL noise, so it cannot be known, on any existing run, whether a
-    # rejected strategy was manufacturable on the machine of 👤. The detail is therefore kept.
+    # Reducing the rates to `max` alone would lose the rate at the REAL noise,
+    # which the operator needs to interpret a rejected strategy. Keep the detail
+    # in the result so the table can display it alongside the gate rate.
     #
     # 🔒 What this does NOT do: change the gate. The rule stays the max, and it is a
     # decision of 👤 -- judging on the worst of the three may be exactly the margin they want.

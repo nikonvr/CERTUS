@@ -119,6 +119,26 @@ def test_the_worst_layers_sit_under_the_worst_headers(window):
     assert worst[0] == BLOCKS_FIRST_COLUMN + 2  # two blocks in this result: the header list leaves no gap and no overlap
 
 
+def test_yield_explains_the_worst_rate_and_the_nominal_noise_rate(qapp):
+    data = result()
+    data["crash_rate"] = 0.12
+    data["crash_rates_by_noise"] = {"0.5": 0.01, "1": 0.02, "2": 0.12}
+    win = StrategiesTableWindow(None, [data], [100.0, 80.0, 60.0])
+    try:
+        item = win.table.item(0, headers(win).index("Yield %"))
+        assert item.text() == "88.0"
+        assert "Worst-case non-completion rate: 12.00%" in item.toolTip()
+        assert "Nominal noise (1x) non-completion rate: 2.00%" in item.toolTip()
+    finally:
+        win.close()
+
+
+def test_yield_does_not_invent_a_nominal_rate_for_an_old_result(window):
+    tooltip = window.table.item(0, headers(window).index("Yield %")).toolTip()
+    assert "Worst-case non-completion rate: 3.00%" in tooltip
+    assert "Nominal noise (1x) non-completion rate: not available" in tooltip
+
+
 def test_a_table_with_no_block_still_puts_the_worst_layers_after_the_seel_columns(qapp):
     win = StrategiesTableWindow(None, [result(blocks=1)], [100.0, 80.0, 60.0])
     try:

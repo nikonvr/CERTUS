@@ -351,7 +351,7 @@ class CertusStratLayoutMixin:
                 # ranking figure, not something anyone can act on.
                 ("seel", "SEEL (nm/layer)"),
                 ("score", "ROBUSTNESS SCORE"),
-                ("crash", "CRASH RATE"),
+                ("crash", "WORST CRASH RATE"),
                 ("blocks", "BLOCKS"),
                 ("ranked", "STRATEGIES RANKED"),
                 ("status", "RUN STATUS"),

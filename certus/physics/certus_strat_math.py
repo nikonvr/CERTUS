@@ -143,6 +143,10 @@ def calculate_level_margins_to_extrema(
     wider BEFORE an extremum than AFTER. That asymmetry was a PROXY for this computation:
     in thickness space, "before" and "after" differ because the slope differs. In transmission,
     both sides are at the same distance from the extremum by construction.
+
+    A turning point within one grid step of the stop is located by the vertex of the parabola
+    through the three samples around it, and counts on its side: a stop on a turning point has
+    a zero margin, not the gap to the extremum of the other kind.
     """
     if wl < 0.1 or thickness_nominal <= 0.0001:
         return (MARGIN_NONE, MARGIN_NONE)
@@ -202,6 +206,26 @@ def calculate_level_margins_to_extrema(
             break
         if sign1 == 0.0:
             sign1 = s
+
+    # The turning point UNDER the stop. When the slope changes sign at the stop sample, that
+    # sample is the extremum of the grid and neither scan sees it: the backward one looks for a
+    # reversal before it, the forward one after it, so both report the extrema of the OTHER
+    # kind, half a period away (0.28 in T for a high-index layer on glass). The worst stop there
+    # is -- on the turning point, where half the noise draws put the target out of reach -- then
+    # passed every threshold under that gap. The parabola through the three samples places the
+    # turning point inside the step (its vertex is before the stop when slope x curvature >= 0)
+    # and gives its level; the margin on that side is the gap to it, quadratic in the distance
+    # as everywhere else.
+    d_left = Ts[i_stop] - Ts[i_stop - 1]
+    d_right = Ts[i_stop + 1] - Ts[i_stop] if i_stop + 1 < _MARGIN_NPTS else 0.0
+    if (d_left > 1e-15 and d_right < -1e-15) or (d_left < -1e-15 and d_right > 1e-15):
+        curvature = 0.5 * (d_right - d_left)
+        slope = 0.5 * (d_right + d_left)
+        gap = abs(slope * slope / (4.0 * curvature))
+        if slope * curvature >= 0.0:
+            m_prev = gap
+        else:
+            m_next = gap
 
     return (m_prev, m_next)
 

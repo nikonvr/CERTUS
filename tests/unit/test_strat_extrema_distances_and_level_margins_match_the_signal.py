@@ -9,8 +9,9 @@ do not come from the code:
         because T is even in the thickness, one at the start of the growth of a bare substrate
     DISTANCES: a stop a few nanometres before a turning point is that many nanometres of optical thickness from it (to the 0.5 nm of the scan), a turning point out of the
         +/- 16 nm window is not reported (999), the start of a layer that grows on a turning point is at distance 0
-    MARGINS: the algorithm the docstring describes (64 points over 3 thicknesses, the stop at index 21, the last reversal before it, the first after it, the gap in T), rewritten
-        in plain Python on the oracle's signal, gives the kernel's margins; a missing side is MARGIN_NONE; the margin is in T
+    MARGINS: the algorithm the docstring describes (64 points over 3 thicknesses, the stop at index 21, the last reversal before it, the first after it, the gap in T,
+        and a turning point under the stop placed by the vertex of the parabola through its three samples), rewritten in plain Python on the oracle's signal, gives
+        the kernel's margins; a missing side is MARGIN_NONE; the margin is in T; at every distance from a turning point, it is the gap in T to its level
     THE BATCH: a candidate is admitted when both margins reach the threshold, and a side without a turning point constrains nothing
 """
 
@@ -84,6 +85,16 @@ def plain_margins(nominal, matrix=BARE, wl=WL):
             break
         if reference == 0.0:
             reference = s
+    # the turning point under the stop: the stop sample is the extremum of the grid; the vertex of the parabola through the
+    # three samples is on the side of the sign of slope x curvature, and the margin on that side is the gap to its level
+    left, right = ts[STOP_INDEX] - ts[STOP_INDEX - 1], ts[STOP_INDEX + 1] - ts[STOP_INDEX]
+    if sign_of(left) * sign_of(right) < 0:
+        curvature, slope = (right - left) / 2, (right + left) / 2
+        gap = abs(slope**2 / (4 * curvature))
+        if slope * curvature >= 0:
+            margin_before = gap
+        else:
+            margin_after = gap
     return margin_before, margin_after
 
 
@@ -195,28 +206,28 @@ def test_the_margin_grows_as_the_square_of_the_distance_to_the_turning_point(sid
     assert b[index] / a[index] == pytest.approx((far / near) ** 2, rel=0.3)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="D73: a stop within half a grid step of a turning point is in a blind zone of the margin criterion: the turning point at the stop is no one's neighbour",
-)
 def test_a_stop_on_a_turning_point_has_no_margin_to_it():
     """The worst stop there is: the level is the extremum's, and half the noise realizations put the target beyond it. The margin to the turning point is then zero, on one side at least.
 
-    It is not: from 1.25 nm before the turning point to 1.25 nm after it (a grid step is 2.8 nm), the margins are (MARGIN_NONE, 0.28), the second being the gap to the OTHER
-    kind of extremum; `check_level_margin_batch` admits the stop for any threshold under 0.28. Strict: the day the function counts the turning point under the stop, this test
-    passes, and the mark has to go."""
+    It was not (D73, before 2026-10-04): from 1.25 nm before the turning point to 1.25 nm after it (a grid step is 2.8 nm), the margins were (MARGIN_NONE, 0.28), the second
+    being the gap to the OTHER kind of extremum, and `check_level_margin_batch` admitted the stop for any threshold under 0.28."""
     for offset in (-1.0, -0.5, 0.0, 0.5, 1.0):
         margins = calculate_level_margins_to_extrema(WL, N_HIGH, N_SUB, QUARTER + offset, BARE)
         assert min(margins) < 0.01, f"offset {offset} nm: margins {margins}"
 
 
-def test_the_blind_zone_of_the_margin_criterion_is_where_the_stop_is_within_half_a_step_of_the_turning_point():
-    """What the xfail above says, measured: the zone is [-1.25, +1.25] nm around the turning point at the quarter wave (half a step), and nowhere else near it."""
+def test_at_every_distance_the_margin_to_the_turning_point_is_the_gap_to_its_level():
+    """No blind zone: from 3 nm before the quarter-wave turning point to 3 nm after it, the margin on the turning point's side is |T(stop) - T(turning point)|, both by the
+    independent oracle, to the precision of the grid: a sampled extremum is at most half a step from the true one, so its level is off by at most c (step / 2)^2."""
     step = SCAN * QUARTER / (POINTS - 1)
+    level = signal(QUARTER)
+    h = 0.01
+    c = abs(signal(QUARTER + h) + signal(QUARTER - h) - 2 * level) / (2 * h**2)  # T ~ T_ext - c (d - d0)^2
     for offset in np.arange(-3.0, 3.01, 0.25):
         margins = calculate_level_margins_to_extrema(WL, N_HIGH, N_SUB, QUARTER + offset, BARE)
-        blind = min(margins) > 0.1
-        assert blind == (abs(offset) < step / 2), f"offset {offset}: margins {margins}"
+        side = 1 if offset < 0 else 0  # a stop before the turning point sees it ahead (margin_after), a stop after it sees it behind (margin_before)
+        truth = abs(signal(QUARTER + offset) - level)
+        assert margins[side] == pytest.approx(truth, abs=c * (step / 2) ** 2 + 1e-9), f"offset {offset}: margins {margins}, gap {truth}"
 
 
 def test_a_missing_side_is_the_marker_and_not_a_huge_margin():

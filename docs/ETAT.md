@@ -13,6 +13,9 @@
 > à la fin. Les règles de validation sont dans les sections 2, 4 et 12 de
 > [CLAUDE.md](../CLAUDE.md) ; les décisions scientifiques appartiennent à 👤 (§5).
 
+**En cours (Codex, 2026-10-04).** D81 : reproduire le défaut avec les raffinements
+d'indice activés, restaurer les méthodes perdues et valider le run RE sans écran.
+
 **Point de départ (2026-10-04).** Travailler dans `certus0310`, branche
 `refactor-corridors-mixins`, [PR #5](https://github.com/nikonvr/CERTUS/pull/5).
 Première commande : `python scripts\preflight.py` → `PREFLIGHT=GO`. Dernier commit de code `dd345d01` (R140), suivi
@@ -26,10 +29,12 @@ oracle `1115 passed` ; unit `4879 passed, 5 skipped, 2 xfailed` en 12 min 40 ; r
 `347 passed, 2 skipped` en 8 min 42 (19 `DeprecationWarning` de `pyqtgraph`) ; UI
 `1288 passed, 12 skipped, 2 xfailed` en 21 min 46 ; trois contrôles documentaires : 0.
 
-**R136 à R140 : tests ciblés seulement, la suite complète reste à passer.** R136 (D45) : oracle `1117 passed`, C1 contre
-`b60d80e2` : 93 tableaux sur 8 008 diffèrent, tous du gradient avec pile arrière ; R137 (D46) : 51 tests unitaires de DESIGN
-et le cliquet de dette ; R138 : tests du budget et RE sans écran ; R139 : 4 tests UI et 29 tests UI du RE ; R140 : 6 unitaires,
-4 UI, 2 sans écran, cliquet de dette, C1 du RE au bit sur l'exemple (hors chemin à splines, D81). Ruff : 0 défaut.
+**Validation complète de R136 à R140 sur `be6872ce` (Windows 11, Python 3.14.8, 2026-10-04) : `0 failed`.**
+Ruff : 0 défaut ; oracle `1119 passed` ; unit `4895 passed, 5 skipped, 2 xfailed` en 16 min 24 ;
+UI `1297 passed, 12 skipped, 2 xfailed` en 24 min 04 ; reste de `tests/` `348 passed, 2 skipped`
+en 9 min 36 (19 `DeprecationWarning` de `pyqtgraph`). Le RE à raffinements d'indice cochés reste non couvert (D81).
+R136 (D45) : C1 contre `b60d80e2` : 93 tableaux sur 8 008 diffèrent, tous du gradient avec pile arrière.
+R140 : C1 du RE au bit sur l'exemple hors chemin à splines (D81).
 
 **Validation du lot R122–R126 (Windows 11, Python 3.14.8, 2026-10-04).**
 Oracle sur R124 : `1113 passed` ; unitaires sur R125 :
@@ -54,7 +59,6 @@ Node, hors pytest.
 
 | priorité | difficulté / responsable | première action précise | fini quand |
 |---|---|---|---|
-| 0 · validation | **simple, long (~50 min)** : passer les cinq commandes du §2 de CLAUDE.md sur le dernier commit | Les cinq commandes ; R136 à R140 n'ont vu que des tests ciblés. | `0 failed` partout ; ETAT dit les comptes. |
 | 0 bis · D81 | **moyen · Claude** : le RE plante dès qu'un raffinement d'indice est coché (§4, D81) | Reproduire comme `tests/headless/test_re.py`, mais avec `build_re_worker_cfg({"re_refine_h": True, "re_refine_l": True})` puis `REWorker(cfg).run()` : `finished` arrive sans résultat ; retrouver `_evaluate_p2_fd_derivative` dans `git show 05dc0ad8^` et la rendre au worker ou à `REMathStrategy`. | Un run avec raffinements va au bout ; un test sans écran l'exige ; C1 de R140 vérifié sur ce chemin. |
 | 1 · arbitrages STRAT | **complexe · Claude, délégués par 👤 le 2026-10-04** (« tranche au plus logique ») ; D73, D20, D70, D17 faits (R129–R132), six défauts clos par raisonnement, D15 clos par la mesure ; D14 mesuré, à trancher (§4) ; reste l'hystérésis, D14, D54, D55 (et D21, simple) | Hystérésis : sur `r75x2` en `deep`, où l'anomalie a été mesurée, comparer le seuil qui suit le niveau de bruit au seuil fixé par le bruit nominal (§3, STRAT) ; la clé `tp_hysteresis_reference` n'existe que dans un arbre jetable, à recréer. | Chaque décision écrite en §3 avec sa raison et sa mesure ; un commit par décision. |
 | 2 · Zenodo spline et RE | **complexe · Claude, demandé par 👤 le 2026-10-04** : faire bénéficier certus0310 du meilleur de `optics continuum/05_CODE_ET_ZENODO` et de `publication_reverse/07_PAQUET_ZENODO` (`certus_re`). Spline fait (R133) ; RE : incertitudes d'épaisseur (R135), budget de paramètres (R138), leur affichage (R139) et préréglage d'instrument (R140) faits. L'inversion conjointe de plusieurs échantillons est écartée par 👤 | Décrire R138 à R140 dans `pages/CERTUS_RE.html` (budget, σ(d) affiché, ouverture imposée), puis vérifier C1 du chemin à splines une fois D81 corrigé. | Écarts mesurés, portages testés et validés, sources Zenodo citées. |

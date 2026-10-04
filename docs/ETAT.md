@@ -58,7 +58,7 @@ R128 `fabb9f22` : `strategy_id` unique sur tout un run (D5).
 R129 `f12fe0d9` : la marge en transmission voit le point tournant sous l'arrêt (D73).
 R130 `9667b189` : le classement final suit la règle de tri de 👤 (D20).
 R131 `d1b2684b` : le critère en épaisseur et son réglage inerte sont retirés (D70).
-R132 : le recensement de la Phase A compte chaque gain négatif (D17).
+R132 `ad180e34` : le recensement de la Phase A compte chaque gain négatif (D17).
 Le choix de 👤 « on garde fastmath » clôt l'arbitrage D52/D67 ; les écarts
 froid/chaud restent documentés en §3.
 
@@ -143,7 +143,7 @@ Le passe-bande de 99 couches est chiffré en moyenne de trois graines, jamais pa
    1/√k est réfutée (elle laisse 100 % de points tournants fabriqués). Une mesure, pas une loi.
 5. Aucun retard de déclenchement.
 6. Marge de sélection des λ : 5 σ du bruit brut (1,66 A) ; 10 σ (3,33 A) à évaluer.
-7. Quantification de l'arrêt `U(0 ; 0,125 nm)` — non implantée (défaut D13).
+7. Quantification de l'arrêt `U(0 ; 0,125 nm)` — non implantée (§3, STRAT, D13).
 
 Hors du modèle, et à y laisser : σ dépendant de T ou de λ, grenaille, bruit multiplicatif,
 bruit corrélé d'un tour à l'autre, tout filtre autre que la moyenne glissante. Seul un run réel
@@ -239,6 +239,24 @@ logique ». Chaque ligne donne la décision, sa raison et sa mesure ; une mesure
   `[ADMISSIBILITY]`). Mesuré sur le juge de paix en `fast` : 159 candidates à gain négatif sur 48 couches,
   dont 146 déjà écartées pour plantage et 13 par ce seul critère ; les runs d'avant comptaient déjà ces 13.
   Le constat « n'a jamais rejeté une candidate » (n° 38) ne tient pas sur ce composant.
+- **Clos sans changement de code** (raisonnement sur le code, sans mesure nouvelle) :
+  - **D16** : la carte THICKNESS² est le carré du coût boosté, par construction (un bonus en 1/√s y
+    devient 1/s), et la normalisation par la moyenne est un facteur commun, qui ne change aucun ordre de
+    la DP.
+  - **D18** : 0,025 (dynamique de la couche pendant son dépôt, filtre de candidates et besoin de Rate) et
+    0,04 (écart entre les deux ancres POEM, règle de l'opérateur qui n'emploie pas POEM sur un swing trop
+    faible) mesurent deux grandeurs. Une couche entre les deux est simulée en cible absolue, avec le bruit
+    des ancres et la dérive photométrique : son erreur entre dans le score, la sélection la voit.
+  - **D19** : la Phase A note chaque λ avec le noyau de croissance complet (comptage des points
+    tournants, ancres POEM, atteignabilité du niveau) ; un terme de comptage en plus compterait deux fois
+    la même chose.
+  - **D22** : effet borné à une couche ; la Phase B simule le Rate exactement.
+  - **D12** : sans exposition, `k = 1` dans toutes les configurations. Une moyenne en temps réel est
+    causale par nature ; les ancres POEM, lues après coup, pourraient l'être sans retard : à revoir avec 12.2.
+  - **D13** : la quantification `U(0 ; 0,125 nm)` a la même loi pour toutes les stratégies ; son
+    écart-type (0,036 nm) est environ trois fois sous l'erreur de déclenchement due au bruit (~0,1 nm),
+    à laquelle elle s'ajoute en quadrature (calcul, non mesuré). La compensation par la couche suivante
+    dépend de la stratégie : à implanter si une mesure réelle le demande, pas avant.
 
 ## 4. Défauts ouverts
 
@@ -264,15 +282,9 @@ numéros de l'ancien registre sont entre parenthèses
 
 | # | défaut |
 |---|---|
-| D12 | La moyenne de lecture est **causale** : elle décale un extremum de (k−1)/2 échantillons (n° 3) |
-| D13 | La quantification de l'arrêt n'est pas implantée (n° 4) |
 | D14 | L'historique est échantillonné 1,33× plus grossièrement que la couche courante (`NPTS_PREV = 16` contre `NPTS = 64` sur trois épaisseurs nominales) (n° 22) |
 | D15 | POEM ne rejoue que les quatre dernières couches d'un bloc (`MAX_LOOKBACK_VAL = 4`) : la valeur d'un bloc long est plafonnée par construction (n° 21) |
-| D16 | Le bonus « block-aware » de la Phase A écrase le coût en place, avant la normalisation, qui l'élève au carré (n° 45) |
-| D18 | Deux seuils de swing : `RATE_SWING_MIN_DEFAULT = 0,025` admet une λ, et 0,04 codé en dur fait abandonner POEM ; entre les deux, une couche perd POEM en silence |
-| D19 | La Phase A ne vérifie jamais qu'une λ offre un point tournant ; proposition de 👤 : les compter, en coût non monotone |
 | D21 | `MachineModel` n'a aucun consommateur, et `trigger_tolerance` y est documenté en unités T alors que ses lecteurs divisent par 100 (n° 9) |
-| D22 | La Phase A ignore qu'une couche Rate efface l'historique ; effet borné à une couche |
 | D51 | INDEX garde sa propre lame de Beer-Lambert pour le substrat (`_calculate_RT_absorbing_sub_single`) : elle s'accorde avec le modèle commun `certus_substrate_absorption` à 1e-12 (k de 1e-7 à 1e-3, à 450 et 800 nm, testé, interface avant comprise depuis R117), mais c'est une seconde formule à tenir à jour |
 | D54 | `simulate_growth_kernel` avec `adaptive_scan=True` **et** la grille fine (`smoothing_window > 1` ou `machine_sampling_dd > 0`) lit hors du balayage grossier : le re-échantillonnage suppose 64 points sur trois fois l'épaisseur, le balayage adaptatif en a moins sur une autre fenêtre. La `margin_missed` rendue diffère d'un lancement à l'autre (mesuré le 2026-09-30 avec le corpus élargi de `c1_diff` : 6 cas sur 87 combinaisons, jusqu'à 20 % d'écart ; l'arbre de 421ab8f comparé à lui-même ne se retrouvait pas). **Exposition : nulle aujourd'hui** — aucun appelant, test, script ni page ne passe `adaptive_scan` (`git grep`) : l'option est morte. Le corpus de `c1_diff` évite la combinaison, faute de quoi il ne prouverait plus rien. **Même famille, même exposition nulle** : `machine_sampling_dd > 0` avec `smoothing_window == 1` prend la grille fine et **saute la dérive photométrique** (affine et courbure), qui n'est appliquée que dans la branche grossière ou dans celle du lissage ; `machine_sampling_dd` reste à 0,0 pour tous les appelants (`certus_strat_batch.py`). **À décider par 👤** : supprimer `adaptive_scan` (elle alourdit le dimensionnement de la fenêtre du noyau) et garder `machine_sampling_dd` seulement si on lui rend la dérive, ou réparer les deux |
 | D55 | Sur la grille fine de la machine, une couche **rejouée** de l'historique est lue avec un pas grossier de retard : son balayage grossier commence à 1/16 de l'épaisseur (le point 0 est le dernier de la couche du dessous), l'indice d'interpolation commence à 0. Mesuré le 2026-09-30 sur `_resample_on_machine_grid` : une rampe en profondeur revient décalée de d/16 (6,25 % de l'épaisseur, 3 nm sur 50) puis plate sur le dernier seizième ; la couche courante, elle, est lue à sa vraie profondeur. **Exposition** : seulement quand la grille fine est active (`smoothing_window > 1` ou `machine_sampling_dd > 0`) ; l'effet sur les extrema rejoués n'est pas mesuré. **À décider par 👤** (le modèle de la chaîne de lecture est figé depuis le 2026-08-08). Le test est un `xfail` strict : il passera quand la lecture sera corrigée |

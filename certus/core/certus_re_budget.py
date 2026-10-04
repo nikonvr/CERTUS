@@ -49,8 +49,11 @@ def parameter_budget(result: dict[str, Any], cfg: dict[str, Any], n_data: int | 
     else:
         blocks.append(_block("substrate Cauchy", 0, "tabulated substrate"))
     knots_deg = np.asarray(result.get("re_p4_beam_ap_knots_deg", []), dtype=np.float64).ravel()
+    imposed = cfg.get("re_beam_aperture_imposed_deg")
     if knots_deg.size == 0:
         blocks.append(_block("beam aperture", 0, "not modelled (no cone average)"))
+    elif imposed is not None:
+        blocks.append(_block("beam aperture", 0, f"imposed, {float(imposed):.2f} deg total"))
     else:
         blocks.append(_block("beam aperture", knots_deg.size, f"released, {knots_deg.size} plateaus in lambda"))
     n_free = sum(b["count"] for b in blocks)

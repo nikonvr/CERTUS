@@ -358,7 +358,7 @@ class CertusRELayoutMixin:
 
         lay.addWidget(self.re_qwot_penalty_chk)
 
-        # No GUI input for ap: in P4 we work only with the optimized plateaus.
+        self._build_re_aperture_choice(lay)
 
         self.cfg["re_beam_aperture_deg"] = float(RE_GUI_DEFAULT_BEAM_APERTURE_DEG)
 

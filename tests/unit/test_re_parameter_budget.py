@@ -4,6 +4,7 @@
     THE COUNT FOLLOWS THE RESULT: a phase-1 result released the thicknesses alone, whatever later phases did
     A MATERIAL WHOSE REFINEMENT IS OFF counts zero: the solver pins its knots at zero
     THE RATIO THAT LIMITS AN INVERSION: data points per released parameter, unknown when the data were not counted
+    AN IMPOSED APERTURE costs nothing: the cone is applied, no parameter is released for it
 """
 
 from __future__ import annotations
@@ -76,3 +77,11 @@ def test_attach_reads_the_data_count_of_the_uncertainty_and_logs_every_block(cap
     assert top["parameter_budget"]["n_data_points"] == 1200
     assert "35 free parameters, 1200 data points, 34.3 per free parameter" in caplog.text
     assert caplog.text.count("RE   ") == 6
+
+
+def test_an_imposed_aperture_is_modelled_but_costs_no_parameter():
+    cfg = dict(BOTH, re_beam_aperture_imposed_deg=2.0)
+    budget = parameter_budget(phase4_result(), cfg, 1200)
+    aperture = next(b for b in budget["blocks"] if b["name"] == "beam aperture")
+    assert aperture == {"name": "beam aperture", "count": 0, "status": "imposed, 2.00 deg total"}
+    assert budget["n_free_parameters"] == 31

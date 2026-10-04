@@ -10,6 +10,7 @@ from certus.core.certus_core import CFG
 from certus.ui.certus_qt_widgets import (
     QAbstractSpinBox,
     QApplication,
+    QComboBox,
     QDialog,
     QFont,
     QGridLayout,
@@ -25,7 +26,7 @@ from certus.ui.certus_ui import (
     remove_skeleton_loader,
     show_toast,
 )
-from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_QWOT_ALPHA, RE_SPEED_PRESETS
+from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_QWOT_ALPHA, RE_INSTRUMENT_PRESETS, RE_SPEED_PRESETS
 from certus.utils.certus_re_helpers import (
     RE_GUI_DEFAULT_BEAM_APERTURE_DEG,
     RE_SPLINE_N_KNOTS,
@@ -52,6 +53,7 @@ class CertusREStateMixin:
                 "re_enable_qwot_penalty": self.re_qwot_penalty_chk.isChecked(),
                 "re_fit_lambda_min_nm": float(self.re_fit_lambda_min_spin.value()),
                 "re_fit_lambda_max_nm": float(self.re_fit_lambda_max_spin.value()),
+                "re_beam_aperture": str(self.re_aperture_combo.currentData()),
             },
         }
         if getattr(self, "_re_loaded", False) and getattr(self, "_re_workbook_path", None):
@@ -95,6 +97,11 @@ class CertusREStateMixin:
                 self.auto_scale_y_check.setChecked(True)
 
             self.cfg["re_beam_aperture_deg"] = float(RE_GUI_DEFAULT_BEAM_APERTURE_DEG)
+
+            self.cfg.pop("re_beam_aperture_imposed_deg", None)
+
+            if hasattr(self, "re_aperture_combo"):
+                self.re_aperture_combo.setCurrentIndex(0)
 
             self.log("Default configuration loaded (CERTUS-RE).", "INFO")
 
@@ -480,6 +487,34 @@ class CertusREStateMixin:
 
         self._update_substrate_info()
 
+    def _build_re_aperture_choice(self, lay) -> None:
+        """The beam aperture of phase 4: fitted (four plateaus in lambda, the default) or imposed by an instrument preset
+        (``RE_INSTRUMENT_PRESETS``, port of certus_re); the choice reaches the worker as ``re_beam_aperture_imposed_deg``."""
+        row = QHBoxLayout()
+        row.addWidget(QLabel("Aperture:"))
+        self.re_aperture_combo = QComboBox()
+        self.re_aperture_combo.addItem("fitted (4 plateaus)", "fitted")
+        for key, preset in RE_INSTRUMENT_PRESETS.items():
+            self.re_aperture_combo.addItem(f"{preset['short']}, {preset['aperture_deg']:.1f} deg imposed", key)
+        lines = [
+            "Beam aperture of the cone average, applied from 10 deg of incidence.",
+            "Fitted: phase 4 fits four plateaus of the total aperture over lambda, within 1.0-2.5 deg.",
+            "Imposed: the total aperture of the instrument (twice the half-angle) is used as given and no parameter "
+            "is spent on it, so the fit cannot hide a model error in the instrument.",
+        ]
+        lines += [f"{p['short']}: {p['comment']}" for p in RE_INSTRUMENT_PRESETS.values()]
+        self.re_aperture_combo.setToolTip("\n".join(lines))
+        self.re_aperture_combo.currentIndexChanged.connect(self._on_re_aperture_choice)
+        row.addWidget(self.re_aperture_combo, 1)
+        lay.addLayout(row)
+
+    def _on_re_aperture_choice(self, _index: int = -1) -> None:
+        preset = RE_INSTRUMENT_PRESETS.get(self.re_aperture_combo.currentData())
+        if preset is None:
+            self.cfg.pop("re_beam_aperture_imposed_deg", None)
+        else:
+            self.cfg["re_beam_aperture_imposed_deg"] = float(preset["aperture_deg"])
+
     def _re_apply_gui_prefs_from_dict(self, d: dict[str, Any]) -> None:
         """Restore RE speed preset and toggle prefs from a JSON ``re_gui`` block."""
         if not d:
@@ -506,6 +541,10 @@ class CertusREStateMixin:
                 self.re_fit_lambda_min_spin.setValue(float(d["re_fit_lambda_min_nm"]))
             if "re_fit_lambda_max_nm" in d and hasattr(self, "re_fit_lambda_max_spin"):
                 self.re_fit_lambda_max_spin.setValue(float(d["re_fit_lambda_max_nm"]))
+            if "re_beam_aperture" in d and hasattr(self, "re_aperture_combo"):
+                _idx = self.re_aperture_combo.findData(str(d["re_beam_aperture"]))
+                if _idx >= 0:
+                    self.re_aperture_combo.setCurrentIndex(_idx)
         except (KeyError, ValueError, TypeError) as e:
             logging.warning("RE GUI prefs restore skipped: %s", e)
 

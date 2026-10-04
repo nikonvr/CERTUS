@@ -37,7 +37,6 @@
     ]
   ],
   "fonctions_longues": {
-    "certus/core/certus_re_solvers.py::re_execute_phase1_p4_scan": 326,
     "certus/core/certus_re_solvers.py::re_execute_phase2_splines": 394,
     "certus/core/certus_re_solvers.py::re_execute_phase2_candidate": 307,
     "certus/core/certus_strat_robustness.py::run_final_simulation_block": 334,

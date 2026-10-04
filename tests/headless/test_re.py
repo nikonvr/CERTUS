@@ -69,5 +69,26 @@ def test_re_headless():
     assert budget["n_free_parameters"] >= len(top["ep"])
     assert budget["n_data_points"] == report["n_data"]
 
+
+def test_re_headless_with_an_imposed_aperture():
+    """The PHOTON RT preset (2.0 deg total, imposed): phase 4 runs to its end without releasing the aperture."""
+    if QApplication.instance() is None:
+        QApplication(sys.argv)
+    certus_physics.warmup_physics()
+    re_app = CertusREApp()
+    re_app.load_reverse_engineering_from_path(str(Path("example/example_RE/reverse_sample.xlsx").resolve()))
+    cfg = re_app.build_re_worker_cfg({"re_beam_aperture_imposed_deg": 2.0})
+    finished: dict = {}
+    worker = REWorker(cfg)
+    worker.signals.finished.connect(finished.update)
+    worker.run()
+    re_app.close()
+    assert finished.get("ok") is True, "the RE worker did not finish its run"
+    imposed = [r for r in finished["results"] if "imposed aperture" in str(r.get("label"))]
+    assert imposed, [r.get("label") for r in finished["results"]]
+    assert all(list(r["re_p4_beam_ap_knots_deg"]) == [2.0] * 4 for r in imposed)
+    aperture = next(b for b in finished["results"][0]["parameter_budget"]["blocks"] if b["name"] == "beam aperture")
+    assert aperture["count"] == 0
+
 if __name__ == "__main__":
     test_re_headless()

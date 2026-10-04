@@ -14,6 +14,7 @@ from certus.utils.certus_re_config import (
     RE_PHASE4_APERTURE_SCAN_POINTS,
     RE_PHASE4_TRF_MAX_NFEV,
     RE_PHASE4_TRF_TOL_FACTOR,
+    re_imposed_aperture_deg,
 )
 
 scipy = lazy_scipy()
@@ -130,6 +131,21 @@ class REPhase4Strategy:
                 "RE phase 4 scan detail | " + " | ".join((f"ap={a:.2f}||r||2={c:.6g}" for a, c in _p4_scan_trace))
             )
         return (_p4_scan_trace, best_ap, best_ls_sq, _p4_scan_wall_s, _p4_scan_mse_evals, best_rmse_ap)
+
+    def _phase4_imposed_start(
+        self, imposed, x0_base, _eval_both_p2, _cb2_ref, _re_state, _report_mse_spectral, _cor_base, ep_p4
+    ) -> tuple[list[tuple[float, float]], float, float, float, int, float]:
+        """Phase 4 with an imposed aperture: no scan. The knots take the imposed value and the starting point is evaluated
+        once; the return mirrors `_run_phase4_aperture_scan` (empty trace)."""
+        _t0 = time.perf_counter()
+        _i0 = int(_cb2_ref[0]["i"])
+        _re_state["re_aperture_knots"][:] = float(imposed)
+        _eval_both_p2(x0_base, emit_interval=1000000000.0)
+        _r = _cb2_ref[0]["res"]
+        ls_sq = float(np.dot(_r, _r))
+        rmse = float(np.sqrt(max(_report_mse_spectral(ep_p4, _cor_base), 0.0)))
+        logging.info("RE phase 4: beam aperture IMPOSED at %.2f deg (total), not fitted | ||r||^2=%.8g | RMSE_sp=%.6f", float(imposed), ls_sq, rmse)
+        return ([], float(imposed), ls_sq, float(time.perf_counter() - _t0), int(_cb2_ref[0]["i"]) - _i0, rmse)
 
     def _get_phase4_scan_inputs(
         self,
@@ -379,8 +395,13 @@ class REPhase4Strategy:
                     _nap,
                     _nap,
                 )
+                _imposed_p4 = re_imposed_aperture_deg(worker.cfg)
                 _p4_scan_trace, best_ap, best_ls_sq, _p4_scan_wall_s, _p4_scan_mse_evals, best_rmse_ap = (
-                    worker._run_phase4_aperture_scan(
+                    REPhase4Strategy._phase4_imposed_start(
+                        None, _imposed_p4, x0_base, _eval_both_p2, _cb2_ref, _re_state, _report_mse_spectral, _cor_base, ep_p4
+                    )
+                    if _imposed_p4 is not None
+                    else worker._run_phase4_aperture_scan(
                         _emit_re_prog=_emit_re_prog,
                         _nap=_nap,
                         _lo_ap=_lo_ap,
@@ -434,7 +455,7 @@ class REPhase4Strategy:
 
                 _p4_trf_wall_s, _p4_trf_mse_evals, _p4_best_seen_rmse = worker._run_phase4_joint_trf(
                     p4_trf_nfev=_p4_trf_nfev,
-                    nap=_nap,
+                    nap=0 if _imposed_p4 is not None else _nap,
                     x0_base=x0_base,
                     best_ap=best_ap,
                     lo_ap=_lo_ap,
@@ -487,7 +508,8 @@ class REPhase4Strategy:
                     )
                     phase4_scan = REPhase4Result.from_legacy_dict(best_res)
                     phase4_scan = REPhase4Result(
-                        label=RE_RESULT_LABEL_WITH_DRIFT + " (P4 aperture scan)",
+                        label=RE_RESULT_LABEL_WITH_DRIFT
+                        + (" (P4 aperture scan)" if _imposed_p4 is None else " (P4 imposed aperture, no TRF)"),
                         ep=phase4_scan.ep,
                         a=phase4_scan.a,
                         b=phase4_scan.b,

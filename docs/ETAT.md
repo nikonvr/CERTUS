@@ -13,14 +13,14 @@
 > à la fin. Les règles de validation sont dans les sections 2, 4 et 12 de
 > [CLAUDE.md](../CLAUDE.md) ; les décisions scientifiques appartiennent à 👤 (§5).
 
-**En cours (Codex, 2026-10-04).** Mise à jour des pages HTML RE, INDEX SPLINE,
-DESIGN et STRAT avec les logigrammes des chemins effectivement implantés ; audit
-des apports des deux paquets Zenodo. Le correctif D81 est complètement validé.
+**En cours (Codex, 2026-10-04).** Aucun lot de code ouvert. La prochaine action
+est la comparaison fonction par fonction des paquets Zenodo avec CERTUS, au-delà
+des portages déjà mesurés ; l'inversion conjointe reste écartée par 👤.
 
 **Point de départ (2026-10-04).** Travailler dans `certus0310`, branche
 `refactor-corridors-mixins`, [PR #5](https://github.com/nikonvr/CERTUS/pull/5).
-Première commande : `python scripts\preflight.py` → `PREFLIGHT=GO`. Dernier commit de code `dd345d01` (R140), suivi
-d'un commit de documentation ; arbre propre ; R128 à R140 et leurs commits de documentation sont **locaux, non poussés**
+Première commande : `python scripts\preflight.py` → `PREFLIGHT=GO`. Dernier commit de code `64f98a51` (R141), suivi
+des quatre commits HTML `176afb33`, `9af5f894`, `453f5d46`, `bd7b753e` ; arbre propre ; R128 à R141 et leurs commits de documentation sont **locaux, non poussés**
 (pousser attend l'ordre de 👤) ;
 sauvegarde : `../CERTUS_certus0310_<date>_<commit>.bundle`, refait après chaque lot (le plus récent porte le dernier commit).
 
@@ -36,6 +36,17 @@ UI `1297 passed, 12 skipped, 2 xfailed` en 24 min 04 ; reste de `tests/` `348 pa
 en 9 min 36 (19 `DeprecationWarning` de `pyqtgraph`).
 R136 (D45) : C1 contre `b60d80e2` : 93 tableaux sur 8 008 diffèrent, tous du gradient avec pile arrière.
 R140 : C1 du RE au bit sur l'exemple, avec et sans chemin à splines (D81 corrigé ci-dessous).
+
+**Validation de R141 `64f98a51` (Windows 11, Python 3.14.8, 2026-10-04) : complète, `0 failed`.**
+Ruff : 0 défaut ; oracle `1119 passed` ; unit `4895 passed, 5 skipped, 2 xfailed` en 10 min 25 ;
+UI `1297 passed, 12 skipped, 2 xfailed` en 25 min 34 ; reste de `tests/` `349 passed, 2 skipped`
+en 10 min 49 (19 `DeprecationWarning` de `pyqtgraph`) ; C1 contre `f61cdaf6` :
+**8 008/8 008 tableaux identiques au bit** ; trois contrôles documentaires : 0 défaut.
+
+**Pages HTML (2026-10-04).** RE, DESIGN, INDEX SPLINE et STRAT documentent les branches
+implantées avec huit nouveaux logigrammes. Deux anciens logigrammes RE et DESIGN qui ne se
+rendaient pas ont été réparés. Dans Chrome, Mermaid rend 8/8, 6/6, 5/5 et 6/6 logigrammes,
+sans erreur de syntaxe ; les trois contrôles documentaires signalent 0 défaut.
 
 **Validation du lot R122–R126 (Windows 11, Python 3.14.8, 2026-10-04).**
 Oracle sur R124 : `1113 passed` ; unitaires sur R125 :
@@ -61,11 +72,11 @@ Node, hors pytest.
 | priorité | difficulté / responsable | première action précise | fini quand |
 |---|---|---|---|
 | 1 · arbitrages STRAT | **complexe · Claude, délégués par 👤 le 2026-10-04** (« tranche au plus logique ») ; D73, D20, D70, D17 faits (R129–R132), six défauts clos par raisonnement, D15 clos par la mesure ; D14 mesuré, à trancher (§4) ; reste l'hystérésis, D14, D54, D55 (et D21, simple) | Hystérésis : sur `r75x2` en `deep`, où l'anomalie a été mesurée, comparer le seuil qui suit le niveau de bruit au seuil fixé par le bruit nominal (§3, STRAT) ; la clé `tp_hysteresis_reference` n'existe que dans un arbre jetable, à recréer. | Chaque décision écrite en §3 avec sa raison et sa mesure ; un commit par décision. |
-| 2 · Zenodo spline et RE | **complexe · Claude, demandé par 👤 le 2026-10-04** : faire bénéficier certus0310 du meilleur de `optics continuum/05_CODE_ET_ZENODO` et de `publication_reverse/07_PAQUET_ZENODO` (`certus_re`). Spline fait (R133) ; RE : incertitudes d'épaisseur (R135), budget de paramètres (R138), leur affichage (R139) et préréglage d'instrument (R140) faits. L'inversion conjointe de plusieurs échantillons est écartée par 👤 | Décrire R138 à R140 dans `pages/CERTUS_RE.html` (budget, σ(d) affiché, ouverture imposée). | Écarts mesurés, portages testés et validés, sources Zenodo citées. |
+| 2 · Zenodo spline et RE | **complexe · Claude, demandé par 👤 le 2026-10-04** : faire bénéficier certus0310 du meilleur de `optics continuum/05_CODE_ET_ZENODO` et de `publication_reverse/07_PAQUET_ZENODO` (`certus_re`). Spline : profils publiés (R133) ; RE : incertitudes d'épaisseur (R135), budget de paramètres (R138), leur affichage (R139) et préréglage d'instrument (R140) portés. Les quatre pages HTML concernées sont à jour. L'inversion conjointe de plusieurs échantillons est écartée par 👤. Le paquet RE local 1.2.0.dev0 n'est pas publié ; le DOI concept 10.5281/zenodo.22756244 pointe vers la série archivée, dont la version 1.1.1 ne contient pas les filtres remesurés. | Faire l'inventaire fonction par fonction des deux paquets et du code courant, mesurer les écarts utiles restant à porter et distinguer la source locale RE de l'archive publique. Aucun audit de parité exhaustive n'a encore été fait. | Écarts mesurés, portages testés et validés, sources et versions exactes citées. |
 | 4 · D11 / reste de D23 | **complexe · Opus** : cycle de vie Qt et collecte hors du thread GUI | Rejouer `scripts/sonde_retenants_fenetre.py` ; inventorier les cinq `gc.collect()` des workers STRAT et les `QThread` retenus avant tout `WA_DeleteOnClose`. R121 a déjà clos l'arrêt des workers UI. | Fenêtres libérées après fermeture sans destruction de thread actif ; boucle de fermetures et suite UI sans arrêt natif. |
 | contingence · D77 | **complexe, seulement si la CI release devient rouge** | Lire stderr et l'artefact watchdog du premier job rouge ; le gel est vert sur `52de082c`. | Nouveau gel Windows vert sur le code en cause. |
 
-**Correctifs récents** (R136 à R140 validés complètement sur `be6872ce` ; R141 validé sur l'arbre de travail). R121 `21e62841` : arrêt natif des workers
+**Correctifs récents** (R136 à R140 validés complètement sur `be6872ce` ; R141 validé sur `64f98a51`). R121 `21e62841` : arrêt natif des workers
 UI (D23, partie harnais). R122 `9ab37980` : indices de substrat non finis (D75).
 R123 `466c31cc` : cibles non finies de `needle_scan_cached` (D53).
 R124 `73df4a3e` : repli `minimize` si l'API privée SciPy change (D74).
@@ -85,7 +96,7 @@ R137 `83661fd4` : les bornes d'épaisseur de DESIGN s'arrêtent avant l'opacité
 R138 `6481f45a` : le RE déclare le budget de paramètres du résultat retenu (`parameter_budget`, porté de `certus_re`, Zenodo) : chaque bloc, tenu ou libéré, avec son compte et sa raison, le total des paramètres libres et les points de données par paramètre libre.
 R139 `c43b4aa0` : le tableau des résultats RE donne σ(d) par couche du run retenu (n/a pour une combinaison que les spectres ne contraignent pas), et l'export « snapshot » écrit σ(d) et le budget tant que l'empilement porte les épaisseurs retenues.
 R140 `dd345d01` : l'ouverture du faisceau du RE peut être imposée plutôt qu'ajustée (préréglage « PHOTON RT, 2.0 deg imposed », clé `re_beam_aperture_imposed_deg`, ouverture totale ; porté de `certus_re`, Zenodo) : l'étape 2 et la phase 4 ne balaient plus et ne libèrent aucun nœud d'ouverture, le cône s'applique dès 10°. Absente, la clé laisse le chemin d'avant : sur `reverse_sample.xlsx` tel qu'il se charge (raffinements d'indice décochés), graine des secousses fixée, les trois résultats sont identiques au bit à ceux de `c43b4aa0`, et deux runs de `c43b4aa0` l'étaient entre eux. Mesuré sur le même exemple : ajustée, l'ouverture vaut 1,62 à 1,71° et RMSE_sp 0,007730 avec 21 paramètres libres ; imposée à 2,0°, RMSE_sp 0,008853 avec 17, épaisseurs à 1,25 nm près au plus. Avec D81 corrigé sur les deux arbres, les raffinements H/L activés et une graine de secousses fixée à 42, les trois résultats complets de R139 et R140 sont identiques au bit (chaque flottant converti par `float.hex()`, empreintes SHA-256 des dictionnaires complets égales).
-R141 (D81, local) : `_evaluate_p2_fd_derivative` et `_build_cached_spline_correc`, retirées par `05dc0ad8`, sont rendues au worker RE. Le nouveau test sans écran avec raffinements H/L actifs échoue avant (`AttributeError`, `finished.ok=False`) et passe après (`finished.ok=True`, résultat présent ; 70 s). Les trois runs RE sans écran passent ensemble (`3 passed` en 1 min 51). Sur l'arbre corrigé, Windows 11 / Python 3.14.8, 2026-10-04 : Ruff 0 défaut ; oracle `1119 passed` ; unit `4895 passed, 5 skipped, 2 xfailed` en 10 min 25 ; UI `1297 passed, 12 skipped, 2 xfailed` en 25 min 34 ; reste de `tests/` `349 passed, 2 skipped` en 10 min 49 (19 `DeprecationWarning` de `pyqtgraph`) ; C1 contre `f61cdaf6` : **8 008/8 008 tableaux identiques au bit** ; trois contrôles documentaires : 0 défaut.
+R141 `64f98a51` (D81, local) : `_evaluate_p2_fd_derivative` et `_build_cached_spline_correc`, retirées par `05dc0ad8`, sont rendues au worker RE. Le nouveau test sans écran avec raffinements H/L actifs échoue avant (`AttributeError`, `finished.ok=False`) et passe après (`finished.ok=True`, résultat présent ; 70 s). Les trois runs RE sans écran passent ensemble (`3 passed` en 1 min 51). Validation complète ci-dessus.
 Le choix de 👤 « on garde fastmath » clôt l'arbitrage D52/D67 ; les écarts
 froid/chaud restent documentés en §3.
 

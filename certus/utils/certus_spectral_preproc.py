@@ -300,22 +300,6 @@ def smooth_dataframe_auto(df: pd.DataFrame, level: str = "moyen") -> tuple[pd.Da
     return out, last_info
 
 
-def summarize_smoothing_quality(info: dict | None) -> str:
-    """Return a compact human-readable quality summary for logs/UI."""
-
-    if not info:
-        return "smoother: unavailable"
-
-    q = info.get("quality_score", None)
-    label = str(info.get("quality_label", "unknown"))
-    base = info.get("window_base", "?")
-    heavy = info.get("window_heavy", "?")
-    period = info.get("estimated_period_k", None)
-    period_txt = f"period_k={float(period):.4g}" if isinstance(period, (int, float, np.floating)) else "period_k=?"
-    q_txt = f"q={float(q):.3f}" if isinstance(q, (int, float, np.floating)) else "q=?"
-    return f"smoother[{label}] {q_txt} base={base} heavy={heavy} {period_txt}"
-
-
 def auto_tune_savgol_params(
     x_lambda: np.ndarray,
     y_mat: np.ndarray,

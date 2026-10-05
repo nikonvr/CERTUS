@@ -1,0 +1,6 @@
+[DP-PROBE] minimum contiguous blocks with a common admissible wavelength: thickness=7 thickness_sq=7
+[DP-PROBE] n_blocks=48 found=2 origins={'STRUCTURED_REGULAR_PARTITION': 1, 'STRUCTURED_1_PER_LAYER': 1}
+[DP-PROBE] n_blocks=9 found=241 origins={'THICKNESS': 80, 'THICKNESS²': 80, 'SYM': 80, 'STRUCTURED_REGULAR_PARTITION': 1}
+[DP-PROBE] n_blocks=8 found=242 origins={'THICKNESS': 80, 'THICKNESS²': 80, 'SYM': 80, 'STRUCTURED_MONO_WL': 1, 'STRUCTURED_REGULAR_PARTITION': 1}
+[DP-PROBE] n_blocks=2 found=2 origins={'STRUCTURED_MONO_WL': 1, 'STRUCTURED_REGULAR_PARTITION': 1}
+[DP-PROBE] n_blocks=1 found=2 origins={'STRUCTURED_MONO_WL': 1, 'STRUCTURED_REGULAR_PARTITION': 1}

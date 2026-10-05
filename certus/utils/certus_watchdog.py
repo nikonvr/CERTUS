@@ -198,21 +198,3 @@ class CrashAndFreezeWatchdog:
                 self._faulthandler_file = None
             except Exception:
                 logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
-
-
-_GLOBAL_WATCHDOG: CrashAndFreezeWatchdog | None = None
-
-
-def install_watchdog(
-    log_dir: Path | str | None = None,
-    freeze_timeout_s: float = 15.0,
-    qt_app: Any = None,
-) -> CrashAndFreezeWatchdog:
-    """Public helper to initialize and attach the global crash & freeze watchdog."""
-    global _GLOBAL_WATCHDOG
-    if _GLOBAL_WATCHDOG is None:
-        _GLOBAL_WATCHDOG = CrashAndFreezeWatchdog(log_dir=log_dir, freeze_timeout_s=freeze_timeout_s)
-        _GLOBAL_WATCHDOG.install()
-    if qt_app is not None:
-        _GLOBAL_WATCHDOG.hook_qt_app(qt_app)
-    return _GLOBAL_WATCHDOG

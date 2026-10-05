@@ -53,7 +53,7 @@ Les lots 1 et 2 peuvent avancer en parallèle. Une mesure en cours n'autorise pa
 
 | rang | action et critère de fin | raison / condition |
 |---|---|---|
-| 1 — fiabiliser le verdict STRAT | Vérifier la propagation des réglages de consensus (D6), ce que `RESULT` agrège (D7) et la DP à plage restreinte (D9) ; corriger seulement les écarts prouvés, puis refaire les intervalles utiles avec recherche de fente (D8). | Ces points peuvent invalider une comparaison de stratégies ; établir ce socle avant de conclure sur un nouveau SEEL ou un taux de plantage. |
+| 1 — fiabiliser le verdict STRAT | D6 et D7 vérifiés (§3, STRAT). Reste la DP à plage restreinte (D9) ; corriger seulement les écarts prouvés, puis refaire les intervalles utiles avec recherche de fente (D8). | Ces points peuvent invalider une comparaison de stratégies ; établir ce socle avant de conclure sur un nouveau SEEL ou un taux de plantage. |
 | 2 — établir la parité publiée | Comparer fonction par fonction SPLINE et RE avec `optics continuum/05_CODE_ET_ZENODO` et `publication_reverse/07_PAQUET_ZENODO` ; consigner version, écart, effet mesuré et test associé. | Travail indépendant du rang 1, nécessaire avant d'affirmer que les améliorations publiées sont intégrées. RE local 1.2.0.dev0 diffère de l'archive 1.1.1 ; l'inversion conjointe de plusieurs échantillons est écartée par 👤. |
 | 4 — traiter la chaîne de mesure | Caractériser D54/D55 avant de modifier la grille fine ; spécifier puis mesurer la cadence machine (§6, 12.4), ensuite seulement le lissage (12.2). | D54 n'a pas d'appelant exposé ; D55 concerne la grille fine, avec effet final non mesuré. Leur arbitrage est délégué à Claude. Tout changement de noyau passe C1 froid contre froid et l'oracle. |
 | 5 — stabiliser interface et gel | Reproduire D23 (les cinq `gc.collect()` des workers STRAT et les `QThread`) avant D11 et `WA_DeleteOnClose` ; mesurer D85 dans le gel avant de réparer le préchauffage RE. Si `release-windows` rougit, traiter D77 en premier via stderr et artefact du job ; réduire la taille du gel (D72) après sa fiabilité. | D11 n'a pas d'effet dans le lancement actuel par processus ; libérer une fenêtre avant ses threads serait plus grave. |
@@ -245,6 +245,24 @@ du dichroïque dont le plantage s'écarterait nettement du prédit rouvrirait ce
   33 où il décroît (en août : 61 contre 532). Raison de garder : aucun gain mesuré pour un changement de toutes
   les populations. `scripts\probe_plantage_vs_sigma.py` rouvrira la question si l'anomalie revient. Sorties :
   `reports/STRAT_bench_r75x2_deep_hysteresis_{noise_level,nominal}_306559d3_2026-10-05.json`.
+- **D6, réglages du consensus : vérifiés, aucun écart à corriger.** `collect_params` applique toujours un mode
+  d'exécution (inconnu → `premium`) et chaque mode fixe ensemble `robustness_num_runs` et `consensus_num_runs`
+  (50, 150, 300, 300) ; la ligne `[MODE]` nomme toute valeur du fichier qu'il remplace. Le cas de 2026-08-10
+  (20 tirages demandés, 150 obtenus en silence) ne peut plus se produire par l'application. Les graines du
+  consensus viennent de `consensus_seed_list` quand elle est renseignée, de `robustness_seed` sinon
+  (`_resolve_consensus_seeds`) : un triplet fixe rend les scores de consensus comparables d'un run à l'autre, et
+  chaque journal l'imprime (`Consensus ranking enabled (…, seeds=[41, 42, 43], …, runs=300)`, vu le
+  2026-10-05 sur `r75x2`). Pour mesurer la dispersion d'un run à l'autre, changer le triplet, pas
+  `robustness_seed` ; le consensus ne réécrit que le score, jamais le taux de plantage.
+- **D7, ce que `RESULT` agrège : établi dans le code.** `RESULT` est le `robustness_score` de la première
+  stratégie classée (`extract_best_rmse`) : le P95 du RMSE des tirages, au pire des trois niveaux de bruit
+  (`_test_strategy_robustness_task`), remplacé pour les `consensus_top_k` par la moyenne plus
+  `consensus_std_weight` écarts-types de ce même score sur les graines du consensus. Il ne dit rien du reste de
+  la population : un réglage qui change les autres stratégies sans toucher la gagnante le laisse identique au
+  bit. C'était le cas de 2026-08-10 : à `tp_hysteresis_factor` 2,0 et 2,4 (au moins 2 A), le bruit seul ne
+  fabrique aucun point tournant (`detect_turning_points`), la gagnante est simulée à l'identique, et l'écart de
+  38 % était celui d'une statistique de bande sur la population. Comparer deux runs se fait sur le classement
+  (`dump_strat_ranking`) ou sur les vidages par stratégie, comme les rapports `STRAT_bench_*` de `reports/`.
 - **Sans changement de code :** D16 (THICKNESS² conserve l'ordre DP),
   D18 (seuils 0,025 et 0,04 appliqués à deux grandeurs), D19 (le
   comptage des points tournants est déjà dans le noyau Phase A), D22
@@ -279,8 +297,6 @@ numéros de l'ancien registre sont entre parenthèses
 
 | # | défaut | piste |
 |---|---|---|
-| D6 | Le consensus ignore `robustness_num_runs`, et `robustness_seed` dès que `consensus_seed_list` est renseignée (n° 18, 47) | exposer `consensus_num_runs` |
-| D7 | Deux configurations rendent le même `RESULT` au bit alors qu'une bande diffère de 38 % (n° 15) | vérifier dans le code ce que `RESULT` agrège |
 | D8 | `scripts/campagne_intervalles.py` forçait `search_resolution` à faux alors que 👤 en a fait un prérequis : les campagnes d'intervalles ont tourné sans recherche de fente (n° 49) | refaire les intervalles utiles avec la fente cherchée |
 | D9 | Restreindre la plage de blocs vide la DP ; cause non établie (n° 54) | mesurer la recherche à plage complète |
 | D10 | **L'ajustement Sellmeier 3 pôles est chaotique sur le saphir** : un ulp sur les données change le minimum atteint (RMSE de 0,00126 à 0,00208 sur 41 essais, 2026-09-26) ; deux machines rendent deux indices pour les mêmes données. SiO2 et BK7 sont stables | élargir le multistart ou reconditionner — change les résultats, décision de 👤 |

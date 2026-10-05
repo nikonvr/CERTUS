@@ -13,9 +13,18 @@
 > à la fin. Les règles de validation sont dans les sections 2, 4 et 12 de
 > [CLAUDE.md](../CLAUDE.md) ; les décisions scientifiques appartiennent à 👤 (§5).
 
-**Dernière action (Claude, 2026-10-05).** Rang 3 clos : l'hystérésis et D14 sont tranchés sans changer le
-modèle livré (§3, STRAT) ; la machine est libre. Les arbres jetables `hyst2` et `hyst3` (le réglage
-`tp_hysteresis_reference` non commité et une trace de contrôle) ne servent plus et peuvent être retirés.
+**Dernière action (Claude, 2026-10-05, seul sur délégation de 👤 depuis 12 h 45).** Rangs 1 et 3 clos,
+rang 2 entamé, un défaut de physique corrigé :
+- rang 3 : l'hystérésis garde le seuil qui suit le bruit, D14 passe au rang 4 (§3, STRAT) ;
+- rang 1 : D6 et D7 vérifiés dans le code, D9 expliqué (un seuil de faisabilité, que le mineur dit désormais,
+  R147), D8 remesuré sur les quatre intervalles retenus du 99c (§3, STRAT) ;
+- **R148, le RE prenait n + ik pour ses indices tabulés** (couches et substrat des classeurs) : faux en incidence
+  oblique dès que k > 0, invisible en incidence normale. Corrigé ; sur `reverse_sample.xlsx` (k ≤ 0,0043) la RMSE
+  du résultat retenu passe de 0,007730 à 0,007481 et les épaisseurs bougent de 1,18 nm au plus ; `pages/CERTUS_RE.html`
+  donne les chiffres remesurés. Tout RE fait avant R148 sur des indices absorbants en oblique est à refaire ;
+- rang 2 : inventaires dans `reports/PARITE_ZENODO_SPLINE_2026-10-05.md` (fonction par fonction) et
+  `reports/PARITE_ZENODO_RE_2026-10-05.md` (capacité par capacité).
+Les arbres jetables de la session sont retirés.
 
 **Dernière action (Codex, 2026-10-05).** Ordre des lots qualifié ci-dessous ;
 trois contrôles documentaires à zéro défaut, changement commité localement.
@@ -36,15 +45,13 @@ poussés ; pousser attend l'ordre de 👤. `python scripts\preflight.py` →
 Une entrée Git `.git/worktrees/certus0310` incomplète déclenche un
 avertissement de nettoyage à chaque commit, sans empêcher le commit.
 
-**Dernière validation complète (2026-10-05, Windows 11, Python 3.14.8,
-code au commit `4960ea5d`) :** Ruff 0 ; oracle 1 118 passed ; unit
-4 900 passed, 5 skipped, 2 xfailed ; UI 1 297 passed, 12 skipped,
-2 xfailed ; autres tests 346 passed, 2 skipped. Les quatre retraits de
-CORE ont chacun passé C1 froid contre froid (8 008/8 008 tableaux
-identiques au bit) et l'oracle. Trois contrôles documentaires : 0 défaut.
-Les quatre pages HTML RE, DESIGN, INDEX SPLINE et STRAT rendent leurs
-logigrammes Mermaid dans Chrome (8/8, 6/6, 5/5 et 6/6, mesuré le
-2026-10-04).
+**Dernière validation complète (2026-10-05, Windows 11, Python 3.14.8, code au commit `3c002869`, machine au
+repos) :** Ruff 0 ; C1 froid contre froid depuis `ca99bc8c` : 8 008/8 008 tableaux identiques au bit ; oracle
+1 118 passed ; unit 4 904 passed, 5 skipped, 2 xfailed en 8 min 55 ; autres tests 346 passed, 2 skipped en
+9 min 13 ; UI 1 297 passed, 12 skipped, 2 xfailed en 17 min 29 ; trois contrôles documentaires : 0 défaut.
+Depuis, R148 (indices RE) : oracle 1 122 passed, tests RE unitaires et sans écran verts, cliquet de dette vert.
+Les quatre pages HTML RE, DESIGN, INDEX SPLINE et STRAT rendent leurs logigrammes Mermaid dans Chrome (8/8,
+6/6, 5/5 et 6/6, mesuré le 2026-10-04).
 
 **Ordre conseillé des prochains lots.** Priorité aux résultats potentiellement faux,
 puis aux dépendances techniques ; chaque changement reste un commit distinct (C3).
@@ -53,7 +60,7 @@ Les lots 1 et 2 peuvent avancer en parallèle. Une mesure en cours n'autorise pa
 
 | rang | action et critère de fin | raison / condition |
 |---|---|---|
-| 2 — établir la parité publiée | Comparer fonction par fonction SPLINE et RE avec `optics continuum/05_CODE_ET_ZENODO` et `publication_reverse/07_PAQUET_ZENODO` ; consigner version, écart, effet mesuré et test associé. | Travail indépendant du rang 1, nécessaire avant d'affirmer que les améliorations publiées sont intégrées. RE local 1.2.0.dev0 diffère de l'archive 1.1.1 ; l'inversion conjointe de plusieurs échantillons est écartée par 👤. |
+| 2 — établir la parité publiée | Inventaires faits le 2026-10-05 (`reports/PARITE_ZENODO_*_2026-10-05.md`). Reste à lire les 58 fonctions de calcul de l'INDEX SPLINE qui diffèrent de la version publiée et à dire, pour chacune, amélioration, régression ou remaniement ; et à comparer les capacités du RE marquées « non comparé » (a priori MAP, extrapolation des indices, D86, substrats, échantillons à deux faces, résidus par voie). | Nécessaire avant d'affirmer que les améliorations publiées sont intégrées. RE local 1.2.0.dev0 diffère de l'archive 1.1.1 ; l'inversion conjointe de plusieurs échantillons est écartée par 👤. |
 | 4 — traiter la chaîne de mesure | Caractériser D54/D55 avant de modifier la grille fine ; spécifier puis mesurer la cadence machine (§6, 12.4), ensuite seulement le lissage (12.2). | D54 n'a pas d'appelant exposé ; D55 concerne la grille fine, avec effet final non mesuré. Leur arbitrage est délégué à Claude. Tout changement de noyau passe C1 froid contre froid et l'oracle. |
 | 5 — stabiliser interface et gel | Reproduire D23 (les cinq `gc.collect()` des workers STRAT et les `QThread`) avant D11 et `WA_DeleteOnClose` ; mesurer D85 dans le gel avant de réparer le préchauffage RE. Si `release-windows` rougit, traiter D77 en premier via stderr et artefact du job ; réduire la taille du gel (D72) après sa fiabilité. | D11 n'a pas d'effet dans le lancement actuel par processus ; libérer une fenêtre avant ses threads serait plus grave. |
 | 6 — réduire la dette | Élucider les effets d'import de D42 avant E402/I001 (D25), puis traiter D26 et les défauts visuels selon §4–5. | Chantier utile, mais moins urgent que la justesse scientifique ; l'ordre des imports peut changer l'exécution. |
@@ -315,6 +322,7 @@ numéros de l'ancien registre sont entre parenthèses
 
 | # | défaut | piste |
 |---|---|---|
+| D86 | Le RE prolonge par une constante les indices d'un classeur hors de leur table (`TabularMaterial.get_nk`, `np.interp` aux bornes), sans un mot : un ajustement qui déborde la table des indices travaille sur des indices inventés. `certus_re` (Zenodo) refuse l'extrapolation hors du domaine déclaré. Relevé le 2026-10-05, non mesuré sur un cas réel | dire au chargement quelle part de la plage ajustée sort de la table, ou la refuser |
 | D10 | **L'ajustement Sellmeier 3 pôles est chaotique sur le saphir** : un ulp sur les données change le minimum atteint (RMSE de 0,00126 à 0,00208 sur 41 essais, 2026-09-26) ; deux machines rendent deux indices pour les mêmes données. SiO2 et BK7 sont stables | élargir le multistart ou reconditionner — change les résultats, décision de 👤 |
 | D47 | DESIGN n'a pas de polarisation moyenne « Avg » : le tableau des cibles n'offre que s et p, et une configuration ancienne « Avg » se charge en s avec un avertissement (elle était calculée en p) | la calculer demande les deux ondes, chacune avec son gradient : décision de 👤 |
 | D48 | L'épaisseur du substrat (1 mm par défaut, `DEFAULT_SUBSTRATE_THICKNESS_NM`) n'est un champ ni de DESIGN ni de STRAT : un substrat qui absorbe perd du flux selon cette épaisseur | exposer le champ : décision de 👤 (section 5) |

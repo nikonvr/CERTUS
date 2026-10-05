@@ -1,5 +1,8 @@
 # Audit UX de CERTUS — 2 octobre 2026
 
+Ce rapport conserve les observations et mesures du 2 octobre. Pour l'état actuel des
+défauts et les décisions, voir [`docs/ETAT.md`](../../docs/ETAT.md).
+
 **Conclusion : CERTUS dispose d'un socle d'interface cohérent, mais son UX reste celle d'un outil pour utilisateur déjà formé. Les priorités sont la fiabilité des messages, la protection du travail et la lisibilité sur petit écran. Une refonte graphique générale n'est pas nécessaire pour traiter ces problèmes.**
 
 Ce jugement repose sur le code, des fenêtres Qt exécutées et des captures, pas sur une étude avec des utilisateurs. Aucune note chiffrée de satisfaction ou de facilité d'apprentissage n'a été mesurée.
@@ -51,7 +54,7 @@ toasts:
   text: Fichier chargé : invalide_field.json
 ```
 
-Chaîne relue : `CertusAppRunMixin._handle_dropped_file` dans `certus/ui/certus_base_app_run_mixin.py` appelle `load_config`, puis annonce systématiquement le succès. `CertusAppConfigMixin.load_config` est décoré par `safe_ui_action` dans `certus/ui/certus_ui_utils.py` : le décorateur affiche l'erreur puis rend `None`, sans propager l'échec. L'annonce finale est donc fausse. Le défaut est reproduit dans FIELD ; son extension à chaque autre module n'a pas été exécutée.
+Chaîne relue : `CertusAppRunStateMixin._handle_dropped_file` dans `certus/ui/certus_base_app_run_mixin.py` appelle `load_config`, puis annonce systématiquement le succès. `CertusAppConfigMixin.load_config` est décoré par `safe_ui_action` dans `certus/ui/certus_ui_utils.py` : le décorateur affiche l'erreur puis rend `None`, sans propager l'échec. L'annonce finale est donc fausse. Le défaut est reproduit dans FIELD ; son extension à chaque autre module n'a pas été exécutée.
 
 ### A03 / A07 — deux protections différentes
 
@@ -147,17 +150,3 @@ Après ces corrections, une session utilisateur courte devrait mesurer trois par
 - Sondes : `probe_routage.json`, `probe_CERTUS_*.json` ; les journaux `*.log` restent locaux (ignorés par Git).
 - Captures : `CERTUS_*_<résolution>_<thème>.png` et variantes `sans_tutoriel`.
 - Scripts de reproduction : `audit_capture.py`, `audit_probes.py`. Ils utilisent le harnais du dépôt et l’interpréteur Python 3.14 équipé des dépendances de CERTUS. Leur sortie vise ce dossier : les relancer seulement sur une copie si les preuves de cet audit doivent être conservées.
-
-**Aucun code applicatif, calcul, fichier de dépendances ou préférence utilisateur n'a été corrigé. Aucun commit, push ou publication.** Le rapport et le registre `docs/ETAT.md` sont les documents ajoutés/modifiés pour cette demande. Les arbitrages d'interface préexistants restent des décisions du propriétaire ; cet audit fournit les éléments pour les prendre.
-
-## Suite donnée (2026-10-02, après le rapport)
-
-Les constatations A01 à A12 ont été corrigées localement, sans commit ; le détail, les mesures et les limites sont dans `docs/ETAT.md` (R102 et les lignes D59, D60, D61, D78 à D87). Ce que la vérification a trouvé de plus, ou de différent :
-
-- **A02** touchait aussi RE (qui rendait `False` sans qu'on le lise), STRAT, et six gestionnaires de dépôt ; un spectre déposé sur INDEX passait par le lecteur de configuration.
-- **A04** : FIELD, INDEX SPLINE et RE ignoraient le fichier que le hub leur donne.
-- **A07** touchait aussi INDEX SPLINE, et l'arrêt d'une optimisation FIELD laissait la fenêtre bloquée (boutons désactivés, curseur d'attente).
-- **A08** : « Error: Max layers reached » était un troisième cas ; le curseur d'attente restait posé après une synthèse.
-- **A09** : le tutoriel d'INDEX SPLINE ne démarrait jamais (clé du catalogue `CERTUS-INDEX-SPLINE`, fenêtre `CERTUS_INDEX_SPLINE`).
-- **A10** : « Mesh_optimizer » et « Corridors_RMSE(d) » étaient une esperluette lue comme mnémonique Qt (et le raccourci Alt+Espace enregistré trois fois), pas des noms de variables.
-- Le rapport nommait `CertusAppRunMixin` la classe `CertusAppRunStateMixin`.

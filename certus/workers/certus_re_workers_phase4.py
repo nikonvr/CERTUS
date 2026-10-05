@@ -482,19 +482,28 @@ class REPhase4Strategy:
                     results=results,
                 )
                 if not worker._stop:
-                    logging.info(
-                        "RE phase 4: joint TRF disabled | re_phase4_trf_max_nfev=0  scan-only (raise max_nfev to polish ap knots + thickness+splines jointly)"
-                    )
+                    baseline = "scan-only candidate" if _imposed_p4 is None else "imposed-aperture pre-TRF candidate"
+                    if _p4_trf_nfev <= 0:
+                        logging.info(
+                            "RE phase 4: joint TRF disabled | re_phase4_trf_max_nfev=0; retaining %s for final ranking",
+                            baseline,
+                        )
+                    else:
+                        logging.info(
+                            "RE phase 4: retaining %s for final ranking as the pre-TRF baseline; joint TRF was requested",
+                            baseline,
+                        )
                     rmse_q_scan = _compute_qwot_rmse(ep_p4, _cor_base)
                     rmse_c_scan = _rmse_combined(float(best_rmse_ap), rmse_q_scan)
-                    _sk = np.asarray(_re_state["re_aperture_knots"], dtype=np.float64).ravel()[
-                        : int(RE_P4_BEAM_N_KNOTS)
-                    ]
+                    # The scan score was evaluated with one flat aperture. The joint TRF has since changed
+                    # the shared knot state, so it cannot describe this pre-TRF candidate.
+                    _sk = np.full(int(RE_P4_BEAM_N_KNOTS), float(best_ap), dtype=np.float64)
                     _skn = np.asarray(_re_state["re_p4_beam_knots_lam_nm"], dtype=float).ravel()[
                         : int(RE_P4_BEAM_N_KNOTS)
                     ]
                     logging.info(
-                        "RE phase 4 scan-only result | RMSE_sum=%.6f RMSE_sp=%.6f RMSE_qwot=%.6f | min||r||^2(scan)=%.8g | ap_deg(n knots)=%s | knots_lam_nm=%s",
+                        "RE phase 4 %s result | RMSE_sum=%.6f RMSE_sp=%.6f RMSE_qwot=%.6f | ||r||^2(pre-TRF)=%.8g | ap_deg(n knots)=%s | knots_lam_nm=%s",
+                        baseline,
                         rmse_c_scan,
                         float(best_rmse_ap),
                         rmse_q_scan,
@@ -503,7 +512,8 @@ class REPhase4Strategy:
                         np.array2string(_skn, precision=2, separator=","),
                     )
                     logging.info(
-                        "RE phase 4 scan-only plateaus (explicit): %s",
+                        "RE phase 4 %s plateaus (explicit): %s",
+                        baseline,
                         _re_p4_ap_band_intervals_str(_skn, _sk, _wmin_obj, _wmax_obj),
                     )
                     phase4_scan = REPhase4Result.from_legacy_dict(best_res)

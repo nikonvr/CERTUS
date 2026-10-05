@@ -13,9 +13,8 @@
 > à la fin. Les règles de validation sont dans les sections 2, 4 et 12 de
 > [CLAUDE.md](../CLAUDE.md) ; les décisions scientifiques appartiennent à 👤 (§5).
 
-**En cours (Codex, 2026-10-04).** Aucun lot de code ouvert. La prochaine action
-est la comparaison fonction par fonction des paquets Zenodo avec CERTUS, au-delà
-des portages déjà mesurés ; l'inversion conjointe reste écartée par 👤.
+**En cours (Codex, 2026-10-05).** D82 corrigé sur l'arbre de travail, D83 ensuite.
+Validation complète des deux corrections encore à faire ; un commit par défaut.
 
 **Point de départ (2026-10-04).** Travailler dans `certus0310`, branche
 `refactor-corridors-mixins`, [PR #5](https://github.com/nikonvr/CERTUS/pull/5).
@@ -104,6 +103,7 @@ R138 `6481f45a` : le RE déclare le budget de paramètres du résultat retenu (`
 R139 `c43b4aa0` : le tableau des résultats RE donne σ(d) par couche du run retenu (n/a pour une combinaison que les spectres ne contraignent pas), et l'export « snapshot » écrit σ(d) et le budget tant que l'empilement porte les épaisseurs retenues.
 R140 `dd345d01` : l'ouverture du faisceau du RE peut être imposée plutôt qu'ajustée (préréglage « PHOTON RT, 2.0 deg imposed », clé `re_beam_aperture_imposed_deg`, ouverture totale ; porté de `certus_re`, Zenodo) : l'étape 2 et la phase 4 ne balaient plus et ne libèrent aucun nœud d'ouverture, le cône s'applique dès 10°. Absente, la clé laisse le chemin d'avant : sur `reverse_sample.xlsx` tel qu'il se charge (raffinements d'indice décochés), graine des secousses fixée, les trois résultats sont identiques au bit à ceux de `c43b4aa0`, et deux runs de `c43b4aa0` l'étaient entre eux. Mesuré sur le même exemple : ajustée, l'ouverture vaut 1,62 à 1,71° et RMSE_sp 0,007730 avec 21 paramètres libres ; imposée à 2,0°, RMSE_sp 0,008853 avec 17, épaisseurs à 1,25 nm près au plus. Avec D81 corrigé sur les deux arbres, les raffinements H/L activés et une graine de secousses fixée à 42, les trois résultats complets de R139 et R140 sont identiques au bit (chaque flottant converti par `float.hex()`, empreintes SHA-256 des dictionnaires complets égales).
 R141 `64f98a51` (D81, local) : `_evaluate_p2_fd_derivative` et `_build_cached_spline_correc`, retirées par `05dc0ad8`, sont rendues au worker RE. Le nouveau test sans écran avec raffinements H/L actifs échoue avant (`AttributeError`, `finished.ok=False`) et passe après (`finished.ok=True`, résultat présent ; 70 s). Les trois runs RE sans écran passent ensemble (`3 passed` en 1 min 51). Validation complète ci-dessus.
+R142 (D82, local) : le journal de phase 4 ne dit « joint TRF disabled » que si son budget vaut zéro ; le candidat conservé avant TRF annonce son rôle de repli pour le classement. Le candidat du balayage portait, après le TRF, les quatre ouvertures chromatiques du résultat joint alors que son score venait du meilleur balayage à ouverture plate : il porte maintenant quatre fois cette ouverture plate, sans changer le score ni l'état du TRF. Sur `reverse_sample.xlsx`, le test sans écran échoue avant (quatre ouvertures 1,652 / 1,626 / 1,720 / 1,715° dans le candidat « scan » ; faux message « disabled ») et passe après ; les trois scénarios RE sans écran passent (`3 passed` en 1 min 59). Ruff 0 ; oracle `1119 passed` ; C1 contre `1d912c4f` : **8 008/8 008 tableaux identiques au bit**. Suite complète encore à faire.
 Le choix de 👤 « on garde fastmath » clôt l'arbitrage D52/D67 ; les écarts
 froid/chaud restent documentés en §3.
 
@@ -355,7 +355,6 @@ numéros de l'ancien registre sont entre parenthèses
 
 | # | défaut | piste |
 |---|---|---|
-| D82 | La phase 4 du RE écrit « joint TRF disabled \| re_phase4_trf_max_nfev=0 scan-only » après **chaque** phase 4 non interrompue, même quand le TRF joint a tourné (`_execute_phase4_beam`, branche `if not worker._stop`, lue dans le code le 2026-10-04), et ajoute toujours un candidat « (P4 aperture scan) » : épaisseurs de la phase 3 et ouverture du meilleur balayage plat, sans TRF, qui concourt au classement final. Sur `reverse_sample.xlsx`, les résultats portent à la fois « P4 aperture+TRF » et « P4 aperture scan » | n'écrire « disabled » que si `re_phase4_trf_max_nfev` vaut 0, et dire dans le journal pourquoi le candidat sans TRF est offert |
 | D6 | Le consensus ignore `robustness_num_runs`, et `robustness_seed` dès que `consensus_seed_list` est renseignée (n° 18, 47) | exposer `consensus_num_runs` |
 | D7 | Deux configurations rendent le même `RESULT` au bit alors qu'une bande diffère de 38 % (n° 15) | vérifier dans le code ce que `RESULT` agrège |
 | D8 | `scripts/campagne_intervalles.py` forçait `search_resolution` à faux alors que 👤 en a fait un prérequis : les campagnes d'intervalles ont tourné sans recherche de fente (n° 49) | refaire les intervalles utiles avec la fente cherchée |

@@ -1,3 +1,4 @@
+import logging
 import sys
 from pathlib import Path
 
@@ -38,7 +39,23 @@ def test_re_headless():
     worker = REWorker(cfg)
     worker.signals.result.connect(on_result)
     worker.signals.finished.connect(finished.update)
-    worker.run()
+    phase4_logs: list[str] = []
+
+    class Phase4LogHandler(logging.Handler):
+        def emit(self, record):
+            if record.getMessage().startswith("RE phase 4"):
+                phase4_logs.append(record.getMessage())
+
+    root_logger = logging.getLogger()
+    previous_level = root_logger.level
+    handler = Phase4LogHandler()
+    root_logger.addHandler(handler)
+    root_logger.setLevel(logging.INFO)
+    try:
+        worker.run()
+    finally:
+        root_logger.removeHandler(handler)
+        root_logger.setLevel(previous_level)
     
     if final_result:
         print("RE Result keys:", final_result.keys())
@@ -68,6 +85,14 @@ def test_re_headless():
     assert budget is not None, "the retained result carries no parameter budget"
     assert budget["n_free_parameters"] >= len(top["ep"])
     assert budget["n_data_points"] == report["n_data"]
+    scan_candidates = [r for r in finished["results"] if "P4 aperture scan" in str(r.get("label"))]
+    assert len(scan_candidates) == 1, [r.get("label") for r in finished["results"]]
+    scan_apertures = list(scan_candidates[0]["re_p4_beam_ap_knots_deg"])
+    assert len(scan_apertures) == 4, scan_apertures
+    assert len(set(scan_apertures)) == 1, scan_apertures
+    assert any("joint TRF" in m and "independent" in m for m in phase4_logs), phase4_logs
+    assert not any("joint TRF disabled" in m for m in phase4_logs), phase4_logs
+    assert any("scan-only candidate" in m and "final ranking" in m for m in phase4_logs), phase4_logs
 
 
 def test_re_headless_with_an_imposed_aperture():

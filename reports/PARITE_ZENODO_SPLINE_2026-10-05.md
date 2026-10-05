@@ -21,6 +21,8 @@ lire avant de conclure. Outil : `scripts/parite_spline_zenodo.py`.
 
 **Ce que la version publiée retire.** Elle désactive le gradient analytique de l'objectif (`spline_pwl_analytic_grad_supported` y rend toujours `False` : différences finies partout) et remplace par des fonctions vides (`pass`) le nettoyage automatique et le décalage des nœuds et l'insertion manuelle de nœuds (`worker_spline_auto_clean_knots`, `worker_spline_autoshift_delta_ns`, `_eval_clean_variant`, `_auto_clean_prescreen_result`, `_auto_clean_cache_result`, `insert_manual_sigma_nodes`). Sur ces points le code courant en fait plus ; les lignes à 2 lignes publiées du tableau ci-dessous sont ces fonctions vides.
 
+**Lecture d'un échantillon** (7 des 58 fonctions de calcul, 2026-10-05) : deux corrections de bogue faites après le gel de la version publiée (`enforce_min_k_corridor_half_width` nettoie désormais un k de référence non fini dans tous les cas ; `_corridor_profile_walk_side` teste un saut avant d'ajouter le point à l'historique qui doit le prédire), un réglage plus sensible de la détection de saut (`_detect_corridor_spike` : 3σ au lieu de 4σ, rapport 2,5 au lieu de 3), deux remaniements sans changement de calcul apparent (`_spectral_polish_node_mesh_profile`, `CorridorContextBuilder._process_center_solution`, par extraction de fonctions), et les deux capacités que la version publiée coupe (gradient analytique, nettoyage des nœuds). Aucune régression dans cet échantillon ; les 51 autres restent à lire.
+
 ## Fonctions de calcul qui diffèrent (à lire en premier)
 
 | module | fonction | lignes publiées | lignes courantes | lignes changées |

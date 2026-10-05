@@ -21,7 +21,11 @@ rang 2 entamé, un défaut de physique corrigé :
 - **R148, le RE prenait n + ik pour ses indices tabulés** (couches et substrat des classeurs) : faux en incidence
   oblique dès que k > 0, invisible en incidence normale. Corrigé ; sur `reverse_sample.xlsx` (k ≤ 0,0043) la RMSE
   du résultat retenu passe de 0,007730 à 0,007481 et les épaisseurs bougent de 1,18 nm au plus ; `pages/CERTUS_RE.html`
-  donne les chiffres remesurés. Tout RE fait avant R148 sur des indices absorbants en oblique est à refaire ;
+  donne les chiffres remesurés. Tout RE fait avant R148 sur des indices absorbants en oblique est à refaire.
+  Le paquet Zenodo `certus_re` connaissait ce défaut et ne l'a pas : il convertit n + ik en n − ik
+  (`physics.as_macleod`) et colle à la référence indépendante à 10⁻¹⁵ ; son option cachée `legacy_gain_sign`,
+  qui ne sert qu'à se comparer à l'ancien CERTUS, en reproduit exactement les écarts (T à 0,289 de la
+  référence à 45°, R + T à 1,11), mesuré le 2026-10-05 ;
 - rang 2 : inventaires dans `reports/PARITE_ZENODO_SPLINE_2026-10-05.md` (fonction par fonction) et
   `reports/PARITE_ZENODO_RE_2026-10-05.md` (capacité par capacité).
 Les arbres jetables de la session sont retirés.
@@ -45,13 +49,12 @@ poussés ; pousser attend l'ordre de 👤. `python scripts\preflight.py` →
 Une entrée Git `.git/worktrees/certus0310` incomplète déclenche un
 avertissement de nettoyage à chaque commit, sans empêcher le commit.
 
-**Dernière validation complète (2026-10-05, Windows 11, Python 3.14.8, code au commit `3c002869`, machine au
-repos) :** Ruff 0 ; C1 froid contre froid depuis `ca99bc8c` : 8 008/8 008 tableaux identiques au bit ; oracle
-1 118 passed ; unit 4 904 passed, 5 skipped, 2 xfailed en 8 min 55 ; autres tests 346 passed, 2 skipped en
-9 min 13 ; UI 1 297 passed, 12 skipped, 2 xfailed en 17 min 29 ; trois contrôles documentaires : 0 défaut.
-Depuis, R148 (indices RE) : oracle 1 122 passed, tests RE unitaires et sans écran verts, cliquet de dette vert.
-Les quatre pages HTML RE, DESIGN, INDEX SPLINE et STRAT rendent leurs logigrammes Mermaid dans Chrome (8/8,
-6/6, 5/5 et 6/6, mesuré le 2026-10-04).
+**Dernière validation complète (2026-10-05, Windows 11, Python 3.14.8, code au commit `afd11ebc`, R148
+compris) :** Ruff 0 ; C1 froid contre froid depuis `3c002869` : 8 008/8 008 tableaux identiques au bit ; oracle
+1 122 passed ; unit 4 904 passed, 5 skipped, 2 xfailed en 9 min 07 ; autres tests 346 passed, 2 skipped en
+10 min 16 ; UI 1 297 passed, 12 skipped, 2 xfailed en 18 min 44 ; trois contrôles documentaires : 0 défaut.
+Depuis : R149, une ligne de journal, avec son test vert. Les quatre pages HTML RE, DESIGN, INDEX SPLINE et STRAT
+rendent leurs logigrammes Mermaid dans Chrome (8/8, 6/6, 5/5 et 6/6, mesuré le 2026-10-04).
 
 **Ordre conseillé des prochains lots.** Priorité aux résultats potentiellement faux,
 puis aux dépendances techniques ; chaque changement reste un commit distinct (C3).
@@ -314,6 +317,14 @@ annule seul.
   Une couche non absorbante garde ses bornes au bit ; un métal
   infrarouge n'envoie plus l'optimiseur dans la zone où le noyau
   répond (R, T) = (0, 0). Les noyaux restent inchangés.
+
+### RE — décidé par 👤 le 2026-10-05
+
+- **Divergence du faisceau : deux ou trois rayons suffisent.** 👤 : « définitivement, la prise en compte de
+  la divergence faisceau se fait avec 2 ou 3 rayons, c'est suffisant ». Le RE en emploie deux (θ ± h,
+  `_re_p4_effective_half_width_deg`) ; la quadrature de Gauss-Legendre à neuf nœuds du paquet Zenodo n'est pas
+  portée (dans ses propres sorties, elle ajustait moins bien : RMSE jointe 0,4166 % contre 0,1481 % à deux
+  rayons, ouverture imposée de 2°, `results/insitu_model_refinement.json`).
 
 ## 4. Défauts ouverts
 

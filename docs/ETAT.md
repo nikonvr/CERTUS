@@ -13,17 +13,13 @@
 > à la fin. Les règles de validation sont dans les sections 2, 4 et 12 de
 > [CLAUDE.md](../CLAUDE.md) ; les décisions scientifiques appartiennent à 👤 (§5).
 
-**En cours (Codex, 2026-10-05).** D24 : l'audit couvre la racine,
-`certus_physics` et les paquets `certus/metal`, `spline`, `core`,
-`domain`, `physics` et `workers` : 1 791 définitions, 41 candidats
-explicitement motivés dans la liste blanche, aucun candidat non résolu.
-Sept symboles sans appel de production ont été retirés de CORE et UTILS,
-dont un alias de résultat ; l'audit reconnaît
-les imports renommés utilisés et les validateurs Pydantic. Il reste à
-instruire les candidats exploratoires de `certus/utils` (15) et
-`certus/ui` (26), puis à étendre le portail CI à tout `certus/` et
-rejouer la validation complète. Les nombres exploratoires ne prouvent pas
-qu'un symbole est mort.
+**D24 clos (Codex, 2026-10-05).** L'audit CI couvre la racine,
+`certus_physics` et tout `certus/`, y compris les futurs sous-paquets :
+3 928 définitions, 73 candidats justifiés un par un dans la liste blanche,
+0 non résolu ; 17 tests du portail passent. Les symboles sans usage de
+production identifiés ont été retirés, notamment dans CORE, UTILS et UI ;
+le watchdog jamais installé a été supprimé. L'appariement par nom nu peut
+encore sous-signaler le code mort : le vert ne prouve pas son absence.
 
 **Point de départ.** `certus0310`, branche `refactor-corridors-mixins`,
 [PR #5](https://github.com/nikonvr/CERTUS/pull/5), commits locaux non
@@ -36,17 +32,16 @@ L'arbre jetable `hyst2` contient le réglage d'hystérésis STRAT non commité ;
 ne pas le retirer.
 
 **Dernière validation complète (2026-10-05, Windows 11, Python 3.14.8,
-commit `98f972d8`) :** Ruff 0 ; oracle 1 119 passed ; unit
-4 897 passed, 5 skipped, 2 xfailed ; UI 1 297 passed, 12 skipped,
-2 xfailed ; autres tests 350 passed, 2 skipped ; trois contrôles
-documentaires 0 défaut. Les quatre retraits de CORE ont chacun passé C1
-froid contre froid (8 008/8 008 tableaux identiques au bit) et l'oracle.
-La validation complète des commits D24 ultérieurs reste à faire.
+code au commit `4960ea5d`) :** Ruff 0 ; oracle 1 118 passed ; unit
+4 900 passed, 5 skipped, 2 xfailed ; UI 1 297 passed, 12 skipped,
+2 xfailed ; autres tests 346 passed, 2 skipped. Les quatre retraits de
+CORE ont chacun passé C1 froid contre froid (8 008/8 008 tableaux
+identiques au bit) et l'oracle. Trois contrôles documentaires : 0 défaut.
 Les quatre pages HTML RE, DESIGN, INDEX SPLINE et STRAT rendent leurs
 logigrammes Mermaid dans Chrome (8/8, 6/6, 5/5 et 6/6, mesuré le
 2026-10-04).
 
-**À faire après D24 :**
+**À faire :**
 
 | chantier | prochaine action |
 |---|---|
@@ -274,7 +269,6 @@ numéros de l'ancien registre sont entre parenthèses
 |---|---|
 | D11 | **Une fenêtre de module fermée n'est pas détruite** : des lambdas et des `functools.partial` branchés sur les signaux de ses propres widgets la capturent, et la connexion les tient du côté C++ de PyQt, où le ramasse-miettes ne voit pas le cycle (`scripts/sonde_retenants_fenetre.py`, 2026-09-27 : `CertusREApp` retenue par quatre méthodes liées, cinq fermetures et deux attributs de `CertusToast` / `CertusToastStack`). **Sans effet en production** : le hub lance chaque module dans son propre processus (`QProcess`), et fermer la fenêtre finit le processus. Les tests détruisent désormais leurs fenêtres (R5). Coûterait dans tout processus qui construirait plusieurs fenêtres. Piste : `WA_DeleteOnClose` sur `CertusBaseApp`, à condition de retenir d'abord ses `QThread` encore actifs : sans cela, libérer la fenêtre libère un thread en cours (D23) |
 | D23 | R114 a corrigé le préchauffage qui lisait hors de trois tableaux ; R121 a supprimé l'arrêt natif de finalisation des huit workers UI Windows (CI verte le 2026-10-04). Restent à instruire : cinq `gc.collect()` exécutés dans les threads de calcul STRAT peuvent libérer des objets Qt hors du thread GUI, sans arrêt observé ; les tests n'isolent pas `sys.modules`. L'arrêt des raffinements IR après PGLOBAL d'INDEX relève du choix de 👤 en §5. | Reproduire avant de changer le cycle de vie ; traiter avec D11. |
-| D24 | Code mort : l'audit (`tools/dead_symbol_audit.py`) couvre la racine, `certus_physics`, `certus/metal`, `spline`, `core`, `domain`, `physics` et `workers` : 1 791 définitions, 41 candidats exemptés avec raison, 0 non résolu (2026-10-05). Il reconnaît les imports renommés utilisés et les validateurs Pydantic. Restent `certus/utils` (15 candidats exploratoires) et `certus/ui` (26), puis l'extension du portail CI à tout `certus/`. L'appariement par nom nu sous-signale le code mort ; la liste blanche doit conserver une raison vérifiable pour chaque exception. |
 | D25 | Dette de lint masquée par `extend-ignore` : **14 règles** (31 au départ de S5.5) et 1 464 violations à la mesure du plan (3 455 au départ) ; plus aucun import étoile, et les noms indéfinis (F821, F822) sont à zéro. F401 : 629 signalements, 590 hors tests gardés exprès pour la plupart (R9) ; restent surtout E402 (548) et les confusables RUF001 à RUF003 (188, des µ, × et – voulus). Le détail est en R69. Le cliquet `tests/oracle/test_lint_debt_ratchet.py` nomme les règles restantes : aucune ne peut entrer, et une règle sortie doit quitter sa liste. RUF022 et RUF023 (trier `__all__`, `__slots__`) restent ignorées à dessein |
 | D26 | Inversions de couches, comptées le 2026-08-19 : `utils → ui` (11), `core → workers` (10), cycle `physics ↔ core` (23 et 29 imports). Mesuré le 2026-09-29, module par module dans un interpréteur neuf : 72 des 73 modules de `certus/core`, `certus/physics` et `certus/domain` se chargent sans Qt, et tous ensemble n'en chargent aucun (garde-fou `test_computation_imports_no_qt`) ; le dernier, `certus.physics.gradient_analytic`, ne s'importe pas seul (cycle avec `gradient_utils`) |
 | D40 | METAL BILAYER : l'analyse de faisceau minimise la MSE de réflectance seule, l'optimisation globale y ajoute une pénalité de lissage — deux objectifs, dont les RMSE ne se comparent pas |

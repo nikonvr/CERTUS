@@ -9,7 +9,7 @@ que l'outil n'ouvrait jamais. Il collectait ses références dans le même péri
 🔑 **Un symbole n'est pas mort parce qu'on a regardé ailleurs.** Le périmètre des
 *définitions* s'étend paquet par paquet après examen : racine, `certus_physics`,
 `certus/metal`, `certus/spline`, `certus/core`, `certus/domain`, puis
-`certus/physics`. Celui des *références* couvre
+`certus/physics`, puis `certus/workers`. Celui des *références* couvre
 tout le code d'exécution : une référence compte d'où qu'elle vienne.
 
 ⚠️ **`tests/` reste dehors, et c'est voulu** : un symbole que seul un test appelle
@@ -182,7 +182,7 @@ def test_framework_validators_are_not_reported_as_dead(tmp_path):
     assert "CERTUS_SONDE:Model.normalize_model" not in signales
 
 
-@pytest.mark.parametrize("package", ["spline", "core", "domain", "physics"])
+@pytest.mark.parametrize("package", ["spline", "core", "domain", "physics", "workers"])
 def test_reviewed_package_definitions_enter_the_gate(tmp_path, package):
     """Un symbole mort d'un paquet contrôlé doit rendre un verdict ; un appel UI compte."""
     copie = tmp_path / "tools" / AUDIT.name
@@ -295,7 +295,7 @@ def test_the_definition_perimeter_is_reviewed():
     Le signaler ici évite qu'on « répare » le rouge en faisant les deux d'un coup —
     ce serait deux changements à la fois, et le résultat ne s'attribuerait pas.
     `certus/metal` y est entré le 2026-09-28 (D30), `certus/spline` et
-    `certus/core`, `certus/domain` et `certus/physics` après examen des candidats D24 ;
+    `certus/core`, `certus/domain`, `certus/physics` et `certus/workers` après D24 ;
     le reste attend son examen.
     """
     sys.path.insert(0, str(ROOT / "tools"))
@@ -308,7 +308,7 @@ def test_the_definition_perimeter_is_reviewed():
         if len(p.relative_to(ROOT).parts) > 1
     }
 
-    assert zones == {"certus_physics", "certus/metal", "certus/spline", "certus/core", "certus/domain", "certus/physics"}, (
+    assert zones == {"certus_physics", "certus/metal", "certus/spline", "certus/core", "certus/domain", "certus/physics", "certus/workers"}, (
         f"le périmètre des définitions s'est élargi à {sorted(zones)} : c'est une décision "
         "de portée, pas un correctif de faux positif"
     )

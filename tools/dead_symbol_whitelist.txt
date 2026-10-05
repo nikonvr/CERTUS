@@ -103,3 +103,13 @@ certus.physics.certus_material_db:MaterialDatabase.get_cached_computation
 certus.physics.certus_material_db:MaterialDatabase.get_cache_stats
 # MachineModel wavelength-noise vector API; test_strat_machine_model checks its result.
 certus.physics.certus_strat_machine:MachineModel.get_sigma_array
+
+# D24, 2026-10-05 -- DESIGN worker delegation seams retained after the split.
+# OptimWorker restart-loop facade delegates to DesignStratService; no caller found.
+certus.workers.certus_design_workers:OptimWorker._run_pglobal_restart_loop
+# OptimWorker coordinate-descent facade delegates to DesignStratService; no caller found.
+certus.workers.certus_design_workers:OptimWorker._run_coord_descent_5cycles
+# OptimWorker fine-grid upgrade facade delegates to DesignStratService; no caller found.
+certus.workers.certus_design_workers:OptimWorker._maybe_upgrade_grid_tikhonravov
+# OptimWorker PGlobal-config facade delegates to DesignStratService; no caller found.
+certus.workers.certus_design_workers:OptimWorker._build_pglobal_config

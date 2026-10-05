@@ -24,7 +24,6 @@ from certus.core.certus_re_objectives import (
     _build_phase2_result,
     _build_phase2b_output,
     _build_phase4_aperture_bounds,
-    _phase4_aperture_slice,
     _prepare_phase2_fd_settings,
 )
 from certus.workers.certus_re_workers import (
@@ -511,10 +510,4 @@ def test_build_phase4_aperture_bounds_appends_aperture_columns() -> None:
     np.testing.assert_allclose(b_lo[-3:], 5.0)
     np.testing.assert_allclose(b_hi[-3:], 15.0)
 
-
-def test_phase4_aperture_slice_extracts_contiguous_values() -> None:
-    x = np.array([1.0, 2.0, 3.0, 4.0, 5.0], dtype=np.float64)
-    out = _phase4_aperture_slice(x, 1, 3)
-    np.testing.assert_allclose(out, [2.0, 3.0, 4.0])
-    assert out.dtype == np.float64
 

@@ -249,11 +249,6 @@ def _build_phase4_aperture_bounds(bounds_p2_trf: tuple, nap: int, lo_ap: float, 
         np.concatenate([bounds_p2_trf[1], np.full(nap, float(hi_ap), dtype=np.float64)]),
     )
 
-def _phase4_aperture_slice(x: np.ndarray, i_ap0: int, nap: int) -> np.ndarray:
-    """Return the phase-4 aperture knot slice as a contiguous float64 vector."""
-
-    return np.asarray(x[i_ap0 : i_ap0 + nap], dtype=np.float64).ravel()
-
 def _build_phase2_result(
     *,
     res_p2: Any,

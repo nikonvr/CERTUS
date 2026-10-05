@@ -26,7 +26,9 @@ class MachineModel:
         date: Reference date for hardware specs.
         reading_noise_floor_pct: Measured RMS reading noise floor (% of T).
         monochromator_resolution_nm: Monochromator step / precision in nm.
-        trigger_tolerance: Level trigger tolerance in T units (0..1).
+        trigger_tolerance: Level trigger tolerance in percent of T (0.05 means 0.05%,
+            or an amplitude of 0.0005 in T units). Production readers of the
+            configuration value divide by 100.
         tp_hysteresis_factor: Turning point detector hysteresis multiplier.
         sigma_wl_func: Optional function(wl_nm -> float) returning wavelength-dependent noise sigma.
     """

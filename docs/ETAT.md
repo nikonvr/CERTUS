@@ -236,7 +236,12 @@ du dichroïque dont le plantage s'écarterait nettement du prédit rouvrirait ce
   causal inactif à `k=1`), D13 (quantification temporelle à reporter
   jusqu'à une mesure réelle). Une mesure contradictoire les rouvrira.
 
-### DESIGN — arbitrages délégués par 👤 le 2026-10-04
+### DESIGN — tranchés par Claude sur l'ordre de 👤, 2026-10-04
+
+D45 et D46 attendaient la décision de 👤 ; son « go » du 2026-10-04 à la résolution des
+actions complexes, donné sur une liste qui les disait bloquées par lui, a été lu comme cette
+décision. Chaque correctif est un commit (R136 `c738a130`, R137 `83661fd4`) qu'un `git revert`
+annule seul.
 
 - **D45, gradient avec pile arrière : corrigé.** Le coût et son gradient
   utilisent désormais la même somme des poids. C1 : 93 des 8 008

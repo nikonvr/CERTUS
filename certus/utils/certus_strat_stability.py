@@ -183,6 +183,3 @@ def run_reference_audit(reference_json: str | Path, output_md: str | Path | None
 
 
 
-def summarize_many(payloads: Iterable[dict[str, Any]]) -> list[StratStabilitySummary]:
-    """Convenience helper for future multi-reference audits."""
-    return [summarize_stability_reference(payload) for payload in payloads]

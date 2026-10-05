@@ -23,3 +23,17 @@ certus.spline.certus_index_spline_io:export_spline_result_jsonable
 # Public target-grid mask helper: no runtime call in the repository; direct unit
 # contract in test_spline_rmse_lambda_window and test_spline_objective_extended.
 certus.spline.spline_objective:objective_lam_mask_on_target_grid
+
+# D24, 2026-10-05 -- certus/core reviewed after four unused helpers were removed.
+# Deprecated SystemConfig compatibility wrapper; two direct unit contracts still
+# exercise it while production uses get_resource_path.
+certus.core.certus_core:SystemConfig.resource_path
+# Public DESIGN helper for excluding selected layers from needle scans; directly
+# exercised by test_certus_design, with no production caller in this repository.
+certus.core.certus_design_worker_utils:build_needle_scan_mask
+# Public RunManifest JSON serializer; test_metrology_platform fixes its output
+# contract, while production exports currently use to_dict/as_flat_dict.
+certus.core.certus_metrology:RunManifest.to_json
+# Public INDEX fit-range suggestion; test_certus_substrate_index exercises the
+# edge-trimming contract, with no production caller currently found.
+certus.core.certus_substrate_index:IndexCore.suggest_trimmed_fit_range

@@ -37,3 +37,55 @@ certus.core.certus_metrology:RunManifest.to_json
 # Public INDEX fit-range suggestion; test_certus_substrate_index exercises the
 # edge-trimming contract, with no production caller currently found.
 certus.core.certus_substrate_index:IndexCore.suggest_trimmed_fit_range
+
+# D24, 2026-10-05 -- domain value objects and event API, no internal runtime caller.
+# Layer optical-thickness convenience; contract in test_optical_entities.
+certus.domain.optical.entities.layer:Layer.is_quarter_wave_at
+# OpticalStack layer lookup; contract in test_optical_entities.
+certus.domain.optical.entities.optical_stack:OpticalStack.get_layer
+# OpticalStack public thickness aggregate; no call or test in this repository.
+certus.domain.optical.entities.optical_stack:OpticalStack.total_optical_thickness
+# OpticalStack absorption query; contract in test_optical_entities.
+certus.domain.optical.entities.optical_stack:OpticalStack.has_absorbing_layers
+# OpticalStack event readout; contract in test_optical_entities.
+certus.domain.optical.entities.optical_stack:OpticalStack.get_events
+# OpticalStack event reset API; no call or test in this repository.
+certus.domain.optical.entities.optical_stack:OpticalStack.clear_events
+# EventBus subscription API; contract in test_event_bus.
+certus.domain.optical.events.event_bus:EventBus.subscribe
+# EventBus publication API; contract in test_event_bus.
+certus.domain.optical.events.event_bus:EventBus.publish
+# EventBus replay API; contract in test_event_bus.
+certus.domain.optical.events.event_bus:EventBus.replay
+# EventBus event readout API; contract in test_event_bus.
+certus.domain.optical.events.event_bus:EventBus.get_all_events
+# EventBus count API; contract in test_event_bus.
+certus.domain.optical.events.event_bus:EventBus.event_count
+# RefractiveIndex absorption property; contract in test_optical_value_objects.
+certus.domain.optical.value_objects.refractive_index:RefractiveIndex.absorption_coefficient
+# RefractiveIndex penetration property; contract in test_optical_value_objects.
+certus.domain.optical.value_objects.refractive_index:RefractiveIndex.penetration_depth_nm
+# RefractiveIndex Fresnel property; contract in test_optical_value_objects.
+certus.domain.optical.value_objects.refractive_index:RefractiveIndex.reflectance_normal_incidence
+# Dispersion point evaluation; contract in test_optical_value_objects.
+certus.domain.optical.value_objects.refractive_index:RefractiveIndexDispersion.at_wavelength
+# Thickness micrometer conversion; contract in test_optical_value_objects.
+certus.domain.optical.value_objects.thickness:Thickness.to_micrometers
+# Thickness angstrom conversion; contract in test_optical_value_objects.
+certus.domain.optical.value_objects.thickness:Thickness.to_angstroms
+# Thickness constructor from meters; contract in test_optical_value_objects.
+certus.domain.optical.value_objects.thickness:Thickness.from_meters
+# Thickness constructor from micrometers; contract in test_optical_value_objects.
+certus.domain.optical.value_objects.thickness:Thickness.from_micrometers
+# Wavelength micrometer conversion; contract in test_optical_value_objects.
+certus.domain.optical.value_objects.wavelength:Wavelength.to_micrometers
+# Wavelength angstrom conversion; contract in test_optical_value_objects.
+certus.domain.optical.value_objects.wavelength:Wavelength.to_angstroms
+# Wavelength constructor from meters; contract in test_optical_value_objects.
+certus.domain.optical.value_objects.wavelength:Wavelength.from_meters
+# Wavelength constructor from micrometers; contract in test_optical_value_objects.
+certus.domain.optical.value_objects.wavelength:Wavelength.from_micrometers
+# Wavelength photon-energy property; contract in test_optical_value_objects.
+certus.domain.optical.value_objects.wavelength:Wavelength.energy_ev
+# Wavelength frequency property; contract in test_optical_value_objects.
+certus.domain.optical.value_objects.wavelength:Wavelength.frequency_hz

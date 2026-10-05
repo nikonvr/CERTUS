@@ -5,15 +5,11 @@ d'indice, design d'empilements, stratégie de dépôt. Le code calcule de la **p
 servant à fabriquer de vrais filtres : une erreur silencieuse ne plante pas, elle produit un
 **résultat faux qui a l'air juste**, et quelqu'un fabrique une pièce avec.
 
-**Deux documents, et deux seulement :** ce fichier porte les **règles** ; l'**état** du projet
-(repères mesurés, décisions, défauts ouverts, chantiers) est dans [`docs/ETAT.md`](docs/ETAT.md),
-dont la **section 0 est la reprise** : à lire en premier, et à tenir à jour au fil du travail.
-`README.md` est la page d'accueil du dépôt public (quoi, lancer, licence) : il ne porte aucun fait qui change.
-L'historique — campagnes, hypothèses réfutées, anciens plans — n'est plus dans l'arbre : **`git` le
-garde**, sans autorité. Un renvoi du code, d'un test ou d'une page à un fichier de `docs/archives/`
-désigne un fichier supprimé le 2026-09-30, qu'on lit par `git show 7b08dc8:docs/archives/NOM.md`.
-Les numéros de section que citent le code et ces renvois désignent l'ancienne version de ce fichier
-(`CLAUDE_2026-09-26.md`) ; ceux du registre des défauts, `DEFAUTS_OUVERTS.md`.
+**Deux documents vivants :** les règles ici ; l'état, les décisions et les défauts
+dans [`docs/ETAT.md`](docs/ETAT.md). Lire sa section 0 avant de travailler et
+la tenir à jour. Les rapports de `reports/` sont des mesures datées ; Git garde
+l'historique des corrections. Les archives supprimées se lisent avec
+`git show 7b08dc8:docs/archives/NOM.md`.
 
 ## 1. Démarrage — avant de toucher à quoi que ce soit
 
@@ -36,7 +32,7 @@ il assume de tout publier. Committer ne publie **pas** par défaut : le hook
 jamais hérité. Vérifie avec `git config --get core.hooksPath` et `git status -sb`, ne le
 suppose pas. **Pousser publie : seulement sur ordre de 👤.**
 
-## 2. Valider — le seul critère est `0 failed`
+## 2. Valider — seul critère : `0 failed`
 
 ```bat
 python -m ruff check .
@@ -44,62 +40,35 @@ python -m pytest tests/oracle/ -q --no-cov
 python -m pytest tests/unit/ -q --no-cov
 python -m pytest tests/ui/ -q --no-cov
 python -m pytest tests/ -q --no-cov --ignore=tests/oracle --ignore=tests/unit --ignore=tests/ui
+python scripts\coherence_md.py
+python scripts\check_claude_md.py
+python scripts\check_docs.py
 ```
 
-📏 Mesuré le 2026-10-02 (Windows 11, Ryzen 7 5700G 8 cœurs / 16 threads, 31 Go, Python 3.14.7, cache Numba
-chaud, sur une copie jetable du commit, la machine au repos) : oracle 1 min 15 · unit 16 min 46 · le reste de
-`tests/` 8 min 43 · ui 20 min 03, soit 47 min en tout (le 2026-09-30, avant que unit ne grossisse de
-moitié : oracle 8 s · unit 7 min 23 · ui 18 min 32 · le reste 7 min 53, soit 34 min). **Une durée sans
-sa machine ne vaut rien ; un compte de tests se périme au premier test ajouté — ne recopie ni l'un ni
-l'autre.**
+Pour itérer : `python -m pytest tests/unit/ -m "not slow" -q --no-cov`.
+La liste des tests lents est dans `tests/slow_tests.json`. La validation finale
+reste la suite entière. Si un test est rouge avant toute modification, arrête-toi
+et signale-le. Pour un calcul optique, oracle avant et après ; pour un noyau,
+`python scripts\c1_diff.py HEAD` avant commit (C1, §5).
 
-**Palier rapide** : `python -m pytest tests/unit/ -m "not slow" -q --no-cov` (1 min 36 sur la même
-machine au repos, au lieu de 16 min 46). Les fonctions de test qui prennent une seconde ou plus sont listées dans
-`tests/slow_tests.json`, `tests/conftest.py` les marque `slow` à la collecte, et
-`scripts\refresh_slow_tests.py` refait la liste d'après un journal de `pytest --durations`. Le palier
-rapide aide à itérer ; il ne remplace pas la validation ci-dessus, dont le seul critère reste `0 failed`.
+Un échec au premier run dans un arbre neuf peut venir du cache Numba : relancer
+une fois. Un échec persistant est réel. Un test Qt qui meurt sans traceback
+peut signaler un worker encore actif ; relancer avec
+`QT_FORCE_STDERR_LOGGING=1` et `-s`. Un test isolé vert mais rouge en suite
+signale souvent un état partagé.
 
-Les **indicateurs du plan** (dette de lint, cycles d'imports, tests sans assertion, contraste des boutons,
-CI de HEAD…) : `python scripts\metrics.py` (1 min ; `--rapide` : 10 s, le statique seul). Un `n/a` y dit
-qu'une mesure manque, jamais un zéro. La **couverture** se mesure sur toutes les suites (`pytest --cov=certus` avec `--cov-append`) et
-sur les noyaux compilés à part (`python scripts\measure_kernel_coverage.py` : oracle, core, property et les tests de `unit` marqués `kernels`, sans compilation ; sans cela `physics` paraît à 20 %) ;
-`python scripts\check_coverage_floors.py cov.json --noyaux cov_noyaux.json` refuse qu'un paquet passe sous son plancher.
-La **dette d'architecture** (imports montants, cycles à l'exécution, fonctions de plus de 300 lignes ou de complexité
-supérieure à 60, fichiers de plus de 1 500 lignes) est nommée dans `tests/architecture_debt.json` :
-`tests/unit/test_the_architecture_debt_only_shrinks.py` refuse un élément nouveau ou qui grossit, et exige
-qu'une dette payée, ou une mesure qui baisse, y soit corrigée dans le même commit (`python scripts\metrics.py --dette
-tests\architecture_debt.json` réécrit le registre).
-Les **types** : `python -m mypy` depuis la racine (réglages dans `[tool.mypy]` ; il parcourt `certus/domain`, `physics` et
-`core`). mypy n'est pas une dépendance du projet : installe-le dans un environnement jetable (`pip install --only-binary=:all:
-mypy`, et `--python-executable` vers le Python du projet s'il n'y est pas). Le même registre nomme les fonctions de ces trois
-paquets sans annotation complète (`fonctions_non_annotees`) : une fonction nouvelle vient annotée, une fonction annotée sort du
-registre dans le même commit. La CI lance mypy sans bloquer tant qu'elle ne l'a pas vu vert.
-Les **tests qui gardent vraiment** : `python scripts\mutation_pilot.py certus/physics/certus_inputs.py` pose une faute à la fois
-(`<` → `<=`, `raise` → `pass`, `max` → `min`, `.real` → `.imag`…) dans une copie du dépôt et compte celles que les tests voient
-(mutmut 3 ne tourne pas sous Windows). Les tests tournent sans compilation (`NUMBA_DISABLE_JIT=1`) ; `--rerun mutation.json` rejoue
-les survivants, `--baseline tests\mutation_baseline.json` sort 1 sur un survivant que la base n'a pas jugé équivalent. Trois modules
-de physique sont joués (`certus_inputs`, `certus_substrate_absorption`, `certus_oblique_substrate`) ;
-`tests/unit/test_the_mutation_baseline_describes_the_code_as_it_is.py` dit en une seconde si la base décrit encore leur code (sinon :
-relancer le pilote et juger les nouveaux survivants, ne pas retoucher un chiffre).
+Mesures et cliquets : `python scripts\metrics.py` (architecture, lint, UI) ;
+`scripts/measure_kernel_coverage.py`, `scripts/check_coverage_floors.py`,
+`tests/architecture_debt.json`, `scripts/mutation_pilot.py`. Le calcul
+doit rester importable sans Qt. Un nouveau module typé dans `domain`,
+`physics` ou `core` doit suivre le registre d'annotations
+`tests/architecture_debt.json`. `mypy` est lancé en CI sans bloquer.
 
-| échec | ce que c'est |
-|---|---|
-| 3 tests à la **première** passe dans un arbre neuf (`test_phase2_gradient`, deux `TestIRGlobalModelStrategy`) | cache numba froid, vu après un changement de numba ou d'interpréteur, et le 2026-09-27 dans un worktree neuf (`AttributeError: module 'numba' has no attribute 'core'`). Relance une fois : s'ils passent, c'était le cache ; sinon, c'est un vrai échec |
-| un test d'oracle ou d'unit qui échoue sur un code juste, juste après une mise à jour | cache Numba **de l'arbre** périmé (`certus/**/__pycache__/*.nbi` et `.nbc`) : un appelant y garde l'ancien appelé d'un autre fichier (2026-09-30 : `cost_numba_fast` ignorait la perte du substrat du nouveau noyau, 4 échecs à l'oracle). `tests/conftest.py` lit désormais le cache clé par les sources, la session de tests n'y touche plus ; un script qui importe les noyaux sans point d'entrée, si (ETAT D49). Supprime ces fichiers |
-| un test d'interface qui meurt sans message | arrêt natif `0xC0000005` du worker Qt, mesuré 2 fois sur 120 lancements ; le harnais réessaie une fois |
-| un processus qui meurt sans message Qt | sous Windows, Qt écrit dans `OutputDebugString` : relance avec `QT_FORCE_STDERR_LOGGING=1`, et `-s` pour que pytest ne capture pas (par exemple « QThread: Destroyed while thread … is still running », D23, ou « QObject: shared QObject was deleted directly ») |
-| un test qui passe seul et échoue en suite | fuite d'état entre tests (caches de classe, `sys.modules`) : cherche le test précédent |
-
-Si un test est rouge **avant** que tu aies touché quoi que ce soit : arrête-toi et signale.
-Et `tests/oracle/` avant et après toute modification d'un calcul optique.
-
-Le **gel** ne se valide pas par ces tests : la suite entière, verte, n'a pas vu qu'un script embarqué qui en
-importait un autre, non embarqué, empêchait STRAT de démarrer dans l'exécutable (2026-09-30). Après
-avoir touché `certus_hub.spec`, `tools/frozen_entry.py`, `CERTUS_HUB.py` ou un script de `scripts/`
-que STRAT importe au démarrage : `pip install pyinstaller` (extra `freeze`), puis
-`powershell tools\build_frozen.ps1` et `python tools\release_checks.py --check-frozen
---check-frozen-run`. Le build écrit `dist/` et `build/` dans le dépôt (≈ 450 Mo, ignorés par git,
-mais **synchronisés par Drive**) : supprime-les ensuite.
+Après modification du gel ou d'un point d'entrée que STRAT importe :
+`powershell tools\build_frozen.ps1` et
+`python tools\release_checks.py --check-frozen --check-frozen-run`.
+Le gel produit `dist/` et `build/` : les retirer ensuite, sans toucher
+aux résultats scientifiques de `reports/`.
 
 ## 3. Les onze interdits — aucune exception
 
@@ -161,65 +130,39 @@ mais **synchronisés par Drive**) : supprime-les ensuite.
 - **C3** — une chose à la fois, un commit chacune.
 - Un test ajouté pour un correctif **doit échouer sur le code d'avant** — sinon il ne prouve rien.
 
-## 6. Pièges — chacun a déjà coûté une session
+## 6. Pièges d'exécution
 
-- **`params` n'est pas toujours un dict** (DTO pydantic sur certains chemins) : `get` et `[]`
-  marchent, **`setdefault` lève**.
-- **Importer un paquet exécute son `__init__.py`** : depuis `certus/physics/`, importer
-  `certus_physics.X` est circulaire ; passe par la façade, et `TYPE_CHECKING` pour une annotation.
-- **Numba ne relit un appelant que si SON fichier change**, et fige les tableaux de module à la
-  compilation : avec `cache=True`, une fonction qui en appelle une autre d'un **autre** fichier garde
-  l'ancien appelé dans son code machine, et une donnée modifiée sans toucher au `.py` reste servie
-  périmée. Les applications et la session de tests lisent un répertoire de cache clé par les sources
-  qui mentionnent numba (`numba_cache_key`, `ensure_numba_cache_dir` dans `certus/core/certus_core.py`) ;
-  ce qui importe les noyaux sans point d'entrée lit encore le cache de l'arbre (ETAT D49).
-  **Un module qui donne une valeur (constante, appelé, façade) à un noyau doit dire numba** dans son
-  texte, sinon sa modification ne bouge pas la clé : `certus/domain/constants.py` (les constantes que
-  lit la physique, `TWO_PI`…) et la façade `certus_tmm_core.py` le disent, et
-  `tests/unit/test_the_cache_key_covers_what_the_kernels_read.py` refuse tout autre trou.
-- **Les tests partagent des caches de classe** (`SplineBasisCache._cache`…) : sauve et
-  restaure-les dans une fixture `autouse`.
-- **Un test ne crée jamais sa `QApplication`, il prend `qapp`** : créée dans une variable
-  locale, elle meurt avec le premier test Qt du processus, et tout ce qui suit tourne sur une
-  Qt détruite. Un gardien l'impose (`tests/unit/test_tests_borrow_the_session_qapplication.py`).
-- **Un test qui échoue n'a pas forcément tort — mais parfois si** : cinq tests vérifiaient un
-  comportement faux. Comprends d'abord, dis lequel des deux est faux, et pourquoi.
-- **La Phase A ne dit rien** : lis le `reports/STRAT_observability_*.json` le plus récent.
-- **INDEX SPLINE : `d_lo` / `d_hi` du widget sont la NOMINALE et la TOLÉRANCE**, alors que les
-  mêmes noms portent des **bornes** dans `SplineOptConfig`. Vérifie la ligne `[d min=…, d max=…]`
-  du dialogue Smart Init avant d'exploiter un run.
-- **`tests/headless/test_design.py` et `test_strat.py` remplacent le calcul par un mock** : ne
-  mesure rien avec. Le banc sans mock est `scripts\bench_examples.py`.
-- **Un export s'écrit par `atomic_open`** (`certus/utils/certus_atomic_io.py`), jamais par
-  `open(chemin, "w")` : un écrivain qui meurt au milieu (disque plein, exception, processus tué)
-  laissait un fichier tronqué sur la copie de l'utilisateur. `tests/unit/test_exports_are_written_atomically.py`
-  refuse tout autre `open(..., "w")` dans `certus/`.
-- **Un `except` large ne se tait pas** : `except Exception: pass` fait disparaître une erreur sans
-  laisser de trace. Restreins-le aux exceptions attendues, ou écris
-  `logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)` (rien ne coûte à
-  un niveau supérieur). `tests/unit/test_no_broad_exception_is_swallowed_in_silence.py` refuse un nouveau.
-- **Un bouton de `create_styled_button` porte sa propre feuille**, qui l'emporte sur celle de l'application quelle que soit la
-  spécificité : une règle d'état posée ailleurs (`:focus`) ne l'atteint pas, elle va DANS `get_button_style`. Son libellé se dérive du
-  fond (`CertusTheme.label_on`), jamais d'un jeton choisi pour un thème. Pour un état de focus, Qt garde la taille calculée avant
-  le focus : le test de non-déplacement la lui fait recalculer (changer le texte). `test_ux_button_label_is_painted.py` et
-  `test_ux_focus_ring.py` lisent les pixels ; un test qui lit la feuille déclarée ne voit pas ce qu'on peint.
-- **Une couleur de la palette écrite dans une feuille suit le thème ; une copie ne le suit pas.** `CertusTheme.SURFACE` est un
-  `_Token` : une chaîne ordinaire pour tout (Qt, JSON, `==`, `str()`, `%`, `+`) SAUF pour un f-string, qui l'écrit avec son nom
-  (`#ffffff/*T:SURFACE*/`, un commentaire que Qt lit comme du blanc) ; `CertusTheme.refresh_widget_sheets()`, appelé par la bascule de
-  thème, réécrit toute feuille posée sur un widget d'après ces noms. Écris donc `f"color: {CertusTheme.TEXT_MAIN}"`, jamais
-  `str(CertusTheme.TEXT_MAIN)`, une concaténation ou un hexadécimal. **L'encre posée sur un remplissage de la palette est un jeton
-  de la palette** (`PRIMARY_TEXT`, `DANGER_LABEL`, `SUCCESS_LABEL`, `WARNING_LABEL`, `SECONDARY_LABEL`, `INFO_LABEL`, dérivées du
-  remplissage par `label_on`), jamais `white` : blanc sur le PRIMARY du thème sombre fait 2,54:1 (`test_ux_ink_follows_the_fill.py`
-  refuse tout `color: white` hors trois exceptions listées). Un survol n'est pas un jeton : le style d'un bouton plein est entre deux
-  marqueurs que `get_button_style` pose et que le rafraîchissement reconstruit. `test_ux_dark_toggle_reaches_the_widgets.py` et
-  `python scripts\audit_ux_certus.py` comptent les feuilles restées claires après un clic sur la bascule, et celles dont une règle
-  apparie une encre et un fond sous 4,5:1. **Une transparence s'écrit `CertusTheme.tint(couleur, 0.18)`** (un `rgba()` qui garde le nom du
-  jeton), jamais `f"{couleur}2e"` ni `couleur + "2e"` : Qt lit huit chiffres hexadécimaux à l'envers (`#aarrggbb`), et le commentaire du
-  jeton tomberait dans le nombre (`test_ux_alpha_is_written_the_way_qt_reads_it.py` cherche les deux écritures dans tout le dépôt).
-- **Le premier calcul est lent** (compilation numba, +30 s) : chauffe, puis mesure.
-- **N'écris pas l'artefact que tu décris** : un hexadécimal cité dans un commentaire fait
-  bouger le cliquet des couleurs, une règle QSS citée dans une f-string est recrachée dans la
-  feuille. **Nomme, ne cite pas.**
+- `params` peut être un DTO Pydantic : `get` et `[]` marchent,
+  `setdefault` non. Un import de paquet exécute `__init__.py` ;
+  depuis `certus/physics`, importer `certus_physics.X` peut créer un cycle.
+- **Numba** met en cache le code machine de l'appelant, y compris un appelé
+  d'un autre fichier et les tableaux de module. `numba_cache_key` dans
+  `certus/core/certus_core.py` clé le cache par les sources ; les modules
+  qui donnent une constante ou une façade aux noyaux doivent mentionner
+  numba dans leur texte. Garde :
+  `tests/unit/test_the_cache_key_covers_what_the_kernels_read.py`.
+  Compare toujours C1 froid contre froid.
+- Les tests partagent des caches de classe : les restaurer par fixture.
+  Un test Qt prend la fixture `qapp`, jamais une `QApplication` locale.
+  `tests/headless/test_design.py` et `test_strat.py` simulent le calcul :
+  pour une mesure réelle, utiliser `scripts/bench_examples.py`.
+- La Phase A se lit dans `reports/STRAT_observability_*.json`.
+  Dans INDEX SPLINE, `d_lo`/`d_hi` désignent nominale/tolérance au widget,
+  mais des bornes dans `SplineOptConfig` : vérifier le dialogue Smart Init.
+- Un export passe par `atomic_open` (`certus/utils/certus_atomic_io.py`).
+  Un `except` large journalise l'exception ou se restreint aux erreurs
+  attendues ; les tests `test_exports_are_written_atomically.py` et
+  `test_no_broad_exception_is_swallowed_in_silence.py` gardent ces règles.
+- **Qt/thème** : une feuille locale de `create_styled_button` prime sur
+  la feuille de l'application. Utiliser `CertusTheme.label_on` pour l'encre
+  d'un bouton plein et les jetons `CertusTheme` dans les f-strings des
+  feuilles ; `refresh_widget_sheets()` les actualise au changement de
+  thème. Pour une transparence, `CertusTheme.tint(couleur, 0.18)`,
+  jamais huit chiffres hexadécimaux ou une concaténation. Vérifier les
+  pixels, pas seulement la feuille déclarée (`scripts/audit_ux_certus.py`).
+- Le premier calcul compile Numba : chauffer avant un chronométrage.
+  Ne pas citer dans le code le motif littéral qu'un garde-fou cherche
+  (couleur, règle QSS), au risque de déclencher le garde-fou lui-même.
 
 ## 7. Conventions physiques
 
@@ -267,11 +210,8 @@ mais **synchronisés par Drive**) : supprime-les ensuite.
 
 ## 10. Tenir la documentation
 
-- **Un fait, un seul endroit** : un état dans `docs/ETAT.md`, une règle ici. Recopier un fait,
-  c'est préparer sa péremption — ce dépôt a compté 80 documents contradictoires, puis un
-  fichier unique de 5 413 lignes, puis 17 000 lignes réparties.
-- **Cite une FONCTION, jamais un numéro de ligne** : 38 % des renvois `fichier.py:ligne`
-  vérifiables étaient périmés le 2026-09-25.
+- **Un fait, un seul endroit** : état dans `docs/ETAT.md`, règle ici.
+- **Cite une fonction, jamais un numéro de ligne** : les lignes bougent.
 - Pas de récit dans les documents vivants (« cette ligne disait… ») : `git log` le garde.
 - Contrôles : `python scripts\coherence_md.py` (un fait = une valeur dans tous les `.md`, archives
   exclues), `python scripts\check_claude_md.py`, `python scripts\check_docs.py`. « 0 point à

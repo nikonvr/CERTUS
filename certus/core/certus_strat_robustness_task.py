@@ -44,6 +44,17 @@ from certus_physics import (
 )
 
 
+def task_numba_threads() -> int:
+    """Numba threads of one robustness task: 4 on a machine with 16 or more logical cores (measured 11-13 % faster than 2,
+    bit-identical results), else 2; never above what Numba was started with (a frozen build runs one thread)."""
+    import os
+
+    import numba
+
+    wanted = 4 if (os.cpu_count() or 1) >= 16 else 2
+    return max(1, min(wanted, int(numba.config.NUMBA_NUM_THREADS)))
+
+
 def _test_strategy_robustness_task(
     strategy: dict[str, Any],
     _strat_idx: int,
@@ -72,7 +83,7 @@ def _test_strategy_robustness_task(
     )
     from certus.utils.certus_strat_service import compute_probe_offset_nm_from_ratio
 
-    numba.set_num_threads(max(1, min(2, int(numba.config.NUMBA_NUM_THREADS))))  # a 1-thread build raises on 2
+    numba.set_num_threads(task_numba_threads())
     logger = logging.getLogger("certus_strat")
     strategy = dict(strategy)
     blocks = strategy["blocks"]

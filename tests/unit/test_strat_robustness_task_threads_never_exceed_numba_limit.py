@@ -1,12 +1,18 @@
-"""The robustness task asks Numba for 2 threads; a process limited to 1 (the frozen build) must not crash on it."""
+"""The robustness task asks Numba for 2 or 4 threads; a process limited to 1 (the frozen build) must not crash on it."""
 
+import os
 import subprocess
 import sys
 import textwrap
 
 
+def _run(code: str, threads: str) -> subprocess.CompletedProcess:
+    env = {**os.environ, "NUMBA_NUM_THREADS": threads, "NUMBA_DISABLE_JIT": "1"}
+    return subprocess.run([sys.executable, "-c", textwrap.dedent(code)], env=env, capture_output=True, text=True, timeout=300)
+
+
 def test_task_thread_request_survives_a_one_thread_numba():
-    code = textwrap.dedent(
+    r = _run(
         """
         import numba
         import certus.core.certus_strat_robustness_task as m
@@ -17,8 +23,22 @@ def test_task_thread_request_survives_a_one_thread_numba():
         except Exception:
             pass
         assert numba.get_num_threads() == 1
-        """
+        """,
+        "1",
     )
-    env = {**__import__("os").environ, "NUMBA_NUM_THREADS": "1", "NUMBA_DISABLE_JIT": "1"}
-    r = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True, timeout=300)
+    assert r.returncode == 0, r.stderr[-800:]
+
+
+def test_task_asks_four_threads_on_a_big_machine_and_two_otherwise():
+    r = _run(
+        """
+        import os
+        from certus.core.certus_strat_robustness_task import task_numba_threads
+        os.cpu_count = lambda: 16
+        assert task_numba_threads() == 4
+        os.cpu_count = lambda: 8
+        assert task_numba_threads() == 2
+        """,
+        "8",
+    )
     assert r.returncode == 0, r.stderr[-800:]

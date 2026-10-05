@@ -32,7 +32,7 @@ Les arbres jetables de la session sont retirés.
 
 **D86 corrigé (Claude, 2026-10-05, nuit) :** `TabularMaterial.get_nk` écrit un avertissement, une fois par matériau, dès qu'on lui demande des longueurs d'onde hors de sa table (valeurs inchangées : le bord reste prolongé par une constante). Non fait : refuser l'extrapolation, qui changerait des résultats. D87 (STRAT sous un Numba à un fil) : la demande de threads est corrigée, le plantage `workqueue` reste à instruire.
 
-**Mesure d'accélération de STRAT (Claude, 2026-10-05, nuit).** Juge de paix standard, mode premium, cache froid : 2 threads Numba par tâche de robustesse (valeur du code) 520,6 s ; 4 threads 452,5 s ; 370 stratégies, RESULT 0,007644641198073172. Répété trois fois de chaque côté (Ryzen 7 5700G, 16 threads, cache froid, commit `f1daa0af`) : 2 threads 521, 476, 472 s ; 4 threads 452, 421, 418 s, soit 11 à 13 % de moins ; les six populations (identifiants, scores, plantage par niveau de bruit) sont identiques au bit. **Non adopté** : une seule machine, et le pool lance `cpu_count // 2` tâches de 4 threads, soit autant de threads que de cœurs logiques ici, davantage sur une machine à moins de cœurs. À mesurer sur un autre poste, ou à borner par le nombre de cœurs, avant de changer la valeur. Profil par échantillonnage : 74 % de la durée dans la robustesse Monte-Carlo (dont 29 % consensus), 17 % d'attente du consommateur de statistiques, 6 % dans `build_M_before_cache`.
+**Mesure d'accélération de STRAT (Claude, 2026-10-05, nuit).** Juge de paix standard, mode premium, cache froid : 2 threads Numba par tâche de robustesse (valeur du code) 520,6 s ; 4 threads 452,5 s ; 370 stratégies, RESULT 0,007644641198073172. Répété trois fois de chaque côté (Ryzen 7 5700G, 16 threads, cache froid, commit `f1daa0af`) : 2 threads 521, 476, 472 s ; 4 threads 452, 421, 418 s, soit 11 à 13 % de moins ; les six populations (identifiants, scores, plantage par niveau de bruit) sont identiques au bit. **Adopté le soir même, de façon adaptative** (4 threads dès 16 cœurs logiques, sinon 2 ; `task_numba_threads`) : le code livré rend 421 s et la même population au bit que les runs à 2 threads. Les machines de moins de 16 cœurs gardent 2 faute de mesure. Profil par échantillonnage : 74 % de la durée dans la robustesse Monte-Carlo (dont 29 % consensus), 17 % d'attente du consommateur de statistiques, 6 % dans `build_M_before_cache`.
 
 **Dernière action (Codex, 2026-10-05).** Ordre des lots qualifié ci-dessous ;
 trois contrôles documentaires à zéro défaut, changement commité localement.
@@ -317,6 +317,14 @@ annule seul.
   infrarouge n'envoie plus l'optimiseur dans la zone où le noyau
   répond (R, T) = (0, 0). Les noyaux restent inchangés.
 
+### Arbitrages de 👤 du 2026-10-05 (soir)
+
+- **Polarisation « Avg » de DESIGN (ex-D47) : retirée officiellement.** Le tableau des cibles n'offre que s et p ; une configuration ancienne « Avg » se charge en s avec un avertissement. Rien à calculer.
+- **Threads Numba d'une tâche de robustesse STRAT : adaptatif.** 4 sur une machine de 16 cœurs logiques ou plus, 2 sinon, jamais au-dessus de la limite de Numba (`task_numba_threads`).
+- **D54 : supprimer `adaptive_scan`** (code mort) ; à faire, C1 froid contre froid.
+- **D48 : exposer l'épaisseur du substrat** comme champ de DESIGN et STRAT, défaut 1 mm inchangé ; à faire.
+- **D86 : garder l'avertissement**, ne pas refuser l'extrapolation.
+
 ### RE — décidé par 👤 le 2026-10-05
 
 - **Divergence du faisceau : deux ou trois rayons suffisent.** 👤 : « définitivement, la prise en compte de
@@ -337,7 +345,6 @@ numéros de l'ancien registre sont entre parenthèses
 |---|---|---|
 | D87 | **STRAT et le gel : deux faits mesurés le 2026-10-05.** (1) `_test_strategy_robustness_task` demandait `numba.set_num_threads(2)` sans condition : avec `NUMBA_NUM_THREADS=1` (le gel, D50) Numba lève `ValueError`, et le pool rejette chaque stratégie. Corrigé : la demande est bornée par la limite de Numba (test qui échoue avant, passe après). (2) Un run du banc STRAT avec `NUMBA_NUM_THREADS=1` et `NUMBA_THREADING_LAYER=workqueue` (réglages du gel) **termine le processus** : « workqueue … not threadsafe … Concurrent access has been detected », dès l'étape du paysage de sensibilité, avant la première stratégie. Reproduit en développement, **non vérifié dans l'exécutable** ; l'accès concurrent vient d'un autre fil qui appelle un noyau parallèle (préchauffage de fond ou pool). Piste : mesurer dans le gel (`--run-module`), puis sérialiser les appels parallèles ou couper le préchauffage de fond sous `workqueue` (lié à D77, D85) |
 | D10 | **L'ajustement Sellmeier 3 pôles est chaotique sur le saphir** : un ulp sur les données change le minimum atteint (RMSE de 0,00126 à 0,00208 sur 41 essais, 2026-09-26) ; deux machines rendent deux indices pour les mêmes données. SiO2 et BK7 sont stables | élargir le multistart ou reconditionner — change les résultats, décision de 👤 |
-| D47 | DESIGN n'a pas de polarisation moyenne « Avg » : le tableau des cibles n'offre que s et p, et une configuration ancienne « Avg » se charge en s avec un avertissement (elle était calculée en p) | la calculer demande les deux ondes, chacune avec son gradient : décision de 👤 |
 | D48 | L'épaisseur du substrat (1 mm par défaut, `DEFAULT_SUBSTRATE_THICKNESS_NM`) n'est un champ ni de DESIGN ni de STRAT : un substrat qui absorbe perd du flux selon cette épaisseur | exposer le champ : décision de 👤 (section 5) |
 
 **Le modèle physique — connus, non corrigés**
@@ -392,7 +399,6 @@ Ces sujets demandent un jugement de physicien ou de propriétaire du produit. Le
 | **protection de `master` et Dependabot** | Décider si l’épinglage des actions par SHA devient obligatoire, si une relecture ou `release-windows` devient un contrôle requis (après D77), et quoi faire des PR Dependabot #1 à #4. |
 | **avis de tiers** | Écrire `THIRD_PARTY_NOTICES` pour les éléments redistribués sous licence propre (icônes Lucide, données d’indices, textes tiers). |
 | **le substrat qui absorbe (D48)** | Confirmer l’épaisseur par défaut de 1 mm, ou en faire un champ de DESIGN et STRAT ; elle décide de la perte de flux. |
-| **la polarisation « Avg » (D47)** | la retirer du tableau des cibles de DESIGN, comme aujourd'hui, ou la calculer : les deux ondes, leur moyenne et leurs gradients |
 
 D54 et D55 ne sont plus en attente de 👤 : délégués à Claude le 2026-10-04 avec les autres questions STRAT (ligne 1 du §0).
 

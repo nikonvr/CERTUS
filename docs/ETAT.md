@@ -273,9 +273,12 @@ du dichroïque dont le plantage s'écarterait nettement du prédit rouvrirait ce
   Mesuré sur le juge de paix standard (`ca99bc8c`, caches vierges, 2026-10-05) : la DP trouve 241, 242 et 241
   groupements à 9, 8 et 7 blocs, aucun de 6 à 1, avec la plage livrée comme avec une plage réduite à
   {48, 9, 8, 2, 1} ; une sonde autour du mineur compte 7 blocs contigus au moins pour qu'une même λ soit
-  admissible dans toutes les couches de chaque bloc. Sous ce nombre, il ne reste que les graines structurées
-  (« Mining found 2 strategies »), ce qui se lisait comme une recherche vidée ; à 48 blocs aussi, la première
-  couche devant partager le bloc de la deuxième (`force_first_layer_same_wl`). Sur `r75x2` le même seuil tombe
+  admissible dans toutes les couches de chaque bloc. Sous ce nombre, le mineur ne rend que les graines
+  structurées (« Mining found 2 strategies »), ce qui se lisait comme une recherche vidée ; à 48 blocs aussi, la
+  première couche devant partager le bloc de la deuxième (`force_first_layer_same_wl`). L'héritage depuis le
+  nombre de blocs supérieur y ajoute ensuite ses stratégies dérivées, et elles comptent : sur `r75x2`, de 5 à 9
+  blocs, 188 stratégies déposables, et la gagnante du juge de paix standard a 4 blocs. Sauter ces nombres de blocs
+  pour gagner du temps (environ 11 min des 30 d'un run `deep` de `r75x2`) les perdrait. Sur `r75x2` le même seuil tombe
   entre 9 et 10 blocs (601 groupements de 15 à 10, graines seules de 9 à 1, 2026-10-05). Le mineur écrit
   maintenant `[MINING] n_blocks=…: the DP found no grouping; the fewest contiguous blocks … is N` ; aucun
   résultat ne change. Sorties : `reports/STRAT_bench_juge_de_paix_ca99bc8c_D9_*_2026-10-05.*`.

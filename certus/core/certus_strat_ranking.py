@@ -598,7 +598,8 @@ def mine_strategies_for_block_count(
         log.info(
             f"   [MINING] n_blocks={n_blocks}: the DP found no grouping; the fewest contiguous blocks with one "
             f"admissible wavelength per block is {fewest_feasible_blocks(cost_map_thick, num_layers)} here "
-            f"(first block of two layers at least: {bool(force_monolayer)}). Only the structured seeds remain."
+            f"(first block of two layers at least: {bool(force_monolayer)}). The miner returns the structured seeds "
+            f"only; inheritance from the next block count adds its derived strategies after."
         )
 
     structured_seeds = _generate_structured_seed_strategies(

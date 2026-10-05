@@ -57,12 +57,6 @@ class CertusWorkerManager(QObject):
     def active_count(self) -> int:
         return len(self._active_workers)
 
-class CertusNumbaWarmupProtocol(Protocol):
-    """Protocol for managing Numba JIT warmup routines."""
-    numba_ready: bool
-    def start_warmup(self) -> None: ...
-    def is_ready(self) -> bool: ...
-
 class CertusNumbaWarmupManager(QObject):
     """
     Handles Numba JIT warmup to prevent UI freezing during first spectral evaluation.
@@ -104,5 +98,3 @@ class CertusNumbaWarmupManager(QObject):
         self.logger.error(f"Warmup Error: {message}")
         self.sig_numba_error.emit(message)
 
-    def is_ready(self) -> bool:
-        return self.numba_ready

@@ -13,13 +13,19 @@
 > à la fin. Les règles de validation sont dans les sections 2, 4 et 12 de
 > [CLAUDE.md](../CLAUDE.md) ; les décisions scientifiques appartiennent à 👤 (§5).
 
-**En cours (Codex, 2026-10-05).** D82 et D83 clos, validation complète verte.
-Chantier secondaire suivant : élargir prudemment l'audit de code mort D24.
+**En cours (Codex, 2026-10-05).** D24 progresse paquet par paquet : SPLINE est
+contrôlé (R144–R145), 613 définitions au total, deux exceptions motivées, aucun
+candidat non résolu. L'exploration du reste de `certus/` a trouvé 91 candidats
+après correction des imports renommés ; chacun demande examen avant extension
+du portail CI. D21 : l'unité documentaire de `trigger_tolerance` est corrigée
+(R146). Lot validé complètement ; prochaine action secondaire : examiner les huit
+candidats de `certus/core` sans toucher aux API encore testées.
 
 **Point de départ (2026-10-05).** Travailler dans `certus0310`, branche
 `refactor-corridors-mixins`, [PR #5](https://github.com/nikonvr/CERTUS/pull/5).
-Première commande : `python scripts\preflight.py` → `PREFLIGHT=GO`. Dernier commit de code `55a41cdd` (R143), après
-`169e434` (R142) ; arbre propre ; R128 à R143 et leurs commits de documentation sont **locaux, non poussés**
+Première commande : `python scripts\preflight.py` → `PREFLIGHT=GO`. Derniers commits
+`3399f586` (R144), `60b4b3fd` (R145), `98f972d8` (R146) ;
+R128 à R146 et leurs commits de documentation sont **locaux, non poussés**
 (pousser attend l'ordre de 👤) ;
 sauvegarde : `../CERTUS_certus0310_<date>_<commit>.bundle`, refait après chaque lot (le plus récent porte le dernier commit).
 
@@ -56,6 +62,14 @@ en 8 min 54 ; UI `1297 passed, 12 skipped, 2 xfailed` en 19 min 53 ; reste de
 C1 froid contre froid : R142 contre `1d912c4f` et R143 contre `169e434`, chacun
 **8 008/8 008 tableaux identiques au bit**. Trois contrôles documentaires : 0 défaut.
 
+**Validation du lot R144–R146 sur `98f972d8` (Windows 11, Python 3.14.8, 2026-10-05) : complète, `0 failed`.**
+Ruff : 0 défaut ; oracle `1119 passed` ; unit `4897 passed, 5 skipped, 2 xfailed`
+en 8 min 56 ; UI `1297 passed, 12 skipped, 2 xfailed` en 19 min 53 ; reste de
+`tests/` `350 passed, 2 skipped` en 9 min 46 (17 `DeprecationWarning` de `pyqtgraph`).
+Audit de code mort `--ci` : 613 définitions, deux candidats justifiés, zéro non résolu ;
+neuf tests de l'audit passent. Trois contrôles documentaires : 0 défaut. Aucun
+calcul optique n'a été modifié dans ce lot, donc C1 n'a pas été rejoué.
+
 **Pages HTML (2026-10-04).** RE, DESIGN, INDEX SPLINE et STRAT documentent les branches
 implantées avec huit nouveaux logigrammes. Deux anciens logigrammes RE et DESIGN qui ne se
 rendaient pas ont été réparés. Dans Chrome, Mermaid rend 8/8, 6/6, 5/5 et 6/6 logigrammes,
@@ -89,7 +103,7 @@ Node, hors pytest.
 | 4 · D11 / reste de D23 | **complexe · Opus** : cycle de vie Qt et collecte hors du thread GUI | Rejouer `scripts/sonde_retenants_fenetre.py` ; inventorier les cinq `gc.collect()` des workers STRAT et les `QThread` retenus avant tout `WA_DeleteOnClose`. R121 a déjà clos l'arrêt des workers UI. | Fenêtres libérées après fermeture sans destruction de thread actif ; boucle de fermetures et suite UI sans arrêt natif. |
 | contingence · D77 | **complexe, seulement si la CI release devient rouge** | Lire stderr et l'artefact watchdog du premier job rouge ; le gel est vert sur `52de082c`. | Nouveau gel Windows vert sur le code en cause. |
 
-**Correctifs récents** (R136 à R140 validés complètement sur `be6872ce` ; R141 sur `64f98a51` ; R142–R143 sur `55a41cdd`). R121 `21e62841` : arrêt natif des workers
+**Correctifs récents** (R136 à R140 validés complètement sur `be6872ce` ; R141 sur `64f98a51` ; R142–R143 sur `55a41cdd` ; R144–R146 sur `98f972d8`). R121 `21e62841` : arrêt natif des workers
 UI (D23, partie harnais). R122 `9ab37980` : indices de substrat non finis (D75).
 R123 `466c31cc` : cibles non finies de `needle_scan_cached` (D53).
 R124 `73df4a3e` : repli `minimize` si l'API privée SciPy change (D74).
@@ -112,6 +126,9 @@ R140 `dd345d01` : l'ouverture du faisceau du RE peut être imposée plutôt qu'a
 R141 `64f98a51` (D81, local) : `_evaluate_p2_fd_derivative` et `_build_cached_spline_correc`, retirées par `05dc0ad8`, sont rendues au worker RE. Le nouveau test sans écran avec raffinements H/L actifs échoue avant (`AttributeError`, `finished.ok=False`) et passe après (`finished.ok=True`, résultat présent ; 70 s). Les trois runs RE sans écran passent ensemble (`3 passed` en 1 min 51). Validation complète ci-dessus.
 R142 `169e434` (D82, local) : le journal de phase 4 ne dit « joint TRF disabled » que si son budget vaut zéro ; le candidat conservé avant TRF annonce son rôle de repli pour le classement. Le candidat du balayage portait, après le TRF, les quatre ouvertures chromatiques du résultat joint alors que son score venait du meilleur balayage à ouverture plate : il porte maintenant quatre fois cette ouverture plate, sans changer le score ni l'état du TRF. Sur `reverse_sample.xlsx`, le test sans écran échoue avant (quatre ouvertures 1,652 / 1,626 / 1,720 / 1,715° dans le candidat « scan » ; faux message « disabled ») et passe après. Validation du lot ci-dessus.
 R143 `55a41cdd` (D83, local) : l'absence de `re_refine_h` / `re_refine_l` signifie désormais « désactivé » pour l'ordre des phases et les colonnes de différences finies, comme pour les bornes et le budget. Le nouveau run sans ces clés échoue avant (`_re_use_staged_order=True`) et passe après (ordre non étagé, aucun appel de dérivée spline) ; le code d'avant activait aussi les colonnes de nœuds malgré les bornes fixes. L'interface écrit explicitement les deux clés ; les trois autres scénarios RE, dont H/L actifs, passent. Le run pré-correctif a pris 4 min 49 et le run corrigé 28 s sur la même machine, sans protocole de performance à caches identiques : ce n'est pas un rapport de vitesse contrôlé. Validation du lot ci-dessus.
+R144 `3399f586` (D24, local) : l'audit de code mort reconnaît un import renommé si le nom local est réellement utilisé. Le test planté échoue avant (fonction appelée signalée morte) et passe après ; un import renommé non utilisé reste candidat. La reconnaissance reste par nom nu, limitation documentée de l'audit.
+R145 `60b4b3fd` (D24, local) : `certus/spline` entre dans le périmètre des définitions. Le test planté dans ce paquet échoue avant et passe après. L'audit parcourt 613 définitions, signale deux candidats bruts, justifiés dans la liste blanche comme API de sérialisation et de masque spectral exercées par leurs tests de contrat ; 0 candidat non résolu. L'exploration du reste de `certus/` laisse 91 candidats à instruire, pas 91 morts prouvés.
+R146 `98f972d8` (D21, local) : la docstring de `MachineModel.trigger_tolerance` précise le pourcentage de T, soit 0,05 % = 0,0005 en unités T ; les lecteurs de la clé de configuration divisent par 100. `MachineModel` lui-même reste une façade exportée sans consommateur de production trouvé. 41 tests ciblés passent.
 Le choix de 👤 « on garde fastmath » clôt l'arbitrage D52/D67 ; les écarts
 froid/chaud restent documentés en §3.
 
@@ -376,7 +393,7 @@ numéros de l'ancien registre sont entre parenthèses
 | # | défaut |
 |---|---|
 | D14 | L'historique est échantillonné 1,33× plus grossièrement que la couche courante (`NPTS_PREV = 16` contre `NPTS = 64` sur trois épaisseurs nominales) (n° 22). **Mesuré le 2026-10-04** sur le juge de paix standard, caches Numba vierges, arbre `b60d80e2`, avec 21 points d'historique (`SCAN_NPTS_HISTORY`, la densité de la couche courante) : la population change presque entière — 363 stratégies contre 370, dont **8 plans en commun** (mêmes blocs, couches Rate et fente ; les 64 identifiants communs ne désignent pas les mêmes plans) ; sur ces 8, le score bouge de −3,3 % à +2,0 %. `RESULT` 0,007433 contre 0,007645 (−2,8 %, sous les ~8 % où deux runs sont indiscernables, §2) ; la gagnante devient 4 blocs λ 543/471/453/474 (SEEL 0,1724 nm contre 0,1749). Plantage moyen au bruit ×2 : 0,0069 contre 0,0012 ; stratégies dont le plantage croît avec le bruit : 122 contre 41 (239 plates, 2 décroissantes, contre 329 et 0). L'historique plus dense fabrique plus d'extrema parasites, ce qui est le sens attendu. À trancher : une densité unique, plus fidèle au balayage de la couche courante, contre le changement de tous les résultats ; le coût n'est pas mesuré (la machine n'était pas au repos). Sorties : `reports/STRAT_bench_juge_de_paix_b60d80e2_{temoin,d14_historique21}_2026-10-04.json` |
-| D21 | `MachineModel` n'a aucun consommateur, et `trigger_tolerance` y est documenté en unités T alors que ses lecteurs divisent par 100 (n° 9) |
+| D21 | `MachineModel` n'a aucun consommateur de production trouvé ; sa docstring donne désormais la bonne unité de `trigger_tolerance` (pourcentage de T, R146). La façade `certus_physics` continue de l'exporter et ses tests de contrat restent actifs |
 | D51 | INDEX garde sa propre lame de Beer-Lambert pour le substrat (`_calculate_RT_absorbing_sub_single`) : elle s'accorde avec le modèle commun `certus_substrate_absorption` à 1e-12 (k de 1e-7 à 1e-3, à 450 et 800 nm, testé, interface avant comprise depuis R117), mais c'est une seconde formule à tenir à jour |
 | D54 | `simulate_growth_kernel` avec `adaptive_scan=True` **et** la grille fine (`smoothing_window > 1` ou `machine_sampling_dd > 0`) lit hors du balayage grossier : le re-échantillonnage suppose 64 points sur trois fois l'épaisseur, le balayage adaptatif en a moins sur une autre fenêtre. La `margin_missed` rendue diffère d'un lancement à l'autre (mesuré le 2026-09-30 avec le corpus élargi de `c1_diff` : 6 cas sur 87 combinaisons, jusqu'à 20 % d'écart ; l'arbre de 421ab8f comparé à lui-même ne se retrouvait pas). **Exposition : nulle aujourd'hui** — aucun appelant, test, script ni page ne passe `adaptive_scan` (`git grep`) : l'option est morte. Le corpus de `c1_diff` évite la combinaison, faute de quoi il ne prouverait plus rien. **Même famille, même exposition nulle** : `machine_sampling_dd > 0` avec `smoothing_window == 1` prend la grille fine et **saute la dérive photométrique** (affine et courbure), qui n'est appliquée que dans la branche grossière ou dans celle du lissage ; `machine_sampling_dd` reste à 0,0 pour tous les appelants (`certus_strat_batch.py`). **À décider par 👤** : supprimer `adaptive_scan` (elle alourdit le dimensionnement de la fenêtre du noyau) et garder `machine_sampling_dd` seulement si on lui rend la dérive, ou réparer les deux |
 | D55 | Sur la grille fine de la machine, une couche **rejouée** de l'historique est lue avec un pas grossier de retard : son balayage grossier commence à 1/16 de l'épaisseur (le point 0 est le dernier de la couche du dessous), l'indice d'interpolation commence à 0. Mesuré le 2026-09-30 sur `_resample_on_machine_grid` : une rampe en profondeur revient décalée de d/16 (6,25 % de l'épaisseur, 3 nm sur 50) puis plate sur le dernier seizième ; la couche courante, elle, est lue à sa vraie profondeur. **Exposition** : seulement quand la grille fine est active (`smoothing_window > 1` ou `machine_sampling_dd > 0`) ; l'effet sur les extrema rejoués n'est pas mesuré. **À décider par 👤** (le modèle de la chaîne de lecture est figé depuis le 2026-08-08). Le test est un `xfail` strict : il passera quand la lecture sera corrigée |
@@ -388,7 +405,7 @@ numéros de l'ancien registre sont entre parenthèses
 |---|---|
 | D11 | **Une fenêtre de module fermée n'est pas détruite** : des lambdas et des `functools.partial` branchés sur les signaux de ses propres widgets la capturent, et la connexion les tient du côté C++ de PyQt, où le ramasse-miettes ne voit pas le cycle (`scripts/sonde_retenants_fenetre.py`, 2026-09-27 : `CertusREApp` retenue par quatre méthodes liées, cinq fermetures et deux attributs de `CertusToast` / `CertusToastStack`). **Sans effet en production** : le hub lance chaque module dans son propre processus (`QProcess`), et fermer la fenêtre finit le processus. Les tests détruisent désormais leurs fenêtres (R5). Coûterait dans tout processus qui construirait plusieurs fenêtres. Piste : `WA_DeleteOnClose` sur `CertusBaseApp`, à condition de retenir d'abord ses `QThread` encore actifs : sans cela, libérer la fenêtre libère un thread en cours (D23) |
 | D23 | R114 a corrigé le préchauffage qui lisait hors de trois tableaux ; R121 a supprimé l'arrêt natif de finalisation des huit workers UI Windows (CI verte le 2026-10-04). Restent à instruire : cinq `gc.collect()` exécutés dans les threads de calcul STRAT peuvent libérer des objets Qt hors du thread GUI, sans arrêt observé ; les tests n'isolent pas `sys.modules`. L'arrêt des raffinements IR après PGLOBAL d'INDEX relève du choix de 👤 en §5. | Reproduire avant de changer le cycle de vie ; traiter avec D11. |
-| D24 | Code mort : l'audit (`tools/dead_symbol_audit.py`) cherche ses candidats à la racine, dans `certus_physics` et dans `certus/metal`, et n'en trouve aucun, liste blanche vide. Le reste de `certus/` n'est pas dans son périmètre : il ne voit pas ce qui y meurt |
+| D24 | Code mort : l'audit (`tools/dead_symbol_audit.py`) cherche ses candidats à la racine, dans `certus_physics`, `certus/metal` et, depuis R145, `certus/spline` : 613 définitions, deux API SPLINE sans appel interne exemptées avec raison, 0 candidat non résolu. Il compte les imports renommés réellement utilisés (R144). L'exploration des autres paquets de `certus/` donne 91 candidats bruts à examiner avant d'élargir encore le portail CI ; l'appariement par nom nu sous-signale aussi le code mort |
 | D25 | Dette de lint masquée par `extend-ignore` : **14 règles** (31 au départ de S5.5) et 1 464 violations à la mesure du plan (3 455 au départ) ; plus aucun import étoile, et les noms indéfinis (F821, F822) sont à zéro. F401 : 629 signalements, 590 hors tests gardés exprès pour la plupart (R9) ; restent surtout E402 (548) et les confusables RUF001 à RUF003 (188, des µ, × et – voulus). Le détail est en R69. Le cliquet `tests/oracle/test_lint_debt_ratchet.py` nomme les règles restantes : aucune ne peut entrer, et une règle sortie doit quitter sa liste. RUF022 et RUF023 (trier `__all__`, `__slots__`) restent ignorées à dessein |
 | D26 | Inversions de couches, comptées le 2026-08-19 : `utils → ui` (11), `core → workers` (10), cycle `physics ↔ core` (23 et 29 imports). Mesuré le 2026-09-29, module par module dans un interpréteur neuf : 72 des 73 modules de `certus/core`, `certus/physics` et `certus/domain` se chargent sans Qt, et tous ensemble n'en chargent aucun (garde-fou `test_computation_imports_no_qt`) ; le dernier, `certus.physics.gradient_analytic`, ne s'importe pas seul (cycle avec `gradient_utils`) |
 | D40 | METAL BILAYER : l'analyse de faisceau minimise la MSE de réflectance seule, l'optimisation globale y ajoute une pénalité de lissage — deux objectifs, dont les RMSE ne se comparent pas |

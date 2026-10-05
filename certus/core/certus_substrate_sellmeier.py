@@ -79,11 +79,6 @@ _SUBSTRATE_PRIOR_HINTS: tuple[tuple[re.Pattern[str], int], ...] = (
 )
 
 
-def _sellmeier_midpoint_seed(bounds: list[tuple[float, float]], lam_min_um: float) -> np.ndarray:
-    """Returns midpoint of Sellmeier parameter bounds."""
-    return np.array([0.5 * (b[0] + b[1]) for b in bounds], dtype=np.float64)
-
-
 def _sellmeier_2poles_param_bounds(lam_min_um: float) -> list[tuple[float, float]]:
     """Box (A, B1, L1, B2, L2, B3, L3).
 

@@ -53,12 +53,7 @@ poussés ; pousser attend l'ordre de 👤. `python scripts\preflight.py` →
 Une entrée Git `.git/worktrees/certus0310` incomplète déclenche un
 avertissement de nettoyage à chaque commit, sans empêcher le commit.
 
-**Dernière validation complète (2026-10-05, Windows 11, Python 3.14.8, code au commit `afd11ebc`, R148
-compris) :** Ruff 0 ; C1 froid contre froid depuis `3c002869` : 8 008/8 008 tableaux identiques au bit ; oracle
-1 122 passed ; unit 4 904 passed, 5 skipped, 2 xfailed en 9 min 07 ; autres tests 346 passed, 2 skipped en
-10 min 16 ; UI 1 297 passed, 12 skipped, 2 xfailed en 18 min 44 ; trois contrôles documentaires : 0 défaut.
-Depuis : R149, une ligne de journal, avec son test vert. Les quatre pages HTML RE, DESIGN, INDEX SPLINE et STRAT
-rendent leurs logigrammes Mermaid dans Chrome (8/8, 6/6, 5/5 et 6/6, mesuré le 2026-10-04).
+**Dernière validation complète (2026-10-05, Windows 11, Python 3.14.8, code au commit `1bafab06`, D86 et D87 compris) :** Ruff 0 ; oracle 1 123 passed ; unit 4 906 passed, 5 skipped, 2 xfailed en 14 min 35 ; autres tests 346 passed, 2 skipped en 9 min 27 ; UI 1 297 passed, 12 skipped, 2 xfailed en 17 min 42 ; trois contrôles documentaires : 0 défaut. Les quatre pages HTML RE, DESIGN, INDEX SPLINE et STRAT rendent leurs logigrammes Mermaid dans Chrome (8/8, 6/6, 5/5 et 6/6, mesuré le 2026-10-04).
 
 **Ordre conseillé des prochains lots.** Priorité aux résultats potentiellement faux,
 puis aux dépendances techniques ; chaque changement reste un commit distinct (C3).

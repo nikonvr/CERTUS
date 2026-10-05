@@ -134,16 +134,6 @@ Ces tests confirment notamment que l'inaction dans la confirmation d'arrêt cons
 
 Vérification finale : `py -m ruff check .` → `All checks passed!`, après tri manuel des imports des scripts de reproduction. Les contrôles `coherence_md.py`, `check_claude_md.py` et `check_docs.py` ne signalent aucun défaut mécanique dans leurs périmètres documentaires ; cela ne valide pas le jugement UX ni toutes les phrases du rapport.
 
-## Ordre de traitement proposé
-
-1. **Rétablir un lancement fiable**, puis supprimer les succès trompeurs de chargement. Cas d'acceptation : fichier valide, invalide, annulé, mauvais module, fichier renommé.
-2. **Protéger le travail** : configuration modifiée, fermeture pendant calcul, Échap, arrêt partiel. Vérifier les boutons et raccourcis réels de chaque module.
-3. **Corriger les composants communs** : états vides, tutoriels, couleurs résolues, messages de fin et accès permanent aux actions. Un petit correctif partagé aura plus d'effet qu'une refonte indépendante des onze fenêtres.
-4. **Adapter les panneaux à 1366×768**, avec vérification native à 100/150/200 % et grand écran. Commencer par METAL puis STRAT, puis la répartition pile/cibles de DESIGN et RE.
-5. **Guider le choix et la première réussite** : hub orienté tâches, un exemple par module, explication de l'entrée et du résultat attendu, vocabulaire stable et statut « modifié depuis le dernier calcul » lorsque pertinent.
-
-Après ces corrections, une session utilisateur courte devrait mesurer trois parcours : novice choisissant le bon outil, expert modifiant une configuration, opérateur interrompant un calcul puis exportant le résultat conservé. Mesurer le temps, les erreurs de destination, les retours en arrière et la compréhension du statut. Aucun de ces résultats utilisateurs n'est anticipé ici.
-
 ## Livrables et limites de cette intervention
 
 - Rapport : `AUDIT_UX.md` ; mesures : `mesures.json` ; tests : `tests_cibles.txt`.

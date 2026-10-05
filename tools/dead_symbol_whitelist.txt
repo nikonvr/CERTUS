@@ -15,3 +15,11 @@
 # could no longer match anything. An exemption that can never fire is a promise
 # nobody checks, and it would silently cover a symbol that dies later.
 # `tests/unit/test_ci_dead_symbol_audit.py` now forbids fossil entries.
+
+# D24, 2026-10-05 -- certus/spline reviewed: 395 definitions, two candidates.
+# Public JSON export helper: re-exported by certus_index_spline_core and exercised
+# as a serialization contract by test_the_spline_helpers_no_test_named_keep_their_contract.
+certus.spline.certus_index_spline_io:export_spline_result_jsonable
+# Public target-grid mask helper: no runtime call in the repository; direct unit
+# contract in test_spline_rmse_lambda_window and test_spline_objective_extended.
+certus.spline.spline_objective:objective_lam_mask_on_target_grid

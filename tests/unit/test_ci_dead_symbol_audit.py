@@ -152,6 +152,36 @@ def test_an_aliased_import_counts_only_when_called(tmp_path):
     assert "CERTUS_SONDE:aliased_live" not in signales
 
 
+def test_spline_definitions_enter_the_gate(tmp_path):
+    """Un symbole mort de SPLINE doit rendre un verdict, même appelé seulement depuis l'UI."""
+    copie = tmp_path / "tools" / AUDIT.name
+    copie.parent.mkdir()
+    shutil.copy2(AUDIT, copie)
+    sonde = tmp_path / "certus" / "spline" / "probe.py"
+    sonde.parent.mkdir(parents=True)
+    sonde.write_text(
+        "def spline_dead():\n    return 0\n\n\ndef spline_live():\n    return 1\n",
+        encoding="utf-8",
+    )
+    appelant = tmp_path / "certus" / "ui" / "caller.py"
+    appelant.parent.mkdir(parents=True)
+    appelant.write_text(
+        "from certus.spline.probe import spline_live as _live\nVALEUR = _live()\n",
+        encoding="utf-8",
+    )
+    out = subprocess.run(
+        [sys.executable, str(copie), "--whitelist", str(tmp_path / "aucune_liste_blanche")],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert out.returncode == 0, out.stderr
+    signales = _candidats(out.stdout)
+    assert "certus.spline.probe:spline_dead" in signales
+    assert "certus.spline.probe:spline_live" not in signales
+
+
 def test_the_ci_step_passes():
     """Le verdict que `lint.yml` rend vraiment, rendu ICI aussi.
 
@@ -228,13 +258,13 @@ def test_the_reference_perimeter_covers_the_application_but_not_the_tests():
     assert "tests" not in zones, "les tests comptent comme des références : le code mort en production sera masqué"
 
 
-def test_the_definition_perimeter_stays_narrow():
-    """Contrôle négatif dans l'autre sens : élargir les DÉFINITIONS est un autre sujet.
+def test_the_definition_perimeter_is_reviewed():
+    """Le périmètre des DÉFINITIONS s'élargit paquet par paquet après examen.
 
     Le signaler ici évite qu'on « répare » le rouge en faisant les deux d'un coup —
     ce serait deux changements à la fois, et le résultat ne s'attribuerait pas.
-    `certus/metal` y est entré le 2026-09-28, décision de portée : les applications
-    METAL y sont descendues de la racine (D30), qui était dans le périmètre.
+    `certus/metal` y est entré le 2026-09-28 (D30). `certus/spline` y entre après
+    examen des candidats D24 ; le reste de l'interface garde son audit distinct.
     """
     sys.path.insert(0, str(ROOT / "tools"))
     from dead_symbol_audit import _iter_python_files
@@ -246,7 +276,7 @@ def test_the_definition_perimeter_stays_narrow():
         if len(p.relative_to(ROOT).parts) > 1
     }
 
-    assert zones <= {"certus_physics", "certus/metal"}, (
+    assert zones == {"certus_physics", "certus/metal", "certus/spline"}, (
         f"le périmètre des définitions s'est élargi à {sorted(zones)} : c'est une décision "
         "de portée, pas un correctif de faux positif"
     )

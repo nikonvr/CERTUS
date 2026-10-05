@@ -33,12 +33,6 @@ class StratStabilitySummary:
     def is_stable(self) -> bool:
         return self.same_best_strategy_id and self.same_best_origin
 
-    @property
-    def score_regression(self) -> float | None:
-        return self.score_delta
-
-
-
 def load_stability_reference(path: str | Path) -> dict[str, Any]:
     """Load a STRAT stability reference JSON file."""
     ref_path = Path(path)

@@ -321,7 +321,7 @@ annule seul.
 
 - **Polarisation « Avg » de DESIGN (ex-D47) : retirée officiellement.** Le tableau des cibles n'offre que s et p ; une configuration ancienne « Avg » se charge en s avec un avertissement. Rien à calculer.
 - **Threads Numba d'une tâche de robustesse STRAT : adaptatif.** 4 sur une machine de 16 cœurs logiques ou plus, 2 sinon, jamais au-dessus de la limite de Numba (`task_numba_threads`).
-- **D54 : supprimer `adaptive_scan`** (code mort) ; à faire, C1 froid contre froid.
+- **D54 : supprimer `adaptive_scan`** (code mort), décidé ; **tenté le 2026-10-06 et non commité** : retirer le seul paramètre du noyau (le reste du code laissé tel quel) déplace 90 des 2 000 résultats de croissance du corpus de `c1_diff` (chemin non adaptatif, base et tête recompilées à froid, la base se retrouve elle-même à 0 écart), de 12 à 1 024 ulp, soit 2,3·10⁻¹³ relatif au plus, sur les sorties 2 et 3 (marges). Même effet que la coupe d'un noyau `fastmath` (§ C1 de CLAUDE.md). Le retrait complet de la fenêtre adaptative donne les mêmes 90 écarts. **À trancher par 👤** : accepter ce décalage de dernier chiffre (le corpus de `c1_diff` doit alors passer `adaptive_scan` seulement aux arbres qui l'ont encore, `inspect.signature`), ou laisser le paramètre mort.
 - **D48 : exposer l'épaisseur du substrat** comme champ de DESIGN et STRAT, défaut 1 mm inchangé ; à faire.
 - **D86 : garder l'avertissement**, ne pas refuser l'extrapolation.
 

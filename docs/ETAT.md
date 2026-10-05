@@ -13,6 +13,12 @@
 > à la fin. Les règles de validation sont dans les sections 2, 4 et 12 de
 > [CLAUDE.md](../CLAUDE.md) ; les décisions scientifiques appartiennent à 👤 (§5).
 
+**En cours (Claude, 2026-10-05) — machine occupée jusque vers 18 h 30.** Rang 3 : le banc d'hystérésis
+`r75x2` en `deep` tourne depuis 12 h 14, deux runs l'un après l'autre (`noise_level` puis `nominal`),
+dans l'arbre jetable `%TEMP%\hyst3` (commit `306559d3` plus le réglage `tp_hysteresis_reference`,
+non commité). Un essai `fast` a d'abord montré que la clé atteint le calcul : seuil constant de
+0,00083 aux trois niveaux de bruit. Ne pas lancer d'autre banc ni la suite complète avant la fin.
+
 **Dernière action (Codex, 2026-10-05).** Ordre des lots qualifié ci-dessous ;
 trois contrôles documentaires à zéro défaut, changement commité localement.
 

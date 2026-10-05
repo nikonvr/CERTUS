@@ -10,6 +10,9 @@ dans [`docs/ETAT.md`](docs/ETAT.md). Lire sa section 0 avant de travailler et
 la tenir à jour. Les rapports de `reports/` sont des mesures datées ; Git garde
 l'historique des corrections. Les archives supprimées se lisent avec
 `git show 7b08dc8:docs/archives/NOM.md`.
+Les « CLAUDE.md §N » cités par le code, les tests et les scripts viennent de versions
+successives de ce fichier : leur numéro peut désigner une autre section qu'ici. Chercher
+la règle par son sujet, ou dans `git log -p CLAUDE.md`.
 
 ## 1. Démarrage — avant de toucher à quoi que ce soit
 

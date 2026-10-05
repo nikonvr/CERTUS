@@ -171,14 +171,6 @@ class WorkerThreadResult:
     ) -> WorkerThreadResult:
         return WorkerThreadResult._build(opti_results=opti_results, final_results=final_results)
 
-    @staticmethod
-    def for_step_33(
-        *,
-        opti_results: dict[str, Any],
-        final_results: dict[str, Any],
-    ) -> WorkerThreadResult:
-        return WorkerThreadResult._build(opti_results=opti_results, final_results=final_results)
-
     def to_legacy_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {}
         if self.nominal_results is not None:

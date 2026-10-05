@@ -113,3 +113,75 @@ certus.workers.certus_design_workers:OptimWorker._run_coord_descent_5cycles
 certus.workers.certus_design_workers:OptimWorker._maybe_upgrade_grid_tikhonravov
 # OptimWorker PGlobal-config facade delegates to DesignStratService; no caller found.
 certus.workers.certus_design_workers:OptimWorker._build_pglobal_config
+
+# D24, 2026-10-05 -- core methods exposed by the public performance facade.
+# Direct enabled/disabled contract in test_the_performance_monitor_records_what_it_measures.
+certus.core.certus_performance:PerformanceMonitor.enable
+# Direct disabled-path contract in test_the_performance_monitor_records_what_it_measures.
+certus.core.certus_performance:PerformanceMonitor.disable
+
+# D24, 2026-10-05 -- Qt callbacks have no explicit Python caller.
+# Qt release event; test_ux_hub_mouse_activation exercises click boundaries.
+certus.ui.certus_hub_widgets:BaseApplicationCard.mouseReleaseEvent
+# Qt pointer-entry event of the hoverable application card.
+certus.ui.certus_hub_widgets:ApplicationCard.enterEvent
+# Qt pointer-exit event of the hoverable application card.
+certus.ui.certus_hub_widgets:ApplicationCard.leaveEvent
+# pyqtgraph axis-label override; direct contract in test_the_ui_helpers_no_test_named_keep_their_contract.
+certus.ui.certus_index_ui_utils:KLogAxisItem.tickStrings
+# Qt double-click override; direct UI contracts in test_certus_ux_battery and test_certus_ux_drag_and_drop.
+certus.ui.certus_plot:CertusScientificPlot.mouseDoubleClickEvent
+# Qt move event override of the STRAT window diagnostic mixin.
+certus.ui.certus_strat_mixins_ui:CertusWindowSpyMixin.moveEvent
+# Qt state-change event override of the STRAT window diagnostic mixin.
+certus.ui.certus_strat_mixins_ui:CertusWindowSpyMixin.changeEvent
+# Qt focus-entry event override of the STRAT window diagnostic mixin.
+certus.ui.certus_strat_mixins_ui:CertusWindowSpyMixin.focusInEvent
+# Qt focus-exit event override of the STRAT window diagnostic mixin.
+certus.ui.certus_strat_mixins_ui:CertusWindowSpyMixin.focusOutEvent
+# Qt timer event override used by the STRAT event mixin.
+certus.ui.certus_strat_ui_events:CertusStratEventsMixin.timerEvent
+# QDoubleValidator virtual method; test_ux_numeric_field_validators checks input normalization.
+certus.ui.certus_strat_ui_layout:_DecimalValidator.validate
+# Qt paint event override; test_certus_ui_ux_boost exercises the skeleton widget.
+certus.ui.certus_ui_widgets_utils:SkeletonLoaderWidget.paintEvent
+
+# D24, 2026-10-05 -- UI public helpers: no internal runtime call, contract or facade retained.
+# Stats snapshot API; test_certus_ui_helpers checks empty and populated counters.
+certus.ui.certus_base_app:StatsCounter.as_dict
+# FIELD plot-data adapter; test_field_module directly checks its output.
+certus.ui.certus_field_services:FieldExportService.build_plot_data
+# Scientific plot label setter; test_certus_ui checks its labels.
+certus.ui.certus_plot:CertusScientificPlot.set_labels
+# Theme primary-button stylesheet API; test_certus_ui checks it.
+certus.ui.certus_theme:CertusTheme.get_primary_button_stylesheet
+# Theme danger-button stylesheet API; test_certus_ui checks it.
+certus.ui.certus_theme:CertusTheme.get_danger_button_stylesheet
+# Colored QLabel factory exported by certus.ui.certus_ui; no internal caller or direct test.
+certus.ui.certus_ui_widgets_factory:create_colored_label
+# Collapsible state query; test_certus_ui and test_certus_ux_battery check it.
+certus.ui.certus_ui_widgets_layout:CertusCollapsible.is_expanded
+# Status pill setter; test_certus_ui and test_certus_ui_ux_boost check its states.
+certus.ui.certus_ui_widgets_utils:CertusStatusPill.set_level
+# Excel table export API; test_certus_ui writes and checks a workbook.
+certus.ui.certus_ui_widgets_utils:ExcelTableWidget.export_to_excel
+# Command registration API; test_certus_ui_ux_boost invokes it on a real mixin host.
+certus.ui.mixins.certus_base_core_mixins:CertusCommandPaletteMixin.register_command
+
+# D24, 2026-10-05 -- public utility contracts exercised only by tests.
+# DataFrame Savitzky-Golay tuner; test_certus_spectral_preproc checks its output.
+certus.utils.certus_spectral_preproc:auto_tune_savgol_params_from_dataframe
+# SPLINE report entry point; test_certus_spline_report and test_gui_smoke exercise it.
+certus.utils.certus_spline_report:SplineReportBuilder.build_report
+# STRAT context-manager entry point; test_certus_strat_context tests nesting and restoration.
+certus.utils.certus_strat_context:StratContext.activate
+# STRAT process-context initializer; test_certus_strat_context checks worker setup.
+certus.utils.certus_strat_context:StratContext.worker_init
+# Standalone STRAT stability report API; test_certus_strat_stability checks file output.
+certus.utils.certus_strat_stability:run_reference_audit
+# Numeric float validation API; test_certus_validation checks ranges and non-finite values.
+certus.utils.certus_validation:NumericValidator.validate_float
+# Numeric integer validation API; test_certus_validation checks conversion and bounds.
+certus.utils.certus_validation:NumericValidator.validate_int
+# String validation API; test_certus_validation checks length and pattern.
+certus.utils.certus_validation:StringValidator.validate_string

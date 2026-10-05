@@ -7,10 +7,8 @@ que l'outil n'ouvrait jamais. Il collectait ses références dans le même péri
 étroit que ses définitions : la racine plus `certus_physics/`.
 
 🔑 **Un symbole n'est pas mort parce qu'on a regardé ailleurs.** Le périmètre des
-*définitions* s'étend paquet par paquet après examen : racine, `certus_physics`,
-`certus/metal`, `certus/spline`, `certus/core`, `certus/domain`, puis
-`certus/physics`, puis `certus/workers`. Celui des *références* couvre
-tout le code d'exécution : une référence compte d'où qu'elle vienne.
+*définitions* couvre la racine, `certus_physics` et tout `certus/`, y compris
+les nouveaux paquets. Celui des *références* couvre tout le code d'exécution.
 
 ⚠️ **`tests/` reste dehors, et c'est voulu** : un symbole que seul un test appelle
 est mort en production. L'y inclure masquerait exactement ce qu'on cherche.
@@ -182,7 +180,7 @@ def test_framework_validators_are_not_reported_as_dead(tmp_path):
     assert "CERTUS_SONDE:Model.normalize_model" not in signales
 
 
-@pytest.mark.parametrize("package", ["spline", "core", "domain", "physics", "workers"])
+@pytest.mark.parametrize("package", ["spline", "core", "domain", "physics", "workers", "utils", "ui", "future_package"])
 def test_reviewed_package_definitions_enter_the_gate(tmp_path, package):
     """Un symbole mort d'un paquet contrôlé doit rendre un verdict ; un appel UI compte."""
     copie = tmp_path / "tools" / AUDIT.name
@@ -195,7 +193,7 @@ def test_reviewed_package_definitions_enter_the_gate(tmp_path, package):
         encoding="utf-8",
     )
     appelant = tmp_path / "certus" / "ui" / "caller.py"
-    appelant.parent.mkdir(parents=True)
+    appelant.parent.mkdir(parents=True, exist_ok=True)
     appelant.write_text(
         f"from certus.{package}.probe import reviewed_live as _live\nVALEUR = _live()\n",
         encoding="utf-8",
@@ -290,14 +288,7 @@ def test_the_reference_perimeter_covers_the_application_but_not_the_tests():
 
 
 def test_the_definition_perimeter_is_reviewed():
-    """Le périmètre des DÉFINITIONS s'élargit paquet par paquet après examen.
-
-    Le signaler ici évite qu'on « répare » le rouge en faisant les deux d'un coup —
-    ce serait deux changements à la fois, et le résultat ne s'attribuerait pas.
-    `certus/metal` y est entré le 2026-09-28 (D30), `certus/spline` et
-    `certus/core`, `certus/domain`, `certus/physics` et `certus/workers` après D24 ;
-    le reste attend son examen.
-    """
+    """Chaque paquet runtime de certus est dans le portail des définitions."""
     sys.path.insert(0, str(ROOT / "tools"))
     from dead_symbol_audit import _iter_python_files
 
@@ -308,7 +299,7 @@ def test_the_definition_perimeter_is_reviewed():
         if len(p.relative_to(ROOT).parts) > 1
     }
 
-    assert zones == {"certus_physics", "certus/metal", "certus/spline", "certus/core", "certus/domain", "certus/physics", "certus/workers"}, (
-        f"le périmètre des définitions s'est élargi à {sorted(zones)} : c'est une décision "
-        "de portée, pas un correctif de faux positif"
-    )
+    expected = {"certus_physics"} | {
+        f"certus/{path.name}" for path in (ROOT / "certus").iterdir() if path.is_dir() and any(path.rglob("*.py"))
+    }
+    assert zones == expected, f"définitions : {sorted(zones)} ; paquets runtime : {sorted(expected)}"

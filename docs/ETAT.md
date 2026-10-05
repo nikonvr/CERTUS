@@ -13,11 +13,9 @@
 > à la fin. Les règles de validation sont dans les sections 2, 4 et 12 de
 > [CLAUDE.md](../CLAUDE.md) ; les décisions scientifiques appartiennent à 👤 (§5).
 
-**En cours (Claude, 2026-10-05) — machine occupée jusque vers 18 h 30.** Rang 3 : le banc d'hystérésis
-`r75x2` en `deep` tourne depuis 12 h 14, deux runs l'un après l'autre (`noise_level` puis `nominal`),
-dans l'arbre jetable `%TEMP%\hyst3` (commit `306559d3` plus le réglage `tp_hysteresis_reference`,
-non commité). Un essai `fast` a d'abord montré que la clé atteint le calcul : seuil constant de
-0,00083 aux trois niveaux de bruit. Ne pas lancer d'autre banc ni la suite complète avant la fin.
+**Dernière action (Claude, 2026-10-05).** Rang 3 clos : l'hystérésis et D14 sont tranchés sans changer le
+modèle livré (§3, STRAT) ; la machine est libre. Les arbres jetables `hyst2` et `hyst3` (le réglage
+`tp_hysteresis_reference` non commité et une trace de contrôle) ne servent plus et peuvent être retirés.
 
 **Dernière action (Codex, 2026-10-05).** Ordre des lots qualifié ci-dessous ;
 trois contrôles documentaires à zéro défaut, changement commité localement.
@@ -37,8 +35,6 @@ poussés ; pousser attend l'ordre de 👤. `python scripts\preflight.py` →
 `../CERTUS_certus0310_<date>_<commit>.bundle`.
 Une entrée Git `.git/worktrees/certus0310` incomplète déclenche un
 avertissement de nettoyage à chaque commit, sans empêcher le commit.
-L'arbre jetable `hyst2` contient le réglage d'hystérésis STRAT non commité ;
-ne pas le retirer.
 
 **Dernière validation complète (2026-10-05, Windows 11, Python 3.14.8,
 code au commit `4960ea5d`) :** Ruff 0 ; oracle 1 118 passed ; unit
@@ -59,7 +55,6 @@ Les lots 1 et 2 peuvent avancer en parallèle. Une mesure en cours n'autorise pa
 |---|---|---|
 | 1 — fiabiliser le verdict STRAT | Vérifier la propagation des réglages de consensus (D6), ce que `RESULT` agrège (D7) et la DP à plage restreinte (D9) ; corriger seulement les écarts prouvés, puis refaire les intervalles utiles avec recherche de fente (D8). | Ces points peuvent invalider une comparaison de stratégies ; établir ce socle avant de conclure sur un nouveau SEEL ou un taux de plantage. |
 | 2 — établir la parité publiée | Comparer fonction par fonction SPLINE et RE avec `optics continuum/05_CODE_ET_ZENODO` et `publication_reverse/07_PAQUET_ZENODO` ; consigner version, écart, effet mesuré et test associé. | Travail indépendant du rang 1, nécessaire avant d'affirmer que les améliorations publiées sont intégrées. RE local 1.2.0.dev0 diffère de l'archive 1.1.1 ; l'inversion conjointe de plusieurs échantillons est écartée par 👤. |
-| 3 — départager les variantes STRAT | Claude, à qui 👤 a délégué ce lot, compare dans `hyst2` les deux configurations sur `r75x2` en `deep` : plantage par bruit, déposables et SEEL. D14 est tranché (§3, STRAT) : la densité de lecture passe au rang 4. | Interpréter après le rang 1 ; garder témoins, graines et conditions identiques. Présenter les compromis à 👤 avant de changer le modèle livré. |
 | 4 — traiter la chaîne de mesure | Caractériser D54/D55 avant de modifier la grille fine ; spécifier puis mesurer la cadence machine (§6, 12.4), ensuite seulement le lissage (12.2). | D54 n'a pas d'appelant exposé ; D55 concerne la grille fine, avec effet final non mesuré. Leur arbitrage est délégué à Claude. Tout changement de noyau passe C1 froid contre froid et l'oracle. |
 | 5 — stabiliser interface et gel | Reproduire D23 (les cinq `gc.collect()` des workers STRAT et les `QThread`) avant D11 et `WA_DeleteOnClose` ; mesurer D85 dans le gel avant de réparer le préchauffage RE. Si `release-windows` rougit, traiter D77 en premier via stderr et artefact du job ; réduire la taille du gel (D72) après sa fiabilité. | D11 n'a pas d'effet dans le lancement actuel par processus ; libérer une fenêtre avant ses threads serait plus grave. |
 | 6 — réduire la dette | Élucider les effets d'import de D42 avant E402/I001 (D25), puis traiter D26 et les défauts visuels selon §4–5. | Chantier utile, mais moins urgent que la justesse scientifique ; l'ordre des imports peut changer l'exécution. |
@@ -238,11 +233,18 @@ du dichroïque dont le plantage s'écarterait nettement du prédit rouvrirait ce
   arbitraire que 16 : sur le juge standard (2026-10-04), 8 plans sur 370 survivent, le plantage moyen au bruit
   ×2 passe de 0,0012 à 0,0069. La sensibilité mesurée dit que la densité de lecture compte ; elle se règle par
   la cadence de la machine, pas par ce paramètre numérique.
-- **Hystérésis : ouverte.** Phase A emploie le bruit nominal ; Phase B
-  multiplie aujourd'hui le seuil par le niveau de bruit simulé. Le
-  seuil nominal fixe a été essayé sur le juge `fast`, sans résultat
-  décisif. Mesurer `r75x2` en `deep` avec les deux configurations
-  de l'arbre jetable `hyst2` avant activation.
+- **Hystérésis : le seuil suit le niveau de bruit, comme aujourd'hui.** Le seuil vaut 1,66 × le bruit
+  du niveau simulé (0,5×, 1×, 2×). L'autre lecture, un seul seuil réglé sur le bruit nominal, a été mesurée
+  sur `r75x2` en `deep` (graine 42, `306559d3`, caches vierges, 2026-10-05 ; une trace a vérifié que la clé
+  atteint le calcul) : sur les 300 plans communs aux deux runs, le plantage à 1× est identique pour 300,
+  à 0,5× il baisse pour 7 et monte pour 2, à 2× il monte pour 4 et baisse pour 5, et aucun plan ne gagne ni
+  ne perd le statut de déposable ; meilleur SEEL déposable 0,5566 contre 0,5560 nm, gagnante 0,5605 contre
+  0,5592 nm, sous le σ ≈ 1,8 % de ce composant. Les populations diffèrent (783 contre 662 stratégies, 691
+  contre 515 déposables) parce que la recherche bifurque, pas par un effet plan par plan. L'anomalie qui
+  motivait la question a disparu du code actuel : 684 stratégies dont le plantage croît avec le bruit contre
+  33 où il décroît (en août : 61 contre 532). Raison de garder : aucun gain mesuré pour un changement de toutes
+  les populations. `scripts\probe_plantage_vs_sigma.py` rouvrira la question si l'anomalie revient. Sorties :
+  `reports/STRAT_bench_r75x2_deep_hysteresis_{noise_level,nominal}_306559d3_2026-10-05.json`.
 - **Sans changement de code :** D16 (THICKNESS² conserve l'ordre DP),
   D18 (seuils 0,025 et 0,04 appliqués à deux grandeurs), D19 (le
   comptage des points tournants est déjà dans le noyau Phase A), D22

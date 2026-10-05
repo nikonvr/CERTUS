@@ -179,9 +179,11 @@ def _collect_references(py_files: list[Path]) -> dict[str, list[tuple[Path, int]
         except SyntaxError:
             continue
 
+        local_name_uses: dict[str, list[int]] = defaultdict(list)
         for node in ast.walk(tree):
             if isinstance(node, ast.Name):
                 refs[node.id].append((path, node.lineno))
+                local_name_uses[node.id].append(node.lineno)
             elif isinstance(node, ast.Attribute):
                 refs[node.attr].append((path, node.lineno))
             elif isinstance(node, ast.Constant) and isinstance(node.value, str):
@@ -194,6 +196,16 @@ def _collect_references(py_files: list[Path]) -> dict[str, list[tuple[Path, int]
                         slot_name = node.args[1].value
                         if slot_name.isidentifier():
                             refs[slot_name].append((path, node.lineno))
+
+        # `from module import original as local` is a production reference to
+        # `original` only when the local spelling is actually used in this file.
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom):
+                for imported in node.names:
+                    if imported.asname:
+                        refs[imported.name].extend(
+                            (path, line) for line in local_name_uses.get(imported.asname, [])
+                        )
 
     return refs
 

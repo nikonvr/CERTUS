@@ -125,6 +125,33 @@ def test_the_audit_exists_and_runs(tmp_path):
     )
 
 
+def test_an_aliased_import_counts_only_when_called(tmp_path):
+    """Les imports renommés de SPLINE ne doivent ni cacher du mort ni créer un faux positif."""
+    copie = tmp_path / "tools" / AUDIT.name
+    copie.parent.mkdir()
+    shutil.copy2(AUDIT, copie)
+    (tmp_path / "CERTUS_SONDE.py").write_text(
+        "def aliased_live():\n    return 1\n\n\ndef aliased_dead():\n    return 0\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "CERTUS_APPELANT.py").write_text(
+        "from CERTUS_SONDE import aliased_live as _called, aliased_dead as _unused\n"
+        "VALEUR = _called()\n",
+        encoding="utf-8",
+    )
+    out = subprocess.run(
+        [sys.executable, str(copie), "--whitelist", str(tmp_path / "aucune_liste_blanche")],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert out.returncode == 0, out.stderr
+    signales = _candidats(out.stdout)
+    assert "CERTUS_SONDE:aliased_dead" in signales
+    assert "CERTUS_SONDE:aliased_live" not in signales
+
+
 def test_the_ci_step_passes():
     """Le verdict que `lint.yml` rend vraiment, rendu ICI aussi.
 

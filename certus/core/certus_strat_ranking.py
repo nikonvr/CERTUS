@@ -338,6 +338,27 @@ def _find_k_best_groupings_dp_sequential(
     return solutions
 
 
+def fewest_feasible_blocks(cost_map: dict[int, dict[float, float]], num_layers: int) -> int:
+    """The fewest contiguous blocks covering the stack with one wavelength admissible in every layer of each block.
+
+    Greedy, and optimal for this constraint: any sub-interval of a feasible block is feasible, so extending each block
+    as far as a common wavelength exists cannot be beaten. Wavelengths match to 1e-5 nm, as in
+    `_compute_valid_blocks_kernel`. 0 when a layer has no admissible wavelength at all.
+    """
+    count = 0
+    common: set[float] | None = None
+    for i in range(num_layers):
+        layer = {round(float(w), 5) for w in (cost_map.get(i) or {})}
+        if not layer:
+            return 0
+        if common is not None and common & layer:
+            common &= layer
+            continue
+        count += 1
+        common = layer
+    return count
+
+
 def mine_strategies_for_block_count(
     n_blocks: int,
     raw_results_thickness: dict[int, list[dict[str, float]]],
@@ -570,6 +591,15 @@ def mine_strategies_for_block_count(
         if sym_enable and cost_map_sym:
             f3 = miner_executor.submit(run_mining, cost_map_sym, "SYM", 200, True)
             strategies_collected.extend(f3.result())
+
+    if not strategies_collected:
+        # D9: a block count under the fewest feasible one leaves only the structured seeds, which reads like an
+        # emptied search. Say why, once per block count.
+        log.info(
+            f"   [MINING] n_blocks={n_blocks}: the DP found no grouping; the fewest contiguous blocks with one "
+            f"admissible wavelength per block is {fewest_feasible_blocks(cost_map_thick, num_layers)} here "
+            f"(first block of two layers at least: {bool(force_monolayer)}). Only the structured seeds remain."
+        )
 
     structured_seeds = _generate_structured_seed_strategies(
         n_blocks=n_blocks,

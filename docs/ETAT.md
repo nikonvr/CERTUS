@@ -193,105 +193,51 @@ du dichroïque dont le plantage s'écarterait nettement du prédit rouvrirait ce
 - **Le multi-témoins est un outil de faisabilité**, pas d'optimisation : il rend le passe-bande
   de 99 couches fabricable et dégrade tout composant qui s'en passait (contrôle négatif 3 sur 3).
 
-### STRAT — tranché par Claude sur délégation de 👤, 2026-10-04
+### STRAT — arbitrages délégués par 👤 le 2026-10-04
 
-👤 : « je ne me souviens plus trop de strat, je te propose de trancher les questionnements au plus
-logique ». Chaque ligne donne la décision, sa raison et sa mesure ; une mesure qui la contredit la rouvre.
+- **D73, point tournant sous l'arrêt : corrigé.** La marge se mesure en
+  transmission au sommet interpolé, même si la pente change de signe sur
+  l'échantillon d'arrêt. Sur 20 000 empilements aléatoires, 1 617 marges
+  ont baissé ; le juge de paix `fast` a gardé ses 194 stratégies et son
+  `RESULT` au bit.
+- **D20, classement final : corrigé.** Dans la classe à 0,01 nm du meilleur
+  SEEL, trier par rendement, marge critique, puis score brut. Le juge
+  `fast` conserve 194 stratégies mais change 147 positions ; la
+  recherche interne garde son tri propre.
+- **D70, critère en épaisseur : retiré.** Son réglage était inerte ; la
+  marge valable est en transmission. L'ancienne clé est ignorée au
+  chargement avec journal. C1 : 8 008/8 008 tableaux identiques au bit.
+- **D17, gain négatif : conservé.** Il détecte une fragilité que la porte
+  de plantage peut manquer. Sur le juge `fast`, 159 candidates ont un
+  gain négatif, dont 13 sont écartées par ce seul critère ; le journal
+  les compte toutes.
+- **D15, historique POEM : quatre couches conservées.** Douze couches
+  rendent les mêmes 370 stratégies, leur ordre et leurs taux de
+  plantage sur le juge standard ; 303 scores ne diffèrent que dans
+  les derniers bits (≤ 6,7·10⁻¹¹ en relatif).
+- **Hystérésis : ouverte.** Phase A emploie le bruit nominal ; Phase B
+  multiplie aujourd'hui le seuil par le niveau de bruit simulé. Le
+  seuil nominal fixe a été essayé sur le juge `fast`, sans résultat
+  décisif. Mesurer `r75x2` en `deep` avec les deux configurations
+  de l'arbre jetable `hyst2` avant activation.
+- **Sans changement de code :** D16 (THICKNESS² conserve l'ordre DP),
+  D18 (seuils 0,025 et 0,04 appliqués à deux grandeurs), D19 (le
+  comptage des points tournants est déjà dans le noyau Phase A), D22
+  (effet borné à une couche et Rate simulé en Phase B), D12 (lissage
+  causal inactif à `k=1`), D13 (quantification temporelle à reporter
+  jusqu'à une mesure réelle). Une mesure contradictoire les rouvrira.
 
-- **D73, la marge en transmission voit le point tournant sous l'arrêt** (R129). Quand la pente change
-  de signe à l'échantillon d'arrêt, le sommet de la parabole des trois échantillons situe le point
-  tournant dans le pas et donne son niveau ; la marge de son côté est l'écart en T à ce niveau. Raison :
-  le critère existe pour interdire l'arrêt sur un point tournant, et il l'admettait (marges
-  `(MARGIN_NONE ; 0,28)` à ±1,25 nm d'un quart d'onde). Mesuré sur 20 000 empilements aléatoires,
-  noyaux compilés à froid : 18 383 réponses identiques au bit, les 1 617 autres changent d'un seul côté
-  et toujours vers le bas, 1 148 passent sous le seuil `1,66 × A`. Sur le juge de paix en `fast`, la
-  Phase A refuse 241 candidates sur 24 couches au lieu de 96 sur 21, et les 194 stratégies finales, leur
-  ordre, leurs scores et `RESULT` sont identiques au bit : ces λ mouraient plus tard au Monte-Carlo.
-- **D20, le classement montré et exporté suit la règle gravée** (R130) : les stratégies à moins d'un pas
-  (0,01 nm) du meilleur SEEL restant forment une classe, ordonnée par plantage, puis marge de la couche
-  critique, puis score brut (`order_by_the_ranking_rule`). Raison : la règle « un écart d'un pas est une
-  égalité » n'atteignait aucun tableau — le run final triait par score brut, et les cases fixes de
-  `rank_key_seel_yield_margin` séparent deux SEEL distants de 0,005 nm. La recherche interne (parents
-  d'ELITE, diversité, consensus) garde son tri ; `use_margin_ranking` reste inactif. Mesuré sur le juge
-  de paix en `fast` : même population de 194 stratégies, 147 positions changent, et la gagnante passe de
-  la fusion à un bloc (SEEL 0,1843 nm, 2 % de plantage) à la stratégie ELITE à huit blocs (0,1892 nm, 0 %) ;
-  `RESULT` passe de 0,008495 à 0,008950.
-- **D70, le critère en épaisseur est retiré** (R131). `check_extrema_proximity` n'était appelé par la
-  Phase A qu'avec des matrices nulles quand `phase_a_level_margin_factor` vaut 0, et ne refusait alors
-  rien ; au-dessus, il n'était pas appelé. Le réglage « Extrema Exclusion Ratio » n'atteignait donc aucun
-  calcul, et arrivait de surcroît dans le noyau comme une largeur en nm. Raison : la marge se compte en
-  transmission (règle gravée). Le réglage rejoint `_RETIRED_CONFIG_KEYS` (un fichier ancien se charge et
-  le dit), l'appel inerte disparaît, la fonction reste testée pour elle-même ; sa docstring, le commentaire
-  du noyau de croissance et la page STRAT décrivent ce que fait le code (2 largeurs avant un point
-  tournant, une demi après, et non 3 et 1). La page annonçait aussi un journal `[SURVIVAL]` qui n'existe
-  pas : elle cite `[MARGIN]` et `[ADMISSIBILITY]`. Mesuré :
-  C1 froid contre froid, 8 008/8 008 tableaux identiques au bit ; sur le juge de paix en `fast`, le run
-  avec D70 et un cache Numba vierge est identique au bit au run D20 (194 stratégies, IDs, ordre, scores) ;
-  sept cas du test des réglages retirés échouent sur le code d'avant. Un premier run avait relu des noyaux
-  mis en cache par les tests : sept scores différaient au dernier bit, l'écart froid/chaud de D52.
-- **D17, le critère du gain négatif est gardé ; le défaut est réfuté** (R132). Le gain négatif signale une
-  couche qui ne se termine pas, sans bruit, après 1 nm d'erreur amont : une fragilité que la porte de
-  plantage ne voit pas toujours. Le recensement compte désormais chaque gain négatif, même quand la porte de
-  plantage a déjà écarté la candidate (`gain_negative_any`, et « of N with gain<0 » dans la ligne
-  `[ADMISSIBILITY]`). Mesuré sur le juge de paix en `fast` : 159 candidates à gain négatif sur 48 couches,
-  dont 146 déjà écartées pour plantage et 13 par ce seul critère ; les runs d'avant comptaient déjà ces 13.
-  Le constat « n'a jamais rejeté une candidate » (n° 38) ne tient pas sur ce composant.
-- **Hystérésis du détecteur, non tranché faute de mesure décisive.** Le seuil vaut `tp_hysteresis_factor ×
-  bruit` du niveau Monte-Carlo (0,5×, 1×, 2×) en Phase B, et du bruit nominal en Phase A : à 0,5× et 2× les deux
-  phases ne simulent pas la même machine. Principe retenu : un seul réglage, celui du bruit nominal de la fente.
-  Mesuré sur le juge de paix en `fast` avec ce seuil fixe (clé `tp_hysteresis_reference`, arbre jetable, trace qui
-  prouve que la clé atteint le calcul) : aucun durcissement — le plantage au bruit ×2 baisse pour 8 stratégies
-  communes et ne monte pour aucune — et ce composant ne montre presque pas l'anomalie (26 croissantes, 167 plates,
-  1 décroissante). Le test décisif est `r75x2`, où l'anomalie a été mesurée (8,7 contre 1) ; rien n'est activé avant.
-- **D15, POEM garde quatre couches d'historique : mesuré sans effet.** Sur le juge de paix standard
-  (`JSON-strat-example.json`, caches Numba vierges, 2026-10-04), rejouer douze couches au lieu de quatre rend les mêmes 370 stratégies,
-  dans le même ordre, avec les mêmes taux de plantage à chaque niveau de bruit ; 303 scores diffèrent d'au plus 6,7·10⁻¹¹ en
-  relatif (derniers bits). Le plafond « par construction » n'agit pas sur ce composant ; on garde quatre couches
-  (`MAX_LOOKBACK_VAL`, inchangé), moins coûteux. Une
-  mesure sur un composant à blocs plus longs qui montrerait un écart rouvrirait D15.
-- **Clos sans changement de code** (raisonnement sur le code, sans mesure nouvelle) :
-  - **D16** : la carte THICKNESS² est le carré du coût boosté, par construction (un bonus en 1/√s y
-    devient 1/s), et la normalisation par la moyenne est un facteur commun, qui ne change aucun ordre de
-    la DP.
-  - **D18** : 0,025 (dynamique de la couche pendant son dépôt, filtre de candidates et besoin de Rate) et
-    0,04 (écart entre les deux ancres POEM, règle de l'opérateur qui n'emploie pas POEM sur un swing trop
-    faible) mesurent deux grandeurs. Une couche entre les deux est simulée en cible absolue, avec le bruit
-    des ancres et la dérive photométrique : son erreur entre dans le score, la sélection la voit.
-  - **D19** : la Phase A note chaque λ avec le noyau de croissance complet (comptage des points
-    tournants, ancres POEM, atteignabilité du niveau) ; un terme de comptage en plus compterait deux fois
-    la même chose.
-  - **D22** : effet borné à une couche ; la Phase B simule le Rate exactement.
-  - **D12** : sans exposition, `k = 1` dans toutes les configurations. Une moyenne en temps réel est
-    causale par nature ; les ancres POEM, lues après coup, pourraient l'être sans retard : à revoir avec 12.2.
-  - **D13** : la quantification `U(0 ; 0,125 nm)` a la même loi pour toutes les stratégies ; son
-    écart-type (0,036 nm) est environ trois fois sous l'erreur de déclenchement due au bruit (~0,1 nm),
-    à laquelle elle s'ajoute en quadrature (calcul, non mesuré). La compensation par la couche suivante
-    dépend de la stratégie : à implanter si une mesure réelle le demande, pas avant.
+### DESIGN — arbitrages délégués par 👤 le 2026-10-04
 
-### DESIGN — D45 et D46, tranchés par Claude sur l'ordre de 👤, 2026-10-04
-
-👤 : « go et lance-toi dans la résolution des actions complexes », en réponse à la liste qui disait ces deux-là
-bloquées par sa décision. Chaque correctif est un commit qu'un `git revert` annule seul.
-
-- **D45, le gradient de DESIGN avec pile arrière est la dérivée de son coût** (R136). Il divisait par le nombre de
-  points valides là où le coût divise par la somme de leurs poids : trop grand du poids moyen, de 1,07 à 1,94 sur les
-  cas mesurés le 2026-09-30. Raison : l'optimiseur doit recevoir la dérivée de la fonction qu'il rapporte ; la valeur
-  du coût et la direction du gradient étaient justes, pas son échelle. Mesuré : C1 froid contre froid, 7 915 tableaux
-  sur 8 008 identiques au bit, dont les 240 du gradient sans pile arrière (`normal.gradall0`) ; les 93 autres sont le
-  gradient avec pile arrière (`normal.gradall1`), qui change de 26 à 62 %. Oracle `1117 passed` ; le nouveau test
-  (poids 1 et 3, points hors cible, k = 0 et 10⁻⁶) échoue sur le code d'avant et colle après aux différences finies
-  à 10⁻⁵. Avec l'ancien gradient, L-BFGS-B atteignait les mêmes coûts finaux en jusqu'à 25 % d'évaluations de plus
-  (2026-09-30) ; l'effet du correctif sur un design réel n'est pas mesuré.
-- **D46, les bornes d'épaisseur de DESIGN s'arrêtent avant l'opacité** (R137). Au-delà de |Im φ| = 700 sur la
-  grille (`PHASE_IMAG_OVERFLOW`), les noyaux rendent (R, T) = (0, 0) au lieu de l'absorbeur semi-infini ; or la borne
-  haute du mode global, 1,2 × max(quart d'onde à λ₀, départ), vaut des centaines de micromètres pour un métal dans
-  l'infrarouge, dont la partie réelle est minuscule. Les trois modes (global, local, healing) arrêtent désormais la
-  borne haute à 1 % sous l'épaisseur d'opacité de la couche (`optim_opaque_thickness_limits`), où sa réponse ne bouge
-  plus avec d. Raison : borner la phase dans les noyaux changeait les derniers bits (1e-15) des chemins à substrat
-  réel ; borner les épaisseurs ne touche aucun noyau. Mesuré : une couche qui n'absorbe pas garde ses bornes au bit
-  dans les trois modes ; pour un métal infrarouge (n = 0,02 − 60i, de 8 à 12 µm), la borne globale passait de plus
-  de 100 µm à une épaisseur que `require_layers_below_overflow` accepte, et 2 % au-delà est refusé. Les noyaux
-  répondent toujours (0, 0) au-delà ; les optimisations de DESIGN ne le leur demandent plus.
+- **D45, gradient avec pile arrière : corrigé.** Le coût et son gradient
+  utilisent désormais la même somme des poids. C1 : 93 des 8 008
+  tableaux changent, tous dans ce gradient ; la différence finie
+  confirme le nouveau gradient à 10⁻⁵.
+- **D46, opacité : bornes d'épaisseur limitées.** Les modes global,
+  local et healing restent à 1 % sous l'épaisseur où `|Im φ|=700`.
+  Une couche non absorbante garde ses bornes au bit ; un métal
+  infrarouge n'envoie plus l'optimiseur dans la zone où le noyau
+  répond (R, T) = (0, 0). Les noyaux restent inchangés.
 
 ## 4. Défauts ouverts
 
@@ -344,7 +290,7 @@ numéros de l'ancien registre sont entre parenthèses
 | D72 | **Taille du gel (S7.2) : objectif ≤ 300 Mo non atteint.** Reconstruit le 2026-10-03 avec PyInstaller 6.22.3 dans un dossier temporaire, `PATH` assaini : 447 675 580 octets, 7 307 fichiers ; hub et dix modules passent `release_checks.py --check-frozen --check-frozen-run`. Aucun `excludes` n'a été essayé (`certus_hub.spec` a `excludes=[]`). L'application (`certus/`, `certus_physics/`, les `CERTUS_*.py`) n'importe aucune des bibliothèques de développement que le gel embarque (D50) — balayage AST : IPython, pytest, hypothesis, coverage, astroid, pylint, black, mypy, ruff, sphinx, jedi, parso, notebook, jupyter, ipykernel : 0 import ; setuptools, pip, wheel, tkinter aussi, à essayer avec prudence (numba en a un usage optionnel). Étape suivante : exclure les douze premières dans une copie et mesurer taille et démarrage de tous les modules ; inspecter plugins Qt et sous-modules de scipy avant d'autres exclusions |
 | D76 | **METAL SINGLE, analyse du faisceau : objectif et gradient différents.** `gradient_function_fixed_eM` donne la dérivée de la partie données à 2e-10 près, mais `objective_function_fixed_eM` ajoute une pénalité de lissage 1e-2 sans sa dérivée : écart relatif au gradient du coût complet de 1,7e-3 (nœuds lisses) à 1,9e-2 (rugueux). Décision de 👤 : ajouter la dérivée ou retirer la pénalité. Le point distinct sur les nœuds internes METAL BILAYER est corrigé en R113. |
 | D82 | **Thème sombre : logo et mesure de contraste à terminer.** Les textes et états vides suivent désormais le thème (R102). Le logo foncé reste peu visible en thème sombre, constat visuel sans mesure ; le harnais ne résout pas encore une encre de palette sur fond hérité. |
-| D84 | **Validation locale intermittente, partiellement instruite.** Sur une copie propre de `HEAD`, `test_uniform_weights_reproduce_the_unweighted_functional` avait rendu un écart de 5,55e-17 (Numba 0.68.0 installé alors pour 0.67.0 au verrou) ; un test du workflow échouait sur une modification locale aujourd'hui absente ; la limite du test de concurrence était dépassée sur une passe Windows. Le benchmark de croissance attendait deux valeurs quand le noyau en rend cinq : corrigé par R103 et rejoué avec `pytest-benchmark 5.3.0` dans un dossier temporaire (`1 passed in 1.46s`, puis `6 passed in 5.77s` pour le fichier). Le 2026-10-02, sur l'arbre courant avec Numba 0.67.0 : les deux tests unitaires ciblés passent (`2 passed in 6.21s`), le test de concurrence ciblé passe (`1 passed in 3.94s`), puis la suite unit entière passe (`4830 passed, 5 skipped, 6 xfailed in 972.14s`) et le reste de `tests/` passe (`347 passed, 2 skipped in 579.07s`). Ces passes ne prouvent pas que les écarts intermittents ont disparu. Le 2026-10-03, juste après un changement de la clé du cache (R114) : `test_neutral_parameters_are_bit_identical_to_the_legacy_call` et `test_the_slit_profile_is_inert_when_absent_or_zero` (`test_strat_phase_a_state_coherence.py`) en échec au bit à la première passe d'unit, verts à trois relances (`11 passed`) et à la passe complète suivante ; de nouveau après R117, le premier des deux seul, vert à la passe complète suivante. Deux fois sur deux après un changement de clé, aucune sur les passes à cache chaud du même jour : la signature de D52, un noyau compilé sur place contre un noyau relu du cache, que l'enquête D52/D67 doit trancher. | Établir la cause de l'écart au bit s'il revient en suite complète. |
+| D84 | **Validation locale intermittente.** Des écarts au dernier bit sur deux tests STRAT apparaissent après un changement de clé de cache Numba, puis disparaissent aux relances et dans la suite complète (observé deux fois le 2026-10-03). Signature compatible avec D52 : compilation sur place contre lecture du cache, cause non prouvée. | Si l'écart revient, comparer les noyaux froids et chauds avant de modifier le calcul. |
 | D85 | **Le préchauffage RE ne va jamais au bout.** `_warmup_re_physics`, lancé au démarrage de chaque application par `_bg_warmup`, lève `IndexError: index 2 is out of bounds for axis 0 with size 2` dans `_global_evaluate_oblique_physics` (`n_lay_full[pos_all, :]`), que son `except Exception` avale (mesuré le 2026-10-03, compilé et interprété) : les noyaux RE qui suivent ne sont pas préchauffés, le premier calcul RE les compile. Sans risque mémoire, numpy contrôle cet indice. **Non corrigé** : un préchauffage RE qui irait au bout ferait tourner plus longtemps des noyaux parallèles en fond, et le gel (couche `workqueue`) ne tolère pas deux appels parallèles concurrents (D77, R107) ; à mesurer dans le gel avant d'y toucher. |
 
 ## 5. Ce qui attend une décision de 👤

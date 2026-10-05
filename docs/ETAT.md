@@ -13,6 +13,9 @@
 > à la fin. Les règles de validation sont dans les sections 2, 4 et 12 de
 > [CLAUDE.md](../CLAUDE.md) ; les décisions scientifiques appartiennent à 👤 (§5).
 
+**Dernière action (Codex, 2026-10-05).** Ordre des lots qualifié ci-dessous ;
+trois contrôles documentaires à zéro défaut, changement commité localement.
+
 **D24 clos (Codex, 2026-10-05).** L'audit CI couvre la racine,
 `certus_physics` et tout `certus/`, y compris les futurs sous-paquets :
 3 928 définitions, 73 candidats justifiés un par un dans la liste blanche,
@@ -41,24 +44,35 @@ Les quatre pages HTML RE, DESIGN, INDEX SPLINE et STRAT rendent leurs
 logigrammes Mermaid dans Chrome (8/8, 6/6, 5/5 et 6/6, mesuré le
 2026-10-04).
 
-**À faire :**
+**Ordre conseillé des prochains lots.** Priorité aux résultats potentiellement faux,
+puis aux dépendances techniques ; chaque changement reste un commit distinct (C3).
+Les lots 1 et 2 peuvent avancer en parallèle. Une mesure en cours n'autorise pas
+à modifier son arbre témoin.
 
-| chantier | prochaine action |
-|---|---|
-| STRAT : hystérésis, D14, D54, D55 | Arbitrages délégués à Claude par 👤. `hyst2` contient les deux configurations à comparer sur `r75x2` en `deep` ; mesurer les taux de plantage par niveau de bruit, les déposables et le meilleur SEEL. D14 est chiffré en §4 ; départager les extrema parasites de l'historique à densité égale. |
-| Parité Zenodo SPLINE et RE | Comparer fonction par fonction les sources locales de `optics continuum/05_CODE_ET_ZENODO` et `publication_reverse/07_PAQUET_ZENODO` avec le code courant ; mesurer les écarts utiles. Le paquet RE local 1.2.0.dev0 et l'archive publique 1.1.1 diffèrent ; l'inversion conjointe de plusieurs échantillons est écartée par 👤. |
-| D11 / D23, Qt | Rejouer `scripts/sonde_retenants_fenetre.py`, examiner les cinq `gc.collect()` des workers STRAT et les `QThread` retenus avant de toucher à `WA_DeleteOnClose`. |
-| D77 | Seulement si la CI release devient rouge : lire stderr et l'artefact watchdog du premier job rouge. |
+| rang | action et critère de fin | raison / condition |
+|---|---|---|
+| 1 — fiabiliser le verdict STRAT | Vérifier la propagation des réglages de consensus (D6), ce que `RESULT` agrège (D7) et la DP à plage restreinte (D9) ; corriger seulement les écarts prouvés, puis refaire les intervalles utiles avec recherche de fente (D8). | Ces points peuvent invalider une comparaison de stratégies ; établir ce socle avant de conclure sur un nouveau SEEL ou un taux de plantage. |
+| 2 — établir la parité publiée | Comparer fonction par fonction SPLINE et RE avec `optics continuum/05_CODE_ET_ZENODO` et `publication_reverse/07_PAQUET_ZENODO` ; consigner version, écart, effet mesuré et test associé. | Travail indépendant du rang 1, nécessaire avant d'affirmer que les améliorations publiées sont intégrées. RE local 1.2.0.dev0 diffère de l'archive 1.1.1 ; l'inversion conjointe de plusieurs échantillons est écartée par 👤. |
+| 3 — départager les variantes STRAT | Claude, à qui 👤 a délégué ce lot, compare dans `hyst2` les deux configurations sur `r75x2` en `deep` : plantage par bruit, déposables et SEEL ; confronter ensuite D14 aux extrema parasites à densité égale. | Interpréter après le rang 1 ; garder témoins, graines et conditions identiques. Présenter les compromis à 👤 avant de changer le modèle livré. |
+| 4 — traiter la chaîne de mesure | Caractériser D54/D55 avant de modifier la grille fine ; spécifier puis mesurer la cadence machine (§6, 12.4), ensuite seulement le lissage (12.2). | D54 n'a pas d'appelant exposé ; D55 concerne la grille fine, avec effet final non mesuré. Leur arbitrage est délégué à Claude. Tout changement de noyau passe C1 froid contre froid et l'oracle. |
+| 5 — stabiliser interface et gel | Reproduire D23 (les cinq `gc.collect()` des workers STRAT et les `QThread`) avant D11 et `WA_DeleteOnClose` ; mesurer D85 dans le gel avant de réparer le préchauffage RE. Si `release-windows` rougit, traiter D77 en premier via stderr et artefact du job ; réduire la taille du gel (D72) après sa fiabilité. | D11 n'a pas d'effet dans le lancement actuel par processus ; libérer une fenêtre avant ses threads serait plus grave. |
+| 6 — réduire la dette | Élucider les effets d'import de D42 avant E402/I001 (D25), puis traiter D26 et les défauts visuels selon §4–5. | Chantier utile, mais moins urgent que la justesse scientifique ; l'ordre des imports peut changer l'exécution. |
+
+**En parallèle, priorité scientifique dépendant de 👤 :** obtenir deux dépôts
+réels du dichroïque et leurs spectres pour la validation ordinale externe (§5).
+Vérifier la provenance des indices D56 et « Syrus » avant de valider des
+résultats fondés sur ces matériaux ; ne pas changer leurs coefficients sans
+mesure et décision. Les autres choix réservés à 👤 restent en §5.
 
 ## 1. Où en sont les programmes
 
 | programme | état | prochaine action |
 |---|---|---|
-| **Calcul (STRAT)** | composant étalon : l'aléatoire ×2 (`r75x2`) à la fente de 2 nm. Fabricable avec les rampes de la configuration livrée ; sans rampes, 3 graines sur 7 trouvent des déposables. Toute la fabricabilité passe par le générateur ELITE | voir la section 6 |
-| **Interface** | plan clos le 2026-09-08 : 12 critères de fin sur 13 atteints et mesurés, le treizième démontré inatteignable (`xfail` strict) | la revue visuelle et trois arbitrages de 👤 (section 5) ; la fuite des fenêtres (défaut D11) |
-| **Qualité** | CI : calcul sous Linux, interface sous Windows ; tests isolés des préférences de 👤 ; dette de lint de 14 règles masquées (D25) | E402/I001, D11 et défauts de la section 4 |
+| **Calcul (STRAT)** | composant étalon : l'aléatoire ×2 (`r75x2`) à la fente de 2 nm. Fabricable avec les rampes de la configuration livrée ; sans rampes, 3 graines sur 7 trouvent des déposables. Toute la fabricabilité passe par le générateur ELITE | rangs 1, 3 et 4 ci-dessus |
+| **Interface** | plan clos le 2026-09-08 : 12 critères de fin sur 13 atteints et mesurés, le treizième démontré inatteignable (`xfail` strict) | rang 5 et choix de 👤 (§5) |
+| **Qualité** | CI : calcul sous Linux, interface sous Windows ; tests isolés des préférences de 👤 ; dette de lint de 14 règles masquées (D25) | rangs 5 et 6 |
 | **Documentation** | règles dans `CLAUDE.md`, état ici ; 15 rapports HTML, 34 schémas Mermaid et 2 SVG validés le 2026-10-03 ; anciens dossiers lisibles dans Git | tenir « un fait, un seul endroit » |
-| **Validation externe** | 🔴 **aucune** : STRAT n'est validé que contre lui-même | deux dépôts réels du dichroïque (section 5) |
+| **Validation externe** | 🔴 **aucune** : STRAT n'est validé que contre lui-même | données à obtenir auprès de 👤 (§0 et §5) |
 
 ## 2. Repères mesurés — fente 2 nm, modèle courant
 

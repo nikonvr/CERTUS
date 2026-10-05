@@ -126,9 +126,9 @@ def _decorator_names(node: ast.FunctionDef | ast.AsyncFunctionDef) -> tuple[str,
     return tuple(names)
 
 
-def _is_qt_decorated(decorators: tuple[str, ...]) -> bool:
-    qt_decorators = {"pyqtSlot", "pyqtProperty", "Slot", "Property"}
-    return any(name in qt_decorators for name in decorators)
+def _is_framework_decorated(decorators: tuple[str, ...]) -> bool:
+    auto_invoked = {"pyqtSlot", "pyqtProperty", "Slot", "Property", "field_validator", "model_validator"}
+    return any(name in auto_invoked for name in decorators)
 
 
 def _collect_definitions(py_files: list[Path]) -> list[Definition]:
@@ -241,7 +241,7 @@ def _write_whitelist(path: Path, symbol_ids: list[str]) -> None:
 def _is_excluded_by_heuristic(defn: Definition) -> bool:
     if defn.name.startswith("__") and defn.name.endswith("__"):
         return True
-    if _is_qt_decorated(defn.decorators):
+    if defn.is_method and _is_framework_decorated(defn.decorators):
         return True
     if defn.is_method and EVENT_HANDLER_RE.match(defn.name):
         return True

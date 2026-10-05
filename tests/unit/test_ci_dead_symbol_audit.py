@@ -154,6 +154,33 @@ def test_an_aliased_import_counts_only_when_called(tmp_path):
     assert "CERTUS_SONDE:aliased_live" not in signales
 
 
+def test_framework_validators_are_not_reported_as_dead(tmp_path):
+    """Pydantic invokes decorated validators without an explicit Python call site."""
+    copie = tmp_path / "tools" / AUDIT.name
+    copie.parent.mkdir()
+    shutil.copy2(AUDIT, copie)
+    (tmp_path / "CERTUS_SONDE.py").write_text(
+        "class Model:\n"
+        "    @field_validator('x')\n"
+        "    @classmethod\n"
+        "    def normalize_field(cls, value):\n        return value\n\n"
+        "    @model_validator(mode='after')\n"
+        "    def normalize_model(self):\n        return self\n",
+        encoding="utf-8",
+    )
+    out = subprocess.run(
+        [sys.executable, str(copie), "--whitelist", str(tmp_path / "aucune_liste_blanche")],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert out.returncode == 0, out.stderr
+    signales = _candidats(out.stdout)
+    assert "CERTUS_SONDE:Model.normalize_field" not in signales
+    assert "CERTUS_SONDE:Model.normalize_model" not in signales
+
+
 @pytest.mark.parametrize("package", ["spline", "core"])
 def test_reviewed_package_definitions_enter_the_gate(tmp_path, package):
     """Un symbole mort d'un paquet contrôlé doit rendre un verdict ; un appel UI compte."""

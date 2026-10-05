@@ -53,7 +53,6 @@ Les lots 1 et 2 peuvent avancer en parallèle. Une mesure en cours n'autorise pa
 
 | rang | action et critère de fin | raison / condition |
 |---|---|---|
-| 1 — fiabiliser le verdict STRAT | D6, D7 et D9 tranchés (§3, STRAT). Reste D8 : refaire les intervalles utiles avec recherche de fente. | Ces points peuvent invalider une comparaison de stratégies ; établir ce socle avant de conclure sur un nouveau SEEL ou un taux de plantage. |
 | 2 — établir la parité publiée | Comparer fonction par fonction SPLINE et RE avec `optics continuum/05_CODE_ET_ZENODO` et `publication_reverse/07_PAQUET_ZENODO` ; consigner version, écart, effet mesuré et test associé. | Travail indépendant du rang 1, nécessaire avant d'affirmer que les améliorations publiées sont intégrées. RE local 1.2.0.dev0 diffère de l'archive 1.1.1 ; l'inversion conjointe de plusieurs échantillons est écartée par 👤. |
 | 4 — traiter la chaîne de mesure | Caractériser D54/D55 avant de modifier la grille fine ; spécifier puis mesurer la cadence machine (§6, 12.4), ensuite seulement le lissage (12.2). | D54 n'a pas d'appelant exposé ; D55 concerne la grille fine, avec effet final non mesuré. Leur arbitrage est délégué à Claude. Tout changement de noyau passe C1 froid contre froid et l'oracle. |
 | 5 — stabiliser interface et gel | Reproduire D23 (les cinq `gc.collect()` des workers STRAT et les `QThread`) avant D11 et `WA_DeleteOnClose` ; mesurer D85 dans le gel avant de réparer le préchauffage RE. Si `release-windows` rougit, traiter D77 en premier via stderr et artefact du job ; réduire la taille du gel (D72) après sa fiabilité. | D11 n'a pas d'effet dans le lancement actuel par processus ; libérer une fenêtre avant ses threads serait plus grave. |
@@ -273,6 +272,15 @@ du dichroïque dont le plantage s'écarterait nettement du prédit rouvrirait ce
   entre 9 et 10 blocs (601 groupements de 15 à 10, graines seules de 9 à 1, 2026-10-05). Le mineur écrit
   maintenant `[MINING] n_blocks=…: the DP found no grouping; the fewest contiguous blocks … is N` ; aucun
   résultat ne change. Sorties : `reports/STRAT_bench_juge_de_paix_ca99bc8c_D9_*_2026-10-05.*`.
+- **D8, intervalles du 99c avec recherche de fente : les verdicts tiennent.** Les quatre intervalles de la
+  partition retenue ([0,22), [22,42), [42,76), [76,99)) remesurés comme le fait
+  `scripts\campagne_intervalles.py` (`fast`, graine 42, verre nu, tranche du bruit des 99 couches, `ca99bc8c`,
+  2026-10-05), fente cherchée ou non : déposables tous les quatre dans les deux bras, plantage minimal 0 %,
+  meilleur score déposable à −2,6 %, −0,8 %, 0 % et +1,8 % (la recherche de fente place dans la population des
+  fentes de 0,5 à 5 nm). La partition reste fabricable avec la recherche de fente. Les autres intervalles
+  du cache ont servi à choisir cette partition ; les refaire ne servirait qu'à la rechoisir, ce qui n'est pas fait. Le SEEL assemblé (§2, 0,81 nm
+  sur trois graines) n'est pas remesuré. Sorties :
+  `reports/STRAT_99c_intervalles_retenus_fente_{off,on}_ca99bc8c_2026-10-05.json`.
 - **Sans changement de code :** D16 (THICKNESS² conserve l'ordre DP),
   D18 (seuils 0,025 et 0,04 appliqués à deux grandeurs), D19 (le
   comptage des points tournants est déjà dans le noyau Phase A), D22
@@ -307,7 +315,6 @@ numéros de l'ancien registre sont entre parenthèses
 
 | # | défaut | piste |
 |---|---|---|
-| D8 | `scripts/campagne_intervalles.py` forçait `search_resolution` à faux alors que 👤 en a fait un prérequis : les campagnes d'intervalles ont tourné sans recherche de fente (n° 49) | refaire les intervalles utiles avec la fente cherchée |
 | D10 | **L'ajustement Sellmeier 3 pôles est chaotique sur le saphir** : un ulp sur les données change le minimum atteint (RMSE de 0,00126 à 0,00208 sur 41 essais, 2026-09-26) ; deux machines rendent deux indices pour les mêmes données. SiO2 et BK7 sont stables | élargir le multistart ou reconditionner — change les résultats, décision de 👤 |
 | D47 | DESIGN n'a pas de polarisation moyenne « Avg » : le tableau des cibles n'offre que s et p, et une configuration ancienne « Avg » se charge en s avec un avertissement (elle était calculée en p) | la calculer demande les deux ondes, chacune avec son gradient : décision de 👤 |
 | D48 | L'épaisseur du substrat (1 mm par défaut, `DEFAULT_SUBSTRATE_THICKNESS_NM`) n'est un champ ni de DESIGN ni de STRAT : un substrat qui absorbe perd du flux selon cette épaisseur | exposer le champ : décision de 👤 (section 5) |

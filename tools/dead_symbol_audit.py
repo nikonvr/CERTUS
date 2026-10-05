@@ -5,7 +5,8 @@ unused, with a conservative whitelist model for CI enforcement.
 
 THE TWO PERIMETERS ARE NOT THE SAME, and conflating them was a defect.
 Candidates are looked for in reviewed modules -- the root entry points,
-certus_physics, certus/metal, certus/spline, certus/core and certus/domain -- so each package's candidates
+certus_physics, certus/metal, certus/spline, certus/core, certus/domain and
+certus/physics -- so each package's candidates
 can be examined before the CI gate expands. References are looked for across the entire
 runtime tree instead: a call counts wherever it lives.
 
@@ -60,11 +61,12 @@ class Definition:
 
 
 def _iter_python_files(root: Path) -> list[Path]:
-    """Scan reviewed runtime modules: root *.py, certus_physics, metal, spline, core and domain.
+    """Scan reviewed runtime modules: root *.py, certus_physics and reviewed certus packages.
 
     certus/metal holds the METAL applications that lived at the root until 2026-09-28:
     moving them must not take them out of the audit. certus/spline was measured
-    and added in D24, followed by certus/core and certus/domain. Tests and tooling scripts are excluded.
+    and added in D24, followed by spline, core, domain and physics. Tests and
+    tooling scripts are excluded.
     """
     files: list[Path] = list(root.glob("*.py"))
 
@@ -74,6 +76,7 @@ def _iter_python_files(root: Path) -> list[Path]:
         root / "certus" / "spline",
         root / "certus" / "core",
         root / "certus" / "domain",
+        root / "certus" / "physics",
     ):
         if not package.exists():
             continue

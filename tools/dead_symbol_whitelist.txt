@@ -89,3 +89,17 @@ certus.domain.optical.value_objects.wavelength:Wavelength.from_micrometers
 certus.domain.optical.value_objects.wavelength:Wavelength.energy_ev
 # Wavelength frequency property; contract in test_optical_value_objects.
 certus.domain.optical.value_objects.wavelength:Wavelength.frequency_hz
+
+# D24, 2026-10-05 -- physics library API with direct unit contracts, no runtime caller.
+# Parallel interpolation API; test_certus_physics_hotpaths checks values and boundaries.
+certus.physics.certus_material_db:numba_interp_vectorized
+# MaterialDatabase vector query; test_certus_physics_hotpaths checks its real index output.
+certus.physics.certus_material_db:MaterialDatabase.get_clues_vectorized
+# MaterialDatabase spectral range query; test_certus_physics_hotpaths checks its bounds.
+certus.physics.certus_material_db:MaterialDatabase.get_wavelength_range
+# MaterialDatabase memoization API; test_certus_physics_hotpaths checks hit and miss behavior.
+certus.physics.certus_material_db:MaterialDatabase.get_cached_computation
+# MaterialDatabase cache statistics API; test_certus_physics_hotpaths checks its counters.
+certus.physics.certus_material_db:MaterialDatabase.get_cache_stats
+# MachineModel wavelength-noise vector API; test_strat_machine_model checks its result.
+certus.physics.certus_strat_machine:MachineModel.get_sigma_array

@@ -234,7 +234,7 @@ class REContextStrategy:
                 logging.info('RE phase1  differential_evolution seed (maxiter=%d, popsize=%d)', _de_mx, _de_ps)
             except NUMERICAL_FAULT_EXCEPTIONS as _e_de:
                 logging.warning('RE phase1 differential_evolution skipped: %s', _e_de)
-        _any_spl_act = bool(worker.cfg.get('re_refine_h', True)) or bool(worker.cfg.get('re_refine_l', True))
+        _any_spl_act = bool(worker.cfg.get('re_refine_h', False)) or bool(worker.cfg.get('re_refine_l', False))
         _re_top_k_cfg = max(1, int(worker.cfg.get('re_phase2_top_k', RE_GUI_DEFAULT_RE_PHASE2_TOP_K)))
         _re_n_sh_cfg = max(0, int(worker.cfg.get('re_phase3_shake_rounds', 4))) if _any_spl_act else 0
         _re_prefit_max_cfg = int(worker.cfg.get('re_phase2_spline_prefit_maxiter', RE_PHASE2_SPLINE_PREFIT_MAXITER)) if _any_spl_act else 0

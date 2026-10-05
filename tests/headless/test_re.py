@@ -133,5 +133,34 @@ def test_re_headless_with_refined_indices(qapp):
     assert received, finished
     assert finished.get("results"), finished
 
+
+def test_re_headless_without_refinement_keys(qapp):
+    """Omitted H/L switches must stay disabled through the phase order and finite-difference columns."""
+    certus_physics.warmup_physics()
+    re_app = CertusREApp()
+    re_app.load_reverse_engineering_from_path(str(Path("example/example_RE/reverse_sample.xlsx").resolve()))
+    cfg = re_app.build_re_worker_cfg()
+    cfg.pop("re_refine_h")
+    cfg.pop("re_refine_l")
+    finished: dict = {}
+    worker = REWorker(cfg)
+    fd_calls: list[int] = []
+    original_fd = worker._evaluate_p2_fd_derivative
+
+    def record_fd(*args, **kwargs):
+        fd_calls.append(int(args[1]))
+        return original_fd(*args, **kwargs)
+
+    worker._evaluate_p2_fd_derivative = record_fd
+    worker.signals.finished.connect(finished.update)
+    worker.run()
+    re_app.close()
+    assert finished.get("ok") is True, finished
+    assert worker._re_phase_ns._re_use_staged_order is False
+    assert fd_calls == []
+    assert finished.get("results"), finished
+    budget = finished["results"][0]["parameter_budget"]
+    assert all(b["count"] == 0 for b in budget["blocks"] if b["name"].startswith("index correction"))
+
 if __name__ == "__main__":
     test_re_headless()

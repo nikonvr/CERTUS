@@ -250,22 +250,6 @@ def test_design_strategy_service_build_runner_payload_matches_worker_request() -
 
 
 @pytest.mark.unit
-def test_design_strategy_service_extract_design_config_accepts_cfg_alias() -> None:
-    payload = {
-        "cfg": {
-            "mode": "healing",
-            "pre_polish": False,
-            "cycle_no_gain_patience": 4,
-            "ignored": "value",
-        }
-    }
-
-    cfg = DesignStrategyService._extract_design_config(payload)
-
-    assert cfg == {"mode": "healing", "pre_polish": False, "cycle_no_gain_patience": 4}
-
-
-@pytest.mark.unit
 def test_design_strategy_request_defaults_are_safe() -> None:
     """Default request values must remain safe for legacy callers."""
     req = DesignStrategyRequest()

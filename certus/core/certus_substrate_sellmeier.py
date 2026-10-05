@@ -260,26 +260,6 @@ def _sellmeier_seed_from_compact_poly(
     return seed_desc, q0
 
 
-def _sellmeier_multistart_candidates(q0: np.ndarray, _p_from_q: Callable[..., Any], _q_from_p: Callable[..., Any], bounds: Any, ls_bounds_q: Any, n_trials: int) -> list[np.ndarray]:
-    rng = np.random.default_rng(12345)
-    q_candidates: list[np.ndarray] = [np.asarray(q0, dtype=np.float64)]
-    p_base = _p_from_q(q0)
-    l3_grid = (0.1, 0.5, 2.0, 8.0)
-    for l3_try in l3_grid:
-        p_try = np.asarray(p_base, dtype=np.float64).copy()
-        p_try[6] = float(np.clip(l3_try, bounds[6][0], bounds[6][1]))
-        q_try = _q_from_p(p_try)
-        q_try = np.clip(q_try, ls_bounds_q[0], ls_bounds_q[1])
-        q_candidates.append(np.asarray(q_try, dtype=np.float64))
-    for _ in range(max(0, int(n_trials) - 1)):
-        jit = rng.uniform(-0.15, 0.15, size=q0.shape)
-        jit[6] = float(rng.uniform(-0.5, 0.5))
-        qj = np.asarray(q0 + jit, dtype=np.float64)
-        qj = np.clip(qj, ls_bounds_q[0], ls_bounds_q[1])
-        q_candidates.append(qj)
-    return q_candidates
-
-
 def _sellmeier_polish_helpers(p_from_q: Callable[..., Any], wl_fit_um: np.ndarray, n_fit: np.ndarray, w_fit_sell: np.ndarray, log_l1l2: bool) -> tuple[Callable[..., Any], ...]:
     def _residuals_polish_q(qv: np.ndarray) -> np.ndarray:
         pv = p_from_q(qv)

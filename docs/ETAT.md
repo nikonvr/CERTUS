@@ -30,6 +30,8 @@ rang 2 entamé, un défaut de physique corrigé :
   `reports/PARITE_ZENODO_RE_2026-10-05.md` (capacité par capacité).
 Les arbres jetables de la session sont retirés.
 
+**Mesure d'accélération de STRAT (Claude, 2026-10-05, nuit).** Juge de paix standard, mode premium, cache froid : 2 threads Numba par tâche de robustesse (valeur du code) 520,6 s ; 4 threads 452,5 s ; population de 370 stratégies et RESULT 0,007644641198073172 identiques au bit. Un run de chaque côté : à répéter avant de changer la valeur ; **non adopté**. Profil par échantillonnage : 74 % de la durée dans la robustesse Monte-Carlo (dont 29 % consensus), 17 % d'attente du consommateur de statistiques, 6 % dans `build_M_before_cache`.
+
 **Dernière action (Codex, 2026-10-05).** Ordre des lots qualifié ci-dessous ;
 trois contrôles documentaires à zéro défaut, changement commité localement.
 
@@ -337,6 +339,7 @@ numéros de l'ancien registre sont entre parenthèses
 | # | défaut | piste |
 |---|---|---|
 | D86 | Le RE prolonge par une constante les indices d'un classeur hors de leur table (`TabularMaterial.get_nk`, `np.interp` aux bornes), sans un mot : un ajustement qui déborde la table des indices travaille sur des indices inventés. `certus_re` (Zenodo) refuse l'extrapolation hors du domaine déclaré. Relevé le 2026-10-05, non mesuré sur un cas réel | dire au chargement quelle part de la plage ajustée sort de la table, ou la refuser |
+| D87 | **STRAT et le gel : deux faits mesurés le 2026-10-05.** (1) `_test_strategy_robustness_task` demandait `numba.set_num_threads(2)` sans condition : avec `NUMBA_NUM_THREADS=1` (le gel, D50) Numba lève `ValueError`, et le pool rejette chaque stratégie. Corrigé : la demande est bornée par la limite de Numba (test qui échoue avant, passe après). (2) Un run du banc STRAT avec `NUMBA_NUM_THREADS=1` et `NUMBA_THREADING_LAYER=workqueue` (réglages du gel) **termine le processus** : « workqueue … not threadsafe … Concurrent access has been detected », dès l'étape du paysage de sensibilité, avant la première stratégie. Reproduit en développement, **non vérifié dans l'exécutable** ; l'accès concurrent vient d'un autre fil qui appelle un noyau parallèle (préchauffage de fond ou pool). Piste : mesurer dans le gel (`--run-module`), puis sérialiser les appels parallèles ou couper le préchauffage de fond sous `workqueue` (lié à D77, D85) |
 | D10 | **L'ajustement Sellmeier 3 pôles est chaotique sur le saphir** : un ulp sur les données change le minimum atteint (RMSE de 0,00126 à 0,00208 sur 41 essais, 2026-09-26) ; deux machines rendent deux indices pour les mêmes données. SiO2 et BK7 sont stables | élargir le multistart ou reconditionner — change les résultats, décision de 👤 |
 | D47 | DESIGN n'a pas de polarisation moyenne « Avg » : le tableau des cibles n'offre que s et p, et une configuration ancienne « Avg » se charge en s avec un avertissement (elle était calculée en p) | la calculer demande les deux ondes, chacune avec son gradient : décision de 👤 |
 | D48 | L'épaisseur du substrat (1 mm par défaut, `DEFAULT_SUBSTRATE_THICKNESS_NM`) n'est un champ ni de DESIGN ni de STRAT : un substrat qui absorbe perd du flux selon cette épaisseur | exposer le champ : décision de 👤 (section 5) |

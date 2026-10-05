@@ -72,7 +72,7 @@ def _test_strategy_robustness_task(
     )
     from certus.utils.certus_strat_service import compute_probe_offset_nm_from_ratio
 
-    numba.set_num_threads(2)
+    numba.set_num_threads(max(1, min(2, int(numba.config.NUMBA_NUM_THREADS))))  # a 1-thread build raises on 2
     logger = logging.getLogger("certus_strat")
     strategy = dict(strategy)
     blocks = strategy["blocks"]

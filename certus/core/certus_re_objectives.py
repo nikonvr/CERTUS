@@ -744,7 +744,14 @@ def _global_add_regularization_residuals(cfg: Any,
 
 
 def _warmup_re_physics() -> None:
-    """Background JIT warmup for Reverse Engineering hot paths."""
+    """Background JIT warmup for Reverse Engineering hot paths.
+
+    The arrays have the shapes and types of a real run (`re_nominal_indices_at_wls`): indices per layer and per
+    wavelength (layers first), the reference index of each layer as a real number, one reference wavelength. With the
+    wavelengths first, the warmup stopped on an IndexError that the except below swallowed, and the RE kernels were
+    compiled by the first real computation instead (D85). The "pct" correction reaches the same physics kernels
+    without the spline nodes a real phase sizes.
+    """
     import numpy as np
 
     from certus.core.certus_re_config import REMseContext
@@ -753,10 +760,10 @@ def _warmup_re_physics() -> None:
         ep0 = np.array([50.0, 50.0], dtype=np.float64)
         is_H = np.array([True, False], dtype=bool)
         is_L = np.array([False, True], dtype=bool)
-        n_layers_nominal = np.ones((10, 2), dtype=np.complex128)
+        n_layers_nominal = np.ones((2, 10), dtype=np.complex128)
         n_sub_nominal = np.ones(10, dtype=np.complex128)
-        n_ref_nom_per_layer = np.ones(2, dtype=np.complex128)
-        _lref_arr = np.ones(2, dtype=np.float64)
+        n_ref_nom_per_layer = np.ones(2, dtype=np.float64)
+        _lref_arr = np.array([500.0], dtype=np.float64)
         
         oblique_config_meta = [
             {
@@ -800,7 +807,7 @@ def _warmup_re_physics() -> None:
             ep_local=ep0,
             spectral_weights_wls=np.ones(10, dtype=np.float64),
             want_grad=True,
-            correc=("spline", np.zeros(3), np.zeros(3), 500.0),
+            correc=("pct", 0.0, 0.0, 0.0),
             return_residuals=True,
         )
     except Exception:

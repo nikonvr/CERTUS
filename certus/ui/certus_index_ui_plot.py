@@ -247,6 +247,9 @@ class CertusIndexPlotMixin:
 
             self.plot_nk.setLabel("left", "n", color=CertusTheme.PRIMARY)
 
+            # Legend n (left axis), created BEFORE the n curves: pyqtgraph lists only the curves added after it (D66)
+            self.plot_nk.plotItem.addLegend(offset=(10, 10), labelTextSize="9pt")
+
             c_n = self.plot_nk.plot(wls, n_values, pen=pg.mkPen(CertusTheme.PRIMARY, width=3), name="n (R+T)")
 
             self.plot_nk.add_tracked_curve(c_n, "n (R+T)")
@@ -262,10 +265,6 @@ class CertusIndexPlotMixin:
                 )
 
                 self.plot_nk.add_tracked_curve(c_nt, "n (90% T)")
-
-            # Legend n (left axis)
-
-            self.plot_nk.plotItem.addLegend(offset=(10, 10), labelTextSize="9pt")
 
             # --- Secondary axis (right, log scale): k ---
 

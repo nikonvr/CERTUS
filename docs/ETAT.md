@@ -53,7 +53,8 @@ correction ; chaque test échoue sur le code d'avant.
   fermeture le demande, dans une boîte que personne ne fermait (`e4e0941d`). (3) UI : le cliquet UX a vu le
   panneau gauche de METAL passer de 389 à 403 px de largeur minimale, effet du bouton de remise à zéro à 11 pt
   (D58), plus que les 394 px que ce panneau reçoit à 1366×768 ; 👤 a choisi un padding horizontal de 8 px au lieu
-  de 16 (`7dbe4ae9`, mesuré : 387 px). Le push attend une validation complète à 0 échec du dernier commit.
+  de 16 (`7dbe4ae9`, mesuré : 387 px). Validation complète de `29240ee7` verte (ci-dessous), puis la branche poussée,
+  sans fusion dans `master`.
 
 **Plus tôt le 2026-10-06.** Un audit complet (`c2b47f11`) a trouvé D87 à D91. Corrigés depuis : D87 (`31745571`,
 `1aa32a1d` : le gel calcule sur la couche OpenMP ; construit, démarrage et artefact contrôlés), D88 (`a49fe502`,
@@ -63,15 +64,14 @@ en partie (`5ccaa210`, 442 → 411 Mo). **Reste à 👤 : un calcul réel de cha
 (`%TEMP%\buildwt\dist\CERTUS_HUB\CERTUS_HUB.exe`, hors du dépôt).
 
 **Point de départ.** `certus0310`, branche `refactor-corridors-mixins`,
-[PR #5](https://github.com/nikonvr/CERTUS/pull/5). `origin` est à `828661a0` (poussé sur ordre de 👤 le
-2026-10-05 ; CI verte sur ce commit : lint, sécurité, tests, `release-windows`) ; les commits suivants sont
-locaux. 👤 a autorisé le 2026-10-06 de pousser la branche après une validation complète à 0 échec, sans fusion
-dans `master`. `python scripts\preflight.py` → `PREFLIGHT=GO` le 2026-10-06. Sauvegarde
+[PR #5](https://github.com/nikonvr/CERTUS/pull/5). La branche est poussée sur `origin` le 2026-10-06 au soir, sur
+l'autorisation de 👤 donnée pour une validation complète à 0 échec, sans fusion dans `master` ; sa CI se lit sur la
+PR. `python scripts\preflight.py` → `PREFLIGHT=GO` le 2026-10-06. Sauvegarde
 après chaque lot : `../CERTUS_certus0310_<date>_<commit>.bundle`. Les entrées `.git/worktrees/certus0310` et
 `.git/worktrees/profwt`, incomplètes (Drive en refuse la suppression), déclenchent un avertissement à chaque
 commit sans l'empêcher.
 
-**Dernière validation complète (2026-10-06, Windows 11, Python 3.14.8, Ryzen 7 5700G, code au commit `fb0437eb`) :** Ruff 0 ; oracle 1 123 passed ; unit 4 921 passed, 5 skipped, 1 xfailed en 18 min 31 ; autres tests 346 passed, 2 skipped en 9 min 44 ; UI 1 299 passed, 12 skipped, 2 xfailed en 19 min 00 ; trois contrôles documentaires : 0 défaut. Les quatre pages HTML RE, DESIGN, INDEX SPLINE et STRAT rendent leurs logigrammes Mermaid dans Chrome (8/8, 6/6, 5/5 et 6/6, mesuré le 2026-10-04).
+**Dernière validation complète (2026-10-06, Windows 11, Python 3.14.8, Ryzen 7 5700G, code au commit `29240ee7`, arbre neuf hors de Drive) :** Ruff 0 ; oracle 1 123 passed ; unit 4 934 passed, 5 skipped en 9 min 44 (premier passage, froid après le changement de clé du cache Numba : 1 failed, D84) ; UI 1 312 passed, 12 skipped, 2 xfailed en 18 min 42 ; autres tests 347 passed, 2 skipped en 10 min 42 ; trois contrôles documentaires : 0 défaut. Les quatre pages HTML RE, DESIGN, INDEX SPLINE et STRAT rendent leurs logigrammes Mermaid dans Chrome (8/8, 6/6, 5/5 et 6/6, mesuré le 2026-10-04).
 
 **Ordre conseillé des prochains lots.** Priorité à ce qui rend un résultat faux ou empêche de calculer,
 puis aux dépendances techniques ; chaque changement reste un commit distinct (C3). Une mesure en cours
@@ -419,7 +419,7 @@ numéros de l'ancien registre sont entre parenthèses
 | D71 | Deux observations sur Tauc-Lorentz-Urbach (`gradient_analytic.py`), non corrigées. **(1)** k est calculé par √((|ε| − ε₁)/2), qui s'annule par différence là où ε₂ ≪ ε₁ : sous ε₂ ≈ 1e-7 (loin sous le gap) k revient à 0 ou à quelques pour mille près, soit moins de 2e-7 sur 2nk ; une différence finie de n ou de k y est fausse, la dérivée analytique est juste ; sans effet sur un empilement. **(2)** ε₂ saute en E = Eg : la queue d'Urbach, utilisée pour E ≤ Eg, vaut 1,9e-4 pour l'oxyde de l'exemple, l'absorption de bande (E > Eg) vaut 0 et monte jusqu'à l'ancre de la queue, posée à Eg + 0,01 eV ; le saut est de 2e-5 du maximum, sans effet sur un empilement, mais le modèle n'est pas continu là pour un ajustement qui passerait au bord du gap |
 | D72 | **Taille du gel (S7.2) : objectif ≤ 300 Mo non atteint.** 411 Mo le 2026-10-06 (442 avant `5ccaa210`, qui laisse dehors IPython, pytest, hypothesis, coverage, astroid, pylint, black, mypy, ruff, sphinx, jedi, parso, notebook, jupyter et ipykernel ; hub et modules démarrent, artefact contrôlé). Le reste : llvmlite 115 Mo (Numba, indispensable), Qt 77 Mo (dont le rendu OpenGL logiciel), scipy 68 Mo avec ses bibliothèques, numpy 28, matplotlib 15, Pillow 13, pandas 13, lxml 7, OpenSSL 8. Étape suivante : mesurer ce que l'application charge vraiment (sous-modules de scipy, plugins Qt, ssl, lxml) avant d'autres exclusions. Un gel local embarque ce que porte l'interpréteur qui le construit : celui du 2026-10-06 contient aussi lxml, psutil, pywin32, PyYAML, certifi, charset_normalizer, MarkupSafe et cffi, absents de `requirements.lock`, d'où part le gel de la CI |
 | D82 | **Thème sombre : logo et mesure de contraste à terminer.** Les textes et états vides suivent désormais le thème (R102). Le logo foncé reste peu visible en thème sombre, constat visuel sans mesure ; le harnais ne résout pas encore une encre de palette sur fond hérité. |
-| D84 | **Validation locale intermittente.** Des écarts au dernier bit sur deux tests STRAT apparaissent après un changement de clé de cache Numba, puis disparaissent aux relances et dans la suite complète (observé deux fois le 2026-10-03, pas depuis). Signature compatible avec D52 : compilation sur place contre lecture du cache, cause non prouvée. Si l'écart revient, comparer les noyaux froids et chauds avant de modifier le calcul. |
+| D84 | **Validation locale intermittente.** Des écarts au dernier bit sur des tests STRAT apparaissent au premier passage après un changement de clé du cache Numba, puis disparaissent à la relance (deux fois le 2026-10-03 ; le 2026-10-06, `test_neutral_parameters_are_bit_identical_to_the_legacy_call` dans la validation de `29240ee7`, après la modification de `certus_colorimetry.py` : rouge à froid, vert à la relance, 0 ulp mesuré entre les deux appels du noyau). Signature compatible avec D52 : compilation sur place contre lecture du cache, cause non prouvée. Si l'écart persiste à la relance, comparer les noyaux froids et chauds avant de modifier le calcul. |
 
 ## 5. Ce qui attend une décision de 👤
 

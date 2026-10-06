@@ -5,8 +5,8 @@
 > [`CLAUDE.md`](../CLAUDE.md). Il se tient **en place** : un fait change, on corrige sa ligne,
 > on ne raconte pas la correction (`git log` s'en charge). Toute mesure porte sa date.
 > Le détail et l'historique sont dans `git`, sans autorité (CLAUDE.md, en-tête).
-> Mis à jour le 2026-10-06 dans la nuit (PR #5 et #7 fusionnées ; parité Zenodo faite ; retrait de la branche PGlobal
-> morte en cours).
+> Mis à jour le 2026-10-06 dans la nuit (PR #5 et #7 fusionnées ; parité Zenodo faite ; branche PGlobal morte
+> retirée).
 
 ## 0. Reprise — à lire en premier, à tenir à jour
 
@@ -14,15 +14,14 @@
 > à la fin. Les règles de validation sont dans les sections 2, 4 et 12 de
 > [CLAUDE.md](../CLAUDE.md) ; les décisions scientifiques appartiennent à 👤 (§5).
 
-**En cours (Claude, 2026-10-06 dans la nuit) : retrait de la branche PGlobal morte de l'INDEX SPLINE** (décision de 👤,
-§3), sur la branche locale `parite-zenodo`. Fait, non commité : la branche (43 instructions) et le bloc de région de confiance, mort
-lui aussi, sont retirés de `_run_single_spline_stage` (2 467 → 2 172 lignes) ; ruff 0. Reste : retirer les
-aides qu'elle laisse orphelines (l'audit du code mort échoue sur `SingleSplineStageContext`), le banc INDEX SPLINE après,
-à froid, contre `RESULT` 0,0033932679903320956 avant (deux passages froids identiques au bit ; le banc passe une fois
-par `_run_single_spline_stage`), les plafonds du registre de dette, puis la validation complète et la PR, fusionnée dès
-sa CI verte.
-
 **Fait dans la nuit du 2026-10-06.**
+- **Branche PGlobal morte de l'INDEX SPLINE retirée** (`8328e6fc`, décision de 👤) : les 43 instructions qui suivaient
+  le polissage local de `_run_single_spline_stage`, où `local_only` vaut toujours True, avec les deux aides qu'elles
+  seules utilisaient. Rien de ce qui s'exécute ne change : le banc INDEX SPLINE, qui passe une fois par cette fonction,
+  rend `RESULT` 0,0033932679903320956 après, à froid, comme deux passages froids avant. Registre de dette abaissé
+  (fichier 2 467 → 1 997 lignes, fonction 620 → 325) ; cliquet, audit du code mort et tests de l'INDEX SPLINE passent.
+  Poussé sur ordre de 👤 avec la parité (branche `parite-zenodo`) ; la validation complète locale n'a pas été relancée
+  sur cet état, la CI de la PR la fait avant la fusion.
 - **PR #7 fusionnée** dans `master` (`80dd7d3c`), ses 12 contrôles de CI verts : licences dans le gel, avis de tiers
   complétés. Dependabot a fermé lui-même ses PR #1 à #4 et #6 après la fusion de la PR #5.
 - **Rang 3, parité avec les versions publiées : fait** (`898bd4cd`, `reports/PARITE_ZENODO_ECARTS_LONGS_2026-10-06.md`).
@@ -430,7 +429,7 @@ annule seul.
 
 ### Réponses de 👤 du 2026-10-06, quatrième série (parité)
 
-- **La branche PGlobal morte de `_run_single_spline_stage` est retirée** (en cours, §0) : Git la garde.
+- **La branche PGlobal morte de `_run_single_spline_stage` est retirée** (fait, §0) : Git la garde.
 - **Le RE garde sa pénalité QWOT** : l'a priori MAP de `certus_re` n'est pas porté.
 - **La citation du saphir est corrigée dans le paquet `certus_re`** (fait, non commité dans ce dépôt-là, §0).
 - **La PR de la parité se fusionne dès que sa CI est verte**, comme les PR #5 et #7.

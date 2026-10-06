@@ -63,12 +63,7 @@ après chaque lot : `../CERTUS_certus0310_<date>_<commit>.bundle`. Les entrées 
 `.git/worktrees/profwt`, incomplètes (Drive en refuse la suppression), déclenchent un avertissement à chaque
 commit sans l'empêcher.
 
-**Dernière validation complète (2026-10-06, Windows 11, Python 3.14.8, Ryzen 7 5700G, pendant d'autres
-calculs) :** Ruff 0 ; oracle 1 123 passed (`ee9f1afe`) ; unit 4 907 passed, 5 skipped, 2 xfailed en 15 min 36 (`827a913e`) ; autres tests
-346 passed, 2 skipped en 10 min 26 (`ee9f1afe`) ; UI 1 297 passed, 12 skipped, 2 xfailed en 18 min 06
-(`ee9f1afe`) ; trois contrôles documentaires : 0 défaut. De `ee9f1afe` à `827a913e`, seul un import de
-`certus_strat_robustness.py` change. Les quatre pages HTML RE, DESIGN, INDEX SPLINE et STRAT rendent leurs
-logigrammes Mermaid dans Chrome (8/8, 6/6, 5/5 et 6/6, mesuré le 2026-10-04).
+**Dernière validation complète (2026-10-06, Windows 11, Python 3.14.8, Ryzen 7 5700G, code au commit `fb0437eb`) :** Ruff 0 ; oracle 1 123 passed ; unit 4 921 passed, 5 skipped, 1 xfailed en 18 min 31 ; autres tests 346 passed, 2 skipped en 9 min 44 ; UI 1 299 passed, 12 skipped, 2 xfailed en 19 min 00 ; trois contrôles documentaires : 0 défaut. Les quatre pages HTML RE, DESIGN, INDEX SPLINE et STRAT rendent leurs logigrammes Mermaid dans Chrome (8/8, 6/6, 5/5 et 6/6, mesuré le 2026-10-04).
 
 **Ordre conseillé des prochains lots.** Priorité à ce qui rend un résultat faux ou empêche de calculer,
 puis aux dépendances techniques ; chaque changement reste un commit distinct (C3). Une mesure en cours
@@ -431,9 +426,11 @@ D48, D54, D55, D86, D87 et D88 sont tranchés (§3) ou corrigés.
 dimensionner K, le nombre de graines à lancer : p ≈ 3/7 pour trouver un déposable, 2/7 pour
 atteindre le niveau 0,57 · balayer `tp_hysteresis_factor` à bruit fixé · compter le criblage et
 l'héritage quand un étage deviendra suspect · porter le résultat de `r75x2` dans la vitrine,
-avec sa condition dans la même phrase que le chiffre · accélérer à résultat identique au bit : le
-profil du juge de paix (§3, threads) désigne ensuite `build_M_before_cache` (6 % de la durée) et
-l'attente du consommateur de statistiques (17 %).
+avec sa condition dans la même phrase que le chiffre · accélérer à résultat identique au bit : reste
+l'attente du consommateur de statistiques (17 % du profil). `build_M_before_cache` est écarté : 10 151 appels pour
+4 070 entrées distinctes sur le juge de paix, mais s'en souvenir ne fait rien gagner (2026-10-06, caches froids,
+machine au repos : 434,9 et 431,5 s sans, 432,0 et 431,1 s avec, populations identiques au bit) ; ses 6 % venaient
+d'un profil pris pendant une autre charge.
 
 **Modèle physique** (détail : `git show 7b08dc8:docs/archives/TRAVAUX_A_VENIR.md`) :
 

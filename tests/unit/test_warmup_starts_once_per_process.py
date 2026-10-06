@@ -8,7 +8,7 @@ the import system could deadlock: `_DeadlockError: deadlock detected by
 _ModuleLock('scipy.linalg.cython_lapack')` in an INDEX run of the CI (2026-09-28). Importing now
 starts nothing; init_certus_app, called by every application once its imports are done, starts
 the warmup through start_jit_warmup, and a second call finds it registered. RE and DESIGN
-start their own QThread warmups instead of the global one in a frozen workqueue process.
+start their own QThread warmups instead of the global one.
 """
 
 from __future__ import annotations

@@ -443,7 +443,7 @@ class CoreManager:
         """Automatically updates points count using Tikhonravov."""
 
         # Material.get_nk uses a parallel Numba kernel. The default-config timer can fire
-        # while the QThread is still compiling the same kernels under frozen workqueue.
+        # while the QThread is still compiling the same kernels.
         if not getattr(self.ui, "_warmup_done", True):
             return
 

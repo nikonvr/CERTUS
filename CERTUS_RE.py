@@ -352,7 +352,7 @@ class CertusREApp(
 
 def main():
 
-    # RE starts WarmupWorker itself; a second JIT warmup thread races frozen Numba workqueue.
+    # RE starts WarmupWorker itself; the global JIT warmup thread would compile the same kernels a second time.
     app = init_certus_app(jit_warmup=False)
     certus_app = CertusREApp()
     certus_app.show()

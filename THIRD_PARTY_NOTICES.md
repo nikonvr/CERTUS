@@ -67,7 +67,8 @@ Measured values from the literature and from manufacturers, reproduced for compu
 | B270i, Sellmeier | same | B1 and C1 fitted to the line indices of the SCHOTT B 270 i data sheet; the other four terms: « à confirmer par toi » |
 | silicon, n and k, 200–5200 nm | `example/database_index/indices.xlsx`, sheet `Si-substrate` | from 1200 nm on, the Sellmeier formula of C. D. Salzberg and J. J. Villa, *J. Opt. Soc. Am.* 47, 244 (1957), within 5e-5; below 1200 nm: « à confirmer par toi » |
 | silicon, 15-point fallback | `certus_physics/materials_data.py` | same Salzberg and Villa formula from 1200 nm on; a rough placeholder below |
-| CIE 1931 2° colour-matching functions, illuminant D65 | `certus/physics/certus_colorimetry.py` | CIE (ISO/CIE 11664-1 and 11664-2); licence of the CIE tables: « à confirmer par toi » |
+| CIE 1931 2° colour-matching functions | `certus/physics/certus_colorimetry.py` | the rows 380, 385, …, 780 nm of `CIE_xyz_1931_2deg.csv`, International Commission on Illumination (CIE), 2019, DOI [10.25039/CIE.DS.xvudnb9b](https://doi.org/10.25039/CIE.DS.xvudnb9b), licensed [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/); Creative Commons lists the GPL-3.0 as compatible with it for adapted material |
+| CIE illuminant D65 | same | CIE (ISO/CIE 11664-2); where the tabulation in the code was taken from: « à confirmer par toi » |
 | Cauchy presets | `data/materials_v1.json` | « à confirmer par toi » |
 | sapphire index table | `example/database_index/sapphire_index.txt` and its copy in `example/example_index/` | « à confirmer par toi »: it follows neither ray of Malitson and Dodge (up to 1.6e-2 from the ordinary, 1.1e-2 from the extraordinary) |
 

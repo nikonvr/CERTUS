@@ -5,7 +5,7 @@
 > [`CLAUDE.md`](../CLAUDE.md). Il se tient **en place** : un fait change, on corrige sa ligne,
 > on ne raconte pas la correction (`git log` s'en charge). Toute mesure porte sa date.
 > Le détail et l'historique sont dans `git`, sans autorité (CLAUDE.md, en-tête).
-> Mis à jour le 2026-10-06 (audit complet).
+> Mis à jour le 2026-10-06 au soir (les 19 réponses de 👤 appliquées ; D92 trouvé).
 
 ## 0. Reprise — à lire en premier, à tenir à jour
 
@@ -13,52 +13,44 @@
 > à la fin. Les règles de validation sont dans les sections 2, 4 et 12 de
 > [CLAUDE.md](../CLAUDE.md) ; les décisions scientifiques appartiennent à 👤 (§5).
 
-**Corrections du 2026-10-06 après-midi (Claude, sur « fais les corrections / améliorations » de 👤).** Un commit et
-un test par correction ; chaque test échoue sur le code d'avant.
-- **D89** (`f65f191d`) : un `reports/` non inscriptible laisse un avertissement, le calcul STRAT continue.
-- **Le matériau absent au-delà de STRAT** (`330f592d`, `c2e0db04`) : DESIGN et INDEX ne chargent rien d'une
-  configuration qui nomme ce qu'ils n'offrent pas (une couche d'un matériau inconnu, un substrat inconnu) et le
-  disent ; RE ne charge pas un classeur dont aucune source n'a le substrat (il passait pour chargé, et le premier
-  calcul échouait plus loin sur l'entrée absente). **DESIGN ignorait les indices des anciens préréglages** : ses
-  listes n'offrent plus que « Custom », et un matériau enregistré avec un préréglage nommé (l'exemple livré a
-  `TiO2 (H)`) gardait les indices d'avant le chargement ; il prend maintenant les n4 et n7 du fichier.
-- **D85** (`55f7e9da`) : le préchauffage RE va au bout (ses tableaux avaient les longueurs d'onde en premier).
-- **D91** (`f61e40a0`) : chaque fil du pool d'INDEX prend sa part des fils Numba. Sans effet en production : les
-  workers d'INDEX appellent l'optimiseur avec un seul fil, et le banc d'INDEX n'ouvre aucun pool (compté).
-- **D55** (`601b2489`) et **la moitié restante de D54** (`39990246`) : sur la grille de la machine, une couche
-  rejouée est lue à sa vraie profondeur, et la dérive photométrique touche les lectures même sans lissage (une
-  couche s'arrêtait à 54,407 nm au lieu de 52,523 sur la grille grossière ; 52,524 maintenant). La grille de la
-  machine est inactive par défaut : `c1_diff`, froid contre froid, ne voit bouger que des cas de la grille fine
-  (66 puis 54), les 171 cas du chemin par défaut gardent leurs bits ; le juge de paix garde sa population au bit.
-- **D72** (`5ccaa210`) : le gel laisse dehors les outils de développement : 442 → 411 Mo, contrôles de démarrage et
-  d'artefact passés.
-- D48 : 👤 garde le substrat non absorbant (§3) ; le reste attend 👤 (§5).
+**Dernière action (Claude, 2026-10-06 au soir, sur les 19 réponses de 👤, §3).** Un commit et un test par
+correction ; chaque test échoue sur le code d'avant.
+- **D10** (`d83c39c7`) : huit départs aléatoires au lieu de deux. Sur 41 perturbations d'un ulp des données du
+  saphir, la RMSE reste entre 0,000946 et 0,000964 (avant : 0,00095 à 0,00097 quarante fois, 0,00796 une fois),
+  pour 2,15 s par ajustement au lieu de 1,44.
+- **D76** (`ca3e269c`) : le gradient de l'analyse du faisceau de METAL SINGLE porte la dérivée de la pénalité de
+  lissage. Le banc METAL SINGLE ne lance pas cette analyse : son résultat ne bouge pas (0,0061003457).
+- **D56** (`36dde65c`) : D263T eco prend les coefficients du catalogue Zemax de SCHOTT (2017-01-20b), à 2,1e-4 de
+  la fiche ; pour B270i, dont SCHOTT ne publie pas de Sellmeier, B1 et C1 sont ajustés aux huit raies de la fiche
+  (436 à 656 nm, résidu de 4,4e-5 au plus) et les quatre autres termes gardés : au-delà de 656 nm, l'indice repose
+  sur eux. Oracle : 1 123 passed.
+- **D41** (`a8c013fa`) : fermer INDEX, INDEX SPLINE, RE, METAL ou DESIGN pendant un calcul pose la question avant
+  d'arrêter quoi que ce soit. **D58** (`49584fd7`, le bouton de remise à zéro passe de 9 à 11 pt), **D65**
+  (`bfc8e298`), **D66** (`4a4a6a81`).
+- **Deux fenêtres rebranchées** (`f20fd40c`) : l'accueil propre de STRAT, et le moniteur n, k d'INDEX SPLINE ouvert
+  à côté de l'aperçu Smart Init. **Couleurs de la branche du 2026-09-07 portées** (`dc0c1c60` : 257 → 217
+  couleurs hexadécimales hors thème), puis la branche supprimée, comme `wip-d75-gradient-lame`.
+- **Poste et sauvegardes** : le venv `C:\envs\certus` est supprimé (envoyé à la corbeille) et quatre scripts shell
+  prennent le Python du système (`2e197935`) ; les fichiers hors git (les deux PDF Selenium et `studies/`) sont
+  archivés à côté des bundles, `../CERTUS_hors_git_2026-10-06.zip` (24 entrées).
+- **CI** : les actions étaient déjà épinglées par SHA ; les cinq mises à jour proposées par Dependabot sont
+  appliquées sur la branche, une par commit (`fcce99e7`, `6c7faa3d`, `1321c206`, `2d83a2df`, `c6b7e4bf`) ; les
+  gardes des workflows passent (41 passed). Aucune fusion dans `master`.
+- **Avis de tiers** : brouillon `THIRD_PARTY_NOTICES.md` (`30fb39c0`) ; ce que le dépôt n'établit pas y est marqué
+  « à confirmer par toi ». En le faisant : **D92**, les tables CIE de la colorimétrie sont fausses (§4).
 
-**Dernière action (Claude, 2026-10-06, sur les arbitrages de 👤 du matin, §3).**
-- **D87 corrigé dans le code et dans la construction** : le gel prend la couche Numba OpenMP et le budget de
-  fils du mode source (`31745571`) ; un test lance un noyau parallèle depuis quatre fils dans un interpréteur
-  réglé comme le gel : il meurt sur l'ancien code (« Concurrent access has been detected »), il passe sur le
-  nouveau. Construit hors de Drive à `1aa32a1d` (PyInstaller 6.22.3, 442 Mo, `omppool` et `VCOMP140.DLL`
-  embarqués) : `release_checks.py --check-frozen --check-frozen-run` passe, et le contrôle d'artefact exige
-  désormais ces deux fichiers (`1aa32a1d`). **Reste à 👤 : un calcul réel de chaque module dans
-  l'exécutable** (`%TEMP%\buildwt\dist\CERTUS_HUB\CERTUS_HUB.exe`, hors du dépôt).
-- **D88 corrigé** (`a49fe502`) : un matériau absent de la base refuse le calcul STRAT, avec la raison à
-  l'écran, jusqu'à ce que l'opérateur choisisse dans la liste.
-- **D54, `adaptive_scan` retiré** (`7a958dec`) sous la tolérance fixée par 👤 (10⁻¹⁰ relatif) : 90 des
-  2 000 sorties de croissance du corpus de `c1_diff` bougent, toutes des marges, de 2,3·10⁻¹³ relatif au plus ;
-  le juge de paix garde sa population au bit (370 stratégies, `RESULT` 0,007644641198073172).
-- **D90 corrigé** (`a5a50fc8`) : les pages HUB et INDEX ne parlent plus de `workqueue`.
-
-**Audit complet du 2026-10-06 (Claude, à la demande de 👤).** Chaque défaut de §4 et chaque sujet de §5
-revérifiés contre le code, les indicateurs remesurés (`scripts\metrics.py`), la validation complète relancée,
-l'exécutable gelé simulé module par module. Il a trouvé D87, D88 et D89, puis D90 et D91 ; la nuit du
-2026-10-05 avait laissé un test rouge (la façade de robustesse ne réexportait pas `task_numba_threads`),
-corrigé (`827a913e`). Les autres défauts sont toujours là ; D23, D25, D26 et D65 ont des chiffres remis à jour.
+**Plus tôt le 2026-10-06.** Un audit complet (`c2b47f11`) a trouvé D87 à D91. Corrigés depuis : D87 (`31745571`,
+`1aa32a1d` : le gel calcule sur la couche OpenMP ; construit, démarrage et artefact contrôlés), D88 (`a49fe502`,
+`330f592d`, `c2e0db04`), D89 (`f65f191d`), D90 (`a5a50fc8`), D91 (`f61e40a0`), D85 (`55f7e9da`), D55 (`601b2489`)
+et D54 (`7a958dec`, `39990246` : le chemin par défaut garde ses bits, le juge de paix sa population au bit), D72
+en partie (`5ccaa210`, 442 → 411 Mo). **Reste à 👤 : un calcul réel de chaque module dans l'exécutable**
+(`%TEMP%\buildwt\dist\CERTUS_HUB\CERTUS_HUB.exe`, hors du dépôt).
 
 **Point de départ.** `certus0310`, branche `refactor-corridors-mixins`,
 [PR #5](https://github.com/nikonvr/CERTUS/pull/5). `origin` est à `828661a0` (poussé sur ordre de 👤 le
 2026-10-05 ; CI verte sur ce commit : lint, sécurité, tests, `release-windows`) ; les commits suivants sont
-locaux, pousser attend l'ordre de 👤. `python scripts\preflight.py` → `PREFLIGHT=GO` le 2026-10-06. Sauvegarde
+locaux. 👤 a autorisé le 2026-10-06 de pousser la branche après une validation complète à 0 échec, sans fusion
+dans `master`. `python scripts\preflight.py` → `PREFLIGHT=GO` le 2026-10-06. Sauvegarde
 après chaque lot : `../CERTUS_certus0310_<date>_<commit>.bundle`. Les entrées `.git/worktrees/certus0310` et
 `.git/worktrees/profwt`, incomplètes (Drive en refuse la suppression), déclenchent un avertissement à chaque
 commit sans l'empêcher.
@@ -72,6 +64,7 @@ n'autorise pas à modifier son arbre témoin.
 | rang | action et critère de fin | raison / condition |
 |---|---|---|
 | 1 — un exécutable qui calcule (D87) | 👤 : un calcul réel de chaque module qui calcule dans l'exécutable construit à `5ccaa210` (`%TEMP%\buildwt\dist\CERTUS_HUB\CERTUS_HUB.exe`, hors du dépôt). | La simulation et la construction disent que le gel calcule ; seul un calcul dans l'exécutable le prouve. |
+| 2 — des couleurs justes (D92) | Remplacer x̄, ȳ, z̄ par la table officielle de la CIE, avec un test qui échoue sur l'ancienne (un blanc parfait doit donner a\* = b\* = 0). | Le résultat de l'analyse couleur de DESIGN est faux aujourd'hui. Télécharger la table demande l'accord de 👤 (demandé le 2026-10-06). |
 | 3 — établir la parité publiée | Inventaires (`reports/PARITE_ZENODO_*_2026-10-05.md`) et lecture des écarts courts de l'INDEX SPLINE (`reports/PARITE_ZENODO_SPLINE_LECTURE_2026-10-06.md` : remaniements, trois retouches heuristiques du corridor, une correction) faits. Reste à lire les écarts longs (gradient analytique, nettoyage des nœuds, décalage de Δn, polissage du maillage) et à comparer les capacités du RE marquées « non comparé » (a priori MAP, substrats, échantillons à deux faces, résidus par voie). | Nécessaire avant d'affirmer que les améliorations publiées sont intégrées. RE local 1.2.0.dev0 diffère de l'archive 1.1.1 ; l'inversion conjointe de plusieurs échantillons est écartée par 👤. |
 | 4 — traiter la chaîne de mesure | Spécifier puis mesurer la cadence machine (§6, 12.4), ensuite seulement le lissage (12.2). D54 et D55 sont corrigés. | La grille de la machine est inactive par défaut. Tout changement de noyau passe C1 froid contre froid et l'oracle. |
 | 5 — stabiliser interface et gel | Reproduire D23 (les six `gc.collect()` des threads de calcul STRAT et les `QThread`) avant D11 et `WA_DeleteOnClose` ; poursuivre la réduction du gel (D72) après sa fiabilité. | D11 n'a pas d'effet dans le lancement actuel par processus ; libérer une fenêtre avant ses threads serait plus grave. |
@@ -79,9 +72,7 @@ n'autorise pas à modifier son arbre témoin.
 
 **En parallèle, priorité scientifique dépendant de 👤 :** obtenir deux dépôts
 réels du dichroïque et leurs spectres pour la validation ordinale externe (§5).
-Vérifier la provenance des indices D56 et « Syrus » avant de valider des
-résultats fondés sur ces matériaux ; ne pas changer leurs coefficients sans
-mesure et décision. Les autres choix réservés à 👤 restent en §5.
+Les autres choix réservés à 👤 restent en §5.
 
 ## 1. Où en sont les programmes
 
@@ -190,7 +181,7 @@ du dichroïque dont le plantage s'écarterait nettement du prédit rouvrirait ce
 
 ### Publication — décidé le 2026-09-30
 
-- **Rien à cacher côté public** (« je n'ai aucune crainte de tout mettre en espace public, c'est mon choix ») : l'historique n'est pas purgé — ni le nom porté par les métadonnées de 44 classeurs anciens, ni l'adresse personnelle de quatre commits — et `git filter-repo` n'est pas au programme. Les 269 fichiers Office suivis aujourd'hui ne portent comme auteur que « CERTUS » ou « openpyxl » (vérifié le 2026-10-06).
+- **Rien à cacher côté public** (« je n'ai aucune crainte de tout mettre en espace public, c'est mon choix ») : l'historique n'est pas purgé — ni le nom porté par les métadonnées de 44 classeurs anciens, ni l'adresse personnelle de quatre commits — et `git filter-repo` n'est pas au programme. Les 269 classeurs `.xlsx` suivis aujourd'hui ne portent comme auteur que « CERTUS » ou « openpyxl », les 8 `.xls` que « CERTUS » ou aucun (vérifié le 2026-10-06).
 - **Les œuvres de tiers restent à leurs auteurs** : la GPL-3.0 ne les couvre pas (le texte de thèse de l'historique, les PDF d'articles). Elles vont dans les avis de tiers, pas dans une purge.
 
 ### Interface — décidé le 2026-09-28
@@ -348,6 +339,27 @@ annule seul.
 - **Tolérance de C1 pour retirer du code mort d'un noyau : 10⁻¹⁰ en relatif** (D54). Le retrait de
   `adaptive_scan` en est resté à 2,3·10⁻¹³.
 
+### Réponses de 👤 du 2026-10-06 au soir, une question à la fois
+
+- **Calcul** : D10, fiabiliser l'ajustement du saphir ; D76, ajouter la dérivée de la pénalité ; D56, remplacer
+  les coefficients si les fiches du fabricant diffèrent. Faits (§0).
+- **Données Nb2O5 « Syrus » : laissées telles quelles.** Dans les feuilles `Nb2O5-Syrus` et `IR-Syrus-Nb2O5` de
+  `example/database_index/indices.xlsx`, n tombe de 2,09 à 4,0 µm à 1,19 à 4,7 µm puis remonte à 1,78 à 5 µm,
+  quand les feuilles H400 et H800 restent entre 2,07 et 2,13 ; un creux de cette taille avec k ≤ 0,018 n'est pas
+  physique. Un résultat fondé sur ces feuilles au-delà de 4 µm en hérite.
+- **Stop pendant l'étage IR d'INDEX : le résultat raffiné est gardé**, comme aujourd'hui ; rien à changer.
+- **Interface** : D41, demander avant de fermer pendant un calcul, partout ; D65, retirer les branches mortes ;
+  D66, créer la légende avant les courbes ; D58, appliquer `BODY_LG` ; rebrancher les deux fenêtres ; évaluer
+  puis intégrer la branche de couleurs. Faits (§0).
+- **Poste** : supprimer `wip-d75-gradient-lame` et le venv `C:\envs\certus` ; archiver les fichiers hors git à
+  côté des bundles. Faits ; l'archive est à refaire si ces fichiers changent. **Le dépôt reste dans Google Drive.**
+- **GitHub** : tester puis fusionner les mises à jour de Dependabot — appliquées sur la branche, et toute fusion
+  dans `master` se redemande à 👤 ; `master` exigera une CI verte et des actions épinglées par SHA — l'épinglage
+  est en place, la protection de branche est un réglage de sécurité de GitHub, appliqué par 👤 ; pousser
+  la branche après une validation complète verte, sans fusion dans `master`.
+- **Avis de tiers : un brouillon**, ce que le dépôt n'établit pas marqué « à confirmer par toi ». Fait
+  (`THIRD_PARTY_NOTICES.md`).
+
 ### RE — décidé par 👤 le 2026-10-05
 
 - **Divergence du faisceau : deux ou trois rayons suffisent.** 👤 : « définitivement, la prise en compte de
@@ -367,7 +379,7 @@ numéros de l'ancien registre sont entre parenthèses
 | # | défaut | piste |
 |---|---|---|
 | D87 | **L'exécutable gelé ne calculait pas — corrigé, à confirmer dans l'exécutable.** Le gel forçait la couche Numba `workqueue` avec un seul fil (`configure_numba_env`), qui termine le processus dès que deux fils Python entrent ensemble dans un noyau parallèle, alors que les calculs le font tous : simulé le 2026-10-06 (`sys.frozen` posé avant tout import, données à côté de l'exécutable, `workqueue`, un fil), DESIGN, INDEX, RE, METAL SINGLE et STRAT finissaient en code 3 (« Numba workqueue threading layer is terminating: Concurrent access has been detected »), les quatre premiers en 30 à 53 s, STRAT à l'entrée de sa Phase B ; piles : deux fils du pool de la phase 1 de RE, deux du pool de robustesse de STRAT, le fil de l'interface d'INDEX contre son `QThread`, les fils du pool de DESIGN. Depuis `31745571`, le gel a la couche OpenMP et le budget de fils du mode source ; la même simulation de RE sur OpenMP va au bout. Construit à `1aa32a1d` : démarrage et artefact contrôlés (§0). Corrigé du même défaut le 2026-10-05 : la tâche de robustesse ne demande plus à Numba plus de fils qu'il n'en a | un calcul réel de chaque module dans l'exécutable (👤) ; sinon, un seul fil de calcul dans le gel |
-| D10 | **L'ajustement Sellmeier 3 pôles est chaotique sur le saphir** : un ulp sur les données change le minimum atteint (RMSE de 0,00126 à 0,00208 sur 41 essais, 2026-09-26) ; deux machines rendent deux indices pour les mêmes données. SiO2 et BK7 sont stables | élargir le multistart ou reconditionner — change les résultats, décision de 👤 |
+| D92 | **Les tables CIE 1931 de la colorimétrie sont fausses**, depuis le commit initial (`certus/physics/certus_colorimetry.py`) : ȳ suit la courbe de la CIE jusqu'à 425 nm, puis la parcourt deux fois trop vite et culmine à 490 nm au lieu de 555 ; x̄ culmine à 460 nm au lieu de 600 ; les sommes de x̄, ȳ, z̄ (14,40, 10,82, 45,16) devraient être égales. L'illuminant D65 est juste. Mesuré le 2026-10-06 : un réflecteur parfait (R = 1 partout) sort en L\*a\*b\* = (100 ; 60,4 ; −113,1) au lieu de (100 ; 0 ; 0), et R = 0,5 en (76,1 ; 47,9 ; −89,8). L'analyse couleur Monte-Carlo de DESIGN (`ColorWorker` : L\*a\*b\*, RGB, ΔE00) en hérite | remplacer x̄, ȳ, z̄ par la table officielle de la CIE (rang 2 de §0) |
 
 **Le modèle physique — connus, non corrigés**
 
@@ -375,28 +387,22 @@ numéros de l'ancien registre sont entre parenthèses
 |---|---|
 | D21 | `MachineModel` n'a aucun consommateur de production trouvé ; sa docstring donne désormais la bonne unité de `trigger_tolerance` (pourcentage de T, R146). La façade `certus_physics` continue de l'exporter et ses tests de contrat restent actifs |
 | D51 | INDEX garde sa propre lame de Beer-Lambert pour le substrat (`_calculate_RT_absorbing_sub_single`) : elle s'accorde avec le modèle commun `certus_substrate_absorption` à 1e-12 (k de 1e-7 à 1e-3, à 450 et 800 nm, testé, interface avant comprise depuis R117), mais c'est une seconde formule à tenir à jour |
-| D56 | Les jeux de coefficients de Sellmeier de D263T eco (n° 2) et de B270i (n° 4) de `certus/core/certus_substrate_db.py` donnent n_d = 1,5201 et 1,5257 à 587,56 nm. De mémoire, et **sans l'avoir vérifié**, les fiches du fabricant disent 1,5230 pour les deux ; la provenance de ces deux jeux n'est écrite nulle part. Les trois autres verres retrouvent leur indice publié à 1e-4 (silice fondue 1,45846, N-BK7 1,51680, saphir ordinaire 1,76820), et le noyau de production calcule l'indice de ces coefficients à 1e-12 près. Un écart de 3e-3 sur l'indice du substrat déplace la réflexion d'une face nue d'environ 4e-4 (calcul, pas mesure). Le test épingle les deux valeurs comme **mesurées, non validées** (R64) : changer ces nombres doit être une décision, donc casser un test |
 
 **Le code, les tests et la documentation**
 
 | # | défaut |
 |---|---|
 | D11 | **Une fenêtre de module fermée n'est pas détruite** : des lambdas et des `functools.partial` branchés sur les signaux de ses propres widgets la capturent, et la connexion les tient du côté C++ de PyQt, où le ramasse-miettes ne voit pas le cycle (`scripts/sonde_retenants_fenetre.py`, 2026-09-27 : `CertusREApp` retenue par quatre méthodes liées, cinq fermetures et deux attributs de `CertusToast` / `CertusToastStack`). **Sans effet en production** : le hub lance chaque module dans son propre processus (`QProcess`), et fermer la fenêtre finit le processus. Les tests détruisent désormais leurs fenêtres (R5). Coûterait dans tout processus qui construirait plusieurs fenêtres. Piste : `WA_DeleteOnClose` sur `CertusBaseApp`, à condition de retenir d'abord ses `QThread` encore actifs : sans cela, libérer la fenêtre libère un thread en cours (D23) |
-| D23 | R114 a corrigé le préchauffage qui lisait hors de trois tableaux ; R121 a supprimé l'arrêt natif de finalisation des huit workers UI Windows (CI verte le 2026-10-04). Restent à instruire : six `gc.collect()` exécutés dans les threads de calcul STRAT (deux dans `_parallel_block_worker`, un dans `_run_segment`, un dans `_execute_nucleation_and_cost_mapping`, deux dans l'exécuteur du pipeline) peuvent libérer des objets Qt hors du thread GUI, sans arrêt observé ; les tests n'isolent pas `sys.modules`. L'arrêt des raffinements IR après PGLOBAL d'INDEX relève du choix de 👤 en §5. Reproduire avant de changer le cycle de vie ; traiter avec D11 |
+| D23 | R114 a corrigé le préchauffage qui lisait hors de trois tableaux ; R121 a supprimé l'arrêt natif de finalisation des huit workers UI Windows (CI verte le 2026-10-04). Restent à instruire : six `gc.collect()` exécutés dans les threads de calcul STRAT (deux dans `_parallel_block_worker`, un dans `_run_segment`, un dans `_execute_nucleation_and_cost_mapping`, deux dans l'exécuteur du pipeline) peuvent libérer des objets Qt hors du thread GUI, sans arrêt observé ; les tests n'isolent pas `sys.modules`. L'arrêt pendant l'étage IR d'INDEX garde le résultat raffiné, décidé par 👤 (§3). Reproduire avant de changer le cycle de vie ; traiter avec D11 |
 | D25 | Dette de lint masquée par `extend-ignore` : **15 règles**, E501 compris, et 1 479 violations à la mesure du plan (`scripts\metrics.py`, 2026-10-06 : `ruff --isolated`, E501 exclue ; 32 règles et 3 319 violations à sa base du 2026-09-30) ; plus aucun import étoile, et les noms indéfinis (F821, F822) sont à zéro. Par règle, avec la configuration du projet et ses exceptions par fichier (`ruff check --select` de la liste, 2026-10-06, 1 445 hors E501) : F401 590, gardés exprès pour la plupart (R9) ; E402 508 ; confusables RUF001 à RUF003 186 (des µ, × et – voulus) ; RUF100 62 ; PERF401 47 ; PT011 19 ; PT017 12 ; RUF005 10 ; RUF022, UP042 et UP046 3 chacune ; UP040 2 ; E501 en compte 2 623. Le cliquet `tests/oracle/test_lint_debt_ratchet.py` nomme les règles restantes : aucune ne peut entrer, et une règle sortie doit quitter sa liste. RUF022 (trier `__all__`) reste ignorée à dessein |
 | D26 | Imports montants entre couches, mesurés le 2026-10-06 (`scripts\metrics.py`) : 20 arêtes, `certus.spline → certus.ui` (8), `certus.metal → certus.ui` (6), `certus.utils → certus.ui` (3), `certus.utils → certus.spline` (3) ; un cycle d'imports à l'exécution (le cœur de STRAT). Mesuré le 2026-09-29, module par module dans un interpréteur neuf : 72 des 73 modules de `certus/core`, `certus/physics` et `certus/domain` se chargent sans Qt, et tous ensemble n'en chargent aucun (garde-fou `test_computation_imports_no_qt`) ; le dernier, `certus.physics.gradient_analytic`, ne s'importe pas seul (cycle avec `gradient_utils`) |
 | D40 | METAL BILAYER : l'analyse de faisceau minimise la MSE de réflectance seule, l'optimisation globale y ajoute une pénalité de lissage — deux objectifs, dont les RMSE ne se comparent pas |
-| D41 | INDEX, INDEX SPLINE, RE, METAL et DESIGN arrêtent leurs workers dans leur propre `closeEvent` avant d'appeler celui de base : la question « un calcul tourne, fermer quand même ? » ne peut pas s'y poser. La leur donner, c'est demander avant d'arrêter, comme STRAT — un changement de comportement à la fermeture |
 | D42 | Neuf modules de bibliothèque appellent `create_module_environment(__file__)` à l'import : chacun reconfigure le journal CERTUS, dont la destination dépend alors de l'ordre des imports ; leur `script_dir`, leur propre dossier, ne sert presque jamais. L'insertion dans `sys.path` (R21) et le fil de préchauffage (R24) sont corrigés |
-| D50 | Le dossier gelé (`dist/CERTUS_HUB/`, 443 Mo, mesuré le 2026-09-30) embarque les bibliothèques de développement que tirent pandas et Numba (IPython, pytest, hypothesis, coverage, astroid…) ; `loky` ne marche pas gelé (repli sur des fils) ; le multigraine reste refusé dans l'exécutable gelé, le message le dit. La couche Numba du gel est D87. Le job `release-windows` l'a construit et démarré sur un poste neuf le 2026-09-30 (R42) |
-| D58 | `certus/utils/certus_reset_framework.py` (le bouton de remise à zéro) : la feuille de style est une chaîne ordinaire, pas un f-string, donc `font-size: {Typography.BODY_LG}pt;` est écrit tel quel et Qt ignore la déclaration : le bouton garde la police par défaut au lieu de celle que son auteur voulait. Observé le 2026-10-01 en cherchant les `color: white` ; **non changé** : le réparer change l'aspect d'un bouton, et c'est au propriétaire de dire quelle taille il veut |
-| D65 | `certus/ui/certus_index_ui_export.py` lit encore `n_fit_R_only` (neuf fois, dont dans `_update_data_table`), la colonne que D62 a fait retirer du tracé : aucune sortie d'optimiseur ne l'écrit (la stratégie IR n'écrit que `n_fit_T_only` / `k_fit_T_only`, `delta_n`, `delta_k`). Branches mortes du même genre ; **non changé** : le retrait est une décision de 👤, comme D62 |
-| D66 | La légende de gauche du tracé n / k d'INDEX (`_update_nk_plot`) est créée par `addLegend` APRÈS le tracé des courbes n : pyqtgraph ne liste que les courbes ajoutées après elle, donc elle est vide au premier tracé d'une fenêtre et remplie aux suivants (la légende de k, construite à la main, est complète). Vu en écrivant le test du tracé (R73) ; **non changé** : créer la légende avant les courbes change l'aspect du premier tracé |
+| D50 | Gelé, `loky` ne marche pas (repli sur des fils) et le multigraine reste refusé, le message le dit. La couche Numba du gel est D87, sa taille D72. Le job `release-windows` l'a construit et démarré sur un poste neuf le 2026-09-30 (R42) |
 | D68 | Deux conséquences de R74 que 👤 peut défaire ou compléter. **(1)** Le hub ne lance plus l'échauffement JIT : il ne calcule rien, et ce fil de fond lui faisait charger numba, scipy et la physique. Sur un cache Numba vide (première installation), le premier module lancé compile donc seul ses noyaux, sans que le hub l'ait amorcé ; chaque module garde son propre échauffement. Revenir en arrière : retirer `jit_warmup=False` de l'appel du hub (le test de R74 le dira). Une voie qui garde le hub léger et amorce le cache : un processus fils à basse priorité lancé après l'affichage du hub — **non fait**, c'est un choix de conception. **(2)** La physique lit le silicium (`SI_*`, feuille `Si-substrate` de `indices.xlsx`) À L'IMPORT, par pandas et openpyxl (mesuré sur la fenêtre DESIGN, machine chargée : 0,53 s pour `materials_data`, dont 0,42 s d'import d'openpyxl) ; les rendre paresseux demande que les tableaux existent avant la première compilation de `get_nk_si` (numba les fige), donc toucher le chargement de la physique — **non fait** |
 | D69 | Deux définitions d'indicateurs ont changé en route, et 👤 doit le savoir. **(1)** « Couverture des noyaux, compilation coupée » : le plan la mesurait par `oracle` + `core` (base 45,9 %, cible ≥ 70 %) ; elle se mesure maintenant par ces deux répertoires, `property` et les tests de `unit` marqués `kernels` (R78 : 74,0 %). La base de l'audit reste celle de l'ancienne définition ; avec l'ancienne, l'indicateur serait à 46,0 % le 2026-10-01 (non atteint). Je tiens la nouvelle pour la bonne (les tests des noyaux de STRAT ont été écrits pour cela), mais c'est un changement de critère. **(2)** « Modules à moins de 15 % de couverture » (13, cible ≤ 8) : `metrics.py` prend déjà la meilleure couverture de chaque fichier parmi les JSON donnés ; remesuré le 2026-10-01 avec la mesure de toutes les suites (1b67dd95) et celle des noyaux (f94523a5) : **6 modules** (R87), cible atteinte |
 | D71 | Deux observations sur Tauc-Lorentz-Urbach (`gradient_analytic.py`), non corrigées. **(1)** k est calculé par √((|ε| − ε₁)/2), qui s'annule par différence là où ε₂ ≪ ε₁ : sous ε₂ ≈ 1e-7 (loin sous le gap) k revient à 0 ou à quelques pour mille près, soit moins de 2e-7 sur 2nk ; une différence finie de n ou de k y est fausse, la dérivée analytique est juste ; sans effet sur un empilement. **(2)** ε₂ saute en E = Eg : la queue d'Urbach, utilisée pour E ≤ Eg, vaut 1,9e-4 pour l'oxyde de l'exemple, l'absorption de bande (E > Eg) vaut 0 et monte jusqu'à l'ancre de la queue, posée à Eg + 0,01 eV ; le saut est de 2e-5 du maximum, sans effet sur un empilement, mais le modèle n'est pas continu là pour un ajustement qui passerait au bord du gap |
-| D72 | **Taille du gel (S7.2) : objectif ≤ 300 Mo non atteint.** 411 Mo le 2026-10-06 (442 avant `5ccaa210`, qui laisse dehors IPython, pytest, hypothesis, coverage, astroid, pylint, black, mypy, ruff, sphinx, jedi, parso, notebook, jupyter et ipykernel ; hub et modules démarrent, artefact contrôlé). Le reste : llvmlite 115 Mo (Numba, indispensable), Qt 77 Mo (dont le rendu OpenGL logiciel), scipy 68 Mo avec ses bibliothèques, numpy 28, matplotlib 15, Pillow 13, pandas 13, lxml 7, OpenSSL 8. Étape suivante : mesurer ce que l'application charge vraiment (sous-modules de scipy, plugins Qt, ssl, lxml) avant d'autres exclusions |
-| D76 | **METAL SINGLE, analyse du faisceau : objectif et gradient différents.** `gradient_function_fixed_eM` donne la dérivée de la partie données à 2e-10 près, mais `objective_function_fixed_eM` ajoute une pénalité de lissage 1e-2 sans sa dérivée : écart relatif au gradient du coût complet de 1,7e-3 (nœuds lisses) à 1,9e-2 (rugueux). Décision de 👤 : ajouter la dérivée ou retirer la pénalité. Le point distinct sur les nœuds internes METAL BILAYER est corrigé en R113. |
+| D72 | **Taille du gel (S7.2) : objectif ≤ 300 Mo non atteint.** 411 Mo le 2026-10-06 (442 avant `5ccaa210`, qui laisse dehors IPython, pytest, hypothesis, coverage, astroid, pylint, black, mypy, ruff, sphinx, jedi, parso, notebook, jupyter et ipykernel ; hub et modules démarrent, artefact contrôlé). Le reste : llvmlite 115 Mo (Numba, indispensable), Qt 77 Mo (dont le rendu OpenGL logiciel), scipy 68 Mo avec ses bibliothèques, numpy 28, matplotlib 15, Pillow 13, pandas 13, lxml 7, OpenSSL 8. Étape suivante : mesurer ce que l'application charge vraiment (sous-modules de scipy, plugins Qt, ssl, lxml) avant d'autres exclusions. Un gel local embarque ce que porte l'interpréteur qui le construit : celui du 2026-10-06 contient aussi lxml, psutil, pywin32, PyYAML, certifi, charset_normalizer, MarkupSafe et cffi, absents de `requirements.lock`, d'où part le gel de la CI |
 | D82 | **Thème sombre : logo et mesure de contraste à terminer.** Les textes et états vides suivent désormais le thème (R102). Le logo foncé reste peu visible en thème sombre, constat visuel sans mesure ; le harnais ne résout pas encore une encre de palette sur fond hérité. |
 | D84 | **Validation locale intermittente.** Des écarts au dernier bit sur deux tests STRAT apparaissent après un changement de clé de cache Numba, puis disparaissent aux relances et dans la suite complète (observé deux fois le 2026-10-03, pas depuis). Signature compatible avec D52 : compilation sur place contre lecture du cache, cause non prouvée. Si l'écart revient, comparer les noyaux froids et chauds avant de modifier le calcul. |
 
@@ -406,20 +412,14 @@ Ces sujets demandent un jugement de physicien ou de propriétaire du produit. Le
 
 | sujet | ce qui est en jeu |
 |---|---|
-| **le dépôt dans Google Drive** | un dépôt git synchronisé par Drive est lent et exposé aux copies de conflit dans `.git` ; ce dossier est en plus partagé par deux PC sous deux chemins différents. Recommandé : un clone hors Drive par machine. Non fait : déplacer l'arbre de travail pendant qu'on y travaille n'est pas une opération sûre |
-| **données Nb2O5 « Syrus »** | dans les feuilles `Nb2O5-Syrus` et `IR-Syrus-Nb2O5` de `example/database_index/indices.xlsx`, n tombe de 2,09 à 4,0 µm à 1,19 à 4,7 µm puis remonte à 1,78 à 5 µm, quand les feuilles H400 et H800 restent entre 2,07 et 2,13. Un creux de cette taille avec k ≤ 0,018 n'est pas physique |
-| **défaut D10** | fiabiliser l'ajustement Sellmeier du saphir : **change des résultats de production** |
-| **interface** | Revoir visuellement les onze fenêtres et choisir les teintes de marque, la bande des fichiers récents et les bornes des champs numériques. La branche locale `claude/charming-wright-43077a` (un commit du 2026-09-07) contient des couleurs à évaluer avant intégration. |
-| **branches locales** | `wip-d75-gradient-lame` (un commit du 2026-10-02) porte l'alternative de D75 que la décision finale du même jour a écartée (`265a334c` : le verre dépoli est une face arrière infinie) : à supprimer si tu le confirmes |
-| **Stop pendant l'étage IR d'INDEX** | interrompre aussi les raffinements qui suivent PGLOBAL, ou garder le résultat raffiné livré aujourd'hui (détail : D23) — change ce que voit l'utilisateur |
 | **validation externe** | deux stratégies réellement déposées du dichroïque, avec leurs spectres mesurés. Le test est **ordinal** : STRAT doit les classer dans le bon ordre |
-| **fichiers hors git** | `Selenium_Optical_Constants*.pdf` (œuvre d'un tiers) et `studies/selenium_bk7/` (recherche non publiée, dont des scripts sources) : ignorés, donc dans aucun clone (vérifié le 2026-10-06). **À sauvegarder à la main avant tout changement de machine**, ou à commiter si tu le décides |
-| **poste de travail** | le venv `C:\envs\certus` (numba 0.66) est inutilisé depuis le passage au Python système, et toujours présent le 2026-10-06 : à supprimer si tu le confirmes |
-| **deux fenêtres débranchées** | STRAT montre l’accueil générique alors que `certus_strat_welcome_ui.py` existe ; le moniteur d’indices d’INDEX SPLINE (`certus_index_spline_monitor_ui.py`) n’est plus appelé que par un test. Rebrancher ou retirer ces fenêtres ? Recommandé : les rebrancher. |
-| **protection de `master` et Dependabot** | Décider si l’épinglage des actions par SHA devient obligatoire, si une relecture ou `release-windows` devient un contrôle requis, et quoi faire des PR Dependabot ouvertes (#1 à #4 et #6 le 2026-10-06). |
-| **avis de tiers** | Écrire `THIRD_PARTY_NOTICES` (absent le 2026-10-06) pour les éléments redistribués sous licence propre (icônes Lucide, données d’indices, textes tiers). |
+| **la table CIE (D92)** | autoriser le téléchargement de la table officielle des fonctions colorimétriques CIE 1931 (site de la CIE), seule source sûre pour corriger D92 |
+| **avis de tiers** | relire le brouillon `THIRD_PARTY_NOTICES.md` et lever ses « à confirmer par toi » ; décider si le gel embarque `LICENSE`, les avis et les textes de licence des bibliothèques qu'il contient : celui du 2026-10-06 n'a que ceux de cinq distributions (MarkupSafe, numba, NumPy, pydantic, PyQt6), alors que les licences MIT et BSD demandent leur avis dans une distribution binaire |
+| **protection de `master`** | l'appliquer dans GitHub (CI verte exigée) : réglage de sécurité, laissé à 👤 |
+| **PR Dependabot** | #1 à #4 et #6, ouvertes le 2026-10-06 : leurs mises à jour sont sur la branche ; les fermer ou les fusionner dans `master` se redemande à 👤 |
+| **interface** | Revoir visuellement les onze fenêtres et choisir les teintes de marque, la bande des fichiers récents et les bornes des champs numériques. |
 
-D48, D54, D55, D86, D87 et D88 sont tranchés (§3) ou corrigés.
+D10, D41, D48, D54, D55, D56, D58, D65, D66, D76, D86, D87 et D88 sont tranchés (§3) ou corrigés.
 
 ## 6. Chantiers spécifiés, en attente
 

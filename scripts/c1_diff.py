@@ -214,6 +214,15 @@ def corpus_strat(rec: Enregistreur) -> None:
     f_scan = rec.resoudre("strat.scan", f"{g}:layer_scan_coeffs")
     f_profile = rec.resoudre("strat.tprofile", f"{g}:compute_T_front_profile")
     f_detail = rec.resoudre("strat.detailed", f"{g}:calculate_detailed_growth")
+    # L'option `adaptive_scan`, morte, a ete retiree du noyau (D54) : un arbre qui l'a encore la recoit a False, les deux
+    # arbres comparent alors le meme chemin. Les cas qui la tiraient gardent leur tirage (la graine ne bouge pas).
+    import inspect
+
+    parametres = inspect.signature(getattr(f_grow, "py_func", f_grow)).parameters if f_grow is not None else {}
+
+    def queue(grille: float, drapeaux: Any) -> tuple[Any, ...]:
+        return (False, grille, drapeaux) if "adaptive_scan" in parametres else (grille, drapeaux)
+
     nodes = 8  # SLIT_PROFILE_NODES : le nombre exact est celui du noyau, mais toute largeur >= 2 est une entree valide
 
     rng = np.random.default_rng(20260930)
@@ -246,7 +255,7 @@ def corpus_strat(rec: Enregistreur) -> None:
             int(rng.integers(0, 3)), float(rng.choice([0.0, 0.01])), float(rng.choice([1.0, 0.98])),
             float(rng.choice([0.0, 0.01])), float(rng.choice([0.0, 0.5])), bool(rng.random() < 0.7),
             lissage, 2.30 if est_taux else -1.0, 1.45 if est_taux else -1.0, est_taux, profiles,
-            base_layer, adaptatif, grille, drapeaux,
+            base_layer, *queue(grille, drapeaux),
         )  # fmt: skip
 
     for cas in range(20):

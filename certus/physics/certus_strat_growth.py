@@ -25,9 +25,6 @@ from certus.physics.certus_substrate_absorption import K_MAX_LAYER_BACKSIDE, K_M
 #: (9bis-1). Rate mode counts turns, so a commanded thickness is quantised to a
 #: multiple of this -- which IS the U(0, 0.125 nm) stopping law of 9bis-7,
 #: appearing on its own with no parameter to pose.
-#: 👤 "no layer will be off by more than 10 nm of thickness, or it is scrap"
-#: (2026-08-11). The margin the stopping point can need BEYOND the nominal thickness.
-SCAN_ERROR_MARGIN_NM: float = 15.0
 RATE_TURN_NM: float = 0.125
 
 #: Amplitude of the PHOTOMETRIC CURVATURE, in T units, at its maximum (T = 0.5).
@@ -1056,52 +1053,24 @@ def _resample_on_machine_grid(
     return Ts_r, Ts_n, n_tot, idx_nom_stop
 
 
-# ---- SCAN WINDOW (👤 2026-08-11) ------------------------------------
+# ---- SCAN WINDOW ----------------------------------------------------
 #
-# 👤 *"scanning from zero to three times, that seems enormous! No layer will be
-# off by more than 10 nm of thickness, or it is scrap."*
-#
-# 📏 Measured on the 48-layer dichroic: `D_SCAN = 3.0` makes **63 %** of the
-# sweep cover thicknesses no layer will ever reach without being scrap. On the
-# 253 nm layer it scans to 760 nm.
-#
-# 🔑 THE DEFECT IS NOT THAT 3 IS TOO BIG -- IT IS THE SCALING. `D_SCAN` is a
-# MULTIPLE of the layer thickness, yet the two things that require going beyond
-# the nominal are both FIXED IN NANOMETRES:
-#
-#   * the stopping point, bounded by the largest meaningful error (15 nm here);
-#   * the reachability test, which needs the NEXT extremum -- half an optical
-#     period, i.e. lambda/(4n): 57.9 nm on H, 93.2 nm on L at 544 nm, and that
-#     does not depend on how thick the layer is.
-#
-# A multiple is therefore too generous on a thick layer and possibly TOO SHORT
-# on a thin one -- the same parameter wrong in both directions.
-#
-# ⚠️ THE DENSITY IS PRESERVED, and that is what makes this a cost saving rather
-# than a change of model. The number of points falls WITH the window, so the
-# sampling stays at the same points per nanometre -- hence the same number of
-# noise draws per nanometre, the same false-extremum fabrication rate (12.4
-# measured 33 % at 80 points against 99.9 % at 800), the same physics. Cutting
-# NPTS at a fixed window would NOT be neutral.
+# The current layer is swept over `D_SCAN_VAL` times its thickness in `SCAN_NPTS_CURRENT` points (a shorter,
+# adaptive window was removed: it had no caller, and it read outside the coarse sweep on the fine grid).
 #
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
 def _scan_window(
     block_start_layer: int,
     i_layer: int,
     witness_base_layer: int,
-    n_H: complex,
-    n_L: complex,
     nominal_th: float,
-    adaptive_scan: bool,
-    wl: float,
 ) -> tuple[int, int, int, float, int]:
     """What the scan reads: the first layer replayed (`j0`), the length of the history in points (`n_hist`), the number of
     points of the current layer (`npts_cur`), the depth it is swept to (`d_max`), and the length of both signals (`n_tot`).
 
     The block starts at `block_start_layer` (-1, or past the layer: the layer alone), goes back at most
     `MAX_LOOKBACK_VAL` layers, and never below the witness the signal is read on. The current layer is swept over
-    `D_SCAN_VAL` times its thickness in `SCAN_NPTS_CURRENT` points; with `adaptive_scan` it is swept over its thickness
-    plus the error margin plus half an optical period, at the same density in points per nanometre.
+    `D_SCAN_VAL` times its thickness in `SCAN_NPTS_CURRENT` points.
     """
     MAX_LOOKBACK = MAX_LOOKBACK_VAL
     NPTS = SCAN_NPTS_CURRENT
@@ -1121,28 +1090,8 @@ def _scan_window(
         j0 = witness_base_layer
     n_hist = (i_layer - j0) * NPTS_PREV
     # The scan window, computed HERE because it sizes the arrays below.
-    n_cur_n_w = n_H if i_layer % 2 == 0 else n_L
     npts_cur = NPTS
     d_max = D_SCAN * nominal_th
-    if adaptive_scan and nominal_th > 0.0001:
-        # 🔴 THE TWO NEEDS ADD UP, they do not compete -- and taking their maximum
-        # was wrong. Measured 2026-08-11: with `max()` a layer declared
-        # non-terminable by the classic sweep came back terminable, because the
-        # reachability test bounds its window at the NEXT EXTREMUM after the stop
-        # and the shorter sweep no longer contained one. It then fell back on the
-        # end of the array, which is MORE PERMISSIVE -- the sweep was hiding
-        # crashes, the worst possible direction for an error.
-        #
-        #   the stop wanders by up to the error margin (👤 "10 nm, or it is scrap")
-        #   and FROM WHEREVER IT LANDS the next extremum can be half a period away
-        #
-        # so the window is nominal + margin + half period, not their maximum.
-        half_period = wl / (4.0 * n_cur_n_w.real) if n_cur_n_w.real > 1e-9 else nominal_th
-        d_max = nominal_th + SCAN_ERROR_MARGIN_NM + half_period
-        density = NPTS / (D_SCAN * nominal_th)          # points per nm, UNCHANGED
-        npts_cur = round(density * d_max)
-        if npts_cur < 8:
-            npts_cur = 8
     n_tot = n_hist + npts_cur
     return j0, n_hist, npts_cur, d_max, n_tot
 
@@ -1810,7 +1759,6 @@ def simulate_growth_kernel(
     is_rate: bool = False,
     slit_profiles: np.ndarray | None = None,
     witness_base_layer: int = 0,
-    adaptive_scan: bool = False,
     machine_sampling_dd: float = 0.0,
     prev_rate_flags: np.ndarray | None = None,
 ) -> tuple[float, float, float, float, float]:
@@ -1931,7 +1879,7 @@ def simulate_growth_kernel(
     T_last_nom = 0.0
     if nominal_th > 0.0001:
         j0, n_hist, npts_cur, d_max, n_tot = _scan_window(
-            block_start_layer, i_layer, witness_base_layer, n_H, n_L, nominal_th, adaptive_scan, wl,
+            block_start_layer, i_layer, witness_base_layer, nominal_th,
         )
         Ts_r = np.zeros(n_tot, dtype=np.float64)
         Ts_n = np.zeros(n_tot, dtype=np.float64)

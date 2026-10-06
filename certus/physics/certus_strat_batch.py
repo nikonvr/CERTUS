@@ -526,11 +526,10 @@ def simulate_stack_robustness_batch(
                 # each replayed layer must carry its own bias profile, not this layer's.
                 slit_profiles,
                 witness_base[i_layer],
-                # ⚠️ The kernel's two defaults, repeated as they are in order to reach the next
+                # ⚠️ The kernel's default, repeated as it is in order to reach the next
                 # parameter by position. `machine_sampling_dd` therefore stays at 0.0 -- it is
                 # defect A8, documented as UNREACHABLE, and this is not the place to repair it:
                 # repeating it changes nothing, omitting it neither.
-                False,
                 0.0,
                 # 👤 2026-08-19: the rate is computed ONLY on the optically deposited layers.
                 # The kernel only received the flag of the current layer and therefore took the

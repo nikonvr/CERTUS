@@ -62,7 +62,7 @@ correction ; chaque test échoue sur le code d'avant.
 - **Licences dans le gel** (`04a67083`, `93127c2e`, locaux, pour la PR suivante) : `licenses/` reçoit `LICENSE`,
   `THIRD_PARTY_NOTICES.md` et les fichiers de licence de chaque distribution embarquée (`tools/frozen_licences.py`) ;
   le contrôle d'artefact les exige. Construit le 2026-10-06 (même contenu, avant le rebasage sur `d8a0ef42`) : 91
-  fichiers, 885 Ko, 55 distributions dans le gel local ; artefact et démarrage contrôlés.
+  fichiers, 885 Ko, pour les 53 distributions du gel local, Python et PyInstaller ; artefact et démarrage contrôlés.
 
 **Plus tôt le 2026-10-06.** Un audit complet (`c2b47f11`) a trouvé D87 à D91. Corrigés depuis : D87 (`31745571`,
 `1aa32a1d` : le gel calcule sur la couche OpenMP ; construit, démarrage et artefact contrôlés), D88 (`a49fe502`,

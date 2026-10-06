@@ -1381,7 +1381,7 @@
     </tr>
     <tr>
         <td><strong>Multi-threaded</strong></td>
-        <td>Multi-start evaluations parallelized via Numba workqueue threading layer.</td>
+        <td>Multi-start evaluations run in a thread pool; their kernels use Numba's OpenMP threading layer.</td>
     </tr>
     <tr>
         <td><strong>Spline Refinement</strong></td>

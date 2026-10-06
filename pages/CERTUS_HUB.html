@@ -124,8 +124,8 @@
             D -->|Frozen| F --> G
         </div>
         <p><code>configure_numba_env</code> sets a source-keyed temporary cache and thread environment before a
-            Numba-using module is imported. In source mode it defaults to the <code>omp</code> layer and reserves
-            CPU capacity; in frozen mode it selects <code>workqueue</code>. Existing environment settings and an
+            Numba-using module is imported. Frozen or not, it defaults to the thread-safe <code>omp</code> layer and
+            reserves CPU capacity. Existing environment settings and an
             already-initialized Numba runtime can affect the result, so the precise values are conditional.</p>
         <p><code>launch_module</code> creates a <code>QProcess</code> for the selected script, or re-enters the
             single frozen executable with <code>--run-module</code>. An optional dropped file is passed as a command

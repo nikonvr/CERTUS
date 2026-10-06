@@ -345,11 +345,8 @@ def configure_numba_env() -> None:
 
     This function is idempotent - safe to call multiple times.
 
-    Configuration:
-
-    - Frozen mode: Single-threaded (prevents deadlocks)
-
-    - Development mode: Multi-threaded with reserved cores for OS/GUI
+    Configuration, the same frozen or not: the OpenMP threading layer, multi-threaded with cores reserved
+    for the OS and the GUI.
 
     Environment variables set:
 
@@ -357,7 +354,7 @@ def configure_numba_env() -> None:
 
     - NUMBA_NUM_THREADS: Number of threads for Numba
 
-    - NUMBA_THREADING_LAYER: Threading layer ('workqueue' or 'omp')
+    - NUMBA_THREADING_LAYER: Threading layer ('omp')
 
     - OMP_NUM_THREADS, OPENBLAS_NUM_THREADS, MKL_NUM_THREADS: Thread limits
 
@@ -368,7 +365,7 @@ def configure_numba_env() -> None:
     if getattr(sys, "_certus_numba_configured", False) and os.environ.get("_CERTUS_NUMBA_CONFIGURED") == "1":
         ensure_numba_cache_dir()
         if "NUMBA_THREADING_LAYER" not in os.environ:
-            os.environ["NUMBA_THREADING_LAYER"] = "workqueue" if is_frozen() else "omp"
+            os.environ["NUMBA_THREADING_LAYER"] = "omp"
         return
 
     if os.environ.get("_CERTUS_NUMBA_CONFIGURED") == "1":
@@ -392,7 +389,7 @@ def configure_numba_env() -> None:
             ]:
                 os.environ.setdefault(env_var, cur)
             os.environ["NUMBA_NUM_THREADS"] = cur
-            os.environ.setdefault("NUMBA_THREADING_LAYER", "workqueue" if is_frozen() else "omp")
+            os.environ.setdefault("NUMBA_THREADING_LAYER", "omp")
             os.environ["_CERTUS_NUMBA_CONFIGURED"] = "1"
             sys._certus_numba_configured = True  # type: ignore[attr-defined]
             return
@@ -406,37 +403,25 @@ def configure_numba_env() -> None:
     cache_dir = numba_cache_dir()
     os.environ["NUMBA_CACHE_DIR"] = cache_dir
 
-    if is_frozen():
-        # In frozen mode: force workqueue (standard python threading)
-        # TBB is hard to bundle correctly with PyInstaller.
-        # One Numba worker does not make workqueue safe across Python threads: RE must not
-        # overlap its QThread warmup with the global background warmup.
-        os.environ["NUMBA_THREADING_LAYER"] = "workqueue"
-        os.environ.setdefault("NUMBA_NUM_THREADS", "1")
-        for env_var in [
-            "OMP_NUM_THREADS",
-            "OPENBLAS_NUM_THREADS",
-            "MKL_NUM_THREADS",
-            "VECLIB_MAXIMUM_THREADS",
-            "NUMEXPR_NUM_THREADS",
-        ]:
-            os.environ.setdefault(env_var, "1")
-    else:
-        # Development mode: use optimal thread count
-        n_cores = max(1, _get_cpu_count() - _RESERVED_CORES_FOR_NUMBA)
-        s_cores = str(n_cores)
-        if "NUMBA_THREADING_LAYER" not in os.environ:
-            os.environ["NUMBA_THREADING_LAYER"] = "omp"
-        for env_var in [
-            "NUMBA_NUM_THREADS",
-            "OMP_NUM_THREADS",
-            "OPENBLAS_NUM_THREADS",
-            "MKL_NUM_THREADS",
-            "VECLIB_MAXIMUM_THREADS",
-            "NUMEXPR_NUM_THREADS",
-        ]:
-            if env_var not in os.environ:
-                os.environ[env_var] = s_cores
+    # Frozen or not, the same layer and the same thread budget. The frozen build used to force `workqueue` with
+    # one thread: that layer ends the process ("Concurrent access has been detected") as soon as two Python
+    # threads enter a parallel kernel together, and every module computing does (a pool of workers, or the GUI
+    # thread beside its QThread). OpenMP is thread-safe; `omppool` ships with Numba, and PyInstaller bundles its
+    # runtime (vcomp140.dll).
+    n_cores = max(1, _get_cpu_count() - _RESERVED_CORES_FOR_NUMBA)
+    s_cores = str(n_cores)
+    if "NUMBA_THREADING_LAYER" not in os.environ:
+        os.environ["NUMBA_THREADING_LAYER"] = "omp"
+    for env_var in [
+        "NUMBA_NUM_THREADS",
+        "OMP_NUM_THREADS",
+        "OPENBLAS_NUM_THREADS",
+        "MKL_NUM_THREADS",
+        "VECLIB_MAXIMUM_THREADS",
+        "NUMEXPR_NUM_THREADS",
+    ]:
+        if env_var not in os.environ:
+            os.environ[env_var] = s_cores
 
     os.environ["_CERTUS_NUMBA_CONFIGURED"] = "1"
     sys._certus_numba_configured = True  # type: ignore[attr-defined]
@@ -450,9 +435,7 @@ def get_safe_worker_count(default_workers: int | None = None) -> int:
 
     Cached to avoid repeated CPU count checks.
 
-    Returns 1 in frozen mode to avoid Numba locking issues.
-
-    In development mode, reserves cores for OS and GUI.
+    Reserves cores for the OS and the GUI, frozen or not.
 
     Args:
 
@@ -464,9 +447,7 @@ def get_safe_worker_count(default_workers: int | None = None) -> int:
 
     Returns:
 
-        Number of workers (int): 1 in frozen mode, otherwise
-
-        max(1, cpu_count - 2) or default_workers if provided.
+        Number of workers (int): max(1, cpu_count - reserved cores), or default_workers if provided.
 
     Example:
 
@@ -475,12 +456,6 @@ def get_safe_worker_count(default_workers: int | None = None) -> int:
         >>> workers = get_safe_worker_count(8)  # Explicit count
 
     """
-
-    if is_frozen():
-        if default_workers is not None:
-            return max(1, default_workers)
-
-        return max(1, _get_cpu_count() - _RESERVED_CORES_FOR_WORKERS)
 
     if default_workers is not None:
         return max(1, default_workers)

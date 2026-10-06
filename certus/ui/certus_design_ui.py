@@ -376,6 +376,9 @@ class CertusDesignApp(
     def _apply_config(self, c: dict) -> None:
         self.state_manager._apply_config(c)
 
+    def _config_load_problems(self, c: dict) -> list[str]:
+        return self.state_manager.config_load_problems(c)
+
     def _apply_optimization_config(self, opt: dict) -> None:
         self.state_manager._apply_optimization_config(opt)
 

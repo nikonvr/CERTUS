@@ -189,6 +189,13 @@ class CertusIndexStateMixin:
         """Normalize legacy/new CERTUS_INDEX JSON payloads for first-launch compatibility."""
         return normalize_index_config(cfg)
 
+    def _config_load_problems(self, cfg: dict) -> list[str]:
+        """A substrate this window does not offer (D88): the list would keep the previous one."""
+        sub = self._normalize_index_config(cfg).get("substrate")
+        if sub and hasattr(self, "cb_sub") and self.cb_sub.findText(str(sub)) < 0:
+            return [f'Substrate: "{sub}" is not one of the substrates of this window.']
+        return []
+
     def _apply_config(self, cfg: dict) -> None:
         """Restore CERTUS_INDEX widget state from a loaded config dict.
 

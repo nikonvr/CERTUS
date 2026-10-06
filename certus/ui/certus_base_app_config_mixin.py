@@ -134,6 +134,14 @@ class CertusAppConfigMixin:
 
         pass
 
+    def _config_load_problems(self, config: dict[str, Any]) -> list[str]:
+        """What the configuration names that this window does not offer; override in a subclass.
+
+        A combo box asked for a text it does not offer keeps its previous choice, and the window would compute with
+        that other material while the file names another (D88). `load_config` loads nothing when this is not empty.
+        """
+        return []
+
     def _pre_save_smart_cleanup(self) -> None:
         """Override in subclass for pre-save cleanup (e.g. layer pruning in DESIGN)."""
 
@@ -298,6 +306,17 @@ class CertusAppConfigMixin:
                             details=str(e),
                             suggestion="Ensure the configuration file matches the INDEX_SPLINE schema.",
                         ) from e
+
+                problems = self._config_load_problems(config)
+                if problems:
+                    logging.getLogger("CERTUS").warning("Configuration refused (%s): %s", filename, "; ".join(problems))
+                    QMessageBox.warning(
+                        self,
+                        "Configuration not loaded",
+                        "This configuration names what this installation does not offer; nothing was loaded:\n\n"
+                        + "\n".join(f"• {p}" for p in problems),
+                    )
+                    return False
 
                 self._apply_config(config)
 

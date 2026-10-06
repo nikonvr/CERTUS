@@ -87,12 +87,12 @@ n'autorise pas à modifier son arbre témoin.
 
 | rang | action et critère de fin | raison / condition |
 |---|---|---|
-| 3 — établir la parité publiée | Inventaires (`reports/PARITE_ZENODO_*_2026-10-05.md`) et lecture des écarts courts de l'INDEX SPLINE (`reports/PARITE_ZENODO_SPLINE_LECTURE_2026-10-06.md` : remaniements, trois retouches heuristiques du corridor, une correction) faits. Reste à lire les écarts longs (gradient analytique, nettoyage des nœuds, décalage de Δn, polissage du maillage) et à comparer les capacités du RE marquées « non comparé » (a priori MAP, substrats, échantillons à deux faces, résidus par voie). | Nécessaire avant d'affirmer que les améliorations publiées sont intégrées. RE local 1.2.0.dev0 diffère de l'archive 1.1.1 ; l'inversion conjointe de plusieurs échantillons est écartée par 👤. |
+| 3 — établir la parité publiée | Fait le 2026-10-06 (`reports/PARITE_ZENODO_ECARTS_LONGS_2026-10-06.md`, après les inventaires du 2026-10-05 et la lecture des écarts courts) : aucune amélioration de l'INDEX SPLINE publié ne manque au code courant ; son gradient analytique, que la version publiée n'utilise pas, est vérifié contre les différences finies avec des mesures en réflexion (12 cas ajoutés à l'oracle). Pour le RE, le silicium diffère de celui de `certus_re` de −2,0e-3 à +4,5e-3, le saphir est le même jeu. Reste à 👤 : trois décisions (§5). | Les capacités du RE publié absentes de CERTUS (a priori MAP, échantillon revêtu sur les deux faces, résidus par voie) ne se portent que sur décision. |
 | 4 — traiter la chaîne de mesure | Spécifier puis mesurer la cadence machine (§6, 12.4), ensuite seulement le lissage (12.2). D54 et D55 sont corrigés. | La grille de la machine est inactive par défaut. Tout changement de noyau passe C1 froid contre froid et l'oracle. |
 | 5 — stabiliser interface et gel | Reproduire D23 (les six `gc.collect()` des threads de calcul STRAT et les `QThread`) avant D11 et `WA_DeleteOnClose` ; poursuivre la réduction du gel (D72) après sa fiabilité. | D11 n'a pas d'effet dans le lancement actuel par processus ; libérer une fenêtre avant ses threads serait plus grave. |
 | 6 — réduire la dette | Élucider les effets d'import de D42 avant E402/I001 (D25), puis traiter D26 et les défauts visuels selon §4–5. | Chantier utile, mais moins urgent que la justesse scientifique ; l'ordre des imports peut changer l'exécution. |
 
-**Après les deux PR en cours, le rang 3** (choix de 👤 du 2026-10-06). Les autres
+**Le rang 3 est fait** (choix de 👤 du 2026-10-06) ; ses décisions sont en §5. Les autres
 choix réservés à 👤 restent en §5.
 
 ## 1. Où en sont les programmes
@@ -458,6 +458,9 @@ Ces sujets demandent un jugement de physicien ou de propriétaire du produit. Le
 | sujet | ce qui est en jeu |
 |---|---|
 | **avis de tiers** | une ligne reste « à confirmer par toi » dans `THIRD_PARTY_NOTICES.md` : les DLL du runtime Visual C++ (`VCRUNTIME140*.dll`, `VCOMP140.DLL`) se redistribuent avec un programme, mais Microsoft réserve ce droit aux utilisateurs de Visual Studio sous licence |
+| **branche PGlobal morte de l'INDEX SPLINE** | `_run_single_spline_stage` écrit `local_only = True` en dur : la branche PGlobal qui suit (43 instructions) ne s'exécute jamais, comme dans la version publiée qui l'a retirée. La retirer (aucun bit ne bouge) ou la garder pour la rebrancher un jour |
+| **a priori MAP du RE** | `certus_re` régularise par un a priori gaussien de 0,5 % sur chaque couche, sans zone morte ; CERTUS par une pénalité QWOT à zone morte de ±0,01 QWOT et poids α = 0,05. Porter l'a priori changerait les résultats du RE |
+| **citation du saphir dans `certus_re`** | le paquet publié cite Malitson (1962) pour les coefficients de Malitson et Dodge (1972) : à corriger dans le paquet, hors de ce dépôt |
 | **interface** | Revoir visuellement les onze fenêtres et choisir les teintes de marque, la bande des fichiers récents et les bornes des champs numériques. |
 
 D10, D41, D48, D54, D55, D56, D58, D65, D66, D76, D86, D87, D88 et D92 sont tranchés (§3) ou corrigés.

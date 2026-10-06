@@ -51,6 +51,7 @@ from certus.workers.certus_index_workers import (
 
 
 class CertusIndexEventsMixin:
+    _COMPUTATION_THREADS = ("_thread", "_beam_thread")
     def _setup_shortcuts(self) -> None:
         """Install premium cross-window shortcuts."""
         try:
@@ -982,6 +983,9 @@ class CertusIndexEventsMixin:
 
     def closeEvent(self, event) -> None:
         """Clean up resources on window close."""
+
+        if not self.confirm_close_during_run(event):  # D41: ask before the workers below are stopped
+            return
 
         # Shutdown ThreadPoolExecutor if exists
 

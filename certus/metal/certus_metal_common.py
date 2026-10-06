@@ -1594,18 +1594,18 @@ class MetalBaseApp(CertusBaseApp):
         self.btn_beam.setEnabled(True)
         self.btn_stop.setEnabled(False)
 
+    _COMPUTATION_THREADS = ("optimization_thread", "beam_thread")
+
     def closeEvent(self, event) -> None:
         """Clean up all worker threads on close."""
-
+        if not self.confirm_close_during_run(event):  # D41: ask before the workers below are stopped
+            return
         for attr in ("worker", "beam_worker"):
             w = getattr(self, attr, None)
-
             if w and hasattr(w, "stop"):
                 w.stop()
-
         for attr in ("optimization_thread", "beam_thread"):
             t = getattr(self, attr, None)
-
             if t is not None:
                 try:
                     if t.isRunning():

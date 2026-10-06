@@ -39,6 +39,7 @@ calc_spectrum_full_exact = calc_spectrum_full_exact_wrapper
 
 
 class CertusREStateMixin:
+    _COMPUTATION_THREADS = ("_re_worker", "eval_worker")
     """CertusREStateMixin for CERTUS_RE."""
 
     def _collect_config(self) -> dict[str, Any]:
@@ -559,8 +560,9 @@ class CertusREStateMixin:
 
         """
 
+        if not self.confirm_close_during_run(event):  # D41: ask before the workers below are stopped
+            return
         # Ensure all workers are stopped to avoid "QThread: Destroyed while thread is still running"
-
         workers = [
             getattr(self, "_re_worker", None),
             getattr(self, "eval_worker", None),

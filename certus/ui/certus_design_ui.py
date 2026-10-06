@@ -277,7 +277,11 @@ class CertusDesignApp(
     def open_help(self) -> None:
         self.events_manager.open_help()
 
+    _COMPUTATION_THREADS = ("optim_thread", "needle_thread", "col_thread")
+
     def closeEvent(self, event) -> None:
+        if not self.confirm_close_during_run(event):  # D41: ask before the workers below are stopped
+            return
         self.events_manager.closeEvent(event)
         super().closeEvent(event)
 

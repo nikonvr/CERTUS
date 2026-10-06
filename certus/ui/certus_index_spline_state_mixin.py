@@ -18,6 +18,7 @@ from certus.utils.certus_qsettings import certus_settings
 
 
 class CertusIndexSplineStateMixin:
+    _COMPUTATION_THREADS = ("_worker",)
     """CertusIndexSplineStateMixin."""
 
     def _collect_config(self) -> dict:
@@ -205,6 +206,8 @@ class CertusIndexSplineStateMixin:
 
         Mirrors CERTUS_DESIGN / METAL shutdown pattern: threading ``Event`` first, then QThread.wait.
         """
+        if not self.confirm_close_during_run(event):  # D41: ask before the workers below are stopped
+            return
         prev_stop = getattr(self, "_stop_event", None)
         if getattr(prev_stop, "set", None) is not None:
             prev_stop.set()

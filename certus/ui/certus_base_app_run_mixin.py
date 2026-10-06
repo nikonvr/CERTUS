@@ -103,6 +103,10 @@ class CertusAppRunStateMixin:
 
         pass
 
+    #: The attributes that hold a module's computation threads when it does not register them with `worker_manager`
+    #: (D41): INDEX, INDEX SPLINE, RE, METAL and DESIGN closed a running computation without a question.
+    _COMPUTATION_THREADS: tuple[str, ...] = ()
+
     def running_worker_count(self) -> int:
         """Background threads ACTUALLY running right now.
 
@@ -125,6 +129,13 @@ class CertusAppRunStateMixin:
         for candidate in list(workers):
             try:
                 if candidate.isRunning():
+                    running += 1
+            except RuntimeError, AttributeError:  # wrapper outlived the C++ object
+                continue
+        for name in self._COMPUTATION_THREADS:
+            thread = getattr(self, name, None)
+            try:
+                if thread is not None and thread not in workers and thread.isRunning():
                     running += 1
             except RuntimeError, AttributeError:  # wrapper outlived the C++ object
                 continue

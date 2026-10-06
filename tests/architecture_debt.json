@@ -91,7 +91,7 @@
     "certus/metal/certus_metal_bilayer_app.py": 2110,
     "certus/metal/certus_metal_common.py": 2193,
     "certus/metal/certus_metal_single_app.py": 2044,
-    "certus/physics/certus_strat_growth.py": 2509,
+    "certus/physics/certus_strat_growth.py": 2508,
     "certus/physics/gradient_analytic.py": 1802,
     "certus/spline/certus_corridor_exploration.py": 1615,
     "certus/spline/certus_corridor_orchestrator_utils.py": 1791,

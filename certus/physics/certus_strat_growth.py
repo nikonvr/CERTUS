@@ -1922,10 +1922,9 @@ def simulate_growth_kernel(
             # index has to be derived from that or the stop drifts by a sub-step.
             idx_nom_stop = n_hist + round((npts_cur - 1) * nominal_th / d_max)
 
+        if use_fine_grid:  # every machine reading drifts, smoothed or not; without smoothing it was skipped (D54)
+            _apply_photometric_drift(Ts_r, n_tot, affine_scale, affine_offset, photo_curvature)
         if smoothing_window > 1:
-            _apply_photometric_drift(
-                Ts_r, n_tot, affine_scale, affine_offset, photo_curvature,
-            )
             _running_mean(
                 Ts_r, Ts_n, n_tot, smoothing_window,
             )

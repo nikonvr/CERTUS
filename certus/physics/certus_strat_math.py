@@ -448,3 +448,20 @@ def validate_backside_real_clues(n_H_imag: float, n_L_imag: float, n_Sub_imag: f
     L_ok = abs(n_L_imag) < K_MAX_LAYER_BACKSIDE
     Sub_ok = abs(n_Sub_imag) < K_MAX_SUBSTRATE_BACKSIDE
     return (H_ok, L_ok, Sub_ok)
+
+
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def _read_replayed_point(tmm_sub: np.ndarray, start: float, k_flt: float, npts: int) -> float:
+    """The coarse scan of a replayed layer at the fractional index `k_flt`.
+
+    Its point k sits at depth (k + 1) / npts of the layer: point 0 at 1/16 of the thickness, depth 0 being the last
+    point of the layer below. Index -1 is therefore depth 0, whose value is `start`; past the last point the layer
+    has ended and its last point holds.
+    """
+    if k_flt < 0.0:
+        frac = k_flt + 1.0
+        return (1.0 - frac) * start + frac * tmm_sub[0]
+    k_low = min(int(k_flt), npts - 1)
+    k_frac = k_flt - k_low
+    k_hi = min(k_low + 1, npts - 1)
+    return (1.0 - k_frac) * tmm_sub[k_low] + k_frac * tmm_sub[k_hi]

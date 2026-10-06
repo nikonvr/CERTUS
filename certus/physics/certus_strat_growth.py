@@ -88,6 +88,7 @@ CRASH_TP_MISCOUNT: int = 2
 #: Non-monotonic T(d) and REJECT mode requested: candidate is rejected.
 CRASH_NON_MONOTONIC: int = 3
 from .certus_strat_math import (
+    _read_replayed_point,
     _seeded_noise_sample,
     _solve_quadratic_target,
     fit_parabola_vertex_3points,
@@ -990,20 +991,17 @@ def _resample_on_machine_grid(
         M_pj = int(np.ceil(d_nj / SAMPLE_DD))
         tmm_sub_r = Ts_r[idx_src : idx_src + NPTS_PREV]
         tmm_sub_n = Ts_n[idx_src : idx_src + NPTS_PREV]
+        # Depth 0 of layer j: the last coarse point of the layer below, or for the first layer of the window (its start is
+        # not on the scan) the line through its first two points. Indices start at -1 (D55: from 0, one step late).
+        start_r = Ts_r[idx_src - 1] if j > j0 else 2.0 * tmm_sub_r[0] - tmm_sub_r[1]
+        start_n = Ts_n[idx_src - 1] if j > j0 else 2.0 * tmm_sub_n[0] - tmm_sub_n[1]
         inv_drj_npts = (NPTS_PREV / d_rj) * SAMPLE_DD if d_rj > 1e-9 else 0.0
         inv_dnj_npts = (NPTS_PREV / d_nj) * SAMPLE_DD if d_nj > 1e-9 else 0.0
-        kr_flt = 0.0
-        kn_flt = 0.0
+        kr_flt = -1.0
+        kn_flt = -1.0
         for m in range(M_pj):
-            kr_low = min(max(0, int(kr_flt)), NPTS_PREV - 1)
-            kr_frac = kr_flt - kr_low
-            kr_hi = min(kr_low + 1, NPTS_PREV - 1)
-            vr = (1.0 - kr_frac) * tmm_sub_r[kr_low] + kr_frac * tmm_sub_r[kr_hi]
-
-            kn_low = min(max(0, int(kn_flt)), NPTS_PREV - 1)
-            kn_frac = kn_flt - kn_low
-            kn_hi = min(kn_low + 1, NPTS_PREV - 1)
-            vn = (1.0 - kn_frac) * tmm_sub_n[kn_low] + kn_frac * tmm_sub_n[kn_hi]
+            vr = _read_replayed_point(tmm_sub_r, start_r, kr_flt, NPTS_PREV)
+            vn = _read_replayed_point(tmm_sub_n, start_n, kn_flt, NPTS_PREV)
 
             Ts_r_samp[idx_dst] = vr
             Ts_n_samp[idx_dst] = vn

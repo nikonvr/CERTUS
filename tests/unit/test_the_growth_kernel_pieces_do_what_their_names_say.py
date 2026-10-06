@@ -419,10 +419,9 @@ def test_the_current_layer_is_read_at_its_own_depth() -> None:
     np.testing.assert_allclose(ts_n[m_hist + m], m * DD, atol=1e-9)
 
 
-@pytest.mark.xfail(strict=True, reason="D55: a replayed layer is read one coarse step late (d/16), then flat over its last step")
 def test_a_replayed_layer_is_read_at_its_own_depth() -> None:
-    # The coarse scan of a replayed layer starts at 1/16 of its thickness (0 is the last point of the layer below), the
-    # interpolation index starts at 0: a ramp in depth comes back shifted by 1/16, and clamped at 1 over the last 1/16.
+    # The coarse scan of a replayed layer starts at 1/16 of its thickness (0 is the last point of the layer below). The
+    # interpolation index used to start at 0: a ramp in depth came back shifted by 1/16, and flat over the last 1/16 (D55).
     nominal = [50.0, 60.0]
     coarse = np.concatenate([np.arange(1, SCAN_NPTS_HISTORY + 1) / SCAN_NPTS_HISTORY, np.zeros(SCAN_NPTS_CURRENT)])
 

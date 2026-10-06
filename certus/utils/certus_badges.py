@@ -77,27 +77,14 @@ def variant_color(variant: str) -> tuple[str, str, str]:
     """Return ``(bg, fg, border)`` colours for ``variant``.
 
     Falls back to ``neutral`` when the variant is unknown. Reads the colours
-    of :class:`CertusTheme` when available (they follow the theme, see
-    ``_VARIANT_TOKENS``), and uses a hard-coded fallback palette otherwise
-    so the function remains pure-python.
+    of :class:`CertusTheme` (they follow the theme, see ``_VARIANT_TOKENS``);
+    every token named there exists, so the hard-coded palette that stood
+    behind them never ran and is gone.
     """
-    fallback = {
-        "idle": ("#F3F4F6", "#6B7280", "#D1D5DB"),
-        "running": ("#DBEAFE", "#1E40AF", "#93C5FD"),
-        "success": ("#D1FAE5", "#065F46", "#6EE7B7"),
-        "error": ("#FEE2E2", "#991B1B", "#FCA5A5"),
-        "warning": ("#FEF3C7", "#92400E", "#FCD34D"),
-        "info": ("#E0F2FE", "#075985", "#7DD3FC"),
-        "neutral": ("#F9FAFB", "#374151", "#E5E7EB"),
-    }
-    base = fallback.get(variant, fallback["neutral"])
-    try:
-        from certus.ui.certus_ui import CertusTheme as T
+    from certus.ui.certus_ui import CertusTheme as T
 
-        fill, ink, edge = _VARIANT_TOKENS.get(variant, _VARIANT_TOKENS["neutral"])
-        return getattr(T, fill), getattr(T, ink), getattr(T, edge)
-    except (ImportError, AttributeError, TypeError):
-        return base
+    fill, ink, edge = _VARIANT_TOKENS.get(variant, _VARIANT_TOKENS["neutral"])
+    return getattr(T, fill), getattr(T, ink), getattr(T, edge)
 
 
 # =============================================================================

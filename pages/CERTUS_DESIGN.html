@@ -60,7 +60,7 @@
             <h1>CERTUS-DESIGN</h1>
             <p style="font-size: 1.3em; color: #7f8c8d; font-weight: 300;">Stochastic Global Synthesis & Density
                 Clustering Engine</p>
-            <p style="font-size: 1.0em; color: #95a5a6; font-weight: 300;">Scientific Revision Pro 2026.04.17</p>
+            <p style="font-size: 1.0em; color: #95a5a6; font-weight: 300;">Implementation review: 2026-10-03</p>
         </header>
 
         <div class="abstract">
@@ -68,11 +68,10 @@
             films, powered by the <strong>PGLOBAL (Population-based Stochastic Exploration)</strong> algorithm.
             <br><br>
             <div style="background-color: #f8f9fa; border-left: 4px solid #6c757d; padding: 10px; margin-bottom: 15px;">
-                <strong>Scientific Note (Global Optimum Guarantee):</strong> Thin-film optical design in high-dimensional space is an NP-hard problem. While the term "Global" is used historically in PGLOBAL to contrast with purely local descents (like L-BFGS-B), the algorithm performs a <em>robust stochastic exploration</em> combined with topological mutations. It guarantees escape from immediate local minima, but does not provide a mathematical proof of finding the absolute global optimum.
+                <strong>Interpretation of “global”:</strong> PGLOBAL explores multiple regions of the bounded design space and combines stochastic search with local refinement. A reported best fit is the best solution found under the configured budget; the algorithm does not certify a global optimum or guarantee escape from every local basin.
             </div>
-            It solves the extreme multimodality of the thin-film design space by combining stochastic exploration with
-            density-based clustering.
-            Key innovations include <strong>Analytic Gradient</strong> computation (<a href="https://en.wikipedia.org/wiki/Adjoint_state_method" target="_blank">Adjoint Method</a>) for $O(N)$
+            It addresses multimodality by combining stochastic exploration with density-based clustering.
+            Implemented mechanisms include <strong>analytic gradient</strong> computation (<a href="https://en.wikipedia.org/wiki/Adjoint_state_method" target="_blank" rel="noopener noreferrer">adjoint method</a>) for $O(N)$
             local refinement, <strong>Topological Deep Search</strong> (Needle Method) for automatic structure
             evolution, and <strong>incoherent backside correction</strong> for real-world glass substrates.
         </div>
@@ -100,7 +99,8 @@
             SAMP["2. Latin Hypercube Sampling<br>N_pop random thickness vectors<br>in [0, 1.2×QWOT]^N"]:::process --> EVAL["3. Evaluate Cost (Numba JIT)<br>TMM → R/T(λ), RMSE vs target"]:::process
             EVAL --> SORT["4. Sort by RMSE<br>Keep top σ% lowest-error"]:::process
             SORT --> DC["5. Critical distance d_c<br>from Γ, D, N, α"]:::process
-            DC --> CLUSTER["6. Single-Linkage Clustering<br>dist < d_c AND descent"]:::process CLUSTER --> NEW{"7. New basin?"}:::decision
+            DC --> CLUSTER["6. Single-Linkage Clustering<br>dist &lt; d_c AND descent"]:::process
+            CLUSTER --> NEW{"7. New basin?"}:::decision
                 NEW -->|"Yes"| LBFGS["8. L-BFGS-B Refinement<br>Analytic gradient ∇MSE<br>(Adjoint Method, O(N))"]:::highlight
                 NEW -->|"No"| SKIP["Discard"]:::process
                 LBFGS --> UPDATE["9. Update global best"]:::process
@@ -129,7 +129,8 @@
                         OVERSHOOT["12. Overshoot Setup<br>Temporary target = ⌈N × 1.20⌉<br>(+20% to enrich design space)"]:::process
                         OVERSHOOT --> NP["13. Needle Scan: P(z)<br>Topological derivative<br>at 1000 positions"]:::process
                         NP --> NMIN["14. Find z* = argmin P(z)"]:::process
-                        NMIN --> NCHECK{"P(z*) < −ε ?"}:::decision NCHECK -->|"Yes"| NINSERT["15. Split layer at z*<br>Insert needle (0.1 nm)"]:::highlight
+                        NMIN --> NCHECK{"P(z*) &lt; −ε ?"}:::decision
+                        NCHECK -->|"Yes"| NINSERT["15. Split layer at z*<br>Insert needle (0.1 nm)"]:::highlight
                             NINSERT --> NLBFGS["16. L-BFGS-B Polish<br>(step 1)"]:::process
                             NLBFGS --> NCLEAN["17. Cleanup + Merge<br>(step 2)"]:::process
                             NCLEAN --> NEVAL["18. Evaluate RMSE<br>improvement > 1%?<br>(step 3)"]:::process
@@ -362,11 +363,30 @@
             \frac{d\mathbf{M}_j}{d d_j} \cdot \mathbf{M}_{before}[j] $$
         </div>
         <div class="eq-box">
-            $$ \frac{\partial \text{MSE}}{\partial d_j} = \frac{1}{M} \sum_{k=1}^{M} w_k \left(S_{calc}(\lambda_k) - S_{target}(\lambda_k)\right) \frac{\partial S_{calc}}{\partial d_j} $$
+            $$ \text{MSE} = \frac{\sum_{k\in V} w_k\,[S_{calc}(\lambda_k)-S_{target}(\lambda_k)]^2}{\sum_{k\in V} w_k}, \qquad
+            \frac{\partial \text{MSE}}{\partial d_j} = \frac{2}{\sum_{k\in V} w_k}
+            \sum_{k\in V} w_k\,[S_{calc}(\lambda_k)-S_{target}(\lambda_k)]
+            \frac{\partial S_{calc}(\lambda_k)}{\partial d_j} $$
         </div>
         <p>
             Where $\frac{\partial S_{calc}}{\partial d_j}$ is extracted directly from the components of $\frac{\partial \mathbf{M}_{total}}{\partial d_j}$. This explicit Jacobian $\nabla_{\mathbf{d}} \text{MSE}$ is what feeds the L-BFGS-B quasi-Newton step.
+            Here $V$ contains valid weighted target points. The backside path uses the same sum of valid weights
+            in its cost and gradient; dividing the gradient by the number of points would scale it incorrectly.
         </p>
+        <div class="mermaid">
+            flowchart LR
+            A[Trial layer thicknesses] --> B{Backside calculation enabled?}
+            B -->|No| C[Front-stack TMM and analytic sensitivities]
+            B -->|Yes, bare or coated back| D[Backside oblique TMM and analytic sensitivities]
+            C --> E[Keep valid target points and their weights]
+            D --> E
+            E --> F[Sum weighted squared errors and weighted derivatives]
+            F --> G{Sum of valid weights sufficient?}
+            G -->|Yes| H[Cost: error sum / weight sum; gradient: 2 x derivative sum / weight sum]
+            G -->|No| I[Large penalty cost; zero gradient]
+            H --> J[L-BFGS-B step inside thickness bounds]
+            I --> J
+        </div>
         <p>
             The derivative of a single layer matrix $\mathbf{M}_j$ is analytically simple:
         </p>
@@ -380,6 +400,34 @@
             forward + backward pass, resulting in a <strong>50×–100× speedup</strong> compared to numerical
             differentiation. All gradient kernels are JIT-compiled via Numba in Float64/Complex128.
         </div>
+
+        <h3>5.3 Bounds for absorbing layers</h3>
+        <p>
+            Before global, local or healing optimisation, <code>optim_opaque_thickness_limits</code> computes a
+            per-layer upper thickness from the shortest wavelength and the largest absolute imaginary index on
+            the grid. For an absorbing layer it caps the mode's upper bound at
+            $0.99\times700\lambda_{min}/(2\pi k_{max})$ nm, one percent below the phase-overflow threshold.
+            A nonabsorbing layer has no additional cap. The cap is applied without moving a mode's lower bound;
+            when that lower bound permits it, this keeps the optimiser inside the range accepted by the existing
+            physics kernels, whose guard otherwise returns $(R,T)=(0,0)$ beyond that threshold.
+        </p>
+        <div class="mermaid">
+            flowchart TD
+            A[Variable layers and wavelength grid] --> B[Build usual mode bounds: global, local or healing]
+            A --> C[For each layer: maximum absolute imaginary index and minimum wavelength]
+            C --> D{Absorbing layer?}
+            D -->|No| E[Infinite opacity limit]
+            D -->|Yes| F[Limit = 0.99 x 700 x shortest wavelength / 2 pi x maximum k]
+            B --> G[Cap each upper bound by its layer opacity limit]
+            E --> G
+            F --> G
+            G --> H[Bounded global search or local L-BFGS-B]
+        </div>
+        <p>
+            On the measured infrared metal case ($n=0.02-60i$, 8&ndash;12 &micro;m), this removed a
+            global upper bound above 100 &micro;m; bounds for a nonabsorbing layer were bit-identical.
+            The corrected backside gradient matched finite differences to $10^{-5}$ in its regression cases.
+        </p>
 
         <!-- ================================================================ -->
         <!--  5. HEALING                                                       -->
@@ -420,6 +468,16 @@
             L-BFGS-B within $\pm 2$ nm bounds, using the analytic gradient.<br>
             Converges precisely within the best basin found by Phase 1.<br>
             <strong>This phase is always executed</strong>, guaranteeing that the local descent is not missed.
+        </div>
+        <div class="mermaid">
+            flowchart TD
+            A["Current multilayer design"] --> B["Remove layers thinner than 1 nm"]
+            B --> C["Merge adjacent identical materials"]
+            C --> D{"Were layers removed?"}
+            D -->|Yes| E["Restricted PGLOBAL around remaining thicknesses"]
+            E --> F["L-BFGS-B local polish within 2 nm bounds"]
+            D -->|No| G["Keep cleaned design"]
+            F --> H["Return healed design"]
         </div>
 
         <div class="highlight-box">
@@ -480,6 +538,21 @@
             &emsp; d. Repeat until $\text{count} \leq N_{target}$.<br>
             4. Final L-BFGS-B polish on the pruned stack.
         </div>
+        <div class="mermaid">
+            flowchart TD
+            A["Layer count below target"] --> B["Set temporary overshoot target"]
+            B --> C["Locate favorable needle position from topological derivative"]
+            C --> D["Insert alternate material and run local polish"]
+            D --> E["Remove thin layers and merge identical neighbors"]
+            E --> F{"RMSE improved by more than 1 percent?"}
+            F -->|No| G{"Three consecutive stagnations?"}
+            G -->|Yes| H["Stop needle growth"]
+            G -->|No| C
+            F -->|Yes| I{"Temporary layer target reached?"}
+            I -->|No| C
+            I -->|Yes| J["Prune thinnest layer one at a time, merging neighbors"]
+            J --> K["Final local polish at target count"]
+        </div>
 
         <div class="highlight-box">
             <strong>Why one-at-a-time pruning?</strong> In alternating H/L stacks, removing one layer makes
@@ -501,11 +574,17 @@
         </div>
         <p>where $S$ is reflectance or transmittance and $w_j$ are spectral weights (uniform or user-defined).</p>
 
-        <h3>8.2 Colorimetric Target (Optional)</h3>
+        <h3>8.2 Colour Analysis (Monte Carlo)</h3>
         <p>
-            For decorative coatings, CERTUS supports simultaneous color optimization using the CIE 1976 $\Delta E_{00}$
-            metric. The perceived color difference between the designed and target coating is computed from the
-            CIELAB coordinates $(L^*, a^*, b^*)$ derived from the CIE 1931 standard observer and D65 illuminant:
+            DESIGN does not optimize towards a colour: colour enters only an analysis of the current design. Its
+            front-side reflectance at normal incidence, without the rear face, is computed from 380 to 780 nm every
+            5 nm. The tristimulus values $X, Y, Z$ follow from the CIE 1931 2&deg; colour-matching functions and the D65
+            illuminant, scaled so that a perfect reflector has $Y = 100$, and the CIELAB coordinates $(L^*, a^*, b^*)$
+            from the D65 white point. The analysis then draws $N$ perturbed designs (200 by default), each layer
+            thickness shifted by an independent Gaussian error of standard deviation $\sigma$ (2 nm by default; a
+            negative thickness is set to zero), with a fixed seed. It reports the nominal $(L^*, a^*, b^*)$, its sRGB
+            rendering, and the mean and standard deviation over the samples of the CIEDE2000 difference
+            $\Delta E_{00}$ to the nominal colour:
         </p>
         <div class="eq-box">
             $$ \Delta E_{00} = \sqrt{
@@ -564,8 +643,8 @@
             </tr>
             <tr>
                 <td><strong>Colorimetry</strong></td>
-                <td>CIE 1931 / 1976</td>
-                <td>$\Delta E_{00}$ color difference for decorative coatings.</td>
+                <td>CIE 1931 2&deg;, D65, CIELAB, CIEDE2000</td>
+                <td>Spread of the reflected colour ($\Delta E_{00}$) under thickness errors, by Monte Carlo.</td>
             </tr>
             <tr>
                 <td><strong>Backside Correction</strong></td>
@@ -622,32 +701,21 @@
         <!-- ================================================================ -->
         <!--  PRO 2026 ERGONOMICS & UX                                         -->
         <!-- ================================================================ -->
-        <h2>10. Pro 2026 Ergonomics & UI Upgrades</h2>
+        <h2>10. Interface Controls</h2>
         <p>
-            The CERTUS Suite features a fundamentally modernized UI engineered for high-speed scientific workflows.
-            All mathematical kernels are JIT-compiled via <strong>Numba</strong>, strictly enforcing
-            <code>float64</code> / <code>complex128</code> for maximum numerical stability.
-            <code>CertusDesignApp</code> extends the shared <code>CertusBaseApp</code> base class,
-            inheriting a <strong>5-level undo stack</strong> (<code>deque</code>),
-            <code>CertusLogPanel</code> (scrollable log with copy-to-clipboard), and
-            <code>WelcomeGuideWidget</code> (first-launch guide auto-shown).
+            The DESIGN window presents optimization controls, progress and plots while workers perform the fit.
+            <code>CertusDesignApp</code> extends the shared <code>CertusBaseApp</code> base class and uses shared
+            logging and window controls.
         </p>
-        <h3>10.1 Global Keyboard Shortcuts</h3>
-        <p>To maximize efficiency, the interface actively maps physical keystrokes to core pipeline triggers:</p>
-        <ul>
-            <li><kbd>Ctrl</kbd> + <kbd>S</kbd> : Save current configuration.</li>
-            <li><kbd>Ctrl</kbd> + <kbd>O</kbd> : Load an existing configuration.</li>
-            <li><kbd>F5</kbd> or <kbd>Ctrl</kbd> + <kbd>R</kbd> : Launch primary optimization (Step 2).</li>
-            <li><kbd>Ctrl</kbd> + <kbd>Z</kbd> : Undo last configuration change (5-level stack).</li>
-            <li><kbd>Esc</kbd> : Dismiss detached windows and auxiliary charts.</li>
-        </ul>
+        <h3>10.1 Keyboard Actions</h3>
+        <p>Use the actions shown by the running DESIGN window and its shortcuts help. A command label is not proof that
+            its suggested key sequence is bound in every module.</p>
         <h3>10.2 Dynamic Processing Feedback</h3>
-        <p>Heavy Background Tasks (like full DP Strategy extraction or Numba lazy-compilation hooks) are completely
-            thread-isolated. The architecture enforces <strong>Dynamic Wait Cursors (Spinners)</strong> and rich button
-            Tooltips to provide absolute real-time state awareness without locking the application's event loop.</p>
+        <p>Long-running optimization uses workers and sends progress to the GUI. Inspect the completion state and
+            logs before using an exported result.</p>
 
         <div class="footer">
-            <p>Generated from source analysis of <code>CERTUS_DESIGN.py</code> (Facade), <code>certus_design_core.py</code>, <code>certus_design_ui.py</code> &mdash; Revision 2026.04.17
+            <p>Generated from source analysis of <code>CERTUS_DESIGN.py</code> (Facade), <code>certus_design_core.py</code>, <code>certus_design_ui.py</code> &mdash; implementation review: 2026-10-04
             </p>
             <p>&copy; CERTUS Scientific Suite v26-04 &bull; Scientific Analysis Report</p>
         </div>

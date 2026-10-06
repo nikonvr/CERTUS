@@ -63,3 +63,21 @@ def test_project_manual_material_preset_dispatches() -> None:
 def test_project_manual_material_preset_unknown_raises() -> None:
     with pytest.raises(ValueError):
         project_manual_material_preset("unknown", np.array([0.001], dtype=np.float64))
+
+
+@pytest.mark.parametrize("material", ["sio2", "ta2o5", "nb2o5"])
+@pytest.mark.parametrize("wavelength_nm", [400.0, 1000.0, 3000.0])
+def test_the_presets_are_the_published_optical_constants(material: str, wavelength_nm: float) -> None:
+    """Smart Init starts from the optical constants published with the Optics Continuum article (Zenodo, Certus Index Spline
+    1.1-revised): at a wavelength of the table, the projected n and k are the table's. The profiles they replaced -- 12 nodes
+    for SiO2 and Nb2O5, 4 points for Ta2O5 -- were 0.015 low in n for SiO2 and up to 0.055 off for Ta2O5, and the fit then
+    settled 18 nm away from the published SiO2 thickness."""
+    import certus.spline.spline_presets as presets
+
+    lam = getattr(presets, f"{material.upper()}_PRESET_LAM_NM")
+    n_tab = getattr(presets, f"{material.upper()}_PRESET_N")
+    k_tab = getattr(presets, f"{material.upper()}_PRESET_K")
+    i = int(np.flatnonzero(np.isclose(lam, wavelength_nm))[0])
+    _, n, L, _ = project_manual_material_preset(material, np.array([1.0 / wavelength_nm]), d_nm_hint=1700.0)
+    assert n[0] == pytest.approx(n_tab[i], abs=1e-12)
+    assert np.exp(L[0]) == pytest.approx(k_tab[i], rel=1e-9)

@@ -7,9 +7,8 @@ que l'outil n'ouvrait jamais. Il collectait ses références dans le même péri
 étroit que ses définitions : la racine plus `certus_physics/`.
 
 🔑 **Un symbole n'est pas mort parce qu'on a regardé ailleurs.** Le périmètre des
-*définitions* est un choix délibéré — on ne veut pas signaler les 109 fichiers
-d'interface. Celui des *références* n'en est pas un : une référence compte d'où
-qu'elle vienne.
+*définitions* couvre la racine, `certus_physics` et tout `certus/`, y compris
+les nouveaux paquets. Celui des *références* couvre tout le code d'exécution.
 
 ⚠️ **`tests/` reste dehors, et c'est voulu** : un symbole que seul un test appelle
 est mort en production. L'y inclure masquerait exactement ce qu'on cherche.
@@ -27,6 +26,8 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 AUDIT = ROOT / "tools" / "dead_symbol_audit.py"
@@ -91,8 +92,8 @@ def test_the_audit_exists_and_runs(tmp_path):
 
     Le symbole mort est PLANTÉ dans une arborescence jetable, à côté d'un symbole
     appelé : l'audit doit signaler l'un et taire l'autre. Le contrôle ne dépend donc
-    pas du code mort que contient le projet — le périmètre des définitions (la racine
-    et `certus_physics/`) peut n'en plus contenir aucun sans que l'audit ait cessé de
+    pas du code mort que contient le projet — le périmètre des définitions peut
+    n'en plus contenir aucun sans que l'audit ait cessé de
     mordre, et exiger d'y en trouver un ferait alors échouer ce test à tort.
     """
     assert AUDIT.is_file(), f"{AUDIT} est introuvable — lint.yml le lance pourtant"
@@ -123,6 +124,91 @@ def test_the_audit_exists_and_runs(tmp_path):
     assert "CERTUS_SONDE:_sonde_vivante" not in signales, (
         f"l'audit signale un symbole appelé : il mord au hasard — {sorted(signales)}"
     )
+
+
+def test_an_aliased_import_counts_only_when_called(tmp_path):
+    """Les imports renommés de SPLINE ne doivent ni cacher du mort ni créer un faux positif."""
+    copie = tmp_path / "tools" / AUDIT.name
+    copie.parent.mkdir()
+    shutil.copy2(AUDIT, copie)
+    (tmp_path / "CERTUS_SONDE.py").write_text(
+        "def aliased_live():\n    return 1\n\n\ndef aliased_dead():\n    return 0\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "CERTUS_APPELANT.py").write_text(
+        "from CERTUS_SONDE import aliased_live as _called, aliased_dead as _unused\n"
+        "VALEUR = _called()\n",
+        encoding="utf-8",
+    )
+    out = subprocess.run(
+        [sys.executable, str(copie), "--whitelist", str(tmp_path / "aucune_liste_blanche")],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert out.returncode == 0, out.stderr
+    signales = _candidats(out.stdout)
+    assert "CERTUS_SONDE:aliased_dead" in signales
+    assert "CERTUS_SONDE:aliased_live" not in signales
+
+
+def test_framework_validators_are_not_reported_as_dead(tmp_path):
+    """Pydantic invokes decorated validators without an explicit Python call site."""
+    copie = tmp_path / "tools" / AUDIT.name
+    copie.parent.mkdir()
+    shutil.copy2(AUDIT, copie)
+    (tmp_path / "CERTUS_SONDE.py").write_text(
+        "class Model:\n"
+        "    @field_validator('x')\n"
+        "    @classmethod\n"
+        "    def normalize_field(cls, value):\n        return value\n\n"
+        "    @model_validator(mode='after')\n"
+        "    def normalize_model(self):\n        return self\n",
+        encoding="utf-8",
+    )
+    out = subprocess.run(
+        [sys.executable, str(copie), "--whitelist", str(tmp_path / "aucune_liste_blanche")],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert out.returncode == 0, out.stderr
+    signales = _candidats(out.stdout)
+    assert "CERTUS_SONDE:Model.normalize_field" not in signales
+    assert "CERTUS_SONDE:Model.normalize_model" not in signales
+
+
+@pytest.mark.parametrize("package", ["spline", "core", "domain", "physics", "workers", "utils", "ui", "future_package"])
+def test_reviewed_package_definitions_enter_the_gate(tmp_path, package):
+    """Un symbole mort d'un paquet contrôlé doit rendre un verdict ; un appel UI compte."""
+    copie = tmp_path / "tools" / AUDIT.name
+    copie.parent.mkdir()
+    shutil.copy2(AUDIT, copie)
+    sonde = tmp_path / "certus" / package / "probe.py"
+    sonde.parent.mkdir(parents=True)
+    sonde.write_text(
+        "def reviewed_dead():\n    return 0\n\n\ndef reviewed_live():\n    return 1\n",
+        encoding="utf-8",
+    )
+    appelant = tmp_path / "certus" / "ui" / "caller.py"
+    appelant.parent.mkdir(parents=True, exist_ok=True)
+    appelant.write_text(
+        f"from certus.{package}.probe import reviewed_live as _live\nVALEUR = _live()\n",
+        encoding="utf-8",
+    )
+    out = subprocess.run(
+        [sys.executable, str(copie), "--whitelist", str(tmp_path / "aucune_liste_blanche")],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert out.returncode == 0, out.stderr
+    signales = _candidats(out.stdout)
+    assert f"certus.{package}.probe:reviewed_dead" in signales
+    assert f"certus.{package}.probe:reviewed_live" not in signales
 
 
 def test_the_ci_step_passes():
@@ -201,14 +287,8 @@ def test_the_reference_perimeter_covers_the_application_but_not_the_tests():
     assert "tests" not in zones, "les tests comptent comme des références : le code mort en production sera masqué"
 
 
-def test_the_definition_perimeter_stays_narrow():
-    """Contrôle négatif dans l'autre sens : élargir les DÉFINITIONS est un autre sujet.
-
-    Le signaler ici évite qu'on « répare » le rouge en faisant les deux d'un coup —
-    ce serait deux changements à la fois, et le résultat ne s'attribuerait pas.
-    `certus/metal` y est entré le 2026-09-28, décision de portée : les applications
-    METAL y sont descendues de la racine (D30), qui était dans le périmètre.
-    """
+def test_the_definition_perimeter_is_reviewed():
+    """Chaque paquet runtime de certus est dans le portail des définitions."""
     sys.path.insert(0, str(ROOT / "tools"))
     from dead_symbol_audit import _iter_python_files
 
@@ -219,7 +299,7 @@ def test_the_definition_perimeter_stays_narrow():
         if len(p.relative_to(ROOT).parts) > 1
     }
 
-    assert zones <= {"certus_physics", "certus/metal"}, (
-        f"le périmètre des définitions s'est élargi à {sorted(zones)} : c'est une décision "
-        "de portée, pas un correctif de faux positif"
-    )
+    expected = {"certus_physics"} | {
+        f"certus/{path.name}" for path in (ROOT / "certus").iterdir() if path.is_dir() and any(path.rglob("*.py"))
+    }
+    assert zones == expected, f"définitions : {sorted(zones)} ; paquets runtime : {sorted(expected)}"

@@ -40,7 +40,7 @@
 # ne refait rien.
 
 set -u
-PY="${CERTUS_PY:-C:/envs/certus/Scripts/python.exe}"
+PY="${CERTUS_PY:-python}"
 J="reports/nuit75_2026-08-22"
 mkdir -p "$J"
 

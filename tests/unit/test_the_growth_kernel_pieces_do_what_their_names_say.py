@@ -23,7 +23,6 @@ from certus.physics.certus_strat_growth import (
     D_SCAN_VAL,
     MAX_LOOKBACK_VAL,
     RATE_TURN_NM,
-    SCAN_ERROR_MARGIN_NM,
     SCAN_NPTS_CURRENT,
     SCAN_NPTS_HISTORY,
     _add_slit_bias,
@@ -420,10 +419,9 @@ def test_the_current_layer_is_read_at_its_own_depth() -> None:
     np.testing.assert_allclose(ts_n[m_hist + m], m * DD, atol=1e-9)
 
 
-@pytest.mark.xfail(strict=True, reason="D55: a replayed layer is read one coarse step late (d/16), then flat over its last step")
 def test_a_replayed_layer_is_read_at_its_own_depth() -> None:
-    # The coarse scan of a replayed layer starts at 1/16 of its thickness (0 is the last point of the layer below), the
-    # interpolation index starts at 0: a ramp in depth comes back shifted by 1/16, and clamped at 1 over the last 1/16.
+    # The coarse scan of a replayed layer starts at 1/16 of its thickness (0 is the last point of the layer below). The
+    # interpolation index used to start at 0: a ramp in depth came back shifted by 1/16, and flat over the last 1/16 (D55).
     nominal = [50.0, 60.0]
     coarse = np.concatenate([np.arange(1, SCAN_NPTS_HISTORY + 1) / SCAN_NPTS_HISTORY, np.zeros(SCAN_NPTS_CURRENT)])
 
@@ -468,8 +466,8 @@ def test_without_a_history_the_first_reading_of_the_layer_is_its_own_draw() -> N
 # =============================================================================
 
 
-def _window(block_start, i_layer, *, base=0, nominal_th=50.0, adaptive=False, wl=550.0, n_even=N_EVEN, n_odd=N_ODD):
-    j0, n_hist, npts_cur, d_max, n_tot = _scan_window(block_start, i_layer, base, n_even + 0j, n_odd + 0j, nominal_th, adaptive, wl)
+def _window(block_start, i_layer, *, base=0, nominal_th=50.0):
+    j0, n_hist, npts_cur, d_max, n_tot = _scan_window(block_start, i_layer, base, nominal_th)
     return {"j0": j0, "n_hist": n_hist, "npts_cur": npts_cur, "d_max": d_max, "n_tot": n_tot}
 
 
@@ -502,32 +500,6 @@ def test_a_block_never_starts_below_the_witness_it_is_read_on() -> None:
     assert _window(1, 4, base=3)["j0"] == 3
     assert _window(1, 4, base=3)["n_hist"] == SCAN_NPTS_HISTORY
     assert _window(1, 4, base=0)["j0"] == 1
-
-
-@pytest.mark.parametrize(("i_layer", "n_layer"), [(2, N_EVEN), (3, N_ODD)])
-def test_the_adaptive_window_is_the_thickness_plus_the_error_margin_plus_half_a_period(i_layer, n_layer) -> None:
-    nominal, wl = 80.0, 610.0
-
-    got = _window(-1, i_layer, nominal_th=nominal, adaptive=True, wl=wl)
-
-    half_period = wl / (4.0 * n_layer)  # from an extremum to the next: lambda / 4n
-    assert got["d_max"] == pytest.approx(nominal + SCAN_ERROR_MARGIN_NM + half_period)
-    density = SCAN_NPTS_CURRENT / (D_SCAN_VAL * nominal)  # the density in points per nm is that of the fixed window
-    assert got["npts_cur"] == round(density * got["d_max"])
-    assert got["n_tot"] == got["n_hist"] + got["npts_cur"]
-
-
-def test_the_adaptive_window_of_an_index_of_zero_falls_back_on_one_more_thickness() -> None:
-    got = _window(-1, 2, nominal_th=80.0, adaptive=True, n_even=0.0)
-
-    assert got["d_max"] == pytest.approx(80.0 + SCAN_ERROR_MARGIN_NM + 80.0)
-
-
-def test_a_layer_of_no_thickness_is_swept_with_the_fixed_window_even_when_adaptive() -> None:
-    got = _window(-1, 2, nominal_th=0.00005, adaptive=True)
-
-    assert got["npts_cur"] == SCAN_NPTS_CURRENT
-    assert got["d_max"] == pytest.approx(D_SCAN_VAL * 0.00005)
 
 
 # =============================================================================

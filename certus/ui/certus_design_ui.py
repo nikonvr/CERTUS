@@ -227,6 +227,10 @@ class CertusDesignApp(
 
         self.warmup_worker.start()
 
+    def _on_warmup_done(self) -> None:
+        super()._on_warmup_done()
+        self.orchestrator.schedule_update_tikhonravov_points(0)
+
     @safe_ui_action
     def export_results(self) -> None:
         self.export_manager.export_results()
@@ -273,7 +277,11 @@ class CertusDesignApp(
     def open_help(self) -> None:
         self.events_manager.open_help()
 
+    _COMPUTATION_THREADS = ("optim_thread", "needle_thread", "col_thread")
+
     def closeEvent(self, event) -> None:
+        if not self.confirm_close_during_run(event):  # D41: ask before the workers below are stopped
+            return
         self.events_manager.closeEvent(event)
         super().closeEvent(event)
 
@@ -371,6 +379,9 @@ class CertusDesignApp(
 
     def _apply_config(self, c: dict) -> None:
         self.state_manager._apply_config(c)
+
+    def _config_load_problems(self, c: dict) -> list[str]:
+        return self.state_manager.config_load_problems(c)
 
     def _apply_optimization_config(self, opt: dict) -> None:
         self.state_manager._apply_optimization_config(opt)

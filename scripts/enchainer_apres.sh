@@ -22,7 +22,7 @@
 set -u
 [ "$#" -ge 2 ] || { echo "usage: $0 <etiquette> <composant> [args...]" >&2; exit 2; }
 ETIQ="$1"; COMP="$2"; shift 2
-PY="${CERTUS_PY:-C:/envs/certus/Scripts/python.exe}"
+PY="${CERTUS_PY:-python}"
 J="reports/${ETIQ}"
 mkdir -p "$J"
 LOG="$J/journal_${COMP}.log"

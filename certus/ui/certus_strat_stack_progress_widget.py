@@ -177,9 +177,6 @@ class CertusStratStackProgressWidget(QWidget):
         self.scroll_area.setWidget(self.layers_container)
         root_layout.addWidget(self.scroll_area, 1)
 
-    def has_stack(self) -> bool:
-        return len(self.layer_cards) > 0
-
     def init_stack_from_table(self, table: Any, l0: float = 550.0, h_mat: str = "H", l_mat: str = "L") -> None:
         """Initialise the list of layers from the cockpit table."""
         # Nettoyage précédent
@@ -252,7 +249,3 @@ class CertusStratStackProgressWidget(QWidget):
             else:
                 card.set_state("pending")
 
-    def mark_phase_a_complete(self) -> None:
-        """Mark every layer as admissible once Phase A is finished."""
-        for card in self.layer_cards:
-            card.set_state("done")

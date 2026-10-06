@@ -472,10 +472,59 @@ class CertusREResultsDialog(QDialog):
                 if item:
                     item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
 
+        self._append_sigma_column(results)
+
         layout.addWidget(self.tbl)
 
-        # Buttons
+        layout.addLayout(self._build_button_row())
 
+        self.setWindowModality(Qt.WindowModality.ApplicationModal)
+
+        self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
+
+        self.setMinimumSize(640, 420)
+
+        if announce_in_log:
+            self.main_app.log(
+                "RE: results display; modal opening of 'RE Results' window "
+                "(QWOT table, DeltaQWOT, DeltaRe splines, RMSE milestones, exports).",
+                "INFO",
+            )
+
+        self.show()
+
+        self.raise_()
+
+        self.activateWindow()
+
+        self.exec()
+
+    def _append_sigma_column(self, results: list) -> None:
+        """A last column with one sigma per layer of the retained run (certus_re port, see certus_re_uncertainty), from
+        the data rows alone; n/a for a combination of thicknesses the spectra do not constrain. Nothing without them."""
+        sigma_nm = list(((results[0].get("thickness_uncertainty") or {}) if results else {}).get("sigma_nm") or [])
+        if not sigma_nm:
+            return
+        col = self.n_cols
+        self.n_cols += 1
+        self.headers.append("sigma(d) nm, retained run")
+        self.tbl.insertColumn(col)
+        header = QTableWidgetItem(self.headers[-1])
+        header.setToolTip(
+            "One standard deviation of each thickness of the retained run, from the Jacobian of the data rows alone. "
+            "Conditional on the fitted index corrections and beam aperture; n/a = a combination of thicknesses the "
+            "spectra do not constrain."
+        )
+        self.tbl.setHorizontalHeaderItem(col, header)
+        for i, s in enumerate(float(x) for x in sigma_nm):
+            if i >= self.tbl.rowCount():
+                break
+            item = QTableWidgetItem(f"{s:.3f}" if np.isfinite(s) else "n/a")
+            item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.tbl.setItem(i, col, item)
+
+    def _build_button_row(self) -> QHBoxLayout:
+        """The row of actions under the table."""
         btn_row = QHBoxLayout()
 
         export_tgt_btn = QPushButton(" Export cibles vs calcul (Excel)")
@@ -548,28 +597,7 @@ class CertusREResultsDialog(QDialog):
 
         btn_row.addWidget(close_btn)
 
-        layout.addLayout(btn_row)
-
-        self.setWindowModality(Qt.WindowModality.ApplicationModal)
-
-        self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
-
-        self.setMinimumSize(640, 420)
-
-        if announce_in_log:
-            self.main_app.log(
-                "RE: results display; modal opening of 'RE Results' window "
-                "(QWOT table, DeltaQWOT, DeltaRe splines, RMSE milestones, exports).",
-                "INFO",
-            )
-
-        self.show()
-
-        self.raise_()
-
-        self.activateWindow()
-
-        self.exec()
+        return btn_row
 
     def _re_spline_lam2_nm_from_result(self, r: dict) -> float:
         return self.main_app._re_spline_lam2_nm_from_result(r)

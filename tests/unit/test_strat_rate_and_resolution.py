@@ -180,7 +180,7 @@ def _grow(i_layer, history, is_rate, prev_rate_flags=None, stack=None):
         2.35 + 0j, 1.46 + 0j, 1.52 + 0j,
         1.0, 0.0, 2.0, 0, 0, 0.0, 0, 0, 0.0,
         1.0, 0.0, 0.0, True, 1, -1.0, -1.0, is_rate,
-        None, 0, False, 0.0, prev_rate_flags,
+        None, 0, 0.0, prev_rate_flags,
     )
 
 

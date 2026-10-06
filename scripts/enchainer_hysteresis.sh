@@ -46,7 +46,7 @@
 # obligerait a produire un second temoin -- une heure de plus pour rien.
 
 set -u
-PY="${CERTUS_PY:-C:/envs/certus/Scripts/python.exe}"
+PY="${CERTUS_PY:-python}"
 ETIQ="${1:-hysteresis_2026-08-24}"
 G="${2:-404}"
 # 🔴 LE FACTEUR EST UN ARGUMENT, ET IL ENTRE DANS L'ETIQUETTE. La premiere version le codait

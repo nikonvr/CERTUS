@@ -37,24 +37,18 @@ def _calc_T_added_layer(
 def check_extrema_proximity(
     wl: float, n_current: complex, n_previous: complex, n_Sub: complex, thickness_nominal: float, M_before: np.ndarray, exclusion_width: float, check_start: bool, wl_changed: bool = False
 ) -> bool:
-    """
+    """Whether a stop is clear of the transmission extrema, judged in THICKNESS space.
 
-    Checks if wavelength is too close to a transmission extremum.
+    STRAT no longer calls it: the margin to a turning point is counted in transmission
+    (`calculate_level_margins_to_extrema`), never in nanometres (D70).
 
-    ARRIVAL CHECK is asymmetric (Opus 4.7):
+    ARRIVAL CHECK, as the code does it (measured against the independent TMM oracle): T is sampled at
+    d - w, d, d + w and d + 3w, and the stop is refused when the signs of the three slopes centred at
+    d - w/2, d + w/2 and d + 2w change -- that is, from 2 widths BEFORE a turning point to half a width
+    AFTER it, whatever the width. A stop exactly half a width before a turning point passes (zero slope).
 
-      - Forbidden zone BEFORE a turning point: 3 * exclusion_width  (wide)
-
-      - Forbidden zone AFTER  a turning point: 1 * exclusion_width  (narrow)
-
-    START CHECK (Opus 4.7b) - asymmetric only when wl_changed=True:
-
-      - Symmetric +/-δe check always applied (unchanged behaviour)
-
-      - If wl_changed: also reject if TP is AHEAD within [0, 3δe] (new wavelength
-
-        starts with no prior monitoring info -> be more cautious before a TP)
-
+    START CHECK: a reversal within +/- w of the start of the layer; with `wl_changed`, also a reversal
+    within [0, 3w] ahead, since a new wavelength starts with no monitoring history.
     """
     m00, m01 = (M_before[0, 0], M_before[0, 1])
     m10, m11 = (M_before[1, 0], M_before[1, 1])
@@ -143,6 +137,10 @@ def calculate_level_margins_to_extrema(
     wider BEFORE an extremum than AFTER. That asymmetry was a PROXY for this computation:
     in thickness space, "before" and "after" differ because the slope differs. In transmission,
     both sides are at the same distance from the extremum by construction.
+
+    A turning point within one grid step of the stop is located by the vertex of the parabola
+    through the three samples around it, and counts on its side: a stop on a turning point has
+    a zero margin, not the gap to the extremum of the other kind.
     """
     if wl < 0.1 or thickness_nominal <= 0.0001:
         return (MARGIN_NONE, MARGIN_NONE)
@@ -202,6 +200,26 @@ def calculate_level_margins_to_extrema(
             break
         if sign1 == 0.0:
             sign1 = s
+
+    # The turning point UNDER the stop. When the slope changes sign at the stop sample, that
+    # sample is the extremum of the grid and neither scan sees it: the backward one looks for a
+    # reversal before it, the forward one after it, so both report the extrema of the OTHER
+    # kind, half a period away (0.28 in T for a high-index layer on glass). The worst stop there
+    # is -- on the turning point, where half the noise draws put the target out of reach -- then
+    # passed every threshold under that gap. The parabola through the three samples places the
+    # turning point inside the step (its vertex is before the stop when slope x curvature >= 0)
+    # and gives its level; the margin on that side is the gap to it, quadratic in the distance
+    # as everywhere else.
+    d_left = Ts[i_stop] - Ts[i_stop - 1]
+    d_right = Ts[i_stop + 1] - Ts[i_stop] if i_stop + 1 < _MARGIN_NPTS else 0.0
+    if (d_left > 1e-15 and d_right < -1e-15) or (d_left < -1e-15 and d_right > 1e-15):
+        curvature = 0.5 * (d_right - d_left)
+        slope = 0.5 * (d_right + d_left)
+        gap = abs(slope * slope / (4.0 * curvature))
+        if slope * curvature >= 0.0:
+            m_prev = gap
+        else:
+            m_next = gap
 
     return (m_prev, m_next)
 
@@ -430,3 +448,20 @@ def validate_backside_real_clues(n_H_imag: float, n_L_imag: float, n_Sub_imag: f
     L_ok = abs(n_L_imag) < K_MAX_LAYER_BACKSIDE
     Sub_ok = abs(n_Sub_imag) < K_MAX_SUBSTRATE_BACKSIDE
     return (H_ok, L_ok, Sub_ok)
+
+
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def _read_replayed_point(tmm_sub: np.ndarray, start: float, k_flt: float, npts: int) -> float:
+    """The coarse scan of a replayed layer at the fractional index `k_flt`.
+
+    Its point k sits at depth (k + 1) / npts of the layer: point 0 at 1/16 of the thickness, depth 0 being the last
+    point of the layer below. Index -1 is therefore depth 0, whose value is `start`; past the last point the layer
+    has ended and its last point holds.
+    """
+    if k_flt < 0.0:
+        frac = k_flt + 1.0
+        return (1.0 - frac) * start + frac * tmm_sub[0]
+    k_low = min(int(k_flt), npts - 1)
+    k_frac = k_flt - k_low
+    k_hi = min(k_low + 1, npts - 1)
+    return (1.0 - k_frac) * tmm_sub[k_low] + k_frac * tmm_sub[k_hi]

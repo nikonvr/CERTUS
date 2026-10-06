@@ -388,7 +388,7 @@ class CertusStratWorkerMixin:
 
             return
 
-        problems = self.input_problems(params)
+        problems = self.input_problems(params) + self.material_problems()
 
         if problems:
             self.refuse_to_run(problems)

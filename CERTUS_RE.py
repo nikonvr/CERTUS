@@ -58,6 +58,7 @@ from certus.ui.certus_ui import (
     CertusBaseApp,
     CertusTheme,
     init_certus_app,
+    open_command_line_file,
 )
 from certus.utils.certus_re_config import RE_P4_BEAM_N_KNOTS, RE_SUB_CAUCHY_TUBE_DELTA
 from certus.utils.certus_re_math import re_substrate_cauchy_n_re_from_theta
@@ -341,6 +342,7 @@ class CertusREApp(
         self.warmup_worker.finished.connect(self._on_warmup_done)
 
         self.warmup_worker.start()
+        self.mark_config_saved()
 
     def _get_optim_wls(self) -> np.ndarray:
         if self._re_targets and len(self._re_targets) > 0:
@@ -350,9 +352,11 @@ class CertusREApp(
 
 def main():
 
-    app = init_certus_app()
+    # RE starts WarmupWorker itself; the global JIT warmup thread would compile the same kernels a second time.
+    app = init_certus_app(jit_warmup=False)
     certus_app = CertusREApp()
     certus_app.show()
+    open_command_line_file(certus_app)
 
     try:
         sys.exit(app.exec())

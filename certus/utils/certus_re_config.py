@@ -118,6 +118,43 @@ RE_P4_AP_FD_STEP_DEG = 1.0e-3
 RE_P4_BEAM_N_KNOTS = 4
 
 
+# The beam aperture imposed instead of fitted (cfg key ``re_beam_aperture_imposed_deg``): the TOTAL cone angle at the
+# sample, in degrees, twice the half-angle -- a divergence of +/- 1 deg is entered as 2.0. Absent or None, the default,
+# keeps the fitted plateaus above. Ported from certus_re (Zenodo, concept DOI 10.5281/zenodo.22756244,
+# ``instruments.PRESETS``): an imposed aperture spends no degree of freedom on the instrument, so the fit cannot hide a
+# model error in it. The cone average applies from 10 deg of incidence, as for the fitted aperture.
+
+
+RE_IMPOSED_APERTURE_MAX_DEG = 20.0
+
+
+RE_INSTRUMENT_PRESETS = {
+    "photon_rt_5200": {
+        "label": "EssentOptics PHOTON RT, 185-5200 nm",
+        "short": "PHOTON RT",
+        "aperture_deg": 2.0,
+        "comment": (
+            "Manufacturer's divergence of +/- 1 deg, a total aperture of 2 deg, imposed on the whole range as in the "
+            "published study. The detector (2530 nm) and source (3700 nm) switchovers are where the cone could change; "
+            "one value is imposed across them."
+        ),
+    },
+}
+
+
+def re_imposed_aperture_deg(cfg: dict) -> float | None:
+    """The total beam aperture to impose, in degrees, or None to fit it (the default path)."""
+    raw = cfg.get("re_beam_aperture_imposed_deg")
+    if raw is None:
+        return None
+    value = float(raw)
+    if not 0.0 <= value <= RE_IMPOSED_APERTURE_MAX_DEG:
+        raise ValueError(
+            f"re_beam_aperture_imposed_deg = {value!r}: the total aperture must lie in [0, {RE_IMPOSED_APERTURE_MAX_DEG:g}] deg"
+        )
+    return value
+
+
 RE_RESULT_LABEL_WITH_DRIFT = "Deltaln(lambda) trap + splines Re(H,L)"
 
 

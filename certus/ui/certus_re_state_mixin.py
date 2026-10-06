@@ -10,6 +10,7 @@ from certus.core.certus_core import CFG
 from certus.ui.certus_qt_widgets import (
     QAbstractSpinBox,
     QApplication,
+    QComboBox,
     QDialog,
     QFont,
     QGridLayout,
@@ -25,7 +26,7 @@ from certus.ui.certus_ui import (
     remove_skeleton_loader,
     show_toast,
 )
-from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_QWOT_ALPHA, RE_SPEED_PRESETS
+from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_QWOT_ALPHA, RE_INSTRUMENT_PRESETS, RE_SPEED_PRESETS
 from certus.utils.certus_re_helpers import (
     RE_GUI_DEFAULT_BEAM_APERTURE_DEG,
     RE_SPLINE_N_KNOTS,
@@ -38,7 +39,27 @@ calc_spectrum_full_exact = calc_spectrum_full_exact_wrapper
 
 
 class CertusREStateMixin:
+    _COMPUTATION_THREADS = ("_re_worker", "eval_worker")
     """CertusREStateMixin for CERTUS_RE."""
+
+    def _collect_config(self) -> dict[str, Any]:
+        """Save only RE settings that ``load_config`` can restore."""
+        config = {
+            "l0": float(self.l0_spin.value()),
+            "re_gui": {
+                "re_speed_mode": self._re_speed_mode(),
+                "re_phase2b_substrate_cauchy": self.sub_refine_check.isChecked(),
+                "re_refine_h": self.h_refine_check.isChecked(),
+                "re_refine_l": self.l_refine_check.isChecked(),
+                "re_enable_qwot_penalty": self.re_qwot_penalty_chk.isChecked(),
+                "re_fit_lambda_min_nm": float(self.re_fit_lambda_min_spin.value()),
+                "re_fit_lambda_max_nm": float(self.re_fit_lambda_max_spin.value()),
+                "re_beam_aperture": str(self.re_aperture_combo.currentData()),
+            },
+        }
+        if getattr(self, "_re_loaded", False) and getattr(self, "_re_workbook_path", None):
+            config["workbook_path"] = self._re_workbook_path
+        return config
 
     def reset_to_defaults(self):
         """Reset the application (tables, results, RE state, workers stopped)."""
@@ -77,6 +98,11 @@ class CertusREStateMixin:
                 self.auto_scale_y_check.setChecked(True)
 
             self.cfg["re_beam_aperture_deg"] = float(RE_GUI_DEFAULT_BEAM_APERTURE_DEG)
+
+            self.cfg.pop("re_beam_aperture_imposed_deg", None)
+
+            if hasattr(self, "re_aperture_combo"):
+                self.re_aperture_combo.setCurrentIndex(0)
 
             self.log("Default configuration loaded (CERTUS-RE).", "INFO")
 
@@ -137,13 +163,16 @@ class CertusREStateMixin:
             raw = json.loads(p.read_text(encoding="utf-8-sig"))
             cfg = self._normalize_re_config(raw if isinstance(raw, dict) else {})
             workbook_path = cfg.get("workbook_path") or cfg.get("re_workbook_path")
-            if workbook_path and Path(str(workbook_path)).is_file():
-                return self.load_reverse_engineering_from_path(str(workbook_path))
+            if workbook_path:
+                if not Path(str(workbook_path)).is_file() or not self.load_reverse_engineering_from_path(str(workbook_path)):
+                    self.log(f"RE: workbook could not be loaded: {workbook_path!r}", "ERROR")
+                    return False
             if "l0" in cfg and hasattr(self, "l0_spin"):
                 self.l0_spin.setValue(float(cfg["l0"]))
             if "re_gui" in raw and isinstance(raw["re_gui"], dict):
                 self._re_apply_gui_prefs_from_dict(raw["re_gui"])
             self.log("RE JSON loaded and normalized.", "INFO")
+            self.mark_config_saved()
             return True
         except Exception as e:
             self.log(f"RE JSON load error: {e}", "ERROR")
@@ -459,6 +488,34 @@ class CertusREStateMixin:
 
         self._update_substrate_info()
 
+    def _build_re_aperture_choice(self, lay) -> None:
+        """The beam aperture of phase 4: fitted (four plateaus in lambda, the default) or imposed by an instrument preset
+        (``RE_INSTRUMENT_PRESETS``, port of certus_re); the choice reaches the worker as ``re_beam_aperture_imposed_deg``."""
+        row = QHBoxLayout()
+        row.addWidget(QLabel("Aperture:"))
+        self.re_aperture_combo = QComboBox()
+        self.re_aperture_combo.addItem("fitted (4 plateaus)", "fitted")
+        for key, preset in RE_INSTRUMENT_PRESETS.items():
+            self.re_aperture_combo.addItem(f"{preset['short']}, {preset['aperture_deg']:.1f} deg imposed", key)
+        lines = [
+            "Beam aperture of the cone average, applied from 10 deg of incidence.",
+            "Fitted: phase 4 fits four plateaus of the total aperture over lambda, within 1.0-2.5 deg.",
+            "Imposed: the total aperture of the instrument (twice the half-angle) is used as given and no parameter "
+            "is spent on it, so the fit cannot hide a model error in the instrument.",
+        ]
+        lines += [f"{p['short']}: {p['comment']}" for p in RE_INSTRUMENT_PRESETS.values()]
+        self.re_aperture_combo.setToolTip("\n".join(lines))
+        self.re_aperture_combo.currentIndexChanged.connect(self._on_re_aperture_choice)
+        row.addWidget(self.re_aperture_combo, 1)
+        lay.addLayout(row)
+
+    def _on_re_aperture_choice(self, _index: int = -1) -> None:
+        preset = RE_INSTRUMENT_PRESETS.get(self.re_aperture_combo.currentData())
+        if preset is None:
+            self.cfg.pop("re_beam_aperture_imposed_deg", None)
+        else:
+            self.cfg["re_beam_aperture_imposed_deg"] = float(preset["aperture_deg"])
+
     def _re_apply_gui_prefs_from_dict(self, d: dict[str, Any]) -> None:
         """Restore RE speed preset and toggle prefs from a JSON ``re_gui`` block."""
         if not d:
@@ -481,6 +538,14 @@ class CertusREStateMixin:
                     self.l_refine_check.setChecked(bool(d["re_refine_l"]))
             if hasattr(self, "re_qwot_penalty_chk") and "re_enable_qwot_penalty" in d:
                 self.re_qwot_penalty_chk.setChecked(bool(d["re_enable_qwot_penalty"]))
+            if "re_fit_lambda_min_nm" in d and hasattr(self, "re_fit_lambda_min_spin"):
+                self.re_fit_lambda_min_spin.setValue(float(d["re_fit_lambda_min_nm"]))
+            if "re_fit_lambda_max_nm" in d and hasattr(self, "re_fit_lambda_max_spin"):
+                self.re_fit_lambda_max_spin.setValue(float(d["re_fit_lambda_max_nm"]))
+            if "re_beam_aperture" in d and hasattr(self, "re_aperture_combo"):
+                _idx = self.re_aperture_combo.findData(str(d["re_beam_aperture"]))
+                if _idx >= 0:
+                    self.re_aperture_combo.setCurrentIndex(_idx)
         except (KeyError, ValueError, TypeError) as e:
             logging.warning("RE GUI prefs restore skipped: %s", e)
 
@@ -495,8 +560,9 @@ class CertusREStateMixin:
 
         """
 
+        if not self.confirm_close_during_run(event):  # D41: ask before the workers below are stopped
+            return
         # Ensure all workers are stopped to avoid "QThread: Destroyed while thread is still running"
-
         workers = [
             getattr(self, "_re_worker", None),
             getattr(self, "eval_worker", None),

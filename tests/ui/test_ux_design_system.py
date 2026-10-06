@@ -122,10 +122,14 @@ def test_no_new_hardcoded_hex_outside_the_theme() -> None:
     📏 265 apres le dernier lot de S6.4b : sept de plus, des encres et des fonds ecrits pour le seul theme clair (`#1e293b` des
     equations finales d'INDEX, `#475569` du libelle de Pareto de FIELD, `#15803d` et `#bbf7d0` d'une couche faite, `#f8f9fa`, `#ddd`
     et `#e2e6ea` de la barre d'outils des graphiques), routes vers les jetons ou vers une teinte de jeton.
+
+    📏 217 le 2026-10-06 (257 avant) : les 40 hexadecimaux des palettes de repli du suivi d'etapes, des infobulles et des
+    badges, qui ne servaient que derriere des jetons absents (`MID`, `TEXT_MUTED`) ou jamais (branche
+    claude/charming-wright-43077a, portee).
     """
     count = count_hex_outside_theme()
-    assert count <= 265, (
-        f"Hardcoded hex colors ratchet violated! Found {count} > 265. "
+    assert count <= 217, (
+        f"Hardcoded hex colors ratchet violated! Found {count} > 217. "
         "Use CertusTheme tokens instead of hardcoded hex values."
     )
 
@@ -202,7 +206,11 @@ def _font_worker_main(tag: str) -> None:
         "resolved": font.family() in _QFD.families(),
     }
     win.close()
-    print(FONT_MARKER + json.dumps(out))
+    # D23: the native abort (0xC0000005) came after this line, while the return freed the locals (the
+    # QApplication before the window) or during interpreter teardown; the marker, still in the pipe buffer,
+    # was lost with it. Flush it, then leave without the teardown: it is not what this worker measures.
+    print(FONT_MARKER + json.dumps(out), flush=True)
+    os._exit(0)
 
 
 def _measure_font(tag: str) -> dict:

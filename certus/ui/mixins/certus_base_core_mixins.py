@@ -733,14 +733,14 @@ class CertusEmptyStateMixin:
         # is what stops the coverage from expiring at the next rename.
         try:
             already = {id(getattr(self, attr, None)) for attr in self._EMPTY_STATE_HINTS}
-            for name, table in self._iter_persistable_tables():
+            for _name, table in self._iter_persistable_tables():
                 if id(table) in already or not hasattr(table, "model"):
                     continue
                 attach_empty_state_to(
                     table,
                     icon_name="table",
                     title="Nothing to show yet",
-                    description=f"This table ({name}) fills in once a run or an import produces data.",
+                    description="This table fills in once a run or an import produces data.",
                 )
         except RuntimeError, AttributeError, TypeError, ValueError:
             pass

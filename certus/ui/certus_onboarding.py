@@ -197,6 +197,7 @@ def _build_overlay_class():
         QWidget,
     )
 
+    from certus.ui.certus_theme import CertusTheme
     from certus.utils.certus_ux import ClickTarget
 
     class _CoachMark(QFrame):
@@ -213,20 +214,20 @@ def _build_overlay_class():
             # Title
             t = QLabel(step.title, self)
             t.setObjectName("coach-title")
-            t.setStyleSheet("#coach-title { font-size: 11pt; font-weight: 700; color: palette(text); }")
+            t.setStyleSheet(f"#coach-title {{ font-size: 11pt; font-weight: 700; color: {CertusTheme.TEXT_MAIN}; }}")
             v.addWidget(t)
 
             # Body
             b = QLabel(step.body, self)
             b.setObjectName("coach-body")
             b.setWordWrap(True)
-            b.setStyleSheet("#coach-body { font-size: 9pt; color: palette(mid); }")
+            b.setStyleSheet(f"#coach-body {{ font-size: 9pt; color: {CertusTheme.TEXT_SUB}; }}")
             v.addWidget(b)
 
             # Progress
             prog = QLabel(f"Step {index + 1} / {total}", self)
             prog.setObjectName("coach-progress")
-            prog.setStyleSheet("#coach-progress { font-size: 8pt; color: palette(mid); font-style: italic; }")
+            prog.setStyleSheet(f"#coach-progress {{ font-size: 8pt; color: {CertusTheme.TEXT_SUB}; font-style: italic; }}")
             v.addWidget(prog)
 
             # Buttons
@@ -248,7 +249,8 @@ def _build_overlay_class():
             v.addLayout(row)
 
             self.setStyleSheet(
-                "#CertusCoachMark { background: palette(base); border: 1px solid palette(mid); border-radius: 8px; }"
+                f"#CertusCoachMark {{ background: {CertusTheme.SURFACE}; border: 1px solid {CertusTheme.BORDER}; "
+                "border-radius: 8px; }"
             )
 
     class _OnboardingOverlay(QWidget):

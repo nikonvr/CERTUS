@@ -302,3 +302,12 @@ def test_a_new_drawing_starts_from_a_clean_plot_and_clean_tracking():
 
 def test_the_module_still_uses_the_logger_of_the_window():
     assert module.CertusIndexPlotMixin._update_nk_plot is CertusIndexPlotMixin._update_nk_plot
+
+
+def test_the_n_legend_lists_its_curves_from_the_first_plot_of_a_window():
+    """D66: the legend was created after the n curves, and pyqtgraph lists only the curves added after it: empty at the
+    first plot of a window, filled at the next ones. It is created first now."""
+    win = draw(frame(n_fit_T_only=N_CALC + 0.01, k_fit_T_only=K_CALC))
+
+    names = [label.text for _sample, label in win.plot_nk.plotItem.legend.items]
+    assert names == ["n (R+T)", "n (90% T)"]

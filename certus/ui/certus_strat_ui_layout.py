@@ -79,7 +79,8 @@ def _as_numeric_field(edit, label):
 from certus.ui.certus_overview_tab import CertusKpiBanner
 from certus.ui.certus_strat_monitor_ui import CertusStratGrowthWidget
 from certus.ui.certus_strat_stack_progress_widget import CertusStratStackProgressWidget
-from certus.ui.certus_ui import EnhancedProgressWidget, WelcomeGuideWidget
+from certus.ui.certus_strat_welcome_ui import WelcomeGuideWidget  # STRAT's own page, not the generic one
+from certus.ui.certus_ui import EnhancedProgressWidget
 
 
 class CertusStratLayoutMixin:
@@ -351,7 +352,7 @@ class CertusStratLayoutMixin:
                 # ranking figure, not something anyone can act on.
                 ("seel", "SEEL (nm/layer)"),
                 ("score", "ROBUSTNESS SCORE"),
-                ("crash", "CRASH RATE"),
+                ("crash", "WORST CRASH RATE"),
                 ("blocks", "BLOCKS"),
                 ("ranked", "STRATEGIES RANKED"),
                 ("status", "RUN STATUS"),
@@ -457,7 +458,9 @@ class CertusStratLayoutMixin:
 
         self.stack_group = CertusCard("Stack Control & Workflow")
 
-        cockpit_layout = QHBoxLayout()
+        # Buttons over the table, not side by side: next to the 3-column grid of buttons (300 px) the fixed 135 px table
+        # made the page ask 525 px of a 549 px panel, which left 59.6 % of the window to the plots at 1366x768.
+        cockpit_layout = QVBoxLayout()
 
         self.stack_group.body.addLayout(cockpit_layout)
 
@@ -659,7 +662,7 @@ class CertusStratLayoutMixin:
 
         self.widgets["stack_table"].setHorizontalHeaderLabels(["#", "Mat.", "Mult."])
 
-        self.widgets["stack_table"].setFixedWidth(135)
+        self.widgets["stack_table"].setMinimumWidth(135)
 
         # Column header tooltips
 
@@ -685,7 +688,7 @@ class CertusStratLayoutMixin:
 
         h_header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
 
-        self.widgets["stack_table"].setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
+        self.widgets["stack_table"].setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
         self.widgets["stack_table"].setMinimumHeight(200)
 
@@ -813,7 +816,6 @@ class CertusStratLayoutMixin:
                     "wl_step",
                     "Spectral Step (nm):",
                 ),
-                ("extrema_exclusion_ratio", "Extrema Exclusion Ratio (1:X):"),
             ],
         )
 
@@ -825,7 +827,6 @@ class CertusStratLayoutMixin:
             "wl_range_start": "Start of the optical simulation wavelength range (nm). Must be within the available dispersive data range for H and L materials.",
             "wl_range_end": "End of the optical simulation wavelength range (nm).",
             "wl_step": "Spectral step (nm) used to build the simulation grid. Smaller = more precise but slower.",
-            "extrema_exclusion_ratio": "Ratio 1:X - exclude 1 in X extremum from monitoring candidates to avoid crowded regions near turning points.",
         }
 
         for _k, _tip in _tips_scan.items():

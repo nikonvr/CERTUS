@@ -10,6 +10,7 @@ from typing import Any
 
 from PyQt6.QtWidgets import QMessageBox, QPlainTextEdit, QPushButton, QTextEdit, QWidget
 
+from certus.utils.certus_ux import Typography
 from certus.utils.errors import NUMERICAL_FAULT_EXCEPTIONS
 
 __all__ = [
@@ -409,11 +410,11 @@ def create_reset_button(app_instance, use_app_reset: bool = False) -> QPushButto
             f"app_instance must be a QWidget to host dialogs safely, got {type(app_instance).__name__}"
         )
 
-    from PyQt6.QtWidgets import QPushButton, QStyle
+    from PyQt6.QtWidgets import QPushButton
 
-    # Create button
+    # Create button. The label carries its own symbol: the standard icon that used to sit beside it said the same
+    # thing a second time, and cost 24 px of a control panel that has 394 at 1366x768.
     reset_btn = QPushButton("🔄  Clear / Reset")
-    reset_btn.setIcon(reset_btn.style().standardIcon(QStyle.StandardPixmap.SP_DialogResetButton))
 
     # Set tooltip
     reset_btn.setToolTip(
@@ -422,16 +423,17 @@ def create_reset_button(app_instance, use_app_reset: bool = False) -> QPushButto
         "and reloads the default configuration."
     )
 
-    # Professional styling
+    # Professional styling. Horizontal padding 8 px: at 11 pt (D58), 16 px made this button set METAL's left panel
+    # to 403 px, more than the 394 it gets at 1366x768 (the owner's choice, 2026-10-06; tests/ui/test_ux_ratchet.py).
     reset_btn.setStyleSheet("""
         QPushButton {
             background-color: #5a3a00;
             color: white;
             border: none;
-            padding: 8px 16px;
+            padding: 8px 8px;
             border-radius: 4px;
             font-weight: bold;
-            font-size: {Typography.BODY_LG}pt;
+            font-size: BODY_LGpt;
         }
         QPushButton:hover {
             background-color: #7a4a00;
@@ -443,7 +445,7 @@ def create_reset_button(app_instance, use_app_reset: bool = False) -> QPushButto
             background-color: #3a2a00;
             color: #888;
         }
-    """)
+    """.replace("BODY_LG", str(Typography.BODY_LG)))  # D58: in a plain string, Qt dropped the size
 
     if use_app_reset and hasattr(app_instance, "reset_to_defaults"):
         reset_btn.clicked.connect(app_instance.reset_to_defaults)

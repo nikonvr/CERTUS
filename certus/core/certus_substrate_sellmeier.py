@@ -45,13 +45,14 @@ SELLMEIER_2POLES_LAM_FRAC_MAX = 0.97
 SELLMEIER_3TERM_C_FRAC_MAX = 0.995
 
 
-# Light multistart: with physical bounds and good seeding, 2 candidates are enough.
+# Multistart: eight random starts besides the seed and the L3 grid. Two made the sapphire fit a lottery (D10): a one-ulp
+# change of one data point could send every polish off and the fit to a worse model (RMSE 0.00796 instead of 0.00096).
 
 
 SELLMEIER_SEED_POINTS = 5  # grid points for polynomial seed (was 9)
 
 
-SELLMEIER_MULTISTART_TRIALS = 2  # additional random jitters (was 8)
+SELLMEIER_MULTISTART_TRIALS = 8  # additional random jitters
 
 
 SELLMEIER_WEIGHT_MODE = "uniform"  # uniform: no UV bias (was inv_sqrt_lambda)
@@ -77,11 +78,6 @@ _SUBSTRATE_PRIOR_HINTS: tuple[tuple[re.Pattern[str], int], ...] = (
     (re.compile(r"\b(d263t|d263)\b", re.IGNORECASE), 2),
     (re.compile(r"\b(b270i|b270)\b", re.IGNORECASE), 4),
 )
-
-
-def _sellmeier_midpoint_seed(bounds: list[tuple[float, float]], lam_min_um: float) -> np.ndarray:
-    """Returns midpoint of Sellmeier parameter bounds."""
-    return np.array([0.5 * (b[0] + b[1]) for b in bounds], dtype=np.float64)
 
 
 def _sellmeier_2poles_param_bounds(lam_min_um: float) -> list[tuple[float, float]]:
@@ -263,26 +259,6 @@ def _sellmeier_seed_from_compact_poly(
             f"{int(seed_nm.size)} points (lambda_nm={np.array2string(seed_nm, precision=1, separator=', ')})"
         )
     return seed_desc, q0
-
-
-def _sellmeier_multistart_candidates(q0: np.ndarray, _p_from_q: Callable[..., Any], _q_from_p: Callable[..., Any], bounds: Any, ls_bounds_q: Any, n_trials: int) -> list[np.ndarray]:
-    rng = np.random.default_rng(12345)
-    q_candidates: list[np.ndarray] = [np.asarray(q0, dtype=np.float64)]
-    p_base = _p_from_q(q0)
-    l3_grid = (0.1, 0.5, 2.0, 8.0)
-    for l3_try in l3_grid:
-        p_try = np.asarray(p_base, dtype=np.float64).copy()
-        p_try[6] = float(np.clip(l3_try, bounds[6][0], bounds[6][1]))
-        q_try = _q_from_p(p_try)
-        q_try = np.clip(q_try, ls_bounds_q[0], ls_bounds_q[1])
-        q_candidates.append(np.asarray(q_try, dtype=np.float64))
-    for _ in range(max(0, int(n_trials) - 1)):
-        jit = rng.uniform(-0.15, 0.15, size=q0.shape)
-        jit[6] = float(rng.uniform(-0.5, 0.5))
-        qj = np.asarray(q0 + jit, dtype=np.float64)
-        qj = np.clip(qj, ls_bounds_q[0], ls_bounds_q[1])
-        q_candidates.append(qj)
-    return q_candidates
 
 
 def _sellmeier_polish_helpers(p_from_q: Callable[..., Any], wl_fit_um: np.ndarray, n_fit: np.ndarray, w_fit_sell: np.ndarray, log_l1l2: bool) -> tuple[Callable[..., Any], ...]:

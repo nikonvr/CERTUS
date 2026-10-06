@@ -65,8 +65,8 @@ class REMathStrategy:
             return worker._evaluate_p2_fd_derivative(ctx, j, xv64, ep_x, r_c, b_mat_c, env_c, tk_w_c, dh4, dl4, lam2, th4)
         _nw_j = min(ctx._fd_nw, ctx._n_joint_fd)
         _active_js = []
-        _act_h = bool(worker.cfg.get('re_refine_h', True))
-        _act_l = bool(worker.cfg.get('re_refine_l', True))
+        _act_h = bool(worker.cfg.get('re_refine_h', False))
+        _act_l = bool(worker.cfg.get('re_refine_l', False))
         for j in range(ctx._n_joint_fd):
             if j < ctx._nk and (not _act_h):
                 continue

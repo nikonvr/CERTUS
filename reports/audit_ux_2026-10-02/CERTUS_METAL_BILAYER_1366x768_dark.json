@@ -1,0 +1,650 @@
+{
+  "controls": [
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Copy Logs",
+      "accessible": "Copy Logs",
+      "tooltip": "Copy all logs to clipboard",
+      "enabled": true,
+      "geometry": [
+        318,
+        21,
+        76,
+        32
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "⬡  Detach Plot",
+      "accessible": "⬡  Detach Plot",
+      "tooltip": "Detach the current plot tab into a separate floating window.",
+      "enabled": true,
+      "geometry": [
+        406,
+        33,
+        116,
+        42
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "Help",
+      "accessible": "Help",
+      "tooltip": "Open documentation for CERTUS_METAL_BILAYER (F1)",
+      "enabled": true,
+      "geometry": [
+        279,
+        44,
+        60,
+        45
+      ]
+    },
+    {
+      "class": "CertusThemeToggle",
+      "name": "",
+      "text": "◑",
+      "accessible": "Switch to light theme",
+      "tooltip": "Switch to light theme",
+      "enabled": true,
+      "geometry": [
+        345,
+        51,
+        32,
+        46
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": " Load File...",
+      "accessible": "Load File...",
+      "tooltip": "Load a data file (CSV or Excel) containing columns:\nλ (nm), R, [T], [Rback] — percentage or 0-1 scale accepted.",
+      "enabled": true,
+      "geometry": [
+        52,
+        369,
+        276,
+        42
+      ]
+    },
+    {
+      "class": "QLineEdit",
+      "name": "",
+      "text": "",
+      "accessible": "λ min",
+      "tooltip": "Minimum wavelength (nm) used for fitting. Rows below this value are excluded.",
+      "enabled": true,
+      "geometry": [
+        94,
+        509,
+        234,
+        40
+      ]
+    },
+    {
+      "class": "QLineEdit",
+      "name": "",
+      "text": "",
+      "accessible": "λ max",
+      "tooltip": "Maximum wavelength (nm) used for fitting. Rows above this value are excluded.",
+      "enabled": true,
+      "geometry": [
+        94,
+        555,
+        234,
+        40
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "?",
+      "accessible": "Help: Minimum expected thickness of the metal layer (nm)",
+      "tooltip": "Minimum expected thickness of the metal layer (nm).",
+      "enabled": true,
+      "geometry": [
+        104,
+        705,
+        20,
+        46
+      ]
+    },
+    {
+      "class": "QLineEdit",
+      "name": "",
+      "text": "5",
+      "accessible": "eM min",
+      "tooltip": "Minimum expected thickness of the metal layer (nm).",
+      "enabled": true,
+      "geometry": [
+        204,
+        703,
+        124,
+        40
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "?",
+      "accessible": "Help: Maximum expected thickness of the metal layer (nm)",
+      "tooltip": "Maximum expected thickness of the metal layer (nm).",
+      "enabled": true,
+      "geometry": [
+        107,
+        755,
+        20,
+        46
+      ]
+    },
+    {
+      "class": "QLineEdit",
+      "name": "",
+      "text": "50",
+      "accessible": "eM max",
+      "tooltip": "Maximum expected thickness of the metal layer (nm).",
+      "enabled": true,
+      "geometry": [
+        204,
+        753,
+        124,
+        40
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "?",
+      "accessible": "Help: Nominal thickness of the dielectric underlayer (SiO2)",
+      "tooltip": "Nominal thickness of the dielectric underlayer (SiO2).",
+      "enabled": true,
+      "geometry": [
+        103,
+        805,
+        20,
+        46
+      ]
+    },
+    {
+      "class": "QLineEdit",
+      "name": "",
+      "text": "900",
+      "accessible": "eL nom",
+      "tooltip": "Nominal thickness of the dielectric underlayer (SiO2).",
+      "enabled": true,
+      "geometry": [
+        204,
+        803,
+        124,
+        40
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "?",
+      "accessible": "Help: Allowed thickness variation range for eL optimization",
+      "tooltip": "Allowed thickness variation range for eL optimization.",
+      "enabled": true,
+      "geometry": [
+        96,
+        855,
+        20,
+        46
+      ]
+    },
+    {
+      "class": "QLineEdit",
+      "name": "",
+      "text": "20",
+      "accessible": "eL +/-",
+      "tooltip": "Allowed thickness variation range for eL optimization.",
+      "enabled": true,
+      "geometry": [
+        204,
+        853,
+        124,
+        40
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "?",
+      "accessible": "Help: Min High-Frequency Index (SiO2)",
+      "tooltip": "Min High-Frequency Index (SiO2).",
+      "enabled": true,
+      "geometry": [
+        103,
+        998,
+        20,
+        46
+      ]
+    },
+    {
+      "class": "QLineEdit",
+      "name": "",
+      "text": "1.42",
+      "accessible": "n∞ min",
+      "tooltip": "Min High-Frequency Index (SiO2).",
+      "enabled": true,
+      "geometry": [
+        204,
+        996,
+        124,
+        40
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "?",
+      "accessible": "Help: Max High-Frequency Index (SiO2)",
+      "tooltip": "Max High-Frequency Index (SiO2).",
+      "enabled": true,
+      "geometry": [
+        106,
+        1048,
+        20,
+        46
+      ]
+    },
+    {
+      "class": "QLineEdit",
+      "name": "",
+      "text": "1.44",
+      "accessible": "n∞ max",
+      "tooltip": "Max High-Frequency Index (SiO2).",
+      "enabled": true,
+      "geometry": [
+        204,
+        1046,
+        124,
+        40
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "?",
+      "accessible": "Help: Min Cauchy Dispersion A term",
+      "tooltip": "Min Cauchy Dispersion A term.",
+      "enabled": true,
+      "geometry": [
+        93,
+        1098,
+        20,
+        46
+      ]
+    },
+    {
+      "class": "QLineEdit",
+      "name": "",
+      "text": "0",
+      "accessible": "A min",
+      "tooltip": "Min Cauchy Dispersion A term.",
+      "enabled": true,
+      "geometry": [
+        204,
+        1096,
+        124,
+        40
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "?",
+      "accessible": "Help: Max Cauchy Dispersion A term",
+      "tooltip": "Max Cauchy Dispersion A term.",
+      "enabled": true,
+      "geometry": [
+        96,
+        1148,
+        20,
+        46
+      ]
+    },
+    {
+      "class": "QLineEdit",
+      "name": "",
+      "text": "10000",
+      "accessible": "A max",
+      "tooltip": "Max Cauchy Dispersion A term.",
+      "enabled": true,
+      "geometry": [
+        204,
+        1146,
+        124,
+        40
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "?",
+      "accessible": "Help: Number of control points for B-Spline",
+      "tooltip": "Number of control points for B-Spline.",
+      "enabled": true,
+      "geometry": [
+        93,
+        1208,
+        20,
+        46
+      ]
+    },
+    {
+      "class": "QLineEdit",
+      "name": "",
+      "text": "5",
+      "accessible": "Knots",
+      "tooltip": "Number of control points for B-Spline.",
+      "enabled": true,
+      "geometry": [
+        204,
+        1206,
+        124,
+        40
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "?",
+      "accessible": "Help: Lower bound for n and k",
+      "tooltip": "Lower bound for n and k.",
+      "enabled": true,
+      "geometry": [
+        101,
+        1258,
+        20,
+        46
+      ]
+    },
+    {
+      "class": "QLineEdit",
+      "name": "",
+      "text": "0.0",
+      "accessible": "n,k min",
+      "tooltip": "Lower bound for n and k.",
+      "enabled": true,
+      "geometry": [
+        204,
+        1256,
+        124,
+        40
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "?",
+      "accessible": "Help: Upper bound for n and k",
+      "tooltip": "Upper bound for n and k.",
+      "enabled": true,
+      "geometry": [
+        104,
+        1308,
+        20,
+        46
+      ]
+    },
+    {
+      "class": "QLineEdit",
+      "name": "",
+      "text": "10.0",
+      "accessible": "n,k max",
+      "tooltip": "Upper bound for n and k.",
+      "enabled": true,
+      "geometry": [
+        204,
+        1306,
+        124,
+        40
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "?",
+      "accessible": "Help: Minimum spectral distance between knots (nm)",
+      "tooltip": "Minimum spectral distance between knots (nm).",
+      "enabled": true,
+      "geometry": [
+        113,
+        1358,
+        20,
+        46
+      ]
+    },
+    {
+      "class": "QLineEdit",
+      "name": "",
+      "text": "20.0",
+      "accessible": "Knot Dist",
+      "tooltip": "Minimum spectral distance between knots (nm).",
+      "enabled": true,
+      "geometry": [
+        204,
+        1356,
+        124,
+        40
+      ]
+    },
+    {
+      "class": "QLineEdit",
+      "name": "",
+      "text": "metal_results.xlsx",
+      "accessible": "File",
+      "tooltip": "Name of the Excel output file. Written to the reports/ directory.",
+      "enabled": true,
+      "geometry": [
+        91,
+        1496,
+        225,
+        40
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusPrimaryBtn",
+      "text": "▶  Run",
+      "accessible": "▶  Run",
+      "tooltip": "Run the optimization pipeline to extract the metal optical constants.",
+      "enabled": true,
+      "geometry": [
+        27,
+        584,
+        167,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusDangerBtn",
+      "text": "■  Halt",
+      "accessible": "■  Halt",
+      "tooltip": "Halt the running optimization and keep the best result found so far.",
+      "enabled": false,
+      "geometry": [
+        200,
+        584,
+        167,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Beam Scan",
+      "accessible": "Beam Scan",
+      "tooltip": "Run a beam scan: vary thickness (eM) around the optimum to map the\nRMSE valley and assess solution uniqueness.",
+      "enabled": false,
+      "geometry": [
+        35,
+        644,
+        117,
+        46
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Logs",
+      "accessible": "Logs",
+      "tooltip": "Show or hide the live log panel below the plots.",
+      "enabled": true,
+      "geometry": [
+        158,
+        644,
+        62,
+        46
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "🔄  Clear / Reset",
+      "accessible": "🔄  Clear / Reset",
+      "tooltip": "Reset the entire application to factory defaults.\nStops any running processes, clears all data and results,\nand reloads the default configuration.",
+      "enabled": true,
+      "geometry": [
+        226,
+        639,
+        133,
+        44
+      ]
+    },
+    {
+      "class": "CertusThemeToggle",
+      "name": "",
+      "text": "◐",
+      "accessible": "Switch to dark theme",
+      "tooltip": "Toggle between light and dark themes.",
+      "enabled": true,
+      "geometry": [
+        1211,
+        727,
+        32,
+        46
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Skip",
+      "accessible": "Skip",
+      "tooltip": "Skip the guided tour",
+      "enabled": true,
+      "geometry": [
+        579,
+        406,
+        60,
+        46
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Back",
+      "accessible": "Back",
+      "tooltip": "Go back to previous step",
+      "enabled": false,
+      "geometry": [
+        656,
+        406,
+        61,
+        46
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Next",
+      "accessible": "Next",
+      "tooltip": "Go to next step",
+      "enabled": true,
+      "geometry": [
+        725,
+        406,
+        62,
+        46
+      ]
+    }
+  ],
+  "tabs": [
+    {
+      "name": "",
+      "current": 0,
+      "tabs": [
+        "✦ Synthesis",
+        "Reflectance",
+        "n, k",
+        "Dielectric",
+        "Convergence"
+      ]
+    }
+  ],
+  "labels": [
+    "LOGS",
+    "Optical-constants synthesis — refreshed when an optimization completes.",
+    "FINAL RMSE",
+    "—",
+    "ITERATIONS",
+    "—",
+    "FIT STATUS",
+    "—",
+    "CERTUS-METAL-BILAYER",
+    "Metal Bilayer (SiO2 on Silicon)",
+    "Workflow",
+    "1 Load data  →  2 Configure model  →  3 Run analysis  →  4 Review & export",
+    "Parameters",
+    "Input Data",
+    "No file loaded",
+    "Ready to load a spectrum",
+    "Wavelength filter",
+    "λ min",
+    "λ max",
+    "Physical Parameters",
+    "eM min:",
+    "eM max:",
+    "eL nom:",
+    "eL +/-:",
+    "Material Parameters",
+    "n∞ min:",
+    "n∞ max:",
+    "A min:",
+    "A max:",
+    "Knots:",
+    "n,k min:",
+    "n,k max:",
+    "Knot Dist:",
+    "Output",
+    "File",
+    "Live Parameters",
+    "eM:",
+    "N/A",
+    "eL:",
+    "N/A",
+    "n∞:",
+    "N/A",
+    "A:",
+    "N/A",
+    "RMSE:",
+    "N/A",
+    "Actions",
+    "System warming up (compiling JIT)...",
+    " 0  |  0  |   0",
+    "Overall progress",
+    "0%",
+    "",
+    "Status: Idle • Next: start run",
+    "Zoom 100%",
+    "Welcome to CERTUS-METAL",
+    "Metal-layer characterisation (single or bilayer) from spectro-photometric data.",
+    "Step 1 / 3"
+  ]
+}

@@ -1,0 +1,762 @@
+{
+  "controls": [
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "Help",
+      "accessible": "Help",
+      "tooltip": "Open documentation for CERTUS_INDEX_SPLINE (F1)",
+      "enabled": true,
+      "geometry": [
+        1250,
+        30,
+        60,
+        45
+      ]
+    },
+    {
+      "class": "CertusThemeToggle",
+      "name": "",
+      "text": "◑",
+      "accessible": "Switch to light theme",
+      "tooltip": "Switch to light theme",
+      "enabled": true,
+      "geometry": [
+        1316,
+        37,
+        32,
+        46
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "⬡  Detach plot",
+      "accessible": "⬡  Detach plot",
+      "tooltip": "Clone the first plot of the active tab into a floating window (Ctrl+Shift+D on plot).",
+      "enabled": true,
+      "geometry": [
+        394,
+        99,
+        116,
+        42
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "Reset",
+      "accessible": "Reset",
+      "tooltip": "Reset",
+      "enabled": true,
+      "geometry": [
+        879,
+        175,
+        60,
+        28
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "Detach",
+      "accessible": "Detach",
+      "tooltip": "Large resizable window (Ctrl+Shift+D)",
+      "enabled": true,
+      "geometry": [
+        944,
+        175,
+        60,
+        28
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "Copy data",
+      "accessible": "Copy data",
+      "tooltip": "Copy all displayed plot data to clipboard (Excel TSV)",
+      "enabled": true,
+      "geometry": [
+        1020,
+        175,
+        79,
+        28
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "Pub copy",
+      "accessible": "Pub copy",
+      "tooltip": "Copy publication-ready TSV (fixed decimals)",
+      "enabled": true,
+      "geometry": [
+        1104,
+        175,
+        74,
+        28
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "CSV",
+      "accessible": "CSV",
+      "tooltip": "Export all displayed plot data to CSV",
+      "enabled": true,
+      "geometry": [
+        1183,
+        175,
+        60,
+        28
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": " Export",
+      "accessible": "Export",
+      "tooltip": "Export the plot or its data: PNG, SVG, CSV or TSV.",
+      "enabled": true,
+      "geometry": [
+        1259,
+        175,
+        62,
+        28
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "Reset",
+      "accessible": "Reset",
+      "tooltip": "Reset",
+      "enabled": true,
+      "geometry": [
+        395,
+        175,
+        60,
+        28
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "Detach",
+      "accessible": "Detach",
+      "tooltip": "Large resizable window (Ctrl+Shift+D)",
+      "enabled": true,
+      "geometry": [
+        460,
+        175,
+        60,
+        28
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "Copy data",
+      "accessible": "Copy data",
+      "tooltip": "Copy all displayed plot data to clipboard (Excel TSV)",
+      "enabled": true,
+      "geometry": [
+        536,
+        175,
+        79,
+        28
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "Pub copy",
+      "accessible": "Pub copy",
+      "tooltip": "Copy publication-ready TSV (fixed decimals)",
+      "enabled": true,
+      "geometry": [
+        620,
+        175,
+        74,
+        28
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "CSV",
+      "accessible": "CSV",
+      "tooltip": "Export all displayed plot data to CSV",
+      "enabled": true,
+      "geometry": [
+        699,
+        175,
+        60,
+        28
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": " Export",
+      "accessible": "Export",
+      "tooltip": "Export the plot or its data: PNG, SVG, CSV or TSV.",
+      "enabled": true,
+      "geometry": [
+        775,
+        175,
+        62,
+        28
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "StepBadge_0",
+      "text": "1",
+      "accessible": "1",
+      "tooltip": "Step 1: Load spectrum",
+      "enabled": false,
+      "geometry": [
+        29,
+        150,
+        24,
+        24
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "StepBtn_0",
+      "text": "Load spectrum",
+      "accessible": "Load spectrum",
+      "tooltip": "Go to step 1: Load spectrum",
+      "enabled": true,
+      "geometry": [
+        59,
+        148,
+        119,
+        28
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "StepBadge_1",
+      "text": "2",
+      "accessible": "2",
+      "tooltip": "Step 2: Substrate (n) & layer thickness",
+      "enabled": false,
+      "geometry": [
+        188,
+        150,
+        24,
+        24
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "StepBtn_1",
+      "text": "Substrate (n) & layer thickness",
+      "accessible": "Substrate (n)  layer thickness",
+      "tooltip": "Go to step 2: Substrate (n) & layer thickness",
+      "enabled": true,
+      "geometry": [
+        218,
+        148,
+        119,
+        28
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "StepBadge_2",
+      "text": "3",
+      "accessible": "3",
+      "tooltip": "Step 3: Fit targets (T / R)",
+      "enabled": false,
+      "geometry": [
+        29,
+        184,
+        24,
+        24
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "StepBtn_2",
+      "text": "Fit targets (T / R)",
+      "accessible": "Fit targets (T / R)",
+      "tooltip": "Go to step 3: Fit targets (T / R)",
+      "enabled": true,
+      "geometry": [
+        59,
+        182,
+        119,
+        28
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "StepBadge_3",
+      "text": "4",
+      "accessible": "4",
+      "tooltip": "Step 4: Mesh & optimizer",
+      "enabled": false,
+      "geometry": [
+        188,
+        184,
+        24,
+        24
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "StepBtn_3",
+      "text": "Mesh & optimizer",
+      "accessible": "Mesh  optimizer",
+      "tooltip": "Go to step 4: Mesh & optimizer",
+      "enabled": true,
+      "geometry": [
+        218,
+        182,
+        119,
+        28
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "StepBadge_4",
+      "text": "5",
+      "accessible": "5",
+      "tooltip": "Step 5: Run",
+      "enabled": false,
+      "geometry": [
+        29,
+        218,
+        24,
+        24
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "StepBtn_4",
+      "text": "Run",
+      "accessible": "Run",
+      "tooltip": "Go to step 5: Run",
+      "enabled": true,
+      "geometry": [
+        59,
+        216,
+        119,
+        28
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "StepBadge_5",
+      "text": "6",
+      "accessible": "6",
+      "tooltip": "Step 6: Manual nodes",
+      "enabled": false,
+      "geometry": [
+        188,
+        218,
+        24,
+        24
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "StepBtn_5",
+      "text": "Manual nodes",
+      "accessible": "Manual nodes",
+      "tooltip": "Go to step 6: Manual nodes",
+      "enabled": true,
+      "geometry": [
+        218,
+        216,
+        119,
+        28
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "StepBadge_6",
+      "text": "7",
+      "accessible": "7",
+      "tooltip": "Step 7: Corridors & RMSE(d)",
+      "enabled": false,
+      "geometry": [
+        29,
+        252,
+        24,
+        24
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "StepBtn_6",
+      "text": "Corridors & RMSE(d)",
+      "accessible": "Corridors  RMSE(d)",
+      "tooltip": "Go to step 7: Corridors & RMSE(d)",
+      "enabled": true,
+      "geometry": [
+        59,
+        250,
+        119,
+        28
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Load spectrum…",
+      "accessible": "Load spectrum…",
+      "tooltip": "Step 1: open a file containing at least λ and transmission T. In Basic, enable T/Tsub if T already is T_film/T_bare_sub ratio (often in %).",
+      "enabled": true,
+      "geometry": [
+        29,
+        361,
+        308,
+        42
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "▸  2-4  Parameters",
+      "accessible": "▸  2-4  Parameters",
+      "tooltip": "Expand 2-4  Parameters section",
+      "enabled": true,
+      "geometry": [
+        4,
+        447,
+        358,
+        36
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "1700.00",
+      "accessible": "d_nominal (nm)",
+      "tooltip": "Nominal thickness d0 (nm). Effective bounds are d0 +/- Delta.",
+      "enabled": true,
+      "geometry": [
+        114,
+        604,
+        77,
+        43
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "100.00",
+      "accessible": "+/- (nm)",
+      "tooltip": "Half-width Delta (nm): optimization bounds are [d_nominal - Delta, d_nominal + Delta].",
+      "enabled": true,
+      "geometry": [
+        259,
+        604,
+        78,
+        43
+      ]
+    },
+    {
+      "class": "QComboBox",
+      "name": "",
+      "text": "",
+      "accessible": "Substrate",
+      "tooltip": "Select the same substrate used for measurement (internal tabulated dispersion).",
+      "enabled": true,
+      "geometry": [
+        98,
+        651,
+        238,
+        40
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "Fit transmission T",
+      "accessible": "Fit transmission T",
+      "tooltip": "Include file T column in objective. Disable only when fitting R only.",
+      "enabled": true,
+      "geometry": [
+        30,
+        776,
+        306,
+        18
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "T ratio (film / substrate)",
+      "accessible": "T ratio (film / substrate)",
+      "tooltip": "Checked (usual case): T column is T_film / bare-substrate T ratio (backside included), same for R. Often provided in percent (100 = ratio 1). Fit compares against ratio model without dividing by T_sub again. Unchecked: columns are absolute transmission/reflection (or %). RMSE objective uses ln λ weighting and optional mixed T/R loss.",
+      "enabled": true,
+      "geometry": [
+        30,
+        798,
+        306,
+        18
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "Fit reflection R",
+      "accessible": "Fit reflection R",
+      "tooltip": "Requires an R column; combines T and R if both are enabled and wR > 0.",
+      "enabled": true,
+      "geometry": [
+        30,
+        820,
+        306,
+        18
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "1.00",
+      "accessible": "wT: Relative weight of T error in global RMSE",
+      "tooltip": "Relative weight of T error in global RMSE.",
+      "enabled": true,
+      "geometry": [
+        159,
+        851,
+        71,
+        43
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "1.00",
+      "accessible": "wR: Relative weight of R error",
+      "tooltip": "Relative weight of R error. Set to 0 to ignore R in fitting.",
+      "enabled": true,
+      "geometry": [
+        255,
+        851,
+        71,
+        43
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Spectral RMSE window (λ)...",
+      "accessible": "Spectral RMSE window (λ)...",
+      "tooltip": "Limits the wavelengths used in the optimization MSE/RMSE. The displayed spectrum remains complete; only points in the band count for the adjustment.",
+      "enabled": true,
+      "geometry": [
+        7,
+        930,
+        352,
+        42
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Advanced settings...",
+      "accessible": "Advanced settings...",
+      "tooltip": "Optimization budgets and detailed uncertainty/corridor options.",
+      "enabled": true,
+      "geometry": [
+        30,
+        1037,
+        306,
+        42
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusFeaturedBtn",
+      "text": "▶  Run Optimization",
+      "accessible": "▶  Run Optimization",
+      "tooltip": "Start global optimization (Smart Init). Raccourci : F5.",
+      "enabled": true,
+      "geometry": [
+        29,
+        1172,
+        201,
+        52
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusDangerBtn",
+      "text": "■  Stop",
+      "accessible": "■  Stop",
+      "tooltip": "Stop and keep best result found so far. Raccourci : Échap.",
+      "enabled": false,
+      "geometry": [
+        236,
+        1172,
+        101,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusPrimaryBtn",
+      "text": "◆  Manual knots",
+      "accessible": "◆  Manual knots",
+      "tooltip": "Priority action after optimization: automatic removal + manual knot insertion.",
+      "enabled": false,
+      "geometry": [
+        29,
+        1227,
+        135,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusPrimaryBtn",
+      "text": "◈  Corridors / RMSE(d)",
+      "accessible": "◈  Corridors / RMSE(d)",
+      "tooltip": "Priority action: launches corridors and RMSE(d) workflow from the latest optimized result.",
+      "enabled": false,
+      "geometry": [
+        170,
+        1227,
+        167,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "🔄  Clear / Reset",
+      "accessible": "🔄  Clear / Reset",
+      "tooltip": "Clear all and return to first-launch state: no spectrum, no result, default controls.",
+      "enabled": true,
+      "geometry": [
+        29,
+        1390,
+        308,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Skip",
+      "accessible": "Skip",
+      "tooltip": "Skip the guided tour",
+      "enabled": true,
+      "geometry": [
+        573,
+        414,
+        60,
+        46
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Back",
+      "accessible": "Back",
+      "tooltip": "Go back to previous step",
+      "enabled": false,
+      "geometry": [
+        658,
+        414,
+        61,
+        46
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Finish",
+      "accessible": "Finish",
+      "tooltip": "Complete tour",
+      "enabled": true,
+      "geometry": [
+        727,
+        414,
+        66,
+        46
+      ]
+    }
+  ],
+  "tabs": [
+    {
+      "name": "",
+      "current": 0,
+      "tabs": [
+        "✦ Synthèse (Overview)",
+        "Spectrum T / R",
+        "n, k",
+        "Corridors n/k",
+        "Corridor RMSE(d)",
+        "Data",
+        "Data TH",
+        "Data Corridor",
+        "CERTUS"
+      ]
+    },
+    {
+      "name": "",
+      "current": 0,
+      "tabs": [
+        "Context",
+        "Logs"
+      ]
+    },
+    {
+      "name": "",
+      "current": 0,
+      "tabs": [
+        "Basic (2 → 4)"
+      ]
+    }
+  ],
+  "labels": [
+    "INDEX-SPLINE",
+    "CERTUS  Index Spline Optimization",
+    "RMSE GLOBALE",
+    "—",
+    "ÉPAISSEUR d",
+    "—",
+    "INDICE n (550 nm)",
+    "—",
+    "EXTINCTION k (550 nm)",
+    "—",
+    "STATUT AJUSTEMENT",
+    "Prêt pour calcul",
+    "Vue de Synthèse Complète",
+    "Workflow guide",
+    "1 — Spectrum",
+    "(no file loaded)",
+    "Order: 2 → 3 → 4",
+    "2 — Substrate n(λ) & layer thickness d (nm)",
+    "d_nominal (nm) :",
+    "+/- (nm) :",
+    "Substrate :",
+    "3 — What to fit on the spectrum (T, T/Tsub, R)",
+    "Weights in MSE:",
+    "wT",
+    "wR",
+    "Advanced settings",
+    "5 — Run, manual nodes, corridors",
+    "Recommended flow: Run -> Manual knots -> Corridors / RMSE(d)",
+    "Corridors: <span style=\"color:#94a3b8/*T:TEXT_SUB*/;\"><b>available after optimization</b></span>",
+    "Overall progress",
+    "0%",
+    "Optimization",
+    "Status: Idle • Next: start run",
+    "Ready (JIT Compiled)",
+    "Zoom 100%",
+    "Welcome",
+    "Every CERTUS app has a command palette (Ctrl+K), a shortcuts cheatsheet (F1) and a recent-files MRU via File → Open recent.",
+    "Step 1 / 1"
+  ]
+}

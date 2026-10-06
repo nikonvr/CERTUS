@@ -32,6 +32,8 @@ RETIRED = (
     "screening_keep_top_k",
     "phase_a_keep_limit",
     "step0_sigma",
+    # Third batch (D70, 2026-10-04): it only fed a thickness check that ran on zero matrices and refused nothing.
+    "extrema_exclusion_ratio",
 )
 
 

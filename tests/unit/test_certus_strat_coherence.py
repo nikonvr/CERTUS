@@ -2171,7 +2171,9 @@ class TestStratSymmetryContractAndStability:
             sid = strategy["strategy_id"]
 
 
-            score = float(score_map[sid])
+            # This test ranks the four named parents; generated candidates have
+            # opaque ids and must not depend on a particular numbering scheme.
+            score = float(score_map.get(sid, 1.0))
 
 
             return {

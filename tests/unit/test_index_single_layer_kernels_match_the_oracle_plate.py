@@ -11,8 +11,8 @@ What is pinned here, against `tests/oracle/tmm_reference.py` (`rt_plate_incohere
     the array wrappers of the plate, point by point; and the reflectance wrappers, which are the FRONT SURFACE alone, an infinite back face (the frosted glass, ETAT D75: they used to return
     the plate's R, back face included, while their docstrings said "front-surface")
     the sentinels INDEX relies on (an index below one, a zero film index) and the conservation of energy
-    the film on an absorbing substrate, exactly, against the oracle's plate with the substrate read by its real index at the front; and the size of the difference with the oracle's
-    complex front index, which is first order in the extinction of the substrate (0.25 k at most) because the kernel reads the film with the real index only
+    the film on an absorbing substrate, exactly, against the oracle's plate: the film read from air into the complex index of the substrate, the interfaces seen from inside
+    with its real part (ETAT D75: the kernel read the front with the real part too, an error of first order in the extinction of the substrate, up to 0.25 k)
     the batch kernels: the weighted mean square error of every candidate, its weights, its normalisation, and that one candidate does not read another's row
 """
 
@@ -50,17 +50,6 @@ def plate(wavelength, n, k, d, n_sub, k_sub=0.0, substrate_thickness=SUBSTRATE_T
     return oracle.rt_plate_incoherent(
         float(wavelength), [complex(n, -k)], [float(d)], [], [], complex(n_sub, -k_sub), 0.0, True, substrate_thickness
     )
-
-
-def plate_with_the_real_index_at_the_front(wavelength, n, k, d, n_sub, k_sub, substrate_thickness=SUBSTRATE_THICKNESS):
-    """The model of `_calculate_RT_absorbing_sub_single`, assembled from the oracle's pieces: every interface read with the real index of the substrate, Beer-Lambert in the bulk."""
-    film, thickness = [complex(n, -k)], [float(d)]
-    r_front, t_front = oracle.rt_stack_oblique(wavelength, film, thickness, 0.0, True, n_inc=1.0 + 0.0j, n_sub=complex(n_sub, 0.0))
-    r_inside, t_inside = oracle.rt_stack_oblique(wavelength, film[::-1], thickness[::-1], 0.0, True, n_inc=complex(n_sub, 0.0), n_sub=1.0 + 0.0j)
-    r_back = ((n_sub - 1.0) / (n_sub + 1.0)) ** 2
-    tau = float(np.exp(-4.0 * np.pi * k_sub * substrate_thickness / wavelength))
-    denominator = 1.0 - r_inside * r_back * tau * tau
-    return r_front + t_front * t_inside * r_back * tau * tau / denominator, t_front * (1.0 - r_back) * tau / denominator
 
 
 def random_cases(count, seed):
@@ -119,8 +108,8 @@ def test_a_film_of_no_thickness_is_the_bare_plate():
 
 
 def test_a_substrate_index_below_one_is_refused_with_nan():
-    # NaN and inf are not pinned: the `np.isfinite` of the same guard is folded away by `fastmath` once compiled, and they answer (0, 0) (the fastmath question is D52)
-    for n_sub in (0.99, 0.5, 0.0, -1.5):
+    # NaN and inf too: the guard lives in a kernel compiled without fastmath, which cannot fold `np.isfinite` (R122, D75)
+    for n_sub in (0.99, 0.5, 0.0, -1.5, np.nan, np.inf, -np.inf):
         r, t = calculate_transmission_single(550.0, 1.5, 0.0, 100.0, complex(n_sub, 0.0))
         assert np.isnan(r)
         assert np.isnan(t)
@@ -196,23 +185,12 @@ SUBSTRATE_EXTINCTIONS = [0.0, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2]
 
 @pytest.mark.parametrize("k_sub", SUBSTRATE_EXTINCTIONS)
 @pytest.mark.parametrize("substrate_thickness", [5.0e5, SUBSTRATE_THICKNESS])
-def test_the_absorbing_substrate_kernel_is_the_oracles_pieces_assembled_with_the_real_index(k_sub, substrate_thickness):
+def test_the_absorbing_substrate_kernel_is_the_oracles_plate(k_sub, substrate_thickness):
     for wavelength, n, k, d, n_sub in cases()[:50]:
         r, t = _calculate_RT_absorbing_sub_single(wavelength, n, k, d, n_sub, k_sub, substrate_thickness)
-        r_expected, t_expected = plate_with_the_real_index_at_the_front(wavelength, n, k, d, n_sub, k_sub, substrate_thickness)
+        r_expected, t_expected = plate(wavelength, n, k, d, n_sub, k_sub, substrate_thickness)
         assert r == pytest.approx(r_expected, abs=1e-11), (wavelength, n, k, d, n_sub, k_sub)
         assert t == pytest.approx(t_expected, abs=1e-11), (wavelength, n, k, d, n_sub, k_sub)
-
-
-@pytest.mark.parametrize("k_sub", SUBSTRATE_EXTINCTIONS)
-def test_the_absorbing_substrate_kernel_differs_from_the_oracle_front_index_by_first_order_in_k(k_sub):
-    # the kernel reads the film from air into the REAL index of the substrate (a comment says so), the oracle into the complex one: R and T differ by 0.25 k at most (measured over this sample)
-    worst = 0.0
-    for wavelength, n, k, d, n_sub in cases()[:50]:
-        r, t = _calculate_RT_absorbing_sub_single(wavelength, n, k, d, n_sub, k_sub, SUBSTRATE_THICKNESS)
-        r_oracle, t_oracle = plate(wavelength, n, k, d, n_sub, k_sub)
-        worst = max(worst, abs(r - r_oracle), abs(t - t_oracle))
-    assert worst <= 1e-11 + 0.3 * k_sub
 
 
 def test_without_extinction_the_absorbing_substrate_kernel_is_the_transparent_plate():
@@ -237,7 +215,7 @@ def test_an_opaque_substrate_transmits_nothing_and_a_thin_one_transmits_more():
     _r_mid, t_mid = _calculate_RT_absorbing_sub_single(550.0, 2.0, 0.0, 100.0, 1.52, 1e-5, 1.0e6)
     assert t_thick < 1e-50
     assert t_thin > t_mid > t_thick
-    assert r_thick == pytest.approx(oracle.rt_stack(550.0, [2.0 + 0.0j], [100.0], 1.0 + 0.0j, 1.52 + 0.0j)[0], abs=1e-11)  # only the front is seen
+    assert r_thick == pytest.approx(oracle.rt_stack(550.0, [2.0 + 0.0j], [100.0], 1.0 + 0.0j, 1.52 - 0.1j)[0], abs=1e-11)  # only the front is seen, into n - ik
 
 
 def test_the_absorbing_substrate_array_is_the_scalar_kernel_at_every_point():

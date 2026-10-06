@@ -1,0 +1,625 @@
+{
+  "controls": [
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "⬡ Detach active tab",
+      "accessible": "⬡ Detach active tab",
+      "tooltip": "Open the current tab in a separate window.",
+      "enabled": true,
+      "geometry": [
+        1769,
+        35,
+        147,
+        42
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "Help",
+      "accessible": "Help",
+      "tooltip": "Open documentation for CERTUS_FIELD (F1)",
+      "enabled": true,
+      "geometry": [
+        284,
+        34,
+        60,
+        45
+      ]
+    },
+    {
+      "class": "CertusThemeToggle",
+      "name": "",
+      "text": "◐",
+      "accessible": "Switch to dark theme",
+      "tooltip": "Switch to dark theme",
+      "enabled": true,
+      "geometry": [
+        350,
+        40,
+        32,
+        32
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Save",
+      "accessible": "Save",
+      "tooltip": "Save current configuration to a file.",
+      "enabled": true,
+      "geometry": [
+        10,
+        96,
+        74,
+        34
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Load",
+      "accessible": "Load",
+      "tooltip": "Load configuration from a file.",
+      "enabled": true,
+      "geometry": [
+        89,
+        96,
+        75,
+        34
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Export",
+      "accessible": "Export",
+      "tooltip": "Export current results.",
+      "enabled": true,
+      "geometry": [
+        169,
+        96,
+        88,
+        34
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "📸 Capture",
+      "accessible": "📸 Capture",
+      "tooltip": "Save a screenshot of the electric field profile (PNG)",
+      "enabled": true,
+      "geometry": [
+        6,
+        135,
+        125,
+        42
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Show Details",
+      "accessible": "Show Details",
+      "tooltip": "Toggle the visibility of the application logs panel",
+      "enabled": true,
+      "geometry": [
+        137,
+        142,
+        126,
+        28
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Copy Log",
+      "accessible": "Copy Log",
+      "tooltip": "Copy the application logs to the clipboard",
+      "enabled": true,
+      "geometry": [
+        269,
+        135,
+        125,
+        42
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "🔄  Clear / Reset",
+      "accessible": "🔄  Clear / Reset",
+      "tooltip": "Reset the entire application to factory defaults.\nStops any running processes, clears all data and results,\nand reloads the default configuration.",
+      "enabled": true,
+      "geometry": [
+        0,
+        177,
+        400,
+        33
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "▸  1  Materials Config",
+      "accessible": "▸  1  Materials Config",
+      "tooltip": "Expand 1  Materials Config section",
+      "enabled": true,
+      "geometry": [
+        0,
+        218,
+        382,
+        36
+      ]
+    },
+    {
+      "class": "QComboBox",
+      "name": "",
+      "text": "",
+      "accessible": "High index (H)",
+      "tooltip": "High index material (H)",
+      "enabled": true,
+      "geometry": [
+        209,
+        300,
+        160,
+        25
+      ]
+    },
+    {
+      "class": "QComboBox",
+      "name": "",
+      "text": "",
+      "accessible": "Low index (L)",
+      "tooltip": "Low index material (L)",
+      "enabled": true,
+      "geometry": [
+        209,
+        333,
+        160,
+        25
+      ]
+    },
+    {
+      "class": "QComboBox",
+      "name": "",
+      "text": "",
+      "accessible": "Substrate",
+      "tooltip": "Substrate material index lookup",
+      "enabled": true,
+      "geometry": [
+        209,
+        366,
+        160,
+        25
+      ]
+    },
+    {
+      "class": "QComboBox",
+      "name": "",
+      "text": "",
+      "accessible": "Superstrate",
+      "tooltip": "Superstrate medium (incident medium, e.g. Air)",
+      "enabled": true,
+      "geometry": [
+        209,
+        399,
+        160,
+        25
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "1064.0 nm",
+      "accessible": "Center λ",
+      "tooltip": "Reference center wavelength",
+      "enabled": true,
+      "geometry": [
+        209,
+        432,
+        120,
+        22
+      ]
+    },
+    {
+      "class": "QLineEdit",
+      "name": "",
+      "text": "1064.0",
+      "accessible": "Evaluation λ",
+      "tooltip": "Field evaluation wavelength. Multiple values can be specified, separated by commas or semicolons (e.g. 1064, 532, 355).",
+      "enabled": true,
+      "geometry": [
+        209,
+        462,
+        120,
+        25
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "0.0 °",
+      "accessible": "Angle",
+      "tooltip": "Angle of incidence (degrees)",
+      "enabled": true,
+      "geometry": [
+        209,
+        495,
+        120,
+        22
+      ]
+    },
+    {
+      "class": "QComboBox",
+      "name": "",
+      "text": "",
+      "accessible": "Polarization",
+      "tooltip": "Polarization state of the incident field",
+      "enabled": true,
+      "geometry": [
+        209,
+        525,
+        160,
+        25
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "▸  2  Stack",
+      "accessible": "▸  2  Stack",
+      "tooltip": "Expand 2  Stack section",
+      "enabled": true,
+      "geometry": [
+        0,
+        569,
+        382,
+        36
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "⬡ Detach Stack",
+      "accessible": "⬡ Detach Stack",
+      "tooltip": "Open the stack editor in a floating panel",
+      "enabled": true,
+      "geometry": [
+        13,
+        727,
+        356,
+        42
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "▸  3  Action",
+      "accessible": "▸  3  Action",
+      "tooltip": "Expand 3  Action section",
+      "enabled": true,
+      "geometry": [
+        0,
+        788,
+        382,
+        36
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "3.00",
+      "accessible": "LIDT H (J/cm²)",
+      "tooltip": "Laser Induced Damage Threshold (LIDT) for High index layer material (J/cm²)",
+      "enabled": true,
+      "geometry": [
+        249,
+        870,
+        120,
+        22
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "25.00",
+      "accessible": "LIDT L (J/cm²)",
+      "tooltip": "Laser Induced Damage Threshold (LIDT) for Low index layer material (J/cm²)",
+      "enabled": true,
+      "geometry": [
+        249,
+        900,
+        120,
+        22
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "10.0",
+      "accessible": "Weight (α)",
+      "tooltip": "Penalty weight alpha for damage threshold violations in the cost function",
+      "enabled": true,
+      "geometry": [
+        249,
+        930,
+        120,
+        22
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "1.00",
+      "accessible": "Rmin",
+      "tooltip": "Minimum Reflectance constraint applied on all evaluation wavelengths (0.0 to 1.0)",
+      "enabled": true,
+      "geometry": [
+        249,
+        960,
+        120,
+        22
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "1.00",
+      "accessible": "Rmax",
+      "tooltip": "Maximum Reflectance constraint applied on all evaluation wavelengths (0.0 to 1.0)",
+      "enabled": true,
+      "geometry": [
+        249,
+        990,
+        120,
+        22
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "2.0 %",
+      "accessible": "MC error",
+      "tooltip": "Monte-Carlo normal thickness perturbation standard deviation percentage",
+      "enabled": true,
+      "geometry": [
+        249,
+        1020,
+        120,
+        22
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "50",
+      "accessible": "MC iterations",
+      "tooltip": "Number of Monte-Carlo runs for sensitivity and tolerancing analysis",
+      "enabled": true,
+      "geometry": [
+        249,
+        1050,
+        120,
+        22
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "5.0 nm",
+      "accessible": "Min thickness",
+      "tooltip": "Minimum thickness to keep a layer during final cleaning step",
+      "enabled": true,
+      "geometry": [
+        249,
+        1080,
+        120,
+        22
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "Active Field Minimization",
+      "accessible": "Active Field Minimization",
+      "tooltip": "Enable continuous field minimization weighted by LIDT, instead of a simple threshold barrier.",
+      "enabled": true,
+      "geometry": [
+        13,
+        1110,
+        356,
+        22
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "Global Optimization",
+      "accessible": "Global Optimization",
+      "tooltip": "Use Differential Evolution (global search) instead of Multi-Start L-BFGS-B (local search).",
+      "enabled": true,
+      "geometry": [
+        13,
+        1140,
+        356,
+        22
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "Authorize change of number layer",
+      "accessible": "Authorize change of number layer",
+      "tooltip": "Authorize automatic layer insertion and deletion during optimization (Needle synthesis loop).",
+      "enabled": true,
+      "geometry": [
+        13,
+        1170,
+        356,
+        22
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Calculate Field",
+      "accessible": "Calculate Field",
+      "tooltip": "Compute and plot the electric field profile for the current design",
+      "enabled": true,
+      "geometry": [
+        13,
+        1206,
+        356,
+        42
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Run Optimization",
+      "accessible": "Run Optimization",
+      "tooltip": "Run thickness optimization to minimize electric field intensity",
+      "enabled": true,
+      "geometry": [
+        13,
+        1254,
+        356,
+        42
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Sensitivity (MC)",
+      "accessible": "Sensitivity (MC)",
+      "tooltip": "Run Monte-Carlo sensitivity analysis on layer thicknesses",
+      "enabled": true,
+      "geometry": [
+        13,
+        1302,
+        356,
+        42
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "📂 Open Reports Folder",
+      "accessible": "📂 Open Reports Folder",
+      "tooltip": "Open the folder containing exported reports in File Explorer",
+      "enabled": true,
+      "geometry": [
+        22,
+        1550,
+        338,
+        42
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Skip",
+      "accessible": "Skip",
+      "tooltip": "Skip the guided tour",
+      "enabled": true,
+      "geometry": [
+        832,
+        581,
+        80,
+        25
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Back",
+      "accessible": "Back",
+      "tooltip": "Go back to previous step",
+      "enabled": false,
+      "geometry": [
+        920,
+        581,
+        80,
+        25
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Finish",
+      "accessible": "Finish",
+      "tooltip": "Complete tour",
+      "enabled": true,
+      "geometry": [
+        1008,
+        581,
+        80,
+        25
+      ]
+    }
+  ],
+  "tabs": [
+    {
+      "name": "",
+      "current": 0,
+      "tabs": [
+        "Overview",
+        "Field",
+        "Spectrum",
+        "Index",
+        "Field Result",
+        "Spectral Result",
+        "Design Result"
+      ]
+    }
+  ],
+  "labels": [
+    "Results",
+    "Overview — field, spectral response and index profile visible together",
+    "Electric field",
+    "Spectral response",
+    "Index profile",
+    "FIELD",
+    "Electric Field Optimization",
+    "🔭 Optical Parameters",
+    "Materials & Wavelengths",
+    "High index (H):",
+    "Low index (L):",
+    "Substrate:",
+    "Superstrate:",
+    "Center λ:",
+    "Evaluation λ:",
+    "Angle:",
+    "Polarization:",
+    "🥞 Stack Structure",
+    "Layers & Thicknesses",
+    "⚡ Optimization",
+    "Weights & Controls",
+    "LIDT H (J/cm²):",
+    "LIDT L (J/cm²):",
+    "Weight (α):",
+    "Rmin:",
+    "Rmax:",
+    "MC error:",
+    "MC iterations:",
+    "Min thickness:",
+    "📊 Analytical Metrics",
+    "Latest calculation results",
+    "Peak |E|² : N/A",
+    "R : N/A",
+    "📁 Reports & Data",
+    "Export history",
+    "Zoom 100%",
+    "Overall progress",
+    "0%",
+    "",
+    "Status: Idle • Next: start run",
+    "Ready",
+    "Welcome",
+    "Every CERTUS app has a command palette (Ctrl+K), a shortcuts cheatsheet (F1) and a recent-files MRU via File → Open recent.",
+    "Step 1 / 1"
+  ]
+}

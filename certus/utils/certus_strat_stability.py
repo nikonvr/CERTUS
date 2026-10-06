@@ -33,12 +33,6 @@ class StratStabilitySummary:
     def is_stable(self) -> bool:
         return self.same_best_strategy_id and self.same_best_origin
 
-    @property
-    def score_regression(self) -> float | None:
-        return self.score_delta
-
-
-
 def load_stability_reference(path: str | Path) -> dict[str, Any]:
     """Load a STRAT stability reference JSON file."""
     ref_path = Path(path)
@@ -189,6 +183,3 @@ def run_reference_audit(reference_json: str | Path, output_md: str | Path | None
 
 
 
-def summarize_many(payloads: Iterable[dict[str, Any]]) -> list[StratStabilitySummary]:
-    """Convenience helper for future multi-reference audits."""
-    return [summarize_stability_reference(payload) for payload in payloads]

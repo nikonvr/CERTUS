@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QKeySequence, QShortcut
@@ -15,6 +14,7 @@ from certus.ui.certus_ui import (
     enable_file_drop,
     install_standard_shortcuts,
     open_documentation,
+    open_dropped_file,
     show_toast,
 )
 from certus.ui.certus_ui_shared import apply_app_zoom
@@ -50,8 +50,7 @@ class CertusStratEventsMixin:
 
         def _on_config_drop(paths) -> None:
             if paths and hasattr(self, "load_configuration"):
-                self.load_configuration(paths[0])
-                show_toast(self, f"Loaded: {Path(paths[0]).name}", "success")
+                open_dropped_file(self, paths[0], self.load_configuration)
 
         enable_file_drop(self, _on_config_drop, extensions=("json",))
 

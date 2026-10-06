@@ -31,6 +31,7 @@ script_dir = env["script_dir"]
 
 
 from certus.utils.certus_re_config import RE_GUI_DEFAULT_BEAM_APERTURE_DEG, RE_SPLINE_CORREC_KINDS
+from certus.utils.certus_re_extrapolation import warn_once_if_extrapolating
 from certus.utils.certus_re_math import (
     _RE_FT_COL_MAT,
     _RE_FT_COL_N,
@@ -954,15 +955,13 @@ class TabularMaterial:
         self.n7 = self.n4  # kept for code that reads n7 (not used in RE calcs)
 
     def get_nk(self, wls: np.ndarray) -> np.ndarray:
-        """Returns (n + ik) as a complex array via linear interpolation."""
+        """n - ik (Macleod: the table stores k >= 0, the kernels take n - ik), by linear interpolation."""
 
         wls_f = np.asarray(wls, dtype=np.float64)
-
+        warn_once_if_extrapolating(self, self.wls_nm, wls_f)
         n_i = np.interp(wls_f, self.wls_nm, self.n_arr, left=self.n_arr[0], right=self.n_arr[-1])
-
         k_i = np.interp(wls_f, self.wls_nm, self.k_arr, left=self.k_arr[0], right=self.k_arr[-1])
-
-        return (n_i + 1j * k_i).astype(np.complex128)
+        return (n_i + 1j * (0.0 - k_i)).astype(np.complex128)  # 0.0 - 0.0 is +0.0: k = 0 keeps its bits
 
 
 # =============================================================================

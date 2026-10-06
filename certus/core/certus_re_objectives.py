@@ -154,8 +154,8 @@ def _prepare_re_run_context_setup(self, _re_t0: float) -> tuple[Any, dict[str, A
     return ctx, prep
 
 def _build_re_mse_grad_helper(self, ctx: Any) -> Callable[..., Any]:
-    def _mse_grad_accumulate_ep(ep_arr: np.ndarray, wt: np.ndarray, want_grad: bool, correc: tuple, return_residuals: bool = False) -> tuple | None:
-        return _global_compute_re_mse_gradient(self.cfg, ctx, ep_arr, wt, want_grad, correc, return_residuals=return_residuals)
+    def _mse_grad_accumulate_ep(ep_arr: np.ndarray, wt: np.ndarray, want_grad: bool, correc: tuple, return_residuals: bool = False, data_only: bool = False) -> tuple | None:
+        return _global_compute_re_mse_gradient(self.cfg, ctx, ep_arr, wt, want_grad, correc, return_residuals=return_residuals, data_only=data_only)
     return _mse_grad_accumulate_ep
 
 def _build_qwot_helpers(self, ep0: Any, n_ref_nom_per_layer: Any, is_H: Any, is_L: Any, lambda_ref: Any, re_env_s: Any, _lref_arr: Any, _alpha_slot: Any) -> dict[str, Callable[..., Any]]:
@@ -248,11 +248,6 @@ def _build_phase4_aperture_bounds(bounds_p2_trf: tuple, nap: int, lo_ap: float, 
         np.concatenate([bounds_p2_trf[0], np.full(nap, float(lo_ap), dtype=np.float64)]),
         np.concatenate([bounds_p2_trf[1], np.full(nap, float(hi_ap), dtype=np.float64)]),
     )
-
-def _phase4_aperture_slice(x: np.ndarray, i_ap0: int, nap: int) -> np.ndarray:
-    """Return the phase-4 aperture knot slice as a contiguous float64 vector."""
-
-    return np.asarray(x[i_ap0 : i_ap0 + nap], dtype=np.float64).ravel()
 
 def _build_phase2_result(
     *,
@@ -397,6 +392,7 @@ def _global_compute_re_mse_gradient(cfg: Any, ctx: Any,
     want_grad: bool,
     correc: tuple,
     return_residuals: bool = False,
+    data_only: bool = False,
 ) -> tuple | None:
 
     n_lay_m, n_sub_m = _re_apply_correc(
@@ -468,7 +464,9 @@ def _global_compute_re_mse_gradient(cfg: Any, ctx: Any,
         _accum_from_stats,
     )
 
-    if return_residuals:
+    # `data_only` keeps the measured rows alone: the regularisation selects the solution but is not data, and the
+    # covariance of `certus_re_uncertainty` must not count it.
+    if return_residuals and not data_only:
         _global_add_regularization_residuals(
             cfg,
             ctx,
@@ -746,7 +744,14 @@ def _global_add_regularization_residuals(cfg: Any,
 
 
 def _warmup_re_physics() -> None:
-    """Background JIT warmup for Reverse Engineering hot paths."""
+    """Background JIT warmup for Reverse Engineering hot paths.
+
+    The arrays have the shapes and types of a real run (`re_nominal_indices_at_wls`): indices per layer and per
+    wavelength (layers first), the reference index of each layer as a real number, one reference wavelength. With the
+    wavelengths first, the warmup stopped on an IndexError that the except below swallowed, and the RE kernels were
+    compiled by the first real computation instead (D85). The "pct" correction reaches the same physics kernels
+    without the spline nodes a real phase sizes.
+    """
     import numpy as np
 
     from certus.core.certus_re_config import REMseContext
@@ -755,10 +760,10 @@ def _warmup_re_physics() -> None:
         ep0 = np.array([50.0, 50.0], dtype=np.float64)
         is_H = np.array([True, False], dtype=bool)
         is_L = np.array([False, True], dtype=bool)
-        n_layers_nominal = np.ones((10, 2), dtype=np.complex128)
+        n_layers_nominal = np.ones((2, 10), dtype=np.complex128)
         n_sub_nominal = np.ones(10, dtype=np.complex128)
-        n_ref_nom_per_layer = np.ones(2, dtype=np.complex128)
-        _lref_arr = np.ones(2, dtype=np.float64)
+        n_ref_nom_per_layer = np.ones(2, dtype=np.float64)
+        _lref_arr = np.array([500.0], dtype=np.float64)
         
         oblique_config_meta = [
             {
@@ -802,7 +807,7 @@ def _warmup_re_physics() -> None:
             ep_local=ep0,
             spectral_weights_wls=np.ones(10, dtype=np.float64),
             want_grad=True,
-            correc=("spline", np.zeros(3), np.zeros(3), 500.0),
+            correc=("pct", 0.0, 0.0, 0.0),
             return_residuals=True,
         )
     except Exception:

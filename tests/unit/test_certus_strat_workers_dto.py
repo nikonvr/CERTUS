@@ -69,17 +69,6 @@ def test_worker_thread_result_step3_to_legacy_dict() -> None:
     assert payload == {"final_results": {"summary": "ok"}}
 
 
-@pytest.mark.unit
-def test_worker_thread_result_step33_to_legacy_dict() -> None:
-    dto = WorkerThreadResult.for_step_33(
-        opti_results={"ctx": 1},
-        final_results={"external": True},
-    )
-    payload = dto.to_legacy_dict()
-    assert payload["opti_results"] == {"ctx": 1}
-    assert payload["final_results"] == {"external": True}
-
-
 class TestLiveFeedMonitor:
     def test_poll_emits_latest_package(self) -> None:
         import queue as queue_mod

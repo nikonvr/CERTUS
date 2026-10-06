@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import logging
 import traceback
 
@@ -18,8 +19,15 @@ class CertusFieldWorkersMixin:
 
 
     def on_worker_finished(self, result):
+        self.worker._result_reported = True
         action = getattr(self.worker, "request", None) and self.worker.request.action
         synthesis_was_active = getattr(self, "_synthesis_active", False)
+
+        # `_start_worker` sets one wait cursor per worker started, and a synthesis starts several in a row.
+        try:
+            QApplication.restoreOverrideCursor()
+        except Exception:
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         #If standard execution (not synthesis) or worker failed, we reset running and enable buttons
         if not getattr(self, "_synthesis_active", False) or not result.success:
@@ -34,10 +42,6 @@ class CertusFieldWorkersMixin:
             self._field_opt_started_ts = None
             if hasattr(self, "field_opt_status"):
                 self.field_opt_status.setText("Ready")
-            try:
-                QApplication.restoreOverrideCursor()
-            except Exception:
-                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         if not result.success:
             if hasattr(self, "progress_widget"):
@@ -134,7 +138,7 @@ class CertusFieldWorkersMixin:
                             self.btn_opt.setEnabled(True)
                             self.btn_mc.setEnabled(True)
                             if hasattr(self, "progress_widget"):
-                                self.progress_widget.stop("Error: Max layers reached")
+                                self.progress_widget.stop("Stopped: maximum of 100 layers reached")
                         else:
                             # Start needle search
                             self.btn_calc.setEnabled(False)
@@ -143,7 +147,7 @@ class CertusFieldWorkersMixin:
                             try:
                                 params = self._get_params()
                                 self._start_worker(FieldWorkerRequest(action="needle", params=params))
-                            except ValueError:
+                            except ValueError as e:
                                 self._revert_to_synthesis_checkpoint()
                                 self._synthesis_active = False
                                 self._is_running = False
@@ -151,7 +155,7 @@ class CertusFieldWorkersMixin:
                                 self.btn_opt.setEnabled(True)
                                 self.btn_mc.setEnabled(True)
                                 if hasattr(self, "progress_widget"):
-                                    self.progress_widget.stop("Error: Failed to get parameters")
+                                    self.progress_widget.stop(f"Error: Failed to get parameters: {e}")
                     else:
                         # Did not improve significantly
                         self.logger.info("[Synthesis] Cost did not improve significantly. Reverting to last best checkpoint and finishing.")
@@ -162,7 +166,7 @@ class CertusFieldWorkersMixin:
                         self.btn_opt.setEnabled(True)
                         self.btn_mc.setEnabled(True)
                         if hasattr(self, "progress_widget"):
-                            self.progress_widget.stop("Error: Stagnation")
+                            self.progress_widget.stop("Finished: no significant improvement")
                         
                 elif action == "needle":
                     # Step B: Evaluate needle results
@@ -177,7 +181,7 @@ class CertusFieldWorkersMixin:
                             params.global_opt = False  # Local refinement after needle split
                             params.synthesis_mode = True
                             self._start_worker(FieldWorkerRequest(action="optimize", params=params))
-                        except ValueError:
+                        except ValueError as e:
                             self._revert_to_synthesis_checkpoint()
                             self._synthesis_active = False
                             self._is_running = False
@@ -185,7 +189,7 @@ class CertusFieldWorkersMixin:
                             self.btn_opt.setEnabled(True)
                             self.btn_mc.setEnabled(True)
                             if hasattr(self, "progress_widget"):
-                                self.progress_widget.stop("Error: Failed to get parameters")
+                                self.progress_widget.stop(f"Error: Failed to get parameters: {e}")
                     else:
                         self.logger.info("[Synthesis] Needle did not find any beneficial insertion. Reverting and finishing.")
                         self._revert_to_synthesis_checkpoint()
@@ -195,7 +199,7 @@ class CertusFieldWorkersMixin:
                         self.btn_opt.setEnabled(True)
                         self.btn_mc.setEnabled(True)
                         if hasattr(self, "progress_widget"):
-                            self.progress_widget.stop("Error: No needle insertion found")
+                            self.progress_widget.stop("Finished: no beneficial needle insertion")
         else:
             if hasattr(self, "field_opt_status"):
                 self.field_opt_status.setText("Failed")
@@ -216,6 +220,7 @@ class CertusFieldWorkersMixin:
     @pyqtSlot(tuple)
     def on_worker_error(self, err_tuple):
         exc_type, exc_val, exc_trace = err_tuple
+        self.worker._result_reported = True
         if getattr(self, "_synthesis_active", False):
             self._revert_to_synthesis_checkpoint()
             self._synthesis_active = False
@@ -235,6 +240,27 @@ class CertusFieldWorkersMixin:
         if self.logger:
             self.logger.error(f"Worker Error: {exc_val}\n{''.join(traceback.format_exception(exc_type, exc_val, exc_trace))}")
 
+    def _on_worker_thread_ended(self, worker) -> None:
+        """A worker thread is over. If it reported neither a result nor an error, the operator stopped it:
+        the window must not stay in the running state (buttons off, wait cursor, status "running")."""
+        if getattr(worker, "_result_reported", False) or worker is not getattr(self, "worker", None):
+            return
+        if getattr(self, "_synthesis_active", False):
+            self._revert_to_synthesis_checkpoint()
+            self._synthesis_active = False
+        self._is_running = False
+        self.btn_calc.setEnabled(True)
+        self.btn_opt.setEnabled(True)
+        self.btn_mc.setEnabled(True)
+        if hasattr(self, "progress_widget"):
+            self.progress_widget.stop("Stopped")
+        if hasattr(self, "field_opt_status"):
+            self.field_opt_status.setText("Stopped")
+        try:
+            QApplication.restoreOverrideCursor()
+        except Exception:
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+
     def _start_worker(self, request: FieldWorkerRequest):
         if request.action != "optimize":
             self._initial_field_data = None
@@ -244,6 +270,8 @@ class CertusFieldWorkersMixin:
             return
 
         self.worker = FieldWorkerThread(request)
+        self.worker._result_reported = False
+        self.worker.finished.connect(functools.partial(self._on_worker_thread_ended, self.worker))
         self.worker.signals.finished.connect(self.on_worker_finished)
         self.worker.signals.error.connect(self.on_worker_error)
         self.worker.signals.progress.connect(self.on_worker_progress)

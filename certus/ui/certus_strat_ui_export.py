@@ -101,14 +101,20 @@ class CertusStratExportMixin:
         return warnings
 
     def _validate_strat_gui_state(self, config: dict[str, Any]) -> list[str]:
-        """Compare populated widget state against canonical config values."""
+        """Compare populated widget state against canonical config values.
+
+        A material the list could not show is remembered (`_unmatched_materials`): a combo box keeps its previous
+        choice when asked for a text it does not offer, and the run would compute with that other material while the
+        configuration names another (D88). `material_problems` refuses the run until the operator picks one.
+        """
         warnings: list[str] = []
+        self._unmatched_materials = {}
         checks = [
-            ("h_material_file", "H"),
-            ("l_material_file", "L"),
-            ("substrate_choice", "substrate"),
+            ("h_material_file", "H material", "material"),
+            ("l_material_file", "L material", "material"),
+            ("substrate_choice", "Substrate", "substrate"),
         ]
-        for key, kind in checks:
+        for key, label, kind in checks:
             widget = self.widgets.get(key)
             if not isinstance(widget, QComboBox):
                 continue
@@ -116,7 +122,30 @@ class CertusStratExportMixin:
             actual = widget.currentText().strip()
             if expected and actual and expected != actual:
                 warnings.append(f"{key}: expected '{expected}' but combo shows '{actual}'")
+                self._unmatched_materials[key] = (label, expected)
+                self._watch_material_choice(key, widget)
         return warnings
+
+    def _watch_material_choice(self, key: str, widget: QComboBox) -> None:
+        """The operator's own pick in the list settles the material: `activated` fires on a click, never on a load."""
+        if widget.property("certus_material_watch"):
+            return
+        widget.setProperty("certus_material_watch", True)
+        widget.activated.connect(lambda _index, k=key: self.__dict__.get("_unmatched_materials", {}).pop(k, None))
+
+    def material_problems(self) -> list[str]:
+        """The materials a run would take although the loaded configuration asked for others (D88)."""
+        problems = []
+        for key, (label, expected) in self.__dict__.get("_unmatched_materials", {}).items():
+            custom = self.widgets.get(f"{key[0]}_type_custom") if key != "substrate_choice" else None
+            if custom is not None and custom.isChecked():
+                continue  # a constant index: the list is not read
+            shown = self.widgets[key].currentText().strip()
+            problems.append(
+                f'{label}: the configuration asks for "{expected}", which is not in the material database; '
+                f'the run would use "{shown}". Choose the material in the list.'
+            )
+        return problems
 
     def _resolve_manifest_seed(self, seed_container: Any) -> int | None:
         if not isinstance(seed_container, dict):

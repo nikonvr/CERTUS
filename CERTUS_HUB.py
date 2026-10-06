@@ -32,9 +32,12 @@ Fixed: Header generation and Config loading robustness.
 
 
 import functools
+import json
 import logging
 import multiprocessing
+import re
 import sys
+import zipfile
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, NamedTuple
@@ -126,7 +129,7 @@ else:
 # =============================================================================
 
 
-from PyQt6.QtWidgets import QComboBox, QFileDialog
+from PyQt6.QtWidgets import QComboBox, QFileDialog, QInputDialog
 
 from certus.core.certus_core import (
     get_export_config,
@@ -142,7 +145,14 @@ from certus.core.certus_core import (
 # =============================================================================
 # UI COMPONENTS
 # =============================================================================
-from certus.core.certus_hub_config import HUB_APP_CATALOG, RUN_MODULE_FLAG, HubAppCatalogItem, hub_grid_columns
+from certus.core.certus_hub_config import (
+    HUB_APP_CATALOG,
+    RUN_MODULE_FLAG,
+    HubAppCatalogItem,
+    hub_grid_columns,
+    script_for_name,
+    scripts_for_config,
+)
 from certus.ui.certus_a11y import install_accessible_names
 from certus.ui.certus_hub_widgets import ApplicationCard, GroupedApplicationCard
 from certus.ui.certus_theme import CertusTheme
@@ -171,6 +181,7 @@ STDERR_TAIL_LINES = 15
 FORCE_CLOSE_EXIT_CODES = (1, 15, -1)
 
 _MAX_CAUSE_CHARS = 300
+_DESIGN_EXAMPLE = "example/example_design/JSON-design-example.json"
 
 
 class ModuleStop(NamedTuple):
@@ -415,6 +426,7 @@ class CertusHub(CertusDialogMixin, QMainWindow):
                     app["icon"],
                     app["color"],
                     app["badge"],
+                    task=app.get("task", ""),
                 )
 
                 # Mouse and keyboard share one path. Assigning `mousePressEvent`
@@ -488,6 +500,13 @@ class CertusHub(CertusDialogMixin, QMainWindow):
         cg_layout.addWidget(self.chk_export)
 
         bb_layout.addWidget(config_group)
+
+        self.btn_example = QPushButton("Open DESIGN example")
+        self.btn_example.setObjectName("HubOpenDesignExample")
+        self.btn_example.setToolTip("Open a sample optical filter design in DESIGN.")
+        self.btn_example.setFixedHeight(40)
+        self.btn_example.clicked.connect(self.open_design_example)
+        bb_layout.addWidget(self.btn_example)
 
         bb_layout.addStretch()
 
@@ -747,6 +766,14 @@ class CertusHub(CertusDialogMixin, QMainWindow):
         """Opens CERTUS_HUB documentation"""
 
         open_documentation("CERTUS_HUB")
+
+    def open_design_example(self) -> None:
+        """Open the bundled DESIGN configuration without changing the operator's files."""
+        example = Path(get_resource_path(_DESIGN_EXAMPLE))
+        if not example.is_file():
+            QMessageBox.warning(self, "Example unavailable", f"The DESIGN example was not found: {example}")
+            return
+        self.launch_module("CERTUS_DESIGN.py", files=[str(example)])
 
     def on_export_changed(self, state) -> None:
 
@@ -1017,26 +1044,79 @@ class CertusHub(CertusDialogMixin, QMainWindow):
 
     # =========================================================================
 
-    #: Which module opens a dropped file. Spectral measurements go to INDEX;
-    #: a JSON configuration goes to the module its name refers to, and to DESIGN
-    #: otherwise since a bare stack description is a design.
+    #: The file types the hub takes on a drop or in File > Open.
     DROP_EXTENSIONS = (".json", ".csv", ".dat", ".txt", ".xlsx")
 
-    def _module_for_dropped_file(self, path: str) -> str:
-        """Pick the launcher entry that can read ``path``."""
+    #: The modules that open the file named on their command line: the ones File > Open with... may offer.
+    _FILE_READERS = (
+        "CERTUS_DESIGN.py",
+        "CERTUS_STRAT.py",
+        "CERTUS_INDEX.py",
+        "CERTUS_INDEX_SPLINE.py",
+        "CERTUS_FIELD.py",
+        "CERTUS_RE.py",
+        "CERTUS_METAL_SINGLE.py",
+        "CERTUS_METAL_BILAYER.py",
+    )
+
+    #: A configuration is read to name its module, never more than this.
+    _SNIFF_MAX_BYTES = 8_000_000
+
+    @classmethod
+    def _read_json_object(cls, path: str) -> dict:
+        """The JSON object a file holds, or {} when it is not readable JSON (absent file, a list, a syntax error)."""
+        try:
+            if Path(path).stat().st_size > cls._SNIFF_MAX_BYTES:
+                return {}
+            data = json.loads(Path(path).read_text(encoding="utf-8-sig"))
+        except (OSError, ValueError):
+            return {}
+        return data if isinstance(data, dict) else {}
+
+    @staticmethod
+    def _is_re_workbook(path: str) -> bool:
+        """True when a workbook names three sheets as RE reads them (measurement, design, index); read without openpyxl."""
+        try:
+            with zipfile.ZipFile(path) as archive:
+                xml = archive.read("xl/workbook.xml").decode("utf-8", "replace")
+        except (OSError, KeyError, zipfile.BadZipFile):
+            return False
+        from certus.utils.certus_re_helpers import _RE_CANONICAL_SHEETS, _re_resolve_re_workbook_sheets
+
+        sheets = _re_resolve_re_workbook_sheets(re.findall('<sheet [^>]*name="([^"]*)"', xml))
+        return all(name in sheets for name in _RE_CANONICAL_SHEETS) and len(set(sheets.values())) == len(
+            _RE_CANONICAL_SHEETS
+        )
+
+    def _module_for_dropped_file(self, path: str) -> str | None:
+        """Pick the launcher entry that can read ``path``, or None when the operator was asked and declined.
+
+        What a file holds outranks what it is called: a configuration is read for the keys of the module that wrote
+        it, a workbook for the sheets RE expects. The name settles what the content leaves open (a bare stack
+        description is a design, a spectrum goes to INDEX), and the operator is asked only when two modules read the
+        file and nothing tells them apart.
+        """
         name = Path(path).name.lower()
+        by_name = script_for_name(name)
         if name.endswith(".json"):
-            for token, script in (
-                ("strat", "CERTUS_STRAT.py"),
-                ("field", "CERTUS_FIELD.py"),
-                ("spline", "CERTUS_INDEX_SPLINE.py"),
-                ("metal", "CERTUS_METAL_SINGLE.py"),
-                ("index", "CERTUS_INDEX.py"),
-            ):
-                if token in name:
-                    return script
-            return "CERTUS_DESIGN.py"
+            candidates = scripts_for_config(self._read_json_object(path))
+            if len(candidates) == 1:
+                return candidates[0]
+            if len(candidates) > 1:
+                return by_name if by_name in candidates else self._ask_module(path, candidates)
+            return by_name or "CERTUS_DESIGN.py"
+        if name.endswith(".xlsx") and (by_name == "CERTUS_RE.py" or self._is_re_workbook(path)):
+            return "CERTUS_RE.py"
         return "CERTUS_INDEX.py"
+
+    def _ask_module(self, path: str, scripts: Sequence[str]) -> str | None:
+        """Ask which of ``scripts`` should open ``path``; None when the operator declines."""
+        titles = {item["script"]: item["title"] for item in self.apps}
+        labels = [titles.get(script, Path(script).stem) for script in scripts]
+        choice, accepted = QInputDialog.getItem(
+            self, "Open with…", f"{Path(path).name} can be read by several modules. Open it with:", labels, 0, False
+        )
+        return scripts[labels.index(choice)] if accepted and choice in labels else None
 
     def _dropped_paths(self, event) -> list[str]:
         md = event.mimeData()
@@ -1064,6 +1144,8 @@ class CertusHub(CertusDialogMixin, QMainWindow):
         event.acceptProposedAction()
         target = paths[0]
         script = self._module_for_dropped_file(target)
+        if script is None:
+            return
         self._log_message(f"Dropped {Path(target).name} -> launching {Path(script).stem}")
         # The module opens the file it is given; without it a drop only started an empty window.
         self.launch_module(script, files=[target])
@@ -1076,6 +1158,10 @@ class CertusHub(CertusDialogMixin, QMainWindow):
             claim_shortcut_for_action(act_open, "Ctrl+O", self)
             act_open.setToolTip("Ask for a file and open it in the module able to read it (as dropping it would).")
             act_open.triggered.connect(self.open_file_in_module)
+            act_with = file_menu.addAction("Open file with…")
+            claim_shortcut_for_action(act_with, "Ctrl+Shift+O", self)
+            act_with.setToolTip("Ask for a file and for the module that opens it, when the hub cannot tell.")
+            act_with.triggered.connect(self.open_file_with_module)
         except (AttributeError, RuntimeError, TypeError) as e:  # pragma: no cover - defensive
             self._log_message(f"File menu install failed: {e}")
 
@@ -1086,7 +1172,21 @@ class CertusHub(CertusDialogMixin, QMainWindow):
         if not path:
             return
         script = self._module_for_dropped_file(path)
+        if script is None:
+            return
         self._log_message(f"Opened {Path(path).name} -> launching {Path(script).stem}")
+        self.launch_module(script, files=[path])
+
+    def open_file_with_module(self) -> None:
+        """Ask for a file, then for the module that opens it: the way out when the hub cannot tell."""
+        patterns = " ".join(f"*{ext}" for ext in self.DROP_EXTENSIONS)
+        path, _ = QFileDialog.getOpenFileName(self, "Open a file in CERTUS", "", f"CERTUS files ({patterns});;All files (*)")
+        if not path:
+            return
+        script = self._ask_module(path, [item["script"] for item in self.apps if item["script"] in self._FILE_READERS])
+        if script is None:
+            return
+        self._log_message(f"Opened {Path(path).name} with {Path(script).stem}")
         self.launch_module(script, files=[path])
 
     def _install_help_menu(self) -> None:

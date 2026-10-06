@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from threading import Event
 from typing import Any
 
@@ -44,7 +43,7 @@ from certus.ui.certus_ui import (
     enable_file_drop,
     install_standard_shortcuts,
     open_documentation,
-    show_toast,
+    open_dropped_file,
 )
 from certus.utils.certus_ux import build_premium_overrides
 
@@ -172,8 +171,7 @@ class CertusIndexSplineApp(
 
         def _on_spectrum_drop(paths) -> None:
             if paths:
-                self._on_load(paths[0])
-                show_toast(self, f"Loaded: {Path(paths[0]).name}", "success")
+                open_dropped_file(self, paths[0], self._on_load)
 
         enable_file_drop(self, _on_spectrum_drop, extensions=("csv", "xlsx", "xls", "txt"))
 
@@ -211,6 +209,7 @@ class CertusIndexSplineApp(
         )
 
         self._finalize_init()
+        self.mark_config_saved()
 
 
 def main():

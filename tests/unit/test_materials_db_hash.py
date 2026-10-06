@@ -6,7 +6,7 @@ from pathlib import Path
 
 from certus.core.certus_core import get_materials_db_hash
 
-EXPECTED_MATERIALS_V1_SHA256 = "b72b847d82264169ca83fa43f459ecf4c6d72e292d900d32b8a1673d14a0c8ee"
+EXPECTED_MATERIALS_V1_SHA256 = "d2ce255df1af017d3f132f399b3db906ee45e2ee816ffae9e1a2fef3ab6b71aa"
 
 
 def test_materials_v1_hash_is_locked() -> None:

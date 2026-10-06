@@ -41,7 +41,13 @@ from certus.core.certus_strat_config import (  # type: ignore[attr-defined]
     _emit_stat,
     precompute_clues_and_matrices,
 )
-from certus.core.certus_strat_ranking import STRATEGY_ID_SLIT_BASE, _filter_valid_robustness_strategies
+from certus.core.certus_strat_ranking import (
+    STRATEGY_ID_SLIT_BASE,
+    _filter_valid_robustness_strategies,
+    strategy_id_context,
+    strategy_id_for_block,
+    strategy_id_source_block_count,
+)
 from certus.core.certus_strat_robustness_diagnostics import (
     _CAUSE_WORDS,
     _MARGIN_REPORT_CEILING_A,
@@ -78,7 +84,9 @@ from certus.core.certus_strat_robustness_rate import (
     RATE_SWING_MIN_DEFAULT,
     RATE_VARIANT_TOP_N_DEFAUT,
     _expand_with_rate_variants,
+    _make_rate_variant,
     _optical_prefix_variants,
+    _rate_candidate_combinations,
     _rate_candidate_layers,
     _rate_swing_candidates,
     _RateSwingContext,
@@ -105,6 +113,7 @@ from certus.core.certus_strat_robustness_slit import (
 )
 from certus.core.certus_strat_robustness_task import (
     _test_strategy_robustness_task,
+    task_numba_threads,
 )
 
 # What moved out (S5.2) is imported back here, every name: this module stays the one place where the callers, the scripts and the
@@ -186,6 +195,9 @@ def _prepare_robustness_inputs(
         total_mc_runs = num_runs * len(noise_levels)
         _emit_stat("MCS", total_mc_runs)
     all_strategies_in = opti_results["all_strategies"]
+    id_namespace_n_blocks = strategy_id_source_block_count(
+        all_strategies_in, opti_results.get("strategy_id_namespace_n_blocks")
+    )
     p_thick_nominal = opti_results["p_thick_nominal"]
     num_layers = len(p_thick_nominal)
     all_strategies = _filter_valid_robustness_strategies(
@@ -208,11 +220,13 @@ def _prepare_robustness_inputs(
             nominal_matrix_cache=opti_results.get("nominal_matrix_cache"),
             all_wls=opti_results.get("all_wls"),
             clues_at_wl=opti_results.get("clues_at_wl"),
+            id_namespace_n_blocks=int(id_namespace_n_blocks),
         )
         # A18 AFTER the Rate variants, so a Rate layer is evaluated at each slit too: the
         # two degrees of freedom are independent, nothing couples them here.
         all_strategies = _expand_with_resolution_variants(
-            all_strategies, params, logger, p_thick_nominal
+            all_strategies, params, logger, p_thick_nominal,
+            id_namespace_n_blocks=int(id_namespace_n_blocks),
         )
     # 🔴 The curvature must be attached BEFORE the simulation runs, not after.
     # `_calculate_strategy_spectral_resolution` was already called on every strategy --
@@ -248,6 +262,7 @@ def _expand_with_resolution_variants(
     params: dict[str, Any],
     logger: logging.Logger,
     p_thick_nominal: list[float] | None = None,
+    id_namespace_n_blocks: int | None = None,
 ) -> list[dict[str, Any]]:
     """A18 -- put the four slit widths in competition, as part of the strategy.
 
@@ -295,7 +310,8 @@ def _expand_with_resolution_variants(
     base = float(params.get("monochromator_resolution_nm", NOMINAL_RESOLUTION_NM)
                  or NOMINAL_RESOLUTION_NM)
     out: list[dict[str, Any]] = []
-    next_id = STRATEGY_ID_SLIT_BASE
+    source_n_blocks = strategy_id_source_block_count(strategies, id_namespace_n_blocks)
+    serial = 0
     skipped: dict[float, int] = {}
     for strat in strategies:
         # The widest slit the curvature of THIS strategy tolerates. `None` when it
@@ -323,9 +339,11 @@ def _expand_with_resolution_variants(
             v = dict(strat)
             v["blocks"] = list(strat.get("blocks") or [])
             v["monochromator_resolution_nm"] = slit
-            v["strategy_id"] = _variant_id(strat.get("strategy_id"), next_id)
+            v["strategy_id"] = _variant_id(
+                strat.get("strategy_id"), strategy_id_for_block(STRATEGY_ID_SLIT_BASE, source_n_blocks, serial)
+            )
             v["origin"] = f"SLIT{slit:g}(from {strat.get('strategy_id', '?')})"
-            next_id += 1
+            serial += 1
             out.append(v)
     # 🔴 What is skipped is COUNTED and SAID. A silent pruning reads as full coverage,
     # and that is the failure mode this repository has been paying for since the
@@ -458,6 +476,16 @@ def _ablation_profile(
     return out
 
 
+def _precompute_layer_index_matrix(
+    nH_arr: np.ndarray, nL_arr: np.ndarray, num_layers: int
+) -> np.ndarray:
+    """Build the layer-index matrix shared by the main and fallback task paths."""
+    nH_c128 = nH_arr.astype(np.complex128)
+    nL_c128 = nL_arr.astype(np.complex128)
+    parity = np.arange(num_layers) % 2 == 0
+    return np.where(parity[np.newaxis, :], nH_c128[:, np.newaxis], nL_c128[:, np.newaxis])
+
+
 def _execute_robustness_tasks(
     all_strategies: list[dict[str, Any]],
     noise_levels: list[float],
@@ -489,14 +517,7 @@ def _execute_robustness_tasks(
 
     num_layers = len(p_thick_nominal)
     if n_layers_matrix_precomp is None:
-        nH_c128 = nH_arr.astype(np.complex128)
-        nL_c128 = nL_arr.astype(np.complex128)
-        parity = np.arange(num_layers) % 2 == 0
-        n_layers_matrix_precomp = np.where(
-            parity[np.newaxis, :],
-            nH_c128[:, np.newaxis],
-            nL_c128[:, np.newaxis],
-        )
+        n_layers_matrix_precomp = _precompute_layer_index_matrix(nH_arr, nL_arr, num_layers)
 
     strategies_results = []
     enable_halving = bool(params.get("enable_successive_halving", False))
@@ -745,14 +766,7 @@ def run_final_simulation_block(
 
     params_safe = filter_params_for_gui(params)
 
-    nH_c128 = nH_arr.astype(np.complex128)
-    nL_c128 = nL_arr.astype(np.complex128)
-    parity = np.arange(num_layers) % 2 == 0
-    n_layers_matrix_precomp = np.where(
-        parity[np.newaxis, :],
-        nH_c128[:, np.newaxis],
-        nL_c128[:, np.newaxis],
-    )
+    n_layers_matrix_precomp = _precompute_layer_index_matrix(nH_arr, nL_arr, num_layers)
 
     strategies_results = _execute_robustness_tasks(
         all_strategies=all_strategies,
@@ -964,6 +978,7 @@ def run_final_simulation_block(
         T_nom=T_nom,
         full_dyn_grid=full_dyn_grid,
         n_layers_matrix_precomp=n_layers_matrix_precomp,
+        **strategy_id_context(opti_results),
     )
 
     strategies_results = _apply_elite_refinement_if_enabled(

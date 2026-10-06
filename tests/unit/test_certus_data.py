@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -69,6 +70,17 @@ class TestNumpyEncoder:
 
 
 class TestReadCsvRobust:
+    def test_header_only_csv_does_not_divide_by_zero(self, tmp_path: Path) -> None:
+        f = tmp_path / "header_only.csv"
+        f.write_text("wavelength,intensity\n", encoding="utf-8")
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", RuntimeWarning)
+            df = read_csv_robust(str(f))
+
+        assert df.empty
+        assert list(df.columns) == ["wavelength", "intensity"]
+
     def test_read_comma_separated(self, tmp_path: Path) -> None:
         f = tmp_path / "test.csv"
         f.write_text("a,b\n1.0,2.0\n3.0,4.0\n", encoding="utf-8")

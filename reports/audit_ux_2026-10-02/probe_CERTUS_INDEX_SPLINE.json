@@ -1,0 +1,20 @@
+{
+  "app": "CERTUS_INDEX_SPLINE",
+  "dark_palette_labels": [
+    {
+      "text": "Welcome",
+      "name": "coach-title",
+      "text_colour": "#000000",
+      "mid_colour": "#b8b8b8",
+      "style": "#coach-title { font-size: 11pt; font-weight: 700; color: palette(text); }"
+    },
+    {
+      "text": "Every CERTUS app has a command palette (Ctrl+K), a shortcuts cheatsheet (F1) and a recent-files MRU via File → Open recent.",
+      "name": "coach-body",
+      "text_colour": "#b8b8b8",
+      "mid_colour": "#b8b8b8",
+      "style": "#coach-body { font-size: 9pt; color: palette(mid); }"
+    }
+  ],
+  "render_note": "Qt offscreen; onboarding skipped by its normal callback; no calculation launched."
+}

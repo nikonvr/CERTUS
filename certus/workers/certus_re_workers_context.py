@@ -24,12 +24,14 @@ from certus.utils.certus_re_math import (
 logger = logging.getLogger(__name__)
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
+from certus.core.certus_re_budget import attach_parameter_budget
 from certus.core.certus_re_config import REPhase4Result
 from certus.core.certus_re_objectives import (
     _build_qwot_helpers,
     _build_re_mse_grad_helper,
     _prepare_re_run_context_setup,
 )
+from certus.core.certus_re_uncertainty import attach_thickness_uncertainty, thickness_uncertainty_at
 from certus.core.certus_re_worker_utils import (
     RE_CORREC_NOMINAL_PCT,
     p2_result_to_correc_tuple,
@@ -66,7 +68,7 @@ from certus.utils.certus_re_results_builder import REResultsBuilder as REResults
 
 
 class REContextStrategy:
-    def _finalize_re_run(worker, *, results: list[dict], rmse_initial_sp: float, rmse_initial_q: float, rmse_initial_u: float, rmse_initial_milestone: list[float], rmse_phase1_milestone: list[float], rmse_final_milestone: list[float], _alpha_slot: list[float], _alpha_rank_ref: float, re_qwot_alphas: tuple[float, float, float, float], _compute_qwot_rmse_raw, _compute_qwot_rmse, _correc_nom: tuple, _emit_re_spectrum_live, _report_t0: float, _re_pct_hi: list[float], n_sub_nominal: np.ndarray, wls: np.ndarray, lambda_ref: float, ep0: np.ndarray) -> None:
+    def _finalize_re_run(worker, *, results: list[dict], rmse_initial_sp: float, rmse_initial_q: float, rmse_initial_u: float, rmse_initial_milestone: list[float], rmse_phase1_milestone: list[float], rmse_final_milestone: list[float], _alpha_slot: list[float], _alpha_rank_ref: float, re_qwot_alphas: tuple[float, float, float, float], _compute_qwot_rmse_raw, _compute_qwot_rmse, _correc_nom: tuple, _emit_re_spectrum_live, _report_t0: float, _re_pct_hi: list[float], n_sub_nominal: np.ndarray, wls: np.ndarray, lambda_ref: float, ep0: np.ndarray, _thickness_uncertainty=None) -> None:
         """Sort/finalize RE results, emit final spectrum, logs and finished payload."""
         _top_result = REResultsPayloadBuilder.finalize_reconcile_top(results=results, stop_requested=bool(worker._stop), cfg_ep0=worker.cfg.get('ep0'), rmse_initial_sp=rmse_initial_sp, rmse_initial_q=rmse_initial_q, rmse_initial_u=rmse_initial_u, alpha_rank_ref=_alpha_rank_ref, compute_qwot_rmse_raw=_compute_qwot_rmse_raw, sort_results=_re_sort_results_best_for_table_and_apply, enrich_results=re_enrich_results_ranking_fields)
         _top_dto = REPhase4Result.from_legacy_dict(_top_result) if _top_result else None
@@ -91,6 +93,8 @@ class REContextStrategy:
             _cauchy_diag = REResultsPayloadBuilder.cauchy_barrier_diagnostic_payload(top_result=_top_result, wls=wls, lambda_ref=lambda_ref, n_sub_nominal=n_sub_nominal, barrier_sqrt_w=float(worker.cfg.get('re_sub_cauchy_barrier_sqrt_w', RE_SUB_CAUCHY_BARRIER_SQRT_W)), tube_delta=float(RE_SUB_CAUCHY_TUBE_DELTA), substrate_phi_matrix=re_substrate_cauchy_phi_matrix, barrier_residuals_jac=re_substrate_cauchy_barrier_residuals_jac)
             if _cauchy_diag is not None:
                 logging.info('RE diag [Cauchy substrate barrier] ||r||=%.4g, %d/%d non-zero residuals (tube |nn_tab|<=%.3g)  active boundary -> constraint saturated; zeros -> inside tube.', _cauchy_diag['res_norm'], _cauchy_diag['n_active'], _cauchy_diag['n_total'], _cauchy_diag['tube_delta'])
+        attach_thickness_uncertainty(_top_result, _thickness_uncertainty, logging.getLogger())
+        attach_parameter_budget(_top_result, worker.cfg, logging.getLogger())
         _tail = REResultsPayloadBuilder.finalize_tail_bundle(results=results, top_result=_top_result, ep0=ep0, alpha_rank_ref=_alpha_rank_ref, elapsed_s=_tot, best_sp=_best_sp, best_ot=_best_ot, best_combined=_best, rmse_initial_milestone=rmse_initial_milestone, rmse_phase1_milestone=rmse_phase1_milestone, rmse_final_milestone=rmse_final_milestone, stopped_by_user=bool(worker._stop), re_qwot_alphas=re_qwot_alphas, ranking_log_suffix=re_finalize_ranking_log_suffix, finished_main_log_line=re_finalize_finished_main_log_line, rmse_milestone_log_line=re_finalize_rmse_milestone_log_line, progress_message_done=re_finalize_progress_message_done)
         logging.info(_tail['finished_main_log'])
         logging.info(_tail['rmse_milestone_log'])
@@ -230,7 +234,7 @@ class REContextStrategy:
                 logging.info('RE phase1  differential_evolution seed (maxiter=%d, popsize=%d)', _de_mx, _de_ps)
             except NUMERICAL_FAULT_EXCEPTIONS as _e_de:
                 logging.warning('RE phase1 differential_evolution skipped: %s', _e_de)
-        _any_spl_act = bool(worker.cfg.get('re_refine_h', True)) or bool(worker.cfg.get('re_refine_l', True))
+        _any_spl_act = bool(worker.cfg.get('re_refine_h', False)) or bool(worker.cfg.get('re_refine_l', False))
         _re_top_k_cfg = max(1, int(worker.cfg.get('re_phase2_top_k', RE_GUI_DEFAULT_RE_PHASE2_TOP_K)))
         _re_n_sh_cfg = max(0, int(worker.cfg.get('re_phase3_shake_rounds', 4))) if _any_spl_act else 0
         _re_prefit_max_cfg = int(worker.cfg.get('re_phase2_spline_prefit_maxiter', RE_PHASE2_SPLINE_PREFIT_MAXITER)) if _any_spl_act else 0
@@ -251,5 +255,5 @@ class REContextStrategy:
         _emit_re_spectrum_live(ep0_u, 0, correc=_correc_nom, force=True, rmse_override=rmse_initial_u)
         worker.ctx = SimpleNamespace(runs=runs, n_layers_count=n_layers_count, _emit_re_prog=_emit_re_prog, _pct_p1=_pct_p1, wt_spectral=wt_spectral, _correc_nom=_correc_nom, _mse_grad_accumulate_ep=_mse_grad_accumulate_ep, _compute_qwot_rmse=_compute_qwot_rmse, _rmse_combined=_rmse_combined, bounds_trf=bounds_trf, RE_LBFGSB_FTOL=RE_LBFGSB_FTOL, RE_LBFGSB_GTOL=RE_LBFGSB_GTOL, _report_mse_spectral=_report_mse_spectral, _emit_re_spectrum_live=_emit_re_spectrum_live, _alpha_slot=ctx._alpha_slot, _a_p1=_a_p1, rmse_initial_u=rmse_initial_u, rmse_initial_sp=rmse_initial_sp, rmse_initial_q=rmse_initial_q, rmse_phase1_milestone=rmse_phase1_milestone, rmse_final_milestone=rmse_final_milestone, _re_use_staged_order=_re_use_staged_order, cfg=worker.cfg, _stop=worker._stop)
         worker._re_phase_ns = SimpleNamespace(results=results, oblique_config_meta=oblique_config_meta, _re_use_staged_order=_re_use_staged_order, _emit_re_prog=_emit_re_prog, _RE_P_SETUP=_RE_P_SETUP, _RE_P_P1=_RE_P_P1, _re_state=_re_state, _ap_gui=_ap_gui, _mse_grad_accumulate_ep=_mse_grad_accumulate_ep, wt_spectral=wt_spectral, _correc_nom=_correc_nom, bounds_trf=bounds_trf, n_layers_count=n_layers_count, _compute_qwot_rmse=_compute_qwot_rmse, _rmse_combined=_rmse_combined, _report_mse_spectral=_report_mse_spectral, rmse_final_milestone=rmse_final_milestone, wls=wls, re_env_s=re_env_s, n_sub_nominal=n_sub_nominal, lambda_ref=lambda_ref, bounds=bounds, _alpha_slot=ctx._alpha_slot, _a_p2a=_a_p2a, _a_p2b=_a_p2b, _a_p3=_a_p3, re_p2_plan=re_p2_plan, _bind_p2_plan=_bind_p2_plan, _pct_p2a=_pct_p2a, _pct_p2b=_pct_p2b, _pct_p3=_pct_p3, _emit_re_spectrum_live=_emit_re_spectrum_live, _re_n_sh_cfg=_re_n_sh_cfg, _any_spl_act=_any_spl_act, _maxiter_p2b=_maxiter_p2b, _re_pct_hi=_re_pct_hi, _use_sub_c3_shared=False, _p2_ctx={})
-        return SimpleNamespace(rmse_initial_sp=rmse_initial_sp, rmse_initial_q=rmse_initial_q, rmse_initial_u=rmse_initial_u, rmse_initial_milestone=rmse_initial_milestone, rmse_phase1_milestone=rmse_phase1_milestone, rmse_final_milestone=rmse_final_milestone, _alpha_slot=ctx._alpha_slot, _a_p1=_a_p1, _a_p2a=_a_p2a, _a_p2b=_a_p2b, _a_p3=_a_p3, _correc_nom=_correc_nom, _emit_re_spectrum_live=_emit_re_spectrum_live, _compute_qwot_rmse_raw=_compute_qwot_rmse_raw, _compute_qwot_rmse=_compute_qwot_rmse, n_sub_nominal=n_sub_nominal, wls=wls, lambda_ref=lambda_ref, ep0=ep0, _re_pct_hi=_re_pct_hi, results=results, _re_t0=_re_t0)
+        return SimpleNamespace(rmse_initial_sp=rmse_initial_sp, rmse_initial_q=rmse_initial_q, rmse_initial_u=rmse_initial_u, rmse_initial_milestone=rmse_initial_milestone, rmse_phase1_milestone=rmse_phase1_milestone, rmse_final_milestone=rmse_final_milestone, _alpha_slot=ctx._alpha_slot, _a_p1=_a_p1, _a_p2a=_a_p2a, _a_p2b=_a_p2b, _a_p3=_a_p3, _correc_nom=_correc_nom, _emit_re_spectrum_live=_emit_re_spectrum_live, _compute_qwot_rmse_raw=_compute_qwot_rmse_raw, _compute_qwot_rmse=_compute_qwot_rmse, n_sub_nominal=n_sub_nominal, wls=wls, lambda_ref=lambda_ref, ep0=ep0, _re_pct_hi=_re_pct_hi, results=results, _re_t0=_re_t0, _thickness_uncertainty=partial(thickness_uncertainty_at, mse_grad=_mse_grad_accumulate_ep, wt_spectral=wt_spectral, correc_nominal=_correc_nom, p2_to_correc=p2_result_to_correc_tuple, re_state=_re_state))
 

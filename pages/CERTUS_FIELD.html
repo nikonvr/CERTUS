@@ -59,7 +59,7 @@
             <div class="metric-card"><div class="label">Visual Interface</div><div class="value">Triple Overlay</div><div class="desc">Displays field profile, spectral response, and index structure.</div></div>
         </section>
 
-        <div class="abstract"><strong>Abstract</strong><br>CERTUS-FIELD models the electric-field distribution inside multilayer optical coatings under arbitrary angles and polarizations. The module leverages complex admittance recurrences to compute localized physical peak intensities. It integrates a state-of-the-art minimax optimizer that targets Laser-Induced Damage Thresholds (LIDT) to protect optical components from high-power radiation, displaying initial and optimized curves concurrently for detailed screening.</div>
+        <div class="abstract"><strong>Abstract</strong><br>CERTUS-FIELD models the electric-field distribution inside multilayer optical coatings for the supported incidence angles and s/p polarizations. Complex admittance recurrences provide field profiles and peak intensities. A minimax objective can reduce the computed field relative to user-supplied LIDT weights while the interface compares initial and optimized curves. This calculation is a design diagnostic, not a measured damage threshold.</div>
 
         <section class="two-col">
             <div>
@@ -102,6 +102,17 @@
             $$ \delta_j = \frac{2\pi}{\lambda} n_j d_j \cos\theta_j $$
             At the entrance interface (superstrate/stack), the amplitude reflection coefficient $r$ and the reflectance $R$ are evaluated as:
             $$ r = \frac{Y_0 - Y_{\text{eff}}^{(0)}}{Y_0 + Y_{\text{eff}}^{(0)}} \quad ; \quad R = |r|^2 $$
+        </div>
+
+        <div class="mermaid">
+            flowchart LR
+            A["Layer indices, thicknesses, angle and polarization"] --> B["Complex Snell angles and admittances"]
+            B --> C["Backward admittance recurrence from substrate"]
+            C --> D["Entrance reflection coefficient"]
+            D --> E["Seed entrance electric and magnetic fields"]
+            E --> F["Forward sweep through layer interfaces"]
+            F --> G["Separate forward and backward waves"]
+            G --> H["Sample intensity and locate hotspots"]
         </div>
 
         <h3>3.4 Forward Field Propagation</h3>
@@ -184,32 +195,29 @@
         </div>
 
         <h3>4.1 Multi-Start L-BFGS-B (Local Refinement)</h3>
-        <p>The local optimization engine uses the <strong>L-BFGS-B</strong> algorithm, a quasi-Newton solver designed to handle box-constrained parameters. Since thin-film optical objectives are highly non-linear with many local minima, a single local minimization can easily get trapped. To address this, the solver executes a <strong>Multi-Start</strong> routine:
+        <p>The local optimization engine uses the <strong>L-BFGS-B</strong> algorithm, a quasi-Newton solver designed to handle box-constrained parameters. Since thin-film optical objectives are highly non-linear with many local minima, a single local minimization can easily get trapped. To address this, the solver executes a <strong>Multi-Start</strong> routine:</p>
         <ol>
             <li><strong>Nominal Run:</strong> Enters optimization using the current design thicknesses as the starting vector $x_0$.</li>
             <li><strong>Perturbed Runs (2x):</strong> Generates two additional starting points by applying a random uniform scaling factor between $0.85$ and $1.15$ to each layer thickness.</li>
-            <li><strong>Selection:</strong> Minimizes each start point separately. Once all runs finish, it ranks the solutions by cost and returns the absolute best configuration.</li>
+            <li><strong>Selection:</strong> Minimizes each start point separately. Once all runs finish, it ranks the solutions by cost and returns the best configuration found in those runs.</li>
         </ol>
-        </p>
 
         <h3>4.2 PGLOBAL (Global Search)</h3>
-        <p>When the <strong>Global Optimization</strong> mode is enabled, the worker switches to the premium <strong>PGLOBAL</strong> algorithm, the exact same multi-start stochastic global solver used in the design module:
+        <p>When the <strong>Global Optimization</strong> mode is enabled, the worker switches to the premium <strong>PGLOBAL</strong> algorithm, the same multi-start stochastic global solver used in the design module:</p>
         <ul>
             <li><strong>Sobol Quasi-Random Adaptive Sampling:</strong> Draws highly balanced, low-discrepancy candidate points across the thickness boundaries using scrambled Sobol sequences.</li>
             <li><strong>Batch Evaluation & Reduction:</strong> Evaluates candidate points in parallel and keeps the top fraction (e.g., 20% to 30%) by sorting and partitioning their objective values.</li>
-            <li><strong>Single-Linkage Clustering (MLSL):</strong> Performs distance-based clustering on the unit hypercube to group candidates near known minima, identifying unique search basins and preventing redundant local searches.</li>
-            <li><strong>Parallel Local Sweeps:</strong> Launches box-constrained local refinement runs (L-BFGS-B) from each unclustered candidate seed in parallel to converge precisely to the best global optimum.</li>
+            <li><strong>Single-Linkage Clustering (MLSL):</strong> Performs distance-based clustering on the unit hypercube to group nearby candidates and reduce redundant local searches.</li>
+            <li><strong>Parallel Local Sweeps:</strong> Launches box-constrained local refinement runs (L-BFGS-B) from unclustered candidate seeds in parallel and retains the best result found under the configured budget. This search does not certify a global optimum.</li>
         </ul>
-        </p>
 
         <h3>4.3 Monte-Carlo Tolerancing</h3>
-        <p>To assess the manufacturing robustness of the designs, the module implements a Monte-Carlo simulation:
+        <p>To assess the modeled manufacturing robustness of the designs, the module implements a Monte-Carlo simulation:</p>
         <ul>
             <li><strong>Gaussian Thickness Perturbation:</strong> Random noise is added to the nominal thicknesses: $d_j \sim \mathcal{N}(d_j^{(0)}, \,\, (d_j^{(0)} \cdot \sigma)^2)$ where $\sigma$ is the user-configured error percentage.</li>
             <li><strong>Statistical Ensemble:</strong> Runs the wave solver over multiple iterations (e.g. 50 or 100 runs) with perturbed stacks.</li>
             <li><strong>Hotspot and Spectral Variance:</strong> Computes the envelope of the electric field intensity profiles and spectral variations, showing how the physical damage thresholds are affected by layer thickness errors.</li>
         </ul>
-        </p>
 
         <h2>5. LIDT-Weighted Optimization Mathematics</h2>
         <p>In high-power laser systems, the Laser-Induced Damage Threshold (LIDT) defines the maximum energy density a material can withstand. In multi-layer stacks, H-index and L-index layers possess different mechanical and chemical bonding strengths, resulting in distinct threshold values $LIDT_H$ and $LIDT_L$ (represented by the user controls <code>seuil_int_1</code> and <code>seuil_int_2</code>).</p>
@@ -230,28 +238,27 @@
         <h3>5.2 Active Minimax Minimization Mode</h3>
         <p>When the <strong>Active Field Minimization</strong> checkbox is enabled (<code>min_field_active = True</code>), the optimizer switches to a continuous minimax objective. The cost function is defined as:
         $$ Cost = Cost_R + \alpha \cdot \max\left( \frac{|E_{\max, H}|^2}{LIDT_H}, \,\, \frac{|E_{\max, L}|^2}{LIDT_L} \right) $$
-        where:
+        where:</p>
         <ul>
             <li>$|E_{\max, H}|^2$ and $|E_{\max, L}|^2$ are the absolute worst-case local peak intensities across all H and L layers respectively.</li>
             <li>$LIDT_H$ and $LIDT_L$ are the physical damage thresholds.</li>
             <li>$\alpha$ (<code>alpha</code>) represents the active field weighting coefficient.</li>
         </ul>
-        </p>
         
         <div class="deep-dive">
-            <strong>Key Consequence:</strong> Because the electric field inside a dielectric structure is always positive, the minimax cost term is strictly greater than zero. The optimization algorithm actively and continuously reshapes the layer thicknesses to minimize field hotspots, even when the fields are well below nominal damage thresholds.
+            <strong>Key Consequence:</strong> The peak-intensity term remains active below the nominal damage thresholds. The optimizer can therefore seek lower modeled hotspots even when the barrier objective would contribute zero.
         </div>
 
         <h2>6. Visual Overlay and Comparison</h2>
-        <p>To help engineers evaluate the optimization trade-offs, the module implements a dual-curve comparison system:
+        <p>To help engineers evaluate the optimization trade-offs, the module implements a dual-curve comparison system:</p>
         <ul>
             <li><strong>Initial State (Dashed Lines):</strong> The pre-optimized curves ($|E|^2$ profile and spectral reflectance $R(\lambda)$) are cached when optimization is triggered. They are rendered as thin dashed lines (style <code>Qt.PenStyle.DashLine</code>) for direct visual screening.</li>
             <li><strong>Optimized State (Solid Lines):</strong> The active designs are rendered as thick solid lines, allowing immediate validation of the optimized field compression.</li>
         </ul>
-        This visual comparison helps engineers confirm that field hotspots have been reduced without compromising spectral performance.</p>
+        <p>This visual comparison helps engineers inspect whether the modeled field hotspots decreased while the spectral response remained acceptable.</p>
 
         <h2>7. Summary</h2>
-        <p>By combining rigorous TMM wave propagation with an active minimax optimizer, CERTUS-FIELD provides a premium, scientifically verified solution for designing high-power optical coatings. It enables engineers to optimize both spectral responses and spatial field profiles to prevent laser-induced damage.</p>
+        <p>By combining TMM wave propagation with an active minimax optimizer, CERTUS-FIELD lets engineers explore spectral response and modeled spatial field hotspots together. The predicted field reduction does not by itself establish a measured laser-damage threshold.</p>
     </div>
 </body>
 </html>

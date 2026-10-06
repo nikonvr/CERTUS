@@ -123,6 +123,6 @@ def test_index_spline_ux_and_shortcuts():
     assert spline_app.plot_ov_nk is not None
     assert spline_app.kpi_rmse is not None
     assert spline_app.kpi_d is not None
-    assert spline_app.tabs_main.tabText(0) == "✦ Synthèse (Overview)"
+    assert spline_app.tabs_main.tabText(0) == "✦ Synthesis"
 
     spline_app.close()

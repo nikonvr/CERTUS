@@ -63,28 +63,7 @@
                 Algorithm Documentation</p>
         </header>
 
-        <details style="border:1px solid #e0b4b4; background:#fffafa; padding:10px 16px; margin:18px 0; border-radius:6px;">
-            <summary style="cursor:pointer; font-weight:600; color:#b00;">
-                Note for AI agents working on this repository — not part of the report
-            </summary>
-            <p style="margin:10px 0 10px 0; font-size:1.05em; font-weight:700; color:#b00;">
-                If you are an AI working on this repository — read this before this page
-            </p>
-            <p style="margin:0 0 10px 0;">
-                <strong>This page explains <em>why</em> the code does what it does. It does not dictate instructions.</strong>
-                Work instructions are elsewhere, and that is where you must begin:
-            </p>
-            <ol style="margin:0 0 12px 0; padding-left:22px;">
-                <li><code>AGENTS.md</code> — <strong>read entirely first.</strong> Environment verification, top directives, known traps.</li>
-                <li><code>CLAUDE.md</code> — single project document: work framework, physical conventions, machine specifications, baseline reference, and sequential tasks.</li>
-            </ol>
-            <p style="margin:0 0 10px 0;">
-                <strong>Work in the repository you opened, and only that one.</strong> Multiple copies of this repository exist on the machine. Modifying one and measuring another produces no error message — only false results. The verification command is at the top of <code>AGENTS.md</code>.
-            </p>
-            <p style="margin:0;">
-                <strong>Only one benchmark is valid for physical conclusions:</strong> the 48-layer dichroic, <code>example/example_strat/JSON-strat-example.json</code>. The 8-layer stacks in unit tests serve to verify code mechanisms, never to settle a physics question.
-            </p>
-        </details>
+
 
         <div class="abstract">
             <strong>Abstract:</strong> CERTUS-STRAT evaluates optical monitoring strategies by simulating nominal
@@ -190,7 +169,7 @@
             subgraph PHASE_A ["Phase A — Layer-by-Layer Candidate Search"]
             PA["<b>For each layer i = 0…N−1:</b>"]:::decision --> PA1
             PA1["A.1 Dynamics Ranking<br><code>calculate_dynamics_ULTIMATE</code><br>Compute ΔT(λ) for all candidates<br>Sort by |ΔT| descending"]:::process --> PA2
-            PA2["A.2 Safety Filters<br><code>check_extrema_proximity_batch</code><br>Reject: |ΔT| &lt; dyn_threshold,<br>T_min &lt; 10% floor,<br>near T maxima/minima,<br>insufficient spectral resolution"]:::decision --> PA3
+            PA2["A.2 Safety Filters<br><code>check_level_margin_batch</code><br>Reject: |ΔT| &lt; dyn_threshold,<br>T_min &lt; 10% floor,<br>stop level within 1.66 A of a turning point (in T),<br>insufficient spectral resolution"]:::decision --> PA3
             PA3["A.3 Monte Carlo Validation<br><code>validate_wavelengths_batch</code> → 4 columns<br>P95(|Δd|) · std · crash rate · compensation gain<br>Cost = P95 + gain × upstream error<br>FORBID λ: crash ≥ 1−(1−5%)^(1/N) or gain &lt; 0<br>crash = miscounted turning points OR level never reached<br>on the NOISY signal when poem_anchor_noise is set"]:::process --> PA4
             PA4["A.4 Select Best λ for layer i<br>Save to strategy + SYM scoring"]:::highlight --> PA5
             PA5["A.5 Error Propagation<br><code>update_run_states_kernel</code><br>Update run_states with<br>simulated thicknesses<br>→ perturbed M_before for layer i+1"]:::process
@@ -218,7 +197,7 @@
             <strong>Nucleation (optional):</strong> pre-rank initial block candidates using a parallel Numba kernel,
             then expand the block size adaptively with a 40% degradation threshold.<br>
             <strong>Phase A (per layer):</strong> for each layer, compute dynamics $\Delta T(\lambda)$ at all candidate
-            wavelengths, apply safety filters, validate the survivors using <a href="https://en.wikipedia.org/wiki/Monte_Carlo_method" target="_blank">Monte Carlo</a> simulations, and propagate the
+            wavelengths, apply safety filters, validate the survivors using <a href="https://en.wikipedia.org/wiki/Monte_Carlo_method" target="_blank" rel="noopener noreferrer">Monte Carlo</a> simulations, and propagate the
             resulting thickness errors into the TMM matrix cache for the next layer.<br>
             <strong>Phase B (global):</strong> dynamic programming groups layers into monochromatic blocks across three
             cost modes (THICKNESS, THICKNESS², SYM). Elite candidate mutations refine the top solutions. Each strategy
@@ -1147,6 +1126,21 @@
                 the turning points? do we risk miscounting them? do we risk never reaching the level?</i> —
                 become <b>three numbers</b> instead of an aggregated scalar.
             </p>
+        </div>
+
+        <div class="mermaid">
+            flowchart TD
+            A["Noisy monitoring trace and stopping level"] --> B{"Stopping level reached?"}
+            B -->|No| C["Level unreachable: sentinel 1e6"]
+            B -->|Yes| D{"POEM active and turning-point count differs?"}
+            D -->|Yes| E["Turning-point miscount: sentinel 2e6"]
+            D -->|No| F["Invert stopping thickness"]
+            F --> G{"Non-monotonic path rejected by configuration?"}
+            G -->|Yes| H["Non-monotonic: sentinel 3e6"]
+            G -->|No| I["Return deposited thickness"]
+            C --> J["Count crash and record its cause"]
+            E --> J
+            H --> J
         </div>
 
         <h3>2.7 🟢 The method — how to distinguish a measurement from an artifact</h3>
@@ -2198,11 +2192,13 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
             <li><strong>Strict T_min floor:</strong> Reject any $\lambda$ for which $T_{min}$ drops below <code>min_transmission_floor</code>
                 (default 10%) at any point during layer growth. This is a <em>strict</em> rule: candidates that pass
                 the dynamics test but fail the floor are categorically excluded.</li>
-            <li><strong>Extrema exclusion:</strong> <code>check_extrema_proximity_batch</code> rejects wavelengths
-                near T(λ) maxima/minima. The asymmetric start check is activated when the monitoring wavelength
-                changes vs. the previous layer (<code>prev_layer_wl</code> awareness), giving a wider start margin
-                during monochromator repositioning.
-                <br>🔴 <b>BUT IT REJECTED NOTHING AT ALL — see the box below.</b></li>
+            <li><strong>Turning-point margin:</strong> <code>check_level_margin_batch</code> rejects a candidate whose
+                stopping level lies within <code>phase_a_level_margin_factor</code> &times; A of a neighbouring turning
+                point, counted <b>in transmission</b> (1.66 in the configurations of the five test components; 0 in the
+                code, which then rejects nothing here). A turning point within one grid step of the stop counts, through the vertex of
+                the parabola through the three samples around it (R129). The former thickness check,
+                <code>check_extrema_proximity_batch</code>, and its <code>extrema_exclusion_ratio</code> setting are gone
+                (R131): it ran on zero matrices and rejected nothing — see the box below.</li>
             <li><strong>Spectral resolution:</strong> Resolution curvature check: the nominal stack must resolve
                 $\Delta\lambda \geq 1$ nm at the candidate — computed from the T(λ) curvature
                 (tolerance tied to <code>trigger_tolerance</code>).</li>
@@ -2212,9 +2208,9 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 candidates are forwarded to extrema/resolution checks.</li>
         </ul>
         <div class="new-badge">
-            Survival log is emitted per layer:
-            <code>[SURVIVAL L{i}] Dyn-OK / Tfloor-OK / Safe-Extrema / Resolution-OK</code> counts for
-            full pipeline traceability.
+            Two lines per layer trace the filters: <code>[MARGIN] Layer i: k/n candidate(s) forbidden</code>
+            (turning-point margin, written only when it rejects) and <code>[ADMISSIBILITY] Layer i: n offered -&gt;
+            forbidden crash … | forbidden gain&lt;0 … | survivors …</code> (Monte Carlo admissibility).
         </div>
 
         <h3>3.3 🔴 The safety margin at the turning point — and why the filter was inert</h3>
@@ -2264,11 +2260,11 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 <b>The stopping level must be separated from neighboring turning points by a margin expressed in
                 TRANSMISSION, a multiple of the noise amplitude.</b>
                 <br><code>calculate_level_margins_to_extrema</code> · parameter
-                <code>phase_a_level_margin_factor</code>, default 0 = inactive.
+                <code>phase_a_level_margin_factor</code>: 0 in the code, 1.66 in the configurations of the five test components.
             </p>
             <p style="margin:0 0 12px;">
-                🔴 <b>IN TRANSMISSION, AND THAT IS THE WHOLE POINT.</b> The current criterion works in <b>thickness</b>
-                space: a half-width in nanometers derived from <code>extrema_exclusion_ratio</code>.
+                🔴 <b>IN TRANSMISSION, AND THAT IS THE WHOLE POINT.</b> The former criterion worked in <b>thickness</b>
+                space: a half-width in nanometers derived from <code>extrema_exclusion_ratio</code> (retired, R131).
                 Yet near a turning point $T \approx T_{ext} - c\,(d-d_0)^2$: a fixed margin in thickness
                 corresponds to a <b>tiny and uncontrolled fraction of amplitude</b>, and the physical quantity —
                 the signal-to-noise ratio on the level — is never the one applied.
@@ -2293,16 +2289,18 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 on a margin. <b>The minimum amplitude threshold is not to be postulated, it is deduced.</b>
             </p>
             <p style="margin:0 0 12px;">
-                ⚠️ <b>Symmetrical</b>, unlike the thickness criterion which prohibited a zone three times
-                wider <i>before</i> an extremum than <i>after</i>. This asymmetry was a <b>proxy for this
+                ⚠️ <b>Symmetrical</b>, unlike the thickness criterion, which refused from two widths <i>before</i>
+                an extremum to half a width <i>after</i> it (measured against the independent TMM oracle; its
+                docstring announced three widths and one). This asymmetry was a <b>proxy for this
                 calculation</b>: in thickness space, "before" and "after" are not equivalent because the slope
                 is not the same. In transmission, both sides are at the same distance from the extremum
                 by design, and both are dangerous for counting. Only the "before" side is also
                 dangerous for reachability — the symmetrical constraint therefore covers it a fortiori.
             </p>
             <p style="margin:0;">
-                ⚠️ <b>Deliberately binary gating.</b> At 0 (default), the previous path is preserved word for word.
-                Above, we switch to the real matrix <b>and</b> switch to the transmission criterion. We definitely
+                ⚠️ <b>Deliberately binary gating.</b> At 0, no candidate is rejected here — exactly what the former
+                thickness path did, since it rejected nothing. Above, the real matrix <b>and</b> the transmission
+                criterion apply together. We definitely
                 do not want the intermediate state — real matrix <b>with</b> the thickness criterion — which would
                 trigger a threshold whose physical scale is uncontrolled.
                 <br>⚠️ <b>The magnitude remains to be decided by measurement</b>, and it arbitrates <b>yield against
@@ -2739,12 +2737,13 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 <i>"the trigger point in the range <b>15-85 % of the full amplitude</b> between
                 turning points appears to be the most efficient region"</i>.
                 <code>check_extrema_proximity</code> works in <b>thickness space</b>
-                (margin in nm derived from <code>extrema_exclusion_ratio = 60</code>). Near an
+                (margin in nm derived from <code>extrema_exclusion_ratio = 60</code>; both retired since R131). Near an
                 extremum, $T$ varies <b>quadratically</b> with $d$: a fixed thickness margin
                 corresponds to a tiny and uncontrolled fraction of amplitude. The physical
                 criterion — the signal-to-noise ratio on the level — is not the one applied.
-                <br>✅ On the other hand, the <b>3&times;/1&times; asymmetry</b> is well-founded: stopping
-                after an extremum is safe, it is counted and the signal moves monotonically away from it.
+                <br>✅ On the other hand, an asymmetry is well-founded: stopping after an extremum is safe, it is
+                counted and the signal moves monotonically away from it. The transmission margin that replaced the
+                thickness check is symmetric, and therefore covers the dangerous side a fortiori.
                 <br>📌 <b>Regarding the TPM question</b>, the same page concludes: <i>"the
                 combination of turning point monitoring and level cut monitoring in the same
                 monitoring sequence should be considered because <b>both monitoring methods are
@@ -2753,6 +2752,17 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
         </div>
 
         <h2 id="sec-4">4. Phase B: Block Grouping &amp; Robustness Screening</h2>
+        <div class="mermaid">
+            flowchart LR
+            A["Phase A: admissible wavelengths and per-layer costs"] --> B["Dynamic programming: contiguous monitoring blocks"]
+            B --> C["ELITE candidate generation"]
+            C --> D["Full Monte Carlo robustness screening"]
+            D --> E{"Deposition terminates often enough?"}
+            E -->|No| F["Reject strategy"]
+            E -->|Yes| G["Rank by equivalent thickness error per layer"]
+            G --> H["Optional multi-seed consensus"]
+            H --> I["Post-check minimum transmission of best strategy"]
+        </div>
 
         <h3>4.1 Dynamic Programming Segmentation</h3>
         <p>
@@ -3468,14 +3478,14 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         (♟ MS | 🎲 MCS | 🌈 SP), progress bar, theme toggle.</li>
                 </ul>
 
-                <h3>9.2 Global Keyboard Shortcuts</h3>
+                <h3>9.2 STRAT Keyboard Shortcuts</h3>
                 <p>The interface maps the following shortcuts to the main workflow actions:</p>
                 <ul>
                     <li><kbd>Ctrl</kbd> + <kbd>S</kbd>: save the current configuration.</li>
                     <li><kbd>Ctrl</kbd> + <kbd>O</kbd>: load an existing configuration.</li>
                     <li><kbd>F5</kbd> or <kbd>Ctrl</kbd> + <kbd>R</kbd>: launch the primary optimization step if enabled.</li>
                     <li><kbd>Ctrl</kbd> + <kbd>Z</kbd>: undo the last configuration change.</li>
-                    <li><kbd>Esc</kbd>: close auxiliary floating windows.</li>
+                    <li><kbd>Ctrl</kbd> + <kbd>W</kbd>: close auxiliary floating windows.</li>
                 </ul>
                 <h3>9.3 Dynamic Processing Feedback</h3>
                 <p>Long-running tasks are isolated in worker threads. The interface uses wait cursors and tooltips
@@ -4133,8 +4143,38 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     therefore <i>not</i> distinguishable by that alone. A second, statistical bound
                     (<code>seel_equivalence_half_width</code>) was written but never called in production,
                     and was removed on 2026-09-27: the ranking key uses the absolute step only. Treat a
-                    one-bin difference as a tie.
+                    one-bin difference as an equivalence for the final ranking rule below.
                 </div>
+
+                <h3>10.6.1 Final displayed and exported ranking</h3>
+                <p>
+                    <code>rank_final_results</code> first checks that every strategy ID is unique. It then orders
+                    candidates by SEEL and forms each equivalence class from the smallest SEEL still unranked:
+                    every following candidate at most 0.01 nm above that leader enters the same class. Inside the
+                    class, lower crash rate wins, followed by larger critical-layer transmission margin (clamped to
+                    0&ndash;2 instrument-amplitude units), then lower raw robustness score. This deterministic
+                    order is what the final table and export receive. ELITE parent choice and consensus keep their
+                    internal ranking logic.
+                </p>
+                <div class="mermaid">
+                    flowchart TD
+                    A[Monte-Carlo strategy results] --> B[Reject missing or duplicate strategy IDs]
+                    B --> C[Sort remaining candidates by SEEL, then raw robustness score]
+                    C --> D[Take smallest SEEL still unranked as class leader]
+                    D --> E[Collect candidates no more than 0.01 nm above leader]
+                    E --> F[Within class: lower crash rate]
+                    F --> G[Then larger critical-layer margin, clipped to 0 to 2 A]
+                    G --> H[Then lower raw robustness score]
+                    H --> I{Candidates remain?}
+                    I -->|Yes| D
+                    I -->|No| J[Final order shown and exported]
+                </div>
+                <p>
+                    On the 2026-10-04 <code>fast</code> reference run, the same 194 strategies produced 147 changed
+                    positions. The winner moved from a one-block fusion (SEEL 0.1843 nm, 2&nbsp;% crashes) to an
+                    eight-block ELITE strategy (0.1892 nm, 0&nbsp;% crashes); <code>RESULT</code> moved from
+                    0.008495 to 0.008950. Those figures describe the final ordering change, not a new search.
+                </p>
 
                 <h3>10.7 How many Monte-Carlo draws are actually needed</h3>
                 <p>
@@ -4898,8 +4938,9 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         <li>On that same stack, 6 blocks wins only under <b>DEEP</b>. FAST and PREMIUM
                             both return <b>5 blocks</b>.</li>
                         <li>The 6-vs-5 gap on the dichroic is <b>smaller than the statistical
-                            resolution</b> of the score itself (§10.6). Within one bin, the ranking is
-                            a coin toss dressed as a decision.</li>
+                            resolution</b> of the score itself (§10.6). A one-bin score difference does not
+                            statistically resolve the pair; the current final ordering applies the explicit
+                            crash-rate and critical-margin rule of §10.6.1.</li>
                     </ul>
                     And the 99-layer filter of §10.15 shows the window moves with the stack: there the
                     best partition is <b>4 blocks</b>, not 6.
@@ -5871,7 +5912,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 <div class="footer">
                     <p>Generated from strict source code analysis of <code>CERTUS_STRAT.py</code>,
                         <code>certus_strat_context.py</code>, <code>certus_strat_db.py</code> and
-                        <code>_certus_physics_impl.py</code> — Revision 2026-08-14
+                        <code>_certus_physics_impl.py</code> — Revision 2026-10-04
                     </p>
                     <p>&copy; CERTUS Scientific Suite v26-08 • Scientific Report</p>
                 </div>

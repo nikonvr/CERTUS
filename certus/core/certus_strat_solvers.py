@@ -112,6 +112,11 @@ def _export_phase_a_observability_json(params: dict[str, Any], payload: dict[str
         if logger_local:
             logger_local.info(f"📈 Observability JSON saved: '{out_path}'")
 
+    except OSError as exc:
+        # A diagnostic never ends the run: an executable installed in a folder that cannot be written to used
+        # to stop every STRAT run here, at the end of Phase A (D89).
+        logging.getLogger("CERTUS").warning("Phase A observability report not written (%s); the run goes on", exc)
+
     except NUMERICAL_FAULT_EXCEPTIONS:
         logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 

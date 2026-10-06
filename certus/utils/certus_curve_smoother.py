@@ -199,7 +199,7 @@ class CurveSmootherGUI(QMainWindow):
         )
         self.lbl_computed_params = create_styled_label("   [ Level: Medium ]", color=CertusTheme.TEXT_SUB)
         self.chk_raw = QCheckBox("Show Raw Traces")
-        self.chk_raw.setChecked(False)
+        self.chk_raw.setChecked(True)
         self.chk_raw.stateChanged.connect(self.update_plot)
         self.chk_raw.setToolTip("Overlay the unsmoothed measurements on the plot.")
         self.combo_isolate = QComboBox()
@@ -373,7 +373,7 @@ class CurveSmootherGUI(QMainWindow):
                 x,
                 y_clean,
                 pen=pg.mkPen(color=color, width=2),
-                name=f"{col} (Clean)" if show_raw else col,
+                name=f"{col} (Clean)",
             )
 
     def open_isolated_view(self) -> None:

@@ -286,7 +286,8 @@ class _RateSwingContext:
 
 
 def _optical_prefix_variants(strategies: list[dict[str, Any]], params: Any,
-                             num_layers: int, logger: Any) -> list[dict[str, Any]]:
+                             num_layers: int, logger: Any,
+                             id_namespace_n_blocks: int | None = None) -> list[dict[str, Any]]:
     """`n` optical layers, the rest at PERFECT thickness -- the SEEL(n) curve of 👤.
 
     👤 2026-08-19: *"20 optical layers plus the rest with PERFECT thicknesses, we compute
@@ -321,7 +322,7 @@ def _optical_prefix_variants(strategies: list[dict[str, Any]], params: Any,
                   (protection x34.8, §24-17), so one more optical layer can LOWER the
                   error. The LOCAL RISES designate the layers where optics does harm.
     """
-    from certus.core.certus_strat_ranking import STRATEGY_ID_RATE_BASE
+    from certus.core.certus_strat_ranking import STRATEGY_ID_RATE_BASE, strategy_id_for_block
     sweep = sorted({int(x) for x in (params.get("optical_prefix_sweep") or [])})
     if not sweep:
         return []
@@ -351,7 +352,8 @@ def _optical_prefix_variants(strategies: list[dict[str, Any]], params: Any,
         )
         return []
     out: list[dict[str, Any]] = []
-    next_id = STRATEGY_ID_RATE_BASE
+    source_n_blocks = int(id_namespace_n_blocks) if id_namespace_n_blocks is not None else len(strategies[0]["blocks"])
+    serial = 0
     for strat in meres:
         for n_opt in sweep:
             if not (RATE_MIN_LAYER <= n_opt <= num_layers):
@@ -368,15 +370,48 @@ def _optical_prefix_variants(strategies: list[dict[str, Any]], params: Any,
             # 🔴 No Rate layer: layers >= n_opt are PERFECT, not Rate.
             # Confusing the two would measure the cost of Rate instead of isolating it.
             v["rate_layers"] = []
-            v["strategy_id"] = _variant_id(strat.get("strategy_id"), next_id)
+            v["strategy_id"] = _variant_id(
+                strat.get("strategy_id"), strategy_id_for_block(STRATEGY_ID_RATE_BASE, source_n_blocks, serial)
+            )
             v["origin"] = f"OPT_PREFIX{n_opt}(from {strat.get('strategy_id', '?')})"
-            next_id += 1
+            serial += 1
             out.append(v)
     logger.info(
         f"[PREFIX] {len(out)} optical prefixes injected on {len(meres)} layer-by-layer "
         f"strategy(ies), n from {min(sweep)} to {max(sweep)}."
     )
     return out
+
+
+def _rate_candidate_combinations(
+    cands: list[int], max_layers: int, cap: int
+) -> list[tuple[int, ...]]:
+    """Keep the full Rate combination even when the ordinary cap is full."""
+    if max_layers == 1:
+        return [(x,) for x in cands[:cap]]
+    combos: list[tuple[int, ...]] = []
+    for taille in range(1, min(max_layers, len(cands)) + 1):
+        combos.extend(itertools.combinations(cands, taille))
+    combos = combos[:cap]
+    entier = tuple(cands)
+    if len(cands) > 1 and entier not in combos:
+        combos.append(entier)
+    return combos
+
+
+def _make_rate_variant(
+    parent: dict[str, Any], rate_layers: list[int], source_n_blocks: int, serial: int
+) -> dict[str, Any]:
+    """Copy a parent and assign one Rate id in its worker's block range."""
+    from certus.core.certus_strat_ranking import STRATEGY_ID_RATE_BASE, strategy_id_for_block
+
+    variant = dict(parent)
+    variant["blocks"] = list(parent.get("blocks") or [])
+    variant["rate_layers"] = rate_layers
+    variant["strategy_id"] = _variant_id(
+        parent.get("strategy_id"), strategy_id_for_block(STRATEGY_ID_RATE_BASE, source_n_blocks, serial)
+    )
+    return variant
 
 
 def _expand_with_rate_variants(
@@ -388,6 +423,7 @@ def _expand_with_rate_variants(
     nominal_matrix_cache: Any = None,
     all_wls: Any = None,
     clues_at_wl: Any = None,
+    id_namespace_n_blocks: int | None = None,
 ) -> list[dict[str, Any]]:
     """Add Rate variants of each strategy, so the ranking can compare them side by side.
 
@@ -414,8 +450,8 @@ def _expand_with_rate_variants(
         rate_max_layers_per_variant     default 1  -- historical path, bit for bit
         rate_max_variants_per_strategy  default 40 -- RATE_MAX_VARIANTS_PER_STRATEGY
 
-    At `rate_max_layers_per_variant = 1` this function walks exactly the same singletons, in
-    the same order, with the same ids and the same `origin` strings as before.
+    At `rate_max_layers_per_variant = 1` it walks the same singletons in order and
+    keeps their `origin` strings. IDs include the source block count to avoid collisions.
 
     🔴 AND THE FULL COMBINATION IS ALWAYS APPENDED when the multi-layer path is active, cap or
     no cap. It is the cheapest probe of "what if we rate every boundary we may", and it costs
@@ -432,14 +468,15 @@ def _expand_with_rate_variants(
     `_prepare_robustness_inputs` from `opti_results` -- nothing new computed, only reaches a
     function that did not have them before.
     """
-    from certus.core.certus_strat_ranking import STRATEGY_ID_RATE_BASE
+    from certus.core.certus_strat_ranking import strategy_id_source_block_count
     # 🔴 THE OPTICAL PREFIX SWEEP IS HOISTED ABOVE THE `allow_rate` GUARD, AND THAT IS THE
     # WHOLE POINT. It is NOT a Rate feature: it measures the cost of OPTICAL monitoring alone,
     # leaving the tail at PERFECT thickness. The probe therefore needs `allow_rate = False` --
     # otherwise Rate variants would mix into the population and both costs would be measured
     # at once. Placed under the guard, the injection returned ZERO variants silently: the
     # probe would have run for two hours for an empty curve.
-    prefixes = _optical_prefix_variants(strategies, params, num_layers, logger)
+    source_n_blocks = strategy_id_source_block_count(strategies, id_namespace_n_blocks)
+    prefixes = _optical_prefix_variants(strategies, params, num_layers, logger, source_n_blocks)
     if not bool(params.get("allow_rate", True)):
         # ⚠️ Golden rule: without `optical_prefix_sweep`, `prefixes` is empty and the
         # `strategies` object ITSELF is returned, exactly as before. The default path does not move.
@@ -609,7 +646,7 @@ def _expand_with_rate_variants(
     # prefix and the child/parent pairing would become impossible to untangle.
     variants: list[dict[str, Any]] = list(prefixes)
     skipped = 0
-    next_id = STRATEGY_ID_RATE_BASE + len(prefixes)
+    serial = len(prefixes)
     _t0 = time.perf_counter()
     if layer_sets:
         for strat in strategies:
@@ -617,13 +654,10 @@ def _expand_with_rate_variants(
                 couches = sorted({int(x) for x in jeu if 0 <= int(x) < num_layers})
                 if not couches:
                     continue
-                v = dict(strat)
-                v["blocks"] = list(strat.get("blocks") or [])
-                v["rate_layers"] = couches
-                v["strategy_id"] = _variant_id(strat.get("strategy_id"), next_id)
+                v = _make_rate_variant(strat, couches, source_n_blocks, serial)
                 v["origin"] = (f"RATE_SET{'_'.join(str(x) for x in couches)}"
                                f"(from {strat.get('strategy_id', '?')})")
-                next_id += 1
+                serial += 1
                 variants.append(v)
         logger.info(
             f"[RATE-SET] {len(variants)} surgical variants on {len(strategies)} "
@@ -635,8 +669,6 @@ def _expand_with_rate_variants(
                 c = int(cut)
                 if not (0 < c < num_layers):
                     continue
-                v = dict(strat)
-                v["blocks"] = list(strat.get("blocks") or [])
                 queue = list(range(c, num_layers))
                 # 🔑 THE EXCEPTION RULE OF 👤: "except the layers [with a good signal] that stay
                 # optical". It requires a DISCRIMINATING criterion -- 📏 the ">= 2 turning points"
@@ -651,12 +683,11 @@ def _expand_with_rate_variants(
                     note.sort(reverse=True)
                     gardees = {lay for _, lay in note[:keep_optical]}
                     queue = [lay for lay in queue if lay not in gardees]
-                v["rate_layers"] = queue
-                v["strategy_id"] = _variant_id(strat.get("strategy_id"), next_id)
+                v = _make_rate_variant(strat, queue, source_n_blocks, serial)
                 v["origin"] = (f"RATE_TAIL{c}"
                                + (f"K{keep_optical}" if keep_optical else "")
                                + f"(from {strat.get('strategy_id', '?')})")
-                next_id += 1
+                serial += 1
                 variants.append(v)
         logger.info(
             f"[RATE-TAIL] {len(variants)} tail variants injected on "
@@ -676,24 +707,12 @@ def _expand_with_rate_variants(
         if not cands:
             skipped += 1
             continue
-        if max_layers == 1:
-            combos: list[tuple[int, ...]] = [(x,) for x in cands[:cap]]
-        else:
-            combos = []
-            for taille in range(1, min(max_layers, len(cands)) + 1):
-                combos.extend(itertools.combinations(cands, taille))
-            combos = combos[:cap]
-            entier = tuple(cands)
-            if len(cands) > 1 and entier not in combos:
-                combos.append(entier)
+        combos = _rate_candidate_combinations(cands, max_layers, cap)
         for combo in combos:
-            v = dict(strat)
-            v["blocks"] = list(strat.get("blocks") or [])
-            v["rate_layers"] = list(combo)
-            v["strategy_id"] = _variant_id(strat.get("strategy_id"), next_id)
+            v = _make_rate_variant(strat, list(combo), source_n_blocks, serial)
             etiquette = "_".join(str(x) for x in combo)
             v["origin"] = f"RATE_L{etiquette}(from {strat.get('strategy_id', '?')})"
-            next_id += 1
+            serial += 1
             variants.append(v)
     if variants or skipped:
         _dt = time.perf_counter() - _t0

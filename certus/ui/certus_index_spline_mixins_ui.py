@@ -366,6 +366,23 @@ class _MeshOptimizationMixin:
 class _SmartInitDialogMixin:
     """Mixin extracting _show_smart_init_preview_dialog logic."""
 
+    def _open_live_nk_monitor(self, next_to=None) -> None:
+        """The live n, k monitor, opened beside the Smart Init preview as it was until 2026-07-03, and fed during the
+        optimization by `_update_persistent_nk_monitor`. Unplugged since, it was reached only by a test (decided by the
+        owner on 2026-10-06: plug it back)."""
+        from certus.ui.certus_index_spline_monitor_ui import LiveIndexMonitor
+
+        monitor = getattr(self, "_live_nk_monitor", None)
+        if monitor is None or not hasattr(monitor, "update_indices"):
+            monitor = LiveIndexMonitor(self)
+            self._live_nk_monitor = monitor
+        monitor.show()
+        if next_to is not None:
+            try:
+                monitor.move(next_to.x() + next_to.width() + 10, next_to.y())
+            except (AttributeError, RuntimeError):
+                logger.debug("live n, k monitor not placed beside the preview", exc_info=True)
+
     def _show_smart_init_preview_dialog(self, payload) -> bool:
         logger.info(
             "[INDEX_SPLINE.SMART_INIT] show requested | payload_type=%s | payload_d=%.6f | wait_event=%s",
@@ -376,6 +393,7 @@ class _SmartInitDialogMixin:
         try:
             from certus.spline.certus_index_spline_smart_init import SmartInitPreviewManager
             manager = SmartInitPreviewManager(self, payload)
+            self._open_live_nk_monitor(next_to=manager.dlg)
             logger.info(
                 "[INDEX_SPLINE.SMART_INIT] dialog constructed | dlg_visible=%s | aux_visible=%s | main_visible=%s | k_n=%d | d=%.6f",
                 bool(getattr(manager.dlg, "isVisible", lambda: False)()),

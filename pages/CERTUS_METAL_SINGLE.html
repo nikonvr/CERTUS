@@ -58,12 +58,12 @@
         <header>
             <h1>CERTUS-METAL SINGLE</h1>
             <p style="font-size: 1.3em; color: #546e7a; font-weight: 300;">Single-layer optical constant extraction on a transparent substrate</p>
-            <p style="font-size: 1.0em; color: #78909c; font-weight: 300;">Scientific report revision 2026.04.17</p>
+            <p style="font-size: 1.0em; color: #78909c; font-weight: 300;">Implementation review: 2026-10-03</p>
         </header>
 
         <div class="abstract">
             <strong>Abstract:</strong> CERTUS-METAL SINGLE estimates the complex refractive index of a single metallic
-            or absorbing layer deposited on a transparent substrate (fused silica or BK7). The method combines
+            or absorbing layer deposited on a transparent substrate. The method combines
             reflectance, transmission, and backside reflectance measurements to constrain the inverse problem and
             extract the layer thickness ($d_M$) together with spline-based optical constants ($n$, $k$).
         </div>
@@ -103,7 +103,7 @@
         </div>
 
         <ul>
-            <li><strong>Substrate:</strong> Selectable Fused Silica or BK7 (Sellmeier dispersion).</li>
+            <li><strong>Substrate:</strong> uses the selected Sellmeier catalogue model for a transparent material. Check the selected material: labels without a Sellmeier ID fall back to N-BK7 in <code>_resolve_single_substrate_id</code>.</li>
             <li><strong>Metal Film:</strong> Modeled with free-form cubic splines for $n(\lambda)$ and $k(\lambda)$.
             </li>
         </ul>
@@ -129,15 +129,16 @@
             style="background:#f8f9fa; border:1px solid #cfd8dc; padding:15px; border-radius:5px; margin:15px 0; text-align:center;">
             $$ R_{ext} = \left(\frac{n_{sub} - 1}{n_{sub} + 1}\right)^2, \qquad T_{ext} = 1 - R_{ext} $$
         </div>
-        <p>The total observables are computed by the exact incoherent sum (geometric series):</p>
+        <p>For a transparent substrate, the implementation combines the two faces through an incoherent intensity sum. Here $R_b$ and $T_b$ are the reflectance and transmittance of the film stack illuminated from inside the substrate; $R_{back,total}$ is the observable measured from the rear:</p>
         <div
             style="background:#f8f9fa; border:1px solid #cfd8dc; padding:15px; border-radius:5px; margin:15px 0; text-align:center;">
-            $$ T_{total} = \frac{T_{front} \cdot T_{ext}}{1 - R_{back} \cdot R_{ext}}, \qquad
-            R_{total} = R_{front} + \frac{T_{front}^2 \cdot R_{ext}}{1 - R_{back} \cdot R_{ext}} $$
+            $$ D=1-R_bR_{ext},\qquad T_{total}=\frac{T_{front}(1-R_{ext})}{D},\qquad
+            R_{total}=R_{front}+\frac{T_{front}T_bR_{ext}}{D} $$
+            $$ R_{back,total}=R_{ext}+\frac{(1-R_{ext})^2R_b}{D} $$
         </div>
         <p>
-            $R_{back}$ is computed from a <strong>reverse matrix</strong> (Sub→Air), ensuring correct treatment
-            even for absorbing films where $R_{front} \neq R_{back}$.
+            The reverse stack calculation is necessary for absorbing films, where front and rear reflectance differ.
+            The code clamps a near-zero denominator; the equations above show the non-singular case.
         </p>
 
         <h3>2.4 Spline-Based Material Model</h3>
@@ -148,7 +149,7 @@
         <ul>
             <li><strong>Knots:</strong> Adaptive control points $(n_i, k_i)$ at wavelengths $\lambda_i$.</li>
             <li><strong>Natural Cubic Splines:</strong> $C^2$-continuous interpolation between knots.</li>
-            <li><strong>Physics Constraints:</strong> $n > 0$, $k \ge 0$.</li>
+            <li><strong>Bounds:</strong> the configured $n$ and $k$ knot values default to $[0,10]$; the objective also rejects invalid or non-finite curves.</li>
             <li><strong>Knot Distance Constraint:</strong> Minimum spacing $\Delta\lambda_{min}$ prevents over-fitting.
             </li>
         </ul>
@@ -160,58 +161,34 @@
 
         <div class="mermaid">
             flowchart TD
-            classDef default fill:#ffffff,stroke:#0ea5e9,stroke-width:2px,color:#0f172a
-            classDef process fill:#f8fafc,stroke:#0ea5e9,stroke-width:2px
-            classDef decision fill:#fff3e0,stroke:#f59e0b,stroke-width:2px,color:#9333ea
-            classDef terminal fill:#0f172a,stroke:none,color:#ffffff,font-weight:bold
-            classDef highlight fill:#e0f2fe,stroke:#2563eb,stroke-width:3px
-
-            START(["User Input:<br>R(λ), T(λ), Rback(λ),<br>Substrate, Knot count N"]):::terminal --> LOAD["1. Load spectral data<br>Auto-detect channels (R, T, Rback)<br>Auto-detect units (%, abs)"]:::process
-            LOAD --> SUB["2. Configure substrate<br>Fused Silica or BK7<br>(Sellmeier dispersion)"]:::process
-            SUB --> BOUNDS["3. Define parameter bounds<br>d_M: [d_min, d_max]<br>n_i, k_i: physical range<br>λ_i: spectral range"]:::process
-
-            BOUNDS --> DE_INIT["4. Initialize DE population<br>50 random vectors x ∈ bounds"]:::highlight
-
-            subgraph DE ["Differential Evolution — Global Search"]
-            DE_INIT --> DE_LOOP["For each generation g:"]:::process
-            DE_LOOP --> DE_MUT["5. Mutate: v = x_r1 + F·(x_r2 − x_r3)<br>F ∈ [0.5, 1.0]"]:::process
-            DE_MUT --> DE_CROSS["6. Crossover: mix trial/target<br>with probability CR = 0.7"]:::process
-            DE_CROSS --> DE_SPLINE["7. Interpolate n(λ), k(λ)<br>Natural Cubic Splines from knots"]:::process
-            DE_SPLINE --> DE_TMM["8. TMM (Macleod +1j, Complex128)<br>Forward matrix → R_calc, T_calc<br>Reverse matrix → Rback_calc"]:::process
-            DE_TMM --> DE_INCOH["9. Incoherent backside combination<br>T_total = T_fwd·T_ext / (1 − R_back·R_ext)"]:::process
-            DE_INCOH --> DE_MSE["10. Multi-channel MSE<br>= (MSE_R + MSE_T + MSE_Rback) / N_ch"]:::process
-            DE_MSE --> DE_SEL["11. Selection: keep better<br>of trial vs target"]:::process
-            DE_SEL --> DE_CONV{"Converged<br>or max gen?"}:::decision
-            DE_CONV -->|"No"| DE_LOOP
-            DE_CONV -->|"Yes"| DE_BEST["Best solution from DE"]:::highlight
-            end
-
-            DE_BEST --> BEAM_CHK{"Beam Analysis<br>requested?"}:::decision
-
-            subgraph BEAM ["Beam Analysis — Uncertainty Mapping"]
-            BEAM_CHK -->|"Yes"| BA_REF["12. Reference: d_opt from DE"]:::process
-            BA_REF --> BA_SCAN["13. Scan d = d_opt ± Δd<br>(steps of 0.5–1 nm)"]:::highlight
-            BA_SCAN --> BA_REOPT["14. For each fixed d:<br>re-optimize spline n,k only<br>(L-BFGS-B, analytic gradient)"]:::process
-            BA_REOPT --> BA_FILT["15. Keep solutions where<br>MSE ≤ MSE_opt × (1 + τ)"]:::process
-            BA_FILT --> BA_ENV["16. Compute envelope:<br>Δn(λ) = max − min over beam<br>Δk(λ) = max − min over beam"]:::highlight
-            end
-
-            BEAM_CHK -->|"No"| EXPORT
-            BA_ENV --> EXPORT(["17. Export:<br>d_M, n(λ), k(λ),<br>uncertainty envelope,<br>Excel + HTML report"]):::terminal
+            A(["Measured R; T and Rback as a pair when both supplied; substrate and bounds"])
+            B["Load spectral channels and normalize their units"]
+            C["Continue from 2 knots to the requested knot count"]
+            D["At each knot count: PGLOBAL explores bounded parameters"]
+            E["Evaluate film spline and incoherent plate model"]
+            F["Score available channels plus spline-curvature penalty"]
+            G["Carry the best solution to the next knot count"]
+            H["Polish the final solution with bounded L-BFGS-B restarts"]
+            I{"Run optional thickness-profile scan?"}
+            J["Fix thickness at 0.5 nm steps; refit n/k knot values"]
+            K["Keep solutions below the implemented heuristic MSE threshold"]
+            L(["Display and export fit; export beam results when available"])
+            A --> B --> C --> D --> E --> F --> G
+            G -->|More knots| D
+            G -->|Final knot count| H --> I
+            I -->|Yes| J --> K --> L
+            I -->|No| L
         </div>
 
         <div class="algo-step">
-            <span class="algo-title">Algorithm Summary</span>
-            <strong>Steps 1–3:</strong> Load up to three spectral channels (R, T, Rback), configure the substrate
-            dispersion, and define the bounded search space for thickness, spline knot values, and knot positions.<br>
-            <strong>Steps 4–11 (Differential Evolution):</strong> Differential Evolution explores the parameter space.
-            Each candidate is decoded into spline optical constants, evaluated with the full TMM including incoherent
-            backside correction, and scored using the multi-channel mean squared error. The population evolves for up
-            to approximately 1500 generations.<br>
-            <strong>Steps 12–16 (Beam analysis):</strong> A systematic thickness scan with L-BFGS-B re-optimization (using analytic gradients)
-            at each fixed $d$ maps the $n$–$k$–$d$ degeneracy. The uncertainty envelope defines the admissible process
-            window.<br>
-            <strong>Step 17:</strong> Export the final report with spectra, optical constants, and the beam envelope.
+            <span class="algo-title">Implementation summary</span>
+            <strong>Input:</strong> measured reflectance, and transmission/backside reflectance when supplied.
+            <strong>Global fit:</strong> <code>OptimizationWorker.run</code> grows the spline from two knots to the requested count;
+            <code>run_pglobal_optimization</code> explores each bounded problem and carries the incumbent forward.
+            The objective averages the finite available channel errors and adds a spline-curvature penalty.
+            <strong>Final polish:</strong> bounded L-BFGS-B restarts follow the PGLOBAL pass.
+            <strong>Optional beam diagnostic:</strong> <code>BeamAnalysisWorker.run_beam_analysis</code> fixes thickness on a
+            0.5 nm grid and refits n/k knot values against reflectance with the internal knot wavelengths held fixed.
         </div>
 
         <h3>3.1 Optimization Vector</h3>
@@ -222,70 +199,72 @@
             <li>$\{\lambda_i\}_{i=2}^{N-1}$: internal knot wavelengths, adjusted to the measured spectrum.</li>
         </ul>
 
-        <h3>3.2 Multi-Channel Cost Function</h3>
-        <p>The total error is computed as the average over all available data channels:</p>
-        <div
-            style="background:#f8f9fa; border:1px solid #cfd8dc; padding:15px; border-radius:5px; margin:15px 0; text-align:center;">
-            $$ \text{MSE}_{total} = \frac{1}{N_{ch}} \sum_{c \in \{R,T,R_{back}\}} \frac{1}{M}
-            \sum_{j=1}^{M} \left(S_c^{calc}(\lambda_j) - S_c^{meas}(\lambda_j)\right)^2 $$
+        <h3>3.2 Objective for the Available Channels</h3>
+        <p><code>_single_RTRback_mse</code> averages the finite MSE terms for $R$, $T$, and $R_{back}$ when both optional channels are supplied. Otherwise it uses $R$ alone. The objective then penalizes rapid changes in the reconstructed spline curves:</p>
+        <div class="eq-box">
+            $$ J = \frac{1}{|C|}\sum_{c\in C}\operatorname{nanmean}\bigl[(S_c^{calc}-S_c^{meas})^2\bigr]
+            + 10^{-2}\left(\sum_j(\Delta^2 n_j)^2+\sum_j(\Delta^2 k_j)^2\right). $$
         </div>
-        <p>The combined channels constrain the film response at both interfaces and in the bulk absorption region.
-            Missing channels are excluded automatically.</p>
+        <p>$C$ contains only channels with finite residuals when the $T$/$R_{back}$ pair is present. If either optional channel is absent, the current objective uses reflectance alone. The displayed RMSE is the square root of the complete objective.</p>
 
-        <h3>3.3 Differential Evolution</h3>
-        <p>
-            The global search uses <a href="https://en.wikipedia.org/wiki/Differential_evolution" target="_blank"><strong>Differential Evolution (DE)</strong></a>, a population-based stochastic
-            optimizer suitable for high-dimensional and non-convex problems.
-        </p>
-        <ol>
-            <li><strong>Initialize:</strong> generate a population of parameter vectors within the bounds.</li>
-            <li><strong>Mutate:</strong> build trial vectors using weighted differences:
-                $\mathbf{v} = \mathbf{x}_{r1} + F(\mathbf{x}_{r2} - \mathbf{x}_{r3})$</li>
-            <li><strong>Crossover:</strong> combine trial and target vectors with probability CR.</li>
-            <li><strong>Select:</strong> retain the vector with the lower mean squared error.</li>
-        </ol>
-        <p>Typical parameters are: population size 50, $F \in [0.5, 1.0]$, CR = 0.7, and a maximum of 1500 iterations.</p>
+        <h3>3.3 PGLOBAL and Knot Continuation</h3>
+        <p>The current global search calls the native <code>PGlobalOptimizer</code> through
+            <code>run_pglobal_optimization</code>. Without a supplied starting vector, it fits knot counts
+            $K=2,\ldots,K_{requested}$ in sequence. An initial mesh seeds the search, each stage explores bounded
+            candidates, and the best vector seeds the next stage. The final stage uses bounded L-BFGS-B restarts
+            without a supplied analytic Jacobian; the separate beam refit supplies an analytic gradient.
+            Iteration and evaluation budgets are configurable; the result is a best-found fit, not a guarantee of
+            the global optimum.</p>
 
         <!-- ================================================================ -->
         <!--  4. BEAM ANALYSIS                                                 -->
         <!-- ================================================================ -->
-        <h2>4. Beam Analysis: Uncertainty Quantification</h2>
+        <h2>4. Beam Analysis: Local Fit Diagnostic</h2>
 
         <h3>4.1 Uniqueness Assessment</h3>
         <p>
             Although the combined $R$, $T$, and $R_{back}$ measurements strongly constrain the solution,
             experimental noise can still produce ambiguity between thickness and refractive index.
-            The beam-analysis post-processing stage maps this uncertainty explicitly.
+            The optional beam-analysis stage samples how fitted optical constants change when thickness is fixed at nearby values.
         </p>
 
         <h3>4.2 Scan Methodology</h3>
         <ol>
             <li><strong>Reference:</strong> start from the optimal thickness $d_{opt}$ returned by the main solver.</li>
-            <li><strong>Constraint Scan:</strong> vary the thickness in both directions using 1 nm steps. At each step,
-                fix $d$ and re-optimize the spline optical constants.</li>
+            <li><strong>Constraint scan:</strong> vary thickness in both directions by 0.5 nm, up to 20 nm from the optimum (and no lower than 1 nm). Hold the internal knot wavelengths fixed and re-optimize the $n$ and $k$ knot values against the reflectance channel.</li>
             <li><strong>Valley Mapping:</strong> plot the minimum MSE as a function of thickness.</li>
         </ol>
+        <div class="mermaid">
+            flowchart TD
+            A["Best fitted metal thickness"] --> B["Sample both sides in 0.5 nm steps"]
+            B --> C["Fix thickness and internal knot wavelengths"]
+            C --> D["Refit metal n and k knot values against reflectance"]
+            D --> E{"Objective within heuristic threshold?"}
+            E -->|Yes| F["Retain fitted curves"]
+            E -->|No| G["Discard this scan point"]
+            F --> H["Plot MSE by thickness and retained n/k envelopes"]
+            G --> H
+        </div>
 
         <h3>4.3 Interpretation</h3>
         <div class="highlight-box">
             <ul>
-                <li><strong>V-shape:</strong> a sharp V indicates a unique solution.</li>
-                <li><strong>Flat bottom:</strong> this indicates parameter correlation, mainly between $d$ and $n$.</li>
-                <li><strong>Beam envelope:</strong> the software exports the set of $n(\lambda)$ and $k(\lambda)$ curves
-                    whose MSE remains within the selected tolerance from the global minimum. This defines the admissible
-                    process window.
+                <li><strong>Narrow valley:</strong> the local fit deteriorates quickly as thickness moves from this optimum; other basins are not ruled out.</li>
+                <li><strong>Flat valley:</strong> nearby thicknesses can be compensated by changes in fitted optical constants.</li>
+                <li><strong>Beam envelope:</strong> the retained $n(\lambda)$ and $k(\lambda)$ curves show sensitivity to the scanned thickness range and the chosen fit threshold.
                 </li>
             </ul>
         </div>
 
         <h3>4.4 Uncertainty Formula</h3>
         <p>
-            The spectral uncertainty envelope defines the confidence intervals used to describe the process window:
+            The curve envelope is a local fit diagnostic. It is not a statistically calibrated confidence interval or a fabrication process window:
         </p>
         <div class="eq-box">
-            $$ \Delta n(\lambda) = \max_{d \in D_\tau} n_{sol}(\lambda, d) - \min_{d \in D_\tau} n_{sol}(\lambda, d) $$
-            $$ \Delta k(\lambda) = \max_{d \in D_\tau} k_{sol}(\lambda, d) - \min_{d \in D_\tau} k_{sol}(\lambda, d) $$
-            $$ \text{with } D_\tau = \{ d \mid \text{MSE}(d) \le \text{MSE}_{opt} \cdot (1 + \tau) \} $$
+            $$ \Delta n(\lambda) = \max_{d \in D} n_{sol}(\lambda, d) - \min_{d \in D} n_{sol}(\lambda, d) $$
+            $$ \Delta k(\lambda) = \max_{d \in D} k_{sol}(\lambda, d) - \min_{d \in D} k_{sol}(\lambda, d) $$
+            $$ \text{with } D = \{ d \text{ sampled at 0.5 nm intervals} \mid
+            J(d) \le \max(1.5J_{opt}+10^{-5},\,5\times10^{-5}) \}. $$
         </div>
 
         <!-- ================================================================ -->
@@ -328,7 +307,7 @@
             <li><strong>Knots:</strong> start with two or three knots for simple metals. Increase the knot count only
                 if the fit remains inadequate.</li>
             <li><strong>Thickness range:</strong> constrain $d_M$ to approximately ±20% of the target deposition.</li>
-            <li><strong>Substrate:</strong> the substrate selection (fused silica or BK7) affects the $R_{back}$ and
+            <li><strong>Substrate:</strong> the resolved transparent-substrate model affects the $R_{back}$ and
                 $T$ baselines.
             </li>
         </ul>
@@ -360,11 +339,11 @@
             </tr>
             <tr>
                 <td><strong>TMM Convention</strong></td>
-                <td>Macleod ($\hat{n}=n-ik$, <code>+1j</code>). Float64 / Complex128 throughout.</td>
+                <td>Macleod ($\hat{n}=n-ik$, <code>+1j</code>) in the film calculation.</td>
             </tr>
             <tr>
                 <td><strong>Global Search</strong></td>
-                <td>Differential Evolution (SciPy) with Numba-JIT cost function.</td>
+                <td>Native PGLOBAL, with knot continuation and bounded L-BFGS-B final polish.</td>
             </tr>
             <tr>
                 <td><strong>Local Polish (Beam)</strong></td>
@@ -381,7 +360,7 @@
             </tr>
             <tr>
                 <td><strong>Export</strong></td>
-                <td>Excel + HTML reports with embedded plots and metadata.</td>
+                <td>Excel and HTML fit reports; beam output is available after a beam scan.</td>
             </tr>
         </table>
 
@@ -391,26 +370,19 @@
         <!-- ================================================================ -->
         <h2>8. Pro 2026 Ergonomics & UI Upgrades</h2>
         <p>
-            The CERTUS suite uses a modernized interface for scientific workflows. The numerical kernels are
-            JIT-compiled through <strong>Numba</strong> and use <code>float64</code> and <code>complex128</code>
-            datatypes to preserve numerical stability.
+            The fit runs in a worker and reports progress while the GUI remains responsive. Numerical kernels use
+            NumPy and Numba on the paths called by the model.
         </p>
-        <h3>8.1 Global Keyboard Shortcuts</h3>
-        <p>The interface maps the following shortcuts to the main workflow actions:</p>
-        <ul>
-            <li><kbd>Ctrl</kbd> + <kbd>S</kbd>: save the current configuration.</li>
-            <li><kbd>Ctrl</kbd> + <kbd>O</kbd>: load an existing configuration.</li>
-            <li><kbd>F5</kbd> or <kbd>Ctrl</kbd> + <kbd>R</kbd>: launch the primary optimization step.</li>
-            <li><kbd>Ctrl</kbd> + <kbd>Z</kbd>: undo the last configuration change.</li>
-            <li><kbd>Esc</kbd>: close detached windows and auxiliary charts.</li>
-        </ul>
+        <h3>8.1 Controls</h3>
+        <p>Use the window's Load, Run, Stop, Save and Beam controls. Keyboard bindings should be read from the
+            running window's shortcuts help, since a command shown in a palette is not necessarily bound to a key.</p>
         <h3>8.2 Dynamic Processing Feedback</h3>
         <p>The long-running numerical tasks are executed in isolated worker threads. The interface uses wait cursors,
             tooltips, and progress feedback to keep the event loop responsive.
         </p>
 
         <div class="footer">
-            <p>Generated from source analysis of <code>CERTUS_METAL_SINGLE.py</code>, <code>certus_metal_common.py</code>, and <code>certus_ui.py</code> &mdash; Revision 2026.04.17</p>
+            <p>Implementation paths: <code>certus_metal_single_app.py</code>, <code>certus_metal_single_physics.py</code>, <code>pglobal_adapter.py</code>, and <code>calculate_RTRback_incoherent_vectorized</code>.</p>
             <p>&copy; CERTUS Scientific Suite v26-04 &bull; Scientific Report</p>
         </div>
     </div>

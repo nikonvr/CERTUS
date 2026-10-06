@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 
 import numpy as np
 
@@ -17,7 +16,7 @@ from certus.ui.certus_qt_widgets import (
     Qt,
     QWidget,
 )
-from certus.ui.certus_ui import enable_file_drop, install_standard_shortcuts, open_documentation, show_toast
+from certus.ui.certus_ui import enable_file_drop, install_standard_shortcuts, open_documentation, open_dropped_file
 
 
 class EventsManager:
@@ -49,12 +48,12 @@ class EventsManager:
             extra={"Ctrl+L": lambda: getattr(self.ui, "toggle_logs", lambda: None)()},
         )
 
-        def _on_spectrum_drop(paths) -> None:
+        def _on_config_drop(paths) -> None:
             if paths and hasattr(self.ui, "load_config"):
-                self.ui.load_config(paths[0])
-                show_toast(self.ui, f"Loaded: {Path(paths[0]).name}", "success")
+                open_dropped_file(self.ui, paths[0], self.ui.load_config)
 
-        enable_file_drop(self.ui, _on_spectrum_drop, extensions=("json", "csv", "xlsx", "xls"))
+        # A configuration only: DESIGN reads no data file, and the common drop router says so for any other.
+        enable_file_drop(self.ui, _on_config_drop, extensions=("json",))
 
     def _toggle_back_stack(self, state: int) -> None:
         """Toggle backside group visibility"""

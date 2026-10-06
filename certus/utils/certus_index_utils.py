@@ -292,7 +292,6 @@ def _sorted_finite_sigma_knots(sigma_knots) -> np.ndarray:
 
 from collections.abc import Mapping
 
-_D_SLIDER_STEPS_DEFAULT = 5000
 
 def _get_substrate_n_array_spline(substrate_id: int, wavelengths_nm: np.ndarray) -> np.ndarray:
     """Return substrate n(lambda), forcing Sapphire (id=3) to equation-based Sellmeier."""
@@ -358,58 +357,6 @@ def _spectral_display_align(lam_nm: np.ndarray, *series: np.ndarray) -> tuple[np
     lam_s = lam_u[order]
     out = [np.asarray(t)[order] for t in trimmed]
     return lam_s, out, order
-
-
-def _d_from_slider_int(iv: int, d_lo_nm: float, d_hi_nm: float, steps: int = _D_SLIDER_STEPS_DEFAULT) -> float:
-    """Convert slider integer position to thickness (nm)."""
-    if d_hi_nm <= d_lo_nm + 1e-30:
-        return float(d_lo_nm)
-    t = float(iv) / float(steps)
-    return float(d_lo_nm + t * (d_hi_nm - d_lo_nm))
-
-
-def _slider_int_from_d_nm(dv: float, d_lo_nm: float, d_hi_nm: float, steps: int = _D_SLIDER_STEPS_DEFAULT) -> int:
-    """Convert thickness (nm) to slider integer position."""
-    if d_hi_nm <= d_lo_nm + 1e-30:
-        return 0
-    dv = float(np.clip(dv, d_lo_nm, d_hi_nm))
-    t = (dv - d_lo_nm) / (d_hi_nm - d_lo_nm)
-    return round(t * steps)
-
-
-def _get_xv_spectral_coord(sx: float, mode: str) -> float:
-    """Utility for spectral coordinate conversion (lambda / sigma / sigma2)."""
-    if mode == "Sigma (nm?1)":
-        return float(sx)
-    elif mode == "Sigma2 (nm?2)":
-        return float(sx) ** 2
-    else:
-        return 1.0 / float(sx) if sx != 0 else 0.0
-
-
-def _stretch_sig_to_px(delta: float, span_sig2: float) -> int:
-    """Calculate pixel stretch for sigma-based UI elements."""
-    return max(1, int(max(0.0, float(delta)) / max(span_sig2, 1e-30) * 28000.0))
-
-
-def _compute_study_lambda_window_nm(lam_m: np.ndarray, cfg: Any) -> tuple[float, float]:
-    """Calculate the useful lambda band for display and RMSE calculation."""
-    lam = np.asarray(lam_m, dtype=np.float64).ravel()
-    ok = np.isfinite(lam) & (lam > 0)
-    if not np.any(ok):
-        return 400.0, 1200.0
-    lo_d = float(np.min(lam[ok]))
-    hi_d = float(np.max(lam[ok]))
-    rw = getattr(cfg, "rmse_fit_lambda_nm", None)
-    if rw is None:
-        return lo_d, hi_d
-    lo_w = float(min(rw[0], rw[1]))
-    hi_w = float(max(rw[0], rw[1]))
-    lo = max(lo_d, lo_w)
-    hi = min(hi_d, hi_w)
-    if hi <= lo:
-        return lo_d, hi_d
-    return lo, hi
 
 
 def _rmse_d_lower_envelope_mask(d_nm: np.ndarray, rmse: np.ndarray, tol_nm: float) -> np.ndarray:
@@ -1080,7 +1027,7 @@ def normalize_index_config(cfg: dict) -> dict:
             out["stack_multipliers"] = [float(x.strip()) for x in str(out["stack_string"]).split(",") if x.strip()]
         except Exception:
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
-    for key in ("thickness_min", "thickness_max", "exclude_min", "exclude_max", "weight_T", "weight_R", "l0", "wl_range_start", "wl_range_end", "wl_step", "scan_wl_min", "scan_wl_max", "scan_wl_step", "dynamics_threshold", "min_transmission_floor", "min_spectral_resolution", "mc_runs_block", "iter_divider_start", "iter_divider_end", "strategy_phase_timeout", "screening_mc_runs", "screening_keep_top_k", "trigger_tolerance", "sim_thickness_probe_offset_ratio", "non_monotonic_error_factor", "wavelength_change_penalty", "extrema_exclusion_ratio", "robustness_num_runs", "nucleation_mc_runs", "mining_candidates_limit", "n_screen_runs", "k_keep_survivors", "top_k_parents", "max_fusions_per_parent", "phase_a_scan_limit", "phase_a_keep_limit", "nucleation_max_rmse", "nucleation_degradation", "step0_sigma", "keep_full_mc_top_k", "sym_weight", "sym_same_wl_bonus", "sym_extrema_window", "sym_continuity_weight", "consensus_num_seeds", "consensus_seed_stride", "consensus_top_k", "consensus_num_runs", "consensus_std_weight"):
+    for key in ("thickness_min", "thickness_max", "exclude_min", "exclude_max", "weight_T", "weight_R", "l0", "wl_range_start", "wl_range_end", "wl_step", "scan_wl_min", "scan_wl_max", "scan_wl_step", "dynamics_threshold", "min_transmission_floor", "min_spectral_resolution", "mc_runs_block", "iter_divider_start", "iter_divider_end", "strategy_phase_timeout", "screening_mc_runs", "screening_keep_top_k", "trigger_tolerance", "sim_thickness_probe_offset_ratio", "non_monotonic_error_factor", "wavelength_change_penalty", "robustness_num_runs", "nucleation_mc_runs", "mining_candidates_limit", "n_screen_runs", "k_keep_survivors", "top_k_parents", "max_fusions_per_parent", "phase_a_scan_limit", "phase_a_keep_limit", "nucleation_max_rmse", "nucleation_degradation", "step0_sigma", "keep_full_mc_top_k", "sym_weight", "sym_same_wl_bonus", "sym_extrema_window", "sym_continuity_weight", "consensus_num_seeds", "consensus_seed_stride", "consensus_top_k", "consensus_num_runs", "consensus_std_weight"):
         if key in out and isinstance(out[key], str):
             try:
                 out[key] = float(str(out[key]).replace(",", "."))

@@ -37,6 +37,7 @@ from certus.ui.certus_qt_widgets import (
     QVBoxLayout,
     QWidget,
 )
+from certus.ui.certus_re_snapshot import retained_report_for, write_front_stack
 from certus.ui.certus_ui import (
     ExcelTableWidget,
     get_certus_last_dir,
@@ -313,8 +314,8 @@ class CertusREExcelMixin:
 
     def _load_re_substrate(
         self, substrate_name: str, l0_ref: float, *, re_workbook_dir: str | None = None
-    ) -> TabularMaterial | None:
-        """Load substrate TabularMaterial."""
+    ) -> TabularMaterial:
+        """Load substrate TabularMaterial; raise ValueError when no source has it."""
 
         mat, source, raw_name, sub_norm = self._re_resolve_substrate_material(
             substrate_name, l0_ref, re_workbook_dir=re_workbook_dir
@@ -328,7 +329,7 @@ class CertusREExcelMixin:
             )
             return mat
 
-        return None
+        raise ValueError(f"RE: substrate '{raw_name}' is neither in indices.xlsx nor built in: the workbook is not loaded (D88)")
 
     def _parse_re_design(self, ws) -> tuple:
         """Parse 'design' sheet -> (lambda_ref_nm, substrate_name, qwot_list).
@@ -1445,7 +1446,7 @@ class CertusREExcelMixin:
             )
 
             show_toast(self, f"Loaded: {Path(path).name}", "success")
-
+            self.mark_config_saved()
             return True
 
         except NUMERICAL_FAULT_EXCEPTIONS :
@@ -1821,25 +1822,11 @@ class CertusREExcelMixin:
 
             ws.append(["FRONT STACK", f"L0 = {self.l0_spin.value()} nm"])
 
-            ws.append(["#", "Material", "QWOT", "Thickness (nm)", "Variable"])
-
             ep = self.ep_current if self.ep_current is not None else []
 
-            for i, layer in enumerate(self._get_front_stack()):
-                ws.append(
-                    [
-                        i + 1,
-                        layer.mat,
-                        layer.qwot,
-                        ep[i] if i < len(ep) else 0,
-                        "Yes" if layer.var else "No",
-                    ]
-                )
+            _retained = retained_report_for(getattr(self, "_re_retained_report", None), ep)
 
-            if len(ep) > 0:
-                ws.append([])
-
-                ws.append(["Total Thickness (nm)", float(np.sum(ep))])
+            write_front_stack(ws, self._get_front_stack(), ep, _retained)
 
             ws.append([])
 

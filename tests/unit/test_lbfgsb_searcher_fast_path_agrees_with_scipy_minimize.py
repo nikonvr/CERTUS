@@ -2,12 +2,13 @@
 
 `LBFGSBSearcher.search` (`certus/physics/certus_optimizers.py`, the local search of PGlobal) calls `scipy.optimize._lbfgsb.setulb` directly when a gradient is available and no callback is
 asked for: a PRIVATE function of scipy, whose signature changed when L-BFGS-B was rewritten in C (the `ln_task` argument), called in a loop that follows its state machine by hand (task codes 3, 1,
-5; the `isave[29]` iteration counter). No test of the repository called it: `_search_direct` was half uncovered, `LBFGSBSearcher` was named by no test, and `search` catches `ValueError`,
-`RuntimeError` and `LinAlgError` but not `TypeError`, which is what a changed signature raises. The CI installs the latest versions at each run.
+5; the `isave[29]` iteration counter). If that private call raises `TypeError` or `AttributeError`, search retries through the public `minimize` API. CI still checks that the fast path works with
+the installed scipy, so a performance loss remains visible.
 
 What is pinned here, against `scipy.optimize.minimize` on problems whose optimum is known:
 
-    the fast path RUNS with the installed scipy (the tripwire: a signature that changes fails here, with its own message, and not in the middle of a global optimization)
+    the fast path RUNS with the installed scipy (the tripwire: a signature that changes fails here, with its own message)
+    the public minimize path is used if the private call has an incompatible API
     it reaches the optimum of a quadratic, of a bounded quadratic whose minimum is outside the box (the bound), and of the Rosenbrock valley, to what `minimize` reaches
     the budget of evaluations stops it, and `nfev` counts the evaluations; the iteration budget stops it too
     a gradient given as a (value, gradient) pair, or failing at the probe, is handled; without a gradient the search falls back on finite differences
@@ -61,6 +62,23 @@ def test_the_fast_path_runs_with_the_installed_scipy():
     assert evaluations >= 1
     assert np.all(np.isfinite(x))
     assert np.isfinite(value)
+
+
+@pytest.mark.parametrize("error", [TypeError, AttributeError])
+def test_a_changed_private_setulb_api_falls_back_to_minimize(monkeypatch, error):
+    s = searcher()
+    calls = []
+
+    def incompatible_setulb(*args):
+        calls.append(1)
+        raise error("setulb API changed")
+
+    monkeypatch.setattr(s, "_setulb", incompatible_setulb)
+    x, value, evaluations = s.search(np.zeros(3))
+    assert calls == [1]
+    np.testing.assert_allclose(x, CENTRE, atol=1e-6)
+    assert value < 1e-10
+    assert evaluations > 0
 
 
 def quadratic_and_gradient(x):

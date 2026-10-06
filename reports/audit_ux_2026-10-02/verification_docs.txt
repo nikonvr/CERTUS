@@ -1,0 +1,16 @@
+==================================================================================
+CONTROLE DE 19 DOCUMENTS (4 md, 15 html)
+==================================================================================
+
+A. LIENS MORTS : 0
+
+B. REFERENCES DE CODE MORTES : 0
+
+C. CHIFFRES ET AFFIRMATIONS PERIMES : 0
+
+D. STRUCTURE HTML : 0
+
+==================================================================================
+DEFAUTS MECANIQUES : 0
+Zero ici ne veut PAS dire zero contradiction : ce script ne juge aucune phrase.
+==================================================================================

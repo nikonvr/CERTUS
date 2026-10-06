@@ -121,28 +121,16 @@ def _build_popup_class() -> Any:
             self._apply_style()
 
         def _apply_style(self) -> None:
-            try:
-                from certus.ui.certus_ui import CertusTheme as T
+            # Tokens of the palette, in an f-string so they follow the theme. The body asked for TEXT_MUTED or MID,
+            # which the palette does not have, and fell back on a hexadecimal, light in both themes.
+            from certus.ui.certus_ui import CertusTheme as T
 
-                bg = getattr(T, "SURFACE", "#FFFFFF")
-                border = getattr(T, "BORDER", "#D1D5DB")
-                text = getattr(T, "TEXT_MAIN", "#111827")
-                link = getattr(T, "PRIMARY", "#2563EB")
-                muted = getattr(T, "TEXT_MUTED", None) or getattr(T, "MID", "#6B7280")
-            except (ImportError, AttributeError, RuntimeError, TypeError):
-                bg, border, text, link, muted = (
-                    "#FFFFFF",
-                    "#D1D5DB",
-                    "#111827",
-                    "#2563EB",
-                    "#6B7280",
-                )
             self.setStyleSheet(
-                f"#CertusRichTooltip {{ background: {bg}; "
-                f"border: 1px solid {border}; border-radius: 8px; }}"
-                f"#tip-title {{ color: {text}; font-weight: 700; font-size: 10pt; }}"
-                f"#tip-body  {{ color: {muted}; font-size: 9pt; }}"
-                f"#tip-link  {{ color: {link}; font-size: 9pt; font-weight: 600; }}"
+                f"#CertusRichTooltip {{ background: {T.SURFACE}; "
+                f"border: 1px solid {T.BORDER}; border-radius: 8px; }}"
+                f"#tip-title {{ color: {T.TEXT_MAIN}; font-weight: 700; font-size: 10pt; }}"
+                f"#tip-body  {{ color: {T.TEXT_SUB}; font-size: 9pt; }}"
+                f"#tip-link  {{ color: {T.PRIMARY}; font-size: 9pt; font-weight: 600; }}"
             )
 
         def apply_spec(self, spec: TooltipSpec) -> None:
@@ -154,7 +142,7 @@ def _build_popup_class() -> Any:
                     from certus.ui.certus_icons import certus_icon
                     from certus.ui.certus_ui import CertusTheme as T
 
-                    color = getattr(T, "PRIMARY", "#2563EB")
+                    color = T.PRIMARY
                     pix = certus_icon(spec.icon_name, color=color, size=16).pixmap(16, 16)
                     self._icon_lbl.setPixmap(pix)
                     self._icon_lbl.setVisible(True)

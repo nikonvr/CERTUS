@@ -35,7 +35,7 @@
 # defaut de 1800 s couperait ce run a 30 min. Regle du §0.3 : `max(5400, 4 x duree attendue)`.
 
 set -u
-PY="${CERTUS_PY:-C:/envs/certus/Scripts/python.exe}"
+PY="${CERTUS_PY:-python}"
 ETIQ="${1:-solo_2026-08-23}"
 GRAINE="${2:-404}"
 J="reports/${ETIQ}"

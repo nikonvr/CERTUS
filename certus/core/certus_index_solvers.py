@@ -454,10 +454,13 @@ class PGlobalOptimizerINDEX:
                 _numba_restore = _numba_set_threads_clamped(nb_cores)
 
             # nb_cores // n_workers can exceed 31; restoration used raw nb_cores -> ValueError
-
-            numba.set_num_threads(_numba_set_threads_clamped(max(1, nb_cores // self.n_workers)))
-
-            self._executor = ThreadPoolExecutor(max_workers=self.n_workers)
+            n_inner = _numba_set_threads_clamped(max(1, nb_cores // self.n_workers))
+            numba.set_num_threads(n_inner)
+            # The count holds for the thread that sets it: each pool thread sets its share when it starts, or it would
+            # take every Numba thread, n_workers times over (D91).
+            self._executor = ThreadPoolExecutor(
+                max_workers=self.n_workers, initializer=numba.set_num_threads, initargs=(n_inner,)
+            )
 
         else:
             self._executor = None

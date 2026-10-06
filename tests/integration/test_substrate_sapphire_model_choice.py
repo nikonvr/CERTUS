@@ -53,3 +53,22 @@ def test_sapphire_sellmeier_remains_competitive_against_polynomial() -> None:
     # We still require a physically plausible Sellmeier fit with controlled error.
     assert rmse_sell < 2e-3
     assert rmse_sell <= (40.0 * rmse_poly)
+
+
+@pytest.mark.integration
+def test_one_ulp_on_one_point_does_not_send_the_sapphire_fit_to_another_model() -> None:
+    """D10: with two random starts, a one-ulp change of one data point decided the minimum: 41 such perturbations gave an
+    RMSE of 0.00095 to 0.00097 forty times and 0.00796 once (2026-10-06), the polish of every start having run off and
+    the fit fallen back to the standard 3-term model. With eight starts, the 41 stay within 0.000946 to 0.000964. This
+    is the perturbation that ran off (point 105, one ulp up)."""
+    wl_nm = np.linspace(2500.0, 4000.0, 280, dtype=np.float64)
+    n_true = csi._sellmeier_3term_standard_eval(np.asarray(SELLMEIER_COEFFS_BY_ID[3], dtype=np.float64), wl_nm / 1000.0)
+    n_obs = n_true + np.random.default_rng(20260425).normal(0.0, 2.5e-4, size=n_true.shape)
+    n_obs[105] = np.nextafter(n_obs[105], np.inf)
+
+    n_sell, _meta = csi.IndexCore.fit_sellmeier(
+        n_obs, wl_nm, 2500.0, 4000.0, model_kind="sellmeier3poles", return_meta=True,
+        sellmeier_timeout_s=8.0, sellmeier_de_maxiter=250, sellmeier_ls_max_nfev=2500,
+    )  # fmt: skip
+
+    assert float(np.sqrt(np.mean((n_sell - n_true) ** 2))) < 1.5e-3

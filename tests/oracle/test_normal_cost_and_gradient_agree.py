@@ -8,9 +8,10 @@ only when the substrate does not absorb. Measured on 2026-09-30 against the orac
 wavelengths): 1.8e-5 off at k = 1e-4, 1.8e-3 at k = 1e-2, 5.2e-2 at k = 0.3, 0.16 at k = 1.5. The optimizer
 followed the gradient of another objective than the one it reported.
 
-The weights of DESIGN average 1 (`spectral_rmse_weights`); the gradient of the back-stack branch divides by the
-number of points where the cost divides by the sum of the weights, so the two agree only then. That is what
-these tests use; it is a separate, older defect (PHY-12, D45 in docs/ETAT.md).
+The weights of DESIGN average 1 (`spectral_rmse_weights`), and these tests used weights of mean 1 because the
+gradient of the back-stack branch divided by the number of points where the cost divides by the sum of the
+weights (PHY-12, D45 in docs/ETAT.md): the gradient was then too large by the mean weight. The last test pins the
+fix with weights that are neither normalised nor all positive.
 """
 
 from __future__ import annotations
@@ -102,3 +103,31 @@ def test_a_substrate_without_absorption_keeps_the_kernel_that_always_ran(monkeyp
     module.compute_gradient_all_layers_analytic(*args[:2], _substrate(1e-4), *args[3:], *empty)
 
     assert used == ["plain"]
+
+
+@pytest.mark.parametrize("k", [0.0, 1e-6])
+def test_with_a_back_stack_the_gradient_is_the_derivative_of_the_cost_whatever_the_weights(k) -> None:
+    """Weights of 1 and 3 and points outside the targets (weight 0), as DESIGN builds them for two bands: the
+    gradient divided by the number of valid points was 1.6 times too large here (sum of weights / count)."""
+    from certus.physics.gradient_oblique import compute_gradient_all_layers_analytic
+    from certus.physics.gradient_utils import cost_numba_fast
+
+    n, d = _stack(3, seed=53)
+    n_back, d_back = _stack(2, seed=59)
+    n_sub = _substrate(k)
+    targets = np.random.default_rng(61).uniform(0.2, 0.9, len(WLS))
+    weights = np.array([1.0, 1.0, 3.0, 3.0, 0.0, 1.0, 3.0, 0.0])
+    var = np.arange(3, dtype=np.int64)
+
+    def cost(thicknesses):
+        return cost_numba_fast(thicknesses, n, n_sub, WLS, targets, weights, 1.0, True, n_back, d_back)
+
+    value, gradient = compute_gradient_all_layers_analytic(d, n, n_sub, WLS, targets, weights, 1.0, True, n_back, d_back, var)
+
+    assert value == pytest.approx(cost(d), rel=1e-10)
+    step = 1e-3
+    for j in range(3):
+        up, down = d.copy(), d.copy()
+        up[j] += step
+        down[j] -= step
+        assert gradient[j] == pytest.approx((cost(up) - cost(down)) / (2 * step), rel=1e-5, abs=1e-9)

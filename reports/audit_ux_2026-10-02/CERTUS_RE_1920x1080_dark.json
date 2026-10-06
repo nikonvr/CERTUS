@@ -1,0 +1,479 @@
+{
+  "controls": [
+    {
+      "class": "QPushButton",
+      "name": "empty-cta",
+      "text": "Add target",
+      "accessible": "Add target",
+      "tooltip": "Click 'Add target' to define the first wavelength window.",
+      "enabled": true,
+      "geometry": [
+        1416,
+        921,
+        180,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Detach",
+      "accessible": "Detach",
+      "tooltip": "Open the front layer table in a separate floating window.",
+      "enabled": true,
+      "geometry": [
+        943,
+        738,
+        77,
+        42
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "⬡  Detach plot",
+      "accessible": "⬡  Detach plot",
+      "tooltip": "Open the current plot tab in a separate window.",
+      "enabled": true,
+      "geometry": [
+        521,
+        36,
+        126,
+        42
+      ]
+    },
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "Help",
+      "accessible": "Help",
+      "tooltip": "Open documentation for CERTUS_RE (F1)",
+      "enabled": true,
+      "geometry": [
+        384,
+        37,
+        60,
+        45
+      ]
+    },
+    {
+      "class": "CertusThemeToggle",
+      "name": "",
+      "text": "◑",
+      "accessible": "Switch to light theme",
+      "tooltip": "Switch to light theme",
+      "enabled": true,
+      "geometry": [
+        450,
+        43,
+        32,
+        46
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Export",
+      "accessible": "Export",
+      "tooltip": "Excel snapshot: materials, stack thicknesses, targets (oblique columns if RE/oblique), and last evaluated spectrum (R+T columns per angle/pol when available). For full target-vs-theory tables after a fit, use the dedicated RE export action if present.",
+      "enabled": true,
+      "geometry": [
+        10,
+        99,
+        88,
+        42
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "▸  1  RE workflow",
+      "accessible": "▸  1  RE workflow",
+      "tooltip": "Expand 1  RE workflow section",
+      "enabled": true,
+      "geometry": [
+        0,
+        281,
+        486,
+        36
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusPrimaryBtn",
+      "text": " Load RE file (Excel)",
+      "accessible": "Load RE file (Excel)",
+      "tooltip": "Select and load a previously saved R/E inversion file.",
+      "enabled": true,
+      "geometry": [
+        29,
+        417,
+        208,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusPrimaryBtn",
+      "text": " Run RE",
+      "accessible": "Run RE",
+      "tooltip": "Run the R/E inversion process on current targets.",
+      "enabled": false,
+      "geometry": [
+        249,
+        417,
+        208,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusPrimaryBtn",
+      "text": " Display results",
+      "accessible": "Display results",
+      "tooltip": "Reopen the results table from the last Run RE (QWOT, DeltaQWOT, splines DeltaRe, RMSE, exports...).",
+      "enabled": false,
+      "geometry": [
+        29,
+        467,
+        428,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "▸  2  Options",
+      "accessible": "▸  2  Options",
+      "tooltip": "Expand 2  Options section",
+      "enabled": true,
+      "geometry": [
+        0,
+        550,
+        486,
+        36
+      ]
+    },
+    {
+      "class": "QRadioButton",
+      "name": "",
+      "text": "Slow",
+      "accessible": "Slow",
+      "tooltip": "Multistarts ×4, top-K 5, shakes 8, increased P1/2a/2b iterations.",
+      "enabled": true,
+      "geometry": [
+        87,
+        761,
+        54,
+        18
+      ]
+    },
+    {
+      "class": "QRadioButton",
+      "name": "",
+      "text": "Medium",
+      "accessible": "Medium",
+      "tooltip": "Matches optimal batch defaults (multistarts 2, top-K 3, shakes 4, maxiter 85/45/110).",
+      "enabled": true,
+      "geometry": [
+        153,
+        761,
+        74,
+        18
+      ]
+    },
+    {
+      "class": "QRadioButton",
+      "name": "",
+      "text": "Fast",
+      "accessible": "Fast",
+      "tooltip": "Single multistart, top-K 1, no shakes, reduced iterations — good for a first try.",
+      "enabled": true,
+      "geometry": [
+        239,
+        761,
+        50,
+        18
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "QWOT penalty",
+      "accessible": "QWOT penalty",
+      "tooltip": "ON: displayed RMSE_facade = sqrt(RMSE_sp2 + alpha·RMSE_QWOT2) (alpha varies by phase). The solver minimizes TRF_RMS(r) (see iter logs). OFF: RMSE_facade = RMSE_sp.",
+      "enabled": true,
+      "geometry": [
+        29,
+        792,
+        428,
+        18
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "▸  3  Excel data",
+      "accessible": "▸  3  Excel data",
+      "tooltip": "Expand 3  Excel data section",
+      "enabled": true,
+      "geometry": [
+        0,
+        849,
+        486,
+        36
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "400.0 nm",
+      "accessible": "Ignore all RE measurement points with λ below this minimum",
+      "tooltip": "Ignore all RE measurement points with λ below this minimum.",
+      "enabled": true,
+      "geometry": [
+        29,
+        1182,
+        135,
+        43
+      ]
+    },
+    {
+      "class": "QDoubleSpinBox",
+      "name": "",
+      "text": "700.0 nm",
+      "accessible": "Ignore all RE measurement points with λ above this maximum",
+      "tooltip": "Ignore all RE measurement points with λ above this maximum.",
+      "enabled": true,
+      "geometry": [
+        196,
+        1182,
+        135,
+        43
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "▸  4  Display",
+      "accessible": "▸  4  Display",
+      "tooltip": "Expand 4  Display section",
+      "enabled": true,
+      "geometry": [
+        0,
+        1264,
+        486,
+        36
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "▸  5  Refinement",
+      "accessible": "▸  5  Refinement",
+      "tooltip": "Expand 5  Refinement section",
+      "enabled": true,
+      "geometry": [
+        0,
+        1312,
+        486,
+        36
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "Refine Substrate Index (Cauchy)",
+      "accessible": "Refine Substrate Index (Cauchy)",
+      "tooltip": "Refine substrate Cauchy parameters if a Cauchy model is available.",
+      "enabled": true,
+      "geometry": [
+        29,
+        1410,
+        428,
+        18
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "Refine Material 1 Index (H)",
+      "accessible": "Refine Material 1 Index (H)",
+      "tooltip": "Enable B-Spline refinement for the high-index material.",
+      "enabled": true,
+      "geometry": [
+        29,
+        1434,
+        428,
+        18
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "Refine Material 2 Index (L)",
+      "accessible": "Refine Material 2 Index (L)",
+      "tooltip": "Enable B-Spline refinement for the low-index material.",
+      "enabled": true,
+      "geometry": [
+        29,
+        1458,
+        428,
+        18
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusPrimaryBtn",
+      "text": "EVALUATE",
+      "accessible": "EVALUATE",
+      "tooltip": "Compute RMSE and spectral curves for current stack (Ctrl+E)",
+      "enabled": false,
+      "geometry": [
+        27,
+        1577,
+        210,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusDangerBtn",
+      "text": "STOP",
+      "accessible": "STOP",
+      "tooltip": "Stop spectral evaluation or RE optimization in progress.",
+      "enabled": true,
+      "geometry": [
+        249,
+        1577,
+        210,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusPrimaryBtn",
+      "text": " Stack Info",
+      "accessible": "Stack Info",
+      "tooltip": "Substrate summary and stack structure in QWOT in a separate window.",
+      "enabled": true,
+      "geometry": [
+        27,
+        1633,
+        210,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "🔄  Clear / Reset",
+      "accessible": "🔄  Clear / Reset",
+      "tooltip": "Reset the entire application to factory defaults.\nStops any running processes, clears all data and results,\nand reloads the default configuration.",
+      "enabled": true,
+      "geometry": [
+        249,
+        1633,
+        210,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Show Details",
+      "accessible": "Show Details",
+      "tooltip": "Toggle log panel and detail view.",
+      "enabled": true,
+      "geometry": [
+        2,
+        1039,
+        104,
+        34
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "toast-close",
+      "text": "✕",
+      "accessible": "Dismiss notification",
+      "tooltip": "Dismiss notification",
+      "enabled": true,
+      "geometry": [
+        1869,
+        1019,
+        22,
+        28
+      ]
+    }
+  ],
+  "tabs": [
+    {
+      "name": "",
+      "current": 0,
+      "tabs": [
+        "Layers"
+      ]
+    },
+    {
+      "name": "",
+      "current": 0,
+      "tabs": [
+        "✦ Synthesis",
+        "Spectrum (T)",
+        "Index profile",
+        "n(λ)"
+      ]
+    }
+  ],
+  "labels": [
+    "<b>Spectral targets</b>",
+    "∅",
+    "No spectral targets",
+    "Click 'Add target' to define the first wavelength window.",
+    "<b>Stack (front face)</b>",
+    "0 layers",
+    "∅",
+    "No layers yet",
+    "Add a layer from the toolbar above, or load a configuration.",
+    "<span style=\"color:#94a3b8/*T:TEXT_SUB*/; font-size: 11pt;\">RE load, run, and optimization options: left panel.</span>",
+    "Reverse engineering synthesis — figures refresh after each evaluation.",
+    "RMSE",
+    "—",
+    "LAYERS",
+    "—",
+    "TOTAL THICKNESS",
+    "—",
+    "STATUS",
+    "—",
+    "RE",
+    "CERTUS  Reverse Engineering",
+    "Workflow",
+    "1 Load workbook  →  2 Evaluate spectrum  →  3 Run RE  →  4 Inspect results",
+    "RE workflow",
+    "<b>1</b> Load workbook &nbsp;&nbsp; <b>2</b> Evaluate spectrum &nbsp;&nbsp; <b>3</b> Run RE",
+    "RE optimization",
+    "Modes below are left to right: <b>Slow</b> -> <b>Medium</b> -> <b>Fast</b>. <b>Slow</b> = larger budget (more multistarts, top-K, shakes, iterations) to seek a better minimum. <b>Medium</b> = settings validated on the optimal batch (exploration + iterations). <b>Fast</b> = fewer restarts / top-K / shakes and reduced iterations — quick run.",
+    "Mode :",
+    "Data from Excel",
+    "<b>Optical indices</b> — H, L and substrate: 'index' sheet (n(λ), k(λ) tables).",
+    "<b>Design and measurement reference</b>",
+    "<span style=\"color:#94a3b8/*T:TEXT_SUB*/;\"><b>Reference lambda₀</b> :  (load an RE file; value read from the <b>design</b> sheet)</span>",
+    "<span style=\"color:#94a3b8/*T:TEXT_SUB*/;\"><b>Substrate back face</b> :  (load an RE file; inferred from measurement column <b>headers</b>)</span>",
+    "RE fit λ window:",
+    "->",
+    "Index Refinement (Degrees of Freedom)",
+    "Actions",
+    "Ready",
+    "Zoom 100%",
+    "Evals: 0",
+    "Best RMSE:  N/A",
+    "Overall progress",
+    "0%",
+    "",
+    "Status: Idle • Next: start run",
+    "Zoom 100%",
+    "",
+    "System ready. JIT Warmup complete."
+  ]
+}

@@ -91,7 +91,11 @@ def _worker_main(tag: str) -> None:
         "is_button": isinstance(focused, QAbstractButton),
     }
     win.close()
-    print(MARKER + json.dumps(out, ensure_ascii=False))
+    # D23: the native abort (0xC0000005) came after this line, while the return freed the locals (the
+    # QApplication before the window) or during interpreter teardown; the marker, still in the pipe buffer,
+    # was lost with it. Flush it, then leave without the teardown: it is not what this worker measures.
+    print(MARKER + json.dumps(out, ensure_ascii=False), flush=True)
+    os._exit(0)
 
 
 @pytest.mark.parametrize("tag", MODULES_UNDER_TEST)

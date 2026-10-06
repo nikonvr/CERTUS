@@ -1,0 +1,116 @@
+{
+  "controls": [
+    {
+      "class": "QToolButton",
+      "name": "",
+      "text": "Help",
+      "accessible": "Help",
+      "tooltip": "Open documentation for HUB (F1)",
+      "enabled": true,
+      "geometry": [
+        1614,
+        30,
+        60,
+        45
+      ]
+    },
+    {
+      "class": "CertusThemeToggle",
+      "name": "",
+      "text": "◐",
+      "accessible": "Switch to dark theme",
+      "tooltip": "Switch to dark theme",
+      "enabled": true,
+      "geometry": [
+        1870,
+        37,
+        32,
+        46
+      ]
+    },
+    {
+      "class": "QComboBox",
+      "name": "",
+      "text": "",
+      "accessible": "Choose the global font",
+      "tooltip": "Choose the global font",
+      "enabled": true,
+      "geometry": [
+        1680,
+        34,
+        184,
+        38
+      ]
+    },
+    {
+      "class": "QCheckBox",
+      "name": "",
+      "text": "Auto Export Reports",
+      "accessible": "Auto Export Reports",
+      "tooltip": "Automatically generate Excel/HTML reports after calculationation.",
+      "enabled": true,
+      "geometry": [
+        48,
+        998,
+        141,
+        22
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "CertusPrimaryBtn",
+      "text": " Scientific Documentation",
+      "accessible": "Scientific Documentation",
+      "tooltip": "Open the full scientific documentation for the CERTUS suite (HTML reference).",
+      "enabled": true,
+      "geometry": [
+        1686,
+        989,
+        186,
+        44
+      ]
+    },
+    {
+      "class": "QPushButton",
+      "name": "",
+      "text": "Show Details",
+      "accessible": "Show Details",
+      "tooltip": "Show or hide the process launch log panel.",
+      "enabled": true,
+      "geometry": [
+        195,
+        989,
+        96,
+        40
+      ]
+    }
+  ],
+  "tabs": [],
+  "labels": [
+    "CERTUS HUB",
+    "Unified Optical Suite",
+    "🧩",
+    "DESIGN",
+    "🕵️",
+    "RE",
+    "🏭",
+    "STRAT",
+    "🧪",
+    "INDEX",
+    "〰️",
+    "INDEX SPLINE",
+    "⚡",
+    "FIELD",
+    "🫧",
+    "SMOOTHER",
+    "📏",
+    "SUBSTRATE INDEX",
+    "🛡️",
+    "METAL BILAYER",
+    "🛡️",
+    "METAL SINGLE",
+    "Recent:",
+    "(none yet)",
+    "© 2024-2026 CERTUS Scientific Suite v26_05 • Python 3.14.7 (64bit) • Qt 6.11.0"
+  ]
+}

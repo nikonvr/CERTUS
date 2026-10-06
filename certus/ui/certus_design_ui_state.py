@@ -339,13 +339,43 @@ class StateManager:
         if hasattr(self.ui, "auto_scale_y_check"):
             self.ui.auto_scale_y_check.setChecked(opt.get("auto_scale_y", self.ui.auto_scale_y_check.isChecked()))
 
+    def config_load_problems(self, c: dict) -> list[str]:
+        """What `c` names that this window cannot reproduce (D88): loading it would compute with something else.
+
+        A layer naming a material slot the window does not have would become the first slot. A material slot whose
+        preset no list offers is loaded from the indices the file saved with it (`_apply_material_config`); only a
+        slot that saved none cannot be.
+        """
+        problems = []
+        for name, d in (c.get("materials") or {}).items():
+            widgets = self.ui.mat_widgets.get(name)
+            preset = d.get("preset", "Custom") if isinstance(d, dict) else "Custom"
+            offered = widgets is None or preset == "Custom" or widgets["preset"].findText(str(preset)) >= 0
+            if not offered and not ("n4" in d and "n7" in d):
+                problems.append(f'Material {name}: the preset "{preset}" is not offered and the file saved no indices for it.')
+        slots = [m for m in CFG.MATERIALS if m.lower() != "substrate"]
+        for side in ("front", "back"):
+            for k, row in enumerate(c.get(side) or [], start=1):
+                mat = row.get("mat") if isinstance(row, dict) else None
+                if mat is not None and str(mat) not in slots:
+                    problems.append(f'{side.capitalize()} layer {k}: "{mat}" is not one of {", ".join(slots)}.')
+        return problems
+
     def _apply_material_config(self, materials: dict) -> None:
-        """Apply saved material presets and custom n values."""
+        """Apply saved material presets and custom n values.
+
+        The preset lists offer only "Custom": a file saved with a named preset (the shipped example has `TiO2 (H)`)
+        carries the indices that preset stood for, and those are applied. They used to be skipped, so the slot kept the
+        indices it had before the load, whatever the file said.
+        """
 
         for n, d in materials.items():
             if n not in self.ui.mat_widgets:
                 continue
             preset_name = d.get("preset", "Custom")
+            if preset_name != "Custom" and self.ui.mat_widgets[n]["preset"].findText(str(preset_name)) < 0:
+                self.ui.log(f"Material {n}: preset {preset_name!r} is not offered; the indices the file saved are used.", "INFO")
+                preset_name = "Custom"
             self.ui.mat_widgets[n]["preset"].setCurrentText(preset_name)
             if preset_name == "Custom":
                 self.ui.mat_widgets[n]["n4"].setValue(d.get("n4", 1.5))

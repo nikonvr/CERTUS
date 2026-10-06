@@ -200,28 +200,24 @@ def step_icon_name(state: StepState | str) -> str:
 
 
 def step_color(state: StepState | str) -> str:
+    """The colour of a step, a token of the palette: written in an f-string it keeps its name, and follows the theme.
+
+    PENDING asked for a `MID` token the palette does not have and fell back on a hexadecimal, light in both themes; and
+    `str()` stripped the name from the others, so a theme toggle left the step titles as they were.
+    """
     if isinstance(state, str):
         try:
             state = StepState(state)
         except ValueError:
             state = StepState.PENDING
-    try:
-        from certus.ui.certus_ui import CertusTheme as T
+    from certus.ui.certus_ui import CertusTheme as T
 
-        mapping = {
-            StepState.PENDING: getattr(T, "MID", "#9CA3AF"),
-            StepState.RUNNING: getattr(T, "PRIMARY", "#2563EB"),
-            StepState.DONE: getattr(T, "SUCCESS", "#10B981"),
-            StepState.ERROR: getattr(T, "DANGER", "#EF4444"),
-        }
-        return str(mapping[state])
-    except (ImportError, AttributeError, TypeError):
-        return {
-            StepState.PENDING: "#9CA3AF",
-            StepState.RUNNING: "#2563EB",
-            StepState.DONE: "#10B981",
-            StepState.ERROR: "#EF4444",
-        }[state]
+    return {
+        StepState.PENDING: T.TEXT_SUB,
+        StepState.RUNNING: T.PRIMARY,
+        StepState.DONE: T.SUCCESS,
+        StepState.ERROR: T.DANGER,
+    }[state]
 
 
 def format_eta(seconds: float | None) -> str:

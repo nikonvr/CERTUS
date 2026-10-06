@@ -131,7 +131,6 @@
   "tests/unit/test_close_guard_sees_real_runs.py::test_closing_field_during_a_run_asks_first": 1.0,
   "tests/unit/test_computation_imports_no_qt.py::test_every_computation_module_together_loads_no_qt": 4.7,
   "tests/unit/test_computation_imports_no_qt.py::test_importing_a_computation_module_loads_no_qt": 3.5,
-  "tests/unit/test_crash_watchdog.py::test_watchdog_freeze_detection": 3.0,
   "tests/unit/test_design_excel_export_writes_its_file.py::test_the_excel_export_writes_the_chosen_file": 1.0,
   "tests/unit/test_design_final_evaluation_triggers_the_export.py::test_a_pending_export_is_scheduled_when_the_evaluation_ends": 1.3,
   "tests/unit/test_design_growth_caps_the_global_phase.py::test_a_budget_already_under_the_cap_is_kept": 1.3,
@@ -176,6 +175,7 @@
   "tests/unit/test_gui_apps_smoke.py::test_certus_design_app_constructs_headless": 1.8,
   "tests/unit/test_gui_apps_smoke.py::test_certus_strat_app_constructs_headless": 1.1,
   "tests/unit/test_headless_qt_lifecycle.py::test_headless_teardown_joins_before_deleting": 3.0,
+  "tests/unit/test_index_cleanup_keeps_a_running_thread_alive.py::test_cleanup_keeps_a_thread_that_ignores_stop_until_it_ends": 7.6,
   "tests/unit/test_index_gradients_are_the_gradients_of_their_costs_in_every_mode.py::test_the_infrared_stage_follows_the_slope_of_its_cost": 5.8,
   "tests/unit/test_index_gradients_are_the_gradients_of_their_costs_in_every_mode.py::test_the_tauc_lorentz_fit_follows_the_slope_of_its_cost": 6.6,
   "tests/unit/test_library_modules_leave_sys_path_alone.py::test_library_modules_put_no_package_folder_on_sys_path": 4.1,
@@ -272,6 +272,7 @@
   "tests/unit/test_tmm_inline.py::test_simulate_growth_kernel": 5.6,
   "tests/unit/test_ui_qt_lifecycle.py::test_ui_fixtures_destroy_windows_at_the_right_boundary": 1.9,
   "tests/unit/test_user_preferences_are_isolated.py::test_a_pytest_session_leaves_no_private_directory_behind": 6.5,
+  "tests/unit/test_warmup_reads_no_array_past_its_end.py::test_warmup_physics_reads_no_array_past_its_end": 3.6,
   "tests/unit/test_warmup_starts_once_per_process.py::test_importing_an_entry_script_starts_no_warmup": 5.0
  }
 }

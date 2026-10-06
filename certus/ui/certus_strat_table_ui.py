@@ -315,6 +315,21 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
         else:
             origin_item.setForeground(QColor(80, 80, 80))
             origin_item.setToolTip(origin)
+        forced = result.get("phase_a_forced") or {}
+        if forced:
+            n_forced = int(forced.get("n_forced", 0))
+            n_layers = int(forced.get("n_layers", 0))
+            layers = forced.get("layers") or []
+            layer_names = ", ".join(f"L{layer}" for layer in layers)
+            forced_detail = f"Phase A forced layers: {n_forced}/{n_layers}"
+            if layer_names:
+                forced_detail += f" ({layer_names})"
+            origin_item.setToolTip(f"{origin_item.toolTip()}\n{forced_detail}")
+            if n_forced:
+                origin_item.setText(f"⚠ {display_text}")
+                origin_item.setBackground(QColor(CertusTheme.WARNING_BG))
+                origin_item.setForeground(QColor(CertusTheme.WARNING_TEXT))
+                origin_item.setFont(CertusTheme.get_font(9, QFont.Weight.Bold))
         self.table.setItem(row, 2, origin_item)
 
         # 3: Min Res
@@ -430,6 +445,13 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
             f"⚠ {yield_pct:.1f}" if rescued else f"{yield_pct:.1f}"
         )
         causes = result.get("crash_causes") or {}
+        rates_by_noise = result.get("crash_rates_by_noise") or {}
+        nominal_rate = rates_by_noise.get("1")
+        nominal_line = (
+            f"Nominal noise (1x) non-completion rate: {float(nominal_rate):.2%}\n"
+            if nominal_rate is not None
+            else "Nominal noise (1x) non-completion rate: not available\n"
+        )
         yield_item.setToolTip(
             ("🔴 RESCUED STRATEGY — it did NOT pass the crash filter.\n"
              "No strategy of its block did, so all were re-injected rather than\n"
@@ -437,8 +459,9 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
              "a robustness score: never compare it with a ranked strategy's, and\n"
              "never average the two.\n\n" if rescued else "")
             + "Depositions completing successfully, out of 100.\n"
-            f"Non-completion rate: {crash_rate:.2%}\n"
-            "\nThe three failure modes, separately:\n"
+            f"Worst-case non-completion rate: {crash_rate:.2%}\n"
+            + nominal_line
+            + "\nThe three failure modes, separately:\n"
             f"  level never reached       : {float(causes.get('p_level_unreachable', 0.0)):.2%}\n"
             f"  divergent TP count        : {float(causes.get('p_tp_miscount', 0.0)):.2%}\n"
             f"  non-monotonic T(d)        : {float(causes.get('p_non_monotonic', 0.0)):.2%}\n"
@@ -1158,6 +1181,7 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
 
                 for rank, result in enumerate(strategies_results, 1):
                     strat = result["strategy"]
+                    forced = result.get("phase_a_forced") or {}
 
                     noise_results = result.get("results_per_noise", [])
 
@@ -1206,6 +1230,9 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
                         "Rank": rank,
                         "Strategy_ID": strat["strategy_id"],
                         "Origin": origin.upper(),
+                        "Phase_A_Forced_Count": forced.get("n_forced", ""),
+                        "Phase_A_Total_Layers": forced.get("n_layers", ""),
+                        "Phase_A_Forced_Layers": ",".join(str(layer) for layer in forced.get("layers") or []),
                         "Min_Resolution_nm": result.get("min_resolution", ""),
                         "Limiting_Layer": result.get("limiting_layer", ""),
                         "Thickness_Rank": strat.get("thickness_rank", ""),

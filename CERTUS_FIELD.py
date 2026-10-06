@@ -27,7 +27,7 @@ import certus.ui.certus_field_ui as certus_field_ui
 import certus.workers.certus_field_workers as certus_field_workers
 from certus.core.certus_core import CertusFacadeModule, setup_module_logging
 from certus.ui.certus_field_ui import CertusFieldApp
-from certus.ui.certus_ui import init_certus_app
+from certus.ui.certus_ui import init_certus_app, open_command_line_file
 
 # Replace current module with a facade exposing core, workers, and ui components
 sys.modules[__name__] = CertusFacadeModule(__name__, [
@@ -58,5 +58,6 @@ if __name__ == "__main__":
 
     win = CertusFieldApp()
     win.show()
+    open_command_line_file(win)
 
     sys.exit(app.exec())

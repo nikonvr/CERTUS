@@ -112,27 +112,31 @@ def test_the_semi_infinite_absorber_is_the_limit_of_the_plate() -> None:
 # =============================================================================
 
 
-def _plate(rf, tf, rf_inside, rb, tb, tau):
+def _plate(rf, tf, rf_inside, tf_inside, rb, tb, tau):
     """The incoherent plate of `certus_substrate_absorption`: what the kernels combine."""
     denominator = 1.0 - rf_inside * rb * tau * tau
-    return rf + tf * tf * rb * tau * tau / denominator, tf * tb * tau / denominator
+    return rf + tf * tf_inside * rb * tau * tau / denominator, tf * tb * tau / denominator
 
 
 @pytest.mark.parametrize("k", [1e-7, 4.4e-6, 1e-4, 1e-3])
 @pytest.mark.parametrize("wavelength", [450.0, 800.0])
 def test_the_plate_agrees_with_the_index_module_plate(k, wavelength) -> None:
     # A film of index 1 between air and the substrate changes nothing: R and T of INDEX's plate are then
-    # those of the bare substrate, whose interfaces have closed forms. The attenuation is the only thing
-    # the two implementations must agree on.
+    # those of the bare substrate, whose interfaces have closed forms -- air to substrate through its
+    # complex index n - ik, the interfaces seen from inside through its real part (ETAT D75) -- and the
+    # attenuation of `certus_substrate_absorption`.
     from certus.physics.certus_substrate_absorption import substrate_internal_transmittance
     from certus.physics.certus_tmm_single_layer import _calculate_RT_absorbing_sub_single
 
     n_sub, thickness = 1.52, 1.0e6
+    entering = complex(n_sub, -k)
+    r_front = abs((1.0 - entering) / (1.0 + entering)) ** 2
+    t_front = 4.0 * n_sub / abs(1.0 + entering) ** 2
     r_interface = ((n_sub - 1.0) / (n_sub + 1.0)) ** 2
     t_interface = 1.0 - r_interface
     tau = substrate_internal_transmittance(k, wavelength, thickness, 1.0)
 
-    r_expected, t_expected = _plate(r_interface, t_interface, r_interface, r_interface, t_interface, tau)
+    r_expected, t_expected = _plate(r_front, t_front, r_interface, t_interface, r_interface, t_interface, tau)
     r_index, t_index = _calculate_RT_absorbing_sub_single(wavelength, 1.0, 0.0, 100.0, n_sub, k, thickness)
 
     assert r_index == pytest.approx(r_expected, abs=1e-12)

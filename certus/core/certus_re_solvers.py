@@ -49,6 +49,7 @@ from certus.utils.certus_re_config import (
     RE_RE_DEADZONE_DELTA_RE_ABS,
     RE_RE_DEADZONE_QWOT_ABS,
     RE_SUB_CAUCHY_TUBE_DELTA,
+    re_imposed_aperture_deg,
 )
 from certus.utils.certus_re_helpers import (
     RE_SPLINE_NODE2_DEFAULT_NM,
@@ -221,6 +222,115 @@ def re_execute_phase1(worker: Any) -> list[dict]:
 
     return res_p1
 
+def _s2_scan_flat_aperture(L: Any, ep_stage: np.ndarray, lo: float, hi: float, n_scan: int) -> float:
+    """The flat aperture (the same on every lambda knot) of lowest cost on ``linspace(lo, hi, n_scan)``, thicknesses fixed;
+    the GUI aperture, clipped to the bounds, when no point beats infinity."""
+    best_ap_s2 = float(
+        np.clip(
+            L._ap_gui,
+            lo,
+            hi,
+        )
+    )
+    best_cost_s2 = float("inf")
+    for test_ap in np.linspace(lo, hi, n_scan):
+        _ta = float(test_ap)
+        L._re_state["re_aperture_knots"][:] = _ta
+        _mse_s2 = float(
+            L._mse_grad_accumulate_ep(
+                ep_stage,
+                L.wt_spectral,
+                False,
+                L._correc_nom,
+                return_residuals=False,
+            )[0]
+        )
+        if _mse_s2 < best_cost_s2:
+            best_cost_s2 = _mse_s2
+            best_ap_s2 = _ta
+    return best_ap_s2
+
+def _s2_residual_functions(worker: Any, L: Any, i_ap: int, nap: int, bounds: tuple, fd_step: float) -> tuple:
+    """Residuals and Jacobian of step 2 over [thicknesses + ``nap`` aperture knots], and their shared cache.
+    The aperture columns are forward differences kept inside the bounds. With ``nap == 0`` (imposed aperture) the knots
+    keep the value the caller set and the Jacobian is that of the thicknesses alone.
+    """
+    cache: dict[str, Any] = {
+        "x": None,
+        "res": None,
+        "jac": None,
+        "mse": None,
+        "i": 0,
+        "last_emit": time.perf_counter(),
+    }
+    def _eval_both_s2(xv_full: np.ndarray, *, emit_interval: float = 5.0) -> None:
+        if worker._stop:
+            raise REUserStopRequested()
+        if cache["x"] is not None and np.array_equal(xv_full, cache["x"]):
+            return
+        ep_s2 = np.asarray(xv_full[:i_ap], dtype=np.float64).ravel()
+        ap_s2 = np.asarray(xv_full[i_ap : i_ap + nap], dtype=np.float64).ravel()
+        if nap:
+            L._re_state["re_aperture_knots"][:] = ap_s2
+        mse_s2, _, r_s2, j_ep_s2 = L._mse_grad_accumulate_ep(
+            ep_s2,
+            L.wt_spectral,
+            True,
+            L._correc_nom,
+            return_residuals=True,
+        )
+        j_ap = np.zeros((r_s2.shape[0], nap), dtype=np.float64)
+        b_lo_s2, b_hi_s2 = bounds[0], bounds[1]
+        for _k in range(nap):
+            _ik = i_ap + _k
+            _xk = float(xv_full[_ik])
+            _hi = float(b_hi_s2[_ik])
+            _lo = float(b_lo_s2[_ik])
+            _step = min(fd_step, _hi - _xk)
+            if _step < 1e-12:
+                _step = max(-fd_step, _lo - _xk)
+            if abs(_step) < 1e-15:
+                continue
+            xv_p = np.array(xv_full, dtype=np.float64, copy=True)
+            xv_p[_ik] = _xk + _step
+            L._re_state["re_aperture_knots"][:] = xv_p[i_ap : i_ap + nap]
+            r_p = L._mse_grad_accumulate_ep(
+                xv_p[:i_ap],
+                L.wt_spectral,
+                False,
+                L._correc_nom,
+                return_residuals=True,
+            )[2]
+            j_ap[:, _k] = (r_p - r_s2) / _step
+        if nap:
+            L._re_state["re_aperture_knots"][:] = ap_s2
+        cache["x"] = xv_full.copy()
+        cache["res"] = r_s2
+        cache["jac"] = np.hstack([j_ep_s2, j_ap])
+        cache["mse"] = float(mse_s2)
+        cache["i"] = int(cache["i"]) + 1
+        now = time.perf_counter()
+        if cache["i"] == 1 or (now - float(cache["last_emit"])) >= emit_interval:
+            cache["last_emit"] = now
+            rs2 = float(np.sqrt(max(cache["mse"], 0.0)))
+            rq2 = L._compute_qwot_rmse(ep_s2, L._correc_nom)
+            rmse2 = L._rmse_combined(rs2, rq2)
+            _trf_r2 = _re_trf_residual_rms(cache["res"])
+            logging.info(
+                "RE step 2/3 [P4+ep] TRF it ~%d  RMSE_facade=%.6f | TRF_RMS(r)=%.6g | ap=%s",
+                int(cache["i"]),
+                rmse2,
+                _trf_r2,
+                np.array2string(ap_s2 if nap else L._re_state["re_aperture_knots"], precision=2, separator=","),
+            )
+    def _fun_s2(xv_full: np.ndarray) -> Any:
+        _eval_both_s2(xv_full)
+        return cache["res"]
+    def _jac_s2(xv_full: np.ndarray) -> Any:
+        _eval_both_s2(xv_full)
+        return cache["jac"]
+    return _fun_s2, _jac_s2, cache
+
 def re_execute_phase1_p4_scan(worker: Any) -> None:
     """Step 2/3 in sequential order: flat ap scan + joint TRF thick+ap (nominal indices)."""
 
@@ -234,11 +344,20 @@ def re_execute_phase1_p4_scan(worker: Any) -> None:
         and not worker._stop
         and any(float(meta["angle"]) >= 10.0 for meta in L.oblique_config_meta)
     ):
-        logging.info(
-            "RE staged order: step 2/3 - scalar ap scan (flat across lambda knots) then joint TRF "
-            "[thicknesses + %d ap knots]; P4 angular averaging active; nominal indices.",
-            int(RE_P4_BEAM_N_KNOTS),
-        )
+        _imposed_s2 = re_imposed_aperture_deg(worker.cfg)
+
+        if _imposed_s2 is None:
+            logging.info(
+                "RE staged order: step 2/3 - scalar ap scan (flat across lambda knots) then joint TRF "
+                "[thicknesses + %d ap knots]; P4 angular averaging active; nominal indices.",
+                int(RE_P4_BEAM_N_KNOTS),
+            )
+        else:
+            logging.info(
+                "RE staged order: step 2/3 - beam aperture IMPOSED at %.2f deg (total), not fitted; TRF "
+                "[thicknesses]; P4 angular averaging active; nominal indices.",
+                _imposed_s2,
+            )
 
         L._emit_re_prog(
             L._RE_P_SETUP + L._RE_P_P1 + 1.0,
@@ -272,42 +391,19 @@ def re_execute_phase1_p4_scan(worker: Any) -> None:
 
         L._re_state["is_phase4"] = True
 
-        best_ap_s2 = float(
-            np.clip(
-                L._ap_gui,
-                _lo_ap_s2,
-                _hi_ap_s2,
-            )
-        )
+        _nap_free_s2 = 0 if _imposed_s2 is not None else _nap_s2
 
-        best_cost_s2 = float("inf")
-
-        for test_ap in np.linspace(_lo_ap_s2, _hi_ap_s2, _n_ap_scan_s2):
-            _ta = float(test_ap)
-
-            L._re_state["re_aperture_knots"][:] = _ta
-
-            _mse_s2 = float(
-                L._mse_grad_accumulate_ep(
-                    ep_stage,
-                    L.wt_spectral,
-                    False,
-                    L._correc_nom,
-                    return_residuals=False,
-                )[0]
-            )
-
-            if _mse_s2 < best_cost_s2:
-                best_cost_s2 = _mse_s2
-
-                best_ap_s2 = _ta
+        if _imposed_s2 is None:
+            best_ap_s2 = _s2_scan_flat_aperture(L, ep_stage, _lo_ap_s2, _hi_ap_s2, _n_ap_scan_s2)
+        else:
+            best_ap_s2 = float(_imposed_s2)
 
         L._re_state["re_aperture_knots"][:] = best_ap_s2
 
         x0_s2 = np.concatenate(
             [
                 ep_stage,
-                np.full(_nap_s2, float(best_ap_s2), dtype=np.float64),
+                np.full(_nap_free_s2, float(best_ap_s2), dtype=np.float64),
             ]
         )
 
@@ -315,131 +411,20 @@ def re_execute_phase1_p4_scan(worker: Any) -> None:
             np.concatenate(
                 [
                     np.asarray(L.bounds_trf[0], dtype=np.float64),
-                    np.full(_nap_s2, float(_lo_ap_s2), dtype=np.float64),
+                    np.full(_nap_free_s2, float(_lo_ap_s2), dtype=np.float64),
                 ]
             ),
             np.concatenate(
                 [
                     np.asarray(L.bounds_trf[1], dtype=np.float64),
-                    np.full(_nap_s2, float(_hi_ap_s2), dtype=np.float64),
+                    np.full(_nap_free_s2, float(_hi_ap_s2), dtype=np.float64),
                 ]
             ),
         )
 
         i_ap_s2 = L.n_layers_count
 
-        _c_s2: dict[str, Any] = {
-            "x": None,
-            "res": None,
-            "jac": None,
-            "mse": None,
-            "i": 0,
-            "last_emit": time.perf_counter(),
-        }
-
-        def _eval_both_s2(xv_full: np.ndarray, *, emit_interval: float = 5.0) -> None:
-
-            if worker._stop:
-                raise REUserStopRequested()
-
-            if _c_s2["x"] is not None and np.array_equal(xv_full, _c_s2["x"]):
-                return
-
-            ep_s2 = np.asarray(xv_full[:i_ap_s2], dtype=np.float64).ravel()
-
-            ap_s2 = np.asarray(xv_full[i_ap_s2 : i_ap_s2 + _nap_s2], dtype=np.float64).ravel()
-
-            L._re_state["re_aperture_knots"][:] = ap_s2
-
-            mse_s2, _, r_s2, j_ep_s2 = L._mse_grad_accumulate_ep(
-                ep_s2,
-                L.wt_spectral,
-                True,
-                L._correc_nom,
-                return_residuals=True,
-            )
-
-            j_ap = np.zeros((r_s2.shape[0], _nap_s2), dtype=np.float64)
-
-            b_lo_s2, b_hi_s2 = bounds_s2[0], bounds_s2[1]
-
-            for _k in range(_nap_s2):
-                _ik = i_ap_s2 + _k
-
-                _xk = float(xv_full[_ik])
-
-                _hi = float(b_hi_s2[_ik])
-
-                _lo = float(b_lo_s2[_ik])
-
-                _step = min(_p4_fd_ap_s2, _hi - _xk)
-
-                if _step < 1e-12:
-                    _step = max(-_p4_fd_ap_s2, _lo - _xk)
-
-                if abs(_step) < 1e-15:
-                    continue
-
-                xv_p = np.array(xv_full, dtype=np.float64, copy=True)
-
-                xv_p[_ik] = _xk + _step
-
-                L._re_state["re_aperture_knots"][:] = xv_p[i_ap_s2 : i_ap_s2 + _nap_s2]
-
-                r_p = L._mse_grad_accumulate_ep(
-                    xv_p[:i_ap_s2],
-                    L.wt_spectral,
-                    False,
-                    L._correc_nom,
-                    return_residuals=True,
-                )[2]
-
-                j_ap[:, _k] = (r_p - r_s2) / _step
-
-            L._re_state["re_aperture_knots"][:] = ap_s2
-
-            _c_s2["x"] = xv_full.copy()
-
-            _c_s2["res"] = r_s2
-
-            _c_s2["jac"] = np.hstack([j_ep_s2, j_ap])
-
-            _c_s2["mse"] = float(mse_s2)
-
-            _c_s2["i"] = int(_c_s2["i"]) + 1
-
-            now = time.perf_counter()
-
-            if _c_s2["i"] == 1 or (now - float(_c_s2["last_emit"])) >= emit_interval:
-                _c_s2["last_emit"] = now
-
-                rs2 = float(np.sqrt(max(_c_s2["mse"], 0.0)))
-
-                rq2 = L._compute_qwot_rmse(ep_s2, L._correc_nom)
-
-                rmse2 = L._rmse_combined(rs2, rq2)
-
-                _trf_r2 = _re_trf_residual_rms(_c_s2["res"])
-
-                logging.info(
-                    "RE step 2/3 [P4+ep] TRF it ~%d  RMSE_facade=%.6f | TRF_RMS(r)=%.6g | ap=%s",
-                    int(_c_s2["i"]),
-                    rmse2,
-                    _trf_r2,
-                    np.array2string(ap_s2, precision=2, separator=","),
-                )
-
-        def _fun_s2(xv_full: np.ndarray) -> Any:
-
-            _eval_both_s2(xv_full)
-
-            return _c_s2["res"]
-
-        def _jac_s2(xv_full: np.ndarray) -> Any:
-
-            _eval_both_s2(xv_full)
-
-            return _c_s2["jac"]
+        _fun_s2, _jac_s2, _c_s2 = _s2_residual_functions(worker, L, i_ap_s2, _nap_free_s2, bounds_s2, _p4_fd_ap_s2)
 
         try:
             res_s2 = least_squares(
@@ -482,7 +467,11 @@ def re_execute_phase1_p4_scan(worker: Any) -> None:
 
         ep_s2_f = np.asarray(x_s2[:i_ap_s2], dtype=np.float64).ravel()
 
-        ap_s2_f = np.asarray(x_s2[i_ap_s2 : i_ap_s2 + _nap_s2], dtype=np.float64).ravel()
+        ap_s2_f = (
+            np.asarray(x_s2[i_ap_s2 : i_ap_s2 + _nap_free_s2], dtype=np.float64).ravel()
+            if _nap_free_s2
+            else np.full(_nap_s2, float(best_ap_s2), dtype=np.float64)
+        )
 
         L._re_state["re_aperture_knots"][:] = ap_s2_f
 
@@ -495,7 +484,7 @@ def re_execute_phase1_p4_scan(worker: Any) -> None:
         _kn_s2 = np.asarray(L._re_state["re_p4_beam_knots_lam_nm"], dtype=float).ravel()[:_nap_s2]
 
         phase_s2_result = REPhase4Result(
-            label="P4 aperture+thickness (pre-joint)",
+            label="P4 aperture+thickness (pre-joint)" if _nap_free_s2 else "P4 imposed aperture+thickness (pre-joint)",
             ep=np.asarray(ep_s2_f, dtype=np.float64).ravel(),
             a=0.0,
             b=0.0,
@@ -1299,7 +1288,9 @@ def re_run_phase4_joint_trf(
     i_ap0 = len(x0_p4) - nap
 
     def _restore_aperture_knots(xv: np.ndarray) -> None:
-        re_state["re_aperture_knots"][:] = xv[i_ap0 : i_ap0 + nap]
+        # With nap == 0 (imposed aperture) nothing is released: the knots keep the imposed value.
+        if nap:
+            re_state["re_aperture_knots"][:] = xv[i_ap0 : i_ap0 + nap]
 
     def _fun_res_p4(xv: np.ndarray) -> Any:
         _restore_aperture_knots(xv)
@@ -1370,14 +1361,14 @@ def re_run_phase4_joint_trf(
         )
 
         x_p4 = res_p4.x
-        re_state["re_aperture_knots"][:] = x_p4[i_ap0 : i_ap0 + nap]
+        _restore_aperture_knots(x_p4)
         ep_p4_f = np.asarray(x_p4[:n_layers_count], dtype=np.float64)
         dh_p4 = x_p4[i0 : i0 + nk]
         dl_p4 = x_p4[i0 + nk : i_lam]
         lam_p4 = float(x_p4[i_lam])
         th_p4 = np.asarray(x_p4[i_cu : i_cu + 3], dtype=np.float64).ravel() if use_sub_c3 else None
-        _ap_i = np.asarray(x0_p4[i_ap0 : i_ap0 + nap], dtype=np.float64).ravel()
-        _ap_f = np.asarray(x_p4[i_ap0 : i_ap0 + nap], dtype=np.float64).ravel()
+        _ap_i = np.asarray(x0_p4[i_ap0 : i_ap0 + nap] if nap else re_state["re_aperture_knots"].copy(), dtype=np.float64).ravel()
+        _ap_f = np.asarray(x_p4[i_ap0 : i_ap0 + nap] if nap else re_state["re_aperture_knots"].copy(), dtype=np.float64).ravel()
 
         _cost_0 = None
         try:
@@ -1426,7 +1417,7 @@ def re_run_phase4_joint_trf(
             lam_v=lam_p4,
             th_v=th_p4,
             nfev_extra=int(res_p4.nfev),
-            p4_label_suffix="P4 aperture+TRF",
+            p4_label_suffix="P4 aperture+TRF" if nap else "P4 imposed aperture+TRF",
             success=bool(res_p4.success),
         )
 

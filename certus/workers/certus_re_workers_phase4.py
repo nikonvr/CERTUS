@@ -14,6 +14,7 @@ from certus.utils.certus_re_config import (
     RE_PHASE4_APERTURE_SCAN_POINTS,
     RE_PHASE4_TRF_MAX_NFEV,
     RE_PHASE4_TRF_TOL_FACTOR,
+    re_imposed_aperture_deg,
 )
 
 scipy = lazy_scipy()
@@ -130,6 +131,21 @@ class REPhase4Strategy:
                 "RE phase 4 scan detail | " + " | ".join((f"ap={a:.2f}||r||2={c:.6g}" for a, c in _p4_scan_trace))
             )
         return (_p4_scan_trace, best_ap, best_ls_sq, _p4_scan_wall_s, _p4_scan_mse_evals, best_rmse_ap)
+
+    def _phase4_imposed_start(
+        self, imposed, x0_base, _eval_both_p2, _cb2_ref, _re_state, _report_mse_spectral, _cor_base, ep_p4
+    ) -> tuple[list[tuple[float, float]], float, float, float, int, float]:
+        """Phase 4 with an imposed aperture: no scan. The knots take the imposed value and the starting point is evaluated
+        once; the return mirrors `_run_phase4_aperture_scan` (empty trace)."""
+        _t0 = time.perf_counter()
+        _i0 = int(_cb2_ref[0]["i"])
+        _re_state["re_aperture_knots"][:] = float(imposed)
+        _eval_both_p2(x0_base, emit_interval=1000000000.0)
+        _r = _cb2_ref[0]["res"]
+        ls_sq = float(np.dot(_r, _r))
+        rmse = float(np.sqrt(max(_report_mse_spectral(ep_p4, _cor_base), 0.0)))
+        logging.info("RE phase 4: beam aperture IMPOSED at %.2f deg (total), not fitted | ||r||^2=%.8g | RMSE_sp=%.6f", float(imposed), ls_sq, rmse)
+        return ([], float(imposed), ls_sq, float(time.perf_counter() - _t0), int(_cb2_ref[0]["i"]) - _i0, rmse)
 
     def _get_phase4_scan_inputs(
         self,
@@ -379,8 +395,13 @@ class REPhase4Strategy:
                     _nap,
                     _nap,
                 )
+                _imposed_p4 = re_imposed_aperture_deg(worker.cfg)
                 _p4_scan_trace, best_ap, best_ls_sq, _p4_scan_wall_s, _p4_scan_mse_evals, best_rmse_ap = (
-                    worker._run_phase4_aperture_scan(
+                    REPhase4Strategy._phase4_imposed_start(
+                        None, _imposed_p4, x0_base, _eval_both_p2, _cb2_ref, _re_state, _report_mse_spectral, _cor_base, ep_p4
+                    )
+                    if _imposed_p4 is not None
+                    else worker._run_phase4_aperture_scan(
                         _emit_re_prog=_emit_re_prog,
                         _nap=_nap,
                         _lo_ap=_lo_ap,
@@ -434,7 +455,7 @@ class REPhase4Strategy:
 
                 _p4_trf_wall_s, _p4_trf_mse_evals, _p4_best_seen_rmse = worker._run_phase4_joint_trf(
                     p4_trf_nfev=_p4_trf_nfev,
-                    nap=_nap,
+                    nap=0 if _imposed_p4 is not None else _nap,
                     x0_base=x0_base,
                     best_ap=best_ap,
                     lo_ap=_lo_ap,
@@ -461,19 +482,28 @@ class REPhase4Strategy:
                     results=results,
                 )
                 if not worker._stop:
-                    logging.info(
-                        "RE phase 4: joint TRF disabled | re_phase4_trf_max_nfev=0  scan-only (raise max_nfev to polish ap knots + thickness+splines jointly)"
-                    )
+                    baseline = "scan-only candidate" if _imposed_p4 is None else "imposed-aperture pre-TRF candidate"
+                    if _p4_trf_nfev <= 0:
+                        logging.info(
+                            "RE phase 4: joint TRF disabled | re_phase4_trf_max_nfev=0; retaining %s for final ranking",
+                            baseline,
+                        )
+                    else:
+                        logging.info(
+                            "RE phase 4: retaining %s for final ranking as the pre-TRF baseline; joint TRF was requested",
+                            baseline,
+                        )
                     rmse_q_scan = _compute_qwot_rmse(ep_p4, _cor_base)
                     rmse_c_scan = _rmse_combined(float(best_rmse_ap), rmse_q_scan)
-                    _sk = np.asarray(_re_state["re_aperture_knots"], dtype=np.float64).ravel()[
-                        : int(RE_P4_BEAM_N_KNOTS)
-                    ]
+                    # The scan score was evaluated with one flat aperture. The joint TRF has since changed
+                    # the shared knot state, so it cannot describe this pre-TRF candidate.
+                    _sk = np.full(int(RE_P4_BEAM_N_KNOTS), float(best_ap), dtype=np.float64)
                     _skn = np.asarray(_re_state["re_p4_beam_knots_lam_nm"], dtype=float).ravel()[
                         : int(RE_P4_BEAM_N_KNOTS)
                     ]
                     logging.info(
-                        "RE phase 4 scan-only result | RMSE_sum=%.6f RMSE_sp=%.6f RMSE_qwot=%.6f | min||r||^2(scan)=%.8g | ap_deg(n knots)=%s | knots_lam_nm=%s",
+                        "RE phase 4 %s result | RMSE_sum=%.6f RMSE_sp=%.6f RMSE_qwot=%.6f | ||r||^2(pre-TRF)=%.8g | ap_deg(n knots)=%s | knots_lam_nm=%s",
+                        baseline,
                         rmse_c_scan,
                         float(best_rmse_ap),
                         rmse_q_scan,
@@ -482,12 +512,14 @@ class REPhase4Strategy:
                         np.array2string(_skn, precision=2, separator=","),
                     )
                     logging.info(
-                        "RE phase 4 scan-only plateaus (explicit): %s",
+                        "RE phase 4 %s plateaus (explicit): %s",
+                        baseline,
                         _re_p4_ap_band_intervals_str(_skn, _sk, _wmin_obj, _wmax_obj),
                     )
                     phase4_scan = REPhase4Result.from_legacy_dict(best_res)
                     phase4_scan = REPhase4Result(
-                        label=RE_RESULT_LABEL_WITH_DRIFT + " (P4 aperture scan)",
+                        label=RE_RESULT_LABEL_WITH_DRIFT
+                        + (" (P4 aperture scan)" if _imposed_p4 is None else " (P4 imposed aperture, no TRF)"),
                         ep=phase4_scan.ep,
                         a=phase4_scan.a,
                         b=phase4_scan.b,
@@ -514,7 +546,8 @@ class REPhase4Strategy:
                     )
                     _prepend_result_dto(results, phase4_scan)
                     rmse_final_milestone[0] = float(rmse_c_scan)
-                self._close_phase4_profile(_re_state, _t_p4_wall, _p4_scan_wall_s, _p4_trf_wall_s)
+                # Called on the class, like every method of this strategy: the worker passes None as `self`.
+                REPhase4Strategy._close_phase4_profile(None, _re_state, _t_p4_wall, _p4_scan_wall_s, _p4_trf_wall_s)
             elif _has_high_angle:
                 logging.info(
                     "RE phase 4 skipped | reason=no_spline_state_on_best | need re_dH_knots/re_dL_knots on results[0] (phase 2 splines)"

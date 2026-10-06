@@ -5,7 +5,7 @@ import concurrent.futures
 import logging
 import threading
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -45,6 +45,9 @@ from certus_physics import (  # STRAT-specific kernels (previously imported from
     validate_backside_real_clues,
     validate_wavelengths_batch,
 )
+
+if TYPE_CHECKING:
+    from certus.core.certus_strat_ranking import RefinementIdCursor
 
 # Robust db clues (fixed xlsx)
 
@@ -399,3 +402,5 @@ class RobustnessContext:
     T_nom: np.ndarray
     full_dyn_grid: dict[str, Any]
     n_layers_matrix_precomp: np.ndarray | None = None
+    strategy_id_namespace_n_blocks: int | None = None
+    strategy_id_cursor: RefinementIdCursor | None = None

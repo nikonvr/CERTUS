@@ -59,8 +59,8 @@ def test_the_release_structure_holds_on_the_repository() -> None:
     assert _release_checks().check_release_structure() == []
 
 
-def _frozen_folder(tmp_path: Path, rc, *, data: bool = True, runtime: bool = True) -> Path:
-    """A folder that looks like `dist/CERTUS_HUB/`: a PE launcher, the runtime, the data."""
+def _frozen_folder(tmp_path: Path, rc, *, data: bool = True, runtime: bool = True, openmp: bool = True) -> Path:
+    """A folder that looks like `dist/CERTUS_HUB/`: a PE launcher, the runtime, Numba's OpenMP layer, the data."""
     folder = tmp_path / rc.FROZEN_NAME
     folder.mkdir()
     header = bytearray(b"MZ" + bytes(0x7E))
@@ -68,6 +68,10 @@ def _frozen_folder(tmp_path: Path, rc, *, data: bool = True, runtime: bool = Tru
     (folder / f"{rc.FROZEN_NAME}.exe").write_bytes(bytes(header) + b"PE" + bytes(2) + bytes(64))
     if runtime:
         (folder / "python314.dll").write_bytes(b"runtime")
+    if openmp:
+        (folder / "numba" / "np" / "ufunc").mkdir(parents=True)
+        (folder / "numba" / "np" / "ufunc" / "omppool.cp314-win_amd64.pyd").write_bytes(b"layer")
+        (folder / "VCOMP140.DLL").write_bytes(b"runtime")
     for name in rc.FROZEN_REQUIRED_FILES if data else ():
         (folder / name).parent.mkdir(parents=True, exist_ok=True)
         (folder / name).write_bytes(b"data")
@@ -106,6 +110,17 @@ def test_a_frozen_folder_without_the_python_runtime_is_refused(tmp_path, rc) -> 
 
 
 @pytest.mark.unit
+def test_a_frozen_folder_without_numba_s_openmp_layer_is_refused(tmp_path, rc) -> None:
+    """D87: the frozen build computes on the OpenMP layer; without it the first parallel kernel fails."""
+    _frozen_folder(tmp_path, rc, openmp=False)
+
+    errors = rc.check_frozen_artifact()
+
+    assert any("OpenMP layer" in e for e in errors)
+    assert any("vcomp140.dll" in e for e in errors)
+
+
+@pytest.mark.unit
 def test_a_missing_frozen_build_is_reported(rc) -> None:
     assert any("Missing frozen artifact" in e for e in rc.check_frozen_artifact())
     assert any("Missing frozen artifact" in e for e in rc.check_frozen_functional_startup(timeout_sec=1))
@@ -140,6 +155,54 @@ def test_the_refusal_quotes_the_log_the_process_wrote(tmp_path, rc) -> None:
     errors = rc._process_stays_up([sys.executable, "-c", "pass"], "Frozen module X", 30)
 
     assert "failed to open the database" in errors[0]
+
+
+@pytest.mark.unit
+def test_a_frozen_crash_reports_native_stderr_and_watchdog_dump(tmp_path, rc) -> None:
+    _frozen_folder(tmp_path, rc)
+    code = (
+        "from pathlib import Path; import sys; "
+        "Path('logs').mkdir(exist_ok=True); "
+        "Path('logs/crash_dump.log').write_text('Fatal Python error: Aborted'); "
+        "sys.stderr.write('QThread: Destroyed while thread is still running\\n'); "
+        "sys.stderr.flush(); sys.exit(3)"
+    )
+
+    errors = rc._process_stays_up([sys.executable, "-c", code], "Frozen module CERTUS_RE", 30)
+
+    assert len(errors) == 1
+    assert "code 3" in errors[0]
+    assert "QThread: Destroyed while thread is still running" in errors[0]
+    assert "Fatal Python error: Aborted" in errors[0]
+
+
+@pytest.mark.unit
+def test_a_living_module_that_reports_unsafe_numba_concurrency_is_refused(tmp_path, rc) -> None:
+    _frozen_folder(tmp_path, rc)
+    code = (
+        "import sys, time; "
+        "sys.stderr.write('Numba workqueue threading layer is terminating: '",
+        "'Concurrent access has been detected.\\n'); "
+        "sys.stderr.flush(); time.sleep(60)"
+    )
+
+    errors = rc._process_stays_up([sys.executable, "-c", "".join(code)], "Frozen module CERTUS_RE", 1)
+
+    assert len(errors) == 1
+    assert "Concurrent access has been detected" in errors[0]
+
+
+@pytest.mark.unit
+def test_release_keeps_frozen_diagnostics_after_a_failed_startup() -> None:
+    workflow = (Path(__file__).resolve().parents[2] / ".github/workflows/release-windows.yml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "name: Upload frozen diagnostics" in workflow
+    diagnostics = workflow.split("name: Upload frozen diagnostics", 1)[1]
+    assert "always()" in diagnostics
+    assert "dist/CERTUS_HUB/logs/**" in diagnostics
+    assert "dist/CERTUS_HUB/*.log" in diagnostics
 
 
 @pytest.mark.unit

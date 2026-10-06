@@ -442,6 +442,11 @@ class CoreManager:
     def _update_tikhonravov_points(self) -> None:
         """Automatically updates points count using Tikhonravov."""
 
+        # Material.get_nk uses a parallel Numba kernel. The default-config timer can fire
+        # while the QThread is still compiling the same kernels.
+        if not getattr(self.ui, "_warmup_done", True):
+            return
+
         if getattr(self.ui, "_loading_config", False):
             self.ui.log("Tikhonravov update skipped during config load.", "INFO")
             return

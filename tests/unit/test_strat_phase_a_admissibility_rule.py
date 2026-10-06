@@ -113,6 +113,15 @@ def test_the_census_counts_each_forbidden_candidate_once_and_a_crash_wins_over_a
     assert stats["survivors"] == 1
 
 
+def test_a_negative_gain_is_also_counted_when_the_crash_gate_already_forbade_the_candidate():
+    """D17: the exclusive count never showed the gain rule at work, since a crash wins; the overlap is counted on its own."""
+    _out, params, _ = rule([(0.1, 0, 0.5, -1.0), (0.1, 0, 0.0, -1.0), (0.1, 0, 0.0, 0.1)])
+    (stats,) = params["phase_a_admissibility_stats"]
+    assert stats["forbidden_crash"] == 1
+    assert stats["forbidden_gain_negative"] == 1
+    assert stats["gain_negative_any"] == 2
+
+
 # --- the census ------------------------------------------------------------------------------------------------------------------------
 
 
@@ -124,6 +133,7 @@ def test_the_census_describes_the_layer():
         "offered": 3,
         "forbidden_crash": 1,
         "forbidden_gain_negative": 0,
+        "gain_negative_any": 0,
         "survivors": 2,
         "crash_rate_min_observed": 0.02,
         "crash_tolerance": 0.1,
@@ -163,7 +173,7 @@ def test_the_list_is_created_in_params_when_it_is_missing():
 def test_the_census_is_logged_on_one_line():
     _out, _params, recorder = rule([(0.1, 0, 0.5, 0.1), (0.1, 0, 0.0, -1.0), (0.1, 0, 0.02, 0.1)], crash_tol=0.1, i_layer=2)
     assert recorder.infos == [
-        "   [ADMISSIBILITY] Layer 3: 3 offered -> forbidden crash>=10.000%: 1 | forbidden gain<0: 1 | survivors: 1 | min crash rate observed: 0.000%"
+        "   [ADMISSIBILITY] Layer 3: 3 offered -> forbidden crash>=10.000%: 1 | forbidden gain<0: 1 of 1 with gain<0 | survivors: 1 | min crash rate observed: 0.000%"
     ]
     assert recorder.warnings == []
 

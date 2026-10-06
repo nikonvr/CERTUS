@@ -1,23 +1,16 @@
-from typing import ClassVar
-
 import numpy as np
 import pandas as pd
 
 from certus.utils.certus_index_utils import (
     DataType,
-    _compute_study_lambda_window_nm,
-    _d_from_slider_int,
     _detect_data_type_from_array,
     _detect_type_from_column_name,
     _ensure_strictly_increasing,
     _filter_rmse_peaks_iteratively,
-    _get_xv_spectral_coord,
     _lam_uniform_grid,
     _merge_closest_knot_pair,
     _safe_int_from_mapping,
-    _slider_int_from_d_nm,
     _sorted_finite_sigma_knots,
-    _stretch_sig_to_px,
     analyze_loaded_data,
     calculate_index_rmse,
     normalize_index_config,
@@ -76,31 +69,6 @@ def test_merge_closest_knot_pair():
     new_lam, _new_k = _merge_closest_knot_pair(lam, k)
     assert len(new_lam) == 3
     assert new_lam[1] == 2.05
-
-def test_slider_conversions():
-    d_lo, d_hi = 100.0, 200.0
-    val = _d_from_slider_int(2500, d_lo, d_hi, steps=5000)
-    assert val == 150.0
-    
-    ival = _slider_int_from_d_nm(150.0, d_lo, d_hi, steps=5000)
-    assert ival == 2500
-
-def test_spectral_coords():
-    assert _get_xv_spectral_coord(2.0, "Sigma (nm?1)") == 2.0
-    assert _get_xv_spectral_coord(2.0, "Sigma2 (nm?2)") == 4.0
-    assert _get_xv_spectral_coord(2.0, "Lambda (nm)") == 0.5
-
-def test_stretch_sig_to_px():
-    assert _stretch_sig_to_px(1.0, 2.0) == 14000
-
-class DummyCfg:
-    rmse_fit_lambda_nm: ClassVar[list[float]] = [450.0, 750.0]
-
-def test_compute_study_lambda_window_nm():
-    lam = np.array([400.0, 500.0, 800.0])
-    lo, hi = _compute_study_lambda_window_nm(lam, DummyCfg())
-    assert lo == 450.0
-    assert hi == 750.0
 
 def test_filter_rmse_peaks_iteratively():
     d = np.array([1, 2, 3, 4, 5])

@@ -4,10 +4,9 @@ Scans Python modules for top-level functions and class methods that appear
 unused, with a conservative whitelist model for CI enforcement.
 
 THE TWO PERIMETERS ARE NOT THE SAME, and conflating them was a defect.
-Candidates are looked for in a deliberately narrow set of modules -- the root
-entry points plus the physics package -- because flagging the whole interface
-tree would drown the signal. References are looked for across the entire
-runtime tree instead: a call counts wherever it lives.
+Candidates are looked for in root entry points, certus_physics and all of
+certus/. References are looked for across the entire runtime tree instead:
+a call counts wherever it lives.
 
 Measured on 2026-09-08: collecting references in the narrow perimeter reported
 32 unresolved candidates, 27 of which are called from the application package
@@ -60,15 +59,10 @@ class Definition:
 
 
 def _iter_python_files(root: Path) -> list[Path]:
-    """Scan runtime modules only: root *.py, the certus_physics package and certus/metal.
-
-    certus/metal holds the METAL applications that lived at the root until 2026-09-28:
-    moving them must not take them out of the audit. Tests and tooling scripts are
-    intentionally excluded from candidates.
-    """
+    """Scan runtime definitions, including packages added beneath certus/ later."""
     files: list[Path] = list(root.glob("*.py"))
 
-    for package in (root / "certus_physics", root / "certus" / "metal"):
+    for package in (root / "certus_physics", root / "certus"):
         if not package.exists():
             continue
         for path in package.rglob("*.py"):
@@ -121,9 +115,9 @@ def _decorator_names(node: ast.FunctionDef | ast.AsyncFunctionDef) -> tuple[str,
     return tuple(names)
 
 
-def _is_qt_decorated(decorators: tuple[str, ...]) -> bool:
-    qt_decorators = {"pyqtSlot", "pyqtProperty", "Slot", "Property"}
-    return any(name in qt_decorators for name in decorators)
+def _is_framework_decorated(decorators: tuple[str, ...]) -> bool:
+    auto_invoked = {"pyqtSlot", "pyqtProperty", "Slot", "Property", "field_validator", "model_validator"}
+    return any(name in auto_invoked for name in decorators)
 
 
 def _collect_definitions(py_files: list[Path]) -> list[Definition]:
@@ -179,9 +173,11 @@ def _collect_references(py_files: list[Path]) -> dict[str, list[tuple[Path, int]
         except SyntaxError:
             continue
 
+        local_name_uses: dict[str, list[int]] = defaultdict(list)
         for node in ast.walk(tree):
             if isinstance(node, ast.Name):
                 refs[node.id].append((path, node.lineno))
+                local_name_uses[node.id].append(node.lineno)
             elif isinstance(node, ast.Attribute):
                 refs[node.attr].append((path, node.lineno))
             elif isinstance(node, ast.Constant) and isinstance(node.value, str):
@@ -194,6 +190,16 @@ def _collect_references(py_files: list[Path]) -> dict[str, list[tuple[Path, int]
                         slot_name = node.args[1].value
                         if slot_name.isidentifier():
                             refs[slot_name].append((path, node.lineno))
+
+        # `from module import original as local` is a production reference to
+        # `original` only when the local spelling is actually used in this file.
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom):
+                for imported in node.names:
+                    if imported.asname:
+                        refs[imported.name].extend(
+                            (path, line) for line in local_name_uses.get(imported.asname, [])
+                        )
 
     return refs
 
@@ -224,7 +230,7 @@ def _write_whitelist(path: Path, symbol_ids: list[str]) -> None:
 def _is_excluded_by_heuristic(defn: Definition) -> bool:
     if defn.name.startswith("__") and defn.name.endswith("__"):
         return True
-    if _is_qt_decorated(defn.decorators):
+    if defn.is_method and _is_framework_decorated(defn.decorators):
         return True
     if defn.is_method and EVENT_HANDLER_RE.match(defn.name):
         return True

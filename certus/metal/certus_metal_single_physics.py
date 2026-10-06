@@ -424,6 +424,14 @@ def gradient_function_fixed_eM(
 
         dJ_dk[i] = fac_r * dr * dRdk
 
+    # The smoothness penalty the objective adds, 1e-2 times the squared second differences of n and of k on the
+    # wavelength grid, has its derivative here too (D76): without it the gradient was the data term's alone.
+    for curve, dJ in ((n_calc, dJ_dn), (k_calc, dJ_dk)):
+        d2 = np.diff(curve, n=2)
+        dJ[:-2] += 2e-2 * d2
+        dJ[1:-1] -= 4e-2 * d2
+        dJ[2:] += 2e-2 * d2
+
     # Spline basis mapping (same strategy as bilayer analytic wrapper)
 
     basis = np.zeros((num_knots, len(l_array)), dtype=np.float64)

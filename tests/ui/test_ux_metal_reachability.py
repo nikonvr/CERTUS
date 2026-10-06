@@ -94,7 +94,11 @@ def _worker_main(tag: str) -> None:
         "fields_visible": sum(1 for f in fields if f.isVisible()),
     }
     win.close()
-    print(MARKER + json.dumps(out))
+    # D23: the native abort (0xC0000005) came after this line, while the return freed the locals (the
+    # QApplication before the window) or during interpreter teardown; the marker, still in the pipe buffer,
+    # was lost with it. Flush it, then leave without the teardown: it is not what this worker measures.
+    print(MARKER + json.dumps(out), flush=True)
+    os._exit(0)
 
 
 def _measure(tag: str) -> dict:

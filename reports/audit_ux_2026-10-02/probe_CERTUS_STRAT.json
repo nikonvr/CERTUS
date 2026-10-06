@@ -1,0 +1,5 @@
+{
+  "app": "CERTUS_STRAT",
+  "dark_palette_labels": [],
+  "render_note": "Qt offscreen; onboarding skipped by its normal callback; no calculation launched."
+}

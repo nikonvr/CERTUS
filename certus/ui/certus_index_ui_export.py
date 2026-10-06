@@ -482,9 +482,6 @@ class CertusIndexExportMixin:
 
                 cols.append("R (%)")
 
-                if "n_fit_R_only" in sub_df.columns:
-                    cols.extend(["n (R-only)", "k (R-only)"])
-
                 if has_R_tgt:
                     cols.append("R Exp (%)")
 
@@ -526,15 +523,6 @@ class CertusIndexExportMixin:
 
                     col_idx += 1
 
-                    if "n_fit_R_only" in sub_df.columns:
-                        self.table_res.setItem(i, col_idx, QTableWidgetItem(f"{row_data['n_fit_R_only']:.4f}"))
-
-                        col_idx += 1
-
-                        self.table_res.setItem(i, col_idx, QTableWidgetItem(f"{row_data['k_fit_R_only']:.6f}"))
-
-                        col_idx += 1
-
                     if has_R_tgt:
                         val_r = row_data["R_target"] * 100
 
@@ -557,9 +545,6 @@ class CertusIndexExportMixin:
                     cols.append("T Exp (%)")
 
                 cols.append("R (%)")
-
-                if "n_fit_R_only" in sub_df.columns:
-                    cols.extend(["n (R-only)", "k (R-only)"])
 
                 if has_R_tgt:
                     cols.append("R Exp (%)")
@@ -625,15 +610,6 @@ class CertusIndexExportMixin:
                     )
 
                     col_idx += 1
-
-                    if "n_fit_R_only" in sub_df.columns:
-                        self.table_res.setItem(i, col_idx, QTableWidgetItem(f"{row_data['n_fit_R_only']:.4f}"))
-
-                        col_idx += 1
-
-                        self.table_res.setItem(i, col_idx, QTableWidgetItem(f"{row_data['k_fit_R_only']:.6f}"))
-
-                        col_idx += 1
 
                     if has_R_tgt:
                         val_r = row_data["R_target"] * 100
@@ -754,9 +730,6 @@ class CertusIndexExportMixin:
             if "n_fit_T_only" in df.columns:
                 header += "\tn (T-only)\tk (T-only)"
 
-            if "n_fit_R_only" in df.columns:
-                header += "\tn (R-only)\tk (R-only)"
-
             lines = [header]
 
             for _, row in df.iterrows():
@@ -767,9 +740,6 @@ class CertusIndexExportMixin:
 
                 if "n_fit_T_only" in df.columns:
                     row_str += f"\t{row['n_fit_T_only']:.6f}\t{row['k_fit_T_only']:.9f}"
-
-                if "n_fit_R_only" in df.columns:
-                    row_str += f"\t{row['n_fit_R_only']:.6f}\t{row['k_fit_R_only']:.9f}"
 
                 lines.append(row_str)
 

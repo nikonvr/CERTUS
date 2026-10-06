@@ -56,6 +56,48 @@ from certus_physics import (
     get_n_substrate_array_by_id,
 )
 
+# Threads that did not stop in time, each with its worker, held until the thread ends. Dropping the last Python
+# reference to a running QThread deletes it, and Qt aborts on "QThread: Destroyed while thread ... is still
+# running": the IR refinements that follow PGLOBAL do not read the stop flag (D23,
+# tests/unit/test_index_cleanup_keeps_a_running_thread_alive.py).
+_THREADS_STILL_RUNNING: list[tuple[QThread, object]] = []
+
+_WINDOW_SLOTS = (
+    "_on_progress",
+    "_on_evals_update",
+    "_on_curve_update",
+    "_on_error",
+    "_on_finished",
+    "_on_tlu_constrained_finished",
+    "_on_thread_finished",
+)
+
+
+def _keep_until_finished(window, thread: QThread, worker) -> None:
+    """Hold a thread whose stop timed out, and its worker, until the thread ends.
+
+    Its signals are first cut from the window's slots: when it ends, it must neither clear the references of a
+    later run (`_on_thread_finished`) nor deliver its result as that run's (`_on_finished`).
+    """
+    for emitter in (thread, worker):
+        for signal_name in ("progress", "evals_update", "curve_update", "error", "finished"):
+            signal = getattr(emitter, signal_name, None)
+            if signal is None:
+                continue
+            for slot_name in _WINDOW_SLOTS:
+                slot = getattr(window, slot_name, None)
+                if slot is None:
+                    continue
+                try:
+                    signal.disconnect(slot)
+                except TypeError, RuntimeError:
+                    pass  # not connected to this slot
+    entry = (thread, worker)
+    _THREADS_STILL_RUNNING.append(entry)
+    thread.finished.connect(lambda: _THREADS_STILL_RUNNING.remove(entry) if entry in _THREADS_STILL_RUNNING else None)
+    if thread.isFinished() and entry in _THREADS_STILL_RUNNING:  # it ended before the connection
+        _THREADS_STILL_RUNNING.remove(entry)
+
 
 class CertusIndexWorkerMixin:
     def _warmup_numba(self) -> None:
@@ -547,6 +589,7 @@ class CertusIndexWorkerMixin:
                         self.logger.critical(
                             "Thread did not stop within 2s in _cleanup_worker - skipping terminate() to avoid unsafe thread kill."
                         )
+                        _keep_until_finished(self, self._thread, self._worker)
 
             except RuntimeError:
                 # Qt object has already been deleted
@@ -565,6 +608,7 @@ class CertusIndexWorkerMixin:
                         self.logger.critical(
                             "Thread2 did not stop within 2s in _cleanup_worker - skipping terminate() to avoid unsafe thread kill."
                         )
+                        _keep_until_finished(self, self._thread2, getattr(self, "_worker2", None))
 
             except RuntimeError:
                 self._core_logger.debug("Silenced exception in %s", __name__, exc_info=True)
@@ -841,6 +885,7 @@ class CertusIndexWorkerMixin:
                         self.logger.critical(
                             "Thread did not stop within 2s in _on_error - skipping terminate() to avoid unsafe thread kill."
                         )
+                        _keep_until_finished(self, self._thread, getattr(self, "_worker", None))
 
             except RuntimeError as e:
                 self.logger.warning(f"Thread cleanup warning: {e}")
@@ -857,6 +902,7 @@ class CertusIndexWorkerMixin:
                         self.logger.critical(
                             "Thread2 did not stop within 2s in _on_error - skipping terminate() to avoid unsafe thread kill."
                         )
+                        _keep_until_finished(self, self._thread2, getattr(self, "_worker2", None))
 
             except RuntimeError as e:
                 self.logger.warning(f"Thread2 cleanup warning: {e}")

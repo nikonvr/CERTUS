@@ -15,7 +15,6 @@ candidate the answer is `(-1, 0.0, 1e30)`.
 
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 
@@ -124,12 +123,6 @@ def test_a_point_of_zero_weight_does_not_score() -> None:
     assert cost == pytest.approx(expected[2], rel=1e-10)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    condition=os.environ.get("NUMBA_DISABLE_JIT") != "1",
-    reason="ETAT D53: `fastmath=True` folds `np.isfinite`, so a NaN target with a positive weight poisons every cost "
-    "(the compiled scan returns cost nan and candidate 0; the interpreted one skips the point, as documented)",
-)
 def test_a_point_without_a_finite_target_does_not_score() -> None:
     target = TARGET.copy()
     target[0] = np.nan  # a target that is missing, with a weight that says it counts

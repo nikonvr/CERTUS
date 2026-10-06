@@ -25,13 +25,15 @@ SELLMEIER_COEFFS_BY_ID: dict[int, tuple[float, ...]] = {
         1.01046945,
         103.560653,
     ),  # N-BK7
+    # D263T eco: SCHOTT Zemax catalog 2017-01-20b (refractiveindex.info, D263TECO), 0.334-2.325 um. Within 2.1e-4 of
+    # the maker's sheet (F 1.5300, e 1.5255, d 1.5231, C 1.5204; tolerance 1.5e-3); the set before gave n_d = 1.5201 (D56).
     2: (
-        0.90963095,
-        0.0047563071,
-        0.37290409,
-        0.01621977,
-        0.92110613,
-        105.77911,
+        1.23795755,
+        0.00863080926,
+        0.0466468888,
+        0.0469074501,
+        2.46700556,
+        264.146296,
     ),  # D263T
     3: (
         1.4313493,
@@ -41,9 +43,12 @@ SELLMEIER_COEFFS_BY_ID: dict[int, tuple[float, ...]] = {
         5.3414021,
         18.028251**2,
     ),  # Sapphire (Al2O3)
+    # B270i: SCHOTT publishes no Sellmeier constants, only eight line indices (g to C, 436-656 nm: n_d 1.5230). B1 and
+    # C1 are fitted to them (largest residual 4.4e-5); the other four terms are those of the set committed before, of
+    # unknown origin, which gave n_d = 1.5257 (D56). Beyond 656 nm the index rests on those four terms.
     4: (
-        0.90110328,
-        0.0045578115,
+        0.88788095,
+        0.0065395174,
         0.39734436,
         0.016601149,
         0.94615601,

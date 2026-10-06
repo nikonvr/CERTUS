@@ -94,14 +94,6 @@ class DesignStrategyService(BaseHeadlessService[DesignStrategyRequest, DesignStr
         raise TypeError(f"Unsupported request type: {type(request).__name__}")
 
     @staticmethod
-    def _extract_design_config(payload: dict[str, Any]) -> dict[str, Any]:
-        """Extract and filter design configuration from payload."""
-        config_obj = payload.get("config", payload.get("cfg", payload))
-        if isinstance(config_obj, Mapping):
-            return {k: v for k, v in config_obj.items() if k in _DESIGN_CFG_KEYS}
-        return {}
-
-    @staticmethod
     def _build_runner_payload(cfg: dict[str, Any]) -> dict[str, Any]:
         """Convert a validated config into the exact payload expected by the worker runner."""
         params = DesignParamsDTO.model_validate(cfg)

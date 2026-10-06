@@ -46,10 +46,14 @@ correction ; chaque test échoue sur le code d'avant.
   publiée : le réflecteur parfait donne (100 ; −0,007 ; 0,002). D65, inchangé au bit, rend avec elle le blanc
   (95,043 ; 100 ; 108,880) pour (95,047 ; 100 ; 108,883) publié. La page DESIGN (8.2) décrit maintenant cette
   analyse, et non une optimisation vers une couleur cible que DESIGN ne fait pas (`1834349b`).
-- **Une validation complète à `e855bffa`** a trouvé un échec (1 failed, 4 923 passed en unit) : l'attribut annoté
-  que D41 avait ajouté à un mixin de la fenêtre de base, sous Python 3.14, donnait à ce mixin un
-  `__annotate_func__` masqué (`test_the_base_app_split_keeps_every_window_method_where_it_resolves`) ; corrigé
-  (`d81252e3`). Le push attend une validation complète à 0 échec du dernier commit.
+- **Une validation complète à `e855bffa`** a trouvé trois suites de mes corrections, toutes corrigées. (1) Unit :
+  1 failed, 4 923 passed — l'attribut annoté que D41 avait ajouté à un mixin de la fenêtre de base donnait à ce
+  mixin, sous Python 3.14, un `__annotate_func__` masqué (`d81252e3`). (2) UI : la suite s'est figée dans
+  `test_ux_re_stop_when_idle.py`, dont la fixture fermait RE avec un faux calcul en cours ; depuis D41 la
+  fermeture le demande, dans une boîte que personne ne fermait (`e4e0941d`). (3) UI : le cliquet UX a vu le
+  panneau gauche de METAL passer de 389 à 403 px de largeur minimale, effet du bouton de remise à zéro à 11 pt
+  (D58), plus que les 394 px que ce panneau reçoit à 1366×768 ; 👤 a choisi un padding horizontal de 8 px au lieu
+  de 16 (`7dbe4ae9`, mesuré : 387 px). Le push attend une validation complète à 0 échec du dernier commit.
 
 **Plus tôt le 2026-10-06.** Un audit complet (`c2b47f11`) a trouvé D87 à D91. Corrigés depuis : D87 (`31745571`,
 `1aa32a1d` : le gel calcule sur la couche OpenMP ; construit, démarrage et artefact contrôlés), D88 (`a49fe502`,
@@ -360,8 +364,9 @@ annule seul.
   physique. Un résultat fondé sur ces feuilles au-delà de 4 µm en hérite.
 - **Stop pendant l'étage IR d'INDEX : le résultat raffiné est gardé**, comme aujourd'hui ; rien à changer.
 - **Interface** : D41, demander avant de fermer pendant un calcul, partout ; D65, retirer les branches mortes ;
-  D66, créer la légende avant les courbes ; D58, appliquer `BODY_LG` ; rebrancher les deux fenêtres ; évaluer
-  puis intégrer la branche de couleurs. Faits (§0).
+  D66, créer la légende avant les courbes ; D58, appliquer `BODY_LG` — puis, son effet sur le panneau de METAL
+  mesuré, réduire le padding horizontal du bouton à 8 px plutôt qu'accepter 403 px ou revenir à 9 pt ;
+  rebrancher les deux fenêtres ; évaluer puis intégrer la branche de couleurs. Faits (§0).
 - **Poste** : supprimer `wip-d75-gradient-lame` et le venv `C:\envs\certus` ; archiver les fichiers hors git à
   côté des bundles. Faits ; l'archive est à refaire si ces fichiers changent. **Le dépôt reste dans Google Drive.**
 - **GitHub** : tester puis fusionner les mises à jour de Dependabot — appliquées sur la branche, et toute fusion

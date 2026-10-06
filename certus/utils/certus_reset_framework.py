@@ -10,6 +10,7 @@ from typing import Any
 
 from PyQt6.QtWidgets import QMessageBox, QPlainTextEdit, QPushButton, QTextEdit, QWidget
 
+from certus.utils.certus_ux import Typography
 from certus.utils.errors import NUMERICAL_FAULT_EXCEPTIONS
 
 __all__ = [
@@ -431,7 +432,7 @@ def create_reset_button(app_instance, use_app_reset: bool = False) -> QPushButto
             padding: 8px 16px;
             border-radius: 4px;
             font-weight: bold;
-            font-size: {Typography.BODY_LG}pt;
+            font-size: BODY_LGpt;
         }
         QPushButton:hover {
             background-color: #7a4a00;
@@ -443,7 +444,7 @@ def create_reset_button(app_instance, use_app_reset: bool = False) -> QPushButto
             background-color: #3a2a00;
             color: #888;
         }
-    """)
+    """.replace("BODY_LG", str(Typography.BODY_LG)))  # D58: in a plain string, Qt dropped the size
 
     if use_app_reset and hasattr(app_instance, "reset_to_defaults"):
         reset_btn.clicked.connect(app_instance.reset_to_defaults)

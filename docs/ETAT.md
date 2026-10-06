@@ -32,7 +32,7 @@ un test par correction ; chaque test échoue sur le code d'avant.
   (66 puis 54), les 171 cas du chemin par défaut gardent leurs bits ; le juge de paix garde sa population au bit.
 - **D72** (`5ccaa210`) : le gel laisse dehors les outils de développement : 442 → 411 Mo, contrôles de démarrage et
   d'artefact passés.
-- Non fait : D48 dans STRAT, qui ne modélise pas l'absorption du substrat (§5) ; le reste attend 👤 (§5).
+- D48 : 👤 garde le substrat non absorbant (§3) ; le reste attend 👤 (§5).
 
 **Dernière action (Claude, 2026-10-06, sur les arbitrages de 👤 du matin, §3).**
 - **D87 corrigé dans le code et dans la construction** : le gel prend la couche Numba OpenMP et le budget de
@@ -334,7 +334,6 @@ annule seul.
 - **Polarisation « Avg » de DESIGN (ex-D47) : retirée officiellement.** Le tableau des cibles n'offre que s et p ; une configuration ancienne « Avg » se charge en s avec un avertissement. Rien à calculer.
 - **Threads Numba d'une tâche de robustesse STRAT : adaptatif** (`task_numba_threads`) : 4 sur une machine de 16 cœurs logiques ou plus, 2 sinon, jamais au-dessus de la limite de Numba. Mesuré sur le juge de paix standard (mode `premium`, caches froids, Ryzen 7 5700G, 16 threads, 2026-10-05) : à 2 threads 521, 476 et 472 s, à 4 threads 452, 421 et 418 s, soit 11 à 13 % de moins, et les six populations (370 stratégies, scores, plantage par niveau de bruit) sont identiques au bit, ce que la construction garantit : chaque tirage des noyaux parallèles écrit sa propre case. Le code livré rend 421 s et la même population. Les machines de moins de 16 cœurs gardent 2 faute de mesure. Profil par échantillonnage du même run : 74 % de la durée dans la robustesse Monte-Carlo (dont 29 % de consensus), 17 % d'attente du consommateur de statistiques, 6 % dans `build_M_before_cache`.
 - **D54 : supprimer `adaptive_scan`** (code mort) : fait le 2026-10-06 (`7a958dec`), sous la tolérance de 👤 du même jour (ci-dessous).
-- **D48 : exposer l'épaisseur du substrat** comme champ de DESIGN et STRAT, défaut 1 mm inchangé ; à faire.
 - **D86 : garder l'avertissement**, ne pas refuser l'extrapolation.
 
 ### Arbitrages de 👤 du 2026-10-06
@@ -342,6 +341,10 @@ annule seul.
 - **Un matériau absent de la base refuse le calcul** (D88), plutôt que de seulement prévenir.
 - **Le gel passe sur la couche OpenMP** (D87) : construire, contrôler le démarrage ; le calcul réel dans
   l'exécutable revient à 👤.
+- **D48 : le substrat reste non absorbant**, sans champ d'épaisseur. DESIGN construit ses matériaux, substrat
+  compris, par un modèle de Cauchy réel à deux indices (n à 400 et 700 nm, `Material`) et STRAT ne lit que la
+  partie réelle de l'indice du substrat : l'épaisseur du substrat n'entre dans aucun de leurs calculs. La lame
+  absorbante reste dans la physique (`certus_substrate_absorption`), avec son épaisseur par défaut de 1 mm.
 - **Tolérance de C1 pour retirer du code mort d'un noyau : 10⁻¹⁰ en relatif** (D54). Le retrait de
   `adaptive_scan` en est resté à 2,3·10⁻¹³.
 
@@ -365,7 +368,6 @@ numéros de l'ancien registre sont entre parenthèses
 |---|---|---|
 | D87 | **L'exécutable gelé ne calculait pas — corrigé, à confirmer dans l'exécutable.** Le gel forçait la couche Numba `workqueue` avec un seul fil (`configure_numba_env`), qui termine le processus dès que deux fils Python entrent ensemble dans un noyau parallèle, alors que les calculs le font tous : simulé le 2026-10-06 (`sys.frozen` posé avant tout import, données à côté de l'exécutable, `workqueue`, un fil), DESIGN, INDEX, RE, METAL SINGLE et STRAT finissaient en code 3 (« Numba workqueue threading layer is terminating: Concurrent access has been detected »), les quatre premiers en 30 à 53 s, STRAT à l'entrée de sa Phase B ; piles : deux fils du pool de la phase 1 de RE, deux du pool de robustesse de STRAT, le fil de l'interface d'INDEX contre son `QThread`, les fils du pool de DESIGN. Depuis `31745571`, le gel a la couche OpenMP et le budget de fils du mode source ; la même simulation de RE sur OpenMP va au bout. Construit à `1aa32a1d` : démarrage et artefact contrôlés (§0). Corrigé du même défaut le 2026-10-05 : la tâche de robustesse ne demande plus à Numba plus de fils qu'il n'en a | un calcul réel de chaque module dans l'exécutable (👤) ; sinon, un seul fil de calcul dans le gel |
 | D10 | **L'ajustement Sellmeier 3 pôles est chaotique sur le saphir** : un ulp sur les données change le minimum atteint (RMSE de 0,00126 à 0,00208 sur 41 essais, 2026-09-26) ; deux machines rendent deux indices pour les mêmes données. SiO2 et BK7 sont stables | élargir le multistart ou reconditionner — change les résultats, décision de 👤 |
-| D48 | L'épaisseur du substrat (1 mm par défaut, `DEFAULT_SUBSTRATE_THICKNESS_NM`) n'est un champ ni de DESIGN ni de STRAT : un substrat qui absorbe perd du flux selon cette épaisseur. Décidé le 2026-10-05 : l'exposer (§3). Les fonctions physiques prennent déjà l'épaisseur ; dans DESIGN, l'interface, les paramètres, les workers et les noyaux d'optimisation ne la passent pas. **STRAT ne modélise pas l'absorption du substrat** (ses noyaux prennent la partie réelle de l'indice du substrat) : un champ d'épaisseur y serait inerte (§5) | DESIGN : la faire passer partout, C1 sur le chemin par défaut |
 
 **Le modèle physique — connus, non corrigés**
 
@@ -404,7 +406,6 @@ Ces sujets demandent un jugement de physicien ou de propriétaire du produit. Le
 
 | sujet | ce qui est en jeu |
 |---|---|
-| **l'épaisseur du substrat dans STRAT (D48)** | STRAT ne modélise pas l'absorption du substrat : y exposer l'épaisseur donnerait un champ qui n'atteint pas le calcul (CLAUDE.md §4). Soit DESIGN seul, soit d'abord modéliser l'absorption du substrat dans les noyaux de STRAT (un changement de physique, C1) |
 | **le dépôt dans Google Drive** | un dépôt git synchronisé par Drive est lent et exposé aux copies de conflit dans `.git` ; ce dossier est en plus partagé par deux PC sous deux chemins différents. Recommandé : un clone hors Drive par machine. Non fait : déplacer l'arbre de travail pendant qu'on y travaille n'est pas une opération sûre |
 | **données Nb2O5 « Syrus »** | dans les feuilles `Nb2O5-Syrus` et `IR-Syrus-Nb2O5` de `example/database_index/indices.xlsx`, n tombe de 2,09 à 4,0 µm à 1,19 à 4,7 µm puis remonte à 1,78 à 5 µm, quand les feuilles H400 et H800 restent entre 2,07 et 2,13. Un creux de cette taille avec k ≤ 0,018 n'est pas physique |
 | **défaut D10** | fiabiliser l'ajustement Sellmeier du saphir : **change des résultats de production** |

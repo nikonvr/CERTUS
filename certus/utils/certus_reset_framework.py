@@ -423,13 +423,14 @@ def create_reset_button(app_instance, use_app_reset: bool = False) -> QPushButto
         "and reloads the default configuration."
     )
 
-    # Professional styling
+    # Professional styling. Horizontal padding 8 px: at 11 pt (D58), 16 px made this button set METAL's left panel
+    # to 403 px, more than the 394 it gets at 1366x768 (the owner's choice, 2026-10-06; tests/ui/test_ux_ratchet.py).
     reset_btn.setStyleSheet("""
         QPushButton {
             background-color: #5a3a00;
             color: white;
             border: none;
-            padding: 8px 16px;
+            padding: 8px 8px;
             border-radius: 4px;
             font-weight: bold;
             font-size: BODY_LGpt;

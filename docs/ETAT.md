@@ -5,7 +5,7 @@
 > [`CLAUDE.md`](../CLAUDE.md). Il se tient **en place** : un fait change, on corrige sa ligne,
 > on ne raconte pas la correction (`git log` s'en charge). Toute mesure porte sa date.
 > Le détail et l'historique sont dans `git`, sans autorité (CLAUDE.md, en-tête).
-> Mis à jour le 2026-10-06 au soir (les 19 réponses de 👤 appliquées ; D92 trouvé).
+> Mis à jour le 2026-10-06 au soir (les 19 réponses de 👤 appliquées ; D92 trouvé et corrigé).
 
 ## 0. Reprise — à lire en premier, à tenir à jour
 
@@ -36,8 +36,20 @@ correction ; chaque test échoue sur le code d'avant.
 - **CI** : les actions étaient déjà épinglées par SHA ; les cinq mises à jour proposées par Dependabot sont
   appliquées sur la branche, une par commit (`fcce99e7`, `6c7faa3d`, `1321c206`, `2d83a2df`, `c6b7e4bf`) ; les
   gardes des workflows passent (41 passed). Aucune fusion dans `master`.
-- **Avis de tiers** : brouillon `THIRD_PARTY_NOTICES.md` (`30fb39c0`) ; ce que le dépôt n'établit pas y est marqué
-  « à confirmer par toi ». En le faisant : **D92**, les tables CIE de la colorimétrie sont fausses (§4).
+- **Avis de tiers** : brouillon `THIRD_PARTY_NOTICES.md` (`30fb39c0`, `52bd04a9`) ; ce que le dépôt n'établit pas y
+  est marqué « à confirmer par toi ».
+- **D92, trouvé en écrivant les avis et corrigé** (`79b26a95`) : les fonctions colorimétriques x̄, ȳ, z̄ n'étaient
+  pas celles de la CIE depuis le commit initial (ȳ culminait à 490 nm au lieu de 555) ; un réflecteur parfait
+  sortait en L\*a\*b\* = (100 ; 60,4 ; −113,1), et l'analyse couleur Monte-Carlo de DESIGN avec lui. Elles sont
+  maintenant les lignes 380 à 780 nm, au pas de 5 nm, de la table de la CIE (`CIE_xyz_1931_2deg.csv`, DOI
+  10.25039/CIE.DS.xvudnb9b, CC BY-SA 4.0), téléchargée avec l'accord de 👤 et contrôlée par sa somme SHA-256
+  publiée : le réflecteur parfait donne (100 ; −0,007 ; 0,002). D65, inchangé au bit, rend avec elle le blanc
+  (95,043 ; 100 ; 108,880) pour (95,047 ; 100 ; 108,883) publié. La page DESIGN (8.2) décrit maintenant cette
+  analyse, et non une optimisation vers une couleur cible que DESIGN ne fait pas (`1834349b`).
+- **Une validation complète à `e855bffa`** a trouvé un échec (1 failed, 4 923 passed en unit) : l'attribut annoté
+  que D41 avait ajouté à un mixin de la fenêtre de base, sous Python 3.14, donnait à ce mixin un
+  `__annotate_func__` masqué (`test_the_base_app_split_keeps_every_window_method_where_it_resolves`) ; corrigé
+  (`d81252e3`). Le push attend une validation complète à 0 échec du dernier commit.
 
 **Plus tôt le 2026-10-06.** Un audit complet (`c2b47f11`) a trouvé D87 à D91. Corrigés depuis : D87 (`31745571`,
 `1aa32a1d` : le gel calcule sur la couche OpenMP ; construit, démarrage et artefact contrôlés), D88 (`a49fe502`,
@@ -64,7 +76,6 @@ n'autorise pas à modifier son arbre témoin.
 | rang | action et critère de fin | raison / condition |
 |---|---|---|
 | 1 — un exécutable qui calcule (D87) | 👤 : un calcul réel de chaque module qui calcule dans l'exécutable construit à `5ccaa210` (`%TEMP%\buildwt\dist\CERTUS_HUB\CERTUS_HUB.exe`, hors du dépôt). | La simulation et la construction disent que le gel calcule ; seul un calcul dans l'exécutable le prouve. |
-| 2 — des couleurs justes (D92) | Remplacer x̄, ȳ, z̄ par la table officielle de la CIE, avec un test qui échoue sur l'ancienne (un blanc parfait doit donner a\* = b\* = 0). | Le résultat de l'analyse couleur de DESIGN est faux aujourd'hui. Télécharger la table demande l'accord de 👤 (demandé le 2026-10-06). |
 | 3 — établir la parité publiée | Inventaires (`reports/PARITE_ZENODO_*_2026-10-05.md`) et lecture des écarts courts de l'INDEX SPLINE (`reports/PARITE_ZENODO_SPLINE_LECTURE_2026-10-06.md` : remaniements, trois retouches heuristiques du corridor, une correction) faits. Reste à lire les écarts longs (gradient analytique, nettoyage des nœuds, décalage de Δn, polissage du maillage) et à comparer les capacités du RE marquées « non comparé » (a priori MAP, substrats, échantillons à deux faces, résidus par voie). | Nécessaire avant d'affirmer que les améliorations publiées sont intégrées. RE local 1.2.0.dev0 diffère de l'archive 1.1.1 ; l'inversion conjointe de plusieurs échantillons est écartée par 👤. |
 | 4 — traiter la chaîne de mesure | Spécifier puis mesurer la cadence machine (§6, 12.4), ensuite seulement le lissage (12.2). D54 et D55 sont corrigés. | La grille de la machine est inactive par défaut. Tout changement de noyau passe C1 froid contre froid et l'oracle. |
 | 5 — stabiliser interface et gel | Reproduire D23 (les six `gc.collect()` des threads de calcul STRAT et les `QThread`) avant D11 et `WA_DeleteOnClose` ; poursuivre la réduction du gel (D72) après sa fiabilité. | D11 n'a pas d'effet dans le lancement actuel par processus ; libérer une fenêtre avant ses threads serait plus grave. |
@@ -379,7 +390,6 @@ numéros de l'ancien registre sont entre parenthèses
 | # | défaut | piste |
 |---|---|---|
 | D87 | **L'exécutable gelé ne calculait pas — corrigé, à confirmer dans l'exécutable.** Le gel forçait la couche Numba `workqueue` avec un seul fil (`configure_numba_env`), qui termine le processus dès que deux fils Python entrent ensemble dans un noyau parallèle, alors que les calculs le font tous : simulé le 2026-10-06 (`sys.frozen` posé avant tout import, données à côté de l'exécutable, `workqueue`, un fil), DESIGN, INDEX, RE, METAL SINGLE et STRAT finissaient en code 3 (« Numba workqueue threading layer is terminating: Concurrent access has been detected »), les quatre premiers en 30 à 53 s, STRAT à l'entrée de sa Phase B ; piles : deux fils du pool de la phase 1 de RE, deux du pool de robustesse de STRAT, le fil de l'interface d'INDEX contre son `QThread`, les fils du pool de DESIGN. Depuis `31745571`, le gel a la couche OpenMP et le budget de fils du mode source ; la même simulation de RE sur OpenMP va au bout. Construit à `1aa32a1d` : démarrage et artefact contrôlés (§0). Corrigé du même défaut le 2026-10-05 : la tâche de robustesse ne demande plus à Numba plus de fils qu'il n'en a | un calcul réel de chaque module dans l'exécutable (👤) ; sinon, un seul fil de calcul dans le gel |
-| D92 | **Les tables CIE 1931 de la colorimétrie sont fausses**, depuis le commit initial (`certus/physics/certus_colorimetry.py`) : ȳ suit la courbe de la CIE jusqu'à 425 nm, puis la parcourt deux fois trop vite et culmine à 490 nm au lieu de 555 ; x̄ culmine à 460 nm au lieu de 600 ; les sommes de x̄, ȳ, z̄ (14,40, 10,82, 45,16) devraient être égales. L'illuminant D65 est juste. Mesuré le 2026-10-06 : un réflecteur parfait (R = 1 partout) sort en L\*a\*b\* = (100 ; 60,4 ; −113,1) au lieu de (100 ; 0 ; 0), et R = 0,5 en (76,1 ; 47,9 ; −89,8). L'analyse couleur Monte-Carlo de DESIGN (`ColorWorker` : L\*a\*b\*, RGB, ΔE00) en hérite | remplacer x̄, ȳ, z̄ par la table officielle de la CIE (rang 2 de §0) |
 
 **Le modèle physique — connus, non corrigés**
 
@@ -413,13 +423,12 @@ Ces sujets demandent un jugement de physicien ou de propriétaire du produit. Le
 | sujet | ce qui est en jeu |
 |---|---|
 | **validation externe** | deux stratégies réellement déposées du dichroïque, avec leurs spectres mesurés. Le test est **ordinal** : STRAT doit les classer dans le bon ordre |
-| **la table CIE (D92)** | autoriser le téléchargement de la table officielle des fonctions colorimétriques CIE 1931 (site de la CIE), seule source sûre pour corriger D92 |
 | **avis de tiers** | relire le brouillon `THIRD_PARTY_NOTICES.md` et lever ses « à confirmer par toi » ; décider si le gel embarque `LICENSE`, les avis et les textes de licence des bibliothèques qu'il contient : celui du 2026-10-06 n'a que ceux de cinq distributions (MarkupSafe, numba, NumPy, pydantic, PyQt6), alors que les licences MIT et BSD demandent leur avis dans une distribution binaire |
 | **protection de `master`** | l'appliquer dans GitHub (CI verte exigée) : réglage de sécurité, laissé à 👤 |
 | **PR Dependabot** | #1 à #4 et #6, ouvertes le 2026-10-06 : leurs mises à jour sont sur la branche ; les fermer ou les fusionner dans `master` se redemande à 👤 |
 | **interface** | Revoir visuellement les onze fenêtres et choisir les teintes de marque, la bande des fichiers récents et les bornes des champs numériques. |
 
-D10, D41, D48, D54, D55, D56, D58, D65, D66, D76, D86, D87 et D88 sont tranchés (§3) ou corrigés.
+D10, D41, D48, D54, D55, D56, D58, D65, D66, D76, D86, D87, D88 et D92 sont tranchés (§3) ou corrigés.
 
 ## 6. Chantiers spécifiés, en attente
 

@@ -113,6 +113,7 @@ from certus.core.certus_strat_robustness_slit import (
 )
 from certus.core.certus_strat_robustness_task import (
     _test_strategy_robustness_task,
+    task_numba_threads,
 )
 
 # What moved out (S5.2) is imported back here, every name: this module stays the one place where the callers, the scripts and the

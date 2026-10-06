@@ -94,9 +94,8 @@ n'autorise pas à modifier son arbre témoin.
 | 5 — stabiliser interface et gel | Reproduire D23 (les six `gc.collect()` des threads de calcul STRAT et les `QThread`) avant D11 et `WA_DeleteOnClose` ; poursuivre la réduction du gel (D72) après sa fiabilité. | D11 n'a pas d'effet dans le lancement actuel par processus ; libérer une fenêtre avant ses threads serait plus grave. |
 | 6 — réduire la dette | Élucider les effets d'import de D42 avant E402/I001 (D25), puis traiter D26 et les défauts visuels selon §4–5. | Chantier utile, mais moins urgent que la justesse scientifique ; l'ordre des imports peut changer l'exécution. |
 
-**En parallèle, priorité scientifique dépendant de 👤 :** obtenir deux dépôts
-réels du dichroïque et leurs spectres pour la validation ordinale externe (§5).
-Les autres choix réservés à 👤 restent en §5.
+**Après les deux PR en cours et le test de l'exécutable par 👤, le rang 3** (choix de 👤 du 2026-10-06). Les autres
+choix réservés à 👤 restent en §5.
 
 ## 1. Où en sont les programmes
 
@@ -108,7 +107,7 @@ Les autres choix réservés à 👤 restent en §5.
 | **Interface** | plan clos le 2026-09-08 : 12 critères de fin sur 13 atteints et mesurés, le treizième démontré inatteignable (`xfail` strict) | rang 5 et choix de 👤 (§5) |
 | **Qualité** | CI : calcul sous Linux, interface sous Windows, gel construit et démarré sous Windows, audit de sécurité (`pip-audit`, `gitleaks`) ; tests isolés des préférences de 👤 ; l'audit du code mort couvre tout `certus/` (D24 clos le 2026-10-05 : 3 928 définitions, 73 candidats justifiés un par un). Indicateurs du plan le 2026-10-06 (`scripts\metrics.py`) : tous dans leur cible, sauf la couverture et la taille du gel, non remesurées ce jour | rangs 5 et 6 |
 | **Documentation** | règles dans `CLAUDE.md`, état ici ; 15 rapports HTML, 34 schémas Mermaid et 2 SVG validés le 2026-10-03 ; anciens dossiers lisibles dans Git | tenir « un fait, un seul endroit » |
-| **Validation externe** | 🔴 **aucune** : STRAT n'est validé que contre lui-même | données à obtenir auprès de 👤 (§0 et §5) |
+| **Validation externe** | 🔴 **aucune** : STRAT n'est validé que contre lui-même, et c'est assumé (décision de 👤 du 2026-10-06 : les deux dépôts réels du dichroïque ne sont plus prévus) | — |
 
 ## 2. Repères mesurés — fente 2 nm, modèle courant
 
@@ -399,6 +398,17 @@ annule seul.
   termes de B270i autres que B1 et C1 sont d'origine inconnue.
 - **La table D65 de la CIE peut être téléchargée** pour vérifier celle du code : identique au bit (`e8be1315`).
 
+### Réponses de 👤 du 2026-10-06, troisième série
+
+- **La PR qui suit la #5** (licences du gel, avis, ETAT) **se fusionne aussi dès que toute sa CI est verte.** La
+  session n'est plus archivée automatiquement à la fusion d'une PR.
+- **DLL Microsoft du gel** : une licence Visual Studio de 👤 n'est pas établie ; la ligne reste « à confirmer
+  par toi » dans `THIRD_PARTY_NOTICES.md`.
+- **Un gel local se construit dans un environnement jetable installé depuis `requirements.lock`**, comme celui de la
+  CI, et supprimé ensuite : l'exécutable local n'embarque plus ce que porte le Python du poste.
+- **Le prochain chantier est la parité Zenodo** (rang 3 de §0).
+- **La validation externe de STRAT n'est plus prévue** : STRAT reste validé contre lui-même (§1).
+
 ### RE — décidé par 👤 le 2026-10-05
 
 - **Divergence du faisceau : deux ou trois rayons suffisent.** 👤 : « définitivement, la prise en compte de
@@ -450,7 +460,6 @@ Ces sujets demandent un jugement de physicien ou de propriétaire du produit. Le
 
 | sujet | ce qui est en jeu |
 |---|---|
-| **validation externe** | deux stratégies réellement déposées du dichroïque, avec leurs spectres mesurés. Le test est **ordinal** : STRAT doit les classer dans le bon ordre |
 | **avis de tiers** | une ligne reste « à confirmer par toi » dans `THIRD_PARTY_NOTICES.md` : les DLL du runtime Visual C++ (`VCRUNTIME140*.dll`, `VCOMP140.DLL`) se redistribuent avec un programme, mais Microsoft réserve ce droit aux utilisateurs de Visual Studio sous licence |
 | **interface** | Revoir visuellement les onze fenêtres et choisir les teintes de marque, la bande des fichiers récents et les bornes des champs numériques. |
 

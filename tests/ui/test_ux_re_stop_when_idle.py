@@ -50,6 +50,10 @@ def re_window(qapp):
 
     win = CertusREApp()
     yield win
+    # Since D41 a close asks first while a computation thread runs, in a modal box nobody answers here: the fake
+    # workers below still "run" when a test declined to stop them.
+    win._re_worker = None
+    win.eval_worker = None
     win.close()
 
 

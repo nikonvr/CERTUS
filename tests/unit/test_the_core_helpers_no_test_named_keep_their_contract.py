@@ -347,16 +347,24 @@ def test_the_catalog_glasses_reproduce_their_published_index_at_the_sodium_d_lin
     assert _sellmeier_index(SELLMEIER_COEFFS_BY_ID[substrate_id], 587.56) == pytest.approx(published_nd, abs=1e-4)
 
 
-def test_the_two_glasses_whose_provenance_is_open_keep_the_index_they_have():
-    """MEASURED, NOT VALIDATED: D263T eco and B270i give n_d = 1.5201 and 1.5257 with the coefficients as committed.
-
-    Whether these are the maker's coefficients is a question for the owner (plan S8.3, ETAT D56): a change of these
-    numbers moves the substrate of every design on these glasses, and must be a decision, so it must break a test.
+@pytest.mark.parametrize(
+    ("substrate_id", "sheet", "tolerance"),
+    [
+        (2, {486.13: 1.5300, 546.07: 1.5255, 587.56: 1.5231, 656.27: 1.5204}, 3e-4),  # the catalog's own n_d is 1.523303
+        (4, {435.83: 1.5341, 479.99: 1.5297, 486.13: 1.5292, 546.07: 1.5251, 587.56: 1.5230, 589.29: 1.5229,
+             643.85: 1.5207, 656.27: 1.5203}, 1e-4),
+    ],
+    ids=["D263T eco", "B270i"],
+)
+def test_the_two_thin_glasses_reproduce_the_line_indices_of_their_maker(substrate_id, sheet, tolerance):
+    """D56, decided by the owner on 2026-10-06: the sets committed before gave n_d = 1.5201 (D263T eco) and 1.5257
+    (B270i), against 1.5231 and 1.5230 on SCHOTT's sheets. D263T eco now has SCHOTT's Zemax coefficients; B270i, for
+    which SCHOTT publishes none, its two visible terms fitted to the eight line indices of the sheet.
     """
     from certus.core.certus_substrate_db import SELLMEIER_COEFFS_BY_ID
 
-    assert _sellmeier_index(SELLMEIER_COEFFS_BY_ID[2], 587.56) == pytest.approx(1.52007, abs=1e-4)
-    assert _sellmeier_index(SELLMEIER_COEFFS_BY_ID[4], 587.56) == pytest.approx(1.52566, abs=1e-4)
+    for wavelength_nm, published in sheet.items():
+        assert _sellmeier_index(SELLMEIER_COEFFS_BY_ID[substrate_id], wavelength_nm) == pytest.approx(published, abs=tolerance)
 
 
 @pytest.mark.parametrize("substrate_id", [0, 1, 2, 3, 4])

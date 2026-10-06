@@ -152,7 +152,8 @@ def check_frozen_artifact() -> list[str]:
     # (D87): without its module or its runtime, the first parallel kernel of the executable would fail.
     if not list(folder.glob("numba/np/ufunc/omppool*.pyd")):
         errors.append("Frozen folder holds no Numba OpenMP layer (numba/np/ufunc/omppool*.pyd)")
-    if not [p for p in folder.glob("*.dll") if p.name.lower() == "vcomp140.dll"]:
+    # Case-blind: the build writes VCOMP140.DLL, which a case-sensitive file system (the Linux CI) did not match.
+    if not list(folder.glob("vcomp140.dll", case_sensitive=False)):
         errors.append("Frozen folder holds no OpenMP runtime (vcomp140.dll)")
     for name in FROZEN_REQUIRED_FILES:
         if not (folder / name).is_file():

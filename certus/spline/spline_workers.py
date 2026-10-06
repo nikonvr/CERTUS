@@ -48,8 +48,6 @@ from certus.utils.certus_index_utils import (
     _transmittance_absolute_from_nk,
 )
 from certus_physics import (
-    PGlobalConfig,
-    PGlobalOptimizer,
     clip_to_bounds,
 )
 
@@ -73,86 +71,6 @@ def _build_spline_view_payload(cfg: SplineOptConfig, sigma_knots: np.ndarray, xv
     t_th, r_th = _build_theoretical_outputs(cfg, lam, n_l, k_l, d_nm, n_sub_full)
     return lam, sk, xv, n_l, k_l, d_nm, n_sub_full, t_th, r_th
 
-
-def _pglobal_bounds_trust_region(
-    bounds_full: np.ndarray,
-    x0: np.ndarray,
-    k_sigma: int,
-    k_lo: int,
-    k_hi: int,
-    rho_lo: float,
-    rho_hi: float,
-    sigma_knots: np.ndarray | None = None,
-) -> tuple[np.ndarray, float]:
-    """Tightens the bounds passed to PGlobal around ``x0``; decreases as K increases.
-
-    If a knot is outside [600, 3000] nm, the trust box is relaxed (wider box) to account
-
-    for the high uncertainty of the initial local solution (Needle) in the UV / Far-IR.
-
-    """
-
-    b = np.asarray(bounds_full, dtype=np.float64).copy()
-
-    x0v = np.asarray(x0, dtype=np.float64).ravel()
-
-    ks = int(k_sigma)
-
-    k_lo = int(max(3, k_lo))
-
-    k_hi = int(max(k_lo + 1, k_hi))
-
-    rh = float(rho_hi)
-
-    rl = float(rho_lo)
-
-    if ks <= k_lo:
-        rho = rh
-
-    elif ks >= k_hi:
-        rho = rl
-
-    else:
-        t = float(ks - k_lo) / float(k_hi - k_lo)
-
-        rho = rh + t * (rl - rh)
-
-    rho = float(np.clip(rho, 1e-7, 0.5))
-
-    dim = int(b.shape[0])
-
-    for i in range(dim):
-        L, U = float(b[i, 0]), float(b[i, 1])
-
-        span = U - L
-
-        if not np.isfinite(span) or span <= 0.0:
-            continue
-
-        current_rho = rho
-
-        # Relaxation at the edges because the uncertainty on the Needle probe is high
-
-        if sigma_knots is not None and i > 0:
-            idx_knot = (i - 1) % ks
-
-            lam_knot = 1.0 / max(float(sigma_knots[idx_knot]), 1e-12)
-
-            if lam_knot < 600.0 or lam_knot > 3000.0:
-                current_rho = min(0.45, current_rho * 2.5)
-
-        hw = current_rho * span
-
-        lo = max(L, float(x0v[i]) - hw)
-
-        hi = min(U, float(x0v[i]) + hw)
-
-        if hi <= lo + 1e-18 * max(1.0, abs(U)):
-            lo, hi = L, U
-
-        b[i, 0], b[i, 1] = lo, hi
-
-    return b, rho
 
 def _build_live_dict(
     cfg: SplineOptConfig,
@@ -808,99 +726,6 @@ class FreeKnotStageContext:
             self.bnds, self.stage_name, self.progress_cb, self.obj_tracked,
         )
 
-
-@dataclass
-class SingleSplineStageContext:
-    cfg: Any
-    sigma_knots: np.ndarray
-    pipeline_seq: str
-    pg_conf: Any
-    optimizer: Any
-    progress_cb: Callable
-    live_cb: Any
-    lgr: Any
-    
-    live_interval: float = 2.0
-    pg_prog_interval: float = 0.4
-    
-    live_throttle: float = 0.0
-    best_rmse_ref: float = 0.0
-    best_mse_live_ref: float = 0.0
-    best_x_live_ref: np.ndarray = field(default_factory=lambda: np.zeros(0))
-    pg_snap_last_eval: int = 0
-    pg_cb_count: int = 0
-    pg_prog_last: float = 0.0
-
-    def cb(self, s) -> None:
-        import time as _time_mod
-        self.pg_cb_count += 1
-        _fe = max(1, int(self.pg_conf.max_feval))
-        frac = min(1.0, float(self.optimizer.n_evals) / float(_fe))
-        pc = 15.0 + 70.0 * frac
-        rmse = float(np.sqrt(max(s.y, 0.0)))
-
-        if rmse < self.best_rmse_ref - 1e-12:
-            self.best_rmse_ref = rmse
-            self.best_mse_live_ref = float(s.y)
-            self.best_x_live_ref = np.asarray(s.x, dtype=np.float64).ravel().copy()
-            xv = self.best_x_live_ref
-            with np.printoptions(precision=6, suppress=True):
-                self.lgr.info(
-                    "PGlobal IMPROVEMENT: evals=%d  RMSE=%.6f  x(d,n,L)=%s",
-                    int(self.optimizer.n_evals),
-                    rmse,
-                    np.array2string(xv, separator=", "),
-                )
-
-        step_pg = max(1, int(self.pg_conf.max_feval) // 8)
-        step_hit = False
-
-        if self.optimizer.n_evals - self.pg_snap_last_eval >= step_pg:
-            self.pg_snap_last_eval = int(self.optimizer.n_evals)
-            step_hit = True
-            from certus.spline.certus_index_spline_core import _log_spline_pipeline_json
-            _log_spline_pipeline_json(
-                self.lgr,
-                "pglobal_progress",
-                seq=self.pipeline_seq,
-                n_evals=int(self.optimizer.n_evals),
-                best_rmse_so_far=float(self.best_rmse_ref),
-                last_sample_rmse=rmse,
-            )
-            self.lgr.info(
-                "PIPELINE [%s] PGlobal … evals=%d | best RMSE=%.6f (current sample=%.6f)",
-                self.pipeline_seq,
-                int(self.optimizer.n_evals),
-                float(self.best_rmse_ref),
-                rmse,
-            )
-
-        _now_prog = _time_mod.monotonic()
-        _prog_time_hit = (_now_prog - self.pg_prog_last) >= self.pg_prog_interval
-        _emit_prog = self.pg_cb_count == 1 or step_hit or _prog_time_hit
-
-        if _emit_prog:
-            self.pg_prog_last = _now_prog
-            self.progress_cb(pc, f"PGlobal: evals={self.optimizer.n_evals}  RMSE={rmse:.6f}")
-
-        if self.live_cb is not None:
-            now = _time_mod.monotonic()
-            if now - self.live_throttle >= self.live_interval:
-                self.live_throttle = now
-                try:
-                    # _build_live_dict is module level
-                    self.live_cb(
-                        _build_live_dict(
-                            self.cfg,
-                            self.sigma_knots,
-                            self.best_x_live_ref,
-                            self.best_mse_live_ref,
-                            int(self.optimizer.n_evals),
-                        )
-                    )
-                except Exception:
-                    import logging
-                    logging.getLogger("CERTUS").debug("live_cb failed in PGlobal callback", exc_info=True)
 
 def _sk_max_abs_delta(a: np.ndarray, b: np.ndarray) -> float:
     """Max absolute element-wise difference between two sigma-knot arrays."""
@@ -2016,28 +1841,6 @@ def _run_single_spline_stage(
 
     local_only = True
 
-    bounds_pg = bounds_full
-
-    trust_rho_val: float | None = None
-
-    if (not local_only) and cfg.pglobal_trust_region_by_k:
-        bounds_pg, trust_rho_val = _pglobal_bounds_trust_region(
-            bounds_full,
-            x0,
-            int(sigma_knots.size),
-            int(cfg.pglobal_trust_k_lo),
-            int(cfg.pglobal_trust_k_hi),
-            float(cfg.pglobal_trust_rho_lo),
-            float(cfg.pglobal_trust_rho_hi),
-            sigma_knots,
-        )
-
-        logging.getLogger("CERTUS").info(
-            "INDEX_SPLINE PGlobal trust region K_sigma=%s =%.4g (polish -> full bounds)",
-            int(sigma_knots.size),
-            trust_rho_val,
-        )
-
     smlf = int(max(0, int(getattr(cfg, "stage_mandatory_local_maxfun", 0) or 0)))
 
     n_loc_pre = 0
@@ -2130,327 +1933,54 @@ def _run_single_spline_stage(
             int(n_loc_pre),
         )
 
-    if local_only:
-        lgr.info(
-            "INDEX_SPLINE step K_sigma=%s: local-only optimization | This run stays in local L-BFGS-B mode from the current seed.",
-            int(sigma_knots.size),
-        )
-
-        if stop_event.is_set():
-            return None, None
-
-        progress_cb(2, "L-BFGS-B only (polish)...")
-
-        x_best, final_mse, nitp = _polish_lbfgsb_chunked(
-            obj,
-            x_local,
-            bounds_full,
-            int(cfg.polish_maxfun),
-            stop_event,
-            progress_cb=progress_cb,
-            live_cb=live_cb,
-            sigma_knots=sigma_knots,
-            progress_lo=5,
-            progress_hi=100,
-        )
-
-        nit_combined = int(n_loc_pre + nitp)
-
-        rmse_fin_loc = float(np.sqrt(max(final_mse, 0.0)))
-
-        rmse_in_polish = float(np.sqrt(max(mse_local, 0.0)))
-
-        _log_spline_pipeline_json(
-            lgr,
-            "stage_local_only_complete",
-            seq=pipeline_seq,
-            rmse_after_mandatory_local=rmse_in_polish,
-            rmse_after_polish_only=rmse_fin_loc,
-            nfev_lbfgsb=int(nitp),
-            nit_combined=int(nit_combined),
-            pglobal_skipped=True,
-        )
-
-        lgr.info(
-            "PIPELINE [%s] Stage local-only done | RMSE after polish=%.6f (nfev L-BFGS-B~%d)",
-            pipeline_seq,
-            rmse_fin_loc,
-            int(nitp),
-        )
-
-        out = _pack_spline_stage_result(
-            cfg,
-            sigma_knots,
-            x_best,
-            final_mse,
-            0,
-            nit_combined,
-            stage_repli_local=False,
-            pglobal_trust_rho=None,
-        )
-
-        return out, None
-
-    rmse_before_pg = float(np.sqrt(max(mse_local, 0.0)))
-
+    # Local only. `local_only` is always True, so the PGlobal stage that came after this polish never ran; the
+    # published version had removed it, and it is gone here too since 2026-10-06 (the owner's decision,
+    # reports/PARITE_ZENODO_ECARTS_LONGS_2026-10-06.md).
     lgr.info(
-        "INDEX_SPLINE stage K_sigma=%s: RMSE at start of PGlobal (after mandatory local) = %.6f  "
-        "| same objective metric as FACTUAL SOL2",
+        "INDEX_SPLINE step K_sigma=%s: local-only optimization | This run stays in local L-BFGS-B mode from the current seed.",
         int(sigma_knots.size),
-        rmse_before_pg,
     )
-
-    progress_cb(15, "PGlobal: start...")
-
-    lgr.info(
-        "INDEX_SPLINE PGlobal ACTIVE | seq=%s | K_sigma=%d | dim=%d | trust_region_by_k=%s | rho=%s",
-        str(pipeline_seq),
-        int(sigma_knots.size),
-        int(dim),
-        bool(cfg.pglobal_trust_region_by_k),
-        (f"{float(trust_rho_val):.4g}" if trust_rho_val is not None else "n/a_full_bounds"),
-    )
-
-    pg_conf = PGlobalConfig.for_dimension(dim).with_overrides(
-        max_feval=max(50000, 4000 * dim),
-        max_time=600.0,
-    )
-
-    if cfg.pglobal_max_feval is not None:
-        mfe = int(cfg.pglobal_max_feval)
-
-        # mfe = max(mfe, 6000 * dim)  # Removed this constraint which slowed down adaptive mode
-
-        pg_conf = pg_conf.with_overrides(max_feval=mfe)
-
-        # PGLOBAL ~ triples the size of the 1st batch; avoid exceeding max_feval from iteration 0
-
-        cap_spi = max(32, mfe // 8)
-
-        if cap_spi < pg_conf.n_samples_per_iter:
-            pg_conf = pg_conf.with_overrides(n_samples_per_iter=cap_spi)
-
-        # reduce local searches if the global budget is tight
-
-        if cfg.pglobal_local_search_budget is None:
-            pg_conf = pg_conf.with_overrides(
-                local_search_budget=min(int(pg_conf.local_search_budget), max(1000, mfe // 2))
-            )
-
-    if cfg.pglobal_max_time is not None:
-        pg_conf = pg_conf.with_overrides(max_time=float(cfg.pglobal_max_time))
-
-    if cfg.pglobal_local_search_budget is not None:
-        # Respect explicit user/UI budget (avoid silently inflating eval counts).
-        lsb = max(0, int(cfg.pglobal_local_search_budget))
-
-        pg_conf = pg_conf.with_overrides(local_search_budget=lsb)
-    pglobal_seed = getattr(cfg, "pglobal_random_seed", None)
-    if pglobal_seed is not None:
-        pg_conf = pg_conf.with_overrides(random_seed=int(pglobal_seed))
-
-    # Wire analytic gradient into PGlobal's L-BFGS-B local searches
-    # so each local search uses the direct Fortran setulb fast path (jac=True)
-    # instead of finite-difference gradients (2N+1 → 1 eval per iteration).
-    _pg_grad_func = None
-    try:
-
-        if spline_pwl_analytic_grad_supported(cfg):
-            _gt = obj.analytic_gradient(x_local)
-            if _gt is not None and np.all(np.isfinite(_gt)):
-                _pg_grad_func = obj.analytic_gradient
-    except NUMERICAL_FAULT_EXCEPTIONS:
-        logging.getLogger("CERTUS").debug("PGlobal gradient probe failed, using FD fallback", exc_info=True)
-
-    optimizer = PGlobalOptimizer(
-        objective=obj,
-        bounds=bounds_pg,
-        config=pg_conf,
-        stop_event=stop_event,
-        x0=x_local,
-        gradient_func=_pg_grad_func,
-    )
-
-    _log_spline_pipeline_json(
-        lgr,
-        "stage_pglobal_start",
-        seq=pipeline_seq,
-        rmse_seed_for_pglobal=rmse_before_pg,
-        pglobal_max_iter=int(cfg.pglobal_max_iter),
-        max_feval=int(pg_conf.max_feval),
-        max_time_s=float(pg_conf.max_time),
-        n_samples_per_iter=int(pg_conf.n_samples_per_iter),
-        local_search_budget=int(pg_conf.local_search_budget),
-        pglobal_random_seed=(
-            int(pg_conf.random_seed) if getattr(pg_conf, "random_seed", None) is not None else None
-        ),
-        dim_pglobal_bounds=int(bounds_pg.shape[0]),
-        bounds_are_trust_region=bool(trust_rho_val is not None),
-    )
-
-    lgr.info(
-        "PIPELINE [%s] PGlobal started | feval budget=%d time=%.0fs | RMSE seed=%.6f",
-        pipeline_seq,
-        int(pg_conf.max_feval),
-        float(pg_conf.max_time),
-        rmse_before_pg,
-    )
-
-    ctx_pg = SingleSplineStageContext(
-        cfg=cfg, sigma_knots=sigma_knots, pipeline_seq=pipeline_seq,
-        pg_conf=pg_conf, optimizer=optimizer, progress_cb=progress_cb,
-        live_cb=live_cb, lgr=lgr,
-        best_rmse_ref=float(np.sqrt(max(mse_local, 0.0))),
-        best_mse_live_ref=float(mse_local),
-        best_x_live_ref=np.asarray(x_local, dtype=np.float64).ravel().copy()
-    )
-
-    best = optimizer.optimize(max_iter=int(cfg.pglobal_max_iter), callback=ctx_pg.cb)
-
-    if stop_event.is_set() and best is None:
-        return None, None
-
-    mse_pg_returned = float(best.y) if best is not None else float("nan")
-
-    rmse_pg_returned = float(np.sqrt(max(mse_pg_returned, 0.0))) if np.isfinite(mse_pg_returned) else float("nan")
-
-    # Prefer the best sample observed during callbacks over the optimizer return value.
-    # Some optimizers return the last sampled point rather than the incumbent best.
-    mse_pg_best_obs = float(ctx_pg.best_mse_live_ref) if np.isfinite(float(ctx_pg.best_mse_live_ref)) else float(mse_local)
-
-    x_pg_best_obs = np.asarray(ctx_pg.best_x_live_ref, dtype=np.float64).ravel().copy()
-
-    if best is not None and np.isfinite(mse_pg_returned) and mse_pg_returned < mse_pg_best_obs - 1e-15:
-        mse_pg_best_obs = float(mse_pg_returned)
-
-        x_pg_best_obs = np.asarray(best.x, dtype=np.float64).ravel().copy()
-
-    rmse_pg_out = float(np.sqrt(max(mse_pg_best_obs, 0.0)))
-
-    _log_spline_pipeline_json(
-        lgr,
-        "stage_pglobal_done",
-        seq=pipeline_seq,
-        n_evals_pglobal=int(optimizer.n_evals),
-        rmse_before_pglobal=rmse_before_pg,
-        rmse_best_pglobal=rmse_pg_out,
-        pglobal_returned_sample=bool(best is not None),
-        rmse_pglobal_returned_sample=float(rmse_pg_returned) if np.isfinite(rmse_pg_returned) else None,
-        delta_rmse_pglobal=float(rmse_pg_out - rmse_before_pg),
-        stop_event_set=bool(stop_event.is_set()),
-    )
-
-    lgr.info(
-        "PIPELINE [%s] PGlobal finished | evals=%d | RMSE %.6f -> %.6f (Delta=%+.6f) | returned_sample=%s",
-        pipeline_seq,
-        int(optimizer.n_evals),
-        rmse_before_pg,
-        rmse_pg_out,
-        float(rmse_pg_out - rmse_before_pg),
-        f"{rmse_pg_returned:.6f}" if np.isfinite(rmse_pg_returned) else "n/a",
-    )
-
-    x_start = clip_to_bounds(np.asarray(x_pg_best_obs, dtype=np.float64).copy(), bounds_full[:, 0], bounds_full[:, 1])
-
-    mse_polish_in = float(obj(x_start))
-
-    rmse_polish_in = float(np.sqrt(max(mse_polish_in, 0.0)))
 
     if stop_event.is_set():
-        progress_cb(85, "Stop requested: short polish then save best PGlobal...")
+        return None, None
 
-    else:
-        progress_cb(85, "Polish L-BFGS-B...")
+    progress_cb(2, "L-BFGS-B only (polish)...")
 
     x_best, final_mse, nitp = _polish_lbfgsb_chunked(
         obj,
-        x_start,
+        x_local,
         bounds_full,
         int(cfg.polish_maxfun),
         stop_event,
         progress_cb=progress_cb,
         live_cb=live_cb,
         sigma_knots=sigma_knots,
-        progress_lo=85,
+        progress_lo=5,
         progress_hi=100,
     )
 
     nit_combined = int(n_loc_pre + nitp)
 
-    rmse_after_polish = float(np.sqrt(max(float(final_mse), 0.0)))
+    rmse_fin_loc = float(np.sqrt(max(final_mse, 0.0)))
+
+    rmse_in_polish = float(np.sqrt(max(mse_local, 0.0)))
 
     _log_spline_pipeline_json(
         lgr,
-        "stage_polish_done",
+        "stage_local_only_complete",
         seq=pipeline_seq,
-        rmse_start_polish=rmse_polish_in,
-        rmse_end_polish=rmse_after_polish,
+        rmse_after_mandatory_local=rmse_in_polish,
+        rmse_after_polish_only=rmse_fin_loc,
         nfev_lbfgsb=int(nitp),
-        delta_rmse_polish=float(rmse_after_polish - rmse_polish_in),
+        nit_combined=int(nit_combined),
+        pglobal_skipped=True,
     )
 
     lgr.info(
-        "PIPELINE [%s] Polish L-BFGS-B done | RMSE %.6f -> %.6f (nfev~%d)",
+        "PIPELINE [%s] Stage local-only done | RMSE after polish=%.6f (nfev L-BFGS-B~%d)",
         pipeline_seq,
-        rmse_polish_in,
-        rmse_after_polish,
+        rmse_fin_loc,
         int(nitp),
-    )
-
-    repli_local = False
-
-    # Always guard against PGlobal+polish degradation relative to the pre-PGlobal seed/local state.
-    tol_repli = max(1e-14, 1e-9 * max(1.0, abs(float(mse_local))))
-    if float(final_mse) > float(mse_local) + float(tol_repli):
-        lgr.info(
-            "INDEX_SPLINE step: fallback to pre-PGlobal seed/local (MSE %.6e < PGlobal+polish %.6e); K continuation possible",
-            mse_local,
-            final_mse,
-        )
-
-        _log_spline_pipeline_json(
-            lgr,
-            "stage_repli_mandatory_local",
-            seq=pipeline_seq,
-            reason="PGlobal_plus_polish_worse_than_seed_or_local",
-            mse_mandatory_local=float(mse_local),
-            mse_after_pglobal_polish=float(final_mse),
-            rmse_kept=float(np.sqrt(max(mse_local, 0.0))),
-        )
-
-        lgr.info(
-            "PIPELINE [%s] FALLBACK to pre-PGlobal seed/local | RMSE kept=%.6f "
-            "(PGlobal+polish worsened the objective - common cause: PGlobal budget too low "
-            "or multimodal landscape).",
-            pipeline_seq,
-            float(np.sqrt(max(mse_local, 0.0))),
-        )
-
-        x_best = x_local.copy()
-
-        final_mse = float(mse_local)
-
-        nit_combined = int(n_loc_pre)
-
-        repli_local = True
-
-    rmse_final = float(np.sqrt(max(float(final_mse), 0.0)))
-
-    _log_spline_pipeline_json(
-        lgr,
-        "stage_complete",
-        seq=pipeline_seq,
-        rmse_final=rmse_final,
-        repli_local=bool(repli_local),
-        n_evals_pglobal=int(optimizer.n_evals),
-        nit_total=int(nit_combined),
-    )
-
-    lgr.info(
-        "PIPELINE [%s] Stage done | RMSE final=%.6f | repli_local=%s",
-        pipeline_seq,
-        rmse_final,
-        repli_local,
     )
 
     out = _pack_spline_stage_result(
@@ -2458,10 +1988,10 @@ def _run_single_spline_stage(
         sigma_knots,
         x_best,
         final_mse,
-        int(optimizer.n_evals),
+        0,
         nit_combined,
-        stage_repli_local=repli_local,
-        pglobal_trust_rho=trust_rho_val,
+        stage_repli_local=False,
+        pglobal_trust_rho=None,
     )
 
     return out, None

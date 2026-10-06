@@ -59,8 +59,11 @@ def test_the_release_structure_holds_on_the_repository() -> None:
     assert _release_checks().check_release_structure() == []
 
 
-def _frozen_folder(tmp_path: Path, rc, *, data: bool = True, runtime: bool = True, openmp: bool = True) -> Path:
-    """A folder that looks like `dist/CERTUS_HUB/`: a PE launcher, the runtime, Numba's OpenMP layer, the data."""
+def _frozen_folder(
+    tmp_path: Path, rc, *, data: bool = True, runtime: bool = True, openmp: bool = True, licences: bool = True
+) -> Path:
+    """A folder that looks like `dist/CERTUS_HUB/`: a PE launcher, the runtime, Numba's OpenMP layer, the data and the
+    licences."""
     folder = tmp_path / rc.FROZEN_NAME
     folder.mkdir()
     header = bytearray(b"MZ" + bytes(0x7E))
@@ -75,6 +78,10 @@ def _frozen_folder(tmp_path: Path, rc, *, data: bool = True, runtime: bool = Tru
     for name in rc.FROZEN_REQUIRED_FILES if data else ():
         (folder / name).parent.mkdir(parents=True, exist_ok=True)
         (folder / name).write_bytes(b"data")
+    licence_files = [*rc.FROZEN_LICENCE_FILES, *(f"licenses/{d}/LICENSE" for d in rc.FROZEN_LICENCE_FOLDERS)]
+    for name in licence_files if licences else ():
+        (folder / name).parent.mkdir(parents=True, exist_ok=True)
+        (folder / name).write_bytes(b"licence")
     return folder
 
 
@@ -118,6 +125,18 @@ def test_a_frozen_folder_without_numba_s_openmp_layer_is_refused(tmp_path, rc) -
 
     assert any("OpenMP layer" in e for e in errors)
     assert any("vcomp140.dll" in e for e in errors)
+
+
+@pytest.mark.unit
+def test_a_frozen_folder_without_the_licences_is_refused(tmp_path, rc) -> None:
+    """Decided by the owner on 2026-10-06: the published build carries CERTUS's licence, its notices and the licences
+    of what it bundles. It carried five distributions' licence files, those PyInstaller's hooks copied."""
+    _frozen_folder(tmp_path, rc, licences=False)
+
+    errors = rc.check_frozen_artifact()
+
+    assert [n for n in rc.FROZEN_LICENCE_FILES if not any(n in e for e in errors)] == []
+    assert [d for d in rc.FROZEN_LICENCE_FOLDERS if not any(f"licenses/{d}/" in e for e in errors)] == []
 
 
 @pytest.mark.unit

@@ -18,6 +18,7 @@ running `<module>.exe`, which nothing produced: from the frozen hub, no card cou
   them (the folder of `sys.executable`; PyInstaller 6 would put them in `_internal/` otherwise).
 """
 
+import importlib.util
 import sys
 from pathlib import Path
 
@@ -78,6 +79,13 @@ a = Analysis(
     ],
     noarchive=False,
 )
+# The licences of what the executable carries, next to it in licenses/ (decided by the owner on 2026-10-06; see
+# tools/frozen_licences.py). Loaded by its path: `tools` is not a package, and another `tools` could be importable.
+_licences_spec = importlib.util.spec_from_file_location("frozen_licences", ROOT / "tools" / "frozen_licences.py")
+frozen_licences = importlib.util.module_from_spec(_licences_spec)
+_licences_spec.loader.exec_module(frozen_licences)
+a.datas += frozen_licences.licence_toc(frozen_licences.top_level_names(a.pure, a.binaries))
+
 pyz = PYZ(a.pure)
 exe = EXE(
     pyz,

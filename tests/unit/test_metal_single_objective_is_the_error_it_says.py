@@ -12,8 +12,8 @@ What is pinned here, against `tests/oracle/tmm_reference.py` (the film on the fr
     the three-curve value: the mean of the three mean square errors, a curve with nothing finite left out of the mean, the penalty when nothing is left
     the guards: a negative thickness, internal knots that are too close or in the wrong order, non-finite values
     the fixed-thickness objective: the same value, with the knots only in x and the internal knot positions given aside
-    the analytic gradient of the beam analysis is the gradient of the DATA term, to 1e-6 (measured 2e-10) - and only that: it leaves out the derivative of the smoothness penalty the
-    objective adds, a gap of 1.7e-3 at smooth knots and 1.9e-2 at rough ones (`xfail(strict)`, ETAT D76)
+    the analytic gradient of the beam analysis is the gradient of the whole objective, smoothness penalty included, at smooth and at rough knots (it left the penalty out
+    until 2026-10-06, a gap of 1.7e-3 and 1.9e-2: D76)
     the bounds and the substrate label
 """
 
@@ -250,18 +250,16 @@ def analytic_gradient(x_knots):
     return gradient_function_fixed_eM(x_knots, THICKNESS, NUM_KNOTS, WAVELENGTHS, R_TARGET, MIN_KNOT_DISTANCE, PRECOMPUTED, lambda_internes_fixed=INTERNAL_KNOTS)
 
 
-def test_the_analytic_gradient_is_the_gradient_of_the_data_term():
+def test_the_analytic_gradient_is_the_gradient_of_the_whole_objective_at_smooth_knots():
     x_knots = np.concatenate((N_KNOTS, K_KNOTS))
-    numeric = central_differences(data_term, x_knots)
+    numeric = central_differences(fixed_thickness, x_knots)
     assert np.max(np.abs(numeric)) > 1e-3
     np.testing.assert_allclose(analytic_gradient(x_knots), numeric, rtol=0.0, atol=1e-6 * np.max(np.abs(numeric)))
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="D76: the gradient leaves out the derivative of the smoothness penalty that the objective adds (relative gap 1.9e-2 at these rough knots, 1.7e-3 at smooth ones)",
-)
 def test_the_analytic_gradient_is_the_gradient_of_the_whole_objective_at_rough_knots():
+    # D76: the gradient left out the derivative of the smoothness penalty that the objective adds (relative gap 1.9e-2
+    # at these rough knots, 1.7e-3 at smooth ones). Decided by the owner on 2026-10-06: add it.
     rough_n = np.array([1.2, 2.4, 0.6, 2.2, 1.0])
     x_knots = np.concatenate((rough_n, K_KNOTS))
     numeric = central_differences(fixed_thickness, x_knots)

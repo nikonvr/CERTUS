@@ -45,13 +45,14 @@ SELLMEIER_2POLES_LAM_FRAC_MAX = 0.97
 SELLMEIER_3TERM_C_FRAC_MAX = 0.995
 
 
-# Light multistart: with physical bounds and good seeding, 2 candidates are enough.
+# Multistart: eight random starts besides the seed and the L3 grid. Two made the sapphire fit a lottery (D10): a one-ulp
+# change of one data point could send every polish off and the fit to a worse model (RMSE 0.00796 instead of 0.00096).
 
 
 SELLMEIER_SEED_POINTS = 5  # grid points for polynomial seed (was 9)
 
 
-SELLMEIER_MULTISTART_TRIALS = 2  # additional random jitters (was 8)
+SELLMEIER_MULTISTART_TRIALS = 8  # additional random jitters
 
 
 SELLMEIER_WEIGHT_MODE = "uniform"  # uniform: no UV bias (was inv_sqrt_lambda)

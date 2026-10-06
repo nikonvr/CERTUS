@@ -59,8 +59,8 @@ def test_the_release_structure_holds_on_the_repository() -> None:
     assert _release_checks().check_release_structure() == []
 
 
-def _frozen_folder(tmp_path: Path, rc, *, data: bool = True, runtime: bool = True) -> Path:
-    """A folder that looks like `dist/CERTUS_HUB/`: a PE launcher, the runtime, the data."""
+def _frozen_folder(tmp_path: Path, rc, *, data: bool = True, runtime: bool = True, openmp: bool = True) -> Path:
+    """A folder that looks like `dist/CERTUS_HUB/`: a PE launcher, the runtime, Numba's OpenMP layer, the data."""
     folder = tmp_path / rc.FROZEN_NAME
     folder.mkdir()
     header = bytearray(b"MZ" + bytes(0x7E))
@@ -68,6 +68,10 @@ def _frozen_folder(tmp_path: Path, rc, *, data: bool = True, runtime: bool = Tru
     (folder / f"{rc.FROZEN_NAME}.exe").write_bytes(bytes(header) + b"PE" + bytes(2) + bytes(64))
     if runtime:
         (folder / "python314.dll").write_bytes(b"runtime")
+    if openmp:
+        (folder / "numba" / "np" / "ufunc").mkdir(parents=True)
+        (folder / "numba" / "np" / "ufunc" / "omppool.cp314-win_amd64.pyd").write_bytes(b"layer")
+        (folder / "VCOMP140.DLL").write_bytes(b"runtime")
     for name in rc.FROZEN_REQUIRED_FILES if data else ():
         (folder / name).parent.mkdir(parents=True, exist_ok=True)
         (folder / name).write_bytes(b"data")
@@ -103,6 +107,17 @@ def test_a_frozen_folder_without_the_python_runtime_is_refused(tmp_path, rc) -> 
     _frozen_folder(tmp_path, rc, runtime=False)
 
     assert any("Python runtime" in e for e in rc.check_frozen_artifact())
+
+
+@pytest.mark.unit
+def test_a_frozen_folder_without_numba_s_openmp_layer_is_refused(tmp_path, rc) -> None:
+    """D87: the frozen build computes on the OpenMP layer; without it the first parallel kernel fails."""
+    _frozen_folder(tmp_path, rc, openmp=False)
+
+    errors = rc.check_frozen_artifact()
+
+    assert any("OpenMP layer" in e for e in errors)
+    assert any("vcomp140.dll" in e for e in errors)
 
 
 @pytest.mark.unit

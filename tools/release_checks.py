@@ -148,6 +148,12 @@ def check_frozen_artifact() -> list[str]:
         errors.append(f"Frozen folder abnormally large ({size} bytes)")
     if not list(folder.glob("python3*.dll")):
         errors.append("Frozen folder holds no Python runtime (python3*.dll)")
+    # The computations call their parallel kernels from several threads at once, on Numba's OpenMP layer
+    # (D87): without its module or its runtime, the first parallel kernel of the executable would fail.
+    if not list(folder.glob("numba/np/ufunc/omppool*.pyd")):
+        errors.append("Frozen folder holds no Numba OpenMP layer (numba/np/ufunc/omppool*.pyd)")
+    if not [p for p in folder.glob("*.dll") if p.name.lower() == "vcomp140.dll"]:
+        errors.append("Frozen folder holds no OpenMP runtime (vcomp140.dll)")
     for name in FROZEN_REQUIRED_FILES:
         if not (folder / name).is_file():
             errors.append(f"Frozen folder is missing a file the code reads: {name}")

@@ -58,7 +58,7 @@ correction ; chaque test échoue sur le code d'avant.
 - **CI de la PR #5 sur `dbec2fc1`** : `pytest (ubuntu)` rouge sur un seul test, `test_a_complete_frozen_folder_is_accepted`.
   Le contrôle d'artefact de D87 cherchait `vcomp140.dll` par un motif sensible à la casse sous Linux, et le gel
   écrit `VCOMP140.DLL` ; il est insensible à la casse depuis `d8a0ef42` (poussé). La PR se fusionne dès que toute sa
-  CI est verte (§3).
+  CI est verte (§3) : fusionnée le 2026-10-06 (`d531c7cf`).
 - **Licences dans le gel** (`04a67083`, `93127c2e`, locaux, pour la PR suivante) : `licenses/` reçoit `LICENSE`,
   `THIRD_PARTY_NOTICES.md` et les fichiers de licence de chaque distribution embarquée (`tools/frozen_licences.py`) ;
   le contrôle d'artefact les exige. Construit le 2026-10-06 (même contenu, avant le rebasage sur `d8a0ef42`) : 91
@@ -72,10 +72,9 @@ en partie (`5ccaa210`, 442 → 411 Mo). **D87 confirmé par 👤 dans l'exécuta
 `dbec2fc1` (`%TEMP%\CERTUS_HUB_test_dbec2fc1\CERTUS_HUB.exe`, hors du dépôt) : « l'exécutable fonctionne »
 (2026-10-06) ; le `release-windows` de la CI l'a aussi construit et démarré sur ce commit.
 
-**Point de départ.** `certus0310`, branche `refactor-corridors-mixins`,
-[PR #5](https://github.com/nikonvr/CERTUS/pull/5). La branche est poussée sur `origin` le 2026-10-06 au soir, sur
-l'autorisation de 👤 donnée pour une validation complète à 0 échec, sans fusion dans `master` ; sa CI se lit sur la
-PR. `python scripts\preflight.py` → `PREFLIGHT=GO` le 2026-10-06. Sauvegarde
+**Point de départ.** `certus0310`. La [PR #5](https://github.com/nikonvr/CERTUS/pull/5) (`refactor-corridors-mixins`) est
+fusionnée dans `master` le 2026-10-06 (`d531c7cf`), ses 12 contrôles de CI verts ; la suite (licences du gel, avis,
+ETAT) part de la branche `gel-licences`, dans une PR fusionnée dès que sa CI est verte (§3). `python scripts\preflight.py` → `PREFLIGHT=GO` le 2026-10-06. Sauvegarde
 après chaque lot : `../CERTUS_certus0310_<date>_<commit>.bundle`. Les entrées `.git/worktrees/certus0310` et
 `.git/worktrees/profwt`, incomplètes (Drive en refuse la suppression), déclenchent un avertissement à chaque
 commit sans l'empêcher.

@@ -202,7 +202,8 @@ class WelcomeGuideWidget(QWidget):
         cpu_count = _get_cpu_count()
 
         try:
-            mat_count = len(APP_CONTEXT.get("materials_db").data) if APP_CONTEXT.get("materials_db") else 0
+            db = APP_CONTEXT.get("materials_db")  # STRAT's RobustMaterialDatabase keeps them in `materials`
+            mat_count = len(getattr(db, "materials", None) or getattr(db, "data", None) or [])
 
         except (AttributeError, TypeError):
             mat_count = 0

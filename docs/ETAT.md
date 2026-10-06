@@ -5,13 +5,34 @@
 > [`CLAUDE.md`](../CLAUDE.md). Il se tient **en place** : un fait change, on corrige sa ligne,
 > on ne raconte pas la correction (`git log` s'en charge). Toute mesure porte sa date.
 > Le détail et l'historique sont dans `git`, sans autorité (CLAUDE.md, en-tête).
-> Mis à jour le 2026-10-06 au soir (les 19 réponses de 👤 appliquées ; D92 trouvé et corrigé).
+> Mis à jour le 2026-10-06 dans la nuit (PR #5 et #7 fusionnées ; parité Zenodo faite ; retrait de la branche PGlobal
+> morte en cours).
 
 ## 0. Reprise — à lire en premier, à tenir à jour
 
 > Mettre à jour cette section avec le travail : « en cours » dès le début, mesure et commit
 > à la fin. Les règles de validation sont dans les sections 2, 4 et 12 de
 > [CLAUDE.md](../CLAUDE.md) ; les décisions scientifiques appartiennent à 👤 (§5).
+
+**En cours (Claude, 2026-10-06 dans la nuit) : retrait de la branche PGlobal morte de l'INDEX SPLINE** (décision de 👤,
+§3), sur la branche locale `parite-zenodo`. Fait, non commité : la branche (43 instructions) et le bloc de région de confiance, mort
+lui aussi, sont retirés de `_run_single_spline_stage` (2 467 → 2 172 lignes) ; ruff 0. Reste : retirer les
+aides qu'elle laisse orphelines (l'audit du code mort échoue sur `SingleSplineStageContext`), le banc INDEX SPLINE après,
+à froid, contre `RESULT` 0,0033932679903320956 avant (deux passages froids identiques au bit ; le banc passe une fois
+par `_run_single_spline_stage`), les plafonds du registre de dette, puis la validation complète et la PR, fusionnée dès
+sa CI verte.
+
+**Fait dans la nuit du 2026-10-06.**
+- **PR #7 fusionnée** dans `master` (`80dd7d3c`), ses 12 contrôles de CI verts : licences dans le gel, avis de tiers
+  complétés. Dependabot a fermé lui-même ses PR #1 à #4 et #6 après la fusion de la PR #5.
+- **Rang 3, parité avec les versions publiées : fait** (`898bd4cd`, `reports/PARITE_ZENODO_ECARTS_LONGS_2026-10-06.md`).
+  Aucune amélioration de l'INDEX SPLINE publié ne manque au code courant ; son gradient analytique, que la version
+  publiée n'utilise pas, est juste avec des mesures en réflexion : 15 tests ajoutés à l'oracle (`02edbf5c`), dont un
+  garde-fou qui refuse un gradient pris avec 10 % de poids en moins sur R. Une première sonde, au pas de 1e-7, avait
+  trouvé des écarts de 1e-4 à 8e-3 : c'était l'arrondi d'un coût de 50 à 120, qui disparaît quand le pas grandit.
+- **Citation du saphir corrigée dans le paquet `certus_re`** (hors de ce dépôt, sur la décision de 👤) : Malitson et
+  Dodge (1972) au lieu de Malitson (1962), dans `certus_re/dispersion.py` et l'en-tête de
+  `studies/volet2/indices/Al2O3_Malitson.csv`. Non commité : ce dépôt contient des modifications en cours de 👤.
 
 **Dernière action (Claude, 2026-10-06 au soir, sur les 19 réponses de 👤, §3).** Un commit et un test par
 correction ; chaque test échoue sur le code d'avant.
@@ -72,9 +93,9 @@ en partie (`5ccaa210`, 442 → 411 Mo). **D87 confirmé par 👤 dans l'exécuta
 `dbec2fc1` (`%TEMP%\CERTUS_HUB_test_dbec2fc1\CERTUS_HUB.exe`, hors du dépôt) : « l'exécutable fonctionne »
 (2026-10-06) ; le `release-windows` de la CI l'a aussi construit et démarré sur ce commit.
 
-**Point de départ.** `certus0310`. La [PR #5](https://github.com/nikonvr/CERTUS/pull/5) (`refactor-corridors-mixins`) est
-fusionnée dans `master` le 2026-10-06 (`d531c7cf`), ses 12 contrôles de CI verts ; la suite (licences du gel, avis,
-ETAT) part de la branche `gel-licences`, dans une PR fusionnée dès que sa CI est verte (§3). `python scripts\preflight.py` → `PREFLIGHT=GO` le 2026-10-06. Sauvegarde
+**Point de départ.** `certus0310`, branche locale `parite-zenodo`. Les PR
+[#5](https://github.com/nikonvr/CERTUS/pull/5) et [#7](https://github.com/nikonvr/CERTUS/pull/7) sont fusionnées dans
+`master` le 2026-10-06 (`d531c7cf`, `80dd7d3c`), leur CI verte ; aucune PR n'est ouverte. `python scripts\preflight.py` → `PREFLIGHT=GO` le 2026-10-06. Sauvegarde
 après chaque lot : `../CERTUS_certus0310_<date>_<commit>.bundle`. Les entrées `.git/worktrees/certus0310` et
 `.git/worktrees/profwt`, incomplètes (Drive en refuse la suppression), déclenchent un avertissement à chaque
 commit sans l'empêcher.
@@ -407,6 +428,13 @@ annule seul.
 - **Le prochain chantier est la parité Zenodo** (rang 3 de §0).
 - **La validation externe de STRAT n'est plus prévue** : STRAT reste validé contre lui-même (§1).
 
+### Réponses de 👤 du 2026-10-06, quatrième série (parité)
+
+- **La branche PGlobal morte de `_run_single_spline_stage` est retirée** (en cours, §0) : Git la garde.
+- **Le RE garde sa pénalité QWOT** : l'a priori MAP de `certus_re` n'est pas porté.
+- **La citation du saphir est corrigée dans le paquet `certus_re`** (fait, non commité dans ce dépôt-là, §0).
+- **La PR de la parité se fusionne dès que sa CI est verte**, comme les PR #5 et #7.
+
 ### RE — décidé par 👤 le 2026-10-05
 
 - **Divergence du faisceau : deux ou trois rayons suffisent.** 👤 : « définitivement, la prise en compte de
@@ -458,9 +486,7 @@ Ces sujets demandent un jugement de physicien ou de propriétaire du produit. Le
 | sujet | ce qui est en jeu |
 |---|---|
 | **avis de tiers** | une ligne reste « à confirmer par toi » dans `THIRD_PARTY_NOTICES.md` : les DLL du runtime Visual C++ (`VCRUNTIME140*.dll`, `VCOMP140.DLL`) se redistribuent avec un programme, mais Microsoft réserve ce droit aux utilisateurs de Visual Studio sous licence |
-| **branche PGlobal morte de l'INDEX SPLINE** | `_run_single_spline_stage` écrit `local_only = True` en dur : la branche PGlobal qui suit (43 instructions) ne s'exécute jamais, comme dans la version publiée qui l'a retirée. La retirer (aucun bit ne bouge) ou la garder pour la rebrancher un jour |
-| **a priori MAP du RE** | `certus_re` régularise par un a priori gaussien de 0,5 % sur chaque couche, sans zone morte ; CERTUS par une pénalité QWOT à zone morte de ±0,01 QWOT et poids α = 0,05. Porter l'a priori changerait les résultats du RE |
-| **citation du saphir dans `certus_re`** | le paquet publié cite Malitson (1962) pour les coefficients de Malitson et Dodge (1972) : à corriger dans le paquet, hors de ce dépôt |
+| **paquet `certus_re`** | la correction de la citation du saphir (Malitson et Dodge, 1972) attend d'être commitée par 👤 dans ce dépôt-là, qui contient ses modifications en cours, puis publiée avec la prochaine version Zenodo |
 | **interface** | Revoir visuellement les onze fenêtres et choisir les teintes de marque, la bande des fichiers récents et les bornes des champs numériques. |
 
 D10, D41, D48, D54, D55, D56, D58, D65, D66, D76, D86, D87, D88 et D92 sont tranchés (§3) ou corrigés.

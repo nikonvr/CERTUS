@@ -314,8 +314,8 @@ class CertusREExcelMixin:
 
     def _load_re_substrate(
         self, substrate_name: str, l0_ref: float, *, re_workbook_dir: str | None = None
-    ) -> TabularMaterial | None:
-        """Load substrate TabularMaterial."""
+    ) -> TabularMaterial:
+        """Load substrate TabularMaterial; raise ValueError when no source has it."""
 
         mat, source, raw_name, sub_norm = self._re_resolve_substrate_material(
             substrate_name, l0_ref, re_workbook_dir=re_workbook_dir
@@ -329,7 +329,7 @@ class CertusREExcelMixin:
             )
             return mat
 
-        return None
+        raise ValueError(f"RE: substrate '{raw_name}' is neither in indices.xlsx nor built in: the workbook is not loaded (D88)")
 
     def _parse_re_design(self, ws) -> tuple:
         """Parse 'design' sheet -> (lambda_ref_nm, substrate_name, qwot_list).

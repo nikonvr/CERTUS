@@ -69,7 +69,13 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    # Development tools that pandas, Numba and Qt pull in, and that the application never imports (an AST sweep of
+    # certus/, certus_physics/ and the CERTUS_*.py found none of them, D72). Measured by a build and the start-up of
+    # every module: see docs/ETAT.md.
+    excludes=[
+        "IPython", "pytest", "_pytest", "hypothesis", "coverage", "astroid", "pylint", "black", "mypy", "ruff",
+        "sphinx", "jedi", "parso", "notebook", "jupyter", "ipykernel",
+    ],
     noarchive=False,
 )
 pyz = PYZ(a.pure)

@@ -104,8 +104,10 @@ class CertusAppRunStateMixin:
         pass
 
     #: The attributes that hold a module's computation threads when it does not register them with `worker_manager`
-    #: (D41): INDEX, INDEX SPLINE, RE, METAL and DESIGN closed a running computation without a question.
-    _COMPUTATION_THREADS: tuple[str, ...] = ()
+    #: (D41): INDEX, INDEX SPLINE, RE, METAL and DESIGN closed a running computation without a question. A tuple of
+    #: names, NOT annotated: under Python 3.14 an annotation gives the mixin its own `__annotate_func__`, which the
+    #: window would resolve to another mixin's (test_the_base_app_split_keeps_every_window_method_where_it_resolves).
+    _COMPUTATION_THREADS = ()
 
     def running_worker_count(self) -> int:
         """Background threads ACTUALLY running right now.

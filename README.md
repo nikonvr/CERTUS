@@ -37,4 +37,4 @@ python -m pytest tests/unit/ -q --no-cov
 
 - Method pages, to open in a browser: [`pages/CERTUS_DESIGN.html`](pages/CERTUS_DESIGN.html), [`pages/CERTUS_STRAT.html`](pages/CERTUS_STRAT.html).
 - Working rules: [`CLAUDE.md`](CLAUDE.md). State of the project (measured figures, decisions, open defects): [`docs/ETAT.md`](docs/ETAT.md).
-- Licence: GPL-3.0-only ([`LICENSE`](LICENSE)).
+- Licence: GPL-3.0-only ([`LICENSE`](LICENSE)); third-party notices: [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).

@@ -25,6 +25,13 @@ FROZEN_REQUIRED_FILES = (
     "pages/CERTUS_HUB.html",
 )
 
+#: The licences the executable carries (decided by the owner on 2026-10-06, see `tools/frozen_licences.py`): CERTUS's,
+#: its third-party notices, and a folder of licence files for each of these distributions it bundles.
+FROZEN_LICENCE_FILES = ("licenses/LICENSE", "licenses/THIRD_PARTY_NOTICES.md")
+FROZEN_LICENCE_FOLDERS = (
+    "numpy", "scipy", "numba", "llvmlite", "pyqt6", "pyqt6-qt6", "pandas", "matplotlib", "pyqtgraph", "openpyxl", "pydantic",
+)
+
 #: Sanity bounds on the size of the whole folder (Qt, NumPy, SciPy and Numba are in it).
 FROZEN_MIN_BYTES = 50_000_000
 FROZEN_MAX_BYTES = 3_000_000_000
@@ -158,6 +165,12 @@ def check_frozen_artifact() -> list[str]:
     for name in FROZEN_REQUIRED_FILES:
         if not (folder / name).is_file():
             errors.append(f"Frozen folder is missing a file the code reads: {name}")
+    for name in FROZEN_LICENCE_FILES:
+        if not (folder / name).is_file():
+            errors.append(f"Frozen folder is missing a licence file: {name}")
+    for name in FROZEN_LICENCE_FOLDERS:
+        if not any(p.is_file() for p in (folder / "licenses" / name).rglob("*")):
+            errors.append(f"Frozen folder carries no licence of {name} (licenses/{name}/)")
     return errors
 
 

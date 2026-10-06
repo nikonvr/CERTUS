@@ -574,11 +574,17 @@
         </div>
         <p>where $S$ is reflectance or transmittance and $w_j$ are spectral weights (uniform or user-defined).</p>
 
-        <h3>8.2 Colorimetric Target (Optional)</h3>
+        <h3>8.2 Colour Analysis (Monte Carlo)</h3>
         <p>
-            For decorative coatings, CERTUS supports simultaneous color optimization using the CIE 1976 $\Delta E_{00}$
-            metric. The perceived color difference between the designed and target coating is computed from the
-            CIELAB coordinates $(L^*, a^*, b^*)$ derived from the CIE 1931 standard observer and D65 illuminant:
+            DESIGN does not optimize towards a colour: colour enters only an analysis of the current design. Its
+            front-side reflectance at normal incidence, without the rear face, is computed from 380 to 780 nm every
+            5 nm. The tristimulus values $X, Y, Z$ follow from the CIE 1931 2&deg; colour-matching functions and the D65
+            illuminant, scaled so that a perfect reflector has $Y = 100$, and the CIELAB coordinates $(L^*, a^*, b^*)$
+            from the D65 white point. The analysis then draws $N$ perturbed designs (200 by default), each layer
+            thickness shifted by an independent Gaussian error of standard deviation $\sigma$ (2 nm by default; a
+            negative thickness is set to zero), with a fixed seed. It reports the nominal $(L^*, a^*, b^*)$, its sRGB
+            rendering, and the mean and standard deviation over the samples of the CIEDE2000 difference
+            $\Delta E_{00}$ to the nominal colour:
         </p>
         <div class="eq-box">
             $$ \Delta E_{00} = \sqrt{
@@ -637,8 +643,8 @@
             </tr>
             <tr>
                 <td><strong>Colorimetry</strong></td>
-                <td>CIE 1931 / 1976</td>
-                <td>$\Delta E_{00}$ color difference for decorative coatings.</td>
+                <td>CIE 1931 2&deg;, D65, CIELAB, CIEDE2000</td>
+                <td>Spread of the reflected colour ($\Delta E_{00}$) under thickness errors, by Monte Carlo.</td>
             </tr>
             <tr>
                 <td><strong>Backside Correction</strong></td>

@@ -68,9 +68,9 @@ correction ; chaque test échoue sur le code d'avant.
 `1aa32a1d` : le gel calcule sur la couche OpenMP ; construit, démarrage et artefact contrôlés), D88 (`a49fe502`,
 `330f592d`, `c2e0db04`), D89 (`f65f191d`), D90 (`a5a50fc8`), D91 (`f61e40a0`), D85 (`55f7e9da`), D55 (`601b2489`)
 et D54 (`7a958dec`, `39990246` : le chemin par défaut garde ses bits, le juge de paix sa population au bit), D72
-en partie (`5ccaa210`, 442 → 411 Mo). **Reste à 👤 : un calcul réel de chaque module dans l'exécutable**,
-construit au commit poussé `dbec2fc1` (`%TEMP%\CERTUS_HUB_test_dbec2fc1\CERTUS_HUB.exe`, hors du dépôt ; démarrage et
-artefact contrôlés le 2026-10-06).
+en partie (`5ccaa210`, 442 → 411 Mo). **D87 confirmé par 👤 dans l'exécutable** construit au commit poussé
+`dbec2fc1` (`%TEMP%\CERTUS_HUB_test_dbec2fc1\CERTUS_HUB.exe`, hors du dépôt) : « l'exécutable fonctionne »
+(2026-10-06) ; le `release-windows` de la CI l'a aussi construit et démarré sur ce commit.
 
 **Point de départ.** `certus0310`, branche `refactor-corridors-mixins`,
 [PR #5](https://github.com/nikonvr/CERTUS/pull/5). La branche est poussée sur `origin` le 2026-10-06 au soir, sur
@@ -88,13 +88,12 @@ n'autorise pas à modifier son arbre témoin.
 
 | rang | action et critère de fin | raison / condition |
 |---|---|---|
-| 1 — un exécutable qui calcule (D87) | 👤 : un calcul réel de chaque module qui calcule dans l'exécutable construit à `dbec2fc1` (`%TEMP%\CERTUS_HUB_test_dbec2fc1\CERTUS_HUB.exe`, hors du dépôt). | La simulation et la construction disent que le gel calcule ; seul un calcul dans l'exécutable le prouve. |
 | 3 — établir la parité publiée | Inventaires (`reports/PARITE_ZENODO_*_2026-10-05.md`) et lecture des écarts courts de l'INDEX SPLINE (`reports/PARITE_ZENODO_SPLINE_LECTURE_2026-10-06.md` : remaniements, trois retouches heuristiques du corridor, une correction) faits. Reste à lire les écarts longs (gradient analytique, nettoyage des nœuds, décalage de Δn, polissage du maillage) et à comparer les capacités du RE marquées « non comparé » (a priori MAP, substrats, échantillons à deux faces, résidus par voie). | Nécessaire avant d'affirmer que les améliorations publiées sont intégrées. RE local 1.2.0.dev0 diffère de l'archive 1.1.1 ; l'inversion conjointe de plusieurs échantillons est écartée par 👤. |
 | 4 — traiter la chaîne de mesure | Spécifier puis mesurer la cadence machine (§6, 12.4), ensuite seulement le lissage (12.2). D54 et D55 sont corrigés. | La grille de la machine est inactive par défaut. Tout changement de noyau passe C1 froid contre froid et l'oracle. |
 | 5 — stabiliser interface et gel | Reproduire D23 (les six `gc.collect()` des threads de calcul STRAT et les `QThread`) avant D11 et `WA_DeleteOnClose` ; poursuivre la réduction du gel (D72) après sa fiabilité. | D11 n'a pas d'effet dans le lancement actuel par processus ; libérer une fenêtre avant ses threads serait plus grave. |
 | 6 — réduire la dette | Élucider les effets d'import de D42 avant E402/I001 (D25), puis traiter D26 et les défauts visuels selon §4–5. | Chantier utile, mais moins urgent que la justesse scientifique ; l'ordre des imports peut changer l'exécution. |
 
-**Après les deux PR en cours et le test de l'exécutable par 👤, le rang 3** (choix de 👤 du 2026-10-06). Les autres
+**Après les deux PR en cours, le rang 3** (choix de 👤 du 2026-10-06). Les autres
 choix réservés à 👤 restent en §5.
 
 ## 1. Où en sont les programmes
@@ -103,7 +102,7 @@ choix réservés à 👤 restent en §5.
 |---|---|---|
 | **Calcul (STRAT)** | composant étalon : l'aléatoire ×2 (`r75x2`) à la fente de 2 nm. Fabricable avec les rampes de la configuration livrée ; sans rampes, 3 graines sur 7 trouvent des déposables. Toute la fabricabilité passe par le générateur ELITE | rangs 2 et 4 ci-dessus |
 | **RE** | indices tabulés lus en n − ik depuis R148 (2026-10-05) : tout RE antérieur fait sur des indices absorbants en incidence oblique est à refaire ; un indice demandé hors de sa table est prolongé par une constante, avec un avertissement (ex-D86, `dec73219`, 2026-10-05) ; préchauffage incomplet (D85) | rang 3 |
-| **Exécutable gelé** | sur la couche OpenMP depuis `31745571` (D87), sans les outils de développement depuis `5ccaa210` (411 Mo) ; construit à `5ccaa210` le 2026-10-06 : le hub et ses modules passent les contrôles de démarrage et d'artefact ; aucun calcul n'y a encore été fait | rang 1 (👤) |
+| **Exécutable gelé** | sur la couche OpenMP depuis `31745571` (D87), sans les outils de développement depuis `5ccaa210` (411 Mo) ; construit à `dbec2fc1` le 2026-10-06, hub et modules contrôlés au démarrage, et 👤 y a calculé : « l'exécutable fonctionne ». Les licences de ce qu'il embarque le suivent (`licenses/`, PR suivante) | rang 5 (D72) |
 | **Interface** | plan clos le 2026-09-08 : 12 critères de fin sur 13 atteints et mesurés, le treizième démontré inatteignable (`xfail` strict) | rang 5 et choix de 👤 (§5) |
 | **Qualité** | CI : calcul sous Linux, interface sous Windows, gel construit et démarré sous Windows, audit de sécurité (`pip-audit`, `gitleaks`) ; tests isolés des préférences de 👤 ; l'audit du code mort couvre tout `certus/` (D24 clos le 2026-10-05 : 3 928 définitions, 73 candidats justifiés un par un). Indicateurs du plan le 2026-10-06 (`scripts\metrics.py`) : tous dans leur cible, sauf la couverture et la taille du gel, non remesurées ce jour | rangs 5 et 6 |
 | **Documentation** | règles dans `CLAUDE.md`, état ici ; 15 rapports HTML, 34 schémas Mermaid et 2 SVG validés le 2026-10-03 ; anciens dossiers lisibles dans Git | tenir « un fait, un seul endroit » |
@@ -427,7 +426,6 @@ numéros de l'ancien registre sont entre parenthèses
 
 | # | défaut | piste |
 |---|---|---|
-| D87 | **L'exécutable gelé ne calculait pas — corrigé, à confirmer dans l'exécutable.** Le gel forçait la couche Numba `workqueue` avec un seul fil (`configure_numba_env`), qui termine le processus dès que deux fils Python entrent ensemble dans un noyau parallèle, alors que les calculs le font tous : simulé le 2026-10-06 (`sys.frozen` posé avant tout import, données à côté de l'exécutable, `workqueue`, un fil), DESIGN, INDEX, RE, METAL SINGLE et STRAT finissaient en code 3 (« Numba workqueue threading layer is terminating: Concurrent access has been detected »), les quatre premiers en 30 à 53 s, STRAT à l'entrée de sa Phase B ; piles : deux fils du pool de la phase 1 de RE, deux du pool de robustesse de STRAT, le fil de l'interface d'INDEX contre son `QThread`, les fils du pool de DESIGN. Depuis `31745571`, le gel a la couche OpenMP et le budget de fils du mode source ; la même simulation de RE sur OpenMP va au bout. Construit à `1aa32a1d` : démarrage et artefact contrôlés (§0). Corrigé du même défaut le 2026-10-05 : la tâche de robustesse ne demande plus à Numba plus de fils qu'il n'en a | un calcul réel de chaque module dans l'exécutable (👤) ; sinon, un seul fil de calcul dans le gel |
 
 **Le modèle physique — connus, non corrigés**
 

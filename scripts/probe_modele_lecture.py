@@ -39,7 +39,13 @@ import numpy as np  # noqa: E402
 import probe_oms_sequentiel as seq  # noqa: E402
 
 CRASH_GATE = 0.05
-MODELS = {"livre": {"smoothing": 1, "hyst": None}, "fige": {"smoothing": 8, "hyst": 1.0}}
+MODELS = {
+    "livre": {"smoothing": 1, "hyst": None, "exact": False},
+    "fige": {"smoothing": 8, "hyst": 1.0, "exact": False},
+    # D97: the same two reading models, the stop solved on the exact signal instead of the parabola.
+    "livre_exact": {"smoothing": 1, "hyst": None, "exact": True},
+    "fige_exact": {"smoothing": 8, "hyst": 1.0, "exact": True},
+}
 
 
 def score_plan(params, thick, blocks, n_runs, A, h_config, model, wls, nH_w, nL_w, nS_w, flat, T_nom, seed):
@@ -72,7 +78,7 @@ def score_plan(params, thick, blocks, n_runs, A, h_config, model, wls, nH_w, nL_
             np.asarray(thick, dtype=float), lw, nH, nL, nS, stop, compute_probe_offset_nm_from_ratio(params),
             float(params.get("non_monotonic_error_factor", 2.0)), 0, np.full(n, A * f), seed * 7919 + level_idx,
             hf * A * f, 0.0, 0.0, curvature, seed * 31 + level_idx, True, int(model["smoothing"]), corridor,
-            seed * 53 + level_idx, lo, hi, None, None, None,
+            seed * 53 + level_idx, lo, hi, None, None, None, bool(model.get("exact", False)),
         )[0]
         crashed = (res > 1e5).any(axis=1)
         crash = float(np.mean(crashed))
@@ -101,8 +107,10 @@ def main() -> None:
     ap.add_argument("--first", type=int, default=0, help="score only the first N plans (0: all)")
     ap.add_argument("--runs", type=int, default=300)
     ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--models", default="livre,fige", help=f"among {', '.join(MODELS)}")
     ap.add_argument("--json", default=None)
     args = ap.parse_args()
+    models = {m: MODELS[m] for m in args.models.split(",") if m}
 
     from certus.physics.certus_strat_batch import calculate_RT_batch_kernel
 
@@ -127,7 +135,7 @@ def main() -> None:
     t0 = time.perf_counter()
     for rank, plan in enumerate(plans):
         row = {"rank": rank, "id": plan.get("id"), "bench_score": plan.get("score"), "blocks": plan["blocks"]}
-        for name, model in MODELS.items():
+        for name, model in models.items():
             row[name] = score_plan(params, thick, plan["blocks"], args.runs, A, h_config, model, wls, nH_w, nL_w, nS_w,
                                    flat, T_nom, args.seed)
         rows.append(row)
@@ -137,21 +145,23 @@ def main() -> None:
                 Path(args.json).write_text(json.dumps({"rows": rows}, indent=0), encoding="utf-8")
     if args.json:
         Path(args.json).write_text(json.dumps({"rows": rows}, indent=0), encoding="utf-8")
-    summarise(rows)
+    summarise(rows, list(models))
 
 
-def summarise(rows: list[dict]) -> None:
+def summarise(rows: list[dict], names: list[str]) -> None:
     from scipy.stats import spearmanr
 
-    finite = [r for r in rows if np.isfinite(r["livre"]["score"]) and np.isfinite(r["fige"]["score"])]
-    print(f"\n{len(rows)} plans; depositable (crash <= 5 % at every level): shipped "
-          f"{sum(np.isfinite(r['livre']['score']) for r in rows)}, frozen {sum(np.isfinite(r['fige']['score']) for r in rows)}")
-    if len(finite) > 2:
-        a = [r["livre"]["score"] for r in finite]
-        b = [r["fige"]["score"] for r in finite]
-        print(f"Spearman(shipped, frozen) over the {len(finite)} plans depositable under both: {spearmanr(a, b)[0]:.3f}")
-        print(f"score ratio frozen / shipped: median {np.median(np.array(b) / np.array(a)):.3f}")
-    for name in ("livre", "fige"):
+    print(f"\n{len(rows)} plans; depositable (crash <= 5 % at every level): "
+          + ", ".join(f"{n} {sum(np.isfinite(r[n]['score']) for r in rows)}" for n in names))
+    ref = names[0]
+    for other in names[1:]:
+        finite = [r for r in rows if np.isfinite(r[ref]["score"]) and np.isfinite(r[other]["score"])]
+        if len(finite) > 2:
+            a = [r[ref]["score"] for r in finite]
+            b = [r[other]["score"] for r in finite]
+            print(f"Spearman({ref}, {other}) over the {len(finite)} plans depositable under both: {spearmanr(a, b)[0]:.3f}; "
+                  f"score ratio {other} / {ref}: median {np.median(np.array(b) / np.array(a)):.3f}")
+    for name in names:
         order = sorted(rows, key=lambda r: r[name]["score"])
         print(f"top 5 under {name}: {[(r['rank'], round(r[name]['score'], 6)) for r in order[:5]]}")
 

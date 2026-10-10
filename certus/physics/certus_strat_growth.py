@@ -149,10 +149,12 @@ def detect_turning_points(
     EXPECTS to count; evaluating it with a different rule than the physical machine
     would induce artificial per-layer counting divergence.
 
-    ``start_dir`` -- WHICH WAY THE SIGNAL LEAVES A START THAT IS A TURNING POINT, used only
-    with ``start_is_tp`` and the hysteresis detector: -1 when it falls (the start is a
-    maximum, the detector then tracks the minimum), +1 when it rises, 0 = unknown (the
-    detector establishes the direction itself, the behaviour before this parameter).
+    ``start_dir`` -- WHICH WAY THE SIGNAL LEAVES THE START, for the hysteresis detector:
+    -1 when it falls (the detector then tracks the minimum; with ``start_is_tp`` the start
+    is that maximum), +1 when it rises, 0 = unknown (the detector establishes the direction
+    itself, the behaviour before this parameter). A start that is not a turning point is
+    never counted; knowing the direction, the detector no longer counts the start as an
+    extremum of the other kind because noise moved its first reading.
 
         The bare substrate is a turning point: dT/dd = 0 at d = 0, so the signal leaves it
         quadratically. On the machine grid (one reading every 0.125 nm) the first readings
@@ -194,7 +196,7 @@ def detect_turning_points(
     maxi = 0
     mini = 0
     dirn = 0
-    known_start = start_is_tp and start_dir != 0
+    known_start = start_dir != 0
     if known_start:
         dirn = -1 if start_dir < 0 else 1
     for k in range(1, n_tot):
@@ -1403,6 +1405,7 @@ def _read_poem_anchors(
     idx_nom_stop: int,
     tp_hysteresis: float,
     poem_enabled: bool,
+    direction_at_window_start: bool = False,
 ) -> tuple[int, int, float, float, float, float, float, float, bool]:
     """Count the turning points of the real and the nominal signal up to the nominal stop, and read the two anchors POEM needs.
 
@@ -1420,8 +1423,14 @@ def _read_poem_anchors(
     start_is_tp = i_layer == 0 and j0 == 0
     # Which way the first layer leaves the bare substrate, read on the NOMINAL signal (noise-free): the plan the
     # controller holds. Without it the detector can count the start twice on a fine grid (`detect_turning_points`).
+    #
+    # 🔑 On the machine grid (`direction_at_window_start`) the same plan direction is given at EVERY window start: the
+    # start of a block, or of the replayed history. 📏 Measured on 2026-10-10 on the judge of paix: plans whose 467 nm
+    # block starts 0.86 threshold below a maximum (2 nm into its first layer) saw that start counted as a minimum in 156
+    # runs of 300 at 2x noise, on noise alone -- 21 plans of the population eliminated, among them bench ranks 8 to 22.
+    # The coarse grid cannot see an extremum 2 nm into a layer (its second sample is 5 nm in), and keeps its path.
     start_dir = 0
-    if start_is_tp:
+    if start_is_tp or direction_at_window_start:
         for k_dir in range(1, n_tot):
             if Ts_n[k_dir] < Ts_n[0]:
                 start_dir = -1
@@ -2134,7 +2143,7 @@ def simulate_growth_kernel(
             )
         # The bare substrate is a turning point: see the notes above `_read_poem_anchors`.
         n_tp_real, n_tp_nom, margin_missed, margin_fab, T_prev_nom, T_last_nom, T_prev_real, T_last_real, poem_ok = _read_poem_anchors(
-            i_layer, j0, Ts_r, Ts_n, n_tot, idx_nom_stop, tp_hysteresis, poem_enabled,
+            i_layer, j0, Ts_r, Ts_n, n_tot, idx_nom_stop, tp_hysteresis, poem_enabled, use_fine_grid,
         )
 
     if poem_ok:

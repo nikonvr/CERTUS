@@ -49,10 +49,15 @@ def test_a_rising_start_is_a_minimum_and_the_detector_then_looks_for_the_maximum
     assert detect_turning_points(ts, len(ts), len(ts) - 1, True, 0.005, 1) == (2, 0, 5)
 
 
-def test_the_direction_changes_nothing_when_the_start_is_not_a_turning_point() -> None:
-    ts = np.array([1.0, 1.0004, 0.999, 0.99, 0.98, 0.97, 0.975, 0.985, 0.995])
+def test_a_window_that_starts_below_a_maximum_does_not_count_its_noisy_start_as_a_minimum() -> None:
+    """A block that starts just below a turning point: its first reading, pushed low by noise, sits more than the
+    threshold under the coming maximum. Without the planned direction the start becomes a minimum, counted, and the
+    count no longer matches the plan's -- 156 runs of 300 at layer 36 of bench plan 11 of the judge of paix at 2x noise.
+    Knowing the signal rises there, the detector tracks the maximum and never counts the start."""
+    ts = np.array([0.995, 1.0, 1.003, 1.004, 1.003, 0.99, 0.98, 0.975, 0.98, 0.99])
 
-    assert detect_turning_points(ts, len(ts), 8, False, 0.005, -1) == detect_turning_points(ts, len(ts), 8, False, 0.005)
+    assert detect_turning_points(ts, len(ts), 9, False, 0.005) == (3, 3, 7)  # a minimum at 0, the maximum, the minimum
+    assert detect_turning_points(ts, len(ts), 9, False, 0.005, 1) == (2, 3, 7)  # the maximum and the minimum only
 
 
 @pytest.mark.parametrize("smoothing", [8, 1])

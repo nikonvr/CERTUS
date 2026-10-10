@@ -5,13 +5,33 @@
 > [`CLAUDE.md`](../CLAUDE.md). Il se tient **en place** : un fait change, on corrige sa ligne,
 > on ne raconte pas la correction (`git log` s'en charge). Toute mesure porte sa date.
 > Le détail et l'historique sont dans `git`, sans autorité (CLAUDE.md, en-tête).
-> Mis à jour le 2026-10-06 au soir (les 19 réponses de 👤 appliquées ; D92 trouvé et corrigé).
+> Mis à jour le 2026-10-06 dans la nuit (PR #5 et #7 fusionnées ; parité Zenodo faite ; branche PGlobal morte
+> retirée).
 
 ## 0. Reprise — à lire en premier, à tenir à jour
 
 > Mettre à jour cette section avec le travail : « en cours » dès le début, mesure et commit
 > à la fin. Les règles de validation sont dans les sections 2, 4 et 12 de
 > [CLAUDE.md](../CLAUDE.md) ; les décisions scientifiques appartiennent à 👤 (§5).
+
+**Fait dans la nuit du 2026-10-06.**
+- **Branche PGlobal morte de l'INDEX SPLINE retirée** (`8328e6fc`, décision de 👤) : les 43 instructions qui suivaient
+  le polissage local de `_run_single_spline_stage`, où `local_only` vaut toujours True, avec les deux aides qu'elles
+  seules utilisaient. Rien de ce qui s'exécute ne change : le banc INDEX SPLINE, qui passe une fois par cette fonction,
+  rend `RESULT` 0,0033932679903320956 après, à froid, comme deux passages froids avant. Registre de dette abaissé
+  (fichier 2 467 → 1 997 lignes, fonction 620 → 325) ; cliquet, audit du code mort et tests de l'INDEX SPLINE passent.
+  Poussé sur ordre de 👤 avec la parité (branche `parite-zenodo`) ; la validation complète locale n'a pas été relancée
+  sur cet état, la CI de la PR la fait avant la fusion.
+- **PR #7 fusionnée** dans `master` (`80dd7d3c`), ses 12 contrôles de CI verts : licences dans le gel, avis de tiers
+  complétés. Dependabot a fermé lui-même ses PR #1 à #4 et #6 après la fusion de la PR #5.
+- **Rang 3, parité avec les versions publiées : fait** (`898bd4cd`, `reports/PARITE_ZENODO_ECARTS_LONGS_2026-10-06.md`).
+  Aucune amélioration de l'INDEX SPLINE publié ne manque au code courant ; son gradient analytique, que la version
+  publiée n'utilise pas, est juste avec des mesures en réflexion : 15 tests ajoutés à l'oracle (`02edbf5c`), dont un
+  garde-fou qui refuse un gradient pris avec 10 % de poids en moins sur R. Une première sonde, au pas de 1e-7, avait
+  trouvé des écarts de 1e-4 à 8e-3 : c'était l'arrondi d'un coût de 50 à 120, qui disparaît quand le pas grandit.
+- **Citation du saphir corrigée dans le paquet `certus_re`** (hors de ce dépôt, sur la décision de 👤) : Malitson et
+  Dodge (1972) au lieu de Malitson (1962), dans `certus_re/dispersion.py` et l'en-tête de
+  `studies/volet2/indices/Al2O3_Malitson.csv`. Non commité : ce dépôt contient des modifications en cours de 👤.
 
 **Dernière action (Claude, 2026-10-06 au soir, sur les 19 réponses de 👤, §3).** Un commit et un test par
 correction ; chaque test échoue sur le code d'avant.
@@ -72,9 +92,9 @@ en partie (`5ccaa210`, 442 → 411 Mo). **D87 confirmé par 👤 dans l'exécuta
 `dbec2fc1` (`%TEMP%\CERTUS_HUB_test_dbec2fc1\CERTUS_HUB.exe`, hors du dépôt) : « l'exécutable fonctionne »
 (2026-10-06) ; le `release-windows` de la CI l'a aussi construit et démarré sur ce commit.
 
-**Point de départ.** `certus0310`. La [PR #5](https://github.com/nikonvr/CERTUS/pull/5) (`refactor-corridors-mixins`) est
-fusionnée dans `master` le 2026-10-06 (`d531c7cf`), ses 12 contrôles de CI verts ; la suite (licences du gel, avis,
-ETAT) part de la branche `gel-licences`, dans une PR fusionnée dès que sa CI est verte (§3). `python scripts\preflight.py` → `PREFLIGHT=GO` le 2026-10-06. Sauvegarde
+**Point de départ.** `certus0310`, branche locale `parite-zenodo`. Les PR
+[#5](https://github.com/nikonvr/CERTUS/pull/5) et [#7](https://github.com/nikonvr/CERTUS/pull/7) sont fusionnées dans
+`master` le 2026-10-06 (`d531c7cf`, `80dd7d3c`), leur CI verte ; aucune PR n'est ouverte. `python scripts\preflight.py` → `PREFLIGHT=GO` le 2026-10-06. Sauvegarde
 après chaque lot : `../CERTUS_certus0310_<date>_<commit>.bundle`. Les entrées `.git/worktrees/certus0310` et
 `.git/worktrees/profwt`, incomplètes (Drive en refuse la suppression), déclenchent un avertissement à chaque
 commit sans l'empêcher.
@@ -87,12 +107,12 @@ n'autorise pas à modifier son arbre témoin.
 
 | rang | action et critère de fin | raison / condition |
 |---|---|---|
-| 3 — établir la parité publiée | Inventaires (`reports/PARITE_ZENODO_*_2026-10-05.md`) et lecture des écarts courts de l'INDEX SPLINE (`reports/PARITE_ZENODO_SPLINE_LECTURE_2026-10-06.md` : remaniements, trois retouches heuristiques du corridor, une correction) faits. Reste à lire les écarts longs (gradient analytique, nettoyage des nœuds, décalage de Δn, polissage du maillage) et à comparer les capacités du RE marquées « non comparé » (a priori MAP, substrats, échantillons à deux faces, résidus par voie). | Nécessaire avant d'affirmer que les améliorations publiées sont intégrées. RE local 1.2.0.dev0 diffère de l'archive 1.1.1 ; l'inversion conjointe de plusieurs échantillons est écartée par 👤. |
+| 3 — établir la parité publiée | Fait le 2026-10-06 (`reports/PARITE_ZENODO_ECARTS_LONGS_2026-10-06.md`, après les inventaires du 2026-10-05 et la lecture des écarts courts) : aucune amélioration de l'INDEX SPLINE publié ne manque au code courant ; son gradient analytique, que la version publiée n'utilise pas, est vérifié contre les différences finies avec des mesures en réflexion (12 cas ajoutés à l'oracle). Pour le RE, le silicium diffère de celui de `certus_re` de −2,0e-3 à +4,5e-3, le saphir est le même jeu. Reste à 👤 : trois décisions (§5). | Les capacités du RE publié absentes de CERTUS (a priori MAP, échantillon revêtu sur les deux faces, résidus par voie) ne se portent que sur décision. |
 | 4 — traiter la chaîne de mesure | Spécifier puis mesurer la cadence machine (§6, 12.4), ensuite seulement le lissage (12.2). D54 et D55 sont corrigés. | La grille de la machine est inactive par défaut. Tout changement de noyau passe C1 froid contre froid et l'oracle. |
 | 5 — stabiliser interface et gel | Reproduire D23 (les six `gc.collect()` des threads de calcul STRAT et les `QThread`) avant D11 et `WA_DeleteOnClose` ; poursuivre la réduction du gel (D72) après sa fiabilité. | D11 n'a pas d'effet dans le lancement actuel par processus ; libérer une fenêtre avant ses threads serait plus grave. |
 | 6 — réduire la dette | Élucider les effets d'import de D42 avant E402/I001 (D25), puis traiter D26 et les défauts visuels selon §4–5. | Chantier utile, mais moins urgent que la justesse scientifique ; l'ordre des imports peut changer l'exécution. |
 
-**Après les deux PR en cours, le rang 3** (choix de 👤 du 2026-10-06). Les autres
+**Le rang 3 est fait** (choix de 👤 du 2026-10-06) ; ses décisions sont en §5. Les autres
 choix réservés à 👤 restent en §5.
 
 ## 1. Où en sont les programmes
@@ -407,6 +427,13 @@ annule seul.
 - **Le prochain chantier est la parité Zenodo** (rang 3 de §0).
 - **La validation externe de STRAT n'est plus prévue** : STRAT reste validé contre lui-même (§1).
 
+### Réponses de 👤 du 2026-10-06, quatrième série (parité)
+
+- **La branche PGlobal morte de `_run_single_spline_stage` est retirée** (fait, §0) : Git la garde.
+- **Le RE garde sa pénalité QWOT** : l'a priori MAP de `certus_re` n'est pas porté.
+- **La citation du saphir est corrigée dans le paquet `certus_re`** (fait, non commité dans ce dépôt-là, §0).
+- **La PR de la parité se fusionne dès que sa CI est verte**, comme les PR #5 et #7.
+
 ### RE — décidé par 👤 le 2026-10-05
 
 - **Divergence du faisceau : deux ou trois rayons suffisent.** 👤 : « définitivement, la prise en compte de
@@ -458,6 +485,7 @@ Ces sujets demandent un jugement de physicien ou de propriétaire du produit. Le
 | sujet | ce qui est en jeu |
 |---|---|
 | **avis de tiers** | une ligne reste « à confirmer par toi » dans `THIRD_PARTY_NOTICES.md` : les DLL du runtime Visual C++ (`VCRUNTIME140*.dll`, `VCOMP140.DLL`) se redistribuent avec un programme, mais Microsoft réserve ce droit aux utilisateurs de Visual Studio sous licence |
+| **paquet `certus_re`** | la correction de la citation du saphir (Malitson et Dodge, 1972) attend d'être commitée par 👤 dans ce dépôt-là, qui contient ses modifications en cours, puis publiée avec la prochaine version Zenodo |
 | **interface** | Revoir visuellement les onze fenêtres et choisir les teintes de marque, la bande des fichiers récents et les bornes des champs numériques. |
 
 D10, D41, D48, D54, D55, D56, D58, D65, D66, D76, D86, D87, D88 et D92 sont tranchés (§3) ou corrigés.

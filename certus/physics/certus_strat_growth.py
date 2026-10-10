@@ -1634,6 +1634,125 @@ def _invert_thickness_from_probes(
     return error_raw
 
 
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def _invert_thickness_exact(
+    wl: float,
+    n_current: complex,
+    nominal_th: float,
+    probe_offset: float,
+    n_Sub: complex,
+    M_before_00: complex,
+    M_before_01: complex,
+    M_before_10: complex,
+    M_before_11: complex,
+    affine_scale: float,
+    affine_offset: float,
+    photo_curvature: float,
+    slit_profiles: np.ndarray | None,
+    i_layer: int,
+    target_T_noisy: float,
+) -> float:
+    """The same stop as `_invert_thickness_from_probes`, solved on the exact signal instead of a parabola (D97).
+
+    The measured signal of the growing layer is T(d) = 4 n_sub / (P + Q cos 2kd + R sin 2kd) (`layer_scan_coeffs`), then
+    the instrument's distortion and the slit bias of depth d, exactly as on the three probes. The root nearest the
+    nominal thickness is bracketed by stepping outward from it, alternately on each side, then bisected. The parabola
+    through three probes at +/- `probe_offset` extrapolates as soon as the stop moves away from the nominal thickness:
+    measured on 2026-10-10, 0.021 nm RMS under POEM, up to 1.53 nm at an absolute level, on the judge of paix.
+
+    An absorbing layer (k above `K_MAX_CLOSED_FORM`) has no closed form and keeps the parabola, as does a level the exact
+    signal does not cross within three nominal thicknesses (the reachability test, on the read signal, said it did).
+    """
+    if abs(n_current.imag) >= K_MAX_CLOSED_FORM or nominal_th <= 1e-9:
+        return _invert_thickness_from_probes(
+            wl, n_current, nominal_th, probe_offset, n_Sub, M_before_00, M_before_01, M_before_10, M_before_11,
+            affine_scale, affine_offset, photo_curvature, slit_profiles, i_layer, target_T_noisy,
+        )
+    P, Q, R = layer_scan_coeffs(M_before_00, M_before_01, M_before_10, M_before_11, n_current, n_Sub)
+    kk2 = 2.0 * TWO_PI / wl * n_current.real
+    distort = affine_scale != 1.0 or affine_offset != 0.0 or photo_curvature != 0.0
+    slit_on = slit_profiles is not None and slit_profiles.shape[0] > 0
+    # The step: an eighth of the probe offset, and never more than a 64th of the period of T(d) -- two roots of the
+    # same level are half a period apart at least, so a bracket of this width holds one of them.
+    period = TWO_PI / kk2 if kk2 > 1e-12 else nominal_th
+    step = min(0.125 * probe_offset, period / 64.0)
+    if step <= 1e-9:
+        step = 1e-3 * nominal_th
+    d_max = D_SCAN_VAL * nominal_th
+    d0 = nominal_th
+    t0 = 4.0 * n_Sub.real / (P + Q * np.cos(kk2 * d0) + R * np.sin(kk2 * d0))
+    if distort:
+        t_aff = affine_scale * t0 + affine_offset
+        t0 = t_aff + 4.0 * photo_curvature * t_aff * (1.0 - t_aff)
+    if slit_on:
+        t0 += slit_bias_at(slit_profiles, i_layer, 1.0)
+    f0 = t0 - target_T_noisy
+    if f0 == 0.0:
+        return 0.0
+    lo_a, hi_a = d0, d0
+    f_lo, f_hi = f0, f0
+    found = False
+    a = d0
+    b = d0
+    fa = f0
+    n_steps = int(d_max / step) + 1
+    for s_idx in range(1, n_steps + 1):
+        for side in range(2):
+            if side == 0:
+                d_new = d0 + s_idx * step
+                if d_new > d_max:
+                    continue
+                d_old = hi_a
+                f_old = f_hi
+            else:
+                d_new = d0 - s_idx * step
+                if d_new < 0.0:
+                    continue
+                d_old = lo_a
+                f_old = f_lo
+            t = 4.0 * n_Sub.real / (P + Q * np.cos(kk2 * d_new) + R * np.sin(kk2 * d_new))
+            if distort:
+                t_aff = affine_scale * t + affine_offset
+                t = t_aff + 4.0 * photo_curvature * t_aff * (1.0 - t_aff)
+            if slit_on:
+                t += slit_bias_at(slit_profiles, i_layer, d_new / nominal_th)
+            f_new = t - target_T_noisy
+            if (f_new <= 0.0 < f_old) or (f_old <= 0.0 < f_new) or (f_new >= 0.0 > f_old) or (f_old >= 0.0 > f_new):
+                a = d_old
+                b = d_new
+                fa = f_old
+                found = True
+                break
+            if side == 0:
+                hi_a = d_new
+                f_hi = f_new
+            else:
+                lo_a = d_new
+                f_lo = f_new
+        if found:
+            break
+    if not found:
+        return _invert_thickness_from_probes(
+            wl, n_current, nominal_th, probe_offset, n_Sub, M_before_00, M_before_01, M_before_10, M_before_11,
+            affine_scale, affine_offset, photo_curvature, slit_profiles, i_layer, target_T_noisy,
+        )
+    for _ in range(60):
+        mid = 0.5 * (a + b)
+        t = 4.0 * n_Sub.real / (P + Q * np.cos(kk2 * mid) + R * np.sin(kk2 * mid))
+        if distort:
+            t_aff = affine_scale * t + affine_offset
+            t = t_aff + 4.0 * photo_curvature * t_aff * (1.0 - t_aff)
+        if slit_on:
+            t += slit_bias_at(slit_profiles, i_layer, mid / nominal_th)
+        fm = t - target_T_noisy
+        if (fm > 0.0) == (fa > 0.0):
+            a = mid
+            fa = fm
+        else:
+            b = mid
+    return 0.5 * (a + b) - nominal_th
+
+
 # ---- RATE MODE (14, A24) -------------------------------------------------
 #
 # The machine stops watching and counts turntable revolutions instead. It needs a
@@ -1840,6 +1959,7 @@ def simulate_growth_kernel(
     witness_base_layer: int = 0,
     machine_sampling_dd: float = 0.0,
     prev_rate_flags: np.ndarray | None = None,
+    exact_inversion: bool = False,
 ) -> tuple[float, float, float, float, float]:
     """
 
@@ -2062,10 +2182,17 @@ def simulate_growth_kernel(
                 margin_missed,
                 margin_fab,
             )
-    error_raw = _invert_thickness_from_probes(
-        wl, n_current, nominal_th, probe_offset, n_Sub, M_before_00, M_before_01, M_before_10, M_before_11,
-        affine_scale, affine_offset, photo_curvature, slit_profiles, i_layer, target_T_noisy,
-    )
+    # The stop: on the parabola of three probes (the default), or on the exact signal (`exact_inversion`, D97).
+    if exact_inversion:
+        error_raw = _invert_thickness_exact(
+            wl, n_current, nominal_th, probe_offset, n_Sub, M_before_00, M_before_01, M_before_10, M_before_11,
+            affine_scale, affine_offset, photo_curvature, slit_profiles, i_layer, target_T_noisy,
+        )
+    else:
+        error_raw = _invert_thickness_from_probes(
+            wl, n_current, nominal_th, probe_offset, n_Sub, M_before_00, M_before_01, M_before_10, M_before_11,
+            affine_scale, affine_offset, photo_curvature, slit_profiles, i_layer, target_T_noisy,
+        )
     dyn_encounter = 0.0
     if nominal_th > 0.0001:
         dyn_encounter = np.max(T_mono) - np.min(T_mono)
@@ -2355,6 +2482,7 @@ def update_run_states_kernel(
     corridor_lo: float = 0.0,
     corridor_hi: float = 0.0,
     slit_profiles: np.ndarray | None = None,
+    exact_inversion: bool = False,
 ) -> np.ndarray:
     """Parallel update of simulation states for next layer.
 
@@ -2447,6 +2575,10 @@ def update_run_states_kernel(
             # the candidates were judged with it would make Phase A inconsistent with
             # itself. Same argument as 17-23, one parameter further.
             slit_profiles,
+            0,
+            0.0,
+            None,
+            exact_inversion,
         )
     return updates
 

@@ -83,6 +83,7 @@ def validate_wavelengths_batch(
     corridor_hi: float = 0.0,
     rate_flags: np.ndarray | None = None,
     slit_profiles: np.ndarray | None = None,
+    exact_inversion: bool = False,
 ) -> np.ndarray:
     """Evaluates each candidate monitoring wavelength for ONE layer (Phase A).
 
@@ -242,6 +243,10 @@ def validate_wavelengths_batch(
                 # matrix would give every candidate the incumbent's curvature -- the
                 # inert-filter failure of 20-control 4.
                 slit_arr[c_slit],  # type: ignore[index]
+                0,
+                0.0,
+                None,
+                exact_inversion,
             )
             if val > 100000.0:
                 # non-terminable deposition: sentinel nominal_th + 1e6
@@ -309,7 +314,7 @@ def validate_wavelengths_batch(
                 probe_offset, 0.0, non_monotonic_factor, non_monotonic_mode, blk,
                 0.0, 0, 0, tp_hysteresis,
                 aff_s_0, aff_o_0, photo_curv_0, poem_enabled,
-                smoothing_window, nH_g, nL_g,
+                smoothing_window, nH_g, nL_g, False, None, 0, 0.0, None, exact_inversion,
             )
             v_prt, _, _, _, _ = simulate_growth_kernel(
                 p_thick_nominal, i_layer, prev_prt, wl,
@@ -317,7 +322,7 @@ def validate_wavelengths_batch(
                 probe_offset, 0.0, non_monotonic_factor, non_monotonic_mode, blk,
                 0.0, 0, 0, tp_hysteresis,
                 aff_s_0, aff_o_0, photo_curv_0, poem_enabled,
-                smoothing_window, nH_g, nL_g,
+                smoothing_window, nH_g, nL_g, False, None, 0, 0.0, None, exact_inversion,
             )
             if v_ref < 100000.0 and v_prt < 100000.0:
                 delta = np.abs(v_prt - v_ref)
@@ -359,6 +364,7 @@ def simulate_stack_robustness_batch(
     rate_flags: np.ndarray | None = None,
     slit_profiles: np.ndarray | None = None,
     witness_reset_flags: np.ndarray | None = None,
+    exact_inversion: bool = False,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
 
@@ -536,6 +542,8 @@ def simulate_stack_robustness_batch(
                 # earlier Rate layers as references, although they carry no measurement. It is
                 # given the whole array.
                 rate_flags,
+                # D97: the stop solved on the exact signal instead of the parabola of three probes. Off by default.
+                exact_inversion,
             )
             current_run_th_buffer[r, i_layer] = val
             results[r, i_layer] = val

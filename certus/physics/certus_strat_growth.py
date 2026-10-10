@@ -88,7 +88,7 @@ CRASH_TP_MISCOUNT: int = 2
 #: Non-monotonic T(d) and REJECT mode requested: candidate is rejected.
 CRASH_NON_MONOTONIC: int = 3
 from .certus_strat_math import (
-    _read_replayed_point,
+    _calc_T_added_layer,
     _seeded_noise_sample,
     _solve_quadratic_target,
     fit_parabola_vertex_3points,
@@ -964,10 +964,24 @@ def _fill_current_signal(
 # 92.9 % at 320, and 99.9 % at the machine's own 800. The model has been
 # underestimating that risk by construction, simply by drawing 38 times less.
 #
-# The trick is 12.4's: T(d) is smooth and covers less than one period over the
-# whole sweep, so the expensive TMM evaluations stay coarse and are INTERPOLATED
-# onto the real reading positions, where the noise is drawn. Faithful draw
-# count, unchanged TMM cost.
+# 🔑 THE SIGNAL IS COMPUTED EXACTLY AT EVERY READING (D94, D95). It used to be the coarse scan (16 points per replayed
+# layer, 64 over three thicknesses of the current one) INTERPOLATED onto the reading positions, on the idea that T(d) is
+# smooth. 📏 Measured on 2026-10-10 on the judge of paix's winner, nominal signal: the interpolated values were 6.1 A off
+# the exact T in median per layer and up to 33 A, the extrapolated start of the window (the line through its first two
+# coarse points) up to 36 A where the window starts on a turning point -- against a reading noise of +/- 1 A. And the
+# coarse points already carried their own noise draw, so every reading carried two, one of them interpolated, i.e.
+# correlated from one reading to the next, which the frozen reading model (ETAT section 3) excludes.
+#
+# Exactness costs little: for a real index the growing layer obeys the closed form of `layer_scan_coeffs`, three
+# coefficients per layer and two trigonometric calls per reading -- less than the noise draw of that reading. An
+# absorbing index (k above `K_MAX_CLOSED_FORM`) takes the characteristic matrix, exact too, slower.
+#
+# 🔴 C2 STAYS AS IT WAS. A replayed layer j is read `ceil(d_nominal_j / dd)` times whatever its real thickness, so the
+# number of draws never depends on the strategy; reading m sits at depth m * dd of the nominal layer, and at the same
+# FRACTION of the real one (a real layer 0.3 % thicker is read 0.3 % more sparsely, not cut short: the previous rule
+# held its last readings flat or dropped its end, and the signal jumped at the next layer). The draws are the ones of
+# before: (group j, element m) for a replayed layer, (group i_layer, element 4096 + m) for the current one, whose
+# first reading is the last of the layer below and takes its draw.
 #
 # ⚠️ THE UNWELDING IS ONE-DIRECTIONAL, and that is correct rather than lazy. The
 # smoothing window is counted IN MACHINE READINGS, so it is meaningless on the
@@ -981,108 +995,130 @@ def _fill_current_signal(
 # the physics having degraded.
 #
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
-def _resample_on_machine_grid(
+def _advance_matrix(
+    wl: float, n_layer: complex, d: float, M00: complex, M01: complex, M10: complex, M11: complex
+) -> tuple[complex, complex, complex, complex]:
+    """The characteristic matrix of the stack (M) once a layer of index `n_layer` and thickness `d` is laid on it."""
+    phi = TWO_PI / wl * n_layer * d
+    c, s_ = (np.cos(phi), np.sin(phi))
+    so = s_ / n_layer if abs(n_layer) > 1e-09 else 0.0
+    return (
+        c * M00 + 1j * so * M10,
+        c * M01 + 1j * so * M11,
+        1j * n_layer * s_ * M00 + c * M10,
+        1j * n_layer * s_ * M01 + c * M11,
+    )
+
+
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def _layer_T(
+    wl: float,
+    n_layer: complex,
+    n_Sub: complex,
+    M00: complex,
+    M01: complex,
+    M10: complex,
+    M11: complex,
+    depths: np.ndarray,
+    out: np.ndarray,
+    first: int,
+) -> None:
+    """T of the stack (M) under a growing layer of index `n_layer`, at each depth of `depths`, written to `out[first:]`.
+
+    The closed form of `layer_scan_coeffs` for a real index, the characteristic matrix otherwise: both exact.
+    """
+    count = depths.shape[0]
+    if abs(n_layer.imag) < K_MAX_CLOSED_FORM:
+        P, Q, R = layer_scan_coeffs(M00, M01, M10, M11, n_layer, n_Sub)
+        kk = TWO_PI / wl * n_layer.real
+        for m in range(count):
+            td = 2.0 * kk * depths[m]
+            den = P + Q * np.cos(td) + R * np.sin(td)
+            out[first + m] = 4.0 * n_Sub.real / den if den > 1e-18 else 0.0
+    else:
+        for m in range(count):
+            out[first + m] = _calc_T_added_layer(wl, n_layer, depths[m], n_Sub, M00, M01, M10, M11)
+
+
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def _machine_grid_signal(
     machine_sampling_dd: float,
+    wl: float,
+    n_Sub: complex,
+    n_H_r: complex,
+    n_L_r: complex,
+    n_H: complex,
+    n_L: complex,
+    witness_base_layer: int,
     j0: int,
     i_layer: int,
     nominal_th: float,
-    n_hist: int,
     p_thick_nominal: np.ndarray,
     prev_thicknesses_sim: np.ndarray,
-    Ts_r: np.ndarray,
-    Ts_n: np.ndarray,
+    slit_profiles: np.ndarray | None,
     apply_signal_noise: bool,
     signal_noise_scale: float,
     signal_noise_seed: int,
     signal_noise_run: int,
-) -> tuple[np.ndarray, np.ndarray, int, int]:
-    """Put the coarse TMM scan on the readings the machine actually makes: one every `machine_sampling_dd` nm (0.125 by
-    default), interpolated from the coarse points, each with its own noise draw.
+) -> tuple[np.ndarray, np.ndarray, int, int, int]:
+    """The real and the nominal signal at the readings the machine makes: one every `machine_sampling_dd` nm (0.125 by
+    default) over the replayed layers `j0` .. `i_layer - 1` of the block, then over three nominal thicknesses of the
+    layer being grown -- each value exact, the real one with its slit bias and its own noise draw.
 
-    `Ts_r` and `Ts_n` hold the coarse scan (`SCAN_NPTS_HISTORY` points per replayed layer of the block `j0` ..
-    `i_layer - 1`, then `SCAN_NPTS_CURRENT` for the layer being grown). Returns (Ts_r, Ts_n, n_tot, idx_nom_stop): the
-    two signals on the fine grid, their length, and the index of the nominal stop on it. New arrays, the coarse ones
-    are not touched.
+    Returns (Ts_r, Ts_n, n_tot, idx_nom_stop, n_hist): the two signals, their length, the index of the nominal stop, and
+    that of the first reading of the layer being grown (the readings of the replayed layers come before it).
     """
     D_SCAN = D_SCAN_VAL
-    NPTS = SCAN_NPTS_CURRENT
-    NPTS_PREV = SCAN_NPTS_HISTORY
     SAMPLE_DD = machine_sampling_dd if machine_sampling_dd > 0.0 else 0.125
     M_hist = 0
     for j in range(j0, i_layer):
         M_hist += int(np.ceil(p_thick_nominal[j] / SAMPLE_DD))
     M_cur = int(np.ceil(D_SCAN * nominal_th / SAMPLE_DD)) + 1
     M_tot = M_hist + M_cur
-
-    Ts_r_samp = np.empty(M_tot, dtype=np.float64)
-    Ts_n_samp = np.empty(M_tot, dtype=np.float64)
-
-    idx_src = 0
-    idx_dst = 0
+    Ts_r = np.empty(M_tot, dtype=np.float64)
+    Ts_n = np.empty(M_tot, dtype=np.float64)
+    slit_on = slit_profiles is not None and slit_profiles.shape[0] > 0
+    R00, R01, R10, R11, Q00, Q01, Q10, Q11 = _stack_matrix_pair(
+        wl, n_H_r, n_L_r, prev_thicknesses_sim, n_H, n_L, p_thick_nominal, witness_base_layer, j0
+    )
+    idx = 0
     for j in range(j0, i_layer):
+        n_j_r = n_H_r if j % 2 == 0 else n_L_r
+        n_j_n = n_H if j % 2 == 0 else n_L
         d_rj = prev_thicknesses_sim[j]
         d_nj = p_thick_nominal[j]
         M_pj = int(np.ceil(d_nj / SAMPLE_DD))
-        tmm_sub_r = Ts_r[idx_src : idx_src + NPTS_PREV]
-        tmm_sub_n = Ts_n[idx_src : idx_src + NPTS_PREV]
-        # Depth 0 of layer j: the last coarse point of the layer below, or for the first layer of the window (its start is
-        # not on the scan) the line through its first two points. Indices start at -1 (D55: from 0, one step late).
-        start_r = Ts_r[idx_src - 1] if j > j0 else 2.0 * tmm_sub_r[0] - tmm_sub_r[1]
-        start_n = Ts_n[idx_src - 1] if j > j0 else 2.0 * tmm_sub_n[0] - tmm_sub_n[1]
-        inv_drj_npts = (NPTS_PREV / d_rj) * SAMPLE_DD if d_rj > 1e-9 else 0.0
-        inv_dnj_npts = (NPTS_PREV / d_nj) * SAMPLE_DD if d_nj > 1e-9 else 0.0
-        kr_flt = -1.0
-        kn_flt = -1.0
+        dep_n = np.arange(M_pj) * SAMPLE_DD
+        dep_r = dep_n * (d_rj / d_nj) if d_nj > 1e-9 else dep_n
+        _layer_T(wl, n_j_r, n_Sub, R00, R01, R10, R11, dep_r, Ts_r, idx)
+        _layer_T(wl, n_j_n, n_Sub, Q00, Q01, Q10, Q11, dep_n, Ts_n, idx)
         for m in range(M_pj):
-            vr = _read_replayed_point(tmm_sub_r, start_r, kr_flt, NPTS_PREV)
-            vn = _read_replayed_point(tmm_sub_n, start_n, kn_flt, NPTS_PREV)
-
-            Ts_r_samp[idx_dst] = vr
-            Ts_n_samp[idx_dst] = vn
-
+            if slit_on:
+                Ts_r[idx + m] += slit_bias_at(slit_profiles, j, dep_r[m] / d_nj if d_nj > 1e-9 else 0.0)
             if apply_signal_noise:
-                Ts_r_samp[idx_dst] += signal_noise_scale * _seeded_noise_sample(
-                    signal_noise_seed, j, signal_noise_run, m, True
-                )
-            idx_dst += 1
-            kr_flt += inv_drj_npts
-            kn_flt += inv_dnj_npts
-        idx_src += NPTS_PREV
-
-    tmm_cur_r = Ts_r[n_hist : n_hist + NPTS]
-    tmm_cur_n = Ts_n[n_hist : n_hist + NPTS]
-    d_max_cur = D_SCAN * nominal_th
-    fc_step = ((NPTS - 1) / d_max_cur) * SAMPLE_DD if d_max_cur > 1e-9 else 0.0
-    fc_flt = 0.0
+                Ts_r[idx + m] += signal_noise_scale * _seeded_noise_sample(signal_noise_seed, j, signal_noise_run, m, True)
+        idx += M_pj
+        R00, R01, R10, R11 = _advance_matrix(wl, n_j_r, d_rj, R00, R01, R10, R11)
+        Q00, Q01, Q10, Q11 = _advance_matrix(wl, n_j_n, d_nj, Q00, Q01, Q10, Q11)
+    n_cur_r = n_H_r if i_layer % 2 == 0 else n_L_r
+    n_cur_n = n_H if i_layer % 2 == 0 else n_L
+    dep_c = np.arange(M_cur) * SAMPLE_DD
+    _layer_T(wl, n_cur_r, n_Sub, R00, R01, R10, R11, dep_c, Ts_r, idx)
+    _layer_T(wl, n_cur_n, n_Sub, Q00, Q01, Q10, Q11, dep_c, Ts_n, idx)
     for m in range(M_cur):
-        kc_low = min(max(0, int(fc_flt)), NPTS - 2)
-        kc_frac = fc_flt - kc_low
-        kc_hi = kc_low + 1
-
-        vr = (1.0 - kc_frac) * tmm_cur_r[kc_low] + kc_frac * tmm_cur_r[kc_hi]
-        vn = (1.0 - kc_frac) * tmm_cur_n[kc_low] + kc_frac * tmm_cur_n[kc_hi]
-
-        Ts_r_samp[idx_dst] = vr
-        Ts_n_samp[idx_dst] = vn
-
+        if slit_on:
+            Ts_r[idx + m] += slit_bias_at(slit_profiles, i_layer, dep_c[m] / nominal_th)
         if apply_signal_noise:
             g_noise = i_layer
             e_noise = 4096 + m
             if m == 0 and M_hist > 0:
                 g_noise = i_layer - 1
-                prev_M = int(np.ceil(p_thick_nominal[i_layer - 1] / SAMPLE_DD))
-                e_noise = prev_M - 1
-            Ts_r_samp[idx_dst] += signal_noise_scale * _seeded_noise_sample(
+                e_noise = int(np.ceil(p_thick_nominal[i_layer - 1] / SAMPLE_DD)) - 1
+            Ts_r[idx + m] += signal_noise_scale * _seeded_noise_sample(
                 signal_noise_seed, g_noise, signal_noise_run, e_noise, True
             )
-        idx_dst += 1
-        fc_flt += fc_step
-
-    n_tot = M_tot
-    Ts_r = Ts_r_samp
-    Ts_n = Ts_n_samp
     idx_nom_stop = M_hist + round(nominal_th / SAMPLE_DD)
-    return Ts_r, Ts_n, n_tot, idx_nom_stop
+    return Ts_r, Ts_n, M_tot, idx_nom_stop, M_hist
 
 
 # ---- SCAN WINDOW ----------------------------------------------------
@@ -1950,12 +1986,15 @@ def simulate_growth_kernel(
                 d_max, nominal_th,
             )
 
-        # The machine sampling grid (A8): see the notes above `_resample_on_machine_grid`.
+        # The machine sampling grid (A8): see the notes above `_machine_grid_signal`.
         use_fine_grid = machine_sampling_dd > 0.0 or smoothing_window > 1
         if use_fine_grid:
-            Ts_r, Ts_n, n_tot, idx_nom_stop = _resample_on_machine_grid(
-                machine_sampling_dd, j0, i_layer, nominal_th, n_hist, p_thick_nominal, prev_thicknesses_sim,
-                Ts_r, Ts_n, apply_signal_noise, signal_noise_scale, signal_noise_seed, signal_noise_run,
+            # `n_hist` becomes the index of the first FINE reading of the current layer: the reachability test reads the
+            # signal from there (it used to keep the coarse count, so its window opened inside the replayed history).
+            Ts_r, Ts_n, n_tot, idx_nom_stop, n_hist = _machine_grid_signal(
+                machine_sampling_dd, wl, n_Sub, n_H_r, n_L_r, n_H, n_L, witness_base_layer, j0, i_layer, nominal_th,
+                p_thick_nominal, prev_thicknesses_sim, slit_profiles, apply_signal_noise, signal_noise_scale,
+                signal_noise_seed, signal_noise_run,
             )
         else:  # coarse TMM grid, the historical path
             _apply_photometric_drift(

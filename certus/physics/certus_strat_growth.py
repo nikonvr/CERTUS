@@ -194,7 +194,8 @@ def detect_turning_points(
     maxi = 0
     mini = 0
     dirn = 0
-    if start_is_tp and start_dir != 0:
+    known_start = start_is_tp and start_dir != 0
+    if known_start:
         dirn = -1 if start_dir < 0 else 1
     for k in range(1, n_tot):
         v = Ts[k]
@@ -205,6 +206,17 @@ def detect_turning_points(
             minv = v
             mini = k
         emit = -1
+        if known_start and dirn < 0 and mini == 0 and v - minv > hysteresis:
+            # The start is a maximum and the signal leaves it downwards: a rise above the START reading is noise on
+            # that reading (a cold smoothing window leaves it unsmoothed), not a minimum. Track the minimum from here,
+            # without turning: turning would let the next fall declare a second maximum.
+            minv = v
+            mini = k
+            continue
+        if known_start and dirn > 0 and maxi == 0 and maxv - v > hysteresis:
+            maxv = v
+            maxi = k
+            continue
         if dirn >= 0 and maxv - v > hysteresis:
             emit = maxi
             dirn = -1

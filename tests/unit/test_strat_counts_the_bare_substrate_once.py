@@ -35,6 +35,14 @@ def test_a_reading_lifted_by_noise_next_to_a_falling_start_is_not_a_second_maxim
     assert detect_turning_points(ts, len(ts), len(ts) - 1, True, h, -1) == (2, 0, 5)  # the start and the minimum
 
 
+def test_noise_that_lifts_a_reading_above_a_known_maximum_start_does_not_turn_the_detector() -> None:
+    # The start reading came out low (a cold smoothing window leaves it unsmoothed): reading 1 rises above it by more
+    # than the threshold. That is not a minimum at the start; turning on it let the next fall declare a second maximum.
+    ts = np.array([1.0, 1.006, 1.004, 0.99, 0.98, 0.97, 0.975, 0.985, 0.995])
+
+    assert detect_turning_points(ts, len(ts), len(ts) - 1, True, 0.005, -1) == (2, 0, 5)
+
+
 def test_a_rising_start_is_a_minimum_and_the_detector_then_looks_for_the_maximum() -> None:
     ts = np.array([0.5, 0.4996, 0.501, 0.51, 0.52, 0.53, 0.525, 0.515, 0.505])
 

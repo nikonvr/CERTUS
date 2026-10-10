@@ -103,7 +103,11 @@ class Detector:
         # When the start IS a turning point (bare substrate), the controller knows which way the signal leaves
         # it: -1 after a maximum (it now tracks the minimum), +1 after a minimum. Left at 0, a reading that noise
         # lifts above the start becomes a SECOND maximum a few readings later, counted on top of the start.
-        self.dirn = start_dir if start_is_tp else 0
+        # The plan gives the same direction at every window start (`Machine.plan`), as the kernel's machine grid
+        # does (`_read_poem_anchors`): the start is then counted only when the plan counts it, never because
+        # noise moved its first readings.
+        self.dirn = start_dir
+        self.known = start_dir != 0
         self.k = 0
         self.start_is_tp = start_is_tp
         self.extrema: list[tuple[int, float, int]] = [(0, first_value, 0)] if start_is_tp else []
@@ -115,6 +119,14 @@ class Detector:
             self.maxv, self.maxi = v, k
         if v < self.minv:
             self.minv, self.mini = v, k
+        # A known direction: a move the other way from the START reading is noise on that reading, not an extremum
+        # at the start (the two rules of `detect_turning_points`).
+        if self.known and self.dirn < 0 and self.mini == 0 and v - self.minv > self.h:
+            self.minv, self.mini = v, k
+            return
+        if self.known and self.dirn > 0 and self.maxi == 0 and self.maxv - v > self.h:
+            self.maxv, self.maxi = v, k
+            return
         if self.dirn >= 0 and self.maxv - v > self.h:
             if not (self.start_is_tp and self.maxi == 0):
                 self.extrema.append((self.maxi, self.maxv, k))
@@ -146,13 +158,17 @@ class RunningMean:
 class Plan:
     """What the controller is handed for one layer, computed offline on the NOMINAL stack."""
 
-    def __init__(self, n_exp, poem_ok, p_frac, target_abs, direction, stop_k_nom):
+    def __init__(self, n_exp, poem_ok, p_frac, target_abs, direction, stop_k_nom, start_is_tp=False, start_dir=0):
         self.n_exp = n_exp
         self.poem_ok = poem_ok
         self.p_frac = p_frac
         self.target_abs = target_abs
         self.direction = direction
         self.stop_k_nom = stop_k_nom
+        # How the window start is counted: as an extremum of known kind (the bare substrate, or a start the plan counts
+        # as POEM's first anchor), and which way the nominal signal leaves it.
+        self.start_is_tp = start_is_tp
+        self.start_dir = start_dir
 
 
 class Machine:
@@ -217,7 +233,6 @@ class Machine:
         wl = self.layer_wl[i]
         j0 = max(int(self.block_start[i]), i - self.lookback)
         start_is_tp = i == 0 and j0 == 0
-        start_dir = self.start_direction(wl) if start_is_tp else 0
         # Signal of the NOMINAL stack at the reading positions the plan assumes (nominal thicknesses).
         vals = [self.T_curve(self.thick, j0, wl, np.array([0.0]))[0]]
         for j in range(j0, i):
@@ -227,6 +242,18 @@ class Machine:
         vals.extend(self.T_curve(self.thick, i, wl, ds_cur))
         vals = np.asarray(vals)
         stop_k = k_cur0 + round(float(self.thick[i]) / self.dd)
+        if start_is_tp:
+            start_dir = self.start_direction(wl)
+        else:
+            # Any other window start: the direction of the nominal signal there, and the start is POEM's first anchor
+            # when the nominal signal, read without that direction, counts it (`_read_poem_anchors`).
+            moved = np.nonzero(vals[1:] != vals[0])[0]
+            start_dir = 0 if moved.size == 0 else (1 if vals[1 + moved[0]] > vals[0] else -1)
+            sm = RunningMean(self.smoothing)
+            free = Detector(sm.push(vals[0]), h, False, 0)
+            for v in vals[1:]:
+                free.push(sm.push(v))
+            start_is_tp = start_dir != 0 and bool(free.extrema) and free.extrema[0][0] == 0
         sm = RunningMean(self.smoothing)
         det = Detector(sm.push(vals[0]), h, start_is_tp, start_dir)
         for v in vals[1:]:
@@ -243,7 +270,7 @@ class Machine:
         eps = min(0.05, 0.1 * self.thick[i])
         t_lo, t_hi = self.T_curve(self.thick, i, wl, np.array([self.thick[i] - eps, self.thick[i] + eps]))
         direction = 1.0 if t_hi > t_lo else -1.0
-        pl = Plan(n_exp, poem_ok, p_frac, target_abs, direction, stop_k)
+        pl = Plan(n_exp, poem_ok, p_frac, target_abs, direction, stop_k, start_is_tp, start_dir)
         self._plans[key] = pl
         return pl
 
@@ -261,7 +288,6 @@ class Machine:
             wl = self.layer_wl[i]
             pl = self.plan(i, h)
             j0 = max(int(self.block_start[i]), i - self.lookback)
-            start_is_tp = i == 0 and j0 == 0
             # Replay the machine's memory of the window: what it measured on layers j0..i-1.
             if j0 not in start_level:
                 t0 = self.T_curve(real, j0, wl, np.array([0.0]))[0]
@@ -270,7 +296,7 @@ class Machine:
             for j in range(j0, i):
                 hist.extend(log.get((j, wl), ()))
             sm = RunningMean(self.smoothing)
-            det = Detector(sm.push(hist[0]), h, start_is_tp, self.start_direction(wl) if start_is_tp else 0)
+            det = Detector(sm.push(hist[0]), h, pl.start_is_tp, pl.start_dir)
             for v in hist[1:]:
                 det.push(sm.push(v))
             # The layer grows: one reading every dd, up to three nominal thicknesses, evaluated in chunks.

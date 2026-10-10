@@ -1438,6 +1438,18 @@ def _read_poem_anchors(
             if Ts_n[k_dir] > Ts_n[0]:
                 start_dir = 1
                 break
+    # 🔑 AND THE PLAN SAYS WHETHER THE WINDOW START IS AN ANCHOR. Without the direction, the detector counted the start of
+    # a window as an extremum when the signal left it by more than the threshold before turning: the start level became
+    # POEM's first anchor, on both signals. Given the direction, it never counted it, and a layer whose window holds one
+    # extremum before the stop lost POEM for the absolute level. 📏 Measured on 2026-10-10 on the judge of paix, frozen
+    # reading model, first 101 plans: 27 crashed more than without the direction, all at the level-unreachable test
+    # (plan 96: 0 % to 34 % of runs at 0.5x, all at its one-layer last block). The start is an anchor when the NOMINAL
+    # signal, read without the direction, counts it; the real signal then counts it too, whatever noise does to its first
+    # readings.
+    if direction_at_window_start and not start_is_tp and start_dir != 0:
+        n_free = detect_turning_points(Ts_n, n_tot, idx_nom_stop, False, tp_hysteresis, 0)[0]
+        n_planned = detect_turning_points(Ts_n, n_tot, idx_nom_stop, False, tp_hysteresis, start_dir)[0]
+        start_is_tp = n_free > n_planned
     # The REAL signal: what the machine counts.
     n_tp_real, tp_a, tp_b = detect_turning_points(
         Ts_r, n_tot, idx_nom_stop, start_is_tp, tp_hysteresis, start_dir

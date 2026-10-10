@@ -17,6 +17,7 @@ import pytest
 
 from certus.physics.certus_strat_growth import (
     CRASH_SENTINEL_MIN,
+    _read_poem_anchors,
     detect_turning_points,
     simulate_growth_kernel,
 )
@@ -58,6 +59,47 @@ def test_a_window_that_starts_below_a_maximum_does_not_count_its_noisy_start_as_
 
     assert detect_turning_points(ts, len(ts), 9, False, 0.005) == (3, 3, 7)  # a minimum at 0, the maximum, the minimum
     assert detect_turning_points(ts, len(ts), 9, False, 0.005, 1) == (2, 3, 7)  # the maximum and the minimum only
+
+
+ANCHOR_NAMES = ("n_tp_real", "n_tp_nom", "margin_missed", "margin_fab", "T_prev_nom", "T_last_nom", "T_prev_real",
+                "T_last_real", "poem_ok")
+
+
+def _machine_grid_anchors(real, nominal, stop, hysteresis) -> dict:
+    """`_read_poem_anchors` for layer 47 of a block that starts there, as the machine grid calls it."""
+    real, nominal = np.asarray(real, dtype=float), np.asarray(nominal, dtype=float)
+    out = _read_poem_anchors(47, 47, real, nominal, len(real), stop, hysteresis, True, True)
+    return dict(zip(ANCHOR_NAMES, out, strict=True))
+
+
+def test_a_window_start_the_plan_counts_stays_poems_first_anchor_on_the_machine_grid() -> None:
+    """A block of one layer whose signal climbs far from its start to one maximum before the stop: the plan, read
+    without the direction, counts the start, and POEM stops between the start level and the maximum. Given the
+    direction and nothing else, the detector never counted the start: one extremum, POEM lost, the absolute level
+    unreachable under the photometric curvature -- 34 % of runs at 0.5x on the last layer of plan 96 of the judge of
+    paix's population (2026-10-10)."""
+    k = np.arange(200)
+    nominal = 0.895 - 0.095 * np.cos(np.pi * k / 60.0)  # 0.80 at the start, a maximum of 0.99 at 60, back down at 120
+    real = 0.892 - 0.094 * np.cos(np.pi * (k + 4.0) / 61.0)  # another stack: lower, and its maximum earlier
+
+    got = _machine_grid_anchors(real, nominal, 100, A)
+
+    assert got["n_tp_real"] == got["n_tp_nom"] == 2
+    assert (got["T_prev_nom"], got["T_prev_real"]) == (nominal[0], real[0])  # the start levels, read on each signal
+    assert got["poem_ok"]
+
+
+def test_a_window_start_the_plan_does_not_count_stays_uncounted_whatever_the_noise_does() -> None:
+    """The plan leaves its start 0.86 threshold below a maximum: it does not count the start. The real start reading,
+    pushed low by noise, sits more than the threshold under that maximum; the real signal must not count it either."""
+    h = 0.005
+    nominal = np.array([0.9957, 0.998, 0.9995, 1.0, 0.9995, 0.99, 0.98, 0.975, 0.98, 0.99])
+    real = nominal.copy()
+    real[0] = 0.994
+
+    got = _machine_grid_anchors(real, nominal, 9, h)
+
+    assert got["n_tp_real"] == got["n_tp_nom"] == 2  # the maximum and the minimum, on both signals
 
 
 @pytest.mark.parametrize("smoothing", [8, 1])

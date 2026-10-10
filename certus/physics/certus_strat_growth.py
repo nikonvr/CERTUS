@@ -102,6 +102,7 @@ def detect_turning_points(
     idx_stop: int,
     start_is_tp: bool,
     hysteresis: float,
+    start_dir: int = 0,
 ) -> tuple[int, int, int]:
     """Counts the turning points of a monitoring signal and returns the last two.
 
@@ -147,6 +148,23 @@ def detect_turning_points(
     The threshold applies to the NOMINAL signal as well. It represents what the strategy
     EXPECTS to count; evaluating it with a different rule than the physical machine
     would induce artificial per-layer counting divergence.
+
+    ``start_dir`` -- WHICH WAY THE SIGNAL LEAVES A START THAT IS A TURNING POINT, used only
+    with ``start_is_tp`` and the hysteresis detector: -1 when it falls (the start is a
+    maximum, the detector then tracks the minimum), +1 when it rises, 0 = unknown (the
+    detector establishes the direction itself, the behaviour before this parameter).
+
+        The bare substrate is a turning point: dT/dd = 0 at d = 0, so the signal leaves it
+        quadratically. On the machine grid (one reading every 0.125 nm) the first readings
+        of layer 0 stay within the noise of the start for several nanometres, and the
+        running maximum moves onto one of them. With the direction unknown, that reading
+        is then DECLARED as a maximum when the signal has fallen by the threshold -- on top
+        of the start, which is already counted. The nominal signal, noise-free, keeps its
+        maximum at index 0 and counts one extremum fewer: a miscount crash at layer 0.
+        📏 Measured 2026-10-10 on the judge of paix's winner, smoothing window 8 (which
+        switches the fine grid on), 300 runs: 7.7 %, 21.3 % and 36.0 % of runs crashed at
+        layer 0 at the 0.5x, 1x and 2x noise levels, all by miscount. The controller
+        knows from its plan which way the first layer goes; so does this detector.
     """
     tp_a = -1
     tp_b = -1
@@ -168,12 +186,16 @@ def detect_turning_points(
         return (n_tp, tp_a, tp_b)
 
     # Hysteresis detector. Simultaneously tracks current maximum and minimum;
-    # `dirn` is 0 until direction is established by first threshold crossing.
+    # `dirn` is 0 until direction is established by first threshold crossing, unless the
+    # start is a turning point of known kind (`start_dir`): the detector then starts as if
+    # it had just declared it, and looks for the extremum of the other kind.
     maxv = Ts[0]
     minv = Ts[0]
     maxi = 0
     mini = 0
     dirn = 0
+    if start_is_tp and start_dir != 0:
+        dirn = -1 if start_dir < 0 else 1
     for k in range(1, n_tot):
         v = Ts[k]
         if v > maxv:
@@ -1348,9 +1370,20 @@ def _read_poem_anchors(
     T_last_nom = 0.0
     poem_ok = False
     start_is_tp = i_layer == 0 and j0 == 0
+    # Which way the first layer leaves the bare substrate, read on the NOMINAL signal (noise-free): the plan the
+    # controller holds. Without it the detector can count the start twice on a fine grid (`detect_turning_points`).
+    start_dir = 0
+    if start_is_tp:
+        for k_dir in range(1, n_tot):
+            if Ts_n[k_dir] < Ts_n[0]:
+                start_dir = -1
+                break
+            if Ts_n[k_dir] > Ts_n[0]:
+                start_dir = 1
+                break
     # The REAL signal: what the machine counts.
     n_tp_real, tp_a, tp_b = detect_turning_points(
-        Ts_r, n_tot, idx_nom_stop, start_is_tp, tp_hysteresis
+        Ts_r, n_tot, idx_nom_stop, start_is_tp, tp_hysteresis, start_dir
     )
     # The NOMINAL signal: what the strategy expects of it. SAME detection
     # rule, imperatively -- the two countings also serve to detect the
@@ -1358,7 +1391,7 @@ def _read_poem_anchors(
     # modes, and two different rules would fabricate one at each layer.
     # Counting the edge on one side and not the other would have the same effect.
     n_tp_nom, tp_a_n, tp_b_n = detect_turning_points(
-        Ts_n, n_tot, idx_nom_stop, start_is_tp, tp_hysteresis
+        Ts_n, n_tot, idx_nom_stop, start_is_tp, tp_hysteresis, start_dir
     )
     # A23 stage 2, counting side. Measured on the REAL signal -- the one the
     # machine reads. The binding margin is the smaller of the two ways the count

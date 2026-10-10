@@ -515,9 +515,10 @@ def main() -> None:
     ranks = [int(x) for x in args.ranks.split(",") if x.strip()]
     noises = [float(x) for x in args.noises.split(",") if x.strip()]
     print(f"config={Path(args.config).name} plans={Path(args.plans).name} ranks={ranks} noises={noises}")
-    print(f"layers={len(thick)} A={A:g} machine h={h_factor:g} A x noise (kernel: {h_config:g}) dd={args.dd} nm "
-          f"stop={args.stop} lookback={args.lookback} smoothing={args.smoothing} runs={args.runs} seed={args.seed} "
-          f"python={sys.version.split()[0]}")
+    h_kernel = h_config if args.kernel_hyst is None else args.kernel_hyst
+    print(f"layers={len(thick)} A={A:g} machine h={h_factor:g} A x noise (kernel: {h_kernel:g}, smoothing "
+          f"{args.kernel_smoothing}) dd={args.dd} nm stop={args.stop} lookback={args.lookback} smoothing={args.smoothing} "
+          f"runs={args.runs} seed={args.seed} python={sys.version.split()[0]}")
     rows: list[dict] = []
     for rank in ranks:
         for noise in noises:

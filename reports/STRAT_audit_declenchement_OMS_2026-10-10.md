@@ -32,7 +32,9 @@ A = 5e-4 en T (±0,05 point), hystérésis du fichier 1,66 A, niveaux de bruit 0
    du modèle figé d'environ 10 %, dans un sens qui dépend du composant : 10 % trop haut sur le juge de paix, 11 %
    trop bas sur `r75x2`. Mais il choisit bien : sur les 370 plans du juge, il désigne **le même meilleur plan** que le
    modèle figé (classements concordants à 0,92) ; sur la tête de `r75x2`, son meilleur plan est à 3,9 % de celui du
-   modèle figé, dans le bruit Monte-Carlo (§6). Quatre écarts restent ouverts, mesurés en
+   modèle figé, dans le bruit Monte-Carlo (§6). Sur `r75x2`, l'écart a une cause mesurée : les ancres lues sur
+   l'échantillonnage grossier ; au sommet (option D96), le modèle livré y note comme le modèle figé et classe comme lui
+   (Spearman 0,89 au lieu de 0,19). Quatre écarts restent ouverts, mesurés en
    §4 : les ancres lues sur l'échantillonnage grossier (D96), l'inversion parabolique de l'arrêt (D97, désormais en
    option), l'armement non causal (D98) et, au modèle figé, la lecture d'arrêt non lissée (D99). Aucun ne déplace la
    tête de la population hors du bruit Monte-Carlo. D96 et D98 existent aussi en option depuis le 2026-10-11 : avec
@@ -127,7 +129,8 @@ physique isolée, machine de `876af484` :
 Aucun plantage côté machine ; côté noyau livré, 0,3 % au plus (à 2×).
 
 Sur ces 12 plans du juge, le noyau livré est **pessimiste** (sur `r75x2`, la §6 mesure le sens inverse). Il lit ses
-ancres sur des lectures brutes, alors que la machine les lit lissées ; la cause de l'écart n'est pas isolée. Il classe
+ancres sur des lectures brutes, alors que la machine les lit lissées ; la cause de l'écart sur le juge n'est pas
+isolée (sur `r75x2`, ce sont les ancres échantillonnées, §6). Il classe
 pourtant les plans à peu près dans le même ordre. Les arrêts décalés de la machine à 2× tombent sur des
 couches où la fraction POEM est proche de 0, donc près de l'extremum suivant. Lu à 0,125 nm, un extremum est biaisé
 **vers l'extérieur** par le bruit (le maximum de lectures bruitées). Lu sur l'échantillonnage grossier, il est
@@ -294,13 +297,39 @@ Ce que cela dit :
 | figé | 50 | 47 (0,079976) | 18 | 35 |
 
 - **Le signe s'inverse** : ici le modèle figé note **11 % plus haut** en médiane (sur le juge, 10 % plus bas). Le
-  modèle livré n'est donc pas pessimiste en général ; cela dépend du composant. La cause n'est pas isolée.
+  modèle livré n'est donc pas pessimiste en général ; cela dépend du composant. Sur `r75x2`, la cause est mesurée
+  (ci-dessous) : les ancres échantillonnées.
 - **La tête est un peloton** : sous le modèle livré, les 50 plans tiennent dans 8 % du meilleur, 43 dans 4 %. Les
   classements des deux modèles n'y concordent pas (Spearman 0,19), ce qu'on attend d'écarts aussi petits que le
   bruit Monte-Carlo.
 - **Le meilleur plan change** (48 sous le modèle livré, 47 sous le modèle figé), mais le 48 n'est qu'à 3,9 % du 47
   au modèle figé : dans la classe d'équivalence. Reclasser au modèle figé les 10 premiers du modèle livré choisirait
   le 47.
+
+**Ce qui sépare les deux modèles** (2026-10-11, mêmes plans, mêmes tirages ; le modèle livré y rend au bit les notes du
+tableau ci-dessus) : le modèle livré avec les options du 2026-10-11, seules ou ensemble (§4).
+
+| modèle | meilleur plan (note) | plans à 4 % | plans à 8 % | note / note du figé, médiane | Spearman avec le figé |
+|---|---|---|---|---|---|
+| livré | 48 (0,074191) | 43 | 50 | 0,899 | 0,187 |
+| livré, ancres au sommet (D96) | 6 (0,080159) | 21 | 35 | 1,004 | 0,888 |
+| livré, armé (D98) | 35 (0,080752) | 27 | 41 | 1,021 | −0,564 |
+| livré, les trois options (D96, D97, D98) | 18 (0,080510) | 25 | 35 | 1,003 | 0,912 |
+| figé | 47 (0,079976) | 18 | 35 | 1 | 1 |
+
+- **Sur `r75x2`, l'écart entre les deux modèles vient des ancres échantillonnées.** Au sommet, le modèle livré note
+  comme le modèle figé (rapport médian 1,004 au lieu de 0,899) et classe comme lui (0,888 au lieu de 0,187). Son
+  meilleur plan (6) est à 0,96 % du meilleur du modèle figé, 3ᵉ sous lui ; avec les trois options, le 18, à 0,84 %,
+  2ᵉ. L'échantillon grossier tombe à côté du sommet, l'ancre est biaisée vers l'intérieur de la courbe, et sur ce
+  composant le biais rend le modèle livré optimiste de 10 %.
+- **L'armement seul, sur des ancres échantillonnées, décorrèle le classement** (−0,56) : il compare le niveau à une
+  ancre décalée de l'écart d'échantillonnage. Avec les ancres au sommet et l'arrêt exact, il ne le dégrade plus
+  (0,912, contre 0,888 avec les seules ancres au sommet ; l'armement sans l'arrêt exact n'est pas mesuré). Il ne
+  s'emploie qu'avec les ancres au sommet.
+- **Sur le juge, ce n'est pas la cause.** Les trois options ensemble y gardent le même meilleur plan (11) et notent
+  1,2 % plus bas que le modèle livré en médiane, encore 10,7 % au-dessus du modèle figé ; le classement concorde avec
+  celui du modèle figé à 0,941 au lieu de 0,920. Le reste de l'écart, sur ce composant, vient du modèle de lecture
+  lui-même (lissage, seuil, cadence) : le choix qu'ETAT, section 3, réserve à 👤.
 
 ## Reproduire
 
@@ -313,6 +342,8 @@ python scripts\probe_modele_lecture.py example\example_strat\JSON-strat-example.
 python scripts\probe_modele_lecture.py example\example_strat\JSON-strat-example.json reports\STRAT_bench_juge_de_paix_b60d80e2_temoin_2026-10-04.json --runs 300 --models livre@1.0,livre@1.33,livre@1.66,livre@2.0,livre@2.4
 python scripts\probe_modele_lecture.py example\example_strat\JSON-strat-example.json reports\STRAT_bench_juge_de_paix_b60d80e2_temoin_2026-10-04.json --runs 300 --models livre_ancres,livre_exact_ancres
 python scripts\probe_modele_lecture.py example\example_strat\JSON-strat-example.json reports\STRAT_bench_juge_de_paix_b60d80e2_temoin_2026-10-04.json --runs 300 --models livre_armement
+python scripts\probe_modele_lecture.py example\example_strat\JSON-strat-example.json reports\STRAT_bench_juge_de_paix_b60d80e2_temoin_2026-10-04.json --runs 300 --models livre_corrige
+python scripts\probe_modele_lecture.py example\example_strat\JSON-strat-random75-x2-fabricable.json reports\STRAT_bench_r75x2_deep_hysteresis_noise_level_306559d3_2026-10-05.json --first 50 --runs 300 --models livre,livre_ancres,livre_armement,livre_corrige
 python scripts\probe_modele_lecture.py example\example_strat\JSON-strat-example.json reports\STRAT_bench_juge_de_paix_b60d80e2_temoin_2026-10-04.json --runs 300 --models fige,fige_armement --ranks 0,1,9,11,12,20,22,23,28,33,40,50,84,88,93,94,100,150,185,200,250,279,300,350
 python scripts\probe_arret_sans_bruit.py example\example_strat\JSON-strat-example.json reports\STRAT_bench_juge_de_paix_b60d80e2_temoin_2026-10-04.json [--exact-inversion] [--exact-anchors] [--no-poem]
 ```

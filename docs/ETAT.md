@@ -52,6 +52,12 @@ Le rapport de l'audit, ses chiffres et leurs commandes : `reports/STRAT_audit_de
   est 6ᵉ (livré) et 7ᵉ (figé), à 4,6 % du plan 11 : dans la classe d'équivalence du bruit Monte-Carlo. Sur les 50
   premiers plans de `r75x2`, le sens s'inverse (le modèle figé note 11 % plus haut) ; les deux meilleurs plans
   diffèrent (48 et 47) mais restent à 3,9 % l'un de l'autre, dans un peloton de tête où 43 plans tiennent dans 4 %.
+- **Sur `r75x2`, l'écart entre modèle livré et modèle figé vient des ancres échantillonnées** (D96, mesuré le
+  2026-10-11 sur les mêmes 50 plans) : ancres au sommet, le modèle livré note comme le modèle figé (rapport médian
+  1,004 au lieu de 0,899) et classe comme lui (Spearman 0,888 au lieu de 0,187) ; avec les trois options, 0,912, et son
+  meilleur plan est à 0,84 % de celui du modèle figé. L'armement seul, sur ancres échantillonnées, décorrèle le
+  classement (−0,56) : il ne s'emploie qu'avec D96. Sur le juge, ce n'est pas la cause (0,941 avec les trois options) :
+  le reste de l'écart y vient du modèle de lecture (rapport, section 6).
 - **CI** : le cliquet de dette refusait `certus_strat_growth.py` (2 745 lignes, plafond 2 508). Découpé par responsabilité
   (`cbdae548`) : `certus_strat_readings.py` prend ce que la machine lit et où elle s'arrête ; 8 008 tableaux identiques
   au bit ; plafond abaissé à 2 169. Validation complète sur `cbdae548` : Ruff 0 ; oracle 1 139 passed ; unit 4 986 passed,

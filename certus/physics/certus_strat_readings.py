@@ -5,8 +5,9 @@ it, and turns the trigger level into a thickness. This module holds the two halv
 
 * the signal -- the characteristic matrices of the witness, real and nominal (`_stack_matrix`, `_stack_matrix_pair`),
   the closed form of the growing layer (`layer_scan_coeffs`), the slit bias at a depth (`slit_bias_at`), the coarse
-  scan of the replayed layers and of the layer being grown (`_fill_history_signal`, `_fill_current_signal`), and the
-  readings the machine makes every 0.125 nm (`_machine_grid_signal`);
+  scan of the replayed layers and of the layer being grown (`_fill_history_signal`, `_fill_current_signal`), the
+  readings the machine makes every 0.125 nm (`_machine_grid_signal`), and, when asked, POEM's anchors moved from the
+  coarse samples to the extremum of their layer (`_exact_poem_anchors`, D96);
 * the stop -- the thickness at which the read signal reaches the trigger level, on a parabola through three probes
   (`_invert_thickness_from_probes`) or on the exact signal when asked (`_invert_thickness_exact`, D97).
 
@@ -942,3 +943,135 @@ def _invert_thickness_exact(
         else:
             b = mid
     return 0.5 * (a + b) - nominal_th
+
+
+# ---- D96: POEM'S ANCHORS AT THE EXTREMUM ITSELF, ON REQUEST (`exact_anchors`) ----
+#
+# On the coarse scan an anchor is the value of the SAMPLE at which the detector put the extremum: 16 samples per replayed
+# layer, 64 over three thicknesses of the current one, so the sample falls up to half a step from the summit, by an amount
+# that differs between the real and the nominal signal as soon as their thicknesses differ. 📏 Measured on 2026-10-10 on
+# the judge of paix's winner, noise-free, upstream errors of 0.3 nm: the kernel's stop sits 0.055 nm RMS from the exact
+# POEM stop, of which the inversion (D97) explains 0.021 nm RMS and the anchors the rest. The closed form of a layer
+# (`layer_scan_coeffs`) gives its extrema exactly: T = 4 n_sub / (P -+ sqrt(Q^2 + R^2)), where 2kd = atan2(R, Q), plus pi
+# for a maximum. The machine grid needs none of this: it reads the exact T at every reading.
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def _closed_form_extremum(
+    wl: float,
+    n_layer: complex,
+    n_Sub: complex,
+    M00: complex,
+    M01: complex,
+    M10: complex,
+    M11: complex,
+    d_sample: float,
+    window: float,
+    d_hi: float,
+    is_max: bool,
+) -> tuple[bool, float, float, float]:
+    """The extremum of kind `is_max` of a layer of index `n_layer` growing on the stack (M), the one nearest `d_sample`.
+
+    Returns (found, its depth, T there, T at `d_sample`). Found when it lies within `window` of `d_sample` and inside the
+    layer, [0, `d_hi`]; never on an absorbing layer (k above `K_MAX_CLOSED_FORM`), which has no closed form.
+    """
+    if abs(n_layer.imag) >= K_MAX_CLOSED_FORM:
+        return False, 0.0, 0.0, 0.0
+    P, Q, R = layer_scan_coeffs(M00, M01, M10, M11, n_layer, n_Sub)
+    kk2 = 2.0 * TWO_PI / wl * n_layer.real
+    den_s = P + Q * np.cos(kk2 * d_sample) + R * np.sin(kk2 * d_sample)
+    amp = np.sqrt(Q * Q + R * R)
+    den = P - amp if is_max else P + amp
+    if amp <= 1e-15 or kk2 <= 1e-15 or den_s <= 1e-18 or den <= 1e-18:
+        return False, 0.0, 0.0, 0.0
+    # P + Q cos(2kd) + R sin(2kd) = P + amp cos(2kd - phi), phi = atan2(R, Q): T is largest where that is smallest.
+    base = np.arctan2(R, Q) + (np.pi if is_max else 0.0)
+    d_star = (base + TWO_PI * np.floor((kk2 * d_sample - base) / TWO_PI + 0.5)) / kk2
+    found = abs(d_star - d_sample) <= window and d_star >= 0.0 and d_star <= d_hi
+    return found, d_star, 4.0 * n_Sub.real / den, 4.0 * n_Sub.real / den_s
+
+
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def _exact_poem_anchors(
+    wl: float,
+    n_Sub: complex,
+    n_H_r: complex,
+    n_L_r: complex,
+    n_H: complex,
+    n_L: complex,
+    witness_base_layer: int,
+    j0: int,
+    i_layer: int,
+    prev_thicknesses_sim: np.ndarray,
+    p_thick_nominal: np.ndarray,
+    n_hist: int,
+    npts_cur: int,
+    d_max: float,
+    Ts_r: np.ndarray,
+    Ts_n: np.ndarray,
+    n_tot: int,
+    affine_scale: float,
+    photo_curvature: float,
+    slit_profiles: np.ndarray | None,
+    T_prev_real: float,
+    T_last_real: float,
+    T_prev_nom: float,
+    T_last_nom: float,
+) -> tuple[float, float, float, float]:
+    """POEM's two anchors on each signal of the coarse scan, moved to the extremum of the layer they fall in (D96).
+
+    Returns (T_prev_real, T_last_real, T_prev_nom, T_last_nom), the arguments of the same names. An anchor is one of the
+    samples of `Ts_r` or `Ts_n`, found by its value; its kind is read against the other anchor of its pair, since a
+    maximum and a minimum alternate. The nominal anchor becomes the extremum of the nominal layer. The real one keeps the
+    reading noise of its sample, takes T and the slit bias at the depth of the extremum, and goes through the
+    instrument's distortion exactly: the reading before the curvature is recovered from the anchor itself. An anchor
+    whose layer has no extremum of its kind within two samples of it keeps its value: a turning point on a layer
+    boundary, which the scan samples exactly, or an absorbing layer.
+    """
+    NPTS_PREV = SCAN_NPTS_HISTORY
+    slit_on = slit_profiles is not None and slit_profiles.shape[0] > 0
+    c4 = 4.0 * photo_curvature
+    vals = np.array([T_prev_real, T_last_real, T_prev_nom, T_last_nom])
+    out = vals.copy()
+    for a in range(4):
+        real = a < 2
+        sig = Ts_r if real else Ts_n
+        idx = -1
+        for k in range(n_tot):
+            if sig[k] == vals[a]:
+                idx = k
+                break
+        if idx < 0:
+            continue
+        is_max = vals[a] > vals[a + 1 - 2 * (a % 2)]
+        th = prev_thicknesses_sim if real else p_thick_nominal
+        if idx < n_hist:  # a replayed layer: its sample k (1 .. 16) is at k / 16 of the layer
+            j = j0 + idx // NPTS_PREV
+            step = th[j] / NPTS_PREV
+            d_s = (idx % NPTS_PREV + 1) * step
+            d_hi = th[j]
+        else:  # the layer being grown, swept over [0, d_max]
+            j = i_layer
+            step = d_max / (npts_cur - 1)
+            d_s = (idx - n_hist) * step
+            d_hi = d_max
+        n_even = n_H_r if real else n_H
+        n_odd = n_L_r if real else n_L
+        M00, M01, M10, M11 = _stack_matrix(wl, n_even, n_odd, th, witness_base_layer, j)
+        found, d_star, t_ext, t_at = _closed_form_extremum(
+            wl, n_even if j % 2 == 0 else n_odd, n_Sub, M00, M01, M10, M11, d_s, 2.0 * step, d_hi, is_max
+        )
+        if not found:
+            continue
+        if not real:
+            out[a] = t_ext
+            continue
+        delta = t_ext - t_at
+        if slit_on and p_thick_nominal[j] > 1e-9:  # the profile is indexed by depth / nominal thickness of the layer
+            inv_nom = 1.0 / p_thick_nominal[j]
+            delta += slit_bias_at(slit_profiles, j, d_star * inv_nom) - slit_bias_at(slit_profiles, j, d_s * inv_nom)
+        # The instrument reads t + c4 t (1 - t), t = a T + b: t is the root of that quadratic nearest the reading, written
+        # in its stable form (it is the reading itself when c4 = 0), moved by a * delta, and read back.
+        disc = (1.0 + c4) * (1.0 + c4) - 4.0 * c4 * vals[a]
+        t_aff = 2.0 * vals[a] / ((1.0 + c4) + np.sqrt(disc)) if disc >= 0.0 else vals[a]
+        t_aff += affine_scale * delta
+        out[a] = t_aff + c4 * t_aff * (1.0 - t_aff)
+    return out[0], out[1], out[2], out[3]

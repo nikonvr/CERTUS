@@ -80,6 +80,7 @@ from .certus_strat_readings import (
     K_MAX_CLOSED_FORM,
     SCAN_NPTS_CURRENT,
     SCAN_NPTS_HISTORY,
+    _exact_poem_anchors,
     _fill_current_signal,
     _fill_history_signal,
     _invert_thickness_exact,
@@ -1089,68 +1090,51 @@ def simulate_growth_kernel(
     machine_sampling_dd: float = 0.0,
     prev_rate_flags: np.ndarray | None = None,
     exact_inversion: bool = False,
+    exact_anchors: bool = False,
 ) -> tuple[float, float, float, float, float]:
-    """
+    """Fast TMM Simulation for robustness heuristics.
 
-    Fast TMM Simulation for robustness heuristics.
-
-    CRITICAL PHYSICS NOTE:
-
-    This kernel calculates T_front (Internal Transmission) ONLY.
-
-    It intentionally IGNORES backside reflection for computational speed in heuristics.
-
-    Do not use for absolute photometric accuracy. Use calculate_detailed_growth for that.
-
-    This is a RELATIVE control kernel: target extraction and inversion both use the
-
+    CRITICAL PHYSICS NOTE: this kernel calculates T_front (Internal Transmission) ONLY. It intentionally IGNORES backside
+    reflection for computational speed in heuristics. Do not use for absolute photometric accuracy: use
+    calculate_detailed_growth for that. This is a RELATIVE control kernel: target extraction and inversion both use the
     same front-only model, so there is no absolute backside mismatch in this loop.
 
     Args:
+        non_monotonic_mode: How to handle non-monotonic T(d) curves: 0 (ATTENUATE) divided the error by
+            non_monotonic_factor (legacy, no longer applied: see the note above); 1 (REJECT) returns a large penalty to
+            reject the candidate.
 
-        non_monotonic_mode: How to handle non-monotonic T(d) curves:
+        signal_noise_scale: AXIS 1.1 -- scale of the READING noise applied to the REAL monitoring signal ``Ts_r``, in
+            units of T (0..1), BEFORE detecting turning points, reading POEM anchors, and testing level reachability.
+            0.0 = disabled, and the computation path is then word for word the one from before this parameter. See the
+            "READING NOISE" block below.
 
-            0 (ATTENUATE): Divide error by non_monotonic_factor (legacy)
-
-            1 (REJECT): Return large penalty to reject candidate
-
-        signal_noise_scale: AXIS 1.1 -- scale of the READING noise applied to the
-            REAL monitoring signal ``Ts_r``, in units of T (0..1), BEFORE detecting
-            turning points, reading POEM anchors, and testing level reachability.
-            0.0 = disabled, and the computation path is then word for word the one
-            from before this parameter. See the "READING NOISE" block below.
-
-        signal_noise_seed: seed of the reading noise stream. Must be a function
-            of the draw configuration only (seed, noise level) and NEVER of the
-            evaluated strategy: this is what preserves common random numbers.
+        signal_noise_seed: seed of the reading noise stream. Must be a function of the draw configuration only (seed,
+            noise level) and NEVER of the evaluated strategy: this is what preserves common random numbers.
 
         signal_noise_run: Monte-Carlo draw index. Same requirement.
 
-        tp_hysteresis: AXIS 1.2 -- THE TURNING POINT DETECTION RULE, in units of T.
-            0.0 = historical rule (sign change beyond a numerical guard of 1e-12),
-            which is not a physical rule. > 0 = hysteresis detector. See
-            ``detect_turning_points``, which contains the derivation of the
-            threshold from measured noise -- and why it is NOT the 4% criterion
-            from Zideluns.
+        tp_hysteresis: AXIS 1.2 -- THE TURNING POINT DETECTION RULE, in units of T. 0.0 = historical rule (sign change
+            beyond a numerical guard of 1e-12), which is not a physical rule. > 0 = hysteresis detector. See
+            ``detect_turning_points``, which contains the derivation of the threshold from measured noise -- and why it
+            is NOT the 4% criterion from Zideluns.
 
-            🔴 WITHOUT THIS PARAMETER, `signal_noise_scale` IS NOT MEASURABLE:
-            the crash rate it produces does not depend on sigma (1.47% per layer at
-            sigma = 5e-8 versus 1.30% at the real sigma), so it does not measure noise.
+            🔴 WITHOUT THIS PARAMETER, `signal_noise_scale` IS NOT MEASURABLE: the crash rate it produces does not
+            depend on sigma (1.47% per layer at sigma = 5e-8 versus 1.30% at the real sigma), so it does not measure
+            noise.
 
-        affine_scale, affine_offset: PHOTOMETRIC CALIBRATION DRIFT of the instrument,
-            T_measured = affine_scale * T_true + affine_offset. Applied to the REAL
-            monitoring signal ``Ts_r`` and to the three probe points of the parabolic
-            inversion -- and to nothing else. ``Ts_n`` is the offline design: no
-            instrument reads it, so no instrument can distort it. (1.0, 0.0) = disabled,
-            and the computation path is then word for word the one from before these
-            parameters.
+        affine_scale, affine_offset: PHOTOMETRIC CALIBRATION DRIFT of the instrument, T_measured = affine_scale *
+            T_true + affine_offset. Applied to the REAL monitoring signal ``Ts_r`` and to the three probe points of the
+            parabolic inversion -- and to nothing else. ``Ts_n`` is the offline design: no instrument reads it, so no
+            instrument can distort it. (1.0, 0.0) = disabled, and the computation path is then word for word the one
+            from before these parameters.
 
-            POEM is EXACTLY invariant under this transform; the absolute fallback is
-            not. That contrast IS the measurement these parameters exist to make. Any
-            code cancelling the distortion on one side of a comparison destroys it --
-            three such cancellations were removed on 2026-08-08, see the comment at the
-            inversion below.
+            POEM is EXACTLY invariant under this transform; the absolute fallback is not. That contrast IS the
+            measurement these parameters exist to make. Any code cancelling the distortion on one side of a comparison
+            destroys it -- three such cancellations were removed on 2026-08-08, see the comment at the inversion below.
 
+        exact_anchors: D96 -- on the coarse grid, POEM's two anchors are read at the extremum of the layer they fall in
+            (`_exact_poem_anchors`), not at the sample the detector picked. False = the path from before it, bit for bit.
     """
     if wl < 0.1:
         # No monitoring wavelength: nothing is read, so neither margin is constrained.
@@ -1265,6 +1249,12 @@ def simulate_growth_kernel(
         n_tp_real, n_tp_nom, margin_missed, margin_fab, T_prev_nom, T_last_nom, T_prev_real, T_last_real, poem_ok = _read_poem_anchors(
             i_layer, j0, Ts_r, Ts_n, n_tot, idx_nom_stop, tp_hysteresis, poem_enabled, use_fine_grid,
         )
+        if exact_anchors and poem_ok and not use_fine_grid:  # POEM's anchors at the extremum itself (D96)
+            T_prev_real, T_last_real, T_prev_nom, T_last_nom = _exact_poem_anchors(
+                wl, n_Sub, n_H_r, n_L_r, n_H, n_L, witness_base_layer, j0, i_layer, prev_thicknesses_sim,
+                p_thick_nominal, n_hist, npts_cur, d_max, Ts_r, Ts_n, n_tot, affine_scale, photo_curvature,
+                slit_profiles, T_prev_real, T_last_real, T_prev_nom, T_last_nom,
+            )
 
     if poem_ok:
         # frozen fraction, calculated on the nominal (eq. 2.2)
@@ -1596,6 +1586,7 @@ def update_run_states_kernel(
     corridor_hi: float = 0.0,
     slit_profiles: np.ndarray | None = None,
     exact_inversion: bool = False,
+    exact_anchors: bool = False,
 ) -> np.ndarray:
     """Parallel update of simulation states for next layer.
 
@@ -1692,6 +1683,7 @@ def update_run_states_kernel(
             0.0,
             None,
             exact_inversion,
+            exact_anchors,
         )
     return updates
 

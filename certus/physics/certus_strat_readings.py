@@ -1080,3 +1080,26 @@ def _exact_poem_anchors(
         # sample below it (a level between the two was declared unreachable).
         sig[idx] = out[a]
     return out[0], out[1], out[2], out[3]
+
+
+# ---- D98: THE STOP IS ARMED ONCE THE LAST EXTREMUM IS DECLARED, ON REQUEST (`arming`) ----
+#
+# The kernel counts a turning point at the position of the extremum. A causal controller only knows it once the signal
+# has come back from it by the detection threshold h: until then it does not know that the extremum is behind it, and
+# cannot stop. A level nearer the last extremum than h is therefore crossed before the stop is armed. 📏 Measured on the
+# nominal plans (scripts/probe_armement.py, 2026-10-10): on the judge of paix, 22 plans of 370 at 1x and 38 at 2x, the
+# first at rank 23; on r75x2, 222 plans of 783 at 2x. What the instrument then does is not known (it is patented): this
+# option takes the late stop of `scripts/probe_oms_sequentiel.py`, at the reading where the extremum is declared.
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def _armed_level(T_prev: float, T_last: float, h: float, level: float) -> float:
+    """The level at which an armed controller stops: `level`, or the declaration of the last extremum if later.
+
+    `T_prev` and `T_last` are the last two extrema before the stop, as read; the signal leaves `T_last` towards
+    `T_prev`'s side, and the extremum is declared when it has come back from it by `h`. A level crossed before that
+    gives way to the declaration level, T_last -+ h, where the controller arms and finds the level already passed.
+    """
+    direction = -1.0 if T_last > T_prev else 1.0
+    declared = T_last + direction * h
+    if (level - declared) * direction < 0.0:
+        return declared
+    return level

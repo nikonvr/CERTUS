@@ -80,6 +80,7 @@ from .certus_strat_readings import (
     K_MAX_CLOSED_FORM,
     SCAN_NPTS_CURRENT,
     SCAN_NPTS_HISTORY,
+    _armed_level,
     _exact_poem_anchors,
     _fill_current_signal,
     _fill_history_signal,
@@ -627,74 +628,63 @@ def _running_mean(
 # ------------------------------------------------------------------------
 # POEM -- Percent of Optical Extrema Monitoring
 #
-#   T_POEM = (T_trigger - T_prev_TP) / (T_last_TP - T_prev_TP)      (Arsac
-#   these 2025, eq. 2.2 ; Zideluns et al., Opt. Express 29, 33398 (2021))
+#   T_POEM = (T_trigger - T_prev_TP) / (T_last_TP - T_prev_TP)
+#   (Arsac these 2025, eq. 2.2 ; Zideluns et al., Opt. Express 29, 33398 (2021))
 #
-# The stopping point is NOT a transmission value but a FRACTION of the
-# photometric amplitude between the last two turning points. The fraction
-# is pre-calculated on the NOMINAL and frozen before deposition; at runtime
-# it is reported on the ACTUALLY observed extrema.
+# The stopping point is NOT a transmission value but a FRACTION of the photometric amplitude between the last two
+# turning points. The fraction is pre-calculated on the NOMINAL and frozen before deposition; at runtime it is reported
+# on the ACTUALLY observed extrema.
 #
-# Consequence, and this is the whole point: if the real signal undergoes an
-# affine distortion T_real = a*T_nom + b -- gain drift or photometric offset,
-# index error, upstream thickness error -- then T_prev and T_last undergo
-# the same, and the reported level is a*T_trigger_nom + b. We thus stop
-# exactly at the desired thickness. Compensation is obtained by CHANGE OF
-# VARIABLE, not by a manually tuned reduction coefficient.
+# Consequence, and this is the whole point: if the real signal undergoes an affine distortion T_real = a*T_nom + b --
+# gain drift or photometric offset, index error, upstream thickness error -- then T_prev and T_last undergo the same,
+# and the reported level is a*T_trigger_nom + b. We thus stop exactly at the desired thickness. Compensation is obtained
+# by CHANGE OF VARIABLE, not by a manually tuned reduction coefficient.
 #
-# "If the current layer has less than two turning points, the virtual next
-#  turning points are used": we extend the scan beyond d_nom.
+# "If the current layer has less than two turning points, the virtual next turning points are used": we extend the scan
+# beyond d_nom.
 #
-# Fallback: if the swing amplitude is too weak (< SWING_MIN, cf. the 4%
-# minimum starting amplitude of Zideluns et al.), POEM is ill-conditioned
-# and we fall back on the frozen absolute target.
-# 64 points and not 5: locating a turning point with 5 points neither allows
-# distinguishing a clear extremum from a shoulder, nor counting several of them.
-# Cost: 64 T evaluations per layer and per run, versus 8 previously.
+# Fallback: if the swing amplitude is too weak (< SWING_MIN, cf. the 4% minimum starting amplitude of Zideluns et al.),
+# POEM is ill-conditioned and we fall back on the frozen absolute target. 64 points and not 5: locating a turning point
+# with 5 points neither allows distinguishing a clear extremum from a shoulder, nor counting several of them. Cost: 64 T
+# evaluations per layer and per run, versus 8 previously.
 #
-# 🔴 THE TWO COUNTING CAUSES STAY SEPARATE, and A23 says so in as many words:
-# "one margin per layer is too coarse -- it takes one per layer AND per cause".
-# Merging them into min(missed, fabricated) was tried and measured: the number
-# jumped from 0.15 A to 505 A between two noise levels, a factor 3000, purely
-# because the BINDING CAUSE switched. That reads as a bug and hides the only thing
-# an operator can act on -- a faint ripple is cured by moving the wavelength, an
-# invented extremum by raising the threshold. Trap 1, corollary 2.
+# ARMING (D98). The anchors are counted at the POSITION of the extremum; a causal controller declares an extremum only
+# once the signal has come back from it by the threshold, and cannot stop before. `arming` (off by default) moves a
+# level crossed before that to the declaration: see `_armed_level` (certus_strat_readings.py).
+#
+# 🔴 THE TWO COUNTING CAUSES STAY SEPARATE, and A23 says so in as many words: "one margin per layer is too coarse -- it
+# takes one per layer AND per cause". Merging them into min(missed, fabricated) was tried and measured: the number jumped
+# from 0.15 A to 505 A between two noise levels, a factor 3000, purely because the BINDING CAUSE switched. That reads as
+# a bug and hides the only thing an operator can act on -- a faint ripple is cured by moving the wavelength, an invented
+# extremum by raising the threshold. Trap 1, corollary 2.
 #
 # ---- THE BARE SUBSTRATE IS A TURNING POINT, AND IT WAS IGNORED ----------
 #
-# Physicist, 2026-08-05: "for layer 1 we start the layer on a turning point,
-# but that is mandatory".
+# Physicist, 2026-08-05: "for layer 1 we start the layer on a turning point, but that is mandatory".
 #
-# This is correct and automatic. For a single layer on substrate,
-# R(d) = A + B.cos(2.delta) with delta = 2.pi.n.d/lambda, therefore
-# dR/dd proportional to sin(2.delta), which VANISHES at d = 0. Numerically
-# verified (n_H = 2.35, substrate 1.52, lambda = 500 nm): slope at d = 0 of
-# -8.0e-4 per nm versus -7.9e-3 in the middle of the quarter wave, which is
-# ten times less -- the residue comes from the finite difference on a 2.5 nm
-# step, the true derivative is zero.
+# This is correct and automatic. For a single layer on substrate, R(d) = A + B.cos(2.delta) with delta = 2.pi.n.d/lambda,
+# therefore dR/dd proportional to sin(2.delta), which VANISHES at d = 0. Numerically verified (n_H = 2.35, substrate
+# 1.52, lambda = 500 nm): slope at d = 0 of -8.0e-4 per nm versus -7.9e-3 in the middle of the quarter wave, which is ten
+# times less -- the residue comes from the finite difference on a 2.5 nm step, the true derivative is zero.
 #
-# However the detection loop starts at k = 1: an EDGE extremum is structurally
-# invisible. Consequence measured on the example, whose first multiplier
-# is 1.556 (thus idx_nom_stop ~ 33):
+# However the detection loop starts at k = 1: an EDGE extremum is structurally invisible. Consequence measured on the
+# example, whose first multiplier is 1.556 (thus idx_nom_stop ~ 33):
 #
 #     detected extrema    [21, 42]        d = 53.2 and 106.4 nm
 #     k = 21 <= 33        tp_b = 21, tp_a remains -1
 #     k = 42 >  33        rejected because tp_b >= 0
 #     => tp_a = -1  =>  poem_ok = FALSE on layer 0
 #
-# Layer 0 therefore fell back on the absolute target, without compensation.
-# And this explained why it had only ONE surviving wavelength out of ~51
-# scanned, hence the absence of a common lambda with layer 1, hence the
-# force_monolayer fallback which fabricates an invalid edge.
+# Layer 0 therefore fell back on the absolute target, without compensation. And this explained why it had only ONE
+# surviving wavelength out of ~51 scanned, hence the absence of a common lambda with layer 1, hence the force_monolayer
+# fallback which fabricates an invalid edge.
 #
-# 🔴 THIS ANCHOR IS THE MOST RELIABLE OF ALL. At d = 0 on layer 0, the real
-# stack and the nominal stack are the SAME object -- the bare substrate.
-# T_prev_real = T_prev_nom exactly, with no upstream error possible, and
-# the machine measures this level even before starting.
+# 🔴 THIS ANCHOR IS THE MOST RELIABLE OF ALL. At d = 0 on layer 0, the real stack and the nominal stack are the SAME
+# object -- the bare substrate. T_prev_real = T_prev_nom exactly, with no upstream error possible, and the machine
+# measures this level even before starting.
 #
-# Intentionally narrow condition: only the first layer of the stack (i_layer == 0,
-# thus j0 == 0). For a block starting higher, d = 0 of its first layer is NOT an
-# extremum in general: the sub-stack already deposited has no reason to be
+# Intentionally narrow condition: only the first layer of the stack (i_layer == 0, thus j0 == 0). For a block starting
+# higher, d = 0 of its first layer is NOT an extremum in general: the sub-stack already deposited has no reason to be
 # stationary there.
 #
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
@@ -1091,6 +1081,7 @@ def simulate_growth_kernel(
     prev_rate_flags: np.ndarray | None = None,
     exact_inversion: bool = False,
     exact_anchors: bool = False,
+    arming: bool = False,
 ) -> tuple[float, float, float, float, float]:
     """Fast TMM Simulation for robustness heuristics.
 
@@ -1135,6 +1126,9 @@ def simulate_growth_kernel(
 
         exact_anchors: D96 -- on the coarse grid, POEM's two anchors are read at the extremum of the layer they fall in
             (`_exact_poem_anchors`), not at the sample the detector picked. False = the path from before it, bit for bit.
+
+        arming: D98 -- no stop before the last extremum is declared (`_armed_level`): a level crossed before the signal
+            has come back from it by `tp_hysteresis` gives way to the declaration. False = the path from before it.
     """
     if wl < 0.1:
         # No monitoring wavelength: nothing is read, so neither margin is constrained.
@@ -1274,6 +1268,8 @@ def simulate_growth_kernel(
         target_level = target_nominal
 
     target_T_noisy = target_level + noise_val_precalc
+    if arming and T_last_real != T_prev_real:  # no stop before the last extremum is declared (D98)
+        target_T_noisy = _armed_level(T_prev_real, T_last_real, tp_hysteresis, target_T_noisy)
 
     # Hard failure, the stopping level is never reached: see the notes above `_level_reachability`.
     if nominal_th > 0.0001:
@@ -1587,6 +1583,7 @@ def update_run_states_kernel(
     slit_profiles: np.ndarray | None = None,
     exact_inversion: bool = False,
     exact_anchors: bool = False,
+    arming: bool = False,
 ) -> np.ndarray:
     """Parallel update of simulation states for next layer.
 
@@ -1684,6 +1681,7 @@ def update_run_states_kernel(
             None,
             exact_inversion,
             exact_anchors,
+            arming,
         )
     return updates
 

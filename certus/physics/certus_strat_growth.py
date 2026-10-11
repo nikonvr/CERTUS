@@ -1046,6 +1046,18 @@ def _add_slit_bias(
         )
 
 
+# ---- NON_MONOTONIC_FACTOR IS NO LONGER APPLIED (`simulate_growth_kernel`) ----
+# It divided the error by a constant (default 2.0) as soon as an extremum was crossed. This was the reduced form of the
+# information gain brought by the swing -- a band-aid, made necessary by the fact that the model COULD NOT produce this
+# gain itself: the target being recalculated on the real stack, error_raw only contained local noise and there was
+# nothing to correct.
+#
+# With the frozen target and POEM, the swing gain is now STRUCTURAL: it varies with the actually observed contrast and
+# with the number of extrema, instead of being the same for a layer that grazes an extremum and a layer that crosses
+# three. Dividing it on top of that would amount to double-counting the same effect.
+#
+# The parameter is kept in the signature to avoid breaking the six call sites; it is now only used for the REJECT mode
+# of the kernel.
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def simulate_growth_kernel(
     p_thick_nominal: np.ndarray,
@@ -1322,23 +1334,7 @@ def simulate_growth_kernel(
                 margin_missed,
                 margin_fab,
             )
-        # non_monotonic_factor IS NO LONGER APPLIED.
-        #
-        # It divided the error by a constant (default 2.0) as soon as an extremum
-        # was crossed. This was the reduced form of the information gain brought
-        # by the swing -- a band-aid, made necessary by the fact that the model
-        # COULD NOT produce this gain itself: the target being recalculated on
-        # the real stack, error_raw only contained local noise and there was
-        # nothing to correct.
-        #
-        # With the frozen target and POEM, the swing gain is now STRUCTURAL:
-        # it varies with the actually observed contrast and with the number
-        # of extrema, instead of being the same for a layer that grazes an
-        # extremum and a layer that crosses three. Dividing it on top of that
-        # would amount to double-counting the same effect.
-        #
-        # The parameter is kept in the signature to avoid breaking the six
-        # call sites; it is now only used for the REJECT mode above.
+        # `non_monotonic_factor` is no longer applied: see the note above `simulate_growth_kernel`.
         return (
         max(0.0, nominal_th + error_raw), dyn_encounter,
         margin_level, margin_missed, margin_fab,

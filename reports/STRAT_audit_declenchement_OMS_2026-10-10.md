@@ -35,9 +35,9 @@ A = 5e-4 en T (±0,05 point), hystérésis du fichier 1,66 A, niveaux de bruit 0
    modèle figé, dans le bruit Monte-Carlo (§6). Quatre écarts restent ouverts, mesurés en
    §4 : les ancres lues sur l'échantillonnage grossier (D96), l'inversion parabolique de l'arrêt (D97, désormais en
    option), l'armement non causal (D98) et, au modèle figé, la lecture d'arrêt non lissée (D99). Aucun ne déplace la
-   tête de la population hors du bruit Monte-Carlo. D96 existe aussi en option depuis le 2026-10-11 : avec les deux
-   options, l'arrêt du noyau sans bruit tombe sur l'arrêt POEM exact, et le modèle livré classe le juge plus près du
-   modèle figé (§4).
+   tête de la population hors du bruit Monte-Carlo. D96 et D98 existent aussi en option depuis le 2026-10-11 : avec
+   les options D96 et D97, l'arrêt du noyau sans bruit tombe sur l'arrêt POEM exact ; chacune des options D96 et D98
+   rapproche le classement du modèle livré de celui du modèle figé (§4).
 
 ## 1. Les outils
 
@@ -45,7 +45,7 @@ A = 5e-4 en T (±0,05 point), hystérésis du fichier 1,66 A, niveaux de bruit 0
 |---|---|
 | `scripts/probe_oms_sequentiel.py` | rejoue un dépôt **lecture par lecture** (0,125 nm), chaque lecture avec son tirage borné (σ = A/3), un détecteur à hystérésis **causal**, un lissage optionnel, et un arrêt qui n'est possible qu'une fois **compté** le nombre d'extrema que le plan attend (armement) ; à côté, le noyau de production sur le même plan, avec la même physique coupée (fente, courbure, couloir) ; les deux notés par le noyau de notation de production. T(d) vient de l'oracle indépendant `tests/oracle/tmm_reference.py` |
 | `scripts/probe_armement.py` | pour chaque couche de chaque plan, l'écart en transmission entre le niveau d'arrêt nominal et le dernier extremum avant lui, comparé au seuil d'hystérésis aux trois niveaux de bruit |
-| `scripts/probe_modele_lecture.py` | renote une population avec les noyaux de production sous le modèle de lecture livré et sous le modèle figé, même physique des deux côtés ; options : arrêt exact (D97), ancres au sommet (D96), arrêt lissé (D99), seuil de détection balayé |
+| `scripts/probe_modele_lecture.py` | renote une population avec les noyaux de production sous le modèle de lecture livré et sous le modèle figé, même physique des deux côtés ; options : arrêt exact (D97), ancres au sommet (D96), arrêt armé (D98), arrêt lissé (D99), seuil de détection balayé |
 | `scripts/probe_arret_sans_bruit.py` | sans aucun bruit, sous des erreurs amont tirées, l'arrêt de chaque couche par le noyau contre l'arrêt POEM exact du contrôleur de la machine séquentielle, rejoué sur l'oracle tous les 0,05 nm (croisement résolu par bissection) ; options du noyau : arrêt exact (D97), ancres au sommet (D96) |
 
 ## 2. Le chemin « grille machine » (rang 4 d'ETAT) : cinq défauts, corrigés
@@ -194,6 +194,26 @@ du bloc. `scripts/probe_armement.py`, sur les plans nominaux :
 Ce que fait l'OMS quand le niveau a déjà été franchi au moment où il arme (arrêt tardif, ou attente sans fin) n'est
 pas connu : l'appareil est breveté.
 
+L'option `arming` (2026-10-11, inactive par défaut, chemin par défaut identique au bit) prend l'arrêt tardif de la
+machine séquentielle : un niveau plus proche du dernier extremum que le seuil cède la place au niveau où la machine
+déclare cet extremum, T_last ∓ h (`_armed_level`). Renotation, mêmes conditions que la §6 (les 370 plans du juge au
+modèle livré, 24 plans au modèle figé) :
+
+| modèle | déposables | meilleur plan | note armée / note sans armement, médiane (P5 – P95) | Spearman avec le même modèle sans armement | plans dont la note bouge de plus de 1 % | plantage moyen à 2× |
+|---|---|---|---|---|---|---|
+| livré | 370 sur 370 | 11 (−1,2 %) | 1,000 (0,963 – 1,007) | 0,979 | 87 | 0,105 % → 0,014 % |
+| figé | 24 sur 24 | 11 (inchangé) | 1,000 | 0,979 | 2 (rangs 94 et 185) | — |
+
+- L'armement ne change le meilleur plan sous aucun des deux modèles. Au modèle livré, il touche les 22 plans que la
+  sonde d'armement désignait à 1×, mais aussi 154 autres : avec le bruit, le niveau d'une couche tombe parfois à moins
+  du seuil de l'extremum même quand le plan nominal l'en écarte.
+- Il baisse les notes plus souvent qu'il ne les monte (jusqu'à −19 % pour le plan 93, au plus +4,5 %) : l'arrêt tardif
+  remplace les tirages où le niveau bruité passait au-dessus du sommet, que le noyau comptait comme plantages
+  (plantage moyen à 2× : 0,105 % sans armement, 0,014 % armé). Sous l'autre hypothèse, l'attente sans fin, ces tirages
+  resteraient des plantages.
+- Le classement du modèle livré armé est un peu plus proche de celui du modèle figé : Spearman 0,931 au lieu de 0,920.
+- Au modèle figé, au seuil de 1,00 A, 5 des 24 plans bougent, de −0,06 % à −3,4 %.
+
 **D99, bruit de la lecture d'arrêt non lissé au modèle figé.** Le noyau porte le bruit de la lecture d'arrêt par un
 seul tirage brut par couche (`noise_val_precalc`, σ = A/3 × niveau), lissage ou non ; la machine séquentielle en mode
 `anticipated` fait de même. Si la chaîne de détection moyenne sur 8 lectures (postulat 3 d'ETAT, section 3), l'arrêt se
@@ -292,5 +312,7 @@ python scripts\probe_modele_lecture.py example\example_strat\JSON-strat-example.
 python scripts\probe_modele_lecture.py example\example_strat\JSON-strat-example.json reports\STRAT_bench_juge_de_paix_b60d80e2_temoin_2026-10-04.json --runs 300 --models fige,fige_arret_lisse --ranks 0,1,9,11,20,22,23,28,40,50,100,150,200,250,300,350,369
 python scripts\probe_modele_lecture.py example\example_strat\JSON-strat-example.json reports\STRAT_bench_juge_de_paix_b60d80e2_temoin_2026-10-04.json --runs 300 --models livre@1.0,livre@1.33,livre@1.66,livre@2.0,livre@2.4
 python scripts\probe_modele_lecture.py example\example_strat\JSON-strat-example.json reports\STRAT_bench_juge_de_paix_b60d80e2_temoin_2026-10-04.json --runs 300 --models livre_ancres,livre_exact_ancres
+python scripts\probe_modele_lecture.py example\example_strat\JSON-strat-example.json reports\STRAT_bench_juge_de_paix_b60d80e2_temoin_2026-10-04.json --runs 300 --models livre_armement
+python scripts\probe_modele_lecture.py example\example_strat\JSON-strat-example.json reports\STRAT_bench_juge_de_paix_b60d80e2_temoin_2026-10-04.json --runs 300 --models fige,fige_armement --ranks 0,1,9,11,12,20,22,23,28,33,40,50,84,88,93,94,100,150,185,200,250,279,300,350
 python scripts\probe_arret_sans_bruit.py example\example_strat\JSON-strat-example.json reports\STRAT_bench_juge_de_paix_b60d80e2_temoin_2026-10-04.json [--exact-inversion] [--exact-anchors] [--no-poem]
 ```

@@ -25,11 +25,18 @@ oracle 1 139 passed ; unit 5 010 passed, 7 skipped en 23 min 51 ; UI 1 312 passe
 (`python scripts\c1_diff.py master`) : 299 tableaux sur 8 008 diffèrent, tous sur la grille machine (pas > 0 ou
 lissage > 1), que la branche corrige (D93 à D95) ; les 171 cas de croissance sans grille machine sont identiques au bit.
 
-**Dernière mesure (2026-10-11).** `r75x2` à 2 nm sans rampes, au protocole d'août, avec le code de `212126d4`
-(`reports/STRAT_r75x2_sept_graines_protocole_aout_2026-10-11.md`) : sept graines sur sept trouvent des déposables
-(août : trois), meilleurs SEEL déposables de 0,5355 à 0,5629 nm. La cause n'est pas établie, et un affaiblissement de
-la détection du plantage laisserait la même signature : rang 3 ci-dessous. ELITE tour à tour (graine 202) atteint le
-calcul et donne 33 % de déposables en plus, pour un meilleur SEEL dans le bruit (0,5662 contre 0,5547 nm).
+**🔴 D100, trouvé le 2026-10-11 : depuis le 2026-09-08, STRAT calcule sans Rate ni biais de fente**
+(`reports/STRAT_D100_interrupteurs_non_charges_2026-10-11.md`). Les sept interrupteurs de STRAT ne reçoivent plus ni
+le fichier chargé ni leurs valeurs par défaut, et le calcul prend leur état de construction : `allow_rate`,
+`slit_bias_enabled`, `search_resolution`, `sym_adaptive_same_wl` et `sym_prefer_on_tie` faux. Tout résultat STRAT
+obtenu depuis par la fenêtre, le banc ou une sonde l'est sous ce défaut, sauf surcharge explicite : rang 3 ci-dessous.
+
+**Dernière mesure (2026-10-11), sous D100.** `r75x2` à 2 nm sans rampes, au protocole d'août, avec le code de
+`212126d4` (`reports/STRAT_r75x2_sept_graines_protocole_aout_2026-10-11.md`) : sept graines sur sept trouvent des
+déposables, meilleurs SEEL de 0,5355 à 0,5629 nm. Août (trois sur sept) avait le Rate et le biais de fente : les deux
+ne se comparent pas. Contre-épreuve sous D100 : le passe-bande de 99 couches en une campagne reste non fabricable
+(0 déposable sur 205), mais son plantage minimal tombe de 100 à 34 %. ELITE tour à tour (graine 202) atteint le
+calcul : 33 % de déposables en plus, meilleur SEEL dans le bruit (0,5662 contre 0,5547 nm).
 
 **Ordre conseillé des prochains lots.** Priorité à ce qui rend un résultat faux ou empêche de calculer,
 puis aux dépendances techniques ; chaque changement reste un commit distinct (C3). Une mesure en cours
@@ -37,7 +44,7 @@ n'autorise pas à modifier son arbre témoin.
 
 | rang | action et critère de fin | raison / condition |
 |---|---|---|
-| 3 — contre-épreuve du plantage | Le passe-bande de 99 couches en une seule campagne (§2 : 100 % de plantage) doit rester non fabricable avec le code d'aujourd'hui. S'il le reste, chercher le commit qui a rendu `r75x2` déposable sans rampes (bissection à la graine 303 entre `cc7008d`, 0 / 1 680, et `212126d4`, 25 min par run) ; sinon, la détection du plantage s'est affaiblie, et c'est un défaut. | Un résultat meilleur que prévu se vérifie avant de s'écrire (CLAUDE.md §11). |
+| 3 — corriger D100, puis remesurer | `populate_gui_from_config` écrit aussi dans les `CertusBooleanField`, avec un test qui échoue sur le code d'avant ; puis la validation complète, le repère du juge de paix (§2) et la campagne `r75x2` des sept graines (§0), sous le modèle voulu. | D100 fausse tout résultat STRAT depuis le 2026-09-08. La correction change ces résultats : elle attend l'accord de 👤. |
 | 4 — traiter la chaîne de mesure | La grille machine du noyau lit le T exact à chaque lecture (12.4) et lisse sur 8 lectures avec le seuil de 1,00 A (12.2) : D54, D55, D93, D94 et D95 sont corrigés, et ce chemin reproduit une machine indépendante rejouée lecture par lecture (rapport du 2026-10-10, section 2). D96, D97 et D98 existent en option, inactives par défaut, et leur effet sur un classement est mesuré (même rapport, sections 4 et 6). Restent les décisions de 👤 (§5, arrêt de STRAT). | La grille de la machine est inactive par défaut. Tout changement de noyau passe C1 froid contre froid et l'oracle. |
 | 5 — stabiliser interface et gel | Reproduire D23 (les six `gc.collect()` des threads de calcul STRAT et les `QThread`) avant D11 et `WA_DeleteOnClose` ; poursuivre la réduction du gel (D72) après sa fiabilité. | D11 n'a pas d'effet dans le lancement actuel par processus ; libérer une fenêtre avant ses threads serait plus grave. |
 | 6 — réduire la dette | Élucider les effets d'import de D42 avant E402/I001 (D25), puis traiter D26 et les défauts visuels selon §4–5. | Chantier utile, mais moins urgent que la justesse scientifique ; l'ordre des imports peut changer l'exécution. |
@@ -46,7 +53,7 @@ n'autorise pas à modifier son arbre témoin.
 
 | programme | état | prochaine action |
 |---|---|---|
-| **Calcul (STRAT)** | composant étalon : l'aléatoire ×2 (`r75x2`) à la fente de 2 nm. Fabricable avec les rampes de la configuration livrée ; sans rampes, 7 graines sur 7 trouvent des déposables avec le code de `212126d4` (3 sur 7 en août ; cause non établie, §0). Presque toute la fabricabilité passe par le générateur ELITE | rangs 3 et 4 (§0) |
+| **Calcul (STRAT)** | composant étalon : l'aléatoire ×2 (`r75x2`) à la fente de 2 nm. Fabricable avec les rampes de la configuration livrée ; sans rampes, 3 graines sur 7 trouvaient des déposables en août, et la mesure du 2026-10-11 (7 sur 7) a tourné sous D100 : elle ne remplace pas ce chiffre. Toute la fabricabilité passe par le générateur ELITE | rangs 3 et 4 (§0) |
 | **RE** | indices tabulés lus en n − ik depuis R148 (2026-10-05) : tout RE antérieur fait sur des indices absorbants en incidence oblique est à refaire ; un indice demandé hors de sa table est prolongé par une constante, avec un avertissement (ex-D86, `dec73219`, 2026-10-05) | — |
 | **Exécutable gelé** | sur la couche OpenMP depuis `31745571` (D87), sans les outils de développement depuis `5ccaa210` (411 Mo) ; construit à `dbec2fc1` le 2026-10-06, hub et modules contrôlés au démarrage, et 👤 y a calculé : « l'exécutable fonctionne ». Les licences de ce qu'il embarque le suivent (`licenses/`) | rang 5 (D72) |
 | **Interface** | plan clos le 2026-09-08 : 12 critères de fin sur 13 atteints et mesurés, le treizième démontré inatteignable (`xfail` strict) | rang 5 et choix de 👤 (§5) |
@@ -59,14 +66,14 @@ n'autorise pas à modifier son arbre témoin.
 | composant | SEEL | plantage | condition |
 |---|---|---|---|
 | dichroïque 48 couches, `JSON-strat-example` | **0,173 nm** | 0 % | 6 blocs, une campagne |
-| le même, modèle de `b60d80e2` (après R130) | **0,175 nm** | 0 % | 4 blocs (λ 544, 471, 467, 474 nm), 370 stratégies, aucune éliminée ; `scripts\bench_examples.py strat`, caches Numba vierges, 2026-10-04 (`reports/STRAT_bench_juge_de_paix_b60d80e2_temoin_2026-10-04.json`). Même population au bit (identifiants, scores, plantage par niveau de bruit) et même `RESULT` 0,007644641198073172 avec le code de `e6c66b4b`, le 2026-10-05 |
+| le même, modèle de `b60d80e2` (après R130) | **0,175 nm** | 0 % | 4 blocs (λ 544, 471, 467, 474 nm), 370 stratégies, aucune éliminée ; `scripts\bench_examples.py strat`, caches Numba vierges, 2026-10-04 (`reports/STRAT_bench_juge_de_paix_b60d80e2_temoin_2026-10-04.json`). Même population au bit (identifiants, scores, plantage par niveau de bruit) et même `RESULT` 0,007644641198073172 avec le code de `e6c66b4b`, le 2026-10-05. 🔴 Mesuré sous D100 : sans biais de fente, sans Rate, sans recherche de fente |
 | passe-bande 3 cavités, 35 couches | **0,482 nm** | 0 % | 6 blocs, mode `deep` |
 | aléatoire `JSON-strat-random75`, 75 couches | **0,272 nm** | 0 % | une campagne, 241 déposables sur 662 |
 | passe-bande 5 cavités, 99 couches | **0,81 nm** | 0 % par campagne | 4 verres témoins, partition 0-22 / 22-42 / 42-76 / 76-99 |
 | le même en une seule campagne | aucun score valide | 100 % | 487 stratégies, toutes plantent : non fabricable |
 | aléatoire ×2 `r75x2`, fente native 1 nm | **0,6248 nm** | 0 % | `deep`, pur optique, 277 déposables |
 | `r75x2` à 2 nm, configuration livrée | **0,5676 nm** | 1,67 % | avec `example/example_strat/rampes_r75x2-2nm.json` ; étendue 0,55 % sur 3 graines |
-| `r75x2` à 2 nm, sans rampes | **0,5355 nm** | 0,33 % | meilleur SEEL déposable, graine 77, code `212126d4`, 2026-10-11 ; 7 graines sur 7 trouvent (de 0,5355 à 0,5629 nm) ; 0,5599 nm et 3 graines sur 7 en août. Cause non établie (§0, rang 3) |
+| `r75x2` à 2 nm, sans rampes | **0,5599 nm** | — | graine 404 ; 3 graines sur 7 trouvent (77, 404, 505), août. Égalité avec la voie à rampes, pas supériorité. La mesure du 2026-10-11 (7 sur 7, 0,5355 nm) a tourné sous D100 et ne la remplace pas (§0) |
 
 Le passe-bande de 99 couches est chiffré en moyenne de trois graines, jamais par la meilleure.
 
@@ -183,6 +190,9 @@ du dichroïque dont le plantage s'écarterait nettement du prédit rouvrirait ce
   de 99 couches fabricable et dégrade tout composant qui s'en passait (contrôle négatif 3 sur 3).
 
 ### STRAT — arbitrages délégués par 👤 le 2026-10-04
+
+🔴 Les mesures de cette sous-section (2026-10-04 et 2026-10-05) ont tourné sous D100 : sans biais de fente, sans Rate,
+sans recherche de fente. Leurs décisions tiennent jusqu'à leur remesure sous le modèle voulu (§0, rang 3).
 
 - **D73, point tournant sous l'arrêt : corrigé.** La marge se mesure en
   transmission au sommet interpolé, même si la pente change de signe sur
@@ -316,6 +326,7 @@ numéros de l'ancien registre sont entre parenthèses
 
 | # | défaut | piste |
 |---|---|---|
+| D100 | **Les interrupteurs de STRAT ne se chargent plus.** `populate_gui_from_config` n'écrit que dans les `QLineEdit` ; les sept réglages marche/arrêt sont des `CertusBooleanField` (une `QCheckBox`) depuis `f006e7eb` (2026-09-08). Ni le fichier chargé ni `set_default_values` ne les atteignent, et `collect_params` lit le widget en premier : mesuré le 2026-10-11, `allow_rate`, `slit_bias_enabled`, `search_resolution`, `sym_adaptive_same_wl` et `sym_prefer_on_tie` arrivent faux au calcul, fichier à 1 compris (`cfg_x2.json`, `JSON-strat-example.json`). Aucun plan Rate ni ligne `[SLIT] slit bias active` depuis, dans les artefacts et journaux disponibles (`reports/STRAT_D100_interrupteurs_non_charges_2026-10-11.md`) | écrire aussi dans les `CertusBooleanField`, avec un test qui échoue sur le code d'avant ; puis remesurer ce qui a tourné depuis le 2026-09-08 (§0, rang 3). Sur décision de 👤 : la correction change ces résultats |
 | D96 | **Ancres POEM lues sur l'échantillonnage grossier.** Le noyau prend la valeur de l'échantillon à l'extremum (16 points par couche rejouée, 64 sur trois épaisseurs pour la couche en cours) : l'échantillon tombe à côté du sommet, d'une quantité qui diffère entre signal réel et nominal dès que leurs épaisseurs diffèrent. Sans aucun bruit, erreurs amont tirées à σ = 0,3 nm (3 réalisations × 48 couches, gagnante du juge de paix, 2026-10-10) : l'arrêt du noyau s'écarte de l'arrêt POEM exact (oracle au pas de 0,05 nm) de 0,055 nm RMS, P95 0,14 nm, jusqu'à 0,17 nm RMS sur une couche ; l'inversion (D97) en explique 0,021 nm RMS, les ancres le reste | l'option existe (`exact_anchors`, `_exact_poem_anchors`, inactive par défaut : chaque ancre portée au sommet de l'extremum de sa couche, en forme fermée, et remise dans le signal) ; avec `exact_inversion`, l'arrêt sans bruit tombe sur l'arrêt POEM exact (8,0e-6 nm RMS, `scripts/probe_arret_sans_bruit.py`) ; son effet sur un classement est mesuré (rapport du 2026-10-10, section 4) ; l'activer par défaut est une décision de 👤 |
 | D97 | **Inversion parabolique de l'arrêt.** `_invert_thickness_from_probes` résout le niveau sur la parabole de trois points à ±`probe_offset` (2,5 nm sur le juge) autour de l'épaisseur nominale, et extrapole quand l'arrêt réel s'en éloigne. Mêmes conditions que D96, niveaux exacts donnés : 0,021 nm RMS sous POEM (0,13 nm sur la couche 40), mais 0,19 nm RMS et jusqu'à 1,53 nm au niveau absolu (POEM coupé), où l'arrêt se déplace de plusieurs nanomètres | l'option existe (`exact_inversion`, `_invert_thickness_exact`, inactive par défaut : racine de la forme fermée la plus proche du nominal, encadrée puis bissectée ; la parabole reste pour un indice absorbant) ; son effet sur un classement est mesuré (rapport du 2026-10-10, section 6) ; l'activer par défaut est une décision de 👤 |
 
@@ -360,8 +371,8 @@ Ces sujets demandent un jugement de physicien ou de propriétaire du produit. Le
 ## 6. Chantiers spécifiés, en attente
 
 **Calcul** (détail : `git show 7b08dc8:docs/archives/REPRENDRE_ICI.md`) —
-dimensionner K, le nombre de graines à lancer : sur `r75x2` à 2 nm, p vaut 7/7 avec le code de `212126d4` (3/7 en
-août) pour trouver un déposable comme pour atteindre 0,57 nm, sous réserve du rang 3 (§0) · balayer `tp_hysteresis_factor` à bruit fixé sur la grille machine : sur la grille
+dimensionner K, le nombre de graines à lancer : p ≈ 3/7 pour trouver un déposable, 2/7 pour atteindre le niveau 0,57
+(août ; à remesurer une fois D100 corrigé) · balayer `tp_hysteresis_factor` à bruit fixé sur la grille machine : sur la grille
 grossière, il est presque inerte (juge de paix, 370 plans, 2026-10-11 : de 1,0 à 2,0 A, 358 à 362 notes identiques au
 bit à celles de 1,66 A, même meilleur plan ; rapport de l'audit du 2026-10-10, section 4) · compter le criblage et
 l'héritage quand un étage deviendra suspect · porter le résultat de `r75x2` dans la vitrine,

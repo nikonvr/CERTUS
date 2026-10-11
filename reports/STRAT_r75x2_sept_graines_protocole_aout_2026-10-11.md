@@ -1,5 +1,11 @@
 # r75x2 à 2 nm sans rampes, protocole d'août, code du 2026-10-11 — sept graines
 
+> 🔴 **Ajout du 2026-10-11, 17 h : cette campagne a tourné sans Rate ni biais de fente** (défaut D100,
+> `reports/STRAT_D100_interrupteurs_non_charges_2026-10-11.md`) : les interrupteurs de STRAT ne se chargent plus
+> depuis le 2026-09-08. Ses « 7 graines sur 7 » ne comparent donc pas le même modèle que les « 3 sur 7 » d'août, qui
+> avaient l'un et l'autre. Les chiffres ci-dessous restent ce qui a été mesuré ; la conclusion « le 3 sur 7 ne tient
+> plus » ne s'en déduit pas.
+
 Question (ETAT, section 0, à `212126d4`) : le « 3 graines sur 7 » d'août tient-il avec le code d'aujourd'hui ? Et
 ELITE « tour à tour » (`elite_round_robin`, inactif par défaut) change-t-il la population à graine égale ?
 

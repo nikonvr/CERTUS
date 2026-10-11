@@ -5,8 +5,7 @@
 > [`CLAUDE.md`](../CLAUDE.md). Il se tient **en place** : un fait change, on corrige sa ligne,
 > on ne raconte pas la correction (`git log` s'en charge). Toute mesure porte sa date.
 > Le détail et l'historique sont dans `git`, sans autorité (CLAUDE.md, en-tête).
-> Mis à jour dans la nuit du 2026-10-10 au 11 (session Claude dans le nuage : `parite-zenodo` fusionnée dans la branche
-> de travail, audit du déclenchement de STRAT face à un OMS, grille machine du noyau corrigée, PR #9 en brouillon).
+> Mis à jour le 2026-10-11.
 
 ## 0. Reprise — à lire en premier, à tenir à jour
 
@@ -14,173 +13,23 @@
 > à la fin. Les règles de validation sont dans les sections 2, 4 et 12 de
 > [CLAUDE.md](../CLAUDE.md) ; les décisions scientifiques appartiennent à 👤 (§5).
 
-**Nuit du 2026-10-10 au 11 (Claude, session dans le nuage, Linux, Python 3.14.6, 4 cœurs ; ordre de 👤 : « finalise les
-améliorations préconisées, puis audite l'arrêt de STRAT face à la réalité d'un OMS ; teste et améliore la recherche »).**
-Le rapport de l'audit, ses chiffres et leurs commandes : `reports/STRAT_audit_declenchement_OMS_2026-10-10.md`.
-- **`parite-zenodo` fusionnée** dans la branche `claude/ecstatic-newton-3grmls` (`7af8db47`), sans conflit ; PR
-  [#9](https://github.com/nikonvr/CERTUS/pull/9) en brouillon vers `master`.
-- **Validation de départ sur `7af8db47`** (Linux, l'interface ne s'y mesure pas) : Ruff 0 ; oracle 1 138 passed ; unit
-  4 937 passed, 7 skipped en 19 min 22 ; autres tests 347 passed, 2 skipped en 13 min 13 ; trois contrôles documentaires : 0.
-- **La grille machine du noyau est corrigée** (rang 4) ; le chemin par défaut garde ses bits à chaque commit (C1, froid
-  contre froid). D93 (`cf555a5b`, `1812329d`) : le substrat nu compté deux fois à la couche 0 (7,7 à 36,0 % de plantage
-  sur la gagnante du juge, fenêtre 8). D94 et D95 (`b576f915`) : T exact à chaque lecture au lieu d'un balayage grossier
-  interpolé, un seul tirage par lecture, fenêtre d'atteignabilité ouverte au début de la couche. Départ des fenêtres
-  (`c1d0c239`, `f7248c81`) : le plan dit si le départ d'une fenêtre est la première ancre de POEM, et le signal réel le
-  suit quel que soit le bruit de ses premières lectures (`c1d0c239` seul en avait fait perdre l'ancre : 27 des 101
-  premiers plans plantaient davantage, jusqu'à 34 %). Ainsi corrigé, le noyau reproduit une machine indépendante rejouée
-  lecture par lecture (`scripts/probe_oms_sequentiel.py`, oracle TMM, même contrôleur depuis `876af484`) : aucun plantage
-  d'un côté ni de l'autre sur quatre plans, P95 à 6 % près (rapport, section 2).
-- **D97 en option** (`33bbd645`) : `exact_inversion`, inactive par défaut, résout l'arrêt sur la forme fermée de la couche
-  en cours au lieu de la parabole de trois sondes.
-- **D96 en option** (`b0d0264c`, `eae41d81`) : `exact_anchors`, inactive par défaut, porte les ancres POEM du
-  balayage grossier au sommet de l'extremum de leur couche. Avec les deux options, l'arrêt du noyau sans bruit tombe
-  sur l'arrêt POEM exact de la machine séquentielle (8,0e-6 nm RMS sur 3 × 48 couches, contre 0,0545 nm par défaut).
-  Sur les 370 plans du juge : même meilleur plan, notes inchangées en médiane (+0,3 %), classement plus proche du
-  modèle figé (Spearman 0,943 au lieu de 0,920) (rapport, section 4).
-- **D98 en option** (`arming`, inactive par défaut) : pas d'arrêt avant que le dernier extremum soit déclaré ; un niveau
-  franchi avant cède la place au niveau de déclaration (l'arrêt tardif de la machine séquentielle). Sur les 370 plans
-  du juge au modèle livré : même meilleur plan, classement conservé à 0,979, plantage moyen à 2× de 0,105 % à 0,014 %
-  (les tirages au niveau passé au-dessus du sommet deviennent des arrêts tardifs) (rapport, section 4).
-- **Le modèle livré** (grille grossière, lectures brutes, 1,66 A) est pessimiste sur le juge face à la machine au modèle
-  figé : sur 12 plans, P95 de la machine / P95 du noyau de 0,73 à 0,97 à 1×, de 0,76 à 0,94 à 2× ; il classe les 12 plans à
-  peu près comme elle (Spearman 0,84 et 0,90). À 2×, la machine fait 5 à 66 arrêts à plus de 2 nm du nominal par plan (sur
-  300 × 48), sur des couches où la fraction POEM est proche de 0 : l'armement (D98), que le noyau ne modélise pas.
-- **Renotation des 370 plans du juge** (`scripts/probe_modele_lecture.py`, noyaux de production, 300 tirages, fente
-  absente ; rapport, section 6) : les 370 sont déposables sous les quatre modèles (livré, figé, et chacun avec l'arrêt exact).
-  Le modèle livré et le modèle figé désignent le même meilleur plan (rang 11 du banc) ; Spearman 0,920 ; le modèle figé
-  note 10 % plus bas en médiane. L'arrêt exact ne change presque rien (Spearman 0,991, −0,7 %). La gagnante du banc
-  est 6ᵉ (livré) et 7ᵉ (figé), à 4,6 % du plan 11 : dans la classe d'équivalence du bruit Monte-Carlo. Sur les 50
-  premiers plans de `r75x2`, le sens s'inverse (le modèle figé note 11 % plus haut) ; les deux meilleurs plans
-  diffèrent (48 et 47) mais restent à 3,9 % l'un de l'autre, dans un peloton de tête où 43 plans tiennent dans 4 %.
-- **Sur `r75x2`, l'écart entre modèle livré et modèle figé vient des ancres échantillonnées** (D96, mesuré le
-  2026-10-11 sur les mêmes 50 plans) : ancres au sommet, le modèle livré note comme le modèle figé (rapport médian
-  1,004 au lieu de 0,899) et classe comme lui (Spearman 0,888 au lieu de 0,187) ; avec les trois options, 0,912, et son
-  meilleur plan est à 0,84 % de celui du modèle figé. L'armement seul, sur ancres échantillonnées, décorrèle le
-  classement (−0,56) : il ne s'emploie qu'avec D96. Sur le juge, ce n'est pas la cause (0,941 avec les trois options) :
-  le reste de l'écart y vient du modèle de lecture (rapport, section 6).
-- **CI** : le cliquet de dette refusait `certus_strat_growth.py` (2 745 lignes, plafond 2 508). Découpé par responsabilité
-  (`cbdae548`) : `certus_strat_readings.py` prend ce que la machine lit et où elle s'arrête ; 8 008 tableaux identiques
-  au bit ; plafond abaissé à 2 169. Validation complète sur `cbdae548` : Ruff 0 ; oracle 1 139 passed ; unit 4 986 passed,
-  9 skipped en 25 min 45 ; autres tests 347 passed, 2 skipped en 20 min 18 ; trois contrôles documentaires : 0. Poussé
-  sur la branche de travail.
-- **ELITE tour à tour en option** (`elite_round_robin`, lu dans `params` seulement, inactif par défaut). Le générateur
-  essayait les mouvements parent après parent jusqu'à 120 candidats : à 11 blocs, 4 parents sur 10 étaient explorés, à
-  15 blocs 3. Tour à tour, chaque parent reçoit sa part du même budget. Le chemin par défaut rend les mêmes candidats sur
-  400 cas tirés au hasard. **Non mesuré sur une recherche complète.**
-- **`r75x2` à 2 nm sans rampes, configuration livrée** (`example/example_strat/JSON-strat-random75-x2-fabricable-2nm.json`
-  sans `injected_strategies`, `scripts/bench_examples.py strat`, 2026-10-11) : graine 42, 768 stratégies, 94 éliminées,
-  meilleure `RESULT` 0,07997 (plantage 0,33 %) ; graine 202, 602 stratégies, 276 éliminées, meilleure `RESULT` 0,08721
-  (plantage 0 %) ; graine 101 coupée par un redémarrage du conteneur, sans résultat. Le « 3 graines sur 7 » d'août
-  (section 1) vient d'un autre protocole (`scripts/probe_blocs_vs_plantage.py`, configuration
-  `reports/serie_echelle_r75/cfg_x2.json`, 1 617 stratégies et aucune déposable à la graine 42) : les deux ne se
-  comparent pas, et ce chiffre n'est ni confirmé ni infirmé.
-- **Validation complète sur `524df088`** (Linux, Python 3.14.6) : Ruff 0 ; oracle 1 139 passed ; unit 5 008 passed,
-  9 skipped en 30 min ; autres tests 347 passed, 2 skipped en 29 min ; trois contrôles documentaires : 0. Les commits
-  suivants ne touchent que `scripts/` et la documentation.
+**Point de départ.** `certus0310`, branche `claude/ecstatic-newton-3grmls` : `master` (`80dd7d3c`), plus
+`parite-zenodo` (PR [#8](https://github.com/nikonvr/CERTUS/pull/8)) et l'audit de l'arrêt de STRAT face à un OMS
+(`reports/STRAT_audit_declenchement_OMS_2026-10-10.md`) ; PR [#9](https://github.com/nikonvr/CERTUS/pull/9) en
+brouillon vers `master`. Les entrées `.git/worktrees/certus0310` et `.git/worktrees/profwt`, incomplètes (Drive en
+refuse la suppression), déclenchent un avertissement à chaque commit sans l'empêcher.
 
-**Reprendre en local (Windows), là où la session dans le nuage s'est arrêtée (2026-10-11).**
-1. Récupérer la branche : `git fetch origin`, puis `git switch claude/ecstatic-newton-3grmls` (ou `git pull` si elle est
-   déjà là). `python scripts\preflight.py` jusqu'à `PREFLIGHT=GO`, puis la validation de CLAUDE.md, section 2.
-2. Rejouer les graines du protocole d'août, une à la fois, seule sur la machine :
-   `set CERTUS_BENCH_TIMEOUT_S=38400` puis `python scripts\probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 <graine>`
-   pour 42, 77, 101, 202, 303, 404 et 505 (ou `python scripts\orchestre_multigraine.py r75x2 --graines 42 77 101 202
-   303 404 505 --budget nuit --objectif meilleur`). C'est ce protocole qui dit si « 3 sur 7 » tient avec le code
-   d'aujourd'hui.
-3. Mesurer ELITE tour à tour à graine égale : la même commande, avec `set CERTUS_PROBE_OVERRIDES=elite_round_robin=true`
-   et `set CERTUS_PROBE_TAG=rr`, contre le même run sans surcharge ; deux runs à moins de ~8 % sont indiscernables
-   (section 2), un passage de 0 à des déposables ne l'est pas.
-4. Les décisions qui attendent 👤 sur l'arrêt (`reports/STRAT_audit_declenchement_OMS_2026-10-10.md`) : activer D96 par
-   défaut (ancres au sommet), et D97 avec elle ; pour D98, choisir entre l'arrêt tardif et l'attente sans fin ; noter
-   ou non au modèle figé.
+**Dernière validation complète** (2026-10-11, Windows 11, Python 3.14.8, Ryzen 7 5700G, `212126d4`) : Ruff 0 ;
+oracle 1 139 passed ; unit 5 010 passed, 7 skipped en 23 min 51 ; UI 1 312 passed, 12 skipped, 2 xfailed en
+21 min 51 ; autres tests 347 passed, 2 skipped en 10 min 35 ; trois contrôles documentaires : 0. C1 contre `master`
+(`python scripts\c1_diff.py master`) : 299 tableaux sur 8 008 diffèrent, tous sur la grille machine (pas > 0 ou
+lissage > 1), que la branche corrige (D93 à D95) ; les 171 cas de croissance sans grille machine sont identiques au bit.
 
-**Fait dans la nuit du 2026-10-06.**
-- **Branche PGlobal morte de l'INDEX SPLINE retirée** (`8328e6fc`, décision de 👤) : les 43 instructions qui suivaient
-  le polissage local de `_run_single_spline_stage`, où `local_only` vaut toujours True, avec les deux aides qu'elles
-  seules utilisaient. Rien de ce qui s'exécute ne change : le banc INDEX SPLINE, qui passe une fois par cette fonction,
-  rend `RESULT` 0,0033932679903320956 après, à froid, comme deux passages froids avant. Registre de dette abaissé
-  (fichier 2 467 → 1 997 lignes, fonction 620 → 325) ; cliquet, audit du code mort et tests de l'INDEX SPLINE passent.
-  Poussé sur ordre de 👤 avec la parité (branche `parite-zenodo`) ; la validation complète locale n'a pas été relancée
-  sur cet état, la CI de la PR la fait avant la fusion.
-- **PR #7 fusionnée** dans `master` (`80dd7d3c`), ses 12 contrôles de CI verts : licences dans le gel, avis de tiers
-  complétés. Dependabot a fermé lui-même ses PR #1 à #4 et #6 après la fusion de la PR #5.
-- **Rang 3, parité avec les versions publiées : fait** (`898bd4cd`, `reports/PARITE_ZENODO_ECARTS_LONGS_2026-10-06.md`).
-  Aucune amélioration de l'INDEX SPLINE publié ne manque au code courant ; son gradient analytique, que la version
-  publiée n'utilise pas, est juste avec des mesures en réflexion : 15 tests ajoutés à l'oracle (`02edbf5c`), dont un
-  garde-fou qui refuse un gradient pris avec 10 % de poids en moins sur R. Une première sonde, au pas de 1e-7, avait
-  trouvé des écarts de 1e-4 à 8e-3 : c'était l'arrondi d'un coût de 50 à 120, qui disparaît quand le pas grandit.
-- **Citation du saphir corrigée dans le paquet `certus_re`** (hors de ce dépôt, sur la décision de 👤) : Malitson et
-  Dodge (1972) au lieu de Malitson (1962), dans `certus_re/dispersion.py` et l'en-tête de
-  `studies/volet2/indices/Al2O3_Malitson.csv`. Non commité : ce dépôt contient des modifications en cours de 👤.
-
-**Dernière action (Claude, 2026-10-06 au soir, sur les 19 réponses de 👤, §3).** Un commit et un test par
-correction ; chaque test échoue sur le code d'avant.
-- **D10** (`d83c39c7`) : huit départs aléatoires au lieu de deux. Sur 41 perturbations d'un ulp des données du
-  saphir, la RMSE reste entre 0,000946 et 0,000964 (avant : 0,00095 à 0,00097 quarante fois, 0,00796 une fois),
-  pour 2,15 s par ajustement au lieu de 1,44.
-- **D76** (`ca3e269c`) : le gradient de l'analyse du faisceau de METAL SINGLE porte la dérivée de la pénalité de
-  lissage. Le banc METAL SINGLE ne lance pas cette analyse : son résultat ne bouge pas (0,0061003457).
-- **D56** (`36dde65c`) : D263T eco prend les coefficients du catalogue Zemax de SCHOTT (2017-01-20b), à 2,1e-4 de
-  la fiche ; pour B270i, dont SCHOTT ne publie pas de Sellmeier, B1 et C1 sont ajustés aux huit raies de la fiche
-  (436 à 656 nm, résidu de 4,4e-5 au plus) et les quatre autres termes gardés : au-delà de 656 nm, l'indice repose
-  sur eux. Oracle : 1 123 passed.
-- **D41** (`a8c013fa`) : fermer INDEX, INDEX SPLINE, RE, METAL ou DESIGN pendant un calcul pose la question avant
-  d'arrêter quoi que ce soit. **D58** (`49584fd7`, le bouton de remise à zéro passe de 9 à 11 pt), **D65**
-  (`bfc8e298`), **D66** (`4a4a6a81`).
-- **Deux fenêtres rebranchées** (`f20fd40c`) : l'accueil propre de STRAT, et le moniteur n, k d'INDEX SPLINE ouvert
-  à côté de l'aperçu Smart Init. **Couleurs de la branche du 2026-09-07 portées** (`dc0c1c60` : 257 → 217
-  couleurs hexadécimales hors thème), puis la branche supprimée, comme `wip-d75-gradient-lame`.
-- **Poste et sauvegardes** : le venv `C:\envs\certus` est supprimé (envoyé à la corbeille) et quatre scripts shell
-  prennent le Python du système (`2e197935`) ; les fichiers hors git (les deux PDF Selenium et `studies/`) sont
-  archivés à côté des bundles, `../CERTUS_hors_git_2026-10-06.zip` (24 entrées).
-- **CI** : les actions étaient déjà épinglées par SHA ; les cinq mises à jour proposées par Dependabot sont
-  appliquées sur la branche, une par commit (`fcce99e7`, `6c7faa3d`, `1321c206`, `2d83a2df`, `c6b7e4bf`) ; les
-  gardes des workflows passent (41 passed). Aucune fusion dans `master`.
-- **Avis de tiers** : brouillon `THIRD_PARTY_NOTICES.md` (`30fb39c0`, `52bd04a9`) ; ce que le dépôt n'établit pas y
-  est marqué « à confirmer par toi ».
-- **D92, trouvé en écrivant les avis et corrigé** (`79b26a95`) : les fonctions colorimétriques x̄, ȳ, z̄ n'étaient
-  pas celles de la CIE depuis le commit initial (ȳ culminait à 490 nm au lieu de 555) ; un réflecteur parfait
-  sortait en L\*a\*b\* = (100 ; 60,4 ; −113,1), et l'analyse couleur Monte-Carlo de DESIGN avec lui. Elles sont
-  maintenant les lignes 380 à 780 nm, au pas de 5 nm, de la table de la CIE (`CIE_xyz_1931_2deg.csv`, DOI
-  10.25039/CIE.DS.xvudnb9b, CC BY-SA 4.0), téléchargée avec l'accord de 👤 et contrôlée par sa somme SHA-256
-  publiée : le réflecteur parfait donne (100 ; −0,007 ; 0,002). D65, inchangé au bit, rend avec elle le blanc
-  (95,043 ; 100 ; 108,880) pour (95,047 ; 100 ; 108,883) publié. La page DESIGN (8.2) décrit maintenant cette
-  analyse, et non une optimisation vers une couleur cible que DESIGN ne fait pas (`1834349b`).
-- **Une validation complète à `e855bffa`** a trouvé trois suites de mes corrections, toutes corrigées. (1) Unit :
-  1 failed, 4 923 passed — l'attribut annoté que D41 avait ajouté à un mixin de la fenêtre de base donnait à ce
-  mixin, sous Python 3.14, un `__annotate_func__` masqué (`d81252e3`). (2) UI : la suite s'est figée dans
-  `test_ux_re_stop_when_idle.py`, dont la fixture fermait RE avec un faux calcul en cours ; depuis D41 la
-  fermeture le demande, dans une boîte que personne ne fermait (`e4e0941d`). (3) UI : le cliquet UX a vu le
-  panneau gauche de METAL passer de 389 à 403 px de largeur minimale, effet du bouton de remise à zéro à 11 pt
-  (D58), plus que les 394 px que ce panneau reçoit à 1366×768 ; 👤 a choisi un padding horizontal de 8 px au lieu
-  de 16 (`7dbe4ae9`, mesuré : 387 px). Validation complète de `29240ee7` verte (ci-dessous), puis la branche poussée,
-  sans fusion dans `master`.
-- **CI de la PR #5 sur `dbec2fc1`** : `pytest (ubuntu)` rouge sur un seul test, `test_a_complete_frozen_folder_is_accepted`.
-  Le contrôle d'artefact de D87 cherchait `vcomp140.dll` par un motif sensible à la casse sous Linux, et le gel
-  écrit `VCOMP140.DLL` ; il est insensible à la casse depuis `d8a0ef42` (poussé). La PR se fusionne dès que toute sa
-  CI est verte (§3) : fusionnée le 2026-10-06 (`d531c7cf`).
-- **Licences dans le gel** (`04a67083`, `93127c2e`, locaux, pour la PR suivante) : `licenses/` reçoit `LICENSE`,
-  `THIRD_PARTY_NOTICES.md` et les fichiers de licence de chaque distribution embarquée (`tools/frozen_licences.py`) ;
-  le contrôle d'artefact les exige. Construit le 2026-10-06 (même contenu, avant le rebasage sur `d8a0ef42`) : 91
-  fichiers, 885 Ko, pour les 53 distributions du gel local, Python et PyInstaller ; artefact et démarrage contrôlés.
-
-**Plus tôt le 2026-10-06.** Un audit complet (`c2b47f11`) a trouvé D87 à D91. Corrigés depuis : D87 (`31745571`,
-`1aa32a1d` : le gel calcule sur la couche OpenMP ; construit, démarrage et artefact contrôlés), D88 (`a49fe502`,
-`330f592d`, `c2e0db04`), D89 (`f65f191d`), D90 (`a5a50fc8`), D91 (`f61e40a0`), D85 (`55f7e9da`), D55 (`601b2489`)
-et D54 (`7a958dec`, `39990246` : le chemin par défaut garde ses bits, le juge de paix sa population au bit), D72
-en partie (`5ccaa210`, 442 → 411 Mo). **D87 confirmé par 👤 dans l'exécutable** construit au commit poussé
-`dbec2fc1` (`%TEMP%\CERTUS_HUB_test_dbec2fc1\CERTUS_HUB.exe`, hors du dépôt) : « l'exécutable fonctionne »
-(2026-10-06) ; le `release-windows` de la CI l'a aussi construit et démarré sur ce commit.
-
-**Point de départ.** `certus0310`, branche locale `parite-zenodo`. Les PR
-[#5](https://github.com/nikonvr/CERTUS/pull/5) et [#7](https://github.com/nikonvr/CERTUS/pull/7) sont fusionnées dans
-`master` le 2026-10-06 (`d531c7cf`, `80dd7d3c`), leur CI verte. Le 2026-10-10, la session dans le nuage travaille sur
-`claude/ecstatic-newton-3grmls` (`master` plus `parite-zenodo`), PR [#9](https://github.com/nikonvr/CERTUS/pull/9) en
-brouillon. `python scripts\preflight.py` → `PREFLIGHT=GO` le 2026-10-06. Sauvegarde
-après chaque lot : `../CERTUS_certus0310_<date>_<commit>.bundle`. Les entrées `.git/worktrees/certus0310` et
-`.git/worktrees/profwt`, incomplètes (Drive en refuse la suppression), déclenchent un avertissement à chaque
-commit sans l'empêcher.
-
-**Dernière validation complète (2026-10-06, Windows 11, Python 3.14.8, Ryzen 7 5700G, code au commit `29240ee7`, arbre neuf hors de Drive) :** Ruff 0 ; oracle 1 123 passed ; unit 4 934 passed, 5 skipped en 9 min 44 (premier passage, froid après le changement de clé du cache Numba : 1 failed, D84) ; UI 1 312 passed, 12 skipped, 2 xfailed en 18 min 42 ; autres tests 347 passed, 2 skipped en 10 min 42 ; trois contrôles documentaires : 0 défaut. Les quatre pages HTML RE, DESIGN, INDEX SPLINE et STRAT rendent leurs logigrammes Mermaid dans Chrome (8/8, 6/6, 5/5 et 6/6, mesuré le 2026-10-04).
+**En cours (2026-10-11).** Campagne `r75x2` au protocole d'août, une graine à la fois
+(`python scripts\probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 <graine>`) : 42, 77, 101, 202, 303, 404 et 505, puis
+202 avec `CERTUS_PROBE_OVERRIDES=elite_round_robin=true` ; journaux et résumé dans
+`reports/campagne_r75x2_protocole_aout_2026-10-11/`. Elle dit si « 3 graines sur 7 » (§1, §2) tient avec le code
+d'aujourd'hui, et si ELITE tour à tour change la population.
 
 **Ordre conseillé des prochains lots.** Priorité à ce qui rend un résultat faux ou empêche de calculer,
 puis aux dépendances techniques ; chaque changement reste un commit distinct (C3). Une mesure en cours
@@ -188,21 +37,17 @@ n'autorise pas à modifier son arbre témoin.
 
 | rang | action et critère de fin | raison / condition |
 |---|---|---|
-| 3 — établir la parité publiée | Fait le 2026-10-06 (`reports/PARITE_ZENODO_ECARTS_LONGS_2026-10-06.md`, après les inventaires du 2026-10-05 et la lecture des écarts courts) : aucune amélioration de l'INDEX SPLINE publié ne manque au code courant ; son gradient analytique, que la version publiée n'utilise pas, est vérifié contre les différences finies avec des mesures en réflexion (12 cas ajoutés à l'oracle). Pour le RE, le silicium diffère de celui de `certus_re` de −2,0e-3 à +4,5e-3, le saphir est le même jeu. Reste à 👤 : trois décisions (§5). | Les capacités du RE publié absentes de CERTUS (a priori MAP, échantillon revêtu sur les deux faces, résidus par voie) ne se portent que sur décision. |
-| 4 — traiter la chaîne de mesure | La grille machine du noyau lit maintenant le T exact à chaque lecture (12.4) et lisse sur 8 lectures avec le seuil de 1,00 A (12.2) : D54, D55, D93, D94 et D95 sont corrigés, et ce chemin reproduit une machine indépendante rejouée lecture par lecture (rapport du 2026-10-10, section 2). Ce que ce modèle figé change au classement d'une population est mesuré (même rapport, section 6). D96, D97 et D98 existent en option, inactives par défaut, et leur effet sur un classement est mesuré (même rapport, sections 4 et 6). Restent les décisions de 👤 : noter au modèle figé, au moins pour départager la tête du classement ; activer ces options ; pour D98, choisir entre l'arrêt tardif et l'attente sans fin. | La grille de la machine est inactive par défaut. Tout changement de noyau passe C1 froid contre froid et l'oracle. |
+| 4 — traiter la chaîne de mesure | La grille machine du noyau lit le T exact à chaque lecture (12.4) et lisse sur 8 lectures avec le seuil de 1,00 A (12.2) : D54, D55, D93, D94 et D95 sont corrigés, et ce chemin reproduit une machine indépendante rejouée lecture par lecture (rapport du 2026-10-10, section 2). D96, D97 et D98 existent en option, inactives par défaut, et leur effet sur un classement est mesuré (même rapport, sections 4 et 6). Restent les décisions de 👤 (§5, arrêt de STRAT). | La grille de la machine est inactive par défaut. Tout changement de noyau passe C1 froid contre froid et l'oracle. |
 | 5 — stabiliser interface et gel | Reproduire D23 (les six `gc.collect()` des threads de calcul STRAT et les `QThread`) avant D11 et `WA_DeleteOnClose` ; poursuivre la réduction du gel (D72) après sa fiabilité. | D11 n'a pas d'effet dans le lancement actuel par processus ; libérer une fenêtre avant ses threads serait plus grave. |
 | 6 — réduire la dette | Élucider les effets d'import de D42 avant E402/I001 (D25), puis traiter D26 et les défauts visuels selon §4–5. | Chantier utile, mais moins urgent que la justesse scientifique ; l'ordre des imports peut changer l'exécution. |
-
-**Le rang 3 est fait** (choix de 👤 du 2026-10-06) ; ses décisions sont en §5. Les autres
-choix réservés à 👤 restent en §5.
 
 ## 1. Où en sont les programmes
 
 | programme | état | prochaine action |
 |---|---|---|
-| **Calcul (STRAT)** | composant étalon : l'aléatoire ×2 (`r75x2`) à la fente de 2 nm. Fabricable avec les rampes de la configuration livrée ; sans rampes, 3 graines sur 7 trouvent des déposables. Toute la fabricabilité passe par le générateur ELITE | rangs 2 et 4 ci-dessus |
-| **RE** | indices tabulés lus en n − ik depuis R148 (2026-10-05) : tout RE antérieur fait sur des indices absorbants en incidence oblique est à refaire ; un indice demandé hors de sa table est prolongé par une constante, avec un avertissement (ex-D86, `dec73219`, 2026-10-05) ; préchauffage incomplet (D85) | rang 3 |
-| **Exécutable gelé** | sur la couche OpenMP depuis `31745571` (D87), sans les outils de développement depuis `5ccaa210` (411 Mo) ; construit à `dbec2fc1` le 2026-10-06, hub et modules contrôlés au démarrage, et 👤 y a calculé : « l'exécutable fonctionne ». Les licences de ce qu'il embarque le suivent (`licenses/`, PR suivante) | rang 5 (D72) |
+| **Calcul (STRAT)** | composant étalon : l'aléatoire ×2 (`r75x2`) à la fente de 2 nm. Fabricable avec les rampes de la configuration livrée ; sans rampes, 3 graines sur 7 trouvent des déposables. Toute la fabricabilité passe par le générateur ELITE | rang 4 et la campagne en cours (§0) |
+| **RE** | indices tabulés lus en n − ik depuis R148 (2026-10-05) : tout RE antérieur fait sur des indices absorbants en incidence oblique est à refaire ; un indice demandé hors de sa table est prolongé par une constante, avec un avertissement (ex-D86, `dec73219`, 2026-10-05) | — |
+| **Exécutable gelé** | sur la couche OpenMP depuis `31745571` (D87), sans les outils de développement depuis `5ccaa210` (411 Mo) ; construit à `dbec2fc1` le 2026-10-06, hub et modules contrôlés au démarrage, et 👤 y a calculé : « l'exécutable fonctionne ». Les licences de ce qu'il embarque le suivent (`licenses/`) | rang 5 (D72) |
 | **Interface** | plan clos le 2026-09-08 : 12 critères de fin sur 13 atteints et mesurés, le treizième démontré inatteignable (`xfail` strict) | rang 5 et choix de 👤 (§5) |
 | **Qualité** | CI : calcul sous Linux, interface sous Windows, gel construit et démarré sous Windows, audit de sécurité (`pip-audit`, `gitleaks`) ; tests isolés des préférences de 👤 ; l'audit du code mort couvre tout `certus/` (D24 clos le 2026-10-05 : 3 928 définitions, 73 candidats justifiés un par un). Indicateurs du plan le 2026-10-06 (`scripts\metrics.py`) : tous dans leur cible, sauf la couverture et la taille du gel, non remesurées ce jour | rangs 5 et 6 |
 | **Documentation** | règles dans `CLAUDE.md`, état ici ; 15 rapports HTML, 34 schémas Mermaid et 2 SVG validés le 2026-10-03 ; anciens dossiers lisibles dans Git | tenir « un fait, un seul endroit » |
@@ -299,7 +144,7 @@ du dichroïque dont le plantage s'écarterait nettement du prédit rouvrirait ce
 
 - **Le projet est publié sous GPL-3.0** : c'est ce que PyQt6 exige de l'exécutable gelé (R36).
 - **Quatre changements du comportement par défaut de DESIGN, acceptés** (R29) : la porte de stagnation et les seuils de gain prédit du Needle sont ceux réglés sur la fenêtre ; la phase globale est plafonnée quand la croissance topologique est cochée ; les graphiques prennent le fond du thème compact ; le substrat complexe est lu en oblique.
-- **La sauvegarde des commits locaux** est un bundle Git hors dépôt, à actualiser après chaque lot non poussé ; pousser requiert ton ordre.
+- **La sauvegarde des commits locaux** est un bundle Git hors dépôt (`../CERTUS_certus0310_<date>_<commit>.bundle`), à actualiser après chaque lot non poussé ; pousser requiert ton ordre.
 
 ### Publication — décidé le 2026-09-30
 
@@ -359,65 +204,40 @@ du dichroïque dont le plantage s'écarterait nettement du prédit rouvrirait ce
   plantage sur le juge standard ; 303 scores ne diffèrent que dans
   les derniers bits (≤ 6,7·10⁻¹¹ en relatif).
 - **D14, densité de l'historique : 16 points conservés ; la densité relève de la cadence machine (rang 4).**
-  L'écart de densité (16 points par couche rejouée contre 21 par épaisseur nominale pour la couche courante)
-  n'existe que sur le balayage grossier : sur la grille de la machine (`machine_sampling_dd > 0`),
-  `_machine_grid_signal` lit l'historique et la couche courante à la même cadence, chaque lecture exacte avec
-  son tirage. Porter l'historique à 21 points changerait tous les résultats pour une densité aussi
-  arbitraire que 16 : sur le juge standard (2026-10-04), 8 plans sur 370 survivent, le plantage moyen au bruit
-  ×2 passe de 0,0012 à 0,0069. La sensibilité mesurée dit que la densité de lecture compte ; elle se règle par
-  la cadence de la machine, pas par ce paramètre numérique.
-- **Hystérésis : le seuil suit le niveau de bruit, comme aujourd'hui.** Le seuil vaut 1,66 × le bruit
-  du niveau simulé (0,5×, 1×, 2×). L'autre lecture, un seul seuil réglé sur le bruit nominal, a été mesurée
-  sur `r75x2` en `deep` (graine 42, `306559d3`, caches vierges, 2026-10-05 ; une trace a vérifié que la clé
-  atteint le calcul) : sur les 300 plans communs aux deux runs, le plantage à 1× est identique pour 300,
-  à 0,5× il baisse pour 7 et monte pour 2, à 2× il monte pour 4 et baisse pour 5, et aucun plan ne gagne ni
-  ne perd le statut de déposable ; meilleur SEEL déposable 0,5566 contre 0,5560 nm, gagnante 0,5605 contre
-  0,5592 nm, sous le σ ≈ 1,8 % de ce composant. Les populations diffèrent (783 contre 662 stratégies, 691
-  contre 515 déposables) parce que la recherche bifurque, pas par un effet plan par plan. L'anomalie qui
-  motivait la question a disparu du code actuel : 684 stratégies dont le plantage croît avec le bruit contre
-  33 où il décroît (en août : 61 contre 532). Raison de garder : aucun gain mesuré pour un changement de toutes
-  les populations. `scripts\probe_plantage_vs_sigma.py` rouvrira la question si l'anomalie revient. Sorties :
-  `reports/STRAT_bench_r75x2_deep_hysteresis_{noise_level,nominal}_306559d3_2026-10-05.json`.
-- **D6, réglages du consensus : vérifiés, aucun écart à corriger.** `collect_params` applique toujours un mode
-  d'exécution (inconnu → `premium`) et chaque mode fixe ensemble `robustness_num_runs` et `consensus_num_runs`
-  (50, 150, 300, 300) ; la ligne `[MODE]` nomme toute valeur du fichier qu'il remplace. Le cas de 2026-08-10
-  (20 tirages demandés, 150 obtenus en silence) ne peut plus se produire par l'application. Les graines du
-  consensus viennent de `consensus_seed_list` quand elle est renseignée, de `robustness_seed` sinon
-  (`_resolve_consensus_seeds`) : un triplet fixe rend les scores de consensus comparables d'un run à l'autre, et
-  chaque journal l'imprime (`Consensus ranking enabled (…, seeds=[41, 42, 43], …, runs=300)`, vu le
-  2026-10-05 sur `r75x2`). Pour mesurer la dispersion d'un run à l'autre, changer le triplet, pas
-  `robustness_seed` ; le consensus ne réécrit que le score, jamais le taux de plantage.
+  Sur le balayage grossier, l'historique rejoue 16 points par couche contre 21 par épaisseur nominale pour la couche
+  courante ; sur la grille de la machine, `_machine_grid_signal` lit les deux à la même cadence. Porter l'historique
+  à 21 points changerait tous les résultats pour une densité aussi arbitraire que 16 (juge standard, 2026-10-04 :
+  8 plans sur 370 survivent, plantage moyen au bruit ×2 de 0,0012 à 0,0069).
+- **Hystérésis : le seuil suit le niveau de bruit, comme aujourd'hui** (1,66 × le bruit du niveau simulé : 0,5×, 1×,
+  2×). Un seul seuil réglé sur le bruit nominal, mesuré sur `r75x2` en `deep` (graine 42, `306559d3`, caches vierges,
+  2026-10-05) : aucun des 300 plans communs aux deux runs ne gagne ni ne perd le statut de déposable ; meilleur SEEL
+  déposable 0,5566 contre 0,5560 nm, sous le σ ≈ 1,8 % de ce composant. Aucun gain mesuré, donc pas de changement de
+  toutes les populations. `scripts\probe_plantage_vs_sigma.py` rouvrira la question si le plantage recommence à
+  décroître avec le bruit. Sorties : `reports/STRAT_bench_r75x2_deep_hysteresis_{noise_level,nominal}_306559d3_2026-10-05.json`.
+- **D6, réglages du consensus : vérifiés, aucun écart à corriger.** Chaque mode d'exécution fixe ensemble
+  `robustness_num_runs` et `consensus_num_runs` (50, 150, 300, 300 ; mode inconnu → `premium`), et la ligne `[MODE]`
+  nomme toute valeur du fichier qu'il remplace. Les graines du consensus viennent de `consensus_seed_list` quand elle
+  est renseignée, de `robustness_seed` sinon (`_resolve_consensus_seeds`), et chaque journal les imprime. Pour mesurer
+  la dispersion d'un run à l'autre, changer le triplet, pas `robustness_seed` ; le consensus ne réécrit que le score,
+  jamais le taux de plantage.
 - **D7, ce que `RESULT` agrège : établi dans le code.** `RESULT` est le `robustness_score` de la première
   stratégie classée (`extract_best_rmse`) : le P95 du RMSE des tirages, au pire des trois niveaux de bruit
   (`_test_strategy_robustness_task`), remplacé pour les `consensus_top_k` par la moyenne plus
   `consensus_std_weight` écarts-types de ce même score sur les graines du consensus. Il ne dit rien du reste de
-  la population : un réglage qui change les autres stratégies sans toucher la gagnante le laisse identique au
-  bit. C'était le cas de 2026-08-10 : à `tp_hysteresis_factor` 2,0 et 2,4 (au moins 2 A), le bruit seul ne
-  fabrique aucun point tournant (`detect_turning_points`), la gagnante est simulée à l'identique, et l'écart de
-  38 % était celui d'une statistique de bande sur la population. Comparer deux runs se fait sur le classement
-  (`dump_strat_ranking`) ou sur les vidages par stratégie, comme les rapports `STRAT_bench_*` de `reports/`.
-- **D9, la plage de blocs ne vide pas la DP : un seuil de faisabilité, dit désormais dans le journal** (R147).
-  Mesuré sur le juge de paix standard (`ca99bc8c`, caches vierges, 2026-10-05) : la DP trouve 241, 242 et 241
-  groupements à 9, 8 et 7 blocs, aucun de 6 à 1, avec la plage livrée comme avec une plage réduite à
-  {48, 9, 8, 2, 1} ; une sonde autour du mineur compte 7 blocs contigus au moins pour qu'une même λ soit
-  admissible dans toutes les couches de chaque bloc. Sous ce nombre, le mineur ne rend que les graines
-  structurées (« Mining found 2 strategies »), ce qui se lisait comme une recherche vidée ; à 48 blocs aussi, la
-  première couche devant partager le bloc de la deuxième (`force_first_layer_same_wl`). L'héritage depuis le
-  nombre de blocs supérieur y ajoute ensuite ses stratégies dérivées, et elles comptent : sur `r75x2`, de 5 à 9
-  blocs, 188 stratégies déposables, et la gagnante du juge de paix standard a 4 blocs. Sauter ces nombres de blocs
-  pour gagner du temps (environ 11 min des 30 d'un run `deep` de `r75x2`) les perdrait. Sur `r75x2` le même seuil tombe
-  entre 9 et 10 blocs (601 groupements de 15 à 10, graines seules de 9 à 1, 2026-10-05). Le mineur écrit
-  maintenant `[MINING] n_blocks=…: the DP found no grouping; the fewest contiguous blocks … is N` ; aucun
-  résultat ne change. Sorties : `reports/STRAT_bench_juge_de_paix_ca99bc8c_D9_*_2026-10-05.*`.
+  la population : comparer deux runs se fait sur le classement (`dump_strat_ranking`) ou sur les vidages par
+  stratégie, comme les rapports `STRAT_bench_*` de `reports/`.
+- **D9, la plage de blocs ne vide pas la DP : un seuil de faisabilité, dit dans le journal** (R147). Sous un nombre
+  minimal de blocs contigus (7 sur le juge de paix standard, entre 9 et 10 sur `r75x2`, 2026-10-05), aucune λ n'est
+  admissible dans toutes les couches de chaque bloc : le mineur ne rend que les graines structurées et l'écrit
+  (`[MINING] n_blocks=…: the DP found no grouping; the fewest contiguous blocks … is N`). L'héritage depuis le nombre
+  de blocs supérieur y ajoute ses stratégies dérivées, et elles comptent (sur `r75x2`, de 5 à 9 blocs, 188 stratégies
+  déposables ; la gagnante du juge de paix standard a 4 blocs) : sauter ces nombres de blocs les perdrait. Sorties :
+  `reports/STRAT_bench_juge_de_paix_ca99bc8c_D9_*_2026-10-05.*`.
 - **D8, intervalles du 99c avec recherche de fente : les verdicts tiennent.** Les quatre intervalles de la
-  partition retenue ([0,22), [22,42), [42,76), [76,99)) remesurés comme le fait
-  `scripts\campagne_intervalles.py` (`fast`, graine 42, verre nu, tranche du bruit des 99 couches, `ca99bc8c`,
-  2026-10-05), fente cherchée ou non : déposables tous les quatre dans les deux bras, plantage minimal 0 %,
-  meilleur score déposable à −2,6 %, −0,8 %, 0 % et +1,8 % (la recherche de fente place dans la population des
-  fentes de 0,5 à 5 nm). La partition reste fabricable avec la recherche de fente. Les autres intervalles
-  du cache ont servi à choisir cette partition ; les refaire ne servirait qu'à la rechoisir, ce qui n'est pas fait. Le SEEL assemblé (§2, 0,81 nm
-  sur trois graines) n'est pas remesuré. Sorties :
-  `reports/STRAT_99c_intervalles_retenus_fente_{off,on}_ca99bc8c_2026-10-05.json`.
+  partition retenue ([0,22), [22,42), [42,76), [76,99)), remesurés comme le fait `scripts\campagne_intervalles.py`
+  (`fast`, graine 42, `ca99bc8c`, 2026-10-05), sont déposables avec et sans recherche de fente (plantage minimal 0 %,
+  meilleur score déposable à −2,6 %, −0,8 %, 0 % et +1,8 %). Le SEEL assemblé (§2, 0,81 nm sur trois graines) n'est
+  pas remesuré. Sorties : `reports/STRAT_99c_intervalles_retenus_fente_{off,on}_ca99bc8c_2026-10-05.json`.
 - **Sans changement de code :** D16 (THICKNESS² conserve l'ordre DP),
   D18 (seuils 0,025 et 0,04 appliqués à deux grandeurs), D19 (le
   comptage des points tournants est déjà dans le noyau Phase A), D22
@@ -427,10 +247,7 @@ du dichroïque dont le plantage s'écarterait nettement du prédit rouvrirait ce
 
 ### DESIGN — tranchés par Claude sur l'ordre de 👤, 2026-10-04
 
-D45 et D46 attendaient la décision de 👤 ; son « go » du 2026-10-04 à la résolution des
-actions complexes, donné sur une liste qui les disait bloquées par lui, a été lu comme cette
-décision. Chaque correctif est un commit (R136 `c738a130`, R137 `83661fd4`) qu'un `git revert`
-annule seul.
+Chaque correctif est un commit (R136 `c738a130`, R137 `83661fd4`) qu'un `git revert` annule seul.
 
 - **D45, gradient avec pile arrière : corrigé.** Le coût et son gradient
   utilisent désormais la même somme des poids. C1 : 93 des 8 008
@@ -445,75 +262,40 @@ annule seul.
 ### Arbitrages de 👤 du 2026-10-05 (soir)
 
 - **Polarisation « Avg » de DESIGN (ex-D47) : retirée officiellement.** Le tableau des cibles n'offre que s et p ; une configuration ancienne « Avg » se charge en s avec un avertissement. Rien à calculer.
-- **Threads Numba d'une tâche de robustesse STRAT : adaptatif** (`task_numba_threads`) : 4 sur une machine de 16 cœurs logiques ou plus, 2 sinon, jamais au-dessus de la limite de Numba. Mesuré sur le juge de paix standard (mode `premium`, caches froids, Ryzen 7 5700G, 16 threads, 2026-10-05) : à 2 threads 521, 476 et 472 s, à 4 threads 452, 421 et 418 s, soit 11 à 13 % de moins, et les six populations (370 stratégies, scores, plantage par niveau de bruit) sont identiques au bit, ce que la construction garantit : chaque tirage des noyaux parallèles écrit sa propre case. Le code livré rend 421 s et la même population. Les machines de moins de 16 cœurs gardent 2 faute de mesure. Profil par échantillonnage du même run : 74 % de la durée dans la robustesse Monte-Carlo (dont 29 % de consensus), 17 % d'attente du consommateur de statistiques, 6 % dans `build_M_before_cache`.
-- **D54 : supprimer `adaptive_scan`** (code mort) : fait le 2026-10-06 (`7a958dec`), sous la tolérance de 👤 du même jour (ci-dessous).
+- **Threads Numba d'une tâche de robustesse STRAT : adaptatif** (`task_numba_threads`) : 4 sur une machine de 16 cœurs logiques ou plus, 2 sinon, jamais au-dessus de la limite de Numba. Sur le juge de paix standard (mode `premium`, caches froids, Ryzen 7 5700G, 16 threads, 2026-10-05), 4 threads prennent 11 à 13 % de moins que 2, populations identiques au bit (chaque tirage des noyaux parallèles écrit sa propre case). Les machines de moins de 16 cœurs gardent 2 faute de mesure.
 - **D86 : garder l'avertissement**, ne pas refuser l'extrapolation.
 
 ### Arbitrages de 👤 du 2026-10-06
 
 - **Un matériau absent de la base refuse le calcul** (D88), plutôt que de seulement prévenir.
-- **Le gel passe sur la couche OpenMP** (D87) : construire, contrôler le démarrage ; le calcul réel dans
-  l'exécutable revient à 👤.
+- **Le gel passe sur la couche OpenMP** (D87).
 - **D48 : le substrat reste non absorbant**, sans champ d'épaisseur. DESIGN construit ses matériaux, substrat
   compris, par un modèle de Cauchy réel à deux indices (n à 400 et 700 nm, `Material`) et STRAT ne lit que la
   partie réelle de l'indice du substrat : l'épaisseur du substrat n'entre dans aucun de leurs calculs. La lame
   absorbante reste dans la physique (`certus_substrate_absorption`), avec son épaisseur par défaut de 1 mm.
-- **Tolérance de C1 pour retirer du code mort d'un noyau : 10⁻¹⁰ en relatif** (D54). Le retrait de
-  `adaptive_scan` en est resté à 2,3·10⁻¹³.
+- **Tolérance de C1 pour retirer du code mort d'un noyau : 10⁻¹⁰ en relatif** (D54).
 
-### Réponses de 👤 du 2026-10-06 au soir, une question à la fois
+### Réponses de 👤 du 2026-10-06
 
-- **Calcul** : D10, fiabiliser l'ajustement du saphir ; D76, ajouter la dérivée de la pénalité ; D56, remplacer
-  les coefficients si les fiches du fabricant diffèrent. Faits (§0).
 - **Données Nb2O5 « Syrus » : laissées telles quelles.** Dans les feuilles `Nb2O5-Syrus` et `IR-Syrus-Nb2O5` de
   `example/database_index/indices.xlsx`, n tombe de 2,09 à 4,0 µm à 1,19 à 4,7 µm puis remonte à 1,78 à 5 µm,
   quand les feuilles H400 et H800 restent entre 2,07 et 2,13 ; un creux de cette taille avec k ≤ 0,018 n'est pas
   physique. Un résultat fondé sur ces feuilles au-delà de 4 µm en hérite.
 - **Stop pendant l'étage IR d'INDEX : le résultat raffiné est gardé**, comme aujourd'hui ; rien à changer.
-- **Interface** : D41, demander avant de fermer pendant un calcul, partout ; D65, retirer les branches mortes ;
-  D66, créer la légende avant les courbes ; D58, appliquer `BODY_LG` — puis, son effet sur le panneau de METAL
-  mesuré, réduire le padding horizontal du bouton à 8 px plutôt qu'accepter 403 px ou revenir à 9 pt ;
-  rebrancher les deux fenêtres ; évaluer puis intégrer la branche de couleurs. Faits (§0).
-- **Poste** : supprimer `wip-d75-gradient-lame` et le venv `C:\envs\certus` ; archiver les fichiers hors git à
-  côté des bundles. Faits ; l'archive est à refaire si ces fichiers changent. **Le dépôt reste dans Google Drive.**
-- **GitHub** : tester puis fusionner les mises à jour de Dependabot — appliquées sur la branche, et toute fusion
-  dans `master` se redemande à 👤 ; `master` exigera une CI verte et des actions épinglées par SHA — l'épinglage
-  est en place, la protection de branche est un réglage de sécurité de GitHub, appliqué par 👤 ; pousser
-  la branche après une validation complète verte, sans fusion dans `master`.
-- **Avis de tiers : un brouillon**, ce que le dépôt n'établit pas marqué « à confirmer par toi ». Fait
-  (`THIRD_PARTY_NOTICES.md`).
-
-### Réponses de 👤 du 2026-10-06, seconde série
-
-- **La PR #5 se fusionne dans `master` dès que toute sa CI est verte**, sans attendre le test de l'exécutable ; la
-  correction automatique de la CI est active sur elle. Une autre fusion dans `master` se redemande.
-- **Protection de `master` : rien à ajouter** aux contrôles exigés (ruff, pytest, interface) ; pas d'épinglage SHA
-  obligatoire (les actions sont épinglées de toute façon).
-- **PR Dependabot #1 à #4 et #6 : laissées à Dependabot**, qui les ferme quand `master` a leurs versions.
+- **Le dépôt reste dans Google Drive.** Les fichiers hors git sont archivés à côté des bundles ; l'archive est à
+  refaire si ces fichiers changent.
+- **Toute fusion dans `master` se redemande à 👤**, sauf la PR de la parité (`parite-zenodo`), qui se fusionne dès que
+  sa CI est verte. La protection de `master` est un réglage de sécurité de GitHub, appliqué par 👤 : rien à ajouter
+  aux contrôles exigés (ruff, pytest, interface), pas d'épinglage SHA obligatoire (les actions sont épinglées de
+  toute façon).
 - **Le gel embarque toutes les licences** : `LICENSE`, `THIRD_PARTY_NOTICES.md` et les fichiers de licence de chaque
   distribution embarquée, dans `licenses/`.
+- **Un gel local se construit dans un environnement jetable installé depuis `requirements.lock`**, comme celui de la
+  CI, et supprimé ensuite : l'exécutable local n'embarque pas ce que porte le Python du poste.
 - **Données et logo de 👤** : `BSCNES_*` et le reste de `example/` et `samples/`, la table du silicium sous 1200 nm,
   `sapphire_index.txt`, les préréglages de Cauchy, le logo. `certus_re` (Zenodo) est publié sous CC BY 4.0. Les quatre
   termes de B270i autres que B1 et C1 sont d'origine inconnue.
-- **La table D65 de la CIE peut être téléchargée** pour vérifier celle du code : identique au bit (`e8be1315`).
-
-### Réponses de 👤 du 2026-10-06, troisième série
-
-- **La PR qui suit la #5** (licences du gel, avis, ETAT) **se fusionne aussi dès que toute sa CI est verte.** La
-  session n'est plus archivée automatiquement à la fusion d'une PR.
-- **DLL Microsoft du gel** : une licence Visual Studio de 👤 n'est pas établie ; la ligne reste « à confirmer
-  par toi » dans `THIRD_PARTY_NOTICES.md`.
-- **Un gel local se construit dans un environnement jetable installé depuis `requirements.lock`**, comme celui de la
-  CI, et supprimé ensuite : l'exécutable local n'embarque plus ce que porte le Python du poste.
-- **Le prochain chantier est la parité Zenodo** (rang 3 de §0).
-- **La validation externe de STRAT n'est plus prévue** : STRAT reste validé contre lui-même (§1).
-
-### Réponses de 👤 du 2026-10-06, quatrième série (parité)
-
-- **La branche PGlobal morte de `_run_single_spline_stage` est retirée** (fait, §0) : Git la garde.
 - **Le RE garde sa pénalité QWOT** : l'a priori MAP de `certus_re` n'est pas porté.
-- **La citation du saphir est corrigée dans le paquet `certus_re`** (fait, non commité dans ce dépôt-là, §0).
-- **La PR de la parité se fusionne dès que sa CI est verte**, comme les PR #5 et #7.
 
 ### RE — décidé par 👤 le 2026-10-05
 
@@ -572,6 +354,7 @@ Ces sujets demandent un jugement de physicien ou de propriétaire du produit. Le
 | **avis de tiers** | une ligne reste « à confirmer par toi » dans `THIRD_PARTY_NOTICES.md` : les DLL du runtime Visual C++ (`VCRUNTIME140*.dll`, `VCOMP140.DLL`) se redistribuent avec un programme, mais Microsoft réserve ce droit aux utilisateurs de Visual Studio sous licence |
 | **paquet `certus_re`** | la correction de la citation du saphir (Malitson et Dodge, 1972) attend d'être commitée par 👤 dans ce dépôt-là, qui contient ses modifications en cours, puis publiée avec la prochaine version Zenodo |
 | **interface** | Revoir visuellement les onze fenêtres et choisir les teintes de marque, la bande des fichiers récents et les bornes des champs numériques. |
+| **arrêt de STRAT** | D96 à D99 (§4) : activer par défaut les ancres au sommet (D96) et l'arrêt exact (D97) ; pour l'armement (D98), choisir entre l'arrêt tardif et l'attente sans fin ; lisser ou non la lecture d'arrêt (D99) ; noter ou non au modèle figé, au moins pour départager la tête du classement (rapport du 2026-10-10, sections 4 et 6) |
 
 D10, D41, D48, D54, D55, D56, D58, D65, D66, D76, D86, D87, D88 et D92 sont tranchés (§3) ou corrigés.
 
@@ -583,23 +366,18 @@ atteindre le niveau 0,57 · balayer `tp_hysteresis_factor` à bruit fixé sur la
 grossière, il est presque inerte (juge de paix, 370 plans, 2026-10-11 : de 1,0 à 2,0 A, 358 à 362 notes identiques au
 bit à celles de 1,66 A, même meilleur plan ; rapport de l'audit du 2026-10-10, section 4) · compter le criblage et
 l'héritage quand un étage deviendra suspect · porter le résultat de `r75x2` dans la vitrine,
-avec sa condition dans la même phrase que le chiffre · accélérer à résultat identique au bit : aucune piste ouverte.
-Les 17 % d'« attente du consommateur de statistiques » du profil ne sont pas du temps : l'échantillonneur de
-`scripts/bench_examples.py` (`start_sampler`) compte chaque fil vivant à chaque tick, et le fil de
-`StatsConsumerWorker.run`, bloqué dans `get(timeout=0.1)`, y est trouvé à chaque tick. Mesuré le 2026-10-11, machine
-au repos, Linux (`scripts/probe_sampler_idle_thread.py 6`) : un calcul numpy prend de 0,235 à 0,264 s (médiane 0,250)
-avec un tel fil et de 0,239 à 0,267 s (médiane 0,255) sans. `build_M_before_cache` est écarté : 10 151 appels pour
-4 070 entrées distinctes sur le juge de paix, mais s'en souvenir ne fait rien gagner (2026-10-06, caches froids,
-machine au repos : 434,9 et 431,5 s sans, 432,0 et 431,1 s avec, populations identiques au bit) ; ses 6 % venaient
-d'un profil pris pendant une autre charge.
+avec sa condition dans la même phrase que le chiffre · accélérer à résultat identique au bit : aucune piste ouverte
+(les 17 % d'« attente du consommateur de statistiques » d'un profil par échantillonnage sont un artefact de
+l'échantillonneur de `scripts/bench_examples.py`, `scripts/probe_sampler_idle_thread.py`, 2026-10-11 ; mémoriser
+`build_M_before_cache` ne fait rien gagner, populations identiques au bit, 2026-10-06).
 
 **Modèle physique** (détail : `git show 7b08dc8:docs/archives/TRAVAUX_A_VENIR.md`) :
 
 | | sujet | état |
 |---|---|---|
-| 12.2 | modéliser le lissage de lecture | ouvert — surtout ne pas remonter le seuil |
+| 12.2 | modéliser le lissage de lecture | sur la grille machine, voir le rang 4 (§0) — surtout ne pas remonter le seuil |
 | 12.3 | méconnaissance d'indice | spécifié : corridor de dispersion |
-| 12.4 | grille d'échantillonnage à la cadence machine | ouvert, à faire avant 12.2 |
+| 12.4 | grille d'échantillonnage à la cadence machine | voir le rang 4 (§0) |
 | 12.5 | quantification temporelle du déclenchement | ouvert |
 | 12.6 | facteur de face arrière | en dernier, ou jamais |
 | 12.7 | résolution du monochromateur | spécifié |

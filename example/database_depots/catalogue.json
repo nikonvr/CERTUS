@@ -21,6 +21,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "03-03-2026 11:35:24"
@@ -52,7 +54,9 @@
    "substrat": null,
    "voies": [
     {
-     "mode": "T",
+     "mode": "R",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 16.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "03-03-2026 11:39:14"
@@ -85,6 +89,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "03-03-2026 11:58:46"
@@ -116,7 +122,9 @@
    "substrat": null,
    "voies": [
     {
-     "mode": "T",
+     "mode": "R",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 16.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "03-03-2026 12:03:13"
@@ -146,6 +154,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "03-03-2026 12:07:38"
@@ -174,7 +184,9 @@
    "substrat": null,
    "voies": [
     {
-     "mode": "T",
+     "mode": "R",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 16.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "03-03-2026 12:11:34"
@@ -207,6 +219,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "03-03-2026 12:17:10"
@@ -238,7 +252,9 @@
    "substrat": null,
    "voies": [
     {
-     "mode": "T",
+     "mode": "R",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 16.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "03-03-2026 12:21:05"
@@ -268,6 +284,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "03-03-2026 12:25:18"
@@ -296,7 +314,9 @@
    "substrat": null,
    "voies": [
     {
-     "mode": "T",
+     "mode": "R",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 16.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "03-03-2026 12:29:15"
@@ -326,6 +346,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "07-06-2024 14:41"
@@ -355,6 +377,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "07-06-2024 14:45"
@@ -384,6 +408,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "07-06-2024 14:52"
@@ -416,6 +442,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "07-06-2024 14:56"
@@ -445,6 +473,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "07-06-2024 15:05"
@@ -474,6 +504,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "10-04-2026 08:08:27"
@@ -503,6 +535,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "10-04-2026 08:14:19"
@@ -532,6 +566,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "10-04-2026 08:39:31"
@@ -561,6 +597,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "10-04-2026 08:42:37"
@@ -590,6 +628,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "10-04-2026 08:52:02"
@@ -619,6 +659,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "10-04-2026 08:54:45"
@@ -648,6 +690,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "10-04-2026 09:00:31"
@@ -677,6 +721,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "10-04-2026 09:03:03"
@@ -706,6 +752,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "10-04-2026 09:05:20"
@@ -735,6 +783,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "10-04-2026 09:09:38"
@@ -764,6 +814,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "10-04-2026 09:12:27"
@@ -793,6 +845,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "10-04-2026 09:14:35"
@@ -822,6 +876,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "08-04-2026 09:16:22"
@@ -851,6 +907,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "10-04-2026 09:20:57"
@@ -880,6 +938,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "28-04-2026 09:22:03"
@@ -909,6 +969,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "08-04-2026 09:23:09"
@@ -938,6 +1000,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "10-04-2026 09:25:02"
@@ -967,6 +1031,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "10-04-2026 09:26:32"
@@ -996,6 +1062,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "08-04-2026 09:27:57"
@@ -1025,6 +1093,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "08-04-2026 09:30:21"
@@ -1054,6 +1124,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "03-04-2026 09:32:25"
@@ -1089,6 +1161,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "11-06-2024 10:00"
@@ -1124,6 +1198,8 @@
    "voies": [
     {
      "mode": "R",
+     "mode_declare": "Reflectance",
+     "detecteur_deg": 16.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "11-06-2024 10:05"
@@ -1159,6 +1235,8 @@
    "voies": [
     {
      "mode": "R",
+     "mode_declare": "Reflectance",
+     "detecteur_deg": 16.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "11-06-2024 10:12"
@@ -1194,6 +1272,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "11-06-2024 10:17"
@@ -1226,6 +1306,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "15-04-2024 13:43"
@@ -1258,6 +1340,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "15-04-2024 14:06"
@@ -1290,6 +1374,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "31-12-1969 19:00"
@@ -1322,6 +1408,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "15-04-2024 16:48"
@@ -1354,6 +1442,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "15-04-2024 16:59"
@@ -1386,6 +1476,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "16-04-2024 14:36"
@@ -1418,6 +1510,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "16-04-2024 16:39"
@@ -1450,6 +1544,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "17-04-2024 08:15"
@@ -1482,6 +1578,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "17-04-2024 08:26"
@@ -1514,6 +1612,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "24-03-2026 11:02:04"
@@ -1546,6 +1646,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "24-03-2026 11:07:53"
@@ -1575,6 +1677,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "24-03-2026 11:13:28"
@@ -1607,6 +1711,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "24-03-2026 11:22:07"
@@ -1639,6 +1745,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "24-03-2026 11:29:08"
@@ -1671,6 +1779,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "24-03-2026 11:30:30"
@@ -1700,6 +1810,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "24-03-2026 11:31:57"
@@ -1732,6 +1844,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "24-03-2026 11:37:14"
@@ -1764,6 +1878,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "24-03-2026 11:39:15"
@@ -1793,6 +1909,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "24-03-2026 11:41:16"
@@ -1825,6 +1943,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "S",
      "debut": "24-03-2026 11:46:29"
@@ -1857,6 +1977,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "P",
      "debut": "24-03-2026 11:53:58"
@@ -1889,6 +2011,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "S",
      "debut": "24-03-2026 11:59:17"
@@ -1921,6 +2045,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "S",
      "debut": "24-03-2026 12:00:56"
@@ -1950,6 +2076,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "S",
      "debut": "24-03-2026 12:02:36"
@@ -1982,6 +2110,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "S",
      "debut": "24-03-2026 12:09:05"
@@ -2014,6 +2144,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "S",
      "debut": "24-03-2026 12:11:41"
@@ -2043,6 +2175,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "S",
      "debut": "24-03-2026 12:14:04"
@@ -2072,6 +2206,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "24-03-2026 13:03:12"
@@ -2100,7 +2236,9 @@
    "substrat": null,
    "voies": [
     {
-     "mode": "T",
+     "mode": "R",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 16.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "24-03-2026 13:06:25"
@@ -2132,7 +2270,9 @@
    "substrat": null,
    "voies": [
     {
-     "mode": "T",
+     "mode": "R",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 16.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "24-03-2026 13:10:27"
@@ -2165,6 +2305,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "24-03-2026 13:13:44"
@@ -2197,6 +2339,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "24-03-2026 13:17:42"
@@ -2228,7 +2372,9 @@
    "substrat": null,
    "voies": [
     {
-     "mode": "T",
+     "mode": "R",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 16.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "24-03-2026 13:20:58"
@@ -2257,7 +2403,9 @@
    "substrat": null,
    "voies": [
     {
-     "mode": "T",
+     "mode": "R",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 16.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "24-03-2026 13:25:09"
@@ -2287,6 +2435,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "24-03-2026 13:28:23"
@@ -2319,6 +2469,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "28-08-2026 13:04:44"
@@ -2351,6 +2503,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "28-08-2026 13:10:28"
@@ -2383,6 +2537,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "28-08-2026 13:18:20"
@@ -2415,6 +2571,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "28-08-2026 13:24:58"
@@ -2447,6 +2605,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "28-08-2026 13:29:10"
@@ -2476,6 +2636,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "19-02-2026 15:18:35"
@@ -2511,6 +2673,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "14-06-2024 16:15"
@@ -2546,6 +2710,8 @@
    "voies": [
     {
      "mode": "R",
+     "mode_declare": "Reflectance",
+     "detecteur_deg": 16.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "14-06-2024 16:24"
@@ -2581,6 +2747,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "14-06-2024 15:53"
@@ -2616,6 +2784,8 @@
    "voies": [
     {
      "mode": "R",
+     "mode_declare": "Reflectance",
+     "detecteur_deg": 16.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "14-06-2024 16:02"
@@ -2651,6 +2821,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "14-06-2024 14:59"
@@ -2686,6 +2858,8 @@
    "voies": [
     {
      "mode": "R",
+     "mode_declare": "Reflectance",
+     "detecteur_deg": 16.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "14-06-2024 15:08"
@@ -2721,6 +2895,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "14-06-2024 14:11"
@@ -2756,6 +2932,8 @@
    "voies": [
     {
      "mode": "R",
+     "mode_declare": "Reflectance",
+     "detecteur_deg": 16.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "14-06-2024 14:22"
@@ -2788,6 +2966,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "31-05-2024 15:53"
@@ -2820,6 +3000,8 @@
    "voies": [
     {
      "mode": "R",
+     "mode_declare": "Reflectance",
+     "detecteur_deg": 16.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "31-05-2024 16:00"
@@ -2852,6 +3034,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "31-05-2024 16:07"
@@ -2884,6 +3068,8 @@
    "voies": [
     {
      "mode": "R",
+     "mode_declare": "Reflectance",
+     "detecteur_deg": 16.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "31-05-2024 16:13"
@@ -2913,6 +3099,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "24-03-2026 15:41:48"
@@ -2942,6 +3130,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "18-02-2026 12:34:47"
@@ -2974,6 +3164,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "18-02-2026 12:34:47"
@@ -3003,6 +3195,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "18-02-2026 12:40:28"
@@ -3035,6 +3229,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "18-02-2026 12:58:42"
@@ -3064,6 +3260,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "18-02-2026 13:07:30"
@@ -3096,6 +3294,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "19-02-2026 14:16:35"
@@ -3127,7 +3327,9 @@
    "substrat": null,
    "voies": [
     {
-     "mode": "T",
+     "mode": "R",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 16.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "19-02-2026 14:19:49"
@@ -3156,7 +3358,9 @@
    "substrat": null,
    "voies": [
     {
-     "mode": "T",
+     "mode": "R",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 16.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "19-02-2026 14:23:13"
@@ -3186,6 +3390,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "19-02-2026 14:26:29"
@@ -3215,6 +3421,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "19-02-2026 14:37:26"
@@ -3243,7 +3451,9 @@
    "substrat": null,
    "voies": [
     {
-     "mode": "T",
+     "mode": "R",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 16.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "19-02-2026 14:42:31"
@@ -3275,7 +3485,9 @@
    "substrat": null,
    "voies": [
     {
-     "mode": "T",
+     "mode": "R",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 16.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "19-02-2026 14:48:00"
@@ -3308,6 +3520,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "19-02-2026 14:53:13"
@@ -3337,6 +3551,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "24-03-2026 16:01:29"
@@ -3366,6 +3582,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "24-03-2026 16:10:47"
@@ -3395,6 +3613,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "24-03-2026 16:24:20"
@@ -3424,6 +3644,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "24-03-2026 16:36:08"
@@ -3453,6 +3675,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "24-03-2026 16:47:39"
@@ -3482,6 +3706,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "24-03-2026 16:56:31"
@@ -3511,6 +3737,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "05-07-2024 10:54"
@@ -3540,6 +3768,8 @@
    "voies": [
     {
      "mode": "R",
+     "mode_declare": "Reflectance",
+     "detecteur_deg": 16.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "05-07-2024 10:50"
@@ -3569,6 +3799,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "05-07-2024 11:00"
@@ -3598,6 +3830,8 @@
    "voies": [
     {
      "mode": "R",
+     "mode_declare": "Reflectance",
+     "detecteur_deg": 16.0,
      "angle_deg": 8.0,
      "polarisation": "--",
      "debut": "05-07-2024 11:03"
@@ -3630,6 +3864,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "15-04-2024 16:38"
@@ -3662,6 +3898,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "28-04-2026 09:35:30"
@@ -3694,6 +3932,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "28-04-2026 09:59:10"
@@ -3726,6 +3966,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "03-04-2026 10:00:18"
@@ -3758,6 +4000,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "28-04-2026 09:12:55"
@@ -3790,6 +4034,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "03-04-2026 10:13:58"
@@ -3822,6 +4068,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "28-04-2026 09:30:29"
@@ -3854,6 +4102,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "03-04-2026 09:17:05"
@@ -3886,6 +4136,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "28-04-2026 09:54:09"
@@ -3918,6 +4170,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "03-04-2026 09:54:06"
@@ -3950,6 +4204,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "28-04-2026 09:00:43"
@@ -3982,6 +4238,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "03-04-2026 10:17:50"
@@ -4014,6 +4272,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "10-06-2026 08:48:06"
@@ -4046,6 +4306,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "10-06-2026 08:30:26"
@@ -4078,6 +4340,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "10-06-2026 08:38:27"
@@ -4110,6 +4374,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "10-06-2026 08:52:58"
@@ -4142,6 +4408,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "10-06-2026 08:33:59"
@@ -4174,6 +4442,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "10-06-2026 08:42:49"
@@ -4209,6 +4479,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "01-01-1970 01:00"
@@ -4244,6 +4516,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "11-07-2024 14:01"
@@ -4276,6 +4550,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "10-06-2026 08:50:31"
@@ -4308,6 +4584,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "10-06-2026 08:32:16"
@@ -4340,6 +4618,8 @@
    "voies": [
     {
      "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
      "angle_deg": 0.0,
      "polarisation": "--",
      "debut": "10-06-2026 08:40:40"

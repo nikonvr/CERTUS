@@ -16,8 +16,15 @@ Source : les monocouches « certaines » mesurées au spectrophotomètre Essent 
 Un classeur Photon RT (`.xls`, `.xlsx`) porte deux feuilles : `Parameters`, une colonne par mesure (nom, dates, mode,
 angle, polarisation, réglages), et `Measurement`, les longueurs d'onde puis une colonne par mesure. Un classeur peut
 donc contenir plusieurs échantillons : chacun devient une entrée. La transmission et la réflexion d'un même échantillon
-sur la même grille forment une seule entrée ; autrement, chaque voie a la sienne. Les `.csv` et `.res` du même nom que
-un classeur en sont des exports : gardés dans `bruts/`, ils ne sont pas lus une seconde fois.
+sur la même grille forment une seule entrée ; autrement, chaque voie a la sienne. Les `.csv` et `.res` du même nom
+qu'un classeur en sont des exports : gardés dans `bruts/`, ils ne sont pas lus une seconde fois.
+
+**La voie se lit dans la géométrie, pas dans la déclaration.** En mode manuel, le Photon RT écrit « Transmittance »
+quel que soit le détecteur : un détecteur à 180° voit le faisceau transmis, un détecteur à deux fois l'angle du
+porte-échantillon (16° pour 8°) le faisceau réfléchi. Treize colonnes de cette source sont des réflexions déclarées
+« Transmittance » ; `mode_declare` garde la déclaration du fichier. Une transmission et une réflexion du même
+échantillon nommées différemment par l'opérateur (`NbT3` et `NbR3`, `H800-NbT` et `H800-NbR`) restent deux entrées :
+rien ne les apparie d'après leur nom.
 
 ## Une entrée du catalogue
 
@@ -25,7 +32,7 @@ un classeur en sont des exports : gardés dans `bruts/`, ils ne sont pas lus une
 |---|---|
 | `id`, `fichier`, `brut` | identifiant, mesure normalisée, fichier d'origine |
 | `echantillon` | le nom que porte la colonne dans le classeur |
-| `voies` | pour chaque voie : `mode` (T ou R), `angle_deg` (angle du porte-échantillon), `polarisation` (`--` : non polarisée), `debut` (date de la mesure) |
+| `voies` | pour chaque voie : `mode` (T ou R), `mode_declare` (ce que le classeur déclare), `detecteur_deg` et `angle_deg` (angles du détecteur et du porte-échantillon), `polarisation` (`--` : non polarisée), `debut` (date de la mesure) |
 | `lambda_nm`, `points` | domaine spectral et nombre de points |
 | `parametres` | réglages d'acquisition relevés dans la feuille `Parameters` (moyennage, pas, fente, taille du spot) ; `Sample thickness, mm` et `Refractive index n` sont des réglages du banc, pas une description du substrat |
 | `materiau`, `substrat` | **seulement ce que le nom du fichier ou de l'échantillon dit** (`"source": "nom"`), sinon `null` : « Nb » et « Ta » désignent les oxydes déposés (Nb₂O₅, Ta₂O₅), « si » seul reste sans attribution (silicium ou silice) ; rien n'est déduit du spectre |
@@ -40,3 +47,4 @@ Le script copie les fichiers du dossier dans `bruts/`, écrit leurs mesures dans
 à partir de ce seul dossier : pour reconstruire la base, vider d'abord `example/database_depots/` (ce README excepté).
 Il lui faut `xlrd` pour les `.xls`. `tests/unit/test_the_deposit_database_holds_together.py` vérifie que chaque entrée
 se charge comme le catalogue l'annonce.
+

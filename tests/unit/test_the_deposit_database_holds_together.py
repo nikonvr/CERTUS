@@ -55,3 +55,21 @@ def test_a_material_or_a_substrate_is_only_what_the_name_states():
         for key in ("materiau", "substrat"):
             if depot[key] is not None:
                 assert depot[key]["source"] == "nom", depot["id"]
+
+
+
+def test_a_channel_is_read_in_its_geometry_not_in_the_declared_mode():
+    """In manual mode the Photon RT declares "Transmittance" whatever the detector does: 13 such columns of this source are
+    reflectances (detector at 16 deg, sample at 8 deg). A detector at 180 deg sees the transmitted beam, one at twice the
+    stage angle the reflected one."""
+    checked = 0
+    for depot in DEPOTS:
+        for channel in depot["voies"]:
+            detector, stage = channel["detecteur_deg"], channel["angle_deg"]
+            if detector is not None and abs(detector - 180.0) < 0.5:
+                assert channel["mode"] == "T", depot["id"]
+                checked += 1
+            elif detector is not None and stage is not None and abs(detector - 2.0 * stage) < 0.5:
+                assert channel["mode"] == "R", depot["id"]
+                checked += 1
+    assert checked == sum(len(depot["voies"]) for depot in DEPOTS)

@@ -107,6 +107,21 @@ def number(value: Any) -> float | None:
     return out if out == out else None
 
 
+def channel_mode(declared: str, stage_deg: float | None, detector_deg: float | None) -> str | None:
+    """T or R, read in the geometry when the workbook records it, else in the declared mode.
+
+    In manual mode the Photon RT writes "Transmittance" whatever the detector does: on 2026-10-11, 13 columns of
+    `Certain_Monocouche` declared so had the detector at 16 deg with the sample at 8 deg, a specular reflectance
+    (their names end in R). A detector at 180 deg sees the transmitted beam, one at twice the stage angle the
+    reflected one.
+    """
+    if detector_deg is not None and abs(detector_deg - 180.0) < 0.5:
+        return "T"
+    if detector_deg is not None and stage_deg is not None and abs(detector_deg - 2.0 * stage_deg) < 0.5:
+        return "R"
+    return MODES.get(declared.strip().lower())
+
+
 def measurements(path: Path) -> list[dict[str, Any]]:
     """One record per measurement column: its parameters and its (wavelength, value) pairs."""
     params, data = read_workbook(path)
@@ -125,12 +140,16 @@ def measurements(path: Path) -> list[dict[str, Any]]:
             values = table.get(key, []) if key else []
             return values[k] if k < len(values) else ""
 
-        mode = MODES.get(param("measurement mode").lower())
+        declared = param("measurement mode")
+        detector = number(param("detector angle"))
+        mode = channel_mode(declared, number(param("sample stage angle")), detector)
         if mode is None:
             continue
         out.append({
             "echantillon": name or path.stem,
             "mode": mode,
+            "mode_declare": declared or None,
+            "detecteur_deg": detector,
             "angle_deg": number(param("sample stage angle")),
             "polarisation": param("polarization") or None,
             "debut": param("start date") or None,
@@ -205,7 +224,8 @@ def main(argv: list[str] | None = None) -> int:
                     "echantillon": sample,
                     "materiau": {"valeur": materiau, "source": "nom"} if materiau else None,
                     "substrat": {"valeur": substrat, "source": "nom"} if substrat else None,
-                    "voies": [{k: r[k] for k in ("mode", "angle_deg", "polarisation", "debut")} for r in group],
+                    "voies": [{k: r[k] for k in ("mode", "mode_declare", "detecteur_deg", "angle_deg", "polarisation", "debut")}
+                              for r in group],
                     "lambda_nm": [grid[0], grid[-1]],
                     "points": len(grid),
                     "parametres": group[0]["parametres"],

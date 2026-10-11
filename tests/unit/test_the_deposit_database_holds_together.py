@@ -73,3 +73,32 @@ def test_a_channel_is_read_in_its_geometry_not_in_the_declared_mode():
                 assert channel["mode"] == "R", depot["id"]
                 checked += 1
     assert checked == sum(len(depot["voies"]) for depot in DEPOTS)
+
+REFERENCES = json.loads((BASE / "references_index.json").read_text(encoding="utf-8"))["references"]
+
+
+@pytest.mark.parametrize("reference", REFERENCES, ids=lambda r: r["nom"])
+def test_a_reference_names_deposits_of_one_workbook_on_one_grid(reference):
+    """`scripts/bench_base_depots.py` sets the T and R of a reference side by side: they must share their grid."""
+    by_id = {d["id"]: d for d in DEPOTS}
+    entries = [by_id[depot_id] for depot_id in reference["depots"]]
+    assert [e["voies"][0]["mode"] for e in entries] in (["T"], ["R"], ["T", "R"])
+    assert len({e["brut"] for e in entries}) == 1
+    assert len({(e["points"], tuple(e["lambda_nm"])) for e in entries}) == 1
+
+
+@pytest.mark.parametrize("reference", REFERENCES, ids=lambda r: r["nom"])
+def test_the_reference_index_is_what_the_index_model_gives_for_its_parameters(reference):
+    """The standalone app computed n(633); the functions INDEX fits with must give it back from the same parameters."""
+    import numpy as np
+
+    from certus.core.certus_core import HC_EV_NM
+    from certus_physics import epsilon1_TL_analytic, epsilon2_TLU_array, epsilon_to_nk
+
+    p = reference["parametres"]
+    assert reference["d_nm"] == p["d"]
+    energy = np.array([HC_EV_NM / 633.0])
+    eps2 = epsilon2_TLU_array(energy, p["Eg"], p["A"], p["E0"], p["C"], p["Eu"])
+    eps1 = epsilon1_TL_analytic(energy, p["Eg"], p["A"], p["E0"], p["C"], p["eps_inf"])
+    n, _k, _ok = epsilon_to_nk(eps1, eps2, 0.5, 15.0, 15.0)
+    assert n[0] == pytest.approx(reference["n633"], abs=1e-9)

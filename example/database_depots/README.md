@@ -44,7 +44,26 @@ python scripts\importer_base_depots.py <dossier de fichiers Photon RT>
 ```
 
 Le script copie les fichiers du dossier dans `bruts/`, écrit leurs mesures dans `mesures/` et réécrit `catalogue.json`
-à partir de ce seul dossier : pour reconstruire la base, vider d'abord `example/database_depots/` (ce README excepté).
+à partir de ce seul dossier : pour reconstruire la base, vider d'abord `example/database_depots/` (ce README et
+`references_index.json` exceptés).
 Il lui faut `xlrd` pour les `.xls`. `tests/unit/test_the_deposit_database_holds_together.py` vérifie que chaque entrée
 se charge comme le catalogue l'annonce.
 
+## Les références d'INDEX et le banc
+
+`references_index.json` relève les ajustements certifiés de l'application CERTUS INDEX autonome
+(`CERTIFIED_FRESNEL_CONFIGS`) dont le spectre embarqué est un dépôt de cette base, rapproché sur les données : onze
+sur vingt-sept. Pour chacun : les dépôts (T, ou T et R que l'ajustement réunit), le substrat, la normalisation, la bande
+d'ajustement, les sept paramètres du modèle de Tauc-Lorentz-Urbach, l'épaisseur et n(633). **Ce sont des sorties
+d'ajustement, pas des mesures indépendantes** ; avec les fonctions d'INDEX, les paramètres redonnent le n(633) de
+l'application à 10⁻⁹ près (le test le vérifie).
+
+```bat
+python scriptsench_base_depots.py
+```
+
+Le banc charge chaque référence dans la fenêtre INDEX comme un utilisateur, avec son substrat, sa normalisation et
+sa bande, et dit si INDEX retrouve l'épaisseur et n(633). Quand la bande dépasse 2500 nm et commence sous 2200 nm,
+INDEX ajuste le modèle jusqu'à 2200 nm puis fige épaisseur et indice avant l'extension IR, quand l'application
+autonome ajuste toute la bande : le banc l'écrit sur chaque ligne. INDEX n'étant pas reproductible, chaque référence
+tourne trois fois.

@@ -24,6 +24,7 @@ from certus.core.certus_strat_core import (
 )
 from certus.ui.certus_strat_json_ui import JsonViewerWindow
 from certus.ui.certus_ui import get_certus_last_dir, safe_ui_action, set_certus_last_dir
+from certus.ui.certus_ui_widgets_factory import CertusBooleanField
 from certus.utils.certus_dto import StratConfigDTO
 from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
 from certus.utils.certus_numeric_text import parse_decimal
@@ -546,8 +547,11 @@ class CertusStratStateMixin:
                     return True
             return False
 
+        # The on/off settings are `CertusBooleanField`, a check box that keeps the text field's `.setText()`
+        # contract: left out here, they kept their construction state and the run ignored the file and the
+        # defaults alike -- no Rate and no slit bias from 2026-09-08 to 2026-10-11 (D100).
         for key, widget in self.widgets.items():
-            if isinstance(widget, QLineEdit) and key in config:
+            if isinstance(widget, (QLineEdit, CertusBooleanField)) and key in config:
                 widget.setText(str(config[key]))
 
         for combo_key in [

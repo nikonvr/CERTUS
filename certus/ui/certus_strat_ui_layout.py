@@ -3,8 +3,8 @@ from __future__ import annotations
 import functools
 from typing import Any
 
-from PyQt6.QtCore import QLocale, Qt
-from PyQt6.QtGui import QDoubleValidator
+from PyQt6.QtCore import QLocale, QRegularExpression, Qt
+from PyQt6.QtGui import QDoubleValidator, QRegularExpressionValidator
 from PyQt6.QtWidgets import (
     QApplication,
     QButtonGroup,
@@ -30,6 +30,7 @@ from PyQt6.QtWidgets import (
 
 from certus.core.certus_core import SUBSTRATE_MAPPING, get_resource_path
 from certus.core.certus_strat_core import SYM_DEFAULT_SCORING_MODE
+from certus.ui import certus_strat_witness as witness
 from certus.ui.certus_ui import (
     CERTUS_UI_STRINGS,
     CertusCard,
@@ -49,7 +50,7 @@ from certus.utils.certus_ux import OBJ, Typography, build_premium_overrides
 
 #: Settings typed as a comma-separated LIST, not a single number: a number
 #: validator would stop the operator entering a valid value.
-LIST_VALUED_SETTINGS = frozenset({"robustness_noise_factors"})
+LIST_VALUED_SETTINGS = frozenset({"robustness_noise_factors", witness.KEY})
 
 
 class _DecimalValidator(QDoubleValidator):
@@ -1076,8 +1077,10 @@ class CertusStratLayoutMixin:
                 ("photometric_curvature_amp", "Photometric curvature:"),
                 ("allow_rate", "Allow Rate mode (0/1):"),
                 ("reading_smoothing_window", "Reading smoothing (k):"),
+                (witness.KEY, witness.LABEL),
             ],
         )
+        self.widgets[witness.KEY].setValidator(QRegularExpressionValidator(QRegularExpression(witness.ALLOWED), self))
 
         self.machine_status = QLabel("")
         self.machine_status.setWordWrap(True)
@@ -1120,6 +1123,7 @@ class CertusStratLayoutMixin:
                 "Running mean over k readings before detection. OFF (k=1) on purpose: the OMS "
                 "filter chain is not known, and an unmeasured hypothesis is worse than none."
             ),
+            witness.KEY: witness.TOOLTIP,
         }
         for _k, _tip in _tips_machine.items():
             if _k in self.widgets:
@@ -1382,6 +1386,10 @@ class CertusStratLayoutMixin:
             parts.append("inactif : " + ", ".join(off))
         if bad:
             parts.append("ILLISIBLE : " + ", ".join(bad))
+        table, glasses = self.widgets.get("stack_table"), self.widgets.get(witness.KEY)
+        glasses_txt = witness.summary(glasses.text() if glasses is not None else "", table.rowCount() if table is not None else 0)
+        parts.append(glasses_txt)
+        bad += [glasses_txt] if glasses_txt.endswith("?") else []
         self.machine_status.setText("   |   ".join(parts))
         colour = CertusTheme.DANGER if bad else (CertusTheme.SUCCESS if len(on) >= 5 else CertusTheme.WARNING)
         self.machine_status.setStyleSheet(

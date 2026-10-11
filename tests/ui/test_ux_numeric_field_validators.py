@@ -29,9 +29,6 @@ os.environ.setdefault("QT_QPA_FONTDIR", r"C:\Windows\Fonts")
 
 import pytest
 
-#: Reads as a comma-separated LIST ("0.5,1,2"), not a single number.
-LIST_VALUED = {"robustness_noise_factors"}
-
 
 @pytest.fixture(scope="module")
 def strat(qapp):
@@ -51,7 +48,10 @@ def strat(qapp):
 def _numeric_line_edits(win) -> dict:
     from PyQt6.QtWidgets import QLineEdit
 
-    return {key: w for key, w in win.widgets.items() if isinstance(w, QLineEdit) and key not in LIST_VALUED}
+    # The settings typed as a LIST ("0.5,1,2", "22;42;76") are read where the layout declares them, not copied here.
+    from certus.ui.certus_strat_ui_layout import LIST_VALUED_SETTINGS
+
+    return {key: w for key, w in win.widgets.items() if isinstance(w, QLineEdit) and key not in LIST_VALUED_SETTINGS}
 
 
 def test_there_are_numeric_fields_to_check(strat):

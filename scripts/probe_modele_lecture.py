@@ -15,7 +15,8 @@ layer or witness swap -- the comparison is between reading models, under the sam
 Models (`--models`): `livre` and `fige`, each also with the exact stop (`_exact`, D97), `fige_arret_lisse`, the frozen
 model whose stop reading is smoothed like the rest (D99), and `livre_ancres` and `livre_exact_ancres`, the shipped model
 with POEM's anchors read at the extremum of their layer instead of the coarse sample (D96), the second with the exact stop
-too, and `livre_armement` and `fige_armement`, each model with no stop before the last extremum is declared (D98).
+too, `livre_armement` and `fige_armement`, each model with no stop before the last extremum is declared (D98), and
+`livre_corrige`, the shipped model with the three options at once (D96, D97, D98).
 `name@factor` sets the turning-point threshold of a model to `factor` x A: `--models livre@1.0,livre@1.66,livre@2.4`
 sweeps it.
 
@@ -62,6 +63,8 @@ MODELS = {
     # D98: no stop before the last extremum is declared, the late stop of probe_oms_sequentiel.py.
     "livre_armement": {"smoothing": 1, "hyst": None, "exact": False, "arming": True},
     "fige_armement": {"smoothing": 8, "hyst": 1.0, "exact": False, "arming": True},
+    # The coarse grid with every option that brings it to the machine: anchors at the extremum, exact stop, arming.
+    "livre_corrige": {"smoothing": 1, "hyst": None, "exact": True, "anchors": True, "arming": True},
 }
 
 

@@ -5,7 +5,7 @@ réalité d'un OMS »*. Ce rapport répond par la mesure. Chaque chiffre vient d
 n'a pas été mesuré est dit tel.
 
 **Conditions.** Linux (conteneur, 4 cœurs), Python 3.14.6, NumPy 2.5.3, Numba 0.68.0 ; le banc de référence est sous
-Windows et Python 3.14.8 (ETAT §0), les derniers chiffres d'un `RESULT` ne se comparent donc pas d'une machine à
+Windows et Python 3.14.8 (ETAT, section 0), les derniers chiffres d'un `RESULT` ne se comparent donc pas d'une machine à
 l'autre. Code : branche `claude/ecstatic-newton-3grmls`, aux commits cités. Plans : la population du juge de paix
 (`reports/STRAT_bench_juge_de_paix_b60d80e2_temoin_2026-10-04.json`, 370 plans) et celle de `r75x2`
 (`reports/STRAT_bench_r75x2_deep_hysteresis_noise_level_306559d3_2026-10-05.json`, 783 plans). Bruit de lecture
@@ -18,7 +18,7 @@ A = 5e-4 en T (±0,05 point), hystérésis du fichier 1,66 A, niveaux de bruit 0
    lecture en nombres aléatoires communs, détection à hystérésis par la même règle sur le réel et le nominal, plantage
    quand le niveau n'est pas atteint ou que le comptage diverge. Rien de cela n'est naïf.
 2. **Son chemin « grille machine » était faux**, et c'est le chemin qui porte le modèle de lecture figé de 👤
-   (ETAT §3 : lecture tous les 0,125 nm, moyenne sur 8 lectures). Cinq défauts, tous corrigés cette nuit :
+   (ETAT, section 3 : lecture tous les 0,125 nm, moyenne sur 8 lectures). Cinq défauts, tous corrigés cette nuit :
    - le substrat nu compté deux fois à la couche 0 (D93) ;
    - un signal interpolé et une fenêtre au départ extrapolé : 6,1 A d'écart au T exact en médiane, jusqu'à 36 A
      (D94, D95) ;
@@ -28,9 +28,11 @@ A = 5e-4 en T (±0,05 point), hystérésis du fichier 1,66 A, niveaux de bruit 0
 
    Corrigé, ce chemin reproduit une machine rejouée lecture par lecture et indépendante du noyau : P95 à 6 % près au
    plus, aucun plantage d'un côté ni de l'autre sur les quatre plans comparés (§2).
-3. **Le chemin livré (grille grossière, lectures brutes) reste un modèle approché**, pessimiste : le modèle figé note
-   10 % plus bas en médiane. Mais sur les 370 plans du juge, il désigne **le même meilleur
-   plan** que le modèle figé, et les classements concordent à 0,92 (§6). Quatre écarts restent ouverts, mesurés en
+3. **Le chemin livré (grille grossière, lectures brutes) reste un modèle approché.** Ses notes s'écartent de celles
+   du modèle figé d'environ 10 %, dans un sens qui dépend du composant : 10 % trop haut sur le juge de paix, 11 %
+   trop bas sur `r75x2`. Mais il choisit bien : sur les 370 plans du juge, il désigne **le même meilleur plan** que le
+   modèle figé (classements concordants à 0,92) ; sur la tête de `r75x2`, son meilleur plan est à 3,9 % de celui du
+   modèle figé, dans le bruit Monte-Carlo (§6). Quatre écarts restent ouverts, mesurés en
    §4 : les ancres lues sur l'échantillonnage grossier (D96), l'inversion parabolique de l'arrêt (D97, désormais en
    option), l'armement non causal (D98) et, au modèle figé, la lecture d'arrêt non lissée (D99). Ceux dont l'effet
    sur le classement est mesuré (D97, D98, D99) ne déplacent la tête de la population qu'à l'intérieur du bruit
@@ -122,8 +124,9 @@ physique isolée, machine de `876af484` :
 
 Aucun plantage côté machine ; côté noyau livré, 0,3 % au plus (à 2×).
 
-Le noyau livré est **pessimiste**. Il lit ses ancres sur des lectures brutes, alors que la machine les lit lissées ;
-il classe pourtant les plans à peu près dans le même ordre. Les arrêts décalés de la machine à 2× tombent sur des
+Sur ces 12 plans du juge, le noyau livré est **pessimiste** (sur `r75x2`, la §6 mesure le sens inverse). Il lit ses
+ancres sur des lectures brutes, alors que la machine les lit lissées ; la cause de l'écart n'est pas isolée. Il classe
+pourtant les plans à peu près dans le même ordre. Les arrêts décalés de la machine à 2× tombent sur des
 couches où la fraction POEM est proche de 0, donc près de l'extremum suivant. Lu à 0,125 nm, un extremum est biaisé
 **vers l'extérieur** par le bruit (le maximum de lectures bruitées). Lu sur l'échantillonnage grossier, il est
 biaisé **vers l'intérieur** (l'échantillon tombe à côté du sommet). Le noyau livré ne voit donc pas ces arrêts.
@@ -161,13 +164,13 @@ pas connu : l'appareil est breveté.
 
 **D99, bruit de la lecture d'arrêt non lissé au modèle figé.** Le noyau porte le bruit de la lecture d'arrêt par un
 seul tirage brut par couche (`noise_val_precalc`, σ = A/3 × niveau), lissage ou non ; la machine séquentielle en mode
-`anticipated` fait de même. Si la chaîne de détection moyenne sur 8 lectures (postulat 3 d'ETAT §3), l'arrêt se
+`anticipated` fait de même. Si la chaîne de détection moyenne sur 8 lectures (postulat 3 d'ETAT, section 3), l'arrêt se
 décide sur le signal lissé, au bruit divisé par environ √8. Mesuré sur 17 plans du juge (rangs 0 à 369), modèle figé,
 mêmes tirages divisés par √8 : notes plus basses de 8 à 21 % (médiane 11 %), classement des 17 conservé à 0,92
 (Spearman), meilleur plan 22 au lieu de 11, à 2,3 % l'un de l'autre. La variante brute redonne exactement les notes de
 la §6. C'est une question de modèle : à trancher par 👤.
 
-**Le seuil de détection, balayé** (chantier d'ETAT §6). Modèle livré, les 370 plans du juge, seuil de 1,0 à 2,4 A,
+**Le seuil de détection, balayé** (chantier d'ETAT, section 6). Modèle livré, les 370 plans du juge, seuil de 1,0 à 2,4 A,
 proportionnel au niveau de bruit comme dans le code, mêmes tirages :
 
 | seuil | plans dont la note est identique au bit à celle de 1,66 A | plantage moyen à 2× | meilleur plan |
@@ -225,9 +228,27 @@ Ce que cela dit :
 - **L'arrêt exact (D97) ne change presque rien** : −0,7 % de note en médiane, classement conservé à 0,99.
 - **Les plans de tête sont indiscernables.** La gagnante du banc (rang 0) est 6ᵉ ici, à 4,6 % du plan 11 ; au banc,
   qui ajoute la fente et le consensus et tire d'autres bruits, le plan 11 était 3 % derrière elle. Les deux sont dans
-  la classe d'équivalence que donne le bruit Monte-Carlo (ETAT §2 : deux runs à moins de ~8 % sont indiscernables).
+  la classe d'équivalence que donne le bruit Monte-Carlo (ETAT, section 2 : deux runs à moins de ~8 % sont indiscernables).
 - Avant les correctifs de la grille machine, la même renotation éliminait 21 plans sous le modèle figé, dont les
   rangs 8 à 22 du banc (Spearman 0,907 sur les 349 restants).
+
+**Sur un empilement sans structure** (`r75x2`, les 50 premiers plans de
+`reports/STRAT_bench_r75x2_deep_hysteresis_noise_level_306559d3_2026-10-05.json`, configuration
+`JSON-strat-random75-x2-fabricable.json`, mêmes conditions) :
+
+| modèle | déposables | meilleur plan (note) | plans à 4 % du meilleur | plans à 8 % |
+|---|---|---|---|---|
+| livré | 50 | 48 (0,074191) | 43 | 50 |
+| figé | 50 | 47 (0,079976) | 18 | 35 |
+
+- **Le signe s'inverse** : ici le modèle figé note **11 % plus haut** en médiane (sur le juge, 10 % plus bas). Le
+  modèle livré n'est donc pas pessimiste en général ; cela dépend du composant. La cause n'est pas isolée.
+- **La tête est un peloton** : sous le modèle livré, les 50 plans tiennent dans 8 % du meilleur, 43 dans 4 %. Les
+  classements des deux modèles n'y concordent pas (Spearman 0,19), ce qu'on attend d'écarts aussi petits que le
+  bruit Monte-Carlo.
+- **Le meilleur plan change** (48 sous le modèle livré, 47 sous le modèle figé), mais le 48 n'est qu'à 3,9 % du 47
+  au modèle figé : dans la classe d'équivalence. Reclasser au modèle figé les 10 premiers du modèle livré choisirait
+  le 47.
 
 ## Reproduire
 

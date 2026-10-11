@@ -29,18 +29,20 @@ Le rapport de l'audit, ses chiffres et leurs commandes : `reports/STRAT_audit_de
   suit quel que soit le bruit de ses premières lectures (`c1d0c239` seul en avait fait perdre l'ancre : 27 des 101
   premiers plans plantaient davantage, jusqu'à 34 %). Ainsi corrigé, le noyau reproduit une machine indépendante rejouée
   lecture par lecture (`scripts/probe_oms_sequentiel.py`, oracle TMM, même contrôleur depuis `876af484`) : aucun plantage
-  d'un côté ni de l'autre sur quatre plans, P95 à 6 % près (rapport §2).
+  d'un côté ni de l'autre sur quatre plans, P95 à 6 % près (rapport, section 2).
 - **D97 en option** (`33bbd645`) : `exact_inversion`, inactive par défaut, résout l'arrêt sur la forme fermée de la couche
   en cours au lieu de la parabole de trois sondes.
-- **Le modèle livré** (grille grossière, lectures brutes, 1,66 A) est pessimiste face à la machine au modèle figé : sur
-  12 plans du juge, P95 de la machine / P95 du noyau de 0,73 à 0,97 à 1×, de 0,76 à 0,94 à 2× ; il classe les 12 plans à
+- **Le modèle livré** (grille grossière, lectures brutes, 1,66 A) est pessimiste sur le juge face à la machine au modèle
+  figé : sur 12 plans, P95 de la machine / P95 du noyau de 0,73 à 0,97 à 1×, de 0,76 à 0,94 à 2× ; il classe les 12 plans à
   peu près comme elle (Spearman 0,84 et 0,90). À 2×, la machine fait 5 à 66 arrêts à plus de 2 nm du nominal par plan (sur
   300 × 48), sur des couches où la fraction POEM est proche de 0 : l'armement (D98), que le noyau ne modélise pas.
 - **Renotation des 370 plans du juge** (`scripts/probe_modele_lecture.py`, noyaux de production, 300 tirages, fente
-  absente ; rapport §6) : les 370 sont déposables sous les quatre modèles (livré, figé, et chacun avec l'arrêt exact).
+  absente ; rapport, section 6) : les 370 sont déposables sous les quatre modèles (livré, figé, et chacun avec l'arrêt exact).
   Le modèle livré et le modèle figé désignent le même meilleur plan (rang 11 du banc) ; Spearman 0,920 ; le modèle figé
   note 10 % plus bas en médiane. L'arrêt exact ne change presque rien (Spearman 0,991, −0,7 %). La gagnante du banc
-  est 6ᵉ (livré) et 7ᵉ (figé), à 4,6 % du plan 11 : dans la classe d'équivalence du bruit Monte-Carlo.
+  est 6ᵉ (livré) et 7ᵉ (figé), à 4,6 % du plan 11 : dans la classe d'équivalence du bruit Monte-Carlo. Sur les 50
+  premiers plans de `r75x2`, le sens s'inverse (le modèle figé note 11 % plus haut) ; les deux meilleurs plans
+  diffèrent (48 et 47) mais restent à 3,9 % l'un de l'autre, dans un peloton de tête où 43 plans tiennent dans 4 %.
 - **CI** : le cliquet de dette refusait `certus_strat_growth.py` (2 745 lignes, plafond 2 508). Découpé par responsabilité
   (`cbdae548`) : `certus_strat_readings.py` prend ce que la machine lit et où elle s'arrête ; 8 008 tableaux identiques
   au bit ; plafond abaissé à 2 169. Validation complète sur `cbdae548` : Ruff 0 ; oracle 1 139 passed ; unit 4 986 passed,
@@ -143,7 +145,7 @@ n'autorise pas à modifier son arbre témoin.
 | rang | action et critère de fin | raison / condition |
 |---|---|---|
 | 3 — établir la parité publiée | Fait le 2026-10-06 (`reports/PARITE_ZENODO_ECARTS_LONGS_2026-10-06.md`, après les inventaires du 2026-10-05 et la lecture des écarts courts) : aucune amélioration de l'INDEX SPLINE publié ne manque au code courant ; son gradient analytique, que la version publiée n'utilise pas, est vérifié contre les différences finies avec des mesures en réflexion (12 cas ajoutés à l'oracle). Pour le RE, le silicium diffère de celui de `certus_re` de −2,0e-3 à +4,5e-3, le saphir est le même jeu. Reste à 👤 : trois décisions (§5). | Les capacités du RE publié absentes de CERTUS (a priori MAP, échantillon revêtu sur les deux faces, résidus par voie) ne se portent que sur décision. |
-| 4 — traiter la chaîne de mesure | La grille machine du noyau lit maintenant le T exact à chaque lecture (12.4) et lisse sur 8 lectures avec le seuil de 1,00 A (12.2) : D54, D55, D93, D94 et D95 sont corrigés, et ce chemin reproduit une machine indépendante rejouée lecture par lecture (rapport du 2026-10-10, §2). Ce que ce modèle figé change au classement d'une population est mesuré (même rapport, §6). Reste : D96 à D98, et la décision de 👤 de noter au modèle figé, au moins pour départager la tête du classement. | La grille de la machine est inactive par défaut. Tout changement de noyau passe C1 froid contre froid et l'oracle. |
+| 4 — traiter la chaîne de mesure | La grille machine du noyau lit maintenant le T exact à chaque lecture (12.4) et lisse sur 8 lectures avec le seuil de 1,00 A (12.2) : D54, D55, D93, D94 et D95 sont corrigés, et ce chemin reproduit une machine indépendante rejouée lecture par lecture (rapport du 2026-10-10, section 2). Ce que ce modèle figé change au classement d'une population est mesuré (même rapport, section 6). Reste : D96 à D98, et la décision de 👤 de noter au modèle figé, au moins pour départager la tête du classement. | La grille de la machine est inactive par défaut. Tout changement de noyau passe C1 froid contre froid et l'oracle. |
 | 5 — stabiliser interface et gel | Reproduire D23 (les six `gc.collect()` des threads de calcul STRAT et les `QThread`) avant D11 et `WA_DeleteOnClose` ; poursuivre la réduction du gel (D72) après sa fiabilité. | D11 n'a pas d'effet dans le lancement actuel par processus ; libérer une fenêtre avant ses threads serait plus grave. |
 | 6 — réduire la dette | Élucider les effets d'import de D42 avant E402/I001 (D25), puis traiter D26 et les défauts visuels selon §4–5. | Chantier utile, mais moins urgent que la justesse scientifique ; l'ordre des imports peut changer l'exécution. |
 
@@ -488,7 +490,7 @@ numéros de l'ancien registre sont entre parenthèses
 | # | défaut | piste |
 |---|---|---|
 | D96 | **Ancres POEM lues sur l'échantillonnage grossier.** Le noyau prend la valeur de l'échantillon à l'extremum (16 points par couche rejouée, 64 sur trois épaisseurs pour la couche en cours) : l'échantillon tombe à côté du sommet, d'une quantité qui diffère entre signal réel et nominal dès que leurs épaisseurs diffèrent. Sans aucun bruit, erreurs amont tirées à σ = 0,3 nm (3 réalisations × 48 couches, gagnante du juge de paix, 2026-10-10) : l'arrêt du noyau s'écarte de l'arrêt POEM exact (oracle au pas de 0,05 nm) de 0,055 nm RMS, P95 0,14 nm, jusqu'à 0,17 nm RMS sur une couche ; l'inversion (D97) en explique 0,021 nm RMS, les ancres le reste | extrema en forme fermée (tan 2δ = R/Q, docstring de `layer_scan_coeffs`), en option inactive par défaut, puis mesurer |
-| D97 | **Inversion parabolique de l'arrêt.** `_invert_thickness_from_probes` résout le niveau sur la parabole de trois points à ±`probe_offset` (2,5 nm sur le juge) autour de l'épaisseur nominale, et extrapole quand l'arrêt réel s'en éloigne. Mêmes conditions que D96, niveaux exacts donnés : 0,021 nm RMS sous POEM (0,13 nm sur la couche 40), mais 0,19 nm RMS et jusqu'à 1,53 nm au niveau absolu (POEM coupé), où l'arrêt se déplace de plusieurs nanomètres | l'option existe (`exact_inversion`, `_invert_thickness_exact`, inactive par défaut : racine de la forme fermée la plus proche du nominal, encadrée puis bissectée ; la parabole reste pour un indice absorbant) ; son effet sur un classement est mesuré (rapport du 2026-10-10, §6) ; l'activer par défaut est une décision de 👤 |
+| D97 | **Inversion parabolique de l'arrêt.** `_invert_thickness_from_probes` résout le niveau sur la parabole de trois points à ±`probe_offset` (2,5 nm sur le juge) autour de l'épaisseur nominale, et extrapole quand l'arrêt réel s'en éloigne. Mêmes conditions que D96, niveaux exacts donnés : 0,021 nm RMS sous POEM (0,13 nm sur la couche 40), mais 0,19 nm RMS et jusqu'à 1,53 nm au niveau absolu (POEM coupé), où l'arrêt se déplace de plusieurs nanomètres | l'option existe (`exact_inversion`, `_invert_thickness_exact`, inactive par défaut : racine de la forme fermée la plus proche du nominal, encadrée puis bissectée ; la parabole reste pour un indice absorbant) ; son effet sur un classement est mesuré (rapport du 2026-10-10, section 6) ; l'activer par défaut est une décision de 👤 |
 
 **Le modèle physique — connus, non corrigés**
 
@@ -535,7 +537,7 @@ D10, D41, D48, D54, D55, D56, D58, D65, D66, D76, D86, D87, D88 et D92 sont tran
 dimensionner K, le nombre de graines à lancer : p ≈ 3/7 pour trouver un déposable, 2/7 pour
 atteindre le niveau 0,57 · balayer `tp_hysteresis_factor` à bruit fixé sur la grille machine : sur la grille
 grossière, il est presque inerte (juge de paix, 370 plans, 2026-10-11 : de 1,0 à 2,0 A, 358 à 362 notes identiques au
-bit à celles de 1,66 A, même meilleur plan ; rapport de l'audit du 2026-10-10, §4) · compter le criblage et
+bit à celles de 1,66 A, même meilleur plan ; rapport de l'audit du 2026-10-10, section 4) · compter le criblage et
 l'héritage quand un étage deviendra suspect · porter le résultat de `r75x2` dans la vitrine,
 avec sa condition dans la même phrase que le chiffre · accélérer à résultat identique au bit : aucune piste ouverte.
 Les 17 % d'« attente du consommateur de statistiques » du profil ne sont pas du temps : l'échantillonneur de

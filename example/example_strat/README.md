@@ -66,6 +66,7 @@ un fichier peut porter des clés retirées, ignorées au chargement avec une lig
 | `affine_scale_amp` | `float` | `0.0` | Amplitude de distorsion affine d'échelle sur la transmission ($a \in [1-\delta, 1+\delta]$). |
 | `affine_offset_amp` | `float` | `0.0` | Amplitude de décalage affine de ligne de base ($b \in [-\delta, +\delta]$). |
 | `reading_smoothing_window` | `int` | `1` | Taille de la fenêtre de lissage des lectures machine (1 = désactivé/neutre). Au-delà de 1, le noyau passe aussi sur la grille de la machine : une lecture tous les 0,125 nm. |
+| `witness_reset_layers` | `string`/`list` | absent | Couches où un verre témoin NEUF entre, comptées depuis 0 (`"22;42;76"` : quatre témoins). Absent ou vide : un seul témoin. Champ « New test glass at layers » de la carte « Machine model ». Outil de faisabilité, jamais d'optimisation : sur un composant qu'un seul témoin suffit à surveiller, toute coupure mesurée a dégradé le SEEL (+10 à +110 %). |
 | `machine_sampling_dd` | `float` | `0.0` | Pas de la grille machine en nm (0 = grille grossière). 🔴 **Inerte** : le noyau reçoit toujours 0. |
 | `tp_hysteresis_factor` | `float` | `1.66` | Seuil d'hystérésis pour la détection anti-bruit des points tournants. |
 | `phase_a_level_margin_factor` | `float` | `1.66` | Marge de sécurité requise entre le niveau de transmission visé et les extrema. |

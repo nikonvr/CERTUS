@@ -22,6 +22,8 @@ from certus.core.certus_strat_core import (
     SYM_DEFAULT_TIE_EPS_REL,
     SYM_DEFAULT_WEIGHT,
 )
+from certus.ui import certus_strat_witness as witness
+from certus.ui.certus_strat_defaults import default_settings
 from certus.ui.certus_strat_json_ui import JsonViewerWindow
 from certus.ui.certus_ui import get_certus_last_dir, safe_ui_action, set_certus_last_dir
 from certus.ui.certus_ui_widgets_factory import CertusBooleanField
@@ -319,82 +321,7 @@ class CertusStratStateMixin:
         self._on_substrate_choice_changed(self.widgets["substrate_choice"].currentText())
 
     def set_default_values(self) -> None:
-
-        stack_string = "0.376863,0.544274,0.525625,2.014363,1.404237,1.260913,2.108868,1.619996,1.661556,1.051359,1.410965,0.96871,1.000151,0.812025,0.723532,0.679077,0.749945,0.697612,0.590237,0.654072,0.756165,0.854369,0.892505,1.147616,0.196934,0.801568,0.692039,0.793093,0.732264,0.62781,0.700873,0.742287,0.74316,0.161261,1.028982,1.563076,0.726649,0.325847,0.844091,0.496665,0.585217,0.149928,0.54806,0.302789,0.439372,1.355508"
-
-        multipliers = [m.strip() for m in stack_string.split(",")]
-
-        defaults = {
-            "h_type_custom": True,
-            "l_type_custom": True,
-            "nH_r": "2.3",
-            "nL_r": "1.45",
-            "substrate_choice": "Custom",
-            "nSub_custom": "1.73",
-            "l0": "1500.0",
-            "stack_multipliers": multipliers,
-            "wl_range_start": "1200.0",
-            "wl_range_end": "1700.0",
-            "wl_step": "0.2",
-            "scan_wl_min": "1200.0",
-            "scan_wl_max": "1700.0",
-            "scan_wl_step": "2.0",
-            "dynamics_threshold": "0.025",
-            "min_transmission_floor": "0.10",
-            "iter_divider_start": "10",
-            "iter_divider_end": "3",
-            "mc_runs_block": "100",
-            "trigger_tolerance": "0.1",
-            "noise_distribution": "gaussian",
-            "non_monotonic_mode": "attenuate",
-            "sim_thickness_probe_offset_ratio": "80.0",
-            "robustness_noise_factors": "0.5,1,2",
-            "robustness_num_runs": "150",
-            "execution_mode": "premium",
-            "non_monotonic_error_factor": "2.0",
-            "wavelength_change_penalty": "1.2",
-            "force_first_layer_same_wl": False,
-            "nucleation_mc_runs": "40",
-            "mining_candidates_limit": "3000",
-            # ── MACHINE MODEL: the six error sources, 2026-08-12 ──────────
-            #
-            # 🔴 THE DEFAULTS ARE THOSE OF THE REAL MACHINE, not neutral values.
-            # An empty or zero field would describe a perfect instrument that does not exist,
-            # and that is precisely what 👤 asked to correct: "I do not want to be optimistic
-            # about the slits but realistic", "the index biases must always be active, it is
-            # the basis", "rate is the general case".
-            "slit_bias_enabled": "1",
-            "monochromator_resolution_nm": "2.0",
-            "search_resolution": "1",
-            "index_corridor": "0.005",
-            "photometric_curvature_amp": "0.00375",
-            "allow_rate": "1",
-            # The one that stays INACTIVE: the smoothing, because the OMS algorithms are
-            # not known.
-            "reading_smoothing_window": "1",
-            "n_screen_runs": "25",
-            "k_keep_survivors": "10",
-            "top_k_parents": "20",
-            "max_fusions_per_parent": "5",
-            "phase_a_scan_limit": "300",
-            "nucleation_max_rmse": "1.5",
-            "nucleation_degradation": "1.4",
-            "sym_enable": "1",
-            "sym_weight": f"{SYM_DEFAULT_WEIGHT}",
-            "sym_same_wl_bonus": f"{SYM_DEFAULT_SAME_WL_BONUS}",
-            "sym_extrema_window": f"{SYM_DEFAULT_EXTREMA_WINDOW_OT}",
-            "sym_continuity_weight": f"{SYM_DEFAULT_CONTINUITY_WEIGHT}",
-            "sym_adaptive_same_wl": "1",
-            "sym_allow_hybrid": "0",
-            "sym_prefer_on_tie": "1",
-            "sym_tie_epsilon": f"{SYM_DEFAULT_TIE_EPS_ABS}",
-            "sym_tie_epsilon_rel": f"{SYM_DEFAULT_TIE_EPS_REL}",
-            "sym_scoring_mode": SYM_DEFAULT_SCORING_MODE,
-            "show_plots": True,
-            "export_excel": True,
-        }
-
-        self.populate_gui_from_config(defaults)
+        self.populate_gui_from_config(default_settings())
 
     def _save_undo_state(self) -> None:
         """Save current state of stack_table for undo"""
@@ -681,6 +608,7 @@ class CertusStratStateMixin:
             "photometric_curvature_amp",
             "allow_rate",
             "reading_smoothing_window",
+            witness.KEY,
             "n_screen_runs",
             "k_keep_survivors",
             "top_k_parents",
@@ -820,6 +748,7 @@ class CertusStratStateMixin:
             for warn in validation_warnings:
                 self.logger.warning("[STRAT-CONFIG] %s", warn)
 
+            config.setdefault(witness.KEY, "")  # a cut plan belongs to its stack: a file without one runs one glass
             self.populate_gui_from_config(config)
 
             post_warnings = self._validate_strat_gui_state(config)
@@ -1323,9 +1252,10 @@ class CertusStratStateMixin:
                 getattr(self, "_loaded_config", {}), "poem_enabled", True
             ),
             # ── Machine reading smoothing window k (T4) ───────────────────────
-            "reading_smoothing_window": int(
-                _config_float(getattr(self, "_loaded_config", {}), "reading_smoothing_window") or 1
-            ),
+            "reading_smoothing_window": int(self._get_float_safe(
+                "reading_smoothing_window", _config_float(getattr(self, "_loaded_config", {}), "reading_smoothing_window") or 1,
+            ) or 1),
+            witness.KEY: self._witness_layers(),
             # ── 👤 MONOCHROMATOR SLIT, part of the strategy to report ──────────
             #
             # "Finding a strategy is finding the control wavelengths or the rate layers,
@@ -1610,16 +1540,7 @@ class CertusStratStateMixin:
                 or _config_float(getattr(self, "_loaded_config", {}), "robustness_seed", 0.0)
                 or 42
             ),
-            "sym_enable": True,
-            "sym_weight": self._get_float_safe("sym_weight", SYM_DEFAULT_WEIGHT),
-            "sym_same_wl_bonus": self._get_float_safe("sym_same_wl_bonus", SYM_DEFAULT_SAME_WL_BONUS),
-            "sym_extrema_window": self._get_float_safe("sym_extrema_window", SYM_DEFAULT_EXTREMA_WINDOW_OT),
-            "sym_continuity_weight": self._get_float_safe("sym_continuity_weight", SYM_DEFAULT_CONTINUITY_WEIGHT),
-            "sym_adaptive_same_wl": bool(self._get_float_safe("sym_adaptive_same_wl", 1.0) > 0.5),
-            "sym_allow_hybrid": bool(self._get_float_safe("sym_allow_hybrid", 0.0) > 0.5),
-            "sym_prefer_on_tie": bool(self._get_float_safe("sym_prefer_on_tie", 1.0) > 0.5),
-            "sym_tie_epsilon": self._get_float_safe("sym_tie_epsilon", SYM_DEFAULT_TIE_EPS_ABS),
-            "sym_tie_epsilon_rel": self._get_float_safe("sym_tie_epsilon_rel", SYM_DEFAULT_TIE_EPS_REL),
+            **self._collect_sym_params(),
             "sym_scoring_mode": (
                 self.widgets["sym_scoring_mode"].currentText()
                 if self.widgets.get("sym_scoring_mode")
@@ -1733,6 +1654,26 @@ class CertusStratStateMixin:
         resolved = alias_map.get(kind, {}).get(key, txt)
         return resolved
 
+    def _collect_sym_params(self) -> dict[str, Any]:
+        """The symmetry settings of `collect_params`, in its order and with its values."""
+        return {
+            "sym_enable": bool(self._get_float_safe("sym_enable", 1.0) > 0.5),
+            "sym_weight": self._get_float_safe("sym_weight", SYM_DEFAULT_WEIGHT),
+            "sym_same_wl_bonus": self._get_float_safe("sym_same_wl_bonus", SYM_DEFAULT_SAME_WL_BONUS),
+            "sym_extrema_window": self._get_float_safe("sym_extrema_window", SYM_DEFAULT_EXTREMA_WINDOW_OT),
+            "sym_continuity_weight": self._get_float_safe("sym_continuity_weight", SYM_DEFAULT_CONTINUITY_WEIGHT),
+            "sym_adaptive_same_wl": bool(self._get_float_safe("sym_adaptive_same_wl", 1.0) > 0.5),
+            "sym_allow_hybrid": bool(self._get_float_safe("sym_allow_hybrid", 0.0) > 0.5),
+            "sym_prefer_on_tie": bool(self._get_float_safe("sym_prefer_on_tie", 1.0) > 0.5),
+            "sym_tie_epsilon": self._get_float_safe("sym_tie_epsilon", SYM_DEFAULT_TIE_EPS_ABS),
+            "sym_tie_epsilon_rel": self._get_float_safe("sym_tie_epsilon_rel", SYM_DEFAULT_TIE_EPS_REL),
+        }
+
+    def _witness_layers(self) -> list[int]:
+        """The layers where a new test glass enters: the field first, the loaded file when the window has none."""
+        field = self.widgets.get(witness.KEY)
+        return witness.parse(field.text() if field is not None else getattr(self, "_loaded_config", {}).get(witness.KEY))[0]
+
     def _get_float_safe(self, widget_name, default=0.0) -> Any:
 
         if widget_name not in self.widgets:
@@ -1778,6 +1719,9 @@ class CertusStratStateMixin:
                 f"{self._field_label('scan_wl_min')} ({params['scan_wl_min']:g}) must be below "
                 f"{self._field_label('scan_wl_max')} ({params['scan_wl_max']:g})."
             )
+        field, table = self.widgets.get(witness.KEY), self.widgets.get("stack_table")
+        if field is not None and table is not None:
+            problems += witness.problems(field.text(), table.rowCount(), self._field_label(witness.KEY))
         return problems
 
     def refuse_to_run(self, problems: list[str]) -> None:

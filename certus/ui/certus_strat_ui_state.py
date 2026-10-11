@@ -1323,9 +1323,9 @@ class CertusStratStateMixin:
                 getattr(self, "_loaded_config", {}), "poem_enabled", True
             ),
             # ── Machine reading smoothing window k (T4) ───────────────────────
-            "reading_smoothing_window": int(
-                _config_float(getattr(self, "_loaded_config", {}), "reading_smoothing_window") or 1
-            ),
+            "reading_smoothing_window": int(self._get_float_safe(
+                "reading_smoothing_window", _config_float(getattr(self, "_loaded_config", {}), "reading_smoothing_window") or 1,
+            ) or 1),
             # ── 👤 MONOCHROMATOR SLIT, part of the strategy to report ──────────
             #
             # "Finding a strategy is finding the control wavelengths or the rate layers,

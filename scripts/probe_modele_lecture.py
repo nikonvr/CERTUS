@@ -12,9 +12,11 @@ levels; a crash rate above 5 % at any level eliminates. Photometric curvature an
 production; the slit bias is LEFT OUT (its profiles are built per strategy inside the pipeline), and so is any Rate
 layer or witness swap -- the comparison is between reading models, under the same physics on both sides.
 
-Models (`--models`): `livre` and `fige`, each also with the exact stop (`_exact`, D97), and `fige_arret_lisse`, the
-frozen model whose stop reading is smoothed like the rest (D99). `name@factor` sets the turning-point threshold of a
-model to `factor` x A: `--models livre@1.0,livre@1.66,livre@2.4` sweeps it.
+Models (`--models`): `livre` and `fige`, each also with the exact stop (`_exact`, D97), `fige_arret_lisse`, the frozen
+model whose stop reading is smoothed like the rest (D99), and `livre_ancres` and `livre_exact_ancres`, the shipped model
+with POEM's anchors read at the extremum of their layer instead of the coarse sample (D96), the second with the exact stop
+too. `name@factor` sets the turning-point threshold of a model to `factor` x A: `--models livre@1.0,livre@1.66,livre@2.4`
+sweeps it.
 
     python scripts/probe_modele_lecture.py <config.json> <plans.json> [--models livre,fige] [--ranks 0,5,9]
         [--first N] [--runs 300] [--json out.json]
@@ -53,6 +55,9 @@ MODELS = {
     # D99: the frozen model with the stop reading smoothed like the rest -- the same stop draws divided by sqrt(8), the
     # variance of a mean of 8 independent readings. The kernel draws it raw whatever the smoothing.
     "fige_arret_lisse": {"smoothing": 8, "hyst": 1.0, "exact": False, "stop_scale": 1.0 / np.sqrt(8.0)},
+    # D96: the shipped model with POEM's anchors at the extremum of their layer, with the parabola or the exact stop.
+    "livre_ancres": {"smoothing": 1, "hyst": None, "exact": False, "anchors": True},
+    "livre_exact_ancres": {"smoothing": 1, "hyst": None, "exact": True, "anchors": True},
 }
 
 
@@ -87,6 +92,7 @@ def score_plan(params, thick, blocks, n_runs, A, h_config, model, wls, nH_w, nL_
             float(params.get("non_monotonic_error_factor", 2.0)), 0, np.full(n, A * f), seed * 7919 + level_idx,
             hf * A * f, 0.0, 0.0, curvature, seed * 31 + level_idx, True, int(model["smoothing"]), corridor,
             seed * 53 + level_idx, lo, hi, None, None, None, bool(model.get("exact", False)),
+            bool(model.get("anchors", False)),
         )[0]
         crashed = (res > 1e5).any(axis=1)
         crash = float(np.mean(crashed))

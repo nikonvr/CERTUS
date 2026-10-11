@@ -362,3 +362,26 @@ def test_a_beam_deeper_than_an_id_range_is_clipped_and_never_shares_an_id(monkey
     assert calls
     assert max(calls) <= ranking._COUVERTURE_ID_STRIDE
     assert "clipped" in " ".join(r.getMessage() for r in caplog.records)
+
+
+def test_the_real_dp_returns_twice_top_k_and_every_mined_id_stays_unique():
+    """D103. The kernel keeps a beam of `2 * top_k` and returns all of it (`_dp_kernel`): at `dp_top_k = 100`, deep and
+    extreme, one cost map yields up to 200 groupings, and ranks 100 to 199 of THICKNESS took the ids of ranks 0 to 99 of
+    THICKNESS^2, those of THICKNESS^2 the ids of SYM. Measured on 2026-10-11, r75x2 deep: id 15239 named two plans, the
+    consensus gave both the score of one, and the uniqueness guard withheld the run at its end. The fake DP of the test
+    above returns `top_k` groupings at most, which is why it never saw it."""
+    raw = {i: [{"wl": 400.0 + 10.0 * w, "cost": 1.0 + 0.01 * w + 0.001 * i} for w in range(20)] for i in range(6)}
+    strategies = ranking.mine_strategies_for_block_count(
+        n_blocks=3, raw_results_thickness=raw, raw_results_sq=raw, num_layers=6, top_k=100
+    )
+    per_origin = {o: [s for s in strategies if s["origin"] == o] for o in ("THICKNESS", "THICKNESS²", "SYM")}
+    assert all(len(rows) > ranking._COUVERTURE_ID_STRIDE for rows in per_origin.values()), (
+        "no cost map went past the first hundred: the test tests nothing"
+    )
+    ids = [s["strategy_id"] for s in strategies]
+    assert len(ids) == len(set(ids)), "two mined groupings share an id"
+    # The first hundred of each map keep the ids they always had: a run whose maps stop there is unchanged.
+    for offset, origin in ((0, "THICKNESS"), (100, "THICKNESS²"), (200, "SYM")):
+        for s in per_origin[origin]:
+            if s["rank_in_group"] <= ranking._COUVERTURE_ID_STRIDE:
+                assert s["strategy_id"] == 3 * 1000 + offset + s["rank_in_group"] - 1

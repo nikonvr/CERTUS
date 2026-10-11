@@ -437,12 +437,30 @@ fermées par la mesure.
 
 ## 7. Les composants d'essai
 
-| composant | fichier (`example/example_strat/`) | couches | notation | rôle |
+| composant | fichier (`example/example_strat/`, sauf mention) | couches | notation | rôle |
 |---|---|---|---|---|
 | dichroïque | `JSON-strat-example.json` | 48 | 400-700 nm | le juge de paix : passe-court, front vers 545 nm |
 | passe-bande 3 cavités | `JSON-strat-bandpass-3cav.json` | 35 | 600-660 nm | une résonance, une bande étroite |
 | aléatoire | `JSON-strat-random75.json` | 75 | 550-750 nm | ni cavité, ni miroir, ni périodicité : teste si une règle est **générale** |
 | passe-bande 5 cavités | `JSON-strat-bandpass-5cav-99c.json` | 99 | 610-655 nm | le cas dur |
-| aléatoire ×2 | `JSON-strat-random75-x2-fabricable.json` | 75 | 550-750 nm | l'étalon depuis le 2026-08-20 : épaisseurs doublées, fente native 1 nm |
+| aléatoire ×0,5 | `reports/serie_echelle_r75/cfg_x0.5.json` (`r75x0.5` des sondes) | 75 | 550-750 nm | le côté mince de la série d'échelle ; non fabricable avec un seul verre témoin (ci-dessous) |
+| aléatoire ×2 | `JSON-strat-random75-x2-fabricable.json` (fente 1 nm) ; `JSON-strat-random75-x2-fabricable-2nm.json` (fente 2 nm, rampes injectées de `rampes_r75x2-2nm.json`) | 75 | 550-750 nm | l'étalon depuis le 2026-08-20 : épaisseurs doublées |
 
 Une règle n'est acquise que si elle survit sur un empilement **sans structure**.
+
+**La série d'échelle de l'aléatoire** (`reports/serie_echelle_r75/`, 2026-08-15) : même empilement, mêmes matériaux
+(H800-Nb2O5 sur H800-SiO2, substrat SiO2, λ₀ 633 nm), seule l'épaisseur est multipliée ; c'est la seule expérience
+contrôlée du projet. Somme des QWOT (QWOT par couche ; couches sous 1 QWOT) : ×0,5 57,4 (0,25-1,24 ; 59) · ×1 114,9
+(0,50-2,48 ; 11) · ×1,5 172,3 (0,76-3,72 ; 3) · ×1,75 201,1 (0,88-4,34 ; 2) · ×2 229,8 (1,01-4,96 ; 0). Optique et
+mécanique y sont proportionnelles : une conclusion en micromètres ne se généraliserait pas à d'autres matériaux.
+
+**×0,5 avec un seul verre témoin** (2026-10-11, `782972bf`, D100 corrigé, `deep`, fente 2 nm,
+`reports/blocs_vs_plantage_r75x0.5_deep_s{042,101,202}.json`) : aucun déposable aux graines 42, 101 et 202 (0 sur
+2 895, 2 897 et 2 895 stratégies), plantage minimal 69,0 %, 8,3 % et 62,3 % (août : 68,7 % pour la graine 42 avec le
+profil élargi, 70,0 % et 67,0 %), et la cause de plantage dominante est « niveau d'arrêt hors d'atteinte » pour toutes
+les stratégies des trois graines. D103 ne la touche pas (aucun identifiant en double dans les trois journaux). Quand
+rien ne passe, le repli garde le plan au plantage le plus bas : celui de la graine 101, qui plante dans
+1,7 / 1,7 / 8,3 % des tirages aux bruits 0,5× / 1× / 2×, seul le 2× dépassant 5 % ; 5 blocs aux λ de contrôle 636,
+686, 737, 747 et 734 nm, variante `RATE_L31`. Son SEEL affiché est 0,673 nm : le `robustness_score` de D7, le P95 au
+pire des trois niveaux de bruit sur tous les tirages, plantés compris. Le SEEL niveau par niveau et le cas à plusieurs
+verres témoins ne sont pas mesurés.

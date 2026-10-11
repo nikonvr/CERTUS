@@ -197,6 +197,8 @@ du dichroïque dont le plantage s'écarterait nettement du prédit rouvrirait ce
   que N était petit est perdue pour toujours.
 - **Le multi-témoins est un outil de faisabilité**, pas d'optimisation : il rend le passe-bande
   de 99 couches fabricable et dégrade tout composant qui s'en passait (contrôle négatif 3 sur 3).
+  Il se règle dans la fenêtre STRAT depuis le 2026-10-11, sur demande de 👤 : champ « New test glass at layers: »
+  de la carte « Machine model — error sources » (`witness_reset_layers`), vide par défaut, donc un seul verre témoin.
 
 ### STRAT — arbitrages délégués par 👤 le 2026-10-04
 

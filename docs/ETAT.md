@@ -5,13 +5,73 @@
 > [`CLAUDE.md`](../CLAUDE.md). Il se tient **en place** : un fait change, on corrige sa ligne,
 > on ne raconte pas la correction (`git log` s'en charge). Toute mesure porte sa date.
 > Le détail et l'historique sont dans `git`, sans autorité (CLAUDE.md, en-tête).
-> Mis à jour le 2026-10-06 au soir (les 19 réponses de 👤 appliquées ; D92 trouvé et corrigé).
+> Mis à jour dans la nuit du 2026-10-10 au 11 (session Claude dans le nuage : `parite-zenodo` fusionnée dans la branche
+> de travail, audit du déclenchement de STRAT face à un OMS, grille machine du noyau corrigée, PR #9 en brouillon).
 
 ## 0. Reprise — à lire en premier, à tenir à jour
 
 > Mettre à jour cette section avec le travail : « en cours » dès le début, mesure et commit
 > à la fin. Les règles de validation sont dans les sections 2, 4 et 12 de
 > [CLAUDE.md](../CLAUDE.md) ; les décisions scientifiques appartiennent à 👤 (§5).
+
+**Nuit du 2026-10-10 au 11 (Claude, session dans le nuage, Linux, Python 3.14.6, 4 cœurs ; ordre de 👤 : « finalise les
+améliorations préconisées, puis audite l'arrêt de STRAT face à la réalité d'un OMS ; teste et améliore la recherche »).**
+Le rapport de l'audit, ses chiffres et leurs commandes : `reports/STRAT_audit_declenchement_OMS_2026-10-10.md`.
+- **`parite-zenodo` fusionnée** dans la branche `claude/ecstatic-newton-3grmls` (`7af8db47`), sans conflit ; PR
+  [#9](https://github.com/nikonvr/CERTUS/pull/9) en brouillon vers `master`.
+- **Validation de départ sur `7af8db47`** (Linux, l'interface ne s'y mesure pas) : Ruff 0 ; oracle 1 138 passed ; unit
+  4 937 passed, 7 skipped en 19 min 22 ; autres tests 347 passed, 2 skipped en 13 min 13 ; trois contrôles documentaires : 0.
+- **La grille machine du noyau est corrigée** (rang 4) ; le chemin par défaut garde ses bits à chaque commit (C1, froid
+  contre froid). D93 (`cf555a5b`, `1812329d`) : le substrat nu compté deux fois à la couche 0 (7,7 à 36,0 % de plantage
+  sur la gagnante du juge, fenêtre 8). D94 et D95 (`b576f915`) : T exact à chaque lecture au lieu d'un balayage grossier
+  interpolé, un seul tirage par lecture, fenêtre d'atteignabilité ouverte au début de la couche. Départ des fenêtres
+  (`c1d0c239`, `f7248c81`) : le plan dit si le départ d'une fenêtre est la première ancre de POEM, et le signal réel le
+  suit quel que soit le bruit de ses premières lectures (`c1d0c239` seul en avait fait perdre l'ancre : 27 des 101
+  premiers plans plantaient davantage, jusqu'à 34 %). Ainsi corrigé, le noyau reproduit une machine indépendante rejouée
+  lecture par lecture (`scripts/probe_oms_sequentiel.py`, oracle TMM, même contrôleur depuis `876af484`) : aucun plantage
+  d'un côté ni de l'autre sur quatre plans, P95 à 6 % près (rapport, section 2).
+- **D97 en option** (`33bbd645`) : `exact_inversion`, inactive par défaut, résout l'arrêt sur la forme fermée de la couche
+  en cours au lieu de la parabole de trois sondes.
+- **D96 en option** (`b0d0264c`, `eae41d81`) : `exact_anchors`, inactive par défaut, porte les ancres POEM du
+  balayage grossier au sommet de l'extremum de leur couche. Avec les deux options, l'arrêt du noyau sans bruit tombe
+  sur l'arrêt POEM exact de la machine séquentielle (8,0e-6 nm RMS sur 3 × 48 couches, contre 0,0545 nm par défaut).
+  Sur les 370 plans du juge : même meilleur plan, notes inchangées en médiane (+0,3 %), classement plus proche du
+  modèle figé (Spearman 0,943 au lieu de 0,920) (rapport, section 4).
+- **Le modèle livré** (grille grossière, lectures brutes, 1,66 A) est pessimiste sur le juge face à la machine au modèle
+  figé : sur 12 plans, P95 de la machine / P95 du noyau de 0,73 à 0,97 à 1×, de 0,76 à 0,94 à 2× ; il classe les 12 plans à
+  peu près comme elle (Spearman 0,84 et 0,90). À 2×, la machine fait 5 à 66 arrêts à plus de 2 nm du nominal par plan (sur
+  300 × 48), sur des couches où la fraction POEM est proche de 0 : l'armement (D98), que le noyau ne modélise pas.
+- **Renotation des 370 plans du juge** (`scripts/probe_modele_lecture.py`, noyaux de production, 300 tirages, fente
+  absente ; rapport, section 6) : les 370 sont déposables sous les quatre modèles (livré, figé, et chacun avec l'arrêt exact).
+  Le modèle livré et le modèle figé désignent le même meilleur plan (rang 11 du banc) ; Spearman 0,920 ; le modèle figé
+  note 10 % plus bas en médiane. L'arrêt exact ne change presque rien (Spearman 0,991, −0,7 %). La gagnante du banc
+  est 6ᵉ (livré) et 7ᵉ (figé), à 4,6 % du plan 11 : dans la classe d'équivalence du bruit Monte-Carlo. Sur les 50
+  premiers plans de `r75x2`, le sens s'inverse (le modèle figé note 11 % plus haut) ; les deux meilleurs plans
+  diffèrent (48 et 47) mais restent à 3,9 % l'un de l'autre, dans un peloton de tête où 43 plans tiennent dans 4 %.
+- **CI** : le cliquet de dette refusait `certus_strat_growth.py` (2 745 lignes, plafond 2 508). Découpé par responsabilité
+  (`cbdae548`) : `certus_strat_readings.py` prend ce que la machine lit et où elle s'arrête ; 8 008 tableaux identiques
+  au bit ; plafond abaissé à 2 169. Validation complète sur `cbdae548` : Ruff 0 ; oracle 1 139 passed ; unit 4 986 passed,
+  9 skipped en 25 min 45 ; autres tests 347 passed, 2 skipped en 20 min 18 ; trois contrôles documentaires : 0. Poussé
+  sur la branche de travail.
+
+**Fait dans la nuit du 2026-10-06.**
+- **Branche PGlobal morte de l'INDEX SPLINE retirée** (`8328e6fc`, décision de 👤) : les 43 instructions qui suivaient
+  le polissage local de `_run_single_spline_stage`, où `local_only` vaut toujours True, avec les deux aides qu'elles
+  seules utilisaient. Rien de ce qui s'exécute ne change : le banc INDEX SPLINE, qui passe une fois par cette fonction,
+  rend `RESULT` 0,0033932679903320956 après, à froid, comme deux passages froids avant. Registre de dette abaissé
+  (fichier 2 467 → 1 997 lignes, fonction 620 → 325) ; cliquet, audit du code mort et tests de l'INDEX SPLINE passent.
+  Poussé sur ordre de 👤 avec la parité (branche `parite-zenodo`) ; la validation complète locale n'a pas été relancée
+  sur cet état, la CI de la PR la fait avant la fusion.
+- **PR #7 fusionnée** dans `master` (`80dd7d3c`), ses 12 contrôles de CI verts : licences dans le gel, avis de tiers
+  complétés. Dependabot a fermé lui-même ses PR #1 à #4 et #6 après la fusion de la PR #5.
+- **Rang 3, parité avec les versions publiées : fait** (`898bd4cd`, `reports/PARITE_ZENODO_ECARTS_LONGS_2026-10-06.md`).
+  Aucune amélioration de l'INDEX SPLINE publié ne manque au code courant ; son gradient analytique, que la version
+  publiée n'utilise pas, est juste avec des mesures en réflexion : 15 tests ajoutés à l'oracle (`02edbf5c`), dont un
+  garde-fou qui refuse un gradient pris avec 10 % de poids en moins sur R. Une première sonde, au pas de 1e-7, avait
+  trouvé des écarts de 1e-4 à 8e-3 : c'était l'arrondi d'un coût de 50 à 120, qui disparaît quand le pas grandit.
+- **Citation du saphir corrigée dans le paquet `certus_re`** (hors de ce dépôt, sur la décision de 👤) : Malitson et
+  Dodge (1972) au lieu de Malitson (1962), dans `certus_re/dispersion.py` et l'en-tête de
+  `studies/volet2/indices/Al2O3_Malitson.csv`. Non commité : ce dépôt contient des modifications en cours de 👤.
 
 **Dernière action (Claude, 2026-10-06 au soir, sur les 19 réponses de 👤, §3).** Un commit et un test par
 correction ; chaque test échoue sur le code d'avant.
@@ -72,9 +132,11 @@ en partie (`5ccaa210`, 442 → 411 Mo). **D87 confirmé par 👤 dans l'exécuta
 `dbec2fc1` (`%TEMP%\CERTUS_HUB_test_dbec2fc1\CERTUS_HUB.exe`, hors du dépôt) : « l'exécutable fonctionne »
 (2026-10-06) ; le `release-windows` de la CI l'a aussi construit et démarré sur ce commit.
 
-**Point de départ.** `certus0310`. La [PR #5](https://github.com/nikonvr/CERTUS/pull/5) (`refactor-corridors-mixins`) est
-fusionnée dans `master` le 2026-10-06 (`d531c7cf`), ses 12 contrôles de CI verts ; la suite (licences du gel, avis,
-ETAT) part de la branche `gel-licences`, dans une PR fusionnée dès que sa CI est verte (§3). `python scripts\preflight.py` → `PREFLIGHT=GO` le 2026-10-06. Sauvegarde
+**Point de départ.** `certus0310`, branche locale `parite-zenodo`. Les PR
+[#5](https://github.com/nikonvr/CERTUS/pull/5) et [#7](https://github.com/nikonvr/CERTUS/pull/7) sont fusionnées dans
+`master` le 2026-10-06 (`d531c7cf`, `80dd7d3c`), leur CI verte. Le 2026-10-10, la session dans le nuage travaille sur
+`claude/ecstatic-newton-3grmls` (`master` plus `parite-zenodo`), PR [#9](https://github.com/nikonvr/CERTUS/pull/9) en
+brouillon. `python scripts\preflight.py` → `PREFLIGHT=GO` le 2026-10-06. Sauvegarde
 après chaque lot : `../CERTUS_certus0310_<date>_<commit>.bundle`. Les entrées `.git/worktrees/certus0310` et
 `.git/worktrees/profwt`, incomplètes (Drive en refuse la suppression), déclenchent un avertissement à chaque
 commit sans l'empêcher.
@@ -87,12 +149,12 @@ n'autorise pas à modifier son arbre témoin.
 
 | rang | action et critère de fin | raison / condition |
 |---|---|---|
-| 3 — établir la parité publiée | Inventaires (`reports/PARITE_ZENODO_*_2026-10-05.md`) et lecture des écarts courts de l'INDEX SPLINE (`reports/PARITE_ZENODO_SPLINE_LECTURE_2026-10-06.md` : remaniements, trois retouches heuristiques du corridor, une correction) faits. Reste à lire les écarts longs (gradient analytique, nettoyage des nœuds, décalage de Δn, polissage du maillage) et à comparer les capacités du RE marquées « non comparé » (a priori MAP, substrats, échantillons à deux faces, résidus par voie). | Nécessaire avant d'affirmer que les améliorations publiées sont intégrées. RE local 1.2.0.dev0 diffère de l'archive 1.1.1 ; l'inversion conjointe de plusieurs échantillons est écartée par 👤. |
-| 4 — traiter la chaîne de mesure | Spécifier puis mesurer la cadence machine (§6, 12.4), ensuite seulement le lissage (12.2). D54 et D55 sont corrigés. | La grille de la machine est inactive par défaut. Tout changement de noyau passe C1 froid contre froid et l'oracle. |
+| 3 — établir la parité publiée | Fait le 2026-10-06 (`reports/PARITE_ZENODO_ECARTS_LONGS_2026-10-06.md`, après les inventaires du 2026-10-05 et la lecture des écarts courts) : aucune amélioration de l'INDEX SPLINE publié ne manque au code courant ; son gradient analytique, que la version publiée n'utilise pas, est vérifié contre les différences finies avec des mesures en réflexion (12 cas ajoutés à l'oracle). Pour le RE, le silicium diffère de celui de `certus_re` de −2,0e-3 à +4,5e-3, le saphir est le même jeu. Reste à 👤 : trois décisions (§5). | Les capacités du RE publié absentes de CERTUS (a priori MAP, échantillon revêtu sur les deux faces, résidus par voie) ne se portent que sur décision. |
+| 4 — traiter la chaîne de mesure | La grille machine du noyau lit maintenant le T exact à chaque lecture (12.4) et lisse sur 8 lectures avec le seuil de 1,00 A (12.2) : D54, D55, D93, D94 et D95 sont corrigés, et ce chemin reproduit une machine indépendante rejouée lecture par lecture (rapport du 2026-10-10, section 2). Ce que ce modèle figé change au classement d'une population est mesuré (même rapport, section 6). D96 et D97 existent en option, inactives par défaut, et leur effet sur un classement est mesuré (même rapport, sections 4 et 6). Reste : D98, et les décisions de 👤 de noter au modèle figé, au moins pour départager la tête du classement, et d'activer ces options. | La grille de la machine est inactive par défaut. Tout changement de noyau passe C1 froid contre froid et l'oracle. |
 | 5 — stabiliser interface et gel | Reproduire D23 (les six `gc.collect()` des threads de calcul STRAT et les `QThread`) avant D11 et `WA_DeleteOnClose` ; poursuivre la réduction du gel (D72) après sa fiabilité. | D11 n'a pas d'effet dans le lancement actuel par processus ; libérer une fenêtre avant ses threads serait plus grave. |
 | 6 — réduire la dette | Élucider les effets d'import de D42 avant E402/I001 (D25), puis traiter D26 et les défauts visuels selon §4–5. | Chantier utile, mais moins urgent que la justesse scientifique ; l'ordre des imports peut changer l'exécution. |
 
-**Après les deux PR en cours, le rang 3** (choix de 👤 du 2026-10-06). Les autres
+**Le rang 3 est fait** (choix de 👤 du 2026-10-06) ; ses décisions sont en §5. Les autres
 choix réservés à 👤 restent en §5.
 
 ## 1. Où en sont les programmes
@@ -260,7 +322,7 @@ du dichroïque dont le plantage s'écarterait nettement du prédit rouvrirait ce
 - **D14, densité de l'historique : 16 points conservés ; la densité relève de la cadence machine (rang 4).**
   L'écart de densité (16 points par couche rejouée contre 21 par épaisseur nominale pour la couche courante)
   n'existe que sur le balayage grossier : sur la grille de la machine (`machine_sampling_dd > 0`),
-  `_resample_on_machine_grid` lit l'historique et la couche courante à la même cadence, chaque lecture avec
+  `_machine_grid_signal` lit l'historique et la couche courante à la même cadence, chaque lecture exacte avec
   son tirage. Porter l'historique à 21 points changerait tous les résultats pour une densité aussi
   arbitraire que 16 : sur le juge standard (2026-10-04), 8 plans sur 370 survivent, le plantage moyen au bruit
   ×2 passe de 0,0012 à 0,0069. La sensibilité mesurée dit que la densité de lecture compte ; elle se règle par
@@ -407,6 +469,13 @@ annule seul.
 - **Le prochain chantier est la parité Zenodo** (rang 3 de §0).
 - **La validation externe de STRAT n'est plus prévue** : STRAT reste validé contre lui-même (§1).
 
+### Réponses de 👤 du 2026-10-06, quatrième série (parité)
+
+- **La branche PGlobal morte de `_run_single_spline_stage` est retirée** (fait, §0) : Git la garde.
+- **Le RE garde sa pénalité QWOT** : l'a priori MAP de `certus_re` n'est pas porté.
+- **La citation du saphir est corrigée dans le paquet `certus_re`** (fait, non commité dans ce dépôt-là, §0).
+- **La PR de la parité se fusionne dès que sa CI est verte**, comme les PR #5 et #7.
+
 ### RE — décidé par 👤 le 2026-10-05
 
 - **Divergence du faisceau : deux ou trois rayons suffisent.** 👤 : « définitivement, la prise en compte de
@@ -425,11 +494,15 @@ numéros de l'ancien registre sont entre parenthèses
 
 | # | défaut | piste |
 |---|---|---|
+| D96 | **Ancres POEM lues sur l'échantillonnage grossier.** Le noyau prend la valeur de l'échantillon à l'extremum (16 points par couche rejouée, 64 sur trois épaisseurs pour la couche en cours) : l'échantillon tombe à côté du sommet, d'une quantité qui diffère entre signal réel et nominal dès que leurs épaisseurs diffèrent. Sans aucun bruit, erreurs amont tirées à σ = 0,3 nm (3 réalisations × 48 couches, gagnante du juge de paix, 2026-10-10) : l'arrêt du noyau s'écarte de l'arrêt POEM exact (oracle au pas de 0,05 nm) de 0,055 nm RMS, P95 0,14 nm, jusqu'à 0,17 nm RMS sur une couche ; l'inversion (D97) en explique 0,021 nm RMS, les ancres le reste | l'option existe (`exact_anchors`, `_exact_poem_anchors`, inactive par défaut : chaque ancre portée au sommet de l'extremum de sa couche, en forme fermée, et remise dans le signal) ; avec `exact_inversion`, l'arrêt sans bruit tombe sur l'arrêt POEM exact (8,0e-6 nm RMS, `scripts/probe_arret_sans_bruit.py`) ; son effet sur un classement est mesuré (rapport du 2026-10-10, section 4) ; l'activer par défaut est une décision de 👤 |
+| D97 | **Inversion parabolique de l'arrêt.** `_invert_thickness_from_probes` résout le niveau sur la parabole de trois points à ±`probe_offset` (2,5 nm sur le juge) autour de l'épaisseur nominale, et extrapole quand l'arrêt réel s'en éloigne. Mêmes conditions que D96, niveaux exacts donnés : 0,021 nm RMS sous POEM (0,13 nm sur la couche 40), mais 0,19 nm RMS et jusqu'à 1,53 nm au niveau absolu (POEM coupé), où l'arrêt se déplace de plusieurs nanomètres | l'option existe (`exact_inversion`, `_invert_thickness_exact`, inactive par défaut : racine de la forme fermée la plus proche du nominal, encadrée puis bissectée ; la parabole reste pour un indice absorbant) ; son effet sur un classement est mesuré (rapport du 2026-10-10, section 6) ; l'activer par défaut est une décision de 👤 |
 
 **Le modèle physique — connus, non corrigés**
 
 | # | défaut |
 |---|---|
+| D98 | **Armement du déclenchement.** Le noyau compte un point tournant à la position de l'extremum ; un contrôleur causal ne le connaît qu'une fois le signal revenu du seuil d'hystérésis, et un niveau plus proche de l'extremum que ce seuil est franchi avant que la machine l'attende. La marge de Phase A ne regarde que la couche en cours, pas les extrema des couches précédentes du bloc. `scripts/probe_armement.py` (nominal, 2026-10-10) : juge de paix, 22 plans sur 370 à 1× (couche 47) et 38 à 2× (couches 36, 41, 42, 47), tous jugés déposables par le noyau (plantage ≤ 1,33 %), le premier au rang 23 (compté depuis 0) ; `r75x2`, 67, 69 et 222 plans sur 783 à 0,5×, 1× et 2×, aucun des 20 premiers. Ce que fait l'OMS alors (arrêt tardif ou attente sans fin) n'est pas connu |
+| D99 | **Lecture d'arrêt non lissée au modèle figé.** Le bruit de la lecture d'arrêt est un seul tirage brut par couche (`noise_val_precalc`), que la grille machine lisse ou non le reste du signal. Si la chaîne de détection moyenne sur 8 lectures (§3, postulat 3 du modèle de la chaîne de lecture), l'arrêt se décide sur le signal lissé, au bruit divisé par environ √8. Sur 17 plans du juge de paix, modèle figé, mêmes tirages divisés par √8 (2026-10-11, `scripts/probe_modele_lecture.py --models fige,fige_arret_lisse`) : notes plus basses de 8 à 21 % (médiane 11 %), classement conservé à 0,92 (Spearman), meilleur plan 22 au lieu de 11, à 2,3 % l'un de l'autre. Chemin inactif par défaut ; à trancher par 👤 |
 | D21 | `MachineModel` n'a aucun consommateur de production trouvé ; sa docstring donne désormais la bonne unité de `trigger_tolerance` (pourcentage de T, R146). La façade `certus_physics` continue de l'exporter et ses tests de contrat restent actifs |
 | D51 | INDEX garde sa propre lame de Beer-Lambert pour le substrat (`_calculate_RT_absorbing_sub_single`) : elle s'accorde avec le modèle commun `certus_substrate_absorption` à 1e-12 (k de 1e-7 à 1e-3, à 450 et 800 nm, testé, interface avant comprise depuis R117), mais c'est une seconde formule à tenir à jour |
 
@@ -458,6 +531,7 @@ Ces sujets demandent un jugement de physicien ou de propriétaire du produit. Le
 | sujet | ce qui est en jeu |
 |---|---|
 | **avis de tiers** | une ligne reste « à confirmer par toi » dans `THIRD_PARTY_NOTICES.md` : les DLL du runtime Visual C++ (`VCRUNTIME140*.dll`, `VCOMP140.DLL`) se redistribuent avec un programme, mais Microsoft réserve ce droit aux utilisateurs de Visual Studio sous licence |
+| **paquet `certus_re`** | la correction de la citation du saphir (Malitson et Dodge, 1972) attend d'être commitée par 👤 dans ce dépôt-là, qui contient ses modifications en cours, puis publiée avec la prochaine version Zenodo |
 | **interface** | Revoir visuellement les onze fenêtres et choisir les teintes de marque, la bande des fichiers récents et les bornes des champs numériques. |
 
 D10, D41, D48, D54, D55, D56, D58, D65, D66, D76, D86, D87, D88 et D92 sont tranchés (§3) ou corrigés.
@@ -466,10 +540,16 @@ D10, D41, D48, D54, D55, D56, D58, D65, D66, D76, D86, D87, D88 et D92 sont tran
 
 **Calcul** (détail : `git show 7b08dc8:docs/archives/REPRENDRE_ICI.md`) —
 dimensionner K, le nombre de graines à lancer : p ≈ 3/7 pour trouver un déposable, 2/7 pour
-atteindre le niveau 0,57 · balayer `tp_hysteresis_factor` à bruit fixé · compter le criblage et
+atteindre le niveau 0,57 · balayer `tp_hysteresis_factor` à bruit fixé sur la grille machine : sur la grille
+grossière, il est presque inerte (juge de paix, 370 plans, 2026-10-11 : de 1,0 à 2,0 A, 358 à 362 notes identiques au
+bit à celles de 1,66 A, même meilleur plan ; rapport de l'audit du 2026-10-10, section 4) · compter le criblage et
 l'héritage quand un étage deviendra suspect · porter le résultat de `r75x2` dans la vitrine,
-avec sa condition dans la même phrase que le chiffre · accélérer à résultat identique au bit : reste
-l'attente du consommateur de statistiques (17 % du profil). `build_M_before_cache` est écarté : 10 151 appels pour
+avec sa condition dans la même phrase que le chiffre · accélérer à résultat identique au bit : aucune piste ouverte.
+Les 17 % d'« attente du consommateur de statistiques » du profil ne sont pas du temps : l'échantillonneur de
+`scripts/bench_examples.py` (`start_sampler`) compte chaque fil vivant à chaque tick, et le fil de
+`StatsConsumerWorker.run`, bloqué dans `get(timeout=0.1)`, y est trouvé à chaque tick. Mesuré le 2026-10-11, machine
+au repos, Linux (`scripts/probe_sampler_idle_thread.py 6`) : un calcul numpy prend de 0,235 à 0,264 s (médiane 0,250)
+avec un tel fil et de 0,239 à 0,267 s (médiane 0,255) sans. `build_M_before_cache` est écarté : 10 151 appels pour
 4 070 entrées distinctes sur le juge de paix, mais s'en souvenir ne fait rien gagner (2026-10-06, caches froids,
 machine au repos : 434,9 et 431,5 s sans, 432,0 et 431,1 s avec, populations identiques au bit) ; ses 6 % venaient
 d'un profil pris pendant une autre charge.

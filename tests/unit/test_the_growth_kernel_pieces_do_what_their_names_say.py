@@ -32,14 +32,15 @@ from certus.physics.certus_strat_growth import (
     _frozen_trigger_level,
     _invert_thickness_from_probes,
     _level_reachability,
+    _machine_grid_signal,
     _monotonicity_scan,
     _rate_layer_thickness,
     _read_poem_anchors,
-    _resample_on_machine_grid,
     _running_mean,
     _scan_window,
     _stack_matrix,
     _stack_matrix_pair,
+    slit_bias_at,
     turning_point_margins,
 )
 from certus.physics.certus_strat_math import _seeded_noise_sample
@@ -348,24 +349,21 @@ def test_the_nominal_scan_is_never_noised() -> None:
 
 
 # =============================================================================
-# _resample_on_machine_grid : the coarse scan read at the machine's cadence
+# _machine_grid_signal : the signal at the machine's readings, exact at each of them (D94, D95)
 # =============================================================================
 
 DD = 0.125  # the machine reads every 0.125 nm: 240 rpm, 4 readings a second, 0.5 nm/s
+WL_FINE = 520.0
 
 
-def _fine(nominal, i_layer, j0, *, dd=DD, coarse_r=None, coarse_n=None, noise=0.0, seed=0, run=0):
-    """Resample the coarse scan of layers j0 .. i_layer (history, then the current one) on the machine grid."""
+def _fine(nominal, i_layer, j0, *, dd=DD, real=None, base=0, noise=0.0, seed=0, run=0, profiles=None, n_even=N_EVEN):
+    """The machine-grid signal of layers j0 .. i_layer (replayed, then the current one) on a witness that starts at `base`."""
     nominal = np.asarray(nominal, dtype=float)
-    n_hist = SCAN_NPTS_HISTORY * (i_layer - j0)
-    size = n_hist + SCAN_NPTS_CURRENT
-    ts_r = np.full(size, 0.5) if coarse_r is None else np.array(coarse_r, dtype=float)
-    ts_n = np.full(size, 0.25) if coarse_n is None else np.array(coarse_n, dtype=float)
-    given = (ts_r.copy(), ts_n.copy())
-    out = _resample_on_machine_grid(
-        dd, j0, i_layer, nominal[i_layer], n_hist, nominal, nominal * 1.01, ts_r, ts_n, noise > 0.0, noise, seed, run
+    real = nominal * 1.01 if real is None else np.asarray(real, dtype=float)
+    return _machine_grid_signal(
+        dd, WL_FINE, N_SUB + 0j, n_even + 0j, N_ODD + 0j, n_even + 0j, N_ODD + 0j, base, j0, i_layer, nominal[i_layer],
+        nominal, real, profiles, noise > 0.0, noise, seed, run,
     )
-    return out, given, (ts_r, ts_n)
 
 
 def _sizes(nominal, i_layer, j0, dd=DD) -> tuple[int, int]:
@@ -373,68 +371,83 @@ def _sizes(nominal, i_layer, j0, dd=DD) -> tuple[int, int]:
     return m_hist, m_hist + int(np.ceil(3.0 * nominal[i_layer] / dd)) + 1
 
 
+def _oracle_reading(thicknesses, base, layer, depth, n_even=N_EVEN) -> float:
+    """T of the witness (layers base .. layer - 1, then `layer` grown to `depth`), by the independent TMM."""
+    idx = _indices(base, layer + 1, n_even, N_ODD)
+    return rt_stack(WL_FINE, idx, [*thicknesses[base:layer], depth], 1.0, N_SUB)[1]
+
+
 @pytest.mark.parametrize("dd", [0.125, 0.2])
 @pytest.mark.parametrize(("i_layer", "j0"), [(1, 0), (3, 1), (2, 2)])
 def test_the_fine_grid_has_a_reading_every_dd_over_the_history_and_three_thicknesses_of_the_layer(i_layer, j0, dd) -> None:
     nominal = [50.0, 60.0, 42.5, 71.3]
 
-    (ts_r, ts_n, n_tot, stop), _, _ = _fine(nominal, i_layer, j0, dd=dd)
+    ts_r, ts_n, n_tot, stop, first = _fine(nominal, i_layer, j0, dd=dd)
 
     m_hist, m_tot = _sizes(nominal, i_layer, j0, dd)
     assert n_tot == m_tot
     assert len(ts_r) == len(ts_n) == m_tot
+    assert first == m_hist  # the first reading of the current layer, where the reachability test starts reading
     assert stop == m_hist + round(nominal[i_layer] / dd)  # the nominal stop, on the fine grid
 
 
 def test_smoothing_alone_reads_the_default_grid_of_a_eighth_of_a_nanometre() -> None:
     nominal = [50.0, 60.0]
 
-    (_, _, n_default, stop_default), _, _ = _fine(nominal, 1, 0, dd=0.0)
-    (_, _, n_explicit, stop_explicit), _, _ = _fine(nominal, 1, 0, dd=0.125)
+    default = _fine(nominal, 1, 0, dd=0.0)
+    explicit = _fine(nominal, 1, 0, dd=0.125)
 
-    assert (n_default, stop_default) == (n_explicit, stop_explicit)
-
-
-def test_a_constant_signal_stays_constant_and_the_coarse_scan_is_not_touched() -> None:
-    (ts_r, ts_n, _, _), given, after = _fine([50.0, 60.0, 42.5], 2, 0)
-
-    np.testing.assert_allclose(ts_r, 0.5, atol=1e-15)
-    np.testing.assert_allclose(ts_n, 0.25, atol=1e-15)
-    np.testing.assert_array_equal(after[0], given[0])  # new arrays: the coarse ones are read, never written
-    np.testing.assert_array_equal(after[1], given[1])
+    assert default[2:] == explicit[2:]
+    np.testing.assert_array_equal(default[0], explicit[0])
 
 
-def test_the_current_layer_is_read_at_its_own_depth() -> None:
-    # A ramp in depth on the coarse scan (value = depth in nm) reads back as m * dd on the fine one.
-    nominal = [50.0, 60.0]
-    n_hist = SCAN_NPTS_HISTORY
-    step = 3.0 * nominal[1] / (SCAN_NPTS_CURRENT - 1)
-    coarse = np.concatenate([np.zeros(n_hist), np.arange(SCAN_NPTS_CURRENT) * step])
+@pytest.mark.parametrize("n_even", [N_EVEN, 2.35 - 3e-3j])  # the closed form, then the characteristic matrix (k > 1e-4)
+def test_every_reading_is_the_oracles_on_the_nominal_and_on_the_real_stack(n_even) -> None:
+    """Exact at each reading, never interpolated: the interpolated signal was 6.1 A off in median and 33 A at worst on
+    the judge of paix, against a reading noise of 1 A (D95)."""
+    nominal = np.array([50.0, 60.0, 42.5, 71.3, 38.0])
+    real = nominal * np.array([1.012, 0.991, 1.004, 0.997, 1.0])
+    base, j0, i_layer = 0, 1, 4
+    ts_r, ts_n, _, _, first = _fine(nominal, i_layer, j0, real=real, base=base, n_even=n_even)
 
-    (ts_r, ts_n, _, _), _, _ = _fine(nominal, 1, 0, coarse_r=coarse, coarse_n=coarse)
-
-    m_hist, m_tot = _sizes(nominal, 1, 0)
-    m = np.arange(m_tot - m_hist - 1)  # the last reading falls past the scan: it is extrapolated, not compared
-    np.testing.assert_allclose(ts_r[m_hist + m], m * DD, atol=1e-9)
-    np.testing.assert_allclose(ts_n[m_hist + m], m * DD, atol=1e-9)
-
-
-def test_a_replayed_layer_is_read_at_its_own_depth() -> None:
-    # The coarse scan of a replayed layer starts at 1/16 of its thickness (0 is the last point of the layer below). The
-    # interpolation index used to start at 0: a ramp in depth came back shifted by 1/16, and flat over the last 1/16 (D55).
-    nominal = [50.0, 60.0]
-    coarse = np.concatenate([np.arange(1, SCAN_NPTS_HISTORY + 1) / SCAN_NPTS_HISTORY, np.zeros(SCAN_NPTS_CURRENT)])
-
-    (ts_r, _, _, _), _, _ = _fine(nominal, 1, 0, coarse_r=coarse, coarse_n=coarse)
-
-    m = np.arange(int(np.ceil(nominal[0] / DD)))
-    np.testing.assert_allclose(ts_r[m], m * DD / nominal[0], atol=1e-2)
+    idx = 0
+    for j in range(j0, i_layer):
+        for m in range(int(np.ceil(nominal[j] / DD))):
+            assert ts_n[idx] == pytest.approx(_oracle_reading(nominal, base, j, m * DD, n_even), abs=1e-12)
+            # the real layer j is read at the same FRACTION of its own thickness: never cut short, never held flat
+            depth_r = m * DD * real[j] / nominal[j]
+            assert ts_r[idx] == pytest.approx(_oracle_reading(real, base, j, depth_r, n_even), abs=1e-12)
+            idx += 1
+    assert idx == first
+    for m in (0, 1, 7, 400, len(ts_n) - first - 1):
+        assert ts_n[first + m] == pytest.approx(_oracle_reading(nominal, base, i_layer, m * DD, n_even), abs=1e-12)
+        assert ts_r[first + m] == pytest.approx(_oracle_reading(real, base, i_layer, m * DD, n_even), abs=1e-12)
 
 
-def test_the_reading_noise_is_drawn_per_reading_by_layer_and_position_and_never_on_the_nominal_signal() -> None:
+def test_a_window_that_starts_on_the_bare_substrate_reads_the_substrate_not_an_extrapolation() -> None:
+    """Depth 0 of the first replayed layer was the line through its first two coarse points; on a turning point,
+    where T is flat, the line overshot by 36 A at layer 1 of the judge of paix's winner (D94)."""
+    nominal = np.array([90.0, 110.0])
+    ts_r, ts_n, *_ = _fine(nominal, 1, 0, real=nominal)
+
+    bare = rt_stack(WL_FINE, [], [], 1.0, N_SUB)[1]
+    assert ts_n[0] == pytest.approx(bare, abs=1e-14)
+    assert ts_r[0] == pytest.approx(bare, abs=1e-14)
+
+
+def test_the_witness_under_the_window_is_the_one_read() -> None:
+    nominal = np.array([50.0, 60.0, 42.5, 71.3])
+    _ts_r, ts_n, *_ = _fine(nominal, 3, 2, base=1, real=nominal)
+
+    assert ts_n[0] == pytest.approx(_oracle_reading(nominal, 1, 2, 0.0), abs=1e-12)
+
+
+def test_the_reading_noise_is_drawn_once_per_reading_by_layer_and_position_and_never_on_the_nominal_signal() -> None:
+    """One draw per reading: the coarse points used to carry their own draw too, interpolated onto the readings, so
+    every reading carried two, one of them correlated with its neighbours (D95)."""
     nominal, scale, seed, run = [50.0, 60.0, 42.5], 0.01, 3, 8
-    clean = _fine(nominal, 2, 0)[0]
-    noisy = _fine(nominal, 2, 0, noise=scale, seed=seed, run=run)[0]
+    clean = _fine(nominal, 2, 0)
+    noisy = _fine(nominal, 2, 0, noise=scale, seed=seed, run=run)
 
     added = noisy[0] - clean[0]
     m0, m1 = int(np.ceil(nominal[0] / DD)), int(np.ceil(nominal[1] / DD))
@@ -453,12 +466,28 @@ def test_the_reading_noise_is_drawn_per_reading_by_layer_and_position_and_never_
 
 def test_without_a_history_the_first_reading_of_the_layer_is_its_own_draw() -> None:
     nominal, scale, seed, run = [50.0, 60.0], 0.01, 3, 8
-    clean = _fine(nominal, 1, 1)[0]
-    noisy = _fine(nominal, 1, 1, noise=scale, seed=seed, run=run)[0]
+    clean = _fine(nominal, 1, 1)
+    noisy = _fine(nominal, 1, 1, noise=scale, seed=seed, run=run)
 
     added = noisy[0] - clean[0]
 
     assert added[0] == pytest.approx(scale * _seeded_noise_sample(seed, 1, run, 4096, True), abs=1e-15)
+
+
+def test_the_slit_bias_is_read_at_each_readings_depth_on_the_real_signal_only() -> None:
+    nominal = np.array([50.0, 60.0])
+    real = nominal * 1.02
+    profiles = np.array([[1e-3, 2e-3, 4e-3, 8e-3], [-1e-3, -3e-3, -5e-3, -7e-3]])
+    plain = _fine(nominal, 1, 0, real=real)
+    biased = _fine(nominal, 1, 0, real=real, profiles=profiles)
+
+    m0 = int(np.ceil(nominal[0] / DD))
+    for m in (0, 5, m0 - 1):  # replayed layer 0: u = real depth / nominal thickness
+        u = m * DD * real[0] / nominal[0] / nominal[0]
+        assert biased[0][m] - plain[0][m] == pytest.approx(slit_bias_at(profiles, 0, u), abs=1e-15)
+    for m in (0, 3, 300):  # current layer: u = depth / nominal thickness
+        assert biased[0][m0 + m] - plain[0][m0 + m] == pytest.approx(slit_bias_at(profiles, 1, m * DD / nominal[1]), abs=1e-15)
+    np.testing.assert_array_equal(biased[1], plain[1])
 
 
 # =============================================================================

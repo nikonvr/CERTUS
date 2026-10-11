@@ -88,9 +88,9 @@ def _oracle_stop(nominal, prev, i: int, j0: int, scale: float = 1.0, offset: flo
     raise AssertionError("the oracle level is never crossed")
 
 
-def _kernel(nominal, prev, i: int, j0: int, *flags, scale=1.0, offset=0.0, curv=0.0, machine_dd=0.0) -> float:
+def _kernel(nominal, prev, i: int, j0: int, *flags, scale=1.0, offset=0.0, curv=0.0, machine_dd=0.0, stop_noise=0.0):
     return simulate_growth_kernel(
-        nominal, i, prev, WL, N_H + 0j, N_L + 0j, N_SUB + 0j, 2.5, 0.0, 2.0, 0, j0, 0.0, 0, 0, HYSTERESIS,
+        nominal, i, prev, WL, N_H + 0j, N_L + 0j, N_SUB + 0j, 2.5, stop_noise, 2.0, 0, j0, 0.0, 0, 0, HYSTERESIS,
         scale, offset, curv, True, 1, -1.0, -1.0, False, None, 0, machine_dd, None, *flags,
     )[0]
 
@@ -126,6 +126,25 @@ def test_the_real_anchors_go_through_the_instruments_distortion_exactly(case) ->
     stop, _, _ = _oracle_stop(nominal, prev, i, j0, **drift)
 
     assert _kernel(nominal, prev, i, j0, True, True, **drift) == pytest.approx(stop, abs=1e-6)
+
+
+def test_a_level_between_the_coarse_sample_and_the_summit_is_reached() -> None:
+    """The moved anchor replaces its sample in the signal: the reachability test, which reads the band the real signal
+    spans, sees the summit the level was taken from. A level between the sample and the summit was declared unreachable,
+    a crash the machine would not have: it reads the summit on its way."""
+    nominal, prev, i, j0 = CURRENT
+    (_, prev_n), (_, last_n) = _extrema(nominal, i, nominal[i])[-2:]
+    (_, prev_r), (d_last, last_r) = _extrema(prev, i, nominal[i])[-2:]
+    level = prev_r + (_t(nominal, i, nominal[i]) - prev_n) / (last_n - prev_n) * (last_r - prev_r)
+    samples = 3.0 * nominal[i] * np.arange(64) / 63
+    sample = max(_t(prev, i, d) for d in samples[np.abs(samples - d_last) < 3.0 * nominal[i] / 63])
+    assert last_r - sample > 1e-4  # the summit, a maximum, lies above the samples around it
+    target = 0.5 * (sample + last_r)
+
+    got = _kernel(nominal, prev, i, j0, True, True, stop_noise=target - level)
+
+    assert got < 1e5  # not the sentinel of an unreachable level
+    assert _t(prev, i, got) == pytest.approx(target, abs=1e-9)
 
 
 def test_without_the_flag_the_kernel_keeps_the_coarse_samples_bit_for_bit() -> None:

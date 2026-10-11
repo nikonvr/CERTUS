@@ -1022,8 +1022,9 @@ def _exact_poem_anchors(
     samples of `Ts_r` or `Ts_n`, found by its value; its kind is read against the other anchor of its pair, since a
     maximum and a minimum alternate. The nominal anchor becomes the extremum of the nominal layer. The real one keeps the
     reading noise of its sample, takes T and the slit bias at the depth of the extremum, and goes through the
-    instrument's distortion exactly: the reading before the curvature is recovered from the anchor itself. An anchor
-    whose layer has no extremum of its kind within two samples of it keeps its value: a turning point on a layer
+    instrument's distortion exactly: the reading before the curvature is recovered from the anchor itself. Each moved
+    anchor replaces its sample in `Ts_r` or `Ts_n` (modified in place), so the reachability test sees the summit. An
+    anchor whose layer has no extremum of its kind within two samples of it keeps its value: a turning point on a layer
     boundary, which the scan samples exactly, or an absorbing layer.
     """
     NPTS_PREV = SCAN_NPTS_HISTORY
@@ -1061,17 +1062,21 @@ def _exact_poem_anchors(
         )
         if not found:
             continue
-        if not real:
+        if real:
+            delta = t_ext - t_at
+            if slit_on and p_thick_nominal[j] > 1e-9:  # the profile is indexed by depth / nominal thickness of the layer
+                inv_nom = 1.0 / p_thick_nominal[j]
+                delta += slit_bias_at(slit_profiles, j, d_star * inv_nom) - slit_bias_at(slit_profiles, j, d_s * inv_nom)
+            # The instrument reads t + c4 t (1 - t), t = a T + b: t is the root of that quadratic nearest the reading,
+            # written in its stable form (it is the reading itself when c4 = 0), moved by a * delta, and read back.
+            disc = (1.0 + c4) * (1.0 + c4) - 4.0 * c4 * vals[a]
+            t_aff = 2.0 * vals[a] / ((1.0 + c4) + np.sqrt(disc)) if disc >= 0.0 else vals[a]
+            t_aff += affine_scale * delta
+            out[a] = t_aff + c4 * t_aff * (1.0 - t_aff)
+        else:
             out[a] = t_ext
-            continue
-        delta = t_ext - t_at
-        if slit_on and p_thick_nominal[j] > 1e-9:  # the profile is indexed by depth / nominal thickness of the layer
-            inv_nom = 1.0 / p_thick_nominal[j]
-            delta += slit_bias_at(slit_profiles, j, d_star * inv_nom) - slit_bias_at(slit_profiles, j, d_s * inv_nom)
-        # The instrument reads t + c4 t (1 - t), t = a T + b: t is the root of that quadratic nearest the reading, written
-        # in its stable form (it is the reading itself when c4 = 0), moved by a * delta, and read back.
-        disc = (1.0 + c4) * (1.0 + c4) - 4.0 * c4 * vals[a]
-        t_aff = 2.0 * vals[a] / ((1.0 + c4) + np.sqrt(disc)) if disc >= 0.0 else vals[a]
-        t_aff += affine_scale * delta
-        out[a] = t_aff + c4 * t_aff * (1.0 - t_aff)
+        # The sample becomes the reading at the extremum. The reachability test reads the band the real signal spans
+        # from the start of the layer: a level taken from the summit must be judged against the summit, not against the
+        # sample below it (a level between the two was declared unreachable).
+        sig[idx] = out[a]
     return out[0], out[1], out[2], out[3]

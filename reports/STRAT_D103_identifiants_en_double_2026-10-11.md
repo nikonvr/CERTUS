@@ -14,7 +14,8 @@ ValueError: Missing or duplicate strategy_id '15239' in result rows 195 and 417;
 
 Le garde-fou `validate_unique_strategy_ids` (`certus/core/certus_strat_ranking.py`, ajouté le 2026-10-04 avec D5) a
 refusé le classement final : la liste des parents ELITE du même run montre deux plans différents sous l'identifiant
-15239, l'un `THICKNESS²`, l'autre `SYM`.
+15239, l'un `THICKNESS²`, l'autre `SYM`. Les graines 404 et 505 de la même remesure s'arrêtent de même, sur les
+identifiants 15233 et 12228 : **trois graines sur sept** (`reports/STRAT_remesure_D100_2026-10-11.md`).
 
 ## La cause
 

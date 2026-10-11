@@ -574,6 +574,13 @@ class CertusIndexLayoutMixin:
 
         lay.addWidget(self.btn_load)
 
+        self.btn_load_deposit = QPushButton(" Deposit database…")
+        self.btn_load_deposit.setToolTip(
+            "Load a measured single layer from the Photon RT deposit database (example/database_depots)."
+        )
+        self.btn_load_deposit.clicked.connect(self.load_from_deposit_database)
+        lay.addWidget(self.btn_load_deposit)
+
         self.lbl_file = QLabel("No file loaded")
 
         self.lbl_file.setStyleSheet(f"font-style: italic; color: {CertusTheme.TEXT_SUB}; font-size: {Typography.BODY_LG}pt;")

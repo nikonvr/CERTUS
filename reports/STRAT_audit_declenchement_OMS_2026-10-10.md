@@ -34,9 +34,10 @@ A = 5e-4 en T (±0,05 point), hystérésis du fichier 1,66 A, niveaux de bruit 0
    modèle figé (classements concordants à 0,92) ; sur la tête de `r75x2`, son meilleur plan est à 3,9 % de celui du
    modèle figé, dans le bruit Monte-Carlo (§6). Quatre écarts restent ouverts, mesurés en
    §4 : les ancres lues sur l'échantillonnage grossier (D96), l'inversion parabolique de l'arrêt (D97, désormais en
-   option), l'armement non causal (D98) et, au modèle figé, la lecture d'arrêt non lissée (D99). Ceux dont l'effet
-   sur le classement est mesuré (D97, D98, D99) ne déplacent la tête de la population qu'à l'intérieur du bruit
-   Monte-Carlo ; celui de D96 n'est pas mesuré.
+   option), l'armement non causal (D98) et, au modèle figé, la lecture d'arrêt non lissée (D99). Aucun ne déplace la
+   tête de la population hors du bruit Monte-Carlo. D96 existe aussi en option depuis le 2026-10-11 : avec les deux
+   options, l'arrêt du noyau sans bruit tombe sur l'arrêt POEM exact, et le modèle livré classe le juge plus près du
+   modèle figé (§4).
 
 ## 1. Les outils
 
@@ -44,7 +45,8 @@ A = 5e-4 en T (±0,05 point), hystérésis du fichier 1,66 A, niveaux de bruit 0
 |---|---|
 | `scripts/probe_oms_sequentiel.py` | rejoue un dépôt **lecture par lecture** (0,125 nm), chaque lecture avec son tirage borné (σ = A/3), un détecteur à hystérésis **causal**, un lissage optionnel, et un arrêt qui n'est possible qu'une fois **compté** le nombre d'extrema que le plan attend (armement) ; à côté, le noyau de production sur le même plan, avec la même physique coupée (fente, courbure, couloir) ; les deux notés par le noyau de notation de production. T(d) vient de l'oracle indépendant `tests/oracle/tmm_reference.py` |
 | `scripts/probe_armement.py` | pour chaque couche de chaque plan, l'écart en transmission entre le niveau d'arrêt nominal et le dernier extremum avant lui, comparé au seuil d'hystérésis aux trois niveaux de bruit |
-| `scripts/probe_modele_lecture.py` | renote une population avec les noyaux de production sous le modèle de lecture livré et sous le modèle figé, même physique des deux côtés ; options : arrêt exact (D97), arrêt lissé (D99), seuil de détection balayé |
+| `scripts/probe_modele_lecture.py` | renote une population avec les noyaux de production sous le modèle de lecture livré et sous le modèle figé, même physique des deux côtés ; options : arrêt exact (D97), ancres au sommet (D96), arrêt lissé (D99), seuil de détection balayé |
+| `scripts/probe_arret_sans_bruit.py` | sans aucun bruit, sous des erreurs amont tirées, l'arrêt de chaque couche par le noyau contre l'arrêt POEM exact du contrôleur de la machine séquentielle, rejoué sur l'oracle tous les 0,05 nm (croisement résolu par bissection) ; options du noyau : arrêt exact (D97), ancres au sommet (D96) |
 
 ## 2. Le chemin « grille machine » (rang 4 d'ETAT) : cinq défauts, corrigés
 
@@ -139,10 +141,40 @@ La renotation de toute la population sous les deux modèles, physique complète 
 (3 réalisations × 48 couches, gagnante du juge), l'arrêt du noyau s'écarte de l'arrêt POEM exact (oracle au pas de
 0,05 nm, croisement résolu par bissection) de **0,055 nm RMS, P95 0,14 nm**, jusqu'à 0,17 nm RMS sur une couche.
 
+L'option `exact_anchors` (2026-10-11, `b0d0264c` et `eae41d81`, inactive par défaut, chemin par défaut identique au bit)
+porte chaque ancre au sommet de l'extremum de sa couche, en forme fermée. L'ancre nominale prend sa valeur exacte.
+L'ancre réelle garde le bruit de lecture de son échantillon, prend T et le biais de fente à la profondeur du sommet, et
+passe exactement par la dérive photométrique ; elle remplace son échantillon dans le signal, pour que le test
+d'atteignabilité voie le sommet d'où le niveau est tiré. Mêmes conditions sans bruit
+(`scripts/probe_arret_sans_bruit.py`) :
+
+| arrêt du noyau − arrêt POEM exact | RMS | P95 | max |
+|---|---|---|---|
+| par défaut | 0,0545 nm | 0,142 nm | 0,226 nm |
+| arrêt exact seul (D97) | 0,0484 nm | 0,117 nm | 0,224 nm |
+| ancres au sommet seules (D96) | 0,0212 nm | 0,0248 nm | 0,189 nm |
+| les deux | 8,0e-6 nm | 1,7e-5 nm | 3,7e-5 nm |
+
+Avec les deux options, le noyau sans bruit rend l'arrêt de la machine. Renotation des 370 plans du juge, mêmes
+conditions que la §6 (`scripts/probe_modele_lecture.py`, 300 tirages, mêmes tirages, fente absente) :
+
+| modèle | déposables | meilleur plan | note / modèle livré, médiane (P5 – P95) | Spearman avec le livré | Spearman avec le figé |
+|---|---|---|---|---|---|
+| livré | 370 | 11 | 1 | 1 | 0,920 |
+| livré, ancres au sommet | 370 | 11 | 1,003 (0,952 – 1,045) | 0,967 | 0,943 |
+| livré, ancres au sommet et arrêt exact | 370 | 11 | 0,991 (0,948 – 1,035) | 0,969 | 0,944 |
+
+Les ancres au sommet ne changent ni le meilleur plan ni le niveau moyen des notes ; elles rapprochent le classement du
+modèle livré de celui du modèle figé. Le plantage moyen à 2× ne bouge pas (0,106 % contre 0,105 %). Une première version
+jugeait le niveau, pris au sommet, contre la bande lue sur les échantillons, plus bas : les plans 185 et 283 y passaient
+de 1,7 et 1,3 % de plantage à 2× à 7,0 et 5,3 %, tous à la couche 47, dont l'arrêt tombe 2,75 nm après un maximum,
+le niveau 1,5 A sous lui. Activer l'option par défaut est une décision de 👤.
+
 **D97, inversion parabolique.** Les niveaux exacts donnés, la parabole à ±2,5 nm du nominal s'écarte de l'arrêt exact
 de **0,021 nm RMS sous POEM**, avec 0,13 nm sur la couche 40. Au niveau absolu (POEM coupé), l'écart monte à
 **0,19 nm RMS, jusqu'à 1,53 nm** : l'arrêt s'y éloigne de plusieurs nanomètres du nominal et la parabole extrapole.
-Les ancres expliquent donc l'essentiel des 0,055 nm de D96. Pour comparaison, le SEEL du juge de paix vaut 0,17 nm.
+Les ancres expliquent donc l'essentiel des 0,055 nm de D96 (0,048 nm RMS quand la parabole est seule corrigée). Pour
+comparaison, le SEEL du juge de paix vaut 0,17 nm.
 
 **D98, armement.** Le noyau compte un extremum à sa **position** ; une machine ne le connaît qu'une fois le signal
 revenu du seuil d'hystérésis. Un niveau plus proche de l'extremum que ce seuil est donc franchi avant que la machine
@@ -259,4 +291,6 @@ python scripts\probe_oms_sequentiel.py example\example_strat\JSON-strat-example.
 python scripts\probe_modele_lecture.py example\example_strat\JSON-strat-example.json reports\STRAT_bench_juge_de_paix_b60d80e2_temoin_2026-10-04.json --runs 300 --models livre,fige,livre_exact,fige_exact
 python scripts\probe_modele_lecture.py example\example_strat\JSON-strat-example.json reports\STRAT_bench_juge_de_paix_b60d80e2_temoin_2026-10-04.json --runs 300 --models fige,fige_arret_lisse --ranks 0,1,9,11,20,22,23,28,40,50,100,150,200,250,300,350,369
 python scripts\probe_modele_lecture.py example\example_strat\JSON-strat-example.json reports\STRAT_bench_juge_de_paix_b60d80e2_temoin_2026-10-04.json --runs 300 --models livre@1.0,livre@1.33,livre@1.66,livre@2.0,livre@2.4
+python scripts\probe_modele_lecture.py example\example_strat\JSON-strat-example.json reports\STRAT_bench_juge_de_paix_b60d80e2_temoin_2026-10-04.json --runs 300 --models livre_ancres,livre_exact_ancres
+python scripts\probe_arret_sans_bruit.py example\example_strat\JSON-strat-example.json reports\STRAT_bench_juge_de_paix_b60d80e2_temoin_2026-10-04.json [--exact-inversion] [--exact-anchors] [--no-poem]
 ```

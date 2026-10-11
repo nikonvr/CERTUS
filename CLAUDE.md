@@ -194,9 +194,8 @@ aux résultats scientifiques de `reports/`.
 - **Un fait, un seul endroit** : état dans `docs/ETAT.md`, règle ici.
 - **Cite une fonction, jamais un numéro de ligne** : les lignes bougent.
 - Pas de récit dans les documents vivants (« cette ligne disait… ») : `git log` le garde.
-- Contrôles : `python scripts\coherence_md.py` (un fait = une valeur dans tous les `.md`, archives
-  exclues), `python scripts\check_claude_md.py`, `python scripts\check_docs.py`. « 0 point à
-  instruire » ne veut pas dire « tout est cohérent » : ils ne lisent pas les phrases.
+- Les trois contrôles documentaires de §2 ne lisent pas les phrases : « 0 point à instruire » ne
+  veut pas dire « tout est cohérent ».
 - `pages/*.html` sont des rapports scientifiques **en anglais**, fidèles à ce que le code fait, sans
   affirmation non étayée : chaque page doit répondre « oui » à *décrit-elle exactement ce que fait le
   code, sans enjolivement ?*

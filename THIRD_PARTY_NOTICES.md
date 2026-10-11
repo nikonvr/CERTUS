@@ -1,8 +1,5 @@
 # Third-party notices
 
-> **Established on 2026-10-06 with the owner**, who settled what the repository did not establish. The one item
-> still marked « à confirmer par toi » waits for the owner.
-
 CERTUS is licensed under the GPL-3.0-only ([`LICENSE`](LICENSE)). This file lists what the repository and the frozen
 executable redistribute that is the work of others. The licence of a third-party item keeps applying to it: the
 GPL-3.0 does not replace it.

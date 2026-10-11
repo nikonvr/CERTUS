@@ -518,9 +518,7 @@ class CertusStratStateMixin:
         # Step 1: Set radio button states
 
         self.widgets["h_type_custom"].setChecked(bool(config.get("h_type_custom", True)))
-
         self.widgets["h_type_file"].setChecked(not config.get("h_type_custom", True))
-
         self.widgets["l_type_custom"].setChecked(bool(config.get("l_type_custom", True)))
 
         self.widgets["l_type_file"].setChecked(not config.get("l_type_custom", True))
@@ -547,9 +545,7 @@ class CertusStratStateMixin:
                     return True
             return False
 
-        # The on/off settings are `CertusBooleanField`, a check box that keeps the text field's `.setText()`
-        # contract: left out here, they kept their construction state and the run ignored the file and the
-        # defaults alike -- no Rate and no slit bias from 2026-09-08 to 2026-10-11 (D100).
+        # Check boxes too: `CertusBooleanField` keeps the text field's `.setText()` contract (D100).
         for key, widget in self.widgets.items():
             if isinstance(widget, (QLineEdit, CertusBooleanField)) and key in config:
                 widget.setText(str(config[key]))

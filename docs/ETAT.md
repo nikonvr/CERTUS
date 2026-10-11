@@ -19,10 +19,10 @@
 brouillon vers `master`. Les entrées `.git/worktrees/certus0310` et `.git/worktrees/profwt`, incomplètes (Drive en
 refuse la suppression), déclenchent un avertissement à chaque commit sans l'empêcher.
 
-**Dernière validation complète** (2026-10-11, Windows 11, Python 3.14.8, Ryzen 7 5700G, `212126d4`) : Ruff 0 ;
-oracle 1 139 passed ; unit 5 010 passed, 7 skipped en 23 min 51 ; UI 1 312 passed, 12 skipped, 2 xfailed en
-21 min 51 ; autres tests 347 passed, 2 skipped en 10 min 35 ; trois contrôles documentaires : 0. C1 contre `master`
-(`python scripts\c1_diff.py master`) : 299 tableaux sur 8 008 diffèrent, tous sur la grille machine (pas > 0 ou
+**Dernière validation complète** (2026-10-12, Windows 11, Python 3.14.8, Ryzen 7 5700G, `c4feec85`) : Ruff 0 ;
+oracle 1 143 passed ; unit 5 212 passed, 7 skipped en 13 min 51 ; UI 1 315 passed, 12 skipped, 2 xfailed en
+21 min 42 ; autres tests 349 passed, 2 skipped en 10 min 05 ; trois contrôles documentaires : 0. C1 contre `master`
+(`python scripts\c1_diff.py master`, mesuré à `212126d4` ; aucun noyau n'a changé depuis) : 299 tableaux sur 8 008 diffèrent, tous sur la grille machine (pas > 0 ou
 lissage > 1), que la branche corrige (D93 à D95) ; les 171 cas de croissance sans grille machine sont identiques au bit.
 
 **🔴 D103, trouvé le 2026-10-11 : en `deep` et `extreme`, deux groupements minés portaient le même identifiant**

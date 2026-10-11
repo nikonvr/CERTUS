@@ -7,7 +7,8 @@ construction state, and `collect_params`, which reads the widget first, sent `al
 `search_resolution`, `sym_adaptive_same_wl` and `sym_prefer_on_tie` to the computation as false, whatever the file
 said: no Rate and no slit bias in any STRAT run from 2026-09-08 (f006e7eb) to 2026-10-11.
 
-`sym_enable` is left out: `collect_params` writes it as True without reading its widget, a separate matter.
+`sym_enable` joined them with D101: `collect_params` wrote it True without reading its field (since c79316bb), so
+unticking it changed nothing.
 """
 
 from __future__ import annotations
@@ -29,6 +30,7 @@ DEFAULTS = {
     "allow_rate": True,
     "slit_bias_enabled": True,
     "search_resolution": True,
+    "sym_enable": True,
     "sym_adaptive_same_wl": True,
     "sym_allow_hybrid": False,
     "sym_prefer_on_tie": True,

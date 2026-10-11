@@ -1610,7 +1610,7 @@ class CertusStratStateMixin:
                 or _config_float(getattr(self, "_loaded_config", {}), "robustness_seed", 0.0)
                 or 42
             ),
-            "sym_enable": True,
+            "sym_enable": bool(self._get_float_safe("sym_enable", 1.0) > 0.5),
             "sym_weight": self._get_float_safe("sym_weight", SYM_DEFAULT_WEIGHT),
             "sym_same_wl_bonus": self._get_float_safe("sym_same_wl_bonus", SYM_DEFAULT_SAME_WL_BONUS),
             "sym_extrema_window": self._get_float_safe("sym_extrema_window", SYM_DEFAULT_EXTREMA_WINDOW_OT),

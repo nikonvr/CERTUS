@@ -13,7 +13,8 @@ production; the slit bias is LEFT OUT (its profiles are built per strategy insid
 layer or witness swap -- the comparison is between reading models, under the same physics on both sides.
 
 Models (`--models`): `livre` and `fige`, each also with the exact stop (`_exact`, D97), and `fige_arret_lisse`, the
-frozen model whose stop reading is smoothed like the rest (D99).
+frozen model whose stop reading is smoothed like the rest (D99). `name@factor` sets the turning-point threshold of a
+model to `factor` x A: `--models livre@1.0,livre@1.66,livre@2.4` sweeps it.
 
     python scripts/probe_modele_lecture.py <config.json> <plans.json> [--models livre,fige] [--ranks 0,5,9]
         [--first N] [--runs 300] [--json out.json]
@@ -118,7 +119,12 @@ def main() -> None:
     ap.add_argument("--models", default="livre,fige", help=f"among {', '.join(MODELS)}")
     ap.add_argument("--json", default=None)
     args = ap.parse_args()
-    models = {m: MODELS[m] for m in args.models.split(",") if m}
+    # `name@factor` is model `name` with the turning-point threshold set to `factor` x A (x the noise level, as the code
+    # scales it): `livre@1.0,livre@2.0` sweeps the threshold of the shipped model.
+    models = {}
+    for m in (x for x in args.models.split(",") if x):
+        base, _, factor = m.partition("@")
+        models[m] = dict(MODELS[base], **({"hyst": float(factor)} if factor else {}))
 
     from certus.physics.certus_strat_batch import calculate_RT_batch_kernel
 

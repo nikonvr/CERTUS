@@ -25,11 +25,11 @@ oracle 1 139 passed ; unit 5 010 passed, 7 skipped en 23 min 51 ; UI 1 312 passe
 (`python scripts\c1_diff.py master`) : 299 tableaux sur 8 008 diffèrent, tous sur la grille machine (pas > 0 ou
 lissage > 1), que la branche corrige (D93 à D95) ; les 171 cas de croissance sans grille machine sont identiques au bit.
 
-**En cours (2026-10-11).** Campagne `r75x2` au protocole d'août, une graine à la fois
-(`python scripts\probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 <graine>`) : 42, 77, 101, 202, 303, 404 et 505, puis
-202 avec `CERTUS_PROBE_OVERRIDES=elite_round_robin=true` ; journaux et résumé dans
-`reports/campagne_r75x2_protocole_aout_2026-10-11/`. Elle dit si « 3 graines sur 7 » (§1, §2) tient avec le code
-d'aujourd'hui, et si ELITE tour à tour change la population.
+**Dernière mesure (2026-10-11).** `r75x2` à 2 nm sans rampes, au protocole d'août, avec le code de `212126d4`
+(`reports/STRAT_r75x2_sept_graines_protocole_aout_2026-10-11.md`) : sept graines sur sept trouvent des déposables
+(août : trois), meilleurs SEEL déposables de 0,5355 à 0,5629 nm. La cause n'est pas établie, et un affaiblissement de
+la détection du plantage laisserait la même signature : rang 3 ci-dessous. ELITE tour à tour (graine 202) atteint le
+calcul et donne 33 % de déposables en plus, pour un meilleur SEEL dans le bruit (0,5662 contre 0,5547 nm).
 
 **Ordre conseillé des prochains lots.** Priorité à ce qui rend un résultat faux ou empêche de calculer,
 puis aux dépendances techniques ; chaque changement reste un commit distinct (C3). Une mesure en cours
@@ -37,6 +37,7 @@ n'autorise pas à modifier son arbre témoin.
 
 | rang | action et critère de fin | raison / condition |
 |---|---|---|
+| 3 — contre-épreuve du plantage | Le passe-bande de 99 couches en une seule campagne (§2 : 100 % de plantage) doit rester non fabricable avec le code d'aujourd'hui. S'il le reste, chercher le commit qui a rendu `r75x2` déposable sans rampes (bissection à la graine 303 entre `cc7008d`, 0 / 1 680, et `212126d4`, 25 min par run) ; sinon, la détection du plantage s'est affaiblie, et c'est un défaut. | Un résultat meilleur que prévu se vérifie avant de s'écrire (CLAUDE.md §11). |
 | 4 — traiter la chaîne de mesure | La grille machine du noyau lit le T exact à chaque lecture (12.4) et lisse sur 8 lectures avec le seuil de 1,00 A (12.2) : D54, D55, D93, D94 et D95 sont corrigés, et ce chemin reproduit une machine indépendante rejouée lecture par lecture (rapport du 2026-10-10, section 2). D96, D97 et D98 existent en option, inactives par défaut, et leur effet sur un classement est mesuré (même rapport, sections 4 et 6). Restent les décisions de 👤 (§5, arrêt de STRAT). | La grille de la machine est inactive par défaut. Tout changement de noyau passe C1 froid contre froid et l'oracle. |
 | 5 — stabiliser interface et gel | Reproduire D23 (les six `gc.collect()` des threads de calcul STRAT et les `QThread`) avant D11 et `WA_DeleteOnClose` ; poursuivre la réduction du gel (D72) après sa fiabilité. | D11 n'a pas d'effet dans le lancement actuel par processus ; libérer une fenêtre avant ses threads serait plus grave. |
 | 6 — réduire la dette | Élucider les effets d'import de D42 avant E402/I001 (D25), puis traiter D26 et les défauts visuels selon §4–5. | Chantier utile, mais moins urgent que la justesse scientifique ; l'ordre des imports peut changer l'exécution. |
@@ -45,7 +46,7 @@ n'autorise pas à modifier son arbre témoin.
 
 | programme | état | prochaine action |
 |---|---|---|
-| **Calcul (STRAT)** | composant étalon : l'aléatoire ×2 (`r75x2`) à la fente de 2 nm. Fabricable avec les rampes de la configuration livrée ; sans rampes, 3 graines sur 7 trouvent des déposables. Toute la fabricabilité passe par le générateur ELITE | rang 4 et la campagne en cours (§0) |
+| **Calcul (STRAT)** | composant étalon : l'aléatoire ×2 (`r75x2`) à la fente de 2 nm. Fabricable avec les rampes de la configuration livrée ; sans rampes, 7 graines sur 7 trouvent des déposables avec le code de `212126d4` (3 sur 7 en août ; cause non établie, §0). Presque toute la fabricabilité passe par le générateur ELITE | rangs 3 et 4 (§0) |
 | **RE** | indices tabulés lus en n − ik depuis R148 (2026-10-05) : tout RE antérieur fait sur des indices absorbants en incidence oblique est à refaire ; un indice demandé hors de sa table est prolongé par une constante, avec un avertissement (ex-D86, `dec73219`, 2026-10-05) | — |
 | **Exécutable gelé** | sur la couche OpenMP depuis `31745571` (D87), sans les outils de développement depuis `5ccaa210` (411 Mo) ; construit à `dbec2fc1` le 2026-10-06, hub et modules contrôlés au démarrage, et 👤 y a calculé : « l'exécutable fonctionne ». Les licences de ce qu'il embarque le suivent (`licenses/`) | rang 5 (D72) |
 | **Interface** | plan clos le 2026-09-08 : 12 critères de fin sur 13 atteints et mesurés, le treizième démontré inatteignable (`xfail` strict) | rang 5 et choix de 👤 (§5) |
@@ -65,7 +66,7 @@ n'autorise pas à modifier son arbre témoin.
 | le même en une seule campagne | aucun score valide | 100 % | 487 stratégies, toutes plantent : non fabricable |
 | aléatoire ×2 `r75x2`, fente native 1 nm | **0,6248 nm** | 0 % | `deep`, pur optique, 277 déposables |
 | `r75x2` à 2 nm, configuration livrée | **0,5676 nm** | 1,67 % | avec `example/example_strat/rampes_r75x2-2nm.json` ; étendue 0,55 % sur 3 graines |
-| `r75x2` à 2 nm, sans rampes | **0,5599 nm** | — | graine 404 ; 3 graines sur 7 trouvent (77, 404, 505). Égalité avec la voie à rampes, pas supériorité |
+| `r75x2` à 2 nm, sans rampes | **0,5355 nm** | 0,33 % | meilleur SEEL déposable, graine 77, code `212126d4`, 2026-10-11 ; 7 graines sur 7 trouvent (de 0,5355 à 0,5629 nm) ; 0,5599 nm et 3 graines sur 7 en août. Cause non établie (§0, rang 3) |
 
 Le passe-bande de 99 couches est chiffré en moyenne de trois graines, jamais par la meilleure.
 
@@ -359,8 +360,8 @@ Ces sujets demandent un jugement de physicien ou de propriétaire du produit. Le
 ## 6. Chantiers spécifiés, en attente
 
 **Calcul** (détail : `git show 7b08dc8:docs/archives/REPRENDRE_ICI.md`) —
-dimensionner K, le nombre de graines à lancer : p ≈ 3/7 pour trouver un déposable, 2/7 pour
-atteindre le niveau 0,57 · balayer `tp_hysteresis_factor` à bruit fixé sur la grille machine : sur la grille
+dimensionner K, le nombre de graines à lancer : sur `r75x2` à 2 nm, p vaut 7/7 avec le code de `212126d4` (3/7 en
+août) pour trouver un déposable comme pour atteindre 0,57 nm, sous réserve du rang 3 (§0) · balayer `tp_hysteresis_factor` à bruit fixé sur la grille machine : sur la grille
 grossière, il est presque inerte (juge de paix, 370 plans, 2026-10-11 : de 1,0 à 2,0 A, 358 à 362 notes identiques au
 bit à celles de 1,66 A, même meilleur plan ; rapport de l'audit du 2026-10-10, section 4) · compter le criblage et
 l'héritage quand un étage deviendra suspect · porter le résultat de `r75x2` dans la vitrine,

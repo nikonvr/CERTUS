@@ -63,6 +63,35 @@ Le rapport de l'audit, ses chiffres et leurs commandes : `reports/STRAT_audit_de
   au bit ; plafond abaissé à 2 169. Validation complète sur `cbdae548` : Ruff 0 ; oracle 1 139 passed ; unit 4 986 passed,
   9 skipped en 25 min 45 ; autres tests 347 passed, 2 skipped en 20 min 18 ; trois contrôles documentaires : 0. Poussé
   sur la branche de travail.
+- **ELITE tour à tour en option** (`elite_round_robin`, lu dans `params` seulement, inactif par défaut). Le générateur
+  essayait les mouvements parent après parent jusqu'à 120 candidats : à 11 blocs, 4 parents sur 10 étaient explorés, à
+  15 blocs 3. Tour à tour, chaque parent reçoit sa part du même budget. Le chemin par défaut rend les mêmes candidats sur
+  400 cas tirés au hasard. **Non mesuré sur une recherche complète.**
+- **`r75x2` à 2 nm sans rampes, configuration livrée** (`example/example_strat/JSON-strat-random75-x2-fabricable-2nm.json`
+  sans `injected_strategies`, `scripts/bench_examples.py strat`, 2026-10-11) : graine 42, 768 stratégies, 94 éliminées,
+  meilleure `RESULT` 0,07997 (plantage 0,33 %) ; graine 202, 602 stratégies, 276 éliminées, meilleure `RESULT` 0,08721
+  (plantage 0 %) ; graine 101 coupée par un redémarrage du conteneur, sans résultat. Le « 3 graines sur 7 » d'août
+  (section 1) vient d'un autre protocole (`scripts/probe_blocs_vs_plantage.py`, configuration
+  `reports/serie_echelle_r75/cfg_x2.json`, 1 617 stratégies et aucune déposable à la graine 42) : les deux ne se
+  comparent pas, et ce chiffre n'est ni confirmé ni infirmé.
+- **Validation complète sur `524df088`** (Linux, Python 3.14.6) : Ruff 0 ; oracle 1 139 passed ; unit 5 008 passed,
+  9 skipped en 30 min ; autres tests 347 passed, 2 skipped en 29 min ; trois contrôles documentaires : 0. Les commits
+  suivants ne touchent que `scripts/` et la documentation.
+
+**Reprendre en local (Windows), là où la session dans le nuage s'est arrêtée (2026-10-11).**
+1. Récupérer la branche : `git fetch origin`, puis `git switch claude/ecstatic-newton-3grmls` (ou `git pull` si elle est
+   déjà là). `python scripts\preflight.py` jusqu'à `PREFLIGHT=GO`, puis la validation de CLAUDE.md, section 2.
+2. Rejouer les graines du protocole d'août, une à la fois, seule sur la machine :
+   `set CERTUS_BENCH_TIMEOUT_S=38400` puis `python scripts\probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 <graine>`
+   pour 42, 77, 101, 202, 303, 404 et 505 (ou `python scripts\orchestre_multigraine.py r75x2 --graines 42 77 101 202
+   303 404 505 --budget nuit --objectif meilleur`). C'est ce protocole qui dit si « 3 sur 7 » tient avec le code
+   d'aujourd'hui.
+3. Mesurer ELITE tour à tour à graine égale : la même commande, avec `set CERTUS_PROBE_OVERRIDES=elite_round_robin=true`
+   et `set CERTUS_PROBE_TAG=rr`, contre le même run sans surcharge ; deux runs à moins de ~8 % sont indiscernables
+   (section 2), un passage de 0 à des déposables ne l'est pas.
+4. Les décisions qui attendent 👤 sur l'arrêt (`reports/STRAT_audit_declenchement_OMS_2026-10-10.md`) : activer D96 par
+   défaut (ancres au sommet), et D97 avec elle ; pour D98, choisir entre l'arrêt tardif et l'attente sans fin ; noter
+   ou non au modèle figé.
 
 **Fait dans la nuit du 2026-10-06.**
 - **Branche PGlobal morte de l'INDEX SPLINE retirée** (`8328e6fc`, décision de 👤) : les 43 instructions qui suivaient

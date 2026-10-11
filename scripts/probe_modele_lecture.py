@@ -12,7 +12,11 @@ levels; a crash rate above 5 % at any level eliminates. Photometric curvature an
 production; the slit bias is LEFT OUT (its profiles are built per strategy inside the pipeline), and so is any Rate
 layer or witness swap -- the comparison is between reading models, under the same physics on both sides.
 
-    python scripts/probe_modele_lecture.py <config.json> <plans.json> [--first N] [--runs 300] [--json out.json]
+Models (`--models`): `livre` and `fige`, each also with the exact stop (`_exact`, D97), and `fige_arret_lisse`, the
+frozen model whose stop reading is smoothed like the rest (D99).
+
+    python scripts/probe_modele_lecture.py <config.json> <plans.json> [--models livre,fige] [--ranks 0,5,9]
+        [--first N] [--runs 300] [--json out.json]
 """
 
 from __future__ import annotations
@@ -45,6 +49,9 @@ MODELS = {
     # D97: the same two reading models, the stop solved on the exact signal instead of the parabola.
     "livre_exact": {"smoothing": 1, "hyst": None, "exact": True},
     "fige_exact": {"smoothing": 8, "hyst": 1.0, "exact": True},
+    # D99: the frozen model with the stop reading smoothed like the rest -- the same stop draws divided by sqrt(8), the
+    # variance of a mean of 8 independent readings. The kernel draws it raw whatever the smoothing.
+    "fige_arret_lisse": {"smoothing": 8, "hyst": 1.0, "exact": False, "stop_scale": 1.0 / np.sqrt(8.0)},
 }
 
 
@@ -73,7 +80,7 @@ def score_plan(params, thick, blocks, n_runs, A, h_config, model, wls, nH_w, nL_
     worst_p95, worst_crash = 0.0, 0.0
     for level_idx, f in enumerate((0.5, 1.0, 2.0)):
         rng = np.random.default_rng([seed, level_idx])
-        stop = A * f * np.clip(rng.normal(0.0, 1.0 / 3.0, size=(n_runs, n)), -1.0, 1.0)
+        stop = model.get("stop_scale", 1.0) * A * f * np.clip(rng.normal(0.0, 1.0 / 3.0, size=(n_runs, n)), -1.0, 1.0)
         res = simulate_stack_robustness_batch(
             np.asarray(thick, dtype=float), lw, nH, nL, nS, stop, compute_probe_offset_nm_from_ratio(params),
             float(params.get("non_monotonic_error_factor", 2.0)), 0, np.full(n, A * f), seed * 7919 + level_idx,
@@ -105,6 +112,7 @@ def main() -> None:
     ap.add_argument("config")
     ap.add_argument("plans")
     ap.add_argument("--first", type=int, default=0, help="score only the first N plans (0: all)")
+    ap.add_argument("--ranks", default="", help="score only these ranks of the plans file, comma-separated")
     ap.add_argument("--runs", type=int, default=300)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--models", default="livre,fige", help=f"among {', '.join(MODELS)}")
@@ -127,20 +135,22 @@ def main() -> None:
     flat = np.where((np.arange(len(thick)) % 2 == 0)[None, :], nH_w[:, None], nL_w[:, None]).astype(np.complex128)
     T_nom = calculate_RT_batch_kernel(wls, nH_w, nL_w, nS_w, np.asarray(thick, dtype=float).reshape(1, -1))[1][0]
     plans = json.load(open(args.plans))
+    ranks = [int(x) for x in args.ranks.split(",") if x.strip()] or list(range(len(plans)))
     if args.first:
-        plans = plans[: args.first]
-    print(f"config={Path(args.config).name} plans={len(plans)} runs={args.runs} A={A:g} h={h_config:g} "
+        ranks = ranks[: args.first]
+    print(f"config={Path(args.config).name} plans={len(ranks)} runs={args.runs} A={A:g} h={h_config:g} "
           f"python={sys.version.split()[0]}", flush=True)
     rows = []
     t0 = time.perf_counter()
-    for rank, plan in enumerate(plans):
+    for count, rank in enumerate(ranks):
+        plan = plans[rank]
         row = {"rank": rank, "id": plan.get("id"), "bench_score": plan.get("score"), "blocks": plan["blocks"]}
         for name, model in models.items():
             row[name] = score_plan(params, thick, plan["blocks"], args.runs, A, h_config, model, wls, nH_w, nL_w, nS_w,
                                    flat, T_nom, args.seed)
         rows.append(row)
-        if rank % 10 == 0:
-            print(f"  {rank + 1}/{len(plans)} plans, {time.perf_counter() - t0:.0f} s", flush=True)
+        if count % 10 == 0:
+            print(f"  {count + 1}/{len(ranks)} plans, {time.perf_counter() - t0:.0f} s", flush=True)
             if args.json:
                 Path(args.json).write_text(json.dumps({"rows": rows}, indent=0), encoding="utf-8")
     if args.json:

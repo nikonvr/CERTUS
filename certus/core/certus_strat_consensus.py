@@ -770,7 +770,15 @@ def _apply_elite_refinement_if_enabled(
         f"{float(ctx.params.get('scan_wl_step', 0.0)):g} nm"
     )
     total_elite_added = 0
-    
+    # 🔑 WHICH PARENTS GET EXPLORED. The moves are tried parent after parent until `elite_max_candidates` (120) are kept,
+    # and a parent of K blocks has up to 4K - 2 of them: 📏 with ten near-duplicate parents of 11 blocks, the first four
+    # fill the budget (38, 40, 40 and 2 candidates), with 15 blocks the first three (56, 56, 8) -- `elite_parent_top_k`
+    # says ten. With `elite_round_robin` the parents take turns, one move each, every parent's moves in an order drawn
+    # from (robustness seed, round, parent rank): same budget, every parent explored. Off by default: the former order.
+    # Read from `params` only -- the configuration file does not route it (an option to measure, not yet to deliver).
+    round_robin = bool(ctx.params.get("elite_round_robin", False))
+    base_seed = _resolve_robustness_base_seed(ctx.params)
+
     executor_cls = concurrent.futures.ThreadPoolExecutor
     worker_count = get_safe_worker_count()
 
@@ -797,6 +805,7 @@ def _apply_elite_refinement_if_enabled(
             max_candidates=elite_max_candidates,
             wl_neighbor_span=elite_wl_neighbor_span,
             existing_signatures=existing_signatures,
+            round_robin_seed=(base_seed, elite_round) if round_robin else None,
         )
         if ctx.strategy_id_cursor is not None:
             ctx.strategy_id_cursor.advance(_next_sid)
@@ -1283,6 +1292,62 @@ def _apply_local_search_p_conforme(
 
 
 
+def _elite_moves(base_blocks: list[dict[str, Any]], wl_arr: np.ndarray, span: int) -> list[list[dict[str, Any]]]:
+    """The local moves around one parent, in the order ELITE has always tried them.
+
+    First the wavelength of each block, moved to its `span` neighbours on the control grid `wl_arr`; then each boundary
+    between two blocks, moved by one layer to the left, then to the right. Each move is a new list of blocks.
+    """
+    moves: list[list[dict[str, Any]]] = []
+    # 1) Wavelength local mutations (neighbor wavelengths around each block lambda)
+    for b_idx, blk in enumerate(base_blocks):
+        cur_wl = float(blk["wavelength"])
+        nearest = int(np.argmin(np.abs(wl_arr - cur_wl)))
+        for delta in range(-span, span + 1):
+            if delta == 0:
+                continue
+
+            idx_wl = nearest + delta
+            if idx_wl < 0 or idx_wl >= wl_arr.size:
+                continue
+
+            new_wl = float(wl_arr[idx_wl])
+            if abs(new_wl - cur_wl) < 1e-12:
+                continue
+
+            mutated = [dict(b) for b in base_blocks]
+            mutated[b_idx]["wavelength"] = new_wl
+            moves.append(mutated)
+
+    # 2) Boundary local shifts (+/- 1 layer between adjacent blocks)
+    for b_idx in range(len(base_blocks) - 1):
+        left = base_blocks[b_idx]
+        right = base_blocks[b_idx + 1]
+        left_len = int(left["end"]) - int(left["start"])
+        right_len = int(right["end"]) - int(right["start"])
+
+        # Shift boundary left by 1 (give one layer from left to right)
+        if left_len > 1:
+            mutated = [dict(b) for b in base_blocks]
+            new_boundary = int(mutated[b_idx]["end"]) - 1
+            mutated[b_idx]["end"] = new_boundary
+            mutated[b_idx + 1]["start"] = new_boundary
+            mutated[b_idx]["num_layers"] = mutated[b_idx]["end"] - mutated[b_idx]["start"]
+            mutated[b_idx + 1]["num_layers"] = mutated[b_idx + 1]["end"] - mutated[b_idx + 1]["start"]
+            moves.append(mutated)
+
+        # Shift boundary right by 1 (give one layer from right to left)
+        if right_len > 1:
+            mutated = [dict(b) for b in base_blocks]
+            new_boundary = int(mutated[b_idx]["end"]) + 1
+            mutated[b_idx]["end"] = new_boundary
+            mutated[b_idx + 1]["start"] = new_boundary
+            mutated[b_idx]["num_layers"] = mutated[b_idx]["end"] - mutated[b_idx]["start"]
+            mutated[b_idx + 1]["num_layers"] = mutated[b_idx + 1]["end"] - mutated[b_idx + 1]["start"]
+            moves.append(mutated)
+    return moves
+
+
 def _generate_elite_candidate_strategies(
     parent_results: list[dict[str, Any]],
     available_wls: list[float],
@@ -1291,10 +1356,15 @@ def _generate_elite_candidate_strategies(
     max_candidates: int = 120,
     wl_neighbor_span: int = 1,
     existing_signatures: set | None = None,
+    round_robin_seed: tuple[int, ...] | None = None,
 ) -> tuple[list[dict[str, Any]], int]:
     """
     Build local-neighborhood variants around top-ranked strategies.
     Preserves contract constraints (same n_blocks, contiguous coverage).
+
+    The moves of every parent (`_elite_moves`) are tried parent after parent until `max_candidates` are kept. With
+    `round_robin_seed`, the parents take turns instead, one move each, every parent's moves in an order drawn from the
+    seed (with the parent's rank): see `elite_round_robin` in `_apply_elite_refinement_if_enabled`.
     """
     if not parent_results or not available_wls:
         return [], start_strategy_id
@@ -1348,6 +1418,7 @@ def _generate_elite_candidate_strategies(
         seen.add(sig)
         next_id += 1
 
+    per_parent: list[list[tuple[Any, list[dict[str, Any]]]]] = []
     for parent in parent_results:
         strat = parent.get("strategy", {})
         parent_sid = strat.get("strategy_id", "?")
@@ -1362,59 +1433,20 @@ def _generate_elite_candidate_strategies(
 
         if not base_blocks:
             continue
+        per_parent.append([(parent_sid, mutated) for mutated in _elite_moves(base_blocks, wl_arr, span)])
 
-        # 1) Wavelength local mutations (neighbor wavelengths around each block lambda)
-        for b_idx, blk in enumerate(base_blocks):
-            cur_wl = float(blk["wavelength"])
-            nearest = int(np.argmin(np.abs(wl_arr - cur_wl)))
-            for delta in range(-span, span + 1):
-                if delta == 0:
-                    continue
-
-                idx_wl = nearest + delta
-                if idx_wl < 0 or idx_wl >= wl_arr.size:
-                    continue
-
-                new_wl = float(wl_arr[idx_wl])
-                if abs(new_wl - cur_wl) < 1e-12:
-                    continue
-
-                mutated = [dict(b) for b in base_blocks]
-                mutated[b_idx]["wavelength"] = new_wl
-                _push_candidate(mutated, parent_sid)
-                if len(out) >= max_keep:
-                    return out, next_id
-
-        # 2) Boundary local shifts (+/- 1 layer between adjacent blocks)
-        for b_idx in range(len(base_blocks) - 1):
-            left = base_blocks[b_idx]
-            right = base_blocks[b_idx + 1]
-            left_len = int(left["end"]) - int(left["start"])
-            right_len = int(right["end"]) - int(right["start"])
-
-            # Shift boundary left by 1 (give one layer from left to right)
-            if left_len > 1:
-                mutated = [dict(b) for b in base_blocks]
-                new_boundary = int(mutated[b_idx]["end"]) - 1
-                mutated[b_idx]["end"] = new_boundary
-                mutated[b_idx + 1]["start"] = new_boundary
-                mutated[b_idx]["num_layers"] = mutated[b_idx]["end"] - mutated[b_idx]["start"]
-                mutated[b_idx + 1]["num_layers"] = mutated[b_idx + 1]["end"] - mutated[b_idx + 1]["start"]
-                _push_candidate(mutated, parent_sid)
-                if len(out) >= max_keep:
-                    return out, next_id
-
-            # Shift boundary right by 1 (give one layer from right to left)
-            if right_len > 1:
-                mutated = [dict(b) for b in base_blocks]
-                new_boundary = int(mutated[b_idx]["end"]) + 1
-                mutated[b_idx]["end"] = new_boundary
-                mutated[b_idx + 1]["start"] = new_boundary
-                mutated[b_idx]["num_layers"] = mutated[b_idx]["end"] - mutated[b_idx]["start"]
-                mutated[b_idx + 1]["num_layers"] = mutated[b_idx + 1]["end"] - mutated[b_idx + 1]["start"]
-                _push_candidate(mutated, parent_sid)
-                if len(out) >= max_keep:
-                    return out, next_id
+    if round_robin_seed is None:
+        ordered = [move for moves in per_parent for move in moves]
+    else:
+        for rank, moves in enumerate(per_parent):
+            order = np.random.default_rng([*round_robin_seed, rank]).permutation(len(moves))
+            per_parent[rank] = [moves[k] for k in order]
+        longest = max((len(moves) for moves in per_parent), default=0)
+        ordered = [moves[k] for k in range(longest) for moves in per_parent if k < len(moves)]
+    for parent_sid, mutated in ordered:
+        _push_candidate(mutated, parent_sid)
+        if len(out) >= max_keep:
+            break
 
     return out, next_id
 

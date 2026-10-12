@@ -25,6 +25,13 @@ oracle 1 143 passed ; unit 5 219 passed, 7 skipped en 13 min 42 ; UI 1 315 passe
 (`python scripts\c1_diff.py master`, mesuré à `212126d4` ; aucun noyau n'a changé depuis) : 299 tableaux sur 8 008 diffèrent, tous sur la grille machine (pas > 0 ou
 lissage > 1), que la branche corrige (D93 à D95) ; les 171 cas de croissance sans grille machine sont identiques au bit.
 
+**Un seul indice de saphir** (2026-10-12, `reports/SAPHIR_indice_unique_2026-10-12.md`). La référence est le Sellmeier d'id 3
+(rayon ordinaire, Malitson et Dodge) ; les mesures absolues de la séance 24-03 en donnent le niveau à +0,0003 ± 0,0028, donc on ne
+la corrige pas. « Sapphire Fresnel » (un second Sellmeier, n plus bas de 0,0077 ; dans METAL, un substrat N-BK7 sans un mot) est un
+alias de l'id 3 (`b9223b43`) ; les tables mortes `sapphire fresnel.xlsx` et `sapphire_index.txt` sont supprimées (`4a3bda20`) ;
+`tests/unit/test_one_sapphire_index.py` garde l'unicité. Reste : C1 et C3 diffèrent entre le JSON et le code (n : 4,6·10⁻⁷ au plus),
+non alignés pour ne pas changer le hash verrouillé du JSON. Pas encore validé en entier : voir la validation ci-dessous.
+
 **D103, trouvé le 2026-10-11, corrigé par `de9a2025`** (`reports/STRAT_D103_identifiants_en_double_2026-10-11.md`). En
 `deep` et `extreme`, la DP rend jusqu'à 2 × `top_k` groupements par carte de coût, numérotés dans des plages de cent :
 les rangs 100 à 199 d'une carte prenaient les numéros de la suivante, et le consensus, qui range ses scores par
@@ -181,6 +188,12 @@ du dichroïque dont le plantage s'écarterait nettement du prédit rouvrirait ce
 - **INDEX : les réglages d'absorption du substrat ne s'affichent que pour le silicium**, le seul
   substrat dont le calcul lit l'absorption ; pour tous les autres, le worker force k = 0 (D43).
 
+### Indice du saphir — décidé le 2026-10-12
+
+- **Un seul indice de saphir dans CERTUS** : le Sellmeier d'id 3, partout (noyaux, INDEX, INDEX SPLINE, STRAT, FIELD, METAL).
+  Aucune table de saphir, aucun second Sellmeier. Les libellés « Sapphire Fresnel » et « Sapphire (FR) » restent des alias pour
+  qu'un composant enregistré se charge encore.
+
 ### Règles gravées
 
 - **Une λ de contrôle est interdite** si, signal bruité, elle risque de mal compter les points
@@ -328,7 +341,7 @@ Chaque correctif est un commit (R136 `c738a130`, R137 `83661fd4`) qu'un `git rev
 - **Un gel local se construit dans un environnement jetable installé depuis `requirements.lock`**, comme celui de la
   CI, et supprimé ensuite : l'exécutable local n'embarque pas ce que porte le Python du poste.
 - **Données et logo de 👤** : `BSCNES_*` et le reste de `example/` et `samples/`, la table du silicium sous 1200 nm,
-  `sapphire_index.txt`, les préréglages de Cauchy, le logo. `certus_re` (Zenodo) est publié sous CC BY 4.0. Les quatre
+  les préréglages de Cauchy, le logo. `certus_re` (Zenodo) est publié sous CC BY 4.0. Les quatre
   termes de B270i autres que B1 et C1 sont d'origine inconnue.
 - **Le RE garde sa pénalité QWOT** : l'a priori MAP de `certus_re` n'est pas porté.
 
@@ -395,6 +408,11 @@ Ces sujets demandent un jugement de physicien ou de propriétaire du produit. Le
 | **arrêt de STRAT** | D96 à D99 (§4) : activer par défaut les ancres au sommet (D96) et l'arrêt exact (D97) ; pour l'armement (D98), choisir entre l'arrêt tardif et l'attente sans fin ; lisser ou non la lecture d'arrêt (D99) ; noter ou non au modèle figé, au moins pour départager la tête du classement (rapport du 2026-10-10, sections 4 et 6) |
 
 ## 6. Chantiers spécifiés, en attente
+
+**Saphir** — INDEX traite le saphir comme transparent (k = 0) : son absorption au-delà de 3,9 µm (α de 0,05 cm⁻¹ à 4 µm à 1,1 cm⁻¹ à
+5,2 µm, lue sur le saphir nu de la séance 24-03) n'est pas modélisée, ce qui biaise les films mesurés au MWIR ; à brancher comme
+nouveau paramètre inactif par défaut (C1) · mesurer la polarisation du faisceau du spectrophotomètre : elle domine l'incertitude
+du niveau (0,025 d'indice par unité de fraction p).
 
 **Calcul** (détail : `git show 7b08dc8:docs/archives/REPRENDRE_ICI.md`) —
 dimensionner K, le nombre de graines à lancer : p ≈ 6/7 pour trouver un déposable, 4/7 pour atteindre le niveau 0,57

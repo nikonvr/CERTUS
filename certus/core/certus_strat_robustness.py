@@ -96,6 +96,7 @@ from certus.core.certus_strat_robustness_rate import (
     RATE_RESCUE_SERIAL_BASE,
     RATE_SWING_MIN_DEFAULT,
     RATE_VARIANT_TOP_N_DEFAUT,
+    _elite_rate_candidates,
     _elite_rate_moves,
     _expand_with_rate_variants,
     _first_crash_layer,

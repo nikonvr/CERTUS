@@ -65,9 +65,9 @@ def _attach_slit_profiles(*args, **kwargs) -> Any:
     from certus.core.certus_strat_robustness import _attach_slit_profiles as attach_fn
     return attach_fn(*args, **kwargs)
 
-def _elite_rate_moves(*args, **kwargs) -> Any:
-    from certus.core.certus_strat_robustness import _elite_rate_moves as moves_fn
-    return moves_fn(*args, **kwargs)
+def _elite_rate_candidates(*args, **kwargs) -> Any:
+    from certus.core.certus_strat_robustness import _elite_rate_candidates as candidates_fn
+    return candidates_fn(*args, **kwargs)
 
 
 #: What a strategy carries besides its blocks, and what its children keep: the layers laid by Rate, the slit, the testglass swaps.
@@ -797,13 +797,8 @@ def _apply_elite_refinement_if_enabled(
     # Read from `params` only -- the configuration file does not route it (an option to measure, not yet to deliver).
     round_robin = bool(ctx.params.get("elite_round_robin", False))
     base_seed = _resolve_robustness_base_seed(ctx.params)
-    # 🔑 THE RATE LAYERS OF A PARENT, MOVED -- 👤 2026-10-12: optics, then a packet of Rate, then optics at another wavelength. Up to
-    # `elite_rate_max_candidates` more candidates per round change nothing but the Rate layers of their parent (`_elite_rate_moves`).
-    # 📏 On by default since the measure of 2026-10-12: `r75x0.5` (seed 101) 0.4981 -> 0.3967 nm, the juge de paix 0.1849 -> 0.1721 nm,
-    # `r75x2` 0.5406 -> 0.5358 nm, every list depositable; the best plans alternate packets of Rate and windows of optics of two layers.
-    # Pure optical monitoring, asked for with `allow_rate = 0`, is honoured: the moves are Rate like the others.
+    # 👤 2026-10-12: optics, a packet of Rate, optics at another wavelength: on by default (`r75x0.5` 0.4981 -> 0.3967 nm); `allow_rate = 0` is honoured.
     rate_moves = bool(ctx.params.get("elite_rate_moves", True)) and bool(ctx.params.get("allow_rate", True))
-    rate_moves_max = int(ctx.params.get("elite_rate_max_candidates", 120))
 
     executor_cls = concurrent.futures.ThreadPoolExecutor
     worker_count = get_safe_worker_count()
@@ -833,14 +828,11 @@ def _apply_elite_refinement_if_enabled(
             existing_signatures=existing_signatures,
             round_robin_seed=(base_seed, elite_round) if round_robin else None,
             rate_moves=rate_moves,
-            max_rate_candidates=rate_moves_max,
+            max_rate_candidates=int(ctx.params.get("elite_rate_max_candidates", 120)),
         )
         if rate_moves:
-            ctx.logger.info(
-                f"[ELITE-RATE] Round {elite_round}: "
-                f"{sum(1 for c in elite_candidates if str(c.get('origin_details', '')).startswith('ELITE_RATE'))} candidate(s) "
-                "change the Rate layers of their parent."
-            )
+            n_rate = sum(1 for c in elite_candidates if str(c.get("origin_details", "")).startswith("ELITE_RATE"))
+            ctx.logger.info(f"[ELITE-RATE] Round {elite_round}: {n_rate} candidate(s) change the Rate layers of their parent.")
         if ctx.strategy_id_cursor is not None:
             ctx.strategy_id_cursor.advance(_next_sid)
         _attach_slit_profiles(elite_candidates, ctx.p_thick_nominal, ctx.params, ctx.logger)
@@ -1405,8 +1397,7 @@ def _generate_elite_candidate_strategies(
     `round_robin_seed`, the parents take turns instead, one move each, every parent's moves in an order drawn from the
     seed (with the parent's rank): see `elite_round_robin` in `_apply_elite_refinement_if_enabled`.
 
-    With `rate_moves`, up to `max_rate_candidates` more are kept, which change the Rate layers of their parent and nothing else
-    (`_elite_rate_moves`: the parents take turns, one move each, the nearest moves first): see `elite_rate_moves`.
+    With `rate_moves`, up to `max_rate_candidates` more change the Rate layers of their parent and nothing else (`elite_rate_moves`).
     """
     if not parent_results or not available_wls:
         return [], start_strategy_id
@@ -1422,11 +1413,7 @@ def _generate_elite_candidate_strategies(
     max_keep = max(1, int(max_candidates))
 
     def _push_candidate(
-        base_blocks: list[dict[str, Any]],
-        parent_sid: Any,
-        parent_strat: dict[str, Any],
-        rate_layers: list[int] | None = None,
-        limit: int | None = None,
+        base_blocks: list[dict[str, Any]], parent_sid: Any, parent_strat: dict[str, Any], rate_layers: list[int] | None = None, limit: int | None = None
     ) -> bool:
         nonlocal next_id
         if len(out) >= (max_keep if limit is None else limit):
@@ -1502,28 +1489,10 @@ def _generate_elite_candidate_strategies(
 
     if rate_moves and max_rate_candidates > 0:
         limit = len(out) + int(max_rate_candidates)
-        rate_per_parent = []
-        for parent in parent_results:
-            strat = parent.get("strategy", {})
-            base_blocks = [
-                {"start": int(b["start"]), "end": int(b["end"]), "wavelength": float(b["wavelength"])}
-                for b in strat.get("blocks", [])
-            ]
-            if base_blocks:
-                rate_per_parent.append(
-                    [
-                        (strat.get("strategy_id", "?"), strat, base_blocks, layers)
-                        for layers in _elite_rate_moves(strat.get("rate_layers"), num_layers)
-                    ]
-                )
-        longest = max((len(moves) for moves in rate_per_parent), default=0)
-        for k in range(longest):
-            for moves in rate_per_parent:
-                if k < len(moves):
-                    parent_sid, parent_strat, base_blocks, layers = moves[k]
-                    _push_candidate([dict(b) for b in base_blocks], parent_sid, parent_strat, rate_layers=layers, limit=limit)
+        for parent_sid, parent_strat, base_blocks, layers in _elite_rate_candidates(parent_results, num_layers):
             if len(out) >= limit:
                 break
+            _push_candidate([dict(b) for b in base_blocks], parent_sid, parent_strat, rate_layers=layers, limit=limit)
 
     return out, next_id
 

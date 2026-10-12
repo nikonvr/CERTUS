@@ -1072,3 +1072,15 @@ def _elite_rate_moves(rate_layers: Any, num_layers: int) -> list[list[int]]:
             seen.add(candidate)
             ordered.append(sorted(candidate))
     return ordered
+
+
+def _elite_rate_candidates(parent_results: list[dict[str, Any]], num_layers: int) -> list[tuple[Any, dict[str, Any], list[dict[str, Any]], list[int]]]:
+    """The moves on the Rate layers of every parent, the parents taking turns: `(parent id, parent, its blocks, the new Rate layers)`."""
+    per_parent = []
+    for parent in parent_results:
+        strat = parent.get("strategy", {})
+        blocks = [{"start": int(b["start"]), "end": int(b["end"]), "wavelength": float(b["wavelength"])} for b in strat.get("blocks", [])]
+        if blocks:
+            per_parent.append([(strat.get("strategy_id", "?"), strat, blocks, layers) for layers in _elite_rate_moves(strat.get("rate_layers"), num_layers)])
+    longest = max((len(moves) for moves in per_parent), default=0)
+    return [moves[k] for k in range(longest) for moves in per_parent if k < len(moves)]

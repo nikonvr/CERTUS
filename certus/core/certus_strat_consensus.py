@@ -12,6 +12,7 @@ Contains:
 
 import collections
 import concurrent.futures
+import copy
 import logging
 from typing import Any
 
@@ -32,11 +33,11 @@ from certus.core.certus_strat_ranking import (
     next_refinement_strategy_id,
 )
 from certus.utils.certus_strat_context import (
-    _blocks_signature,
     _dedupe_preserve_order_int,
     _default_consensus_seeds,
     _extract_rmse_p95_for_noise,
     _parse_origin_priority_map,
+    _plan_signature,
     _resolve_consensus_num_runs,
     _resolve_consensus_num_seeds,
     _resolve_consensus_seed_stride,
@@ -59,6 +60,16 @@ def _calculate_strategy_spectral_resolution(*args, **kwargs) -> Any:
 def _parse_noise_factors(*args, **kwargs) -> Any:
     from certus.core.certus_strat_robustness import _parse_noise_factors as parse_fn
     return parse_fn(*args, **kwargs)
+
+
+#: What a strategy carries besides its blocks, and what its children keep: the layers laid by Rate, the slit, the testglass swaps.
+#: A child of ELITE or of the local search is its parent with other blocks, not a new strategy.
+_INHERITED_KEYS = ("rate_layers", "monochromator_resolution_nm", "witness_reset_layers")
+
+
+def _inherited_by_children(parent: dict[str, Any]) -> dict[str, Any]:
+    """The parts of a strategy its children keep, as copies (a child can be edited without touching its parent)."""
+    return {key: copy.deepcopy(parent[key]) for key in _INHERITED_KEYS if parent.get(key) not in (None, [])}
 
 
 def _resolve_consensus_std_weight(params: dict[str, Any]) -> float:
@@ -1068,7 +1079,7 @@ def _generate_local_search_neighborhood(
 
     def _push(blocks: list[dict[str, Any]], tag: str) -> None:
         nonlocal next_id
-        sig = _blocks_signature(blocks)
+        sig = _plan_signature(blocks, parent_strat.get("rate_layers"))
         if not sig or sig in seen_signatures:
             return
         n_blocks_local = len(blocks)
@@ -1087,6 +1098,7 @@ def _generate_local_search_neighborhood(
             "origin_details": f"LOCAL_SEARCH({tag}, parent={parent_sid})",
             "same_wl_kept": int(same_wl_kept),
             "parent_strategy_id": parent_sid,
+            **_inherited_by_children(parent_strat),
         }
         ok, _reason = _validate_strategy_blocks_contract(
             candidate,
@@ -1379,12 +1391,12 @@ def _generate_elite_candidate_strategies(
     span = max(1, int(wl_neighbor_span))
     max_keep = max(1, int(max_candidates))
 
-    def _push_candidate(base_blocks: list[dict[str, Any]], parent_sid: Any) -> None:
+    def _push_candidate(base_blocks: list[dict[str, Any]], parent_sid: Any, parent_strat: dict[str, Any]) -> None:
         nonlocal next_id
         if len(out) >= max_keep:
             return
 
-        sig = _blocks_signature(base_blocks)
+        sig = _plan_signature(base_blocks, parent_strat.get("rate_layers"))
         if not sig or sig in seen:
             return
 
@@ -1404,6 +1416,7 @@ def _generate_elite_candidate_strategies(
             "origin_details": f"ELITE(parent={parent_sid})",
             "same_wl_kept": int(same_wl_kept),
             "parent_strategy_id": parent_sid,
+            **_inherited_by_children(parent_strat),
         }
 
         ok, _reason = _validate_strategy_blocks_contract(
@@ -1418,7 +1431,7 @@ def _generate_elite_candidate_strategies(
         seen.add(sig)
         next_id += 1
 
-    per_parent: list[list[tuple[Any, list[dict[str, Any]]]]] = []
+    per_parent: list[list[tuple[Any, dict[str, Any], list[dict[str, Any]]]]] = []
     for parent in parent_results:
         strat = parent.get("strategy", {})
         parent_sid = strat.get("strategy_id", "?")
@@ -1433,7 +1446,7 @@ def _generate_elite_candidate_strategies(
 
         if not base_blocks:
             continue
-        per_parent.append([(parent_sid, mutated) for mutated in _elite_moves(base_blocks, wl_arr, span)])
+        per_parent.append([(parent_sid, strat, mutated) for mutated in _elite_moves(base_blocks, wl_arr, span)])
 
     if round_robin_seed is None:
         ordered = [move for moves in per_parent for move in moves]
@@ -1443,8 +1456,8 @@ def _generate_elite_candidate_strategies(
             per_parent[rank] = [moves[k] for k in order]
         longest = max((len(moves) for moves in per_parent), default=0)
         ordered = [moves[k] for k in range(longest) for moves in per_parent if k < len(moves)]
-    for parent_sid, mutated in ordered:
-        _push_candidate(mutated, parent_sid)
+    for parent_sid, parent_strat, mutated in ordered:
+        _push_candidate(mutated, parent_sid, parent_strat)
         if len(out) >= max_keep:
             break
 

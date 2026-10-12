@@ -672,6 +672,17 @@ def _blocks_signature(blocks: list[dict[str, Any]]) -> tuple:
     return tuple(sig)
 
 
+def _plan_signature(blocks: list[dict[str, Any]], rate_layers: Any = None) -> tuple:
+    """What makes two plans the same to the refinement: their blocks, and when some layers are laid by Rate, which ones.
+
+    Without Rate layer it is `_blocks_signature`, as it always was. A plan with the same blocks and other Rate layers is another
+    plan: the tails of one parent share their blocks and differ by their cut.
+    """
+    sig = _blocks_signature(blocks)
+    rate = tuple(sorted(int(i) for i in rate_layers or ()))
+    return ("rate", sig, rate) if rate and sig else sig
+
+
 def _strategy_signature(strategy: dict[str, Any]) -> tuple:
     if not isinstance(strategy, dict):
         return tuple()

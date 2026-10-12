@@ -36,6 +36,7 @@ from certus.utils.certus_strat_context import (
     _extract_rmse_p95_for_noise,
     _origin_family,
     _origin_priority_from_map,
+    _plan_signature,
     _strategy_id_sort_token,
     _validate_strategy_blocks_contract,
     _wl_set,
@@ -995,8 +996,13 @@ def _max_strategy_id(strategies_results: list[dict[str, Any]]) -> int:
 
 
 def _existing_block_signatures(strategies_results: list[dict[str, Any]]) -> set[tuple]:
-    """Build signature set for already present strategies."""
-    return {_blocks_signature(item.get("strategy", {}).get("blocks", [])) for item in strategies_results}
+    """Build signature set for already present strategies: their blocks, and for those that lay layers by Rate the blocks and the layers."""
+    signatures: set[tuple] = set()
+    for item in strategies_results:
+        strategy = item.get("strategy", {})
+        signatures.add(_blocks_signature(strategy.get("blocks", [])))
+        signatures.add(_plan_signature(strategy.get("blocks", []), strategy.get("rate_layers")))
+    return signatures
 
 
 def _resolve_elite_nominal_and_target_threshold(

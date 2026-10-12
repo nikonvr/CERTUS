@@ -14,6 +14,7 @@ from .certus_strat_dp import _compute_valid_blocks_kernel, _dp_kernel
 from .certus_strat_growth import (
     CRASH_LEVEL_UNREACHABLE,
     CRASH_NON_MONOTONIC,
+    CRASH_NOT_ARMED,
     CRASH_SENTINEL_MIN,
     CRASH_SENTINEL_UNIT,
     CRASH_TP_MISCOUNT,
@@ -60,6 +61,7 @@ from .certus_strat_nucleation import find_nucleation_adaptive_kernel, rank_nucle
 __all__ = [
     "CRASH_LEVEL_UNREACHABLE",
     "CRASH_NON_MONOTONIC",
+    "CRASH_NOT_ARMED",
     "CRASH_SENTINEL_MIN",
     "CRASH_SENTINEL_UNIT",
     "CRASH_TP_MISCOUNT",

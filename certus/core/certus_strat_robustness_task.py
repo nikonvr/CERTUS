@@ -32,6 +32,7 @@ from certus.core.certus_strat_robustness_wrappers import _IdxWrapper
 from certus_physics import (
     CRASH_LEVEL_UNREACHABLE,
     CRASH_NON_MONOTONIC,
+    CRASH_NOT_ARMED,
     CRASH_SENTINEL_MIN,
     CRASH_SENTINEL_UNIT,
     CRASH_TP_MISCOUNT,
@@ -165,6 +166,7 @@ def _test_strategy_robustness_task(
         "p_level_unreachable": 0.0,
         "p_tp_miscount": 0.0,
         "p_non_monotonic": 0.0,
+        "p_not_armed": 0.0,
     }
     # A23 stage 0: crash count PER LAYER and per cause, worst case across noise levels.
     # Already computed inside the batch; only the reduction threw it away.
@@ -174,7 +176,7 @@ def _test_strategy_robustness_task(
     n_lay_prof = len(p_thick_nominal)
     crash_layer_profile = {
         k: np.zeros(n_lay_prof, dtype=int)
-        for k in ("total", "level_unreachable", "tp_miscount", "non_monotonic")
+        for k in ("total", "level_unreachable", "tp_miscount", "non_monotonic", "not_armed")
     }
     # A23 stage 2. inf = "never constrained by this cause on this layer", which is NOT
     # a large margin and must never be averaged into one.
@@ -583,6 +585,7 @@ def _test_strategy_robustness_task(
             (CRASH_LEVEL_UNREACHABLE, "p_level_unreachable"),
             (CRASH_TP_MISCOUNT, "p_tp_miscount"),
             (CRASH_NON_MONOTONIC, "p_non_monotonic"),
+            (CRASH_NOT_ARMED, "p_not_armed"),
         ):
             rate = float(np.count_nonzero(np.any(crash_cause == cause_id, axis=1))) / max(1, num_runs)
             crash_rates_by_cause[cause_key] = max(crash_rates_by_cause[cause_key], rate)
@@ -631,6 +634,7 @@ def _test_strategy_robustness_task(
                 (CRASH_LEVEL_UNREACHABLE, "level_unreachable"),
                 (CRASH_TP_MISCOUNT, "tp_miscount"),
                 (CRASH_NON_MONOTONIC, "non_monotonic"),
+                (CRASH_NOT_ARMED, "not_armed"),
             ):
                 counts = (crash_cause == cause_id).sum(axis=0).astype(int)
                 crash_layer_profile[cause_key] = np.maximum(crash_layer_profile[cause_key], counts)
@@ -804,7 +808,8 @@ def _test_strategy_robustness_task(
             f"{crash_rate_max:.1%} | unreachable level "
             f"{crash_rates_by_cause['p_level_unreachable']:.1%} | divergent count "
             f"{crash_rates_by_cause['p_tp_miscount']:.1%} | non monotonic "
-            f"{crash_rates_by_cause['p_non_monotonic']:.1%}"
+            f"{crash_rates_by_cause['p_non_monotonic']:.1%} | not armed "
+            f"{crash_rates_by_cause['p_not_armed']:.1%}"
         )
 
     return {

@@ -129,6 +129,7 @@ __all__ = [
     "CRASH_LEVEL_UNREACHABLE",
     "CRASH_TP_MISCOUNT",
     "CRASH_NON_MONOTONIC",
+    "CRASH_NOT_ARMED",
     "D_SCAN_VAL",
     "MAX_LOOKBACK_VAL",
     "PHOTOMETRIC_CURVATURE_AMP",
@@ -685,6 +686,7 @@ def get_refractive_clues_vectorized(material_id: Any, wavelengths: np.ndarray, d
 from certus.physics.certus_strat_kernels import (
     CRASH_LEVEL_UNREACHABLE,
     CRASH_NON_MONOTONIC,
+    CRASH_NOT_ARMED,
     CRASH_SENTINEL_MIN,
     CRASH_SENTINEL_UNIT,
     CRASH_TP_MISCOUNT,

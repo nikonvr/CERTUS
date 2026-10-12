@@ -74,8 +74,11 @@ CRASH_LEVEL_UNREACHABLE: int = 1
 CRASH_TP_MISCOUNT: int = 2
 #: Non-monotonic T(d) and REJECT mode requested: candidate is rejected.
 CRASH_NON_MONOTONIC: int = 3
+#: The stopping level is crossed before the controller knows the last extremum is behind it (D98), and the controller waits for ever.
+CRASH_NOT_ARMED: int = 4
 from .certus_strat_math import _seeded_noise_sample
 from .certus_strat_readings import (
+    ARMING_NEVER_STOPS,
     D_SCAN_VAL,
     K_MAX_CLOSED_FORM,
     SCAN_NPTS_CURRENT,
@@ -86,6 +89,7 @@ from .certus_strat_readings import (
     _fill_history_signal,
     _invert_thickness_exact,
     _invert_thickness_from_probes,
+    _level_passed_before_declaration,
     _machine_grid_signal,
     _stack_matrix,
     _stack_matrix_pair,
@@ -1081,7 +1085,7 @@ def simulate_growth_kernel(
     prev_rate_flags: np.ndarray | None = None,
     exact_inversion: bool = False,
     exact_anchors: bool = False,
-    arming: bool = False,
+    arming: int = 0,
 ) -> tuple[float, float, float, float, float]:
     """Fast TMM Simulation for robustness heuristics.
 
@@ -1127,8 +1131,9 @@ def simulate_growth_kernel(
         exact_anchors: D96 -- on the coarse grid, POEM's two anchors are read at the extremum of the layer they fall in
             (`_exact_poem_anchors`), not at the sample the detector picked. False = the path from before it, bit for bit.
 
-        arming: D98 -- no stop before the last extremum is declared (`_armed_level`): a level crossed before the signal
-            has come back from it by `tp_hysteresis` gives way to the declaration. False = the path from before it.
+        arming: D98 -- no stop before the last extremum is declared: a level crossed before the signal has come back from it
+            by `tp_hysteresis`. 0 (or False) = the path from before it, the stop at the level; 1 (or True) = the stop gives way to
+            the declaration (`_armed_level`); 2 = the controller waits for ever, the layer never ends (`CRASH_NOT_ARMED`).
     """
     if wl < 0.1:
         # No monitoring wavelength: nothing is read, so neither margin is constrained.
@@ -1268,8 +1273,13 @@ def simulate_growth_kernel(
         target_level = target_nominal
 
     target_T_noisy = target_level + noise_val_precalc
-    if arming and T_last_real != T_prev_real:  # no stop before the last extremum is declared (D98)
-        target_T_noisy = _armed_level(T_prev_real, T_last_real, tp_hysteresis, target_T_noisy)
+    never_armed = False
+    if arming > 0 and T_last_real != T_prev_real:  # no stop before the last extremum is declared (D98)
+        if _level_passed_before_declaration(T_prev_real, T_last_real, tp_hysteresis, target_T_noisy):
+            if arming == ARMING_NEVER_STOPS:
+                never_armed = True  # the controller waits for ever: reported below, after the two older causes
+            else:
+                target_T_noisy = _armed_level(T_prev_real, T_last_real, tp_hysteresis, target_T_noisy)
 
     # Hard failure, the stopping level is never reached: see the notes above `_level_reachability`.
     if nominal_th > 0.0001:
@@ -1297,6 +1307,14 @@ def simulate_growth_kernel(
                 margin_missed,
                 margin_fab,
             )
+    if never_armed:
+        return (
+            nominal_th + CRASH_NOT_ARMED * CRASH_SENTINEL_UNIT,
+            np.max(T_mono) - np.min(T_mono),
+            margin_level,
+            margin_missed,
+            margin_fab,
+        )
     # The stop: on the parabola of three probes (the default), or on the exact signal (`exact_inversion`, D97).
     if exact_inversion:
         error_raw = _invert_thickness_exact(
@@ -1583,7 +1601,7 @@ def update_run_states_kernel(
     slit_profiles: np.ndarray | None = None,
     exact_inversion: bool = False,
     exact_anchors: bool = False,
-    arming: bool = False,
+    arming: int = 0,
 ) -> np.ndarray:
     """Parallel update of simulation states for next layer.
 

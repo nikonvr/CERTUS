@@ -1090,6 +1090,23 @@ def _exact_poem_anchors(
 # nominal plans (scripts/probe_armement.py, 2026-10-10): on the judge of paix, 22 plans of 370 at 1x and 38 at 2x, the
 # first at rank 23; on r75x2, 222 plans of 783 at 2x. What the instrument then does is not known (it is patented): this
 # option takes the late stop of `scripts/probe_oms_sequentiel.py`, at the reading where the extremum is declared.
+#: The three behaviours of a controller asked to stop at a level it crosses before it knows the last extremum is behind it
+#: (`arming` of the growth kernel): 0 = it stops at the level (the kernel's historical model); 1 = it stops late, where the extremum is
+#: declared; 2 = it waits for ever, the layer never ends (a crash, `CRASH_NOT_ARMED`).
+ARMING_OFF: int = 0
+ARMING_LATE_STOP: int = 1
+ARMING_NEVER_STOPS: int = 2
+
+
+
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def _level_passed_before_declaration(T_prev: float, T_last: float, h: float, level: float) -> bool:
+    """True when `level` lies between the last extremum and its declaration, T_last -+ h: crossed before the stop is armed."""
+    direction = -1.0 if T_last > T_prev else 1.0
+    declared = T_last + direction * h
+    return (level - declared) * direction < 0.0
+
+
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
 def _armed_level(T_prev: float, T_last: float, h: float, level: float) -> float:
     """The level at which an armed controller stops: `level`, or the declaration of the last extremum if later.
@@ -1098,8 +1115,7 @@ def _armed_level(T_prev: float, T_last: float, h: float, level: float) -> float:
     `T_prev`'s side, and the extremum is declared when it has come back from it by `h`. A level crossed before that
     gives way to the declaration level, T_last -+ h, where the controller arms and finds the level already passed.
     """
-    direction = -1.0 if T_last > T_prev else 1.0
-    declared = T_last + direction * h
-    if (level - declared) * direction < 0.0:
-        return declared
+    if _level_passed_before_declaration(T_prev, T_last, h, level):
+        direction = -1.0 if T_last > T_prev else 1.0
+        return T_last + direction * h
     return level

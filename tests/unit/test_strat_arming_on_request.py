@@ -23,7 +23,13 @@ from scipy.optimize import brentq, minimize_scalar
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "oracle"))
 from tmm_reference import rt_stack
 
-from certus.physics.certus_strat_growth import _armed_level, simulate_growth_kernel
+from certus.physics.certus_strat_growth import (
+    CRASH_NOT_ARMED,
+    CRASH_SENTINEL_UNIT,
+    _armed_level,
+    simulate_growth_kernel,
+)
+from certus.physics.certus_strat_readings import ARMING_LATE_STOP, ARMING_NEVER_STOPS
 
 pytestmark = pytest.mark.kernels
 
@@ -127,3 +133,21 @@ def test_without_the_flag_the_kernel_is_unchanged_bit_for_bit() -> None:
 )
 def test_the_armed_level_is_the_later_of_the_level_and_the_declaration(T_prev, T_last, level, expected) -> None:
     assert _armed_level(T_prev, T_last, H, level) == pytest.approx(expected, abs=1e-15)
+
+
+@pytest.mark.parametrize("case", [AFTER_A_MAXIMUM, AFTER_A_MINIMUM], ids=["after a maximum", "after a minimum"])
+def test_a_controller_that_waits_for_ever_never_ends_the_layer(case) -> None:
+    """D98, decided 2026-10-12: the OMS waits for ever when the level is crossed before the extremum is declared (mode 2)."""
+    nominal, i, j0 = case
+    assert _oracle(nominal, i, j0, armed=False)[2] < H
+
+    thickness = _kernel(nominal, i, j0, True, True, ARMING_NEVER_STOPS)
+
+    assert thickness == pytest.approx(nominal[i] + CRASH_NOT_ARMED * CRASH_SENTINEL_UNIT)
+    assert _kernel(nominal, i, j0, True, True, ARMING_LATE_STOP) == _kernel(nominal, i, j0, True, True, True)  # mode 1 is the late stop
+
+
+def test_waiting_for_ever_does_not_touch_a_level_farther_than_the_threshold() -> None:
+    nominal, i, j0 = np.array([62.0, 95.0, 104.0, 97.0, 150.0]), 4, 4
+
+    assert _kernel(nominal, i, j0, True, True, ARMING_NEVER_STOPS) == _kernel(nominal, i, j0, True, True, False)

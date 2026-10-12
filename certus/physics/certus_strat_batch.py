@@ -85,7 +85,7 @@ def validate_wavelengths_batch(
     slit_profiles: np.ndarray | None = None,
     exact_inversion: bool = False,
     exact_anchors: bool = False,
-    arming: bool = False,
+    arming: int = 0,
 ) -> np.ndarray:
     """Evaluates each candidate monitoring wavelength for ONE layer (Phase A).
 
@@ -370,7 +370,7 @@ def simulate_stack_robustness_batch(
     witness_reset_flags: np.ndarray | None = None,
     exact_inversion: bool = False,
     exact_anchors: bool = False,
-    arming: bool = False,
+    arming: int = 0,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
 

@@ -461,10 +461,11 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
             + "Depositions completing successfully, out of 100.\n"
             f"Worst-case non-completion rate: {crash_rate:.2%}\n"
             + nominal_line
-            + "\nThe three failure modes, separately:\n"
+            + "\nThe failure modes, separately:\n"
             f"  level never reached       : {float(causes.get('p_level_unreachable', 0.0)):.2%}\n"
             f"  divergent TP count        : {float(causes.get('p_tp_miscount', 0.0)):.2%}\n"
             f"  non-monotonic T(d)        : {float(causes.get('p_non_monotonic', 0.0)):.2%}\n"
+            f"  stop crossed before armed : {float(causes.get('p_not_armed', 0.0)):.2%}\n"
             "\nA lost run and an out-of-spec filter are the same failure, but not the same\n"
             "cost: one costs machine time, the other costs material and is discovered late."
         )

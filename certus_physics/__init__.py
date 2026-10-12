@@ -22,6 +22,7 @@ if _parent_dir not in sys.path:
 from certus.core._certus_physics_impl import (  # noqa: F401
     CRASH_LEVEL_UNREACHABLE,
     CRASH_NON_MONOTONIC,
+    CRASH_NOT_ARMED,
     # Depots non terminables, decomposes par cause (les trois questions du juge de paix)
     CRASH_SENTINEL_MIN,
     CRASH_SENTINEL_UNIT,

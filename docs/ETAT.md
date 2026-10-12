@@ -19,22 +19,23 @@
 brouillon vers `master`. Les entrées `.git/worktrees/certus0310` et `.git/worktrees/profwt`, incomplètes (Drive en
 refuse la suppression), déclenchent un avertissement à chaque commit sans l'empêcher.
 
-**Dernière validation complète** (2026-10-12, Windows 11, Python 3.14.8, Ryzen 7 5700G, `dbf8025f` ; depuis, seuls des rapports
+**Dernière validation complète** (2026-10-13, Windows 11, Python 3.14.8, Ryzen 7 5700G, `631c4830` ; depuis, seuls des rapports
 et ce document ont changé) : Ruff 0 ;
-oracle 1 143 passed en 51 s ; unit 5 357 passed, 7 skipped en 22 min 43 ; UI 1 315 passed, 12 skipped, 2 xfailed en
-22 min 22 ; autres tests 348 passed, 2 skipped en 10 min 16 (un test de moins qu'à `d1d53bb5` : `test_sapphire_index_txt_is_parseable`
-est parti avec la table de saphir morte) ; trois contrôles documentaires : 0. C1 contre `master`
-(`python scripts\c1_diff.py master`, mesuré à `dbf8025f`, 196 s) : 299 tableaux sur 8 008 diffèrent (`strat.growth` 295,
+oracle 1 143 passed en 54 s ; unit 5 406 passed, 7 skipped en 24 min 35 ; UI 1 324 passed, 12 skipped, 2 xfailed en
+22 min 24 ; autres tests 348 passed, 2 skipped en 10 min 20 ; trois contrôles documentaires : 0. Un premier passage de l'unit, à
+`978b8f04`, avait rendu deux rouges (`test_the_architecture_debt_only_shrinks` : `certus_strat_consensus.py` à 1 529 lignes et
+`_apply_elite_refinement_if_enabled` à 307) ; `631c4830` les ramène sous les plafonds, avec les mêmes candidats. C1 : aucun fichier de
+noyau n'a changé depuis `dbf8025f`, mesuré contre `master` (196 s) : 299 tableaux sur 8 008 diffèrent (`strat.growth` 295,
 `strat.states` 4), tous sur la grille machine (pas > 0 ou lissage > 1), que la branche corrige (D93 à D95) ; les 171 cas de
-croissance sans grille machine sont identiques au bit. C1 contre `212126d4`, où ces 299 écarts avaient été mesurés : les 8 008
-tableaux sont identiques au bit, donc aucun noyau n'a changé de résultat depuis.
+croissance sans grille machine sont identiques au bit. Contre `212126d4`, où ces 299 écarts avaient été mesurés : les 8 008
+tableaux sont identiques au bit.
 
 **Un seul indice de saphir** (2026-10-12, `reports/SAPHIR_indice_unique_2026-10-12.md`). La référence est le Sellmeier d'id 3
 (rayon ordinaire, Malitson et Dodge) ; les mesures absolues de la séance 24-03 en donnent le niveau à +0,0003 ± 0,0028, donc on ne
 la corrige pas. « Sapphire Fresnel » (un second Sellmeier, n plus bas de 0,0077 ; dans METAL, un substrat N-BK7 sans un mot) est un
 alias de l'id 3 (`b9223b43`) ; les tables mortes `sapphire fresnel.xlsx` et `sapphire_index.txt` sont supprimées (`925b3788`) ;
 `tests/unit/test_one_sapphire_index.py` garde l'unicité. Reste : C1 et C3 diffèrent entre le JSON et le code (n : 4,6·10⁻⁷ au plus),
-non alignés pour ne pas changer le hash verrouillé du JSON. Validé en entier avec le reste à `dbf8025f` (validation ci-dessus).
+non alignés pour ne pas changer le hash verrouillé du JSON. Validé en entier avec le reste à `631c4830` (validation ci-dessus).
 
 **D103, trouvé le 2026-10-11, corrigé par `de9a2025`** (`reports/STRAT_D103_identifiants_en_double_2026-10-11.md`). En
 `deep` et `extreme`, la DP rend jusqu'à 2 × `top_k` groupements par carte de coût, numérotés dans des plages de cent :
@@ -51,6 +52,13 @@ parents ELITE sur des scores mélangés.
 2026-09-08 au 2026-10-11, tout résultat STRAT a tourné sans Rate, sans biais de fente et sans recherche de fente, sauf
 surcharge explicite (`reports/STRAT_D100_interrupteurs_non_charges_2026-10-11.md`).
 
+**L'optique reprend après le Rate** (2026-10-12 ; `reports/STRAT_ELITE_couches_Rate_paquets_2026-10-12.md`). 👤 observe en salle de bonnes
+stratégies qui alternent des paquets d'optique à une λ et des paquets de Rate (« purement empirique »). Le noyau le permettait ; la recherche ne le
+proposait pas. ELITE déplace maintenant les couches Rate de ses parents (`elite_rate_moves`, actif par défaut depuis `978b8f04` ; `allow_rate`
+faux l'éteint) : `r75x0.5` 0,4981 → **0,3967 nm** (le meilleur plan : trois paquets de Rate et deux fenêtres d'optique de deux couches, la première à
+451 nm), juge de paix 0,1849 → **0,1721 nm**, `r75x2` 0,5406 → 0,5358 nm, une graine par composant, toutes les listes déposables, au modèle de Rate de
+STRAT (sans dérive de la source).
+
 **Modèle d'arrêt de production et Rate dans tous les scénarios** (2026-10-12 ;
 `reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md`, `reports/STRAT_r75x0.5_secours_rate_2026-10-12.md`). D96, D97 et D98 sont le
 modèle d'arrêt par défaut (`8d9ced13`, décision de 👤, §3) : l'attente sans fin retire 95 % des plans que l'ancien modèle jugeait
@@ -64,7 +72,9 @@ mesurée. D106 (les enfants d'ELITE étaient notés sans biais de fente) est cor
 correction, **0 sur 4 821** avec elle ; la graine 42 : 0 sur 4 561. Les déposables optiques de `r75x2` d'avant la correction (« six
 graines sur sept » ci-dessous) étaient des enfants d'ELITE sans biais de fente : **sans rampes, `r75x2` n'est pas fabricable en optique
 pure**. Avec les défauts de production, tous les plans de la liste le sont (4 175 et 4 307 plans aux graines 101 et 42, meilleur SEEL
-0,5406 et 0,5678 nm), avec du Rate (`reports/STRAT_r75x2_D106_secours_Rate_2026-10-12.md`).
+0,5406 et 0,5678 nm), avec du Rate (`reports/STRAT_r75x2_D106_secours_Rate_2026-10-12.md`). Au juge de paix (ancien modèle d'arrêt, sans
+secours, graine 42), D106 fait passer le meilleur SEEL de 0,1776 à 0,1927 nm (+8,5 %) : les repères du juge de paix d'avant la correction
+sont optimistes d'autant.
 
 **Mesure d'avant D106 (2026-10-12), D100 et D103 corrigés**
 (`reports/STRAT_r75x2_sept_graines_D100_D103_corriges_2026-10-12.md`, code `411e6eb5`). `r75x2` en `deep`, sans
@@ -108,14 +118,14 @@ n'autorise pas à modifier son arbre témoin.
 |---|---|---|---|
 | dichroïque 48 couches, `JSON-strat-example` | **0,173 nm** | 0 % | 6 blocs, une campagne |
 | le même, D100 corrigé (`782972bf`) | **0,178 nm** | 0 % | 5 blocs (λ 544, 471, 466, 467, 462 nm), 823 stratégies dont 154 éliminées, `RESULT` 0,007917103726810235 ; `scripts\bench_examples.py strat` (`premium`), caches de l'arbre, 2026-10-11 (`reports/STRAT_bench_juge_de_paix_782972bf_D100_2026-10-11.txt`). Sous D100 (`b60d80e2`) : 0,175 nm |
-| le même, modèle d'arrêt par défaut du 2026-10-12 (D96 à D98) et secours Rate (`03990e9a`) | **0,1849 nm** | 0 % | 1 bloc (λ 542 nm), 2 260 stratégies dont aucune éliminée, `RESULT` 0,00854267382381426 ; `scripts\bench_examples.py strat` (`premium`), caches de l'arbre, 2026-10-12 (`reports/STRAT_bench_juge_de_paix_03990e9a_D96-D98_secours_Rate_2026-10-12.txt`). Tous les plans de la liste portent du Rate (de 4 à 46 couches, médiane 29) ; le meilleur pose le Rate des indices 26 à 47. Les cinq combinaisons du modèle d'arrêt au code final : de 0,1759 à 0,1854 nm (`reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md`). Sans le secours (`8d9ced13`) : 0,2000 nm, 2 plans déposables sur 1 112 |
+| le même, défauts du 2026-10-13 (D96 à D98, secours Rate, ELITE déplace les couches Rate) | **0,1721 nm** | 0 % | 2 blocs, 2 652 stratégies, toutes déposables, toutes avec du Rate ; `scripts/probe_blocs_vs_plantage.py 48c premium 1 0 2 0 42 0`, `cea0db66`, 2026-10-12. Sans les mouvements sur les couches Rate : **0,1849 nm** (1 bloc, 2 260 stratégies dont aucune éliminée, `RESULT` 0,00854267382381426 ; `scripts\bench_examples.py strat` (`premium`), caches de l'arbre, `03990e9a` ; `reports/STRAT_bench_juge_de_paix_03990e9a_D96-D98_secours_Rate_2026-10-12.txt`). Les cinq combinaisons du modèle d'arrêt au code final, sans ces mouvements : de 0,1759 à 0,1854 nm (`reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md`). Sans le secours (`8d9ced13`) : 0,2000 nm, 2 plans déposables sur 1 112 |
 | passe-bande 3 cavités, 35 couches | **0,482 nm** | 0 % | 6 blocs, mode `deep` |
 | aléatoire `JSON-strat-random75`, 75 couches | **0,272 nm** | 0 % | une campagne, 241 déposables sur 662 |
 | passe-bande 5 cavités, 99 couches | **0,81 nm** | 0 % par campagne | 4 verres témoins, partition 0-22 / 22-42 / 42-76 / 76-99 |
 | le même en une seule campagne | aucun score valide | 100 % | 487 stratégies, toutes plantent : non fabricable |
 | aléatoire ×2 `r75x2`, fente native 1 nm | **0,6248 nm** | 0 % | `deep`, pur optique, 277 déposables ; mesuré avant D106 : à refaire |
 | `r75x2` à 2 nm, configuration livrée | **0,5676 nm** | 1,67 % | avec `example/example_strat/rampes_r75x2-2nm.json` ; étendue 0,55 % sur 3 graines ; mesuré avant D106 : à refaire |
-| `r75x2` à 2 nm, sans rampes, défauts de production du 2026-10-12 | **0,5406 nm** (graine 101), 0,5678 nm (graine 42) | 0 % | `deep`, `dbf8025f` : tous les plans de la liste déposables (4 175 et 4 307), aucun optique pur, du Rate (61 et 23 couches) ; l'optique pur sans secours Rate : 0 déposable aux deux graines (D106 corrigé). `reports/STRAT_r75x2_D106_secours_Rate_2026-10-12.md` |
+| `r75x2` à 2 nm, sans rampes, défauts de production du 2026-10-12 | **0,5406 nm** (graine 101), 0,5678 nm (graine 42) | 0 % | `deep`, `dbf8025f` : tous les plans de la liste déposables (4 175 et 4 307), aucun optique pur, du Rate (61 et 23 couches) ; l'optique pur sans secours Rate : 0 déposable aux deux graines (D106 corrigé). Avec ELITE qui déplace les couches Rate (`cea0db66`, graine 101) : 0,5358 nm. `reports/STRAT_r75x2_D106_secours_Rate_2026-10-12.md` |
 
 Le passe-bande de 99 couches est chiffré en moyenne de trois graines, jamais par la meilleure.
 
@@ -165,6 +175,7 @@ Le passe-bande de 99 couches est chiffré en moyenne de trois graines, jamais pa
 | `allow_rate` | vrai — « le cas général » |
 | `rate_by_swing` | vrai, dans l'application comme dans le noyau (2026-10-12) : des variantes Rate aux couches dont la dynamique est sous 0,025 |
 | `rate_rescue`, `rate_rescue_few` | vrai, 10 (2026-10-12) : le secours Rate pose en Rate la queue des plans qui plantent ; 30 plans × 8 coupures quand aucun plan ne se termine, 3 × 2 à partir de 10 plans déposables, linéaire entre les deux |
+| `elite_rate_moves`, `elite_rate_max_candidates` | vrai, 120 (2026-10-13) : ELITE déplace les couches Rate de ses parents (optique, paquet de Rate, optique à une autre λ) ; `allow_rate` faux l'éteint |
 | `slit_bias_enabled` | vrai, fente nominale 2 nm |
 | choix de fente de l'opérateur | 5, 1 ou 0,5 nm en plus du nominal ; facteurs de bruit ÷1,5, ×2, ×5 |
 | `robustness_num_runs` | 300, décidé le 2026-08-13 : il commande la sensibilité du filtre de plantage, donc **quelles stratégies existent**. 🔴 Le mode d'exécution l'emporte sur le fichier (150 en `premium`), et la ligne `[MODE]` du journal le dit |
@@ -407,7 +418,7 @@ Chaque correctif est un commit (R136 `c738a130`, R137 `83661fd4`) qu'un `git rev
   proposait presque pas : les plans déposables du 2026-10-12 avec de l'optique après du Rate ont exactement deux paquets de Rate, une
   couche puis la queue, et ELITE rendait à ses enfants les couches Rate du parent sans les changer. ELITE sait maintenant les déplacer
   (`elite_rate_moves`, `elite_rate_max_candidates`) : étendre ou raccourcir un paquet, fermer un trou, ouvrir une fenêtre d'optique
-  dans une queue, poser un paquet de Rate dans l'optique. Inactif par défaut, à mesurer (§6).
+  dans une queue, poser un paquet de Rate dans l'optique. Actif par défaut depuis `978b8f04`, après mesure (§7).
 
 ### RE — décidé par 👤 le 2026-10-05
 
@@ -455,7 +466,7 @@ Ces sujets demandent un jugement de physicien ou de propriétaire du produit. Le
 | **base de dépôts** | RE : remplacer la seule mesure d'un classeur RE déjà chargé par celle d'un dépôt (il faudrait découper `load_reverse_engineering_from_path`) ? Apparier dans la base la T et la R d'un même échantillon que l'opérateur a nommées différemment (`NbT3` et `NbR3`) ? INDEX : en phase 2, la fenêtre λ de l'utilisateur est remplacée par toute l'étendue des données (`_on_tlu_constrained_finished`), est-ce voulu ? |
 | **ELITE « tour à tour »** | `elite_round_robin`, six graines, D100 et D103 corrigés, avant D106 (2026-10-12) : mieux à la graine 42 (0,5420 contre 0,6354 nm), équivalent à la 404, moins bien aux 77, 101 et 505 (de +0,7 à +2,8 %), la 303 sans déposable des deux côtés ; médiane +0,7 %. L'option est inactive et le reste tant que 👤 ne dit pas de l'armer ; ce qui manque pour trancher est le bruit d'une même graine rejouée |
 | **arrêt de STRAT** | D96 à D98 sont le modèle par défaut (§3). L'attente sans fin de D98 retire 95 % des plans que l'ancien modèle jugeait fabricables (§3) ; ce que l'OMS fait à un niveau franchi avant que son contrôleur soit armé n'est pas connu. À secours Rate égal (juge de paix, code final), l'arrêt tardif rend un meilleur SEEL du même ordre (0,1792 contre 0,1849 nm) et garde 101 plans optiques purs déposables, que l'attente sans fin ne garde pas : avec elle le Rate est une nécessité pour ce composant, avec l'arrêt tardif une option. À confirmer, ou à remplacer. Reste aussi : noter ou non au modèle figé, au moins pour départager la tête du classement (rapport du 2026-10-10, sections 4 et 6) |
-| **le Rate et l'optique pure** | Au juge de paix (code final), le meilleur plan porte du Rate sous les cinq modèles d'arrêt (de 1 à 28 couches) et le meilleur plan optique pur est de 4 à 37 % moins bon ; les plans optiques purs déposables sont 50 à l'ancien modèle, contre 487 avant le secours Rate (mesure d'avant D106). Le modèle de Rate de STRAT n'a ni dérive de la source ni bruit propre de la vitesse (§7), ce qui le favorise, et ELITE refine maintenant des parents Rate : l'hypothèse, non mesurée, est que la lignée optique pure y perd des tours. Faut-il réserver à ELITE des parents optiques purs, ou ne laisser le Rate que là où l'optique ne suffit pas ? La réponse dépend de la stabilité réelle de la vitesse (A25, §6) |
+| **le Rate et l'optique pure** | Au juge de paix (code final), le meilleur plan porte du Rate sous les cinq modèles d'arrêt (de 1 à 28 couches) et le meilleur plan optique pur est de 4 à 37 % moins bon ; les plans optiques purs déposables sont 50 à l'ancien modèle, contre 487 avant le secours Rate (mesure d'avant D106). Le modèle de Rate de STRAT n'a ni dérive de la source ni bruit propre de la vitesse (§7), ce qui le favorise, et ELITE refine maintenant des parents Rate (et déplace leurs couches Rate : §3) : l'hypothèse, non mesurée, est que la lignée optique pure y perd des tours. Faut-il réserver à ELITE des parents optiques purs, ou ne laisser le Rate que là où l'optique ne suffit pas ? La réponse dépend de la stabilité réelle de la vitesse (A25, §6) |
 
 ## 6. Chantiers spécifiés, en attente
 
@@ -473,8 +484,8 @@ l'héritage quand un étage deviendra suspect · porter le résultat de `r75x2` 
 avec sa condition dans la même phrase que le chiffre · accélérer à résultat identique au bit : aucune piste ouverte
 (les 17 % d'« attente du consommateur de statistiques » d'un profil par échantillonnage sont un artefact de
 l'échantillonneur de `scripts/bench_examples.py`, `scripts/probe_sampler_idle_thread.py`, 2026-10-11 ; mémoriser
-`build_M_before_cache` ne fait rien gagner, populations identiques au bit, 2026-10-06) · mesurer `elite_rate_moves` (ELITE déplace les
-couches Rate de ses parents : paquets d'optique et de Rate en alternance) à `r75x0.5`, `r75x2` et au juge de paix avant de l'activer.
+`build_M_before_cache` ne fait rien gagner, populations identiques au bit, 2026-10-06) · mesurer `elite_rate_moves` (actif) sur
+d'autres graines et composants (`r75x0.5` aux graines 42 et 202, ×1,5, ×1,75, 35 et 99 couches) et avec plus de tours d'ELITE : une graine par composant aujourd'hui.
 
 **Modèle physique** (détail : `git show 7b08dc8:docs/archives/TRAVAUX_A_VENIR.md`) :
 
@@ -556,5 +567,7 @@ minimal de 52 % pour les ensembles) : les couches qui cèdent se déplacent quan
 Rate de STRAT** (`certus_strat_growth.py`, « RATE MODE ») fige l'estimation de la vitesse à l'entrée de la queue : toutes ses
 couches héritent de la même erreur relative, corrélée, et la source ne dérive pas pendant le dépôt (non modélisé, non mesuré) :
 ces SEEL sont ceux de ce modèle. Le Rate posé aux seules couches où les tirages plantent d'abord (`rate_rescue_hard`, inactif par
-défaut) ajoute 35 plans déposables sur 410 essayés et laisse le meilleur SEEL à 0,4981 nm (graine 101, `dbf8025f`). Le cas à plusieurs
+défaut) ajoute 35 plans déposables sur 410 essayés et laisse le meilleur SEEL à 0,4981 nm (graine 101, `dbf8025f`). **Avec ELITE qui déplace
+les couches Rate** (`cea0db66`, graine 101, `reports/STRAT_ELITE_couches_Rate_2026-10-12/`) : **0,3967 nm**, 4 074 plans déposables ; le meilleur plan
+alterne optique (couches 1 à 6), Rate 7 à 10, optique 11 et 12 (λ 451 nm), Rate 13 à 34, optique 35 et 36, Rate 37 à 75. Le cas à plusieurs
 verres témoins n'est pas mesuré.

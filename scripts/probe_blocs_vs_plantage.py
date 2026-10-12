@@ -249,6 +249,33 @@ ELARGISSEMENT = {
 }
 
 
+
+def _rmse_par_bruit(result: dict) -> dict:
+    """Per noise level: the 95th percentile of the RMSE over all draws, over the draws that terminate, and the counts."""
+    import numpy as np
+
+    from certus_physics import CRASH_SENTINEL_MIN
+
+    out = {}
+    for level in result.get("results_per_noise") or []:
+        rmse = np.asarray(level.get("rmse_all") or [], dtype=float)
+        thick = np.asarray(level.get("thicknesses_all") or [], dtype=float)
+        if rmse.size == 0 or thick.shape[0] != rmse.size:
+            out[f"{float(level.get('noise_level', float('nan'))):g}"] = {"rmse_p95": float(level.get("rmse_p95", float("nan")))}
+            continue
+        crashed = np.any(thick > CRASH_SENTINEL_MIN, axis=1)
+        done = rmse[~crashed]
+        out[f"{float(level['noise_level']):g}"] = {
+            "n": int(rmse.size),
+            "plantes": int(crashed.sum()),
+            "rmse_p95": float(np.percentile(rmse, 95)),
+            "rmse_p95_termines": float(np.percentile(done, 95)) if done.size else None,
+            "rmse_moyen_plantes": float(rmse[crashed].mean()) if crashed.any() else None,
+            "rmse_max_termines": float(done.max()) if done.size else None,
+            "rmse_min_plantes": float(rmse[crashed].min()) if crashed.any() else None,
+        }
+    return out
+
 def _machine() -> str:
     import platform
     cpu = " ".join((platform.processor() or platform.machine() or "?").split())
@@ -468,6 +495,9 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
             # fois le bruit mesure de la machine. Sans ce champ, aucun artefact ne permet de
             # savoir si une strategie rejetee etait fabricable au bruit REEL.
             "crash_rates_by_noise": s.get("crash_rates_by_noise") or {},
+            # `score` is the largest, over the three noise levels, of the 95th percentile of the per-draw RMSE, crashed draws
+            # included. Nothing in the artefact said at which level it was reached, nor what the draws that terminate give.
+            "rmse_par_bruit": _rmse_par_bruit(s),
             "critical_layer": s.get("critical_layer") or {},
             # 🔑 LA FENTE QUE CETTE STRATEGIE A CHOISIE, et son prix en bruit. Sans ce champ on
             # saurait SI la recherche de fente aide, jamais A QUELLE LARGEUR -- soit la moitie

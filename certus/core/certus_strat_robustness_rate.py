@@ -765,8 +765,8 @@ def _variant_id(parent_id: object, serial: int) -> object:
 # For the plans of a pass that did not terminate (the crash gate rejected them), the rescue finds the layer at which they start to
 # give way (`_first_crash_layer`), lays everything by Rate from there to the end, then from earlier cuts down to layer 2
 # (`_rescue_cuts`), evaluates these variants like any other, and the ranking decides. The last cut is layer 2, the first one that
-# can be laid by Rate: a plan that terminates therefore always exists. It works harder the fewer depositable plans the pass found:
-# at full strength when there is none, lightly from `rate_rescue_few` of them (`_rescue_budget`).
+# can be laid by Rate: that plan crashes only through layers 0 and 1, which no Rate can take. It works harder the fewer depositable
+# plans the pass found: at full strength when there is none, lightly from `rate_rescue_few` of them (`_rescue_budget`).
 
 #: Share of all the draws that have crashed by a layer, above which the optical monitoring of a plan is said to give way there.
 RATE_RESCUE_LEAK: float = 0.02

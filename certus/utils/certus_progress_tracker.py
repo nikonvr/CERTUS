@@ -35,7 +35,7 @@ Public API
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Final, Protocol
 
 
@@ -51,7 +51,7 @@ ROW_HEIGHT_PX: Final[int] = 28
 ICON_SIZE_PX: Final[int] = 16
 
 
-class StepState(str, Enum):
+class StepState(StrEnum):
     PENDING = "pending"
     RUNNING = "running"
     DONE = "done"

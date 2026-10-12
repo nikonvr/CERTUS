@@ -13,7 +13,7 @@ import platform
 import subprocess
 import sys
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from functools import lru_cache
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
@@ -98,7 +98,7 @@ def provenance() -> dict[str, Any]:
     }
 
 
-class ValidationStatus(str, Enum):
+class ValidationStatus(StrEnum):
     """Normalized status for exported scientific runs."""
 
     OK = "OK"

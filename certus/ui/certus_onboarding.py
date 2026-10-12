@@ -39,7 +39,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import Final
 
 from certus.utils.certus_qsettings import certus_settings
@@ -48,7 +48,7 @@ _QS_ORG: Final[str] = "CERTUS"
 _QS_APP: Final[str] = "onboarding"
 
 
-class OnboardingResult(str, Enum):
+class OnboardingResult(StrEnum):
     COMPLETED = "completed"
     SKIPPED = "skipped"
     ALREADY_DONE = "already_done"

@@ -1440,8 +1440,12 @@ class CertusStratStateMixin:
             "rate_layer_sets": _config_list_of_list_int(
                 getattr(self, "_loaded_config", {}), "rate_layer_sets"
             ),
-            "rate_by_swing": _config_flag(
-                getattr(self, "_loaded_config", {}), "rate_by_swing", False
+            # 🔴 ON WHEN THE FILE DOES NOT SAY, like the kernel and the registry of the levers: this read `_config_flag(..., False)`
+            # from 2026-08-22 to 2026-10-12, so every run launched from the application placed its Rate by cost alone (a block
+            # boundary), never where the optical signal is too poor to stop on. 👤 2026-10-12: Rate is favoured on the layers that are
+            # hard to control optically. `tests/unit/test_strat_leviers_ui_route.py` crosses the two.
+            "rate_by_swing": _config_flag_default(
+                getattr(self, "_loaded_config", {}), "rate_by_swing", True
             ),
             "rate_tail_keep_optical": int(
                 _config_float(getattr(self, "_loaded_config", {}), "rate_tail_keep_optical", 0.0)

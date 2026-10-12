@@ -25,25 +25,31 @@ oracle 1 143 passed ; unit 5 212 passed, 7 skipped en 13 min 51 ; UI 1 315 passe
 (`python scripts\c1_diff.py master`, mesuré à `212126d4` ; aucun noyau n'a changé depuis) : 299 tableaux sur 8 008 diffèrent, tous sur la grille machine (pas > 0 ou
 lissage > 1), que la branche corrige (D93 à D95) ; les 171 cas de croissance sans grille machine sont identiques au bit.
 
-**🔴 D103, trouvé le 2026-10-11 : en `deep` et `extreme`, deux groupements minés portaient le même identifiant**
-(`reports/STRAT_D103_identifiants_en_double_2026-10-11.md`). La DP rend jusqu'à 2 × `top_k` groupements par carte de
-coût, numérotés dans des plages de cent : les rangs 100 à 199 d'une carte prenaient les numéros de la suivante, et le
-consensus, qui range ses scores par identifiant, donnait aux deux homonymes le score d'un seul. Présent depuis le premier
-commit ; `fast` et `premium` (au plus 40 et 80 groupements par carte) n'en sont pas touchés. Corrigé par `de9a2025` :
-les cent premiers groupements de chaque carte gardent leur numéro, les suivants ont leur propre plage. Tout résultat
-`deep` antérieur, dont les campagnes `r75x2` d'août et du 2026-10-11, a choisi ses parents ELITE sur des scores
-mélangés : rang 3 ci-dessous.
+**D103, trouvé le 2026-10-11, corrigé par `de9a2025`** (`reports/STRAT_D103_identifiants_en_double_2026-10-11.md`). En
+`deep` et `extreme`, la DP rend jusqu'à 2 × `top_k` groupements par carte de coût, numérotés dans des plages de cent :
+les rangs 100 à 199 d'une carte prenaient les numéros de la suivante, et le consensus, qui range ses scores par
+identifiant, donnait aux deux homonymes le score d'un seul. Présent depuis le premier commit ; `fast` et `premium` (au
+plus 40 et 80 groupements par carte) n'en sont pas touchés. Les cent premiers groupements de chaque carte gardent leur
+numéro, les suivants ont leur propre plage. Mesuré le 2026-10-12 sur `r75x2` : les graines 42, 404 et 505, que le
+garde-fou d'unicité retenait, vont au bout ; les graines 101 et 202 sont identiques champ par champ, et les graines 77
+et 303 portent les mêmes plans, scores, plantages et marges (18 et 41 plans renumérotés). Les résultats `deep`
+antérieurs à la correction (campagnes d'août, repères de la section 2 hors `r75x2` sans rampes) ont pu choisir leurs
+parents ELITE sur des scores mélangés.
 
 **D100 corrigé le 2026-10-11** (`2cba90f4`) : les interrupteurs de STRAT reçoivent de nouveau le fichier chargé. Du
 2026-09-08 au 2026-10-11, tout résultat STRAT a tourné sans Rate, sans biais de fente et sans recherche de fente, sauf
 surcharge explicite (`reports/STRAT_D100_interrupteurs_non_charges_2026-10-11.md`).
 
-**Dernière mesure (2026-10-11), D100 corrigé, sous D103** (`reports/STRAT_remesure_D100_2026-10-11.md`, code
-`782972bf`). Le juge de paix, en `premium` donc intouché par D103, vaut **0,178 nm**.
-Le passe-bande de 99 couches en une campagne reste non fabricable (0 déposable sur 2 139, plantage minimal 82,7 %),
-et `r75x0.5` avec un seul verre témoin aux graines 42, 101 et 202 (plantage minimal 8,3 % à la graine 101).
-`r75x2` en `deep` : déposables aux graines 77, 101 et 202, aucun à 303, et 42, 404 et 505 retenues par le garde-fou
-d'unicité ; pas de chiffre avant la campagne corrigée.
+**Dernière mesure (2026-10-12), D100 et D103 corrigés**
+(`reports/STRAT_r75x2_sept_graines_D100_D103_corriges_2026-10-12.md`, code `411e6eb5`). `r75x2` en `deep`, sans
+rampes, protocole d'août, sept graines : **six trouvent des déposables** (42, 77, 101, 202, 404, 505 ; août : trois),
+la 303 n'en trouve aucun ; meilleurs SEEL de 0,5323 à 0,6354 nm, médiane 0,5563 nm. Tous les déposables sont des plans
+ELITE. L'ELITE « tour à tour » (graine 202) rend 368 déposables contre 403 et un meilleur SEEL de 0,5602 contre
+0,5837 nm, le signe inverse de celui du 2026-10-11 au matin sous D100 : une graine, pas de décision. Mesures du
+2026-10-11 (`reports/STRAT_remesure_D100_2026-10-11.md`, `782972bf`) : juge de paix **0,178 nm** (`premium`, même
+`RESULT` au bit après D103) ; le passe-bande de 99 couches en une campagne reste non fabricable (0 déposable sur
+2 139, plantage minimal 82,7 %) ; `r75x0.5` avec un seul verre témoin : aucun déposable aux graines 42, 101 et 202,
+plantage minimal 8,3 % à la graine 101 (§7).
 
 **Ordre conseillé des prochains lots.** Priorité à ce qui rend un résultat faux ou empêche de calculer,
 puis aux dépendances techniques ; chaque changement reste un commit distinct (C3). Une mesure en cours
@@ -51,7 +57,7 @@ n'autorise pas à modifier son arbre témoin.
 
 | rang | action et critère de fin | raison / condition |
 |---|---|---|
-| 3 — remesurer `r75x2` avec D100 et D103 corrigés | Validation complète de la branche ; juge de paix au bit (`RESULT` 0,007917103726810235 : `premium` ne dépasse pas cent groupements par carte) ; puis les sept graines `r75x2` en `deep` au protocole d'août, et le banc de la base de dépôts. | Les deux corrections changent les résultats `deep` : D100 sur décision de 👤 (« corriger et remesurer »), D103 parce qu'un identifiant ne doit jamais désigner deux plans. |
+| 3 — D104, puis les textes que la campagne du 2026-10-12 rend faux | Faire lire à chacun des 23 appels de `load_configuration` de `scripts/` et `tools/` son retour (refuser de mesurer sur `False`), avec un test qui échoue sur le code d'avant. Puis les textes qui citent des chiffres d'août que cette campagne remplace : la vitrine `pages/CERTUS_STRAT.html` (§10.18 et §10.19, mesures sans rampes), l'infobulle de l'onglet multi-graines (écart de 0,5599 à 0,6112 nm) et la docstring de `scripts/orchestre_multigraine.py`. | D104 touche plus de trois fichiers pour une seule action : l'accord de 👤. La vitrine suit un régime strict (CLAUDE.md, section 10). |
 | 4 — traiter la chaîne de mesure | La grille machine du noyau lit le T exact à chaque lecture (12.4) et lisse sur 8 lectures avec le seuil de 1,00 A (12.2) : D54, D55, D93, D94 et D95 sont corrigés, et ce chemin reproduit une machine indépendante rejouée lecture par lecture (rapport du 2026-10-10, section 2). D96, D97 et D98 existent en option, inactives par défaut, et leur effet sur un classement est mesuré (même rapport, sections 4 et 6). Restent les décisions de 👤 (§5, arrêt de STRAT). | La grille de la machine est inactive par défaut. Tout changement de noyau passe C1 froid contre froid et l'oracle. |
 | 5 — stabiliser interface et gel | Reproduire D23 (les six `gc.collect()` des threads de calcul STRAT et les `QThread`) avant D11 et `WA_DeleteOnClose` ; poursuivre la réduction du gel (D72) après sa fiabilité. | D11 n'a pas d'effet dans le lancement actuel par processus ; libérer une fenêtre avant ses threads serait plus grave. |
 | 6 — réduire la dette | Élucider les effets d'import de D42 avant E402/I001 (D25), puis traiter D26 et les défauts visuels selon §4–5. | Chantier utile, mais moins urgent que la justesse scientifique ; l'ordre des imports peut changer l'exécution. |
@@ -60,9 +66,9 @@ n'autorise pas à modifier son arbre témoin.
 
 | programme | état | prochaine action |
 |---|---|---|
-| **Calcul (STRAT)** | composant étalon : l'aléatoire ×2 (`r75x2`) à la fente de 2 nm. Fabricable avec les rampes de la configuration livrée ; sans rampes, 3 graines sur 7 trouvaient des déposables en août ; ce chiffre et les deux mesures du 2026-10-11 ont tourné sous D103 (§0). Toute la fabricabilité passe par le générateur ELITE | rangs 3 et 4 (§0) |
+| **Calcul (STRAT)** | composant étalon : l'aléatoire ×2 (`r75x2`) à la fente de 2 nm. Fabricable avec les rampes de la configuration livrée ; sans rampes, 6 graines sur 7 trouvent des déposables (2026-10-12, D100 et D103 corrigés ; 3 sur 7 en août). Toute la fabricabilité passe par le générateur ELITE | rang 4 (§0) |
 | **RE** | indices tabulés lus en n − ik depuis R148 (2026-10-05) : tout RE antérieur fait sur des indices absorbants en incidence oblique est à refaire ; un indice demandé hors de sa table est prolongé par une constante, avec un avertissement (ex-D86, `dec73219`, 2026-10-05) | — |
-| **Base de dépôts** | 140 monocouches mesurées au Photon RT (`example/database_depots/`, importées le 2026-10-11 par `scripts\importer_base_depots.py`) ; la voie (T ou R) se lit dans la géométrie du détecteur, le mode manuel déclarant « Transmittance » quoi qu'il mesure. INDEX les charge par « Deposit database… ». Onze ajustements certifiés de l'application autonome, dont le spectre est un dépôt de la base, servent de références (`references_index.json`) : `scripts\bench_base_depots.py` y confronte INDEX ; essai du 2026-10-11, une exécution chacun, épaisseur à +0,33 % (h800), −0,24 % (yf3vis), −3,8 % avec une RMSE dix fois plus grande (sb2s3-silice). RE ne la lit pas : il lui faut un classeur complet | banc complet (rang 3) ; choix de 👤 (§5) |
+| **Base de dépôts** | 140 monocouches mesurées au Photon RT (`example/database_depots/`, importées le 2026-10-11 par `scripts\importer_base_depots.py`) ; la voie (T ou R) se lit dans la géométrie du détecteur, le mode manuel déclarant « Transmittance » quoi qu'il mesure. INDEX les charge par « Deposit database… ». Onze ajustements certifiés de l'application autonome, dont le spectre est un dépôt de la base, servent de références (`references_index.json`) ; `scripts\bench_base_depots.py` y confronte INDEX. Banc du 2026-10-12 (11 références × 3 exécutions, `reports/BASE_DEPOTS_banc_INDEX_2026-10-12.md`) : neuf références sur onze à moins de 2,0 % d'épaisseur de la référence, deux non retrouvées (`mesures-c1b-sio2`, −49 %, et `sb2s3-silice`, −3,85 %), cause non cherchée. RE ne la lit pas : il lui faut un classeur complet | instruire les deux échecs ; choix de 👤 (§5) |
 | **Exécutable gelé** | sur la couche OpenMP depuis `31745571` (D87), sans les outils de développement depuis `5ccaa210` (411 Mo) ; construit à `dbec2fc1` le 2026-10-06, hub et modules contrôlés au démarrage, et 👤 y a calculé : « l'exécutable fonctionne ». Les licences de ce qu'il embarque le suivent (`licenses/`) | rang 5 (D72) |
 | **Interface** | plan clos le 2026-09-08 : 12 critères de fin sur 13 atteints et mesurés, le treizième démontré inatteignable (`xfail` strict) | rang 5 et choix de 👤 (§5) |
 | **Qualité** | CI : calcul sous Linux, interface sous Windows, gel construit et démarré sous Windows, audit de sécurité (`pip-audit`, `gitleaks`) ; tests isolés des préférences de 👤 ; l'audit du code mort couvre tout `certus/`. Indicateurs du plan le 2026-10-06 (`scripts\metrics.py`) : tous dans leur cible, sauf la couverture et la taille du gel, non remesurées ce jour | rangs 5 et 6 |
@@ -81,7 +87,7 @@ n'autorise pas à modifier son arbre témoin.
 | le même en une seule campagne | aucun score valide | 100 % | 487 stratégies, toutes plantent : non fabricable |
 | aléatoire ×2 `r75x2`, fente native 1 nm | **0,6248 nm** | 0 % | `deep`, pur optique, 277 déposables |
 | `r75x2` à 2 nm, configuration livrée | **0,5676 nm** | 1,67 % | avec `example/example_strat/rampes_r75x2-2nm.json` ; étendue 0,55 % sur 3 graines |
-| `r75x2` à 2 nm, sans rampes | **0,5599 nm** | — | graine 404 ; 3 graines sur 7 trouvent (77, 404, 505), août. Égalité avec la voie à rampes, pas supériorité. Mesurée sous D103, comme les deux mesures du 2026-10-11, qui ne la remplacent pas (§0) |
+| `r75x2` à 2 nm, sans rampes | **0,5323 nm** | — | graine 404, la meilleure des six qui trouvent des déposables (42, 77, 101, 202, 404, 505 ; la 303 n'en trouve aucun) : médiane 0,5563 nm, de 0,5323 à 0,6354 nm ; `deep`, D100 et D103 corrigés, 2026-10-12 (`reports/STRAT_r75x2_sept_graines_D100_D103_corriges_2026-10-12.md`). Août : trois graines sur sept, meilleur 0,5599 nm. La comparaison avec la voie à rampes est à refaire avec ce code |
 
 Le passe-bande de 99 couches est chiffré en moyenne de trois graines, jamais par la meilleure.
 
@@ -94,8 +100,9 @@ Le passe-bande de 99 couches est chiffré en moyenne de trois graines, jamais pa
   d'équivalence SEEL**. Sur `r75x2`, σ ≈ 1,8 % mesuré en changeant le triplet de graines de
   consensus : un bruit emprunté à un autre composant ne vaut rien.
 - Ces repères comprennent le **biais de fente** ; une mesure sans ce biais ne leur est pas comparable.
-- 🔴 Les repères mesurés en `deep` (passe-bande de 35 couches, lignes `r75x2`) ont tourné sous D103 (§0) : leurs
-  parents ELITE ont été choisis sur des scores de consensus mélangés entre homonymes.
+- 🔴 Les repères mesurés en `deep` avant la correction de D103 (passe-bande de 35 couches, `r75x2` à fente native de
+  1 nm, `r75x2` avec rampes) ont pu choisir leurs parents ELITE sur des scores de consensus mélangés entre homonymes
+  (§0).
 - Le banc `scripts\bench_examples.py strat` lit sa configuration dans `CERTUS_DESIGN_JSON` ; par défaut le juge de
   paix standard (`JSON-strat-example.json`). Les mesures `fast` de D5, D73, D20, D70 et D17 prenaient
   `JSON-strat-example-fast.json` (194 stratégies), celles de D14 et D15 le standard (370) : les deux ne se comparent pas.
@@ -204,7 +211,8 @@ du dichroïque dont le plantage s'écarterait nettement du prédit rouvrirait ce
 ### STRAT — arbitrages délégués par 👤 le 2026-10-04
 
 🔴 Les mesures de cette sous-section (2026-10-04 et 2026-10-05) ont tourné sous D100 : sans biais de fente, sans Rate,
-sans recherche de fente. Leurs décisions tiennent jusqu'à leur remesure sous le modèle voulu (§0, rang 3).
+sans recherche de fente. Leurs décisions tiennent jusqu'à leur remesure sous le modèle voulu : le juge de paix et `r75x2` l'ont été les 2026-10-11 et
+2026-10-12 (§0), pas ces mesures-là.
 
 - **D73, point tournant sous l'arrêt : corrigé.** La marge se mesure en
   transmission au sommet interpolé, même si la pente change de signe sur
@@ -243,12 +251,16 @@ sans recherche de fente. Leurs décisions tiennent jusqu'à leur remesure sous l
   est renseignée, de `robustness_seed` sinon (`_resolve_consensus_seeds`), et chaque journal les imprime. Pour mesurer
   la dispersion d'un run à l'autre, changer le triplet, pas `robustness_seed` ; le consensus ne réécrit que le score,
   jamais le taux de plantage.
-- **D7, ce que `RESULT` agrège : établi dans le code.** `RESULT` est le `robustness_score` de la première
-  stratégie classée (`extract_best_rmse`) : le P95 du RMSE des tirages, au pire des trois niveaux de bruit
-  (`_test_strategy_robustness_task`), remplacé pour les `consensus_top_k` par la moyenne plus
-  `consensus_std_weight` écarts-types de ce même score sur les graines du consensus. Il ne dit rien du reste de
-  la population : comparer deux runs se fait sur le classement (`dump_strat_ranking`) ou sur les vidages par
-  stratégie, comme les rapports `STRAT_bench_*` de `reports/`.
+- **D7, ce que `RESULT` agrège : établi dans le code.** `RESULT` est le `robustness_score` de la première stratégie
+  classée (`extract_best_rmse`) : le P95 du RMSE des tirages, au pire des trois niveaux de bruit
+  (`_test_strategy_robustness_task`), remplacé pour les `consensus_top_k` par la moyenne plus `consensus_std_weight`
+  écarts-types de ce même score sur les graines du consensus. **Les tirages plantés comptent dans ce P95** : au-delà
+  de 5 % de plantés, il est celui d'un tirage planté (r75x0.5, graine 101, niveau 2×, 25 plantés sur 300 : SEEL
+  0,960 nm sur tous les tirages, 0,644 nm sur ceux qui aboutissent,
+  `reports/STRAT_r75x0.5_graine101_plan_de_repli_par_bruit_2026-10-12.md`). **La moyenne du consensus ne garde que les
+  scores finis** (`_store_and_consume_consensus_score`) : un plan rejeté par la porte de plantage à une graine n'y
+  compte pas. Il ne dit rien du reste de la population : comparer deux runs se fait sur le classement
+  (`dump_strat_ranking`) ou sur les vidages par stratégie, comme les rapports `STRAT_bench_*` de `reports/`.
 - **D9, la plage de blocs ne vide pas la DP : un seuil de faisabilité, dit dans le journal** (R147). Sous un nombre
   minimal de blocs contigus (7 sur le juge de paix standard, entre 9 et 10 sur `r75x2`, 2026-10-05), aucune λ n'est
   admissible dans toutes les couches de chaque bloc : le mineur ne rend que les graines structurées et l'écrit
@@ -338,6 +350,7 @@ numéros de l'ancien registre sont entre parenthèses
 
 | # | défaut | piste |
 |---|---|---|
+| D104 | **Les scripts ignorent le retour de `load_configuration`.** `CertusStratApp.load_configuration` rend `False` quand le fichier est absent ou refusé (mesuré le 2026-10-12 : `False` sur un chemin absent, `True` sur `cfg_x0.5.json`) et laisse la fenêtre à sa configuration par défaut. Les 23 appels de `scripts/` et `tools/` n'en lisent pas le retour (0 sur 23) : un rejeu de `probe_blocs_vs_plantage.py r75x0.5` dans un clone sans `reports/serie_echelle_r75/cfg_x0.5.json` a calculé quatre heures sur la pile par défaut de 46 couches, verdict `OK`, 2 743 stratégies | faire lire le retour par les 23 appels (refuser de mesurer sur `False`), avec un test qui échoue sur le code d'avant ; un clone doit contenir les fichiers de composant |
 | D96 | **Ancres POEM lues sur l'échantillonnage grossier.** Le noyau prend la valeur de l'échantillon à l'extremum (16 points par couche rejouée, 64 sur trois épaisseurs pour la couche en cours) : l'échantillon tombe à côté du sommet, d'une quantité qui diffère entre signal réel et nominal dès que leurs épaisseurs diffèrent. Sans aucun bruit, erreurs amont tirées à σ = 0,3 nm (3 réalisations × 48 couches, gagnante du juge de paix, 2026-10-10) : l'arrêt du noyau s'écarte de l'arrêt POEM exact (oracle au pas de 0,05 nm) de 0,055 nm RMS, P95 0,14 nm, jusqu'à 0,17 nm RMS sur une couche ; l'inversion (D97) en explique 0,021 nm RMS, les ancres le reste | l'option existe (`exact_anchors`, `_exact_poem_anchors`, inactive par défaut : chaque ancre portée au sommet de l'extremum de sa couche, en forme fermée, et remise dans le signal) ; avec `exact_inversion`, l'arrêt sans bruit tombe sur l'arrêt POEM exact (8,0e-6 nm RMS, `scripts/probe_arret_sans_bruit.py`) ; son effet sur un classement est mesuré (rapport du 2026-10-10, section 4) ; l'activer par défaut est une décision de 👤 |
 | D97 | **Inversion parabolique de l'arrêt.** `_invert_thickness_from_probes` résout le niveau sur la parabole de trois points à ±`probe_offset` (2,5 nm sur le juge) autour de l'épaisseur nominale, et extrapole quand l'arrêt réel s'en éloigne. Mêmes conditions que D96, niveaux exacts donnés : 0,021 nm RMS sous POEM (0,13 nm sur la couche 40), mais 0,19 nm RMS et jusqu'à 1,53 nm au niveau absolu (POEM coupé), où l'arrêt se déplace de plusieurs nanomètres | l'option existe (`exact_inversion`, `_invert_thickness_exact`, inactive par défaut : racine de la forme fermée la plus proche du nominal, encadrée puis bissectée ; la parabole reste pour un indice absorbant) ; son effet sur un classement est mesuré (rapport du 2026-10-10, section 6) ; l'activer par défaut est une décision de 👤 |
 
@@ -378,13 +391,14 @@ Ces sujets demandent un jugement de physicien ou de propriétaire du produit. Le
 | **paquet `certus_re`** | la correction de la citation du saphir (Malitson et Dodge, 1972) attend d'être commitée par 👤 dans ce dépôt-là, qui contient ses modifications en cours, puis publiée avec la prochaine version Zenodo |
 | **interface** | Revoir visuellement les onze fenêtres et choisir les teintes de marque, la bande des fichiers récents et les bornes des champs numériques. |
 | **base de dépôts** | RE : remplacer la seule mesure d'un classeur RE déjà chargé par celle d'un dépôt (il faudrait découper `load_reverse_engineering_from_path`) ? Apparier dans la base la T et la R d'un même échantillon que l'opérateur a nommées différemment (`NbT3` et `NbR3`) ? INDEX : en phase 2, la fenêtre λ de l'utilisateur est remplacée par toute l'étendue des données (`_on_tlu_constrained_finished`), est-ce voulu ? |
+| **ELITE « tour à tour »** | `elite_round_robin`, graine 202, D100 et D103 corrigés : 368 déposables contre 403, meilleur SEEL 0,5602 contre 0,5837 nm ; sous D100 le signe était l'inverse (33 % de déposables en plus, SEEL dans le bruit). L'armer par défaut demande plus de graines : dire s'il faut les mesurer |
 | **arrêt de STRAT** | D96 à D99 (§4) : activer par défaut les ancres au sommet (D96) et l'arrêt exact (D97) ; pour l'armement (D98), choisir entre l'arrêt tardif et l'attente sans fin ; lisser ou non la lecture d'arrêt (D99) ; noter ou non au modèle figé, au moins pour départager la tête du classement (rapport du 2026-10-10, sections 4 et 6) |
 
 ## 6. Chantiers spécifiés, en attente
 
 **Calcul** (détail : `git show 7b08dc8:docs/archives/REPRENDRE_ICI.md`) —
-dimensionner K, le nombre de graines à lancer : p ≈ 3/7 pour trouver un déposable, 2/7 pour atteindre le niveau 0,57
-(août, sous D103 ; à remesurer, §0 rang 3) · balayer `tp_hysteresis_factor` à bruit fixé sur la grille machine : sur la grille
+dimensionner K, le nombre de graines à lancer : p ≈ 6/7 pour trouver un déposable, 4/7 pour atteindre le niveau 0,57
+(2026-10-12, D100 et D103 corrigés ; août : 3/7 et 2/7) · balayer `tp_hysteresis_factor` à bruit fixé sur la grille machine : sur la grille
 grossière, il est presque inerte (juge de paix, 370 plans, 2026-10-11 : de 1,0 à 2,0 A, 358 à 362 notes identiques au
 bit à celles de 1,66 A, même meilleur plan ; rapport de l'audit du 2026-10-10, section 4) · compter le criblage et
 l'héritage quand un étage deviendra suspect · porter le résultat de `r75x2` dans la vitrine,
@@ -461,6 +475,7 @@ profil élargi, 70,0 % et 67,0 %), et la cause de plantage dominante est « nive
 les stratégies des trois graines. D103 ne la touche pas (aucun identifiant en double dans les trois journaux). Quand
 rien ne passe, le repli garde le plan au plantage le plus bas : celui de la graine 101, qui plante dans
 1,7 / 1,7 / 8,3 % des tirages aux bruits 0,5× / 1× / 2×, seul le 2× dépassant 5 % ; 5 blocs aux λ de contrôle 636,
-686, 737, 747 et 734 nm, variante `RATE_L31`. Son SEEL affiché est 0,673 nm : le `robustness_score` de D7, le P95 au
-pire des trois niveaux de bruit sur tous les tirages, plantés compris. Le SEEL niveau par niveau et le cas à plusieurs
-verres témoins ne sont pas mesurés.
+686, 737, 747 et 734 nm, variante `RATE_L31`. Son SEEL affiché est 0,673 nm (score de consensus, D7). Rejoué niveau
+par niveau (`reports/STRAT_r75x0.5_graine101_plan_de_repli_par_bruit_2026-10-12.md`) : 0,655 / 0,660 / 0,960 nm sur
+tous les tirages, **0,633 / 0,636 / 0,644 nm sur les tirages qui aboutissent**. Le cas à plusieurs verres témoins
+n'est pas mesuré.

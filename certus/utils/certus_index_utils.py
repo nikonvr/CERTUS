@@ -388,7 +388,7 @@ def _filter_rmse_peaks_iteratively(
     """Remove points whose RMSE exceeds both neighbors; optional *sidecars stay row-aligned with (d, r)."""
     if d.size < 3:
         if sidecars:
-            return (d, r) + tuple(np.asarray(s).copy() for s in sidecars)
+            return (d, r, *(np.asarray(s).copy() for s in sidecars))
         return d, r
 
     d_curr = d.copy()
@@ -410,7 +410,7 @@ def _filter_rmse_peaks_iteratively(
             r_curr = r_curr[mask]
             sc = [a[mask] for a in sc]
     if sidecars:
-        return (d_curr, r_curr) + tuple(sc)
+        return (d_curr, r_curr, *sc)
     return d_curr, r_curr
 
 

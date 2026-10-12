@@ -102,7 +102,10 @@ def test_the_switch_of_the_parameters_turns_it_off_in_the_pool_too(pool) -> None
 
 def test_a_pass_with_depositable_plans_keeps_only_those(pool) -> None:
     """The rescue adds candidates to a pass; the filter still drops the plans the gate rejected as soon as one terminates."""
-    plans = _plans(2) + [{"strategy_id": 7, "blocks": [{"start": 0, "end": N_LAYERS, "wavelength": 700.0}], "n_blocks": 1, "rate_layers": [6]}]
+    plans = [
+        *_plans(2),
+        {"strategy_id": 7, "blocks": [{"start": 0, "end": N_LAYERS, "wavelength": 700.0}], "n_blocks": 1, "rate_layers": [6]},
+    ]
 
     res = pool(plans, rate_rescue=True, id_namespace_n_blocks=1)
 

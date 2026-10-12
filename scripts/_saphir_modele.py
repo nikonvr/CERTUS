@@ -226,7 +226,7 @@ class ProblemeNormalise:
 
     def residus(self, x):
         parts = [f.v * (self.modele(x, i) - f.y) / SIGMA_RATIO for i, f in enumerate(self.films)]
-        return np.concatenate(parts + [self.courbure(x)])
+        return np.concatenate([*parts, self.courbure(x)])
 
     def jacobien(self, x):
         x = np.asarray(x, dtype=np.float64)

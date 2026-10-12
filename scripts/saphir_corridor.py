@@ -277,7 +277,7 @@ def etape_rapport():
         seul = sm.ProblemeNormalise([f], prob.sk_dn)
         xi, _res = seul.ajuster(seul.x_start, fixed={seul.i_dn + j: 0.0 for j in range(seul.J)}, max_nfev=600)
         pieces.append(xi[: seul.i_dn])
-    xa = np.concatenate(pieces + [np.zeros(prob.J)])
+    xa = np.concatenate([*pieces, np.zeros(prob.J)])
     print(f"films ajustes un par un (saphir = Sellmeier) en {time.time() - t0:.0f} s ; rms (% de T) : "
           + " ".join(f"{n}:{100 * r:.2f}" for n, r in prob.rmse(xa)))
     x, res = prob.ajuster(xa, max_nfev=200)

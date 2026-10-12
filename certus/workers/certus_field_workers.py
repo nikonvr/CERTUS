@@ -408,18 +408,14 @@ class FieldWorkerThread(QThread):
         def _needle_task(idx: int, lay_i: int, lay_z: float) -> tuple[int, int, float, float, list, list]:
             if not self._is_running:
                 return idx, lay_i, lay_z, _MAX_COST, [], []
-            emp_test = (
-                params.emp_factors[:lay_i] +
-                [lay_z, PROBE_QWOT, params.emp_factors[lay_i] - lay_z] +
-                params.emp_factors[lay_i+1:]
-            )
+            emp_test = [
+                *params.emp_factors[:lay_i],
+                lay_z, PROBE_QWOT, params.emp_factors[lay_i] - lay_z,
+                *params.emp_factors[lay_i+1:],
+            ]
             type_i = params.layer_types[lay_i]
             alt_type = 1 - type_i
-            types_test = (
-                params.layer_types[:lay_i] +
-                [type_i, alt_type, type_i] +
-                params.layer_types[lay_i+1:]
-            )
+            types_test = [*params.layer_types[:lay_i], type_i, alt_type, type_i, *params.layer_types[lay_i+1:]]
             cost = top_level_objective_function(
                 emp_test, params.n1_rs, params.n2_rs, params.nSub_rs,
                 params.l0, params.seuil_int_1, params.seuil_int_2,

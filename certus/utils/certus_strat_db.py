@@ -161,7 +161,7 @@ class RobustMaterialDatabase:
             # Now we have data. Expect 3 cols: wl, n, k (or 2: wl, n)
 
             if df.shape[1] >= 3:
-                df.columns = ["wl", "n", "k"] + list(range(3, df.shape[1]))
+                df.columns = ["wl", "n", "k", *range(3, df.shape[1])]
 
             elif df.shape[1] == 2:
                 df.columns = ["wl", "n"]

@@ -725,7 +725,7 @@ class CertusStratLayoutMixin:
 
         self.widgets["substrate_choice"] = QComboBox()
 
-        self.widgets["substrate_choice"].addItems(["Custom"] + list(SUBSTRATE_MAPPING.keys()))
+        self.widgets["substrate_choice"].addItems(["Custom", *SUBSTRATE_MAPPING])
 
         self.widgets["substrate_choice"].setMinimumWidth(100)
 

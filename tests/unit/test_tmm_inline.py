@@ -703,7 +703,7 @@ def test_compute_dynamics_kernel():
         n_full = np.array([nH, nL, nH, nL], dtype=complex)
 
 
-        d_full = np.array(prev_d + [test_thicknesses[-1]], dtype=np.float64)
+        d_full = np.array([*prev_d, test_thicknesses[-1]], dtype=np.float64)
 
 
         _, T_ref_final = macleod_tmm_RT(wl, d_full, n_full, complex(1.0), ns)

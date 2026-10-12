@@ -640,7 +640,7 @@ def _prepare_substrate_index_input(df: pd.DataFrame) -> tuple[pd.DataFrame | Non
 
     groups = _classify_substrate_index_columns(df.columns[1:])
     if not any(groups.values()):
-        return None, None, None, None, None, warnings_list + ["no matching bare-substrate columns"]
+        return None, None, None, None, None, [*warnings_list, "no matching bare-substrate columns"]
 
     # Ensure every retained spectral column matches the wavelength length.
     mismatched: list[str] = []

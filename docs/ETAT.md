@@ -79,7 +79,7 @@ n'autorise pas à modifier son arbre témoin.
 
 | rang | action et critère de fin | raison / condition |
 |---|---|---|
-| 3 — les textes que la campagne du 2026-10-12 rend faux | Reste la vitrine `pages/CERTUS_STRAT.html` (§10.18 et §10.19, mesures sans rampes), qui cite les chiffres d'août que cette campagne remplace (l'infobulle de l'onglet multi-graines et la docstring de `scripts/orchestre_multigraine.py` sont corrigées, `262a110d`). Les 23 appels de `load_configuration` lisent maintenant leur retour (`scripts/_composant.py`, `58ed99c5`, gardé par `tests/unit/test_the_scripts_read_what_load_configuration_returns.py`). | La vitrine suit un régime strict (CLAUDE.md, section 10) : 👤 la relit avant qu'on la touche. |
+| 3 — les textes que la campagne du 2026-10-12 rend faux | Reste la vitrine `pages/CERTUS_STRAT.html` (§10.18 et §10.19, mesures sans rampes), qui cite les chiffres d'août que cette campagne remplace (l'infobulle de l'onglet multi-graines et la docstring de `scripts/orchestre_multigraine.py` sont corrigées, `262a110d`). Les 23 appels de `load_configuration` lisent maintenant leur retour (`scripts/_composant.py`, `58ed99c5`, gardé par `tests/unit/test_the_scripts_read_what_load_configuration_returns.py`). Elle appelle aussi le Rate « quartz/chrono » (trois passages : « have to run on rate (quartz/chrono) », « The quartz rate estimate », « strategies carry a quartz-controlled layer »), alors que c'est du temps sur une vitesse estimée (§3). | La vitrine suit un régime strict (CLAUDE.md, section 10) : 👤 la relit avant qu'on la touche. |
 | 4 — traiter la chaîne de mesure | La grille machine du noyau lit le T exact à chaque lecture (12.4) et lisse sur 8 lectures avec le seuil de 1,00 A (12.2) : D54, D55, D93, D94 et D95 sont corrigés, et ce chemin reproduit une machine indépendante rejouée lecture par lecture (rapport du 2026-10-10, section 2). D96, D97 et D98 sont le modèle d'arrêt par défaut depuis le 2026-10-12 (§3) ; leur effet est mesuré (même rapport, sections 4 et 6, et `reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md`). Reste une décision de 👤 (§5, arrêt de STRAT). | La grille de la machine est inactive par défaut. Tout changement de noyau passe C1 froid contre froid et l'oracle. |
 | 5 — stabiliser interface et gel | Reproduire D23 (les six `gc.collect()` des threads de calcul STRAT et les `QThread`) avant D11 et `WA_DeleteOnClose` ; poursuivre la réduction du gel (D72) après sa fiabilité. | D11 n'a pas d'effet dans le lancement actuel par processus ; libérer une fenêtre avant ses threads serait plus grave. |
 | 6 — réduire la dette | Traiter E402 (D25), puis D26 et les défauts visuels selon §4–5. | Chantier utile, mais moins urgent que la justesse scientifique ; l'ordre des imports peut changer l'exécution. |
@@ -157,6 +157,8 @@ Le passe-bande de 99 couches est chiffré en moyenne de trois graines, jamais pa
 | `photometric_curvature_amp` | **0,00375**, actif |
 | `affine_scale_amp`, `affine_offset_amp` | 0,05 et 0,02 |
 | `allow_rate` | vrai — « le cas général » |
+| `rate_by_swing` | vrai, dans l'application comme dans le noyau (2026-10-12) : des variantes Rate aux couches dont la dynamique est sous 0,025 |
+| `rate_rescue`, `rate_rescue_few` | vrai, 10 (2026-10-12) : le secours Rate pose en Rate la queue des plans qui plantent ; 30 plans × 8 coupures quand aucun plan ne se termine, 3 × 2 à partir de 10 plans déposables, linéaire entre les deux |
 | `slit_bias_enabled` | vrai, fente nominale 2 nm |
 | choix de fente de l'opérateur | 5, 1 ou 0,5 nm en plus du nominal ; facteurs de bruit ÷1,5, ×2, ×5 |
 | `robustness_num_runs` | 300, décidé le 2026-08-13 : il commande la sensibilité du filtre de plantage, donc **quelles stratégies existent**. 🔴 Le mode d'exécution l'emporte sur le fichier (150 en `premium`), et la ligne `[MODE]` du journal le dit |
@@ -390,7 +392,8 @@ Chaque correctif est un commit (R136 `c738a130`, R137 `83661fd4`) qu'un `git rev
   défaut) qui pose en Rate la queue des plans qui plantent, et des enfants d'ELITE et de la recherche locale qui **gardent les
   couches Rate**, la fente et les échanges de verre de leur parent (ils les perdaient : ELITE ne pouvait jamais affiner un plan
   Rate). Mesuré à `r75x0.5` : §7. Le secours sait aussi poser le Rate là où les tirages plantent d'abord, quelques couches de plus
-  à chaque tour (`rate_rescue_hard`) : inactif par défaut, non mesuré en production (§6).
+  à chaque tour (`rate_rescue_hard`) : inactif par défaut ; à `r75x0.5` (graine 101) il ajoute 35 plans déposables sur 410 et ne change
+  pas le meilleur SEEL (§7).
 
 ### RE — décidé par 👤 le 2026-10-05
 
@@ -455,9 +458,7 @@ l'héritage quand un étage deviendra suspect · porter le résultat de `r75x2` 
 avec sa condition dans la même phrase que le chiffre · accélérer à résultat identique au bit : aucune piste ouverte
 (les 17 % d'« attente du consommateur de statistiques » d'un profil par échantillonnage sont un artefact de
 l'échantillonneur de `scripts/bench_examples.py`, `scripts/probe_sampler_idle_thread.py`, 2026-10-11 ; mémoriser
-`build_M_before_cache` ne fait rien gagner, populations identiques au bit, 2026-10-06) · mesurer le secours Rate aux couches où les
-tirages plantent d'abord (`rate_rescue_hard`, inactif) contre la queue seule sur `r75x0.5` (0,4981 nm à la graine 101) avant de
-l'activer.
+`build_M_before_cache` ne fait rien gagner, populations identiques au bit, 2026-10-06)
 
 **Modèle physique** (détail : `git show 7b08dc8:docs/archives/TRAVAUX_A_VENIR.md`) :
 
@@ -538,4 +539,6 @@ ensembles fixes de couches critiques (indices 22, 25, 28, puis 46, 51, 62, 69, 7
 minimal de 52 % pour les ensembles) : les couches qui cèdent se déplacent quand les précédentes passent au Rate. **Le modèle de
 Rate de STRAT** (`certus_strat_growth.py`, « RATE MODE ») fige l'estimation de la vitesse à l'entrée de la queue : toutes ses
 couches héritent de la même erreur relative, corrélée, et la source ne dérive pas pendant le dépôt (non modélisé, non mesuré) :
-ces SEEL sont ceux de ce modèle. Le cas à plusieurs verres témoins n'est pas mesuré.
+ces SEEL sont ceux de ce modèle. Le Rate posé aux seules couches où les tirages plantent d'abord (`rate_rescue_hard`, inactif par
+défaut) ajoute 35 plans déposables sur 410 essayés et laisse le meilleur SEEL à 0,4981 nm (graine 101, `dbf8025f`). Le cas à plusieurs
+verres témoins n'est pas mesuré.

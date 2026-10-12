@@ -66,9 +66,6 @@ extend-ignore = [
   "F401",  # unused-import: some are deliberate re-exports
   # Bugbear legacy
   
-  # Pyupgrade legacy
-  
-  "UP040", "UP046",
   # Pytest legacy (tests already green — these are stylistic)
   "PT011", "PT017",
   # Performance legacy

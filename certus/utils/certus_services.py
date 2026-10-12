@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass, field
-from typing import Any, Generic, Protocol, TypeAlias, TypeVar
+from typing import Any, Protocol, TypeVar
 
 from certus.core.certus_metrology import RunContext, RunManifest, ValidationStatus
 from certus.utils.certus_dto import (
@@ -27,15 +27,11 @@ class HeadlessRunner(Protocol):
         """Execute a computation from a validated service config."""
 
 
-Runner: TypeAlias = HeadlessRunner
-
-
-ConfigT = TypeVar("ConfigT")
-ResultT = TypeVar("ResultT")
+type Runner = HeadlessRunner
 
 
 @dataclass(frozen=True)
-class BaseHeadlessRequest(Generic[ConfigT]):
+class BaseHeadlessRequest[ConfigT]:
     """Public contract for all headless service requests.
 
     The request object intentionally carries traceability fields so callers can
@@ -57,19 +53,19 @@ class BaseHeadlessRequest(Generic[ConfigT]):
 
 
 @dataclass(frozen=True)
-class BaseHeadlessResponse(Generic[ResultT]):
+class BaseHeadlessResponse[ResultT]:
     """Public contract for all headless service responses."""
 
     result: ResultT
     manifest: RunManifest
 
 
-HeadlessPayload: TypeAlias = BaseHeadlessRequest[Any] | Mapping[str, Any]
+type HeadlessPayload = BaseHeadlessRequest[Any] | Mapping[str, Any]
 ReqT = TypeVar("ReqT", bound=BaseHeadlessRequest[Any])
 ResT = TypeVar("ResT", bound=BaseHeadlessResponse[Any])
 
 
-class BaseHeadlessService(Generic[ReqT, ResT]):
+class BaseHeadlessService[ReqT: BaseHeadlessRequest[Any], ResT: BaseHeadlessResponse[Any]]:
     """Shared wrapper for headless services with manifest injection."""
 
     def __init__(self, runner: Runner) -> None:

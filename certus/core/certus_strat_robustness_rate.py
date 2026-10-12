@@ -765,8 +765,8 @@ def _variant_id(parent_id: object, serial: int) -> object:
 # For the plans of a pass that did not terminate (the crash gate rejected them), the rescue finds the layer at which they start to
 # give way (`_first_crash_layer`), lays everything by Rate from there to the end, then from earlier cuts down to layer 2
 # (`_rescue_cuts`), evaluates these variants like any other, and the ranking decides. The last cut is layer 2, the first one that
-# can be laid by Rate: a plan that terminates therefore always exists. It works at full strength when the pass found fewer than
-# `rate_rescue_few` depositable plans, lightly otherwise.
+# can be laid by Rate: a plan that terminates therefore always exists. It works harder the fewer depositable plans the pass found:
+# at full strength when there is none, lightly from `rate_rescue_few` of them (`_rescue_budget`).
 
 #: Share of all the draws that have crashed by a layer, above which the optical monitoring of a plan is said to give way there.
 RATE_RESCUE_LEAK: float = 0.02
@@ -775,10 +775,11 @@ RATE_RESCUE_LEAK: float = 0.02
 #: parent on 50 parents, the tails and the sets of the configuration), before the end of the range (100 000).
 RATE_RESCUE_SERIAL_BASE: int = 50_000
 
-#: Fewer depositable plans than this in a pass: the rescue works at full strength.
+#: Fewer depositable plans than this in a pass: the rescue works harder the fewer there are, at full strength when there is none.
 RATE_RESCUE_FEW_DEFAULT: int = 10
 
-#: What the rescue spends, as (parents, cuts per parent): at full strength, and lightly.
+#: What the rescue spends, as (parents, cuts per parent): at full strength (nothing terminates), and lightly (`rate_rescue_few`
+#: depositable plans or more).
 RATE_RESCUE_FULL: tuple[int, int] = (30, 8)
 RATE_RESCUE_LIGHT: tuple[int, int] = (3, 2)
 
@@ -820,6 +821,17 @@ def _rescue_cuts(first_crash: int, count: int) -> list[int]:
         return [first_crash]
     spread = np.rint(np.linspace(first_crash, RATE_MIN_LAYER, count)).astype(int)
     return sorted({int(c) for c in spread}, reverse=True)
+
+
+def _rescue_budget(depositable: int, few: int) -> tuple[int, int]:
+    """(parents, cuts per parent) the rescue spends: from `RATE_RESCUE_FULL` when nothing terminates to `RATE_RESCUE_LIGHT` at `few`.
+
+    Linear in the scarcity, so that a pass that found nine plans of ten does not pay as much as one that found none.
+    """
+    scarcity = min(1.0, max(0.0, (few - depositable) / few)) if few > 0 else 0.0
+    return tuple(  # type: ignore[return-value]
+        round(light + scarcity * (full - light)) for light, full in zip(RATE_RESCUE_LIGHT, RATE_RESCUE_FULL, strict=True)
+    )
 
 
 def _rescue_variants(
@@ -866,15 +878,14 @@ def _rescue_with_rate(
     if not bool(params.get("rate_rescue", True)):
         return raw
     depositable = sum(1 for r in raw if np.isfinite(float(r.get("robustness_score", np.inf))))
-    full = depositable < int(params.get("rate_rescue_few", RATE_RESCUE_FEW_DEFAULT))
-    parents_count, cuts_count = RATE_RESCUE_FULL if full else RATE_RESCUE_LIGHT
+    parents_count, cuts_count = _rescue_budget(depositable, int(params.get("rate_rescue_few", RATE_RESCUE_FEW_DEFAULT)))
     variants = _rescue_variants(raw, num_layers, parents_count, cuts_count, source_n_blocks)
     if not variants:
         return raw
     new = collect(variants)
     rescued = sum(1 for r in new if np.isfinite(float(r.get("robustness_score", np.inf))))
     logger.info(
-        f"[RATE-RESCUE] {'full strength' if full else 'light'}: {depositable} depositable plan(s) in the pass, "
+        f"[RATE-RESCUE] {depositable} depositable plan(s) in the pass: {parents_count} plan(s) x {cuts_count} cut(s) at most, "
         f"{len(variants)} Rate tail(s) laid under the plans that gave way, {rescued} of them depositable."
     )
     return raw + new

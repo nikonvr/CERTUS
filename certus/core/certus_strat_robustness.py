@@ -96,6 +96,7 @@ from certus.core.certus_strat_robustness_rate import (
     _rate_candidate_layers,
     _rate_swing_candidates,
     _RateSwingContext,
+    _rescue_budget,
     _rescue_cuts,
     _rescue_variants,
     _rescue_with_rate,

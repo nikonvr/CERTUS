@@ -9,6 +9,7 @@ up to layer 16 to 28 and everything after laid by Rate, 522 of 547 did (best SEE
 
 from __future__ import annotations
 
+import itertools
 import logging
 
 import numpy as np
@@ -20,6 +21,7 @@ from certus.core.certus_strat_robustness_rate import (
     RATE_RESCUE_LIGHT,
     RATE_RESCUE_SERIAL_BASE,
     _first_crash_layer,
+    _rescue_budget,
     _rescue_cuts,
     _rescue_variants,
     _rescue_with_rate,
@@ -178,6 +180,27 @@ def test_the_variant_ids_are_distinct_and_in_the_rate_range_after_the_ordinary_v
     from certus.core.certus_strat_ranking import STRATEGY_ID_RATE_BASE, strategy_id_for_block
 
     assert min(ids) == strategy_id_for_block(STRATEGY_ID_RATE_BASE, 7, RATE_RESCUE_SERIAL_BASE)
+
+
+# ---- the budget ------------------------------------------------------------------------------------------------------------
+
+
+def test_the_budget_goes_from_full_strength_when_nothing_terminates_to_light_at_the_threshold() -> None:
+    assert _rescue_budget(0, 10) == RATE_RESCUE_FULL
+    assert _rescue_budget(10, 10) == RATE_RESCUE_LIGHT
+    assert _rescue_budget(50, 10) == RATE_RESCUE_LIGHT
+
+
+def test_the_fewer_depositable_plans_the_more_the_rescue_spends() -> None:
+    spent = [_rescue_budget(found, 10) for found in range(11)]
+
+    assert all(a[0] >= b[0] and a[1] >= b[1] for a, b in itertools.pairwise(spent))
+    assert spent[0] != spent[-1]
+    assert RATE_RESCUE_LIGHT[0] < _rescue_budget(5, 10)[0] < RATE_RESCUE_FULL[0]
+
+
+def test_a_threshold_of_zero_means_light() -> None:
+    assert _rescue_budget(0, 0) == RATE_RESCUE_LIGHT
 
 
 # ---- the stage -------------------------------------------------------------------------------------------------------------

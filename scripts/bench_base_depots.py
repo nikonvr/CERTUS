@@ -28,6 +28,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -200,12 +201,29 @@ def _delta(value: float | None, reference: float | None) -> str:
     return "-" if value is None or reference is None else f"{value - reference:+.5f}"
 
 
+def _index_exports() -> set[Path]:
+    """The `Report_INDEX_*` files in reports/: INDEX writes one .html and one .xlsx there after every fit."""
+    return set((ROOT / "reports").glob("Report_INDEX_*"))
+
+
+def _park_index_exports(before: set[Path], destination: Path) -> int:
+    """Move the exports INDEX wrote since `before` out of the repository tree, so that a bench leaves no untracked files."""
+    fresh = sorted(_index_exports() - before)
+    if fresh:
+        destination.mkdir(parents=True, exist_ok=True)
+    for path in fresh:
+        shutil.move(str(path), str(destination / path.name))
+    return len(fresh)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--runs", type=int, default=3)
     ap.add_argument("--seulement", default="", help="noms de references separes par des virgules")
     ap.add_argument("--timeout", type=float, default=1800.0, help="secondes par execution")
     ap.add_argument("--out", default=None)
+    ap.add_argument("--garder-exports", action="store_true",
+                    help="laisse dans reports/ les Report_INDEX_* qu'INDEX ecrit a chaque ajustement (par defaut : deplaces dans le dossier temporaire)")
     a = ap.parse_args()
 
     be.qapp()
@@ -225,26 +243,34 @@ def main() -> int:
             f"references={len(refs)} runs={a.runs}")
 
     results = []
-    with tempfile.TemporaryDirectory() as tmp:
-        for ref in refs:
-            path = _measurement(ref, catalogue, Path(tmp))
-            for run in range(1, a.runs + 1):
-                out = _one_run(ref, path, a.timeout)
-                middle = (out.get("reglages") or {}).get("lambda_milieu_nm")
-                n_mid_ref = None if middle is None else _n_at(SimpleNamespace(**ref["parametres"]), middle)
-                results.append({"reference": ref["nom"], "execution": run, "reference_n_milieu": n_mid_ref, **out})
-                tlu, final = out.get("tlu") or out.get("final"), out.get("final")
-                if out.get("erreur") or tlu is None:
-                    be.emit(f"REF {ref['nom']} #{run} ERREUR {out.get('erreur')}")
-                    continue
-                d_pct = 100.0 * (tlu["d_nm"] - ref["d_nm"]) / ref["d_nm"]
-                be.emit(
-                    f"REF {ref['nom']} #{run} {out['etages']} | d {tlu['d_nm']:.2f} nm (ref {ref['d_nm']:.2f}, "
-                    f"{d_pct:+.3f} %) | n({middle:.0f}) {_fmt(tlu['n_milieu'])} (ref {_fmt(n_mid_ref)}, "
-                    f"{_delta(tlu['n_milieu'], n_mid_ref)}) | n633 {_fmt(tlu['n633'])} (ref {_fmt(ref['n633'])}, "
-                    f"{_delta(tlu['n633'], ref['n633'])}) | rmse final {_fmt(final['rmse'] if final else None)} "
-                    f"| {out['duree_s']} s"
-                )
+    exports_before = _index_exports()
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            for ref in refs:
+                path = _measurement(ref, catalogue, Path(tmp))
+                for run in range(1, a.runs + 1):
+                    out = _one_run(ref, path, a.timeout)
+                    middle = (out.get("reglages") or {}).get("lambda_milieu_nm")
+                    n_mid_ref = None if middle is None else _n_at(SimpleNamespace(**ref["parametres"]), middle)
+                    results.append({"reference": ref["nom"], "execution": run, "reference_n_milieu": n_mid_ref, **out})
+                    tlu, final = out.get("tlu") or out.get("final"), out.get("final")
+                    if out.get("erreur") or tlu is None:
+                        be.emit(f"REF {ref['nom']} #{run} ERREUR {out.get('erreur')}")
+                        continue
+                    d_pct = 100.0 * (tlu["d_nm"] - ref["d_nm"]) / ref["d_nm"]
+                    be.emit(
+                        f"REF {ref['nom']} #{run} {out['etages']} | d {tlu['d_nm']:.2f} nm (ref {ref['d_nm']:.2f}, "
+                        f"{d_pct:+.3f} %) | n({middle:.0f}) {_fmt(tlu['n_milieu'])} (ref {_fmt(n_mid_ref)}, "
+                        f"{_delta(tlu['n_milieu'], n_mid_ref)}) | n633 {_fmt(tlu['n633'])} (ref {_fmt(ref['n633'])}, "
+                        f"{_delta(tlu['n633'], ref['n633'])}) | rmse final {_fmt(final['rmse'] if final else None)} "
+                        f"| {out['duree_s']} s"
+                    )
+    finally:
+        if not a.garder_exports:
+            parked = Path(tempfile.gettempdir()) / "bench_base_depots_exports_INDEX" / dt.datetime.now().strftime("%Y%m%d_%H%M%S")
+            moved = _park_index_exports(exports_before, parked)
+            if moved:
+                be.emit(f"EXPORTS_INDEX={moved} fichiers deplaces vers {parked}")
 
     stamp = dt.date.today().isoformat()
     target = Path(a.out) if a.out else ROOT / "reports" / f"bench_base_depots_{provenance['git_commit'][:8]}_{stamp}.json"

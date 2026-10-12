@@ -66,4 +66,5 @@ Le banc charge chaque référence dans la fenêtre INDEX comme un utilisateur, a
 sa bande, et dit si INDEX retrouve l'épaisseur et n(633). Quand la bande dépasse 2500 nm et commence sous 2200 nm,
 INDEX ajuste le modèle jusqu'à 2200 nm puis fige épaisseur et indice avant l'extension IR, quand l'application
 autonome ajuste toute la bande : le banc l'écrit sur chaque ligne. INDEX n'étant pas reproductible, chaque référence
-tourne trois fois.
+tourne trois fois. INDEX écrit un `Report_INDEX_*` (html et xlsx) dans `reports/` après chaque ajustement : le banc les
+déplace dans le dossier temporaire (`--garder-exports` les laisse en place).

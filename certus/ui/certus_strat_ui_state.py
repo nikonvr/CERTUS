@@ -1699,11 +1699,8 @@ class CertusStratStateMixin:
         a wavelength or a step that is not positive, and a range that is reversed.
         """
         problems = [f'{self._field_label(key)}: "{text}" cannot be read.' for key, text in self._rejected_entries.items()]
-        problems.extend(
-            f"{self._field_label(key)}: {params[key]:g} must be positive."
-            for key in ("l0", "wl_step", "scan_wl_step")
-            if key not in self._rejected_entries and not params[key] > 0
-        )
+        problems.extend(f"{self._field_label(key)}: {params[key]:g} must be positive." for key in ("l0", "wl_step", "scan_wl_step")
+                        if key not in self._rejected_entries and not params[key] > 0)
         wl_start, wl_end = params["wl_range"]
         if not wl_end > wl_start:
             problems.append(

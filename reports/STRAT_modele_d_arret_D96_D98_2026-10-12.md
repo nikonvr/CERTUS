@@ -11,7 +11,7 @@ couches), et ce que le secours Rate (`reports/STRAT_r75x0.5_secours_rate_2026-10
   sont déposables à l'ancien modèle, 6 à l'attente sans fin, avec ou sans D96 et D97. Le rapport médian des scores de ces 6 plans à
   ceux de l'ancien modèle vaut de 0,993 à 1,001.
 - **La recherche n'en retrouve qu'une fraction, très variable** : 2 plans déposables sur 1 112 avec les trois options
-  (`8d9ced13`, graine 42), 323 sur 489 avec D98 seul, 381 sur 1 034 avec l'arrêt tardif.
+  (`8d9ced13`, graine 42, avant le secours Rate et D106), 323 sur 489 avec D98 seul, 381 sur 1 034 avec l'arrêt tardif.
 - **Avec le secours Rate, la liste finale du juge de paix ne contient que des plans déposables** : 2 260 stratégies, aucune
   éliminée par la porte de plantage, meilleur SEEL **0,1849 nm** (`03990e9a`).
 - **Au code final, le meilleur SEEL ne dépend presque pas du modèle d'arrêt, mais le meilleur plan est un plan Rate sous chacun** :
@@ -69,8 +69,8 @@ variante) : le meilleur de ceux-là vaut de 0,1928 à 0,1966 nm, sur les quatre 
 Le meilleur SEEL de chaque ligne est le minimum d'une population dont la taille et le contenu diffèrent d'une ligne à l'autre
 (489 à 1 112 stratégies) ; l'écart de 0,1689 à 0,2000 nm (18 %) dépasse la dispersion Monte-Carlo de ce mode (σ ≈ 6 % à 150
 tirages, ETAT section 2), mais **je n'ai pas séparé ce qui revient au modèle d'arrêt de ce qui revient à la population**. Ces comptes sont d'avant D106 : les
-enfants d'ELITE, nombreux dans ces listes, n'avaient pas le biais de fente, et leurs nombres de plans déposables sont plus élevés
-qu'ils ne le seraient avec lui (la mesure 4 le montre : 50 plans optiques purs déposables à l'ancien modèle, au lieu de 487).
+enfants d'ELITE, nombreux dans ces listes, n'avaient pas le biais de fente. Au code final, l'ancien modèle ne garde que 50 plans
+optiques purs déposables au lieu de 487 (mesure 4), sans que j'aie isolé la part de D106.
 
 ## Mesure 3 : le juge de paix au modèle de production, avec le secours Rate
 
@@ -121,7 +121,7 @@ tardif une option.
 
 ## Artefacts
 
-`reports/STRAT_modele_d_arret_2026-10-12/` : les cinq recherches de la mesure 2 (`blocs_vs_plantage_48c_premium_s042_*_8d9ced13.json`) et les cinq de la mesure 4 (`..._dbf8025f.json`), chacune avec le commit, l'état de l'arbre et les surcharges qui l'ont produite et la mesure 1 (`probe_modele_lecture_120_plans.json` et `.txt`). La mesure 3 : `reports/STRAT_bench_juge_de_paix_03990e9a_D96-D98_secours_Rate_2026-10-12.txt`.
+`reports/STRAT_modele_d_arret_2026-10-12/` : les cinq recherches de la mesure 2 (`blocs_vs_plantage_48c_premium_s042_*_8d9ced13.json`) et les cinq de la mesure 4 (`..._dbf8025f.json`), chacune avec le commit, l'état de l'arbre et les surcharges qui l'ont produite ; la mesure 1 : `probe_modele_lecture_120_plans.json` et `.txt`. La mesure 3 : `reports/STRAT_bench_juge_de_paix_03990e9a_D96-D98_secours_Rate_2026-10-12.txt`.
 
 ## Ce que ce rapport ne mesure pas
 

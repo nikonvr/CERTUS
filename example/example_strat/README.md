@@ -58,7 +58,7 @@ un fichier peut porter des clés retirées, ignorées au chargement avec une lig
 
 | Clé JSON | Type | Valeur | Description |
 |---|---|---|---|
-| `allow_rate` | `int`/`bool` | `1` | `1` = autorise le mode Rate (surveillance au chrono sur couches sans extremum franc), `0` = optique pure. |
+| `allow_rate` | `int`/`bool` | `1` | `1` = autorise le mode Rate (couche posee au temps, a la vitesse estimee sur les couches controlees optiquement ; utile sur les couches sans extremum franc), `0` = optique pure. |
 | `poem_anchor_noise` | `int`/`bool` | `1` | `1` = bruite le signal de monitoring avant la détection des points tournants, la lecture des ancres POEM et le test d'atteignabilité. |
 | `poem_anchor_noise_phase_a` | `int`/`bool` | `1` | `1` = applique le bruit dès la pré-sélection Phase A. |
 | `index_corridor` | `float` | `0.005` | Demi-largeur du couloir de dérive d'indice de réfraction admissible. |

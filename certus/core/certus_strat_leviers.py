@@ -77,13 +77,13 @@ LEVIERS: tuple[Levier, ...] = (
     # ---------------------------------------------------------------- RATE: the mechanism
     Levier(
         cle="allow_rate",
-        libelle="Autoriser le Rate (quartz / chrono)",
+        libelle="Autoriser le Rate (temps x vitesse estimee)",
         defaut=True,
         genre="bool",
         statut=VALIDE,
         mesure="ON par defaut depuis le 2026-08-12, sur demande de 👤 : « add that rate is "
                "always allowed ». Chaque survivante est etendue en variantes portant une couche "
-               "pilotee au quartz, et le classement les compare COTE A COTE avec le pur optique.",
+               "posee au temps, a la vitesse estimee sur les couches controlees optiquement, et le classement les compare COTE A COTE avec le pur optique.",
         reserve="En mode Rate il n'y a AUCUNE compensation d'erreur : l'ecart part en boucle "
                 "ouverte vers la couche suivante. Une gagnante qui porte un Rate n'est pas la "
                 "meme promesse pour l'atelier qu'une gagnante en pur optique.",
@@ -119,7 +119,7 @@ LEVIERS: tuple[Levier, ...] = (
                "une dynamique aussi pauvre qu'une ultrafine.",
         reserve="🔴 IL SERT A DEUX ETAGES A LA FOIS, et c'est delibere : la Phase A l'emploie "
                 "pour FILTRER les longueurs d'onde candidates, le placement Rate pour designer "
-                "les couches qui ont BESOIN d'un quartz. Le baisser elargit les deux ; "
+                "les couches qui ont BESOIN du Rate. Le baisser elargit les deux ; "
                 "l'augmenter les restreint tous les deux. Un reglage, deux effets -- ne pas "
                 "l'ajuster pour le Rate sans regarder ce qu'il fait a la Phase A.",
     ),

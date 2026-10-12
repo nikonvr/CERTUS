@@ -928,8 +928,8 @@ def _level_reachability(Ts_r: np.ndarray, n_tot: int, n_hist: int, idx_nom_stop:
 # is exactly the property 12.4 chose the generator for.
 # 🔴 THIS LOOP IS NOT CUT AT A TESTGLASS SWAP, AND THAT IS DELIBERATE. Everything
 # else the kernel reads is truncated at `witness_base_layer`; this one spans the
-# whole run. The rate estimate is a property of the MACHINE -- the quartz, the
-# chrono, what the source is actually doing -- not of the glass the beam looks at.
+# whole run. The rate estimate is a property of the MACHINE -- what the source is
+# actually doing -- not of the glass the beam looks at.
 # Swapping the witness restores the optical signal; it does not make the machine
 # forget its own calibration. Cutting here would throw away the sqrt(n) averaging of
 # 17-... above and hand the Rate layers a worse estimate for no physical reason.

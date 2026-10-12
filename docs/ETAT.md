@@ -19,18 +19,22 @@
 brouillon vers `master`. Les entrées `.git/worktrees/certus0310` et `.git/worktrees/profwt`, incomplètes (Drive en
 refuse la suppression), déclenchent un avertissement à chaque commit sans l'empêcher.
 
-**Dernière validation complète** (2026-10-12, Windows 11, Python 3.14.8, Ryzen 7 5700G, `d1d53bb5`) : Ruff 0 ;
-oracle 1 143 passed ; unit 5 219 passed, 7 skipped en 13 min 42 ; UI 1 315 passed, 12 skipped, 2 xfailed en
-21 min 38 ; autres tests 349 passed, 2 skipped en 9 min 40 ; trois contrôles documentaires : 0. C1 contre `master`
-(`python scripts\c1_diff.py master`, mesuré à `212126d4` ; aucun noyau n'a changé depuis) : 299 tableaux sur 8 008 diffèrent, tous sur la grille machine (pas > 0 ou
-lissage > 1), que la branche corrige (D93 à D95) ; les 171 cas de croissance sans grille machine sont identiques au bit.
+**Dernière validation complète** (2026-10-12, Windows 11, Python 3.14.8, Ryzen 7 5700G, `dbf8025f` ; depuis, seuls des rapports
+et ce document ont changé) : Ruff 0 ;
+oracle 1 143 passed en 51 s ; unit 5 357 passed, 7 skipped en 22 min 43 ; UI 1 315 passed, 12 skipped, 2 xfailed en
+22 min 22 ; autres tests 348 passed, 2 skipped en 10 min 16 (un test de moins qu'à `d1d53bb5` : `test_sapphire_index_txt_is_parseable`
+est parti avec la table de saphir morte) ; trois contrôles documentaires : 0. C1 contre `master`
+(`python scripts\c1_diff.py master`, mesuré à `dbf8025f`, 196 s) : 299 tableaux sur 8 008 diffèrent (`strat.growth` 295,
+`strat.states` 4), tous sur la grille machine (pas > 0 ou lissage > 1), que la branche corrige (D93 à D95) ; les 171 cas de
+croissance sans grille machine sont identiques au bit. C1 contre `212126d4`, où ces 299 écarts avaient été mesurés : les 8 008
+tableaux sont identiques au bit, donc aucun noyau n'a changé de résultat depuis.
 
 **Un seul indice de saphir** (2026-10-12, `reports/SAPHIR_indice_unique_2026-10-12.md`). La référence est le Sellmeier d'id 3
 (rayon ordinaire, Malitson et Dodge) ; les mesures absolues de la séance 24-03 en donnent le niveau à +0,0003 ± 0,0028, donc on ne
 la corrige pas. « Sapphire Fresnel » (un second Sellmeier, n plus bas de 0,0077 ; dans METAL, un substrat N-BK7 sans un mot) est un
 alias de l'id 3 (`b9223b43`) ; les tables mortes `sapphire fresnel.xlsx` et `sapphire_index.txt` sont supprimées (`925b3788`) ;
 `tests/unit/test_one_sapphire_index.py` garde l'unicité. Reste : C1 et C3 diffèrent entre le JSON et le code (n : 4,6·10⁻⁷ au plus),
-non alignés pour ne pas changer le hash verrouillé du JSON. Pas encore validé en entier : voir la validation ci-dessous.
+non alignés pour ne pas changer le hash verrouillé du JSON. Validé en entier avec le reste à `dbf8025f` (validation ci-dessus).
 
 **D103, trouvé le 2026-10-11, corrigé par `de9a2025`** (`reports/STRAT_D103_identifiants_en_double_2026-10-11.md`). En
 `deep` et `extreme`, la DP rend jusqu'à 2 × `top_k` groupements par carte de coût, numérotés dans des plages de cent :
@@ -47,16 +51,27 @@ parents ELITE sur des scores mélangés.
 2026-09-08 au 2026-10-11, tout résultat STRAT a tourné sans Rate, sans biais de fente et sans recherche de fente, sauf
 surcharge explicite (`reports/STRAT_D100_interrupteurs_non_charges_2026-10-11.md`).
 
+**Modèle d'arrêt de production et Rate dans tous les scénarios** (2026-10-12 ;
+`reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md`, `reports/STRAT_r75x0.5_secours_rate_2026-10-12.md`). D96, D97 et D98 sont le
+modèle d'arrêt par défaut (`8d9ced13`, décision de 👤, §3) : l'attente sans fin retire 95 % des plans que l'ancien modèle jugeait
+fabricables (6 sur 120 au rejeu) et la recherche du juge de paix n'en garde que 2 sur 1 112. Le Rate entre dans chaque design : le
+secours Rate (`0fc7c5f2`, `40642146`) pose au temps la queue des plans dont le contrôle optique cède, et les enfants d'ELITE gardent
+les couches Rate de leur parent (`4a4e1f0d`). Avec eux, `r75x0.5` et un seul verre témoin, que la recherche ne savait pas fabriquer
+(0 déposable sur 8 687 plans), rend 3 383, 3 701 et 3 279 plans déposables aux graines 42, 101 et 202 (meilleur SEEL 0,5031 / 0,4981 /
+0,5000 nm) ; le juge de paix, 0,1849 nm. Ces SEEL sont ceux du modèle de Rate de STRAT (§7), dont la stabilité de la vitesse n'est pas
+mesurée. D106 (les enfants d'ELITE étaient notés sans biais de fente) est corrigé par `6fcdd56a` ; les SEEL d'ELITE mesurés avant lui
+ne portaient pas le biais de fente, d'une grandeur non mesurée.
+
 **Dernière mesure (2026-10-12), D100 et D103 corrigés**
 (`reports/STRAT_r75x2_sept_graines_D100_D103_corriges_2026-10-12.md`, code `411e6eb5`). `r75x2` en `deep`, sans
 rampes, protocole d'août, sept graines : **six trouvent des déposables** (42, 77, 101, 202, 404, 505 ; août : trois),
 la 303 n'en trouve aucun ; meilleurs SEEL de 0,5323 à 0,6354 nm, médiane 0,5563 nm. Tous les déposables sont des plans
 ELITE. L'ELITE « tour à tour » sur les six graines (`reports/STRAT_ELITE_tour_a_tour_six_graines_2026-10-12.md`) :
 meilleur SEEL médian +0,7 % (mieux une fois, de 14,7 %), pas de gain net démontré. Mesures du
-2026-10-11 (`reports/STRAT_remesure_D100_2026-10-11.md`, `782972bf`) : juge de paix **0,178 nm** (`premium`, même
+2026-10-11 (`reports/STRAT_remesure_D100_2026-10-11.md`, `782972bf`) : juge de paix **0,178 nm** (`premium`, ancien modèle d'arrêt, même
 `RESULT` au bit après D103) ; le passe-bande de 99 couches en une campagne reste non fabricable (0 déposable sur
-2 139, plantage minimal 82,7 %) ; `r75x0.5` avec un seul verre témoin : aucun déposable aux graines 42, 101 et 202,
-plantage minimal 8,3 % à la graine 101 (§7).
+2 139, plantage minimal 82,7 %) ; `r75x0.5` avec un seul verre témoin : aucun déposable aux graines 42, 101 et 202
+avant le secours Rate, plantage minimal 8,3 % à la graine 101 (§7).
 
 **Ordre conseillé des prochains lots.** Priorité à ce qui rend un résultat faux ou empêche de calculer,
 puis aux dépendances techniques ; chaque changement reste un commit distinct (C3). Une mesure en cours
@@ -65,9 +80,9 @@ n'autorise pas à modifier son arbre témoin.
 | rang | action et critère de fin | raison / condition |
 |---|---|---|
 | 3 — les textes que la campagne du 2026-10-12 rend faux | Reste la vitrine `pages/CERTUS_STRAT.html` (§10.18 et §10.19, mesures sans rampes), qui cite les chiffres d'août que cette campagne remplace (l'infobulle de l'onglet multi-graines et la docstring de `scripts/orchestre_multigraine.py` sont corrigées, `262a110d`). Les 23 appels de `load_configuration` lisent maintenant leur retour (`scripts/_composant.py`, `58ed99c5`, gardé par `tests/unit/test_the_scripts_read_what_load_configuration_returns.py`). | La vitrine suit un régime strict (CLAUDE.md, section 10) : 👤 la relit avant qu'on la touche. |
-| 4 — traiter la chaîne de mesure | La grille machine du noyau lit le T exact à chaque lecture (12.4) et lisse sur 8 lectures avec le seuil de 1,00 A (12.2) : D54, D55, D93, D94 et D95 sont corrigés, et ce chemin reproduit une machine indépendante rejouée lecture par lecture (rapport du 2026-10-10, section 2). D96, D97 et D98 existent en option, inactives par défaut, et leur effet sur un classement est mesuré (même rapport, sections 4 et 6). Restent les décisions de 👤 (§5, arrêt de STRAT). | La grille de la machine est inactive par défaut. Tout changement de noyau passe C1 froid contre froid et l'oracle. |
+| 4 — traiter la chaîne de mesure | La grille machine du noyau lit le T exact à chaque lecture (12.4) et lisse sur 8 lectures avec le seuil de 1,00 A (12.2) : D54, D55, D93, D94 et D95 sont corrigés, et ce chemin reproduit une machine indépendante rejouée lecture par lecture (rapport du 2026-10-10, section 2). D96, D97 et D98 sont le modèle d'arrêt par défaut depuis le 2026-10-12 (§3) ; leur effet est mesuré (même rapport, sections 4 et 6, et `reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md`). Reste une décision de 👤 (§5, arrêt de STRAT). | La grille de la machine est inactive par défaut. Tout changement de noyau passe C1 froid contre froid et l'oracle. |
 | 5 — stabiliser interface et gel | Reproduire D23 (les six `gc.collect()` des threads de calcul STRAT et les `QThread`) avant D11 et `WA_DeleteOnClose` ; poursuivre la réduction du gel (D72) après sa fiabilité. | D11 n'a pas d'effet dans le lancement actuel par processus ; libérer une fenêtre avant ses threads serait plus grave. |
-| 6 — réduire la dette | Élucider les effets d'import de D42 avant E402/I001 (D25), puis traiter D26 et les défauts visuels selon §4–5. | Chantier utile, mais moins urgent que la justesse scientifique ; l'ordre des imports peut changer l'exécution. |
+| 6 — réduire la dette | Traiter E402 (D25), puis D26 et les défauts visuels selon §4–5. | Chantier utile, mais moins urgent que la justesse scientifique ; l'ordre des imports peut changer l'exécution. |
 
 ## 1. Où en sont les programmes
 
@@ -88,6 +103,7 @@ n'autorise pas à modifier son arbre témoin.
 |---|---|---|---|
 | dichroïque 48 couches, `JSON-strat-example` | **0,173 nm** | 0 % | 6 blocs, une campagne |
 | le même, D100 corrigé (`782972bf`) | **0,178 nm** | 0 % | 5 blocs (λ 544, 471, 466, 467, 462 nm), 823 stratégies dont 154 éliminées, `RESULT` 0,007917103726810235 ; `scripts\bench_examples.py strat` (`premium`), caches de l'arbre, 2026-10-11 (`reports/STRAT_bench_juge_de_paix_782972bf_D100_2026-10-11.txt`). Sous D100 (`b60d80e2`) : 0,175 nm |
+| le même, modèle d'arrêt par défaut du 2026-10-12 (D96 à D98) et secours Rate (`03990e9a`) | **0,1849 nm** | 0 % | 1 bloc (λ 542 nm), 2 260 stratégies dont aucune éliminée, `RESULT` 0,00854267382381426 ; `scripts\bench_examples.py strat` (`premium`), caches de l'arbre, 2026-10-12 (`reports/STRAT_bench_juge_de_paix_03990e9a_D96-D98_secours_Rate_2026-10-12.txt`). Sans le secours (`8d9ced13`) : 0,2000 nm, 2 plans déposables sur 1 112 |
 | passe-bande 3 cavités, 35 couches | **0,482 nm** | 0 % | 6 blocs, mode `deep` |
 | aléatoire `JSON-strat-random75`, 75 couches | **0,272 nm** | 0 % | une campagne, 241 déposables sur 662 |
 | passe-bande 5 cavités, 99 couches | **0,81 nm** | 0 % par campagne | 4 verres témoins, partition 0-22 / 22-42 / 42-76 / 76-99 |
@@ -113,7 +129,8 @@ Le passe-bande de 99 couches est chiffré en moyenne de trois graines, jamais pa
 - Le banc `scripts\bench_examples.py strat` lit sa configuration dans `CERTUS_DESIGN_JSON` ; par défaut le juge de
   paix standard (`JSON-strat-example.json`). Les mesures `fast` de D5, D73, D20, D70 et D17 prenaient
   `JSON-strat-example-fast.json` (194 stratégies), celles de D14 et D15 le standard (370) : les deux ne se comparent pas.
-- Les repères du tableau, sauf la ligne du juge de paix au modèle de `782972bf`, sont antérieurs à R130 : depuis, la gagnante est prise dans la classe du meilleur SEEL
+- Les repères du tableau, sauf les deux lignes du juge de paix au modèle de `782972bf` et de `03990e9a`, sont antérieurs à R130 et
+  à D96 à D98 par défaut (2026-10-12) : à refaire. Depuis R130, la gagnante est prise dans la classe du meilleur SEEL
   (à un pas de 0,01 nm près) par rendement puis marge ; son SEEL dépasse le meilleur d'au plus un pas.
 - La longueur seule ne met pas le monitoring optique en échec, la **structure** si :
   75 couches aléatoires passent, 99 couches à cavités et miroirs non. Sur un empilement
@@ -351,9 +368,18 @@ Chaque correctif est un commit (R136 `c738a130`, R137 `83661fd4`) qu'un `git rev
   lectures. Le modèle figé reste tel quel ; `fige_arret_lisse` de `scripts/probe_modele_lecture.py` documente l'hypothèse écartée
   (notes plus basses de 8 à 21 %, classement à 0,92).
 - **D96 et D97 : activer par défaut** l'ancre exacte et l'inversion exacte de l'arrêt POEM (l'arrêt sans bruit retombe sur POEM
-  exact). Les scores STRAT changent : les références mesurées sont à refaire.
+  exact). Les scores STRAT changent : les références mesurées sont à refaire. Actifs par défaut depuis `8d9ced13`.
 - **D98 : l'OMS attend sans fin** quand le niveau d'arrêt est plus proche de l'extremum que le seuil d'hystérésis : la couche est
-  plantée (pas d'arrêt tardif).
+  plantée (pas d'arrêt tardif). Actif par défaut depuis `8d9ced13` (`oms_arming` = 2). Effet mesuré à ce commit sur le juge de paix
+  (`premium`, graine 42, `scripts/probe_blocs_vs_plantage.py 48c premium 1 0 2 0 42 0`, une recherche complète par ligne, avant le
+  secours Rate) : ancien modèle 669 plans déposables sur 823, meilleur 0,1780 nm ; D96 et D97 seuls 550 sur 632, 0,1787 nm ; D98
+  seul 323 sur 489, 0,1689 nm ; les trois avec l'arrêt tardif 381 sur 1 034, 0,1904 nm ; les trois avec l'attente sans fin (la
+  production) 2 sur 1 112, 0,2000 nm. Sur les 120 premiers plans du banc du 2026-10-04
+  (`reports/STRAT_bench_juge_de_paix_b60d80e2_temoin_2026-10-04.json`), notés de nouveau avec 300 tirages (sans biais de fente ni
+  Rate, `scripts/probe_modele_lecture.py`) : 120 déposables à l'ancien modèle, 6 à l'attente sans fin, avec ou sans D96 et D97.
+  L'attente sans fin retire donc 95 % des plans que l'ancien modèle jugeait fabricables, et la recherche n'en retrouve qu'une
+  fraction, très variable ; avec le secours Rate, la liste finale du juge de paix ne compte que des plans déposables (§2). Rapport :
+  `reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md`.
 - **D68 (1) : le hub ne lance pas l'échauffement JIT** ; chaque module garde le sien.
 - **Rate dans tous les scénarios.** Le Rate est une couche posée **au temps, à la vitesse estimée** sur les couches du même
   matériau contrôlées optiquement (`_rate_layer_thickness`), pas un quartz ni un chrono. 👤 : il doit être intégré à chaque
@@ -363,7 +389,8 @@ Chaque correctif est un commit (R136 `c738a130`, R137 `83661fd4`) qu'un `git rev
   depuis le 2026-08-22, le noyau et le registre disaient Vrai), le **secours Rate** (`rate_rescue`, `rate_rescue_few`, actifs par
   défaut) qui pose en Rate la queue des plans qui plantent, et des enfants d'ELITE et de la recherche locale qui **gardent les
   couches Rate**, la fente et les échanges de verre de leur parent (ils les perdaient : ELITE ne pouvait jamais affiner un plan
-  Rate).
+  Rate). Mesuré à `r75x0.5` : §7. Le secours sait aussi poser le Rate là où les tirages plantent d'abord, quelques couches de plus
+  à chaque tour (`rate_rescue_hard`) : inactif par défaut, non mesuré en production (§6).
 
 ### RE — décidé par 👤 le 2026-10-05
 
@@ -379,18 +406,9 @@ Numérotés ici ; un défaut corrigé sort de la liste et son numéro n'est pas 
 numéros de l'ancien registre sont entre parenthèses
 (`git show 7b08dc8:docs/archives/DEFAUTS_OUVERTS.md`). Tous revérifiés contre le code le 2026-10-06.
 
-**Ils faussent un résultat, trompent l'utilisateur ou empêchent de calculer**
+**Ils faussent un résultat, trompent l'utilisateur ou empêchent de calculer, et le modèle physique — connus, non corrigés**
 
-| # | défaut | piste |
-|---|---|---|
-| D96 | **Ancres POEM lues sur l'échantillonnage grossier.** Le noyau prend la valeur de l'échantillon à l'extremum (16 points par couche rejouée, 64 sur trois épaisseurs pour la couche en cours) : l'échantillon tombe à côté du sommet, d'une quantité qui diffère entre signal réel et nominal dès que leurs épaisseurs diffèrent. Sans aucun bruit, erreurs amont tirées à σ = 0,3 nm (3 réalisations × 48 couches, gagnante du juge de paix, 2026-10-10) : l'arrêt du noyau s'écarte de l'arrêt POEM exact (oracle au pas de 0,05 nm) de 0,055 nm RMS, P95 0,14 nm, jusqu'à 0,17 nm RMS sur une couche ; l'inversion (D97) en explique 0,021 nm RMS, les ancres le reste | l'option existe (`exact_anchors`, `_exact_poem_anchors`, inactive par défaut : chaque ancre portée au sommet de l'extremum de sa couche, en forme fermée, et remise dans le signal) ; avec `exact_inversion`, l'arrêt sans bruit tombe sur l'arrêt POEM exact (8,0e-6 nm RMS, `scripts/probe_arret_sans_bruit.py`) ; son effet sur un classement est mesuré (rapport du 2026-10-10, section 4) ; l'activer par défaut est une décision de 👤 |
-| D97 | **Inversion parabolique de l'arrêt.** `_invert_thickness_from_probes` résout le niveau sur la parabole de trois points à ±`probe_offset` (2,5 nm sur le juge) autour de l'épaisseur nominale, et extrapole quand l'arrêt réel s'en éloigne. Mêmes conditions que D96, niveaux exacts donnés : 0,021 nm RMS sous POEM (0,13 nm sur la couche 40), mais 0,19 nm RMS et jusqu'à 1,53 nm au niveau absolu (POEM coupé), où l'arrêt se déplace de plusieurs nanomètres | l'option existe (`exact_inversion`, `_invert_thickness_exact`, inactive par défaut : racine de la forme fermée la plus proche du nominal, encadrée puis bissectée ; la parabole reste pour un indice absorbant) ; son effet sur un classement est mesuré (rapport du 2026-10-10, section 6) ; l'activer par défaut est une décision de 👤 |
-
-**Le modèle physique — connus, non corrigés**
-
-| # | défaut |
-|---|---|
-| D98 | **Armement du déclenchement.** Le noyau compte un point tournant à la position de l'extremum ; un contrôleur causal ne le connaît qu'une fois le signal revenu du seuil d'hystérésis, et un niveau plus proche de l'extremum que ce seuil est franchi avant que la machine l'attende. La marge de Phase A ne regarde que la couche en cours, pas les extrema des couches précédentes du bloc. `scripts/probe_armement.py` (nominal, 2026-10-10) : juge de paix, 22 plans sur 370 à 1× (couche 47) et 38 à 2× (couches 36, 41, 42, 47), tous jugés déposables par le noyau (plantage ≤ 1,33 %), le premier au rang 23 (compté depuis 0) ; `r75x2`, 67, 69 et 222 plans sur 783 à 0,5×, 1× et 2×, aucun des 20 premiers. Ce que fait l'OMS alors (arrêt tardif ou attente sans fin) n'est pas connu. L'option `arming` (`_armed_level`, inactive par défaut) modélise l'arrêt tardif : sur les 370 plans du juge, même meilleur plan, classement conservé à 0,979, plantage moyen à 2× de 0,105 à 0,014 % (rapport du 2026-10-10, section 4). Choisir l'hypothèse, et l'activer, est une décision de 👤 |
+Aucun. D96 à D98 (le modèle d'arrêt) sont décidés et actifs depuis le 2026-10-12 : §3.
 
 **Le code, les tests et la documentation**
 
@@ -398,9 +416,8 @@ numéros de l'ancien registre sont entre parenthèses
 |---|---|
 | D11 | **Une fenêtre de module fermée n'est pas détruite** : des lambdas et des `functools.partial` branchés sur les signaux de ses propres widgets la capturent, et la connexion les tient du côté C++ de PyQt, où le ramasse-miettes ne voit pas le cycle (`scripts/sonde_retenants_fenetre.py`, 2026-09-27 : `CertusREApp` retenue par quatre méthodes liées, cinq fermetures et deux attributs de `CertusToast` / `CertusToastStack`). **Sans effet en production** : le hub lance chaque module dans son propre processus (`QProcess`), et fermer la fenêtre finit le processus. Les tests détruisent désormais leurs fenêtres (R5). Coûterait dans tout processus qui construirait plusieurs fenêtres. Piste : `WA_DeleteOnClose` sur `CertusBaseApp`, à condition de retenir d'abord ses `QThread` encore actifs : sans cela, libérer la fenêtre libère un thread en cours (D23) |
 | D23 | À instruire : six `gc.collect()` exécutés dans les threads de calcul STRAT (deux dans `_parallel_block_worker`, un dans `_run_segment`, un dans `_execute_nucleation_and_cost_mapping`, deux dans l'exécuteur du pipeline) peuvent libérer des objets Qt hors du thread GUI, sans arrêt observé ; les tests n'isolent pas `sys.modules`. L'arrêt pendant l'étage IR d'INDEX garde le résultat raffiné, décidé par 👤 (§3). Reproduire avant de changer le cycle de vie ; traiter avec D11 |
-| D25 | Dette de lint masquée par `extend-ignore` : **15 règles**, E501 compris, et 1 479 violations à la mesure du plan (`scripts\metrics.py`, 2026-10-06, E501 exclue) ; plus aucun import étoile, et les noms indéfinis (F821, F822) sont à zéro. Le cliquet `tests/oracle/test_lint_debt_ratchet.py` nomme les règles restantes : aucune ne peut entrer, et une règle sortie doit quitter sa liste. RUF022 (trier `__all__`) reste ignorée à dessein |
+| D25 | Dette de lint masquée par `extend-ignore` : **8 règles**, E501 compris, et 1 416 violations à la mesure du plan (`scripts\metrics.py`, 2026-10-12, E501 exclue : F401 659, E402 555, RUF001 77, RUF003 59, RUF002 51, RUF100 10, RUF022 3, F811 2, ce dernier écarté des tests par `per-file-ignores`) ; plus aucun import étoile, et les noms indéfinis (F821, F822) sont à zéro. Le cliquet `tests/oracle/test_lint_debt_ratchet.py` nomme les règles restantes : aucune ne peut entrer, et une règle sortie doit quitter sa liste. RUF022 (trier `__all__`) reste ignorée à dessein |
 | D26 | Imports montants entre couches, mesurés le 2026-10-06 (`scripts\metrics.py`) : 20 arêtes, `certus.spline → certus.ui` (8), `certus.metal → certus.ui` (6), `certus.utils → certus.ui` (3), `certus.utils → certus.spline` (3) ; un cycle d'imports à l'exécution (le cœur de STRAT) ; `certus.physics.gradient_analytic` ne s'importe pas seul (cycle avec `gradient_utils`) |
-| D42 | Neuf modules de bibliothèque appellent `create_module_environment(__file__)` à l'import : chacun reconfigure le journal CERTUS, dont la destination dépend alors de l'ordre des imports ; leur `script_dir`, leur propre dossier, ne sert presque jamais. L'insertion dans `sys.path` (R21) et le fil de préchauffage (R24) sont corrigés |
 | D50 | Gelé, `loky` ne marche pas (repli sur des fils) et le multigraine reste refusé, le message le dit. La couche Numba du gel est D87, sa taille D72. Le job `release-windows` l'a construit et démarré sur un poste neuf le 2026-09-30 (R42) |
 | D68 | **La physique lit le silicium (`SI_*`, feuille `Si-substrate` de `indices.xlsx`) À L'IMPORT**, par pandas et openpyxl (mesuré sur la fenêtre DESIGN, machine chargée : 0,53 s pour `materials_data`, dont 0,42 s d'import d'openpyxl) ; les rendre paresseux demande que les tableaux existent avant la première compilation de `get_nk_si` (numba les fige), donc toucher le chargement de la physique. (L'échauffement JIT du hub est tranché : il ne le lance pas, §3.) |
 | D69 | Une définition d'indicateur a changé en route, et 👤 doit le savoir. « Couverture des noyaux, compilation coupée » : le plan la mesurait par `oracle` + `core` (base 45,9 %, cible ≥ 70 %) ; elle se mesure maintenant par ces deux répertoires, `property` et les tests de `unit` marqués `kernels` (R78 : 74,0 %). La base de l'audit reste celle de l'ancienne définition ; avec l'ancienne, l'indicateur serait à 46,0 % le 2026-10-01 (non atteint). Je tiens la nouvelle pour la bonne (les tests des noyaux de STRAT ont été écrits pour cela), mais c'est un changement de critère. |
@@ -420,7 +437,7 @@ Ces sujets demandent un jugement de physicien ou de propriétaire du produit. Le
 | **interface** | Revoir visuellement les onze fenêtres et choisir les teintes de marque, la bande des fichiers récents et les bornes des champs numériques. |
 | **base de dépôts** | RE : remplacer la seule mesure d'un classeur RE déjà chargé par celle d'un dépôt (il faudrait découper `load_reverse_engineering_from_path`) ? Apparier dans la base la T et la R d'un même échantillon que l'opérateur a nommées différemment (`NbT3` et `NbR3`) ? INDEX : en phase 2, la fenêtre λ de l'utilisateur est remplacée par toute l'étendue des données (`_on_tlu_constrained_finished`), est-ce voulu ? |
 | **ELITE « tour à tour »** | `elite_round_robin`, six graines, D100 et D103 corrigés (2026-10-12) : mieux à la graine 42 (0,5420 contre 0,6354 nm), équivalent à la 404, moins bien aux 77, 101 et 505 (de +0,7 à +2,8 %), la 303 sans déposable des deux côtés ; médiane +0,7 %. L'option est inactive et le reste tant que 👤 ne dit pas de l'armer ; ce qui manque pour trancher est le bruit d'une même graine rejouée |
-| **arrêt de STRAT** | D96 à D98 sont tranchés le 2026-10-12 (§3) et se codent ; reste : noter ou non au modèle figé, au moins pour départager la tête du classement (rapport du 2026-10-10, sections 4 et 6) |
+| **arrêt de STRAT** | D96 à D98 sont le modèle par défaut (§3). L'attente sans fin de D98 retire 95 % des plans que l'ancien modèle jugeait fabricables (§3) : ce que l'OMS fait à un niveau franchi avant que son contrôleur soit armé n'est pas connu, et l'arrêt tardif en garde davantage (381 plans déposables sur 1 034 au juge de paix, 0,1904 nm, sans le secours Rate ; avec lui, non mesuré). À confirmer, ou à remplacer. Reste aussi : noter ou non au modèle figé, au moins pour départager la tête du classement (rapport du 2026-10-10, sections 4 et 6) |
 
 ## 6. Chantiers spécifiés, en attente
 
@@ -438,7 +455,9 @@ l'héritage quand un étage deviendra suspect · porter le résultat de `r75x2` 
 avec sa condition dans la même phrase que le chiffre · accélérer à résultat identique au bit : aucune piste ouverte
 (les 17 % d'« attente du consommateur de statistiques » d'un profil par échantillonnage sont un artefact de
 l'échantillonneur de `scripts/bench_examples.py`, `scripts/probe_sampler_idle_thread.py`, 2026-10-11 ; mémoriser
-`build_M_before_cache` ne fait rien gagner, populations identiques au bit, 2026-10-06).
+`build_M_before_cache` ne fait rien gagner, populations identiques au bit, 2026-10-06) · mesurer le secours Rate aux couches où les
+tirages plantent d'abord (`rate_rescue_hard`, inactif) contre la queue seule sur `r75x0.5` (0,4981 nm à la graine 101) avant de
+l'activer.
 
 **Modèle physique** (détail : `git show 7b08dc8:docs/archives/TRAVAUX_A_VENIR.md`) :
 
@@ -461,22 +480,19 @@ de taille (32 fonctions de plus de 300 lignes, 12 de complexité supérieure à 
 de 1 500 lignes le 2026-10-06), nommés dans `tests/architecture_debt.json` ; l'hygiène des imports (D25).
 
 **Lint à effet possible (D25).** F401 est traité pour les imports sans rôle ; restent
-E402/I001 et les petites règles, un cas à la fois.
+E402 et les petites règles (RUF001 à RUF003, RUF022, RUF100), un cas à la fois.
 
 | règle | ce qui peut changer un comportement | démarche proposée |
 |---|---|---|
 | F401 | un import « inutilisé » peut être un ré-export (y compris dans un import sur plusieurs lignes, ou un nom déclaré par `__all__.extend`), un effet de bord (enregistrement, sous-module `import a.b`, configuration numba avant un `@njit`), ou servi par une façade `CertusFacadeModule` | **fait** par lots (R9) : un nom ne part que si l'import est au niveau du module, hors `try`, sans accès dynamique du module à ses globales, et si aucun fichier suivi, aucune façade, aucun test qui charge le fichier par son chemin ni aucun code lancé depuis une chaîne ne le prend ; le reste est listé, pas retiré |
-| I001, E402 | l'ordre des imports compte : cycle `physics ↔ core`, `configure_numba_env()` avant tout `@njit`, `QT_QPA_PLATFORM` avant la première `QApplication` | réordonner seulement les fichiers sans import à effet, jamais les façades ni `certus_core` ; E402 cas par cas |
-| E741 | renommer `l`, `O`, `I` : sans effet, mais 89 cas dont des noyaux numba | après recompilation, `python scripts\c1_diff.py HEAD` (C1) |
-| RUF046, RUF005, RUF015 | équivalences qui dépendent du type : `round(x)` d'un scalaire numpy rend bien un `int`, mais `round(x, n)` et `np.round(x)` rendent un `float64` (mesuré, numpy 2.5.2) ; `a + b` et `[*a, *b]` diffèrent si `a` est un tableau numpy | cas par cas, avec le type réel de l'argument |
-| UP040, UP042, UP046 | changent l'objet à l'exécution (`TypeAliasType`, sous-classe de `str`, génériques PEP 695) | restent ignorées (arbitrage du 2026-09-27) |
+| E402 | l'ordre des imports compte : cycle `physics ↔ core`, `configure_numba_env()` avant tout `@njit`, `QT_QPA_PLATFORM` avant la première `QApplication` | réordonner seulement les fichiers sans import à effet, jamais les façades ni `certus_core` ; E402 cas par cas |
 
 **Contrôles du chantier lint** : ruff ; oracle ; unit ; `tests/ui/` ; le reste de `tests/` ; trois
 photos avant/après — l'espace de noms final de chaque module touché (`scripts/lint_ns_snapshot.py`),
 les modules que charge chaque script d'entrée une fois son fil de préchauffage fini, et les noms
 que sert chaque façade `CertusFacadeModule`. Un nom qui disparaît ne doit être ni utilisé ni
 demandé par personne.
-**Ordre** : E402/I001, puis les petites règles.
+**Ordre** : E402, puis les petites règles.
 
 **Prédictibilité** (détail : `git show 7b08dc8:docs/archives/CHANTIER_PREDICTIBILITE.md`) —
 prédire sans tout calculer si un design passe avec un seul verre témoin ; quatre routes déjà
@@ -490,7 +506,7 @@ fermées par la mesure.
 | passe-bande 3 cavités | `JSON-strat-bandpass-3cav.json` | 35 | 600-660 nm | une résonance, une bande étroite |
 | aléatoire | `JSON-strat-random75.json` | 75 | 550-750 nm | ni cavité, ni miroir, ni périodicité : teste si une règle est **générale** |
 | passe-bande 5 cavités | `JSON-strat-bandpass-5cav-99c.json` | 99 | 610-655 nm | le cas dur |
-| aléatoire ×0,5 | `reports/serie_echelle_r75/cfg_x0.5.json` (`r75x0.5` des sondes) | 75 | 550-750 nm | le côté mince de la série d'échelle ; non fabricable avec un seul verre témoin (ci-dessous) |
+| aléatoire ×0,5 | `reports/serie_echelle_r75/cfg_x0.5.json` (`r75x0.5` des sondes) | 75 | 550-750 nm | le côté mince de la série d'échelle ; fabricable avec un seul verre témoin grâce au secours Rate (ci-dessous) |
 | aléatoire ×2 | `JSON-strat-random75-x2-fabricable.json` (fente 1 nm) ; `JSON-strat-random75-x2-fabricable-2nm.json` (fente 2 nm, rampes injectées de `rampes_r75x2-2nm.json`) | 75 | 550-750 nm | l'étalon depuis le 2026-08-20 : épaisseurs doublées |
 
 Une règle n'est acquise que si elle survit sur un empilement **sans structure**.
@@ -501,7 +517,7 @@ contrôlée du projet. Somme des QWOT (QWOT par couche ; couches sous 1 QWOT) : 
 (0,50-2,48 ; 11) · ×1,5 172,3 (0,76-3,72 ; 3) · ×1,75 201,1 (0,88-4,34 ; 2) · ×2 229,8 (1,01-4,96 ; 0). Optique et
 mécanique y sont proportionnelles : une conclusion en micromètres ne se généraliserait pas à d'autres matériaux.
 
-**×0,5 avec un seul verre témoin** (2026-10-11, `782972bf`, D100 corrigé, `deep`, fente 2 nm,
+**×0,5 avec un seul verre témoin, avant le secours Rate** (2026-10-11, `782972bf`, D100 corrigé, `deep`, fente 2 nm,
 `reports/blocs_vs_plantage_r75x0.5_deep_s{042,101,202}.json`) : aucun déposable aux graines 42, 101 et 202 (0 sur
 2 895, 2 897 et 2 895 stratégies), plantage minimal 69,0 %, 8,3 % et 62,3 % (août : 68,7 % pour la graine 42 avec le
 profil élargi, 70,0 % et 67,0 %), et la cause de plantage dominante est « niveau d'arrêt hors d'atteinte » pour toutes
@@ -510,5 +526,16 @@ rien ne passe, le repli garde le plan au plantage le plus bas : celui de la grai
 1,7 / 1,7 / 8,3 % des tirages aux bruits 0,5× / 1× / 2×, seul le 2× dépassant 5 % ; 5 blocs aux λ de contrôle 636,
 686, 737, 747 et 734 nm, variante `RATE_L31`. Son SEEL affiché est 0,673 nm (score de consensus, D7). Rejoué niveau
 par niveau (`reports/STRAT_r75x0.5_graine101_plan_de_repli_par_bruit_2026-10-12.md`) : 0,655 / 0,660 / 0,960 nm sur
-tous les tirages, **0,633 / 0,636 / 0,644 nm sur les tirages qui aboutissent**. Le cas à plusieurs verres témoins
-n'est pas mesuré.
+tous les tirages, **0,633 / 0,636 / 0,644 nm sur les tirages qui aboutissent**.
+
+**×0,5 avec un seul verre témoin, avec le secours Rate** (2026-10-12, `40642146`, `deep`, fente 2 nm,
+`reports/STRAT_secours_rate_2026-10-12/`, `reports/STRAT_r75x0.5_secours_rate_2026-10-12.md`) : tous les plans de la liste finale
+sont déposables aux trois graines (3 383, 3 701 et 3 279 plans), aucun n'est un plan optique pur, plantage maximal de 2,67 %,
+4,67 % et 2,00 %. Meilleur SEEL 0,5031 / 0,4981 / 0,5000 nm (graines 42 / 101 / 202), 12 blocs, 0 % de plantage aux trois bruits,
+Rate des couches 18 à 75 (indices 17 à 74). Les queues Rate seules (`21d1b1c3`, graine 101, avant l'héritage d'ELITE) donnaient
+0,555 nm (coupure à l'indice 16 : 522 plans sur 547 se terminent) et 0,563 nm (coupure 14 : 2 272 plans sur 2 272) ; des
+ensembles fixes de couches critiques (indices 22, 25, 28, puis 46, 51, 62, 69, 72) n'en rendent aucun (0 sur 4 614, plantage
+minimal de 52 % pour les ensembles) : les couches qui cèdent se déplacent quand les précédentes passent au Rate. **Le modèle de
+Rate de STRAT** (`certus_strat_growth.py`, « RATE MODE ») fige l'estimation de la vitesse à l'entrée de la queue : toutes ses
+couches héritent de la même erreur relative, corrélée, et la source ne dérive pas pendant le dépôt (non modélisé, non mesuré) :
+ces SEEL sont ceux de ce modèle. Le cas à plusieurs verres témoins n'est pas mesuré.

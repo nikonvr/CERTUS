@@ -78,6 +78,25 @@ le secours. Il a posé 3 567, 3 467 et 3 562 queues (graines 42, 101, 202), dont
 liste finale viennent des queues du secours (2 350, 2 680 et 2 368) et d'ELITE (1 033, 1 021 et 911) ; les vingt meilleurs de chaque
 graine sont d'ELITE.
 
+## Le Rate là où les tirages plantent d'abord (`rate_rescue_hard`)
+
+👤 voulait le Rate favorisé sur les couches difficiles à contrôler optiquement. Outre les queues, le secours sait poser le Rate sur
+les seules couches où les tirages d'un plan plantent d'abord (jusqu'à 4 par tour, 80 % des premiers plantages), puis recommencer
+avec les plans qui se sont améliorés et ne se terminent toujours pas (`_hard_layer_rounds`, `4acbda26`). Il est inactif par défaut.
+Mesuré à `r75x0.5`, graine 101, `dbf8025f`, avec `rate_rescue_hard=true` et rien d'autre de changé :
+
+| | queues seules (`40642146`) | queues et couches difficiles (`dbf8025f`) |
+|---|---|---|
+| queues posées, déposables | 3 467, 2 680 | 3 467, 2 680 (les mêmes) |
+| plans « couches difficiles » évalués, déposables | | 410, **35** (8,5 %) |
+| liste finale | 3 701 plans, tous déposables | 3 760 plans, tous déposables |
+| meilleur SEEL | 0,4981 nm | 0,4981 nm (même plan : ELITE, 12 blocs, Rate des indices 17 à 74) |
+
+Les couches difficiles ajoutent 35 plans déposables sur 410 essayés (les queues : 2 680 sur 3 467, 77 %) et ne changent pas le meilleur ;
+**il reste inactif par défaut**. Les queues du secours sont identiques d'une exécution à l'autre (mêmes nombres de queues posées et de
+queues déposables aux seize passes, même meilleur SEEL à la décimale). Une graine, un composant : je ne sais pas ce que l'opérateur
+donne ailleurs. Artefacts : `..._s101_couches_difficiles.json` et `passes_du_secours_s101_couches_difficiles.txt`.
+
 ## Ce que le modèle de Rate de STRAT suppose
 
 Le modèle (`certus/physics/certus_strat_growth.py`, « RATE MODE ») estime la vitesse comme la moyenne des rapports d'épaisseur
@@ -100,8 +119,7 @@ pendant un run n'est pas mesurée**, et c'est ce qui les rendrait faux si la sou
 - **L'apport d'ELITE hérité et celui du secours ne sont pas séparés** : E1 (0,555 nm) a tourné avant l'héritage d'ELITE (`4a4e1f0d`),
   l'acceptation (0,50 nm) après ; je n'ai pas mesuré l'héritage sans le secours.
 - Le cas à plusieurs verres témoins (`witness_reset_layers`) n'est pas mesuré à `r75x0.5`.
-- L'opérateur qui pose le Rate sur les couches où les tirages plantent d'abord, quelques couches de plus à chaque tour
-  (`rate_rescue_hard`, `4acbda26`), existe et est **inactif par défaut** : je ne l'ai pas mesuré en production.
+- Le cas à `rate_rescue_hard` est mesuré sur une seule graine (voir « Le Rate là où les tirages plantent d'abord » ci-dessous).
 - Les durées (52, 36 et 55 minutes pour les graines 101, 42 et 202) viennent d'une machine qui portait d'autres mesures : elles ne
   comparent rien.
 
@@ -113,6 +131,6 @@ python scripts/probe_blocs_vs_plantage.py r75x0.5 deep 0 0 2 0 <graine> 0
 dans un arbre propre à `40642146` (`git worktree add --detach`), `CERTUS_BENCH_TIMEOUT_S=21600`, graines 101, 42, 202. Artefacts dans
 `reports/STRAT_secours_rate_2026-10-12/` : `blocs_vs_plantage_r75x0.5_deep_s{042,101,202}_secours.json`,
 `..._s101_queues_16-28.json` (E1), `..._s101_queues_2-14.json` (E1b),
-`..._s101_ensembles_fixes.json` (E2), et `passes_du_secours_s{042,101,202}.txt` (les lignes `[RATE-RESCUE]` des journaux : une par
+`..._s101_ensembles_fixes.json` (E2), `..._s101_couches_difficiles.json`, et `passes_du_secours_s{042,101,202}.txt` (les lignes `[RATE-RESCUE]` des journaux : une par
 passe). Chaque artefact porte le commit et l'état de l'arbre qui l'a produit (`provenance`, `git_dirty` faux). Les recherches du juge
 de paix sont dans `reports/STRAT_modele_d_arret_2026-10-12/` (rapport `reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md`).

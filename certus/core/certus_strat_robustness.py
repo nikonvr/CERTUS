@@ -112,6 +112,9 @@ from certus.core.certus_strat_robustness_slit import (
     phase_a_slit_profiles,
 )
 from certus.core.certus_strat_robustness_task import (
+    _CRASH_CAUSES,
+    _CRASH_LAYER_KEYS,
+    _CRASH_RATE_KEYS,
     _test_strategy_robustness_task,
     task_numba_threads,
 )

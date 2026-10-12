@@ -44,6 +44,16 @@ from certus_physics import (
     simulate_stack_robustness_batch,
 )
 
+#: The causes a deposition can fail by: `(the sentinel of the kernel, the key of the rate by cause, the key of the count per layer)`.
+_CRASH_CAUSES = (
+    (CRASH_LEVEL_UNREACHABLE, "p_level_unreachable", "level_unreachable"),
+    (CRASH_TP_MISCOUNT, "p_tp_miscount", "tp_miscount"),
+    (CRASH_NON_MONOTONIC, "p_non_monotonic", "non_monotonic"),
+    (CRASH_NOT_ARMED, "p_not_armed", "not_armed"),
+)
+_CRASH_RATE_KEYS = tuple(rate_key for _, rate_key, _ in _CRASH_CAUSES)
+_CRASH_LAYER_KEYS = ("total", *(layer_key for _, _, layer_key in _CRASH_CAUSES))
+
 
 def task_numba_threads() -> int:
     """Numba threads of one robustness task: 4 on a machine with 16 or more logical cores (measured 11-13 % faster than 2,
@@ -162,22 +172,14 @@ def _test_strategy_robustness_task(
     # What was not defensible is that nobody could MEASURE it.
     crash_rates_by_noise: dict[str, float] = {}
     # Breakdown of crashes by CAUSE, worst case across noise levels.
-    crash_rates_by_cause = {
-        "p_level_unreachable": 0.0,
-        "p_tp_miscount": 0.0,
-        "p_non_monotonic": 0.0,
-        "p_not_armed": 0.0,
-    }
+    crash_rates_by_cause = dict.fromkeys(_CRASH_RATE_KEYS, 0.0)
     # A23 stage 0: crash count PER LAYER and per cause, worst case across noise levels.
     # Already computed inside the batch; only the reduction threw it away.
     # 🔴 NOT `layer_profile`: that name is reassigned at the theoretical-profile loop
     # below, from a dict of floats. Reusing it clobbered this accumulator silently and
     # the only symptom was an AttributeError three hundred lines later.
     n_lay_prof = len(p_thick_nominal)
-    crash_layer_profile = {
-        k: np.zeros(n_lay_prof, dtype=int)
-        for k in ("total", "level_unreachable", "tp_miscount", "non_monotonic", "not_armed")
-    }
+    crash_layer_profile = {k: np.zeros(n_lay_prof, dtype=int) for k in _CRASH_LAYER_KEYS}
     # A23 stage 2. inf = "never constrained by this cause on this layer", which is NOT
     # a large margin and must never be averaged into one.
     margin_profile = {
@@ -581,12 +583,7 @@ def _test_strategy_robustness_task(
         # one of its layers suffered it. The rates per cause can thus overlap,
         # and their sum exceed the overall rate — this is intended, a run can fail in
         # two different ways on two different layers.
-        for cause_id, cause_key in (
-            (CRASH_LEVEL_UNREACHABLE, "p_level_unreachable"),
-            (CRASH_TP_MISCOUNT, "p_tp_miscount"),
-            (CRASH_NON_MONOTONIC, "p_non_monotonic"),
-            (CRASH_NOT_ARMED, "p_not_armed"),
-        ):
+        for cause_id, cause_key, _ in _CRASH_CAUSES:
             rate = float(np.count_nonzero(np.any(crash_cause == cause_id, axis=1))) / max(1, num_runs)
             crash_rates_by_cause[cause_key] = max(crash_rates_by_cause[cause_key], rate)
 
@@ -630,12 +627,7 @@ def _test_strategy_robustness_task(
         per_layer = crashed_cells.sum(axis=0).astype(int)
         if per_layer.sum():
             crash_layer_profile["total"] = np.maximum(crash_layer_profile["total"], per_layer)
-            for cause_id, cause_key in (
-                (CRASH_LEVEL_UNREACHABLE, "level_unreachable"),
-                (CRASH_TP_MISCOUNT, "tp_miscount"),
-                (CRASH_NON_MONOTONIC, "non_monotonic"),
-                (CRASH_NOT_ARMED, "not_armed"),
-            ):
+            for cause_id, _, cause_key in _CRASH_CAUSES:
                 counts = (crash_cause == cause_id).sum(axis=0).astype(int)
                 crash_layer_profile[cause_key] = np.maximum(crash_layer_profile[cause_key], counts)
 

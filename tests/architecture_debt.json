@@ -41,7 +41,7 @@
     "certus/core/certus_re_solvers.py::re_execute_phase2_candidate": 307,
     "certus/core/certus_strat_robustness.py::run_final_simulation_block": 334,
     "certus/core/certus_strat_robustness_rate.py::_expand_with_rate_variants": 314,
-    "certus/core/certus_strat_robustness_task.py::_test_strategy_robustness_task": 814,
+    "certus/core/certus_strat_robustness_task.py::_test_strategy_robustness_task": 800,
     "certus/core/certus_substrate_index.py::IndexCore._fit_model_spline_adaptive": 357,
     "certus/core/certus_substrate_sellmeier.py::_fit_model_sellmeier3poles": 389,
     "certus/physics/certus_opt_needle.py::needle_scan_cached": 416,

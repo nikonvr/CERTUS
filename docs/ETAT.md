@@ -355,6 +355,15 @@ Chaque correctif est un commit (R136 `c738a130`, R137 `83661fd4`) qu'un `git rev
 - **D98 : l'OMS attend sans fin** quand le niveau d'arrêt est plus proche de l'extremum que le seuil d'hystérésis : la couche est
   plantée (pas d'arrêt tardif).
 - **D68 (1) : le hub ne lance pas l'échauffement JIT** ; chaque module garde le sien.
+- **Rate dans tous les scénarios.** Le Rate est une couche posée **au temps, à la vitesse estimée** sur les couches du même
+  matériau contrôlées optiquement (`_rate_layer_thickness`), pas un quartz ni un chrono. 👤 : il doit être intégré à chaque
+  design, quel que soit le filtre ; favorisé sur les couches difficiles à contrôler optiquement ; renforcé quand peu de plans
+  se terminent ; `r75x0.5` avec un seul verre témoin est le test, et il doit finir par trouver des plans, « quitte à tout
+  finir au rate ». Traduit en trois changements : `rate_by_swing` actif par défaut **dans l'application** (elle lisait Faux
+  depuis le 2026-08-22, le noyau et le registre disaient Vrai), le **secours Rate** (`rate_rescue`, `rate_rescue_few`, actifs par
+  défaut) qui pose en Rate la queue des plans qui plantent, et des enfants d'ELITE et de la recherche locale qui **gardent les
+  couches Rate**, la fente et les échanges de verre de leur parent (ils les perdaient : ELITE ne pouvait jamais affiner un plan
+  Rate).
 
 ### RE — décidé par 👤 le 2026-10-05
 

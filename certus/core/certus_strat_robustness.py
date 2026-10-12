@@ -78,6 +78,9 @@ from certus.core.certus_strat_robustness_noise import (
     _signal_noise_stream_seed,
 )
 from certus.core.certus_strat_robustness_rate import (
+    ELITE_RATE_FILL_MAX,
+    ELITE_RATE_STEP,
+    ELITE_RATE_WINDOWS,
     RATE_MAX_VARIANTS_PER_STRATEGY,
     RATE_MIN_LAYER,
     RATE_MIN_LAYERS_PER_BLOCK,
@@ -93,6 +96,7 @@ from certus.core.certus_strat_robustness_rate import (
     RATE_RESCUE_SERIAL_BASE,
     RATE_SWING_MIN_DEFAULT,
     RATE_VARIANT_TOP_N_DEFAUT,
+    _elite_rate_moves,
     _expand_with_rate_variants,
     _first_crash_layer,
     _first_crash_profile,
@@ -102,6 +106,7 @@ from certus.core.certus_strat_robustness_rate import (
     _optical_prefix_variants,
     _rate_candidate_combinations,
     _rate_candidate_layers,
+    _rate_runs,
     _rate_swing_candidates,
     _RateSwingContext,
     _rescue_budget,

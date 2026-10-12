@@ -65,6 +65,10 @@ def _attach_slit_profiles(*args, **kwargs) -> Any:
     from certus.core.certus_strat_robustness import _attach_slit_profiles as attach_fn
     return attach_fn(*args, **kwargs)
 
+def _elite_rate_moves(*args, **kwargs) -> Any:
+    from certus.core.certus_strat_robustness import _elite_rate_moves as moves_fn
+    return moves_fn(*args, **kwargs)
+
 
 #: What a strategy carries besides its blocks, and what its children keep: the layers laid by Rate, the slit, the testglass swaps.
 #: A child of ELITE or of the local search is its parent with other blocks, not a new strategy.
@@ -793,6 +797,11 @@ def _apply_elite_refinement_if_enabled(
     # Read from `params` only -- the configuration file does not route it (an option to measure, not yet to deliver).
     round_robin = bool(ctx.params.get("elite_round_robin", False))
     base_seed = _resolve_robustness_base_seed(ctx.params)
+    # 🔑 THE RATE LAYERS OF A PARENT, MOVED -- 👤 2026-10-12: optics, then a packet of Rate, then optics at another wavelength. Up to
+    # `elite_rate_max_candidates` more candidates per round change nothing but the Rate layers of their parent (`_elite_rate_moves`).
+    # Off by default, and read from `params` only, like `elite_round_robin`: an option to measure, not yet to deliver.
+    rate_moves = bool(ctx.params.get("elite_rate_moves", False))
+    rate_moves_max = int(ctx.params.get("elite_rate_max_candidates", 120))
 
     executor_cls = concurrent.futures.ThreadPoolExecutor
     worker_count = get_safe_worker_count()
@@ -821,7 +830,15 @@ def _apply_elite_refinement_if_enabled(
             wl_neighbor_span=elite_wl_neighbor_span,
             existing_signatures=existing_signatures,
             round_robin_seed=(base_seed, elite_round) if round_robin else None,
+            rate_moves=rate_moves,
+            max_rate_candidates=rate_moves_max,
         )
+        if rate_moves:
+            ctx.logger.info(
+                f"[ELITE-RATE] Round {elite_round}: "
+                f"{sum(1 for c in elite_candidates if str(c.get('origin_details', '')).startswith('ELITE_RATE'))} candidate(s) "
+                "change the Rate layers of their parent."
+            )
         if ctx.strategy_id_cursor is not None:
             ctx.strategy_id_cursor.advance(_next_sid)
         _attach_slit_profiles(elite_candidates, ctx.p_thick_nominal, ctx.params, ctx.logger)
@@ -1375,6 +1392,8 @@ def _generate_elite_candidate_strategies(
     wl_neighbor_span: int = 1,
     existing_signatures: set | None = None,
     round_robin_seed: tuple[int, ...] | None = None,
+    rate_moves: bool = False,
+    max_rate_candidates: int = 0,
 ) -> tuple[list[dict[str, Any]], int]:
     """
     Build local-neighborhood variants around top-ranked strategies.
@@ -1383,6 +1402,9 @@ def _generate_elite_candidate_strategies(
     The moves of every parent (`_elite_moves`) are tried parent after parent until `max_candidates` are kept. With
     `round_robin_seed`, the parents take turns instead, one move each, every parent's moves in an order drawn from the
     seed (with the parent's rank): see `elite_round_robin` in `_apply_elite_refinement_if_enabled`.
+
+    With `rate_moves`, up to `max_rate_candidates` more are kept, which change the Rate layers of their parent and nothing else
+    (`_elite_rate_moves`: the parents take turns, one move each, the nearest moves first): see `elite_rate_moves`.
     """
     if not parent_results or not available_wls:
         return [], start_strategy_id
@@ -1397,14 +1419,20 @@ def _generate_elite_candidate_strategies(
     span = max(1, int(wl_neighbor_span))
     max_keep = max(1, int(max_candidates))
 
-    def _push_candidate(base_blocks: list[dict[str, Any]], parent_sid: Any, parent_strat: dict[str, Any]) -> None:
+    def _push_candidate(
+        base_blocks: list[dict[str, Any]],
+        parent_sid: Any,
+        parent_strat: dict[str, Any],
+        rate_layers: list[int] | None = None,
+        limit: int | None = None,
+    ) -> bool:
         nonlocal next_id
-        if len(out) >= max_keep:
-            return
+        if len(out) >= (max_keep if limit is None else limit):
+            return False
 
-        sig = _plan_signature(base_blocks, parent_strat.get("rate_layers"))
+        sig = _plan_signature(base_blocks, parent_strat.get("rate_layers") if rate_layers is None else rate_layers)
         if not sig or sig in seen:
-            return
+            return False
 
         n_blocks_local = len(base_blocks)
         same_wl_kept = 0
@@ -1419,11 +1447,13 @@ def _generate_elite_candidate_strategies(
             "total_cost": float("inf"),
             "blocks": base_blocks,
             "origin": "ELITE",
-            "origin_details": f"ELITE(parent={parent_sid})",
+            "origin_details": f"ELITE(parent={parent_sid})" if rate_layers is None else f"ELITE_RATE(parent={parent_sid})",
             "same_wl_kept": int(same_wl_kept),
             "parent_strategy_id": parent_sid,
             **_inherited_by_children(parent_strat),
         }
+        if rate_layers is not None:
+            candidate["rate_layers"] = [int(i) for i in rate_layers]
 
         ok, _reason = _validate_strategy_blocks_contract(
             candidate,
@@ -1431,11 +1461,12 @@ def _generate_elite_candidate_strategies(
             expected_n_blocks=n_blocks_local,
         )
         if not ok:
-            return
+            return False
 
         out.append(candidate)
         seen.add(sig)
         next_id += 1
+        return True
 
     per_parent: list[list[tuple[Any, dict[str, Any], list[dict[str, Any]]]]] = []
     for parent in parent_results:
@@ -1466,6 +1497,31 @@ def _generate_elite_candidate_strategies(
         _push_candidate(mutated, parent_sid, parent_strat)
         if len(out) >= max_keep:
             break
+
+    if rate_moves and max_rate_candidates > 0:
+        limit = len(out) + int(max_rate_candidates)
+        rate_per_parent = []
+        for parent in parent_results:
+            strat = parent.get("strategy", {})
+            base_blocks = [
+                {"start": int(b["start"]), "end": int(b["end"]), "wavelength": float(b["wavelength"])}
+                for b in strat.get("blocks", [])
+            ]
+            if base_blocks:
+                rate_per_parent.append(
+                    [
+                        (strat.get("strategy_id", "?"), strat, base_blocks, layers)
+                        for layers in _elite_rate_moves(strat.get("rate_layers"), num_layers)
+                    ]
+                )
+        longest = max((len(moves) for moves in rate_per_parent), default=0)
+        for k in range(longest):
+            for moves in rate_per_parent:
+                if k < len(moves):
+                    parent_sid, parent_strat, base_blocks, layers = moves[k]
+                    _push_candidate([dict(b) for b in base_blocks], parent_sid, parent_strat, rate_layers=layers, limit=limit)
+            if len(out) >= limit:
+                break
 
     return out, next_id
 

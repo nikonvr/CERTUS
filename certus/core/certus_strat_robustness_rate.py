@@ -986,3 +986,89 @@ def _rescue_with_rate(
         f"{len(hard)} plan(s) with Rate on the hard layers in at most {rounds_count} round(s), {rescued_hard} of them depositable."
     )
     return raw + new + hard
+
+
+# ---- ELITE MOVES ON THE RATE LAYERS ----------------------------------------------------------------------------------------
+#
+# 👤 2026-10-12: *"experience shows that there are sometimes good strategies with a packet of optics at one wavelength, then a packet
+# of Rate, then a packet of optics at another wavelength, and so on -- but it is purely empirical"*, and *"do you allow going back to
+# optics after the Rate? It is important"*.
+#
+# 🔑 The kernel allows it: `rate_layers` is any set of layers, and an optical layer that follows Rate layers is stopped by POEM on its
+# own turning points, at the wavelength of its block (👤 2026-08-19, verified in the kernel; see the surgical Rate in
+# `_expand_with_rate_variants`). The search did not offer it: the Rate variants lay one to three layers at block boundaries or where the
+# swing is low, the rescue lays tails, and ELITE moved the wavelength of the blocks and their boundaries, never the Rate layers of its
+# parent. 📏 Of the depositable plans of `r75x0.5` (three seeds) and `r75x2` (seed 101) of 2026-10-12, the only ones with optics after
+# Rate have exactly two runs of Rate, a layer and a tail; none alternates. The best plan of `r75x2` is one of them.
+#
+# 🔑 A packet of optics inside a tail has a second use in the model: the rate is estimated on EVERY previous layer of the material laid
+# under optical control (`_rate_layer_thickness`), so each packet gives a better estimate to the Rate layers after it.
+#
+# The moves are the neighbours of a set of Rate layers: a layer more or less at the end of a run, a short optical gap closed, a window
+# of optics opened inside a run, a packet of Rate laid in a stretch of optics. They keep the blocks (so the wavelength of the packets
+# of optics is that of their block, which ELITE refines like any other) and are tried by ELITE on request (`elite_rate_moves`).
+
+#: Widths of the window of optics a move opens inside a run of Rate, and of the packet of Rate it lays in a stretch of optics.
+ELITE_RATE_WINDOWS: tuple[int, ...] = (2, 4)
+
+#: Distance between the positions tried for those windows and packets.
+ELITE_RATE_STEP: int = 3
+
+#: The longest gap of optics between two runs of Rate that a move closes.
+ELITE_RATE_FILL_MAX: int = 6
+
+
+def _rate_runs(layers: Any) -> list[tuple[int, int]]:
+    """The maximal runs of consecutive layers of a set, as (first, last)."""
+    runs: list[list[int]] = []
+    for layer in sorted({int(i) for i in layers or []}):
+        if runs and layer == runs[-1][1] + 1:
+            runs[-1][1] = layer
+        else:
+            runs.append([layer, layer])
+    return [(a, b) for a, b in runs]
+
+
+def _elite_rate_moves(rate_layers: Any, num_layers: int) -> list[list[int]]:
+    """The neighbours of a set of Rate layers, nearest first; each is a new sorted list of layers.
+
+    For each run of Rate: one layer more at either end, then one layer less at either end. Then the short gaps of optics between two
+    runs, closed. Then windows of optics (`ELITE_RATE_WINDOWS` layers wide, a layer of Rate left at each end) opened inside the runs.
+    Then packets of Rate of the same widths laid in the stretches of optics, with a layer of optics on each side and after the
+    first `RATE_MIN_LAYER` + 1 layers. Layers 0 and 1 never carry Rate (`RATE_MIN_LAYER`); the set itself is never returned, nor a set twice.
+    """
+    current = {int(i) for i in rate_layers or [] if RATE_MIN_LAYER <= int(i) < num_layers}
+    runs = _rate_runs(current)
+    found: list[frozenset[int]] = []
+
+    def _add(candidate: set[int]) -> None:
+        if candidate != current:
+            found.append(frozenset(candidate))
+
+    for first, last in runs:
+        if first - 1 >= RATE_MIN_LAYER:
+            _add(current | {first - 1})
+        if last + 1 < num_layers:
+            _add(current | {last + 1})
+        _add(current - {first})
+        if last > first:
+            _add(current - {last})
+    for (_, last), (first, _) in itertools.pairwise(runs):
+        if 0 < first - last - 1 <= ELITE_RATE_FILL_MAX:
+            _add(current | set(range(last + 1, first)))
+    for first, last in runs:
+        for width in ELITE_RATE_WINDOWS:
+            for start in range(first + 1, last - width + 1, ELITE_RATE_STEP):
+                _add(current - set(range(start, start + width)))
+    optical = [layer for layer in range(num_layers) if layer not in current]
+    for stretch_first, stretch_last in _rate_runs(optical):
+        for width in ELITE_RATE_WINDOWS:
+            for start in range(max(stretch_first + 1, RATE_MIN_LAYER + 1), stretch_last - width + 1, ELITE_RATE_STEP):
+                _add(current | set(range(start, start + width)))
+    ordered: list[list[int]] = []
+    seen: set[frozenset[int]] = set()
+    for candidate in found:
+        if candidate not in seen:
+            seen.add(candidate)
+            ordered.append(sorted(candidate))
+    return ordered

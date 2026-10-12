@@ -16,7 +16,8 @@ Models (`--models`): `livre` and `fige`, each also with the exact stop (`_exact`
 model whose stop reading is smoothed like the rest (D99), and `livre_ancres` and `livre_exact_ancres`, the shipped model
 with POEM's anchors read at the extremum of their layer instead of the coarse sample (D96), the second with the exact stop
 too, `livre_armement` and `fige_armement`, each model with no stop before the last extremum is declared (D98), and
-`livre_corrige`, the shipped model with the three options at once (D96, D97, D98).
+`livre_corrige`, the shipped model with the three options at once (D96, D97, D98 with the late stop), and `livre_attente`,
+`livre_ancres_attente`, `livre_exact_attente` and `livre_corrige_attente`, the same with a controller that waits for ever (D98, `arming` = 2).
 `name@factor` sets the turning-point threshold of a model to `factor` x A: `--models livre@1.0,livre@1.66,livre@2.4`
 sweeps it.
 
@@ -65,6 +66,12 @@ MODELS = {
     "fige_armement": {"smoothing": 8, "hyst": 1.0, "exact": False, "arming": True},
     # The coarse grid with every option that brings it to the machine: anchors at the extremum, exact stop, arming.
     "livre_corrige": {"smoothing": 1, "hyst": None, "exact": True, "anchors": True, "arming": True},
+    # D98, the controller that waits for ever on a level crossed before the last extremum is declared (`arming` = 2, the model
+    # of production since 2026-10-12): alone, with each of the two other options, and with both.
+    "livre_attente": {"smoothing": 1, "hyst": None, "exact": False, "arming": 2},
+    "livre_ancres_attente": {"smoothing": 1, "hyst": None, "exact": False, "anchors": True, "arming": 2},
+    "livre_exact_attente": {"smoothing": 1, "hyst": None, "exact": True, "arming": 2},
+    "livre_corrige_attente": {"smoothing": 1, "hyst": None, "exact": True, "anchors": True, "arming": 2},
 }
 
 
@@ -99,7 +106,7 @@ def score_plan(params, thick, blocks, n_runs, A, h_config, model, wls, nH_w, nL_
             float(params.get("non_monotonic_error_factor", 2.0)), 0, np.full(n, A * f), seed * 7919 + level_idx,
             hf * A * f, 0.0, 0.0, curvature, seed * 31 + level_idx, True, int(model["smoothing"]), corridor,
             seed * 53 + level_idx, lo, hi, None, None, None, bool(model.get("exact", False)),
-            bool(model.get("anchors", False)), bool(model.get("arming", False)),
+            bool(model.get("anchors", False)), int(model.get("arming", 0)),
         )[0]
         crashed = (res > 1e5).any(axis=1)
         crash = float(np.mean(crashed))

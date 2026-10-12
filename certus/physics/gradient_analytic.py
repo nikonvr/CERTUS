@@ -25,6 +25,7 @@ from certus.domain.constants import PI, TWO_PI
 #
 # `gradient_utils` only imports numpy, numba and the TMM facade: no cycle. (It used to re-export `make_cost_function`
 # from this module at the end of its file, and `gradient_analytic` could not be imported first.)
+from certus.physics.certus_optical_models import extinction_from_epsilon
 from certus.physics.gradient_utils import cost_numba_fast
 
 # ⚠️ `Target` under TYPE_CHECKING, and this is not just for show: importing
@@ -570,7 +571,7 @@ def _compute_tlu_derivatives_kernel(
 
         n_val = np.sqrt(max((eps_mag + e1) / 2.0, 1e-12))
 
-        k_val = np.sqrt(max((eps_mag - e1) / 2.0, 0.0))
+        k_val = extinction_from_epsilon(e1, e2, eps_mag, n_val)
 
         n_arr[i] = n_val
 

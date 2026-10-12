@@ -5,26 +5,29 @@
 
 ## POURQUOI CE FICHIER EXISTE
 
-Sur `r75x2` a 2 nm, une graine trouve ou ne trouve pas, et c'est proche d'une loterie. Mesure
-du 2026-08-22, sept graines NUES, plage complete, aucune surcharge :
+Sur `r75x2` a 2 nm, une graine trouve ou ne trouve pas, et le SEEL du meilleur plan varie de 19,4 %
+d'une graine a l'autre. Mesure du 2026-10-12 (D100 et D103 corriges), sept graines NUES, plage
+complete, aucune surcharge :
 
-    42 -> 0/1617     77 -> 547/2231 ✅     101 -> 0/1630     202 -> 0/1646
-   303 -> 0/1680    404 -> 372/2016 ✅     505 -> 311/1995 ✅
+    42 -> 147/4244 ✅    77 -> 517/5036 ✅    101 -> 727/5514 ✅    202 -> 403/5192 ✅
+   303 -> 0/4144        404 -> 741/5157 ✅    505 -> 382/4954 ✅
 
-🔑 Le mecanisme est mesure et n'a rien de vague (§3 de REPRENDRE_ICI) : hors ELITE il n'y a
-rien ; la generation d'ELITE est DETERMINISTE ; le seul point de divergence des graines est le
-criblage Monte-Carlo, dont les survivants deviennent les PARENTS d'ELITE. Et le paysage est une
-FALAISE -- 100 % de plantage ou deposable, rien entre les deux. La graine decide donc quels
-parents ELITE recoit, et si un descendant atterrit de l'autre cote.
+(Le 2026-08-22, avant ces deux corrections : 77, 404 et 505 seulement, 3 sur 7.)
+
+🔑 Le mecanisme a ete mesure en aout et n'a rien de vague (§3 de REPRENDRE_ICI ; non remesure depuis D100 et
+D103) : hors ELITE il n'y a rien ; la generation d'ELITE est DETERMINISTE ; le seul point de divergence des graines
+est le criblage Monte-Carlo, dont les survivants deviennent les PARENTS d'ELITE. Et le paysage est une FALAISE -- 100 %
+de plantage ou deposable, rien entre les deux. La graine decide donc quels parents ELITE recoit, et si un descendant
+atterrit de l'autre cote.
 
 **La reponse produit est donc de rejouer la meme recherche sur K realisations.** Ce fichier
 est l'orchestration de cela, par-dessus des briques qui existent toutes deja.
 
 ## 🔴 POURQUOI UN BUDGET DE TEMPS, ET PAS UN `K` A COCHER
 
-`K` utile depend de `p`, et **`p` est inconnu sur un composant neuf.** Nos 3/7 valent pour
-`r75x2` a 2 nm -- un empilement, une fente. §8.2bis interdit d'en tirer une generalite. Une
-case « multi-graines, K=4 » promettrait donc une couverture que le logiciel ne peut pas tenir.
+`K` utile depend de `p`, et **`p` est inconnu sur un composant neuf.** Nos 6/7 (3/7 avant D100 et D103) valent
+pour `r75x2` a 2 nm -- un empilement, une fente. §8.2bis interdit d'en tirer une generalite. Une case
+« multi-graines, K=4 » promettrait donc une couverture que le logiciel ne peut pas tenir.
 
 Un budget, lui, est robuste a l'ignorance de `p` : on cherche tant qu'il reste du temps, et on
 rapporte ce qu'on a trouve ET ce qu'on n'a pas eu le temps d'essayer.

@@ -2,10 +2,11 @@
 
 ## WHY THIS TAB, AND WHY IT COMPUTES NOTHING ITSELF
 
-On `r75x2` at 2 nm, a seed finds or does not find. Measured on 2026-08-22, seven BARE seeds,
-full range, no override: 42, 101, 202, 303 return **zero**; 77, 404 and 505 find, with SEELs
-of 0.5692, 0.5599 and 0.6112 nm. The product answer is therefore to replay the same search
-over several realisations.
+On `r75x2` at 2 nm, a seed finds or does not find. Measured on 2026-10-12 (D100 and D103 fixed), seven
+BARE seeds, full range, no override: 303 returns **zero**; 42, 77, 101, 202, 404 and 505 find, with
+SEELs of 0.6354, 0.5404, 0.5634, 0.5837, 0.5323 and 0.5493 nm (on 2026-08-22, before those two fixes:
+77, 404 and 505 only). The product answer is therefore to replay the same search over several
+realisations.
 
 🔑 **THIS TAB DRIVES `scripts/orchestre_multigraine.py`, IT DOES NOT REIMPLEMENT IT.** The rule
 of disjoint seeds, the round-robin union, the time cap, the writing of the artefacts -- all of
@@ -328,7 +329,7 @@ class CertusStratMultigraineMixin:
         self._mg_objectif.setToolTip(
             "first to find: stop as soon as one run succeeds -- the fastest.\n"
             "best within budget: spend the whole budget, then merge everything.\n"
-            "⚠️ The three seeds that succeed spread from 0.5599 to 0.6112 nm, i.e. 9.2 %: "
+            "⚠️ The six seeds that succeed spread from 0.5323 to 0.6354 nm, i.e. 19.4 %: "
             "stopping at the first one can cost that much."
         )
         self._mg_cible = QLineEdit("")

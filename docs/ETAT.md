@@ -103,7 +103,7 @@ n'autorise pas à modifier son arbre témoin.
 |---|---|---|---|
 | dichroïque 48 couches, `JSON-strat-example` | **0,173 nm** | 0 % | 6 blocs, une campagne |
 | le même, D100 corrigé (`782972bf`) | **0,178 nm** | 0 % | 5 blocs (λ 544, 471, 466, 467, 462 nm), 823 stratégies dont 154 éliminées, `RESULT` 0,007917103726810235 ; `scripts\bench_examples.py strat` (`premium`), caches de l'arbre, 2026-10-11 (`reports/STRAT_bench_juge_de_paix_782972bf_D100_2026-10-11.txt`). Sous D100 (`b60d80e2`) : 0,175 nm |
-| le même, modèle d'arrêt par défaut du 2026-10-12 (D96 à D98) et secours Rate (`03990e9a`) | **0,1849 nm** | 0 % | 1 bloc (λ 542 nm), 2 260 stratégies dont aucune éliminée, `RESULT` 0,00854267382381426 ; `scripts\bench_examples.py strat` (`premium`), caches de l'arbre, 2026-10-12 (`reports/STRAT_bench_juge_de_paix_03990e9a_D96-D98_secours_Rate_2026-10-12.txt`). Sans le secours (`8d9ced13`) : 0,2000 nm, 2 plans déposables sur 1 112 |
+| le même, modèle d'arrêt par défaut du 2026-10-12 (D96 à D98) et secours Rate (`03990e9a`) | **0,1849 nm** | 0 % | 1 bloc (λ 542 nm), 2 260 stratégies dont aucune éliminée, `RESULT` 0,00854267382381426 ; `scripts\bench_examples.py strat` (`premium`), caches de l'arbre, 2026-10-12 (`reports/STRAT_bench_juge_de_paix_03990e9a_D96-D98_secours_Rate_2026-10-12.txt`). Tous les plans de la liste portent du Rate (de 4 à 46 couches, médiane 29) ; le meilleur pose le Rate des indices 26 à 47. Les cinq combinaisons du modèle d'arrêt au code final : de 0,1759 à 0,1854 nm (`reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md`). Sans le secours (`8d9ced13`) : 0,2000 nm, 2 plans déposables sur 1 112 |
 | passe-bande 3 cavités, 35 couches | **0,482 nm** | 0 % | 6 blocs, mode `deep` |
 | aléatoire `JSON-strat-random75`, 75 couches | **0,272 nm** | 0 % | une campagne, 241 déposables sur 662 |
 | passe-bande 5 cavités, 99 couches | **0,81 nm** | 0 % par campagne | 4 verres témoins, partition 0-22 / 22-42 / 42-76 / 76-99 |
@@ -374,14 +374,16 @@ Chaque correctif est un commit (R136 `c738a130`, R137 `83661fd4`) qu'un `git rev
 - **D98 : l'OMS attend sans fin** quand le niveau d'arrêt est plus proche de l'extremum que le seuil d'hystérésis : la couche est
   plantée (pas d'arrêt tardif). Actif par défaut depuis `8d9ced13` (`oms_arming` = 2). Effet mesuré à ce commit sur le juge de paix
   (`premium`, graine 42, `scripts/probe_blocs_vs_plantage.py 48c premium 1 0 2 0 42 0`, une recherche complète par ligne, avant le
-  secours Rate) : ancien modèle 669 plans déposables sur 823, meilleur 0,1780 nm ; D96 et D97 seuls 550 sur 632, 0,1787 nm ; D98
-  seul 323 sur 489, 0,1689 nm ; les trois avec l'arrêt tardif 381 sur 1 034, 0,1904 nm ; les trois avec l'attente sans fin (la
-  production) 2 sur 1 112, 0,2000 nm. Sur les 120 premiers plans du banc du 2026-10-04
+  secours Rate et D106) : ancien modèle 669 plans déposables sur 823 (487 optiques purs, meilleur 0,1780 nm) ; D96 et D97 seuls 550
+  sur 632, 0,1787 nm ; D98 seul 323 sur 489, 0,1689 nm ; les trois avec l'arrêt tardif 381 sur 1 034, 0,1904 nm ; les trois avec
+  l'attente sans fin (la production) 2 sur 1 112, 0,2000 nm. Sur les 120 premiers plans du banc du 2026-10-04
   (`reports/STRAT_bench_juge_de_paix_b60d80e2_temoin_2026-10-04.json`), notés de nouveau avec 300 tirages (sans biais de fente ni
   Rate, `scripts/probe_modele_lecture.py`) : 120 déposables à l'ancien modèle, 6 à l'attente sans fin, avec ou sans D96 et D97.
-  L'attente sans fin retire donc 95 % des plans que l'ancien modèle jugeait fabricables, et la recherche n'en retrouve qu'une
-  fraction, très variable ; avec le secours Rate, la liste finale du juge de paix ne compte que des plans déposables (§2). Rapport :
-  `reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md`.
+  L'attente sans fin retire donc 95 % des plans que l'ancien modèle jugeait fabricables. Au code final (secours Rate, `rate_by_swing`,
+  D106 ; mêmes lignes, une exécution chacune), toutes les listes sont déposables et le meilleur SEEL est le même à la dispersion près
+  sous les cinq combinaisons (de 0,1759 à 0,1854 nm) ; ce qui change est le nombre de plans optiques purs déposables, 50 à l'ancien
+  modèle, 107 avec D96 et D97, 101 avec l'arrêt tardif, 4 avec D98 seul et **0 à l'attente sans fin complète**, et le meilleur plan
+  est un plan Rate sous chacune (de 1 à 28 couches au Rate). Rapport : `reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md`.
 - **D68 (1) : le hub ne lance pas l'échauffement JIT** ; chaque module garde le sien.
 - **Rate dans tous les scénarios.** Le Rate est une couche posée **au temps, à la vitesse estimée** sur les couches du même
   matériau contrôlées optiquement (`_rate_layer_thickness`), pas un quartz ni un chrono. 👤 : il doit être intégré à chaque
@@ -440,7 +442,8 @@ Ces sujets demandent un jugement de physicien ou de propriétaire du produit. Le
 | **interface** | Revoir visuellement les onze fenêtres et choisir les teintes de marque, la bande des fichiers récents et les bornes des champs numériques. |
 | **base de dépôts** | RE : remplacer la seule mesure d'un classeur RE déjà chargé par celle d'un dépôt (il faudrait découper `load_reverse_engineering_from_path`) ? Apparier dans la base la T et la R d'un même échantillon que l'opérateur a nommées différemment (`NbT3` et `NbR3`) ? INDEX : en phase 2, la fenêtre λ de l'utilisateur est remplacée par toute l'étendue des données (`_on_tlu_constrained_finished`), est-ce voulu ? |
 | **ELITE « tour à tour »** | `elite_round_robin`, six graines, D100 et D103 corrigés (2026-10-12) : mieux à la graine 42 (0,5420 contre 0,6354 nm), équivalent à la 404, moins bien aux 77, 101 et 505 (de +0,7 à +2,8 %), la 303 sans déposable des deux côtés ; médiane +0,7 %. L'option est inactive et le reste tant que 👤 ne dit pas de l'armer ; ce qui manque pour trancher est le bruit d'une même graine rejouée |
-| **arrêt de STRAT** | D96 à D98 sont le modèle par défaut (§3). L'attente sans fin de D98 retire 95 % des plans que l'ancien modèle jugeait fabricables (§3) : ce que l'OMS fait à un niveau franchi avant que son contrôleur soit armé n'est pas connu, et l'arrêt tardif en garde davantage (381 plans déposables sur 1 034 au juge de paix, 0,1904 nm, sans le secours Rate ; avec lui, non mesuré). À confirmer, ou à remplacer. Reste aussi : noter ou non au modèle figé, au moins pour départager la tête du classement (rapport du 2026-10-10, sections 4 et 6) |
+| **arrêt de STRAT** | D96 à D98 sont le modèle par défaut (§3). L'attente sans fin de D98 retire 95 % des plans que l'ancien modèle jugeait fabricables (§3) ; ce que l'OMS fait à un niveau franchi avant que son contrôleur soit armé n'est pas connu. À secours Rate égal (juge de paix, code final), l'arrêt tardif rend un meilleur SEEL du même ordre (0,1792 contre 0,1849 nm) et garde 101 plans optiques purs déposables, que l'attente sans fin ne garde pas : avec elle le Rate est une nécessité pour ce composant, avec l'arrêt tardif une option. À confirmer, ou à remplacer. Reste aussi : noter ou non au modèle figé, au moins pour départager la tête du classement (rapport du 2026-10-10, sections 4 et 6) |
+| **le Rate et l'optique pure** | Au juge de paix (code final), le meilleur plan porte du Rate sous les cinq modèles d'arrêt (de 1 à 28 couches) et le meilleur plan optique pur est de 4 à 37 % moins bon ; les plans optiques purs déposables sont 50 à l'ancien modèle, contre 487 avant le secours Rate (mesure d'avant D106). Le modèle de Rate de STRAT n'a ni dérive de la source ni bruit propre de la vitesse (§7), ce qui le favorise, et ELITE refine maintenant des parents Rate : l'hypothèse, non mesurée, est que la lignée optique pure y perd des tours. Faut-il réserver à ELITE des parents optiques purs, ou ne laisser le Rate que là où l'optique ne suffit pas ? La réponse dépend de la stabilité réelle de la vitesse (A25, §6) |
 
 ## 6. Chantiers spécifiés, en attente
 

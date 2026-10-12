@@ -1108,6 +1108,16 @@ def _level_passed_before_declaration(T_prev: float, T_last: float, h: float, lev
 
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def _armed_stop(arming: int, T_prev: float, T_last: float, h: float, level: float) -> tuple[float, bool]:
+    """What a controller of behaviour `arming` (1 or 2) does with `level`: `(the level it stops at, whether it waits for ever)`."""
+    if _level_passed_before_declaration(T_prev, T_last, h, level):
+        if arming == ARMING_NEVER_STOPS:
+            return level, True
+        return _armed_level(T_prev, T_last, h, level), False
+    return level, False
+
+
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
 def _armed_level(T_prev: float, T_last: float, h: float, level: float) -> float:
     """The level at which an armed controller stops: `level`, or the declaration of the last extremum if later.
 

@@ -78,18 +78,17 @@ CRASH_NON_MONOTONIC: int = 3
 CRASH_NOT_ARMED: int = 4
 from .certus_strat_math import _seeded_noise_sample
 from .certus_strat_readings import (
-    ARMING_NEVER_STOPS,
     D_SCAN_VAL,
     K_MAX_CLOSED_FORM,
     SCAN_NPTS_CURRENT,
     SCAN_NPTS_HISTORY,
     _armed_level,
+    _armed_stop,
     _exact_poem_anchors,
     _fill_current_signal,
     _fill_history_signal,
     _invert_thickness_exact,
     _invert_thickness_from_probes,
-    _level_passed_before_declaration,
     _machine_grid_signal,
     _stack_matrix,
     _stack_matrix_pair,
@@ -1275,45 +1274,26 @@ def simulate_growth_kernel(
     target_T_noisy = target_level + noise_val_precalc
     never_armed = False
     if arming > 0 and T_last_real != T_prev_real:  # no stop before the last extremum is declared (D98)
-        if _level_passed_before_declaration(T_prev_real, T_last_real, tp_hysteresis, target_T_noisy):
-            if arming == ARMING_NEVER_STOPS:
-                never_armed = True  # the controller waits for ever: reported below, after the two older causes
-            else:
-                target_T_noisy = _armed_level(T_prev_real, T_last_real, tp_hysteresis, target_T_noisy)
+        target_T_noisy, never_armed = _armed_stop(arming, T_prev_real, T_last_real, tp_hysteresis, target_T_noisy)
 
-    # Hard failure, the stopping level is never reached: see the notes above `_level_reachability`.
+    # Hard failure, in this order: the stopping level is never reached (see the notes above `_level_reachability`: a
+    # non-terminable deposition); the extrema counted on the real deposition are not those of the nominal one (the machine does
+    # not anchor POEM on the same turning points as the strategy; it REMAINS conditioned to poem_ok, without POEM nothing can
+    # diverge); the controller waits for ever on a level crossed before the last extremum was declared (D98, `arming` = 2).
+    crash_cause = 0
     if nominal_th > 0.0001:
         margin_level, level_reached = _level_reachability(
             Ts_r, n_tot, n_hist, idx_nom_stop, tp_hysteresis, target_T_noisy,
         )
         if not level_reached:
-            # level never reached: non-terminable deposition
-            return (
-                nominal_th + CRASH_LEVEL_UNREACHABLE * CRASH_SENTINEL_UNIT,
-                np.max(T_mono) - np.min(T_mono),
-                margin_level,
-                margin_missed,
-                margin_fab,
-            )
-        # Divergent extrema counting between nominal and real: the machine
-        # does not anchor POEM on the same turning points as the strategy.
-        # This one, however, REMAINS conditioned to poem_ok: without POEM there is
-        # no anchoring on turning points, so nothing that can diverge.
-        if poem_ok and n_tp_real != n_tp_nom:
-            return (
-                nominal_th + CRASH_TP_MISCOUNT * CRASH_SENTINEL_UNIT,
-                np.max(T_mono) - np.min(T_mono),
-                margin_level,
-                margin_missed,
-                margin_fab,
-            )
-    if never_armed:
+            crash_cause = CRASH_LEVEL_UNREACHABLE
+        elif poem_ok and n_tp_real != n_tp_nom:
+            crash_cause = CRASH_TP_MISCOUNT
+    if crash_cause == 0 and never_armed:
+        crash_cause = CRASH_NOT_ARMED
+    if crash_cause > 0:
         return (
-            nominal_th + CRASH_NOT_ARMED * CRASH_SENTINEL_UNIT,
-            np.max(T_mono) - np.min(T_mono),
-            margin_level,
-            margin_missed,
-            margin_fab,
+            nominal_th + crash_cause * CRASH_SENTINEL_UNIT, np.max(T_mono) - np.min(T_mono), margin_level, margin_missed, margin_fab,
         )
     # The stop: on the parabola of three probes (the default), or on the exact signal (`exact_inversion`, D97).
     if exact_inversion:

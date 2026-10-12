@@ -387,8 +387,7 @@ class FieldWorkerThread(QThread):
             if qwot_layer < (2 * STEP_QWOT):
                 continue
             z_positions = np.arange(STEP_QWOT, qwot_layer - STEP_QWOT + 1e-9, STEP_QWOT)
-            for z in z_positions:
-                candidates.append((i, z))
+            candidates.extend((i, z) for z in z_positions)
 
         total_candidates = len(candidates)
         logger.info(f"Needle scan: found {total_candidates} candidate split positions.")

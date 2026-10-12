@@ -27,9 +27,7 @@ def _collect_ui_modules() -> list[str]:
 
     ui_pkg = importlib.import_module("certus.ui")
     prefix = "certus.ui."
-    modules = []
-    for info in pkgutil.walk_packages(ui_pkg.__path__, prefix=prefix):
-        modules.append(info.name)
+    modules = [info.name for info in pkgutil.walk_packages(ui_pkg.__path__, prefix=prefix)]
     return sorted(modules)
 
 

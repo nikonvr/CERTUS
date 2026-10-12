@@ -151,12 +151,14 @@ def test_a_failing_test_fails_the_measure_even_above_the_floor(tmp_path, capsys,
 
 
 def _files_carrying_the_marker() -> list[str]:
-    found = []
-    for path in sorted((ROOT / "tests" / "unit").glob("test_*.py")):
-        for node in ast.parse(path.read_text(encoding="utf-8-sig")).body:
-            if isinstance(node, ast.Assign) and any(getattr(t, "id", "") == "pytestmark" for t in node.targets) and "kernels" in ast.unparse(node.value):
-                found.append(path.name)
-    return found
+    return [
+        path.name
+        for path in sorted((ROOT / "tests" / "unit").glob("test_*.py"))
+        for node in ast.parse(path.read_text(encoding="utf-8-sig")).body
+        if isinstance(node, ast.Assign)
+        and any(getattr(t, "id", "") == "pytestmark" for t in node.targets)
+        and "kernels" in ast.unparse(node.value)
+    ]
 
 
 def test_the_marker_is_registered():

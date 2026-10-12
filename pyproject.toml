@@ -66,8 +66,6 @@ extend-ignore = [
   "F401",  # unused-import: some are deliberate re-exports
   # Bugbear legacy
   
-  # Performance legacy
-  "PERF401",
   # Ruff-specific legacy
   "RUF001", "RUF002", "RUF003",
   "RUF022",

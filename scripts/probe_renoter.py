@@ -234,10 +234,9 @@ def _renoter(opti, params, plans, nom, graine, mode_ctx, fichier, surcharges=Non
                        "n_blocs": len(st.get("blocks") or []),
                        "critical_layer": s.get("critical_layer") or {},
                        "statut": "note"})
-    for manquant in sorted(attendus - vus):
-        lignes.append({"nom": manquant, "score": None, "seel": None, "crash_rate": None,
-                       "n_blocs": None, "critical_layer": {},
-                       "statut": "ELIMINE_PAR_LA_PORTE_DE_PLANTAGE"})
+    lignes.extend({"nom": manquant, "score": None, "seel": None, "crash_rate": None,
+                   "n_blocs": None, "critical_layer": {},
+                   "statut": "ELIMINE_PAR_LA_PORTE_DE_PLANTAGE"} for manquant in sorted(attendus - vus))
 
     # 🔑 SAUVER D'ABORD, AFFICHER ENSUITE. L'affichage est un confort, la sauvegarde est le
     # livrable -- vingt minutes ont ete perdues le 2026-08-20 pour l'ordre inverse.

@@ -43,9 +43,7 @@ def smoother(qapp):
 def _visible_texts(win) -> list[str]:
     from PyQt6.QtWidgets import QCheckBox, QComboBox, QLabel, QPushButton
 
-    texts = []
-    for w in win.findChildren((QLabel, QPushButton, QCheckBox)):
-        texts.append(w.text())
+    texts = [w.text() for w in win.findChildren((QLabel, QPushButton, QCheckBox))]
     for c in win.findChildren(QComboBox):
         texts.extend(c.itemText(i) for i in range(c.count()))
     return [t for t in texts if t]

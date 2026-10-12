@@ -415,10 +415,7 @@ class CertusREExcelMixin:
             except (TypeError, ValueError):
                 return None
 
-        raw_wls: list = []
-
-        for row in data_rows:
-            raw_wls.append(_get(row, wl_i, 0.0))
+        raw_wls: list = [_get(row, wl_i, 0.0) for row in data_rows]
 
         wls_arr = np.array(self._reconstruct_lambda_list(raw_wls))
 
@@ -1500,11 +1497,11 @@ class CertusREExcelMixin:
                 f"{n_with} column(s) <b>with</b> back face, {n - n_with} <b>without</b> :"
             ]
 
-            for s in specs:
-                parts.append(
-                    f" <i>{s.raw_header}</i> : "
-                    f"{'<b>with</b> back face' if s.include_backside else '<b>without</b> back face'}"
-                )
+            parts.extend(
+                f" <i>{s.raw_header}</i> : "
+                f"{'<b>with</b> back face' if s.include_backside else '<b>without</b> back face'}"
+                for s in specs
+            )
 
             html = "<br>".join(parts)
 
@@ -1698,9 +1695,7 @@ class CertusREExcelMixin:
 
         headers: list[str] = ["lambda_nm"]
 
-        for disp, subheads, _arrs in series:
-            for sh in subheads:
-                headers.append(f"Re({disp}) {sh}")
+        headers.extend(f"Re({disp}) {sh}" for disp, subheads, _arrs in series for sh in subheads)
 
         nrows = len(wls)
 

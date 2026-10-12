@@ -149,8 +149,10 @@ def compare(ratios: Mapping[str, float], baseline: Mapping[str, float], toleranc
             findings.append(Finding(name, "slower", f"{now:.3g} references, baseline {base:.3g} (+{100 * (now / base - 1):.0f} %, limit +{100 * tolerance:.0f} %)"))
         elif now < base * (1 - tolerance):
             findings.append(Finding(name, "faster", f"{now:.3g} references, baseline {base:.3g} ({100 * (now / base - 1):.0f} %): the baseline can come down"))
-    for name in sorted(set(ratios) - set(baseline)):
-        findings.append(Finding(name, "unbaselined", f"{ratios[name]:.3g} references, no baseline yet: --write-baseline"))
+    findings.extend(
+        Finding(name, "unbaselined", f"{ratios[name]:.3g} references, no baseline yet: --write-baseline")
+        for name in sorted(set(ratios) - set(baseline))
+    )
     return findings
 
 

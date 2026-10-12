@@ -212,8 +212,7 @@ def main(argv: list[str] | None = None) -> int:
                 columns = {r["mode"]: dict(r["points"]) for r in group}
                 header = ["wavelength_nm"] + [m for m in ("T", "R") if m in columns]
                 lines = [",".join(header)]
-                for w in grid:
-                    lines.append(",".join([repr(w)] + [repr(columns[m][w]) for m in header[1:]]))
+                lines.extend(",".join([repr(w)] + [repr(columns[m][w]) for m in header[1:]]) for w in grid)
                 (a.sortie / "mesures" / f"{ident}.csv").write_text("\n".join(lines) + "\n", encoding="utf-8")
                 name_text = f"{path.stem} {sample}"
                 materiau, substrat = from_name(name_text, MATERIAUX), from_name(name_text, SUBSTRATS)

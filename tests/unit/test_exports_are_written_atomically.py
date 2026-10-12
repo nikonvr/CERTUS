@@ -162,9 +162,11 @@ def _writes(tree: ast.AST) -> list[int]:
         # builtin open(file, mode): the mode is the second argument; Path.open(mode): the first
         position = 1 if isinstance(callee, ast.Name) else 0
         modes = [a for a in node.args[position : position + 1]] + [k.value for k in node.keywords if k.arg == "mode"]
-        for mode in modes:
-            if isinstance(mode, ast.Constant) and isinstance(mode.value, str) and any(c in mode.value for c in "wx"):
-                lines.append(node.lineno)
+        lines.extend(
+            node.lineno
+            for mode in modes
+            if isinstance(mode, ast.Constant) and isinstance(mode.value, str) and any(c in mode.value for c in "wx")
+        )
     return lines
 
 

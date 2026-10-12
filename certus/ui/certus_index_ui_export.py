@@ -1029,14 +1029,14 @@ class CertusIndexExportMixin:
 
                 # Take top 20 or all
 
-                for b in sorted_beam[:20]:
-                    beam_table.append(
-                        {
-                            "Thickness (nm)": f"{b['d']:.2f}",
-                            "MSE": f"{b['mse']:.2e}",
-                            "Status": "Best" if b == sorted_beam[0] else "",
-                        }
-                    )
+                beam_table.extend(
+                    {
+                        "Thickness (nm)": f"{b['d']:.2f}",
+                        "MSE": f"{b['mse']:.2e}",
+                        "Status": "Best" if b == sorted_beam[0] else "",
+                    }
+                    for b in sorted_beam[:20]
+                )
 
                 sections.append(
                     {

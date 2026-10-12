@@ -69,11 +69,7 @@ def _lit_la_cle(fichier: Path, cle: str) -> list[int]:
         arbre = ast.parse(fichier.read_text(encoding="utf-8", errors="replace"))
     except SyntaxError:
         return []
-    lignes = []
-    for n in ast.walk(arbre):
-        if isinstance(n, ast.Constant) and isinstance(n.value, str) and n.value == cle:
-            lignes.append(n.lineno)
-    return lignes
+    return [n.lineno for n in ast.walk(arbre) if isinstance(n, ast.Constant) and isinstance(n.value, str) and n.value == cle]
 
 
 def _code_seul(f: Path) -> str:
@@ -112,10 +108,9 @@ def test_A_timeout_inerte() -> None:
     zones = [ROOT / "certus" / "core", ROOT / "certus" / "workers",
              ROOT / "certus" / "physics", ROOT / "certus" / "domain"]
     trouve = []
-    for z in zones:
-        for f in z.rglob("*.py"):
-            for ln in _lit_la_cle(f, "strategy_phase_timeout"):
-                trouve.append(f"{f.relative_to(ROOT)}:{ln}")
+    trouve.extend(
+        f"{f.relative_to(ROOT)}:{ln}" for z in zones for f in z.rglob("*.py") for ln in _lit_la_cle(f, "strategy_phase_timeout")
+    )
     # 🔑 Et on verifie aussi l'acces DYNAMIQUE : une boucle sur une liste de cles le lirait sans
     # que la constante apparaisse dans un `.get()`. certus/utils/certus_index_utils.py:1089 en
     # contient une -- il faut donc dire ce qu'elle fait.
@@ -321,10 +316,12 @@ def test_H_controle_negatif() -> None:
     pas le code.
     """
     trouve = []
-    for z in (ROOT / "certus" / "core", ROOT / "certus" / "workers"):
-        for f in z.rglob("*.py"):
-            if _lit_la_cle(f, "robustness_num_runs"):
-                trouve.append(f.name)
+    trouve.extend(
+        f.name
+        for z in (ROOT / "certus" / "core", ROOT / "certus" / "workers")
+        for f in z.rglob("*.py")
+        if _lit_la_cle(f, "robustness_num_runs")
+    )
     if trouve:
         verdict("H. CONTROLE NEGATIF (doit echouer)", "FAIL_ATTENDU",
                 f"robustness_num_runs EST lu ({len(trouve)} fichiers) -- "
@@ -410,9 +407,7 @@ def test_J_queue_rate_falaise() -> None:
 
     pbs = []
     # 1. LA FALAISE : tout plante au-dessus de 61, tout passe a partir de 58.
-    for c in (61, 64, 67, 70):
-        if cm.get(c) != 1.0:
-            pbs.append(f"coupure {c} : crash_min {cm.get(c)} au lieu de 1,0")
+    pbs.extend(f"coupure {c} : crash_min {cm.get(c)} au lieu de 1,0" for c in (61, 64, 67, 70) if cm.get(c) != 1.0)
     # 2. LE PLATEAU : de 46 a 58, crash_min IDENTIQUE. C'est lui qui tue « plus on couvre,
     #    mieux c'est » -- couvrir 12 couches de plus ne gagne rien.
     plateau = {c: cm[c] for c in (46, 49, 52, 55, 58) if c in cm}

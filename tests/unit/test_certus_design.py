@@ -62,10 +62,7 @@ class TestDesignFunctionality:
             "calc_spectrum_full",
         ]
 
-        available_attributes = []
-        for attr_name in design_attributes:
-            if hasattr(CERTUS_DESIGN, attr_name):
-                available_attributes.append(attr_name)
+        available_attributes = [attr_name for attr_name in design_attributes if hasattr(CERTUS_DESIGN, attr_name)]
 
         assert len(available_attributes) > 0
 

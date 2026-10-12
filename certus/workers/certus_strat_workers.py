@@ -1513,9 +1513,7 @@ def _run_phaseB_parallel_execution(
             initargs=(stats_queue, live_preview_queue),
         )
         with executor:
-            futures = []
-            for segment in segments:
-                futures.append(executor.submit(_run_segment, segment))
+            futures = [executor.submit(_run_segment, segment) for segment in segments]
 
             # Wait for all segments to complete (with a safe timeout)
             done, _not_done = concurrent.futures.wait(futures, timeout=600)

@@ -38,10 +38,11 @@ def _plot_texts(win) -> list[str]:
     """Every piece of text drawn inside the plot area."""
     import pyqtgraph as pg
 
-    texts = []
-    for item in win.plot_widget.plotItem.items:
-        if isinstance(item, pg.TextItem):
-            texts.append(item.toPlainText() if hasattr(item, "toPlainText") else str(item.textItem.toPlainText()))
+    texts = [
+        item.toPlainText() if hasattr(item, "toPlainText") else str(item.textItem.toPlainText())
+        for item in win.plot_widget.plotItem.items
+        if isinstance(item, pg.TextItem)
+    ]
     return [t for t in texts if t and t.strip()]
 
 

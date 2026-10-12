@@ -728,14 +728,9 @@ class CertusStratWorkerMixin:
         if render_thread is not None:
             thread_worker_pairs.append((render_thread, None))
 
-        for thread in getattr(self, "_active_worker_threads", []):
-            if thread is not None:
-                thread_worker_pairs.append((thread, None))
+        thread_worker_pairs.extend((thread, None) for thread in getattr(self, "_active_worker_threads", []) if thread is not None)
 
-        active_pairs = []
-        for t, w in thread_worker_pairs:
-            if self._thread_is_running_safe(t):
-                active_pairs.append((t, w))
+        active_pairs = [(t, w) for t, w in thread_worker_pairs if self._thread_is_running_safe(t)]
 
         if not active_pairs:
             return

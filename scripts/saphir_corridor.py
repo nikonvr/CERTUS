@@ -149,11 +149,14 @@ def variantes():
            ("R du saphir nu non utilise", {"pb": {"poids_r_nu": 0.0}}),
            ("T seul (nu + films)", {"pb": {"utiliser_r": False}}),
            ("R seul (nu + films)", {"pb": {"utiliser_t": False}})]
-    for retire in ("Nb", "Ta", "Si"):
-        out.append((f"sans le film {retire}", {"pb": {"noms": tuple(n for n in ("nu", "Nb", "Ta", "Si") if n != retire)}}))
+    out.extend(
+        (f"sans le film {retire}", {"pb": {"noms": tuple(n for n in ("nu", "Nb", "Ta", "Si") if n != retire)}}) for retire in ("Nb", "Ta", "Si")
+    )
     out += [("saphir nu seul (T et R)", {"pb": {"noms": ("nu",)}}), ("saphir nu seul, T seul", {"pb": {"noms": ("nu",), "poids_r_nu": 0.0}})]
-    for lo, hi in ((800, 3300), (1200, 3300), (1000, 2400), (1000, 3000), (1500, 3300)):
-        out.append((f"fenetre {lo}-{hi}", {"pb": {"lam_min": float(lo), "lam_max": float(hi)}, "valide": lo >= 1000}))
+    out.extend(
+        (f"fenetre {lo}-{hi}", {"pb": {"lam_min": float(lo), "lam_max": float(hi)}, "valide": lo >= 1000})
+        for lo, hi in ((800, 3300), (1200, 3300), (1000, 2400), (1000, 3000), (1500, 3300))
+    )
     out += [("J = 4", {"pb": {"J": 4}}), ("plus de noeuds dans les films", {"pb": {"densite": 1.8e-4}}), ("moins de noeuds dans les films", {"pb": {"densite": 3.5e-4}})]
     return out
 

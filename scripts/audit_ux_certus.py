@@ -404,8 +404,7 @@ def skeleton(win) -> list[str]:
             # additions are allowed. Measured 2026-09-04: wiring the Help menu
             # into RE reported its whole tab widget as "missing". Per-tab entries
             # still catch a lost or renamed tab, and they name which one.
-            for i in range(w.count()):
-                out.append(f"{type(w).__name__}|{libelle_affiche(w.tabText(i))[:48]}")
+            out.extend(f"{type(w).__name__}|{libelle_affiche(w.tabText(i))[:48]}" for i in range(w.count()))
             continue
         label = (w.text() if hasattr(w, "text") else "") or ""
         out.append(f"{type(w).__name__}|{(label or w.objectName())[:48]}")
@@ -720,9 +719,11 @@ def _verdicts(row: dict) -> list[str]:
         bad.append(f"{row['btn_no_tooltip']} buttons without a tooltip")
     if row.get("dark_stale"):
         bad.append(f"{len(row['dark_stale'])} widget sheets keep a light colour after the dark toggle")
-    for theme in ("light", "dark"):
-        if row.get(f"low_contrast_{theme}"):
-            bad.append(f"{len(row[f'low_contrast_{theme}'])} widget sheets pair an ink and a fill under 4.5:1 in the {theme} theme")
+    bad.extend(
+        f"{len(row[f'low_contrast_{theme}'])} widget sheets pair an ink and a fill under 4.5:1 in the {theme} theme"
+        for theme in ("light", "dark")
+        if row.get(f"low_contrast_{theme}")
+    )
     if row.get("a11y_unnamed"):
         bad.append(f"{len(row['a11y_unnamed'])} of {row['n_interactive']} controls have no name for a screen reader")
     # A permanent KPI strip answers the same need as a synthesis tab - CERTUS-STRAT

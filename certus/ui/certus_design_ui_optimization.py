@@ -783,9 +783,7 @@ class OptimizationManager:
         ep_current = self.ui.ep_current if self.ui.ep_current is not None else []
 
         if len(ep_current) == self.ui.front_table.rowCount():
-            for r in range(len(ep_current) - 1, -1, -1):
-                if ep_current[r] < threshold:
-                    rows_to_remove.append(r)
+            rows_to_remove.extend(r for r in range(len(ep_current) - 1, -1, -1) if ep_current[r] < threshold)
 
         if rows_to_remove:
             self.ui.log(f"Smart cleanup: removing {len(rows_to_remove)} layers < {threshold:.2f} nm (adaptive)", "INFO")

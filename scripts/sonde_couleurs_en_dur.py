@@ -166,16 +166,18 @@ def balaye() -> dict:
         source = chemin.read_text(encoding="utf-8", errors="replace")
         prose = _lignes_de_prose(source)
         balisage = _lignes_de_balisage(source)
-        for numero, ligne in enumerate(source.splitlines(), start=1):
-            for valeur in HEX.findall(ligne):
-                trouvailles.append({
-                    "fichier": chemin.relative_to(RACINE).as_posix(),
-                    "ligne": numero,
-                    "valeur": valeur.lower(),
-                    "classe": _classe(ligne, numero in prose, numero in balisage),
-                    "jetons": par_valeur.get(valeur.lower(), []),
-                    "texte": ligne.strip()[:100],
-                })
+        trouvailles.extend(
+            {
+                "fichier": chemin.relative_to(RACINE).as_posix(),
+                "ligne": numero,
+                "valeur": valeur.lower(),
+                "classe": _classe(ligne, numero in prose, numero in balisage),
+                "jetons": par_valeur.get(valeur.lower(), []),
+                "texte": ligne.strip()[:100],
+            }
+            for numero, ligne in enumerate(source.splitlines(), start=1)
+            for valeur in HEX.findall(ligne)
+        )
     return {"trouvailles": trouvailles, "par_valeur": par_valeur}
 
 

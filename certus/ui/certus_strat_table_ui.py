@@ -74,6 +74,17 @@ SEEL_FIRST_COLUMN = len(BASE_HEADERS)
 BLOCKS_FIRST_COLUMN = SEEL_FIRST_COLUMN + len(NOISE_HEADERS)
 
 
+def layer_ranges(indices) -> str:
+    """0-based layer indices as 1-based runs: [17, 18, 19, 25] -> 'L18-L20, L26'. A plan that lays 58 layers by Rate reads 'L18-L75'."""
+    runs: list[list[int]] = []
+    for i in sorted({int(x) for x in indices}):
+        if runs and i == runs[-1][1] + 1:
+            runs[-1][1] = i
+        else:
+            runs.append([i, i])
+    return ", ".join(f"L{a + 1}" if a == b else f"L{a + 1}-L{b + 1}" for a, b in runs)
+
+
 class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
     strategy_selected = pyqtSignal(int, object)
 
@@ -580,9 +591,7 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
         self.table.setItem(row, 14, slit_item)
 
         rl = result.get("rate_layers") or strat.get("rate_layers") or []
-        rate_item = NumericTableWidgetItem(
-            ", ".join(f"L{int(i) + 1}" for i in rl) if rl else "--"
-        )
+        rate_item = NumericTableWidgetItem(layer_ranges(rl) if rl else "--")
         rate_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
         rate_item.setToolTip(
             "Layers deposited by TURN COUNTING instead of photometry."

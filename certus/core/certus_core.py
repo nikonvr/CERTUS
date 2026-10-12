@@ -1164,11 +1164,20 @@ def bootstrap_app(
     # second time under its bare name, as a separate module object.
 
     package_dir = Path(__file__).resolve().parents[1]
+    is_library = Path(script_dir).resolve().is_relative_to(package_dir)
 
-    if script_dir not in sys.path and not Path(script_dir).resolve().is_relative_to(package_dir):
+    if script_dir not in sys.path and not is_library:
         sys.path.insert(0, script_dir)
 
-    active_runtime = runtime if runtime is not None else build_runtime(log_file=_log_name)
+    # A library module never reconfigures the logging (D42): nine of them called this at import, and each one replaced the
+    # handlers of the CERTUS logger, so the log file of a run depended on the order in which they happened to be imported (a script that
+    # imported one got `certus_certus_index_spline.log` in its working folder). It takes the logging the entry script set up, or the default.
+    if runtime is not None:
+        active_runtime = runtime
+    elif is_library:
+        active_runtime = CertusRuntime(logger=get_logger(), cache_dir=setup_numba_cache(), n_cores=os.cpu_count() or 1)
+    else:
+        active_runtime = build_runtime(log_file=_log_name)
 
     if return_runtime:
         return script_dir, active_runtime

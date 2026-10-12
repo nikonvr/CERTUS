@@ -1116,8 +1116,10 @@ class CertusStratLayoutMixin:
                 "within [0.4975, 0.5025] at 2 sigma."
             ),
             "allow_rate": (
-                "Generate variants depositing one layer by turn counting instead of photometry. "
-                "The general case on the machine, so on by default."
+                "Allow layers to be deposited by turn counting -- a time, at the speed estimated on the layers of the "
+                "same material monitored by photometry -- instead of photometry: variants with one Rate layer, and, when "
+                "plans do not terminate, plans that lay by Rate everything from the layer where the monitoring gives way. "
+                "The general case on the machine, so on by default, whatever the filter."
             ),
             "reading_smoothing_window": (
                 "Running mean over k readings before detection. OFF (k=1) on purpose: the OMS "

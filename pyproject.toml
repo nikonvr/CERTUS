@@ -67,7 +67,7 @@ extend-ignore = [
   # Bugbear legacy
   
   # Pytest legacy (tests already green — these are stylistic)
-  "PT011", "PT017",
+  "PT011",
   # Performance legacy
   "PERF401",
   # Ruff-specific legacy

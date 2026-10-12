@@ -304,21 +304,15 @@ class TestModuleInteraction:
 
         # Create an error and check that it propagate correctly
 
-        try:
+        with pytest.raises(CertusValidationError) as raised:
 
-            raise CertusValidationError(
+            raise CertusValidationError("Test integration", "Test details", "Test suggestion")
 
-                "Test integration", "Test details", "Test suggestion"
+        assert raised.value.message == "Test integration"
 
-            )
+        assert raised.value.details == "Test details"
 
-        except CertusValidationError as e:
-
-            assert e.message == "Test integration"
-
-            assert e.details == "Test details"
-
-            assert e.suggestion == "Test suggestion"
+        assert raised.value.suggestion == "Test suggestion"
 
 
 

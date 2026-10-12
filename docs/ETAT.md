@@ -395,7 +395,13 @@ Chaque correctif est un commit (R136 `c738a130`, R137 `83661fd4`) qu'un `git rev
   couches Rate**, la fente et les échanges de verre de leur parent (ils les perdaient : ELITE ne pouvait jamais affiner un plan
   Rate). Mesuré à `r75x0.5` : §7. Le secours sait aussi poser le Rate là où les tirages plantent d'abord, quelques couches de plus
   à chaque tour (`rate_rescue_hard`) : inactif par défaut ; à `r75x0.5` (graine 101) il ajoute 35 plans déposables sur 410 et ne change
-  pas le meilleur SEEL (§7).
+  pas le meilleur SEEL (§7). **L'optique reprend après du Rate** : le noyau le permet (une couche optique est arrêtée sur son propre
+  signal, quelle que soit la façon dont les précédentes ont été posées ; `tests/unit/test_strat_optics_after_rate.py`) et 👤 observe en
+  salle de bonnes stratégies en paquets (optique à un λ, Rate, optique à un autre λ), ce qui reste empirique. La recherche ne le
+  proposait presque pas : les plans déposables du 2026-10-12 avec de l'optique après du Rate ont exactement deux paquets de Rate, une
+  couche puis la queue, et ELITE rendait à ses enfants les couches Rate du parent sans les changer. ELITE sait maintenant les déplacer
+  (`elite_rate_moves`, `elite_rate_max_candidates`) : étendre ou raccourcir un paquet, fermer un trou, ouvrir une fenêtre d'optique
+  dans une queue, poser un paquet de Rate dans l'optique. Inactif par défaut, à mesurer (§6).
 
 ### RE — décidé par 👤 le 2026-10-05
 
@@ -461,7 +467,8 @@ l'héritage quand un étage deviendra suspect · porter le résultat de `r75x2` 
 avec sa condition dans la même phrase que le chiffre · accélérer à résultat identique au bit : aucune piste ouverte
 (les 17 % d'« attente du consommateur de statistiques » d'un profil par échantillonnage sont un artefact de
 l'échantillonneur de `scripts/bench_examples.py`, `scripts/probe_sampler_idle_thread.py`, 2026-10-11 ; mémoriser
-`build_M_before_cache` ne fait rien gagner, populations identiques au bit, 2026-10-06)
+`build_M_before_cache` ne fait rien gagner, populations identiques au bit, 2026-10-06) · mesurer `elite_rate_moves` (ELITE déplace les
+couches Rate de ses parents : paquets d'optique et de Rate en alternance) à `r75x0.5`, `r75x2` et au juge de paix avant de l'activer.
 
 **Modèle physique** (détail : `git show 7b08dc8:docs/archives/TRAVAUX_A_VENIR.md`) :
 

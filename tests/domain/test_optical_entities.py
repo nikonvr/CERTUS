@@ -71,7 +71,7 @@ def test_layer_quarter_wave(wl_nm, n):
 
 def test_layer_rejects_empty_material():
     """Property: Empty material_id must be rejected."""
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="material_id must be non-empty"):
         Layer("", Thickness(50.0), RefractiveIndex(1.5, 0.0))
 
 

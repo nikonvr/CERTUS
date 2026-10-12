@@ -66,8 +66,6 @@ extend-ignore = [
   "F401",  # unused-import: some are deliberate re-exports
   # Bugbear legacy
   
-  # Pytest legacy (tests already green — these are stylistic)
-  "PT011",
   # Performance legacy
   "PERF401",
   # Ruff-specific legacy

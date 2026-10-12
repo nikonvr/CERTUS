@@ -59,7 +59,7 @@ def test_an_error_in_the_block_leaves_the_old_file_untouched_and_no_temporary_fi
 def test_a_block_that_dies_on_a_new_path_leaves_nothing_at_all(tmp_path) -> None:
     target = tmp_path / "never_written.txt"
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="bad value"):
         _write_then_fail(target, ValueError("bad value"))
 
     assert list(tmp_path.iterdir()) == []
@@ -91,7 +91,7 @@ def test_a_target_that_cannot_be_replaced_raises_and_leaves_no_temporary_file(tm
     target = tmp_path / "a_directory"
     target.mkdir()
 
-    with pytest.raises(OSError), atomic_open(target, "w") as f:
+    with pytest.raises((PermissionError, IsADirectoryError)), atomic_open(target, "w") as f:
         f.write("x")
 
     assert [p.name for p in tmp_path.iterdir()] == ["a_directory"]

@@ -69,16 +69,16 @@ def test_wavelength_energy_frequency_relation(nm):
 @settings(max_examples=50, deadline=1000)
 def test_wavelength_rejects_invalid(nm):
     """Property: Invalid wavelengths must raise ValueError."""
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="out of range"):
         Wavelength(nm)
 
 
 def test_wavelength_rejects_nan_inf():
     """Property: NaN and Inf must be rejected."""
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="must be finite"):
         Wavelength(float("nan"))
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="must be finite"):
         Wavelength(float("inf"))
 
 
@@ -177,7 +177,7 @@ def test_thickness_qwot_positive(thickness_nm, n, wavelength_nm):
 @settings(max_examples=50, deadline=1000)
 def test_thickness_rejects_non_positive(nm):
     """Property: Zero or negative thickness must be rejected."""
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="out of range"):
         Thickness(nm)
 
 

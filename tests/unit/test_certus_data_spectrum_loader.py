@@ -173,7 +173,7 @@ class TestExcelAndErrors:
     def test_raises_on_all_nan_file(self, tmp_path):
         path = tmp_path / "bad.csv"
         path.write_text("x,y\nfoo,bar\nbaz,qux\n", encoding="utf-8")
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="empty after numeric coercion"):
             load_spectrum_columns(str(path))
 
 

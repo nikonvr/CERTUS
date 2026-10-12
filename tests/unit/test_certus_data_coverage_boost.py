@@ -84,7 +84,7 @@ class TestReadCsvRobust:
         assert len(df) == 2
 
     def test_invalid_filepath_raises(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Invalid filepath"):
             read_csv_robust("")
 
     def test_file_not_found_raises(self):
@@ -92,7 +92,7 @@ class TestReadCsvRobust:
             read_csv_robust("nonexistent_file_12345.csv")
 
     def test_none_filepath_raises(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Invalid filepath"):
             read_csv_robust(None)
 
 
@@ -104,7 +104,7 @@ class TestReadDataFileRobust:
         assert len(df) == 2
 
     def test_invalid_filepath_raises(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Invalid filepath"):
             read_data_file_robust("")
 
 
@@ -135,7 +135,7 @@ class TestToCsvRobust:
 
     def test_invalid_path_raises(self):
         df = pd.DataFrame({"a": [1]})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Invalid filepath"):
             to_csv_robust(df, "")
 
 

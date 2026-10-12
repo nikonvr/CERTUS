@@ -17,6 +17,8 @@ fused loop, without running `python scripts/c1_diff.py HEAD`). The kernel module
 here, so they stay importable from it.
 """
 
+from typing import Any
+
 import numpy as np
 from numba import njit
 
@@ -1097,6 +1099,21 @@ ARMING_OFF: int = 0
 ARMING_LATE_STOP: int = 1
 ARMING_NEVER_STOPS: int = 2
 
+
+def stop_model_flags(params: Any) -> tuple[bool, bool, int]:
+    """The stop model of production, `(exact_inversion, exact_anchors, arming)`, read from a parameter set (a dict or a DTO).
+
+    Decided 2026-10-12 (ETAT section 3): POEM's anchors are read at the extremum of their layer (D96), the stop is solved on the
+    exact signal (D97), and the OMS waits for ever on a level crossed before the last extremum is declared (D98). The kernels keep
+    their historical path as the default of their own signature, bit for bit; the production callers ask for this one, and a
+    parameter set can ask for the old one with `exact_inversion=False`, `exact_anchors=False`, `oms_arming=0` (the baselines of the
+    probes). Phase A, the growth and the scoring of Phase B read the SAME three values: one stop model, never two.
+    """
+    return (
+        bool(params.get("exact_inversion", True)),
+        bool(params.get("exact_anchors", True)),
+        int(params.get("oms_arming", ARMING_NEVER_STOPS)),
+    )
 
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")

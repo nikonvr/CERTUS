@@ -29,6 +29,7 @@ from certus.core.certus_strat_robustness_noise import (
 )
 from certus.core.certus_strat_robustness_slit import _strategy_resolution
 from certus.core.certus_strat_robustness_wrappers import _IdxWrapper
+from certus.physics.certus_strat_readings import stop_model_flags
 from certus_physics import (
     CRASH_LEVEL_UNREACHABLE,
     CRASH_NON_MONOTONIC,
@@ -533,6 +534,7 @@ def _test_strategy_robustness_task(
             rate_flags,
             slit_profiles,
             witness_reset_flags,
+            *stop_model_flags(params),
         )
 
         for i_layer in range(num_layers):
@@ -545,11 +547,10 @@ def _test_strategy_robustness_task(
                     logger.warning(
                         f"   [DYN-ALERT] Discrepancy L{i_layer + 1} @ {wl_sel:.0f}nm | Phase A (Grid): {theory_dyn * 100:.2f}% | Phase B (Sim): {sim_dyn * 100:.2f}% | DIFF: {diff * 100:.2f}%"
                     )
-                else:
-                    if theory_dyn >= 0.0:
-                        logger.info(
-                            f"   [DYN-OK] L{i_layer + 1} @ {wl_sel:.0f}nm | A={theory_dyn * 100:.2f}% | B={sim_dyn * 100:.2f}%"
-                        )
+                elif theory_dyn >= 0.0:
+                    logger.info(
+                        f"   [DYN-OK] L{i_layer + 1} @ {wl_sel:.0f}nm | A={theory_dyn * 100:.2f}% | B={sim_dyn * 100:.2f}%"
+                    )
 
         # NON-TERMINATING DEPOSITIONS, AND NOW BROKEN DOWN BY CAUSE.
         #

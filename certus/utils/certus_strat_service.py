@@ -140,12 +140,13 @@ class _PhysicsBridge:
         corridor_lo: float = 0.0,
         corridor_hi: float = 0.0,
         slit_profiles: np.ndarray | None = None,
+        stop_model: tuple[bool, bool, int] = (False, False, 0),
     ) -> np.ndarray:
         return validate_wavelengths_batch(
             wls, nH, nL, nSub, history, nominal_thicknesses, i_layer, offset, noise, error_factor, mode,
             block_start_arr, gain_probe_nm, signal_noise_scale, signal_noise_seed, tp_hysteresis,
             affine_scale_amp, affine_offset_amp, photo_curvature_amp, affine_seed, poem_enabled, smoothing_window,
-            index_corridor, index_seed, corridor_lo, corridor_hi, None, slit_profiles,
+            index_corridor, index_seed, corridor_lo, corridor_hi, None, slit_profiles, *stop_model,
         )
 
     @staticmethod
@@ -176,12 +177,13 @@ class _PhysicsBridge:
         corridor_lo: float = 0.0,
         corridor_hi: float = 0.0,
         slit_profiles: np.ndarray | None = None,
+        stop_model: tuple[bool, bool, int] = (False, False, 0),
     ) -> np.ndarray:
         return update_run_states_kernel(
             nominal_thicknesses, i_layer, history, best_wl, nH, nL, nSub, offset, noise, error_factor, mode,
             block_start_layer, signal_noise_scale, signal_noise_seed, tp_hysteresis,
             affine_scale_amp, affine_offset_amp, photo_curvature_amp, affine_seed, poem_enabled, smoothing_window,
-            index_corridor, index_seed, corridor_lo, corridor_hi, slit_profiles,
+            index_corridor, index_seed, corridor_lo, corridor_hi, slit_profiles, *stop_model,
         )
 
     @staticmethod
@@ -194,15 +196,7 @@ class _PhysicsBridge:
         nSub_arr: np.ndarray,
         steps_per_layer: np.ndarray,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-        return calculate_detailed_growth(
-            num_layers,
-            p_thick_arr,
-            layer_wls,
-            nH_arr,
-            nL_arr,
-            nSub_arr,
-            steps_per_layer,
-        )
+        return calculate_detailed_growth(num_layers, p_thick_arr, layer_wls, nH_arr, nL_arr, nSub_arr, steps_per_layer)
 
 
 def wavelength_to_index(wavelength_nm: float) -> int:
@@ -700,12 +694,10 @@ def calculate_dynamics_ULTIMATE(
     n_L_arr = np.array([c["L"] for c in all_clues], dtype=np.complex128)
     n_Sub_arr = np.array([c.get("substrate", 1.0) for c in all_clues], dtype=np.complex128)
 
-    # _PhysicsBridge.prepare_dynamics_data(wls, all_wls, matrix_cache, n_H, n_L, n_Sub, i_layer)
     n_layer_array, n_sub_array, M_before_stack = _PhysicsBridge.prepare_dynamics_data(
         wls_array, all_wls_f64, nominal_matrix_cache, n_H_arr, n_L_arr, n_Sub_arr, i_layer
     )
 
-    # _PhysicsBridge.compute_dynamics(wls, n_layers, n_subs, thicknesses, M_befores)
     dyn_vals, t_inits, t_finals, t_mins = _PhysicsBridge.compute_dynamics(
         wls_array, n_layer_array, n_sub_array, thickness_steps, M_before_stack
     )
@@ -1131,6 +1123,7 @@ def _validate_candidates_phase_a(
     # 12.1bis: Phase A must see the SAME photometric distortion as Phase B.
     # The default lives in certus_strat_robustness so that there is only one.
     from certus.physics.certus_strat_growth import PHOTOMETRIC_CURVATURE_AMP
+    from certus.physics.certus_strat_readings import stop_model_flags
     photo_curvature_amp = float(
         params.get("photometric_curvature_amp", PHOTOMETRIC_CURVATURE_AMP) or 0.0
     )
@@ -1195,6 +1188,7 @@ def _validate_candidates_phase_a(
         # at 48 layers, so the slit averages over a quarter of a period. Same defect as
         # 17-23, one parameter further.
         phase_a_slit_profiles(cand_wls_arr, list(p_thick_nom_arr), params, i_layer),
+        stop_model_flags(params),
     )
     results_thickness = []
     p_thick_sim_updates = [[] for _ in range(len(candidate_wls))]
@@ -1297,6 +1291,7 @@ def _validate_candidates_phase_a(
             # 🟢 Free in practice: `best_wl` was one of the candidates, so its profile is
             # already in the shared cache from the call above.
             _slit_best[0] if _slit_best is not None else None,
+            stop_model_flags(params),
         ).tolist()
     else:
         p_thick_sim_updates = []

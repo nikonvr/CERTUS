@@ -1450,6 +1450,9 @@ class CertusStratStateMixin:
             "rate_tail_keep_optical": int(
                 _config_float(getattr(self, "_loaded_config", {}), "rate_tail_keep_optical", 0.0)
             ),
+            # The Rate rescue (👤 2026-10-12): on when the file does not say, like the kernel and the registry of the levers.
+            "rate_rescue": _config_flag_default(getattr(self, "_loaded_config", {}), "rate_rescue", True),
+            "rate_rescue_few": int(_config_float(getattr(self, "_loaded_config", {}), "rate_rescue_few", 10.0)),
             "require_turning_point": int(
                 _config_float(getattr(self, "_loaded_config", {}), "require_turning_point", 0.0)
             ),

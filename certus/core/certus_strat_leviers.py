@@ -175,6 +175,37 @@ LEVIERS: tuple[Levier, ...] = (
         reserve="🔴 C'EST UNE AFFAIRE DE 2 nm. A 1 nm, le pur optique la BAT. Et le SEEL "
                 "obtenu (0,68-0,69) est +18 % au-dessus de la voie avec rampes.",
     ),
+    # ---------------------------------------------------------------- RATE: the rescue
+    Levier(
+        cle="rate_rescue",
+        libelle="Secours Rate : poser en Rate la queue des plans qui ne se terminent pas",
+        defaut=True,
+        genre="bool",
+        statut=RESERVE,
+        mesure="👤 2026-10-12 : « le rate doit etre integre a chaque design, quel que soit le filtre, et encore plus "
+               "quand on retrouve peu de strategies deposables ; r75x0.5 est un bon test, on doit finir par trouver des "
+               "strategies, quitte a tout finir au rate ». Pour les plans que la porte de plantage rejette, cherche la "
+               "couche ou le controle optique cede, pose tout en Rate de la jusqu'au bout, puis depuis des coupures plus "
+               "precoces jusqu'a la couche 2 : un plan qui se termine existe toujours. 📏 r75x0.5, graine 101, avec les "
+               "queues de rate_tail_sweep : 0 plan sur 2 897 se termine avec UNE couche Rate par variante, 522 sur 547 avec "
+               "des queues des couches 16 a 28 (meilleur SEEL 0,555 nm), 2 272 sur 2 272 des couches 2 a 14 (de 0,767 nm, "
+               "tout en Rate sauf les couches 0 et 1, a 0,563 nm).",
+        reserve="Rate n'a AUCUNE compensation d'erreur : un plan qui pose 59 couches en Rate promet moins a l'atelier "
+                "qu'un plan optique, et le classement le compare a eux sur le seul SEEL. Cout en calcul : jusqu'a 240 "
+                "evaluations par passe quand rien ne se termine. `false` retablit le chemin d'avant, au bit.",
+    ),
+    Levier(
+        cle="rate_rescue_few",
+        libelle="Secours Rate : sous ce nombre de plans deposables dans la passe, a pleine force",
+        defaut=10,
+        genre="int",
+        statut=RESERVE,
+        mesure="Sous le seuil le secours essaie 30 plans x 8 coupures ; au-dessus, 3 plans x 2 coupures (la couche ou "
+               "le controle cede, et la couche 2). Le seuil compte les plans deposables d'UNE passe, c'est-a-dire d'un "
+               "nombre de blocs, pas ceux de la campagne.",
+        reserve="Le nombre de plans deposables d'une passe depend de sa taille : 10 est un reglage de depart, pas une "
+                "mesure. Monter le seuil donne plus de queues Rate aux composants qui ont deja des plans deposables.",
+    ),
     # ---------------------------------------------------------------- RATE: the constants
     Levier(
         cle="RATE_MIN_LAYER",

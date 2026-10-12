@@ -32,7 +32,10 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from certus.core.certus_core import HC_EV_NM  # noqa: E402
+from certus.core.certus_core import HC_EV_NM, ensure_numba_cache_dir  # noqa: E402
+
+ensure_numba_cache_dir()  # the Numba cache keyed by the sources, before the first import that loads Numba
+
 from certus.physics.certus_optical_models import sellmeier_n_array  # noqa: E402
 from certus.physics.certus_tmm_oblique import calc_spectrum_oblique_backside_vectorized  # noqa: E402
 from certus.spline.spline_objective import nk_from_x_pwlnk  # noqa: E402

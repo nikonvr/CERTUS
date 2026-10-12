@@ -59,15 +59,20 @@ secours Rate (`0fc7c5f2`, `40642146`) pose au temps la queue des plans dont le c
 les couches Rate de leur parent (`4a4e1f0d`). Avec eux, `r75x0.5` et un seul verre témoin, que la recherche ne savait pas fabriquer
 (0 déposable sur 8 687 plans), rend 3 383, 3 701 et 3 279 plans déposables aux graines 42, 101 et 202 (meilleur SEEL 0,5031 / 0,4981 /
 0,5000 nm) ; le juge de paix, 0,1849 nm. Ces SEEL sont ceux du modèle de Rate de STRAT (§7), dont la stabilité de la vitesse n'est pas
-mesurée. D106 (les enfants d'ELITE étaient notés sans biais de fente) est corrigé par `6fcdd56a` ; les SEEL d'ELITE mesurés avant lui
-ne portaient pas le biais de fente, d'une grandeur non mesurée.
+mesurée. D106 (les enfants d'ELITE étaient notés sans biais de fente) est corrigé par `6fcdd56a`, et son effet est mesuré par un A/B :
+à `r75x2` sans rampes (graine 101, ancien modèle d'arrêt, sans secours Rate, même code), **706 déposables sur 6 042** stratégies sans la
+correction, **0 sur 4 821** avec elle ; la graine 42 : 0 sur 4 561. Les déposables optiques de `r75x2` d'avant la correction (« six
+graines sur sept » ci-dessous) étaient des enfants d'ELITE sans biais de fente : **sans rampes, `r75x2` n'est pas fabricable en optique
+pure**. Avec les défauts de production, tous les plans de la liste le sont (4 175 et 4 307 plans aux graines 101 et 42, meilleur SEEL
+0,5406 et 0,5678 nm), avec du Rate (`reports/STRAT_r75x2_D106_secours_Rate_2026-10-12.md`).
 
-**Dernière mesure (2026-10-12), D100 et D103 corrigés**
+**Mesure d'avant D106 (2026-10-12), D100 et D103 corrigés**
 (`reports/STRAT_r75x2_sept_graines_D100_D103_corriges_2026-10-12.md`, code `411e6eb5`). `r75x2` en `deep`, sans
 rampes, protocole d'août, sept graines : **six trouvent des déposables** (42, 77, 101, 202, 404, 505 ; août : trois),
 la 303 n'en trouve aucun ; meilleurs SEEL de 0,5323 à 0,6354 nm, médiane 0,5563 nm. Tous les déposables sont des plans
 ELITE. L'ELITE « tour à tour » sur les six graines (`reports/STRAT_ELITE_tour_a_tour_six_graines_2026-10-12.md`) :
-meilleur SEEL médian +0,7 % (mieux une fois, de 14,7 %), pas de gain net démontré. Mesures du
+meilleur SEEL médian +0,7 % (mieux une fois, de 14,7 %), pas de gain net démontré. Les déposables de `r75x2` de cette mesure sont des
+enfants d'ELITE sans biais de fente : D106 les invalide (ci-dessus). Mesures du
 2026-10-11 (`reports/STRAT_remesure_D100_2026-10-11.md`, `782972bf`) : juge de paix **0,178 nm** (`premium`, ancien modèle d'arrêt, même
 `RESULT` au bit après D103) ; le passe-bande de 99 couches en une campagne reste non fabricable (0 déposable sur
 2 139, plantage minimal 82,7 %) ; `r75x0.5` avec un seul verre témoin : aucun déposable aux graines 42, 101 et 202
@@ -88,7 +93,7 @@ n'autorise pas à modifier son arbre témoin.
 
 | programme | état | prochaine action |
 |---|---|---|
-| **Calcul (STRAT)** | composant étalon : l'aléatoire ×2 (`r75x2`) à la fente de 2 nm. Fabricable avec les rampes de la configuration livrée ; sans rampes, 6 graines sur 7 trouvent des déposables (2026-10-12, D100 et D103 corrigés ; 3 sur 7 en août). Toute la fabricabilité passe par le générateur ELITE | rang 4 (§0) |
+| **Calcul (STRAT)** | composant étalon : l'aléatoire ×2 (`r75x2`) à la fente de 2 nm. Sans rampes, aucun plan optique pur n'est déposable une fois D106 corrigé (graines 101 et 42, 2026-10-12) ; avec les défauts de production (secours Rate), tous les plans de la liste le sont, au modèle de Rate de STRAT (§2). La voie à rampes de la configuration livrée (mesurée avant D106) est à refaire | rang 4 (§0) |
 | **RE** | indices tabulés lus en n − ik depuis R148 (2026-10-05) : tout RE antérieur fait sur des indices absorbants en incidence oblique est à refaire ; un indice demandé hors de sa table est prolongé par une constante, avec un avertissement (ex-D86, `dec73219`, 2026-10-05) | — |
 | **Base de dépôts** | 140 monocouches mesurées au Photon RT (`example/database_depots/`, importées le 2026-10-11 par `scripts\importer_base_depots.py`) ; la voie (T ou R) se lit dans la géométrie du détecteur, le mode manuel déclarant « Transmittance » quoi qu'il mesure. INDEX les charge par « Deposit database… ». Onze ajustements certifiés de l'application autonome, dont le spectre est un dépôt de la base, servent de références (`references_index.json`) ; `scripts\bench_base_depots.py` y confronte INDEX. Banc du 2026-10-12 (11 références × 3 exécutions, `reports/BASE_DEPOTS_banc_INDEX_2026-10-12.md`) : neuf références sur onze à moins de 2,0 % d'épaisseur de la référence, deux non retrouvées (`mesures-c1b-sio2`, −49 %, et `sb2s3-silice`, −3,85 %), cause non cherchée. RE ne la lit pas : il lui faut un classeur complet | instruire les deux échecs ; choix de 👤 (§5) |
 | **Exécutable gelé** | sur la couche OpenMP depuis `31745571` (D87), sans les outils de développement depuis `5ccaa210` (411 Mo) ; construit à `dbec2fc1` le 2026-10-06, hub et modules contrôlés au démarrage, et 👤 y a calculé : « l'exécutable fonctionne ». Les licences de ce qu'il embarque le suivent (`licenses/`) | rang 5 (D72) |
@@ -108,9 +113,9 @@ n'autorise pas à modifier son arbre témoin.
 | aléatoire `JSON-strat-random75`, 75 couches | **0,272 nm** | 0 % | une campagne, 241 déposables sur 662 |
 | passe-bande 5 cavités, 99 couches | **0,81 nm** | 0 % par campagne | 4 verres témoins, partition 0-22 / 22-42 / 42-76 / 76-99 |
 | le même en une seule campagne | aucun score valide | 100 % | 487 stratégies, toutes plantent : non fabricable |
-| aléatoire ×2 `r75x2`, fente native 1 nm | **0,6248 nm** | 0 % | `deep`, pur optique, 277 déposables |
-| `r75x2` à 2 nm, configuration livrée | **0,5676 nm** | 1,67 % | avec `example/example_strat/rampes_r75x2-2nm.json` ; étendue 0,55 % sur 3 graines |
-| `r75x2` à 2 nm, sans rampes | **0,5323 nm** | — | graine 404, la meilleure des six qui trouvent des déposables (42, 77, 101, 202, 404, 505 ; la 303 n'en trouve aucun) : médiane 0,5563 nm, de 0,5323 à 0,6354 nm ; `deep`, D100 et D103 corrigés, 2026-10-12 (`reports/STRAT_r75x2_sept_graines_D100_D103_corriges_2026-10-12.md`). Août : trois graines sur sept, meilleur 0,5599 nm. La comparaison avec la voie à rampes est à refaire avec ce code |
+| aléatoire ×2 `r75x2`, fente native 1 nm | **0,6248 nm** | 0 % | `deep`, pur optique, 277 déposables ; mesuré avant D106 : à refaire |
+| `r75x2` à 2 nm, configuration livrée | **0,5676 nm** | 1,67 % | avec `example/example_strat/rampes_r75x2-2nm.json` ; étendue 0,55 % sur 3 graines ; mesuré avant D106 : à refaire |
+| `r75x2` à 2 nm, sans rampes, défauts de production du 2026-10-12 | **0,5406 nm** (graine 101), 0,5678 nm (graine 42) | 0 % | `deep`, `dbf8025f` : tous les plans de la liste déposables (4 175 et 4 307), aucun optique pur, du Rate (61 et 23 couches) ; l'optique pur sans secours Rate : 0 déposable aux deux graines (D106 corrigé). `reports/STRAT_r75x2_D106_secours_Rate_2026-10-12.md` |
 
 Le passe-bande de 99 couches est chiffré en moyenne de trois graines, jamais par la meilleure.
 
@@ -123,6 +128,7 @@ Le passe-bande de 99 couches est chiffré en moyenne de trois graines, jamais pa
   d'équivalence SEEL**. Sur `r75x2`, σ ≈ 1,8 % mesuré en changeant le triplet de graines de
   consensus : un bruit emprunté à un autre composant ne vaut rien.
 - Ces repères comprennent le **biais de fente** ; une mesure sans ce biais ne leur est pas comparable.
+- 🔴 Les repères où des enfants d'ELITE comptent, mesurés avant la correction de D106 (2026-10-12), les notent sans biais de fente : `r75x2` sans rampes perd tous ses déposables optiques à la correction (§0). Les repères du juge de paix en sont aussi touchés.
 - 🔴 Les repères mesurés en `deep` avant la correction de D103 (passe-bande de 35 couches, `r75x2` à fente native de
   1 nm, `r75x2` avec rampes) ont pu choisir leurs parents ELITE sur des scores de consensus mélangés entre homonymes
   (§0).
@@ -447,7 +453,7 @@ Ces sujets demandent un jugement de physicien ou de propriétaire du produit. Le
 | **paquet `certus_re`** | la correction de la citation du saphir (Malitson et Dodge, 1972) attend d'être commitée par 👤 dans ce dépôt-là, qui contient ses modifications en cours, puis publiée avec la prochaine version Zenodo |
 | **interface** | Revoir visuellement les onze fenêtres et choisir les teintes de marque, la bande des fichiers récents et les bornes des champs numériques. |
 | **base de dépôts** | RE : remplacer la seule mesure d'un classeur RE déjà chargé par celle d'un dépôt (il faudrait découper `load_reverse_engineering_from_path`) ? Apparier dans la base la T et la R d'un même échantillon que l'opérateur a nommées différemment (`NbT3` et `NbR3`) ? INDEX : en phase 2, la fenêtre λ de l'utilisateur est remplacée par toute l'étendue des données (`_on_tlu_constrained_finished`), est-ce voulu ? |
-| **ELITE « tour à tour »** | `elite_round_robin`, six graines, D100 et D103 corrigés (2026-10-12) : mieux à la graine 42 (0,5420 contre 0,6354 nm), équivalent à la 404, moins bien aux 77, 101 et 505 (de +0,7 à +2,8 %), la 303 sans déposable des deux côtés ; médiane +0,7 %. L'option est inactive et le reste tant que 👤 ne dit pas de l'armer ; ce qui manque pour trancher est le bruit d'une même graine rejouée |
+| **ELITE « tour à tour »** | `elite_round_robin`, six graines, D100 et D103 corrigés, avant D106 (2026-10-12) : mieux à la graine 42 (0,5420 contre 0,6354 nm), équivalent à la 404, moins bien aux 77, 101 et 505 (de +0,7 à +2,8 %), la 303 sans déposable des deux côtés ; médiane +0,7 %. L'option est inactive et le reste tant que 👤 ne dit pas de l'armer ; ce qui manque pour trancher est le bruit d'une même graine rejouée |
 | **arrêt de STRAT** | D96 à D98 sont le modèle par défaut (§3). L'attente sans fin de D98 retire 95 % des plans que l'ancien modèle jugeait fabricables (§3) ; ce que l'OMS fait à un niveau franchi avant que son contrôleur soit armé n'est pas connu. À secours Rate égal (juge de paix, code final), l'arrêt tardif rend un meilleur SEEL du même ordre (0,1792 contre 0,1849 nm) et garde 101 plans optiques purs déposables, que l'attente sans fin ne garde pas : avec elle le Rate est une nécessité pour ce composant, avec l'arrêt tardif une option. À confirmer, ou à remplacer. Reste aussi : noter ou non au modèle figé, au moins pour départager la tête du classement (rapport du 2026-10-10, sections 4 et 6) |
 | **le Rate et l'optique pure** | Au juge de paix (code final), le meilleur plan porte du Rate sous les cinq modèles d'arrêt (de 1 à 28 couches) et le meilleur plan optique pur est de 4 à 37 % moins bon ; les plans optiques purs déposables sont 50 à l'ancien modèle, contre 487 avant le secours Rate (mesure d'avant D106). Le modèle de Rate de STRAT n'a ni dérive de la source ni bruit propre de la vitesse (§7), ce qui le favorise, et ELITE refine maintenant des parents Rate : l'hypothèse, non mesurée, est que la lignée optique pure y perd des tours. Faut-il réserver à ELITE des parents optiques purs, ou ne laisser le Rate que là où l'optique ne suffit pas ? La réponse dépend de la stabilité réelle de la vitesse (A25, §6) |
 
@@ -459,8 +465,8 @@ nouveau paramètre inactif par défaut (C1) · mesurer la polarisation du faisce
 du niveau (0,025 d'indice par unité de fraction p).
 
 **Calcul** (détail : `git show 7b08dc8:docs/archives/REPRENDRE_ICI.md`) —
-dimensionner K, le nombre de graines à lancer : p ≈ 6/7 pour trouver un déposable, 4/7 pour atteindre le niveau 0,57
-(2026-10-12, D100 et D103 corrigés ; août : 3/7 et 2/7) · balayer `tp_hysteresis_factor` à bruit fixé sur la grille machine : sur la grille
+dimensionner K, le nombre de graines à lancer : à refaire au code final (`r75x2`, avec D106 corrigé : deux graines sur deux trouvent des
+déposables avec le secours Rate, aucune sans ; avant D106, 6/7 puis 3/7 en août) · balayer `tp_hysteresis_factor` à bruit fixé sur la grille machine : sur la grille
 grossière, il est presque inerte (juge de paix, 370 plans, 2026-10-11 : de 1,0 à 2,0 A, 358 à 362 notes identiques au
 bit à celles de 1,66 A, même meilleur plan ; rapport de l'audit du 2026-10-10, section 4) · compter le criblage et
 l'héritage quand un étage deviendra suspect · porter le résultat de `r75x2` dans la vitrine,

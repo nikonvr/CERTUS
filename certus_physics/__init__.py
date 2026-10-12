@@ -167,7 +167,6 @@ from certus.core._certus_physics_impl import (  # noqa: F401
     xyz_from_spectrum,
     xyz_to_lab,
 )
-from certus.physics.certus_strat_machine import MachineModel  # noqa: F401
 
 # =============================================================================
 # AUXILIARY MODULES (not in _impl - unique functionality)

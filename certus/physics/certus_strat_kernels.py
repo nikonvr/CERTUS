@@ -36,7 +36,6 @@ from .certus_strat_machine import (
     OMS5100_DEFAULT_5_SIGMA_FACTOR,
     OMS5100_DEFAULT_MONOCHROMATOR_STEP_NM,
     OMS5100_DEFAULT_READING_NOISE_PCT,
-    MachineModel,
 )
 from .certus_strat_math import (
     K_MAX_LAYER_BACKSIDE,
@@ -76,7 +75,6 @@ __all__ = [
     "OMS5100_DEFAULT_READING_NOISE_PCT",
     "PHOTOMETRIC_CURVATURE_AMP",
     "SLIT_PROFILE_NODES",
-    "MachineModel",
     "_calc_T_added_layer",
     "_calc_T_from_matrix",
     "_calculate_RT_HL_single_point",

@@ -81,15 +81,24 @@ from certus.core.certus_strat_robustness_rate import (
     RATE_MAX_VARIANTS_PER_STRATEGY,
     RATE_MIN_LAYER,
     RATE_MIN_LAYERS_PER_BLOCK,
+    RATE_RESCUE_FEW_DEFAULT,
+    RATE_RESCUE_FULL,
+    RATE_RESCUE_LEAK,
+    RATE_RESCUE_LIGHT,
+    RATE_RESCUE_SERIAL_BASE,
     RATE_SWING_MIN_DEFAULT,
     RATE_VARIANT_TOP_N_DEFAUT,
     _expand_with_rate_variants,
+    _first_crash_layer,
     _make_rate_variant,
     _optical_prefix_variants,
     _rate_candidate_combinations,
     _rate_candidate_layers,
     _rate_swing_candidates,
     _RateSwingContext,
+    _rescue_cuts,
+    _rescue_variants,
+    _rescue_with_rate,
     _variant_id,
     _wl_de_la_couche,
 )
@@ -505,7 +514,15 @@ def _execute_robustness_tasks(
     params: dict[str, Any],
     logger: logging.Logger,
     n_layers_matrix_precomp: np.ndarray | None = None,
+    rate_rescue: bool = False,
+    id_namespace_n_blocks: int | None = None,
+    keep_gated: bool = False,
 ) -> list[dict[str, Any]]:
+    """Evaluate the strategies and keep the finite scores (`_filter_finite_robustness_scores`).
+
+    `rate_rescue`: lay by Rate the plans that did not terminate, from the layer where they give way (`_rescue_with_rate`); the
+    deciding pass asks for it. `keep_gated`: hand the raw results back, the plans the crash gate rejected still in.
+    """
     import multiprocessing
 
     max_workers = max(1, multiprocessing.cpu_count() // 2)
@@ -655,7 +672,16 @@ def _execute_robustness_tasks(
                     logger.error(f"Strategy simulation failed: {e}", exc_info=True)
         strategies_results = [r for r in results_by_idx if r is not None]
 
-    return _filter_finite_robustness_scores(strategies_results, logger=logger)
+    if rate_rescue:
+        def collect(strategies: list[dict[str, Any]]) -> list[dict[str, Any]]:
+            return _execute_robustness_tasks(
+                strategies, noise_levels, num_runs, p_thick_nominal, clues_at_wl, params_safe, wl_arr, nH_arr, nL_arr, nSub_arr,
+                T_nom, full_dyn_grid, params, logger, n_layers_matrix_precomp, keep_gated=True,
+            )
+
+        namespace = strategy_id_source_block_count(all_strategies, id_namespace_n_blocks)
+        strategies_results = _rescue_with_rate(strategies_results, collect, params, num_layers, namespace, logger)
+    return strategies_results if keep_gated else _filter_finite_robustness_scores(strategies_results, logger=logger)
 
 
 # _select_best_strat_result has been moved to certus_strat_ranking.py
@@ -772,21 +798,10 @@ def run_final_simulation_block(
     n_layers_matrix_precomp = _precompute_layer_index_matrix(nH_arr, nL_arr, num_layers)
 
     strategies_results = _execute_robustness_tasks(
-        all_strategies=all_strategies,
-        noise_levels=noise_levels,
-        num_runs=num_runs,
-        p_thick_nominal=p_thick_nominal,
-        clues_at_wl=clues_at_wl,
-        params_safe=params_safe,
-        wl_arr=wl_arr,
-        nH_arr=nH_arr,
-        nL_arr=nL_arr,
-        nSub_arr=nSub_arr,
-        T_nom=T_nom,
-        full_dyn_grid=full_dyn_grid,
-        params=params,
-        logger=logger,
-        n_layers_matrix_precomp=n_layers_matrix_precomp,
+        all_strategies=all_strategies, noise_levels=noise_levels, num_runs=num_runs, p_thick_nominal=p_thick_nominal,
+        clues_at_wl=clues_at_wl, params_safe=params_safe, wl_arr=wl_arr, nH_arr=nH_arr, nL_arr=nL_arr, nSub_arr=nSub_arr, T_nom=T_nom,
+        full_dyn_grid=full_dyn_grid, params=params, logger=logger, n_layers_matrix_precomp=n_layers_matrix_precomp,
+        rate_rescue=expand_variants, id_namespace_n_blocks=strategy_id_context(opti_results)["strategy_id_namespace_n_blocks"],
     )
 
     # ---- ABLATION PROFILE on the best ones, 👤 2026-08-12 -------------------

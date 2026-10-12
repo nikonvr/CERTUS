@@ -7,7 +7,10 @@ from typing import Any
 
 import numpy as np
 
+from certus.core.certus_strat_robustness_gate import _worst_finite_rmse
 from certus.core.certus_strat_robustness_wrappers import _IdxWrapper
+from certus.utils.certus_strat_context import _plan_signature
+from certus_physics import CRASH_SENTINEL_MIN
 
 #: 🔴 RAISED FROM 3 TO 40 ON 2026-08-22, together with `RATE_VARIANT_TOP_N_DEFAUT`. The two go
 #: TOGETHER: 40 variants on 50 parents cost 2 000 evaluations, against 12 923 for 3 variants
@@ -741,3 +744,137 @@ def _variant_id(parent_id: object, serial: int) -> object:
     started generating variants on every run.
     """
     return f"{parent_id}#{serial}" if isinstance(parent_id, str) else serial
+
+
+# ---- THE RATE RESCUE -------------------------------------------------------------------------------------------------------
+#
+# 👤 2026-10-12: *"Rate must be integrated in every scenario, and still more when few depositable strategies are found"*, *"it has
+# to be allowed whatever the filter"*, *"r75x0.5 is a good test of the implementation: we must end up finding strategies, even if
+# it means finishing everything by Rate"*.
+#
+# 🔑 A Rate layer is laid for a time, at the speed estimated on the layers of its material laid under optical control before it
+# (`_rate_layer_thickness`): it reads nothing, so it cannot fail to terminate. The variants of `_expand_with_rate_variants` carry
+# ONE such layer, placed where it is cheapest, and the plans that crash on the thin layers of a stack crash on many of them.
+#
+# 📏 Measured on `r75x0.5`, seed 101, 2 897 plans: none depositable, and the first layer to give way is 22, 25 or 28 for half of
+# them, 46 or 51 for most of the rest. With the monitoring kept up to layer 16, 20, 24 or 28 and everything after laid by Rate
+# (the tail of `rate_tail_sweep`), the same seed gives 522 depositable plans out of 547, the best at SEEL 0.555 nm and no crash
+# at the three noise levels; with cuts from layer 2 to 14, 2 272 out of 2 272, the best at 0.563 nm (cut 14), and 0.767 nm when
+# everything but layers 0 and 1 is laid by Rate.
+#
+# For the plans of a pass that did not terminate (the crash gate rejected them), the rescue finds the layer at which they start to
+# give way (`_first_crash_layer`), lays everything by Rate from there to the end, then from earlier cuts down to layer 2
+# (`_rescue_cuts`), evaluates these variants like any other, and the ranking decides. The last cut is layer 2, the first one that
+# can be laid by Rate: a plan that terminates therefore always exists. It works at full strength when the pass found fewer than
+# `rate_rescue_few` depositable plans, lightly otherwise.
+
+#: Share of all the draws that have crashed by a layer, above which the optical monitoring of a plan is said to give way there.
+RATE_RESCUE_LEAK: float = 0.02
+
+#: Serial of the first rescue variant in the Rate id range of its block count: after those of `_expand_with_rate_variants` (40 per
+#: parent on 50 parents, the tails and the sets of the configuration), before the end of the range (100 000).
+RATE_RESCUE_SERIAL_BASE: int = 50_000
+
+#: Fewer depositable plans than this in a pass: the rescue works at full strength.
+RATE_RESCUE_FEW_DEFAULT: int = 10
+
+#: What the rescue spends, as (parents, cuts per parent): at full strength, and lightly.
+RATE_RESCUE_FULL: tuple[int, int] = (30, 8)
+RATE_RESCUE_LIGHT: tuple[int, int] = (3, 2)
+
+
+def _first_crash_layer(item: dict[str, Any], num_layers: int) -> int | None:
+    """The layer at which the optical monitoring of this plan starts to give way, or None when it does not.
+
+    For each noise level, the draws are given the first layer where they crashed (the sentinel of the kernel); the level that
+    crashes most is the one that decides, as for the crash gate; the layer is the first one where the share of all the draws that
+    have crashed by then exceeds `RATE_RESCUE_LEAK`.
+    """
+    worst: np.ndarray | None = None
+    worst_rate = 0.0
+    for level in item.get("results_per_noise") or []:
+        thick = np.asarray(level.get("thicknesses_all") or [], dtype=np.float64)
+        if thick.ndim != 2 or thick.shape[0] == 0 or thick.shape[1] != num_layers:
+            continue
+        crashed = thick > CRASH_SENTINEL_MIN
+        first = np.where(crashed.any(axis=1), crashed.argmax(axis=1), num_layers)
+        rate = float(np.mean(first < num_layers))
+        if rate > worst_rate:
+            worst, worst_rate = first, rate
+    if worst is None:
+        return None
+    cumulative = np.cumsum(np.bincount(worst[worst < num_layers], minlength=num_layers)) / worst.size
+    over = np.nonzero(cumulative > RATE_RESCUE_LEAK)[0]
+    return int(over[0]) if over.size else None
+
+
+def _rescue_cuts(first_crash: int, count: int) -> list[int]:
+    """The layers from which the rescue lays everything by Rate: from `first_crash` down to `RATE_MIN_LAYER`, evenly spread.
+
+    The first is the layer where the monitoring gives way (the latest cut that can work), the last is `RATE_MIN_LAYER`
+    (everything by Rate, the cut that cannot fail). Latest first.
+    """
+    if first_crash < RATE_MIN_LAYER or count < 1:
+        return []
+    if count == 1:
+        return [first_crash]
+    spread = np.rint(np.linspace(first_crash, RATE_MIN_LAYER, count)).astype(int)
+    return sorted({int(c) for c in spread}, reverse=True)
+
+
+def _rescue_variants(
+    raw: list[dict[str, Any]], num_layers: int, parents_count: int, cuts_count: int, source_n_blocks: int
+) -> list[dict[str, Any]]:
+    """The tails laid by Rate under the plans that did not terminate: those that crash least first, one cut after the other."""
+    gated = [r for r in raw if not np.isfinite(float(r.get("robustness_score", np.inf)))]
+    gated.sort(key=lambda r: (float(r.get("crash_rate", 1.0)), _worst_finite_rmse(r)))
+    variants: list[dict[str, Any]] = []
+    seen: set[tuple] = set()
+    for item in gated:
+        if len(seen) >= parents_count:
+            break
+        strategy = item.get("strategy") or {}
+        plan = _plan_signature(strategy.get("blocks") or [], strategy.get("rate_layers"))
+        signature = (plan, strategy.get("monochromator_resolution_nm"))
+        cuts = _rescue_cuts(_first_crash_layer(item, num_layers) or 0, cuts_count)
+        if signature in seen or not cuts:
+            continue
+        seen.add(signature)
+        already = {int(i) for i in strategy.get("rate_layers") or []}
+        for cut in cuts:
+            serial = RATE_RESCUE_SERIAL_BASE + len(variants)
+            v = _make_rate_variant(strategy, sorted(already | set(range(cut, num_layers))), source_n_blocks, serial)
+            v["origin"] = f"RATE_RESCUE{cut}(from {strategy.get('strategy_id', '?')})"
+            variants.append(v)
+    return variants
+
+
+def _rescue_with_rate(
+    raw: list[dict[str, Any]],
+    collect: Any,
+    params: dict[str, Any],
+    num_layers: int,
+    source_n_blocks: int,
+    logger: logging.Logger,
+) -> list[dict[str, Any]]:
+    """The raw results of a pass (the gated ones still in), plus those of the Rate tails laid under the plans that gave way.
+
+    `collect` evaluates a list of strategies like the pass itself did and returns their raw results. The caller applies the filter
+    of the finite scores to what this returns, so a pass where nothing terminated keeps its ranking by increasing risk, and a pass
+    where something did keeps only that.
+    """
+    if not bool(params.get("rate_rescue", True)):
+        return raw
+    depositable = sum(1 for r in raw if np.isfinite(float(r.get("robustness_score", np.inf))))
+    full = depositable < int(params.get("rate_rescue_few", RATE_RESCUE_FEW_DEFAULT))
+    parents_count, cuts_count = RATE_RESCUE_FULL if full else RATE_RESCUE_LIGHT
+    variants = _rescue_variants(raw, num_layers, parents_count, cuts_count, source_n_blocks)
+    if not variants:
+        return raw
+    new = collect(variants)
+    rescued = sum(1 for r in new if np.isfinite(float(r.get("robustness_score", np.inf))))
+    logger.info(
+        f"[RATE-RESCUE] {'full strength' if full else 'light'}: {depositable} depositable plan(s) in the pass, "
+        f"{len(variants)} Rate tail(s) laid under the plans that gave way, {rescued} of them depositable."
+    )
+    return raw + new

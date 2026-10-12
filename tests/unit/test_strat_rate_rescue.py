@@ -230,8 +230,9 @@ def test_the_stage_adds_the_evaluated_tails_to_the_raw_results() -> None:
     out = _rescue_with_rate(raw, collect, {}, N_LAYERS, 1, LOG)
 
     assert out[: len(raw)] == raw
-    assert len(out) == len(raw) + len(collect.calls[0])
+    assert len(out) == len(raw) + sum(len(call) for call in collect.calls)
     assert all(np.isfinite(r["robustness_score"]) for r in out[len(raw):])
+    assert any(r["strategy"]["origin"].startswith("RATE_RESCUE") for r in out[len(raw):])
 
 
 def test_with_few_depositable_plans_it_works_at_full_strength_and_otherwise_lightly() -> None:
@@ -260,6 +261,17 @@ def test_it_can_be_switched_off_and_then_hands_the_results_back_untouched() -> N
     collect = _Collect()
 
     out = _rescue_with_rate(raw, collect, {"rate_rescue": False}, N_LAYERS, 1, LOG)
+
+    assert out is raw
+    assert collect.calls == []
+
+
+def test_pure_optical_monitoring_asked_for_is_honoured() -> None:
+    """`allow_rate = 0` says the user does not want a Rate layer anywhere: the rescue is a Rate variant like the others."""
+    raw = _population(0, 3)
+    collect = _Collect()
+
+    out = _rescue_with_rate(raw, collect, {"allow_rate": False}, N_LAYERS, 1, LOG)
 
     assert out is raw
     assert collect.calls == []

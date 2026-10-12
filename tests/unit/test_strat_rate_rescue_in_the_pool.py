@@ -66,7 +66,7 @@ def test_with_the_rescue_the_plans_that_terminate_are_the_Rate_tails(pool) -> No
 
     assert res
     assert all(np.isfinite(r["robustness_score"]) for r in res)
-    assert all(r["strategy"]["origin"].startswith("RATE_RESCUE") for r in res)
+    assert all(r["strategy"]["origin"].startswith(("RATE_RESCUE", "RATE_HARD")) for r in res)
     assert all(6 in r["strategy"]["rate_layers"] for r in res)
 
 

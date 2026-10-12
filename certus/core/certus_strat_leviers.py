@@ -206,6 +206,35 @@ LEVIERS: tuple[Levier, ...] = (
         reserve="Le nombre de plans deposables d'une passe depend de sa taille : 10 est un reglage de depart, pas une "
                 "mesure. Monter le seuil donne plus de queues Rate aux composants qui ont deja des plans deposables.",
     ),
+    # ---------------------------------------------------------------- RATE: the Rate layers, moved by ELITE
+    Levier(
+        cle="elite_rate_moves",
+        libelle="ELITE deplace les couches Rate de ses parents (optique, paquet de Rate, optique a une autre longueur d'onde)",
+        defaut=True,
+        genre="bool",
+        statut=RESERVE,
+        mesure="👤 2026-10-12 : « l'experience empirique montre qu'il y a des fois de bonnes strategies avec des paquets d'optique "
+               "a une longueur d'onde puis un paquet de rate puis re un paquet d'optique a une autre longueur d'onde » -- et « est-ce "
+               "que tu autorises apres le rate a reprendre en optique ? C'est important ». Le noyau l'autorise ; la recherche ne le "
+               "proposait pas (les plans deposables avec de l'optique apres du Rate n'avaient que deux paquets de Rate). 📏 Arme, une "
+               "graine, `cea0db66` : r75x0.5 0,4981 -> 0,3967 nm (le meilleur plan alterne trois paquets de Rate et deux fenetres "
+               "d'optique de deux couches, la premiere a 451 nm), juge de paix 0,1849 -> 0,1721 nm, r75x2 0,5406 -> 0,5358 nm ; "
+               "toutes les listes deposables.",
+        reserve="Le modele de Rate n'a ni derive de la source ni bruit propre de la vitesse : ces gains sont ceux du modele. Une "
+                "seule graine par composant. Cout : jusqu'a `elite_rate_max_candidates` candidats de plus par tour d'ELITE. `false` "
+                "retablit le chemin d'avant, au bit ; `allow_rate = 0` l'eteint aussi.",
+    ),
+    Levier(
+        cle="elite_rate_max_candidates",
+        libelle="ELITE : candidats de plus par tour pour les couches Rate",
+        defaut=120,
+        genre="int",
+        statut=RESERVE,
+        mesure="120, comme les candidats sur les longueurs d'onde ; les parents se les partagent un mouvement chacun, les plus "
+               "proches d'abord (une couche de plus ou de moins au bout d'un paquet, un trou d'optique referme, une fenetre "
+               "d'optique ouverte dans un paquet de Rate, un paquet de Rate pose dans l'optique).",
+        reserve="Jamais balaye : 120 est un reglage de depart.",
+    ),
     # ---------------------------------------------------------------- RATE: the constants
     Levier(
         cle="RATE_MIN_LAYER",

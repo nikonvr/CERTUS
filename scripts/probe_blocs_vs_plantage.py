@@ -451,7 +451,7 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
         p.update(over)
         vus["n"] += 1
         for _k in ("allow_rate", "rate_by_swing", "rate_tail_sweep", "rate_layer_sets", "rate_tail_keep_optical", "rate_rescue",
-                   "rate_rescue_few"):
+                   "rate_rescue_few", "elite_rate_moves", "elite_rate_max_candidates"):
             if _k in p:
                 leviers_rate[_k] = p[_k]
         for _k in ("robustness_num_runs", "n_screen_runs", "dp_top_k", "consensus_num_runs"):

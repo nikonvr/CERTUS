@@ -1,9 +1,10 @@
-"""ELITE can move the Rate layers of its parents, on request: optics, a packet of Rate, optics again.
+"""ELITE moves the Rate layers of its parents: optics, a packet of Rate, optics again.
 
 👤 2026-10-12: *"experience shows that there are sometimes good strategies with a packet of optics at one wavelength, then a packet of
 Rate, then a packet of optics at another wavelength -- but it is purely empirical"*. The kernel allows it (`rate_layers` is any set
 of layers); the search did not offer it: the depositable plans of `r75x0.5` and `r75x2` with optics after Rate had exactly two runs of
-Rate, a layer and a tail, and ELITE handed its parent's Rate layers down unchanged.
+Rate, a layer and a tail, and ELITE handed its parent's Rate layers down unchanged. On by default since the measure of 2026-10-12
+(`r75x0.5` 0.4981 -> 0.3967 nm); `allow_rate = 0` switches it off with the other Rate mechanisms.
 """
 
 from __future__ import annotations
@@ -209,7 +210,7 @@ def test_a_pure_optical_parent_gets_packets_of_rate() -> None:
     assert all(_rate_runs(c["rate_layers"])[0][1] - _rate_runs(c["rate_layers"])[0][0] + 1 in ELITE_RATE_WINDOWS for c in extra)
 
 
-# ---- the refinement asks for them only when told to ------------------------------------------------------------------------
+# ---- the refinement asks for them unless told otherwise -------------------------------------------------------------------
 
 
 def _ctx(params: dict) -> RobustnessContext:
@@ -224,15 +225,17 @@ def _ctx(params: dict) -> RobustnessContext:
 @pytest.mark.parametrize(
     ("extra", "expected"),
     [
-        ({}, (False, 120)),
-        ({"elite_rate_moves": False}, (False, 120)),
+        ({}, (True, 120)),
         ({"elite_rate_moves": True}, (True, 120)),
         ({"elite_rate_moves": True, "elite_rate_max_candidates": 33}, (True, 33)),
+        ({"elite_rate_moves": False}, (False, 120)),
+        ({"allow_rate": False}, (False, 120)),
+        ({"allow_rate": 0}, (False, 120)),
+        ({"allow_rate": 1, "elite_rate_moves": True}, (True, 120)),
     ],
+    ids=["default", "on", "budget", "off", "no Rate", "no Rate (0)", "Rate allowed"],
 )
-def test_the_refinement_passes_the_moves_only_when_asked(monkeypatch, extra, expected) -> None:
-    from certus.core.certus_strat_consensus import _apply_elite_refinement_if_enabled as refine
-
+def test_the_refinement_passes_the_moves_unless_told_otherwise(monkeypatch, extra, expected) -> None:
     seen = []
 
     def fake_generate(*_a, **k):
@@ -246,7 +249,6 @@ def test_the_refinement_passes_the_moves_only_when_asked(monkeypatch, extra, exp
     params = {"elite_rounds": 1, "robustness_noise_factors": [1.0], "robustness_seed": 77, **extra}
     strategies = [{"strategy": {"strategy_id": "s", "blocks": []}, "robustness_score": 0.01}]
 
-    refine(strategies, _ctx(params), lambda *a: None)
+    _apply_elite_refinement_if_enabled(strategies, _ctx(params), lambda *a: None)
 
     assert seen == [expected]
-    assert _apply_elite_refinement_if_enabled is refine

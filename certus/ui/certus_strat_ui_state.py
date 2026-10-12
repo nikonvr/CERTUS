@@ -1424,28 +1424,22 @@ class CertusStratStateMixin:
             # measurable, not deliverable. It is the reverse pattern of the former
             # `fast_auto_blocks` key, set and never read until it was removed: this one was
             # read and never settable.
-            "enable_wl_coverage": _config_flag(
-                getattr(self, "_loaded_config", {}), "enable_wl_coverage", False
-            ),
+            "enable_wl_coverage": _config_flag(getattr(self, "_loaded_config", {}), "enable_wl_coverage", False),
             # 🔴 ZERO, NEVER None -- same trap as `wl_diversity_top_k` above, and it would
             # only raise on the armed path. At zero, the consumer falls back on `dp_top_k`.
             # ⚠️ The kernel then CLIPS it to the width of the reserved identifier range (100
             # per origin) and logs it: the hard cap is not a search setting.
-            "wl_coverage_top_k": int(
-                _config_float(getattr(self, "_loaded_config", {}), "wl_coverage_top_k", 0.0)
-            ),
+            "wl_coverage_top_k": int(_config_float(getattr(self, "_loaded_config", {}), "wl_coverage_top_k", 0.0)),
             "rate_tail_sweep": _config_list_int(getattr(self, "_loaded_config", {}), "rate_tail_sweep"),
             "rate_layer_sets": _config_list_of_list_int(getattr(self, "_loaded_config", {}), "rate_layer_sets"),
             "rate_by_swing": _config_flag_default(getattr(self, "_loaded_config", {}), "rate_by_swing", True),
             "rate_tail_keep_optical": int(_config_float(getattr(self, "_loaded_config", {}), "rate_tail_keep_optical", 0.0)),
             "rate_rescue": _config_flag_default(getattr(self, "_loaded_config", {}), "rate_rescue", True),
             "rate_rescue_few": int(_config_float(getattr(self, "_loaded_config", {}), "rate_rescue_few", 10.0)),
-            "require_turning_point": int(
-                _config_float(getattr(self, "_loaded_config", {}), "require_turning_point", 0.0)
-            ),
-            "optical_prefix_sweep": _config_list_int(
-                getattr(self, "_loaded_config", {}), "optical_prefix_sweep"
-            ),
+            "elite_rate_moves": _config_flag_default(getattr(self, "_loaded_config", {}), "elite_rate_moves", True),
+            "elite_rate_max_candidates": int(_config_float(getattr(self, "_loaded_config", {}), "elite_rate_max_candidates", 120.0)),
+            "require_turning_point": int(_config_float(getattr(self, "_loaded_config", {}), "require_turning_point", 0.0)),
+            "optical_prefix_sweep": _config_list_int(getattr(self, "_loaded_config", {}), "optical_prefix_sweep"),
             # ⚠️ `elite_min_improvement` is CLIPPED AT ZERO by
             # `certus_strat_consensus.py` (`max(0.0, ...)`), so it can only TIGHTEN the
             # ELITE gate, never loosen it. Routing it here at least makes it settable; lifting

@@ -799,8 +799,10 @@ def _apply_elite_refinement_if_enabled(
     base_seed = _resolve_robustness_base_seed(ctx.params)
     # 🔑 THE RATE LAYERS OF A PARENT, MOVED -- 👤 2026-10-12: optics, then a packet of Rate, then optics at another wavelength. Up to
     # `elite_rate_max_candidates` more candidates per round change nothing but the Rate layers of their parent (`_elite_rate_moves`).
-    # Off by default, and read from `params` only, like `elite_round_robin`: an option to measure, not yet to deliver.
-    rate_moves = bool(ctx.params.get("elite_rate_moves", False))
+    # 📏 On by default since the measure of 2026-10-12: `r75x0.5` (seed 101) 0.4981 -> 0.3967 nm, the juge de paix 0.1849 -> 0.1721 nm,
+    # `r75x2` 0.5406 -> 0.5358 nm, every list depositable; the best plans alternate packets of Rate and windows of optics of two layers.
+    # Pure optical monitoring, asked for with `allow_rate = 0`, is honoured: the moves are Rate like the others.
+    rate_moves = bool(ctx.params.get("elite_rate_moves", True)) and bool(ctx.params.get("allow_rate", True))
     rate_moves_max = int(ctx.params.get("elite_rate_max_candidates", 120))
 
     executor_cls = concurrent.futures.ThreadPoolExecutor

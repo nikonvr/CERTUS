@@ -299,6 +299,25 @@ def _commit() -> str:
         return "?"
 
 
+def _leviers_rate(par_swing: int) -> dict:
+    """Les leviers Rate qu'une sonde IMPOSE (8e argument) : aucun a 0, les reglages de la production.
+
+    🔴 A 0 la sonde posait `rate_by_swing` a Faux, alors que la production l'arme depuis le 2026-08-22 (et l'application le lisait
+    Faux, par erreur, jusqu'au 2026-10-12) : toute mesure a 0 tournait donc sans le placement du Rate la ou le signal optique est
+    trop pauvre pour arreter la couche, que 👤 veut favorise. 👤 2026-10-12 : « le rate doit etre integre dans tous les
+    scenarios ». A 0 on ne force plus rien, et l'artefact consigne ce qui a tourne (`config`). Les autres valeurs gardent leur
+    sens, y compris `rate_by_swing` Faux pour 2 et 4 (queue seule, chirurgical seul).
+    """
+    if par_swing == 0:
+        return {}
+    return {
+        "rate_by_swing": par_swing in (1, 3, 5),
+        "rate_tail_sweep": TAIL_CUTS if par_swing in (2, 3, 5) else [],
+        "rate_layer_sets": RATE_SETS if par_swing == 4 else [],
+        "rate_tail_keep_optical": 4 if par_swing == 3 else 0,
+    }
+
+
 def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
             resolution_nm: float = 2.0, elargi: bool = False, seed: int = SEED,
             par_swing: int = 0) -> dict:
@@ -370,10 +389,7 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
         # 🔴 par_swing == 3 exige AUSSI le contexte de swing : sans lui `swing_ctx` vaut None
         # et la regle d'exception est sautee EN SILENCE. C'est ce qui a fait qu'un run de
         # 56 min a rendu un doublon exact du run sans exception, le 2026-08-19.
-        "rate_by_swing": par_swing in (1, 3, 5),
-        "rate_tail_sweep": TAIL_CUTS if par_swing in (2, 3, 5) else [],
-        "rate_layer_sets": RATE_SETS if par_swing == 4 else [],
-        "rate_tail_keep_optical": 4 if par_swing == 3 else 0,
+        **_leviers_rate(par_swing),
         "execution_mode": mode,
     }
     # 🔴 LE TRIPLET DE GRAINES DU CONSENSUS -- ajoute le 2026-08-19, et c'est le VERROU de
@@ -428,11 +444,16 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
     # d'ou la profondeur se DEDUIT par une table qui vit dans certus_strat_ui_state.py et qui
     # peut changer. Une deduction n'est pas une consignation : on enregistre la valeur resolue.
     profondeur: dict = {}
+    leviers_rate: dict = {}
 
     def collect(*a, **k):
         p = _c(*a, **k)
         p.update(over)
         vus["n"] += 1
+        for _k in ("allow_rate", "rate_by_swing", "rate_tail_sweep", "rate_layer_sets", "rate_tail_keep_optical", "rate_rescue",
+                   "rate_rescue_few"):
+            if _k in p:
+                leviers_rate[_k] = p[_k]
         for _k in ("robustness_num_runs", "n_screen_runs", "dp_top_k", "consensus_num_runs"):
             _v = p.get(_k)
             if _v is not None:
@@ -518,7 +539,7 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
             "resolution_noise_factor": s.get("resolution_noise_factor"),
         })
     return {"verdict": "OK", "n_strats": len(lignes), "strategies": lignes,
-            "profondeur": dict(profondeur)}
+            "profondeur": dict(profondeur), "leviers_rate": dict(leviers_rate)}
 
 
 def par_fente(lignes: list[dict]) -> None:
@@ -703,7 +724,7 @@ def main() -> int:
     res_nm = float(sys.argv[5]) if len(sys.argv) > 5 else 2.0
     elargi = int(sys.argv[6]) if len(sys.argv) > 6 else 0   # 0 / 1 / 2
     graine = int(sys.argv[7]) if len(sys.argv) > 7 else SEED
-    # 0=rien · 1=swing seul · 2=queue seule · 3=queue+swing+exception · 4=chirurgical
+    # 0=les reglages de la production (rien n'est force) · 1=swing seul · 2=queue seule · 3=queue+swing+exception · 4=chirurgical
     # 🔴 5=queue+swing SANS exception -- le CONTROLE de 3, ajoute le 2026-08-20. Sans lui,
     # comparer 3 a 2 fait varier DEUX drapeaux a la fois (erreur n° 3 du §5), et `by_swing`
     # n'est pas inerte sur r75x2 : il y ajoute 26 origines (RATE_L47, RATE_L65).
@@ -729,11 +750,10 @@ def main() -> int:
                          "exploration_elargie": bool(elargi),
                          "exploration_niveau": int(elargi),
                          # 🔴 CE BLOC MENTAIT : il enregistrait `[]` pour par_swing == 3
-                         # alors que le run tournait bien avec les coupures (§24-7).
-                         "rate_by_swing": par_swing in (1, 3, 5),
-                         "rate_tail_sweep": TAIL_CUTS if par_swing in (2, 3, 5) else [],
-                         "rate_layer_sets": RATE_SETS if par_swing == 4 else [],
-                         "rate_tail_keep_optical": 4 if par_swing == 3 else 0,
+                         # alors que le run tournait bien avec les coupures (§24-7). Il consigne desormais les valeurs
+                         # que le calcul a RECUES (celles de `collect_params` surchargees par la sonde), pas celles que la
+                         # sonde croit avoir posees.
+                         **(r.pop("leviers_rate", None) or {}),
                          # 🔴 §24-7 : sans lui, deux runs a triplets differents seraient
                          # indiscernables dans les artefacts -- exactement la mesure
                          # qu'on cherche a faire.

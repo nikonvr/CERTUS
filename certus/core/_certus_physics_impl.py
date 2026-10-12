@@ -428,20 +428,8 @@ _SUBSTRATE_CACHE: dict[Any, Any] = {}
 
 def get_n_substrate_array_by_id(substrate_id: int, wavelengths_nm: np.ndarray) -> np.ndarray:
 
-    # ── GUARDRAIL ─────────────────────────────────────────────────────────────
-    # Sapphire/Al2O3 (id=3) uses the ANALYTICAL 3-term Sellmeier LAW,
-    # identical to all other substrates.
-    #
-    # HISTORY: until May 2026, id=3 used a tabulated interpolation
-    # from example/sapphire fresnel.xlsx. This approach was abandoned
-    # because:
-    #   1. It created an external dependency (xlsx) for a physical calculation.
-    #   2. It was not consistent with CERTUS_INDEX / CERTUS_INDEX_SPLINE
-    #      which already forced the analytical Sellmeier.
-    #   3. The Sellmeier law is more stable at the edges of the spectral range.
-    #
-    # DO NOT reintroduce tabulated branching here.
-    # ──────────────────────────────────────────────────────────────────────────
+    # Sapphire/Al2O3 (id=3) is the ONE sapphire index of CERTUS: the analytical 3-term Sellmeier law, like every other substrate.
+    # No tabulated branch and no second sapphire table anywhere (guard: tests/unit/test_one_sapphire_index.py).
 
     if substrate_id not in SELLMEIER_COEFFS_BY_ID:
         raise KeyError(f"Unknown substrate ID: {substrate_id}")

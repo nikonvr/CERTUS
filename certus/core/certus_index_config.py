@@ -174,7 +174,7 @@ class OptimizationConfig:
         )
 
         self.n_sub_data = (
-            n_sub_data  # Optional: n_sub from file (e.g. example/sapphire fresnel.xlsx); when set, overrides Sellmeier
+            n_sub_data  # Optional: n_sub from file (a user-supplied substrate table); when set, overrides Sellmeier
         )
         self.random_seed = int(random_seed) if random_seed is not None else None
 

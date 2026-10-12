@@ -6,6 +6,8 @@ from certus.core.certus_core import create_module_environment
 _env = create_module_environment(__file__, 'CERTUS_INDEX_CORE')
 script_dir = _env['script_dir']
 
+import warnings
+
 import numpy as np
 import pandas as pd
 from numba import njit, prange
@@ -449,87 +451,6 @@ def estimate_initial_params(
                 E0_init = float(np.clip(max(E0_init, Eg_init + 0.65), 1.5, 10.0))
 
     return np.array([d_init, Eg_init, A_init, E0_init, C_init, Eu_init, eps_init], dtype=np.float64)
-
-# =============================================================================
-
-# SAPPHIRE SUBSTRATE  tabulated nk data (example/sapphire fresnel.xlsx)
-
-# Loaded once at import time. Used AUTOMATICALLY when substrate resolves to the canonical
-# sapphire substrate label.
-
-# Default physical thickness: 1 mm = 1e6 nm.
-
-# DO NOT MODIFY OR BYPASS THIS BLOCK.
-
-# =============================================================================
-
-# Resolved from the project root (or the executable's folder once frozen): the folder of
-# this module is certus/core, which has no example/ directory.
-_SAPPHIRE_DATA_FILE = get_resource_path("example/sapphire fresnel.xlsx")
-
-_SAPPHIRE_WLS: np.ndarray | None = None
-
-_SAPPHIRE_N: np.ndarray | None = None
-
-_SAPPHIRE_K: np.ndarray | None = None
-
-# True only if the xlsx contains an explicit k column (otherwise k=0 everywhere, no real absorption).
-
-_SAPPHIRE_FILE_HAS_K_COLUMN: bool = False
-
-_SAPPHIRE_DEFAULT_THICKNESS_NM: float = 1.0e6  # 1 mm in nm  DO NOT CHANGE
-
-try:
-    _df_sap = pd.read_excel(_SAPPHIRE_DATA_FILE, header=0, engine="openpyxl")
-
-    _df_sap.columns = _df_sap.columns.astype(str).str.strip().str.lower()
-
-    _wl_col = next((c for c in _df_sap.columns if ("wl" in c) or ("wave" in c) or ("lambda" in c)), _df_sap.columns[0])
-
-    _n_col = next((c for c in _df_sap.columns if c == "n" or c.startswith("n_") or c == "n_sub"), None)
-
-    _k_col = next((c for c in _df_sap.columns if c == "k" or c.startswith("k_") or c == "k_sub"), None)
-
-    _rnu_col = next((c for c in _df_sap.columns if ("r bare" in c) or ("rnu" in c)), None)
-
-    _df_sap = _df_sap.sort_values(by=_wl_col)
-
-    if _n_col is None and _rnu_col is not None:
-        _df_sap = _df_sap.dropna(subset=[_wl_col, _rnu_col])
-
-    else:
-        _n_col = _n_col or _df_sap.columns[1]
-
-        _df_sap = _df_sap.dropna(subset=[_wl_col, _n_col])
-
-    _SAPPHIRE_WLS = _df_sap[_wl_col].to_numpy(dtype=np.float64)
-
-    if _n_col is None and _rnu_col is not None:
-        _r2f = _df_sap[_rnu_col].to_numpy(dtype=np.float64)
-
-        _rfrac = np.clip(_r2f / 100.0 if np.nanmax(_r2f) > 2.0 else _r2f, 1.0e-6, 0.999999)
-
-        _disc = np.maximum(2.0 * _rfrac - _rfrac * _rfrac, 0.0)
-
-        _SAPPHIRE_N = (1.0 + np.sqrt(_disc)) / np.maximum(1.0 - _rfrac, 1.0e-9)
-
-    else:
-        _SAPPHIRE_N = _df_sap[_n_col].to_numpy(dtype=np.float64)
-
-    _SAPPHIRE_K = np.zeros_like(_SAPPHIRE_WLS, dtype=np.float64)
-
-    _SAPPHIRE_FILE_HAS_K_COLUMN = False
-
-except (FileNotFoundError, OSError, *NUMERICAL_FAULT_EXCEPTIONS) as _e_sap:
-    _SAPPHIRE_FILE_HAS_K_COLUMN = False
-
-    import warnings
-
-    warnings.warn(
-        f"[CERTUS INDEX] Sapphire substrate reference unavailable: example/sapphire fresnel.xlsx "
-        f"({_e_sap}). Transparent substrate fallback will be used.",
-        stacklevel=1,
-    )
 
 # =============================================================================
 

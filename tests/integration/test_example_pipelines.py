@@ -343,22 +343,6 @@ def test_index_spline_total_optimization_converges() -> None:
 @pytest.mark.integration
 def test_database_index_files_exist() -> None:
     """The index database files must be present."""
-    for name in ["indices.xlsx", "sapphire_index.txt"]:
-        p = _EXAMPLE_ROOT / "database_index" / name
-        assert p.is_file(), f"Missing database file: {name}"
-        assert p.stat().st_size > 100, f"Suspicious file (too small): {name}"
-
-
-@pytest.mark.integration
-def test_sapphire_index_txt_is_parseable() -> None:
-    """sapphire_index.txt must be a numeric array λ, n, k."""
-    p = _example("database_index/sapphire_index.txt")
-    #FIREWALL: the file has a text header, skip the first line
-    data = np.loadtxt(str(p), comments="#", delimiter=None, skiprows=1)
-    #FIREWALL: at least 2 columns (λ, n) and 50+ rows
-    assert data.ndim == 2
-    assert data.shape[0] >= 50, f"Trop peu de lignes : {data.shape[0]}"
-    assert data.shape[1] >= 2, f"Trop peu de colonnes : {data.shape[1]}"
-    # Check that lambda is increasing
-    lam_col = data[:, 0]
-    assert np.all(np.diff(lam_col) > 0), "Lambda n'est pas strictement croissante"
+    p = _EXAMPLE_ROOT / "database_index" / "indices.xlsx"
+    assert p.is_file(), "Missing database file: indices.xlsx"
+    assert p.stat().st_size > 100, "Suspicious file (too small): indices.xlsx"

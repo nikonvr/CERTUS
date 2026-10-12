@@ -24,7 +24,6 @@ from certus.core.certus_core import (
     get_resource_path,
 )
 from certus.core.certus_index_core import (
-    _SAPPHIRE_FILE_HAS_K_COLUMN,
     OptimizationConfig,
     OptimizationResults,
     calculate_relative_R_normalization,
@@ -1215,8 +1214,6 @@ class CertusIndexExportMixin:
 
             if res.config.substrate == "Sapphire (Al2O3)":
                 summary_data["Sapphire n(lambda) source"] = ["Sellmeier equation (materials_v1.json, id=3)"]
-
-                summary_data["Sapphire k column in file"] = ["yes" if _SAPPHIRE_FILE_HAS_K_COLUMN else "no"]
 
             if hasattr(res, "sellmeier_params") and res.sellmeier_params is not None:
                 sp = res.sellmeier_params

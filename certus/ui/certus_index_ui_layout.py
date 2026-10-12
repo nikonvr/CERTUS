@@ -661,8 +661,7 @@ class CertusIndexLayoutMixin:
 
         self.cb_sub.setToolTip(
             "substrate material. Determines the dispersion model used for n_substrate(\u03bb).\n"
-            "Al2O3: n(\u03bb) via Sellmeier equation (materials DB). "
-            "Absorbing mode uses sapphire fresnel.xlsx only for k(\u03bb).\n"
+            "Al2O3: n(\u03bb) via Sellmeier equation (materials DB); the substrate is transparent (k = 0).\n"
             "Si (Silicon): absorbing mode auto from clues.xlsx."
         )
 

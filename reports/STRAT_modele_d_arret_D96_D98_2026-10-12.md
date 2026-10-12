@@ -19,6 +19,9 @@ couches), et ce que le secours Rate (`reports/STRAT_r75x0.5_secours_rate_2026-10
   de 0,1933 à 0,2407 nm. Ce que le modèle change est le nombre de plans optiques purs déposables : 50 à l'ancien modèle, 107 avec D96
   et D97, 101 avec l'arrêt tardif, 4 avec D98 seul et **0 avec les trois options et l'attente sans fin** (mesure 4).
 
+- **D106 coûte 8 % de SEEL au juge de paix** : ancien modèle d'arrêt, sans secours, graine 42, le meilleur SEEL passe de 0,1776 nm (les enfants
+  d'ELITE sans biais de fente) à 0,1927 nm (avec) ; les repères du juge de paix d'avant la correction sont optimistes d'autant (mesure 5).
+
 ## Ce qui a changé dans le code
 
 `stop_model_flags(params)` (`certus/physics/certus_strat_readings.py`) rend `(exact_inversion, exact_anchors, arming)`, par défaut
@@ -109,6 +112,22 @@ Lecture :
   hypothèse, que je n'ai pas mesurée, est qu'ELITE, dont les parents sont maintenant en majorité des plans Rate, raffine moins la
   lignée optique pure.**
 
+## Mesure 5 : D106 au juge de paix (ancien modèle d'arrêt, sans secours Rate, graine 42)
+
+Même protocole que la mesure 4 (`scripts/probe_blocs_vs_plantage.py 48c premium 1 0 2 0 42 0`), avec les surcharges
+`exact_inversion=false,exact_anchors=false,oms_arming=0,rate_rescue=false`. La seule différence entre les deux lignes : D106, c'est-à-dire les
+enfants d'ELITE notés avec le biais de fente (corrigé) ou sans (arbre modifié : `_attach_slit_profiles` du module d'ELITE ne fait rien,
+`git_dirty` vrai).
+
+| | stratégies | déposables | dont optique pur | meilleur SEEL optique pur | meilleur SEEL |
+|---|---|---|---|---|---|
+| D106 remis comme avant (`dbf8025f`, arbre modifié) | 909 | 673 | 108 | 0,1792 nm | 0,1776 nm |
+| D106 corrigé (`cea0db66`) | 597 | 429 | 84 | 0,1933 nm | 0,1927 nm |
+
+D106 fait passer le meilleur SEEL du juge de paix de 0,1776 à 0,1927 nm (+8,5 %) et celui du meilleur plan optique pur de 0,1792 à 0,1933 nm
+(+7,9 %). Les repères du juge de paix d'avant la correction (0,173 et 0,178 nm dans ETAT) étaient optimistes d'environ 8 %. Une graine, une
+exécution par ligne.
+
 ## Ce qui reste à décider
 
 L'attente sans fin est une hypothèse sur la machine : ce que fait l'OMS à un niveau franchi avant que son contrôleur soit armé n'est
@@ -121,7 +140,7 @@ tardif une option.
 
 ## Artefacts
 
-`reports/STRAT_modele_d_arret_2026-10-12/` : les cinq recherches de la mesure 2 (`blocs_vs_plantage_48c_premium_s042_*_8d9ced13.json`) et les cinq de la mesure 4 (`..._dbf8025f.json`), chacune avec le commit, l'état de l'arbre et les surcharges qui l'ont produite ; la mesure 1 : `probe_modele_lecture_120_plans.json` et `.txt`. La mesure 3 : `reports/STRAT_bench_juge_de_paix_03990e9a_D96-D98_secours_Rate_2026-10-12.txt`.
+`reports/STRAT_modele_d_arret_2026-10-12/` : les cinq recherches de la mesure 2 (`blocs_vs_plantage_48c_premium_s042_*_8d9ced13.json`) et les cinq de la mesure 4 (`..._dbf8025f.json`) et les deux de la mesure 5 (`..._ancien_sans_secours_*.json`), chacune avec le commit, l'état de l'arbre et les surcharges qui l'ont produite ; la mesure 1 : `probe_modele_lecture_120_plans.json` et `.txt`. La mesure 3 : `reports/STRAT_bench_juge_de_paix_03990e9a_D96-D98_secours_Rate_2026-10-12.txt`.
 
 ## Ce que ce rapport ne mesure pas
 

@@ -1,0 +1,34 @@
+=== R du saphir nu utilise ===
+A  dn = 0, f = 0.5           chi2   466.8  rms T/R nu:0.11/0.14 Nb:0.12/0.15 Ta:0.08/0.10 Si:0.07/0.08   dn +0.0000 +0.0000 +0.0000   f_T 0.50 f_R 0.50
+B  dn = 0, f_T f_R libres    chi2   463.4  rms T/R nu:0.10/0.14 Nb:0.12/0.15 Ta:0.08/0.10 Si:0.08/0.08   dn +0.0000 +0.0000 +0.0000   f_T 0.47 f_R 0.51
+C  dn libre, f = 0.5         chi2   440.9  rms T/R nu:0.09/0.13 Nb:0.13/0.15 Ta:0.09/0.09 Si:0.08/0.07   dn +0.0028 -0.0016 +0.0002   f_T 0.50 f_R 0.50
+D  dn libre, f libres        chi2   432.4  rms T/R nu:0.08/0.12 Nb:0.13/0.15 Ta:0.09/0.09 Si:0.08/0.07   dn +0.0137 +0.0096 +0.0113   f_T 0.95 f_R 1.00
+=== R du saphir nu NON utilise ===
+A  dn = 0, f = 0.5           chi2   373.6  rms T/R nu:0.11/0.14 Nb:0.12/0.15 Ta:0.08/0.10 Si:0.07/0.08   dn +0.0000 +0.0000 +0.0000   f_T 0.50 f_R 0.50
+B  dn = 0, f_T f_R libres    chi2   350.4  rms T/R nu:0.10/0.18 Nb:0.13/0.14 Ta:0.08/0.09 Si:0.08/0.09   dn +0.0000 +0.0000 +0.0000   f_T 0.45 f_R 0.41
+C  dn libre, f = 0.5         chi2   339.1  rms T/R nu:0.08/0.16 Nb:0.13/0.14 Ta:0.09/0.08 Si:0.08/0.08   dn +0.0038 +0.0001 +0.0033   f_T 0.50 f_R 0.50
+D  dn libre, f libres        chi2   335.5  rms T/R nu:0.08/0.17 Nb:0.13/0.14 Ta:0.09/0.08 Si:0.08/0.08   dn +0.0147 +0.0115 +0.0149   f_T 1.00 f_R 0.98
+
+Robustesse : niveau (moyenne des noeuds dn) sous d'autres choix, faisceau non polarise, sigma de Fisher du niveau
+   reference : 4 echantillons, 1000-3300, J = 3   niveau +0.0005  (Fisher +-0.0005)
+   R du saphir nu non utilise                     niveau +0.0024  (Fisher +-0.0006)
+   T seul (nu + films)                            niveau +0.0016  (Fisher +-0.0009)
+   R seul (nu + films)                            niveau -0.0011  (Fisher +-0.0008)
+   sans le film Nb                                niveau -0.0001  (Fisher +-0.0006)
+   sans le film Ta                                niveau -0.0003  (Fisher +-0.0006)
+   sans le film Si                                niveau +0.0008  (Fisher +-0.0006)
+   saphir nu seul (T et R)                        niveau -0.0011  (Fisher +-0.0007)
+   saphir nu seul, T seul                         niveau +0.0023  (Fisher +-0.0010)
+   fenetre 800-3300                               niveau -0.0010  (Fisher +-0.0006)   [ecarte : un film a un rms > 1 %]
+   fenetre 1200-3300                              niveau +0.0003  (Fisher +-0.0006)
+   fenetre 1000-2400                              niveau -0.0026  (Fisher +-0.0007)
+   fenetre 1000-3000                              niveau +0.0003  (Fisher +-0.0006)
+   fenetre 1500-3300                              niveau +0.0017  (Fisher +-0.0005)
+   J = 4                                          niveau -0.0001  (Fisher +-0.0005)
+   plus de noeuds dans les films                  niveau -0.0004  (Fisher +-0.0005)
+   moins de noeuds dans les films                 niveau +0.0005  (Fisher +-0.0005)
+
+16 variantes retenues : niveau +0.0003, ecart-type entre variantes 0.0013
+
+consigne dans reports\saphir_corridor_2026-10-12\saphir_absolu.json
+absolu: 17 s -> saphir_absolu.json

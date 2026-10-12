@@ -1,0 +1,65 @@
+=== R du saphir nu utilise: noeud epingle a 1535 nm ; echelle du chi2 = 1.17 (chi2 minimal / nombre de points) ===
+  f = 0.5 exactement: noeud epingle -> chi2 - minimum
+     -0.0120:     429.1   autres noeuds +0.0074 +0.0031;  f_T 0.50 f_R 0.50
+     -0.0095:     248.6   autres noeuds +0.0063 +0.0024;  f_T 0.50 f_R 0.50
+     -0.0075:     139.1   autres noeuds +0.0055 +0.0018;  f_T 0.50 f_R 0.50
+     -0.0050:      45.8   autres noeuds +0.0044 +0.0012;  f_T 0.50 f_R 0.50
+     -0.0040:      22.3   autres noeuds +0.0039 +0.0009;  f_T 0.50 f_R 0.50
+     -0.0025:       2.1   autres noeuds +0.0033 +0.0005;  f_T 0.50 f_R 0.50
+     -0.0010:       0.0   autres noeuds +0.0026 +0.0001;  f_T 0.50 f_R 0.50
+     +0.0000:       8.8   autres noeuds +0.0022 -0.0002;  f_T 0.50 f_R 0.50
+     +0.0010:      26.0   autres noeuds +0.0017 -0.0005;  f_T 0.50 f_R 0.50
+     +0.0025:      67.2   autres noeuds +0.0011 -0.0010;  f_T 0.50 f_R 0.50
+     +0.0040:     127.4   autres noeuds +0.0005 -0.0014;  f_T 0.50 f_R 0.50
+     +0.0050:     178.1   autres noeuds +0.0000 -0.0017;  f_T 0.50 f_R 0.50
+     +0.0075:     342.0   autres noeuds -0.0010 -0.0025;  f_T 0.50 f_R 0.50
+     intervalle a 1 sigma [-0.0018, -0.0009]   a 2 sigma [-0.0027, -0.0005]
+  f libres, a priori N(0.5, 0.15): noeud epingle -> chi2 - minimum
+     -0.0120:      22.0   autres noeuds -0.0069 -0.0103;  f_T 0.01 f_R 0.07
+     -0.0095:      13.2   autres noeuds -0.0045 -0.0078;  f_T 0.12 f_R 0.18
+     -0.0075:       7.9   autres noeuds -0.0026 -0.0058;  f_T 0.21 f_R 0.27
+     -0.0050:       3.1   autres noeuds -0.0002 -0.0033;  f_T 0.32 f_R 0.38
+     -0.0040:       1.8   autres noeuds +0.0008 -0.0023;  f_T 0.37 f_R 0.42
+     -0.0025:       0.5   autres noeuds +0.0022 -0.0008;  f_T 0.43 f_R 0.48
+     -0.0010:       0.0   autres noeuds +0.0036 +0.0007;  f_T 0.50 f_R 0.55
+     +0.0000:       0.1   autres noeuds +0.0046 +0.0018;  f_T 0.54 f_R 0.59
+     +0.0010:       0.5   autres noeuds +0.0055 +0.0028;  f_T 0.58 f_R 0.64
+     +0.0025:       1.7   autres noeuds +0.0070 +0.0043;  f_T 0.65 f_R 0.70
+     +0.0040:       3.6   autres noeuds +0.0084 +0.0058;  f_T 0.71 f_R 0.76
+     +0.0050:       5.4   autres noeuds +0.0094 +0.0068;  f_T 0.75 f_R 0.81
+     +0.0075:      11.0   autres noeuds +0.0118 +0.0093;  f_T 0.86 f_R 0.91
+     intervalle a 1 sigma [-0.0032, +0.0019]   a 2 sigma [-0.0058, +0.0046]
+=== R du saphir nu NON utilise: noeud epingle a 1535 nm ; echelle du chi2 = 1.00 (chi2 minimal / nombre de points) ===
+  f = 0.5 exactement: noeud epingle -> chi2 - minimum
+     -0.0120:     434.0   autres noeuds +0.0089 +0.0067;  f_T 0.50 f_R 0.50
+     -0.0095:     275.7   autres noeuds +0.0079 +0.0060;  f_T 0.50 f_R 0.50
+     -0.0075:     174.5   autres noeuds +0.0071 +0.0055;  f_T 0.50 f_R 0.50
+     -0.0050:      79.5   autres noeuds +0.0060 +0.0048;  f_T 0.50 f_R 0.50
+     -0.0040:      51.8   autres noeuds +0.0056 +0.0045;  f_T 0.50 f_R 0.50
+     -0.0025:      21.1   autres noeuds +0.0049 +0.0041;  f_T 0.50 f_R 0.50
+     -0.0010:       3.9   autres noeuds +0.0043 +0.0036;  f_T 0.50 f_R 0.50
+     +0.0000:       0.0   autres noeuds +0.0039 +0.0033;  f_T 0.50 f_R 0.50
+     +0.0010:       2.3   autres noeuds +0.0034 +0.0030;  f_T 0.50 f_R 0.50
+     +0.0025:      17.4   autres noeuds +0.0028 +0.0026;  f_T 0.50 f_R 0.50
+     +0.0040:      46.7   autres noeuds +0.0022 +0.0022;  f_T 0.50 f_R 0.50
+     +0.0050:      74.2   autres noeuds +0.0017 +0.0018;  f_T 0.50 f_R 0.50
+     +0.0075:     170.8   autres noeuds +0.0007 +0.0011;  f_T 0.50 f_R 0.50
+     intervalle a 1 sigma [-0.0003, +0.0004]   a 2 sigma [-0.0010, +0.0012]
+  f libres, a priori N(0.5, 0.15): noeud epingle -> chi2 - minimum
+     -0.0120:      27.5   autres noeuds -0.0067 -0.0078;  f_T 0.01 f_R 0.00
+     -0.0095:      18.2   autres noeuds -0.0054 -0.0062;  f_T 0.09 f_R 0.07
+     -0.0075:      11.8   autres noeuds -0.0035 -0.0042;  f_T 0.18 f_R 0.16
+     -0.0050:       5.7   autres noeuds -0.0011 -0.0017;  f_T 0.29 f_R 0.27
+     -0.0040:       3.9   autres noeuds -0.0001 -0.0007;  f_T 0.34 f_R 0.31
+     -0.0025:       1.8   autres noeuds +0.0013 +0.0008;  f_T 0.40 f_R 0.38
+     -0.0010:       0.6   autres noeuds +0.0028 +0.0023;  f_T 0.47 f_R 0.44
+     +0.0000:       0.1   autres noeuds +0.0037 +0.0033;  f_T 0.51 f_R 0.49
+     +0.0010:       0.0   autres noeuds +0.0047 +0.0043;  f_T 0.55 f_R 0.53
+     +0.0025:       0.5   autres noeuds +0.0061 +0.0059;  f_T 0.62 f_R 0.59
+     +0.0040:       1.7   autres noeuds +0.0075 +0.0074;  f_T 0.68 f_R 0.66
+     +0.0050:       2.9   autres noeuds +0.0085 +0.0084;  f_T 0.72 f_R 0.70
+     +0.0075:       7.3   autres noeuds +0.0109 +0.0109;  f_T 0.83 f_R 0.81
+     intervalle a 1 sigma [-0.0015, +0.0032]   a 2 sigma [-0.0040, +0.0056]
+
+consigne dans reports\saphir_corridor_2026-10-12\saphir_profil.json
+profil: 17 s -> saphir_profil.json

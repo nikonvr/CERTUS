@@ -1,0 +1,46 @@
+{
+  "etape": "information",
+  "resultats": {
+    "R du saphir nu utilise": {
+      "f=0.5": 0.0005189772376858741,
+      "sigma_f=0.05": 0.0009608221462875787,
+      "sigma_f=0.1": 0.0016921583850512917,
+      "sigma_f=0.15": 0.0024677588359884066,
+      "sigma_f=0.25": 0.004045012255888353,
+      "sigma_f=0.5": 0.007967608517942058,
+      "sigma_f=5.0": 0.04358297442820977
+    },
+    "R du saphir nu NON utilise": {
+      "f=0.5": 0.0006139353494418319,
+      "sigma_f=0.05": 0.0010131227983378541,
+      "sigma_f=0.1": 0.0017242953995742398,
+      "sigma_f=0.15": 0.0024924059446021786,
+      "sigma_f=0.25": 0.004065540280562707,
+      "sigma_f=0.5": 0.00799588266652067,
+      "sigma_f=5.0": 0.04496284162521416
+    },
+    "sous_ensembles": {
+      "saphir nu, T et R": 0.0006839187759575446,
+      "saphir nu, T seul": 0.0009673008783534799,
+      "3 films, T et R": 0.0007945939567201198,
+      "3 films, T seul": 0.0069028989615864175,
+      "3 films, R seul": 0.0029774082671569667,
+      "tout": 0.0005189772376858741
+    }
+  },
+  "duree_s": 5.5,
+  "provenance": {
+    "certus_version": "26_05",
+    "git_commit": "925b37886116a5e63e35f5bdd6b971507fd10d78",
+    "git_dirty": false,
+    "python": "3.14.8",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "numba": "0.67.0",
+    "numba_cache_key": "01e9ad348310",
+    "numba_cache_keyed": false,
+    "platform": "Windows-11-10.0.26200-SP0",
+    "machine": "AMD64",
+    "generated_at_utc": "2026-10-12T08:06:30+00:00"
+  }
+}

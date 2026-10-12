@@ -1,0 +1,108 @@
+{
+  "etape": "synthese",
+  "resultats": {
+    "spline niveau +0.0000 f (0.5, 0.5) deficit R nu 0.0 R nu utilise": {
+      "biais": -0.00013988136845939725,
+      "ecart_type": 0.00032774763770383573
+    },
+    "spline niveau +0.0000 f (0.5, 0.5) deficit R nu 0.0 R nu non utilise": {
+      "biais": 0.00018988337056495653,
+      "ecart_type": 0.0003826639091931574
+    },
+    "spline niveau -0.0040 f (0.5, 0.5) deficit R nu 0.0 R nu utilise": {
+      "biais": -0.00032210296284322735,
+      "ecart_type": 0.0005041098604099969
+    },
+    "spline niveau -0.0040 f (0.5, 0.5) deficit R nu 0.0 R nu non utilise": {
+      "biais": -2.6304979796869937e-05,
+      "ecart_type": 0.0009754691963530075
+    },
+    "spline niveau -0.0075 f (0.5, 0.5) deficit R nu 0.0 R nu utilise": {
+      "biais": -0.00012521530410701791,
+      "ecart_type": 0.0004936273398988523
+    },
+    "spline niveau -0.0075 f (0.5, 0.5) deficit R nu 0.0 R nu non utilise": {
+      "biais": 0.00023006354835831272,
+      "ecart_type": 0.0004940390311424345
+    },
+    "spline niveau +0.0000 f (0.35, 0.35) deficit R nu 0.0 R nu utilise": {
+      "biais": 0.003236065350071387,
+      "ecart_type": 0.0005980604179201842
+    },
+    "spline niveau +0.0000 f (0.35, 0.35) deficit R nu 0.0 R nu non utilise": {
+      "biais": 0.00328655209921574,
+      "ecart_type": 0.0006810716167639888
+    },
+    "spline niveau +0.0000 f (0.65, 0.65) deficit R nu 0.0 R nu utilise": {
+      "biais": -0.0036829050246007192,
+      "ecart_type": 0.000460030663750876
+    },
+    "spline niveau +0.0000 f (0.65, 0.65) deficit R nu 0.0 R nu non utilise": {
+      "biais": -0.003741831913469374,
+      "ecart_type": 0.0006949765712851399
+    },
+    "spline niveau +0.0000 f (0.5, 0.9) deficit R nu 0.002 R nu utilise": {
+      "biais": -0.00847660725483047,
+      "ecart_type": 0.00046266424480621886
+    },
+    "spline niveau +0.0000 f (0.5, 0.9) deficit R nu 0.002 R nu non utilise": {
+      "biais": -0.005271624472176574,
+      "ecart_type": 0.0003456251307468502
+    },
+    "TLU niveau +0.0000 f (0.5, 0.5) deficit R nu 0.0 R nu utilise": {
+      "biais": 6.977905563272247e-05,
+      "ecart_type": 0.000430510090930784
+    },
+    "TLU niveau +0.0000 f (0.5, 0.5) deficit R nu 0.0 R nu non utilise": {
+      "biais": -7.610514605598273e-05,
+      "ecart_type": 0.000478726304583502
+    },
+    "TLU niveau -0.0040 f (0.5, 0.5) deficit R nu 0.0 R nu utilise": {
+      "biais": -0.0003761663919900132,
+      "ecart_type": 0.0006213340175374826
+    },
+    "TLU niveau -0.0040 f (0.5, 0.5) deficit R nu 0.0 R nu non utilise": {
+      "biais": -0.0004957781128730214,
+      "ecart_type": 0.0007429844478481838
+    },
+    "TLU niveau -0.0075 f (0.5, 0.5) deficit R nu 0.0 R nu utilise": {
+      "biais": -8.847843875032374e-05,
+      "ecart_type": 0.00024714461571477087
+    },
+    "TLU niveau -0.0075 f (0.5, 0.5) deficit R nu 0.0 R nu non utilise": {
+      "biais": -4.648578626774685e-05,
+      "ecart_type": 0.0006073358370940805
+    },
+    "TLU niveau +0.0000 f (0.4, 0.4) deficit R nu 0.0 R nu utilise": {
+      "biais": 0.001955249433491973,
+      "ecart_type": 0.000606967279104704
+    },
+    "TLU niveau +0.0000 f (0.4, 0.4) deficit R nu 0.0 R nu non utilise": {
+      "biais": 0.0018777451805115977,
+      "ecart_type": 0.0005466424588167998
+    },
+    "TLU niveau +0.0000 f (0.6, 0.6) deficit R nu 0.0 R nu utilise": {
+      "biais": -0.0023074950542965205,
+      "ecart_type": 0.0003573422056908345
+    },
+    "TLU niveau +0.0000 f (0.6, 0.6) deficit R nu 0.0 R nu non utilise": {
+      "biais": -0.002864840914840699,
+      "ecart_type": 0.0004240453959262986
+    }
+  },
+  "duree_s": 111.6,
+  "provenance": {
+    "certus_version": "26_05",
+    "git_commit": "925b37886116a5e63e35f5bdd6b971507fd10d78",
+    "git_dirty": false,
+    "python": "3.14.8",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "numba": "0.67.0",
+    "numba_cache_key": "01e9ad348310",
+    "numba_cache_keyed": false,
+    "platform": "Windows-11-10.0.26200-SP0",
+    "machine": "AMD64",
+    "generated_at_utc": "2026-10-12T08:04:55+00:00"
+  }
+}

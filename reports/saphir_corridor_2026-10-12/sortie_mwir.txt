@@ -1,0 +1,10 @@
+Fenetres 1000 -> lam_max, J = 4, R du saphir nu NON utilise (sa fermeture echoue au-dela de 4 um), absorption mesuree du saphir
+   1000-3300 k_s mesure  noeuds  3300  1868  1303  1000 nm : dn +0.0045 +0.0002 +0.0011 +0.0013  sd 0.0008 0.0006 0.0008 0.0021  rms T 0.08 0.13 0.09 0.08
+   1000-4300 k_s mesure  noeuds  4300  2048  1344  1000 nm : dn +0.0010 +0.0015 +0.0007 +0.0064  sd 0.0007 0.0005 0.0007 0.0020  rms T 0.12 0.38 0.84 0.15
+   1000-5000 k_s mesure  noeuds  5000  2143  1364  1000 nm : dn +0.0009 +0.0020 +0.0006 +0.0063  sd 0.0007 0.0004 0.0007 0.0019  rms T 0.21 0.47 0.72 0.20
+   1000-5200 k_s mesure  noeuds  5200  2167  1368  1000 nm : dn +0.0011 +0.0017 +0.0007 +0.0060  sd 0.0006 0.0004 0.0007 0.0019  rms T 0.29 0.71 0.77 0.57
+   1000-4300 k_s = 0     noeuds  4300  2048  1344  1000 nm : dn +0.0041 +0.0013 +0.0011 +0.0059  sd 0.0007 0.0005 0.0007 0.0020  rms T 0.15 0.38 0.81 0.18
+   1000-5000 k_s = 0     noeuds  5000  2143  1364  1000 nm : dn +0.0083 +0.0015 +0.0017 +0.0037  sd 0.0007 0.0004 0.0007 0.0019  rms T 1.18 0.50 0.69 0.27
+
+consigne dans reports\saphir_corridor_2026-10-12\saphir_mwir.json
+mwir: 13 s -> saphir_mwir.json

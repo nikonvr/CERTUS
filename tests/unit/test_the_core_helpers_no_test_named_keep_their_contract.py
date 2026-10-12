@@ -424,7 +424,8 @@ def test_every_canonical_label_is_offered_once_to_the_user():
         ("Si", "Silicon (Si)"),
         ("void", "Air"),
         ("  air ", "Air"),
-        ("Sapphire (FR)", "Sapphire Fresnel"),
+        ("Sapphire (FR)", "Sapphire (Al2O3)"),
+        ("Sapphire Fresnel", "Sapphire (Al2O3)"),
     ],
 )
 def test_an_alias_of_a_substrate_resolves_to_its_canonical_label_whatever_the_case(label, canonical):

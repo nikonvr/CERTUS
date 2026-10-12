@@ -19,7 +19,10 @@ def _build_sellmeier_by_name() -> dict:
 
     result["Sapphire (FR)"] = result["Sapphire (Al2O3)"]
 
-    result["Sapphire Fresnel"] = (1.4155, 0.00904, 0.6356, 0.00905, 3.2352, 226.57863)
+    # Legacy name, kept so that a saved component still loads. It used to carry its own Sellmeier set, fitted to an index
+    # deduced from the reflectance of the bare plate (n lower than the true one by 0.0077 at 1 um, closure deficit of R).
+    # CERTUS has ONE sapphire index: the law of id 3.
+    result["Sapphire Fresnel"] = result["Sapphire (Al2O3)"]
 
     # Silicon Fresnel Sellmeier REMOVED - Si data comes from clues.xlsx (Single Source of Truth)
 
@@ -46,14 +49,8 @@ class RobustMaterialDatabase:
 
     # DATA SOURCES & VALIDATION (2026-02 Upgrade)
 
-    # 1. Sapphire Fresnel:
-
-    #    - Source: Analytic formula from resultats_substrates.pdf
-
-    #    - Verification: Matches reference table with Delta n < 1e-5.
-
-    #    - Range: 280-4200 nm.
-
+    # 1. Sapphire: the Sellmeier law of id 3 (ordinary ray, Malitson and Dodge), the only sapphire index of CERTUS;
+    #    'Sapphire (FR)' and 'Sapphire Fresnel' are legacy names for that same index.
     # 2. Silicon: Data from clues.xlsx -> Si-substrate (Single Source of Truth).
 
     # ---------------------------------------------------------------------

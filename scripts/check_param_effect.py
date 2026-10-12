@@ -98,7 +98,9 @@ def run_once(overrides: dict, seed: int = 42) -> tuple[float | None, int, int]:
     B.qapp()
     B.autoanswer_dialogs(True)
     app = CertusStratApp()
-    app.load_configuration(str(ROOT / CONFIG))
+    from _composant import charger_configuration
+
+    charger_configuration(app, ROOT / CONFIG)
 
     full = dict(overrides)
     full["show_plots"] = False

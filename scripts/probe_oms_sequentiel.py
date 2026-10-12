@@ -69,7 +69,9 @@ def load_params(config_path: Path) -> dict:
 
     app = CertusStratApp()
     app._post_load_config = lambda *a: None
-    app.load_configuration(str(config_path))
+    from _composant import charger_configuration
+
+    charger_configuration(app, config_path)
     params = app.collect_params()
     params["_keep_app_alive"] = app
     return params

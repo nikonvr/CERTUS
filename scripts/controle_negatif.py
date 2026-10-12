@@ -99,7 +99,9 @@ def mesurer(comp: str, a: int, b: int) -> dict:
         Bx.qapp()
         Bx.autoanswer_dialogs(True)
         app = CertusStratApp()
-        app.load_configuration(str(f))
+        from _composant import charger_configuration
+
+        charger_configuration(app, f)
         if "execution_mode" in getattr(app, "widgets", {}):
             app.widgets["execution_mode"].setCurrentText("fast")
         over = {"show_plots": False, "robustness_seed": SEED,

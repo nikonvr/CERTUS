@@ -748,7 +748,9 @@ def run_strat():
     if not _path.is_file():
         raise FileNotFoundError(f"CERTUS_DESIGN_JSON={_design!r} : fichier introuvable")
     emit(f"DESIGN_JSON={_path.name}")
-    app.load_configuration(str(_path))
+    from _composant import charger_configuration
+
+    charger_configuration(app, _path)
     setup = time.perf_counter() - t0
 
     t1 = time.perf_counter()

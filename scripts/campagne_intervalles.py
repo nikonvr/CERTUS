@@ -141,7 +141,9 @@ def mesurer(a: int, b: int, mode: str = "fast", cache_dir: Path | None = None,
         Bx.qapp()
         Bx.autoanswer_dialogs(True)
         app = CertusStratApp()
-        app.load_configuration(str(cfg))
+        from _composant import charger_configuration
+
+        charger_configuration(app, cfg)
         if "execution_mode" in getattr(app, "widgets", {}):
             app.widgets["execution_mode"].setCurrentText(mode)
 

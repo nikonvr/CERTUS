@@ -98,7 +98,9 @@ def run_part(cfg: str, mode: str = "fast") -> tuple[dict, dict]:
     B.qapp()
     B.autoanswer_dialogs(True)
     app = CertusStratApp()
-    app.load_configuration(str(ROOT / cfg))
+    from _composant import charger_configuration
+
+    charger_configuration(app, ROOT / cfg)
     if "execution_mode" in getattr(app, "widgets", {}):
         app.widgets["execution_mode"].setCurrentText(mode)
 
@@ -184,7 +186,9 @@ def _score(assembled: np.ndarray, n_runs: int) -> int:
 
     B.qapp()
     app = CertusStratApp()
-    app.load_configuration(str(ROOT / FULL))
+    from _composant import charger_configuration
+
+    charger_configuration(app, ROOT / FULL)
     prm = app.collect_params()
 
     from certus.physics.certus_opt_tmm import arange_inclusive
@@ -210,7 +214,7 @@ def _score(assembled: np.ndarray, n_runs: int) -> int:
     nom_parts = []
     for part in PARTS:
         a2 = CertusStratApp()
-        a2.load_configuration(str(ROOT / f"example/example_strat/JSON-strat-99c-part{part}.json"))
+        charger_configuration(a2, ROOT / f"example/example_strat/JSON-strat-99c-part{part}.json")
         nom_parts.append(_nominal_thicknesses(a2.collect_params()))
     nom_cat = np.concatenate(nom_parts)
     print(f"\nControle de l'assemblage : {[len(x) for x in nom_parts]} couches -> {nom_cat.size}")

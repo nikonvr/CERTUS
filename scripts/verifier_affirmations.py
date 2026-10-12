@@ -180,7 +180,9 @@ def test_D_modes_existants_inchanges() -> None:
     from CERTUS_STRAT import CertusStratApp
 
     app = CertusStratApp()
-    app.load_configuration(str(ROOT / "example/example_strat/JSON-strat-random75.json"))
+    from _composant import charger_configuration
+
+    charger_configuration(app, ROOT / "example/example_strat/JSON-strat-random75.json")
     # 🔴 Ces valeurs sont celles d'AVANT l'ajout du mode, relevees dans le diff de
     # certus_strat_ui_state.py. Si l'une bouge, la regle d'or est violee.
     ref = {"fast":    (50, 50, 10, 1, 20, 6),

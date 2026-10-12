@@ -121,7 +121,9 @@ def resolution_exigee(cfg: str, adm: np.ndarray) -> dict:
     from CERTUS_STRAT import CertusStratApp
 
     app = CertusStratApp()
-    app.load_configuration(str(ROOT / cfg))
+    from _composant import charger_configuration
+
+    charger_configuration(app, ROOT / cfg)
     prm = app.collect_params()
     db = prm.get("materials_db_instance") or prm.get("materials_db")
 

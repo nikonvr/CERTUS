@@ -13,10 +13,10 @@ from numba import njit, prange
 
 import certus.physics.certus_tmm_core as tmm_core
 from certus.domain.constants import PI, TWO_PI
+from certus.physics.certus_optical_models import extinction_from_epsilon
 
 # Explicit imports for type annotations and helper functions
 # to prevent F821 undefined symbol errors.
-#   immediate would have broken the import.
 #
 #   🔴 `cost_numba_fast`, however, is in the BODY of `make_cost_function` (line ~1181).
 #   Any cost function built by this call therefore raised `NameError` at the
@@ -25,7 +25,6 @@ from certus.domain.constants import PI, TWO_PI
 #
 # `gradient_utils` only imports numpy, numba and the TMM facade: no cycle. (It used to re-export `make_cost_function`
 # from this module at the end of its file, and `gradient_analytic` could not be imported first.)
-from certus.physics.certus_optical_models import extinction_from_epsilon
 from certus.physics.gradient_utils import cost_numba_fast
 
 # ⚠️ `Target` under TYPE_CHECKING, and this is not just for show: importing

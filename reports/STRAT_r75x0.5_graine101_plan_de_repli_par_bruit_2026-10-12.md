@@ -53,7 +53,7 @@ Les trois plans suivants dans l'ordre du plantage, mêmes niveaux de bruit (0,5�
   7,7·10⁻¹³ (cache Numba froid du clone). **Il ne retrouve pas la population au bit** : 2 897 stratégies de part et d'autre, 2 893 identifiants communs,
   44 lignes communes ont un taux de plantage différent.
 - **Un premier rejeu a été perdu** : le clone n'avait pas `reports/serie_echelle_r75/cfg_x0.5.json`, `load_configuration` a rendu `False`, la sonde n'a pas lu ce retour
-  et a calculé quatre heures sur la pile par défaut de 46 couches, avec le verdict `OK` (D104, ETAT section 4). Son artefact n'est pas conservé.
+  et a calculé quatre heures sur la pile par défaut de 46 couches, avec le verdict `OK` (D105, ETAT section 4). Son artefact n'est pas conservé.
 
 ## Ce que ce rapport ne dit pas
 

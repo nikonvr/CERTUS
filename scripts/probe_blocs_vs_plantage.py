@@ -93,6 +93,7 @@ Lancer sur le 99c d'abord, puis sur le 75c, avant toute conclusion generale.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import sys
@@ -210,6 +211,13 @@ RATE_SETS = [
     [31, 32, 33, 34, 35, 36],    # la zone continue
     [30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40],
 ]
+#: 🔑 SURCHARGEABLE PAR `CERTUS_RATE_SETS` : les jeux separes par `;`, les couches d'un jeu par `-`.
+#: Les jeux ci-dessus sont ceux du x2 ; une autre echelle a d'autres couches critiques (sur x0,5 :
+#: 22, 25, 28, puis 46, 51, 62), qu'on lit dans l'artefact d'une mesure precedente.
+#:     set CERTUS_RATE_SETS=22-25-28;22-25-28-46;22-25-28-46-51
+_RATE_SETS_ENV = os.environ.get("CERTUS_RATE_SETS", "").strip()
+if _RATE_SETS_ENV:
+    RATE_SETS = [[int(_c) for _c in _jeu.split("-") if _c.strip()] for _jeu in _RATE_SETS_ENV.split(";") if _jeu.strip()]
 
 #: PROFIL D'EXPLORATION ELARGIE -- il elargit ce qui est GENERE et RETENU, jamais la profondeur
 #: d'EVALUATION. `robustness_num_runs` et `n_screen_runs` restent intacts : ce sont des
@@ -759,7 +767,8 @@ def main() -> int:
                 # 🔴 LES COUPURES ENTRENT DANS LE NOM. Sans elles, changer TAIL_CUTS ecrase
                 # l'artefact precedent : les coupures 28-52 ont ete perdues ainsi.
                 + ("" if not par_swing else "_swing" if par_swing == 1
-                   else "_chirurgical" if par_swing == 4
+                   else "_chirurgical" + (f"-{hashlib.sha1(_RATE_SETS_ENV.encode()).hexdigest()[:8]}" if _RATE_SETS_ENV else "")
+                   if par_swing == 4
                    else f"_tail{min(TAIL_CUTS)}-{max(TAIL_CUTS)}"
                         + ("k" if par_swing == 3 else "s" if par_swing == 5 else ""))
                 # 🔴 LE TRIPLET DE CONSENSUS ENTRE DANS LE NOM, pour la meme raison que les

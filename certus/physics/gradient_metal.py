@@ -304,6 +304,21 @@ def compute_metal_bilayer_gradient_analytic(
 
     dJ_dk = -sens_nM_i
 
+    # The objective the optimizer minimises is the reflectance MSE PLUS a smoothness penalty, 1e-2 times the squared second
+    # differences of n and of k on the wavelength grid (`_bilayer_reflectance_mse`). The cost and the gradient of the beam
+    # analysis left it out (D40): it minimised another function, whose values could not be compared with the global
+    # optimum it starts from. The penalty and its derivative, as METAL SINGLE has had them since D76:
+    d2_n = np.diff(n_calc, n=2)
+
+    d2_k = np.diff(k_calc, n=2)
+
+    mse = mse + 1e-2 * (np.sum(d2_n**2) + np.sum(d2_k**2))
+
+    for d2, dJ in ((d2_n, dJ_dn), (d2_k, dJ_dk)):
+        dJ[:-2] += 2e-2 * d2
+        dJ[1:-1] -= 4e-2 * d2
+        dJ[2:] += 2e-2 * d2
+
     # Spline basis CACHED instead of being reconstructed at each gradient call.
     #
     # The previous loop constructed spline_knot_count distinct CubicSpline objects,

@@ -51,8 +51,8 @@ surcharge explicite (`reports/STRAT_D100_interrupteurs_non_charges_2026-10-11.md
 (`reports/STRAT_r75x2_sept_graines_D100_D103_corriges_2026-10-12.md`, code `411e6eb5`). `r75x2` en `deep`, sans
 rampes, protocole d'août, sept graines : **six trouvent des déposables** (42, 77, 101, 202, 404, 505 ; août : trois),
 la 303 n'en trouve aucun ; meilleurs SEEL de 0,5323 à 0,6354 nm, médiane 0,5563 nm. Tous les déposables sont des plans
-ELITE. L'ELITE « tour à tour » (graine 202) rend 368 déposables contre 403 et un meilleur SEEL de 0,5602 contre
-0,5837 nm, le signe inverse de celui du 2026-10-11 au matin sous D100 : une graine, pas de décision. Mesures du
+ELITE. L'ELITE « tour à tour » sur les six graines (`reports/STRAT_ELITE_tour_a_tour_six_graines_2026-10-12.md`) :
+meilleur SEEL médian +0,7 % (mieux une fois, de 14,7 %), pas de gain net démontré. Mesures du
 2026-10-11 (`reports/STRAT_remesure_D100_2026-10-11.md`, `782972bf`) : juge de paix **0,178 nm** (`premium`, même
 `RESULT` au bit après D103) ; le passe-bande de 99 couches en une campagne reste non fabricable (0 déposable sur
 2 139, plantage minimal 82,7 %) ; `r75x0.5` avec un seul verre témoin : aucun déposable aux graines 42, 101 et 202,
@@ -410,7 +410,7 @@ Ces sujets demandent un jugement de physicien ou de propriétaire du produit. Le
 | **paquet `certus_re`** | la correction de la citation du saphir (Malitson et Dodge, 1972) attend d'être commitée par 👤 dans ce dépôt-là, qui contient ses modifications en cours, puis publiée avec la prochaine version Zenodo |
 | **interface** | Revoir visuellement les onze fenêtres et choisir les teintes de marque, la bande des fichiers récents et les bornes des champs numériques. |
 | **base de dépôts** | RE : remplacer la seule mesure d'un classeur RE déjà chargé par celle d'un dépôt (il faudrait découper `load_reverse_engineering_from_path`) ? Apparier dans la base la T et la R d'un même échantillon que l'opérateur a nommées différemment (`NbT3` et `NbR3`) ? INDEX : en phase 2, la fenêtre λ de l'utilisateur est remplacée par toute l'étendue des données (`_on_tlu_constrained_finished`), est-ce voulu ? |
-| **ELITE « tour à tour »** | `elite_round_robin`, graine 202, D100 et D103 corrigés : 368 déposables contre 403, meilleur SEEL 0,5602 contre 0,5837 nm ; sous D100 le signe était l'inverse (33 % de déposables en plus, SEEL dans le bruit). L'armer par défaut demande plus de graines : dire s'il faut les mesurer |
+| **ELITE « tour à tour »** | `elite_round_robin`, six graines, D100 et D103 corrigés (2026-10-12) : mieux à la graine 42 (0,5420 contre 0,6354 nm), équivalent à la 404, moins bien aux 77, 101 et 505 (de +0,7 à +2,8 %), la 303 sans déposable des deux côtés ; médiane +0,7 %. L'option est inactive et le reste tant que 👤 ne dit pas de l'armer ; ce qui manque pour trancher est le bruit d'une même graine rejouée |
 | **arrêt de STRAT** | D96 à D98 sont tranchés le 2026-10-12 (§3) et se codent ; reste : noter ou non au modèle figé, au moins pour départager la tête du classement (rapport du 2026-10-10, sections 4 et 6) |
 
 ## 6. Chantiers spécifiés, en attente

@@ -28,7 +28,7 @@ lissage > 1), que la branche corrige (D93 à D95) ; les 171 cas de croissance sa
 **Un seul indice de saphir** (2026-10-12, `reports/SAPHIR_indice_unique_2026-10-12.md`). La référence est le Sellmeier d'id 3
 (rayon ordinaire, Malitson et Dodge) ; les mesures absolues de la séance 24-03 en donnent le niveau à +0,0003 ± 0,0028, donc on ne
 la corrige pas. « Sapphire Fresnel » (un second Sellmeier, n plus bas de 0,0077 ; dans METAL, un substrat N-BK7 sans un mot) est un
-alias de l'id 3 (`b9223b43`) ; les tables mortes `sapphire fresnel.xlsx` et `sapphire_index.txt` sont supprimées (`4a3bda20`) ;
+alias de l'id 3 (`b9223b43`) ; les tables mortes `sapphire fresnel.xlsx` et `sapphire_index.txt` sont supprimées (`925b3788`) ;
 `tests/unit/test_one_sapphire_index.py` garde l'unicité. Reste : C1 et C3 diffèrent entre le JSON et le code (n : 4,6·10⁻⁷ au plus),
 non alignés pour ne pas changer le hash verrouillé du JSON. Pas encore validé en entier : voir la validation ci-dessous.
 

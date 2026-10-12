@@ -68,8 +68,8 @@ infrarouge de la référence tient à ±0,003 jusqu'à 5,2 µm (`sortie_mwir.txt
 |---|---|---|
 | `certus/utils/certus_strat_db.py` | « Sapphire Fresnel » : un Sellmeier à part (n plus bas de 0,0077 à 1 µm), offert par les listes de FIELD et de METAL | `b9223b43` : alias du saphir d'id 3 |
 | `certus/core/certus_substrate_db.py` | le libellé « Sapphire Fresnel » et ses alias ; **dans METAL, ce libellé n'avait pas d'id de Sellmeier et le substrat devenait N-BK7 sans un mot** | `b9223b43` |
-| `example/sapphire fresnel.xlsx` | une table lue à l'import par INDEX et jamais utilisée (k forcé à 0, n pris au Sellmeier), à k 200 fois trop fort à 5 µm | `4a3bda20` : supprimée avec son chargeur |
-| `example/database_index/sapphire_index.txt` et la copie de `example_index/` | une table n, k plus basse que la référence de 0,012 à 250 nm, 0,0043 à 1 µm, 0,002 à 3 µm | `4a3bda20` : supprimées |
+| `example/sapphire fresnel.xlsx` | une table lue à l'import par INDEX et jamais utilisée (k forcé à 0, n pris au Sellmeier), à k 200 fois trop fort à 5 µm | `925b3788` : supprimée avec son chargeur |
+| `example/database_index/sapphire_index.txt` et la copie de `example_index/` | une table n, k plus basse que la référence de 0,012 à 250 nm, 0,0043 à 1 µm, 0,002 à 3 µm | `925b3788` : supprimées |
 
 Le garde `tests/unit/test_one_sapphire_index.py` (13 tests) échoue si un nom, un résolveur (noyau, INDEX, INDEX SPLINE,
 outil de Sellmeier de substrat) ou le fichier de données donne un autre n. **Il a trouvé un écart restant : le JSON et le

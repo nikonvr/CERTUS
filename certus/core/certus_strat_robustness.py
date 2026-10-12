@@ -240,33 +240,45 @@ def _prepare_robustness_inputs(
             all_strategies, params, logger, p_thick_nominal,
             id_namespace_n_blocks=int(id_namespace_n_blocks),
         )
-    # 🔴 The curvature must be attached BEFORE the simulation runs, not after.
-    # `_calculate_strategy_spectral_resolution` was already called on every strategy --
-    # but AFTERWARDS, to fill `min_resolution` in the result. Too late to feed a bias
-    # into the very simulation that produced it. Computed here it costs the same call,
-    # simply moved, and ONLY when the bias is asked for.
-    if bool(params.get("slit_bias_enabled", True)):
-        _slit_b = float(params.get("monochromator_resolution_nm", 2.0) or 2.0)
-        _n_before = len(_SLIT_PROFILE_CACHE)
-        _t0 = time.perf_counter()
-        for _st in all_strategies:
-            try:
-                # 🔴 EACH STRATEGY AT ITS OWN SLIT (A18). The bias goes as B^2, so handing
-                # every variant the run-level width would make the four widths differ only
-                # by their NOISE and not by their BIAS -- half the effect, silently.
-                _st["slit_profile"] = _slit_bias_profiles(
-                    _st, p_thick_nominal, params, _strategy_resolution(_st, params)
-                )
-            except Exception:  # a missing profile disables the bias
-                _st["slit_profile"] = None                    # for that strategy alone
-        n_ok = sum(1 for _st in all_strategies if _st.get("slit_profile") is not None)
-        logger.info(
-            f"[SLIT] slit bias active, {n_ok}/{len(all_strategies)} strategies "
-            f"-- slit {_slit_b:g} nm, profile of {SLIT_PROFILE_NODES} nodes, "
-            f"{len(_SLIT_PROFILE_CACHE) - _n_before} NEW profiles in "
-            f"{time.perf_counter() - _t0:.1f} s (cache: {len(_SLIT_PROFILE_CACHE)})"
-        )
+    _attach_slit_profiles(all_strategies, p_thick_nominal, params, logger)
     return all_strategies, noise_levels or [], p_thick_nominal, num_layers
+
+
+def _attach_slit_profiles(
+    strategies: list[dict[str, Any]], p_thick_nominal: list[float], params: dict[str, Any], logger: logging.Logger
+) -> None:
+    """Give each strategy the slit-bias profile of ITS blocks, at ITS slit, before the simulation that needs it runs.
+
+    🔴 The curvature must be attached BEFORE the simulation runs, not after.
+    `_calculate_strategy_spectral_resolution` was already called on every strategy -- but AFTERWARDS, to fill `min_resolution`
+    in the result. Too late to feed a bias into the very simulation that produced it. Computed here it costs the same call,
+    simply moved, and ONLY when the bias is asked for.
+
+    🔴 AND EVERY STRATEGY THAT IS EVALUATED MUST PASS HERE, the children of ELITE and of the local search included. They were
+    built after `_prepare_robustness_inputs` had run, from the blocks of their parent, and were simulated with NO bias while their
+    parents and every other plan of the run carried it (📏 `35c` in `fast`: 2 926 of the 3 013 ELITE evaluations had no profile).
+    The bias is proportional to the curvature of the signal, which is largest at the band edge where the winners monitor their
+    first block (544 nm on the juge de paix): a plan judged without it looks better than the same plan judged like the others.
+    """
+    if not bool(params.get("slit_bias_enabled", True)):
+        return
+    slit_b = float(params.get("monochromator_resolution_nm", 2.0) or 2.0)
+    n_before = len(_SLIT_PROFILE_CACHE)
+    t0 = time.perf_counter()
+    for strategy in strategies:
+        try:
+            # 🔴 EACH STRATEGY AT ITS OWN SLIT (A18). The bias goes as B^2, so handing every variant the run-level width would make
+            # the four widths differ only by their NOISE and not by their BIAS -- half the effect, silently.
+            strategy["slit_profile"] = _slit_bias_profiles(strategy, p_thick_nominal, params, _strategy_resolution(strategy, params))
+        except Exception:  # a missing profile disables the bias
+            strategy["slit_profile"] = None  # for that strategy alone
+    n_ok = sum(1 for strategy in strategies if strategy.get("slit_profile") is not None)
+    logger.info(
+        f"[SLIT] slit bias active, {n_ok}/{len(strategies)} strategies "
+        f"-- slit {slit_b:g} nm, profile of {SLIT_PROFILE_NODES} nodes, "
+        f"{len(_SLIT_PROFILE_CACHE) - n_before} NEW profiles in "
+        f"{time.perf_counter() - t0:.1f} s (cache: {len(_SLIT_PROFILE_CACHE)})"
+    )
 
 
 def _expand_with_resolution_variants(

@@ -61,6 +61,10 @@ def _parse_noise_factors(*args, **kwargs) -> Any:
     from certus.core.certus_strat_robustness import _parse_noise_factors as parse_fn
     return parse_fn(*args, **kwargs)
 
+def _attach_slit_profiles(*args, **kwargs) -> Any:
+    from certus.core.certus_strat_robustness import _attach_slit_profiles as attach_fn
+    return attach_fn(*args, **kwargs)
+
 
 #: What a strategy carries besides its blocks, and what its children keep: the layers laid by Rate, the slit, the testglass swaps.
 #: A child of ELITE or of the local search is its parent with other blocks, not a new strategy.
@@ -820,6 +824,7 @@ def _apply_elite_refinement_if_enabled(
         )
         if ctx.strategy_id_cursor is not None:
             ctx.strategy_id_cursor.advance(_next_sid)
+        _attach_slit_profiles(elite_candidates, ctx.p_thick_nominal, ctx.params, ctx.logger)
         ctx.logger.info(
             "[ELITE] Round "
             f"{elite_round}/{elite_rounds}: generated={len(elite_candidates)} "
@@ -1241,6 +1246,7 @@ def _apply_local_search_p_conforme(
                 ctx.strategy_id_cursor.advance(next_sid)
             if not neighborhood:
                 break
+            _attach_slit_profiles(neighborhood, ctx.p_thick_nominal, ctx.params, ctx.logger)
 
             eval_results: list[dict[str, Any]] = []
             with executor_cls(max_workers=worker_count) as executor:

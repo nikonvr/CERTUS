@@ -382,7 +382,6 @@ numéros de l'ancien registre sont entre parenthèses
 | # | défaut |
 |---|---|
 | D98 | **Armement du déclenchement.** Le noyau compte un point tournant à la position de l'extremum ; un contrôleur causal ne le connaît qu'une fois le signal revenu du seuil d'hystérésis, et un niveau plus proche de l'extremum que ce seuil est franchi avant que la machine l'attende. La marge de Phase A ne regarde que la couche en cours, pas les extrema des couches précédentes du bloc. `scripts/probe_armement.py` (nominal, 2026-10-10) : juge de paix, 22 plans sur 370 à 1× (couche 47) et 38 à 2× (couches 36, 41, 42, 47), tous jugés déposables par le noyau (plantage ≤ 1,33 %), le premier au rang 23 (compté depuis 0) ; `r75x2`, 67, 69 et 222 plans sur 783 à 0,5×, 1× et 2×, aucun des 20 premiers. Ce que fait l'OMS alors (arrêt tardif ou attente sans fin) n'est pas connu. L'option `arming` (`_armed_level`, inactive par défaut) modélise l'arrêt tardif : sur les 370 plans du juge, même meilleur plan, classement conservé à 0,979, plantage moyen à 2× de 0,105 à 0,014 % (rapport du 2026-10-10, section 4). Choisir l'hypothèse, et l'activer, est une décision de 👤 |
-| D51 | INDEX garde sa propre lame de Beer-Lambert pour le substrat (`_calculate_RT_absorbing_sub_single`) : elle s'accorde avec le modèle commun `certus_substrate_absorption` à 1e-12 (k de 1e-7 à 1e-3, à 450 et 800 nm, testé, interface avant comprise depuis R117), mais c'est une seconde formule à tenir à jour |
 
 **Le code, les tests et la documentation**
 

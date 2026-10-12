@@ -24,13 +24,12 @@ PACKAGES = ("certus", "certus_physics")
 
 ALLOWED = {
     "certus/physics/certus_opt_tmm.py::compute_RT_from_matrix": "the single source",
-    # Copies that exist today. The oblique kernels work on the admittance eta = n cos(theta); the two in
-    # certus_tmm_single_layer.py are the single-layer helper and INDEX's own plate (ETAT D51).
+    # Copies that exist today. The oblique kernels work on the admittance eta = n cos(theta); the one in
+    # certus_tmm_single_layer.py is the single-layer helper.
     "certus/physics/certus_tmm_oblique.py::_calc_spectrum_oblique_parallel": "copy (oblique, admittance)",
     "certus/physics/certus_tmm_oblique.py::_oblique_stack_rt_single": "copy (oblique, admittance)",
     "certus/physics/certus_tmm_oblique.py::oblique_front_rt_from_char_matrix_nsub_real": "copy (oblique, admittance)",
     "certus/physics/certus_tmm_single_layer.py::calculate_transmission_single": "copy (single layer)",
-    "certus/physics/certus_tmm_single_layer.py::_calculate_RT_absorbing_sub_single": "copy (INDEX plate, ETAT D51)",
     "certus/physics/gradient_oblique.py::_make_oblique_gradient_contrib_kernel.kernel": "copy (oblique gradient)",
     "certus/physics/gradient_oblique.py::_make_oblique_rt_and_grads_kernel.kernel": "copy (oblique gradient)",
     # Same shape, other physics: the Tauc-Lorentz epsilon_1 integral and its gradient.

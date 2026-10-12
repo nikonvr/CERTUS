@@ -7,7 +7,9 @@ from certus.domain.constants import TWO_PI
 from certus.physics.certus_opt_tmm import (
     _is_valid_substrate_index,
     calculate_reflection_infinite_substrate_single,
+    compute_RT_from_matrix,
 )
+from certus.physics.certus_substrate_absorption import substrate_internal_transmittance
 
 SMALL_EPSILON = 1e-12
 
@@ -497,10 +499,7 @@ def batch_single_layer_RT_mse(
 # Formulas (film + thick absorbing substrate of physical thickness D_nm):
 
 
-#   alpha = 4π·k_sub / lambda_nm          (absorption coefficient, nm⁻¹)
-
-
-#   att1 = exp(-alpha·D_nm)           (single-pass attenuation)
+#   att1 = substrate_internal_transmittance(k_sub, lambda_nm, D_nm)   (single-pass attenuation, the common model)
 
 
 #   att2 = att1²                  (double-pass)
@@ -555,81 +554,38 @@ def _calculate_RT_absorbing_sub_single(
 
     n_film = complex(n_film_real, -n_film_imag)  # Macleod: n̂ = n - ik
 
+    if abs(n_film) < 1e-12:
+        return np.nan, np.nan
+
     phi = (TWO_PI / wavelength) * n_film * thickness_nm
 
     cp = np.cos(phi)
 
     sp = np.sin(phi)
 
-    if abs(n_film) < 1e-12:
-        return np.nan, np.nan
-
     M01 = +1j * sp / n_film
 
     M10 = +1j * n_film * sp
 
-    # --- Forward: Air -> Film -> Sub ---
-    #
-    # Seen from air, the film exits into the COMPLEX index of the substrate (Macleod: n - ik), as in the
-    # common plate model and the oracle's `rt_plate_incoherent`; the interfaces seen from inside keep the
-    # real part. Reading the front with the real part too was wrong at first order in k (D75).
+    # Seen from air, the film exits into the COMPLEX index of the substrate (Macleod: n - ik), as in the common plate
+    # model and the oracle's `rt_plate_incoherent`; the interfaces seen from inside keep the real part. Reading the front
+    # with the real part too was wrong at first order in k (D75). R and T of both faces come from the single source,
+    # `compute_RT_from_matrix` (a single layer is its own reverse: the same matrix, the media swapped).
+    R_front, T_front = compute_RT_from_matrix(cp, M01, M10, cp, 1.0 + 0.0j, complex(n_sub_real, -k_sub))
 
-    ns_front = complex(n_sub_real, -k_sub)
+    R_prime, T_prime = compute_RT_from_matrix(cp, M01, M10, cp, ns, 1.0 + 0.0j)
 
-    B = cp + M01 * ns_front
-
-    C = M10 + cp * ns_front
-
-    Y = B + C
-
-    Y_mag_sq = Y.real * Y.real + Y.imag * Y.imag
-
-    if Y_mag_sq < 1e-25:
-        return 0.0, 0.0
-
-    r_num = B - C
-
-    R_front = (r_num.real * r_num.real + r_num.imag * r_num.imag) / Y_mag_sq
-
-    T_front = 4.0 * ns_front.real / Y_mag_sq
-
-    # --- Reverse: Sub -> Film -> Air (R_prime for denom) ---
-
-    Bp = cp + M01
-
-    Cp = M10 + cp
-
-    Yp = ns * Bp + Cp
-
-    Yp_mag_sq = Yp.real * Yp.real + Yp.imag * Yp.imag
-
-    if Yp_mag_sq < 1e-25:
-        R_prime = 0.0
-
-        T_prime = 0.0
-
-    else:
-        rp_num = ns * Bp - Cp
-
-        R_prime = (rp_num.real * rp_num.real + rp_num.imag * rp_num.imag) / Yp_mag_sq
-
-        T_prime = 4.0 * ns.real / Yp_mag_sq
-
-    # --- Backside interface Sub|Air (bare Fresnel, real ns for interface) ---
-
+    # Backside interface Sub|Air (bare Fresnel, real ns for the interface)
     r_b = (n_sub_real - 1.0) / (n_sub_real + 1.0)
 
     R_back = r_b * r_b
 
     T_back = 1.0 - R_back
 
-    # --- Beer-Lambert attenuation through substrate bulk ---
+    # Loss through the substrate bulk: the common model (`certus_substrate_absorption`), one pass and two
+    att1 = substrate_internal_transmittance(k_sub, wavelength, D_sub_nm, 1.0)
 
-    alpha = 4.0 * math.pi * k_sub / wavelength  # nm⁻¹
-
-    att1 = math.exp(-alpha * D_sub_nm)  # single-pass
-
-    att2 = att1 * att1  # double-pass
+    att2 = att1 * att1
 
     denom = 1.0 - R_prime * R_back * att2
 

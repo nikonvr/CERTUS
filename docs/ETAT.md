@@ -345,6 +345,17 @@ Chaque correctif est un commit (R136 `c738a130`, R137 `83661fd4`) qu'un `git rev
   termes de B270i autres que B1 et C1 sont d'origine inconnue.
 - **Le RE garde sa pénalité QWOT** : l'a priori MAP de `certus_re` n'est pas porté.
 
+### Arbitrages de 👤 du 2026-10-12
+
+- **D99 n'est pas un défaut** : la lecture d'arrêt est **une lecture brute** (un tirage par couche), pas une moyenne sur 8
+  lectures. Le modèle figé reste tel quel ; `fige_arret_lisse` de `scripts/probe_modele_lecture.py` documente l'hypothèse écartée
+  (notes plus basses de 8 à 21 %, classement à 0,92).
+- **D96 et D97 : activer par défaut** l'ancre exacte et l'inversion exacte de l'arrêt POEM (l'arrêt sans bruit retombe sur POEM
+  exact). Les scores STRAT changent : les références mesurées sont à refaire.
+- **D98 : l'OMS attend sans fin** quand le niveau d'arrêt est plus proche de l'extremum que le seuil d'hystérésis : la couche est
+  plantée (pas d'arrêt tardif).
+- **D68 (1) : le hub ne lance pas l'échauffement JIT** ; chaque module garde le sien.
+
 ### RE — décidé par 👤 le 2026-10-05
 
 - **Divergence du faisceau : deux ou trois rayons suffisent.** 👤 : « définitivement, la prise en compte de
@@ -371,7 +382,6 @@ numéros de l'ancien registre sont entre parenthèses
 | # | défaut |
 |---|---|
 | D98 | **Armement du déclenchement.** Le noyau compte un point tournant à la position de l'extremum ; un contrôleur causal ne le connaît qu'une fois le signal revenu du seuil d'hystérésis, et un niveau plus proche de l'extremum que ce seuil est franchi avant que la machine l'attende. La marge de Phase A ne regarde que la couche en cours, pas les extrema des couches précédentes du bloc. `scripts/probe_armement.py` (nominal, 2026-10-10) : juge de paix, 22 plans sur 370 à 1× (couche 47) et 38 à 2× (couches 36, 41, 42, 47), tous jugés déposables par le noyau (plantage ≤ 1,33 %), le premier au rang 23 (compté depuis 0) ; `r75x2`, 67, 69 et 222 plans sur 783 à 0,5×, 1× et 2×, aucun des 20 premiers. Ce que fait l'OMS alors (arrêt tardif ou attente sans fin) n'est pas connu. L'option `arming` (`_armed_level`, inactive par défaut) modélise l'arrêt tardif : sur les 370 plans du juge, même meilleur plan, classement conservé à 0,979, plantage moyen à 2× de 0,105 à 0,014 % (rapport du 2026-10-10, section 4). Choisir l'hypothèse, et l'activer, est une décision de 👤 |
-| D99 | **Lecture d'arrêt non lissée au modèle figé.** Le bruit de la lecture d'arrêt est un seul tirage brut par couche (`noise_val_precalc`), que la grille machine lisse ou non le reste du signal. Si la chaîne de détection moyenne sur 8 lectures (§3, postulat 3 du modèle de la chaîne de lecture), l'arrêt se décide sur le signal lissé, au bruit divisé par environ √8. Sur 17 plans du juge de paix, modèle figé, mêmes tirages divisés par √8 (2026-10-11, `scripts/probe_modele_lecture.py --models fige,fige_arret_lisse`) : notes plus basses de 8 à 21 % (médiane 11 %), classement conservé à 0,92 (Spearman), meilleur plan 22 au lieu de 11, à 2,3 % l'un de l'autre. Chemin inactif par défaut ; à trancher par 👤 |
 | D21 | `MachineModel` n'a aucun consommateur de production trouvé ; sa docstring donne désormais la bonne unité de `trigger_tolerance` (pourcentage de T, R146). La façade `certus_physics` continue de l'exporter et ses tests de contrat restent actifs |
 | D51 | INDEX garde sa propre lame de Beer-Lambert pour le substrat (`_calculate_RT_absorbing_sub_single`) : elle s'accorde avec le modèle commun `certus_substrate_absorption` à 1e-12 (k de 1e-7 à 1e-3, à 450 et 800 nm, testé, interface avant comprise depuis R117), mais c'est une seconde formule à tenir à jour |
 
@@ -404,7 +414,7 @@ Ces sujets demandent un jugement de physicien ou de propriétaire du produit. Le
 | **interface** | Revoir visuellement les onze fenêtres et choisir les teintes de marque, la bande des fichiers récents et les bornes des champs numériques. |
 | **base de dépôts** | RE : remplacer la seule mesure d'un classeur RE déjà chargé par celle d'un dépôt (il faudrait découper `load_reverse_engineering_from_path`) ? Apparier dans la base la T et la R d'un même échantillon que l'opérateur a nommées différemment (`NbT3` et `NbR3`) ? INDEX : en phase 2, la fenêtre λ de l'utilisateur est remplacée par toute l'étendue des données (`_on_tlu_constrained_finished`), est-ce voulu ? |
 | **ELITE « tour à tour »** | `elite_round_robin`, graine 202, D100 et D103 corrigés : 368 déposables contre 403, meilleur SEEL 0,5602 contre 0,5837 nm ; sous D100 le signe était l'inverse (33 % de déposables en plus, SEEL dans le bruit). L'armer par défaut demande plus de graines : dire s'il faut les mesurer |
-| **arrêt de STRAT** | D96 à D99 (§4) : activer par défaut les ancres au sommet (D96) et l'arrêt exact (D97) ; pour l'armement (D98), choisir entre l'arrêt tardif et l'attente sans fin ; lisser ou non la lecture d'arrêt (D99) ; noter ou non au modèle figé, au moins pour départager la tête du classement (rapport du 2026-10-10, sections 4 et 6) |
+| **arrêt de STRAT** | D96 à D98 sont tranchés le 2026-10-12 (§3) et se codent ; reste : noter ou non au modèle figé, au moins pour départager la tête du classement (rapport du 2026-10-10, sections 4 et 6) |
 
 ## 6. Chantiers spécifiés, en attente
 

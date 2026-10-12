@@ -1434,23 +1434,10 @@ class CertusStratStateMixin:
             "wl_coverage_top_k": int(
                 _config_float(getattr(self, "_loaded_config", {}), "wl_coverage_top_k", 0.0)
             ),
-            "rate_tail_sweep": _config_list_int(
-                getattr(self, "_loaded_config", {}), "rate_tail_sweep"
-            ),
-            "rate_layer_sets": _config_list_of_list_int(
-                getattr(self, "_loaded_config", {}), "rate_layer_sets"
-            ),
-            # 🔴 ON WHEN THE FILE DOES NOT SAY, like the kernel and the registry of the levers: this read `_config_flag(..., False)`
-            # from 2026-08-22 to 2026-10-12, so every run launched from the application placed its Rate by cost alone (a block
-            # boundary), never where the optical signal is too poor to stop on. 👤 2026-10-12: Rate is favoured on the layers that are
-            # hard to control optically. `tests/unit/test_strat_leviers_ui_route.py` crosses the two.
-            "rate_by_swing": _config_flag_default(
-                getattr(self, "_loaded_config", {}), "rate_by_swing", True
-            ),
-            "rate_tail_keep_optical": int(
-                _config_float(getattr(self, "_loaded_config", {}), "rate_tail_keep_optical", 0.0)
-            ),
-            # The Rate rescue (👤 2026-10-12): on when the file does not say, like the kernel and the registry of the levers.
+            "rate_tail_sweep": _config_list_int(getattr(self, "_loaded_config", {}), "rate_tail_sweep"),
+            "rate_layer_sets": _config_list_of_list_int(getattr(self, "_loaded_config", {}), "rate_layer_sets"),
+            "rate_by_swing": _config_flag_default(getattr(self, "_loaded_config", {}), "rate_by_swing", True),
+            "rate_tail_keep_optical": int(_config_float(getattr(self, "_loaded_config", {}), "rate_tail_keep_optical", 0.0)),
             "rate_rescue": _config_flag_default(getattr(self, "_loaded_config", {}), "rate_rescue", True),
             "rate_rescue_few": int(_config_float(getattr(self, "_loaded_config", {}), "rate_rescue_few", 10.0)),
             "require_turning_point": int(

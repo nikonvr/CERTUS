@@ -22,10 +22,12 @@ Usage
 from __future__ import annotations
 
 import argparse
+import atexit
 import copy
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -128,6 +130,7 @@ def _isolate_qsettings() -> str:
     import PyQt6.QtCore as qtcore
 
     tmp = tempfile.mkdtemp(prefix="certus_audit_qs_")
+    atexit.register(shutil.rmtree, tmp, ignore_errors=True)
     original = qtcore.QSettings
 
     class _IsolatedQSettings(original):  # type: ignore[misc, valid-type]

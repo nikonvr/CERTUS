@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import sys
 import tempfile
 import time
@@ -88,6 +89,8 @@ def _worker_main(mod_path: str, cls_name: str, width: int, height: int) -> None:
             if hbar.maximum() > 0:
                 hscroll_px = max(hscroll_px, int(hbar.maximum()))
     win.close()
+    # The worker leaves by os._exit below, which skips atexit: the scratch directory of its QSettings goes now.
+    shutil.rmtree(tmp, ignore_errors=True)
     # D23: the native abort (0xC0000005) came after this line, while the return freed the locals (the
     # QApplication before the window) or during interpreter teardown; the marker, still in the pipe buffer,
     # was lost with it. Flush it, then leave without the teardown: it is not what this worker measures.

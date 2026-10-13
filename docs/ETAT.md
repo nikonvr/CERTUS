@@ -19,8 +19,10 @@
 brouillon vers `master`. Les entrées `.git/worktrees/certus0310`, `profwt`, `buildwt`, `valwt`, `ratewt` et `ratewt2`, incomplètes (Drive en
 refuse la suppression), déclenchent un avertissement à chaque commit sans l'empêcher.
 
-**Dernière validation complète** (2026-10-13, Windows 11, Python 3.14.8, Ryzen 7 5700G, `631c4830` ; depuis, seuls des rapports,
-ce document et le texte de mesure d'un levier du registre ont changé) : Ruff 0 ;
+**Dernière validation complète** (2026-10-13, Windows 11, Python 3.14.8, Ryzen 7 5700G, `631c4830` ; depuis, ont changé des rapports, ce document, le texte de mesure d'un levier du registre,
+trois passages de la vitrine et deux lignes d'un rapport HTML (le mot « quartz » en est parti), et un script de lecture d'artefact
+(`scripts/resumer_artefact_sonde.py`) avec son test, passés seuls : ruff, les 11 tests du script, les tests des scripts, les contrôles
+documentaires et `scripts\verifier_html.py`) : Ruff 0 ;
 oracle 1 143 passed en 54 s ; unit 5 406 passed, 7 skipped en 24 min 35 ; UI 1 324 passed, 12 skipped, 2 xfailed en
 22 min 24 ; autres tests 348 passed, 2 skipped en 10 min 20 ; trois contrôles documentaires : 0. Un premier passage de l'unit, à
 `978b8f04`, avait rendu deux rouges (`test_the_architecture_debt_only_shrinks` : `certus_strat_consensus.py` à 1 529 lignes et

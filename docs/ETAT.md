@@ -19,8 +19,8 @@
 brouillon vers `master`. Les entrées `.git/worktrees/certus0310` et `.git/worktrees/profwt`, incomplètes (Drive en
 refuse la suppression), déclenchent un avertissement à chaque commit sans l'empêcher.
 
-**Dernière validation complète** (2026-10-13, Windows 11, Python 3.14.8, Ryzen 7 5700G, `631c4830` ; depuis, seuls des rapports
-et ce document ont changé) : Ruff 0 ;
+**Dernière validation complète** (2026-10-13, Windows 11, Python 3.14.8, Ryzen 7 5700G, `631c4830` ; depuis, seuls des rapports,
+ce document et le texte de mesure d'un levier du registre ont changé) : Ruff 0 ;
 oracle 1 143 passed en 54 s ; unit 5 406 passed, 7 skipped en 24 min 35 ; UI 1 324 passed, 12 skipped, 2 xfailed en
 22 min 24 ; autres tests 348 passed, 2 skipped en 10 min 20 ; trois contrôles documentaires : 0. Un premier passage de l'unit, à
 `978b8f04`, avait rendu deux rouges (`test_the_architecture_debt_only_shrinks` : `certus_strat_consensus.py` à 1 529 lignes et
@@ -55,9 +55,9 @@ surcharge explicite (`reports/STRAT_D100_interrupteurs_non_charges_2026-10-11.md
 **L'optique reprend après le Rate** (2026-10-12 ; `reports/STRAT_ELITE_couches_Rate_paquets_2026-10-12.md`). 👤 observe en salle de bonnes
 stratégies qui alternent des paquets d'optique à une λ et des paquets de Rate (« purement empirique »). Le noyau le permettait ; la recherche ne le
 proposait pas. ELITE déplace maintenant les couches Rate de ses parents (`elite_rate_moves`, actif par défaut depuis `978b8f04` ; `allow_rate`
-faux l'éteint) : `r75x0.5` 0,4981 → **0,3967 nm** (le meilleur plan : trois paquets de Rate et deux fenêtres d'optique de deux couches, la première à
-451 nm), juge de paix 0,1849 → **0,1721 nm**, `r75x2` 0,5406 → 0,5358 nm, une graine par composant, toutes les listes déposables, au modèle de Rate de
-STRAT (sans dérive de la source).
+faux l'éteint) : `r75x0.5` (graines 42 / 101 / 202) 0,5031 / 0,4981 / 0,5000 → **0,4347 / 0,3967 / 0,3967 nm** (le meilleur plan des graines 101 et 202 : trois
+paquets de Rate et deux fenêtres d'optique de deux couches, la première à 451 nm), juge de paix 0,1849 → **0,1721 nm**, `r75x2` (graines 101 / 42) 0,5406 / 0,5678
+→ 0,5358 / 0,5477 nm ; le meilleur SEEL baisse dans les six exécutions, toutes les listes sont déposables, au modèle de Rate de STRAT (sans dérive de la source).
 
 **Modèle d'arrêt de production et Rate dans tous les scénarios** (2026-10-12 ;
 `reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md`, `reports/STRAT_r75x0.5_secours_rate_2026-10-12.md`). D96, D97 et D98 sont le
@@ -125,7 +125,7 @@ n'autorise pas à modifier son arbre témoin.
 | le même en une seule campagne | aucun score valide | 100 % | 487 stratégies, toutes plantent : non fabricable |
 | aléatoire ×2 `r75x2`, fente native 1 nm | **0,6248 nm** | 0 % | `deep`, pur optique, 277 déposables ; mesuré avant D106 : à refaire |
 | `r75x2` à 2 nm, configuration livrée | **0,5676 nm** | 1,67 % | avec `example/example_strat/rampes_r75x2-2nm.json` ; étendue 0,55 % sur 3 graines ; mesuré avant D106 : à refaire |
-| `r75x2` à 2 nm, sans rampes, défauts de production du 2026-10-12 | **0,5406 nm** (graine 101), 0,5678 nm (graine 42) | 0 % | `deep`, `dbf8025f` : tous les plans de la liste déposables (4 175 et 4 307), aucun optique pur, du Rate (61 et 23 couches) ; l'optique pur sans secours Rate : 0 déposable aux deux graines (D106 corrigé). Avec ELITE qui déplace les couches Rate (`cea0db66`, graine 101) : 0,5358 nm. `reports/STRAT_r75x2_D106_secours_Rate_2026-10-12.md` |
+| `r75x2` à 2 nm, sans rampes, défauts de production du 2026-10-12 | **0,5406 nm** (graine 101), 0,5678 nm (graine 42) | 0 % | `deep`, `dbf8025f` : tous les plans de la liste déposables (4 175 et 4 307), aucun optique pur, du Rate (61 et 23 couches) ; l'optique pur sans secours Rate : 0 déposable aux deux graines (D106 corrigé). Avec ELITE qui déplace les couches Rate (`cea0db66`, graine 101) : 0,5358 nm ; graine 42 (`5da02db9`) : 0,5477 nm. `reports/STRAT_r75x2_D106_secours_Rate_2026-10-12.md` |
 
 Le passe-bande de 99 couches est chiffré en moyenne de trois graines, jamais par la meilleure.
 
@@ -485,7 +485,7 @@ avec sa condition dans la même phrase que le chiffre · accélérer à résulta
 (les 17 % d'« attente du consommateur de statistiques » d'un profil par échantillonnage sont un artefact de
 l'échantillonneur de `scripts/bench_examples.py`, `scripts/probe_sampler_idle_thread.py`, 2026-10-11 ; mémoriser
 `build_M_before_cache` ne fait rien gagner, populations identiques au bit, 2026-10-06) · mesurer `elite_rate_moves` (actif) sur
-d'autres graines et composants (`r75x0.5` aux graines 42 et 202, ×1,5, ×1,75, 35 et 99 couches) et avec plus de tours d'ELITE : une graine par composant aujourd'hui.
+d'autres composants (×1,5, ×1,75, 35 et 99 couches), d'autres graines (une seule au juge de paix, deux à `r75x2`) et avec plus de tours d'ELITE.
 
 **Modèle physique** (détail : `git show 7b08dc8:docs/archives/TRAVAUX_A_VENIR.md`) :
 
@@ -568,6 +568,7 @@ Rate de STRAT** (`certus_strat_growth.py`, « RATE MODE ») fige l'estimation de
 couches héritent de la même erreur relative, corrélée, et la source ne dérive pas pendant le dépôt (non modélisé, non mesuré) :
 ces SEEL sont ceux de ce modèle. Le Rate posé aux seules couches où les tirages plantent d'abord (`rate_rescue_hard`, inactif par
 défaut) ajoute 35 plans déposables sur 410 essayés et laisse le meilleur SEEL à 0,4981 nm (graine 101, `dbf8025f`). **Avec ELITE qui déplace
-les couches Rate** (`cea0db66`, graine 101, `reports/STRAT_ELITE_couches_Rate_2026-10-12/`) : **0,3967 nm**, 4 074 plans déposables ; le meilleur plan
-alterne optique (couches 1 à 6), Rate 7 à 10, optique 11 et 12 (λ 451 nm), Rate 13 à 34, optique 35 et 36, Rate 37 à 75. Le cas à plusieurs
+les couches Rate** (`reports/STRAT_ELITE_couches_Rate_2026-10-12/`) : **0,4347 / 0,3967 / 0,3967 nm** aux graines 42 / 101 / 202 (`5da02db9`, `cea0db66`,
+`5da02db9`), toutes les listes déposables ; le meilleur plan des graines 101 et 202, le même, alterne optique (couches 1 à 6), Rate 7 à 10, optique 11 et 12
+(λ 451 nm), Rate 13 à 34, optique 35 et 36, Rate 37 à 75. Le cas à plusieurs
 verres témoins n'est pas mesuré.

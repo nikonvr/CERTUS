@@ -218,7 +218,8 @@ Après accord explicite de 👤, une action séparée l'édite puis lance `pytho
   qu'à zéro violation, dans le commit qui met à jour la liste de `tests/oracle/test_lint_debt_ratchet.py`. Commencer par E402, module par module, avec les trois
   photos avant/après du §6 (`scripts/lint_ns_snapshot.py`). RUF001 touche des chaînes dont des libellés vus de l'utilisateur : ne pas les réécrire sans 👤.
 - *D26, imports montants* : 20 arêtes (§4) ; commencer par celles qui ne demandent qu'un symbole à descendre dans `certus/domain/` ou `certus/core/` ; après chaque
-  correction `python scripts\metrics.py --dette tests\architecture_debt.json` met le registre à jour (il ne fait que rétrécir).
+  dette payée, `python scripts\metrics.py --dette tests\architecture_debt.json` réécrit le registre depuis les sources (il ne fait que rétrécir) ; **ne jamais le lancer
+  pour faire passer `tests/unit/test_the_architecture_debt_only_shrinks.py`** : il y inscrirait la régression au lieu de la signaler.
 - *D23 puis D11, D50, D72* : reproduire D23 avant tout (`scripts/sonde_retenants_fenetre.py`) ; ne pas toucher `WA_DeleteOnClose` avant (§4). D72 (taille du gel) après la
   fiabilité du gel.
 - *D82* (logo du thème sombre) demande des yeux ; *D84* (écart au dernier bit au premier passage après un changement de clé du cache Numba) : relancer une fois avant de

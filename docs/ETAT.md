@@ -88,26 +88,158 @@ enfants d'ELITE sans biais de fente : D106 les invalide (ci-dessus). Mesures du
 2 139, plantage minimal 82,7 %) ; `r75x0.5` avec un seul verre témoin : aucun déposable aux graines 42, 101 et 202
 avant le secours Rate, plantage minimal 8,3 % à la graine 101 (§7).
 
-**Ordre conseillé des prochains lots.** Priorité à ce qui rend un résultat faux ou empêche de calculer,
-puis aux dépendances techniques ; chaque changement reste un commit distinct (C3). Une mesure en cours
-n'autorise pas à modifier son arbre témoin.
+**Prochaines actions — à lancer avec une autre IA.** Lire dans l'ordre : [`CLAUDE.md`](../CLAUDE.md) (les règles et les onze interdits),
+ce §0, puis l'action choisie. Chaque action est **autonome** : pourquoi, quoi lancer (commandes exactes), quand elle est finie, ce qu'il ne
+faut pas faire. Faire A1 d'abord ; les autres sont indépendantes les unes des autres, par priorité décroissante. Une action peut donner
+plusieurs commits, chacun d'une seule chose (C3). **Jamais de `git push`, jamais de fusion de la PR #9 : l'un et l'autre sont à 👤.** La
+branche a été poussée à `bee0d3c5` le 2026-10-13, sur l'ordre de 👤 ; les commits locaux qui suivent restent à pousser sur son ordre.
 
-| rang | action et critère de fin | raison / condition |
+**Vocabulaire.**
+*Rate* : couche posée pour un temps, à la vitesse estimée sur les couches du même matériau contrôlées optiquement (ce n'est pas un quartz).
+*Paquet de Rate* : couches consécutives au Rate. *Fenêtre d'optique* : couches contrôlées optiquement entre deux paquets. *Queue* : le Rate va
+d'une coupure à la dernière couche. *Plan mixte* : de l'optique après du Rate. *Plan optique pur* : aucune couche au Rate. *Déposable* :
+plantage inférieur à 5 % au pire des trois niveaux de bruit (0,5×, 1×, 2×). *SEEL* = 2·√score, en nm, toujours rapporté avec la graine et le
+mode. Les indices de couche des artefacts commencent à 0 ; l'interface et les rapports numérotent à partir de 1 (« L18-L75 » = indices 17 à 74).
+
+**En vigueur au 2026-10-13** (ne pas le remettre en cause sans mesure) : D96, D97 et D98 (attente sans fin) ; le secours Rate (`rate_rescue`) ;
+`rate_by_swing` ; ELITE déplace les couches Rate de ses parents (`elite_rate_moves`) ; les enfants d'ELITE portent le biais de fente (D106) et
+gardent les couches Rate de leur parent. Dernière validation complète : `631c4830` (ci-dessus). Les preuves sont dans `reports/STRAT_*_2026-10-12*`.
+
+**Avant toute action.**
+1. `python scripts\preflight.py` doit finir par `PREFLIGHT=GO` (l'arbre où l'on édite est celui qu'`import certus` résout).
+2. `git status -sb` propre ; noter `git log -1` : c'est le point de départ de l'action.
+3. Lancer la validation de CLAUDE.md §2 **en entier** avant de committer du code : un sous-ensemble de tests a déjà laissé passer une régression
+   (le garde-fou `tests/unit/test_the_architecture_debt_only_shrinks.py` ne tourne pas avec les tests voisins).
+
+**Mesurer, une fois pour toutes** (toutes les actions de mesure suivent ce protocole ; il a produit tous les rapports du 2026-10-12).
+```bat
+rem depuis la racine du dépôt ; l'arbre jetable pèse plusieurs Go : le supprimer en fin de mesure
+git worktree add --detach "%TEMP%\mesure_wt" HEAD
+cd /d "%TEMP%\mesure_wt"
+set CERTUS_BENCH_TIMEOUT_S=21600
+python scripts\probe_blocs_vs_plantage.py r75x0.5 deep 0 0 2 0 101 0
+python scripts\resumer_artefact_sonde.py reports\blocs_vs_plantage_r75x0.5_deep_s101.json
+```
+- Les 8 arguments : composant (`48c` juge de paix, `35c`, `75c`, `99c`, `r75x0.5`, `r75x1.5`, `r75x1.75`, `r75x2`, `r75x2-2nm`), mode (`fast`,
+  `premium`, `deep`), recherche de fente (1 pour le juge de paix, 0 ailleurs), `require_turning_point` (0), résolution du monochromateur en nm (2),
+  élargissement (0), graine, réglages de production (0 = rien n'est forcé). Les rapports du 2026-10-12 utilisent `48c premium 1 0 2 0 <graine> 0`,
+  `r75x0.5 deep 0 0 2 0 <graine> 0` et `r75x2 deep 0 0 2 0 <graine> 0`.
+- Pour changer un réglage sans toucher au code : `set CERTUS_PROBE_OVERRIDES=cle=valeur,cle2=valeur2` **et** `set CERTUS_PROBE_TAG=etiquette`
+  (l'étiquette est obligatoire avec une surcharge ; elle entre dans le nom de l'artefact). Les valeurs `true` et `false`, les entiers et les flottants
+  sont reconnus. Vider les deux variables après l'essai.
+- L'artefact est écrit dans `reports\` **de l'arbre jetable** : `blocs_vs_plantage_<composant>_<mode>_s<graine sur trois chiffres>[_<etiquette>][_fente].json`.
+  Si le nom existe déjà, un horodatage s'ajoute : prendre le plus récent par date de modification. Il porte le commit, `git_dirty` (doit être faux, sauf
+  A/B voulu), les surcharges et les réglages Rate effectifs (`config`).
+- **Une seule mesure à la fois sur la machine** (sinon `RESULT=None` ou dépassement du délai) ; pas de test lancé pendant une mesure. Ordres de grandeur,
+  machine seule (Ryzen 7 5700G, 16 threads) : juge de paix `premium` 9 min ; `r75x0.5 deep` 44 min ; `r75x2 deep` 44 à 52 min.
+- **Lire un écart avec prudence** : à 150 tirages la dispersion d'un meilleur SEEL est de l'ordre de 6 % (§2) ; deux exécutions à moins de 8 % ne se
+  distinguent pas. Le SEEL d'un gagnant est le minimum de plusieurs milliers de plans. Un résultat meilleur que prévu se vérifie avant de le croire
+  (rejeu de la graine de base, `rmse_par_bruit` dans l'artefact).
+- **Vérifier qu'un réglage arrive au calcul** avant de lui attribuer un effet : sa valeur dans `config` de l'artefact et sa ligne de journal
+  (`[ELITE-RATE]`, `[RATE-RESCUE]`, `[RATE]`).
+- Fin : copier les artefacts utiles dans un dossier de `reports\` (pour une exécution sans déposable, retirer `margin_by_layer`, `lambdas` et
+  `rmse_par_bruit` de chaque stratégie : voir `reports/STRAT_r75x2_D106_secours_Rate_2026-10-12/`), écrire un rapport en français dans `reports\` (protocole,
+  tableau, ce qui n'est pas mesuré), mettre à jour ce document, `git worktree remove --force "%TEMP%\mesure_wt"`. Aucun chemin personnel dans un
+  fichier versionné. Les entrées `.git/worktrees/*` que Drive refuse de supprimer sont normales.
+
+**A1 — Vérifier la CI de la PR #9** (30 min, d'abord). *Pourquoi* : 105 commits ont été poussés le 2026-10-13 ; la CI calcule sous Linux et teste
+l'interface et le gel sous Windows. *Faire* : `gh pr checks 9` ; pour un job rouge, `gh run view <identifiant> --log-failed`, corriger la cause (un
+commit par cause), rejouer la validation locale. *Fini quand* : `lint`, `security`, `tests` et `release-windows` sont verts sur le dernier commit
+poussé, ou chaque rouge est expliqué dans ce §0 avec sa cause. *Ne pas* : pousser, fusionner la PR, supprimer ou assouplir un test, agrandir
+`extend-ignore`.
+
+**A2 — Confirmer `elite_rate_moves` sur les composants et les graines non mesurés** (≈ 8 à 15 h de machine, par cellules indépendantes).
+*Pourquoi* : l'option est active par défaut depuis `978b8f04` sur six exécutions (`r75x0.5` aux graines 42, 101, 202, le juge de paix à la graine 42,
+`r75x2` aux graines 101 et 42) : le meilleur SEEL baisse dans les six (de 0,9 à 20,7 %). *Faire* : pour chaque cellule du tableau, deux exécutions au même
+commit, la première aux défauts, la seconde avec `set CERTUS_PROBE_OVERRIDES=elite_rate_moves=false` et `set CERTUS_PROBE_TAG=sans_mouvements`.
+
+| composant (arguments 1 à 3) | graines | durée d'une exécution |
 |---|---|---|
-| 3 — les textes que la campagne du 2026-10-12 rend faux | Reste la vitrine `pages/CERTUS_STRAT.html` (§10.18 et §10.19, mesures sans rampes), qui cite les chiffres d'août que cette campagne remplace, et des déposables de `r75x2` sans rampes que D106 invalide (§0) (l'infobulle de l'onglet multi-graines et la docstring de `scripts/orchestre_multigraine.py` sont corrigées, `262a110d`). Les 23 appels de `load_configuration` lisent maintenant leur retour (`scripts/_composant.py`, `58ed99c5`, gardé par `tests/unit/test_the_scripts_read_what_load_configuration_returns.py`). Elle appelle aussi le Rate « quartz/chrono » (trois passages : « have to run on rate (quartz/chrono) », « The quartz rate estimate », « strategies carry a quartz-controlled layer »), alors que c'est du temps sur une vitesse estimée (§3). | La vitrine suit un régime strict (CLAUDE.md, section 10) : 👤 la relit avant qu'on la touche. |
-| 4 — traiter la chaîne de mesure | La grille machine du noyau lit le T exact à chaque lecture (12.4) et lisse sur 8 lectures avec le seuil de 1,00 A (12.2) : D54, D55, D93, D94 et D95 sont corrigés, et ce chemin reproduit une machine indépendante rejouée lecture par lecture (rapport du 2026-10-10, section 2). D96, D97 et D98 sont le modèle d'arrêt par défaut depuis le 2026-10-12 (§3) ; leur effet est mesuré (même rapport, sections 4 et 6, et `reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md`). Reste une décision de 👤 (§5, arrêt de STRAT). | La grille de la machine est inactive par défaut. Tout changement de noyau passe C1 froid contre froid et l'oracle. |
-| 5 — stabiliser interface et gel | Reproduire D23 (les six `gc.collect()` des threads de calcul STRAT et les `QThread`) avant D11 et `WA_DeleteOnClose` ; poursuivre la réduction du gel (D72) après sa fiabilité. | D11 n'a pas d'effet dans le lancement actuel par processus ; libérer une fenêtre avant ses threads serait plus grave. |
-| 6 — réduire la dette | Traiter E402 (D25), puis D26 et les défauts visuels selon §4–5. | Chantier utile, mais moins urgent que la justesse scientifique ; l'ordre des imports peut changer l'exécution. |
+| `r75x1.5 deep 0`, `r75x1.75 deep 0` | 42 et 101 | non mesurée (compter 45 min) |
+| `35c deep 0`, `75c deep 0` | 42 | non mesurée (la mesurer à la première) |
+| `48c premium 1` (juge de paix) | 77, 101, 202 | 9 min |
+| `r75x0.5 deep 0`, `r75x2 deep 0` | 77 ; 202 et 77 | 44 min ; 45 à 52 min |
+
+(Les arguments 4 à 8 sont toujours `0 2 0 <graine> 0`.) *Fini quand* : un rapport « STRAT_ELITE_couches_Rate_autres_composants » (date du jour) donne, par
+cellule, le meilleur SEEL sans et avec, l'écart, les nombres de plans déposables, la classe et la forme du meilleur plan (`resumer_artefact_sonde.py`), et
+conclut en une phrase : « le défaut reste » (le meilleur SEEL baisse ou reste dans la dispersion partout, aucune liste ne perd ses déposables) ou « à
+signaler à 👤 » (une dégradation de plus de 8 % ou une liste qui perd ses déposables). *Ne pas* : changer le défaut ; `elite_rate_moves=false` n'est
+qu'une surcharge de mesure.
+
+**A3 — Refaire les repères d'avant D106 et d'avant D96-D98** (§2 ; ≈ 6 h). *Pourquoi* : ces nombres datent d'avant D106 (qui coûte 8 % au juge de paix et retire tous les déposables optiques de `r75x2`)
+et d'avant le secours Rate : leur population n'est plus celle de la production. *Faire* : le juge de paix au banc officiel, aux défauts : `python scripts\bench_examples.py strat
+--auto-yes --out reports\STRAT_bench_juge_de_paix_<commit>_defauts_<date>.txt` (33 min ; `RESULT` et `STRAT_RANK00..09` sont les chiffres à reporter) ;
+puis, avec la variable `CERTUS_DESIGN_JSON` pointant le fichier de `example/example_strat/` (`set CERTUS_DESIGN_JSON=example\example_strat\JSON-strat-bandpass-3cav-deep.json`,
+à changer à chaque composant) la même commande pour le passe-bande de 35 couches (`JSON-strat-bandpass-3cav-deep.json`), l'aléatoire de 75 couches (`JSON-strat-random75.json`),
+`r75x2` à fente native (`JSON-strat-random75-x2-fabricable.json`) et la configuration livrée avec rampes (`JSON-strat-random75-x2-fabricable-2nm.json`) ;
+le passe-bande de 99 couches à verres témoins multiples se refait par intervalles (`python scripts\campagne_intervalles.py --etat` puis ses vagues : lire sa
+docstring, c'est long). *Fini quand* : chaque ligne concernée de la table du §2 porte le nombre refait, sa condition (commit, mode, graine) et son
+rapport ; les anciens nombres sont retirés (un fait, un seul endroit). *Ne pas* : modifier `example/example_strat/JSON-strat-example.json` (interdit 4).
+
+**A4 — Le Rate évince-t-il l'optique pure ?** (conception 2 h, mesure 2 h). *Pourquoi* : au juge de paix, les plans optiques purs déposables sont passés de
+487 à 50 (ancien modèle d'arrêt), le meilleur plan optique pur de 0,178 à 0,193 nm ; l'hypothèse, non mesurée, est qu'ELITE, dont les parents sont
+maintenant en majorité des plans Rate, raffine moins la lignée optique pure (`reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md`, mesure 4). *Faire* : un
+levier `elite_optical_parents` (entier, `0` = le chemin d'avant, **bit pour bit** : le prouver comme `tests/unit/test_strat_elite_rate_moves.py` le fait
+pour `rate_moves=False`) qui garantit, parmi les parents d'ELITE, au moins M plans sans aucune couche Rate quand la liste en contient ; le mesurer au
+juge de paix (graine 42) avec M = 0, 2, 4, puis à `r75x0.5` (graine 101). *Fini quand* : pour chaque M, le meilleur SEEL optique pur, le meilleur SEEL
+global et le nombre de plans optiques purs déposables, dans un rapport. **Le contrat de taille** : `certus/core/certus_strat_consensus.py` est à 1 498
+lignes (plafond 1 500) et `_apply_elite_refinement_if_enabled` à 299 (plafond 300) : ne rien y ajouter qui ne soit pas compensé, mettre la logique dans
+`certus/core/certus_strat_robustness_rate.py` comme `_elite_rate_candidates`. *Ne pas* : l'armer par défaut (c'est à 👤).
+
+**A5 — ELITE : plus de tours, autre budget pour les mouvements sur les couches Rate** (≈ 4 h). *Pourquoi* : ELITE fait 3 tours en `deep` et s'arrête
+quand rien ne progresse ; la recherche des paquets est une escalade qui n'a peut-être pas fini. *Faire* (`r75x0.5`, graine 101, référence : 0,3967 nm) :
+`elite_rounds=6,elite_stop_on_no_gain=false`, puis `elite_rounds=10,elite_stop_on_no_gain=false` ; puis, à 3 tours, `elite_rate_max_candidates=40` et
+`elite_rate_max_candidates=360`. Une surcharge à la fois, avec son étiquette. *Fini quand* : un tableau tours et budget → meilleur SEEL, durée, nombre de
+paquets de Rate du meilleur plan. Si les largeurs de fenêtre (`ELITE_RATE_WINDOWS`) ou le pas (`ELITE_RATE_STEP`) méritent un balayage, en faire des
+paramètres **inactifs par défaut** (chemin d'avant identique) avant de les mesurer. *Ne pas* : changer un défaut sans 👤.
+
+**A6 — Le modèle de Rate sans dérive de la source** (le sujet scientifique central ; **ne pas commencer sans la valeur de 👤**). *Pourquoi* : tous les SEEL
+des plans Rate supposent une vitesse constante pendant le dépôt (`certus/physics/certus_strat_growth.py`, « RATE MODE ») ; 👤 observe en salle ±1 à 2 %
+(§6, A25) et de bons plans en paquets alternés. Le modèle ne peut ni confirmer ni infirmer ce qui vient de la salle. *Faire* : (1) **demander à 👤** la
+dérive ou l'instabilité de la vitesse pendant un dépôt (relative, par couche ou par run, et comment elle a été observée) ; ne pas l'inventer ; (2) ajouter un
+paramètre **inactif par défaut** qui perturbe l'épaisseur des couches Rate (tirage fonction pure de la graine, du tirage et de l'indice physique,
+`_seeded_noise_sample` de `certus/physics/certus_strat_math.py`, jamais de la stratégie : C2), sur le modèle de `stop_model_flags`
+(`certus/physics/certus_strat_readings.py`) et de `tests/unit/test_strat_stop_model_is_the_decided_one.py` ; `python scripts\c1_diff.py HEAD` doit rendre « C1 TENU »
+avant de committer ; (3) refaire `r75x0.5` (graine 101), le juge de paix et `r75x2` (graine 101) avec la dérive de 👤 divisée par 3, telle quelle et multipliée par 3,
+et comparer la forme du meilleur plan (queue, paquets alternés, optique pur). *Fini quand* : le tableau, le rapport, le §6 mis à jour. *Ne pas* : activer par
+défaut ; conclure sur une seule graine.
+
+**A7 — Proposer les corrections de la vitrine `pages/CERTUS_STRAT.html`, sans l'éditer** (2 h). *Pourquoi* : la vitrine suit un régime strict (CLAUDE.md §10) : 👤
+la relit avant qu'on la touche. Ses §10.18 et §10.19 citent les chiffres d'août ; ses déposables de `r75x2` sans rampes sont invalidés par D106 ; elle dit que le Rate
+est « offert mais jamais choisi » à ×1,5, ×1,75 et ×2 (« zero out of 1510 »), ce qui n'est plus vrai à `r75x2` aux défauts de production (tous les plans
+déposables portent du Rate ; ×1,5 et ×1,75 ne sont pas mesurés aux défauts). *Faire* : écrire un fichier
+« STRAT_vitrine_passages_a_relire » (date du jour) dans `reports\` : pour chaque passage, la ligne, le texte actuel, ce qui est faux, le texte proposé (en anglais,
+chaque nombre sourcé dans un rapport, la limite montrée : le modèle de Rate n'a pas de dérive). *Fini quand* : le fichier est écrit ; **la page n'est pas modifiée**.
+Après accord explicite de 👤, une action séparée l'édite puis lance `python scripts\verifier_html.py pages\CERTUS_STRAT.html` (0 point à instruire).
+
+**A8 — Dette technique** (§4 et §6) : un défaut par tâche, un commit par changement, jamais `ruff check --fix`, jamais agrandir `extend-ignore`.
+- *D25, lint* : mesure officielle `python -m ruff check . --isolated --select "E,F,I,B,UP,RUF,PT,PERF" --ignore E501 --line-length 120 --target-version py314 --statistics`
+  (1 416 violations le 2026-10-12 : F401 659, E402 555, RUF001 77, RUF003 59, RUF002 51, RUF100 10, RUF022 3, F811 2). Une règle ne quitte `extend-ignore`
+  qu'à zéro violation, dans le commit qui met à jour la liste de `tests/oracle/test_lint_debt_ratchet.py`. Commencer par E402, module par module, avec les trois
+  photos avant/après du §6 (`scripts/lint_ns_snapshot.py`). RUF001 touche des chaînes dont des libellés vus de l'utilisateur : ne pas les réécrire sans 👤.
+- *D26, imports montants* : 20 arêtes (§4) ; commencer par celles qui ne demandent qu'un symbole à descendre dans `certus/domain/` ou `certus/core/` ; après chaque
+  correction `python scripts\metrics.py --dette tests\architecture_debt.json` met le registre à jour (il ne fait que rétrécir).
+- *D23 puis D11, D50, D72* : reproduire D23 avant tout (`scripts/sonde_retenants_fenetre.py`) ; ne pas toucher `WA_DeleteOnClose` avant (§4). D72 (taille du gel) après la
+  fiabilité du gel.
+- *D82* (logo du thème sombre) demande des yeux ; *D84* (écart au dernier bit au premier passage après un changement de clé du cache Numba) : relancer une fois avant de
+  conclure à une régression ; *D68* (silicium lu à l'import) est optionnel.
+
+**Décisions qui n'appartiennent qu'à 👤 — une IA ne les tranche pas, elle rapporte les mesures.**
+1. D98 : l'attente sans fin (défaut) ou l'arrêt tardif (`oms_arming=1`) — chiffres au §3 et dans `reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md`.
+2. `elite_rate_moves` : garder actif (défaut actuel) ou le désarmer (`False`, ou `git revert 978b8f04`) — A2 apporte les mesures.
+3. `rate_rescue_hard` : inactif, mesuré sans gain (35 plans déposables sur 410) — le garder ou le retirer.
+4. Le Rate et l'optique pure (§5, A4) ; la valeur de la dérive du Rate (A6) ; D71 (2) ; l'information D69 (changement de définition d'un indicateur).
+5. Toute poussée (`git push`), toute fusion de la PR #9, toute modification de la vitrine.
 
 ## 1. Où en sont les programmes
 
 | programme | état | prochaine action |
 |---|---|---|
-| **Calcul (STRAT)** | composant étalon : l'aléatoire ×2 (`r75x2`) à la fente de 2 nm. Sans rampes, aucun plan optique pur n'est déposable une fois D106 corrigé (graines 101 et 42, 2026-10-12) ; avec les défauts de production (secours Rate), tous les plans de la liste le sont, au modèle de Rate de STRAT (§2). La voie à rampes de la configuration livrée (mesurée avant D106) est à refaire | rang 4 (§0) |
+| **Calcul (STRAT)** | composant étalon : l'aléatoire ×2 (`r75x2`) à la fente de 2 nm. Sans rampes, aucun plan optique pur n'est déposable une fois D106 corrigé (graines 101 et 42, 2026-10-12) ; avec les défauts de production (secours Rate), tous les plans de la liste le sont, au modèle de Rate de STRAT (§2). La voie à rampes de la configuration livrée (mesurée avant D106) est à refaire | A2 à A6 (§0) |
 | **RE** | indices tabulés lus en n − ik depuis R148 (2026-10-05) : tout RE antérieur fait sur des indices absorbants en incidence oblique est à refaire ; un indice demandé hors de sa table est prolongé par une constante, avec un avertissement (ex-D86, `dec73219`, 2026-10-05) | — |
 | **Base de dépôts** | 140 monocouches mesurées au Photon RT (`example/database_depots/`, importées le 2026-10-11 par `scripts\importer_base_depots.py`) ; la voie (T ou R) se lit dans la géométrie du détecteur, le mode manuel déclarant « Transmittance » quoi qu'il mesure. INDEX les charge par « Deposit database… ». Onze ajustements certifiés de l'application autonome, dont le spectre est un dépôt de la base, servent de références (`references_index.json`) ; `scripts\bench_base_depots.py` y confronte INDEX. Banc du 2026-10-12 (11 références × 3 exécutions, `reports/BASE_DEPOTS_banc_INDEX_2026-10-12.md`) : neuf références sur onze à moins de 2,0 % d'épaisseur de la référence, deux non retrouvées (`mesures-c1b-sio2`, −49 %, et `sb2s3-silice`, −3,85 %), cause non cherchée. RE ne la lit pas : il lui faut un classeur complet | instruire les deux échecs ; choix de 👤 (§5) |
-| **Exécutable gelé** | sur la couche OpenMP depuis `31745571` (D87), sans les outils de développement depuis `5ccaa210` (411 Mo) ; construit à `dbec2fc1` le 2026-10-06, hub et modules contrôlés au démarrage, et 👤 y a calculé : « l'exécutable fonctionne ». Les licences de ce qu'il embarque le suivent (`licenses/`) | rang 5 (D72) |
-| **Interface** | plan clos le 2026-09-08 : 12 critères de fin sur 13 atteints et mesurés, le treizième démontré inatteignable (`xfail` strict) | rang 5 et choix de 👤 (§5) |
+| **Exécutable gelé** | sur la couche OpenMP depuis `31745571` (D87), sans les outils de développement depuis `5ccaa210` (411 Mo) ; construit à `dbec2fc1` le 2026-10-06, hub et modules contrôlés au démarrage, et 👤 y a calculé : « l'exécutable fonctionne ». Les licences de ce qu'il embarque le suivent (`licenses/`) | A8 (D72, §0) |
+| **Interface** | plan clos le 2026-09-08 : 12 critères de fin sur 13 atteints et mesurés, le treizième démontré inatteignable (`xfail` strict) | A8 (§0) et choix de 👤 (§5) |
 | **Qualité** | CI : calcul sous Linux, interface sous Windows, gel construit et démarré sous Windows, audit de sécurité (`pip-audit`, `gitleaks`) ; tests isolés des préférences de 👤 ; l'audit du code mort couvre tout `certus/`. Indicateurs du plan le 2026-10-06 (`scripts\metrics.py`) : tous dans leur cible, sauf la couverture et la taille du gel, non remesurées ce jour | rangs 5 et 6 |
 | **Documentation** | règles dans `CLAUDE.md`, état ici ; 15 rapports HTML, 34 schémas Mermaid et 2 SVG validés le 2026-10-03 ; anciens dossiers lisibles dans Git | tenir « un fait, un seul endroit » |
 | **Validation externe** | 🔴 **aucune** : STRAT n'est validé que contre lui-même, et c'est assumé (décision de 👤 du 2026-10-06 : les deux dépôts réels du dichroïque ne sont plus prévus) | — |
@@ -283,7 +415,7 @@ sans recherche de fente. Leurs décisions tiennent jusqu'à leur remesure sous l
   rendent les mêmes 370 stratégies, leur ordre et leurs taux de
   plantage sur le juge standard ; 303 scores ne diffèrent que dans
   les derniers bits (≤ 6,7·10⁻¹¹ en relatif).
-- **D14, densité de l'historique : 16 points conservés ; la densité relève de la cadence machine (rang 4).**
+- **D14, densité de l'historique : 16 points conservés ; la densité relève de la cadence machine (12.4, §6).**
   Sur le balayage grossier, l'historique rejoue 16 points par couche contre 21 par épaisseur nominale pour la couche
   courante ; sur la grille de la machine, `_machine_grid_signal` lit les deux à la même cadence. Porter l'historique
   à 21 points changerait tous les résultats pour une densité aussi arbitraire que 16 (juge standard, 2026-10-04 :
@@ -491,9 +623,9 @@ d'autres composants (×1,5, ×1,75, 35 et 99 couches), d'autres graines (une seu
 
 | | sujet | état |
 |---|---|---|
-| 12.2 | modéliser le lissage de lecture | sur la grille machine, voir le rang 4 (§0) — surtout ne pas remonter le seuil |
+| 12.2 | modéliser le lissage de lecture | fait sur la grille machine : lecture du T exact à chaque pas, lissage sur 8 lectures au seuil de 1,00 A ; D54, D55, D93, D94 et D95 sont corrigés et ce chemin reproduit une machine indépendante rejouée lecture par lecture (rapport du 2026-10-10, section 2) — surtout ne pas remonter le seuil |
 | 12.3 | méconnaissance d'indice | spécifié : corridor de dispersion |
-| 12.4 | grille d'échantillonnage à la cadence machine | voir le rang 4 (§0) |
+| 12.4 | grille d'échantillonnage à la cadence machine | fait : voir 12.2 ; inactive par défaut (§3) |
 | 12.5 | quantification temporelle du déclenchement | ouvert |
 | 12.6 | facteur de face arrière | en dernier, ou jamais |
 | 12.7 | résolution du monochromateur | spécifié |

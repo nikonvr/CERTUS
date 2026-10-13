@@ -16,7 +16,7 @@
 **Point de départ.** `certus0310`, branche `claude/ecstatic-newton-3grmls` : `master` (`80dd7d3c`), plus
 `parite-zenodo` (PR [#8](https://github.com/nikonvr/CERTUS/pull/8)) et l'audit de l'arrêt de STRAT face à un OMS
 (`reports/STRAT_audit_declenchement_OMS_2026-10-10.md`) ; PR [#9](https://github.com/nikonvr/CERTUS/pull/9) en
-brouillon vers `master`. Les entrées `.git/worktrees/certus0310` et `.git/worktrees/profwt`, incomplètes (Drive en
+brouillon vers `master`. Les entrées `.git/worktrees/certus0310`, `profwt`, `buildwt`, `valwt`, `ratewt` et `ratewt2`, incomplètes (Drive en
 refuse la suppression), déclenchent un avertissement à chaque commit sans l'empêcher.
 
 **Dernière validation complète** (2026-10-13, Windows 11, Python 3.14.8, Ryzen 7 5700G, `631c4830` ; depuis, seuls des rapports,

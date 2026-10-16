@@ -9,18 +9,29 @@ from certus.core.certus_strat_rate_post import complete_score, refine_native_out
 from certus.utils.certus_data import SharedIndicesWorker
 
 
+def check_rate_post_preconditions(params: dict[str, Any]) -> dict[str, Any]:
+    """Resolve the consensus setup the final refinement scores with, or refuse: it runs after the whole search."""
+    from certus.core.certus_strat_consensus import _resolve_consensus_ranking_params
+
+    cfg = _resolve_consensus_ranking_params(params, num_runs=int(params.get("robustness_num_runs", 150)))
+    if not cfg["enabled"] or cfg["top_k"] < 9 or len(cfg["seeds"]) < 2:
+        raise ValueError(
+            "Final Rate refinement requires consensus for every group of up to nine plans: "
+            f"enable_consensus_ranking={cfg['enabled']}, consensus_top_k={cfg['top_k']} (9 or more needed), "
+            f"{len(cfg['seeds'])} consensus seed(s) (2 or more needed)"
+        )
+    return cfg
+
+
 def refine_rate_output(
     rows: list[dict[str, Any]], pre_calc_data: dict[str, Any], params: dict[str, Any], shared_clues_info: dict[str, Any]
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Score fixed groups sequentially, with the native worker's exact float32 clues."""
-    from certus.core.certus_strat_consensus import _resolve_consensus_ranking_params
     from certus.core.certus_strat_ranking import _resolve_monitoring_wavelength_grid
     from certus.core.certus_strat_robustness import run_final_simulation_block
 
     num_runs = int(params.get("robustness_num_runs", 150))
-    cfg = _resolve_consensus_ranking_params(params, num_runs=num_runs)
-    if not cfg["enabled"] or cfg["top_k"] < 9 or len(cfg["seeds"]) < 2:
-        raise ValueError("Final Rate refinement requires consensus for every group of up to nine plans")
+    cfg = check_rate_post_preconditions(params)
     scoring_params = {**params, "ablation_profile": False, "rate_post_refinement": False}
     with SharedIndicesWorker(shared_clues_info) as clues:
         context = {key: pre_calc_data[key] for key in ("p_thick_nominal", "nominal_matrix_cache", "all_wls")}

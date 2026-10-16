@@ -256,7 +256,9 @@ LEVIERS: tuple[Levier, ...] = (
         mesure="Prototype automatique R3_h03 :0,3431123800nm contre0,3600987135nm, puis3/3 groupes frais favorables, gain moyen5,2130%. "
                "Le meilleur plan local0,3345159946nm reste devant ; l'integration et les autres graines ne sont pas encore validees.",
         reserve="Cout supplementaire : deux passes au plus, faisceau2,600propositions au total,300par passe et consensus complet. "
-                "Aucune ancre historique injectee comme parent. False conserve la finalisation historique ; allow_rate=0 l'eteint aussi.",
+                "Aucune ancre historique injectee comme parent. False conserve la finalisation historique ; allow_rate=0 l'eteint aussi. "
+                "Les prerequis du consensus (actif, consensus_top_k >= 9, au moins 2 graines) sont verifies au demarrage : sinon la "
+                "campagne s'arrete avant la recherche.",
     ),
     # ---------------------------------------------------------------- RATE: the constants
     Levier(

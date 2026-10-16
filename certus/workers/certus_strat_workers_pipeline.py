@@ -27,6 +27,13 @@ class FullPipelineStrategy:
         - Results aggregation and analysis
         """
 
+        rate_post = bool(worker.params.get("rate_post_refinement", False) and worker.params.get("allow_rate", True))
+        if rate_post:
+            # The opt-in refinement runs after the whole search: refuse a setup it cannot score with now, not then.
+            from certus.workers.certus_strat_workers_rate import check_rate_post_preconditions
+
+            check_rate_post_preconditions(worker.params)
+
         import multiprocessing as mp
 
         if worker.timing_logger:
@@ -191,7 +198,7 @@ class FullPipelineStrategy:
                         worker.params["logger"].warning("Live preview monitor thread did not stop within 3s")
 
                 finalize_options = {}
-                if worker.params.get("rate_post_refinement", False) and worker.params.get("allow_rate", True):
+                if rate_post:
                     from certus.core.certus_strat_rate_post import rank_complete_first
                     from certus.workers.certus_strat_workers_rate import refine_rate_output
                     worker.params["logger"].info("[RATE-POST] Bounded final native refinement, additional full-depth scoring.")

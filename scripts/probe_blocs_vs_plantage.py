@@ -98,6 +98,7 @@ import json
 import os
 import sys
 from collections import defaultdict
+from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 
@@ -451,7 +452,7 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
         p.update(over)
         vus["n"] += 1
         for _k in ("allow_rate", "rate_by_swing", "rate_tail_sweep", "rate_layer_sets", "rate_tail_keep_optical", "rate_rescue",
-                   "rate_rescue_few", "elite_rate_moves", "elite_rate_max_candidates"):
+                   "rate_rescue_few", "elite_rate_moves", "elite_rate_max_candidates", "elite_rate_joint_candidates", "rate_post_refinement"):
             if _k in p:
                 leviers_rate[_k] = p[_k]
         for _k in ("robustness_num_runs", "n_screen_runs", "dp_top_k", "consensus_num_runs"):
@@ -480,6 +481,10 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
             "n_blocs": int(st.get("n_blocks", len(blocs))),
             "crash_rate": float(s.get("crash_rate", 1.0)),
             "score": float(s.get("robustness_score", 0.0) or 0.0),
+            # Keep base and consensus provenance separate; missing metadata stays unknown.
+            "robustness_score_base": s.get("robustness_score_base"),
+            "robustness_score_consensus": s.get("robustness_score_consensus"),
+            "robustness_consensus_meta": deepcopy(s.get("robustness_consensus_meta")),
             # 🔴 LA CLE EST `wavelength`, PAS `wl` -- corrige le 2026-08-20, et l'erreur coutait
             # LE LIVRABLE. `_build_layer_wavelengths_from_strategy` (certus_strat_robustness.py:
             # 2855) lit `block["wavelength"]` : c'est le nom qui fait foi. Avec `wl`, le champ
@@ -515,6 +520,7 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
             #
             # Liste VIDE = pur optique. C'est une distinction, pas une absence de donnee.
             "rate_layers": sorted(int(x) for x in (st.get("rate_layers") or [])),
+            "witness_reset_layers": deepcopy(st.get("witness_reset_layers")),
             # 🔴 LE DRAPEAU QUI MANQUAIT AUX ARTEFACTS. `crash_eliminated` est pose par
             # `_filter_finite_robustness_scores` sur toute strategie dont le score a ete
             # REMPLACE par un repli. Sans lui, un artefact ne porte que des scores finis
@@ -539,7 +545,9 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
             "resolution_noise_factor": s.get("resolution_noise_factor"),
         })
     return {"verdict": "OK", "n_strats": len(lignes), "strategies": lignes,
-            "profondeur": dict(profondeur), "leviers_rate": dict(leviers_rate)}
+            "profondeur": dict(profondeur), "leviers_rate": dict(leviers_rate),
+            **({"rate_post_refinement": deepcopy(res["final_results"]["rate_post_refinement"])}
+               if "rate_post_refinement" in res.get("final_results", {}) else {})}
 
 
 def par_fente(lignes: list[dict]) -> None:
@@ -787,7 +795,7 @@ def main() -> int:
                 # 🔴 LES COUPURES ENTRENT DANS LE NOM. Sans elles, changer TAIL_CUTS ecrase
                 # l'artefact precedent : les coupures 28-52 ont ete perdues ainsi.
                 + ("" if not par_swing else "_swing" if par_swing == 1
-                   else "_chirurgical" + (f"-{hashlib.sha1(_RATE_SETS_ENV.encode()).hexdigest()[:8]}" if _RATE_SETS_ENV else "")
+                   else "_chirurgical" + (f"-{hashlib.sha256(_RATE_SETS_ENV.encode()).hexdigest()[:8]}" if _RATE_SETS_ENV else "")
                    if par_swing == 4
                    else f"_tail{min(TAIL_CUTS)}-{max(TAIL_CUTS)}"
                         + ("k" if par_swing == 3 else "s" if par_swing == 5 else ""))

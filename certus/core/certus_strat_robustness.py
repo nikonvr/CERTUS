@@ -96,6 +96,7 @@ from certus.core.certus_strat_robustness_rate import (
     RATE_RESCUE_SERIAL_BASE,
     RATE_SWING_MIN_DEFAULT,
     RATE_VARIANT_TOP_N_DEFAUT,
+    _balanced_elite_rate_moves,
     _elite_rate_candidates,
     _elite_rate_moves,
     _expand_with_rate_variants,
@@ -721,10 +722,11 @@ def run_final_simulation_block(
     num_runs: int = 150,
     noise_levels: list[float] | None = None,
     expand_variants: bool = True,
+    refine: bool = True,
 ) -> dict[str, Any]:
     """Phase B robustness screening: evaluate every candidate strategy under noise.
 
-    ``expand_variants`` -- generate the Rate and slit variants of each strategy.
+    ``expand_variants`` generates Rate/slit variants; ``refine=False`` scores fixed plans without ELITE.
 
     🔑 FALSE ON THE SCREENING PASS, and that is the whole point. Rate multiplies the
     candidate count by up to 4 and the slit search by 4 again: 📏 measured 2026-08-12 on
@@ -1031,8 +1033,7 @@ def run_final_simulation_block(
         strategies_results=strategies_results,
         ctx=ctx,
         apply_consensus_fn=_apply_consensus_ranking_inplace,
-    )
-
+    ) if refine else strategies_results
     return _finalize_robustness_results(
         strategies_results=strategies_results,
         params=params,

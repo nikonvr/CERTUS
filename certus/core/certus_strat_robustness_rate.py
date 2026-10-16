@@ -1074,13 +1074,36 @@ def _elite_rate_moves(rate_layers: Any, num_layers: int) -> list[list[int]]:
     return ordered
 
 
-def _elite_rate_candidates(parent_results: list[dict[str, Any]], num_layers: int) -> list[tuple[Any, dict[str, Any], list[dict[str, Any]], list[int]]]:
+def _balanced_elite_rate_moves(rate_layers: Any, num_layers: int) -> list[list[int]]:
+    """Reorder the same moves across families, widths and early/middle/late positions before the shared cap."""
+    current = {int(i) for i in rate_layers or [] if RATE_MIN_LAYER <= int(i) < num_layers}
+    families: dict[tuple[str, int], list[list[int]]] = {}
+    for layers in _elite_rate_moves(sorted(current), num_layers):
+        removed = current - set(layers)
+        added = set(layers) - current
+        if removed:
+            family = ("edge", 0) if len(removed) == 1 else ("open", len(removed))
+        elif min(added) - 1 in current and max(added) + 1 in current:
+            family = ("fill", 0)
+        else:
+            family = ("edge", 0) if len(added) == 1 else ("insert", len(added))
+        families.setdefault(family, []).append(layers)
+    spread: list[list[list[int]]] = []
+    for moves in families.values():
+        indices = dict.fromkeys((0, len(moves) // 2, len(moves) - 1, *range(len(moves))))
+        spread.append([moves[i] for i in indices])
+    longest = max((len(moves) for moves in spread), default=0)
+    return [moves[k] for k in range(longest) for moves in spread if k < len(moves)]
+
+
+def _elite_rate_candidates(parent_results: list[dict[str, Any]], num_layers: int, *, balanced: bool = False) -> list[tuple[Any, dict[str, Any], list[dict[str, Any]], list[int]]]:
     """The moves on the Rate layers of every parent, the parents taking turns: `(parent id, parent, its blocks, the new Rate layers)`."""
+    move_fn = _balanced_elite_rate_moves if balanced else _elite_rate_moves
     per_parent = []
     for parent in parent_results:
         strat = parent.get("strategy", {})
         blocks = [{"start": int(b["start"]), "end": int(b["end"]), "wavelength": float(b["wavelength"])} for b in strat.get("blocks", [])]
         if blocks:
-            per_parent.append([(strat.get("strategy_id", "?"), strat, blocks, layers) for layers in _elite_rate_moves(strat.get("rate_layers"), num_layers)])
+            per_parent.append([(strat.get("strategy_id", "?"), strat, blocks, layers) for layers in move_fn(strat.get("rate_layers"), num_layers)])
     longest = max((len(moves) for moves in per_parent), default=0)
     return [moves[k] for k in range(longest) for moves in per_parent if k < len(moves)]

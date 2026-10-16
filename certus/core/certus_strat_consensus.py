@@ -799,7 +799,6 @@ def _apply_elite_refinement_if_enabled(
     base_seed = _resolve_robustness_base_seed(ctx.params)
     # 👤 2026-10-12: optics, a packet of Rate, optics at another wavelength: on by default (`r75x0.5` 0.4981 -> 0.3967 nm); `allow_rate = 0` is honoured.
     rate_moves = bool(ctx.params.get("elite_rate_moves", True)) and bool(ctx.params.get("allow_rate", True))
-
     executor_cls = concurrent.futures.ThreadPoolExecutor
     worker_count = get_safe_worker_count()
 
@@ -829,10 +828,12 @@ def _apply_elite_refinement_if_enabled(
             round_robin_seed=(base_seed, elite_round) if round_robin else None,
             rate_moves=rate_moves,
             max_rate_candidates=int(ctx.params.get("elite_rate_max_candidates", 120)),
+            balanced_rate_moves=bool(ctx.params.get("elite_rate_balanced_moves", False)),
+            **({"joint_candidates": int(ctx.params.get("elite_rate_joint_candidates", 0))} if ctx.params.get("elite_rate_joint_candidates", 0) else {}),
         )
         if rate_moves:
             n_rate = sum(1 for c in elite_candidates if str(c.get("origin_details", "")).startswith("ELITE_RATE"))
-            ctx.logger.info(f"[ELITE-RATE] Round {elite_round}: {n_rate} candidate(s) change the Rate layers of their parent.")
+            ctx.logger.info(f"[ELITE-RATE] Round {elite_round}: {n_rate} candidate(s) change the Rate layers of their parent." + (" [balanced families]" if bool(ctx.params.get("elite_rate_balanced_moves", False)) else ""))
         if ctx.strategy_id_cursor is not None:
             ctx.strategy_id_cursor.advance(_next_sid)
         _attach_slit_profiles(elite_candidates, ctx.p_thick_nominal, ctx.params, ctx.logger)
@@ -1388,6 +1389,8 @@ def _generate_elite_candidate_strategies(
     round_robin_seed: tuple[int, ...] | None = None,
     rate_moves: bool = False,
     max_rate_candidates: int = 0,
+    balanced_rate_moves: bool = False,
+    joint_candidates: int = 0,
 ) -> tuple[list[dict[str, Any]], int]:
     """
     Build local-neighborhood variants around top-ranked strategies.
@@ -1401,17 +1404,14 @@ def _generate_elite_candidate_strategies(
     """
     if not parent_results or not available_wls:
         return [], start_strategy_id
-
     wl_arr = np.array(sorted(set(float(w) for w in available_wls)), dtype=np.float64)
     if wl_arr.size == 0:
         return [], start_strategy_id
-
     seen = set(existing_signatures or set())
     out: list[dict[str, Any]] = []
     next_id = int(start_strategy_id)
     span = max(1, int(wl_neighbor_span))
     max_keep = max(1, int(max_candidates))
-
     def _push_candidate(
         base_blocks: list[dict[str, Any]], parent_sid: Any, parent_strat: dict[str, Any], rate_layers: list[int] | None = None, limit: int | None = None
     ) -> bool:
@@ -1489,10 +1489,12 @@ def _generate_elite_candidate_strategies(
 
     if rate_moves and max_rate_candidates > 0:
         limit = len(out) + int(max_rate_candidates)
-        for parent_sid, parent_strat, base_blocks, layers in _elite_rate_candidates(parent_results, num_layers):
+        for parent_sid, parent_strat, base_blocks, layers in _elite_rate_candidates(parent_results, num_layers, balanced=balanced_rate_moves):
             if len(out) >= limit:
                 break
             _push_candidate([dict(b) for b in base_blocks], parent_sid, parent_strat, rate_layers=layers, limit=limit)
-
+    if rate_moves and joint_candidates > 0:
+        from certus.core.certus_strat_rate_moves import append_joint_candidates
+        append_joint_candidates(parent_results, available_wls, num_layers, joint_candidates, out, _push_candidate)
     return out, next_id
 

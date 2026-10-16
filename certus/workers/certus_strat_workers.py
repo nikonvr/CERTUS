@@ -1540,19 +1540,17 @@ def _finalize_and_export_pipeline_results(
     params: dict[str, Any],
     signals: Any,
     timing_logger: Any,
+    ranker: Any = None,
+    post_report: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Sorts final results, emits plots, triggers Excel export, and returns final payload."""
     params["logger"].info("🚀 PHASE 4: Final Monte Carlo Yield Evaluation & Export...")
     if not accumulated_strategies_results:
         raise RuntimeError("No strategies found.")
-
-    accumulated_strategies_results[:] = rank_final_results(accumulated_strategies_results)
-
+    accumulated_strategies_results[:] = (ranker or rank_final_results)(accumulated_strategies_results)
     if timing_logger:
         timing_logger.end_global("STRAT_Workflow")
-
     signals.show_strategies_table.emit(accumulated_strategies_results)
-
     best_res = accumulated_strategies_results[0]
     sim_context = pre_calc_data.copy()
     sim_context["blocks"] = best_res["strategy"]["blocks"]
@@ -1564,6 +1562,8 @@ def _finalize_and_export_pipeline_results(
         "best_strategy": best_res["strategy"],
         "all_strategies_results": accumulated_strategies_results,
     }
+    if post_report is not None:
+        final_complete_structure["rate_post_refinement"] = post_report
 
     if params.get("show_plots", True):
         try:

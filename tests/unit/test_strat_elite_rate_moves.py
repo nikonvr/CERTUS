@@ -24,6 +24,7 @@ from certus.core.certus_strat_robustness import (
     _elite_rate_moves,
     _rate_runs,
 )
+from certus.core.certus_strat_robustness_rate import _balanced_elite_rate_moves
 
 WLS = [596.0, 598.0, 600.0, 602.0, 604.0, 616.0, 618.0, 620.0, 622.0, 624.0]
 N_LAYERS = 20
@@ -124,6 +125,22 @@ def test_layers_zero_and_one_in_the_parent_are_dropped_not_carried() -> None:
     assert all(0 not in m and 1 not in m for m in moves)
 
 
+@pytest.mark.parametrize("parent", [[], [5], list(range(2, 10)), [3, 4, 9, 10, 11], list(range(14, 75))])
+def test_balancing_only_reorders_the_existing_moves(parent) -> None:
+    original = _elite_rate_moves(parent, 75)
+    balanced = _balanced_elite_rate_moves(parent, 75)
+
+    assert len(balanced) == len(original)
+    assert set(_as_sets(balanced)) == set(_as_sets(original))
+    assert balanced == _balanced_elite_rate_moves(parent, 75)
+
+
+def test_balancing_accepts_an_iterator_without_losing_its_layers() -> None:
+    parent = list(range(14, 75))
+
+    assert _balanced_elite_rate_moves(iter(parent), 75) == _balanced_elite_rate_moves(parent, 75)
+
+
 # ---- the candidates of ELITE -----------------------------------------------------------------------------------------------
 
 
@@ -210,6 +227,59 @@ def test_a_pure_optical_parent_gets_packets_of_rate() -> None:
     assert all(_rate_runs(c["rate_layers"])[0][1] - _rate_runs(c["rate_layers"])[0][0] + 1 in ELITE_RATE_WINDOWS for c in extra)
 
 
+def _packet_parents() -> list[dict]:
+    rates = [*range(6, 10), *range(12, 34), *range(36, 75)]
+    return [{"strategy": {
+        "strategy_id": rank,
+        "n_blocks": 1,
+        "blocks": [{"start": 0, "end": 75, "wavelength": 600.0 + rank}],
+        "rate_layers": list(rates),
+        "monochromator_resolution_nm": 2.0,
+        "witness_reset_layers": [4],
+    }} for rank in range(10)]
+
+
+def _packet_children(parents: list[dict], *, balanced: bool) -> list[dict]:
+    children, _ = _generate_elite_candidate_strategies(
+        parents, list(range(590, 630)), 75, 1000, max_candidates=120,
+        rate_moves=True, max_rate_candidates=120, balanced_rate_moves=balanced,
+    )
+    return [child for child in children if child["origin_details"].startswith("ELITE_RATE")]
+
+
+def test_balancing_opens_both_window_widths_for_every_parent_under_the_same_cap() -> None:
+    parents = _packet_parents()
+    legacy = _packet_children(parents, balanced=False)
+    balanced = _packet_children(parents, balanced=True)
+    original = set(parents[0]["strategy"]["rate_layers"])
+
+    assert len(legacy) == len(balanced) == 120
+    assert all(len(original - set(child["rate_layers"])) <= 1 for child in legacy)
+    for parent in parents:
+        children = [child for child in balanced if child["parent_strategy_id"] == parent["strategy"]["strategy_id"]]
+        windows = [original - set(child["rate_layers"]) for child in children]
+        assert {2, 4} <= {len(window) for window in windows}
+        assert any(window and min(window) > 60 for window in windows)
+        assert all(child["blocks"] == parent["strategy"]["blocks"] for child in children)
+        assert all(child["monochromator_resolution_nm"] == 2.0 and child["witness_reset_layers"] == [4] for child in children)
+    assert len({tuple(child["rate_layers"]) + tuple(b["wavelength"] for b in child["blocks"]) for child in balanced}) == 120
+
+
+def test_balancing_is_ignored_when_rate_moves_are_disabled() -> None:
+    parents = [_parent(7, range(12, N_LAYERS))]
+
+    assert _children(parents, balanced_rate_moves=True) == _children(parents)
+
+
+def test_disabled_balancing_preserves_the_default_candidates_and_ids() -> None:
+    parents = _packet_parents()
+    arguments = dict(max_candidates=120, rate_moves=True, max_rate_candidates=120)
+
+    assert _generate_elite_candidate_strategies(parents, WLS, 75, 1000, balanced_rate_moves=False, **arguments) == (
+        _generate_elite_candidate_strategies(parents, WLS, 75, 1000, **arguments)
+    )
+
+
 # ---- the refinement asks for them unless told otherwise -------------------------------------------------------------------
 
 
@@ -225,21 +295,22 @@ def _ctx(params: dict) -> RobustnessContext:
 @pytest.mark.parametrize(
     ("extra", "expected"),
     [
-        ({}, (True, 120)),
-        ({"elite_rate_moves": True}, (True, 120)),
-        ({"elite_rate_moves": True, "elite_rate_max_candidates": 33}, (True, 33)),
-        ({"elite_rate_moves": False}, (False, 120)),
-        ({"allow_rate": False}, (False, 120)),
-        ({"allow_rate": 0}, (False, 120)),
-        ({"allow_rate": 1, "elite_rate_moves": True}, (True, 120)),
+        ({}, (True, 120, False)),
+        ({"elite_rate_moves": True}, (True, 120, False)),
+        ({"elite_rate_moves": True, "elite_rate_max_candidates": 33}, (True, 33, False)),
+        ({"elite_rate_moves": False}, (False, 120, False)),
+        ({"allow_rate": False}, (False, 120, False)),
+        ({"allow_rate": 0}, (False, 120, False)),
+        ({"allow_rate": 1, "elite_rate_moves": True}, (True, 120, False)),
+        ({"elite_rate_balanced_moves": True}, (True, 120, True)),
     ],
-    ids=["default", "on", "budget", "off", "no Rate", "no Rate (0)", "Rate allowed"],
+    ids=["default", "on", "budget", "off", "no Rate", "no Rate (0)", "Rate allowed", "balanced"],
 )
 def test_the_refinement_passes_the_moves_unless_told_otherwise(monkeypatch, extra, expected) -> None:
     seen = []
 
     def fake_generate(*_a, **k):
-        seen.append((k.get("rate_moves"), k.get("max_rate_candidates")))
+        seen.append((k.get("rate_moves"), k.get("max_rate_candidates"), k.get("balanced_rate_moves")))
         return [], 0
 
     monkeypatch.setattr("certus.core.certus_strat_consensus._generate_elite_candidate_strategies", fake_generate)

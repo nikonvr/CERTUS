@@ -236,6 +236,28 @@ LEVIERS: tuple[Levier, ...] = (
                "d'optique ouverte dans un paquet de Rate, un paquet de Rate pose dans l'optique).",
         reserve="Jamais balaye : 120 est un reglage de depart.",
     ),
+    Levier(
+        cle="elite_rate_joint_candidates",
+        libelle="ELITE : budget experimental de fenetres optiques et longueurs d'onde conjointes",
+        defaut=0,
+        genre="int",
+        statut=NON_MESURE,
+        mesure="Prototype R3_h03, r75x0.5 deep graine101 : voisinage conjoint de480 propositions, largeurs1..7 et lambda fine, "
+               "puis raffinement final ; gain frais moyen5,2130% sur trois groupes contre sa recherche propre. La voie integree reste a mesurer.",
+        reserve="Budget supplementaire par tour, borne a480 ; zero conserve le generateur historique. Les largeurs et lambda seules "
+                "n'ont pas gagne dans les deux premieres paires. Pas de generalisation ni d'activation par defaut.",
+    ),
+    Levier(
+        cle="rate_post_refinement",
+        libelle="Rate : raffinement experimental final des parents issus de la seule recherche native",
+        defaut=False,
+        genre="bool",
+        statut=NON_MESURE,
+        mesure="Prototype automatique R3_h03 :0,3431123800nm contre0,3600987135nm, puis3/3 groupes frais favorables, gain moyen5,2130%. "
+               "Le meilleur plan local0,3345159946nm reste devant ; l'integration et les autres graines ne sont pas encore validees.",
+        reserve="Cout supplementaire : deux passes au plus, faisceau2,600propositions au total,300par passe et consensus complet. "
+                "Aucune ancre historique injectee comme parent. False conserve la finalisation historique ; allow_rate=0 l'eteint aussi.",
+    ),
     # ---------------------------------------------------------------- RATE: the constants
     Levier(
         cle="RATE_MIN_LAYER",

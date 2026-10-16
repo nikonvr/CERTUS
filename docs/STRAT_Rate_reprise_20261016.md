@@ -11,14 +11,15 @@ Le chantier scientifique en est au **diagnostic, avant correctif 48c**. Le progr
 R0–R6 précédent est clos ; son automation reste en pause. L'action immédiate demandée
 est la passation et le nettoyage : conserver les preuves brutes en archives locales,
 garder Git léger et conserver `certus0310` sous **1 000 000 000 octets, `.git` compris**.
-Le contrôle après ménage donne environ509Mo ; l'inventaire après livraison dans le
-dossier de publication donne le relevé final, sans présumer la fin du push.
+Le contrôle après push donne490935336octets (~491Mo), Git compris ; le relevé daté
+est conservé dans le dossier de publication.
 Après deux refus de la revue automatique, l'utilisateur confirme explicitement :
 « force le push public c'est un ordre ». La publication publique du code, des bilans,
 plans, indexSHA et journaux de validation est donc autorisée vers
 `https://github.com/nikonvr/CERTUS.git`, branche `claude/ecstatic-newton-3grmls`.
-Les archives brutes restent locales. L'envoi reste à exécuter dans ce relevé ; consulter
-le bilan de livraison pour son résultat effectif. Aucun historique Git n'est réécrit.
+Les archives brutes restent locales. Le push a réussi (sortie0), puis le distant a été
+vérifié au commit `be3af69ed0271d64b8c98d1f065674ffe6d31b49` ; le présent récépissé
+complète cette livraison. Aucun historique Git n'est réécrit.
 
 Pour reprendre la science après cette livraison :
 

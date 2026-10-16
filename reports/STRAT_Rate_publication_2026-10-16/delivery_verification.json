@@ -1,14 +1,14 @@
 {
   "recorded_utc": "2026-10-16T09:17:55.898494+00:00",
-  "checkout_bytes_including_git": 490832930,
+  "checkout_bytes_including_git": 490935336,
   "checkout_under_1_decimal_GB": true,
   "scientific_sources_unchanged_since_R5": true,
   "payload_head": "8104055146182fd4ceca5f53ded0d53230950dde",
   "branch": "claude/ecstatic-newton-3grmls",
   "push_url_verified": "https://github.com/nikonvr/CERTUS.git",
   "remote_branch_before_push": "bee0d3c511573eaa1da5621b3a047712fdf1cd79",
-  "push_executed": false,
-  "push_status": "PUBLIC_PUSH_EXPLICITLY_AUTHORIZED_PENDING_EXECUTION",
+  "push_executed": true,
+  "push_status": "SUCCESS_REMOTE_HEAD_VERIFIED",
   "automatic_rejections": 2,
   "review_reason": "Public destination and payload (code, scientific reports, plans, SHA indexes and validation journals) require explicit user confirmation despite general push request. Do not bypass.",
   "destination_checks": [
@@ -39,5 +39,10 @@
     "branch": "claude/ecstatic-newton-3grmls",
     "payload": "Code, bilans scientifiques, plans, index SHA256 et journaux de validation; archives brutes locales exclues.",
     "rewrite_history": false
-  }
+  },
+  "checkout_size_recorded_after_first_push_utc": "2026-10-16T09:23:17.949251+00:00",
+  "push_exit_code": 0,
+  "remote_head_verified": "be3af69ed0271d64b8c98d1f065674ffe6d31b49",
+  "remote_verification": "git ls-remote exact URL and branch with host network access; initial sandbox DNS failure preserved as an environment limitation, host retry exit0.",
+  "receipt_commit_follows_this_verification": true
 }

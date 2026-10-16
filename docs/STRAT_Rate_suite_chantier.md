@@ -7,7 +7,11 @@ Document de travail préparé le 14 octobre 2026 à la demande de 👤, pour une
 [périmètre et plafonds séparés](../reports/STRAT_Rate_followup_2026-10-16/authorization_and_plan.json).
 Diagnostic enregistré terminé ; préparation contrôlée échouée avant mesure, ancien suiviPAUSED.
 La [passation précise du16octobre](STRAT_Rate_reprise_20261016.md) décrit l'état réel,
-le diagnostic48c, les écartsR5/h03 non résolus et la reprise sûre. Publication et ménage demandés.
+le diagnostic48c, les écartsR5/h03 non résolus et la reprise sûre. Ménage terminé : environ491Mo,
+Git compris ; archives brutes locales horsCERTUS. Publication publique confirmée par 👤 et effectuée
+sur `claude/ecstatic-newton-3grmls`, distant vérifié à `be3af69e`.
+[Livraison et restauration des preuves](../reports/STRAT_Rate_publication_2026-10-16/README.md).
+Les autorisations et restrictions ci-dessous décrivent le programme historique clos.
 👤 a ensuite choisi de poursuivre avec cette IA en totale autonomie : le guide s’applique à la continuation
 actuelle et reste utilisable pour une passation ultérieure.
 **Dernière autorisation, le15 octobre2026 : corriger RMSE puis reprendre jusqu’à la fin du programme borné R0–R6.**

@@ -175,6 +175,42 @@ LEVIERS: tuple[Levier, ...] = (
         reserve="🔴 C'EST UNE AFFAIRE DE 2 nm. A 1 nm, le pur optique la BAT. Et le SEEL "
                 "obtenu (0,68-0,69) est +18 % au-dessus de la voie avec rampes.",
     ),
+    Levier(
+        cle="rate_tail_keep_optical",
+        libelle="Queue Rate : couches de la queue gardees en optique (les N au swing le plus fort)",
+        defaut=0,
+        genre="int",
+        statut=NON_MESURE,
+        mesure="Regle d'exception de 👤 (2026-08-19) : « sauf les couches a bon signal qui restent en optique ». Dans chaque "
+               "queue de `rate_tail_sweep`, les N couches de plus fort swing restent en optique et les autres passent en Rate ; "
+               "a 0 la queue n'est pas touchee. Jamais mesure : aucun resultat dans docs/ETAT.md, "
+               "docs/STRAT_Rate_suite_chantier.md ni reports/ (recherche du 2026-10-16), et tous les artefacts de reports/ qui "
+               "portent la cle la montrent a 0.",
+        reserve="N'agit que si `rate_tail_sweep` n'est pas vide ET si le placement par swing est disponible (`rate_by_swing` "
+                "arme et son contexte construit) : sinon aucune couche n'est gardee, et l'etiquette de la variante porte "
+                "quand meme `K<N>`. Se pose par la configuration JSON, sans widget. 🔴 Le 2026-08-19 (commit `788b6d70`) le "
+                "mecanisme faisait PREDIRE qu'elle nuit -- rouvrir une couche optique au milieu de la queue reintroduit un point "
+                "de plantage et reexpose tout l'aval, donc moins de deposables ou un SEEL pire : une prediction, pas une mesure.",
+    ),
+    # ---------------------------------------------------------------- RATE: the surgical sets
+    Levier(
+        cle="rate_layer_sets",
+        libelle="Rate chirurgical : jeux de couches posees en Rate, une variante par strategie et par jeu",
+        defaut=None,
+        genre="liste",
+        statut=RESERVE,
+        mesure="📏 Essai E2 du rapport du 2026-10-12, r75x0.5, graine 101, `03990e9a`, `rate_by_swing` et secours eteints : "
+               "les jeux {22, 25, 28} puis +46, +51, +62, +69 et 72 (indices) ne rendent AUCUN plan deposable sur 4 614 ; "
+               "plantage minimal 52,0 % pour ces jeux (47,0 % toutes familles confondues). Le rapport en conclut que les couches "
+               "critiques d'un plan optique pur ne designent pas ou poser le Rate : une fois les premieres en Rate, ce sont "
+               "d'autres couches qui cedent.",
+        reserve="Un seul essai : un composant, une graine, sans le placement par swing ni le secours Rate que la production "
+                "arme par defaut ; il ne dit rien de la production actuelle ni d'un autre composant, et aucune autre mesure "
+                "ne figure dans docs/ETAT.md, docs/STRAT_Rate_suite_chantier.md ni reports/ (recherche du 2026-10-16). Cout : "
+                "une variante par strategie ET par jeu, hors du plafond `rate_max_variants_per_strategy` et de "
+                "`rate_variant_top_n`. Se pose par la configuration JSON, sans widget : les jeux separes par `;`, les couches "
+                "d'un jeu par `-`, indices depuis 0 (`22-25-28;22-25-28-46`). Vide, la recherche est inchangee.",
+    ),
     # ---------------------------------------------------------------- RATE: the rescue
     Levier(
         cle="rate_rescue",
@@ -205,6 +241,21 @@ LEVIERS: tuple[Levier, ...] = (
                "nombre de blocs, pas ceux de la campagne.",
         reserve="Le nombre de plans deposables d'une passe depend de sa taille : 10 est un reglage de depart, pas une "
                 "mesure. Monter le seuil donne plus de queues Rate aux composants qui ont deja des plans deposables.",
+    ),
+    Levier(
+        cle="rate_rescue_hard",
+        libelle="Secours Rate : poser en Rate les seules couches ou les tirages plantent d'abord, par tours",
+        defaut=False,
+        genre="bool",
+        statut=RESERVE,
+        mesure="📏 r75x0.5, graine 101, `dbf8025f`, rapport du 2026-10-12, `rate_rescue_hard=true` et rien d'autre de change : "
+               "410 plans « couches difficiles » evalues, 35 deposables (8,5 %), contre 2 680 deposables sur 3 467 queues (77 %) ; "
+               "liste finale de 3 701 a 3 760 plans, tous deposables ; meilleur SEEL 0,4981 nm avant et apres, le meme plan "
+               "(ELITE, 12 blocs, Rate des indices 17 a 74).",
+        reserve="Une graine, un composant, et aucun gain sur le meilleur. Au 2026-10-16 l'application ne le transmet pas "
+                "(`collect_params` ne le lit pas) : il se pose par `CERTUS_PROBE_OVERRIDES`. Cout : jusqu'a 10 plans sur 8 tours "
+                "quand aucun plan ne se termine, 1 plan sur 2 tours a `rate_rescue_few` plans deposables ou plus, jusqu'a 4 couches "
+                "ajoutees par tour ; il suppose `rate_rescue` et `allow_rate` armes. `false` retablit le chemin d'avant.",
     ),
     # ---------------------------------------------------------------- RATE: the Rate layers, moved by ELITE
     Levier(

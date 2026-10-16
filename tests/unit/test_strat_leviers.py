@@ -193,8 +193,8 @@ def test_le_statut_VALIDE_et_RESERVE_sont_distincts() -> None:
 # ---------------------------------------------------------------------------
 
 #: Rate switches that the search reads and that predate this guard, still missing from the registry. The set may
-#: only shrink: a new switch is registered, with what its measurement says, before the search reads it.
-RATE_SWITCHES_NOT_YET_REGISTERED = {"rate_layer_sets", "rate_tail_keep_optical", "rate_rescue_hard"}
+#: only shrink, and it is empty: a new switch is registered, with what its measurement says, before the search reads it.
+RATE_SWITCHES_NOT_YET_REGISTERED: set[str] = set()
 
 
 def _rate_switches_read_by_the_search() -> set[str]:

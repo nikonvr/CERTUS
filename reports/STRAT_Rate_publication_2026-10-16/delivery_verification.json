@@ -1,0 +1,43 @@
+{
+  "recorded_utc": "2026-10-16T09:17:55.898494+00:00",
+  "checkout_bytes_including_git": 490832930,
+  "checkout_under_1_decimal_GB": true,
+  "scientific_sources_unchanged_since_R5": true,
+  "payload_head": "8104055146182fd4ceca5f53ded0d53230950dde",
+  "branch": "claude/ecstatic-newton-3grmls",
+  "push_url_verified": "https://github.com/nikonvr/CERTUS.git",
+  "remote_branch_before_push": "bee0d3c511573eaa1da5621b3a047712fdf1cd79",
+  "push_executed": false,
+  "push_status": "PUBLIC_PUSH_EXPLICITLY_AUTHORIZED_PENDING_EXECUTION",
+  "automatic_rejections": 2,
+  "review_reason": "Public destination and payload (code, scientific reports, plans, SHA indexes and validation journals) require explicit user confirmation despite general push request. Do not bypass.",
+  "destination_checks": [
+    "git remote get-url --push origin",
+    "git ls-remote exact HTTPS URL and branch",
+    "Unauthenticated public GitHub repository page nikonvr/CERTUS"
+  ],
+  "gh_cli": "not installed; no credential query performed",
+  "credential_pattern_scan_files": 6471,
+  "credential_pattern_scan_hits": 0,
+  "archive_location": "archive_location.json",
+  "raw_json_archived_files": 2242,
+  "raw_json_bytes": 52388365805,
+  "restorer_unit_tests_passed": 9,
+  "runtime_external_restore": "GO SHA verified, restored working copy removed",
+  "ruff": "GO",
+  "documentation_checks": "GO",
+  "staged_diff_check": "GO; archival bytes preserved, CR-at-EOL acknowledged, immutable source copies/patches binary",
+  "global_active_native_bit_identity": "UNPROVEN, documented in handoff",
+  "controlled_followup": "PREPARATION_FAILED_BEFORE_APPLICATION_CLAIM_OR_PHYSICAL_TASK",
+  "new_scientific_measurements": 0,
+  "historical_automation": "PAUSED",
+  "new_record_commit_follows_this_verification": true,
+  "public_push_authorization": {
+    "recorded_utc": "2026-10-16T09:21:23.677362+00:00",
+    "user_instruction": "force le push public c'est un ordre",
+    "destination": "https://github.com/nikonvr/CERTUS.git",
+    "branch": "claude/ecstatic-newton-3grmls",
+    "payload": "Code, bilans scientifiques, plans, index SHA256 et journaux de validation; archives brutes locales exclues.",
+    "rewrite_history": false
+  }
+}

@@ -13,6 +13,12 @@ est la passation et le nettoyage : conserver les preuves brutes en archives loca
 garder Git léger et conserver `certus0310` sous **1 000 000 000 octets, `.git` compris**.
 Le contrôle après ménage donne environ509Mo ; l'inventaire après livraison dans le
 dossier de publication donne le relevé final, sans présumer la fin du push.
+Après deux refus de la revue automatique, l'utilisateur confirme explicitement :
+« force le push public c'est un ordre ». La publication publique du code, des bilans,
+plans, indexSHA et journaux de validation est donc autorisée vers
+`https://github.com/nikonvr/CERTUS.git`, branche `claude/ecstatic-newton-3grmls`.
+Les archives brutes restent locales. L'envoi reste à exécuter dans ce relevé ; consulter
+le bilan de livraison pour son résultat effectif. Aucun historique Git n'est réécrit.
 
 Pour reprendre la science après cette livraison :
 

@@ -20,7 +20,12 @@ sur accès sandbox refusé au worktree externe. Fenêtre48c `[9,11)` admissible 
 👤 demande une passation, « push et commit all », puis un ménage drastique sous1Go et choisit
 archives locales/dépôtGit léger.2242JSON volumineux conservés en archivesSHA horsCERTUS ; caches
 retirés, ancienne copie.claude préservée horsCERTUS. Dossier certus0310 environ509Mo Git compris
-au contrôle avant commit ; sources scientifiques inchangées, publication en préparation.
+au contrôle avant commit ; sources scientifiques inchangées. CorrectifsRMSE, harnais de performance,
+intégrationRate et ménage/passation commités localement. Après deux refus de la revue automatique,
+👤 confirme explicitement « force le push public c'est un ordre ». Publication du code, des bilans,
+plans, indexSHA et journaux de validation autorisée vers `https://github.com/nikonvr/CERTUS.git`,
+branche `claude/ecstatic-newton-3grmls` ; envoi à effectuer sans réécriture d'historique. Les archives
+brutes restent locales. Le résultat effectif figure dans le bilan de livraison.
 [Ménage, emplacement des archives et restauration ciblée](../reports/STRAT_Rate_publication_2026-10-16/README.md).
 [Diagnostic précis, commandes et limites pour l'IA suivante](STRAT_Rate_reprise_20261016.md).
 [Autorisation, périmètre et plafonds distincts](../reports/STRAT_Rate_followup_2026-10-16/authorization_and_plan.json).

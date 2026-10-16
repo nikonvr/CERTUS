@@ -5,6 +5,14 @@ L'utilisateur demande « push et commit all », puis un ménage drastique, chois
 Le contrôle après ménage donne environ509Mo, Git compris ; le relevé après commit fait foi
 dans `delivery_verification.json` lorsqu'il existe.
 
+**Publication publique explicitement confirmée.** Après deux refus de la revue automatique,
+l'utilisateur demande « force le push public c'est un ordre ». Cette confirmation autorise
+l'envoi du code, des bilans scientifiques, plans, indexSHA et journaux de validation vers
+`https://github.com/nikonvr/CERTUS.git`, branche `claude/ecstatic-newton-3grmls`.
+Les archives brutes restent locales. L'envoi est à exécuter dans ce relevé ;
+`delivery_verification.json` porte le résultat effectif et les refus antérieurs.
+Le push prévu conserve l'historique, sans option de réécriture forcée.
+
 Les2242JSON volumineux sont conservés en gzip sans perte **hors du dossier CERTUS**, dans :
 
 ```text

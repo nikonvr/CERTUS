@@ -574,7 +574,7 @@ def simulate_stack_robustness_batch(
 
 
 @njit(parallel=True, cache=True, fastmath=True, nogil=True, error_model="numpy")
-def compute_batch_rmse(
+def _compute_batch_rmse_kernel(
     sim_thick_batch: np.ndarray,
     wls: np.ndarray,
     nH_arr: np.ndarray,
@@ -711,6 +711,37 @@ def compute_batch_rmse(
             # perfect. We return infinity, which eliminates and is visible.
             rmse_arr[r] = np.inf
     return rmse_arr
+
+
+@njit(cache=True, nogil=True)
+def compute_batch_rmse(
+    sim_thick_batch: np.ndarray,
+    wls: np.ndarray,
+    nH_arr: np.ndarray,
+    nL_arr: np.ndarray,
+    nSub_arr: np.ndarray,
+    T_target: np.ndarray,
+    n_layers_flattened: np.ndarray,
+    weights: np.ndarray | None = None,
+    index_corridor: float = 0.0,
+    index_seed: int = 0,
+    corridor_wl_min: float = 0.0,
+    corridor_wl_max: float = 0.0,
+) -> np.ndarray:
+    """Canonicalize uniform weights before selecting the historical JIT specialization."""
+    if weights is not None and weights.ndim == 1 and weights.size == len(wls) and weights.size > 0:
+        first_weight = weights[0]
+        total_weight = first_weight * weights.size
+        if np.isfinite(first_weight) and first_weight > 0.0 and np.isfinite(total_weight) and total_weight > 1e-300:
+            if np.all(weights == first_weight):
+                return _compute_batch_rmse_kernel(
+                    sim_thick_batch, wls, nH_arr, nL_arr, nSub_arr, T_target, n_layers_flattened,
+                    None, index_corridor, index_seed, corridor_wl_min, corridor_wl_max,
+                )
+    return _compute_batch_rmse_kernel(
+        sim_thick_batch, wls, nH_arr, nL_arr, nSub_arr, T_target, n_layers_flattened,
+        weights, index_corridor, index_seed, corridor_wl_min, corridor_wl_max,
+    )
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")

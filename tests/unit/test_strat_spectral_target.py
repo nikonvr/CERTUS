@@ -62,7 +62,8 @@ def test_omitting_weights_is_bit_identical_to_passing_none():
 
 
 @pytest.mark.unit
-def test_uniform_weights_reproduce_the_unweighted_functional():
+@pytest.mark.parametrize("weight", [0.5, 1.0, 2.0, 7.3])
+def test_uniform_weights_reproduce_the_unweighted_functional(weight):
     """🔴 Des poids UNIFORMES doivent redonner exactement le RMSE non pondere.
 
     This is the condition which makes the weighting interpretable: if constant weights
@@ -71,7 +72,7 @@ def test_uniform_weights_reproduce_the_unweighted_functional():
     """
     flat = np.full(WL.size, 0.5)
     ref = _rmse(flat)
-    got = _rmse(flat, np.ones(WL.size))
+    got = _rmse(flat, np.full(WL.size, weight))
     assert float(np.max(np.abs(ref - got))) == 0.0
 
 

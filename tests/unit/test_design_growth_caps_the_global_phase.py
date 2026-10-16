@@ -86,3 +86,25 @@ def test_a_budget_already_under_the_cap_is_kept(design_app, monkeypatch) -> None
     cfg = _global_config(design_app, monkeypatch, growth=True, n100=1000, cycles=3, clusters=5)
 
     assert (cfg["n100"], cfg["max_iter"], cfg["max_clusters"]) == (1000, 3, 5)
+
+
+def test_the_log_says_what_the_window_showed_and_what_was_applied(design_app, monkeypatch) -> None:
+    """The spin boxes keep showing 6000 / 50 / 40 while the capped global phase runs 1500 / 8 / 5 (UXargon section 4.3, item 4)."""
+    logs = []
+    monkeypatch.setattr(design_app, "log", lambda message, level="INFO": logs.append(message))
+
+    _global_config(design_app, monkeypatch, growth=True, n100=6000, cycles=50, clusters=40)
+
+    [line] = [m for m in logs if "Global+Needle caps" in m]
+    assert "N100 6000 -> 1500" in line
+    assert "cycles 50 -> 8" in line
+    assert "clusters 40 -> 5" in line
+
+
+def test_without_the_growth_no_cap_is_announced(design_app, monkeypatch) -> None:
+    logs = []
+    monkeypatch.setattr(design_app, "log", lambda message, level="INFO": logs.append(message))
+
+    _global_config(design_app, monkeypatch, growth=False, n100=6000, cycles=50, clusters=40)
+
+    assert not [m for m in logs if "Global+Needle caps" in m]

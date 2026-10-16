@@ -239,6 +239,32 @@ class WorkerManager:
         except (*NUMERICAL_FAULT_EXCEPTIONS, AttributeError, TypeError):
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
+    def _capped_global_budgets(self) -> tuple[int, int, int, int]:
+        """Budgets of the global phase that seeds the Needle: the window's values, capped.
+
+        The spin boxes keep showing the operator's values, so the log says what the capped phase really runs.
+        """
+
+        g_max_feval = min(CFG.MAX_FEVAL_GLOBAL, 50000)
+
+        g_n100 = min(self.ui.n100_spin.value(), 1500)
+
+        g_max_iter = min(self.ui.global_cycles_spin.value(), 8)
+
+        g_max_clusters = min(self.ui.max_clusters_spin.value(), 5)
+
+        self.ui.log("Global+Needle: ultra-fast global (seed for needle iterations)", "INFO")
+
+        self.ui.log(
+            "Global+Needle caps (shown -> applied): "
+            f"N100 {self.ui.n100_spin.value()} -> {g_n100}, "
+            f"cycles {self.ui.global_cycles_spin.value()} -> {g_max_iter}, "
+            f"clusters {self.ui.max_clusters_spin.value()} -> {g_max_clusters}",
+            "INFO",
+        )
+
+        return g_max_feval, g_n100, g_max_iter, g_max_clusters
+
     @safe_ui_action
     def run_optim(self, mode: str, keep_history: bool = False, **kwargs) -> None:
         """
@@ -448,18 +474,7 @@ class WorkerManager:
             needle_coupled = allow_growth and allow_growth.isChecked()
 
             if needle_coupled:
-                g_max_feval = min(CFG.MAX_FEVAL_GLOBAL, 50000)
-
-                g_n100 = min(self.ui.n100_spin.value(), 1500)
-
-                g_max_iter = min(self.ui.global_cycles_spin.value(), 8)
-
-                g_max_clusters = min(self.ui.max_clusters_spin.value(), 5)
-
-                self.ui.log(
-                    "Global+Needle: ultra-fast global (seed for needle iterations)",
-                    "INFO",
-                )
+                g_max_feval, g_n100, g_max_iter, g_max_clusters = self._capped_global_budgets()
 
             else:
                 g_max_feval = CFG.MAX_FEVAL_GLOBAL

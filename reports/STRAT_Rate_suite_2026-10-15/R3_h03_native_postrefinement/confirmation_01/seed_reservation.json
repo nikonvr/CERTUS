@@ -1,0 +1,48 @@
+{
+  "before_fresh_inspection": true,
+  "reserved_utc": "2026-10-15T18:34:14.319772+00:00",
+  "groups": [
+    {
+      "robustness_seed": 17510001,
+      "consensus_seed_list": [
+        17510002,
+        17510003,
+        17510004
+      ]
+    },
+    {
+      "robustness_seed": 17510011,
+      "consensus_seed_list": [
+        17510012,
+        17510013,
+        17510014
+      ]
+    },
+    {
+      "robustness_seed": 17510021,
+      "consensus_seed_list": [
+        17510022,
+        17510023,
+        17510024
+      ]
+    }
+  ],
+  "search_winner_id_fixed": 98000284,
+  "previous_use_scan": {
+    "command": [
+      "rg",
+      "-n",
+      "-e",
+      "\\b175100(0[1-4]|1[1-4]|2[1-4])\\b",
+      "reports",
+      "-g",
+      "*.json",
+      "-l"
+    ],
+    "exit_code": 1,
+    "matches": [],
+    "performed_before_this_reservation": true
+  },
+  "fresh_group_quota": 3,
+  "new_proposals": 0
+}

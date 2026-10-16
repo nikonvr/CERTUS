@@ -1,0 +1,210 @@
+{
+  "status": "REGENERABLE_CACHES_REMOVED",
+  "recorded_utc": "2026-10-16T08:58:52.3883348Z",
+  "directories": 40,
+  "bytes": 167988949.0,
+  "removed": [
+    {
+      "path": "__pycache__",
+      "files": 12,
+      "bytes": 112674.0
+    },
+    {
+      "path": ".hypothesis",
+      "files": 4539,
+      "bytes": 3509769.0
+    },
+    {
+      "path": ".mypy_cache",
+      "files": 18,
+      "bytes": 17944805.0
+    },
+    {
+      "path": ".pytest_cache",
+      "files": 257,
+      "bytes": 14650954.0
+    },
+    {
+      "path": ".ruff_cache",
+      "files": 4005,
+      "bytes": 8378682.0
+    },
+    {
+      "path": "certus_physics\\__pycache__",
+      "files": 3,
+      "bytes": 27017.0
+    },
+    {
+      "path": "certus\\core\\__pycache__",
+      "files": 104,
+      "bytes": 4329042.0
+    },
+    {
+      "path": "certus\\domain\\__pycache__",
+      "files": 2,
+      "bytes": 3386.0
+    },
+    {
+      "path": "certus\\domain\\optical\\__pycache__",
+      "files": 1,
+      "bytes": 354.0
+    },
+    {
+      "path": "certus\\domain\\optical\\entities\\__pycache__",
+      "files": 3,
+      "bytes": 17314.0
+    },
+    {
+      "path": "certus\\domain\\optical\\events\\__pycache__",
+      "files": 2,
+      "bytes": 7019.0
+    },
+    {
+      "path": "certus\\domain\\optical\\services\\__pycache__",
+      "files": 1,
+      "bytes": 4840.0
+    },
+    {
+      "path": "certus\\domain\\optical\\value_objects\\__pycache__",
+      "files": 4,
+      "bytes": 25469.0
+    },
+    {
+      "path": "certus\\metal\\__pycache__",
+      "files": 8,
+      "bytes": 381238.0
+    },
+    {
+      "path": "certus\\physics\\__pycache__",
+      "files": 411,
+      "bytes": 30833692.0
+    },
+    {
+      "path": "certus\\spline\\__pycache__",
+      "files": 39,
+      "bytes": 1763920.0
+    },
+    {
+      "path": "certus\\ui\\__pycache__",
+      "files": 124,
+      "bytes": 3288882.0
+    },
+    {
+      "path": "certus\\ui\\mixins\\__pycache__",
+      "files": 1,
+      "bytes": 43717.0
+    },
+    {
+      "path": "certus\\utils\\__pycache__",
+      "files": 56,
+      "bytes": 1366670.0
+    },
+    {
+      "path": "certus\\workers\\__pycache__",
+      "files": 28,
+      "bytes": 722454.0
+    },
+    {
+      "path": "htmlcov",
+      "files": 331,
+      "bytes": 58647250.0
+    },
+    {
+      "path": "reports\\STRAT_Rate_suite_2026-10-14\\R1_score_export\\__pycache__",
+      "files": 0,
+      "bytes": null
+    },
+    {
+      "path": "scratch\\__pycache__",
+      "files": 17,
+      "bytes": 275765.0
+    },
+    {
+      "path": "scripts\\__pycache__",
+      "files": 81,
+      "bytes": 1526577.0
+    },
+    {
+      "path": "scripts\\benchmarks\\__pycache__",
+      "files": 3,
+      "bytes": 38548.0
+    },
+    {
+      "path": "scripts\\smoke\\__pycache__",
+      "files": 3,
+      "bytes": 26150.0
+    },
+    {
+      "path": "tests\\__pycache__",
+      "files": 8,
+      "bytes": 183310.0
+    },
+    {
+      "path": "tests\\core\\__pycache__",
+      "files": 18,
+      "bytes": 136818.0
+    },
+    {
+      "path": "tests\\domain\\__pycache__",
+      "files": 6,
+      "bytes": 133292.0
+    },
+    {
+      "path": "tests\\headless\\__pycache__",
+      "files": 22,
+      "bytes": 150590.0
+    },
+    {
+      "path": "tests\\integration\\__pycache__",
+      "files": 36,
+      "bytes": 374935.0
+    },
+    {
+      "path": "tests\\oracle\\__pycache__",
+      "files": 42,
+      "bytes": 583792.0
+    },
+    {
+      "path": "tests\\performance\\__pycache__",
+      "files": 18,
+      "bytes": 290175.0
+    },
+    {
+      "path": "tests\\property\\__pycache__",
+      "files": 7,
+      "bytes": 91141.0
+    },
+    {
+      "path": "tests\\regression\\__pycache__",
+      "files": 6,
+      "bytes": 42640.0
+    },
+    {
+      "path": "tests\\ui\\__pycache__",
+      "files": 224,
+      "bytes": 3111485.0
+    },
+    {
+      "path": "tests\\unit\\__pycache__",
+      "files": 707,
+      "bytes": 14473708.0
+    },
+    {
+      "path": "tests\\unit\\workers\\__pycache__",
+      "files": 15,
+      "bytes": 158001.0
+    },
+    {
+      "path": "tests\\utils\\__pycache__",
+      "files": 6,
+      "bytes": 104678.0
+    },
+    {
+      "path": "tools\\__pycache__",
+      "files": 21,
+      "bytes": 228196.0
+    }
+  ],
+  "git_history_preserved": true,
+  "source_files_deleted": 0
+}

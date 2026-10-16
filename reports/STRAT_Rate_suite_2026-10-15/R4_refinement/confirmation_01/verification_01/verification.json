@@ -1,0 +1,35 @@
+{
+  "verdict": "GO",
+  "script_sha256": {
+    "rate_fixed_replay_R4_fresh.py": "36c99eb3890b6a89e690d909ce0466467c444820939a27dc74502e2ebf1e80e7",
+    "rate_R4_fresh_guard.py": "92d5367c4ae39aa47437f7bf38a02fb0b5089fc865b310aff34e04668eccfc07",
+    "run_rate_R4_confirmation_01.ps1": "9062df47ac0fc992a611ab25ad9bc68ff5a8f9aaddb5e0ebd23a0d4bfd11f5c7",
+    "campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51"
+  },
+  "checks": [
+    "check_sources AST identical to audited R4/R0 physics",
+    "record_task AST identical to audited R4/R0 physics",
+    "keep_fixed_plans AST identical to audited R4/R0 physics",
+    "evaluate_fixed AST identical to audited R4/R0 physics",
+    "Twelve distinct pre-reserved seeds; fixed primary and diagnostic secondary before inspection",
+    "Frozen group1, seven complete plans, four actual300-run calls required per plan",
+    "Rejected: Fresh seeds differ from the preinspection reservation",
+    "Rejected: Only these previously frozen complete plans can be confirmed",
+    "Rejected: Only these previously frozen complete plans can be confirmed",
+    "Frozen group2, seven complete plans, four actual300-run calls required per plan",
+    "Rejected: Fresh seeds differ from the preinspection reservation",
+    "Rejected: Only these previously frozen complete plans can be confirmed",
+    "Rejected: Only these previously frozen complete plans can be confirmed",
+    "Frozen group3, seven complete plans, four actual300-run calls required per plan",
+    "Rejected: Fresh seeds differ from the preinspection reservation",
+    "Rejected: Only these previously frozen complete plans can be confirmed",
+    "Rejected: Only these previously frozen complete plans can be confirmed",
+    "Rejected: No new measurement or test after the authorized morning cutoff",
+    "Rejected: The requested deadline exceeds the authorized window",
+    "Seven actual complete mixed plans pass real contract; no physical simulation"
+  ],
+  "physics_measured": false,
+  "fresh_seeds_executed": 0,
+  "claims_consumed": 0,
+  "verified_utc": "2026-10-15T13:50:46.843371+00:00"
+}

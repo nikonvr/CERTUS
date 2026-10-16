@@ -1,0 +1,62 @@
+{
+  "status": "prepared_not_run",
+  "reference_plans": "plans_reference.json",
+  "candidate_artifact": null,
+  "depths": {
+    "robustness_num_runs": 300,
+    "n_screen_runs": 50,
+    "dp_top_k": 100,
+    "consensus_num_runs": 300
+  },
+  "control": {
+    "robustness_seed": 101,
+    "consensus_seed_list": [
+      41,
+      42,
+      43
+    ]
+  },
+  "holdouts": [
+    {
+      "robustness_seed": 202,
+      "consensus_seed_list": [
+        202,
+        203,
+        204
+      ]
+    },
+    {
+      "robustness_seed": 303,
+      "consensus_seed_list": [
+        303,
+        304,
+        305
+      ]
+    },
+    {
+      "robustness_seed": 404,
+      "consensus_seed_list": [
+        404,
+        405,
+        406
+      ]
+    },
+    {
+      "robustness_seed": 505,
+      "consensus_seed_list": [
+        505,
+        506,
+        507
+      ]
+    }
+  ],
+  "requirements": [
+    "preserve blocks, Rate mask and slit; no invented rate drift",
+    "reproduce the reference fixed point before holdouts",
+    "score both fixed plans in the same random worlds",
+    "do not use the current injected_strategies loader unchanged: it drops Rate metadata",
+    "verify delivered seed and consensus seed list in logs and artifact",
+    "record each fixed plan, not the best regenerated strategy",
+    "404/405/406 and 505/506/507 declared before the completed joint winner is replayed; not used for candidate selection"
+  ]
+}

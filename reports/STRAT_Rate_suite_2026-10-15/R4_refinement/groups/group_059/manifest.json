@@ -1,0 +1,12 @@
+{
+  "phase": "R4_g059",
+  "index": 59,
+  "branch": "native",
+  "pass": 2,
+  "stage": "fine",
+  "new_plans": 9,
+  "before_scores": true,
+  "plans_sha256": "aef9c3d392a797a384fe6be2656669b8abf3e4d7e620321340a702a8fbba9a22",
+  "protocol_sha256": "04b7393cf981e1bb8cdbadb24e4169d1cadcb1bcb4729e100599c55fbecc570c",
+  "prepared_utc": "2026-10-15T13:41:02.196942+00:00"
+}

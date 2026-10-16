@@ -1,0 +1,34 @@
+{
+  "prepared_utc": "2026-10-14T02:37:03.810640+00:00",
+  "status": "prepared_waiting_not_measuring",
+  "runner": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_window_confirmation_runner.py",
+  "arguments": [
+    "--worktree",
+    "C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-equilibre\\certus0310",
+    "--pool-output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_window_widths_2026-10-14",
+    "--output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_window_widths_2026-10-14",
+    "--reference-state",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_equilibre_AB_2026-10-13\\etat.json",
+    "--protocol",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_window_widths_2026-10-14\\protocole_validation_window_widths_v8.json",
+    "--fixed-plans",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_native_prefix_pool_2026-10-14\\plans.json"
+  ],
+  "hashes": {
+    "rate_window_confirmation_runner.py": "c772250a68c1477ae02776522a74c9aa030888664eca1b4505f48e779cae205f",
+    "rate_fixed_replay_confirmation_v8.py": "8a7adefe3e87823be76d2e70c6f8da3762a5f8386da0bb2c2b5e6c846a6bb901",
+    "campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51",
+    "protocole_validation_window_widths_v8.json": "49f10d3eae437251b7e6dddfdbddf700ef02689d5496c0bf2149f5b9c0cc37a2",
+    "plans.json": "61e2c74886c55cf7840dac11b8361f97647647fe176d2868714c57962efc4b6b"
+  },
+  "fresh_groups": [
+    2121,
+    2222,
+    2323
+  ],
+  "selection": "After all window candidates complete, minimum eligible proposal compared with parent600. If no search gain, finish without an unnecessary independent measure; anchor already strictly reproduced in every batch. If gain, strict point then three fresh groups against six saved comparators.",
+  "review": "Same physical v7 replay except CLI choices added; AST identical. Existing full-pool sequential controller reused, same depth/tolerance/source guards. Original IDs retained, new ID9900006. No runtime tests while windows active.",
+  "deadline_utc": "2026-10-14T07:00:00Z"
+}

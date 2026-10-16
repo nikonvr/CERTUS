@@ -1,0 +1,40 @@
+{
+  "checked_local": "2026-10-14T06:32:28.5028545+02:00",
+  "status": "running",
+  "completed": 4,
+  "current": "r75x1.75_deep_s042_avec",
+  "current_pid": 25072,
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "processes": [
+    {
+      "pid": 23280,
+      "parent_pid": 22652,
+      "command": "\"C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\campagne_a2_deadline_runner.py\" \"--worktree\" \"C:\\Users\\Lemarchand\\.codex\\worktrees\\campagne-a2\\certus0310\" \"--output\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_ELITE_couches_Rate_autres_composants_2026-10-13\" \"--logical-cpus\" \"16\"",
+      "affinity": 65535,
+      "priority": "Normal",
+      "cpu_seconds": 0.375
+    },
+    {
+      "pid": 25072,
+      "parent_pid": 23280,
+      "command": "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe scripts/probe_blocs_vs_plantage.py r75x1.75 deep 0 0 2 0 42 0",
+      "affinity": 65535,
+      "priority": "Normal",
+      "cpu_seconds": 12857.484375
+    }
+  ],
+  "log_tail": [
+    "06:32:19 | INFO | [ELITE] No candidate added across all rounds.",
+    "06:32:19 | INFO | 🏆 Best Strategy ID: 901300005 (SMART_MERGE_THICKNESS2 (from ID 901400009)) - Score: 0.29811",
+    "06:32:19 | INFO |    [Block 12] Full pass on 40 survivors (n_full=300)...",
+    "06:32:19 | INFO | [RATE] 480 variants on 40 strategies, 40 at most each, DEEPEST boundaries first. 0 strategy(ies) skipped: no block boundary and no low-swing layer. [SWING] seuil 0.025, 197 evaluations TMM a lambda fixe, 0.1 s au total pour cette expansion.",
+    "06:32:19 | INFO | [SLIT] slit bias active, 520/520 strategies -- slit 2 nm, profile of 17 nodes, 0 NEW profiles in 0.1 s (cache: 17433)",
+    "06:32:19 | INFO | Running robustness tests on 520 strategies (ThreadPoolExecutor with 8 workers)..."
+  ],
+  "errors": []
+}

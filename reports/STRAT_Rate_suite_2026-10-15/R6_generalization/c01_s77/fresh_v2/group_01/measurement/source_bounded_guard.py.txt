@@ -1,0 +1,122 @@
+"""Three reserved fresh groups per initial R6 case, frozen after each native pair."""
+
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+from datetime import UTC, datetime
+from pathlib import Path
+
+from rate_R5_guard import (
+    REFERENCE,
+    RESOURCES,
+    ROOT,
+    check_context,
+    check_deadline,
+    is_language_server,
+    read,
+    sha,
+)
+from rate_R6_guard import CASES, EXPERIMENT, PROGRAM
+
+SLOTS = {f"R6_{case}_fresh_g{group:02}": EXPERIMENT / case / "fresh_v2" / f"group_{group:02}" / "measurement"
+         for case in CASES for group in range(1, 4)}
+
+
+def check_ready(phase: str, output: Path, sources: dict, *, requested_deadline: str) -> dict:
+    deadline = check_deadline(requested_deadline)
+    if phase not in SLOTS or output.resolve() != SLOTS[phase].resolve():
+        raise RuntimeError("Unknown or exhausted R6 fresh slot")
+    case = next(case for case in CASES if phase.startswith("R6_" + case + "_"))
+    group = int(phase[-2:])
+    directory = EXPERIMENT / case
+    protocol_file = directory / "confirmation_protocol_v2.json"
+    protocol = read(protocol_file)
+    reference = read(REFERENCE)
+    if check_context(Path(reference["worktree"]), reference) != sources or protocol["source_sha256"] != sources:
+        raise RuntimeError("Validated R6 fresh sources changed")
+    if protocol["reference_sha256"] != sha(REFERENCE) or protocol["deadline_utc"] != deadline or protocol["case"] != case:
+        raise RuntimeError("Fresh context/window/case changed")
+    if sha(EXPERIMENT / "native_protocol.json") != protocol["native_protocol_sha256"]:
+        raise RuntimeError("Native pair protocol changed")
+    reservation_file = EXPERIMENT / "fresh_seed_reservation.json"
+    if protocol["reservation_sha256"] != sha(reservation_file):
+        raise RuntimeError("Pre-search seed reservation changed")
+    for name, digest in protocol["script_sha256"].items():
+        if sha(ROOT / "scratch" / name) != digest:
+            raise RuntimeError("Fresh launcher changed: " + name)
+    verified = read(directory / "fresh_verification_02/verification.json")
+    if verified["verdict"] != "GO" or verified["script_sha256"] != protocol["script_sha256"]:
+        raise RuntimeError("Fresh launcher verification missing/stale")
+    coordinator = read(directory / "controller.json")
+    if coordinator["status"] != "pair_complete_freeze_and_fresh_pending" or coordinator["current_pid"] or len(coordinator["runs"]) != 2:
+        raise RuntimeError("Native pair unfinished")
+    if any(r["exit_code"] != 0 for r in coordinator["runs"]):
+        raise RuntimeError("Native pair lacks actual exit0")
+    for arm, digest in protocol["native_artifact_sha256"].items():
+        state = read(directory / arm / "measurement/etat.json")
+        if state["status"] != "complete" or sha(Path(state["artifact"])) != digest:
+            raise RuntimeError("Native source artifact changed")
+    plans_file, manifest_file = output.parent / "plans.json", output.parent / "manifest.json"
+    raw, manifest = read(plans_file), read(manifest_file)
+    if (manifest["phase"] != phase or manifest["case"] != case or manifest["index"] != group or
+            manifest["protocol_sha256"] != sha(protocol_file) or manifest["plans_sha256"] != sha(plans_file) or
+            sha(plans_file) != protocol["plans_sha256"]):
+        raise RuntimeError("Frozen plans or manifest changed")
+    if manifest["setting"] != read(reservation_file)["settings"][case][group-1]:
+        raise RuntimeError("The group is not its pre-search reserved seed setting")
+    plans = raw["plans"]
+    if not 3 <= len(plans) <= 8 or len({p["source_strategy_id"] for p in plans}) != len(plans):
+        raise RuntimeError("Fresh plan quota/identifiers changed")
+    if any("expected_score_fixed_point" in p for p in plans):
+        raise RuntimeError("Fresh groups cannot reuse old-seed fixed point expectations")
+    if protocol["depths"] != {"robustness_num_runs": 300, "n_screen_runs": 50, "dp_top_k": 100, "consensus_num_runs": 300}:
+        raise RuntimeError("Fresh physical depths changed")
+    if list((ROOT / "reports").rglob(".running")) or (PROGRAM / "measurement.running").exists():
+        raise RuntimeError("An existing measurement/validation owns a lock")
+    shell = Path(os.environ["SYSTEMROOT"]) / "System32/WindowsPowerShell/v1.0/powershell.exe"
+    raw_processes = subprocess.check_output([str(shell), "-NoProfile", "-Command",
+        "@(Get-CimInstance Win32_Process | Where-Object { $_.Name -match '^python' } | Select-Object ProcessId,CommandLine) | ConvertTo-Json -Compress"], encoding="utf-8").strip()
+    active = json.loads(raw_processes) if raw_processes else []
+    if isinstance(active, dict):
+        active = [active]
+    if any(p["ProcessId"] != os.getpid() and not is_language_server(p) for p in active):
+        raise RuntimeError("Another Python calculation/test/controller is alive")
+    if (PROGRAM / "claims" / (phase + ".json")).exists() or (output / "fresh.json").exists() or list(output.glob("request_*.json")):
+        raise RuntimeError("Fresh slot consumed: inspect/adopt, never replay")
+    if group > 1:
+        previous = read(directory / "fresh_v2" / f"group_{group-1:02}" / "measurement/fresh.json")
+        if previous["verdict"] != "OK" or previous["source_sha256"] != sources:
+            raise RuntimeError("Preceding fresh group did not complete")
+    return {"phase": phase, "slot": str(output.resolve()), "resources": RESOURCES, "quota": 1,
+            "deadline_utc": deadline, "protocol_file": str(protocol_file), "protocol_sha256": sha(protocol_file),
+            "source_sha256": sources, "manifest_sha256": sha(manifest_file), "plans_sha256": sha(plans_file),
+            "window_sha256": sha(PROGRAM / "autonomie_jusqu_20261016_0800/authorization.json")}
+
+
+def reserve_slot(proof: dict) -> None:
+    check_deadline(proof["deadline_utc"])
+    if proof["phase"] not in SLOTS or proof["slot"] != str(SLOTS[proof["phase"]].resolve()):
+        raise RuntimeError("Unknown fresh slot")
+    output = Path(proof["slot"])
+    if (sha(Path(proof["protocol_file"])) != proof["protocol_sha256"] or
+            sha(output.parent / "manifest.json") != proof["manifest_sha256"] or
+            sha(output.parent / "plans.json") != proof["plans_sha256"] or
+            sha(PROGRAM / "autonomie_jusqu_20261016_0800/authorization.json") != proof["window_sha256"]):
+        raise RuntimeError("Fresh protocol/plans/authorization changed")
+    entry = {**proof, "pid": os.getpid(), "claimed_utc": datetime.now(UTC).isoformat()}
+    with (PROGRAM / "measurement.running").open("x", encoding="utf-8") as stream:
+        json.dump(entry, stream, ensure_ascii=False, indent=2)
+    try:
+        with (PROGRAM / "claims" / (proof["phase"] + ".json")).open("x", encoding="utf-8") as stream:
+            json.dump(entry, stream, ensure_ascii=False, indent=2)
+    except BaseException:
+        release_slot()
+        raise
+
+
+def release_slot() -> None:
+    lock = PROGRAM / "measurement.running"
+    if lock.exists() and read(lock)["pid"] == os.getpid():
+        lock.unlink()

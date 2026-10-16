@@ -1,0 +1,26 @@
+{
+  "status": "FAILED",
+  "started_utc": "2026-10-14T16:03:31.981839+00:00",
+  "pid": 37308,
+  "command": [
+    "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+    "-m",
+    "pytest",
+    "tests/unit/test_strat_spectral_target.py",
+    "tests/unit/test_the_robustness_split_keeps_every_name_and_the_cycle_where_it_was.py",
+    "tests/unit/test_strat_elite_rate_moves.py",
+    "-q",
+    "--no-cov"
+  ],
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "cold_cache": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-14\\validation_after_A2\\targeted_repair_attempt_01\\cold_cache",
+  "facade_sha256": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+  "exit_code": 1,
+  "seconds": 15.469964499992784,
+  "finished_utc": "2026-10-14T16:03:47.451945+00:00"
+}

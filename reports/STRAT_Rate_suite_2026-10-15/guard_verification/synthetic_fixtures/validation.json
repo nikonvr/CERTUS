@@ -1,0 +1,82 @@
+{
+  "status": "GO",
+  "source_sha256": {
+    "certus/synthetic.txt": "e27444748e3ce344b0a11f3fd8bac9651669b03401dbdc8f41c57c900749015a"
+  },
+  "synthetic_fixture": true,
+  "checks": [
+    {
+      "name": "0",
+      "command": [
+        "ruff",
+        "check",
+        "."
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "1",
+      "command": [
+        "tests/oracle/"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "2",
+      "command": [
+        "tests/unit/"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "3",
+      "command": [
+        "tests/ui/"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "4",
+      "command": [
+        "--ignore=tests/oracle"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "5",
+      "command": [
+        "scripts/coherence_md.py"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "6",
+      "command": [
+        "scripts/check_claude_md.py"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "7",
+      "command": [
+        "scripts/check_docs.py"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "8",
+      "command": [
+        "scripts/c1_diff.py"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "9",
+      "command": [
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0
+    }
+  ]
+}

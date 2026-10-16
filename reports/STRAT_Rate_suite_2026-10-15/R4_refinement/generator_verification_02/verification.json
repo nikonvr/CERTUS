@@ -1,0 +1,188 @@
+{
+  "verdict": "GO",
+  "verified_utc": "2026-10-15T13:05:15.457408+00:00",
+  "physics_measured": false,
+  "resources": {
+    "logical_cpus": 24,
+    "affinity_mask": "0xffffff",
+    "priority": "normal",
+    "library_threads": 23
+  },
+  "complete_contracts_checked": 839,
+  "summaries": [
+    {
+      "parent": 18001,
+      "layers": 18,
+      "kind": "internal",
+      "stage": "coarse",
+      "constructed": 31,
+      "invalid_geometry": 20
+    },
+    {
+      "parent": 18001,
+      "layers": 18,
+      "kind": "internal",
+      "stage": "fine",
+      "constructed": 56,
+      "invalid_geometry": 7
+    },
+    {
+      "parent": 18001,
+      "layers": 18,
+      "kind": "prefix",
+      "stage": "coarse",
+      "constructed": 21,
+      "invalid_geometry": 0
+    },
+    {
+      "parent": 18001,
+      "layers": 18,
+      "kind": "prefix",
+      "stage": "fine",
+      "constructed": 21,
+      "invalid_geometry": 0
+    },
+    {
+      "parent": 9900006,
+      "layers": 75,
+      "kind": "internal",
+      "stage": "coarse",
+      "constructed": 60,
+      "invalid_geometry": 6
+    },
+    {
+      "parent": 9900006,
+      "layers": 75,
+      "kind": "internal",
+      "stage": "fine",
+      "constructed": 63,
+      "invalid_geometry": 0
+    },
+    {
+      "parent": 9900006,
+      "layers": 75,
+      "kind": "prefix",
+      "stage": "coarse",
+      "constructed": 39,
+      "invalid_geometry": 0
+    },
+    {
+      "parent": 9900006,
+      "layers": 75,
+      "kind": "prefix",
+      "stage": "fine",
+      "constructed": 21,
+      "invalid_geometry": 0
+    },
+    {
+      "parent": 9900008,
+      "layers": 75,
+      "kind": "internal",
+      "stage": "coarse",
+      "constructed": 60,
+      "invalid_geometry": 6
+    },
+    {
+      "parent": 9900008,
+      "layers": 75,
+      "kind": "internal",
+      "stage": "fine",
+      "constructed": 63,
+      "invalid_geometry": 0
+    },
+    {
+      "parent": 9900008,
+      "layers": 75,
+      "kind": "prefix",
+      "stage": "coarse",
+      "constructed": 39,
+      "invalid_geometry": 0
+    },
+    {
+      "parent": 9900008,
+      "layers": 75,
+      "kind": "prefix",
+      "stage": "fine",
+      "constructed": 21,
+      "invalid_geometry": 0
+    },
+    {
+      "parent": 901054165,
+      "layers": 75,
+      "kind": "internal",
+      "stage": "coarse",
+      "constructed": 56,
+      "invalid_geometry": 10
+    },
+    {
+      "parent": 901054165,
+      "layers": 75,
+      "kind": "internal",
+      "stage": "fine",
+      "constructed": 56,
+      "invalid_geometry": 7
+    },
+    {
+      "parent": 901054165,
+      "layers": 75,
+      "kind": "prefix",
+      "stage": "coarse",
+      "constructed": 39,
+      "invalid_geometry": 0
+    },
+    {
+      "parent": 901054165,
+      "layers": 75,
+      "kind": "prefix",
+      "stage": "fine",
+      "constructed": 21,
+      "invalid_geometry": 0
+    },
+    {
+      "parent": 900754638,
+      "layers": 75,
+      "kind": "internal",
+      "stage": "coarse",
+      "constructed": 56,
+      "invalid_geometry": 10
+    },
+    {
+      "parent": 900754638,
+      "layers": 75,
+      "kind": "internal",
+      "stage": "fine",
+      "constructed": 56,
+      "invalid_geometry": 7
+    },
+    {
+      "parent": 900754638,
+      "layers": 75,
+      "kind": "prefix",
+      "stage": "coarse",
+      "constructed": 39,
+      "invalid_geometry": 0
+    },
+    {
+      "parent": 900754638,
+      "layers": 75,
+      "kind": "prefix",
+      "stage": "fine",
+      "constructed": 21,
+      "invalid_geometry": 0
+    }
+  ],
+  "checks": [
+    "Deterministic output and immutable parents",
+    "First two layers always optical",
+    "One selected window only; other blocks, slit, witness and block boundaries preserved",
+    "Expected comparator score removed from every new proposal",
+    "Internal lengths1..7, prefix>=2 and legal wavelengths",
+    "Fully Rate wavelength equivalence deduplicated, optical wavelength change distinct",
+    "Multi-window block refused explicitly"
+  ],
+  "source_sha256": {
+    "generator": "b7314f1f57b4f96622bc6db75bb4b9787d6e8e9783901b3d0bebb586d47a639b",
+    "verifier": "09d588777dea3cf4064719501a708070a1b1c10a9cc5980401f835ffa49c34b3"
+  },
+  "legal_grid_sha256": "2f3e243b1f20135260c1f84abe59b2b93e423c3adee7025653d4fdb08f11a0b4"
+}

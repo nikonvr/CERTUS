@@ -1,0 +1,15 @@
+{
+  "checked_utc": "2026-10-14T08:52:01.636379+00:00",
+  "links_missing": [],
+  "AST_scientific_body": "IDENTICAL_TO_v11",
+  "runtime": "NOT_RUN_A2_ACTIVE",
+  "measurement": "NOT_STARTED",
+  "a2": {
+    "completed": 11,
+    "current": "75c_deep_s042_sans",
+    "science_pid": 21720,
+    "latest_verified_artifact": "75c_deep_s042_avec_da1af082.json",
+    "latest_artifact_sha256": "526dfc4611c591b8fcba24c2f8d3ce8bf5aef62563ce18bfd536b0381f214b1b"
+  },
+  "next": "Finish A2; validate pending code and observer; then reproduce R0 and trace one native baseline"
+}

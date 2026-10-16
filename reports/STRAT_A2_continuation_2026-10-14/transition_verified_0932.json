@@ -1,0 +1,35 @@
+{
+  "checked_utc": "2026-10-14T07:31:01.700618+00:00",
+  "completed": 8,
+  "unique_keys": true,
+  "current": "35c_deep_s042_avec",
+  "controller_pid": 24128,
+  "science_pid": 23240,
+  "last_run": "r75x1.75_deep_s101_sans",
+  "last_seconds": 2802.4128143999988,
+  "artifact_sha256": "bf5d1af8587a68578470436387a8fb9dc460a2ea7153a690e44b1090ab148c3e",
+  "artifact_verdict": "OK",
+  "effective_override": {
+    "elite_rate_moves": false
+  },
+  "provenance": {
+    "certus_version": "26_05",
+    "git_commit": "da1af0825d5e09e8d0a5ff4f1cf42b802e0e30e7",
+    "git_dirty": false,
+    "python": "3.14.8",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "numba": "0.68.0",
+    "numba_cache_key": "caf88a3320c7",
+    "numba_cache_keyed": true,
+    "platform": "Windows-11-10.0.26300-SP0",
+    "machine": "AMD64",
+    "generated_at_utc": "2026-10-14T07:24:55+00:00"
+  },
+  "pair_seel": {
+    "avec": 0.47172674018714195,
+    "sans": 0.49678410464009143
+  },
+  "raw_export_gain_percent": 5.043914291722953,
+  "limitation": "base/consensus metadata absent in frozen A2 export; no homogeneous fixed-plan conclusion"
+}

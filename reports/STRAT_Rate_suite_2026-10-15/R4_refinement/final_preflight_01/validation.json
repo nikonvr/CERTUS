@@ -1,0 +1,66 @@
+{
+  "verdict": "GO",
+  "checks": [
+    {
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-X",
+        "utf8",
+        "-m",
+        "ruff",
+        "check",
+        "scratch\\check_rate_R4_final_preflight.py",
+        "scratch\\document_rate_R4_launch.py",
+        "scratch\\prepare_rate_R4_guard.py",
+        "scratch\\prepare_rate_R4_invocations.py",
+        "scratch\\prepare_rate_R4_replayer.py",
+        "scratch\\rate_fixed_replay_R4.py",
+        "scratch\\rate_R4_candidates.py",
+        "scratch\\rate_R4_guard.py",
+        "scratch\\rate_R4_planner.py",
+        "scratch\\verify_rate_R4_anchor_counterproof.py",
+        "scratch\\verify_rate_R4_candidates.py",
+        "scratch\\verify_rate_R4_isolation.py",
+        "scratch\\verify_rate_R4_launch.py"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-X",
+        "utf8",
+        "scripts/coherence_md.py"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-X",
+        "utf8",
+        "scripts/check_claude_md.py"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-X",
+        "utf8",
+        "scripts/check_docs.py"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "ended_utc": "2026-10-15T13:23:31.786930+00:00",
+  "no_scientific_measurement": true
+}

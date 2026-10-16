@@ -1,0 +1,77 @@
+diff --git a/certus/core/certus_strat_consensus.py b/certus/core/certus_strat_consensus.py
+index a4a1fb01..58809049 100644
+--- a/certus/core/certus_strat_consensus.py
++++ b/certus/core/certus_strat_consensus.py
+@@ -829,10 +829,11 @@ def _apply_elite_refinement_if_enabled(
+             round_robin_seed=(base_seed, elite_round) if round_robin else None,
+             rate_moves=rate_moves,
+             max_rate_candidates=int(ctx.params.get("elite_rate_max_candidates", 120)),
++            balanced_rate_moves=bool(ctx.params.get("elite_rate_balanced_moves", False)),
+         )
+         if rate_moves:
+             n_rate = sum(1 for c in elite_candidates if str(c.get("origin_details", "")).startswith("ELITE_RATE"))
+-            ctx.logger.info(f"[ELITE-RATE] Round {elite_round}: {n_rate} candidate(s) change the Rate layers of their parent.")
++            ctx.logger.info(f"[ELITE-RATE] Round {elite_round}: {n_rate} candidate(s) change the Rate layers of their parent." + (" [balanced families]" if bool(ctx.params.get("elite_rate_balanced_moves", False)) else ""))
+         if ctx.strategy_id_cursor is not None:
+             ctx.strategy_id_cursor.advance(_next_sid)
+         _attach_slit_profiles(elite_candidates, ctx.p_thick_nominal, ctx.params, ctx.logger)
+@@ -1388,6 +1389,7 @@ def _generate_elite_candidate_strategies(
+     round_robin_seed: tuple[int, ...] | None = None,
+     rate_moves: bool = False,
+     max_rate_candidates: int = 0,
++    balanced_rate_moves: bool = False,
+ ) -> tuple[list[dict[str, Any]], int]:
+     """
+     Build local-neighborhood variants around top-ranked strategies.
+@@ -1489,7 +1491,7 @@ def _generate_elite_candidate_strategies(
+ 
+     if rate_moves and max_rate_candidates > 0:
+         limit = len(out) + int(max_rate_candidates)
+-        for parent_sid, parent_strat, base_blocks, layers in _elite_rate_candidates(parent_results, num_layers):
++        for parent_sid, parent_strat, base_blocks, layers in _elite_rate_candidates(parent_results, num_layers, balanced=balanced_rate_moves):
+             if len(out) >= limit:
+                 break
+             _push_candidate([dict(b) for b in base_blocks], parent_sid, parent_strat, rate_layers=layers, limit=limit)
+diff --git a/certus/core/certus_strat_robustness_rate.py b/certus/core/certus_strat_robustness_rate.py
+index a1d40e73..0b3d3711 100644
+--- a/certus/core/certus_strat_robustness_rate.py
++++ b/certus/core/certus_strat_robustness_rate.py
+@@ -1074,13 +1074,36 @@ def _elite_rate_moves(rate_layers: Any, num_layers: int) -> list[list[int]]:
+     return ordered
+ 
+ 
+-def _elite_rate_candidates(parent_results: list[dict[str, Any]], num_layers: int) -> list[tuple[Any, dict[str, Any], list[dict[str, Any]], list[int]]]:
++def _balanced_elite_rate_moves(rate_layers: Any, num_layers: int) -> list[list[int]]:
++    """Reorder the same moves across families, widths and early/middle/late positions before the shared cap."""
++    current = {int(i) for i in rate_layers or [] if RATE_MIN_LAYER <= int(i) < num_layers}
++    families: dict[tuple[str, int], list[list[int]]] = {}
++    for layers in _elite_rate_moves(sorted(current), num_layers):
++        removed = current - set(layers)
++        added = set(layers) - current
++        if removed:
++            family = ("edge", 0) if len(removed) == 1 else ("open", len(removed))
++        elif min(added) - 1 in current and max(added) + 1 in current:
++            family = ("fill", 0)
++        else:
++            family = ("edge", 0) if len(added) == 1 else ("insert", len(added))
++        families.setdefault(family, []).append(layers)
++    spread: list[list[list[int]]] = []
++    for moves in families.values():
++        indices = dict.fromkeys((0, len(moves) // 2, len(moves) - 1, *range(len(moves))))
++        spread.append([moves[i] for i in indices])
++    longest = max((len(moves) for moves in spread), default=0)
++    return [moves[k] for k in range(longest) for moves in spread if k < len(moves)]
++
++
++def _elite_rate_candidates(parent_results: list[dict[str, Any]], num_layers: int, *, balanced: bool = False) -> list[tuple[Any, dict[str, Any], list[dict[str, Any]], list[int]]]:
+     """The moves on the Rate layers of every parent, the parents taking turns: `(parent id, parent, its blocks, the new Rate layers)`."""
++    move_fn = _balanced_elite_rate_moves if balanced else _elite_rate_moves
+     per_parent = []
+     for parent in parent_results:
+         strat = parent.get("strategy", {})
+         blocks = [{"start": int(b["start"]), "end": int(b["end"]), "wavelength": float(b["wavelength"])} for b in strat.get("blocks", [])]
+         if blocks:
+-            per_parent.append([(strat.get("strategy_id", "?"), strat, blocks, layers) for layers in _elite_rate_moves(strat.get("rate_layers"), num_layers)])
++            per_parent.append([(strat.get("strategy_id", "?"), strat, blocks, layers) for layers in move_fn(strat.get("rate_layers"), num_layers)])
+     longest = max((len(moves) for moves in per_parent), default=0)
+     return [moves[k] for k in range(longest) for moves in per_parent if k < len(moves)]

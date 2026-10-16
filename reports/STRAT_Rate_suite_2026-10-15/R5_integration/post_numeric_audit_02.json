@@ -1,0 +1,276 @@
+{
+  "verdict": "GO_WITH_DOCUMENTED_LIMITS",
+  "audited_utc": "2026-10-15T21:38:12.887578+00:00",
+  "audit01_sha256": "ba0e3ceb53aedb62cce9594048b625b5ca61af879b9a43b10d89e20fd6414437",
+  "matched_post_tasks": 889,
+  "exact_post_scores": 650,
+  "different_post_scores": 239,
+  "crash_vectors_identical_for_all_matched_post_tasks": true,
+  "max_base_task_abs_difference": 2.6922908347160046e-15,
+  "max_consensus_task_abs_difference": 7.577272143066693e-15,
+  "max_post_task_ulps": 452.0,
+  "aggregate_consensus_max_abs_difference": 2.55351295663786e-15,
+  "extra_ineligible_consensus_calls": [
+    {
+      "group": 1,
+      "integrated_id": 997550054,
+      "prototype_id": 98000001,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 1,
+      "integrated_id": 997550055,
+      "prototype_id": 98000002,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 1,
+      "integrated_id": 997550056,
+      "prototype_id": 98000003,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 1,
+      "integrated_id": 997550057,
+      "prototype_id": 98000004,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 1,
+      "integrated_id": 997550058,
+      "prototype_id": 98000005,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 1,
+      "integrated_id": 997550059,
+      "prototype_id": 98000006,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 1,
+      "integrated_id": 997550060,
+      "prototype_id": 98000007,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 1,
+      "integrated_id": 997550061,
+      "prototype_id": 98000008,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 1,
+      "integrated_id": 997550062,
+      "prototype_id": 98000009,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 2,
+      "integrated_id": 997550063,
+      "prototype_id": 98000010,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 2,
+      "integrated_id": 997550064,
+      "prototype_id": 98000011,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 2,
+      "integrated_id": 997550065,
+      "prototype_id": 98000012,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 2,
+      "integrated_id": 997550066,
+      "prototype_id": 98000013,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 2,
+      "integrated_id": 997550067,
+      "prototype_id": 98000014,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 2,
+      "integrated_id": 997550068,
+      "prototype_id": 98000015,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 2,
+      "integrated_id": 997550069,
+      "prototype_id": 98000016,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 2,
+      "integrated_id": 997550070,
+      "prototype_id": 98000017,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 2,
+      "integrated_id": 997550071,
+      "prototype_id": 98000018,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 3,
+      "integrated_id": 997550072,
+      "prototype_id": 98000019,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 3,
+      "integrated_id": 997550073,
+      "prototype_id": 98000020,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 3,
+      "integrated_id": 997550074,
+      "prototype_id": 98000021,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 3,
+      "integrated_id": 997550075,
+      "prototype_id": 98000022,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 3,
+      "integrated_id": 997550076,
+      "prototype_id": 98000023,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 3,
+      "integrated_id": 997550077,
+      "prototype_id": 98000024,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 3,
+      "integrated_id": 997550078,
+      "prototype_id": 98000025,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 3,
+      "integrated_id": 997550079,
+      "prototype_id": 98000026,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 3,
+      "integrated_id": 997550080,
+      "prototype_id": 98000027,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 28,
+      "integrated_id": 997550290,
+      "prototype_id": 98000237,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 28,
+      "integrated_id": 997550291,
+      "prototype_id": 98000238,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 28,
+      "integrated_id": 997550292,
+      "prototype_id": 98000239,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 28,
+      "integrated_id": 997550293,
+      "prototype_id": 98000240,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 28,
+      "integrated_id": 997550294,
+      "prototype_id": 98000241,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 28,
+      "integrated_id": 997550295,
+      "prototype_id": 98000242,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 28,
+      "integrated_id": 997550296,
+      "prototype_id": 98000243,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 28,
+      "integrated_id": 997550297,
+      "prototype_id": 98000244,
+      "extra_calls": 3,
+      "still_ineligible": true
+    },
+    {
+      "group": 28,
+      "integrated_id": 997550298,
+      "prototype_id": 98000245,
+      "extra_calls": 3,
+      "still_ineligible": true
+    }
+  ],
+  "extra_calls": 108,
+  "explanation": "Four all-rejected groups without campaign anchors use the existing all-invalid fallback, then receive consensus; all36 remain ineligible. The prototype's finite anchors prevented that fallback. No physical model change or gain from those calls.",
+  "post_full_group_plan_equivalence": true,
+  "winner_full_plan_equivalence": true,
+  "native_bit_identity": false,
+  "native_generation_different_calls": 29,
+  "numeric_join_scope_correction": "The broad audit01 diagnostic joins by plan/seed/depth but does not capture every per-scope task parameter. Its15 crash-vector differences and maximum score difference are exploratory, not a controlled same-task physics comparison or an identified cache cause.",
+  "decision": "Proceed to paired R6 with identical validated production sources and explicit controls, keeping the options inactive by default. Generalization remains unproved.",
+  "no_new_physical_evaluation": true
+}

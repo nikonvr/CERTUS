@@ -1,0 +1,17 @@
+{
+  "scientific_simulations": 0,
+  "scientific_claims": 0,
+  "incidents": [
+    {
+      "attempt": 1,
+      "error": "WinError5 creating TemporaryDirectory subdirectory inside Windows sandbox temp; cleanup also denied",
+      "repair": "Synthetic fixture kept in reports; no scientific source changed"
+    },
+    {
+      "attempt": "guard refusal harness",
+      "error": "Path.glob stub lacked Python3.14 case_sensitive/recurse_symlinks kwargs",
+      "repair": "Test stub forwards kwargs; all seven real/read-only guard checks pass"
+    }
+  ],
+  "earlier_protocol": "preparation_validation_01 retains first GO protocol/sources/fixtures; only native/post protocol byte-equality guard added before final freeze"
+}

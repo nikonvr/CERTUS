@@ -1,0 +1,50 @@
+{
+  "checked_local": "2026-10-14T12:32:31.1120095+02:00",
+  "preflight": "GO",
+  "deadline_utc": "2026-10-15T06:00:00Z",
+  "status": "running",
+  "completed": 18,
+  "current": "r75x0.5_deep_s077_avec",
+  "current_pid": 21320,
+  "current_started": "2026-10-14T12:12:22",
+  "controller_pid": 24128,
+  "resources": [
+    {
+      "id": 21320,
+      "cpu_seconds": 17781.140625,
+      "priority": "Normal",
+      "affinity": 65535
+    },
+    {
+      "id": 24128,
+      "cpu_seconds": 1.25,
+      "priority": "Normal",
+      "affinity": 65535
+    },
+    {
+      "id": 51884,
+      "cpu_seconds": 0.28125,
+      "priority": "Normal",
+      "affinity": 65535
+    }
+  ],
+  "worktree_head": "da1af0825d5e09e8d0a5ff4f1cf42b802e0e30e7",
+  "tracked_changes": [],
+  "helper_sha256": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51",
+  "controller_locks": [
+    {
+      "folder": "STRAT_A2_continuation_2026-10-14",
+      "owner": "51884"
+    },
+    {
+      "folder": "STRAT_ELITE_couches_Rate_autres_composants_2026-10-13",
+      "owner": "24128"
+    }
+  ],
+  "log_tail": [
+    "12:31:30 | INFO | [SLIT] slit bias active, 384/384 strategies -- slit 2 nm, profile of 17 nodes, 0 NEW profiles in 0.1 s (cache: 14873)",
+    "12:31:30 | INFO | Running robustness tests on 384 strategies (ThreadPoolExecutor with 8 workers)..."
+  ],
+  "no_test_or_parallel_science_started": true,
+  "next_action": "Wait for completed A2 before runtime validation and Rate measurements"
+}

@@ -1,0 +1,28 @@
+{
+  "status": "prepared_not_runtime_verified",
+  "original_sha256": {
+    "rate_native_pipeline_probe.py": "264a89d19f97317ee369c6715bed7f6d940b3fc43b591b3b5f1ccbe7abfd40ed",
+    "verify_rate_native_pipeline_trace.py": "777f642c0842ccbd4dbe0a57864ddbce77e718fb399b605cd19e77d99ca793e8",
+    "rate_fixed_replay_R0_suite.py": "93789f513ed5ec17120b1c367c37ef558b2856872b906de9e7e69e41613b713f"
+  },
+  "new_sha256": {
+    "rate_fixed_replay_R0_bounded.py": "454b2be2898ee1846898f5a220ef2c94533594b15e79e627d547d2ed9766055b",
+    "rate_native_pipeline_probe_bounded.py": "9a87b5d5fdf208e1926c7cc8aa8fd4062354d5fddbcdf877970f81e432c981e5",
+    "verify_rate_native_pipeline_trace_bounded.py": "341fa8b7e0f24b098abea4ed513514d7832c1a498139c47412755cacb2cb6099",
+    "rate_suite_bounded_guard.py": "ee42dff2229e1c8b8384a34e676b815eba62fd55548be0d889f5bab9e291f9ff"
+  },
+  "scientific_measurement_launched": false,
+  "resources": {
+    "logical_cpus": 24,
+    "library_threads": 23
+  },
+  "bounded_slots": {
+    "R0_control": 1,
+    "R2_native_base": 1
+  },
+  "notes": [
+    "Old launchers unchanged",
+    "No deadline extension invented",
+    "No guard or observer runtime checks during the full validation"
+  ]
+}

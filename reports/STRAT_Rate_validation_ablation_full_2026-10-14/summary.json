@@ -1,0 +1,217 @@
+{
+  "status": "OK",
+  "rows": [
+    {
+      "run": "control",
+      "setting": {
+        "robustness_seed": 101,
+        "consensus_seed_list": [
+          41,
+          42,
+          43
+        ]
+      },
+      "reference_nm": 0.3967147882193691,
+      "native_nm": 0.36006088633539163,
+      "ablation_nm": 0.3619390294854627,
+      "native_gain_vs_reference_percent": 9.239358595250845,
+      "ablation_gain_vs_reference_percent": 8.765934562206612,
+      "native_gain_vs_ablation_percent": 0.5189114732227273,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_202",
+      "setting": {
+        "robustness_seed": 202,
+        "consensus_seed_list": [
+          202,
+          203,
+          204
+        ]
+      },
+      "reference_nm": 0.3968275691183069,
+      "native_nm": 0.36087179214882187,
+      "ablation_nm": 0.37148123585655346,
+      "native_gain_vs_reference_percent": 9.060806195843085,
+      "ablation_gain_vs_reference_percent": 6.387241017066758,
+      "native_gain_vs_ablation_percent": 2.855983743907975,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_303",
+      "setting": {
+        "robustness_seed": 303,
+        "consensus_seed_list": [
+          303,
+          304,
+          305
+        ]
+      },
+      "reference_nm": 0.39951312206581885,
+      "native_nm": 0.3653610083269699,
+      "ablation_nm": 0.36772448838621474,
+      "native_gain_vs_reference_percent": 8.548433543873058,
+      "ablation_gain_vs_reference_percent": 7.956843448653239,
+      "native_gain_vs_ablation_percent": 0.642731211515768,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_404",
+      "setting": {
+        "robustness_seed": 404,
+        "consensus_seed_list": [
+          404,
+          405,
+          406
+        ]
+      },
+      "reference_nm": 0.3997442249720676,
+      "native_nm": 0.36632744240686443,
+      "ablation_nm": 0.3607791370096378,
+      "native_gain_vs_reference_percent": 8.359541045912088,
+      "ablation_gain_vs_reference_percent": 9.747504911459936,
+      "native_gain_vs_ablation_percent": -1.5378675838116473,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_505",
+      "setting": {
+        "robustness_seed": 505,
+        "consensus_seed_list": [
+          505,
+          506,
+          507
+        ]
+      },
+      "reference_nm": 0.3993888245623097,
+      "native_nm": 0.3687252866366746,
+      "ablation_nm": 0.36396360495569874,
+      "native_gain_vs_reference_percent": 7.677615406299676,
+      "ablation_gain_vs_reference_percent": 8.869857499251122,
+      "native_gain_vs_ablation_percent": -1.308285118660546,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_606",
+      "setting": {
+        "robustness_seed": 606,
+        "consensus_seed_list": [
+          606,
+          607,
+          608
+        ]
+      },
+      "reference_nm": 0.39282220588012384,
+      "native_nm": 0.36268171199059435,
+      "ablation_nm": 0.3634107809908701,
+      "native_gain_vs_reference_percent": 7.672808063892234,
+      "ablation_gain_vs_reference_percent": 7.487210358527729,
+      "native_gain_vs_ablation_percent": 0.20061842917480366,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_707",
+      "setting": {
+        "robustness_seed": 707,
+        "consensus_seed_list": [
+          707,
+          708,
+          709
+        ]
+      },
+      "reference_nm": 0.3972990866694603,
+      "native_nm": 0.37214426689384034,
+      "ablation_nm": 0.3579251957168253,
+      "native_gain_vs_reference_percent": 6.33145673363904,
+      "ablation_gain_vs_reference_percent": 9.910390502707788,
+      "native_gain_vs_ablation_percent": -3.97263767602003,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_808",
+      "setting": {
+        "robustness_seed": 808,
+        "consensus_seed_list": [
+          808,
+          809,
+          810
+        ]
+      },
+      "reference_nm": 0.39613206070741236,
+      "native_nm": 0.3632205049261109,
+      "ablation_nm": 0.3614252539876395,
+      "native_gain_vs_reference_percent": 8.308228251590643,
+      "ablation_gain_vs_reference_percent": 8.76142331367813,
+      "native_gain_vs_ablation_percent": -0.4967143050089051,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_909",
+      "setting": {
+        "robustness_seed": 909,
+        "consensus_seed_list": [
+          909,
+          910,
+          911
+        ]
+      },
+      "reference_nm": 0.40453763057663217,
+      "native_nm": 0.36208383202831035,
+      "ablation_nm": 0.3581325749726461,
+      "native_gain_vs_reference_percent": 10.494400357219602,
+      "ablation_gain_vs_reference_percent": 11.471134474644495,
+      "native_gain_vs_ablation_percent": -1.1032945148779172,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_1010",
+      "setting": {
+        "robustness_seed": 1010,
+        "consensus_seed_list": [
+          1010,
+          1011,
+          1012
+        ]
+      },
+      "reference_nm": 0.3967968906431166,
+      "native_nm": 0.35975912480281763,
+      "ablation_nm": 0.3603426568092653,
+      "native_gain_vs_reference_percent": 9.334187518523452,
+      "ablation_gain_vs_reference_percent": 9.187126888713093,
+      "native_gain_vs_ablation_percent": 0.16193808737902105,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_1111",
+      "setting": {
+        "robustness_seed": 1111,
+        "consensus_seed_list": [
+          1111,
+          1112,
+          1113
+        ]
+      },
+      "reference_nm": 0.400442967752004,
+      "native_nm": 0.3664183696927496,
+      "ablation_nm": 0.3587119141621607,
+      "native_gain_vs_reference_percent": 8.496740060204022,
+      "ablation_gain_vs_reference_percent": 10.421222733442415,
+      "native_gain_vs_ablation_percent": -2.1483689909181924,
+      "max_observed_crash_rate": 0
+    }
+  ],
+  "native_wins_vs_ablation": 4,
+  "n_holdout_groups": 10,
+  "incremental_gain_range_percent": [
+    -3.97263767602003,
+    2.855983743907975
+  ],
+  "incremental_gain_median_percent": -0.8000044099434112,
+  "incremental_gain_mean_percent": -0.670589671731967,
+  "state_sha256": "b9fa06195a51b84e8a3aab88c8ca2c086146d078c9c4af1efa90f4d119bed132",
+  "pool_original_id": 900752354,
+  "limits": [
+    "One component, selected fixed plans, no confidence interval",
+    "Eight reused groups and two freshly predeclared groups; effect of full search over holdout seeds not measured"
+  ]
+}

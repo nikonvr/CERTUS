@@ -1,0 +1,16 @@
+{
+  "observed_utc": "2026-10-15T09:00:57.583648+00:00",
+  "controller_status": "running",
+  "controller_pid": 36608,
+  "current": "control",
+  "child_pid": 21508,
+  "scientific_process_count": 1,
+  "IDE_language_server_pid": 23808,
+  "cpu_seconds_at_check": 31515.75,
+  "affinity": 16777215,
+  "priority": "Normal",
+  "memory_bytes": 4167716864,
+  "progress": "11:00 Paris: strategy evaluations continue; non-finite/fallback candidate batches are preserved scientific outcomes, not a failed controller",
+  "decision": "Leave the existing control and its automatic sequential variant running; no tests or source edits",
+  "new_scientific_result": false
+}

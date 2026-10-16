@@ -1,0 +1,100 @@
+{
+  "status": "OK_native_prefix_gain_not_established",
+  "rows": [
+    {
+      "run": "control",
+      "setting": {
+        "robustness_seed": 101,
+        "consensus_seed_list": [
+          41,
+          42,
+          43
+        ]
+      },
+      "max_observed_crash_rate": 0,
+      "reference_nm": 0.3967147882193691,
+      "native_joint_nm": 0.36006088633539163,
+      "ablation_nm": 0.3619390294854627,
+      "prefix600_nm": 0.35395924517094074,
+      "fine598_nm": 0.35182778503400536,
+      "native_prefix_pool_nm": 0.36308284202857044,
+      "native_prefix_pool_gain_vs_reference_percent": 8.477613436533005,
+      "native_prefix_pool_gain_vs_native_joint_percent": -0.8392901889276327,
+      "native_prefix_pool_gain_vs_ablation_percent": -0.3160235426209246,
+      "native_prefix_pool_gain_vs_prefix600_percent": -2.5775839964919056
+    },
+    {
+      "run": "holdout_1515",
+      "setting": {
+        "robustness_seed": 1515,
+        "consensus_seed_list": [
+          1515,
+          1516,
+          1517
+        ]
+      },
+      "max_observed_crash_rate": 0,
+      "reference_nm": 0.4012007497097099,
+      "native_joint_nm": 0.360986646724816,
+      "ablation_nm": 0.3617630345023475,
+      "prefix600_nm": 0.34968305702584157,
+      "fine598_nm": 0.35285834431369256,
+      "native_prefix_pool_nm": 0.3672569738368212,
+      "native_prefix_pool_gain_vs_reference_percent": 8.460546471423303,
+      "native_prefix_pool_gain_vs_native_joint_percent": -1.736996968972404,
+      "native_prefix_pool_gain_vs_ablation_percent": -1.5186569136427464,
+      "native_prefix_pool_gain_vs_prefix600_percent": -5.025670091210888
+    },
+    {
+      "run": "holdout_1616",
+      "setting": {
+        "robustness_seed": 1616,
+        "consensus_seed_list": [
+          1616,
+          1617,
+          1618
+        ]
+      },
+      "max_observed_crash_rate": 0,
+      "reference_nm": 0.3961179715245636,
+      "native_joint_nm": 0.3661329490997276,
+      "ablation_nm": 0.3627477851145149,
+      "prefix600_nm": 0.3565012338399345,
+      "fine598_nm": 0.35863633874693157,
+      "native_prefix_pool_nm": 0.3685089962041742,
+      "native_prefix_pool_gain_vs_reference_percent": 6.969887080388959,
+      "native_prefix_pool_gain_vs_native_joint_percent": -0.6489574648468555,
+      "native_prefix_pool_gain_vs_ablation_percent": -1.5882139949774166,
+      "native_prefix_pool_gain_vs_prefix600_percent": -3.3682246299408636
+    },
+    {
+      "run": "holdout_1717",
+      "setting": {
+        "robustness_seed": 1717,
+        "consensus_seed_list": [
+          1717,
+          1718,
+          1719
+        ]
+      },
+      "max_observed_crash_rate": 0,
+      "reference_nm": 0.3957017531194933,
+      "native_joint_nm": 0.36387657709661353,
+      "ablation_nm": 0.3569121170392854,
+      "prefix600_nm": 0.362304132754789,
+      "fine598_nm": 0.35596835172244656,
+      "native_prefix_pool_nm": 0.36941107235915227,
+      "native_prefix_pool_gain_vs_reference_percent": 6.6440647667289525,
+      "native_prefix_pool_gain_vs_native_joint_percent": -1.520981456596826,
+      "native_prefix_pool_gain_vs_ablation_percent": -3.5019700153500644,
+      "native_prefix_pool_gain_vs_prefix600_percent": -1.96159495899908
+    }
+  ],
+  "native_prefix_pool_wins_vs_prefix600": 0,
+  "n_fresh_groups": 3,
+  "limits": [
+    "Saved depositables only; baseline native joint complete pool not rescored",
+    "One search seed, fixed plans on three fresh groups, no full machine validation",
+    "All points reproduce at complete consensus depth; no default changes"
+  ]
+}

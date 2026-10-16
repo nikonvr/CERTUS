@@ -1,0 +1,11 @@
+# R4 — reprise du coordinateur après groupe046,15 octobre2026
+
+Le coordinateur43244 échoue sur `File.Replace` : « Impossible de supprimer le fichier à remplacer ». Une lecture sans partage de suppression peut entrer en collision avec le remplacement atomique. Son enfant28992 termine cependant le groupe046 avec `FIXED_REPLAY=OK`, requête complète et verrou libéré. L’inventaire réel après échec ne trouve plus aucunPython/PowerShell de campagne vivant.
+
+Le résultat est adopté après contrôle indépendant :39 appels réels300tirages, base101 pour chaque plan,41/42/43 pour chaque ancre et plan éligible, trois points fixes, plans complets, sources/scripts/copies/protocole/manifestes etPID de réservation vérifiés. Le code de sortie initial n’a pas été conservé par le parent : il reste explicitement inconnu, jamais inventé0. Preuve `groups/group_046/adoption_without_parent_exit.json`. Aucun calcul n’est répété.
+
+Copie nouvelle `scratch/run_rate_R4_resume_v2.ps1`, sources complètes etSHA dans `controller_repair_01.json` : même planificateur, replayer, paramètres et protocole scientifique figés ; seuls changent la reprise documentée, un nouvel état/logs et une sauvegarde qui réessaie lesIOException au plus20fois espacées100ms. L’état original `controller.json` reste intact ; l’état courant est `controller_v2.json`, déclaré par `controller_current.json`. Les runs0 du parent sont conservés ; groupe046 porte une adoptionGO et une sortie inconnue.
+
+Contre-épreuve sous WindowsPowerShell5.1 avec un véritable lecteur qui interdit le partage de suppression : l’ancien Save échoue, le nouveau attend la libération et passe après neuf tentatives. Handle conservé et sortie0 d’unPython vide éprouvés ; aucune simulation physique. Ruff passe sur les scripts nouveaux. Preuves dans `controller_retry_verification_01` ; politique Windows inchangée.
+
+Pour lire l’état vivant, préférer un FileStream avec `FileShare.ReadWrite | FileShare.Delete` puis refermer aussitôt ; ne pas laisser un `Get-Content` bloquer le remplacement du contrôleur. Le lecteur de suivi ne doit pas écrire les checkpoints de campagne. Avant toute nouvelle reprise, inspecter réellement le parent et son enfant, les claims et le résultat pending ; jamais de suppression de réservation.

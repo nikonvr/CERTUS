@@ -1,0 +1,26 @@
+{
+    "status":  "complete",
+    "pid":  24768,
+    "started_utc":  "2026-10-15T10:41:59.5316123Z",
+    "runs":  [
+                 {
+                     "arm":  "control",
+                     "pid":  30284,
+                     "status":  "complete",
+                     "exit_code":  0,
+                     "ended_utc":  "2026-10-15T11:25:37.662311+00:00",
+                     "artifact":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R3_h02_wavelengths\\control\\blocs_vs_plantage_r75x0.5_deep_s101_r3_wavelengths_control_20261015_v1.json"
+                 },
+                 {
+                     "arm":  "variant",
+                     "pid":  28532,
+                     "status":  "complete",
+                     "exit_code":  0,
+                     "ended_utc":  "2026-10-15T12:10:36.721534+00:00",
+                     "artifact":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R3_h02_wavelengths\\variant\\blocs_vs_plantage_r75x0.5_deep_s101_r3_wavelengths_variant_20261015_v1.json"
+                 }
+             ],
+    "current":  null,
+    "current_pid":  null,
+    "updated_utc":  "2026-10-15T12:10:47.8299638Z"
+}

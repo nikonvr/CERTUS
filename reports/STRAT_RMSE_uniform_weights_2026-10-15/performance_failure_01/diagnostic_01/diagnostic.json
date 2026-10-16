@@ -1,0 +1,72 @@
+{
+  "status": "diagnostic_complete",
+  "pid": 33424,
+  "started_utc": "2026-10-15T06:37:12.582496+00:00",
+  "resources": {
+    "logical_cpus": 24,
+    "affinity_mask": "0xffffff",
+    "priority": "normal",
+    "library_threads": 23
+  },
+  "source_sha256": {
+    "old": {
+      "tests/performance/test_performance.py": "e920de666c9ef62a9709e161f487c549a20ecbb0f1b5c9af3901693f7d7c3f21",
+      "tools/bench_kernels.py": "3f147b05f0747dc47bca36e43baeed2efb10be332257348bf8f0bfc6c3442e72",
+      "certus/physics/certus_tmm_matrix.py": "36de6f0e5a23e354960cb33ee90d6b26eec800a0c3ff3a38e447171834e3b908"
+    },
+    "current": {
+      "tests/performance/test_performance.py": "e920de666c9ef62a9709e161f487c549a20ecbb0f1b5c9af3901693f7d7c3f21",
+      "tools/bench_kernels.py": "3f147b05f0747dc47bca36e43baeed2efb10be332257348bf8f0bfc6c3442e72",
+      "certus/physics/certus_tmm_matrix.py": "36de6f0e5a23e354960cb33ee90d6b26eec800a0c3ff3a38e447171834e3b908"
+    }
+  },
+  "runs": [
+    {
+      "name": "old23",
+      "worktree": "C:\\Users\\Lemarchand\\.codex\\worktrees\\campagne-a2\\certus0310",
+      "numba_ceiling": 23,
+      "other_library_ceiling": 23,
+      "fresh_interpreter": true,
+      "fresh_numba_cache": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_RMSE_uniform_weights_2026-10-15\\performance_failure_01\\diagnostic_01\\old23\\numba_cache",
+      "exit_code": 1,
+      "seconds": 13.33253300000797,
+      "log": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_RMSE_uniform_weights_2026-10-15\\performance_failure_01\\diagnostic_01\\old23\\pytest.log"
+    },
+    {
+      "name": "current23",
+      "worktree": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310",
+      "numba_ceiling": 23,
+      "other_library_ceiling": 23,
+      "fresh_interpreter": true,
+      "fresh_numba_cache": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_RMSE_uniform_weights_2026-10-15\\performance_failure_01\\diagnostic_01\\current23\\numba_cache",
+      "exit_code": 1,
+      "seconds": 12.949204500007909,
+      "log": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_RMSE_uniform_weights_2026-10-15\\performance_failure_01\\diagnostic_01\\current23\\pytest.log"
+    },
+    {
+      "name": "old1",
+      "worktree": "C:\\Users\\Lemarchand\\.codex\\worktrees\\campagne-a2\\certus0310",
+      "numba_ceiling": 1,
+      "other_library_ceiling": 23,
+      "fresh_interpreter": true,
+      "fresh_numba_cache": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_RMSE_uniform_weights_2026-10-15\\performance_failure_01\\diagnostic_01\\old1\\numba_cache",
+      "exit_code": 1,
+      "seconds": 12.549954999994952,
+      "log": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_RMSE_uniform_weights_2026-10-15\\performance_failure_01\\diagnostic_01\\old1\\pytest.log"
+    },
+    {
+      "name": "current1",
+      "worktree": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310",
+      "numba_ceiling": 1,
+      "other_library_ceiling": 23,
+      "fresh_interpreter": true,
+      "fresh_numba_cache": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_RMSE_uniform_weights_2026-10-15\\performance_failure_01\\diagnostic_01\\current1\\numba_cache",
+      "exit_code": 0,
+      "seconds": 10.027086699992651,
+      "log": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_RMSE_uniform_weights_2026-10-15\\performance_failure_01\\diagnostic_01\\current1\\pytest.log"
+    }
+  ],
+  "meaning": "Diagnostic only; failures retained, no science or full-validation GO inferred",
+  "current": null,
+  "finished_utc": "2026-10-15T06:38:01.502921+00:00"
+}

@@ -1,0 +1,53 @@
+$ErrorActionPreference = 'Stop'
+$rateR3Root = Split-Path -Parent $PSScriptRoot
+$rateR3Directory = Join-Path $rateR3Root 'reports\STRAT_Rate_suite_2026-10-15\R3_h01_widths'
+$rateR3StatePath = Join-Path $rateR3Directory 'pair_controller.json'
+if (Test-Path -LiteralPath $rateR3StatePath) { throw 'Inspect the existing controller and live child before recovery' }
+$rateR3Python = (Get-Command python -ErrorAction Stop).Source
+$rateR3Context = Get-Content -Raw -LiteralPath (Join-Path $rateR3Root 'reports\STRAT_Rate_suite_2026-10-15\reference_context.json') | ConvertFrom-Json
+$rateR3State = [ordered]@{status='starting';pid=$PID;started_utc=(Get-Date).ToUniversalTime().ToString('o');runs=@();current=$null;current_pid=$null}
+function Save-RateR3State {
+    $rateR3State['updated_utc'] = (Get-Date).ToUniversalTime().ToString('o')
+    $rateR3Temp = $rateR3StatePath + '.tmp'
+    [System.IO.File]::WriteAllText($rateR3Temp,($rateR3State | ConvertTo-Json -Depth 8),[System.Text.UTF8Encoding]::new($false))
+    if (Test-Path -LiteralPath $rateR3StatePath) {
+        [System.IO.File]::Replace($rateR3Temp,$rateR3StatePath,$null)
+    } else {
+        [System.IO.File]::Move($rateR3Temp,$rateR3StatePath)
+    }
+}
+Save-RateR3State
+try {
+    foreach ($rateR3Arm in @('control','variant')) {
+        $rateR3Output = Join-Path $rateR3Directory $rateR3Arm
+        if (Test-Path -LiteralPath (Join-Path $rateR3Output 'etat.json')) { throw 'Existing arm must be audited; never overwrite or repeat it' }
+        New-Item -ItemType Directory -Path $rateR3Output -ErrorAction Stop | Out-Null
+        $rateR3Arguments = @('-X','utf8','-X','cpu_count=24',('"' + (Join-Path $rateR3Root 'scratch\rate_native_R3_widths_probe.py') + '"'),
+            '--worktree',('"' + $rateR3Context.worktree + '"'),
+            '--output',('"' + $rateR3Output + '"'),
+            '--reference-state',('"' + (Join-Path $rateR3Root 'reports\STRAT_Rate_suite_2026-10-15\reference_context.json') + '"'),
+            '--tag',('r3_widths_' + $rateR3Arm + '_20261015_v1'),'--arm',$rateR3Arm,
+            '--verification-record',('"' + (Join-Path $rateR3Directory 'verification_02\verification.json') + '"'),
+            '--validated-control',('"' + (Join-Path $rateR3Root 'reports\STRAT_Rate_suite_2026-10-15\R0_control\control.json') + '"'))
+        $rateR3State['status']='running';$rateR3State['current']=$rateR3Arm
+        Save-RateR3State
+        $rateR3Child = Start-Process -FilePath $rateR3Python -ArgumentList $rateR3Arguments -WorkingDirectory $rateR3Root -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $rateR3Output 'stdout.log') -RedirectStandardError (Join-Path $rateR3Output 'stderr.log')
+        $rateR3Child.ProcessorAffinity=[IntPtr]16777215
+        $rateR3Child.PriorityClass='Normal'
+        $rateR3State['current_pid']=$rateR3Child.Id
+        Save-RateR3State
+        $rateR3Child.WaitForExit()
+        $rateR3Child.Refresh()
+        $rateR3Saved = Get-Content -Raw -LiteralPath (Join-Path $rateR3Output 'etat.json') | ConvertFrom-Json
+        if ($rateR3Child.ExitCode -ne 0 -or $rateR3Saved.status -ne 'complete') { throw ('Arm failed: ' + $rateR3Arm) }
+        $rateR3State['runs'] += [ordered]@{arm=$rateR3Arm;pid=$rateR3Child.Id;status=$rateR3Saved.status;ended_utc=$rateR3Saved.updated;artifact=$rateR3Saved.artifact}
+        $rateR3State['current_pid']=$null;$rateR3State['current']=$null
+        Save-RateR3State
+    }
+    $rateR3State['status']='complete'
+} catch {
+    $rateR3State['status']='failed';$rateR3State['error']=$_.Exception.Message
+    throw
+} finally {
+    Save-RateR3State
+}

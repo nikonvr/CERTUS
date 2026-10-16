@@ -1,0 +1,7 @@
+# Lancement du cas R6 c02_s202 — 16 octobre 2026
+
+Le cas77 a passé le critère figé avant scores : trois gains frais propres, médiane1,0523%, moyenne1,2541%. Son audit de provenance est GO, ses trois groupes sont consommés ; aucun groupe supplémentaire n’est ajouté.
+
+La paire202 démarre à23:47:25UTC /01h47Paris. Coordinateur WindowsPowerShell5.1 39516, contrôle2184 au lancement ; les processus et états courants font foi. Invocation par scriptbloc avec `-RateCase c02_s202` explicite, source du coordinateur inchangée et SHA vérifié. Le contrôle réel porte la graine202 et `rate_post_refinement=false`, CPU24, affinité0xffffff, Normal et23threads de bibliothèque. Aucune autre mesure Python au démarrage. Le coordinateur lance seul la variante à la fin du contrôle ; aucun lancement manuel concurrent.
+
+Aucune source scientifique ni script engagé modifié. Les trois groupes176200xx sont réservés, encore non consommés au lancement. Après fin effective : préparation de confirmation par `prepare_rate_R6_confirmation_v2.py`, vérification `verify_rate_R6_fresh_v2.py`, puis contrôleur `run_rate_R6_fresh_v2.ps1` avec paramètre explicite de ce cas, et audit `audit_rate_R6_fresh.py`. Ne pas employer les copiesv1 à défautLF/CRLF. La garde conserve chaque claim et l’échéance du16octobre06:00UTC.

@@ -1,0 +1,10 @@
+{
+  "verdict": "GO",
+  "exact_prompt_readback": true,
+  "status": "ACTIVE",
+  "same_thread": true,
+  "same_automation_id": "certus-essais-rate-jusqu-au-14-octobre-9-h",
+  "deadline_utc": "2026-10-16T06:00:00Z",
+  "R4_controller_started_pid": 43244,
+  "inspect_current_process_before_action": true
+}

@@ -1,0 +1,7 @@
+{
+  "pid": 43244,
+  "invocation_copy": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\run_rate_R4_invocation_01.ps1",
+  "command": "& ([scriptblock]::Create([IO.File]::ReadAllText('D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\run_rate_R4_invocation_01.ps1')))",
+  "started_utc": "2026-10-15T13:24:59.5057855Z",
+  "first_group_adopted": "group_001"
+}

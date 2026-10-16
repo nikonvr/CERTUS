@@ -1,0 +1,65 @@
+{
+  "checked_local": "2026-10-14T12:02:21.3932328+02:00",
+  "preflight": "GO",
+  "status": "running",
+  "completed": 16,
+  "current": "48c_premium_s202_avec",
+  "current_pid": 19844,
+  "current_started": "2026-10-14T11:55:18",
+  "controller_pid": 24128,
+  "processes": [
+    {
+      "ProcessId": 36516,
+      "ParentProcessId": 49656,
+      "CreationDate": "2026-10-13T22:18:45.002171+02:00",
+      "CommandLine": "\"C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe\"  \"C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\Scripts\\pyright-langserver.exe\" --stdio"
+    },
+    {
+      "ProcessId": 51884,
+      "ParentProcessId": 46640,
+      "CreationDate": "2026-10-14T09:08:32.570007+02:00",
+      "CommandLine": "\"C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\a2_continue_runner.py\" \"--worktree\" \"C:\\Users\\Lemarchand\\.codex\\worktrees\\campagne-a2\\certus0310\" \"--campaign\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_ELITE_couches_Rate_autres_composants_2026-10-13\" \"--output\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_A2_continuation_2026-10-14\" \"--previous-controller-pid\" \"23280\""
+    },
+    {
+      "ProcessId": 24128,
+      "ParentProcessId": 51884,
+      "CreationDate": "2026-10-14T09:25:04.926278+02:00",
+      "CommandLine": "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\campagne_a2_runner.py\" --worktree C:\\Users\\Lemarchand\\.codex\\worktrees\\campagne-a2\\certus0310 --output \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_ELITE_couches_Rate_autres_composants_2026-10-13\" --logical-cpus 16"
+    },
+    {
+      "ProcessId": 19844,
+      "ParentProcessId": 24128,
+      "CreationDate": "2026-10-14T11:55:18.694941+02:00",
+      "CommandLine": "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe scripts/probe_blocs_vs_plantage.py 48c premium 1 0 2 0 202 0"
+    }
+  ],
+  "resources": [
+    {
+      "id": 19844,
+      "cpu_seconds": 6013.234375,
+      "priority": "Normal",
+      "affinity": 65535
+    },
+    {
+      "id": 24128,
+      "cpu_seconds": 1.078125,
+      "priority": "Normal",
+      "affinity": 65535
+    },
+    {
+      "id": 51884,
+      "cpu_seconds": 0.28125,
+      "priority": "Normal",
+      "affinity": 65535
+    }
+  ],
+  "worktree_head": "da1af0825d5e09e8d0a5ff4f1cf42b802e0e30e7",
+  "tracked_changes": [],
+  "helper_sha256": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51",
+  "log_tail": [
+    "12:02:14 | WARNING | [ROBUSTNESS] 32 strategy(ies) dropped for a NON-FINITE score -- ids: 900300001, 900300002, 900300003, 900300004, 900300005 ...",
+    "12:02:14 | ERROR | [ROBUSTNESS] 🔴 NONE of the 32 strategies holds under 5% of non-terminating depositions. The rate compounds over the height of the stack: the best candidate crashes in 48.0% of the draws. We still return the ranking by increasing risk — but NONE of these strategies is usable as is, and the component likely requires another monitoring paradigm.",
+    "12:02:14 | WARNING |    [REGIME] 🔴 DEGENERATE: the 32 returned strategies carry a FALLBACK score, and their crash_rate is constant. The ranking that follows -- hence the choice of the ELITE PARENTS -- has no signal in its first two keys. `use_margin_ranking` is the only informative key in this regime."
+  ],
+  "no_test_or_parallel_science_started": true
+}

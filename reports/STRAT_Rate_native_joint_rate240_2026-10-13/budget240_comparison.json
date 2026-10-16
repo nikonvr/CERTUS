@@ -1,0 +1,14 @@
+{
+  "status": "OK",
+  "native_best_id": 900852003,
+  "previous_budget240_id": 900851523,
+  "exact_equal": {
+    "blocs": true,
+    "rate_layers": true,
+    "resolution_nm": true,
+    "score": true
+  },
+  "native_artifact_sha256": "f91d16af4e54d4f8874c7753596ea5610153191d92a5ad8a30c3db0292fe444b",
+  "gain_vs_reference_percent": 3.5049903185771614,
+  "extra_joint_gain_vs_budget240_percent": 0.0
+}

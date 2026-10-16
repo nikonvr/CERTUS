@@ -1,0 +1,96 @@
+"""Check prefix adapter contracts using the frozen real factory, without Monte Carlo."""
+
+from __future__ import annotations
+
+import argparse
+import copy
+import json
+import os
+import runpy
+import sys
+from pathlib import Path
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--worktree", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args()
+    root = Path(__file__).resolve().parents[1]
+    if any(folder.is_dir() and (folder / ".running").exists() for folder in (root / "reports").iterdir()):
+        raise RuntimeError("No adapter verification during a scientific measurement")
+    worktree = args.worktree.resolve()
+    sys.path[:0] = [str(worktree), str(worktree / "scripts")]
+    os.environ["QT_QPA_PLATFORM"] = "offscreen"
+    import bench_examples as bx
+
+    bx.qapp()
+    import certus.core.certus_strat_consensus as consensus
+    from certus.utils.certus_strat_context import _plan_signature, _validate_strategy_blocks_contract
+
+    joint = runpy.run_path(str(root / "scratch/rate_joint_native_candidates.py"))["extend_factory"]
+    extend = runpy.run_path(str(root / "scratch/rate_prefix_native_candidates.py"))["extend_prefix"]
+    fixed = json.loads((root / "reports/STRAT_Rate_validation_prefix_2026-10-14/plans.json").read_text())["plans"]
+    parents = []
+    for sid in (9900000, 9900001):
+        strategy = copy.deepcopy(next(p for p in fixed if p["source_strategy_id"] == sid))
+        strategy.update(strategy_id=sid, witness_reset_layers=[30])
+        parents.append({"strategy": strategy})
+    before = copy.deepcopy(parents)
+    grid = list(range(450, 751))
+    kwargs = {"parent_results": parents, "available_wls": grid, "num_layers": 75, "start_strategy_id": 9910000,
+              "max_candidates": 120, "max_rate_candidates": 240, "wl_neighbor_span": 1, "rate_moves": True,
+              "balanced_rate_moves": False, "existing_signatures": set()}
+    factory = consensus._generate_elite_candidate_strategies
+    checks = []
+    for scenario in ({}, {"round_robin_seed": (101, 2)}, {"rate_moves": False}, {"parent_results": []}, {"available_wls": []}):
+        parameters = {**kwargs, **scenario}
+        prior, cursor, _ = joint(factory, consensus, _plan_signature, (), parameters, 480)
+        actual, next_sid, event = extend(factory, consensus, _plan_signature, parameters, prior, cursor, 0)
+        assert (actual, next_sid) == (prior, cursor)
+        assert event is None
+        checks.append("inactive candidates/order/IDs/cursor identical: " + str(list(scenario)))
+    prior, prior_cursor, _ = joint(factory, consensus, _plan_signature, (), kwargs, 480)
+    active, cursor, event = extend(factory, consensus, _plan_signature, kwargs, prior, prior_cursor, 720)
+    assert active[:len(prior)] == prior
+    assert event["prefix_count"] > 0
+    assert cursor == prior_cursor + event["prefix_count"]
+    assert [c["strategy_id"] for c in active] == list(range(kwargs["start_strategy_id"], cursor))
+    signatures = [_plan_signature(c["blocks"], c.get("rate_layers")) for c in active]
+    assert len(set(signatures)) == len(signatures)
+    by_id = {p["strategy"]["strategy_id"]: p["strategy"] for p in parents}
+    for candidate in active[len(prior):]:
+        valid, reason = _validate_strategy_blocks_contract(candidate, 75)
+        assert valid, reason
+        parent = by_id[candidate["parent_strategy_id"]]
+        boundary = parent["blocks"][0]["end"]
+        assert candidate["blocks"][1:] == parent["blocks"][1:]
+        assert candidate["blocks"][0]["start"] == 0
+        assert candidate["blocks"][0]["end"] == boundary
+        assert {i for i in candidate["rate_layers"] if i >= boundary} == {i for i in parent["rate_layers"] if i >= boundary}
+        prefix_rate = {i for i in candidate["rate_layers"] if i < boundary}
+        first_rate = min(prefix_rate, default=boundary)
+        assert prefix_rate == set(range(first_rate, boundary))
+        assert first_rate >= 2
+        assert candidate["blocks"][0]["wavelength"] in grid
+        assert candidate["monochromator_resolution_nm"] == 2
+        assert candidate["witness_reset_layers"] == [30]
+    target = next(p for p in fixed if p["source_strategy_id"] == 9900002)
+    assert _plan_signature(target["blocks"], target["rate_layers"]) in signatures
+    assert parents == before
+    assert consensus._generate_elite_candidate_strategies is factory
+    active[len(prior)]["slit_profile"] = object()
+    assert "slit_profile" not in event["offered"][0]
+    json.dumps(event)
+    checks += ["legacy and joint candidates preserved exactly before prefix additions", "unique contiguous IDs/signatures",
+               "only first wavelength and optical-prefix Rate layers changed", "legal control wavelengths, first two optical, slit/witness inherited",
+               "useful prefix geometry offered generically", "parents unchanged; temporary patches restored; independent serializable trace"]
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    with args.output.open("x", encoding="utf-8") as stream:
+        json.dump({"verdict": "GO", "checks": checks, "prior_count": len(prior), "prefix_count": event["prefix_count"],
+                   "scope": "real candidate factory, no Monte Carlo or physical changes"}, stream, indent=2)
+    print("PREFIX_NATIVE_ADAPTER_VERIFY=GO")
+
+
+if __name__ == "__main__":
+    main()

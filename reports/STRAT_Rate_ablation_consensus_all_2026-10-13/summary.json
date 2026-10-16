@@ -1,0 +1,25 @@
+{
+  "status": "OK",
+  "n_scored": 5240,
+  "n_complete_consensus": 5238,
+  "rejected": {
+    "incomplete consensus": 2
+  },
+  "best_ablation": {
+    "id": 9980047,
+    "name": "ablation_saved_900752354",
+    "move": {
+      "kind": "saved_ablation_plan",
+      "original_id": 900752354
+    },
+    "eligible": true,
+    "score": 0.032749965266219656,
+    "crash_rate": 0.0,
+    "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_ablation_consensus_all_2026-10-13\\batch_005\\attempt_01\\search.json"
+  },
+  "best_ablation_seel_nm": 0.3619390294854627,
+  "native_seel_nm": 0.36006088633539163,
+  "native_gain_vs_ablation_percent": 0.5189114732227273,
+  "updated_utc": "2026-10-13T22:13:57+00:00",
+  "state_sha256": "199d613b1733f9a927f93b7a07e6be6304dfa2ec9b6b1889bee39477239748c4"
+}

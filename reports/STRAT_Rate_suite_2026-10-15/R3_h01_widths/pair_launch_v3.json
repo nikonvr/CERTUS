@@ -1,0 +1,12 @@
+{
+  "started_utc": "2026-10-15T09:33:54.5335470Z",
+  "controller_pid": 41504,
+  "script": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\run_rate_R3_widths_resume_variant.ps1",
+  "script_sha256": "1e1a097e549e1248edc6c0cc927b2fea4a959ef5cc682e1e06ed549a6aff17c9",
+  "sequence": [
+    "adopt audited control",
+    "measure variant only"
+  ],
+  "control_audit": "audit_control.json",
+  "no_control_repeat": true
+}

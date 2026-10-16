@@ -1,0 +1,23 @@
+"""Make documented invocation copies with explicit roots for PowerShell -Command."""
+
+from pathlib import Path
+
+from rate_R4_guard import EXPERIMENT, ROOT, sha
+from rate_R4_planner import save
+
+records = []
+for name in ("start_rate_R4_first_group", "run_rate_R4"):
+    source = ROOT / f"scratch/{name}.ps1"
+    target = ROOT / f"scratch/{name}_invocation_01.ps1"
+    code = source.read_text(encoding="utf-8")
+    code = code.replace("Split-Path -Parent $PSScriptRoot", "'" + str(ROOT).replace("'", "''") + "'")
+    if name.startswith("start_"):
+        code = code.replace("$PSCommandPath", "'" + str(target).replace("'", "''") + "'")
+    with target.open("x", encoding="utf-8", newline="\n") as stream:
+        stream.write(code)
+    with (EXPERIMENT / (target.name + ".txt")).open("xb") as stream:
+        stream.write(target.read_bytes())
+    records.append({"source": str(source), "source_sha256": sha(source), "invocation_copy": str(target),
+                    "invocation_sha256": sha(target), "only_change": "Explicit task root and bootstrap source path for -Command; scientific command/functions unchanged"})
+save(EXPERIMENT / "invocation_copies.json", {"status": "PREPARED_BEFORE_MEASUREMENT", "records": records,
+                                           "execution_policy_changed": False}, immutable=True)

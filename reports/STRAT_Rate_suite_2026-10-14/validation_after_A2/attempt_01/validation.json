@@ -1,0 +1,52 @@
+{
+  "status": "FAILED",
+  "started_utc": "2026-10-14T15:04:25.820604+00:00",
+  "pid": 45016,
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "deadline_utc": "2026-10-15T06:00:00Z",
+  "checks": [
+    {
+      "name": "R1_current",
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-m",
+        "pytest",
+        "tests/unit/test_probe_keeps_consensus_score_provenance.py",
+        "-q",
+        "--no-cov"
+      ],
+      "exit_code": 0,
+      "seconds": 5.560958699992625,
+      "verdict": "GO",
+      "log": "R1_current.log"
+    },
+    {
+      "name": "R1_before_expected_failure",
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-c",
+        "import importlib.util,sys; from importlib.machinery import SourceFileLoader; loader=SourceFileLoader(\"probe_blocs_vs_plantage\",'D:\\\\drivefl\\\\01_Recherche_Enseignement\\\\02_Couches_Minces_Optique\\\\couches minces 2026\\\\CERTUS\\\\certus0310\\\\reports\\\\STRAT_Rate_suite_2026-10-14\\\\R1_score_export\\\\probe_before_R1.py.txt'); spec=importlib.util.spec_from_loader(loader.name,loader); mod=importlib.util.module_from_spec(spec); sys.modules[loader.name]=mod; loader.exec_module(mod); import pytest; sys.exit(pytest.main(['tests/unit/test_probe_keeps_consensus_score_provenance.py',\"-q\",\"--no-cov\"]))"
+      ],
+      "exit_code": 1,
+      "seconds": 0.16186530000413768,
+      "verdict": "FAILED",
+      "log": "R1_before_expected_failure.log"
+    }
+  ],
+  "source_sha256": {
+    "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e",
+    "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+    "tests/unit/test_probe_keeps_consensus_score_provenance.py": "accd22f5f43d05f0b52cd0b01e46fb47437d66afb32ad80fc3f1eb7a48c214b9",
+    "tests/unit/test_strat_elite_rate_moves.py": "574f08fc5df532759a02fc1a2b9f632e69296f10a00307bf67b071d2073735e4"
+  },
+  "current": "R1_before_expected_failure",
+  "R1_before_sha256": "a3f391ba642300fddaae470ba432a0c8306500492bc9dcb4e25056ef13e61c32",
+  "error": "Validation failed: R1_before_expected_failure",
+  "finished_utc": "2026-10-14T15:04:31.626216+00:00"
+}

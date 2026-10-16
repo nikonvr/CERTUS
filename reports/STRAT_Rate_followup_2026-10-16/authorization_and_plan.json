@@ -1,0 +1,22 @@
+{
+  "recorded_date": "2026-10-16",
+  "user_authorization": "continue la suite logique",
+  "later_steering": ["essaie encore", "donne moi la marche a suivre", "est ce ok ?", "ou en es tu ?"],
+  "interpretation": "Reprendre la suite proposée après le bilan clos : diagnostic contrôlé R5/h03, puis sélection de fenêtre admissible48c et évaluation conditionnelle du seul correctif.",
+  "historical_program": "STRAT_Rate_suite_2026-10-15 reste clos. Aucune réservation, garde, échéance ou source historique n'est réécrite.",
+  "current_stage": "Diagnostic enregistré terminé ; préparation contrôlée échouée avant application/claim/mesure. Passation demandée, puis ménage et publication.",
+  "later_publication_authorization": "push et commit all",
+  "later_handoff_request": "fais un diagnostic precis dans les md pourq 'une autre IA puisse conitnur",
+  "later_cleanup_authorization": "fais un meenage drastique !",
+  "publication_override": "La demande de commit/push remplace l'interdiction de publication pour la livraison de cet état ; aucune option scientifique n'est activée.",
+  "next_stage_requires_concrete_protocol": "Avant une contre-épreuve physique : nouveaux slots permanents, plans et paramètres complets figés, inventaire des sources et des processus, garde de concurrence et vérification du harnais.",
+  "internal_caps_for_initial_diagnosis": {"complete_plans": 3, "seeds_per_plan": 4, "source_contexts": 2, "maximum_physical_tasks": 24},
+  "conditional_48c_cap": {"native_pairs": 1, "fresh_groups": 3, "unique_fixed_plans_per_group": 8},
+  "other_components": "x1.5/x2 restent conditionnels à un bilan48c favorable ; aucune mesure de ces composants n'est engagée par ce document.",
+  "resources": {"logical_cpus": 24, "affinity_mask": "0xffffff", "priority": "normal", "library_threads": 23, "concurrent_scientific_measurements": 1},
+  "restrictions": ["Aucun test ni Python d'analyse pendant une mesure", "Aucune source ou script engagé modifié", "Aucun arrêt scientifique", "Aucun défaut scientifique activé", "Aucune amplitude machine inventée pour R7"],
+  "old_deadline": "2026-10-16T06:00:00Z s'applique au programme historique terminé ; elle n'est ni déplacée ni réutilisée dans ses lanceurs.",
+  "new_unattended_deadline": null,
+  "automation": "L'ancien suivi reste PAUSED. Pas de nouvelle autonomie nocturne ni de relance automatique accordée par ce document.",
+  "environment_recovery": {"terminal_command_succeeded": true, "live_scientific_processes": 0, "preflight": "PREFLIGHT=GO", "preexisting_tracked_modifications": 12, "preexisting_unpushed_commits": 6}
+}

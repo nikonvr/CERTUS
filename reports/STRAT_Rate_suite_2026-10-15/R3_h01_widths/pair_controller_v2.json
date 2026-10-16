@@ -1,0 +1,12 @@
+{
+    "status":  "failed",
+    "pid":  36608,
+    "started_utc":  "2026-10-15T08:35:47.8079916Z",
+    "runs":  [
+
+             ],
+    "current":  "control",
+    "current_pid":  21508,
+    "updated_utc":  "2026-10-15T09:20:22.4590122Z",
+    "error":  "Arm failed: control"
+}

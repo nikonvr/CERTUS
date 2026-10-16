@@ -1,0 +1,91 @@
+{
+  "verdict": "GO",
+  "audited_utc": "2026-10-16T03:06:00.443864+00:00",
+  "favorable_cases": 3,
+  "cases": {
+    "c01_s77": {
+      "audit_sha256": "6f402fb9228d11e615dae67c54f7997da3544ce13a8c7b89e23f33e377a6479e",
+      "own_comparison": {
+        "by_group_pct": [
+          2.108274216821393,
+          1.0523238841518734,
+          0.6016260777836901
+        ],
+        "evaluable_groups": 3,
+        "wins": 3,
+        "mean_pct": 1.2540747262523189,
+        "median_pct": 1.0523238841518734,
+        "worst_loss_pct": 0
+      },
+      "historical_best_local": {
+        "by_group_pct": [
+          -19.929540965224525,
+          -18.13781782472159,
+          -20.70960361528522
+        ],
+        "evaluable_groups": 3,
+        "wins": 0,
+        "mean_pct": -19.592320801743778,
+        "median_pct": -19.929540965224525,
+        "worst_loss_pct": 20.70960361528522
+      }
+    },
+    "c02_s202": {
+      "audit_sha256": "e6faefb3ec676e8a5eff83f6d5eae4892cf11f0a424b4c37013c4cfc79058ffb",
+      "own_comparison": {
+        "by_group_pct": [
+          1.4166098585502218,
+          1.0252832302897419,
+          1.4245492815046723
+        ],
+        "evaluable_groups": 3,
+        "wins": 3,
+        "mean_pct": 1.288814123448212,
+        "median_pct": 1.4166098585502218,
+        "worst_loss_pct": 0
+      },
+      "historical_best_local": {
+        "by_group_pct": [
+          -9.45906858386627,
+          -9.464058646286745,
+          -9.495855744920622
+        ],
+        "evaluable_groups": 3,
+        "wins": 0,
+        "mean_pct": -9.472994325024546,
+        "median_pct": -9.464058646286745,
+        "worst_loss_pct": 9.495855744920622
+      }
+    },
+    "c03_s404": {
+      "audit_sha256": "ffd0a0673f60962943ad7b9f3aef573324018ab0ccc5701d8675005fafe7d163",
+      "own_comparison": {
+        "by_group_pct": [
+          0.4330485003652629,
+          2.4731398767201984,
+          2.3623395276311965
+        ],
+        "evaluable_groups": 3,
+        "wins": 3,
+        "mean_pct": 1.756175968238886,
+        "median_pct": 2.3623395276311965,
+        "worst_loss_pct": 0
+      },
+      "historical_best_local": {
+        "by_group_pct": [
+          -8.953155557501091,
+          -8.119311208823742,
+          -7.718544174139397
+        ],
+        "evaluable_groups": 3,
+        "wins": 0,
+        "mean_pct": -8.263670313488078,
+        "median_pct": -8.119311208823742,
+        "worst_loss_pct": 8.953155557501091
+      }
+    }
+  },
+  "decision": "Proceed in the guide order; stop extension after the first case not meeting the same clear-gain rule",
+  "scope": "At most three additional pairs, six overall; three reserved groups per case; deadline has priority",
+  "no_new_global_best_or_confidence_interval": true
+}

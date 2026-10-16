@@ -1,0 +1,210 @@
+"""New R2 native trace launcher; requires completed A2, verification and fresh fixed points."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import runpy
+import subprocess
+import sys
+import traceback
+from datetime import UTC, datetime
+from functools import wraps
+from pathlib import Path
+from unittest.mock import patch
+
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--worktree", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--reference-state", type=Path, required=True)
+    parser.add_argument("--deadline-utc", required=True)
+    parser.add_argument("--tag", required=True)
+    parser.add_argument("--verification-record", type=Path)
+    parser.add_argument("--validated-control", type=Path)
+    parser.add_argument("--plan", action="store_true")
+    args = parser.parse_args()
+    root = Path(__file__).resolve().parents[1]
+    worktree, output = args.worktree.resolve(), args.output.resolve()
+    output.relative_to(root / "reports")
+    reference_file = args.reference_state.resolve()
+    deadline = datetime.fromisoformat(args.deadline_utc)
+    if deadline.tzinfo is None:
+        raise ValueError("The deadline requires an explicit timezone")
+    deadline = deadline.astimezone(UTC)
+    if not args.tag.replace("_", "").replace("-", "").isalnum():
+        raise ValueError("The unique tag accepts letters, digits, underscores and hyphens")
+    probe_arguments = ["r75x0.5", "deep", "0", "0", "2", "0", "101", "0"]
+    overrides = "elite_rate_balanced_moves=false,elite_rate_max_candidates=240,elite_rounds=6"
+    if args.plan:
+        print(json.dumps({"arguments": probe_arguments, "joint_budget": 480, "prefix_budget": 0,
+                          "overrides": overrides, "deadline_utc": deadline.isoformat(), "tag": args.tag,
+                          "trace_enabled": True, "physics_and_selection": "unchanged",
+                          "guards": ["A2 complete24/24", "passing observer verification", "passing R0 control", "idle machine"]}))
+        return 0
+    if datetime.now(UTC) >= deadline:
+        raise RuntimeError("The explicit deadline forbids a new measurement")
+    if args.verification_record is None or args.validated_control is None:
+        raise RuntimeError("Observer verification and R0 control records are required before measurement")
+    campaign = root / "reports/STRAT_ELITE_couches_Rate_autres_composants_2026-10-13"
+    a2 = json.loads((campaign / "etat.json").read_text(encoding="utf-8"))
+    if a2["status"] != "complete" or len(a2["runs"]) != 24 or len({r["key"] for r in a2["runs"]}) != 24 or a2.get("current_pid"):
+        raise RuntimeError("Finish the existing24 A2 measurements before starting R2")
+    for name in ("STRAT_ELITE_couches_Rate_autres_composants_2026-10-13", "STRAT_A2_continuation_2026-10-14",
+                 "STRAT_Rate_equilibre_AB_2026-10-13", "STRAT_Rate_pistes_2026-10-13",
+                 "STRAT_Rate_joint_window_2026-10-13", "STRAT_Rate_joint_refinement_2026-10-13"):
+        if (root / "reports" / name / ".running").exists():
+            raise RuntimeError(f"Another controller owns {name}")
+    shell = Path(os.environ["SYSTEMROOT"]) / "System32/WindowsPowerShell/v1.0/powershell.exe"
+    inventory = subprocess.check_output([str(shell), "-NoProfile", "-Command",
+        "@(Get-CimInstance Win32_Process | Where-Object { $_.Name -match '^python' -and "
+        "($_.CommandLine -match 'probe_blocs|campagne_a2|a2_continue|rate_.*(runner|replay|probe)') } | "
+        "Select-Object ProcessId,CommandLine) | ConvertTo-Json -Compress"], encoding="utf-8").strip()
+    active = json.loads(inventory) if inventory else []
+    if isinstance(active, dict):
+        active = [active]
+    if any(p["ProcessId"] != os.getpid() for p in active):
+        raise RuntimeError("Another scientific process or controller is alive")
+    reference = json.loads(reference_file.read_text(encoding="utf-8"))
+
+    def check_sources():
+        commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=worktree, encoding="utf-8").strip()
+        changed = set(subprocess.check_output(["git", "diff", "--name-only", "HEAD"], cwd=worktree, encoding="utf-8").splitlines())
+        hashes = {name: hashlib.sha256((worktree / name).read_bytes()).hexdigest() for name in reference["source_sha256"]}
+        if commit != reference["commit"] or changed != set(hashes) or hashes != reference["source_sha256"]:
+            raise RuntimeError("Scientific source snapshot differs from the historical reference")
+        return hashes
+
+    sources = check_sources()
+    script_paths = {"adapter": Path(__file__).resolve(), "observer": root / "scratch/rate_native_pipeline_trace.py",
+                    "generator": root / "scratch/rate_joint_native_candidates.py", "controller_helper": root / "scratch/campagne_a2_runner.py"}
+    script_hashes = {name: hashlib.sha256(p.read_bytes()).hexdigest() for name, p in script_paths.items()}
+    verified = json.loads(args.verification_record.resolve().read_text(encoding="utf-8"))
+    control = json.loads(args.validated_control.resolve().read_text(encoding="utf-8"))
+    if verified.get("verdict") != "GO" or verified.get("script_sha256") != script_hashes or verified.get("source_sha256") != sources:
+        raise RuntimeError("These exact observer/adapter sources have no passing verification")
+    if (control.get("verdict") != "OK" or control.get("source_sha256") != sources or
+            control.get("setting") != {"robustness_seed": 101, "consensus_seed_list": [41, 42, 43]}):
+        raise RuntimeError("A matching R0 fixed-point control is required")
+    if control.get("run") != "control" or control.get("depths") != {
+        "robustness_num_runs": 300, "n_screen_runs": 50, "dp_top_k": 100, "consensus_num_runs": 300
+    }:
+        raise RuntimeError("R0 must use the same complete scoring depths")
+    if {p["source_strategy_id"] for p in control.get("plans", [])} != {900951015, 9900006, 9900008}:
+        raise RuntimeError("R0 must control the reference and both retained local plans")
+    simulations = control.get("simulations", [])
+    if not simulations or any(s.get("num_runs") != 300 or s.get("error") for s in simulations):
+        raise RuntimeError("R0 actual task depths have not been verified")
+    for sid in (900951015, 9900006, 9900008):
+        if {s.get("seed") for s in simulations if s.get("id") == sid} != {101, 41, 42, 43}:
+            raise RuntimeError(f"R0 actual seed coverage is incomplete for {sid}")
+    helper = runpy.run_path(str(script_paths["controller_helper"]))
+    resources = helper["limit_resources"](16)
+    output.mkdir(parents=True, exist_ok=True)
+    state_path, lock = output / "etat.json", output / ".running"
+    if state_path.exists():
+        raise RuntimeError("Inspect the existing attempt before restarting")
+    native_artifact = worktree / "reports" / f"blocs_vs_plantage_r75x0.5_deep_s101_{args.tag}.json"
+    if native_artifact.exists():
+        raise RuntimeError("The tagged native artifact already exists")
+    trace = []
+    pipeline = None
+    state = {"status": "running", "pid": os.getpid(), "started": datetime.now(UTC).isoformat(), "resources": resources,
+             "arguments": probe_arguments, "joint_budget": 480, "source_sha256": sources, "script_sha256": script_hashes,
+             "probe_sha256": hashlib.sha256((worktree / "scripts/probe_blocs_vs_plantage.py").read_bytes()).hexdigest(),
+             "overrides": overrides, "deadline_utc": deadline.isoformat(), "tag": args.tag,
+             "verification_record_sha256": hashlib.sha256(args.verification_record.resolve().read_bytes()).hexdigest(),
+             "validated_control_sha256": hashlib.sha256(args.validated_control.resolve().read_bytes()).hexdigest()}
+    with lock.open("x", encoding="utf-8") as stream:
+        stream.write(str(os.getpid()))
+    try:
+        helper["save"](state_path, state)
+        for name, p in script_paths.items():
+            with (output / f"source_{name}.py.txt").open("xb") as stream:
+                stream.write(p.read_bytes())
+        for key in ("CERTUS_CONSENSUS_SEEDS", "CERTUS_RATE_SETS", "CERTUS_TAIL_CUTS", "CERTUS_DESIGN_JSON", "NUMBA_CACHE_DIR",
+                    "_CERTUS_NUMBA_CONFIGURED", "NUMBA_THREADING_LAYER"):
+            os.environ.pop(key, None)
+        os.environ.update(PYTHON_CPU_COUNT="16", PYTHONUTF8="1", QT_QPA_PLATFORM="offscreen", CERTUS_BENCH_TIMEOUT_S="21600",
+                          CERTUS_PROBE_OVERRIDES=overrides, CERTUS_PROBE_TAG=args.tag,
+                          CERTUS_CONFIG_DIR=str(worktree / "scratch/rate_batch_preferences"))
+        for key in ("NUMBA_NUM_THREADS", "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "VECLIB_MAXIMUM_THREADS", "NUMEXPR_NUM_THREADS"):
+            os.environ[key] = "15"
+        os.chdir(worktree)
+        sys.path[:0] = [str(worktree), str(worktree / "scripts")]
+        import bench_examples as bx
+
+        bx.qapp()
+        bx.autoanswer_dialogs(True)
+        import _artefact
+
+        import certus.core.certus_strat_consensus as consensus
+        import certus.core.certus_strat_robustness as robustness
+        from certus.utils.certus_strat_context import _plan_signature
+
+        real_factory, real_provenance = consensus._generate_elite_candidate_strategies, _artefact.avec_provenance
+        extend_factory = runpy.run_path(str(script_paths["generator"]))["extend_factory"]
+        observer = runpy.run_path(str(script_paths["observer"]))
+
+        @wraps(real_factory)
+        def generate(*factory_args, **factory_kwargs):
+            candidates, cursor, event = extend_factory(real_factory, consensus, _plan_signature, factory_args, factory_kwargs, 480)
+            if event is not None:
+                trace.append(event)
+            return candidates, cursor
+
+        def provenance(data):
+            enriched = real_provenance(data)
+            if isinstance(enriched, dict):
+                enriched = {**enriched, "native_pipeline_trace_adapter": {**state, "n_generator_calls": len(trace),
+                                                                         "joint_offered": sum(t["joint_count"] for t in trace)}}
+            return enriched
+
+        sys.argv = [str(worktree / "scripts/probe_blocs_vs_plantage.py"), *probe_arguments]
+        with patch.object(consensus, "_generate_elite_candidate_strategies", generate), patch.object(_artefact, "avec_provenance", provenance):
+            with observer["observe_pipeline"](consensus, robustness) as pipeline:
+                try:
+                    runpy.run_path(sys.argv[0], run_name="__main__")
+                except SystemExit as ended:
+                    if ended.code not in (None, 0):
+                        raise RuntimeError(f"Native probe exited {ended.code}") from ended
+        check_sources()
+        if {name: hashlib.sha256(p.read_bytes()).hexdigest() for name, p in script_paths.items()} != script_hashes:
+            raise RuntimeError("A launcher or observer changed during the measurement")
+        artifact = json.loads(native_artifact.read_text(encoding="utf-8"))
+        if artifact["verdict"] != "OK" or artifact["native_pipeline_trace_adapter"]["script_sha256"] != script_hashes:
+            raise RuntimeError("Invalid native artifact or adapter provenance")
+        state.update(status="complete")
+        return 0
+    except BaseException:
+        state.update(status="failed", error=traceback.format_exc())
+        raise
+    finally:
+        try:
+            try:
+                if native_artifact.exists():
+                    with (output / native_artifact.name).open("xb") as stream:
+                        stream.write(native_artifact.read_bytes())
+                    state["artifact"] = str(output / native_artifact.name)
+                helper["save"](output / "generated_candidates.json", {"script_sha256": script_hashes, "calls": trace})
+                if pipeline is not None:
+                    serializable = json.loads(json.dumps(pipeline, default=observer["json_default"]))
+                    helper["save"](output / "pipeline_trace.json", serializable)
+            except BaseException:
+                state.update(status="failed", trace_export_error=traceback.format_exc())
+                raise
+            finally:
+                state["updated"] = datetime.now(UTC).isoformat()
+                helper["save"](state_path, state)
+        finally:
+            lock.unlink(missing_ok=True)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

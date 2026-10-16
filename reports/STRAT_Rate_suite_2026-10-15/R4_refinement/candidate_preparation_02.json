@@ -1,0 +1,9 @@
+{
+  "status": "SOURCE_PREPARED_NOT_RUNTIME_VERIFIED",
+  "prepared_utc": "2026-10-15T12:59:13.262648+00:00",
+  "source_sha256": "b7314f1f57b4f96622bc6db75bb4b9787d6e8e9783901b3d0bebb586d47a639b",
+  "lint_exit_code": 0,
+  "lint_output": "All checks passed!\n",
+  "change": "Fine internal widths explicitly bounded1..7, matching written specification; first source snapshot retained",
+  "physics_measured": false
+}

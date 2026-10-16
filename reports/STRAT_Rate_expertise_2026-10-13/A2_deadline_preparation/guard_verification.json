@@ -1,0 +1,27 @@
+{
+  "verdict": "GO",
+  "controller_sha256": "52aee00f5ff49e0c93dd5fcacab418354cb4774952c92d428334e1f17e6c40e6",
+  "cases": [
+    {
+      "utc": "2026-10-14T06:59:59+00:00",
+      "adopt": null,
+      "result": "allowed"
+    },
+    {
+      "utc": "2026-10-14T07:00:00+00:00",
+      "adopt": null,
+      "result": 0
+    },
+    {
+      "utc": "2026-10-14T08:00:00+00:00",
+      "adopt": null,
+      "result": 0
+    },
+    {
+      "utc": "2026-10-14T08:00:00+00:00",
+      "adopt": "ongoing_measure",
+      "result": "allowed"
+    }
+  ],
+  "scope": "Only the added guard's real AST, mocked clock and persistence; no scientific run or full controller simulation"
+}

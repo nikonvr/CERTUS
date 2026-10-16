@@ -1,0 +1,71 @@
+{
+  "status": "complete",
+  "n_proposals": 3133,
+  "eligible_complete_consensus": 1194,
+  "excluded": 1939,
+  "best": {
+    "id": 9932265,
+    "name": "window_L35_37_wl688_fromL36",
+    "move": {
+      "kind": "joint_window",
+      "parent_id": 9900002,
+      "original_window": [
+        35,
+        39
+      ],
+      "window": [
+        34,
+        37
+      ],
+      "block_index": 3,
+      "wavelength": 688
+    },
+    "eligible": true,
+    "score": 0.029057302267738155,
+    "crash_rate": 0.0,
+    "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_window_widths_2026-10-14\\batch_227\\attempt_01\\search.json"
+  },
+  "seel": 0.3409240517636628,
+  "source_artifact_sha256": "3d8fb6f61a2f2f76be24f139cf5c0f66c51f4e65c8230b946186c8a1809d3261",
+  "confirmation_status": "complete",
+  "confirmation_runs": 4,
+  "comparisons": [
+    {
+      "run": "control",
+      "seel": 0.3409240517636628,
+      "reference": 0.3967147882193691,
+      "prefix600": 0.35395924517094074,
+      "gain_reference_percent": 14.063185470377782,
+      "gain_prefix600_percent": 3.6826819994439597,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_2121",
+      "seel": 0.34542016525811553,
+      "reference": 0.40033959718262924,
+      "prefix600": 0.359607830867259,
+      "gain_reference_percent": 13.718211316344064,
+      "gain_prefix600_percent": 3.9453160891761874,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_2222",
+      "seel": 0.34187979270845004,
+      "reference": 0.39855065437374,
+      "prefix600": 0.35732831935582765,
+      "gain_reference_percent": 14.219236888304533,
+      "gain_prefix600_percent": 4.323342374661876,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_2323",
+      "seel": 0.3349944904517502,
+      "reference": 0.39289293625120886,
+      "prefix600": 0.3533635976834763,
+      "gain_reference_percent": 14.73644355938214,
+      "gain_prefix600_percent": 5.19835867422318,
+      "max_observed_crash_rate": 0
+    }
+  ],
+  "scope": "Fixed-plan improvement on one component; no native scheduling gain, no production default activated, no machine rate-variation model introduced"
+}

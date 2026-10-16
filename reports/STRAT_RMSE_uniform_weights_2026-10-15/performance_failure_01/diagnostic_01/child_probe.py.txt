@@ -1,0 +1,19 @@
+import json, sys, threading
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+import pytest
+result = pytest.main([sys.argv[1], "-q", "--no-cov"])
+import numba
+from certus.physics.certus_tmm_matrix import calculate_RT_vectorized_real
+sys.path.insert(0, str(Path.cwd() / "tools"))
+import bench_kernels
+barrier = threading.Barrier(4)
+def observe():
+    barrier.wait(timeout=30)
+    return {"thread":threading.get_ident(),"numba_threads":numba.get_num_threads()}
+with bench_kernels.single_numba_thread():
+    main_threads = numba.get_num_threads()
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        threads = [future.result() for future in [executor.submit(observe) for _ in range(4)]]
+print("THREAD_MASK_OBSERVATION="+json.dumps({"source":str(Path(calculate_RT_vectorized_real.__code__.co_filename).resolve()),"main":main_threads,"pool":threads}))
+raise SystemExit(result)

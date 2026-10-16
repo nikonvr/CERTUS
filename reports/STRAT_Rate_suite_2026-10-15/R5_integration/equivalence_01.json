@@ -1,0 +1,18 @@
+{
+  "verdict": "GO",
+  "native_input_contexts": 123,
+  "generated_candidates_compared": 78546,
+  "inactive_route_exact_candidates_and_cursor": true,
+  "active_matches_measured_generator_without_patches": true,
+  "parents_unchanged": true,
+  "active_regression_before": "_generate_elite_candidate_strategies() got an unexpected keyword argument 'joint_candidates'. Did you mean 'max_candidates'?",
+  "active_regression_after": "PASS",
+  "post_batches_compared": 37,
+  "post_proposals": 305,
+  "post_score_matches_exactly": 0.029431526325033333,
+  "post_full_winner_signature_matches": true,
+  "physical_evaluations_executed": 0,
+  "recorded_outcomes_only": true,
+  "independent_native_measurement_still_required": true,
+  "script_sha256": "7ec7df6a5dfd9f7353415b6d1ddd938b256f4540c4293aad6bb138360dd9c4c6"
+}

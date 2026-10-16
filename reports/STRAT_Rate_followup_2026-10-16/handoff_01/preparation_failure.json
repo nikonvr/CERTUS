@@ -1,0 +1,16 @@
+{
+  "recorded_utc": "2026-10-16T08:50:09.825016+00:00",
+  "command": "python -X utf8 -X cpu_count=24 scratch\\rate_followup_controlled_20261016.py prepare",
+  "exit_code": 1,
+  "error_type": "PermissionError",
+  "message": "[WinError 5] Accès refusé",
+  "source": "scripts/bench_examples.py: os.chdir(ROOT)",
+  "external_context": "C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-r5-native\\certus0310",
+  "application_loaded": false,
+  "claims_created": 0,
+  "physical_tasks_executed": 0,
+  "manifest_exists": false,
+  "prototype_verified": false,
+  "script_sha256": "da2389be787a369bc90ba78a523387459e9765053da901b4d80537c29f838b03",
+  "next_action": "Preserve controlled_01, prepare a new copy and controlled_02 after verifying actual access to the external context."
+}

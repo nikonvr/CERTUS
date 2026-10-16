@@ -1,0 +1,13 @@
+{
+  "started_utc": "2026-10-15T08:35:46.5467799Z",
+  "controller_pid": 36608,
+  "controller_script": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\run_rate_R3_widths_pair_v2.ps1",
+  "script_sha256": "3eafebad379f977f7d993476300e103789b1a7103e4136c1bc39cb1a43395630",
+  "sequence": [
+    "control",
+    "variant"
+  ],
+  "protocol": "protocol_v3.json",
+  "recovery_of": "pair_controller.json: failed before any child; no measurement claim consumed",
+  "authorization": "R0-R6 bounded;24 logical CPUs"
+}

@@ -1,0 +1,22 @@
+{
+  "checked_utc": "2026-10-13T20:01:51.803706+00:00",
+  "controller_pid": 49780,
+  "measurement_pid": 1368,
+  "status": "running",
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "prepared_and_scientific_sources_unchanged": true,
+  "log_tail": [
+    "22:01:50 | INFO | [ELITE] Round 1: no candidate beat nominal threshold.",
+    "22:01:50 | INFO | [ELITE] No candidate added across all rounds.",
+    "22:01:50 | INFO | 🏆 Best Strategy ID: 6800 (STRUCTURED_MONO_WL) - Score: 0.25932",
+    "22:01:50 | INFO |    [Block 6] Screening complete. Results count: 2",
+    "22:01:51 | INFO | [SLIT] slit bias active, 171/171 strategies -- slit 2 nm, profile of 17 nodes, 324 NEW profiles in 0.9 s (cache: 17474)",
+    "22:01:51 | INFO | Running robustness tests on 171 strategies (ThreadPoolExecutor with 8 workers)..."
+  ],
+  "action": "No test or second measurement, no interruption"
+}

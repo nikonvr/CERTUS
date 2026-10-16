@@ -1,0 +1,99 @@
+"""Compare the unchanged concurrency test on old/new sources and thread ceilings."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import runpy
+import subprocess
+import sys
+import time
+from datetime import UTC, datetime
+from pathlib import Path
+
+
+def main() -> None:
+    root = Path(__file__).resolve().parents[1]
+    output = root / "reports/STRAT_RMSE_uniform_weights_2026-10-15/performance_failure_01/diagnostic_01"
+    output.mkdir(parents=True, exist_ok=False)
+    helper = runpy.run_path(str(root / "scratch/campagne_a2_runner.py"))
+    resources = helper["limit_resources"](24)
+    shell = Path(os.environ["SYSTEMROOT"]) / "System32/WindowsPowerShell/v1.0/powershell.exe"
+    inventory = subprocess.check_output([str(shell), "-NoProfile", "-Command",
+        "@(Get-CimInstance Win32_Process | Where-Object { $_.Name -match '^python' } | "
+        "Select-Object ProcessId) | ConvertTo-Json -Compress"], encoding="utf-8").strip()
+    active = json.loads(inventory) if inventory else []
+    if isinstance(active, dict):
+        active = [active]
+    if any(p["ProcessId"] != os.getpid() for p in active) or list((root / "reports").rglob(".running")):
+        raise RuntimeError("Wait for every previous test or measurement before diagnosis")
+    old = Path(os.environ["USERPROFILE"]) / ".codex/worktrees/campagne-a2/certus0310"
+    node = "tests/performance/test_performance.py::TestParallelPerformance::test_concurrent_calculationations"
+    source_names = ["tests/performance/test_performance.py", "tools/bench_kernels.py", "certus/physics/certus_tmm_matrix.py"]
+    hashes = {label: {name: hashlib.sha256((tree / name).read_bytes()).hexdigest() for name in source_names}
+              for label, tree in (("old", old), ("current", root))}
+    assert hashes["old"] == hashes["current"]
+    child = '''import json, sys, threading
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+import pytest
+result = pytest.main([sys.argv[1], "-q", "--no-cov"])
+import numba
+from certus.physics.certus_tmm_matrix import calculate_RT_vectorized_real
+sys.path.insert(0, str(Path.cwd() / "tools"))
+import bench_kernels
+barrier = threading.Barrier(4)
+def observe():
+    barrier.wait(timeout=30)
+    return {"thread":threading.get_ident(),"numba_threads":numba.get_num_threads()}
+with bench_kernels.single_numba_thread():
+    main_threads = numba.get_num_threads()
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        threads = [future.result() for future in [executor.submit(observe) for _ in range(4)]]
+print("THREAD_MASK_OBSERVATION="+json.dumps({"source":str(Path(calculate_RT_vectorized_real.__code__.co_filename).resolve()),"main":main_threads,"pool":threads}))
+raise SystemExit(result)
+'''
+    with (output / "child_probe.py.txt").open("x", encoding="utf-8") as stream:
+        stream.write(child)
+    state = {"status": "diagnostic_running", "pid": os.getpid(), "started_utc": datetime.now(UTC).isoformat(),
+             "resources": resources, "source_sha256": hashes, "runs": [],
+             "meaning": "Diagnostic only; failures retained, no science or full-validation GO inferred"}
+    try:
+        for label, tree, threads in (("old23", old, 23), ("current23", root, 23), ("old1", old, 1), ("current1", root, 1)):
+            target = output / label
+            target.mkdir()
+            preferences = target / "preferences"
+            preferences.mkdir()
+            (preferences / "certus_export.json").write_text('{"auto_export_enabled": false, "schema_version": 1}', encoding="utf-8")
+            environment = os.environ.copy()
+            for key in ("_CERTUS_NUMBA_CONFIGURED", "NUMBA_THREADING_LAYER"):
+                environment.pop(key, None)
+            environment.update(PYTHON_CPU_COUNT="24", PYTHONUTF8="1", QT_QPA_PLATFORM="offscreen",
+                               CERTUS_CONFIG_DIR=str(preferences), NUMBA_CACHE_DIR=str(target / "numba_cache"))
+            for key in ("NUMBA_NUM_THREADS", "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
+                        "VECLIB_MAXIMUM_THREADS", "NUMEXPR_NUM_THREADS"):
+                environment[key] = "23"
+            environment["NUMBA_NUM_THREADS"] = str(threads)
+            command = [sys.executable, "-X", "utf8", "-c", child, node]
+            state["current"] = label
+            helper["save"](output / "diagnostic.json", state)
+            started = time.monotonic()
+            with (target / "pytest.log").open("x", encoding="utf-8") as stream:
+                completed = subprocess.run(command, cwd=tree, env=environment, stdout=stream, stderr=subprocess.STDOUT, check=False)
+            record = {"name": label, "worktree": str(tree), "numba_ceiling": threads, "other_library_ceiling": 23,
+                      "fresh_interpreter": True, "fresh_numba_cache": str(target / "numba_cache"),
+                      "exit_code": completed.returncode, "seconds": time.monotonic() - started, "log": str(target / "pytest.log")}
+            state["runs"].append(record)
+            helper["save"](output / "diagnostic.json", state)
+            print(json.dumps(record), flush=True)
+        assert all(hashlib.sha256((tree / name).read_bytes()).hexdigest() == hashes[label][name]
+                   for label, tree in (("old", old), ("current", root)) for name in source_names)
+        state.update(status="diagnostic_complete", current=None)
+    finally:
+        state["finished_utc"] = datetime.now(UTC).isoformat()
+        helper["save"](output / "diagnostic.json", state)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,7 @@
+{
+  "status": "PREPARED_NOT_RUN",
+  "source": "scratch/audit_rate_R4_complete.py",
+  "sha256": "f48777592b489364c4e119ee7ec9f14ffb5f81140c3490dd9805564354d0e2c4",
+  "reason": "Do not run lint/audit while a scientific group or coordinator is active",
+  "next": "After full completion, review/lint then audit all frozen groups; no simulation in audit"
+}

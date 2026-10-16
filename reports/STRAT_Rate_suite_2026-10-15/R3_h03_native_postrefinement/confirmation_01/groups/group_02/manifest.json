@@ -1,0 +1,15 @@
+{
+  "phase": "R3_h03_confirm_g02",
+  "index": 2,
+  "setting": {
+    "robustness_seed": 17510011,
+    "consensus_seed_list": [
+      17510012,
+      17510013,
+      17510014
+    ]
+  },
+  "plans_sha256": "b19fdbedccdaf3998f74a2ad25353b37351696b667cfee4034c2e02f330a332e",
+  "protocol_sha256": "bb8f71e7eea7905310baf66cd7154c874a88abc5ca305be4168bd834c8cb6254",
+  "before_fresh_inspection": true
+}

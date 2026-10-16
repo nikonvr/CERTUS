@@ -1,0 +1,2004 @@
+{
+  "runs": [
+    {
+      "key": "r75x1.5_deep_s042_avec",
+      "component": "r75x1.5",
+      "mode": "deep",
+      "seed": 42,
+      "variant": "avec",
+      "arguments": [
+        "r75x1.5",
+        "deep",
+        "0",
+        "0",
+        "2",
+        "0",
+        "42",
+        "0"
+      ],
+      "artifact": "r75x1.5_deep_s042_avec_da1af082.json",
+      "seconds": 2369.8615445,
+      "resources": {
+        "logical_cpus": 16,
+        "affinity_mask": "0xffff",
+        "priority": "normal",
+        "library_threads": 15
+      },
+      "summary": {
+        "composant": "r75x1.5",
+        "mode": "deep",
+        "graine": 42,
+        "commit": "da1af082",
+        "arbre_modifie": false,
+        "surcharges": null,
+        "n_couches": 75,
+        "strategies": 2360,
+        "deposables": 2360,
+        "plantage_minimal": 0.0,
+        "meilleur_seel": 0.4717839110717501,
+        "meilleur": {
+          "id": 901550854,
+          "origine": "ELITE",
+          "n_blocs": 15,
+          "crash_rate": 0.0,
+          "score": 0.055645014686539256,
+          "lambdas": [
+            562.0,
+            571.0,
+            472.0,
+            561.0,
+            651.0,
+            522.0,
+            532.0,
+            592.0,
+            661.0,
+            523.0,
+            534.0,
+            536.0,
+            669.0,
+            679.0,
+            680.0
+          ],
+          "blocs": [
+            {
+              "start": 0,
+              "end": 8,
+              "wavelength": 562.0
+            },
+            {
+              "start": 8,
+              "end": 20,
+              "wavelength": 571.0
+            },
+            {
+              "start": 20,
+              "end": 37,
+              "wavelength": 472.0
+            },
+            {
+              "start": 37,
+              "end": 48,
+              "wavelength": 561.0
+            },
+            {
+              "start": 48,
+              "end": 60,
+              "wavelength": 651.0
+            },
+            {
+              "start": 60,
+              "end": 63,
+              "wavelength": 522.0
+            },
+            {
+              "start": 63,
+              "end": 66,
+              "wavelength": 532.0
+            },
+            {
+              "start": 66,
+              "end": 67,
+              "wavelength": 592.0
+            },
+            {
+              "start": 67,
+              "end": 68,
+              "wavelength": 661.0
+            },
+            {
+              "start": 68,
+              "end": 69,
+              "wavelength": 523.0
+            },
+            {
+              "start": 69,
+              "end": 71,
+              "wavelength": 534.0
+            },
+            {
+              "start": 71,
+              "end": 72,
+              "wavelength": 536.0
+            },
+            {
+              "start": 72,
+              "end": 73,
+              "wavelength": 669.0
+            },
+            {
+              "start": 73,
+              "end": 74,
+              "wavelength": 679.0
+            },
+            {
+              "start": 74,
+              "end": 75,
+              "wavelength": 680.0
+            }
+          ],
+          "margin_by_layer": {
+            "fabricated": {
+              "3": 0.83,
+              "6": 0.83
+            }
+          },
+          "rate_layers": [
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39,
+            40,
+            41,
+            42,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50,
+            51,
+            53,
+            54,
+            55,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74
+          ],
+          "crash_eliminated": false,
+          "crash_rates_by_noise": {
+            "0.025": 0.0,
+            "0.05": 0.0,
+            "0.1": 0.0
+          },
+          "rmse_par_bruit": {
+            "0.025": {
+              "n": 300,
+              "plantes": 0,
+              "rmse_p95": 0.051584976204891796,
+              "rmse_p95_termines": 0.051584976204891796,
+              "rmse_moyen_plantes": null,
+              "rmse_max_termines": 0.08019850515959917,
+              "rmse_min_plantes": null
+            },
+            "0.05": {
+              "n": 300,
+              "plantes": 0,
+              "rmse_p95": 0.053261159675861425,
+              "rmse_p95_termines": 0.053261159675861425,
+              "rmse_moyen_plantes": null,
+              "rmse_max_termines": 0.06308441770674132,
+              "rmse_min_plantes": null
+            },
+            "0.1": {
+              "n": 300,
+              "plantes": 0,
+              "rmse_p95": 0.0543982622281209,
+              "rmse_p95_termines": 0.0543982622281209,
+              "rmse_moyen_plantes": null,
+              "rmse_max_termines": 0.0823319990376392,
+              "rmse_min_plantes": null
+            }
+          },
+          "critical_layer": {
+            "layer": 3,
+            "cause": "point tournant fabrique par le bruit",
+            "margin_in_A": 0.83,
+            "verdict": "PEUT ECHOUER",
+            "n_layers_below_2A": 2
+          },
+          "resolution_nm": 2.0,
+          "resolution_noise_factor": 1.0
+        },
+        "classes": {
+          "mixte": {
+            "plans": 520,
+            "meilleur_seel": 0.4717839110717501,
+            "meilleur": {
+              "id": 901550854,
+              "origine": "ELITE",
+              "n_blocs": 15,
+              "crash_rate": 0.0,
+              "score": 0.055645014686539256,
+              "lambdas": [
+                562.0,
+                571.0,
+                472.0,
+                561.0,
+                651.0,
+                522.0,
+                532.0,
+                592.0,
+                661.0,
+                523.0,
+                534.0,
+                536.0,
+                669.0,
+                679.0,
+                680.0
+              ],
+              "blocs": [
+                {
+                  "start": 0,
+                  "end": 8,
+                  "wavelength": 562.0
+                },
+                {
+                  "start": 8,
+                  "end": 20,
+                  "wavelength": 571.0
+                },
+                {
+                  "start": 20,
+                  "end": 37,
+                  "wavelength": 472.0
+                },
+                {
+                  "start": 37,
+                  "end": 48,
+                  "wavelength": 561.0
+                },
+                {
+                  "start": 48,
+                  "end": 60,
+                  "wavelength": 651.0
+                },
+                {
+                  "start": 60,
+                  "end": 63,
+                  "wavelength": 522.0
+                },
+                {
+                  "start": 63,
+                  "end": 66,
+                  "wavelength": 532.0
+                },
+                {
+                  "start": 66,
+                  "end": 67,
+                  "wavelength": 592.0
+                },
+                {
+                  "start": 67,
+                  "end": 68,
+                  "wavelength": 661.0
+                },
+                {
+                  "start": 68,
+                  "end": 69,
+                  "wavelength": 523.0
+                },
+                {
+                  "start": 69,
+                  "end": 71,
+                  "wavelength": 534.0
+                },
+                {
+                  "start": 71,
+                  "end": 72,
+                  "wavelength": 536.0
+                },
+                {
+                  "start": 72,
+                  "end": 73,
+                  "wavelength": 669.0
+                },
+                {
+                  "start": 73,
+                  "end": 74,
+                  "wavelength": 679.0
+                },
+                {
+                  "start": 74,
+                  "end": 75,
+                  "wavelength": 680.0
+                }
+              ],
+              "margin_by_layer": {
+                "fabricated": {
+                  "3": 0.83,
+                  "6": 0.83
+                }
+              },
+              "rate_layers": [
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                53,
+                54,
+                55,
+                56,
+                57,
+                58,
+                59,
+                60,
+                61,
+                62,
+                63,
+                64,
+                65,
+                66,
+                67,
+                68,
+                69,
+                70,
+                71,
+                72,
+                73,
+                74
+              ],
+              "crash_eliminated": false,
+              "crash_rates_by_noise": {
+                "0.025": 0.0,
+                "0.05": 0.0,
+                "0.1": 0.0
+              },
+              "rmse_par_bruit": {
+                "0.025": {
+                  "n": 300,
+                  "plantes": 0,
+                  "rmse_p95": 0.051584976204891796,
+                  "rmse_p95_termines": 0.051584976204891796,
+                  "rmse_moyen_plantes": null,
+                  "rmse_max_termines": 0.08019850515959917,
+                  "rmse_min_plantes": null
+                },
+                "0.05": {
+                  "n": 300,
+                  "plantes": 0,
+                  "rmse_p95": 0.053261159675861425,
+                  "rmse_p95_termines": 0.053261159675861425,
+                  "rmse_moyen_plantes": null,
+                  "rmse_max_termines": 0.06308441770674132,
+                  "rmse_min_plantes": null
+                },
+                "0.1": {
+                  "n": 300,
+                  "plantes": 0,
+                  "rmse_p95": 0.0543982622281209,
+                  "rmse_p95_termines": 0.0543982622281209,
+                  "rmse_moyen_plantes": null,
+                  "rmse_max_termines": 0.0823319990376392,
+                  "rmse_min_plantes": null
+                }
+              },
+              "critical_layer": {
+                "layer": 3,
+                "cause": "point tournant fabrique par le bruit",
+                "margin_in_A": 0.83,
+                "verdict": "PEUT ECHOUER",
+                "n_layers_below_2A": 2
+              },
+              "resolution_nm": 2.0,
+              "resolution_noise_factor": 1.0
+            }
+          },
+          "queue": {
+            "plans": 1840,
+            "meilleur_seel": 0.4888616673205907,
+            "meilleur": {
+              "id": 991450189,
+              "origine": "RATE_RESCUE13(from 991400249)",
+              "n_blocs": 14,
+              "crash_rate": 0.0,
+              "score": 0.05974643244386698,
+              "lambdas": [
+                562.0,
+                571.0,
+                590.0,
+                561.0,
+                651.0,
+                495.0,
+                592.0,
+                661.0,
+                523.0,
+                534.0,
+                536.0,
+                669.0,
+                679.0,
+                680.0
+              ],
+              "blocs": [
+                {
+                  "start": 0,
+                  "end": 8,
+                  "wavelength": 562.0
+                },
+                {
+                  "start": 8,
+                  "end": 23,
+                  "wavelength": 571.0
+                },
+                {
+                  "start": 23,
+                  "end": 37,
+                  "wavelength": 590.0
+                },
+                {
+                  "start": 37,
+                  "end": 48,
+                  "wavelength": 561.0
+                },
+                {
+                  "start": 48,
+                  "end": 60,
+                  "wavelength": 651.0
+                },
+                {
+                  "start": 60,
+                  "end": 64,
+                  "wavelength": 495.0
+                },
+                {
+                  "start": 64,
+                  "end": 67,
+                  "wavelength": 592.0
+                },
+                {
+                  "start": 67,
+                  "end": 68,
+                  "wavelength": 661.0
+                },
+                {
+                  "start": 68,
+                  "end": 69,
+                  "wavelength": 523.0
+                },
+                {
+                  "start": 69,
+                  "end": 71,
+                  "wavelength": 534.0
+                },
+                {
+                  "start": 71,
+                  "end": 72,
+                  "wavelength": 536.0
+                },
+                {
+                  "start": 72,
+                  "end": 73,
+                  "wavelength": 669.0
+                },
+                {
+                  "start": 73,
+                  "end": 74,
+                  "wavelength": 679.0
+                },
+                {
+                  "start": 74,
+                  "end": 75,
+                  "wavelength": 680.0
+                }
+              ],
+              "margin_by_layer": {
+                "fabricated": {
+                  "3": 0.83,
+                  "6": 0.83
+                }
+              },
+              "rate_layers": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56,
+                57,
+                58,
+                59,
+                60,
+                61,
+                62,
+                63,
+                64,
+                65,
+                66,
+                67,
+                68,
+                69,
+                70,
+                71,
+                72,
+                73,
+                74
+              ],
+              "crash_eliminated": false,
+              "crash_rates_by_noise": {
+                "0.025": 0.0,
+                "0.05": 0.0,
+                "0.1": 0.0
+              },
+              "rmse_par_bruit": {
+                "0.025": {
+                  "n": 300,
+                  "plantes": 0,
+                  "rmse_p95": 0.059447927040330514,
+                  "rmse_p95_termines": 0.059447927040330514,
+                  "rmse_moyen_plantes": null,
+                  "rmse_max_termines": 0.08045616172782563,
+                  "rmse_min_plantes": null
+                },
+                "0.05": {
+                  "n": 300,
+                  "plantes": 0,
+                  "rmse_p95": 0.056116257941602646,
+                  "rmse_p95_termines": 0.056116257941602646,
+                  "rmse_moyen_plantes": null,
+                  "rmse_max_termines": 0.063873590247921,
+                  "rmse_min_plantes": null
+                },
+                "0.1": {
+                  "n": 300,
+                  "plantes": 0,
+                  "rmse_p95": 0.059153595042498695,
+                  "rmse_p95_termines": 0.059153595042498695,
+                  "rmse_moyen_plantes": null,
+                  "rmse_max_termines": 0.07425463665140333,
+                  "rmse_min_plantes": null
+                }
+              },
+              "critical_layer": {
+                "layer": 3,
+                "cause": "point tournant fabrique par le bruit",
+                "margin_in_A": 0.83,
+                "verdict": "PEUT ECHOUER",
+                "n_layers_below_2A": 2
+              },
+              "resolution_nm": 2.0,
+              "resolution_noise_factor": 1.0
+            }
+          }
+        },
+        "paquets_de_rate": {
+          "1": 1848,
+          "2": 484,
+          "3": 28
+        }
+      }
+    },
+    {
+      "key": "r75x1.5_deep_s042_sans",
+      "component": "r75x1.5",
+      "mode": "deep",
+      "seed": 42,
+      "variant": "sans",
+      "arguments": [
+        "r75x1.5",
+        "deep",
+        "0",
+        "0",
+        "2",
+        "0",
+        "42",
+        "0"
+      ],
+      "artifact": "r75x1.5_deep_s042_sans_da1af082.json",
+      "seconds": 2301.2591673000006,
+      "resources": {
+        "logical_cpus": 16,
+        "affinity_mask": "0xffff",
+        "priority": "normal",
+        "library_threads": 15
+      },
+      "summary": {
+        "composant": "r75x1.5",
+        "mode": "deep",
+        "graine": 42,
+        "commit": "da1af082",
+        "arbre_modifie": false,
+        "surcharges": {
+          "elite_rate_moves": false
+        },
+        "n_couches": 75,
+        "strategies": 2396,
+        "deposables": 2396,
+        "plantage_minimal": 0.0,
+        "meilleur_seel": 0.4876389116562808,
+        "meilleur": {
+          "id": 901450262,
+          "origine": "ELITE",
+          "n_blocs": 14,
+          "crash_rate": 0.0,
+          "score": 0.059447927040330514,
+          "lambdas": [
+            562.0,
+            571.0,
+            590.0,
+            561.0,
+            651.0,
+            495.0,
+            592.0,
+            661.0,
+            523.0,
+            534.0,
+            536.0,
+            668.0,
+            679.0,
+            680.0
+          ],
+          "blocs": [
+            {
+              "start": 0,
+              "end": 8,
+              "wavelength": 562.0
+            },
+            {
+              "start": 8,
+              "end": 23,
+              "wavelength": 571.0
+            },
+            {
+              "start": 23,
+              "end": 37,
+              "wavelength": 590.0
+            },
+            {
+              "start": 37,
+              "end": 48,
+              "wavelength": 561.0
+            },
+            {
+              "start": 48,
+              "end": 60,
+              "wavelength": 651.0
+            },
+            {
+              "start": 60,
+              "end": 64,
+              "wavelength": 495.0
+            },
+            {
+              "start": 64,
+              "end": 67,
+              "wavelength": 592.0
+            },
+            {
+              "start": 67,
+              "end": 68,
+              "wavelength": 661.0
+            },
+            {
+              "start": 68,
+              "end": 69,
+              "wavelength": 523.0
+            },
+            {
+              "start": 69,
+              "end": 71,
+              "wavelength": 534.0
+            },
+            {
+              "start": 71,
+              "end": 72,
+              "wavelength": 536.0
+            },
+            {
+              "start": 72,
+              "end": 73,
+              "wavelength": 668.0
+            },
+            {
+              "start": 73,
+              "end": 74,
+              "wavelength": 679.0
+            },
+            {
+              "start": 74,
+              "end": 75,
+              "wavelength": 680.0
+            }
+          ],
+          "margin_by_layer": {
+            "fabricated": {
+              "3": 0.83,
+              "6": 0.83
+            }
+          },
+          "rate_layers": [
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39,
+            40,
+            41,
+            42,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50,
+            51,
+            52,
+            53,
+            54,
+            55,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74
+          ],
+          "crash_eliminated": false,
+          "crash_rates_by_noise": {
+            "0.025": 0.0,
+            "0.05": 0.0,
+            "0.1": 0.0
+          },
+          "rmse_par_bruit": {
+            "0.025": {
+              "n": 300,
+              "plantes": 0,
+              "rmse_p95": 0.059447927040330514,
+              "rmse_p95_termines": 0.059447927040330514,
+              "rmse_moyen_plantes": null,
+              "rmse_max_termines": 0.08045616172782563,
+              "rmse_min_plantes": null
+            },
+            "0.05": {
+              "n": 300,
+              "plantes": 0,
+              "rmse_p95": 0.056116257941602646,
+              "rmse_p95_termines": 0.056116257941602646,
+              "rmse_moyen_plantes": null,
+              "rmse_max_termines": 0.063873590247921,
+              "rmse_min_plantes": null
+            },
+            "0.1": {
+              "n": 300,
+              "plantes": 0,
+              "rmse_p95": 0.059153595042498695,
+              "rmse_p95_termines": 0.059153595042498695,
+              "rmse_moyen_plantes": null,
+              "rmse_max_termines": 0.07425463665140333,
+              "rmse_min_plantes": null
+            }
+          },
+          "critical_layer": {
+            "layer": 3,
+            "cause": "point tournant fabrique par le bruit",
+            "margin_in_A": 0.83,
+            "verdict": "PEUT ECHOUER",
+            "n_layers_below_2A": 2
+          },
+          "resolution_nm": 2.0,
+          "resolution_noise_factor": 1.0
+        },
+        "classes": {
+          "mixte": {
+            "plans": 92,
+            "meilleur_seel": 0.492967004193488,
+            "meilleur": {
+              "id": 991550085,
+              "origine": "RATE_RESCUE13(from 991500014)",
+              "n_blocs": 15,
+              "crash_rate": 0.0,
+              "score": 0.0607541168058756,
+              "lambdas": [
+                562.0,
+                571.0,
+                590.0,
+                561.0,
+                651.0,
+                522.0,
+                532.0,
+                592.0,
+                661.0,
+                523.0,
+                534.0,
+                536.0,
+                669.0,
+                679.0,
+                680.0
+              ],
+              "blocs": [
+                {
+                  "start": 0,
+                  "end": 8,
+                  "wavelength": 562.0
+                },
+                {
+                  "start": 8,
+                  "end": 23,
+                  "wavelength": 571.0
+                },
+                {
+                  "start": 23,
+                  "end": 38,
+                  "wavelength": 590.0
+                },
+                {
+                  "start": 38,
+                  "end": 48,
+                  "wavelength": 561.0
+                },
+                {
+                  "start": 48,
+                  "end": 60,
+                  "wavelength": 651.0
+                },
+                {
+                  "start": 60,
+                  "end": 63,
+                  "wavelength": 522.0
+                },
+                {
+                  "start": 63,
+                  "end": 66,
+                  "wavelength": 532.0
+                },
+                {
+                  "start": 66,
+                  "end": 67,
+                  "wavelength": 592.0
+                },
+                {
+                  "start": 67,
+                  "end": 68,
+                  "wavelength": 661.0
+                },
+                {
+                  "start": 68,
+                  "end": 69,
+                  "wavelength": 523.0
+                },
+                {
+                  "start": 69,
+                  "end": 71,
+                  "wavelength": 534.0
+                },
+                {
+                  "start": 71,
+                  "end": 72,
+                  "wavelength": 536.0
+                },
+                {
+                  "start": 72,
+                  "end": 73,
+                  "wavelength": 669.0
+                },
+                {
+                  "start": 73,
+                  "end": 74,
+                  "wavelength": 679.0
+                },
+                {
+                  "start": 74,
+                  "end": 75,
+                  "wavelength": 680.0
+                }
+              ],
+              "margin_by_layer": {
+                "fabricated": {
+                  "3": 0.83,
+                  "6": 0.83
+                }
+              },
+              "rate_layers": [
+                7,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56,
+                57,
+                58,
+                59,
+                60,
+                61,
+                62,
+                63,
+                64,
+                65,
+                66,
+                67,
+                68,
+                69,
+                70,
+                71,
+                72,
+                73,
+                74
+              ],
+              "crash_eliminated": false,
+              "crash_rates_by_noise": {
+                "0.025": 0.0,
+                "0.05": 0.0,
+                "0.1": 0.0
+              },
+              "rmse_par_bruit": {
+                "0.025": {
+                  "n": 300,
+                  "plantes": 0,
+                  "rmse_p95": 0.059366722111998046,
+                  "rmse_p95_termines": 0.059366722111998046,
+                  "rmse_moyen_plantes": null,
+                  "rmse_max_termines": 0.09530927246262927,
+                  "rmse_min_plantes": null
+                },
+                "0.05": {
+                  "n": 300,
+                  "plantes": 0,
+                  "rmse_p95": 0.059976034081682034,
+                  "rmse_p95_termines": 0.059976034081682034,
+                  "rmse_moyen_plantes": null,
+                  "rmse_max_termines": 0.0657878084805662,
+                  "rmse_min_plantes": null
+                },
+                "0.1": {
+                  "n": 300,
+                  "plantes": 0,
+                  "rmse_p95": 0.060248401002278545,
+                  "rmse_p95_termines": 0.060248401002278545,
+                  "rmse_moyen_plantes": null,
+                  "rmse_max_termines": 0.09042987681172489,
+                  "rmse_min_plantes": null
+                }
+              },
+              "critical_layer": {
+                "layer": 3,
+                "cause": "point tournant fabrique par le bruit",
+                "margin_in_A": 0.83,
+                "verdict": "PEUT ECHOUER",
+                "n_layers_below_2A": 2
+              },
+              "resolution_nm": 2.0,
+              "resolution_noise_factor": 1.0
+            }
+          },
+          "queue": {
+            "plans": 2304,
+            "meilleur_seel": 0.4876389116562808,
+            "meilleur": {
+              "id": 901450262,
+              "origine": "ELITE",
+              "n_blocs": 14,
+              "crash_rate": 0.0,
+              "score": 0.059447927040330514,
+              "lambdas": [
+                562.0,
+                571.0,
+                590.0,
+                561.0,
+                651.0,
+                495.0,
+                592.0,
+                661.0,
+                523.0,
+                534.0,
+                536.0,
+                668.0,
+                679.0,
+                680.0
+              ],
+              "blocs": [
+                {
+                  "start": 0,
+                  "end": 8,
+                  "wavelength": 562.0
+                },
+                {
+                  "start": 8,
+                  "end": 23,
+                  "wavelength": 571.0
+                },
+                {
+                  "start": 23,
+                  "end": 37,
+                  "wavelength": 590.0
+                },
+                {
+                  "start": 37,
+                  "end": 48,
+                  "wavelength": 561.0
+                },
+                {
+                  "start": 48,
+                  "end": 60,
+                  "wavelength": 651.0
+                },
+                {
+                  "start": 60,
+                  "end": 64,
+                  "wavelength": 495.0
+                },
+                {
+                  "start": 64,
+                  "end": 67,
+                  "wavelength": 592.0
+                },
+                {
+                  "start": 67,
+                  "end": 68,
+                  "wavelength": 661.0
+                },
+                {
+                  "start": 68,
+                  "end": 69,
+                  "wavelength": 523.0
+                },
+                {
+                  "start": 69,
+                  "end": 71,
+                  "wavelength": 534.0
+                },
+                {
+                  "start": 71,
+                  "end": 72,
+                  "wavelength": 536.0
+                },
+                {
+                  "start": 72,
+                  "end": 73,
+                  "wavelength": 668.0
+                },
+                {
+                  "start": 73,
+                  "end": 74,
+                  "wavelength": 679.0
+                },
+                {
+                  "start": 74,
+                  "end": 75,
+                  "wavelength": 680.0
+                }
+              ],
+              "margin_by_layer": {
+                "fabricated": {
+                  "3": 0.83,
+                  "6": 0.83
+                }
+              },
+              "rate_layers": [
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+                30,
+                31,
+                32,
+                33,
+                34,
+                35,
+                36,
+                37,
+                38,
+                39,
+                40,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56,
+                57,
+                58,
+                59,
+                60,
+                61,
+                62,
+                63,
+                64,
+                65,
+                66,
+                67,
+                68,
+                69,
+                70,
+                71,
+                72,
+                73,
+                74
+              ],
+              "crash_eliminated": false,
+              "crash_rates_by_noise": {
+                "0.025": 0.0,
+                "0.05": 0.0,
+                "0.1": 0.0
+              },
+              "rmse_par_bruit": {
+                "0.025": {
+                  "n": 300,
+                  "plantes": 0,
+                  "rmse_p95": 0.059447927040330514,
+                  "rmse_p95_termines": 0.059447927040330514,
+                  "rmse_moyen_plantes": null,
+                  "rmse_max_termines": 0.08045616172782563,
+                  "rmse_min_plantes": null
+                },
+                "0.05": {
+                  "n": 300,
+                  "plantes": 0,
+                  "rmse_p95": 0.056116257941602646,
+                  "rmse_p95_termines": 0.056116257941602646,
+                  "rmse_moyen_plantes": null,
+                  "rmse_max_termines": 0.063873590247921,
+                  "rmse_min_plantes": null
+                },
+                "0.1": {
+                  "n": 300,
+                  "plantes": 0,
+                  "rmse_p95": 0.059153595042498695,
+                  "rmse_p95_termines": 0.059153595042498695,
+                  "rmse_moyen_plantes": null,
+                  "rmse_max_termines": 0.07425463665140333,
+                  "rmse_min_plantes": null
+                }
+              },
+              "critical_layer": {
+                "layer": 3,
+                "cause": "point tournant fabrique par le bruit",
+                "margin_in_A": 0.83,
+                "verdict": "PEUT ECHOUER",
+                "n_layers_below_2A": 2
+              },
+              "resolution_nm": 2.0,
+              "resolution_noise_factor": 1.0
+            }
+          }
+        },
+        "paquets_de_rate": {
+          "1": 2304,
+          "2": 92
+        }
+      }
+    },
+    {
+      "key": "r75x1.5_deep_s101_avec",
+      "component": "r75x1.5",
+      "mode": "deep",
+      "seed": 101,
+      "variant": "avec",
+      "arguments": [
+        "r75x1.5",
+        "deep",
+        "0",
+        "0",
+        "2",
+        "0",
+        "101",
+        "0"
+      ],
+      "artifact": "r75x1.5_deep_s101_avec_da1af082.json",
+      "seconds": 2633.5494727999994,
+      "resources": {
+        "logical_cpus": 16,
+        "affinity_mask": "0xffff",
+        "priority": "normal",
+        "library_threads": 15
+      },
+      "summary": {
+        "composant": "r75x1.5",
+        "mode": "deep",
+        "graine": 101,
+        "commit": "da1af082",
+        "arbre_modifie": false,
+        "surcharges": null,
+        "n_couches": 75,
+        "strategies": 4714,
+        "deposables": 4714,
+        "plantage_minimal": 0.0,
+        "meilleur_seel": 0.4876126045720307,
+        "meilleur": {
+          "id": 901550483,
+          "origine": "ELITE",
+          "n_blocs": 15,
+          "crash_rate": 0.02,
+          "score": 0.059441513034379896,
+          "lambdas": [
+            672.0,
+            629.0,
+            589.0,
+            561.0,
+            651.0,
+            522.0,
+            532.0,
+            592.0,
+            661.0,
+            523.0,
+            534.0,
+            536.0,
+            669.0,
+            679.0,
+            680.0
+          ],
+          "blocs": [
+            {
+              "start": 0,
+              "end": 11,
+              "wavelength": 672.0
+            },
+            {
+              "start": 11,
+              "end": 25,
+              "wavelength": 629.0
+            },
+            {
+              "start": 25,
+              "end": 37,
+              "wavelength": 589.0
+            },
+            {
+              "start": 37,
+              "end": 48,
+              "wavelength": 561.0
+            },
+            {
+              "start": 48,
+              "end": 60,
+              "wavelength": 651.0
+            },
+            {
+              "start": 60,
+              "end": 63,
+              "wavelength": 522.0
+            },
+            {
+              "start": 63,
+              "end": 66,
+              "wavelength": 532.0
+            },
+            {
+              "start": 66,
+              "end": 67,
+              "wavelength": 592.0
+            },
+            {
+              "start": 67,
+              "end": 68,
+              "wavelength": 661.0
+            },
+            {
+              "start": 68,
+              "end": 69,
+              "wavelength": 523.0
+            },
+            {
+              "start": 69,
+              "end": 71,
+              "wavelength": 534.0
+            },
+            {
+              "start": 71,
+              "end": 72,
+              "wavelength": 536.0
+            },
+            {
+              "start": 72,
+              "end": 73,
+              "wavelength": 669.0
+            },
+            {
+              "start": 73,
+              "end": 74,
+              "wavelength": 679.0
+            },
+            {
+              "start": 74,
+              "end": 75,
+              "wavelength": 680.0
+            }
+          ],
+          "margin_by_layer": {
+            "missed": {
+              "33": 0.0
+            },
+            "fabricated": {
+              "33": 0.83,
+              "35": 0.83,
+              "37": 0.83,
+              "38": 0.83,
+              "39": 0.83
+            }
+          },
+          "rate_layers": [
+            36,
+            41,
+            42,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50,
+            51,
+            52,
+            53,
+            54,
+            55,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74
+          ],
+          "crash_eliminated": false,
+          "crash_rates_by_noise": {
+            "0.025": 0.02,
+            "0.05": 0.0,
+            "0.1": 0.0
+          },
+          "rmse_par_bruit": {
+            "0.025": {
+              "n": 300,
+              "plantes": 6,
+              "rmse_p95": 0.06093339417298785,
+              "rmse_p95_termines": 0.05857884976624389,
+              "rmse_moyen_plantes": 0.24561720671428924,
+              "rmse_max_termines": 0.07711130176380386,
+              "rmse_min_plantes": 0.2027532821764673
+            },
+            "0.05": {
+              "n": 300,
+              "plantes": 0,
+              "rmse_p95": 0.057259135262674475,
+              "rmse_p95_termines": 0.057259135262674475,
+              "rmse_moyen_plantes": null,
+              "rmse_max_termines": 0.06730782511369598,
+              "rmse_min_plantes": null
+            },
+            "0.1": {
+              "n": 300,
+              "plantes": 0,
+              "rmse_p95": 0.059773051173115786,
+              "rmse_p95_termines": 0.059773051173115786,
+              "rmse_moyen_plantes": null,
+              "rmse_max_termines": 0.09155370860730233,
+              "rmse_min_plantes": null
+            }
+          },
+          "critical_layer": {
+            "layer": 33,
+            "cause": "ondulation trop faible pour etre vue",
+            "margin_in_A": 0.0003847397587160642,
+            "verdict": "PEUT ECHOUER",
+            "n_layers_below_2A": 6
+          },
+          "resolution_nm": 2.0,
+          "resolution_noise_factor": 1.0
+        },
+        "classes": {
+          "mixte": {
+            "plans": 966,
+            "meilleur_seel": 0.4876126045720307,
+            "meilleur": {
+              "id": 901550483,
+              "origine": "ELITE",
+              "n_blocs": 15,
+              "crash_rate": 0.02,
+              "score": 0.059441513034379896,
+              "lambdas": [
+                672.0,
+                629.0,
+                589.0,
+                561.0,
+                651.0,
+                522.0,
+                532.0,
+                592.0,
+                661.0,
+                523.0,
+                534.0,
+                536.0,
+                669.0,
+                679.0,
+                680.0
+              ],
+              "blocs": [
+                {
+                  "start": 0,
+                  "end": 11,
+                  "wavelength": 672.0
+                },
+                {
+                  "start": 11,
+                  "end": 25,
+                  "wavelength": 629.0
+                },
+                {
+                  "start": 25,
+                  "end": 37,
+                  "wavelength": 589.0
+                },
+                {
+                  "start": 37,
+                  "end": 48,
+                  "wavelength": 561.0
+                },
+                {
+                  "start": 48,
+                  "end": 60,
+                  "wavelength": 651.0
+                },
+                {
+                  "start": 60,
+                  "end": 63,
+                  "wavelength": 522.0
+                },
+                {
+                  "start": 63,
+                  "end": 66,
+                  "wavelength": 532.0
+                },
+                {
+                  "start": 66,
+                  "end": 67,
+                  "wavelength": 592.0
+                },
+                {
+                  "start": 67,
+                  "end": 68,
+                  "wavelength": 661.0
+                },
+                {
+                  "start": 68,
+                  "end": 69,
+                  "wavelength": 523.0
+                },
+                {
+                  "start": 69,
+                  "end": 71,
+                  "wavelength": 534.0
+                },
+                {
+                  "start": 71,
+                  "end": 72,
+                  "wavelength": 536.0
+                },
+                {
+                  "start": 72,
+                  "end": 73,
+                  "wavelength": 669.0
+                },
+                {
+                  "start": 73,
+                  "end": 74,
+                  "wavelength": 679.0
+                },
+                {
+                  "start": 74,
+                  "end": 75,
+                  "wavelength": 680.0
+                }
+              ],
+              "margin_by_layer": {
+                "missed": {
+                  "33": 0.0
+                },
+                "fabricated": {
+                  "33": 0.83,
+                  "35": 0.83,
+                  "37": 0.83,
+                  "38": 0.83,
+                  "39": 0.83
+                }
+              },
+              "rate_layers": [
+                36,
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56,
+                57,
+                58,
+                59,
+                60,
+                61,
+                62,
+                63,
+                64,
+                65,
+                66,
+                67,
+                68,
+                69,
+                70,
+                71,
+                72,
+                73,
+                74
+              ],
+              "crash_eliminated": false,
+              "crash_rates_by_noise": {
+                "0.025": 0.02,
+                "0.05": 0.0,
+                "0.1": 0.0
+              },
+              "rmse_par_bruit": {
+                "0.025": {
+                  "n": 300,
+                  "plantes": 6,
+                  "rmse_p95": 0.06093339417298785,
+                  "rmse_p95_termines": 0.05857884976624389,
+                  "rmse_moyen_plantes": 0.24561720671428924,
+                  "rmse_max_termines": 0.07711130176380386,
+                  "rmse_min_plantes": 0.2027532821764673
+                },
+                "0.05": {
+                  "n": 300,
+                  "plantes": 0,
+                  "rmse_p95": 0.057259135262674475,
+                  "rmse_p95_termines": 0.057259135262674475,
+                  "rmse_moyen_plantes": null,
+                  "rmse_max_termines": 0.06730782511369598,
+                  "rmse_min_plantes": null
+                },
+                "0.1": {
+                  "n": 300,
+                  "plantes": 0,
+                  "rmse_p95": 0.059773051173115786,
+                  "rmse_p95_termines": 0.059773051173115786,
+                  "rmse_moyen_plantes": null,
+                  "rmse_max_termines": 0.09155370860730233,
+                  "rmse_min_plantes": null
+                }
+              },
+              "critical_layer": {
+                "layer": 33,
+                "cause": "ondulation trop faible pour etre vue",
+                "margin_in_A": 0.0003847397587160642,
+                "verdict": "PEUT ECHOUER",
+                "n_layers_below_2A": 6
+              },
+              "resolution_nm": 2.0,
+              "resolution_noise_factor": 1.0
+            }
+          },
+          "queue": {
+            "plans": 3748,
+            "meilleur_seel": 0.4886343995248165,
+            "meilleur": {
+              "id": 901050329,
+              "origine": "ELITE",
+              "n_blocs": 10,
+              "crash_rate": 0.01,
+              "score": 0.059690894099744506,
+              "lambdas": [
+                672.0,
+                628.0,
+                589.0,
+                561.0,
+                522.0,
+                532.0,
+                592.0,
+                661.0,
+                669.0,
+                679.0
+              ],
+              "blocs": [
+                {
+                  "start": 0,
+                  "end": 11,
+                  "wavelength": 672.0
+                },
+                {
+                  "start": 11,
+                  "end": 25,
+                  "wavelength": 628.0
+                },
+                {
+                  "start": 25,
+                  "end": 37,
+                  "wavelength": 589.0
+                },
+                {
+                  "start": 37,
+                  "end": 48,
+                  "wavelength": 561.0
+                },
+                {
+                  "start": 48,
+                  "end": 63,
+                  "wavelength": 522.0
+                },
+                {
+                  "start": 63,
+                  "end": 66,
+                  "wavelength": 532.0
+                },
+                {
+                  "start": 66,
+                  "end": 67,
+                  "wavelength": 592.0
+                },
+                {
+                  "start": 67,
+                  "end": 69,
+                  "wavelength": 661.0
+                },
+                {
+                  "start": 69,
+                  "end": 73,
+                  "wavelength": 669.0
+                },
+                {
+                  "start": 73,
+                  "end": 75,
+                  "wavelength": 679.0
+                }
+              ],
+              "margin_by_layer": {
+                "missed": {
+                  "33": 0.001,
+                  "39": 0.81
+                },
+                "fabricated": {
+                  "22": 0.83,
+                  "33": 0.83,
+                  "35": 0.83,
+                  "38": 0.83,
+                  "39": 0.83
+                }
+              },
+              "rate_layers": [
+                41,
+                42,
+                43,
+                44,
+                45,
+                46,
+                47,
+                48,
+                49,
+                50,
+                51,
+                52,
+                53,
+                54,
+                55,
+                56,
+                57,
+                58,
+                59,
+                60,
+                61,
+                62,
+                63,
+                64,
+                65,
+                66,
+                67,
+                68,
+                69,
+                70,
+                71,
+                72,
+                73,
+                74
+              ],
+              "crash_eliminated": false,
+              "crash_rates_by_noise": {
+                "0.025": 0.01,
+                "0.05": 0.0,
+                "0.1": 0.0
+              },
+              "rmse_par_bruit": {
+                "0.025": {
+                  "n": 300,
+                  "plantes": 3,
+                  "rmse_p95": 0.060975132954459166,
+                  "rmse_p95_termines": 0.05981406485241739,
+                  "rmse_moyen_plantes": 0.25818001588780876,
+                  "rmse_max_termines": 0.08158393706679992,
+                  "rmse_min_plantes": 0.23692490398739058
+                },
+                "0.05": {
+                  "n": 300,
+                  "plantes": 0,
+                  "rmse_p95": 0.05813410630955689,
+                  "rmse_p95_termines": 0.05813410630955689,
+                  "rmse_moyen_plantes": null,
+                  "rmse_max_termines": 0.0669037123453429,
+                  "rmse_min_plantes": null
+                },
+                "0.1": {
+                  "n": 300,
+                  "plantes": 0,
+                  "rmse_p95": 0.06067246983077399,
+                  "rmse_p95_termines": 0.06067246983077399,
+                  "rmse_moyen_plantes": null,
+                  "rmse_max_termines": 0.09005325493276464,
+                  "rmse_min_plantes": null
+                }
+              },
+              "critical_layer": {
+                "layer": 33,
+                "cause": "ondulation trop faible pour etre vue",
+                "margin_in_A": 0.000913841999181271,
+                "verdict": "PEUT ECHOUER",
+                "n_layers_below_2A": 7
+              },
+              "resolution_nm": 2.0,
+              "resolution_noise_factor": 1.0
+            }
+          }
+        },
+        "paquets_de_rate": {
+          "1": 3868,
+          "2": 787,
+          "3": 59
+        }
+      }
+    }
+  ],
+  "commit": "da1af0825d5e09e8d0a5ff4f1cf42b802e0e30e7",
+  "status": "paused",
+  "pid": null,
+  "updated": "2026-10-13T15:40:42",
+  "current": null,
+  "current_pid": null,
+  "current_started": "2026-10-13T14:56:49",
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  }
+}

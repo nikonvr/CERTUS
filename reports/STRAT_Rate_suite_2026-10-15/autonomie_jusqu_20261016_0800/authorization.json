@@ -1,0 +1,32 @@
+{
+  "recorded_utc": "2026-10-15T11:42:11.391962+00:00",
+  "user_instruction": "tourne en 100% autonomie jiusqua demain matin et reponds toi meme aux questions",
+  "scope": "Programme borné R0–R6 existant, sans élargissement des quotas",
+  "end_time_interpretation": "Demain matin interprété par l’agent comme vendredi16 octobre2026 à8 h Europe/Paris, horaire déjà utilisé dans cette conversation ; hypothèse annoncée sans demander une nouvelle confirmation",
+  "no_new_measurements_or_tests_after_utc": "2026-10-16T06:00:00Z",
+  "at_end": "Conserver et laisser finir le calcul déjà engagé ; sauvegarder, faire le bilan puis mettre le même suivi en pause",
+  "resources": {
+    "logical_cpus": 24,
+    "affinity_mask": "0xffffff",
+    "priority": "normal",
+    "library_threads": 23
+  },
+  "routine_decisions": "L’IA choisit les pistes et réparations sûres à partir des résultats et documente les arbitrages sans question courante à l’utilisateur",
+  "limits": [
+    "Aucun quota R0–R6 supplémentaire",
+    "Aucun commit/push/publication ni activation d’un nouveau défaut scientifique",
+    "Aucune donnée physique machine inventée",
+    "Aucun arrêt scientifique ni test concurrent",
+    "Sources et lanceurs des mesures engagées inchangés"
+  ],
+  "original_authorization": "reports/STRAT_RMSE_uniform_weights_2026-10-15/authorization_and_baseline.json",
+  "original_authorization_sha256": "50448c46c5a2335d7d706cf564e2565d97c5d2e6de447913071103af4b39ffa9",
+  "current_science": {
+    "experiment": "R3_h02_wavelengths",
+    "control": "complete, recorded exit0",
+    "variant_pid": 28532,
+    "coordinator_pid": 24768,
+    "inspect_live_state_before_action": true
+  },
+  "future_controllers": "Copies nouvelles uniquement ; contrôler cette autorisation, l’heure UTC absolue et les quotas restants avant chaque mesure et test. Ne pas modifier les scripts h02 vivants."
+}

@@ -1,0 +1,13 @@
+{
+  "status": "automation_update_verified",
+  "same_automation": "certus-essais-rate-jusqu-au-14-octobre-9-h",
+  "same_thread": "01a1347c-9798-7b00-af1b-6e6de6058b00",
+  "deadline_utc": "2026-10-15T06:00:00Z",
+  "final_wake_grace_end_utc": "2026-10-15T06:01:00Z",
+  "grace_purpose": "Allow the scheduled08h final wake despite scheduler seconds offset; no new measurement after06h UTC",
+  "automation_after_sha256": "da6887c62cf6e2d90f51a4325fd0040a9272aee9cba160c01126eb20f700ddf8",
+  "kind": "heartbeat",
+  "active": true,
+  "old_nocturnal_sources_modified": false,
+  "scientific_tests_run": false
+}

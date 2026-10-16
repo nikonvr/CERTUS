@@ -1,0 +1,17 @@
+{
+  "artifact_sha256": "d8fcf45f8f9fbfcc8d237862f7af8ecfc51616d71dc27f9c0cfc3258138e60ae",
+  "same_as_worktree_copy": true,
+  "native_adapter_source_hashes_preserved": {
+    "adapter": "861f8ac0406617b8e090ce26220b23e1a55b8ad7ef294962b35c5c4b4fe96d89",
+    "generator": "70211dc4fad1c1adabc673ffe95c35b8996459db4f75ecc8831454ff0e48c2af",
+    "controller_helper": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51"
+  },
+  "no_scientific_recalculation": true,
+  "candidate_trace_loss": "Original in-memory offered-candidate trace lost after NumPy serialization failure; counts, logs, source snapshots and scientific artifact preserved",
+  "repaired_sources": {
+    "rate_native_joint_probe.py": "d8405ee876d8879783f740431f83ea2c7df7d4e7afe27a0568272fe777f8fa29",
+    "rate_joint_native_candidates.py": "30ac713dc23b4c0754ca56f5f843309f9b3b55c583dbe4b2bf1f17427684a611",
+    "verify_rate_native_joint_adapter.py": "df959dbfb88c6ee1f2632b284a4096aee2ba5c74f5f12d984b4c49c6374c11ba",
+    "rate_native_confirmation_runner.py": "e75d2063b7f81b3a6332e7d7725ef9903c76209aa2f45d3f157fe50701bc1249"
+  }
+}

@@ -1,0 +1,238 @@
+"""H03 same-arm post planner, copied from the closed R4 prototype with separate quotas."""
+from __future__ import annotations
+
+import argparse
+import copy
+import math
+import os
+import runpy
+import sys
+from datetime import UTC, datetime
+from itertools import zip_longest
+from pathlib import Path
+
+from rate_H03_guard import ANCHORS, PROGRAM, ROOT, check_deadline, read, sha
+from rate_H03_guard import POST as EXPERIMENT
+from rate_H03_parent_selection import freeze_selections
+from rate_R4_candidates import coarse, fine, signature, window_context
+from rate_R4_planner import beam
+from rate_R4_planner_resume_v3 import save
+
+TASKS = [(p, "native", stage) for p in (1, 2) for stage in ("coarse", "fine")]
+
+
+def protocol_and_state():
+    return read(EXPERIMENT / "protocol.json"), read(EXPERIMENT / "checkpoint.json")
+
+
+def initialize():
+    check_deadline()
+    if (EXPERIMENT / "checkpoint.json").exists() or (EXPERIMENT / "parent_selection.json").exists():
+        raise RuntimeError("Existing post context: inspect and adopt, never initialize twice")
+    artifacts, provenance = {}, {}
+    protocol = read(EXPERIMENT / "protocol.json")
+    for arm in ("control", "variant"):
+        directory = EXPERIMENT.parent / arm
+        state = read(directory / "etat.json")
+        if state["status"] != "complete" or state["source_sha256"] != protocol["source_sha256"] or not state["fine_wavelengths"]:
+            raise RuntimeError("Both same-policy native arms must complete first")
+        path = Path(state["artifact"])
+        artifacts[arm] = read(path)
+        if artifacts[arm]["verdict"] != "OK":
+            raise RuntimeError("Native artifact failed")
+        provenance[arm] = {"artifact": str(path), "artifact_sha256": sha(path),
+                           "state_sha256": sha(directory / "etat.json"), "trace_sha256": sha(directory / "pipeline_trace.json")}
+    selection = freeze_selections(artifacts["control"], artifacts["variant"])
+    selection.update(native_provenance=provenance, frozen_utc=datetime.now(UTC).isoformat())
+    save(EXPERIMENT / "parent_selection.json", selection, immutable=True)
+    directory = EXPERIMENT / "parent_check"
+    raw = {"plans": [*copy.deepcopy(protocol["anchors"]), *selection["unique_replay_plans"]]}
+    save(directory / "plans.json", raw, immutable=True)
+    manifest = {"phase": "R3_h03_parentcheck", "index": 0, "branch": "native", "pass": 0, "stage": "parent_check",
+                "new_plans": 0, "before_scores": True, "plans_sha256": sha(directory / "plans.json"),
+                "protocol_sha256": sha(EXPERIMENT / "protocol.json"),
+                "parent_selection_sha256": sha(EXPERIMENT / "parent_selection.json")}
+    save(directory / "manifest.json", manifest, immutable=True)
+    state = {"status": "ready", "task_index": 0, "queue": [], "queue_offset": 0, "group_count": 0,
+             "new_proposals": 0, "branch_pass_counts": {}, "branches": {"native": {"active": True, "beam": [], "pool": [], "seen": [], "passes": []}},
+             "variant_parent_ids": selection["variant_parent_ids"], "control_comparator_ids": selection["control_comparator_ids"],
+             "pending_group": str(directory / "manifest.json"), "groups": [], "stage_records": [],
+             "protocol_sha256": sha(EXPERIMENT / "protocol.json")}
+    save(EXPERIMENT / "checkpoint.json", state)
+    return {"status": "ready", "manifest": state["pending_group"], "output": str(directory / "measurement")}
+
+
+def prepare_stage(state: dict, protocol: dict) -> None:
+    pass_number, branch, stage = TASKS[state["task_index"]]
+    data = state["branches"][branch]
+    if stage == "coarse":
+        data["pass_start"] = min(e["score"] for e in data["pool"])
+        data["beam"] = beam(data["pool"])
+    else:
+        data["beam"] = beam(data["pool"])
+    parents = copy.deepcopy(data["beam"])
+    grid = read(EXPERIMENT / "legal_grid.json")["available_wls"]
+    kind = "internal" if pass_number == 1 else "prefix"
+    generator = coarse if stage == "coarse" else fine
+    sys.path.insert(0, read(PROGRAM / "reference_context.json")["worktree"])
+    from certus.utils.certus_strat_context import _validate_strategy_blocks_contract
+
+    seen = set(data["seen"])
+    records, accepted = [], []
+    quota_key = f"{branch}_pass{pass_number}"
+    streams = []
+    for entry in parents:
+        try:
+            window_context(entry["plan"], 75, kind)
+        except ValueError as error:
+            records.append({"parent": entry["plan"]["source_strategy_id"], "status": "not_applicable", "reason": str(error)})
+            streams.append(iter(()))
+        else:
+            streams.append(generator(entry["plan"], grid, 75, kind))
+    for items in zip_longest(*streams):
+        for parent, plan in zip(parents, items, strict=True):
+            if plan is None:
+                records.append({"parent": parent["plan"]["source_strategy_id"], "status": "boundary_or_exhausted"})
+                continue
+            key = signature(plan)
+            if key in seen:
+                records.append({"status": "duplicate", "plan": plan, "signature": key})
+                continue
+            if state["branch_pass_counts"].get(quota_key, 0) >= 300 or state["new_proposals"] >= 600:
+                records.append({"status": "quota_rejected", "plan": plan})
+                continue
+            seen.add(key)
+            state["new_proposals"] += 1
+            state["branch_pass_counts"][quota_key] = state["branch_pass_counts"].get(quota_key, 0) + 1
+            plan["source_strategy_id"] = 98_000_000 + state["new_proposals"]
+            plan["nom"] = f"R4_{branch}_p{pass_number}_{stage}_{plan['source_strategy_id']}"
+            plan["branch"], plan["root_parent_id"] = branch, parent["plan"]["root_parent_id"]
+            valid, reason = _validate_strategy_blocks_contract(plan, 75)
+            records.append({"status": "accepted" if valid else "contract_rejected", "reason": reason, "plan": plan})
+            if valid:
+                accepted.append(plan)
+    data["seen"] = sorted(seen)
+    directory = EXPERIMENT / f"stages/pass{pass_number}_{branch}_{stage}"
+    save(directory / "proposals.json", {"parents": parents, "records": records, "accepted": len(accepted),
+                                       "before_scores": True, "selection": protocol["selection"]}, immutable=True)
+    state["stage_records"].append(str(directory / "proposals.json"))
+    state["queue"], state["queue_offset"] = accepted, 0
+
+
+def consume(state: dict) -> None:
+    manifest_file = Path(state["pending_group"])
+    manifest = read(manifest_file)
+    output = manifest_file.parent / "measurement"
+    result_file = output / "search.json"
+    if not result_file.exists():
+        raise RuntimeError("Pending group has no complete artifact; inspect living child or failed attempt")
+    result = read(result_file)
+    protocol = read(EXPERIMENT / "protocol.json")
+    if (result["verdict"] != "OK" or result["errors"] or result["source_sha256"] != protocol["source_sha256"] or
+            result["plans_sha256"] != manifest["plans_sha256"] or result["protocol_sha256"] != sha(EXPERIMENT / "protocol.json") or
+            result["group_manifest_sha256"] != sha(manifest_file) or result["setting"] != protocol["control"]):
+        raise RuntimeError("R4 artifact audit failed")
+    plans = read(manifest_file.parent / "plans.json")["plans"]
+    by_id = {p["source_strategy_id"]: p for p in plans}
+    for row in result["final_results"]["all_strategies_results"]:
+        strategy_id = row["strategy"]["strategy_id"]
+        if strategy_id not in result["search_eligible_ids"] or strategy_id in ANCHORS:
+            continue
+        score = row["robustness_score"]
+        if not math.isfinite(score) or row.get("crash_eliminated", False):
+            raise RuntimeError("An ineligible score entered the beam")
+        if manifest["phase"] == "R3_h03_parentcheck" and strategy_id not in state["variant_parent_ids"]:
+            continue
+        state["branches"][manifest["branch"]]["pool"].append({"plan": by_id[strategy_id], "score": score,
+                                                             "base_score": row.get("robustness_score_base"),
+                                                             "provenance": str(result_file)})
+    audit = {"verdict": "GO", "artifact_sha256": sha(result_file), "manifest_sha256": sha(manifest_file),
+             "actual_calls": len(result["simulations"]), "eligible_ids": result["search_eligible_ids"],
+             "rejected": result["search_rejected"]}
+    save(manifest_file.parent / "audit.json", audit, immutable=True)
+    state["groups"].append({"phase": manifest["phase"], "audit": str(manifest_file.parent / "audit.json")})
+    if manifest["phase"] == "R3_h03_parentcheck":
+        pool = state["branches"]["native"]["pool"]
+        if not pool:
+            raise RuntimeError("No eligible native variant parent after homogeneous scoring")
+        data = state["branches"]["native"]
+        data.update(beam=beam(pool), initial_best=min(e["score"] for e in pool),
+                    seen=sorted({signature(e["plan"]) for e in pool} | {signature(p) for p in protocol["anchors"]}))
+        state["parent_check_artifact"] = str(result_file)
+    state["queue_offset"] += manifest["new_plans"]
+    state["pending_group"] = None
+
+
+def next_group() -> dict:
+    protocol, state = protocol_and_state()
+    if state["protocol_sha256"] != sha(EXPERIMENT / "protocol.json"):
+        raise RuntimeError("R4 checkpoint protocol changed")
+    for name, digest in protocol["script_sha256"].items():
+        if sha(ROOT / "scratch" / name) != digest:
+            raise RuntimeError(f"Frozen R4 source changed: {name}")
+    if state["status"] == "search_complete_confirmation_pending":
+        return {"status": state["status"]}
+    if state["pending_group"]:
+        consume(state)
+        save(EXPERIMENT / "checkpoint.json", state)
+    try:
+        check_deadline()
+    except RuntimeError:
+        state["status"] = "deadline_reached"
+        save(EXPERIMENT / "checkpoint.json", state)
+        return {"status": "deadline_reached"}
+    while state["task_index"] < len(TASKS):
+        pass_number, branch, stage = TASKS[state["task_index"]]
+        data = state["branches"][branch]
+        if not data["active"]:
+            state["task_index"] += 1
+            continue
+        if not state.get("stage_prepared"):
+            prepare_stage(state, protocol)
+            state["stage_prepared"] = True
+        offered = state["queue"][state["queue_offset"]:state["queue_offset"] + 9]
+        if offered:
+            if state["group_count"] >= 72:
+                raise RuntimeError("R4 finite group quota exhausted")
+            state["group_count"] += 1
+            index = state["group_count"]
+            directory = EXPERIMENT / f"groups/group_{index:03}"
+            raw = {"plans": [*protocol["anchors"], *offered]}
+            save(directory / "plans.json", raw, immutable=True)
+            manifest = {"phase": f"R3_h03_post_g{index:03}", "index": index, "branch": branch, "pass": pass_number,
+                        "stage": stage, "new_plans": len(offered), "before_scores": True,
+                        "plans_sha256": sha(directory / "plans.json"), "protocol_sha256": sha(EXPERIMENT / "protocol.json"),
+                        "parent_selection_sha256": sha(EXPERIMENT / "parent_selection.json"), "prepared_utc": datetime.now(UTC).isoformat()}
+            save(directory / "manifest.json", manifest, immutable=True)
+            state["pending_group"] = str(directory / "manifest.json")
+            save(EXPERIMENT / "checkpoint.json", state)
+            return {"status": "ready", "manifest": state["pending_group"], "output": str(directory / "measurement")}
+        if stage == "fine":
+            data["beam"] = beam(data["pool"])
+            before, after = data["pass_start"], min(e["score"] for e in data["beam"])
+            improved = before - after > max(1e-10, 1e-7 * abs(before))
+            data["passes"].append({"pass": pass_number, "before": before, "after": after, "improved": improved})
+            data["active"] = improved and pass_number < 2
+        state["queue"], state["queue_offset"], state["stage_prepared"] = [], 0, False
+        state["task_index"] += 1
+        save(EXPERIMENT / "checkpoint.json", state)
+    state["status"] = "search_complete_confirmation_pending"
+    save(EXPERIMENT / "checkpoint.json", state)
+    save(EXPERIMENT / "frozen_search_winners.json", {"before_fresh_groups": True, "branches": state["branches"],
+                                                   "new_proposals": state["new_proposals"]}, immutable=True)
+    return {"status": state["status"]}
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("action", choices=("initialize", "next"))
+    args = parser.parse_args()
+    if os.cpu_count() != 24:
+        raise RuntimeError("Start planner with -X cpu_count=24")
+    runpy.run_path(str(ROOT / "scratch/campagne_a2_runner.py"))["limit_resources"](24)
+    result = initialize() if args.action == "initialize" else next_group()
+    save(EXPERIMENT / "next.json", result)
+
+
+if __name__ == "__main__":
+    main()

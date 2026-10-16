@@ -1,0 +1,123 @@
+"""Compare integrated pure generation/selection with frozen measured prototypes, without simulation."""
+
+from __future__ import annotations
+
+import copy
+import json
+import runpy
+import types
+from pathlib import Path
+
+import certus.core.certus_strat_consensus as integrated
+from certus.core.certus_strat_rate_post import refine_native_output
+from certus.utils.certus_strat_context import _plan_signature
+from rate_H03_guard import EXPERIMENT, PROGRAM, ROOT, check_deadline, read, sha
+from rate_R4_candidates import signature
+from rate_R4_planner_resume_v3 import save
+
+check_deadline()
+if (PROGRAM / "measurement.running").exists() or list((ROOT / "reports").rglob(".running")):
+    raise RuntimeError("No verification while a scientific child is engaged")
+old = types.ModuleType("r5_historical_consensus")
+before = PROGRAM / "R5_integration/before/certus__core__certus_strat_consensus.py.txt"
+exec(compile(before.read_text(encoding="utf-8"), str(before), "exec"), old.__dict__)
+extend = runpy.run_path(str(ROOT / "scratch/rate_joint_native_candidates_R3_wavelengths.py"))["extend_factory"]
+trace = read(EXPERIMENT / "variant/pipeline_trace.json")
+inputs = [e for e in trace["events"] if e["kind"] == "generation_inputs"]
+calls = read(EXPERIMENT / "variant/generated_candidates.json")["calls"]
+checked = 0
+generated = 0
+for event, call in zip(inputs, calls, strict=True):
+    kwargs = {"parent_results": copy.deepcopy(event["parents"]), "available_wls": event["available_wls"],
+              "num_layers": event["num_layers"], "start_strategy_id": call["start_sid"] - call["legacy_count"],
+              **event["settings"]}
+    kwargs["existing_signatures"] = {_plan_signature(p["strategy"]["blocks"], p["strategy"].get("rate_layers")) for p in event["parents"]}
+    snapshot = copy.deepcopy(kwargs)
+    legacy = old._generate_elite_candidate_strategies(**kwargs)
+    inactive = integrated._generate_elite_candidate_strategies(**kwargs)
+    assert inactive == legacy
+    expected, cursor, _ = extend(old._generate_elite_candidate_strategies, old, _plan_signature, (), kwargs,
+                                 480, widths=tuple(range(1, 8)), fine_wavelengths=True)
+    active, actual_cursor = integrated._generate_elite_candidate_strategies(**kwargs, joint_candidates=480)
+    assert active == expected, event["context"]
+    assert actual_cursor == cursor
+    assert kwargs == snapshot
+    checked += 1
+    generated += len(active)
+
+# The executable active regression fails on the pre-R5 implementation, then passes on integration.
+test = runpy.run_path(str(ROOT / "tests/unit/test_strat_rate_final_refinement.py"))["test_active_joint_budget_adds_legal_children_after_legacy_ids"]
+current = test.__globals__["_generate_elite_candidate_strategies"]
+test.__globals__["_generate_elite_candidate_strategies"] = old._generate_elite_candidate_strategies
+try:
+    test()
+except TypeError as error:
+    assert "joint_candidates" in str(error)
+    regression_before = str(error)
+else:
+    raise AssertionError("The active routing regression did not fail on the original source")
+finally:
+    test.__globals__["_generate_elite_candidate_strategies"] = current
+test()
+
+# Replay recorded complete outcomes only; assert that no new physical plan is requested.
+state = read(EXPERIMENT / "post/checkpoint.json")
+lookup = {}
+expected_batches = []
+for index in range(0, state["group_count"] + 1):
+    directory = EXPERIMENT / "post" / ("parent_check" if index == 0 else f"groups/group_{index:03}")
+    plans = read(directory / "plans.json")["plans"]
+    result = read(directory / "measurement/search.json")
+    results = {r["strategy"]["strategy_id"]: r for r in result["final_results"]["all_strategies_results"]}
+    batch = []
+    for plan in plans[3:]:
+        key = signature(plan)
+        lookup[key] = results.get(plan["source_strategy_id"])
+        batch.append(key)
+    expected_batches.append(batch)
+native_state = read(EXPERIMENT / "variant/etat.json")
+native = read(Path(native_state["artifact"]))
+rows = []
+for source in native["strategies"]:
+    strategy = {"strategy_id": source["id"], "blocks": source["blocs"], "rate_layers": source.get("rate_layers") or [],
+                "monochromator_resolution_nm": source.get("resolution_nm")}
+    if "witness_reset_layers" in source:
+        strategy["witness_reset_layers"] = source["witness_reset_layers"]
+    rows.append({"strategy": strategy, "robustness_score": source["score"],
+                 "robustness_score_consensus": source.get("robustness_score_consensus"),
+                 "robustness_consensus_meta": source.get("robustness_consensus_meta"),
+                 "crash_eliminated": source.get("crash_eliminated", False)})
+batches = []
+
+
+def recorded_only(plans):
+    batch, out = [], []
+    for plan in plans:
+        key = signature(plan)
+        assert key in lookup, "Integration requested a plan outside the frozen prototype corpus"
+        batch.append(key)
+        saved = lookup[key]
+        if saved is not None:
+            row = copy.deepcopy(saved)
+            row["strategy"] = {**copy.deepcopy(plan), "strategy_id": plan["source_strategy_id"]}
+            out.append(row)
+    batches.append(batch)
+    return out
+
+
+grid = read(EXPERIMENT / "post/legal_grid.json")["available_wls"]
+_, report = refine_native_output(rows, grid, 75, [41, 42, 43], "mean_std", 2.0, recorded_only)
+assert batches == expected_batches
+assert report["new_proposals"] == state["new_proposals"]
+assert report["best_score"] == min(e["score"] for e in state["branches"]["native"]["pool"])
+assert report["passes"][0]["after"] == state["branches"]["native"]["passes"][0]["after"]
+assert signature(report["winner"]) == signature(read(EXPERIMENT / "frozen_finalists.json")["primary_plan"])
+destination = PROGRAM / "R5_integration/equivalence_01.json"
+save(destination, {"verdict": "GO", "native_input_contexts": checked, "generated_candidates_compared": generated,
+     "inactive_route_exact_candidates_and_cursor": True, "active_matches_measured_generator_without_patches": True,
+     "parents_unchanged": True, "active_regression_before": regression_before, "active_regression_after": "PASS",
+     "post_batches_compared": len(batches), "post_proposals": report["new_proposals"],
+     "post_score_matches_exactly": report["best_score"], "post_full_winner_signature_matches": True,
+     "physical_evaluations_executed": 0, "recorded_outcomes_only": True, "independent_native_measurement_still_required": True,
+     "script_sha256": sha(Path(__file__))}, immutable=True)
+print(json.dumps(read(destination)))

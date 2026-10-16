@@ -1,0 +1,25 @@
+{
+  "observed_utc": "2026-10-15T10:46:23.752024+00:00",
+  "status": "running",
+  "controller_pid": 24768,
+  "current": "control",
+  "child_pid": 30284,
+  "scientific_process_count": 1,
+  "IDE_language_servers": [
+    23808,
+    29084,
+    24252
+  ],
+  "affinity": 16777215,
+  "priority": "Normal",
+  "cpu_seconds_at_check": 4537.359375,
+  "memory_bytes": 1691480064,
+  "previous_pair": "h01 NO_GAIN after20 homogeneous actual300-run calls; no fresh groups consumed",
+  "factor": "Per-window fine wavelengths only; widths1..7 fixed in both arms",
+  "new_tests_or_active_source_edits_during_measurement": false,
+  "eta_next_phase_Paris": [
+    "2026-10-15T14:30:00+02:00",
+    "2026-10-15T16:00:00+02:00"
+  ],
+  "decision": "Leave the verified existing sequential pair running; audit/freeze/replay only after it finishes"
+}

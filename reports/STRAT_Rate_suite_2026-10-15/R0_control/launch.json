@@ -1,0 +1,9 @@
+{
+  "pid": 54056,
+  "library_threads_ceiling": 23,
+  "authorized_logical_cpus": 24,
+  "affinity_mask": "0xffffff",
+  "status": "launched",
+  "arguments": "-X utf8 \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_fixed_replay_R0_bounded.py\" --worktree \"C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-rmse-r0\\certus0310\" --plans \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\selected_fixed_plans.json\" --protocol \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\protocol_R0_bounded.json\" --reference-state \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\reference_context.json\" --output \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R0_control\" --run control",
+  "started_utc": "2026-10-15T07:17:23.2582009Z"
+}

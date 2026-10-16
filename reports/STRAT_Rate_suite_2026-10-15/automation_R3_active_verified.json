@@ -1,0 +1,8 @@
+{
+  "verified_utc": "2026-10-15T08:38:34.149162+00:00",
+  "status": "ACTIVE",
+  "rrule": "FREQ=HOURLY;BYMINUTE=0,30",
+  "same_id": true,
+  "follows_active_R3_pair": true,
+  "prompt_sha256": "9e7ce22bb39ab41a9bb2407a38906556e5759d700af97ce4a984629b0f2cb3b4"
+}

@@ -1,0 +1,12 @@
+{
+  "verdict": "GO",
+  "coherence_exit_code": 0,
+  "claude_md_exit_code": 0,
+  "docs_exit_code": 0,
+  "diff_check_exit_code": 0,
+  "R5_general_validation_reused_without_rerun": true,
+  "physical_evaluations_after_close": 0,
+  "automation_status": "PAUSED",
+  "pause_readback_exact": true,
+  "source_audit": "audit_final.json"
+}

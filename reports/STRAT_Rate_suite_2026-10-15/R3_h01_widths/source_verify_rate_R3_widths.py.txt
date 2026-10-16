@@ -1,0 +1,233 @@
+"""Verify copied R3 adapter/observer and inactive/active joint-width contracts without physics."""
+
+from __future__ import annotations
+
+import argparse
+import copy
+import hashlib
+import json
+import logging
+import os
+import runpy
+import subprocess
+import sys
+import traceback
+from datetime import UTC, datetime
+from functools import wraps
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
+
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--worktree", type=Path, required=True)
+    parser.add_argument("--reference-state", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args()
+    root = Path(__file__).resolve().parents[1]
+    worktree, output = args.worktree.resolve(), args.output.resolve()
+    output.relative_to(root / "reports")
+    if any(folder.is_dir() and (folder / ".running").exists() for folder in (root / "reports").iterdir()):
+        raise RuntimeError("No verification during a scientific measurement")
+    shell = Path(os.environ["SYSTEMROOT"]) / "System32/WindowsPowerShell/v1.0/powershell.exe"
+    processes = subprocess.check_output([str(shell), "-NoProfile", "-Command",
+        "@(Get-CimInstance Win32_Process | Where-Object { $_.Name -match '^python' -and "
+        "($_.CommandLine -match 'probe_blocs|campagne_a2|a2_continue|rate_.*(runner|replay|probe)') } | "
+        "Select-Object ProcessId) | ConvertTo-Json -Compress"], encoding="utf-8").strip()
+    active = json.loads(processes) if processes else []
+    if isinstance(active, dict):
+        active = [active]
+    if any(p["ProcessId"] != os.getpid() for p in active):
+        raise RuntimeError("A scientific process or controller is still alive")
+    reference = json.loads(args.reference_state.resolve().read_text(encoding="utf-8"))
+    sources = {name: hashlib.sha256((worktree / name).read_bytes()).hexdigest() for name in reference["source_sha256"]}
+    if sources != reference["source_sha256"]:
+        raise RuntimeError("Unexpected frozen scientific sources")
+    bounded = runpy.run_path(str(root / "scratch/rate_R3_widths_guard.py"))
+    bounded_proof = bounded["check_ready"]("R3_h01_control", root / "reports/STRAT_Rate_suite_2026-10-15/R3_h01_widths/control", sources)
+    paths = {"adapter": root / "scratch/rate_native_R3_widths_probe.py", "observer": root / "scratch/rate_native_pipeline_trace.py",
+             "generator": root / "scratch/rate_joint_native_candidates_R3_widths.py", "controller_helper": root / "scratch/campagne_a2_runner.py",
+             "bounded_guard": root / "scratch/rate_R3_widths_guard.py"}
+    hashes = {name: hashlib.sha256(p.read_bytes()).hexdigest() for name, p in paths.items()}
+    record = {"verdict": "NOT_RUN", "started_utc": datetime.now(UTC).isoformat(), "script_sha256": hashes,
+              "source_sha256": sources, "physics_measured": False, "bounded_program": bounded_proof,
+              "verifier_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(), "checks": []}
+    output.mkdir(parents=True, exist_ok=True)
+    target = output / "verification.json"
+    if target.exists():
+        raise RuntimeError("Preserve the existing verification and choose a new attempt")
+    try:
+        helper = runpy.run_path(str(paths["controller_helper"]))
+        record["resources"] = helper["limit_resources"](24)
+        if record["resources"] != bounded_proof["resources"]:
+            raise RuntimeError("Actual resources differ from the authorized24/23 limits")
+        os.environ["PYTHON_CPU_COUNT"] = "24"
+        os.environ["QT_QPA_PLATFORM"] = "offscreen"
+        for key in ("NUMBA_NUM_THREADS", "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
+                    "VECLIB_MAXIMUM_THREADS", "NUMEXPR_NUM_THREADS"):
+            os.environ[key] = "23"
+        sys.path[:0] = [str(worktree), str(worktree / "scripts")]
+        import bench_examples as bx
+
+        bx.qapp()
+        import numpy as np
+
+        import certus.core.certus_strat_consensus as consensus
+        import certus.core.certus_strat_robustness as robustness
+        from certus.utils.certus_strat_context import _plan_signature
+
+        observer = runpy.run_path(str(paths["observer"]))
+        observe, convert = observer["observe_pipeline"], observer["json_default"]
+        extend = runpy.run_path(str(paths["generator"]))["extend_factory"]
+        factory = consensus._generate_elite_candidate_strategies
+        fixed = json.loads((root / "reports/STRAT_Rate_validation_prefix_after_window_extended_2026-10-14/selected_fixed_plans.json").read_text(encoding="utf-8"))["plans"]
+        parents = []
+        for sid in (9900006, 9900008):
+            plan = copy.deepcopy(next(p for p in fixed if p["source_strategy_id"] == sid))
+            plan.update(strategy_id=sid, n_blocks=len(plan["blocks"]), witness_reset_layers=[30])
+            parents.append({"strategy": plan, "robustness_score": 0.03, "crash_rate": 0.0})
+        before = copy.deepcopy(parents)
+        kwargs = {"parent_results": parents, "available_wls": list(range(450, 751)), "num_layers": 75,
+                  "start_strategy_id": 9990000, "max_candidates": 120, "max_rate_candidates": 240,
+                  "wl_neighbor_span": 1, "rate_moves": True, "balanced_rate_moves": False, "existing_signatures": set()}
+
+        legacy_extend = runpy.run_path(str(root / "scratch/rate_joint_native_candidates.py"))["extend_factory"]
+        expected_legacy = legacy_extend(factory, consensus, _plan_signature, (), kwargs, 480)
+        assert extend(factory, consensus, _plan_signature, (), kwargs, 480) == expected_legacy
+        record["checks"].append("Inactive copied generator: exact legacy candidates/order/IDs/cursor/event")
+        active_widths = (2, 4, 6)
+
+        @wraps(factory)
+        def generate(*args, **kw):
+            candidates, cursor, _ = extend(factory, consensus, _plan_signature, args, kw, 480, widths=active_widths)
+            return candidates, cursor
+
+        for active_widths in ((2, 4, 6), tuple(range(1, 8))):
+            for scenario in ({}, {"rate_moves": False}, {"parent_results": []}, {"available_wls": []}, {"round_robin_seed": (101, 2)}):
+                parameters = {**kwargs, **scenario}
+                expected = generate(**parameters)
+                if active_widths == (2, 4, 6):
+                    previous, previous_cursor, _ = legacy_extend(factory, consensus, _plan_signature, (), parameters, 480)
+                    assert expected == (previous, previous_cursor)
+                with patch.object(consensus, "_generate_elite_candidate_strategies", generate):
+                    with observe(consensus, robustness) as captured:
+                        actual = consensus._generate_elite_candidate_strategies(**parameters)
+                assert actual == expected
+                assert consensus._generate_elite_candidate_strategies is factory
+                assert parents == before
+                json.dumps(captured, default=convert)
+                record["checks"].append("Widths " + str(active_widths) + " factory output/order/ids/cursor and parent immutability: " + str(list(scenario)))
+
+        pure = runpy.run_path(str(paths["generator"]))["joint_candidates"]
+        fixture = {"strategy_id": 18001, "blocks": [{"start": 0, "end": 6, "wavelength": 500.0},
+                                                    {"start": 6, "end": 18, "wavelength": 600.0}],
+                   "rate_layers": list(range(2, 6)) + list(range(8, 18)),
+                   "monochromator_resolution_nm": 2.0, "witness_reset_layers": [6]}
+        sample_parents = [{"strategy": fixture}]
+        sample_before = copy.deepcopy(sample_parents)
+        legacy_moves = list(pure(sample_parents, [500, 600, 610], 18))
+        active_moves = list(pure(sample_parents, [500, 600, 610], 18, tuple(range(1, 8))))
+        assert active_moves == list(pure(sample_parents, [500, 600, 610], 18, tuple(range(1, 8))))
+        assert not any(set(range(6, 9)).isdisjoint(layers) and 9 in layers for _, _, _, layers in legacy_moves)
+        assert any(set(range(6, 9)).isdisjoint(layers) and 9 in layers for _, _, _, layers in active_moves)
+        for _, strategy, blocks, layers in active_moves:
+            child = {**strategy, "blocks": blocks, "rate_layers": layers}
+            assert consensus._validate_strategy_blocks_contract(child, 18)[0]
+            assert child["monochromator_resolution_nm"] == 2.0 and child["witness_reset_layers"] == [6]
+            assert all(b["wavelength"] in (500, 600, 610) for b in blocks)
+        assert sample_parents == sample_before
+        record["checks"].append("Generic18-layer odd-width reachability, deterministic stream, real contracts, slit/witness and legal grid")
+
+        task_row = {"strategy": copy.deepcopy(parents[0]["strategy"]), "robustness_score": 0.03,
+                    "crash_rate": 0.0, "results_per_noise": [{"noise_level": 0.05, "rmse_p95": 0.03,
+                                                            "rmse_all": np.array([0.02, 0.03])}]}
+        calls = []
+        real_task, real_elite, real_finalize = robustness._test_strategy_robustness_task, consensus._apply_elite_refinement_if_enabled, robustness._finalize_robustness_results
+
+        @wraps(real_task)
+        def fake_task(*a, **kw):
+            calls.append((a, kw))
+            if a[6].get("verification_error"):
+                raise RuntimeError("Verification error")
+            return task_row
+
+        @wraps(real_finalize)
+        def fake_finalize(strategies_results, params, logger):
+            return {"all_strategies_results": strategies_results}
+
+        @wraps(real_elite)
+        def fake_elite(strategies_results, ctx, apply_consensus_fn):
+            consensus._log_elite_parents(logging.getLogger("trace_verify"), 1, strategies_results)
+            consensus._generate_elite_candidate_strategies(**kwargs)
+            return strategies_results
+
+        originals = {name: getattr(consensus, name) for name in (
+            "_generate_elite_candidate_strategies", "_log_elite_parents", "_validate_strategy_blocks_contract",
+            "_resolve_elite_nominal_and_target_threshold", "_select_consensus_candidates", "_log_consensus_ranking_enabled",
+            "_apply_consensus_scores_to_results", "_consume_cached_consensus_score")}
+        task_args = (task_row["strategy"], 0, [0.05], 300, [100.0] * 75, {}, {"robustness_seed": 41},
+                     None, None, None, None, None, None)
+        with patch.object(robustness, "_test_strategy_robustness_task", fake_task), patch.object(
+            robustness, "_finalize_robustness_results", fake_finalize
+        ), patch.object(consensus, "_apply_elite_refinement_if_enabled", fake_elite):
+            try:
+                with observe(consensus, robustness) as captured:
+                    actual = robustness._test_strategy_robustness_task(*task_args, compute_layer_profile=False)
+                    assert actual is task_row
+                    assert calls[-1][0] == task_args
+                    assert calls[-1][1] == {"compute_layer_profile": False}
+                    meta = {str(task_row["strategy"]["strategy_id"]): {"score": 0.02, "mean": 0.018, "std": 0.002,
+                            "worst": 0.021, "seeds": np.array([41, 42, 43]), "n_samples": 3}}
+                    rows = [task_row]
+                    selected = consensus._select_consensus_candidates(rows, consensus_top_k=12)
+                    assert selected[1][0] is task_row
+                    consensus._apply_consensus_scores_to_results(results_in=rows, consensus_map=meta, consensus_mode="mean_std")
+                    ctx = SimpleNamespace(num_layers=75, num_runs=300, strategy_id_namespace_n_blocks=10)
+                    assert consensus._apply_elite_refinement_if_enabled(rows, ctx, None) is rows
+                    assert robustness._finalize_robustness_results(rows, {}, None)["all_strategies_results"] is rows
+                    saved = next(e for e in captured["events"] if e["kind"] == "consensus_applied")
+                    task_row["robustness_consensus_meta"]["seeds"][0] = 999
+                    assert saved["rows"][0]["robustness_consensus_meta"]["seeds"].tolist() == [41, 42, 43]
+                    encoded = json.loads(json.dumps(captured, default=convert))
+                    assert any(e["kind"] == "physical_task_result" and e["num_runs"] == 300 and e["seed"] == 41 for e in encoded["events"])
+                    try:
+                        convert(object())
+                    except TypeError:
+                        pass
+                    else:
+                        raise AssertionError("Unsupported serialization was swallowed")
+                    failing = (*task_args[:6], {"robustness_seed": 41, "verification_error": True}, *task_args[7:])
+                    robustness._test_strategy_robustness_task(*failing)
+            except RuntimeError as error:
+                if str(error) != "Verification error":
+                    raise
+                assert captured["events"][-1]["kind"] == "physical_task_error"
+            else:
+                raise AssertionError("Task exception was swallowed")
+            assert robustness._test_strategy_robustness_task is fake_task
+            assert consensus._apply_elite_refinement_if_enabled is fake_elite
+        assert robustness._test_strategy_robustness_task is real_task
+        assert robustness._finalize_robustness_results is real_finalize
+        assert consensus._apply_elite_refinement_if_enabled is real_elite
+        assert all(getattr(consensus, name) is function for name, function in originals.items())
+        record["checks"].extend(["Task argument/result identity and actual depth capture", "Consensus metadata copied before late NumPy mutation",
+                                 "Unsupported serialization rejected", "Task exception propagated and all patches restored"])
+        assert {name: hashlib.sha256(p.read_bytes()).hexdigest() for name, p in paths.items()} == hashes
+        assert {name: hashlib.sha256((worktree / name).read_bytes()).hexdigest() for name in sources} == sources
+        record["verdict"] = "GO"
+    except BaseException:
+        record.update(verdict="FAILED", error=traceback.format_exc())
+        raise
+    finally:
+        record["finished_utc"] = datetime.now(UTC).isoformat()
+        with target.open("x", encoding="utf-8") as stream:
+            json.dump(record, stream, ensure_ascii=False, indent=2)
+    print("PIPELINE_VERIFY=" + record["verdict"])
+
+
+if __name__ == "__main__":
+    main()

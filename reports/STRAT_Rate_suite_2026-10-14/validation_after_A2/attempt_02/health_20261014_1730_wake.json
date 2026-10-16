@@ -1,0 +1,50 @@
+{
+  "checked_local": "2026-10-14T17:32:32.1476895+02:00",
+  "preflight": "GO",
+  "A2_complete": 24,
+  "validation_status": "running",
+  "current": "unit",
+  "deadline_utc": "2026-10-15T06:00:00Z",
+  "process_inventory": [
+    {
+      "ProcessId": 37660,
+      "ParentProcessId": 28652,
+      "CommandLine": "\"C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe\" -X utf8 -"
+    },
+    {
+      "ProcessId": 48248,
+      "ParentProcessId": 37660,
+      "CommandLine": "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m pytest tests/unit/ -q --no-cov"
+    }
+  ],
+  "resources": [
+    {
+      "id": 37660,
+      "cpu_seconds": 0.25,
+      "priority": "Normal",
+      "affinity": 65535
+    },
+    {
+      "id": 48248,
+      "cpu_seconds": 1541.125,
+      "priority": "Normal",
+      "affinity": 65535
+    }
+  ],
+  "source_sha256": {
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+    "tests/unit/test_strat_elite_rate_moves.py": "574f08fc5df532759a02fc1a2b9f632e69296f10a00307bf67b071d2073735e4",
+    "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e",
+    "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+    "tests/unit/test_probe_keeps_consensus_score_provenance.py": "accd22f5f43d05f0b52cd0b01e46fb47437d66afb32ad80fc3f1eb7a48c214b9"
+  },
+  "scientific_locks": 0,
+  "unit_log_tail": [
+    "tests\\unit\\test_strat_poem.py .....................                      [ 71%]",
+    "tests\\unit\\test_strat_poem_anchors_are_exact_on_request.py .......       [ 71%]",
+    "tests\\unit\\test_strat_ranking_logger.py ........                         [ 71%]",
+    "tests\\unit\\test_strat_ranking_rule.py ............                       [ 71%]",
+    "tests\\unit\\test_strat_rate_and_resolution.py ................."
+  ],
+  "no_measurement_started": true
+}

@@ -1,0 +1,30 @@
+{
+  "checked_utc": "2026-10-13T21:35:14.612346+00:00",
+  "status": "running",
+  "completed_stages": 311,
+  "total_stages": 525,
+  "scored": 3100,
+  "eligible": 3099,
+  "best_ablation_so_far": {
+    "id": 9980047,
+    "name": "ablation_saved_900752354",
+    "move": {
+      "kind": "saved_ablation_plan",
+      "original_id": 900752354
+    },
+    "eligible": true,
+    "score": 0.032749965266219656,
+    "crash_rate": 0.0,
+    "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_ablation_consensus_all_2026-10-13\\batch_005\\attempt_01\\search.json"
+  },
+  "best_ablation_seel_nm": 0.3619390294854627,
+  "error": null,
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "confirmation_pid": 35012,
+  "confirmation_status": "waiting_for_pool"
+}

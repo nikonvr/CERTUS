@@ -1,0 +1,8 @@
+{
+  "observed_utc": "2026-10-15T09:34:46.515144+00:00",
+  "status": "FAILED_BEFORE_CHILD_OR_CLAIM",
+  "cause": "Get-FileHash unavailable in the background Windows PowerShell5.1 module environment",
+  "no_measurement_repeated": true,
+  "repair": "New copied coordinator uses System.Security.Cryptography.SHA256 directly for the same exact digests; no module dependency",
+  "new_controller_sha256": "9101d8a81ee7d5bcc339b343c4ce5c0dad1d022a8bff461e9c39788710525b08"
+}

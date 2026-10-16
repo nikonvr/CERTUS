@@ -1,0 +1,176 @@
+"""Verify orchestration with labelled synthetic scores; perform no scientific simulation."""
+
+from __future__ import annotations
+
+import ast
+import copy
+import json
+import subprocess
+from contextlib import nullcontext
+from datetime import UTC, datetime
+from pathlib import Path
+from unittest.mock import patch
+
+import rate_H03_guard as guard
+import rate_H03_post_planner as planner
+from rate_H03_parent_selection import freeze_selections, select_parents
+from rate_R4_candidates import signature
+from rate_R4_planner_resume_v3 import save
+
+ROOT, EXP = guard.ROOT, guard.EXPERIMENT
+CHECKS = []
+
+
+def expect_rejection(function, *args, **kwargs):
+    try:
+        function(*args, **kwargs)
+    except (RuntimeError, ValueError, FileExistsError):
+        return
+    raise AssertionError("Expected rejection")
+
+
+def node(path, name):
+    return next(n for n in ast.walk(ast.parse(path.read_text(encoding="utf-8")))
+                if isinstance(n, ast.FunctionDef) and n.name == name)
+
+
+def run():
+    guard.check_deadline()
+    for name in ("check_sources", "record_task", "keep_fixed_plans", "evaluate_fixed"):
+        before = node(ROOT / "scratch/rate_fixed_replay_R4.py", name)
+        after = node(ROOT / "scratch/rate_H03_post_scorer.py", name)
+        assert ast.dump(before) == ast.dump(after), name
+        CHECKS.append(name + ": exact validated physical callback AST")
+    before = node(ROOT / "scratch/rate_native_R3_wavelengths_probe.py", "generate")
+    after = node(ROOT / "scratch/rate_native_H03_probe.py", "generate")
+    assert ast.dump(before) == ast.dump(after)
+    CHECKS.append("Native generator wrapper unchanged; both arms fine_wavelengths=True")
+    for function in ("check_deadline", "is_language_server"):
+        assert ast.dump(node(ROOT / "scratch/rate_R4_guard.py", function)) == ast.dump(node(ROOT / "scratch/rate_H03_guard.py", function))
+    expect_rejection(guard.check_deadline, "2026-10-16T06:00:01Z")
+    expect_rejection(guard.check_deadline, now=datetime(2026, 10, 16, 6, tzinfo=UTC))
+    expect_rejection(guard.reserve_slot, {"phase": "R3_h04_control", "deadline_utc": guard.check_deadline()})
+    CHECKS.append("Exact installed IDE exemption, morning boundary and unknown/fourth slot refusals")
+    row = {"id": 11, "blocs": [{"start": 0, "end": 18, "wavelength": 507.0}],
+           "rate_layers": list(range(2, 8)) + list(range(11, 18)), "resolution_nm": None,
+           "robustness_score_consensus": 2.0, "score": -999,
+           "robustness_consensus_meta": {"seeds": [41, 42, 43], "n_samples": 3}, "witness_reset_layers": [8]}
+    artifact = {"strategies": [row], "native_pipeline_trace_adapter": {"arguments": [0, 0, 0, 0, "2"]}}
+    row2 = copy.deepcopy(row)
+    row2.update(id=12, robustness_score_consensus=1.0, score=999)
+    row2["rate_layers"] = list(range(2, 9)) + list(range(11, 18))
+    artifact["strategies"].append(row2)
+    for change in ({"robustness_score_consensus": float("nan")}, {"crash_eliminated": True},
+                   {"robustness_consensus_meta": {"seeds": [41, 42], "n_samples": 2}}):
+        invalid = copy.deepcopy(row2)
+        invalid.update({"id": 13, "robustness_score_consensus": -1000, **change})
+        artifact["strategies"].append(invalid)
+    original = copy.deepcopy(artifact)
+    parents = select_parents(artifact)
+    assert [e["plan"]["source_strategy_id"] for e in parents] == [12, 11]
+    assert parents[0]["plan"]["monochromator_resolution_nm"] == 2.0
+    parents[0]["plan"]["blocks"][0]["wavelength"] = 1
+    assert artifact["strategies"][0] == original["strategies"][0]
+    changed_control = copy.deepcopy(artifact)
+    changed_control["strategies"] = [copy.deepcopy(row)]
+    a, b = freeze_selections(artifact, artifact), freeze_selections(changed_control, artifact)
+    assert a["selections"]["variant"] == b["selections"]["variant"]
+    assert len(a["unique_replay_plans"]) == 2
+    CHECKS.append("Generic 18-layer selection: consensus before raw, incomplete/nonfinite/eliminated rejected, inherited slit/witness preserved, immutable same-arm selection")
+    protocol = guard.read(EXP / "protocol.json")
+    for anchor in protocol["anchors"]:
+        assert "expected_score_fixed_point" in anchor
+    h02 = guard.PROGRAM / "R3_h02_wavelengths"
+    real = {}
+    for arm in ("control", "variant"):
+        state = guard.read(h02 / arm / "etat.json")
+        real[arm] = guard.read(Path(state["artifact"]))
+    selected = freeze_selections(real["control"], real["variant"])
+    assert 1 <= len(selected["variant_parent_ids"]) <= 2
+    CHECKS.append("Actual exported h02 schemas parsed; only explicit complete native consensus parents selected")
+    fixture_directory = EXP / "verification_01/synthetic_fixture"
+    fixture_directory.mkdir(parents=True, exist_ok=False)
+    with nullcontext(str(fixture_directory)) as tmp:
+        post = Path(tmp) / "post"
+        post.mkdir()
+        save(post / "protocol.json", protocol, immutable=True)
+        save(post / "legal_grid.json", guard.read(EXP / "post/legal_grid.json"), immutable=True)
+        for arm in ("control", "variant"):
+            directory = post.parent / arm
+            save(directory / "artifact.json", real[arm], immutable=True)
+            save(directory / "etat.json", {"status": "complete", "fine_wavelengths": True,
+                 "source_sha256": protocol["source_sha256"], "artifact": str(directory / "artifact.json")}, immutable=True)
+            save(directory / "pipeline_trace.json", {"synthetic_fixture_only": True}, immutable=True)
+        with patch.object(planner, "EXPERIMENT", post), patch.object(guard, "POST", post):
+            next_item = planner.initialize()
+            initial_anchor = copy.deepcopy(protocol["anchors"])
+            stages = 0
+            lowest = None
+            while next_item["status"] == "ready":
+                manifest_file = Path(next_item["manifest"])
+                manifest = guard.read(manifest_file)
+                raw = guard.read(manifest_file.parent / "plans.json")
+                state = guard.read(post / "checkpoint.json")
+                guard.validate_group(manifest, raw, protocol, state)
+                if manifest["index"] > 0:
+                    for mutation in ({"new_proposals": 601}, {"group_count": 73}, {"branch_pass_counts": {"native_pass1": 301}}):
+                        expect_rejection(guard.validate_group, manifest, raw, protocol, {**state, **mutation})
+                    foreign = copy.deepcopy(raw)
+                    foreign["plans"][3]["root_parent_id"] = 9900008
+                    foreign_manifest = {**manifest, "plans_sha256": guard.hashlib.sha256(json.dumps(foreign, ensure_ascii=False, indent=2).encode()).hexdigest()}
+                    expect_rejection(guard.validate_group, foreign_manifest, foreign, protocol, state)
+                rows, calls = [], []
+                for i, plan in enumerate(raw["plans"]):
+                    score = 2.0 + i / 100
+                    if manifest["index"] == 1 and i == 3:
+                        score = 0.5  # Labelled synthetic effect, not a scientific result.
+                    rows.append({"strategy": {"strategy_id": plan["source_strategy_id"]}, "robustness_score": score})
+                    calls.extend({"id": plan["source_strategy_id"], "seed": seed, "num_runs": 300} for seed in (101, 41, 42, 43))
+                result = {"synthetic_not_physical": True, "verdict": "OK", "errors": [], "setting": protocol["control"],
+                          "source_sha256": protocol["source_sha256"], "plans_sha256": manifest["plans_sha256"],
+                          "protocol_sha256": guard.sha(post / "protocol.json"), "group_manifest_sha256": guard.sha(manifest_file),
+                          "search_eligible_ids": [p["source_strategy_id"] for p in raw["plans"]], "search_rejected": [],
+                          "final_results": {"all_strategies_results": rows}, "simulations": calls}
+                save(Path(next_item["output"]) / "search.json", result, immutable=True)
+                next_item = planner.next_group()
+                stages += 1
+                assert stages <= 73
+            final = guard.read(post / "checkpoint.json")
+            lowest = min(e["score"] for e in final["branches"]["native"]["beam"])
+            assert lowest == 0.5 < final["branches"]["native"]["initial_best"]
+            assert final["new_proposals"] <= 600
+            assert max(final["branch_pass_counts"].values()) <= 300
+            assert all(e["plan"]["root_parent_id"] in selected["variant_parent_ids"] for e in final["branches"]["native"]["pool"])
+            assert protocol["anchors"] == initial_anchor
+            assert planner.next_group()["status"] == "search_complete_confirmation_pending"
+            expect_rejection(planner.initialize)
+            save(post / "immutable.json", {}, immutable=True)
+            expect_rejection(save, post / "immutable.json", {}, immutable=True)
+            synthetic = {"groups": stages, "proposals": final["new_proposals"], "passes": final["branches"]["native"]["passes"],
+                         "active_output": lowest, "inactive_output": final["branches"]["native"]["initial_best"], "scientific_simulations": 0}
+    CHECKS.append("Full sequential synthetic pipeline: parent-check, charged generic moves, exclusive lineage, incumbent retention, two passes, finite quotas, early stop, idempotent completion and overwrite refusal")
+    plans = []
+    context = guard.read(guard.PROGRAM / "reference_context.json")
+    for arm in ("control", "variant"):
+        command = ["python", "-X", "utf8", str(ROOT / "scratch/rate_native_H03_probe.py"), "--plan", "--arm", arm,
+                   "--worktree", context["worktree"], "--output", str(EXP / arm), "--reference-state", str(guard.PROGRAM / "reference_context.json"),
+                   "--tag", "h03_verification_only", "--deadline-utc", "2026-10-16T06:00:00Z"]
+        value = json.loads(subprocess.check_output(command, encoding="utf-8"))
+        for key in ("arm", "bounded_slot"):
+            value.pop(key)
+        plans.append(value)
+    assert plans[0] == plans[1]
+    assert plans[0]["fine_wavelengths"] is True
+    CHECKS.append("Actual CLI --plan both arms equivalent, only arm/slot differ; no simulation or claim")
+    paths = {"adapter": "rate_native_H03_probe.py", "observer": "rate_native_pipeline_trace.py",
+             "generator": "rate_joint_native_candidates_R3_wavelengths.py", "controller_helper": "campagne_a2_runner.py",
+             "bounded_guard": "rate_H03_guard.py", "persistence_helper": "rate_R4_planner_resume_v3.py"}
+    save(EXP / "verification_01/verification.json", {"verdict": "GO", "checks": CHECKS, "synthetic_pipeline": synthetic,
+         "source_sha256": protocol["source_sha256"], "all_script_sha256": protocol["script_sha256"],
+         "script_sha256": {key: guard.sha(ROOT / "scratch" / value) for key, value in paths.items()},
+         "verified_utc": datetime.now(UTC).isoformat()}, immutable=True)
+    print(json.dumps({"verdict": "GO", "checks": len(CHECKS), "synthetic_pipeline": synthetic}))
+
+
+if __name__ == "__main__":
+    run()

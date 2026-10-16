@@ -1,0 +1,12 @@
+{
+  "exit_code": 0,
+  "seconds": 22.299654700007522,
+  "resources": {
+    "logical_cpus": 24,
+    "affinity_mask": "0xffffff",
+    "priority": "normal",
+    "library_threads": 23
+  },
+  "historical_kernel_ast_identical_except_name": true,
+  "source_sha256": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91"
+}

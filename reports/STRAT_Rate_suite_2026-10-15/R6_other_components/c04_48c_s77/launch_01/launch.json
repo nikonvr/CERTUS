@@ -1,0 +1,23 @@
+{
+  "case": "c04_48c_s77",
+  "coordinator_pid": 29856,
+  "started_utc": "2026-10-16T03:13:16.8070986Z",
+  "arguments": [
+    "48c",
+    "premium",
+    "1",
+    "0",
+    "2",
+    "0",
+    "77",
+    "0"
+  ],
+  "controller_sha256": "b48d9a7c0a5efff4cb058ead14a28835362391c8bf09e4fb900da0dbc37740cc",
+  "explicit_invocation": "scriptblock -RateCase c04_48c_s77",
+  "deadline_utc": "2026-10-16T06:00:00Z",
+  "initial_cases_passed": 3,
+  "overall_R6_pair_number": 4,
+  "max_R6_pairs": 6,
+  "science_sources_changed": false,
+  "design_sha256": "9eeb74f8ca9155839ed494dc2c8bd5abdb1a675983560fc1b99d0d0a2d8ccbe7"
+}

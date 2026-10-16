@@ -1,0 +1,21 @@
+{
+    "powershell":  "5.1.26100.9549",
+    "observed_utc":  "2026-10-15T09:32:19.0717322Z",
+    "cases":  [
+                  {
+                      "keep_handle":  false,
+                      "exit_code":  null,
+                      "exit_code_is_null":  true,
+                      "old_condition_would_fail":  true,
+                      "has_exited":  true
+                  },
+                  {
+                      "keep_handle":  true,
+                      "exit_code":  0,
+                      "exit_code_is_null":  false,
+                      "old_condition_would_fail":  false,
+                      "has_exited":  true
+                  }
+              ],
+    "physics_measured":  false
+}

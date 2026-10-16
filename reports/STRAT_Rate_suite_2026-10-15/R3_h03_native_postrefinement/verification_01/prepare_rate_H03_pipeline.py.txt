@@ -1,0 +1,245 @@
+"""Build new bounded H03 launchers without changing any measured source."""
+
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SCRATCH = ROOT / "scratch"
+
+
+def write(name, content):
+    (SCRATCH / name).write_text(content, encoding="utf-8", newline="\n")
+
+
+old = (SCRATCH / "rate_R4_guard.py").read_text(encoding="utf-8")
+guard = old[:old.index('    protocol_file = EXPERIMENT / "protocol.json"')]
+guard = guard.replace('EXPERIMENT = PROGRAM / "R4_refinement"', 'EXPERIMENT = PROGRAM / "R3_h03_native_postrefinement"\nPOST = EXPERIMENT / "post"')
+guard = guard.replace('SLOTS = {f"R4_g{i:03}": EXPERIMENT / f"groups/group_{i:03}/measurement" for i in range(1, 145)}', '''SLOTS = {"R3_h03_control": EXPERIMENT / "control", "R3_h03_variant": EXPERIMENT / "variant",
+         "R3_h03_parentcheck": POST / "parent_check/measurement"}
+SLOTS.update({f"R3_h03_post_g{i:03}": POST / f"groups/group_{i:03}/measurement" for i in range(1, 73)})''')
+guard += '''    protocol_file = EXPERIMENT / "protocol.json"
+    protocol = read(protocol_file)
+    if sha(POST / "protocol.json") != sha(protocol_file):
+        raise RuntimeError("Native/post protocol copies differ")
+    if protocol["source_sha256"] != sources or protocol["deadline_utc"] != deadline or protocol["limits"] != LIMITS:
+        raise RuntimeError("H03 frozen source/deadline/limits mismatch")
+    for name, digest in protocol["script_sha256"].items():
+        if sha(ROOT / "scratch" / name) != digest:
+            raise RuntimeError(f"Frozen H03 source changed: {name}")
+    for name, digest in protocol["input_sha256"].items():
+        if sha(ROOT / name) != digest:
+            raise RuntimeError(f"Frozen H03 input changed: {name}")
+    verification = read(EXPERIMENT / "verification_01/verification.json")
+    if verification.get("verdict") != "GO" or verification.get("all_script_sha256") != protocol["script_sha256"]:
+        raise RuntimeError("H03 verification missing or stale")
+    if phase == "R3_h03_control" and len(list((PROGRAM / "claims").glob("R3_*_control.json"))) >= 3:
+        raise RuntimeError("Three native R3 pairs consumed")
+    if phase != "R3_h03_control":
+        arms = ("control",) if phase == "R3_h03_variant" else ("control", "variant")
+        for arm in arms:
+            state = read(EXPERIMENT / arm / "etat.json")
+            if (state.get("status") != "complete" or state["source_sha256"] != sources or
+                    state["fine_wavelengths"] is not True or state["joint_widths"] != list(range(1, 8))):
+                raise RuntimeError("Finish this pair's preceding native arm with the same policy")
+    proof = {"phase": phase, "resources": expected_resources, "slot": str(output.resolve()),
+             "source_sha256": sources, "quota": 1, "deadline_utc": deadline,
+             "authorization_sha256": sha(AUTHORIZATION), "validation_sha256": sha(VALIDATION),
+             "window_authorization_sha256": sha(WINDOW_AUTHORIZATION), "protocol_sha256": sha(protocol_file)}
+    if phase not in ("R3_h03_control", "R3_h03_variant"):
+        manifest_file = output.parent / "manifest.json"
+        manifest, state = read(manifest_file), read(POST / "checkpoint.json")
+        validate_group(manifest, read(output.parent / "plans.json"), protocol, state)
+        if manifest["phase"] != phase or state["pending_group"] != str(manifest_file):
+            raise RuntimeError("Offered group differs from pending checkpoint")
+        proof.update(manifest_sha256=sha(manifest_file), plans_sha256=sha(output.parent / "plans.json"))
+    if (PROGRAM / "claims" / (phase + ".json")).exists() or (output / "etat.json").exists() or (output / "search.json").exists() or list(output.glob("request_search_*.json")):
+        raise RuntimeError("Consumed H03 slot: inspect/adopt; never replay silently")
+    return proof
+
+
+LIMITS = {"passes": 2, "global_beam": 2, "branch_beam": 2, "new_proposals": 600,
+          "branch_pass_proposals": 300, "group_proposals": 9, "groups": 72, "parent_check_groups": 1}
+ANCHORS = [900951015, 9900006, 9900008]
+
+
+def read(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def validate_group(manifest: dict, raw: dict, protocol: dict, state: dict) -> None:
+    plans = raw["plans"]
+    if manifest["protocol_sha256"] != sha(POST / "protocol.json"):
+        raise RuntimeError("Another scoring protocol")
+    if manifest["plans_sha256"] != hashlib.sha256(json.dumps(raw, ensure_ascii=False, indent=2).encode()).hexdigest():
+        raise RuntimeError("Frozen plans changed")
+    ids = [p["source_strategy_id"] for p in plans]
+    if len(ids) != len(set(ids)) or ids[:3] != ANCHORS or plans[:3] != protocol["anchors"]:
+        raise RuntimeError("Anchors/identifiers changed")
+    selection = read(POST / "parent_selection.json")
+    if manifest["parent_selection_sha256"] != sha(POST / "parent_selection.json"):
+        raise RuntimeError("Parent selection changed")
+    if manifest["phase"] == "R3_h03_parentcheck":
+        if manifest["index"] != 0 or manifest["new_plans"] != 0 or not 4 <= len(plans) <= 7 or plans[3:] != selection["unique_replay_plans"]:
+            raise RuntimeError("Parent-check quota or independently selected parents changed")
+        return
+    index = manifest["index"]
+    if not 1 <= index <= 72 or manifest["phase"] != f"R3_h03_post_g{index:03}" or index != state["group_count"]:
+        raise RuntimeError("Unknown/exhausted H03 post slot")
+    if manifest["branch"] != "native" or manifest["pass"] not in (1, 2) or manifest["stage"] not in ("coarse", "fine"):
+        raise RuntimeError("Unknown post stage")
+    if not 4 <= len(plans) <= 12 or len(plans) != manifest["new_plans"] + 3:
+        raise RuntimeError("Post group exceeds nine new proposals")
+    if (not 0 < state["new_proposals"] <= 600 or sum(state["branch_pass_counts"].values()) != state["new_proposals"] or
+            any(not 0 <= n <= 300 for n in state["branch_pass_counts"].values()) or
+            list(state["branches"]) != ["native"] or len(state["branches"]["native"]["beam"]) > 2):
+        raise RuntimeError("Post proposal/beam quota exceeded")
+    if plans[3:] != state["queue"][state["queue_offset"]:state["queue_offset"] + 9]:
+        raise RuntimeError("Offered group differs from charged queue")
+    for plan in plans[3:]:
+        if plan.get("branch") != "native" or plan.get("root_parent_id") not in selection["variant_parent_ids"] or "expected_score_fixed_point" in plan:
+            raise RuntimeError("Foreign parent or invented fixed point")
+
+
+def reserve_slot(proof: dict) -> None:
+    check_deadline(proof["deadline_utc"])
+    phase = proof["phase"]
+    if phase not in SLOTS or proof["slot"] != str(SLOTS[phase].resolve()):
+        raise RuntimeError("Unknown H03 slot")
+    if sha(WINDOW_AUTHORIZATION) != proof["window_authorization_sha256"] or sha(EXPERIMENT / "protocol.json") != proof["protocol_sha256"]:
+        raise RuntimeError("Authorization/protocol changed before reservation")
+    output = Path(proof["slot"])
+    if "manifest_sha256" in proof and (sha(output.parent / "manifest.json") != proof["manifest_sha256"] or sha(output.parent / "plans.json") != proof["plans_sha256"]):
+        raise RuntimeError("Group changed before reservation")
+    claims = PROGRAM / "claims"
+    claims.mkdir(parents=True, exist_ok=True)
+    entry = {**proof, "pid": os.getpid(), "claimed_utc": datetime.now(UTC).isoformat()}
+    with (PROGRAM / "measurement.running").open("x", encoding="utf-8") as stream:
+        json.dump(entry, stream, ensure_ascii=False, indent=2)
+    try:
+        with (claims / (phase + ".json")).open("x", encoding="utf-8") as stream:
+            json.dump(entry, stream, ensure_ascii=False, indent=2)
+    except BaseException:
+        release_slot()
+        raise
+
+
+def release_slot() -> None:
+    lock = PROGRAM / "measurement.running"
+    if lock.exists() and read(lock)["pid"] == os.getpid():
+        lock.unlink()
+'''
+write("rate_H03_guard.py", guard)
+
+planner = (SCRATCH / "rate_R4_planner.py").read_text(encoding="utf-8")
+start = planner.index('def prepare_stage(')
+end = planner.index('\ndef main()')
+body = planner[start:end].replace('>= 1200', '>= 600').replace('97_000_000', '98_000_000').replace('>= 144', '>= 72')
+body = body.replace('f"R4_g{index:03}"', 'f"R3_h03_post_g{index:03}"')
+body = body.replace('"prepared_utc": datetime.now(UTC).isoformat()', '"parent_selection_sha256": sha(EXPERIMENT / "parent_selection.json"), "prepared_utc": datetime.now(UTC).isoformat()')
+body = body.replace('    if state["pending_group"]:\n        consume(state)', '    if state["status"] == "search_complete_confirmation_pending":\n        return {"status": state["status"]}\n    if state["pending_group"]:\n        consume(state)')
+# Reject unsupported window contexts explicitly, preserving the incumbent.
+body = body.replace('from rate_R4_candidates import coarse, fine, signature', 'from rate_R4_candidates import coarse, fine, signature')
+body = body.replace('    streams = [generator(e["plan"], grid, 75, kind) for e in parents]', '''    streams = []
+    for entry in parents:
+        try:
+            window_context(entry["plan"], 75, kind)
+        except ValueError as error:
+            records.append({"parent": entry["plan"]["source_strategy_id"], "status": "not_applicable", "reason": str(error)})
+            streams.append(iter(()))
+        else:
+            streams.append(generator(entry["plan"], grid, 75, kind))''')
+# Parent-check consume has a distinct role and never adds control comparators to the beam.
+body = body.replace('        state["branches"][manifest["branch"]]["pool"].append(', '        if manifest["phase"] == "R3_h03_parentcheck" and strategy_id not in state["variant_parent_ids"]:\n            continue\n        state["branches"][manifest["branch"]]["pool"].append(')
+body = body.replace('    state["queue_offset"] += manifest["new_plans"]', '''    if manifest["phase"] == "R3_h03_parentcheck":
+        pool = state["branches"]["native"]["pool"]
+        if not pool:
+            raise RuntimeError("No eligible native variant parent after homogeneous scoring")
+        data = state["branches"]["native"]
+        data.update(beam=beam(pool), initial_best=min(e["score"] for e in pool),
+                    seen=sorted({signature(e["plan"]) for e in pool} | {signature(p) for p in protocol["anchors"]}))
+        state["parent_check_artifact"] = str(result_file)
+    state["queue_offset"] += manifest["new_plans"]''')
+header = '''"""H03 same-arm post planner, copied from the closed R4 prototype with separate quotas."""
+from __future__ import annotations
+
+import argparse
+import copy
+import math
+import os
+import runpy
+import sys
+from datetime import UTC, datetime
+from itertools import zip_longest
+from pathlib import Path
+
+from rate_H03_guard import ANCHORS, PROGRAM, ROOT, check_deadline, read, sha
+from rate_H03_guard import POST as EXPERIMENT
+from rate_H03_parent_selection import freeze_selections
+from rate_R4_candidates import coarse, fine, signature, window_context
+from rate_R4_planner import beam
+from rate_R4_planner_resume_v3 import save
+
+TASKS = [(p, "native", stage) for p in (1, 2) for stage in ("coarse", "fine")]
+
+
+def protocol_and_state():
+    return read(EXPERIMENT / "protocol.json"), read(EXPERIMENT / "checkpoint.json")
+
+
+def initialize():
+    check_deadline()
+    if (EXPERIMENT / "checkpoint.json").exists() or (EXPERIMENT / "parent_selection.json").exists():
+        raise RuntimeError("Existing post context: inspect and adopt, never initialize twice")
+    artifacts, provenance = {}, {}
+    protocol = read(EXPERIMENT / "protocol.json")
+    for arm in ("control", "variant"):
+        directory = EXPERIMENT.parent / arm
+        state = read(directory / "etat.json")
+        if state["status"] != "complete" or state["source_sha256"] != protocol["source_sha256"] or not state["fine_wavelengths"]:
+            raise RuntimeError("Both same-policy native arms must complete first")
+        path = Path(state["artifact"])
+        artifacts[arm] = read(path)
+        if artifacts[arm]["verdict"] != "OK":
+            raise RuntimeError("Native artifact failed")
+        provenance[arm] = {"artifact": str(path), "artifact_sha256": sha(path),
+                           "state_sha256": sha(directory / "etat.json"), "trace_sha256": sha(directory / "pipeline_trace.json")}
+    selection = freeze_selections(artifacts["control"], artifacts["variant"])
+    selection.update(native_provenance=provenance, frozen_utc=datetime.now(UTC).isoformat())
+    save(EXPERIMENT / "parent_selection.json", selection, immutable=True)
+    directory = EXPERIMENT / "parent_check"
+    raw = {"plans": [*copy.deepcopy(protocol["anchors"]), *selection["unique_replay_plans"]]}
+    save(directory / "plans.json", raw, immutable=True)
+    manifest = {"phase": "R3_h03_parentcheck", "index": 0, "branch": "native", "pass": 0, "stage": "parent_check",
+                "new_plans": 0, "before_scores": True, "plans_sha256": sha(directory / "plans.json"),
+                "protocol_sha256": sha(EXPERIMENT / "protocol.json"),
+                "parent_selection_sha256": sha(EXPERIMENT / "parent_selection.json")}
+    save(directory / "manifest.json", manifest, immutable=True)
+    state = {"status": "ready", "task_index": 0, "queue": [], "queue_offset": 0, "group_count": 0,
+             "new_proposals": 0, "branch_pass_counts": {}, "branches": {"native": {"active": True, "beam": [], "pool": [], "seen": [], "passes": []}},
+             "variant_parent_ids": selection["variant_parent_ids"], "control_comparator_ids": selection["control_comparator_ids"],
+             "pending_group": str(directory / "manifest.json"), "groups": [], "stage_records": [],
+             "protocol_sha256": sha(EXPERIMENT / "protocol.json")}
+    save(EXPERIMENT / "checkpoint.json", state)
+    return {"status": "ready", "manifest": state["pending_group"], "output": str(directory / "measurement")}
+
+
+'''
+footer = '''
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("action", choices=("initialize", "next"))
+    args = parser.parse_args()
+    if os.cpu_count() != 24:
+        raise RuntimeError("Start planner with -X cpu_count=24")
+    runpy.run_path(str(ROOT / "scratch/campagne_a2_runner.py"))["limit_resources"](24)
+    result = initialize() if args.action == "initialize" else next_group()
+    save(EXPERIMENT / "next.json", result)
+
+
+if __name__ == "__main__":
+    main()
+'''
+write("rate_H03_post_planner.py", header + body + footer)

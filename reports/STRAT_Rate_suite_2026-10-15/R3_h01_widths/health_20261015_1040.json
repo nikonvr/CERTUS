@@ -1,0 +1,15 @@
+{
+  "observed_utc": "2026-10-15T08:40:19.218872+00:00",
+  "controller_status": "running",
+  "controller_pid": 36608,
+  "current": "control",
+  "child_pid": 21508,
+  "scientific_process_count": 1,
+  "separate_IDE_language_server": 23808,
+  "affinity": 16777215,
+  "priority": "Normal",
+  "cpu_seconds_at_check": 4693.328125,
+  "observed_progress": "10:39:44 Paris: robustness evaluation,12 workers",
+  "decision": "Leave the existing sequential pair running; no tests, duplicate launch or active-source edits",
+  "new_scientific_result": false
+}

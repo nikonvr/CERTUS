@@ -1,0 +1,22 @@
+{
+  "runner": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_native_prefix_confirmation_runner.py",
+  "arguments": [
+    "--worktree",
+    "C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-equilibre\\certus0310",
+    "--native-output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_native_prefix_2026-10-14",
+    "--measurement-key",
+    "prefix_720_joint_480_rate240_rounds6_s101",
+    "--output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_confirmation_native_prefix_2026-10-14\\attempt_02",
+    "--reference-state",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_equilibre_AB_2026-10-13\\etat.json",
+    "--protocol",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_native_prefix_2026-10-14\\protocole_validation_native_prefix_v6.json",
+    "--fixed-plans",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_2026-10-14\\plans.json"
+  ],
+  "cause": "Preparation snapshot plans.json collided with the exclusive new scientific plans.json. Original failed controller and every snapshot preserved; new attempt output has no plans.json. No scientific confirmation was started.",
+  "original_failed_state_sha256": "15008b1f37fa5094301f46aa2f0afbdb8266097e3b93989245bd6ad1a44cd857",
+  "native_artifact_sha256": "85f5c3f221214d459460b57975c998ec34366eda5e644ecd1f52730666cb8472"
+}

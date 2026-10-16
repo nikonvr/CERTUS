@@ -1,0 +1,40 @@
+{
+  "prepared_utc": "2026-10-13T23:09:24.913119+00:00",
+  "runner": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_native_prefix_runner.py",
+  "arguments": [
+    "--worktree",
+    "C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-equilibre\\certus0310",
+    "--output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_native_prefix_2026-10-14",
+    "--wait-output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_2026-10-14",
+    "--reference-state",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_equilibre_AB_2026-10-13\\etat.json",
+    "--joint-budget",
+    "480",
+    "--prefix-budget",
+    "720",
+    "--rate-budget",
+    "240",
+    "--elite-rounds",
+    "6"
+  ],
+  "hashes": {
+    "rate_native_prefix_runner.py": "213a70208b6d48dc50ef9a2922c425dfae61bf6aa05afee7b0b4c842eb3b9309",
+    "rate_native_prefix_probe.py": "f9601b7c564ca7386ed0ef88fc2a52fd02795781fa4df401667a6c8ad6fd4d41",
+    "rate_prefix_native_candidates.py": "bb3e6c85e868b9805712ecfc091f3fd005f425d133a83f0adcfaa7dc1c35e230",
+    "rate_joint_native_candidates.py": "30ac713dc23b4c0754ca56f5f843309f9b3b55c583dbe4b2bf1f17427684a611",
+    "verify_rate_native_prefix_adapter.py": "a3f5602c69810886a73295b21631aa71fbf17e87e4818fa0686e73bb43041f95",
+    "campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51",
+    "protocole_validation_native_prefix_v6.json": "09b7f40d016b9c516c23e5e30c968ae4a5a3d6b9cbd2b0d8dfe5415ed688dccf"
+  },
+  "scope": "One change vs native joint480/Rate240/six rounds: append separate optical prefix-length/wavelength budget720 after all prior candidates. Existing candidate order/IDs prefix preserved within each call. First two optical; legal 10nm grid nearest values; all other windows fixed per proposed child.",
+  "verification": "Actual frozen candidate factory verified between measurements; five inactive contexts exact candidates/order/IDs/cursor, active legacy+joint prefix preserved, contracts/metadata/unique IDs/parent immutability/independent trace passed; Ruff passed after PT018 assertion formatting repair. Manual review of full adapter/controller.",
+  "defaults": "Scratch-only prefix budget default0; production source frozen; no default change",
+  "deadline_utc": "2026-10-14T07:00:00Z",
+  "fresh_groups": [
+    1515,
+    1616,
+    1717
+  ]
+}

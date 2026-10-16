@@ -1,0 +1,136 @@
+"""Verify conditional routing, fixed-plan transport and native context without simulation."""
+
+from __future__ import annotations
+
+import ast
+import json
+import os
+import sys
+from datetime import UTC, datetime
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
+
+import rate_R6_other_guard as guard
+
+
+def function(source, name):
+    return next(n for n in ast.walk(ast.parse(source)) if isinstance(n, ast.FunctionDef) and n.name == name)
+
+
+def require_failure(action, message):
+    try:
+        action()
+    except (RuntimeError, FileNotFoundError):
+        return message
+    raise AssertionError("Accepted forbidden action: " + message)
+
+
+def main():
+    deadline = guard.check_deadline()
+    directory = guard.EXPERIMENT / "verification_01"
+    directory.mkdir(exist_ok=False)
+    target = directory / "verification.json"
+    protocol, reference = guard.read(guard.PROTOCOL), guard.read(guard.REFERENCE)
+    source = (guard.ROOT / "scratch/rate_R6_other_native.py").read_text(encoding="utf-8")
+    tree = ast.parse(source)
+    assert not any(isinstance(n, ast.Name) and n.id == "patch" for n in ast.walk(tree))
+    checks = ["No scientific replacement in native adapter"]
+    assignments = {n.targets[0].id: n for n in ast.walk(tree) if isinstance(n, ast.Assign) and isinstance(n.targets[0], ast.Name)}
+    for case, seed in guard.CASES.items():
+        configs = []
+        for arm in ("control", "variant"):
+            env = {"seed": seed, "protocol": protocol, "args": SimpleNamespace(case=case, arm=arm), "str": str}
+            exec(compile(ast.Module(body=[assignments["native"], assignments["tag"]], type_ignores=[]), "<configuration only>", "exec"), env)
+            assert env["native"]["arguments"] == guard.CASE_ARGUMENTS[case]
+            configs.append(env["native"]["overrides"])
+        assert configs[0].replace("rate_post_refinement=false", "rate_post_refinement=true") == configs[1]
+        checks.append("Exact authorized eight arguments and one factor: " + case)
+    current = (guard.ROOT / "scratch/rate_R6_other_fresh_scorer.py").read_text(encoding="utf-8")
+    previous = (guard.ROOT / "scratch/rate_R5_points.py").read_text(encoding="utf-8")
+    for name in ("evaluate_fixed", "record_task"):
+        assert ast.dump(function(current, name)) == ast.dump(function(previous, name))
+        checks.append("Validated physical/float32 callback AST identical: " + name)
+    assert 'COMPOSANTS[component]' in current
+    assert '_contract(strategy, num_layers)' in current
+    assert 'params.update(protocol["depths"])' in current
+    # Load the actual GUI configuration exactly as the official probe, without invoking any worker.
+    worktree = Path(reference["worktree"])
+    from campagne_a2_runner import limit_resources
+
+    assert limit_resources(24) == guard.RESOURCES
+    os.environ.update(QT_QPA_PLATFORM="offscreen", PYTHON_CPU_COUNT="24")
+    for name in ("NUMBA_NUM_THREADS", "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "NUMEXPR_NUM_THREADS"):
+        os.environ[name] = "23"
+    sys.path[:0] = [str(worktree), str(worktree / "scripts")]
+    import bench_examples as bx
+
+    bx.qapp()
+    bx.autoanswer_dialogs(True)
+    from _composant import charger_configuration
+    from probe_blocs_vs_plantage import COMPOSANTS
+
+    from certus.core.certus_strat_consensus import _resolve_consensus_ranking_params
+    from certus.utils.certus_strat_context import _validate_strategy_blocks_contract
+    from CERTUS_STRAT import CertusStratApp
+
+    app = CertusStratApp()
+    context_proofs = {}
+    for case, args in guard.CASE_ARGUMENTS.items():
+        design, layers = COMPOSANTS[args[0]]
+        charger_configuration(app, worktree / design)
+        app.widgets["execution_mode"].setCurrentText(args[1])
+        params = app.collect_params()
+        native = _resolve_consensus_ranking_params(params, num_runs=params["robustness_num_runs"])
+        params.update(robustness_num_runs=300, n_screen_runs=50, dp_top_k=100, consensus_num_runs=300,
+                      consensus_seed_list=[17710002, 17710003, 17710004])
+        fixed = _resolve_consensus_ranking_params(params, num_runs=300)
+        assert fixed["enabled"]
+        assert fixed["num_runs"] == 300
+        assert fixed["mode"] == "mean_std"
+        assert fixed["std_weight"] == 0.35
+        assert fixed["seeds"] == params["consensus_seed_list"]
+        assert fixed["top_k"] >= 4
+        fixture = {"blocks": [{"start": 0, "end": layers, "wavelength": 600.0}], "rate_layers": []}
+        assert _validate_strategy_blocks_contract(fixture, layers)[0]
+        assert not _validate_strategy_blocks_contract(fixture, layers+1)[0]
+        context_proofs[case] = {"design": design, "design_sha256": guard.sha(worktree / design), "layers": layers,
+                               "mode": args[1], "native_consensus": native, "fixed_consensus": fixed,
+                               "fixed_depths": {key: params[key] for key in ("robustness_num_runs", "n_screen_runs", "dp_top_k", "consensus_num_runs")}}
+        checks.append("Actual design/mode/layer contract and300 fixed consensus without simulation: " + case)
+    app.close()
+    result = {"verdict": "GO", "script_sha256": protocol["script_sha256"], "checks": checks,
+              "contexts": context_proofs, "physical_evaluations": 0, "verifier_sha256": guard.sha(Path(__file__))}
+    target.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+    try:
+        phase = "R6_c04_48c_s77_control"
+        output = guard.SLOTS[phase]
+        proof = guard.check_ready(phase, output, reference["source_sha256"], requested_deadline=deadline)
+        checks.append("Actual first component guard passes without reservation")
+        for wrong_phase, wrong_path in (("R6_c03_s404_control", output), (phase, output / "wrong")):
+            checks.append(require_failure(lambda p=wrong_phase, o=wrong_path: guard.check_ready(p, o, reference["source_sha256"], requested_deadline=deadline), "Foreign/repeated slot or path refused"))
+        checks.extend(require_failure(lambda p=premature: guard.check_ready(p, guard.SLOTS[p], reference["source_sha256"], requested_deadline=deadline), "Premature variant/next component refused")
+                      for premature in ("R6_c04_48c_s77_variant", "R6_c05_r75x15_s42_control"))
+        real = guard.subprocess.check_output
+
+        def inventory(*args, **kwargs):
+            if "Get-CimInstance" in " ".join(args[0]):
+                return json.dumps([{"ProcessId": os.getpid()+1, "CommandLine": "python -m pytest"}])
+            return real(*args, **kwargs)
+
+        with patch.object(guard.subprocess, "check_output", inventory):
+            checks.append(require_failure(lambda: guard.check_ready(phase, output, reference["source_sha256"], requested_deadline=deadline), "Concurrent calculation refused"))
+        checks.append(require_failure(lambda: guard.check_deadline(deadline, now=datetime(2026, 10, 16, 6, tzinfo=UTC)), "Exact morning cutoff refused"))
+        assert not any((guard.PROGRAM / "claims" / (p + ".json")).exists() for p in guard.SLOTS)
+        result["proof_not_reserved"] = proof
+    except BaseException:
+        result["verdict"] = "FAILED"
+        raise
+    finally:
+        target.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+        (directory / "verifier.py.txt").write_bytes(Path(__file__).read_bytes())
+    print(json.dumps({"verdict": result["verdict"], "checks": len(checks), "physical_evaluations": 0}))
+
+
+if __name__ == "__main__":
+    main()

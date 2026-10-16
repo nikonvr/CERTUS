@@ -1,0 +1,28 @@
+{
+  "status": "FAILED_FIXED_POINT_PRESERVED",
+  "errors": [
+    "Fixed point failed: ablation_joint0_rate240_round6_s101 0.03517507293183044 vs 0.03339661422533983"
+  ],
+  "ablation_base_101_score": 0.03339661422533983,
+  "ablation_complete_consensus_score": 0.03517507293183044,
+  "consensus_meta": {
+    "mode": "mean_std",
+    "mean": 0.03500030484770064,
+    "std": 0.0004993373832279904,
+    "worst": 0.03553972674398954,
+    "seeds": [
+      41,
+      42,
+      43
+    ],
+    "n_samples": 3
+  },
+  "configured_depths": {
+    "robustness_num_runs": 300,
+    "n_screen_runs": 50,
+    "dp_top_k": 100,
+    "consensus_num_runs": 300
+  },
+  "control_artifact_sha256": "5b820a75146722638f6ee941e4098793468e7f57c2d38309d99db1bb53cb02d4",
+  "interpretation": "Original score equals the base simulation; complete consensus is different. Apparent incremental 1.4867 percent is not a valid same-depth comparison."
+}

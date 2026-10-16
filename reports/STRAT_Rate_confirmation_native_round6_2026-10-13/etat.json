@@ -1,0 +1,897 @@
+{
+  "status": "complete",
+  "pid": 27636,
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "hashes": {
+    "replay": "1ab91c3fc245e85887e511b4acdc18e7d0dbce27b99746f29b9eaba8920f2639",
+    "protocol": "7d864ee1416b251257743d718a45c178bb77176b8560678faadcaa199fe94d15"
+  },
+  "sequence": [
+    "control",
+    "holdout_202",
+    "holdout_303",
+    "holdout_404",
+    "holdout_505",
+    "holdout_606",
+    "holdout_707",
+    "holdout_808",
+    "holdout_909"
+  ],
+  "runs": [
+    {
+      "run": "control",
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_confirmation_native_round6_2026-10-13\\control.json",
+      "setting": {
+        "robustness_seed": 101,
+        "consensus_seed_list": [
+          41,
+          42,
+          43
+        ]
+      },
+      "plans": [
+        {
+          "id": 9900000,
+          "name": "native_joint_480_rate240_rounds6_s101",
+          "score": 0.032410960467156955,
+          "seel": 0.36006088633539163
+        },
+        {
+          "id": 9600579,
+          "name": "joint_L33_34_wl630_baseL32",
+          "score": 0.03336799909407186,
+          "seel": 0.36533819452157945
+        },
+        {
+          "id": 900951015,
+          "name": "reference_rate_s101",
+          "score": 0.03934565579798472,
+          "seel": 0.3967147882193691
+        }
+      ],
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_202",
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_confirmation_native_round6_2026-10-13\\holdout_202.json",
+      "setting": {
+        "robustness_seed": 202,
+        "consensus_seed_list": [
+          202,
+          203,
+          204
+        ]
+      },
+      "plans": [
+        {
+          "id": 9900000,
+          "name": "native_joint_480_rate240_rounds6_s101",
+          "score": 0.03255711259217562,
+          "seel": 0.36087179214882187
+        },
+        {
+          "id": 9600579,
+          "name": "joint_L33_34_wl630_baseL32",
+          "score": 0.035854681593181024,
+          "seel": 0.3787066494963141
+        },
+        {
+          "id": 900951015,
+          "name": "reference_rate_s101",
+          "score": 0.03936802990308617,
+          "seel": 0.3968275691183069
+        }
+      ],
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_303",
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_confirmation_native_round6_2026-10-13\\holdout_303.json",
+      "setting": {
+        "robustness_seed": 303,
+        "consensus_seed_list": [
+          303,
+          304,
+          305
+        ]
+      },
+      "plans": [
+        {
+          "id": 9900000,
+          "name": "native_joint_480_rate240_rounds6_s101",
+          "score": 0.033372166601425036,
+          "seel": 0.3653610083269699
+        },
+        {
+          "id": 9600579,
+          "name": "joint_L33_34_wl630_baseL32",
+          "score": 0.03441762073904961,
+          "seel": 0.3710397323147461
+        },
+        {
+          "id": 900951015,
+          "name": "reference_rate_s101",
+          "score": 0.03990268367569447,
+          "seel": 0.39951312206581885
+        }
+      ],
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_404",
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_confirmation_native_round6_2026-10-13\\holdout_404.json",
+      "setting": {
+        "robustness_seed": 404,
+        "consensus_seed_list": [
+          404,
+          405,
+          406
+        ]
+      },
+      "plans": [
+        {
+          "id": 9900000,
+          "name": "native_joint_480_rate240_rounds6_s101",
+          "score": 0.03354894876508864,
+          "seel": 0.36632744240686443
+        },
+        {
+          "id": 9600579,
+          "name": "joint_L33_34_wl630_baseL32",
+          "score": 0.034589686335195435,
+          "seel": 0.3719660540167365
+        },
+        {
+          "id": 900951015,
+          "name": "reference_rate_s101",
+          "score": 0.039948861349629744,
+          "seel": 0.3997442249720676
+        }
+      ],
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_505",
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_confirmation_native_round6_2026-10-13\\holdout_505.json",
+      "setting": {
+        "robustness_seed": 505,
+        "consensus_seed_list": [
+          505,
+          506,
+          507
+        ]
+      },
+      "plans": [
+        {
+          "id": 9900000,
+          "name": "native_joint_480_rate240_rounds6_s101",
+          "score": 0.03398958425132446,
+          "seel": 0.3687252866366746
+        },
+        {
+          "id": 9600579,
+          "name": "joint_L33_34_wl630_baseL32",
+          "score": 0.03445658133568411,
+          "seel": 0.37124968059614066
+        },
+        {
+          "id": 900951015,
+          "name": "reference_rate_s101",
+          "score": 0.03987785829631585,
+          "seel": 0.3993888245623097
+        }
+      ],
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_606",
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_confirmation_native_round6_2026-10-13\\holdout_606.json",
+      "setting": {
+        "robustness_seed": 606,
+        "consensus_seed_list": [
+          606,
+          607,
+          608
+        ]
+      },
+      "plans": [
+        {
+          "id": 9900000,
+          "name": "native_joint_480_rate240_rounds6_s101",
+          "score": 0.03288450605310711,
+          "seel": 0.36268171199059435
+        },
+        {
+          "id": 9600579,
+          "name": "joint_L33_34_wl630_baseL32",
+          "score": 0.034438137907975404,
+          "seel": 0.371150308678171
+        },
+        {
+          "id": 900951015,
+          "name": "reference_rate_s101",
+          "score": 0.0385773213581316,
+          "seel": 0.39282220588012384
+        }
+      ],
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_707",
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_confirmation_native_round6_2026-10-13\\holdout_707.json",
+      "setting": {
+        "robustness_seed": 707,
+        "consensus_seed_list": [
+          707,
+          708,
+          709
+        ]
+      },
+      "plans": [
+        {
+          "id": 9600579,
+          "name": "joint_L33_34_wl630_baseL32",
+          "score": 0.03415851388929875,
+          "seel": 0.3696404409114281
+        },
+        {
+          "id": 9900000,
+          "name": "native_joint_480_rate240_rounds6_s101",
+          "score": 0.03462283884548847,
+          "seel": 0.37214426689384034
+        },
+        {
+          "id": 900951015,
+          "name": "reference_rate_s101",
+          "score": 0.03946164106709683,
+          "seel": 0.3972990866694603
+        }
+      ],
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_808",
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_confirmation_native_round6_2026-10-13\\holdout_808.json",
+      "setting": {
+        "robustness_seed": 808,
+        "consensus_seed_list": [
+          808,
+          809,
+          810
+        ]
+      },
+      "plans": [
+        {
+          "id": 9900000,
+          "name": "native_joint_480_rate240_rounds6_s101",
+          "score": 0.032982283799694735,
+          "seel": 0.3632205049261109
+        },
+        {
+          "id": 9600579,
+          "name": "joint_L33_34_wl630_baseL32",
+          "score": 0.035243170882493624,
+          "seel": 0.3754632918541765
+        },
+        {
+          "id": 900951015,
+          "name": "reference_rate_s101",
+          "score": 0.03923015238007526,
+          "seel": 0.39613206070741236
+        }
+      ],
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_909",
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_confirmation_native_round6_2026-10-13\\holdout_909.json",
+      "setting": {
+        "robustness_seed": 909,
+        "consensus_seed_list": [
+          909,
+          910,
+          911
+        ]
+      },
+      "plans": [
+        {
+          "id": 9900000,
+          "name": "native_joint_480_rate240_rounds6_s101",
+          "score": 0.03277617535407641,
+          "seel": 0.36208383202831035
+        },
+        {
+          "id": 9600579,
+          "name": "joint_L33_34_wl630_baseL32",
+          "score": 0.03369370756777605,
+          "seel": 0.3671169163510505
+        },
+        {
+          "id": 900951015,
+          "name": "reference_rate_s101",
+          "score": 0.04091267363813893,
+          "seel": 0.40453763057663217
+        }
+      ],
+      "max_observed_crash_rate": 0
+    }
+  ],
+  "current": null,
+  "current_pid": null,
+  "updated": "2026-10-13T19:25:12+00:00",
+  "native_summary": {
+    "composant": "r75x0.5",
+    "mode": "deep",
+    "graine": 101,
+    "commit": "da1af082",
+    "arbre_modifie": true,
+    "surcharges": {
+      "elite_rate_balanced_moves": false,
+      "elite_rate_max_candidates": 240,
+      "elite_rounds": 6
+    },
+    "n_couches": 75,
+    "strategies": 5412,
+    "deposables": 5412,
+    "plantage_minimal": 0.0,
+    "meilleur_seel": 0.36006088633539163,
+    "meilleur": {
+      "id": 901054165,
+      "origine": "ELITE",
+      "n_blocs": 10,
+      "crash_rate": 0.0,
+      "score": 0.032410960467156955,
+      "lambdas": [
+        632.0,
+        451.0,
+        691.0,
+        691.0,
+        741.0,
+        733.0,
+        705.0,
+        708.0,
+        742.0,
+        580.0
+      ],
+      "blocs": [
+        {
+          "start": 0,
+          "end": 9,
+          "wavelength": 632.0
+        },
+        {
+          "start": 9,
+          "end": 20,
+          "wavelength": 451.0
+        },
+        {
+          "start": 20,
+          "end": 30,
+          "wavelength": 691.0
+        },
+        {
+          "start": 30,
+          "end": 40,
+          "wavelength": 691.0
+        },
+        {
+          "start": 40,
+          "end": 50,
+          "wavelength": 741.0
+        },
+        {
+          "start": 50,
+          "end": 55,
+          "wavelength": 733.0
+        },
+        {
+          "start": 55,
+          "end": 60,
+          "wavelength": 705.0
+        },
+        {
+          "start": 60,
+          "end": 65,
+          "wavelength": 708.0
+        },
+        {
+          "start": 65,
+          "end": 70,
+          "wavelength": 742.0
+        },
+        {
+          "start": 70,
+          "end": 75,
+          "wavelength": 580.0
+        }
+      ],
+      "margin_by_layer": {},
+      "rate_layers": [
+        6,
+        7,
+        8,
+        9,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74
+      ],
+      "crash_eliminated": false,
+      "crash_rates_by_noise": {
+        "0.025": 0.0,
+        "0.05": 0.0,
+        "0.1": 0.0
+      },
+      "rmse_par_bruit": {
+        "0.025": {
+          "n": 300,
+          "plantes": 0,
+          "rmse_p95": 0.029454436624581387,
+          "rmse_p95_termines": 0.029454436624581387,
+          "rmse_moyen_plantes": null,
+          "rmse_max_termines": 0.04298176792480803,
+          "rmse_min_plantes": null
+        },
+        "0.05": {
+          "n": 300,
+          "plantes": 0,
+          "rmse_p95": 0.02880263450801089,
+          "rmse_p95_termines": 0.02880263450801089,
+          "rmse_moyen_plantes": null,
+          "rmse_max_termines": 0.03831996683372356,
+          "rmse_min_plantes": null
+        },
+        "0.1": {
+          "n": 300,
+          "plantes": 0,
+          "rmse_p95": 0.032719526946813696,
+          "rmse_p95_termines": 0.032719526946813696,
+          "rmse_moyen_plantes": null,
+          "rmse_max_termines": 0.03915371772353074,
+          "rmse_min_plantes": null
+        }
+      },
+      "critical_layer": {
+        "layer": 37,
+        "cause": "niveau d'arret hors d'atteinte",
+        "margin_in_A": 5.650094214139978,
+        "verdict": "impossible",
+        "n_layers_below_2A": 0
+      },
+      "resolution_nm": 2.0,
+      "resolution_noise_factor": 1.0
+    },
+    "classes": {
+      "mixte": {
+        "plans": 2709,
+        "meilleur_seel": 0.36006088633539163,
+        "meilleur": {
+          "id": 901054165,
+          "origine": "ELITE",
+          "n_blocs": 10,
+          "crash_rate": 0.0,
+          "score": 0.032410960467156955,
+          "lambdas": [
+            632.0,
+            451.0,
+            691.0,
+            691.0,
+            741.0,
+            733.0,
+            705.0,
+            708.0,
+            742.0,
+            580.0
+          ],
+          "blocs": [
+            {
+              "start": 0,
+              "end": 9,
+              "wavelength": 632.0
+            },
+            {
+              "start": 9,
+              "end": 20,
+              "wavelength": 451.0
+            },
+            {
+              "start": 20,
+              "end": 30,
+              "wavelength": 691.0
+            },
+            {
+              "start": 30,
+              "end": 40,
+              "wavelength": 691.0
+            },
+            {
+              "start": 40,
+              "end": 50,
+              "wavelength": 741.0
+            },
+            {
+              "start": 50,
+              "end": 55,
+              "wavelength": 733.0
+            },
+            {
+              "start": 55,
+              "end": 60,
+              "wavelength": 705.0
+            },
+            {
+              "start": 60,
+              "end": 65,
+              "wavelength": 708.0
+            },
+            {
+              "start": 65,
+              "end": 70,
+              "wavelength": 742.0
+            },
+            {
+              "start": 70,
+              "end": 75,
+              "wavelength": 580.0
+            }
+          ],
+          "margin_by_layer": {},
+          "rate_layers": [
+            6,
+            7,
+            8,
+            9,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            39,
+            40,
+            41,
+            42,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50,
+            51,
+            52,
+            53,
+            54,
+            55,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74
+          ],
+          "crash_eliminated": false,
+          "crash_rates_by_noise": {
+            "0.025": 0.0,
+            "0.05": 0.0,
+            "0.1": 0.0
+          },
+          "rmse_par_bruit": {
+            "0.025": {
+              "n": 300,
+              "plantes": 0,
+              "rmse_p95": 0.029454436624581387,
+              "rmse_p95_termines": 0.029454436624581387,
+              "rmse_moyen_plantes": null,
+              "rmse_max_termines": 0.04298176792480803,
+              "rmse_min_plantes": null
+            },
+            "0.05": {
+              "n": 300,
+              "plantes": 0,
+              "rmse_p95": 0.02880263450801089,
+              "rmse_p95_termines": 0.02880263450801089,
+              "rmse_moyen_plantes": null,
+              "rmse_max_termines": 0.03831996683372356,
+              "rmse_min_plantes": null
+            },
+            "0.1": {
+              "n": 300,
+              "plantes": 0,
+              "rmse_p95": 0.032719526946813696,
+              "rmse_p95_termines": 0.032719526946813696,
+              "rmse_moyen_plantes": null,
+              "rmse_max_termines": 0.03915371772353074,
+              "rmse_min_plantes": null
+            }
+          },
+          "critical_layer": {
+            "layer": 37,
+            "cause": "niveau d'arret hors d'atteinte",
+            "margin_in_A": 5.650094214139978,
+            "verdict": "impossible",
+            "n_layers_below_2A": 0
+          },
+          "resolution_nm": 2.0,
+          "resolution_noise_factor": 1.0
+        }
+      },
+      "queue": {
+        "plans": 2703,
+        "meilleur_seel": 0.49995802429685704,
+        "meilleur": {
+          "id": 901250548,
+          "origine": "ELITE",
+          "n_blocs": 12,
+          "crash_rate": 0.0,
+          "score": 0.062489506514704175,
+          "lambdas": [
+            630.0,
+            674.0,
+            675.0,
+            695.0,
+            639.0,
+            656.0,
+            744.0,
+            740.0,
+            733.0,
+            701.0,
+            525.0,
+            524.0
+          ],
+          "blocs": [
+            {
+              "start": 0,
+              "end": 6,
+              "wavelength": 630.0
+            },
+            {
+              "start": 6,
+              "end": 12,
+              "wavelength": 674.0
+            },
+            {
+              "start": 12,
+              "end": 19,
+              "wavelength": 675.0
+            },
+            {
+              "start": 19,
+              "end": 25,
+              "wavelength": 695.0
+            },
+            {
+              "start": 25,
+              "end": 31,
+              "wavelength": 639.0
+            },
+            {
+              "start": 31,
+              "end": 38,
+              "wavelength": 656.0
+            },
+            {
+              "start": 38,
+              "end": 44,
+              "wavelength": 744.0
+            },
+            {
+              "start": 44,
+              "end": 50,
+              "wavelength": 740.0
+            },
+            {
+              "start": 50,
+              "end": 56,
+              "wavelength": 733.0
+            },
+            {
+              "start": 56,
+              "end": 62,
+              "wavelength": 701.0
+            },
+            {
+              "start": 62,
+              "end": 69,
+              "wavelength": 525.0
+            },
+            {
+              "start": 69,
+              "end": 75,
+              "wavelength": 524.0
+            }
+          ],
+          "margin_by_layer": {
+            "level": {
+              "6": 4.27
+            }
+          },
+          "rate_layers": [
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39,
+            40,
+            41,
+            42,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50,
+            51,
+            52,
+            53,
+            54,
+            55,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74
+          ],
+          "crash_eliminated": false,
+          "crash_rates_by_noise": {
+            "0.025": 0.0,
+            "0.05": 0.0,
+            "0.1": 0.0
+          },
+          "rmse_par_bruit": {
+            "0.025": {
+              "rmse_p95": 0.04571092283321165
+            },
+            "0.05": {
+              "rmse_p95": 0.05301287554187971
+            },
+            "0.1": {
+              "rmse_p95": 0.06614946813046034
+            }
+          },
+          "critical_layer": {
+            "layer": 6,
+            "cause": "niveau d'arret hors d'atteinte",
+            "margin_in_A": 4.270217857440972,
+            "verdict": "impossible",
+            "n_layers_below_2A": 0
+          },
+          "resolution_nm": 2.0,
+          "resolution_noise_factor": 1.0
+        }
+      }
+    },
+    "paquets_de_rate": {
+      "1": 2711,
+      "2": 1482,
+      "3": 1168,
+      "4": 51
+    }
+  },
+  "plans_sha256": "667777d736e17a59a6cffa6cd6cfe1a30770e5fe03122c922d4f4090db78bfc5"
+}

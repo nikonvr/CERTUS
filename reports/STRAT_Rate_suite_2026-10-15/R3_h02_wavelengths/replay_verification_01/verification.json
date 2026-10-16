@@ -1,0 +1,67 @@
+{
+  "verdict": "GO",
+  "verified_utc": "2026-10-15T12:34:35.048701+00:00",
+  "checks": [
+    "Authorized instant immediately before cutoff accepted",
+    "Rejected: No new measurement or test after the authorized morning cutoff",
+    "Rejected: No new measurement or test after the authorized morning cutoff",
+    "Rejected: The requested deadline exceeds the authorized window",
+    "Rejected: The requested deadline exceeds the authorized window",
+    "check_sources AST unchanged from the validated h01/R0 path",
+    "record_task AST unchanged from the validated h01/R0 path",
+    "keep_fixed_plans AST unchanged from the validated h01/R0 path",
+    "evaluate_fixed AST unchanged from the validated h01/R0 path",
+    "Synthetic 4-plan bound accepted without physical scoring",
+    "Synthetic 8-plan bound accepted without physical scoring",
+    "Rejected: This replay requires four to eight unique frozen plans",
+    "Rejected: This replay requires four to eight unique frozen plans",
+    "Rejected: Replay identifiers must be unique",
+    "Rejected: The frozen plans must be deduplicated by complete plan",
+    "Rejected: Complete comparator or fixed score changed: 900951015",
+    "Rejected: Complete comparator or fixed score changed: 900951015",
+    "Rejected: Every frozen plan requires four actual full-depth calls",
+    "Rejected: This launcher only supports its fixed, single R3 pair slot",
+    "Rejected: This launcher only supports its fixed, single R3 pair slot",
+    "Actual idle/source/authorization/protocol/quota guard GO; no reservation taken",
+    "All actual frozen complete plans pass the real75-layer mixed-plan contract"
+  ],
+  "physics_measured": false,
+  "ready_proof": {
+    "phase": "R3_h02_replay",
+    "resources": {
+      "logical_cpus": 24,
+      "affinity_mask": "0xffffff",
+      "priority": "normal",
+      "library_threads": 23
+    },
+    "authorization_sha256": "50448c46c5a2335d7d706cf564e2565d97c5d2e6de447913071103af4b39ffa9",
+    "validation_sha256": "03de1b4f0985438843f3f2afb8f2bc2f81a06dd44737e37acfa7ce510aef51ba",
+    "source_sha256": {
+      "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+      "certus/core/certus_strat_robustness.py": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+      "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+      "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+      "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e"
+    },
+    "slot": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R3_h02_wavelengths\\homogeneous_replay",
+    "quota": 1,
+    "protocol_sha256": "b720164baabaddcac023543e31d7c1447fa93cf937645f63ec3fbdbec3a2eb43",
+    "deadline_utc": "2026-10-16T06:00:00+00:00",
+    "window_authorization_sha256": "3f7f52860cd28152b70fa7577a3a5de32308d26021401a12b43f0d4d6cc400c4"
+  },
+  "source_sha256": {
+    "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+    "certus/core/certus_strat_robustness.py": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+    "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+    "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e"
+  },
+  "unique_plans": 6,
+  "required_physical_calls": 24,
+  "script_sha256": {
+    "rate_fixed_replay_R3_h02.py": "4156de715df987cf34f6143e9439f401a93a0377bc1d3049d7f0ad2b550b770c",
+    "rate_R3_h02_replay_guard.py": "274dc0f98cc4d1d61d9d744645b85ef7c26f6654ec80c8d4a458587443c48df7",
+    "verify_rate_R3_h02_replay.py": "1511d8d27eaf2c2e0dc0d334df15954b8340a4e549d17319d70ec6ea22359724"
+  },
+  "review": "Exact callback ASTs, explicit boundaries, full comparator metadata; manual review remains separate"
+}

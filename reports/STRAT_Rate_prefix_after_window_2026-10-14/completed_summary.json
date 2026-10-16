@@ -1,0 +1,65 @@
+{
+  "status": "complete",
+  "n_proposals": 607,
+  "eligible_complete_consensus": 429,
+  "excluded": 178,
+  "best": {
+    "id": 9910275,
+    "name": "prefix_L1_5_wl613_parent9900006",
+    "move": {
+      "kind": "wavelength_only",
+      "parent_id": 9900006,
+      "prefix_length": 5,
+      "wavelength": 613,
+      "original_prefix_length": 5
+    },
+    "eligible": true,
+    "score": 0.02797523766720083,
+    "crash_rate": 0.0,
+    "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_after_window_2026-10-14\\batch_028\\attempt_01\\search.json"
+  },
+  "seel": 0.3345159946382285,
+  "artifact_sha256": "4bd54122f4517c3a123e2321684b355513fc7b5f766b466293ed8f976dc7ce9e",
+  "confirmation_runs": 4,
+  "comparisons": [
+    {
+      "run": "control",
+      "seel": 0.3345159946382285,
+      "reference": 0.3967147882193691,
+      "parent": 0.3409240517636628,
+      "gain_reference_percent": 15.67846609911272,
+      "gain_parent_percent": 1.8796142695958973,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_2727",
+      "seel": 0.3403585045412538,
+      "reference": 0.39430810738473504,
+      "parent": 0.341997301370675,
+      "gain_reference_percent": 13.68209322433267,
+      "gain_parent_percent": 0.4791841405920816,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_2828",
+      "seel": 0.3376976051842709,
+      "reference": 0.40139625119750855,
+      "parent": 0.3413832839322973,
+      "gain_reference_percent": 15.869267792910824,
+      "gain_parent_percent": 1.0796307029366181,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_2929",
+      "seel": 0.34021603410687284,
+      "reference": 0.39722162250415566,
+      "parent": 0.3438016853139316,
+      "gain_reference_percent": 14.351078885864633,
+      "gain_parent_percent": 1.0429417190857215,
+      "max_observed_crash_rate": 0
+    }
+  ],
+  "incremental_gain_initial_three_groups": true,
+  "extended_confirmation": "complete7/7; nine fresh groups total, 9/9 improve reference, 8/9 improve parent; mean0.3074%, one loss2.3282%",
+  "retention": "Meilleur score de recherche conservé avec son avance incrémentale faible et hétérogène; parent688 aussi conservé; aucun défaut changé"
+}

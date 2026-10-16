@@ -1,0 +1,356 @@
+{
+  "synthetic_not_physical": true,
+  "verdict": "OK",
+  "errors": [],
+  "setting": {
+    "robustness_seed": 101,
+    "consensus_seed_list": [
+      41,
+      42,
+      43
+    ]
+  },
+  "source_sha256": {
+    "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+    "certus/core/certus_strat_robustness.py": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+    "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+    "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e"
+  },
+  "plans_sha256": "89bfc7eead62768c379a59abe19b0360ac2f518d230e416889b1dd300c308e91",
+  "protocol_sha256": "dedff535f8a12e062e912811e6219dc6f77918b4bf9e9949f407785e9b9b8e1a",
+  "group_manifest_sha256": "2285fea118178d67a867a8de24c68764cd63b385996e6f5aed4c9d906f143967",
+  "search_eligible_ids": [
+    900951015,
+    9900006,
+    9900008,
+    98000100,
+    98000101,
+    98000102,
+    98000103,
+    98000104,
+    98000105,
+    98000106,
+    98000107,
+    98000108
+  ],
+  "search_rejected": [],
+  "final_results": {
+    "all_strategies_results": [
+      {
+        "strategy": {
+          "strategy_id": 900951015
+        },
+        "robustness_score": 2.0
+      },
+      {
+        "strategy": {
+          "strategy_id": 9900006
+        },
+        "robustness_score": 2.01
+      },
+      {
+        "strategy": {
+          "strategy_id": 9900008
+        },
+        "robustness_score": 2.02
+      },
+      {
+        "strategy": {
+          "strategy_id": 98000100
+        },
+        "robustness_score": 2.03
+      },
+      {
+        "strategy": {
+          "strategy_id": 98000101
+        },
+        "robustness_score": 2.04
+      },
+      {
+        "strategy": {
+          "strategy_id": 98000102
+        },
+        "robustness_score": 2.05
+      },
+      {
+        "strategy": {
+          "strategy_id": 98000103
+        },
+        "robustness_score": 2.06
+      },
+      {
+        "strategy": {
+          "strategy_id": 98000104
+        },
+        "robustness_score": 2.07
+      },
+      {
+        "strategy": {
+          "strategy_id": 98000105
+        },
+        "robustness_score": 2.08
+      },
+      {
+        "strategy": {
+          "strategy_id": 98000106
+        },
+        "robustness_score": 2.09
+      },
+      {
+        "strategy": {
+          "strategy_id": 98000107
+        },
+        "robustness_score": 2.1
+      },
+      {
+        "strategy": {
+          "strategy_id": 98000108
+        },
+        "robustness_score": 2.11
+      }
+    ]
+  },
+  "simulations": [
+    {
+      "id": 900951015,
+      "seed": 101,
+      "num_runs": 300
+    },
+    {
+      "id": 900951015,
+      "seed": 41,
+      "num_runs": 300
+    },
+    {
+      "id": 900951015,
+      "seed": 42,
+      "num_runs": 300
+    },
+    {
+      "id": 900951015,
+      "seed": 43,
+      "num_runs": 300
+    },
+    {
+      "id": 9900006,
+      "seed": 101,
+      "num_runs": 300
+    },
+    {
+      "id": 9900006,
+      "seed": 41,
+      "num_runs": 300
+    },
+    {
+      "id": 9900006,
+      "seed": 42,
+      "num_runs": 300
+    },
+    {
+      "id": 9900006,
+      "seed": 43,
+      "num_runs": 300
+    },
+    {
+      "id": 9900008,
+      "seed": 101,
+      "num_runs": 300
+    },
+    {
+      "id": 9900008,
+      "seed": 41,
+      "num_runs": 300
+    },
+    {
+      "id": 9900008,
+      "seed": 42,
+      "num_runs": 300
+    },
+    {
+      "id": 9900008,
+      "seed": 43,
+      "num_runs": 300
+    },
+    {
+      "id": 98000100,
+      "seed": 101,
+      "num_runs": 300
+    },
+    {
+      "id": 98000100,
+      "seed": 41,
+      "num_runs": 300
+    },
+    {
+      "id": 98000100,
+      "seed": 42,
+      "num_runs": 300
+    },
+    {
+      "id": 98000100,
+      "seed": 43,
+      "num_runs": 300
+    },
+    {
+      "id": 98000101,
+      "seed": 101,
+      "num_runs": 300
+    },
+    {
+      "id": 98000101,
+      "seed": 41,
+      "num_runs": 300
+    },
+    {
+      "id": 98000101,
+      "seed": 42,
+      "num_runs": 300
+    },
+    {
+      "id": 98000101,
+      "seed": 43,
+      "num_runs": 300
+    },
+    {
+      "id": 98000102,
+      "seed": 101,
+      "num_runs": 300
+    },
+    {
+      "id": 98000102,
+      "seed": 41,
+      "num_runs": 300
+    },
+    {
+      "id": 98000102,
+      "seed": 42,
+      "num_runs": 300
+    },
+    {
+      "id": 98000102,
+      "seed": 43,
+      "num_runs": 300
+    },
+    {
+      "id": 98000103,
+      "seed": 101,
+      "num_runs": 300
+    },
+    {
+      "id": 98000103,
+      "seed": 41,
+      "num_runs": 300
+    },
+    {
+      "id": 98000103,
+      "seed": 42,
+      "num_runs": 300
+    },
+    {
+      "id": 98000103,
+      "seed": 43,
+      "num_runs": 300
+    },
+    {
+      "id": 98000104,
+      "seed": 101,
+      "num_runs": 300
+    },
+    {
+      "id": 98000104,
+      "seed": 41,
+      "num_runs": 300
+    },
+    {
+      "id": 98000104,
+      "seed": 42,
+      "num_runs": 300
+    },
+    {
+      "id": 98000104,
+      "seed": 43,
+      "num_runs": 300
+    },
+    {
+      "id": 98000105,
+      "seed": 101,
+      "num_runs": 300
+    },
+    {
+      "id": 98000105,
+      "seed": 41,
+      "num_runs": 300
+    },
+    {
+      "id": 98000105,
+      "seed": 42,
+      "num_runs": 300
+    },
+    {
+      "id": 98000105,
+      "seed": 43,
+      "num_runs": 300
+    },
+    {
+      "id": 98000106,
+      "seed": 101,
+      "num_runs": 300
+    },
+    {
+      "id": 98000106,
+      "seed": 41,
+      "num_runs": 300
+    },
+    {
+      "id": 98000106,
+      "seed": 42,
+      "num_runs": 300
+    },
+    {
+      "id": 98000106,
+      "seed": 43,
+      "num_runs": 300
+    },
+    {
+      "id": 98000107,
+      "seed": 101,
+      "num_runs": 300
+    },
+    {
+      "id": 98000107,
+      "seed": 41,
+      "num_runs": 300
+    },
+    {
+      "id": 98000107,
+      "seed": 42,
+      "num_runs": 300
+    },
+    {
+      "id": 98000107,
+      "seed": 43,
+      "num_runs": 300
+    },
+    {
+      "id": 98000108,
+      "seed": 101,
+      "num_runs": 300
+    },
+    {
+      "id": 98000108,
+      "seed": 41,
+      "num_runs": 300
+    },
+    {
+      "id": 98000108,
+      "seed": 42,
+      "num_runs": 300
+    },
+    {
+      "id": 98000108,
+      "seed": 43,
+      "num_runs": 300
+    }
+  ]
+}

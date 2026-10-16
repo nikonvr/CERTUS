@@ -1,0 +1,77 @@
+"""Record RMSE bits in one fresh interpreter and a new cache; no strategy search."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import runpy
+import sys
+from datetime import UTC, datetime
+from pathlib import Path
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--worktree", type=Path, required=True)
+parser.add_argument("--output", type=Path, required=True)
+args = parser.parse_args()
+root = Path(__file__).resolve().parents[1]
+output, worktree = args.output.resolve(), args.worktree.resolve()
+output.relative_to(root / "reports")
+output.mkdir(parents=True, exist_ok=False)
+helper = runpy.run_path(str(root / "scratch/campagne_a2_runner.py"))
+resources = helper["limit_resources"](24)
+os.environ.update(NUMBA_CACHE_DIR=str(output / "cold_cache"), PYTHON_CPU_COUNT="24",
+                  NUMBA_THREADING_LAYER="omp", _CERTUS_NUMBA_CONFIGURED="1")
+for key in ("NUMBA_NUM_THREADS", "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
+            "VECLIB_MAXIMUM_THREADS", "NUMEXPR_NUM_THREADS"):
+    os.environ[key] = "23"
+sys.path[:0] = [str(worktree), str(worktree / "scripts")]
+import certus_physics  # noqa: E402, F401
+import numba  # noqa: E402
+import numpy as np  # noqa: E402
+from certus.physics.certus_strat_batch import compute_batch_rmse  # noqa: E402
+
+source = Path(compute_batch_rmse.py_func.__code__.co_filename).resolve()
+source.relative_to(worktree)
+rng = np.random.default_rng(20261015)
+bits, cases = {}, []
+empty = np.empty(0, dtype=np.complex128)
+for case in range(49):
+    if case == 0:
+        wls = np.linspace(400.0, 700.0, 301)
+        thick = np.array([[60.0, 100.0, 60.0, 100.0], [61.0, 100.0, 60.0, 100.0]])
+        indices = np.full((301, 4), 2.3 + 0j)
+        substrate, target = np.full(301, 1.52 + 0j), np.full(301, 0.5)
+    else:
+        count = int(rng.choice([3, 13, 41, 101]))
+        layers = int(rng.choice([1, 2, 4, 6, 8]))
+        wls = np.linspace(400.0, 750.0, count)
+        thick = rng.uniform(20.0, 180.0, (int(rng.choice([1, 2, 7])), layers))
+        indices = np.asarray(rng.uniform(1.3, 2.5, (count, layers)), dtype=np.complex128)
+        substrate = np.full(count, 1.52 + 0j)
+        target = rng.uniform(0.0, 1.0, count)
+    arguments = (thick, wls, empty, empty, substrate, target, indices)
+    variable = rng.uniform(0.1, 3.0, len(wls))
+    variable[0] = 0.0
+    variants = {"none": None, "variable": variable, "zero": np.zeros(len(wls))}
+    variants.update({f"uniform_{value}": np.full(len(wls), value) for value in (0.5, 1.0, 2.0, 7.3)})
+    variants["tiny"] = np.full(len(wls), 1e-310)
+    for corridor in (0.0, 0.005):
+        for name, weights in variants.items():
+            label = f"case_{case:02d}_corridor_{corridor}_{name}"
+            result = compute_batch_rmse(*arguments, weights, corridor, 101, 400.0, 750.0)
+            bits[label] = result.view(np.uint64)
+    bits[f"case_{case:02d}_omitted"] = compute_batch_rmse(*arguments).view(np.uint64)
+    bits[f"case_{case:02d}_explicit_none"] = compute_batch_rmse(*arguments, None).view(np.uint64)
+    cases.append({"case": case, "runs": len(thick), "layers": thick.shape[1], "wavelengths": len(wls)})
+with (output / "bits.npz").open("xb") as stream:
+    np.savez(stream, **bits)
+manifest = {"created_utc": datetime.now(UTC).isoformat(), "worktree": str(worktree),
+            "source_file": str(source), "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+            "probe_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(), "resources": resources,
+            "numba_threads": numba.get_num_threads(), "numpy": np.__version__, "numba": numba.__version__,
+            "arrays": len(bits), "cases": cases, "cache": os.environ["NUMBA_CACHE_DIR"]}
+with (output / "manifest.json").open("x", encoding="utf-8") as stream:
+    json.dump(manifest, stream, indent=2)
+print(f"RMSE_CORPUS=GO arrays={len(bits)} output={output}")

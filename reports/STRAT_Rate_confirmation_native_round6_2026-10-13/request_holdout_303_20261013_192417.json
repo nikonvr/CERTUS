@@ -1,0 +1,27 @@
+{
+  "status": "complete",
+  "pid": 32076,
+  "run": "holdout_303",
+  "setting": {
+    "robustness_seed": 303,
+    "consensus_seed_list": [
+      303,
+      304,
+      305
+    ]
+  },
+  "plans_sha256": "667777d736e17a59a6cffa6cd6cfe1a30770e5fe03122c922d4f4090db78bfc5",
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "source_sha256": {
+    "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127"
+  },
+  "started": "2026-10-13T19:24:17.462255+00:00",
+  "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_confirmation_native_round6_2026-10-13\\holdout_303.json",
+  "errors": []
+}

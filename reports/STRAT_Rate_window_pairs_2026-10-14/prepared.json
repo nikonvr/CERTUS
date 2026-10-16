@@ -1,0 +1,41 @@
+{
+  "prepared_utc": "2026-10-14T03:08:11.734420+00:00",
+  "runner": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_pair_runner.py",
+  "arguments": [
+    "--worktree",
+    "C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-equilibre\\certus0310",
+    "--proposals",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_window_pairs_2026-10-14\\proposals.json",
+    "--protocol",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_window_pairs_2026-10-14\\protocole_validation_window_pairs_v9.json",
+    "--reference-state",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_equilibre_AB_2026-10-13\\etat.json",
+    "--trial-output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_window_widths_2026-10-14",
+    "--output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_window_pairs_2026-10-14"
+  ],
+  "hashes": {
+    "rate_pair_runner.py": "a6cde7ab1cadb5bf96ce42dc53b8983d66e90f9b3e1670a9c3aa250f6b39f110",
+    "rate_pair_confirmation_runner.py": "6546f64b12b587b4223ee368d742065dbf9e5292a5a1ceff29f3ffdeac9b776f",
+    "rate_fixed_replay_confirmation_v9.py": "8867689ed015ee238f92ab1a6bda431a36ea899d5bb510e46595c9a4520b7252",
+    "prepare_rate_window_pairs.py": "b18e3c868825b787d26009d25c05d00177a3851773d991261202d38b45be7596",
+    "verify_rate_window_pairs.py": "20eddd7efa78197a75ffc124eb56c0ac93fc1ade0849a6409c16ef5c8b2e1853",
+    "prepare_rate_pair_orchestration.py": "aab796e7406f57490545ec1d744b3e1bc458c323830e19be2a3e1eb8036458e8",
+    "rate_fixed_replay.py": "05376a9240c66a99a1f4f5bf1a7300045d13ed83ca0ed4a4f88300a73688a2c3",
+    "campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51",
+    "proposals.json": "9a3162a3b9c954da51b4061eeca7777ed14e43e7d060357c6a040f4536c701bf",
+    "protocol": "672ad408e2652a30c4cc8446d596b04707ad6972783cc13e9678801612a0a2bf",
+    "selection_policy": "bfd456f7ec9ca6f773468b58ee0afab740ef3976a9f1ffdf2710e964374f2ed1"
+  },
+  "physical_replay_ast_identical_except_cli_choices": true,
+  "n_proposals": 144,
+  "status": "prepared_not_launched",
+  "fresh_groups": [
+    2424,
+    2525,
+    2626
+  ],
+  "review": "Existing sequential controller/checkpoint/fixed-point logic reused; all pair contracts verified before scoring; no default or physics change",
+  "deadline_utc": "2026-10-14T07:00:00Z"
+}

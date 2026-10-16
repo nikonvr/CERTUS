@@ -1,0 +1,11 @@
+{
+  "artifact": "r75x1.75_deep_s101_avec_da1af082.json",
+  "sha256": "176e0eb4161c252cc26d0aafdc0077696e85423caac66abe5875d05d1dcf8882",
+  "verdict": "OK",
+  "provenance_verified": true,
+  "elite_rate_moves": true,
+  "seel": 0.47172674018714195,
+  "deposables": 3800,
+  "seconds": 2865.6990156999964,
+  "scope": "Seventh A2 run, pair101 incomplete"
+}

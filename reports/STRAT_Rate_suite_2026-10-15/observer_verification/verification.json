@@ -1,0 +1,58 @@
+{
+  "verdict": "GO",
+  "started_utc": "2026-10-15T07:23:06.590815+00:00",
+  "script_sha256": {
+    "adapter": "9a87b5d5fdf208e1926c7cc8aa8fd4062354d5fddbcdf877970f81e432c981e5",
+    "observer": "df28ee632f11e6dcde87e53c78ce4dc35869194b2b579107f6725e7416562dc3",
+    "generator": "30ac713dc23b4c0754ca56f5f843309f9b3b55c583dbe4b2bf1f17427684a611",
+    "controller_helper": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51",
+    "bounded_guard": "436613d686f21ea09e3a62c2d5d9474b763e5bd0b01c0c157cb4a3f669010b5a"
+  },
+  "source_sha256": {
+    "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+    "certus/core/certus_strat_robustness.py": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+    "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+    "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e"
+  },
+  "physics_measured": false,
+  "bounded_program": {
+    "phase": "R2_native_base",
+    "resources": {
+      "logical_cpus": 24,
+      "affinity_mask": "0xffffff",
+      "priority": "normal",
+      "library_threads": 23
+    },
+    "authorization_sha256": "50448c46c5a2335d7d706cf564e2565d97c5d2e6de447913071103af4b39ffa9",
+    "validation_sha256": "03de1b4f0985438843f3f2afb8f2bc2f81a06dd44737e37acfa7ce510aef51ba",
+    "source_sha256": {
+      "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+      "certus/core/certus_strat_robustness.py": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+      "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+      "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+      "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e"
+    },
+    "slot": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R2_native_base",
+    "quota": 1
+  },
+  "verifier_sha256": "341fa8b7e0f24b098abea4ed513514d7832c1a498139c47412755cacb2cb6099",
+  "checks": [
+    "Factory output/order/ids/cursor and parent immutability: []",
+    "Factory output/order/ids/cursor and parent immutability: ['rate_moves']",
+    "Factory output/order/ids/cursor and parent immutability: ['parent_results']",
+    "Factory output/order/ids/cursor and parent immutability: ['available_wls']",
+    "Factory output/order/ids/cursor and parent immutability: ['round_robin_seed']",
+    "Task argument/result identity and actual depth capture",
+    "Consensus metadata copied before late NumPy mutation",
+    "Unsupported serialization rejected",
+    "Task exception propagated and all patches restored"
+  ],
+  "resources": {
+    "logical_cpus": 24,
+    "affinity_mask": "0xffffff",
+    "priority": "normal",
+    "library_threads": 23
+  },
+  "finished_utc": "2026-10-15T07:23:09.652143+00:00"
+}

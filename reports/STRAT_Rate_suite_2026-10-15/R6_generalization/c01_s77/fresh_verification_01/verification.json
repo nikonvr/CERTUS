@@ -1,0 +1,23 @@
+{
+  "verdict": "FAILED",
+  "script_sha256": {
+    "rate_R6_fresh_scorer.py": "d62a131fd3a1fb52d6dacf03b90249bccdd0623d9b54ffed487c8b6f1a6e5e87",
+    "rate_R6_fresh_guard.py": "3c2bb2f4cc9f938329c8e33fec5a5d9adaf2f6157327b727ba21696a97804fd3",
+    "run_rate_R6_fresh.ps1": "70b54096a98a464b26bede1ad934ce8630660237e55cfb184e853573cb464baf",
+    "rate_R5_guard.py": "2d0f28a7b1e1a282c1680d00989974e7c119d676cd4d6bfdd0e866492c4371eb",
+    "rate_R6_guard.py": "a1b217884b8416219e16a2a79955096e877e1dc69cd76293d54a65f38957d48b",
+    "rate_H03_guard.py": "c5c104d01371144eeb7fff8fc78ee339cb8171a293b2572f0544aa787fb61e00",
+    "campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51",
+    "rate_R4_planner_resume_v3.py": "c0e714c66efb130bf893d3130cd3dcd747e680a3039ce33d241f63e88cf8ba04"
+  },
+  "checks": [
+    "Validated R5 callback AST identical: evaluate_fixed",
+    "Validated R5 callback AST identical: record_task",
+    "Actual reserved non-historical seed group accepted by the real validator",
+    "Wrong old seed metadata retained as incomplete, not accepted",
+    "Shallow task and missing base call refused",
+    "Missing non-finite row conserved as rejection without replay"
+  ],
+  "physical_evaluations": 0,
+  "verifier_sha256": "6266b3f81dec8e51adcd413ea0bd6a94813991904abf089afc0704e0a6ff8577"
+}

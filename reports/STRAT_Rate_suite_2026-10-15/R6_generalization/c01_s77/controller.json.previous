@@ -1,0 +1,23 @@
+{
+    "status":  "native_variant",
+    "pid":  55048,
+    "started_utc":  "2026-10-15T21:45:53.9226465Z",
+    "runs":  [
+                 {
+                     "pid":  35160,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R6_generalization\\c01_s77\\control\\logs",
+                     "ended_utc":  "2026-10-15T22:30:04.9158500Z"
+                 },
+                 {
+                     "pid":  12900,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R6_generalization\\c01_s77\\variant\\logs",
+                     "ended_utc":  "2026-10-15T23:15:30.8851444Z"
+                 }
+             ],
+    "current_pid":  null,
+    "current_manifest":  null,
+    "persistence_retries":  0,
+    "updated_utc":  "2026-10-15T23:15:30.8861453Z"
+}

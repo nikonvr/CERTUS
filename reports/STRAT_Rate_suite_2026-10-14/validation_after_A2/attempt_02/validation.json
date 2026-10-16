@@ -1,0 +1,97 @@
+{
+  "status": "FAILED",
+  "started_utc": "2026-10-14T15:05:28.122621+00:00",
+  "pid": 37660,
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "deadline_utc": "2026-10-15T06:00:00Z",
+  "supersedes_attempt": "attempt_01 failed old-source import due to snapshot location; logical module path now matches original",
+  "checks": [
+    {
+      "name": "R1_current",
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-m",
+        "pytest",
+        "tests/unit/test_probe_keeps_consensus_score_provenance.py",
+        "-q",
+        "--no-cov"
+      ],
+      "exit_code": 0,
+      "seconds": 5.064551499992376,
+      "verdict": "GO",
+      "log": "R1_current.log"
+    },
+    {
+      "name": "R1_before_expected_failure",
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-c",
+        "import sys,types; from pathlib import Path; source=Path('D:\\\\drivefl\\\\01_Recherche_Enseignement\\\\02_Couches_Minces_Optique\\\\couches minces 2026\\\\CERTUS\\\\certus0310\\\\reports\\\\STRAT_Rate_suite_2026-10-14\\\\R1_score_export\\\\probe_before_R1.py.txt'); mod=types.ModuleType(\"probe_blocs_vs_plantage\"); mod.__file__='D:\\\\drivefl\\\\01_Recherche_Enseignement\\\\02_Couches_Minces_Optique\\\\couches minces 2026\\\\CERTUS\\\\certus0310\\\\scripts\\\\probe_blocs_vs_plantage.py'; sys.modules[mod.__name__]=mod; exec(compile(source.read_text(encoding=\"utf-8\"),mod.__file__,\"exec\"),mod.__dict__); import pytest; sys.exit(pytest.main(['tests/unit/test_probe_keeps_consensus_score_provenance.py',\"-q\",\"--no-cov\"]))"
+      ],
+      "exit_code": 1,
+      "seconds": 5.745122699998319,
+      "verdict": "EXPECTED_FAILURE_CONFIRMED",
+      "log": "R1_before_expected_failure.log"
+    },
+    {
+      "name": "ruff",
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-m",
+        "ruff",
+        "check",
+        "."
+      ],
+      "exit_code": 0,
+      "seconds": 0.20871559999068268,
+      "verdict": "GO",
+      "log": "ruff.log"
+    },
+    {
+      "name": "oracle",
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-m",
+        "pytest",
+        "tests/oracle/",
+        "-q",
+        "--no-cov"
+      ],
+      "exit_code": 0,
+      "seconds": 68.82357060001232,
+      "verdict": "GO",
+      "log": "oracle.log"
+    },
+    {
+      "name": "unit",
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-m",
+        "pytest",
+        "tests/unit/",
+        "-q",
+        "--no-cov"
+      ],
+      "exit_code": 1,
+      "seconds": 1882.3059797000024,
+      "verdict": "FAILED",
+      "log": "unit.log"
+    }
+  ],
+  "source_sha256": {
+    "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e",
+    "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+    "tests/unit/test_probe_keeps_consensus_score_provenance.py": "accd22f5f43d05f0b52cd0b01e46fb47437d66afb32ad80fc3f1eb7a48c214b9",
+    "tests/unit/test_strat_elite_rate_moves.py": "574f08fc5df532759a02fc1a2b9f632e69296f10a00307bf67b071d2073735e4"
+  },
+  "current": "unit",
+  "R1_before_sha256": "a3f391ba642300fddaae470ba432a0c8306500492bc9dcb4e25056ef13e61c32",
+  "error": "Validation failed: unit",
+  "finished_utc": "2026-10-14T15:38:10.403439+00:00"
+}

@@ -1,0 +1,8 @@
+{
+  "transient_failure_retries": 2,
+  "successful_replace": true,
+  "permanent_failure_propagated": true,
+  "old_target_preserved_on_permanent_failure": true,
+  "temporary_files_cleaned": true,
+  "verdict": "GO"
+}

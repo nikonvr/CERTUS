@@ -1,0 +1,243 @@
+{
+  "verdict": "GO",
+  "case": "c02_s202",
+  "audited_utc": "2026-10-16T01:32:28.348519+00:00",
+  "groups": [
+    {
+      "group": 1,
+      "setting": {
+        "robustness_seed": 17620001,
+        "consensus_seed_list": [
+          17620002,
+          17620003,
+          17620004
+        ]
+      },
+      "actual_calls": 24,
+      "artifact_sha256": "db835e1810a892d942cdd44360ed8765822a1271ce371406bb2c82cbafff73ae",
+      "plans": {
+        "900951015": {
+          "eligible": true,
+          "score_consensus": 0.039916518783432595,
+          "score_base": 0.03914503785390884,
+          "seel_nm": 0.3995823759048069,
+          "crash_rate": 0.0
+        },
+        "9900006": {
+          "eligible": true,
+          "score_consensus": 0.029372684841234464,
+          "score_base": 0.029227197362313207,
+          "seel_nm": 0.3427692217293406,
+          "crash_rate": 0.0
+        },
+        "9900008": {
+          "eligible": true,
+          "score_consensus": 0.028942457644709676,
+          "score_base": 0.02869706260115603,
+          "seel_nm": 0.3402496591898935,
+          "crash_rate": 0.0
+        },
+        "98620004": {
+          "eligible": true,
+          "score_consensus": 0.035680538916996275,
+          "score_base": 0.03604183017333714,
+          "seel_nm": 0.37778585953948185,
+          "crash_rate": 0.0
+        },
+        "98620005": {
+          "eligible": true,
+          "score_consensus": 0.03619157119179864,
+          "score_base": 0.037197983654665825,
+          "seel_nm": 0.3804816483973893,
+          "crash_rate": 0.0
+        },
+        "98620006": {
+          "eligible": true,
+          "score_consensus": 0.03467679116487832,
+          "score_base": 0.03508889927917089,
+          "seel_nm": 0.37243410780903685,
+          "crash_rate": 0.0
+        }
+      },
+      "rejections": []
+    },
+    {
+      "group": 2,
+      "setting": {
+        "robustness_seed": 17620011,
+        "consensus_seed_list": [
+          17620012,
+          17620013,
+          17620014
+        ]
+      },
+      "actual_calls": 24,
+      "artifact_sha256": "4cf83494f13d8aae77b1fb1ecfddc19cf24ecae5ce065ac84cddc1a12eb16cf0",
+      "plans": {
+        "900951015": {
+          "eligible": true,
+          "score_consensus": 0.03982603662854589,
+          "score_base": 0.039955891549863926,
+          "seel_nm": 0.39912923535389333,
+          "crash_rate": 0.0
+        },
+        "9900006": {
+          "eligible": true,
+          "score_consensus": 0.028734870509928078,
+          "score_base": 0.03036477655213986,
+          "seel_nm": 0.3390272585496811,
+          "crash_rate": 0.0
+        },
+        "9900008": {
+          "eligible": true,
+          "score_consensus": 0.029605738510887276,
+          "score_base": 0.028902761018497806,
+          "seel_nm": 0.3441263634822957,
+          "crash_rate": 0.0
+        },
+        "98620004": {
+          "eligible": true,
+          "score_consensus": 0.03621349632896742,
+          "score_base": 0.034799767355453676,
+          "seel_nm": 0.3805968803286092,
+          "crash_rate": 0.0
+        },
+        "98620005": {
+          "eligible": true,
+          "score_consensus": 0.03809699287608382,
+          "score_base": 0.03762968080249565,
+          "seel_nm": 0.39036901965234805,
+          "crash_rate": 0.0
+        },
+        "98620006": {
+          "eligible": true,
+          "score_consensus": 0.035474721302426605,
+          "score_base": 0.03430707449543349,
+          "seel_nm": 0.3766946843395941,
+          "crash_rate": 0.0
+        }
+      },
+      "rejections": []
+    },
+    {
+      "group": 3,
+      "setting": {
+        "robustness_seed": 17620021,
+        "consensus_seed_list": [
+          17620022,
+          17620023,
+          17620024
+        ]
+      },
+      "actual_calls": 24,
+      "artifact_sha256": "3a550b9b6ea9b7d94e512d185b79d2c8f5e51a51a5443dfe0e350fe72442df31",
+      "plans": {
+        "900951015": {
+          "eligible": true,
+          "score_consensus": 0.03924508632938225,
+          "score_base": 0.04149194779142023,
+          "seel_nm": 0.3962074523750519,
+          "crash_rate": 0.0
+        },
+        "9900006": {
+          "eligible": true,
+          "score_consensus": 0.029065246144667795,
+          "score_base": 0.030299734602270596,
+          "seel_nm": 0.3409706506118542,
+          "crash_rate": 0.0
+        },
+        "9900008": {
+          "eligible": true,
+          "score_consensus": 0.0286096448485451,
+          "score_base": 0.02987486979605152,
+          "seel_nm": 0.3382877168833956,
+          "crash_rate": 0.0
+        },
+        "98620004": {
+          "eligible": true,
+          "score_consensus": 0.03529964093866134,
+          "score_base": 0.03653365486349179,
+          "seel_nm": 0.37576397346558565,
+          "crash_rate": 0.0
+        },
+        "98620005": {
+          "eligible": true,
+          "score_consensus": 0.03753387796470684,
+          "score_base": 0.03801009253613909,
+          "seel_nm": 0.38747324018418017,
+          "crash_rate": 0.0
+        },
+        "98620006": {
+          "eligible": true,
+          "score_consensus": 0.0343010828755784,
+          "score_base": 0.035262053677276334,
+          "seel_nm": 0.37041103048142826,
+          "crash_rate": 0.0
+        }
+      },
+      "rejections": []
+    }
+  ],
+  "actual_calls": 72,
+  "comparisons": {
+    "control_complete": {
+      "by_group_pct": [
+        1.4166098585502218,
+        1.0252832302897419,
+        1.4245492815046723
+      ],
+      "evaluable_groups": 3,
+      "wins": 3,
+      "mean_pct": 1.288814123448212,
+      "median_pct": 1.4166098585502218,
+      "worst_loss_pct": 0
+    },
+    "control_official": {
+      "by_group_pct": [
+        2.115092967623833,
+        3.5029253409842642,
+        4.403454983018074
+      ],
+      "evaluable_groups": 3,
+      "wins": 3,
+      "mean_pct": 3.340491097208724,
+      "median_pct": 3.5029253409842642,
+      "worst_loss_pct": 0
+    },
+    "historical_reference": {
+      "by_group_pct": [
+        6.794160536809468,
+        5.6208738992540415,
+        6.510837123074753
+      ],
+      "evaluable_groups": 3,
+      "wins": 3,
+      "mean_pct": 6.308623853046087,
+      "median_pct": 6.510837123074753,
+      "worst_loss_pct": 0
+    },
+    "historical_best_local": {
+      "by_group_pct": [
+        -9.45906858386627,
+        -9.464058646286745,
+        -9.495855744920622
+      ],
+      "evaluable_groups": 3,
+      "wins": 0,
+      "mean_pct": -9.472994325024546,
+      "median_pct": -9.464058646286745,
+      "worst_loss_pct": 9.495855744920622
+    }
+  },
+  "scientific_case_pass": true,
+  "scientific_status": "clear_gain",
+  "decision_requires_more_data": false,
+  "stop_initial_program": false,
+  "decision": "Continue the next preplanned search case, without adding fresh groups to this case",
+  "no_additional_fresh_groups": true,
+  "small_group_uncertainty": "Three groups, no confidence interval claim",
+  "protocol_sha256": "0c028b9d6cfc035d74f87dad28cda93f400a62caac1c840b04affec44a1a75b0",
+  "frozen_finalists_sha256": "8850ade4223fec201095a557c564dd22eb2f9f8269f29836bcd4a9d94284d300",
+  "audit_sha256": "267bd1b8e5dee2603a27e3cb7bb20a7a83d081f143a0ea0285b1c6394bfb2173",
+  "physical_evaluations_executed_by_auditor": 0
+}

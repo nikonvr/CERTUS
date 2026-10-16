@@ -1,0 +1,22 @@
+{
+  "status": "PREPARED_NOT_EXECUTED",
+  "prepared_utc": "2026-10-15T11:32:12.205621+00:00",
+  "purpose": "Audit only after both h02 arms have ended; no scientific imports or simulation",
+  "source_copy": "scratch\\audit_rate_R3_arm.py",
+  "source_sha256": "b9425741b3f4560480b2850e89c9e6996ebbe8e332efddcbecf330c58b88f13e",
+  "new_script": "scratch\\audit_rate_R3_wavelengths_arm.py",
+  "new_sha256": "0548c31297f21afdf2bef07519c6850bf3e693eb49ac2261ebfc5792da965e20",
+  "changes": [
+    "Both arms widths1..7; fine wavelength flag isolated",
+    "Both-arm completion and recorded exit0 required",
+    "Frozen protocol and every script hash checked",
+    "ID-only calls explicitly labelled; no full-plan stage attribution"
+  ],
+  "checks_deferred_until_measurement_ends": [
+    "Ruff",
+    "AST/manual review",
+    "Audit execution"
+  ],
+  "active_sources_or_launchers_changed": false,
+  "tests_or_simulations_started": false
+}

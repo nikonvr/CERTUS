@@ -1,0 +1,12 @@
+{
+  "verdict": "GO",
+  "physics_measured": false,
+  "checks": [
+    "PowerShell AST parsed",
+    "Exact Save-RateR3State function: first write then two actual atomic replacements",
+    "Previous state preserved",
+    "No scientific child or quota consumed"
+  ],
+  "controller_sha256": "3eafebad379f977f7d993476300e103789b1a7103e4136c1bc39cb1a43395630",
+  "verified_utc": "2026-10-15T08:35:15.2460998Z"
+}

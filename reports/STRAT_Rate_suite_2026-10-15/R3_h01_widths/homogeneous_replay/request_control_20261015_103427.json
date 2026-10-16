@@ -1,0 +1,56 @@
+{
+  "status": "complete",
+  "pid": 50196,
+  "run": "control",
+  "setting": {
+    "robustness_seed": 101,
+    "consensus_seed_list": [
+      41,
+      42,
+      43
+    ]
+  },
+  "plans_sha256": "ce7192ff9fad9e0bc7c49bee00bebe92ea13ad488b4dff0f3c8bf7832d054b70",
+  "resources": {
+    "logical_cpus": 24,
+    "affinity_mask": "0xffffff",
+    "priority": "normal",
+    "library_threads": 23
+  },
+  "source_sha256": {
+    "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+    "certus/core/certus_strat_robustness.py": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+    "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+    "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e"
+  },
+  "bounded_program": {
+    "phase": "R3_h01_replay",
+    "resources": {
+      "logical_cpus": 24,
+      "affinity_mask": "0xffffff",
+      "priority": "normal",
+      "library_threads": 23
+    },
+    "authorization_sha256": "50448c46c5a2335d7d706cf564e2565d97c5d2e6de447913071103af4b39ffa9",
+    "validation_sha256": "03de1b4f0985438843f3f2afb8f2bc2f81a06dd44737e37acfa7ce510aef51ba",
+    "source_sha256": {
+      "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+      "certus/core/certus_strat_robustness.py": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+      "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+      "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+      "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e"
+    },
+    "slot": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R3_h01_widths\\homogeneous_replay",
+    "quota": 1,
+    "protocol_sha256": "ca113fe33b5ff2588f83ff1a139b3503388de4604d3041711c28d1481fa47aea"
+  },
+  "launcher_sha256": {
+    "launcher": "795abad65b51165718ae54bec22eee470f89c864fbc60adedeb214cb7184df4b",
+    "bounded_guard": "cc6c23f3667a8ed16756ae6963d2111f564c116224cbd5642ea657e9e424b351",
+    "controller_helper": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51"
+  },
+  "started": "2026-10-15T10:34:27.375555+00:00",
+  "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R3_h01_widths\\homogeneous_replay\\control.json",
+  "errors": []
+}

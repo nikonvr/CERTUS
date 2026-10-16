@@ -1,0 +1,25 @@
+{
+  "recorded_utc": "2026-10-16T09:13:53.140304+00:00",
+  "commit": "73469b0f",
+  "commit_exit_code": 0,
+  "automatic_maintenance_errors": [
+    "failed to delete .git/worktrees/buildwt: Permission denied",
+    "failed to delete .git/worktrees/certus0310: Permission denied",
+    "failed to delete .git/worktrees/profwt: Permission denied",
+    "failed to delete .git/worktrees/ratewt: Permission denied",
+    "failed to delete .git/worktrees/ratewt2: Permission denied",
+    "failed to delete .git/worktrees/valwt: Permission denied"
+  ],
+  "later_commands": [
+    "-c maintenance.auto=false",
+    "-c gc.auto=0"
+  ],
+  "managed_scientific_contexts_still_listed": [
+    "campagne-a2",
+    "rate-equilibre",
+    "rate-r5-native",
+    "rate-rmse-r0"
+  ],
+  "git_history_reset_or_rewritten": false,
+  "unique_worktree_data_deleted": false
+}

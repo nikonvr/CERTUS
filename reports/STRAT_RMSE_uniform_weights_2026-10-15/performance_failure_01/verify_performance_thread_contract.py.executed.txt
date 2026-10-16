@@ -1,0 +1,73 @@
+"""Verify before/after worker masks with a fake calculation, never a timing verdict."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import runpy
+import sys
+import threading
+from datetime import UTC, datetime
+from pathlib import Path
+
+
+def main() -> None:
+    root = Path(__file__).resolve().parents[1]
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output", type=Path, required=True)
+    folder = parser.parse_args().output.resolve()
+    folder.relative_to(root / "reports")
+    folder.mkdir(exist_ok=False)
+    sys.path.insert(0, str(root))
+    resources = runpy.run_path(str(root / "scratch/campagne_a2_runner.py"))["limit_resources"](24)
+    os.environ["PYTHON_CPU_COUNT"] = "24"
+    for key in ("NUMBA_NUM_THREADS", "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
+                "VECLIB_MAXIMUM_THREADS", "NUMEXPR_NUM_THREADS"):
+        os.environ[key] = "23"
+    before = root / "reports/STRAT_RMSE_uniform_weights_2026-10-15/performance_failure_01/test_performance.py.txt"
+    after = root / "tests/performance/test_performance.py"
+    record = {"started_utc": datetime.now(UTC).isoformat(), "resources": resources, "physics_measured": False,
+              "timing_measured": False, "purpose": "Thread-mask contract only; performance tests remain required", "cases": []}
+    baselines = []
+    for label, source in (("before", before), ("after", after)):
+        namespace = {"__file__": str(after), "__name__": "performance_contract_" + label}
+        data = source.read_bytes()
+        exec(compile(data.decode("utf-8"), str(source), "exec"), namespace)
+        import numba
+
+        observations = []
+        lock = threading.Lock()
+
+        def calculate(layers, wavelengths, *, _lock=lock, _observations=observations, _namespace=namespace):
+            with _lock:
+                _observations.append({"thread": threading.get_ident(), "numba_threads": numba.get_num_threads()})
+            return _namespace["np"].ones_like(wavelengths)
+
+        def cost(call, *, _namespace=namespace):
+            with _namespace["bench"].single_numba_thread():
+                call()
+            return 1.0
+
+        namespace["run_tmm_wrapper"] = calculate
+        namespace["cost"] = cost
+        namespace["TestParallelPerformance"]().test_concurrent_calculationations(namespace["np"].linspace(400, 800, 9))
+        passed = bool(observations) and all(item["numba_threads"] == 1 for item in observations)
+        record["cases"].append({"source": label, "source_sha256": hashlib.sha256(data).hexdigest(),
+                                "all_calls_use_one_numba_thread": passed, "observations": observations})
+        baselines.append(namespace["BASELINE"])
+    assert not record["cases"][0]["all_calls_use_one_numba_thread"]
+    assert record["cases"][1]["all_calls_use_one_numba_thread"]
+    assert baselines[0] == baselines[1]
+    record.update(verdict="GO", baseline_unchanged=True, regression_contract_fails_before=True,
+                  finished_utc=datetime.now(UTC).isoformat())
+    with (folder / "test_performance.after.py.txt").open("xb") as stream:
+        stream.write(after.read_bytes())
+    with (folder / "contract.json").open("x", encoding="utf-8") as stream:
+        json.dump(record, stream, ensure_ascii=False, indent=2)
+    print("THREAD_CONTRACT=GO before_fails=True after_passes=True baseline_unchanged=True timing_measured=False")
+
+
+if __name__ == "__main__":
+    main()

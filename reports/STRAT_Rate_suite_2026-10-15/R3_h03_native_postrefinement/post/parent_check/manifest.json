@@ -1,0 +1,12 @@
+{
+  "phase": "R3_h03_parentcheck",
+  "index": 0,
+  "branch": "native",
+  "pass": 0,
+  "stage": "parent_check",
+  "new_plans": 0,
+  "before_scores": true,
+  "plans_sha256": "03532fe4ea89a39faa33cea669415442cd68cc4c97d170f1205285327537e91d",
+  "protocol_sha256": "6b40d33d8407cdf241eda0a3ebed62ec2f10cbeaa83059547437a3ecc02bed1d",
+  "parent_selection_sha256": "1fc6cfeb23dfe2a5d5405e91411b99a8f30b812536d8b667f303509faffd9353"
+}

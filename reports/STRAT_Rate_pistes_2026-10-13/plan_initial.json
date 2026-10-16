@@ -1,0 +1,16 @@
+[
+  {
+    "key": "budget_240",
+    "overrides": {
+      "elite_rate_balanced_moves": false,
+      "elite_rate_max_candidates": 240
+    }
+  },
+  {
+    "key": "raffinement_6",
+    "overrides": {
+      "elite_rate_balanced_moves": false,
+      "elite_rounds": 6
+    }
+  }
+]

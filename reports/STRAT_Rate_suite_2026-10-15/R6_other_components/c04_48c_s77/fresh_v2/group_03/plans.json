@@ -1,0 +1,93 @@
+{
+  "plans": [
+    {
+      "blocks": [
+        {
+          "start": 0,
+          "end": 5,
+          "wavelength": 544.0
+        },
+        {
+          "start": 5,
+          "end": 11,
+          "wavelength": 547.0
+        },
+        {
+          "start": 11,
+          "end": 16,
+          "wavelength": 498.0
+        },
+        {
+          "start": 16,
+          "end": 32,
+          "wavelength": 485.0
+        },
+        {
+          "start": 32,
+          "end": 37,
+          "wavelength": 466.0
+        },
+        {
+          "start": 37,
+          "end": 43,
+          "wavelength": 462.0
+        },
+        {
+          "start": 43,
+          "end": 48,
+          "wavelength": 476.0
+        }
+      ],
+      "rate_layers": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47
+      ],
+      "monochromator_resolution_nm": 2.0,
+      "witness_reset_layers": null,
+      "resolution_noise_factor": 1.0,
+      "nom": "R6_control_complete",
+      "source_strategy_id": 98610001,
+      "native_source_id": 900754108
+    }
+  ]
+}

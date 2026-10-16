@@ -1,0 +1,35 @@
+"""Create new native and post-scoring adapters without changing any measured source."""
+
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+source = (ROOT / "scratch/rate_native_R3_wavelengths_probe.py").read_text(encoding="utf-8")
+source = source.replace('phase = "R3_h02_" + args.arm', 'phase = "R3_h03_" + args.arm')
+source = source.replace('fine_wavelengths = args.arm == "variant"', 'fine_wavelengths = True')
+source = source.replace('    parser.add_argument("--arm",', '    parser.add_argument("--deadline-utc", required=True)\n    parser.add_argument("--arm",')
+source = source.replace("rate_R3_wavelengths_guard.py", "rate_H03_guard.py")
+source = source.replace('bounded["check_ready"](phase, output, sources)', 'bounded["check_ready"](phase, output, sources, requested_deadline=args.deadline_utc)')
+source = source.replace('"bounded_guard": root / "scratch/rate_H03_guard.py"}',
+                        '"bounded_guard": root / "scratch/rate_H03_guard.py", "persistence_helper": root / "scratch/rate_R4_planner_resume_v3.py"}')
+source = source.replace('    resources = helper["limit_resources"](24)',
+                        '    helper["save"] = runpy.run_path(str(script_paths["persistence_helper"]))["save"]\n    resources = helper["limit_resources"](24)')
+source = source.replace('        sys.argv = [str(worktree / "scripts/probe_blocs_vs_plantage.py"), *probe_arguments]',
+                        '        bounded["check_deadline"](args.deadline_utc)\n        sys.argv = [str(worktree / "scripts/probe_blocs_vs_plantage.py"), *probe_arguments]')
+source = source.replace('only the per-window wavelength neighborhood differs between arms.',
+                        'both arms use the same fine-wavelength policy; post-processing is orchestrated separately.')
+with (ROOT / "scratch/rate_native_H03_probe.py").open("x", encoding="utf-8", newline="\n") as stream:
+    stream.write(source)
+source = (ROOT / "scratch/rate_fixed_replay_R4.py").read_text(encoding="utf-8")
+source = source.replace('root / "reports/STRAT_Rate_suite_2026-10-15/R4_refinement"',
+                        'root / "reports/STRAT_Rate_suite_2026-10-15/R3_h03_native_postrefinement/post"')
+source = source.replace('reference_file != experiment.parent / "reference_context.json"',
+                        'reference_file != experiment.parent.parent / "reference_context.json"')
+source = source.replace("rate_R4_guard.py", "rate_H03_guard.py")
+source = source.replace('"controller_helper": root / "scratch/campagne_a2_runner.py"}',
+                        '"controller_helper": root / "scratch/campagne_a2_runner.py", "persistence_helper": root / "scratch/rate_R4_planner_resume_v3.py"}')
+source = source.replace('    resources = helper["limit_resources"](24)',
+                        '    helper["save"] = runpy.run_path(str(launcher_paths["persistence_helper"]))["save"]\n    resources = helper["limit_resources"](24)')
+source = source.replace('if sorted(actual_calls) != [(41, 300), (42, 300), (43, 300), (101, 300)]:',
+                        'if sorted(actual_calls) != sorted((seed, 300) for seed in (setting["robustness_seed"], *setting["consensus_seed_list"])):')
+with (ROOT / "scratch/rate_H03_post_scorer.py").open("x", encoding="utf-8", newline="\n") as stream:
+    stream.write(source)

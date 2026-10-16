@@ -1,0 +1,119 @@
+"""Audit all three fixed fresh groups, including the preserved group1 validator counterproof."""
+
+from __future__ import annotations
+
+import math
+import statistics
+from collections import Counter
+from datetime import UTC, datetime
+
+from rate_H03_guard import EXPERIMENT, PROGRAM, ROOT, read, sha
+from rate_R4_planner_resume_v3 import save
+
+
+def require(condition, message):
+    if not condition:
+        raise RuntimeError(message)
+
+
+def numeric_values(value):
+    if isinstance(value, dict):
+        return [n for child in value.values() for n in numeric_values(child)]
+    if isinstance(value, list):
+        return [n for child in value for n in numeric_values(child)]
+    return [float(value)] if isinstance(value, (int, float)) and math.isfinite(value) else []
+
+
+def main():
+    require(not (PROGRAM / "measurement.running").exists(), "Scientific measurement lock remains")
+    require(not list((ROOT / "reports").rglob(".running")), "Scientific child lock remains")
+    directory = EXPERIMENT / "confirmation_01"
+    controller = read(directory / "controller.json")
+    require(controller["status"] == "complete", "Both remaining fresh groups are not complete")
+    protocols = {1: read(directory / "protocol.json"), 2: read(directory / "protocol.json"), 3: read(directory / "protocol.json")}
+    raw = read(directory / "frozen_plans.json")
+    require(all(p["frozen_plans"] == raw for p in protocols.values()), "Plans changed after first fresh group")
+    require(all(p["groups"] == protocols[1]["groups"] for p in protocols.values()), "Reserved seeds changed")
+    ids = [p["source_strategy_id"] for p in raw["plans"]]
+    primary = protocols[1]["primary_winner_id"]
+    native_control = protocols[1]["primary_comparator_id"]
+    rows_by_group, reports, calls_total = [], [], 0
+    for index in (1, 2, 3):
+        group = directory / f"groups/group_{index:02}"
+        protocol = protocols[index]
+        protocol_path = directory / ("protocol.json" if index == 1 else "protocol.json")
+        manifest_file = group / ("manifest.json" if index == 1 else "manifest.json")
+        result_file = group / "measurement/fresh.json"
+        result, manifest = read(result_file), read(manifest_file)
+        require(manifest["index"] == index and manifest["setting"] == protocol["groups"][index - 1], "Frozen manifest setting changed")
+        require(result["setting"] == protocol["groups"][index - 1], "Actual fresh seed setting mismatch")
+        require(result["source_sha256"] == protocol["source_sha256"], "Scientific source drift")
+        require(result["plans_sha256"] == sha(group / "plans.json"), "Plan hash mismatch")
+        require(read(group / "plans.json") == raw, "Complete plans changed")
+        require(result["protocol_sha256"] == sha(protocol_path), "Protocol hash mismatch")
+        require(result["group_manifest_sha256"] == sha(manifest_file), "Manifest hash mismatch")
+        require(result["depths"] == protocol["depths"], "Declared depths changed")
+        require(result["verdict"] == "OK" and not result["errors"], "Fresh scoring failed")
+        require(any(run["exit_code"] == 0 and run["log_directory"] == str(group / "measurement") for run in controller["runs"]), "Missing recorded fresh child exit0")
+        calls = result["simulations"]
+        setting = result["setting"]
+        require(len(calls) == protocol["actual_calls_required_per_group"] == 24 and all(c["num_runs"] == 300 and not c.get("error") for c in calls), "Actual full-depth call mismatch")
+        require(Counter(c["id"] for c in calls if c["seed"] == setting["robustness_seed"]) == Counter(ids), "Missing/duplicate base evaluations")
+        expected = sorted((seed, 300) for seed in (setting["robustness_seed"], *setting["consensus_seed_list"]))
+        rows = {r["strategy"]["strategy_id"]: r for r in result["final_results"]["all_strategies_results"]}
+        require(set(rows) == set(ids), "A frozen plan is missing from fresh output")
+        for plan in raw["plans"]:
+            strategy_id = plan["source_strategy_id"]
+            require(sorted((c["seed"], c["num_runs"]) for c in calls if c["id"] == strategy_id) == expected, "Actual seeds/depth mismatch")
+            row = rows[strategy_id]
+            require(math.isfinite(row["robustness_score"]) and not row.get("crash_eliminated", False), "A fresh plan was rejected physically")
+            meta = row["robustness_consensus_meta"]
+            require(meta["seeds"] == setting["consensus_seed_list"] and meta["n_samples"] == 3, "Incomplete fresh consensus")
+            require(all(row["strategy"].get(k) == plan.get(k) for k in ("blocks", "rate_layers", "monochromator_resolution_nm", "witness_reset_layers")), "Plan metadata drift")
+        params = result["parameters"]
+        for key, expected_value in {"execution_mode": "deep", "monochromator_resolution_nm": 2.0, "noise_layer_offset": 0,
+                                    "noise_total_layers": 75, "require_turning_point": 0, "search_resolution": False,
+                                    "ablation_profile": False, "robustness_num_runs": 300, "consensus_num_runs": 300,
+                                    "n_screen_runs": 50, "dp_top_k": 100}.items():
+            require(params.get(key) == expected_value, f"Changed physical parameter: {key}")
+        require(params.get("robustness_seed") == setting["robustness_seed"], "Worker base seed mismatch")
+        require(params.get("consensus_seed_list") == setting["consensus_seed_list"], "Worker consensus seeds mismatch")
+        require(params.get("consensus_std_weight", 0.35) == 0.35 and params.get("consensus_score_mode", "mean_std") == "mean_std", "Objective formula changed")
+        for name, digest in protocol["script_sha256"].items():
+            require(sha(ROOT / "scratch" / name) == digest, f"Changed source: {name}")
+        for name, digest in protocol["input_sha256"].items():
+            require(sha(ROOT / name) == digest, f"Changed frozen input: {name}")
+        rates = {i: [n for c in calls if c["id"] == i for n in numeric_values(c.get("crash_rates_by_noise"))] for i in ids}
+        reports.append({"index": index, "setting": setting, "actual_calls": len(calls), "artifact_sha256": sha(result_file),
+                        "scores": {i: rows[i]["robustness_score"] for i in ids},
+                        "seel_nm": {i: 2 * math.sqrt(rows[i]["robustness_score"]) for i in ids},
+                        "max_observed_crash_by_noise": {i: max(rates[i]) if rates[i] else None for i in ids},
+                        "technical_validator_failure_adopted": False})
+        calls_total += len(calls)
+        rows_by_group.append(rows)
+
+    def compare(candidate, baseline):
+        gains = [100 * (1 - math.sqrt(rows[candidate]["robustness_score"] / rows[baseline]["robustness_score"])) for rows in rows_by_group]
+        return {"candidate": candidate, "baseline": baseline, "paired_gain_seel_pct": gains,
+                "mean_gain_pct": statistics.mean(gains), "median_gain_pct": statistics.median(gains),
+                "wins": sum(g > 0 for g in gains), "groups": 3, "minimum_gain_pct": min(gains),
+                "worst_loss_pct": max(0.0, -min(gains))}
+
+    comparisons = {"primary_vs_native_control": compare(primary, native_control),
+                   "primary_vs_historical_native": compare(primary, 901054165),
+                   "primary_vs_best_local": compare(primary, 9900008),
+                   "primary_vs_reference": compare(primary, 900951015)}
+    main_comparison = comparisons["primary_vs_native_control"]
+    preliminary = main_comparison["mean_gain_pct"] > 0 and main_comparison["median_gain_pct"] > 0 and main_comparison["wins"] >= 2
+    report = {"verdict": "GO", "audited_utc": datetime.now(UTC).isoformat(), "groups": reports, "actual_calls": calls_total,
+              "primary_id_fixed_before_inspection": primary, "single_search_seed": 101,
+              "comparisons": comparisons, "preliminary_confirmation_passed": preliminary,
+              "all_three_primary_gains_positive": main_comparison["wins"] == 3,
+              "fresh_groups_consumed_total": 3, "new_proposals": 0, "native_integration_proved": False,
+              "no_confidence_interval_claimed": True, "audit_script_sha256": sha(ROOT / "scratch/audit_rate_H03_confirmation.py")}
+    save(directory / "complete_audit_01.json", report, immutable=True)
+    print({"verdict": "GO", "actual_calls": calls_total, "comparisons": comparisons, "preliminary_passed": preliminary})
+
+
+if __name__ == "__main__":
+    main()

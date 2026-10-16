@@ -1,0 +1,110 @@
+{
+  "verdict": "FAILED_REPLAY",
+  "errors": [
+    "Fixed point failed: native_prefix_720_joint_480_rate240_rounds6_s101 0.03336799909407186 vs 0.03317814691821762"
+  ],
+  "rows": [
+    {
+      "id": 9900002,
+      "expected": 0.031321786810495536,
+      "base101": 0.03325998502808605,
+      "actual_consensus": 0.031321786810495536,
+      "consensus_seel_nm": 0.35395924517094074,
+      "meta": {
+        "mode": "mean_std",
+        "mean": 0.031220571545508623,
+        "std": 0.00028918647139117027,
+        "worst": 0.03155777948279727,
+        "seeds": [
+          41,
+          42,
+          43
+        ],
+        "n_samples": 3
+      },
+      "point_pass": true
+    },
+    {
+      "id": 9900001,
+      "expected": 0.032749965266219656,
+      "base101": 0.032361536968314515,
+      "actual_consensus": 0.032749965266219656,
+      "consensus_seel_nm": 0.3619390294854627,
+      "meta": {
+        "mode": "mean_std",
+        "mean": 0.03232368922742992,
+        "std": 0.0012179315393992442,
+        "worst": 0.03391957138283512,
+        "seeds": [
+          41,
+          42,
+          43
+        ],
+        "n_samples": 3
+      },
+      "point_pass": true
+    },
+    {
+      "id": 9900003,
+      "expected": 0.03317814691821762,
+      "base101": 0.03317814691821762,
+      "actual_consensus": 0.03336799909407186,
+      "consensus_seel_nm": 0.36533819452157945,
+      "meta": {
+        "mode": "mean_std",
+        "mean": 0.032937799295315574,
+        "std": 0.0012291422821608046,
+        "worst": 0.034200861668732346,
+        "seeds": [
+          41,
+          42,
+          43
+        ],
+        "n_samples": 3
+      },
+      "point_pass": false
+    },
+    {
+      "id": 900951015,
+      "expected": 0.039345655797984144,
+      "base101": 0.03990199328595278,
+      "actual_consensus": 0.03934565579798472,
+      "consensus_seel_nm": 0.3967147882193691,
+      "meta": {
+        "mode": "mean_std",
+        "mean": 0.03903722101379858,
+        "std": 0.0008812422405318423,
+        "worst": 0.040174649500132546,
+        "seeds": [
+          41,
+          42,
+          43
+        ],
+        "n_samples": 3
+      },
+      "point_pass": true
+    },
+    {
+      "id": 9900000,
+      "expected": 0.032410960467156955,
+      "base101": 0.032719526946813696,
+      "actual_consensus": 0.032410960467156955,
+      "consensus_seel_nm": 0.36006088633539163,
+      "meta": {
+        "mode": "mean_std",
+        "mean": 0.03211612913833137,
+        "std": 0.000842375225215964,
+        "worst": 0.03295687922611154,
+        "seeds": [
+          41,
+          42,
+          43
+        ],
+        "n_samples": 3
+      },
+      "point_pass": true
+    }
+  ],
+  "cause": "Native exported winner has a base-only score in a mixed base/consensus ranking; homogeneous comparison required. Tolerance unchanged.",
+  "control_sha256": "01fec5d0ed6bd9c1acbf56147b5228e34d7aa3fed5445c88454d6c30141a035f"
+}

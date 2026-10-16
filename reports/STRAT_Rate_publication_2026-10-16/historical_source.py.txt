@@ -1,0 +1,89 @@
+"""Archive only historical tracked simulation JSON, preserving bytes before working-tree cleanup."""
+
+from __future__ import annotations
+
+import gzip
+import hashlib
+import json
+import subprocess
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import UTC, datetime
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+OUT = ROOT / "reports/STRAT_Rate_publication_2026-10-16"
+
+
+def digest(path: Path) -> str:
+    checksum = hashlib.sha256()
+    with path.open("rb") as stream:
+        while data := stream.read(1024 * 1024):
+            checksum.update(data)
+    return checksum.hexdigest()
+
+
+def main() -> None:
+    target = OUT / "historical_manifest.json"
+    if target.exists():
+        raise RuntimeError("Inspect the existing completed manifest before continuing")
+    raw = subprocess.check_output(["git", "-c", "core.longpaths=true", "ls-files", "-z", "--", "reports"], cwd=ROOT)
+    candidates = [ROOT / p.decode() for p in raw.split(b"\0") if p]
+    paths = [p for p in candidates if p.suffix == ".json" and p.stat().st_size >= 1024 * 1024
+             and p.resolve().is_relative_to((ROOT / "reports").resolve()) and not p.is_relative_to(OUT)
+             and p.name.startswith(("blocs_vs_plantage", "STRAT_"))]
+    objects = OUT / "objects"
+    objects.mkdir(exist_ok=True)
+    locks, verified = {}, {}
+    guard = threading.Lock()
+
+    def archive(path: Path) -> dict:
+        expected = digest(path)
+        with guard:
+            lock = locks.setdefault(expected, threading.Lock())
+        with lock:
+            output = objects / (expected + ".json.gz")
+            if expected not in verified:
+                if not output.exists():
+                    temp = output.with_suffix(".gz.v2.tmp")
+                    with path.open("rb") as source, temp.open("wb") as stream, gzip.GzipFile(
+                        fileobj=stream, filename="", mode="wb", compresslevel=1, mtime=0
+                    ) as packed:
+                        while data := source.read(1024 * 1024):
+                            packed.write(data)
+                    temp.replace(output)
+                checksum = hashlib.sha256()
+                size = 0
+                with gzip.open(output, "rb") as stream:
+                    while data := stream.read(1024 * 1024):
+                        checksum.update(data)
+                        size += len(data)
+                if checksum.hexdigest() != expected or size != path.stat().st_size or output.stat().st_size >= 90 * 1024 * 1024:
+                    raise RuntimeError("Evidence round-trip failed: " + str(path))
+                verified[expected] = {"raw_bytes": size, "gzip_path": output.relative_to(ROOT).as_posix(),
+                                      "gzip_bytes": output.stat().st_size, "gzip_sha256": digest(output)}
+            return {"raw_path": path.relative_to(ROOT).as_posix(), "raw_sha256": expected,
+                    **verified[expected], "decompressed_sha256_verified": True}
+
+    rows = []
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        futures = [pool.submit(archive, path) for path in sorted(paths)]
+        for future in as_completed(futures):
+            rows.append(future.result())
+            if len(rows) % 50 == 0 or len(rows) == len(paths):
+                print(f"COMPACT {len(rows)}/{len(paths)} raw_bytes={sum(r['raw_bytes'] for r in rows)}", flush=True)
+    rows.sort(key=lambda row: row["raw_path"])
+    manifest = {"status": "LOSSLESS_ARCHIVES_VERIFIED_BEFORE_CLEANUP", "recorded_utc": datetime.now(UTC).isoformat(),
+                "user_request": "fais un meenage drastique !", "archives": rows,
+                "raw_bytes": sum(r["raw_bytes"] for r in rows), "unique_archives": len(verified),
+                "unique_gzip_bytes": sum(v["gzip_bytes"] for v in verified.values()),
+                "raw_files_deleted_by_this_script": 0, "script_sha256": digest(Path(__file__)),
+                "workers": 6, "tracked_simulation_evidence_selected": True,
+                "prior_helper": "Sequential archive helper PID19024 stopped to replace it with bounded parallel compression; zero physical task and no raw evidence removed by either helper."}
+    target.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    (OUT / "historical_source.py.txt").write_bytes(Path(__file__).read_bytes())
+    print(json.dumps({k: manifest[k] for k in ("status", "raw_bytes", "unique_archives", "unique_gzip_bytes")}), flush=True)
+
+
+if __name__ == "__main__":
+    main()

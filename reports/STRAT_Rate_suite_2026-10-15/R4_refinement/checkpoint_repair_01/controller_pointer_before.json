@@ -1,0 +1,7 @@
+{
+  "state_file": "controller_v2.json",
+  "previous_state": "controller.json",
+  "recovery": "controller_repair_01.md",
+  "scientific_protocol_unchanged": true,
+  "group046_exit_code_observed": false
+}

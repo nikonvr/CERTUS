@@ -1,0 +1,20 @@
+{
+  "started_utc": "2026-10-15T12:32:06.441191+00:00",
+  "status": "FAILED",
+  "checks": [
+    {
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-m",
+        "ruff",
+        "check",
+        "scratch/audit_rate_R3_wavelengths_arm.py",
+        "scratch/rate_fixed_replay_R3_h02.py",
+        "scratch/rate_R3_h02_replay_guard.py",
+        "scratch/verify_rate_R3_h02_replay.py"
+      ],
+      "exit_code": 1,
+      "log": "check_00.log"
+    }
+  ]
+}

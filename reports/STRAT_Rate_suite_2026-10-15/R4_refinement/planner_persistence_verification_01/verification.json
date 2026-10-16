@@ -1,0 +1,10 @@
+{
+  "verdict": "GO",
+  "old_save": "fails once",
+  "new_save": "passes after three attempts",
+  "persistent_failure_limit": 20,
+  "old_target_preserved": true,
+  "immutable_overwrite_refused": true,
+  "physics_measured": false,
+  "wrapper_sha256": "c0e714c66efb130bf893d3130cd3dcd747e680a3039ce33d241f63e88cf8ba04"
+}

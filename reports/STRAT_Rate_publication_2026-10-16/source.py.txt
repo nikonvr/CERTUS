@@ -1,0 +1,80 @@
+"""Preserve large evidence losslessly for Git, and inventory publication without deleting raw data."""
+
+from __future__ import annotations
+
+import gzip
+import hashlib
+import json
+import re
+import subprocess
+from collections import Counter
+from datetime import UTC, datetime
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+OUT = ROOT / "reports/STRAT_Rate_publication_2026-10-16"
+PATTERN = re.compile(rb"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{40,}|sk-proj-[A-Za-z0-9_-]{30,}")
+
+
+def digest(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as stream:
+        while block := stream.read(1024 * 1024):
+            h.update(block)
+    return h.hexdigest()
+
+
+def main() -> None:
+    OUT.mkdir(exist_ok=True)
+    names = subprocess.check_output(["git", "-c", "core.longpaths=true", "ls-files", "--others", "--exclude-standard", "-z"], cwd=ROOT)
+    paths = [ROOT / p.decode("utf-8") for p in names.split(b"\0") if p]
+    selected = [p for p in paths if p.stat().st_size >= 50 * 1024 * 1024 and p.suffix not in {".nbc", ".nbi"}]
+    rows = []
+    for index, path in enumerate(sorted(selected), 1):
+        relative = path.relative_to(ROOT).as_posix()
+        output = OUT / "large_evidence" / (hashlib.sha256(relative.encode()).hexdigest()[:16] + ".gz")
+        output.parent.mkdir(exist_ok=True)
+        expected = digest(path)
+        if not output.exists():
+            temp = output.with_suffix(".gz.tmp")
+            with temp.open("wb") as target, gzip.GzipFile(fileobj=target, filename="", mode="wb", mtime=0) as archive, path.open("rb") as source:
+                while block := source.read(1024 * 1024):
+                    archive.write(block)
+            temp.replace(output)
+        actual = hashlib.sha256()
+        size = 0
+        with gzip.open(output, "rb") as stream:
+            while block := stream.read(1024 * 1024):
+                actual.update(block)
+                size += len(block)
+        if actual.hexdigest() != expected or size != path.stat().st_size:
+            raise RuntimeError("Lossless verification failed: " + relative)
+        if output.stat().st_size >= 90 * 1024 * 1024:
+            raise RuntimeError("Archive requires explicit partitioning before Git: " + relative)
+        rows.append({"raw_path": relative, "raw_bytes": size, "raw_sha256": expected,
+                     "gzip_path": output.relative_to(ROOT).as_posix(), "gzip_bytes": output.stat().st_size,
+                     "gzip_sha256": digest(output), "decompressed_sha256_verified": True})
+        print(f"ARCHIVE {index}/{len(selected)} raw={size} gzip={output.stat().st_size}", flush=True)
+    manifest = {"status": "LOSSLESS_ARCHIVES_VERIFIED", "recorded_utc": datetime.now(UTC).isoformat(),
+                "user_request": "push et commit all", "raw_evidence_preserved_locally": True,
+                "archives": rows, "raw_bytes": sum(r["raw_bytes"] for r in rows),
+                "gzip_bytes": sum(r["gzip_bytes"] for r in rows), "script_sha256": digest(Path(__file__)),
+                "compiled_cache_policy": "Keep all local .nbc/.nbi files; exclude generated machine-code caches from Git.",
+                "initial_untracked_file_count": len(paths), "initial_untracked_bytes": sum(p.stat().st_size for p in paths),
+                "initial_extensions": dict(Counter(p.suffix for p in paths))}
+    (OUT / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    (OUT / "source.py.txt").write_bytes(Path(__file__).read_bytes())
+    ignore = ROOT / ".gitignore"
+    marker = "# Rate evidence publication 2026-10-16: raw files have lossless SHA-verified archives."
+    current = ignore.read_text(encoding="utf-8")
+    if marker in current:
+        raise RuntimeError("Ignore rules already written; inspect the prior publication instead of rewriting")
+    additions = "\n" + marker + "\n# Compiled Numba caches stay local.\n*.nbc\n*.nbi\n"
+    additions += "# Restore the following exact raw evidence paths with the publication manifest.\n"
+    additions += "".join("/" + r["raw_path"] + "\n" for r in rows)
+    ignore.write_text(current.rstrip() + "\n" + additions, encoding="utf-8", newline="\n")
+    print(json.dumps({"status": manifest["status"], "files": len(rows), "raw_bytes": manifest["raw_bytes"], "gzip_bytes": manifest["gzip_bytes"]}), flush=True)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,408 @@
+{
+  "verdict": "GO",
+  "audited_utc": "2026-10-15T18:32:55.734158+00:00",
+  "groups": [
+    {
+      "phase": "R3_h03_parentcheck",
+      "actual_calls": 20,
+      "new_proposals": 0,
+      "artifact_sha256": "17966ca820f769168342ab6a5cf15e7010d63304a75d91b5b836384d363405dd"
+    },
+    {
+      "phase": "R3_h03_post_g001",
+      "actual_calls": 21,
+      "new_proposals": 9,
+      "artifact_sha256": "0696d992fd9037ef19dedf2786911e43369314ecd5cd54a5a8eff22e53ac9c3f"
+    },
+    {
+      "phase": "R3_h03_post_g002",
+      "actual_calls": 21,
+      "new_proposals": 9,
+      "artifact_sha256": "9b95b6e2ad1222b564368b7caa931eaf66290dc5517e65265eb5d9e39bc8c994"
+    },
+    {
+      "phase": "R3_h03_post_g003",
+      "actual_calls": 21,
+      "new_proposals": 9,
+      "artifact_sha256": "87cb71db0e9846df1118d0dcf8b3494a2e5df73546a68d2ca3452d5cc9965d26"
+    },
+    {
+      "phase": "R3_h03_post_g004",
+      "actual_calls": 24,
+      "new_proposals": 9,
+      "artifact_sha256": "f8c3510e0c27c383ea1e163cfb199fd18c0281e176f8e6057eebdd989bc600fe"
+    },
+    {
+      "phase": "R3_h03_post_g005",
+      "actual_calls": 30,
+      "new_proposals": 9,
+      "artifact_sha256": "413752a7a5ed5cfef3bbf8185b0729bcc55764258ea0c9669f5e3e7cb366574d"
+    },
+    {
+      "phase": "R3_h03_post_g006",
+      "actual_calls": 42,
+      "new_proposals": 9,
+      "artifact_sha256": "60c4c7d1f86fc2b5ec5c4209f6c573a524ec20eece99b37c259b6b8093f06a56"
+    },
+    {
+      "phase": "R3_h03_post_g007",
+      "actual_calls": 36,
+      "new_proposals": 9,
+      "artifact_sha256": "762da813f555c20c536864a5cf97691767980643f3a52734cb9cd0852559187a"
+    },
+    {
+      "phase": "R3_h03_post_g008",
+      "actual_calls": 45,
+      "new_proposals": 9,
+      "artifact_sha256": "b948da3cfcc1990b2a21271a08315892133734d845ef40e793f54d99331539aa"
+    },
+    {
+      "phase": "R3_h03_post_g009",
+      "actual_calls": 45,
+      "new_proposals": 9,
+      "artifact_sha256": "ff478b5feb6f2c1c7be37c9a32b2dca64f4b8e099c26062e7dce2b37b089f598"
+    },
+    {
+      "phase": "R3_h03_post_g010",
+      "actual_calls": 42,
+      "new_proposals": 9,
+      "artifact_sha256": "d468dd97d3ae03a0255524e5fc4c40a475e199d6304f8224fc56bb6b4841890c"
+    },
+    {
+      "phase": "R3_h03_post_g011",
+      "actual_calls": 39,
+      "new_proposals": 9,
+      "artifact_sha256": "4ff889b66e9410291e93f07bd6629d83652951153b39cb7a3d07746f138059aa"
+    },
+    {
+      "phase": "R3_h03_post_g012",
+      "actual_calls": 36,
+      "new_proposals": 9,
+      "artifact_sha256": "be15633059846a73d0b9f710471c1dd455f774e959a686f3fdc0255cc84c67f2"
+    },
+    {
+      "phase": "R3_h03_post_g013",
+      "actual_calls": 21,
+      "new_proposals": 6,
+      "artifact_sha256": "cda9271e0cc07c88b0ee7f46038b86038ea85788fe475e31a9fd80681c3b300c"
+    },
+    {
+      "phase": "R3_h03_post_g014",
+      "actual_calls": 42,
+      "new_proposals": 9,
+      "artifact_sha256": "b37634edfee77c8250281ce5405c0f8d8a91528b4d84019ce27714325ed7d06f"
+    },
+    {
+      "phase": "R3_h03_post_g015",
+      "actual_calls": 39,
+      "new_proposals": 9,
+      "artifact_sha256": "556dd13020b7471bae4fb41d39a8d602d6589e7efbcc0efb098a20ea934a19dd"
+    },
+    {
+      "phase": "R3_h03_post_g016",
+      "actual_calls": 39,
+      "new_proposals": 9,
+      "artifact_sha256": "a98023f6fbfc4350544b4d0cdbdc8cf64b573b605b8066d78c1b8e29755b9ef6"
+    },
+    {
+      "phase": "R3_h03_post_g017",
+      "actual_calls": 42,
+      "new_proposals": 9,
+      "artifact_sha256": "f3f86855015fbcb1eb2c258e17784f95a6fd6113668c8eac01b2662008243a38"
+    },
+    {
+      "phase": "R3_h03_post_g018",
+      "actual_calls": 42,
+      "new_proposals": 9,
+      "artifact_sha256": "24e3af97b37f0d185ff352259411a7d7e93f2b04f88be4cf5f89d974b93af85b"
+    },
+    {
+      "phase": "R3_h03_post_g019",
+      "actual_calls": 45,
+      "new_proposals": 9,
+      "artifact_sha256": "5c5a02b86cbe418d063112f7d4e35541e8593dc7759bb3f633aff3f22e060bbe"
+    },
+    {
+      "phase": "R3_h03_post_g020",
+      "actual_calls": 39,
+      "new_proposals": 9,
+      "artifact_sha256": "e65378a434d11cfdc9f365f176b641c4a8e1ceb9e4218bfa64ca217dde603f0d"
+    },
+    {
+      "phase": "R3_h03_post_g021",
+      "actual_calls": 45,
+      "new_proposals": 9,
+      "artifact_sha256": "8d3c7422161aa3983d497d5581a3a7bfa710ac77131c867cf148c66304b85673"
+    },
+    {
+      "phase": "R3_h03_post_g022",
+      "actual_calls": 32,
+      "new_proposals": 5,
+      "artifact_sha256": "3897aa205aace960e18dca330e4dbb1c754bfd9130fb836e91696e84f71d875b"
+    },
+    {
+      "phase": "R3_h03_post_g023",
+      "actual_calls": 27,
+      "new_proposals": 9,
+      "artifact_sha256": "602de6a0c8d68f746c0c8dba5e24319f61b2c42fec442fbe8b799242e77d1f31"
+    },
+    {
+      "phase": "R3_h03_post_g024",
+      "actual_calls": 39,
+      "new_proposals": 9,
+      "artifact_sha256": "41462b647912125e7cd314bf8e4cd344c87d5d8b90cba5390e00de610c99dbb2"
+    },
+    {
+      "phase": "R3_h03_post_g025",
+      "actual_calls": 48,
+      "new_proposals": 9,
+      "artifact_sha256": "cef124cb94b53cec792a0f7a61815b4585763cb064087350ff6a6a385fdc0e4e"
+    },
+    {
+      "phase": "R3_h03_post_g026",
+      "actual_calls": 48,
+      "new_proposals": 9,
+      "artifact_sha256": "5ba4c223489886970710e128f4f77979c45d7fc1472acff742af9fc1adedd775"
+    },
+    {
+      "phase": "R3_h03_post_g027",
+      "actual_calls": 33,
+      "new_proposals": 9,
+      "artifact_sha256": "490f59d561d57e4cd8701462eeea3e99def7d780af1e4501bf8a8ccebecbf476"
+    },
+    {
+      "phase": "R3_h03_post_g028",
+      "actual_calls": 21,
+      "new_proposals": 9,
+      "artifact_sha256": "558776c6dca3e3bbc9b176ee4c52bf6f44b5f459f0f87bdeb01030eb350ba077"
+    },
+    {
+      "phase": "R3_h03_post_g029",
+      "actual_calls": 30,
+      "new_proposals": 9,
+      "artifact_sha256": "4f138f0c8fe4e2dc07c334e49705bb5d9faafab89574c7663eed09d1fc253fa0"
+    },
+    {
+      "phase": "R3_h03_post_g030",
+      "actual_calls": 42,
+      "new_proposals": 9,
+      "artifact_sha256": "9bf3c0bf82c44c216f6d6e452a52b3561dda8708f3d04c6ca421c3f2927d5c72"
+    },
+    {
+      "phase": "R3_h03_post_g031",
+      "actual_calls": 28,
+      "new_proposals": 4,
+      "artifact_sha256": "b93f2b9bfdec6c68f39929be9bbe5ca72a90696163d8dbe29245cea6d16453d1"
+    },
+    {
+      "phase": "R3_h03_post_g032",
+      "actual_calls": 48,
+      "new_proposals": 9,
+      "artifact_sha256": "1a24294496666ebf6c6b582a0b5d76af789511e89cff130d101a689fbb3a385d"
+    },
+    {
+      "phase": "R3_h03_post_g033",
+      "actual_calls": 48,
+      "new_proposals": 9,
+      "artifact_sha256": "c6285fb2ddc0099f85f45191a33e1554cea938bc855b0db93a3cbaddd8b5aa9b"
+    },
+    {
+      "phase": "R3_h03_post_g034",
+      "actual_calls": 48,
+      "new_proposals": 9,
+      "artifact_sha256": "2b92e4a62b26946f6dc81d2ee0ea99a1738ced9dfc20e3da6b26be0c2dd8b675"
+    },
+    {
+      "phase": "R3_h03_post_g035",
+      "actual_calls": 45,
+      "new_proposals": 9,
+      "artifact_sha256": "2f9a55aa1a0487785d8c987caa72828cc741d51f96bd51a815c111432c794f42"
+    },
+    {
+      "phase": "R3_h03_post_g036",
+      "actual_calls": 20,
+      "new_proposals": 2,
+      "artifact_sha256": "34fd33438f9557031d1580a6c9da22a1c42b728f4eb005a9595ccea0715dce87"
+    }
+  ],
+  "new_proposals": 305,
+  "actual_calls": 1333,
+  "stage_counts": {
+    "accepted": 305,
+    "duplicate": 52,
+    "boundary_or_exhausted": 23
+  },
+  "rejections": {
+    "base score non-finite": 113,
+    "incomplete consensus": 13
+  },
+  "branches": {
+    "native": {
+      "baseline_score": 0.0324177708681504,
+      "best_score": 0.029431526325033333,
+      "seel_nm": 0.34311237998669375,
+      "gain_seel_pct": 4.717132521556888,
+      "improved": true,
+      "winner": {
+        "plan": {
+          "nom": "R4_native_p2_fine_98000284",
+          "source_strategy_id": 98000284,
+          "native_source_id": 900754520,
+          "blocks": [
+            {
+              "start": 0,
+              "end": 10,
+              "wavelength": 628.0
+            },
+            {
+              "start": 10,
+              "end": 21,
+              "wavelength": 451.0
+            },
+            {
+              "start": 21,
+              "end": 40,
+              "wavelength": 686.0
+            },
+            {
+              "start": 40,
+              "end": 50,
+              "wavelength": 741.0
+            },
+            {
+              "start": 50,
+              "end": 60,
+              "wavelength": 733.0
+            },
+            {
+              "start": 60,
+              "end": 70,
+              "wavelength": 742.0
+            },
+            {
+              "start": 70,
+              "end": 75,
+              "wavelength": 580.0
+            }
+          ],
+          "rate_layers": [
+            5,
+            6,
+            7,
+            8,
+            9,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            37,
+            38,
+            39,
+            40,
+            41,
+            42,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50,
+            51,
+            52,
+            53,
+            54,
+            55,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74
+          ],
+          "monochromator_resolution_nm": 2.0,
+          "branch": "native",
+          "witness_reset_layers": null,
+          "root_parent_id": 98500002,
+          "n_blocks": 7,
+          "move": {
+            "kind": "prefix",
+            "stage": "fine_joint",
+            "parent_id": 98000258,
+            "old_window": [
+              0,
+              5
+            ],
+            "window": [
+              0,
+              5
+            ],
+            "block_index": 0,
+            "wavelength": 628.0
+          }
+        },
+        "score": 0.029431526325033333,
+        "base_score": 0.03034599236653493,
+        "provenance": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R3_h03_native_postrefinement\\post\\groups\\group_033\\measurement\\search.json"
+      },
+      "passes": [
+        {
+          "pass": 1,
+          "before": 0.0324177708681504,
+          "after": 0.03192907040069526,
+          "improved": true
+        },
+        {
+          "pass": 2,
+          "before": 0.03192907040069526,
+          "after": 0.029431526325033333,
+          "improved": true
+        }
+      ]
+    }
+  },
+  "native_pipeline_discovery_observed": true,
+  "fresh_confirmation_pending": true,
+  "sources": {
+    "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+    "certus/core/certus_strat_robustness.py": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+    "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+    "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e"
+  },
+  "protocol_sha256": "6b40d33d8407cdf241eda0a3ebed62ec2f10cbeaa83059547437a3ecc02bed1d",
+  "audit_script_sha256": "2423164ac785a2e7ec000660a5132c0c1f02de2734fc08f1c596455ed1f01e81",
+  "limitation": "Single native search seed; additional post cost; procedure holdouts not yet consumed; no equal-budget or speedup claim"
+}

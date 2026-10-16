@@ -14,3 +14,12 @@
 *.xls binary
 *.png binary
 *.ico binary
+
+# Scientific provenance hashes refer to exact report bytes, including line endings.
+reports/STRAT_* -text whitespace=cr-at-eol
+reports/STRAT_*/** -text whitespace=cr-at-eol
+# Immutable copies and patches are byte evidence, not editable production sources.
+reports/STRAT_*/**/*.txt binary
+reports/STRAT_*/**/*.patch binary
+reports/STRAT_*/**/*.py binary
+reports/STRAT_*/**/*.ps1 binary

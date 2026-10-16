@@ -1,0 +1,853 @@
+{
+  "checked_utc": "2026-10-14T13:03:20.115883+00:00",
+  "completed": 22,
+  "current": "r75x2_deep_s077_avec",
+  "current_pid": 7320,
+  "current_started": "2026-10-14T15:02:07",
+  "runs": [
+    {
+      "key": "r75x2_deep_s202_avec",
+      "artifact": "r75x2_deep_s202_avec_da1af082.json",
+      "sha256": "3df38b61bde8c51356cc4260daaccaa9059aaaa367cfe4fae91bb1def122d613",
+      "seconds": 2896.2204350999964,
+      "saved_utc": "2026-10-14T12:16:29+00:00",
+      "effective_elite_rate_moves": true,
+      "verdict": "OK",
+      "seel": 0.5411587816350232,
+      "deposables": 4964,
+      "declared_depth": {
+        "robustness_num_runs": 300,
+        "n_screen_runs": 50,
+        "dp_top_k": 100,
+        "consensus_num_runs": 300
+      },
+      "best_plan": {
+        "id": 901350975,
+        "origine": "ELITE",
+        "n_blocs": 13,
+        "crash_rate": 0.006666666666666667,
+        "score": 0.07321320673517567,
+        "lambdas": [
+          482.0,
+          640.0,
+          490.0,
+          686.0,
+          511.0,
+          702.0,
+          647.0,
+          693.0,
+          689.0,
+          687.0,
+          697.0,
+          702.0,
+          698.0
+        ],
+        "blocs": [
+          {
+            "start": 0,
+            "end": 4,
+            "wavelength": 482.0
+          },
+          {
+            "start": 4,
+            "end": 25,
+            "wavelength": 640.0
+          },
+          {
+            "start": 25,
+            "end": 33,
+            "wavelength": 490.0
+          },
+          {
+            "start": 33,
+            "end": 54,
+            "wavelength": 686.0
+          },
+          {
+            "start": 54,
+            "end": 56,
+            "wavelength": 511.0
+          },
+          {
+            "start": 56,
+            "end": 63,
+            "wavelength": 702.0
+          },
+          {
+            "start": 63,
+            "end": 64,
+            "wavelength": 647.0
+          },
+          {
+            "start": 64,
+            "end": 68,
+            "wavelength": 693.0
+          },
+          {
+            "start": 68,
+            "end": 70,
+            "wavelength": 689.0
+          },
+          {
+            "start": 70,
+            "end": 72,
+            "wavelength": 687.0
+          },
+          {
+            "start": 72,
+            "end": 73,
+            "wavelength": 697.0
+          },
+          {
+            "start": 73,
+            "end": 74,
+            "wavelength": 702.0
+          },
+          {
+            "start": 74,
+            "end": 75,
+            "wavelength": 698.0
+          }
+        ],
+        "margin_by_layer": {
+          "missed": {
+            "22": 0.403
+          },
+          "fabricated": {
+            "3": 0.83
+          }
+        },
+        "rate_layers": [
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74
+        ],
+        "crash_eliminated": false,
+        "crash_rates_by_noise": {
+          "0.025": 0.0,
+          "0.05": 0.0,
+          "0.1": 0.006666666666666667
+        },
+        "rmse_par_bruit": {
+          "0.025": {
+            "n": 300,
+            "plantes": 0,
+            "rmse_p95": 0.06589350095683244,
+            "rmse_p95_termines": 0.06589350095683244,
+            "rmse_moyen_plantes": null,
+            "rmse_max_termines": 0.10772118040275917,
+            "rmse_min_plantes": null
+          },
+          "0.05": {
+            "n": 300,
+            "plantes": 0,
+            "rmse_p95": 0.07140634881556063,
+            "rmse_p95_termines": 0.07140634881556063,
+            "rmse_moyen_plantes": null,
+            "rmse_max_termines": 0.10475200169540302,
+            "rmse_min_plantes": null
+          },
+          "0.1": {
+            "n": 300,
+            "plantes": 2,
+            "rmse_p95": 0.07321320673517567,
+            "rmse_p95_termines": 0.07270688621059665,
+            "rmse_moyen_plantes": 0.2523424949580887,
+            "rmse_max_termines": 0.10535087902063084,
+            "rmse_min_plantes": 0.25189386251836815
+          }
+        },
+        "critical_layer": {
+          "layer": 22,
+          "cause": "ondulation trop faible pour etre vue",
+          "margin_in_A": 0.4030687299927289,
+          "verdict": "PEUT ECHOUER",
+          "n_layers_below_2A": 2
+        },
+        "resolution_nm": 2.0,
+        "resolution_noise_factor": 1.0
+      }
+    },
+    {
+      "key": "r75x2_deep_s202_sans",
+      "artifact": "r75x2_deep_s202_sans_da1af082.json",
+      "sha256": "89103b42387d6085cd83641b64673bb3079000122f5a08e00553ae9078eb88e9",
+      "seconds": 2728.5053296999977,
+      "saved_utc": "2026-10-14T13:01:58+00:00",
+      "effective_elite_rate_moves": false,
+      "verdict": "OK",
+      "seel": 0.5678354293053708,
+      "deposables": 4168,
+      "declared_depth": {
+        "robustness_num_runs": 300,
+        "n_screen_runs": 50,
+        "dp_top_k": 100,
+        "consensus_num_runs": 300
+      },
+      "best_plan": {
+        "id": 907550434,
+        "origine": "ELITE",
+        "n_blocs": 75,
+        "crash_rate": 0.006666666666666667,
+        "score": 0.0806092686936037,
+        "lambdas": [
+          497.0,
+          483.0,
+          495.0,
+          640.0,
+          610.0,
+          483.0,
+          640.0,
+          622.0,
+          640.0,
+          477.0,
+          475.0,
+          609.0,
+          606.0,
+          610.0,
+          618.0,
+          610.0,
+          487.0,
+          580.0,
+          609.0,
+          609.0,
+          582.0,
+          582.0,
+          609.0,
+          489.0,
+          489.0,
+          609.0,
+          609.0,
+          490.0,
+          690.0,
+          669.0,
+          490.0,
+          471.0,
+          622.0,
+          540.0,
+          622.0,
+          621.0,
+          690.0,
+          687.0,
+          686.0,
+          585.0,
+          686.0,
+          686.0,
+          686.0,
+          686.0,
+          647.0,
+          738.0,
+          622.0,
+          739.0,
+          686.0,
+          738.0,
+          686.0,
+          686.0,
+          686.0,
+          686.0,
+          511.0,
+          701.0,
+          701.0,
+          701.0,
+          701.0,
+          702.0,
+          702.0,
+          702.0,
+          702.0,
+          647.0,
+          692.0,
+          700.0,
+          692.0,
+          692.0,
+          690.0,
+          690.0,
+          688.0,
+          687.0,
+          697.0,
+          702.0,
+          698.0
+        ],
+        "blocs": [
+          {
+            "start": 0,
+            "end": 1,
+            "wavelength": 497.0
+          },
+          {
+            "start": 1,
+            "end": 2,
+            "wavelength": 483.0
+          },
+          {
+            "start": 2,
+            "end": 3,
+            "wavelength": 495.0
+          },
+          {
+            "start": 3,
+            "end": 4,
+            "wavelength": 640.0
+          },
+          {
+            "start": 4,
+            "end": 5,
+            "wavelength": 610.0
+          },
+          {
+            "start": 5,
+            "end": 6,
+            "wavelength": 483.0
+          },
+          {
+            "start": 6,
+            "end": 7,
+            "wavelength": 640.0
+          },
+          {
+            "start": 7,
+            "end": 8,
+            "wavelength": 622.0
+          },
+          {
+            "start": 8,
+            "end": 9,
+            "wavelength": 640.0
+          },
+          {
+            "start": 9,
+            "end": 10,
+            "wavelength": 477.0
+          },
+          {
+            "start": 10,
+            "end": 11,
+            "wavelength": 475.0
+          },
+          {
+            "start": 11,
+            "end": 12,
+            "wavelength": 609.0
+          },
+          {
+            "start": 12,
+            "end": 13,
+            "wavelength": 606.0
+          },
+          {
+            "start": 13,
+            "end": 14,
+            "wavelength": 610.0
+          },
+          {
+            "start": 14,
+            "end": 15,
+            "wavelength": 618.0
+          },
+          {
+            "start": 15,
+            "end": 16,
+            "wavelength": 610.0
+          },
+          {
+            "start": 16,
+            "end": 17,
+            "wavelength": 487.0
+          },
+          {
+            "start": 17,
+            "end": 18,
+            "wavelength": 580.0
+          },
+          {
+            "start": 18,
+            "end": 19,
+            "wavelength": 609.0
+          },
+          {
+            "start": 19,
+            "end": 20,
+            "wavelength": 609.0
+          },
+          {
+            "start": 20,
+            "end": 21,
+            "wavelength": 582.0
+          },
+          {
+            "start": 21,
+            "end": 22,
+            "wavelength": 582.0
+          },
+          {
+            "start": 22,
+            "end": 23,
+            "wavelength": 609.0
+          },
+          {
+            "start": 23,
+            "end": 24,
+            "wavelength": 489.0
+          },
+          {
+            "start": 24,
+            "end": 25,
+            "wavelength": 489.0
+          },
+          {
+            "start": 25,
+            "end": 26,
+            "wavelength": 609.0
+          },
+          {
+            "start": 26,
+            "end": 27,
+            "wavelength": 609.0
+          },
+          {
+            "start": 27,
+            "end": 28,
+            "wavelength": 490.0
+          },
+          {
+            "start": 28,
+            "end": 29,
+            "wavelength": 690.0
+          },
+          {
+            "start": 29,
+            "end": 30,
+            "wavelength": 669.0
+          },
+          {
+            "start": 30,
+            "end": 31,
+            "wavelength": 490.0
+          },
+          {
+            "start": 31,
+            "end": 32,
+            "wavelength": 471.0
+          },
+          {
+            "start": 32,
+            "end": 33,
+            "wavelength": 622.0
+          },
+          {
+            "start": 33,
+            "end": 34,
+            "wavelength": 540.0
+          },
+          {
+            "start": 34,
+            "end": 35,
+            "wavelength": 622.0
+          },
+          {
+            "start": 35,
+            "end": 36,
+            "wavelength": 621.0
+          },
+          {
+            "start": 36,
+            "end": 37,
+            "wavelength": 690.0
+          },
+          {
+            "start": 37,
+            "end": 38,
+            "wavelength": 687.0
+          },
+          {
+            "start": 38,
+            "end": 39,
+            "wavelength": 686.0
+          },
+          {
+            "start": 39,
+            "end": 40,
+            "wavelength": 585.0
+          },
+          {
+            "start": 40,
+            "end": 41,
+            "wavelength": 686.0
+          },
+          {
+            "start": 41,
+            "end": 42,
+            "wavelength": 686.0
+          },
+          {
+            "start": 42,
+            "end": 43,
+            "wavelength": 686.0
+          },
+          {
+            "start": 43,
+            "end": 44,
+            "wavelength": 686.0
+          },
+          {
+            "start": 44,
+            "end": 45,
+            "wavelength": 647.0
+          },
+          {
+            "start": 45,
+            "end": 46,
+            "wavelength": 738.0
+          },
+          {
+            "start": 46,
+            "end": 47,
+            "wavelength": 622.0
+          },
+          {
+            "start": 47,
+            "end": 48,
+            "wavelength": 739.0
+          },
+          {
+            "start": 48,
+            "end": 49,
+            "wavelength": 686.0
+          },
+          {
+            "start": 49,
+            "end": 50,
+            "wavelength": 738.0
+          },
+          {
+            "start": 50,
+            "end": 51,
+            "wavelength": 686.0
+          },
+          {
+            "start": 51,
+            "end": 52,
+            "wavelength": 686.0
+          },
+          {
+            "start": 52,
+            "end": 53,
+            "wavelength": 686.0
+          },
+          {
+            "start": 53,
+            "end": 54,
+            "wavelength": 686.0
+          },
+          {
+            "start": 54,
+            "end": 55,
+            "wavelength": 511.0
+          },
+          {
+            "start": 55,
+            "end": 56,
+            "wavelength": 701.0
+          },
+          {
+            "start": 56,
+            "end": 57,
+            "wavelength": 701.0
+          },
+          {
+            "start": 57,
+            "end": 58,
+            "wavelength": 701.0
+          },
+          {
+            "start": 58,
+            "end": 59,
+            "wavelength": 701.0
+          },
+          {
+            "start": 59,
+            "end": 60,
+            "wavelength": 702.0
+          },
+          {
+            "start": 60,
+            "end": 61,
+            "wavelength": 702.0
+          },
+          {
+            "start": 61,
+            "end": 62,
+            "wavelength": 702.0
+          },
+          {
+            "start": 62,
+            "end": 63,
+            "wavelength": 702.0
+          },
+          {
+            "start": 63,
+            "end": 64,
+            "wavelength": 647.0
+          },
+          {
+            "start": 64,
+            "end": 65,
+            "wavelength": 692.0
+          },
+          {
+            "start": 65,
+            "end": 66,
+            "wavelength": 700.0
+          },
+          {
+            "start": 66,
+            "end": 67,
+            "wavelength": 692.0
+          },
+          {
+            "start": 67,
+            "end": 68,
+            "wavelength": 692.0
+          },
+          {
+            "start": 68,
+            "end": 69,
+            "wavelength": 690.0
+          },
+          {
+            "start": 69,
+            "end": 70,
+            "wavelength": 690.0
+          },
+          {
+            "start": 70,
+            "end": 71,
+            "wavelength": 688.0
+          },
+          {
+            "start": 71,
+            "end": 72,
+            "wavelength": 687.0
+          },
+          {
+            "start": 72,
+            "end": 73,
+            "wavelength": 697.0
+          },
+          {
+            "start": 73,
+            "end": 74,
+            "wavelength": 702.0
+          },
+          {
+            "start": 74,
+            "end": 75,
+            "wavelength": 698.0
+          }
+        ],
+        "margin_by_layer": {
+          "level": {
+            "8": 2.085,
+            "29": 3.628,
+            "37": -1140.821,
+            "39": -815.103,
+            "43": -653.887,
+            "44": 0.183,
+            "45": -1283.351,
+            "46": -367.194,
+            "47": -971.605,
+            "48": -1212.806,
+            "49": -742.684,
+            "50": -946.3,
+            "51": -1215.88
+          },
+          "missed": {
+            "7": 0.654,
+            "17": 2.061,
+            "21": 3.841,
+            "29": 0.375,
+            "37": 2.241,
+            "39": 4.591,
+            "45": 4.114,
+            "49": 3.613,
+            "51": 2.754
+          },
+          "fabricated": {
+            "6": 3.32,
+            "7": 3.32,
+            "8": 0.83,
+            "10": 0.83,
+            "11": 1.66,
+            "13": 0.83,
+            "14": 0.83,
+            "15": 0.83,
+            "16": 0.83,
+            "18": 1.66,
+            "19": 0.83,
+            "20": 1.66,
+            "21": 0.83,
+            "22": 0.83,
+            "24": 0.83,
+            "25": 3.32,
+            "26": 3.32,
+            "27": 0.83,
+            "29": 1.66,
+            "31": 3.32,
+            "32": 3.32,
+            "33": 0.83,
+            "34": 0.83,
+            "35": 0.83,
+            "36": 3.32,
+            "38": 0.83,
+            "40": 0.83,
+            "42": 0.83,
+            "45": 0.827,
+            "46": 0.83,
+            "47": 3.32,
+            "48": 0.83,
+            "49": 3.32,
+            "50": 3.32,
+            "51": 1.66
+          }
+        },
+        "rate_layers": [
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74
+        ],
+        "crash_eliminated": false,
+        "crash_rates_by_noise": {
+          "0.025": 0.0033333333333333335,
+          "0.05": 0.006666666666666667,
+          "0.1": 0.006666666666666667
+        },
+        "rmse_par_bruit": {
+          "0.025": {
+            "n": 300,
+            "plantes": 1,
+            "rmse_p95": 0.07897748279875562,
+            "rmse_p95_termines": 0.07806044672446645,
+            "rmse_moyen_plantes": 0.2776888971095399,
+            "rmse_max_termines": 0.1123923770154139,
+            "rmse_min_plantes": 0.2776888971095399
+          },
+          "0.05": {
+            "n": 300,
+            "plantes": 2,
+            "rmse_p95": 0.08257947288250447,
+            "rmse_p95_termines": 0.08167489241228934,
+            "rmse_moyen_plantes": 0.27927000332220875,
+            "rmse_max_termines": 0.102795705163205,
+            "rmse_min_plantes": 0.26903357734561417
+          },
+          "0.1": {
+            "n": 300,
+            "plantes": 2,
+            "rmse_p95": 0.07955606397640573,
+            "rmse_p95_termines": 0.07647778256041897,
+            "rmse_moyen_plantes": 0.2851581229192844,
+            "rmse_max_termines": 0.10716928026969429,
+            "rmse_min_plantes": 0.270991142175044
+          }
+        },
+        "critical_layer": {
+          "layer": 45,
+          "cause": "niveau d'arret hors d'atteinte",
+          "margin_in_A": -1283.3513845203543,
+          "verdict": "PEUT ECHOUER",
+          "n_layers_below_2A": 38
+        },
+        "resolution_nm": 2.0,
+        "resolution_noise_factor": 1.0
+      }
+    }
+  ],
+  "raw_gain_percent_r75x2_s202": 4.6979540714782395,
+  "interpretation": "Existing production ELITE Rate moves; no new native local-search integration result",
+  "limits": [
+    "Raw minima with consensus provenance missing in frozen export",
+    "No homogeneous independent fixed-plan confirmation",
+    "Different component from r75x0.5; no cross-component score comparison"
+  ]
+}

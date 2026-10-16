@@ -1,0 +1,28 @@
+{
+  "status": "complete",
+  "pid": 51884,
+  "previous_controller_pid": 23280,
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "helper_sha256": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51",
+  "expected_runs": 24,
+  "current_pid": null,
+  "authorization": "User explicitly requested finishing the remaining batches on 2026-10-14; A2 continues beyond the old09h boundary",
+  "updated_utc": "2026-10-14T14:35:38+00:00",
+  "completed_before_resume": 8,
+  "arguments": [
+    "--worktree",
+    "C:\\Users\\Lemarchand\\.codex\\worktrees\\campagne-a2\\certus0310",
+    "--output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_ELITE_couches_Rate_autres_composants_2026-10-13",
+    "--logical-cpus",
+    "16"
+  ],
+  "commit": "da1af0825d5e09e8d0a5ff4f1cf42b802e0e30e7",
+  "completed": 24,
+  "checkpoint": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_ELITE_couches_Rate_autres_composants_2026-10-13\\etat.json"
+}

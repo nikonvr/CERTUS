@@ -1,0 +1,14 @@
+{
+    "status":  "synthetic_validation_only",
+    "runs":  [
+                 {
+                     "pid":  52344,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R3_h03_native_postrefinement\\verification_01\\windows_controller\\empty_child",
+                     "ended_utc":  "2026-10-15T16:37:19.0174328Z"
+                 }
+             ],
+    "current_pid":  null,
+    "persistence_retries":  0,
+    "updated_utc":  "2026-10-15T16:37:19.0440114Z"
+}

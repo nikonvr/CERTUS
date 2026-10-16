@@ -1,0 +1,44 @@
+{
+  "prepared_utc": "2026-10-13T23:04:40.087222+00:00",
+  "runner": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_prefix_confirmation_runner.py",
+  "arguments": [
+    "--worktree",
+    "C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-equilibre\\certus0310",
+    "--plans",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_2026-10-14\\plans.json",
+    "--protocol",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_joint_2026-10-14\\protocole_validation_prefix_v5.json",
+    "--reference-state",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_equilibre_AB_2026-10-13\\etat.json",
+    "--trial-output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_joint_2026-10-14",
+    "--output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_2026-10-14"
+  ],
+  "hashes": {
+    "rate_prefix_confirmation_runner.py": "d450383fcea4976a852074d016167953e0d8a7409ee9ddaa3e9c2ab1621b9ad2",
+    "rate_fixed_replay_confirmation_v5.py": "1e1a932875863fb96161106dcd6a1a2ea4b9bd345afc6522a832fb0c7249c357",
+    "campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51",
+    "plans.json": "c09d40815b34e17359b2394b02507b99b9eb18037b7bd78a8da407b80974153f",
+    "protocole_validation_prefix_v5.json": "c8c480c032b2fb4578bbb01c2759b69974518a1f9e82c160a91b2a7a4b8d2d37"
+  },
+  "review": "Replay v4 to v5 changes argparse choices only; controller copies validated sequential runner and strengthens hashes/full-depth calls. No physical formula, tolerance, model or world changes. Four strict fixed points required before holdouts.",
+  "fresh_groups": [
+    1212,
+    1313,
+    1414
+  ],
+  "reused_context_groups": [
+    202,
+    303,
+    404,
+    505,
+    606,
+    707,
+    808,
+    909,
+    1010,
+    1111
+  ],
+  "deadline_utc": "2026-10-14T07:00:00Z"
+}

@@ -1,0 +1,11 @@
+{
+  "source_sha256": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+  "test_sha256": "a1ecf68dc60be63495bbec630bfa93b24a7fa69660cc40aa36046e1cd7e11f5c",
+  "historical_kernel_ast_identical_except_name": true,
+  "public_api": "CPUDispatcher; same arguments and defaults; nogil; numerical kernel still parallel/fastmath",
+  "normalizer": "finite positive uniform weights with finite total above existing floor -> original None specialization; all other cases delegated",
+  "tests": "strict assertion preserved; four positive constants; old-source counterproof in full validation",
+  "cold_comparison": "882 arrays;490 unchanged bitwise;392 uniform match unweighted;272 pre-fix mismatches",
+  "formal_code_review_tool": "not exposed for local changes; manual diff review performed",
+  "full_validation": "running; no commit/measurement permitted until it passes"
+}

@@ -1,0 +1,9 @@
+{
+  "observed_utc": "2026-10-15T09:31:25.2198296Z",
+  "exit_code": 0,
+  "exit_code_is_null": false,
+  "old_condition_would_fail": false,
+  "has_exited": true,
+  "command": "python -c pass",
+  "scientific_calculation": false
+}

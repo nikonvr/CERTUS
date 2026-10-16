@@ -1,0 +1,39 @@
+{
+  "checked_local": "2026-10-14T07:01:38.9604507+02:00",
+  "status": "running",
+  "completed": 4,
+  "current": "r75x1.75_deep_s042_avec",
+  "current_pid": 25072,
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "processes": [
+    {
+      "pid": 23280,
+      "parent_pid": 22652,
+      "command": "\"C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\campagne_a2_deadline_runner.py\" \"--worktree\" \"C:\\Users\\Lemarchand\\.codex\\worktrees\\campagne-a2\\certus0310\" \"--output\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_ELITE_couches_Rate_autres_composants_2026-10-13\" \"--logical-cpus\" \"16\"",
+      "affinity": 65535,
+      "priority": "Normal",
+      "cpu_seconds": 0.375
+    },
+    {
+      "pid": 25072,
+      "parent_pid": 23280,
+      "command": "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe scripts/probe_blocs_vs_plantage.py r75x1.75 deep 0 0 2 0 42 0",
+      "affinity": 65535,
+      "priority": "Normal",
+      "cpu_seconds": 38631.53125
+    }
+  ],
+  "log_tail": [
+    "07:01:35 | INFO |    [ELITE-PARENTS] Round 3 #10 id=990250110 n_blocs=2 crash=0.00% seel=0.6939 marge=20.76A origin=RATE_RESCUE4(from 9902 wl=[575, 575]",
+    "07:01:35 | INFO | [ELITE-RATE] Round 3: 120 candidate(s) change the Rate layers of their parent.",
+    "07:01:35 | INFO | [SLIT] slit bias active, 156/156 strategies -- slit 2 nm, profile of 17 nodes, 72 NEW profiles in 0.2 s (cache: 28469)",
+    "07:01:35 | INFO | [ELITE] Round 3/3: generated=156 parents=10 rank10_nominal=0.108446 target=0.108446",
+    "07:01:37 | INFO | [ELITE] Round 3: full_eval=36."
+  ],
+  "errors": []
+}

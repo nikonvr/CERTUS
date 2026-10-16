@@ -1,0 +1,16 @@
+{
+  "observed_utc": "2026-10-15T11:16:28.3975905Z",
+  "status": "running",
+  "phase": "R3_h02_control",
+  "controller_pid": 24768,
+  "child_pid": 30284,
+  "cpu_seconds": 44050.734375,
+  "affinity": 16777215,
+  "priority": "Normal",
+  "memory_bytes": 4173881344,
+  "scientific_process_count": 1,
+  "new_scientific_result": false,
+  "preflight": "GO",
+  "decision": "Existing h02 control preserved; automatic variant next; no tests, duplicate launch, or active-source edit",
+  "eta_bilan_Paris": "14:30-16:00, provisional"
+}

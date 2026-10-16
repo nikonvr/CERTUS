@@ -1,0 +1,19 @@
+{
+  "verdict": "GO",
+  "seed42_collision": {
+    "before": {
+      "accepted": false,
+      "reason": "Missing or shallow actual post base evaluations"
+    },
+    "after": {
+      "accepted": true
+    }
+  },
+  "artifact_names": {
+    "c04_48c_s77": "blocs_vs_plantage_48c_premium_s077_fixture_c04_48c_s77_fente.json",
+    "c05_r75x15_s42": "blocs_vs_plantage_r75x1.5_deep_s042_fixture_c05_r75x15_s42.json",
+    "c06_r75x2_s77": "blocs_vs_plantage_r75x2_deep_s077_fixture_c06_r75x2_s77.json"
+  },
+  "physical_evaluations": 0,
+  "source_sha256": "68499f51af544cc292ce51aee8fd18f220f0b658e8af85047196ab857c32ce26"
+}

@@ -1,0 +1,35 @@
+{
+  "prepared_utc": "2026-10-14T00:01:54.507691+00:00",
+  "status": "prepared_waiting_not_measuring",
+  "runner": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_prefix_fine_runner.py",
+  "arguments": [
+    "--worktree",
+    "C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-equilibre\\certus0310",
+    "--proposals",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_lambda_fine_2026-10-14\\proposals.json",
+    "--protocol",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_lambda_fine_2026-10-14\\protocole_validation_prefix_fine_v7.json",
+    "--reference-state",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_equilibre_AB_2026-10-13\\etat.json",
+    "--trial-output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_confirmation_native_prefix_2026-10-14",
+    "--output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_lambda_fine_2026-10-14"
+  ],
+  "hashes": {
+    "rate_prefix_fine_runner.py": "7fca73e4b02b6ce17891caa17d75da273aeafcb854b19a7c8d9aacd4bc209fce",
+    "rate_fixed_replay.py": "05376a9240c66a99a1f4f5bf1a7300045d13ed83ca0ed4a4f88300a73688a2c3",
+    "campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51",
+    "protocole_validation_prefix_fine_v7.json": "8b572e6c0955338d1464c7f01cbd9d51df6d48d9ebfc2e00c951ae5c79c0e9b2",
+    "proposals.json": "cd0baa2c7a62d3838034a9d0c8d36ae7ff53415836819861d05aa500379bf4b3"
+  },
+  "scope": "Only first-block wavelength on a 1nm grid within +/-20nm; prefix length five, other windows and full plans unchanged; skip already measured exact candidates",
+  "n_proposals": 36,
+  "fresh_groups": [
+    1818,
+    1919,
+    2020
+  ],
+  "review": "Reused measured sequential search controller; only report title and prerequisite changed. Every physical call and tolerance unchanged. Full real block contract checked by replay before scoring each plan. Static AST reviewed; no runtime tests during native measurement.",
+  "deadline_utc": "2026-10-14T07:00:00Z"
+}

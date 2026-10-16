@@ -1,0 +1,26 @@
+"""Confirm the actual failed anchor preparation is rejected and the corrected one passes."""
+
+from rate_R4_guard import EXPERIMENT, PROGRAM, read
+from rate_R4_planner import save
+
+trusted = {p["source_strategy_id"]: p for p in read(PROGRAM / "R3_h02_wavelengths/homogeneous_replay/control.json")["plans"]}
+
+
+def check(protocol):
+    for anchor in protocol["anchors"]:
+        expected = trusted[anchor["source_strategy_id"]]
+        if "expected_score_fixed_point" not in anchor or anchor["expected_score_fixed_point"] != expected["expected_score_fixed_point"]:
+            raise RuntimeError("A fixed point was lost during parent initialization")
+
+
+try:
+    check(read(EXPERIMENT / "launch_failure_01/protocol.json"))
+except RuntimeError as error:
+    before = str(error)
+else:
+    raise AssertionError("The actual failed preparation was not rejected")
+check(read(EXPERIMENT / "protocol.json"))
+save(EXPERIMENT / "verification_02/anchor_counterproof.json",
+     {"verdict": "GO", "before": before, "after": "All three independently measured expected scores preserved",
+      "physics_measured": False, "claims_consumed": 0}, immutable=True)
+print("ANCHOR_COUNTERPROOF=GO")

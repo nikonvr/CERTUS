@@ -1,0 +1,53 @@
+{
+  "prepared_utc": "2026-10-13T23:31:43.580022+00:00",
+  "status": "prepared_waiting_not_measuring",
+  "runner": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_native_prefix_confirmation_runner.py",
+  "arguments": [
+    "--worktree",
+    "C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-equilibre\\certus0310",
+    "--native-output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_native_prefix_2026-10-14",
+    "--measurement-key",
+    "prefix_720_joint_480_rate240_rounds6_s101",
+    "--output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_confirmation_native_prefix_2026-10-14",
+    "--reference-state",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_equilibre_AB_2026-10-13\\etat.json",
+    "--protocol",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_native_prefix_2026-10-14\\protocole_validation_native_prefix_v6.json",
+    "--fixed-plans",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_2026-10-14\\plans.json"
+  ],
+  "hashes": {
+    "rate_native_prefix_confirmation_runner.py": "9a8da6f704029da399eedc2c68946cadf4518bc103f1105c37115c50cc17c224",
+    "rate_fixed_replay_confirmation_v6.py": "dbcdd6e24103675db50d0f8e6948cb419d471c3a5cbaacbee0921e7e5aee0778",
+    "campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51",
+    "resumer_artefact_sonde.py": "6c34d928727a6facd21b8ce72d2ca57c894fc612fb7bdf32d14ade947acc78f7",
+    "protocole_validation_native_prefix_v6.json": "09b7f40d016b9c516c23e5e30c968ae4a5a3d6b9cbd2b0d8dfe5415ed688dccf",
+    "plans.json": "c09d40815b34e17359b2394b02507b99b9eb18037b7bd78a8da407b80974153f"
+  },
+  "review": "Copied sequential native confirmation controller; four fixed comparators plus native winner if distinct; original winner ID retained; strict fixed point required. Physical replay AST identical v5/v6 outside CLI choices. No test or measurement during the active native search.",
+  "fresh_groups": [
+    1515,
+    1616,
+    1717
+  ],
+  "reused_context_groups": [
+    202,
+    303,
+    404,
+    505,
+    606,
+    707,
+    808,
+    909,
+    1010,
+    1111,
+    1212,
+    1313,
+    1414
+  ],
+  "deadline_utc": "2026-10-14T07:00:00Z",
+  "source_physics": "unchanged",
+  "strict_depth_guard": "If exported native winner has only a base score, fixed control will fail; preserve and audit without relaxing tolerance"
+}

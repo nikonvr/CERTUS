@@ -1,0 +1,11 @@
+{
+  "affinity_mask": "0xffffff",
+  "status": "launched",
+  "measurement_quota": 1,
+  "bounded_slot": "R2_native_base",
+  "started_utc": "2026-10-15T07:25:24.6376753Z",
+  "authorized_logical_cpus": 24,
+  "library_threads_ceiling": 23,
+  "pid": 32588,
+  "arguments": "-X utf8 \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_native_pipeline_probe_bounded.py\" --worktree \"C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-rmse-r0\\certus0310\" --output \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R2_native_base\" --reference-state \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\reference_context.json\" --tag r2_rmse24_20261015_v1 --verification-record \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\observer_verification\\verification.json\" --validated-control \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R0_control\\control.json\""
+}

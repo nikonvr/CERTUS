@@ -1,0 +1,46 @@
+"""Run the frozen planner with only its atomic checkpoint persistence retried."""
+
+from __future__ import annotations
+
+import json
+import os
+import runpy
+import time
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+EXPERIMENT = ROOT / "reports/STRAT_Rate_suite_2026-10-15/R4_refinement"
+
+
+def save(path: Path, value: dict, *, immutable: bool = False) -> None:
+    text = json.dumps(value, ensure_ascii=False, indent=2)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if immutable:
+        with path.open("x", encoding="utf-8", newline="\n") as stream:
+            stream.write(text)
+        return
+    temp = path.with_name(path.name + ".tmp")
+    for attempt in range(20):
+        try:
+            temp.write_text(text, encoding="utf-8", newline="\n")
+            os.replace(temp, path)
+            return
+        except PermissionError:
+            if attempt == 19:
+                raise
+            time.sleep(0.1)
+
+
+def main() -> None:
+    # The generation, selection, quotas, scoring inputs and phase code stay frozen.
+    scope = runpy.run_path(str(ROOT / "scratch/rate_R4_planner.py"), run_name="frozen_rate_R4_planner")
+    scope["check_deadline"]()
+    protocol = scope["read"](EXPERIMENT / "protocol.json")
+    if scope["sha"](ROOT / "scratch/rate_R4_planner.py") != protocol["script_sha256"]["rate_R4_planner.py"]:
+        raise RuntimeError("The original frozen planner changed")
+    scope["main"].__globals__["save"] = save
+    scope["main"]()
+
+
+if __name__ == "__main__":
+    main()

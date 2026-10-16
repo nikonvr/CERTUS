@@ -1,0 +1,7 @@
+{
+  "note": "The protocol inherited prepared_utc from v4. This field is not the v5 creation time; the current v5 hash and file timestamp were recorded before the 00:37:53 scientific launch. Frozen protocol bytes remain unchanged during measurement.",
+  "inherited_prepared_utc": "2026-10-13T21:02:17.164562+00:00",
+  "v5_file_mtime_utc": "2026-10-13T22:37:18.924557+00:00",
+  "v5_sha256": "c8c480c032b2fb4578bbb01c2759b69974518a1f9e82c160a91b2a7a4b8d2d37",
+  "launch_utc": "2026-10-13T22:37:53+00:00"
+}

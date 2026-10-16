@@ -1,0 +1,61 @@
+"""Prove old persistence fails under a held reader and the copied retry recovers, no physics."""
+
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+from rate_R4_guard import EXPERIMENT, ROOT, check_deadline, read, sha
+from rate_R4_planner import save
+
+check_deadline()
+if list((ROOT / "reports").rglob(".running")) or (EXPERIMENT.parent / "measurement.running").exists():
+    raise RuntimeError("No controller verification while scientific work lives")
+output = EXPERIMENT / "controller_retry_verification_01"
+output.mkdir(exist_ok=False)
+old = (ROOT / "scratch/run_rate_R4.ps1").read_text(encoding="utf-8")
+old_function = old[old.index("function Save-RateR4State"):old.index("function Invoke-RateR4Child")]
+old_function = old_function.replace("Save-RateR4State", "Save-OldRateR4State")
+new = (ROOT / "scratch/run_rate_R4_resume_v2.ps1").read_text(encoding="utf-8")
+functions = new[new.index("function Save-RateR4State"):new.index("\n$rateR4Previous=")]
+
+
+def quote(value):
+    return "'" + str(value).replace("'", "''") + "'"
+
+
+shell = Path(os.environ["SYSTEMROOT"]) / "System32/WindowsPowerShell/v1.0/powershell.exe"
+reader_code = (f"$rateReader=[IO.File]::Open({quote(output / 'state.json')},'Open','Read','Read'); "
+               f"try {{ [IO.File]::WriteAllText({quote(output / 'reader_ready')},'ready'); Start-Sleep -Milliseconds 900 }} "
+               "finally { $rateReader.Dispose() }")
+script = ("$ErrorActionPreference='Stop'\n" +
+          f"$rateR4Root={quote(ROOT)}\n$rateR4Python={quote(sys.executable)}\n" +
+          f"$rateR4StatePath={quote(output / 'state.json')}\n" +
+          "$rateR4State=[ordered]@{status='test';runs=@();current_pid=$null;persistence_retries=0}\n" + functions + old_function +
+          "\nSave-RateR4State\n" +
+          f"$rateReaderProcess=Start-Process -FilePath {quote(shell)} -ArgumentList @('-NoProfile','-Command',('\"'+{quote(reader_code)}+'\"')) -WindowStyle Hidden -PassThru\n" +
+          "$rateReaderHandle=$rateReaderProcess.Handle\n" +
+          f"for($ratePoll=0;$ratePoll -lt 50 -and -not(Test-Path -LiteralPath {quote(output / 'reader_ready')});$ratePoll++){{Start-Sleep -Milliseconds 50}}\n" +
+          f"if(-not(Test-Path -LiteralPath {quote(output / 'reader_ready')})){{throw 'Reader lock setup failed'}}\n" +
+          "$rateBeforeFailed=$false\ntry { Save-OldRateR4State } catch { $rateBeforeFailed=$true }\n" +
+          "if(-not $rateBeforeFailed){throw 'Old save unexpectedly passed under denied-delete reader'}\n" +
+          "Save-RateR4State\n$rateReaderProcess.WaitForExit()\n" +
+          "if($rateR4State.persistence_retries -lt 1){throw 'Retry was not exercised'}\n" +
+          f"Invoke-RateR4Child @('-c','\"print(1)\"') {quote(output)}\n" +
+          "$rateR4State['before_failed']=$rateBeforeFailed\nSave-RateR4State\n")
+(output / "harness.ps1").write_text(script, encoding="utf-8")
+with (output / "harness.stdout.log").open("wb") as stdout, (output / "harness.stderr.log").open("wb") as stderr:
+    result = subprocess.run([str(shell), "-NoProfile", "-Command", script], stdout=stdout, stderr=stderr, check=False)
+if result.returncode:
+    raise RuntimeError("Controller retry counterproof failed; inspect the preserved harness logs")
+state = read(output / "state.json")
+assert state["before_failed"]
+assert state["persistence_retries"] > 0
+assert state["current_pid"] is None
+assert len(state["runs"]) == 1
+assert state["runs"][0]["exit_code"] == 0
+save(output / "verification.json", {"verdict": "GO", "old_save": "failed under held reader", "new_save": "recovered after reader released",
+                                    "retries": state["persistence_retries"], "handle_exit0": True, "physics_measured": False,
+                                    "resume_sha256": sha(ROOT / "scratch/run_rate_R4_resume_v2.ps1")}, immutable=True)
+print(json.dumps({"verdict": "GO", "retries": state["persistence_retries"], "physics_measured": False}))

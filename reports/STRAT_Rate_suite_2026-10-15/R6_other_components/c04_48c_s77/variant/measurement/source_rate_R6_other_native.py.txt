@@ -1,0 +1,116 @@
+"""Bounded R5 native probe: production options and passive observers, no scientific adapter."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import runpy
+import sys
+import traceback
+from datetime import UTC, datetime
+from pathlib import Path
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--deadline-utc", required=True)
+    parser.add_argument("--case", choices=('c04_48c_s77', 'c05_r75x15_s42', 'c06_r75x2_s77'), required=True)
+    parser.add_argument("--arm", choices=("control", "variant"), required=True)
+    args = parser.parse_args()
+    root = Path(__file__).resolve().parents[1]
+    guard = runpy.run_path(str(root / "scratch/rate_R6_other_guard.py"))
+    reference = guard["read"](guard["REFERENCE"])
+    protocol = guard["read"](guard["PROTOCOL"])
+    worktree = Path(reference["worktree"])
+    phase = "R6_" + args.case + "_" + args.arm
+    output = guard["SLOTS"][phase]
+    sources = guard["check_context"](worktree, reference)
+    proof = guard["check_ready"](phase, output, sources, requested_deadline=args.deadline_utc)
+    if os.cpu_count() != 24:
+        raise RuntimeError("Start Python with -X cpu_count=24")
+    helper = runpy.run_path(str(root / "scratch/campagne_a2_runner.py"))
+    save = runpy.run_path(str(root / "scratch/rate_R4_planner_resume_v3.py"))["save"]
+    resources = helper["limit_resources"](24)
+    if resources != proof["resources"]:
+        raise RuntimeError("Wrong resource limits")
+    seed = protocol["cases"][args.case]
+    native = {"arguments": protocol["case_arguments"][args.case],
+              "overrides": protocol["common_overrides"] + ",rate_post_refinement=" + str(args.arm == "variant").lower()}
+    tag = "r6_" + args.case + "_" + args.arm + "_20261015_v1"
+    native_artifact = worktree / "reports" / f"blocs_vs_plantage_{native['arguments'][0]}_{native['arguments'][1]}_s{seed:03d}_{tag}{'_fente' if native['arguments'][2] == '1' else ''}.json"
+    if native_artifact.exists():
+        raise RuntimeError("The uniquely tagged R5 native artifact already exists")
+    output.mkdir(parents=True, exist_ok=True)
+    lock = output / ".running"
+    state = {"status": "running", "pid": os.getpid(), "started_utc": datetime.now(UTC).isoformat(),
+             "resources": resources, "python_cpu_count": os.cpu_count(), "source_sha256": sources,
+             "script_sha256": protocol["script_sha256"], "arguments": native["arguments"],
+             "overrides": native["overrides"], "bounded_program": proof, "tag": tag, "case": args.case, "arm": args.arm,
+             "scientific_adapter": False, "observation_only": True}
+    pipeline = None
+    with lock.open("x", encoding="utf-8") as stream:
+        stream.write(str(os.getpid()))
+    try:
+        guard["reserve_slot"](proof)
+        save(output / "etat.json", state)
+        for name in protocol["script_sha256"]:
+            with (output / ("source_" + name + ".txt")).open("xb") as stream:
+                stream.write((root / "scratch" / name).read_bytes())
+        for key in ("NUMBA_CACHE_DIR", "_CERTUS_NUMBA_CONFIGURED", "NUMBA_THREADING_LAYER", "CERTUS_CONSENSUS_SEEDS",
+                    "CERTUS_RATE_SETS", "CERTUS_TAIL_CUTS", "CERTUS_DESIGN_JSON", "PYTHONPYCACHEPREFIX"):
+            os.environ.pop(key, None)
+        os.environ.update(PYTHON_CPU_COUNT="24", PYTHONUTF8="1", QT_QPA_PLATFORM="offscreen", CERTUS_BENCH_TIMEOUT_S="21600",
+                          CERTUS_PROBE_OVERRIDES=native["overrides"], CERTUS_PROBE_TAG=tag,
+                          CERTUS_CONFIG_DIR=str(worktree / "scratch/rate_batch_preferences"))
+        for key in ("NUMBA_NUM_THREADS", "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "VECLIB_MAXIMUM_THREADS", "NUMEXPR_NUM_THREADS"):
+            os.environ[key] = "23"
+        os.chdir(worktree)
+        sys.path[:0] = [str(worktree), str(worktree / "scripts")]
+        import bench_examples as bx
+
+        bx.qapp()
+        bx.autoanswer_dialogs(True)
+        import certus.core.certus_strat_consensus as consensus
+        import certus.core.certus_strat_robustness as robustness
+
+        observer = runpy.run_path(str(root / "scratch/rate_native_pipeline_trace.py"))
+        guard["check_deadline"](args.deadline_utc)
+        sys.argv = [str(worktree / "scripts/probe_blocs_vs_plantage.py"), *native["arguments"]]
+        with observer["observe_pipeline"](consensus, robustness) as pipeline:
+            try:
+                runpy.run_path(sys.argv[0], run_name="__main__")
+            except SystemExit as ended:
+                if ended.code not in (None, 0):
+                    raise RuntimeError(f"R5 native probe exited {ended.code}") from ended
+        guard["check_context"](worktree, reference)
+        if any(guard["sha"](root / "scratch" / name) != digest for name, digest in protocol["script_sha256"].items()):
+            raise RuntimeError("A frozen launcher changed")
+        artifact = guard["read"](native_artifact)
+        if artifact["verdict"] != "OK" or (args.arm == "variant" and artifact.get("rate_post_refinement", {}).get("status") != "complete"):
+            raise RuntimeError("The integrated native/post artifact is not complete")
+        state.update(status="complete", native_artifact_sha256=hashlib.sha256(native_artifact.read_bytes()).hexdigest())
+        return 0
+    except BaseException:
+        state.update(status="failed", error=traceback.format_exc())
+        raise
+    finally:
+        try:
+            if native_artifact.exists():
+                with (output / native_artifact.name).open("xb") as stream:
+                    stream.write(native_artifact.read_bytes())
+                state["artifact"] = str(output / native_artifact.name)
+            if pipeline is not None:
+                save(output / "pipeline_trace.json", json.loads(json.dumps(pipeline, default=observer["json_default"])))
+            state["updated_utc"] = datetime.now(UTC).isoformat()
+            save(output / "etat.json", state)
+        finally:
+            lock.unlink(missing_ok=True)
+            guard["release_slot"]()
+
+
+if __name__ == "__main__":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    raise SystemExit(main())

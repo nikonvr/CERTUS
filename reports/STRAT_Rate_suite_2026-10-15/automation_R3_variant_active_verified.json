@@ -1,0 +1,8 @@
+{
+  "status": "ACTIVE",
+  "verified_utc": "2026-10-15T09:37:30.274596+00:00",
+  "rrule": "FREQ=HOURLY;BYMINUTE=0,30",
+  "same_id": true,
+  "current_controller": "pair_controller_v4.json",
+  "prompt_sha256": "0e7df0f2f34f1cc7bdcb124f382946e311a52427ae8e323453e4fcf49280a50f"
+}

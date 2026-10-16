@@ -1,0 +1,10 @@
+{
+  "original_total_quota": 3,
+  "group1_adopted_without_replay": true,
+  "started_utc": "2026-10-15T13:55:50.1622047Z",
+  "pid": 53552,
+  "remaining_fresh_groups": [
+    2,
+    3
+  ]
+}

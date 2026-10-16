@@ -1,0 +1,23 @@
+# R6 autres composants — revue avant mesure,16octobre2026
+
+Le bilan initial est GO :77,202,404 ont chacun trois victoires fraîches et une médiane≥1%, sur les groupes propres réservés avant recherche. Détails et limites dans ../R6_generalization/initial_cases_bilan_20261016.md et initial_gate.json. Aucun meilleur global nouveau : les variantes restent derrière9900008.
+
+Le programme conditionnel compte au plus trois nouvelles paires, soit sixR6 au total. Ordre exact issu des cellules A2 :
+
+| Cas | Huit arguments du probe officiel |
+|---|---|
+| c04_48c_s77 |48c premium 1 0 2 0 77 0|
+| c05_r75x15_s42 |r75x1.5 deep 0 0 2 0 42 0|
+| c06_r75x2_s77 |r75x2 deep 0 0 2 0 77 0|
+
+Dans chaque paire, mêmes sources, physique, grille, bruits, fente, profondeur et paramètres hors facteur rate_post_refinementFalse/True. Politique conjointeλfine/largeurs1..7,480conjoints/240Rate/six tours conservée. La recherche premium conserve son profil natif et son consensus150 ; deep conserve300. Les profondeurs réellement appelées seront auditées, jamais présentées toutes à300. Le post reste≤2passes,beam2,300propositions par passe/600total,73groupes,arrêt sans gain et parents propres au bras uniquement. Coût additionnel déclaré.
+
+Après chaque paire : figer meilleurs exports officiels ET meilleurs consensus complets, dédupliquer par plan complet, puis trois groupes frais réservés. Les plans historiques75c/x0.5 ne sont pas des ancres pertinentes pour ces autres composants et ne sont pas injectés. Au plus huit plans, au moins un si les sorties sont identiques. Les plans fixés sont renotés homogènement à300tirages via APIproductionrefine=False, sans recherche/expansion ; design et nombre de couches proviennent du registre COMPOSANTS du probe officiel. Les fentes, facteurs de bruit, témoins et partitions de chaque plan sont conservés. Les paramètres de profondeur des plans fixes sont explicites, sans prétendre un budget de recherche inchangé.
+
+Graines17710001..04/11..14/21..24 pour48c,177200xx pourx1.5,177300xx pourx2 :36graines exactes absentes des JSONreports avant réservation. fresh_seed_reservation.json est figé avant recherche ou inspection des holdouts. Aucun groupe ancien réutilisé ni quota élargi. Critère conservateur identique3/3+médiane≥1% ; au premier cas conditionnel qui ne le satisfait pas, arrêt de cette extension, sans groupe supplémentaire.
+
+Copies nouvelles : rate_R6_other_guard/native, run_rate_R6_other_pair.ps1, rate_R6_other_fresh_guard/scorer, run_rate_R6_other_fresh.ps1, prepare_rate_R6_other_confirmation.py, verify_rate_R6_other_fresh.py, audit_rate_R6_other_fresh.py. Aucun ancien script/protocole/SHA réécrit. Sources intégrales dans prepared_sources et verification_01/final_sources ; les deux derniers correctifs du harnais frais (liaison design/mode) sont dans les copies finales, archives de préparation conservées. Protocole natif native_protocol.json figé.
+
+Vérifications réelles :16contrôles sans simulation GO, trois configurations chargées par la vraie application sans worker, callbacks evaluate_fixed/record_task identiques à l’AST àR5, contrats48/75couches et consensus fixés300. Gardes réelles : premier contrôle autorisé sans claim, slots étrangers/rejoués, variante prématurée, composant suivant prématuré, concurrence et heure limite refusés. PowerShell5.1 : parsingGO et quatre fonctions identiques aux coordinateurs éprouvés (Handle avantWaitForExit, sauvegardes atomiques20×100ms/backup, datesISO littérales). Contre-épreuve sur traces enregistrées : ancien comptage par graine refuse le cas où base42=consensus42, nouveau comptage par multiensemble(graine,profondeur) accepte ses quatre appels ; aucun nouveau calcul physique. Noms de fichiers du probe vérifiés, y compris suffixe_fente48c. Ruff tous nouveaux scripts GO. Diagnostics initiaux de style du vérificateur conservés, source réellement exécutée archivée avant correction de style, aucune simulation répétée.
+
+Limite absolue16octobre06:00UTC contrôlée avant chaque enfant ; une seule mesure, CPU24 déclaré au démarrage,affinité0xffffff/Normal/bibliothèques≤23. Aucun autre Python/test/analyse pendant une mesure. Ne pas interrompre l’enfant engagé à la limite. Aucun nouveau défaut activé, aucune source de production modifiée, aucun commit/push/publication. R7 reste en attente des données machine. Démarrer uniquement48c après inventaire réel ; chaque autre cas exige l’audit frais précédent favorable.

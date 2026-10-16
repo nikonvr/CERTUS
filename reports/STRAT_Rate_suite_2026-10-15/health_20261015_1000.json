@@ -1,0 +1,18 @@
+{
+  "observed_utc": "2026-10-15T08:01:05.439242+00:00",
+  "status": "running",
+  "pid": 32588,
+  "process_checked": true,
+  "python_process_count": 1,
+  "cpu_seconds": 39633.578125,
+  "priority": "Normal",
+  "affinity": 16777215,
+  "memory_bytes": 4898226176,
+  "last_observed_progress": "10:00:23 Paris: Block 5 full pass, 262 strategies, 16 workers",
+  "claims": [
+    "R0_control",
+    "R2_native_base"
+  ],
+  "decision": "Continue the existing R2 calculation; no new test, measurement, or source edit",
+  "new_scientific_result": false
+}

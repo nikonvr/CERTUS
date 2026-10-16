@@ -1,0 +1,42 @@
+{
+  "prepared_utc": "2026-10-14T03:15:54.463075+00:00",
+  "runner": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_prefix_after_window_runner.py",
+  "arguments": [
+    "--worktree",
+    "C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-equilibre\\certus0310",
+    "--proposals",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_after_window_2026-10-14\\proposals.json",
+    "--protocol",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_after_window_2026-10-14\\protocole_validation_prefix_after_window_v10.json",
+    "--reference-state",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_equilibre_AB_2026-10-13\\etat.json",
+    "--trial-output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_window_pairs_2026-10-14",
+    "--output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_after_window_2026-10-14"
+  ],
+  "hashes": {
+    "prepare_rate_prefix_after_window.py": "8faa6c01e8f8e0d1bb1ced9dea8d87bd4030a1d27d2addff07b2004314d86567",
+    "prepare_rate_prefix_after_window_proposals.py": "6bce9b67093fda286a206fedd99e836cc883158c4b54b1ffa75887583b6c8819",
+    "verify_rate_prefix_after_window.py": "65e42e08086601a6fffd49d83418129ffec3d4e13f10b71d0626c661d44a8721",
+    "rate_prefix_after_window_runner.py": "bf1f83ca16d5b0c1c91420bb89d1e3fb784bef26d603bcafc2178bb8ecd96703",
+    "rate_prefix_after_window_confirmation_runner.py": "1908b489678b12fd931977499ca8de8145a54b5c34c2ce206d444bdd6deba237",
+    "rate_fixed_replay_confirmation_v10.py": "0249da490dd9d59c4ae483fcaa9dbaf662eb4adb5c122fde86fb47bb53e9c7a6",
+    "rate_fixed_replay.py": "05376a9240c66a99a1f4f5bf1a7300045d13ed83ca0ed4a4f88300a73688a2c3",
+    "campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51",
+    "proposals.json": "9d5b462394b8baaee51cb06a8ae1fa7848251aa5a2543f0d4ef7a010a881de37",
+    "protocol": "be6b866075ce6378dc0495df8359914d05dc4392b8f60e306557c2b2de6c1dae"
+  },
+  "n_proposals": 607,
+  "n_stages": 62,
+  "status": "prepared_not_launched",
+  "fresh_groups": [
+    2727,
+    2828,
+    2929
+  ],
+  "physical_replay_ast_identical_except_cli_choices": true,
+  "scope": "Retained window688 parent only; prefix lengths2..9, original broad grid and fine +/-20nm; internal windows/partition fixed",
+  "selection": "Parent retained after confirmation; rank only search101 complete consensus; pair winner not adopted because it lost all fresh groups",
+  "deadline_utc": "2026-10-14T07:00:00Z"
+}

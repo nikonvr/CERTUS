@@ -1,0 +1,17 @@
+{
+  "status": "OK",
+  "artifact_sha256": "f91d16af4e54d4f8874c7753596ea5610153191d92a5ad8a30c3db0292fe444b",
+  "trace_sha256": "1bc10bfc108dbc8cd5fb6a596ebbc410508ffbb99f5afea38f84a2fc051057ee",
+  "best_plan_equal_to_budget240": null,
+  "native_best_id": 900852003,
+  "equivalent_best_plan_ids_in_saved_artifact": [
+    900852003
+  ],
+  "equivalent_best_as_parent_events": [],
+  "known_local_joint_winner_exactly_offered": [],
+  "offered_count": 17770,
+  "limitations": [
+    "Only offered candidates and parent identities observed, no inference that a missing parent was the only possible path",
+    "Full scoring selection is not stored by the generator observer"
+  ]
+}

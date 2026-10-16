@@ -1,0 +1,80 @@
+{
+  "verdict": "NO_GAIN",
+  "completed_utc": "2026-10-15T10:36:24.893783+00:00",
+  "native_control_and_variant_best_full_plans_identical": true,
+  "relative_gain": 0.0,
+  "native_seel_nm": 0.36006088633539163,
+  "homogeneous_replay_verdict": "OK",
+  "actual_calls": 20,
+  "actual_runs_each": 300,
+  "actual_seeds": [
+    101,
+    41,
+    42,
+    43
+  ],
+  "replayed_unique_plans": [
+    {
+      "id": 9900008,
+      "nom": "prefix_after_window_consensus_best_s101",
+      "score_base": 0.030530068757467776,
+      "score_consensus": 0.02797523766720083,
+      "seel_nm": 0.3345159946382285,
+      "crash_rate": 0.0
+    },
+    {
+      "id": 9900001,
+      "nom": "ablation_consensus_best_s101",
+      "score_base": 0.032361536968314515,
+      "score_consensus": 0.032749965266219656,
+      "seel_nm": 0.3619390294854627,
+      "crash_rate": 0.0
+    },
+    {
+      "id": 900951015,
+      "nom": "reference_rate_s101",
+      "score_base": 0.03990199328595278,
+      "score_consensus": 0.03934565579798472,
+      "seel_nm": 0.3967147882193691,
+      "crash_rate": 0.0
+    },
+    {
+      "id": 9900006,
+      "nom": "internal_window_consensus_best_s101",
+      "score_base": 0.027573191157578752,
+      "score_consensus": 0.029057302267738155,
+      "seel_nm": 0.3409240517636628,
+      "crash_rate": 0.0
+    },
+    {
+      "id": 901054165,
+      "nom": "R3_h01_native_shared_finalist",
+      "score_base": 0.032719526946813696,
+      "score_consensus": 0.032410960467156955,
+      "seel_nm": 0.36006088633539163,
+      "crash_rate": 0.0
+    }
+  ],
+  "native_counts": {
+    "control": 5412,
+    "variant": 5375
+  },
+  "native_duration_seconds": {
+    "control": 2660.182777,
+    "variant": 2611.906006
+  },
+  "independent_confirmation_groups_consumed": 0,
+  "decision": "Do not confirm or retain the wider-window-only variant; continue R3 with one wavelength-neighborhood factor after trace diagnosis",
+  "input_sha256": {
+    "audit_control.json": "0010eb8f5d440f3e879395cdb333e58122b69684168cf7a8b73fbf0d36d7e052",
+    "audit_variant.json": "e650a0e5bc05a199fb37112474e20232530bd446aaa05b63dfc078bf2270e8da",
+    "frozen_finalists.json": "ce7192ff9fad9e0bc7c49bee00bebe92ea13ad488b4dff0f3c8bf7832d054b70",
+    "replay_protocol.json": "ca113fe33b5ff2588f83ff1a139b3503388de4604d3041711c28d1481fa47aea",
+    "homogeneous_replay/control.json": "53706f8f9e8af148fb8784c2edeef2ae43aa497d8ca9a29891f8df038be33c60"
+  },
+  "limitations": [
+    "One training case/graine101; not a general impossibility result for odd widths",
+    "Same best native plan; local best remains outside automatic discovery",
+    "Runtime difference is not proof of code acceleration"
+  ]
+}

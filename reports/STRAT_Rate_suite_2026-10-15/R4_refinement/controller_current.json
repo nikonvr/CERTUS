@@ -1,0 +1,10 @@
+{
+  "state_file": "controller_v3.json",
+  "tail_groups": [
+    61,
+    62
+  ],
+  "no_replay": true,
+  "previous_state": "controller_v2.json",
+  "recovery": "controller_repair_02.json"
+}

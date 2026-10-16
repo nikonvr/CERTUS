@@ -1,0 +1,39 @@
+{
+  "prepared_utc": "2026-10-14T01:34:43.501919+00:00",
+  "status": "prepared_waiting_not_measuring",
+  "runner": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_window_runner.py",
+  "arguments": [
+    "--worktree",
+    "C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-equilibre\\certus0310",
+    "--proposals",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_window_widths_2026-10-14\\proposals.json",
+    "--protocol",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_window_widths_2026-10-14\\protocole_validation_window_widths_v8.json",
+    "--reference-state",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_equilibre_AB_2026-10-13\\etat.json",
+    "--trial-output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_native_prefix_pool_2026-10-14",
+    "--output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_window_widths_2026-10-14"
+  ],
+  "n_proposals": 3133,
+  "n_stages": 315,
+  "hashes": {
+    "rate_window_runner.py": "42adf21927c38ecf757caccd091ca21102aef8a8d4e3866003178dd6a99f154a",
+    "prepare_rate_window_width_trials.py": "7e7f59be1b1f032b01062d6fd55c0e41006a0c826fd4d33213fee6b93ef68978",
+    "verify_rate_window_trials.py": "83656e032d0cfc2f09a535a9c1380ef94afeb3167c53158d87cfa559463c8a87",
+    "rate_fixed_replay.py": "05376a9240c66a99a1f4f5bf1a7300045d13ed83ca0ed4a4f88300a73688a2c3",
+    "campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51",
+    "proposals.json": "0aaa42e64093bd3403cfbc333305f80ade3c1eb8def6c4421f29e2a89856e1ba",
+    "protocole_validation_window_widths_v8.json": "49f10d3eae437251b7e6dddfdbddf700ef02689d5496c0bf2149f5b9c0cc37a2"
+  },
+  "scope": "Retained prefix600 parent only: one later optical window geometry and its wavelength per proposal; widths1..7 including odd, shifts-3..3, broad10nm and fine+/-10nm grids. First optical prefix and other window untouched. Same physics/depth/worlds/tolerance.",
+  "fresh_groups": [
+    2121,
+    2222,
+    2323
+  ],
+  "verification": "Static AST/manual review now; entire real block contract and one-window metadata verification runs only after native pool confirmation has completed and before any new measurement. Sequential existing replay reused.",
+  "selection_limit": "Chosen parent is the existing independently confirmed prefix600; pool winner cannot replace it silently after freeze. This tests this precise neighborhood, not all possible parents.",
+  "deadline_utc": "2026-10-14T07:00:00Z"
+}

@@ -1,0 +1,84 @@
+{
+  "status": "FROZEN_BEFORE_MEASUREMENT",
+  "frozen_utc": "2026-10-15T10:40:41.863740+00:00",
+  "experiment": "R3_h02_wavelengths",
+  "pair_index": 2,
+  "max_R3_pairs": 3,
+  "factor": "Per-window legal wavelength neighborhood only",
+  "control": "Legacy global wavelength stream, as R3_h01 variant",
+  "variant": "For each window, prioritize its containing block wavelength and legal offsets0,-1,+1,-2,+2,-3,+3, then the unchanged legacy wavelength stream with stable deduplication",
+  "both_arm_widths": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "why_both_wide": "h01 offered347 new target geometries but no688; widths alone gave0 gain. This pair isolates fine wavelengths conditional on the reachable geometry; it does not retain/promote width-only as an improvement. If the combination wins, a later bounded pair should ablate width expansion under the same fine wavelength policy.",
+  "unchanged": {
+    "joint_budget": 480,
+    "rate_budget": 240,
+    "rounds": 6,
+    "shifts": [
+      -2,
+      -1,
+      0,
+      1,
+      2
+    ],
+    "family_order": "legacy before joint, same parent/window round robin",
+    "selection_and_objective": "unchanged, full cap36 and consensus std weight0.35",
+    "component": "r75x0.5",
+    "mode": "deep",
+    "slit_nm": 2,
+    "seed": 101,
+    "consensus_seeds": [
+      41,
+      42,
+      43
+    ],
+    "depths": {
+      "robustness_num_runs": 300,
+      "n_screen_runs": 50,
+      "dp_top_k": 100,
+      "consensus_num_runs": 300
+    },
+    "prefix_budget": 0,
+    "balanced_rate_moves": false
+  },
+  "source_sha256": {
+    "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+    "certus/core/certus_strat_robustness.py": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+    "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+    "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e"
+  },
+  "resources": {
+    "logical_cpus": 24,
+    "affinity_mask": "0xffffff",
+    "priority": "normal",
+    "library_threads": 23,
+    "python_startup_cpu_count": 24
+  },
+  "R2_audit_sha256": "ae0ca439c273873d98b2670a1103e9f80436f63a46fe427600a089f2b5411a36",
+  "previous_pair_comparison_sha256": "914dcc74815a1e43ce63afe86312325ec3ad953e37d19ba360d7fdfad745d8e8",
+  "previous_pair_transition_diagnostic_sha256": "d0658a173c484047a7864e3422fdfdf14a510e4fffb081fc707ec457ce1d8892",
+  "script_sha256": {
+    "rate_joint_native_candidates_R3_wavelengths.py": "113855ba740fa46ce4c1e4b832cb5c88811e74ff406b0fbbcd0e34b54cdb9038",
+    "rate_native_R3_wavelengths_probe.py": "f47ea8341da7cb2040409743bbed8762bfd09ed4d656ff83988db80284eb3fdb",
+    "rate_R3_wavelengths_guard.py": "e25ceecd752e0b04c52105054ed27c86c4d83aaab370f3b1c1cad6ee72729f07",
+    "verify_rate_R3_wavelengths.py": "628fbb9bda36b6d994b33d8304c3cd232e0133fc7aefbdd63804a5e57a9a5766",
+    "verify_rate_R3_wavelengths_guard.py": "a900796bf482cf9fff9a86e26a8c149f7033263c6e6c14a348f81c41c11ce8d9",
+    "run_rate_R3_wavelengths_pair.ps1": "001b9c5eb45d8939b7137cad77968fec068c9ab4096760b410529d82b9ab5f05",
+    "rate_native_pipeline_trace.py": "df28ee632f11e6dcde87e53c78ce4dc35869194b2b579107f6725e7416562dc3",
+    "campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51"
+  },
+  "finalist_rule": "Best exported native ranking and best complete consensus per arm, deduplicate full plans; freeze before homogeneous replay with900951015/9900001/9900006/9900008",
+  "homogeneous_replay_quota": 1,
+  "homogeneous_replay_max_unique_plans": 8,
+  "confirmation": "Only after positive homogeneous search gain; reserve3 actually fresh groups before inspection, plus3 at most if effect small/heterogeneous; report worst loss; no default activation",
+  "fresh_groups_reserved": false,
+  "claims_permanent": true
+}

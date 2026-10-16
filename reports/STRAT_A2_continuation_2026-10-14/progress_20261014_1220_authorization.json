@@ -1,0 +1,50 @@
+{
+  "checked_utc": "2026-10-14T10:21:17.821606+00:00",
+  "completed": 18,
+  "current": "r75x0.5_deep_s077_avec",
+  "current_pid": 21320,
+  "current_started": "2026-10-14T12:12:22",
+  "runs": [
+    {
+      "key": "48c_premium_s202_avec",
+      "artifact": "48c_premium_s202_avec_da1af082.json",
+      "sha256": "4c8fdd16f247e98c9259803379e50d3faa91719b68a04e8a45c04dc901dd772d",
+      "seconds": 527.3413629999995,
+      "saved_utc": "2026-10-14T10:04:03+00:00",
+      "effective_elite_rate_moves": true,
+      "verdict": "OK",
+      "meilleur_seel": 0.18730161551124266,
+      "deposables": 2575,
+      "declared_depth": {
+        "robustness_num_runs": 150,
+        "n_screen_runs": 25,
+        "dp_top_k": 40,
+        "consensus_num_runs": 150
+      }
+    },
+    {
+      "key": "48c_premium_s202_sans",
+      "artifact": "48c_premium_s202_sans_da1af082.json",
+      "sha256": "a1b705aca729c6f64b27e0259d435f286442d4a99a396f095f8d9a7de98d4dc3",
+      "seconds": 495.9062214000005,
+      "saved_utc": "2026-10-14T10:12:19+00:00",
+      "effective_elite_rate_moves": false,
+      "verdict": "OK",
+      "meilleur_seel": 0.1879353657303209,
+      "deposables": 2482,
+      "declared_depth": {
+        "robustness_num_runs": 150,
+        "n_screen_runs": 25,
+        "dp_top_k": 40,
+        "consensus_num_runs": 150
+      }
+    }
+  ],
+  "raw_gain_percent_48c_s202": 0.3372171153712751,
+  "interpretation": "No homogeneous independent fixed-plan confirmation; no global conclusion before completion",
+  "limits": [
+    "Raw exported minima may mix base and consensus scores",
+    "Existing production Rate moves are measured, not the new local search integration",
+    "Premium and deep have distinct declared scoring depths"
+  ]
+}

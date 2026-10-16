@@ -1,0 +1,68 @@
+{
+  "phase": "R3_h02_homogeneous_replay",
+  "status": "FROZEN_BEFORE_MEASUREMENT",
+  "prepared_utc": "2026-10-15T12:34:07.681897+00:00",
+  "depths": {
+    "robustness_num_runs": 300,
+    "n_screen_runs": 50,
+    "dp_top_k": 100,
+    "consensus_num_runs": 300
+  },
+  "control": {
+    "robustness_seed": 101,
+    "consensus_seed_list": [
+      41,
+      42,
+      43
+    ]
+  },
+  "holdouts": [],
+  "plans_source_sha256": "82b2645b41274eb0333c15aba1dd9d2de720af5ce4f5d59f9bfcf302f7a92925",
+  "comparator_source_sha256": "ce7192ff9fad9e0bc7c49bee00bebe92ea13ad488b4dff0f3c8bf7832d054b70",
+  "comparator_ids": [
+    900951015,
+    9900001,
+    9900006,
+    9900008
+  ],
+  "bounded_slot": "R3_h02_replay",
+  "measurement_quota": 1,
+  "max_R3_pairs": 3,
+  "unique_plans": 6,
+  "max_unique_plans": 8,
+  "actual_calls_required": 24,
+  "source_sha256": {
+    "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+    "certus/core/certus_strat_robustness.py": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+    "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+    "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e"
+  },
+  "resources": {
+    "logical_cpus": 24,
+    "affinity_mask": "0xffffff",
+    "priority": "normal",
+    "library_threads": 23
+  },
+  "R2_audit_sha256": "ae0ca439c273873d98b2670a1103e9f80436f63a46fe427600a089f2b5411a36",
+  "previous_protocol_sha256": "c68c98259c777480de21aab24ba1f4acefc7e94e2e5098647a1b337b0dfa6e78",
+  "audit_sha256": {
+    "control": "1f5eab49a61a6306cfa2e0f9a78730abc38ed963372d8dfdc2fef08220acd99b",
+    "variant": "04222f0d21f8263ddba2e73063222bc0cecfca274a38e7fe7fe099bf55840211"
+  },
+  "script_sha256": {
+    "rate_fixed_replay_R3_h02.py": "4156de715df987cf34f6143e9439f401a93a0377bc1d3049d7f0ad2b550b770c",
+    "rate_R3_h02_replay_guard.py": "274dc0f98cc4d1d61d9d744645b85ef7c26f6654ec80c8d4a458587443c48df7",
+    "verify_rate_R3_h02_replay.py": "1511d8d27eaf2c2e0dc0d334df15954b8340a4e549d17319d70ec6ea22359724",
+    "campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51"
+  },
+  "deadline_utc": "2026-10-16T06:00:00+00:00",
+  "window_authorization_sha256": "3f7f52860cd28152b70fa7577a3a5de32308d26021401a12b43f0d4d6cc400c4",
+  "requirements": [
+    "Exactly4 full-depth300 calls101/41/42/43 per complete unique plan",
+    "Measured fixed point expectations remain relative1e-7 absolute1e-10; unknown new finalist has no invented expectation",
+    "No candidate generation and no fresh group consumption",
+    "New permanent replay quota, no repeat of R0 or h01",
+    "Latest overnight window enforced before reservation and nominal analysis"
+  ]
+}

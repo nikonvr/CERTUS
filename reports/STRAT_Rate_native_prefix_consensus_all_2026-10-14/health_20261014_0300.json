@@ -1,0 +1,54 @@
+{
+  "checked_utc": "2026-10-14T01:03:30.970234+00:00",
+  "status": "running",
+  "saved_stages": 138,
+  "n_stages": 513,
+  "scored_proposals": 1370,
+  "complete_consensus": 1370,
+  "native_best_provisional": {
+    "id": 9940095,
+    "name": "native_prefix_saved_901454694",
+    "move": {
+      "kind": "saved_native_prefix",
+      "source_id": 901454694,
+      "exported_score": 0.03373141448900565
+    },
+    "eligible": true,
+    "score": 0.03295728754388596,
+    "crash_rate": 0.0,
+    "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_native_prefix_consensus_all_2026-10-14\\batch_010\\attempt_01\\search.json"
+  },
+  "native_best_seel_nm": 0.36308284202857044,
+  "retained_anchor_nm": 0.35395924517094074,
+  "confirmation": {
+    "status": "waiting_for_pool",
+    "pid": 7984,
+    "resources": {
+      "logical_cpus": 16,
+      "affinity_mask": "0xffff",
+      "priority": "normal",
+      "library_threads": 15
+    },
+    "hashes": {
+      "replay": "210b9ab4de1c72dccd545e3019bdcec8e6960b9a41235b8d9ddc7543920b4130",
+      "protocol": "09b7f40d016b9c516c23e5e30c968ae4a5a3d6b9cbd2b0d8dfe5415ed688dccf",
+      "fixed_plans": "7d50ea16ef6f68c0254cc60d34acc0038283df84347828b41bb3fa4910657def",
+      "proposals": "d4901cc4b2a71206c2bfd62ff10a7804c3060a0b3e0363bf0a4623aa22b85f75"
+    },
+    "sequence": [
+      "control",
+      "holdout_1515",
+      "holdout_1616",
+      "holdout_1717"
+    ],
+    "runs": [],
+    "current": null,
+    "current_pid": null,
+    "updated": "2026-10-14T01:01:50+00:00"
+  },
+  "script_hashes_unchanged": {
+    "rate_native_pool_runner.py": true,
+    "rate_fixed_replay.py": true,
+    "campagne_a2_runner.py": true
+  }
+}

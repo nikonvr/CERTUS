@@ -1,0 +1,31 @@
+{
+  "status": "complete_search_not_independently_confirmed",
+  "completed_utc": "2026-10-13T22:52:59+00:00",
+  "n_proposals": 876,
+  "complete_consensus": 563,
+  "excluded": 313,
+  "best": {
+    "id": 9960194,
+    "name": "prefix_L1_5_wl600_parent9900000",
+    "move": {
+      "kind": "joint_prefix",
+      "parent_id": 9900000,
+      "prefix_length": 5,
+      "wavelength": 600,
+      "original_prefix_length": 6
+    },
+    "eligible": true,
+    "score": 0.031321786810495536,
+    "crash_rate": 0.0,
+    "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_joint_2026-10-14\\batch_020\\attempt_01\\search.json"
+  },
+  "seel_nm": 0.35395924517094074,
+  "gain_vs_reference_percent": 10.777400872887577,
+  "gain_vs_native_percent": 1.6946137156278906,
+  "gain_vs_ablation_percent": 2.2047316438534192,
+  "rejection_reasons": {
+    "base score non-finite": 292,
+    "incomplete consensus": 21
+  },
+  "artifact_sha256": "e9167e8f79c40906a1c5a6755f060922e8bbaaefe362b506d39766d16de54b3f"
+}

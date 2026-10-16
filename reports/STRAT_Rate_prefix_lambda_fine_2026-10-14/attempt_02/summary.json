@@ -1,0 +1,23 @@
+{
+  "status": "complete_not_independently_confirmed",
+  "best": {
+    "id": 9950016,
+    "name": "prefix_fixed_L1_5_fine_wl598",
+    "move": {
+      "kind": "wavelength_only_fine",
+      "parent_id": 9900002,
+      "wavelength": 598,
+      "parent_wavelength": 600
+    },
+    "eligible": true,
+    "score": 0.030945697580483572,
+    "crash_rate": 0.0,
+    "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_lambda_fine_2026-10-14\\attempt_02\\batch_002\\attempt_01\\search.json"
+  },
+  "n_proposals": 36,
+  "complete_consensus": 36,
+  "seel_nm": 0.35182778503400536,
+  "gain_vs_reference_percent": 11.31467858479297,
+  "gain_vs_prefix600_percent": 0.6021767098938202,
+  "artifact_sha256": "145e4f2392f3cc0d449399a6a55a0a0b2d5e9df40a886b829feb420ca0f12325"
+}

@@ -1,0 +1,35 @@
+{
+  "phase": "R0",
+  "status": "prepared_not_run",
+  "depths": {
+    "robustness_num_runs": 300,
+    "n_screen_runs": 50,
+    "dp_top_k": 100,
+    "consensus_num_runs": 300
+  },
+  "control": {
+    "robustness_seed": 101,
+    "consensus_seed_list": [
+      41,
+      42,
+      43
+    ]
+  },
+  "holdouts": [],
+  "plans_source_sha256": "d8586f8b4d69c9d4305dd58745bfc6a906dbf42e8ed3bd67735b92896709e445",
+  "requirements": [
+    "finish A2 and verify idle before any runtime test or measurement",
+    "same float32 SharedIndicesManager/Worker transport",
+    "strict unchanged relative1e-7 absolute1e-10 fixed-point tolerances",
+    "actual task coverage at300 for101/41/42/43 on all three plans",
+    "no candidate generation; preserve complete blocks/Rate/slit/witness plans",
+    "old motor and old guards preserved",
+    "no new native gain claimed from R0 controls"
+  ],
+  "proposed_deadline_utc": "2026-10-15T06:00:00+00:00",
+  "prepared_utc": "2026-10-14T08:37:28.352732+00:00",
+  "authorized_deadline_utc": "2026-10-15T06:00:00+00:00",
+  "authorized_deadline_local": "2026-10-15T08:00:00+02:00",
+  "previous_preparation_protocol_sha256": "ce377e6c6fa64e0b23fc3c880868159ba7d99625d256fa9533b28fb814863e2e",
+  "authorization_file": "authorization.json"
+}

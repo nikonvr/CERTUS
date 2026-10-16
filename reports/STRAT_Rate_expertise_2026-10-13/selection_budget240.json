@@ -1,0 +1,73 @@
+{
+  "scope": "geometry matches in the logged full-pass parents; raw ranks ignore signature filtering and are not candidate IDs",
+  "best_id": 900851523,
+  "best_score": 0.03663586891447066,
+  "groups": [
+    {
+      "blocks": 8,
+      "round": 1,
+      "time": "16:03:18",
+      "ids": [
+        990850020,
+        990850001,
+        990850129,
+        990850140,
+        990850188,
+        990850052,
+        990850060,
+        990850068,
+        990850161,
+        990850012
+      ],
+      "matching_Rate_moves": []
+    },
+    {
+      "blocks": 8,
+      "round": 2,
+      "time": "16:03:28",
+      "ids": [
+        900850832,
+        900850833,
+        990850020,
+        990850001,
+        900850789,
+        900850621,
+        900850706,
+        900850707,
+        990850052,
+        990850060
+      ],
+      "matching_Rate_moves": []
+    },
+    {
+      "blocks": 8,
+      "round": 3,
+      "time": "16:03:35",
+      "ids": [
+        900850881,
+        900850911,
+        990850020,
+        990850001,
+        900850890,
+        900850891,
+        900850893,
+        900850894,
+        900850895,
+        900850896
+      ],
+      "matching_Rate_moves": [
+        {
+          "parent_id": 900850890,
+          "raw_rank": 175,
+          "removed_Rate_layers": [
+            11,
+            12,
+            13,
+            14
+          ],
+          "added_Rate_layers": []
+        }
+      ]
+    }
+  ]
+}

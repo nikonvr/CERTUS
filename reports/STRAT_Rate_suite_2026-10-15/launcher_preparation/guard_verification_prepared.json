@@ -1,0 +1,24 @@
+{
+  "status": "PREPARED_RUNTIME_PENDING",
+  "at_utc": "2026-10-15T05:37:07.817430+00:00",
+  "script": "scratch\\verify_rate_suite_bounded_guard.py",
+  "script_sha256": "a867c86f2a2e68f45c5abe33aa41a78611b3b9c56b3d75d9ff500a028e29ce82",
+  "guard_sha256": "ee42dff2229e1c8b8384a34e676b815eba62fd55548be0d889f5bab9e291f9ff",
+  "physics_measured": false,
+  "prerequisites": [
+    "Real full validation GO",
+    "No other Python process or measurement lock"
+  ],
+  "command_after_prerequisites": "python -X utf8 scratch/verify_rate_suite_bounded_guard.py --output reports/STRAT_Rate_suite_2026-10-15/guard_verification",
+  "cases": [
+    "Incomplete validation and missing checks",
+    "Changed validated source",
+    "Wrong resource authorization",
+    "Incomplete A2",
+    "Busy process and nested lock",
+    "Fixed output prevents quota bypass",
+    "One permanent claim per R0/R2 slot",
+    "Common lock exclusivity and foreign owner preservation"
+  ],
+  "fixtures": "preserved synthetic context, no real program claims changed"
+}

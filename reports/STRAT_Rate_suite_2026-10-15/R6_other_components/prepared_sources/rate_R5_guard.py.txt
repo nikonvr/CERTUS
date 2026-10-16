@@ -1,0 +1,134 @@
+"""New R5 slots: exact validated checkout, finite quotas, deadline and exclusive claims."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import runpy
+import subprocess
+from datetime import UTC, datetime
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+PROGRAM = ROOT / "reports/STRAT_Rate_suite_2026-10-15"
+EXPERIMENT = PROGRAM / "R5_integration"
+VALIDATION = EXPERIMENT / "full_validation_01/validation.json"
+REFERENCE = EXPERIMENT / "reference_context.json"
+PROTOCOL = EXPERIMENT / "measurement_protocol.json"
+OLD = runpy.run_path(str(ROOT / "scratch/rate_H03_guard.py"))
+check_deadline = OLD["check_deadline"]
+is_language_server = OLD["is_language_server"]
+SLOTS = {"R5_points": EXPERIMENT / "points/measurement", "R5_native": EXPERIMENT / "native/measurement"}
+RESOURCES = {"logical_cpus": 24, "affinity_mask": "0xffffff", "priority": "normal", "library_threads": 23}
+
+
+def sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def read(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def check_context(worktree: Path, reference: dict) -> dict:
+    """Account for tracked changes, new modules, complete package and validated snapshots."""
+    if worktree.resolve() != Path(reference["worktree"]).resolve() or reference["status"] != "GO":
+        raise RuntimeError("Wrong managed R5 checkout")
+    commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=worktree, encoding="utf-8").strip()
+    changed = subprocess.check_output(["git", "diff", "--name-only", "HEAD"], cwd=worktree, encoding="utf-8").splitlines()
+    new = subprocess.check_output(["git", "ls-files", "--others", "--exclude-standard", "--", "certus", "scripts", "tests"],
+                                  cwd=worktree, encoding="utf-8").splitlines()
+    if commit != reference["commit"] or set(changed) != set(reference["tracked_dirty_paths"]) or set(new) != set(reference["untracked_source_paths"]):
+        raise RuntimeError("R5 tracked/new source inventory changed")
+    hashes = {name: sha(worktree / name) for name in reference["source_sha256"]}
+    package = {p.relative_to(worktree).as_posix(): sha(p) for p in (worktree / "certus").rglob("*.py")}
+    if hashes != reference["source_sha256"] or package != reference["package_sha256"]:
+        raise RuntimeError("R5 frozen source/package hash changed")
+    if sha(worktree / "reports/serie_echelle_r75/cfg_x0.5.json") != reference["design_sha256"]:
+        raise RuntimeError("R5 design changed")
+    validation = read(VALIDATION)
+    if sha(VALIDATION) != reference["validation_sha256"] or validation["source_sha256"] != hashes:
+        raise RuntimeError("R5 validation provenance changed")
+    if any(sha(ROOT / name) != digest for name, digest in hashes.items()):
+        raise RuntimeError("Root source changed since R5 validation")
+    return hashes
+
+
+def check_ready(phase: str, output: Path, sources: dict, *, requested_deadline: str) -> dict:
+    deadline = check_deadline(requested_deadline)
+    if phase not in SLOTS or output.resolve() != SLOTS[phase].resolve():
+        raise RuntimeError("Only the explicit, single R5 points/native slots are allowed")
+    authorization = read(OLD["AUTHORIZATION"])
+    if authorization["resources"] != RESOURCES or authorization["scope_extension"] != "Jusqu’à la fin du programme borné R0–R6":
+        raise RuntimeError("Missing current explicit authorization")
+    validation = read(VALIDATION)
+    names = {"ruff", "mypy_new_modules", "oracle", "unit", "ui", "remaining", "coherence", "claude_md", "docs", "c1_cold", "diff"}
+    if validation["status"] != "GO" or {c["name"] for c in validation["checks"]} != names or any(c["exit_code"] != 0 for c in validation["checks"]):
+        raise RuntimeError("All R5 validation commands must be GO")
+    reference = read(REFERENCE)
+    if check_context(Path(reference["worktree"]), reference) != sources:
+        raise RuntimeError("Different validated measurement source set")
+    protocol = read(PROTOCOL)
+    if (protocol["source_sha256"] != sources or protocol["reference_sha256"] != sha(REFERENCE) or
+            protocol["deadline_utc"] != deadline or protocol["slots"] != {k: str(v) for k, v in SLOTS.items()}):
+        raise RuntimeError("Frozen R5 protocol/context/deadline mismatch")
+    if (protocol["control"] != {"robustness_seed": 101, "consensus_seed_list": [41, 42, 43]} or
+            protocol["depths"] != {"robustness_num_runs": 300, "n_screen_runs": 50, "dp_top_k": 100, "consensus_num_runs": 300} or
+            protocol["native"]["arguments"] != ["r75x0.5", "deep", "0", "0", "2", "0", "101", "0"] or
+            protocol["native"]["overrides"] != "elite_rate_balanced_moves=false,elite_rate_max_candidates=240,elite_rounds=6,elite_rate_joint_candidates=480,rate_post_refinement=true" or
+            sha(EXPERIMENT / "points/plans.json") != protocol["points_plans_sha256"]):
+        raise RuntimeError("R5 settings, quotas or fixed point plans changed")
+    for name, digest in protocol["script_sha256"].items():
+        if sha(ROOT / "scratch" / name) != digest:
+            raise RuntimeError("R5 frozen launcher changed: " + name)
+    verification = read(EXPERIMENT / "measurement_verification_01/verification.json")
+    if verification["verdict"] != "GO" or verification["script_sha256"] != protocol["script_sha256"]:
+        raise RuntimeError("R5 launcher verification missing or stale")
+    a2 = read(ROOT / "reports/STRAT_ELITE_couches_Rate_autres_composants_2026-10-13/etat.json")
+    if a2["status"] != "complete" or len(a2["runs"]) != 24 or a2.get("current_pid"):
+        raise RuntimeError("A2 is not complete")
+    if list((ROOT / "reports").rglob(".running")) or (PROGRAM / "measurement.running").exists():
+        raise RuntimeError("An existing validation/measurement owns a lock")
+    shell = Path(os.environ["SYSTEMROOT"]) / "System32/WindowsPowerShell/v1.0/powershell.exe"
+    raw = subprocess.check_output([str(shell), "-NoProfile", "-Command",
+        "@(Get-CimInstance Win32_Process | Where-Object { $_.Name -match '^python' } | Select-Object ProcessId,CommandLine) | ConvertTo-Json -Compress"], encoding="utf-8").strip()
+    active = json.loads(raw) if raw else []
+    if isinstance(active, dict):
+        active = [active]
+    if any(p["ProcessId"] != os.getpid() and not is_language_server(p) for p in active):
+        raise RuntimeError("Another Python calculation/test/controller is alive")
+    if (PROGRAM / "claims" / (phase + ".json")).exists() or (output / "etat.json").exists() or (output / "control.json").exists() or list(output.glob("request_*.json")):
+        raise RuntimeError("Consumed R5 slot: inspect/adopt, never repeat silently")
+    if phase == "R5_native":
+        control = read(SLOTS["R5_points"] / "control.json")
+        if control["verdict"] != "OK" or control["source_sha256"] != sources or len(control["simulations"]) != 12:
+            raise RuntimeError("R5 fixed points have not passed")
+    return {"phase": phase, "slot": str(output.resolve()), "resources": RESOURCES, "quota": 1,
+            "deadline_utc": deadline, "protocol_sha256": sha(PROTOCOL), "reference_sha256": sha(REFERENCE),
+            "validation_sha256": sha(VALIDATION), "source_sha256": sources,
+            "authorization_sha256": sha(OLD["WINDOW_AUTHORIZATION"])}
+
+
+def reserve_slot(proof: dict) -> None:
+    check_deadline(proof["deadline_utc"])
+    if proof["phase"] not in SLOTS or proof["slot"] != str(SLOTS[proof["phase"]].resolve()):
+        raise RuntimeError("Unknown R5 slot")
+    if (sha(PROTOCOL) != proof["protocol_sha256"] or sha(REFERENCE) != proof["reference_sha256"] or
+            sha(OLD["WINDOW_AUTHORIZATION"]) != proof["authorization_sha256"]):
+        raise RuntimeError("R5 frozen authorization/protocol changed")
+    entry = {**proof, "pid": os.getpid(), "claimed_utc": datetime.now(UTC).isoformat()}
+    with (PROGRAM / "measurement.running").open("x", encoding="utf-8") as stream:
+        json.dump(entry, stream, ensure_ascii=False, indent=2)
+    try:
+        with (PROGRAM / "claims" / (proof["phase"] + ".json")).open("x", encoding="utf-8") as stream:
+            json.dump(entry, stream, ensure_ascii=False, indent=2)
+    except BaseException:
+        release_slot()
+        raise
+
+
+def release_slot() -> None:
+    lock = PROGRAM / "measurement.running"
+    if lock.exists() and read(lock)["pid"] == os.getpid():
+        lock.unlink()

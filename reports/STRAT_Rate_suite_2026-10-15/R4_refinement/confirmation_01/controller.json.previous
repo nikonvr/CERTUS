@@ -1,0 +1,12 @@
+{
+    "status":  "measuring",
+    "pid":  43976,
+    "started_utc":  "2026-10-15T13:51:17.3633974Z",
+    "runs":  [
+
+             ],
+    "current_pid":  25052,
+    "current_manifest":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\confirmation_01\\groups\\group_01\\manifest.json",
+    "persistence_retries":  0,
+    "updated_utc":  "2026-10-15T13:51:17.4643890Z"
+}

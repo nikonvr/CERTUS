@@ -1,0 +1,361 @@
+{
+  "status": "complete",
+  "runs": [
+    {
+      "run": "control",
+      "seeds": {
+        "robustness_seed": 101,
+        "consensus_seed_list": [
+          41,
+          42,
+          43
+        ]
+      },
+      "verdict": "OK",
+      "artifact": "reports\\STRAT_Rate_validation_joint_2026-10-13\\control.json",
+      "artifact_sha256": "1a29a7220f87c9f6cc18a2553923f008f8360291997d1cfef0691a80a7c4fc10",
+      "reference_seel": 0.3967147882193691,
+      "budget240_seel": 0.38280997329991634,
+      "joint_seel": 0.36533819452157945,
+      "gain_percent": -7.909106146161493,
+      "plans": [
+        {
+          "id": 9600579,
+          "score": 0.03336799909407186,
+          "crash_rate": 0.0,
+          "consensus": {
+            "mode": "mean_std",
+            "mean": 0.032937799295315574,
+            "std": 0.0012291422821608046,
+            "worst": 0.034200861668732346,
+            "seeds": [
+              41,
+              42,
+              43
+            ],
+            "n_samples": 3
+          }
+        },
+        {
+          "id": 900951015,
+          "score": 0.03934565579798472,
+          "crash_rate": 0.0,
+          "consensus": {
+            "mode": "mean_std",
+            "mean": 0.03903722101379858,
+            "std": 0.0008812422405318423,
+            "worst": 0.040174649500132546,
+            "seeds": [
+              41,
+              42,
+              43
+            ],
+            "n_samples": 3
+          }
+        },
+        {
+          "id": 900851523,
+          "score": 0.03663586891447066,
+          "crash_rate": 0.0,
+          "consensus": {
+            "mode": "mean_std",
+            "mean": 0.03640908105370845,
+            "std": 0.0006479653164634658,
+            "worst": 0.03732232214461362,
+            "seeds": [
+              41,
+              42,
+              43
+            ],
+            "n_samples": 3
+          }
+        }
+      ]
+    },
+    {
+      "run": "holdout_202",
+      "seeds": {
+        "robustness_seed": 202,
+        "consensus_seed_list": [
+          202,
+          203,
+          204
+        ]
+      },
+      "verdict": "OK",
+      "artifact": "reports\\STRAT_Rate_validation_joint_2026-10-13\\holdout_202.json",
+      "artifact_sha256": "633c5bdbda2b5780b7e22618366e7a9c261356c1e4e4bf88b59561514c5423fd",
+      "reference_seel": 0.3968275691183069,
+      "budget240_seel": 0.38895747466550756,
+      "joint_seel": 0.3787066494963141,
+      "gain_percent": -4.56644674719926,
+      "plans": [
+        {
+          "id": 9600579,
+          "score": 0.035854681593181024,
+          "crash_rate": 0.0,
+          "consensus": {
+            "mode": "mean_std",
+            "mean": 0.03532471340578859,
+            "std": 0.0015141948211212365,
+            "worst": 0.03692099059507962,
+            "seeds": [
+              202,
+              203,
+              204
+            ],
+            "n_samples": 3
+          }
+        },
+        {
+          "id": 900951015,
+          "score": 0.03936802990308617,
+          "crash_rate": 0.0,
+          "consensus": {
+            "mode": "mean_std",
+            "mean": 0.0389798975405295,
+            "std": 0.0011089496073047591,
+            "worst": 0.040547540172404826,
+            "seeds": [
+              202,
+              203,
+              204
+            ],
+            "n_samples": 3
+          }
+        },
+        {
+          "id": 900851523,
+          "score": 0.037821979274542235,
+          "crash_rate": 0.0,
+          "consensus": {
+            "mode": "mean_std",
+            "mean": 0.03745300362488816,
+            "std": 0.0010542161418687806,
+            "worst": 0.03883782219931355,
+            "seeds": [
+              202,
+              203,
+              204
+            ],
+            "n_samples": 3
+          }
+        }
+      ]
+    },
+    {
+      "run": "holdout_303",
+      "seeds": {
+        "robustness_seed": 303,
+        "consensus_seed_list": [
+          303,
+          304,
+          305
+        ]
+      },
+      "verdict": "OK",
+      "artifact": "reports\\STRAT_Rate_validation_joint_2026-10-13\\holdout_303.json",
+      "artifact_sha256": "0c5edaa23d5e85f2a53dcf772fe58c169776cbe0fdac186d6c483860037f5825",
+      "reference_seel": 0.39951312206581885,
+      "budget240_seel": 0.3850170203175936,
+      "joint_seel": 0.3710397323147461,
+      "gain_percent": -7.127022412641015,
+      "plans": [
+        {
+          "id": 9600579,
+          "score": 0.03441762073904961,
+          "crash_rate": 0.0,
+          "consensus": {
+            "mode": "mean_std",
+            "mean": 0.03417988475873965,
+            "std": 0.0006792456580284544,
+            "worst": 0.035018456301085854,
+            "seeds": [
+              303,
+              304,
+              305
+            ],
+            "n_samples": 3
+          }
+        },
+        {
+          "id": 900951015,
+          "score": 0.03990268367569447,
+          "crash_rate": 0.0,
+          "consensus": {
+            "mode": "mean_std",
+            "mean": 0.03966976968272406,
+            "std": 0.000665468551344018,
+            "worst": 0.040490975670904865,
+            "seeds": [
+              303,
+              304,
+              305
+            ],
+            "n_samples": 3
+          }
+        },
+        {
+          "id": 900851523,
+          "score": 0.03705952648355958,
+          "crash_rate": 0.0,
+          "consensus": {
+            "mode": "mean_std",
+            "mean": 0.03684576774300048,
+            "std": 0.0006107392587402652,
+            "worst": 0.037703572229539274,
+            "seeds": [
+              303,
+              304,
+              305
+            ],
+            "n_samples": 3
+          }
+        }
+      ]
+    },
+    {
+      "run": "holdout_404",
+      "seeds": {
+        "robustness_seed": 404,
+        "consensus_seed_list": [
+          404,
+          405,
+          406
+        ]
+      },
+      "verdict": "OK",
+      "artifact": "reports\\STRAT_Rate_validation_joint_2026-10-13\\holdout_404.json",
+      "artifact_sha256": "3d5d1c47579f31d7b90822c2af2cc056435ecfbec8b8c405cb5a84c2ea262b73",
+      "reference_seel": 0.3997442249720676,
+      "budget240_seel": 0.3829357701274613,
+      "joint_seel": 0.3719660540167365,
+      "gain_percent": -6.94898618166957,
+      "plans": [
+        {
+          "id": 9600579,
+          "score": 0.034589686335195435,
+          "crash_rate": 0.0,
+          "consensus": {
+            "mode": "mean_std",
+            "mean": 0.03419702631644501,
+            "std": 0.0011218857678583734,
+            "worst": 0.035110004666490384,
+            "seeds": [
+              404,
+              405,
+              406
+            ],
+            "n_samples": 3
+          }
+        },
+        {
+          "id": 900951015,
+          "score": 0.039948861349629744,
+          "crash_rate": 0.0,
+          "consensus": {
+            "mode": "mean_std",
+            "mean": 0.0393909851978962,
+            "std": 0.0015939318620958388,
+            "worst": 0.040850090180312285,
+            "seeds": [
+              404,
+              405,
+              406
+            ],
+            "n_samples": 3
+          }
+        },
+        {
+          "id": 900851523,
+          "score": 0.036659951010777965,
+          "crash_rate": 0.0,
+          "consensus": {
+            "mode": "mean_std",
+            "mean": 0.03641958000240526,
+            "std": 0.0006867743096363028,
+            "worst": 0.037116783483545794,
+            "seeds": [
+              404,
+              405,
+              406
+            ],
+            "n_samples": 3
+          }
+        }
+      ]
+    },
+    {
+      "run": "holdout_505",
+      "seeds": {
+        "robustness_seed": 505,
+        "consensus_seed_list": [
+          505,
+          506,
+          507
+        ]
+      },
+      "verdict": "OK",
+      "artifact": "reports\\STRAT_Rate_validation_joint_2026-10-13\\holdout_505.json",
+      "artifact_sha256": "c0856276c3a12262d765f518e72df4cfc9305337c82caf20d660fde1b110ba4c",
+      "reference_seel": 0.3993888245623097,
+      "budget240_seel": 0.3831158919722188,
+      "joint_seel": 0.37124968059614066,
+      "gain_percent": -7.045551161078856,
+      "plans": [
+        {
+          "id": 9600579,
+          "score": 0.03445658133568411,
+          "crash_rate": 0.0,
+          "consensus": {
+            "mode": "mean_std",
+            "mean": 0.034361259538860246,
+            "std": 0.00027234799092532377,
+            "worst": 0.034596869149675115,
+            "seeds": [
+              505,
+              506,
+              507
+            ],
+            "n_samples": 3
+          }
+        },
+        {
+          "id": 900951015,
+          "score": 0.03987785829631585,
+          "crash_rate": 0.0,
+          "consensus": {
+            "mode": "mean_std",
+            "mean": 0.039533977487240295,
+            "std": 0.0009825165973587182,
+            "worst": 0.04090599910395107,
+            "seeds": [
+              505,
+              506,
+              507
+            ],
+            "n_samples": 3
+          }
+        },
+        {
+          "id": 900851523,
+          "score": 0.0366944466704172,
+          "crash_rate": 0.0,
+          "consensus": {
+            "mode": "mean_std",
+            "mean": 0.036515148231317955,
+            "std": 0.0005122812545692751,
+            "worst": 0.03689989864947274,
+            "seeds": [
+              505,
+              506,
+              507
+            ],
+            "n_samples": 3
+          }
+        }
+      ]
+    }
+  ],
+  "scope": "three fixed plans; 300 runs per consensus seed; same model, slit and physical random worlds"
+}

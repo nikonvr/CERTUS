@@ -1,0 +1,33 @@
+{
+  "runs": [],
+  "hashes": {
+    "replay": "05376a9240c66a99a1f4f5bf1a7300045d13ed83ca0ed4a4f88300a73688a2c3",
+    "proposals": "cd0baa2c7a62d3838034a9d0c8d36ae7ff53415836819861d05aa500379bf4b3",
+    "protocol": "8b572e6c0955338d1464c7f01cbd9d51df6d48d9ebfc2e00c951ae5c79c0e9b2"
+  },
+  "best": {
+    "id": 9900002,
+    "name": "prefix_consensus_best_s101",
+    "move": {
+      "kind": "incumbent"
+    },
+    "eligible": true,
+    "score": 0.031321786810495536,
+    "crash_rate": 0.0,
+    "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_joint_2026-10-14\\batch_020\\attempt_01\\search.json"
+  },
+  "status": "failed",
+  "pid": 46612,
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "current": null,
+  "current_pid": null,
+  "n_proposals": 36,
+  "n_stages": 5,
+  "updated": "2026-10-14T00:08:19+00:00",
+  "error": "Native confirmation failed; fine-prefix measurement not started"
+}

@@ -1,0 +1,113 @@
+"""Bounded initial R6 native pairs on the validated R5 checkout; no historical slot reuse."""
+
+from __future__ import annotations
+
+import os
+import subprocess
+from datetime import UTC, datetime
+from pathlib import Path
+
+from rate_R5_guard import (
+    PROGRAM,
+    REFERENCE,
+    RESOURCES,
+    ROOT,
+    check_context,
+    check_deadline,
+    is_language_server,
+    read,
+    sha,
+)
+
+EXPERIMENT = PROGRAM / "R6_other_components"
+PROTOCOL = EXPERIMENT / "native_protocol.json"
+CASES = {'c04_48c_s77': 77, 'c05_r75x15_s42': 42, 'c06_r75x2_s77': 77}
+CASE_ARGUMENTS = {'c04_48c_s77': ['48c', 'premium', '1', '0', '2', '0', '77', '0'], 'c05_r75x15_s42': ['r75x1.5', 'deep', '0', '0', '2', '0', '42', '0'], 'c06_r75x2_s77': ['r75x2', 'deep', '0', '0', '2', '0', '77', '0']}
+SLOTS = {f"R6_{case}_{arm}": EXPERIMENT / case / arm / "measurement" for case in CASES for arm in ("control", "variant")}
+
+
+def check_ready(phase: str, output: Path, sources: dict, *, requested_deadline: str) -> dict:
+    deadline = check_deadline(requested_deadline)
+    if phase not in SLOTS or output.resolve() != SLOTS[phase].resolve():
+        raise RuntimeError("Unknown R6 native pair slot")
+    protocol = read(PROTOCOL)
+    gate = read(EXPERIMENT / "initial_gate.json")
+    if gate["verdict"] != "GO" or protocol["initial_gate_sha256"] != sha(EXPERIMENT / "initial_gate.json"):
+        raise RuntimeError("Initial R6 gate changed")
+    for case, entry in gate["cases"].items():
+        if sha(PROGRAM / "R6_generalization" / case / "fresh_audit.json") != entry["audit_sha256"]:
+            raise RuntimeError("Initial independent proof changed")
+    if protocol["case_arguments"] != CASE_ARGUMENTS:
+        raise RuntimeError("Conditional component arguments changed")
+    reference = read(REFERENCE)
+    if protocol["reference_sha256"] != sha(REFERENCE) or check_context(Path(reference["worktree"]), reference) != sources:
+        raise RuntimeError("R6 context changed")
+    if protocol["deadline_utc"] != deadline or protocol["source_sha256"] != sources or protocol["cases"] != CASES:
+        raise RuntimeError("R6 authorization, finite case quota or sources changed")
+    if protocol["common_overrides"] != "elite_rate_balanced_moves=false,elite_rate_max_candidates=240,elite_rounds=6,elite_rate_joint_candidates=480":
+        raise RuntimeError("R6 common configuration changed")
+    if protocol["r5_audit_sha256"] != sha(PROGRAM / "R5_integration/post_numeric_audit_02.json"):
+        raise RuntimeError("R5 integrated audit changed")
+    if read(PROGRAM / "R5_integration/post_numeric_audit_02.json")["verdict"] != "GO_WITH_DOCUMENTED_LIMITS":
+        raise RuntimeError("R5 has not passed its actual integrated audit")
+    if sha(EXPERIMENT / "fresh_seed_reservation.json") != protocol["fresh_seed_reservation_sha256"]:
+        raise RuntimeError("Reserved fresh groups changed")
+    for name, digest in protocol["script_sha256"].items():
+        if sha(ROOT / "scratch" / name) != digest:
+            raise RuntimeError("Frozen R6 launcher changed: " + name)
+    verified = read(EXPERIMENT / "verification_01/verification.json")
+    if verified["verdict"] != "GO" or verified["script_sha256"] != protocol["script_sha256"]:
+        raise RuntimeError("R6 launcher verification missing or stale")
+    if list((ROOT / "reports").rglob(".running")) or (PROGRAM / "measurement.running").exists():
+        raise RuntimeError("An existing scientific/validation lock remains")
+    shell = Path(os.environ["SYSTEMROOT"]) / "System32/WindowsPowerShell/v1.0/powershell.exe"
+    raw = subprocess.check_output([str(shell), "-NoProfile", "-Command",
+        "@(Get-CimInstance Win32_Process | Where-Object { $_.Name -match '^python' } | Select-Object ProcessId,CommandLine) | ConvertTo-Json -Compress"], encoding="utf-8").strip()
+    import json
+
+    active = json.loads(raw) if raw else []
+    if isinstance(active, dict):
+        active = [active]
+    if any(p["ProcessId"] != os.getpid() and not is_language_server(p) for p in active):
+        raise RuntimeError("Another Python test/calculation/controller is alive")
+    if (PROGRAM / "claims" / (phase + ".json")).exists() or (output / "etat.json").exists():
+        raise RuntimeError("Consumed R6 slot: inspect/adopt, never replay")
+    case = next(case for case in CASES if phase.startswith("R6_" + case + "_"))
+    index = list(CASES).index(case)
+    if index:
+        previous = read(EXPERIMENT / list(CASES)[index-1] / "fresh_audit.json")
+        if previous["verdict"] != "GO" or previous.get("decision_requires_more_data", False) or not previous.get("scientific_case_pass", False):
+            raise RuntimeError("Audit the preceding pair and its independent fresh groups first")
+    if phase.endswith("variant"):
+        state = read(EXPERIMENT / case / "control/measurement/etat.json")
+        coordinator = read(EXPERIMENT / case / "controller.json")
+        if state["status"] != "complete" or not any(r["pid"] == state["pid"] and r["exit_code"] == 0 for r in coordinator["runs"]):
+            raise RuntimeError("Same-case control has not finished with actual exit0")
+    return {"phase": phase, "slot": str(output.resolve()), "resources": RESOURCES, "quota": 1,
+            "deadline_utc": deadline, "source_sha256": sources, "protocol_sha256": sha(PROTOCOL),
+            "reference_sha256": sha(REFERENCE), "window_authorization_sha256": sha(PROGRAM / "autonomie_jusqu_20261016_0800/authorization.json")}
+
+
+def reserve_slot(proof: dict) -> None:
+    import json
+
+    check_deadline(proof["deadline_utc"])
+    if proof["phase"] not in SLOTS or proof["slot"] != str(SLOTS[proof["phase"]].resolve()) or sha(PROTOCOL) != proof["protocol_sha256"]:
+        raise RuntimeError("R6 protocol/slot changed before reservation")
+    if sha(REFERENCE) != proof["reference_sha256"] or sha(PROGRAM / "autonomie_jusqu_20261016_0800/authorization.json") != proof["window_authorization_sha256"]:
+        raise RuntimeError("R6 source/window authorization changed")
+    entry = {**proof, "pid": os.getpid(), "claimed_utc": datetime.now(UTC).isoformat()}
+    with (PROGRAM / "measurement.running").open("x", encoding="utf-8") as stream:
+        json.dump(entry, stream, ensure_ascii=False, indent=2)
+    try:
+        with (PROGRAM / "claims" / (proof["phase"] + ".json")).open("x", encoding="utf-8") as stream:
+            json.dump(entry, stream, ensure_ascii=False, indent=2)
+    except BaseException:
+        release_slot()
+        raise
+
+
+def release_slot() -> None:
+    lock = PROGRAM / "measurement.running"
+    if lock.exists() and read(lock)["pid"] == os.getpid():
+        lock.unlink()

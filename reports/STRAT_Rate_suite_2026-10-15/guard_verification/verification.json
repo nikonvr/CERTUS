@@ -1,0 +1,33 @@
+{
+  "verdict": "GO",
+  "started_utc": "2026-10-15T07:09:38.182729+00:00",
+  "physics_measured": false,
+  "guard_sha256": "436613d686f21ea09e3a62c2d5d9474b763e5bd0b01c0c157cb4a3f669010b5a",
+  "checks": [
+    "A complete matching synthetic context is accepted",
+    "Unknown phase rejected",
+    "A second output cannot bypass the fixed slot",
+    "Running validation rejected",
+    "Missing C1 and diff checks rejected",
+    "Changed validated source rejected",
+    "Wrong resource authorization rejected",
+    "Incomplete A2 rejected",
+    "Nested measurement lock rejected",
+    "Another Python process rejected",
+    "Live common measurement lock rejected",
+    "Permanent R0 quota survives release",
+    "Direct duplicate reservation rejected",
+    "Another owner retains the common lock",
+    "R2 has its own single permanent quota"
+  ],
+  "synthetic_fixtures_only": true,
+  "resources": {
+    "logical_cpus": 24,
+    "affinity_mask": "0xffffff",
+    "priority": "normal",
+    "library_threads": 23
+  },
+  "verifier_sha256": "12da2aa77abf3ba1b7f813bcb47f34a1ae4e187cc9cb6268e4e683653ef5e1e6",
+  "full_validation_sha256": "03de1b4f0985438843f3f2afb8f2bc2f81a06dd44737e37acfa7ce510aef51ba",
+  "finished_utc": "2026-10-15T07:09:38.279047+00:00"
+}

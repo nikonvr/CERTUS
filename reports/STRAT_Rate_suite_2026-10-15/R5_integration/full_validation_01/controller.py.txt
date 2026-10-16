@@ -1,0 +1,128 @@
+"""Finite sequential validation of the opt-in production integration, never alongside a measurement."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import runpy
+import subprocess
+import sys
+import time
+import traceback
+from datetime import UTC, datetime
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+PROGRAM = ROOT / "reports/STRAT_Rate_suite_2026-10-15"
+OUTPUT = PROGRAM / "R5_integration/full_validation_01"
+FILES = ["certus/core/certus_strat_consensus.py", "certus/core/certus_strat_robustness.py",
+         "certus/core/certus_strat_robustness_rate.py", "certus/core/certus_strat_leviers.py",
+         "certus/core/certus_strat_rate_moves.py", "certus/core/certus_strat_rate_post.py",
+         "certus/physics/certus_strat_batch.py", "certus/workers/certus_strat_workers.py",
+         "certus/workers/certus_strat_workers_pipeline.py", "certus/workers/certus_strat_workers_rate.py",
+         "scripts/probe_blocs_vs_plantage.py", "tests/unit/test_strat_rate_final_refinement.py",
+         "tests/unit/test_probe_keeps_consensus_score_provenance.py", "tests/performance/test_performance.py",
+         "tests/unit/test_strat_elite_rate_moves.py", "tests/unit/test_strat_spectral_target.py"]
+
+
+def sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def main() -> int:
+    guard = runpy.run_path(str(ROOT / "scratch/rate_H03_guard.py"))
+    deadline = guard["check_deadline"]()
+    if list((ROOT / "reports").rglob(".running")) or (PROGRAM / "measurement.running").exists():
+        raise RuntimeError("Inspect an existing scientific/validation lock first")
+    shell = Path(os.environ["SYSTEMROOT"]) / "System32/WindowsPowerShell/v1.0/powershell.exe"
+    raw = subprocess.check_output([str(shell), "-NoProfile", "-Command",
+        "@(Get-CimInstance Win32_Process | Where-Object { $_.Name -match '^python' } | Select-Object ProcessId,CommandLine) | ConvertTo-Json -Compress"], encoding="utf-8").strip()
+    active = json.loads(raw) if raw else []
+    if isinstance(active, dict):
+        active = [active]
+    if any(p["ProcessId"] != os.getpid() and not guard["is_language_server"](p) for p in active):
+        raise RuntimeError("Another Python calculation/test/controller is alive")
+    OUTPUT.mkdir(exist_ok=False)
+    helper = runpy.run_path(str(ROOT / "scratch/campagne_a2_runner.py"))
+    save = runpy.run_path(str(ROOT / "scratch/rate_R4_planner_resume_v3.py"))["save"]
+    resources = helper["limit_resources"](24)
+    source_hashes = {name: sha(ROOT / name) for name in FILES}
+    for name in FILES:
+        path = OUTPUT / "sources" / (name.replace("/", "__") + ".txt")
+        path.parent.mkdir(exist_ok=True)
+        with path.open("xb") as stream:
+            stream.write((ROOT / name).read_bytes())
+    with (OUTPUT / "controller.py.txt").open("xb") as stream:
+        stream.write(Path(__file__).read_bytes())
+    state = {"status": "running", "pid": os.getpid(), "started_utc": datetime.now(UTC).isoformat(),
+             "deadline_utc": deadline, "resources": resources, "source_sha256": source_hashes,
+             "checks": [], "current": None, "current_pid": None,
+             "stop_rule": "Finite sequential commands; stop on first failure or before next command at cutoff"}
+    python = [sys.executable, "-X", "utf8", "-X", "cpu_count=24"]
+    commands = [
+        ("ruff", [*python, "-m", "ruff", "check", "."]),
+        ("mypy_new_modules", [*python, "-m", "mypy", "certus/core/certus_strat_rate_moves.py", "certus/core/certus_strat_rate_post.py", "certus/workers/certus_strat_workers_rate.py"]),
+        ("oracle", [*python, "-m", "pytest", "tests/oracle/", "-q", "--no-cov"]),
+        ("unit", [*python, "-m", "pytest", "tests/unit/", "-q", "--no-cov"]),
+        ("ui", [*python, "-m", "pytest", "tests/ui/", "-q", "--no-cov"]),
+        ("remaining", [*python, "-m", "pytest", "tests/", "-q", "--no-cov", "--ignore=tests/oracle", "--ignore=tests/unit", "--ignore=tests/ui"]),
+        ("coherence", [*python, "scripts/coherence_md.py"]),
+        ("claude_md", [*python, "scripts/check_claude_md.py"]),
+        ("docs", [*python, "scripts/check_docs.py"]),
+        ("c1_cold", [*python, "scripts/c1_diff.py", "HEAD", "--sans-cache", "--fils", "4", "--json", str(OUTPUT / "c1_cold_report.json")]),
+        ("diff", ["git", "diff", "--check"]),
+    ]
+    process = None
+    lock = OUTPUT / ".running"
+    with lock.open("x", encoding="utf-8") as stream:
+        json.dump({"pid": os.getpid(), "kind": "sequential_validation"}, stream)
+    try:
+        for name, command in commands:
+            try:
+                guard["check_deadline"](deadline)
+            except RuntimeError:
+                state.update(status="DEADLINE_REACHED", current=None)
+                return 0
+            if any(sha(ROOT / path) != value for path, value in source_hashes.items()):
+                raise RuntimeError("A source changed during validation; preserve this attempt")
+            environment = os.environ.copy()
+            for key in ("NUMBA_CACHE_DIR", "PYTHONPYCACHEPREFIX", "_CERTUS_NUMBA_CONFIGURED", "NUMBA_THREADING_LAYER", "PYTHONPATH"):
+                environment.pop(key, None)
+            environment.update(PYTHON_CPU_COUNT="24", PYTHONUTF8="1", PYTHONUNBUFFERED="1", QT_QPA_PLATFORM="offscreen")
+            for key in ("NUMBA_NUM_THREADS", "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "VECLIB_MAXIMUM_THREADS", "NUMEXPR_NUM_THREADS"):
+                environment[key] = "23"
+            environment["PYTHONPYCACHEPREFIX"] = str(OUTPUT / (name + "_python_cache"))
+            if name in ("oracle", "unit", "ui", "remaining"):
+                environment["NUMBA_CACHE_DIR"] = str(OUTPUT / (name + "_numba_cache"))
+            state.update(current=name, current_pid=None)
+            save(OUTPUT / "validation.json", state)
+            started = time.monotonic()
+            with (OUTPUT / (name + ".log")).open("x", encoding="utf-8") as stream:
+                process = subprocess.Popen(command, cwd=ROOT, env=environment, stdout=stream, stderr=subprocess.STDOUT,
+                                           creationflags=subprocess.CREATE_NO_WINDOW | subprocess.NORMAL_PRIORITY_CLASS)
+                state["current_pid"] = process.pid
+                save(OUTPUT / "validation.json", state)
+                code = process.wait()
+            state["checks"].append({"name": name, "command": command, "exit_code": code,
+                                    "seconds": time.monotonic() - started, "log": name + ".log"})
+            state["current_pid"] = None
+            save(OUTPUT / "validation.json", state)
+            if code:
+                raise RuntimeError("Validation failed: " + name)
+        if any(sha(ROOT / path) != value for path, value in source_hashes.items()):
+            raise RuntimeError("A validated source changed")
+        state.update(status="GO", current=None)
+        return 0
+    except BaseException:
+        state.update(status="FAILED", error=traceback.format_exc())
+        raise
+    finally:
+        state["updated_utc"] = datetime.now(UTC).isoformat()
+        save(OUTPUT / "validation.json", state)
+        if process is None or process.poll() is not None:
+            lock.unlink()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

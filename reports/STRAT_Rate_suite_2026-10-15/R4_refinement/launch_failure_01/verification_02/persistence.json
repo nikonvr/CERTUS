@@ -1,0 +1,13 @@
+{
+    "status":  "test",
+    "runs":  [
+                 {
+                     "pid":  21936,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\verification_02",
+                     "ended_utc":  "2026-10-15T13:16:55.1714219Z"
+                 }
+             ],
+    "current_pid":  null,
+    "updated_utc":  "2026-10-15T13:16:55.1834206Z"
+}

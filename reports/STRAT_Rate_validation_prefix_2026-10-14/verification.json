@@ -1,0 +1,6 @@
+{
+  "status": "GO",
+  "replay_physical_ast_identity_v4_v5": true,
+  "control_and_fresh_choices": true,
+  "controller_plan": true
+}

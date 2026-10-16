@@ -1,0 +1,31 @@
+{
+  "at_utc": "2026-10-15T05:33:04.587186+00:00",
+  "status": "STATIC_GO_RUNTIME_PENDING",
+  "R0_unchanged_function_AST": [
+    "check_sources",
+    "record_task",
+    "keep_fixed_plans",
+    "evaluate_fixed",
+    "convert"
+  ],
+  "R0_nominal_worker_external_evaluation_AST_identical": true,
+  "R2_unchanged_function_AST": [
+    "generate",
+    "provenance",
+    "check_sources"
+  ],
+  "authorized_changes": [
+    "24 logical processors /23 library threads",
+    "Current bounded authorization and completed validation guards",
+    "Permanent one-slot claims for R0 and R2",
+    "Source snapshots and actual12-call control checks"
+  ],
+  "new_sha256": {
+    "rate_fixed_replay_R0_bounded.py": "8178a2689b505c960f3ba671247006655d5da3b77bffc9ea57c95fea2e1bca03",
+    "rate_native_pipeline_probe_bounded.py": "9a87b5d5fdf208e1926c7cc8aa8fd4062354d5fddbcdf877970f81e432c981e5",
+    "verify_rate_native_pipeline_trace_bounded.py": "341fa8b7e0f24b098abea4ed513514d7832c1a498139c47412755cacb2cb6099",
+    "rate_suite_bounded_guard.py": "ee42dff2229e1c8b8384a34e676b815eba62fd55548be0d889f5bab9e291f9ff"
+  },
+  "runtime_verification": "pending full validation GO; not launched",
+  "physics_measured": false
+}

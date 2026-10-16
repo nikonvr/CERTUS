@@ -1,0 +1,8 @@
+{
+  "status": "FAILED_BEFORE_CHECKS",
+  "cause": "Conservative Python inventory included the IDE pyright-langserver.exe --stdio service; no scientific process was alive",
+  "observed_pid": 23808,
+  "observed_parent": 43240,
+  "claim_consumed": false,
+  "next": "Preserve this refusal, distinguish the exact language-server command from scientific/test processes in a new R3 guard copy revision"
+}

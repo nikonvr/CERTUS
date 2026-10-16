@@ -1,0 +1,14 @@
+{
+  "artifact": "r75x1.5_deep_s101_sans_da1af082.json",
+  "sha256": "cd057594b75590e695605f93c926bc4eb066e38ee47873fb3cd0b452c11f7c80",
+  "verdict": "OK",
+  "commit": "da1af0825d5e09e8d0a5ff4f1cf42b802e0e30e7",
+  "git_dirty": false,
+  "elite_rate_moves": false,
+  "depth_scope": "Deep with full/consensus300 observed in log; exported strategy rows do not retain consensus metadata, no fixed-point renotation of these A2 winners done",
+  "paired_search_export_gain_percent": {
+    "s042": 3.2513813408939662,
+    "s101": 0.11757966657387486
+  },
+  "interpretation": "Small differences within dispersion; campaign incomplete4/24, no global or normalized fixed-plan conclusion"
+}

@@ -1,0 +1,275 @@
+{
+  "synthetic_not_physical": true,
+  "verdict": "OK",
+  "errors": [],
+  "setting": {
+    "robustness_seed": 101,
+    "consensus_seed_list": [
+      41,
+      42,
+      43
+    ]
+  },
+  "source_sha256": {
+    "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+    "certus/core/certus_strat_robustness.py": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+    "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+    "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e"
+  },
+  "plans_sha256": "adb0388cd8ba9cf134fcc21bc4b432ccef5c4ecb92c7d28c68d6d155fedd06b9",
+  "protocol_sha256": "dedff535f8a12e062e912811e6219dc6f77918b4bf9e9949f407785e9b9b8e1a",
+  "group_manifest_sha256": "13d9ea584618df16ba19d93f554ccca9e014722f76d2546fb6fcd2a232a16526",
+  "search_eligible_ids": [
+    900951015,
+    9900006,
+    9900008,
+    98000109,
+    98000110,
+    98000111,
+    98000112,
+    98000113,
+    98000114
+  ],
+  "search_rejected": [],
+  "final_results": {
+    "all_strategies_results": [
+      {
+        "strategy": {
+          "strategy_id": 900951015
+        },
+        "robustness_score": 2.0
+      },
+      {
+        "strategy": {
+          "strategy_id": 9900006
+        },
+        "robustness_score": 2.01
+      },
+      {
+        "strategy": {
+          "strategy_id": 9900008
+        },
+        "robustness_score": 2.02
+      },
+      {
+        "strategy": {
+          "strategy_id": 98000109
+        },
+        "robustness_score": 2.03
+      },
+      {
+        "strategy": {
+          "strategy_id": 98000110
+        },
+        "robustness_score": 2.04
+      },
+      {
+        "strategy": {
+          "strategy_id": 98000111
+        },
+        "robustness_score": 2.05
+      },
+      {
+        "strategy": {
+          "strategy_id": 98000112
+        },
+        "robustness_score": 2.06
+      },
+      {
+        "strategy": {
+          "strategy_id": 98000113
+        },
+        "robustness_score": 2.07
+      },
+      {
+        "strategy": {
+          "strategy_id": 98000114
+        },
+        "robustness_score": 2.08
+      }
+    ]
+  },
+  "simulations": [
+    {
+      "id": 900951015,
+      "seed": 101,
+      "num_runs": 300
+    },
+    {
+      "id": 900951015,
+      "seed": 41,
+      "num_runs": 300
+    },
+    {
+      "id": 900951015,
+      "seed": 42,
+      "num_runs": 300
+    },
+    {
+      "id": 900951015,
+      "seed": 43,
+      "num_runs": 300
+    },
+    {
+      "id": 9900006,
+      "seed": 101,
+      "num_runs": 300
+    },
+    {
+      "id": 9900006,
+      "seed": 41,
+      "num_runs": 300
+    },
+    {
+      "id": 9900006,
+      "seed": 42,
+      "num_runs": 300
+    },
+    {
+      "id": 9900006,
+      "seed": 43,
+      "num_runs": 300
+    },
+    {
+      "id": 9900008,
+      "seed": 101,
+      "num_runs": 300
+    },
+    {
+      "id": 9900008,
+      "seed": 41,
+      "num_runs": 300
+    },
+    {
+      "id": 9900008,
+      "seed": 42,
+      "num_runs": 300
+    },
+    {
+      "id": 9900008,
+      "seed": 43,
+      "num_runs": 300
+    },
+    {
+      "id": 98000109,
+      "seed": 101,
+      "num_runs": 300
+    },
+    {
+      "id": 98000109,
+      "seed": 41,
+      "num_runs": 300
+    },
+    {
+      "id": 98000109,
+      "seed": 42,
+      "num_runs": 300
+    },
+    {
+      "id": 98000109,
+      "seed": 43,
+      "num_runs": 300
+    },
+    {
+      "id": 98000110,
+      "seed": 101,
+      "num_runs": 300
+    },
+    {
+      "id": 98000110,
+      "seed": 41,
+      "num_runs": 300
+    },
+    {
+      "id": 98000110,
+      "seed": 42,
+      "num_runs": 300
+    },
+    {
+      "id": 98000110,
+      "seed": 43,
+      "num_runs": 300
+    },
+    {
+      "id": 98000111,
+      "seed": 101,
+      "num_runs": 300
+    },
+    {
+      "id": 98000111,
+      "seed": 41,
+      "num_runs": 300
+    },
+    {
+      "id": 98000111,
+      "seed": 42,
+      "num_runs": 300
+    },
+    {
+      "id": 98000111,
+      "seed": 43,
+      "num_runs": 300
+    },
+    {
+      "id": 98000112,
+      "seed": 101,
+      "num_runs": 300
+    },
+    {
+      "id": 98000112,
+      "seed": 41,
+      "num_runs": 300
+    },
+    {
+      "id": 98000112,
+      "seed": 42,
+      "num_runs": 300
+    },
+    {
+      "id": 98000112,
+      "seed": 43,
+      "num_runs": 300
+    },
+    {
+      "id": 98000113,
+      "seed": 101,
+      "num_runs": 300
+    },
+    {
+      "id": 98000113,
+      "seed": 41,
+      "num_runs": 300
+    },
+    {
+      "id": 98000113,
+      "seed": 42,
+      "num_runs": 300
+    },
+    {
+      "id": 98000113,
+      "seed": 43,
+      "num_runs": 300
+    },
+    {
+      "id": 98000114,
+      "seed": 101,
+      "num_runs": 300
+    },
+    {
+      "id": 98000114,
+      "seed": 41,
+      "num_runs": 300
+    },
+    {
+      "id": 98000114,
+      "seed": 42,
+      "num_runs": 300
+    },
+    {
+      "id": 98000114,
+      "seed": 43,
+      "num_runs": 300
+    }
+  ]
+}

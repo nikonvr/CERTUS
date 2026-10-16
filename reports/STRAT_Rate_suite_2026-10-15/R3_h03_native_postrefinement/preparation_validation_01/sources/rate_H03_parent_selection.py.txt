@@ -1,0 +1,55 @@
+"""Pure same-arm parent selection for the final bounded native post-refinement pair."""
+
+from __future__ import annotations
+
+import copy
+import math
+
+from rate_R4_candidates import signature
+from rate_R4_planner import beam
+
+
+def select_parents(artifact: dict) -> list[dict]:
+    """Rank only explicit complete consensus scores; never inject a saved plan."""
+    candidates = []
+    for row in artifact["strategies"]:
+        meta = row.get("robustness_consensus_meta") or {}
+        score = row.get("robustness_score_consensus")
+        if (meta.get("seeds") != [41, 42, 43] or meta.get("n_samples") != 3 or
+                not isinstance(score, (int, float)) or not math.isfinite(score) or
+                row.get("crash_eliminated", False)):
+            continue
+        plan = {"nom": "native_parent", "source_strategy_id": row["id"], "native_source_id": row["id"],
+                "blocks": copy.deepcopy(row["blocs"]), "rate_layers": copy.deepcopy(row.get("rate_layers") or []),
+                "monochromator_resolution_nm": row.get("resolution_nm"), "branch": "native"}
+        if "witness_reset_layers" in row:
+            plan["witness_reset_layers"] = copy.deepcopy(row["witness_reset_layers"])
+        # The probe's fixed request supplies the slit when the export leaves it inherited.
+        if plan["monochromator_resolution_nm"] is None:
+            plan["monochromator_resolution_nm"] = float(artifact["native_pipeline_trace_adapter"]["arguments"][4])
+        candidates.append({"plan": plan, "score": float(score), "native_export_score": row.get("score"),
+                           "native_consensus_meta": copy.deepcopy(meta), "signature": signature(plan)})
+    if not candidates:
+        raise RuntimeError("This native arm exported no finite complete consensus parent")
+    return copy.deepcopy(beam(candidates))
+
+
+def freeze_selections(control: dict, variant: dict) -> dict:
+    """Freeze each arm independently; deduplicate only their later scoring work."""
+    selections = {"variant": select_parents(variant), "control": select_parents(control)}
+    unique, by_signature = [], {}
+    for arm in ("variant", "control"):
+        for entry in selections[arm]:
+            key = signature(entry["plan"])
+            if key not in by_signature:
+                plan = copy.deepcopy(entry["plan"])
+                plan["source_strategy_id"] = 98_500_001 + len(unique)
+                plan["root_parent_id"] = plan["source_strategy_id"]
+                plan["nom"] = f"automatic_parent_{len(unique) + 1}"
+                unique.append(plan)
+                by_signature[key] = plan["source_strategy_id"]
+            entry["replay_id"] = by_signature[key]
+    return {"selections": selections, "unique_replay_plans": unique,
+            "variant_parent_ids": [e["replay_id"] for e in selections["variant"]],
+            "control_comparator_ids": [e["replay_id"] for e in selections["control"]],
+            "before_post_scoring": True, "variant_parents_only_from_variant": True}

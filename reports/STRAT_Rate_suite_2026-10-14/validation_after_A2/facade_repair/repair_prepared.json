@@ -1,0 +1,8 @@
+{
+  "prepared_utc": "2026-10-14T16:02:49.112123+00:00",
+  "cause": "New helper _balanced_elite_rate_moves was not re-exported by the existing robustness facade",
+  "before_sha256": "3ee669ef0edd4bc266701a17d6e49a767d90b4b505770ee7eaf0dfd23f225fde",
+  "scope": "root facade import only; frozen scientific worktrees unchanged",
+  "regression_detected_by": "test_every_name_that_a_part_defines_is_the_same_object_in_the_facade",
+  "scientific_effect": "No scoring/generation change"
+}

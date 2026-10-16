@@ -1,0 +1,25 @@
+{
+  "verdict": "GO",
+  "artifact_sha256": "29e1ab1891a0e013fb169bcaee3c7f11718a5a60ea38546c643bca010b7bf746",
+  "manifest_sha256": "082fa680950b0a09f511543bbfc5202416204efa4fed81e5d57785d06a759ae1",
+  "actual_calls": 48,
+  "eligible_ids": [
+    900951015,
+    9900006,
+    9900008,
+    97000277,
+    97000278,
+    97000280,
+    97000281,
+    97000282,
+    97000283,
+    97000284,
+    97000285
+  ],
+  "rejected": [
+    {
+      "id": 97000279,
+      "reason": "incomplete consensus"
+    }
+  ]
+}

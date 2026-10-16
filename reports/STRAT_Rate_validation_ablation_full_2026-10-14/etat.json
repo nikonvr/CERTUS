@@ -1,0 +1,411 @@
+{
+  "status": "complete",
+  "pid": 35012,
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "hashes": {
+    "replay": "ab6ff3efffd465761f571be5021418e9c98d5e110d2370956eba1da4da0f5afa",
+    "protocol": "1a0ec42d04903427a97e2c8e719d19ad24c96a8450c073d32c451a8278984ec6",
+    "proposals": "d0e1a708b5d71e54b29df2c102cfca02674f9c7e6b78337c78660a9024df48f1"
+  },
+  "sequence": [
+    "control",
+    "holdout_202",
+    "holdout_303",
+    "holdout_404",
+    "holdout_505",
+    "holdout_606",
+    "holdout_707",
+    "holdout_808",
+    "holdout_909",
+    "holdout_1010",
+    "holdout_1111"
+  ],
+  "runs": [
+    {
+      "run": "control",
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_ablation_full_2026-10-14\\control.json",
+      "setting": {
+        "robustness_seed": 101,
+        "consensus_seed_list": [
+          41,
+          42,
+          43
+        ]
+      },
+      "plans": [
+        {
+          "id": 9900000,
+          "name": "native_joint_480_rate240_rounds6_s101",
+          "score": 0.032410960467156955,
+          "seel": 0.36006088633539163
+        },
+        {
+          "id": 9900001,
+          "name": "ablation_consensus_best_s101",
+          "score": 0.032749965266219656,
+          "seel": 0.3619390294854627
+        },
+        {
+          "id": 900951015,
+          "name": "reference_rate_s101",
+          "score": 0.03934565579798472,
+          "seel": 0.3967147882193691
+        }
+      ],
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_202",
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_ablation_full_2026-10-14\\holdout_202.json",
+      "setting": {
+        "robustness_seed": 202,
+        "consensus_seed_list": [
+          202,
+          203,
+          204
+        ]
+      },
+      "plans": [
+        {
+          "id": 9900000,
+          "name": "native_joint_480_rate240_rounds6_s101",
+          "score": 0.03255711259217562,
+          "seel": 0.36087179214882187
+        },
+        {
+          "id": 9900001,
+          "name": "ablation_consensus_best_s101",
+          "score": 0.03449957714837808,
+          "seel": 0.37148123585655346
+        },
+        {
+          "id": 900951015,
+          "name": "reference_rate_s101",
+          "score": 0.03936802990308617,
+          "seel": 0.3968275691183069
+        }
+      ],
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_303",
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_ablation_full_2026-10-14\\holdout_303.json",
+      "setting": {
+        "robustness_seed": 303,
+        "consensus_seed_list": [
+          303,
+          304,
+          305
+        ]
+      },
+      "plans": [
+        {
+          "id": 9900000,
+          "name": "native_joint_480_rate240_rounds6_s101",
+          "score": 0.033372166601425036,
+          "seel": 0.3653610083269699
+        },
+        {
+          "id": 9900001,
+          "name": "ablation_consensus_best_s101",
+          "score": 0.03380532483972584,
+          "seel": 0.36772448838621474
+        },
+        {
+          "id": 900951015,
+          "name": "reference_rate_s101",
+          "score": 0.03990268367569447,
+          "seel": 0.39951312206581885
+        }
+      ],
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_404",
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_ablation_full_2026-10-14\\holdout_404.json",
+      "setting": {
+        "robustness_seed": 404,
+        "consensus_seed_list": [
+          404,
+          405,
+          406
+        ]
+      },
+      "plans": [
+        {
+          "id": 9900001,
+          "name": "ablation_consensus_best_s101",
+          "score": 0.03254039642535476,
+          "seel": 0.3607791370096378
+        },
+        {
+          "id": 9900000,
+          "name": "native_joint_480_rate240_rounds6_s101",
+          "score": 0.03354894876508864,
+          "seel": 0.36632744240686443
+        },
+        {
+          "id": 900951015,
+          "name": "reference_rate_s101",
+          "score": 0.039948861349629744,
+          "seel": 0.3997442249720676
+        }
+      ],
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_505",
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_ablation_full_2026-10-14\\holdout_505.json",
+      "setting": {
+        "robustness_seed": 505,
+        "consensus_seed_list": [
+          505,
+          506,
+          507
+        ]
+      },
+      "plans": [
+        {
+          "id": 9900001,
+          "name": "ablation_consensus_best_s101",
+          "score": 0.03311737643308699,
+          "seel": 0.36396360495569874
+        },
+        {
+          "id": 9900000,
+          "name": "native_joint_480_rate240_rounds6_s101",
+          "score": 0.03398958425132446,
+          "seel": 0.3687252866366746
+        },
+        {
+          "id": 900951015,
+          "name": "reference_rate_s101",
+          "score": 0.03987785829631585,
+          "seel": 0.3993888245623097
+        }
+      ],
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_606",
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_ablation_full_2026-10-14\\holdout_606.json",
+      "setting": {
+        "robustness_seed": 606,
+        "consensus_seed_list": [
+          606,
+          607,
+          608
+        ]
+      },
+      "plans": [
+        {
+          "id": 9900000,
+          "name": "native_joint_480_rate240_rounds6_s101",
+          "score": 0.03288450605310711,
+          "seel": 0.36268171199059435
+        },
+        {
+          "id": 9900001,
+          "name": "ablation_consensus_best_s101",
+          "score": 0.03301684893509854,
+          "seel": 0.3634107809908701
+        },
+        {
+          "id": 900951015,
+          "name": "reference_rate_s101",
+          "score": 0.0385773213581316,
+          "seel": 0.39282220588012384
+        }
+      ],
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_707",
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_ablation_full_2026-10-14\\holdout_707.json",
+      "setting": {
+        "robustness_seed": 707,
+        "consensus_seed_list": [
+          707,
+          708,
+          709
+        ]
+      },
+      "plans": [
+        {
+          "id": 9900001,
+          "name": "ablation_consensus_best_s101",
+          "score": 0.03202761143223192,
+          "seel": 0.3579251957168253
+        },
+        {
+          "id": 9900000,
+          "name": "native_joint_480_rate240_rounds6_s101",
+          "score": 0.03462283884548847,
+          "seel": 0.37214426689384034
+        },
+        {
+          "id": 900951015,
+          "name": "reference_rate_s101",
+          "score": 0.03946164106709683,
+          "seel": 0.3972990866694603
+        }
+      ],
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_808",
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_ablation_full_2026-10-14\\holdout_808.json",
+      "setting": {
+        "robustness_seed": 808,
+        "consensus_seed_list": [
+          808,
+          809,
+          810
+        ]
+      },
+      "plans": [
+        {
+          "id": 9900001,
+          "name": "ablation_consensus_best_s101",
+          "score": 0.032657053555007434,
+          "seel": 0.3614252539876395
+        },
+        {
+          "id": 9900000,
+          "name": "native_joint_480_rate240_rounds6_s101",
+          "score": 0.032982283799694735,
+          "seel": 0.3632205049261109
+        },
+        {
+          "id": 900951015,
+          "name": "reference_rate_s101",
+          "score": 0.03923015238007526,
+          "seel": 0.39613206070741236
+        }
+      ],
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_909",
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_ablation_full_2026-10-14\\holdout_909.json",
+      "setting": {
+        "robustness_seed": 909,
+        "consensus_seed_list": [
+          909,
+          910,
+          911
+        ]
+      },
+      "plans": [
+        {
+          "id": 9900001,
+          "name": "ablation_consensus_best_s101",
+          "score": 0.03206473531413449,
+          "seel": 0.3581325749726461
+        },
+        {
+          "id": 9900000,
+          "name": "native_joint_480_rate240_rounds6_s101",
+          "score": 0.03277617535407641,
+          "seel": 0.36208383202831035
+        },
+        {
+          "id": 900951015,
+          "name": "reference_rate_s101",
+          "score": 0.04091267363813893,
+          "seel": 0.40453763057663217
+        }
+      ],
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_1010",
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_ablation_full_2026-10-14\\holdout_1010.json",
+      "setting": {
+        "robustness_seed": 1010,
+        "consensus_seed_list": [
+          1010,
+          1011,
+          1012
+        ]
+      },
+      "plans": [
+        {
+          "id": 9900000,
+          "name": "native_joint_480_rate240_rounds6_s101",
+          "score": 0.03235665696972233,
+          "seel": 0.35975912480281763
+        },
+        {
+          "id": 9900001,
+          "name": "ablation_consensus_best_s101",
+          "score": 0.03246170757908999,
+          "seel": 0.3603426568092653
+        },
+        {
+          "id": 900951015,
+          "name": "reference_rate_s101",
+          "score": 0.039361943106011356,
+          "seel": 0.3967968906431166
+        }
+      ],
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_1111",
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_ablation_full_2026-10-14\\holdout_1111.json",
+      "setting": {
+        "robustness_seed": 1111,
+        "consensus_seed_list": [
+          1111,
+          1112,
+          1113
+        ]
+      },
+      "plans": [
+        {
+          "id": 9900001,
+          "name": "ablation_consensus_best_s101",
+          "score": 0.03216855934047033,
+          "seel": 0.3587119141621607
+        },
+        {
+          "id": 9900000,
+          "name": "native_joint_480_rate240_rounds6_s101",
+          "score": 0.03356560541207313,
+          "seel": 0.3664183696927496
+        },
+        {
+          "id": 900951015,
+          "name": "reference_rate_s101",
+          "score": 0.040088642605508124,
+          "seel": 0.400442967752004
+        }
+      ],
+      "max_observed_crash_rate": 0
+    }
+  ],
+  "current": null,
+  "current_pid": null,
+  "updated": "2026-10-13T22:15:27+00:00",
+  "pool_best": {
+    "id": 9980047,
+    "name": "ablation_saved_900752354",
+    "move": {
+      "kind": "saved_ablation_plan",
+      "original_id": 900752354
+    },
+    "eligible": true,
+    "score": 0.032749965266219656,
+    "crash_rate": 0.0,
+    "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_ablation_consensus_all_2026-10-13\\batch_005\\attempt_01\\search.json"
+  },
+  "pool_original_id": 900752354,
+  "pool_state_sha256": "199d613b1733f9a927f93b7a07e6be6304dfa2ec9b6b1889bee39477239748c4",
+  "plans_sha256": "bc930ee337033eff8e24ac2de8499d14dccdf8f9309b8e5ba7560010c7b9d202"
+}

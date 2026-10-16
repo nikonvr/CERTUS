@@ -1,0 +1,33 @@
+{
+  "scope": "Three fixed plans and exact seed/depth coverage; expected score tolerances preserved, no full-pipeline bit identity claim",
+  "point_sha256": "3861c99e6c74da7d1740c6d7a5b42a29bfe77d1e0f5aa9387bc6c269ee1f04ed",
+  "actual_calls": 12,
+  "verdict": "GO",
+  "audited_utc": "2026-10-15T21:01:11.0429021Z",
+  "rows": [
+    {
+      "expected": 0.039345655797984144,
+      "actual_calls": 4,
+      "id": 900951015,
+      "actual_depth": 300,
+      "score_consensus": 0.039345655797984144,
+      "score_base": 0.0399019932859532
+    },
+    {
+      "expected": 0.029057302267738155,
+      "actual_calls": 4,
+      "id": 9900006,
+      "actual_depth": 300,
+      "score_consensus": 0.029057302267737437,
+      "score_base": 0.027573191157578242
+    },
+    {
+      "expected": 0.02797523766720083,
+      "actual_calls": 4,
+      "id": 9900008,
+      "actual_depth": 300,
+      "score_consensus": 0.027975237667200847,
+      "score_base": 0.03053006875746744
+    }
+  ]
+}

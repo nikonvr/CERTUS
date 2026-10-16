@@ -1,0 +1,27 @@
+{
+  "phase": "R1",
+  "status": "prepared_static_checks_passed",
+  "updated_utc": "2026-10-14T07:23:39.408113+00:00",
+  "changed_factor": "export metadata only; no physical or ranking change",
+  "files_sha256": {
+    "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e",
+    "tests/unit/test_probe_keeps_consensus_score_provenance.py": "accd22f5f43d05f0b52cd0b01e46fb47437d66afb32ad80fc3f1eb7a48c214b9"
+  },
+  "before_sha256": "a3f391ba642300fddaae470ba432a0c8306500492bc9dcb4e25056ef13e61c32",
+  "checks": {
+    "ruff_targeted": "GO",
+    "ast_parse": "GO",
+    "runtime_tests": "NOT_RUN_A2_ACTIVE"
+  },
+  "pending": [
+    "new export regression on current code",
+    "same regression on before-R1 source must fail",
+    "existing probe tests",
+    "complete repository validation"
+  ],
+  "limitations": [
+    "consensus n_samples counts seed scores, not per-seed physical draws",
+    "actual consensus depth still requires observer; no depth inferred from mode",
+    "historical artifacts are not rewritten"
+  ]
+}

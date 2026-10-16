@@ -1,0 +1,66 @@
+{
+  "verdict": "GO",
+  "checks": [
+    "check_sources: exact validated physical callback AST",
+    "record_task: exact validated physical callback AST",
+    "keep_fixed_plans: exact validated physical callback AST",
+    "evaluate_fixed: exact validated physical callback AST",
+    "Native generator wrapper unchanged; both arms fine_wavelengths=True",
+    "Exact installed IDE exemption, morning boundary and unknown/fourth slot refusals",
+    "Generic 18-layer selection: consensus before raw, incomplete/nonfinite/eliminated rejected, inherited slit/witness preserved, immutable same-arm selection",
+    "Actual exported h02 schemas parsed; only explicit complete native consensus parents selected",
+    "Full sequential synthetic pipeline: parent-check, charged generic moves, exclusive lineage, incumbent retention, two passes, finite quotas, early stop, idempotent completion and overwrite refusal",
+    "Actual CLI --plan both arms equivalent, only arm/slot differ; no simulation or claim"
+  ],
+  "synthetic_pipeline": {
+    "groups": 39,
+    "proposals": 320,
+    "passes": [
+      {
+        "pass": 1,
+        "before": 2.03,
+        "after": 0.5,
+        "improved": true
+      },
+      {
+        "pass": 2,
+        "before": 0.5,
+        "after": 0.5,
+        "improved": false
+      }
+    ],
+    "active_output": 0.5,
+    "inactive_output": 2.03,
+    "scientific_simulations": 0
+  },
+  "source_sha256": {
+    "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+    "certus/core/certus_strat_robustness.py": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+    "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+    "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e"
+  },
+  "all_script_sha256": {
+    "rate_native_H03_probe.py": "dfae32fba2faeeeef0e8b9c00dc599f63725d250552f2b22a109a5ce5b4a7b9d",
+    "rate_H03_post_scorer.py": "9d24f63dd9f4366d53628a49fe9a612947622b028a2ff4032313cbbf45ebce0e",
+    "rate_H03_guard.py": "c5c104d01371144eeb7fff8fc78ee339cb8171a293b2572f0544aa787fb61e00",
+    "rate_H03_post_planner.py": "87c1e60a5e44c501173ee4853a0d1be475d0f0ec6f56cc4e681d04b088df81b8",
+    "rate_H03_parent_selection.py": "1a3670e015d8c99e7be8352b76106c9c504d2d361370b6707840cb48fa8b5055",
+    "run_rate_H03.ps1": "00e6814248a90af1393ae4d66b8379b4b343124fd8a0f551622f18f793242a28",
+    "rate_R4_candidates.py": "b7314f1f57b4f96622bc6db75bb4b9787d6e8e9783901b3d0bebb586d47a639b",
+    "rate_R4_planner.py": "14b1239f2af6fd95a5f6579671d5a68b5b772a68c63632fb79ab5743984a090d",
+    "rate_R4_planner_resume_v3.py": "c0e714c66efb130bf893d3130cd3dcd747e680a3039ce33d241f63e88cf8ba04",
+    "rate_native_pipeline_trace.py": "df28ee632f11e6dcde87e53c78ce4dc35869194b2b579107f6725e7416562dc3",
+    "rate_joint_native_candidates_R3_wavelengths.py": "113855ba740fa46ce4c1e4b832cb5c88811e74ff406b0fbbcd0e34b54cdb9038",
+    "campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51"
+  },
+  "script_sha256": {
+    "adapter": "dfae32fba2faeeeef0e8b9c00dc599f63725d250552f2b22a109a5ce5b4a7b9d",
+    "observer": "df28ee632f11e6dcde87e53c78ce4dc35869194b2b579107f6725e7416562dc3",
+    "generator": "113855ba740fa46ce4c1e4b832cb5c88811e74ff406b0fbbcd0e34b54cdb9038",
+    "controller_helper": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51",
+    "bounded_guard": "c5c104d01371144eeb7fff8fc78ee339cb8171a293b2572f0544aa787fb61e00",
+    "persistence_helper": "c0e714c66efb130bf893d3130cd3dcd747e680a3039ce33d241f63e88cf8ba04"
+  },
+  "verified_utc": "2026-10-15T16:36:29.761704+00:00"
+}

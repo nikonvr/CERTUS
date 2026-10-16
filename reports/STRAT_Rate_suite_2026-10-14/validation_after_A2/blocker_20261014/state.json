@@ -1,0 +1,32 @@
+{
+  "created_utc": "2026-10-14T16:12:17.058103+00:00",
+  "status": "awaiting_user_decision",
+  "A2_completed": 24,
+  "remaining_failure": "test_uniform_weights_reproduce_the_unweighted_functional",
+  "observed_absolute_difference": 5.551115123125783e-17,
+  "ulp_at_observed_value": 5.551115123125783e-17,
+  "preexisting_on_clean_HEAD": "da1af0825d5e09e8d0a5ff4f1cf42b802e0e30e7",
+  "baseline_verification": "../baseline_spectral_attempt_01/verification.json",
+  "cold_root_verification": "../targeted_repair_attempt_01/verification.json",
+  "original_full_validation": "../attempt_02/validation.json",
+  "facade_reexport_repaired": true,
+  "root_targeted_outcome": "65 passed,1 failed; remaining failure is spectral invariant",
+  "global_checks": "not complete; UI/remaining/docs not yet run",
+  "R0_R2_scientific_measurements_launched": false,
+  "R2_observer_runtime_verified": false,
+  "physical_source_and_test_changed": false,
+  "requires_decision": "Separate RMSE-kernel correction before Rate continuation; strict assertion not relaxed",
+  "retained_best_local_seel": 0.3345159946382285,
+  "fixed_reference_seel": 0.3967147882193691,
+  "native_automatic_gain_proven": false,
+  "frozen_worktrees_changed": false,
+  "source_sha256": {
+    "certus/core/certus_strat_robustness.py": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+    "certus/physics/certus_strat_batch.py": "36fb771e73570cf4247e3a7bca133c22b995294b5d93924f3d884f21016908e7",
+    "tests/unit/test_strat_spectral_target.py": "ef2f1ebc8224f349075e8970ce29814958be4f72dd1daf2576677cd886cfbf9f"
+  },
+  "cold_cache_file_counts": {
+    "targeted_repair_attempt_01": 19,
+    "baseline_spectral_attempt_01": 19
+  }
+}

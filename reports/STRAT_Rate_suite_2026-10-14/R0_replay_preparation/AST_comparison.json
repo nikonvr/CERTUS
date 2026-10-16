@@ -1,0 +1,14 @@
+{
+  "status": "AST_SCIENTIFIC_BODY_IDENTICAL",
+  "old_sha256": "e134846ad489a6af1950504ff7539ca3917ab6bc9dd3493c4e34d76512c8989d",
+  "new_sha256": "93789f513ed5ec17120b1c367c37ef558b2856872b906de9e7e69e41613b713f",
+  "scientific_ast_sha256": "43b24fd079dd5e80e2a4e35e93f3e22bdf5209471d0d1a75054985b38f560695",
+  "changes": [
+    "CLI restricted tocontrol with required explicit deadline",
+    "require A2 complete24/24 and idle process inventory",
+    "output confined to project reports",
+    "artifact/request atomic helper saves with existing PermissionError retries"
+  ],
+  "runtime_tests": "NOT_RUN_A2_ACTIVE",
+  "measurement": "NOT_STARTED"
+}

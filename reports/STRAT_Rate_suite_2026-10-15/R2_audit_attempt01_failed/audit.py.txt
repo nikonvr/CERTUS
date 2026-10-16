@@ -1,0 +1,148 @@
+"""Audit saved R2 artifacts without importing or executing scientific code."""
+
+from __future__ import annotations
+
+import collections
+import hashlib
+import json
+import math
+from datetime import UTC, datetime
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+PROGRAM = ROOT / "reports/STRAT_Rate_suite_2026-10-15"
+SAVED = PROGRAM / "R2_native_base"
+
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def windows(plan):
+    rate = set(plan.get("rate_layers") or [])
+    out = []
+    for layer in range(75):
+        if layer in rate:
+            continue
+        if out and out[-1][1] == layer:
+            out[-1][1] += 1
+        else:
+            out.append([layer, layer + 1])
+    return out
+
+
+def geometry_counts(plans):
+    counts = collections.Counter()
+    for plan in plans:
+        counts["plans"] += 1
+        optical = windows(plan)
+        for name, first, end, wl in (("internal_34_37", 34, 37, 688), ("prefix_0_5", 0, 5, 613)):
+            if [first, end] not in optical:
+                continue
+            counts[name] += 1
+            blocks = plan.get("blocks", plan.get("blocs", []))
+            if all(any(b["start"] <= layer < b["end"] and b["wavelength"] == wl for b in blocks)
+                   for layer in range(first, end)):
+                counts[name + "_with_target_wl"] += 1
+    return dict(counts)
+
+
+def main():
+    state = json.loads((SAVED / "etat.json").read_text(encoding="utf-8"))
+    reference = json.loads((PROGRAM / "reference_context.json").read_text(encoding="utf-8"))
+    assert state["status"] == "complete", state.get("error")
+    assert not (PROGRAM / "measurement.running").exists() and not (SAVED / ".running").exists()
+    # The context field names are read from the saved record, never inferred from a PID.
+    worktree = Path(reference.get("worktree", reference.get("workspace_directory", "")))
+    assert worktree.is_absolute(), reference.keys()
+    assert state["source_sha256"] == reference["source_sha256"]
+    for name, expected in state["source_sha256"].items():
+        assert digest(worktree / name) == expected, name
+    scripts = {"adapter": "rate_native_pipeline_probe_bounded.py", "observer": "rate_native_pipeline_trace.py",
+               "generator": "rate_joint_native_candidates.py", "controller_helper": "campagne_a2_runner.py",
+               "bounded_guard": "rate_suite_bounded_guard.py"}
+    for key, name in scripts.items():
+        assert digest(ROOT / "scratch" / name) == state["script_sha256"][key], name
+        assert digest(SAVED / f"source_{key}.py.txt") == state["script_sha256"][key], key
+    artifact_file = Path(state["artifact"])
+    assert digest(artifact_file) == digest(worktree / "reports" / artifact_file.name)
+    artifact = json.loads(artifact_file.read_text(encoding="utf-8"))
+    assert artifact["verdict"] == "OK" and artifact["n_strats"] == len(artifact["strategies"])
+    assert artifact["profondeur"] == {"robustness_num_runs": 300, "n_screen_runs": 50,
+                                       "dp_top_k": 100, "consensus_num_runs": 300}
+    assert artifact["seed"] == 101 and artifact["composant"] == "r75x0.5" and artifact["mode"] == "deep"
+    adapter = artifact["native_pipeline_trace_adapter"]
+    assert adapter["script_sha256"] == state["script_sha256"] and adapter["source_sha256"] == state["source_sha256"]
+    generated = json.loads((SAVED / "generated_candidates.json").read_text(encoding="utf-8"))
+    assert generated["script_sha256"] == state["script_sha256"]
+    joint_counts = geometry_counts(p for call in generated["calls"] for p in call["offered"])
+    joint_widths = collections.Counter(end - first for call in generated["calls"]
+                                       for plan in call["offered"] for first, end in windows(plan) if first >= 2)
+    joint_calls = generated["calls"]
+    trace = json.loads((SAVED / "pipeline_trace.json").read_text(encoding="utf-8"))
+    events = trace["events"]
+    assert [e["event"] for e in events] == list(range(len(events)))
+    kinds = collections.Counter(e["kind"] for e in events)
+    assert not kinds["physical_task_error"]
+    inputs = [e for e in events if e["kind"] == "generation_inputs"]
+    outputs = [e for e in events if e["kind"] == "generation_outputs"]
+    assert len(inputs) == len(outputs) == len(joint_calls) == 124
+    for inp, out, joint in zip(inputs, outputs, joint_calls, strict=True):
+        assert inp["event"] < out["event"] and inp["context"] == out["context"]
+        assert len(out["candidates"]) == joint["legacy_count"] + joint["joint_count"]
+        assert joint["joint_count"] <= 480
+        assert joint["parent_ids"] == [p["strategy"]["strategy_id"] for p in inp["parents"]]
+        assert out["candidates"][-joint["joint_count"]:] == joint["offered"] if joint["joint_count"] else True
+    tasks = [e for e in events if e["kind"] == "physical_task_result"]
+    depth_counts = collections.Counter((e["num_runs"], e["seed"]) for e in tasks)
+    grids = collections.Counter((len(e["available_wls"]), min(e["available_wls"]), max(e["available_wls"]),
+                                613 in e["available_wls"], 688 in e["available_wls"]) for e in inputs)
+    all_generated = geometry_counts(plan for e in outputs for plan in e["candidates"])
+    parent_counts = geometry_counts(row["strategy"] for e in inputs for row in e["parents"])
+    parent_score_categories = collections.Counter()
+    mixed_parent_events = []
+    for event in inputs:
+        categories = collections.Counter("complete_consensus" if (row.get("robustness_consensus_meta") or {}).get("n_samples") == 3
+                                         else "no_complete_consensus" for row in event["parents"])
+        parent_score_categories.update(categories)
+        if len(categories) > 1:
+            mixed_parent_events.append({"context": event["context"], "categories": dict(categories)})
+    finite = [r for r in artifact["strategies"] if math.isfinite(r["score"]) and not r.get("crash_eliminated")]
+    consensus = [r for r in finite if (r.get("robustness_consensus_meta") or {}).get("n_samples") == 3
+                 and (r.get("robustness_consensus_meta") or {}).get("seeds") == [41, 42, 43]
+                 and r.get("robustness_score_consensus") == r["score"]]
+    best_raw = min(finite, key=lambda row: row["score"])
+    best_consensus = min(consensus, key=lambda row: row["score"])
+    best_calls = [{k: e[k] for k in ("event", "context", "id", "seed", "num_runs")}
+                  for e in tasks if e["id"] == best_consensus["id"]]
+    report = {
+        "verdict": "GO", "audited_utc": datetime.now(UTC).isoformat(),
+        "audit_script_sha256": digest(Path(__file__)), "state_sha256": digest(SAVED / "etat.json"),
+        "source_sha256": state["source_sha256"], "script_sha256": state["script_sha256"],
+        "input_sha256": {f.name: digest(f) for f in (artifact_file, SAVED / "generated_candidates.json", SAVED / "pipeline_trace.json")},
+        "duration_seconds_including_exports": (datetime.fromisoformat(state["updated"]) - datetime.fromisoformat(state["started"])).total_seconds(),
+        "strategies": len(artifact["strategies"]), "finite_not_eliminated": len(finite),
+        "complete_consensus_rows": len(consensus), "best_raw_row": best_raw, "best_consensus_row": best_consensus,
+        "best_consensus_actual_calls": best_calls,
+        "trace_event_counts": dict(kinds),
+        "actual_task_depth_seed_counts": [{"num_runs": d, "seed": seed, "calls": n} for (d, seed), n in sorted(depth_counts.items())],
+        "grid_summary": [{"n": n, "min": lo, "max": hi, "contains_613": p, "contains_688": w, "calls": count}
+                         for (n, lo, hi, p, w), count in grids.items()],
+        "all_generated_geometries": all_generated, "joint_generated_geometries": joint_counts,
+        "parent_geometries": parent_counts, "joint_output_internal_window_widths": dict(joint_widths),
+        "parent_score_categories": dict(parent_score_categories), "mixed_parent_events": mixed_parent_events,
+        "limitations": trace["limitations"] + [
+            "Window absence is structural evidence, not evidence that a wider generator will improve scores.",
+            "Parent categories may mix screening/full contexts; no homogeneous-parent causal claim is made.",
+            "Target geometries are diagnostic probes from prior measured local plans, never injected into native search.",
+            "Historical cache/resource contexts differ: elapsed time is not a measured code speedup.",
+            "Finalists still need explicit homogeneous replay, including the ablation comparator9900001."]}
+    out = PROGRAM / "R2_audit_20261015.json"
+    with out.open("x", encoding="utf-8") as stream:
+        json.dump(report, stream, ensure_ascii=False, indent=2)
+    print(json.dumps({k: report[k] for k in ("verdict", "duration_seconds_including_exports", "strategies", "complete_consensus_rows",
+          "all_generated_geometries", "joint_generated_geometries", "parent_geometries", "parent_score_categories")}, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    main()

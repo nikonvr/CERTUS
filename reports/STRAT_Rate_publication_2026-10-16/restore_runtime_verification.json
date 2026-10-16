@@ -1,0 +1,9 @@
+{
+  "status": "GO",
+  "restored_path": "reports/STRAT_Rate_suite_2026-10-15/R3_h03_native_postrefinement/preparation_validation_01/verification_01/synthetic_fixture/post/frozen_search_winners.json",
+  "raw_bytes": 1190048,
+  "sha256": "4f4d1c7aa957ed2a8a9c60304db2bc02e3fb0530369ed4a01b19ab86234be19d",
+  "external_archive": true,
+  "restored_copy_removed_after_verification": true,
+  "sandbox_attempt": "Access denied creating a hard link; passed with ordinary host access"
+}

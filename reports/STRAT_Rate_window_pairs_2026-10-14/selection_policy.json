@@ -1,0 +1,15 @@
+{
+  "prepared_utc": "2026-10-14T02:41:01.059787+00:00",
+  "status": "policy_only_not_launched",
+  "scope": "After the complete one-window search and its confirmation, test interactions by combining one internal-window1 move with one internal-window2 move; prefix600, partition, other wavelengths/slit/witness fixed",
+  "selection_rule": "Top12 unique eligible complete-consensus proposals from each block_index (1 and3), ordered by search score then ID, only after every one-window candidate is scored; combine Cartesian product, at most144; no holdout-based candidate ranking",
+  "source_proposals_sha256": "0aaa42e64093bd3403cfbc333305f80ade3c1eb8def6c4421f29e2a89856e1ba",
+  "fresh_groups": [
+    2424,
+    2525,
+    2626
+  ],
+  "protocol_sha256": "672ad408e2652a30c4cc8446d596b04707ad6972783cc13e9678801612a0a2bf",
+  "review": "One isolated composite proposal family; unchanged physical model and scoring depth; structure/runtime validation still required when no measurement is active, before launch",
+  "deadline_utc": "2026-10-14T07:00:00Z"
+}

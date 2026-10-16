@@ -1,0 +1,15 @@
+{
+  "status": "MEASURING_NATIVE_CONTROL",
+  "updated_utc": "2026-10-15T16:39:49.3709985Z",
+  "controller_pid_at_launch": 41628,
+  "child_control_pid_at_launch": 4868,
+  "actual_state_is_authoritative": true,
+  "R3_pair_index": 3,
+  "max_R3_pairs": 3,
+  "R4_prototype_closed": true,
+  "claimed_slots": [
+    "R3_h03_control"
+  ],
+  "deadline_utc": "2026-10-16T06:00:00Z",
+  "next": "Coordinator automatically runs native control, native variant, same-arm parent check and finite post-refinement. Do not launch another coordinator or manual group."
+}

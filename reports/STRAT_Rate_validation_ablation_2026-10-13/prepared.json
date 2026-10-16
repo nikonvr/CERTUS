@@ -1,0 +1,15 @@
+{
+  "prepared_utc": "2026-10-13T20:32:19.062199+00:00",
+  "status": "prepared_control_only",
+  "plans_sha256": "eaa29a052375548b3a5a96f2f8f82dc54eb7ef7f7cfec60a8f8e772300bbe057",
+  "replay_sha256": "1ab91c3fc245e85887e511b4acdc18e7d0dbce27b99746f29b9eaba8920f2639",
+  "protocol_sha256": "7d864ee1416b251257743d718a45c178bb77176b8560678faadcaa199fe94d15",
+  "purpose": "Reproduce the ablation winner at the same complete consensus depth as the native winner, before attributing the apparent 1.4867 percent incremental gain",
+  "warning": "Equal configured depth does not prove that each selected winner had three complete consensus samples",
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "started_utc": "2026-10-15T21:45:53.5387982Z",
+  "case": "c01_s77",
+  "controller_pid": 55048,
+  "controller_script": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\run_rate_R6_pair.ps1",
+  "controller_sha256": "79f7c2ee2566e45a697d5d75d1f96cc9568f4aa387fa23f35d92270e0a76a4ae",
+  "invocation": "Windows PowerShell5.1 -NoProfile -EncodedCommand exact frozen source, default case77, hidden",
+  "deadline_utc": "2026-10-16T06:00:00Z",
+  "checks": "R5 integrated actual audit documented; 11 R6 routing/isolation checks, PS5.1 source identity, Ruff/docs/diff GO",
+  "after_pair": "freeze finalists then new bounded fresh scorer on the three already reserved groups; no automatic next case"
+}

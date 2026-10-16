@@ -1,0 +1,29 @@
+"""Record relevant launch lint/document checks sequentially before any R4 measure."""
+
+import json
+import subprocess
+import sys
+from datetime import UTC, datetime
+
+from rate_R4_guard import EXPERIMENT, ROOT, check_deadline
+
+check_deadline()
+output = EXPERIMENT / "final_preflight_01"
+output.mkdir(exist_ok=False)
+commands = [[sys.executable, "-X", "utf8", "-m", "ruff", "check", *[str(p.relative_to(ROOT)) for p in (ROOT / "scratch").glob("*R4*.py")]],
+            *[[sys.executable, "-X", "utf8", "scripts/" + name] for name in ("coherence_md.py", "check_claude_md.py", "check_docs.py")],
+            ["git", "diff", "--check"]]
+checks = []
+for index, command in enumerate(commands):
+    check_deadline()
+    with (output / f"{index:02}.log").open("wb") as stream:
+        result = subprocess.run(command, cwd=ROOT, stdout=stream, stderr=subprocess.STDOUT, check=False)
+    checks.append({"command": command, "exit_code": result.returncode})
+    if result.returncode:
+        break
+report = {"verdict": "GO" if len(checks) == len(commands) and all(c["exit_code"] == 0 for c in checks) else "FAILED",
+          "checks": checks, "ended_utc": datetime.now(UTC).isoformat(), "no_scientific_measurement": True}
+with (output / "validation.json").open("x", encoding="utf-8") as stream:
+    json.dump(report, stream, ensure_ascii=False, indent=2)
+print(json.dumps(report))
+raise SystemExit(0 if report["verdict"] == "GO" else 1)

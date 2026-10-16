@@ -1,0 +1,1 @@
+PID13472 exit1 before reserve_slot, request, lock or physical import. Three required anchors became one: protocol anchors and branch parents aliased; pop(expected_score_fixed_point) mutated two anchors. No claim R4_g001 exists. Repaired by deep-copy anchors and verifier comparing their complete metadata/expected values with independently validated h02 control.

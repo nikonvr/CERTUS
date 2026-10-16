@@ -1,0 +1,9 @@
+{
+  "started_utc": "2026-10-15T16:39:08.7928303Z",
+  "controller_pid": 41628,
+  "controller_script": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\run_rate_H03.ps1",
+  "controller_sha256": "00e6814248a90af1393ae4d66b8379b4b343124fd8a0f551622f18f793242a28",
+  "invocation": "Windows PowerShell5.1 -NoProfile -EncodedCommand of exact frozen source; hidden",
+  "deadline_utc": "2026-10-16T06:00:00Z",
+  "checks": "Ruff, three documentation checks, git diff --check passed; 10 pipeline checks,7 guard checks, real PS5.1 empty child persistence GO"
+}

@@ -1,0 +1,46 @@
+{
+  "checked": "2026-10-14T09:32:02.8258174+02:00",
+  "resources": [
+    {
+      "Id": 51884,
+      "CPU": 0.28125,
+      "PriorityClass": 32,
+      "Affinity": 65535,
+      "StartTime": "2026-10-14T09:08:32.5700071+02:00"
+    },
+    {
+      "Id": 24128,
+      "CPU": 0.21875,
+      "PriorityClass": 32,
+      "Affinity": 65535,
+      "StartTime": "2026-10-14T09:25:04.9262781+02:00"
+    },
+    {
+      "Id": 49256,
+      "CPU": 726.203125,
+      "PriorityClass": 32,
+      "Affinity": 65535,
+      "StartTime": "2026-10-14T09:31:03.0795704+02:00"
+    }
+  ],
+  "processes": [
+    {
+      "ProcessId": 51884,
+      "ParentProcessId": 46640,
+      "CreationDate": "2026-10-14T09:08:32.570007+02:00",
+      "CommandLine": "\"C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\a2_continue_runner.py\" \"--worktree\" \"C:\\Users\\Lemarchand\\.codex\\worktrees\\campagne-a2\\certus0310\" \"--campaign\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_ELITE_couches_Rate_autres_composants_2026-10-13\" \"--output\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_A2_continuation_2026-10-14\" \"--previous-controller-pid\" \"23280\""
+    },
+    {
+      "ProcessId": 24128,
+      "ParentProcessId": 51884,
+      "CreationDate": "2026-10-14T09:25:04.926278+02:00",
+      "CommandLine": "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\campagne_a2_runner.py\" --worktree C:\\Users\\Lemarchand\\.codex\\worktrees\\campagne-a2\\certus0310 --output \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_ELITE_couches_Rate_autres_composants_2026-10-13\" --logical-cpus 16"
+    },
+    {
+      "ProcessId": 49256,
+      "ParentProcessId": 24128,
+      "CreationDate": "2026-10-14T09:31:03.07957+02:00",
+      "CommandLine": "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe scripts/probe_blocs_vs_plantage.py 35c deep 0 0 2 0 42 0"
+    }
+  ]
+}

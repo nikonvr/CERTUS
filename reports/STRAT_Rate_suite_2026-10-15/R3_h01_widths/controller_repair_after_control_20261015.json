@@ -1,0 +1,17 @@
+{
+  "repaired_utc": "2026-10-15T09:33:36.226490+00:00",
+  "status": "READY_TO_RESUME_VARIANT",
+  "cause": "Windows PowerShell5.1 Start-Process -PassThru/WaitForExit/Refresh returns null ExitCode when the process handle was not retained. Exact before/after reproduced with a Python no-op, while the tool shell returned0.",
+  "diagnostic": "controller_exitcode_diagnostic/windows_powershell_comparison.json",
+  "control_state": "complete",
+  "control_audit": "audit_control.json",
+  "control_scientific_seconds_including_exports": 2660.182777,
+  "control_best_score": 0.032410960467156955,
+  "control_n_strategies": 5412,
+  "no_control_repeat": true,
+  "remaining_arm": "variant",
+  "scientific_sources_or_adapter_changed": false,
+  "repair": "New PowerShell copy adopts the exact audited control and retains the process handle before waiting; records the variant exit code explicitly. Original failed states/logs remain intact.",
+  "new_controller_sha256": "1e1a097e549e1248edc6c0cc927b2fea4a959ef5cc682e1e06ed549a6aff17c9",
+  "control_audit_sha256": "0010eb8f5d440f3e879395cdb333e58122b69684168cf7a8b73fbf0d36d7e052"
+}

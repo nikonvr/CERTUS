@@ -1,0 +1,71 @@
+$ErrorActionPreference = 'Stop'
+$rateR4Root = 'D:\drivefl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310'
+$rateR4Directory = Join-Path $rateR4Root 'reports\STRAT_Rate_suite_2026-10-15\R4_refinement'
+$rateR4StatePath = Join-Path $rateR4Directory 'controller.json'
+if (Test-Path -LiteralPath $rateR4StatePath) { throw 'Existing R4 controller: inspect its child and checkpoint before adoption' }
+$rateR4Python = (Get-Command python -ErrorAction Stop).Source
+$rateR4Context = Get-Content -Raw -LiteralPath (Join-Path $rateR4Directory '..\reference_context.json') | ConvertFrom-Json
+$rateR4State = [ordered]@{status='starting';pid=$PID;started_utc=(Get-Date).ToUniversalTime().ToString('o');runs=@();current_pid=$null;current_manifest=$null}
+function Save-RateR4State {
+    $rateR4State['updated_utc'] = (Get-Date).ToUniversalTime().ToString('o')
+    $rateR4Temp = $rateR4StatePath + '.tmp'
+    [System.IO.File]::WriteAllText($rateR4Temp,($rateR4State | ConvertTo-Json -Depth 10),[System.Text.UTF8Encoding]::new($false))
+    if (Test-Path -LiteralPath $rateR4StatePath) {
+        [System.IO.File]::Replace($rateR4Temp,$rateR4StatePath,($rateR4StatePath + '.previous'))
+    } else { [System.IO.File]::Move($rateR4Temp,$rateR4StatePath) }
+}
+function Invoke-RateR4Child($rateR4Arguments,$rateR4LogDirectory) {
+    $rateR4Process = Start-Process -FilePath $rateR4Python -ArgumentList $rateR4Arguments -WorkingDirectory $rateR4Root -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $rateR4LogDirectory 'stdout.log') -RedirectStandardError (Join-Path $rateR4LogDirectory 'stderr.log')
+    $rateR4Handle = $rateR4Process.Handle
+    $rateR4Process.ProcessorAffinity = [IntPtr]16777215
+    $rateR4Process.PriorityClass = 'Normal'
+    $rateR4State['current_pid'] = $rateR4Process.Id
+    Save-RateR4State
+    $rateR4Process.WaitForExit()
+    $rateR4Process.Refresh()
+    if ($null -eq $rateR4Process.ExitCode -or $rateR4Process.ExitCode -ne 0) { throw ('Child failed: ' + $rateR4Process.Id + ', exit=' + $rateR4Process.ExitCode) }
+    $rateR4State['runs'] += [ordered]@{pid=$rateR4Process.Id;exit_code=$rateR4Process.ExitCode;log_directory=$rateR4LogDirectory;ended_utc=(Get-Date).ToUniversalTime().ToString('o')}
+    $rateR4State['current_pid']=$null
+    Save-RateR4State
+}
+Save-RateR4State
+try {
+    for ($rateR4Step=1; $rateR4Step -le 145; $rateR4Step++) {
+        $rateR4PlannerLog = Join-Path $rateR4Directory ('controller_steps\step_{0:d3}' -f $rateR4Step)
+        New-Item -ItemType Directory -Path $rateR4PlannerLog -ErrorAction Stop | Out-Null
+        $rateR4State['status']='planning'
+        Save-RateR4State
+        Invoke-RateR4Child @('-X','utf8','-X','cpu_count=24',('"'+(Join-Path $rateR4Root 'scratch\rate_R4_planner.py')+'"'),'next') $rateR4PlannerLog
+        $rateR4Next = Get-Content -Raw -LiteralPath (Join-Path $rateR4Directory 'next.json') | ConvertFrom-Json
+        if ($rateR4Next.status -ne 'ready') {
+            $rateR4State['status']=$rateR4Next.status
+            Save-RateR4State
+            exit 0
+        }
+        if ((Get-Date).ToUniversalTime() -ge [datetime]::Parse('2026-10-16T06:00:00Z').ToUniversalTime()) {
+            $rateR4State['status']='deadline_before_launch'
+            Save-RateR4State
+            exit 0
+        }
+        $rateR4State['current_manifest']=$rateR4Next.manifest
+        $rateR4State['status']='measuring'
+        Save-RateR4State
+        $rateR4Group = Split-Path -Parent $rateR4Next.manifest
+        New-Item -ItemType Directory -Path $rateR4Next.output -ErrorAction Stop | Out-Null
+        $rateR4Arguments = @('-X','utf8','-X','cpu_count=24',('"'+(Join-Path $rateR4Root 'scratch\rate_fixed_replay_R4.py')+'"'),
+            '--worktree',('"'+$rateR4Context.worktree+'"'),
+            '--plans',('"'+(Join-Path $rateR4Group 'plans.json')+'"'),
+            '--protocol',('"'+(Join-Path $rateR4Directory 'protocol.json')+'"'),
+            '--reference-state',('"'+(Join-Path $rateR4Directory '..\reference_context.json')+'"'),
+            '--output',('"'+$rateR4Next.output+'"'),'--run','search',
+            '--validated-control',('"'+(Join-Path $rateR4Directory '..\R3_h02_wavelengths\homogeneous_replay\control.json')+'"'),
+            '--group-manifest',('"'+$rateR4Next.manifest+'"'),
+            '--deadline-utc','2026-10-16T06:00:00+00:00')
+        Invoke-RateR4Child $rateR4Arguments $rateR4Next.output
+    }
+    throw 'Finite controller step quota exhausted'
+} catch {
+    $rateR4State['status']='failed'
+    $rateR4State['error']=$_.Exception.Message
+    throw
+} finally { Save-RateR4State }

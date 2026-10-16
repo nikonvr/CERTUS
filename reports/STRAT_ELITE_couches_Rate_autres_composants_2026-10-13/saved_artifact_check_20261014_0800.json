@@ -1,0 +1,14 @@
+{
+  "artifact": "r75x1.75_deep_s042_sans_da1af082.json",
+  "sha256": "b0ac41a3335d32b8dbaedee40efd9e3ad9d16d6ab91e7f51417a1e212c050fbd",
+  "verdict": "OK",
+  "commit": "da1af0825d5e09e8d0a5ff4f1cf42b802e0e30e7",
+  "git_dirty": false,
+  "elite_rate_moves": false,
+  "provenance_verified": true,
+  "seel": 0.49678410464009143,
+  "deposables": 4060,
+  "seconds": 2775.168294000003,
+  "paired_search_export_gain_percent": 3.6154287225661608,
+  "scope": "Pair search exports, difference within dispersion; consensus membership lost in flat export, no homogeneous fixed-plan replay"
+}

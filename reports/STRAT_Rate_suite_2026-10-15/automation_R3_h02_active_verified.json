@@ -1,0 +1,8 @@
+{
+  "verified_utc": "2026-10-15T10:45:55.142783+00:00",
+  "status": "ACTIVE",
+  "rrule": "FREQ=HOURLY;BYMINUTE=0,30",
+  "same_id": true,
+  "current_phase": "R3_h02_wavelengths",
+  "prompt_sha256": "3f814fbe9cfbd10950e933407bca687d8928345a440672ab20771df0c053912b"
+}

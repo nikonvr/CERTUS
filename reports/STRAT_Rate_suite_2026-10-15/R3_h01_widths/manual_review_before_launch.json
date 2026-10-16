@@ -1,0 +1,21 @@
+{
+  "reviewed_utc": "2026-10-15T08:33:40.680616+00:00",
+  "method": "Manual code/diff review; no /code-review tool is exposed",
+  "status": "GO",
+  "Ruff": "GO",
+  "PowerShell_AST_parse": "GO",
+  "physics_sources_changed": false,
+  "inactive_factory_exact": true,
+  "active_observer_and_contracts": "verification_02/verification.json",
+  "guard_refusals_and_quotas": "guard_verification/verification.json",
+  "language_service_exception": "Exact installed pyright-langserver.exe --stdio command only; all scientific/test Python remains rejected",
+  "controller_sha256": "86626f3802fd6e66abcf1fdd52fbc32a896be09758447b67cc74e0395f09f238",
+  "protocol_sha256": "7bb0c2032817113e1ccb516630c033bc7671da56521100c3f81d087c0981fbd1",
+  "process_model": "PowerShell coordinator launches one fresh Python at a time, -X cpu_count=24. A failed arm stops the pair; never overwrite an existing state. Child scientific lock and permanent quota claims enforce isolation.",
+  "recovery": "Inspect controller and child processes plus states; adopt completed arm or live child, never rerun a consumed claim. No tests during either arm.",
+  "limitations": [
+    "No scientific gain before paired runs and homogeneous replay",
+    "Controller PowerShell parsed/reviewed; real execution must be monitored",
+    "R2 elapsed time48min is a planning observation, not a code speedup measurement"
+  ]
+}

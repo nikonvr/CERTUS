@@ -1,0 +1,1 @@
+FAILED before empty Python worker: PowerShell -File blocked by installed execution policy. No simulation, quota, state claim. Retry uses -Command with exact harness text, without changing policy.

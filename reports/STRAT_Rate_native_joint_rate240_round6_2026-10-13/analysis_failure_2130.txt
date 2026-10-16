@@ -1,0 +1,5 @@
+Offline summary failure, 2026-10-13 21:30 Paris.
+The first summary assumed native_same_plan_as existed and raised KeyError: native_same_plan_as.
+The native winner was different; the confirmation correctly contained three plans.
+No scientific process, parameter, score or artifact was changed. The corrected summary handles the distinct native ID 9900000.
+Native summary from the first script remained valid, with all equality comparisons false except slit.

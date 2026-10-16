@@ -1,0 +1,29 @@
+{
+  "checked_utc": "2026-10-14T10:09:04.500375+00:00",
+  "completed": 17,
+  "current": "48c_premium_s202_sans",
+  "current_pid": 35200,
+  "current_started": "2026-10-14T12:04:06",
+  "run": {
+    "key": "48c_premium_s202_avec",
+    "artifact": "48c_premium_s202_avec_da1af082.json",
+    "sha256": "4c8fdd16f247e98c9259803379e50d3faa91719b68a04e8a45c04dc901dd772d",
+    "seconds": 527.3413629999995,
+    "saved_utc": "2026-10-14T10:04:03+00:00",
+    "verdict": "OK",
+    "effective_elite_rate_moves": true,
+    "seel": 0.18730161551124266,
+    "deposables": 2575,
+    "declared_depth": {
+      "robustness_num_runs": 150,
+      "n_screen_runs": 25,
+      "dp_top_k": 40,
+      "consensus_num_runs": 150
+    }
+  },
+  "limits": [
+    "Pair202 incomplete at inspection; no with/without comparison",
+    "Frozen A2 exports lack full consensus provenance",
+    "Native Rate improvement integration is a later distinct phase"
+  ]
+}

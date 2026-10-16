@@ -1,0 +1,90 @@
+{
+  "created_utc": "2026-10-15T05:10:52.134964+00:00",
+  "resources": {
+    "logical_cpus": 24,
+    "affinity_mask": "0xffffff",
+    "priority": "normal",
+    "library_threads": 23
+  },
+  "source_sha256": "36fb771e73570cf4247e3a7bca133c22b995294b5d93924f3d884f21016908e7",
+  "records": {
+    "none": {
+      "jit": [
+        0.2812619499957447,
+        0.28019390244381503
+      ],
+      "jit_bits": [
+        4598738384770683260,
+        4598719144536455722
+      ],
+      "python_body": [
+        0.2812619499957447,
+        0.280193902443815
+      ],
+      "python_bits": [
+        4598738384770683260,
+        4598719144536455721
+      ]
+    },
+    "ones": {
+      "jit": [
+        0.2812619499957447,
+        0.280193902443815
+      ],
+      "jit_bits": [
+        4598738384770683260,
+        4598719144536455721
+      ],
+      "python_body": [
+        0.2812619499957447,
+        0.280193902443815
+      ],
+      "python_bits": [
+        4598738384770683260,
+        4598719144536455721
+      ]
+    },
+    "twos": {
+      "jit": [
+        0.2812619499957447,
+        0.280193902443815
+      ],
+      "jit_bits": [
+        4598738384770683260,
+        4598719144536455721
+      ],
+      "python_body": [
+        0.2812619499957447,
+        0.280193902443815
+      ],
+      "python_bits": [
+        4598738384770683260,
+        4598719144536455721
+      ]
+    },
+    "half": {
+      "jit": [
+        0.2812619499957447,
+        0.280193902443815
+      ],
+      "jit_bits": [
+        4598738384770683260,
+        4598719144536455721
+      ],
+      "python_body": [
+        0.2812619499957447,
+        0.280193902443815
+      ],
+      "python_bits": [
+        4598738384770683260,
+        4598719144536455721
+      ]
+    }
+  },
+  "nopython_signatures": [
+    "(Array(float64, 2, 'C', False, aligned=True), Array(float64, 1, 'C', False, aligned=True), Array(complex128, 1, 'C', False, aligned=True), Array(complex128, 1, 'C', False, aligned=True), Array(complex128, 1, 'C', False, aligned=True), Array(float64, 1, 'C', False, aligned=True), Array(complex128, 2, 'C', False, aligned=True), none, omitted(default=0.0), omitted(default=0), omitted(default=0.0), omitted(default=0.0)) -> array(float64, 1d, C)",
+    "(Array(float64, 2, 'C', False, aligned=True), Array(float64, 1, 'C', False, aligned=True), Array(complex128, 1, 'C', False, aligned=True), Array(complex128, 1, 'C', False, aligned=True), Array(complex128, 1, 'C', False, aligned=True), Array(float64, 1, 'C', False, aligned=True), Array(complex128, 2, 'C', False, aligned=True), Array(float64, 1, 'C', False, aligned=True), omitted(default=0.0), omitted(default=0), omitted(default=0.0), omitted(default=0.0)) -> array(float64, 1d, C)"
+  ],
+  "compiled_unit_weights_equal": false,
+  "python_unit_weights_equal": true
+}

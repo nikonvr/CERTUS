@@ -1,0 +1,344 @@
+{
+  "status": "OK",
+  "rows": [
+    {
+      "run": "control",
+      "setting": {
+        "robustness_seed": 101,
+        "consensus_seed_list": [
+          41,
+          42,
+          43
+        ]
+      },
+      "fresh": false,
+      "reference_nm": 0.3967147882193691,
+      "native_nm": 0.36006088633539163,
+      "ablation_nm": 0.3619390294854627,
+      "prefix_nm": 0.35395924517094074,
+      "max_observed_crash_rate": 0,
+      "prefix_gain_vs_reference_percent": 10.777400872887577,
+      "prefix_gain_vs_native_percent": 1.6946137156278906,
+      "prefix_gain_vs_ablation_percent": 2.2047316438534192
+    },
+    {
+      "run": "holdout_1212",
+      "setting": {
+        "robustness_seed": 1212,
+        "consensus_seed_list": [
+          1212,
+          1213,
+          1214
+        ]
+      },
+      "fresh": true,
+      "reference_nm": 0.39976477946160494,
+      "native_nm": 0.366072830577516,
+      "ablation_nm": 0.36464760474646835,
+      "prefix_nm": 0.3596519270960383,
+      "max_observed_crash_rate": 0,
+      "prefix_gain_vs_reference_percent": 10.034113665438404,
+      "prefix_gain_vs_native_percent": 1.7539961846794405,
+      "prefix_gain_vs_ablation_percent": 1.3700014988178522
+    },
+    {
+      "run": "holdout_1313",
+      "setting": {
+        "robustness_seed": 1313,
+        "consensus_seed_list": [
+          1313,
+          1314,
+          1315
+        ]
+      },
+      "fresh": true,
+      "reference_nm": 0.4001566556868183,
+      "native_nm": 0.37213461197954084,
+      "ablation_nm": 0.3662637279499274,
+      "prefix_nm": 0.3624105172201582,
+      "max_observed_crash_rate": 0,
+      "prefix_gain_vs_reference_percent": 9.432840346457215,
+      "prefix_gain_vs_native_percent": 2.613058405843005,
+      "prefix_gain_vs_ablation_percent": 1.0520317562802584
+    },
+    {
+      "run": "holdout_1414",
+      "setting": {
+        "robustness_seed": 1414,
+        "consensus_seed_list": [
+          1414,
+          1415,
+          1416
+        ]
+      },
+      "fresh": true,
+      "reference_nm": 0.3936739752902591,
+      "native_nm": 0.36806810560523945,
+      "ablation_nm": 0.3634137249327584,
+      "prefix_nm": 0.3568757609642187,
+      "max_observed_crash_rate": 0,
+      "prefix_gain_vs_reference_percent": 9.347383021422429,
+      "prefix_gain_vs_native_percent": 3.0408352341793954,
+      "prefix_gain_vs_ablation_percent": 1.79904156612396
+    },
+    {
+      "run": "holdout_202",
+      "setting": {
+        "robustness_seed": 202,
+        "consensus_seed_list": [
+          202,
+          203,
+          204
+        ]
+      },
+      "fresh": false,
+      "reference_nm": 0.3968275691183069,
+      "native_nm": 0.36087179214882187,
+      "ablation_nm": 0.37148123585655346,
+      "prefix_nm": 0.35785651794413487,
+      "max_observed_crash_rate": 0,
+      "prefix_gain_vs_reference_percent": 9.820651135897652,
+      "prefix_gain_vs_native_percent": 0.835552755933755,
+      "prefix_gain_vs_ablation_percent": 3.667673248960479
+    },
+    {
+      "run": "holdout_303",
+      "setting": {
+        "robustness_seed": 303,
+        "consensus_seed_list": [
+          303,
+          304,
+          305
+        ]
+      },
+      "fresh": false,
+      "reference_nm": 0.39951312206581885,
+      "native_nm": 0.3653610083269699,
+      "ablation_nm": 0.36772448838621474,
+      "prefix_nm": 0.35542113963510213,
+      "max_observed_crash_rate": 0,
+      "prefix_gain_vs_reference_percent": 11.036429092172018,
+      "prefix_gain_vs_native_percent": 2.7205608878143717,
+      "prefix_gain_vs_ablation_percent": 3.3458062053758564
+    },
+    {
+      "run": "holdout_404",
+      "setting": {
+        "robustness_seed": 404,
+        "consensus_seed_list": [
+          404,
+          405,
+          406
+        ]
+      },
+      "fresh": false,
+      "reference_nm": 0.3997442249720676,
+      "native_nm": 0.36632744240686443,
+      "ablation_nm": 0.3607791370096378,
+      "prefix_nm": 0.35467927815923544,
+      "max_observed_crash_rate": 0,
+      "prefix_gain_vs_reference_percent": 11.273445367717594,
+      "prefix_gain_vs_native_percent": 3.179713802246864,
+      "prefix_gain_vs_ablation_percent": 1.6907460062579593
+    },
+    {
+      "run": "holdout_505",
+      "setting": {
+        "robustness_seed": 505,
+        "consensus_seed_list": [
+          505,
+          506,
+          507
+        ]
+      },
+      "fresh": false,
+      "reference_nm": 0.3993888245623097,
+      "native_nm": 0.3687252866366746,
+      "ablation_nm": 0.36396360495569874,
+      "prefix_nm": 0.35498175602670606,
+      "max_observed_crash_rate": 0,
+      "prefix_gain_vs_reference_percent": 11.118755910175837,
+      "prefix_gain_vs_native_percent": 3.7273089500668766,
+      "prefix_gain_vs_ablation_percent": 2.4677876597265613
+    },
+    {
+      "run": "holdout_606",
+      "setting": {
+        "robustness_seed": 606,
+        "consensus_seed_list": [
+          606,
+          607,
+          608
+        ]
+      },
+      "fresh": false,
+      "reference_nm": 0.39282220588012384,
+      "native_nm": 0.36268171199059435,
+      "ablation_nm": 0.3634107809908701,
+      "prefix_nm": 0.35788348485678556,
+      "max_observed_crash_rate": 0,
+      "prefix_gain_vs_reference_percent": 8.8942835970939,
+      "prefix_gain_vs_native_percent": 1.3229856855680677,
+      "prefix_gain_vs_ablation_percent": 1.5209499616422817
+    },
+    {
+      "run": "holdout_707",
+      "setting": {
+        "robustness_seed": 707,
+        "consensus_seed_list": [
+          707,
+          708,
+          709
+        ]
+      },
+      "fresh": false,
+      "reference_nm": 0.3972990866694603,
+      "native_nm": 0.37214426689384034,
+      "ablation_nm": 0.3579251957168253,
+      "prefix_nm": 0.35381929742461476,
+      "max_observed_crash_rate": 0,
+      "prefix_gain_vs_reference_percent": 10.943843241456852,
+      "prefix_gain_vs_native_percent": 4.924157403304308,
+      "prefix_gain_vs_ablation_percent": 1.1471386595144684
+    },
+    {
+      "run": "holdout_808",
+      "setting": {
+        "robustness_seed": 808,
+        "consensus_seed_list": [
+          808,
+          809,
+          810
+        ]
+      },
+      "fresh": false,
+      "reference_nm": 0.39613206070741236,
+      "native_nm": 0.3632205049261109,
+      "ablation_nm": 0.3614252539876395,
+      "prefix_nm": 0.35857367587900535,
+      "max_observed_crash_rate": 0,
+      "prefix_gain_vs_reference_percent": 9.481278733494902,
+      "prefix_gain_vs_native_percent": 1.279341057039407,
+      "prefix_gain_vs_ablation_percent": 0.788981422070667
+    },
+    {
+      "run": "holdout_909",
+      "setting": {
+        "robustness_seed": 909,
+        "consensus_seed_list": [
+          909,
+          910,
+          911
+        ]
+      },
+      "fresh": false,
+      "reference_nm": 0.40453763057663217,
+      "native_nm": 0.36208383202831035,
+      "ablation_nm": 0.3581325749726461,
+      "prefix_nm": 0.3543906017143067,
+      "max_observed_crash_rate": 0,
+      "prefix_gain_vs_reference_percent": 12.396134518028735,
+      "prefix_gain_vs_native_percent": 2.124709703525818,
+      "prefix_gain_vs_ablation_percent": 1.0448569942639874
+    },
+    {
+      "run": "holdout_1010",
+      "setting": {
+        "robustness_seed": 1010,
+        "consensus_seed_list": [
+          1010,
+          1011,
+          1012
+        ]
+      },
+      "fresh": false,
+      "reference_nm": 0.3967968906431166,
+      "native_nm": 0.35975912480281763,
+      "ablation_nm": 0.3603426568092653,
+      "prefix_nm": 0.3532789149022417,
+      "max_observed_crash_rate": 0,
+      "prefix_gain_vs_reference_percent": 10.96731773032349,
+      "prefix_gain_vs_native_percent": 1.8012635271246191,
+      "prefix_gain_vs_ablation_percent": 1.9602846827991627
+    },
+    {
+      "run": "holdout_1111",
+      "setting": {
+        "robustness_seed": 1111,
+        "consensus_seed_list": [
+          1111,
+          1112,
+          1113
+        ]
+      },
+      "fresh": false,
+      "reference_nm": 0.400442967752004,
+      "native_nm": 0.3664183696927496,
+      "ablation_nm": 0.3587119141621607,
+      "prefix_nm": 0.3597368436841049,
+      "max_observed_crash_rate": 0,
+      "prefix_gain_vs_reference_percent": 10.165273795770224,
+      "prefix_gain_vs_native_percent": 1.8234691711136897,
+      "prefix_gain_vs_ablation_percent": -0.2857249735733314
+    }
+  ],
+  "groups": {
+    "fresh": {
+      "reference": {
+        "wins": 3,
+        "n": 3,
+        "min_percent": 9.347383021422429,
+        "max_percent": 10.034113665438404,
+        "median_percent": 9.432840346457215,
+        "mean_percent": 9.604779011106016
+      },
+      "native": {
+        "wins": 3,
+        "n": 3,
+        "min_percent": 1.7539961846794405,
+        "max_percent": 3.0408352341793954,
+        "median_percent": 2.613058405843005,
+        "mean_percent": 2.469296608233947
+      },
+      "ablation": {
+        "wins": 3,
+        "n": 3,
+        "min_percent": 1.0520317562802584,
+        "max_percent": 1.79904156612396,
+        "median_percent": 1.3700014988178522,
+        "mean_percent": 1.407024940407357
+      }
+    },
+    "reused_context": {
+      "reference": {
+        "wins": 10,
+        "n": 10,
+        "min_percent": 8.8942835970939,
+        "max_percent": 12.396134518028735,
+        "median_percent": 10.95558048589017,
+        "mean_percent": 10.60974131221312
+      },
+      "native": {
+        "wins": 10,
+        "n": 10,
+        "min_percent": 0.835552755933755,
+        "max_percent": 4.924157403304308,
+        "median_percent": 1.9740894373197537,
+        "mean_percent": 2.3739062943737776
+      },
+      "ablation": {
+        "wins": 9,
+        "n": 10,
+        "min_percent": -0.2857249735733314,
+        "max_percent": 3.667673248960479,
+        "median_percent": 1.6058479839501205,
+        "mean_percent": 1.7348499867038092
+      }
+    }
+  },
+  "limits": [
+    "One component, fixed plans, no general or machine validation",
+    "Three fresh groups predeclared before prefix selection; ten older groups reused as exploratory context",
+    "No formal confidence interval; no causal claim for preceding native joint generator"
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "phase": "R3_h01_homogeneous_replay",
+  "status": "FROZEN_BEFORE_MEASUREMENT",
+  "depths": {
+    "robustness_num_runs": 300,
+    "n_screen_runs": 50,
+    "dp_top_k": 100,
+    "consensus_num_runs": 300
+  },
+  "control": {
+    "robustness_seed": 101,
+    "consensus_seed_list": [
+      41,
+      42,
+      43
+    ]
+  },
+  "holdouts": [],
+  "plans_source_sha256": "ce7192ff9fad9e0bc7c49bee00bebe92ea13ad488b4dff0f3c8bf7832d054b70",
+  "requirements": [
+    "Exactly5 unique complete plans and20 physical calls300 at101/41/42/43",
+    "Same float32 transport and scoring callbacks as validated R0",
+    "Fixed scores unchanged at relative1e-7 absolute1e-10",
+    "No candidate generation or fresh confirmation group",
+    "Permanent replay claim distinct from R0 and native pair claims"
+  ],
+  "prepared_utc": "2026-10-15T10:34:04.997423+00:00",
+  "previous_protocol_sha256": "6c49903371bd62c8a94ec55e9d80e1c58207de14c6108ced2749932c8d16d102",
+  "authorization_file": "../STRAT_RMSE_uniform_weights_2026-10-15/authorization_and_baseline.json",
+  "bounded_slot": "R3_h01_replay",
+  "measurement_quota": 1,
+  "resources": {
+    "logical_cpus": 24,
+    "affinity_mask": "0xffffff",
+    "priority": "normal",
+    "library_threads": 23
+  },
+  "source_context": "Existing validated rate-rmse-r0; paired native results completed, final plans frozen; no new R0 or native run",
+  "max_R3_pairs": 3,
+  "unique_plans": 5,
+  "actual_calls_required": 20,
+  "source_sha256": {
+    "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+    "certus/core/certus_strat_robustness.py": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+    "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+    "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e"
+  },
+  "R2_audit_sha256": "ae0ca439c273873d98b2670a1103e9f80436f63a46fe427600a089f2b5411a36",
+  "audit_sha256": {
+    "control": "0010eb8f5d440f3e879395cdb333e58122b69684168cf7a8b73fbf0d36d7e052",
+    "variant": "e650a0e5bc05a199fb37112474e20232530bd446aaa05b63dfc078bf2270e8da"
+  },
+  "script_sha256": {
+    "rate_fixed_replay_R3_h01.py": "795abad65b51165718ae54bec22eee470f89c864fbc60adedeb214cb7184df4b",
+    "rate_R3_replay_guard.py": "cc6c23f3667a8ed16756ae6963d2111f564c116224cbd5642ea657e9e424b351",
+    "campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51"
+  }
+}

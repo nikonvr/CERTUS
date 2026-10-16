@@ -1,0 +1,284 @@
+"""New bounded same-input tasks in frozen h03/R5 sources; no native search or source edits."""
+
+from __future__ import annotations
+
+import argparse
+import copy
+import hashlib
+import json
+import os
+import runpy
+import subprocess
+import sys
+import traceback
+from datetime import UTC, datetime
+from pathlib import Path
+from unittest.mock import patch
+
+ROOT = Path(__file__).resolve().parents[1]
+OLD = ROOT / "reports/STRAT_Rate_suite_2026-10-15"
+OUT = ROOT / "reports/STRAT_Rate_followup_2026-10-16/controlled_01"
+MANIFEST = OUT / "manifest.json"
+
+
+def read(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def save(path: Path, value: dict, *, immutable: bool = False) -> None:
+    helper = runpy.run_path(str(ROOT / "scratch/rate_R4_planner_resume_v3.py"))
+    helper["save"](path, value, immutable=immutable)
+
+
+def sources(context: Path) -> dict:
+    paths = sorted((context / "certus").rglob("*.py"))
+    paths.extend(context / name for name in ("certus_physics.py", "CERTUS_STRAT.py"))
+    return {p.relative_to(context).as_posix(): sha(p) for p in paths if p.is_file()}
+
+
+def configure(context: Path, label: str) -> None:
+    if os.cpu_count() != 24:
+        raise RuntimeError("Start with -X cpu_count=24")
+    helper = runpy.run_path(str(ROOT / "scratch/campagne_a2_runner.py"))
+    if helper["limit_resources"](24) != {
+        "logical_cpus": 24, "affinity_mask": "0xffffff", "priority": "normal", "library_threads": 23
+    }:
+        raise RuntimeError("Wrong resource limits")
+    for key in ("NUMBA_NUM_THREADS", "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
+                "VECLIB_MAXIMUM_THREADS", "NUMEXPR_NUM_THREADS"):
+        os.environ[key] = "23"
+    for key in ("_CERTUS_NUMBA_CONFIGURED", "NUMBA_THREADING_LAYER", "CERTUS_PROBE_OVERRIDES",
+                "CERTUS_CONSENSUS_SEEDS", "CERTUS_DESIGN_JSON"):
+        os.environ.pop(key, None)
+    os.environ.update(QT_QPA_PLATFORM="offscreen", CERTUS_CONFIG_DIR=str(OUT / (label + "_preferences")),
+                      NUMBA_CACHE_DIR=str(OUT / (label + "_numba_cache")))
+    sys.path[:0] = [str(context), str(context / "scripts")]
+    import bench_examples as bx
+
+    bx.qapp()
+    bx.autoanswer_dialogs(True)
+
+
+def encode(value: object, directory: Path) -> object:
+    import numpy as np
+
+    if isinstance(value, np.ndarray):
+        array = np.ascontiguousarray(value)
+        digest = hashlib.sha256(array.dtype.str.encode() + str(array.shape).encode() + array.tobytes()).hexdigest()
+        directory.mkdir(parents=True, exist_ok=True)
+        path = directory / (digest + ".npy")
+        if not path.exists():
+            np.save(path, array, allow_pickle=False)
+        return {"array": path.name, "sha256": sha(path)}
+    if isinstance(value, np.generic):
+        return encode(value.item(), directory)
+    if isinstance(value, complex):
+        return {"complex": [value.real, value.imag]}
+    if isinstance(value, dict):
+        return {"dict": [[encode(k, directory), encode(v, directory)] for k, v in value.items()]}
+    if isinstance(value, (tuple, list)):
+        return {"tuple" if isinstance(value, tuple) else "list": [encode(v, directory) for v in value]}
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return value
+    raise TypeError(f"Uncaptured task input type: {type(value).__module__}.{type(value).__name__}")
+
+
+def decode(value: object, directory: Path) -> object:
+    import numpy as np
+
+    if not isinstance(value, dict):
+        return value
+    if "array" in value:
+        path = directory / value["array"]
+        if path.parent != directory or sha(path) != value["sha256"]:
+            raise RuntimeError("Array provenance mismatch")
+        return np.load(path, allow_pickle=False)
+    if "complex" in value:
+        return complex(*value["complex"])
+    if "dict" in value:
+        return {decode(k, directory): decode(v, directory) for k, v in value["dict"]}
+    if "tuple" in value:
+        return tuple(decode(v, directory) for v in value["tuple"])
+    if "list" in value:
+        return [decode(v, directory) for v in value["list"]]
+    raise RuntimeError("Unknown manifest type")
+
+
+def prepare() -> None:
+    if OUT.exists():
+        raise RuntimeError("Preserve the existing preparation; do not overwrite it")
+    OUT.mkdir(parents=True)
+    contexts = {
+        "h03": Path(read(OLD / "reference_context.json")["worktree"]),
+        "R5": Path(read(OLD / "R5_integration/reference_context.json")["worktree"]),
+    }
+    source_hashes = {name: sources(path) for name, path in contexts.items()}
+    configure(contexts["R5"], "preparation")
+    from _composant import charger_configuration
+
+    import certus.core.certus_strat_robustness as robustness
+    import certus.workers.certus_strat_workers_external as external
+    from certus.utils.certus_data import SharedIndicesManager, SharedIndicesWorker
+    from certus.workers.certus_strat_workers import StratTask, WorkerThread
+    from CERTUS_STRAT import CertusStratApp
+
+    recorded = read(ROOT / "reports/STRAT_Rate_followup_2026-10-16/diagnostic_01/recorded_audit.json")
+    screening_plan = json.loads(recorded["crash_difference_examples"][0]["key"][1])
+    finalists = read(OLD / "R5_integration/integrated_finalists.json")
+    plans = [screening_plan, finalists["own_native_parents"][0]["plan"], finalists["winner"]]
+    plans = [copy.deepcopy(plan) for plan in plans]
+    for index, plan in enumerate(plans, 1):
+        plan.update(strategy_id=index, source_strategy_id=index, n_blocks=len(plan["blocks"]))
+    app = CertusStratApp()
+    charger_configuration(app, contexts["R5"] / "reports/serie_echelle_r75/cfg_x0.5.json")
+    app.widgets["execution_mode"].setCurrentText("deep")
+    params = app.collect_params()
+    params.update(show_plots=False, export_excel=False, execution_mode="deep", search_resolution=False,
+                  monochromator_resolution_nm=2.0, noise_layer_offset=0, noise_total_layers=75,
+                  require_turning_point=0, robustness_seed=101, consensus_seed_list=[41, 42, 43],
+                  ablation_profile=False, elite_rate_joint_candidates=0, rate_post_refinement=False,
+                  loaded_strategies=plans)
+    worker = WorkerThread(StratTask.EXTERNAL_EVALUATION, params=params)
+    captured = []
+
+    def capture(**kwargs):
+        captured.append(kwargs)
+        return []
+
+    def forbid_task(*args, **kwargs):
+        raise RuntimeError("Preparation must execute zero physical tasks")
+
+    def nominal_only(opti_results, actual_params, num_runs):
+        with SharedIndicesManager(opti_results["clues_at_wl"]) as manager, SharedIndicesWorker(manager.get_context_info()) as clues:
+            context = {**opti_results, "clues_at_wl": clues}
+            return robustness.run_final_simulation_block(context, actual_params, num_runs, expand_variants=False, refine=False)
+
+    worker._execute_nominal_analysis_auto()
+    with patch.object(robustness, "_execute_robustness_tasks", capture), patch.object(
+        robustness, "_test_strategy_robustness_task", forbid_task
+    ), patch.object(external, "run_final_simulation_block", nominal_only):
+        external.ExternalEvaluationStrategy().execute(worker)
+    if len(captured) != 1:
+        raise RuntimeError("Expected one complete fixed scoring context")
+    values = captured[0]
+    fields = ("p_thick_nominal", "clues_at_wl", "wl_arr", "nH_arr", "nL_arr", "nSub_arr", "T_nom",
+              "full_dyn_grid", "n_layers_matrix_precomp")
+    shared = {key: values[key] for key in fields}
+    shared["clues_at_wl"] = dict(shared["clues_at_wl"])
+    tasks = []
+    for index, strategy in enumerate(values["all_strategies"]):
+        if any(float(b["wavelength"]) not in shared["clues_at_wl"] for b in strategy["blocks"]):
+            raise RuntimeError("A plan wavelength would use an uncaptured clue lookup")
+        for depth in (25, 50, 300):
+            payload = {**shared, "strategy": strategy, "_strat_idx": index, "num_runs": depth,
+                       "noise_levels": [0.05] if depth < 300 else values["noise_levels"],
+                       "compute_layer_profile": depth == 300, "params": values["params_safe"]}
+            packed = encode(payload, OUT / "inputs")
+            if encode(decode(packed, OUT / "inputs"), OUT / "inputs") != packed:
+                raise RuntimeError("Task payload did not round-trip exactly")
+            tasks.append({"plan": index + 1, "seed": 101, "depth": depth, "arguments": packed})
+    if len(tasks) != 9:
+        raise RuntimeError("Unexpected task count")
+    manifest = {
+        "status": "PREPARED_ZERO_PHYSICAL_TASKS", "recorded_utc": datetime.now(UTC).isoformat(),
+        "authorization_sha256": sha(OUT.parent / "authorization_and_plan.json"),
+        "contexts": {name: str(path) for name, path in contexts.items()}, "source_sha256": source_hashes,
+        "script_sha256": sha(Path(__file__)), "tasks": tasks, "maximum_actual_calls": 18,
+        "plan_selection": "One recorded crash-vector mismatch, own native parent and integrated winner; fixed before scores.",
+        "scope": "Fresh same-input task comparison, not reconstruction of missing historical per-scope parameters.",
+        "transport": "Actual SharedIndicesWorker float32 values captured into complete wavelength lookup dictionary.",
+        "cold_cache_policy": "Separate empty per-context Numba directories; no hot/cold speed claim.",
+        "physical_evaluations_during_preparation": 0,
+    }
+    save(MANIFEST, manifest, immutable=True)
+    (OUT / "source.py.txt").write_bytes(Path(__file__).read_bytes())
+    print("PREPARED=GO tasks_per_context=9 actual_physical_calls=0")
+
+
+def verify() -> dict:
+    manifest = read(MANIFEST)
+    if manifest["script_sha256"] != sha(Path(__file__)) or sha(OUT / "source.py.txt") != manifest["script_sha256"]:
+        raise RuntimeError("Frozen diagnostic runner changed")
+    if sha(OUT.parent / "authorization_and_plan.json") != manifest["authorization_sha256"]:
+        raise RuntimeError("Authorization changed")
+    for name, path in manifest["contexts"].items():
+        if sources(Path(path)) != manifest["source_sha256"][name]:
+            raise RuntimeError("A frozen source context changed")
+    if len(manifest["tasks"]) != 9 or manifest["maximum_actual_calls"] != 18:
+        raise RuntimeError("Diagnostic quota mismatch")
+    return manifest
+
+
+def measure(label: str) -> None:
+    manifest = verify()
+    context = Path(manifest["contexts"][label])
+    output = OUT / label
+    claim = OUT / "claims" / (label + ".json")
+    cache = OUT / (label + "_numba_cache")
+    if claim.exists() or output.exists() or cache.exists():
+        raise RuntimeError("Slot consumed or cache not cold; preserve and audit instead of replaying")
+    shell = Path(os.environ["SYSTEMROOT"]) / "System32/WindowsPowerShell/v1.0/powershell.exe"
+    raw = subprocess.check_output([str(shell), "-NoProfile", "-Command",
+        "@(Get-CimInstance Win32_Process -ErrorAction Stop | Where-Object { $_.Name -match '^python' } | Select-Object ProcessId,CommandLine) | ConvertTo-Json -Compress"], encoding="utf-8").strip()
+    active = json.loads(raw) if raw else []
+    if isinstance(active, dict):
+        active = [active]
+    if any(p["ProcessId"] != os.getpid() for p in active):
+        raise RuntimeError("Another Python process is alive")
+    if list((ROOT / "reports").rglob(".running")) or list((ROOT / "reports").rglob("measurement.running")):
+        raise RuntimeError("An existing scientific lock remains")
+    lock = OUT / "measurement.running"
+    with lock.open("x", encoding="utf-8") as stream:
+        stream.write(str(os.getpid()))
+    state = {"status": "running", "pid": os.getpid(), "context": label, "actual_calls": 0,
+             "started_utc": datetime.now(UTC).isoformat(), "manifest_sha256": sha(MANIFEST), "tasks": []}
+    try:
+        save(claim, {"pid": os.getpid(), "manifest_sha256": sha(MANIFEST), "context": label}, immutable=True)
+        output.mkdir()
+        save(output / "state.json", state)
+        configure(context, label)
+        from certus.core.certus_strat_robustness_task import _test_strategy_robustness_task
+
+        for index, task in enumerate(manifest["tasks"]):
+            payload = decode(task["arguments"], OUT / "inputs")
+            state["engaged_task"] = index
+            save(output / "state.json", state)
+            result = _test_strategy_robustness_task(**payload)
+            packed = encode(result, output / "arrays")
+            state["tasks"].append({"index": index, "plan": task["plan"], "depth": task["depth"],
+                                   "input_sha256": hashlib.sha256(json.dumps(task["arguments"]).encode()).hexdigest(),
+                                   "score": result["robustness_score"], "crash_rates_by_noise": result["crash_rates_by_noise"],
+                                   "result": packed})
+            state["actual_calls"] += 1
+            save(output / "state.json", state)
+        verify()
+        state.update(status="complete", completed_utc=datetime.now(UTC).isoformat())
+        print(f"CONTROLLED_TASKS=GO context={label} actual_calls={state['actual_calls']}")
+    except BaseException:
+        state.update(status="failed", error=traceback.format_exc())
+        raise
+    finally:
+        if output.exists():
+            save(output / "state.json", state)
+        lock.unlink(missing_ok=True)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("action", choices=("prepare", "verify", "h03", "R5"))
+    action = parser.parse_args().action
+    if action == "prepare":
+        prepare()
+    elif action == "verify":
+        verify()
+        print("VERIFICATION=GO physical_calls=0")
+    else:
+        measure(action)
+
+
+if __name__ == "__main__":
+    main()

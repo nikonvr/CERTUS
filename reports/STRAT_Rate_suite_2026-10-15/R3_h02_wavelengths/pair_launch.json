@@ -1,0 +1,13 @@
+{
+  "started_utc": "2026-10-15T10:41:58.0400157Z",
+  "controller_pid": 24768,
+  "script": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\run_rate_R3_wavelengths_pair.ps1",
+  "script_sha256": "001b9c5eb45d8939b7137cad77968fec068c9ab4096760b410529d82b9ab5f05",
+  "sequence": [
+    "control",
+    "variant"
+  ],
+  "protocol": "protocol.json",
+  "factor": "fine wavelength neighborhood, widths1..7 fixed in both arms",
+  "authorization": "Second of maximum3 R3 pairs;24 CPUs"
+}

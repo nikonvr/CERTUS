@@ -1,0 +1,21 @@
+{
+  "observed_utc": "2026-10-15T07:42:44.7385687Z",
+  "phase": "R2_native_base",
+  "status": "running",
+  "pid": 32588,
+  "cpu_seconds": 16160.734375,
+  "priority": "Normal",
+  "affinity": 16777215,
+  "working_set_bytes": 4116316160,
+  "python_processes": [
+    {
+      "ProcessId": 32588,
+      "ParentProcessId": 2716,
+      "CreationDate": "2026-10-15T09:25:24.610524+02:00",
+      "CommandLine": "\"C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe\" -X utf8 \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_native_pipeline_probe_bounded.py\" --worktree \"C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-rmse-r0\\certus0310\" --output \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R2_native_base\" --reference-state \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\reference_context.json\" --tag r2_rmse24_20261015_v1 --verification-record \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\observer_verification\\verification.json\" --validated-control \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R0_control\\control.json\""
+    }
+  ],
+  "decision": "Leave the single scientific measurement running; no tests or active-source edits",
+  "R0": "GO",
+  "observer": "GO"
+}

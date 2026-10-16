@@ -1,0 +1,261 @@
+"""Checkpointed finite R4 planning between, never alongside, scientific groups."""
+
+from __future__ import annotations
+
+import argparse
+import copy
+import hashlib
+import json
+import math
+import os
+import sys
+from datetime import UTC, datetime
+from itertools import zip_longest
+from pathlib import Path
+
+from rate_R4_candidates import coarse, fine, signature
+from rate_R4_guard import ANCHORS, EXPERIMENT, LIMITS, PROGRAM, ROOT, check_deadline, read, sha
+
+TASKS = [(p, branch, stage) for p in (1, 2) for branch in ("local", "native") for stage in ("coarse", "fine")]
+FILES = ["rate_R4_candidates.py", "rate_fixed_replay_R4.py", "rate_R4_guard.py",
+         "rate_R4_planner.py", "run_rate_R4.ps1", "campagne_a2_runner.py"]
+
+
+def save(path: Path, value: dict, *, immutable: bool = False) -> None:
+    text = json.dumps(value, ensure_ascii=False, indent=2)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if immutable:
+        with path.open("x", encoding="utf-8", newline="\n") as stream:
+            stream.write(text)
+    else:
+        temp = path.with_name(path.name + ".tmp")
+        temp.write_text(text, encoding="utf-8", newline="\n")
+        os.replace(temp, path)
+
+
+def beam(entries: list[dict]) -> list[dict]:
+    """Keep the best, then prefer a distinct mask; stable full-plan ties."""
+    unique = {}
+    for entry in entries:
+        key = signature(entry["plan"])
+        if key not in unique or entry["score"] < unique[key]["score"]:
+            unique[key] = entry
+    ordered = sorted(unique.values(), key=lambda e: (e["score"], signature(e["plan"])))
+    if len(ordered) <= 1:
+        return ordered
+    mask = ordered[0]["plan"]["rate_layers"]
+    other = next((e for e in ordered[1:] if e["plan"]["rate_layers"] != mask), ordered[1])
+    return [ordered[0], other]
+
+
+def protocol_and_state() -> tuple[dict, dict]:
+    return read(EXPERIMENT / "protocol.json"), read(EXPERIMENT / "checkpoint.json")
+
+
+def freeze() -> None:
+    check_deadline()
+    if (EXPERIMENT / "protocol.json").exists() or (EXPERIMENT / "checkpoint.json").exists():
+        raise RuntimeError("R4 context already frozen; inspect/adopt, never initialize twice")
+    context = read(PROGRAM / "reference_context.json")
+    h02 = PROGRAM / "R3_h02_wavelengths"
+    original = read(h02 / "frozen_finalists.json")
+    plans = {p["source_strategy_id"]: copy.deepcopy(p) for p in original["plans"]}
+    replay = read(h02 / "homogeneous_replay/control.json")
+    if replay["verdict"] != "OK" or replay["errors"]:
+        raise RuntimeError("R4 requires the verified h02 fixed points")
+    scores = {r["strategy"]["strategy_id"]: r["robustness_score"] for r in replay["final_results"]["all_strategies_results"]}
+    protocol = {"status": "FROZEN_BEFORE_MEASUREMENT", "prepared_utc": datetime.now(UTC).isoformat(),
+                "limits": LIMITS, "deadline_utc": check_deadline(), "source_sha256": context["source_sha256"],
+                "control": {"robustness_seed": 101, "consensus_seed_list": [41, 42, 43]},
+                "depths": {"robustness_num_runs": 300, "n_screen_runs": 50, "dp_top_k": 100, "consensus_num_runs": 300},
+                "anchors": [copy.deepcopy(plans[i]) for i in ANCHORS], "script_sha256": {n: sha(ROOT / "scratch" / n) for n in FILES},
+                "input_sha256": {str(p.relative_to(ROOT)).replace("\\", "/"): sha(p) for p in (
+                    h02 / "frozen_finalists.json", h02 / "homogeneous_replay/control.json",
+                    EXPERIMENT / "legal_grid.json", PROGRAM / "reference_context.json",
+                    PROGRAM / "autonomie_jusqu_20261016_0800/authorization.json")},
+                "selection": "complete finite consensus300/41/42/43, best then distinct Rate mask; signature tie",
+                "order": "pass then local/native then coarse/fine; parent streams round-robin; wavelength before geometry",
+                "improvement_tolerance": {"relative": 1e-7, "absolute": 1e-10},
+                "transport": "R0/h01/h02 exact physical callbacks and Workerfloat32",
+                "fresh_groups_consumed": 0}
+    branches = {}
+    for name, ids in (("local", [9900006, 9900008]), ("native", [901054165, 900754638])):
+        entries = []
+        for strategy_id in ids:
+            plan = plans[strategy_id]
+            plan["branch"], plan["root_parent_id"] = name, strategy_id
+            plan.pop("expected_score_fixed_point", None)
+            entries.append({"plan": plan, "score": scores[strategy_id], "provenance": "h02 homogeneous replay"})
+        branches[name] = {"active": True, "beam": beam(entries), "pool": entries,
+                          "seen": sorted({signature(e["plan"]) for e in entries} | {signature(p) for p in protocol["anchors"]}),
+                          "initial_best": min(e["score"] for e in entries), "passes": []}
+    save(EXPERIMENT / "protocol.json", protocol, immutable=True)
+    state = {"status": "ready", "task_index": 0, "queue": [], "queue_offset": 0, "group_count": 0,
+             "new_proposals": 0, "branch_pass_counts": {}, "branches": branches, "pending_group": None,
+             "groups": [], "stage_records": [], "protocol_sha256": sha(EXPERIMENT / "protocol.json")}
+    save(EXPERIMENT / "checkpoint.json", state)
+    snapshot = EXPERIMENT / "sources"
+    snapshot.mkdir()
+    for name in FILES:
+        with (snapshot / (name + ".txt")).open("xb") as stream:
+            stream.write((ROOT / "scratch" / name).read_bytes())
+
+
+def prepare_stage(state: dict, protocol: dict) -> None:
+    pass_number, branch, stage = TASKS[state["task_index"]]
+    data = state["branches"][branch]
+    if stage == "coarse":
+        data["pass_start"] = min(e["score"] for e in data["pool"])
+        data["beam"] = beam(data["pool"])
+    else:
+        data["beam"] = beam(data["pool"])
+    parents = copy.deepcopy(data["beam"])
+    grid = read(EXPERIMENT / "legal_grid.json")["available_wls"]
+    kind = "internal" if pass_number == 1 else "prefix"
+    generator = coarse if stage == "coarse" else fine
+    sys.path.insert(0, read(PROGRAM / "reference_context.json")["worktree"])
+    from certus.utils.certus_strat_context import _validate_strategy_blocks_contract
+
+    seen = set(data["seen"])
+    records, accepted = [], []
+    quota_key = f"{branch}_pass{pass_number}"
+    streams = [generator(e["plan"], grid, 75, kind) for e in parents]
+    for items in zip_longest(*streams):
+        for parent, plan in zip(parents, items, strict=True):
+            if plan is None:
+                records.append({"parent": parent["plan"]["source_strategy_id"], "status": "boundary_or_exhausted"})
+                continue
+            key = signature(plan)
+            if key in seen:
+                records.append({"status": "duplicate", "plan": plan, "signature": key})
+                continue
+            if state["branch_pass_counts"].get(quota_key, 0) >= 300 or state["new_proposals"] >= 1200:
+                records.append({"status": "quota_rejected", "plan": plan})
+                continue
+            seen.add(key)
+            state["new_proposals"] += 1
+            state["branch_pass_counts"][quota_key] = state["branch_pass_counts"].get(quota_key, 0) + 1
+            plan["source_strategy_id"] = 97_000_000 + state["new_proposals"]
+            plan["nom"] = f"R4_{branch}_p{pass_number}_{stage}_{plan['source_strategy_id']}"
+            plan["branch"], plan["root_parent_id"] = branch, parent["plan"]["root_parent_id"]
+            valid, reason = _validate_strategy_blocks_contract(plan, 75)
+            records.append({"status": "accepted" if valid else "contract_rejected", "reason": reason, "plan": plan})
+            if valid:
+                accepted.append(plan)
+    data["seen"] = sorted(seen)
+    directory = EXPERIMENT / f"stages/pass{pass_number}_{branch}_{stage}"
+    save(directory / "proposals.json", {"parents": parents, "records": records, "accepted": len(accepted),
+                                       "before_scores": True, "selection": protocol["selection"]}, immutable=True)
+    state["stage_records"].append(str(directory / "proposals.json"))
+    state["queue"], state["queue_offset"] = accepted, 0
+
+
+def consume(state: dict) -> None:
+    manifest_file = Path(state["pending_group"])
+    manifest = read(manifest_file)
+    output = manifest_file.parent / "measurement"
+    result_file = output / "search.json"
+    if not result_file.exists():
+        raise RuntimeError("Pending group has no complete artifact; inspect living child or failed attempt")
+    result = read(result_file)
+    protocol = read(EXPERIMENT / "protocol.json")
+    if (result["verdict"] != "OK" or result["errors"] or result["source_sha256"] != protocol["source_sha256"] or
+            result["plans_sha256"] != manifest["plans_sha256"] or result["protocol_sha256"] != sha(EXPERIMENT / "protocol.json") or
+            result["group_manifest_sha256"] != sha(manifest_file) or result["setting"] != protocol["control"]):
+        raise RuntimeError("R4 artifact audit failed")
+    plans = read(manifest_file.parent / "plans.json")["plans"]
+    by_id = {p["source_strategy_id"]: p for p in plans}
+    for row in result["final_results"]["all_strategies_results"]:
+        strategy_id = row["strategy"]["strategy_id"]
+        if strategy_id not in result["search_eligible_ids"] or strategy_id in ANCHORS:
+            continue
+        score = row["robustness_score"]
+        if not math.isfinite(score) or row.get("crash_eliminated", False):
+            raise RuntimeError("An ineligible score entered the beam")
+        state["branches"][manifest["branch"]]["pool"].append({"plan": by_id[strategy_id], "score": score,
+                                                             "base_score": row.get("robustness_score_base"),
+                                                             "provenance": str(result_file)})
+    audit = {"verdict": "GO", "artifact_sha256": sha(result_file), "manifest_sha256": sha(manifest_file),
+             "actual_calls": len(result["simulations"]), "eligible_ids": result["search_eligible_ids"],
+             "rejected": result["search_rejected"]}
+    save(manifest_file.parent / "audit.json", audit, immutable=True)
+    state["groups"].append({"phase": manifest["phase"], "audit": str(manifest_file.parent / "audit.json")})
+    state["queue_offset"] += manifest["new_plans"]
+    state["pending_group"] = None
+
+
+def next_group() -> dict:
+    protocol, state = protocol_and_state()
+    if state["protocol_sha256"] != sha(EXPERIMENT / "protocol.json"):
+        raise RuntimeError("R4 checkpoint protocol changed")
+    for name, digest in protocol["script_sha256"].items():
+        if sha(ROOT / "scratch" / name) != digest:
+            raise RuntimeError(f"Frozen R4 source changed: {name}")
+    if state["pending_group"]:
+        consume(state)
+        save(EXPERIMENT / "checkpoint.json", state)
+    try:
+        check_deadline()
+    except RuntimeError:
+        state["status"] = "deadline_reached"
+        save(EXPERIMENT / "checkpoint.json", state)
+        return {"status": "deadline_reached"}
+    while state["task_index"] < len(TASKS):
+        pass_number, branch, stage = TASKS[state["task_index"]]
+        data = state["branches"][branch]
+        if not data["active"]:
+            state["task_index"] += 1
+            continue
+        if not state.get("stage_prepared"):
+            prepare_stage(state, protocol)
+            state["stage_prepared"] = True
+        offered = state["queue"][state["queue_offset"]:state["queue_offset"] + 9]
+        if offered:
+            if state["group_count"] >= 144:
+                raise RuntimeError("R4 finite group quota exhausted")
+            state["group_count"] += 1
+            index = state["group_count"]
+            directory = EXPERIMENT / f"groups/group_{index:03}"
+            raw = {"plans": [*protocol["anchors"], *offered]}
+            save(directory / "plans.json", raw, immutable=True)
+            manifest = {"phase": f"R4_g{index:03}", "index": index, "branch": branch, "pass": pass_number,
+                        "stage": stage, "new_plans": len(offered), "before_scores": True,
+                        "plans_sha256": sha(directory / "plans.json"), "protocol_sha256": sha(EXPERIMENT / "protocol.json"),
+                        "prepared_utc": datetime.now(UTC).isoformat()}
+            save(directory / "manifest.json", manifest, immutable=True)
+            state["pending_group"] = str(directory / "manifest.json")
+            save(EXPERIMENT / "checkpoint.json", state)
+            return {"status": "ready", "manifest": state["pending_group"], "output": str(directory / "measurement")}
+        if stage == "fine":
+            data["beam"] = beam(data["pool"])
+            before, after = data["pass_start"], min(e["score"] for e in data["beam"])
+            improved = before - after > max(1e-10, 1e-7 * abs(before))
+            data["passes"].append({"pass": pass_number, "before": before, "after": after, "improved": improved})
+            data["active"] = improved and pass_number < 2
+        state["queue"], state["queue_offset"], state["stage_prepared"] = [], 0, False
+        state["task_index"] += 1
+        save(EXPERIMENT / "checkpoint.json", state)
+    state["status"] = "search_complete_confirmation_pending"
+    save(EXPERIMENT / "checkpoint.json", state)
+    save(EXPERIMENT / "frozen_search_winners.json", {"before_fresh_groups": True, "branches": state["branches"],
+                                                   "new_proposals": state["new_proposals"]}, immutable=True)
+    return {"status": state["status"]}
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("action", choices=("freeze", "next"))
+    args = parser.parse_args()
+    if os.cpu_count() != 24:
+        raise RuntimeError("Start the planner with -X cpu_count=24")
+    import runpy
+
+    runpy.run_path(str(ROOT / "scratch/campagne_a2_runner.py"))["limit_resources"](24)
+    if args.action == "freeze":
+        freeze()
+    else:
+        save(EXPERIMENT / "next.json", next_group())
+
+
+if __name__ == "__main__":
+    main()

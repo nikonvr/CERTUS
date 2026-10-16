@@ -1,0 +1,34 @@
+{
+  "same_geometry_as_final_winner_except_first_block_lambda": [
+    {
+      "call_index": 49,
+      "id": 901053250,
+      "parent_id": 901051858,
+      "prefix_wavelength": 630.0,
+      "origin_details": "ELITE_RATE_JOINT(parent=901051858)"
+    }
+  ],
+  "parents_rounds5_6_at_10blocks": [
+    "20:52:30 | INFO |    [ELITE-PARENTS] Round 5 #01 id=901053250 n_blocs=10 crash=0.00% seel=0.3629 marge=5.68A origin=ELITE wl=[630, 451, 691, 691, 741, 733, 705, 708, 742, 580]",
+    "20:52:30 | INFO |    [ELITE-PARENTS] Round 5 #02 id=901053251 n_blocs=10 crash=0.00% seel=0.3629 marge=5.68A origin=ELITE wl=[630, 451, 691, 691, 741, 733, 705, 708, 742, 580]",
+    "20:52:30 | INFO |    [ELITE-PARENTS] Round 5 #03 id=901053252 n_blocs=10 crash=0.00% seel=0.3629 marge=5.68A origin=ELITE wl=[630, 451, 691, 691, 741, 733, 705, 708, 742, 580]",
+    "20:52:30 | INFO |    [ELITE-PARENTS] Round 5 #04 id=901053253 n_blocs=10 crash=0.00% seel=0.3629 marge=5.68A origin=ELITE wl=[630, 451, 691, 691, 741, 733, 705, 708, 742, 580]",
+    "20:52:30 | INFO |    [ELITE-PARENTS] Round 5 #05 id=991050168 n_blocs=10 crash=0.00% seel=0.6005 marge=4.79A origin=RATE_RESCUE17(from 991 wl=[630, 675, 727, 731, 706, 728, 742, 708, 525, 524]",
+    "20:52:30 | INFO |    [ELITE-PARENTS] Round 5 #06 id=991050024 n_blocs=10 crash=0.00% seel=0.6005 marge=4.79A origin=RATE_RESCUE17(from 991 wl=[630, 675, 727, 731, 706, 728, 742, 708, 525, 524]",
+    "20:52:30 | INFO |    [ELITE-PARENTS] Round 5 #07 id=901052220 n_blocs=10 crash=0.00% seel=0.4301 marge=0.04A origin=ELITE wl=[630, 451, 691, 691, 741, 733, 705, 708, 742, 580]",
+    "20:52:30 | INFO |    [ELITE-PARENTS] Round 5 #08 id=901052264 n_blocs=10 crash=0.00% seel=0.4339 marge=28.74A origin=ELITE wl=[630, 451, 691, 706, 741, 733, 705, 708, 742, 580]",
+    "20:52:30 | INFO |    [ELITE-PARENTS] Round 5 #09 id=901050468 n_blocs=10 crash=0.00% seel=0.5655 marge=4.79A origin=ELITE wl=[630, 675, 727, 731, 706, 728, 742, 708, 525, 524]",
+    "20:52:30 | INFO |    [ELITE-PARENTS] Round 5 #10 id=901050469 n_blocs=10 crash=0.00% seel=0.5655 marge=4.79A origin=ELITE wl=[630, 675, 727, 731, 706, 728, 742, 708, 525, 524]",
+    "20:52:44 | INFO |    [ELITE-PARENTS] Round 6 #01 id=901053326 n_blocs=10 crash=0.00% seel=0.3611 marge=5.68A origin=ELITE wl=[631, 451, 691, 691, 741, 733, 705, 708, 742, 580]",
+    "20:52:44 | INFO |    [ELITE-PARENTS] Round 6 #02 id=901053364 n_blocs=10 crash=0.00% seel=0.3611 marge=5.68A origin=ELITE wl=[631, 451, 691, 691, 741, 733, 705, 708, 742, 580]",
+    "20:52:44 | INFO |    [ELITE-PARENTS] Round 6 #03 id=901053400 n_blocs=10 crash=0.00% seel=0.3611 marge=5.68A origin=ELITE wl=[631, 451, 691, 691, 741, 733, 705, 708, 742, 580]",
+    "20:52:44 | INFO |    [ELITE-PARENTS] Round 6 #04 id=901053435 n_blocs=10 crash=0.00% seel=0.3611 marge=5.68A origin=ELITE wl=[631, 451, 691, 691, 741, 733, 705, 708, 742, 580]",
+    "20:52:44 | INFO |    [ELITE-PARENTS] Round 6 #05 id=991050168 n_blocs=10 crash=0.00% seel=0.6005 marge=4.79A origin=RATE_RESCUE17(from 991 wl=[630, 675, 727, 731, 706, 728, 742, 708, 525, 524]",
+    "20:52:44 | INFO |    [ELITE-PARENTS] Round 6 #06 id=991050024 n_blocs=10 crash=0.00% seel=0.6005 marge=4.79A origin=RATE_RESCUE17(from 991 wl=[630, 675, 727, 731, 706, 728, 742, 708, 525, 524]",
+    "20:52:44 | INFO |    [ELITE-PARENTS] Round 6 #07 id=901053345 n_blocs=10 crash=0.00% seel=0.3681 marge=5.68A origin=ELITE wl=[630, 451, 691, 691, 741, 733, 705, 708, 742, 580]",
+    "20:52:44 | INFO |    [ELITE-PARENTS] Round 6 #08 id=901053346 n_blocs=10 crash=0.00% seel=0.3681 marge=5.68A origin=ELITE wl=[630, 451, 691, 691, 741, 733, 705, 708, 742, 580]",
+    "20:52:44 | INFO |    [ELITE-PARENTS] Round 6 #09 id=901053348 n_blocs=10 crash=0.00% seel=0.3681 marge=5.68A origin=ELITE wl=[630, 451, 691, 691, 741, 733, 705, 708, 742, 580]",
+    "20:52:44 | INFO |    [ELITE-PARENTS] Round 6 #10 id=901053349 n_blocs=10 crash=0.00% seel=0.3681 marge=5.68A origin=ELITE wl=[630, 451, 691, 691, 741, 733, 705, 708, 742, 580]"
+  ],
+  "conclusion": "Final winner itself is not among extra joint offers; ancestry and causal gain require the ongoing joint-budget-zero ablation. Similar shape alone is not proof of ancestry."
+}

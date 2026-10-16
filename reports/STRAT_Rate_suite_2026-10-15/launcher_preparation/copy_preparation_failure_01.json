@@ -1,0 +1,8 @@
+{
+  "at_utc": "2026-10-15T05:31:26.296913+00:00",
+  "status": "preparation_only",
+  "error": "Ambiguous text replacement in R2 deadline metadata: two occurrences; source not written",
+  "created_before_failure": "rate_fixed_replay_R0_bounded.py",
+  "physical_or_runtime_execution": false,
+  "repair": "Use complete indentation-specific source fragments"
+}

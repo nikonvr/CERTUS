@@ -1,0 +1,37 @@
+{
+  "phase": "R6_c03_s404_fresh_g03",
+  "slot": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R6_generalization\\c03_s404\\fresh_v2\\group_03\\measurement",
+  "resources": {
+    "logical_cpus": 24,
+    "affinity_mask": "0xffffff",
+    "priority": "normal",
+    "library_threads": 23
+  },
+  "quota": 1,
+  "deadline_utc": "2026-10-16T06:00:00+00:00",
+  "protocol_file": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R6_generalization\\c03_s404\\confirmation_protocol_v2.json",
+  "protocol_sha256": "2554b1292f4006a3994cf835fc0fc4e0a8e96a0a2c8192f7332d43771eac341c",
+  "source_sha256": {
+    "certus/core/certus_strat_consensus.py": "249bd447f4db3b4f9c75cdb34bc68a9988d1810e83a42f678558f5c74e1c2656",
+    "certus/core/certus_strat_robustness.py": "5e12ced2f99a45175a5546499c405c89c246b481cbf076af1769ef94419ed89e",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+    "certus/core/certus_strat_leviers.py": "deea3efd1b33d83cc1dea3afdb362c01e5b0acc39fc69b5fd86d5ef4c25270cb",
+    "certus/core/certus_strat_rate_moves.py": "5cc1e6092e972ba9b9e8d97057332509c73a617260b2682aa7748c8bdadd99dc",
+    "certus/core/certus_strat_rate_post.py": "b373832d5bdd6a9c3f5048242978209139f6e2443338d55ae78fe027910d63f3",
+    "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+    "certus/workers/certus_strat_workers.py": "459a1297d494b7d94231978f6a81ec07a96ebabc1755d9f2dda0114d856e5834",
+    "certus/workers/certus_strat_workers_pipeline.py": "4119bf41570968d55d94543a5aa58ab7df62d330abdf0a447ff566f0b8f4f3a3",
+    "certus/workers/certus_strat_workers_rate.py": "ac4df2ce33ab952be31a04a12f7b1b5fd5b346173e0a4062b9aecfb92238ac62",
+    "scripts/probe_blocs_vs_plantage.py": "e8636c3dee7468e1a4e2ca2357da73447ecdb9d0d746e0b1509fe2f1d203d2cf",
+    "tests/unit/test_strat_rate_final_refinement.py": "1b5df0923acc37d3764f08f05fcd52c13e2e1c340f2220164a68f3767a6c45a7",
+    "tests/unit/test_probe_keeps_consensus_score_provenance.py": "7a1bf56facab7fe9bbde88d4064d474cee42f8b0270738759df99676bfab0827",
+    "tests/performance/test_performance.py": "736fe81e289bcb2ac72dd56c6bd7d6cdddf9de9a20528504fddf148a169af6c2",
+    "tests/unit/test_strat_elite_rate_moves.py": "574f08fc5df532759a02fc1a2b9f632e69296f10a00307bf67b071d2073735e4",
+    "tests/unit/test_strat_spectral_target.py": "a1ecf68dc60be63495bbec630bfa93b24a7fa69660cc40aa36046e1cd7e11f5c"
+  },
+  "manifest_sha256": "aac78249994b351864762dc26152c66bf2c835d979472acebdc9532d08accfd5",
+  "plans_sha256": "55c93919b3b9ac6dbef0ee43e2fc755105e1c20d3cb1ef1fe2ed85d8c93f26b1",
+  "window_sha256": "3f7f52860cd28152b70fa7577a3a5de32308d26021401a12b43f0d4d6cc400c4",
+  "pid": 45460,
+  "claimed_utc": "2026-10-16T03:01:41.815266+00:00"
+}

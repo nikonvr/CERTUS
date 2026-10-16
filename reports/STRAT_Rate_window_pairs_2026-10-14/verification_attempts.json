@@ -1,0 +1,21 @@
+{
+  "scope": "Pre-measure contract check",
+  "attempts": [
+    {
+      "exit_code": 1,
+      "cause": "Sandbox PermissionError WinError5 when bench_examples changes directory to frozen worktree",
+      "scientific_measure_started": false
+    },
+    {
+      "exit_code": 1,
+      "cause": "Relative proposals path no longer resolves after bench_examples changes cwd",
+      "scientific_measure_started": false
+    },
+    {
+      "exit_code": 0,
+      "cause": "Absolute paths and authorized worktree access; WINDOW_PAIRS_VERIFY=GO",
+      "artifact": "contracts_verification.json"
+    }
+  ],
+  "source_changed": false
+}

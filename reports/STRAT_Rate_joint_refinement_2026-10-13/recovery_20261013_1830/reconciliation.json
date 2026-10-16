@@ -1,0 +1,281 @@
+{
+  "saved_stages": 86,
+  "reconciled": {
+    "key": "batch_085",
+    "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_joint_refinement_2026-10-13\\batch_085\\attempt_01\\search.json",
+    "attempt": 1,
+    "seconds": 8.049031019210815,
+    "duration_source": "artifact modification time minus preserved request start; controller monotonic duration unavailable",
+    "results": [
+      {
+        "id": 9700840,
+        "name": "joint_L31_32_wl740_baseL33",
+        "move": {
+          "kind": "joint",
+          "original_window": [
+            32,
+            34
+          ],
+          "window": [
+            30,
+            32
+          ],
+          "width": 2,
+          "shift": -2,
+          "wavelength": 740
+        },
+        "eligible": false,
+        "score": null,
+        "crash_rate": null,
+        "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_joint_refinement_2026-10-13\\batch_085\\attempt_01\\search.json"
+      },
+      {
+        "id": 9700841,
+        "name": "joint_L31_32_wl741_baseL33",
+        "move": {
+          "kind": "joint",
+          "original_window": [
+            32,
+            34
+          ],
+          "window": [
+            30,
+            32
+          ],
+          "width": 2,
+          "shift": -2,
+          "wavelength": 741
+        },
+        "eligible": false,
+        "score": null,
+        "crash_rate": null,
+        "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_joint_refinement_2026-10-13\\batch_085\\attempt_01\\search.json"
+      },
+      {
+        "id": 9700842,
+        "name": "joint_L31_32_wl742_baseL33",
+        "move": {
+          "kind": "joint",
+          "original_window": [
+            32,
+            34
+          ],
+          "window": [
+            30,
+            32
+          ],
+          "width": 2,
+          "shift": -2,
+          "wavelength": 742
+        },
+        "eligible": false,
+        "score": null,
+        "crash_rate": null,
+        "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_joint_refinement_2026-10-13\\batch_085\\attempt_01\\search.json"
+      },
+      {
+        "id": 9700843,
+        "name": "joint_L31_32_wl750_baseL33",
+        "move": {
+          "kind": "joint",
+          "original_window": [
+            32,
+            34
+          ],
+          "window": [
+            30,
+            32
+          ],
+          "width": 2,
+          "shift": -2,
+          "wavelength": 750
+        },
+        "eligible": true,
+        "score": 0.1460641588585261,
+        "crash_rate": 0.0,
+        "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_joint_refinement_2026-10-13\\batch_085\\attempt_01\\search.json"
+      },
+      {
+        "id": 9700844,
+        "name": "joint_L32_33_wl450_baseL33",
+        "move": {
+          "kind": "joint",
+          "original_window": [
+            32,
+            34
+          ],
+          "window": [
+            31,
+            33
+          ],
+          "width": 2,
+          "shift": -1,
+          "wavelength": 450
+        },
+        "eligible": false,
+        "score": null,
+        "crash_rate": null,
+        "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_joint_refinement_2026-10-13\\batch_085\\attempt_01\\search.json"
+      },
+      {
+        "id": 9700845,
+        "name": "joint_L32_33_wl451_baseL33",
+        "move": {
+          "kind": "joint",
+          "original_window": [
+            32,
+            34
+          ],
+          "window": [
+            31,
+            33
+          ],
+          "width": 2,
+          "shift": -1,
+          "wavelength": 451
+        },
+        "eligible": false,
+        "score": null,
+        "crash_rate": null,
+        "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_joint_refinement_2026-10-13\\batch_085\\attempt_01\\search.json"
+      },
+      {
+        "id": 9700846,
+        "name": "joint_L32_33_wl452_baseL33",
+        "move": {
+          "kind": "joint",
+          "original_window": [
+            32,
+            34
+          ],
+          "window": [
+            31,
+            33
+          ],
+          "width": 2,
+          "shift": -1,
+          "wavelength": 452
+        },
+        "eligible": false,
+        "score": null,
+        "crash_rate": null,
+        "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_joint_refinement_2026-10-13\\batch_085\\attempt_01\\search.json"
+      },
+      {
+        "id": 9700847,
+        "name": "joint_L32_33_wl453_baseL33",
+        "move": {
+          "kind": "joint",
+          "original_window": [
+            32,
+            34
+          ],
+          "window": [
+            31,
+            33
+          ],
+          "width": 2,
+          "shift": -1,
+          "wavelength": 453
+        },
+        "eligible": false,
+        "score": null,
+        "crash_rate": null,
+        "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_joint_refinement_2026-10-13\\batch_085\\attempt_01\\search.json"
+      },
+      {
+        "id": 9700848,
+        "name": "joint_L32_33_wl454_baseL33",
+        "move": {
+          "kind": "joint",
+          "original_window": [
+            32,
+            34
+          ],
+          "window": [
+            31,
+            33
+          ],
+          "width": 2,
+          "shift": -1,
+          "wavelength": 454
+        },
+        "eligible": false,
+        "score": null,
+        "crash_rate": null,
+        "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_joint_refinement_2026-10-13\\batch_085\\attempt_01\\search.json"
+      },
+      {
+        "id": 9700849,
+        "name": "joint_L32_33_wl455_baseL33",
+        "move": {
+          "kind": "joint",
+          "original_window": [
+            32,
+            34
+          ],
+          "window": [
+            31,
+            33
+          ],
+          "width": 2,
+          "shift": -1,
+          "wavelength": 455
+        },
+        "eligible": false,
+        "score": null,
+        "crash_rate": null,
+        "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_joint_refinement_2026-10-13\\batch_085\\attempt_01\\search.json"
+      }
+    ],
+    "rejected": [
+      {
+        "id": 9700840,
+        "reason": "base score non-finite"
+      },
+      {
+        "id": 9700841,
+        "reason": "base score non-finite"
+      },
+      {
+        "id": 9700842,
+        "reason": "base score non-finite"
+      },
+      {
+        "id": 9700844,
+        "reason": "base score non-finite"
+      },
+      {
+        "id": 9700845,
+        "reason": "base score non-finite"
+      },
+      {
+        "id": 9700846,
+        "reason": "base score non-finite"
+      },
+      {
+        "id": 9700847,
+        "reason": "base score non-finite"
+      },
+      {
+        "id": 9700848,
+        "reason": "base score non-finite"
+      },
+      {
+        "id": 9700849,
+        "reason": "base score non-finite"
+      }
+    ],
+    "reconciled_after_controller_failure": true
+  },
+  "hashes_unchanged": {
+    "replay": "05376a9240c66a99a1f4f5bf1a7300045d13ed83ca0ed4a4f88300a73688a2c3",
+    "proposals": "c820393cbaeda4b43a6fd1fd2e976e72120d3e647a37cbabb0864dd9ff1643d9",
+    "protocol": "e7de20e6fe02145011f65dd945474e1aa03051a3b9e942902522c41829f67ba8"
+  },
+  "new_script_sha256": {
+    "rate_joint_runner.py": "bcf6c0f46b3bae7853d63055c6f98fb197a60e8ec1e008b5aeff6fe3c6b3178c",
+    "campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51"
+  },
+  "runtime_retry_check": "atomic_write_runtime.json"
+}

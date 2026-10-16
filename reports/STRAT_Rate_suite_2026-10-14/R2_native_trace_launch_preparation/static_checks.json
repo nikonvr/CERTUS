@@ -1,0 +1,11 @@
+{
+  "checked_utc": "2026-10-14T08:28:03.835157+00:00",
+  "ruff_repository": "GO",
+  "git_diff_check": "GO",
+  "markdown_links": "GO",
+  "ast_parse_all_snapshotted_scripts": "GO",
+  "runtime_verifier": "NOT_RUN_A2_ACTIVE",
+  "CLI_preview": "NOT_RUN_A2_ACTIVE",
+  "measurement": "NOT_STARTED",
+  "next": "Finish A2; validate R1/pending code, observer verifier, prepare R0 fresh copy and three fixed points, then one native trace"
+}

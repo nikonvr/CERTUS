@@ -1,0 +1,145 @@
+"""Check guard refusals and permanent quotas in preserved synthetic fixtures only."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import runpy
+import subprocess
+import traceback
+from datetime import UTC, datetime
+from pathlib import Path
+from unittest.mock import patch
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args()
+    root = Path(__file__).resolve().parents[1]
+    output = args.output.resolve()
+    output.relative_to(root / "reports")
+    actual_validation = root / "reports/STRAT_RMSE_uniform_weights_2026-10-15/full_validation_02/validation.json"
+    if json.loads(actual_validation.read_text(encoding="utf-8")).get("status") != "GO":
+        raise RuntimeError("Finish the real full validation before guard verification")
+    if list((root / "reports").rglob(".running")) or (root / "reports/STRAT_Rate_suite_2026-10-15/measurement.running").exists():
+        raise RuntimeError("No guard verification during a scientific measurement")
+    shell = Path(os.environ["SYSTEMROOT"]) / "System32/WindowsPowerShell/v1.0/powershell.exe"
+    inventory = subprocess.check_output([str(shell), "-NoProfile", "-Command",
+        "@(Get-CimInstance Win32_Process | Where-Object { $_.Name -match '^python' } | "
+        "Select-Object ProcessId) | ConvertTo-Json -Compress"], encoding="utf-8").strip()
+    active = json.loads(inventory) if inventory else []
+    if isinstance(active, dict):
+        active = [active]
+    if any(process["ProcessId"] != os.getpid() for process in active):
+        raise RuntimeError("Another Python process is alive")
+    resources = runpy.run_path(str(root / "scratch/campagne_a2_runner.py"))["limit_resources"](24)
+    output.mkdir(parents=True, exist_ok=False)
+    source = root / "scratch/rate_suite_bounded_guard.py"
+    loaded = runpy.run_path(str(source))
+    check, reserve, release = (loaded[name] for name in ("check_ready", "reserve_slot", "release_slot"))
+    assert check.__globals__ is reserve.__globals__ is release.__globals__
+    fixture = output / "synthetic_fixtures"
+    program = fixture / "reports/bounded_program"
+    program.mkdir(parents=True)
+    scientific = fixture / "certus/synthetic.txt"
+    scientific.parent.mkdir(parents=True)
+    scientific.write_text("Synthetic guard fixture only.\n", encoding="utf-8")
+    sources = {"certus/synthetic.txt": hashlib.sha256(scientific.read_bytes()).hexdigest()}
+    original_source = scientific.read_bytes()
+    authorization = json.loads((root / "reports/STRAT_RMSE_uniform_weights_2026-10-15/authorization_and_baseline.json").read_text(encoding="utf-8"))
+    authorization_file, validation_file = fixture / "authorization.json", fixture / "validation.json"
+    campaign = fixture / "reports/STRAT_ELITE_couches_Rate_autres_composants_2026-10-13/etat.json"
+    campaign.parent.mkdir(parents=True)
+    a2 = {"status": "complete", "current_pid": None, "runs": [{"key": str(i)} for i in range(24)], "synthetic_fixture": True}
+    commands = ["ruff check .", "tests/oracle/", "tests/unit/", "tests/ui/", "--ignore=tests/oracle",
+                "scripts/coherence_md.py", "scripts/check_claude_md.py", "scripts/check_docs.py", "scripts/c1_diff.py", "diff --check"]
+    validation = {"status": "GO", "source_sha256": sources, "synthetic_fixture": True,
+                  "checks": [{"name": str(i), "command": command.split(), "exit_code": 0} for i, command in enumerate(commands)]}
+
+    def save(path, value):
+        path.write_text(json.dumps(value, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    save(authorization_file, authorization)
+    save(validation_file, validation)
+    save(campaign, a2)
+    slots = {"R0_control": program / "R0_control", "R2_native_base": program / "R2_native_base"}
+    replacements = {"ROOT": fixture, "PROGRAM": program, "AUTHORIZATION": authorization_file,
+                    "VALIDATION": validation_file, "SLOTS": slots}
+    record = {"verdict": "NOT_RUN", "started_utc": datetime.now(UTC).isoformat(), "physics_measured": False,
+              "guard_sha256": hashlib.sha256(source.read_bytes()).hexdigest(), "checks": [], "synthetic_fixtures_only": True,
+              "resources": resources, "verifier_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+              "full_validation_sha256": hashlib.sha256(actual_validation.read_bytes()).hexdigest()}
+
+    def refuses(name, action, error_type=RuntimeError):
+        try:
+            action()
+        except error_type:
+            record["checks"].append(name)
+        else:
+            raise AssertionError(f"Guard accepted: {name}")
+
+    try:
+        with patch.dict(check.__globals__, replacements), patch.object(subprocess, "check_output", return_value="[]"):
+            def ready():
+                return check("R0_control", slots["R0_control"], sources)
+
+            proof = ready()
+            record["checks"].append("A complete matching synthetic context is accepted")
+            refuses("Unknown phase rejected", lambda: check("R3", slots["R0_control"], sources))
+            refuses("A second output cannot bypass the fixed slot", lambda: check("R0_control", program / "other", sources))
+            save(validation_file, {**validation, "status": "running"})
+            refuses("Running validation rejected", ready)
+            save(validation_file, {**validation, "checks": validation["checks"][:-2]})
+            refuses("Missing C1 and diff checks rejected", ready)
+            save(validation_file, validation)
+            scientific.write_text("Changed fixture.\n", encoding="utf-8")
+            refuses("Changed validated source rejected", ready)
+            scientific.write_bytes(original_source)
+            save(authorization_file, {**authorization, "resources": {**authorization["resources"], "logical_cpus": 16}})
+            refuses("Wrong resource authorization rejected", ready)
+            save(authorization_file, authorization)
+            save(campaign, {**a2, "runs": a2["runs"][:-1]})
+            refuses("Incomplete A2 rejected", ready)
+            save(campaign, a2)
+            busy = program / "nested/.running"
+            busy.parent.mkdir()
+            busy.write_text("Synthetic lock", encoding="utf-8")
+            refuses("Nested measurement lock rejected", ready)
+            busy.unlink()
+            with patch.object(subprocess, "check_output", return_value=json.dumps([{"ProcessId": os.getpid() + 1}])):
+                refuses("Another Python process rejected", ready)
+            reserve(proof)
+            refuses("Live common measurement lock rejected", ready)
+            release()
+            assert (program / "claims/R0_control.json").exists()
+            refuses("Permanent R0 quota survives release", ready)
+            refuses("Direct duplicate reservation rejected", lambda: reserve(proof), FileExistsError)
+            assert not (program / "measurement.running").exists()
+            second = check("R2_native_base", slots["R2_native_base"], sources)
+            common = program / "measurement.running"
+            save(common, {"pid": os.getpid() + 1, "synthetic_fixture": True})
+            release()
+            assert common.exists()
+            refuses("Another owner retains the common lock", lambda: reserve(second), FileExistsError)
+            common.unlink()
+            reserve(second)
+            release()
+            assert (program / "claims/R2_native_base.json").exists()
+            record["checks"].append("R2 has its own single permanent quota")
+        assert hashlib.sha256(source.read_bytes()).hexdigest() == record["guard_sha256"]
+        record["verdict"] = "GO"
+    except BaseException:
+        record.update(verdict="FAILED", error=traceback.format_exc())
+        raise
+    finally:
+        record["finished_utc"] = datetime.now(UTC).isoformat()
+        with (output / "verification.json").open("x", encoding="utf-8") as stream:
+            json.dump(record, stream, ensure_ascii=False, indent=2)
+    print("BOUNDED_GUARD_VERIFY=" + record["verdict"])
+
+
+if __name__ == "__main__":
+    main()

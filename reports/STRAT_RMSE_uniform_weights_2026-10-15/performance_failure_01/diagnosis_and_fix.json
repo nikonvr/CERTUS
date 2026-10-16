@@ -1,0 +1,61 @@
+{
+  "recorded_utc": "2026-10-15T06:49:55.458818+00:00",
+  "diagnostic": [
+    {
+      "name": "old23",
+      "exit_code": 1,
+      "overhead": 2.262083953770425,
+      "limit": 1.82,
+      "main_threads": 1,
+      "worker_threads": [
+        23
+      ],
+      "seconds": 13.33253300000797
+    },
+    {
+      "name": "current23",
+      "exit_code": 1,
+      "overhead": 2.176704691133515,
+      "limit": 1.82,
+      "main_threads": 1,
+      "worker_threads": [
+        23
+      ],
+      "seconds": 12.949204500007909
+    },
+    {
+      "name": "old1",
+      "exit_code": 1,
+      "overhead": 1.946255775948346,
+      "limit": 1.82,
+      "main_threads": 1,
+      "worker_threads": [
+        1
+      ],
+      "seconds": 12.549954999994952
+    },
+    {
+      "name": "current1",
+      "exit_code": 0,
+      "overhead": null,
+      "limit": 1.82,
+      "main_threads": 1,
+      "worker_threads": [
+        1
+      ],
+      "seconds": 10.027086699992651
+    }
+  ],
+  "interpretation": [
+    "Failure reproduced on the original source; not evidence of an RMSE-induced slowdown",
+    "Main-thread one-thread context did not set the pool-worker masks",
+    "The old1 failure shows that lowering the global ceiling alone does not guarantee a timing pass",
+    "Worker initializer now enforces the actual one-thread baseline; no timing threshold changed",
+    "Fake-calculation before/after contract verification is separate from the real18-test performance pass"
+  ],
+  "harness_patch": "tests/performance/test_performance.py",
+  "harness_after_sha256": "736fe81e289bcb2ac72dd56c6bd7d6cdddf9de9a20528504fddf148a169af6c2",
+  "performance_after_result": "18 passed in20.93s; fresh Python and Numba caches",
+  "full_validation": "../full_validation_02/validation.json",
+  "full_validation_status": "running; remaining/docs/C1 still required"
+}

@@ -1,0 +1,238 @@
+{
+  "checked_utc": "2026-10-14T12:33:50.545831+00:00",
+  "completed": 21,
+  "current": "r75x2_deep_s202_sans",
+  "current_pid": 49852,
+  "current_started": "2026-10-14T14:16:38",
+  "run": {
+    "key": "r75x2_deep_s202_avec",
+    "artifact": "r75x2_deep_s202_avec_da1af082.json",
+    "sha256": "3df38b61bde8c51356cc4260daaccaa9059aaaa367cfe4fae91bb1def122d613",
+    "seconds": 2896.2204350999964,
+    "saved_utc": "2026-10-14T12:16:29+00:00",
+    "verdict": "OK",
+    "effective_elite_rate_moves": true,
+    "seel": 0.5411587816350232,
+    "deposables": 4964,
+    "declared_depth": {
+      "robustness_num_runs": 300,
+      "n_screen_runs": 50,
+      "dp_top_k": 100,
+      "consensus_num_runs": 300
+    },
+    "best_plan": {
+      "id": 901350975,
+      "origine": "ELITE",
+      "n_blocs": 13,
+      "crash_rate": 0.006666666666666667,
+      "score": 0.07321320673517567,
+      "lambdas": [
+        482.0,
+        640.0,
+        490.0,
+        686.0,
+        511.0,
+        702.0,
+        647.0,
+        693.0,
+        689.0,
+        687.0,
+        697.0,
+        702.0,
+        698.0
+      ],
+      "blocs": [
+        {
+          "start": 0,
+          "end": 4,
+          "wavelength": 482.0
+        },
+        {
+          "start": 4,
+          "end": 25,
+          "wavelength": 640.0
+        },
+        {
+          "start": 25,
+          "end": 33,
+          "wavelength": 490.0
+        },
+        {
+          "start": 33,
+          "end": 54,
+          "wavelength": 686.0
+        },
+        {
+          "start": 54,
+          "end": 56,
+          "wavelength": 511.0
+        },
+        {
+          "start": 56,
+          "end": 63,
+          "wavelength": 702.0
+        },
+        {
+          "start": 63,
+          "end": 64,
+          "wavelength": 647.0
+        },
+        {
+          "start": 64,
+          "end": 68,
+          "wavelength": 693.0
+        },
+        {
+          "start": 68,
+          "end": 70,
+          "wavelength": 689.0
+        },
+        {
+          "start": 70,
+          "end": 72,
+          "wavelength": 687.0
+        },
+        {
+          "start": 72,
+          "end": 73,
+          "wavelength": 697.0
+        },
+        {
+          "start": 73,
+          "end": 74,
+          "wavelength": 702.0
+        },
+        {
+          "start": 74,
+          "end": 75,
+          "wavelength": 698.0
+        }
+      ],
+      "margin_by_layer": {
+        "missed": {
+          "22": 0.403
+        },
+        "fabricated": {
+          "3": 0.83
+        }
+      },
+      "rate_layers": [
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74
+      ],
+      "crash_eliminated": false,
+      "crash_rates_by_noise": {
+        "0.025": 0.0,
+        "0.05": 0.0,
+        "0.1": 0.006666666666666667
+      },
+      "rmse_par_bruit": {
+        "0.025": {
+          "n": 300,
+          "plantes": 0,
+          "rmse_p95": 0.06589350095683244,
+          "rmse_p95_termines": 0.06589350095683244,
+          "rmse_moyen_plantes": null,
+          "rmse_max_termines": 0.10772118040275917,
+          "rmse_min_plantes": null
+        },
+        "0.05": {
+          "n": 300,
+          "plantes": 0,
+          "rmse_p95": 0.07140634881556063,
+          "rmse_p95_termines": 0.07140634881556063,
+          "rmse_moyen_plantes": null,
+          "rmse_max_termines": 0.10475200169540302,
+          "rmse_min_plantes": null
+        },
+        "0.1": {
+          "n": 300,
+          "plantes": 2,
+          "rmse_p95": 0.07321320673517567,
+          "rmse_p95_termines": 0.07270688621059665,
+          "rmse_moyen_plantes": 0.2523424949580887,
+          "rmse_max_termines": 0.10535087902063084,
+          "rmse_min_plantes": 0.25189386251836815
+        }
+      },
+      "critical_layer": {
+        "layer": 22,
+        "cause": "ondulation trop faible pour etre vue",
+        "margin_in_A": 0.4030687299927289,
+        "verdict": "PEUT ECHOUER",
+        "n_layers_below_2A": 2
+      },
+      "resolution_nm": 2.0,
+      "resolution_noise_factor": 1.0
+    }
+  },
+  "limits": [
+    "Pair202 incomplete; no with/without comparison",
+    "Different component from r75x0.5; scores not directly comparable",
+    "Frozen A2 exports omit complete consensus provenance",
+    "No runtime tests or new Rate measurements during A2"
+  ]
+}

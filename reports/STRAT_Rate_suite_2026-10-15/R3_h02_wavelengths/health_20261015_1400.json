@@ -1,0 +1,14 @@
+{
+  "observed_utc": "2026-10-15T12:06:55.9313868Z",
+  "status": "running",
+  "arm": "variant",
+  "pid": 28532,
+  "cpu_seconds": 51384.046875,
+  "affinity": 16777215,
+  "priority": "Normal",
+  "new_measurements_started": false,
+  "tests_started": false,
+  "active_sources_changed": false,
+  "preparation": "Copied h02 audit and bounded replay prepared, all execution/checks deferred until native pair ends",
+  "deadline_utc": "2026-10-16T06:00:00Z"
+}

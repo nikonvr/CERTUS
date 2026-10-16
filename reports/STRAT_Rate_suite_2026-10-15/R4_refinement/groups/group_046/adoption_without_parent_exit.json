@@ -1,0 +1,12 @@
+{
+  "verdict": "GO",
+  "adopted_utc": "2026-10-15T13:36:58.943294+00:00",
+  "pid": 28992,
+  "actual_calls": 39,
+  "artifact_sha256": "84979e7a3b9d454d4040b05e8ac71e5f0974c9a8289d21c790e8fbfc068134fe",
+  "manifest_sha256": "fe07bc9dc8935b9a8695cd17081588b7c3a72d3ba5f18f6899750a94c8c7e426",
+  "original_exit_code": null,
+  "exit_code_observed": false,
+  "reason": "Parent File.Replace persistence failed; scientific child finished, complete request and exact artifact/calls/anchors audited; no repeat",
+  "audit_script_sha256": "da836d7e1edfdc54fc04a15aaa586a9f1fb4ce67d747bdd52038d72b1c71974f"
+}

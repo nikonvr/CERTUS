@@ -1,0 +1,89 @@
+{
+  "status": "FROZEN_BEFORE_SEARCH",
+  "deadline_utc": "2026-10-16T06:00:00+00:00",
+  "cases": {
+    "c04_48c_s77": 77,
+    "c05_r75x15_s42": 42,
+    "c06_r75x2_s77": 77
+  },
+  "source_sha256": {
+    "certus/core/certus_strat_consensus.py": "249bd447f4db3b4f9c75cdb34bc68a9988d1810e83a42f678558f5c74e1c2656",
+    "certus/core/certus_strat_robustness.py": "5e12ced2f99a45175a5546499c405c89c246b481cbf076af1769ef94419ed89e",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+    "certus/core/certus_strat_leviers.py": "deea3efd1b33d83cc1dea3afdb362c01e5b0acc39fc69b5fd86d5ef4c25270cb",
+    "certus/core/certus_strat_rate_moves.py": "5cc1e6092e972ba9b9e8d97057332509c73a617260b2682aa7748c8bdadd99dc",
+    "certus/core/certus_strat_rate_post.py": "b373832d5bdd6a9c3f5048242978209139f6e2443338d55ae78fe027910d63f3",
+    "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+    "certus/workers/certus_strat_workers.py": "459a1297d494b7d94231978f6a81ec07a96ebabc1755d9f2dda0114d856e5834",
+    "certus/workers/certus_strat_workers_pipeline.py": "4119bf41570968d55d94543a5aa58ab7df62d330abdf0a447ff566f0b8f4f3a3",
+    "certus/workers/certus_strat_workers_rate.py": "ac4df2ce33ab952be31a04a12f7b1b5fd5b346173e0a4062b9aecfb92238ac62",
+    "scripts/probe_blocs_vs_plantage.py": "e8636c3dee7468e1a4e2ca2357da73447ecdb9d0d746e0b1509fe2f1d203d2cf",
+    "tests/unit/test_strat_rate_final_refinement.py": "1b5df0923acc37d3764f08f05fcd52c13e2e1c340f2220164a68f3767a6c45a7",
+    "tests/unit/test_probe_keeps_consensus_score_provenance.py": "7a1bf56facab7fe9bbde88d4064d474cee42f8b0270738759df99676bfab0827",
+    "tests/performance/test_performance.py": "736fe81e289bcb2ac72dd56c6bd7d6cdddf9de9a20528504fddf148a169af6c2",
+    "tests/unit/test_strat_elite_rate_moves.py": "574f08fc5df532759a02fc1a2b9f632e69296f10a00307bf67b071d2073735e4",
+    "tests/unit/test_strat_spectral_target.py": "a1ecf68dc60be63495bbec630bfa93b24a7fa69660cc40aa36046e1cd7e11f5c"
+  },
+  "reference_sha256": "51d2fcc1a1d46baf4caf2f7175b54b20f1c471fd8b803f7c8aa14afa41210647",
+  "r5_audit_sha256": "831ecea8d4190aa3510f208ca122fa4c88af88e5b3f2dec9eced7b45b3c64196",
+  "fresh_seed_reservation_sha256": "3dc809ca0303dca55bfd583a0741eff58a443054b5bcc00e12d5157da1a5ba54",
+  "common_overrides": "elite_rate_balanced_moves=false,elite_rate_max_candidates=240,elite_rounds=6,elite_rate_joint_candidates=480",
+  "single_factor": "rate_post_refinement False vs True; same fine joint policy in both arms",
+  "script_sha256": {
+    "rate_R6_other_guard.py": "37f1c89aa4c3038dd14c8069cf35c0b9ba22a6531a74faf3c7a24149d949a1f9",
+    "rate_R6_other_native.py": "38d37a0f5df91133134fdcc29e81cdc1dca1c45eb7991ff8bdaf39b596bd95d6",
+    "run_rate_R6_other_pair.ps1": "b48d9a7c0a5efff4cb058ead14a28835362391c8bf09e4fb900da0dbc37740cc",
+    "rate_R5_guard.py": "2d0f28a7b1e1a282c1680d00989974e7c119d676cd4d6bfdd0e866492c4371eb",
+    "rate_H03_guard.py": "c5c104d01371144eeb7fff8fc78ee339cb8171a293b2572f0544aa787fb61e00",
+    "campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51",
+    "rate_R4_planner_resume_v3.py": "c0e714c66efb130bf893d3130cd3dcd747e680a3039ce33d241f63e88cf8ba04",
+    "rate_native_pipeline_trace.py": "df28ee632f11e6dcde87e53c78ce4dc35869194b2b579107f6725e7416562dc3"
+  },
+  "limits": {
+    "initial_pairs": 3,
+    "max_program_pairs": 6,
+    "post_passes": 2,
+    "beam": 2,
+    "proposals_per_pass": 300,
+    "post_proposals": 600,
+    "conditional_pairs": 3
+  },
+  "fresh_plan": "Own official and complete finalists only, no historical cross-component anchors; three reserved300 groups",
+  "conservative_case_pass": "Three fresh positive groups against own best-complete control, median gain>=1%; also report official-winner comparison. Smaller/mixed effects remain unresolved; no other components without at least two clear case gains and third favorable/understood.",
+  "no_additional_pairs_or_groups_automatically": true,
+  "case_arguments": {
+    "c04_48c_s77": [
+      "48c",
+      "premium",
+      "1",
+      "0",
+      "2",
+      "0",
+      "77",
+      "0"
+    ],
+    "c05_r75x15_s42": [
+      "r75x1.5",
+      "deep",
+      "0",
+      "0",
+      "2",
+      "0",
+      "42",
+      "0"
+    ],
+    "c06_r75x2_s77": [
+      "r75x2",
+      "deep",
+      "0",
+      "0",
+      "2",
+      "0",
+      "77",
+      "0"
+    ]
+  },
+  "initial_gate_sha256": "400acd874e8b3442820cd293fd837299e66e63552d7752ff2aff438d4d758c0a",
+  "native_depth_policy": "Unchanged selected component/mode defaults; record actual post base/consensus depths; fresh fixed replay300",
+  "early_stop": "Stop extension after first conditional case not satisfying3/3 and median>=1%"
+}

@@ -1,0 +1,17 @@
+{
+  "observed_utc": "2026-10-15T13:33:02.6888611Z",
+  "phase": "local_pass1",
+  "new_proposals_charged": 195,
+  "passes": [
+    {
+      "pass": 1,
+      "before": 0.02797523766720083,
+      "after": 0.02797523766720083,
+      "improved": false
+    }
+  ],
+  "local_best_score": 0.02797523766720083,
+  "fresh_groups_consumed": 0,
+  "conclusion": "NO_GAIN_LOCAL_PASS_STOPPED",
+  "native_branch": "continues in existing controller"
+}

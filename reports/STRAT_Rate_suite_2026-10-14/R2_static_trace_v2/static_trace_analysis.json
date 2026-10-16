@@ -1,0 +1,119 @@
+{
+  "status": "static_analysis_only",
+  "updated_utc": "2026-10-14T07:25:56.480465+00:00",
+  "records": [
+    {
+      "experiment": "STRAT_Rate_native_joint_rate240_round6_2026-10-13",
+      "families": {
+        "joint": {
+          "generator_calls": 124,
+          "offered": 38410,
+          "counts": {
+            "id_and_plan_in_final_export": 387,
+            "id_seen_in_later_parent_list": 75,
+            "has_L35_L37_window": 200,
+            "has_L35_L37_at688": 0,
+            "has_L1_L5_at600": 3,
+            "has_L1_L5_at613": 0,
+            "any_block_at613": 0
+          },
+          "exact_structural_target_hits": {
+            "900951015": 0,
+            "9900000": 0,
+            "9900001": 0,
+            "9900002": 0,
+            "9900004": 0,
+            "9900005": 0,
+            "9900006": 0,
+            "9900007": 0,
+            "9900008": 0
+          }
+        },
+        "prefix": {
+          "generator_calls": 0,
+          "offered": 0,
+          "counts": {},
+          "exact_structural_target_hits": {}
+        }
+      },
+      "exported_rows": 5412,
+      "offer_ids_reused_across_calls": 0,
+      "exported_consensus_metadata_rows": 0,
+      "raw_export_winner": 901054165,
+      "raw_winner_seen_as_parent": false
+    },
+    {
+      "experiment": "STRAT_Rate_native_prefix_2026-10-14",
+      "families": {
+        "joint": {
+          "generator_calls": 120,
+          "offered": 36358,
+          "counts": {
+            "id_and_plan_in_final_export": 226,
+            "id_seen_in_later_parent_list": 33,
+            "has_L35_L37_window": 0,
+            "has_L35_L37_at688": 0,
+            "has_L1_L5_at600": 5,
+            "has_L1_L5_at613": 0,
+            "any_block_at613": 0
+          },
+          "exact_structural_target_hits": {
+            "900951015": 0,
+            "9900000": 0,
+            "9900001": 0,
+            "9900002": 0,
+            "9900004": 0,
+            "9900005": 0,
+            "9900006": 0,
+            "9900007": 0,
+            "9900008": 0
+          }
+        },
+        "prefix": {
+          "generator_calls": 120,
+          "offered": 47615,
+          "counts": {
+            "id_and_plan_in_final_export": 491,
+            "id_seen_in_later_parent_list": 43,
+            "has_L35_L37_window": 0,
+            "has_L35_L37_at688": 0,
+            "has_L1_L5_at600": 319,
+            "has_L1_L5_at613": 0,
+            "any_block_at613": 0
+          },
+          "exact_structural_target_hits": {
+            "900951015": 0,
+            "9900000": 0,
+            "9900001": 0,
+            "9900002": 0,
+            "9900004": 0,
+            "9900005": 0,
+            "9900006": 0,
+            "9900007": 0,
+            "9900008": 0
+          }
+        }
+      },
+      "exported_rows": 5119,
+      "offer_ids_reused_across_calls": 0,
+      "exported_consensus_metadata_rows": 0,
+      "raw_export_winner": 901457827,
+      "raw_winner_seen_as_parent": false
+    }
+  ],
+  "source_sha256": {
+    "reports\\STRAT_Rate_validation_prefix_after_window_extended_2026-10-14\\plans.json": "68fe44f2756975c64ea6a42d7fa19b322432c5b4bf49b9c13fd8606afff689bf",
+    "reports\\STRAT_Rate_native_joint_rate240_round6_2026-10-13\\joint_480_rate240_rounds6_s101\\generated_candidates.json": "78eacaa6451b5d7fac7a78070e82acf10dd02622339e312b8af0140a798227ec",
+    "reports\\STRAT_Rate_native_joint_rate240_round6_2026-10-13\\joint_480_rate240_rounds6_s101\\blocs_vs_plantage_r75x0.5_deep_s101_rate_native_joint480_rate240_rounds6_s101_v3.json": "944774e4d9ce471d2b2b561f1c6143f5c7be40207187d8ec280c338448cca6d9",
+    "reports\\STRAT_Rate_native_prefix_2026-10-14\\prefix_720_joint_480_rate240_rounds6_s101\\generated_candidates.json": "1dd162a35eee96e850cdfac4cc9cdc9f86339ace2d9ed99009a848639fb23baf",
+    "reports\\STRAT_Rate_native_prefix_2026-10-14\\prefix_720_joint_480_rate240_rounds6_s101\\blocs_vs_plantage_r75x0.5_deep_s101_rate_native_prefix720_joint480_rate240_rounds6_s101_v3.json": "85f5c3f221214d459460b57975c998ec34366eda5e644ecd1f52730666cb8472"
+  },
+  "limitations": [
+    "Only the additional joint/prefix candidates are saved in these traces; legacy candidates are not exhaustively traced.",
+    "Presence in the final export does not prove full or complete consensus evaluation; matching uses both id and structural plan.",
+    "Parent traces carry ids, not full parent plans; a later matching id is only an observed identifier link.",
+    "Native available_wls, per-stage scores and rejection gates are not recorded; absence alone does not identify its cause.",
+    "Exact target matching includes partition and all block wavelengths; auxiliary window matching is not a claim of physical equivalence.",
+    "Raw export winners may mix base and consensus; retain previously homogeneous pool rescoring."
+  ]
+}

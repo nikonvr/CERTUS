@@ -1,0 +1,18 @@
+{
+  "prepared_utc": "2026-10-14T03:33:55.245058+00:00",
+  "runner": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\campagne_a2_deadline_runner.py",
+  "arguments": [
+    "--worktree",
+    "C:\\Users\\Lemarchand\\.codex\\worktrees\\campagne-a2\\certus0310",
+    "--output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_ELITE_couches_Rate_autres_composants_2026-10-13",
+    "--logical-cpus",
+    "16"
+  ],
+  "guard_verification": "GO four cases, exact controller52aee00f; no full campaign simulation",
+  "expected_commit": "da1af0825d5e09e8d0a5ff4f1cf42b802e0e30e7",
+  "expected_completed": 3,
+  "next_key": "r75x1.5_deep_s101_sans",
+  "prerequisite": "Extended prefix confirmation complete7/7 and no science process; inspect all fresh-group results first",
+  "deadline_utc": "2026-10-14T07:00:00Z"
+}

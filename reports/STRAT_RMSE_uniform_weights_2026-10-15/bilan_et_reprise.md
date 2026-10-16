@@ -1,0 +1,40 @@
+# RMSE — correctif et reprise Rate, 15 octobre 2026
+
+L’utilisateur autorise le correctif séparé puis la poursuite jusqu’à la fin du programme borné R0–R6. La nouvelle limite est24 processeurs logiques, affinité0xffffff, priorité Normal,23threads de bibliothèque au maximum, une seule mesure à la fois. L’ancienne échéance de8 h est remplacée ; même suivi/chat réactivé, pause à la fin des quotas ou si une décision devient nécessaire. [Autorisation](authorization_and_baseline.json), [vérification du suivi](automation_resume_verified.json).
+
+## Diagnostic et correctif retenu
+
+Le défaut existe dans le HEAD propre et se reproduit à froid. Le nouveau diagnostic conserve les deux spécialisations LLVM et les tableaux de bits :le corps Python du noyau donne la même sortie pour None/poids constants ; les versions JIT diffèrent. Exemple sur le second RMSE :0,28019390244381503 contre0,280193902443815, écart d’un ULP. Les poids0,5/1/2 sont concernés. [Diagnostic](diagnostic_before/diagnostic.json). Le rôle de la spécialisation compilée est établi sur ce cas ; l’opération LLVM exacte responsable n’est pas isolée.
+
+La première tentative remplace les poids uniformes par None dans le corps compilé. Elle échoue :Numba ne raffine plus correctement le type et les poids nuls empruntent un mauvais chemin. Tentative rejetée, source et journal conservés dans `prototype_01/`.
+
+Le correctif retenu effectue la décision avant le noyau historique, dans une petite fonction JIT publique sans fastmath. Les poids sont dirigés vers la spécialisation None seulement s’ils sont un tableau1D de la bonne taille, constants, strictement positifs, finis, avec un total fini supérieur au seuil existant1e-300. Les autres cas sont délégués avec leurs arguments originaux. L’ancien corps de calcul est conservé, sous le nom privé `_compute_batch_rmse_kernel`, avec son décorateur parallel/fastmath/nogil :AST identique, sauf le nom. Pas de duplication TMM, de changement de tirage C2, de nouveau paramètre ou de désactivation globale fastmath. La fonction publique conserve sa signature et reste un dispatcher Numba. [Revue manuelle](manual_review.json).
+
+## Preuves et limites de validation
+
+- Oracle avant modification :1143 passed. [Résultat](oracle_before.json).
+- Prototype retenu :29 tests ciblés passent à froid, dont les poids nuls, le corridor et la référence optique indépendante. [Résultat](prototype_02/verification.json).
+- Deux interpréteurs neufs, deux caches distincts, même script et même graine synthétique20261015,24 processeurs/23threads :49 cas,882 tableaux. Les490 tableaux non concernés, y compris appels omis/None, poids variables, nuls et trop petits, sont identiques au bit à l’ancien noyau. Les392 tableaux de poids uniformes donnent tous les bits du non pondéré, contre272 écarts avant correction. Corridor0/0,005, divers nombres de couches/tirages/λ couverts. [Comparaison complète](cold_comparison.json). Ce corpus caractérise ces cas, pas tous les tableaux possibles. Aucun gain scientifique de stratégie n’en est déduit.
+- Le test strict de pondération est renforcé avec0,5/1/2/7,3, sans modifier son assertion. Les4 cas échouent sur le noyau d’origine et passent après ;59 contrôles ciblés passent.
+- Ruff et oracle après :verts,1143 passed. Suite unité :5433 passed,7 skipped,0 failed en32 min22 s. UI :1324 passed,12 skipped,2 xfailed en28 min02 s, aucun échec inattendu. Reste :358 passed,1 failed en11 min14 s ; échec du test concurrent, ratio2,3237 contre plafond1,82. Le contrôleur a fini `FAILED` ; documentation/C1 non exécutés. [État, commandes, SHA et journaux](full_validation_01/validation.json). Un diagnostic fini, séquentiel, compare les deux sources et plafondsNumba23/1 avec caches neufs dans `performance_failure_01/diagnostic_01/` ; aucun seuil n’est modifié et aucun résultat Rate n’est produit.
+
+Le script du corpus exécuté est conservé dans `rmse_cold_corpus_executed.py.txt`, SHA7cc275385a1dcbe8eab3ec337887bc9ce46835a8fc859b394f701119a8bae68d. Son import est trié ensuite dans scratch pour Ruff ; la preuve référence la copie exacte exécutée. Le corpus standard `scripts/c1_diff.py` complète cette preuve et ne la remplace pas :son périmètre ne couvre pas directement ce RMSE.
+
+## Reprise après validation générale
+
+**État courant :R3_h01 terminé et renoté sans gain ; deuxième paireR3_h02 engagée à12 h42.**
+[Bilan h01 et vingt appels homogènes](../STRAT_Rate_suite_2026-10-15/R3_h01_widths/bilan_R3_h01_20261015.md),
+[reprise h02 et protocole](../STRAT_Rate_suite_2026-10-15/R3_h02_wavelengths/reprise_et_protocole.md).
+L’état vivant reste dans [ETAT§0](../../docs/ETAT.md) et les JSON/processus réels ; aucun doublon ni test pendant les mesures.
+
+La [continuation de validation02](full_validation_02/validation.json) est **terminéeGO le15 octobre à9 h06 Paris** :359 tests restants réussis, Ruff et documentation verts, **C1froid8008 tableaux identiques au bit**. Le harnais concurrent fixe explicitementNumba1 dans ses workers, sans changer le seuil1,82 ;18 tests de performance passent à froid. Oracle/unité/UI inchangés sont repris avec leurs provenances, pas présentés comme de nouveaux passages. La validation01FAILED et toutes les tentatives restent conservées. [Expertise du harnais](performance_failure_01/bilan.md).
+
+1. Lire désormais l’[état R3 courant](../STRAT_Rate_suite_2026-10-15/R3_h02_wavelengths/pair_controller.json), puis les processus et verrous. Coordinateur24768, enfant de contrôle30284 au lancement ; aucun test, doublon ni changement des sources/scripts actifs pendant un calcul. H01 est terminé avec ses deux voies et son rejeu ; les anciens états/erreurs restent conservés. L’ancien étatR2 est complet et sa réservation reste conservée.
+2. Contexte de mesure distinct **déjà créé**, worktree `rate-rmse-r0` :[provenance](../STRAT_Rate_suite_2026-10-15/reference_context.json), cinq sources exactes validées. Les24 autres écarts d’octets sont uniquementCRLF/LF, sources normalisées etAST identiques ; clés réelles de cache conservées. Les worktrees historiques restent figés ; ne pas recréer le contexte ni réécrire les anciennes attentes.
+3. Copies bornées et gardes **déjà vérifiéesGO**, avec ressources24/23 et contrôle des quotas. Les anciens scripts à garde expirée restent des archives ; seules les copies actuelles servent à la reprise. Les réservations permanentesR0/R2 sont toutes deux consommées, sans répétition silencieuse possible.
+4. **R0 terminé et auditéGO** : trois plans complets900951015/9900006/9900008, douze appels observés à300tirages, base101 et consensus41/42/43. Points fixes reproduits aux tolérances historiques ; aucun groupe frais consommé. [Preuve](../STRAT_Rate_suite_2026-10-15/R0_verified.json).
+5. **Observation passive et auditR2GO**, recette480/240/six tours. Grille légale complète ; aucune reconstruction conjointe directe de la fenêtre interne de trois couches. R3_h01 teste seulement les largeurs2/4/6 contre1..7, sans changer les λ ni les autres plafonds. Après la paire, figer et renoter les finalistes de façon homogène, avec les comparateurs fixes ; ne pas attribuer un écart à la recherche Rate entre sources différentes sans contrôle. Les préparations et échecs de coordinateur avant enfant sont préservés dans le dossierR3.
+6. Choisir un seul facteur R3 à partir de cette trace, au plus trois paires selon le guide ; R4 au plus deux passes, faisceau4/1200 plans nouveaux ; R5 validation/intégration ; R6 au plus six paires conditionnelles. Figer les groupes réellement frais avant inspection. R7 attend les mesures quantitatives machine.
+7. Fin du programme ou décision nécessaire sans réparation sûre :conserver le calcul engagé, produire le bilan honnête et mettre le même suivi en pause. Aucune activation de défaut, aucun commit/push/publication avant validations complètes.
+
+A2 demeure complète24/24. Le meilleur plan local antérieur reste0,3345159946 nm contre0,3967147882 nm, gain15,6785 % confirmé contre la référence sur neuf groupes frais ; la découverte automatique native n’est pas encore démontrée. Aucun nouveau résultat Rate ni gain de vitesse imputé au code n’est annoncé par ce correctif.

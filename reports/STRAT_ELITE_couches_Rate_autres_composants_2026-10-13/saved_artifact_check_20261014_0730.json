@@ -1,0 +1,13 @@
+{
+  "artifact": "r75x1.75_deep_s042_avec_da1af082.json",
+  "sha256": "7686b76d5009ab7ee5cad1394c9739bd1acffddcd24042d48ecedfd486f8a769",
+  "verdict": "OK",
+  "commit": "da1af0825d5e09e8d0a5ff4f1cf42b802e0e30e7",
+  "git_dirty": false,
+  "elite_rate_moves": true,
+  "provenance_verified": true,
+  "seel": 0.47882322943179045,
+  "deposables": 3998,
+  "seconds": 2853.192741699997,
+  "scope": "Only first variant of r75x1.75 s42 complete; no paired conclusion or homogeneous fixed-plan replay"
+}

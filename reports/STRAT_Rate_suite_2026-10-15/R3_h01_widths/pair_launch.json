@@ -1,0 +1,12 @@
+{
+  "started_utc": "2026-10-15T08:34:04.7786179Z",
+  "controller_pid": 19112,
+  "controller_script": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\run_rate_R3_widths_pair.ps1",
+  "script_sha256": "86626f3802fd6e66abcf1fdd52fbc32a896be09758447b67cc74e0395f09f238",
+  "sequence": [
+    "control",
+    "variant"
+  ],
+  "protocol": "protocol_v3.json",
+  "authorization": "R0-R6 bounded;24 logical CPUs"
+}

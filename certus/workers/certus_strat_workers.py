@@ -346,6 +346,7 @@ def _resolve_injected_strategies(params: Any) -> list[dict[str, Any]]:
     if not isinstance(plans, (list, tuple)):
         raise TypeError(f"injected_strategies : attendu une liste, vu {type(plans).__name__}")
 
+    from certus.core.certus_strat_consensus import _inherited_by_children  # the keys the children of ELITE keep
     out: list[dict[str, Any]] = []
     for i, plan in enumerate(plans):
         if not isinstance(plan, dict):
@@ -358,11 +359,7 @@ def _resolve_injected_strategies(params: Any) -> list[dict[str, Any]]:
             wl = b.get("wavelength", b.get("wl"))
             if wl is None or "start" not in b or "end" not in b:
                 continue
-            propres.append({
-                "start": int(b["start"]),
-                "end": int(b["end"]),
-                "wavelength": float(wl),
-            })
+            propres.append({"start": int(b["start"]), "end": int(b["end"]), "wavelength": float(wl)})
         if not propres:
             continue
         nom = str(plan.get("nom") or plan.get("origin") or f"plan_{i}")
@@ -373,6 +370,7 @@ def _resolve_injected_strategies(params: Any) -> list[dict[str, Any]]:
             "origin": f"INJECTED({nom})",
             "avg_cost": float("inf"),
             "total_cost": float("inf"),
+            **_inherited_by_children(plan),  # Rate layers, slit, testglass swaps: scored as handed over, not as pure optics
         })
     return out
 

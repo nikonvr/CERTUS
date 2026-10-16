@@ -186,3 +186,38 @@ def test_une_cle_INCONNUE_est_ignoree() -> None:
 
 def test_le_statut_VALIDE_et_RESERVE_sont_distincts() -> None:
     assert VALIDE != RESERVE != NON_MESURE != DERNIER_RECOURS
+
+
+# ---------------------------------------------------------------------------
+# 3. THE OTHER DIRECTION -- kernel against registry
+# ---------------------------------------------------------------------------
+
+#: Rate switches that the search reads and that predate this guard, still missing from the registry. The set may
+#: only shrink: a new switch is registered, with what its measurement says, before the search reads it.
+RATE_SWITCHES_NOT_YET_REGISTERED = {"rate_layer_sets", "rate_tail_keep_optical", "rate_rescue_hard"}
+
+
+def _rate_switches_read_by_the_search() -> set[str]:
+    root = Path(__file__).resolve().parents[2] / "certus"
+    pattern = re.compile(r'params\.get\(\s*["\']((?:elite_)?rate_[A-Za-z0-9_]+)["\']')
+    keys: set[str] = set()
+    for sub in ("core", "workers", "physics", "utils"):
+        for path in sorted((root / sub).glob("*.py")):
+            keys.update(pattern.findall(path.read_text(encoding="utf-8")))
+    return keys
+
+
+def test_every_rate_switch_the_search_reads_is_in_the_registry() -> None:
+    """A switch the search reads without the registry knowing it is a setting the panel cannot show."""
+    unregistered = _rate_switches_read_by_the_search() - set(PAR_CLE) - RATE_SWITCHES_NOT_YET_REGISTERED
+    assert not unregistered, (
+        f"{sorted(unregistered)} read by the search but absent from the registry: add a `Levier` with its default "
+        "and what its measurement says."
+    )
+
+
+def test_the_unregistered_rate_switches_are_still_unregistered_and_still_read() -> None:
+    """The allowance list only shrinks: a switch that got registered, or stopped being read, leaves it."""
+    read = _rate_switches_read_by_the_search()
+    stale = {k for k in RATE_SWITCHES_NOT_YET_REGISTERED if k in PAR_CLE or k not in read}
+    assert not stale, f"{sorted(stale)} no longer belong to RATE_SWITCHES_NOT_YET_REGISTERED"

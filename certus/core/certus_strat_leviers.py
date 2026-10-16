@@ -237,6 +237,18 @@ LEVIERS: tuple[Levier, ...] = (
         reserve="Jamais balaye : 120 est un reglage de depart.",
     ),
     Levier(
+        cle="elite_rate_balanced_moves",
+        libelle="ELITE : repartit les mouvements Rate entre familles, largeurs et positions (au meme plafond)",
+        defaut=False,
+        genre="bool",
+        statut=RESERVE,
+        mesure="A/B du 2026-10-13, r75x0.5 deep graine 101, defauts de production et 120 candidats Rate par tour : SEEL 0,396715 nm "
+               "(ordre historique, 4069 plans deposables) contre 0,479488 nm (familles reparties, 3777 plans), soit +20,86 % ; "
+               "c'est le seul essai, et il est defavorable.",
+        reserve="Un composant, une graine : ni generalisation ni activation par defaut. `false` conserve l'ordre historique "
+                "des candidats.",
+    ),
+    Levier(
         cle="elite_rate_joint_candidates",
         libelle="ELITE : budget experimental de fenetres optiques et longueurs d'onde conjointes",
         defaut=0,

@@ -1,0 +1,47 @@
+{
+  "recorded_date": "2026-10-16",
+  "version": 2,
+  "kind": "exploratory single measurement, NOT the A9 protocol (docs/ETAT.md A9 stays to be prepared by its own session)",
+  "history": "v1 (protocol_v1_sans_raffinement.json) launched 2026-10-16T17:23:44Z without rate_post_refinement; stopped by me at 2026-10-16T17:28:27Z (ELITE round 1/6, no probe artefact) because 👤 wrote « rajoute le refinement ». Evidence kept in arret_run01.txt and run_01_sans_raffinement_arretee.log. This is run 02.",
+  "user_requests_verbatim": [
+    "le 99c doit etre essayé avec les dernieres evolutions de rate",
+    "sur un seul temoin",
+    "il faut tester le 99c sur les differentes variantes de rate elargie trouvé ces 4 derniers jours",
+    "peux tu lancer le 99c avec le rate elargi ?",
+    "rajoute le refinement"
+  ],
+  "component": {"name": "99c", "config": "example/example_strat/JSON-strat-bandpass-5cav-99c.json", "layers": 99},
+  "witness": "single witness glass for the whole 99-layer run (witness_reset_layers not set)",
+  "command": "python -X cpu_count=16 scripts/probe_blocs_vs_plantage.py 99c premium 0 0 2 0 42",
+  "positional_arguments": {"mode": "premium", "cherche_fente": 0, "min_tp": 0, "resolution_nm": 2, "elargi_profile": 0, "seed": 42, "par_swing": 0},
+  "same_arguments_as": "the 99c runs of 2026-10-11 (reports/STRAT_D100_interrupteurs_non_charges_2026-10-11.md, reports/STRAT_remesure_D100_2026-10-11.md)",
+  "probe_overrides": {"elite_rate_max_candidates": 240, "elite_rounds": 6, "elite_rate_joint_candidates": 480, "rate_post_refinement": true},
+  "probe_tag": "rate_elargi_refinement_240_6_480",
+  "reading_of_rate_elargi": "the widened native profile of reports/STRAT_Rate_expertise_2026-10-13.md (480 joint window/wavelength neighbours, Rate budget 240 instead of 120, six refinement rounds instead of the mode's default), plus the final Rate refinement of the R5 integration (rate_post_refinement). On r75x0.5 seed 101 the widened profile gave SEEL 0.36006088633539163 nm against 0.3967 nm for the reference (-9.24 %, confirmed on 8 independent groups, 6.331 to 10.494 %); that report also says the own contribution of the joint neighbourhood was not confirmed against the same budgets without it.",
+  "final_refinement": {
+    "what": "certus/workers/certus_strat_workers_rate.py::refine_rate_output -> certus/core/certus_strat_rate_post.py::refine_native_output, run after the whole search, on native parents only, no historical plan or anchor injected",
+    "preconditions_checked_at_start": "consensus enabled, consensus_top_k >= 9, at least 2 consensus seeds (check_rate_post_preconditions, commit 6f200d61): the run refuses to start otherwise",
+    "bounds": "beam 2, at most 2 passes (internal windows, then prefix), 300 proposals per pass, 600 in total, groups of 9, quota of 73 groups, stops without gain",
+    "within_run_pairing": "refine_native_output returns the native rows followed by the refined candidates and a ledger (passes[].before/after, best_score, winner): the native result before refinement is therefore in the same run, and the gain of the refinement is read inside it. The refinement runs after the search and does not change it.",
+    "explicit_failure": "if no native parent holds a complete consensus the ledger status is no_complete_native_parent and nothing is refined; an absence of depositable plan stays an explicit failure with no valid SEEL (docs/ETAT.md A9)"
+  },
+  "production_defaults_left_as_they_are": {"rate_rescue": true, "rate_rescue_few": 10, "elite_rate_moves": true, "rate_by_swing": true, "rate_rescue_hard": false, "elite_rate_balanced_moves": false, "rate_layer_sets": [], "rate_tail_keep_optical": 0},
+  "deliberately_not_in_this_run": [
+    "the prefix/wavelength coupling budget of the 2026-10-14 search (experimental adapter outside production code)",
+    "rate_rescue_hard and elite_rate_balanced_moves (measured without gain / unfavourable at r75x0.5)",
+    "witness_reset_layers, an optical-only arm, a production-defaults arm, confirmation seeds"
+  ],
+  "sources_frozen": {"git_head": "0c7c1e2e032fbf17c6de64548318950819e1f07b", "tracked_code_changes_in_certus_scripts_tools_tests_example": "none (git status --porcelain empty on 2026-10-16 before run 01; nothing edited since)", "python": "3.14.8"},
+  "resources": {"logical_cpus": 16, "library_threads": 15, "priority": "normal", "concurrent_scientific_measurements": 1, "bench_timeout_s": 36000, "env": "CERTUS_BENCH_TIMEOUT_S=36000 PYTHONUTF8=1 NUMBA_NUM_THREADS=15 OMP_NUM_THREADS=15 MKL_NUM_THREADS=15 OPENBLAS_NUM_THREADS=15"},
+  "bench_timeout_note": "raised from 21600 s to 36000 s because the final refinement adds up to 600 fully scored proposals on 99 layers after a search whose duration on the 99c with this Rate is not known; a timeout would cut everything and return a result-looking None (WAIT_TIMEOUT).",
+  "machine_inventory_before_launch": "no python process (checked by the launch command itself, which refuses to start otherwise); A9 session blocked on a question to the user",
+  "reference_for_reading_only": "2026-10-11, older code and older Rate: 0 depositable out of 2 139 plans (1 934 Rate variants), minimum crash 82.7 % (reports/STRAT_remesure_D100_2026-10-11.md). Not a paired baseline: the production defaults at HEAD (rescue, ELITE Rate moves) are newer. Run 01 log, 4.7 minutes in: the two phase-B strategies of the last block already showed crash 100 %, the ELITE rounds were starting (this is not a result).",
+  "limits": [
+    "one search seed (42), one run, no confidence interval",
+    "no confirmation seeds are reserved: a depositable plan found here still needs independent seeds before any claim",
+    "an absence of depositable plan stays an explicit failure with no valid SEEL (docs/ETAT.md A9)",
+    "no scientific default activated, no source or script modified, no commit, no push, artefacts left untracked"
+  ],
+  "rules_during_the_run": "no test and no analysis Python during the measurement; the log is read with tail/grep only. Stop: TaskStop on the background task, or kill the python process tree by PID.",
+  "outputs": ["reports/STRAT_99c_rate_elargi_2026-10-16/run.log", "reports/STRAT_99c_rate_elargi_2026-10-16/launched_at_utc.txt", "reports/STRAT_99c_rate_elargi_2026-10-16/finished_at_utc.txt", "the probe artefact reports/blocs_vs_plantage_99c_premium_s042_*rate_elargi_refinement_240_6_480*.json (never overwritten, by scripts/_artefact.py)"]
+}

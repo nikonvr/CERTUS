@@ -1,0 +1,20 @@
+{
+  "recorded_date": "2026-10-16",
+  "kind": "exploratory repetition of the 99c pair at another search seed; NOT the A9 protocol",
+  "user_request_verbatim": "Oui : répète la paire (défauts de production puis élargi + raffinement) sur le 99c à la graine 101, un seul run à la fois, sans surveillance en boucle.",
+  "component": {"name": "99c", "config": "example/example_strat/JSON-strat-bandpass-5cav-99c.json", "layers": 99},
+  "witness": "single witness glass (witness_reset_layers not set)",
+  "arms": {
+    "A_defauts": {"command": "python -X cpu_count=16 scripts/probe_blocs_vs_plantage.py 99c premium 0 0 2 0 101", "overrides": "none"},
+    "B_elargi_raffinement": {"command": "same command", "overrides": {"elite_rate_max_candidates": 240, "elite_rounds": 6, "elite_rate_joint_candidates": 480, "rate_post_refinement": true}, "tag": "rate_elargi_refinement_240_6_480"}
+  },
+  "order": "A then B, one at a time, chained by chain.sh in this folder (it refuses to start an arm if a python process runs or if tracked code changed since the protocol; stops after A if A fails)",
+  "pairing": "same commit, seed, machine, resources and consensus seeds (41/42/43 by default) in both arms; the first pair (seed 42) is in reports/STRAT_99c_rate_elargi_2026-10-16/bilan.md : SEEL 0.7026 nm (defaults) against 0.6084 nm (widened + refinement), consensus score 0.125451 against 0.092536",
+  "what_it_answers": "whether the effect of the widening seen at seed 42 (best SEEL -13.4 %, best consensus score -26.2 %) repeats at another search seed; this seed (101) is not among the consensus seeds 41/42/43",
+  "sources_frozen": {"git_head": "0c7c1e2e032fbf17c6de64548318950819e1f07b", "python": "3.14.8"},
+  "resources": {"logical_cpus": 16, "library_threads": 15, "priority": "normal", "concurrent_scientific_measurements": 1, "bench_timeout_s": 36000},
+  "limits": ["two search seeds in total, one run per arm and seed, no confidence interval", "no confirmation groups reserved", "durations not comparable (warm Numba cache)", "no default activated, no source modified, no commit, no push, artefacts left untracked"],
+  "rules_during_the_run": "no test and no analysis Python during the measurements; not polled in a loop (user request): one start check and one reading at the end",
+  "expected_duration": "about 25 min for A and 38 min for B (seed 42 durations), so about 65 min in total",
+  "outputs": ["chain.log", "run_A_defauts.log", "run_B_elargi_raffinement.log", "reports/blocs_vs_plantage_99c_premium_s101*.json (never overwritten by scripts/_artefact.py)"]
+}

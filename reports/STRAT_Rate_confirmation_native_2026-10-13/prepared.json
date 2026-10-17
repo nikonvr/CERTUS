@@ -1,0 +1,37 @@
+{
+  "status": "prepared_not_measured",
+  "wait_for": "STRAT_Rate_native_joint_2026-10-13/controller.json complete",
+  "sha256": {
+    "runner": "15d7fac3780d6dfcf15c66f04dd7aa930b3051fb4ddfae9d7a65991aefa6af4c",
+    "replay": "ff7945ef100234936381d84012310f1a73328a6ba9e15f53fa5ec092a2b2e6dd",
+    "protocol": "33974126d23f49d96e7393249c500f0d27aa882159b23be551cb23684c36c68c"
+  },
+  "fixed_plans": [
+    "reference",
+    "validated local joint plan",
+    "native winner not yet known"
+  ],
+  "fresh_consensus_seeds": [
+    [
+      606,
+      607,
+      608
+    ],
+    [
+      707,
+      708,
+      709
+    ]
+  ],
+  "sequence": [
+    "control",
+    "holdout_202",
+    "holdout_303",
+    "holdout_404",
+    "holdout_505",
+    "holdout_606",
+    "holdout_707"
+  ],
+  "depths_unchanged": true,
+  "observer": "delegates to original physical task; preserves all per-seed crash counts and per-noise summaries"
+}

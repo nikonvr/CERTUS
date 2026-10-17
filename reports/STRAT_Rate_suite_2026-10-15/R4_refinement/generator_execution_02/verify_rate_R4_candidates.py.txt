@@ -1,0 +1,124 @@
+"""Check R4 construction, invariants and contracts without physical simulations."""
+
+from __future__ import annotations
+
+import copy
+import hashlib
+import json
+import runpy
+import sys
+from datetime import UTC, datetime
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+PROGRAM = ROOT / "reports/STRAT_Rate_suite_2026-10-15"
+SAVED = PROGRAM / "R4_refinement"
+
+
+def main():
+    window = json.loads((PROGRAM / "autonomie_jusqu_20261016_0800/authorization.json").read_text(encoding="utf-8"))
+    deadline = datetime.fromisoformat(window["no_new_measurements_or_tests_after_utc"].replace("Z", "+00:00"))
+    if datetime.now(UTC) >= deadline or (PROGRAM / "measurement.running").exists():
+        raise RuntimeError("Verification requires an idle measurement context before the deadline")
+    output = SAVED / "generator_verification_02"
+    output.mkdir(exist_ok=False)
+    helper = runpy.run_path(str(ROOT / "scratch/campagne_a2_runner.py"))
+    resources = helper["limit_resources"](24)
+    reference = json.loads((PROGRAM / "reference_context.json").read_text(encoding="utf-8"))
+    worktree = Path(reference.get("worktree", reference.get("workspace_directory")))
+    sys.path[:0] = [str(worktree), str(worktree / "scripts")]
+    from certus.utils.certus_strat_context import _validate_strategy_blocks_contract
+
+    generator = runpy.run_path(str(ROOT / "scratch/rate_R4_candidates.py"))
+    coarse, fine = generator["coarse"], generator["fine"]
+    context, signature = generator["window_context"], generator["signature"]
+    frozen = json.loads((PROGRAM / "R3_h02_wavelengths/frozen_finalists.json").read_text(encoding="utf-8"))
+    parent_ids = (9900006, 9900008, 901054165, 900754638)
+    parents = [p for sid in parent_ids for p in frozen["plans"] if p["source_strategy_id"] == sid]
+    trace_file = PROGRAM / "R3_h02_wavelengths/control/pipeline_trace.json"
+    trace = json.loads(trace_file.read_text(encoding="utf-8"))
+    inputs = [e for e in trace["events"] if e["kind"] == "generation_inputs"]
+    grid = inputs[0]["available_wls"]
+    assert all(e["available_wls"] == grid for e in inputs)
+    grid_record = {"available_wls": grid, "source_trace_sha256": hashlib.sha256(trace_file.read_bytes()).hexdigest(),
+                   "source_event": inputs[0]["event"], "all_generation_grids_equal": True}
+    grid_file = SAVED / "legal_grid.json"
+    if grid_file.exists():
+        assert json.loads(grid_file.read_text(encoding="utf-8")) == grid_record
+    else:
+        with grid_file.open("x", encoding="utf-8") as stream:
+            json.dump(grid_record, stream, indent=2)
+    fixture = {"source_strategy_id": 18_001, "blocks": [{"start": 0, "end": 6, "wavelength": 550.0},
+        {"start": 6, "end": 14, "wavelength": 600.0}, {"start": 14, "end": 18, "wavelength": 620.0}],
+        "rate_layers": [*range(3, 11), *range(13, 18)], "monochromator_resolution_nm": 2.0,
+        "witness_reset_layers": None, "expected_score_fixed_point": 0.5}
+    checked = 0
+    summaries = []
+    for parent, count, legal in [(fixture, 18, list(range(500, 651))), *[(p, 75, grid) for p in parents]]:
+        before = copy.deepcopy(parent)
+        for kind in ("internal", "prefix"):
+            old_first, old_end, block_index = context(parent, count, kind)
+            for stage, factory in (("coarse", coarse), ("fine", fine)):
+                offered = list(factory(parent, legal, count, kind))
+                assert offered == list(factory(parent, legal, count, kind))
+                valid_offers = [p for p in offered if p is not None]
+                summaries.append({"parent": parent["source_strategy_id"], "layers": count,
+                                  "kind": kind, "stage": stage, "constructed": len(valid_offers),
+                                  "invalid_geometry": len(offered) - len(valid_offers)})
+                for plan in valid_offers:
+                    valid, reason = _validate_strategy_blocks_contract(plan, count)
+                    assert valid, (parent["source_strategy_id"], kind, reason)
+                    assert "expected_score_fixed_point" not in plan
+                    assert not ({0, 1} & set(plan["rate_layers"]))
+                    assert plan["monochromator_resolution_nm"] == parent["monochromator_resolution_nm"]
+                    assert ("witness_reset_layers" in plan) == ("witness_reset_layers" in parent)
+                    assert plan.get("witness_reset_layers") == parent.get("witness_reset_layers")
+                    assert plan["blocks"][block_index]["wavelength"] in legal
+                    assert len(plan["blocks"]) == len(parent["blocks"])
+                    assert all(plan["blocks"][i] == b for i, b in enumerate(parent["blocks"]) if i != block_index)
+                    move = plan["move"]
+                    new_first, new_end = move["window"]
+                    changed = set(range(old_first, old_end)) | set(range(new_first, new_end))
+                    assert (set(plan["rate_layers"]) ^ set(parent["rate_layers"])) <= changed
+                    assert plan["blocks"][block_index]["start"] == parent["blocks"][block_index]["start"]
+                    assert plan["blocks"][block_index]["end"] == parent["blocks"][block_index]["end"]
+                    if kind == "internal":
+                        assert 1 <= new_end - new_first <= 7
+                    else:
+                        assert new_first == 0
+                        assert new_end >= 2
+                    checked += 1
+        assert parent == before
+    equivalent = copy.deepcopy(fixture)
+    equivalent["blocks"][-1]["wavelength"] = 999.0
+    assert signature(equivalent) == signature(fixture)
+    different = copy.deepcopy(fixture)
+    different["blocks"][1]["wavelength"] += 1
+    assert signature(different) != signature(fixture)
+    unsupported = copy.deepcopy(fixture)
+    unsupported["rate_layers"].remove(7)
+    try:
+        context(unsupported, 18, "internal")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("A second optical window would have changed wavelength")
+    report = {"verdict": "GO", "verified_utc": datetime.now(UTC).isoformat(), "physics_measured": False,
+              "resources": resources,
+              "complete_contracts_checked": checked, "summaries": summaries,
+              "checks": ["Deterministic output and immutable parents", "First two layers always optical",
+                         "One selected window only; other blocks, slit, witness and block boundaries preserved",
+                         "Expected comparator score removed from every new proposal",
+                         "Internal lengths1..7, prefix>=2 and legal wavelengths",
+                         "Fully Rate wavelength equivalence deduplicated, optical wavelength change distinct",
+                         "Multi-window block refused explicitly"],
+              "source_sha256": {"generator": hashlib.sha256((ROOT / "scratch/rate_R4_candidates.py").read_bytes()).hexdigest(),
+                                "verifier": hashlib.sha256(Path(__file__).read_bytes()).hexdigest()},
+              "legal_grid_sha256": hashlib.sha256((SAVED / "legal_grid.json").read_bytes()).hexdigest()}
+    with (output / "verification.json").open("x", encoding="utf-8") as stream:
+        json.dump(report, stream, ensure_ascii=False, indent=2)
+    print(json.dumps({"verdict": "GO", "contracts": checked, "physics_measured": False}))
+
+
+if __name__ == "__main__":
+    main()

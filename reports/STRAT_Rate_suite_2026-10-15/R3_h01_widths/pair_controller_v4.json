@@ -1,0 +1,28 @@
+{
+    "status":  "complete",
+    "pid":  33592,
+    "started_utc":  "2026-10-15T09:35:05.9776956Z",
+    "runs":  [
+                 {
+                     "arm":  "control",
+                     "status":  "complete",
+                     "adopted":  true,
+                     "pid":  21508,
+                     "ended_utc":  "2026-10-15T09:20:11.746362+00:00",
+                     "artifact":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R3_h01_widths\\control\\blocs_vs_plantage_r75x0.5_deep_s101_r3_widths_control_20261015_v1.json",
+                     "audit_sha256":  "0010eb8f5d440f3e879395cdb333e58122b69684168cf7a8b73fbf0d36d7e052"
+                 },
+                 {
+                     "arm":  "variant",
+                     "pid":  17704,
+                     "status":  "complete",
+                     "exit_code":  0,
+                     "ended_utc":  "2026-10-15T10:18:42.163194+00:00",
+                     "artifact":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R3_h01_widths\\variant\\blocs_vs_plantage_r75x0.5_deep_s101_r3_widths_variant_20261015_v1.json"
+                 }
+             ],
+    "current":  null,
+    "current_pid":  null,
+    "recovery_of":  "pair_controller_v2.json; original control is adopted, never repeated",
+    "updated_utc":  "2026-10-15T10:18:53.1216514Z"
+}

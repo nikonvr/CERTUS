@@ -1,0 +1,583 @@
+{
+  "scope": "structural order with logged parents; no physics replay; exact round-1 generator reconstructed with all 229 pre-ELITE saved plans",
+  "groups": [
+    {
+      "variant": "actuel",
+      "blocks": 9,
+      "round": 1,
+      "time": "13:58:24",
+      "ids": [
+        990950168,
+        990950176,
+        990950132,
+        990950228,
+        990950004,
+        990950020,
+        990950169,
+        990950171,
+        990950179,
+        990950172
+      ],
+      "orders": {
+        "legacy": {
+          "pool": 479,
+          "counts": {
+            "120": {
+              "edge": 29,
+              "open2": 91
+            },
+            "240": {
+              "edge": 29,
+              "open2": 200,
+              "open4": 11
+            }
+          },
+          "target_positions": {
+            "900950560": [
+              [
+                124,
+                990950004
+              ]
+            ],
+            "900951015": []
+          }
+        },
+        "balanced": {
+          "pool": 479,
+          "counts": {
+            "120": {
+              "edge": 29,
+              "open2": 33,
+              "open4": 26,
+              "insert2": 17,
+              "insert4": 15
+            },
+            "240": {
+              "edge": 29,
+              "open2": 83,
+              "open4": 77,
+              "insert2": 27,
+              "insert4": 24
+            }
+          },
+          "target_positions": {
+            "900950560": [
+              [
+                264,
+                990950004
+              ]
+            ],
+            "900951015": []
+          }
+        }
+      },
+      "exact_round1": {
+        "legacy_120": {
+          "generated": 240,
+          "rate": 120,
+          "seed_900950560": [
+            {
+              "id": 900950560,
+              "parent": 990950004
+            }
+          ],
+          "families": {
+            "edge": 25,
+            "open2": 95
+          }
+        },
+        "legacy_240": {
+          "generated": 360,
+          "rate": 240,
+          "seed_900950560": [
+            {
+              "id": 900950560,
+              "parent": 990950004
+            }
+          ],
+          "families": {
+            "edge": 25,
+            "open2": 201,
+            "open4": 14
+          }
+        },
+        "legacy_360": {
+          "generated": 480,
+          "rate": 360,
+          "seed_900950560": [
+            {
+              "id": 900950560,
+              "parent": 990950004
+            }
+          ],
+          "families": {
+            "edge": 25,
+            "open2": 203,
+            "open4": 132
+          }
+        },
+        "balanced_120": {
+          "generated": 240,
+          "rate": 120,
+          "seed_900950560": [],
+          "families": {
+            "edge": 25,
+            "open2": 34,
+            "open4": 29,
+            "insert2": 17,
+            "insert4": 15
+          }
+        },
+        "balanced_240": {
+          "generated": 360,
+          "rate": 240,
+          "seed_900950560": [],
+          "families": {
+            "edge": 25,
+            "open2": 84,
+            "open4": 80,
+            "insert2": 27,
+            "insert4": 24
+          }
+        },
+        "balanced_360": {
+          "generated": 480,
+          "rate": 360,
+          "seed_900950560": [
+            {
+              "id": 900950700,
+              "parent": 990950004
+            }
+          ],
+          "families": {
+            "edge": 25,
+            "open2": 144,
+            "open4": 140,
+            "insert2": 27,
+            "insert4": 24
+          }
+        }
+      }
+    },
+    {
+      "variant": "actuel",
+      "blocks": 9,
+      "round": 2,
+      "time": "13:58:31",
+      "ids": [
+        900950560,
+        900950322,
+        990950176,
+        990950132,
+        900950342,
+        900950343,
+        900950344,
+        900950345,
+        900950346,
+        900950347
+      ],
+      "orders": {
+        "legacy": {
+          "pool": 482,
+          "counts": {
+            "120": {
+              "edge": 34,
+              "open2": 85,
+              "fill": 1
+            },
+            "240": {
+              "edge": 34,
+              "open2": 180,
+              "fill": 1,
+              "open4": 25
+            }
+          },
+          "target_positions": {
+            "900950560": [],
+            "900951015": []
+          }
+        },
+        "balanced": {
+          "pool": 482,
+          "counts": {
+            "120": {
+              "edge": 31,
+              "fill": 1,
+              "open2": 30,
+              "open4": 21,
+              "insert2": 19,
+              "insert4": 18
+            },
+            "240": {
+              "edge": 34,
+              "fill": 1,
+              "open2": 71,
+              "open4": 61,
+              "insert2": 37,
+              "insert4": 36
+            }
+          },
+          "target_positions": {
+            "900950560": [],
+            "900951015": []
+          }
+        }
+      }
+    },
+    {
+      "variant": "actuel",
+      "blocks": 9,
+      "round": 3,
+      "time": "13:58:38",
+      "ids": [
+        900950567,
+        990950169,
+        990950176,
+        990950132,
+        900950579,
+        900950580,
+        900950582,
+        900950583,
+        900950584,
+        900950585
+      ],
+      "orders": {
+        "legacy": {
+          "pool": 494,
+          "counts": {
+            "120": {
+              "edge": 58,
+              "open2": 55,
+              "fill": 7
+            },
+            "240": {
+              "edge": 58,
+              "open2": 120,
+              "fill": 7,
+              "open4": 55
+            }
+          },
+          "target_positions": {
+            "900950560": [],
+            "900951015": [
+              [
+                95,
+                900950579
+              ]
+            ]
+          }
+        },
+        "balanced": {
+          "pool": 494,
+          "counts": {
+            "120": {
+              "edge": 37,
+              "fill": 7,
+              "open2": 30,
+              "open4": 27,
+              "insert2": 13,
+              "insert4": 6
+            },
+            "240": {
+              "edge": 58,
+              "fill": 7,
+              "open2": 77,
+              "open4": 68,
+              "insert2": 19,
+              "insert4": 11
+            }
+          },
+          "target_positions": {
+            "900950560": [],
+            "900951015": [
+              [
+                125,
+                900950579
+              ]
+            ]
+          }
+        }
+      }
+    },
+    {
+      "variant": "equilibre",
+      "blocks": 9,
+      "round": 1,
+      "time": "14:37:10",
+      "ids": [
+        990950168,
+        990950176,
+        990950132,
+        990950228,
+        990950004,
+        990950020,
+        990950169,
+        990950171,
+        990950179,
+        990950172
+      ],
+      "orders": {
+        "legacy": {
+          "pool": 479,
+          "counts": {
+            "120": {
+              "edge": 29,
+              "open2": 91
+            },
+            "240": {
+              "edge": 29,
+              "open2": 200,
+              "open4": 11
+            }
+          },
+          "target_positions": {
+            "900950560": [
+              [
+                124,
+                990950004
+              ]
+            ],
+            "900951015": []
+          }
+        },
+        "balanced": {
+          "pool": 479,
+          "counts": {
+            "120": {
+              "edge": 29,
+              "open2": 33,
+              "open4": 26,
+              "insert2": 17,
+              "insert4": 15
+            },
+            "240": {
+              "edge": 29,
+              "open2": 83,
+              "open4": 77,
+              "insert2": 27,
+              "insert4": 24
+            }
+          },
+          "target_positions": {
+            "900950560": [
+              [
+                264,
+                990950004
+              ]
+            ],
+            "900951015": []
+          }
+        }
+      },
+      "exact_round1": {
+        "legacy_120": {
+          "generated": 240,
+          "rate": 120,
+          "seed_900950560": [
+            {
+              "id": 900950560,
+              "parent": 990950004
+            }
+          ],
+          "families": {
+            "edge": 25,
+            "open2": 95
+          }
+        },
+        "legacy_240": {
+          "generated": 360,
+          "rate": 240,
+          "seed_900950560": [
+            {
+              "id": 900950560,
+              "parent": 990950004
+            }
+          ],
+          "families": {
+            "edge": 25,
+            "open2": 201,
+            "open4": 14
+          }
+        },
+        "legacy_360": {
+          "generated": 480,
+          "rate": 360,
+          "seed_900950560": [
+            {
+              "id": 900950560,
+              "parent": 990950004
+            }
+          ],
+          "families": {
+            "edge": 25,
+            "open2": 203,
+            "open4": 132
+          }
+        },
+        "balanced_120": {
+          "generated": 240,
+          "rate": 120,
+          "seed_900950560": [],
+          "families": {
+            "edge": 25,
+            "open2": 34,
+            "open4": 29,
+            "insert2": 17,
+            "insert4": 15
+          }
+        },
+        "balanced_240": {
+          "generated": 360,
+          "rate": 240,
+          "seed_900950560": [],
+          "families": {
+            "edge": 25,
+            "open2": 84,
+            "open4": 80,
+            "insert2": 27,
+            "insert4": 24
+          }
+        },
+        "balanced_360": {
+          "generated": 480,
+          "rate": 360,
+          "seed_900950560": [
+            {
+              "id": 900950700,
+              "parent": 990950004
+            }
+          ],
+          "families": {
+            "edge": 25,
+            "open2": 144,
+            "open4": 140,
+            "insert2": 27,
+            "insert4": 24
+          }
+        }
+      }
+    },
+    {
+      "variant": "equilibre",
+      "blocks": 9,
+      "round": 2,
+      "time": "14:37:18",
+      "ids": [
+        900950322,
+        990950176,
+        990950132,
+        900950342,
+        900950343,
+        900950344,
+        900950345,
+        900950346,
+        900950347,
+        900950348
+      ],
+      "orders": {
+        "legacy": {
+          "pool": 480,
+          "counts": {
+            "120": {
+              "edge": 30,
+              "open2": 90
+            },
+            "240": {
+              "edge": 30,
+              "open2": 190,
+              "open4": 20
+            }
+          },
+          "target_positions": {
+            "900950560": [],
+            "900951015": []
+          }
+        },
+        "balanced": {
+          "pool": 480,
+          "counts": {
+            "120": {
+              "edge": 30,
+              "open2": 30,
+              "open4": 20,
+              "insert2": 20,
+              "insert4": 20
+            },
+            "240": {
+              "edge": 30,
+              "open2": 70,
+              "open4": 60,
+              "insert2": 40,
+              "insert4": 40
+            }
+          },
+          "target_positions": {
+            "900950560": [],
+            "900951015": []
+          }
+        }
+      }
+    },
+    {
+      "variant": "equilibre",
+      "blocks": 9,
+      "round": 3,
+      "time": "14:37:24",
+      "ids": [
+        900950322,
+        990950176,
+        990950132,
+        900950342,
+        900950343,
+        900950344,
+        900950345,
+        900950346,
+        900950347,
+        900950348
+      ],
+      "orders": {
+        "legacy": {
+          "pool": 480,
+          "counts": {
+            "120": {
+              "edge": 30,
+              "open2": 90
+            },
+            "240": {
+              "edge": 30,
+              "open2": 190,
+              "open4": 20
+            }
+          },
+          "target_positions": {
+            "900950560": [],
+            "900951015": []
+          }
+        },
+        "balanced": {
+          "pool": 480,
+          "counts": {
+            "120": {
+              "edge": 30,
+              "open2": 30,
+              "open4": 20,
+              "insert2": 20,
+              "insert4": 20
+            },
+            "240": {
+              "edge": 30,
+              "open2": 70,
+              "open4": 60,
+              "insert2": 40,
+              "insert4": 40
+            }
+          },
+          "target_positions": {
+            "900950560": [],
+            "900951015": []
+          }
+        }
+      }
+    }
+  ]
+}

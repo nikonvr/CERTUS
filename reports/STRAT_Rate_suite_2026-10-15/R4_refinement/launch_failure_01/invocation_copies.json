@@ -1,0 +1,20 @@
+{
+  "status": "PREPARED_BEFORE_MEASUREMENT",
+  "records": [
+    {
+      "source": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\start_rate_R4_first_group.ps1",
+      "source_sha256": "fa91c06003a06ca21abbf464320f64d7a9a5fb165629d0cf82cc9e2b6cd1d3bd",
+      "invocation_copy": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\start_rate_R4_first_group_invocation_01.ps1",
+      "invocation_sha256": "6f130245e6b21cf6fd40b2013dad7ebdba013ec07995725235ed609970d350fd",
+      "only_change": "Explicit task root and bootstrap source path for -Command; scientific command/functions unchanged"
+    },
+    {
+      "source": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\run_rate_R4.ps1",
+      "source_sha256": "2c83ee0560dfecaab06a5b7036a9013df387f7c9d6c9bfe960fdb59f5abe59b3",
+      "invocation_copy": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\run_rate_R4_invocation_01.ps1",
+      "invocation_sha256": "37b2e569d451ce8add013abf77da02fe6cf297f45f0e5d07045af09dab891a16",
+      "only_change": "Explicit task root and bootstrap source path for -Command; scientific command/functions unchanged"
+    }
+  ],
+  "execution_policy_changed": false
+}

@@ -145,9 +145,7 @@ class CertusFieldPlotMixin:
         payload = plot_data.to_dict()
         
         # Extract layer types from the stack table
-        layer_types = []
-        for row in range(self.table_layers.rowCount()):
-            layer_types.append(0 if self._normalize_layer_material(row) == "H" else 1)
+        layer_types = [0 if self._normalize_layer_material(row) == "H" else 1 for row in range(self.table_layers.rowCount())]
         payload["layer_types"] = layer_types
         payload["sub_name"] = self.combo_mat_Sub.currentText()
         payload["sup_name"] = self.combo_mat_Sup.currentText()
@@ -167,8 +165,7 @@ class CertusFieldPlotMixin:
             data = []
             for k in range(len(plot_data.z_coords)):
                 row = [f"{plot_data.z_coords[k]:.2f}"]
-                for w in range(len(plot_data.lambda_calcs)):
-                    row.append(f"{plot_data.E2_values_list[w][k]:.6f}")
+                row.extend(f"{plot_data.E2_values_list[w][k]:.6f}" for w in range(len(plot_data.lambda_calcs)))
                 data.append(row)
             self.table_field_res.set_data(headers, data)
 

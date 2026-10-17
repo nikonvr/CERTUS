@@ -1,0 +1,33 @@
+{
+  "checked_utc": "2026-10-15T05:39:58.430213+00:00",
+  "preflight": "GO",
+  "validation_status": "running",
+  "current": "unit",
+  "validation_processes": [
+    {
+      "Id": 8272,
+      "CPU": 0.21875,
+      "PriorityClass": 32,
+      "Affinity": 16777215
+    },
+    {
+      "Id": 51000,
+      "CPU": 1273.640625,
+      "PriorityClass": 32,
+      "Affinity": 16777215
+    }
+  ],
+  "validated_sources_unchanged": true,
+  "scientific_locks": [],
+  "A2": {
+    "status": "complete",
+    "completed": 24,
+    "current_pid": null
+  },
+  "continuation": {
+    "status": "complete",
+    "current_pid": null
+  },
+  "action": "Leave the single live validator and its unit-test child running; no duplicate and no scientific launch",
+  "new_result": false
+}

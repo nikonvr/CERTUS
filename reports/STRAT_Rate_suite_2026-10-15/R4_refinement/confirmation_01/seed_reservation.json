@@ -1,0 +1,40 @@
+{
+  "reserved_utc": "2026-10-15T13:49:39.454639+00:00",
+  "before_fresh_inspection": true,
+  "groups": [
+    {
+      "robustness_seed": 17410001,
+      "consensus_seed_list": [
+        17410002,
+        17410003,
+        17410004
+      ]
+    },
+    {
+      "robustness_seed": 17410011,
+      "consensus_seed_list": [
+        17410012,
+        17410013,
+        17410014
+      ]
+    },
+    {
+      "robustness_seed": 17410021,
+      "consensus_seed_list": [
+        17410022,
+        17410023,
+        17410024
+      ]
+    }
+  ],
+  "search_winner_id_fixed": 97000497,
+  "secondary_id_fixed": 97000486,
+  "previous_use_scan": {
+    "command": "rg -l \\b174100(0[1-4]|1[1-4]|2[1-4])\\b reports -g *.json",
+    "exit_code": 1,
+    "matches": [],
+    "performed_before_this_reservation": true
+  },
+  "fresh_group_quota": 3,
+  "no_new_proposals": true
+}

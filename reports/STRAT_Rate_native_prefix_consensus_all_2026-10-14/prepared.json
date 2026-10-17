@@ -1,0 +1,36 @@
+{
+  "prepared_utc": "2026-10-14T00:37:44.001100+00:00",
+  "runner": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_native_pool_runner.py",
+  "arguments": [
+    "--worktree",
+    "C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-equilibre\\certus0310",
+    "--proposals",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_native_prefix_consensus_all_2026-10-14\\proposals.json",
+    "--protocol",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_native_prefix_consensus_all_2026-10-14\\protocole_validation_native_prefix_v6.json",
+    "--reference-state",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_equilibre_AB_2026-10-13\\etat.json",
+    "--trial-output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_fine_2026-10-14",
+    "--output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_native_prefix_consensus_all_2026-10-14"
+  ],
+  "hashes": {
+    "rate_native_pool_runner.py": "13c5d76114bb05ef90e6af95e9066288b1c93ac57938e36bb14f5c0e6d25392a",
+    "rate_fixed_replay.py": "05376a9240c66a99a1f4f5bf1a7300045d13ed83ca0ed4a4f88300a73688a2c3",
+    "campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51",
+    "proposals.json": "d4901cc4b2a71206c2bfd62ff10a7804c3060a0b3e0363bf0a4623aa22b85f75",
+    "protocole_validation_native_prefix_v6.json": "09b7f40d016b9c516c23e5e30c968ae4a5a3d6b9cbd2b0d8dfe5415ed688dccf"
+  },
+  "status": "prepared_waiting_not_measuring",
+  "n_proposals": 5119,
+  "n_stages": 513,
+  "review": "Existing full-depth sequential replay unchanged; pool proposal identities/metadata retain original IDs. Two strict anchors repeated in groups of ten. Every completed consensus retained, incomplete excluded, all rejects recorded. No attribution from raw base/consensus exported ranking. Only report/prerequisite changed in the copied controller. Ruff and AST passed.",
+  "fresh_groups": [
+    1515,
+    1616,
+    1717
+  ],
+  "limits": "Saved depositable pool only; excluded non-finite candidates unavailable. Baseline native joint full pool not yet uniformly rescored; no complete causal attribution from best known baseline alone.",
+  "deadline_utc": "2026-10-14T07:00:00Z"
+}

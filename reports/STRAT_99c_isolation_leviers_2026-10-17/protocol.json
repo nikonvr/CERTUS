@@ -1,0 +1,74 @@
+{
+  "recorded_date": "2026-10-17",
+  "recorded_at_utc": "2026-10-17T00:27Z",
+  "version": 1,
+  "kind": "exploratory lever isolation on ONE search seed (42), NOT the A9 protocol (docs/ETAT.md A9 stays to be prepared by its own session)",
+  "user_requests_verbatim": [
+    "ok, je suis tes recommandations",
+    "ok aussi pour les decisions"
+  ],
+  "question": "Which levers of the widened profile of 2026-10-16 (Rate budget 240, six ELITE rounds, 480 joint neighbours) carry its gain over the production defaults on the 99c, at search seed 42?",
+  "component": {"name": "99c", "config": "example/example_strat/JSON-strat-bandpass-5cav-99c.json", "layers": 99, "injected_strategies": "none in this file"},
+  "witness": "single witness glass for the whole 99-layer run (witness_reset_layers not set)",
+  "command_common": "python -X cpu_count=16 scripts/probe_blocs_vs_plantage.py 99c premium 0 0 2 0 42",
+  "positional_arguments": {"mode": "premium", "cherche_fente": 0, "min_tp": 0, "resolution_nm": 2, "elargi_profile": 0, "seed": 42, "par_swing": 0},
+  "defaults_of_the_three_levers": {"elite_rate_max_candidates": 120, "elite_rounds": "2 (mode premium, certus/ui/certus_strat_ui_state.py)", "elite_rate_joint_candidates": 0, "rate_post_refinement": false},
+  "arms": [
+    {
+      "name": "C1_budget240_seul",
+      "probe_overrides": {"elite_rate_max_candidates": 240},
+      "probe_tag": "rate_budget240_seul",
+      "differs_from_production_defaults_by": "Rate budget 240 instead of 120; rounds stay at 2, no joint neighbours, no final refinement"
+    },
+    {
+      "name": "C2_budget240_six_tours",
+      "probe_overrides": {"elite_rate_max_candidates": 240, "elite_rounds": 6},
+      "probe_tag": "rate_budget240_six_tours",
+      "differs_from_C1_by": "six ELITE rounds instead of 2 (the budget stays 240); still no joint neighbours, no final refinement"
+    }
+  ],
+  "already_measured_same_seed_same_consensus_seeds_41_42_43": {
+    "A_production_defaults": {
+      "artefact": "reports/blocs_vs_plantage_99c_premium_s042_20261016_203515.json",
+      "strategies": 4761, "deposable": 4761,
+      "best_consensus_score": 0.125451, "best_seel_nm": 0.7026, "duration": "24 min 41 s"
+    },
+    "B_widened_plus_refinement": {
+      "artefact": "reports/blocs_vs_plantage_99c_premium_s042_rate_elargi_refinement_240_6_480.json",
+      "probe_overrides": {"elite_rate_max_candidates": 240, "elite_rounds": 6, "elite_rate_joint_candidates": 480, "rate_post_refinement": true},
+      "strategies": 6338, "deposable": 6302,
+      "best_consensus_score": 0.092536, "best_native_consensus_score_before_refinement": 0.093363, "best_seel_nm": 0.6084, "duration": "37 min 49 s"
+    },
+    "source": "reports/STRAT_99c_rate_elargi_2026-10-16/bilan.md"
+  },
+  "decomposition_read_after_the_runs": "A -> C1 (+budget 240) -> C2 (+six rounds) -> B native (+480 joint neighbours: the best native plan of run B before the final refinement, read inside run B) -> B (+final refinement, -0.89 % at this seed). Each step is expressed on the consensus score and on SEEL, and as a share of the A -> B-native gap.",
+  "noise_reference": "the only one available: the same arm at two search seeds (42 and 101). Best consensus score of B: 0.092536 against 0.096388 (4.2 %). Best SEEL of A: 0.7026 against 0.6559 (6.9 %); best SEEL of B: 0.6084 against 0.6067 (0.3 %). A step smaller than 4.2 % on the consensus score is not interpreted. This is a spread of two seeds, not a standard deviation.",
+  "what_is_read_in_each_arm": "strategies and depositable count; best consensus score with its origin, number of blocks and Rate layers; best SEEL by the project tool (scripts/resumer_artefact_sonde.py); ELITE rounds really run (the log); duration. An arm that crashes or times out is reported as such, with no number (no valid SEEL).",
+  "sources_frozen": {
+    "git_head": "7f3edea879ab150eb9bee50b3b9f5d1675bb3869",
+    "tracked_code_changes_in_certus_scripts_tools_tests_example": "none (git status --porcelain empty before launch)",
+    "since_the_first_99c_runs_of_2026-10-16": "HEAD was 0c7c1e2e; five commits since (868db8c9, 8c6d951b, bdcae9ed, c25937b3, 7f3edea8) touch five files: certus/ui/certus_design_ui_state.py, certus/ui/certus_measurement_excel_ui.py, certus/ui/certus_design_ui_optimization.py, certus/ui/certus_design_ui_worker.py, certus/workers/certus_strat_workers.py (injected-plan resolver; the 99c file carries no injected_strategies). None of the five mentions numba, so the Numba cache key is the one of the first runs (git show on both commits, 0 of 5).",
+    "python": "3.14.8"
+  },
+  "resources": {"logical_cpus": 16, "library_threads": 15, "priority": "normal", "concurrent_scientific_measurements": 1, "bench_timeout_s": 36000, "env": "CERTUS_BENCH_TIMEOUT_S=36000 PYTHONUTF8=1 NUMBA_NUM_THREADS=15 OMP_NUM_THREADS=15 MKL_NUM_THREADS=15 OPENBLAS_NUM_THREADS=15"},
+  "machine_inventory_before_launch": "no python process (the chain refuses to start an arm otherwise); the Codex desktop application is open but wrote nothing for about 5 hours (last writes 2026-10-16 20:57, 20:59, 21:33)",
+  "production_defaults_left_as_they_are": {"rate_rescue": true, "rate_rescue_few": 10, "elite_rate_moves": true, "rate_by_swing": true, "rate_rescue_hard": false, "elite_rate_balanced_moves": false, "rate_layer_sets": [], "rate_tail_keep_optical": 0},
+  "deliberately_not_in_this_run": [
+    "the 480 joint neighbours alone and the final refinement alone (their own share is read inside run B, not re-measured)",
+    "any seed other than 42, any replicate of an arm, renotation on fresh groups",
+    "an optical-only arm, witness_reset_layers"
+  ],
+  "limits": [
+    "one search seed (42), one run per arm, no confidence interval",
+    "the decomposition follows one path (A, C1, C2, B-native): levers interact (the budget is spent per round), so another order could attribute differently",
+    "the run-to-run reproducibility of the search at a fixed seed is not measured here",
+    "no scientific default is changed by this measurement; it informs the owner's decision on elite_rate_max_candidates, elite_rounds and the joint generator"
+  ],
+  "rules_during_the_run": "no test and no analysis Python during the measurement (the chain refuses to start the second arm if a python process runs); the logs are read with tail/grep only. Stop: TaskStop on the background task, or kill the python process tree by PID.",
+  "outputs": [
+    "reports/STRAT_99c_isolation_leviers_2026-10-17/chain.log",
+    "reports/STRAT_99c_isolation_leviers_2026-10-17/run_C1_budget240_seul.log",
+    "reports/STRAT_99c_isolation_leviers_2026-10-17/run_C2_budget240_six_tours.log",
+    "the probe artefacts reports/blocs_vs_plantage_99c_premium_s042_rate_budget240_seul.json and ..._rate_budget240_six_tours.json (never overwritten, by scripts/_artefact.py)"
+  ]
+}

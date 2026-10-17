@@ -1,0 +1,11 @@
+{
+  "observed_utc": "2026-10-15T08:35:15.041452+00:00",
+  "status": "FAILED_BEFORE_CHILD",
+  "controller_pid": 19112,
+  "no_child_alive": true,
+  "no_control_or_variant_claim_consumed": true,
+  "cause": "PowerShell5.1 converted the null backup-path argument of File.Replace into an invalid path. First state persisted; next state did not.",
+  "old_controller_sha256": "86626f3802fd6e66abcf1fdd52fbc32a896be09758447b67cc74e0395f09f238",
+  "new_copy": "scratch/run_rate_R3_widths_pair_v2.ps1",
+  "repair": "Use an explicit backup path; preserve original failed controller/state/logs; a pre-existing empty arm directory is accepted, any non-empty arm is rejected; real persistence function verified separately before restart."
+}

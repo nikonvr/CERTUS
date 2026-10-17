@@ -1,0 +1,9 @@
+{
+  "verified_utc": "2026-10-15T06:52:27.004553+00:00",
+  "status": "ACTIVE",
+  "rrule": "FREQ=HOURLY;BYMINUTE=0,30",
+  "name": "CERTUS — corriger RMSE puis finir R0–R6",
+  "prompt_sha256": "7967b5ada1b224777455191dce4050212715a190b0be5234fd2fd0feec3d50ce",
+  "follows_validation02": true,
+  "same_automation_id": true
+}

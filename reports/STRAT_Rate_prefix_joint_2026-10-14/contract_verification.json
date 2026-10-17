@@ -1,0 +1,9 @@
+{
+  "status": "PREFIX_CONTRACT_VERIFY=GO",
+  "count": 876,
+  "first_two_layers_optical": true,
+  "only_prefix_and_first_lambda_change": true,
+  "unique_ids_and_geometry": true,
+  "slit_and_witness_preserved": true,
+  "source_context_sha256": "025d6d4bcd82289d6f9b7cdbc09440ad23504a0030c5721433dcba4e056b4e89"
+}

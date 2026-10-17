@@ -1,0 +1,3 @@
+run 01 (sans rate_post_refinement) lance 2026-10-16T17:23:44Z, arrete par moi le 2026-10-16T17:28:27Z a la demande de 👤 (« rajoute le refinement »).
+Dernière ligne du journal : 19:27:47 | WARNING | [ROBUSTNESS] 6 strategy(ies) dropped for a NON-FINITE score -- ids: 99800, 999950000, 999950001, 999950002, 999950003 ...
+Aucun artefact de sonde produit (la sonde l ecrit a la fin). Journal conserve : run_01_sans_raffinement_arretee.log.

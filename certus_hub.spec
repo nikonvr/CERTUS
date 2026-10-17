@@ -55,6 +55,9 @@ datas = [
     # And what THEY import when they start: `probe_blocs_vs_plantage` writes its result through
     # `_artefact` (its provenance), so CERTUS_STRAT ended with "No module named '_artefact'".
     ("scripts/_artefact.py", "scripts"),
+    # `probe_blocs_vs_plantage` also stops, rather than compute on the default configuration, when its component file is
+    # missing or refused (D105): it imports `_composant` for that.
+    ("scripts/_composant.py", "scripts"),
     # `_certus_physics_impl` loads this one BY PATH when the package import cycles, which is the
     # case when a module (METAL_SINGLE) imports it before `certus_physics`: without the file,
     # CERTUS_METAL_SINGLE ends with "Cannot find certus_physics/structures.py".

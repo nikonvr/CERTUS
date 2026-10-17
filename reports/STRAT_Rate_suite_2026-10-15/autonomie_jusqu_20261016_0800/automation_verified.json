@@ -1,0 +1,13 @@
+{
+  "verdict": "GO",
+  "verified_utc": "2026-10-15T11:42:45.871489+00:00",
+  "id": "certus-essais-rate-jusqu-au-14-octobre-9-h",
+  "status": "ACTIVE",
+  "rrule": "FREQ=HOURLY;BYMINUTE=0,30",
+  "target_thread_id": "01a1347c-9798-7b00-af1b-6e6de6058b00",
+  "prompt_sha256": "8eb4b225551c2b6b41ebc9a394031286a1e7ee3c8e2757a6917f9608172369ce",
+  "deadline_utc": "2026-10-16T06:00:00Z",
+  "other_fields_preserved": true,
+  "active_scientific_sources_changed": false,
+  "tests_started": false
+}

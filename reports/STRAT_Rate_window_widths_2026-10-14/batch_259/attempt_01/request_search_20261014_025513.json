@@ -1,0 +1,27 @@
+{
+  "status": "complete",
+  "pid": 50688,
+  "run": "search",
+  "setting": {
+    "robustness_seed": 101,
+    "consensus_seed_list": [
+      41,
+      42,
+      43
+    ]
+  },
+  "plans_sha256": "2d7c29a3d2c919f3ceb8b06729cda10e781e22bc9b744b2a972fc6c497731e6b",
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "source_sha256": {
+    "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127"
+  },
+  "started": "2026-10-14T02:55:13.212391+00:00",
+  "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_window_widths_2026-10-14\\batch_259\\attempt_01\\search.json",
+  "errors": []
+}

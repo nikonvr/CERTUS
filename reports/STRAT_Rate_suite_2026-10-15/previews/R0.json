@@ -1,0 +1,47 @@
+{
+  "command": [
+    "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+    "-X",
+    "utf8",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_fixed_replay_R0_bounded.py",
+    "--worktree",
+    "C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-rmse-r0\\certus0310",
+    "--plans",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\selected_fixed_plans.json",
+    "--protocol",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\protocol_R0_bounded.json",
+    "--reference-state",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\reference_context.json",
+    "--output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R0_control",
+    "--run",
+    "control",
+    "--plan"
+  ],
+  "preview": {
+    "run": "control",
+    "setting": {
+      "robustness_seed": 101,
+      "consensus_seed_list": [
+        41,
+        42,
+        43
+      ]
+    },
+    "plans": [
+      "reference_rate_s101",
+      "internal_window_consensus_best_s101",
+      "prefix_after_window_consensus_best_s101"
+    ],
+    "depths": {
+      "robustness_num_runs": 300,
+      "n_screen_runs": 50,
+      "dp_top_k": 100,
+      "consensus_num_runs": 300
+    },
+    "path": "ExternalEvaluationStrategy",
+    "expand_variants": false,
+    "elite_generation": false
+  },
+  "exit_code": 0
+}

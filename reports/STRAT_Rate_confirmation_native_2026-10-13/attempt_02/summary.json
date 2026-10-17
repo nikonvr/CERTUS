@@ -1,0 +1,62 @@
+{
+  "status": "OK",
+  "source_state_sha256": "b066312e3157e60090aa1ce08bc5dc39e87cc594f5d44f327e6124b817f6e372",
+  "native_same_plan_as": 900951015,
+  "results": [
+    {
+      "run": "control",
+      "reference_seel_nm": 0.3967147882193691,
+      "joint_seel_nm": 0.36533819452157945,
+      "gain_percent": 7.909106146161493,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_202",
+      "reference_seel_nm": 0.3968275691183069,
+      "joint_seel_nm": 0.3787066494963141,
+      "gain_percent": 4.56644674719926,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_303",
+      "reference_seel_nm": 0.39951312206581885,
+      "joint_seel_nm": 0.3710397323147461,
+      "gain_percent": 7.127022412641015,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_404",
+      "reference_seel_nm": 0.3997442249720676,
+      "joint_seel_nm": 0.3719660540167365,
+      "gain_percent": 6.94898618166957,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_505",
+      "reference_seel_nm": 0.3993888245623097,
+      "joint_seel_nm": 0.37124968059614066,
+      "gain_percent": 7.045551161078856,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_606",
+      "reference_seel_nm": 0.39282220588012384,
+      "joint_seel_nm": 0.371150308678171,
+      "gain_percent": 5.516973551277893,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_707",
+      "reference_seel_nm": 0.3972990866694603,
+      "joint_seel_nm": 0.3696404409114281,
+      "gain_percent": 6.961668598307968,
+      "max_observed_crash_rate": 0
+    }
+  ],
+  "limits": [
+    "One component and fixed selected plans",
+    "No formal confidence interval or general validation",
+    "Native search at Rate budget 120 has no gain",
+    "All physical calls captured at 300 runs; zero observed crash is not proof of zero true crash probability"
+  ]
+}

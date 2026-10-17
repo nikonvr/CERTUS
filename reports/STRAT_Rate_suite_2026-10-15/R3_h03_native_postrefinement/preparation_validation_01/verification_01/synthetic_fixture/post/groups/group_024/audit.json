@@ -1,0 +1,15 @@
+{
+  "verdict": "GO",
+  "artifact_sha256": "15aeeebe8635fce295e019c8c6419b2b44e520ededec7c5c5950f5e46828a155",
+  "manifest_sha256": "39c6b7bccc800c55ce423b1fbbc445a1b33a9bf8e28b149ca8f6e379102216f9",
+  "actual_calls": 24,
+  "eligible_ids": [
+    900951015,
+    9900006,
+    9900008,
+    98000205,
+    98000206,
+    98000207
+  ],
+  "rejected": []
+}

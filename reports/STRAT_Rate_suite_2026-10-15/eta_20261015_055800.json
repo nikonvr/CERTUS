@@ -1,0 +1,44 @@
+{
+  "recorded_utc": "2026-10-15T05:58:00.495079+00:00",
+  "kind": "planning_estimate_not_measured_completion",
+  "timezone": "Europe/Paris",
+  "current_validation": {
+    "status": "running",
+    "stage": "ui",
+    "unit_result": "5433 passed,7 skipped,0 failed",
+    "sources_unchanged": true
+  },
+  "milestones": [
+    {
+      "name": "Full validation and R0 control",
+      "earliest_local": "2026-10-15T08:15:00+02:00",
+      "latest_local": "2026-10-15T08:45:00+02:00"
+    },
+    {
+      "name": "R2 native baseline and diagnosis",
+      "earliest_local": "2026-10-15T09:15:00+02:00",
+      "latest_local": "2026-10-15T10:15:00+02:00"
+    },
+    {
+      "name": "First R3 A/B conclusion",
+      "earliest_local": "2026-10-15T11:30:00+02:00",
+      "latest_local": "2026-10-15T13:00:00+02:00"
+    }
+  ],
+  "full_program_planning_hours": [
+    18,
+    30
+  ],
+  "full_program_condition": "If all conditional R0-R6 phases are needed and checks pass; low confidence until R2 and R3",
+  "measured_basis": {
+    "previous_native_seconds": 3127.0,
+    "logical_cpus": 16,
+    "source": "reports\\STRAT_Rate_native_joint_rate240_round6_2026-10-13\\controller.json"
+  },
+  "limits": [
+    "No measured speedup at24 logical processors yet",
+    "New-source cache context and passive-trace overhead not timed",
+    "Code failures and independent confirmation outcomes may change the schedule",
+    "Finite phase quotas remain binding; this forecast is not a new time authorization"
+  ]
+}

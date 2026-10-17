@@ -1,0 +1,15 @@
+{
+  "phase": "R6_c03_s404_fresh_g02",
+  "case": "c03_s404",
+  "index": 2,
+  "setting": {
+    "robustness_seed": 17630011,
+    "consensus_seed_list": [
+      17630012,
+      17630013,
+      17630014
+    ]
+  },
+  "plans_sha256": "55c93919b3b9ac6dbef0ee43e2fc755105e1c20d3cb1ef1fe2ed85d8c93f26b1",
+  "protocol_sha256": "2554b1292f4006a3994cf835fc0fc4e0a8e96a0a2c8192f7332d43771eac341c"
+}

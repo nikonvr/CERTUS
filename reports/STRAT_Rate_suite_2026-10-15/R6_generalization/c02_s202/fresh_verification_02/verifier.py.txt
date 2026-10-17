@@ -1,0 +1,126 @@
+"""Verify the new-seed fixed-plan scorer and guard without a physical evaluation."""
+
+from __future__ import annotations
+
+import argparse
+import ast
+import copy
+import json
+import math
+import textwrap
+from datetime import UTC, datetime
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
+
+import rate_R6_fresh_guard_v2 as guard
+
+
+def function(source, name):
+    return next(n for n in ast.walk(ast.parse(source)) if isinstance(n, ast.FunctionDef) and n.name == name)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--case", choices=tuple(guard.CASES), required=True)
+    args = parser.parse_args()
+    deadline = guard.check_deadline()
+    directory = guard.EXPERIMENT / args.case
+    protocol = guard.read(directory / "confirmation_protocol_v2.json")
+    current = (guard.ROOT / "scratch/rate_R6_fresh_scorer_v2.py").read_text(encoding="utf-8")
+    previous = (guard.ROOT / "scratch/rate_R5_points.py").read_text(encoding="utf-8")
+    checks = []
+    for name in ("evaluate_fixed", "record_task"):
+        assert ast.dump(function(current, name)) == ast.dump(function(previous, name))
+        checks.append("Validated R5 callback AST identical: " + name)
+    assert "keep_fixed_plans" not in current
+    section = current[current.index('        rows = box["final_results"]'):current.index('        check_sources()', current.index('        rows = box["final_results"]'))]
+    validator = compile(textwrap.dedent(section), "<fresh validator only, no simulation>", "exec")
+    setting = guard.read(guard.EXPERIMENT / "fresh_seed_reservation.json")["settings"][args.case][0]
+    plan = {"strategy_id": 1, "nom": "validator_fixture", "blocks": [{"start": 0, "end": 75, "wavelength": 600.0}],
+            "rate_layers": [], "monochromator_resolution_nm": 2.0, "witness_reset_layers": None}
+    row = {"strategy": copy.deepcopy(plan), "robustness_score": 0.03,
+           "robustness_consensus_meta": {"seeds": setting["consensus_seed_list"], "n_samples": 3}}
+    calls = [{"id": 1, "seed": seed, "num_runs": 300} for seed in (setting["robustness_seed"], *setting["consensus_seed_list"])]
+
+    def validate(rows, simulations):
+        namespace = {"box": {"final_results": {"all_strategies_results": copy.deepcopy(rows)}}, "simulations": copy.deepcopy(simulations),
+                     "plans": [copy.deepcopy(plan)], "args": SimpleNamespace(run="fresh"), "setting": setting,
+                     "raw": {"plans": [copy.deepcopy(plan)]}, "math": math}
+        exec(validator, namespace)
+        return namespace
+
+    result = validate([row], calls)
+    assert result["errors"] == []
+    assert result["eligible_ids"] == [1]
+    checks.append("Actual reserved non-historical seed group accepted by the real validator")
+    incomplete = copy.deepcopy(row)
+    incomplete["robustness_consensus_meta"]["seeds"] = [41, 42, 43]
+    result = validate([incomplete], calls)
+    assert result["eligible_ids"] == []
+    assert result["rejected"]
+    checks.append("Wrong old seed metadata retained as incomplete, not accepted")
+    wrong_depth = copy.deepcopy(calls)
+    wrong_depth[0]["num_runs"] = 150
+    assert validate([row], wrong_depth)["errors"]
+    assert validate([row], calls[1:])["errors"]
+    checks.append("Shallow task and missing base call refused")
+    result = validate([], calls[:1])
+    assert result["errors"] == []
+    assert result["rejected"]
+    checks.append("Missing non-finite row conserved as rejection without replay")
+    output_dir = directory / "fresh_verification_02"
+    output_dir.mkdir(exist_ok=False)
+    target = output_dir / "verification.json"
+    record = {"verdict": "GO", "script_sha256": protocol["script_sha256"], "checks": checks,
+              "physical_evaluations": 0, "verifier_sha256": guard.sha(Path(__file__))}
+    target.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
+    try:
+        reference = guard.read(guard.REFERENCE)
+        phase = f"R6_{args.case}_fresh_g01"
+        proof = guard.check_ready(phase, guard.SLOTS[phase], reference["source_sha256"], requested_deadline=deadline)
+        checks.append("Actual first fresh guard passes, no claim taken")
+        try:
+            next_phase = f"R6_{args.case}_fresh_g02"
+            guard.check_ready(next_phase, guard.SLOTS[next_phase], reference["source_sha256"], requested_deadline=deadline)
+        except (RuntimeError, FileNotFoundError):
+            checks.append("Premature group2 refused before group1")
+        else:
+            raise AssertionError("Premature group accepted")
+        manifest_file = guard.SLOTS[phase].parent / "manifest.json"
+        real_read = guard.read
+
+        def changed_manifest(path):
+            raw = real_read(path)
+            if path == manifest_file:
+                raw["setting"] = {"robustness_seed": 101, "consensus_seed_list": [41, 42, 43]}
+            return raw
+
+        with patch.object(guard, "read", changed_manifest):
+            try:
+                guard.check_ready(phase, guard.SLOTS[phase], reference["source_sha256"], requested_deadline=deadline)
+            except RuntimeError as error:
+                if "reserved seed" not in str(error):
+                    raise
+                checks.append("Altered reserved seeds refused without file mutation")
+            else:
+                raise AssertionError("Wrong fresh setting accepted")
+        try:
+            guard.check_deadline(deadline, now=datetime(2026, 10, 16, 6, tzinfo=UTC))
+        except RuntimeError:
+            checks.append("Morning cutoff refused")
+        else:
+            raise AssertionError("Cutoff accepted")
+        assert not list((guard.PROGRAM / "claims").glob(f"R6_{args.case}_fresh_*.json"))
+        record["proof_not_reserved"] = proof
+    except BaseException:
+        record["verdict"] = "FAILED"
+        raise
+    finally:
+        target.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
+        (output_dir / "verifier.py.txt").write_bytes(Path(__file__).read_bytes())
+    print(json.dumps({"verdict": record["verdict"], "checks": len(checks), "physical_evaluations": 0}))
+
+
+if __name__ == "__main__":
+    main()

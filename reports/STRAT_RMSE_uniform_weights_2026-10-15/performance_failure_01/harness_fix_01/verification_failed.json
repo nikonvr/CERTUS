@@ -1,0 +1,7 @@
+{
+  "status": "FAILED_SETUP",
+  "error": "ModuleNotFoundError: No module named certus",
+  "cause": "Direct verifier did not add the project root to sys.path before loading the test source",
+  "physics_measured": false,
+  "timing_measured": false
+}

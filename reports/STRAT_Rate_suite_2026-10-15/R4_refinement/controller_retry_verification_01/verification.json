@@ -1,0 +1,9 @@
+{
+  "verdict": "GO",
+  "old_save": "failed under held reader",
+  "new_save": "recovered after reader released",
+  "retries": 9,
+  "handle_exit0": true,
+  "physics_measured": false,
+  "resume_sha256": "875e58b680a1772c854ad6da082b13924ed53ba5bec7fca5ea1b99bbb13bad7f"
+}

@@ -1,0 +1,153 @@
+{
+  "status": "complete",
+  "pid": 15724,
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "runs": [
+    {
+      "key": "control",
+      "seconds": 7.412858899999264,
+      "artifact": "control.json",
+      "plans": [
+        {
+          "name": "budget_240_rate_s101",
+          "id": 900851523,
+          "score": 0.03663586891447066,
+          "crash_rate": 0.0,
+          "consensus": {
+            "mode": "mean_std",
+            "mean": 0.03640908105370845,
+            "std": 0.0006479653164634658,
+            "worst": 0.03732232214461362,
+            "seeds": [
+              41,
+              42,
+              43
+            ],
+            "n_samples": 3
+          }
+        },
+        {
+          "name": "reference_rate_s101",
+          "id": 900951015,
+          "score": 0.03934565579798472,
+          "crash_rate": 0.0,
+          "consensus": {
+            "mode": "mean_std",
+            "mean": 0.03903722101379858,
+            "std": 0.0008812422405318423,
+            "worst": 0.040174649500132546,
+            "seeds": [
+              41,
+              42,
+              43
+            ],
+            "n_samples": 3
+          }
+        }
+      ]
+    },
+    {
+      "key": "holdout_202",
+      "seconds": 7.512146799999755,
+      "artifact": "holdout_202.json",
+      "plans": [
+        {
+          "name": "budget_240_rate_s101",
+          "id": 900851523,
+          "score": 0.037821979274542235,
+          "crash_rate": 0.0,
+          "consensus": {
+            "mode": "mean_std",
+            "mean": 0.03745300362488816,
+            "std": 0.0010542161418687806,
+            "worst": 0.03883782219931355,
+            "seeds": [
+              202,
+              203,
+              204
+            ],
+            "n_samples": 3
+          }
+        },
+        {
+          "name": "reference_rate_s101",
+          "id": 900951015,
+          "score": 0.03936802990308617,
+          "crash_rate": 0.0,
+          "consensus": {
+            "mode": "mean_std",
+            "mean": 0.0389798975405295,
+            "std": 0.0011089496073047591,
+            "worst": 0.040547540172404826,
+            "seeds": [
+              202,
+              203,
+              204
+            ],
+            "n_samples": 3
+          }
+        }
+      ]
+    },
+    {
+      "key": "holdout_303",
+      "seconds": 7.466606099998899,
+      "artifact": "holdout_303.json",
+      "plans": [
+        {
+          "name": "budget_240_rate_s101",
+          "id": 900851523,
+          "score": 0.03705952648355958,
+          "crash_rate": 0.0,
+          "consensus": {
+            "mode": "mean_std",
+            "mean": 0.03684576774300048,
+            "std": 0.0006107392587402652,
+            "worst": 0.037703572229539274,
+            "seeds": [
+              303,
+              304,
+              305
+            ],
+            "n_samples": 3
+          }
+        },
+        {
+          "name": "reference_rate_s101",
+          "id": 900951015,
+          "score": 0.03990268367569447,
+          "crash_rate": 0.0,
+          "consensus": {
+            "mode": "mean_std",
+            "mean": 0.03966976968272406,
+            "std": 0.000665468551344018,
+            "worst": 0.040490975670904865,
+            "seeds": [
+              303,
+              304,
+              305
+            ],
+            "n_samples": 3
+          }
+        }
+      ]
+    }
+  ],
+  "replay_sha256": "144c358b4a57a1de23ac8e97ad7cb6e688c5f93ae23a87211ec27f6eafbd0aaf",
+  "plans_sha256": "5c4e52eb95e696b999ba3d918d99076c518afbb66ed3735081113c83194f6e47",
+  "protocol_sha256": "e7de20e6fe02145011f65dd945474e1aa03051a3b9e942902522c41829f67ba8",
+  "sequence": [
+    "control",
+    "holdout_202",
+    "holdout_303"
+  ],
+  "current": null,
+  "current_pid": null,
+  "updated": "2026-10-13T15:08:55+00:00",
+  "current_started": "2026-10-13T15:08:48+00:00"
+}

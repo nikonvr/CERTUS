@@ -1,0 +1,33 @@
+{
+  "status": "failed",
+  "pid": 32804,
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "script_sha256": {
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_native_joint_probe.py": "861f8ac0406617b8e090ce26220b23e1a55b8ad7ef294962b35c5c4b4fe96d89",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_joint_native_candidates.py": "70211dc4fad1c1adabc673ffe95c35b8996459db4f75ecc8831454ff0e48c2af",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\verify_rate_native_joint_adapter.py": "031b352e7fcaa1f8734878c1e26e64f6866d09ee83197f4ca6638929f7801518",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51"
+  },
+  "current_pid": null,
+  "joint_budget": 480,
+  "seed": 101,
+  "updated": "2026-10-13T17:29:32+00:00",
+  "previous_best": {
+    "id": 9600579,
+    "name": "joint_L33_34_wl630_baseL32",
+    "move": {
+      "kind": "incumbent"
+    },
+    "eligible": true,
+    "score": 0.03336799909407186,
+    "crash_rate": 0.0,
+    "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_joint_window_2026-10-13\\batch_058\\attempt_01\\search.json"
+  },
+  "current_started": "2026-10-13T16:47:53+00:00",
+  "error": "measurement exited 1; log and artifacts preserved"
+}

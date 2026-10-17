@@ -146,19 +146,19 @@ def _collect_definitions(py_files: list[Path]) -> list[Definition]:
                     )
                 )
             elif isinstance(node, ast.ClassDef):
-                for sub in node.body:
-                    if isinstance(sub, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                        defs.append(
-                            Definition(
-                                symbol_id=f"{module_name}:{node.name}.{sub.name}",
-                                name=sub.name,
-                                file_path=path,
-                                start_line=sub.lineno,
-                                end_line=sub.end_lineno or sub.lineno,
-                                is_method=True,
-                                decorators=_decorator_names(sub),
-                            )
-                        )
+                defs.extend(
+                    Definition(
+                        symbol_id=f"{module_name}:{node.name}.{sub.name}",
+                        name=sub.name,
+                        file_path=path,
+                        start_line=sub.lineno,
+                        end_line=sub.end_lineno or sub.lineno,
+                        is_method=True,
+                        decorators=_decorator_names(sub),
+                    )
+                    for sub in node.body
+                    if isinstance(sub, (ast.FunctionDef, ast.AsyncFunctionDef))
+                )
 
     return defs
 

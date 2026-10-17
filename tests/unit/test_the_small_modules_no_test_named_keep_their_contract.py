@@ -257,49 +257,16 @@ def test_the_warmup_runs_without_a_callback_and_logs_no_error(caplog):
 # certus_strat_machine
 
 
-def test_the_machine_model_defaults_are_those_of_the_oms_5100():
+def test_the_machine_specifications_are_those_of_the_oms_5100():
     from certus.physics.certus_strat_machine import (
         OMS5100_DEFAULT_5_SIGMA_FACTOR,
         OMS5100_DEFAULT_MONOCHROMATOR_STEP_NM,
         OMS5100_DEFAULT_READING_NOISE_PCT,
-        MachineModel,
     )
 
-    machine = MachineModel()
-    assert machine.name.endswith("OMS 5100")
-    assert machine.reading_noise_floor_pct == OMS5100_DEFAULT_READING_NOISE_PCT == 0.05
-    assert machine.monochromator_resolution_nm == OMS5100_DEFAULT_MONOCHROMATOR_STEP_NM == 0.5
-    assert machine.tp_hysteresis_factor == OMS5100_DEFAULT_5_SIGMA_FACTOR == 1.66
-    assert machine.trigger_tolerance == 0.05
-    assert machine.sigma_wl_func is None
-
-
-def test_the_flat_noise_is_the_floor_in_percent_of_t_as_a_fraction():
-    from certus.physics.certus_strat_machine import MachineModel
-
-    assert MachineModel().get_sigma(400.0) == pytest.approx(5e-4)
-    assert MachineModel(reading_noise_floor_pct=0.2).get_sigma(900.0) == pytest.approx(2e-3)
-    assert MachineModel(reading_noise_floor_pct=-1.0).get_sigma(550.0) == 0.0  # never negative
-
-
-def test_a_noise_function_of_the_wavelength_replaces_the_flat_floor_and_is_floored_at_zero():
-    from certus.physics.certus_strat_machine import MachineModel
-
-    machine = MachineModel(sigma_wl_func=lambda wl: (wl - 500.0) / 1e5)
-    assert machine.get_sigma(600.0) == pytest.approx(1e-3)
-    assert machine.get_sigma(400.0) == 0.0
-    assert machine.get_sigma_array(np.array([400.0, 500.0, 700.0])).tolist() == pytest.approx([0.0, 0.0, 2e-3])
-
-
-def test_the_flat_noise_array_has_the_shape_of_the_grid_and_ignores_the_wavelength():
-    from certus.physics.certus_strat_machine import MachineModel
-
-    sigmas = MachineModel().get_sigma_array(np.linspace(400.0, 800.0, 5))
-    assert sigmas.shape == (5,)
-    assert sigmas.dtype == np.float64
-    assert sigmas.tolist() == pytest.approx([5e-4] * 5)
-    assert MachineModel().get_sigma_array(np.array([], dtype=np.float64)).shape == (0,)
-
+    assert OMS5100_DEFAULT_READING_NOISE_PCT == 0.05
+    assert OMS5100_DEFAULT_MONOCHROMATOR_STEP_NM == 0.5
+    assert OMS5100_DEFAULT_5_SIGMA_FACTOR == 1.66
 
 # =============================================================================
 # certus_metal_defaults, certus_metal_orchestrator

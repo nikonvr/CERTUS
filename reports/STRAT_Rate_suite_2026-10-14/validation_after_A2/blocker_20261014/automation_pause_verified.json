@@ -1,0 +1,16 @@
+{
+  "checked_utc": "2026-10-14T16:13:43.029581+00:00",
+  "status": "PAUSED",
+  "unchanged_fields": [
+    "id",
+    "kind",
+    "name",
+    "prompt",
+    "rrule",
+    "target_thread_id",
+    "created_at"
+  ],
+  "before_sha256": "da6887c62cf6e2d90f51a4325fd0040a9272aee9cba160c01126eb20f700ddf8",
+  "after_sha256": "dce964aaca0ee5a0ccac97e5ec6b2a84855e29a397584711e4881c94946c8db3",
+  "reason": "Preexisting strict numerical test failure; user decision requested under project stop rule and authorized heartbeat stop condition"
+}

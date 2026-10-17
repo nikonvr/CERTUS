@@ -1,0 +1,54 @@
+{
+  "observed_utc": "2026-10-15T11:33:00.7210572Z",
+  "status": "running",
+  "pair": {
+    "status": "running",
+    "pid": 24768,
+    "started_utc": "2026-10-15T10:41:59.5316123Z",
+    "runs": [
+      {
+        "arm": "control",
+        "pid": 30284,
+        "status": "complete",
+        "exit_code": 0,
+        "ended_utc": "2026-10-15T13:25:37.662311+02:00",
+        "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R3_h02_wavelengths\\control\\blocs_vs_plantage_r75x0.5_deep_s101_r3_wavelengths_control_20261015_v1.json"
+      }
+    ],
+    "current": "variant",
+    "current_pid": 28532,
+    "updated_utc": "2026-10-15T11:25:48.5076274Z"
+  },
+  "child": {
+    "pid": 28532,
+    "cpu_seconds": 7560.34375,
+    "working_set_bytes": 3667288064,
+    "priority": "Normal",
+    "affinity": 16777215
+  },
+  "python_processes": [
+    {
+      "ProcessId": 23808,
+      "ParentProcessId": 43240,
+      "CommandLine": "\"C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe\"  \"C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\Scripts\\pyright-langserver.exe\" --stdio"
+    },
+    {
+      "ProcessId": 29084,
+      "ParentProcessId": 18748,
+      "CommandLine": "\"C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe\"  \"C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\Scripts\\pyright-langserver.exe\" --stdio"
+    },
+    {
+      "ProcessId": 24252,
+      "ParentProcessId": 35728,
+      "CommandLine": "\"C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe\"  \"C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\Scripts\\pyright-langserver.exe\" --stdio"
+    },
+    {
+      "ProcessId": 28532,
+      "ParentProcessId": 24768,
+      "CommandLine": "\"C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe\" -X utf8 -X cpu_count=24 \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_native_R3_wavelengths_probe.py\" --worktree \"C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-rmse-r0\\certus0310\" --output \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R3_h02_wavelengths\\variant\" --reference-state \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\reference_context.json\" --tag r3_wavelengths_variant_20261015_v1 --arm variant --verification-record \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R3_h02_wavelengths\\verification_01\\verification.json\" --validated-control \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R0_control\\control.json\" "
+    }
+  ],
+  "tests_started": false,
+  "active_sources_changed": false,
+  "note": "Control completed with recorded exit0; variant followed automatically. Full audit/replay deferred until both arms end."
+}

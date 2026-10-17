@@ -141,7 +141,9 @@ def main() -> int:
     Bx.qapp()
     Bx.autoanswer_dialogs(True)
     app = CertusStratApp()
-    app.load_configuration(str(SRC))
+    from _composant import charger_configuration
+
+    charger_configuration(app, SRC)
     prm = app.collect_params()
     db = prm.get("materials_db_instance") or prm.get("materials_db")
 

@@ -1,0 +1,138 @@
+"""Copied guard for the first bounded R3 pair, after audited R2."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import re
+import subprocess
+import sys
+from datetime import UTC, datetime
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+PROGRAM = ROOT / "reports/STRAT_Rate_suite_2026-10-15"
+AUTHORIZATION = ROOT / "reports/STRAT_RMSE_uniform_weights_2026-10-15/authorization_and_baseline.json"
+VALIDATION = ROOT / "reports/STRAT_RMSE_uniform_weights_2026-10-15/full_validation_02/validation.json"
+EXPERIMENT = PROGRAM / "R3_h01_widths"
+SLOTS = {"R3_h01_replay": EXPERIMENT / "homogeneous_replay"}
+
+
+def is_language_server(process: dict) -> bool:
+    """Recognize only the installed IDE language server, never a test or simulation."""
+    executable = re.escape(sys.executable)
+    server = re.escape(str(Path(sys.executable).parent / "Scripts/pyright-langserver.exe"))
+    return re.fullmatch(rf'"?{executable}"?\s+"?{server}"?\s+--stdio\s*',
+                        process.get("CommandLine") or "", flags=re.IGNORECASE) is not None
+
+
+def check_ready(phase: str, output: Path, sources: dict[str, str]) -> dict:
+    """Check completed validation, frozen sources, finite scope and process isolation."""
+    if phase not in SLOTS or output.resolve() != SLOTS[phase].resolve():
+        raise RuntimeError("This launcher only supports its fixed, single R3 pair slot")
+    authorization = json.loads(AUTHORIZATION.read_text(encoding="utf-8"))
+    expected_resources = {"logical_cpus": 24, "affinity_mask": "0xffffff", "priority": "normal", "library_threads": 23}
+    if (authorization.get("scope_extension") != "Jusqu’à la fin du programme borné R0–R6" or
+            authorization.get("resources") != expected_resources or
+            authorization.get("supersedes_old_time_deadline_for_this_bounded_program") is not True):
+        raise RuntimeError("The current explicit bounded authorization is required")
+    validation = json.loads(VALIDATION.read_text(encoding="utf-8"))
+    if validation.get("status") != "GO":
+        raise RuntimeError("Full RMSE validation must finish with GO before any measurement")
+    checks = validation.get("checks", [])
+    if not checks or any(c.get("exit_code") != 0 for c in checks if c.get("name") != "counterproof_before"):
+        raise RuntimeError("A required validation command failed or is incomplete")
+    commands = [" ".join(c.get("command", [])).replace("\\", "/") for c in checks if c.get("exit_code") == 0]
+    for marker in ("ruff check .", "tests/oracle/", "tests/unit/", "tests/ui/", "--ignore=tests/oracle",
+                   "scripts/coherence_md.py", "scripts/check_claude_md.py", "scripts/check_docs.py",
+                   "scripts/c1_diff.py", "diff --check"):
+        if not any(marker in command for command in commands):
+            raise RuntimeError(f"Missing passing validation command: {marker}")
+    validated = validation.get("source_sha256", {})
+    if not sources or any(validated.get(name) != digest for name, digest in sources.items()):
+        raise RuntimeError("The measurement context is not the validated scientific source set")
+    if any(hashlib.sha256((ROOT / name).read_bytes()).hexdigest() != digest for name, digest in validated.items()):
+        raise RuntimeError("A validated source changed since full validation")
+    campaign = ROOT / "reports/STRAT_ELITE_couches_Rate_autres_composants_2026-10-13/etat.json"
+    a2 = json.loads(campaign.read_text(encoding="utf-8"))
+    if (a2.get("status") != "complete" or len(a2.get("runs", [])) != 24 or
+            len({run["key"] for run in a2["runs"]}) != 24 or a2.get("current_pid")):
+        raise RuntimeError("A2 must be complete24/24")
+    locks = list((ROOT / "reports").rglob(".running"))
+    if locks or (PROGRAM / "measurement.running").exists():
+        raise RuntimeError(f"Inspect existing measurement locks before restarting: {locks}")
+    shell = Path(os.environ["SYSTEMROOT"]) / "System32/WindowsPowerShell/v1.0/powershell.exe"
+    raw = subprocess.check_output([str(shell), "-NoProfile", "-Command",
+        "@(Get-CimInstance Win32_Process | Where-Object { $_.Name -match '^python' } | "
+        "Select-Object ProcessId,CommandLine) | ConvertTo-Json -Compress"], encoding="utf-8").strip()
+    active = json.loads(raw) if raw else []
+    if isinstance(active, dict):
+        active = [active]
+    if any(process["ProcessId"] != os.getpid() and not is_language_server(process) for process in active):
+        raise RuntimeError("Another Python test, calculation or controller is alive")
+    protocol_file = EXPERIMENT / "replay_protocol.json"
+    protocol = json.loads(protocol_file.read_text(encoding="utf-8"))
+    audit_file = PROGRAM / "R2_audit_20261015.json"
+    audit = json.loads(audit_file.read_text(encoding="utf-8"))
+    if audit.get("verdict") != "GO" or protocol["R2_audit_sha256"] != hashlib.sha256(audit_file.read_bytes()).hexdigest():
+        raise RuntimeError("The finished R2 audit is required")
+    if protocol["source_sha256"] != sources or protocol["max_R3_pairs"] != 3:
+        raise RuntimeError("Protocol/source/quota mismatch")
+    for name, expected in protocol["script_sha256"].items():
+        if hashlib.sha256((ROOT / "scratch" / name).read_bytes()).hexdigest() != expected:
+            raise RuntimeError(f"A frozen R3 script changed: {name}")
+    controls = list((PROGRAM / "claims").glob("R3_*_control.json"))
+    if phase.endswith("control") and len(controls) >= 3:
+        raise RuntimeError("The three R3 pairs are exhausted")
+    if phase.endswith("variant"):
+        control_file = SLOTS["R3_h01_control"] / "etat.json"
+        control = json.loads(control_file.read_text(encoding="utf-8"))
+        if control.get("status") != "complete" or control.get("source_sha256") != sources:
+            raise RuntimeError("Finish and preserve this pair's control before its variant")
+    pair = json.loads((EXPERIMENT / "pair_controller_v4.json").read_text(encoding="utf-8"))
+    if pair.get("status") != "complete" or {r["arm"] for r in pair["runs"] if r["status"] == "complete"} != {"control", "variant"}:
+        raise RuntimeError("Both native arms must be finished before homogeneous replay")
+    for arm in ("control", "variant"):
+        path = EXPERIMENT / ("audit_" + arm + ".json")
+        if hashlib.sha256(path.read_bytes()).hexdigest() != protocol["audit_sha256"][arm]:
+            raise RuntimeError("A completed arm audit changed")
+    plan_file = EXPERIMENT / "frozen_finalists.json"
+    if hashlib.sha256(plan_file.read_bytes()).hexdigest() != protocol["plans_source_sha256"]:
+        raise RuntimeError("The frozen finalists changed")
+    if len(json.loads(plan_file.read_text(encoding="utf-8"))["plans"]) != 5:
+        raise RuntimeError("This replay is bounded to its five unique fixed plans")
+    claim = PROGRAM / "claims" / (phase + ".json")
+    if claim.exists():
+        raise RuntimeError("This measurement slot was already claimed; inspect its saved result or failed attempt")
+    return {"phase": phase, "resources": expected_resources,
+            "authorization_sha256": hashlib.sha256(AUTHORIZATION.read_bytes()).hexdigest(),
+            "validation_sha256": hashlib.sha256(VALIDATION.read_bytes()).hexdigest(),
+            "source_sha256": sources, "slot": str(output.resolve()), "quota": 1,
+            "protocol_sha256": hashlib.sha256(protocol_file.read_bytes()).hexdigest()}
+
+
+def reserve_slot(proof: dict) -> None:
+    """Claim one fixed slot atomically; failures consume it until an audited repair."""
+    phase = proof["phase"]
+    if phase not in SLOTS or proof["slot"] != str(SLOTS[phase].resolve()):
+        raise RuntimeError("Unknown bounded measurement slot")
+    claims = PROGRAM / "claims"
+    claims.mkdir(parents=True, exist_ok=True)
+    entry = {**proof, "pid": os.getpid(), "claimed_utc": datetime.now(UTC).isoformat()}
+    lock = PROGRAM / "measurement.running"
+    with lock.open("x", encoding="utf-8") as stream:
+        json.dump(entry, stream, ensure_ascii=False, indent=2)
+    try:
+        with (claims / (phase + ".json")).open("x", encoding="utf-8") as stream:
+            json.dump(entry, stream, ensure_ascii=False, indent=2)
+    except BaseException:
+        release_slot()
+        raise
+
+
+def release_slot() -> None:
+    """Release only this process's live lock; keep the permanent quota claim."""
+    lock = PROGRAM / "measurement.running"
+    if lock.exists() and json.loads(lock.read_text(encoding="utf-8"))["pid"] == os.getpid():
+        lock.unlink()

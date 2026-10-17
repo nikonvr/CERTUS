@@ -1,0 +1,27 @@
+{
+  "status": "complete",
+  "pid": 14820,
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "script_sha256": {
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_native_prefix_probe.py": "f9601b7c564ca7386ed0ef88fc2a52fd02795781fa4df401667a6c8ad6fd4d41",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_joint_native_candidates.py": "30ac713dc23b4c0754ca56f5f843309f9b3b55c583dbe4b2bf1f17427684a611",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\verify_rate_native_prefix_adapter.py": "a3f5602c69810886a73295b21631aa71fbf17e87e4818fa0686e73bb43041f95",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_prefix_native_candidates.py": "bb3e6c85e868b9805712ecfc091f3fd005f425d133a83f0adcfaa7dc1c35e230",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51"
+  },
+  "current_pid": null,
+  "joint_budget": 480,
+  "prefix_budget": 720,
+  "seed": 101,
+  "rate_budget": 240,
+  "elite_rounds": 6,
+  "updated": "2026-10-14T00:08:06+00:00",
+  "previous_best": null,
+  "current_started": "2026-10-13T23:09:34+00:00",
+  "measurement_key": "prefix_720_joint_480_rate240_rounds6_s101"
+}

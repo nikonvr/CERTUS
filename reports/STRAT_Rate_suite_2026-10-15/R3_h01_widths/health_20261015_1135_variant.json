@@ -1,0 +1,21 @@
+{
+  "observed_utc": "2026-10-15T09:37:50.735183+00:00",
+  "status": "running",
+  "controller_pid": 33592,
+  "current": "variant",
+  "child_pid": 17704,
+  "scientific_process_count": 1,
+  "IDE_language_servers": [
+    23808,
+    29084,
+    24252
+  ],
+  "cpu_seconds_at_check": 2658.890625,
+  "affinity": 16777215,
+  "priority": "Normal",
+  "memory_bytes": 1373405184,
+  "control": "Complete and auditedGO; adopted without repetition",
+  "variant": "Live; widths1..7; same scientific sources and recipe",
+  "tests_or_active_source_edits_during_measurement": false,
+  "decision": "Leave the existing variant running; audit and homogeneous replay after actual completion"
+}

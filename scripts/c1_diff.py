@@ -466,9 +466,7 @@ def rendre(par_entree: dict[str, dict[str, Any]], base: str, tete: str, secondes
     differents = sum(r["differents"] for r in par_entree.values())
     if differents:
         lignes.append("")
-        for _entree, r in sorted(par_entree.items()):
-            for exemple in r["exemples"]:
-                lignes.append(f"  {exemple}")
+        lignes.extend(f"  {exemple}" for _entree, r in sorted(par_entree.items()) for exemple in r["exemples"])
         lignes.append(f"\nC1 VIOLE : {differents} differences sur {total} tableaux, dans {sum(1 for r in par_entree.values() if r['differents'])} points d'entree")
     else:
         lignes.append(f"\nC1 TENU : {total} tableaux, tous identiques au bit")

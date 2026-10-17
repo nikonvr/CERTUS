@@ -1,0 +1,21 @@
+{
+  "status": "GO",
+  "reviewed_utc": "2026-10-15T10:41:54.904539+00:00",
+  "review": "Manual source/diff review; /code-review capability unavailable",
+  "checks": [
+    "Ruff GO",
+    "PowerShell AST GO",
+    "Control exact prior wide generator outputs/order/IDs/cursor/events on all five scenarios",
+    "Fine-neighbor reachability on a generic18-layer example, only legal wavelengths",
+    "Real contracts, source immutability and witness/slit inheritance",
+    "Passive observer task delegation, metadata copy and exception restoration",
+    "Synthetic guards, permanent quotas and same installed-language-server exception",
+    "Known PowerShell5.1 handle retention and explicit backup path carried forward; no Get-FileHash dependency in coordinator"
+  ],
+  "physics_sources_modified": false,
+  "factor": "Wavelength stream only; widths1..7 in both arms",
+  "prior_pair_decision": "NO_GAIN; not promoted as an improvement",
+  "conditional_interaction_design": "If h02 gains, use the remaining pair for width ablation with the same fine wavelength policy before interpreting width necessity",
+  "quota": "Second of maximum three R3 pairs; one control then one variant; no active calculation now",
+  "protocol_sha256": "c68c98259c777480de21aab24ba1f4acefc7e94e2e5098647a1b337b0dfa6e78"
+}

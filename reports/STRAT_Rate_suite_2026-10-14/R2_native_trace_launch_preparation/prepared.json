@@ -1,0 +1,54 @@
+{
+  "status": "prepared_not_run",
+  "prepared_utc": "2026-10-14T08:13:29.637047+00:00",
+  "source_sha256": {
+    "scratch/rate_native_pipeline_probe.py": "264a89d19f97317ee369c6715bed7f6d940b3fc43b591b3b5f1ccbe7abfd40ed",
+    "scratch/verify_rate_native_pipeline_trace.py": "777f642c0842ccbd4dbe0a57864ddbce77e718fb399b605cd19e77d99ca793e8",
+    "scratch/rate_native_pipeline_trace.py": "df28ee632f11e6dcde87e53c78ce4dc35869194b2b579107f6725e7416562dc3",
+    "scratch/rate_joint_native_candidates.py": "30ac713dc23b4c0754ca56f5f843309f9b3b55c583dbe4b2bf1f17427684a611",
+    "scratch/campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51"
+  },
+  "baseline": {
+    "arguments": [
+      "r75x0.5",
+      "deep",
+      "0",
+      "0",
+      "2",
+      "0",
+      "101",
+      "0"
+    ],
+    "joint_budget": 480,
+    "prefix_budget": 0,
+    "overrides": {
+      "elite_rate_balanced_moves": false,
+      "elite_rate_max_candidates": 240,
+      "elite_rounds": 6
+    }
+  },
+  "guards": [
+    "A2 complete24/24 with no current science pid",
+    "no live known scientific process/controller",
+    "explicit timezone-aware deadline",
+    "unique native artifact tag and attempt",
+    "source snapshot identical to historical reference",
+    "GO verification record for exact adapter/observer/generator/helper hashes",
+    "OK R0 control for reference900951015, parent9900006 and best9900008",
+    "actual R0 task coverage101/41/42/43 at300 runs"
+  ],
+  "runtime_tests": "NOT_RUN_A2_ACTIVE",
+  "measurement": "NOT_STARTED",
+  "next": [
+    "finish A2",
+    "run R1 and complete required code validation outside science",
+    "run observer verifier in a new attempt folder",
+    "prepare new R0 replay copy/deadline and reproduce the three plans",
+    "preview the R2 command then measure at most one native trace"
+  ],
+  "limitations": [
+    "Observer overhead unmeasured",
+    "Observer contract exits do not exhaustively trace private budget/dedup exits",
+    "Passing structural checks does not establish native gain"
+  ]
+}

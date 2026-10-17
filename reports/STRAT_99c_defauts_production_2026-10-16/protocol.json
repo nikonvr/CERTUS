@@ -1,0 +1,16 @@
+{
+  "recorded_date": "2026-10-16",
+  "kind": "baseline arm of the 99c measurement of reports/STRAT_99c_rate_elargi_2026-10-16/ : production defaults, same seed; exploratory, NOT the A9 protocol",
+  "user_request_verbatim": "Oui : lance le bras aux défauts de production du 99c (même graine 42, sans surcharges), un seul run, sans le surveiller en boucle.",
+  "component": {"name": "99c", "config": "example/example_strat/JSON-strat-bandpass-5cav-99c.json", "layers": 99},
+  "witness": "single witness glass (witness_reset_layers not set)",
+  "command": "python -X cpu_count=16 scripts/probe_blocs_vs_plantage.py 99c premium 0 0 2 0 42",
+  "overrides": "none (no CERTUS_PROBE_OVERRIDES, no tag: a lever left at its default must not enter an override); the artefact will carry a timestamp suffix because scripts/_artefact.py never overwrites the older blocs_vs_plantage_99c_premium_s042.json",
+  "pairing": "same command, seed, commit, machine, resources as run 02 of reports/STRAT_99c_rate_elargi_2026-10-16/ ; the only difference is the absence of elite_rate_max_candidates=240, elite_rounds=6, elite_rate_joint_candidates=480 and rate_post_refinement=true. Production defaults here: rate_rescue true, rate_rescue_few 10, elite_rate_moves true, elite_rate_max_candidates 120, rate_by_swing true, elite_rounds from the premium mode, rate_post_refinement false, elite_rate_joint_candidates 0.",
+  "sources_frozen": {"git_head": "0c7c1e2e032fbf17c6de64548318950819e1f07b", "tracked_code_changes": "none (checked by the launch command, which refuses to start otherwise)", "python": "3.14.8"},
+  "resources": {"logical_cpus": 16, "library_threads": 15, "priority": "normal", "concurrent_scientific_measurements": 1, "bench_timeout_s": 36000, "env": "CERTUS_BENCH_TIMEOUT_S=36000 PYTHONUTF8=1 NUMBA_NUM_THREADS=15 OMP_NUM_THREADS=15 MKL_NUM_THREADS=15 OPENBLAS_NUM_THREADS=15"},
+  "what_it_answers": "how much of run 02 (6 302 deposable out of 6 338, best SEEL 0.6084 nm, best consensus score 0.092536) comes from the production defaults (secours Rate, ELITE Rate moves) and how much from the widening and the final refinement",
+  "limits": ["one search seed (42), one run, no confidence interval", "no confirmation seeds reserved", "durations are not comparable (warm Numba cache)", "no default activated, no source modified, no commit, no push, artefacts left untracked"],
+  "rules_during_the_run": "no test and no analysis Python during the measurement; not polled in a loop (user request); a single check shortly after the launch and one reading at the end",
+  "outputs": ["reports/STRAT_99c_defauts_production_2026-10-16/run.log", "reports/STRAT_99c_defauts_production_2026-10-16/launched_at_utc.txt", "reports/STRAT_99c_defauts_production_2026-10-16/finished_at_utc.txt", "the newest reports/blocs_vs_plantage_99c_premium_s042_2026*.json artefact"]
+}

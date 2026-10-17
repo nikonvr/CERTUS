@@ -1,0 +1,7 @@
+{
+  "verdict": "GO",
+  "before": "A fixed point was lost during parent initialization",
+  "after": "All three independently measured expected scores preserved",
+  "physics_measured": false,
+  "claims_consumed": 0
+}

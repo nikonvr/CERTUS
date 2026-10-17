@@ -1,0 +1,4725 @@
+{
+ "version": 1,
+ "description": "Monocouches mesurées au spectrophotomètre Essent Optics Photon RT (Fichiers_PhotonRT/Certain_Monocouche).",
+ "importe_le": "2026-10-11",
+ "unites": {
+  "lambda": "nm",
+  "T": "%",
+  "R": "%"
+ },
+ "depots": [
+  {
+   "id": "03-03-2026-12-32-54__h800-nbt",
+   "fichier": "mesures/03-03-2026-12-32-54__h800-nbt.csv",
+   "brut": "bruts/03-03-2026 12.32.54.xls",
+   "echantillon": "H800-NbT",
+   "materiau": {
+    "valeur": "Nb2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "03-03-2026 11:35:24"
+    }
+   ],
+   "lambda_nm": [
+    1000.02,
+    5199.88
+   ],
+   "points": 421,
+   "parametres": {
+    "Averaging count": "26.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.71"
+   }
+  },
+  {
+   "id": "03-03-2026-12-32-54__h800-nbr",
+   "fichier": "mesures/03-03-2026-12-32-54__h800-nbr.csv",
+   "brut": "bruts/03-03-2026 12.32.54.xls",
+   "echantillon": "H800-NbR",
+   "materiau": {
+    "valeur": "Nb2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "R",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 16.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "03-03-2026 11:39:14"
+    }
+   ],
+   "lambda_nm": [
+    1000.02,
+    5199.88
+   ],
+   "points": 421,
+   "parametres": {
+    "Averaging count": "26.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.71"
+   }
+  },
+  {
+   "id": "03-03-2026-12-32-54__h800-tat",
+   "fichier": "mesures/03-03-2026-12-32-54__h800-tat.csv",
+   "brut": "bruts/03-03-2026 12.32.54.xls",
+   "echantillon": "H800-TaT",
+   "materiau": {
+    "valeur": "Ta2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "03-03-2026 11:58:46"
+    }
+   ],
+   "lambda_nm": [
+    1000.02,
+    5199.88
+   ],
+   "points": 421,
+   "parametres": {
+    "Averaging count": "26.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.71"
+   }
+  },
+  {
+   "id": "03-03-2026-12-32-54__h800-tar",
+   "fichier": "mesures/03-03-2026-12-32-54__h800-tar.csv",
+   "brut": "bruts/03-03-2026 12.32.54.xls",
+   "echantillon": "H800-TaR",
+   "materiau": {
+    "valeur": "Ta2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "R",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 16.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "03-03-2026 12:03:13"
+    }
+   ],
+   "lambda_nm": [
+    1000.02,
+    5199.88
+   ],
+   "points": 421,
+   "parametres": {
+    "Averaging count": "26.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.71"
+   }
+  },
+  {
+   "id": "03-03-2026-12-32-54__h800-sit",
+   "fichier": "mesures/03-03-2026-12-32-54__h800-sit.csv",
+   "brut": "bruts/03-03-2026 12.32.54.xls",
+   "echantillon": "H800-SiT",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "03-03-2026 12:07:38"
+    }
+   ],
+   "lambda_nm": [
+    1000.02,
+    5199.88
+   ],
+   "points": 421,
+   "parametres": {
+    "Averaging count": "26.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.71"
+   }
+  },
+  {
+   "id": "03-03-2026-12-32-54__h800-sir",
+   "fichier": "mesures/03-03-2026-12-32-54__h800-sir.csv",
+   "brut": "bruts/03-03-2026 12.32.54.xls",
+   "echantillon": "H800-SiR",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "R",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 16.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "03-03-2026 12:11:34"
+    }
+   ],
+   "lambda_nm": [
+    1000.02,
+    5199.88
+   ],
+   "points": 421,
+   "parametres": {
+    "Averaging count": "26.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.71"
+   }
+  },
+  {
+   "id": "03-03-2026-12-32-54__syrus-nbt",
+   "fichier": "mesures/03-03-2026-12-32-54__syrus-nbt.csv",
+   "brut": "bruts/03-03-2026 12.32.54.xls",
+   "echantillon": "Syrus-NbT",
+   "materiau": {
+    "valeur": "Nb2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "03-03-2026 12:17:10"
+    }
+   ],
+   "lambda_nm": [
+    1000.02,
+    5199.88
+   ],
+   "points": 421,
+   "parametres": {
+    "Averaging count": "26.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.71"
+   }
+  },
+  {
+   "id": "03-03-2026-12-32-54__syrus-nbr",
+   "fichier": "mesures/03-03-2026-12-32-54__syrus-nbr.csv",
+   "brut": "bruts/03-03-2026 12.32.54.xls",
+   "echantillon": "Syrus-NbR",
+   "materiau": {
+    "valeur": "Nb2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "R",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 16.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "03-03-2026 12:21:05"
+    }
+   ],
+   "lambda_nm": [
+    1000.02,
+    5199.88
+   ],
+   "points": 421,
+   "parametres": {
+    "Averaging count": "26.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.71"
+   }
+  },
+  {
+   "id": "03-03-2026-12-32-54__syrus-sit",
+   "fichier": "mesures/03-03-2026-12-32-54__syrus-sit.csv",
+   "brut": "bruts/03-03-2026 12.32.54.xls",
+   "echantillon": "Syrus-SIT",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "03-03-2026 12:25:18"
+    }
+   ],
+   "lambda_nm": [
+    1000.02,
+    5199.88
+   ],
+   "points": 421,
+   "parametres": {
+    "Averaging count": "26.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.71"
+   }
+  },
+  {
+   "id": "03-03-2026-12-32-54__syrus-sir",
+   "fichier": "mesures/03-03-2026-12-32-54__syrus-sir.csv",
+   "brut": "bruts/03-03-2026 12.32.54.xls",
+   "echantillon": "Syrus-SiR",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "R",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 16.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "03-03-2026 12:29:15"
+    }
+   ],
+   "lambda_nm": [
+    1000.02,
+    5199.88
+   ],
+   "points": 421,
+   "parametres": {
+    "Averaging count": "26.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.71"
+   }
+  },
+  {
+   "id": "07-06-2024-15-07__c1",
+   "fichier": "mesures/07-06-2024-15-07__c1.csv",
+   "brut": "bruts/07-06-2024 15.07.xls",
+   "echantillon": "c1",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "07-06-2024 14:41"
+    }
+   ],
+   "lambda_nm": [
+    186.0,
+    799.99
+   ],
+   "points": 308,
+   "parametres": {
+    "Averaging count": "2.0",
+    "Sampling pitch, nm": "2.0",
+    "Slit width, µm": "120.0",
+    "Spot size, mm": "4.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.5"
+   }
+  },
+  {
+   "id": "07-06-2024-15-07__c2",
+   "fichier": "mesures/07-06-2024-15-07__c2.csv",
+   "brut": "bruts/07-06-2024 15.07.xls",
+   "echantillon": "c2",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "07-06-2024 14:45"
+    }
+   ],
+   "lambda_nm": [
+    186.0,
+    799.99
+   ],
+   "points": 308,
+   "parametres": {
+    "Averaging count": "2.0",
+    "Sampling pitch, nm": "2.0",
+    "Slit width, µm": "120.0",
+    "Spot size, mm": "4.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.5"
+   }
+  },
+  {
+   "id": "07-06-2024-15-07__c1b",
+   "fichier": "mesures/07-06-2024-15-07__c1b.csv",
+   "brut": "bruts/07-06-2024 15.07.xls",
+   "echantillon": "c1b",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "07-06-2024 14:52"
+    }
+   ],
+   "lambda_nm": [
+    186.0,
+    799.99
+   ],
+   "points": 308,
+   "parametres": {
+    "Averaging count": "2.0",
+    "Sampling pitch, nm": "2.0",
+    "Slit width, µm": "120.0",
+    "Spot size, mm": "4.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.5"
+   }
+  },
+  {
+   "id": "07-06-2024-15-07__nb",
+   "fichier": "mesures/07-06-2024-15-07__nb.csv",
+   "brut": "bruts/07-06-2024 15.07.xls",
+   "echantillon": "nb",
+   "materiau": {
+    "valeur": "Nb2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "07-06-2024 14:56"
+    }
+   ],
+   "lambda_nm": [
+    186.0,
+    799.99
+   ],
+   "points": 308,
+   "parametres": {
+    "Averaging count": "2.0",
+    "Sampling pitch, nm": "2.0",
+    "Slit width, µm": "120.0",
+    "Spot size, mm": "4.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.5"
+   }
+  },
+  {
+   "id": "07-06-2024-15-07__si1c",
+   "fichier": "mesures/07-06-2024-15-07__si1c.csv",
+   "brut": "bruts/07-06-2024 15.07.xls",
+   "echantillon": "si1c",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "07-06-2024 15:05"
+    }
+   ],
+   "lambda_nm": [
+    186.0,
+    799.99
+   ],
+   "points": 308,
+   "parametres": {
+    "Averaging count": "2.0",
+    "Sampling pitch, nm": "2.0",
+    "Slit width, µm": "300.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.5"
+   }
+  },
+  {
+   "id": "08-10-53",
+   "fichier": "mesures/08-10-53.csv",
+   "brut": "bruts/08.10.53.xls",
+   "echantillon": "08.10.53",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "10-04-2026 08:08:27"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    600.0
+   ],
+   "points": 351,
+   "parametres": {
+    "Averaging count": "40.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "100.0",
+    "Spot size, mm": "3.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "08-16-45",
+   "fichier": "mesures/08-16-45.csv",
+   "brut": "bruts/08.16.45.xls",
+   "echantillon": "08.16.45",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "10-04-2026 08:14:19"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    600.0
+   ],
+   "points": 351,
+   "parametres": {
+    "Averaging count": "40.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "100.0",
+    "Spot size, mm": "3.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "08-42-30",
+   "fichier": "mesures/08-42-30.csv",
+   "brut": "bruts/08.42.30.xls",
+   "echantillon": "08.42.30",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "10-04-2026 08:39:31"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    600.0
+   ],
+   "points": 351,
+   "parametres": {
+    "Averaging count": "40.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.5",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "08-45-36",
+   "fichier": "mesures/08-45-36.csv",
+   "brut": "bruts/08.45.36.xls",
+   "echantillon": "08.45.36",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "10-04-2026 08:42:37"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    600.0
+   ],
+   "points": 351,
+   "parametres": {
+    "Averaging count": "40.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.5",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "08-54-34",
+   "fichier": "mesures/08-54-34.csv",
+   "brut": "bruts/08.54.34.xls",
+   "echantillon": "08.54.34",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "10-04-2026 08:52:02"
+    }
+   ],
+   "lambda_nm": [
+    600.0,
+    2199.95
+   ],
+   "points": 401,
+   "parametres": {
+    "Averaging count": "20.0",
+    "Sampling pitch, nm": "4.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.5",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "08-57-16",
+   "fichier": "mesures/08-57-16.csv",
+   "brut": "bruts/08.57.16.xls",
+   "echantillon": "08.57.16",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "10-04-2026 08:54:45"
+    }
+   ],
+   "lambda_nm": [
+    600.0,
+    2199.95
+   ],
+   "points": 401,
+   "parametres": {
+    "Averaging count": "20.0",
+    "Sampling pitch, nm": "4.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.5",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "09-02-40",
+   "fichier": "mesures/09-02-40.csv",
+   "brut": "bruts/09.02.40.xls",
+   "echantillon": "09.02.40",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "10-04-2026 09:00:31"
+    }
+   ],
+   "lambda_nm": [
+    2199.95,
+    5199.88
+   ],
+   "points": 151,
+   "parametres": {
+    "Averaging count": "40.0",
+    "Sampling pitch, nm": "20.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.5",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "09-05-13",
+   "fichier": "mesures/09-05-13.csv",
+   "brut": "bruts/09.05.13.xls",
+   "echantillon": "09.05.13",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "10-04-2026 09:03:03"
+    }
+   ],
+   "lambda_nm": [
+    2199.95,
+    5199.88
+   ],
+   "points": 151,
+   "parametres": {
+    "Averaging count": "40.0",
+    "Sampling pitch, nm": "20.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.5",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "09-07-29",
+   "fichier": "mesures/09-07-29.csv",
+   "brut": "bruts/09.07.29.xls",
+   "echantillon": "09.07.29",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "10-04-2026 09:05:20"
+    }
+   ],
+   "lambda_nm": [
+    2199.95,
+    5199.88
+   ],
+   "points": 151,
+   "parametres": {
+    "Averaging count": "40.0",
+    "Sampling pitch, nm": "20.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.5",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "09-10-45",
+   "fichier": "mesures/09-10-45.csv",
+   "brut": "bruts/09.10.45.xls",
+   "echantillon": "09.10.45",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "10-04-2026 09:09:38"
+    }
+   ],
+   "lambda_nm": [
+    4000.04,
+    5199.88
+   ],
+   "points": 61,
+   "parametres": {
+    "Averaging count": "500.0",
+    "Sampling pitch, nm": "20.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.5",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "09-13-33",
+   "fichier": "mesures/09-13-33.csv",
+   "brut": "bruts/09.13.33.xls",
+   "echantillon": "09.13.33",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "10-04-2026 09:12:27"
+    }
+   ],
+   "lambda_nm": [
+    4000.04,
+    5199.88
+   ],
+   "points": 61,
+   "parametres": {
+    "Averaging count": "500.0",
+    "Sampling pitch, nm": "20.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.5",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "09-15-40",
+   "fichier": "mesures/09-15-40.csv",
+   "brut": "bruts/09.15.40.xls",
+   "echantillon": "09.15.40",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "10-04-2026 09:14:35"
+    }
+   ],
+   "lambda_nm": [
+    4000.04,
+    5199.88
+   ],
+   "points": 61,
+   "parametres": {
+    "Averaging count": "500.0",
+    "Sampling pitch, nm": "20.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.5",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "09-18-16",
+   "fichier": "mesures/09-18-16.csv",
+   "brut": "bruts/09.18.16.xls",
+   "echantillon": "09.18.16",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "08-04-2026 09:16:22"
+    }
+   ],
+   "lambda_nm": [
+    499.99,
+    1199.97
+   ],
+   "points": 351,
+   "parametres": {
+    "Averaging count": "20.0",
+    "Sampling pitch, nm": "2.0",
+    "Slit width, µm": "150.0",
+    "Spot size, mm": "4.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "09-22-03",
+   "fichier": "mesures/09-22-03.csv",
+   "brut": "bruts/09.22.03.xls",
+   "echantillon": "09.22.03",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "10-04-2026 09:20:57"
+    }
+   ],
+   "lambda_nm": [
+    4000.04,
+    5199.88
+   ],
+   "points": 61,
+   "parametres": {
+    "Averaging count": "100.0",
+    "Sampling pitch, nm": "20.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.5",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "09-24-44",
+   "fichier": "mesures/09-24-44.csv",
+   "brut": "bruts/09.24.44.xls",
+   "echantillon": "09.24.44",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "28-04-2026 09:22:03"
+    }
+   ],
+   "lambda_nm": [
+    399.98,
+    499.99
+   ],
+   "points": 401,
+   "parametres": {
+    "Averaging count": "50.0",
+    "Sampling pitch, nm": "0.25",
+    "Slit width, µm": "80.0",
+    "Spot size, mm": "3.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "09-25-02",
+   "fichier": "mesures/09-25-02.csv",
+   "brut": "bruts/09.25.02.xls",
+   "echantillon": "09.25.02",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "08-04-2026 09:23:09"
+    }
+   ],
+   "lambda_nm": [
+    1000.02,
+    2400.03
+   ],
+   "points": 351,
+   "parametres": {
+    "Averaging count": "20.0",
+    "Sampling pitch, nm": "4.0",
+    "Slit width, µm": "200.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "09-26-08",
+   "fichier": "mesures/09-26-08.csv",
+   "brut": "bruts/09.26.08.xls",
+   "echantillon": "09.26.08",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "10-04-2026 09:25:02"
+    }
+   ],
+   "lambda_nm": [
+    4000.04,
+    5199.88
+   ],
+   "points": 61,
+   "parametres": {
+    "Averaging count": "200.0",
+    "Sampling pitch, nm": "20.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "09-27-38",
+   "fichier": "mesures/09-27-38.csv",
+   "brut": "bruts/09.27.38.xls",
+   "echantillon": "09.27.38",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "10-04-2026 09:26:32"
+    }
+   ],
+   "lambda_nm": [
+    4000.04,
+    5199.88
+   ],
+   "points": 61,
+   "parametres": {
+    "Averaging count": "200.0",
+    "Sampling pitch, nm": "20.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "09-30-07",
+   "fichier": "mesures/09-30-07.csv",
+   "brut": "bruts/09.30.07.xls",
+   "echantillon": "09.30.07",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "08-04-2026 09:27:57"
+    }
+   ],
+   "lambda_nm": [
+    2199.95,
+    5199.88
+   ],
+   "points": 301,
+   "parametres": {
+    "Averaging count": "20.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.5",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "09-32-31",
+   "fichier": "mesures/09-32-31.csv",
+   "brut": "bruts/09.32.31.xls",
+   "echantillon": "09.32.31",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "08-04-2026 09:30:21"
+    }
+   ],
+   "lambda_nm": [
+    2199.95,
+    5199.88
+   ],
+   "points": 301,
+   "parametres": {
+    "Averaging count": "20.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.5",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "09-45-28",
+   "fichier": "mesures/09-45-28.csv",
+   "brut": "bruts/09.45.28.xls",
+   "echantillon": "09.45.28",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "03-04-2026 09:32:25"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    1199.97
+   ],
+   "points": 3801,
+   "parametres": {
+    "Averaging count": "20.0",
+    "Sampling pitch, nm": "0.25",
+    "Slit width, µm": "100.0",
+    "Spot size, mm": "3.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "11-06-2024-10-23__zns-sur-si",
+   "fichier": "mesures/11-06-2024-10-23__zns-sur-si.csv",
+   "brut": "bruts/11-06-2024 10.23.xls",
+   "echantillon": "zns sur si",
+   "materiau": {
+    "valeur": "ZnS",
+    "source": "nom"
+   },
+   "substrat": {
+    "valeur": "Si",
+    "source": "nom"
+   },
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "11-06-2024 10:00"
+    }
+   ],
+   "lambda_nm": [
+    399.99,
+    5199.92
+   ],
+   "points": 961,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "5.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.5"
+   }
+  },
+  {
+   "id": "11-06-2024-10-23__zns-sur-si-r",
+   "fichier": "mesures/11-06-2024-10-23__zns-sur-si-r.csv",
+   "brut": "bruts/11-06-2024 10.23.xls",
+   "echantillon": "zns sur si R",
+   "materiau": {
+    "valeur": "ZnS",
+    "source": "nom"
+   },
+   "substrat": {
+    "valeur": "Si",
+    "source": "nom"
+   },
+   "voies": [
+    {
+     "mode": "R",
+     "mode_declare": "Reflectance",
+     "detecteur_deg": 16.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "11-06-2024 10:05"
+    }
+   ],
+   "lambda_nm": [
+    399.99,
+    5199.92
+   ],
+   "points": 961,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "5.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.5"
+   }
+  },
+  {
+   "id": "11-06-2024-10-23__zns-sur-verre",
+   "fichier": "mesures/11-06-2024-10-23__zns-sur-verre.csv",
+   "brut": "bruts/11-06-2024 10.23.xls",
+   "echantillon": "zns sur verre",
+   "materiau": {
+    "valeur": "ZnS",
+    "source": "nom"
+   },
+   "substrat": {
+    "valeur": "verre",
+    "source": "nom"
+   },
+   "voies": [
+    {
+     "mode": "R",
+     "mode_declare": "Reflectance",
+     "detecteur_deg": 16.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "11-06-2024 10:12"
+    }
+   ],
+   "lambda_nm": [
+    399.99,
+    5199.92
+   ],
+   "points": 961,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "5.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.5"
+   }
+  },
+  {
+   "id": "11-06-2024-10-23__zns-sur-verre-t",
+   "fichier": "mesures/11-06-2024-10-23__zns-sur-verre-t.csv",
+   "brut": "bruts/11-06-2024 10.23.xls",
+   "echantillon": "zns sur verre t",
+   "materiau": {
+    "valeur": "ZnS",
+    "source": "nom"
+   },
+   "substrat": {
+    "valeur": "verre",
+    "source": "nom"
+   },
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "11-06-2024 10:17"
+    }
+   ],
+   "lambda_nm": [
+    399.99,
+    5199.92
+   ],
+   "points": 961,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "5.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.5"
+   }
+  },
+  {
+   "id": "17-04-2024-09-05__ito-r3",
+   "fichier": "mesures/17-04-2024-09-05__ito-r3.csv",
+   "brut": "bruts/17-04-2024 09.05.xls",
+   "echantillon": "ITO-R3",
+   "materiau": {
+    "valeur": "ITO",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "15-04-2024 13:43"
+    }
+   ],
+   "lambda_nm": [
+    350.01,
+    3500.11
+   ],
+   "points": 3151,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.2"
+   }
+  },
+  {
+   "id": "17-04-2024-09-05__ito-r1-re",
+   "fichier": "mesures/17-04-2024-09-05__ito-r1-re.csv",
+   "brut": "bruts/17-04-2024 09.05.xls",
+   "echantillon": "ITO-R1-Re",
+   "materiau": {
+    "valeur": "ITO",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "15-04-2024 14:06"
+    }
+   ],
+   "lambda_nm": [
+    350.01,
+    3500.11
+   ],
+   "points": 3151,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.2"
+   }
+  },
+  {
+   "id": "17-04-2024-09-05__ito",
+   "fichier": "mesures/17-04-2024-09-05__ito.csv",
+   "brut": "bruts/17-04-2024 09.05.xls",
+   "echantillon": "ITO",
+   "materiau": {
+    "valeur": "ITO",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "31-12-1969 19:00"
+    }
+   ],
+   "lambda_nm": [
+    350.01,
+    3500.11
+   ],
+   "points": 3151,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.2"
+   }
+  },
+  {
+   "id": "17-04-2024-09-05__ito-r5",
+   "fichier": "mesures/17-04-2024-09-05__ito-r5.csv",
+   "brut": "bruts/17-04-2024 09.05.xls",
+   "echantillon": "ITO-R5",
+   "materiau": {
+    "valeur": "ITO",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "15-04-2024 16:48"
+    }
+   ],
+   "lambda_nm": [
+    350.01,
+    3500.11
+   ],
+   "points": 3151,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.2"
+   }
+  },
+  {
+   "id": "17-04-2024-09-05__ito-r6",
+   "fichier": "mesures/17-04-2024-09-05__ito-r6.csv",
+   "brut": "bruts/17-04-2024 09.05.xls",
+   "echantillon": "ITO-R6",
+   "materiau": {
+    "valeur": "ITO",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "15-04-2024 16:59"
+    }
+   ],
+   "lambda_nm": [
+    350.01,
+    3500.11
+   ],
+   "points": 3151,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.2"
+   }
+  },
+  {
+   "id": "17-04-2024-09-05__ito-r7",
+   "fichier": "mesures/17-04-2024-09-05__ito-r7.csv",
+   "brut": "bruts/17-04-2024 09.05.xls",
+   "echantillon": "ITO-R7",
+   "materiau": {
+    "valeur": "ITO",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "16-04-2024 14:36"
+    }
+   ],
+   "lambda_nm": [
+    350.01,
+    3500.11
+   ],
+   "points": 3151,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.2"
+   }
+  },
+  {
+   "id": "17-04-2024-09-05__ito-r8",
+   "fichier": "mesures/17-04-2024-09-05__ito-r8.csv",
+   "brut": "bruts/17-04-2024 09.05.xls",
+   "echantillon": "ITO-R8",
+   "materiau": {
+    "valeur": "ITO",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "16-04-2024 16:39"
+    }
+   ],
+   "lambda_nm": [
+    350.01,
+    3500.11
+   ],
+   "points": 3151,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.2"
+   }
+  },
+  {
+   "id": "17-04-2024-09-05__ito-r9",
+   "fichier": "mesures/17-04-2024-09-05__ito-r9.csv",
+   "brut": "bruts/17-04-2024 09.05.xls",
+   "echantillon": "ITO-R9",
+   "materiau": {
+    "valeur": "ITO",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "17-04-2024 08:15"
+    }
+   ],
+   "lambda_nm": [
+    350.01,
+    3500.11
+   ],
+   "points": 3151,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.2"
+   }
+  },
+  {
+   "id": "17-04-2024-09-05__ito-r10",
+   "fichier": "mesures/17-04-2024-09-05__ito-r10.csv",
+   "brut": "bruts/17-04-2024 09.05.xls",
+   "echantillon": "ITO-R10",
+   "materiau": {
+    "valeur": "ITO",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "17-04-2024 08:26"
+    }
+   ],
+   "lambda_nm": [
+    350.01,
+    3500.11
+   ],
+   "points": 3151,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.2"
+   }
+  },
+  {
+   "id": "24-03-accurate__nb1",
+   "fichier": "mesures/24-03-accurate__nb1.csv",
+   "brut": "bruts/24-03-accurate.xls",
+   "echantillon": "nb1",
+   "materiau": {
+    "valeur": "Nb2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "24-03-2026 11:02:04"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    5199.88
+   ],
+   "points": 100,
+   "parametres": {
+    "Averaging count": "50.0",
+    "Sampling pitch, nm": "2.0",
+    "Slit width, µm": "80.0",
+    "Spot size, mm": "4.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "24-03-accurate__ta1",
+   "fichier": "mesures/24-03-accurate__ta1.csv",
+   "brut": "bruts/24-03-accurate.xls",
+   "echantillon": "ta1",
+   "materiau": {
+    "valeur": "Ta2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "24-03-2026 11:07:53"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    5199.88
+   ],
+   "points": 100,
+   "parametres": {
+    "Averaging count": "50.0",
+    "Sampling pitch, nm": "2.0",
+    "Slit width, µm": "80.0",
+    "Spot size, mm": "4.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "24-03-accurate__si1",
+   "fichier": "mesures/24-03-accurate__si1.csv",
+   "brut": "bruts/24-03-accurate.xls",
+   "echantillon": "si1",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "24-03-2026 11:13:28"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    5199.88
+   ],
+   "points": 100,
+   "parametres": {
+    "Averaging count": "50.0",
+    "Sampling pitch, nm": "2.0",
+    "Slit width, µm": "80.0",
+    "Spot size, mm": "4.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "24-03-accurate__nb2",
+   "fichier": "mesures/24-03-accurate__nb2.csv",
+   "brut": "bruts/24-03-accurate.xls",
+   "echantillon": "nb2",
+   "materiau": {
+    "valeur": "Nb2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "24-03-2026 11:22:07"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    5199.88
+   ],
+   "points": 100,
+   "parametres": {
+    "Averaging count": "150.0",
+    "Sampling pitch, nm": "0.5",
+    "Slit width, µm": "60.0",
+    "Spot size, mm": "3.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "24-03-accurate__nb3",
+   "fichier": "mesures/24-03-accurate__nb3.csv",
+   "brut": "bruts/24-03-accurate.xls",
+   "echantillon": "nb3",
+   "materiau": {
+    "valeur": "Nb2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "24-03-2026 11:29:08"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    5199.88
+   ],
+   "points": 100,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "5.0",
+    "Slit width, µm": "100.0",
+    "Spot size, mm": "4.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "24-03-accurate__ta3",
+   "fichier": "mesures/24-03-accurate__ta3.csv",
+   "brut": "bruts/24-03-accurate.xls",
+   "echantillon": "ta3",
+   "materiau": {
+    "valeur": "Ta2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "24-03-2026 11:30:30"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    5199.88
+   ],
+   "points": 100,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "5.0",
+    "Slit width, µm": "100.0",
+    "Spot size, mm": "4.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "24-03-accurate__si3",
+   "fichier": "mesures/24-03-accurate__si3.csv",
+   "brut": "bruts/24-03-accurate.xls",
+   "echantillon": "si3",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "24-03-2026 11:31:57"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    5199.88
+   ],
+   "points": 100,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "5.0",
+    "Slit width, µm": "100.0",
+    "Spot size, mm": "4.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "24-03-accurate__nb4",
+   "fichier": "mesures/24-03-accurate__nb4.csv",
+   "brut": "bruts/24-03-accurate.xls",
+   "echantillon": "nb4",
+   "materiau": {
+    "valeur": "Nb2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "24-03-2026 11:37:14"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    5199.88
+   ],
+   "points": 100,
+   "parametres": {
+    "Averaging count": "20.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "24-03-accurate__ta4",
+   "fichier": "mesures/24-03-accurate__ta4.csv",
+   "brut": "bruts/24-03-accurate.xls",
+   "echantillon": "ta4",
+   "materiau": {
+    "valeur": "Ta2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "24-03-2026 11:39:15"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    5199.88
+   ],
+   "points": 100,
+   "parametres": {
+    "Averaging count": "20.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "24-03-accurate__si4",
+   "fichier": "mesures/24-03-accurate__si4.csv",
+   "brut": "bruts/24-03-accurate.xls",
+   "echantillon": "si4",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "24-03-2026 11:41:16"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    5199.88
+   ],
+   "points": 100,
+   "parametres": {
+    "Averaging count": "20.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "24-03-accurate__nb5",
+   "fichier": "mesures/24-03-accurate__nb5.csv",
+   "brut": "bruts/24-03-accurate.xls",
+   "echantillon": "nb5",
+   "materiau": {
+    "valeur": "Nb2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "S",
+     "debut": "24-03-2026 11:46:29"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    5199.88
+   ],
+   "points": 100,
+   "parametres": {
+    "Averaging count": "100.0",
+    "Sampling pitch, nm": "20.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "24-03-accurate__nb5p",
+   "fichier": "mesures/24-03-accurate__nb5p.csv",
+   "brut": "bruts/24-03-accurate.xls",
+   "echantillon": "nb5p",
+   "materiau": {
+    "valeur": "Nb2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "P",
+     "debut": "24-03-2026 11:53:58"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    5199.88
+   ],
+   "points": 100,
+   "parametres": {
+    "Averaging count": "100.0",
+    "Sampling pitch, nm": "20.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "24-03-accurate__nb6",
+   "fichier": "mesures/24-03-accurate__nb6.csv",
+   "brut": "bruts/24-03-accurate.xls",
+   "echantillon": "nb6",
+   "materiau": {
+    "valeur": "Nb2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "S",
+     "debut": "24-03-2026 11:59:17"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    5199.88
+   ],
+   "points": 100,
+   "parametres": {
+    "Averaging count": "200.0",
+    "Sampling pitch, nm": "20.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "24-03-accurate__ta6",
+   "fichier": "mesures/24-03-accurate__ta6.csv",
+   "brut": "bruts/24-03-accurate.xls",
+   "echantillon": "ta6",
+   "materiau": {
+    "valeur": "Ta2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "S",
+     "debut": "24-03-2026 12:00:56"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    5199.88
+   ],
+   "points": 100,
+   "parametres": {
+    "Averaging count": "200.0",
+    "Sampling pitch, nm": "20.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "24-03-accurate__si6",
+   "fichier": "mesures/24-03-accurate__si6.csv",
+   "brut": "bruts/24-03-accurate.xls",
+   "echantillon": "si6",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "S",
+     "debut": "24-03-2026 12:02:36"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    5199.88
+   ],
+   "points": 100,
+   "parametres": {
+    "Averaging count": "200.0",
+    "Sampling pitch, nm": "20.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "24-03-accurate__nb7",
+   "fichier": "mesures/24-03-accurate__nb7.csv",
+   "brut": "bruts/24-03-accurate.xls",
+   "echantillon": "nb7",
+   "materiau": {
+    "valeur": "Nb2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "S",
+     "debut": "24-03-2026 12:09:05"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    5199.88
+   ],
+   "points": 100,
+   "parametres": {
+    "Averaging count": "40.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "180.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "24-03-accurate__ta7",
+   "fichier": "mesures/24-03-accurate__ta7.csv",
+   "brut": "bruts/24-03-accurate.xls",
+   "echantillon": "ta7",
+   "materiau": {
+    "valeur": "Ta2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "S",
+     "debut": "24-03-2026 12:11:41"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    5199.88
+   ],
+   "points": 100,
+   "parametres": {
+    "Averaging count": "40.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "180.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "24-03-accurate__si7",
+   "fichier": "mesures/24-03-accurate__si7.csv",
+   "brut": "bruts/24-03-accurate.xls",
+   "echantillon": "si7",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "S",
+     "debut": "24-03-2026 12:14:04"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    5199.88
+   ],
+   "points": 100,
+   "parametres": {
+    "Averaging count": "40.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "180.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "24-03-accurate__tnusaphire-2f",
+   "fichier": "mesures/24-03-accurate__tnusaphire-2f.csv",
+   "brut": "bruts/24-03-accurate.xls",
+   "echantillon": "Tnusaphire-2f",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "24-03-2026 13:03:12"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    5199.88
+   ],
+   "points": 100,
+   "parametres": {
+    "Averaging count": "40.0",
+    "Sampling pitch, nm": "50.0",
+    "Slit width, µm": "200.0",
+    "Spot size, mm": "4.5",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "24-03-accurate__rnu-2f",
+   "fichier": "mesures/24-03-accurate__rnu-2f.csv",
+   "brut": "bruts/24-03-accurate.xls",
+   "echantillon": "Rnu-2f",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "R",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 16.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "24-03-2026 13:06:25"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    5199.88
+   ],
+   "points": 100,
+   "parametres": {
+    "Averaging count": "40.0",
+    "Sampling pitch, nm": "50.0",
+    "Slit width, µm": "200.0",
+    "Spot size, mm": "4.5",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "24-03-accurate__rabsnb",
+   "fichier": "mesures/24-03-accurate__rabsnb.csv",
+   "brut": "bruts/24-03-accurate.xls",
+   "echantillon": "RabsNb",
+   "materiau": {
+    "valeur": "Nb2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "R",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 16.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "24-03-2026 13:10:27"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    5199.88
+   ],
+   "points": 100,
+   "parametres": {
+    "Averaging count": "40.0",
+    "Sampling pitch, nm": "50.0",
+    "Slit width, µm": "200.0",
+    "Spot size, mm": "4.5",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "24-03-accurate__tabsnb",
+   "fichier": "mesures/24-03-accurate__tabsnb.csv",
+   "brut": "bruts/24-03-accurate.xls",
+   "echantillon": "TabsNb",
+   "materiau": {
+    "valeur": "Nb2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "24-03-2026 13:13:44"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    5199.88
+   ],
+   "points": 100,
+   "parametres": {
+    "Averaging count": "40.0",
+    "Sampling pitch, nm": "50.0",
+    "Slit width, µm": "200.0",
+    "Spot size, mm": "4.5",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "24-03-accurate__tabsta",
+   "fichier": "mesures/24-03-accurate__tabsta.csv",
+   "brut": "bruts/24-03-accurate.xls",
+   "echantillon": "TabsTa",
+   "materiau": {
+    "valeur": "Ta2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "24-03-2026 13:17:42"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    5199.88
+   ],
+   "points": 100,
+   "parametres": {
+    "Averaging count": "40.0",
+    "Sampling pitch, nm": "50.0",
+    "Slit width, µm": "200.0",
+    "Spot size, mm": "4.5",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "24-03-accurate__rabsta",
+   "fichier": "mesures/24-03-accurate__rabsta.csv",
+   "brut": "bruts/24-03-accurate.xls",
+   "echantillon": "RabsTa",
+   "materiau": {
+    "valeur": "Ta2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "R",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 16.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "24-03-2026 13:20:58"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    5199.88
+   ],
+   "points": 100,
+   "parametres": {
+    "Averaging count": "40.0",
+    "Sampling pitch, nm": "50.0",
+    "Slit width, µm": "200.0",
+    "Spot size, mm": "4.5",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "24-03-accurate__rabssi",
+   "fichier": "mesures/24-03-accurate__rabssi.csv",
+   "brut": "bruts/24-03-accurate.xls",
+   "echantillon": "RabsSi",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "R",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 16.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "24-03-2026 13:25:09"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    5199.88
+   ],
+   "points": 100,
+   "parametres": {
+    "Averaging count": "40.0",
+    "Sampling pitch, nm": "50.0",
+    "Slit width, µm": "200.0",
+    "Spot size, mm": "4.5",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "24-03-accurate__tabssi",
+   "fichier": "mesures/24-03-accurate__tabssi.csv",
+   "brut": "bruts/24-03-accurate.xls",
+   "echantillon": "TabsSi",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "24-03-2026 13:28:23"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    5199.88
+   ],
+   "points": 100,
+   "parametres": {
+    "Averaging count": "40.0",
+    "Sampling pitch, nm": "50.0",
+    "Slit width, µm": "200.0",
+    "Spot size, mm": "4.5",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "28-08-2026-sb2s3-carac__sb2s3-250-600",
+   "fichier": "mesures/28-08-2026-sb2s3-carac__sb2s3-250-600.csv",
+   "brut": "bruts/28-08-2026 Sb2S3 carac.xls",
+   "echantillon": "Sb2S3 250-600",
+   "materiau": {
+    "valeur": "Sb2S3",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "28-08-2026 13:04:44"
+    }
+   ],
+   "lambda_nm": [
+    399.98,
+    2400.03
+   ],
+   "points": 401,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "120.0",
+    "Spot size, mm": "4.0",
+    "Sample thickness, mm": "2.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "28-08-2026-sb2s3-carac__sb2s3-600-2400",
+   "fichier": "mesures/28-08-2026-sb2s3-carac__sb2s3-600-2400.csv",
+   "brut": "bruts/28-08-2026 Sb2S3 carac.xls",
+   "echantillon": "Sb2S3 600-2400",
+   "materiau": {
+    "valeur": "Sb2S3",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "28-08-2026 13:10:28"
+    }
+   ],
+   "lambda_nm": [
+    399.98,
+    2400.03
+   ],
+   "points": 401,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "5.0",
+    "Slit width, µm": "180.0",
+    "Spot size, mm": "4.0",
+    "Sample thickness, mm": "2.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "28-08-2026-sb2s3-carac__sb2s3-2400-5200",
+   "fichier": "mesures/28-08-2026-sb2s3-carac__sb2s3-2400-5200.csv",
+   "brut": "bruts/28-08-2026 Sb2S3 carac.xls",
+   "echantillon": "Sb2S3 2400-5200",
+   "materiau": {
+    "valeur": "Sb2S3",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "28-08-2026 13:18:20"
+    }
+   ],
+   "lambda_nm": [
+    399.98,
+    2400.03
+   ],
+   "points": 401,
+   "parametres": {
+    "Averaging count": "40.0",
+    "Sampling pitch, nm": "20.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.5",
+    "Sample thickness, mm": "2.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "28-08-2026-sb2s3-carac__sb2s3-400-2400-sc",
+   "fichier": "mesures/28-08-2026-sb2s3-carac__sb2s3-400-2400-sc.csv",
+   "brut": "bruts/28-08-2026 Sb2S3 carac.xls",
+   "echantillon": "Sb2S3 400-2400 SC",
+   "materiau": {
+    "valeur": "Sb2S3",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "28-08-2026 13:24:58"
+    }
+   ],
+   "lambda_nm": [
+    399.98,
+    2400.03
+   ],
+   "points": 401,
+   "parametres": {
+    "Averaging count": "20.0",
+    "Sampling pitch, nm": "5.0",
+    "Slit width, µm": "180.0",
+    "Spot size, mm": "4.0",
+    "Sample thickness, mm": "2.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "28-08-2026-sb2s3-carac__sb2s3-400-2400-silice-sc",
+   "fichier": "mesures/28-08-2026-sb2s3-carac__sb2s3-400-2400-silice-sc.csv",
+   "brut": "bruts/28-08-2026 Sb2S3 carac.xls",
+   "echantillon": "SB2S3 400-2400 silice SC",
+   "materiau": {
+    "valeur": "Sb2S3",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "28-08-2026 13:29:10"
+    }
+   ],
+   "lambda_nm": [
+    399.98,
+    2400.03
+   ],
+   "points": 401,
+   "parametres": {
+    "Averaging count": "20.0",
+    "Sampling pitch, nm": "5.0",
+    "Slit width, µm": "180.0",
+    "Spot size, mm": "4.0",
+    "Sample thickness, mm": "2.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "all1902__tabssi",
+   "fichier": "mesures/all1902__tabssi.csv",
+   "brut": "bruts/all1902.xls",
+   "echantillon": "TabsSi",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "19-02-2026 15:18:35"
+    }
+   ],
+   "lambda_nm": [
+    1149.97,
+    5199.88
+   ],
+   "points": 406,
+   "parametres": {
+    "Averaging count": "50.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.71"
+   }
+  },
+  {
+   "id": "b270-yf3-b-t-et-r-14-06-2024-16-33__b270-yf3-echant-b-transmit-14-06",
+   "fichier": "mesures/b270-yf3-b-t-et-r-14-06-2024-16-33__b270-yf3-echant-b-transmit-14-06.csv",
+   "brut": "bruts/B270 YF3 - B - T et R - 14-06-2024 16.33.xls",
+   "echantillon": "B270 YF3 - echant B - Transmit 14-06",
+   "materiau": {
+    "valeur": "YF3",
+    "source": "nom"
+   },
+   "substrat": {
+    "valeur": "B270",
+    "source": "nom"
+   },
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "14-06-2024 16:15"
+    }
+   ],
+   "lambda_nm": [
+    300.01,
+    3000.08
+   ],
+   "points": 2701,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.5"
+   }
+  },
+  {
+   "id": "b270-yf3-b-t-et-r-14-06-2024-16-33__b270-yf3-echant-b-reflex-14-06",
+   "fichier": "mesures/b270-yf3-b-t-et-r-14-06-2024-16-33__b270-yf3-echant-b-reflex-14-06.csv",
+   "brut": "bruts/B270 YF3 - B - T et R - 14-06-2024 16.33.xls",
+   "echantillon": "B270 YF3 - echant B - Reflex 14-06",
+   "materiau": {
+    "valeur": "YF3",
+    "source": "nom"
+   },
+   "substrat": {
+    "valeur": "B270",
+    "source": "nom"
+   },
+   "voies": [
+    {
+     "mode": "R",
+     "mode_declare": "Reflectance",
+     "detecteur_deg": 16.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "14-06-2024 16:24"
+    }
+   ],
+   "lambda_nm": [
+    300.01,
+    3000.08
+   ],
+   "points": 2701,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.5"
+   }
+  },
+  {
+   "id": "b270-yf3-a-14-06-2024-16-11__b270-yf3-echant-a-transmit-14-06",
+   "fichier": "mesures/b270-yf3-a-14-06-2024-16-11__b270-yf3-echant-a-transmit-14-06.csv",
+   "brut": "bruts/B270 YF3-A-14-06-2024 16.11.xls",
+   "echantillon": "B270 YF3 - echant A - Transmit 14-06",
+   "materiau": {
+    "valeur": "YF3",
+    "source": "nom"
+   },
+   "substrat": {
+    "valeur": "B270",
+    "source": "nom"
+   },
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "14-06-2024 15:53"
+    }
+   ],
+   "lambda_nm": [
+    300.01,
+    3000.08
+   ],
+   "points": 2701,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.5"
+   }
+  },
+  {
+   "id": "b270-yf3-a-14-06-2024-16-11__b270-yf3-echant-a-reflex-14-06",
+   "fichier": "mesures/b270-yf3-a-14-06-2024-16-11__b270-yf3-echant-a-reflex-14-06.csv",
+   "brut": "bruts/B270 YF3-A-14-06-2024 16.11.xls",
+   "echantillon": "B270 YF3 - echant A - Reflex 14-06",
+   "materiau": {
+    "valeur": "YF3",
+    "source": "nom"
+   },
+   "substrat": {
+    "valeur": "B270",
+    "source": "nom"
+   },
+   "voies": [
+    {
+     "mode": "R",
+     "mode_declare": "Reflectance",
+     "detecteur_deg": 16.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "14-06-2024 16:02"
+    }
+   ],
+   "lambda_nm": [
+    300.01,
+    3000.08
+   ],
+   "points": 2701,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.5"
+   }
+  },
+  {
+   "id": "b270-zns-b-t-et-r-14-06-2024-15-18__b270-zns-0-2-echant-b-transmi-14-06",
+   "fichier": "mesures/b270-zns-b-t-et-r-14-06-2024-15-18__b270-zns-0-2-echant-b-transmi-14-06.csv",
+   "brut": "bruts/B270 ZnS - B - T et R 14-06-2024 15.18.xls",
+   "echantillon": "B270-ZnS 0.2 echant B - Transmi 14-06",
+   "materiau": {
+    "valeur": "ZnS",
+    "source": "nom"
+   },
+   "substrat": {
+    "valeur": "B270",
+    "source": "nom"
+   },
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "14-06-2024 14:59"
+    }
+   ],
+   "lambda_nm": [
+    300.01,
+    3000.08
+   ],
+   "points": 2701,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.5"
+   }
+  },
+  {
+   "id": "b270-zns-b-t-et-r-14-06-2024-15-18__b270-zns-echant-b-reflex-14-06",
+   "fichier": "mesures/b270-zns-b-t-et-r-14-06-2024-15-18__b270-zns-echant-b-reflex-14-06.csv",
+   "brut": "bruts/B270 ZnS - B - T et R 14-06-2024 15.18.xls",
+   "echantillon": "B270-ZnS echant B - Reflex 14-06",
+   "materiau": {
+    "valeur": "ZnS",
+    "source": "nom"
+   },
+   "substrat": {
+    "valeur": "B270",
+    "source": "nom"
+   },
+   "voies": [
+    {
+     "mode": "R",
+     "mode_declare": "Reflectance",
+     "detecteur_deg": 16.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "14-06-2024 15:08"
+    }
+   ],
+   "lambda_nm": [
+    300.01,
+    3000.08
+   ],
+   "points": 2701,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.5"
+   }
+  },
+  {
+   "id": "b270-zns-a-t-et-r-14-06-2024-14-31__b270-zns-echant-a-transmit-14-06",
+   "fichier": "mesures/b270-zns-a-t-et-r-14-06-2024-14-31__b270-zns-echant-a-transmit-14-06.csv",
+   "brut": "bruts/B270 ZnS A - T et R - 14-06-2024 14.31.xls",
+   "echantillon": "B270-ZnS echant A - Transmit 14-06",
+   "materiau": {
+    "valeur": "ZnS",
+    "source": "nom"
+   },
+   "substrat": {
+    "valeur": "B270",
+    "source": "nom"
+   },
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "14-06-2024 14:11"
+    }
+   ],
+   "lambda_nm": [
+    300.01,
+    3000.08
+   ],
+   "points": 2701,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.5"
+   }
+  },
+  {
+   "id": "b270-zns-a-t-et-r-14-06-2024-14-31__b270-zns-echant-a-reflex-14-06",
+   "fichier": "mesures/b270-zns-a-t-et-r-14-06-2024-14-31__b270-zns-echant-a-reflex-14-06.csv",
+   "brut": "bruts/B270 ZnS A - T et R - 14-06-2024 14.31.xls",
+   "echantillon": "B270-ZnS echant A - Reflex 14-06",
+   "materiau": {
+    "valeur": "ZnS",
+    "source": "nom"
+   },
+   "substrat": {
+    "valeur": "B270",
+    "source": "nom"
+   },
+   "voies": [
+    {
+     "mode": "R",
+     "mode_declare": "Reflectance",
+     "detecteur_deg": 16.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "14-06-2024 14:22"
+    }
+   ],
+   "lambda_nm": [
+    300.01,
+    3000.08
+   ],
+   "points": 2701,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.5"
+   }
+  },
+  {
+   "id": "copie-de-sl-ta2o5-and-sio2__ta2o5-t",
+   "fichier": "mesures/copie-de-sl-ta2o5-and-sio2__ta2o5-t.csv",
+   "brut": "bruts/Copie de SL Ta2O5 and SiO2.xls",
+   "echantillon": "Ta2O5-T",
+   "materiau": {
+    "valeur": "Ta2O5 / SiO2",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "31-05-2024 15:53"
+    }
+   ],
+   "lambda_nm": [
+    200.01,
+    2000.02
+   ],
+   "points": 1801,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.2"
+   }
+  },
+  {
+   "id": "copie-de-sl-ta2o5-and-sio2__ta2o5-r",
+   "fichier": "mesures/copie-de-sl-ta2o5-and-sio2__ta2o5-r.csv",
+   "brut": "bruts/Copie de SL Ta2O5 and SiO2.xls",
+   "echantillon": "Ta2O5-R",
+   "materiau": {
+    "valeur": "Ta2O5 / SiO2",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "R",
+     "mode_declare": "Reflectance",
+     "detecteur_deg": 16.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "31-05-2024 16:00"
+    }
+   ],
+   "lambda_nm": [
+    200.01,
+    2000.02
+   ],
+   "points": 1801,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.2"
+   }
+  },
+  {
+   "id": "copie-de-sl-ta2o5-and-sio2__sio2-t",
+   "fichier": "mesures/copie-de-sl-ta2o5-and-sio2__sio2-t.csv",
+   "brut": "bruts/Copie de SL Ta2O5 and SiO2.xls",
+   "echantillon": "SiO2-T",
+   "materiau": {
+    "valeur": "Ta2O5 / SiO2",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "31-05-2024 16:07"
+    }
+   ],
+   "lambda_nm": [
+    200.01,
+    2000.02
+   ],
+   "points": 1801,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.2"
+   }
+  },
+  {
+   "id": "copie-de-sl-ta2o5-and-sio2__sio2-r",
+   "fichier": "mesures/copie-de-sl-ta2o5-and-sio2__sio2-r.csv",
+   "brut": "bruts/Copie de SL Ta2O5 and SiO2.xls",
+   "echantillon": "SiO2-R",
+   "materiau": {
+    "valeur": "Ta2O5 / SiO2",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "R",
+     "mode_declare": "Reflectance",
+     "detecteur_deg": 16.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "31-05-2024 16:13"
+    }
+   ],
+   "lambda_nm": [
+    200.01,
+    2000.02
+   ],
+   "points": 1801,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.2"
+   }
+  },
+  {
+   "id": "fab1",
+   "fichier": "mesures/fab1.csv",
+   "brut": "bruts/fab1.xls",
+   "echantillon": "fab1",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "24-03-2026 15:41:48"
+    }
+   ],
+   "lambda_nm": [
+    250.0,
+    5200.0
+   ],
+   "points": 4951,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "80.0",
+    "Spot size, mm": "4.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "fab18__12-37-44",
+   "fichier": "mesures/fab18__12-37-44.csv",
+   "brut": "bruts/fab18.xls",
+   "echantillon": "12.37.44",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "18-02-2026 12:34:47"
+    }
+   ],
+   "lambda_nm": [
+    399.98,
+    5199.88
+   ],
+   "points": 481,
+   "parametres": {
+    "Averaging count": "50.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.71"
+   }
+  },
+  {
+   "id": "fab18__nbsi1",
+   "fichier": "mesures/fab18__nbsi1.csv",
+   "brut": "bruts/fab18.xls",
+   "echantillon": "nbsi1",
+   "materiau": {
+    "valeur": "Nb2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "18-02-2026 12:34:47"
+    }
+   ],
+   "lambda_nm": [
+    399.98,
+    5199.88
+   ],
+   "points": 481,
+   "parametres": {
+    "Averaging count": "50.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.71"
+   }
+  },
+  {
+   "id": "fab18__sisi1",
+   "fichier": "mesures/fab18__sisi1.csv",
+   "brut": "bruts/fab18.xls",
+   "echantillon": "sisi1",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "18-02-2026 12:40:28"
+    }
+   ],
+   "lambda_nm": [
+    399.98,
+    5199.88
+   ],
+   "points": 481,
+   "parametres": {
+    "Averaging count": "50.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.71"
+   }
+  },
+  {
+   "id": "fab18__nb-sapph",
+   "fichier": "mesures/fab18__nb-sapph.csv",
+   "brut": "bruts/fab18.xls",
+   "echantillon": "nb sapph",
+   "materiau": {
+    "valeur": "Nb2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "18-02-2026 12:58:42"
+    }
+   ],
+   "lambda_nm": [
+    399.98,
+    5199.88
+   ],
+   "points": 481,
+   "parametres": {
+    "Averaging count": "50.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.71"
+   }
+  },
+  {
+   "id": "fab18__sisapph",
+   "fichier": "mesures/fab18__sisapph.csv",
+   "brut": "bruts/fab18.xls",
+   "echantillon": "sisapph",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "18-02-2026 13:07:30"
+    }
+   ],
+   "lambda_nm": [
+    399.98,
+    5199.88
+   ],
+   "points": 481,
+   "parametres": {
+    "Averaging count": "50.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.71"
+   }
+  },
+  {
+   "id": "fab19__nbt2",
+   "fichier": "mesures/fab19__nbt2.csv",
+   "brut": "bruts/fab19.xls",
+   "echantillon": "nbt2",
+   "materiau": {
+    "valeur": "Nb2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "19-02-2026 14:16:35"
+    }
+   ],
+   "lambda_nm": [
+    1149.97,
+    5199.88
+   ],
+   "points": 406,
+   "parametres": {
+    "Averaging count": "50.0",
+    "Sampling pitch, nm": "2.0",
+    "Slit width, µm": "60.0",
+    "Spot size, mm": "2.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.71"
+   }
+  },
+  {
+   "id": "fab19__nbr",
+   "fichier": "mesures/fab19__nbr.csv",
+   "brut": "bruts/fab19.xls",
+   "echantillon": "nbr",
+   "materiau": {
+    "valeur": "Nb2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "R",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 16.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "19-02-2026 14:19:49"
+    }
+   ],
+   "lambda_nm": [
+    1149.97,
+    5199.88
+   ],
+   "points": 406,
+   "parametres": {
+    "Averaging count": "50.0",
+    "Sampling pitch, nm": "2.0",
+    "Slit width, µm": "60.0",
+    "Spot size, mm": "2.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.71"
+   }
+  },
+  {
+   "id": "fab19__sir",
+   "fichier": "mesures/fab19__sir.csv",
+   "brut": "bruts/fab19.xls",
+   "echantillon": "sir",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "R",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 16.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "19-02-2026 14:23:13"
+    }
+   ],
+   "lambda_nm": [
+    1149.97,
+    5199.88
+   ],
+   "points": 406,
+   "parametres": {
+    "Averaging count": "50.0",
+    "Sampling pitch, nm": "2.0",
+    "Slit width, µm": "60.0",
+    "Spot size, mm": "2.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.71"
+   }
+  },
+  {
+   "id": "fab19__sit",
+   "fichier": "mesures/fab19__sit.csv",
+   "brut": "bruts/fab19.xls",
+   "echantillon": "sit",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "19-02-2026 14:26:29"
+    }
+   ],
+   "lambda_nm": [
+    1149.97,
+    5199.88
+   ],
+   "points": 406,
+   "parametres": {
+    "Averaging count": "50.0",
+    "Sampling pitch, nm": "2.0",
+    "Slit width, µm": "60.0",
+    "Spot size, mm": "2.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.71"
+   }
+  },
+  {
+   "id": "fab19__sit2",
+   "fichier": "mesures/fab19__sit2.csv",
+   "brut": "bruts/fab19.xls",
+   "echantillon": "sit2",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "19-02-2026 14:37:26"
+    }
+   ],
+   "lambda_nm": [
+    1149.97,
+    5199.88
+   ],
+   "points": 406,
+   "parametres": {
+    "Averaging count": "50.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.71"
+   }
+  },
+  {
+   "id": "fab19__sir2",
+   "fichier": "mesures/fab19__sir2.csv",
+   "brut": "bruts/fab19.xls",
+   "echantillon": "sir2",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "R",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 16.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "19-02-2026 14:42:31"
+    }
+   ],
+   "lambda_nm": [
+    1149.97,
+    5199.88
+   ],
+   "points": 406,
+   "parametres": {
+    "Averaging count": "50.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.71"
+   }
+  },
+  {
+   "id": "fab19__nbr3",
+   "fichier": "mesures/fab19__nbr3.csv",
+   "brut": "bruts/fab19.xls",
+   "echantillon": "nbr3",
+   "materiau": {
+    "valeur": "Nb2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "R",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 16.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "19-02-2026 14:48:00"
+    }
+   ],
+   "lambda_nm": [
+    1149.97,
+    5199.88
+   ],
+   "points": 406,
+   "parametres": {
+    "Averaging count": "50.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.71"
+   }
+  },
+  {
+   "id": "fab19__nbt3",
+   "fichier": "mesures/fab19__nbt3.csv",
+   "brut": "bruts/fab19.xls",
+   "echantillon": "nbt3",
+   "materiau": {
+    "valeur": "Nb2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "19-02-2026 14:53:13"
+    }
+   ],
+   "lambda_nm": [
+    1149.97,
+    5199.88
+   ],
+   "points": 406,
+   "parametres": {
+    "Averaging count": "50.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.71"
+   }
+  },
+  {
+   "id": "fab2",
+   "fichier": "mesures/fab2.csv",
+   "brut": "bruts/fab2.xls",
+   "echantillon": "fab2",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "24-03-2026 16:01:29"
+    }
+   ],
+   "lambda_nm": [
+    350.0,
+    500.0
+   ],
+   "points": 601,
+   "parametres": {
+    "Averaging count": "30.0",
+    "Sampling pitch, nm": "0.25",
+    "Slit width, µm": "60.0",
+    "Spot size, mm": "3.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "fab3",
+   "fichier": "mesures/fab3.csv",
+   "brut": "bruts/fab3.xls",
+   "echantillon": "fab3",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "24-03-2026 16:10:47"
+    }
+   ],
+   "lambda_nm": [
+    1800.0,
+    5200.0
+   ],
+   "points": 171,
+   "parametres": {
+    "Averaging count": "100.0",
+    "Sampling pitch, nm": "20.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "fab4",
+   "fichier": "mesures/fab4.csv",
+   "brut": "bruts/fab4.xls",
+   "echantillon": "fab4",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "24-03-2026 16:24:20"
+    }
+   ],
+   "lambda_nm": [
+    3100.0,
+    4400.0
+   ],
+   "points": 261,
+   "parametres": {
+    "Averaging count": "300.0",
+    "Sampling pitch, nm": "5.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "fab5",
+   "fichier": "mesures/fab5.csv",
+   "brut": "bruts/fab5.xls",
+   "echantillon": "fab5",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "24-03-2026 16:36:08"
+    }
+   ],
+   "lambda_nm": [
+    250.0,
+    5200.0
+   ],
+   "points": 991,
+   "parametres": {
+    "Averaging count": "20.0",
+    "Sampling pitch, nm": "5.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "fab6",
+   "fichier": "mesures/fab6.csv",
+   "brut": "bruts/fab6.xls",
+   "echantillon": "fab6",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "24-03-2026 16:47:39"
+    }
+   ],
+   "lambda_nm": [
+    250.0,
+    500.0
+   ],
+   "points": 251,
+   "parametres": {
+    "Averaging count": "100.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "150.0",
+    "Spot size, mm": "4.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "fab7",
+   "fichier": "mesures/fab7.csv",
+   "brut": "bruts/fab7.xls",
+   "echantillon": "fab7",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "24-03-2026 16:56:31"
+    }
+   ],
+   "lambda_nm": [
+    1800.0,
+    5200.0
+   ],
+   "points": 171,
+   "parametres": {
+    "Averaging count": "100.0",
+    "Sampling pitch, nm": "20.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.5",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "4.0"
+   }
+  },
+  {
+   "id": "ir-oxydes__absorpt-ox-t-bis",
+   "fichier": "mesures/ir-oxydes__absorpt-ox-t-bis.csv",
+   "brut": "bruts/IR oxydes.xls",
+   "echantillon": "absorpt ox T bis",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "05-07-2024 10:54"
+    }
+   ],
+   "lambda_nm": [
+    1099.97,
+    5199.92
+   ],
+   "points": 411,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.5"
+   }
+  },
+  {
+   "id": "ir-oxydes__absorpt-ox-r",
+   "fichier": "mesures/ir-oxydes__absorpt-ox-r.csv",
+   "brut": "bruts/IR oxydes.xls",
+   "echantillon": "absorpt ox R",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "R",
+     "mode_declare": "Reflectance",
+     "detecteur_deg": 16.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "05-07-2024 10:50"
+    }
+   ],
+   "lambda_nm": [
+    1099.97,
+    5199.92
+   ],
+   "points": 411,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.5"
+   }
+  },
+  {
+   "id": "ir-oxydes__absorpt-ox-tter",
+   "fichier": "mesures/ir-oxydes__absorpt-ox-tter.csv",
+   "brut": "bruts/IR oxydes.xls",
+   "echantillon": "absorpt ox Tter",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "05-07-2024 11:00"
+    }
+   ],
+   "lambda_nm": [
+    1099.97,
+    5199.92
+   ],
+   "points": 411,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.5"
+   }
+  },
+  {
+   "id": "ir-oxydes__absorpt-ox-rter",
+   "fichier": "mesures/ir-oxydes__absorpt-ox-rter.csv",
+   "brut": "bruts/IR oxydes.xls",
+   "echantillon": "absorpt ox Rter",
+   "materiau": null,
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "R",
+     "mode_declare": "Reflectance",
+     "detecteur_deg": 16.0,
+     "angle_deg": 8.0,
+     "polarisation": "--",
+     "debut": "05-07-2024 11:03"
+    }
+   ],
+   "lambda_nm": [
+    1099.97,
+    5199.92
+   ],
+   "points": 411,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.5"
+   }
+  },
+  {
+   "id": "ito-2024-04-15__ito-r4",
+   "fichier": "mesures/ito-2024-04-15__ito-r4.csv",
+   "brut": "bruts/ITO -2024-04-15.xlsx",
+   "echantillon": "ITO-R4",
+   "materiau": {
+    "valeur": "ITO",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "15-04-2024 16:38"
+    }
+   ],
+   "lambda_nm": [
+    350.01,
+    3500.11
+   ],
+   "points": 3151,
+   "parametres": {
+    "Averaging count": "10",
+    "Sampling pitch, nm": "1",
+    "Slit width, µm": "240",
+    "Spot size, mm": "6",
+    "Sample thickness, mm": "1",
+    "Refractive index n": "1.2"
+   }
+  },
+  {
+   "id": "nb-600-1200",
+   "fichier": "mesures/nb-600-1200.csv",
+   "brut": "bruts/Nb 600-1200.xls",
+   "echantillon": "Nb 600-1200",
+   "materiau": {
+    "valeur": "Nb2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "28-04-2026 09:35:30"
+    }
+   ],
+   "lambda_nm": [
+    600.0,
+    1199.97
+   ],
+   "points": 601,
+   "parametres": {
+    "Averaging count": "50.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "150.0",
+    "Spot size, mm": "4.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "nb1200",
+   "fichier": "mesures/nb1200.csv",
+   "brut": "bruts/Nb1200.xls",
+   "echantillon": "Nb1200",
+   "materiau": {
+    "valeur": "Nb2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "28-04-2026 09:59:10"
+    }
+   ],
+   "lambda_nm": [
+    1199.97,
+    5199.88
+   ],
+   "points": 401,
+   "parametres": {
+    "Averaging count": "50.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.5",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "nb2",
+   "fichier": "mesures/nb2.csv",
+   "brut": "bruts/NB2.xls",
+   "echantillon": "NB2",
+   "materiau": {
+    "valeur": "Nb2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "03-04-2026 10:00:18"
+    }
+   ],
+   "lambda_nm": [
+    1000.02,
+    4000.04
+   ],
+   "points": 601,
+   "parametres": {
+    "Averaging count": "50.0",
+    "Sampling pitch, nm": "5.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "nb250-600",
+   "fichier": "mesures/nb250-600.csv",
+   "brut": "bruts/NB250 600.xls",
+   "echantillon": "NB250 600",
+   "materiau": {
+    "valeur": "Nb2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "28-04-2026 09:12:55"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    600.0
+   ],
+   "points": 701,
+   "parametres": {
+    "Averaging count": "50.0",
+    "Sampling pitch, nm": "0.5",
+    "Slit width, µm": "120.0",
+    "Spot size, mm": "3.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "nb3",
+   "fichier": "mesures/nb3.csv",
+   "brut": "bruts/NB3.xls",
+   "echantillon": "NB3",
+   "materiau": {
+    "valeur": "Nb2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "03-04-2026 10:13:58"
+    }
+   ],
+   "lambda_nm": [
+    2400.03,
+    5199.88
+   ],
+   "points": 141,
+   "parametres": {
+    "Averaging count": "100.0",
+    "Sampling pitch, nm": "20.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "ta-600-1200",
+   "fichier": "mesures/ta-600-1200.csv",
+   "brut": "bruts/Ta 600-1200.xls",
+   "echantillon": "Ta 600-1200",
+   "materiau": {
+    "valeur": "Ta2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "28-04-2026 09:30:29"
+    }
+   ],
+   "lambda_nm": [
+    600.0,
+    1199.97
+   ],
+   "points": 601,
+   "parametres": {
+    "Averaging count": "50.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "150.0",
+    "Spot size, mm": "4.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "ta1",
+   "fichier": "mesures/ta1.csv",
+   "brut": "bruts/TA1.xls",
+   "echantillon": "TA1",
+   "materiau": {
+    "valeur": "Ta2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "03-04-2026 09:17:05"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    1199.97
+   ],
+   "points": 3801,
+   "parametres": {
+    "Averaging count": "20.0",
+    "Sampling pitch, nm": "0.25",
+    "Slit width, µm": "100.0",
+    "Spot size, mm": "3.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "ta1200",
+   "fichier": "mesures/ta1200.csv",
+   "brut": "bruts/Ta1200.xls",
+   "echantillon": "Ta1200",
+   "materiau": {
+    "valeur": "Ta2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "28-04-2026 09:54:09"
+    }
+   ],
+   "lambda_nm": [
+    1199.97,
+    5199.88
+   ],
+   "points": 401,
+   "parametres": {
+    "Averaging count": "50.0",
+    "Sampling pitch, nm": "10.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.5",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "ta2",
+   "fichier": "mesures/ta2.csv",
+   "brut": "bruts/TA2.xls",
+   "echantillon": "TA2",
+   "materiau": {
+    "valeur": "Ta2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "03-04-2026 09:54:06"
+    }
+   ],
+   "lambda_nm": [
+    1000.02,
+    4000.04
+   ],
+   "points": 601,
+   "parametres": {
+    "Averaging count": "50.0",
+    "Sampling pitch, nm": "5.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "ta250-600",
+   "fichier": "mesures/ta250-600.csv",
+   "brut": "bruts/Ta250 600.xls",
+   "echantillon": "Ta250 600",
+   "materiau": {
+    "valeur": "Ta2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "28-04-2026 09:00:43"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    600.0
+   ],
+   "points": 701,
+   "parametres": {
+    "Averaging count": "50.0",
+    "Sampling pitch, nm": "0.5",
+    "Slit width, µm": "120.0",
+    "Spot size, mm": "3.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "ta3",
+   "fichier": "mesures/ta3.csv",
+   "brut": "bruts/TA3.xls",
+   "echantillon": "TA3",
+   "materiau": {
+    "valeur": "Ta2O5",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "03-04-2026 10:17:50"
+    }
+   ],
+   "lambda_nm": [
+    2400.03,
+    5199.88
+   ],
+   "points": 141,
+   "parametres": {
+    "Averaging count": "100.0",
+    "Sampling pitch, nm": "20.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "tio2ir",
+   "fichier": "mesures/tio2ir.csv",
+   "brut": "bruts/tio2ir.xls",
+   "echantillon": "tio2ir",
+   "materiau": {
+    "valeur": "TiO2",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "10-06-2026 08:48:06"
+    }
+   ],
+   "lambda_nm": [
+    2400.03,
+    5199.88
+   ],
+   "points": 141,
+   "parametres": {
+    "Averaging count": "40.0",
+    "Sampling pitch, nm": "20.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.5",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "tio2uv",
+   "fichier": "mesures/tio2uv.csv",
+   "brut": "bruts/tio2uv.xls",
+   "echantillon": "tio2uv",
+   "materiau": {
+    "valeur": "TiO2",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "10-06-2026 08:30:26"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    600.0
+   ],
+   "points": 351,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "120.0",
+    "Spot size, mm": "4.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "tio2vis",
+   "fichier": "mesures/tio2vis.csv",
+   "brut": "bruts/tio2vis.xls",
+   "echantillon": "tio2vis",
+   "materiau": {
+    "valeur": "TiO2",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "10-06-2026 08:38:27"
+    }
+   ],
+   "lambda_nm": [
+    600.0,
+    2400.03
+   ],
+   "points": 361,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "5.0",
+    "Slit width, µm": "180.0",
+    "Spot size, mm": "4.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "yf3ir",
+   "fichier": "mesures/yf3ir.csv",
+   "brut": "bruts/yf3ir.xls",
+   "echantillon": "yf3ir",
+   "materiau": {
+    "valeur": "YF3",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "10-06-2026 08:52:58"
+    }
+   ],
+   "lambda_nm": [
+    2400.03,
+    5199.88
+   ],
+   "points": 141,
+   "parametres": {
+    "Averaging count": "40.0",
+    "Sampling pitch, nm": "20.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.5",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "yf3uv",
+   "fichier": "mesures/yf3uv.csv",
+   "brut": "bruts/yf3uv.xls",
+   "echantillon": "yf3uv",
+   "materiau": {
+    "valeur": "YF3",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "10-06-2026 08:33:59"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    600.0
+   ],
+   "points": 351,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "120.0",
+    "Spot size, mm": "4.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "yf3vis",
+   "fichier": "mesures/yf3vis.csv",
+   "brut": "bruts/yf3vis.xls",
+   "echantillon": "yf3vis",
+   "materiau": {
+    "valeur": "YF3",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "10-06-2026 08:42:49"
+    }
+   ],
+   "lambda_nm": [
+    600.0,
+    2400.03
+   ],
+   "points": 361,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "5.0",
+    "Slit width, µm": "180.0",
+    "Spot size, mm": "4.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "zns-yf3-quartz-serieux-1__test-fab-3__1",
+   "fichier": "mesures/zns-yf3-quartz-serieux-1__test-fab-3__1.csv",
+   "brut": "bruts/zns yf3 quartz serieux (1).xls",
+   "echantillon": "test fab 3",
+   "materiau": {
+    "valeur": "ZnS / YF3",
+    "source": "nom"
+   },
+   "substrat": {
+    "valeur": "quartz",
+    "source": "nom"
+   },
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "01-01-1970 01:00"
+    }
+   ],
+   "lambda_nm": [
+    380.02,
+    1800.05
+   ],
+   "points": 285,
+   "parametres": {
+    "Averaging count": "30.0",
+    "Sampling pitch, nm": "5.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.5"
+   }
+  },
+  {
+   "id": "zns-yf3-quartz-serieux-1__test-fab-3__2",
+   "fichier": "mesures/zns-yf3-quartz-serieux-1__test-fab-3__2.csv",
+   "brut": "bruts/zns yf3 quartz serieux (1).xls",
+   "echantillon": "test fab 3",
+   "materiau": {
+    "valeur": "ZnS / YF3",
+    "source": "nom"
+   },
+   "substrat": {
+    "valeur": "quartz",
+    "source": "nom"
+   },
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "11-07-2024 14:01"
+    }
+   ],
+   "lambda_nm": [
+    380.02,
+    1800.05
+   ],
+   "points": 285,
+   "parametres": {
+    "Averaging count": "30.0",
+    "Sampling pitch, nm": "5.0",
+    "Slit width, µm": "240.0",
+    "Spot size, mm": "6.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.5"
+   }
+  },
+  {
+   "id": "znsir",
+   "fichier": "mesures/znsir.csv",
+   "brut": "bruts/znsir.xls",
+   "echantillon": "znsir",
+   "materiau": {
+    "valeur": "ZnS",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "10-06-2026 08:50:31"
+    }
+   ],
+   "lambda_nm": [
+    2400.03,
+    5199.88
+   ],
+   "points": 141,
+   "parametres": {
+    "Averaging count": "40.0",
+    "Sampling pitch, nm": "20.0",
+    "Slit width, µm": "220.0",
+    "Spot size, mm": "5.5",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "znsuv",
+   "fichier": "mesures/znsuv.csv",
+   "brut": "bruts/znsuv.xls",
+   "echantillon": "znsuv",
+   "materiau": {
+    "valeur": "ZnS",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "10-06-2026 08:32:16"
+    }
+   ],
+   "lambda_nm": [
+    249.99,
+    600.0
+   ],
+   "points": 351,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "1.0",
+    "Slit width, µm": "120.0",
+    "Spot size, mm": "4.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  },
+  {
+   "id": "znvis",
+   "fichier": "mesures/znvis.csv",
+   "brut": "bruts/znvis.xls",
+   "echantillon": "znvis",
+   "materiau": {
+    "valeur": "ZnS",
+    "source": "nom"
+   },
+   "substrat": null,
+   "voies": [
+    {
+     "mode": "T",
+     "mode_declare": "Transmittance",
+     "detecteur_deg": 180.0,
+     "angle_deg": 0.0,
+     "polarisation": "--",
+     "debut": "10-06-2026 08:40:40"
+    }
+   ],
+   "lambda_nm": [
+    600.0,
+    2400.03
+   ],
+   "points": 361,
+   "parametres": {
+    "Averaging count": "10.0",
+    "Sampling pitch, nm": "5.0",
+    "Slit width, µm": "180.0",
+    "Spot size, mm": "4.0",
+    "Sample thickness, mm": "1.0",
+    "Refractive index n": "1.52"
+   }
+  }
+ ],
+ "doublons": {
+  "03-03-2026 12.32.54": [
+   "03-03-2026 12.32.54.csv"
+  ],
+  "09.45.28": [
+   "09.45.28.csv",
+   "09.45.28.res"
+  ],
+  "all1902": [
+   "all1902.csv"
+  ],
+  "fab18": [
+   "fab18.csv"
+  ],
+  "fab19": [
+   "fab19.csv"
+  ],
+  "17-04-2024-09-05__ito-r5": [
+   "ITO -2024-04-15.xlsx [ITO-R5]"
+  ],
+  "17-04-2024-09-05__ito-r6": [
+   "ITO -2024-04-15.xlsx [ITO-R6]"
+  ],
+  "NB1": [
+   "NB1.csv",
+   "NB1.res"
+  ],
+  "09-45-28": [
+   "NB1.xls [NB1]"
+  ],
+  "NB2": [
+   "NB2.csv",
+   "NB2.res"
+  ],
+  "NB3": [
+   "NB3.csv",
+   "NB3.res"
+  ],
+  "TA1": [
+   "TA1.csv",
+   "TA1.res"
+  ],
+  "TA2": [
+   "TA2.csv",
+   "TA2.res"
+  ],
+  "TA3": [
+   "TA3.csv",
+   "TA3.res"
+  ],
+  "zns sur si R": [
+   "zns sur si R.res"
+  ],
+  "11-06-2024-10-23__zns-sur-si-r": [
+   "zns sur si R.xls [Value]"
+  ],
+  "zns sur si": [
+   "zns sur si.res"
+  ],
+  "11-06-2024-10-23__zns-sur-si": [
+   "zns sur si.xls [Value]"
+  ],
+  "zns sur verre t": [
+   "zns sur verre t.res"
+  ],
+  "11-06-2024-10-23__zns-sur-verre-t": [
+   "zns sur verre t.xls [Value]"
+  ],
+  "zns sur verre": [
+   "zns sur verre.res"
+  ],
+  "11-06-2024-10-23__zns-sur-verre": [
+   "zns sur verre.xls [Value]"
+  ],
+  "zns-yf3-quartz-serieux-1__test-fab-3__1": [
+   "zns yf3 quartz serieux.xls [test fab 3]"
+  ],
+  "zns-yf3-quartz-serieux-1__test-fab-3__2": [
+   "zns yf3 quartz serieux.xls [test fab 3]"
+  ]
+ },
+ "refus": {}
+}

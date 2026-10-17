@@ -1,0 +1,11 @@
+{
+  "checked_utc": "2026-10-15T05:19:44.999623+00:00",
+  "status": "ACTIVE",
+  "id": "certus-essais-rate-jusqu-au-14-octobre-9-h",
+  "name": "CERTUS — corriger RMSE puis finir R0–R6",
+  "thread": "01a1347c-9798-7b00-af1b-6e6de6058b00",
+  "rrule": "FREQ=HOURLY;BYMINUTE=0,30",
+  "same_automation": true,
+  "after_sha256": "341f30bc5f7a21ee5720579025010956356e7a88067d2df79a71fe2ce193a13f",
+  "stop_condition": "Completion/exhaustion of bounded R0-R6 or human decision needed; preserve running calculation"
+}

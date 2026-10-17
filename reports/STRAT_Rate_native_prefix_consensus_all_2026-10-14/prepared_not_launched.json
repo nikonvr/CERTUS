@@ -1,0 +1,9 @@
+{
+  "prepared_utc": "2026-10-14T00:35:36.462583+00:00",
+  "status": "prepared_not_launched",
+  "n_proposals": 5119,
+  "n_stages": 513,
+  "proposals_sha256": "d4901cc4b2a71206c2bfd62ff10a7804c3060a0b3e0363bf0a4623aa22b85f75",
+  "protocol_sha256": "09b7f40d016b9c516c23e5e30c968ae4a5a3d6b9cbd2b0d8dfe5415ed688dccf",
+  "review": "Same real replay v6 and sequential source-guarded controller; only report label and prerequisite changed. Real contracts checked before scoring. No physics, tolerance, depth or world changes. No runtime test during the fine measurement."
+}

@@ -1,0 +1,48 @@
+{
+  "status": "prepared_not_started",
+  "prepared_utc": "2026-10-13T19:32:16.651482+00:00",
+  "controller_arguments": [
+    "--worktree",
+    "C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-equilibre\\certus0310",
+    "--output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_native_joint_ablation_rate240_round6_2026-10-13",
+    "--wait-output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_confirmation_native_round6_2026-10-13",
+    "--wait-state",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_confirmation_native_round6_2026-10-13\\etat.json",
+    "--reference-state",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_equilibre_AB_2026-10-13\\etat.json",
+    "--joint-budget",
+    "0",
+    "--rate-budget",
+    "240",
+    "--elite-rounds",
+    "6"
+  ],
+  "source_sha256": {
+    "rate_native_joint_runner.py": "fdd8772ee3653318b49f30ae799a873b557a512f77c161518daa57f2c55d7dd6",
+    "rate_native_joint_probe.py": "2a257812a713be4c601c1c664fd1053a814658344b5f2f53c6dacf463361284d",
+    "rate_joint_native_candidates.py": "30ac713dc23b4c0754ca56f5f843309f9b3b55c583dbe4b2bf1f17427684a611",
+    "verify_rate_native_joint_adapter.py": "df959dbfb88c6ee1f2632b284a4096aee2ba5c74f5f12d984b4c49c6374c11ba",
+    "campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51"
+  },
+  "joint_budget": 0,
+  "rate_budget": 240,
+  "elite_rounds": 6,
+  "single_change": "Separate joint budget 480 -> 0 relative to the completed native 480/240/6 profile",
+  "purpose": "Isolate incremental contribution of joint code from existing Rate budget and round cap; do not attribute combined gain before this ablation",
+  "depths": [
+    300,
+    50,
+    100,
+    300
+  ],
+  "screen_and_full_caps_unchanged": true,
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "deadline_utc": "2026-10-14T07:00:00Z"
+}

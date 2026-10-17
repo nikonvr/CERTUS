@@ -1,0 +1,39 @@
+{
+  "checked_local": "2026-10-14T05:20:24.9988388+02:00",
+  "status": "running",
+  "stages_saved": 17,
+  "current": "batch_017",
+  "current_pid": 29876,
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "processes": [
+    {
+      "pid": 27312,
+      "parent_pid": 49952,
+      "command": "\"C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_prefix_after_window_runner.py\" \"--worktree\" \"C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-equilibre\\certus0310\" \"--proposals\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_after_window_2026-10-14\\proposals.json\" \"--protocol\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_after_window_2026-10-14\\protocole_validation_prefix_after_window_v10.json\" \"--reference-state\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_equilibre_AB_2026-10-13\\etat.json\" \"--trial-output\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_window_pairs_2026-10-14\" \"--output\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_after_window_2026-10-14\"",
+      "affinity": 65535,
+      "priority": "Normal",
+      "cpu_seconds": 4.203125
+    },
+    {
+      "pid": 48928,
+      "parent_pid": 31336,
+      "command": "\"C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_prefix_after_window_confirmation_runner.py\" \"--worktree\" \"C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-equilibre\\certus0310\" \"--pool-output\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_after_window_2026-10-14\" \"--output\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_after_window_2026-10-14\" \"--reference-state\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_equilibre_AB_2026-10-13\\etat.json\" \"--protocol\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_after_window_2026-10-14\\protocole_validation_prefix_after_window_v10.json\" \"--fixed-plans\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_after_window_2026-10-14\\baseline_plans_snapshot.json\"",
+      "affinity": 65535,
+      "priority": "Normal",
+      "cpu_seconds": 0.171875
+    },
+    {
+      "pid": 29876,
+      "parent_pid": 27312,
+      "command": "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_fixed_replay.py\" --worktree C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-equilibre\\certus0310 --plans \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_after_window_2026-10-14\\batch_017\\attempt_01\\plans.json\" --protocol \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_after_window_2026-10-14\\protocole_validation_prefix_after_window_v10.json\" --reference-state \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_equilibre_AB_2026-10-13\\etat.json\" --output \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_after_window_2026-10-14\\batch_017\\attempt_01\" --run search --validated-control \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_after_window_2026-10-14\\anchor_control\\attempt_01\\control.json\"",
+      "affinity": 65535,
+      "priority": "Normal",
+      "cpu_seconds": 2.59375
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "prepared_utc": "2026-10-13T21:32:45.188643+00:00",
+  "status": "prepared_waiting_not_measuring",
+  "runner": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_ablation_confirmation_runner.py",
+  "arguments": [
+    "--worktree",
+    "C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-equilibre\\certus0310",
+    "--pool-output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_ablation_consensus_all_2026-10-13",
+    "--output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_ablation_full_2026-10-14",
+    "--reference-state",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_equilibre_AB_2026-10-13\\etat.json",
+    "--protocol",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_expertise_2026-10-13\\protocole_validation_ablation_full_v4.json"
+  ],
+  "hashes": {
+    "rate_ablation_confirmation_runner.py": "024835cfaaaf3193001346cc52cf18b2ceb8cb36eea38c85527dc642ebc67f2f",
+    "rate_fixed_replay_confirmation_v4.py": "ab6ff3efffd465761f571be5021418e9c98d5e110d2370956eba1da4da0f5afa",
+    "protocole_validation_ablation_full_v4.json": "1a0ec42d04903427a97e2c8e719d19ad24c96a8450c073d32c451a8278984ec6"
+  },
+  "selection": "Minimum complete-consensus proposal score after every saved ablation plan is rescored; anchors excluded from proposal selection",
+  "sequence": "Strict control, then ten holdout groups including predeclared fresh 1010 and 1111",
+  "static_review": "Only orchestration/CLI extensions; same physical replay, tolerance and depths; AST parsed; no runtime test during current measurement",
+  "deadline_utc": "2026-10-14T07:00:00Z"
+}

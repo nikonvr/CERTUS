@@ -1,0 +1,9 @@
+{
+  "rrule": "FREQ=HOURLY;BYMINUTE=0,30;UNTIL=20261014T070100Z",
+  "status": "ACTIVE",
+  "target_thread_id": "01a1347c-9798-7b00-af1b-6e6de6058b00",
+  "purpose": "One-minute grace for final9h wake only; no extra scientific measure permitted, deadline unchanged07:00UTC",
+  "previous_automation_snapshot": "automation_before_final_wake_20261014_0830.toml.txt",
+  "deadline_controller_sha256": "52aee00f5ff49e0c93dd5fcacab418354cb4774952c92d428334e1f17e6c40e6",
+  "updated_native_tool_confirmed": true
+}

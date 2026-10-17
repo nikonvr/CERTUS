@@ -1,0 +1,160 @@
+"""Audit completed R4 artifacts without generating or scoring any physical plan."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import math
+import os
+import subprocess
+from collections import Counter
+from datetime import UTC, datetime
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+PROGRAM = ROOT / "reports/STRAT_Rate_suite_2026-10-15"
+EXPERIMENT = PROGRAM / "R4_refinement"
+
+
+def read(path):
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def require(condition, message):
+    if not condition:
+        raise RuntimeError(message)
+
+
+def main():
+    # This audit is intentionally not started while any measurement is engaged.
+    require(not (PROGRAM / "measurement.running").exists(), "A measurement lock still exists")
+    require(not list((ROOT / "reports").rglob(".running")), "A scientific child still owns a lock")
+    shell = Path(os.environ["SYSTEMROOT"]) / "System32/WindowsPowerShell/v1.0/powershell.exe"
+    raw = subprocess.check_output([str(shell), "-NoProfile", "-Command",
+        "@(Get-CimInstance Win32_Process | Where-Object { $_.Name -match '^python' } | "
+        "Select-Object ProcessId,CommandLine) | ConvertTo-Json -Compress"], encoding="utf-8").strip()
+    processes = json.loads(raw) if raw else []
+    if isinstance(processes, dict):
+        processes = [processes]
+    # No broad IDE/controller exemption is needed for the final audit.
+    require(all(p["ProcessId"] == os.getpid() for p in processes), "Another Python process is alive")
+    protocol = read(EXPERIMENT / "protocol.json")
+    state = read(EXPERIMENT / "checkpoint.json")
+    controller = read(EXPERIMENT / "controller.json")
+    require(state["status"] == "search_complete_confirmation_pending", "The bounded search has not completed")
+    require(controller["status"] == state["status"], "Coordinator completion has not been recorded")
+    require(state["pending_group"] is None, "A group remains unconsumed")
+    for name, digest in protocol["script_sha256"].items():
+        require(sha(ROOT / "scratch" / name) == digest, f"Changed R4 source: {name}")
+        require(sha(EXPERIMENT / "sources" / (name + ".txt")) == digest, f"Changed source snapshot: {name}")
+    for name, digest in protocol["input_sha256"].items():
+        require(sha(ROOT / name) == digest, f"Changed input: {name}")
+    require(state["protocol_sha256"] == sha(EXPERIMENT / "protocol.json"), "Checkpoint protocol drift")
+    require(state["new_proposals"] == sum(state["branch_pass_counts"].values()) <= 1200, "Global quota mismatch")
+    require(all(0 <= count <= 300 for count in state["branch_pass_counts"].values()), "Branch/pass quota exceeded")
+    require(sum(len(b["beam"]) for b in state["branches"].values()) <= 4, "Beam quota exceeded")
+    trusted = read(PROGRAM / "R3_h02_wavelengths/homogeneous_replay/control.json")
+    trusted_plans = {p["source_strategy_id"]: p for p in trusted["plans"]}
+    anchor_ids = [900951015, 9900006, 9900008]
+    keys = ("blocks", "rate_layers", "monochromator_resolution_nm", "witness_reset_layers")
+    for anchor in protocol["anchors"]:
+        previous = trusted_plans[anchor["source_strategy_id"]]
+        require(all(anchor.get(k) == previous.get(k) for k in (*keys, "expected_score_fixed_point")), "Anchor drift")
+    reports, seen_new_ids, actual_calls = [], set(), 0
+    rejected = Counter()
+    controller_exit = {Path(r["log_directory"]).resolve(): r["exit_code"] for r in controller["runs"]}
+    bootstrap_exit = read(EXPERIMENT / "groups/group_001/bootstrap_exit.json")
+    require(bootstrap_exit["exit_code"] == 0, "Bootstrap has no exit0")
+    for group_index, group in enumerate(state["groups"], start=1):
+        directory = EXPERIMENT / f"groups/group_{group_index:03}"
+        manifest_file = directory / "manifest.json"
+        manifest, offered = read(manifest_file), read(directory / "plans.json")["plans"]
+        result_file = directory / "measurement/search.json"
+        result, audit = read(result_file), read(directory / "audit.json")
+        phase = f"R4_g{group_index:03}"
+        require(group["phase"] == manifest["phase"] == phase, "Group ordering changed")
+        require(manifest["index"] == group_index and 1 <= manifest["new_plans"] <= 9, "Group size drift")
+        require(4 <= len(offered) == manifest["new_plans"] + 3 <= 12, "Too many plans")
+        require(offered[:3] == protocol["anchors"], "Group comparator metadata changed")
+        require(sha(directory / "plans.json") == manifest["plans_sha256"] == result["plans_sha256"], "Plan hash mismatch")
+        require(result["protocol_sha256"] == manifest["protocol_sha256"] == sha(EXPERIMENT / "protocol.json"), "Protocol mismatch")
+        require(result["group_manifest_sha256"] == audit["manifest_sha256"] == sha(manifest_file), "Manifest mismatch")
+        require(audit["artifact_sha256"] == sha(result_file) and audit["verdict"] == "GO", "Artifact audit mismatch")
+        require(result["verdict"] == "OK" and not result["errors"], "Scoring failed")
+        require(result["source_sha256"] == protocol["source_sha256"], "Physical source drift")
+        require(result["setting"] == protocol["control"] and result["depths"] == protocol["depths"], "Seed/depth drift")
+        require(result["resources"] == {"logical_cpus": 24, "affinity_mask": "0xffffff", "priority": "normal", "library_threads": 23}, "Resource mismatch")
+        if group_index > 1:
+            require(controller_exit.get((directory / "measurement").resolve()) == 0, "Missing recorded child exit0")
+        request_files = list((directory / "measurement").glob("request_search_*.json"))
+        require(len(request_files) == 1 and read(request_files[0])["status"] == "complete", "Request count/status mismatch")
+        require(read(PROGRAM / "claims" / (phase + ".json"))["pid"] == read(request_files[0])["pid"], "Claim PID mismatch")
+        for label, file in (("launcher", "rate_fixed_replay_R4.py"), ("bounded_guard", "rate_R4_guard.py"), ("controller_helper", "campagne_a2_runner.py")):
+            require(result["launcher_sha256"][label] == protocol["script_sha256"][file], "Launcher source mismatch")
+            require(sha(directory / "measurement" / ("source_" + label + ".py.txt")) == protocol["script_sha256"][file], "Launcher snapshot mismatch")
+        ids = [p["source_strategy_id"] for p in offered]
+        require(len(ids) == len(set(ids)) and ids[:3] == anchor_ids, "Plan IDs changed")
+        require(not seen_new_ids.intersection(ids[3:]), "Proposal measured twice")
+        seen_new_ids.update(ids[3:])
+        allowed_roots = {"local": {9900006, 9900008}, "native": {901054165, 900754638}}
+        require(all(p["branch"] == manifest["branch"] and p["root_parent_id"] in allowed_roots[manifest["branch"]] for p in offered[3:]), "Branch provenance crossed")
+        calls = result["simulations"]
+        require(all(c["num_runs"] == 300 and not c.get("error") for c in calls), "Physical depth/error mismatch")
+        require(Counter(c["id"] for c in calls if c["seed"] == 101) == Counter(ids), "Every offered plan must have one actual base call")
+        required_ids = set(anchor_ids) | set(result["search_eligible_ids"])
+        for strategy_id in required_ids:
+            require(sorted(c["seed"] for c in calls if c["id"] == strategy_id) == [41, 42, 43, 101], "Missing/duplicate actual full-depth calls")
+        rows = {r["strategy"]["strategy_id"]: r for r in result["final_results"]["all_strategies_results"]}
+        for anchor in protocol["anchors"]:
+            row = rows[anchor["source_strategy_id"]]
+            require(math.isclose(row["robustness_score"], anchor["expected_score_fixed_point"], rel_tol=1e-7, abs_tol=1e-10), "A fixed score drifted")
+        for strategy_id in result["search_eligible_ids"]:
+            row = rows[strategy_id]
+            meta = row.get("robustness_consensus_meta") or {}
+            require(math.isfinite(row["robustness_score"]) and not row.get("crash_eliminated", False), "Ineligible selection")
+            require(meta.get("seeds") == [41, 42, 43] and meta.get("n_samples") == 3, "Incomplete consensus selected")
+        for plan in offered:
+            row = rows.get(plan["source_strategy_id"])
+            if row:
+                require(all(row["strategy"].get(k) == plan.get(k) for k in keys), "Complete plan metadata drift")
+        rejected.update(r["reason"] for r in result["search_rejected"])
+        actual_calls += len(calls)
+        reports.append({"phase": phase, "branch": manifest["branch"], "pass": manifest["pass"], "stage": manifest["stage"],
+                        "proposals": manifest["new_plans"], "actual_calls": len(calls), "artifact_sha256": sha(result_file)})
+    require(len(reports) == state["group_count"] <= 144, "Group quota mismatch")
+    stage_counts, accepted = Counter(), set()
+    for file in state["stage_records"]:
+        for record in read(Path(file))["records"]:
+            stage_counts[record["status"]] += 1
+            if record["status"] == "accepted":
+                accepted.add(record["plan"]["source_strategy_id"])
+    require(accepted == seen_new_ids, "Generated/measured accepted proposals differ")
+    require(stage_counts["accepted"] + stage_counts["contract_rejected"] == state["new_proposals"], "Proposal ledger mismatch")
+    branches = {}
+    for name, data in state["branches"].items():
+        eligible = sorted(data["pool"], key=lambda e: e["score"])
+        winner = eligible[0]
+        before, after = data["initial_best"], winner["score"]
+        branches[name] = {"baseline_score": before, "best_score": after, "seel_nm": 2 * math.sqrt(after),
+                          "gain_seel_pct": 100 * (1 - math.sqrt(after / before)),
+                          "gain_beyond_best_local_pct": 100 * (1 - math.sqrt(after / 0.02797523766720083)),
+                          "improved": before - after > max(1e-10, 1e-7 * abs(before)),
+                          "winner": winner, "passes": data["passes"]}
+    report = {"verdict": "GO", "audited_utc": datetime.now(UTC).isoformat(), "groups": reports,
+              "new_proposals": state["new_proposals"], "actual_calls": actual_calls,
+              "stage_counts": dict(stage_counts), "rejections": dict(rejected), "branches": branches,
+              "fresh_groups_consumed": 0, "native_integration_demonstrated": False,
+              "source_sha256": protocol["source_sha256"], "protocol_sha256": sha(EXPERIMENT / "protocol.json"),
+              "audit_script_sha256": sha(Path(__file__))}
+    with (EXPERIMENT / "complete_audit_01.json").open("x", encoding="utf-8") as stream:
+        json.dump(report, stream, ensure_ascii=False, indent=2)
+    print(json.dumps({"verdict": "GO", "groups": len(reports), "actual_calls": actual_calls,
+                      "branches": {name: {k: b[k] for k in ("seel_nm", "gain_seel_pct", "improved")} for name, b in branches.items()}}))
+
+
+if __name__ == "__main__":
+    main()

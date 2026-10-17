@@ -354,11 +354,12 @@ def test_the_scanner_tells_digits_glued_to_a_colour_from_a_number_or_a_unit():
 
 
 def test_no_f_string_of_the_interface_glues_digits_to_a_colour():
-    offenders = []
     files = [*ROOT.glob("CERTUS_*.py"), *(ROOT / "certus").rglob("*.py")]
-    for path in sorted(files):
-        for line in digits_glued_to_an_interpolation(path.read_text(encoding="utf-8-sig")):
-            offenders.append(f"{path.relative_to(ROOT).as_posix()}:{line}")
+    offenders = [
+        f"{path.relative_to(ROOT).as_posix()}:{line}"
+        for path in sorted(files)
+        for line in digits_glued_to_an_interpolation(path.read_text(encoding="utf-8-sig"))
+    ]
     assert not offenders, f"hex digits written right after an interpolation (Qt reads them wrong, or not at all): {offenders}; use CertusTheme.tint"
 
 
@@ -388,9 +389,10 @@ def test_the_second_scanner_tells_an_appended_alpha_from_any_other_concatenation
 
 
 def test_no_colour_of_the_interface_gets_two_digits_appended_with_a_plus():
-    offenders = []
     files = [*ROOT.glob("CERTUS_*.py"), *(ROOT / "certus").rglob("*.py")]
-    for path in sorted(files):
-        for line in digits_appended_by_concatenation(path.read_text(encoding="utf-8-sig")):
-            offenders.append(f"{path.relative_to(ROOT).as_posix()}:{line}")
+    offenders = [
+        f"{path.relative_to(ROOT).as_posix()}:{line}"
+        for path in sorted(files)
+        for line in digits_appended_by_concatenation(path.read_text(encoding="utf-8-sig"))
+    ]
     assert not offenders, f"alpha appended to a colour by `+` (Qt reads it as #aarrggbb): {offenders}; use CertusTheme.tint"

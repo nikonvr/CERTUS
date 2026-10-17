@@ -1,0 +1,9 @@
+{
+  "Checked": "2026-10-14T00:34:17.3407165Z",
+  "Pid": 22496,
+  "PidExists": false,
+  "State": "complete",
+  "SavedRuns": 14,
+  "LockSha256": "7B2E5942E205924E82FB1FF7A4F2EAF115B6B15439755458A7C1DAF5611E5A5F",
+  "Reason": "Stale lock after completed prefix campaign; preserve bytes under a unique recovery name."
+}

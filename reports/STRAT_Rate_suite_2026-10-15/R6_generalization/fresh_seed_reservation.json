@@ -1,0 +1,87 @@
+{
+  "reserved_utc": "2026-10-15T21:42:33.153526+00:00",
+  "before_case_search_and_holdout_inspection": true,
+  "settings": {
+    "c01_s77": [
+      {
+        "robustness_seed": 17610001,
+        "consensus_seed_list": [
+          17610002,
+          17610003,
+          17610004
+        ]
+      },
+      {
+        "robustness_seed": 17610011,
+        "consensus_seed_list": [
+          17610012,
+          17610013,
+          17610014
+        ]
+      },
+      {
+        "robustness_seed": 17610021,
+        "consensus_seed_list": [
+          17610022,
+          17610023,
+          17610024
+        ]
+      }
+    ],
+    "c02_s202": [
+      {
+        "robustness_seed": 17620001,
+        "consensus_seed_list": [
+          17620002,
+          17620003,
+          17620004
+        ]
+      },
+      {
+        "robustness_seed": 17620011,
+        "consensus_seed_list": [
+          17620012,
+          17620013,
+          17620014
+        ]
+      },
+      {
+        "robustness_seed": 17620021,
+        "consensus_seed_list": [
+          17620022,
+          17620023,
+          17620024
+        ]
+      }
+    ],
+    "c03_s404": [
+      {
+        "robustness_seed": 17630001,
+        "consensus_seed_list": [
+          17630002,
+          17630003,
+          17630004
+        ]
+      },
+      {
+        "robustness_seed": 17630011,
+        "consensus_seed_list": [
+          17630012,
+          17630013,
+          17630014
+        ]
+      },
+      {
+        "robustness_seed": 17630021,
+        "consensus_seed_list": [
+          17630022,
+          17630023,
+          17630024
+        ]
+      }
+    ]
+  },
+  "prior_json_scan_exit": 1,
+  "prior_json_scan_stdout": "",
+  "scope": "Three initial R6 cases, three groups each; no enlargement of search quotas"
+}

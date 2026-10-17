@@ -1,0 +1,527 @@
+diff --git a/certus/core/certus_strat_consensus.py b/certus/core/certus_strat_consensus.py
+index a4a1fb01..197e8bf2 100644
+--- a/certus/core/certus_strat_consensus.py
++++ b/certus/core/certus_strat_consensus.py
+@@ -799,7 +799,6 @@ def _apply_elite_refinement_if_enabled(
+     base_seed = _resolve_robustness_base_seed(ctx.params)
+     # 👤 2026-10-12: optics, a packet of Rate, optics at another wavelength: on by default (`r75x0.5` 0.4981 -> 0.3967 nm); `allow_rate = 0` is honoured.
+     rate_moves = bool(ctx.params.get("elite_rate_moves", True)) and bool(ctx.params.get("allow_rate", True))
+-
+     executor_cls = concurrent.futures.ThreadPoolExecutor
+     worker_count = get_safe_worker_count()
+ 
+@@ -829,10 +828,12 @@ def _apply_elite_refinement_if_enabled(
+             round_robin_seed=(base_seed, elite_round) if round_robin else None,
+             rate_moves=rate_moves,
+             max_rate_candidates=int(ctx.params.get("elite_rate_max_candidates", 120)),
++            balanced_rate_moves=bool(ctx.params.get("elite_rate_balanced_moves", False)),
++            **({"joint_candidates": int(ctx.params.get("elite_rate_joint_candidates", 0))} if ctx.params.get("elite_rate_joint_candidates", 0) else {}),
+         )
+         if rate_moves:
+             n_rate = sum(1 for c in elite_candidates if str(c.get("origin_details", "")).startswith("ELITE_RATE"))
+-            ctx.logger.info(f"[ELITE-RATE] Round {elite_round}: {n_rate} candidate(s) change the Rate layers of their parent.")
++            ctx.logger.info(f"[ELITE-RATE] Round {elite_round}: {n_rate} candidate(s) change the Rate layers of their parent." + (" [balanced families]" if bool(ctx.params.get("elite_rate_balanced_moves", False)) else ""))
+         if ctx.strategy_id_cursor is not None:
+             ctx.strategy_id_cursor.advance(_next_sid)
+         _attach_slit_profiles(elite_candidates, ctx.p_thick_nominal, ctx.params, ctx.logger)
+@@ -1388,6 +1389,8 @@ def _generate_elite_candidate_strategies(
+     round_robin_seed: tuple[int, ...] | None = None,
+     rate_moves: bool = False,
+     max_rate_candidates: int = 0,
++    balanced_rate_moves: bool = False,
++    joint_candidates: int = 0,
+ ) -> tuple[list[dict[str, Any]], int]:
+     """
+     Build local-neighborhood variants around top-ranked strategies.
+@@ -1401,17 +1404,14 @@ def _generate_elite_candidate_strategies(
+     """
+     if not parent_results or not available_wls:
+         return [], start_strategy_id
+-
+     wl_arr = np.array(sorted(set(float(w) for w in available_wls)), dtype=np.float64)
+     if wl_arr.size == 0:
+         return [], start_strategy_id
+-
+     seen = set(existing_signatures or set())
+     out: list[dict[str, Any]] = []
+     next_id = int(start_strategy_id)
+     span = max(1, int(wl_neighbor_span))
+     max_keep = max(1, int(max_candidates))
+-
+     def _push_candidate(
+         base_blocks: list[dict[str, Any]], parent_sid: Any, parent_strat: dict[str, Any], rate_layers: list[int] | None = None, limit: int | None = None
+     ) -> bool:
+@@ -1489,10 +1489,12 @@ def _generate_elite_candidate_strategies(
+ 
+     if rate_moves and max_rate_candidates > 0:
+         limit = len(out) + int(max_rate_candidates)
+-        for parent_sid, parent_strat, base_blocks, layers in _elite_rate_candidates(parent_results, num_layers):
++        for parent_sid, parent_strat, base_blocks, layers in _elite_rate_candidates(parent_results, num_layers, balanced=balanced_rate_moves):
+             if len(out) >= limit:
+                 break
+             _push_candidate([dict(b) for b in base_blocks], parent_sid, parent_strat, rate_layers=layers, limit=limit)
+-
++    if rate_moves and joint_candidates > 0:
++        from certus.core.certus_strat_rate_moves import append_joint_candidates
++        append_joint_candidates(parent_results, available_wls, num_layers, joint_candidates, out, _push_candidate)
+     return out, next_id
+ 
+diff --git a/certus/core/certus_strat_leviers.py b/certus/core/certus_strat_leviers.py
+index 847721c5..bb98001f 100644
+--- a/certus/core/certus_strat_leviers.py
++++ b/certus/core/certus_strat_leviers.py
+@@ -236,6 +236,28 @@ LEVIERS: tuple[Levier, ...] = (
+                "d'optique ouverte dans un paquet de Rate, un paquet de Rate pose dans l'optique).",
+         reserve="Jamais balaye : 120 est un reglage de depart.",
+     ),
++    Levier(
++        cle="elite_rate_joint_candidates",
++        libelle="ELITE : budget experimental de fenetres optiques et longueurs d'onde conjointes",
++        defaut=0,
++        genre="int",
++        statut=NON_MESURE,
++        mesure="Prototype R3_h03, r75x0.5 deep graine101 : voisinage conjoint de480 propositions, largeurs1..7 et lambda fine, "
++               "puis raffinement final ; gain frais moyen5,2130% sur trois groupes contre sa recherche propre. La voie integree reste a mesurer.",
++        reserve="Budget supplementaire par tour, borne a480 ; zero conserve le generateur historique. Les largeurs et lambda seules "
++                "n'ont pas gagne dans les deux premieres paires. Pas de generalisation ni d'activation par defaut.",
++    ),
++    Levier(
++        cle="rate_post_refinement",
++        libelle="Rate : raffinement experimental final des parents issus de la seule recherche native",
++        defaut=False,
++        genre="bool",
++        statut=NON_MESURE,
++        mesure="Prototype automatique R3_h03 :0,3431123800nm contre0,3600987135nm, puis3/3 groupes frais favorables, gain moyen5,2130%. "
++               "Le meilleur plan local0,3345159946nm reste devant ; l'integration et les autres graines ne sont pas encore validees.",
++        reserve="Cout supplementaire : deux passes au plus, faisceau2,600propositions au total,300par passe et consensus complet. "
++                "Aucune ancre historique injectee comme parent. False conserve la finalisation historique ; allow_rate=0 l'eteint aussi.",
++    ),
+     # ---------------------------------------------------------------- RATE: the constants
+     Levier(
+         cle="RATE_MIN_LAYER",
+diff --git a/certus/core/certus_strat_robustness.py b/certus/core/certus_strat_robustness.py
+index 8b7a5fc1..1f18c22d 100644
+--- a/certus/core/certus_strat_robustness.py
++++ b/certus/core/certus_strat_robustness.py
+@@ -96,6 +96,7 @@ from certus.core.certus_strat_robustness_rate import (
+     RATE_RESCUE_SERIAL_BASE,
+     RATE_SWING_MIN_DEFAULT,
+     RATE_VARIANT_TOP_N_DEFAUT,
++    _balanced_elite_rate_moves,
+     _elite_rate_candidates,
+     _elite_rate_moves,
+     _expand_with_rate_variants,
+@@ -721,10 +722,11 @@ def run_final_simulation_block(
+     num_runs: int = 150,
+     noise_levels: list[float] | None = None,
+     expand_variants: bool = True,
++    refine: bool = True,
+ ) -> dict[str, Any]:
+     """Phase B robustness screening: evaluate every candidate strategy under noise.
+ 
+-    ``expand_variants`` -- generate the Rate and slit variants of each strategy.
++    ``expand_variants`` generates Rate/slit variants; ``refine=False`` scores fixed plans without ELITE.
+ 
+     🔑 FALSE ON THE SCREENING PASS, and that is the whole point. Rate multiplies the
+     candidate count by up to 4 and the slit search by 4 again: 📏 measured 2026-08-12 on
+@@ -1031,8 +1033,7 @@ def run_final_simulation_block(
+         strategies_results=strategies_results,
+         ctx=ctx,
+         apply_consensus_fn=_apply_consensus_ranking_inplace,
+-    )
+-
++    ) if refine else strategies_results
+     return _finalize_robustness_results(
+         strategies_results=strategies_results,
+         params=params,
+diff --git a/certus/core/certus_strat_robustness_rate.py b/certus/core/certus_strat_robustness_rate.py
+index a1d40e73..0b3d3711 100644
+--- a/certus/core/certus_strat_robustness_rate.py
++++ b/certus/core/certus_strat_robustness_rate.py
+@@ -1074,13 +1074,36 @@ def _elite_rate_moves(rate_layers: Any, num_layers: int) -> list[list[int]]:
+     return ordered
+ 
+ 
+-def _elite_rate_candidates(parent_results: list[dict[str, Any]], num_layers: int) -> list[tuple[Any, dict[str, Any], list[dict[str, Any]], list[int]]]:
++def _balanced_elite_rate_moves(rate_layers: Any, num_layers: int) -> list[list[int]]:
++    """Reorder the same moves across families, widths and early/middle/late positions before the shared cap."""
++    current = {int(i) for i in rate_layers or [] if RATE_MIN_LAYER <= int(i) < num_layers}
++    families: dict[tuple[str, int], list[list[int]]] = {}
++    for layers in _elite_rate_moves(sorted(current), num_layers):
++        removed = current - set(layers)
++        added = set(layers) - current
++        if removed:
++            family = ("edge", 0) if len(removed) == 1 else ("open", len(removed))
++        elif min(added) - 1 in current and max(added) + 1 in current:
++            family = ("fill", 0)
++        else:
++            family = ("edge", 0) if len(added) == 1 else ("insert", len(added))
++        families.setdefault(family, []).append(layers)
++    spread: list[list[list[int]]] = []
++    for moves in families.values():
++        indices = dict.fromkeys((0, len(moves) // 2, len(moves) - 1, *range(len(moves))))
++        spread.append([moves[i] for i in indices])
++    longest = max((len(moves) for moves in spread), default=0)
++    return [moves[k] for k in range(longest) for moves in spread if k < len(moves)]
++
++
++def _elite_rate_candidates(parent_results: list[dict[str, Any]], num_layers: int, *, balanced: bool = False) -> list[tuple[Any, dict[str, Any], list[dict[str, Any]], list[int]]]:
+     """The moves on the Rate layers of every parent, the parents taking turns: `(parent id, parent, its blocks, the new Rate layers)`."""
++    move_fn = _balanced_elite_rate_moves if balanced else _elite_rate_moves
+     per_parent = []
+     for parent in parent_results:
+         strat = parent.get("strategy", {})
+         blocks = [{"start": int(b["start"]), "end": int(b["end"]), "wavelength": float(b["wavelength"])} for b in strat.get("blocks", [])]
+         if blocks:
+-            per_parent.append([(strat.get("strategy_id", "?"), strat, blocks, layers) for layers in _elite_rate_moves(strat.get("rate_layers"), num_layers)])
++            per_parent.append([(strat.get("strategy_id", "?"), strat, blocks, layers) for layers in move_fn(strat.get("rate_layers"), num_layers)])
+     longest = max((len(moves) for moves in per_parent), default=0)
+     return [moves[k] for k in range(longest) for moves in per_parent if k < len(moves)]
+diff --git a/certus/physics/certus_strat_batch.py b/certus/physics/certus_strat_batch.py
+index 3e1c9212..a1f891c3 100644
+--- a/certus/physics/certus_strat_batch.py
++++ b/certus/physics/certus_strat_batch.py
+@@ -574,7 +574,7 @@ def simulate_stack_robustness_batch(
+ 
+ 
+ @njit(parallel=True, cache=True, fastmath=True, nogil=True, error_model="numpy")
+-def compute_batch_rmse(
++def _compute_batch_rmse_kernel(
+     sim_thick_batch: np.ndarray,
+     wls: np.ndarray,
+     nH_arr: np.ndarray,
+@@ -713,6 +713,37 @@ def compute_batch_rmse(
+     return rmse_arr
+ 
+ 
++@njit(cache=True, nogil=True)
++def compute_batch_rmse(
++    sim_thick_batch: np.ndarray,
++    wls: np.ndarray,
++    nH_arr: np.ndarray,
++    nL_arr: np.ndarray,
++    nSub_arr: np.ndarray,
++    T_target: np.ndarray,
++    n_layers_flattened: np.ndarray,
++    weights: np.ndarray | None = None,
++    index_corridor: float = 0.0,
++    index_seed: int = 0,
++    corridor_wl_min: float = 0.0,
++    corridor_wl_max: float = 0.0,
++) -> np.ndarray:
++    """Canonicalize uniform weights before selecting the historical JIT specialization."""
++    if weights is not None and weights.ndim == 1 and weights.size == len(wls) and weights.size > 0:
++        first_weight = weights[0]
++        total_weight = first_weight * weights.size
++        if np.isfinite(first_weight) and first_weight > 0.0 and np.isfinite(total_weight) and total_weight > 1e-300:
++            if np.all(weights == first_weight):
++                return _compute_batch_rmse_kernel(
++                    sim_thick_batch, wls, nH_arr, nL_arr, nSub_arr, T_target, n_layers_flattened,
++                    None, index_corridor, index_seed, corridor_wl_min, corridor_wl_max,
++                )
++    return _compute_batch_rmse_kernel(
++        sim_thick_batch, wls, nH_arr, nL_arr, nSub_arr, T_target, n_layers_flattened,
++        weights, index_corridor, index_seed, corridor_wl_min, corridor_wl_max,
++    )
++
++
+ @njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
+ def precompute_matrix_cache_kernel(
+     all_wls: np.ndarray, n_H_arr: np.ndarray, n_L_arr: np.ndarray, p_thick_nominal: np.ndarray, num_layers: int
+diff --git a/certus/workers/certus_strat_workers.py b/certus/workers/certus_strat_workers.py
+index 9f3a8d98..052b2a54 100644
+--- a/certus/workers/certus_strat_workers.py
++++ b/certus/workers/certus_strat_workers.py
+@@ -1540,19 +1540,17 @@ def _finalize_and_export_pipeline_results(
+     params: dict[str, Any],
+     signals: Any,
+     timing_logger: Any,
++    ranker: Any = None,
++    post_report: dict[str, Any] | None = None,
+ ) -> dict[str, Any]:
+     """Sorts final results, emits plots, triggers Excel export, and returns final payload."""
+     params["logger"].info("🚀 PHASE 4: Final Monte Carlo Yield Evaluation & Export...")
+     if not accumulated_strategies_results:
+         raise RuntimeError("No strategies found.")
+-
+-    accumulated_strategies_results[:] = rank_final_results(accumulated_strategies_results)
+-
++    accumulated_strategies_results[:] = (ranker or rank_final_results)(accumulated_strategies_results)
+     if timing_logger:
+         timing_logger.end_global("STRAT_Workflow")
+-
+     signals.show_strategies_table.emit(accumulated_strategies_results)
+-
+     best_res = accumulated_strategies_results[0]
+     sim_context = pre_calc_data.copy()
+     sim_context["blocks"] = best_res["strategy"]["blocks"]
+@@ -1564,6 +1562,8 @@ def _finalize_and_export_pipeline_results(
+         "best_strategy": best_res["strategy"],
+         "all_strategies_results": accumulated_strategies_results,
+     }
++    if post_report is not None:
++        final_complete_structure["rate_post_refinement"] = post_report
+ 
+     if params.get("show_plots", True):
+         try:
+diff --git a/certus/workers/certus_strat_workers_pipeline.py b/certus/workers/certus_strat_workers_pipeline.py
+index 586cdf33..e4ce1102 100644
+--- a/certus/workers/certus_strat_workers_pipeline.py
++++ b/certus/workers/certus_strat_workers_pipeline.py
+@@ -190,6 +190,15 @@ class FullPipelineStrategy:
+                     if not worker.monitor_thread.wait(3000):
+                         worker.params["logger"].warning("Live preview monitor thread did not stop within 3s")
+ 
++                finalize_options = {}
++                if worker.params.get("rate_post_refinement", False) and worker.params.get("allow_rate", True):
++                    from certus.core.certus_strat_rate_post import rank_complete_first
++                    from certus.workers.certus_strat_workers_rate import refine_rate_output
++                    worker.params["logger"].info("[RATE-POST] Bounded final native refinement, additional full-depth scoring.")
++                    accumulated_strategies_results, post_report = refine_rate_output(
++                        accumulated_strategies_results, pre_calc_data, worker.params, shm_manager.get_context_info()
++                    )
++                    finalize_options = {"ranker": rank_complete_first, "post_report": post_report}
+                 worker.signals.progress_snapshot.emit(build_progress_snapshot(message="Finalizing results...", display_ratio=1.0, progress_ratio=1.0, eta_seconds=0.0, confidence=1.0, state=StepState.DONE, module='STRAT', phase='FINALIZE'))
+ 
+                 import gc
+@@ -202,6 +211,7 @@ class FullPipelineStrategy:
+                     params=worker.params,
+                     signals=worker.signals,
+                     timing_logger=worker.timing_logger,
++                    **finalize_options,
+                 )
+                 worker.signals.finished.emit(final_result_dict)
+ 
+diff --git a/scripts/probe_blocs_vs_plantage.py b/scripts/probe_blocs_vs_plantage.py
+index af73d2bf..0cea9310 100644
+--- a/scripts/probe_blocs_vs_plantage.py
++++ b/scripts/probe_blocs_vs_plantage.py
+@@ -98,6 +98,7 @@ import json
+ import os
+ import sys
+ from collections import defaultdict
++from copy import deepcopy
+ from datetime import datetime
+ from pathlib import Path
+ 
+@@ -451,7 +452,7 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
+         p.update(over)
+         vus["n"] += 1
+         for _k in ("allow_rate", "rate_by_swing", "rate_tail_sweep", "rate_layer_sets", "rate_tail_keep_optical", "rate_rescue",
+-                   "rate_rescue_few", "elite_rate_moves", "elite_rate_max_candidates"):
++                   "rate_rescue_few", "elite_rate_moves", "elite_rate_max_candidates", "elite_rate_joint_candidates", "rate_post_refinement"):
+             if _k in p:
+                 leviers_rate[_k] = p[_k]
+         for _k in ("robustness_num_runs", "n_screen_runs", "dp_top_k", "consensus_num_runs"):
+@@ -480,6 +481,10 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
+             "n_blocs": int(st.get("n_blocks", len(blocs))),
+             "crash_rate": float(s.get("crash_rate", 1.0)),
+             "score": float(s.get("robustness_score", 0.0) or 0.0),
++            # Keep base and consensus provenance separate; missing metadata stays unknown.
++            "robustness_score_base": s.get("robustness_score_base"),
++            "robustness_score_consensus": s.get("robustness_score_consensus"),
++            "robustness_consensus_meta": deepcopy(s.get("robustness_consensus_meta")),
+             # 🔴 LA CLE EST `wavelength`, PAS `wl` -- corrige le 2026-08-20, et l'erreur coutait
+             # LE LIVRABLE. `_build_layer_wavelengths_from_strategy` (certus_strat_robustness.py:
+             # 2855) lit `block["wavelength"]` : c'est le nom qui fait foi. Avec `wl`, le champ
+@@ -515,6 +520,7 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
+             #
+             # Liste VIDE = pur optique. C'est une distinction, pas une absence de donnee.
+             "rate_layers": sorted(int(x) for x in (st.get("rate_layers") or [])),
++            "witness_reset_layers": deepcopy(st.get("witness_reset_layers")),
+             # 🔴 LE DRAPEAU QUI MANQUAIT AUX ARTEFACTS. `crash_eliminated` est pose par
+             # `_filter_finite_robustness_scores` sur toute strategie dont le score a ete
+             # REMPLACE par un repli. Sans lui, un artefact ne porte que des scores finis
+@@ -539,7 +545,9 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
+             "resolution_noise_factor": s.get("resolution_noise_factor"),
+         })
+     return {"verdict": "OK", "n_strats": len(lignes), "strategies": lignes,
+-            "profondeur": dict(profondeur), "leviers_rate": dict(leviers_rate)}
++            "profondeur": dict(profondeur), "leviers_rate": dict(leviers_rate),
++            **({"rate_post_refinement": deepcopy(res["final_results"]["rate_post_refinement"])}
++               if "rate_post_refinement" in res.get("final_results", {}) else {})}
+ 
+ 
+ def par_fente(lignes: list[dict]) -> None:
+@@ -787,7 +795,7 @@ def main() -> int:
+                 # 🔴 LES COUPURES ENTRENT DANS LE NOM. Sans elles, changer TAIL_CUTS ecrase
+                 # l'artefact precedent : les coupures 28-52 ont ete perdues ainsi.
+                 + ("" if not par_swing else "_swing" if par_swing == 1
+-                   else "_chirurgical" + (f"-{hashlib.sha1(_RATE_SETS_ENV.encode()).hexdigest()[:8]}" if _RATE_SETS_ENV else "")
++                   else "_chirurgical" + (f"-{hashlib.sha256(_RATE_SETS_ENV.encode()).hexdigest()[:8]}" if _RATE_SETS_ENV else "")
+                    if par_swing == 4
+                    else f"_tail{min(TAIL_CUTS)}-{max(TAIL_CUTS)}"
+                         + ("k" if par_swing == 3 else "s" if par_swing == 5 else ""))
+diff --git a/tests/performance/test_performance.py b/tests/performance/test_performance.py
+index 59f59955..2c3d6aa4 100644
+--- a/tests/performance/test_performance.py
++++ b/tests/performance/test_performance.py
+@@ -409,6 +409,8 @@ class TestParallelPerformance:
+         """Test les calculations concurrents."""
+         from concurrent.futures import ThreadPoolExecutor
+ 
++        import numba
++
+         layers = [Layer(mat="SiO2", qwot=100.0 / 100.0)]
+ 
+         def single_calculationation():
+@@ -417,7 +419,8 @@ class TestParallelPerformance:
+         #Testing with multiple threads
+         n_calculationations = 10
+ 
+-        with ThreadPoolExecutor(max_workers=CONCURRENT_WORKERS) as executor:
++        # Numba's mask is thread-local: pool workers must use the one-thread baseline too.
++        with ThreadPoolExecutor(max_workers=CONCURRENT_WORKERS, initializer=numba.set_num_threads, initargs=(1,)) as executor:
+ 
+             def concurrently():
+                 futures = [executor.submit(single_calculationation) for _ in range(n_calculationations)]
+diff --git a/tests/unit/test_strat_elite_rate_moves.py b/tests/unit/test_strat_elite_rate_moves.py
+index 736d2865..fc3d47b0 100644
+--- a/tests/unit/test_strat_elite_rate_moves.py
++++ b/tests/unit/test_strat_elite_rate_moves.py
+@@ -24,6 +24,7 @@ from certus.core.certus_strat_robustness import (
+     _elite_rate_moves,
+     _rate_runs,
+ )
++from certus.core.certus_strat_robustness_rate import _balanced_elite_rate_moves
+ 
+ WLS = [596.0, 598.0, 600.0, 602.0, 604.0, 616.0, 618.0, 620.0, 622.0, 624.0]
+ N_LAYERS = 20
+@@ -124,6 +125,22 @@ def test_layers_zero_and_one_in_the_parent_are_dropped_not_carried() -> None:
+     assert all(0 not in m and 1 not in m for m in moves)
+ 
+ 
++@pytest.mark.parametrize("parent", [[], [5], list(range(2, 10)), [3, 4, 9, 10, 11], list(range(14, 75))])
++def test_balancing_only_reorders_the_existing_moves(parent) -> None:
++    original = _elite_rate_moves(parent, 75)
++    balanced = _balanced_elite_rate_moves(parent, 75)
++
++    assert len(balanced) == len(original)
++    assert set(_as_sets(balanced)) == set(_as_sets(original))
++    assert balanced == _balanced_elite_rate_moves(parent, 75)
++
++
++def test_balancing_accepts_an_iterator_without_losing_its_layers() -> None:
++    parent = list(range(14, 75))
++
++    assert _balanced_elite_rate_moves(iter(parent), 75) == _balanced_elite_rate_moves(parent, 75)
++
++
+ # ---- the candidates of ELITE -----------------------------------------------------------------------------------------------
+ 
+ 
+@@ -210,6 +227,59 @@ def test_a_pure_optical_parent_gets_packets_of_rate() -> None:
+     assert all(_rate_runs(c["rate_layers"])[0][1] - _rate_runs(c["rate_layers"])[0][0] + 1 in ELITE_RATE_WINDOWS for c in extra)
+ 
+ 
++def _packet_parents() -> list[dict]:
++    rates = [*range(6, 10), *range(12, 34), *range(36, 75)]
++    return [{"strategy": {
++        "strategy_id": rank,
++        "n_blocks": 1,
++        "blocks": [{"start": 0, "end": 75, "wavelength": 600.0 + rank}],
++        "rate_layers": list(rates),
++        "monochromator_resolution_nm": 2.0,
++        "witness_reset_layers": [4],
++    }} for rank in range(10)]
++
++
++def _packet_children(parents: list[dict], *, balanced: bool) -> list[dict]:
++    children, _ = _generate_elite_candidate_strategies(
++        parents, list(range(590, 630)), 75, 1000, max_candidates=120,
++        rate_moves=True, max_rate_candidates=120, balanced_rate_moves=balanced,
++    )
++    return [child for child in children if child["origin_details"].startswith("ELITE_RATE")]
++
++
++def test_balancing_opens_both_window_widths_for_every_parent_under_the_same_cap() -> None:
++    parents = _packet_parents()
++    legacy = _packet_children(parents, balanced=False)
++    balanced = _packet_children(parents, balanced=True)
++    original = set(parents[0]["strategy"]["rate_layers"])
++
++    assert len(legacy) == len(balanced) == 120
++    assert all(len(original - set(child["rate_layers"])) <= 1 for child in legacy)
++    for parent in parents:
++        children = [child for child in balanced if child["parent_strategy_id"] == parent["strategy"]["strategy_id"]]
++        windows = [original - set(child["rate_layers"]) for child in children]
++        assert {2, 4} <= {len(window) for window in windows}
++        assert any(window and min(window) > 60 for window in windows)
++        assert all(child["blocks"] == parent["strategy"]["blocks"] for child in children)
++        assert all(child["monochromator_resolution_nm"] == 2.0 and child["witness_reset_layers"] == [4] for child in children)
++    assert len({tuple(child["rate_layers"]) + tuple(b["wavelength"] for b in child["blocks"]) for child in balanced}) == 120
++
++
++def test_balancing_is_ignored_when_rate_moves_are_disabled() -> None:
++    parents = [_parent(7, range(12, N_LAYERS))]
++
++    assert _children(parents, balanced_rate_moves=True) == _children(parents)
++
++
++def test_disabled_balancing_preserves_the_default_candidates_and_ids() -> None:
++    parents = _packet_parents()
++    arguments = dict(max_candidates=120, rate_moves=True, max_rate_candidates=120)
++
++    assert _generate_elite_candidate_strategies(parents, WLS, 75, 1000, balanced_rate_moves=False, **arguments) == (
++        _generate_elite_candidate_strategies(parents, WLS, 75, 1000, **arguments)
++    )
++
++
+ # ---- the refinement asks for them unless told otherwise -------------------------------------------------------------------
+ 
+ 
+@@ -225,21 +295,22 @@ def _ctx(params: dict) -> RobustnessContext:
+ @pytest.mark.parametrize(
+     ("extra", "expected"),
+     [
+-        ({}, (True, 120)),
+-        ({"elite_rate_moves": True}, (True, 120)),
+-        ({"elite_rate_moves": True, "elite_rate_max_candidates": 33}, (True, 33)),
+-        ({"elite_rate_moves": False}, (False, 120)),
+-        ({"allow_rate": False}, (False, 120)),
+-        ({"allow_rate": 0}, (False, 120)),
+-        ({"allow_rate": 1, "elite_rate_moves": True}, (True, 120)),
++        ({}, (True, 120, False)),
++        ({"elite_rate_moves": True}, (True, 120, False)),
++        ({"elite_rate_moves": True, "elite_rate_max_candidates": 33}, (True, 33, False)),
++        ({"elite_rate_moves": False}, (False, 120, False)),
++        ({"allow_rate": False}, (False, 120, False)),
++        ({"allow_rate": 0}, (False, 120, False)),
++        ({"allow_rate": 1, "elite_rate_moves": True}, (True, 120, False)),
++        ({"elite_rate_balanced_moves": True}, (True, 120, True)),
+     ],
+-    ids=["default", "on", "budget", "off", "no Rate", "no Rate (0)", "Rate allowed"],
++    ids=["default", "on", "budget", "off", "no Rate", "no Rate (0)", "Rate allowed", "balanced"],
+ )
+ def test_the_refinement_passes_the_moves_unless_told_otherwise(monkeypatch, extra, expected) -> None:
+     seen = []
+ 
+     def fake_generate(*_a, **k):
+-        seen.append((k.get("rate_moves"), k.get("max_rate_candidates")))
++        seen.append((k.get("rate_moves"), k.get("max_rate_candidates"), k.get("balanced_rate_moves")))
+         return [], 0
+ 
+     monkeypatch.setattr("certus.core.certus_strat_consensus._generate_elite_candidate_strategies", fake_generate)
+diff --git a/tests/unit/test_strat_spectral_target.py b/tests/unit/test_strat_spectral_target.py
+index f3c4f5c0..e440c0d3 100644
+--- a/tests/unit/test_strat_spectral_target.py
++++ b/tests/unit/test_strat_spectral_target.py
+@@ -62,7 +62,8 @@ def test_omitting_weights_is_bit_identical_to_passing_none():
+ 
+ 
+ @pytest.mark.unit
+-def test_uniform_weights_reproduce_the_unweighted_functional():
++@pytest.mark.parametrize("weight", [0.5, 1.0, 2.0, 7.3])
++def test_uniform_weights_reproduce_the_unweighted_functional(weight):
+     """🔴 Des poids UNIFORMES doivent redonner exactement le RMSE non pondere.
+ 
+     This is the condition which makes the weighting interpretable: if constant weights
+@@ -71,7 +72,7 @@ def test_uniform_weights_reproduce_the_unweighted_functional():
+     """
+     flat = np.full(WL.size, 0.5)
+     ref = _rmse(flat)
+-    got = _rmse(flat, np.ones(WL.size))
++    got = _rmse(flat, np.full(WL.size, weight))
+     assert float(np.max(np.abs(ref - got))) == 0.0
+ 
+ 

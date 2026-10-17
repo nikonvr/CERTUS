@@ -1,0 +1,13 @@
+{
+  "verdict": "GO",
+  "n_proposals": 607,
+  "proposals_sha256": "9d5b462394b8baaee51cb06a8ae1fa7848251aa5a2543f0d4ef7a010a881de37",
+  "context_sha256": "025d6d4bcd82289d6f9b7cdbc09440ad23504a0030c5721433dcba4e056b4e89",
+  "checks": [
+    "real block contract",
+    "unique identities and signatures",
+    "exact prefix geometry and wavelength only",
+    "internal windows, partition, slit and witness preserved"
+  ],
+  "scope": "No Monte Carlo or physical changes"
+}

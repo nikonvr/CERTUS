@@ -1,0 +1,25 @@
+{
+  "verdict": "GO",
+  "artifact_sha256": "3342f642436d4f009b3cd8319507ec26e96950b8d8ccd36c52b393a400e736f6",
+  "manifest_sha256": "580b7e6ffd2735d69d84d19e85684af7ec8fec8111ff05e3a2ccbbfc3c52064a",
+  "actual_calls": 45,
+  "eligible_ids": [
+    900951015,
+    9900006,
+    9900008,
+    97000183,
+    97000184,
+    97000185,
+    97000186,
+    97000187,
+    97000188,
+    97000189,
+    97000190
+  ],
+  "rejected": [
+    {
+      "id": 97000182,
+      "reason": "base score non-finite"
+    }
+  ]
+}

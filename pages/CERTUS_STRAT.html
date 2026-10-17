@@ -5068,7 +5068,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 </div>
                 <p>
                     The mechanism is not in doubt, and it is the useful part of this section:
-                    <b>roughly 75 of the 99 layers have to run on rate (quartz/chrono)</b>, with
+                    <b>roughly 75 of the 99 layers have to run on rate (a time at an estimated speed)</b>, with
                     targeted optical monitoring on the ~24 layers that close each cavity. Compare with
                     the dichroic&rsquo;s <b>0.17 nm at 0 % crash</b> to see the size of the gap.
                 </p>
@@ -5301,7 +5301,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         seeds.</li>
                     <li><b>The 0.30 nm target is not reached</b> — a factor of 2.5 remains.</li>
                     <li><b>Not modelled</b>: carousel rotation time (shutter open, the part receives
-                        uncounted material; shutter closed, the source drifts thermally). The quartz
+                        uncounted material; shutter closed, the source drifts thermally). The
                         rate estimate is deliberately <i>not</i> reset at a witness change, since it is
                         a property of the machine and not of the witness — so an interval measured in
                         isolation starts with no rate history where a real sequence would inherit one.
@@ -5645,7 +5645,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
 
         <p>
             <b>And the Rate mode is used very unevenly.</b> On the &times;1 stack, <b>1031 of 1790</b> depositable
-            strategies carry a quartz-controlled layer; on &times;1.5, &times;1.75 and the delivered &times;2
+            strategies carry a layer laid by Rate; on &times;1.5, &times;1.75 and the delivered &times;2
             configuration, <b>zero out of 1510</b> &mdash; offered every time, never chosen. That is the intended
             behaviour: a Rate variant enters as a <b>cost</b>, never as a cut-off, and the ranking decides
             component by component. &#9888; The contrast is <b>not explained</b>: &times;1 is the <i>finest</i>

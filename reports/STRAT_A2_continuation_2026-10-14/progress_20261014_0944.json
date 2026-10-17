@@ -1,0 +1,28 @@
+{
+  "checked_utc": "2026-10-14T07:44:58.803693+00:00",
+  "status": "running",
+  "completed": 10,
+  "current": "75c_deep_s042_avec",
+  "science_pid": 42988,
+  "pair": [
+    {
+      "key": "35c_deep_s042_avec",
+      "sha256": "b970b0e8a6c90c0372a77bf45bbb77f0688b62026f5953f7a2086a0fd7dbce6d",
+      "verdict": "OK",
+      "effective_elite_rate_moves": true,
+      "seel": 0.48330149375160264,
+      "seconds": 357.80453940000734
+    },
+    {
+      "key": "35c_deep_s042_sans",
+      "sha256": "8d95e0f9792469f7188b7f070a82894ee186e14e8e76989d8dcaece9dafd2313",
+      "verdict": "OK",
+      "effective_elite_rate_moves": false,
+      "seel": 0.4886754174964645,
+      "seconds": 376.6479324000102
+    }
+  ],
+  "raw_export_gain_percent": 1.0996918511663667,
+  "limitation": "Consensus metadata absent in A2 exports; no homogeneous fixed-plan confirmation",
+  "R2_observer": "prepared; runtime not run and adapter not yet wired"
+}

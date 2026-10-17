@@ -1,0 +1,6 @@
+{
+  "original_archived_path": "01_campagne_a2_runner.py",
+  "current_archived_path": "01_campagne_a2_runner.py.txt",
+  "sha256": "e55dde982b6e61029cdc231cc7204b40d63f7bc6bc2055417402e34bee4ace84",
+  "reason": "Preserve the original E731 diagnostic snapshot as immutable text rather than runnable source; production/controller sources and Ruff configuration unchanged"
+}

@@ -1,0 +1,152 @@
+{
+  "recorded_utc": "2026-10-16T09:01:55.615026+00:00",
+  "checkout_bytes_including_git": 508771622,
+  "under_1_decimal_GB": true,
+  "top_level": {
+    "(root files)": [
+      74,
+      17686157
+    ],
+    ".git": [
+      691,
+      237643821
+    ],
+    ".githooks": [
+      1,
+      2058
+    ],
+    ".github": [
+      5,
+      18559
+    ],
+    ".pytest_cache": [
+      4,
+      1488
+    ],
+    ".ruff_cache": [
+      4,
+      590
+    ],
+    "certus": [
+      391,
+      7854064
+    ],
+    "certus_physics": [
+      6,
+      46511
+    ],
+    "data": [
+      1,
+      802
+    ],
+    "docs": [
+      3,
+      262108
+    ],
+    "example": [
+      515,
+      20819262
+    ],
+    "pages": [
+      17,
+      971061
+    ],
+    "reports": [
+      11588,
+      213421941
+    ],
+    "samples": [
+      9,
+      3772
+    ],
+    "scratch": [
+      213,
+      1800790
+    ],
+    "scripts": [
+      79,
+      1149927
+    ],
+    "studies": [
+      22,
+      2865770
+    ],
+    "tests": [
+      594,
+      4092165
+    ],
+    "tools": [
+      19,
+      130776
+    ]
+  },
+  "validated_scientific_sources_verified": {
+    "certus/core/certus_strat_consensus.py": true,
+    "certus/core/certus_strat_robustness.py": true,
+    "certus/core/certus_strat_robustness_rate.py": true,
+    "certus/core/certus_strat_leviers.py": true,
+    "certus/core/certus_strat_rate_moves.py": true,
+    "certus/core/certus_strat_rate_post.py": true,
+    "certus/physics/certus_strat_batch.py": true,
+    "certus/workers/certus_strat_workers.py": true,
+    "certus/workers/certus_strat_workers_pipeline.py": true,
+    "certus/workers/certus_strat_workers_rate.py": true,
+    "scripts/probe_blocs_vs_plantage.py": true,
+    "tests/unit/test_strat_rate_final_refinement.py": true,
+    "tests/unit/test_probe_keeps_consensus_score_provenance.py": true,
+    "tests/performance/test_performance.py": true,
+    "tests/unit/test_strat_elite_rate_moves.py": true,
+    "tests/unit/test_strat_spectral_target.py": true
+  },
+  "publication_candidate_bytes": 102579416,
+  "publication_candidate_existing_files": 6473,
+  "largest_candidates": [
+    [
+      1427076,
+      "reports/STRAT_Rate_suite_2026-10-15/R4_refinement/checkpoint_repair_01/checkpoint.json.tmp"
+    ],
+    [
+      1144062,
+      "reports/STRAT_Rate_publication_2026-10-16/compact_manifest.json"
+    ],
+    [
+      782915,
+      "reports/STRAT_Rate_publication_2026-10-16/cleanup_compact_01.json"
+    ],
+    [
+      778251,
+      "reports/STRAT_Rate_joint_window_2026-10-13/etat.json"
+    ],
+    [
+      745156,
+      "reports/STRAT_Rate_suite_2026-10-15/R3_h03_native_postrefinement/post/checkpoint.json"
+    ],
+    [
+      733250,
+      "reports/STRAT_Rate_suite_2026-10-15/R3_h03_native_postrefinement/post/frozen_search_winners.json"
+    ],
+    [
+      684327,
+      "reports/STRAT_Rate_joint_refinement_2026-10-13/recovery_20261013_1830/03_etat.tmp"
+    ],
+    [
+      684327,
+      "reports/STRAT_Rate_joint_refinement_2026-10-13/etat.tmp"
+    ],
+    [
+      683926,
+      "reports/STRAT_Rate_joint_refinement_2026-10-13/recovery_20261013_1830/02_etat.json"
+    ],
+    [
+      614518,
+      "reports/STRAT_Rate_prefix_joint_2026-10-14/etat.json"
+    ]
+  ],
+  "credential_pattern_scan": {
+    "files": 6471,
+    "hits_paths_only": []
+  },
+  "archives_are_local_outside_checkout": true,
+  "raw_JSON_archived": 2242,
+  "scientific_measurements_after_historical_close": 0
+}

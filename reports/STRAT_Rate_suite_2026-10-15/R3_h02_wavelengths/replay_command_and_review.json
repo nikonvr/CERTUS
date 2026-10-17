@@ -1,0 +1,39 @@
+{
+  "status": "REVIEWED_READY_NOT_STARTED",
+  "reviewed_utc": "2026-10-15T12:36:04.915396+00:00",
+  "command": [
+    "python",
+    "-X",
+    "utf8",
+    "-X",
+    "cpu_count=24",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_fixed_replay_R3_h02.py",
+    "--worktree",
+    "C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-rmse-r0\\certus0310",
+    "--plans",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R3_h02_wavelengths\\frozen_finalists.json",
+    "--protocol",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R3_h02_wavelengths\\replay_protocol.json",
+    "--reference-state",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\reference_context.json",
+    "--output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R3_h02_wavelengths\\homogeneous_replay",
+    "--run",
+    "control",
+    "--deadline-utc",
+    "2026-10-16T06:00:00+00:00"
+  ],
+  "verification_sha256": "fc9001dfe1f165831a27eb6ae7c68a306e7ad96489dc6184ecf6a4afacdf1132",
+  "review": [
+    "Four scoring/source callbacks AST identical to validated R0/h01",
+    "Full300 physical task and float32 clues transport unchanged",
+    "Exactly24 actual calls and all complete plan metadata required",
+    "Five previously measured fixed scores strict; new variant finalist has no invented fixed expectation",
+    "Bound6 actual unique plans, ceiling8, one permanent h02 replay claim",
+    "Latest deadline checked in guard, before reserve and nominal analysis",
+    "No physical package, original or live launcher changed",
+    "Manual exact review; /code-review capability unavailable"
+  ],
+  "prior_failed_lint": "audit_execution_01 preserved; five style diagnostics fixed explicitly before audit_execution_02 GO",
+  "new_default_activated": false
+}

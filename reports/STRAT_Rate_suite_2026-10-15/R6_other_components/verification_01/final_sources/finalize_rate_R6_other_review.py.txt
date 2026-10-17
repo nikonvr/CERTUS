@@ -1,0 +1,82 @@
+"""Preserve final metadata checks and phase reports; no physical evaluations."""
+
+from __future__ import annotations
+
+import ast
+import copy
+import json
+import textwrap
+from collections import Counter
+from datetime import UTC, datetime
+from pathlib import Path
+from types import SimpleNamespace
+
+from rate_R4_planner_resume_v3 import save
+from rate_R5_guard import PROGRAM, ROOT, check_deadline, read, sha
+
+
+def main():
+    check_deadline()
+    initial, output = PROGRAM / "R6_generalization", PROGRAM / "R6_other_components"
+    # A base seed equal to a consensus seed must retain both actual calls.
+    state = read(initial / "c03_s404/variant/measurement/etat.json")
+    post = read(Path(state["artifact"]))["rate_post_refinement"]
+    events = read(initial / "c03_s404/variant/measurement/pipeline_trace.json")["events"]
+    tasks = [{**e, "seed": 42 if e.get("seed") == 404 else e.get("seed")} for e in events if e["kind"] == "physical_task_result"]
+    proof = {}
+    for label, name in (("before", "prepare_rate_R6_confirmation_v2.py"), ("after", "prepare_rate_R6_other_confirmation.py")):
+        source = (ROOT / "scratch" / name).read_text(encoding="utf-8")
+        section = source[source.index("    post_ids ="):source.index("    selected =")]
+        namespace = {"post": copy.deepcopy(post), "tasks": {"variant": tasks}, "CASES": {"fixture": 42},
+                     "args": SimpleNamespace(case="fixture"), "Counter": Counter}
+        try:
+            exec(compile(textwrap.dedent(section), "<recorded metadata only>", "exec"), namespace)
+        except RuntimeError as error:
+            proof[label] = {"accepted": False, "reason": str(error)}
+        else:
+            proof[label] = {"accepted": True}
+    assert proof["before"]["accepted"] is False
+    assert proof["after"]["accepted"] is True
+    native = (ROOT / "scratch/rate_R6_other_native.py").read_text(encoding="utf-8")
+    assignments = {n.targets[0].id: n for n in ast.walk(ast.parse(native)) if isinstance(n, ast.Assign) and isinstance(n.targets[0], ast.Name)}
+    protocol = read(output / "native_protocol.json")
+    paths = {}
+    for case, arguments in protocol["case_arguments"].items():
+        tag = "fixture_" + case
+        env = {"native": {"arguments": arguments}, "worktree": Path("C:/fixture"), "seed": int(arguments[6]), "tag": tag}
+        exec(compile(ast.Module(body=[assignments["native_artifact"]], type_ignores=[]), "<artifact path only>", "exec"), env)
+        suffix = "_fente" if arguments[2] == "1" else ""
+        assert env["native_artifact"].name == f"blocs_vs_plantage_{arguments[0]}_{arguments[1]}_s{int(arguments[6]):03d}_{tag}{suffix}.json"
+        paths[case] = env["native_artifact"].name
+    save(output / "verification_01/metadata_counterproof.json", {"verdict": "GO", "seed42_collision": proof,
+         "artifact_names": paths, "physical_evaluations": 0, "source_sha256": sha(Path(__file__))}, immutable=True)
+    save(output / "verification_01/preparation_incidents.json", {"no_measurement_or_claim_repeated": True,
+         "ruff_first": {"exit_code": 1, "diagnostics": ["PT018 compound asserts", "I001 import order", "PERF401 append loop"]},
+         "runtime_verification": "16 checks GO before style-only correction; executed source retained in verifier.py.txt",
+         "ruff_final": "All new scripts pass, no ignore or debt increase", "science_changed": False}, immutable=True)
+    current = output / "verification_01/final_sources"
+    current.mkdir()
+    files = sorted((ROOT / "scratch").glob("*R6_other*"))
+    hashes = {}
+    for path in files:
+        if path.is_file():
+            (current / (path.name + ".txt")).write_bytes(path.read_bytes())
+            hashes[path.name] = sha(path)
+    save(output / "verification_01/final_source_sha256.json", hashes, immutable=True)
+    lines = ["# R6 — bilan initial du16octobre2026", "", "Les trois cas r75x0.5 passent le critère fixé avant leurs groupes frais :3/3 gains propres et médiane≥1%. Le passage conditionnel aux autres composants est autorisé par ce bilan, dans les six paires et l’échéance existantes. Aucun groupe supplémentaire n’est ajouté.", "",
+             "| Graine | Gain frais moyen propre | Médiane | Victoires | Pire perte | Appels frais300 |", "|---:|---:|---:|---:|---:|---:|"]
+    for case in ("c01_s77", "c02_s202", "c03_s404"):
+        result = read(initial / case / "fresh_audit.json")
+        own = result["comparisons"]["control_complete"]
+        lines.append(f"|{case.rsplit('s', 1)[1]}|{own['mean_pct']:.6f}%|{own['median_pct']:.6f}%|{own['wins']}/3|{own['worst_loss_pct']:.6f}%|{result['actual_calls']}|")
+    lines.extend(["", "Les216appels frais à300tirages ne prouvent ni intervalle de confiance ni généralisation hors de ce corpus. Les trois variantes restent inférieures au meilleur local9900008 dans leurs trois groupes respectifs. Aucune identité globale native au bit ni accélération n’est annoncée. Options production inactives par défaut, aucun noyau physique changé.", "",
+                  "Sources détaillées : c01_s77/fresh_audit.json, c02_s202/fresh_audit.json, c03_s404/fresh_audit.json. Plans complets figés avant inspection ; exports officiels et consensus complets conservés. Les36graines176100xx/176200xx/176300xx sont consommées. Les historiques A2/R0/R2/R3/R4/R5 ne sont jamais rejoués.", "",
+                  "La suite suit48c/premium/77/fente recherchée, puis r75x1.5/deep/42 et r75x2/deep/77 seulement si la paire précédente satisfait le même critère. Au premier cas conditionnel non confirmé, arrêt de cette extension sans ajouter de groupes. Aucun lancement après16octobre06:00UTC ; laisser finir un enfant engagé et rendre un bilan incomplet si nécessaire."])
+    (initial / "initial_cases_bilan_20261016.md").write_bytes(("\n".join(lines)+"\n").encode())
+    result = read(initial / "c03_s404/fresh_audit.json")
+    (initial / "c03_s404/bilan_20261016.md").write_bytes(("# R6 c03_s404 —16octobre2026\n\nPaire terminée, deux sorties0 ; confirmation terminée à05h01Paris, trois sorties0 et72appels réels300tirages. Audit de provenance GO, plans complets figés et graines176300xx consommées.\n\n" + json.dumps(result["comparisons"], ensure_ascii=False, indent=2) + "\n\nGains propres :0,433049/2,473140/2,362340%, moyenne1,756176%, médiane2,362340%,3/3victoires,pireperte0. Critère préfixé satisfait. Aucun groupe supplémentaire, aucun nouveau meilleur global. Voir pair_audit.json, frozen_finalists.json et fresh_audit.json pour sources, coûts, rejets et plans complets ; aucune extrapolation de probabilité ni intervalle de confiance.\n").encode())
+    print(json.dumps({"verdict": "GO", "recorded_metadata_checks_only": True, "physical_evaluations": 0, "completed_utc": datetime.now(UTC).isoformat()}))
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,15 @@
+{
+  "issued_utc": "2026-10-15T08:33:40.681525+00:00",
+  "timezone": "Europe/Paris",
+  "R2_completed_Paris": "2026-10-15T10:13:27+02:00",
+  "R2_seconds": 2879.26309,
+  "first_R3_pair_result_Paris_range": [
+    "2026-10-15T12:30:00+02:00",
+    "2026-10-15T14:30:00+02:00"
+  ],
+  "full_conditional_program_remaining_hours": [
+    18,
+    30
+  ],
+  "meaning": "Planning estimate, not an authorization limit; conditional R4/R6 may stop earlier. First R3 pair needs its two native runs and homogeneous audit. No code speedup inferred from R2 timing."
+}

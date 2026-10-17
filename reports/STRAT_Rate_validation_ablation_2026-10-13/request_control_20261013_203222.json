@@ -1,0 +1,29 @@
+{
+  "status": "failed",
+  "pid": 47444,
+  "run": "control",
+  "setting": {
+    "robustness_seed": 101,
+    "consensus_seed_list": [
+      41,
+      42,
+      43
+    ]
+  },
+  "plans_sha256": "eaa29a052375548b3a5a96f2f8f82dc54eb7ef7f7cfec60a8f8e772300bbe057",
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "source_sha256": {
+    "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127"
+  },
+  "started": "2026-10-13T20:32:22.886414+00:00",
+  "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_ablation_2026-10-13\\control.json",
+  "errors": [
+    "Fixed point failed: ablation_joint0_rate240_round6_s101 0.03517507293183044 vs 0.03339661422533983"
+  ]
+}

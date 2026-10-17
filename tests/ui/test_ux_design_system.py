@@ -34,9 +34,7 @@ THEME_FILES = {"certus_theme.py", "certus_hub_config.py"}
 
 def _get_ui_python_files() -> list[Path]:
     files = list(ROOT.glob("CERTUS_*.py"))
-    for p in (ROOT / "certus").rglob("*.py"):
-        if "tests" not in p.parts:
-            files.append(p)
+    files.extend(p for p in (ROOT / "certus").rglob("*.py") if "tests" not in p.parts)
     return files
 
 

@@ -1,0 +1,15 @@
+{
+  "observed_utc": "2026-10-15T10:01:00.001298+00:00",
+  "status": "running",
+  "controller_pid": 33592,
+  "current": "variant",
+  "child_pid": 17704,
+  "scientific_process_count": 1,
+  "cpu_seconds_at_check": 32805.046875,
+  "affinity": 16777215,
+  "priority": "Normal",
+  "memory_bytes": 4159414272,
+  "observed_progress": "12:00 Paris: evaluations and Rate rescue continue; rejected candidates retained normally",
+  "new_scientific_result": false,
+  "decision": "Continue the existing variant; no tests, source edits, duplicate calculation or ETA change justified"
+}

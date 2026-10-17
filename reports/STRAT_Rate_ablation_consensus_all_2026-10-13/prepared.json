@@ -1,0 +1,32 @@
+{
+  "prepared_utc": "2026-10-13T20:36:49.323021+00:00",
+  "runner": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_ablation_consensus_runner.py",
+  "arguments": [
+    "--worktree",
+    "C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-equilibre\\certus0310",
+    "--proposals",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_ablation_consensus_all_2026-10-13\\proposals.json",
+    "--protocol",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_confirmation_native_round6_2026-10-13\\protocole_validation_native_round6_v3.json",
+    "--reference-state",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_equilibre_AB_2026-10-13\\etat.json",
+    "--trial-output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_pistes_2026-10-13",
+    "--output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_ablation_consensus_all_2026-10-13"
+  ],
+  "n_proposals": 5240,
+  "n_stages": 525,
+  "hashes": {
+    "rate_ablation_consensus_runner.py": "5b566378d39deb9b5dfbf2cb8d6b7e80325ec7b2beae2fd30901b0352bb0bd1d",
+    "proposals.json": "d0e1a708b5d71e54b29df2c102cfca02674f9c7e6b78337c78660a9024df48f1",
+    "rate_fixed_replay.py": "05376a9240c66a99a1f4f5bf1a7300045d13ed83ca0ed4a4f88300a73688a2c3",
+    "protocole_validation_native_round6_v3.json": "7d864ee1416b251257743d718a45c178bb77176b8560678faadcaa199fe94d15"
+  },
+  "controller_changes": "Only title and waiting status label; exact existing stage, scoring, resume and deadline logic retained",
+  "batch_size": 10,
+  "anchors_each_batch": 2,
+  "new_depth": false,
+  "deadline_utc": "2026-10-14T07:00:00Z",
+  "free_storage_bytes_observed": 318527819776
+}

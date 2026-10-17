@@ -1,0 +1,12 @@
+{
+  "status": "PREPARED_BEFORE_VALIDATION",
+  "tail_groups": [
+    61,
+    62
+  ],
+  "scientific_sources_unchanged": true,
+  "protocol_unchanged": true,
+  "coordinator_sha256": "bb24d2958a22afc8d3bb44d0fca87c4bac1a2f6c547ee6f30508fc1d01b880e7",
+  "planner_io_wrapper_sha256": "c0e714c66efb130bf893d3130cd3dcd747e680a3039ce33d241f63e88cf8ba04",
+  "reason": "WinError5 on os.replace left exact intended checkpoint; adopted without repeat"
+}

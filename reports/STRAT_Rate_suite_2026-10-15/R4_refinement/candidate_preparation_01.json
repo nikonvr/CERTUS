@@ -1,0 +1,10 @@
+{
+  "status": "SOURCE_PREPARED_NOT_RUNTIME_VERIFIED",
+  "prepared_utc": "2026-10-15T12:58:49.912464+00:00",
+  "source": "scratch/rate_R4_candidates.py",
+  "source_sha256": "7a33f2023b74ae5346812067e085b6cff52e8a6c6dce4813c4952f36e429cbfc",
+  "lint_exit_code": 0,
+  "lint_output": "All checks passed!\n",
+  "physics_measured": false,
+  "next": "Verify generic18-layer fixtures and actual source parents/contracts, then build and validate separate scoring/guard/planner/controller copies before any R4 measurement"
+}

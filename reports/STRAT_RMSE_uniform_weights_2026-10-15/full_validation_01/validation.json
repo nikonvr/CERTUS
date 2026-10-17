@@ -1,0 +1,135 @@
+{
+  "status": "FAILED",
+  "pid": 8272,
+  "started_utc": "2026-10-15T05:17:43.298905+00:00",
+  "resources": {
+    "logical_cpus": 24,
+    "affinity_mask": "0xffffff",
+    "priority": "normal",
+    "library_threads": 23
+  },
+  "stop_rule": "bounded validation command list; stop on first unexpected failure",
+  "source_sha256": {
+    "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+    "tests/unit/test_strat_spectral_target.py": "a1ecf68dc60be63495bbec630bfa93b24a7fa69660cc40aa36046e1cd7e11f5c",
+    "certus/core/certus_strat_robustness.py": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+    "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+    "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e",
+    "tests/unit/test_probe_keeps_consensus_score_provenance.py": "accd22f5f43d05f0b52cd0b01e46fb47437d66afb32ad80fc3f1eb7a48c214b9",
+    "tests/unit/test_strat_elite_rate_moves.py": "574f08fc5df532759a02fc1a2b9f632e69296f10a00307bf67b071d2073735e4"
+  },
+  "checks": [
+    {
+      "name": "counterproof_before",
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-c",
+        "import sys; from pathlib import Path; sys.path.insert(0,'C:\\\\Users\\\\Lemarchand\\\\.codex\\\\worktrees\\\\campagne-a2\\\\certus0310'); import certus_physics; from certus.physics.certus_strat_batch import compute_batch_rmse; assert str(Path(compute_batch_rmse.py_func.__code__.co_filename).resolve()).startswith('C:\\\\Users\\\\Lemarchand\\\\.codex\\\\worktrees\\\\campagne-a2\\\\certus0310'); import pytest; sys.exit(pytest.main(['D:\\\\drivefl\\\\01_Recherche_Enseignement\\\\02_Couches_Minces_Optique\\\\couches minces 2026\\\\CERTUS\\\\certus0310\\\\tests\\\\unit\\\\test_strat_spectral_target.py',\"-q\",\"--no-cov\"]))"
+      ],
+      "exit_code": 1,
+      "seconds": 15.03834860000643,
+      "verdict": "EXPECTED_FAILURE_CONFIRMED",
+      "log": "counterproof_before.log"
+    },
+    {
+      "name": "targeted_after",
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-m",
+        "pytest",
+        "tests/unit/test_strat_spectral_target.py",
+        "tests/unit/test_strat_index_corridor_scoring.py",
+        "tests/unit/test_strat_batch_kernels_match_the_oracle_and_their_definitions.py",
+        "tests/unit/test_probe_keeps_consensus_score_provenance.py",
+        "tests/unit/test_the_robustness_split_keeps_every_name_and_the_cycle_where_it_was.py",
+        "-q",
+        "--no-cov"
+      ],
+      "exit_code": 0,
+      "seconds": 23.897128499986138,
+      "verdict": "GO",
+      "log": "targeted_after.log"
+    },
+    {
+      "name": "ruff",
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-m",
+        "ruff",
+        "check",
+        "."
+      ],
+      "exit_code": 0,
+      "seconds": 0.21380409999983385,
+      "verdict": "GO",
+      "log": "ruff.log"
+    },
+    {
+      "name": "oracle",
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-m",
+        "pytest",
+        "tests/oracle/",
+        "-q",
+        "--no-cov"
+      ],
+      "exit_code": 0,
+      "seconds": 72.28636280001956,
+      "verdict": "GO",
+      "log": "oracle.log"
+    },
+    {
+      "name": "unit",
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-m",
+        "pytest",
+        "tests/unit/",
+        "-q",
+        "--no-cov"
+      ],
+      "exit_code": 0,
+      "seconds": 1961.328797300026,
+      "verdict": "GO",
+      "log": "unit.log"
+    },
+    {
+      "name": "ui",
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-m",
+        "pytest",
+        "tests/ui/",
+        "-q",
+        "--no-cov"
+      ],
+      "exit_code": 0,
+      "seconds": 1687.7088283000048,
+      "verdict": "GO",
+      "log": "ui.log"
+    },
+    {
+      "name": "remaining",
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-m",
+        "pytest",
+        "tests/",
+        "-q",
+        "--no-cov",
+        "--ignore=tests/oracle",
+        "--ignore=tests/unit",
+        "--ignore=tests/ui"
+      ],
+      "exit_code": 1,
+      "seconds": 679.4353878000111,
+      "verdict": "FAILED",
+      "log": "remaining.log"
+    }
+  ],
+  "current": "remaining",
+  "error": "Validation failed: remaining",
+  "finished_utc": "2026-10-15T06:31:43.538185+00:00"
+}

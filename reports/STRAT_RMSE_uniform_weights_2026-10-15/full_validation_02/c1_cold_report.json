@@ -1,0 +1,393 @@
+{
+  "base": "HEAD (da1af08)",
+  "tete": "arbre de travail",
+  "corpus": [
+    "normal",
+    "oblique",
+    "strat"
+  ],
+  "points_d_entree": {
+    "normal.combination": {
+      "tableaux": 120,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "normal.combination_abs": {
+      "tableaux": 120,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "normal.cost0": {
+      "tableaux": 60,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "normal.cost0_abs": {
+      "tableaux": 60,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "normal.cost1": {
+      "tableaux": 60,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "normal.cost1_abs": {
+      "tableaux": 60,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "normal.fullexact": {
+      "tableaux": 240,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "normal.fullexact_abs": {
+      "tableaux": 225,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "normal.fused": {
+      "tableaux": 120,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "normal.fused_abs": {
+      "tableaux": 120,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "normal.generic": {
+      "tableaux": 120,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "normal.generic_abs": {
+      "tableaux": 120,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "normal.gradall0": {
+      "tableaux": 120,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "normal.gradall0_abs": {
+      "tableaux": 120,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "normal.gradall1": {
+      "tableaux": 120,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "normal.gradall1_abs": {
+      "tableaux": 120,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "normal.noback": {
+      "tableaux": 120,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "normal.noback_abs": {
+      "tableaux": 120,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "normal.rtrback": {
+      "tableaux": 180,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "normal.rtrback_abs": {
+      "tableaux": 180,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "normal.vecreal0": {
+      "tableaux": 120,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "normal.vecreal0_abs": {
+      "tableaux": 120,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "normal.vecreal1": {
+      "tableaux": 120,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "normal.vecreal1_abs": {
+      "tableaux": 120,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "oblique.backside": {
+      "tableaux": 120,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "oblique.backside_abs": {
+      "tableaux": 120,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "oblique.bundle": {
+      "tableaux": 240,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "oblique.bundle_abs": {
+      "tableaux": 240,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "oblique.contrib": {
+      "tableaux": 180,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "oblique.contrib_abs": {
+      "tableaux": 180,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "oblique.full": {
+      "tableaux": 120,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "oblique.full_abs": {
+      "tableaux": 120,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "oblique.rtgrads0": {
+      "tableaux": 240,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "oblique.rtgrads0_abs": {
+      "tableaux": 240,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "oblique.rtgrads1": {
+      "tableaux": 240,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "oblique.rtgrads1_abs": {
+      "tableaux": 240,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "oblique.spectrum": {
+      "tableaux": 120,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "oblique.spectrum_abs": {
+      "tableaux": 120,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "strat.detailed": {
+      "tableaux": 3,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "strat.growth": {
+      "tableaux": 2000,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "strat.margins": {
+      "tableaux": 120,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "strat.next": {
+      "tableaux": 60,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "strat.scan": {
+      "tableaux": 90,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "strat.states": {
+      "tableaux": 20,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "strat.tprofile": {
+      "tableaux": 30,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    },
+    "strat.turning": {
+      "tableaux": 180,
+      "differents": 0,
+      "ulp": 0.0,
+      "rel": 0.0,
+      "exemples": [],
+      "refus": 0
+    }
+  },
+  "provenance": {
+    "certus_version": "26_05",
+    "git_commit": "da1af0825d5e09e8d0a5ff4f1cf42b802e0e30e7",
+    "git_dirty": true,
+    "python": "3.14.8",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "numba": "0.68.0",
+    "numba_cache_key": "583fdb3c906c",
+    "numba_cache_keyed": false,
+    "platform": "Windows-11-10.0.26300-SP0",
+    "machine": "AMD64",
+    "generated_at_utc": "2026-10-15T07:06:47+00:00"
+  }
+}

@@ -1,6 +1,19 @@
 from PyQt6.QtWidgets import QWidget
 
 
+def _builds_without_a_name_error(build):
+    """Build a window and dispose of it. Building one with nothing to show may fail in many ways; an undefined name is the one
+    failure this smoke test is for, and it is re-raised."""
+    try:
+        window = build()
+    except NameError:
+        raise
+    except Exception:
+        return
+    assert window is not None
+    window.deleteLater()
+
+
 def test_strat_ui_windows_import_and_construct(qapp):
     """Smoke test to verify that strategy UI window classes can be imported and instantiated without NameError."""
     # Ensure QApp exists
@@ -31,83 +44,33 @@ def test_strat_ui_windows_import_and_construct(qapp):
 
     parent = QWidget()
 
-    # 2. Test InteractiveHeatmapWindow instantiation
-    try:
-        heatmap_win = InteractiveHeatmapWindow(parent, {})
-        assert heatmap_win is not None
-        heatmap_win.deleteLater()
-    except Exception as e:
-        assert not isinstance(e, NameError)
+    # 2. to 10. Every window instantiates, or fails for a reason other than an undefined name
+    dummy_strategy = {"strategy": {"strategy_id": 900000001, "blocks": [], "layers": []}}
 
-    # 3. Test StrategiesTableWindow instantiation
-    try:
-        table_win = StrategiesTableWindow(parent, [], [], False)
-        assert table_win is not None
-        table_win.deleteLater()
-    except Exception as e:
-        assert not isinstance(e, NameError)
-
-    # 4. Test InteractiveIndicesWindow instantiation
-    try:
-        indices_win = InteractiveIndicesWindow(parent, {})
-        assert indices_win is not None
-        indices_win.deleteLater()
-    except Exception as e:
-        assert not isinstance(e, NameError)
-
-    # 5. Test UniversalPlotWindow instantiation
-    try:
-        plot_win = UniversalPlotWindow(parent, {}, "unknown_type")
-        assert plot_win is not None
-        plot_win.deleteLater()
-    except Exception as e:
-        assert not isinstance(e, NameError)
-
-    # 6. Test LiveMonitorWindow and CertusStratGrowthWidget instantiation
-    try:
+    def monitor_and_growth():
         mon_win = LiveMonitorWindow(parent)
-        assert mon_win is not None
         mon_win.deleteLater()
         growth_w = CertusStratGrowthWidget(parent)
-        assert growth_w is not None
         growth_w.set_status_text("Testing", 50)
-        growth_w.deleteLater()
-    except Exception as e:
-        assert not isinstance(e, NameError)
+        return growth_w
 
-    # 7. Test TransmissionVsThicknessWindow instantiation
-    dummy_strategy = {"strategy": {"strategy_id": 900000001, "blocks": [], "layers": []}}
-    try:
-        trans_win = TransmissionVsThicknessWindow(parent, dummy_strategy, {}, {})
-        assert trans_win is not None
-        trans_win.deleteLater()
-    except Exception as e:
-        assert not isinstance(e, NameError)
-
-    # 8. Test InteractiveSpectrumWindow instantiation
-    try:
-        spec_win = InteractiveSpectrumWindow(parent, {})
-        assert spec_win is not None
-        spec_win.deleteLater()
-    except Exception as e:
-        assert not isinstance(e, NameError)
-
-    # 9. Test StrategySpectralPerformanceWindow instantiation
-    try:
-        perf_win = StrategySpectralPerformanceWindow(parent, dummy_strategy, {}, {})
-        assert perf_win is not None
-        perf_win.deleteLater()
-    except Exception as e:
-        assert not isinstance(e, NameError)
-
-    # 10. Test CertusStratStackProgressWidget instantiation and updates
-    try:
+    def stack_progress():
         stack_widget = CertusStratStackProgressWidget(parent)
-        assert stack_widget is not None
         stack_widget.update_progress(1, 10, 10)
-        stack_widget.deleteLater()
-    except Exception as e:
-        assert not isinstance(e, NameError)
+        return stack_widget
+
+    for build in (
+        lambda: InteractiveHeatmapWindow(parent, {}),
+        lambda: StrategiesTableWindow(parent, [], [], False),
+        lambda: InteractiveIndicesWindow(parent, {}),
+        lambda: UniversalPlotWindow(parent, {}, "unknown_type"),
+        monitor_and_growth,
+        lambda: TransmissionVsThicknessWindow(parent, dummy_strategy, {}, {}),
+        lambda: InteractiveSpectrumWindow(parent, {}),
+        lambda: StrategySpectralPerformanceWindow(parent, dummy_strategy, {}, {}),
+        stack_progress,
+    ):
+        _builds_without_a_name_error(build)
 
     parent.deleteLater()
 

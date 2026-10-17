@@ -1,0 +1,6 @@
+{
+  "status": "SOURCE_COMPARISON_FAILED",
+  "error": "Raw byte mismatch: certus/core/certus_frozen_entry.py",
+  "action": "Five validated files already copied; no measurement started. Inspect source semantics and line endings before continuing.",
+  "new_worktree_recreated": false
+}

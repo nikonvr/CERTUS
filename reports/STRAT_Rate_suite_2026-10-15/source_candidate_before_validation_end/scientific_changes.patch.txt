@@ -1,0 +1,180 @@
+diff --git a/certus/core/certus_strat_consensus.py b/certus/core/certus_strat_consensus.py
+index a4a1fb01..58809049 100644
+--- a/certus/core/certus_strat_consensus.py
++++ b/certus/core/certus_strat_consensus.py
+@@ -829,10 +829,11 @@ def _apply_elite_refinement_if_enabled(
+             round_robin_seed=(base_seed, elite_round) if round_robin else None,
+             rate_moves=rate_moves,
+             max_rate_candidates=int(ctx.params.get("elite_rate_max_candidates", 120)),
++            balanced_rate_moves=bool(ctx.params.get("elite_rate_balanced_moves", False)),
+         )
+         if rate_moves:
+             n_rate = sum(1 for c in elite_candidates if str(c.get("origin_details", "")).startswith("ELITE_RATE"))
+-            ctx.logger.info(f"[ELITE-RATE] Round {elite_round}: {n_rate} candidate(s) change the Rate layers of their parent.")
++            ctx.logger.info(f"[ELITE-RATE] Round {elite_round}: {n_rate} candidate(s) change the Rate layers of their parent." + (" [balanced families]" if bool(ctx.params.get("elite_rate_balanced_moves", False)) else ""))
+         if ctx.strategy_id_cursor is not None:
+             ctx.strategy_id_cursor.advance(_next_sid)
+         _attach_slit_profiles(elite_candidates, ctx.p_thick_nominal, ctx.params, ctx.logger)
+@@ -1388,6 +1389,7 @@ def _generate_elite_candidate_strategies(
+     round_robin_seed: tuple[int, ...] | None = None,
+     rate_moves: bool = False,
+     max_rate_candidates: int = 0,
++    balanced_rate_moves: bool = False,
+ ) -> tuple[list[dict[str, Any]], int]:
+     """
+     Build local-neighborhood variants around top-ranked strategies.
+@@ -1489,7 +1491,7 @@ def _generate_elite_candidate_strategies(
+ 
+     if rate_moves and max_rate_candidates > 0:
+         limit = len(out) + int(max_rate_candidates)
+-        for parent_sid, parent_strat, base_blocks, layers in _elite_rate_candidates(parent_results, num_layers):
++        for parent_sid, parent_strat, base_blocks, layers in _elite_rate_candidates(parent_results, num_layers, balanced=balanced_rate_moves):
+             if len(out) >= limit:
+                 break
+             _push_candidate([dict(b) for b in base_blocks], parent_sid, parent_strat, rate_layers=layers, limit=limit)
+diff --git a/certus/core/certus_strat_robustness.py b/certus/core/certus_strat_robustness.py
+index 8b7a5fc1..d8f69723 100644
+--- a/certus/core/certus_strat_robustness.py
++++ b/certus/core/certus_strat_robustness.py
+@@ -96,6 +96,7 @@ from certus.core.certus_strat_robustness_rate import (
+     RATE_RESCUE_SERIAL_BASE,
+     RATE_SWING_MIN_DEFAULT,
+     RATE_VARIANT_TOP_N_DEFAUT,
++    _balanced_elite_rate_moves,
+     _elite_rate_candidates,
+     _elite_rate_moves,
+     _expand_with_rate_variants,
+diff --git a/certus/core/certus_strat_robustness_rate.py b/certus/core/certus_strat_robustness_rate.py
+index a1d40e73..0b3d3711 100644
+--- a/certus/core/certus_strat_robustness_rate.py
++++ b/certus/core/certus_strat_robustness_rate.py
+@@ -1074,13 +1074,36 @@ def _elite_rate_moves(rate_layers: Any, num_layers: int) -> list[list[int]]:
+     return ordered
+ 
+ 
+-def _elite_rate_candidates(parent_results: list[dict[str, Any]], num_layers: int) -> list[tuple[Any, dict[str, Any], list[dict[str, Any]], list[int]]]:
++def _balanced_elite_rate_moves(rate_layers: Any, num_layers: int) -> list[list[int]]:
++    """Reorder the same moves across families, widths and early/middle/late positions before the shared cap."""
++    current = {int(i) for i in rate_layers or [] if RATE_MIN_LAYER <= int(i) < num_layers}
++    families: dict[tuple[str, int], list[list[int]]] = {}
++    for layers in _elite_rate_moves(sorted(current), num_layers):
++        removed = current - set(layers)
++        added = set(layers) - current
++        if removed:
++            family = ("edge", 0) if len(removed) == 1 else ("open", len(removed))
++        elif min(added) - 1 in current and max(added) + 1 in current:
++            family = ("fill", 0)
++        else:
++            family = ("edge", 0) if len(added) == 1 else ("insert", len(added))
++        families.setdefault(family, []).append(layers)
++    spread: list[list[list[int]]] = []
++    for moves in families.values():
++        indices = dict.fromkeys((0, len(moves) // 2, len(moves) - 1, *range(len(moves))))
++        spread.append([moves[i] for i in indices])
++    longest = max((len(moves) for moves in spread), default=0)
++    return [moves[k] for k in range(longest) for moves in spread if k < len(moves)]
++
++
++def _elite_rate_candidates(parent_results: list[dict[str, Any]], num_layers: int, *, balanced: bool = False) -> list[tuple[Any, dict[str, Any], list[dict[str, Any]], list[int]]]:
+     """The moves on the Rate layers of every parent, the parents taking turns: `(parent id, parent, its blocks, the new Rate layers)`."""
++    move_fn = _balanced_elite_rate_moves if balanced else _elite_rate_moves
+     per_parent = []
+     for parent in parent_results:
+         strat = parent.get("strategy", {})
+         blocks = [{"start": int(b["start"]), "end": int(b["end"]), "wavelength": float(b["wavelength"])} for b in strat.get("blocks", [])]
+         if blocks:
+-            per_parent.append([(strat.get("strategy_id", "?"), strat, blocks, layers) for layers in _elite_rate_moves(strat.get("rate_layers"), num_layers)])
++            per_parent.append([(strat.get("strategy_id", "?"), strat, blocks, layers) for layers in move_fn(strat.get("rate_layers"), num_layers)])
+     longest = max((len(moves) for moves in per_parent), default=0)
+     return [moves[k] for k in range(longest) for moves in per_parent if k < len(moves)]
+diff --git a/certus/physics/certus_strat_batch.py b/certus/physics/certus_strat_batch.py
+index 3e1c9212..a1f891c3 100644
+--- a/certus/physics/certus_strat_batch.py
++++ b/certus/physics/certus_strat_batch.py
+@@ -574,7 +574,7 @@ def simulate_stack_robustness_batch(
+ 
+ 
+ @njit(parallel=True, cache=True, fastmath=True, nogil=True, error_model="numpy")
+-def compute_batch_rmse(
++def _compute_batch_rmse_kernel(
+     sim_thick_batch: np.ndarray,
+     wls: np.ndarray,
+     nH_arr: np.ndarray,
+@@ -713,6 +713,37 @@ def compute_batch_rmse(
+     return rmse_arr
+ 
+ 
++@njit(cache=True, nogil=True)
++def compute_batch_rmse(
++    sim_thick_batch: np.ndarray,
++    wls: np.ndarray,
++    nH_arr: np.ndarray,
++    nL_arr: np.ndarray,
++    nSub_arr: np.ndarray,
++    T_target: np.ndarray,
++    n_layers_flattened: np.ndarray,
++    weights: np.ndarray | None = None,
++    index_corridor: float = 0.0,
++    index_seed: int = 0,
++    corridor_wl_min: float = 0.0,
++    corridor_wl_max: float = 0.0,
++) -> np.ndarray:
++    """Canonicalize uniform weights before selecting the historical JIT specialization."""
++    if weights is not None and weights.ndim == 1 and weights.size == len(wls) and weights.size > 0:
++        first_weight = weights[0]
++        total_weight = first_weight * weights.size
++        if np.isfinite(first_weight) and first_weight > 0.0 and np.isfinite(total_weight) and total_weight > 1e-300:
++            if np.all(weights == first_weight):
++                return _compute_batch_rmse_kernel(
++                    sim_thick_batch, wls, nH_arr, nL_arr, nSub_arr, T_target, n_layers_flattened,
++                    None, index_corridor, index_seed, corridor_wl_min, corridor_wl_max,
++                )
++    return _compute_batch_rmse_kernel(
++        sim_thick_batch, wls, nH_arr, nL_arr, nSub_arr, T_target, n_layers_flattened,
++        weights, index_corridor, index_seed, corridor_wl_min, corridor_wl_max,
++    )
++
++
+ @njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
+ def precompute_matrix_cache_kernel(
+     all_wls: np.ndarray, n_H_arr: np.ndarray, n_L_arr: np.ndarray, p_thick_nominal: np.ndarray, num_layers: int
+diff --git a/scripts/probe_blocs_vs_plantage.py b/scripts/probe_blocs_vs_plantage.py
+index af73d2bf..de6e34e2 100644
+--- a/scripts/probe_blocs_vs_plantage.py
++++ b/scripts/probe_blocs_vs_plantage.py
+@@ -98,6 +98,7 @@ import json
+ import os
+ import sys
+ from collections import defaultdict
++from copy import deepcopy
+ from datetime import datetime
+ from pathlib import Path
+ 
+@@ -480,6 +481,10 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
+             "n_blocs": int(st.get("n_blocks", len(blocs))),
+             "crash_rate": float(s.get("crash_rate", 1.0)),
+             "score": float(s.get("robustness_score", 0.0) or 0.0),
++            # Keep base and consensus provenance separate; missing metadata stays unknown.
++            "robustness_score_base": s.get("robustness_score_base"),
++            "robustness_score_consensus": s.get("robustness_score_consensus"),
++            "robustness_consensus_meta": deepcopy(s.get("robustness_consensus_meta")),
+             # 🔴 LA CLE EST `wavelength`, PAS `wl` -- corrige le 2026-08-20, et l'erreur coutait
+             # LE LIVRABLE. `_build_layer_wavelengths_from_strategy` (certus_strat_robustness.py:
+             # 2855) lit `block["wavelength"]` : c'est le nom qui fait foi. Avec `wl`, le champ
+@@ -515,6 +520,7 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
+             #
+             # Liste VIDE = pur optique. C'est une distinction, pas une absence de donnee.
+             "rate_layers": sorted(int(x) for x in (st.get("rate_layers") or [])),
++            "witness_reset_layers": deepcopy(st.get("witness_reset_layers")),
+             # 🔴 LE DRAPEAU QUI MANQUAIT AUX ARTEFACTS. `crash_eliminated` est pose par
+             # `_filter_finite_robustness_scores` sur toute strategie dont le score a ete
+             # REMPLACE par un repli. Sans lui, un artefact ne porte que des scores finis
+@@ -787,7 +793,7 @@ def main() -> int:
+                 # 🔴 LES COUPURES ENTRENT DANS LE NOM. Sans elles, changer TAIL_CUTS ecrase
+                 # l'artefact precedent : les coupures 28-52 ont ete perdues ainsi.
+                 + ("" if not par_swing else "_swing" if par_swing == 1
+-                   else "_chirurgical" + (f"-{hashlib.sha1(_RATE_SETS_ENV.encode()).hexdigest()[:8]}" if _RATE_SETS_ENV else "")
++                   else "_chirurgical" + (f"-{hashlib.sha256(_RATE_SETS_ENV.encode()).hexdigest()[:8]}" if _RATE_SETS_ENV else "")
+                    if par_swing == 4
+                    else f"_tail{min(TAIL_CUTS)}-{max(TAIL_CUTS)}"
+                         + ("k" if par_swing == 3 else "s" if par_swing == 5 else ""))

@@ -1,0 +1,13 @@
+{
+  "status": "PREPARED_NOT_EXECUTED",
+  "prepared_utc": "2026-10-15T12:05:11.041130+00:00",
+  "scripts": {
+    "rate_fixed_replay_R3_h02.py": "4156de715df987cf34f6143e9439f401a93a0377bc1d3049d7f0ad2b550b770c",
+    "rate_R3_h02_replay_guard.py": "274dc0f98cc4d1d61d9d744645b85ef7c26f6654ec80c8d4a458587443c48df7",
+    "verify_rate_R3_h02_replay.py": "25e70000f67a2b937e0da0a739b76d44b2f1ff8729d8381c3c1689ebd67a3713"
+  },
+  "new_verifier": "Deadline before/at/after cutoff and overlong/naive CLI, fixed4..8 bounds, duplicates, altered complete anchors, exact callback ASTs, real contracts and unused-slot guard; all deferred until native work ends",
+  "scientific_sources_changed": false,
+  "tests_started": false,
+  "measurements_started": false
+}

@@ -1,0 +1,6 @@
+{
+  "status": "failed",
+  "stage": "structural audit only",
+  "cause": "Compared full generator rows with observer plan_snapshot subset; projection must use exact observer keys",
+  "measurement_affected": false
+}

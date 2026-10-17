@@ -1,0 +1,46 @@
+{
+  "status": "PREPARATION_NO_R5_MEASUREMENT",
+  "captured_utc": "2026-10-15T18:43:17.1730834Z",
+  "oracle_before": "1143 passed in19.90s; initial sandbox preference-write error retained",
+  "native_h03_gain_fresh_mean_pct": 5.213003799365705,
+  "native_h03_wins": 3,
+  "files": [
+    {
+      "path": "certus\\core\\certus_strat_consensus.py",
+      "sha256": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+      "snapshot": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R5_integration\\before\\certus__core__certus_strat_consensus.py.txt"
+    },
+    {
+      "path": "certus\\core\\certus_strat_robustness.py",
+      "sha256": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+      "snapshot": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R5_integration\\before\\certus__core__certus_strat_robustness.py.txt"
+    },
+    {
+      "path": "certus\\core\\certus_strat_robustness_rate.py",
+      "sha256": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+      "snapshot": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R5_integration\\before\\certus__core__certus_strat_robustness_rate.py.txt"
+    },
+    {
+      "path": "certus\\core\\certus_strat_leviers.py",
+      "sha256": "6feb8544248db67c998e51f719bddac6a02ba49344f017a7065edaab729ce4d3",
+      "snapshot": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R5_integration\\before\\certus__core__certus_strat_leviers.py.txt"
+    },
+    {
+      "path": "certus\\workers\\certus_strat_workers.py",
+      "sha256": "7c242faf6e1030d06f6e27e91b66ced270e45ec4abdb3c244f4d0b80c1819a3a",
+      "snapshot": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R5_integration\\before\\certus__workers__certus_strat_workers.py.txt"
+    },
+    {
+      "path": "certus\\workers\\certus_strat_workers_pipeline.py",
+      "sha256": "d56b70c750ff65ba323ebe6bff33e460d5da28cd334d62f026549a0db6b48fd3",
+      "snapshot": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R5_integration\\before\\certus__workers__certus_strat_workers_pipeline.py.txt"
+    },
+    {
+      "path": "certus\\physics\\certus_strat_batch.py",
+      "sha256": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+      "snapshot": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R5_integration\\before\\certus__physics__certus_strat_batch.py.txt"
+    }
+  ],
+  "historical_measurement_worktrees": "unchanged and frozen",
+  "default_activation": false
+}

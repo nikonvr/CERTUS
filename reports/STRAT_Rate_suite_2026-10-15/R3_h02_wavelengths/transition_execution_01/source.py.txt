@@ -1,0 +1,136 @@
+"""Read saved h02 traces, joining accepted plans by full metadata and scope/round."""
+
+from __future__ import annotations
+
+import collections
+import hashlib
+import json
+from datetime import UTC, datetime
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+PROGRAM = ROOT / "reports/STRAT_Rate_suite_2026-10-15"
+EXPERIMENT = PROGRAM / "R3_h02_wavelengths"
+
+
+def complete_plan(plan):
+    blocks = plan.get("blocks", plan.get("blocs", []))
+    slit = plan.get("monochromator_resolution_nm", plan.get("resolution_nm"))
+    return {"blocks": [{"start": int(b["start"]), "end": int(b["end"]), "wavelength": float(b["wavelength"])}
+                       for b in blocks], "rate_layers": sorted(int(i) for i in (plan.get("rate_layers") or [])),
+            "monochromator_resolution_nm": float(slit) if slit is not None else None,
+            "witness_reset_layers": plan.get("witness_reset_layers")}
+
+
+def signature(plan):
+    return json.dumps(complete_plan(plan), sort_keys=True)
+
+
+def internal_window(plan):
+    rate = set(plan.get("rate_layers") or [])
+    if any(i in rate for i in range(34, 37)) or 33 not in rate or 37 not in rate:
+        return None
+    return tuple(next(b["wavelength"] for b in plan["blocks"] if b["start"] <= i < b["end"])
+                 for i in range(34, 37))
+
+
+def context_key(event):
+    return tuple(event["context"].get(k) for k in ("elite_scope", "round"))
+
+
+def analyze(arm):
+    saved = EXPERIMENT / arm
+    generated = json.loads((saved / "generated_candidates.json").read_text(encoding="utf-8"))
+    trace = json.loads((saved / "pipeline_trace.json").read_text(encoding="utf-8"))
+    inputs = [e for e in trace["events"] if e["kind"] == "generation_inputs"]
+    outputs = [e for e in trace["events"] if e["kind"] == "generation_outputs"]
+    ledger = collections.defaultdict(dict)
+    targets = {}
+    geometry_histogram = collections.Counter()
+    inherited = collections.Counter()
+    for inp, out, joint in zip(inputs, outputs, generated["calls"], strict=True):
+        assert inp["context"] == out["context"]
+        ctx = context_key(inp)
+        parents = {r["strategy"]["strategy_id"]: r["strategy"] for r in inp["parents"]}
+        for plan in [*[r["strategy"] for r in inp["parents"]], *out["candidates"]]:
+            ledger[(*ctx, plan["strategy_id"])][signature(plan)] = plan
+        for plan in joint["offered"]:
+            wavelengths = internal_window(plan)
+            if wavelengths is None:
+                continue
+            geometry_histogram[str(wavelengths)] += 1
+            parent = parents.get(plan.get("parent_strategy_id"))
+            parent_wavelengths = internal_window(parent) if parent else None
+            inherited["parent_unknown" if parent is None else "geometry_inherited" if parent_wavelengths else "geometry_created"] += 1
+            if wavelengths != (688, 688, 688):
+                continue
+            sig = signature(plan)
+            target = targets.setdefault(sig, {"plan": complete_plan(plan), "offers": [], "physical_calls": [],
+                                              "consensus_selected": [], "consensus_applied": [],
+                                              "parents_after": [], "exported": []})
+            target["offers"].append({"context": inp["context"], "id": plan["strategy_id"],
+                                     "parent_id": plan.get("parent_strategy_id"),
+                                     "parent_plan": complete_plan(parent) if parent else None,
+                                     "parent_window_wavelengths": parent_wavelengths})
+    target_ids = {offer["id"] for target in targets.values() for offer in target["offers"]}
+    unresolved = []
+    for event in trace["events"]:
+        kind = event["kind"]
+        if kind == "physical_task_result":
+            choices = ledger.get((*context_key(event), event["id"]), {})
+            if len(choices) == 1:
+                sig = next(iter(choices))
+                if sig in targets:
+                    targets[sig]["physical_calls"].append({"event": event["event"], "context": event["context"],
+                        "id": event["id"], "seed": event["seed"], "num_runs": event["num_runs"],
+                        "noise_levels": event["noise_levels"], "result": event["result"]})
+            elif event["id"] in target_ids:
+                unresolved.append({"event": event["event"], "context": event["context"], "id": event["id"],
+                                   "candidate_plans_for_key": len(choices), "num_runs": event["num_runs"], "seed": event["seed"]})
+        elif kind in ("consensus_selection", "consensus_applied", "parents"):
+            rows = event.get("selected", []) if kind == "consensus_selection" else event.get("rows", [])
+            field = {"consensus_selection": "consensus_selected", "consensus_applied": "consensus_applied", "parents": "parents_after"}[kind]
+            for row in rows:
+                sig = signature(row["strategy"])
+                if sig in targets:
+                    targets[sig][field].append({"event": event["event"], "context": event["context"], "row": row})
+    state = json.loads((saved / "etat.json").read_text(encoding="utf-8"))
+    artifact = json.loads(Path(state["artifact"]).read_text(encoding="utf-8"))
+    for row in artifact["strategies"]:
+        sig = signature(row)
+        if sig in targets:
+            targets[sig]["exported"].append(row)
+    report = {"arm": arm, "unique_target_complete_plans": len(targets),
+              "target_joint_offers": sum(len(t["offers"]) for t in targets.values()),
+              "internal_window_joint_wavelength_histogram": dict(geometry_histogram),
+              "internal_window_geometry_provenance": dict(inherited), "target_plans": list(targets.values()),
+              "unresolved_id_only_task_calls": unresolved,
+              "trace_sha256": hashlib.sha256((saved / "pipeline_trace.json").read_bytes()).hexdigest(),
+              "generated_sha256": hashlib.sha256((saved / "generated_candidates.json").read_bytes()).hexdigest()}
+    print(json.dumps({"arm": arm, "target_offers": report["target_joint_offers"], "unique_complete_plans": len(targets),
+                      "unresolved_calls": len(unresolved), "targets": [{"offers": len(t["offers"]),
+                      "depth_seed_calls": dict(collections.Counter(str((c["num_runs"], c["seed"])) for c in t["physical_calls"])),
+                      "selected": len(t["consensus_selected"]), "applied": len(t["consensus_applied"]),
+                      "later_parent": len(t["parents_after"]),
+                      "exported_scores": [r["score"] for r in t["exported"]]} for t in targets.values()]}, ensure_ascii=False), flush=True)
+    return report
+
+
+def main():
+    if (PROGRAM / "measurement.running").exists():
+        raise RuntimeError("Wait for the physical replay to finish before analyzing traces")
+    report = {"status": "GO", "analyzed_utc": datetime.now(UTC).isoformat(),
+              "script_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+              "arms": [analyze(arm) for arm in ("control", "variant")],
+              "limits": ["A target window is a diagnostic probe, never an injected native plan.",
+                         "Only unique full-plan/scope/round task joins are attributed; unresolved ID-only calls are retained.",
+                         "Absence of a later physical call does not prove its precise rejection cause.",
+                         "Consensus cache reuse and fallback rules must be read separately; no fresh-evaluation claim from a cache hit."]}
+    with (EXPERIMENT / "transition_diagnostic.json").open("x", encoding="utf-8") as stream:
+        json.dump(report, stream, ensure_ascii=False, indent=2)
+    with (EXPERIMENT / "transition_diagnostic_executed.py.txt").open("xb") as stream:
+        stream.write(Path(__file__).read_bytes())
+
+
+if __name__ == "__main__":
+    main()

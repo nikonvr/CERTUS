@@ -1,0 +1,17 @@
+{
+  "checked_utc": "2026-10-14T03:39:14.307686+00:00",
+  "status": "running",
+  "pid": 23280,
+  "current_pid": 41632,
+  "current": "r75x1.5_deep_s101_sans",
+  "completed": 3,
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "guard_sha256": "52aee00f5ff49e0c93dd5fcacab418354cb4774952c92d428334e1f17e6c40e6",
+  "provenance_scope": "HEAD da1af082 and tracked diff clean; three existing untracked scientific artifacts preserved",
+  "health": "health_20261014_0530.json"
+}

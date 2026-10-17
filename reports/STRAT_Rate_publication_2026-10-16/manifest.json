@@ -1,0 +1,255 @@
+{
+  "status": "LOSSLESS_ARCHIVES_VERIFIED",
+  "recorded_utc": "2026-10-16T08:41:18.315058+00:00",
+  "user_request": "push et commit all",
+  "raw_evidence_preserved_locally": true,
+  "archives": [
+    {
+      "raw_path": "reports/STRAT_Rate_native_joint_rate240_round6_2026-10-13/joint_480_rate240_rounds6_s101/generated_candidates.json",
+      "raw_bytes": 92432799,
+      "raw_sha256": "78eacaa6451b5d7fac7a78070e82acf10dd02622339e312b8af0140a798227ec",
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/3e22bd3060f71734.gz",
+      "gzip_bytes": 842744,
+      "gzip_sha256": "e466987ff44cd3a883f6a5caa6af7ca8e0b06b93dc724c1375d81cf6a2d6e9d3",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_Rate_native_prefix_2026-10-14/prefix_720_joint_480_rate240_rounds6_s101/generated_candidates.json",
+      "raw_bytes": 200091261,
+      "raw_sha256": "1dd162a35eee96e850cdfac4cc9cdc9f86339ace2d9ed99009a848639fb23baf",
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/34953e0ce0d5a50f.gz",
+      "gzip_bytes": 1739014,
+      "gzip_sha256": "e67d2fcdb49e7b122e546567904ab7ae3bbdeeade6f4901ea498db72a13aa3fa",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_Rate_suite_2026-10-15/R2_native_base/generated_candidates.json",
+      "raw_bytes": 92975773,
+      "raw_sha256": "64057fbdce382d5f1c1ac97b4b0f7048b4df7df657a1d5418a7b03010001c174",
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/179c1028933fbb92.gz",
+      "gzip_bytes": 841048,
+      "gzip_sha256": "0d7225ce829773f439dc90ed52df0659bc20fe4483c89ae67b04a1413b15ed18",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_Rate_suite_2026-10-15/R2_native_base/pipeline_trace.json",
+      "raw_bytes": 466240339,
+      "raw_sha256": "47aedd4781fdc98cd0e19310f01e1e281c5fe8159e88597471603fc822764656",
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/97130423f453d90d.gz",
+      "gzip_bytes": 8132221,
+      "gzip_sha256": "321bfc61dfc16225abc4333737a8461cb6330a3aa4745fbcd2469cd14ae5789f",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_Rate_suite_2026-10-15/R3_h01_widths/control/generated_candidates.json",
+      "raw_bytes": 92432974,
+      "raw_sha256": "4ff521bd8b3ea1f05e486f0de2ae1f066e7057902510ec50c6c320050430defa",
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/fb500a8f1f02efde.gz",
+      "gzip_bytes": 842896,
+      "gzip_sha256": "9479c2770f9d79503415311b4b7fc91839374eba7fa76ee7f9e488c46d172275",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_Rate_suite_2026-10-15/R3_h01_widths/control/pipeline_trace.json",
+      "raw_bytes": 466486944,
+      "raw_sha256": "1de7522f774c80428417864d8216f0d7314e9fe9f714a46e2e2598e54fa17be8",
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/0518444a664eb332.gz",
+      "gzip_bytes": 8114596,
+      "gzip_sha256": "6dcd5220b21f9db1992931586b4710e1fdeedc3ea86c4b1b0131ef5e9669507d",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_Rate_suite_2026-10-15/R3_h01_widths/variant/generated_candidates.json",
+      "raw_bytes": 99133815,
+      "raw_sha256": "8a1980e72c0d9cd105f5be6e07cdeb165de1bb5021ab16f729587f4e682456ce",
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/308590dc8f314267.gz",
+      "gzip_bytes": 895499,
+      "gzip_sha256": "f5034633671bcaf4e2edf0b1904bf9c850778c011e2cb544b2c7cec315c5fd0d",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_Rate_suite_2026-10-15/R3_h01_widths/variant/pipeline_trace.json",
+      "raw_bytes": 466764989,
+      "raw_sha256": "62de31feed033ded59736433764cf26be4baac6faee4739e12fe299f981c941d",
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/1314f186e870bd5b.gz",
+      "gzip_bytes": 8130953,
+      "gzip_sha256": "cecedcdfa5b7f84f198b28435d48c75a07bdc5f9203c26c0a41afe28b456c5e5",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_Rate_suite_2026-10-15/R3_h02_wavelengths/control/generated_candidates.json",
+      "raw_bytes": 99133815,
+      "raw_sha256": "ee099da7dc3ea3712e621e74eaaf50d079f49db7a3704df36e9ae8a5356fe79b",
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/10289c3efe517211.gz",
+      "gzip_bytes": 895510,
+      "gzip_sha256": "7b053b8c38fec3ebceb26056596eed13fcc754714f5506b54fa0fd956e01add0",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_Rate_suite_2026-10-15/R3_h02_wavelengths/control/pipeline_trace.json",
+      "raw_bytes": 466764989,
+      "raw_sha256": "f106aaf3ec171fa24262586d1ed398f5393309fc1ffbc614401d5e96af410d08",
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/f0bffd3f088fd2f9.gz",
+      "gzip_bytes": 8130537,
+      "gzip_sha256": "83a561183e395657b9743b5b9db4ab02453ae18905301487aacb900f800145bf",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_Rate_suite_2026-10-15/R3_h02_wavelengths/variant/generated_candidates.json",
+      "raw_bytes": 100600183,
+      "raw_sha256": "43fc546ebfa7ec2ede32f5c4be6ec534b558738758d77c5a569470cb8af6e2a0",
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/c8d511d8bb7c15cc.gz",
+      "gzip_bytes": 872670,
+      "gzip_sha256": "97d57c565466fa70f131badaea2a9da417a7ff5de8f39b26e2b3761165089672",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_Rate_suite_2026-10-15/R3_h02_wavelengths/variant/pipeline_trace.json",
+      "raw_bytes": 472133820,
+      "raw_sha256": "bc71989a24c0b60b822ce94c0779b24103dc3756fe65c343090e2e38d40a369d",
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/feb366f9b9d39f98.gz",
+      "gzip_bytes": 8296087,
+      "gzip_sha256": "c9e6764a84b1f2adda59c83ba36e653d6b19557d5000fce3f790829f9f030efe",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_Rate_suite_2026-10-15/R3_h03_native_postrefinement/control/generated_candidates.json",
+      "raw_bytes": 95816007,
+      "raw_sha256": "11a7f987ed96fc38a56e0b78184c6f7b67fbe3d657dabce99943f0a6a1e573f8",
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/c088cb228a0b47f0.gz",
+      "gzip_bytes": 836339,
+      "gzip_sha256": "68eaa42dd1957589f40ddf09ce68719cb941354a31ade1fcbe7e69b11b274dea",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_Rate_suite_2026-10-15/R3_h03_native_postrefinement/control/pipeline_trace.json",
+      "raw_bytes": 451478251,
+      "raw_sha256": "9cdd3b931e7283f33d8eb200a4258b2a9ab118cef59ce851b924fb0de00ea5ca",
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/aec00a094e15f3eb.gz",
+      "gzip_bytes": 8105675,
+      "gzip_sha256": "78442e09cfc7eff74fe66fff4e9a82d24d9178998f8a27ceb5feb32524dfee6c",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_Rate_suite_2026-10-15/R3_h03_native_postrefinement/variant/generated_candidates.json",
+      "raw_bytes": 95816007,
+      "raw_sha256": "11a7f987ed96fc38a56e0b78184c6f7b67fbe3d657dabce99943f0a6a1e573f8",
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/f8962b0afed08af0.gz",
+      "gzip_bytes": 836339,
+      "gzip_sha256": "68eaa42dd1957589f40ddf09ce68719cb941354a31ade1fcbe7e69b11b274dea",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_Rate_suite_2026-10-15/R3_h03_native_postrefinement/variant/pipeline_trace.json",
+      "raw_bytes": 451478251,
+      "raw_sha256": "67438df2670bea5e02ed4e9973216a9d5f7b7e65aa644bfdacbcb8ef7f289453",
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/6ac1b2d99f3e62ab.gz",
+      "gzip_bytes": 8104307,
+      "gzip_sha256": "6f8f1640c4b079f5eba60c7150076ebf4ad20008f3543129033f185dec6d4e9a",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_Rate_suite_2026-10-15/R5_integration/native/measurement/pipeline_trace.json",
+      "raw_bytes": 452293612,
+      "raw_sha256": "1211275f9465ee2343edd7a765d412c2cb613b43c4602ad5cfb97b221bbb2a96",
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/c11f1ba301b12594.gz",
+      "gzip_bytes": 8140370,
+      "gzip_sha256": "56fafadc08077fbdf0273896cfe1badc71b856361ffdea625b42c2a270da75a1",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c01_s77/control/measurement/pipeline_trace.json",
+      "raw_bytes": 444023398,
+      "raw_sha256": "e7fd0504d2d3a799c463602dc8197244aafdc25e2cbb18923eb5a95dd683c0a9",
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/4b495f6c808f6743.gz",
+      "gzip_bytes": 8054462,
+      "gzip_sha256": "062202922e6322ac6f0ee7230366759f19ce3a57a6ebce6f281d69e253210ae5",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c01_s77/variant/measurement/pipeline_trace.json",
+      "raw_bytes": 448354716,
+      "raw_sha256": "f097fa2a3e124d22324e8df440181fd2192d6b0f4b04ddb26b479f9cd3a8ee09",
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/f519a7e79384889c.gz",
+      "gzip_bytes": 8202569,
+      "gzip_sha256": "76e413d9ddd42bde05967c9f9e9ff5f36cd665ae320abdc3a733b9214238180f",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c02_s202/control/measurement/pipeline_trace.json",
+      "raw_bytes": 435263206,
+      "raw_sha256": "360ea4cedcb7df8a90250c26714ed984b8d92506580a678ea37a52cc4cfa5cbd",
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/4aace291122bd7cf.gz",
+      "gzip_bytes": 7879521,
+      "gzip_sha256": "f978f85d7b8c3e7953b9c72393ec90f0c38407d42f00d0a4c20d8b8c2d60326f",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c02_s202/variant/measurement/pipeline_trace.json",
+      "raw_bytes": 438882716,
+      "raw_sha256": "fe3dd9d5695fd835663fa87aade80d6beb7b0cc9d0c6c6f169c20a2f47ed932b",
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/f0fe60d14062e867.gz",
+      "gzip_bytes": 8007368,
+      "gzip_sha256": "7b5ccb41702bf5c70652492b9e520100df4d1d55097de93ce65acadd856b9430",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c03_s404/control/measurement/pipeline_trace.json",
+      "raw_bytes": 409052895,
+      "raw_sha256": "0fa37ae219a5a9624c493b71a7e36fd12fdff799f59eefa08c839a6e19a49151",
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/4dad474748567d24.gz",
+      "gzip_bytes": 7248892,
+      "gzip_sha256": "fe7b0dd640942acfa18b77795f36a8cd6dcc30256984bb1ef7134f25c27245c2",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c03_s404/variant/measurement/pipeline_trace.json",
+      "raw_bytes": 412779985,
+      "raw_sha256": "1c640bdc63e4983747ec95770d9aae3125a5a2118bb12719395a6308457d443a",
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/385be38e1febf292.gz",
+      "gzip_bytes": 7375580,
+      "gzip_sha256": "78ba3464ebb48df358d57d6726af269ca7544ad32645b7ca6a7041fe7c05bd55",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_Rate_suite_2026-10-15/R6_other_components/c04_48c_s77/control/measurement/pipeline_trace.json",
+      "raw_bytes": 194027949,
+      "raw_sha256": "b19d1dbb7987bc9f0f62d7fed7f04c128d81f6c9804bd72c2a6bbacfa00e60a5",
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/dffa721b4091738a.gz",
+      "gzip_bytes": 3750677,
+      "gzip_sha256": "cab8237bc09d5fb7c314aa1da824c6f5955fd02896156453385a8d6f85abe891",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_Rate_suite_2026-10-15/R6_other_components/c04_48c_s77/variant/measurement/pipeline_trace.json",
+      "raw_bytes": 194055154,
+      "raw_sha256": "97bc9421987da5456790ab608203f5689f67bf272cabc1bed871b8166ac7a312",
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/b32a56c7edf33698.gz",
+      "gzip_bytes": 3751217,
+      "gzip_sha256": "c8c9172516a4d60823cb6dbec51b5f0bb00144bfdf0eac153c3a3ff138bca456",
+      "decompressed_sha256_verified": true
+    }
+  ],
+  "raw_bytes": 7638513848,
+  "gzip_bytes": 128027091,
+  "script_sha256": "d023946164f6a5b1a7c8bae9ac34d910b17ce15bb6ee48c739c4e2e5623d5a18",
+  "compiled_cache_policy": "Keep all local .nbc/.nbi files; exclude generated machine-code caches from Git.",
+  "initial_untracked_file_count": 9826,
+  "initial_untracked_bytes": 51126636097,
+  "initial_extensions": {
+    ".py": 165,
+    ".md": 82,
+    ".txt": 871,
+    ".json": 7348,
+    ".npz": 2,
+    ".nbc": 829,
+    ".nbi": 460,
+    ".ll": 2,
+    ".ini": 25,
+    "": 2,
+    ".patch": 3,
+    ".tmp": 7,
+    ".ps1": 6,
+    ".previous": 24
+  }
+}

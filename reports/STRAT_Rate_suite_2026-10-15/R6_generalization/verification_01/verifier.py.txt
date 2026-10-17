@@ -1,0 +1,95 @@
+"""Verify finite R6 control/variant routing and isolation; no physical simulation."""
+
+from __future__ import annotations
+
+import ast
+import json
+import os
+from datetime import UTC, datetime
+from pathlib import Path
+from unittest.mock import patch
+
+import rate_R6_guard as guard
+
+
+def main():
+    protocol = guard.read(guard.PROTOCOL)
+    reference = guard.read(guard.REFERENCE)
+    deadline = guard.check_deadline()
+    directory = guard.EXPERIMENT / "verification_01"
+    directory.mkdir(exist_ok=False)
+    target = directory / "verification.json"
+    source = (guard.ROOT / "scratch/rate_R6_native.py").read_text(encoding="utf-8")
+    tree = ast.parse(source)
+    assert not any(isinstance(n, ast.Name) and n.id == "patch" for n in ast.walk(tree))
+    checks = ["No scientific replacement added to copied production adapter"]
+    # Execute only the two literal configuration assignments, with no simulation or guard reservation.
+    assignments = {n.targets[0].id: n for n in ast.walk(tree) if isinstance(n, ast.Assign) and isinstance(n.targets[0], ast.Name)}
+    for case, seed in guard.CASES.items():
+        configurations = []
+        for arm in ("control", "variant"):
+            from types import SimpleNamespace
+
+            environment = {"seed": seed, "protocol": protocol, "args": SimpleNamespace(case=case, arm=arm), "str": str}
+            exec(compile(ast.Module(body=[assignments["native"], assignments["tag"]], type_ignores=[]), "<R6 configuration only>", "exec"), environment)
+            config = environment["native"]
+            assert config["arguments"] == ["r75x0.5", "deep", "0", "0", "2", "0", str(seed), "0"]
+            configurations.append(config["overrides"])
+        assert configurations[0].replace("rate_post_refinement=false", "rate_post_refinement=true") == configurations[1]
+        checks.append("Single production factor and exact argument order verified: " + case)
+    result = {"verdict": "GO", "script_sha256": protocol["script_sha256"], "checks": checks,
+              "physical_evaluations": 0, "verifier_sha256": guard.sha(Path(__file__))}
+    target.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+    try:
+        phase = "R6_c01_s77_control"
+        output = guard.SLOTS[phase]
+        proof = guard.check_ready(phase, output, reference["source_sha256"], requested_deadline=deadline)
+        checks.append("Actual complete first R6 control guard passes; no reservation")
+        for wrong_phase, wrong_path in (("R5_native", output), (phase, output / "wrong")):
+            try:
+                guard.check_ready(wrong_phase, wrong_path, reference["source_sha256"], requested_deadline=deadline)
+            except RuntimeError:
+                checks.append("Unknown slot/path refused")
+            else:
+                raise AssertionError("Foreign slot accepted")
+        for premature in ("R6_c01_s77_variant", "R6_c02_s202_control"):
+            try:
+                guard.check_ready(premature, guard.SLOTS[premature], reference["source_sha256"], requested_deadline=deadline)
+            except (RuntimeError, FileNotFoundError):
+                checks.append("Premature variant/next case refused: " + premature)
+            else:
+                raise AssertionError("Premature measurement accepted")
+        real = guard.subprocess.check_output
+
+        def inventory(*args, **kwargs):
+            if "Get-CimInstance" in " ".join(args[0]):
+                return json.dumps([{"ProcessId": os.getpid()+1, "CommandLine": "python -m pytest"}])
+            return real(*args, **kwargs)
+
+        with patch.object(guard.subprocess, "check_output", inventory):
+            try:
+                guard.check_ready(phase, output, reference["source_sha256"], requested_deadline=deadline)
+            except RuntimeError as error:
+                assert "Another Python" in str(error)
+                checks.append("Concurrent test refused in synthetic inventory; no reservation")
+            else:
+                raise AssertionError("Concurrent test accepted")
+        try:
+            guard.check_deadline(deadline, now=datetime(2026, 10, 16, 6, tzinfo=UTC))
+        except RuntimeError:
+            checks.append("Exact morning cutoff refused")
+        else:
+            raise AssertionError("Cutoff accepted")
+        assert not list((guard.PROGRAM / "claims").glob("R6_*.json"))
+        result["guard_proof_not_reserved"] = proof
+    except BaseException:
+        result["verdict"] = "FAILED"
+        raise
+    finally:
+        target.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+        (directory / "verifier.py.txt").write_bytes(Path(__file__).read_bytes())
+    print(json.dumps({"verdict": result["verdict"], "checks": len(checks), "physical_evaluations": 0}))
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,133 @@
+"""Close the bounded program from immutable evidence, with no physical evaluations."""
+
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+from datetime import UTC, datetime
+from pathlib import Path
+
+from rate_R4_planner_resume_v3 import save
+from rate_R5_guard import PROGRAM, REFERENCE, ROOT, check_context, check_deadline, is_language_server, read, sha
+
+
+def main():
+    check_deadline()
+    if (PROGRAM / "measurement.running").exists() or list((ROOT / "reports").rglob(".running")):
+        raise RuntimeError("Preserve an engaged child instead of closing it")
+    shell = Path(os.environ["SYSTEMROOT"]) / "System32/WindowsPowerShell/v1.0/powershell.exe"
+    raw = subprocess.check_output([str(shell), "-NoProfile", "-Command",
+        "@(Get-CimInstance Win32_Process | Where-Object { $_.Name -match '^python' } | Select-Object ProcessId,CommandLine) | ConvertTo-Json -Compress"], encoding="utf-8").strip()
+    processes = json.loads(raw) if raw else []
+    if isinstance(processes, dict):
+        processes = [processes]
+    if any(p["ProcessId"] != os.getpid() and not is_language_server(p) for p in processes):
+        raise RuntimeError("Another Python process remains")
+    reference = read(REFERENCE)
+    sources = check_context(Path(reference["worktree"]), reference)
+    initial, other = PROGRAM / "R6_generalization", PROGRAM / "R6_other_components"
+    cases = {"c01_s77": initial, "c02_s202": initial, "c03_s404": initial, "c04_48c_s77": other}
+    records, evidence = {}, {}
+    for case, parent in cases.items():
+        directory = parent / case
+        native, fresh = read(directory / "controller.json"), read(directory / "fresh_controller_v2.json")
+        audit, pair = read(directory / "fresh_audit.json"), read(directory / "pair_audit.json")
+        if len(native["runs"]) != 2 or len(fresh["runs"]) != 3 or any(r["exit_code"] != 0 for r in (*native["runs"], *fresh["runs"])):
+            raise RuntimeError("Incomplete actual exit provenance")
+        if audit["verdict"] != "GO" or pair["verdict"] != "GO":
+            raise RuntimeError("Missing final provenance audit")
+        protocol = read(parent / "native_protocol.json")
+        for arm in ("control", "variant"):
+            state = read(directory / arm / "measurement/etat.json")
+            if state["status"] != "complete" or state["source_sha256"] != sources or sha(Path(state["artifact"])) != state["native_artifact_sha256"]:
+                raise RuntimeError("Actual native source or artifact changed")
+            for name, digest in protocol["script_sha256"].items():
+                if sha(ROOT / "scratch" / name) != digest or sha(directory / arm / "measurement" / ("source_" + name + ".txt")) != digest:
+                    raise RuntimeError("Native executed-source snapshot changed")
+        records[case] = {"scientific_pass": audit["scientific_case_pass"], "own": audit["comparisons"]["control_complete"],
+                         "fresh_calls300": audit["actual_calls"], "post_proposals": pair["post_proposals"],
+                         "post_actual_calls": pair["actual_post_tasks"], "native_rows": {a: v["rows"] for a, v in pair["arms"].items()}}
+        for name in ("controller.json", "fresh_controller_v2.json", "pair_audit.json", "fresh_audit.json", "frozen_finalists.json", "confirmation_protocol_v2.json"):
+            path = directory / name
+            evidence[path.relative_to(ROOT).as_posix()] = sha(path)
+    if not all(records[c]["scientific_pass"] for c in list(cases)[:3]) or records["c04_48c_s77"]["scientific_pass"]:
+        raise RuntimeError("The documented early-stop decision no longer matches evidence")
+    final_audit = read(other / "c04_48c_s77/fresh_audit.json")
+    if not final_audit["stop_initial_program"] or not final_audit["no_additional_fresh_groups"]:
+        raise RuntimeError("Missing predeclared stop instruction")
+    for case in ("c05_r75x15_s42", "c06_r75x2_s77"):
+        if (other / case / "controller.json").exists() or list((PROGRAM / "claims").glob("R6_" + case + "_*.json")):
+            raise RuntimeError("An unapproved continuation was started after the stopping case")
+    claims = sorted(p.name for p in (PROGRAM / "claims").glob("R6_*.json"))
+    if len(claims) != 20:
+        raise RuntimeError("Expected8 native and12 fresh claims, without a repeated attempt")
+    state48 = read(other / "c04_48c_s77/variant/measurement/etat.json")
+    post = read(Path(state48["artifact"]))["rate_post_refinement"]
+    reasons = sorted({r["reason"] for stage in post["stages"] for r in stage["records"] if r["status"] == "not_applicable"})
+    output = PROGRAM / "final_20261016"
+    output.mkdir(exist_ok=False)
+    summary = {"status": "BOUNDED_PROGRAM_STOPPED_EARLY", "recorded_utc": datetime.now(UTC).isoformat(),
+               "reason": "48c same full finalist plan and0% fresh gain; apply the predeclared conditional early stop",
+               "scientific_sources_unchanged_since_R5_validation": sources, "package_sources_verified": len(reference["package_sha256"]),
+               "R6_cases": records, "R6_native_pairs_consumed": 4, "R6_max_pairs": 6, "R6_fresh_actual_calls300": sum(r["fresh_calls300"] for r in records.values()),
+               "unused_cases": ["c05_r75x15_s42", "c06_r75x2_s77"], "unused_reserved_seed_count": 24,
+               "48c_post_base_num_runs": post["base_num_runs"], "48c_post_consensus_num_runs": post["consensus_num_runs"],
+               "48c_no_proposal_reasons": reasons, "claims": claims, "evidence_sha256": evidence,
+               "default_options": {"elite_rate_joint_candidates": 0, "rate_post_refinement": False},
+               "no_commit_push_publication_or_new_scientific_default": True, "no_running_measurement": True,
+               "R7": "Pending quantitative machine data, not fabricated", "physical_evaluations_executed_by_finalizer": 0,
+               "finalizer_sha256": sha(Path(__file__))}
+    save(output / "audit_final.json", summary, immutable=True)
+    (output / "finalizer.py.txt").write_bytes(Path(__file__).read_bytes())
+    report = """# CERTUS — bilan du programme borné,16octobre2026
+
+Le programme est clos par l’arrêt précoceR6 fixé avant les mesures48c. Le correctifRMSE est validé ; le raffinement Rate améliore les contrôles propres de trois recherches r75x0.5, mais ne démontre aucun gain sur48c. Les deux autres paires conditionnelles ne sont pas lancées. Quatre pairesR6 sur six possibles sont consommées ; les quotas ne sont pas présentés comme épuisés.
+
+## Résultats retenus et limites
+
+| Phase/cas | Résultat mesuré |
+|---|---|
+| RMSE | Poids constants positifs dirigés vers le calcul non pondéré ;4régressions rouge/vert,490tableaux non concernés identiques au bit,392cas uniformes alignés. Validation généraleGO et C1froid8008tableaux identiques au bit dans leur corpus. |
+| R3h01/h02 | Aucun gain des largeurs seules ni deλfine seule ; preuves et tentatives conservées. Trois pairesR3 consommées, aucuneh04. |
+| R4 et h03 | Plan raffiné0,343112379987nm, contre meilleur natif historique0,360060886335nm. Procédureh03 confirmée3/3, gain moyen5,2130% contre son contrôle propre. |
+| R5 | Intégration inactive par défaut ; oracle1143,unité5450,UI1324,reste359,Ruff/Mypy/docs/diffGO et C1froid8008identiques. Points fixes12appels300 et mesure intégrée unique terminés sortie0. |
+| R6 r75x0.5/77 |3/3gains frais propres ; moyenne1,254075%,médiane1,052324%,pireperte0. |
+| R6 r75x0.5/202 |3/3gains frais propres ; moyenne1,288814%,médiane1,416610%,pireperte0. |
+| R6 r75x0.5/404 |3/3gains frais propres ; moyenne1,756176%,médiane2,362340%,pireperte0. |
+| R6 48c/premium/77/fente recherchée |Même plan complet pour exports officiels et meilleurs consensus des deux bras ; gain0% sur les trois groupes. Arrêt de l’extension. |
+
+Sur r75x0.5, le meilleur local historique9900008 reste à0,334515994638nm, confirmé sur neuf groupes historiques : aucun nouveau meilleur global pour ce composant. Les valeurs de48c ne se comparent pas directement à celles de r75x0.5. Les trois groupes par cas ne donnent pas d’intervalle de confiance ni de probabilité de plantage garantie. Le SEEL et les gains ci-dessus proviennent de consensus homogènes ; aucune comparaison de minima base/consensus mêlés.
+
+R5 retrouve les307plans du raffinement et le gagnant deh03, avec maxécart de consensus2,5535e-15 sur les appels post comparables, mais l’identité globale native active n’est pas prouvée :29/123appels de génération diffèrent. La jointure exploratoire ne capture pas tous les paramètres locaux et ne prouve ni défaut physique contrôlé ni cause de cache. Les108appels post supplémentaires de quatre groupes rejetés restent déclarés ; aucune accélération n’est attribuée aux caches chauds ni au retrait des ancres.
+
+## 48c et décision d’arrêt
+
+Contrôle16008 et variante45772, deux sorties0 ; coordinateur29856 clos le16octobre à05h39Paris. Respectivement3366/3368lignes,677/679consensus complets,58847/58855appels à plusieurs profondeurs. Le post note deux parents en8appels réels150tirages, sans ancres injectées, puis produit0nouvelle proposition. La fenêtre interne sélectionnée de chaque parent traverse plusieurs blocs de suivi ; ce contexte est rejeté par le générateur. La première passe n’améliore pas le plan ; la règle existante arrête avant la passe préfixe. Ce résultat ne prouve pas qu’un autre générateur ou un repli différent échouerait ; ce serait un autre programme.
+
+Un seul plan complet, dédupliqué avant inspection, est renoté sur les trois groupes177100xx préalablement réservés :12appels réels300tirages, trois sorties0, fin à06h02Paris. Identité des quatre rôles et gain0% ; aucune proposition ajoutée ni répétition pour chercher un gain. L’audit de provenance est GO et le critère scientifique n’est pas satisfait. Les paires r75x1.5/deep/42 etr75x2/deep/77 restent non exécutées ; leurs24graines177200xx/177300xx réservées restent non consommées.
+
+## État conservé
+
+Les16sources validéesR5 et les321sources du paquet du contexte géré sont inchangées et vérifiées ; contextes historiques figés. Les options elite_rate_joint_candidates=0 et rate_post_refinement=False restent les valeurs par défaut. Aucun nouveau défaut activé, aucun noyau/objectif/bruit changé depuis la validation, aucun commit/push/publication. Les modifications locales et nouveaux modules non suivis sont conservés, avec leurs sources et empreintes ; un gitdiff seul ne suffit pas à les inventorier.
+
+Tous les plans complets, paramètres, graines, appels, rejets, nonfinis, consensus incomplets, essais de préparation et codes de sortie restent dans reports. Les20claimsR6 correspondent à8natifs et12groupes frais, sans réutilisation de slot. Les228appels fraisR6 sont à300tirages ; les appels natifs48c à150 sont distincts. n_samples compte des scores, pas les tirages. Aucun calcul n’est vivant à la finalisation. Le même suivi est mis en pause après sauvegarde et vérifications documentaires ; aucune échéance ni quota supplémentaire n’est créé. R7 attend les données machine quantitatives absentes.
+
+## Preuves principales
+
+- [Audit final et indexSHA](audit_final.json).
+- [Trois cas initiauxR6](../R6_generalization/initial_cases_bilan_20261016.md).
+- [Audit frais48c et arrêt](../R6_other_components/c04_48c_s77/fresh_audit.json), [plans complets figés](../R6_other_components/c04_48c_s77/frozen_finalists.json), [protocole d’arrêt fixé avant mesure](../R6_other_components/native_protocol.json).
+- [Validation généraleR5](../R5_integration/full_validation_01/validation.json), [limites de l’intégration](../R5_integration/post_numeric_audit_02.json).
+- [Confirmation de la procédureh03](../R3_h03_native_postrefinement/confirmation_01/complete_audit_02.json).
+
+Prochaine action utile éventuelle, dans une autorisation distincte : examiner le choix d’une fenêtre interne qui traverse plusieurs blocs avant toute modification du générateur. Aucun essai supplémentaire n’est lancé dans ce programme clos.
+"""
+    (output / "bilan_final.md").write_bytes(report.encode("utf-8"))
+    (other / "c04_48c_s77/bilan_20261016.md").write_bytes(("# 48c —16octobre2026\n\nAudit de provenance GO ;0% de gain sur trois groupes, même plan complet pour les deux voies,12appels réels300tirages. Le post natif a seulement renoté ses deux parents en8appels150,0proposition : fenêtre interne sélectionnée traversant plusieurs blocs, puis arrêt sans gain avant passe préfixe. Critère scientifique non satisfait ; aucun groupe supplémentaire ni lancementx1.5/x2.\n\nVoir pair_audit.json, frozen_finalists.json, fresh_audit.json et ../../final_20261016/bilan_final.md. Tous paramètres, sources, graines et rejets conservés.\n").encode())
+    print(json.dumps({"status": summary["status"], "source_snapshots": len(sources), "package_sources": len(reference["package_sha256"]),
+                      "R6_pairs": 4, "fresh_calls300": summary["R6_fresh_actual_calls300"], "no_measurement_executed": True}))
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,11 @@
+# R4 — adoption du checkpoint avant groupe061
+
+Le planificateur du coordinateur37068 échoue sur `os.replace` avec WinError5/Accès refusé. Les60 groupes précédents sont terminés et audités ; groupe061 et son manifeste existent mais ne sont pas mesurés et n’ont aucune réservation. Le fichier `checkpoint.json.tmp` porte exactement l’état voulu.
+
+Avant toute réparation, absence réelle dePython/PowerShell scientifique et de verrous vérifiée. Les deux checkpoints, next.json et état/journal du parent sont conservés ici. Comparaison stricte : l’état temporaire ne change que `group_count`60→61 et `pending_group`None→groupe061 ; compteurs518, phases, tous les60 résultats, pool, files de propositions et paramètres sont identiques. Le groupe061 passe la garde de manifestes, plans et budgets ; son quota n’est pas consommé. Adoption de ces seuls deux champs et du next correspondant, aucune simulation répétée. Preuve `adoption.json`.
+
+La source du planificateur scientifique/générateur reste figée. La nouvelle enveloppe `scratch/rate_R4_planner_resume_v3.py` relit sa source et sonSHA de protocole, puis remplace seulement la fonction de sauvegarde dans le namespace exécuté. Même sérialisation, mêmes fichiers immuables en modex ; remplacement mutable réessayé au plus20fois100ms seulement surPermissionError. Une erreur persistante reste un échec et garde la cible précédente.
+
+Contre-épreuve sans physique dans `../planner_persistence_verification_01` : ancien Save expose immédiatement le refus ; l’enveloppe passe après trois appels quand le refus est transitoire, échoue après20 quand il persiste, conserve l’ancienne cible et refuse tout écrasement d’artefact immuable. Ruff passe. Les sources etSHA du coordinateur et de cette enveloppe sont dans `../controller_repair_02.json`.
+
+Le coordinateur de queue `scratch/run_rate_R4_tail_v3.ps1` est limité aux groupes061/062 déjà prévus par cette phase. Il reprend les sorties enregistrées du parent et l’adoption046 (sortie inconnue conservée), mesure chaque groupe une seule fois puis attend la fin du planificateur avant le suivant. État courant `controller_v3.json`, pointeur `controller_current.json`. Même échéance16octobre06:00UTC, mêmes ressources et garde scientifique. Aucun budget supplémentaire ni protocole réécrit.

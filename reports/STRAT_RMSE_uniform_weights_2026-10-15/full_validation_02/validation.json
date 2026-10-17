@@ -1,0 +1,246 @@
+{
+  "status": "GO",
+  "pid": 47152,
+  "started_utc": "2026-10-15T06:46:31.336759+00:00",
+  "resources": {
+    "logical_cpus": 24,
+    "affinity_mask": "0xffffff",
+    "priority": "normal",
+    "library_threads": 23
+  },
+  "source_sha256": {
+    "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+    "tests/unit/test_strat_spectral_target.py": "a1ecf68dc60be63495bbec630bfa93b24a7fa69660cc40aa36046e1cd7e11f5c",
+    "certus/core/certus_strat_robustness.py": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+    "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+    "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e",
+    "tests/unit/test_probe_keeps_consensus_score_provenance.py": "accd22f5f43d05f0b52cd0b01e46fb47437d66afb32ad80fc3f1eb7a48c214b9",
+    "tests/unit/test_strat_elite_rate_moves.py": "574f08fc5df532759a02fc1a2b9f632e69296f10a00307bf67b071d2073735e4",
+    "tests/performance/test_performance.py": "736fe81e289bcb2ac72dd56c6bd7d6cdddf9de9a20528504fddf148a169af6c2"
+  },
+  "checks": [
+    {
+      "name": "counterproof_before",
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-c",
+        "import sys; from pathlib import Path; sys.path.insert(0,'C:\\\\Users\\\\Lemarchand\\\\.codex\\\\worktrees\\\\campagne-a2\\\\certus0310'); import certus_physics; from certus.physics.certus_strat_batch import compute_batch_rmse; assert str(Path(compute_batch_rmse.py_func.__code__.co_filename).resolve()).startswith('C:\\\\Users\\\\Lemarchand\\\\.codex\\\\worktrees\\\\campagne-a2\\\\certus0310'); import pytest; sys.exit(pytest.main(['D:\\\\drivefl\\\\01_Recherche_Enseignement\\\\02_Couches_Minces_Optique\\\\couches minces 2026\\\\CERTUS\\\\certus0310\\\\tests\\\\unit\\\\test_strat_spectral_target.py',\"-q\",\"--no-cov\"]))"
+      ],
+      "exit_code": 1,
+      "seconds": 15.03834860000643,
+      "verdict": "EXPECTED_FAILURE_CONFIRMED",
+      "log": "counterproof_before.log",
+      "carried_forward_from": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_RMSE_uniform_weights_2026-10-15\\full_validation_01\\validation.json",
+      "previous_report_sha256": "d51cf768b32a852eab66c1100d2cd92e70c253a228cc61daed24a6765732be8d",
+      "reason": "Scientific sources and these suites unchanged; only the separate performance-test harness changed"
+    },
+    {
+      "name": "targeted_after",
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-m",
+        "pytest",
+        "tests/unit/test_strat_spectral_target.py",
+        "tests/unit/test_strat_index_corridor_scoring.py",
+        "tests/unit/test_strat_batch_kernels_match_the_oracle_and_their_definitions.py",
+        "tests/unit/test_probe_keeps_consensus_score_provenance.py",
+        "tests/unit/test_the_robustness_split_keeps_every_name_and_the_cycle_where_it_was.py",
+        "-q",
+        "--no-cov"
+      ],
+      "exit_code": 0,
+      "seconds": 23.897128499986138,
+      "verdict": "GO",
+      "log": "targeted_after.log",
+      "carried_forward_from": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_RMSE_uniform_weights_2026-10-15\\full_validation_01\\validation.json",
+      "previous_report_sha256": "d51cf768b32a852eab66c1100d2cd92e70c253a228cc61daed24a6765732be8d",
+      "reason": "Scientific sources and these suites unchanged; only the separate performance-test harness changed"
+    },
+    {
+      "name": "oracle",
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-m",
+        "pytest",
+        "tests/oracle/",
+        "-q",
+        "--no-cov"
+      ],
+      "exit_code": 0,
+      "seconds": 72.28636280001956,
+      "verdict": "GO",
+      "log": "oracle.log",
+      "carried_forward_from": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_RMSE_uniform_weights_2026-10-15\\full_validation_01\\validation.json",
+      "previous_report_sha256": "d51cf768b32a852eab66c1100d2cd92e70c253a228cc61daed24a6765732be8d",
+      "reason": "Scientific sources and these suites unchanged; only the separate performance-test harness changed"
+    },
+    {
+      "name": "unit",
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-m",
+        "pytest",
+        "tests/unit/",
+        "-q",
+        "--no-cov"
+      ],
+      "exit_code": 0,
+      "seconds": 1961.328797300026,
+      "verdict": "GO",
+      "log": "unit.log",
+      "carried_forward_from": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_RMSE_uniform_weights_2026-10-15\\full_validation_01\\validation.json",
+      "previous_report_sha256": "d51cf768b32a852eab66c1100d2cd92e70c253a228cc61daed24a6765732be8d",
+      "reason": "Scientific sources and these suites unchanged; only the separate performance-test harness changed"
+    },
+    {
+      "name": "ui",
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-m",
+        "pytest",
+        "tests/ui/",
+        "-q",
+        "--no-cov"
+      ],
+      "exit_code": 0,
+      "seconds": 1687.7088283000048,
+      "verdict": "GO",
+      "log": "ui.log",
+      "carried_forward_from": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_RMSE_uniform_weights_2026-10-15\\full_validation_01\\validation.json",
+      "previous_report_sha256": "d51cf768b32a852eab66c1100d2cd92e70c253a228cc61daed24a6765732be8d",
+      "reason": "Scientific sources and these suites unchanged; only the separate performance-test harness changed"
+    },
+    {
+      "name": "performance_after",
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-m",
+        "pytest",
+        "tests/performance/test_performance.py",
+        "-q",
+        "--no-cov"
+      ],
+      "exit_code": 0,
+      "seconds": 51.24977259998559,
+      "verdict": "GO",
+      "log": "performance_after.log",
+      "library_threads_ceiling": 23,
+      "fresh_caches": true
+    },
+    {
+      "name": "ruff",
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-m",
+        "ruff",
+        "check",
+        "."
+      ],
+      "exit_code": 0,
+      "seconds": 0.21270380000350997,
+      "verdict": "GO",
+      "log": "ruff.log",
+      "library_threads_ceiling": 23,
+      "fresh_caches": false
+    },
+    {
+      "name": "remaining",
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-m",
+        "pytest",
+        "tests/",
+        "-q",
+        "--no-cov",
+        "--ignore=tests/oracle",
+        "--ignore=tests/unit",
+        "--ignore=tests/ui"
+      ],
+      "exit_code": 0,
+      "seconds": 933.1959003999946,
+      "verdict": "GO",
+      "log": "remaining.log",
+      "library_threads_ceiling": 23,
+      "fresh_caches": true
+    },
+    {
+      "name": "coherence",
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "scripts/coherence_md.py"
+      ],
+      "exit_code": 0,
+      "seconds": 7.481442800024524,
+      "verdict": "GO",
+      "log": "coherence.log",
+      "library_threads_ceiling": 23,
+      "fresh_caches": false
+    },
+    {
+      "name": "claude_md",
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "scripts/check_claude_md.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.10036750001017936,
+      "verdict": "GO",
+      "log": "claude_md.log",
+      "library_threads_ceiling": 23,
+      "fresh_caches": false
+    },
+    {
+      "name": "docs",
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "scripts/check_docs.py"
+      ],
+      "exit_code": 0,
+      "seconds": 3.2928934000083245,
+      "verdict": "GO",
+      "log": "docs.log",
+      "library_threads_ceiling": 23,
+      "fresh_caches": false
+    },
+    {
+      "name": "c1",
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "scripts/c1_diff.py",
+        "HEAD",
+        "--sans-cache",
+        "--fils",
+        "4",
+        "--json",
+        "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_RMSE_uniform_weights_2026-10-15\\full_validation_02\\c1_cold_report.json"
+      ],
+      "exit_code": 0,
+      "seconds": 220.09941759999492,
+      "verdict": "GO",
+      "log": "c1.log",
+      "library_threads_ceiling": 23,
+      "fresh_caches": false
+    },
+    {
+      "name": "diff",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 0.05538400000659749,
+      "verdict": "GO",
+      "log": "diff.log",
+      "library_threads_ceiling": 23,
+      "fresh_caches": false
+    }
+  ],
+  "scope": "Incremental validation: reuse unchanged successful suites, rerun changed performance and remaining group",
+  "previous_failed_report": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_RMSE_uniform_weights_2026-10-15\\full_validation_01\\validation.json",
+  "stop_rule": "Finite command list; stop on first unexpected failure",
+  "current": null,
+  "current_pid": null,
+  "finished_utc": "2026-10-15T07:06:47.156408+00:00"
+}

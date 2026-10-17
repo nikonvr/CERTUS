@@ -1,0 +1,1393 @@
+{
+ "provenance": {
+  "git_commit": "411e6eb5254f041f0b830e4f04fce0a333d2ebff",
+  "git_dirty": false
+ },
+ "references": [
+  {
+   "nom": "h400",
+   "titre": "[26-03-30] Nb2O5 H400 sur Saphir [T+R]",
+   "depots": [
+    "fab19__nbt3",
+    "fab19__nbr3"
+   ],
+   "substrat": "Al2O3",
+   "normalise": true,
+   "bande_nm": [
+    null,
+    null
+   ],
+   "parametres": {
+    "d": 2953.73,
+    "Eg": 3.2616,
+    "A": 117.85,
+    "E0": 5.1947,
+    "C": 1.5343,
+    "Eu": 0.26115,
+    "eps_inf": 2.2506
+   },
+   "d_nm": 2953.73,
+   "n633": 2.3055839799465394
+  },
+  {
+   "nom": "h800",
+   "titre": "[26-03-30] Nb2O5 H800 sur Saphir [T+R]",
+   "depots": [
+    "03-03-2026-12-32-54__h800-nbt",
+    "03-03-2026-12-32-54__h800-nbr"
+   ],
+   "substrat": "Al2O3",
+   "normalise": true,
+   "bande_nm": [
+    null,
+    2400.0
+   ],
+   "parametres": {
+    "d": 2959.34,
+    "Eg": 3.1032,
+    "A": 119.72,
+    "E0": 4.7144,
+    "C": 1.2598,
+    "Eu": 0.22552,
+    "eps_inf": 2.3193
+   },
+   "d_nm": 2959.34,
+   "n633": 2.323479696982383
+  },
+  {
+   "nom": "mesures-nb1200",
+   "titre": "[23-04-21] Photon RT — Nb2O5 [T] sur Saphir (Nb1200)",
+   "depots": [
+    "nb1200"
+   ],
+   "substrat": "Al2O3",
+   "normalise": true,
+   "bande_nm": [
+    null,
+    2620.0
+   ],
+   "parametres": {
+    "d": 1717.82,
+    "Eg": 3.6081,
+    "A": 86.485,
+    "E0": 4.6877,
+    "C": 0.18574,
+    "Eu": 0.042779,
+    "eps_inf": 3.9499
+   },
+   "d_nm": 1717.82,
+   "n633": 2.2663811166567593
+  },
+  {
+   "nom": "mesures-ta1200",
+   "titre": "[23-04-21] Photon RT — Ta2O5 [T] sur Saphir (Ta1200)",
+   "depots": [
+    "ta1200"
+   ],
+   "substrat": "Al2O3",
+   "normalise": true,
+   "bande_nm": [
+    null,
+    null
+   ],
+   "parametres": {
+    "d": 1705.0,
+    "Eg": 3.2823,
+    "A": 110.75,
+    "E0": 4.584,
+    "C": 1.0985,
+    "Eu": 0.18457,
+    "eps_inf": 2.4693
+   },
+   "d_nm": 1705.0,
+   "n633": 2.1556823352957015
+  },
+  {
+   "nom": "h400-sio2",
+   "titre": "[26-03-30] SiO2 H400 sur Saphir [T+R]",
+   "depots": [
+    "fab19__sit2",
+    "fab19__sir2"
+   ],
+   "substrat": "Al2O3",
+   "normalise": true,
+   "bande_nm": [
+    null,
+    null
+   ],
+   "parametres": {
+    "d": 3326.52,
+    "Eg": 4.3745,
+    "A": 42.329,
+    "E0": 6.599,
+    "C": 1.0428,
+    "Eu": 0.023956,
+    "eps_inf": 1.493
+   },
+   "d_nm": 3326.52,
+   "n633": 1.4927193921309996
+  },
+  {
+   "nom": "mesures-fab18-sio2",
+   "titre": "[23-04-21] Photon RT — SiO2 [T] sur Saphir (fab18)",
+   "depots": [
+    "fab18__sisapph"
+   ],
+   "substrat": "Al2O3",
+   "normalise": true,
+   "bande_nm": [
+    null,
+    null
+   ],
+   "parametres": {
+    "d": 3323.66,
+    "Eg": 4.6452,
+    "A": 34.012,
+    "E0": 10.0,
+    "C": 1.3178,
+    "Eu": 0.10666,
+    "eps_inf": 1.3202
+   },
+   "d_nm": 3323.66,
+   "n633": 1.4991977593831307
+  },
+  {
+   "nom": "mesures-c1b-sio2",
+   "titre": "[23-03-16] Photon RT — SiO2 [T] sur Silice (c1b, substrat corrigé)",
+   "depots": [
+    "07-06-2024-15-07__c1b"
+   ],
+   "substrat": "SiO2",
+   "normalise": true,
+   "bande_nm": [
+    null,
+    null
+   ],
+   "parametres": {
+    "d": 224.65,
+    "Eg": 4.8812,
+    "A": 44.544,
+    "E0": 5.5044,
+    "C": 0.12207,
+    "Eu": 0.082258,
+    "eps_inf": 2.0129
+   },
+   "d_nm": 224.65,
+   "n633": 1.4648006322799783
+  },
+  {
+   "nom": "sb2s3-silice",
+   "titre": "[26-09-11] Photon RT — Sb2S3 [T] sur Silice",
+   "depots": [
+    "28-08-2026-sb2s3-carac__sb2s3-400-2400-silice-sc"
+   ],
+   "substrat": "SiO2",
+   "normalise": false,
+   "bande_nm": [
+    550.0,
+    2400.0
+   ],
+   "parametres": {
+    "d": 317.4,
+    "Eg": 1.746,
+    "A": 94.58,
+    "E0": 3.6,
+    "C": 1.804,
+    "Eu": 0.02,
+    "eps_inf": 2.327
+   },
+   "d_nm": 317.4,
+   "n633": 3.1398201207256564
+  },
+  {
+   "nom": "mesures-yf3vis",
+   "titre": "[26-06-10] Photon RT — YF3 [T] sur Saphir (yf3vis.xls)",
+   "depots": [
+    "yf3vis"
+   ],
+   "substrat": "Al2O3",
+   "normalise": true,
+   "bande_nm": [
+    null,
+    null
+   ],
+   "parametres": {
+    "d": 2159.94,
+    "Eg": 4.2132,
+    "A": 27.79,
+    "E0": 7.7009,
+    "C": 0.99011,
+    "Eu": 0.018335,
+    "eps_inf": 1.5612
+   },
+   "d_nm": 2159.94,
+   "n633": 1.5117275530829046
+  },
+  {
+   "nom": "pe-nb2",
+   "titre": "[26-04-03] PE 1050 — Nb2O5 [T] sur Saphir",
+   "depots": [
+    "nb2"
+   ],
+   "substrat": "Al2O3",
+   "normalise": true,
+   "bande_nm": [
+    null,
+    2630.0
+   ],
+   "parametres": {
+    "d": 3019.7,
+    "Eg": 3.0596,
+    "A": 103.54,
+    "E0": 4.7249,
+    "C": 0.68684,
+    "Eu": 0.26966,
+    "eps_inf": 2.2506
+   },
+   "d_nm": 3019.7,
+   "n633": 2.290990174583691
+  },
+  {
+   "nom": "pe-ta2",
+   "titre": "[26-04-03] PE 1050 — Ta2O5 [T] sur Saphir (NIR)",
+   "depots": [
+    "ta2"
+   ],
+   "substrat": "Al2O3",
+   "normalise": true,
+   "bande_nm": [
+    null,
+    2860.0
+   ],
+   "parametres": {
+    "d": 3008.44,
+    "Eg": 2.3715,
+    "A": 100.23,
+    "E0": 3.6139,
+    "C": 2.5914,
+    "Eu": 0.35293,
+    "eps_inf": 1.8049
+   },
+   "d_nm": 3008.44,
+   "n633": 2.2274518533566363
+  }
+ ],
+ "executions": [
+  {
+   "reference": "h400",
+   "execution": 1,
+   "reference_n_milieu": 2.233709458511194,
+   "reglages": {
+    "substrat_calcul": "Sapphire (Al2O3)",
+    "normalise": true,
+    "lambda_nm": [
+     1150.0,
+     5199.9
+    ],
+    "lambda_milieu_nm": 1675.0,
+    "d_bornes_nm": [
+     2200.0,
+     8850.0
+    ],
+    "d_estimee_nm": 4428.428864670098
+   },
+   "duree_s": 47.3,
+   "etages": "TLU <= 2200 nm puis IR",
+   "tlu": {
+    "d_nm": 2975.378858942334,
+    "n633": 2.3865350843375066,
+    "n_milieu": 2.2176425303887815,
+    "rmse": 0.0025737416698716825,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "final": {
+    "d_nm": 2975.378858942334,
+    "n633": null,
+    "n_milieu": null,
+    "rmse": 0.003341949318371487,
+    "methode": "PGLOBAL Global Refinement (Sellmeier+k8p)"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "h400",
+   "execution": 2,
+   "reference_n_milieu": 2.233709458511194,
+   "reglages": {
+    "substrat_calcul": "Sapphire (Al2O3)",
+    "normalise": true,
+    "lambda_nm": [
+     1150.0,
+     5199.9
+    ],
+    "lambda_milieu_nm": 1675.0,
+    "d_bornes_nm": [
+     2200.0,
+     8850.0
+    ],
+    "d_estimee_nm": 4428.428864670098
+   },
+   "duree_s": 53.2,
+   "etages": "TLU <= 2200 nm puis IR",
+   "tlu": {
+    "d_nm": 2975.662463626123,
+    "n633": 2.3898717720344425,
+    "n_milieu": 2.217413090580368,
+    "rmse": 0.0025743132339528505,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "final": {
+    "d_nm": 2975.662463626123,
+    "n633": null,
+    "n_milieu": null,
+    "rmse": 0.003359345242421823,
+    "methode": "PGLOBAL Global Refinement (Sellmeier+k8p)"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "h400",
+   "execution": 3,
+   "reference_n_milieu": 2.233709458511194,
+   "reglages": {
+    "substrat_calcul": "Sapphire (Al2O3)",
+    "normalise": true,
+    "lambda_nm": [
+     1150.0,
+     5199.9
+    ],
+    "lambda_milieu_nm": 1675.0,
+    "d_bornes_nm": [
+     2200.0,
+     8850.0
+    ],
+    "d_estimee_nm": 4428.428864670098
+   },
+   "duree_s": 29.7,
+   "etages": "TLU <= 2200 nm puis IR",
+   "tlu": {
+    "d_nm": 3012.273342244927,
+    "n633": 2.3744134226131806,
+    "n_milieu": 2.1925477564492253,
+    "rmse": 0.00623676767112822,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "final": {
+    "d_nm": 3012.273342244927,
+    "n633": null,
+    "n_milieu": null,
+    "rmse": 0.0072806124488825515,
+    "methode": "PGLOBAL Global Refinement (Sellmeier+k8p)"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "h800",
+   "execution": 1,
+   "reference_n_milieu": 2.236522295955485,
+   "reglages": {
+    "substrat_calcul": "Sapphire (Al2O3)",
+    "normalise": true,
+    "lambda_nm": [
+     1000.0,
+     2400.0
+    ],
+    "lambda_milieu_nm": 1700.0,
+    "d_bornes_nm": [
+     2250.0,
+     9100.0
+    ],
+    "d_estimee_nm": 4538.711542196327
+   },
+   "duree_s": 3.9,
+   "etages": "TLU sur la bande",
+   "tlu": null,
+   "final": {
+    "d_nm": 2969.312415934125,
+    "n633": 2.3678095484198964,
+    "n_milieu": 2.2247107576527396,
+    "rmse": 0.0042914629357073695,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "h800",
+   "execution": 2,
+   "reference_n_milieu": 2.236522295955485,
+   "reglages": {
+    "substrat_calcul": "Sapphire (Al2O3)",
+    "normalise": true,
+    "lambda_nm": [
+     1000.0,
+     2400.0
+    ],
+    "lambda_milieu_nm": 1700.0,
+    "d_bornes_nm": [
+     2250.0,
+     9100.0
+    ],
+    "d_estimee_nm": 4538.711542196327
+   },
+   "duree_s": 4.0,
+   "etages": "TLU sur la bande",
+   "tlu": null,
+   "final": {
+    "d_nm": 2969.0876422018987,
+    "n633": 2.3684989200998077,
+    "n_milieu": 2.2248793243075826,
+    "rmse": 0.0042939550000894635,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "h800",
+   "execution": 3,
+   "reference_n_milieu": 2.236522295955485,
+   "reglages": {
+    "substrat_calcul": "Sapphire (Al2O3)",
+    "normalise": true,
+    "lambda_nm": [
+     1000.0,
+     2400.0
+    ],
+    "lambda_milieu_nm": 1700.0,
+    "d_bornes_nm": [
+     2250.0,
+     9100.0
+    ],
+    "d_estimee_nm": 4538.711542196327
+   },
+   "duree_s": 4.1,
+   "etages": "TLU sur la bande",
+   "tlu": null,
+   "final": {
+    "d_nm": 2969.13341304884,
+    "n633": 2.3676900442737354,
+    "n_milieu": 2.224844465525937,
+    "rmse": 0.004289273220527838,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "mesures-nb1200",
+   "execution": 1,
+   "reference_n_milieu": 2.2278858667999972,
+   "reglages": {
+    "substrat_calcul": "Sapphire (Al2O3)",
+    "normalise": true,
+    "lambda_nm": [
+     1200.0,
+     2620.0
+    ],
+    "lambda_milieu_nm": 1700.0,
+    "d_bornes_nm": [
+     1300.0,
+     5200.0
+    ],
+    "d_estimee_nm": 2599.2987506143013
+   },
+   "duree_s": 37.8,
+   "etages": "TLU <= 2200 nm puis IR",
+   "tlu": {
+    "d_nm": 1711.8683687869143,
+    "n633": 2.471603780319708,
+    "n_milieu": 2.2352511934143955,
+    "rmse": 0.0014178414289553157,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "final": {
+    "d_nm": 1711.8683687869143,
+    "n633": null,
+    "n_milieu": null,
+    "rmse": 0.001123745598789735,
+    "methode": "PGLOBAL Global Refinement (Sellmeier+k8p)"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "mesures-nb1200",
+   "execution": 2,
+   "reference_n_milieu": 2.2278858667999972,
+   "reglages": {
+    "substrat_calcul": "Sapphire (Al2O3)",
+    "normalise": true,
+    "lambda_nm": [
+     1200.0,
+     2620.0
+    ],
+    "lambda_milieu_nm": 1700.0,
+    "d_bornes_nm": [
+     1300.0,
+     5200.0
+    ],
+    "d_estimee_nm": 2599.2987506143013
+   },
+   "duree_s": 24.7,
+   "etages": "TLU <= 2200 nm puis IR",
+   "tlu": {
+    "d_nm": 1711.864998484028,
+    "n633": 2.39661722299381,
+    "n_milieu": 2.235165370081203,
+    "rmse": 0.0012390078365181927,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "final": {
+    "d_nm": 1711.864998484028,
+    "n633": null,
+    "n_milieu": null,
+    "rmse": 0.0019330352187075734,
+    "methode": "PGLOBAL Global Refinement (Sellmeier+k8p)"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "mesures-nb1200",
+   "execution": 3,
+   "reference_n_milieu": 2.2278858667999972,
+   "reglages": {
+    "substrat_calcul": "Sapphire (Al2O3)",
+    "normalise": true,
+    "lambda_nm": [
+     1200.0,
+     2620.0
+    ],
+    "lambda_milieu_nm": 1700.0,
+    "d_bornes_nm": [
+     1300.0,
+     5200.0
+    ],
+    "d_estimee_nm": 2599.2987506143013
+   },
+   "duree_s": 25.6,
+   "etages": "TLU <= 2200 nm puis IR",
+   "tlu": {
+    "d_nm": 1712.7600537414362,
+    "n633": 2.446973349322196,
+    "n_milieu": 2.2340862961125523,
+    "rmse": 0.0012529035091273831,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "final": {
+    "d_nm": 1712.7600537414362,
+    "n633": null,
+    "n_milieu": null,
+    "rmse": 0.0021481100261886298,
+    "methode": "PGLOBAL Global Refinement (Sellmeier+k8p)"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "mesures-ta1200",
+   "execution": 1,
+   "reference_n_milieu": 2.0887594351404384,
+   "reglages": {
+    "substrat_calcul": "Sapphire (Al2O3)",
+    "normalise": true,
+    "lambda_nm": [
+     1200.0,
+     5199.9
+    ],
+    "lambda_milieu_nm": 1700.0,
+    "d_bornes_nm": [
+     1300.0,
+     5200.0
+    ],
+    "d_estimee_nm": 2599.2987506143013
+   },
+   "duree_s": 39.9,
+   "etages": "TLU <= 2200 nm puis IR",
+   "tlu": {
+    "d_nm": 1702.5715114851846,
+    "n633": 2.3032933045792716,
+    "n_milieu": 2.093615053540662,
+    "rmse": 0.0010774036614141112,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "final": {
+    "d_nm": 1702.5715114851846,
+    "n633": null,
+    "n_milieu": null,
+    "rmse": 0.001870199521863954,
+    "methode": "PGLOBAL Global Refinement (Sellmeier+k8p)"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "mesures-ta1200",
+   "execution": 2,
+   "reference_n_milieu": 2.0887594351404384,
+   "reglages": {
+    "substrat_calcul": "Sapphire (Al2O3)",
+    "normalise": true,
+    "lambda_nm": [
+     1200.0,
+     5199.9
+    ],
+    "lambda_milieu_nm": 1700.0,
+    "d_bornes_nm": [
+     1300.0,
+     5200.0
+    ],
+    "d_estimee_nm": 2599.2987506143013
+   },
+   "duree_s": 20.6,
+   "etages": "TLU <= 2200 nm puis IR",
+   "tlu": {
+    "d_nm": 1702.584332247,
+    "n633": 2.2658833974664145,
+    "n_milieu": 2.09364686474517,
+    "rmse": 0.0010548353326663568,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "final": {
+    "d_nm": 1702.584332247,
+    "n633": null,
+    "n_milieu": null,
+    "rmse": 0.0037358670405880303,
+    "methode": "PGLOBAL Global Refinement (Sellmeier+k8p)"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "mesures-ta1200",
+   "execution": 3,
+   "reference_n_milieu": 2.0887594351404384,
+   "reglages": {
+    "substrat_calcul": "Sapphire (Al2O3)",
+    "normalise": true,
+    "lambda_nm": [
+     1200.0,
+     5199.9
+    ],
+    "lambda_milieu_nm": 1700.0,
+    "d_bornes_nm": [
+     1300.0,
+     5200.0
+    ],
+    "d_estimee_nm": 2599.2987506143013
+   },
+   "duree_s": 22.6,
+   "etages": "TLU <= 2200 nm puis IR",
+   "tlu": {
+    "d_nm": 1702.5517947448889,
+    "n633": 2.20277158949357,
+    "n_milieu": 2.0935406528177256,
+    "rmse": 0.0011188867655772185,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "final": {
+    "d_nm": 1702.5517947448889,
+    "n633": null,
+    "n_milieu": null,
+    "rmse": 0.003735915006645871,
+    "methode": "PGLOBAL Global Refinement (Sellmeier+k8p)"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "h400-sio2",
+   "execution": 1,
+   "reference_n_milieu": 1.4758157448749758,
+   "reglages": {
+    "substrat_calcul": "Sapphire (Al2O3)",
+    "normalise": true,
+    "lambda_nm": [
+     1150.0,
+     5199.9
+    ],
+    "lambda_milieu_nm": 1675.0,
+    "d_bornes_nm": [
+     1700.0,
+     6900.0
+    ],
+    "d_estimee_nm": 3444.3335614100765
+   },
+   "duree_s": 40.1,
+   "etages": "TLU <= 2200 nm puis IR",
+   "tlu": {
+    "d_nm": 3268.679094208217,
+    "n633": 1.565366486510221,
+    "n_milieu": 1.5032832933164173,
+    "rmse": 0.0032512178865421095,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "final": {
+    "d_nm": 3268.679094208217,
+    "n633": null,
+    "n_milieu": null,
+    "rmse": 0.0028398249189313337,
+    "methode": "PGLOBAL Global Refinement (Sellmeier+k8p)"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "h400-sio2",
+   "execution": 2,
+   "reference_n_milieu": 1.4758157448749758,
+   "reglages": {
+    "substrat_calcul": "Sapphire (Al2O3)",
+    "normalise": true,
+    "lambda_nm": [
+     1150.0,
+     5199.9
+    ],
+    "lambda_milieu_nm": 1675.0,
+    "d_bornes_nm": [
+     1700.0,
+     6900.0
+    ],
+    "d_estimee_nm": 3444.3335614100765
+   },
+   "duree_s": 32.1,
+   "etages": "TLU <= 2200 nm puis IR",
+   "tlu": {
+    "d_nm": 3271.15779929808,
+    "n633": 1.575040802180566,
+    "n_milieu": 1.50262171842449,
+    "rmse": 0.0032538360120496425,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "final": {
+    "d_nm": 3271.15779929808,
+    "n633": null,
+    "n_milieu": null,
+    "rmse": 0.0027502825767193612,
+    "methode": "PGLOBAL Global Refinement (Sellmeier+k8p)"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "h400-sio2",
+   "execution": 3,
+   "reference_n_milieu": 1.4758157448749758,
+   "reglages": {
+    "substrat_calcul": "Sapphire (Al2O3)",
+    "normalise": true,
+    "lambda_nm": [
+     1150.0,
+     5199.9
+    ],
+    "lambda_milieu_nm": 1675.0,
+    "d_bornes_nm": [
+     1700.0,
+     6900.0
+    ],
+    "d_estimee_nm": 3444.3335614100765
+   },
+   "duree_s": 24.7,
+   "etages": "TLU <= 2200 nm puis IR",
+   "tlu": {
+    "d_nm": 3267.19214649815,
+    "n633": 1.585966930234753,
+    "n_milieu": 1.5035491454425431,
+    "rmse": 0.003263480214631203,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "final": {
+    "d_nm": 3267.19214649815,
+    "n633": null,
+    "n_milieu": null,
+    "rmse": 0.0029134956112278976,
+    "methode": "PGLOBAL Global Refinement (Sellmeier+k8p)"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "mesures-fab18-sio2",
+   "execution": 1,
+   "reference_n_milieu": 1.4900965096273013,
+   "reglages": {
+    "substrat_calcul": "Sapphire (Al2O3)",
+    "normalise": true,
+    "lambda_nm": [
+     400.0,
+     5199.9
+    ],
+    "lambda_milieu_nm": 1300.0,
+    "d_bornes_nm": [
+     1650.0,
+     6650.0
+    ],
+    "d_estimee_nm": 3321.2376105892567
+   },
+   "duree_s": 24.8,
+   "etages": "TLU <= 2200 nm puis IR",
+   "tlu": {
+    "d_nm": 3302.4685426447036,
+    "n633": 1.5099775810713554,
+    "n_milieu": 1.501633294273436,
+    "rmse": 0.002471373670275118,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "final": {
+    "d_nm": 3302.4685426447036,
+    "n633": null,
+    "n_milieu": null,
+    "rmse": 0.002475792213950545,
+    "methode": "PGLOBAL Global Refinement (Sellmeier+k8p)"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "mesures-fab18-sio2",
+   "execution": 2,
+   "reference_n_milieu": 1.4900965096273013,
+   "reglages": {
+    "substrat_calcul": "Sapphire (Al2O3)",
+    "normalise": true,
+    "lambda_nm": [
+     400.0,
+     5199.9
+    ],
+    "lambda_milieu_nm": 1300.0,
+    "d_bornes_nm": [
+     1650.0,
+     6650.0
+    ],
+    "d_estimee_nm": 3321.2376105892567
+   },
+   "duree_s": 30.6,
+   "etages": "TLU <= 2200 nm puis IR",
+   "tlu": {
+    "d_nm": 3302.480479672259,
+    "n633": 1.5099761558024596,
+    "n_milieu": 1.5016336821849972,
+    "rmse": 0.0024699776677600182,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "final": {
+    "d_nm": 3302.480479672259,
+    "n633": null,
+    "n_milieu": null,
+    "rmse": 0.0024670329533489905,
+    "methode": "PGLOBAL Global Refinement (Sellmeier+k8p)"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "mesures-fab18-sio2",
+   "execution": 3,
+   "reference_n_milieu": 1.4900965096273013,
+   "reglages": {
+    "substrat_calcul": "Sapphire (Al2O3)",
+    "normalise": true,
+    "lambda_nm": [
+     400.0,
+     5199.9
+    ],
+    "lambda_milieu_nm": 1300.0,
+    "d_bornes_nm": [
+     1650.0,
+     6650.0
+    ],
+    "d_estimee_nm": 3321.2376105892567
+   },
+   "duree_s": 23.2,
+   "etages": "TLU <= 2200 nm puis IR",
+   "tlu": {
+    "d_nm": 3302.837285884373,
+    "n633": 1.5098272099645222,
+    "n_milieu": 1.5016025997343965,
+    "rmse": 0.0024886668452738887,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "final": {
+    "d_nm": 3302.837285884373,
+    "n633": null,
+    "n_milieu": null,
+    "rmse": 0.0024721888714794734,
+    "methode": "PGLOBAL Global Refinement (Sellmeier+k8p)"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "mesures-c1b-sio2",
+   "execution": 1,
+   "reference_n_milieu": 1.469055697327047,
+   "reglages": {
+    "substrat_calcul": "SiO2",
+    "normalise": true,
+    "lambda_nm": [
+     186.0,
+     800.0
+    ],
+    "lambda_milieu_nm": 493.0,
+    "d_bornes_nm": [
+     80.0,
+     320.0
+    ],
+    "d_estimee_nm": 161.52468534134087
+   },
+   "duree_s": 3.6,
+   "etages": "TLU sur la bande",
+   "tlu": null,
+   "final": {
+    "d_nm": 114.06075268038948,
+    "n633": 1.7817576293910864,
+    "n_milieu": 1.8183550635952939,
+    "rmse": 0.20294940555467886,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "mesures-c1b-sio2",
+   "execution": 2,
+   "reference_n_milieu": 1.469055697327047,
+   "reglages": {
+    "substrat_calcul": "SiO2",
+    "normalise": true,
+    "lambda_nm": [
+     186.0,
+     800.0
+    ],
+    "lambda_milieu_nm": 493.0,
+    "d_bornes_nm": [
+     80.0,
+     320.0
+    ],
+    "d_estimee_nm": 161.52468534134087
+   },
+   "duree_s": 2.8,
+   "etages": "TLU sur la bande",
+   "tlu": null,
+   "final": {
+    "d_nm": 114.06075199674657,
+    "n633": 1.7817576314799353,
+    "n_milieu": 1.8183550658921181,
+    "rmse": 0.20294940555680197,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "mesures-c1b-sio2",
+   "execution": 3,
+   "reference_n_milieu": 1.469055697327047,
+   "reglages": {
+    "substrat_calcul": "SiO2",
+    "normalise": true,
+    "lambda_nm": [
+     186.0,
+     800.0
+    ],
+    "lambda_milieu_nm": 493.0,
+    "d_bornes_nm": [
+     80.0,
+     320.0
+    ],
+    "d_estimee_nm": 161.52468534134087
+   },
+   "duree_s": 2.8,
+   "etages": "TLU sur la bande",
+   "tlu": null,
+   "final": {
+    "d_nm": 114.06082267980072,
+    "n633": 1.781758181425521,
+    "n_milieu": 1.8183556072582823,
+    "rmse": 0.20294940556312296,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "sb2s3-silice",
+   "execution": 1,
+   "reference_n_milieu": 2.7816393681503913,
+   "reglages": {
+    "substrat_calcul": "SiO2",
+    "normalise": false,
+    "lambda_nm": [
+     550.0,
+     2400.0
+    ],
+    "lambda_milieu_nm": 1475.0,
+    "d_bornes_nm": [
+     160.0,
+     640.0
+    ],
+    "d_estimee_nm": 319.9018801827213
+   },
+   "duree_s": 2.6,
+   "etages": "TLU sur la bande",
+   "tlu": null,
+   "final": {
+    "d_nm": 305.1799277001803,
+    "n633": 3.2478977176088546,
+    "n_milieu": 2.891942368937189,
+    "rmse": 0.05615769705323763,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "sb2s3-silice",
+   "execution": 2,
+   "reference_n_milieu": 2.7816393681503913,
+   "reglages": {
+    "substrat_calcul": "SiO2",
+    "normalise": false,
+    "lambda_nm": [
+     550.0,
+     2400.0
+    ],
+    "lambda_milieu_nm": 1475.0,
+    "d_bornes_nm": [
+     160.0,
+     640.0
+    ],
+    "d_estimee_nm": 319.9018801827213
+   },
+   "duree_s": 3.0,
+   "etages": "TLU sur la bande",
+   "tlu": null,
+   "final": {
+    "d_nm": 305.19086361957255,
+    "n633": 3.247782049187432,
+    "n_milieu": 2.891826428971444,
+    "rmse": 0.05614841796025539,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "sb2s3-silice",
+   "execution": 3,
+   "reference_n_milieu": 2.7816393681503913,
+   "reglages": {
+    "substrat_calcul": "SiO2",
+    "normalise": false,
+    "lambda_nm": [
+     550.0,
+     2400.0
+    ],
+    "lambda_milieu_nm": 1475.0,
+    "d_bornes_nm": [
+     160.0,
+     640.0
+    ],
+    "d_estimee_nm": 319.9018801827213
+   },
+   "duree_s": 2.7,
+   "etages": "TLU sur la bande",
+   "tlu": null,
+   "final": {
+    "d_nm": 305.19182391156966,
+    "n633": 3.2477696207362365,
+    "n_milieu": 2.891815631882285,
+    "rmse": 0.05615051241822879,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "mesures-yf3vis",
+   "execution": 1,
+   "reference_n_milieu": 1.4992756646674525,
+   "reglages": {
+    "substrat_calcul": "Sapphire (Al2O3)",
+    "normalise": true,
+    "lambda_nm": [
+     600.0,
+     2400.0
+    ],
+    "lambda_milieu_nm": 1500.0,
+    "d_bornes_nm": [
+     1050.0,
+     4250.0
+    ],
+    "d_estimee_nm": 2132.803613429325
+   },
+   "duree_s": 2.7,
+   "etages": "TLU sur la bande",
+   "tlu": null,
+   "final": {
+    "d_nm": 2154.717450913502,
+    "n633": 1.5145767379530406,
+    "n_milieu": 1.5037403643531282,
+    "rmse": 0.002018870657731535,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "mesures-yf3vis",
+   "execution": 2,
+   "reference_n_milieu": 1.4992756646674525,
+   "reglages": {
+    "substrat_calcul": "Sapphire (Al2O3)",
+    "normalise": true,
+    "lambda_nm": [
+     600.0,
+     2400.0
+    ],
+    "lambda_milieu_nm": 1500.0,
+    "d_bornes_nm": [
+     1050.0,
+     4250.0
+    ],
+    "d_estimee_nm": 2132.803613429325
+   },
+   "duree_s": 2.8,
+   "etages": "TLU sur la bande",
+   "tlu": null,
+   "final": {
+    "d_nm": 2154.8884387364046,
+    "n633": 1.514472026268234,
+    "n_milieu": 1.5036399387504449,
+    "rmse": 0.0020195867112599132,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "mesures-yf3vis",
+   "execution": 3,
+   "reference_n_milieu": 1.4992756646674525,
+   "reglages": {
+    "substrat_calcul": "Sapphire (Al2O3)",
+    "normalise": true,
+    "lambda_nm": [
+     600.0,
+     2400.0
+    ],
+    "lambda_milieu_nm": 1500.0,
+    "d_bornes_nm": [
+     1050.0,
+     4250.0
+    ],
+    "d_estimee_nm": 2132.803613429325
+   },
+   "duree_s": 2.6,
+   "etages": "TLU sur la bande",
+   "tlu": null,
+   "final": {
+    "d_nm": 2154.6795477699234,
+    "n633": 1.514603231348208,
+    "n_milieu": 1.5037650531562265,
+    "rmse": 0.002018850746481725,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "pe-nb2",
+   "execution": 1,
+   "reference_n_milieu": 2.1998653061920934,
+   "reglages": {
+    "substrat_calcul": "Sapphire (Al2O3)",
+    "normalise": true,
+    "lambda_nm": [
+     1000.0,
+     2630.0
+    ],
+    "lambda_milieu_nm": 1600.0,
+    "d_bornes_nm": [
+     2200.0,
+     8900.0
+    ],
+    "d_estimee_nm": 4443.463053582972
+   },
+   "duree_s": 27.5,
+   "etages": "TLU <= 2200 nm puis IR",
+   "tlu": {
+    "d_nm": 2983.6886988506176,
+    "n633": 2.3515973688832728,
+    "n_milieu": 2.2217406275584133,
+    "rmse": 0.003492911970800314,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "final": {
+    "d_nm": 2983.6886988506176,
+    "n633": null,
+    "n_milieu": null,
+    "rmse": 0.0034876706711989714,
+    "methode": "PGLOBAL Global Refinement (Sellmeier+k8p)"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "pe-nb2",
+   "execution": 2,
+   "reference_n_milieu": 2.1998653061920934,
+   "reglages": {
+    "substrat_calcul": "Sapphire (Al2O3)",
+    "normalise": true,
+    "lambda_nm": [
+     1000.0,
+     2630.0
+    ],
+    "lambda_milieu_nm": 1600.0,
+    "d_bornes_nm": [
+     2200.0,
+     8900.0
+    ],
+    "d_estimee_nm": 4443.463053582972
+   },
+   "duree_s": 25.0,
+   "etages": "TLU <= 2200 nm puis IR",
+   "tlu": {
+    "d_nm": 2983.9101951077805,
+    "n633": 2.3762182054913725,
+    "n_milieu": 2.221988266218373,
+    "rmse": 0.0037421154453751494,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "final": {
+    "d_nm": 2983.9101951077805,
+    "n633": null,
+    "n_milieu": null,
+    "rmse": 0.003268005510167867,
+    "methode": "PGLOBAL Global Refinement (Sellmeier+k8p)"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "pe-nb2",
+   "execution": 3,
+   "reference_n_milieu": 2.1998653061920934,
+   "reglages": {
+    "substrat_calcul": "Sapphire (Al2O3)",
+    "normalise": true,
+    "lambda_nm": [
+     1000.0,
+     2630.0
+    ],
+    "lambda_milieu_nm": 1600.0,
+    "d_bornes_nm": [
+     2200.0,
+     8900.0
+    ],
+    "d_estimee_nm": 4443.463053582972
+   },
+   "duree_s": 33.9,
+   "etages": "TLU <= 2200 nm puis IR",
+   "tlu": {
+    "d_nm": 2990.258208393796,
+    "n633": 2.3487006501719647,
+    "n_milieu": 2.217079022295622,
+    "rmse": 0.0045304507506785194,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "final": {
+    "d_nm": 2990.258208393796,
+    "n633": null,
+    "n_milieu": null,
+    "rmse": 0.003541806512250122,
+    "methode": "PGLOBAL Global Refinement (Sellmeier+k8p)"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "pe-ta2",
+   "execution": 1,
+   "reference_n_milieu": 2.0928432786670745,
+   "reglages": {
+    "substrat_calcul": "Sapphire (Al2O3)",
+    "normalise": true,
+    "lambda_nm": [
+     1000.0,
+     2860.0
+    ],
+    "lambda_milieu_nm": 1600.0,
+    "d_bornes_nm": [
+     2200.0,
+     8900.0
+    ],
+    "d_estimee_nm": 4443.463053582972
+   },
+   "duree_s": 27.0,
+   "etages": "TLU <= 2200 nm puis IR",
+   "tlu": {
+    "d_nm": 3006.445923417509,
+    "n633": 2.1951984043717463,
+    "n_milieu": 2.0972648967479675,
+    "rmse": 0.0022481898023461863,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "final": {
+    "d_nm": 3006.445923417509,
+    "n633": null,
+    "n_milieu": null,
+    "rmse": 0.0020799641427165284,
+    "methode": "PGLOBAL Global Refinement (Sellmeier+k8p)"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "pe-ta2",
+   "execution": 2,
+   "reference_n_milieu": 2.0928432786670745,
+   "reglages": {
+    "substrat_calcul": "Sapphire (Al2O3)",
+    "normalise": true,
+    "lambda_nm": [
+     1000.0,
+     2860.0
+    ],
+    "lambda_milieu_nm": 1600.0,
+    "d_bornes_nm": [
+     2200.0,
+     8900.0
+    ],
+    "d_estimee_nm": 4443.463053582972
+   },
+   "duree_s": 28.0,
+   "etages": "TLU <= 2200 nm puis IR",
+   "tlu": {
+    "d_nm": 3008.0132797119704,
+    "n633": 2.2005436341327784,
+    "n_milieu": 2.096191090345598,
+    "rmse": 0.0023137205317114847,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "final": {
+    "d_nm": 3008.0132797119704,
+    "n633": null,
+    "n_milieu": null,
+    "rmse": 0.002076354206180512,
+    "methode": "PGLOBAL Global Refinement (Sellmeier+k8p)"
+   },
+   "erreur": null
+  },
+  {
+   "reference": "pe-ta2",
+   "execution": 3,
+   "reference_n_milieu": 2.0928432786670745,
+   "reglages": {
+    "substrat_calcul": "Sapphire (Al2O3)",
+    "normalise": true,
+    "lambda_nm": [
+     1000.0,
+     2860.0
+    ],
+    "lambda_milieu_nm": 1600.0,
+    "d_bornes_nm": [
+     2200.0,
+     8900.0
+    ],
+    "d_estimee_nm": 4443.463053582972
+   },
+   "duree_s": 34.4,
+   "etages": "TLU <= 2200 nm puis IR",
+   "tlu": {
+    "d_nm": 3006.8337437935566,
+    "n633": 2.1943775607486344,
+    "n_milieu": 2.097022541731086,
+    "rmse": 0.002237260803397274,
+    "methode": "PGLOBAL + L-BFGS-B + DeepRefine"
+   },
+   "final": {
+    "d_nm": 3006.8337437935566,
+    "n633": null,
+    "n_milieu": null,
+    "rmse": 0.002074644178502822,
+    "methode": "PGLOBAL Global Refinement (Sellmeier+k8p)"
+   },
+   "erreur": null
+  }
+ ]
+}

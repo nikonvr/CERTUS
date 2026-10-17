@@ -1,0 +1,34 @@
+{
+  "status": "complete",
+  "pid": 1368,
+  "started": "2026-10-13T19:32:23.358231+00:00",
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "arguments": [
+    "r75x0.5",
+    "deep",
+    "0",
+    "0",
+    "2",
+    "0",
+    "101",
+    "0"
+  ],
+  "joint_budget": 0,
+  "source_sha256": {
+    "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127"
+  },
+  "script_sha256": {
+    "adapter": "2a257812a713be4c601c1c664fd1053a814658344b5f2f53c6dacf463361284d",
+    "generator": "30ac713dc23b4c0754ca56f5f843309f9b3b55c583dbe4b2bf1f17427684a611",
+    "controller_helper": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51"
+  },
+  "overrides": "elite_rate_balanced_moves=false,elite_rate_max_candidates=240,elite_rounds=6",
+  "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_native_joint_ablation_rate240_round6_2026-10-13\\joint_0_rate240_rounds6_s101\\blocs_vs_plantage_r75x0.5_deep_s101_rate_native_joint0_rate240_rounds6_s101_v3.json",
+  "updated": "2026-10-13T20:18:09.642409+00:00"
+}

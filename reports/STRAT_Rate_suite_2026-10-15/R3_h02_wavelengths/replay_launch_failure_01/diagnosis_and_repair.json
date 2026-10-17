@@ -1,0 +1,12 @@
+{
+  "status": "SAFE_RETRY_BEFORE_RESERVATION",
+  "observed_utc": "2026-10-15T12:37:48.508476+00:00",
+  "failure": "PowerShell ConvertFrom-Json converted the ISO deadline within command[] to DateTime, then native argument binding formatted it as10/16/2026 08:00:00; datetime.fromisoformat rejected it before check_ready returned",
+  "exit_code": 1,
+  "scientific_request_created": false,
+  "quota_claimed": false,
+  "live_child": false,
+  "source_changes": false,
+  "repair": "Use an explicit literal ISO UTC string for the final --deadline-utc argument; preserve original log and use a separate second console/exit record",
+  "protocol_sha256": "b720164baabaddcac023543e31d7c1447fa93cf937645f63ec3fbdbec3a2eb43"
+}

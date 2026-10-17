@@ -1,0 +1,27 @@
+{
+  "checked_utc": "2026-10-14T15:11:24.910453+00:00",
+  "validation_status": "running",
+  "stage": "unit",
+  "resources_observed": [
+    {
+      "pid": 37660,
+      "role": "validation coordinator",
+      "affinity": 65535,
+      "priority": "Normal"
+    },
+    {
+      "pid": 48248,
+      "role": "pytest unit",
+      "affinity": 65535,
+      "priority": "Normal"
+    }
+  ],
+  "environment_requested": {
+    "PYTHON_CPU_COUNT": "16",
+    "library_threads": "15"
+  },
+  "A2_complete": 24,
+  "no_scientific_measurement_in_progress": true,
+  "C1_harness_default_numba_threads": 4,
+  "runtime_checks_still_pending": true
+}

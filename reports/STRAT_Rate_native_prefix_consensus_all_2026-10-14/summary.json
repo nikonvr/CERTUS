@@ -1,0 +1,29 @@
+{
+  "status": "complete",
+  "completed_utc": "2026-10-14T02:12:29+00:00",
+  "n_proposals": 5119,
+  "complete_consensus": 5118,
+  "excluded": 1,
+  "best_native": {
+    "id": 9940095,
+    "name": "native_prefix_saved_901454694",
+    "move": {
+      "kind": "saved_native_prefix",
+      "source_id": 901454694,
+      "exported_score": 0.03373141448900565
+    },
+    "eligible": true,
+    "score": 0.03295728754388596,
+    "crash_rate": 0.0,
+    "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_native_prefix_consensus_all_2026-10-14\\batch_010\\attempt_01\\search.json"
+  },
+  "best_original_id": 901454694,
+  "seel_nm": 0.36308284202857044,
+  "anchor600_nm": 0.35395924517094074,
+  "artifact_sha256": "8910dc02338f24370829bd8e461e3051f2e22f192377f75f9cf6df3c5b73d3cd",
+  "limits": [
+    "Only saved depositable native plans available; non-finite rejected candidates are outside this pool",
+    "Winner includes anchors; native best must be minimum eligible proposal separately",
+    "Exported optional witness metadata transferred when present"
+  ]
+}

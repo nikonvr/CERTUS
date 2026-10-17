@@ -36,6 +36,7 @@ from certus.utils.certus_strat_context import (
     _extract_rmse_p95_for_noise,
     _origin_family,
     _origin_priority_from_map,
+    _plan_signature,
     _strategy_id_sort_token,
     _validate_strategy_blocks_contract,
     _wl_set,
@@ -395,8 +396,8 @@ def mine_strategies_for_block_count(
     if n_blocks <= 0 or num_layers <= 0:
         return []
     log = logger if logger is not None else logging.getLogger("ThinFilm")
-    # Each cost map numbers its groupings `n_blocks * 1000 + offset + rank`, the offsets 100 apart:
-    # a deeper beam would give the 101st grouping of one map the id of the first of the next.
+    # Each cost map numbers its groupings in two ranges of a hundred (`_mined_strategy_id`), and the DP
+    # returns up to `2 * top_k` of them: a deeper beam would run past both.
     if int(top_k) > _COUVERTURE_ID_STRIDE:
         log.warning(
             f"[MINING] dp_top_k {int(top_k)} clipped to {_COUVERTURE_ID_STRIDE}: it is the width of "
@@ -534,11 +535,11 @@ def mine_strategies_for_block_count(
         # 🔴 THE COVERAGE GROUPINGS HAVE THEIR OWN IDENTIFIER RANGE, and it is not
         # cosmetic. The plan is `strategy_id_base + offset_id + rank` with
         # `strategy_id_base = n_blocks * 1000`, and the offsets in use are 0 / 100 / 200 for
-        # the three cost maps, 800 for the structured seeds. In DEEP mode `top_k` is
-        # **exactly 100**: the plan is SATURATED. Extending `solutions` in place would therefore
-        # have given the 101st grouping the identifier of the 1st of the next map -- two
-        # different strategies under one id, and everything that indexes by id (the premium
-        # cache, the reports, `from 9000000...`) would have gone silent.
+        # the three cost maps, 800 for the structured seeds; past the first hundred, a map's
+        # groupings go to a range of their own (`_mined_strategy_id`). Numbered after the
+        # groupings of their map, the coverage groupings would have taken ids of the next map --
+        # two different strategies under one id, and everything that indexes by id (the
+        # consensus scores, the reports, `from 9000000...`) would have gone silent (D103).
         # Offsets 300 / 400 / 500 are free, and 800 bounds the range.
         couverture: list = []
         if enable_wl_coverage:
@@ -558,7 +559,7 @@ def mine_strategies_for_block_count(
 
         def _convertir(sols: list, base: int, etiquette: str) -> None:
             for rank, sol in enumerate(sols):
-                s_id = strategy_id_base + base + rank
+                s_id = _mined_strategy_id(n_blocks, base, rank)
                 strat = _convert_solution_to_strategy(sol, num_layers, n_blocks, etiquette, s_id)
                 is_valid, reason = _validate_strategy_blocks_contract(strat, num_layers, expected_n_blocks=n_blocks)
                 if not is_valid:
@@ -995,8 +996,13 @@ def _max_strategy_id(strategies_results: list[dict[str, Any]]) -> int:
 
 
 def _existing_block_signatures(strategies_results: list[dict[str, Any]]) -> set[tuple]:
-    """Build signature set for already present strategies."""
-    return {_blocks_signature(item.get("strategy", {}).get("blocks", [])) for item in strategies_results}
+    """Build signature set for already present strategies: their blocks, and for those that lay layers by Rate the blocks and the layers."""
+    signatures: set[tuple] = set()
+    for item in strategies_results:
+        strategy = item.get("strategy", {})
+        signatures.add(_blocks_signature(strategy.get("blocks", [])))
+        signatures.add(_plan_signature(strategy.get("blocks", []), strategy.get("rate_layers")))
+    return signatures
 
 
 def _resolve_elite_nominal_and_target_threshold(
@@ -1179,6 +1185,8 @@ def _select_best_strat_result(strategies_results: list[dict[str, Any]]) -> dict[
 # generator is read in `origin`, which is authoritative. The ranges below only serve
 # to guarantee that two distinct strategies never carry the same number.
 
+#: Base of the mined groupings ranked past the first hundred of their cost map (D103, `_mined_strategy_id`).
+STRATEGY_ID_MINED_OVERFLOW_BASE: int = 800_000_000
 #: Base of the derived strategies (Phase B local search, `certus_strat_workers`).
 STRATEGY_ID_DERIVED_BASE: int = 900_000_000
 #: Base of the SLIT variants (A18).
@@ -1220,12 +1228,27 @@ def strategy_id_for_block(base: int, source_n_blocks: int, serial: int = 0) -> i
         raise ValueError("Strategy id block count or serial is outside its range")
     result = base + n_blocks * stride + serial
     upper = {
+        STRATEGY_ID_MINED_OVERFLOW_BASE: STRATEGY_ID_DERIVED_BASE,
         STRATEGY_ID_DERIVED_BASE: STRATEGY_ID_SLIT_BASE,
         STRATEGY_ID_SLIT_BASE: STRATEGY_ID_RATE_BASE,
     }.get(base)
     if upper is not None and result >= upper:
         raise ValueError("Strategy id block range overlaps the next generator")
     return result
+
+
+def _mined_strategy_id(n_blocks: int, offset: int, rank: int) -> int:
+    """The id of the `rank`-th grouping a cost map yields: `n_blocks * 1000 + offset + rank` for the first hundred.
+
+    The DP keeps a beam of `2 * top_k` and returns all of it (`_dp_kernel`): with `top_k` capped at the width of a
+    range, a cost map yields up to two hundred groupings. The second hundred goes to its own range, numbered as the
+    first would have numbered it; the first hundred keep the ids they always had (D103).
+    """
+    if rank < _COUVERTURE_ID_STRIDE:
+        return int(n_blocks) * 1000 + int(offset) + int(rank)
+    if rank >= 2 * _COUVERTURE_ID_STRIDE:
+        raise ValueError(f"Mined grouping rank {rank} exceeds the two ranges of its cost map")
+    return strategy_id_for_block(STRATEGY_ID_MINED_OVERFLOW_BASE, n_blocks, int(offset) + int(rank))
 
 
 def strategy_id_source_block_count(

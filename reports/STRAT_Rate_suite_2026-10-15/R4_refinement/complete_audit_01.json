@@ -1,0 +1,900 @@
+{
+  "verdict": "GO",
+  "audited_utc": "2026-10-15T13:47:11.379905+00:00",
+  "groups": [
+    {
+      "phase": "R4_g001",
+      "branch": "local",
+      "pass": 1,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 21,
+      "artifact_sha256": "fe07842b752c5cddcb49a46855977edf0b662b085f0194bd5c35f7fa461f00f4"
+    },
+    {
+      "phase": "R4_g002",
+      "branch": "local",
+      "pass": 1,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 21,
+      "artifact_sha256": "f55885756e3596e19e94227398fea031df8bb44c45d0a5d8e96bb903c8a8d49c"
+    },
+    {
+      "phase": "R4_g003",
+      "branch": "local",
+      "pass": 1,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 21,
+      "artifact_sha256": "2c67e22e7892f788f4ad4dc3031795689db4f0837562aebe74c184ec78e0611d"
+    },
+    {
+      "phase": "R4_g004",
+      "branch": "local",
+      "pass": 1,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 27,
+      "artifact_sha256": "922c947434cf7229df58a43370342a594e04df9a78efb849b03e846e99c730eb"
+    },
+    {
+      "phase": "R4_g005",
+      "branch": "local",
+      "pass": 1,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 30,
+      "artifact_sha256": "21021fed1cfe13b1f74b770ebbe8184b5fbf2852df1468a39125ef6d3d316314"
+    },
+    {
+      "phase": "R4_g006",
+      "branch": "local",
+      "pass": 1,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 48,
+      "artifact_sha256": "73858b5df0bc77d260e9f8b59166bc7160fbbb94746aecb2e316e0c6d5cfb1aa"
+    },
+    {
+      "phase": "R4_g007",
+      "branch": "local",
+      "pass": 1,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 33,
+      "artifact_sha256": "6d9d0b26aad272e6e6d99b363a24cf984ae74ca78cbd39dda1163c39b41e5d60"
+    },
+    {
+      "phase": "R4_g008",
+      "branch": "local",
+      "pass": 1,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 45,
+      "artifact_sha256": "b39533dab570aca867c48cbbc2f5689179a1452cb654208402277f7fea30c38a"
+    },
+    {
+      "phase": "R4_g009",
+      "branch": "local",
+      "pass": 1,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 36,
+      "artifact_sha256": "1836c160797ea0ddf4ae0bd3b32472bd49e2169cad1877f47a2a426c009a8f34"
+    },
+    {
+      "phase": "R4_g010",
+      "branch": "local",
+      "pass": 1,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 36,
+      "artifact_sha256": "9f14f987b4ebd194ca433fcfcfc65f93c543e9366ce77a9669f99ea246fc704f"
+    },
+    {
+      "phase": "R4_g011",
+      "branch": "local",
+      "pass": 1,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 33,
+      "artifact_sha256": "5b85438fb7b73c069a5db865e7fa0377bea8c577d40066ef558a679223e268f7"
+    },
+    {
+      "phase": "R4_g012",
+      "branch": "local",
+      "pass": 1,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 27,
+      "artifact_sha256": "dfbbe89326adac5032565e60a22a0880b7ff854a5257bf4d651fc1ef4c68971c"
+    },
+    {
+      "phase": "R4_g013",
+      "branch": "local",
+      "pass": 1,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 21,
+      "artifact_sha256": "b10b4b15febda236e4c6ecfd6c84f31f5546385e83545d61e2d03aaec7eb91d8"
+    },
+    {
+      "phase": "R4_g014",
+      "branch": "local",
+      "pass": 1,
+      "stage": "coarse",
+      "proposals": 1,
+      "actual_calls": 13,
+      "artifact_sha256": "f65b5251eed4a089b512cbdf4dae89cc56e6f18368b8221069a6d642f9bfd301"
+    },
+    {
+      "phase": "R4_g015",
+      "branch": "local",
+      "pass": 1,
+      "stage": "fine",
+      "proposals": 9,
+      "actual_calls": 42,
+      "artifact_sha256": "c9c5c7a29aec76f37e68861f8ad238ba241793fba070793f6aa649311ca327b3"
+    },
+    {
+      "phase": "R4_g016",
+      "branch": "local",
+      "pass": 1,
+      "stage": "fine",
+      "proposals": 9,
+      "actual_calls": 39,
+      "artifact_sha256": "bc25bd6a74b2552a110f2507e0a631b066a3b8a69ee25622f0909ff71ff68817"
+    },
+    {
+      "phase": "R4_g017",
+      "branch": "local",
+      "pass": 1,
+      "stage": "fine",
+      "proposals": 9,
+      "actual_calls": 39,
+      "artifact_sha256": "988863b7245eab06557cec52450c09d79d98306bf230337ac3cf47918864d7cd"
+    },
+    {
+      "phase": "R4_g018",
+      "branch": "local",
+      "pass": 1,
+      "stage": "fine",
+      "proposals": 9,
+      "actual_calls": 42,
+      "artifact_sha256": "bdc963e218788c42b88f6057b48d1025ad4d45158d556bdd84f7f4e1a3a372c1"
+    },
+    {
+      "phase": "R4_g019",
+      "branch": "local",
+      "pass": 1,
+      "stage": "fine",
+      "proposals": 9,
+      "actual_calls": 42,
+      "artifact_sha256": "f332d17d75bd109d547ce3984ec95deae11e2a53e338619dd29610f04bac2816"
+    },
+    {
+      "phase": "R4_g020",
+      "branch": "local",
+      "pass": 1,
+      "stage": "fine",
+      "proposals": 9,
+      "actual_calls": 39,
+      "artifact_sha256": "fb990fc53f716d1568234dfd13b5ca43f02b08d520506ff2772948148a88e24b"
+    },
+    {
+      "phase": "R4_g021",
+      "branch": "local",
+      "pass": 1,
+      "stage": "fine",
+      "proposals": 9,
+      "actual_calls": 39,
+      "artifact_sha256": "b4c56b2456ad9c4afb24213d61b5b31b0fb77138bffd536b93ea4c8183e969cb"
+    },
+    {
+      "phase": "R4_g022",
+      "branch": "local",
+      "pass": 1,
+      "stage": "fine",
+      "proposals": 9,
+      "actual_calls": 45,
+      "artifact_sha256": "3342f642436d4f009b3cd8319507ec26e96950b8d8ccd36c52b393a400e736f6"
+    },
+    {
+      "phase": "R4_g023",
+      "branch": "local",
+      "pass": 1,
+      "stage": "fine",
+      "proposals": 5,
+      "actual_calls": 32,
+      "artifact_sha256": "f92cb4a4a8e5b7d81662dec3aea5607568b1958a66f178b4dfc36035264925ce"
+    },
+    {
+      "phase": "R4_g024",
+      "branch": "native",
+      "pass": 1,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 21,
+      "artifact_sha256": "e35e6b58403b882f95893efd54e8e0a9cc2db79fb2d41c58ac0cd57fb39846eb"
+    },
+    {
+      "phase": "R4_g025",
+      "branch": "native",
+      "pass": 1,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 21,
+      "artifact_sha256": "c50da608c249b9b83a20b683b8c6a3e8cbf10d708e6135bb7ed6365d3ed063dc"
+    },
+    {
+      "phase": "R4_g026",
+      "branch": "native",
+      "pass": 1,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 21,
+      "artifact_sha256": "a8ce0b128fa7fd41a5d35de7e84ac212cc59b99d630df0367877218305b85c2a"
+    },
+    {
+      "phase": "R4_g027",
+      "branch": "native",
+      "pass": 1,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 21,
+      "artifact_sha256": "86a1acc7945f5a44fd5944edf428ae8b92b13c05455f8eb913a70bb0ed5e0eff"
+    },
+    {
+      "phase": "R4_g028",
+      "branch": "native",
+      "pass": 1,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 30,
+      "artifact_sha256": "f94e348dd6e573de3c2d54a0ae1a439bb9ebfb6686082fff2d3b09a04a040cba"
+    },
+    {
+      "phase": "R4_g029",
+      "branch": "native",
+      "pass": 1,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 36,
+      "artifact_sha256": "35f5c073aa043771b36a3e62b730de91f58531af6175b54828aac114128f582c"
+    },
+    {
+      "phase": "R4_g030",
+      "branch": "native",
+      "pass": 1,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 36,
+      "artifact_sha256": "4b07184802fe8d892d0ecf1b80dba141793a3dfa2b6d77be22490fe2f779b615"
+    },
+    {
+      "phase": "R4_g031",
+      "branch": "native",
+      "pass": 1,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 48,
+      "artifact_sha256": "7fad3abb7b820771cdae499fd5e560bedc69bc0eb39759893a82777a5ee92994"
+    },
+    {
+      "phase": "R4_g032",
+      "branch": "native",
+      "pass": 1,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 48,
+      "artifact_sha256": "1ab717b1b42beb3eab2718b4da7662cac31cb6df0a68a854f5528636653d3e18"
+    },
+    {
+      "phase": "R4_g033",
+      "branch": "native",
+      "pass": 1,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 48,
+      "artifact_sha256": "29e1ab1891a0e013fb169bcaee3c7f11718a5a60ea38546c643bca010b7bf746"
+    },
+    {
+      "phase": "R4_g034",
+      "branch": "native",
+      "pass": 1,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 42,
+      "artifact_sha256": "2b73a8b6367f1df60cfbcb44897f054b850bb8643e67fbdf6bda94ae7c703d8a"
+    },
+    {
+      "phase": "R4_g035",
+      "branch": "native",
+      "pass": 1,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 42,
+      "artifact_sha256": "8af4813c779c9540548d068ed548bb2870bd4f855ea9ee301602ab6598e61a68"
+    },
+    {
+      "phase": "R4_g036",
+      "branch": "native",
+      "pass": 1,
+      "stage": "coarse",
+      "proposals": 2,
+      "actual_calls": 17,
+      "artifact_sha256": "739ae10f030e6604c49f27b042a18449605dc02a9e1737ec5461b1b86a2f3a4e"
+    },
+    {
+      "phase": "R4_g037",
+      "branch": "native",
+      "pass": 1,
+      "stage": "fine",
+      "proposals": 9,
+      "actual_calls": 42,
+      "artifact_sha256": "73ecb3bdc897758e990085a5fceff90412fc999057d94e78aca8d7a8e0ee6c35"
+    },
+    {
+      "phase": "R4_g038",
+      "branch": "native",
+      "pass": 1,
+      "stage": "fine",
+      "proposals": 9,
+      "actual_calls": 39,
+      "artifact_sha256": "37c54f6a2ca1201b24dd17d99d6fd6ba2e3938c0620c374bf3ff3464d03e9cfd"
+    },
+    {
+      "phase": "R4_g039",
+      "branch": "native",
+      "pass": 1,
+      "stage": "fine",
+      "proposals": 9,
+      "actual_calls": 48,
+      "artifact_sha256": "12180becb054d1d48ffc371c20e40742ea4e1cd529a7ecef22fc199401e353c1"
+    },
+    {
+      "phase": "R4_g040",
+      "branch": "native",
+      "pass": 1,
+      "stage": "fine",
+      "proposals": 9,
+      "actual_calls": 45,
+      "artifact_sha256": "b5af3c930f43b07783b4daf3cd9f8208d3913823ad6bd097ff01ae7564e3aae0"
+    },
+    {
+      "phase": "R4_g041",
+      "branch": "native",
+      "pass": 1,
+      "stage": "fine",
+      "proposals": 9,
+      "actual_calls": 42,
+      "artifact_sha256": "400b538c8b31c70663702b802ed5d3363151f7dd54945f2db2447259efca2f4e"
+    },
+    {
+      "phase": "R4_g042",
+      "branch": "native",
+      "pass": 1,
+      "stage": "fine",
+      "proposals": 9,
+      "actual_calls": 42,
+      "artifact_sha256": "019c6a991664058354dfc9b2be35bab2eef5a059193273a07897573c72b5838a"
+    },
+    {
+      "phase": "R4_g043",
+      "branch": "native",
+      "pass": 1,
+      "stage": "fine",
+      "proposals": 9,
+      "actual_calls": 48,
+      "artifact_sha256": "92377d85c950f007fa1026748c66c04598268326706a4ee43fe892b10f12b316"
+    },
+    {
+      "phase": "R4_g044",
+      "branch": "native",
+      "pass": 1,
+      "stage": "fine",
+      "proposals": 9,
+      "actual_calls": 45,
+      "artifact_sha256": "fca7289d2243874d6e8a637c33bb9849554137ca265874b272e5084adc5f79ef"
+    },
+    {
+      "phase": "R4_g045",
+      "branch": "native",
+      "pass": 1,
+      "stage": "fine",
+      "proposals": 9,
+      "actual_calls": 36,
+      "artifact_sha256": "280f09a83fc9a2390bd8da6690dc640f6168cf329a2178f229f1db599d180eef"
+    },
+    {
+      "phase": "R4_g046",
+      "branch": "native",
+      "pass": 1,
+      "stage": "fine",
+      "proposals": 9,
+      "actual_calls": 39,
+      "artifact_sha256": "84979e7a3b9d454d4040b05e8ac71e5f0974c9a8289d21c790e8fbfc068134fe"
+    },
+    {
+      "phase": "R4_g047",
+      "branch": "native",
+      "pass": 1,
+      "stage": "fine",
+      "proposals": 9,
+      "actual_calls": 36,
+      "artifact_sha256": "b3f2db1ab8fc0ff36b6cfd29a09cb15bd1334ddf59f305cf1609626123bb7c60"
+    },
+    {
+      "phase": "R4_g048",
+      "branch": "native",
+      "pass": 1,
+      "stage": "fine",
+      "proposals": 1,
+      "actual_calls": 16,
+      "artifact_sha256": "4b88209af6d0f6ce883dd82c8e63f6bb9630d9cd25fb2de02843870205395435"
+    },
+    {
+      "phase": "R4_g049",
+      "branch": "native",
+      "pass": 2,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 27,
+      "artifact_sha256": "d133c77b31d95c7b2295c53c064c58b29ffddab3110f18fa2ed2b1626771b9e5"
+    },
+    {
+      "phase": "R4_g050",
+      "branch": "native",
+      "pass": 2,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 39,
+      "artifact_sha256": "ea95ef3c576dc49190ffa931a2404971080d18a276ee2dfe0aeb65ede7ac2fe4"
+    },
+    {
+      "phase": "R4_g051",
+      "branch": "native",
+      "pass": 2,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 48,
+      "artifact_sha256": "4ca55eb76a1d1e38e801cf121f286b63db9eeed267d11e0066ebe926e59e1d7e"
+    },
+    {
+      "phase": "R4_g052",
+      "branch": "native",
+      "pass": 2,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 48,
+      "artifact_sha256": "a618b417f03e8f5058aef1819fddb83812c0a75459c2090d209464721d35e6c3"
+    },
+    {
+      "phase": "R4_g053",
+      "branch": "native",
+      "pass": 2,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 36,
+      "artifact_sha256": "7082c47ae6b88c1577ad5ae08b844da900a95e35b1fa33f37668c7d16969db23"
+    },
+    {
+      "phase": "R4_g054",
+      "branch": "native",
+      "pass": 2,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 21,
+      "artifact_sha256": "65766298c38ded3a76f04b31015f0b5e05f0fad939b947821538f2930c2cd689"
+    },
+    {
+      "phase": "R4_g055",
+      "branch": "native",
+      "pass": 2,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 27,
+      "artifact_sha256": "87ca4cf755bba4bef46568c2a4c3a575661eaa9085cedcd46fd4404dbe489555"
+    },
+    {
+      "phase": "R4_g056",
+      "branch": "native",
+      "pass": 2,
+      "stage": "coarse",
+      "proposals": 9,
+      "actual_calls": 42,
+      "artifact_sha256": "76e3f9cee60d884fc32a21e74de7e794cda5492306c588915a6eef852f16b80e"
+    },
+    {
+      "phase": "R4_g057",
+      "branch": "native",
+      "pass": 2,
+      "stage": "coarse",
+      "proposals": 3,
+      "actual_calls": 21,
+      "artifact_sha256": "1bf152793081d1e71ce857023dbf8fdb2eaa8bb43a7f57571d3e97fb88ceef7e"
+    },
+    {
+      "phase": "R4_g058",
+      "branch": "native",
+      "pass": 2,
+      "stage": "fine",
+      "proposals": 9,
+      "actual_calls": 48,
+      "artifact_sha256": "b4ca973489dbbdda077a810a46db44e5e7c6acd79978274854d8a319150b3b45"
+    },
+    {
+      "phase": "R4_g059",
+      "branch": "native",
+      "pass": 2,
+      "stage": "fine",
+      "proposals": 9,
+      "actual_calls": 48,
+      "artifact_sha256": "641d3c62ff0f1e3aaf8663a72b26201b167bb0ea6971eca196d8731e0b7092ac"
+    },
+    {
+      "phase": "R4_g060",
+      "branch": "native",
+      "pass": 2,
+      "stage": "fine",
+      "proposals": 9,
+      "actual_calls": 48,
+      "artifact_sha256": "51652a780e41ab0021e12164659d8189b8c6432bb78768009163b134a146051a"
+    },
+    {
+      "phase": "R4_g061",
+      "branch": "native",
+      "pass": 2,
+      "stage": "fine",
+      "proposals": 9,
+      "actual_calls": 45,
+      "artifact_sha256": "3926f590dca60b05b76990476439d5bf06721de1cb402b9a1d389210a5d37360"
+    },
+    {
+      "phase": "R4_g062",
+      "branch": "native",
+      "pass": 2,
+      "stage": "fine",
+      "proposals": 2,
+      "actual_calls": 20,
+      "artifact_sha256": "84655b5cfa372b5246b0ce04749f26e80e8de1d37472dee59f5bac312a343a4d"
+    }
+  ],
+  "new_proposals": 518,
+  "actual_calls": 2198,
+  "stage_counts": {
+    "accepted": 518,
+    "duplicate": 72,
+    "boundary_or_exhausted": 46
+  },
+  "rejections": {
+    "base score non-finite": 206,
+    "incomplete consensus": 11
+  },
+  "branches": {
+    "local": {
+      "baseline_score": 0.02797523766720083,
+      "best_score": 0.02797523766720083,
+      "seel_nm": 0.3345159946382285,
+      "gain_seel_pct": 0.0,
+      "gain_beyond_best_local_pct": 0.0,
+      "improved": false,
+      "winner": {
+        "plan": {
+          "nom": "prefix_after_window_consensus_best_s101",
+          "source_strategy_id": 9900008,
+          "blocks": [
+            {
+              "start": 0,
+              "end": 9,
+              "wavelength": 613.0
+            },
+            {
+              "start": 9,
+              "end": 20,
+              "wavelength": 451.0
+            },
+            {
+              "start": 20,
+              "end": 30,
+              "wavelength": 691.0
+            },
+            {
+              "start": 30,
+              "end": 40,
+              "wavelength": 688.0
+            },
+            {
+              "start": 40,
+              "end": 50,
+              "wavelength": 741.0
+            },
+            {
+              "start": 50,
+              "end": 55,
+              "wavelength": 733.0
+            },
+            {
+              "start": 55,
+              "end": 60,
+              "wavelength": 705.0
+            },
+            {
+              "start": 60,
+              "end": 65,
+              "wavelength": 708.0
+            },
+            {
+              "start": 65,
+              "end": 70,
+              "wavelength": 742.0
+            },
+            {
+              "start": 70,
+              "end": 75,
+              "wavelength": 580.0
+            }
+          ],
+          "rate_layers": [
+            5,
+            6,
+            7,
+            8,
+            9,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            37,
+            38,
+            39,
+            40,
+            41,
+            42,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50,
+            51,
+            52,
+            53,
+            54,
+            55,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74
+          ],
+          "monochromator_resolution_nm": 2.0,
+          "move": {
+            "kind": "wavelength_only",
+            "parent_id": 9900006,
+            "prefix_length": 5,
+            "wavelength": 613,
+            "original_prefix_length": 5
+          },
+          "source_artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_after_window_2026-10-14\\batch_028\\attempt_01\\search.json",
+          "source_artifact_sha256": "4bd54122f4517c3a123e2321684b355513fc7b5f766b466293ed8f976dc7ce9e",
+          "source_pool_replay_id": 9910275,
+          "replay_id_reason": "distinct identity; original and pool IDs retained; strict C2 point required",
+          "branch": "local",
+          "root_parent_id": 9900008
+        },
+        "score": 0.02797523766720083,
+        "provenance": "h02 homogeneous replay"
+      },
+      "passes": [
+        {
+          "pass": 1,
+          "before": 0.02797523766720083,
+          "after": 0.02797523766720083,
+          "improved": false
+        }
+      ]
+    },
+    "native": {
+      "baseline_score": 0.032410960467156955,
+      "best_score": 0.029431526325033333,
+      "seel_nm": 0.34311237998669375,
+      "gain_seel_pct": 4.707122320670676,
+      "gain_beyond_best_local_pct": -2.5697980025624956,
+      "improved": true,
+      "winner": {
+        "plan": {
+          "nom": "R4_native_p2_fine_97000497",
+          "source_strategy_id": 97000497,
+          "blocks": [
+            {
+              "start": 0,
+              "end": 9,
+              "wavelength": 628.0
+            },
+            {
+              "start": 9,
+              "end": 20,
+              "wavelength": 451.0
+            },
+            {
+              "start": 20,
+              "end": 40,
+              "wavelength": 686.0
+            },
+            {
+              "start": 40,
+              "end": 50,
+              "wavelength": 740.0
+            },
+            {
+              "start": 50,
+              "end": 60,
+              "wavelength": 733.0
+            },
+            {
+              "start": 60,
+              "end": 70,
+              "wavelength": 742.0
+            },
+            {
+              "start": 70,
+              "end": 75,
+              "wavelength": 580.0
+            }
+          ],
+          "rate_layers": [
+            5,
+            6,
+            7,
+            8,
+            9,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            37,
+            38,
+            39,
+            40,
+            41,
+            42,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50,
+            51,
+            52,
+            53,
+            54,
+            55,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74
+          ],
+          "monochromator_resolution_nm": 2.0,
+          "witness_reset_layers": null,
+          "branch": "native",
+          "root_parent_id": 900754638,
+          "n_blocks": 7,
+          "move": {
+            "kind": "prefix",
+            "stage": "fine_joint",
+            "parent_id": 97000473,
+            "old_window": [
+              0,
+              5
+            ],
+            "window": [
+              0,
+              5
+            ],
+            "block_index": 0,
+            "wavelength": 628.0
+          }
+        },
+        "score": 0.029431526325033333,
+        "base_score": 0.03034599236653493,
+        "provenance": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_059\\measurement\\search.json"
+      },
+      "passes": [
+        {
+          "pass": 1,
+          "before": 0.032410960467156955,
+          "after": 0.03192907040069526,
+          "improved": true
+        },
+        {
+          "pass": 2,
+          "before": 0.03192907040069526,
+          "after": 0.029431526325033333,
+          "improved": true
+        }
+      ]
+    }
+  },
+  "fresh_groups_consumed": 0,
+  "native_integration_demonstrated": false,
+  "source_sha256": {
+    "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+    "certus/core/certus_strat_robustness.py": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+    "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+    "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e"
+  },
+  "protocol_sha256": "04b7393cf981e1bb8cdbadb24e4169d1cadcb1bcb4729e100599c55fbecc570c",
+  "audit_script_sha256": "7a301130ffa4d724310fc4b0a22f2ef89bfe8a2c1f8fe13557e22129de60e705"
+}

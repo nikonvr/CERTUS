@@ -8,11 +8,8 @@ servant à fabriquer de vrais filtres : une erreur silencieuse ne plante pas, el
 **Deux documents vivants :** les règles ici ; l'état, les décisions et les défauts
 dans [`docs/ETAT.md`](docs/ETAT.md). Lire sa section 0 avant de travailler et
 la tenir à jour. Les rapports de `reports/` sont des mesures datées ; Git garde
-l'historique des corrections. Les archives supprimées se lisent avec
-`git show 7b08dc8:docs/archives/NOM.md`.
-Les « CLAUDE.md §N » cités par le code, les tests et les scripts viennent de versions
-successives de ce fichier : leur numéro peut désigner une autre section qu'ici. Chercher
-la règle par son sujet, ou dans `git log -p CLAUDE.md`.
+l'historique des corrections. Les « CLAUDE.md §N » cités par le code viennent de versions
+successives de ce fichier : chercher la règle par son sujet.
 
 ## 1. Démarrage — avant de toucher à quoi que ce soit
 
@@ -20,12 +17,9 @@ la règle par son sujet, ou dans `git log -p CLAUDE.md`.
 python scripts\preflight.py
 ```
 
-Elle doit finir par `PREFLIGHT=GO`. Elle vérifie les deux **propriétés** qui comptent :
-`import certus` résout **dans l'arbre où tu édites**, et l'interpréteur porte les dépendances
-(PyQt6, numpy, scipy, numba) **et les importe sans erreur** (pydantic, PyQt6, pyqtgraph, matplotlib,
-pandas, openpyxl, xlsxwriter, joblib : une version incompatible lève à l'import, ETAT D78). Aucun chemin d'interpréteur ni de racine n'est écrit en dur, et
-c'est délibéré : les chemins se sont périmés à chaque déménagement. En cas de doute,
-`python -c "import sys; print(sys.executable)"`.
+Elle doit finir par `PREFLIGHT=GO` : `import certus` résout **dans l'arbre où tu édites**, et
+l'interpréteur importe sans erreur les dépendances. Aucun chemin d'interpréteur ni de racine
+n'est écrit en dur, délibérément : ils se périmaient à chaque déménagement.
 
 🔴 **Le dépôt est PUBLIC** (`github.com/nikonvr/CERTUS`). Rien qui porte un secret (clé, mot de
 passe, jeton), la donnée personnelle d'un **autre** que 👤 ou l'œuvre d'un tiers n'entre dans
@@ -58,14 +52,8 @@ Un échec au premier run dans un arbre neuf peut venir du cache Numba : relancer
 une fois. Un échec persistant est réel. Un test Qt qui meurt sans traceback
 peut signaler un worker encore actif ; relancer avec
 `QT_FORCE_STDERR_LOGGING=1` et `-s`. Un test isolé vert mais rouge en suite
-signale souvent un état partagé.
-
-Mesures et cliquets : `python scripts\metrics.py` (architecture, lint, UI) ;
-`scripts/measure_kernel_coverage.py`, `scripts/check_coverage_floors.py`,
-`tests/architecture_debt.json`, `scripts/mutation_pilot.py`. Le calcul
-doit rester importable sans Qt. Un nouveau module typé dans `domain`,
-`physics` ou `core` doit suivre le registre d'annotations
-`tests/architecture_debt.json`. `mypy` est lancé en CI sans bloquer.
+signale souvent un état partagé. Un nouveau module typé dans `domain`,
+`physics` ou `core` suit le registre d'annotations `tests/architecture_debt.json`.
 
 Après modification du gel ou d'un point d'entrée que STRAT importe :
 `powershell tools\build_frozen.ps1` et
@@ -78,15 +66,13 @@ aux résultats scientifiques de `reports/`.
 1. **Jamais `ruff check --fix`** : beaucoup d'imports « inutilisés » sont des ré-exports volontaires.
 2. **Jamais agrandir `extend-ignore`** dans `pyproject.toml` ; un cliquet le surveille.
 3. **Jamais supprimer `reports/`** : résultats scientifiques versionnés de 👤.
-4. **`example/example_strat/JSON-strat-example.json` ne se modifie que pour DURCIR** ; il a
-   dérivé quatre fois vers le permissif. Pour essayer autre chose, injecter après coup
-   (`scripts\probe_anchor_noise_pipeline.py`).
+4. **`example/example_strat/JSON-strat-example.json` ne se modifie que pour DURCIR.** Pour
+   essayer autre chose, injecter après coup (`scripts\probe_anchor_noise_pipeline.py`).
 5. **Jamais « corriger » `except A, B:`** : syntaxe PEP 758 de Python 3.14, voulue.
 6. **Jamais inverser `n̂ = n − ik`** (k ≥ 0) : l'inverse crée de l'énergie (`R + T > 1`).
 7. **Jamais réimplémenter une formule TMM** : la source unique pour R et T est
-   `certus/physics/certus_opt_tmm.py::compute_RT_from_matrix` (deux réimplémentations fausses,
-   de 46 et 82 points de réflectance). Garde-fou : le cliquet `tests/oracle/test_tmm_formula_has_one_source.py`
-   nomme les copies d'aujourd'hui ; aucune ne peut entrer.
+   `certus/physics/certus_opt_tmm.py::compute_RT_from_matrix`. Garde-fou : le cliquet
+   `tests/oracle/test_tmm_formula_has_one_source.py`.
 8. **Jamais découper `certus/core/_certus_physics_impl.py`** (`DO NOT SPLIT` : visibilité
    mutuelle des noyaux compilés).
 9. **Jamais affirmer un résultat non mesuré.** Soit tu colles la sortie de la commande, soit
@@ -115,17 +101,13 @@ aux résultats scientifiques de `reports/`.
 > **Tout nouveau paramètre est inactif par défaut, et le chemin inactif rend exactement les
 > mêmes bits qu'avant.** (C1)
 
-- **C1** s'éprouve par une empreinte `float.hex()` du noyau, pas par le `RESULT` du banc : à
-  état compilé identique le banc est déterministe, mais **une recompilation décale les
-  derniers chiffres** (2,8e-11, reproductible). **`python scripts\c1_diff.py HEAD`** (50 s) compare au bit
-  l'arbre de travail à un commit : corpus fixe, interpréteurs neufs, caches Numba vierges ; à lancer
-  avant de committer tout changement de noyau. Il ne prouve que ce que son corpus appelle. Un noyau relu du cache
-  n'a pas toujours les bits du noyau compilé à l'instant (gradients, `fastmath`, ETAT D52) : compare **froid à froid**.
-  **Couper un noyau `fastmath` déplace les derniers bits selon la forme de la coupe** (mesuré : 3 à 116 résultats de
-  croissance sur 1 200, jusqu'à 14 592 ulp) ; `inline="always"` sur le morceau extrait, et les boucles fusionnées gardées
-  fusionnées, ont rendu les mêmes bits (`certus_strat_growth.py`, ETAT D54). Un corpus se valide en comparant un arbre à
-  lui-même : `python scripts\c1_diff.py X --tete X --sans-cache` doit rendre 0 (le 2026-09-30 il a trouvé un noyau qui ne se
-  retrouvait pas lui-même).
+- **C1** s'éprouve au bit, pas par le `RESULT` du banc : **une recompilation décale les derniers
+  chiffres**. **`python scripts\c1_diff.py HEAD`** compare l'arbre de travail à un commit (corpus fixe,
+  interpréteurs neufs, caches Numba vierges) ; à lancer avant de committer tout changement de noyau. Il ne
+  prouve que ce que son corpus appelle. Compare **froid à froid** : un noyau relu du cache n'a pas toujours
+  les bits du noyau compilé à l'instant (`fastmath`). **Couper un noyau `fastmath` déplace ses derniers
+  bits** ; `inline="always"` sur le morceau extrait, boucles fusionnées gardées fusionnées, les préserve. Un
+  corpus se valide contre lui-même : `python scripts\c1_diff.py X --tete X --sans-cache` doit rendre 0.
 - **C2** — croissance et notation voient **la même réalisation** de chaque perturbation :
   tout tirage est une fonction pure de (graine, tirage, index physique), **jamais** de la
   stratégie (ni λ, ni découpage en blocs, ni épaisseur obtenue). Générateur :
@@ -144,7 +126,6 @@ aux résultats scientifiques de `reports/`.
   qui donnent une constante ou une façade aux noyaux doivent mentionner
   numba dans leur texte. Garde :
   `tests/unit/test_the_cache_key_covers_what_the_kernels_read.py`.
-  Compare toujours C1 froid contre froid.
 - Les tests partagent des caches de classe : les restaurer par fixture.
   Un test Qt prend la fixture `qapp`, jamais une `QApplication` locale.
   `tests/headless/test_design.py` et `test_strat.py` simulent le calcul :
@@ -156,13 +137,11 @@ aux résultats scientifiques de `reports/`.
   Un `except` large journalise l'exception ou se restreint aux erreurs
   attendues ; les tests `test_exports_are_written_atomically.py` et
   `test_no_broad_exception_is_swallowed_in_silence.py` gardent ces règles.
-- **Qt/thème** : une feuille locale de `create_styled_button` prime sur
-  la feuille de l'application. Utiliser `CertusTheme.label_on` pour l'encre
-  d'un bouton plein et les jetons `CertusTheme` dans les f-strings des
-  feuilles ; `refresh_widget_sheets()` les actualise au changement de
-  thème. Pour une transparence, `CertusTheme.tint(couleur, 0.18)`,
-  jamais huit chiffres hexadécimaux ou une concaténation. Vérifier les
-  pixels, pas seulement la feuille déclarée (`scripts/audit_ux_certus.py`).
+- **Qt/thème** : toujours `apply_certus_theme()` et les jetons `CertusTheme`, jamais un
+  hexadécimal. Une feuille locale de `create_styled_button` prime sur celle de
+  l'application. L'encre d'un bouton plein est `CertusTheme.label_on`, une transparence
+  `CertusTheme.tint(couleur, 0.18)`, jamais une concaténation ; `refresh_widget_sheets()` actualise les feuilles
+  au changement de thème. Vérifier les pixels, pas la feuille déclarée (`scripts/audit_ux_certus.py`).
 - Le premier calcul compile Numba : chauffer avant un chronométrage.
   Ne pas citer dans le code le motif littéral qu'un garde-fou cherche
   (couleur, règle QSS), au risque de déclencher le garde-fou lui-même.
@@ -174,20 +153,19 @@ aux résultats scientifiques de `reports/`.
   (`DO NOT REMOVE THE BACKSIDE TERM`) : il diffère légitimement d'un TMM nu.
 - `tests/oracle/tmm_reference.py` est une référence TMM **indépendante** (Macleod, chap. 2,
   matrices 2×2 explicites), sans une ligne partagée avec `certus.physics`. Sers-t'en.
-- Un marqueur `LOCKED` n'est pas une preuve : le bug de signe monocouche en portait un.
+- Un marqueur `LOCKED` n'est pas une preuve.
 - 🔴 **QWOT ≠ point tournant.** Le QWOT est l'épaisseur optique d'**une couche**
   (`m = 4nd/λ`) ; le point tournant est l'instant où l'admittance du **système entier**
   devient réelle, `tan 2δ = R/Q`. Leur période commune vaut un quart d'onde à λ_mon, mais le
   **départ** est décalé de `½·arctan(R/Q)`, fixé par l'empilement du dessous. Les deux ne
   coïncident que sur la couche 1 d'un substrat nu, ou sur un empilement tout en QWOT à λ_mon.
-  Le comptage naïf s'est trompé d'un **facteur 59**. Compte les points tournants par la forme
-  fermée (`scripts\probe_turning_points.py`), jamais par l'épaisseur.
+  Compte les points tournants par la forme fermée (`scripts\probe_turning_points.py`), jamais
+  par l'épaisseur.
 
 ## 8. Architecture — frontières à respecter
 
 - `certus.core`, `certus.physics`, `certus.domain` n'importent **jamais** PyQt6 ni `certus.ui`.
 - `certus.ui` et `CERTUS_HUB.py` ne contiennent **aucun** algorithme de calcul.
-- Thème : toujours `apply_certus_theme()` et les jetons `CertusTheme`, jamais un hexadécimal.
 - Des inversions de couches existent déjà (`utils → ui`, `core → workers`, cycle
   `physics ↔ core`) : **n'en crée aucune nouvelle** ; si tu en as besoin, le symbole doit
   descendre dans `domain/` ou `core/`.
@@ -216,12 +194,11 @@ aux résultats scientifiques de `reports/`.
 - **Un fait, un seul endroit** : état dans `docs/ETAT.md`, règle ici.
 - **Cite une fonction, jamais un numéro de ligne** : les lignes bougent.
 - Pas de récit dans les documents vivants (« cette ligne disait… ») : `git log` le garde.
-- Contrôles : `python scripts\coherence_md.py` (un fait = une valeur dans tous les `.md`, archives
-  exclues), `python scripts\check_claude_md.py`, `python scripts\check_docs.py`. « 0 point à
-  instruire » ne veut pas dire « tout est cohérent » : ils ne lisent pas les phrases.
+- Les trois contrôles documentaires de §2 ne lisent pas les phrases : « 0 point à instruire » ne
+  veut pas dire « tout est cohérent ».
 - `pages/*.html` sont des rapports scientifiques **en anglais**, fidèles à ce que le code fait, sans
   affirmation non étayée : chaque page doit répondre « oui » à *décrit-elle exactement ce que fait le
-  code, sans enjolivement ?* Ordre de relecture : METAL, STRAT, INDEX et INDEX SPLINE, RE et DESIGN, le reste.
+  code, sans enjolivement ?*
 - La vitrine `pages/CERTUS_STRAT.html` a un régime strict : tout nombre sourçable dans le code
   ou dans `reports/`, la limite montrée, la structure revérifiée (`python scripts\verifier_html.py pages\CERTUS_STRAT.html`).
 

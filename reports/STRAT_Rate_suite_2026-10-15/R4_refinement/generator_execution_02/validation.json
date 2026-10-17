@@ -1,0 +1,31 @@
+{
+  "started_utc": "2026-10-15T13:05:10.087037+00:00",
+  "checks": [
+    {
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-m",
+        "ruff",
+        "check",
+        "scratch/rate_R4_candidates.py",
+        "scratch/verify_rate_R4_candidates.py"
+      ],
+      "exit_code": 0,
+      "log": "check_00.log"
+    },
+    {
+      "command": [
+        "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+        "-X",
+        "utf8",
+        "-X",
+        "cpu_count=24",
+        "scratch/verify_rate_R4_candidates.py"
+      ],
+      "exit_code": 0,
+      "log": "check_01.log"
+    }
+  ],
+  "prior_failure": "Verifier assumed witness_reset_layers always exists; corrected to require exact presence and value preservation, generator unchanged; first source/log preserved",
+  "status": "GO"
+}

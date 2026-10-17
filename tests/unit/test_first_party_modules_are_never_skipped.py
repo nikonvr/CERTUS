@@ -29,17 +29,17 @@ def _first_party_names(files: list[str]) -> set[str]:
 
 
 def _skipped_imports(tree: ast.AST) -> list[tuple[int, str]]:
-    found = []
-    for node in ast.walk(tree):
+    return [
+        (node.lineno, node.args[0].value)
+        for node in ast.walk(tree)
         if (
             isinstance(node, ast.Call)
             and getattr(node.func, "attr", getattr(node.func, "id", None)) == "importorskip"
             and node.args
             and isinstance(node.args[0], ast.Constant)
             and isinstance(node.args[0].value, str)
-        ):
-            found.append((node.lineno, node.args[0].value))
-    return found
+        )
+    ]
 
 
 def test_no_test_importorskips_a_first_party_module() -> None:

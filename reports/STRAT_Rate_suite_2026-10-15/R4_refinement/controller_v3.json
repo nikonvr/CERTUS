@@ -1,0 +1,746 @@
+{
+    "status":  "search_complete_confirmation_pending",
+    "pid":  39892,
+    "started_utc":  "2026-10-15T13:45:50.5299299Z",
+    "runs":  [
+                 {
+                     "pid":  32436,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_001",
+                     "ended_utc":  "2026-10-15T13:25:00.3534474Z"
+                 },
+                 {
+                     "pid":  45980,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_002\\measurement",
+                     "ended_utc":  "2026-10-15T13:25:21.6487594Z"
+                 },
+                 {
+                     "pid":  49500,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_002",
+                     "ended_utc":  "2026-10-15T13:25:22.0447679Z"
+                 },
+                 {
+                     "pid":  14648,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_003\\measurement",
+                     "ended_utc":  "2026-10-15T13:25:31.9779308Z"
+                 },
+                 {
+                     "pid":  24028,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_003",
+                     "ended_utc":  "2026-10-15T13:25:32.3677280Z"
+                 },
+                 {
+                     "pid":  21516,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_004\\measurement",
+                     "ended_utc":  "2026-10-15T13:25:42.8466455Z"
+                 },
+                 {
+                     "pid":  52124,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_004",
+                     "ended_utc":  "2026-10-15T13:25:43.2813145Z"
+                 },
+                 {
+                     "pid":  7244,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_005\\measurement",
+                     "ended_utc":  "2026-10-15T13:25:53.9751390Z"
+                 },
+                 {
+                     "pid":  27984,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_005",
+                     "ended_utc":  "2026-10-15T13:25:54.4472262Z"
+                 },
+                 {
+                     "pid":  10336,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_006\\measurement",
+                     "ended_utc":  "2026-10-15T13:26:06.1857228Z"
+                 },
+                 {
+                     "pid":  28156,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_006",
+                     "ended_utc":  "2026-10-15T13:26:06.7811682Z"
+                 },
+                 {
+                     "pid":  54764,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_007\\measurement",
+                     "ended_utc":  "2026-10-15T13:26:17.6184007Z"
+                 },
+                 {
+                     "pid":  5232,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_007",
+                     "ended_utc":  "2026-10-15T13:26:18.0995613Z"
+                 },
+                 {
+                     "pid":  26556,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_008\\measurement",
+                     "ended_utc":  "2026-10-15T13:26:29.4827697Z"
+                 },
+                 {
+                     "pid":  37564,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_008",
+                     "ended_utc":  "2026-10-15T13:26:30.0437729Z"
+                 },
+                 {
+                     "pid":  39444,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_009\\measurement",
+                     "ended_utc":  "2026-10-15T13:26:41.0256346Z"
+                 },
+                 {
+                     "pid":  29800,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_009",
+                     "ended_utc":  "2026-10-15T13:26:41.5179885Z"
+                 },
+                 {
+                     "pid":  43088,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_010\\measurement",
+                     "ended_utc":  "2026-10-15T13:26:52.3814263Z"
+                 },
+                 {
+                     "pid":  35528,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_010",
+                     "ended_utc":  "2026-10-15T13:26:52.8732559Z"
+                 },
+                 {
+                     "pid":  49840,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_011\\measurement",
+                     "ended_utc":  "2026-10-15T13:27:03.4134033Z"
+                 },
+                 {
+                     "pid":  28684,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_011",
+                     "ended_utc":  "2026-10-15T13:27:03.8932725Z"
+                 },
+                 {
+                     "pid":  52888,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_012\\measurement",
+                     "ended_utc":  "2026-10-15T13:27:14.1899601Z"
+                 },
+                 {
+                     "pid":  47992,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_012",
+                     "ended_utc":  "2026-10-15T13:27:14.6249651Z"
+                 },
+                 {
+                     "pid":  22740,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_013\\measurement",
+                     "ended_utc":  "2026-10-15T13:27:24.3506558Z"
+                 },
+                 {
+                     "pid":  44564,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_013",
+                     "ended_utc":  "2026-10-15T13:27:24.7486580Z"
+                 },
+                 {
+                     "pid":  44720,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_014\\measurement",
+                     "ended_utc":  "2026-10-15T13:27:33.9338025Z"
+                 },
+                 {
+                     "pid":  47132,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_014",
+                     "ended_utc":  "2026-10-15T13:27:34.5168060Z"
+                 },
+                 {
+                     "pid":  52124,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_015\\measurement",
+                     "ended_utc":  "2026-10-15T13:27:45.6599094Z"
+                 },
+                 {
+                     "pid":  42136,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_015",
+                     "ended_utc":  "2026-10-15T13:27:46.1937932Z"
+                 },
+                 {
+                     "pid":  40808,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_016\\measurement",
+                     "ended_utc":  "2026-10-15T13:27:57.1677582Z"
+                 },
+                 {
+                     "pid":  52664,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_016",
+                     "ended_utc":  "2026-10-15T13:27:57.6887619Z"
+                 },
+                 {
+                     "pid":  39400,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_017\\measurement",
+                     "ended_utc":  "2026-10-15T13:28:08.6461574Z"
+                 },
+                 {
+                     "pid":  39180,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_017",
+                     "ended_utc":  "2026-10-15T13:28:09.1671645Z"
+                 },
+                 {
+                     "pid":  32260,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_018\\measurement",
+                     "ended_utc":  "2026-10-15T13:28:20.5414416Z"
+                 },
+                 {
+                     "pid":  29092,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_018",
+                     "ended_utc":  "2026-10-15T13:28:21.0804509Z"
+                 },
+                 {
+                     "pid":  2712,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_019\\measurement",
+                     "ended_utc":  "2026-10-15T13:28:32.2230983Z"
+                 },
+                 {
+                     "pid":  47348,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_019",
+                     "ended_utc":  "2026-10-15T13:28:32.7574918Z"
+                 },
+                 {
+                     "pid":  12568,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_020\\measurement",
+                     "ended_utc":  "2026-10-15T13:28:43.6982979Z"
+                 },
+                 {
+                     "pid":  6100,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_020",
+                     "ended_utc":  "2026-10-15T13:28:44.2382762Z"
+                 },
+                 {
+                     "pid":  43904,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_021\\measurement",
+                     "ended_utc":  "2026-10-15T13:28:55.2403704Z"
+                 },
+                 {
+                     "pid":  43024,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_021",
+                     "ended_utc":  "2026-10-15T13:28:55.7593763Z"
+                 },
+                 {
+                     "pid":  28540,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_022\\measurement",
+                     "ended_utc":  "2026-10-15T13:29:07.1067747Z"
+                 },
+                 {
+                     "pid":  28868,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_022",
+                     "ended_utc":  "2026-10-15T13:29:07.6687571Z"
+                 },
+                 {
+                     "pid":  38492,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_023\\measurement",
+                     "ended_utc":  "2026-10-15T13:29:18.2966624Z"
+                 },
+                 {
+                     "pid":  812,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_023",
+                     "ended_utc":  "2026-10-15T13:29:19.0196750Z"
+                 },
+                 {
+                     "pid":  6304,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_024\\measurement",
+                     "ended_utc":  "2026-10-15T13:29:29.2704938Z"
+                 },
+                 {
+                     "pid":  53584,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_024",
+                     "ended_utc":  "2026-10-15T13:29:29.6684960Z"
+                 },
+                 {
+                     "pid":  54452,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_025\\measurement",
+                     "ended_utc":  "2026-10-15T13:29:39.8879204Z"
+                 },
+                 {
+                     "pid":  18740,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_025",
+                     "ended_utc":  "2026-10-15T13:29:40.2849263Z"
+                 },
+                 {
+                     "pid":  46468,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_026\\measurement",
+                     "ended_utc":  "2026-10-15T13:29:50.3878867Z"
+                 },
+                 {
+                     "pid":  26400,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_026",
+                     "ended_utc":  "2026-10-15T13:29:50.7995300Z"
+                 },
+                 {
+                     "pid":  49504,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_027\\measurement",
+                     "ended_utc":  "2026-10-15T13:30:00.8546075Z"
+                 },
+                 {
+                     "pid":  26236,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_027",
+                     "ended_utc":  "2026-10-15T13:30:01.2566111Z"
+                 },
+                 {
+                     "pid":  6548,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_028\\measurement",
+                     "ended_utc":  "2026-10-15T13:30:12.0181235Z"
+                 },
+                 {
+                     "pid":  8620,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_028",
+                     "ended_utc":  "2026-10-15T13:30:12.4771333Z"
+                 },
+                 {
+                     "pid":  51636,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_029\\measurement",
+                     "ended_utc":  "2026-10-15T13:30:23.8944982Z"
+                 },
+                 {
+                     "pid":  54884,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_029",
+                     "ended_utc":  "2026-10-15T13:30:24.4095035Z"
+                 },
+                 {
+                     "pid":  43040,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_030\\measurement",
+                     "ended_utc":  "2026-10-15T13:30:36.0684625Z"
+                 },
+                 {
+                     "pid":  5712,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_030",
+                     "ended_utc":  "2026-10-15T13:30:36.5810014Z"
+                 },
+                 {
+                     "pid":  13172,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_031\\measurement",
+                     "ended_utc":  "2026-10-15T13:30:48.2255088Z"
+                 },
+                 {
+                     "pid":  31228,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_031",
+                     "ended_utc":  "2026-10-15T13:30:48.8745250Z"
+                 },
+                 {
+                     "pid":  48572,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_032\\measurement",
+                     "ended_utc":  "2026-10-15T13:31:00.9128512Z"
+                 },
+                 {
+                     "pid":  12440,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_032",
+                     "ended_utc":  "2026-10-15T13:31:01.5198646Z"
+                 },
+                 {
+                     "pid":  32788,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_033\\measurement",
+                     "ended_utc":  "2026-10-15T13:31:13.4078554Z"
+                 },
+                 {
+                     "pid":  54812,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_033",
+                     "ended_utc":  "2026-10-15T13:31:14.0008644Z"
+                 },
+                 {
+                     "pid":  46640,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_034\\measurement",
+                     "ended_utc":  "2026-10-15T13:31:25.2256554Z"
+                 },
+                 {
+                     "pid":  47948,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_034",
+                     "ended_utc":  "2026-10-15T13:31:25.7776716Z"
+                 },
+                 {
+                     "pid":  31076,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_035\\measurement",
+                     "ended_utc":  "2026-10-15T13:31:37.0969504Z"
+                 },
+                 {
+                     "pid":  49980,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_035",
+                     "ended_utc":  "2026-10-15T13:31:37.6433743Z"
+                 },
+                 {
+                     "pid":  22984,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_036\\measurement",
+                     "ended_utc":  "2026-10-15T13:31:47.1407018Z"
+                 },
+                 {
+                     "pid":  45912,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_036",
+                     "ended_utc":  "2026-10-15T13:31:47.7457053Z"
+                 },
+                 {
+                     "pid":  39996,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_037\\measurement",
+                     "ended_utc":  "2026-10-15T13:31:59.0210052Z"
+                 },
+                 {
+                     "pid":  37380,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_037",
+                     "ended_utc":  "2026-10-15T13:31:59.5730135Z"
+                 },
+                 {
+                     "pid":  25140,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_038\\measurement",
+                     "ended_utc":  "2026-10-15T13:32:10.7194309Z"
+                 },
+                 {
+                     "pid":  46644,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_038",
+                     "ended_utc":  "2026-10-15T13:32:11.2542849Z"
+                 },
+                 {
+                     "pid":  43164,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_039\\measurement",
+                     "ended_utc":  "2026-10-15T13:32:23.0168895Z"
+                 },
+                 {
+                     "pid":  33004,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_039",
+                     "ended_utc":  "2026-10-15T13:32:23.6084062Z"
+                 },
+                 {
+                     "pid":  44288,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_040\\measurement",
+                     "ended_utc":  "2026-10-15T13:32:35.3386534Z"
+                 },
+                 {
+                     "pid":  20016,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_040",
+                     "ended_utc":  "2026-10-15T13:32:35.9136033Z"
+                 },
+                 {
+                     "pid":  49888,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_041\\measurement",
+                     "ended_utc":  "2026-10-15T13:32:47.1297438Z"
+                 },
+                 {
+                     "pid":  40720,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_041",
+                     "ended_utc":  "2026-10-15T13:32:47.6898606Z"
+                 },
+                 {
+                     "pid":  50712,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_042\\measurement",
+                     "ended_utc":  "2026-10-15T13:32:59.7957291Z"
+                 },
+                 {
+                     "pid":  49028,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_042",
+                     "ended_utc":  "2026-10-15T13:33:00.3557386Z"
+                 },
+                 {
+                     "pid":  17968,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_043\\measurement",
+                     "ended_utc":  "2026-10-15T13:33:12.8954778Z"
+                 },
+                 {
+                     "pid":  25928,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_043",
+                     "ended_utc":  "2026-10-15T13:33:13.5094899Z"
+                 },
+                 {
+                     "pid":  32716,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_044\\measurement",
+                     "ended_utc":  "2026-10-15T13:33:25.7658317Z"
+                 },
+                 {
+                     "pid":  14228,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_044",
+                     "ended_utc":  "2026-10-15T13:33:26.3585918Z"
+                 },
+                 {
+                     "pid":  11464,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_045\\measurement",
+                     "ended_utc":  "2026-10-15T13:33:37.9787913Z"
+                 },
+                 {
+                     "pid":  2144,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps\\step_045",
+                     "ended_utc":  "2026-10-15T13:33:38.4981183Z"
+                 },
+                 {
+                     "pid":  28992,
+                     "exit_code":  null,
+                     "exit_code_observed":  false,
+                     "adopted_verdict":  "GO",
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_046\\measurement",
+                     "adoption_proof":  "groups/group_046/adoption_without_parent_exit.json"
+                 },
+                 {
+                     "pid":  50900,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps_v2\\step_001",
+                     "ended_utc":  "2026-10-15T13:38:44.8808834Z"
+                 },
+                 {
+                     "pid":  50328,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_047\\measurement",
+                     "ended_utc":  "2026-10-15T13:38:56.1731461Z"
+                 },
+                 {
+                     "pid":  36932,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps_v2\\step_002",
+                     "ended_utc":  "2026-10-15T13:38:56.7015501Z"
+                 },
+                 {
+                     "pid":  14188,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_048\\measurement",
+                     "ended_utc":  "2026-10-15T13:39:06.4735069Z"
+                 },
+                 {
+                     "pid":  48436,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps_v2\\step_003",
+                     "ended_utc":  "2026-10-15T13:39:07.0975223Z"
+                 },
+                 {
+                     "pid":  45452,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_049\\measurement",
+                     "ended_utc":  "2026-10-15T13:39:17.4942142Z"
+                 },
+                 {
+                     "pid":  35720,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps_v2\\step_004",
+                     "ended_utc":  "2026-10-15T13:39:17.9462216Z"
+                 },
+                 {
+                     "pid":  45548,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_050\\measurement",
+                     "ended_utc":  "2026-10-15T13:39:29.2344278Z"
+                 },
+                 {
+                     "pid":  9320,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps_v2\\step_005",
+                     "ended_utc":  "2026-10-15T13:39:29.8213122Z"
+                 },
+                 {
+                     "pid":  28868,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_051\\measurement",
+                     "ended_utc":  "2026-10-15T13:39:41.6459678Z"
+                 },
+                 {
+                     "pid":  54480,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps_v2\\step_006",
+                     "ended_utc":  "2026-10-15T13:39:42.2669786Z"
+                 },
+                 {
+                     "pid":  49184,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_052\\measurement",
+                     "ended_utc":  "2026-10-15T13:39:54.1666180Z"
+                 },
+                 {
+                     "pid":  33896,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps_v2\\step_007",
+                     "ended_utc":  "2026-10-15T13:39:54.7756823Z"
+                 },
+                 {
+                     "pid":  29372,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_053\\measurement",
+                     "ended_utc":  "2026-10-15T13:40:05.7603939Z"
+                 },
+                 {
+                     "pid":  51100,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps_v2\\step_008",
+                     "ended_utc":  "2026-10-15T13:40:06.2749280Z"
+                 },
+                 {
+                     "pid":  13860,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_054\\measurement",
+                     "ended_utc":  "2026-10-15T13:40:16.4131738Z"
+                 },
+                 {
+                     "pid":  32952,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps_v2\\step_009",
+                     "ended_utc":  "2026-10-15T13:40:16.8294841Z"
+                 },
+                 {
+                     "pid":  25340,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_055\\measurement",
+                     "ended_utc":  "2026-10-15T13:40:27.0601172Z"
+                 },
+                 {
+                     "pid":  38652,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps_v2\\step_010",
+                     "ended_utc":  "2026-10-15T13:40:27.5101251Z"
+                 },
+                 {
+                     "pid":  17760,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_056\\measurement",
+                     "ended_utc":  "2026-10-15T13:40:38.5656142Z"
+                 },
+                 {
+                     "pid":  2968,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps_v2\\step_011",
+                     "ended_utc":  "2026-10-15T13:40:39.1176240Z"
+                 },
+                 {
+                     "pid":  48836,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_057\\measurement",
+                     "ended_utc":  "2026-10-15T13:40:48.9644969Z"
+                 },
+                 {
+                     "pid":  26796,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps_v2\\step_012",
+                     "ended_utc":  "2026-10-15T13:40:49.6195082Z"
+                 },
+                 {
+                     "pid":  1196,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_058\\measurement",
+                     "ended_utc":  "2026-10-15T13:41:01.6044517Z"
+                 },
+                 {
+                     "pid":  30556,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps_v2\\step_013",
+                     "ended_utc":  "2026-10-15T13:41:02.2204542Z"
+                 },
+                 {
+                     "pid":  29308,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_059\\measurement",
+                     "ended_utc":  "2026-10-15T13:41:13.9036574Z"
+                 },
+                 {
+                     "pid":  8452,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps_v2\\step_014",
+                     "ended_utc":  "2026-10-15T13:41:14.5139216Z"
+                 },
+                 {
+                     "pid":  11884,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_060\\measurement",
+                     "ended_utc":  "2026-10-15T13:41:26.5612605Z"
+                 },
+                 {
+                     "pid":  37264,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_061\\measurement",
+                     "ended_utc":  "2026-10-15T13:46:02.4993713Z"
+                 },
+                 {
+                     "pid":  37016,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps_v3\\step_01",
+                     "ended_utc":  "2026-10-15T13:46:03.1016972Z"
+                 },
+                 {
+                     "pid":  36516,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_062\\measurement",
+                     "ended_utc":  "2026-10-15T13:46:13.4266891Z"
+                 },
+                 {
+                     "pid":  45632,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\controller_steps_v3\\step_02",
+                     "ended_utc":  "2026-10-15T13:46:13.8993004Z"
+                 }
+             ],
+    "current_pid":  null,
+    "current_manifest":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_062\\manifest.json",
+    "recovery_from":  "controller_v2.json",
+    "persistence_retries":  0,
+    "updated_utc":  "2026-10-15T13:46:13.9963198Z"
+}

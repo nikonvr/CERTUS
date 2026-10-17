@@ -1,0 +1,235 @@
+{
+  "audited_utc": "2026-10-15T08:24:05.335727+00:00",
+  "status": "diagnostic",
+  "transition_counts": {
+    "prefix_present": 1113,
+    "prefix_geometry_inherited": 1033,
+    "internal_present": 348,
+    "internal_geometry_inherited": 348,
+    "prefix_new_geometry": 80,
+    "prefix_wavelength_changed": 72,
+    "prefix_direct_move": 80
+  },
+  "joint_new_window_widths": {
+    "2": 14765,
+    "4": 12124,
+    "6": 8711,
+    "8": 74,
+    "10": 84,
+    "21": 20,
+    "23": 19,
+    "25": 16,
+    "11": 27,
+    "13": 13,
+    "15": 20,
+    "14": 12,
+    "16": 8,
+    "17": 7,
+    "18": 10,
+    "19": 7,
+    "5": 80,
+    "7": 60,
+    "9": 75
+  },
+  "target_geometry_wavelengths": [
+    {
+      "geometry": "prefix",
+      "wavelength": 630.0,
+      "count": 1033
+    },
+    {
+      "geometry": "internal",
+      "wavelength": 691.0,
+      "count": 318
+    },
+    {
+      "geometry": "internal",
+      "wavelength": 690.0,
+      "count": 30
+    },
+    {
+      "geometry": "prefix",
+      "wavelength": 450.0,
+      "count": 5
+    },
+    {
+      "geometry": "prefix",
+      "wavelength": 460.0,
+      "count": 5
+    },
+    {
+      "geometry": "prefix",
+      "wavelength": 470.0,
+      "count": 5
+    },
+    {
+      "geometry": "prefix",
+      "wavelength": 480.0,
+      "count": 5
+    },
+    {
+      "geometry": "prefix",
+      "wavelength": 490.0,
+      "count": 5
+    },
+    {
+      "geometry": "prefix",
+      "wavelength": 500.0,
+      "count": 5
+    },
+    {
+      "geometry": "prefix",
+      "wavelength": 510.0,
+      "count": 5
+    },
+    {
+      "geometry": "prefix",
+      "wavelength": 520.0,
+      "count": 5
+    },
+    {
+      "geometry": "prefix",
+      "wavelength": 530.0,
+      "count": 5
+    },
+    {
+      "geometry": "prefix",
+      "wavelength": 550.0,
+      "count": 5
+    },
+    {
+      "geometry": "prefix",
+      "wavelength": 560.0,
+      "count": 5
+    },
+    {
+      "geometry": "prefix",
+      "wavelength": 570.0,
+      "count": 5
+    },
+    {
+      "geometry": "prefix",
+      "wavelength": 580.0,
+      "count": 5
+    },
+    {
+      "geometry": "prefix",
+      "wavelength": 590.0,
+      "count": 4
+    },
+    {
+      "geometry": "prefix",
+      "wavelength": 600.0,
+      "count": 3
+    },
+    {
+      "geometry": "prefix",
+      "wavelength": 561.0,
+      "count": 2
+    },
+    {
+      "geometry": "prefix",
+      "wavelength": 559.0,
+      "count": 2
+    },
+    {
+      "geometry": "prefix",
+      "wavelength": 562.0,
+      "count": 1
+    },
+    {
+      "geometry": "prefix",
+      "wavelength": 610.0,
+      "count": 2
+    },
+    {
+      "geometry": "prefix",
+      "wavelength": 563.0,
+      "count": 1
+    }
+  ],
+  "examples": [
+    {
+      "parent_id": 901453940,
+      "child_id": 901454973,
+      "old_windows": [
+        [
+          0,
+          5
+        ],
+        [
+          14,
+          17
+        ],
+        [
+          27,
+          29
+        ]
+      ],
+      "new_windows": [
+        [
+          0,
+          5
+        ],
+        [
+          14,
+          17
+        ],
+        [
+          25,
+          27
+        ]
+      ]
+    },
+    {
+      "parent_id": 901453940,
+      "child_id": 901454992,
+      "old_windows": [
+        [
+          0,
+          5
+        ],
+        [
+          14,
+          17
+        ],
+        [
+          27,
+          29
+        ]
+      ],
+      "new_windows": [
+        [
+          0,
+          5
+        ],
+        [
+          14,
+          17
+        ],
+        [
+          26,
+          28
+        ]
+      ]
+    }
+  ],
+  "parent_categories_by_scope_depth": [
+    {
+      "scope_num_runs": 50,
+      "category": "other",
+      "count": 164
+    },
+    {
+      "scope_num_runs": 300,
+      "category": "other",
+      "count": 448
+    },
+    {
+      "scope_num_runs": 300,
+      "category": "consensus",
+      "count": 492
+    }
+  ],
+  "audit_record_sha256": "ae0ca439c273873d98b2670a1103e9f80436f63a46fe427600a089f2b5411a36"
+}

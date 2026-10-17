@@ -1,0 +1,91 @@
+{
+  "status": "FROZEN_BEFORE_MEASUREMENT",
+  "frozen_utc": "2026-10-15T08:29:26.705692+00:00",
+  "experiment": "R3_h01_widths",
+  "max_R3_pairs": 3,
+  "pair_index": 1,
+  "hypothesis": "A 3-layer internal optical window is present by inheritance in R2 but never actively changed by the joint generator. Adding widths1..7 may expose useful Rate/optical geometries under the same480 proposal cap. This does not add missing fine wavelengths.",
+  "factor": "joint_window_widths_only",
+  "control_widths": [
+    2,
+    4,
+    6
+  ],
+  "variant_widths": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "unchanged": {
+    "window_shifts": [
+      -2,
+      -1,
+      0,
+      1,
+      2
+    ],
+    "joint_budget": 480,
+    "rate_budget": 240,
+    "rounds": 6,
+    "wavelength_stream": "parent-block wavelengths then the original10nm coarse legal grid",
+    "family_order": "legacy candidates before joint candidates; same parent/window round robin",
+    "full_cap": 36,
+    "depths": {
+      "robustness_num_runs": 300,
+      "n_screen_runs": 50,
+      "dp_top_k": 100,
+      "consensus_num_runs": 300
+    },
+    "base_seed": 101,
+    "consensus_seeds": [
+      41,
+      42,
+      43
+    ],
+    "consensus_std_weight": 0.35,
+    "slit_nm": 2,
+    "component": "r75x0.5",
+    "mode": "deep",
+    "prefix_budget": 0,
+    "balanced_rate_moves": false
+  },
+  "resources": {
+    "logical_cpus": 24,
+    "affinity_mask": "0xffffff",
+    "priority": "normal",
+    "library_threads": 23,
+    "python_startup_cpu_count": 24
+  },
+  "source_sha256": {
+    "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+    "certus/core/certus_strat_robustness.py": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+    "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+    "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e"
+  },
+  "R2_audit_sha256": "ae0ca439c273873d98b2670a1103e9f80436f63a46fe427600a089f2b5411a36",
+  "R2_transition_diagnostic_sha256": "76120fdd84c6bae0b96e9bacf2a76f70ece12856252af151ffdb9abc4b8ef8c5",
+  "script_sha256": {
+    "rate_native_R3_widths_probe.py": "0ed86e8107a9dd4507ef4660409bab70079b780a7c5ab9747636a61f2230b792",
+    "rate_joint_native_candidates_R3_widths.py": "dc22cd3411334bb58a800551917f80c0266bc97ca0daecfd280b51553836ea19",
+    "rate_R3_widths_guard.py": "490b73b7b73212d76f6622c7ac85051743ad5693a714236499a98272f72e3645",
+    "verify_rate_R3_widths.py": "66a9088a22a1276ef91d6d6ab4167bafed577d267e1754f269d822d879ed6840",
+    "rate_native_pipeline_trace.py": "df28ee632f11e6dcde87e53c78ce4dc35869194b2b579107f6725e7416562dc3",
+    "campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51"
+  },
+  "comparison": "Freeze finalists from both arms; replay at300 runs base101 and consensus41/42/43 with fixed9900001/9900006/9900008, plus the R0 reference. Complete consensus required; do not rank raw and consensus together.",
+  "conditional_confirmation": {
+    "only_after_search_gain": true,
+    "initial_groups": 3,
+    "additional_groups_max": 3,
+    "reserve_fresh_before_inspection": true,
+    "working_criterion": "positive mean and median relative gains, wins>=2/3; aim3/3 or5/6, report worst loss; no default activation"
+  },
+  "no_new_R0_or_R2": true,
+  "claims_are_permanent": true,
+  "supersedes_unmeasured_preparation": "protocol_v2.json; guard inventory refusal preserved in verification_01"
+}

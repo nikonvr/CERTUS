@@ -1,0 +1,79 @@
+{
+  "status": "OK_fine_incremental_gain_not_confirmed",
+  "rows": [
+    {
+      "run": "control",
+      "setting": {
+        "robustness_seed": 101,
+        "consensus_seed_list": [
+          41,
+          42,
+          43
+        ]
+      },
+      "reference_nm": 0.3967147882193691,
+      "prefix600_nm": 0.35395924517094074,
+      "fine598_nm": 0.35182778503400536,
+      "gain_vs_reference_percent": 11.31467858479297,
+      "gain_vs_prefix600_percent": 0.6021767098938202,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_1818",
+      "setting": {
+        "robustness_seed": 1818,
+        "consensus_seed_list": [
+          1818,
+          1819,
+          1820
+        ]
+      },
+      "reference_nm": 0.3987448119922726,
+      "prefix600_nm": 0.36341444651403754,
+      "fine598_nm": 0.366308300087977,
+      "gain_vs_reference_percent": 8.134654277313624,
+      "gain_vs_prefix600_percent": -0.7962956898653895,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_1919",
+      "setting": {
+        "robustness_seed": 1919,
+        "consensus_seed_list": [
+          1919,
+          1920,
+          1921
+        ]
+      },
+      "reference_nm": 0.40266997734099835,
+      "prefix600_nm": 0.36021897284726284,
+      "fine598_nm": 0.3611230993881194,
+      "gain_vs_reference_percent": 10.317848434400478,
+      "gain_vs_prefix600_percent": -0.25099359251126163,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_2020",
+      "setting": {
+        "robustness_seed": 2020,
+        "consensus_seed_list": [
+          2020,
+          2021,
+          2022
+        ]
+      },
+      "reference_nm": 0.4015458636871968,
+      "prefix600_nm": 0.3596928110357203,
+      "fine598_nm": 0.35715939021480253,
+      "gain_vs_reference_percent": 11.053898816144002,
+      "gain_vs_prefix600_percent": 0.7043290116427126,
+      "max_observed_crash_rate": 0
+    }
+  ],
+  "wins_vs_prefix600": 1,
+  "n_fresh_groups": 3,
+  "mean_gain_percent": -0.11432009024464618,
+  "median_gain_percent": -0.25099359251126163,
+  "decision": "Keep 600nm as retained independently confirmed prefix plan; 598nm has a better search score but loses on two fresh groups. No default change.",
+  "limits": "One component, fixed plans, three fresh seed groups, no formal confidence interval or machine validation."
+}

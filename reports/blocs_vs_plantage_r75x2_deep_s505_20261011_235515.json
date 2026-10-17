@@ -1,0 +1,38 @@
+{
+  "verdict": "ECHEC_RESULT_NONE",
+  "composant": "r75x2",
+  "mode": "deep",
+  "seed": 505,
+  "instrument": "782972bf",
+  "machine": "AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD | 16 threads",
+  "stamp": "2026-10-11T23:55:15",
+  "config": {
+    "monochromator_resolution_nm": 2.0,
+    "search_resolution": false,
+    "require_turning_point": 0,
+    "exploration_elargie": false,
+    "exploration_niveau": 0,
+    "rate_by_swing": false,
+    "rate_tail_sweep": [],
+    "rate_layer_sets": [],
+    "rate_tail_keep_optical": 0,
+    "consensus_seed_list": "(defaut du JSON)",
+    "overrides": null,
+    "overrides_tag": null,
+    "elargissement": null
+  },
+  "provenance": {
+    "certus_version": "26_05",
+    "git_commit": "782972bf331b6f0c1964a1f97b471bdfa04e105b",
+    "git_dirty": false,
+    "python": "3.14.8",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "numba": "0.67.0",
+    "numba_cache_key": "61c0ac0046c0",
+    "numba_cache_keyed": true,
+    "platform": "Windows-11-10.0.26200-SP0",
+    "machine": "AMD64",
+    "generated_at_utc": "2026-10-11T21:55:15+00:00"
+  }
+}

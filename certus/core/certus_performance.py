@@ -200,9 +200,7 @@ class PerformanceMonitor:
         if not self._metrics:
             return {"operations": [], "summary": {"total_operations": 0}}
 
-        operations = []
-        for metric in self._metrics.values():
-            operations.append(metric.to_dict())
+        operations = [metric.to_dict() for metric in self._metrics.values()]
 
         # Sort by requested metric
         if sort_by in ("total", "mean", "count", "p95", "max"):

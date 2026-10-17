@@ -1,0 +1,39 @@
+{
+  "checked_local": "2026-10-14T15:02:56.9630000+02:00",
+  "preflight": "GO",
+  "deadline_utc": "2026-10-15T06:00:00Z",
+  "status": "running",
+  "completed": 22,
+  "current": "r75x2_deep_s077_avec",
+  "current_pid": 7320,
+  "current_started": "2026-10-14T15:02:07",
+  "controller_pid": 24128,
+  "resources": [
+    {
+      "id": 7320,
+      "cpu_seconds": 617.65625,
+      "priority": "Normal",
+      "affinity": 65535
+    },
+    {
+      "id": 24128,
+      "cpu_seconds": 2.0625,
+      "priority": "Normal",
+      "affinity": 65535
+    },
+    {
+      "id": 51884,
+      "cpu_seconds": 0.28125,
+      "priority": "Normal",
+      "affinity": 65535
+    }
+  ],
+  "worktree_head": "da1af0825d5e09e8d0a5ff4f1cf42b802e0e30e7",
+  "tracked_changes": [],
+  "helper_sha256": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51",
+  "log_tail": [
+    "composant r75x2 | mode deep | graine 77 | require_turning_point=0 | fente 2 nm | elargi 0 | machine Intel64 Family 6 Model 183 Stepping 1, GenuineIntel | 16 threads",
+    "dialogues: reponse automatique OUI"
+  ],
+  "no_test_or_parallel_science_started": true
+}

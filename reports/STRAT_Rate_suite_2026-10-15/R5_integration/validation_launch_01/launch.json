@@ -1,0 +1,8 @@
+{
+  "pid": 37528,
+  "started_utc": "2026-10-15T19:00:51.2822353Z",
+  "script": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\run_rate_R5_validation.py",
+  "deadline_utc": "2026-10-16T06:00:00Z",
+  "new_scientific_measurement": false,
+  "sequence": "Ruff, Mypy, oracle, unit, UI, remaining, docs, C1cold, diff"
+}

@@ -12,6 +12,7 @@ Contains:
 
 import collections
 import concurrent.futures
+import copy
 import logging
 from typing import Any
 
@@ -32,11 +33,11 @@ from certus.core.certus_strat_ranking import (
     next_refinement_strategy_id,
 )
 from certus.utils.certus_strat_context import (
-    _blocks_signature,
     _dedupe_preserve_order_int,
     _default_consensus_seeds,
     _extract_rmse_p95_for_noise,
     _parse_origin_priority_map,
+    _plan_signature,
     _resolve_consensus_num_runs,
     _resolve_consensus_num_seeds,
     _resolve_consensus_seed_stride,
@@ -59,6 +60,24 @@ def _calculate_strategy_spectral_resolution(*args, **kwargs) -> Any:
 def _parse_noise_factors(*args, **kwargs) -> Any:
     from certus.core.certus_strat_robustness import _parse_noise_factors as parse_fn
     return parse_fn(*args, **kwargs)
+
+def _attach_slit_profiles(*args, **kwargs) -> Any:
+    from certus.core.certus_strat_robustness import _attach_slit_profiles as attach_fn
+    return attach_fn(*args, **kwargs)
+
+def _elite_rate_candidates(*args, **kwargs) -> Any:
+    from certus.core.certus_strat_robustness import _elite_rate_candidates as candidates_fn
+    return candidates_fn(*args, **kwargs)
+
+
+#: What a strategy carries besides its blocks, and what its children keep: the layers laid by Rate, the slit, the testglass swaps.
+#: A child of ELITE or of the local search is its parent with other blocks, not a new strategy.
+_INHERITED_KEYS = ("rate_layers", "monochromator_resolution_nm", "witness_reset_layers")
+
+
+def _inherited_by_children(parent: dict[str, Any]) -> dict[str, Any]:
+    """The parts of a strategy its children keep, as copies (a child can be edited without touching its parent)."""
+    return {key: copy.deepcopy(parent[key]) for key in _INHERITED_KEYS if parent.get(key) not in (None, [])}
 
 
 def _resolve_consensus_std_weight(params: dict[str, Any]) -> float:
@@ -770,7 +789,16 @@ def _apply_elite_refinement_if_enabled(
         f"{float(ctx.params.get('scan_wl_step', 0.0)):g} nm"
     )
     total_elite_added = 0
-    
+    # 🔑 WHICH PARENTS GET EXPLORED. The moves are tried parent after parent until `elite_max_candidates` (120) are kept,
+    # and a parent of K blocks has up to 4K - 2 of them: 📏 with ten near-duplicate parents of 11 blocks, the first four
+    # fill the budget (38, 40, 40 and 2 candidates), with 15 blocks the first three (56, 56, 8) -- `elite_parent_top_k`
+    # says ten. With `elite_round_robin` the parents take turns, one move each, every parent's moves in an order drawn
+    # from (robustness seed, round, parent rank): same budget, every parent explored. Off by default: the former order.
+    # Read from `params` only -- the configuration file does not route it (an option to measure, not yet to deliver).
+    round_robin = bool(ctx.params.get("elite_round_robin", False))
+    base_seed = _resolve_robustness_base_seed(ctx.params)
+    # 👤 2026-10-12: optics, a packet of Rate, optics at another wavelength: on by default (`r75x0.5` 0.4981 -> 0.3967 nm); `allow_rate = 0` is honoured.
+    rate_moves = bool(ctx.params.get("elite_rate_moves", True)) and bool(ctx.params.get("allow_rate", True))
     executor_cls = concurrent.futures.ThreadPoolExecutor
     worker_count = get_safe_worker_count()
 
@@ -797,9 +825,18 @@ def _apply_elite_refinement_if_enabled(
             max_candidates=elite_max_candidates,
             wl_neighbor_span=elite_wl_neighbor_span,
             existing_signatures=existing_signatures,
+            round_robin_seed=(base_seed, elite_round) if round_robin else None,
+            rate_moves=rate_moves,
+            max_rate_candidates=int(ctx.params.get("elite_rate_max_candidates", 120)),
+            balanced_rate_moves=bool(ctx.params.get("elite_rate_balanced_moves", False)),
+            **({"joint_candidates": int(ctx.params.get("elite_rate_joint_candidates", 0))} if ctx.params.get("elite_rate_joint_candidates", 0) else {}),
         )
+        if rate_moves:
+            n_rate = sum(1 for c in elite_candidates if str(c.get("origin_details", "")).startswith("ELITE_RATE"))
+            ctx.logger.info(f"[ELITE-RATE] Round {elite_round}: {n_rate} candidate(s) change the Rate layers of their parent." + (" [balanced families]" if bool(ctx.params.get("elite_rate_balanced_moves", False)) else ""))
         if ctx.strategy_id_cursor is not None:
             ctx.strategy_id_cursor.advance(_next_sid)
+        _attach_slit_profiles(elite_candidates, ctx.p_thick_nominal, ctx.params, ctx.logger)
         ctx.logger.info(
             "[ELITE] Round "
             f"{elite_round}/{elite_rounds}: generated={len(elite_candidates)} "
@@ -1059,7 +1096,7 @@ def _generate_local_search_neighborhood(
 
     def _push(blocks: list[dict[str, Any]], tag: str) -> None:
         nonlocal next_id
-        sig = _blocks_signature(blocks)
+        sig = _plan_signature(blocks, parent_strat.get("rate_layers"))
         if not sig or sig in seen_signatures:
             return
         n_blocks_local = len(blocks)
@@ -1078,6 +1115,7 @@ def _generate_local_search_neighborhood(
             "origin_details": f"LOCAL_SEARCH({tag}, parent={parent_sid})",
             "same_wl_kept": int(same_wl_kept),
             "parent_strategy_id": parent_sid,
+            **_inherited_by_children(parent_strat),
         }
         ok, _reason = _validate_strategy_blocks_contract(
             candidate,
@@ -1220,6 +1258,7 @@ def _apply_local_search_p_conforme(
                 ctx.strategy_id_cursor.advance(next_sid)
             if not neighborhood:
                 break
+            _attach_slit_profiles(neighborhood, ctx.p_thick_nominal, ctx.params, ctx.logger)
 
             eval_results: list[dict[str, Any]] = []
             with executor_cls(max_workers=worker_count) as executor:
@@ -1283,6 +1322,62 @@ def _apply_local_search_p_conforme(
 
 
 
+def _elite_moves(base_blocks: list[dict[str, Any]], wl_arr: np.ndarray, span: int) -> list[list[dict[str, Any]]]:
+    """The local moves around one parent, in the order ELITE has always tried them.
+
+    First the wavelength of each block, moved to its `span` neighbours on the control grid `wl_arr`; then each boundary
+    between two blocks, moved by one layer to the left, then to the right. Each move is a new list of blocks.
+    """
+    moves: list[list[dict[str, Any]]] = []
+    # 1) Wavelength local mutations (neighbor wavelengths around each block lambda)
+    for b_idx, blk in enumerate(base_blocks):
+        cur_wl = float(blk["wavelength"])
+        nearest = int(np.argmin(np.abs(wl_arr - cur_wl)))
+        for delta in range(-span, span + 1):
+            if delta == 0:
+                continue
+
+            idx_wl = nearest + delta
+            if idx_wl < 0 or idx_wl >= wl_arr.size:
+                continue
+
+            new_wl = float(wl_arr[idx_wl])
+            if abs(new_wl - cur_wl) < 1e-12:
+                continue
+
+            mutated = [dict(b) for b in base_blocks]
+            mutated[b_idx]["wavelength"] = new_wl
+            moves.append(mutated)
+
+    # 2) Boundary local shifts (+/- 1 layer between adjacent blocks)
+    for b_idx in range(len(base_blocks) - 1):
+        left = base_blocks[b_idx]
+        right = base_blocks[b_idx + 1]
+        left_len = int(left["end"]) - int(left["start"])
+        right_len = int(right["end"]) - int(right["start"])
+
+        # Shift boundary left by 1 (give one layer from left to right)
+        if left_len > 1:
+            mutated = [dict(b) for b in base_blocks]
+            new_boundary = int(mutated[b_idx]["end"]) - 1
+            mutated[b_idx]["end"] = new_boundary
+            mutated[b_idx + 1]["start"] = new_boundary
+            mutated[b_idx]["num_layers"] = mutated[b_idx]["end"] - mutated[b_idx]["start"]
+            mutated[b_idx + 1]["num_layers"] = mutated[b_idx + 1]["end"] - mutated[b_idx + 1]["start"]
+            moves.append(mutated)
+
+        # Shift boundary right by 1 (give one layer from right to left)
+        if right_len > 1:
+            mutated = [dict(b) for b in base_blocks]
+            new_boundary = int(mutated[b_idx]["end"]) + 1
+            mutated[b_idx]["end"] = new_boundary
+            mutated[b_idx + 1]["start"] = new_boundary
+            mutated[b_idx]["num_layers"] = mutated[b_idx]["end"] - mutated[b_idx]["start"]
+            mutated[b_idx + 1]["num_layers"] = mutated[b_idx + 1]["end"] - mutated[b_idx + 1]["start"]
+            moves.append(mutated)
+    return moves
+
+
 def _generate_elite_candidate_strategies(
     parent_results: list[dict[str, Any]],
     available_wls: list[float],
@@ -1291,32 +1386,42 @@ def _generate_elite_candidate_strategies(
     max_candidates: int = 120,
     wl_neighbor_span: int = 1,
     existing_signatures: set | None = None,
+    round_robin_seed: tuple[int, ...] | None = None,
+    rate_moves: bool = False,
+    max_rate_candidates: int = 0,
+    balanced_rate_moves: bool = False,
+    joint_candidates: int = 0,
 ) -> tuple[list[dict[str, Any]], int]:
     """
     Build local-neighborhood variants around top-ranked strategies.
     Preserves contract constraints (same n_blocks, contiguous coverage).
+
+    The moves of every parent (`_elite_moves`) are tried parent after parent until `max_candidates` are kept. With
+    `round_robin_seed`, the parents take turns instead, one move each, every parent's moves in an order drawn from the
+    seed (with the parent's rank): see `elite_round_robin` in `_apply_elite_refinement_if_enabled`.
+
+    With `rate_moves`, up to `max_rate_candidates` more change the Rate layers of their parent and nothing else (`elite_rate_moves`).
     """
     if not parent_results or not available_wls:
         return [], start_strategy_id
-
     wl_arr = np.array(sorted(set(float(w) for w in available_wls)), dtype=np.float64)
     if wl_arr.size == 0:
         return [], start_strategy_id
-
     seen = set(existing_signatures or set())
     out: list[dict[str, Any]] = []
     next_id = int(start_strategy_id)
     span = max(1, int(wl_neighbor_span))
     max_keep = max(1, int(max_candidates))
-
-    def _push_candidate(base_blocks: list[dict[str, Any]], parent_sid: Any) -> None:
+    def _push_candidate(
+        base_blocks: list[dict[str, Any]], parent_sid: Any, parent_strat: dict[str, Any], rate_layers: list[int] | None = None, limit: int | None = None
+    ) -> bool:
         nonlocal next_id
-        if len(out) >= max_keep:
-            return
+        if len(out) >= (max_keep if limit is None else limit):
+            return False
 
-        sig = _blocks_signature(base_blocks)
+        sig = _plan_signature(base_blocks, parent_strat.get("rate_layers") if rate_layers is None else rate_layers)
         if not sig or sig in seen:
-            return
+            return False
 
         n_blocks_local = len(base_blocks)
         same_wl_kept = 0
@@ -1331,10 +1436,13 @@ def _generate_elite_candidate_strategies(
             "total_cost": float("inf"),
             "blocks": base_blocks,
             "origin": "ELITE",
-            "origin_details": f"ELITE(parent={parent_sid})",
+            "origin_details": f"ELITE(parent={parent_sid})" if rate_layers is None else f"ELITE_RATE(parent={parent_sid})",
             "same_wl_kept": int(same_wl_kept),
             "parent_strategy_id": parent_sid,
+            **_inherited_by_children(parent_strat),
         }
+        if rate_layers is not None:
+            candidate["rate_layers"] = [int(i) for i in rate_layers]
 
         ok, _reason = _validate_strategy_blocks_contract(
             candidate,
@@ -1342,12 +1450,14 @@ def _generate_elite_candidate_strategies(
             expected_n_blocks=n_blocks_local,
         )
         if not ok:
-            return
+            return False
 
         out.append(candidate)
         seen.add(sig)
         next_id += 1
+        return True
 
+    per_parent: list[list[tuple[Any, dict[str, Any], list[dict[str, Any]]]]] = []
     for parent in parent_results:
         strat = parent.get("strategy", {})
         parent_sid = strat.get("strategy_id", "?")
@@ -1362,59 +1472,29 @@ def _generate_elite_candidate_strategies(
 
         if not base_blocks:
             continue
+        per_parent.append([(parent_sid, strat, mutated) for mutated in _elite_moves(base_blocks, wl_arr, span)])
 
-        # 1) Wavelength local mutations (neighbor wavelengths around each block lambda)
-        for b_idx, blk in enumerate(base_blocks):
-            cur_wl = float(blk["wavelength"])
-            nearest = int(np.argmin(np.abs(wl_arr - cur_wl)))
-            for delta in range(-span, span + 1):
-                if delta == 0:
-                    continue
+    if round_robin_seed is None:
+        ordered = [move for moves in per_parent for move in moves]
+    else:
+        for rank, moves in enumerate(per_parent):
+            order = np.random.default_rng([*round_robin_seed, rank]).permutation(len(moves))
+            per_parent[rank] = [moves[k] for k in order]
+        longest = max((len(moves) for moves in per_parent), default=0)
+        ordered = [moves[k] for k in range(longest) for moves in per_parent if k < len(moves)]
+    for parent_sid, parent_strat, mutated in ordered:
+        _push_candidate(mutated, parent_sid, parent_strat)
+        if len(out) >= max_keep:
+            break
 
-                idx_wl = nearest + delta
-                if idx_wl < 0 or idx_wl >= wl_arr.size:
-                    continue
-
-                new_wl = float(wl_arr[idx_wl])
-                if abs(new_wl - cur_wl) < 1e-12:
-                    continue
-
-                mutated = [dict(b) for b in base_blocks]
-                mutated[b_idx]["wavelength"] = new_wl
-                _push_candidate(mutated, parent_sid)
-                if len(out) >= max_keep:
-                    return out, next_id
-
-        # 2) Boundary local shifts (+/- 1 layer between adjacent blocks)
-        for b_idx in range(len(base_blocks) - 1):
-            left = base_blocks[b_idx]
-            right = base_blocks[b_idx + 1]
-            left_len = int(left["end"]) - int(left["start"])
-            right_len = int(right["end"]) - int(right["start"])
-
-            # Shift boundary left by 1 (give one layer from left to right)
-            if left_len > 1:
-                mutated = [dict(b) for b in base_blocks]
-                new_boundary = int(mutated[b_idx]["end"]) - 1
-                mutated[b_idx]["end"] = new_boundary
-                mutated[b_idx + 1]["start"] = new_boundary
-                mutated[b_idx]["num_layers"] = mutated[b_idx]["end"] - mutated[b_idx]["start"]
-                mutated[b_idx + 1]["num_layers"] = mutated[b_idx + 1]["end"] - mutated[b_idx + 1]["start"]
-                _push_candidate(mutated, parent_sid)
-                if len(out) >= max_keep:
-                    return out, next_id
-
-            # Shift boundary right by 1 (give one layer from right to left)
-            if right_len > 1:
-                mutated = [dict(b) for b in base_blocks]
-                new_boundary = int(mutated[b_idx]["end"]) + 1
-                mutated[b_idx]["end"] = new_boundary
-                mutated[b_idx + 1]["start"] = new_boundary
-                mutated[b_idx]["num_layers"] = mutated[b_idx]["end"] - mutated[b_idx]["start"]
-                mutated[b_idx + 1]["num_layers"] = mutated[b_idx + 1]["end"] - mutated[b_idx + 1]["start"]
-                _push_candidate(mutated, parent_sid)
-                if len(out) >= max_keep:
-                    return out, next_id
-
+    if rate_moves and max_rate_candidates > 0:
+        limit = len(out) + int(max_rate_candidates)
+        for parent_sid, parent_strat, base_blocks, layers in _elite_rate_candidates(parent_results, num_layers, balanced=balanced_rate_moves):
+            if len(out) >= limit:
+                break
+            _push_candidate([dict(b) for b in base_blocks], parent_sid, parent_strat, rate_layers=layers, limit=limit)
+    if rate_moves and joint_candidates > 0:
+        from certus.core.certus_strat_rate_moves import append_joint_candidates
+        append_joint_candidates(parent_results, available_wls, num_layers, joint_candidates, out, _push_candidate)
     return out, next_id
 

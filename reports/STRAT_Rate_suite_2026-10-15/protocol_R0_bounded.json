@@ -1,0 +1,41 @@
+{
+  "phase": "R0",
+  "status": "prepared_not_run",
+  "depths": {
+    "robustness_num_runs": 300,
+    "n_screen_runs": 50,
+    "dp_top_k": 100,
+    "consensus_num_runs": 300
+  },
+  "control": {
+    "robustness_seed": 101,
+    "consensus_seed_list": [
+      41,
+      42,
+      43
+    ]
+  },
+  "holdouts": [],
+  "plans_source_sha256": "d8586f8b4d69c9d4305dd58745bfc6a906dbf42e8ed3bd67735b92896709e445",
+  "requirements": [
+    "finish A2 and verify idle before any runtime test or measurement",
+    "same float32 SharedIndicesManager/Worker transport",
+    "strict unchanged relative1e-7 absolute1e-10 fixed-point tolerances",
+    "actual task coverage at300 for101/41/42/43 on all three plans",
+    "no candidate generation; preserve complete blocks/Rate/slit/witness plans",
+    "old motor and old guards preserved",
+    "no new native gain claimed from R0 controls"
+  ],
+  "prepared_utc": "2026-10-15T05:33:04.588440+00:00",
+  "previous_protocol_sha256": "6c49903371bd62c8a94ec55e9d80e1c58207de14c6108ced2749932c8d16d102",
+  "authorization_file": "../STRAT_RMSE_uniform_weights_2026-10-15/authorization_and_baseline.json",
+  "bounded_slot": "R0_control",
+  "measurement_quota": 1,
+  "resources": {
+    "logical_cpus": 24,
+    "affinity_mask": "0xffffff",
+    "priority": "normal",
+    "library_threads": 23
+  },
+  "source_context": "new validated RMSE context to be created after full validation GO"
+}

@@ -104,9 +104,11 @@ class _ExcelExportMixin:
         }
         solution_rows = []
         if isinstance(self._last_result, dict):
-            for key in ("d_nm", "mse", "rmse", "x_encoding", "K_sigma", "n_seg_mesh"):
-                if key in self._last_result:
-                    solution_rows.append({"Parameter": key, "Value": str(self._last_result.get(key))})
+            solution_rows.extend(
+                {"Parameter": key, "Value": str(self._last_result.get(key))}
+                for key in ("d_nm", "mse", "rmse", "x_encoding", "K_sigma", "n_seg_mesh")
+                if key in self._last_result
+            )
         solution_df = pd.DataFrame(solution_rows or [{"Parameter": "status", "Value": "no solution fields"}])
         spectra_df = self.df if isinstance(getattr(self, "df", None), pd.DataFrame) else pd.DataFrame()
         manifest_dict = self._last_result.get("run_manifest") if isinstance(self._last_result, dict) else None

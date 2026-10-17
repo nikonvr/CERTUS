@@ -1,0 +1,83 @@
+"""Copy validated R5 snapshots into a new managed checkout and record exact provenance."""
+
+from __future__ import annotations
+
+import argparse
+import ast
+import hashlib
+import json
+import subprocess
+from datetime import UTC, datetime
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+OUTPUT = ROOT / "reports/STRAT_Rate_suite_2026-10-15/R5_integration"
+
+
+def sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def git(worktree: Path, *args: str) -> str:
+    return subprocess.check_output(["git", *args], cwd=worktree, encoding="utf-8").strip()
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--worktree", required=True, type=Path)
+    args = parser.parse_args()
+    worktree = args.worktree.resolve()
+    assert worktree.name == ROOT.name and worktree.parent.name == "rate-r5-native"
+    validation_file = OUTPUT / "full_validation_01/validation.json"
+    validation = json.loads(validation_file.read_text(encoding="utf-8"))
+    assert validation["status"] == "GO" and len(validation["checks"]) == 11
+    assert all(check["exit_code"] == 0 for check in validation["checks"])
+    assert git(worktree, "rev-parse", "HEAD") == "da1af0825d5e09e8d0a5ff4f1cf42b802e0e30e7"
+    assert not git(worktree, "status", "--porcelain", "--untracked-files=normal")
+    reference_file = OUTPUT / "reference_context.json"
+    assert not reference_file.exists()
+    for name, digest in validation["source_sha256"].items():
+        snapshot = OUTPUT / "full_validation_01/sources" / (name.replace("/", "__") + ".txt")
+        assert sha(snapshot) == sha(ROOT / name) == digest, name
+        target = worktree / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(snapshot.read_bytes())
+        assert sha(target) == digest
+    package_hashes = {}
+    differences = []
+    for source in sorted((ROOT / "certus").rglob("*.py")):
+        name = source.relative_to(ROOT).as_posix()
+        target = worktree / name
+        assert target.exists(), name
+        original, measured = source.read_bytes(), target.read_bytes()
+        same_text = original.replace(b"\r\n", b"\n") == measured.replace(b"\r\n", b"\n")
+        same_ast = ast.dump(ast.parse(original)) == ast.dump(ast.parse(measured))
+        assert same_text and same_ast, name
+        package_hashes[name] = sha(target)
+        if original != measured:
+            differences.append({"name": name, "root_sha256": sha(source), "measurement_sha256": sha(target),
+                                "normalized_text_equal": same_text, "AST_equal": same_ast})
+    assert {p.relative_to(worktree).as_posix() for p in (worktree / "certus").rglob("*.py")} == set(package_hashes)
+    tracked = git(worktree, "diff", "--name-only", "HEAD").splitlines()
+    untracked = git(worktree, "ls-files", "--others", "--exclude-standard").splitlines()
+    assert set(tracked) | set(untracked) == set(validation["source_sha256"]), (tracked, untracked)
+    design = "reports/serie_echelle_r75/cfg_x0.5.json"
+    assert sha(ROOT / design) == sha(worktree / design)
+    context = {"status": "GO", "created_utc": datetime.now(UTC).isoformat(), "worktree": str(worktree),
+               "commit": git(worktree, "rev-parse", "HEAD"), "validation_sha256": sha(validation_file),
+               "source_sha256": validation["source_sha256"], "tracked_dirty_paths": tracked,
+               "untracked_source_paths": untracked, "package_sha256": package_hashes,
+               "package_line_ending_differences": differences, "design_sha256": sha(worktree / design),
+               "copy_policy": "Exact validated snapshots, including three new production modules and all validated tests; historical contexts unchanged",
+               "builder_sha256": sha(Path(__file__))}
+    snapshot_dir = OUTPUT / "context_snapshot"
+    snapshot_dir.mkdir(exist_ok=False)
+    (snapshot_dir / "tracked.patch").write_bytes(subprocess.check_output(["git", "diff", "HEAD"], cwd=worktree))
+    (snapshot_dir / "builder.py.txt").write_bytes(Path(__file__).read_bytes())
+    reference_file.write_text(json.dumps(context, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(json.dumps({"status": "GO", "copied": len(validation["source_sha256"]), "package_files": len(package_hashes),
+                      "line_ending_differences": len(differences), "untracked_sources": untracked}))
+
+
+if __name__ == "__main__":
+    main()

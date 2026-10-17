@@ -1,0 +1,12 @@
+{
+  "started_utc": "2026-10-15T23:40:37.8617974Z",
+  "case": "c01_s77",
+  "controller_pid": 20680,
+  "controller_script": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\run_rate_R6_fresh_v2.ps1",
+  "controller_sha256": "be8ce4ec0dc519ae9570d29b5c96f3a5a764e3e258001a7bd4a0ca039358a13f",
+  "invocation": "Windows PowerShell5.1 -EncodedCommand exact frozen v2 source; hidden; default case77",
+  "groups": 3,
+  "plans": 6,
+  "deadline_utc": "2026-10-16T06:00:00Z",
+  "checks": "Fresh verifier02 10 checks, PS5.1 function identity, Ruff/docs/diff GO; old failed preparation preserved; no old claim reused"
+}

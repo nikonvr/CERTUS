@@ -1,0 +1,184 @@
+{
+  "status": "BOUNDED_PROGRAM_STOPPED_EARLY",
+  "recorded_utc": "2026-10-16T04:06:16.499287+00:00",
+  "reason": "48c same full finalist plan and0% fresh gain; apply the predeclared conditional early stop",
+  "scientific_sources_unchanged_since_R5_validation": {
+    "certus/core/certus_strat_consensus.py": "249bd447f4db3b4f9c75cdb34bc68a9988d1810e83a42f678558f5c74e1c2656",
+    "certus/core/certus_strat_robustness.py": "5e12ced2f99a45175a5546499c405c89c246b481cbf076af1769ef94419ed89e",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+    "certus/core/certus_strat_leviers.py": "deea3efd1b33d83cc1dea3afdb362c01e5b0acc39fc69b5fd86d5ef4c25270cb",
+    "certus/core/certus_strat_rate_moves.py": "5cc1e6092e972ba9b9e8d97057332509c73a617260b2682aa7748c8bdadd99dc",
+    "certus/core/certus_strat_rate_post.py": "b373832d5bdd6a9c3f5048242978209139f6e2443338d55ae78fe027910d63f3",
+    "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+    "certus/workers/certus_strat_workers.py": "459a1297d494b7d94231978f6a81ec07a96ebabc1755d9f2dda0114d856e5834",
+    "certus/workers/certus_strat_workers_pipeline.py": "4119bf41570968d55d94543a5aa58ab7df62d330abdf0a447ff566f0b8f4f3a3",
+    "certus/workers/certus_strat_workers_rate.py": "ac4df2ce33ab952be31a04a12f7b1b5fd5b346173e0a4062b9aecfb92238ac62",
+    "scripts/probe_blocs_vs_plantage.py": "e8636c3dee7468e1a4e2ca2357da73447ecdb9d0d746e0b1509fe2f1d203d2cf",
+    "tests/unit/test_strat_rate_final_refinement.py": "1b5df0923acc37d3764f08f05fcd52c13e2e1c340f2220164a68f3767a6c45a7",
+    "tests/unit/test_probe_keeps_consensus_score_provenance.py": "7a1bf56facab7fe9bbde88d4064d474cee42f8b0270738759df99676bfab0827",
+    "tests/performance/test_performance.py": "736fe81e289bcb2ac72dd56c6bd7d6cdddf9de9a20528504fddf148a169af6c2",
+    "tests/unit/test_strat_elite_rate_moves.py": "574f08fc5df532759a02fc1a2b9f632e69296f10a00307bf67b071d2073735e4",
+    "tests/unit/test_strat_spectral_target.py": "a1ecf68dc60be63495bbec630bfa93b24a7fa69660cc40aa36046e1cd7e11f5c"
+  },
+  "package_sources_verified": 321,
+  "R6_cases": {
+    "c01_s77": {
+      "scientific_pass": true,
+      "own": {
+        "by_group_pct": [
+          2.108274216821393,
+          1.0523238841518734,
+          0.6016260777836901
+        ],
+        "evaluable_groups": 3,
+        "wins": 3,
+        "mean_pct": 1.2540747262523189,
+        "median_pct": 1.0523238841518734,
+        "worst_loss_pct": 0
+      },
+      "fresh_calls300": 72,
+      "post_proposals": 289,
+      "post_actual_calls": 1035,
+      "native_rows": {
+        "control": 4875,
+        "variant": 5123
+      }
+    },
+    "c02_s202": {
+      "scientific_pass": true,
+      "own": {
+        "by_group_pct": [
+          1.4166098585502218,
+          1.0252832302897419,
+          1.4245492815046723
+        ],
+        "evaluable_groups": 3,
+        "wins": 3,
+        "mean_pct": 1.288814123448212,
+        "median_pct": 1.4166098585502218,
+        "worst_loss_pct": 0
+      },
+      "fresh_calls300": 72,
+      "post_proposals": 306,
+      "post_actual_calls": 1028,
+      "native_rows": {
+        "control": 4915,
+        "variant": 5155
+      }
+    },
+    "c03_s404": {
+      "scientific_pass": true,
+      "own": {
+        "by_group_pct": [
+          0.4330485003652629,
+          2.4731398767201984,
+          2.3623395276311965
+        ],
+        "evaluable_groups": 3,
+        "wins": 3,
+        "mean_pct": 1.756175968238886,
+        "median_pct": 2.3623395276311965,
+        "worst_loss_pct": 0
+      },
+      "fresh_calls300": 72,
+      "post_proposals": 325,
+      "post_actual_calls": 1068,
+      "native_rows": {
+        "control": 4811,
+        "variant": 5058
+      }
+    },
+    "c04_48c_s77": {
+      "scientific_pass": false,
+      "own": {
+        "by_group_pct": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "evaluable_groups": 3,
+        "wins": 0,
+        "mean_pct": 0.0,
+        "median_pct": 0.0,
+        "worst_loss_pct": 0
+      },
+      "fresh_calls300": 12,
+      "post_proposals": 0,
+      "post_actual_calls": 8,
+      "native_rows": {
+        "control": 3366,
+        "variant": 3368
+      }
+    }
+  },
+  "R6_native_pairs_consumed": 4,
+  "R6_max_pairs": 6,
+  "R6_fresh_actual_calls300": 228,
+  "unused_cases": [
+    "c05_r75x15_s42",
+    "c06_r75x2_s77"
+  ],
+  "unused_reserved_seed_count": 24,
+  "48c_post_base_num_runs": 150,
+  "48c_post_consensus_num_runs": 150,
+  "48c_no_proposal_reasons": [
+    "The selected window spans multiple monitoring blocks"
+  ],
+  "claims": [
+    "R6_c01_s77_control.json",
+    "R6_c01_s77_fresh_g01.json",
+    "R6_c01_s77_fresh_g02.json",
+    "R6_c01_s77_fresh_g03.json",
+    "R6_c01_s77_variant.json",
+    "R6_c02_s202_control.json",
+    "R6_c02_s202_fresh_g01.json",
+    "R6_c02_s202_fresh_g02.json",
+    "R6_c02_s202_fresh_g03.json",
+    "R6_c02_s202_variant.json",
+    "R6_c03_s404_control.json",
+    "R6_c03_s404_fresh_g01.json",
+    "R6_c03_s404_fresh_g02.json",
+    "R6_c03_s404_fresh_g03.json",
+    "R6_c03_s404_variant.json",
+    "R6_c04_48c_s77_control.json",
+    "R6_c04_48c_s77_fresh_g01.json",
+    "R6_c04_48c_s77_fresh_g02.json",
+    "R6_c04_48c_s77_fresh_g03.json",
+    "R6_c04_48c_s77_variant.json"
+  ],
+  "evidence_sha256": {
+    "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c01_s77/controller.json": "42d135f0744a6e8d4430861251527f576bb61248e7833ea686dbb3c7b94325f6",
+    "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c01_s77/fresh_controller_v2.json": "7c96900bcf7c49b02a4b13a1c3612ca2922b851f0136650e3f2ddb7e7bb28969",
+    "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c01_s77/pair_audit.json": "c4b53ac18b50ba6f8de665c83da6120fa284b0dba9b73b4e4421866b154b2394",
+    "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c01_s77/fresh_audit.json": "6f402fb9228d11e615dae67c54f7997da3544ce13a8c7b89e23f33e377a6479e",
+    "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c01_s77/frozen_finalists.json": "17770d38d21527b4b4bec618fc15fcf8dcb2c84919fc5d457a378b0c94747a67",
+    "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c01_s77/confirmation_protocol_v2.json": "462e716315c9c36cf110e72f1e227f3e08a1cddd88e845c77c62ba64753bae7f",
+    "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c02_s202/controller.json": "44165bbbab027d49304cd179b2028d981997c275a305c9f487863b1653e49c3c",
+    "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c02_s202/fresh_controller_v2.json": "bddb3d344e4e2c5af43058d769e8d385d8406153bb4b888064c84629f46fb44c",
+    "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c02_s202/pair_audit.json": "61f3fbc2fa6af6dace0e4d11620e598becde8c5034b1b63f6a8ef597763d7bdd",
+    "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c02_s202/fresh_audit.json": "e6faefb3ec676e8a5eff83f6d5eae4892cf11f0a424b4c37013c4cfc79058ffb",
+    "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c02_s202/frozen_finalists.json": "8850ade4223fec201095a557c564dd22eb2f9f8269f29836bcd4a9d94284d300",
+    "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c02_s202/confirmation_protocol_v2.json": "0c028b9d6cfc035d74f87dad28cda93f400a62caac1c840b04affec44a1a75b0",
+    "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c03_s404/controller.json": "3d3d2f620b6ae5be45bdbd2e2c7c7053755ce486fabba29bddde457e0db50790",
+    "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c03_s404/fresh_controller_v2.json": "c51f46e7936ba97e4d337d95947d66f9d8a8be1a113dbbbfd10545d733b0bbbb",
+    "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c03_s404/pair_audit.json": "7197d341ce282f70d6048f784ad90e5f18d1a011f2f7e2c1a652abac67213159",
+    "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c03_s404/fresh_audit.json": "ffd0a0673f60962943ad7b9f3aef573324018ab0ccc5701d8675005fafe7d163",
+    "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c03_s404/frozen_finalists.json": "9f1c47edf86930248093ab034affeb24ebf96d57c79b8eb6036ba844b74cc325",
+    "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c03_s404/confirmation_protocol_v2.json": "2554b1292f4006a3994cf835fc0fc4e0a8e96a0a2c8192f7332d43771eac341c",
+    "reports/STRAT_Rate_suite_2026-10-15/R6_other_components/c04_48c_s77/controller.json": "19d707291c1885fa48f7678850e04b571eeef74a3e383b3a62d8382dbe7a8447",
+    "reports/STRAT_Rate_suite_2026-10-15/R6_other_components/c04_48c_s77/fresh_controller_v2.json": "a84416502f60f00f3e7063c9c46718850f112340ebaf2d50f3630e214e77dc64",
+    "reports/STRAT_Rate_suite_2026-10-15/R6_other_components/c04_48c_s77/pair_audit.json": "66b2ebed93b380d0c62a1f68d88325610b3ca39ab9f2f3f30f15d8f439fbce70",
+    "reports/STRAT_Rate_suite_2026-10-15/R6_other_components/c04_48c_s77/fresh_audit.json": "355d6aa207f00ca7816f5fafb10b61af149250f4457cd76efebc20819002587e",
+    "reports/STRAT_Rate_suite_2026-10-15/R6_other_components/c04_48c_s77/frozen_finalists.json": "e9c3f7dde727f8f429b55342c287ee8817926ef44f9edcf6bd78569ca92db243",
+    "reports/STRAT_Rate_suite_2026-10-15/R6_other_components/c04_48c_s77/confirmation_protocol_v2.json": "6edd8bf893f535075eec3e6b7b7473671436aad3597021811de6fb0996ecfc83"
+  },
+  "default_options": {
+    "elite_rate_joint_candidates": 0,
+    "rate_post_refinement": false
+  },
+  "no_commit_push_publication_or_new_scientific_default": true,
+  "no_running_measurement": true,
+  "R7": "Pending quantitative machine data, not fabricated",
+  "physical_evaluations_executed_by_finalizer": 0,
+  "finalizer_sha256": "2d38bf5a7fbfb85c1d7917d5a0e087a4e7df6a8e6b521fb88c6c6246a468eadb"
+}

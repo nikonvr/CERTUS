@@ -1,0 +1,38 @@
+{
+  "status": "complete",
+  "pid": 47776,
+  "started": "2026-10-13T16:47:54.013145+00:00",
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "arguments": [
+    "r75x0.5",
+    "deep",
+    "0",
+    "0",
+    "2",
+    "0",
+    "101",
+    "0"
+  ],
+  "joint_budget": 480,
+  "source_sha256": {
+    "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127"
+  },
+  "script_sha256": {
+    "adapter": "861f8ac0406617b8e090ce26220b23e1a55b8ad7ef294962b35c5c4b4fe96d89",
+    "generator": "70211dc4fad1c1adabc673ffe95c35b8996459db4f75ecc8831454ff0e48c2af",
+    "controller_helper": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51"
+  },
+  "overrides": "elite_rate_balanced_moves=false",
+  "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_native_joint_2026-10-13\\joint_480_s101\\blocs_vs_plantage_r75x0.5_deep_s101_rate_native_joint480_s101_v1.json",
+  "updated": "2026-10-13T17:36:21+00:00",
+  "recovered_scientific_artifact": true,
+  "trace_export_status": "Original in-memory offered-candidate trace lost after NumPy serialization failure; counts, logs, source snapshots and scientific artifact preserved",
+  "controller_failure_preserved": "recovery_20261013_1930",
+  "artifact_sha256": "d8fcf45f8f9fbfcc8d237862f7af8ecfc51616d71dc27f9c0cfc3258138e60ae"
+}

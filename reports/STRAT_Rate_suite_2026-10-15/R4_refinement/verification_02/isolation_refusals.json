@@ -1,0 +1,13 @@
+{
+  "verdict": "GO",
+  "checks": [
+    "Inspect existing measurement locks before restarting: []",
+    "This R4 slot was consumed; audit/adopt its result, never repeat",
+    "Another Python test, calculation or controller is alive",
+    "Another Python test, calculation or controller is alive",
+    "Frozen R4 source changed: rate_fixed_replay_R4.py",
+    "R4 beam quota exceeded"
+  ],
+  "physics_measured": false,
+  "real_claims_created": 0
+}

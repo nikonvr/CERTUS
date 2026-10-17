@@ -1,0 +1,27 @@
+{
+  "phase": "R4_confirm01_g03",
+  "resources": {
+    "logical_cpus": 24,
+    "affinity_mask": "0xffffff",
+    "priority": "normal",
+    "library_threads": 23
+  },
+  "slot": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\confirmation_01\\groups\\group_03\\measurement",
+  "source_sha256": {
+    "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+    "certus/core/certus_strat_robustness.py": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+    "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+    "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e"
+  },
+  "quota": 1,
+  "deadline_utc": "2026-10-16T06:00:00+00:00",
+  "authorization_sha256": "50448c46c5a2335d7d706cf564e2565d97c5d2e6de447913071103af4b39ffa9",
+  "validation_sha256": "03de1b4f0985438843f3f2afb8f2bc2f81a06dd44737e37acfa7ce510aef51ba",
+  "window_authorization_sha256": "3f7f52860cd28152b70fa7577a3a5de32308d26021401a12b43f0d4d6cc400c4",
+  "protocol_sha256": "ddaabd5960135e1f1c1e2db9773edb398f4540d68c604662021d0f232d371a88",
+  "manifest_sha256": "f0c58ca6d70d995627395533172551e36bbb4cf86f177af616a0c8071a384288",
+  "plans_sha256": "feb95adace38ccafa4050f24e11e7c9db9260f44ae3b4c7a8cfd8f65f3512f33",
+  "pid": 28792,
+  "claimed_utc": "2026-10-15T13:56:02.342241+00:00"
+}

@@ -1,0 +1,14 @@
+{
+  "no_measurement_or_claim_repeated": true,
+  "ruff_first": {
+    "exit_code": 1,
+    "diagnostics": [
+      "PT018 compound asserts",
+      "I001 import order",
+      "PERF401 append loop"
+    ]
+  },
+  "runtime_verification": "16 checks GO before style-only correction; executed source retained in verifier.py.txt",
+  "ruff_final": "All new scripts pass, no ignore or debt increase",
+  "science_changed": false
+}

@@ -1,0 +1,44 @@
+{
+  "runner": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_prefix_joint_runner.py",
+  "arguments": [
+    "--worktree",
+    "C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-equilibre\\certus0310",
+    "--proposals",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_joint_2026-10-14\\proposals.json",
+    "--protocol",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_joint_2026-10-14\\protocole_validation_prefix_v5.json",
+    "--reference-state",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_equilibre_AB_2026-10-13\\etat.json",
+    "--trial-output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_pistes_2026-10-13",
+    "--output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_joint_2026-10-14"
+  ],
+  "hashes": {
+    "rate_prefix_joint_runner.py": "aa1d8bc39fd707a0d27c1d2018727a5aa133e1933e60482187d070768e056f27",
+    "rate_fixed_replay.py": "05376a9240c66a99a1f4f5bf1a7300045d13ed83ca0ed4a4f88300a73688a2c3",
+    "proposals.json": "e5e8da27bf02d7a70e520332a06274d26e1a2e42f969f09b146492532aef40bb",
+    "protocole_validation_prefix_v5.json": "c8c480c032b2fb4578bbb01c2759b69974518a1f9e82c160a91b2a7a4b8d2d37"
+  },
+  "n_stages": 89,
+  "n_proposals": 876,
+  "purpose": "One changed optical window per proposal: prefix length and lambda jointly, all other windows and partition fixed",
+  "new_holdout_groups": [
+    [
+      1212,
+      1213,
+      1214
+    ],
+    [
+      1313,
+      1314,
+      1315
+    ],
+    [
+      1414,
+      1415,
+      1416
+    ]
+  ],
+  "deadline_utc": "2026-10-14T07:00:00Z"
+}

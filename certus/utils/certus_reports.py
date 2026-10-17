@@ -477,10 +477,11 @@ def build_pdf_report(
                 manifest_dict = dict(raw_manifest)
             else:
                 manifest_dict = {"manifest": str(raw_manifest)}
-            manifest_lines = []
-            for key in ("run_id", "seed", "status", "started_at_utc", "params_hash"):
-                if key in manifest_dict and manifest_dict[key] not in (None, ""):
-                    manifest_lines.append(f"{key}: {manifest_dict[key]}")
+            manifest_lines = [
+                f"{key}: {manifest_dict[key]}"
+                for key in ("run_id", "seed", "status", "started_at_utc", "params_hash")
+                if key in manifest_dict and manifest_dict[key] not in (None, "")
+            ]
             if manifest_lines:
                 ax.text(
                     0.05,

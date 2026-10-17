@@ -1,0 +1,25 @@
+{
+  "verdict": "GO",
+  "script_sha256": {
+    "rate_H03_fresh_guard.py": "6ef8cbf0fd1da23fc5585bb6a3650c825fbbed14104424fed249f73e809e51c7",
+    "rate_H03_fresh_scorer.py": "cb6171f9da0075d155df38eaa8b9be82835ba9caa0fd85fd5d06ee3164541eff",
+    "run_rate_H03_fresh.ps1": "39930a2a14bb95e035c4bd21b860411d4636fdb1791cc6e7ad57f6cd1e94432f",
+    "campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51",
+    "rate_R4_planner_resume_v3.py": "c0e714c66efb130bf893d3130cd3dcd747e680a3039ce33d241f63e88cf8ba04"
+  },
+  "checks": [
+    "check_sources: validated physical callback AST identical",
+    "record_task: validated physical callback AST identical",
+    "keep_fixed_plans: validated physical callback AST identical",
+    "evaluate_fixed: validated physical callback AST identical",
+    "Winner, six full plans and twelve unused seeds fixed before evaluation; zero new proposals",
+    "Group1 exact manifest accepted; altered seed/plan/fixed expectation refused",
+    "Group2 exact manifest accepted; altered seed/plan/fixed expectation refused",
+    "Group3 exact manifest accepted; altered seed/plan/fixed expectation refused",
+    "Exact cutoff and excessive deadline refused",
+    "All six complete mixed plans pass the actual contract",
+    "Actual call validator follows each frozen group, not historical101/41/42/43"
+  ],
+  "fresh_seeds_executed": 0,
+  "reservations_created": 0
+}

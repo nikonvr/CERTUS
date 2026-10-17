@@ -1,0 +1,14 @@
+debut 2026-10-12T07:27:25 HEAD=2eb52a38 seeds=[77, 101, 404, 505, 42, 303]
+lancee r75x2_s077_rr 2026-10-12T07:27:25 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 77 surcharges=elite_round_robin=true HEAD=2eb52a38
+finie  r75x2_s077_rr rc=0 duree=38.3 min WAIT_TIMEOUT=0 RATE_lignes=16 SLIT_actif=46 HEAD=2eb52a38 artefact=reports\blocs_vs_plantage_r75x2_deep_s077_rr.json
+lancee r75x2_s101_rr 2026-10-12T08:05:44 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 101 surcharges=elite_round_robin=true HEAD=2eb52a38
+finie  r75x2_s101_rr rc=0 duree=46.9 min WAIT_TIMEOUT=0 RATE_lignes=16 SLIT_actif=46 HEAD=2eb52a38 artefact=reports\blocs_vs_plantage_r75x2_deep_s101_rr.json
+lancee r75x2_s404_rr 2026-10-12T08:52:38 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 404 surcharges=elite_round_robin=true HEAD=2eb52a38
+finie  r75x2_s404_rr rc=0 duree=59.3 min WAIT_TIMEOUT=0 RATE_lignes=16 SLIT_actif=46 HEAD=2eb52a38 artefact=reports\blocs_vs_plantage_r75x2_deep_s404_rr.json
+lancee r75x2_s505_rr 2026-10-12T09:51:57 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 505 surcharges=elite_round_robin=true HEAD=2eb52a38
+finie  r75x2_s505_rr rc=0 duree=35.1 min WAIT_TIMEOUT=0 RATE_lignes=16 SLIT_actif=46 HEAD=2eb52a38 artefact=reports\blocs_vs_plantage_r75x2_deep_s505_rr.json
+lancee r75x2_s042_rr 2026-10-12T10:27:05 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 42 surcharges=elite_round_robin=true HEAD=2eb52a38
+finie  r75x2_s042_rr rc=0 duree=40.1 min WAIT_TIMEOUT=0 RATE_lignes=16 SLIT_actif=46 HEAD=2eb52a38 artefact=reports\blocs_vs_plantage_r75x2_deep_s042_rr.json
+lancee r75x2_s303_rr 2026-10-12T11:07:08 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 303 surcharges=elite_round_robin=true HEAD=2eb52a38
+finie  r75x2_s303_rr rc=0 duree=35.0 min WAIT_TIMEOUT=0 RATE_lignes=16 SLIT_actif=46 HEAD=2eb52a38 artefact=reports\blocs_vs_plantage_r75x2_deep_s303_rr.json
+fin 2026-10-12T11:42:08

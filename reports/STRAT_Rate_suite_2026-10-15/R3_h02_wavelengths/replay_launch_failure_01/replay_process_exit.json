@@ -1,0 +1,26 @@
+{
+  "exit_code": 1,
+  "ended_utc": "2026-10-15T12:36:56.3354756Z",
+  "command": [
+    "python",
+    "-X",
+    "utf8",
+    "-X",
+    "cpu_count=24",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_fixed_replay_R3_h02.py",
+    "--worktree",
+    "C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-rmse-r0\\certus0310",
+    "--plans",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R3_h02_wavelengths\\frozen_finalists.json",
+    "--protocol",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R3_h02_wavelengths\\replay_protocol.json",
+    "--reference-state",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\reference_context.json",
+    "--output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R3_h02_wavelengths\\homogeneous_replay",
+    "--run",
+    "control",
+    "--deadline-utc",
+    "2026-10-16T08:00:00+02:00"
+  ]
+}

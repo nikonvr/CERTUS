@@ -1,0 +1,26 @@
+6 tirages de bruit a 0.1 % ; niveau retrouve (moyenne des noeuds dn), faisceau suppose non polarise (f = 0.5)
+  verite spline niveau plante +0.0000, faisceau (0.5, 0.5), deficit R nu 0.0 %, R nu utilise     : biais -0.0001  ecart-type 0.0003
+  verite spline niveau plante +0.0000, faisceau (0.5, 0.5), deficit R nu 0.0 %, R nu non utilise : biais +0.0002  ecart-type 0.0004
+  verite spline niveau plante -0.0040, faisceau (0.5, 0.5), deficit R nu 0.0 %, R nu utilise     : biais -0.0003  ecart-type 0.0005
+  verite spline niveau plante -0.0040, faisceau (0.5, 0.5), deficit R nu 0.0 %, R nu non utilise : biais -0.0000  ecart-type 0.0010
+  verite spline niveau plante -0.0075, faisceau (0.5, 0.5), deficit R nu 0.0 %, R nu utilise     : biais -0.0001  ecart-type 0.0005
+  verite spline niveau plante -0.0075, faisceau (0.5, 0.5), deficit R nu 0.0 %, R nu non utilise : biais +0.0002  ecart-type 0.0005
+  verite spline niveau plante +0.0000, faisceau (0.35, 0.35), deficit R nu 0.0 %, R nu utilise     : biais +0.0032  ecart-type 0.0006
+  verite spline niveau plante +0.0000, faisceau (0.35, 0.35), deficit R nu 0.0 %, R nu non utilise : biais +0.0033  ecart-type 0.0007
+  verite spline niveau plante +0.0000, faisceau (0.65, 0.65), deficit R nu 0.0 %, R nu utilise     : biais -0.0037  ecart-type 0.0005
+  verite spline niveau plante +0.0000, faisceau (0.65, 0.65), deficit R nu 0.0 %, R nu non utilise : biais -0.0037  ecart-type 0.0007
+  verite spline niveau plante +0.0000, faisceau (0.5, 0.9), deficit R nu 0.2 %, R nu utilise     : biais -0.0085  ecart-type 0.0005
+  verite spline niveau plante +0.0000, faisceau (0.5, 0.9), deficit R nu 0.2 %, R nu non utilise : biais -0.0053  ecart-type 0.0003
+  verite TLU    niveau plante +0.0000, faisceau (0.5, 0.5), deficit R nu 0.0 %, R nu utilise     : biais +0.0001  ecart-type 0.0004
+  verite TLU    niveau plante +0.0000, faisceau (0.5, 0.5), deficit R nu 0.0 %, R nu non utilise : biais -0.0001  ecart-type 0.0005
+  verite TLU    niveau plante -0.0040, faisceau (0.5, 0.5), deficit R nu 0.0 %, R nu utilise     : biais -0.0004  ecart-type 0.0006
+  verite TLU    niveau plante -0.0040, faisceau (0.5, 0.5), deficit R nu 0.0 %, R nu non utilise : biais -0.0005  ecart-type 0.0007
+  verite TLU    niveau plante -0.0075, faisceau (0.5, 0.5), deficit R nu 0.0 %, R nu utilise     : biais -0.0001  ecart-type 0.0002
+  verite TLU    niveau plante -0.0075, faisceau (0.5, 0.5), deficit R nu 0.0 %, R nu non utilise : biais -0.0000  ecart-type 0.0006
+  verite TLU    niveau plante +0.0000, faisceau (0.4, 0.4), deficit R nu 0.0 %, R nu utilise     : biais +0.0020  ecart-type 0.0006
+  verite TLU    niveau plante +0.0000, faisceau (0.4, 0.4), deficit R nu 0.0 %, R nu non utilise : biais +0.0019  ecart-type 0.0005
+  verite TLU    niveau plante +0.0000, faisceau (0.6, 0.6), deficit R nu 0.0 %, R nu utilise     : biais -0.0023  ecart-type 0.0004
+  verite TLU    niveau plante +0.0000, faisceau (0.6, 0.6), deficit R nu 0.0 %, R nu non utilise : biais -0.0029  ecart-type 0.0004
+
+consigne dans reports\saphir_corridor_2026-10-12\saphir_synthese.json
+synthese: 112 s -> saphir_synthese.json

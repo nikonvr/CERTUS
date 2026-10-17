@@ -1,0 +1,33 @@
+{
+  "checked_utc": "2026-10-13T19:03:24.207108+00:00",
+  "status": "measurement",
+  "controller_pid": 19656,
+  "measurement_pid": 37604,
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "prepared_sources_unchanged": true,
+  "provisional_evidence": [
+    "21:00:11 | INFO |    [ELITE-PARENTS] Round 4 #01 id=900852003 n_blocs=8 crash=0.00% seel=0.3828 marge=6.44A origin=ELITE wl=[630, 451, 691, 706, 741, 733, 742, 580]",
+    "21:00:23 | INFO |    [ELITE-PARENTS] Round 5 #01 id=900852938 n_blocs=8 crash=0.00% seel=0.3653 marge=1.66A origin=ELITE wl=[630, 451, 691, 630, 741, 733, 742, 580]",
+    "21:00:46 | INFO | 🏆 Best Strategy ID: 900852938 (ELITE) - Score: 0.03337"
+  ],
+  "warning": "Eight-block result only; global artifact is not yet complete",
+  "confirmation_pid": 27636,
+  "confirmation_status": "waiting_for_native",
+  "new_holdout_groups": [
+    [
+      808,
+      809,
+      810
+    ],
+    [
+      909,
+      910,
+      911
+    ]
+  ]
+}

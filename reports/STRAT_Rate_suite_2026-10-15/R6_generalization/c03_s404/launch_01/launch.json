@@ -1,0 +1,14 @@
+{
+  "case": "c03_s404",
+  "seed": 404,
+  "coordinator_pid": 40204,
+  "started_utc": "2026-10-16T01:34:05.6586980Z",
+  "controller_script": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\run_rate_R6_pair.ps1",
+  "controller_sha256": "79f7c2ee2566e45a697d5d75d1f96cc9568f4aa387fa23f35d92270e0a76a4ae",
+  "explicit_invocation": "scriptblock -RateCase c03_s404",
+  "deadline_utc": "2026-10-16T06:00:00Z",
+  "previous_fresh_audit": "c02_s202/fresh_audit.json",
+  "previous_case_pass": true,
+  "no_previous_slot_repeated": true,
+  "scientific_sources_changed": false
+}

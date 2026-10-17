@@ -1,0 +1,14 @@
+{
+  "case": "c04_48c_s77",
+  "coordinator_pid": 25648,
+  "started_utc": "2026-10-16T04:01:41.2818890Z",
+  "controller_sha256": "2c97c4477d3c2a3ad8313ae375e4dca7d69ca2fc5da205fb4f3fff8f119bd4f0",
+  "explicit_invocation": "scriptblock -RateCase c04_48c_s77",
+  "deadline_utc": "2026-10-16T06:00:00Z",
+  "plans": 1,
+  "groups": 3,
+  "fresh_seeds": "17710001..04/11..14/21..24",
+  "purpose": "Homogeneous300 rescoring of one full plan shared by all four finalist roles; no native gain claimed",
+  "science_sources_changed": false,
+  "previous_slot_repeated": false
+}

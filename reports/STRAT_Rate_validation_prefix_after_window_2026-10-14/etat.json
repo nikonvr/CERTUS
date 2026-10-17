@@ -1,0 +1,321 @@
+{
+  "status": "complete",
+  "pid": 48928,
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "hashes": {
+    "replay": "0249da490dd9d59c4ae483fcaa9dbaf662eb4adb5c122fde86fb47bb53e9c7a6",
+    "protocol": "be6b866075ce6378dc0495df8359914d05dc4392b8f60e306557c2b2de6c1dae",
+    "fixed_plans": "c6c42b4d648e5fd2e70721a13d5d7ed621783bb09503a373eb88297a5bb4d12b",
+    "proposals": "9d5b462394b8baaee51cb06a8ae1fa7848251aa5a2543f0d4ef7a010a881de37"
+  },
+  "sequence": [
+    "control",
+    "holdout_2727",
+    "holdout_2828",
+    "holdout_2929"
+  ],
+  "runs": [
+    {
+      "run": "control",
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_after_window_2026-10-14\\control.json",
+      "setting": {
+        "robustness_seed": 101,
+        "consensus_seed_list": [
+          41,
+          42,
+          43
+        ]
+      },
+      "plans": [
+        {
+          "id": 9900008,
+          "name": "prefix_after_window_consensus_best_s101",
+          "score": 0.02797523766720083,
+          "seel": 0.3345159946382285
+        },
+        {
+          "id": 9900001,
+          "name": "ablation_consensus_best_s101",
+          "score": 0.032749965266219656,
+          "seel": 0.3619390294854627
+        },
+        {
+          "id": 9900005,
+          "name": "native_prefix_pool_consensus_best_s101",
+          "score": 0.03295728754388596,
+          "seel": 0.36308284202857044
+        },
+        {
+          "id": 900951015,
+          "name": "reference_rate_s101",
+          "score": 0.03934565579798472,
+          "seel": 0.3967147882193691
+        },
+        {
+          "id": 9900007,
+          "name": "paired_windows_consensus_best_s101",
+          "score": 0.028225278501697756,
+          "seel": 0.33600761004297364
+        },
+        {
+          "id": 9900006,
+          "name": "internal_window_consensus_best_s101",
+          "score": 0.029057302267738155,
+          "seel": 0.3409240517636628
+        },
+        {
+          "id": 9900004,
+          "name": "prefix_fine_best_L1_5_598_s101",
+          "score": 0.030945697580483572,
+          "seel": 0.35182778503400536
+        },
+        {
+          "id": 9900002,
+          "name": "prefix_consensus_best_s101",
+          "score": 0.031321786810495536,
+          "seel": 0.35395924517094074
+        },
+        {
+          "id": 9900000,
+          "name": "native_joint_480_rate240_rounds6_s101",
+          "score": 0.032410960467156955,
+          "seel": 0.36006088633539163
+        }
+      ],
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_2727",
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_after_window_2026-10-14\\holdout_2727.json",
+      "setting": {
+        "robustness_seed": 2727,
+        "consensus_seed_list": [
+          2727,
+          2728,
+          2729
+        ]
+      },
+      "plans": [
+        {
+          "id": 9900008,
+          "name": "prefix_after_window_consensus_best_s101",
+          "score": 0.028960977903389678,
+          "seel": 0.3403585045412538
+        },
+        {
+          "id": 9900001,
+          "name": "ablation_consensus_best_s101",
+          "score": 0.03295641375519596,
+          "seel": 0.3630780288323487
+        },
+        {
+          "id": 9900005,
+          "name": "native_prefix_pool_consensus_best_s101",
+          "score": 0.03382766693078385,
+          "seel": 0.36784598369852484
+        },
+        {
+          "id": 900951015,
+          "name": "reference_rate_s101",
+          "score": 0.03886972088733293,
+          "seel": 0.39430810738473504
+        },
+        {
+          "id": 9900006,
+          "name": "internal_window_consensus_best_s101",
+          "score": 0.029240538536206076,
+          "seel": 0.341997301370675
+        },
+        {
+          "id": 9900007,
+          "name": "paired_windows_consensus_best_s101",
+          "score": 0.02947027184548989,
+          "seel": 0.3433381531114181
+        },
+        {
+          "id": 9900002,
+          "name": "prefix_consensus_best_s101",
+          "score": 0.03127388915641687,
+          "seel": 0.3536885022525718
+        },
+        {
+          "id": 9900004,
+          "name": "prefix_fine_best_L1_5_598_s101",
+          "score": 0.031413317431124,
+          "seel": 0.3544760495781006
+        },
+        {
+          "id": 9900000,
+          "name": "native_joint_480_rate240_rounds6_s101",
+          "score": 0.033439876866650474,
+          "seel": 0.3657314690679514
+        }
+      ],
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_2828",
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_after_window_2026-10-14\\holdout_2828.json",
+      "setting": {
+        "robustness_seed": 2828,
+        "consensus_seed_list": [
+          2828,
+          2829,
+          2830
+        ]
+      },
+      "plans": [
+        {
+          "id": 9900008,
+          "name": "prefix_after_window_consensus_best_s101",
+          "score": 0.028509918136797926,
+          "seel": 0.3376976051842709
+        },
+        {
+          "id": 9900001,
+          "name": "ablation_consensus_best_s101",
+          "score": 0.03335426211996291,
+          "seel": 0.3652629853678739
+        },
+        {
+          "id": 9900005,
+          "name": "native_prefix_pool_consensus_best_s101",
+          "score": 0.03499180818806687,
+          "seel": 0.3741219490383683
+        },
+        {
+          "id": 900951015,
+          "name": "reference_rate_s101",
+          "score": 0.040279737618853347,
+          "seel": 0.40139625119750855
+        },
+        {
+          "id": 9900007,
+          "name": "paired_windows_consensus_best_s101",
+          "score": 0.028883946863431653,
+          "seel": 0.3399055566679171
+        },
+        {
+          "id": 9900006,
+          "name": "internal_window_consensus_best_s101",
+          "score": 0.029135636637099872,
+          "seel": 0.3413832839322973
+        },
+        {
+          "id": 9900004,
+          "name": "prefix_fine_best_L1_5_598_s101",
+          "score": 0.03152115306369542,
+          "seel": 0.35508395099579154
+        },
+        {
+          "id": 9900002,
+          "name": "prefix_consensus_best_s101",
+          "score": 0.0321145589726969,
+          "seel": 0.35841070839302164
+        },
+        {
+          "id": 9900000,
+          "name": "native_joint_480_rate240_rounds6_s101",
+          "score": 0.03317962635178838,
+          "seel": 0.36430551108534376
+        }
+      ],
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_2929",
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_after_window_2026-10-14\\holdout_2929.json",
+      "setting": {
+        "robustness_seed": 2929,
+        "consensus_seed_list": [
+          2929,
+          2930,
+          2931
+        ]
+      },
+      "plans": [
+        {
+          "id": 9900008,
+          "name": "prefix_after_window_consensus_best_s101",
+          "score": 0.028936737465852215,
+          "seel": 0.34021603410687284
+        },
+        {
+          "id": 9900001,
+          "name": "ablation_consensus_best_s101",
+          "score": 0.03353807716873042,
+          "seel": 0.3662680830688386
+        },
+        {
+          "id": 9900005,
+          "name": "native_prefix_pool_consensus_best_s101",
+          "score": 0.03403302749208242,
+          "seel": 0.3689608515389264
+        },
+        {
+          "id": 900951015,
+          "name": "reference_rate_s101",
+          "score": 0.039446254346208486,
+          "seel": 0.39722162250415566
+        },
+        {
+          "id": 9900007,
+          "name": "paired_windows_consensus_best_s101",
+          "score": 0.028951151124879525,
+          "seel": 0.3403007559490841
+        },
+        {
+          "id": 9900006,
+          "name": "internal_window_consensus_best_s101",
+          "score": 0.029549899706174918,
+          "seel": 0.3438016853139316
+        },
+        {
+          "id": 9900002,
+          "name": "prefix_consensus_best_s101",
+          "score": 0.030866823317974405,
+          "seel": 0.35137913038753116
+        },
+        {
+          "id": 9900004,
+          "name": "prefix_fine_best_L1_5_598_s101",
+          "score": 0.03153506462289854,
+          "seel": 0.3551622988037922
+        },
+        {
+          "id": 9900000,
+          "name": "native_joint_480_rate240_rounds6_s101",
+          "score": 0.033008025570802055,
+          "seel": 0.3633622191191707
+        }
+      ],
+      "max_observed_crash_rate": 0
+    }
+  ],
+  "current": null,
+  "current_pid": null,
+  "updated": "2026-10-14T03:28:38+00:00",
+  "pool_best": {
+    "id": 9910275,
+    "name": "prefix_L1_5_wl613_parent9900006",
+    "move": {
+      "kind": "wavelength_only",
+      "parent_id": 9900006,
+      "prefix_length": 5,
+      "wavelength": 613,
+      "original_prefix_length": 5
+    },
+    "eligible": true,
+    "score": 0.02797523766720083,
+    "crash_rate": 0.0,
+    "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_after_window_2026-10-14\\batch_028\\attempt_01\\search.json"
+  },
+  "pool_original_id": 9910275,
+  "pool_state_sha256": "e0946b8076a1e0abd95edbe6e2645049dd1d1fd28ca4b337e21b804260f7c66b",
+  "plans_sha256": "68fe44f2756975c64ea6a42d7fa19b322432c5b4bf49b9c13fd8606afff689bf"
+}

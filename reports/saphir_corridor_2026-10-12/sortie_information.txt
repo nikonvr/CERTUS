@@ -1,0 +1,26 @@
+=== R du saphir nu utilise (sigma des donnees 0.001) ===
+   f = 0.5 exactement          : sigma(niveau) = 0.00052
+   f_T, f_R ~ N(0.5, 0.05)      : sigma(niveau) = 0.00096
+   f_T, f_R ~ N(0.5, 0.10)      : sigma(niveau) = 0.00169
+   f_T, f_R ~ N(0.5, 0.15)      : sigma(niveau) = 0.00247
+   f_T, f_R ~ N(0.5, 0.25)      : sigma(niveau) = 0.00405
+   f_T, f_R ~ N(0.5, 0.50)      : sigma(niveau) = 0.00797
+   f_T, f_R ~ N(0.5, 5.00)      : sigma(niveau) = 0.04358
+=== R du saphir nu NON utilise (sigma des donnees 0.001) ===
+   f = 0.5 exactement          : sigma(niveau) = 0.00061
+   f_T, f_R ~ N(0.5, 0.05)      : sigma(niveau) = 0.00101
+   f_T, f_R ~ N(0.5, 0.10)      : sigma(niveau) = 0.00172
+   f_T, f_R ~ N(0.5, 0.15)      : sigma(niveau) = 0.00249
+   f_T, f_R ~ N(0.5, 0.25)      : sigma(niveau) = 0.00407
+   f_T, f_R ~ N(0.5, 0.50)      : sigma(niveau) = 0.00800
+   f_T, f_R ~ N(0.5, 5.00)      : sigma(niveau) = 0.04496
+Quelles donnees fixent le niveau ? sigma du niveau, f = 0.5 exactement
+   saphir nu, T et R   : 0.00068
+   saphir nu, T seul   : 0.00097
+   3 films, T et R     : 0.00079
+   3 films, T seul     : 0.00690
+   3 films, R seul     : 0.00298
+   tout                : 0.00052
+
+consigne dans reports\saphir_corridor_2026-10-12\saphir_information.json
+information: 7 s -> saphir_information.json

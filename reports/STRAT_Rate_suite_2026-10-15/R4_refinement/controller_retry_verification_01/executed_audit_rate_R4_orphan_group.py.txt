@@ -1,0 +1,55 @@
+"""Adopt group046 after parent persistence failure, without inventing its lost exit code."""
+
+import json
+import math
+from collections import Counter
+from datetime import UTC, datetime
+
+from rate_R4_guard import EXPERIMENT, PROGRAM, ROOT, read, sha
+from rate_R4_planner import save
+
+if (PROGRAM / "measurement.running").exists() or list((ROOT / "reports").rglob(".running")):
+    raise RuntimeError("Inspect and let the scientific child finish before orphan adoption")
+directory = EXPERIMENT / "groups/group_046"
+protocol = read(EXPERIMENT / "protocol.json")
+manifest = read(directory / "manifest.json")
+result_file = directory / "measurement/search.json"
+result = read(result_file)
+offered = read(directory / "plans.json")["plans"]
+assert result["verdict"] == "OK"
+assert result["errors"] == []
+assert result["source_sha256"] == protocol["source_sha256"]
+assert result["plans_sha256"] == manifest["plans_sha256"] == sha(directory / "plans.json")
+assert result["protocol_sha256"] == sha(EXPERIMENT / "protocol.json")
+assert result["group_manifest_sha256"] == sha(directory / "manifest.json")
+assert result["setting"] == protocol["control"]
+assert result["depths"] == protocol["depths"]
+for name, digest in protocol["script_sha256"].items():
+    assert sha(ROOT / "scratch" / name) == digest
+calls = result["simulations"]
+ids = [p["source_strategy_id"] for p in offered]
+assert Counter(c["id"] for c in calls if c["seed"] == 101) == Counter(ids)
+assert all(c["num_runs"] == 300 and not c.get("error") for c in calls)
+for strategy_id in set(result["search_eligible_ids"]) | {900951015, 9900006, 9900008}:
+    assert sorted(c["seed"] for c in calls if c["id"] == strategy_id) == [41, 42, 43, 101]
+rows = {r["strategy"]["strategy_id"]: r for r in result["final_results"]["all_strategies_results"]}
+for plan in offered:
+    row = rows.get(plan["source_strategy_id"])
+    if row is not None:
+        assert all(row["strategy"].get(k) == plan.get(k) for k in ("blocks", "rate_layers", "monochromator_resolution_nm", "witness_reset_layers"))
+    if "expected_score_fixed_point" in plan:
+        assert math.isclose(row["robustness_score"], plan["expected_score_fixed_point"], rel_tol=1e-7, abs_tol=1e-10)
+requests = list((directory / "measurement").glob("request_search_*.json"))
+assert len(requests) == 1
+request = read(requests[0])
+assert request["status"] == "complete"
+assert request["pid"] == read(PROGRAM / "claims/R4_g046.json")["pid"] == 28992
+for label, name in (("launcher", "rate_fixed_replay_R4.py"), ("bounded_guard", "rate_R4_guard.py"), ("controller_helper", "campagne_a2_runner.py")):
+    assert result["launcher_sha256"][label] == sha(directory / "measurement" / ("source_" + label + ".py.txt")) == protocol["script_sha256"][name]
+report = {"verdict": "GO", "adopted_utc": datetime.now(UTC).isoformat(), "pid": request["pid"],
+          "actual_calls": len(calls), "artifact_sha256": sha(result_file), "manifest_sha256": sha(directory / "manifest.json"),
+          "original_exit_code": None, "exit_code_observed": False,
+          "reason": "Parent File.Replace persistence failed; scientific child finished, complete request and exact artifact/calls/anchors audited; no repeat",
+          "audit_script_sha256": sha(ROOT / "scratch/audit_rate_R4_orphan_group.py")}
+save(directory / "adoption_without_parent_exit.json", report, immutable=True)
+print(json.dumps(report))

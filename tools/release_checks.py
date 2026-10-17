@@ -162,15 +162,15 @@ def check_frozen_artifact() -> list[str]:
     # Case-blind: the build writes VCOMP140.DLL, which a case-sensitive file system (the Linux CI) did not match.
     if not list(folder.glob("vcomp140.dll", case_sensitive=False)):
         errors.append("Frozen folder holds no OpenMP runtime (vcomp140.dll)")
-    for name in FROZEN_REQUIRED_FILES:
-        if not (folder / name).is_file():
-            errors.append(f"Frozen folder is missing a file the code reads: {name}")
-    for name in FROZEN_LICENCE_FILES:
-        if not (folder / name).is_file():
-            errors.append(f"Frozen folder is missing a licence file: {name}")
-    for name in FROZEN_LICENCE_FOLDERS:
-        if not any(p.is_file() for p in (folder / "licenses" / name).rglob("*")):
-            errors.append(f"Frozen folder carries no licence of {name} (licenses/{name}/)")
+    errors.extend(
+        f"Frozen folder is missing a file the code reads: {name}" for name in FROZEN_REQUIRED_FILES if not (folder / name).is_file()
+    )
+    errors.extend(f"Frozen folder is missing a licence file: {name}" for name in FROZEN_LICENCE_FILES if not (folder / name).is_file())
+    errors.extend(
+        f"Frozen folder carries no licence of {name} (licenses/{name}/)"
+        for name in FROZEN_LICENCE_FOLDERS
+        if not any(p.is_file() for p in (folder / "licenses" / name).rglob("*"))
+    )
     return errors
 
 
@@ -343,9 +343,7 @@ def check_release_structure() -> list[str]:
         "dist/CERTUS_HUB/**",
         "tests/unit/test_release_guardrails.py",
     ]
-    for token in required_tokens:
-        if token not in wf_text:
-            errors.append(f"Release workflow incomplete (missing token): {token}")
+    errors.extend(f"Release workflow incomplete (missing token): {token}" for token in required_tokens if token not in wf_text)
 
     smoke_script = REPO_ROOT / "tools" / "smoke_release.ps1"
     if not smoke_script.exists():
@@ -362,25 +360,27 @@ def check_release_structure() -> list[str]:
         errors.append("Missing spec: certus_hub.spec")
     else:
         spec_text = spec_file.read_text(encoding="utf-8")
-        for token in (
-            "frozen_entry.py",
-            'name="CERTUS_HUB"',
-            'icon="certus.ico"',
-            'contents_directory="."',
-            "COLLECT(",
-        ):
-            if token not in spec_text:
-                errors.append(f"Incomplete frozen spec (missing token): {token}")
+        errors.extend(
+            f"Incomplete frozen spec (missing token): {token}"
+            for token in (
+                "frozen_entry.py",
+                'name="CERTUS_HUB"',
+                'icon="certus.ico"',
+                'contents_directory="."',
+                "COLLECT(",
+            )
+            if token not in spec_text
+        )
         if 'console=False' not in spec_text:
             errors.append("Incomplete frozen spec: expected console=False")
 
-    for entry in ("tools/frozen_entry.py", "certus/core/certus_frozen_entry.py"):
-        if not (REPO_ROOT / entry).exists():
-            errors.append(f"Missing frozen entry: {entry}")
+    errors.extend(
+        f"Missing frozen entry: {entry}"
+        for entry in ("tools/frozen_entry.py", "certus/core/certus_frozen_entry.py")
+        if not (REPO_ROOT / entry).exists()
+    )
 
-    for asset in ("certus.ico", "certus.svg"):
-        if not (REPO_ROOT / asset).exists():
-            errors.append(f"Missing release asset: {asset}")
+    errors.extend(f"Missing release asset: {asset}" for asset in ("certus.ico", "certus.svg") if not (REPO_ROOT / asset).exists())
 
     return errors
 

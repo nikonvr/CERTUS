@@ -194,7 +194,9 @@ def run_one(cuts: list[int], mode: str, config_rel: str, seed: int) -> dict:
     B.autoanswer_dialogs(True)
 
     app = CertusStratApp()
-    app.load_configuration(str(ROOT / config_rel))
+    from _composant import charger_configuration
+
+    charger_configuration(app, ROOT / config_rel)
     B.attach_console_logging(app)
 
     # 🔴 THE MODE MUST BE SET ON THE WIDGET, BEFORE collect_params. That method reads the

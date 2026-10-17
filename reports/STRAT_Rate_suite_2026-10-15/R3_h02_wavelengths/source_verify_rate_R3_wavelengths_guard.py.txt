@@ -1,0 +1,107 @@
+"""Verify the copied R3 guard in isolated, preserved fixtures; no physics."""
+
+import hashlib
+import json
+import os
+import runpy
+import sys
+from datetime import UTC, datetime
+from pathlib import Path
+from unittest.mock import patch
+
+
+def main():
+    root = Path(__file__).resolve().parents[1]
+    program = root / "reports/STRAT_Rate_suite_2026-10-15"
+    output = program / "R3_h02_wavelengths/guard_verification"
+    if list((root / "reports").rglob(".running")) or (program / "measurement.running").exists():
+        raise RuntimeError("No guard tests during a scientific measurement")
+    source = root / "scratch/rate_R3_wavelengths_guard.py"
+    module = runpy.run_path(str(source))
+    check, reserve, release, service = (module[k] for k in ("check_ready", "reserve_slot", "release_slot", "is_language_server"))
+    output.mkdir(exist_ok=False)
+    fixture = output / "synthetic_only"
+    experiment = fixture / "R3_h02_wavelengths"
+    experiment.mkdir(parents=True)
+    slots = {"R3_h02_control": experiment / "control", "R3_h02_variant": experiment / "variant"}
+    sources = json.loads((program / "reference_context.json").read_text(encoding="utf-8"))["source_sha256"]
+    audit = {"verdict": "GO", "synthetic_fixture": True}
+
+    def save(path, value):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(value), encoding="utf-8")
+
+    audit_file = fixture / "R2_audit_20261015.json"
+    save(audit_file, audit)
+    previous_pair = fixture / "R3_h01_widths/comparison_homogeneous.json"
+    save(previous_pair, {"verdict": "NO_GAIN", "synthetic_fixture": True})
+    protocol = {"previous_pair_comparison_sha256": hashlib.sha256(previous_pair.read_bytes()).hexdigest(), "source_sha256": sources, "max_R3_pairs": 3, "script_sha256": {},
+                "R2_audit_sha256": hashlib.sha256(audit_file.read_bytes()).hexdigest(), "synthetic_fixture": True}
+    protocol_file = experiment / "protocol.json"
+    save(protocol_file, protocol)
+    checks = []
+
+    def refuses(label, action, expected=None):
+        try:
+            action()
+        except (RuntimeError, FileNotFoundError, FileExistsError) as error:
+            if expected and expected not in str(error):
+                raise AssertionError(f"Unexpected refusal: {error}") from error
+            checks.append(label)
+        else:
+            raise AssertionError(label)
+
+    command = f'"{sys.executable}"  "{Path(sys.executable).parent / "Scripts/pyright-langserver.exe"}" --stdio'
+    assert service({"CommandLine": command})
+    assert not service({"CommandLine": command + " --pytest"})
+    assert not service({"CommandLine": command.replace("pyright-langserver.exe", "pytest.exe")})
+    checks.append("Only the exact installed stdio language-server command is exempted")
+    replacements = {"PROGRAM": fixture, "EXPERIMENT": experiment, "SLOTS": slots}
+    with patch.dict(check.__globals__, replacements), patch("subprocess.check_output", return_value="[]"):
+        def ready():
+            return check("R3_h02_control", slots["R3_h02_control"], sources)
+
+        proof = ready()
+        checks.append("Matching authorized/validated context accepted")
+        refuses("Unknown phase rejected", lambda: check("R3_h04_control", slots["R3_h02_control"], sources))
+        refuses("Alternate output rejected", lambda: check("R3_h02_control", fixture / "other", sources))
+        save(protocol_file, {**protocol, "R2_audit_sha256": "wrong"})
+        refuses("Wrong R2 audit hash rejected", ready)
+        save(protocol_file, protocol)
+        with patch("subprocess.check_output", return_value=json.dumps([{"ProcessId": os.getpid() + 1, "CommandLine": "python -m pytest"}])):
+            refuses("Other Python test rejected", ready)
+        with patch("subprocess.check_output", return_value=json.dumps([{"ProcessId": os.getpid() + 1, "CommandLine": command}])):
+            ready()
+        refuses("Variant without a finished control rejected", lambda: check("R3_h02_variant", slots["R3_h02_variant"], sources))
+        reserve(proof)
+        refuses("Live common lock rejected", ready)
+        release()
+        assert (fixture / "claims/R3_h02_control.json").exists()
+        refuses("Permanent control claim survives release", ready)
+        refuses("Direct duplicate reservation rejected", lambda: reserve(proof))
+        assert not (fixture / "measurement.running").exists()
+        save(slots["R3_h02_control"] / "etat.json", {"status": "running", "source_sha256": sources})
+        refuses("Running control rejects variant", lambda: check("R3_h02_variant", slots["R3_h02_variant"], sources))
+        save(slots["R3_h02_control"] / "etat.json", {"status": "complete", "source_sha256": sources})
+        variant = check("R3_h02_variant", slots["R3_h02_variant"], sources)
+        reserve(variant)
+        release()
+        refuses("Permanent variant claim survives release", lambda: check("R3_h02_variant", slots["R3_h02_variant"], sources))
+        for number in (1, 3):
+            save(fixture / f"claims/R3_h{number:02d}_control.json", {"synthetic_fixture": True})
+        refuses("Maximum three R3 pairs enforced", ready, "exhausted")
+        save(fixture / "measurement.running", {"pid": os.getpid() + 1})
+        release()
+        assert (fixture / "measurement.running").exists()
+        (fixture / "measurement.running").unlink()
+        checks.append("A different owner's lock is not released")
+    record = {"verdict": "GO", "verified_utc": datetime.now(UTC).isoformat(), "physics_measured": False,
+              "guard_sha256": hashlib.sha256(source.read_bytes()).hexdigest(), "checks": checks,
+              "verifier_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(), "fixtures_only": True}
+    with (output / "verification.json").open("x", encoding="utf-8") as stream:
+        json.dump(record, stream, indent=2)
+    print("R3_GUARD_VERIFY=GO")
+
+
+if __name__ == "__main__":
+    main()

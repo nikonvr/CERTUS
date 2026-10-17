@@ -1,0 +1,10 @@
+{
+  "verdict": "GO",
+  "exact_prompt_readback": true,
+  "same_automation": "certus-essais-rate-jusqu-au-14-octobre-9-h",
+  "same_thread": "01a1347c-9798-7b00-af1b-6e6de6058b00",
+  "status": "ACTIVE",
+  "R4_search_and_fresh": "COMPLETE_GO",
+  "next": "R3_h03 preparation, no measurement started",
+  "deadline_utc": "2026-10-16T06:00:00Z"
+}

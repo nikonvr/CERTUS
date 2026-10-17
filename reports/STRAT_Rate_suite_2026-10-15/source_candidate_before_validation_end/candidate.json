@@ -1,0 +1,30 @@
+{
+  "status": "CANDIDATE_ONLY_FULL_VALIDATION_RUNNING",
+  "prepared_utc": "2026-10-15T05:34:31.566752+00:00",
+  "commit": "da1af0825d5e09e8d0a5ff4f1cf42b802e0e30e7",
+  "source_sha256": {
+    "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+    "certus/core/certus_strat_robustness.py": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+    "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+    "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e"
+  },
+  "patch_sha256": "2772540f4345a54a9408c7152cbbe78a0f5b01d28ea80e2d915fb5052eadbeb5",
+  "validation_file": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_RMSE_uniform_weights_2026-10-15\\full_validation_01\\validation.json",
+  "validation_status_when_copied": "running",
+  "worktree_created": false,
+  "scientific_measurement_launched": false,
+  "python": "3.14.8 (tags/v3.14.8:8e6e75d, Sep 30 2026, 18:19:33) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "versions": {
+    "numpy": "2.5.3",
+    "numba": "0.68.0",
+    "scipy": "1.18.1",
+    "PyQt6": "6.11.0"
+  },
+  "notes": [
+    "Candidate snapshot only; never use as a GO validation record",
+    "Historical worktrees unchanged",
+    "A new reference descriptor must be recorded from the actual new worktree after full validation GO"
+  ]
+}

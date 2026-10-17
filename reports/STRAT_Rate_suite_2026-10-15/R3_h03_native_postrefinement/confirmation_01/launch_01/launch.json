@@ -1,0 +1,10 @@
+{
+  "controller_pid": 30404,
+  "started_utc": "2026-10-15T18:35:33.3985909Z",
+  "script": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\run_rate_H03_fresh.ps1",
+  "groups": 3,
+  "plans": 6,
+  "new_proposals": 0,
+  "actual_calls_required_per_group": 24,
+  "deadline_utc": "2026-10-16T06:00:00Z"
+}

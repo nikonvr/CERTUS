@@ -1,0 +1,7 @@
+# Reprise48c —16octobre2026
+
+Paire engagée à03:13:16UTC /05h13Paris, coordinateur WindowsPowerShell5.1 29856, contrôle16008 au lancement. Les processus et états présents font foi. Huit arguments réels :48c premium 1 0 2 0 77 0. Seul facteur de la paire : rate_post_refinementFalse/True, mêmeλfine et480/240/six tours. CPU24 dès démarrage, affinité0xffffff/Normal/bibliothèques23. Design officiel48c SHA vérifié avant lancement. Aucun Python/test concurrent ni source active modifiée.
+
+Quatrième paireR6, au plus six au total ; les trois graines r75x0.5 sont terminées et confirmées. Le coordinateur enchaîne seul contrôle puis variante, aucun groupe frais automatique. Après fin effective : préflight puis prepare_rate_R6_other_confirmation.py --case c04_48c_s77 ; verify_rate_R6_other_fresh.py --case c04_48c_s77. Après GO réel, run_rate_R6_other_fresh.ps1 par scriptbloc avec -RateCase c04_48c_s77 explicite, puis audit_rate_R6_other_fresh.py --case c04_48c_s77 après fin des trois groupes177100xx réservés. Ne jamais employer les scriptsR6initials ou modifier les scripts vivants.
+
+Les deux futurs casx1.5/42 etx2/77 exigent l’audit frais précédent favorable. Arrêt de cette extension au premier cas non confirmé par3/3+médiane≥1%, aucun groupe supplémentaire. À06:00UTC, aucun nouveau test/mesure ; laisser finir l’enfant engagé, sauvegarder, bilan honnête puis pause du même suivi. Le modepremium conserve son consensus natif150 ; tout plan final fixé est renoté à300, sans ancres75c/x0.5 injectées. Profondeurs et appels réels distincts dans l’audit.

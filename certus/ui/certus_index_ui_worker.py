@@ -18,8 +18,6 @@ from certus.core.certus_core import (
     get_resource_path,
 )
 from certus.core.certus_index_core import (
-    _SAPPHIRE_DATA_FILE,
-    _SAPPHIRE_FILE_HAS_K_COLUMN,
     _SILICON_WLS,
     OptimizationConfig,
     OptimizationResults,
@@ -493,10 +491,7 @@ class CertusIndexWorkerMixin:
 
         if substrate_name == "Sapphire (Al2O3)":
             self.logger.info(
-                "[FILE] Substrate Al2O3 n(lambda): Sellmeier equation (materials_v1.json, id=3) "
-                "| k file: %s | k column: %s",
-                Path(_SAPPHIRE_DATA_FILE).resolve(),
-                _SAPPHIRE_FILE_HAS_K_COLUMN,
+                "[FILE] Substrate Al2O3 n(lambda): Sellmeier equation (materials_v1.json, id=3) | transparent (k = 0)"
             )
 
         elif substrate_name == "Silicon (Si)":

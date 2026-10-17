@@ -346,6 +346,7 @@ def _resolve_injected_strategies(params: Any) -> list[dict[str, Any]]:
     if not isinstance(plans, (list, tuple)):
         raise TypeError(f"injected_strategies : attendu une liste, vu {type(plans).__name__}")
 
+    from certus.core.certus_strat_consensus import _inherited_by_children  # the keys the children of ELITE keep
     out: list[dict[str, Any]] = []
     for i, plan in enumerate(plans):
         if not isinstance(plan, dict):
@@ -358,11 +359,7 @@ def _resolve_injected_strategies(params: Any) -> list[dict[str, Any]]:
             wl = b.get("wavelength", b.get("wl"))
             if wl is None or "start" not in b or "end" not in b:
                 continue
-            propres.append({
-                "start": int(b["start"]),
-                "end": int(b["end"]),
-                "wavelength": float(wl),
-            })
+            propres.append({"start": int(b["start"]), "end": int(b["end"]), "wavelength": float(wl)})
         if not propres:
             continue
         nom = str(plan.get("nom") or plan.get("origin") or f"plan_{i}")
@@ -373,6 +370,7 @@ def _resolve_injected_strategies(params: Any) -> list[dict[str, Any]]:
             "origin": f"INJECTED({nom})",
             "avg_cost": float("inf"),
             "total_cost": float("inf"),
+            **_inherited_by_children(plan),  # Rate layers, slit, testglass swaps: scored as handed over, not as pure optics
         })
     return out
 
@@ -1513,9 +1511,7 @@ def _run_phaseB_parallel_execution(
             initargs=(stats_queue, live_preview_queue),
         )
         with executor:
-            futures = []
-            for segment in segments:
-                futures.append(executor.submit(_run_segment, segment))
+            futures = [executor.submit(_run_segment, segment) for segment in segments]
 
             # Wait for all segments to complete (with a safe timeout)
             done, _not_done = concurrent.futures.wait(futures, timeout=600)
@@ -1542,19 +1538,17 @@ def _finalize_and_export_pipeline_results(
     params: dict[str, Any],
     signals: Any,
     timing_logger: Any,
+    ranker: Any = None,
+    post_report: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Sorts final results, emits plots, triggers Excel export, and returns final payload."""
     params["logger"].info("🚀 PHASE 4: Final Monte Carlo Yield Evaluation & Export...")
     if not accumulated_strategies_results:
         raise RuntimeError("No strategies found.")
-
-    accumulated_strategies_results[:] = rank_final_results(accumulated_strategies_results)
-
+    accumulated_strategies_results[:] = (ranker or rank_final_results)(accumulated_strategies_results)
     if timing_logger:
         timing_logger.end_global("STRAT_Workflow")
-
     signals.show_strategies_table.emit(accumulated_strategies_results)
-
     best_res = accumulated_strategies_results[0]
     sim_context = pre_calc_data.copy()
     sim_context["blocks"] = best_res["strategy"]["blocks"]
@@ -1566,6 +1560,8 @@ def _finalize_and_export_pipeline_results(
         "best_strategy": best_res["strategy"],
         "all_strategies_results": accumulated_strategies_results,
     }
+    if post_report is not None:
+        final_complete_structure["rate_post_refinement"] = post_report
 
     if params.get("show_plots", True):
         try:

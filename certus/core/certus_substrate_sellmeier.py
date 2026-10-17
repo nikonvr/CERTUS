@@ -117,11 +117,7 @@ def _sellmeier_l_separation_gap_um(p: np.ndarray) -> float:
 
     pp = np.asarray(p, dtype=np.float64).ravel()
 
-    lvals = []
-
-    for i in (2, 4, 6):
-        if i < pp.size:
-            lvals.append(float(pp[i]))
+    lvals = [float(pp[i]) for i in (2, 4, 6) if i < pp.size]
 
     if len(lvals) < 2:
         return 0.0

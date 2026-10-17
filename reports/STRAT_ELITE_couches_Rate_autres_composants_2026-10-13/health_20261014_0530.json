@@ -1,0 +1,31 @@
+{
+  "checked_local": "2026-10-14T05:38:02.8448868+02:00",
+  "status": "running",
+  "completed": 3,
+  "current": "r75x1.5_deep_s101_sans",
+  "current_pid": 41632,
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "processes": [
+    {
+      "pid": 23280,
+      "parent_pid": 22652,
+      "command": "\"C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\campagne_a2_deadline_runner.py\" \"--worktree\" \"C:\\Users\\Lemarchand\\.codex\\worktrees\\campagne-a2\\certus0310\" \"--output\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_ELITE_couches_Rate_autres_composants_2026-10-13\" \"--logical-cpus\" \"16\"",
+      "affinity": 65535,
+      "priority": "Normal",
+      "cpu_seconds": 0.171875
+    },
+    {
+      "pid": 41632,
+      "parent_pid": 23280,
+      "command": "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe scripts/probe_blocs_vs_plantage.py r75x1.5 deep 0 0 2 0 101 0",
+      "affinity": 65535,
+      "priority": "Normal",
+      "cpu_seconds": 1300.53125
+    }
+  ]
+}

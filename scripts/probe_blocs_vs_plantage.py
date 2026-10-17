@@ -93,10 +93,12 @@ Lancer sur le 99c d'abord, puis sur le 75c, avant toute conclusion generale.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import sys
 from collections import defaultdict
+from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 
@@ -210,6 +212,13 @@ RATE_SETS = [
     [31, 32, 33, 34, 35, 36],    # la zone continue
     [30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40],
 ]
+#: 🔑 SURCHARGEABLE PAR `CERTUS_RATE_SETS` : les jeux separes par `;`, les couches d'un jeu par `-`.
+#: Les jeux ci-dessus sont ceux du x2 ; une autre echelle a d'autres couches critiques (sur x0,5 :
+#: 22, 25, 28, puis 46, 51, 62), qu'on lit dans l'artefact d'une mesure precedente.
+#:     set CERTUS_RATE_SETS=22-25-28;22-25-28-46;22-25-28-46-51
+_RATE_SETS_ENV = os.environ.get("CERTUS_RATE_SETS", "").strip()
+if _RATE_SETS_ENV:
+    RATE_SETS = [[int(_c) for _c in _jeu.split("-") if _c.strip()] for _jeu in _RATE_SETS_ENV.split(";") if _jeu.strip()]
 
 #: PROFIL D'EXPLORATION ELARGIE -- il elargit ce qui est GENERE et RETENU, jamais la profondeur
 #: d'EVALUATION. `robustness_num_runs` et `n_screen_runs` restent intacts : ce sont des
@@ -249,6 +258,33 @@ ELARGISSEMENT = {
 }
 
 
+
+def _rmse_par_bruit(result: dict) -> dict:
+    """Per noise level: the 95th percentile of the RMSE over all draws, over the draws that terminate, and the counts."""
+    import numpy as np
+
+    from certus_physics import CRASH_SENTINEL_MIN
+
+    out = {}
+    for level in result.get("results_per_noise") or []:
+        rmse = np.asarray(level.get("rmse_all") or [], dtype=float)
+        thick = np.asarray(level.get("thicknesses_all") or [], dtype=float)
+        if rmse.size == 0 or thick.shape[0] != rmse.size:
+            out[f"{float(level.get('noise_level', float('nan'))):g}"] = {"rmse_p95": float(level.get("rmse_p95", float("nan")))}
+            continue
+        crashed = np.any(thick > CRASH_SENTINEL_MIN, axis=1)
+        done = rmse[~crashed]
+        out[f"{float(level['noise_level']):g}"] = {
+            "n": int(rmse.size),
+            "plantes": int(crashed.sum()),
+            "rmse_p95": float(np.percentile(rmse, 95)),
+            "rmse_p95_termines": float(np.percentile(done, 95)) if done.size else None,
+            "rmse_moyen_plantes": float(rmse[crashed].mean()) if crashed.any() else None,
+            "rmse_max_termines": float(done.max()) if done.size else None,
+            "rmse_min_plantes": float(rmse[crashed].min()) if crashed.any() else None,
+        }
+    return out
+
 def _machine() -> str:
     import platform
     cpu = " ".join((platform.processor() or platform.machine() or "?").split())
@@ -262,6 +298,25 @@ def _commit() -> str:
                               capture_output=True, text=True, timeout=10).stdout.strip() or "?"
     except (OSError, subprocess.SubprocessError):
         return "?"
+
+
+def _leviers_rate(par_swing: int) -> dict:
+    """Les leviers Rate qu'une sonde IMPOSE (8e argument) : aucun a 0, les reglages de la production.
+
+    🔴 A 0 la sonde posait `rate_by_swing` a Faux, alors que la production l'arme depuis le 2026-08-22 (et l'application le lisait
+    Faux, par erreur, jusqu'au 2026-10-12) : toute mesure a 0 tournait donc sans le placement du Rate la ou le signal optique est
+    trop pauvre pour arreter la couche, que 👤 veut favorise. 👤 2026-10-12 : « le rate doit etre integre dans tous les
+    scenarios ». A 0 on ne force plus rien, et l'artefact consigne ce qui a tourne (`config`). Les autres valeurs gardent leur
+    sens, y compris `rate_by_swing` Faux pour 2 et 4 (queue seule, chirurgical seul).
+    """
+    if par_swing == 0:
+        return {}
+    return {
+        "rate_by_swing": par_swing in (1, 3, 5),
+        "rate_tail_sweep": TAIL_CUTS if par_swing in (2, 3, 5) else [],
+        "rate_layer_sets": RATE_SETS if par_swing == 4 else [],
+        "rate_tail_keep_optical": 4 if par_swing == 3 else 0,
+    }
 
 
 def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
@@ -294,7 +349,9 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
     Bx.qapp()
     Bx.autoanswer_dialogs(True)
     app = CertusStratApp()
-    app.load_configuration(str(ROOT / cfg))
+    from _composant import charger_configuration
+
+    charger_configuration(app, ROOT / cfg)
     if "execution_mode" in getattr(app, "widgets", {}):
         app.widgets["execution_mode"].setCurrentText(mode)
 
@@ -333,10 +390,7 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
         # 🔴 par_swing == 3 exige AUSSI le contexte de swing : sans lui `swing_ctx` vaut None
         # et la regle d'exception est sautee EN SILENCE. C'est ce qui a fait qu'un run de
         # 56 min a rendu un doublon exact du run sans exception, le 2026-08-19.
-        "rate_by_swing": par_swing in (1, 3, 5),
-        "rate_tail_sweep": TAIL_CUTS if par_swing in (2, 3, 5) else [],
-        "rate_layer_sets": RATE_SETS if par_swing == 4 else [],
-        "rate_tail_keep_optical": 4 if par_swing == 3 else 0,
+        **_leviers_rate(par_swing),
         "execution_mode": mode,
     }
     # 🔴 LE TRIPLET DE GRAINES DU CONSENSUS -- ajoute le 2026-08-19, et c'est le VERROU de
@@ -391,11 +445,16 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
     # d'ou la profondeur se DEDUIT par une table qui vit dans certus_strat_ui_state.py et qui
     # peut changer. Une deduction n'est pas une consignation : on enregistre la valeur resolue.
     profondeur: dict = {}
+    leviers_rate: dict = {}
 
     def collect(*a, **k):
         p = _c(*a, **k)
         p.update(over)
         vus["n"] += 1
+        for _k in ("allow_rate", "rate_by_swing", "rate_tail_sweep", "rate_layer_sets", "rate_tail_keep_optical", "rate_rescue",
+                   "rate_rescue_few", "elite_rate_moves", "elite_rate_max_candidates", "elite_rate_joint_candidates", "rate_post_refinement"):
+            if _k in p:
+                leviers_rate[_k] = p[_k]
         for _k in ("robustness_num_runs", "n_screen_runs", "dp_top_k", "consensus_num_runs"):
             _v = p.get(_k)
             if _v is not None:
@@ -422,6 +481,10 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
             "n_blocs": int(st.get("n_blocks", len(blocs))),
             "crash_rate": float(s.get("crash_rate", 1.0)),
             "score": float(s.get("robustness_score", 0.0) or 0.0),
+            # Keep base and consensus provenance separate; missing metadata stays unknown.
+            "robustness_score_base": s.get("robustness_score_base"),
+            "robustness_score_consensus": s.get("robustness_score_consensus"),
+            "robustness_consensus_meta": deepcopy(s.get("robustness_consensus_meta")),
             # 🔴 LA CLE EST `wavelength`, PAS `wl` -- corrige le 2026-08-20, et l'erreur coutait
             # LE LIVRABLE. `_build_layer_wavelengths_from_strategy` (certus_strat_robustness.py:
             # 2855) lit `block["wavelength"]` : c'est le nom qui fait foi. Avec `wl`, le champ
@@ -457,6 +520,7 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
             #
             # Liste VIDE = pur optique. C'est une distinction, pas une absence de donnee.
             "rate_layers": sorted(int(x) for x in (st.get("rate_layers") or [])),
+            "witness_reset_layers": deepcopy(st.get("witness_reset_layers")),
             # 🔴 LE DRAPEAU QUI MANQUAIT AUX ARTEFACTS. `crash_eliminated` est pose par
             # `_filter_finite_robustness_scores` sur toute strategie dont le score a ete
             # REMPLACE par un repli. Sans lui, un artefact ne porte que des scores finis
@@ -468,6 +532,9 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
             # fois le bruit mesure de la machine. Sans ce champ, aucun artefact ne permet de
             # savoir si une strategie rejetee etait fabricable au bruit REEL.
             "crash_rates_by_noise": s.get("crash_rates_by_noise") or {},
+            # `score` is the largest, over the three noise levels, of the 95th percentile of the per-draw RMSE, crashed draws
+            # included. Nothing in the artefact said at which level it was reached, nor what the draws that terminate give.
+            "rmse_par_bruit": _rmse_par_bruit(s),
             "critical_layer": s.get("critical_layer") or {},
             # 🔑 LA FENTE QUE CETTE STRATEGIE A CHOISIE, et son prix en bruit. Sans ce champ on
             # saurait SI la recherche de fente aide, jamais A QUELLE LARGEUR -- soit la moitie
@@ -478,7 +545,9 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
             "resolution_noise_factor": s.get("resolution_noise_factor"),
         })
     return {"verdict": "OK", "n_strats": len(lignes), "strategies": lignes,
-            "profondeur": dict(profondeur)}
+            "profondeur": dict(profondeur), "leviers_rate": dict(leviers_rate),
+            **({"rate_post_refinement": deepcopy(res["final_results"]["rate_post_refinement"])}
+               if "rate_post_refinement" in res.get("final_results", {}) else {})}
 
 
 def par_fente(lignes: list[dict]) -> None:
@@ -663,7 +732,7 @@ def main() -> int:
     res_nm = float(sys.argv[5]) if len(sys.argv) > 5 else 2.0
     elargi = int(sys.argv[6]) if len(sys.argv) > 6 else 0   # 0 / 1 / 2
     graine = int(sys.argv[7]) if len(sys.argv) > 7 else SEED
-    # 0=rien · 1=swing seul · 2=queue seule · 3=queue+swing+exception · 4=chirurgical
+    # 0=les reglages de la production (rien n'est force) · 1=swing seul · 2=queue seule · 3=queue+swing+exception · 4=chirurgical
     # 🔴 5=queue+swing SANS exception -- le CONTROLE de 3, ajoute le 2026-08-20. Sans lui,
     # comparer 3 a 2 fait varier DEUX drapeaux a la fois (erreur n° 3 du §5), et `by_swing`
     # n'est pas inerte sur r75x2 : il y ajoute 26 origines (RATE_L47, RATE_L65).
@@ -689,11 +758,10 @@ def main() -> int:
                          "exploration_elargie": bool(elargi),
                          "exploration_niveau": int(elargi),
                          # 🔴 CE BLOC MENTAIT : il enregistrait `[]` pour par_swing == 3
-                         # alors que le run tournait bien avec les coupures (§24-7).
-                         "rate_by_swing": par_swing in (1, 3, 5),
-                         "rate_tail_sweep": TAIL_CUTS if par_swing in (2, 3, 5) else [],
-                         "rate_layer_sets": RATE_SETS if par_swing == 4 else [],
-                         "rate_tail_keep_optical": 4 if par_swing == 3 else 0,
+                         # alors que le run tournait bien avec les coupures (§24-7). Il consigne desormais les valeurs
+                         # que le calcul a RECUES (celles de `collect_params` surchargees par la sonde), pas celles que la
+                         # sonde croit avoir posees.
+                         **(r.pop("leviers_rate", None) or {}),
                          # 🔴 §24-7 : sans lui, deux runs a triplets differents seraient
                          # indiscernables dans les artefacts -- exactement la mesure
                          # qu'on cherche a faire.
@@ -727,7 +795,8 @@ def main() -> int:
                 # 🔴 LES COUPURES ENTRENT DANS LE NOM. Sans elles, changer TAIL_CUTS ecrase
                 # l'artefact precedent : les coupures 28-52 ont ete perdues ainsi.
                 + ("" if not par_swing else "_swing" if par_swing == 1
-                   else "_chirurgical" if par_swing == 4
+                   else "_chirurgical" + (f"-{hashlib.sha256(_RATE_SETS_ENV.encode()).hexdigest()[:8]}" if _RATE_SETS_ENV else "")
+                   if par_swing == 4
                    else f"_tail{min(TAIL_CUTS)}-{max(TAIL_CUTS)}"
                         + ("k" if par_swing == 3 else "s" if par_swing == 5 else ""))
                 # 🔴 LE TRIPLET DE CONSENSUS ENTRE DANS LE NOM, pour la meme raison que les

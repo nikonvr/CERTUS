@@ -1,0 +1,113 @@
+"""Continue validation after an isolated benchmark-harness fix; keep failed reports."""
+
+from __future__ import annotations
+
+import copy
+import hashlib
+import json
+import os
+import runpy
+import subprocess
+import sys
+import time
+import traceback
+from datetime import UTC, datetime
+from pathlib import Path
+
+
+def main() -> int:
+    root = Path(__file__).resolve().parents[1]
+    previous_file = root / "reports/STRAT_RMSE_uniform_weights_2026-10-15/full_validation_01/validation.json"
+    previous = json.loads(previous_file.read_text(encoding="utf-8"))
+    if previous.get("status") != "FAILED" or previous.get("error") != "Validation failed: remaining":
+        raise RuntimeError("Inspect the original validation before this specific continuation")
+    sources = {name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in previous["source_sha256"]}
+    if sources != previous["source_sha256"]:
+        raise RuntimeError("A scientific or previously tested source changed")
+    sources["tests/performance/test_performance.py"] = hashlib.sha256((root / "tests/performance/test_performance.py").read_bytes()).hexdigest()
+    shell = Path(os.environ["SYSTEMROOT"]) / "System32/WindowsPowerShell/v1.0/powershell.exe"
+    raw = subprocess.check_output([str(shell), "-NoProfile", "-Command",
+        "@(Get-CimInstance Win32_Process | Where-Object { $_.Name -match '^python' } | "
+        "Select-Object ProcessId) | ConvertTo-Json -Compress"], encoding="utf-8").strip()
+    active = json.loads(raw) if raw else []
+    if isinstance(active, dict):
+        active = [active]
+    if any(p["ProcessId"] != os.getpid() for p in active) or list((root / "reports").rglob(".running")):
+        raise RuntimeError("Another test or measurement is alive")
+    output = root / "reports/STRAT_RMSE_uniform_weights_2026-10-15/full_validation_02"
+    output.mkdir(exist_ok=False)
+    helper = runpy.run_path(str(root / "scratch/campagne_a2_runner.py"))
+    resources = helper["limit_resources"](24)
+    checks = []
+    for name in ("counterproof_before", "targeted_after", "oracle", "unit", "ui"):
+        found = next(check for check in previous["checks"] if check["name"] == name)
+        if found["exit_code"] != 0 and not (name == "counterproof_before" and found["verdict"] == "EXPECTED_FAILURE_CONFIRMED"):
+            raise RuntimeError("An inherited result is not passing")
+        item = copy.deepcopy(found)
+        item.update(carried_forward_from=str(previous_file), previous_report_sha256=hashlib.sha256(previous_file.read_bytes()).hexdigest(),
+                    reason="Scientific sources and these suites unchanged; only the separate performance-test harness changed")
+        checks.append(item)
+    state = {"status": "running", "pid": os.getpid(), "started_utc": datetime.now(UTC).isoformat(),
+             "resources": resources, "source_sha256": sources, "checks": checks,
+             "scope": "Incremental validation: reuse unchanged successful suites, rerun changed performance and remaining group",
+             "previous_failed_report": str(previous_file), "stop_rule": "Finite command list; stop on first unexpected failure"}
+    with (output / "controller.py.txt").open("xb") as stream:
+        stream.write(Path(__file__).read_bytes())
+    commands = [
+        ("performance_after", [sys.executable, "-m", "pytest", "tests/performance/test_performance.py", "-q", "--no-cov"]),
+        ("ruff", [sys.executable, "-m", "ruff", "check", "."]),
+        ("remaining", [sys.executable, "-m", "pytest", "tests/", "-q", "--no-cov", "--ignore=tests/oracle", "--ignore=tests/unit", "--ignore=tests/ui"]),
+        ("coherence", [sys.executable, "scripts/coherence_md.py"]),
+        ("claude_md", [sys.executable, "scripts/check_claude_md.py"]),
+        ("docs", [sys.executable, "scripts/check_docs.py"]),
+        ("c1", [sys.executable, "scripts/c1_diff.py", "HEAD", "--sans-cache", "--fils", "4", "--json", str(output / "c1_cold_report.json")]),
+        ("diff", ["git", "diff", "--check"]),
+    ]
+    try:
+        for name, command in commands:
+            state["current"] = name
+            helper["save"](output / "validation.json", state)
+            environment = os.environ.copy()
+            for key in ("_CERTUS_NUMBA_CONFIGURED", "NUMBA_THREADING_LAYER"):
+                environment.pop(key, None)
+            environment.update(PYTHON_CPU_COUNT="24", PYTHONUTF8="1", QT_QPA_PLATFORM="offscreen")
+            for key in ("NUMBA_NUM_THREADS", "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS",
+                        "VECLIB_MAXIMUM_THREADS", "NUMEXPR_NUM_THREADS"):
+                environment[key] = "23"
+            if name in ("performance_after", "remaining"):
+                environment["NUMBA_CACHE_DIR"] = str(output / (name + "_fresh_numba_cache"))
+                environment["PYTHONPYCACHEPREFIX"] = str(output / (name + "_fresh_python_cache"))
+                preferences = output / (name + "_preferences")
+                preferences.mkdir()
+                (preferences / "certus_export.json").write_text('{"auto_export_enabled": false, "schema_version": 1}', encoding="utf-8")
+                environment["CERTUS_CONFIG_DIR"] = str(preferences)
+            print("START " + name, flush=True)
+            started = time.monotonic()
+            with (output / (name + ".log")).open("x", encoding="utf-8") as stream:
+                process = subprocess.Popen(command, cwd=root, env=environment, stdout=stream, stderr=subprocess.STDOUT)
+                state["current_pid"] = process.pid
+                helper["save"](output / "validation.json", state)
+                code = process.wait()
+            check = {"name": name, "command": command, "exit_code": code, "seconds": time.monotonic() - started,
+                     "verdict": "GO" if code == 0 else "FAILED", "log": name + ".log",
+                     "library_threads_ceiling": 23, "fresh_caches": name in ("performance_after", "remaining")}
+            state["checks"].append(check)
+            state["current_pid"] = None
+            helper["save"](output / "validation.json", state)
+            print("DONE " + name + " " + check["verdict"], flush=True)
+            if code != 0:
+                raise RuntimeError("Validation failed: " + name)
+        if any(hashlib.sha256((root / path).read_bytes()).hexdigest() != digest for path, digest in sources.items()):
+            raise RuntimeError("A validated input changed during validation")
+        state.update(status="GO", current=None)
+        return 0
+    except BaseException:
+        state.update(status="FAILED", error=traceback.format_exc())
+        raise
+    finally:
+        state["finished_utc"] = datetime.now(UTC).isoformat()
+        helper["save"](output / "validation.json", state)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

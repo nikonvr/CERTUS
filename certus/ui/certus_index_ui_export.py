@@ -24,7 +24,6 @@ from certus.core.certus_core import (
     get_resource_path,
 )
 from certus.core.certus_index_core import (
-    _SAPPHIRE_FILE_HAS_K_COLUMN,
     OptimizationConfig,
     OptimizationResults,
     calculate_relative_R_normalization,
@@ -1030,14 +1029,14 @@ class CertusIndexExportMixin:
 
                 # Take top 20 or all
 
-                for b in sorted_beam[:20]:
-                    beam_table.append(
-                        {
-                            "Thickness (nm)": f"{b['d']:.2f}",
-                            "MSE": f"{b['mse']:.2e}",
-                            "Status": "Best" if b == sorted_beam[0] else "",
-                        }
-                    )
+                beam_table.extend(
+                    {
+                        "Thickness (nm)": f"{b['d']:.2f}",
+                        "MSE": f"{b['mse']:.2e}",
+                        "Status": "Best" if b == sorted_beam[0] else "",
+                    }
+                    for b in sorted_beam[:20]
+                )
 
                 sections.append(
                     {
@@ -1215,8 +1214,6 @@ class CertusIndexExportMixin:
 
             if res.config.substrate == "Sapphire (Al2O3)":
                 summary_data["Sapphire n(lambda) source"] = ["Sellmeier equation (materials_v1.json, id=3)"]
-
-                summary_data["Sapphire k column in file"] = ["yes" if _SAPPHIRE_FILE_HAS_K_COLUMN else "no"]
 
             if hasattr(res, "sellmeier_params") and res.sellmeier_params is not None:
                 sp = res.sellmeier_params

@@ -1,0 +1,7 @@
+# Lancement R6 c03_s404 — 16 octobre 2026
+
+Les cas77 et202 ont chacun passé le critère préfixé :3/3 gains frais propres et médiane≥1%, sans groupe supplémentaire. Le cas404 est le troisième cas initial et doit être audité avant toute décision de passage aux autres composants. Aucun résultat futur n’est présumé.
+
+Lancement à01:34:05UTC /03h34Paris : coordinateur WindowsPowerShell5.1 40204, contrôle24380 au lancement. Invocation par scriptbloc avec `-RateCase c03_s404` explicite, script inchangé et SHA vérifié. État réel du contrôle : graine404, `rate_post_refinement=false`, CPU24, affinité0xffffff, Normal, bibliothèques23 ; aucun autre Python au démarrage. Les états et processus actuels font foi. Le coordinateur lance automatiquement sa variante, aucun doublon ni voie manuelle.
+
+Après fin effective : préflight, `prepare_rate_R6_confirmation_v2.py --case c03_s404`, puis `verify_rate_R6_fresh_v2.py --case c03_s404`. Après GO réel, lancer `run_rate_R6_fresh_v2.ps1` via scriptbloc avec `-RateCase c03_s404` explicite ; après les trois groupes réservés176300xx, exécuter `audit_rate_R6_fresh.py --case c03_s404`. Ne pas employer les copiesv1, ni répéter77/202. Les quotas, graines réservées, plans complets et échéance du16octobre06:00UTC sont conservés. Aucun test ou autre Python d’analyse pendant une mesure. Les trois autres paires restent conditionnelles au bilan complet initial ; aucune copie ou mesure supplémentaire n’est autorisée par ce simple lancement.

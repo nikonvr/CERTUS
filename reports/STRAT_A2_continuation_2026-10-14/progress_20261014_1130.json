@@ -1,0 +1,82 @@
+{
+  "status": "verified_new_artifacts",
+  "observed_completed": 13,
+  "runs": [
+    {
+      "key": "75c_deep_s042_avec",
+      "artifact": "75c_deep_s042_avec_da1af082.json",
+      "sha256": "526dfc4611c591b8fcba24c2f8d3ce8bf5aef62563ce18bfd536b0381f214b1b",
+      "seconds": 3042.165373399999,
+      "saved_utc": "2026-10-14T08:27:55+00:00",
+      "verdict": "OK",
+      "effective_elite_rate_moves": true,
+      "meilleur_seel": 0.24073782908253064,
+      "deposables": 3683,
+      "profondeur": {
+        "robustness_num_runs": 300,
+        "n_screen_runs": 50,
+        "dp_top_k": 100,
+        "consensus_num_runs": 300
+      },
+      "config_consensus": {
+        "consensus_seed_list": "(defaut du JSON)"
+      },
+      "best_id": 900951707,
+      "best_score": 0.014488675587842432,
+      "best_has_consensus_meta": false
+    },
+    {
+      "key": "75c_deep_s042_sans",
+      "artifact": "75c_deep_s042_sans_da1af082.json",
+      "sha256": "326bf504802795a186985d3f1af8a8430f7db4dff83f6e73aece3a5369c963a7",
+      "seconds": 3227.7609474000055,
+      "saved_utc": "2026-10-14T09:21:41+00:00",
+      "verdict": "OK",
+      "effective_elite_rate_moves": false,
+      "meilleur_seel": 0.24085127336762063,
+      "deposables": 4702,
+      "profondeur": {
+        "robustness_num_runs": 300,
+        "n_screen_runs": 50,
+        "dp_top_k": 100,
+        "consensus_num_runs": 300
+      },
+      "config_consensus": {
+        "consensus_seed_list": "(defaut du JSON)"
+      },
+      "best_id": 900850654,
+      "best_score": 0.01450233397070108,
+      "best_has_consensus_meta": false
+    },
+    {
+      "key": "48c_premium_s077_avec",
+      "artifact": "48c_premium_s077_avec_da1af082.json",
+      "sha256": "79ab6a6e12faa1dd56538c8295d08ca0c9add377227bb73aca6f3e6ac151800d",
+      "seconds": 525.6733733000001,
+      "saved_utc": "2026-10-14T09:30:32+00:00",
+      "verdict": "OK",
+      "effective_elite_rate_moves": true,
+      "meilleur_seel": 0.192227481296443,
+      "deposables": 2602,
+      "profondeur": {
+        "robustness_num_runs": 150,
+        "n_screen_runs": 25,
+        "dp_top_k": 40,
+        "consensus_num_runs": 150
+      },
+      "config_consensus": {
+        "consensus_seed_list": "(defaut du JSON)"
+      },
+      "best_id": 900850752,
+      "best_score": 0.009237851141393584,
+      "best_has_consensus_meta": false
+    }
+  ],
+  "raw_75c_gain_percent": 0.047101384810551976,
+  "limits": [
+    "Raw minima of native searches, no complete score consensus metadata in the frozen A2 exports",
+    "No homogeneous independent fixed-plan confirmation",
+    "Different components and actual scoring depths cannot be compared against r75x0.5 reference",
+    "Runtime tests and new Rate measurements deferred until A2 completion"
+  ]
+}

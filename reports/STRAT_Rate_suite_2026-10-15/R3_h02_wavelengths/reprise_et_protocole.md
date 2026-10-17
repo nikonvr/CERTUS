@@ -1,0 +1,27 @@
+# R3_h02 — voisinage des longueurs d’onde, préparation et reprise — 15 octobre2026
+
+**Deuxième paire sur trois au maximum : terminée, auditée et renotée, aucun gain homogène.** [Bilan actuel et repriseR4](bilan_R3_h02_20261015.md). Lire `pair_controller.json`, les états contrôle/variante, les processus et réservations avant toute action. Contrôle30284 terminé à13 h25 min38 s, sortie0 enregistrée. Variante28532 terminée à14 h10 min37 s, coordinateur24768 terminé ; les états présents et la commande réelle font foi. Les deux voies et le rejeu ont consommé leurs réservations ; ne pas les doubler. Aucun test ni modification des sources/scripts actifs pendant une mesure.
+
+## Facteur et justification
+
+R3_h01 est terminé, audité et renoté sans gain.347 propositions conjointes créent réellement la fenêtre interne de trois couches mais aucune ne la place à688nm, pourtant légal. Le facteurh02 est **le flux de λ par fenêtre**, avec largeurs1..7 **dans les deux voies** : l’effet de la λ est isolé conditionnellement à la géométrie accessible. Le résultat nul des largeurs seules reste nul ; leur maintien dans le contrôle ne constitue aucune promotion scientifique.
+
+Contrôle : flux original des λ des blocs parents, puis grille grossière10nm. Variante : pour chaque fenêtre admissible, d’abord la λ de son bloc contenant puis les décalages0/−1/+1/−2/+2/−3/+3 présents dans la grille native, puis le flux original ; déduplication stable. Aucun λ688/613 ou indice propre à75 couches codé en dur dans le générateur. Déplacements±2, largeurs1..7, budgets480/240, six tours, ordre des familles et round-robin parents/fenêtres, plein36, objectif, bruits, fente et témoins inchangés. CPU24 dès démarrage, affinité0xffffff, Normal, bibliothèques≤23.
+
+[Protocole exact et empreintes](protocol.json), [revue manuelle](manual_review_before_launch.json), [contrats et observateurGO](verification_01/verification.json), [gardes et quotasGO](guard_verification/verification.json), [lancement](pair_launch.json). Tous les scripts sont des copies ; les sources du contexte `rate-rmse-r0` et historiques sont inchangées. Le coordinateur reprend les réparations éprouvées : handle conservé avant attente, sauvegarde avec chemin de backup explicite, aucune dépendanceGet-FileHash dans le script de fond.
+
+## Analyse et renotation terminées
+
+Préparation de renotation du15 octobre : nouvelles copies `scratch/rate_fixed_replay_R3_h02.py`, `scratch/rate_R3_h02_replay_guard.py` et `scratch/verify_rate_R3_h02_replay.py`, **préparées sans exécution pendant la mesure, puis vérifiéesGO après sa fin**. [Empreintes et contrôles différés](replay_preparation_02.json). La CLI impose une échéance et la garde vérifie l’autorisation du16 octobre8 hParis avant réservation et analyse nominale. Quatre comparateurs stricts, au plus huit plans uniques et quatre appels300tirages par plan ; les nouveaux finalistes peuvent avoir une note encore inconnue, sans relâcher les attentes des comparateurs. La paire vivante et ses scripts restent inchangés.
+
+Nouvelle copie `scratch/audit_rate_R3_wavelengths_arm.py` préparée le15 octobre à13 h32, préparée sans exécution pendant la mesure, puis exécutéeGO après la fin des deux voies : [provenance et vérifications différées](audit_preparation_20261015_1334.json). Elle attend la fin des deux voies, vérifie leurs sorties0 et les empreintes figées ; les appels joints au seul ID sont explicitement signalés comme ambigus. Ruff, revue et audits des deux voies sontGO dans `audit_execution_02`. Les scripts actifs restent intacts.
+
+Vérifier fin effective des deux processus et code de sortie, sources/scripts/copies, paramètres et appels réels. Figer les meilleurs plans natifs exportés et les meilleurs consensus complets de chaque voie, puis dédupliquer par plan complet. Renoter avec les comparateurs900951015/9900001/9900006/9900008 à300tirages101/41/42/43, via une nouvelle copie de lanceur et un quota de renotation unique. Aucun minimum mêlant scores de base et de consensus ne suffit à conclure.
+
+En cas de gain homogène, réserver trois groupes réellement frais avant toute inspection ; au plus trois autres si petit effet ou hétérogénéité. Aucun groupe frais consommé surh01. Pour interpréter une amélioration du couple géométrie/λ, la troisième paireR3 peut comparer largeurs2/4/6 contre1..7 **avec la même politique de λ fine** ; ne pas ajouter un quota ou changer le classement au même moment. Si aucun gain, revenir aux traces pour choisir le dernier facteur utile, ou passer au raffinement localR4 borné suivant le guide. R3 reste au maximum trois paires.
+
+PuisR4 : deux passes/faisceau4/1200plans ;R5validation/intégration d’une voie retenue ;R6six paires conditionnelles. R7 nécessite les données quantitatives machine absentes. Aucun défaut scientifique activé, aucun commit/push/publication. Préserver tout échec et tous les états ; en cas d’échec du coordinateur, adopter un enfant vivant ou le résultat complet après audit, sans refaire une réservation consommée.
+
+ETA de planification au lancement : premier bilanh02 vers14 h30–16 h Paris, à réajuster sur les durées mesurées. Ce n’est ni une échéance d’autorisation ni une promesse de gain.
+
+Renotation réelle terminéeOK : six plans,24 appels300tirages101/41/42/43, aucun gain ; pas de confirmation fraîche. La première invocation de date échoue avant réservation, conservée dans `replay_launch_failure_01`. Voir le bilan actuel avant toute action. R4 est en préparation, aucun calcul R4 engagé.

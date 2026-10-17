@@ -1,0 +1,54 @@
+"""Exercise refusal branches with mocked process/lock inventories and no real reservations."""
+
+import copy
+import json
+from pathlib import Path
+from unittest.mock import patch
+
+import rate_R4_guard as guard
+import rate_R4_planner as planner
+
+guard.check_deadline()
+protocol, state = planner.protocol_and_state()
+manifest_file = Path(state["pending_group"])
+manifest = guard.read(manifest_file)
+output = manifest_file.parent / "measurement"
+calls = (manifest["phase"], output, protocol["source_sha256"])
+checks = []
+
+
+def reject():
+    try:
+        guard.check_ready(*calls)
+    except RuntimeError as error:
+        checks.append(str(error))
+    else:
+        raise AssertionError("Isolation guard accepted a forbidden state")
+
+
+exists = Path.exists
+for forbidden in (guard.PROGRAM / "measurement.running", guard.PROGRAM / "claims" / (manifest["phase"] + ".json")):
+    with patch.object(Path, "exists", lambda path, expected=forbidden: path == expected or exists(path)):
+        reject()
+with patch.object(guard.subprocess, "check_output", return_value=json.dumps([
+    {"ProcessId": 999999, "CommandLine": 'python -m pytest tests/unit'}
+])):
+    reject()
+with patch.object(guard.subprocess, "check_output", return_value=json.dumps([
+    {"ProcessId": 999999, "CommandLine": 'python another_scientific_controller.py'}
+])):
+    reject()
+original_sha = guard.sha
+with patch.object(guard, "sha", side_effect=lambda path: "changed" if path.name == "rate_fixed_replay_R4.py" else original_sha(path)):
+    reject()
+beam_fixture = copy.deepcopy(state)
+beam_fixture["branches"]["native"]["beam"].append(copy.deepcopy(beam_fixture["branches"]["local"]["beam"][0]))
+try:
+    guard.validate_group(manifest, guard.read(manifest_file.parent / "plans.json"), protocol, beam_fixture)
+except RuntimeError as error:
+    checks.append(str(error))
+else:
+    raise AssertionError("An overfull cross-branch beam was accepted")
+planner.save(guard.EXPERIMENT / "verification_02/isolation_refusals.json",
+             {"verdict": "GO", "checks": checks, "physics_measured": False, "real_claims_created": 0}, immutable=True)
+print(json.dumps({"verdict": "GO", "refusals": len(checks)}))

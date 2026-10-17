@@ -1,0 +1,87 @@
+{
+  "reserved_utc": "2026-10-16T03:06:00.444799+00:00",
+  "before_case_search_and_holdout_inspection": true,
+  "settings": {
+    "c04_48c_s77": [
+      {
+        "robustness_seed": 17710001,
+        "consensus_seed_list": [
+          17710002,
+          17710003,
+          17710004
+        ]
+      },
+      {
+        "robustness_seed": 17710011,
+        "consensus_seed_list": [
+          17710012,
+          17710013,
+          17710014
+        ]
+      },
+      {
+        "robustness_seed": 17710021,
+        "consensus_seed_list": [
+          17710022,
+          17710023,
+          17710024
+        ]
+      }
+    ],
+    "c05_r75x15_s42": [
+      {
+        "robustness_seed": 17720001,
+        "consensus_seed_list": [
+          17720002,
+          17720003,
+          17720004
+        ]
+      },
+      {
+        "robustness_seed": 17720011,
+        "consensus_seed_list": [
+          17720012,
+          17720013,
+          17720014
+        ]
+      },
+      {
+        "robustness_seed": 17720021,
+        "consensus_seed_list": [
+          17720022,
+          17720023,
+          17720024
+        ]
+      }
+    ],
+    "c06_r75x2_s77": [
+      {
+        "robustness_seed": 17730001,
+        "consensus_seed_list": [
+          17730002,
+          17730003,
+          17730004
+        ]
+      },
+      {
+        "robustness_seed": 17730011,
+        "consensus_seed_list": [
+          17730012,
+          17730013,
+          17730014
+        ]
+      },
+      {
+        "robustness_seed": 17730021,
+        "consensus_seed_list": [
+          17730022,
+          17730023,
+          17730024
+        ]
+      }
+    ]
+  },
+  "prior_json_scan_exit": 1,
+  "prior_json_scan_stdout": "",
+  "scope": "Three conditional component pairs only"
+}

@@ -83,6 +83,9 @@ def validate_wavelengths_batch(
     corridor_hi: float = 0.0,
     rate_flags: np.ndarray | None = None,
     slit_profiles: np.ndarray | None = None,
+    exact_inversion: bool = False,
+    exact_anchors: bool = False,
+    arming: int = 0,
 ) -> np.ndarray:
     """Evaluates each candidate monitoring wavelength for ONE layer (Phase A).
 
@@ -242,6 +245,12 @@ def validate_wavelengths_batch(
                 # matrix would give every candidate the incumbent's curvature -- the
                 # inert-filter failure of 20-control 4.
                 slit_arr[c_slit],  # type: ignore[index]
+                0,
+                0.0,
+                None,
+                exact_inversion,
+                exact_anchors,
+                arming,
             )
             if val > 100000.0:
                 # non-terminable deposition: sentinel nominal_th + 1e6
@@ -309,7 +318,7 @@ def validate_wavelengths_batch(
                 probe_offset, 0.0, non_monotonic_factor, non_monotonic_mode, blk,
                 0.0, 0, 0, tp_hysteresis,
                 aff_s_0, aff_o_0, photo_curv_0, poem_enabled,
-                smoothing_window, nH_g, nL_g,
+                smoothing_window, nH_g, nL_g, False, None, 0, 0.0, None, exact_inversion, exact_anchors, arming,
             )
             v_prt, _, _, _, _ = simulate_growth_kernel(
                 p_thick_nominal, i_layer, prev_prt, wl,
@@ -317,7 +326,7 @@ def validate_wavelengths_batch(
                 probe_offset, 0.0, non_monotonic_factor, non_monotonic_mode, blk,
                 0.0, 0, 0, tp_hysteresis,
                 aff_s_0, aff_o_0, photo_curv_0, poem_enabled,
-                smoothing_window, nH_g, nL_g,
+                smoothing_window, nH_g, nL_g, False, None, 0, 0.0, None, exact_inversion, exact_anchors, arming,
             )
             if v_ref < 100000.0 and v_prt < 100000.0:
                 delta = np.abs(v_prt - v_ref)
@@ -359,6 +368,9 @@ def simulate_stack_robustness_batch(
     rate_flags: np.ndarray | None = None,
     slit_profiles: np.ndarray | None = None,
     witness_reset_flags: np.ndarray | None = None,
+    exact_inversion: bool = False,
+    exact_anchors: bool = False,
+    arming: int = 0,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
 
@@ -497,6 +509,9 @@ def simulate_stack_robustness_batch(
             sig_scale = 0.0
             if signal_noise_scale is not None:
                 sig_scale = signal_noise_scale[i_layer]
+            # Out of the call: past 30 arguments Python packs them into a tuple, which Numba cannot build around a
+            # branch (`UnsupportedBytecodeError: CALL_FUNCTION_EX`).
+            rate_layer = rate_flags is not None and rate_flags[i_layer]
             val, dyn, m_lvl, m_mis, m_fab = simulate_growth_kernel(
                 p_thick_nominal,
                 i_layer,
@@ -521,7 +536,7 @@ def simulate_stack_robustness_batch(
                 smoothing_window,
                 nH_real,
                 nL_real,
-                rate_flags is not None and rate_flags[i_layer],
+                rate_layer,
                 # The WHOLE matrix, not the row: the kernel replays the block history and
                 # each replayed layer must carry its own bias profile, not this layer's.
                 slit_profiles,
@@ -536,6 +551,12 @@ def simulate_stack_robustness_batch(
                 # earlier Rate layers as references, although they carry no measurement. It is
                 # given the whole array.
                 rate_flags,
+                # D97: the stop solved on the exact signal instead of the parabola of three probes. Off by default.
+                exact_inversion,
+                # D96: POEM's anchors read at the extremum of their layer, not at the coarse sample. Off by default.
+                exact_anchors,
+                # D98: no stop before the last extremum is declared. Off by default.
+                arming,
             )
             current_run_th_buffer[r, i_layer] = val
             results[r, i_layer] = val
@@ -553,7 +574,7 @@ def simulate_stack_robustness_batch(
 
 
 @njit(parallel=True, cache=True, fastmath=True, nogil=True, error_model="numpy")
-def compute_batch_rmse(
+def _compute_batch_rmse_kernel(
     sim_thick_batch: np.ndarray,
     wls: np.ndarray,
     nH_arr: np.ndarray,
@@ -690,6 +711,37 @@ def compute_batch_rmse(
             # perfect. We return infinity, which eliminates and is visible.
             rmse_arr[r] = np.inf
     return rmse_arr
+
+
+@njit(cache=True, nogil=True)
+def compute_batch_rmse(
+    sim_thick_batch: np.ndarray,
+    wls: np.ndarray,
+    nH_arr: np.ndarray,
+    nL_arr: np.ndarray,
+    nSub_arr: np.ndarray,
+    T_target: np.ndarray,
+    n_layers_flattened: np.ndarray,
+    weights: np.ndarray | None = None,
+    index_corridor: float = 0.0,
+    index_seed: int = 0,
+    corridor_wl_min: float = 0.0,
+    corridor_wl_max: float = 0.0,
+) -> np.ndarray:
+    """Canonicalize uniform weights before selecting the historical JIT specialization."""
+    if weights is not None and weights.ndim == 1 and weights.size == len(wls) and weights.size > 0:
+        first_weight = weights[0]
+        total_weight = first_weight * weights.size
+        if np.isfinite(first_weight) and first_weight > 0.0 and np.isfinite(total_weight) and total_weight > 1e-300:
+            if np.all(weights == first_weight):
+                return _compute_batch_rmse_kernel(
+                    sim_thick_batch, wls, nH_arr, nL_arr, nSub_arr, T_target, n_layers_flattened,
+                    None, index_corridor, index_seed, corridor_wl_min, corridor_wl_max,
+                )
+    return _compute_batch_rmse_kernel(
+        sim_thick_batch, wls, nH_arr, nL_arr, nSub_arr, T_target, n_layers_flattened,
+        weights, index_corridor, index_seed, corridor_wl_min, corridor_wl_max,
+    )
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")

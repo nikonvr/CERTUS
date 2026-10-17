@@ -1,0 +1,7 @@
+{
+    "verdict":  "GO",
+    "powershell":  "5.1.26100.9549",
+    "actual_control_hash":  "5a6c5729baeb5f611c92d095eca85357b08a43af981baeea21b1eb4fd3ac78fa",
+    "expected_control_hash":  "5a6c5729baeb5f611c92d095eca85357b08a43af981baeea21b1eb4fd3ac78fa",
+    "physics_measured":  false
+}

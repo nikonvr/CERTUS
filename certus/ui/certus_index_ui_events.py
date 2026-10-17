@@ -506,6 +506,18 @@ class CertusIndexEventsMixin:
 
             self.sb_ex_max.setEnabled(self.chk_exclude.isChecked())
 
+    def load_from_deposit_database(self, *_args: object) -> bool:
+        """Pick a measured layer of the deposit database and load its measurement as `load_file` loads a file."""
+        from PyQt6.QtWidgets import QDialog
+
+        from certus.ui.certus_depots_dialog import DepositDatabaseDialog
+        from certus.utils.certus_depots_db import measurement_path
+
+        dialog = DepositDatabaseDialog(self)
+        if dialog.exec() != QDialog.DialogCode.Accepted or dialog.selected_entry() is None:
+            return False
+        return self.load_file(str(measurement_path(dialog.selected_entry())))
+
     def load_file(self, filepath=None) -> bool:
         """Load a spectrum. Returns True once the file is loaded, False when none was chosen or it was refused."""
 

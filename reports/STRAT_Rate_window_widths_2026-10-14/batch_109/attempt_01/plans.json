@@ -1,0 +1,1591 @@
+{
+  "plans": [
+    {
+      "nom": "reference_rate_s101",
+      "blocks": [
+        {
+          "start": 0,
+          "end": 9,
+          "wavelength": 630.0
+        },
+        {
+          "start": 9,
+          "end": 20,
+          "wavelength": 451.0
+        },
+        {
+          "start": 20,
+          "end": 30,
+          "wavelength": 691.0
+        },
+        {
+          "start": 30,
+          "end": 40,
+          "wavelength": 706.0
+        },
+        {
+          "start": 40,
+          "end": 50,
+          "wavelength": 741.0
+        },
+        {
+          "start": 50,
+          "end": 60,
+          "wavelength": 705.0
+        },
+        {
+          "start": 60,
+          "end": 65,
+          "wavelength": 708.0
+        },
+        {
+          "start": 65,
+          "end": 70,
+          "wavelength": 742.0
+        },
+        {
+          "start": 70,
+          "end": 75,
+          "wavelength": 580.0
+        }
+      ],
+      "rate_layers": [
+        6,
+        7,
+        8,
+        9,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74
+      ],
+      "monochromator_resolution_nm": 2.0,
+      "source_strategy_id": 900951015,
+      "expected_score_fixed_point": 0.039345655797984144,
+      "source_artifact": "reports/STRAT_Rate_equilibre_AB_2026-10-13/blocs_vs_plantage_r75x0.5_deep_s101_rate_equilibre_off.json",
+      "source_sha256": "974c59a4246ad1d5f8e64edebba23a95cb2411dac62229c57e90dc09e258f8d3"
+    },
+    {
+      "nom": "prefix_consensus_best_s101",
+      "source_strategy_id": 9900002,
+      "blocks": [
+        {
+          "start": 0,
+          "end": 9,
+          "wavelength": 600.0
+        },
+        {
+          "start": 9,
+          "end": 20,
+          "wavelength": 451.0
+        },
+        {
+          "start": 20,
+          "end": 30,
+          "wavelength": 691.0
+        },
+        {
+          "start": 30,
+          "end": 40,
+          "wavelength": 691.0
+        },
+        {
+          "start": 40,
+          "end": 50,
+          "wavelength": 741.0
+        },
+        {
+          "start": 50,
+          "end": 55,
+          "wavelength": 733.0
+        },
+        {
+          "start": 55,
+          "end": 60,
+          "wavelength": 705.0
+        },
+        {
+          "start": 60,
+          "end": 65,
+          "wavelength": 708.0
+        },
+        {
+          "start": 65,
+          "end": 70,
+          "wavelength": 742.0
+        },
+        {
+          "start": 70,
+          "end": 75,
+          "wavelength": 580.0
+        }
+      ],
+      "rate_layers": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74
+      ],
+      "monochromator_resolution_nm": 2.0,
+      "move": {
+        "kind": "joint_prefix",
+        "parent_id": 9900000,
+        "prefix_length": 5,
+        "wavelength": 600,
+        "original_prefix_length": 6
+      },
+      "source_prefix_replay_id": 9960194,
+      "expected_score_fixed_point": 0.031321786810495536,
+      "source_artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_joint_2026-10-14\\batch_020\\attempt_01\\search.json",
+      "source_artifact_sha256": "e9167e8f79c40906a1c5a6755f060922e8bbaaefe362b506d39766d16de54b3f",
+      "replay_id_reason": "Distinct identity; original ID retained; unchanged strict C2 fixed point required"
+    },
+    {
+      "nom": "window_L13_18_wl500_fromL11",
+      "source_strategy_id": 9931080,
+      "blocks": [
+        {
+          "start": 0,
+          "end": 9,
+          "wavelength": 600.0
+        },
+        {
+          "start": 9,
+          "end": 20,
+          "wavelength": 500.0
+        },
+        {
+          "start": 20,
+          "end": 30,
+          "wavelength": 691.0
+        },
+        {
+          "start": 30,
+          "end": 40,
+          "wavelength": 691.0
+        },
+        {
+          "start": 40,
+          "end": 50,
+          "wavelength": 741.0
+        },
+        {
+          "start": 50,
+          "end": 55,
+          "wavelength": 733.0
+        },
+        {
+          "start": 55,
+          "end": 60,
+          "wavelength": 705.0
+        },
+        {
+          "start": 60,
+          "end": 65,
+          "wavelength": 708.0
+        },
+        {
+          "start": 65,
+          "end": 70,
+          "wavelength": 742.0
+        },
+        {
+          "start": 70,
+          "end": 75,
+          "wavelength": 580.0
+        }
+      ],
+      "rate_layers": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74
+      ],
+      "monochromator_resolution_nm": 2.0,
+      "move": {
+        "kind": "joint_window",
+        "parent_id": 9900002,
+        "original_window": [
+          10,
+          12
+        ],
+        "window": [
+          12,
+          18
+        ],
+        "block_index": 1,
+        "wavelength": 500
+      }
+    },
+    {
+      "nom": "window_L13_18_wl510_fromL11",
+      "source_strategy_id": 9931081,
+      "blocks": [
+        {
+          "start": 0,
+          "end": 9,
+          "wavelength": 600.0
+        },
+        {
+          "start": 9,
+          "end": 20,
+          "wavelength": 510.0
+        },
+        {
+          "start": 20,
+          "end": 30,
+          "wavelength": 691.0
+        },
+        {
+          "start": 30,
+          "end": 40,
+          "wavelength": 691.0
+        },
+        {
+          "start": 40,
+          "end": 50,
+          "wavelength": 741.0
+        },
+        {
+          "start": 50,
+          "end": 55,
+          "wavelength": 733.0
+        },
+        {
+          "start": 55,
+          "end": 60,
+          "wavelength": 705.0
+        },
+        {
+          "start": 60,
+          "end": 65,
+          "wavelength": 708.0
+        },
+        {
+          "start": 65,
+          "end": 70,
+          "wavelength": 742.0
+        },
+        {
+          "start": 70,
+          "end": 75,
+          "wavelength": 580.0
+        }
+      ],
+      "rate_layers": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74
+      ],
+      "monochromator_resolution_nm": 2.0,
+      "move": {
+        "kind": "joint_window",
+        "parent_id": 9900002,
+        "original_window": [
+          10,
+          12
+        ],
+        "window": [
+          12,
+          18
+        ],
+        "block_index": 1,
+        "wavelength": 510
+      }
+    },
+    {
+      "nom": "window_L13_18_wl520_fromL11",
+      "source_strategy_id": 9931082,
+      "blocks": [
+        {
+          "start": 0,
+          "end": 9,
+          "wavelength": 600.0
+        },
+        {
+          "start": 9,
+          "end": 20,
+          "wavelength": 520.0
+        },
+        {
+          "start": 20,
+          "end": 30,
+          "wavelength": 691.0
+        },
+        {
+          "start": 30,
+          "end": 40,
+          "wavelength": 691.0
+        },
+        {
+          "start": 40,
+          "end": 50,
+          "wavelength": 741.0
+        },
+        {
+          "start": 50,
+          "end": 55,
+          "wavelength": 733.0
+        },
+        {
+          "start": 55,
+          "end": 60,
+          "wavelength": 705.0
+        },
+        {
+          "start": 60,
+          "end": 65,
+          "wavelength": 708.0
+        },
+        {
+          "start": 65,
+          "end": 70,
+          "wavelength": 742.0
+        },
+        {
+          "start": 70,
+          "end": 75,
+          "wavelength": 580.0
+        }
+      ],
+      "rate_layers": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74
+      ],
+      "monochromator_resolution_nm": 2.0,
+      "move": {
+        "kind": "joint_window",
+        "parent_id": 9900002,
+        "original_window": [
+          10,
+          12
+        ],
+        "window": [
+          12,
+          18
+        ],
+        "block_index": 1,
+        "wavelength": 520
+      }
+    },
+    {
+      "nom": "window_L13_18_wl530_fromL11",
+      "source_strategy_id": 9931083,
+      "blocks": [
+        {
+          "start": 0,
+          "end": 9,
+          "wavelength": 600.0
+        },
+        {
+          "start": 9,
+          "end": 20,
+          "wavelength": 530.0
+        },
+        {
+          "start": 20,
+          "end": 30,
+          "wavelength": 691.0
+        },
+        {
+          "start": 30,
+          "end": 40,
+          "wavelength": 691.0
+        },
+        {
+          "start": 40,
+          "end": 50,
+          "wavelength": 741.0
+        },
+        {
+          "start": 50,
+          "end": 55,
+          "wavelength": 733.0
+        },
+        {
+          "start": 55,
+          "end": 60,
+          "wavelength": 705.0
+        },
+        {
+          "start": 60,
+          "end": 65,
+          "wavelength": 708.0
+        },
+        {
+          "start": 65,
+          "end": 70,
+          "wavelength": 742.0
+        },
+        {
+          "start": 70,
+          "end": 75,
+          "wavelength": 580.0
+        }
+      ],
+      "rate_layers": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74
+      ],
+      "monochromator_resolution_nm": 2.0,
+      "move": {
+        "kind": "joint_window",
+        "parent_id": 9900002,
+        "original_window": [
+          10,
+          12
+        ],
+        "window": [
+          12,
+          18
+        ],
+        "block_index": 1,
+        "wavelength": 530
+      }
+    },
+    {
+      "nom": "window_L13_18_wl540_fromL11",
+      "source_strategy_id": 9931084,
+      "blocks": [
+        {
+          "start": 0,
+          "end": 9,
+          "wavelength": 600.0
+        },
+        {
+          "start": 9,
+          "end": 20,
+          "wavelength": 540.0
+        },
+        {
+          "start": 20,
+          "end": 30,
+          "wavelength": 691.0
+        },
+        {
+          "start": 30,
+          "end": 40,
+          "wavelength": 691.0
+        },
+        {
+          "start": 40,
+          "end": 50,
+          "wavelength": 741.0
+        },
+        {
+          "start": 50,
+          "end": 55,
+          "wavelength": 733.0
+        },
+        {
+          "start": 55,
+          "end": 60,
+          "wavelength": 705.0
+        },
+        {
+          "start": 60,
+          "end": 65,
+          "wavelength": 708.0
+        },
+        {
+          "start": 65,
+          "end": 70,
+          "wavelength": 742.0
+        },
+        {
+          "start": 70,
+          "end": 75,
+          "wavelength": 580.0
+        }
+      ],
+      "rate_layers": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74
+      ],
+      "monochromator_resolution_nm": 2.0,
+      "move": {
+        "kind": "joint_window",
+        "parent_id": 9900002,
+        "original_window": [
+          10,
+          12
+        ],
+        "window": [
+          12,
+          18
+        ],
+        "block_index": 1,
+        "wavelength": 540
+      }
+    },
+    {
+      "nom": "window_L13_18_wl550_fromL11",
+      "source_strategy_id": 9931085,
+      "blocks": [
+        {
+          "start": 0,
+          "end": 9,
+          "wavelength": 600.0
+        },
+        {
+          "start": 9,
+          "end": 20,
+          "wavelength": 550.0
+        },
+        {
+          "start": 20,
+          "end": 30,
+          "wavelength": 691.0
+        },
+        {
+          "start": 30,
+          "end": 40,
+          "wavelength": 691.0
+        },
+        {
+          "start": 40,
+          "end": 50,
+          "wavelength": 741.0
+        },
+        {
+          "start": 50,
+          "end": 55,
+          "wavelength": 733.0
+        },
+        {
+          "start": 55,
+          "end": 60,
+          "wavelength": 705.0
+        },
+        {
+          "start": 60,
+          "end": 65,
+          "wavelength": 708.0
+        },
+        {
+          "start": 65,
+          "end": 70,
+          "wavelength": 742.0
+        },
+        {
+          "start": 70,
+          "end": 75,
+          "wavelength": 580.0
+        }
+      ],
+      "rate_layers": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74
+      ],
+      "monochromator_resolution_nm": 2.0,
+      "move": {
+        "kind": "joint_window",
+        "parent_id": 9900002,
+        "original_window": [
+          10,
+          12
+        ],
+        "window": [
+          12,
+          18
+        ],
+        "block_index": 1,
+        "wavelength": 550
+      }
+    },
+    {
+      "nom": "window_L13_18_wl560_fromL11",
+      "source_strategy_id": 9931086,
+      "blocks": [
+        {
+          "start": 0,
+          "end": 9,
+          "wavelength": 600.0
+        },
+        {
+          "start": 9,
+          "end": 20,
+          "wavelength": 560.0
+        },
+        {
+          "start": 20,
+          "end": 30,
+          "wavelength": 691.0
+        },
+        {
+          "start": 30,
+          "end": 40,
+          "wavelength": 691.0
+        },
+        {
+          "start": 40,
+          "end": 50,
+          "wavelength": 741.0
+        },
+        {
+          "start": 50,
+          "end": 55,
+          "wavelength": 733.0
+        },
+        {
+          "start": 55,
+          "end": 60,
+          "wavelength": 705.0
+        },
+        {
+          "start": 60,
+          "end": 65,
+          "wavelength": 708.0
+        },
+        {
+          "start": 65,
+          "end": 70,
+          "wavelength": 742.0
+        },
+        {
+          "start": 70,
+          "end": 75,
+          "wavelength": 580.0
+        }
+      ],
+      "rate_layers": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74
+      ],
+      "monochromator_resolution_nm": 2.0,
+      "move": {
+        "kind": "joint_window",
+        "parent_id": 9900002,
+        "original_window": [
+          10,
+          12
+        ],
+        "window": [
+          12,
+          18
+        ],
+        "block_index": 1,
+        "wavelength": 560
+      }
+    },
+    {
+      "nom": "window_L13_18_wl570_fromL11",
+      "source_strategy_id": 9931087,
+      "blocks": [
+        {
+          "start": 0,
+          "end": 9,
+          "wavelength": 600.0
+        },
+        {
+          "start": 9,
+          "end": 20,
+          "wavelength": 570.0
+        },
+        {
+          "start": 20,
+          "end": 30,
+          "wavelength": 691.0
+        },
+        {
+          "start": 30,
+          "end": 40,
+          "wavelength": 691.0
+        },
+        {
+          "start": 40,
+          "end": 50,
+          "wavelength": 741.0
+        },
+        {
+          "start": 50,
+          "end": 55,
+          "wavelength": 733.0
+        },
+        {
+          "start": 55,
+          "end": 60,
+          "wavelength": 705.0
+        },
+        {
+          "start": 60,
+          "end": 65,
+          "wavelength": 708.0
+        },
+        {
+          "start": 65,
+          "end": 70,
+          "wavelength": 742.0
+        },
+        {
+          "start": 70,
+          "end": 75,
+          "wavelength": 580.0
+        }
+      ],
+      "rate_layers": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74
+      ],
+      "monochromator_resolution_nm": 2.0,
+      "move": {
+        "kind": "joint_window",
+        "parent_id": 9900002,
+        "original_window": [
+          10,
+          12
+        ],
+        "window": [
+          12,
+          18
+        ],
+        "block_index": 1,
+        "wavelength": 570
+      }
+    },
+    {
+      "nom": "window_L13_18_wl580_fromL11",
+      "source_strategy_id": 9931088,
+      "blocks": [
+        {
+          "start": 0,
+          "end": 9,
+          "wavelength": 600.0
+        },
+        {
+          "start": 9,
+          "end": 20,
+          "wavelength": 580.0
+        },
+        {
+          "start": 20,
+          "end": 30,
+          "wavelength": 691.0
+        },
+        {
+          "start": 30,
+          "end": 40,
+          "wavelength": 691.0
+        },
+        {
+          "start": 40,
+          "end": 50,
+          "wavelength": 741.0
+        },
+        {
+          "start": 50,
+          "end": 55,
+          "wavelength": 733.0
+        },
+        {
+          "start": 55,
+          "end": 60,
+          "wavelength": 705.0
+        },
+        {
+          "start": 60,
+          "end": 65,
+          "wavelength": 708.0
+        },
+        {
+          "start": 65,
+          "end": 70,
+          "wavelength": 742.0
+        },
+        {
+          "start": 70,
+          "end": 75,
+          "wavelength": 580.0
+        }
+      ],
+      "rate_layers": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74
+      ],
+      "monochromator_resolution_nm": 2.0,
+      "move": {
+        "kind": "joint_window",
+        "parent_id": 9900002,
+        "original_window": [
+          10,
+          12
+        ],
+        "window": [
+          12,
+          18
+        ],
+        "block_index": 1,
+        "wavelength": 580
+      }
+    },
+    {
+      "nom": "window_L13_18_wl590_fromL11",
+      "source_strategy_id": 9931089,
+      "blocks": [
+        {
+          "start": 0,
+          "end": 9,
+          "wavelength": 600.0
+        },
+        {
+          "start": 9,
+          "end": 20,
+          "wavelength": 590.0
+        },
+        {
+          "start": 20,
+          "end": 30,
+          "wavelength": 691.0
+        },
+        {
+          "start": 30,
+          "end": 40,
+          "wavelength": 691.0
+        },
+        {
+          "start": 40,
+          "end": 50,
+          "wavelength": 741.0
+        },
+        {
+          "start": 50,
+          "end": 55,
+          "wavelength": 733.0
+        },
+        {
+          "start": 55,
+          "end": 60,
+          "wavelength": 705.0
+        },
+        {
+          "start": 60,
+          "end": 65,
+          "wavelength": 708.0
+        },
+        {
+          "start": 65,
+          "end": 70,
+          "wavelength": 742.0
+        },
+        {
+          "start": 70,
+          "end": 75,
+          "wavelength": 580.0
+        }
+      ],
+      "rate_layers": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74
+      ],
+      "monochromator_resolution_nm": 2.0,
+      "move": {
+        "kind": "joint_window",
+        "parent_id": 9900002,
+        "original_window": [
+          10,
+          12
+        ],
+        "window": [
+          12,
+          18
+        ],
+        "block_index": 1,
+        "wavelength": 590
+      }
+    }
+  ]
+}

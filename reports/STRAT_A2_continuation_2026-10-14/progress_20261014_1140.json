@@ -1,0 +1,47 @@
+{
+  "checked_utc": "2026-10-14T09:40:34.000109+00:00",
+  "completed": 14,
+  "runs": [
+    {
+      "key": "48c_premium_s077_avec",
+      "artifact": "48c_premium_s077_avec_da1af082.json",
+      "sha256": "79ab6a6e12faa1dd56538c8295d08ca0c9add377227bb73aca6f3e6ac151800d",
+      "effective_elite_rate_moves": true,
+      "verdict": "OK",
+      "seconds": 525.6733733000001,
+      "saved_utc": "2026-10-14T09:30:32+00:00",
+      "meilleur_seel": 0.192227481296443,
+      "deposables": 2602,
+      "declared_depth": {
+        "robustness_num_runs": 150,
+        "n_screen_runs": 25,
+        "dp_top_k": 40,
+        "consensus_num_runs": 150
+      }
+    },
+    {
+      "key": "48c_premium_s077_sans",
+      "artifact": "48c_premium_s077_sans_da1af082.json",
+      "sha256": "a668d06bce371a340e148235a0171770ee43c9ca1208454d773904177243748f",
+      "effective_elite_rate_moves": false,
+      "verdict": "OK",
+      "seconds": 497.80144169999403,
+      "saved_utc": "2026-10-14T09:38:50+00:00",
+      "meilleur_seel": 0.19110136424714702,
+      "deposables": 2472,
+      "declared_depth": {
+        "robustness_num_runs": 150,
+        "n_screen_runs": 25,
+        "dp_top_k": 40,
+        "consensus_num_runs": 150
+      }
+    }
+  ],
+  "raw_gain_percent_48c_s077": -0.5892773469893101,
+  "interpretation": "No demonstrated superiority; no homogeneous independent fixed-plan confirmation",
+  "limits": [
+    "Scores may mix base and consensus in frozen A2 export",
+    "These are existing production Rate moves, not integration of the new local search",
+    "Different components and scoring depths are not compared against r75x0.5 deep"
+  ]
+}

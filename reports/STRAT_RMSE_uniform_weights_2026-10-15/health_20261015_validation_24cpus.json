@@ -1,0 +1,38 @@
+{
+  "checked_local": "2026-10-15T07:23:27.4515311+02:00",
+  "status": "running",
+  "stage": "unit",
+  "declared_resources": {
+    "logical_cpus": 24,
+    "affinity_mask": "0xffffff",
+    "priority": "normal",
+    "library_threads": 23
+  },
+  "process_inventory": [
+    {
+      "ProcessId": 8272,
+      "ParentProcessId": 17748,
+      "CommandLine": "\"C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe\" -X utf8 -"
+    },
+    {
+      "ProcessId": 51000,
+      "ParentProcessId": 8272,
+      "CommandLine": "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m pytest tests/unit/ -q --no-cov"
+    }
+  ],
+  "observed_resources": [
+    {
+      "id": 8272,
+      "cpu_seconds": 0.21875,
+      "priority": "Normal",
+      "affinity": 16777215
+    },
+    {
+      "id": 51000,
+      "cpu_seconds": 234.28125,
+      "priority": "Normal",
+      "affinity": 16777215
+    }
+  ],
+  "no_scientific_measurement_started": true
+}

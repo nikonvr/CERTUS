@@ -139,6 +139,9 @@ def test_the_reader_takes_a_comma_a_space_and_nothing_that_is_not_finite() -> No
     assert parse_decimal(" 1 550,5 ") == 1550.5
     assert parse_decimal("1550.5") == 1550.5
     assert parse_decimal("-800") == -800.0
-    for refused in ("", "-", "1,5,2", "1,550.5", "abc", "nan", "inf", "-inf"):
-        with pytest.raises(ValueError):
+    for refused in ("", "-", "1,5,2", "1,550.5", "abc"):
+        with pytest.raises(ValueError, match="could not convert string to float"):
+            parse_decimal(refused)
+    for refused in ("nan", "inf", "-inf"):
+        with pytest.raises(ValueError, match="not a finite number"):
             parse_decimal(refused)

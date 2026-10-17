@@ -1,0 +1,9 @@
+{
+  "started_utc": "2026-10-15T20:38:16.6319677Z",
+  "controller_pid": 26152,
+  "controller_script": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\run_rate_R5.ps1",
+  "controller_sha256": "68ad85b04cdc6d73c6e32f2dd22965b47704527df9a8874379fb21886b499c01",
+  "invocation": "Windows PowerShell5.1 -NoProfile -EncodedCommand of exact frozen source; hidden",
+  "deadline_utc": "2026-10-16T06:00:00Z",
+  "checks": "R5 full validation GO; new context preflight GO; 16 adapter/observer checks, PowerShell functions identical, Ruff/docs/diff GO"
+}

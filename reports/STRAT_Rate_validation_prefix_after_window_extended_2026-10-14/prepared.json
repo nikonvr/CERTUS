@@ -1,0 +1,41 @@
+{
+  "prepared_utc": "2026-10-14T03:32:22.240662+00:00",
+  "runner": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_prefix_after_window_extended_confirmation_runner.py",
+  "arguments": [
+    "--worktree",
+    "C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-equilibre\\certus0310",
+    "--pool-output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_after_window_2026-10-14",
+    "--output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_after_window_extended_2026-10-14",
+    "--reference-state",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_equilibre_AB_2026-10-13\\etat.json",
+    "--protocol",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_after_window_extended_2026-10-14\\protocole_validation_prefix_extended_v11.json",
+    "--fixed-plans",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_after_window_extended_2026-10-14\\baseline_plans_snapshot.json"
+  ],
+  "hashes": {
+    "prepare_rate_prefix_extended_confirmation.py": "d654cf1004df911c5390e0fa55fe50e251a4c61409e3c964c4215b4838c29b06",
+    "rate_prefix_after_window_extended_confirmation_runner.py": "1673ba8c6f1bbf65a2abd57513aa24526acdea5f17e774b6e658f68cca4e52b0",
+    "rate_fixed_replay_confirmation_v11.py": "e134846ad489a6af1950504ff7539ca3917ab6bc9dd3493c4e34d76512c8989d",
+    "campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51"
+  },
+  "protocol_sha256": "2d95977d620377938534e12f45bd0a77e62ce0a24bd64aaad8d6ba9bdbae7314",
+  "fixed_plans_sha256": "68fe44f2756975c64ea6a42d7fa19b322432c5b4bf49b9c13fd8606afff689bf",
+  "pool_proposals_sha256": "9d5b462394b8baaee51cb06a8ae1fa7848251aa5a2543f0d4ef7a010a881de37",
+  "fresh_groups": [
+    3030,
+    3131,
+    3232,
+    3333,
+    3434,
+    3535
+  ],
+  "selected_source_id": 9910275,
+  "selected_replay_id": 9900008,
+  "selection": "Already selected before fresh measurements; no search/ranking based on these groups",
+  "physical_replay_ast_identical_except_cli_choices": true,
+  "review": "Existing strict confirmation controller reused; equivalent winner deduplicated and fixed point checked",
+  "deadline_utc": "2026-10-14T07:00:00Z"
+}

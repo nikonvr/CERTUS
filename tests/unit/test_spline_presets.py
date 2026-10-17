@@ -61,7 +61,7 @@ def test_project_manual_material_preset_dispatches() -> None:
 
 
 def test_project_manual_material_preset_unknown_raises() -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="unknown material preset"):
         project_manual_material_preset("unknown", np.array([0.001], dtype=np.float64))
 
 

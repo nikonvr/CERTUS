@@ -1,0 +1,21 @@
+$ErrorActionPreference='Stop'
+$rateRoot = 'D:\drivefl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310'
+$fixture = Join-Path $rateRoot 'reports\STRAT_Rate_suite_2026-10-15\R3_h03_native_postrefinement\verification_01\windows_controller'
+New-Item -ItemType Directory -Path $fixture -ErrorAction Stop | Out-Null
+$tokens=$null; $parseErrors=$null
+$tree=[System.Management.Automation.Language.Parser]::ParseFile((Join-Path $rateRoot 'scratch\run_rate_H03.ps1'),[ref]$tokens,[ref]$parseErrors)
+if ($parseErrors.Count) { throw 'PowerShell parser failure' }
+foreach ($name in @('Save-RateState','Assert-RateDeadline','Invoke-RateChild')) {
+    $definition=$tree.Find({param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq $name},$true)
+    . ([scriptblock]::Create($definition.Extent.Text))
+}
+$rateStatePath=Join-Path $fixture 'state.json'
+$rateState=[ordered]@{status='synthetic_validation_only';runs=@();current_pid=$null;persistence_retries=0}
+$ratePython=(Get-Command python).Source
+Save-RateState
+Invoke-RateChild @('-X','utf8','-X','cpu_count=24','-c','pass') (Join-Path $fixture 'empty_child')
+if ($rateState.runs.Count -ne 1 -or $rateState.runs[0].exit_code -ne 0) { throw 'Missing real zero exit code' }
+$reader=[System.IO.File]::Open($rateStatePath,[System.IO.FileMode]::Open,[System.IO.FileAccess]::Read,([System.IO.FileShare]::ReadWrite -bor [System.IO.FileShare]::Delete))
+try { Save-RateState } finally { $reader.Dispose() }
+[ordered]@{verdict='GO';powershell=$PSVersionTable.PSVersion.ToString();parser_errors=$parseErrors.Count;actual_empty_python_exit_code=$rateState.runs[0].exit_code;atomic_replace_under_shared_reader='GO';scientific_simulations=0} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $fixture 'verification.json') -Encoding UTF8
+'WINDOWS_CONTROLLER_VERIFICATION=GO'

@@ -1,0 +1,63 @@
+{
+  "checked_utc": "2026-10-14T02:43:30.686834+00:00",
+  "state": "running",
+  "saved_stages": 186,
+  "n_stages": 315,
+  "scored": 1850,
+  "complete": 735,
+  "best_overall": {
+    "id": 9900002,
+    "name": "prefix_consensus_best_s101",
+    "move": {
+      "kind": "incumbent"
+    },
+    "eligible": true,
+    "score": 0.031321786810495536,
+    "crash_rate": 0.0,
+    "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_joint_2026-10-14\\batch_020\\attempt_01\\search.json"
+  },
+  "best_proposal": {
+    "id": 9931152,
+    "name": "window_L14_14_wl455_fromL11",
+    "move": {
+      "kind": "joint_window",
+      "parent_id": 9900002,
+      "original_window": [
+        10,
+        12
+      ],
+      "window": [
+        13,
+        14
+      ],
+      "block_index": 1,
+      "wavelength": 455
+    },
+    "eligible": true,
+    "score": 0.03170334890313497,
+    "crash_rate": 0.0,
+    "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_window_widths_2026-10-14\\batch_116\\attempt_01\\search.json"
+  },
+  "proposal_seel_nm": 0.3561086851124806,
+  "runtime_contract_verification": {
+    "verdict": "GO",
+    "n_proposals": 3133,
+    "proposals_sha256": "0aaa42e64093bd3403cfbc333305f80ade3c1eb8def6c4421f29e2a89856e1ba",
+    "context_sha256": "025d6d4bcd82289d6f9b7cdbc09440ad23504a0030c5721433dcba4e056b4e89",
+    "checks": [
+      "real block contract",
+      "unique complete signatures and identities",
+      "exact one-window Rate and wavelength changes",
+      "prefix, other windows, partition, slit and witness metadata preserved",
+      "legal one-nanometer control grid"
+    ],
+    "scope": "No Monte Carlo or physical changes"
+  },
+  "source_hashes_unchanged": {
+    "rate_window_runner.py": true,
+    "prepare_rate_window_width_trials.py": true,
+    "verify_rate_window_trials.py": true,
+    "rate_fixed_replay.py": true,
+    "campagne_a2_runner.py": true
+  }
+}

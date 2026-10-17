@@ -1,0 +1,16 @@
+[
+  {
+    "Pid": 14820,
+    "ParentPid": 51612,
+    "CommandLine": "\"C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_native_prefix_runner.py\" \"--worktree\" \"C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-equilibre\\certus0310\" \"--output\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_native_prefix_2026-10-14\" \"--wait-output\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_2026-10-14\" \"--reference-state\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_equilibre_AB_2026-10-13\\etat.json\" \"--joint-budget\" \"480\" \"--prefix-budget\" \"720\" \"--rate-budget\" \"240\" \"--elite-rounds\" \"6\"",
+    "Affinity": 65535,
+    "Priority": "Normal"
+  },
+  {
+    "Pid": 25072,
+    "ParentPid": 14820,
+    "CommandLine": "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_native_prefix_probe.py\" --worktree C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-equilibre\\certus0310 --output \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_native_prefix_2026-10-14\\prefix_720_joint_480_rate240_rounds6_s101\" --reference-state \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_equilibre_AB_2026-10-13\\etat.json\" --joint-budget 480 --prefix-budget 720 --rate-budget 240 --seed 101 --elite-rounds 6",
+    "Affinity": 65535,
+    "Priority": "Normal"
+  }
+]

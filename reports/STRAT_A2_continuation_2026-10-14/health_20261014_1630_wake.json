@@ -1,0 +1,73 @@
+{
+  "checked_local": "2026-10-14T16:31:57.9002671+02:00",
+  "preflight": "GO",
+  "deadline_utc": "2026-10-15T06:00:00Z",
+  "completed": 23,
+  "status": "running",
+  "current": "r75x2_deep_s077_sans",
+  "current_pid": 38492,
+  "current_started": "2026-10-14T15:51:26",
+  "controller_pid": 24128,
+  "resources": [
+    {
+      "id": 24128,
+      "cpu_seconds": 2.265625,
+      "priority": "Normal",
+      "affinity": 65535
+    },
+    {
+      "id": 38492,
+      "cpu_seconds": 34986.984375,
+      "priority": "Normal",
+      "affinity": 65535
+    },
+    {
+      "id": 51884,
+      "cpu_seconds": 0.28125,
+      "priority": "Normal",
+      "affinity": 65535
+    }
+  ],
+  "process_inventory": [
+    {
+      "ProcessId": 51884,
+      "ParentProcessId": 46640,
+      "CreationDate": "2026-10-14T09:08:32.570007+02:00",
+      "CommandLine": "\"C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\a2_continue_runner.py\" \"--worktree\" \"C:\\Users\\Lemarchand\\.codex\\worktrees\\campagne-a2\\certus0310\" \"--campaign\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_ELITE_couches_Rate_autres_composants_2026-10-13\" \"--output\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_A2_continuation_2026-10-14\" \"--previous-controller-pid\" \"23280\""
+    },
+    {
+      "ProcessId": 24128,
+      "ParentProcessId": 51884,
+      "CreationDate": "2026-10-14T09:25:04.926278+02:00",
+      "CommandLine": "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\campagne_a2_runner.py\" --worktree C:\\Users\\Lemarchand\\.codex\\worktrees\\campagne-a2\\certus0310 --output \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_ELITE_couches_Rate_autres_composants_2026-10-13\" --logical-cpus 16"
+    },
+    {
+      "ProcessId": 38492,
+      "ParentProcessId": 24128,
+      "CreationDate": "2026-10-14T15:51:26.132016+02:00",
+      "CommandLine": "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 77 0"
+    }
+  ],
+  "worktree_head": "da1af0825d5e09e8d0a5ff4f1cf42b802e0e30e7",
+  "tracked_changes": [],
+  "helper_sha256": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51",
+  "locks": [
+    {
+      "path": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_A2_continuation_2026-10-14\\.running",
+      "owner": "51884"
+    },
+    {
+      "path": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_ELITE_couches_Rate_autres_composants_2026-10-13\\.running",
+      "owner": "24128"
+    }
+  ],
+  "log_tail": [
+    "16:31:38 | INFO | 🏆 Best Strategy ID: 900300021 (SMART_MERGE_MIXED (from ID 900400028)) - Score: 0.29693",
+    "16:31:38 | INFO |    [Block 2] Full pass on 27 survivors (n_full=300)...",
+    "16:31:38 | INFO | [RATE] 216 variants on 27 strategies, 40 at most each, DEEPEST boundaries first. 0 strategy(ies) skipped: no block boundary and no low-swing layer. [SWING] seuil 0.025, 821 evaluations TMM a lambda fixe, 0.2 s au total pour cette expansion.",
+    "16:31:38 | INFO | [SLIT] slit bias active, 243/243 strategies -- slit 2 nm, profile of 17 nodes, 0 NEW profiles in 0.1 s (cache: 28721)",
+    "16:31:38 | INFO | Running robustness tests on 243 strategies (ThreadPoolExecutor with 8 workers)..."
+  ],
+  "cpu_progress_since_previous": 25639.5,
+  "no_test_or_parallel_science_started": true
+}

@@ -1,0 +1,22 @@
+{
+  "checked_utc": "2026-10-15T06:32:34.363037+00:00",
+  "status": "source_identity_clarified",
+  "previous_record": "observation.json",
+  "reason": "Git stores LF while the Windows checkout uses CRLF; raw byte hashes alone did not test code identity",
+  "files": {
+    "tests/performance/test_performance.py": {
+      "working_sha256": "e920de666c9ef62a9709e161f487c549a20ecbb0f1b5c9af3901693f7d7c3f21",
+      "HEAD_bytes_sha256": "d642d9b1653240ff71bbf16a9c2043418a4ebae2b8fcf945613c6217994c5557",
+      "AST_identical_to_HEAD": true,
+      "only_CRLF_LF_difference": true,
+      "git_diff_names": []
+    },
+    "tools/bench_kernels.py": {
+      "working_sha256": "3f147b05f0747dc47bca36e43baeed2efb10be332257348bf8f0bfc6c3442e72",
+      "HEAD_bytes_sha256": "dada670068f571ca4381692aecab34ddaf6eaa44b780faef626510dbb4448a62",
+      "AST_identical_to_HEAD": true,
+      "only_CRLF_LF_difference": true,
+      "git_diff_names": []
+    }
+  }
+}

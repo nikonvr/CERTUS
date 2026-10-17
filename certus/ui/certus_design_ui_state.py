@@ -138,9 +138,12 @@ class StateManager:
         show_toast(self.ui, f"Saved: {Path(filename).name}", "success")
 
     def _collect_config(self) -> dict:
-        """Build the JSON-serialisable config dict from current UI state."""
+        """Build the JSON-serialisable config dict from current UI state.
 
-        self._pre_save_smart_cleanup()
+        Pure: it reads the window and changes nothing. The pre-save cleanup is an explicit step of the save flow
+        (`save_config` runs `_pre_save_smart_cleanup` itself); this function also feeds the unsaved-changes comparison
+        at opening and closing, which must not rewrite the operator's stack.
+        """
 
         cfg = {
             "version": APP_SUITE_VERSION,

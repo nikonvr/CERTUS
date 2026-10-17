@@ -1,0 +1,14 @@
+{
+    "verdict":  "GO",
+    "version":  "5.1.26100.9549",
+    "controllers":  [
+                        {
+                            "name":  "run_rate_R6_other_pair.ps1",
+                            "functions_identical":  4
+                        },
+                        {
+                            "name":  "run_rate_R6_other_fresh.ps1",
+                            "functions_identical":  4
+                        }
+                    ]
+}

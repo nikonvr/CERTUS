@@ -1,0 +1,27 @@
+{
+  "checked_utc": "2026-10-15T06:01:02.699439+00:00",
+  "preflight": "GO",
+  "validation_status": "running",
+  "current": "ui",
+  "processes": [
+    {
+      "Id": 8272,
+      "CPU": 0.234375,
+      "PriorityClass": 32,
+      "Affinity": 16777215
+    },
+    {
+      "Id": 44392,
+      "CPU": 348.0625,
+      "PriorityClass": 32,
+      "Affinity": 16777215
+    }
+  ],
+  "source_sha256_unchanged": true,
+  "measurement_locks": [],
+  "A2_completed": 24,
+  "A2_status": "complete",
+  "action": "Let the single live UI validation finish; no duplicate tests, no scientific launch",
+  "old_0800_deadline_superseded": true,
+  "new_result": false
+}

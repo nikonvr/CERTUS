@@ -14,6 +14,7 @@ from .certus_strat_dp import _compute_valid_blocks_kernel, _dp_kernel
 from .certus_strat_growth import (
     CRASH_LEVEL_UNREACHABLE,
     CRASH_NON_MONOTONIC,
+    CRASH_NOT_ARMED,
     CRASH_SENTINEL_MIN,
     CRASH_SENTINEL_UNIT,
     CRASH_TP_MISCOUNT,
@@ -36,7 +37,6 @@ from .certus_strat_machine import (
     OMS5100_DEFAULT_5_SIGMA_FACTOR,
     OMS5100_DEFAULT_MONOCHROMATOR_STEP_NM,
     OMS5100_DEFAULT_READING_NOISE_PCT,
-    MachineModel,
 )
 from .certus_strat_math import (
     K_MAX_LAYER_BACKSIDE,
@@ -61,6 +61,7 @@ from .certus_strat_nucleation import find_nucleation_adaptive_kernel, rank_nucle
 __all__ = [
     "CRASH_LEVEL_UNREACHABLE",
     "CRASH_NON_MONOTONIC",
+    "CRASH_NOT_ARMED",
     "CRASH_SENTINEL_MIN",
     "CRASH_SENTINEL_UNIT",
     "CRASH_TP_MISCOUNT",
@@ -76,7 +77,6 @@ __all__ = [
     "OMS5100_DEFAULT_READING_NOISE_PCT",
     "PHOTOMETRIC_CURVATURE_AMP",
     "SLIT_PROFILE_NODES",
-    "MachineModel",
     "_calc_T_added_layer",
     "_calc_T_from_matrix",
     "_calculate_RT_HL_single_point",

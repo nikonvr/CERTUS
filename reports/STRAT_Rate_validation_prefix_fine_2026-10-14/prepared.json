@@ -1,0 +1,32 @@
+{
+  "prepared_utc": "2026-10-14T00:36:50.423857+00:00",
+  "runner": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_prefix_fine_confirmation_runner.py",
+  "arguments": [
+    "--worktree",
+    "C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-equilibre\\certus0310",
+    "--plans",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_fine_2026-10-14\\plans.json",
+    "--protocol",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_lambda_fine_2026-10-14\\protocole_validation_prefix_fine_v7.json",
+    "--reference-state",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_equilibre_AB_2026-10-13\\etat.json",
+    "--trial-output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_lambda_fine_2026-10-14\\attempt_02",
+    "--output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_fine_2026-10-14"
+  ],
+  "hashes": {
+    "rate_prefix_fine_confirmation_runner.py": "1a3ea86b3a4ee1fa349af3cb31f5128e238ee436c742765efdbc1a5aa1acb3ca",
+    "rate_fixed_replay_confirmation_v7.py": "210b9ab4de1c72dccd545e3019bdcec8e6960b9a41235b8d9ddc7543920b4130",
+    "campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51",
+    "protocole_validation_prefix_fine_v7.json": "8b572e6c0955338d1464c7f01cbd9d51df6d48d9ebfc2e00c951ae5c79c0e9b2",
+    "plans.json": "7d50ea16ef6f68c0254cc60d34acc0038283df84347828b41bb3fa4910657def"
+  },
+  "fresh_groups": [
+    1818,
+    1919,
+    2020
+  ],
+  "review": "Generic sequential confirmation copied, sequence limited to strict control and three fresh groups. Replay AST unchanged except choices. Five exact plans at complete depth; original IDs retained.",
+  "deadline_utc": "2026-10-14T07:00:00Z"
+}

@@ -1,0 +1,32 @@
+{
+  "etape": "rapport",
+  "resultats": {
+    "gain_chi2": 6.742707126104051,
+    "dn": [
+      0.010339080627609227,
+      0.019291196405154896,
+      0.014979737950819222
+    ],
+    "valeurs_propres": [
+      12.072857663135288,
+      6575.686543791617,
+      150919.92340470315
+    ],
+    "sigma_niveau_equiv": 0.28780276353532075
+  },
+  "duree_s": 1.8,
+  "provenance": {
+    "certus_version": "26_05",
+    "git_commit": "925b37886116a5e63e35f5bdd6b971507fd10d78",
+    "git_dirty": false,
+    "python": "3.14.8",
+    "numpy": "2.5.3",
+    "scipy": "1.18.1",
+    "numba": "0.67.0",
+    "numba_cache_key": "01e9ad348310",
+    "numba_cache_keyed": false,
+    "platform": "Windows-11-10.0.26200-SP0",
+    "machine": "AMD64",
+    "generated_at_utc": "2026-10-12T08:02:38+00:00"
+  }
+}

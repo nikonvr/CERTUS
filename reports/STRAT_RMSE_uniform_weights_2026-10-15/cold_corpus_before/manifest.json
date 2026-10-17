@@ -1,0 +1,314 @@
+{
+  "created_utc": "2026-10-15T05:14:34.838723+00:00",
+  "worktree": "C:\\Users\\Lemarchand\\.codex\\worktrees\\campagne-a2\\certus0310",
+  "source_file": "C:\\Users\\Lemarchand\\.codex\\worktrees\\campagne-a2\\certus0310\\certus\\physics\\certus_strat_batch.py",
+  "source_sha256": "36fb771e73570cf4247e3a7bca133c22b995294b5d93924f3d884f21016908e7",
+  "probe_sha256": "7cc275385a1dcbe8eab3ec337887bc9ce46835a8fc859b394f701119a8bae68d",
+  "resources": {
+    "logical_cpus": 24,
+    "affinity_mask": "0xffffff",
+    "priority": "normal",
+    "library_threads": 23
+  },
+  "numba_threads": 23,
+  "numpy": "2.5.3",
+  "numba": "0.68.0",
+  "arrays": 882,
+  "cases": [
+    {
+      "case": 0,
+      "runs": 2,
+      "layers": 4,
+      "wavelengths": 301
+    },
+    {
+      "case": 1,
+      "runs": 2,
+      "layers": 4,
+      "wavelengths": 41
+    },
+    {
+      "case": 2,
+      "runs": 7,
+      "layers": 6,
+      "wavelengths": 41
+    },
+    {
+      "case": 3,
+      "runs": 2,
+      "layers": 2,
+      "wavelengths": 3
+    },
+    {
+      "case": 4,
+      "runs": 1,
+      "layers": 8,
+      "wavelengths": 3
+    },
+    {
+      "case": 5,
+      "runs": 2,
+      "layers": 2,
+      "wavelengths": 13
+    },
+    {
+      "case": 6,
+      "runs": 7,
+      "layers": 6,
+      "wavelengths": 41
+    },
+    {
+      "case": 7,
+      "runs": 7,
+      "layers": 4,
+      "wavelengths": 3
+    },
+    {
+      "case": 8,
+      "runs": 2,
+      "layers": 2,
+      "wavelengths": 101
+    },
+    {
+      "case": 9,
+      "runs": 7,
+      "layers": 1,
+      "wavelengths": 41
+    },
+    {
+      "case": 10,
+      "runs": 2,
+      "layers": 1,
+      "wavelengths": 101
+    },
+    {
+      "case": 11,
+      "runs": 7,
+      "layers": 4,
+      "wavelengths": 3
+    },
+    {
+      "case": 12,
+      "runs": 2,
+      "layers": 4,
+      "wavelengths": 101
+    },
+    {
+      "case": 13,
+      "runs": 2,
+      "layers": 2,
+      "wavelengths": 13
+    },
+    {
+      "case": 14,
+      "runs": 7,
+      "layers": 8,
+      "wavelengths": 3
+    },
+    {
+      "case": 15,
+      "runs": 7,
+      "layers": 4,
+      "wavelengths": 41
+    },
+    {
+      "case": 16,
+      "runs": 7,
+      "layers": 8,
+      "wavelengths": 101
+    },
+    {
+      "case": 17,
+      "runs": 1,
+      "layers": 1,
+      "wavelengths": 101
+    },
+    {
+      "case": 18,
+      "runs": 7,
+      "layers": 6,
+      "wavelengths": 101
+    },
+    {
+      "case": 19,
+      "runs": 1,
+      "layers": 4,
+      "wavelengths": 3
+    },
+    {
+      "case": 20,
+      "runs": 2,
+      "layers": 6,
+      "wavelengths": 41
+    },
+    {
+      "case": 21,
+      "runs": 7,
+      "layers": 4,
+      "wavelengths": 41
+    },
+    {
+      "case": 22,
+      "runs": 2,
+      "layers": 8,
+      "wavelengths": 101
+    },
+    {
+      "case": 23,
+      "runs": 1,
+      "layers": 8,
+      "wavelengths": 41
+    },
+    {
+      "case": 24,
+      "runs": 7,
+      "layers": 4,
+      "wavelengths": 13
+    },
+    {
+      "case": 25,
+      "runs": 2,
+      "layers": 8,
+      "wavelengths": 101
+    },
+    {
+      "case": 26,
+      "runs": 1,
+      "layers": 8,
+      "wavelengths": 101
+    },
+    {
+      "case": 27,
+      "runs": 7,
+      "layers": 4,
+      "wavelengths": 101
+    },
+    {
+      "case": 28,
+      "runs": 2,
+      "layers": 6,
+      "wavelengths": 3
+    },
+    {
+      "case": 29,
+      "runs": 1,
+      "layers": 6,
+      "wavelengths": 13
+    },
+    {
+      "case": 30,
+      "runs": 7,
+      "layers": 4,
+      "wavelengths": 41
+    },
+    {
+      "case": 31,
+      "runs": 2,
+      "layers": 4,
+      "wavelengths": 41
+    },
+    {
+      "case": 32,
+      "runs": 2,
+      "layers": 2,
+      "wavelengths": 101
+    },
+    {
+      "case": 33,
+      "runs": 7,
+      "layers": 8,
+      "wavelengths": 101
+    },
+    {
+      "case": 34,
+      "runs": 1,
+      "layers": 2,
+      "wavelengths": 3
+    },
+    {
+      "case": 35,
+      "runs": 1,
+      "layers": 2,
+      "wavelengths": 13
+    },
+    {
+      "case": 36,
+      "runs": 2,
+      "layers": 2,
+      "wavelengths": 101
+    },
+    {
+      "case": 37,
+      "runs": 2,
+      "layers": 4,
+      "wavelengths": 41
+    },
+    {
+      "case": 38,
+      "runs": 2,
+      "layers": 2,
+      "wavelengths": 13
+    },
+    {
+      "case": 39,
+      "runs": 1,
+      "layers": 2,
+      "wavelengths": 101
+    },
+    {
+      "case": 40,
+      "runs": 7,
+      "layers": 1,
+      "wavelengths": 13
+    },
+    {
+      "case": 41,
+      "runs": 2,
+      "layers": 1,
+      "wavelengths": 41
+    },
+    {
+      "case": 42,
+      "runs": 2,
+      "layers": 8,
+      "wavelengths": 13
+    },
+    {
+      "case": 43,
+      "runs": 2,
+      "layers": 2,
+      "wavelengths": 13
+    },
+    {
+      "case": 44,
+      "runs": 1,
+      "layers": 8,
+      "wavelengths": 41
+    },
+    {
+      "case": 45,
+      "runs": 1,
+      "layers": 1,
+      "wavelengths": 41
+    },
+    {
+      "case": 46,
+      "runs": 7,
+      "layers": 6,
+      "wavelengths": 3
+    },
+    {
+      "case": 47,
+      "runs": 2,
+      "layers": 4,
+      "wavelengths": 3
+    },
+    {
+      "case": 48,
+      "runs": 7,
+      "layers": 1,
+      "wavelengths": 3
+    }
+  ],
+  "cache": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_RMSE_uniform_weights_2026-10-15\\cold_corpus_before\\cold_cache"
+}

@@ -1,0 +1,200 @@
+{
+  "status": "RECORDED_DIAGNOSIS_COMPLETE_NOT_A_PHYSICAL_COUNTERPROOF",
+  "recorded_utc": "2026-10-16T08:29:19.252445+00:00",
+  "physical_evaluations": 0,
+  "source_sha256": {
+    "certus/core/certus_strat_consensus.py": "249bd447f4db3b4f9c75cdb34bc68a9988d1810e83a42f678558f5c74e1c2656",
+    "certus/core/certus_strat_robustness.py": "5e12ced2f99a45175a5546499c405c89c246b481cbf076af1769ef94419ed89e",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+    "certus/core/certus_strat_leviers.py": "deea3efd1b33d83cc1dea3afdb362c01e5b0acc39fc69b5fd86d5ef4c25270cb",
+    "certus/core/certus_strat_rate_moves.py": "5cc1e6092e972ba9b9e8d97057332509c73a617260b2682aa7748c8bdadd99dc",
+    "certus/core/certus_strat_rate_post.py": "b373832d5bdd6a9c3f5048242978209139f6e2443338d55ae78fe027910d63f3",
+    "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+    "certus/workers/certus_strat_workers.py": "459a1297d494b7d94231978f6a81ec07a96ebabc1755d9f2dda0114d856e5834",
+    "certus/workers/certus_strat_workers_pipeline.py": "4119bf41570968d55d94543a5aa58ab7df62d330abdf0a447ff566f0b8f4f3a3",
+    "certus/workers/certus_strat_workers_rate.py": "ac4df2ce33ab952be31a04a12f7b1b5fd5b346173e0a4062b9aecfb92238ac62",
+    "scripts/probe_blocs_vs_plantage.py": "e8636c3dee7468e1a4e2ca2357da73447ecdb9d0d746e0b1509fe2f1d203d2cf",
+    "tests/unit/test_strat_rate_final_refinement.py": "1b5df0923acc37d3764f08f05fcd52c13e2e1c340f2220164a68f3767a6c45a7",
+    "tests/unit/test_probe_keeps_consensus_score_provenance.py": "7a1bf56facab7fe9bbde88d4064d474cee42f8b0270738759df99676bfab0827",
+    "tests/performance/test_performance.py": "736fe81e289bcb2ac72dd56c6bd7d6cdddf9de9a20528504fddf148a169af6c2",
+    "tests/unit/test_strat_elite_rate_moves.py": "574f08fc5df532759a02fc1a2b9f632e69296f10a00307bf67b071d2073735e4",
+    "tests/unit/test_strat_spectral_target.py": "a1ecf68dc60be63495bbec630bfa93b24a7fa69660cc40aa36046e1cd7e11f5c"
+  },
+  "script_sha256": "5325755d1628b31114177b1785f6248b785b7a4471294f9815d7edb648582c54",
+  "trace_sha256": {
+    "h03": "67438df2670bea5e02ed4e9973216a9d5f7b7e65aa644bfdacbcb8ef7f289453",
+    "R5": "1211275f9465ee2343edd7a765d412c2cb613b43c4602ad5cfb97b221bbb2a96"
+  },
+  "coverage": {
+    "h03": {
+      "unmapped_or_ambiguous": 5502,
+      "unique_keys": 100158,
+      "repeated_keys_excluded_from_pairing": 970
+    },
+    "R5": {
+      "unmapped_or_ambiguous": 5660,
+      "unique_keys": 100671,
+      "repeated_keys_excluded_from_pairing": 943
+    }
+  },
+  "comparison_counts": {
+    "unique_recorded_context_pairs": 87252,
+    "crash_vectors_differ": 8,
+    "finite_equal": 31077,
+    "finite_different": 30073
+  },
+  "maximum_finite_absolute_difference": 6.428468868335813e-13,
+  "crash_difference_examples": [
+    {
+      "key": [
+        "{\"elite_scope\":1,\"round\":1}",
+        "{\"blocks\":[{\"end\":1,\"start\":0,\"wavelength\":705.0},{\"end\":2,\"start\":1,\"wavelength\":630.0},{\"end\":3,\"start\":2,\"wavelength\":712.0},{\"end\":4,\"start\":3,\"wavelength\":630.0},{\"end\":5,\"start\":4,\"wavelength\":630.0},{\"end\":6,\"start\":5,\"wavelength\":457.0},{\"end\":7,\"start\":6,\"wavelength\":530.0},{\"end\":8,\"start\":7,\"wavelength\":675.0},{\"end\":9,\"start\":8,\"wavelength\":712.0},{\"end\":10,\"start\":9,\"wavelength\":594.0},{\"end\":11,\"start\":10,\"wavelength\":451.0},{\"end\":12,\"start\":11,\"wavelength\":679.0},{\"end\":13,\"start\":12,\"wavelength\":679.0},{\"end\":14,\"start\":13,\"wavelength\":733.0},{\"end\":15,\"start\":14,\"wavelength\":705.0},{\"end\":16,\"start\":15,\"wavelength\":642.0},{\"end\":17,\"start\":16,\"wavelength\":638.0},{\"end\":18,\"start\":17,\"wavelength\":675.0},{\"end\":19,\"start\":18,\"wavelength\":674.0},{\"end\":20,\"start\":19,\"wavelength\":675.0},{\"end\":21,\"start\":20,\"wavelength\":674.0},{\"end\":22,\"start\":21,\"wavelength\":675.0},{\"end\":23,\"start\":22,\"wavelength\":695.0},{\"end\":24,\"start\":23,\"wavelength\":727.0},{\"end\":25,\"start\":24,\"wavelength\":679.0},{\"end\":26,\"start\":25,\"wavelength\":639.0},{\"end\":27,\"start\":26,\"wavelength\":655.0},{\"end\":28,\"start\":27,\"wavelength\":655.0},{\"end\":29,\"start\":28,\"wavelength\":658.0},{\"end\":30,\"start\":29,\"wavelength\":718.0},{\"end\":31,\"start\":30,\"wavelength\":718.0},{\"end\":32,\"start\":31,\"wavelength\":661.0},{\"end\":33,\"start\":32,\"wavelength\":661.0},{\"end\":34,\"start\":33,\"wavelength\":661.0},{\"end\":35,\"start\":34,\"wavelength\":704.0},{\"end\":36,\"start\":35,\"wavelength\":706.0},{\"end\":37,\"start\":36,\"wavelength\":705.0},{\"end\":38,\"start\":37,\"wavelength\":743.0},{\"end\":39,\"start\":38,\"wavelength\":744.0},{\"end\":40,\"start\":39,\"wavelength\":712.0},{\"end\":41,\"start\":40,\"wavelength\":728.0},{\"end\":42,\"start\":41,\"wavelength\":733.0},{\"end\":43,\"start\":42,\"wavelength\":737.0},{\"end\":44,\"start\":43,\"wavelength\":743.0},{\"end\":45,\"start\":44,\"wavelength\":740.0},{\"end\":46,\"start\":45,\"wavelength\":741.0},{\"end\":47,\"start\":46,\"wavelength\":742.0},{\"end\":48,\"start\":47,\"wavelength\":742.0},{\"end\":49,\"start\":48,\"wavelength\":680.0},{\"end\":50,\"start\":49,\"wavelength\":738.0},{\"end\":51,\"start\":50,\"wavelength\":733.0},{\"end\":52,\"start\":51,\"wavelength\":525.0},{\"end\":53,\"start\":52,\"wavelength\":708.0},{\"end\":54,\"start\":53,\"wavelength\":704.0},{\"end\":55,\"start\":54,\"wavelength\":703.0},{\"end\":56,\"start\":55,\"wavelength\":705.0},{\"end\":57,\"start\":56,\"wavelength\":701.0},{\"end\":58,\"start\":57,\"wavelength\":525.0},{\"end\":59,\"start\":58,\"wavelength\":525.0},{\"end\":60,\"start\":59,\"wavelength\":703.0},{\"end\":61,\"start\":60,\"wavelength\":708.0},{\"end\":62,\"start\":61,\"wavelength\":524.0},{\"end\":63,\"start\":62,\"wavelength\":525.0},{\"end\":64,\"start\":63,\"wavelength\":525.0},{\"end\":65,\"start\":64,\"wavelength\":730.0},{\"end\":66,\"start\":65,\"wavelength\":742.0},{\"end\":67,\"start\":66,\"wavelength\":525.0},{\"end\":68,\"start\":67,\"wavelength\":580.0},{\"end\":69,\"start\":68,\"wavelength\":700.0},{\"end\":70,\"start\":69,\"wavelength\":524.0},{\"end\":71,\"start\":70,\"wavelength\":580.0},{\"end\":72,\"start\":71,\"wavelength\":524.0},{\"end\":73,\"start\":72,\"wavelength\":712.0},{\"end\":74,\"start\":73,\"wavelength\":710.0},{\"end\":75,\"start\":74,\"wavelength\":712.0}],\"monochromator_resolution_nm\":2.0,\"rate_layers\":[],\"witness_reset_layers\":null}",
+        101,
+        25,
+        "[0.05]",
+        false
+      ],
+      "old_event": 205,
+      "new_event": 207,
+      "h03_result": {
+        "robustness_score": Infinity,
+        "crash_rate": 1.0,
+        "crash_rates_by_noise": {
+          "0.05": 1.0
+        },
+        "noise_results": [
+          {
+            "noise_level": 0.05,
+            "rmse_p95": 0.24524740180460175,
+            "retained_draw_count": 25
+          }
+        ]
+      },
+      "R5_result": {
+        "robustness_score": Infinity,
+        "crash_rate": 0.96,
+        "crash_rates_by_noise": {
+          "0.05": 0.96
+        },
+        "noise_results": [
+          {
+            "noise_level": 0.05,
+            "rmse_p95": 0.24524740180293925,
+            "retained_draw_count": 25
+          }
+        ]
+      }
+    },
+    {
+      "key": [
+        "{\"elite_scope\":1,\"round\":1}",
+        "{\"blocks\":[{\"end\":1,\"start\":0,\"wavelength\":705.0},{\"end\":2,\"start\":1,\"wavelength\":630.0},{\"end\":3,\"start\":2,\"wavelength\":712.0},{\"end\":4,\"start\":3,\"wavelength\":630.0},{\"end\":5,\"start\":4,\"wavelength\":630.0},{\"end\":6,\"start\":5,\"wavelength\":457.0},{\"end\":7,\"start\":6,\"wavelength\":530.0},{\"end\":8,\"start\":7,\"wavelength\":675.0},{\"end\":9,\"start\":8,\"wavelength\":712.0},{\"end\":10,\"start\":9,\"wavelength\":594.0},{\"end\":11,\"start\":10,\"wavelength\":451.0},{\"end\":12,\"start\":11,\"wavelength\":679.0},{\"end\":13,\"start\":12,\"wavelength\":679.0},{\"end\":14,\"start\":13,\"wavelength\":733.0},{\"end\":15,\"start\":14,\"wavelength\":705.0},{\"end\":16,\"start\":15,\"wavelength\":642.0},{\"end\":17,\"start\":16,\"wavelength\":638.0},{\"end\":18,\"start\":17,\"wavelength\":675.0},{\"end\":19,\"start\":18,\"wavelength\":674.0},{\"end\":20,\"start\":19,\"wavelength\":675.0},{\"end\":21,\"start\":20,\"wavelength\":674.0},{\"end\":22,\"start\":21,\"wavelength\":675.0},{\"end\":23,\"start\":22,\"wavelength\":695.0},{\"end\":24,\"start\":23,\"wavelength\":727.0},{\"end\":25,\"start\":24,\"wavelength\":679.0},{\"end\":26,\"start\":25,\"wavelength\":639.0},{\"end\":27,\"start\":26,\"wavelength\":655.0},{\"end\":28,\"start\":27,\"wavelength\":655.0},{\"end\":29,\"start\":28,\"wavelength\":658.0},{\"end\":30,\"start\":29,\"wavelength\":718.0},{\"end\":31,\"start\":30,\"wavelength\":718.0},{\"end\":32,\"start\":31,\"wavelength\":661.0},{\"end\":33,\"start\":32,\"wavelength\":661.0},{\"end\":34,\"start\":33,\"wavelength\":661.0},{\"end\":35,\"start\":34,\"wavelength\":704.0},{\"end\":36,\"start\":35,\"wavelength\":706.0},{\"end\":37,\"start\":36,\"wavelength\":705.0},{\"end\":38,\"start\":37,\"wavelength\":743.0},{\"end\":39,\"start\":38,\"wavelength\":744.0},{\"end\":40,\"start\":39,\"wavelength\":712.0},{\"end\":41,\"start\":40,\"wavelength\":728.0},{\"end\":42,\"start\":41,\"wavelength\":733.0},{\"end\":43,\"start\":42,\"wavelength\":737.0},{\"end\":44,\"start\":43,\"wavelength\":743.0},{\"end\":45,\"start\":44,\"wavelength\":740.0},{\"end\":46,\"start\":45,\"wavelength\":741.0},{\"end\":47,\"start\":46,\"wavelength\":742.0},{\"end\":48,\"start\":47,\"wavelength\":742.0},{\"end\":49,\"start\":48,\"wavelength\":680.0},{\"end\":50,\"start\":49,\"wavelength\":738.0},{\"end\":51,\"start\":50,\"wavelength\":733.0},{\"end\":52,\"start\":51,\"wavelength\":525.0},{\"end\":53,\"start\":52,\"wavelength\":708.0},{\"end\":54,\"start\":53,\"wavelength\":704.0},{\"end\":55,\"start\":54,\"wavelength\":703.0},{\"end\":56,\"start\":55,\"wavelength\":705.0},{\"end\":57,\"start\":56,\"wavelength\":701.0},{\"end\":58,\"start\":57,\"wavelength\":525.0},{\"end\":59,\"start\":58,\"wavelength\":525.0},{\"end\":60,\"start\":59,\"wavelength\":703.0},{\"end\":61,\"start\":60,\"wavelength\":708.0},{\"end\":62,\"start\":61,\"wavelength\":524.0},{\"end\":63,\"start\":62,\"wavelength\":525.0},{\"end\":64,\"start\":63,\"wavelength\":525.0},{\"end\":65,\"start\":64,\"wavelength\":730.0},{\"end\":66,\"start\":65,\"wavelength\":742.0},{\"end\":67,\"start\":66,\"wavelength\":525.0},{\"end\":68,\"start\":67,\"wavelength\":580.0},{\"end\":69,\"start\":68,\"wavelength\":700.0},{\"end\":70,\"start\":69,\"wavelength\":524.0},{\"end\":71,\"start\":70,\"wavelength\":580.0},{\"end\":72,\"start\":71,\"wavelength\":524.0},{\"end\":73,\"start\":72,\"wavelength\":712.0},{\"end\":74,\"start\":73,\"wavelength\":710.0},{\"end\":75,\"start\":74,\"wavelength\":712.0}],\"monochromator_resolution_nm\":2.0,\"rate_layers\":[],\"witness_reset_layers\":null}",
+        101,
+        50,
+        "[0.05]",
+        false
+      ],
+      "old_event": 76,
+      "new_event": 73,
+      "h03_result": {
+        "robustness_score": Infinity,
+        "crash_rate": 0.98,
+        "crash_rates_by_noise": {
+          "0.05": 0.98
+        },
+        "noise_results": [
+          {
+            "noise_level": 0.05,
+            "rmse_p95": 0.2494129699369738,
+            "retained_draw_count": 50
+          }
+        ]
+      },
+      "R5_result": {
+        "robustness_score": Infinity,
+        "crash_rate": 0.96,
+        "crash_rates_by_noise": {
+          "0.05": 0.96
+        },
+        "noise_results": [
+          {
+            "noise_level": 0.05,
+            "rmse_p95": 0.249413006082778,
+            "retained_draw_count": 50
+          }
+        ]
+      }
+    },
+    {
+      "key": [
+        "{\"elite_scope\":1,\"round\":1}",
+        "{\"blocks\":[{\"end\":1,\"start\":0,\"wavelength\":705.0},{\"end\":2,\"start\":1,\"wavelength\":630.0},{\"end\":3,\"start\":2,\"wavelength\":712.0},{\"end\":4,\"start\":3,\"wavelength\":630.0},{\"end\":5,\"start\":4,\"wavelength\":630.0},{\"end\":6,\"start\":5,\"wavelength\":457.0},{\"end\":7,\"start\":6,\"wavelength\":530.0},{\"end\":8,\"start\":7,\"wavelength\":675.0},{\"end\":9,\"start\":8,\"wavelength\":712.0},{\"end\":10,\"start\":9,\"wavelength\":594.0},{\"end\":11,\"start\":10,\"wavelength\":451.0},{\"end\":12,\"start\":11,\"wavelength\":679.0},{\"end\":13,\"start\":12,\"wavelength\":679.0},{\"end\":14,\"start\":13,\"wavelength\":733.0},{\"end\":15,\"start\":14,\"wavelength\":705.0},{\"end\":16,\"start\":15,\"wavelength\":642.0},{\"end\":17,\"start\":16,\"wavelength\":638.0},{\"end\":18,\"start\":17,\"wavelength\":675.0},{\"end\":19,\"start\":18,\"wavelength\":674.0},{\"end\":20,\"start\":19,\"wavelength\":675.0},{\"end\":21,\"start\":20,\"wavelength\":674.0},{\"end\":22,\"start\":21,\"wavelength\":675.0},{\"end\":23,\"start\":22,\"wavelength\":695.0},{\"end\":24,\"start\":23,\"wavelength\":727.0},{\"end\":25,\"start\":24,\"wavelength\":679.0},{\"end\":26,\"start\":25,\"wavelength\":639.0},{\"end\":27,\"start\":26,\"wavelength\":655.0},{\"end\":28,\"start\":27,\"wavelength\":656.0},{\"end\":29,\"start\":28,\"wavelength\":658.0},{\"end\":30,\"start\":29,\"wavelength\":718.0},{\"end\":31,\"start\":30,\"wavelength\":718.0},{\"end\":32,\"start\":31,\"wavelength\":661.0},{\"end\":33,\"start\":32,\"wavelength\":661.0},{\"end\":34,\"start\":33,\"wavelength\":661.0},{\"end\":35,\"start\":34,\"wavelength\":704.0},{\"end\":36,\"start\":35,\"wavelength\":706.0},{\"end\":37,\"start\":36,\"wavelength\":705.0},{\"end\":38,\"start\":37,\"wavelength\":743.0},{\"end\":39,\"start\":38,\"wavelength\":744.0},{\"end\":40,\"start\":39,\"wavelength\":712.0},{\"end\":41,\"start\":40,\"wavelength\":728.0},{\"end\":42,\"start\":41,\"wavelength\":733.0},{\"end\":43,\"start\":42,\"wavelength\":737.0},{\"end\":44,\"start\":43,\"wavelength\":743.0},{\"end\":45,\"start\":44,\"wavelength\":740.0},{\"end\":46,\"start\":45,\"wavelength\":741.0},{\"end\":47,\"start\":46,\"wavelength\":742.0},{\"end\":48,\"start\":47,\"wavelength\":742.0},{\"end\":49,\"start\":48,\"wavelength\":680.0},{\"end\":50,\"start\":49,\"wavelength\":738.0},{\"end\":51,\"start\":50,\"wavelength\":733.0},{\"end\":52,\"start\":51,\"wavelength\":525.0},{\"end\":53,\"start\":52,\"wavelength\":708.0},{\"end\":54,\"start\":53,\"wavelength\":704.0},{\"end\":55,\"start\":54,\"wavelength\":703.0},{\"end\":56,\"start\":55,\"wavelength\":705.0},{\"end\":57,\"start\":56,\"wavelength\":700.0},{\"end\":58,\"start\":57,\"wavelength\":525.0},{\"end\":59,\"start\":58,\"wavelength\":525.0},{\"end\":60,\"start\":59,\"wavelength\":703.0},{\"end\":61,\"start\":60,\"wavelength\":708.0},{\"end\":62,\"start\":61,\"wavelength\":524.0},{\"end\":63,\"start\":62,\"wavelength\":525.0},{\"end\":64,\"start\":63,\"wavelength\":525.0},{\"end\":65,\"start\":64,\"wavelength\":730.0},{\"end\":66,\"start\":65,\"wavelength\":742.0},{\"end\":67,\"start\":66,\"wavelength\":525.0},{\"end\":68,\"start\":67,\"wavelength\":580.0},{\"end\":69,\"start\":68,\"wavelength\":700.0},{\"end\":70,\"start\":69,\"wavelength\":524.0},{\"end\":71,\"start\":70,\"wavelength\":580.0},{\"end\":72,\"start\":71,\"wavelength\":524.0},{\"end\":73,\"start\":72,\"wavelength\":712.0},{\"end\":74,\"start\":73,\"wavelength\":710.0},{\"end\":75,\"start\":74,\"wavelength\":712.0}],\"monochromator_resolution_nm\":2.0,\"rate_layers\":[],\"witness_reset_layers\":null}",
+        101,
+        50,
+        "[0.05]",
+        false
+      ],
+      "old_event": 136,
+      "new_event": 134,
+      "h03_result": {
+        "robustness_score": Infinity,
+        "crash_rate": 0.94,
+        "crash_rates_by_noise": {
+          "0.05": 0.94
+        },
+        "noise_results": [
+          {
+            "noise_level": 0.05,
+            "rmse_p95": 0.26897708391828873,
+            "retained_draw_count": 50
+          }
+        ]
+      },
+      "R5_result": {
+        "robustness_score": Infinity,
+        "crash_rate": 0.96,
+        "crash_rates_by_noise": {
+          "0.05": 0.96
+        },
+        "noise_results": [
+          {
+            "noise_level": 0.05,
+            "rmse_p95": 0.2689770839182953,
+            "retained_draw_count": 50
+          }
+        ]
+      }
+    }
+  ],
+  "limitations": [
+    "Historical traces omit complete task params, optical arrays and material inputs.",
+    "Context/round identity is a recorded label, not proof of identical local task parameters.",
+    "Repeated keys are excluded; no arbitrary first-result pairing.",
+    "No physical or cache cause can be inferred from this recorded comparison."
+  ],
+  "48c": {
+    "frozen_finalists_sha256": "e9c3f7dde727f8f429b55342c287ee8817926ef44f9edcf6bd78569ca92db243",
+    "selected_internal": {
+      "error": "The selected window spans multiple monitoring blocks"
+    },
+    "internal_windows": [
+      {
+        "window": [
+          36,
+          38
+        ],
+        "block_index": null,
+        "status": "spans_multiple_monitoring_blocks"
+      },
+      {
+        "window": [
+          9,
+          11
+        ],
+        "block_index": 1,
+        "status": "admissible"
+      }
+    ]
+  },
+  "next_step": "Capture complete effective task inputs in new bounded controlled slots before changing window selection."
+}

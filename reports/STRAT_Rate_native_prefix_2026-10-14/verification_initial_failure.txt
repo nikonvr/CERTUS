@@ -1,0 +1,1 @@
+Initial Ruff check: six PT018 combined assertions in new verification script. Source before correction preserved verbatim. Split assertions; no scientific measurement started.

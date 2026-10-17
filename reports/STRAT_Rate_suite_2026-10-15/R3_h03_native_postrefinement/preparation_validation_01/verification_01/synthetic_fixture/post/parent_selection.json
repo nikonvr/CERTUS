@@ -1,0 +1,1033 @@
+{
+  "selections": {
+    "variant": [
+      {
+        "plan": {
+          "nom": "native_parent",
+          "source_strategy_id": 900754638,
+          "native_source_id": 900754638,
+          "blocks": [
+            {
+              "start": 0,
+              "end": 9,
+              "wavelength": 630.0
+            },
+            {
+              "start": 9,
+              "end": 20,
+              "wavelength": 451.0
+            },
+            {
+              "start": 20,
+              "end": 40,
+              "wavelength": 689.0
+            },
+            {
+              "start": 40,
+              "end": 50,
+              "wavelength": 740.0
+            },
+            {
+              "start": 50,
+              "end": 60,
+              "wavelength": 733.0
+            },
+            {
+              "start": 60,
+              "end": 70,
+              "wavelength": 742.0
+            },
+            {
+              "start": 70,
+              "end": 75,
+              "wavelength": 580.0
+            }
+          ],
+          "rate_layers": [
+            6,
+            7,
+            8,
+            9,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            39,
+            40,
+            41,
+            42,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50,
+            51,
+            52,
+            53,
+            54,
+            55,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74
+          ],
+          "monochromator_resolution_nm": 2.0,
+          "branch": "native",
+          "witness_reset_layers": null
+        },
+        "score": 0.0324177708681504,
+        "native_export_score": 0.0324177708681504,
+        "native_consensus_meta": {
+          "mode": "mean_std",
+          "mean": 0.03224703913737242,
+          "std": 0.0004878049450799421,
+          "worst": 0.03287917149013844,
+          "seeds": [
+            41,
+            42,
+            43
+          ],
+          "n_samples": 3
+        },
+        "signature": "{\"blocks\": [[0, 9, 630.0], [9, 20, 451.0], [20, 40, 689.0], [40, 50, null], [50, 60, null], [60, 70, null], [70, 75, null]], \"monochromator_resolution_nm\": 2.0, \"rate_layers\": [6, 7, 8, 9, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74], \"witness_reset_layers\": null}",
+        "replay_id": 98500001
+      },
+      {
+        "plan": {
+          "nom": "native_parent",
+          "source_strategy_id": 900754520,
+          "native_source_id": 900754520,
+          "blocks": [
+            {
+              "start": 0,
+              "end": 10,
+              "wavelength": 630.0
+            },
+            {
+              "start": 10,
+              "end": 21,
+              "wavelength": 451.0
+            },
+            {
+              "start": 21,
+              "end": 40,
+              "wavelength": 689.0
+            },
+            {
+              "start": 40,
+              "end": 50,
+              "wavelength": 741.0
+            },
+            {
+              "start": 50,
+              "end": 60,
+              "wavelength": 733.0
+            },
+            {
+              "start": 60,
+              "end": 70,
+              "wavelength": 742.0
+            },
+            {
+              "start": 70,
+              "end": 75,
+              "wavelength": 580.0
+            }
+          ],
+          "rate_layers": [
+            6,
+            7,
+            8,
+            9,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            37,
+            38,
+            39,
+            40,
+            41,
+            42,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50,
+            51,
+            52,
+            53,
+            54,
+            55,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74
+          ],
+          "monochromator_resolution_nm": 2.0,
+          "branch": "native",
+          "witness_reset_layers": null
+        },
+        "score": 0.03291235311885696,
+        "native_export_score": 0.03291235311885696,
+        "native_consensus_meta": {
+          "mode": "mean_std",
+          "mean": 0.0327128056413827,
+          "std": 0.000570135649926448,
+          "worst": 0.033479579683197355,
+          "seeds": [
+            41,
+            42,
+            43
+          ],
+          "n_samples": 3
+        },
+        "signature": "{\"blocks\": [[0, 10, 630.0], [10, 21, 451.0], [21, 40, 689.0], [40, 50, null], [50, 60, null], [60, 70, null], [70, 75, null]], \"monochromator_resolution_nm\": 2.0, \"rate_layers\": [6, 7, 8, 9, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74], \"witness_reset_layers\": null}",
+        "replay_id": 98500002
+      }
+    ],
+    "control": [
+      {
+        "plan": {
+          "nom": "native_parent",
+          "source_strategy_id": 901054165,
+          "native_source_id": 901054165,
+          "blocks": [
+            {
+              "start": 0,
+              "end": 9,
+              "wavelength": 632.0
+            },
+            {
+              "start": 9,
+              "end": 20,
+              "wavelength": 451.0
+            },
+            {
+              "start": 20,
+              "end": 30,
+              "wavelength": 691.0
+            },
+            {
+              "start": 30,
+              "end": 40,
+              "wavelength": 691.0
+            },
+            {
+              "start": 40,
+              "end": 50,
+              "wavelength": 741.0
+            },
+            {
+              "start": 50,
+              "end": 55,
+              "wavelength": 733.0
+            },
+            {
+              "start": 55,
+              "end": 60,
+              "wavelength": 705.0
+            },
+            {
+              "start": 60,
+              "end": 65,
+              "wavelength": 708.0
+            },
+            {
+              "start": 65,
+              "end": 70,
+              "wavelength": 742.0
+            },
+            {
+              "start": 70,
+              "end": 75,
+              "wavelength": 580.0
+            }
+          ],
+          "rate_layers": [
+            6,
+            7,
+            8,
+            9,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            32,
+            33,
+            34,
+            39,
+            40,
+            41,
+            42,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50,
+            51,
+            52,
+            53,
+            54,
+            55,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74
+          ],
+          "monochromator_resolution_nm": 2.0,
+          "branch": "native",
+          "witness_reset_layers": null
+        },
+        "score": 0.032410960467156955,
+        "native_export_score": 0.032410960467156955,
+        "native_consensus_meta": {
+          "mode": "mean_std",
+          "mean": 0.03211612913833137,
+          "std": 0.000842375225215964,
+          "worst": 0.03295687922611154,
+          "seeds": [
+            41,
+            42,
+            43
+          ],
+          "n_samples": 3
+        },
+        "signature": "{\"blocks\": [[0, 9, 632.0], [9, 20, 451.0], [20, 30, null], [30, 40, 691.0], [40, 50, null], [50, 55, null], [55, 60, null], [60, 65, null], [65, 70, null], [70, 75, null]], \"monochromator_resolution_nm\": 2.0, \"rate_layers\": [6, 7, 8, 9, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74], \"witness_reset_layers\": null}",
+        "replay_id": 98500003
+      },
+      {
+        "plan": {
+          "nom": "native_parent",
+          "source_strategy_id": 900853009,
+          "native_source_id": 900853009,
+          "blocks": [
+            {
+              "start": 0,
+              "end": 10,
+              "wavelength": 630.0
+            },
+            {
+              "start": 10,
+              "end": 19,
+              "wavelength": 451.0
+            },
+            {
+              "start": 19,
+              "end": 30,
+              "wavelength": 691.0
+            },
+            {
+              "start": 30,
+              "end": 40,
+              "wavelength": 630.0
+            },
+            {
+              "start": 40,
+              "end": 50,
+              "wavelength": 741.0
+            },
+            {
+              "start": 50,
+              "end": 65,
+              "wavelength": 733.0
+            },
+            {
+              "start": 65,
+              "end": 70,
+              "wavelength": 742.0
+            },
+            {
+              "start": 70,
+              "end": 75,
+              "wavelength": 580.0
+            }
+          ],
+          "rate_layers": [
+            6,
+            7,
+            8,
+            9,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27,
+            28,
+            29,
+            30,
+            31,
+            34,
+            35,
+            36,
+            37,
+            38,
+            39,
+            40,
+            41,
+            42,
+            43,
+            44,
+            45,
+            46,
+            47,
+            48,
+            49,
+            50,
+            51,
+            52,
+            53,
+            54,
+            55,
+            56,
+            57,
+            58,
+            59,
+            60,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            70,
+            71,
+            72,
+            73,
+            74
+          ],
+          "monochromator_resolution_nm": 2.0,
+          "branch": "native",
+          "witness_reset_layers": null
+        },
+        "score": 0.03336799909407186,
+        "native_export_score": 0.03336799909407186,
+        "native_consensus_meta": {
+          "mode": "mean_std",
+          "mean": 0.032937799295315574,
+          "std": 0.0012291422821608046,
+          "worst": 0.034200861668732346,
+          "seeds": [
+            41,
+            42,
+            43
+          ],
+          "n_samples": 3
+        },
+        "signature": "{\"blocks\": [[0, 10, 630.0], [10, 19, 451.0], [19, 30, null], [30, 40, 630.0], [40, 50, null], [50, 65, null], [65, 70, null], [70, 75, null]], \"monochromator_resolution_nm\": 2.0, \"rate_layers\": [6, 7, 8, 9, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74], \"witness_reset_layers\": null}",
+        "replay_id": 98500004
+      }
+    ]
+  },
+  "unique_replay_plans": [
+    {
+      "nom": "automatic_parent_1",
+      "source_strategy_id": 98500001,
+      "native_source_id": 900754638,
+      "blocks": [
+        {
+          "start": 0,
+          "end": 9,
+          "wavelength": 630.0
+        },
+        {
+          "start": 9,
+          "end": 20,
+          "wavelength": 451.0
+        },
+        {
+          "start": 20,
+          "end": 40,
+          "wavelength": 689.0
+        },
+        {
+          "start": 40,
+          "end": 50,
+          "wavelength": 740.0
+        },
+        {
+          "start": 50,
+          "end": 60,
+          "wavelength": 733.0
+        },
+        {
+          "start": 60,
+          "end": 70,
+          "wavelength": 742.0
+        },
+        {
+          "start": 70,
+          "end": 75,
+          "wavelength": 580.0
+        }
+      ],
+      "rate_layers": [
+        6,
+        7,
+        8,
+        9,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74
+      ],
+      "monochromator_resolution_nm": 2.0,
+      "branch": "native",
+      "witness_reset_layers": null,
+      "root_parent_id": 98500001
+    },
+    {
+      "nom": "automatic_parent_2",
+      "source_strategy_id": 98500002,
+      "native_source_id": 900754520,
+      "blocks": [
+        {
+          "start": 0,
+          "end": 10,
+          "wavelength": 630.0
+        },
+        {
+          "start": 10,
+          "end": 21,
+          "wavelength": 451.0
+        },
+        {
+          "start": 21,
+          "end": 40,
+          "wavelength": 689.0
+        },
+        {
+          "start": 40,
+          "end": 50,
+          "wavelength": 741.0
+        },
+        {
+          "start": 50,
+          "end": 60,
+          "wavelength": 733.0
+        },
+        {
+          "start": 60,
+          "end": 70,
+          "wavelength": 742.0
+        },
+        {
+          "start": 70,
+          "end": 75,
+          "wavelength": 580.0
+        }
+      ],
+      "rate_layers": [
+        6,
+        7,
+        8,
+        9,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74
+      ],
+      "monochromator_resolution_nm": 2.0,
+      "branch": "native",
+      "witness_reset_layers": null,
+      "root_parent_id": 98500002
+    },
+    {
+      "nom": "automatic_parent_3",
+      "source_strategy_id": 98500003,
+      "native_source_id": 901054165,
+      "blocks": [
+        {
+          "start": 0,
+          "end": 9,
+          "wavelength": 632.0
+        },
+        {
+          "start": 9,
+          "end": 20,
+          "wavelength": 451.0
+        },
+        {
+          "start": 20,
+          "end": 30,
+          "wavelength": 691.0
+        },
+        {
+          "start": 30,
+          "end": 40,
+          "wavelength": 691.0
+        },
+        {
+          "start": 40,
+          "end": 50,
+          "wavelength": 741.0
+        },
+        {
+          "start": 50,
+          "end": 55,
+          "wavelength": 733.0
+        },
+        {
+          "start": 55,
+          "end": 60,
+          "wavelength": 705.0
+        },
+        {
+          "start": 60,
+          "end": 65,
+          "wavelength": 708.0
+        },
+        {
+          "start": 65,
+          "end": 70,
+          "wavelength": 742.0
+        },
+        {
+          "start": 70,
+          "end": 75,
+          "wavelength": 580.0
+        }
+      ],
+      "rate_layers": [
+        6,
+        7,
+        8,
+        9,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74
+      ],
+      "monochromator_resolution_nm": 2.0,
+      "branch": "native",
+      "witness_reset_layers": null,
+      "root_parent_id": 98500003
+    },
+    {
+      "nom": "automatic_parent_4",
+      "source_strategy_id": 98500004,
+      "native_source_id": 900853009,
+      "blocks": [
+        {
+          "start": 0,
+          "end": 10,
+          "wavelength": 630.0
+        },
+        {
+          "start": 10,
+          "end": 19,
+          "wavelength": 451.0
+        },
+        {
+          "start": 19,
+          "end": 30,
+          "wavelength": 691.0
+        },
+        {
+          "start": 30,
+          "end": 40,
+          "wavelength": 630.0
+        },
+        {
+          "start": 40,
+          "end": 50,
+          "wavelength": 741.0
+        },
+        {
+          "start": 50,
+          "end": 65,
+          "wavelength": 733.0
+        },
+        {
+          "start": 65,
+          "end": 70,
+          "wavelength": 742.0
+        },
+        {
+          "start": 70,
+          "end": 75,
+          "wavelength": 580.0
+        }
+      ],
+      "rate_layers": [
+        6,
+        7,
+        8,
+        9,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74
+      ],
+      "monochromator_resolution_nm": 2.0,
+      "branch": "native",
+      "witness_reset_layers": null,
+      "root_parent_id": 98500004
+    }
+  ],
+  "variant_parent_ids": [
+    98500001,
+    98500002
+  ],
+  "control_comparator_ids": [
+    98500003,
+    98500004
+  ],
+  "before_post_scoring": true,
+  "variant_parents_only_from_variant": true,
+  "native_provenance": {
+    "control": {
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R3_h03_native_postrefinement\\verification_01\\synthetic_fixture\\control\\artifact.json",
+      "artifact_sha256": "3690ff83b9d4c3291bbbb9cdb771845099b7ef2970fbd4e280cdf615507d548e",
+      "state_sha256": "9e9a66fa4020a97f5602c006af10abf31e0825bc0f47b4bc005664c10ac18ddc",
+      "trace_sha256": "e545ff34efa3b7403eabea30cc241b588f94e5a9c2b4f4d3fcd17cce0ae6732f"
+    },
+    "variant": {
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R3_h03_native_postrefinement\\verification_01\\synthetic_fixture\\variant\\artifact.json",
+      "artifact_sha256": "2721decaee9b3dc7ee365399229446fb82fc84e252b1f440ad49de52c7d7554e",
+      "state_sha256": "6f43f4fb4170b625a4076f939fb8ce987af787c9312edd674b9c3392243b011a",
+      "trace_sha256": "e545ff34efa3b7403eabea30cc241b588f94e5a9c2b4f4d3fcd17cce0ae6732f"
+    }
+  },
+  "frozen_utc": "2026-10-15T16:35:21.872027+00:00"
+}

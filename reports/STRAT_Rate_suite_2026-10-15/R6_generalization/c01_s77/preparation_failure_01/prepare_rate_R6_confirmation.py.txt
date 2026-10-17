@@ -1,0 +1,236 @@
+"""Audit a completed native pair, freeze official/complete finalists, and prepare three reserved groups."""
+
+from __future__ import annotations
+
+import argparse
+import copy
+import json
+import math
+from collections import Counter
+from datetime import UTC, datetime
+from pathlib import Path
+
+from rate_R4_planner_resume_v3 import save
+from rate_R5_guard import REFERENCE, ROOT, check_context, check_deadline, read, sha
+from rate_R6_guard import CASES, EXPERIMENT, PROGRAM, PROTOCOL
+
+
+def full_plan(row):
+    plan = {"blocks": copy.deepcopy(row["blocs"]), "rate_layers": copy.deepcopy(row.get("rate_layers") or []),
+            "monochromator_resolution_nm": row.get("resolution_nm") or 2.0,
+            "witness_reset_layers": copy.deepcopy(row.get("witness_reset_layers"))}
+    if row.get("resolution_noise_factor") is not None:
+        plan["resolution_noise_factor"] = row["resolution_noise_factor"]
+    return plan
+
+
+def identity(plan):
+    return json.dumps({key: plan.get(key) for key in ("blocks", "rate_layers", "monochromator_resolution_nm", "witness_reset_layers", "resolution_noise_factor")}, sort_keys=True)
+
+
+def complete(row):
+    meta = row.get("robustness_consensus_meta") or {}
+    score = row.get("robustness_score_consensus")
+    return (meta.get("seeds") == [41, 42, 43] and meta.get("n_samples") == 3 and meta.get("mode") == "mean_std"
+            and isinstance(score, (int, float)) and math.isfinite(score) and not row.get("crash_eliminated", False))
+
+
+def write_source(name, source):
+    target = ROOT / "scratch" / name
+    if target.exists():
+        if target.read_text(encoding="utf-8") != source:
+            raise RuntimeError("Preserve an existing launcher copy: " + name)
+    else:
+        with target.open("x", encoding="utf-8") as stream:
+            stream.write(source)
+
+
+def prepare_sources():
+    source = (ROOT / "scratch/rate_H03_post_scorer.py").read_text(encoding="utf-8")
+    source = source.replace('choices=("search",)', 'choices=("fresh",)')
+    first = source.index('    experiment = root /')
+    last = source.index('    for name in (', first)
+    source = source[:first] + '''    bounded = runpy.run_path(str(root / "scratch/rate_R6_fresh_guard.py"))
+    manifest_file = args.group_manifest.resolve()
+    manifest = json.loads(manifest_file.read_text(encoding="utf-8"))
+    experiment = bounded["EXPERIMENT"] / manifest["case"]
+    if (protocol_file != experiment / "confirmation_protocol.json" or reference_file != bounded["REFERENCE"] or
+            plans_file != manifest_file.parent / "plans.json" or output != manifest_file.parent / "measurement"):
+        raise RuntimeError("Only this case's frozen fresh protocol/context/plans are allowed")
+    setting = manifest["setting"]
+''' + source[last:]
+    first = source.index('    if args.run not in ("control", "search"):')
+    last = source.index('    reference = ', first)
+    source = source[:first] + source[last:]
+    first = source.index("    def check_sources()")
+    last = source.index("    sources = check_sources()", first)
+    source = source[:first] + '''    def check_sources() -> dict[str, str]:
+        return bounded["check_context"](worktree, reference)
+
+''' + source[last:]
+    source = source.replace('    bounded = runpy.run_path(str(root / "scratch/rate_H03_guard.py"))\n', '')
+    source = source.replace('scratch/rate_H03_guard.py', 'scratch/rate_R6_fresh_guard.py')
+    first = source.index('    if args.run == "search":')
+    last = source.index('    if os.cpu_count() != 24:', first)
+    source = source[:first] + source[last:]
+    source = source.replace('any(output.glob("request_search_*.json")) or (output / "search.json").exists()',
+                            'any(output.glob("request_fresh_*.json")) or (output / "fresh.json").exists()')
+    first = source.index('        def keep_fixed_plans(')
+    last = source.index('        def evaluate_fixed(', first)
+    source = source[:first] + source[last:]
+    source = source.replace('num_runs, expand_variants=False)', 'num_runs, expand_variants=False, refine=False)')
+    source = source.replace('''        with patch.object(external, "run_final_simulation_block", evaluate_fixed), patch(
+            "certus.core.certus_strat_consensus._apply_elite_refinement_if_enabled", keep_fixed_plans
+        ), patch.object(robustness, "_test_strategy_robustness_task", record_task):''',
+                            '''        with patch.object(external, "run_final_simulation_block", evaluate_fixed), patch.object(robustness, "_test_strategy_robustness_task", record_task):''')
+    source = source.replace('ablation_profile=False)', 'ablation_profile=False, elite_rate_joint_candidates=0, rate_post_refinement=False)')
+    first = source.index('        if args.run == "control":')
+    last = source.index('        if args.run in ("control", "search"):', first)
+    source = source[:first] + source[last:]
+    source = source.replace('args.run == "search"', 'args.run == "fresh"').replace('args.run != "search"', 'args.run != "fresh"')
+    # No old fixed-point expectations enter a new-seed group; the guard rejects them.
+    source = source.replace('if args.run in ("control", "search"):', 'if args.run == "fresh":')
+    write_source("rate_R6_fresh_scorer.py", source)
+    old = (ROOT / "scratch/run_rate_R6_pair.ps1").read_text(encoding="utf-8")
+    prefix = old[:old.index("Save-RateState\ntry {")].replace("'controller.json'", "'fresh_controller.json'")
+    tail = '''Save-RateState
+try {
+    for($rateGroup=1;$rateGroup -le 3;$rateGroup++) {
+        $rateState['status']='fresh_group_' + $rateGroup
+        Save-RateState
+        $rateGroupPath=Join-Path $rateDirectory ('fresh\\group_{0:d2}' -f $rateGroup)
+        Invoke-RateChild @('-X','utf8','-X','cpu_count=24',(Quote-Rate (Join-Path $rateRoot 'scratch\\rate_R6_fresh_scorer.py')),
+            '--worktree',(Quote-Rate $rateContext.worktree),'--plans',(Quote-Rate (Join-Path $rateGroupPath 'plans.json')),
+            '--protocol',(Quote-Rate (Join-Path $rateDirectory 'confirmation_protocol.json')),
+            '--reference-state',(Quote-Rate (Join-Path $rateDirectory '..\\..\\R5_integration\\reference_context.json')),
+            '--output',(Quote-Rate (Join-Path $rateGroupPath 'measurement')),'--run','fresh',
+            '--group-manifest',(Quote-Rate (Join-Path $rateGroupPath 'manifest.json')),
+            '--deadline-utc','2026-10-16T06:00:00+00:00') (Join-Path $rateGroupPath 'logs')
+    }
+    $rateState['status']='fresh_complete_audit_pending'
+} catch {
+    $rateState['status']='failed'
+    $rateState['error']=$_.Exception.Message
+    throw
+} finally { Save-RateState }
+'''
+    write_source("run_rate_R6_fresh.ps1", prefix + tail)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--case", choices=tuple(CASES), required=True)
+    args = parser.parse_args()
+    check_deadline()
+    if list((ROOT / "reports").rglob(".running")) or (PROGRAM / "measurement.running").exists():
+        raise RuntimeError("No preparation/analysis Python during an engaged measurement")
+    reference = read(REFERENCE)
+    check_context(Path(reference["worktree"]), reference)
+    protocol = read(PROTOCOL)
+    directory = EXPERIMENT / args.case
+    if (directory / "confirmation_protocol.json").exists() or (directory / "frozen_finalists.json").exists():
+        raise RuntimeError("Inspect an existing frozen confirmation preparation before adoption")
+    coordinator = read(directory / "controller.json")
+    if coordinator["status"] != "pair_complete_freeze_and_fresh_pending" or coordinator["current_pid"] or len(coordinator["runs"]) != 2:
+        raise RuntimeError("Native pair is not finished")
+    if any(r["exit_code"] != 0 for r in coordinator["runs"]):
+        raise RuntimeError("Native pair lacks actual recorded exit0")
+    arms, audits, tasks = {}, {}, {}
+    for name, digest in protocol["script_sha256"].items():
+        if sha(ROOT / "scratch" / name) != digest:
+            raise RuntimeError("A native launcher changed")
+    for arm in ("control", "variant"):
+        state = read(directory / arm / "measurement/etat.json")
+        artifact_file = Path(state["artifact"])
+        artifact = read(artifact_file)
+        if (state["status"] != "complete" or state["source_sha256"] != reference["source_sha256"] or artifact["verdict"] != "OK" or
+                sha(artifact_file) != state["native_artifact_sha256"] or state["case"] != args.case or state["arm"] != arm):
+            raise RuntimeError("Native artifact/source/state mismatch")
+        expected = protocol["common_overrides"] + ",rate_post_refinement=" + str(arm == "variant").lower()
+        if state["overrides"] != expected or artifact["seed"] != CASES[args.case]:
+            raise RuntimeError("Native factor or seed mismatch")
+        for name, digest in protocol["script_sha256"].items():
+            if sha(directory / arm / "measurement" / ("source_" + name + ".txt")) != digest:
+                raise RuntimeError("Native script copy mismatch")
+        trace = read(directory / arm / "measurement/pipeline_trace.json")
+        if any(e["kind"] == "physical_task_error" for e in trace["events"]):
+            raise RuntimeError("A native physical task failed")
+        events = [e for e in trace["events"] if e["kind"] == "physical_task_result"]
+        tasks[arm] = events
+        arms[arm] = artifact
+        audits[arm] = {"artifact_sha256": sha(artifact_file), "rows": len(artifact["strategies"]),
+                       "complete_consensus_rows": sum(complete(r) for r in artifact["strategies"]),
+                       "actual_tasks": len(events), "actual_depth_counts": dict(Counter(str(e["num_runs"]) for e in events)),
+                       "trace_sha256": sha(directory / arm / "measurement/pipeline_trace.json"), "state_sha256": sha(directory / arm / "measurement/etat.json")}
+    post = arms["variant"]["rate_post_refinement"]
+    if post["status"] != "complete" or post["new_proposals"] > 600 or len(post["groups"]) > 73 or len(post["passes"]) > 2 or post["anchors_injected"]:
+        raise RuntimeError("Post quota/source invariant failed")
+    post_ids = [p["source_strategy_id"] for g in post["groups"] for p in g["plans"]]
+    if len(post_ids) != len(set(post_ids)):
+        raise RuntimeError("A post plan was evaluated twice")
+    actual_post = [e for e in tasks["variant"] if e["id"] in set(post_ids)]
+    if (any(e["num_runs"] != 300 for e in actual_post) or
+            Counter(e["id"] for e in actual_post if e["seed"] == CASES[args.case]) != Counter(post_ids)):
+        raise RuntimeError("Missing or shallow actual post base evaluations")
+    for group in post["groups"]:
+        for sid in group["eligible_ids"]:
+            if sorted(e["seed"] for e in actual_post if e["id"] == sid) != sorted([CASES[args.case], 41, 42, 43]):
+                raise RuntimeError("Eligible post consensus lacks its actual four full-depth tasks")
+    selected = {}
+    for arm, artifact in arms.items():
+        rows = artifact["strategies"]
+        best = min((row for row in rows if complete(row)), key=lambda r: (r["robustness_score_consensus"], identity(full_plan(r))))
+        selected[arm + "_complete"] = best
+        selected[arm + "_official"] = rows[0]
+    raw = copy.deepcopy(read(PROGRAM / "R3_h03_native_postrefinement/protocol.json")["anchors"])
+    for plan in raw:
+        plan.pop("expected_score_fixed_point", None)
+    seen = {identity(p): p["source_strategy_id"] for p in raw}
+    roles = {}
+    for role, row in selected.items():
+        plan = full_plan(row)
+        key = identity(plan)
+        if key not in seen:
+            sid = 98_610_001 + list(CASES).index(args.case)*10_000 + len(raw)
+            plan.update(nom="R6_" + role, source_strategy_id=sid, native_source_id=row["id"])
+            raw.append(plan)
+            seen[key] = sid
+        roles[role] = seen[key]
+    if len(raw) > 8:
+        raise RuntimeError("Frozen finalist quota exceeded")
+    prepare_sources()
+    names = ["rate_R6_fresh_scorer.py", "rate_R6_fresh_guard.py", "run_rate_R6_fresh.ps1", "rate_R5_guard.py", "rate_R6_guard.py",
+             "rate_H03_guard.py", "campagne_a2_runner.py", "rate_R4_planner_resume_v3.py"]
+    save(directory / "pair_audit.json", {"verdict": "GO", "audited_utc": datetime.now(UTC).isoformat(), "arms": audits,
+         "post_proposals": post["new_proposals"], "post_groups": len(post["groups"]), "actual_post_tasks": len(actual_post), "post_best_score": post["best_score"],
+         "official_and_consensus_selection_frozen": True, "audit_source_sha256": sha(Path(__file__))}, immutable=True)
+    frozen = {"plans": raw, "roles": roles, "before_reserved_holdout_inspection": True,
+              "native_artifact_sha256": {arm: audit["artifact_sha256"] for arm, audit in audits.items()}}
+    save(directory / "frozen_finalists.json", frozen, immutable=True)
+    plans_data = json.dumps({"plans": raw}, ensure_ascii=False, indent=2)
+    import hashlib
+
+    fresh_protocol = {"case": args.case, "source_sha256": reference["source_sha256"], "reference_sha256": sha(REFERENCE),
+                      "deadline_utc": check_deadline(), "depths": {"robustness_num_runs": 300, "n_screen_runs": 50, "dp_top_k": 100, "consensus_num_runs": 300},
+                      "native_protocol_sha256": sha(PROTOCOL), "native_artifact_sha256": frozen["native_artifact_sha256"],
+                      "frozen_finalists_sha256": sha(directory / "frozen_finalists.json"), "pair_audit_sha256": sha(directory / "pair_audit.json"),
+                      "reservation_sha256": sha(EXPERIMENT / "fresh_seed_reservation.json"),
+                      "plans_sha256": hashlib.sha256(plans_data.encode()).hexdigest(),
+                      "script_sha256": {name: sha(ROOT / "scratch" / name) for name in names},
+                      "scope": "Three already reserved fresh groups, no new proposal, <=8 fixed plans, same300 depth"}
+    save(directory / "confirmation_protocol.json", fresh_protocol, immutable=True)
+    settings = read(EXPERIMENT / "fresh_seed_reservation.json")["settings"][args.case]
+    for index, setting in enumerate(settings, start=1):
+        group_dir = directory / "fresh" / f"group_{index:02}"
+        group_dir.mkdir(parents=True, exist_ok=False)
+        (group_dir / "plans.json").write_text(plans_data, encoding="utf-8")
+        save(group_dir / "manifest.json", {"phase": f"R6_{args.case}_fresh_g{index:02}", "case": args.case,
+             "index": index, "setting": setting, "plans_sha256": sha(group_dir / "plans.json"),
+             "protocol_sha256": sha(directory / "confirmation_protocol.json")}, immutable=True)
+    print(json.dumps({"verdict": "PAIR_GO_FINALISTS_FROZEN_CONFIRMATION_NOT_VERIFIED", "case": args.case, "plans": len(raw), "roles": roles,
+                      "control_score": selected["control_complete"]["robustness_score_consensus"],
+                      "variant_score": selected["variant_complete"]["robustness_score_consensus"]}))
+
+
+if __name__ == "__main__":
+    main()

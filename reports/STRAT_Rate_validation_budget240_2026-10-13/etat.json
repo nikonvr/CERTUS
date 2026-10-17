@@ -1,0 +1,24 @@
+{
+  "status": "failed",
+  "pid": 41088,
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "runs": [],
+  "replay_sha256": "f4a26bf3c82d8b79ae342c5d632a2faf96c4c514abbae8ba39f1c83490a2bcb9",
+  "plans_sha256": "5c4e52eb95e696b999ba3d918d99076c518afbb66ed3735081113c83194f6e47",
+  "protocol_sha256": "e7de20e6fe02145011f65dd945474e1aa03051a3b9e942902522c41829f67ba8",
+  "sequence": [
+    "control",
+    "holdout_202",
+    "holdout_303"
+  ],
+  "current": "control",
+  "current_pid": null,
+  "updated": "2026-10-13T15:04:53+00:00",
+  "current_started": "2026-10-13T15:04:46+00:00",
+  "error": "Replay control exited 1; its log and request are preserved"
+}

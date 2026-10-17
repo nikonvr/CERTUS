@@ -1,0 +1,2 @@
+lancee 2026-10-11T17:01:50+02:00 HEAD=c3ff6477 cmd=scripts/probe_blocs_vs_plantage.py 99c premium 0 0 2 0 42
+finie rc=0 duree=11 min WAIT_TIMEOUT=0 artefact=reports\blocs_vs_plantage_99c_premium_s042_20261011_171344.json

@@ -1,0 +1,11 @@
+{
+  "sha256": {
+    "runner": "4d8c0f2d19bec1a17dfce8069ab2cf2a152154fceee9e540f83719266cd22ed3",
+    "replay": "05376a9240c66a99a1f4f5bf1a7300045d13ed83ca0ed4a4f88300a73688a2c3",
+    "preparation": "fca38e804c60d6f9f0688360f203fb265726407bb5ae77b070e7a1c50ad9a0b8",
+    "proposals": "c820393cbaeda4b43a6fd1fd2e976e72120d3e647a37cbabb0864dd9ff1643d9",
+    "protocol": "e7de20e6fe02145011f65dd945474e1aa03051a3b9e942902522c41829f67ba8"
+  },
+  "independent_validation": "STRAT_Rate_validation_joint_2026-10-13/etat.json",
+  "scope": "local refinement of both existing windows around joint winner; 1 nm neighbors to +/-10 nm and retained coarse grid; no other model change"
+}

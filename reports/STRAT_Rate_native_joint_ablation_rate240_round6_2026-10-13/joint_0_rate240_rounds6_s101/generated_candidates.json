@@ -1,0 +1,8 @@
+{
+  "script_sha256": {
+    "adapter": "2a257812a713be4c601c1c664fd1053a814658344b5f2f53c6dacf463361284d",
+    "generator": "30ac713dc23b4c0754ca56f5f843309f9b3b55c583dbe4b2bf1f17427684a611",
+    "controller_helper": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51"
+  },
+  "calls": []
+}

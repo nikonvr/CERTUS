@@ -1,0 +1,1302 @@
+{
+  "status": "LOSSLESS_ARCHIVES_VERIFIED_BEFORE_CLEANUP",
+  "recorded_utc": "2026-10-16T08:56:45.325263+00:00",
+  "user_request": "fais un meenage drastique !",
+  "archives": [
+    {
+      "raw_path": "reports/STRAT_ELITE_couches_Rate_2026-10-12/blocs_vs_plantage_48c_premium_s042_ratemoves_cea0db66.json",
+      "raw_sha256": "ba3febc99cdd4e109d278686145eff0b45d89c313c6b0deb88c5a8cddd2e57f4",
+      "raw_bytes": 5992242,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/ba3febc99cdd4e109d278686145eff0b45d89c313c6b0deb88c5a8cddd2e57f4.json.gz",
+      "gzip_bytes": 362159,
+      "gzip_sha256": "8c4aca59b0002dcde3c86175ff4d193164078582f567161d43f26c72c5e4b042",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_ELITE_couches_Rate_2026-10-12/blocs_vs_plantage_r75x0.5_deep_s042_defauts_5da02db9.json",
+      "raw_sha256": "9560d626b0a5fa0e1b2a838a281883cc6174a2707fd21b35d71794297ad13d6b",
+      "raw_bytes": 11434781,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/9560d626b0a5fa0e1b2a838a281883cc6174a2707fd21b35d71794297ad13d6b.json.gz",
+      "gzip_bytes": 686575,
+      "gzip_sha256": "6564e2ae8dfad3a35e247aa405d415b726187ad5ab8299e9ea7365400db4e80e",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_ELITE_couches_Rate_2026-10-12/blocs_vs_plantage_r75x0.5_deep_s101_ratemoves_cea0db66.json",
+      "raw_sha256": "90e3e5889d6a9a7588572d71dc8b9712e74d5ac435b64c7190382367b8958102",
+      "raw_bytes": 13272700,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/90e3e5889d6a9a7588572d71dc8b9712e74d5ac435b64c7190382367b8958102.json.gz",
+      "gzip_bytes": 785988,
+      "gzip_sha256": "2d836779cda9e2e31d218ca58fe2eed9d8c95e2dbe3e9602a647a414a059c3b5",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_ELITE_couches_Rate_2026-10-12/blocs_vs_plantage_r75x0.5_deep_s202_defauts_5da02db9.json",
+      "raw_sha256": "503503b39076f721135aafbdbfe4581b6345cab281789c4c237293efe3dc3482",
+      "raw_bytes": 12218079,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/503503b39076f721135aafbdbfe4581b6345cab281789c4c237293efe3dc3482.json.gz",
+      "gzip_bytes": 734725,
+      "gzip_sha256": "e65591914e76481e70a4671269a967bb8ee08fb40092446d0a2e15da58b257d1",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_ELITE_couches_Rate_2026-10-12/blocs_vs_plantage_r75x2_deep_s042_defauts_5da02db9.json",
+      "raw_sha256": "4b2200f0ba4f432a08bb8fb668aacb711e4b308c30878c8fd056bea083a4f5b6",
+      "raw_bytes": 14850180,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/4b2200f0ba4f432a08bb8fb668aacb711e4b308c30878c8fd056bea083a4f5b6.json.gz",
+      "gzip_bytes": 888276,
+      "gzip_sha256": "7fccad35e20da8bcde79a42c7098cda6af857e4d2408c15dece140574cf6febf",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_ELITE_couches_Rate_2026-10-12/blocs_vs_plantage_r75x2_deep_s101_ratemoves_cea0db66.json",
+      "raw_sha256": "20169966ce4121a99f7e96393e11bde941ec8c7137912da074f6c2457d707fce",
+      "raw_bytes": 15227754,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/20169966ce4121a99f7e96393e11bde941ec8c7137912da074f6c2457d707fce.json.gz",
+      "gzip_bytes": 933418,
+      "gzip_sha256": "58a614d30434c258a0456526a2b05e98bad0648a721af692b5b5968072f3ed3c",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_modele_d_arret_2026-10-12/blocs_vs_plantage_48c_premium_s042_ancien_8d9ced13.json",
+      "raw_sha256": "dea2264a4e9b1381f537fea0971101e9ede6d6f819172eb75ac7cba569c648e4",
+      "raw_bytes": 2416335,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/dea2264a4e9b1381f537fea0971101e9ede6d6f819172eb75ac7cba569c648e4.json.gz",
+      "gzip_bytes": 279331,
+      "gzip_sha256": "2ef39ec6d0fc688dafaafb882233dc6fc75cd622726ac5b6e417a0788adbd279",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_modele_d_arret_2026-10-12/blocs_vs_plantage_48c_premium_s042_ancien_dbf8025f.json",
+      "raw_sha256": "1ef607f8a93619350d27a0e147536efd0cd141ca5c2567471caee46c6e3980e6",
+      "raw_bytes": 2764606,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/1ef607f8a93619350d27a0e147536efd0cd141ca5c2567471caee46c6e3980e6.json.gz",
+      "gzip_bytes": 245862,
+      "gzip_sha256": "909a817d5c8971e2bf2812ed6731fc3e2302b58954b4addbd43bef5652d01b3e",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_modele_d_arret_2026-10-12/blocs_vs_plantage_48c_premium_s042_ancien_sans_secours_cea0db66.json",
+      "raw_sha256": "7a1376ef93127aa80f3c3e64af19edea48d6c8632ee261c6d5c414d5dc8c13e6",
+      "raw_bytes": 1787677,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/7a1376ef93127aa80f3c3e64af19edea48d6c8632ee261c6d5c414d5dc8c13e6.json.gz",
+      "gzip_bytes": 239576,
+      "gzip_sha256": "a29304aceb37aa2d15b5072a1bba886b12a12854104535edd586d17582337fce",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_modele_d_arret_2026-10-12/blocs_vs_plantage_48c_premium_s042_ancien_sans_secours_sans_d106_dbf8025f_modifie.json",
+      "raw_sha256": "b5484f5e0c7b19695f011e5faedbcaa0eaefccf0d92d05c9c6bd0a80b55b815b",
+      "raw_bytes": 2662313,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/b5484f5e0c7b19695f011e5faedbcaa0eaefccf0d92d05c9c6bd0a80b55b815b.json.gz",
+      "gzip_bytes": 318155,
+      "gzip_sha256": "431906d4c79fa765c9847d2ddbdd9e970c5be95a4d31c4565943211b3812f38e",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_modele_d_arret_2026-10-12/blocs_vs_plantage_48c_premium_s042_d96d97_8d9ced13.json",
+      "raw_sha256": "dffe4a739941957b5d179b2de75cacf716c4691461ffbf97a01608306ee6ce3c",
+      "raw_bytes": 1810440,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/dffe4a739941957b5d179b2de75cacf716c4691461ffbf97a01608306ee6ce3c.json.gz",
+      "gzip_bytes": 226198,
+      "gzip_sha256": "bc057aa6b020855e7d10555aedf2d6c98794faf8253225de68b5afcd0ebb62b5",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_modele_d_arret_2026-10-12/blocs_vs_plantage_48c_premium_s042_d96d97_dbf8025f.json",
+      "raw_sha256": "dd5699bed4a75a1d1c61e519163234b5b1b15e416ece9154fcdb6650c68de4db",
+      "raw_bytes": 4457307,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/dd5699bed4a75a1d1c61e519163234b5b1b15e416ece9154fcdb6650c68de4db.json.gz",
+      "gzip_bytes": 309237,
+      "gzip_sha256": "3c4d181dcca88db142b4cf9dc01ba1ca10af005d46e35790e14f7f2b8dc2f81f",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_modele_d_arret_2026-10-12/blocs_vs_plantage_48c_premium_s042_d98seul_8d9ced13.json",
+      "raw_sha256": "14c41bc17a8fc702e7bf5cc6860e1923ba9d44e66e0b53a579bcd28e85c2c650",
+      "raw_bytes": 1331870,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/14c41bc17a8fc702e7bf5cc6860e1923ba9d44e66e0b53a579bcd28e85c2c650.json.gz",
+      "gzip_bytes": 173235,
+      "gzip_sha256": "f36ea2bdb696116e54eaafb5ebbc2ff518e30651de9f1b7b7c19104e99a109cc",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_modele_d_arret_2026-10-12/blocs_vs_plantage_48c_premium_s042_d98seul_dbf8025f.json",
+      "raw_sha256": "8ffc85e0f3ed6e2b8af9e443168753acc75ccfbbb19899bd5518214b190ab11e",
+      "raw_bytes": 5250965,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/8ffc85e0f3ed6e2b8af9e443168753acc75ccfbbb19899bd5518214b190ab11e.json.gz",
+      "gzip_bytes": 337118,
+      "gzip_sha256": "f93e27b4bfb24705128b9fe3eb3e9985bd5945c5074eb6b0493b368c681a2e71",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_modele_d_arret_2026-10-12/blocs_vs_plantage_48c_premium_s042_d98tardif_8d9ced13.json",
+      "raw_sha256": "48ef77b05f0cbc9b8ce703d3efa67c958e9ff30068e2016d71659ae301a7598f",
+      "raw_bytes": 3327352,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/48ef77b05f0cbc9b8ce703d3efa67c958e9ff30068e2016d71659ae301a7598f.json.gz",
+      "gzip_bytes": 431059,
+      "gzip_sha256": "9b18a4bb7a224a03e3a6ff0d7623bc6d4cbeddf51d1e4091602a04f475cc4d58",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_modele_d_arret_2026-10-12/blocs_vs_plantage_48c_premium_s042_production_8d9ced13.json",
+      "raw_sha256": "700be970df7e3762863fb4c6c5660c2dde91eabe5c299822ded4086631a39e8f",
+      "raw_bytes": 3471199,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/700be970df7e3762863fb4c6c5660c2dde91eabe5c299822ded4086631a39e8f.json.gz",
+      "gzip_bytes": 514188,
+      "gzip_sha256": "07907a7362141f881db40d86016405c97f9bcfcec8d83e228db94177fcd6a4cf",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_modele_d_arret_2026-10-12/blocs_vs_plantage_48c_premium_s042_production_dbf8025f.json",
+      "raw_sha256": "228abb70120a369a89474414fe055aff9c53a825002d17a211c643ae3b4360b4",
+      "raw_bytes": 5220053,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/228abb70120a369a89474414fe055aff9c53a825002d17a211c643ae3b4360b4.json.gz",
+      "gzip_bytes": 297077,
+      "gzip_sha256": "543fd828f8e9b6bf5ca33ea36a9d0464e629bc37029334bc435ad49bfb5ecd92",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_modele_d_arret_2026-10-12/blocs_vs_plantage_48c_premium_s042_tardif_dbf8025f.json",
+      "raw_sha256": "1d00c1a55192d0b4f62c2e836858d6a344b93969ae44890a1c76cffb2ea31cd5",
+      "raw_bytes": 3661233,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/1d00c1a55192d0b4f62c2e836858d6a344b93969ae44890a1c76cffb2ea31cd5.json.gz",
+      "gzip_bytes": 279068,
+      "gzip_sha256": "8649123dce93a42974f39a00c412182c57c4eb06ea82767300dfd7ad14e9be0a",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_r75x2_D106_secours_Rate_2026-10-12/blocs_vs_plantage_r75x2_deep_s042_ancien_dbf8025f_reduit.json",
+      "raw_sha256": "e8d248fff9e2ba3cc5aeb2a90557c94afbf1eef4b83bea760b6543e6fd489492",
+      "raw_bytes": 4167954,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/e8d248fff9e2ba3cc5aeb2a90557c94afbf1eef4b83bea760b6543e6fd489492.json.gz",
+      "gzip_bytes": 439206,
+      "gzip_sha256": "e2750efc096361840afa57e249a570dbdaeff985c1f9334ef699e92e8563d0c0",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_r75x2_D106_secours_Rate_2026-10-12/blocs_vs_plantage_r75x2_deep_s042_production_dbf8025f.json",
+      "raw_sha256": "1dc32553aa4d3e8c61348fec1d20904ddf06a47ca1b23da0b6ee54f0bafe6bfb",
+      "raw_bytes": 13770666,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/1dc32553aa4d3e8c61348fec1d20904ddf06a47ca1b23da0b6ee54f0bafe6bfb.json.gz",
+      "gzip_bytes": 745824,
+      "gzip_sha256": "53e9b968047fd91184feea13c2277bc0d84d0f61b9f9521fec5653da65b90908",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_r75x2_D106_secours_Rate_2026-10-12/blocs_vs_plantage_r75x2_deep_s101_ancien_dbf8025f_reduit.json",
+      "raw_sha256": "75c3346d8800aa620da3c908a147c7d53699aec1e481e1c424aab7f0c3d9139b",
+      "raw_bytes": 4421803,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/75c3346d8800aa620da3c908a147c7d53699aec1e481e1c424aab7f0c3d9139b.json.gz",
+      "gzip_bytes": 506683,
+      "gzip_sha256": "74abc35ca83cbf0993e305d1dd44688b3847860e75cd2736782d4f2a939e93f8",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_r75x2_D106_secours_Rate_2026-10-12/blocs_vs_plantage_r75x2_deep_s101_ancien_sans_d106_dbf8025f_modifie_reduit.json",
+      "raw_sha256": "ddd4da2cbfdb9628ebd029d6fc4c74a1985f17f335c7492154a4b5fdb13adf6f",
+      "raw_bytes": 5653683,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/ddd4da2cbfdb9628ebd029d6fc4c74a1985f17f335c7492154a4b5fdb13adf6f.json.gz",
+      "gzip_bytes": 668485,
+      "gzip_sha256": "024766eebb1f25871b92a01530f304c45ad604e3525809dd1ee073e317d766c2",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_r75x2_D106_secours_Rate_2026-10-12/blocs_vs_plantage_r75x2_deep_s101_production_dbf8025f.json",
+      "raw_sha256": "1fd84d8a7d745bbd1235572dbb5727b49b4bb84e22e39a041c192fe89cf74ac0",
+      "raw_bytes": 13678186,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/1fd84d8a7d745bbd1235572dbb5727b49b4bb84e22e39a041c192fe89cf74ac0.json.gz",
+      "gzip_bytes": 783193,
+      "gzip_sha256": "03b23ecc1f53defc4250c37e544652affa8353059837a36c8ff852fe7da00862",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_secours_rate_2026-10-12/blocs_vs_plantage_r75x0.5_deep_s042_secours.json",
+      "raw_sha256": "e3ff2fda14099216866b905f6e4477246bb80271df452516d17a302a777b9ee3",
+      "raw_bytes": 11392224,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/e3ff2fda14099216866b905f6e4477246bb80271df452516d17a302a777b9ee3.json.gz",
+      "gzip_bytes": 640256,
+      "gzip_sha256": "0fb3fb5edf2f41239fcc6bc3f261964010a7b371879d1124a1f2e8b18155f051",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_secours_rate_2026-10-12/blocs_vs_plantage_r75x0.5_deep_s101_couches_difficiles.json",
+      "raw_sha256": "0fa30571c37b982e9b02f849b588114a7d1135817947ce8d990d04c56278ce10",
+      "raw_bytes": 12482982,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/0fa30571c37b982e9b02f849b588114a7d1135817947ce8d990d04c56278ce10.json.gz",
+      "gzip_bytes": 720084,
+      "gzip_sha256": "03f4aaf95c5c17141510774324dd6e51a09a4c5b84ce7f29e8c7e1d9c7cb4eb0",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_secours_rate_2026-10-12/blocs_vs_plantage_r75x0.5_deep_s101_ensembles_fixes.json",
+      "raw_sha256": "5e1d5d80fa567bb06db4e21451a57f5fc3c9e58ac8db135ef8a189e97ff823af",
+      "raw_bytes": 29964954,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/5e1d5d80fa567bb06db4e21451a57f5fc3c9e58ac8db135ef8a189e97ff823af.json.gz",
+      "gzip_bytes": 6778415,
+      "gzip_sha256": "5cd0a99851f1fc7928871a1c87351d9f3a891a0a7ee6168a2dae94ec6c4a3d70",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_secours_rate_2026-10-12/blocs_vs_plantage_r75x0.5_deep_s101_queues_16-28.json",
+      "raw_sha256": "da7bda7fa46097f6a2ddd3b1d262c5effa920cc8bb949c730377630c99faa6e7",
+      "raw_bytes": 1952662,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/da7bda7fa46097f6a2ddd3b1d262c5effa920cc8bb949c730377630c99faa6e7.json.gz",
+      "gzip_bytes": 141166,
+      "gzip_sha256": "c0435e9d21144202d6e7e7d57303b94bab35dd5877bb879dc771910f94711e2f",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_secours_rate_2026-10-12/blocs_vs_plantage_r75x0.5_deep_s101_queues_2-14.json",
+      "raw_sha256": "bb6d93e96608083af9f20e615be96dbb972bebee251c88c70f72572994363ac0",
+      "raw_bytes": 6845630,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/bb6d93e96608083af9f20e615be96dbb972bebee251c88c70f72572994363ac0.json.gz",
+      "gzip_bytes": 398625,
+      "gzip_sha256": "2ca4019a5746355751eaf95403344f5473495aa249b2260d532db245e76f1088",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_secours_rate_2026-10-12/blocs_vs_plantage_r75x0.5_deep_s101_secours.json",
+      "raw_sha256": "16a038f73ed413c13523bb9ed7c1c1497451630dca95c0c2e28dfb4ad1492dea",
+      "raw_bytes": 12260047,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/16a038f73ed413c13523bb9ed7c1c1497451630dca95c0c2e28dfb4ad1492dea.json.gz",
+      "gzip_bytes": 685611,
+      "gzip_sha256": "f44273bd46029b4ddf967142c77ba79e70a39a14231da700e8615a2b1cd60a36",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/STRAT_secours_rate_2026-10-12/blocs_vs_plantage_r75x0.5_deep_s202_secours.json",
+      "raw_sha256": "2c00a009d74ad7fdea16c3b1e50b54b45fff1c9d3694e6a01420a913f1520702",
+      "raw_bytes": 11092581,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/2c00a009d74ad7fdea16c3b1e50b54b45fff1c9d3694e6a01420a913f1520702.json.gz",
+      "gzip_bytes": 639630,
+      "gzip_sha256": "a1266ebae5067d9fdae3a483e5abc79030077034185233b5565aa1b7a428d2a7",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/avant_leviers_2026-08-22/blocs_vs_plantage_75c_deep_s042.json",
+      "raw_sha256": "bdccede287cf81e75454e39c09f7de4f2e06833817ab5fc1d8311f43506954fe",
+      "raw_bytes": 7338106,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/bdccede287cf81e75454e39c09f7de4f2e06833817ab5fc1d8311f43506954fe.json.gz",
+      "gzip_bytes": 1343750,
+      "gzip_sha256": "4f878ec331ad9692c50ba69cc5aca187b29668c5b89aa7213c90d50de5ed9e1b",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/avant_leviers_2026-08-22/blocs_vs_plantage_r75x0.5_deep_s101.json",
+      "raw_sha256": "bcb5dd87d9fb53cbc4d841b8386afcf85f835df8374733324e9bbf3aea600d3f",
+      "raw_bytes": 7839359,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/bcb5dd87d9fb53cbc4d841b8386afcf85f835df8374733324e9bbf3aea600d3f.json.gz",
+      "gzip_bytes": 1787515,
+      "gzip_sha256": "588ff7f603cf12122df922a5789d5b0795dd56646fcc3fa13aa6901e85526d5f",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/avant_leviers_2026-08-22/blocs_vs_plantage_r75x0.5_deep_s202.json",
+      "raw_sha256": "fbfff903083203c04849f23c9a01a00a27defdaf9184930d0326bbf47778c3ff",
+      "raw_bytes": 7594088,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/fbfff903083203c04849f23c9a01a00a27defdaf9184930d0326bbf47778c3ff.json.gz",
+      "gzip_bytes": 1664967,
+      "gzip_sha256": "2cf181946d77717234e7aa88a51da477d35bd47717f8393aade96458c8725392",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/avant_leviers_2026-08-22/blocs_vs_plantage_r75x1.5_deep_s042_large.json",
+      "raw_sha256": "3cb0fb902ca924136a135f3f33ce69e927c4d411232aaa64da233c1bdb500276",
+      "raw_bytes": 13552812,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/3cb0fb902ca924136a135f3f33ce69e927c4d411232aaa64da233c1bdb500276.json.gz",
+      "gzip_bytes": 2732801,
+      "gzip_sha256": "1cc4db4a7e487d10d143f6e76d0bcbdc1668148414af0e62fef0e1ffe7c208be",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/avant_leviers_2026-08-22/blocs_vs_plantage_r75x1.5_deep_s042_union20260822_200734.json",
+      "raw_sha256": "f9063d5c25dcfd48f9f4011b6597eb675b3e6ef24369a572ee07d18e10d5d4cb",
+      "raw_bytes": 12657506,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/f9063d5c25dcfd48f9f4011b6597eb675b3e6ef24369a572ee07d18e10d5d4cb.json.gz",
+      "gzip_bytes": 2568919,
+      "gzip_sha256": "2767a6169d0d067bfad6da75441c5c772c995fa8913081c1fd90f7d3c87870be",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/avant_leviers_2026-08-22/blocs_vs_plantage_r75x1.5_deep_s101.json",
+      "raw_sha256": "5c0db94905e3a3558c469994d5b5981984abc6c22fc69b26153f05ff4f27e7fe",
+      "raw_bytes": 12068430,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/5c0db94905e3a3558c469994d5b5981984abc6c22fc69b26153f05ff4f27e7fe.json.gz",
+      "gzip_bytes": 2430630,
+      "gzip_sha256": "75e3571e929dfa4b4b4db5aa91610403733cb1c91c87925cc8b1d50d3ee6a0ab",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/avant_leviers_2026-08-22/blocs_vs_plantage_r75x1.5_deep_s202.json",
+      "raw_sha256": "c513dc44a007a5715a0bb05215c95683970aff54649a79bfe6c6bdcf5fe48ff6",
+      "raw_bytes": 10938520,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/c513dc44a007a5715a0bb05215c95683970aff54649a79bfe6c6bdcf5fe48ff6.json.gz",
+      "gzip_bytes": 2359801,
+      "gzip_sha256": "0c25d22ad7158ba81c0109d57edcb942efdc1ef1459c9e11481b65e245b669b7",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/avant_leviers_2026-08-22/blocs_vs_plantage_r75x1.5_deep_s303.json",
+      "raw_sha256": "b443f4fefc8d79148a71a273cca5bd6c5d6891caf9534bf0512342482bc3d308",
+      "raw_bytes": 11285714,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/b443f4fefc8d79148a71a273cca5bd6c5d6891caf9534bf0512342482bc3d308.json.gz",
+      "gzip_bytes": 2150886,
+      "gzip_sha256": "c419670a8b29a2941175c116aa5e30b375006aaed36c3f52046feadd80b17ddf",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/avant_leviers_2026-08-22/blocs_vs_plantage_r75x1.5_deep_s404.json",
+      "raw_sha256": "77937fa371a0f37cc0dc3975dc3c80af23f4ce3c6b9a95358b296b61561ef7ee",
+      "raw_bytes": 11605790,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/77937fa371a0f37cc0dc3975dc3c80af23f4ce3c6b9a95358b296b61561ef7ee.json.gz",
+      "gzip_bytes": 2384809,
+      "gzip_sha256": "caeda9783f2e529085a76fcb6d7d1c11dee66bb0d00457c775a7f34ac4d44bde",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/avant_leviers_2026-08-22/blocs_vs_plantage_r75x1.75_deep_s042_union20260822_182611.json",
+      "raw_sha256": "b2f6ff74e8dc01ea4be9fca62bee6e9f4271378291ea10c0e2b5a4a84b101544",
+      "raw_bytes": 12993430,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/b2f6ff74e8dc01ea4be9fca62bee6e9f4271378291ea10c0e2b5a4a84b101544.json.gz",
+      "gzip_bytes": 2721580,
+      "gzip_sha256": "db29d001d3b700b3dbf3f04dd677bd76ea3423ccfc4803f603c94fdf139a89ba",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/avant_leviers_2026-08-22/blocs_vs_plantage_r75x1.75_deep_s101.json",
+      "raw_sha256": "e9e68d068b93d3fc9ad91ef7153188733307920a47791f5e65e041af55bcc705",
+      "raw_bytes": 13846761,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/e9e68d068b93d3fc9ad91ef7153188733307920a47791f5e65e041af55bcc705.json.gz",
+      "gzip_bytes": 2687729,
+      "gzip_sha256": "bfb73075111de8bd4472d4b4f17a09fd33c48d9b88f571e948e5952af071797c",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/avant_leviers_2026-08-22/blocs_vs_plantage_r75x1.75_deep_s202.json",
+      "raw_sha256": "27366aa5d8410b37497146f5596c15e0e0074c1bf89831210989f2decc54377d",
+      "raw_bytes": 14121760,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/27366aa5d8410b37497146f5596c15e0e0074c1bf89831210989f2decc54377d.json.gz",
+      "gzip_bytes": 2802810,
+      "gzip_sha256": "0832a8caf4501360beb1901f8e3db123a97378f07864766e489fc6c7247aaae0",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/avant_leviers_2026-08-22/blocs_vs_plantage_r75x2-2nm_deep_s042.json",
+      "raw_sha256": "de63b4704e29c805527cda7508524321c3087b2bfa8dbdbbc01fd5f6a7721118",
+      "raw_bytes": 10135994,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/de63b4704e29c805527cda7508524321c3087b2bfa8dbdbbc01fd5f6a7721118.json.gz",
+      "gzip_bytes": 2020792,
+      "gzip_sha256": "23597ba0c69e8a111b2a6ed71d50a14b2b25bcfb8dad64961ac2db48737b6f60",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/avant_leviers_2026-08-22/blocs_vs_plantage_r75x2-2nm_deep_s101.json",
+      "raw_sha256": "b25e943a05ee60971f990ad9547ddea6d3e2e79d6d7d1653cd2e718ed475c4b0",
+      "raw_bytes": 10257954,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/b25e943a05ee60971f990ad9547ddea6d3e2e79d6d7d1653cd2e718ed475c4b0.json.gz",
+      "gzip_bytes": 2111684,
+      "gzip_sha256": "cf128474d85b765e83845fce94d016f164d3e1a001b63a8340a00cbde76199b2",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/avant_leviers_2026-08-22/blocs_vs_plantage_r75x2_deep_s101_20260822_102742.json",
+      "raw_sha256": "f3a5be18f6b6c1a183492051de5ccd4dac256b7f49968d07ad9334389fee4dd2",
+      "raw_bytes": 9802609,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/f3a5be18f6b6c1a183492051de5ccd4dac256b7f49968d07ad9334389fee4dd2.json.gz",
+      "gzip_bytes": 2078978,
+      "gzip_sha256": "5f2fddd84cbd38245506f8930e92dc2084049e9c0b5ec60fbd19abc79590dc26",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/avant_leviers_2026-08-22/blocs_vs_plantage_r75x2_deep_s101_mcreduit4x.json",
+      "raw_sha256": "32339a32083c31fbaf696505e17341538a9146bd1941cb068180832df63ae9d0",
+      "raw_bytes": 9705461,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/32339a32083c31fbaf696505e17341538a9146bd1941cb068180832df63ae9d0.json.gz",
+      "gzip_bytes": 1931856,
+      "gzip_sha256": "596c9b04249d7669cc7778eb76fc511220791eacc57f3349bba69ffed350fa51",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/avant_leviers_2026-08-22/blocs_vs_plantage_r75x2_deep_s202.json",
+      "raw_sha256": "f99b5fad4e1949ccdc2ab054f4bae09a56a7f2c113939f40d310d4455f0c1c78",
+      "raw_bytes": 10668964,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/f99b5fad4e1949ccdc2ab054f4bae09a56a7f2c113939f40d310d4455f0c1c78.json.gz",
+      "gzip_bytes": 1988467,
+      "gzip_sha256": "a2bbb4b5e3e005ddc7b83a0fc4d234da50d9e5184c1b795ac40c31eb07d1e48d",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/avant_leviers_2026-08-22/blocs_vs_plantage_r75x2_deep_s303.json",
+      "raw_sha256": "cd9a937e7117e38246e58be6d0757958121e275385bc7ef7dbbd5f0e0936c1f5",
+      "raw_bytes": 10625361,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/cd9a937e7117e38246e58be6d0757958121e275385bc7ef7dbbd5f0e0936c1f5.json.gz",
+      "gzip_bytes": 2072173,
+      "gzip_sha256": "00c2b1557d27c2ec3cae441f830b15417b5df9d41adf0268e24f62e64cc679c4",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/avant_leviers_2026-08-22/blocs_vs_plantage_r75x2_deep_s404.json",
+      "raw_sha256": "976d985e020f0e39d825c27c6618f3c1f9e7b20a1882569b4dac77913bb666c2",
+      "raw_bytes": 10528822,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/976d985e020f0e39d825c27c6618f3c1f9e7b20a1882569b4dac77913bb666c2.json.gz",
+      "gzip_bytes": 1965679,
+      "gzip_sha256": "75bd5164110bc349a107fc7303a9a228a11d8fc340dd800a3f03b0659e1be723",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/avant_leviers_2026-08-22/blocs_vs_plantage_r75x2_deep_s505.json",
+      "raw_sha256": "ca35c03ec2242dbacb3c5301c749b3141a3455d905998c639b2f40d5a08a46ff",
+      "raw_bytes": 11256267,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/ca35c03ec2242dbacb3c5301c749b3141a3455d905998c639b2f40d5a08a46ff.json.gz",
+      "gzip_bytes": 1993069,
+      "gzip_sha256": "a4e5c6796c45b714b1053fbb69dbb313357a6ff0c59a7ddc9fab80c58c2857fd",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_35c_deep_s042_large.json",
+      "raw_sha256": "6d693d75615493303cf96c300c310624543c02be3c4acddb815bd15c436799cf",
+      "raw_bytes": 1089078,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/6d693d75615493303cf96c300c310624543c02be3c4acddb815bd15c436799cf.json.gz",
+      "gzip_bytes": 86547,
+      "gzip_sha256": "401776eb3887f9b2d91d143c6e5c22f175faaedf28233f41bc225ac8429a6cdb",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_48c_deep_s042_large.json",
+      "raw_sha256": "587a5864e4bda7940d3b5786ee0fbac220c603875732a62cc85a5410c646d43e",
+      "raw_bytes": 1075425,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/587a5864e4bda7940d3b5786ee0fbac220c603875732a62cc85a5410c646d43e.json.gz",
+      "gzip_bytes": 85386,
+      "gzip_sha256": "70a04e8914b9bf05356325c064a92b380bb28c3aa5405e390188a7db00cda64b",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_75c_fast_s042.json",
+      "raw_sha256": "85104cb00f3a1e63131a8d8413136cf194a8326d1a997b6e4538da875a85a18d",
+      "raw_bytes": 1441195,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/85104cb00f3a1e63131a8d8413136cf194a8326d1a997b6e4538da875a85a18d.json.gz",
+      "gzip_bytes": 231152,
+      "gzip_sha256": "d2138af394822151de1d544408bca52b7dd0fdf3513ae5d1f01edbe6c6187b72",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_75c_fast_s042_res0.5.json",
+      "raw_sha256": "4dc35c14a8f4085380cc7dc2d53266710f8c9ab08840fa78c7951d7ca8f90970",
+      "raw_bytes": 2241118,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/4dc35c14a8f4085380cc7dc2d53266710f8c9ab08840fa78c7951d7ca8f90970.json.gz",
+      "gzip_bytes": 462902,
+      "gzip_sha256": "03125a865d3ec2f0cb66ef0aa988775acaee9b7d0ed678302b241e39bcf888d3",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_75c_fast_s042_res1.json",
+      "raw_sha256": "28599681b6bc6f564dfac9be93afd26dfefaf90fab2bf7015cb0742cb9860801",
+      "raw_bytes": 1344487,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/28599681b6bc6f564dfac9be93afd26dfefaf90fab2bf7015cb0742cb9860801.json.gz",
+      "gzip_bytes": 255226,
+      "gzip_sha256": "42e46e3e481a3102ce8faafcb0018f14bf4b188beea85fdc8facb001eb9f6813",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_75c_fast_s042_res1_tail46-70.json",
+      "raw_sha256": "d4a7a9c9cc8db6029e2319bf0f63973a96b936f3f5dde12c71046d0598c780b1",
+      "raw_bytes": 2738194,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/d4a7a9c9cc8db6029e2319bf0f63973a96b936f3f5dde12c71046d0598c780b1.json.gz",
+      "gzip_bytes": 464710,
+      "gzip_sha256": "f028c284464b99396c7024645951ca4305d0c699da74828d32228f51f5db6b84",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_75c_fast_s042_res5.json",
+      "raw_sha256": "d6e284c95b8f846c4984e8b1fcb0960c61afdb268fd56785308b1fe7ae3f4fb7",
+      "raw_bytes": 2299702,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/d6e284c95b8f846c4984e8b1fcb0960c61afdb268fd56785308b1fe7ae3f4fb7.json.gz",
+      "gzip_bytes": 425999,
+      "gzip_sha256": "70ff02bc82b39fefbdeceff467d0f4298d38c312ebd7734357bc3776de2979d0",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_75c_fast_s077_res1_tail46-70.json",
+      "raw_sha256": "2aed56d21931cf1286b026fee5305440a8d79c0c262d030b61664f46239a2ca1",
+      "raw_bytes": 2437332,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/2aed56d21931cf1286b026fee5305440a8d79c0c262d030b61664f46239a2ca1.json.gz",
+      "gzip_bytes": 412703,
+      "gzip_sha256": "2a4aa6d51c9625940f394bf0ff61b8f93fe194b3164bf593c72a303aee25c8f8",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_75c_premium_s042_res5.json",
+      "raw_sha256": "d2ada36bd8986e1ee328ef33068b7b2f2b312cf694587fdc8f63d7a90901c175",
+      "raw_bytes": 4218521,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/d2ada36bd8986e1ee328ef33068b7b2f2b312cf694587fdc8f63d7a90901c175.json.gz",
+      "gzip_bytes": 776464,
+      "gzip_sha256": "a6fef37d8962931f189804e06f5f23050401994cd2f6cf20dc1c8d8184c0e322",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_99c_deep_s042_res1_large.json",
+      "raw_sha256": "d883657d5e53e3f57f87e4511b85ea305f6047a94b5c35a9d8becf6327c2757b",
+      "raw_bytes": 16890973,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/d883657d5e53e3f57f87e4511b85ea305f6047a94b5c35a9d8becf6327c2757b.json.gz",
+      "gzip_bytes": 3573919,
+      "gzip_sha256": "ab7c1ffe04a0aef99e62f026932becffa1dc8ee1cf5994d87f320ffa1bb7f511",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_99c_premium_s042_20261011_171344.json",
+      "raw_sha256": "6710a03e5e6413a93a158516f108a3123f7ed9996e8c30124af94801e4c25e24",
+      "raw_bytes": 1525122,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/6710a03e5e6413a93a158516f108a3123f7ed9996e8c30124af94801e4c25e24.json.gz",
+      "gzip_bytes": 334816,
+      "gzip_sha256": "c1d2ab6c2fd8344a27aa2c49bc0961a5c6af631d01ede71ba6cac6a6416a42e7",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_99c_premium_s042_20261011_195331.json",
+      "raw_sha256": "4dcd1fd2aaee149712928dfa3a7bf33017650f9ae001e18e2553e848ed7eea34",
+      "raw_bytes": 16933258,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/4dcd1fd2aaee149712928dfa3a7bf33017650f9ae001e18e2553e848ed7eea34.json.gz",
+      "gzip_bytes": 3620610,
+      "gzip_sha256": "3e296d12ac7930ff612aa901c3cbcaf8be9a73da18c13b9dd912c405fc1c7586",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x0.5_deep_s042.json",
+      "raw_sha256": "60068c4391446d15ce49d2c33e0d218cf5106bea35318f052cb6e9c1b1e5adb8",
+      "raw_bytes": 17730086,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/60068c4391446d15ce49d2c33e0d218cf5106bea35318f052cb6e9c1b1e5adb8.json.gz",
+      "gzip_bytes": 3914026,
+      "gzip_sha256": "4ece407accae1cba0b87868c102c60f98a50aebbb863a652026cc6f714700b95",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x0.5_deep_s042_large.json",
+      "raw_sha256": "680f3f74783b9c251e82c664f6aa2bcaa847eb67ab4743abe339e7d430e1a9fb",
+      "raw_bytes": 9370894,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/680f3f74783b9c251e82c664f6aa2bcaa847eb67ab4743abe339e7d430e1a9fb.json.gz",
+      "gzip_bytes": 2208141,
+      "gzip_sha256": "02bae92e61cf8d16a14eba21bcdd308f4069b74c854b041df580ee1ee60546e7",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x0.5_deep_s042_res1_large.json",
+      "raw_sha256": "7fde5a46680792da207f5995d79df4292c770b65b331fa6a724426c01f20d926",
+      "raw_bytes": 9609154,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/7fde5a46680792da207f5995d79df4292c770b65b331fa6a724426c01f20d926.json.gz",
+      "gzip_bytes": 2323393,
+      "gzip_sha256": "0c26cf75b4869efbb802cfa2c645c832d4534bfcd620f5a2d325c5cc458b9f1c",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x0.5_deep_s101.json",
+      "raw_sha256": "8f90d829d849c907d5e538af3ce1efa810da2e2a1eeb17448ea03852589f967a",
+      "raw_bytes": 17892518,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/8f90d829d849c907d5e538af3ce1efa810da2e2a1eeb17448ea03852589f967a.json.gz",
+      "gzip_bytes": 4010217,
+      "gzip_sha256": "01109bc9e1041ca4b408ab1e0d96058545b554b8b5dab6e3c7e890575667a3f0",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x0.5_deep_s101_par_bruit.json",
+      "raw_sha256": "8f49cc03ccc9e5fa5c86841520d6f02fdb581a196eed16f16424eda2dcb84b67",
+      "raw_bytes": 18951057,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/8f49cc03ccc9e5fa5c86841520d6f02fdb581a196eed16f16424eda2dcb84b67.json.gz",
+      "gzip_bytes": 4312131,
+      "gzip_sha256": "4a719b18f65a820ce76f28c7e00d008a1214d1b41253a9264f53545e337b5571",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x0.5_deep_s202.json",
+      "raw_sha256": "47e1cf82c2cee0771aedbd21f106515f09e66b812a32cfc1d4e2b607e49e2585",
+      "raw_bytes": 17596405,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/47e1cf82c2cee0771aedbd21f106515f09e66b812a32cfc1d4e2b607e49e2585.json.gz",
+      "gzip_bytes": 3828425,
+      "gzip_sha256": "ef16b3deee47865fb34f726359db6dd2df7a69ed8a80678ab9e019f89db0643b",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x0.5_fast_s042.json",
+      "raw_sha256": "8f7f04ce28f72aca6d7329df6c63dba136af9b5a400d95274ce0f35d59186bd5",
+      "raw_bytes": 1619948,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/8f7f04ce28f72aca6d7329df6c63dba136af9b5a400d95274ce0f35d59186bd5.json.gz",
+      "gzip_bytes": 369750,
+      "gzip_sha256": "283d16526c782050d22f0d0f78404466ec842915f8d2619819205222d15649c7",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x0.5_fast_s042_fente.json",
+      "raw_sha256": "2b13a557cebdf3e927a1067b130fac3da915cbaf42129f9d9050749a9472a3b8",
+      "raw_bytes": 3975480,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/2b13a557cebdf3e927a1067b130fac3da915cbaf42129f9d9050749a9472a3b8.json.gz",
+      "gzip_bytes": 913434,
+      "gzip_sha256": "fb12d96cc549653f0013503b78615ec7709b7aba665ad90bfc5a8ab7ebf48686",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x0.5_fast_s042_res0.5.json",
+      "raw_sha256": "a78418732c145275f28a63ca8637dbd7a8bd4096897d47f62a2bc0b850726f5f",
+      "raw_bytes": 2001861,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/a78418732c145275f28a63ca8637dbd7a8bd4096897d47f62a2bc0b850726f5f.json.gz",
+      "gzip_bytes": 387090,
+      "gzip_sha256": "a196b816113d554a14f56c856996b7570ec0d4eb4088cb205ea99e65dbb081ca",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x0.5_fast_s042_res1.json",
+      "raw_sha256": "749bf5f6cf03216ec9727720407ba58d5b4586633adea3fcc192f9b27885bf05",
+      "raw_bytes": 1651727,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/749bf5f6cf03216ec9727720407ba58d5b4586633adea3fcc192f9b27885bf05.json.gz",
+      "gzip_bytes": 365893,
+      "gzip_sha256": "4f18844a692fc72978c17b2763a4ed19e355d8c8d3097082852801bb5a6004c3",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x0.5_fast_s042_res5.json",
+      "raw_sha256": "ab9b57018e68d2e0f03652fc106b62bf89046e52ced7bccb6e3833741724388d",
+      "raw_bytes": 1548482,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/ab9b57018e68d2e0f03652fc106b62bf89046e52ced7bccb6e3833741724388d.json.gz",
+      "gzip_bytes": 350696,
+      "gzip_sha256": "2d5a9b3595546829a51574eb26dabfdf95963f764fefa42323243cdc9a2e6229",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x1.5_fast_s042.json",
+      "raw_sha256": "1b3c3a76bca068048f183897d0fbcbf95474ec5c966046da38ad01507421f552",
+      "raw_bytes": 1969305,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/1b3c3a76bca068048f183897d0fbcbf95474ec5c966046da38ad01507421f552.json.gz",
+      "gzip_bytes": 396553,
+      "gzip_sha256": "f3d55aad69138ecedd8eca5a91c8c62f905ee6d8580e84052da42f845510bd61",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x1.5_fast_s042_res0.5.json",
+      "raw_sha256": "ac94c01f66dd5fc37c18c805205eadad8db106cccc8693158f3a089ec13c2aaa",
+      "raw_bytes": 2441484,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/ac94c01f66dd5fc37c18c805205eadad8db106cccc8693158f3a089ec13c2aaa.json.gz",
+      "gzip_bytes": 475628,
+      "gzip_sha256": "7b8395aed8a55801ff5f46bb446762e7681f8a3c60c0acf6a79ac4a63087343d",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x1.5_fast_s042_res1.json",
+      "raw_sha256": "8bab571ccc3eb0c184104090f500eacca8a744cd6e3674b76d4d0509dc32020d",
+      "raw_bytes": 1635001,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/8bab571ccc3eb0c184104090f500eacca8a744cd6e3674b76d4d0509dc32020d.json.gz",
+      "gzip_bytes": 281482,
+      "gzip_sha256": "88c286b928dc6618f47ba310d44abdc5f36847a39035b8a9c9f525f811ec3247",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x1.75_fast_s042.json",
+      "raw_sha256": "21758b7762582470f9a191f6dd2a61deaf27b0994cc18279b4b6b52976256688",
+      "raw_bytes": 2432270,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/21758b7762582470f9a191f6dd2a61deaf27b0994cc18279b4b6b52976256688.json.gz",
+      "gzip_bytes": 463444,
+      "gzip_sha256": "10225890a4d92842a4d5e9b2ee060e5743778661023f3f911c1e97ab126ef6ee",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x1.75_fast_s042_res0.5.json",
+      "raw_sha256": "02d8c3d3cf5cd9cbb4742a8545fde846134882c1f19c7a92bd66cd5903b21293",
+      "raw_bytes": 2337721,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/02d8c3d3cf5cd9cbb4742a8545fde846134882c1f19c7a92bd66cd5903b21293.json.gz",
+      "gzip_bytes": 472309,
+      "gzip_sha256": "08e2c9888304d601a94362bd1d921f3084e7fee24a0d1fab91cf102d5d83ae15",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x1.75_fast_s042_res1.json",
+      "raw_sha256": "f954ff4fe2fc0da9aacc9dbb21c8dcc9c20e25ab79f75d2e9de7fa21b6cee3e6",
+      "raw_bytes": 1409296,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/f954ff4fe2fc0da9aacc9dbb21c8dcc9c20e25ab79f75d2e9de7fa21b6cee3e6.json.gz",
+      "gzip_bytes": 234456,
+      "gzip_sha256": "b523f67a6cee313b6ba267e3f8469dbf9a3e346dcfc6b790605f41e357bab913",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s042.json",
+      "raw_sha256": "0be4d49c453fd342aff33e63a6f009e55411df19789c3ff3921e83189a16d365",
+      "raw_bytes": 8262984,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/0be4d49c453fd342aff33e63a6f009e55411df19789c3ff3921e83189a16d365.json.gz",
+      "gzip_bytes": 1701377,
+      "gzip_sha256": "5feacfe776448ce5cb19dff0c271c2904593e9d9038262072589bddc863a7a20",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s042_20260820_120112.json",
+      "raw_sha256": "c74e7b52fbde42cc5bdb3a61e0c2519dbc63549c8fe1b061f1b5b655cf144563",
+      "raw_bytes": 9729844,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/c74e7b52fbde42cc5bdb3a61e0c2519dbc63549c8fe1b061f1b5b655cf144563.json.gz",
+      "gzip_bytes": 1946356,
+      "gzip_sha256": "6cc98c0ab98aa0d867c28203c9c88dc13b0fabaf86557cd9e027761075583ee7",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s042_20260821_013112.json",
+      "raw_sha256": "db0c329f894bbe3428d01c815e25b4fdaa751d8eb2c4af38fed29e28998a4854",
+      "raw_bytes": 9729896,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/db0c329f894bbe3428d01c815e25b4fdaa751d8eb2c4af38fed29e28998a4854.json.gz",
+      "gzip_bytes": 1946380,
+      "gzip_sha256": "7d51d1dc3e5440a539c29f5e041038b6c97f45964ce62acd03e7086255d3c218",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s042_20261011_134042.json",
+      "raw_sha256": "cb90bf80924dbeda7bd5cd8caeb63334d2610adac7d5d4efbf594228423f244b",
+      "raw_bytes": 3151817,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/cb90bf80924dbeda7bd5cd8caeb63334d2610adac7d5d4efbf594228423f244b.json.gz",
+      "gzip_bytes": 421009,
+      "gzip_sha256": "e8d3f7f072ceb9c1e8ce0dbafd27fd8fae38891ee8484d6eb55d0315cdd45845",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s042_20261012_013340.json",
+      "raw_sha256": "7b4ddf1c8f80ff9990db609e6bfca757ca91c280628abf31b1592736e141fbee",
+      "raw_bytes": 27244274,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/7b4ddf1c8f80ff9990db609e6bfca757ca91c280628abf31b1592736e141fbee.json.gz",
+      "gzip_bytes": 4761004,
+      "gzip_sha256": "c23d633aa8fadecc9952c4d0e61961fdc53fb61177a80ecddc5809325ac31e9b",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s042_cgc95.json",
+      "raw_sha256": "c1083351b2f3db4944458be9736cbfb3ff6574fc26148e0083969d6615de9fa9",
+      "raw_bytes": 9729940,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/c1083351b2f3db4944458be9736cbfb3ff6574fc26148e0083969d6615de9fa9.json.gz",
+      "gzip_bytes": 1946417,
+      "gzip_sha256": "cedd3bcf6a96977784e2e89e44bd6bb6e853b7c72a3b2ab4ec7c5a92717d3762",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s042_inject12s077.json",
+      "raw_sha256": "5858562fffdd33a5afa5ae3486caf2a3189930278d5688fd503158895f2a13fd",
+      "raw_bytes": 1424227,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/5858562fffdd33a5afa5ae3486caf2a3189930278d5688fd503158895f2a13fd.json.gz",
+      "gzip_bytes": 185154,
+      "gzip_sha256": "03f28c445b69157760203f23cbdfdafb8e3c1e241d87bfb08d42c70cf7baac02",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s042_mcreduit4x.json",
+      "raw_sha256": "48b7bfe7af55818e2b3b8ffe869959ff500e4befea698598053d5229a062f30f",
+      "raw_bytes": 9114641,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/48b7bfe7af55818e2b3b8ffe869959ff500e4befea698598053d5229a062f30f.json.gz",
+      "gzip_bytes": 1734945,
+      "gzip_sha256": "27d83b5f4938664d9064cddf83659ada98a6e4a04eced2ef158a3aef91ab39f6",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s042_ms5cap480b713.json",
+      "raw_sha256": "92ca0eaf076ca1877539289f37d0804a2cc4c04f8309278d01bfb0d05b33e8bb",
+      "raw_bytes": 9914637,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/92ca0eaf076ca1877539289f37d0804a2cc4c04f8309278d01bfb0d05b33e8bb.json.gz",
+      "gzip_bytes": 1648096,
+      "gzip_sha256": "14e5017d552753a58bb3fcd89053c7e8d97d31116b736d163767132f3c26d9bc",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s042_res1.json",
+      "raw_sha256": "8221e65541f75ad50d2e55a966ab5d49219e9b079693f7527c12e9f817cd76f0",
+      "raw_bytes": 8643640,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/8221e65541f75ad50d2e55a966ab5d49219e9b079693f7527c12e9f817cd76f0.json.gz",
+      "gzip_bytes": 1851203,
+      "gzip_sha256": "add2ba7a9eb1ea1faa352dd62f79dc65a520dfa9e97493d9962a875adf9c3592",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s042_res1_large.json",
+      "raw_sha256": "79bc66c6bc638de4833f7bb0db29de0d4fbf1c5d408990f155668857ff1d3ed9",
+      "raw_bytes": 13423596,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/79bc66c6bc638de4833f7bb0db29de0d4fbf1c5d408990f155668857ff1d3ed9.json.gz",
+      "gzip_bytes": 2860020,
+      "gzip_sha256": "49189e87867db9bd9dde73724589df07d83b14b1313546335740647062fa9d49",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s042_rr.json",
+      "raw_sha256": "fc8064b6fa46688b77d9efac28fe9603ac5f4a9aec45af01f064a8c2fbe0aeff",
+      "raw_bytes": 30456613,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/fc8064b6fa46688b77d9efac28fe9603ac5f4a9aec45af01f064a8c2fbe0aeff.json.gz",
+      "gzip_bytes": 6548689,
+      "gzip_sha256": "9979911eef1329f9afc2696d73431b21982e89a5691f09111382ab0af881b623",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s042_tail49-55.json",
+      "raw_sha256": "09020006c921b1a4781b70f1797d39ea128e8b2a0cfe707b405e4a5c55016148",
+      "raw_bytes": 12609597,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/09020006c921b1a4781b70f1797d39ea128e8b2a0cfe707b405e4a5c55016148.json.gz",
+      "gzip_bytes": 2133320,
+      "gzip_sha256": "8b69b3f74840f14bea6adf590d16068450f7f624226da478d0cc4b7d23fcdd2b",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s042_union20260822_173237.json",
+      "raw_sha256": "bf112b5043830e9c8e1a5b374139d6d54acec52ce9f698ef490843cae528f1c4",
+      "raw_bytes": 10276744,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/bf112b5043830e9c8e1a5b374139d6d54acec52ce9f698ef490843cae528f1c4.json.gz",
+      "gzip_bytes": 2016540,
+      "gzip_sha256": "4ed4489efe7f620d0b62a42725bf1346cc300e583ecc6b5adb54058b7446005c",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s077.json",
+      "raw_sha256": "37c45f0a4944502bdf105c08ef69aac31b1d84ae9344f0c7bd7bd1a004660ba8",
+      "raw_bytes": 8806222,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/37c45f0a4944502bdf105c08ef69aac31b1d84ae9344f0c7bd7bd1a004660ba8.json.gz",
+      "gzip_bytes": 1617088,
+      "gzip_sha256": "86b8aa4e62af1e1bfefc8774fd00cd0afb626565be03fb661ee7d5668b1dc8e9",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s077_20260820_160340.json",
+      "raw_sha256": "c7eddbf3925dfa9081ab012f1139b92587cbc9359736163bb50624d6ccfb6a37",
+      "raw_bytes": 10938992,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/c7eddbf3925dfa9081ab012f1139b92587cbc9359736163bb50624d6ccfb6a37.json.gz",
+      "gzip_bytes": 1943899,
+      "gzip_sha256": "d1dd649e0d6552a8ed911b6e4a2ea3bc23c5d8bcf392dc745f856a32e9f106f7",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s077_20261011_140620.json",
+      "raw_sha256": "e9707fb6f4368d1fd50bd74fe9f3386c67b05eca556736a24cf05d3faf365eb5",
+      "raw_bytes": 2922508,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/e9707fb6f4368d1fd50bd74fe9f3386c67b05eca556736a24cf05d3faf365eb5.json.gz",
+      "gzip_bytes": 382315,
+      "gzip_sha256": "fd95bb5035c88ed33f7b7e592d5c15680161f806a6504ae8fc5b1b1bd0e06fcf",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s077_20261011_205857.json",
+      "raw_sha256": "9b8277972ec3ca7474d183f552dabe30cb3c7a4948e468cf98cd4d7c3760eaf0",
+      "raw_bytes": 28508066,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/9b8277972ec3ca7474d183f552dabe30cb3c7a4948e468cf98cd4d7c3760eaf0.json.gz",
+      "gzip_bytes": 5420447,
+      "gzip_sha256": "791dc4ca89616f28b2710b504d1d02e4fb6872ab906144e7febb31d2169d3d17",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s077_20261012_021225.json",
+      "raw_sha256": "0ab1508206279f8a3e7b8ad975b5c4404a6ad2efa07a7c6e9cd1d985380b4b20",
+      "raw_bytes": 28509206,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/0ab1508206279f8a3e7b8ad975b5c4404a6ad2efa07a7c6e9cd1d985380b4b20.json.gz",
+      "gzip_bytes": 5415412,
+      "gzip_sha256": "d0a40df6838177c8d2d820982ebf37405d63b13756892b53daefd40e6a85aaa7",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s077_mcreduit4x.json",
+      "raw_sha256": "aa6290944be84d6bb05c3e4d841eb34f787175392fb4ec8341d03924aac0d68b",
+      "raw_bytes": 10101622,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/aa6290944be84d6bb05c3e4d841eb34f787175392fb4ec8341d03924aac0d68b.json.gz",
+      "gzip_bytes": 1843451,
+      "gzip_sha256": "040b0220079505d2e5a6bba9f60b82ae1d18a823c48fe8fe8eea50e162d84062",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s077_res1_large.json",
+      "raw_sha256": "5c6f1f2babf5bda1e53b407d9ee00a346093ea891c68ff001f2879b4d4d741cc",
+      "raw_bytes": 9822639,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/5c6f1f2babf5bda1e53b407d9ee00a346093ea891c68ff001f2879b4d4d741cc.json.gz",
+      "gzip_bytes": 1658447,
+      "gzip_sha256": "ce1d0311f36f2b315832a3ae2b08c2e89de8e40fa5a6108fb1cbe3265399eb8a",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s077_rr.json",
+      "raw_sha256": "b7e45c0c3c1c686a8f51778757dbd925241e94762c1185f722291b4054db63d7",
+      "raw_bytes": 29991113,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/b7e45c0c3c1c686a8f51778757dbd925241e94762c1185f722291b4054db63d7.json.gz",
+      "gzip_bytes": 5816858,
+      "gzip_sha256": "4b6c8223a9040287cf33af1eaaa615151ee4d8715bc20cd866df33f2a6d6fcd5",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s077_tail49-55.json",
+      "raw_sha256": "f7054be40e26a9747a1b7d253388823f2cbc582f3939f856d5bda3b147acfabc",
+      "raw_bytes": 12754795,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/f7054be40e26a9747a1b7d253388823f2cbc582f3939f856d5bda3b147acfabc.json.gz",
+      "gzip_bytes": 2016055,
+      "gzip_sha256": "83919fd45a8239ade11baca6f662b80f015f033b6b14a2b4f14daf3b6764d974",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s101.json",
+      "raw_sha256": "703d09be7e117e4750f1d4b5e3d12e4c694c5b200a743b402554726cd9555cfc",
+      "raw_bytes": 4852391,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/703d09be7e117e4750f1d4b5e3d12e4c694c5b200a743b402554726cd9555cfc.json.gz",
+      "gzip_bytes": 600423,
+      "gzip_sha256": "cc93c001f9cf16a9409a9ea8212f0f30218476e8e12cbd1b632b7f1aa61365e0",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s101_20261011_213733.json",
+      "raw_sha256": "54563bda85df52dd5010a952677c8559b0b8a7550a4d119603e0e32204fd24b2",
+      "raw_bytes": 35072056,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/54563bda85df52dd5010a952677c8559b0b8a7550a4d119603e0e32204fd24b2.json.gz",
+      "gzip_bytes": 6910879,
+      "gzip_sha256": "68a607e93d2a40ab5449bd7ddc92d113c5848deeef97a5d8832e593519c18112",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s101_20261012_025327.json",
+      "raw_sha256": "16c3e34cdc26c521115af750ac4169959ffdd60b7a56806a576eeef51d74c1ff",
+      "raw_bytes": 35072056,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/16c3e34cdc26c521115af750ac4169959ffdd60b7a56806a576eeef51d74c1ff.json.gz",
+      "gzip_bytes": 6910877,
+      "gzip_sha256": "411a13a2f1ef59ae4ba4ea73c223e3fc50713dc3fe09e5888b4d2e8a12398976",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s101_rr.json",
+      "raw_sha256": "a5a8505ff791db6ad21bc5247f6bc1d678c80182198c24c7107cbe3cc9ec5248",
+      "raw_bytes": 37695554,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/a5a8505ff791db6ad21bc5247f6bc1d678c80182198c24c7107cbe3cc9ec5248.json.gz",
+      "gzip_bytes": 7758719,
+      "gzip_sha256": "a0484cf65e311c5a407e797962f0dac2f9358225b5f6449e9c54ef1885815064",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s202.json",
+      "raw_sha256": "c3e869c6be2ac8d76224b282998863cbe8671e4b7bb200affc7161dceed18e0c",
+      "raw_bytes": 2876359,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/c3e869c6be2ac8d76224b282998863cbe8671e4b7bb200affc7161dceed18e0c.json.gz",
+      "gzip_bytes": 358929,
+      "gzip_sha256": "95676f58ea8524cc98d781e80ec486b65d2a1b5de6c3cda6687059f4a8cad318",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s202_20261011_221509.json",
+      "raw_sha256": "061eedfbea9d518aa2a8ad65123d39d5de72a572d6b92d6d503437e115536bc8",
+      "raw_bytes": 33230657,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/061eedfbea9d518aa2a8ad65123d39d5de72a572d6b92d6d503437e115536bc8.json.gz",
+      "gzip_bytes": 6578889,
+      "gzip_sha256": "fc3d12dde870f3d44636db92b30cda478fbd7c484d2cb13c2feacae042af2717",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s202_20261012_033328.json",
+      "raw_sha256": "019a2247feb18984008e1d6e68e6b8ee4e788fc4ad6c093881db2a222d91b14c",
+      "raw_bytes": 33230657,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/019a2247feb18984008e1d6e68e6b8ee4e788fc4ad6c093881db2a222d91b14c.json.gz",
+      "gzip_bytes": 6578894,
+      "gzip_sha256": "1d6caa6522fa23d2a3514d45c309157ed6983e0e523fc10c0e4243bde14bebda",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s202_mcreduit4x.json",
+      "raw_sha256": "bb34051d38211e8de92888fd1f554084fbaf1583999f6ad15fefa9d84971ee52",
+      "raw_bytes": 9227405,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/bb34051d38211e8de92888fd1f554084fbaf1583999f6ad15fefa9d84971ee52.json.gz",
+      "gzip_bytes": 1652341,
+      "gzip_sha256": "50b9ae6ecca0ac72c4464fc2bc7d7f242f8450b792b41dd3fbc8627e18552c63",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s202_rr.json",
+      "raw_sha256": "06e2094ff2d006cc7929a833dabb74428cdba3c2bcb83859fc4d6534fd641fb6",
+      "raw_bytes": 3640435,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/06e2094ff2d006cc7929a833dabb74428cdba3c2bcb83859fc4d6534fd641fb6.json.gz",
+      "gzip_bytes": 463856,
+      "gzip_sha256": "01daec60da46720373702c9d80df9c4319a3192764aecad3951ceee0e8802e08",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s202_rr_20261012_062518.json",
+      "raw_sha256": "80f3f0e7cf60a338cb512efdc1101ac5abb72f1204f3ddddb4720ca776243e07",
+      "raw_bytes": 33112967,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/80f3f0e7cf60a338cb512efdc1101ac5abb72f1204f3ddddb4720ca776243e07.json.gz",
+      "gzip_bytes": 7093107,
+      "gzip_sha256": "1d496aaccbbc03e765319a656a8dc515814b88afd2f67f268d37031b7a959841",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s303.json",
+      "raw_sha256": "33ecd86dd62600eb79af44c09dd2b751c2806a09a363433a47ad0a7bbf6cd253",
+      "raw_bytes": 3852948,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/33ecd86dd62600eb79af44c09dd2b751c2806a09a363433a47ad0a7bbf6cd253.json.gz",
+      "gzip_bytes": 516060,
+      "gzip_sha256": "436c7602f8eb8b44bd22d521f7551929855a2edab732f0a36a98d2f0aadd2992",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s303_20261011_224513.json",
+      "raw_sha256": "f33777e766086925b4b2d72ecee3580b756c5febca12a565f99884207079e5e7",
+      "raw_bytes": 27220195,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/f33777e766086925b4b2d72ecee3580b756c5febca12a565f99884207079e5e7.json.gz",
+      "gzip_bytes": 5080256,
+      "gzip_sha256": "8038768f1c0437ef85c9fab0be207e4bd42e598ff26b83103e1f353efd1d9db9",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s303_20261012_040451.json",
+      "raw_sha256": "b2acfa329d5775a4d2fbc0e564e82bf76805658ae8706fcac110d99ddd2dce0b",
+      "raw_bytes": 27222423,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/b2acfa329d5775a4d2fbc0e564e82bf76805658ae8706fcac110d99ddd2dce0b.json.gz",
+      "gzip_bytes": 5080246,
+      "gzip_sha256": "709206133e07908c17972f5a60dd3038e1758af3fa058d57149bef810be19d5b",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s303_mcreduit4x.json",
+      "raw_sha256": "446f4e741f90f8dbbe78a4c218dafde37582a875e8013c17d7ab3e9045f65657",
+      "raw_bytes": 10743478,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/446f4e741f90f8dbbe78a4c218dafde37582a875e8013c17d7ab3e9045f65657.json.gz",
+      "gzip_bytes": 2032427,
+      "gzip_sha256": "26308757df06738ac452a51b974a926bdb64a12cd89602b08299f842f4c2c95e",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s303_rr.json",
+      "raw_sha256": "d9339fafd879d819f386d4cb7446d5c76da12a2cc8f712c853de4d1248c7fd69",
+      "raw_bytes": 28592611,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/d9339fafd879d819f386d4cb7446d5c76da12a2cc8f712c853de4d1248c7fd69.json.gz",
+      "gzip_bytes": 5426378,
+      "gzip_sha256": "04cf8f2cd80f6424a221edb369fbc5cfdbdb7c50d3d9ce068a26b8c0a8bc1421",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s404.json",
+      "raw_sha256": "ef489869403147ce135182bfd63c5e98854aeba32384a1784b6c68cef5b8e474",
+      "raw_bytes": 4726857,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/ef489869403147ce135182bfd63c5e98854aeba32384a1784b6c68cef5b8e474.json.gz",
+      "gzip_bytes": 551503,
+      "gzip_sha256": "c40cf11077618b1fa96f33d17ab397ab19a58bc4cec319fc6bc81a2304388d16",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s404_20261012_044450.json",
+      "raw_sha256": "1530514a5a5c4b3409c5bbbfa876cb3528ca9a5643ad16d43e0e68166f164760",
+      "raw_bytes": 28534961,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/1530514a5a5c4b3409c5bbbfa876cb3528ca9a5643ad16d43e0e68166f164760.json.gz",
+      "gzip_bytes": 5701774,
+      "gzip_sha256": "7382a141363fc58020ef84307ff7c2479076e390f8801be65a3a373916d7e5e2",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s404_mcreduit4x.json",
+      "raw_sha256": "c7a6715de3658b1bc2e8b9f2a18c4268ef8d56db16378bb1434aedf67103fb72",
+      "raw_bytes": 9068315,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/c7a6715de3658b1bc2e8b9f2a18c4268ef8d56db16378bb1434aedf67103fb72.json.gz",
+      "gzip_bytes": 1596900,
+      "gzip_sha256": "e52993004b85424c663a962999c8b3629e0dfdb656c0051efb68e1a3af63f7d2",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s404_rr.json",
+      "raw_sha256": "001de43ecb5c88fc06a382884564ab4247da82eb031e3bcc2193a9b3929c238e",
+      "raw_bytes": 27440428,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/001de43ecb5c88fc06a382884564ab4247da82eb031e3bcc2193a9b3929c238e.json.gz",
+      "gzip_bytes": 5635044,
+      "gzip_sha256": "c017b2f21197a25ea532bd0f40c88d931ccc074bb2206d813d338a2ee46e4ce8",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s505.json",
+      "raw_sha256": "7ec7895d53b9fc1d5939ac9973cf64782dc381d7637a932ed44c845072860d92",
+      "raw_bytes": 4811124,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/7ec7895d53b9fc1d5939ac9973cf64782dc381d7637a932ed44c845072860d92.json.gz",
+      "gzip_bytes": 575028,
+      "gzip_sha256": "322ef4c95ddb787e3c1995a5775a74f4d4213ca8e39d5ad2db2c855a99b40e86",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s505_20261012_052205.json",
+      "raw_sha256": "ea97327dadf2b2bd434a005a1d5e3332e567523d3f21b9f3ca4f595768245b04",
+      "raw_bytes": 29229564,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/ea97327dadf2b2bd434a005a1d5e3332e567523d3f21b9f3ca4f595768245b04.json.gz",
+      "gzip_bytes": 5674151,
+      "gzip_sha256": "f1d9e5b8df39d4dd464668bd0e213bb9274c27c9d17cbf7f79289ebdeb8ece2c",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_deep_s505_rr.json",
+      "raw_sha256": "bc73b379ad90a22bf5230b1e6dc5ad228de93a13106ee6486a285c727179ade2",
+      "raw_bytes": 28150619,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/bc73b379ad90a22bf5230b1e6dc5ad228de93a13106ee6486a285c727179ade2.json.gz",
+      "gzip_bytes": 5639624,
+      "gzip_sha256": "8a22864466e74ad8054616dfd7423de9d2c9491a53d181a6ca5611541d89f68f",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_fast_s042.json",
+      "raw_sha256": "067c2bbee38dd01310f645d982ec6a10102f1554fca18630fb87d4da24afa628",
+      "raw_bytes": 1996307,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/067c2bbee38dd01310f645d982ec6a10102f1554fca18630fb87d4da24afa628.json.gz",
+      "gzip_bytes": 357938,
+      "gzip_sha256": "ce50a7c2204e9a924a192c006a7b4ebb4422e1eeac69398a56837441483d44bc",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_fast_s042_chirurgical.json",
+      "raw_sha256": "8f6aeff81b39ade439f250287581f636de7108ff364289b03694617ee62be208",
+      "raw_bytes": 5748630,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/8f6aeff81b39ade439f250287581f636de7108ff364289b03694617ee62be208.json.gz",
+      "gzip_bytes": 1170563,
+      "gzip_sha256": "3848269e872ce29594c0c56640568b3ab6ada2bb007317f3ca45862d3814f33b",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_fast_s042_res0.5.json",
+      "raw_sha256": "aee91b5b50ca49cab19c8890cdd5bead2c41aea95a6991dcc8a064ebf21d2062",
+      "raw_bytes": 2285970,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/aee91b5b50ca49cab19c8890cdd5bead2c41aea95a6991dcc8a064ebf21d2062.json.gz",
+      "gzip_bytes": 413991,
+      "gzip_sha256": "75c781b5288741ab08de90af20808eaf5d364508af8d8e4e19a10871d2b3b6be",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_fast_s042_res1.json",
+      "raw_sha256": "7b84dd2d7dc49514b73dcc93e6989996152c891f1c3a946c090bf1ff0796afd7",
+      "raw_bytes": 2063835,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/7b84dd2d7dc49514b73dcc93e6989996152c891f1c3a946c090bf1ff0796afd7.json.gz",
+      "gzip_bytes": 399378,
+      "gzip_sha256": "901d0af061ef3c0df7f104e9bb18d1b9f3385809e932ce9734668f8f541190cb",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_fast_s042_tail.json",
+      "raw_sha256": "0307e5f7e5424e15a59536641d1ae332c0acd306eff04913a7a9528b0e800eb5",
+      "raw_bytes": 4760189,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/0307e5f7e5424e15a59536641d1ae332c0acd306eff04913a7a9528b0e800eb5.json.gz",
+      "gzip_bytes": 760902,
+      "gzip_sha256": "893a9ce65024e20a78583a1e9686f9625f0f83c2eed4818a073b02cf7179c13a",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_fast_s042_tail46-55.json",
+      "raw_sha256": "51bd6f6c46a08fb2adfbcaabbd23ac865a357c134cf52e701acd980b42dfa248",
+      "raw_bytes": 3444068,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/51bd6f6c46a08fb2adfbcaabbd23ac865a357c134cf52e701acd980b42dfa248.json.gz",
+      "gzip_bytes": 536753,
+      "gzip_sha256": "9a75b445b292ba8238c97e549d607cd8174f7803cbcbb8d11d24a17bf57a9016",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_fast_s042_tail46-58k.json",
+      "raw_sha256": "53d3c00810dd5a89c50153f20cbd8822b0cb47fefb94cd3d2a5a2f97c16d147f",
+      "raw_bytes": 3440463,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/53d3c00810dd5a89c50153f20cbd8822b0cb47fefb94cd3d2a5a2f97c16d147f.json.gz",
+      "gzip_bytes": 591111,
+      "gzip_sha256": "9f66802ef8363a0b0e7017305077d95a7c893821dcaf3c478924683aa56ac207",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_fast_s042_tail46-58s.json",
+      "raw_sha256": "f8d36557038dbe4dba9522b1443055f437be3352b6adbd592327138565048f18",
+      "raw_bytes": 3340722,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/f8d36557038dbe4dba9522b1443055f437be3352b6adbd592327138565048f18.json.gz",
+      "gzip_bytes": 547137,
+      "gzip_sha256": "0a55bfe5c2cb3fad61277be20f35a8e66bdcd14b7801e3df8ccf498952e7b222",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_fast_s042_tail46-64.json",
+      "raw_sha256": "9d618cee5e28b5604a8476053744a0fc890989a3596aff3d651e5a947d431e0c",
+      "raw_bytes": 4909611,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/9d618cee5e28b5604a8476053744a0fc890989a3596aff3d651e5a947d431e0c.json.gz",
+      "gzip_bytes": 738274,
+      "gzip_sha256": "c9276d6c43ffa0c270e06f00845814120c56e4e94c0046ac03409dddeb37c2c1",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_fast_s042_tail52-52_cons41-42-43.json",
+      "raw_sha256": "4f9a9a854a5a675f0dcaf0c5dea396e2e0c1c8a87e094774b680c4b6f1288d23",
+      "raw_bytes": 2490526,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/4f9a9a854a5a675f0dcaf0c5dea396e2e0c1c8a87e094774b680c4b6f1288d23.json.gz",
+      "gzip_bytes": 433589,
+      "gzip_sha256": "5013d988532a333c49460fe9c79d672f942b11ffad8f68641140f1fbe71e3d59",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_fast_s042_tail52-52_cons51-52-53.json",
+      "raw_sha256": "485286f7d3bb8484e94ab13526379a29ed8d4c7649072c1187bdcd186a678467",
+      "raw_bytes": 2490526,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/485286f7d3bb8484e94ab13526379a29ed8d4c7649072c1187bdcd186a678467.json.gz",
+      "gzip_bytes": 435026,
+      "gzip_sha256": "88dbcc8bba4f0a8bf0d085736d5482bf1ccbffee0c1ee0e4c93891b3e3e38147",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_fast_s042_tail52-52_cons61-62-63.json",
+      "raw_sha256": "7c801aa8cd559b0c4e15739a66b500d1673e1f540c09bd82b0d87c6b5b581261",
+      "raw_bytes": 2490525,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/7c801aa8cd559b0c4e15739a66b500d1673e1f540c09bd82b0d87c6b5b581261.json.gz",
+      "gzip_bytes": 434880,
+      "gzip_sha256": "0c1a1df0858f03ff2469ecc509514b5f0dea1ed2b2dc05cabeafdfc9e7a0c350",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_fast_s042_tailk.json",
+      "raw_sha256": "58f6407877e1af66880901a72c3b3db2fd539ba50a16cf91c6f74ce48cf52cc9",
+      "raw_bytes": 4761466,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/58f6407877e1af66880901a72c3b3db2fd539ba50a16cf91c6f74ce48cf52cc9.json.gz",
+      "gzip_bytes": 760182,
+      "gzip_sha256": "609039d5cf4499bcc099066daacd35024735ed50c403134837353ffbf4c13847",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_fast_s077_res1.json",
+      "raw_sha256": "bfea89c5470714a13f6aa78d12c003a049173aad4485a99d3d53b1e03b1f9069",
+      "raw_bytes": 1954633,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/bfea89c5470714a13f6aa78d12c003a049173aad4485a99d3d53b1e03b1f9069.json.gz",
+      "gzip_bytes": 380367,
+      "gzip_sha256": "81fd5ced6d8ccd62407371c219b2ef753b8e1be67241fa40f17ea527e09ed3c2",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_fast_s077_tail46-64.json",
+      "raw_sha256": "51f1e7eea4012842b4abf91817adf781ac1d2feda94722d5cd4189b18f421c04",
+      "raw_bytes": 4689191,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/51f1e7eea4012842b4abf91817adf781ac1d2feda94722d5cd4189b18f421c04.json.gz",
+      "gzip_bytes": 662089,
+      "gzip_sha256": "328607f6c594f90a012daee509754be8f1001d684e9542829df0659dfa354b35",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_fast_s101_res1.json",
+      "raw_sha256": "da66dd64cd26ea908cff7d597d90cc657dd847646118a4493fa20d18997b7058",
+      "raw_bytes": 1835456,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/da66dd64cd26ea908cff7d597d90cc657dd847646118a4493fa20d18997b7058.json.gz",
+      "gzip_bytes": 373291,
+      "gzip_sha256": "bf09f05d6c940a91b0970f5758025c4261dbe3b536bef66d86172cf983ef2701",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_premium_s042.json",
+      "raw_sha256": "4595f120824951a0ceff3d3889e772dcb0820501fd8668ed26e95bc7b8deb555",
+      "raw_bytes": 3326975,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/4595f120824951a0ceff3d3889e772dcb0820501fd8668ed26e95bc7b8deb555.json.gz",
+      "gzip_bytes": 659375,
+      "gzip_sha256": "c647a65bdf50523c6b13e2790e67573575fb0497709e8dc82c1c0015b52ffecd",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_premium_s042_fente.json",
+      "raw_sha256": "3df09b01f70856403dcc39fe3dc0fcba94c79bf0df659acd43b8b295c5c55310",
+      "raw_bytes": 3367244,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/3df09b01f70856403dcc39fe3dc0fcba94c79bf0df659acd43b8b295c5c55310.json.gz",
+      "gzip_bytes": 671822,
+      "gzip_sha256": "5bf581baec1a515113e31bc36199ac243b3033be6c4c8aaf7416d5e3cdccbbc6",
+      "decompressed_sha256_verified": true
+    },
+    {
+      "raw_path": "reports/blocs_vs_plantage_r75x2_premium_s042_tail52-58.json",
+      "raw_sha256": "a762564ce8d4cf1b63d21dc2bef94ff5ee5c47a5f78e5ca192f99c41d3430e7a",
+      "raw_bytes": 5509116,
+      "gzip_path": "reports/STRAT_Rate_publication_2026-10-16/objects/a762564ce8d4cf1b63d21dc2bef94ff5ee5c47a5f78e5ca192f99c41d3430e7a.json.gz",
+      "gzip_bytes": 973030,
+      "gzip_sha256": "7ee95bfe29e6d3dbfdc84b5210ad6ce3d53c44724da4fd2e773187c0cb699a05",
+      "decompressed_sha256_verified": true
+    }
+  ],
+  "raw_bytes": 1454648386,
+  "unique_archives": 143,
+  "unique_gzip_bytes": 258555305,
+  "raw_files_deleted_by_this_script": 0,
+  "script_sha256": "92e1c9674d942e09d46ef293b39684e9489c59c74cfacb78d5075881d99740e6",
+  "workers": 6,
+  "tracked_simulation_evidence_selected": true,
+  "prior_helper": "Sequential archive helper PID19024 stopped to replace it with bounded parallel compression; zero physical task and no raw evidence removed by either helper."
+}

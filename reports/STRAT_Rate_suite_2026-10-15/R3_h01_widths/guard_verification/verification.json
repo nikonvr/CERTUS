@@ -1,0 +1,24 @@
+{
+  "verdict": "GO",
+  "verified_utc": "2026-10-15T08:31:42.510588+00:00",
+  "physics_measured": false,
+  "guard_sha256": "490b73b7b73212d76f6622c7ac85051743ad5693a714236499a98272f72e3645",
+  "checks": [
+    "Only the exact installed stdio language-server command is exempted",
+    "Matching authorized/validated context accepted",
+    "Unknown phase rejected",
+    "Alternate output rejected",
+    "Wrong R2 audit hash rejected",
+    "Other Python test rejected",
+    "Variant without a finished control rejected",
+    "Live common lock rejected",
+    "Permanent control claim survives release",
+    "Direct duplicate reservation rejected",
+    "Running control rejects variant",
+    "Permanent variant claim survives release",
+    "Maximum three R3 pairs enforced",
+    "A different owner's lock is not released"
+  ],
+  "verifier_sha256": "5d8d4ece626762aed7b78b0f6f8104c8e13d40b6d25d873da49c05dbed8a657e",
+  "fixtures_only": true
+}

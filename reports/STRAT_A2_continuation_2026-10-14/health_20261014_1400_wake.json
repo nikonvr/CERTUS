@@ -1,0 +1,41 @@
+{
+  "checked_local": "2026-10-14T14:02:37.2851690+02:00",
+  "preflight": "GO",
+  "deadline_utc": "2026-10-15T06:00:00Z",
+  "status": "running",
+  "completed": 20,
+  "current": "r75x2_deep_s202_avec",
+  "current_pid": 46680,
+  "current_started": "2026-10-14T13:28:22",
+  "controller_pid": 24128,
+  "resources": [
+    {
+      "id": 46680,
+      "cpu_seconds": 29562.21875,
+      "priority": "Normal",
+      "affinity": 65535
+    },
+    {
+      "id": 24128,
+      "cpu_seconds": 1.625,
+      "priority": "Normal",
+      "affinity": 65535
+    },
+    {
+      "id": 51884,
+      "cpu_seconds": 0.28125,
+      "priority": "Normal",
+      "affinity": 65535
+    }
+  ],
+  "worktree_head": "da1af0825d5e09e8d0a5ff4f1cf42b802e0e30e7",
+  "tracked_changes": [],
+  "helper_sha256": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51",
+  "log_tail": [
+    "14:02:30 | INFO |    [Block 6] Screening complete. Results count: 2",
+    "14:02:32 | INFO | [SLIT] slit bias active, 188/188 strategies -- slit 2 nm, profile of 17 nodes, 558 NEW profiles in 1.4 s (cache: 22241)",
+    "14:02:32 | INFO | Running robustness tests on 188 strategies (ThreadPoolExecutor with 8 workers)..."
+  ],
+  "no_test_or_parallel_science_started": true,
+  "new_completed_result": false
+}

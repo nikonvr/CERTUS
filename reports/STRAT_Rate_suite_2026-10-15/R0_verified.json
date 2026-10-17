@@ -1,0 +1,82 @@
+{
+  "verified_utc": "2026-10-15T07:23:00.827207+00:00",
+  "verdict": "GO",
+  "R0_control_sha256": "7a4ff1dba7c72aaad39a2c44db3fdd30689240ee8814cbf327f0bf96ef4f163f",
+  "source_sha256": {
+    "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+    "certus/core/certus_strat_robustness.py": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+    "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+    "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e"
+  },
+  "resources": {
+    "logical_cpus": 24,
+    "affinity_mask": "0xffffff",
+    "priority": "normal",
+    "library_threads": 23
+  },
+  "actual_calls": 12,
+  "num_runs_each": 300,
+  "rows": [
+    {
+      "id": 9900008,
+      "score": 0.027975237667200847,
+      "expected_score": 0.02797523766720083,
+      "score_base": 0.03053006875746744,
+      "score_consensus": 0.027975237667200847,
+      "consensus_meta": {
+        "mode": "mean_std",
+        "mean": 0.02789815145664103,
+        "std": 0.00022024631588518845,
+        "worst": 0.028209605064099693,
+        "seeds": [
+          41,
+          42,
+          43
+        ],
+        "n_samples": 3
+      }
+    },
+    {
+      "id": 900951015,
+      "score": 0.039345655797984144,
+      "expected_score": 0.039345655797984144,
+      "score_base": 0.0399019932859532,
+      "score_consensus": 0.039345655797984144,
+      "consensus_meta": {
+        "mode": "mean_std",
+        "mean": 0.03903722101379773,
+        "std": 0.0008812422405326119,
+        "worst": 0.040174649500133074,
+        "seeds": [
+          41,
+          42,
+          43
+        ],
+        "n_samples": 3
+      }
+    },
+    {
+      "id": 9900006,
+      "score": 0.029057302267737437,
+      "expected_score": 0.029057302267738155,
+      "score_base": 0.027573191157578242,
+      "score_consensus": 0.029057302267737437,
+      "consensus_meta": {
+        "mode": "mean_std",
+        "mean": 0.028903619818160933,
+        "std": 0.0004390927130757191,
+        "worst": 0.02923078925242826,
+        "seeds": [
+          41,
+          42,
+          43
+        ],
+        "n_samples": 3
+      }
+    }
+  ],
+  "scientific_seconds": 162.75213849998545,
+  "meaning": "Same historical fixed points reproduced in the new numerical context; not a new Rate gain",
+  "next": "Verify the passive observer outside any measurement, then one R2 native baseline"
+}

@@ -1,0 +1,8 @@
+﻿{
+    "verdict":  "GO",
+    "powershell":  "5.1.26100.9549",
+    "parser_errors":  0,
+    "actual_empty_python_exit_code":  0,
+    "atomic_replace_under_shared_reader":  "GO",
+    "scientific_simulations":  0
+}

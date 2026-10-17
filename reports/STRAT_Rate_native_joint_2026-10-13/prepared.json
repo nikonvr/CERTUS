@@ -1,0 +1,16 @@
+{
+  "status": "prepared_not_measured",
+  "native_joint_budget": 480,
+  "base_rate_budget": 120,
+  "base_order_unchanged": true,
+  "screening_and_full_caps_unchanged": true,
+  "independent_fixed_plan_validation": "STRAT_Rate_validation_joint_2026-10-13/etat.json",
+  "runtime_verification": "scheduled only after current measurement finishes; no tests yet",
+  "script_sha256": {
+    "rate_native_joint_probe.py": "861f8ac0406617b8e090ce26220b23e1a55b8ad7ef294962b35c5c4b4fe96d89",
+    "rate_joint_native_candidates.py": "70211dc4fad1c1adabc673ffe95c35b8996459db4f75ecc8831454ff0e48c2af",
+    "verify_rate_native_joint_adapter.py": "031b352e7fcaa1f8734878c1e26e64f6866d09ee83197f4ca6638929f7801518",
+    "rate_native_joint_runner.py": "4b46ed281072ca51c6afc761b8a154bcea4715fe2f35be308be0d7620e4e2e79",
+    "campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51"
+  }
+}

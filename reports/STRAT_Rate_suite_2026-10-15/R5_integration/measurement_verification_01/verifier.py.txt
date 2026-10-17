@@ -1,0 +1,131 @@
+"""Verify new R5 adapters and freeze their finite protocol, without physical evaluation."""
+
+from __future__ import annotations
+
+import ast
+import copy
+import hashlib
+import json
+import logging
+import os
+import runpy
+import sys
+import textwrap
+from datetime import UTC, datetime
+from functools import wraps
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
+
+ROOT = Path(__file__).resolve().parents[1]
+OUTPUT = ROOT / "reports/STRAT_Rate_suite_2026-10-15/R5_integration"
+
+
+def sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def function(source: str, name: str) -> ast.FunctionDef:
+    return next(n for n in ast.walk(ast.parse(source)) if isinstance(n, ast.FunctionDef) and n.name == name)
+
+
+def main() -> None:
+    guard = runpy.run_path(str(ROOT / "scratch/rate_R5_guard.py"))
+    deadline = guard["check_deadline"]()
+    reference = guard["read"](guard["REFERENCE"])
+    worktree = Path(reference["worktree"])
+    guard["check_context"](worktree, reference)
+    old_protocol = guard["read"](OUTPUT.parent / "R3_h03_native_postrefinement/protocol.json")
+    points = OUTPUT / "points"
+    points.mkdir(exist_ok=False)
+    (points / "plans.json").write_text(json.dumps({"plans": copy.deepcopy(old_protocol["anchors"])}, ensure_ascii=False, indent=2), encoding="utf-8")
+    names = ["rate_R5_guard.py", "rate_R5_points.py", "rate_R5_native.py", "run_rate_R5.ps1",
+             "rate_H03_guard.py", "campagne_a2_runner.py", "rate_R4_planner_resume_v3.py", "rate_native_pipeline_trace.py"]
+    hashes = {name: sha(ROOT / "scratch" / name) for name in names}
+    protocol = {"status": "FROZEN_BEFORE_MEASUREMENT", "created_utc": datetime.now(UTC).isoformat(),
+                "deadline_utc": deadline, "reference_sha256": sha(guard["REFERENCE"]),
+                "source_sha256": reference["source_sha256"], "script_sha256": hashes,
+                "slots": {k: str(v) for k, v in guard["SLOTS"].items()},
+                "control": old_protocol["control"], "depths": old_protocol["depths"],
+                "points_plans_sha256": sha(points / "plans.json"),
+                "native": {"tag": "r5_integrated_20261015_v1", "arguments": ["r75x0.5", "deep", "0", "0", "2", "0", "101", "0"],
+                           "overrides": "elite_rate_balanced_moves=false,elite_rate_max_candidates=240,elite_rounds=6,elite_rate_joint_candidates=480,rate_post_refinement=true",
+                           "post_limits": {"passes": 2, "beam": 2, "proposals_per_pass": 300, "proposals": 600, "groups_with_parent_check": 73}},
+                "scope": "One new fixed-point control and at most one initial integrated native validation; no R3/R4 reuse, additional post cost declared"}
+    with guard["PROTOCOL"].open("x", encoding="utf-8") as stream:
+        json.dump(protocol, stream, ensure_ascii=False, indent=2)
+    checks = []
+    old = (ROOT / "scratch/rate_fixed_replay_R0_bounded.py").read_text(encoding="utf-8")
+    new = (ROOT / "scratch/rate_R5_points.py").read_text(encoding="utf-8")
+    assert ast.dump(function(old, "record_task")) == ast.dump(function(new, "record_task"))
+    previous = function(old, "evaluate_fixed")
+    for node in ast.walk(previous):
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "run_final_simulation_block":
+            node.keywords.append(ast.keyword(arg="refine", value=ast.Constant(False)))
+    assert ast.dump(previous) == ast.dump(function(new, "evaluate_fixed"))
+    assert "keep_fixed_plans" not in new
+    checks.append("Point callback AST unchanged except explicit production refine=False; physical task observer AST identical")
+    native_ast = ast.parse((ROOT / "scratch/rate_R5_native.py").read_text(encoding="utf-8"))
+    assert not any(isinstance(n, ast.Name) and n.id == "patch" for n in ast.walk(native_ast))
+    checks.append("Native adapter contains no scientific replacement; only the previously verified passive observer")
+    helper = runpy.run_path(str(ROOT / "scratch/campagne_a2_runner.py"))
+    assert helper["limit_resources"](24) == guard["RESOURCES"]
+    os.environ["QT_QPA_PLATFORM"] = "offscreen"
+    sys.path[:0] = [str(worktree), str(worktree / "scripts")]
+    import bench_examples as bx
+
+    bx.qapp()
+    import numpy as np
+
+    import certus.core.certus_strat_consensus as consensus
+    import certus.core.certus_strat_robustness as robustness
+
+    # Reuse the already validated observer corpus, replacing only the experimental factory adapter
+    # with the new production factory and its explicit opt-in argument. No numerical task runs.
+    verifier = (ROOT / "scratch/verify_rate_native_pipeline_trace_bounded.py").read_text(encoding="utf-8")
+    snippet = verifier[verifier.index('        observer = runpy.run_path'):verifier.index('        assert {name: hashlib.sha256(p.read_bytes()).hexdigest() for name, p in paths.items()}')]
+    snippet = textwrap.dedent(snippet)
+    snippet = snippet.replace('extend = runpy.run_path(str(paths["generator"]))["extend_factory"]\n', '')
+    snippet = snippet.replace('"wl_neighbor_span": 1, "rate_moves": True,', '"wl_neighbor_span": 1, "joint_candidates": 480, "rate_moves": True,')
+    snippet = snippet.replace('    candidates, cursor, _ = extend(factory, consensus, _plan_signature, args, kw, 480)\n    return candidates, cursor', '    return factory(*args, **kw)')
+    record = {"checks": checks}
+    namespace = {"paths": {"observer": ROOT / "scratch/rate_native_pipeline_trace.py"}, "root": ROOT,
+                 "runpy": runpy, "consensus": consensus, "robustness": robustness, "json": json, "copy": copy,
+                 "wraps": wraps, "patch": patch, "record": record, "np": np, "logging": logging, "SimpleNamespace": SimpleNamespace}
+    exec(compile(snippet, "<R5 observer corpus, no physical evaluation>", "exec"), namespace)
+    for current in (datetime(2026, 10, 16, 6, tzinfo=UTC), datetime(2026, 10, 16, 7, tzinfo=UTC)):
+        try:
+            guard["check_deadline"](deadline, now=current)
+        except RuntimeError:
+            checks.append("Morning cutoff refused without reservation: " + current.isoformat())
+        else:
+            raise AssertionError("Cutoff accepted")
+    directory = OUTPUT / "measurement_verification_01"
+    directory.mkdir(exist_ok=False)
+    target = directory / "verification.json"
+    result = {"verdict": "GO", "script_sha256": hashes, "source_sha256": reference["source_sha256"],
+              "verifier_sha256": sha(Path(__file__)), "checks": checks, "physical_evaluations": 0}
+    target.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+    try:
+        proof = guard["check_ready"]("R5_points", guard["SLOTS"]["R5_points"], reference["source_sha256"], requested_deadline=deadline)
+        checks.append("Actual complete R5 point guard passes, no claim taken")
+        for phase, output in (("R0_control", guard["SLOTS"]["R5_points"]), ("R5_points", points / "wrong")):
+            try:
+                guard["check_ready"](phase, output, reference["source_sha256"], requested_deadline=deadline)
+            except RuntimeError:
+                checks.append("Foreign slot/path rejected: " + phase)
+            else:
+                raise AssertionError("Foreign slot accepted")
+        result["guard_proof_not_reserved"] = proof
+        assert not (guard["PROGRAM"] / "claims/R5_points.json").exists()
+    except BaseException:
+        result["verdict"] = "FAILED"
+        raise
+    finally:
+        target.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+        (directory / "verifier.py.txt").write_bytes(Path(__file__).read_bytes())
+    print(json.dumps({"verdict": result["verdict"], "checks": len(checks), "physical_evaluations": 0}))
+
+
+if __name__ == "__main__":
+    main()

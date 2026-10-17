@@ -58,14 +58,20 @@ un fichier peut porter des clés retirées, ignorées au chargement avec une lig
 
 | Clé JSON | Type | Valeur | Description |
 |---|---|---|---|
-| `allow_rate` | `int`/`bool` | `1` | `1` = autorise le mode Rate (surveillance au chrono sur couches sans extremum franc), `0` = optique pure. |
+| `allow_rate` | `int`/`bool` | `1` | `1` = autorise le mode Rate (couche posee au temps, a la vitesse estimee sur les couches controlees optiquement ; utile sur les couches sans extremum franc), `0` = optique pure. |
+| `rate_by_swing` | `int`/`bool` | `1` | `1` = place aussi le Rate sur les couches dont le signal optique est trop pauvre pour y arreter la couche (swing de croissance sous le seuil de dynamique), en plus des frontieres de bloc. |
+| `rate_rescue` | `int`/`bool` | `1` | `1` = pour les plans qui ne se terminent pas (plantage de 5 % ou plus), pose en Rate tout ce qui suit la couche ou le controle optique cede, puis depuis des coupures plus precoces jusqu'a la couche 2 ; le classement decide. `0` = chemin d'avant. |
+| `rate_rescue_few` | `int` | `10` | Sous ce nombre de plans deposables dans une passe, le secours Rate travaille a pleine force (30 plans x 8 coupures) ; au-dessus, legerement (3 x 2). |
+| `elite_rate_moves` | `int`/`bool` | `1` | `1` = ELITE deplace aussi les couches Rate de ses parents (un paquet plus long ou plus court, un trou d'optique referme, une fenetre d'optique ouverte dans un paquet de Rate, un paquet de Rate pose dans l'optique) : optique, Rate, optique a une autre longueur d'onde. `0` = chemin d'avant ; sans effet si `allow_rate` vaut `0`. |
+| `elite_rate_max_candidates` | `int` | `120` | Candidats de plus par tour d'ELITE pour ces mouvements. |
 | `poem_anchor_noise` | `int`/`bool` | `1` | `1` = bruite le signal de monitoring avant la détection des points tournants, la lecture des ancres POEM et le test d'atteignabilité. |
 | `poem_anchor_noise_phase_a` | `int`/`bool` | `1` | `1` = applique le bruit dès la pré-sélection Phase A. |
 | `index_corridor` | `float` | `0.005` | Demi-largeur du couloir de dérive d'indice de réfraction admissible. |
 | `photometric_curvature_amp` | `float` | `0.00375` | Amplitude de la courbure photométrique résiduelle du spectrophotomètre. |
 | `affine_scale_amp` | `float` | `0.0` | Amplitude de distorsion affine d'échelle sur la transmission ($a \in [1-\delta, 1+\delta]$). |
 | `affine_offset_amp` | `float` | `0.0` | Amplitude de décalage affine de ligne de base ($b \in [-\delta, +\delta]$). |
-| `reading_smoothing_window` | `int` | `1` | Taille de la fenêtre de lissage des lectures machine (1 = désactivé/neutre). |
+| `reading_smoothing_window` | `int` | `1` | Taille de la fenêtre de lissage des lectures machine (1 = désactivé/neutre). Au-delà de 1, le noyau passe aussi sur la grille de la machine : une lecture tous les 0,125 nm. |
+| `witness_reset_layers` | `string`/`list` | absent | Couches où un verre témoin NEUF entre, comptées depuis 0 (`"22;42;76"` : quatre témoins). Absent ou vide : un seul témoin. Champ « New test glass at layers » de la carte « Machine model ». Outil de faisabilité, jamais d'optimisation : sur un composant qu'un seul témoin suffit à surveiller, toute coupure mesurée a dégradé le SEEL (+10 à +110 %). |
 | `machine_sampling_dd` | `float` | `0.0` | Pas de la grille machine en nm (0 = grille grossière). 🔴 **Inerte** : le noyau reçoit toujours 0. |
 | `tp_hysteresis_factor` | `float` | `1.66` | Seuil d'hystérésis pour la détection anti-bruit des points tournants. |
 | `phase_a_level_margin_factor` | `float` | `1.66` | Marge de sécurité requise entre le niveau de transmission visé et les extrema. |

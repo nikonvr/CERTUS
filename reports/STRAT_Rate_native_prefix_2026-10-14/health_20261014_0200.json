@@ -1,0 +1,108 @@
+{
+  "checked_utc": "2026-10-14T00:02:20.124162+00:00",
+  "native_controller": {
+    "status": "measurement",
+    "pid": 14820,
+    "resources": {
+      "logical_cpus": 16,
+      "affinity_mask": "0xffff",
+      "priority": "normal",
+      "library_threads": 15
+    },
+    "script_sha256": {
+      "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_native_prefix_probe.py": "f9601b7c564ca7386ed0ef88fc2a52fd02795781fa4df401667a6c8ad6fd4d41",
+      "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_joint_native_candidates.py": "30ac713dc23b4c0754ca56f5f843309f9b3b55c583dbe4b2bf1f17427684a611",
+      "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\verify_rate_native_prefix_adapter.py": "a3f5602c69810886a73295b21631aa71fbf17e87e4818fa0686e73bb43041f95",
+      "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_prefix_native_candidates.py": "bb3e6c85e868b9805712ecfc091f3fd005f425d133a83f0adcfaa7dc1c35e230",
+      "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51"
+    },
+    "current_pid": 25072,
+    "joint_budget": 480,
+    "prefix_budget": 720,
+    "seed": 101,
+    "rate_budget": 240,
+    "elite_rounds": 6,
+    "updated": "2026-10-13T23:09:34+00:00",
+    "previous_best": null,
+    "current_started": "2026-10-13T23:09:34+00:00",
+    "measurement_key": "prefix_720_joint_480_rate240_rounds6_s101"
+  },
+  "confirmation_controller": {
+    "status": "waiting_for_native",
+    "pid": 21248,
+    "resources": {
+      "logical_cpus": 16,
+      "affinity_mask": "0xffff",
+      "priority": "normal",
+      "library_threads": 15
+    },
+    "hashes": {
+      "replay": "dbcdd6e24103675db50d0f8e6948cb419d471c3a5cbaacbee0921e7e5aee0778",
+      "protocol": "09b7f40d016b9c516c23e5e30c968ae4a5a3d6b9cbd2b0d8dfe5415ed688dccf",
+      "fixed_plans": "c09d40815b34e17359b2394b02507b99b9eb18037b7bd78a8da407b80974153f",
+      "summarizer": "6c34d928727a6facd21b8ce72d2ca57c894fc612fb7bdf32d14ade947acc78f7"
+    },
+    "sequence": [
+      "control",
+      "holdout_1515",
+      "holdout_1616",
+      "holdout_1717",
+      "holdout_202",
+      "holdout_303",
+      "holdout_404",
+      "holdout_505",
+      "holdout_606",
+      "holdout_707",
+      "holdout_808",
+      "holdout_909",
+      "holdout_1010",
+      "holdout_1111",
+      "holdout_1212",
+      "holdout_1313",
+      "holdout_1414"
+    ],
+    "runs": [],
+    "current": null,
+    "current_pid": null,
+    "updated": "2026-10-13T23:32:06+00:00"
+  },
+  "fine_controller": {
+    "runs": [],
+    "hashes": {
+      "replay": "05376a9240c66a99a1f4f5bf1a7300045d13ed83ca0ed4a4f88300a73688a2c3",
+      "proposals": "cd0baa2c7a62d3838034a9d0c8d36ae7ff53415836819861d05aa500379bf4b3",
+      "protocol": "8b572e6c0955338d1464c7f01cbd9d51df6d48d9ebfc2e00c951ae5c79c0e9b2"
+    },
+    "best": {
+      "id": 9900002,
+      "name": "prefix_consensus_best_s101",
+      "move": {
+        "kind": "incumbent"
+      },
+      "eligible": true,
+      "score": 0.031321786810495536,
+      "crash_rate": 0.0,
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_joint_2026-10-14\\batch_020\\attempt_01\\search.json"
+    },
+    "status": "waiting_for_prerequisite",
+    "pid": 46612,
+    "resources": {
+      "logical_cpus": 16,
+      "affinity_mask": "0xffff",
+      "priority": "normal",
+      "library_threads": 15
+    },
+    "current": null,
+    "current_pid": null,
+    "n_proposals": 36,
+    "n_stages": 5,
+    "updated": "2026-10-14T00:02:18+00:00"
+  },
+  "native_script_hashes_unchanged": {
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_native_prefix_probe.py": true,
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_joint_native_candidates.py": true,
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\verify_rate_native_prefix_adapter.py": true,
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_prefix_native_candidates.py": true,
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\campagne_a2_runner.py": true
+  }
+}

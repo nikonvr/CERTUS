@@ -1,0 +1,43 @@
+{
+  "status": "prepared_waiting_not_measuring",
+  "prepared_utc": "2026-10-13T19:02:08.083314+00:00",
+  "runner": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_native_confirmation_runner_v3.py",
+  "arguments": [
+    "--worktree",
+    "C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-equilibre\\certus0310",
+    "--native-output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_native_joint_rate240_round6_2026-10-13",
+    "--measurement-key",
+    "joint_480_rate240_rounds6_s101",
+    "--output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_confirmation_native_round6_2026-10-13",
+    "--reference-state",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_equilibre_AB_2026-10-13\\etat.json",
+    "--protocol",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_confirmation_native_round6_2026-10-13\\protocole_validation_native_round6_v3.json"
+  ],
+  "hashes": {
+    "rate_fixed_replay_confirmation_v3.py": "1ab91c3fc245e85887e511b4acdc18e7d0dbce27b99746f29b9eaba8920f2639",
+    "rate_native_confirmation_runner_v3.py": "44a9e4000f7a23010f821a50f2b6c055414012894eed1bbc7deb2b94b105f48b",
+    "protocole_validation_native_round6_v3.json": "7d864ee1416b251257743d718a45c178bb77176b8560678faadcaa199fe94d15"
+  },
+  "static_review": "Only CLI choices, run sequence and winner display name changed; physical calls delegated unchanged; AST parsed. No runtime test while measurement is active.",
+  "sequence": [
+    "control",
+    "holdout_202",
+    "holdout_303",
+    "holdout_404",
+    "holdout_505",
+    "holdout_606",
+    "holdout_707",
+    "holdout_808",
+    "holdout_909"
+  ],
+  "depths": {
+    "robustness_num_runs": 300,
+    "n_screen_runs": 50,
+    "dp_top_k": 100,
+    "consensus_num_runs": 300
+  },
+  "deadline_utc": "2026-10-14T07:00:00Z"
+}

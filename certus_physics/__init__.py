@@ -22,6 +22,7 @@ if _parent_dir not in sys.path:
 from certus.core._certus_physics_impl import (  # noqa: F401
     CRASH_LEVEL_UNREACHABLE,
     CRASH_NON_MONOTONIC,
+    CRASH_NOT_ARMED,
     # Depots non terminables, decomposes par cause (les trois questions du juge de paix)
     CRASH_SENTINEL_MIN,
     CRASH_SENTINEL_UNIT,
@@ -167,7 +168,6 @@ from certus.core._certus_physics_impl import (  # noqa: F401
     xyz_from_spectrum,
     xyz_to_lab,
 )
-from certus.physics.certus_strat_machine import MachineModel  # noqa: F401
 
 # =============================================================================
 # AUXILIARY MODULES (not in _impl - unique functionality)

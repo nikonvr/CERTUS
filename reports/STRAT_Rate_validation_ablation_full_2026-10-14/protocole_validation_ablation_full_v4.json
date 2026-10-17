@@ -1,0 +1,114 @@
+{
+  "status": "prepared_not_run",
+  "reference_plans": "plans_reference.json",
+  "candidate_artifact": null,
+  "depths": {
+    "robustness_num_runs": 300,
+    "n_screen_runs": 50,
+    "dp_top_k": 100,
+    "consensus_num_runs": 300
+  },
+  "control": {
+    "robustness_seed": 101,
+    "consensus_seed_list": [
+      41,
+      42,
+      43
+    ]
+  },
+  "holdouts": [
+    {
+      "robustness_seed": 202,
+      "consensus_seed_list": [
+        202,
+        203,
+        204
+      ]
+    },
+    {
+      "robustness_seed": 303,
+      "consensus_seed_list": [
+        303,
+        304,
+        305
+      ]
+    },
+    {
+      "robustness_seed": 404,
+      "consensus_seed_list": [
+        404,
+        405,
+        406
+      ]
+    },
+    {
+      "robustness_seed": 505,
+      "consensus_seed_list": [
+        505,
+        506,
+        507
+      ]
+    },
+    {
+      "robustness_seed": 606,
+      "consensus_seed_list": [
+        606,
+        607,
+        608
+      ]
+    },
+    {
+      "robustness_seed": 707,
+      "consensus_seed_list": [
+        707,
+        708,
+        709
+      ]
+    },
+    {
+      "robustness_seed": 808,
+      "consensus_seed_list": [
+        808,
+        809,
+        810
+      ]
+    },
+    {
+      "robustness_seed": 909,
+      "consensus_seed_list": [
+        909,
+        910,
+        911
+      ]
+    },
+    {
+      "robustness_seed": 1010,
+      "consensus_seed_list": [
+        1010,
+        1011,
+        1012
+      ]
+    },
+    {
+      "robustness_seed": 1111,
+      "consensus_seed_list": [
+        1111,
+        1112,
+        1113
+      ]
+    }
+  ],
+  "requirements": [
+    "preserve blocks, Rate mask and slit; no invented rate drift",
+    "reproduce the reference fixed point before holdouts",
+    "score both fixed plans in the same random worlds",
+    "do not use the current injected_strategies loader unchanged: it drops Rate metadata",
+    "verify delivered seed and consensus seed list in logs and artifact",
+    "record each fixed plan, not the best regenerated strategy",
+    "404/405/406 and 505/506/507 declared before the completed joint winner is replayed; not used for candidate selection",
+    "606/607/608 and 707/708/709 predeclared before the completed native winner is inspected or replayed; not used to rank search candidates",
+    "808/809/810 and 909/910/911 declared while the round6 native search is still running, before its final winner is inspected; never used to choose search candidates",
+    "1010/1011/1012 and 1111/1112/1113 fixed while full ablation rescoring is incomplete, before selecting or independently measuring its completed winner; never used to rank search candidates"
+  ],
+  "prepared_utc": "2026-10-13T21:02:17.164562+00:00"
+}

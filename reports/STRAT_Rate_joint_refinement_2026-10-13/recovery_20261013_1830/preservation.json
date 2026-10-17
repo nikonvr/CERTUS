@@ -1,0 +1,30 @@
+{
+  "scratch/rate_joint_runner.py": {
+    "preserved_as": "reports\\STRAT_Rate_joint_refinement_2026-10-13\\recovery_20261013_1830\\00_rate_joint_runner.py",
+    "sha256": "4d8c0f2d19bec1a17dfce8069ab2cf2a152154fceee9e540f83719266cd22ed3"
+  },
+  "scratch/campagne_a2_runner.py": {
+    "preserved_as": "reports\\STRAT_Rate_joint_refinement_2026-10-13\\recovery_20261013_1830\\01_campagne_a2_runner.py",
+    "sha256": "e55dde982b6e61029cdc231cc7204b40d63f7bc6bc2055417402e34bee4ace84"
+  },
+  "reports/STRAT_Rate_joint_refinement_2026-10-13/etat.json": {
+    "preserved_as": "reports\\STRAT_Rate_joint_refinement_2026-10-13\\recovery_20261013_1830\\02_etat.json",
+    "sha256": "fe607041a75c02b1e6cd759d8e654a802a16a6a65edc85339f4f66f2b62ec193"
+  },
+  "reports/STRAT_Rate_joint_refinement_2026-10-13/etat.tmp": {
+    "preserved_as": "reports\\STRAT_Rate_joint_refinement_2026-10-13\\recovery_20261013_1830\\03_etat.tmp",
+    "sha256": "dd1cc9eaa3f4c6d982746b0cf693739b0015eaea3c5084b53e291824546e944b"
+  },
+  "reports/STRAT_Rate_joint_refinement_2026-10-13.md": {
+    "preserved_as": "reports\\STRAT_Rate_joint_refinement_2026-10-13\\recovery_20261013_1830\\04_STRAT_Rate_joint_refinement_2026-10-13.md",
+    "sha256": "b72c565bdda143dac861068591d4403fc93cb66c53d03e0586eee89784967e26"
+  },
+  "reports/STRAT_Rate_joint_refinement_2026-10-13.tmp": {
+    "preserved_as": "reports\\STRAT_Rate_joint_refinement_2026-10-13\\recovery_20261013_1830\\05_STRAT_Rate_joint_refinement_2026-10-13.tmp",
+    "sha256": "b72c565bdda143dac861068591d4403fc93cb66c53d03e0586eee89784967e26"
+  },
+  "reports/STRAT_Rate_joint_refinement_2026-10-13/controller_initial_errors.log": {
+    "preserved_as": "reports\\STRAT_Rate_joint_refinement_2026-10-13\\recovery_20261013_1830\\06_controller_initial_errors.log",
+    "sha256": "4b97fa2d0a4749df881d1eaba92602218a2e681ab1390b832919bc43b7a83f6f"
+  }
+}

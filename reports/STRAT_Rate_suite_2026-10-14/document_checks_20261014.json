@@ -1,0 +1,23 @@
+{
+  "checked_utc": "2026-10-14T07:34:57.523071+00:00",
+  "ruff_repository": "GO",
+  "git_diff_check": "GO",
+  "markdown_targets_missing": [],
+  "guide_lines": 818,
+  "document_sha256": {
+    "docs\\STRAT_Rate_suite_chantier.md": "8f44b71ba9280ee2162691d0292c8b3cd19804ca286f8c024784f3c9251c674a",
+    "reports\\STRAT_Rate_bilan_2026-10-14.md": "e7bfcee1844333595242742617df8c9f14e46d57fc82282ae9ae0a362b6c84d7",
+    "reports\\STRAT_Rate_suite_2026-10-14\\R2_static_trace_v2\\analysis.md": "dbe9c96e64b3d1090e1dff41c9f4e71a594f42549635535860ec4f218b9d0d9b"
+  },
+  "runtime_tests": "NOT_RUN_A2_ACTIVE",
+  "a2": {
+    "completed": 9,
+    "current": "35c_deep_s042_sans",
+    "science_pid": 49256,
+    "controller_pid": 24128
+  },
+  "next": "Finish A2 through24/24; then validate R1, reproduce R0 fixed points, complete R2 trace before one-factor R3",
+  "new_default_activated": false,
+  "commit_created": false,
+  "push_performed": false
+}

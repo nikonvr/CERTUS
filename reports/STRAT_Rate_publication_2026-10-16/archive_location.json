@@ -1,0 +1,38 @@
+{
+  "archive_root": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\Archives_CERTUS_20261016",
+  "recorded_utc": "2026-10-16T08:58:16.5035997Z",
+  "user_choice": "Archives locales, depot Git leger",
+  "outside_CERTUS_folder": true,
+  "moved": [
+    {
+      "source": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_publication_2026-10-16\\large_evidence",
+      "destination": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\Archives_CERTUS_20261016\\reports\\STRAT_Rate_publication_2026-10-16\\large_evidence",
+      "files": 25,
+      "bytes": 128027091.0,
+      "inventory_preserved": true
+    },
+    {
+      "source": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_publication_2026-10-16\\objects",
+      "destination": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\Archives_CERTUS_20261016\\reports\\STRAT_Rate_publication_2026-10-16\\objects",
+      "files": 2213,
+      "bytes": 7926548081.0,
+      "inventory_preserved": true
+    },
+    {
+      "source": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\.claude",
+      "destination": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\Archives_CERTUS_20261016\\legacy_claude",
+      "files": 5580,
+      "bytes": 624360131.0,
+      "inventory_preserved": true
+    },
+    {
+      "source": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\logs",
+      "destination": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\Archives_CERTUS_20261016\\runtime_logs",
+      "files": 6,
+      "bytes": 40265067.0,
+      "inventory_preserved": true
+    }
+  ],
+  "managed_codex_worktrees_unchanged": true,
+  "legacy_worktree_note": "Preserved legacy .claude copy; git worktree list marks its old D:/drivfl path prunable. No prune/reset/rewrite."
+}

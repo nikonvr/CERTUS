@@ -1,0 +1,208 @@
+"""Copied guard for the second bounded R3 homogeneous replay with an explicit morning cutoff."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import re
+import subprocess
+import sys
+from datetime import UTC, datetime
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+PROGRAM = ROOT / "reports/STRAT_Rate_suite_2026-10-15"
+AUTHORIZATION = ROOT / "reports/STRAT_RMSE_uniform_weights_2026-10-15/authorization_and_baseline.json"
+VALIDATION = ROOT / "reports/STRAT_RMSE_uniform_weights_2026-10-15/full_validation_02/validation.json"
+EXPERIMENT = PROGRAM / "R3_h03_native_postrefinement"
+POST = EXPERIMENT / "post"
+SLOTS = {"R3_h03_control": EXPERIMENT / "control", "R3_h03_variant": EXPERIMENT / "variant",
+         "R3_h03_parentcheck": POST / "parent_check/measurement"}
+SLOTS.update({f"R3_h03_post_g{i:03}": POST / f"groups/group_{i:03}/measurement" for i in range(1, 73)})
+WINDOW_AUTHORIZATION = PROGRAM / "autonomie_jusqu_20261016_0800/authorization.json"
+
+
+def check_deadline(requested_deadline: str | None = None, *, now: datetime | None = None) -> str:
+    """Respect the latest bounded overnight window without stopping work already engaged."""
+    window = json.loads(WINDOW_AUTHORIZATION.read_text(encoding="utf-8"))
+    if window["original_authorization_sha256"] != hashlib.sha256(AUTHORIZATION.read_bytes()).hexdigest():
+        raise RuntimeError("The overnight window refers to a different original authorization")
+    allowed = datetime.fromisoformat(window["no_new_measurements_or_tests_after_utc"].replace("Z", "+00:00"))
+    absolute = datetime(2026, 10, 16, 6, tzinfo=UTC)
+    if allowed.tzinfo is None or allowed > absolute:
+        raise RuntimeError("The overnight authorization exceeds its announced morning limit")
+    requested = datetime.fromisoformat(requested_deadline.replace("Z", "+00:00")) if requested_deadline else allowed
+    if requested.tzinfo is None or requested > allowed:
+        raise RuntimeError("The requested deadline exceeds the authorized window")
+    current = now if now is not None else datetime.now(UTC)
+    if current.tzinfo is None or current >= requested:
+        raise RuntimeError("No new measurement or test after the authorized morning cutoff")
+    return requested.astimezone(UTC).isoformat()
+
+
+def is_language_server(process: dict) -> bool:
+    """Recognize only the installed IDE language server, never a test or simulation."""
+    executable = re.escape(sys.executable)
+    server = re.escape(str(Path(sys.executable).parent / "Scripts/pyright-langserver.exe"))
+    return re.fullmatch(rf'"?{executable}"?\s+"?{server}"?\s+--stdio\s*',
+                        process.get("CommandLine") or "", flags=re.IGNORECASE) is not None
+
+
+def check_ready(phase: str, output: Path, sources: dict[str, str], *, requested_deadline: str | None = None) -> dict:
+    """Check completed validation, frozen sources, finite scope and process isolation."""
+    if phase not in SLOTS or output.resolve() != SLOTS[phase].resolve():
+        raise RuntimeError("This launcher only supports its fixed, single R3 pair slot")
+    deadline = check_deadline(requested_deadline)
+    authorization = json.loads(AUTHORIZATION.read_text(encoding="utf-8"))
+    expected_resources = {"logical_cpus": 24, "affinity_mask": "0xffffff", "priority": "normal", "library_threads": 23}
+    if (authorization.get("scope_extension") != "Jusqu’à la fin du programme borné R0–R6" or
+            authorization.get("resources") != expected_resources or
+            authorization.get("supersedes_old_time_deadline_for_this_bounded_program") is not True):
+        raise RuntimeError("The current explicit bounded authorization is required")
+    validation = json.loads(VALIDATION.read_text(encoding="utf-8"))
+    if validation.get("status") != "GO":
+        raise RuntimeError("Full RMSE validation must finish with GO before any measurement")
+    checks = validation.get("checks", [])
+    if not checks or any(c.get("exit_code") != 0 for c in checks if c.get("name") != "counterproof_before"):
+        raise RuntimeError("A required validation command failed or is incomplete")
+    commands = [" ".join(c.get("command", [])).replace("\\", "/") for c in checks if c.get("exit_code") == 0]
+    for marker in ("ruff check .", "tests/oracle/", "tests/unit/", "tests/ui/", "--ignore=tests/oracle",
+                   "scripts/coherence_md.py", "scripts/check_claude_md.py", "scripts/check_docs.py",
+                   "scripts/c1_diff.py", "diff --check"):
+        if not any(marker in command for command in commands):
+            raise RuntimeError(f"Missing passing validation command: {marker}")
+    validated = validation.get("source_sha256", {})
+    if not sources or any(validated.get(name) != digest for name, digest in sources.items()):
+        raise RuntimeError("The measurement context is not the validated scientific source set")
+    if any(hashlib.sha256((ROOT / name).read_bytes()).hexdigest() != digest for name, digest in validated.items()):
+        raise RuntimeError("A validated source changed since full validation")
+    campaign = ROOT / "reports/STRAT_ELITE_couches_Rate_autres_composants_2026-10-13/etat.json"
+    a2 = json.loads(campaign.read_text(encoding="utf-8"))
+    if (a2.get("status") != "complete" or len(a2.get("runs", [])) != 24 or
+            len({run["key"] for run in a2["runs"]}) != 24 or a2.get("current_pid")):
+        raise RuntimeError("A2 must be complete24/24")
+    locks = list((ROOT / "reports").rglob(".running"))
+    if locks or (PROGRAM / "measurement.running").exists():
+        raise RuntimeError(f"Inspect existing measurement locks before restarting: {locks}")
+    shell = Path(os.environ["SYSTEMROOT"]) / "System32/WindowsPowerShell/v1.0/powershell.exe"
+    raw = subprocess.check_output([str(shell), "-NoProfile", "-Command",
+        "@(Get-CimInstance Win32_Process | Where-Object { $_.Name -match '^python' } | "
+        "Select-Object ProcessId,CommandLine) | ConvertTo-Json -Compress"], encoding="utf-8").strip()
+    active = json.loads(raw) if raw else []
+    if isinstance(active, dict):
+        active = [active]
+    if any(process["ProcessId"] != os.getpid() and not is_language_server(process) for process in active):
+        raise RuntimeError("Another Python test, calculation or controller is alive")
+    protocol_file = EXPERIMENT / "protocol.json"
+    protocol = read(protocol_file)
+    if protocol["source_sha256"] != sources or protocol["deadline_utc"] != deadline or protocol["limits"] != LIMITS:
+        raise RuntimeError("H03 frozen source/deadline/limits mismatch")
+    for name, digest in protocol["script_sha256"].items():
+        if sha(ROOT / "scratch" / name) != digest:
+            raise RuntimeError(f"Frozen H03 source changed: {name}")
+    for name, digest in protocol["input_sha256"].items():
+        if sha(ROOT / name) != digest:
+            raise RuntimeError(f"Frozen H03 input changed: {name}")
+    verification = read(EXPERIMENT / "verification_01/verification.json")
+    if verification.get("verdict") != "GO" or verification.get("all_script_sha256") != protocol["script_sha256"]:
+        raise RuntimeError("H03 verification missing or stale")
+    if phase == "R3_h03_control" and len(list((PROGRAM / "claims").glob("R3_*_control.json"))) >= 3:
+        raise RuntimeError("Three native R3 pairs consumed")
+    if phase != "R3_h03_control":
+        arms = ("control",) if phase == "R3_h03_variant" else ("control", "variant")
+        for arm in arms:
+            state = read(EXPERIMENT / arm / "etat.json")
+            if (state.get("status") != "complete" or state["source_sha256"] != sources or
+                    state["fine_wavelengths"] is not True or state["joint_widths"] != list(range(1, 8))):
+                raise RuntimeError("Finish this pair's preceding native arm with the same policy")
+    proof = {"phase": phase, "resources": expected_resources, "slot": str(output.resolve()),
+             "source_sha256": sources, "quota": 1, "deadline_utc": deadline,
+             "authorization_sha256": sha(AUTHORIZATION), "validation_sha256": sha(VALIDATION),
+             "window_authorization_sha256": sha(WINDOW_AUTHORIZATION), "protocol_sha256": sha(protocol_file)}
+    if phase not in ("R3_h03_control", "R3_h03_variant"):
+        manifest_file = output.parent / "manifest.json"
+        manifest, state = read(manifest_file), read(POST / "checkpoint.json")
+        validate_group(manifest, read(output.parent / "plans.json"), protocol, state)
+        if manifest["phase"] != phase or state["pending_group"] != str(manifest_file):
+            raise RuntimeError("Offered group differs from pending checkpoint")
+        proof.update(manifest_sha256=sha(manifest_file), plans_sha256=sha(output.parent / "plans.json"))
+    if (PROGRAM / "claims" / (phase + ".json")).exists() or (output / "etat.json").exists() or (output / "search.json").exists() or list(output.glob("request_search_*.json")):
+        raise RuntimeError("Consumed H03 slot: inspect/adopt; never replay silently")
+    return proof
+
+
+LIMITS = {"passes": 2, "global_beam": 2, "branch_beam": 2, "new_proposals": 600,
+          "branch_pass_proposals": 300, "group_proposals": 9, "groups": 72, "parent_check_groups": 1}
+ANCHORS = [900951015, 9900006, 9900008]
+
+
+def read(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def validate_group(manifest: dict, raw: dict, protocol: dict, state: dict) -> None:
+    plans = raw["plans"]
+    if manifest["protocol_sha256"] != sha(POST / "protocol.json"):
+        raise RuntimeError("Another scoring protocol")
+    if manifest["plans_sha256"] != hashlib.sha256(json.dumps(raw, ensure_ascii=False, indent=2).encode()).hexdigest():
+        raise RuntimeError("Frozen plans changed")
+    ids = [p["source_strategy_id"] for p in plans]
+    if len(ids) != len(set(ids)) or ids[:3] != ANCHORS or plans[:3] != protocol["anchors"]:
+        raise RuntimeError("Anchors/identifiers changed")
+    selection = read(POST / "parent_selection.json")
+    if manifest["parent_selection_sha256"] != sha(POST / "parent_selection.json"):
+        raise RuntimeError("Parent selection changed")
+    if manifest["phase"] == "R3_h03_parentcheck":
+        if manifest["index"] != 0 or manifest["new_plans"] != 0 or not 4 <= len(plans) <= 7 or plans[3:] != selection["unique_replay_plans"]:
+            raise RuntimeError("Parent-check quota or independently selected parents changed")
+        return
+    index = manifest["index"]
+    if not 1 <= index <= 72 or manifest["phase"] != f"R3_h03_post_g{index:03}" or index != state["group_count"]:
+        raise RuntimeError("Unknown/exhausted H03 post slot")
+    if manifest["branch"] != "native" or manifest["pass"] not in (1, 2) or manifest["stage"] not in ("coarse", "fine"):
+        raise RuntimeError("Unknown post stage")
+    if not 4 <= len(plans) <= 12 or len(plans) != manifest["new_plans"] + 3:
+        raise RuntimeError("Post group exceeds nine new proposals")
+    if (not 0 < state["new_proposals"] <= 600 or sum(state["branch_pass_counts"].values()) != state["new_proposals"] or
+            any(not 0 <= n <= 300 for n in state["branch_pass_counts"].values()) or
+            list(state["branches"]) != ["native"] or len(state["branches"]["native"]["beam"]) > 2):
+        raise RuntimeError("Post proposal/beam quota exceeded")
+    if plans[3:] != state["queue"][state["queue_offset"]:state["queue_offset"] + 9]:
+        raise RuntimeError("Offered group differs from charged queue")
+    for plan in plans[3:]:
+        if plan.get("branch") != "native" or plan.get("root_parent_id") not in selection["variant_parent_ids"] or "expected_score_fixed_point" in plan:
+            raise RuntimeError("Foreign parent or invented fixed point")
+
+
+def reserve_slot(proof: dict) -> None:
+    check_deadline(proof["deadline_utc"])
+    phase = proof["phase"]
+    if phase not in SLOTS or proof["slot"] != str(SLOTS[phase].resolve()):
+        raise RuntimeError("Unknown H03 slot")
+    if sha(WINDOW_AUTHORIZATION) != proof["window_authorization_sha256"] or sha(EXPERIMENT / "protocol.json") != proof["protocol_sha256"]:
+        raise RuntimeError("Authorization/protocol changed before reservation")
+    output = Path(proof["slot"])
+    if "manifest_sha256" in proof and (sha(output.parent / "manifest.json") != proof["manifest_sha256"] or sha(output.parent / "plans.json") != proof["plans_sha256"]):
+        raise RuntimeError("Group changed before reservation")
+    claims = PROGRAM / "claims"
+    claims.mkdir(parents=True, exist_ok=True)
+    entry = {**proof, "pid": os.getpid(), "claimed_utc": datetime.now(UTC).isoformat()}
+    with (PROGRAM / "measurement.running").open("x", encoding="utf-8") as stream:
+        json.dump(entry, stream, ensure_ascii=False, indent=2)
+    try:
+        with (claims / (phase + ".json")).open("x", encoding="utf-8") as stream:
+            json.dump(entry, stream, ensure_ascii=False, indent=2)
+    except BaseException:
+        release_slot()
+        raise
+
+
+def release_slot() -> None:
+    lock = PROGRAM / "measurement.running"
+    if lock.exists() and read(lock)["pid"] == os.getpid():
+        lock.unlink()

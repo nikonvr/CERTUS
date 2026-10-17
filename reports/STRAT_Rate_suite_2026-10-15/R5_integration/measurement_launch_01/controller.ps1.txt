@@ -1,0 +1,69 @@
+$ErrorActionPreference = 'Stop'
+$rateRoot = 'D:\drivefl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310'
+$rateDirectory = Join-Path $rateRoot 'reports\STRAT_Rate_suite_2026-10-15\R5_integration'
+$rateStatePath = Join-Path $rateDirectory 'measurement_controller.json'
+if (Test-Path -LiteralPath $rateStatePath) { throw 'Existing R5 coordinator: inspect child and claims before adoption' }
+$ratePython = (Get-Command python -ErrorAction Stop).Source
+$rateContext = Get-Content -Raw -LiteralPath (Join-Path $rateDirectory 'reference_context.json') | ConvertFrom-Json
+$rateState = [ordered]@{status='starting';pid=$PID;started_utc=(Get-Date).ToUniversalTime().ToString('o');runs=@();current_pid=$null;current_manifest=$null;persistence_retries=0}
+function Save-RateState {
+    $rateState['updated_utc'] = (Get-Date).ToUniversalTime().ToString('o')
+    $rateTemp = $rateStatePath + '.tmp'
+    for ($rateRetry=0; $rateRetry -lt 20; $rateRetry++) {
+        try {
+            [System.IO.File]::WriteAllText($rateTemp,($rateState | ConvertTo-Json -Depth 12),[System.Text.UTF8Encoding]::new($false))
+            if (Test-Path -LiteralPath $rateStatePath) {
+                [System.IO.File]::Replace($rateTemp,$rateStatePath,($rateStatePath + '.previous'))
+            } else { [System.IO.File]::Move($rateTemp,$rateStatePath) }
+            return
+        } catch [System.IO.IOException] {
+            if ($rateRetry -ge 19) { throw }
+            $rateState['persistence_retries']++
+            Start-Sleep -Milliseconds 100
+        }
+    }
+}
+function Assert-RateDeadline {
+    if ((Get-Date).ToUniversalTime() -ge [datetime]::Parse('2026-10-16T06:00:00Z').ToUniversalTime()) { throw 'Authorized morning cutoff reached; no new child' }
+}
+function Invoke-RateChild($rateArguments,$rateLogDirectory) {
+    Assert-RateDeadline
+    New-Item -ItemType Directory -Path $rateLogDirectory -ErrorAction Stop | Out-Null
+    $rateProcess = Start-Process -FilePath $ratePython -ArgumentList $rateArguments -WorkingDirectory $rateRoot -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $rateLogDirectory 'stdout.log') -RedirectStandardError (Join-Path $rateLogDirectory 'stderr.log')
+    $rateHandle = $rateProcess.Handle
+    $rateProcess.ProcessorAffinity = [IntPtr]16777215
+    $rateProcess.PriorityClass = 'Normal'
+    $rateState['current_pid'] = $rateProcess.Id
+    Save-RateState
+    $rateProcess.WaitForExit()
+    $rateProcess.Refresh()
+    $rateState['runs'] += [ordered]@{pid=$rateProcess.Id;exit_code=$rateProcess.ExitCode;log_directory=$rateLogDirectory;ended_utc=(Get-Date).ToUniversalTime().ToString('o')}
+    $rateState['current_pid']=$null
+    Save-RateState
+    if ($null -eq $rateProcess.ExitCode -or $rateProcess.ExitCode -ne 0) { throw ('Child failed: ' + $rateProcess.Id + ', exit=' + $rateProcess.ExitCode) }
+}
+function Quote-Rate($value) { return ('"' + $value + '"') }
+Save-RateState
+try {
+    $rateState['status']='points'
+    Save-RateState
+    $rateArguments = @('-X','utf8','-X','cpu_count=24',(Quote-Rate (Join-Path $rateRoot 'scratch\rate_R5_points.py')),
+        '--worktree',(Quote-Rate $rateContext.worktree),
+        '--plans',(Quote-Rate (Join-Path $rateDirectory 'points\plans.json')),
+        '--protocol',(Quote-Rate (Join-Path $rateDirectory 'measurement_protocol.json')),
+        '--reference-state',(Quote-Rate (Join-Path $rateDirectory 'reference_context.json')),
+        '--output',(Quote-Rate (Join-Path $rateDirectory 'points\measurement')),'--run','control',
+        '--deadline-utc','2026-10-16T06:00:00+00:00')
+    Invoke-RateChild $rateArguments (Join-Path $rateDirectory 'points\logs')
+    $ratePoints = Get-Content -Raw -LiteralPath (Join-Path $rateDirectory 'points\measurement\control.json') | ConvertFrom-Json
+    if ($ratePoints.verdict -ne 'OK' -or $ratePoints.simulations.Count -ne 12) { throw 'Fixed points not verified' }
+    $rateState['status']='native'
+    Save-RateState
+    Invoke-RateChild @('-X','utf8','-X','cpu_count=24',(Quote-Rate (Join-Path $rateRoot 'scratch\rate_R5_native.py')),
+        '--deadline-utc','2026-10-16T06:00:00+00:00') (Join-Path $rateDirectory 'native\logs')
+    $rateState['status']='complete_audit_pending'
+} catch {
+    $rateState['status']='failed'
+    $rateState['error']=$_.Exception.Message
+    throw
+} finally { Save-RateState }

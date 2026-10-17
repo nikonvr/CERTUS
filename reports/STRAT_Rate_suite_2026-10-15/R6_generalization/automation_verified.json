@@ -1,0 +1,7 @@
+{
+  "verdict": "GO",
+  "automation_id": "certus-essais-rate-jusqu-au-14-octobre-9-h",
+  "prompt_exact_readback": true,
+  "status": "ACTIVE",
+  "phase": "R6_c01_s77_control_engaged"
+}

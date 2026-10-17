@@ -1,0 +1,13 @@
+{
+  "phase": "R3_h03_post_g012",
+  "index": 12,
+  "branch": "native",
+  "pass": 1,
+  "stage": "coarse",
+  "new_plans": 9,
+  "before_scores": true,
+  "plans_sha256": "89bfc7eead62768c379a59abe19b0360ac2f518d230e416889b1dd300c308e91",
+  "protocol_sha256": "6b40d33d8407cdf241eda0a3ebed62ec2f10cbeaa83059547437a3ecc02bed1d",
+  "parent_selection_sha256": "1fc6cfeb23dfe2a5d5405e91411b99a8f30b812536d8b667f303509faffd9353",
+  "prepared_utc": "2026-10-15T18:10:19.434450+00:00"
+}

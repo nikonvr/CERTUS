@@ -1,0 +1,272 @@
+{
+  "started_utc": "2026-10-15T06:43:26.787825+00:00",
+  "resources": {
+    "logical_cpus": 24,
+    "affinity_mask": "0xffffff",
+    "priority": "normal",
+    "library_threads": 23
+  },
+  "physics_measured": false,
+  "timing_measured": false,
+  "purpose": "Thread-mask contract only; performance tests remain required",
+  "cases": [
+    {
+      "source": "before",
+      "source_sha256": "e920de666c9ef62a9709e161f487c549a20ecbb0f1b5c9af3901693f7d7c3f21",
+      "all_calls_use_one_numba_thread": false,
+      "observations": [
+        {
+          "thread": 5664,
+          "numba_threads": 23
+        },
+        {
+          "thread": 36408,
+          "numba_threads": 23
+        },
+        {
+          "thread": 41476,
+          "numba_threads": 23
+        },
+        {
+          "thread": 41232,
+          "numba_threads": 23
+        },
+        {
+          "thread": 41232,
+          "numba_threads": 23
+        },
+        {
+          "thread": 41232,
+          "numba_threads": 23
+        },
+        {
+          "thread": 41232,
+          "numba_threads": 23
+        },
+        {
+          "thread": 36408,
+          "numba_threads": 23
+        },
+        {
+          "thread": 5664,
+          "numba_threads": 23
+        },
+        {
+          "thread": 41476,
+          "numba_threads": 23
+        },
+        {
+          "thread": 41232,
+          "numba_threads": 23
+        },
+        {
+          "thread": 41232,
+          "numba_threads": 23
+        },
+        {
+          "thread": 41232,
+          "numba_threads": 23
+        },
+        {
+          "thread": 41232,
+          "numba_threads": 23
+        },
+        {
+          "thread": 41232,
+          "numba_threads": 23
+        },
+        {
+          "thread": 41232,
+          "numba_threads": 23
+        },
+        {
+          "thread": 41232,
+          "numba_threads": 23
+        },
+        {
+          "thread": 5664,
+          "numba_threads": 23
+        },
+        {
+          "thread": 41476,
+          "numba_threads": 23
+        },
+        {
+          "thread": 36408,
+          "numba_threads": 23
+        },
+        {
+          "thread": 36172,
+          "numba_threads": 1
+        },
+        {
+          "thread": 36172,
+          "numba_threads": 1
+        },
+        {
+          "thread": 36172,
+          "numba_threads": 1
+        },
+        {
+          "thread": 36172,
+          "numba_threads": 1
+        },
+        {
+          "thread": 36172,
+          "numba_threads": 1
+        },
+        {
+          "thread": 36172,
+          "numba_threads": 1
+        },
+        {
+          "thread": 36172,
+          "numba_threads": 1
+        },
+        {
+          "thread": 36172,
+          "numba_threads": 1
+        },
+        {
+          "thread": 36172,
+          "numba_threads": 1
+        },
+        {
+          "thread": 36172,
+          "numba_threads": 1
+        }
+      ]
+    },
+    {
+      "source": "after",
+      "source_sha256": "736fe81e289bcb2ac72dd56c6bd7d6cdddf9de9a20528504fddf148a169af6c2",
+      "all_calls_use_one_numba_thread": true,
+      "observations": [
+        {
+          "thread": 44208,
+          "numba_threads": 1
+        },
+        {
+          "thread": 44208,
+          "numba_threads": 1
+        },
+        {
+          "thread": 44208,
+          "numba_threads": 1
+        },
+        {
+          "thread": 44208,
+          "numba_threads": 1
+        },
+        {
+          "thread": 37692,
+          "numba_threads": 1
+        },
+        {
+          "thread": 51764,
+          "numba_threads": 1
+        },
+        {
+          "thread": 37692,
+          "numba_threads": 1
+        },
+        {
+          "thread": 44208,
+          "numba_threads": 1
+        },
+        {
+          "thread": 51764,
+          "numba_threads": 1
+        },
+        {
+          "thread": 37692,
+          "numba_threads": 1
+        },
+        {
+          "thread": 44208,
+          "numba_threads": 1
+        },
+        {
+          "thread": 44208,
+          "numba_threads": 1
+        },
+        {
+          "thread": 44208,
+          "numba_threads": 1
+        },
+        {
+          "thread": 44208,
+          "numba_threads": 1
+        },
+        {
+          "thread": 44208,
+          "numba_threads": 1
+        },
+        {
+          "thread": 44208,
+          "numba_threads": 1
+        },
+        {
+          "thread": 44208,
+          "numba_threads": 1
+        },
+        {
+          "thread": 27604,
+          "numba_threads": 1
+        },
+        {
+          "thread": 51764,
+          "numba_threads": 1
+        },
+        {
+          "thread": 37692,
+          "numba_threads": 1
+        },
+        {
+          "thread": 36172,
+          "numba_threads": 1
+        },
+        {
+          "thread": 36172,
+          "numba_threads": 1
+        },
+        {
+          "thread": 36172,
+          "numba_threads": 1
+        },
+        {
+          "thread": 36172,
+          "numba_threads": 1
+        },
+        {
+          "thread": 36172,
+          "numba_threads": 1
+        },
+        {
+          "thread": 36172,
+          "numba_threads": 1
+        },
+        {
+          "thread": 36172,
+          "numba_threads": 1
+        },
+        {
+          "thread": 36172,
+          "numba_threads": 1
+        },
+        {
+          "thread": 36172,
+          "numba_threads": 1
+        },
+        {
+          "thread": 36172,
+          "numba_threads": 1
+        }
+      ]
+    }
+  ],
+  "verdict": "GO",
+  "baseline_unchanged": true,
+  "regression_contract_fails_before": true,
+  "finished_utc": "2026-10-15T06:43:30.142854+00:00"
+}

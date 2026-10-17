@@ -1,0 +1,60 @@
+{
+  "status": "complete",
+  "pid": 22740,
+  "run": "search",
+  "setting": {
+    "robustness_seed": 101,
+    "consensus_seed_list": [
+      41,
+      42,
+      43
+    ]
+  },
+  "plans_sha256": "08646f6b9d23e25ed139bd43cb43bf9296e55cf2543a2ee3d91bdac4dce0c841",
+  "resources": {
+    "logical_cpus": 24,
+    "affinity_mask": "0xffffff",
+    "priority": "normal",
+    "library_threads": 23
+  },
+  "source_sha256": {
+    "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+    "certus/core/certus_strat_robustness.py": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+    "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+    "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e"
+  },
+  "bounded_program": {
+    "phase": "R4_g013",
+    "resources": {
+      "logical_cpus": 24,
+      "affinity_mask": "0xffffff",
+      "priority": "normal",
+      "library_threads": 23
+    },
+    "slot": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_013\\measurement",
+    "source_sha256": {
+      "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+      "certus/core/certus_strat_robustness.py": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+      "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+      "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+      "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e"
+    },
+    "quota": 1,
+    "deadline_utc": "2026-10-16T06:00:00+00:00",
+    "authorization_sha256": "50448c46c5a2335d7d706cf564e2565d97c5d2e6de447913071103af4b39ffa9",
+    "validation_sha256": "03de1b4f0985438843f3f2afb8f2bc2f81a06dd44737e37acfa7ce510aef51ba",
+    "window_authorization_sha256": "3f7f52860cd28152b70fa7577a3a5de32308d26021401a12b43f0d4d6cc400c4",
+    "protocol_sha256": "04b7393cf981e1bb8cdbadb24e4169d1cadcb1bcb4729e100599c55fbecc570c",
+    "manifest_sha256": "88774cd71671401cc1c85f1842efc9fda2c7d7bb9fce9c704c8bb1fc9652a4a7",
+    "plans_sha256": "08646f6b9d23e25ed139bd43cb43bf9296e55cf2543a2ee3d91bdac4dce0c841"
+  },
+  "launcher_sha256": {
+    "launcher": "404bf29eb51b58fd9bac13c089bb7aa9bfd4d4812740f63c1909dab61d9337f5",
+    "bounded_guard": "326c0614b8aeddc6faa7408793b0623a97932a42588dfc1e4301367143534491",
+    "controller_helper": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51"
+  },
+  "started": "2026-10-15T13:27:15.895965+00:00",
+  "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\groups\\group_013\\measurement\\search.json",
+  "errors": []
+}

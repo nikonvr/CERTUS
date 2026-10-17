@@ -133,10 +133,9 @@ def install_probe() -> None:
         for layer_idx in (0, 1, 12, 24, 36, num_layers - 1):
             if layer_idx < 0 or layer_idx >= num_layers:
                 continue
-            pts = []
-            for w in range(max_W):
-                if valid_mask[layer_idx, w]:
-                    pts.append((float(layer_wls[layer_idx, w]), float(layer_costs[layer_idx, w])))
+            pts = [
+                (float(layer_wls[layer_idx, w]), float(layer_costs[layer_idx, w])) for w in range(max_W) if valid_mask[layer_idx, w]
+            ]
             pts.sort()
             curves[str(layer_idx)] = {
                 "n_valid": len(pts),

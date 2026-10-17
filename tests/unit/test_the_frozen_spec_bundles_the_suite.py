@@ -35,7 +35,6 @@ NEEDED = (
     "pages/CERTUS_HUB.html",
     "pages/CERTUS_DESIGN.html",
     "example/database_index/indices.xlsx",
-    "example/sapphire fresnel.xlsx",
     # Loaded BY PATH by `_certus_physics_impl` when the package import cycles (a module that imports
     # it before `certus_physics`, METAL_SINGLE): CERTUS_METAL_SINGLE could not start without it.
     "certus_physics/structures.py",

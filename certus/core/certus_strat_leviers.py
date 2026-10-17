@@ -77,13 +77,13 @@ LEVIERS: tuple[Levier, ...] = (
     # ---------------------------------------------------------------- RATE: the mechanism
     Levier(
         cle="allow_rate",
-        libelle="Autoriser le Rate (quartz / chrono)",
+        libelle="Autoriser le Rate (temps x vitesse estimee)",
         defaut=True,
         genre="bool",
         statut=VALIDE,
         mesure="ON par defaut depuis le 2026-08-12, sur demande de 👤 : « add that rate is "
                "always allowed ». Chaque survivante est etendue en variantes portant une couche "
-               "pilotee au quartz, et le classement les compare COTE A COTE avec le pur optique.",
+               "posee au temps, a la vitesse estimee sur les couches controlees optiquement, et le classement les compare COTE A COTE avec le pur optique.",
         reserve="En mode Rate il n'y a AUCUNE compensation d'erreur : l'ecart part en boucle "
                 "ouverte vers la couche suivante. Une gagnante qui porte un Rate n'est pas la "
                 "meme promesse pour l'atelier qu'une gagnante en pur optique.",
@@ -119,7 +119,7 @@ LEVIERS: tuple[Levier, ...] = (
                "une dynamique aussi pauvre qu'une ultrafine.",
         reserve="🔴 IL SERT A DEUX ETAGES A LA FOIS, et c'est delibere : la Phase A l'emploie "
                 "pour FILTRER les longueurs d'onde candidates, le placement Rate pour designer "
-                "les couches qui ont BESOIN d'un quartz. Le baisser elargit les deux ; "
+                "les couches qui ont BESOIN du Rate. Le baisser elargit les deux ; "
                 "l'augmenter les restreint tous les deux. Un reglage, deux effets -- ne pas "
                 "l'ajuster pour le Rate sans regarder ce qu'il fait a la Phase A.",
     ),
@@ -174,6 +174,154 @@ LEVIERS: tuple[Levier, ...] = (
                "ACCUMULEE. Franchir la zone en boucle ouverte l'evite.",
         reserve="🔴 C'EST UNE AFFAIRE DE 2 nm. A 1 nm, le pur optique la BAT. Et le SEEL "
                 "obtenu (0,68-0,69) est +18 % au-dessus de la voie avec rampes.",
+    ),
+    Levier(
+        cle="rate_tail_keep_optical",
+        libelle="Queue Rate : couches de la queue gardees en optique (les N au swing le plus fort)",
+        defaut=0,
+        genre="int",
+        statut=NON_MESURE,
+        mesure="Regle d'exception de 👤 (2026-08-19) : « sauf les couches a bon signal qui restent en optique ». Dans chaque "
+               "queue de `rate_tail_sweep`, les N couches de plus fort swing restent en optique et les autres passent en Rate ; "
+               "a 0 la queue n'est pas touchee. Jamais mesure : aucun resultat dans docs/ETAT.md, "
+               "docs/STRAT_Rate_suite_chantier.md ni reports/ (recherche du 2026-10-16), et tous les artefacts de reports/ qui "
+               "portent la cle la montrent a 0.",
+        reserve="N'agit que si `rate_tail_sweep` n'est pas vide ET si le placement par swing est disponible (`rate_by_swing` "
+                "arme et son contexte construit) : sinon aucune couche n'est gardee, et l'etiquette de la variante porte "
+                "quand meme `K<N>`. Se pose par la configuration JSON, sans widget. 🔴 Le 2026-08-19 (commit `788b6d70`) le "
+                "mecanisme faisait PREDIRE qu'elle nuit -- rouvrir une couche optique au milieu de la queue reintroduit un point "
+                "de plantage et reexpose tout l'aval, donc moins de deposables ou un SEEL pire : une prediction, pas une mesure.",
+    ),
+    # ---------------------------------------------------------------- RATE: the surgical sets
+    Levier(
+        cle="rate_layer_sets",
+        libelle="Rate chirurgical : jeux de couches posees en Rate, une variante par strategie et par jeu",
+        defaut=None,
+        genre="liste",
+        statut=RESERVE,
+        mesure="📏 Essai E2 du rapport du 2026-10-12, r75x0.5, graine 101, `03990e9a`, `rate_by_swing` et secours eteints : "
+               "les jeux {22, 25, 28} puis +46, +51, +62, +69 et 72 (indices) ne rendent AUCUN plan deposable sur 4 614 ; "
+               "plantage minimal 52,0 % pour ces jeux (47,0 % toutes familles confondues). Le rapport en conclut que les couches "
+               "critiques d'un plan optique pur ne designent pas ou poser le Rate : une fois les premieres en Rate, ce sont "
+               "d'autres couches qui cedent.",
+        reserve="Un seul essai : un composant, une graine, sans le placement par swing ni le secours Rate que la production "
+                "arme par defaut ; il ne dit rien de la production actuelle ni d'un autre composant, et aucune autre mesure "
+                "ne figure dans docs/ETAT.md, docs/STRAT_Rate_suite_chantier.md ni reports/ (recherche du 2026-10-16). Cout : "
+                "une variante par strategie ET par jeu, hors du plafond `rate_max_variants_per_strategy` et de "
+                "`rate_variant_top_n`. Se pose par la configuration JSON, sans widget : les jeux separes par `;`, les couches "
+                "d'un jeu par `-`, indices depuis 0 (`22-25-28;22-25-28-46`). Vide, la recherche est inchangee.",
+    ),
+    # ---------------------------------------------------------------- RATE: the rescue
+    Levier(
+        cle="rate_rescue",
+        libelle="Secours Rate : poser en Rate la queue des plans qui ne se terminent pas",
+        defaut=True,
+        genre="bool",
+        statut=RESERVE,
+        mesure="👤 2026-10-12 : « le rate doit etre integre a chaque design, quel que soit le filtre, et encore plus "
+               "quand on retrouve peu de strategies deposables ; r75x0.5 est un bon test, on doit finir par trouver des "
+               "strategies, quitte a tout finir au rate ». Pour les plans que la porte de plantage rejette, cherche la "
+               "couche ou le controle optique cede, pose tout en Rate de la jusqu'au bout, puis depuis des coupures plus "
+               "precoces jusqu'a la couche 2 : un plan qui se termine existe toujours. 📏 r75x0.5, graine 101, avec les "
+               "queues de rate_tail_sweep : 0 plan sur 2 897 se termine avec UNE couche Rate par variante, 522 sur 547 avec "
+               "des queues des couches 16 a 28 (meilleur SEEL 0,555 nm), 2 272 sur 2 272 des couches 2 a 14 (de 0,767 nm, "
+               "tout en Rate sauf les couches 0 et 1, a 0,563 nm).",
+        reserve="Rate n'a AUCUNE compensation d'erreur : un plan qui pose 59 couches en Rate promet moins a l'atelier "
+                "qu'un plan optique, et le classement le compare a eux sur le seul SEEL. Cout en calcul : jusqu'a 240 "
+                "evaluations par passe quand rien ne se termine. `false` retablit le chemin d'avant, au bit.",
+    ),
+    Levier(
+        cle="rate_rescue_few",
+        libelle="Secours Rate : sous ce nombre de plans deposables dans la passe, a pleine force",
+        defaut=10,
+        genre="int",
+        statut=RESERVE,
+        mesure="Sous le seuil le secours essaie 30 plans x 8 coupures ; au-dessus, 3 plans x 2 coupures (la couche ou "
+               "le controle cede, et la couche 2). Le seuil compte les plans deposables d'UNE passe, c'est-a-dire d'un "
+               "nombre de blocs, pas ceux de la campagne.",
+        reserve="Le nombre de plans deposables d'une passe depend de sa taille : 10 est un reglage de depart, pas une "
+                "mesure. Monter le seuil donne plus de queues Rate aux composants qui ont deja des plans deposables.",
+    ),
+    Levier(
+        cle="rate_rescue_hard",
+        libelle="Secours Rate : poser en Rate les seules couches ou les tirages plantent d'abord, par tours",
+        defaut=False,
+        genre="bool",
+        statut=RESERVE,
+        mesure="📏 r75x0.5, graine 101, `dbf8025f`, rapport du 2026-10-12, `rate_rescue_hard=true` et rien d'autre de change : "
+               "410 plans « couches difficiles » evalues, 35 deposables (8,5 %), contre 2 680 deposables sur 3 467 queues (77 %) ; "
+               "liste finale de 3 701 a 3 760 plans, tous deposables ; meilleur SEEL 0,4981 nm avant et apres, le meme plan "
+               "(ELITE, 12 blocs, Rate des indices 17 a 74).",
+        reserve="Une graine, un composant, et aucun gain sur le meilleur. Au 2026-10-16 l'application ne le transmet pas "
+                "(`collect_params` ne le lit pas) : il se pose par `CERTUS_PROBE_OVERRIDES`. Cout : jusqu'a 10 plans sur 8 tours "
+                "quand aucun plan ne se termine, 1 plan sur 2 tours a `rate_rescue_few` plans deposables ou plus, jusqu'a 4 couches "
+                "ajoutees par tour ; il suppose `rate_rescue` et `allow_rate` armes. `false` retablit le chemin d'avant.",
+    ),
+    # ---------------------------------------------------------------- RATE: the Rate layers, moved by ELITE
+    Levier(
+        cle="elite_rate_moves",
+        libelle="ELITE deplace les couches Rate de ses parents (optique, paquet de Rate, optique a une autre longueur d'onde)",
+        defaut=True,
+        genre="bool",
+        statut=RESERVE,
+        mesure="👤 2026-10-12 : « l'experience empirique montre qu'il y a des fois de bonnes strategies avec des paquets d'optique "
+               "a une longueur d'onde puis un paquet de rate puis re un paquet d'optique a une autre longueur d'onde » -- et « est-ce "
+               "que tu autorises apres le rate a reprendre en optique ? C'est important ». Le noyau l'autorise ; la recherche ne le "
+               "proposait pas (les plans deposables avec de l'optique apres du Rate n'avaient que deux paquets de Rate). 📏 Arme, "
+               "`cea0db66` et `5da02db9` : r75x0.5 (graines 42 / 101 / 202) 0,5031 / 0,4981 / 0,5000 -> 0,4347 / 0,3967 / 0,3967 nm (le "
+               "meilleur plan des graines 101 et 202 alterne trois paquets de Rate et deux fenetres d'optique de deux couches, la "
+               "premiere a 451 nm), juge de paix 0,1849 -> 0,1721 nm, r75x2 (graines 101 / 42) 0,5406 / 0,5678 -> 0,5358 / 0,5477 nm ; "
+               "toutes les listes deposables.",
+        reserve="Le modele de Rate n'a ni derive de la source ni bruit propre de la vitesse : ces gains sont ceux du modele. Une a "
+                "trois graines par composant. Cout : jusqu'a `elite_rate_max_candidates` candidats de plus par tour d'ELITE. `false` "
+                "retablit le chemin d'avant, au bit ; `allow_rate = 0` l'eteint aussi.",
+    ),
+    Levier(
+        cle="elite_rate_max_candidates",
+        libelle="ELITE : candidats de plus par tour pour les couches Rate",
+        defaut=120,
+        genre="int",
+        statut=RESERVE,
+        mesure="120, comme les candidats sur les longueurs d'onde ; les parents se les partagent un mouvement chacun, les plus "
+               "proches d'abord (une couche de plus ou de moins au bout d'un paquet, un trou d'optique referme, une fenetre "
+               "d'optique ouverte dans un paquet de Rate, un paquet de Rate pose dans l'optique).",
+        reserve="Jamais balaye : 120 est un reglage de depart.",
+    ),
+    Levier(
+        cle="elite_rate_balanced_moves",
+        libelle="ELITE : repartit les mouvements Rate entre familles, largeurs et positions (au meme plafond)",
+        defaut=False,
+        genre="bool",
+        statut=RESERVE,
+        mesure="A/B du 2026-10-13, r75x0.5 deep graine 101, defauts de production et 120 candidats Rate par tour : SEEL 0,396715 nm "
+               "(ordre historique, 4069 plans deposables) contre 0,479488 nm (familles reparties, 3777 plans), soit +20,86 % ; "
+               "c'est le seul essai, et il est defavorable.",
+        reserve="Un composant, une graine : ni generalisation ni activation par defaut. `false` conserve l'ordre historique "
+                "des candidats.",
+    ),
+    Levier(
+        cle="elite_rate_joint_candidates",
+        libelle="ELITE : budget experimental de fenetres optiques et longueurs d'onde conjointes",
+        defaut=0,
+        genre="int",
+        statut=NON_MESURE,
+        mesure="Prototype R3_h03, r75x0.5 deep graine101 : voisinage conjoint de480 propositions, largeurs1..7 et lambda fine, "
+               "puis raffinement final ; gain frais moyen5,2130% sur trois groupes contre sa recherche propre. La voie integree reste a mesurer.",
+        reserve="Budget supplementaire par tour, borne a480 ; zero conserve le generateur historique. Les largeurs et lambda seules "
+                "n'ont pas gagne dans les deux premieres paires. Pas de generalisation ni d'activation par defaut.",
+    ),
+    Levier(
+        cle="rate_post_refinement",
+        libelle="Rate : raffinement experimental final des parents issus de la seule recherche native",
+        defaut=False,
+        genre="bool",
+        statut=NON_MESURE,
+        mesure="Prototype automatique R3_h03 :0,3431123800nm contre0,3600987135nm, puis3/3 groupes frais favorables, gain moyen5,2130%. "
+               "Le meilleur plan local0,3345159946nm reste devant ; l'integration et les autres graines ne sont pas encore validees.",
+        reserve="Cout supplementaire : deux passes au plus, faisceau2,600propositions au total,300par passe et consensus complet. "
+                "Aucune ancre historique injectee comme parent. False conserve la finalisation historique ; allow_rate=0 l'eteint aussi. "
+                "Les prerequis du consensus (actif, consensus_top_k >= 9, au moins 2 graines) sont verifies au demarrage : sinon la "
+                "campagne s'arrete avant la recherche.",
     ),
     # ---------------------------------------------------------------- RATE: the constants
     Levier(

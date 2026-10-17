@@ -82,7 +82,9 @@ def un_run(cfg: str, dp_top_k: int) -> dict:
     Bx.qapp()
     Bx.autoanswer_dialogs(True)
     app = CertusStratApp()
-    app.load_configuration(str(ROOT / cfg))
+    from _composant import charger_configuration
+
+    charger_configuration(app, ROOT / cfg)
     if "execution_mode" in getattr(app, "widgets", {}):
         app.widgets["execution_mode"].setCurrentText("fast")
 

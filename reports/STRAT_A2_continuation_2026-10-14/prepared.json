@@ -1,0 +1,33 @@
+{
+  "prepared_utc": "2026-10-14T07:08:26.981606+00:00",
+  "runner": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\a2_continue_runner.py",
+  "arguments": [
+    "--worktree",
+    "C:\\Users\\Lemarchand\\.codex\\worktrees\\campagne-a2\\certus0310",
+    "--campaign",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_ELITE_couches_Rate_autres_composants_2026-10-13",
+    "--output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_A2_continuation_2026-10-14",
+    "--previous-controller-pid",
+    "23280"
+  ],
+  "authorization": "Human explicitly requested finishing the remaining batches on2026-10-14; continuation of A2 through24/24 supersedes the old09h launch cutoff for A2 only",
+  "status": "prepared_not_started",
+  "expected_total": 24,
+  "completed_at_authorization": 7,
+  "previous_controller_pid": 23280,
+  "previous_scientific_pid": 28448,
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "Normal",
+    "library_threads": 15
+  },
+  "hashes": {
+    "a2_continue_runner.py": "31e7edd0a4d2bccdba1a177ad0365f37c7014bc769faa74a585aa78764f76f3a",
+    "campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51",
+    "campagne_a2_deadline_runner.py": "52aee00f5ff49e0c93dd5fcacab418354cb4774952c92d428334e1f17e6c40e6"
+  },
+  "review": "Wait on exact previous process handle, preserve checkpoint, inspect live scientific processes and source hashes, start original validated controller only at an idle boundary; no scientific process interrupted",
+  "validation": "Ruff/static/manual review; runtime startup waiting check only while measure active, no unit tests during science"
+}

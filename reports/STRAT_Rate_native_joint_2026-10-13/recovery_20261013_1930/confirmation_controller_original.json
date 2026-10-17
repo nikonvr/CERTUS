@@ -1,0 +1,28 @@
+{
+  "status": "failed",
+  "pid": 21120,
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "hashes": {
+    "replay": "ff7945ef100234936381d84012310f1a73328a6ba9e15f53fa5ec092a2b2e6dd",
+    "protocol": "33974126d23f49d96e7393249c500f0d27aa882159b23be551cb23684c36c68c"
+  },
+  "sequence": [
+    "control",
+    "holdout_202",
+    "holdout_303",
+    "holdout_404",
+    "holdout_505",
+    "holdout_606",
+    "holdout_707"
+  ],
+  "runs": [],
+  "current": null,
+  "current_pid": null,
+  "updated": "2026-10-13T17:29:34+00:00",
+  "error": "Native controller failed; confirmation not started"
+}

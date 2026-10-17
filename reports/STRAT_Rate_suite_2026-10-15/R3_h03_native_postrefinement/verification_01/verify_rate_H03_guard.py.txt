@@ -1,0 +1,57 @@
+"""Exercise real readiness and read-only refusal checks without reserving a slot."""
+
+import json
+import os
+from pathlib import Path
+from unittest.mock import patch
+
+import rate_H03_guard as guard
+from rate_R4_planner_resume_v3 import save
+
+
+def main():
+    guard.check_deadline()
+    protocol = guard.read(guard.EXPERIMENT / "protocol.json")
+    sources = protocol["source_sha256"]
+    arguments = ("R3_h03_control", guard.EXPERIMENT / "control", sources)
+    proof = guard.check_ready(*arguments)
+    checks = ["Real host isolation, completed A2/full validation, frozen protocol and sources: GO"]
+
+    def reject(*args):
+        try:
+            guard.check_ready(*args)
+        except RuntimeError:
+            return
+        raise AssertionError("Missing refusal")
+
+    reject("R3_h04_control", guard.EXPERIMENT / "control", sources)
+    reject("R3_h03_control", guard.EXPERIMENT / "variant", sources)
+    reject("R3_h03_control", guard.EXPERIMENT / "control", {})
+    checks += ["Unknown fourth pair refused", "Wrong output slot refused", "Unvalidated source set refused"]
+    processes = [{"ProcessId": os.getpid(), "CommandLine": "this verification"},
+                 {"ProcessId": 123456789, "CommandLine": "python -m pytest tests/unit"}]
+    with patch.object(guard.subprocess, "check_output", return_value=json.dumps(processes)):
+        reject(*arguments)
+    checks.append("Concurrent Python test refused; no generic controller exemption")
+    original_glob = Path.glob
+
+    def exhausted(path, pattern, **kwargs):
+        if pattern == "R3_*_control.json":
+            return iter([Path("first"), Path("second"), Path("third")])
+        return original_glob(path, pattern, **kwargs)
+
+    with patch.object(Path, "glob", exhausted):
+        reject(*arguments)
+    checks.append("Fourth control refused when three pair claims are present")
+    claim = guard.PROGRAM / "claims/R3_h03_control.json"
+    original_exists = Path.exists
+    with patch.object(Path, "exists", lambda p: True if p == claim else original_exists(p)):
+        reject(*arguments)
+    checks.append("Existing permanent claim refused; no claim created or removed")
+    save(guard.EXPERIMENT / "verification_01/guard_verification.json",
+         {"verdict": "GO", "checks": checks, "ready_proof": proof, "reservations_created": 0}, immutable=True)
+    print(json.dumps({"verdict": "GO", "checks": len(checks), "reservations_created": 0}))
+
+
+if __name__ == "__main__":
+    main()

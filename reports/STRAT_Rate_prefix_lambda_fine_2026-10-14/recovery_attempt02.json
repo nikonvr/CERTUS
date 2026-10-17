@@ -1,0 +1,20 @@
+{
+  "prepared_utc": "2026-10-14T00:32:29.757837+00:00",
+  "runner": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_prefix_fine_runner.py",
+  "arguments": [
+    "--worktree",
+    "C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-equilibre\\certus0310",
+    "--proposals",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_lambda_fine_2026-10-14\\proposals.json",
+    "--protocol",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_lambda_fine_2026-10-14\\protocole_validation_prefix_fine_v7.json",
+    "--reference-state",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_equilibre_AB_2026-10-13\\etat.json",
+    "--trial-output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_2026-10-14",
+    "--output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_prefix_lambda_fine_2026-10-14\\attempt_02"
+  ],
+  "reason": "Original prerequisite failed because native winner export had base-only score. Fine prefix already has its own passing strict control and fresh holdouts at complete depth; use that completed validated prefix campaign as prerequisite, after native audit has ended. Original failed state/logs preserved. No change to proposals, physics, depths or tolerances.",
+  "trusted_prefix_plans_sha256": "c09d40815b34e17359b2394b02507b99b9eb18037b7bd78a8da407b80974153f"
+}

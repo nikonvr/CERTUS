@@ -121,7 +121,7 @@ def test_u9_icons_are_real_lucide_names():
 def test_u9_variant_color_returns_three_hex_strings():
     from certus.utils.certus_badges import supported_variants, variant_color
 
-    for v in list(supported_variants()) + ["unknown"]:
+    for v in [*supported_variants(), "unknown"]:
         bg, fg, border = variant_color(v)
         for x in (bg, fg, border):
             assert isinstance(x, str)

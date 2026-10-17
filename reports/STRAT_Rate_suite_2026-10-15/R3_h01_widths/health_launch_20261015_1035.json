@@ -1,0 +1,13 @@
+{
+  "observed_utc": "2026-10-15T08:37:10.892116+00:00",
+  "status": "running",
+  "controller_pid": 36608,
+  "child_pid": 21508,
+  "phase": "control",
+  "python_cpu_count": 24,
+  "affinity_verified": 16777215,
+  "priority_verified": "Normal",
+  "scientific_processes": 1,
+  "new_scientific_result": false,
+  "tests_or_source_edits_after_launch": false
+}

@@ -1,0 +1,34 @@
+{
+  "prepared_utc": "2026-10-14T01:01:45.813788+00:00",
+  "status": "prepared_waiting_not_measuring",
+  "runner": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_native_pool_confirmation_runner.py",
+  "arguments": [
+    "--worktree",
+    "C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-equilibre\\certus0310",
+    "--pool-output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_native_prefix_consensus_all_2026-10-14",
+    "--output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_native_prefix_pool_2026-10-14",
+    "--reference-state",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_equilibre_AB_2026-10-13\\etat.json",
+    "--protocol",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_native_prefix_consensus_all_2026-10-14\\protocole_validation_native_prefix_v6.json",
+    "--fixed-plans",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_fine_2026-10-14\\plans.json"
+  ],
+  "hashes": {
+    "rate_native_pool_confirmation_runner.py": "6efbc17a4578316727f086617591bbb3e7c52d893d025fca0346fa93738b6829",
+    "rate_fixed_replay_confirmation_v7.py": "210b9ab4de1c72dccd545e3019bdcec8e6960b9a41235b8d9ddc7543920b4130",
+    "campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51",
+    "protocole_validation_native_prefix_v6.json": "09b7f40d016b9c516c23e5e30c968ae4a5a3d6b9cbd2b0d8dfe5415ed688dccf",
+    "plans.json": "7d50ea16ef6f68c0254cc60d34acc0038283df84347828b41bb3fa4910657def"
+  },
+  "fresh_groups": [
+    1515,
+    1616,
+    1717
+  ],
+  "review": "Copied successful full-pool confirmation controller. Select minimum complete-consensus proposal only after every native saved plan is rescored; anchors excluded; verify artifact/meta/exact plan transfer. Five fixed comparators plus distinct winner ID9900005; original IDs retained. Same existing replay v7, full depth and tolerance. AST and manual static review, no runtime test during active pool.",
+  "deadline_utc": "2026-10-14T07:00:00Z",
+  "limits": "Saved depositables only; baseline native joint full pool not rescored, no complete causal attribution of the prefix generator."
+}

@@ -1,8 +1,5 @@
 # Third-party notices
 
-> **Established on 2026-10-06 with the owner**, who settled what the repository did not establish. The one item
-> still marked « à confirmer par toi » waits for the owner.
-
 CERTUS is licensed under the GPL-3.0-only ([`LICENSE`](LICENSE)). This file lists what the repository and the frozen
 executable redistribute that is the work of others. The licence of a third-party item keeps applying to it: the
 GPL-3.0 does not replace it.
@@ -70,8 +67,7 @@ Measured values from the literature and from manufacturers, reproduced for compu
 | CIE 1931 2° colour-matching functions | `certus/physics/certus_colorimetry.py` | the rows 380, 385, …, 780 nm of `CIE_xyz_1931_2deg.csv`, International Commission on Illumination (CIE), 2019, DOI [10.25039/CIE.DS.xvudnb9b](https://doi.org/10.25039/CIE.DS.xvudnb9b), licensed [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/); Creative Commons lists the GPL-3.0 as compatible with it for adapted material |
 | CIE illuminant D65 | same | the rows 380, 385, …, 780 nm of `CIE_std_illum_D65.csv`, identical to the bit, CIE, 2019, DOI [10.25039/CIE.DS.hjfjmt59](https://doi.org/10.25039/CIE.DS.hjfjmt59), licensed [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
 
-The other data of the repository are the author's: the sapphire index table (`example/database_index/sapphire_index.txt`
-and its copy), the Cauchy presets of `data/materials_v1.json`, and the measurements, simulations and configurations
+The other data of the repository are the author's: the Cauchy presets of `data/materials_v1.json`, and the measurements, simulations and configurations
 of `example/` and `samples/`.
 
 ## 3. In the frozen executable

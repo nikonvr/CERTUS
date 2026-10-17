@@ -1,0 +1,442 @@
+{
+  "verdict": "GO_WITH_RECORDED_NUMERIC_AND_NATIVE_TRAJECTORY_DIFFERENCES",
+  "audited_utc": "2026-10-15T21:35:19.511776+00:00",
+  "script_sha256": "69d4c38f0c3c9e07fb44f2ce0637f2912e503b119496404910191f20e3f48e1c",
+  "artifact_sha256": "a50a6179c5af2d225c8b20126e8ba96e106d56d7a9f96972d590fa65954ec249",
+  "protocol_sha256": "4da65013cce056613ca95d5c2886633e216c3353636063088957959c3d56cf2c",
+  "initial_native_measurement_consumed": true,
+  "production_post_matches_full_plan_groups": true,
+  "automatic_parent_ids": [
+    900754638,
+    900754520
+  ],
+  "groups": 37,
+  "new_proposals": 305,
+  "actual_post_calls": 997,
+  "actual_all_task_calls": 110116,
+  "stage_counts": {
+    "accepted": 305,
+    "duplicate": 52,
+    "boundary_or_exhausted": 23
+  },
+  "post_incomplete_or_nonfinite": 126,
+  "post_max_absolute_consensus_difference_vs_prototype": 2.55351295663786e-15,
+  "active_full_pipeline_bit_identity": false,
+  "new_native_strategies": 5463,
+  "native_generation_calls": 123,
+  "changed_native_generation_calls": [
+    {
+      "index": 77,
+      "context": {
+        "elite_scope": 31,
+        "round": 1
+      },
+      "new_count": 840,
+      "prototype_count": 840
+    },
+    {
+      "index": 78,
+      "context": {
+        "elite_scope": 31,
+        "round": 2
+      },
+      "new_count": 840,
+      "prototype_count": 840
+    },
+    {
+      "index": 79,
+      "context": {
+        "elite_scope": 31,
+        "round": 3
+      },
+      "new_count": 840,
+      "prototype_count": 840
+    },
+    {
+      "index": 80,
+      "context": {
+        "elite_scope": 31,
+        "round": 4
+      },
+      "new_count": 840,
+      "prototype_count": 840
+    },
+    {
+      "index": 81,
+      "context": {
+        "elite_scope": 31,
+        "round": 5
+      },
+      "new_count": 840,
+      "prototype_count": 840
+    },
+    {
+      "index": 82,
+      "context": {
+        "elite_scope": 31,
+        "round": 6
+      },
+      "new_count": 840,
+      "prototype_count": 840
+    },
+    {
+      "index": 84,
+      "context": {
+        "elite_scope": 33,
+        "round": 1
+      },
+      "new_count": 360,
+      "prototype_count": 360
+    },
+    {
+      "index": 92,
+      "context": {
+        "elite_scope": 36,
+        "round": 1
+      },
+      "new_count": 360,
+      "prototype_count": 360
+    },
+    {
+      "index": 93,
+      "context": {
+        "elite_scope": 37,
+        "round": 1
+      },
+      "new_count": 840,
+      "prototype_count": 840
+    },
+    {
+      "index": 94,
+      "context": {
+        "elite_scope": 37,
+        "round": 2
+      },
+      "new_count": 840,
+      "prototype_count": 840
+    },
+    {
+      "index": 95,
+      "context": {
+        "elite_scope": 37,
+        "round": 3
+      },
+      "new_count": 840,
+      "prototype_count": 840
+    },
+    {
+      "index": 96,
+      "context": {
+        "elite_scope": 37,
+        "round": 4
+      },
+      "new_count": 840,
+      "prototype_count": 840
+    },
+    {
+      "index": 97,
+      "context": {
+        "elite_scope": 37,
+        "round": 5
+      },
+      "new_count": 840,
+      "prototype_count": 840
+    },
+    {
+      "index": 98,
+      "context": {
+        "elite_scope": 37,
+        "round": 6
+      },
+      "new_count": 840,
+      "prototype_count": 840
+    },
+    {
+      "index": 100,
+      "context": {
+        "elite_scope": 39,
+        "round": 1
+      },
+      "new_count": 337,
+      "prototype_count": 336
+    },
+    {
+      "index": 101,
+      "context": {
+        "elite_scope": 40,
+        "round": 1
+      },
+      "new_count": 800,
+      "prototype_count": 810
+    },
+    {
+      "index": 102,
+      "context": {
+        "elite_scope": 40,
+        "round": 2
+      },
+      "new_count": 820,
+      "prototype_count": 819
+    },
+    {
+      "index": 103,
+      "context": {
+        "elite_scope": 40,
+        "round": 3
+      },
+      "new_count": 816,
+      "prototype_count": 817
+    },
+    {
+      "index": 104,
+      "context": {
+        "elite_scope": 40,
+        "round": 4
+      },
+      "new_count": 817,
+      "prototype_count": 812
+    },
+    {
+      "index": 105,
+      "context": {
+        "elite_scope": 40,
+        "round": 5
+      },
+      "new_count": 811,
+      "prototype_count": 803
+    },
+    {
+      "index": 106,
+      "context": {
+        "elite_scope": 40,
+        "round": 6
+      },
+      "new_count": 795,
+      "prototype_count": 779
+    },
+    {
+      "index": 108,
+      "context": {
+        "elite_scope": 42,
+        "round": 1
+      },
+      "new_count": 298,
+      "prototype_count": 298
+    },
+    {
+      "index": 109,
+      "context": {
+        "elite_scope": 43,
+        "round": 1
+      },
+      "new_count": 767,
+      "prototype_count": 765
+    },
+    {
+      "index": 110,
+      "context": {
+        "elite_scope": 43,
+        "round": 2
+      },
+      "new_count": 777,
+      "prototype_count": 775
+    },
+    {
+      "index": 111,
+      "context": {
+        "elite_scope": 43,
+        "round": 3
+      },
+      "new_count": 775,
+      "prototype_count": 772
+    },
+    {
+      "index": 112,
+      "context": {
+        "elite_scope": 43,
+        "round": 4
+      },
+      "new_count": 774,
+      "prototype_count": 769
+    },
+    {
+      "index": 113,
+      "context": {
+        "elite_scope": 43,
+        "round": 5
+      },
+      "new_count": 772,
+      "prototype_count": 770
+    },
+    {
+      "index": 114,
+      "context": {
+        "elite_scope": 43,
+        "round": 6
+      },
+      "new_count": 770,
+      "prototype_count": 768
+    },
+    {
+      "index": 116,
+      "context": {
+        "elite_scope": 45,
+        "round": 1
+      },
+      "new_count": 255,
+      "prototype_count": 255
+    }
+  ],
+  "numeric_task_comparison": {
+    "counts": {
+      "matched_full_plan_seed_depth": 63624,
+      "crash_vector_changed": 15,
+      "finite_different": 20876,
+      "finite_equal": 23010
+    },
+    "max_finite_difference": {
+      "absolute": 0.00036032902836675984,
+      "relative": 0.0030805606503071193,
+      "ulps": 25964442846133.0
+    },
+    "new_ambiguous_or_unmapped_tasks_excluded": 5583,
+    "old_ambiguous_or_unmapped_tasks_excluded": 5502,
+    "limitation": "Resolved inherited slit2; strict full blocks; repeated task keys counted once; not a cold/cold bit-equivalence experiment"
+  },
+  "winner": {
+    "blocks": [
+      {
+        "start": 0,
+        "end": 10,
+        "wavelength": 628.0
+      },
+      {
+        "start": 10,
+        "end": 21,
+        "wavelength": 451.0
+      },
+      {
+        "start": 21,
+        "end": 40,
+        "wavelength": 686.0
+      },
+      {
+        "start": 40,
+        "end": 50,
+        "wavelength": 741.0
+      },
+      {
+        "start": 50,
+        "end": 60,
+        "wavelength": 733.0
+      },
+      {
+        "start": 60,
+        "end": 70,
+        "wavelength": 742.0
+      },
+      {
+        "start": 70,
+        "end": 75,
+        "wavelength": 580.0
+      }
+    ],
+    "rate_layers": [
+      5,
+      6,
+      7,
+      8,
+      9,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73,
+      74
+    ],
+    "source_strategy_id": 997550337,
+    "native_source_id": 900754520,
+    "monochromator_resolution_nm": 2.0,
+    "root_parent_id": 997550053,
+    "branch": "native",
+    "n_blocks": 7,
+    "move": {
+      "kind": "prefix",
+      "stage": "fine_joint",
+      "parent_id": 997550311,
+      "old_window": [
+        0,
+        5
+      ],
+      "window": [
+        0,
+        5
+      ],
+      "block_index": 0,
+      "wavelength": 628.0
+    }
+  },
+  "best_score": 0.02943152632503351,
+  "seel_nm": 0.3431123799866948,
+  "gain_vs_own_native_pct": 4.7171325215566,
+  "limitations": [
+    "Same post winner, parents and all307 plan-group entries; other native branches do differ",
+    "Numerical differences are explicit; kernel unchanged and C1cold8008 identical only within that corpus",
+    "One integrated search seed; experimental options remain inactive by default; no generalization claim",
+    "Additional post cost, no speedup claim from cache differences or campaign-anchor removal"
+  ]
+}

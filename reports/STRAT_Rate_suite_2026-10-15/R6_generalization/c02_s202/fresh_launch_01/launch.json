@@ -1,0 +1,15 @@
+{
+  "case": "c02_s202",
+  "coordinator_pid": 23644,
+  "started_utc": "2026-10-16T01:31:32.8505823Z",
+  "controller_script": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\run_rate_R6_fresh_v2.ps1",
+  "controller_sha256": "be8ce4ec0dc519ae9570d29b5c96f3a5a764e3e258001a7bd4a0ca039358a13f",
+  "explicit_invocation": "scriptblock -RateCase c02_s202",
+  "deadline_utc": "2026-10-16T06:00:00Z",
+  "verification": "fresh_verification_02/verification.json",
+  "plans": 6,
+  "groups": 3,
+  "fresh_seeds": "17620001..04/11..14/21..24",
+  "no_previous_slot_repeated": true,
+  "scientific_sources_changed": false
+}

@@ -1,0 +1,18 @@
+{
+  "authorized_utc": "2026-10-15T05:08:45.228847+00:00",
+  "user_instruction": "Corriger le noyau RMSE puis reprendre Rate",
+  "scope_extension": "Jusqu’à la fin du programme borné R0–R6",
+  "resources_instruction": "tu peux tourner sur 24 coeurs",
+  "resources": {
+    "logical_cpus": 24,
+    "affinity_mask": "0xffffff",
+    "priority": "normal",
+    "library_threads": 23
+  },
+  "supersedes_old_time_deadline_for_this_bounded_program": true,
+  "no_commit_push_or_new_scientific_default": true,
+  "before_sha256": {
+    "certus/physics/certus_strat_batch.py": "36fb771e73570cf4247e3a7bca133c22b995294b5d93924f3d884f21016908e7",
+    "tests/unit/test_strat_spectral_target.py": "ef2f1ebc8224f349075e8970ce29814958be4f72dd1daf2576677cd886cfbf9f"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "recorded_utc": "2026-10-16T09:04:53.082123+00:00",
+  "scientific_source_snapshots_still_match_R5": true,
+  "R5_validation_reused_for_identical_scientific_sources": {
+    "status": "GO",
+    "oracle": 1143,
+    "unit": 5450,
+    "ui": 1324,
+    "remaining": 359,
+    "C1_cold_bit_identical_arrays": 8008,
+    "proof": "reports/STRAT_Rate_suite_2026-10-15/R5_integration/full_validation_01/validation.json"
+  },
+  "new_restore_tests": {
+    "passed": 9,
+    "failed": 0,
+    "seconds": 0.75,
+    "sandbox_initial_attempt": "conftest temporary preferences access denied before tests; rerun with host access passed"
+  },
+  "restore_runtime": "restore_runtime_verification.json",
+  "ruff": "GO",
+  "coherence_md": "GO",
+  "check_claude_md": "GO",
+  "check_docs": "GO",
+  "diff_check": "GO",
+  "review": "Manual diff review of scientific connections, bounded generator, inactive defaults and restore guards. Local /code-review capability unavailable; only remote CI diagnostic tool exposed. No independent automated code-review claim.",
+  "scientific_limits": "Global active native bit identity unproved; 48c no confirmed improvement; controlled followup unverified and not measured.",
+  "local_archive_choice_confirmed": true,
+  "target_checkout_under_1_GB": true,
+  "commit_push": "Public push explicitly authorized, exit0, remote head verified atbe3af69ed0271d64b8c98d1f065674ffe6d31b49. Receipt commit follows; no history rewrite; raw archives excluded."
+}

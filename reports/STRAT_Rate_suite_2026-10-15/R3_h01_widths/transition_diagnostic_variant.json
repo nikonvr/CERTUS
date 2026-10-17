@@ -1,0 +1,36 @@
+{
+  "observed_utc": "2026-10-15T10:38:24.626265+00:00",
+  "scope": "Actual native R3_h01 variant joint proposals only",
+  "counts": {
+    "target_geometry_present": 392,
+    "new_geometry": 347,
+    "inherited_geometry": 45
+  },
+  "wavelengths_for_geometry": {
+    "630.0": 172,
+    "451.0": 66,
+    "691.0": 25,
+    "741.0": 19,
+    "733.0": 19,
+    "705.0": 5,
+    "708.0": 6,
+    "742.0": 7,
+    "580.0": 3,
+    "450.0": 3,
+    "460.0": 6,
+    "470.0": 1,
+    "480.0": 1,
+    "490.0": 1,
+    "500.0": 1,
+    "510.0": 1,
+    "706.0": 1,
+    "631.0": 2,
+    "629.0": 8,
+    "740.0": 1,
+    "692.0": 43,
+    "690.0": 1
+  },
+  "conclusion": "Wider geometry is genuinely proposed, but the target fine wavelength is still absent; a separate wavelength-neighborhood factor is justified",
+  "not_a_measured_gain": true,
+  "source_audit_sha256": "e650a0e5bc05a199fb37112474e20232530bd446aaa05b63dfc078bf2270e8da"
+}

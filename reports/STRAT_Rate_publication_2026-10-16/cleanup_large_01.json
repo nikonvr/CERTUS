@@ -1,0 +1,161 @@
+{
+  "status": "CLEANED_VERIFIED_REDUNDANT_RAW_AND_COMPILED_CACHES",
+  "recorded_utc": "2026-10-16T08:49:26.3401929Z",
+  "raw_files": 25,
+  "raw_bytes": 7638513848.0,
+  "cache_files": 17988,
+  "cache_bytes": 495944673,
+  "removed_raw": [
+    {
+      "path": "reports/STRAT_Rate_native_joint_rate240_round6_2026-10-13/joint_480_rate240_rounds6_s101/generated_candidates.json",
+      "bytes": 92432799,
+      "preserved_in": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/3e22bd3060f71734.gz",
+      "sha256": "78eacaa6451b5d7fac7a78070e82acf10dd02622339e312b8af0140a798227ec"
+    },
+    {
+      "path": "reports/STRAT_Rate_native_prefix_2026-10-14/prefix_720_joint_480_rate240_rounds6_s101/generated_candidates.json",
+      "bytes": 200091261,
+      "preserved_in": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/34953e0ce0d5a50f.gz",
+      "sha256": "1dd162a35eee96e850cdfac4cc9cdc9f86339ace2d9ed99009a848639fb23baf"
+    },
+    {
+      "path": "reports/STRAT_Rate_suite_2026-10-15/R2_native_base/generated_candidates.json",
+      "bytes": 92975773,
+      "preserved_in": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/179c1028933fbb92.gz",
+      "sha256": "64057fbdce382d5f1c1ac97b4b0f7048b4df7df657a1d5418a7b03010001c174"
+    },
+    {
+      "path": "reports/STRAT_Rate_suite_2026-10-15/R2_native_base/pipeline_trace.json",
+      "bytes": 466240339,
+      "preserved_in": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/97130423f453d90d.gz",
+      "sha256": "47aedd4781fdc98cd0e19310f01e1e281c5fe8159e88597471603fc822764656"
+    },
+    {
+      "path": "reports/STRAT_Rate_suite_2026-10-15/R3_h01_widths/control/generated_candidates.json",
+      "bytes": 92432974,
+      "preserved_in": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/fb500a8f1f02efde.gz",
+      "sha256": "4ff521bd8b3ea1f05e486f0de2ae1f066e7057902510ec50c6c320050430defa"
+    },
+    {
+      "path": "reports/STRAT_Rate_suite_2026-10-15/R3_h01_widths/control/pipeline_trace.json",
+      "bytes": 466486944,
+      "preserved_in": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/0518444a664eb332.gz",
+      "sha256": "1de7522f774c80428417864d8216f0d7314e9fe9f714a46e2e2598e54fa17be8"
+    },
+    {
+      "path": "reports/STRAT_Rate_suite_2026-10-15/R3_h01_widths/variant/generated_candidates.json",
+      "bytes": 99133815,
+      "preserved_in": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/308590dc8f314267.gz",
+      "sha256": "8a1980e72c0d9cd105f5be6e07cdeb165de1bb5021ab16f729587f4e682456ce"
+    },
+    {
+      "path": "reports/STRAT_Rate_suite_2026-10-15/R3_h01_widths/variant/pipeline_trace.json",
+      "bytes": 466764989,
+      "preserved_in": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/1314f186e870bd5b.gz",
+      "sha256": "62de31feed033ded59736433764cf26be4baac6faee4739e12fe299f981c941d"
+    },
+    {
+      "path": "reports/STRAT_Rate_suite_2026-10-15/R3_h02_wavelengths/control/generated_candidates.json",
+      "bytes": 99133815,
+      "preserved_in": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/10289c3efe517211.gz",
+      "sha256": "ee099da7dc3ea3712e621e74eaaf50d079f49db7a3704df36e9ae8a5356fe79b"
+    },
+    {
+      "path": "reports/STRAT_Rate_suite_2026-10-15/R3_h02_wavelengths/control/pipeline_trace.json",
+      "bytes": 466764989,
+      "preserved_in": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/f0bffd3f088fd2f9.gz",
+      "sha256": "f106aaf3ec171fa24262586d1ed398f5393309fc1ffbc614401d5e96af410d08"
+    },
+    {
+      "path": "reports/STRAT_Rate_suite_2026-10-15/R3_h02_wavelengths/variant/generated_candidates.json",
+      "bytes": 100600183,
+      "preserved_in": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/c8d511d8bb7c15cc.gz",
+      "sha256": "43fc546ebfa7ec2ede32f5c4be6ec534b558738758d77c5a569470cb8af6e2a0"
+    },
+    {
+      "path": "reports/STRAT_Rate_suite_2026-10-15/R3_h02_wavelengths/variant/pipeline_trace.json",
+      "bytes": 472133820,
+      "preserved_in": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/feb366f9b9d39f98.gz",
+      "sha256": "bc71989a24c0b60b822ce94c0779b24103dc3756fe65c343090e2e38d40a369d"
+    },
+    {
+      "path": "reports/STRAT_Rate_suite_2026-10-15/R3_h03_native_postrefinement/control/generated_candidates.json",
+      "bytes": 95816007,
+      "preserved_in": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/c088cb228a0b47f0.gz",
+      "sha256": "11a7f987ed96fc38a56e0b78184c6f7b67fbe3d657dabce99943f0a6a1e573f8"
+    },
+    {
+      "path": "reports/STRAT_Rate_suite_2026-10-15/R3_h03_native_postrefinement/control/pipeline_trace.json",
+      "bytes": 451478251,
+      "preserved_in": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/aec00a094e15f3eb.gz",
+      "sha256": "9cdd3b931e7283f33d8eb200a4258b2a9ab118cef59ce851b924fb0de00ea5ca"
+    },
+    {
+      "path": "reports/STRAT_Rate_suite_2026-10-15/R3_h03_native_postrefinement/variant/generated_candidates.json",
+      "bytes": 95816007,
+      "preserved_in": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/f8962b0afed08af0.gz",
+      "sha256": "11a7f987ed96fc38a56e0b78184c6f7b67fbe3d657dabce99943f0a6a1e573f8"
+    },
+    {
+      "path": "reports/STRAT_Rate_suite_2026-10-15/R3_h03_native_postrefinement/variant/pipeline_trace.json",
+      "bytes": 451478251,
+      "preserved_in": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/6ac1b2d99f3e62ab.gz",
+      "sha256": "67438df2670bea5e02ed4e9973216a9d5f7b7e65aa644bfdacbcb8ef7f289453"
+    },
+    {
+      "path": "reports/STRAT_Rate_suite_2026-10-15/R5_integration/native/measurement/pipeline_trace.json",
+      "bytes": 452293612,
+      "preserved_in": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/c11f1ba301b12594.gz",
+      "sha256": "1211275f9465ee2343edd7a765d412c2cb613b43c4602ad5cfb97b221bbb2a96"
+    },
+    {
+      "path": "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c01_s77/control/measurement/pipeline_trace.json",
+      "bytes": 444023398,
+      "preserved_in": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/4b495f6c808f6743.gz",
+      "sha256": "e7fd0504d2d3a799c463602dc8197244aafdc25e2cbb18923eb5a95dd683c0a9"
+    },
+    {
+      "path": "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c01_s77/variant/measurement/pipeline_trace.json",
+      "bytes": 448354716,
+      "preserved_in": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/f519a7e79384889c.gz",
+      "sha256": "f097fa2a3e124d22324e8df440181fd2192d6b0f4b04ddb26b479f9cd3a8ee09"
+    },
+    {
+      "path": "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c02_s202/control/measurement/pipeline_trace.json",
+      "bytes": 435263206,
+      "preserved_in": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/4aace291122bd7cf.gz",
+      "sha256": "360ea4cedcb7df8a90250c26714ed984b8d92506580a678ea37a52cc4cfa5cbd"
+    },
+    {
+      "path": "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c02_s202/variant/measurement/pipeline_trace.json",
+      "bytes": 438882716,
+      "preserved_in": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/f0fe60d14062e867.gz",
+      "sha256": "fe3dd9d5695fd835663fa87aade80d6beb7b0cc9d0c6c6f169c20a2f47ed932b"
+    },
+    {
+      "path": "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c03_s404/control/measurement/pipeline_trace.json",
+      "bytes": 409052895,
+      "preserved_in": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/4dad474748567d24.gz",
+      "sha256": "0fa37ae219a5a9624c493b71a7e36fd12fdff799f59eefa08c839a6e19a49151"
+    },
+    {
+      "path": "reports/STRAT_Rate_suite_2026-10-15/R6_generalization/c03_s404/variant/measurement/pipeline_trace.json",
+      "bytes": 412779985,
+      "preserved_in": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/385be38e1febf292.gz",
+      "sha256": "1c640bdc63e4983747ec95770d9aae3125a5a2118bb12719395a6308457d443a"
+    },
+    {
+      "path": "reports/STRAT_Rate_suite_2026-10-15/R6_other_components/c04_48c_s77/control/measurement/pipeline_trace.json",
+      "bytes": 194027949,
+      "preserved_in": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/dffa721b4091738a.gz",
+      "sha256": "b19d1dbb7987bc9f0f62d7fed7f04c128d81f6c9804bd72c2a6bbacfa00e60a5"
+    },
+    {
+      "path": "reports/STRAT_Rate_suite_2026-10-15/R6_other_components/c04_48c_s77/variant/measurement/pipeline_trace.json",
+      "bytes": 194055154,
+      "preserved_in": "reports/STRAT_Rate_publication_2026-10-16/large_evidence/b32a56c7edf33698.gz",
+      "sha256": "97bc9421987da5456790ab608203f5689f67bf272cabc1bed871b8166ac7a312"
+    }
+  ],
+  "scientific_measurements": 0
+}

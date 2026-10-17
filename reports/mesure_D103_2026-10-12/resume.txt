@@ -1,0 +1,22 @@
+debut 2026-10-12T00:50:27 HEAD=6df9d294 python=C:\Python314\python.exe
+lancee juge_de_paix 2026-10-12T00:50:27 cmd=scripts/bench_examples.py strat --auto-yes --out reports/STRAT_bench_juge_de_paix_6df9d294_D103_2026-10-12.txt
+finie  juge_de_paix rc=0 duree=8.3 min WAIT_TIMEOUT=0 RATE_lignes=10 SLIT_actif=28 HEAD=6df9d294 artefact=- RESULT=0.007917103726810235
+lancee r75x2_s042 2026-10-12T00:58:45 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 42
+finie  r75x2_s042 rc=0 duree=35.1 min WAIT_TIMEOUT=0 RATE_lignes=16 SLIT_actif=46 HEAD=411e6eb5 artefact=reports\blocs_vs_plantage_r75x2_deep_s042_20261012_013340.json RESULT=-
+lancee r75x2_s077 2026-10-12T01:33:53 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 77
+finie  r75x2_s077 rc=0 duree=38.8 min WAIT_TIMEOUT=0 RATE_lignes=16 SLIT_actif=46 HEAD=411e6eb5 artefact=reports\blocs_vs_plantage_r75x2_deep_s077_20261012_021225.json RESULT=-
+lancee r75x2_s101 2026-10-12T02:12:40 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 101
+finie  r75x2_s101 rc=0 duree=41.0 min WAIT_TIMEOUT=0 RATE_lignes=16 SLIT_actif=46 HEAD=411e6eb5 artefact=reports\blocs_vs_plantage_r75x2_deep_s101_20261012_025327.json RESULT=-
+lancee r75x2_s202 2026-10-12T02:53:42 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 202
+finie  r75x2_s202 rc=0 duree=40.0 min WAIT_TIMEOUT=0 RATE_lignes=16 SLIT_actif=46 HEAD=411e6eb5 artefact=reports\blocs_vs_plantage_r75x2_deep_s202_20261012_033328.json RESULT=-
+lancee r75x2_s303 2026-10-12T03:33:41 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 303
+finie  r75x2_s303 rc=0 duree=31.3 min WAIT_TIMEOUT=0 RATE_lignes=16 SLIT_actif=46 HEAD=411e6eb5 artefact=reports\blocs_vs_plantage_r75x2_deep_s303_20261012_040451.json RESULT=-
+lancee r75x2_s404 2026-10-12T04:05:02 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 404
+finie  r75x2_s404 rc=0 duree=40.0 min WAIT_TIMEOUT=0 RATE_lignes=16 SLIT_actif=46 HEAD=411e6eb5 artefact=reports\blocs_vs_plantage_r75x2_deep_s404_20261012_044450.json RESULT=-
+lancee r75x2_s505 2026-10-12T04:45:02 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 505
+finie  r75x2_s505 rc=0 duree=37.3 min WAIT_TIMEOUT=0 RATE_lignes=16 SLIT_actif=46 HEAD=411e6eb5 artefact=reports\blocs_vs_plantage_r75x2_deep_s505_20261012_052205.json RESULT=-
+lancee base_depots 2026-10-12T05:22:17 cmd=scripts/bench_base_depots.py --runs 3
+finie  base_depots rc=0 duree=11.8 min WAIT_TIMEOUT=0 RATE_lignes=0 SLIT_actif=0 HEAD=411e6eb5 artefact=D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches RESULT=-
+fin 2026-10-12T05:34:02
+lancee r75x2_s202_rr 2026-10-12T05:34:50 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 202 surcharges=elite_round_robin=true HEAD=411e6eb5
+finie  r75x2_s202_rr rc=0 duree=50.6 min WAIT_TIMEOUT=0 RATE_lignes=16 SLIT_actif=46 HEAD=411e6eb5 artefact=reports\blocs_vs_plantage_r75x2_deep_s202_rr_20261012_062518.json

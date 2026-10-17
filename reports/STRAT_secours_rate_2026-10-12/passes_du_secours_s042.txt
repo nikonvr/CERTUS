@@ -1,0 +1,16 @@
+15:12:17  [RATE-RESCUE] 0 depositable plan(s) in the pass: 30 plan(s) x 8 cut(s) at most, 52 Rate tail(s) laid under the plans that gave way, 52 of them depositable.
+15:13:04  [RATE-RESCUE] 0 depositable plan(s) in the pass: 30 plan(s) x 8 cut(s) at most, 160 Rate tail(s) laid under the plans that gave way, 160 of them depositable.
+15:14:44  [RATE-RESCUE] 0 depositable plan(s) in the pass: 30 plan(s) x 8 cut(s) at most, 240 Rate tail(s) laid under the plans that gave way, 204 of them depositable.
+15:17:20  [RATE-RESCUE] 0 depositable plan(s) in the pass: 30 plan(s) x 8 cut(s) at most, 240 Rate tail(s) laid under the plans that gave way, 182 of them depositable.
+15:19:51  [RATE-RESCUE] 0 depositable plan(s) in the pass: 30 plan(s) x 8 cut(s) at most, 240 Rate tail(s) laid under the plans that gave way, 187 of them depositable.
+15:22:33  [RATE-RESCUE] 0 depositable plan(s) in the pass: 30 plan(s) x 8 cut(s) at most, 240 Rate tail(s) laid under the plans that gave way, 182 of them depositable.
+15:25:11  [RATE-RESCUE] 0 depositable plan(s) in the pass: 30 plan(s) x 8 cut(s) at most, 240 Rate tail(s) laid under the plans that gave way, 148 of them depositable.
+15:27:59  [RATE-RESCUE] 0 depositable plan(s) in the pass: 30 plan(s) x 8 cut(s) at most, 240 Rate tail(s) laid under the plans that gave way, 120 of them depositable.
+15:30:40  [RATE-RESCUE] 0 depositable plan(s) in the pass: 30 plan(s) x 8 cut(s) at most, 240 Rate tail(s) laid under the plans that gave way, 120 of them depositable.
+15:33:20  [RATE-RESCUE] 0 depositable plan(s) in the pass: 30 plan(s) x 8 cut(s) at most, 240 Rate tail(s) laid under the plans that gave way, 104 of them depositable.
+15:35:52  [RATE-RESCUE] 0 depositable plan(s) in the pass: 30 plan(s) x 8 cut(s) at most, 240 Rate tail(s) laid under the plans that gave way, 108 of them depositable.
+15:38:10  [RATE-RESCUE] 0 depositable plan(s) in the pass: 30 plan(s) x 8 cut(s) at most, 240 Rate tail(s) laid under the plans that gave way, 77 of them depositable.
+15:40:23  [RATE-RESCUE] 0 depositable plan(s) in the pass: 30 plan(s) x 8 cut(s) at most, 240 Rate tail(s) laid under the plans that gave way, 143 of them depositable.
+15:42:30  [RATE-RESCUE] 0 depositable plan(s) in the pass: 30 plan(s) x 8 cut(s) at most, 240 Rate tail(s) laid under the plans that gave way, 170 of them depositable.
+15:44:43  [RATE-RESCUE] 0 depositable plan(s) in the pass: 30 plan(s) x 8 cut(s) at most, 235 Rate tail(s) laid under the plans that gave way, 201 of them depositable.
+15:46:06  [RATE-RESCUE] 0 depositable plan(s) in the pass: 30 plan(s) x 8 cut(s) at most, 240 Rate tail(s) laid under the plans that gave way, 192 of them depositable.

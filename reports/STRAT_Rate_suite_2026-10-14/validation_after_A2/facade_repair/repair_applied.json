@@ -1,0 +1,8 @@
+{
+  "changed_utc": "2026-10-14T16:04:28.451544+00:00",
+  "after_sha256": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+  "changed_file": "certus\\core\\certus_strat_robustness.py",
+  "diff": "diff --git a/certus/core/certus_strat_robustness.py b/certus/core/certus_strat_robustness.py\nindex 8b7a5fc1..d8f69723 100644\n--- a/certus/core/certus_strat_robustness.py\n+++ b/certus/core/certus_strat_robustness.py\n@@ -96,6 +96,7 @@ from certus.core.certus_strat_robustness_rate import (\n     RATE_RESCUE_SERIAL_BASE,\n     RATE_SWING_MIN_DEFAULT,\n     RATE_VARIANT_TOP_N_DEFAUT,\n+    _balanced_elite_rate_moves,\n     _elite_rate_candidates,\n     _elite_rate_moves,\n     _expand_with_rate_variants,\n",
+  "validation": "pending targeted repair and complete checks",
+  "physics_and_frozen_sources_changed": false
+}

@@ -1,0 +1,99 @@
+{
+  "status": "complete",
+  "n_proposals": 144,
+  "eligible_complete_consensus": 144,
+  "best": {
+    "id": 9920025,
+    "name": "pair_9930328_9932266",
+    "move": {
+      "kind": "paired_internal_windows",
+      "parent_id": 9900002,
+      "component_ids": [
+        9930328,
+        9932266
+      ],
+      "component_moves": [
+        {
+          "kind": "wavelength_only",
+          "parent_id": 9900002,
+          "original_window": [
+            10,
+            12
+          ],
+          "window": [
+            10,
+            12
+          ],
+          "block_index": 1,
+          "wavelength": 450
+        },
+        {
+          "kind": "joint_window",
+          "parent_id": 9900002,
+          "original_window": [
+            35,
+            39
+          ],
+          "window": [
+            34,
+            37
+          ],
+          "block_index": 3,
+          "wavelength": 689
+        }
+      ],
+      "component_scores": [
+        0.03224187330533922,
+        0.029365433104123474
+      ]
+    },
+    "eligible": true,
+    "score": 0.028225278501697756,
+    "crash_rate": 0.0,
+    "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_window_pairs_2026-10-14\\batch_003\\attempt_01\\search.json"
+  },
+  "seel": 0.33600761004297364,
+  "artifact_sha256": "c28f91fa65b25a6865c9b5e89db7b59442cb8e14c02a4d7bd32565652e462a2b",
+  "confirmation_status": "complete",
+  "comparisons": [
+    {
+      "run": "control",
+      "seel": 0.33600761004297364,
+      "reference": 0.3967147882193691,
+      "window688": 0.3409240517636628,
+      "gain_reference_percent": 15.302474215512873,
+      "gain_window_percent": 1.4420929515695735,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_2424",
+      "seel": 0.34370038241007816,
+      "reference": 0.4043116559924829,
+      "window688": 0.33899531127494764,
+      "gain_reference_percent": 14.991225873421676,
+      "gain_window_percent": -1.3879457852779664,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_2525",
+      "seel": 0.3442257579437547,
+      "reference": 0.399962902952896,
+      "window688": 0.3430104851420152,
+      "gain_reference_percent": 13.935578674331584,
+      "gain_window_percent": -0.3542961088307095,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_2626",
+      "seel": 0.34188643651010864,
+      "reference": 0.4031143964678,
+      "window688": 0.3408592152932246,
+      "gain_reference_percent": 15.188730666576955,
+      "gain_window_percent": -0.30136231347019926,
+      "max_observed_crash_rate": 0
+    }
+  ],
+  "incremental_gain_confirmed": false,
+  "retained_plan_id": 9900006,
+  "conclusion": "Candidate loses to retained window688 on all three fresh groups; search minimum not adopted; no default or physics change"
+}

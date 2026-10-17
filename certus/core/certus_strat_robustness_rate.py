@@ -7,7 +7,10 @@ from typing import Any
 
 import numpy as np
 
+from certus.core.certus_strat_robustness_gate import _worst_finite_rmse
 from certus.core.certus_strat_robustness_wrappers import _IdxWrapper
+from certus.utils.certus_strat_context import _plan_signature
+from certus_physics import CRASH_SENTINEL_MIN
 
 #: 🔴 RAISED FROM 3 TO 40 ON 2026-08-22, together with `RATE_VARIANT_TOP_N_DEFAUT`. The two go
 #: TOGETHER: 40 variants on 50 parents cost 2 000 evaluations, against 12 923 for 3 variants
@@ -741,3 +744,366 @@ def _variant_id(parent_id: object, serial: int) -> object:
     started generating variants on every run.
     """
     return f"{parent_id}#{serial}" if isinstance(parent_id, str) else serial
+
+
+# ---- THE RATE RESCUE -------------------------------------------------------------------------------------------------------
+#
+# 👤 2026-10-12: *"Rate must be integrated in every scenario, and still more when few depositable strategies are found"*, *"it has
+# to be allowed whatever the filter"*, *"r75x0.5 is a good test of the implementation: we must end up finding strategies, even if
+# it means finishing everything by Rate"*.
+#
+# 🔑 A Rate layer is laid for a time, at the speed estimated on the layers of its material laid under optical control before it
+# (`_rate_layer_thickness`): it reads nothing, so it cannot fail to terminate. The variants of `_expand_with_rate_variants` carry
+# ONE such layer, placed where it is cheapest, and the plans that crash on the thin layers of a stack crash on many of them.
+#
+# 📏 Measured on `r75x0.5`, seed 101, 2 897 plans: none depositable, and the first layer to give way is 22, 25 or 28 for half of
+# them, 46 or 51 for most of the rest. With the monitoring kept up to layer 16, 20, 24 or 28 and everything after laid by Rate
+# (the tail of `rate_tail_sweep`), the same seed gives 522 depositable plans out of 547, the best at SEEL 0.555 nm and no crash
+# at the three noise levels; with cuts from layer 2 to 14, 2 272 out of 2 272, the best at 0.563 nm (cut 14), and 0.767 nm when
+# everything but layers 0 and 1 is laid by Rate.
+#
+# For the plans of a pass that did not terminate (the crash gate rejected them), the rescue finds the layer at which they start to
+# give way (`_first_crash_layer`), lays everything by Rate from there to the end, then from earlier cuts down to layer 2
+# (`_rescue_cuts`), evaluates these variants like any other, and the ranking decides. The last cut is layer 2, the first one that
+# can be laid by Rate: that plan crashes only through layers 0 and 1, which no Rate can take. It works harder the fewer depositable
+# plans the pass found: at full strength when there is none, lightly from `rate_rescue_few` of them (`_rescue_budget`).
+
+#: Share of all the draws that have crashed by a layer, above which the optical monitoring of a plan is said to give way there.
+RATE_RESCUE_LEAK: float = 0.02
+
+#: Serial of the first rescue variant in the Rate id range of its block count: after those of `_expand_with_rate_variants` (40 per
+#: parent on 50 parents, the tails and the sets of the configuration), before the end of the range (100 000).
+RATE_RESCUE_SERIAL_BASE: int = 50_000
+
+#: Fewer depositable plans than this in a pass: the rescue works harder the fewer there are, at full strength when there is none.
+RATE_RESCUE_FEW_DEFAULT: int = 10
+
+#: What the rescue spends, as (parents, cuts per parent): at full strength (nothing terminates), and lightly (`rate_rescue_few`
+#: depositable plans or more).
+RATE_RESCUE_FULL: tuple[int, int] = (30, 8)
+RATE_RESCUE_LIGHT: tuple[int, int] = (3, 2)
+
+#: What the placement on the hard layers spends, as (plans, rounds): the same two ends.
+RATE_RESCUE_HARD_FULL: tuple[int, int] = (10, 8)
+RATE_RESCUE_HARD_LIGHT: tuple[int, int] = (1, 2)
+
+#: Layers the placement lays by Rate per round at most, and the share of the first crashes a round has to cover.
+RATE_RESCUE_PER_ROUND: int = 4
+RATE_RESCUE_COVERAGE: float = 0.8
+
+#: Serial of the first variant of the placement on the hard layers, after the tails in the Rate id range of the block count.
+RATE_RESCUE_HARD_SERIAL_BASE: int = RATE_RESCUE_SERIAL_BASE + 10_000
+
+
+def _first_crash_profile(item: dict[str, Any], num_layers: int) -> np.ndarray | None:
+    """The share of all the draws whose first crash is at each layer, at the noise level that crashes most; None when nothing crashed.
+
+    For each noise level, the draws are given the first layer where they crashed (the sentinel of the kernel); the level that
+    crashes most is the one that decides, as for the crash gate.
+    """
+    worst: np.ndarray | None = None
+    worst_rate = 0.0
+    for level in item.get("results_per_noise") or []:
+        thick = np.asarray(level.get("thicknesses_all") or [], dtype=np.float64)
+        if thick.ndim != 2 or thick.shape[0] == 0 or thick.shape[1] != num_layers:
+            continue
+        crashed = thick > CRASH_SENTINEL_MIN
+        first = np.where(crashed.any(axis=1), crashed.argmax(axis=1), num_layers)
+        rate = float(np.mean(first < num_layers))
+        if rate > worst_rate:
+            worst, worst_rate = first, rate
+    if worst is None:
+        return None
+    return np.bincount(worst[worst < num_layers], minlength=num_layers) / worst.size
+
+
+def _first_crash_layer(item: dict[str, Any], num_layers: int) -> int | None:
+    """The layer at which the optical monitoring of this plan starts to give way, or None when it does not.
+
+    The first layer where the share of all the draws that have crashed by then exceeds `RATE_RESCUE_LEAK`.
+    """
+    profile = _first_crash_profile(item, num_layers)
+    if profile is None:
+        return None
+    over = np.nonzero(np.cumsum(profile) > RATE_RESCUE_LEAK)[0]
+    return int(over[0]) if over.size else None
+
+
+def _hard_layers(item: dict[str, Any], num_layers: int, already: set[int]) -> list[int]:
+    """The layers to lay by Rate next: those where the draws first crash, most first, up to `RATE_RESCUE_PER_ROUND` of them or
+    `RATE_RESCUE_COVERAGE` of the first crashes; none when layer 0 or 1, which no Rate can take, is where too many of them fall.
+    """
+    profile = _first_crash_profile(item, num_layers)
+    if profile is None or float(profile[:RATE_MIN_LAYER].sum()) > RATE_RESCUE_LEAK:
+        return []
+    total = float(profile.sum())
+    chosen: list[int] = []
+    covered = 0.0
+    for layer in np.argsort(-profile, kind="stable"):
+        layer = int(layer)
+        if profile[layer] <= 0.0 or layer < RATE_MIN_LAYER or layer in already:
+            continue
+        chosen.append(layer)
+        covered += float(profile[layer])
+        if len(chosen) >= RATE_RESCUE_PER_ROUND or covered >= RATE_RESCUE_COVERAGE * total:
+            break
+    return sorted(chosen)
+
+
+def _rescue_cuts(first_crash: int, count: int) -> list[int]:
+    """The layers from which the rescue lays everything by Rate: from `first_crash` down to `RATE_MIN_LAYER`, evenly spread.
+
+    The first is the layer where the monitoring gives way (the latest cut that can work), the last is `RATE_MIN_LAYER`
+    (everything by Rate, the cut that cannot fail). Latest first.
+    """
+    if first_crash < RATE_MIN_LAYER or count < 1:
+        return []
+    if count == 1:
+        return [first_crash]
+    spread = np.rint(np.linspace(first_crash, RATE_MIN_LAYER, count)).astype(int)
+    return sorted({int(c) for c in spread}, reverse=True)
+
+
+def _scaled(light: tuple[int, int], full: tuple[int, int], depositable: int, few: int) -> tuple[int, int]:
+    """From `full` when nothing terminates to `light` at `few` depositable plans, linear in the scarcity."""
+    scarcity = min(1.0, max(0.0, (few - depositable) / few)) if few > 0 else 0.0
+    return round(light[0] + scarcity * (full[0] - light[0])), round(light[1] + scarcity * (full[1] - light[1]))
+
+
+def _rescue_budget(depositable: int, few: int) -> tuple[int, int]:
+    """(parents, cuts per parent) the rescue spends: from `RATE_RESCUE_FULL` when nothing terminates to `RATE_RESCUE_LIGHT` at `few`.
+
+    Linear in the scarcity, so that a pass that found nine plans of ten does not pay as much as one that found none.
+    """
+    return _scaled(RATE_RESCUE_LIGHT, RATE_RESCUE_FULL, depositable, few)
+
+
+def _rescue_variants(
+    raw: list[dict[str, Any]], num_layers: int, parents_count: int, cuts_count: int, source_n_blocks: int
+) -> list[dict[str, Any]]:
+    """The tails laid by Rate under the plans that did not terminate: those that crash least first, one cut after the other."""
+    gated = [r for r in raw if not np.isfinite(float(r.get("robustness_score", np.inf)))]
+    gated.sort(key=lambda r: (float(r.get("crash_rate", 1.0)), _worst_finite_rmse(r)))
+    variants: list[dict[str, Any]] = []
+    seen: set[tuple] = set()
+    for item in gated:
+        if len(seen) >= parents_count:
+            break
+        strategy = item.get("strategy") or {}
+        plan = _plan_signature(strategy.get("blocks") or [], strategy.get("rate_layers"))
+        signature = (plan, strategy.get("monochromator_resolution_nm"))
+        cuts = _rescue_cuts(_first_crash_layer(item, num_layers) or 0, cuts_count)
+        if signature in seen or not cuts:
+            continue
+        seen.add(signature)
+        already = {int(i) for i in strategy.get("rate_layers") or []}
+        for cut in cuts:
+            serial = RATE_RESCUE_SERIAL_BASE + len(variants)
+            v = _make_rate_variant(strategy, sorted(already | set(range(cut, num_layers))), source_n_blocks, serial)
+            v["origin"] = f"RATE_RESCUE{cut}(from {strategy.get('strategy_id', '?')})"
+            variants.append(v)
+    return variants
+
+
+def _hard_layer_rounds(
+    raw: list[dict[str, Any]], collect: Any, num_layers: int, plans_count: int, rounds_count: int, source_n_blocks: int
+) -> list[dict[str, Any]]:
+    """The raw results of the plans that lay by Rate the layers where the optical monitoring gives way, a few more every round.
+
+    A tail lays by Rate the layers it does not need to as well, and a Rate layer corrects nothing. This one starts from the plans that
+    crash least, reads in their draws the layers where they first crash, lays those by Rate, evaluates the new plans, and does it
+    again with those that improved and still do not terminate, up to `rounds_count` times.
+    """
+    gated = [r for r in raw if not np.isfinite(float(r.get("robustness_score", np.inf)))]
+    gated.sort(key=lambda r: (float(r.get("crash_rate", 1.0)), _worst_finite_rmse(r)))
+    frontier: list[dict[str, Any]] = []
+    seen: set[tuple] = set()
+    for item in gated:
+        strategy = item.get("strategy") or {}
+        signature = (_plan_signature(strategy.get("blocks") or [], strategy.get("rate_layers")), strategy.get("monochromator_resolution_nm"))
+        if len(frontier) < plans_count and signature not in seen:
+            seen.add(signature)
+            frontier.append(item)
+    out: list[dict[str, Any]] = []
+    serial = RATE_RESCUE_HARD_SERIAL_BASE
+    for _ in range(rounds_count):
+        children: list[dict[str, Any]] = []
+        parent_crash: dict[Any, float] = {}
+        for item in frontier:
+            strategy = item.get("strategy") or {}
+            already = {int(i) for i in strategy.get("rate_layers") or []}
+            layers = _hard_layers(item, num_layers, already)
+            if not layers:
+                continue
+            child = _make_rate_variant(strategy, sorted(already | set(layers)), source_n_blocks, serial)
+            child["origin"] = f"RATE_HARD{len(child['rate_layers'])}(from {strategy.get('strategy_id', '?')})"
+            parent_crash[child["strategy_id"]] = float(item.get("crash_rate", 1.0))
+            children.append(child)
+            serial += 1
+        if not children:
+            break
+        results = collect(children)
+        out += results
+        frontier = [
+            r for r in results
+            if not np.isfinite(float(r.get("robustness_score", np.inf)))
+            and float(r.get("crash_rate", 1.0)) < parent_crash.get(r.get("strategy_id"), 1.0)
+        ]
+    return out
+
+
+def _rescue_with_rate(
+    raw: list[dict[str, Any]],
+    collect: Any,
+    params: dict[str, Any],
+    num_layers: int,
+    source_n_blocks: int,
+    logger: logging.Logger,
+) -> list[dict[str, Any]]:
+    """The raw results of a pass (the gated ones still in), plus those of the Rate tails laid under the plans that gave way.
+
+    `collect` evaluates a list of strategies like the pass itself did and returns their raw results. The caller applies the filter
+    of the finite scores to what this returns, so a pass where nothing terminated keeps its ranking by increasing risk, and a pass
+    where something did keeps only that.
+    """
+    # Pure optical monitoring, asked for with `allow_rate = 0`, is honoured: the rescue is a Rate variant like the others.
+    if not bool(params.get("rate_rescue", True)) or not bool(params.get("allow_rate", True)):
+        return raw
+    depositable = sum(1 for r in raw if np.isfinite(float(r.get("robustness_score", np.inf))))
+    few = int(params.get("rate_rescue_few", RATE_RESCUE_FEW_DEFAULT))
+    parents_count, cuts_count = _rescue_budget(depositable, few)
+    variants = _rescue_variants(raw, num_layers, parents_count, cuts_count, source_n_blocks)
+    new = collect(variants) if variants else []
+    plans_count, rounds_count = _scaled(RATE_RESCUE_HARD_LIGHT, RATE_RESCUE_HARD_FULL, depositable, few)
+    hard = _hard_layer_rounds(raw, collect, num_layers, plans_count, rounds_count, source_n_blocks) if bool(params.get("rate_rescue_hard", False)) else []
+    if not new and not hard:
+        return raw
+    rescued = sum(1 for r in new if np.isfinite(float(r.get("robustness_score", np.inf))))
+    rescued_hard = sum(1 for r in hard if np.isfinite(float(r.get("robustness_score", np.inf))))
+    logger.info(
+        f"[RATE-RESCUE] {depositable} depositable plan(s) in the pass: {parents_count} plan(s) x {cuts_count} cut(s) at most, "
+        f"{len(variants)} Rate tail(s) laid under the plans that gave way, {rescued} of them depositable; "
+        f"{len(hard)} plan(s) with Rate on the hard layers in at most {rounds_count} round(s), {rescued_hard} of them depositable."
+    )
+    return raw + new + hard
+
+
+# ---- ELITE MOVES ON THE RATE LAYERS ----------------------------------------------------------------------------------------
+#
+# 👤 2026-10-12: *"experience shows that there are sometimes good strategies with a packet of optics at one wavelength, then a packet
+# of Rate, then a packet of optics at another wavelength, and so on -- but it is purely empirical"*, and *"do you allow going back to
+# optics after the Rate? It is important"*.
+#
+# 🔑 The kernel allows it: `rate_layers` is any set of layers, and an optical layer that follows Rate layers is stopped by POEM on its
+# own turning points, at the wavelength of its block (👤 2026-08-19, verified in the kernel; see the surgical Rate in
+# `_expand_with_rate_variants`). The search did not offer it: the Rate variants lay one to three layers at block boundaries or where the
+# swing is low, the rescue lays tails, and ELITE moved the wavelength of the blocks and their boundaries, never the Rate layers of its
+# parent. 📏 Of the depositable plans of `r75x0.5` (three seeds) and `r75x2` (seed 101) of 2026-10-12, the only ones with optics after
+# Rate have exactly two runs of Rate, a layer and a tail; none alternates. The best plan of `r75x2` is one of them.
+#
+# 🔑 A packet of optics inside a tail has a second use in the model: the rate is estimated on EVERY previous layer of the material laid
+# under optical control (`_rate_layer_thickness`), so each packet gives a better estimate to the Rate layers after it.
+#
+# The moves are the neighbours of a set of Rate layers: a layer more or less at the end of a run, a short optical gap closed, a window
+# of optics opened inside a run, a packet of Rate laid in a stretch of optics. They keep the blocks (so the wavelength of the packets
+# of optics is that of their block, which ELITE refines like any other) and are tried by ELITE on request (`elite_rate_moves`).
+
+#: Widths of the window of optics a move opens inside a run of Rate, and of the packet of Rate it lays in a stretch of optics.
+ELITE_RATE_WINDOWS: tuple[int, ...] = (2, 4)
+
+#: Distance between the positions tried for those windows and packets.
+ELITE_RATE_STEP: int = 3
+
+#: The longest gap of optics between two runs of Rate that a move closes.
+ELITE_RATE_FILL_MAX: int = 6
+
+
+def _rate_runs(layers: Any) -> list[tuple[int, int]]:
+    """The maximal runs of consecutive layers of a set, as (first, last)."""
+    runs: list[list[int]] = []
+    for layer in sorted({int(i) for i in layers or []}):
+        if runs and layer == runs[-1][1] + 1:
+            runs[-1][1] = layer
+        else:
+            runs.append([layer, layer])
+    return [(a, b) for a, b in runs]
+
+
+def _elite_rate_moves(rate_layers: Any, num_layers: int) -> list[list[int]]:
+    """The neighbours of a set of Rate layers, nearest first; each is a new sorted list of layers.
+
+    For each run of Rate: one layer more at either end, then one layer less at either end. Then the short gaps of optics between two
+    runs, closed. Then windows of optics (`ELITE_RATE_WINDOWS` layers wide, a layer of Rate left at each end) opened inside the runs.
+    Then packets of Rate of the same widths laid in the stretches of optics, with a layer of optics on each side and after the
+    first `RATE_MIN_LAYER` + 1 layers. Layers 0 and 1 never carry Rate (`RATE_MIN_LAYER`); the set itself is never returned, nor a set twice.
+    """
+    current = {int(i) for i in rate_layers or [] if RATE_MIN_LAYER <= int(i) < num_layers}
+    runs = _rate_runs(current)
+    found: list[frozenset[int]] = []
+
+    def _add(candidate: set[int]) -> None:
+        if candidate != current:
+            found.append(frozenset(candidate))
+
+    for first, last in runs:
+        if first - 1 >= RATE_MIN_LAYER:
+            _add(current | {first - 1})
+        if last + 1 < num_layers:
+            _add(current | {last + 1})
+        _add(current - {first})
+        if last > first:
+            _add(current - {last})
+    for (_, last), (first, _) in itertools.pairwise(runs):
+        if 0 < first - last - 1 <= ELITE_RATE_FILL_MAX:
+            _add(current | set(range(last + 1, first)))
+    for first, last in runs:
+        for width in ELITE_RATE_WINDOWS:
+            for start in range(first + 1, last - width + 1, ELITE_RATE_STEP):
+                _add(current - set(range(start, start + width)))
+    optical = [layer for layer in range(num_layers) if layer not in current]
+    for stretch_first, stretch_last in _rate_runs(optical):
+        for width in ELITE_RATE_WINDOWS:
+            for start in range(max(stretch_first + 1, RATE_MIN_LAYER + 1), stretch_last - width + 1, ELITE_RATE_STEP):
+                _add(current | set(range(start, start + width)))
+    ordered: list[list[int]] = []
+    seen: set[frozenset[int]] = set()
+    for candidate in found:
+        if candidate not in seen:
+            seen.add(candidate)
+            ordered.append(sorted(candidate))
+    return ordered
+
+
+def _balanced_elite_rate_moves(rate_layers: Any, num_layers: int) -> list[list[int]]:
+    """Reorder the same moves across families, widths and early/middle/late positions before the shared cap."""
+    current = {int(i) for i in rate_layers or [] if RATE_MIN_LAYER <= int(i) < num_layers}
+    families: dict[tuple[str, int], list[list[int]]] = {}
+    for layers in _elite_rate_moves(sorted(current), num_layers):
+        removed = current - set(layers)
+        added = set(layers) - current
+        if removed:
+            family = ("edge", 0) if len(removed) == 1 else ("open", len(removed))
+        elif min(added) - 1 in current and max(added) + 1 in current:
+            family = ("fill", 0)
+        else:
+            family = ("edge", 0) if len(added) == 1 else ("insert", len(added))
+        families.setdefault(family, []).append(layers)
+    spread: list[list[list[int]]] = []
+    for moves in families.values():
+        indices = dict.fromkeys((0, len(moves) // 2, len(moves) - 1, *range(len(moves))))
+        spread.append([moves[i] for i in indices])
+    longest = max((len(moves) for moves in spread), default=0)
+    return [moves[k] for k in range(longest) for moves in spread if k < len(moves)]
+
+
+def _elite_rate_candidates(parent_results: list[dict[str, Any]], num_layers: int, *, balanced: bool = False) -> list[tuple[Any, dict[str, Any], list[dict[str, Any]], list[int]]]:
+    """The moves on the Rate layers of every parent, the parents taking turns: `(parent id, parent, its blocks, the new Rate layers)`."""
+    move_fn = _balanced_elite_rate_moves if balanced else _elite_rate_moves
+    per_parent = []
+    for parent in parent_results:
+        strat = parent.get("strategy", {})
+        blocks = [{"start": int(b["start"]), "end": int(b["end"]), "wavelength": float(b["wavelength"])} for b in strat.get("blocks", [])]
+        if blocks:
+            per_parent.append([(strat.get("strategy_id", "?"), strat, blocks, layers) for layers in move_fn(strat.get("rate_layers"), num_layers)])
+    longest = max((len(moves) for moves in per_parent), default=0)
+    return [moves[k] for k in range(longest) for moves in per_parent if k < len(moves)]

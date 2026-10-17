@@ -13,10 +13,10 @@ from numba import njit, prange
 
 import certus.physics.certus_tmm_core as tmm_core
 from certus.domain.constants import PI, TWO_PI
+from certus.physics.certus_optical_models import extinction_from_epsilon
 
 # Explicit imports for type annotations and helper functions
 # to prevent F821 undefined symbol errors.
-#   immediate would have broken the import.
 #
 #   🔴 `cost_numba_fast`, however, is in the BODY of `make_cost_function` (line ~1181).
 #   Any cost function built by this call therefore raised `NameError` at the
@@ -570,7 +570,7 @@ def _compute_tlu_derivatives_kernel(
 
         n_val = np.sqrt(max((eps_mag + e1) / 2.0, 1e-12))
 
-        k_val = np.sqrt(max((eps_mag - e1) / 2.0, 0.0))
+        k_val = extinction_from_epsilon(e1, e2, eps_mag, n_val)
 
         n_arr[i] = n_val
 

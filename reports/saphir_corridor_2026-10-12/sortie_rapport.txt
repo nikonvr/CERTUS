@@ -1,0 +1,10 @@
+films ajustes un par un (saphir = Sellmeier) en 1 s ; rms (% de T) : h400:0.55 h800:0.09 mesures-nb1200:0.05 mesures-ta1200:0.69 h400-sio2:0.60 mesures-fab18-sio2:0.66 mesures-yf3vis:0.06 pe-nb2:0.36 pe-ta2:0.27
+ajustement conjoint de 9 films, dn libre : 35 evaluations, 1 s
+chi2 : dn = 0 -> 1180.1 ; dn libre -> 1173.3 (gain 6.7) ; dn aux noeuds (5200, 828, 450 nm) : +0.0103 +0.0193 +0.0150   (bornes +-0.05, epaisseurs +-6 %)
+   valeur propre       12.1  sigma   0.2878  direction +0.565 +0.588 +0.579
+   valeur propre   6.58e+03  sigma   0.0123  direction -0.441 -0.378 +0.814
+   valeur propre   1.51e+05  sigma   0.0026  direction -0.697 +0.715 -0.045
+   variation d'epaisseur par rapport au film certifie (%) : h400:-0.04  h800:-0.24  mesures-nb1200:-0.94  mesures-ta1200:-0.80  h400-sio2:-1.35  mesures-fab18-sio2:-1.67  mesures-yf3vis:-0.31  pe-nb2:-1.89  pe-ta2:-0.69
+
+consigne dans reports\saphir_corridor_2026-10-12\saphir_rapport.json
+rapport: 2 s -> saphir_rapport.json

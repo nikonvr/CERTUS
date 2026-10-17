@@ -1,0 +1,32 @@
+{
+  "status": "FAILED",
+  "started_utc": "2026-10-14T16:06:12.852125+00:00",
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "baseline_worktree": "C:\\Users\\Lemarchand\\.codex\\worktrees\\campagne-a2\\certus0310",
+  "head": "da1af0825d5e09e8d0a5ff4f1cf42b802e0e30e7",
+  "tracked_changes": "",
+  "cold_cache": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-14\\validation_after_A2\\baseline_spectral_attempt_01\\cold_cache",
+  "source_sha256": {
+    "certus/physics/certus_strat_batch.py": "36fb771e73570cf4247e3a7bca133c22b995294b5d93924f3d884f21016908e7",
+    "tests/unit/test_strat_spectral_target.py": "ef2f1ebc8224f349075e8970ce29814958be4f72dd1daf2576677cd886cfbf9f"
+  },
+  "root_sources_identical": true,
+  "command": [
+    "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+    "-m",
+    "pytest",
+    "tests/unit/test_strat_spectral_target.py",
+    "-q",
+    "--no-cov",
+    "-p",
+    "no:cacheprovider"
+  ],
+  "exit_code": 1,
+  "seconds": 11.855215099989437,
+  "finished_utc": "2026-10-14T16:06:24.722054+00:00"
+}

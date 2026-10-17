@@ -1,0 +1,11 @@
+{
+  "authorized_at_utc": "2026-10-14T10:16:22.332163+00:00",
+  "user_instruction": "ok, je te laisse en 100% autonomie jusqu'au 15/10/2026 8h",
+  "deadline_local": "2026-10-15T08:00:00+02:00",
+  "deadline_utc": "2026-10-15T06:00:00+00:00",
+  "scope": "Finish existing A2 then bounded R0-R6; same IA and scientific constraints",
+  "at_deadline": "No new scientific measurement; preserve running calculation; report honestly and pause follow-up",
+  "automation_id": "certus-essais-rate-jusqu-au-14-octobre-9-h",
+  "automation_before_sha256": "6ab60c21d500c3afac0718e58a6a7e65c7b59fa692b21d825ec81ac5e52eb75e",
+  "no_scientific_default_or_commit_authorized": true
+}

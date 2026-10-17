@@ -1,0 +1,66 @@
+{
+  "verdict": "GO",
+  "started_utc": "2026-10-15T10:40:49.424108+00:00",
+  "script_sha256": {
+    "adapter": "f47ea8341da7cb2040409743bbed8762bfd09ed4d656ff83988db80284eb3fdb",
+    "observer": "df28ee632f11e6dcde87e53c78ce4dc35869194b2b579107f6725e7416562dc3",
+    "generator": "113855ba740fa46ce4c1e4b832cb5c88811e74ff406b0fbbcd0e34b54cdb9038",
+    "controller_helper": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51",
+    "bounded_guard": "e25ceecd752e0b04c52105054ed27c86c4d83aaab370f3b1c1cad6ee72729f07"
+  },
+  "source_sha256": {
+    "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+    "certus/core/certus_strat_robustness.py": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+    "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+    "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+    "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e"
+  },
+  "physics_measured": false,
+  "bounded_program": {
+    "phase": "R3_h02_control",
+    "resources": {
+      "logical_cpus": 24,
+      "affinity_mask": "0xffffff",
+      "priority": "normal",
+      "library_threads": 23
+    },
+    "authorization_sha256": "50448c46c5a2335d7d706cf564e2565d97c5d2e6de447913071103af4b39ffa9",
+    "validation_sha256": "03de1b4f0985438843f3f2afb8f2bc2f81a06dd44737e37acfa7ce510aef51ba",
+    "source_sha256": {
+      "certus/core/certus_strat_consensus.py": "ebaf566725a56e401e87823924ad34e6c3ae30cea8b683b9064679176f62d156",
+      "certus/core/certus_strat_robustness.py": "9d759194eb8c87964b34880d4abc0134c2600de8d2d9fdc7152866cec4e3778d",
+      "certus/core/certus_strat_robustness_rate.py": "f08d255e79166a8ed24ad6026c31382c8dff5da858268b47275d64f6458a4127",
+      "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+      "scripts/probe_blocs_vs_plantage.py": "d94e6de4888e4fee14a25b7097f4575308d1c3ecb1b1d954bc6423f0c952a52e"
+    },
+    "slot": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R3_h02_wavelengths\\control",
+    "quota": 1,
+    "protocol_sha256": "c68c98259c777480de21aab24ba1f4acefc7e94e2e5098647a1b337b0dfa6e78"
+  },
+  "verifier_sha256": "628fbb9bda36b6d994b33d8304c3cd232e0133fc7aefbdd63804a5e57a9a5766",
+  "checks": [
+    "Inactive copied generator: exact legacy candidates/order/IDs/cursor/event",
+    "Fine wavelengths False factory output/order/ids/cursor and parent immutability: []",
+    "Fine wavelengths False factory output/order/ids/cursor and parent immutability: ['rate_moves']",
+    "Fine wavelengths False factory output/order/ids/cursor and parent immutability: ['parent_results']",
+    "Fine wavelengths False factory output/order/ids/cursor and parent immutability: ['available_wls']",
+    "Fine wavelengths False factory output/order/ids/cursor and parent immutability: ['round_robin_seed']",
+    "Fine wavelengths True factory output/order/ids/cursor and parent immutability: []",
+    "Fine wavelengths True factory output/order/ids/cursor and parent immutability: ['rate_moves']",
+    "Fine wavelengths True factory output/order/ids/cursor and parent immutability: ['parent_results']",
+    "Fine wavelengths True factory output/order/ids/cursor and parent immutability: ['available_wls']",
+    "Fine wavelengths True factory output/order/ids/cursor and parent immutability: ['round_robin_seed']",
+    "Generic18-layer fine-wavelength reachability, deterministic stream, real contracts, slit/witness and legal grid",
+    "Task argument/result identity and actual depth capture",
+    "Consensus metadata copied before late NumPy mutation",
+    "Unsupported serialization rejected",
+    "Task exception propagated and all patches restored"
+  ],
+  "resources": {
+    "logical_cpus": 24,
+    "affinity_mask": "0xffffff",
+    "priority": "normal",
+    "library_threads": 23
+  },
+  "finished_utc": "2026-10-15T10:40:53.673116+00:00"
+}

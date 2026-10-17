@@ -1,0 +1,18 @@
+{
+  "phase": "R2_native_base",
+  "resources": {
+    "logical_cpus": 24,
+    "affinity_mask": "0xffffff",
+    "priority": "normal",
+    "library_threads": 23
+  },
+  "authorization_sha256": "50448c46c5a2335d7d706cf564e2565d97c5d2e6de447913071103af4b39ffa9",
+  "validation_sha256": "d746bb57b3592b6812977bcf2514a72f6b9f02794b59b86da7be38a20b4baa09",
+  "source_sha256": {
+    "certus/synthetic.txt": "e27444748e3ce344b0a11f3fd8bac9651669b03401dbdc8f41c57c900749015a"
+  },
+  "slot": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\guard_verification\\synthetic_fixtures\\reports\\bounded_program\\R2_native_base",
+  "quota": 1,
+  "pid": 46020,
+  "claimed_utc": "2026-10-15T07:09:38.271719+00:00"
+}

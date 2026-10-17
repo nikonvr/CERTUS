@@ -1,0 +1,62 @@
+"""Exercise only the added launch-boundary guard, without running a scientific probe."""
+
+from __future__ import annotations
+
+import argparse
+import ast
+import copy
+import hashlib
+import json
+from datetime import UTC, datetime
+from pathlib import Path
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args()
+    root = Path(__file__).resolve().parents[1]
+    source = root / "scratch/campagne_a2_deadline_runner.py"
+    tree = ast.parse(source.read_text(encoding="utf-8"))
+    guards = [n for n in ast.walk(tree) if isinstance(n, ast.If) and "adopt_key is None" in ast.unparse(n.test)]
+    if len(guards) != 1:
+        raise ValueError("Expected exactly one added launch guard")
+    body = [copy.deepcopy(guards[0]), ast.Return(ast.Constant("allowed"))]
+    function = ast.FunctionDef(name="check", args=ast.arguments(posonlyargs=[], args=[], kwonlyargs=[], kw_defaults=[], defaults=[]), body=body, decorator_list=[])
+    module = ast.fix_missing_locations(ast.Module(body=[function], type_ignores=[]))
+    results = []
+    for instant, adopt, expected in ((datetime(2026, 10, 14, 6, 59, 59, tzinfo=UTC), None, "allowed"),
+                                    (datetime(2026, 10, 14, 7, tzinfo=UTC), None, 0),
+                                    (datetime(2026, 10, 14, 8, tzinfo=UTC), None, 0),
+                                    (datetime(2026, 10, 14, 8, tzinfo=UTC), "ongoing_measure", "allowed")):
+        class Clock:
+            def __new__(cls, *a, **kw):
+                return datetime(*a, **kw)
+
+            @staticmethod
+            def now(tz=None):
+                return instant if tz else instant.replace(tzinfo=None)
+
+        state = {"runs": [{"key": "saved1"}, {"key": "saved2"}, {"key": "saved3"}], "current": None, "current_pid": None}
+        saved, reported = [], []
+        namespace = {"adopt_key": adopt, "datetime": Clock, "UTC": UTC, "state": state, "run": {"key": "next_measure"},
+                     "save": lambda path, data: saved.append(copy.deepcopy(data)), "status_path": "unused",
+                     "report": lambda: reported.append(True)}
+        exec(compile(module, str(source), "exec"), namespace)
+        result = namespace["check"]()
+        if result != expected or len(state["runs"]) != 3:
+            raise ValueError("Deadline changed completed measurements or incorrectly gates a launch")
+        if expected == 0:
+            if len(saved) != 1 or len(reported) != 1 or state["status"] != "deadline_reached" or state["next_key"] != "next_measure":
+                raise ValueError("Deadline checkpoint is incomplete")
+        elif saved or reported:
+            raise ValueError("Allowed or adopted measure was modified")
+        results.append({"utc": instant.isoformat(), "adopt": adopt, "result": result})
+    with args.output.open("x", encoding="utf-8") as stream:
+        json.dump({"verdict": "GO", "controller_sha256": hashlib.sha256(source.read_bytes()).hexdigest(), "cases": results,
+                   "scope": "Only the added guard's real AST, mocked clock and persistence; no scientific run or full controller simulation"}, stream, indent=2)
+    print("A2_DEADLINE_GUARD_VERIFY=GO")
+
+
+if __name__ == "__main__":
+    main()

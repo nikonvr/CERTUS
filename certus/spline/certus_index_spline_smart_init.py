@@ -960,10 +960,8 @@ class SmartInitPreviewManager:
                 x0[1 + n_len + pos] = init_Le[i_node]
                 
             bounds = [(float(self.cfg.d_lo), float(self.cfg.d_hi))]
-            for _ in idx_list:
-                bounds.append((1.0, 3.3))
-            for _ in idx_list:
-                bounds.append((self.L_lo_g, self.L_hi_g))
+            bounds.extend((1.0, 3.3) for _ in idx_list)
+            bounds.extend((self.L_lo_g, self.L_hi_g) for _ in idx_list)
                 
             def loss(x):
                 cur_d = x[0]

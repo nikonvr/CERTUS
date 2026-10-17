@@ -1,0 +1,37 @@
+{
+  "verdict": "GO",
+  "artifact_sha256": "988863b7245eab06557cec52450c09d79d98306bf230337ac3cf47918864d7cd",
+  "manifest_sha256": "19dde3ac77d1df1e2d036a04da7914d73c3c34d481aa7b2d5547d74ca42a9272",
+  "actual_calls": 39,
+  "eligible_ids": [
+    900951015,
+    9900006,
+    9900008,
+    97000137,
+    97000139,
+    97000140,
+    97000143
+  ],
+  "rejected": [
+    {
+      "id": 97000138,
+      "reason": "incomplete consensus"
+    },
+    {
+      "id": 97000141,
+      "reason": "base score non-finite"
+    },
+    {
+      "id": 97000142,
+      "reason": "incomplete consensus"
+    },
+    {
+      "id": 97000144,
+      "reason": "base score non-finite"
+    },
+    {
+      "id": 97000145,
+      "reason": "base score non-finite"
+    }
+  ]
+}

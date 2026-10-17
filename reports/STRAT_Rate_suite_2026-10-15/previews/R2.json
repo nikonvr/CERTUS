@@ -1,0 +1,43 @@
+{
+  "command": [
+    "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+    "-X",
+    "utf8",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\rate_native_pipeline_probe_bounded.py",
+    "--worktree",
+    "C:\\Users\\Lemarchand\\.codex\\worktrees\\rate-rmse-r0\\certus0310",
+    "--output",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R2_native_base",
+    "--reference-state",
+    "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\reference_context.json",
+    "--tag",
+    "r2_rmse24_20261015_v1",
+    "--plan"
+  ],
+  "preview": {
+    "arguments": [
+      "r75x0.5",
+      "deep",
+      "0",
+      "0",
+      "2",
+      "0",
+      "101",
+      "0"
+    ],
+    "joint_budget": 480,
+    "prefix_budget": 0,
+    "overrides": "elite_rate_balanced_moves=false,elite_rate_max_candidates=240,elite_rounds=6",
+    "bounded_slot": "R2_native_base",
+    "tag": "r2_rmse24_20261015_v1",
+    "trace_enabled": true,
+    "physics_and_selection": "unchanged",
+    "guards": [
+      "A2 complete24/24",
+      "passing observer verification",
+      "passing R0 control",
+      "idle machine"
+    ]
+  },
+  "exit_code": 0
+}

@@ -1,0 +1,21 @@
+{
+  "verdict": "GO",
+  "original_verdict_preserved": "FAILED_REPLAY",
+  "recorded_child_exit": 1,
+  "reason": "Only the post-scoring validator hardcodes search seeds; all protocol-based28 full-depth calls and consensus metadata match",
+  "old_validator_failures": 7,
+  "corrected_protocol_checks_passed": 7,
+  "artifact_sha256": "c5462095501f5917072f78a9f48bb42f989f4e1ee622b363ad0cb9c6d6a315c5",
+  "plans_sha256": "feb95adace38ccafa4050f24e11e7c9db9260f44ae3b4c7a8cfd8f65f3512f33",
+  "setting": {
+    "robustness_seed": 17410001,
+    "consensus_seed_list": [
+      17410002,
+      17410003,
+      17410004
+    ]
+  },
+  "adopted_utc": "2026-10-15T13:54:36.828655+00:00",
+  "physical_replay_count": 0,
+  "fresh_group_consumed": 1
+}

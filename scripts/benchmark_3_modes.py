@@ -51,7 +51,9 @@ def run_single_mode(stack_path: str, mode: str):
     B.autoanswer_dialogs(True)
 
     app = CertusStratApp()
-    app.load_configuration(str(ROOT / stack_path))
+    from _composant import charger_configuration
+
+    charger_configuration(app, ROOT / stack_path)
     B.attach_console_logging(app)
 
     if "execution_mode" in app.widgets:

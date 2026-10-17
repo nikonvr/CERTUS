@@ -1,0 +1,9 @@
+[
+  {
+    "key": "budget_360",
+    "overrides": {
+      "elite_rate_balanced_moves": false,
+      "elite_rate_max_candidates": 360
+    }
+  }
+]

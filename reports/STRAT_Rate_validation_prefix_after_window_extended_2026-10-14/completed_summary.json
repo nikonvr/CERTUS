@@ -1,0 +1,159 @@
+{
+  "status": "complete",
+  "fixed_plan_id": 9900008,
+  "source_search_id": 9910275,
+  "search_seel": 0.3345159946382285,
+  "search_gain_reference_percent": 15.67846609911272,
+  "fresh_groups": 9,
+  "wins_vs_reference": 9,
+  "gain_reference_range_percent": [
+    13.234345893446054,
+    15.869267792910824
+  ],
+  "wins_vs_parent": 8,
+  "mean_gain_vs_parent_percent": 0.30744185328064333,
+  "median_gain_vs_parent_percent": 0.4791841405920816,
+  "range_gain_vs_parent_percent": [
+    -2.3281814442658755,
+    1.0796307029366181
+  ],
+  "comparisons": [
+    {
+      "run": "holdout_2727",
+      "seed_group": [
+        2727,
+        2728,
+        2729
+      ],
+      "seel": 0.3403585045412538,
+      "reference": 0.39430810738473504,
+      "parent": 0.341997301370675,
+      "gain_reference_percent": 13.68209322433267,
+      "gain_parent_percent": 0.4791841405920816,
+      "max_observed_crash_rate": 0,
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_after_window_2026-10-14\\holdout_2727.json"
+    },
+    {
+      "run": "holdout_2828",
+      "seed_group": [
+        2828,
+        2829,
+        2830
+      ],
+      "seel": 0.3376976051842709,
+      "reference": 0.40139625119750855,
+      "parent": 0.3413832839322973,
+      "gain_reference_percent": 15.869267792910824,
+      "gain_parent_percent": 1.0796307029366181,
+      "max_observed_crash_rate": 0,
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_after_window_2026-10-14\\holdout_2828.json"
+    },
+    {
+      "run": "holdout_2929",
+      "seed_group": [
+        2929,
+        2930,
+        2931
+      ],
+      "seel": 0.34021603410687284,
+      "reference": 0.39722162250415566,
+      "parent": 0.3438016853139316,
+      "gain_reference_percent": 14.351078885864633,
+      "gain_parent_percent": 1.0429417190857215,
+      "max_observed_crash_rate": 0,
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_after_window_2026-10-14\\holdout_2929.json"
+    },
+    {
+      "run": "holdout_3030",
+      "seed_group": [
+        3030,
+        3031,
+        3032
+      ],
+      "seel": 0.3431723081653427,
+      "reference": 0.4039058231694006,
+      "parent": 0.34365696984082583,
+      "gain_reference_percent": 15.036553453844581,
+      "gain_parent_percent": 0.1410306549893603,
+      "max_observed_crash_rate": 0,
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_after_window_extended_2026-10-14\\holdout_3030.json"
+    },
+    {
+      "run": "holdout_3131",
+      "seed_group": [
+        3131,
+        3132,
+        3133
+      ],
+      "seel": 0.33676417524105173,
+      "reference": 0.39188683994327067,
+      "parent": 0.34037929071158046,
+      "gain_reference_percent": 14.065964733645675,
+      "gain_parent_percent": 1.0620844361509563,
+      "max_observed_crash_rate": 0,
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_after_window_extended_2026-10-14\\holdout_3131.json"
+    },
+    {
+      "run": "holdout_3232",
+      "seed_group": [
+        3232,
+        3233,
+        3234
+      ],
+      "seel": 0.3436730054959446,
+      "reference": 0.4010643282229018,
+      "parent": 0.3451294156538636,
+      "gain_reference_percent": 14.309754991488665,
+      "gain_parent_percent": 0.4219895760434689,
+      "max_observed_crash_rate": 0,
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_after_window_extended_2026-10-14\\holdout_3232.json"
+    },
+    {
+      "run": "holdout_3333",
+      "seed_group": [
+        3333,
+        3334,
+        3335
+      ],
+      "seel": 0.3394550950708724,
+      "reference": 0.3923603433122679,
+      "parent": 0.3397506055847876,
+      "gain_reference_percent": 13.483841867089453,
+      "gain_parent_percent": 0.08697865700829643,
+      "max_observed_crash_rate": 0,
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_after_window_extended_2026-10-14\\holdout_3333.json"
+    },
+    {
+      "run": "holdout_3434",
+      "seed_group": [
+        3434,
+        3435,
+        3436
+      ],
+      "seel": 0.3458879824089159,
+      "reference": 0.3986461993176962,
+      "parent": 0.3380183030002418,
+      "gain_reference_percent": 13.234345893446054,
+      "gain_parent_percent": -2.3281814442658755,
+      "max_observed_crash_rate": 0,
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_after_window_extended_2026-10-14\\holdout_3434.json"
+    },
+    {
+      "run": "holdout_3535",
+      "seed_group": [
+        3535,
+        3536,
+        3537
+      ],
+      "seel": 0.33572296619738085,
+      "reference": 0.3969290509437911,
+      "parent": 0.3383666868294619,
+      "gain_reference_percent": 15.419905547572943,
+      "gain_parent_percent": 0.7813182369851623,
+      "max_observed_crash_rate": 0,
+      "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_validation_prefix_after_window_extended_2026-10-14\\holdout_3535.json"
+    }
+  ],
+  "conclusion": "Gain versus reference confirmed for this fixed plan on nine fresh groups; small incremental edge versus window688 parent is heterogeneous, 8/9 wins and one loss2.33%; no uniform superiority or formal CI",
+  "scope": "One component, fixed plans, unchanged model/depth; no native scheduling gain or machine/general validation, no new default"
+}

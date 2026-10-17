@@ -556,10 +556,15 @@ class OptimizationManager:
 
         self.ui.remove_thinnest()
 
+    def _fixed_rows(self) -> set[int]:
+        """Rows of the front table whose thickness the operator fixed (`var` off): no automatic cleanup removes them."""
+
+        return {r for r, layer in enumerate(self.ui._get_front_stack()) if not layer.var}
+
     def _apply_5nm_minimum(self) -> None:
         """Enforce hard minimum layer thickness of 5nm on the current design.
 
-        Removes all layers < 5nm, merges adjacent identical materials,
+        Removes all layers < 5nm except those the operator fixed, merges adjacent identical materials,
 
         and logs any changes. Called at every workflow exit point.
 
@@ -574,7 +579,17 @@ class OptimizationManager:
 
         MIN_FINAL_THICKNESS = 5.0  # nm - hard manufacturing limit
 
-        thin_layers = [r for r, d in enumerate(ep) if d < MIN_FINAL_THICKNESS]
+        fixed = self._fixed_rows()
+
+        thin_layers = [r for r, d in enumerate(ep) if d < MIN_FINAL_THICKNESS and r not in fixed]
+
+        kept_fixed = [r for r, d in enumerate(ep) if d < MIN_FINAL_THICKNESS and r in fixed]
+
+        if kept_fixed:
+            self.ui.log(
+                f"[5nm rule] Keeping {len(kept_fixed)} fixed layers < {MIN_FINAL_THICKNESS}nm: the operator fixed them",
+                "WARNING",
+            )
 
         if not thin_layers:
             return  # Nothing to do
@@ -742,7 +757,7 @@ class OptimizationManager:
 
         Smart cleanup: merges identical adjacent materials and removes
 
-        very thin layers (< 1.0 nm) which are likely artifacts.
+        very thin layers (< 1.0 nm) which are likely artifacts. A layer the operator fixed (`var` off) is never removed.
 
         Parameters
 
@@ -782,10 +797,12 @@ class OptimizationManager:
 
         ep_current = self.ui.ep_current if self.ui.ep_current is not None else []
 
+        fixed = self._fixed_rows()
+
         if len(ep_current) == self.ui.front_table.rowCount():
-            for r in range(len(ep_current) - 1, -1, -1):
-                if ep_current[r] < threshold:
-                    rows_to_remove.append(r)
+            rows_to_remove.extend(
+                r for r in range(len(ep_current) - 1, -1, -1) if ep_current[r] < threshold and r not in fixed
+            )
 
         if rows_to_remove:
             self.ui.log(f"Smart cleanup: removing {len(rows_to_remove)} layers < {threshold:.2f} nm (adaptive)", "INFO")

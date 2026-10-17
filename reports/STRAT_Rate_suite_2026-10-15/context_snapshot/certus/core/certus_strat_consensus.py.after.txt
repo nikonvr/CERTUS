@@ -1,0 +1,1500 @@
+"""
+CERTUS STRAT CONSENSUS
+======================
+Part of CERTUS Suite (Refactoring 2026)
+
+Contains:
+- Consensus configurations & seeds resolution
+- Consensus scoring & cache logic
+- Logging utilities for consensus ranking
+- ELITE refinement flow
+"""
+
+import collections
+import concurrent.futures
+import copy
+import logging
+from typing import Any
+
+import numpy as np
+
+from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, get_safe_worker_count
+from certus.core.certus_strat_config import RobustnessContext
+
+# Import helpers from context and ranking
+from certus.core.certus_strat_ranking import (
+    _apply_block_diversity_if_enabled,
+    _apply_family_diversity_if_enabled,
+    _apply_strategy_ranking,
+    _apply_wl_diversity_if_enabled,
+    _existing_block_signatures,
+    _resolve_elite_nominal_and_target_threshold,
+    _resolve_monitoring_wavelength_grid,
+    next_refinement_strategy_id,
+)
+from certus.utils.certus_strat_context import (
+    _dedupe_preserve_order_int,
+    _default_consensus_seeds,
+    _extract_rmse_p95_for_noise,
+    _parse_origin_priority_map,
+    _plan_signature,
+    _resolve_consensus_num_runs,
+    _resolve_consensus_num_seeds,
+    _resolve_consensus_seed_stride,
+    _resolve_consensus_top_k,
+    _strategy_id_sort_token,
+    _strategy_signature,
+    _validate_strategy_blocks_contract,
+)
+
+
+# Dynamic imports from robustness to prevent circular dependencies
+def _test_strategy_robustness_task(*args, **kwargs) -> Any:
+    from certus.core.certus_strat_robustness import _test_strategy_robustness_task as task_fn
+    return task_fn(*args, **kwargs)
+
+def _calculate_strategy_spectral_resolution(*args, **kwargs) -> Any:
+    from certus.core.certus_strat_robustness import _calculate_strategy_spectral_resolution as res_fn
+    return res_fn(*args, **kwargs)
+
+def _parse_noise_factors(*args, **kwargs) -> Any:
+    from certus.core.certus_strat_robustness import _parse_noise_factors as parse_fn
+    return parse_fn(*args, **kwargs)
+
+def _attach_slit_profiles(*args, **kwargs) -> Any:
+    from certus.core.certus_strat_robustness import _attach_slit_profiles as attach_fn
+    return attach_fn(*args, **kwargs)
+
+def _elite_rate_candidates(*args, **kwargs) -> Any:
+    from certus.core.certus_strat_robustness import _elite_rate_candidates as candidates_fn
+    return candidates_fn(*args, **kwargs)
+
+
+#: What a strategy carries besides its blocks, and what its children keep: the layers laid by Rate, the slit, the testglass swaps.
+#: A child of ELITE or of the local search is its parent with other blocks, not a new strategy.
+_INHERITED_KEYS = ("rate_layers", "monochromator_resolution_nm", "witness_reset_layers")
+
+
+def _inherited_by_children(parent: dict[str, Any]) -> dict[str, Any]:
+    """The parts of a strategy its children keep, as copies (a child can be edited without touching its parent)."""
+    return {key: copy.deepcopy(parent[key]) for key in _INHERITED_KEYS if parent.get(key) not in (None, [])}
+
+
+def _resolve_consensus_std_weight(params: dict[str, Any]) -> float:
+    """Resolve non-negative std weight for mean+std consensus mode."""
+    return max(0.0, float(params.get("consensus_std_weight", 0.35)))
+
+def _resolve_consensus_mode(params: dict[str, Any]) -> str:
+    """Resolve consensus score aggregation mode with fallback."""
+    mode = str(params.get("consensus_score_mode", "mean_std")).strip().lower()
+    if mode not in {"mean", "worst", "mean_std"}:
+        mode = "mean_std"
+    return mode
+
+def _resolve_robustness_base_seed(params: dict[str, Any]) -> int:
+    """Resolve base seed used by robustness/consensus flows."""
+    return int(params.get("robustness_seed", 42))
+
+def _resolve_consensus_enabled(params: dict[str, Any]) -> bool:
+    """Resolve whether consensus reranking is enabled."""
+    return bool(params.get("enable_consensus_ranking", False))
+
+def _build_consensus_ranking_params_dict(
+    *,
+    consensus_enabled: bool,
+    consensus_num_seeds: int,
+    consensus_top_k: int,
+    consensus_seed_stride: int,
+    consensus_mode: str,
+    consensus_std_weight: float,
+    consensus_num_runs: int,
+    base_seed: int,
+    consensus_seeds: list[int],
+) -> dict[str, Any]:
+    """Build normalized consensus-configuration payload."""
+    return {
+        "enabled": consensus_enabled,
+        "num_seeds": consensus_num_seeds,
+        "top_k": consensus_top_k,
+        "seed_stride": consensus_seed_stride,
+        "mode": consensus_mode,
+        "std_weight": consensus_std_weight,
+        "num_runs": consensus_num_runs,
+        "base_seed": base_seed,
+        "seeds": consensus_seeds,
+    }
+
+def _init_consensus_map() -> dict[str, dict[str, Any]]:
+    """Initialize consensus metadata map."""
+    return {}
+
+def _resolve_consensus_seeds(
+    params: dict[str, Any],
+    *,
+    consensus_num_seeds: int,
+    consensus_seed_stride: int,
+    base_seed: int,
+) -> list[int]:
+    """Resolve ordered unique consensus seeds under configured budget."""
+    seeds: list[int] = []
+    raw_seed_list = params.get("consensus_seed_list", None)
+
+    raw_list = raw_seed_list if isinstance(raw_seed_list, list) else (
+        [x.strip() for x in raw_seed_list.split(",")] if isinstance(raw_seed_list, str) and raw_seed_list.strip() else []
+    )
+    for token in raw_list:
+        if token:
+            try:
+                seeds.append(int(token))
+            except (TypeError, ValueError):
+                pass
+
+    if seeds:
+        seeds = _dedupe_preserve_order_int(seeds)[: max(1, consensus_num_seeds)]
+
+    if not seeds:
+        seeds = _default_consensus_seeds(
+            base_seed=base_seed,
+            consensus_seed_stride=consensus_seed_stride,
+            consensus_num_seeds=consensus_num_seeds,
+        )
+    return seeds
+
+def _resolve_consensus_ranking_params(
+    params: dict[str, Any],
+    *,
+    num_runs: int,
+) -> dict[str, Any]:
+    """Resolve normalized consensus-ranking parameters."""
+    consensus_enabled = _resolve_consensus_enabled(params)
+    consensus_num_seeds = _resolve_consensus_num_seeds(params)
+    consensus_top_k = _resolve_consensus_top_k(params)
+    consensus_seed_stride = _resolve_consensus_seed_stride(params)
+    consensus_mode = _resolve_consensus_mode(params)
+    consensus_std_weight = _resolve_consensus_std_weight(params)
+    consensus_num_runs = _resolve_consensus_num_runs(params, num_runs=num_runs)
+    base_seed = _resolve_robustness_base_seed(params)
+    consensus_seeds = _resolve_consensus_seeds(
+        params,
+        consensus_num_seeds=consensus_num_seeds,
+        consensus_seed_stride=consensus_seed_stride,
+        base_seed=base_seed,
+    )
+    return _build_consensus_ranking_params_dict(
+        consensus_enabled=consensus_enabled,
+        consensus_num_seeds=consensus_num_seeds,
+        consensus_top_k=consensus_top_k,
+        consensus_seed_stride=consensus_seed_stride,
+        consensus_mode=consensus_mode,
+        consensus_std_weight=consensus_std_weight,
+        consensus_num_runs=consensus_num_runs,
+        base_seed=base_seed,
+        consensus_seeds=consensus_seeds,
+    )
+
+def _init_consensus_runtime_state(
+    noise_levels: list[float] | None,
+) -> tuple[tuple[float, ...], dict[tuple, float]]:
+    """Initialize immutable noise signature and consensus score cache."""
+    noise_signature = tuple(round(float(v), 12) for v in (noise_levels or []))
+    robustness_score_cache: dict[tuple, float] = {}
+    return noise_signature, robustness_score_cache
+
+def _unpack_consensus_cfg(
+    params: dict[str, Any],
+    *,
+    num_runs: int,
+) -> tuple[bool, int, str, float, int, list[int]]:
+    """Resolve and unpack consensus config tuple for runtime loop."""
+    consensus_cfg = _resolve_consensus_ranking_params(params, num_runs=num_runs)
+    return (
+        bool(consensus_cfg["enabled"]),
+        int(consensus_cfg["top_k"]),
+        str(consensus_cfg["mode"]),
+        float(consensus_cfg["std_weight"]),
+        int(consensus_cfg["num_runs"]),
+        list(consensus_cfg["seeds"]),
+    )
+
+def _resolve_elite_refinement_cfg(
+    params: dict[str, Any], *, num_runs: int
+) -> tuple[int, int, int, int, int, float, bool, int]:
+    """Resolve ELITE refinement parameters with safe bounds."""
+    elite_parent_top_k = max(1, int(params.get("elite_parent_top_k", 10)))
+    elite_max_candidates = max(1, int(params.get("elite_max_candidates", 120)))
+    elite_wl_neighbor_span = max(1, int(params.get("elite_wl_neighbor_span", 1)))
+    elite_num_runs = max(10, int(params.get("elite_num_runs", min(num_runs, 80))))
+    elite_rounds = max(1, int(params.get("elite_rounds", 2)))
+    elite_min_improvement = max(0.0, float(params.get("elite_min_improvement", 0.0)))
+    elite_stop_on_no_gain = bool(params.get("elite_stop_on_no_gain", True))
+    elite_max_full_evals = max(1, int(params.get("elite_max_full_evals", 36)))
+    return (
+        elite_parent_top_k,
+        elite_max_candidates,
+        elite_wl_neighbor_span,
+        elite_num_runs,
+        elite_rounds,
+        elite_min_improvement,
+        elite_stop_on_no_gain,
+        elite_max_full_evals,
+    )
+
+def _resolve_nominal_noise_level(
+    noise_levels: list[float] | np.ndarray,
+    raw_factors: Any,
+) -> float:
+    """Resolve nominal-noise level from configured robustness factors."""
+    nominal_idx = 0
+    parsed_factors: list[float] = []
+    if isinstance(raw_factors, (list, tuple)):
+        for x in raw_factors:
+            try:
+                parsed_factors.append(float(x))
+            except (TypeError, ValueError):
+                continue
+    if parsed_factors:
+        nominal_idx = int(np.argmin(np.abs(np.array(parsed_factors, dtype=np.float64) - 1.0)))
+    if nominal_idx < len(noise_levels):
+        return float(noise_levels[nominal_idx])
+    return float(noise_levels[min(len(noise_levels) // 2, len(noise_levels) - 1)])
+
+def _elite_parent_count(
+    strategies_results: list[dict[str, Any]],
+    elite_parent_top_k: int,
+) -> int:
+    """Return capped parent count used to seed ELITE candidate generation."""
+    return min(elite_parent_top_k, len(strategies_results))
+
+def _consensus_prefilter_key(item: dict[str, Any]) -> tuple:
+    """Sorting key for pre-consensus candidate selection."""
+    strategy = item.get("strategy", {})
+    sid_token = _strategy_id_sort_token(strategy.get("strategy_id", ""))
+    return (
+        float(item.get("robustness_score", np.inf)),
+        float(item.get("min_resolution", 999.0)),
+        -int(strategy.get("same_wl_kept", 0)),
+        sid_token,
+    )
+
+def _consensus_aggregate_score(
+    *,
+    mode: str,
+    mean_score: float,
+    worst_score: float,
+    std_score: float,
+    std_weight: float,
+) -> float:
+    """Aggregate consensus score according to configured mode."""
+    if mode == "mean":
+        return float(mean_score)
+    if mode == "worst":
+        return float(worst_score)
+    return float(mean_score + std_weight * std_score)
+
+def _build_consensus_score_meta(
+    *,
+    consensus_score: float,
+    mean_score: float,
+    std_score: float,
+    worst_score: float,
+    consensus_seeds: list[int],
+    n_samples: int,
+) -> dict[str, Any]:
+    """Build canonical consensus-score payload for one strategy."""
+    return {
+        "score": float(consensus_score),
+        "mean": float(mean_score),
+        "std": float(std_score),
+        "worst": float(worst_score),
+        "seeds": list(consensus_seeds),
+        "n_samples": int(n_samples),
+    }
+
+def _register_consensus_score_for_strategy(
+    *,
+    consensus_map: dict[str, dict[str, Any]],
+    sid: str,
+    seed_scores: list[float],
+    consensus_mode: str,
+    consensus_std_weight: float,
+    consensus_seeds: list[int],
+) -> None:
+    """Compute and store consensus score/meta for one strategy id."""
+    mean_score, std_score, worst_score = _consensus_seed_score_stats(seed_scores)
+    consensus_score = _consensus_aggregate_score(
+        mode=consensus_mode,
+        mean_score=mean_score,
+        worst_score=worst_score,
+        std_score=std_score,
+        std_weight=consensus_std_weight,
+    )
+    consensus_map[sid] = _build_consensus_score_meta(
+        consensus_score=consensus_score,
+        mean_score=mean_score,
+        std_score=std_score,
+        worst_score=worst_score,
+        consensus_seeds=consensus_seeds,
+        n_samples=len(seed_scores),
+    )
+
+def _apply_consensus_scores_to_results(
+    *,
+    results_in: list[dict[str, Any]],
+    consensus_map: dict[str, dict[str, Any]],
+    consensus_mode: str,
+) -> None:
+    """Write consensus scores/metadata back into strategy result rows."""
+    for item in results_in:
+        sid = _result_item_strategy_id(item)
+        meta = consensus_map.get(sid)
+        if not meta:
+            continue
+        _apply_item_consensus_scores(item, meta)
+        item["robustness_consensus_meta"] = _build_item_consensus_meta(
+            consensus_mode=consensus_mode,
+            meta=meta,
+        )
+
+def _apply_item_consensus_scores(item: dict[str, Any], meta: dict[str, Any]) -> None:
+    """Apply base/consensus/final robustness score fields on one row."""
+    item["robustness_score_base"] = float(item.get("robustness_score", np.inf))
+    item["robustness_score_consensus"] = float(meta["score"])
+    item["robustness_score"] = float(meta["score"])
+
+def _build_item_consensus_meta(*, consensus_mode: str, meta: dict[str, Any]) -> dict[str, Any]:
+    """Build per-item robustness consensus metadata payload."""
+    return {
+        "mode": consensus_mode,
+        "mean": float(meta["mean"]),
+        "std": float(meta["std"]),
+        "worst": float(meta["worst"]),
+        "seeds": meta["seeds"],
+        "n_samples": int(meta["n_samples"]),
+    }
+
+def _result_item_strategy_id(item: dict[str, Any]) -> str:
+    """Extract strategy id token from a strategy-result row."""
+    return str(item.get("strategy", {}).get("strategy_id", ""))
+
+def _has_consensus_seed_scores(seed_scores: list[float]) -> bool:
+    """Return True when at least one finite seed score was collected."""
+    return bool(seed_scores)
+
+def _should_skip_consensus_registration(seed_scores: list[float]) -> bool:
+    """Return True when candidate has no consensus scores to register."""
+    return not _has_consensus_seed_scores(seed_scores)
+
+def _log_consensus_seed_failure(*, logger, sid: str, seed: int, error: Exception) -> None:
+    """Log one consensus seed re-score failure."""
+    logger.warning(f"[ROBUSTNESS] Consensus re-score failed for strategy {sid} seed={seed}: {error}")
+
+def _log_consensus_rescore_summary(
+    *,
+    logger,
+    consensus_map: dict[str, dict[str, Any]],
+    results_in: list[dict[str, Any]],
+    stage_tag: str,
+) -> None:
+    """Emit compact summary after consensus re-scoring."""
+    if consensus_map:
+        logger.info(
+            f"[ROBUSTNESS] Consensus re-scored strategies: {len(consensus_map)}/{len(results_in)} ({stage_tag})."
+        )
+
+def _log_consensus_ranking_enabled(
+    *,
+    logger,
+    stage_tag: str,
+    top_k_eval: int,
+    consensus_seeds: list[int],
+    consensus_mode: str,
+    consensus_num_runs: int,
+) -> None:
+    """Emit consensus-ranking configuration log line."""
+    logger.info(
+        "[ROBUSTNESS] Consensus ranking enabled "
+        f"({stage_tag}, top_k={top_k_eval}, seeds={consensus_seeds}, "
+        f"mode={consensus_mode}, runs={consensus_num_runs})"
+    )
+
+def _select_consensus_candidates(
+    results_in: list[dict[str, Any]],
+    *,
+    consensus_top_k: int,
+) -> tuple[int, list[dict[str, Any]]]:
+    """Select top-k candidates for consensus re-scoring."""
+    top_k_eval = min(consensus_top_k, len(results_in))
+    candidates = sorted(results_in, key=_consensus_prefilter_key)[:top_k_eval]
+    return top_k_eval, candidates
+
+def _consensus_cache_key(
+    strat_sig: tuple,
+    *,
+    seed: int,
+    consensus_num_runs: int,
+    noise_signature: tuple[float, ...],
+) -> tuple:
+    """Build stable cache key for consensus robustness re-scoring."""
+    return (
+        strat_sig,
+        int(seed),
+        int(consensus_num_runs),
+        noise_signature,
+    )
+
+def _build_params_consensus(params_safe: dict[str, Any], *, seed: int) -> dict[str, Any]:
+    """Build per-seed params payload for consensus re-scoring."""
+    params_consensus = dict(params_safe)
+    params_consensus["robustness_seed"] = int(seed)
+    return params_consensus
+
+def _consume_cached_consensus_score(
+    *,
+    robustness_score_cache: dict[tuple, float],
+    cache_key: tuple,
+    seed_scores: list[float],
+) -> bool:
+    """Consume cached consensus score if available; return True on cache hit."""
+    if cache_key not in robustness_score_cache:
+        return False
+    score_c = robustness_score_cache[cache_key]
+    if np.isfinite(score_c):
+        seed_scores.append(score_c)
+    return True
+
+def _store_and_consume_consensus_score(
+    *,
+    robustness_score_cache: dict[tuple, float],
+    cache_key: tuple,
+    score_c: float,
+    seed_scores: list[float],
+) -> None:
+    """Store computed consensus score then append it if finite."""
+    robustness_score_cache[cache_key] = float(score_c)
+    if np.isfinite(score_c):
+        seed_scores.append(score_c)
+
+def _should_apply_consensus_ranking(
+    *,
+    consensus_enabled: bool,
+    consensus_seeds: list[int],
+    results_in: list[dict[str, Any]],
+) -> bool:
+    """Return True when consensus reranking should run."""
+    return bool(consensus_enabled and len(consensus_seeds) > 1 and results_in)
+
+def _consensus_seed_score_stats(seed_scores: list[float]) -> tuple[float, float, float]:
+    """Return (mean, std, worst) for consensus seed scores."""
+    return (
+        float(np.mean(seed_scores)),
+        float(np.std(seed_scores)),
+        float(np.max(seed_scores)),
+    )
+
+def _consensus_strategy_identity(strat: dict[str, Any]) -> tuple[str, tuple]:
+    """Return stable strategy id and signature for consensus loop."""
+    sid = str(strat.get("strategy_id", ""))
+    strat_sig = _strategy_signature(strat)
+    return sid, strat_sig
+
+def _consensus_score_from_result(res_consensus: dict[str, Any]) -> float:
+    """Extract consensus robustness score from worker result payload."""
+    return float(res_consensus.get("robustness_score", np.inf))
+
+def _rank_and_filter_strategies(
+    strategies_results: list[dict[str, Any]],
+    stage_tag: str,
+    params: dict[str, Any],
+    logger: logging.Logger,
+    apply_consensus_fn: Any,
+) -> list[dict[str, Any]]:
+    """Applies consensus, basic ranking, family diversity, and block diversity in standard order."""
+    apply_consensus_fn(strategies_results, stage_tag)
+    origin_priority_map = _parse_origin_priority_map(params.get("origin_priority_map", None))
+    strategies_results = _apply_strategy_ranking(strategies_results, params, origin_priority_map)
+    strategies_results = _apply_family_diversity_if_enabled(
+        strategies_results=strategies_results,
+        params=params,
+        logger=logger,
+    )
+    strategies_results = _apply_block_diversity_if_enabled(
+        strategies_results=strategies_results,
+        params=params,
+        logger=logger,
+    )
+    # 🔑 THE λ DIVERSITY COMES LAST, AND THAT IS INTENDED.
+    #
+    # The two previous passes diversify the FAMILY of origin and the block PARTITION.
+    # 📏 Measured on 2026-08-21: they let through five ELITE parents carrying ONE SINGLE set
+    # of λ, because they diversify axes orthogonal to the one along which ELITE moves. The
+    # λ pass therefore acts after them, on the head they have already formed.
+    # 🔒 Inert by default: without `enable_wl_diversity`, former path to the bit.
+    strategies_results = _apply_wl_diversity_if_enabled(
+        strategies_results=strategies_results,
+        params=params,
+        logger=logger,
+    )
+    return strategies_results
+
+def _elite_wl_histogram(candidates: list[Any]) -> dict[float, int]:
+    """How many candidates use each control wavelength -- each candidate counted ONCE per wl.
+
+    WHY THIS COUNT EXISTS. Measured 2026-08-20 on `r75x2` at 2 nm: all 547 depositable
+    strategies of seed 77 come from ELITE, and 544 of them monitor layer 35 at 685 nm --
+    a wavelength that NONE of seed 42's 1617 strategies proposes anywhere, at any layer.
+    At seed 42 ELITE generates 4226 candidates, evaluates 1327 in full, and retains NONE.
+
+    The three existing counters say WHICH GATE rejects. They do not say WHICH WAVELENGTHS
+    were on the table, and those two readings separate the only two repairs available:
+
+        wl ABSENT from the generated histogram  -> ELITE never looks there; fix the PARENTS
+        wl PRESENT, and present in a reject     -> ELITE looks and discards; fix the GATE
+
+    Without this the choice between the two stays a guess, and this repository has already
+    paid five times in one day for reasoning on a quantity that did not carry the
+    information sought.
+
+    ⚠️ COUNTING RULE, and it must be known to read the log: a candidate contributes each of
+    its DISTINCT block wavelengths once, so the counts sum to MORE than the number of
+    candidates. A count is "how many candidates used this wl", never "how many blocks".
+
+    Accepts strategy dicts or `(index, strategy)` pairs, which is what the ELITE stage
+    carries at its two rejection sites.
+    """
+    hist: collections.Counter = collections.Counter()
+    for item in candidates:
+        strat = item[1] if isinstance(item, tuple) else item
+        if not isinstance(strat, dict):
+            continue
+        hist.update({
+            float(b["wavelength"])
+            for b in (strat.get("blocks") or [])
+            if isinstance(b, dict) and b.get("wavelength") is not None
+        })
+    return dict(hist)
+
+
+#: Crash-rate buckets for the ELITE reject histogram. The 5 % boundary is 👤's
+#: tolerance, so the buckets straddle it: a reject just above it is a candidate that a
+#: CONFIDENCE-bounded gate could keep, while a reject at 100 % is one that nothing can.
+_CRASH_BUCKETS: tuple[tuple[float, str], ...] = (
+    (0.01, "<=1%"),
+    (0.02, "1-2%"),
+    (0.05, "2-5%"),
+    (0.10, "5-10%"),
+    (0.25, "10-25%"),
+    (0.50, "25-50%"),
+    (0.999, "50-99%"),
+)
+
+
+def _crash_bucket(rate: float | None) -> str:
+    """Name the crash-rate band of a rejected ELITE candidate.
+
+    WHY THIS EXISTS, and it decides which repair is even possible. ELITE's
+    `not np.isfinite(full_score)` reject IS the crash gate: `_crash_gate_rejects`
+    (`certus_strat_robustness.py`) sets `final_score = inf`, and that infinity is what
+    ELITE reads. Measured 2026-08-20 on `r75x2` at 2 nm, seed 42: 1116 of 1327 candidates
+    evaluated in full die there. But the artifacts do NOT say at what RATE they died, and
+    the two answers call for different repairs:
+
+        rejects clustered just ABOVE tolerance -> a confidence-bounded gate keeps them
+        rejects at 100 %                       -> no gate setting recovers them; only
+                                                  relaxing the search itself can, and
+                                                  whatever it finds must then be judged
+                                                  at NOMINAL
+
+    `crash_rate` is written by the robustness evaluation regardless of `final_score`, so
+    the quantity is already there and was simply discarded.
+    """
+    if rate is None:
+        return "unknown"
+    try:
+        r = float(rate)
+    except (TypeError, ValueError):
+        return "unknown"
+    for hi, name in _CRASH_BUCKETS:
+        if r <= hi:
+            return name
+    return "100%"
+
+
+#: Safety net only. The control grid holds at most ~301 wavelengths, so a full histogram is
+#: one long line and never a runaway. This exists so a pathological input cannot produce a
+#: megabyte-long log entry -- not to trim normal output.
+WL_HISTOGRAM_HARD_CAP: int = 400
+
+
+def _format_wl_histogram(hist: dict[float, int], top: int = WL_HISTOGRAM_HARD_CAP) -> str:
+    """Every wavelength, heaviest first. NO truncation of normal output, and here is why.
+
+    🔴 THIS FUNCTION USED TO SHOW THE 14 HEAVIEST AND SAY « [+N wl not shown] », ON THE
+    THEORY THAT NAMING THE OMISSION WAS ENOUGH. Measured 2026-08-21: it is not, and the
+    failure is exact.
+
+    The whole point of these histograms is to answer « does ELITE ever propose the winning
+    wavelength ? ». On `r75x2` at 2 nm that wavelength is 685 nm, and it carries ONE OR TWO
+    candidates per round -- so it fell into the hidden tail in 61 histograms out of one run,
+    and the count read off the log was a FLOOR, not a measurement.
+
+    📏 The proof was internal and it should have been caught sooner: 685 nm appeared 5 times
+    in `generated` and 11 times in the rejects. A candidate cannot be rejected without having
+    been generated, so the `generated` view was missing at least six.
+
+        Saying « I am truncating » does not help when what you are looking for is, BY
+        CONSTRUCTION, exactly what gets truncated. A rare event is the whole question.
+
+    🔑 So the tail is printed. The cost is a long line -- ~74 distinct wavelengths in
+    practice, ~600 characters -- against a journal that already runs to megabytes. The
+    truncation was an optimisation nobody needed, and it cost a reading all night.
+    """
+    if not hist:
+        return "(none)"
+    items = sorted(hist.items(), key=lambda kv: (-kv[1], kv[0]))
+    head = " ".join(f"{wl:g}:{n}" for wl, n in items[:top])
+    omitted = len(items) - top
+    # Should never happen on the real grid; if it does, SAY so.
+    return head + (f" [+{omitted} wl OVER HARD CAP {top}]" if omitted > 0 else "")
+
+
+def _log_elite_wl(
+    logger: logging.Logger,
+    elite_round: int,
+    exit_name: str,
+    generated: dict[float, int],
+    rejects: dict[str, collections.Counter],
+    crash_bands: collections.Counter | None = None,
+) -> None:
+    """Emit the wavelength histograms of one ELITE round, generated and per reject gate.
+
+    Emitted at EVERY exit of the round, for the same reason the three counters are: a round
+    that leaves early was measuring nothing at all before 2026-08-20.
+    """
+    logger.info(
+        f"[ELITE-WL] Round {elite_round} exit={exit_name} generated "
+        f"{_format_wl_histogram(generated)}"
+    )
+    for cause, hist in rejects.items():
+        logger.info(
+            f"[ELITE-WL] Round {elite_round} exit={exit_name} rejected_{cause} "
+            f"{_format_wl_histogram(dict(hist))}"
+        )
+    crash_bands = crash_bands or collections.Counter()
+    if crash_bands:
+        bands = " ".join(
+            f"{cause}/{band}:{n}"
+            for (cause, band), n in sorted(crash_bands.items(), key=lambda kv: -kv[1])
+        )
+        logger.info(
+            f"[ELITE-WL] Round {elite_round} exit={exit_name} reject_crash_bands {bands}"
+        )
+
+
+def _log_elite_parents(
+    logger: logging.Logger,
+    elite_round: int,
+    parents: list[dict[str, Any]],
+) -> None:
+    """The strategies ELITE actually starts from -- and nothing said what they were.
+
+    WHY THIS EXISTS. ELITE's neighbourhood is deterministic, local and one-move-at-a-time:
+    a single block's wavelength shifted by +/- span, or a single boundary shifted by one
+    layer, never both. So the whole outcome is decided by WHERE it starts -- and the parents
+    are simply `strategies_results[:elite_parent_top_k]`, i.e. the head of a list that has
+    been through the ranking and two diversity passes.
+
+    📏 Measured 2026-08-21 on `r75x2` at 2 nm, seed 42: 48 of its own nine-block strategies
+    carry the block `(33, 53) @ 686 nm`, ONE nanometre in wavelength from the block
+    `(33, 53) @ 685 nm` that every one of the 72 depositable strategies carries. A single
+    mutation separates them. Whether any of those 48 was ever a parent decides between two
+    opposite repairs -- fix the parent selection, or fix the gate that rejects the child --
+    and NOTHING in the logs or the artefacts could answer it.
+
+    🔴 AND THE INFERENCE ROUTE IS CLOSED, which is why a log line is the only way. Sorting
+    the final artefact by score does NOT reproduce the parent list: the ranking runs before
+    two diversity passes that reorder it (`enable_family_diversity` and
+    `enable_block_diversity`, both ON by default), and the artefact is post-ELITE anyway.
+    Reading the parents off the artefact is exactly the class of mistake this repository
+    keeps paying for -- a quantity that does not carry the information sought.
+
+    ⚠️ WHAT IS PRINTED, AND WHY EACH FIELD. The wavelength tuple is the strategy's identity
+    for this purpose -- ELITE moves in that space. `crash` and `seel` show what the ranking
+    saw; when every candidate crashes they are a CONSTANT and a FALLBACK respectively, and
+    the line makes that visible instead of leaving it to be deduced. `margin` is the only
+    quantity measured to predict a crash from the signal alone (a factor 22 on the rate),
+    and it is the third sort key -- inert unless `use_margin_ranking` is armed.
+    """
+    import math
+
+    for rank, item in enumerate(parents, start=1):
+        strat = item.get("strategy", {}) or {}
+        wls = [
+            float(b.get("wavelength"))  # type: ignore[arg-type]
+            for b in (strat.get("blocks") or [])
+            if isinstance(b, dict) and b.get("wavelength") is not None
+        ]
+        try:
+            score = float(item.get("robustness_score", float("inf")))
+            seel = 2.0 * math.sqrt(score) if math.isfinite(score) and score > 0 else float("nan")
+        except (TypeError, ValueError):
+            seel = float("nan")
+        crash = item.get("crash_rate")
+        cl = item.get("critical_layer") or {}
+        marge = cl.get("margin_in_A")
+        logger.info(
+            f"   [ELITE-PARENTS] Round {elite_round} #{rank:02d} "
+            f"id={strat.get('strategy_id', '?')} n_blocs={len(wls)} "
+            f"crash={'?' if crash is None else f'{100 * float(crash):.2f}%'} "
+            f"seel={seel:.4f} marge={'?' if marge is None else f'{float(marge):.2f}A'} "
+            f"origin={str(strat.get('origin', '?'))[:22]} wl={[int(w) for w in wls]}"
+        )
+
+
+def _refinement_start(strategies_results: list[dict[str, Any]], ctx: RobustnessContext) -> int:
+    """First id of an ELITE or local-search batch: from the worker's cursor when it has one."""
+    if ctx.strategy_id_cursor is not None:
+        return ctx.strategy_id_cursor.start(strategies_results)
+    return next_refinement_strategy_id(strategies_results, ctx.strategy_id_namespace_n_blocks)
+
+
+def _apply_elite_refinement_if_enabled(
+    strategies_results: list[dict[str, Any]],
+    ctx: RobustnessContext,
+    apply_consensus_fn: Any,
+) -> list[dict[str, Any]]:
+    """Runs the ELITE refinement block using the unified RobustnessContext."""
+    (
+        elite_parent_top_k,
+        elite_max_candidates,
+        elite_wl_neighbor_span,
+        elite_num_runs,
+        elite_rounds,
+        elite_min_improvement,
+        elite_stop_on_no_gain,
+        elite_max_full_evals,
+    ) = _resolve_elite_refinement_cfg(ctx.params, num_runs=ctx.num_runs)
+
+    if not (strategies_results and ctx.noise_levels):
+        return strategies_results
+
+    raw_factors = _parse_noise_factors(ctx.params.get("robustness_noise_factors", [0.5, 1.0, 2.0]))
+    nominal_noise_level = _resolve_nominal_noise_level(ctx.noise_levels, raw_factors)
+    # CONTROL grid (not `scan_wl_step`), not its union with the display grid
+    # at 1 nm: ELITE used to mutate the wavelengths by 1 nm, off-grid, hence the
+    # `551, 552, 553, 554` at the top of the ranking. See
+    # `_resolve_monitoring_wavelength_grid`.
+    available_wls = _resolve_monitoring_wavelength_grid(ctx.params, ctx.clues_at_wl, ctx.wl_arr)
+    ctx.logger.info(
+        f"[ELITE] control grid: {len(available_wls)} lambda at a step of "
+        f"{float(ctx.params.get('scan_wl_step', 0.0)):g} nm"
+    )
+    total_elite_added = 0
+    # 🔑 WHICH PARENTS GET EXPLORED. The moves are tried parent after parent until `elite_max_candidates` (120) are kept,
+    # and a parent of K blocks has up to 4K - 2 of them: 📏 with ten near-duplicate parents of 11 blocks, the first four
+    # fill the budget (38, 40, 40 and 2 candidates), with 15 blocks the first three (56, 56, 8) -- `elite_parent_top_k`
+    # says ten. With `elite_round_robin` the parents take turns, one move each, every parent's moves in an order drawn
+    # from (robustness seed, round, parent rank): same budget, every parent explored. Off by default: the former order.
+    # Read from `params` only -- the configuration file does not route it (an option to measure, not yet to deliver).
+    round_robin = bool(ctx.params.get("elite_round_robin", False))
+    base_seed = _resolve_robustness_base_seed(ctx.params)
+    # 👤 2026-10-12: optics, a packet of Rate, optics at another wavelength: on by default (`r75x0.5` 0.4981 -> 0.3967 nm); `allow_rate = 0` is honoured.
+    rate_moves = bool(ctx.params.get("elite_rate_moves", True)) and bool(ctx.params.get("allow_rate", True))
+
+    executor_cls = concurrent.futures.ThreadPoolExecutor
+    worker_count = get_safe_worker_count()
+
+    for elite_round in range(1, elite_rounds + 1):
+        parent_count = _elite_parent_count(strategies_results, elite_parent_top_k)
+        nominal_target_pair = _resolve_elite_nominal_and_target_threshold(
+            strategies_results,
+            nominal_noise_level=nominal_noise_level,
+            elite_min_improvement=elite_min_improvement,
+        )
+        if nominal_target_pair is None:
+            ctx.logger.info(f"[ELITE] Round {elite_round}: skipped (non-finite nominal threshold).")
+            break
+        nominal_threshold, target_threshold = nominal_target_pair
+        existing_signatures = _existing_block_signatures(strategies_results)
+        # 🔑 WHAT ELITE TAKES AS ITS STARTING POINT -- pure logging. Its mutation being
+        # deterministic, local and one-at-a-time, the whole result is decided here.
+        _log_elite_parents(ctx.logger, elite_round, strategies_results[:parent_count])
+        elite_candidates, _next_sid = _generate_elite_candidate_strategies(
+            parent_results=strategies_results[:parent_count],
+            available_wls=available_wls,
+            num_layers=ctx.num_layers,
+            start_strategy_id=_refinement_start(strategies_results, ctx),
+            max_candidates=elite_max_candidates,
+            wl_neighbor_span=elite_wl_neighbor_span,
+            existing_signatures=existing_signatures,
+            round_robin_seed=(base_seed, elite_round) if round_robin else None,
+            rate_moves=rate_moves,
+            max_rate_candidates=int(ctx.params.get("elite_rate_max_candidates", 120)),
+            balanced_rate_moves=bool(ctx.params.get("elite_rate_balanced_moves", False)),
+        )
+        if rate_moves:
+            n_rate = sum(1 for c in elite_candidates if str(c.get("origin_details", "")).startswith("ELITE_RATE"))
+            ctx.logger.info(f"[ELITE-RATE] Round {elite_round}: {n_rate} candidate(s) change the Rate layers of their parent." + (" [balanced families]" if bool(ctx.params.get("elite_rate_balanced_moves", False)) else ""))
+        if ctx.strategy_id_cursor is not None:
+            ctx.strategy_id_cursor.advance(_next_sid)
+        _attach_slit_profiles(elite_candidates, ctx.p_thick_nominal, ctx.params, ctx.logger)
+        ctx.logger.info(
+            "[ELITE] Round "
+            f"{elite_round}/{elite_rounds}: generated={len(elite_candidates)} "
+            f"parents={parent_count} "
+            f"rank10_nominal={nominal_threshold:.6f} target={target_threshold:.6f}"
+        )
+
+        candidates_to_eval = [(int(e_idx), strat) for e_idx, strat in enumerate(elite_candidates)]
+
+        # 🔴 COUNT THE REJECTIONS, DO NOT READ THE CODE -- check 4 of the verification protocol
+        # in CLAUDE.md.
+        # 📏 On 2026-08-20, ELITE returns 0 strategies at seed 42 and 743 at seed 77 on the
+        # same component, and NOTHING in the artefacts says WHY: neither whether the candidates
+        # are generated then rejected, nor at which of the three gates. Three hypotheses were
+        # put forward and refuted one after the other for lack of that count.
+        # An inert filter does not produce an error -- it produces a plausible result.
+        # ⚠️ PURE instrumentation: three counters and one log line. No computation path
+        # changes, the results stay bit for bit the former ones.
+        rej_halving = rej_full_rmse = rej_score_non_fini = 0
+        # Same three gates, but WHICH WAVELENGTHS -- see `_elite_wl_histogram`.
+        wl_generated = _elite_wl_histogram(elite_candidates)
+        wl_rejects: dict[str, collections.Counter] = {
+            "halving": collections.Counter(),
+            "full_rmse": collections.Counter(),
+            "score_non_fini": collections.Counter(),
+        }
+        # At WHAT RATE the rejected candidates crash -- see `_crash_bucket`.
+        crash_bands: collections.Counter = collections.Counter()
+
+        # Adaptive Sampling: Successive Halving
+        # We progressively eliminate candidates with increasing budget
+        halving_budgets = [
+            max(2, elite_num_runs),
+            max(2, ctx.num_runs // 2)
+        ]
+        
+        for _stage_idx, stage_runs in enumerate(halving_budgets):
+            stage_results: list[tuple[float, int, dict[str, Any]]] = []
+            with executor_cls(max_workers=worker_count) as executor:
+                futures_stage = [
+                    executor.submit(
+                        _test_strategy_robustness_task,
+                        strat,
+                        e_idx,
+                        [nominal_noise_level],
+                        stage_runs,
+                        ctx.p_thick_nominal,
+                        ctx.clues_at_wl,
+                        ctx.params_safe,
+                        ctx.wl_arr,
+                        ctx.nH_arr,
+                        ctx.nL_arr,
+                        ctx.nSub_arr,
+                        ctx.T_nom,
+                        ctx.full_dyn_grid,
+                        n_layers_matrix_precomp=ctx.n_layers_matrix_precomp,
+                        # This halving step only reads _extract_rmse_p95_for_noise(res, ...)
+                        # and re-stacks `strat`, the INPUT strategy. The theoretical
+                        # profile is not needed here so it is not computed.
+                        # The complete ELITE evaluation below retains it as required
+                        # by full_res["strategy"].
+                        compute_layer_profile=False,
+                    )
+                    for e_idx, strat in candidates_to_eval
+                ]
+                for future, (e_idx, strat) in zip(futures_stage, candidates_to_eval, strict=True):
+                    try:
+                        res = future.result()
+                        nominal_val = _extract_rmse_p95_for_noise(res, nominal_noise_level)
+                        if not np.isfinite(nominal_val) or nominal_val >= target_threshold:
+                            rej_halving += 1
+                            wl_rejects["halving"].update(_elite_wl_histogram([strat]))
+                            continue
+                        stage_results.append((float(nominal_val), e_idx, strat))
+                    except NUMERICAL_FAULT_EXCEPTIONS as e:
+                        ctx.logger.warning(f"[ELITE] Round {elite_round}: candidate evaluation failed: {e}")
+                        
+            if not stage_results:
+                break
+                
+            stage_results.sort(key=lambda x: x[0])
+            # Keep top half, but at least enough to fill elite_max_full_evals
+            keep_count = max(elite_max_full_evals, len(stage_results) // 2)
+            candidates_to_eval = [(e_idx, strat) for _val, e_idx, strat in stage_results[:keep_count]]
+
+        if not candidates_to_eval:
+            # 🔴 THE COUNTERS ARE EMITTED HERE TOO, AND IT IS ESSENTIAL. This exit comes
+            # before the counters line placed after the full evaluation: without this, the round
+            # ended WITHOUT MEASURING ANYTHING. Defect found by review on 2026-08-20, before
+            # spending 120 machine minutes on a mute instrument.
+            #
+            # 🔑 AND THIS EXIT HAS A PRECISE MEANING, ESTABLISHED BY FLOW ANALYSIS -- it does
+            # NOT mean "everything was rejected at halving". Proof:
+            #   `candidates_to_eval` starts with ALL the candidates; in the loop,
+            #   either `stage_results` is empty and the loop exits through `break` WITHOUT reassigning,
+            #   or `keep_count = max(elite_max_full_evals, len//2) >= 1` and the slice
+            #   `stage_results[:keep_count]` is NON EMPTY.
+            #   So `candidates_to_eval` is empty IF AND ONLY IF `elite_candidates`
+            #   was: **this exit means that the GENERATOR produced nothing.**
+            #
+            # That is what makes the diagnostic self-interpreting:
+            #   exit=HALVING  ... on 0 generated      -> generator ran dry
+            #   exit=COMPLETE  high score_non_fini    -> the candidates crash
+            #   exit=COMPLETE  high full_rmse         -> the threshold rejects
+            ctx.logger.info(
+                f"[ELITE] Round {elite_round}: rejets -- halving={rej_halving} "
+                f"full_rmse={rej_full_rmse} score_non_fini={rej_score_non_fini} "
+                f"| retenues=0 sur {len(elite_candidates)} engendrees "
+                f"| sortie=HALVING"
+            )
+            _log_elite_wl(ctx.logger, elite_round, "HALVING", wl_generated, wl_rejects, crash_bands)
+            ctx.logger.info(f"[ELITE] Round {elite_round}: no candidate passed Successive Halving.")
+            if elite_stop_on_no_gain:
+                break
+            continue
+            
+        full_eval_candidates = candidates_to_eval[: min(elite_max_full_evals, len(candidates_to_eval))]
+        ctx.logger.info(
+            f"[ELITE] Round {elite_round}: full_eval={len(full_eval_candidates)}."
+        )
+
+        elite_added: list[dict[str, Any]] = []
+        with executor_cls(max_workers=worker_count) as executor:
+            futures_full = [
+                executor.submit(
+                    _test_strategy_robustness_task,
+                    strat,
+                    e_idx,
+                    ctx.noise_levels,
+                    ctx.num_runs,
+                    ctx.p_thick_nominal,
+                    ctx.clues_at_wl,
+                    ctx.params_safe,
+                    ctx.wl_arr,
+                    ctx.nH_arr,
+                    ctx.nL_arr,
+                    ctx.nSub_arr,
+                    ctx.T_nom,
+                    ctx.full_dyn_grid,
+                    n_layers_matrix_precomp=ctx.n_layers_matrix_precomp,
+                )
+                for e_idx, strat in full_eval_candidates
+            ]
+            for future in futures_full:
+                try:
+                    full_res = future.result()
+                    full_nominal = _extract_rmse_p95_for_noise(full_res, nominal_noise_level)
+                    if not np.isfinite(full_nominal) or full_nominal >= target_threshold:
+                        rej_full_rmse += 1
+                        wl_rejects["full_rmse"].update(
+                            _elite_wl_histogram([full_res.get("strategy") or {}])
+                        )
+                        crash_bands[("full_rmse", _crash_bucket(full_res.get("crash_rate")))] += 1
+                        continue
+                    full_score = float(full_res.get("robustness_score", np.inf))
+                    if not np.isfinite(full_score):
+                        # 🔑 THIS GATE IS INVISIBLE IN THE ARTEFACTS. The ranking then
+                        # replaces infinity with a fallback (`_worst_finite_rmse`), so that
+                        # an artefact carries ONLY finite scores even when everything
+                        # crashes at 100 %. Measured on 2026-08-20: 1617 finite scores out of 1617,
+                        # crash 100.00 % everywhere. The artefact therefore cannot tell
+                        # whether ELITE hit this gate -- hence this counter.
+                        rej_score_non_fini += 1
+                        wl_rejects["score_non_fini"].update(
+                            _elite_wl_histogram([full_res.get("strategy") or {}])
+                        )
+                        crash_bands[("score_non_fini", _crash_bucket(full_res.get("crash_rate")))] += 1
+                        continue
+                    min_res, bad_layer, _curv = _calculate_strategy_spectral_resolution(
+                        full_res["strategy"], ctx.p_thick_nominal, ctx.params
+                    )
+                    full_res["min_resolution"] = min_res
+                    full_res["limiting_layer"] = bad_layer
+                    full_res["elite_round"] = int(elite_round)
+                    full_res["elite_nominal_score"] = float(full_nominal)
+                    elite_added.append(full_res)
+                except NUMERICAL_FAULT_EXCEPTIONS as e:
+                    ctx.logger.warning(f"[ELITE] Round {elite_round}: full evaluation failed: {e}")
+
+        # ⚠️ `rej_halving` COUNTS REJECTIONS THAT DO NOT ALWAYS ELIMINATE. If a stage of
+        # the halving rejects EVERYTHING, the loop exits through its `break` without reassigning
+        # `candidates_to_eval`, which therefore keeps the whole previous stage -- and those
+        # candidates still go through the full evaluation. It is a safety net of the existing
+        # code, not a defect, but it must be known to read the counter: a high `halving`
+        # does not mean "that many candidates lost".
+        ctx.logger.info(
+            f"[ELITE] Round {elite_round}: rejets -- halving={rej_halving} "
+            f"full_rmse={rej_full_rmse} score_non_fini={rej_score_non_fini} "
+            f"| retenues={len(elite_added)} sur {len(elite_candidates)} engendrees "
+            f"| sortie=COMPLETE"
+        )
+        _log_elite_wl(ctx.logger, elite_round, "COMPLETE", wl_generated, wl_rejects, crash_bands)
+        if not elite_added:
+            ctx.logger.info(f"[ELITE] Round {elite_round}: no candidate beat nominal threshold.")
+            if elite_stop_on_no_gain:
+                break
+            continue
+
+        total_elite_added += len(elite_added)
+        ctx.logger.info(f"[ELITE] Round {elite_round}: added {len(elite_added)} strategy(ies) above threshold.")
+        strategies_results.extend(elite_added)
+
+        strategies_results = _rank_and_filter_strategies(
+            strategies_results=strategies_results,
+            stage_tag=f"post-elite-r{elite_round}",
+            params=ctx.params,
+            logger=ctx.logger,
+            apply_consensus_fn=apply_consensus_fn,
+        )
+
+    if total_elite_added <= 0:
+        ctx.logger.info("[ELITE] No candidate added across all rounds.")
+
+    strategies_results = _apply_local_search_p_conforme(
+        strategies_results=strategies_results,
+        ctx=ctx,
+        apply_consensus_fn=apply_consensus_fn,
+    )
+
+    return strategies_results
+
+
+def _generate_local_search_neighborhood(
+    parent_strat: dict[str, Any],
+    available_wls: list[float],
+    num_layers: int,
+    start_strategy_id: int,
+    seen_signatures: set,
+) -> tuple[list[dict[str, Any]], int]:
+    """Generate elementary 1-step mutations around parent_strat:
+    1) Move boundary +/- 1 layer
+    2) Mutate block wavelength to neighbor on control grid
+    3) Merge two adjacent blocks
+    4) Split a block of length >= 2 into two blocks
+    """
+    if not parent_strat or not available_wls:
+        return [], start_strategy_id
+
+    wl_arr = np.array(sorted(set(float(w) for w in available_wls)), dtype=np.float64)
+    if wl_arr.size == 0:
+        return [], start_strategy_id
+
+    parent_sid = parent_strat.get("strategy_id", "?")
+    base_blocks = [
+        {
+            "start": int(b["start"]),
+            "end": int(b["end"]),
+            "wavelength": float(b["wavelength"]),
+        }
+        for b in parent_strat.get("blocks", [])
+    ]
+    if not base_blocks:
+        return [], start_strategy_id
+
+    next_id = int(start_strategy_id)
+    out = []
+
+    def _push(blocks: list[dict[str, Any]], tag: str) -> None:
+        nonlocal next_id
+        sig = _plan_signature(blocks, parent_strat.get("rate_layers"))
+        if not sig or sig in seen_signatures:
+            return
+        n_blocks_local = len(blocks)
+        same_wl_kept = 0
+        for i in range(1, n_blocks_local):
+            if abs(float(blocks[i]["wavelength"]) - float(blocks[i - 1]["wavelength"])) < 1e-12:
+                same_wl_kept += 1
+
+        candidate = {
+            "strategy_id": int(next_id),
+            "n_blocks": int(n_blocks_local),
+            "avg_cost": float("inf"),
+            "total_cost": float("inf"),
+            "blocks": blocks,
+            "origin": "LOCAL_SEARCH",
+            "origin_details": f"LOCAL_SEARCH({tag}, parent={parent_sid})",
+            "same_wl_kept": int(same_wl_kept),
+            "parent_strategy_id": parent_sid,
+            **_inherited_by_children(parent_strat),
+        }
+        ok, _reason = _validate_strategy_blocks_contract(
+            candidate,
+            num_layers,
+            expected_n_blocks=n_blocks_local,
+        )
+        if ok:
+            out.append(candidate)
+            seen_signatures.add(sig)
+            next_id += 1
+
+    # Operator 1: Shift boundary +/- 1 layer
+    for b_idx in range(len(base_blocks) - 1):
+        left_len = base_blocks[b_idx]["end"] - base_blocks[b_idx]["start"]
+        right_len = base_blocks[b_idx + 1]["end"] - base_blocks[b_idx + 1]["start"]
+
+        if left_len > 1:
+            mut = [dict(b) for b in base_blocks]
+            nb = mut[b_idx]["end"] - 1
+            mut[b_idx]["end"] = nb
+            mut[b_idx + 1]["start"] = nb
+            _push(mut, f"shift_left_b{b_idx}")
+
+        if right_len > 1:
+            mut = [dict(b) for b in base_blocks]
+            nb = mut[b_idx]["end"] + 1
+            mut[b_idx]["end"] = nb
+            mut[b_idx + 1]["start"] = nb
+            _push(mut, f"shift_right_b{b_idx}")
+
+    # Operator 2: Mutate wavelength to neighbor on control grid
+    for b_idx, blk in enumerate(base_blocks):
+        cur_wl = float(blk["wavelength"])
+        nearest = int(np.argmin(np.abs(wl_arr - cur_wl)))
+        for delta in (-1, 1):
+            idx_wl = nearest + delta
+            if 0 <= idx_wl < wl_arr.size:
+                new_wl = float(wl_arr[idx_wl])
+                if abs(new_wl - cur_wl) > 1e-12:
+                    mut = [dict(b) for b in base_blocks]
+                    mut[b_idx]["wavelength"] = new_wl
+                    _push(mut, f"wl_shift_b{b_idx}")
+
+    # Operator 3: Merge two adjacent blocks
+    for b_idx in range(len(base_blocks) - 1):
+        mut_left = [dict(b) for b in base_blocks[:b_idx]]
+        merged_left = {
+            "start": base_blocks[b_idx]["start"],
+            "end": base_blocks[b_idx + 1]["end"],
+            "wavelength": base_blocks[b_idx]["wavelength"],
+        }
+        mut_left.append(merged_left)
+        mut_left.extend([dict(b) for b in base_blocks[b_idx + 2:]])
+        _push(mut_left, f"merge_b{b_idx}_b{b_idx+1}_wl_left")
+
+        if abs(base_blocks[b_idx]["wavelength"] - base_blocks[b_idx + 1]["wavelength"]) > 1e-12:
+            mut_right = [dict(b) for b in base_blocks[:b_idx]]
+            merged_right = {
+                "start": base_blocks[b_idx]["start"],
+                "end": base_blocks[b_idx + 1]["end"],
+                "wavelength": base_blocks[b_idx + 1]["wavelength"],
+            }
+            mut_right.append(merged_right)
+            mut_right.extend([dict(b) for b in base_blocks[b_idx + 2:]])
+            _push(mut_right, f"merge_b{b_idx}_b{b_idx+1}_wl_right")
+
+    # Operator 4: Split a block into two blocks (if block length >= 2)
+    for b_idx, blk in enumerate(base_blocks):
+        b_len = blk["end"] - blk["start"]
+        if b_len >= 2:
+            split_pt = blk["start"] + b_len // 2
+            cur_wl = float(blk["wavelength"])
+            nearest = int(np.argmin(np.abs(wl_arr - cur_wl)))
+            alt_wls = [cur_wl]
+            if nearest > 0:
+                alt_wls.append(float(wl_arr[nearest - 1]))
+            if nearest < wl_arr.size - 1:
+                alt_wls.append(float(wl_arr[nearest + 1]))
+
+            for alt_wl in alt_wls:
+                mut = [dict(b) for b in base_blocks[:b_idx]]
+                mut.append({"start": blk["start"], "end": split_pt, "wavelength": cur_wl})
+                mut.append({"start": split_pt, "end": blk["end"], "wavelength": alt_wl})
+                mut.extend([dict(b) for b in base_blocks[b_idx + 1:]])
+                _push(mut, f"split_b{b_idx}")
+
+    return out, next_id
+
+
+def _apply_local_search_p_conforme(
+    strategies_results: list[dict[str, Any]],
+    ctx: RobustnessContext,
+    apply_consensus_fn: Any,
+) -> list[dict[str, Any]]:
+    """Direct local search maximizing P(conforme) / minimizing Monte-Carlo RMSE.
+
+    Performs greedy gradient-following over elementary neighborhood operators:
+    - Boundary shift +/- 1 layer
+    - Block wavelength mutation to neighbor on control grid
+    - Block merge
+    - Block split
+
+    Evaluates each candidate directly with full Monte-Carlo simulation.
+    """
+    enable_local_search = bool(ctx.params.get("enable_local_search", False))
+    if not (enable_local_search and strategies_results and ctx.noise_levels):
+        return strategies_results
+
+    top_k = max(1, int(ctx.params.get("local_search_top_k", 3)))
+    max_steps = max(1, int(ctx.params.get("local_search_max_steps", 2)))
+    num_runs = max(10, int(ctx.params.get("local_search_num_runs", min(20, ctx.num_runs))))
+
+    available_wls = _resolve_monitoring_wavelength_grid(ctx.params, ctx.clues_at_wl, ctx.wl_arr)
+    existing_signatures = _existing_block_signatures(strategies_results)
+    next_sid = _refinement_start(strategies_results, ctx)
+
+    ctx.logger.info(
+        f"[LOCAL_SEARCH] Starting direct Monte-Carlo local search on top {top_k} parents "
+        f"(max_steps={max_steps}, num_runs={num_runs})..."
+    )
+
+    improved_any = False
+    executor_cls = concurrent.futures.ThreadPoolExecutor
+    worker_count = get_safe_worker_count()
+
+    for parent_idx in range(min(top_k, len(strategies_results))):
+        current_res = strategies_results[parent_idx]
+        current_score = float(current_res.get("robustness_score", np.inf))
+
+        for step in range(1, max_steps + 1):
+            parent_strat = current_res.get("strategy", {})
+            neighborhood, next_sid = _generate_local_search_neighborhood(
+                parent_strat=parent_strat,
+                available_wls=available_wls,
+                num_layers=ctx.num_layers,
+                start_strategy_id=next_sid,
+                seen_signatures=existing_signatures,
+            )
+            if ctx.strategy_id_cursor is not None:
+                ctx.strategy_id_cursor.advance(next_sid)
+            if not neighborhood:
+                break
+            _attach_slit_profiles(neighborhood, ctx.p_thick_nominal, ctx.params, ctx.logger)
+
+            eval_results: list[dict[str, Any]] = []
+            with executor_cls(max_workers=worker_count) as executor:
+                futures = [
+                    executor.submit(
+                        _test_strategy_robustness_task,
+                        strat,
+                        cand_idx,
+                        ctx.noise_levels,
+                        num_runs,
+                        ctx.p_thick_nominal,
+                        ctx.clues_at_wl,
+                        ctx.params_safe,
+                        ctx.wl_arr,
+                        ctx.nH_arr,
+                        ctx.nL_arr,
+                        ctx.nSub_arr,
+                        ctx.T_nom,
+                        ctx.full_dyn_grid,
+                        n_layers_matrix_precomp=ctx.n_layers_matrix_precomp,
+                    )
+                    for cand_idx, strat in enumerate(neighborhood)
+                ]
+                for fut in concurrent.futures.as_completed(futures):
+                    try:
+                        res = fut.result()
+                        if res and np.isfinite(res.get("robustness_score", np.inf)):
+                            eval_results.append(res)
+                    except Exception as exc:
+                        ctx.logger.debug(f"[LOCAL_SEARCH] Candidate evaluation failed: {exc}")
+
+            if not eval_results:
+                break
+
+            best_cand_res = min(eval_results, key=lambda r: float(r.get("robustness_score", np.inf)))
+            best_cand_score = float(best_cand_res.get("robustness_score", np.inf))
+
+            if best_cand_score < current_score:
+                ctx.logger.info(
+                    f"[LOCAL_SEARCH] Parent {parent_idx + 1} (step {step}): "
+                    f"score improved {current_score:.6f} -> {best_cand_score:.6f} "
+                    f"via {best_cand_res.get('strategy', {}).get('origin_details', 'mutation')}"
+                )
+                current_score = best_cand_score
+                current_res = best_cand_res
+                strategies_results.append(best_cand_res)
+                improved_any = True
+            else:
+                break
+
+    if improved_any:
+        strategies_results = _rank_and_filter_strategies(
+            strategies_results=strategies_results,
+            stage_tag="post-local-search",
+            params=ctx.params,
+            logger=ctx.logger,
+            apply_consensus_fn=apply_consensus_fn,
+        )
+
+    return strategies_results
+
+
+
+def _elite_moves(base_blocks: list[dict[str, Any]], wl_arr: np.ndarray, span: int) -> list[list[dict[str, Any]]]:
+    """The local moves around one parent, in the order ELITE has always tried them.
+
+    First the wavelength of each block, moved to its `span` neighbours on the control grid `wl_arr`; then each boundary
+    between two blocks, moved by one layer to the left, then to the right. Each move is a new list of blocks.
+    """
+    moves: list[list[dict[str, Any]]] = []
+    # 1) Wavelength local mutations (neighbor wavelengths around each block lambda)
+    for b_idx, blk in enumerate(base_blocks):
+        cur_wl = float(blk["wavelength"])
+        nearest = int(np.argmin(np.abs(wl_arr - cur_wl)))
+        for delta in range(-span, span + 1):
+            if delta == 0:
+                continue
+
+            idx_wl = nearest + delta
+            if idx_wl < 0 or idx_wl >= wl_arr.size:
+                continue
+
+            new_wl = float(wl_arr[idx_wl])
+            if abs(new_wl - cur_wl) < 1e-12:
+                continue
+
+            mutated = [dict(b) for b in base_blocks]
+            mutated[b_idx]["wavelength"] = new_wl
+            moves.append(mutated)
+
+    # 2) Boundary local shifts (+/- 1 layer between adjacent blocks)
+    for b_idx in range(len(base_blocks) - 1):
+        left = base_blocks[b_idx]
+        right = base_blocks[b_idx + 1]
+        left_len = int(left["end"]) - int(left["start"])
+        right_len = int(right["end"]) - int(right["start"])
+
+        # Shift boundary left by 1 (give one layer from left to right)
+        if left_len > 1:
+            mutated = [dict(b) for b in base_blocks]
+            new_boundary = int(mutated[b_idx]["end"]) - 1
+            mutated[b_idx]["end"] = new_boundary
+            mutated[b_idx + 1]["start"] = new_boundary
+            mutated[b_idx]["num_layers"] = mutated[b_idx]["end"] - mutated[b_idx]["start"]
+            mutated[b_idx + 1]["num_layers"] = mutated[b_idx + 1]["end"] - mutated[b_idx + 1]["start"]
+            moves.append(mutated)
+
+        # Shift boundary right by 1 (give one layer from right to left)
+        if right_len > 1:
+            mutated = [dict(b) for b in base_blocks]
+            new_boundary = int(mutated[b_idx]["end"]) + 1
+            mutated[b_idx]["end"] = new_boundary
+            mutated[b_idx + 1]["start"] = new_boundary
+            mutated[b_idx]["num_layers"] = mutated[b_idx]["end"] - mutated[b_idx]["start"]
+            mutated[b_idx + 1]["num_layers"] = mutated[b_idx + 1]["end"] - mutated[b_idx + 1]["start"]
+            moves.append(mutated)
+    return moves
+
+
+def _generate_elite_candidate_strategies(
+    parent_results: list[dict[str, Any]],
+    available_wls: list[float],
+    num_layers: int,
+    start_strategy_id: int,
+    max_candidates: int = 120,
+    wl_neighbor_span: int = 1,
+    existing_signatures: set | None = None,
+    round_robin_seed: tuple[int, ...] | None = None,
+    rate_moves: bool = False,
+    max_rate_candidates: int = 0,
+    balanced_rate_moves: bool = False,
+) -> tuple[list[dict[str, Any]], int]:
+    """
+    Build local-neighborhood variants around top-ranked strategies.
+    Preserves contract constraints (same n_blocks, contiguous coverage).
+
+    The moves of every parent (`_elite_moves`) are tried parent after parent until `max_candidates` are kept. With
+    `round_robin_seed`, the parents take turns instead, one move each, every parent's moves in an order drawn from the
+    seed (with the parent's rank): see `elite_round_robin` in `_apply_elite_refinement_if_enabled`.
+
+    With `rate_moves`, up to `max_rate_candidates` more change the Rate layers of their parent and nothing else (`elite_rate_moves`).
+    """
+    if not parent_results or not available_wls:
+        return [], start_strategy_id
+
+    wl_arr = np.array(sorted(set(float(w) for w in available_wls)), dtype=np.float64)
+    if wl_arr.size == 0:
+        return [], start_strategy_id
+
+    seen = set(existing_signatures or set())
+    out: list[dict[str, Any]] = []
+    next_id = int(start_strategy_id)
+    span = max(1, int(wl_neighbor_span))
+    max_keep = max(1, int(max_candidates))
+
+    def _push_candidate(
+        base_blocks: list[dict[str, Any]], parent_sid: Any, parent_strat: dict[str, Any], rate_layers: list[int] | None = None, limit: int | None = None
+    ) -> bool:
+        nonlocal next_id
+        if len(out) >= (max_keep if limit is None else limit):
+            return False
+
+        sig = _plan_signature(base_blocks, parent_strat.get("rate_layers") if rate_layers is None else rate_layers)
+        if not sig or sig in seen:
+            return False
+
+        n_blocks_local = len(base_blocks)
+        same_wl_kept = 0
+        for i in range(1, n_blocks_local):
+            if abs(float(base_blocks[i]["wavelength"]) - float(base_blocks[i - 1]["wavelength"])) < 1e-12:
+                same_wl_kept += 1
+
+        candidate = {
+            "strategy_id": int(next_id),
+            "n_blocks": int(n_blocks_local),
+            "avg_cost": float("inf"),
+            "total_cost": float("inf"),
+            "blocks": base_blocks,
+            "origin": "ELITE",
+            "origin_details": f"ELITE(parent={parent_sid})" if rate_layers is None else f"ELITE_RATE(parent={parent_sid})",
+            "same_wl_kept": int(same_wl_kept),
+            "parent_strategy_id": parent_sid,
+            **_inherited_by_children(parent_strat),
+        }
+        if rate_layers is not None:
+            candidate["rate_layers"] = [int(i) for i in rate_layers]
+
+        ok, _reason = _validate_strategy_blocks_contract(
+            candidate,
+            num_layers,
+            expected_n_blocks=n_blocks_local,
+        )
+        if not ok:
+            return False
+
+        out.append(candidate)
+        seen.add(sig)
+        next_id += 1
+        return True
+
+    per_parent: list[list[tuple[Any, dict[str, Any], list[dict[str, Any]]]]] = []
+    for parent in parent_results:
+        strat = parent.get("strategy", {})
+        parent_sid = strat.get("strategy_id", "?")
+        base_blocks = [
+            {
+                "start": int(b["start"]),
+                "end": int(b["end"]),
+                "wavelength": float(b["wavelength"]),
+            }
+            for b in strat.get("blocks", [])
+        ]
+
+        if not base_blocks:
+            continue
+        per_parent.append([(parent_sid, strat, mutated) for mutated in _elite_moves(base_blocks, wl_arr, span)])
+
+    if round_robin_seed is None:
+        ordered = [move for moves in per_parent for move in moves]
+    else:
+        for rank, moves in enumerate(per_parent):
+            order = np.random.default_rng([*round_robin_seed, rank]).permutation(len(moves))
+            per_parent[rank] = [moves[k] for k in order]
+        longest = max((len(moves) for moves in per_parent), default=0)
+        ordered = [moves[k] for k in range(longest) for moves in per_parent if k < len(moves)]
+    for parent_sid, parent_strat, mutated in ordered:
+        _push_candidate(mutated, parent_sid, parent_strat)
+        if len(out) >= max_keep:
+            break
+
+    if rate_moves and max_rate_candidates > 0:
+        limit = len(out) + int(max_rate_candidates)
+        for parent_sid, parent_strat, base_blocks, layers in _elite_rate_candidates(parent_results, num_layers, balanced=balanced_rate_moves):
+            if len(out) >= limit:
+                break
+            _push_candidate([dict(b) for b in base_blocks], parent_sid, parent_strat, rate_layers=layers, limit=limit)
+
+    return out, next_id
+

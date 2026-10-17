@@ -1,0 +1,12 @@
+{
+  "prepared_utc": "2026-10-14T02:03:03.792396+00:00",
+  "status": "prepared_not_started",
+  "runner": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\campagne_a2_deadline_runner.py",
+  "original_helper_sha256": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51",
+  "deadline_runner_sha256": "52aee00f5ff49e0c93dd5fcacab418354cb4774952c92d428334e1f17e6c40e6",
+  "deadline_utc": "2026-10-14T07:00:00Z",
+  "review": "Exactly one added guard at the launch boundary. Every original statement and run argument is AST-identical after stripping that guard/UTC import. Running adopted measurement is always allowed to finish; next run is not launched at or after the deadline. Shared helper left immutable for the active Rate controllers.",
+  "runtime_validation": "Deferred until no scientific measurement is active, before A2 resume.",
+  "next_key": "r75x1.5_deep_s101_sans",
+  "note": "This copy is for the authorized overnight deadline; it is not yet running and does not modify the A2 checkpoint."
+}

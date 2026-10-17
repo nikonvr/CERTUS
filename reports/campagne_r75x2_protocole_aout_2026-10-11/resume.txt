@@ -1,0 +1,18 @@
+debut 2026-10-11T13:16:53 HEAD=212126d4 python=C:\Python314\python.exe
+lancee graine 42 nue 2026-10-11T13:16:53 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 42 surcharges=-
+finie  graine 42 nue rc=0 duree=23.9 min WAIT_TIMEOUT=0 HEAD=212126d4 artefact=reports\blocs_vs_plantage_r75x2_deep_s042_20261011_134042.json
+lancee graine 77 nue 2026-10-11T13:40:46 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 77 surcharges=-
+finie  graine 77 nue rc=0 duree=25.6 min WAIT_TIMEOUT=0 HEAD=212126d4 artefact=reports\blocs_vs_plantage_r75x2_deep_s077_20261011_140620.json
+lancee graine 101 nue 2026-10-11T14:06:23 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 101 surcharges=-
+finie  graine 101 nue rc=0 duree=25.2 min WAIT_TIMEOUT=0 HEAD=212126d4 artefact=reports\blocs_vs_plantage_r75x2_deep_s101.json
+lancee graine 202 nue 2026-10-11T14:31:37 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 202 surcharges=-
+finie  graine 202 nue rc=0 duree=23.5 min WAIT_TIMEOUT=0 HEAD=212126d4 artefact=reports\blocs_vs_plantage_r75x2_deep_s202.json
+lancee graine 303 nue 2026-10-11T14:55:08 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 303 surcharges=-
+finie  graine 303 nue rc=0 duree=24.3 min WAIT_TIMEOUT=0 HEAD=212126d4 artefact=reports\blocs_vs_plantage_r75x2_deep_s303.json
+lancee graine 404 nue 2026-10-11T15:19:25 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 404 surcharges=-
+finie  graine 404 nue rc=0 duree=26.4 min WAIT_TIMEOUT=0 HEAD=212126d4 artefact=reports\blocs_vs_plantage_r75x2_deep_s404.json
+lancee graine 505 nue 2026-10-11T15:45:50 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 505 surcharges=-
+finie  graine 505 nue rc=0 duree=23.2 min WAIT_TIMEOUT=0 HEAD=212126d4 artefact=reports\blocs_vs_plantage_r75x2_deep_s505.json
+lancee graine 202 rr 2026-10-11T16:09:02 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 202 surcharges=elite_round_robin=true
+finie  graine 202 rr rc=0 duree=24.9 min WAIT_TIMEOUT=0 HEAD=212126d4 artefact=reports\blocs_vs_plantage_r75x2_deep_s202_rr.json
+fin 2026-10-11T16:33:55

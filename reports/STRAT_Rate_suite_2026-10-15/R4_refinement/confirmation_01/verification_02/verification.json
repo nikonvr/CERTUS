@@ -1,0 +1,35 @@
+{
+  "verdict": "GO",
+  "script_sha256": {
+    "rate_fixed_replay_R4_fresh_v2.py": "8730c73adb6267d27414f91e103ac20ed3320d1df9518c33605c7d5c512fc48f",
+    "rate_R4_fresh_guard_v2.py": "6d3abce8866d1f3d495cef3630b15844aba09bbfd71b74a900d2a8d2a7b69686",
+    "run_rate_R4_confirmation_resume_v2.ps1": "e66c59fe2d3a8988883392f6cb8058e899b5fb3f9f4bb0a22441bcb8724eb34d",
+    "campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51"
+  },
+  "checks": [
+    "check_sources AST identical to audited R4/R0 physics",
+    "record_task AST identical to audited R4/R0 physics",
+    "keep_fixed_plans AST identical to audited R4/R0 physics",
+    "evaluate_fixed AST identical to audited R4/R0 physics",
+    "Twelve distinct pre-reserved seeds; fixed primary and diagnostic secondary before inspection",
+    "Frozen group2, seven complete plans, four actual300-run calls required per plan",
+    "Rejected: Fresh seeds differ from the preinspection reservation",
+    "Rejected: Only these previously frozen complete plans can be confirmed",
+    "Rejected: Only these previously frozen complete plans can be confirmed",
+    "Frozen group3, seven complete plans, four actual300-run calls required per plan",
+    "Rejected: Fresh seeds differ from the preinspection reservation",
+    "Rejected: Only these previously frozen complete plans can be confirmed",
+    "Rejected: Only these previously frozen complete plans can be confirmed",
+    "Rejected: No new measurement or test after the authorized morning cutoff",
+    "Rejected: The requested deadline exceeds the authorized window",
+    "Seven actual complete mixed plans pass real contract; no physical simulation",
+    "Recorded group1: old hardcoded search-seed validator fails7; corrected frozen-group validator passes7; no physical replay"
+  ],
+  "physics_measured": false,
+  "fresh_seeds_executed": 0,
+  "claims_consumed_by_verification": 0,
+  "previously_consumed_groups": [
+    1
+  ],
+  "verified_utc": "2026-10-15T13:55:29.481016+00:00"
+}

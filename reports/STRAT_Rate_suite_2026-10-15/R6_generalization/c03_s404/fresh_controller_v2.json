@@ -1,0 +1,29 @@
+{
+    "status":  "fresh_complete_audit_pending",
+    "pid":  38764,
+    "started_utc":  "2026-10-16T03:01:19.2330082Z",
+    "runs":  [
+                 {
+                     "pid":  47132,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R6_generalization\\c03_s404\\fresh_v2\\group_01\\logs",
+                     "ended_utc":  "2026-10-16T03:01:29.7088593Z"
+                 },
+                 {
+                     "pid":  37364,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R6_generalization\\c03_s404\\fresh_v2\\group_02\\logs",
+                     "ended_utc":  "2026-10-16T03:01:40.2157951Z"
+                 },
+                 {
+                     "pid":  45460,
+                     "exit_code":  0,
+                     "log_directory":  "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R6_generalization\\c03_s404\\fresh_v2\\group_03\\logs",
+                     "ended_utc":  "2026-10-16T03:01:50.7868341Z"
+                 }
+             ],
+    "current_pid":  null,
+    "current_manifest":  null,
+    "persistence_retries":  0,
+    "updated_utc":  "2026-10-16T03:01:50.7998330Z"
+}

@@ -409,6 +409,8 @@ class TestParallelPerformance:
         """Test les calculations concurrents."""
         from concurrent.futures import ThreadPoolExecutor
 
+        import numba
+
         layers = [Layer(mat="SiO2", qwot=100.0 / 100.0)]
 
         def single_calculationation():
@@ -417,7 +419,8 @@ class TestParallelPerformance:
         #Testing with multiple threads
         n_calculationations = 10
 
-        with ThreadPoolExecutor(max_workers=CONCURRENT_WORKERS) as executor:
+        # Numba's mask is thread-local: pool workers must use the one-thread baseline too.
+        with ThreadPoolExecutor(max_workers=CONCURRENT_WORKERS, initializer=numba.set_num_threads, initargs=(1,)) as executor:
 
             def concurrently():
                 futures = [executor.submit(single_calculationation) for _ in range(n_calculationations)]

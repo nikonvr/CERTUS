@@ -42,6 +42,10 @@ LEVIERS_DE_RECHERCHE = (
     "elite_min_improvement",
     "robustness_seed",
     "phase_a_seed",
+    "rate_rescue",
+    "rate_rescue_few",
+    "elite_rate_moves",
+    "elite_rate_max_candidates",
 )
 
 

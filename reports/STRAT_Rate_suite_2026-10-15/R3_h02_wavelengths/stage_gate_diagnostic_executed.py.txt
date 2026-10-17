@@ -1,0 +1,124 @@
+"""Reconstruct the two recorded halving stages, including stable ties and fallback."""
+
+from __future__ import annotations
+
+import collections
+import hashlib
+import json
+import math
+from datetime import UTC, datetime
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+PROGRAM = ROOT / "reports/STRAT_Rate_suite_2026-10-15"
+SAVED = PROGRAM / "R3_h02_wavelengths"
+
+
+def key(event):
+    return tuple(event["context"].get(k) for k in ("elite_scope", "round"))
+
+
+def effective_signature(plan):
+    # Native candidate None inherits the fixed request's slit2; no source plan is changed.
+    slit = plan.get("monochromator_resolution_nm", plan.get("resolution_nm"))
+    return json.dumps({"blocks": plan.get("blocks", plan.get("blocs")),
+                       "rate_layers": sorted(plan.get("rate_layers") or []),
+                       "monochromator_resolution_nm": 2.0 if slit is None else float(slit),
+                       "witness_reset_layers": plan.get("witness_reset_layers")}, sort_keys=True)
+
+
+def nominal(result):
+    return next(r["rmse_p95"] for r in result["noise_results"] if r["noise_level"] == 0.05)
+
+
+def main():
+    if (PROGRAM / "measurement.running").exists():
+        raise RuntimeError("Wait for physical measurements before reading stage gates")
+    protocol = json.loads((SAVED / "protocol.json").read_text(encoding="utf-8"))
+    assert protocol["unchanged"]["slit_nm"] == 2
+    original = json.loads((SAVED / "transition_diagnostic.json").read_text(encoding="utf-8"))
+    targets = original["arms"][1]["target_plans"]
+    trace = json.loads((SAVED / "variant/pipeline_trace.json").read_text(encoding="utf-8"))
+    events = trace["events"]
+    last_threshold = {}
+    thresholds = {}
+    for event in events:
+        scope, _round = key(event)
+        if event["kind"] == "nominal_threshold":
+            last_threshold[scope] = event["threshold_pair"]
+        elif event["kind"] == "parents":
+            thresholds[key(event)] = last_threshold[scope]
+    artifact_file = json.loads((SAVED / "variant/etat.json").read_text(encoding="utf-8"))["artifact"]
+    artifact = json.loads(Path(artifact_file).read_text(encoding="utf-8"))
+    exported = collections.defaultdict(list)
+    for row in artifact["strategies"]:
+        exported[effective_signature(row)].append({"id": row["id"], "score": row["score"],
+            "consensus_meta": row.get("robustness_consensus_meta")})
+    contexts = {tuple(o["context"].get(k) for k in ("elite_scope", "round"))
+                for target in targets for o in target["offers"]}
+    reconstructions = {}
+    for ctx in sorted(contexts):
+        output = next(e for e in events if e["kind"] == "generation_outputs" and key(e) == ctx)
+        candidates = output["candidates"]
+        indices = {p["strategy_id"]: i for i, p in enumerate(candidates)}
+        assert len(indices) == len(candidates)
+        remaining = list(indices)
+        threshold = thresholds[ctx][1]
+        stages = []
+        for depth in (80, 150):
+            tasks = [e for e in events if e["kind"] == "physical_task_result" and key(e) == ctx
+                     and e["seed"] == 101 and e["num_runs"] == depth and e["noise_levels"] == [0.05]]
+            by_id = {e["id"]: e for e in tasks}
+            assert len(by_id) == len(tasks)
+            assert set(by_id) == set(remaining), (ctx, depth, len(by_id), len(remaining))
+            accepted = sorted([(nominal(e["result"]), indices[strategy_id], strategy_id)
+                               for strategy_id, e in by_id.items()
+                               if math.isfinite(nominal(e["result"])) and nominal(e["result"]) < threshold])
+            keep = max(36, len(accepted) // 2)
+            stages.append({"depth": depth, "evaluated": len(tasks), "passed_threshold": len(accepted),
+                           "keep_count": keep, "scores_by_id": {str(i): nominal(e["result"]) for i, e in by_id.items()},
+                           "passing_rank_by_id": {str(i): rank + 1 for rank, (_score, _index, i) in enumerate(accepted)},
+                           "fallback": not accepted})
+            if not accepted:
+                break
+            remaining = [i for _score, _index, i in accepted[:keep]]
+        expected_full = remaining[:36]
+        actual_full = [e["id"] for e in events if e["kind"] == "physical_task_result" and key(e) == ctx
+                       and e["seed"] == 101 and e["num_runs"] == 300 and len(e["noise_levels"]) == 3
+                       and e["id"] in indices]
+        assert set(expected_full) == set(actual_full), (ctx, expected_full, actual_full)
+        reconstructions[ctx] = {"context": output["context"], "target_threshold": threshold,
+                               "stages": stages, "expected_full_ids": expected_full,
+                               "actual_full_ids": actual_full, "full_selection_matches_actual": True}
+    details = []
+    for target in targets:
+        offer = target["offers"][0]
+        ctx = tuple(offer["context"].get(k) for k in ("elite_scope", "round"))
+        reconstruction = reconstructions[ctx]
+        identifier = offer["id"]
+        evidence = [{"depth": s["depth"], "score": s["scores_by_id"].get(str(identifier)),
+                     "passing_rank": s["passing_rank_by_id"].get(str(identifier)), "keep_count": s["keep_count"],
+                     "passed_threshold": str(identifier) in s["passing_rank_by_id"]}
+                    for s in reconstruction["stages"]]
+        details.append({"context": offer["context"], "id": identifier, "plan": target["plan"],
+                        "target_threshold": reconstruction["target_threshold"], "stages": evidence,
+                        "reached_full": identifier in reconstruction["actual_full_ids"],
+                        "effective_metadata_export_matches": exported.get(effective_signature(target["plan"]), [])})
+    report = {"status": "GO", "analyzed_utc": datetime.now(UTC).isoformat(), "target_plans": details,
+              "stage_reconstructions": list(reconstructions.values()),
+              "slit_interpretation": "Native None inherits fixed request2nm; v1 transition report kept declared metadata and may miss export joins. This supplement resolves only that inheritance.",
+              "no_unknown_id_join": True, "all_reconstructed_full_selections_match_actual_calls": True,
+              "source_sha256": {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
+                                for p in [Path(__file__), SAVED / "transition_diagnostic.json",
+                                          SAVED / "variant/pipeline_trace.json", Path(artifact_file)]}}
+    with (SAVED / "stage_gate_diagnostic.json").open("x", encoding="utf-8") as stream:
+        json.dump(report, stream, ensure_ascii=False, indent=2)
+    with (SAVED / "stage_gate_diagnostic_executed.py.txt").open("xb") as stream:
+        stream.write(Path(__file__).read_bytes())
+    print(json.dumps({"status": "GO", "contexts": len(reconstructions), "targets": [{k: d[k] for k in
+          ("context", "id", "target_threshold", "stages", "reached_full", "effective_metadata_export_matches")}
+          for d in details]}, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    main()

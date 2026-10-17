@@ -1,0 +1,14 @@
+{
+  "status": "PREPARED_NOT_VALIDATED",
+  "reason": "Atomic File.Replace collided with a reader denying delete sharing",
+  "scientific_sources_unchanged": true,
+  "old_coordinator_sha256": "2c83ee0560dfecaab06a5b7036a9013df387f7c9d6c9bfe960fdb59f5abe59b3",
+  "resume_coordinator": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\run_rate_R4_resume_v2.ps1",
+  "resume_sha256": "875e58b680a1772c854ad6da082b13924ed53ba5bec7fca5ea1b99bbb13bad7f",
+  "no_repeated_group": true,
+  "changes": [
+    "New controller_v2 state/logs",
+    "bounded20x100ms IOException retry",
+    "adopt group046 complete artifact with original exit code explicitly unknown"
+  ]
+}

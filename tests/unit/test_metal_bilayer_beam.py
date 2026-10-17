@@ -24,7 +24,7 @@ sys.path.insert(0, str(ROOT / "tests" / "oracle"))
 
 from gradient_harness import check_gradient  # noqa: E402
 
-from certus.metal.certus_metal_bilayer_physics import _build_bilayer_bounds  # noqa: E402
+from certus.metal.certus_metal_bilayer_physics import _build_bilayer_bounds, objective_function_fixed_eM  # noqa: E402
 from certus.physics.gradient_metal import compute_metal_bilayer_gradient_analytic  # noqa: E402
 from certus.utils.certus_data import load_spectrum_columns  # noqa: E402
 from certus_physics import (  # noqa: E402
@@ -93,15 +93,20 @@ def test_the_gradient_reads_x_like_the_bilayer_objective() -> None:
     grad = np.asarray(grad)
     assert grad.shape == X_OPT.shape, "the gradient does not cover the parameter vector"
 
-    # Its cost is the reflectance MSE of the SAME stack the objective builds from x: the spline
-    # of num_knots values per family on [l_min, inner lambdas, l_max], Cauchy SiO2, Si substrate.
+    # Its cost is the objective of the global optimization (D40): the reflectance MSE of the SAME stack the objective builds
+    # from x (the spline of num_knots values per family on [l_min, inner lambdas, l_max], Cauchy SiO2, Si substrate) PLUS the
+    # smoothness penalty on n and k.
     k0 = 4 + 2 * NUM_KNOTS
     knots = np.concatenate(([lam.min()], np.sort(X_OPT[k0:]), [lam.max()]))
     n, k = get_nk_from_spline(X_OPT[4:k0], knots, lam, use_cache=False)
     reflectance = calculate_reflectance_bilayer_vectorized(
         lam, n - 1j * k, float(X_OPT[0]), float(X_OPT[1]), get_nk_cauchy_simple(lam, X_OPT[2], X_OPT[3]) + 0j, n_sub
     )
-    assert cost == pytest.approx(float(np.mean((reflectance - r_target) ** 2)), rel=1e-9)
+    penalty = 1e-2 * (np.sum(np.diff(n, n=2) ** 2) + np.sum(np.diff(k, n=2) ** 2))
+    assert cost == pytest.approx(float(np.mean((reflectance - r_target) ** 2)) + penalty, rel=1e-9)
+    assert cost == pytest.approx(
+        objective_function_fixed_eM(X_OPT[1:], X_OPT[0], NUM_KNOTS, lam, r_target, MIN_KNOT_DIST, n_sub), rel=1e-9
+    )
 
     # And the gradient is the derivative of that cost, family by family (standard of
     # tests/oracle/test_metal_gradient_vs_fd.py: the lambda gradients are themselves FD).

@@ -1,0 +1,30 @@
+{
+  "checked_utc": "2026-10-14T02:03:05.961569+00:00",
+  "status": "running",
+  "saved_stages": 460,
+  "n_stages": 513,
+  "scored": 4590,
+  "complete_consensus": 4589,
+  "excluded": 1,
+  "best_native_provisional": {
+    "id": 9940095,
+    "name": "native_prefix_saved_901454694",
+    "move": {
+      "kind": "saved_native_prefix",
+      "source_id": 901454694,
+      "exported_score": 0.03373141448900565
+    },
+    "eligible": true,
+    "score": 0.03295728754388596,
+    "crash_rate": 0.0,
+    "artifact": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_native_prefix_consensus_all_2026-10-14\\batch_010\\attempt_01\\search.json"
+  },
+  "seel_native_provisional": 0.36308284202857044,
+  "unchanged_script_hashes": {
+    "rate_native_pool_runner.py": true,
+    "rate_fixed_replay.py": true,
+    "campagne_a2_runner.py": true
+  },
+  "confirmation": "waiting_for_pool",
+  "window": "waiting_for_prerequisite"
+}

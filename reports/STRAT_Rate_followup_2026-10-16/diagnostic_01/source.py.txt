@@ -1,0 +1,141 @@
+"""Narrow the recorded task comparison and inspect 48-layer windows, without simulation."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import math
+import sys
+from collections import Counter, defaultdict
+from datetime import UTC, datetime
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+OLD = ROOT / "reports/STRAT_Rate_suite_2026-10-15"
+OUT = ROOT / "reports/STRAT_Rate_followup_2026-10-16/diagnostic_01"
+
+
+def read(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def canonical(value: object) -> str:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"))
+
+
+def physical(plan: dict) -> str:
+    return canonical({
+        "blocks": plan["blocks"],
+        "rate_layers": sorted(plan.get("rate_layers") or []),
+        "monochromator_resolution_nm": plan.get("monochromator_resolution_nm") or 2.0,
+        "witness_reset_layers": plan.get("witness_reset_layers"),
+    })
+
+
+def keyed(trace: dict) -> tuple[dict, dict]:
+    plans: dict[tuple, set[str]] = defaultdict(set)
+    for event in trace["events"]:
+        scope = (event.get("context") or {}).get("elite_scope")
+        for row in event.get("rows", []) + event.get("parents", []) + event.get("parents_before", []):
+            plan = row.get("strategy", {})
+            if plan.get("blocks"):
+                plans[(scope, plan["strategy_id"])].add(physical(plan))
+        for plan in event.get("candidates", []):
+            plans[(scope, plan["strategy_id"])].add(physical(plan))
+    tasks: dict[tuple, list[dict]] = defaultdict(list)
+    counts: Counter = Counter()
+    for event in trace["events"]:
+        if event["kind"] != "physical_task_result":
+            continue
+        context = event.get("context") or {}
+        identities = plans[(context.get("elite_scope"), event["id"])]
+        if len(identities) != 1:
+            counts["unmapped_or_ambiguous"] += 1
+            continue
+        key = (canonical(context), next(iter(identities)), event["seed"], event["num_runs"],
+               canonical(event["noise_levels"]), event["compute_layer_profile"])
+        tasks[key].append(event)
+    counts["unique_keys"] = len(tasks)
+    counts["repeated_keys_excluded_from_pairing"] = sum(len(items) != 1 for items in tasks.values())
+    return tasks, dict(counts)
+
+
+def main() -> None:
+    OUT.mkdir(parents=True, exist_ok=True)
+    target = OUT / "recorded_audit.json"
+    if target.exists():
+        raise RuntimeError("Preserve the existing audit; use a new explicit attempt")
+    baseline = read(OLD / "final_20261016/audit_final.json")["scientific_sources_unchanged_since_R5_validation"]
+    if any(sha(ROOT / name) != digest for name, digest in baseline.items()):
+        raise RuntimeError("A validated scientific source changed before diagnosis")
+    paths = {
+        "h03": OLD / "R3_h03_native_postrefinement/variant/pipeline_trace.json",
+        "R5": OLD / "R5_integration/native/measurement/pipeline_trace.json",
+    }
+    indexed, coverage = {}, {}
+    for label, path in paths.items():
+        indexed[label], coverage[label] = keyed(read(path))
+    counts: Counter = Counter()
+    samples = []
+    maximum = 0.0
+    for key in sorted(indexed["h03"].keys() & indexed["R5"].keys()):
+        old, new = indexed["h03"][key], indexed["R5"][key]
+        if len(old) != 1 or len(new) != 1:
+            continue
+        a, b = old[0]["result"], new[0]["result"]
+        counts["unique_recorded_context_pairs"] += 1
+        if a.get("crash_rates_by_noise") != b.get("crash_rates_by_noise"):
+            counts["crash_vectors_differ"] += 1
+            samples.append({"key": key, "old_event": old[0]["event"], "new_event": new[0]["event"],
+                            "h03_result": a, "R5_result": b})
+        x, y = a["robustness_score"], b["robustness_score"]
+        if math.isfinite(x) and math.isfinite(y):
+            counts["finite_equal" if x == y else "finite_different"] += 1
+            maximum = max(maximum, abs(x-y))
+    sys.path.insert(0, str(ROOT))
+    from certus.core.certus_strat_rate_moves import optical_windows, window_context
+
+    frozen = OLD / "R6_other_components/c04_48c_s77/frozen_finalists.json"
+    plan = read(frozen)["plans"][0]
+    windows = []
+    rate = set(plan["rate_layers"])
+    for first, end in reversed(optical_windows(plan, 48)):
+        if first < 2:
+            continue
+        block = next((i for i, b in enumerate(plan["blocks"]) if b["start"] <= first and end <= b["end"]), None)
+        reason = "spans_multiple_monitoring_blocks"
+        if block is not None:
+            b = plan["blocks"][block]
+            reason = ("another_optical_window_in_block" if any(
+                i not in rate and not first <= i < end for i in range(b["start"], b["end"])
+            ) else "admissible")
+        windows.append({"window": [first, end], "block_index": block, "status": reason})
+    try:
+        selected = {"value": window_context(plan, 48, "internal")}
+    except ValueError as error:
+        selected = {"error": str(error)}
+    result = {
+        "status": "RECORDED_DIAGNOSIS_COMPLETE_NOT_A_PHYSICAL_COUNTERPROOF",
+        "recorded_utc": datetime.now(UTC).isoformat(), "physical_evaluations": 0,
+        "source_sha256": baseline, "script_sha256": sha(Path(__file__)),
+        "trace_sha256": {label: sha(path) for label, path in paths.items()},
+        "coverage": coverage, "comparison_counts": dict(counts), "maximum_finite_absolute_difference": maximum,
+        "crash_difference_examples": samples[:3],
+        "limitations": ["Historical traces omit complete task params, optical arrays and material inputs.",
+                        "Context/round identity is a recorded label, not proof of identical local task parameters.",
+                        "Repeated keys are excluded; no arbitrary first-result pairing.",
+                        "No physical or cache cause can be inferred from this recorded comparison."],
+        "48c": {"frozen_finalists_sha256": sha(frozen), "selected_internal": selected, "internal_windows": windows},
+        "next_step": "Capture complete effective task inputs in new bounded controlled slots before changing window selection.",
+    }
+    target.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    (OUT / "source.py.txt").write_bytes(Path(__file__).read_bytes())
+    print(json.dumps({"counts": result["comparison_counts"], "48c": result["48c"], "physical_evaluations": 0}))
+
+
+if __name__ == "__main__":
+    main()

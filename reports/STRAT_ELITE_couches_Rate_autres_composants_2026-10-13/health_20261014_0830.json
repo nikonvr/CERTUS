@@ -1,0 +1,39 @@
+{
+  "checked_local": "2026-10-14T08:34:47.4315998+02:00",
+  "status": "running",
+  "completed": 6,
+  "current": "r75x1.75_deep_s101_avec",
+  "current_pid": 51800,
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "processes": [
+    {
+      "pid": 23280,
+      "parent_pid": 22652,
+      "command": "\"C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\campagne_a2_deadline_runner.py\" \"--worktree\" \"C:\\Users\\Lemarchand\\.codex\\worktrees\\campagne-a2\\certus0310\" \"--output\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_ELITE_couches_Rate_autres_composants_2026-10-13\" \"--logical-cpus\" \"16\"",
+      "affinity": 65535,
+      "priority": "Normal",
+      "cpu_seconds": 0.734375
+    },
+    {
+      "pid": 51800,
+      "parent_pid": 23280,
+      "command": "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe scripts/probe_blocs_vs_plantage.py r75x1.75 deep 0 0 2 0 101 0",
+      "affinity": 65535,
+      "priority": "Normal",
+      "cpu_seconds": 38156.234375
+    }
+  ],
+  "log_tail": [
+    "08:34:36 | INFO | 🏆 Best Strategy ID: 900300002 (SMART_MERGE_THICKNESS2 (from ID 900400033)) - Score: 0.29774",
+    "08:34:36 | INFO |    [Block 2] Full pass on 27 survivors (n_full=300)...",
+    "08:34:36 | INFO | [RATE] 72 variants on 27 strategies, 40 at most each, DEEPEST boundaries first. 0 strategy(ies) skipped: no block boundary and no low-swing layer. [SWING] seuil 0.025, 589 evaluations TMM a lambda fixe, 0.2 s au total pour cette expansion.",
+    "08:34:36 | INFO | [SLIT] slit bias active, 99/99 strategies -- slit 2 nm, profile of 17 nodes, 0 NEW profiles in 0.0 s (cache: 27035)",
+    "08:34:36 | INFO | Running robustness tests on 99 strategies (ThreadPoolExecutor with 8 workers)..."
+  ],
+  "controller_errors": []
+}

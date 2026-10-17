@@ -1,0 +1,165 @@
+{
+  "status": "OK",
+  "runs": [
+    {
+      "run": "control",
+      "setting": {
+        "robustness_seed": 101,
+        "consensus_seed_list": [
+          41,
+          42,
+          43
+        ]
+      },
+      "reference_seel_nm": 0.3967147882193691,
+      "local_joint_seel_nm": 0.36533819452157945,
+      "native_seel_nm": 0.36006088633539163,
+      "native_gain_vs_reference_percent": 9.239358595250845,
+      "native_gain_vs_local_percent": 1.4444994433441605,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_202",
+      "setting": {
+        "robustness_seed": 202,
+        "consensus_seed_list": [
+          202,
+          203,
+          204
+        ]
+      },
+      "reference_seel_nm": 0.3968275691183069,
+      "local_joint_seel_nm": 0.3787066494963141,
+      "native_seel_nm": 0.36087179214882187,
+      "native_gain_vs_reference_percent": 9.060806195843085,
+      "native_gain_vs_local_percent": 4.709412251200995,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_303",
+      "setting": {
+        "robustness_seed": 303,
+        "consensus_seed_list": [
+          303,
+          304,
+          305
+        ]
+      },
+      "reference_seel_nm": 0.39951312206581885,
+      "local_joint_seel_nm": 0.3710397323147461,
+      "native_seel_nm": 0.3653610083269699,
+      "native_gain_vs_reference_percent": 8.548433543873058,
+      "native_gain_vs_local_percent": 1.5304894579211914,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_404",
+      "setting": {
+        "robustness_seed": 404,
+        "consensus_seed_list": [
+          404,
+          405,
+          406
+        ]
+      },
+      "reference_seel_nm": 0.3997442249720676,
+      "local_joint_seel_nm": 0.3719660540167365,
+      "native_seel_nm": 0.36632744240686443,
+      "native_gain_vs_reference_percent": 8.359541045912088,
+      "native_gain_vs_local_percent": 1.5158941384523117,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_505",
+      "setting": {
+        "robustness_seed": 505,
+        "consensus_seed_list": [
+          505,
+          506,
+          507
+        ]
+      },
+      "reference_seel_nm": 0.3993888245623097,
+      "local_joint_seel_nm": 0.37124968059614066,
+      "native_seel_nm": 0.3687252866366746,
+      "native_gain_vs_reference_percent": 7.677615406299676,
+      "native_gain_vs_local_percent": 0.679972021905173,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_606",
+      "setting": {
+        "robustness_seed": 606,
+        "consensus_seed_list": [
+          606,
+          607,
+          608
+        ]
+      },
+      "reference_seel_nm": 0.39282220588012384,
+      "local_joint_seel_nm": 0.371150308678171,
+      "native_seel_nm": 0.36268171199059435,
+      "native_gain_vs_reference_percent": 7.672808063892234,
+      "native_gain_vs_local_percent": 2.281716191409633,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_707",
+      "setting": {
+        "robustness_seed": 707,
+        "consensus_seed_list": [
+          707,
+          708,
+          709
+        ]
+      },
+      "reference_seel_nm": 0.3972990866694603,
+      "local_joint_seel_nm": 0.3696404409114281,
+      "native_seel_nm": 0.37214426689384034,
+      "native_gain_vs_reference_percent": 6.33145673363904,
+      "native_gain_vs_local_percent": -0.6773679785248898,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_808",
+      "setting": {
+        "robustness_seed": 808,
+        "consensus_seed_list": [
+          808,
+          809,
+          810
+        ]
+      },
+      "reference_seel_nm": 0.39613206070741236,
+      "local_joint_seel_nm": 0.3754632918541765,
+      "native_seel_nm": 0.3632205049261109,
+      "native_gain_vs_reference_percent": 8.308228251590643,
+      "native_gain_vs_local_percent": 3.2607147472676123,
+      "max_observed_crash_rate": 0
+    },
+    {
+      "run": "holdout_909",
+      "setting": {
+        "robustness_seed": 909,
+        "consensus_seed_list": [
+          909,
+          910,
+          911
+        ]
+      },
+      "reference_seel_nm": 0.40453763057663217,
+      "local_joint_seel_nm": 0.3671169163510505,
+      "native_seel_nm": 0.36208383202831035,
+      "native_gain_vs_reference_percent": 10.494400357219602,
+      "native_gain_vs_local_percent": 1.3709758658811855,
+      "max_observed_crash_rate": 0
+    }
+  ],
+  "state_sha256": "883e154837cdad88cb4b7d018471ece2658d4d0989e011dc5124393e43f0940f",
+  "protocol_sha256": "7d864ee1416b251257743d718a45c178bb77176b8560678faadcaa199fe94d15",
+  "replay_sha256": "1ab91c3fc245e85887e511b4acdc18e7d0dbce27b99746f29b9eaba8920f2639",
+  "limits": [
+    "One component; fixed plans; no confidence interval or general validation",
+    "Fresh independent groups 808 and 909 predeclared before completed native winner inspection"
+  ]
+}

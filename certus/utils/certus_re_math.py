@@ -76,8 +76,7 @@ def _re_p4_chromatic_band_masks(wls_1d: np.ndarray, knots_lam: np.ndarray) -> li
 
     masks: list[np.ndarray] = [w <= t[0]]
 
-    for i in range(1, n - 1):
-        masks.append((w > t[i - 1]) & (w <= t[i]))
+    masks.extend((w > t[i - 1]) & (w <= t[i]) for i in range(1, n - 1))
 
     masks.append(w > t[-1])
 

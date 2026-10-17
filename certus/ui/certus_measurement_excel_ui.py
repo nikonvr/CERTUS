@@ -60,10 +60,12 @@ def read_measurement_excel(
     df = pd.read_excel(xl, sheet_name=sheet)
     if round_wavelength_decimals is not None:
         x_col = df.columns[0]
-        df[x_col] = np.round(
-            np.asarray(df[x_col].values, dtype=np.float64),
-            round_wavelength_decimals,
-        )
+        x = np.asarray(df[x_col].values, dtype=np.float64)
+        snapped = np.round(x, round_wavelength_decimals)
+        # Snap to the decimal grid only when nothing is lost (floating-point noise such as 400.0000000004). A real
+        # finer grid, 0.05 nm say, must reach the saved workbook as measured: rounding it would also repeat wavelengths.
+        if np.allclose(x, snapped, rtol=0.0, atol=10.0 ** -(round_wavelength_decimals + 5), equal_nan=True):
+            df[x_col] = snapped
     return df
 
 

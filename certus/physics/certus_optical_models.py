@@ -246,6 +246,19 @@ def epsilon1_TL_analytic(E_array: np.ndarray, Eg: float, A: float, E0: float, C:
     return eps1_array
 
 
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy", inline="always")
+def extinction_from_epsilon(e1: float, e2: float, eps_mag: float, n_val: float) -> float:
+    """k of the complex index whose square is e1 + i.e2, without the cancellation of sqrt((|eps| - e1) / 2).
+
+    Where e1 > 0, 2nk = e2 gives k = |e2| / (2n): exact however small e2 is. The difference |eps| - e1, taken the other way, is
+    pure rounding below e2 ~ 1e-7 (D71): k came back as 0 or as a few per mille off. Where e1 <= 0 there is no cancellation and the
+    difference stays.
+    """
+    if e1 > 0.0:
+        return abs(e2) / (2.0 * n_val)
+    return np.sqrt(max((eps_mag - e1) / 2.0, 0.0))
+
+
 @njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
 def epsilon_to_nk(
     eps1: np.ndarray, eps2: np.ndarray, n_min: float, n_max: float, k_max: float
@@ -268,7 +281,7 @@ def epsilon_to_nk(
 
         n_val = np.sqrt(max((eps_mag + e1) / 2.0, SMALL_EPSILON))
 
-        k_val = np.sqrt(max((eps_mag - e1) / 2.0, 0.0))
+        k_val = extinction_from_epsilon(e1, e2, eps_mag, n_val)
 
         if n_val < n_min or n_val > n_max or k_val > k_max:
             is_valid = False

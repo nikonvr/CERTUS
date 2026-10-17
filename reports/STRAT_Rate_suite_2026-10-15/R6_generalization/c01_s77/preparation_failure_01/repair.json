@@ -1,0 +1,17 @@
+{
+  "verdict": "REPAIRED_BEFORE_MEASUREMENT_VERIFICATION_PENDING",
+  "claims_consumed": 0,
+  "old_protocol_sha256": "25c87ab6548bcf78ee227261ef8c42b0866c88a7b3da16d19298993df8699437",
+  "new_protocol_sha256": "462e716315c9c36cf110e72f1e227f3e08a1cddd88e845c77c62ba64753bae7f",
+  "plans_semantically_unchanged": true,
+  "plans_bytes_unchanged": true,
+  "old_expected_normalized_sha256": "f536a6637ab24ce94c844b3a91f008438f9680eda552c1b05cb68e62d531d53b",
+  "actual_crlf_sha256": "0ac505aa198bb7b2e078fac54fc680ea1037a61ba89c0b1092da69f92277e150",
+  "source_copies": {
+    "rate_R6_fresh_guard.py": "rate_R6_fresh_guard_v2.py",
+    "rate_R6_fresh_scorer.py": "rate_R6_fresh_scorer_v2.py",
+    "run_rate_R6_fresh.ps1": "run_rate_R6_fresh_v2.ps1",
+    "verify_rate_R6_fresh.py": "verify_rate_R6_fresh_v2.py",
+    "prepare_rate_R6_confirmation.py": "prepare_rate_R6_confirmation_v2.py"
+  }
+}

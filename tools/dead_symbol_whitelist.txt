@@ -101,8 +101,6 @@ certus.physics.certus_material_db:MaterialDatabase.get_wavelength_range
 certus.physics.certus_material_db:MaterialDatabase.get_cached_computation
 # MaterialDatabase cache statistics API; test_certus_physics_hotpaths checks its counters.
 certus.physics.certus_material_db:MaterialDatabase.get_cache_stats
-# MachineModel wavelength-noise vector API; test_strat_machine_model checks its result.
-certus.physics.certus_strat_machine:MachineModel.get_sigma_array
 
 # D24, 2026-10-05 -- DESIGN worker delegation seams retained after the split.
 # OptimWorker restart-loop facade delegates to DesignStratService; no caller found.

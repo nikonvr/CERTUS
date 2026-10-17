@@ -20,7 +20,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from gradient_harness import check_gradient
+from gradient_harness import GradientMismatch, check_gradient
 
 from certus.core.certus_index_config import DataType
 from certus.spline.certus_index_spline_config import SplineOptConfig
@@ -171,3 +171,87 @@ def test_mode_et_matrice_restent_coherents() -> None:
             )
         else:
             assert objective._interp_mode == "pwl"
+
+
+# --- Reflection data, alone or with transmission, and a thicker layer (parity with the published version) ------------
+#
+# The published INDEX SPLINE ("1.1-revised") never uses this gradient; the current code does. The test above checks
+# transmission alone at 120 nm. Measured on 2026-10-06 (reports/PARITE_ZENODO_ECARTS_LONGS_2026-10-06.md): with R
+# data, and at 380 nm, the gradient is the derivative of its cost too.
+
+
+def _make_reflection_config(kind: str, n_points: int = 40) -> SplineOptConfig:
+    lam = np.linspace(420.0, 900.0, n_points)
+    data_type = DataType.REFLECTION if kind == "R" else DataType.BOTH
+    return SplineOptConfig(
+        lam_nm=lam,
+        t_exp=None if kind == "R" else 0.80 + 0.06 * np.sin(lam / 90.0),
+        r_exp=0.15 + 0.05 * np.cos(lam / 70.0),
+        n_sub=np.full(n_points, 1.52),
+        data_type=data_type,
+        n_seg=3,
+        d_lo=50.0,
+        d_hi=400.0,
+        weight_t=0.0 if kind == "R" else 1.0,
+        weight_r=1.0,
+        substrate_name="test",
+    )
+
+
+def _curved_point(knot_count: int, thickness_nm: float) -> np.ndarray:
+    positions = np.linspace(0.0, 1.0, knot_count)
+    return _pack(thickness_nm, 2.10 + 0.25 * np.exp(-3.0 * positions), 0.004 + 0.016 * positions**2)
+
+
+def _blocks(knot_count: int) -> list[tuple[int, int]]:
+    return [(0, 1), (1, 1 + knot_count), (1 + knot_count, 1 + 2 * knot_count)]
+
+
+@pytest.mark.parametrize("thickness_nm", [120.0, 380.0])
+@pytest.mark.parametrize("knot_count", [3, 4, 6], ids=["K3-pwl", "K4-smooth", "K6-smooth"])
+@pytest.mark.parametrize("kind", ["R", "RT"])
+def test_the_gradient_holds_with_reflection_data(kind: str, knot_count: int, thickness_nm: float) -> None:
+    """The step is 1e-4, not the 1e-7 above: on these data the cost is 50 to 120 and the components 1e-6 to 1e-4, and
+    at 1e-7 the rounding of the cost (eps x cost / h) moved finite differences up to 8e-3 away from a gradient that is
+    right; they converge to it as the step grows (4e-9 to 6e-6 at 1e-3 and 1e-4, measured)."""
+    config = _make_reflection_config(kind)
+    objective = SplinePWLObjective(config, _sigma_knots(config, knot_count))
+    params = _curved_point(knot_count, thickness_nm)
+
+    if objective._compute_analytic_gradient(params) is None:
+        pytest.fail("no analytic gradient for reflection data: the optimizer would fall back on finite differences")
+
+    def cost_and_grad(candidate: np.ndarray) -> tuple[float, np.ndarray]:
+        return float(objective(candidate)), objective._compute_analytic_gradient(candidate)
+
+    check_gradient(
+        cost_and_grad,
+        params,
+        step=1e-4,
+        rtol=1e-4,
+        blocks=_blocks(knot_count),
+        label=f"spline gradient {kind} K={knot_count} d={thickness_nm:.0f}",
+    )
+
+
+@pytest.mark.parametrize("knot_count", [3, 4, 6], ids=["K3-pwl", "K4-smooth", "K6-smooth"])
+def test_the_check_sees_an_error_on_the_reflection_part(knot_count: int) -> None:
+    """GUARD: the check above is not blind to the reflection part. A gradient taken with 10 % less weight on R than the
+    cost it is compared to is refused (measured: a relative gap of about 6e-3, sixty times the tolerance)."""
+    config = _make_reflection_config("RT")
+    knots = _sigma_knots(config, knot_count)
+    right = SplinePWLObjective(config, knots)
+    config_wrong = _make_reflection_config("RT")
+    config_wrong.weight_r = 0.9
+    wrong = SplinePWLObjective(config_wrong, knots)
+    params = _curved_point(knot_count, 120.0)
+
+    with pytest.raises(GradientMismatch):
+        check_gradient(
+            lambda candidate: (float(right(candidate)), wrong._compute_analytic_gradient(candidate)),
+            params,
+            step=1e-4,
+            rtol=1e-4,
+            blocks=_blocks(knot_count),
+            label=f"wrong R weight K={knot_count}",
+        )

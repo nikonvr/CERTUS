@@ -1,0 +1,114 @@
+{
+  "verdict": "GO",
+  "case": "c04_48c_s77",
+  "audited_utc": "2026-10-16T04:02:40.126528+00:00",
+  "groups": [
+    {
+      "group": 1,
+      "setting": {
+        "robustness_seed": 17710001,
+        "consensus_seed_list": [
+          17710002,
+          17710003,
+          17710004
+        ]
+      },
+      "actual_calls": 4,
+      "artifact_sha256": "7bdb3f22e464bc341109effc4665bdc91d1cbf8b45b035e92a84479b045ef2e1",
+      "plans": {
+        "98610001": {
+          "eligible": true,
+          "score_consensus": 0.006385232434435781,
+          "score_base": 0.006639185778197493,
+          "seel_nm": 0.1598152988225568,
+          "crash_rate": 0.0
+        }
+      },
+      "rejections": []
+    },
+    {
+      "group": 2,
+      "setting": {
+        "robustness_seed": 17710011,
+        "consensus_seed_list": [
+          17710012,
+          17710013,
+          17710014
+        ]
+      },
+      "actual_calls": 4,
+      "artifact_sha256": "d364e6b8425e8623e01d8569cd927cbf04558fc15007cb9fac53ee6777f5208a",
+      "plans": {
+        "98610001": {
+          "eligible": true,
+          "score_consensus": 0.006185394187466374,
+          "score_base": 0.006021397562734281,
+          "seel_nm": 0.15729455410110516,
+          "crash_rate": 0.0
+        }
+      },
+      "rejections": []
+    },
+    {
+      "group": 3,
+      "setting": {
+        "robustness_seed": 17710021,
+        "consensus_seed_list": [
+          17710022,
+          17710023,
+          17710024
+        ]
+      },
+      "actual_calls": 4,
+      "artifact_sha256": "04a74d0fd9cc2d3dc76d938ca16f4e5f1656264900b2810e4e717ec3364e5ab2",
+      "plans": {
+        "98610001": {
+          "eligible": true,
+          "score_consensus": 0.006382549436305541,
+          "score_base": 0.005925180733641944,
+          "seel_nm": 0.15978171905828953,
+          "crash_rate": 0.0
+        }
+      },
+      "rejections": []
+    }
+  ],
+  "actual_calls": 12,
+  "comparisons": {
+    "control_complete": {
+      "by_group_pct": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "evaluable_groups": 3,
+      "wins": 0,
+      "mean_pct": 0.0,
+      "median_pct": 0.0,
+      "worst_loss_pct": 0
+    },
+    "control_official": {
+      "by_group_pct": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "evaluable_groups": 3,
+      "wins": 0,
+      "mean_pct": 0.0,
+      "median_pct": 0.0,
+      "worst_loss_pct": 0
+    }
+  },
+  "scientific_case_pass": false,
+  "scientific_status": "not_confirmed_under_predeclared_rule",
+  "decision_requires_more_data": true,
+  "stop_initial_program": true,
+  "decision": "Stop other-component deployment: a conditional component case does not meet the predeclared clear-gain rule",
+  "no_additional_fresh_groups": true,
+  "small_group_uncertainty": "Three groups, no confidence interval claim",
+  "protocol_sha256": "6edd8bf893f535075eec3e6b7b7473671436aad3597021811de6fb0996ecfc83",
+  "frozen_finalists_sha256": "e9c3f7dde727f8f429b55342c287ee8817926ef44f9edcf6bd78569ca92db243",
+  "audit_sha256": "f02ce4a7552105ce9e95b2a1545ebfd1401bad9083480e6c112ee90ce674cc81",
+  "physical_evaluations_executed_by_auditor": 0
+}

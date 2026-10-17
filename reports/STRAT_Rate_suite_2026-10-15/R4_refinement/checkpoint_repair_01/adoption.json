@@ -1,0 +1,11 @@
+{
+  "verdict": "GO",
+  "old_checkpoint_sha256": "becf283fcd923b2e6161739a81a126bab412f7f889ef6fb6dbab0a7e52f257dd",
+  "intended_checkpoint_sha256": "da7765bfa452f006b69315771a3c408d14236721493532821f200fc582a80e6d",
+  "adopted_group": 61,
+  "new_proposals": 518,
+  "prior_groups_preserved": 60,
+  "claim61_already_consumed": false,
+  "new_measurement_started": false,
+  "difference": "only pending_group and group_count"
+}

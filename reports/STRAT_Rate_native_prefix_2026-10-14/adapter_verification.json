@@ -1,0 +1,19 @@
+{
+  "verdict": "GO",
+  "checks": [
+    "inactive candidates/order/IDs/cursor identical: []",
+    "inactive candidates/order/IDs/cursor identical: ['round_robin_seed']",
+    "inactive candidates/order/IDs/cursor identical: ['rate_moves']",
+    "inactive candidates/order/IDs/cursor identical: ['parent_results']",
+    "inactive candidates/order/IDs/cursor identical: ['available_wls']",
+    "legacy and joint candidates preserved exactly before prefix additions",
+    "unique contiguous IDs/signatures",
+    "only first wavelength and optical-prefix Rate layers changed",
+    "legal control wavelengths, first two optical, slit/witness inherited",
+    "useful prefix geometry offered generically",
+    "parents unchanged; temporary patches restored; independent serializable trace"
+  ],
+  "prior_count": 644,
+  "prefix_count": 467,
+  "scope": "real candidate factory, no Monte Carlo or physical changes"
+}

@@ -1,0 +1,257 @@
+"""Run the authorized A2 campaign sequentially in an immutable checkout."""
+
+from __future__ import annotations
+
+import argparse
+import ctypes
+import importlib.util
+import json
+import os
+import runpy
+import shutil
+import subprocess
+import sys
+import time
+from datetime import datetime
+from pathlib import Path
+
+CELLS = [
+    ("r75x1.5", "deep", 0, 42), ("r75x1.5", "deep", 0, 101),
+    ("r75x1.75", "deep", 0, 42), ("r75x1.75", "deep", 0, 101),
+    ("35c", "deep", 0, 42), ("75c", "deep", 0, 42),
+    ("48c", "premium", 1, 77), ("48c", "premium", 1, 101), ("48c", "premium", 1, 202),
+    ("r75x0.5", "deep", 0, 77), ("r75x2", "deep", 0, 202), ("r75x2", "deep", 0, 77),
+]
+
+
+def save_text(path: Path, content: str) -> None:
+    atomic_open = runpy.run_path(str(Path(__file__).resolve().parents[1] / "certus/utils/certus_atomic_io.py"))["atomic_open"]
+    for attempt in range(40):
+        try:
+            with atomic_open(path) as stream:
+                stream.write(content)
+            return
+        except PermissionError:
+            if attempt == 39:
+                raise
+            time.sleep(0.25)
+
+
+def save(path: Path, value: dict) -> None:
+    save_text(path, json.dumps(value, indent=2, ensure_ascii=False))
+
+
+def limit_resources(logical_cpus: int) -> dict:
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel.GetCurrentProcess.restype = ctypes.c_void_p
+    kernel.GetProcessAffinityMask.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_size_t), ctypes.POINTER(ctypes.c_size_t)]
+    kernel.SetProcessAffinityMask.argtypes = [ctypes.c_void_p, ctypes.c_size_t]
+    kernel.SetPriorityClass.argtypes = [ctypes.c_void_p, ctypes.c_uint32]
+    process = kernel.GetCurrentProcess()
+    allowed, system = ctypes.c_size_t(), ctypes.c_size_t()
+    if not kernel.GetProcessAffinityMask(process, ctypes.byref(allowed), ctypes.byref(system)):
+        raise ctypes.WinError(ctypes.get_last_error())
+    processors = [bit for bit in range(8 * ctypes.sizeof(ctypes.c_size_t)) if allowed.value & (1 << bit)]
+    if not 1 <= logical_cpus <= len(processors):
+        raise ValueError(f"Requested {logical_cpus} logical processors; {len(processors)} available")
+    mask = sum(1 << bit for bit in processors[:logical_cpus])
+    if not kernel.SetProcessAffinityMask(process, mask) or not kernel.SetPriorityClass(process, 0x20):
+        raise ctypes.WinError(ctypes.get_last_error())
+    return {"logical_cpus": logical_cpus, "affinity_mask": hex(mask), "priority": "normal", "library_threads": max(1, logical_cpus - 1)}
+
+
+def wait_for_existing_process(pid: int) -> int:
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel.OpenProcess.argtypes = [ctypes.c_uint32, ctypes.c_bool, ctypes.c_uint32]
+    kernel.OpenProcess.restype = ctypes.c_void_p
+    kernel.WaitForSingleObject.argtypes = [ctypes.c_void_p, ctypes.c_uint32]
+    kernel.GetExitCodeProcess.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_uint32)]
+    kernel.CloseHandle.argtypes = [ctypes.c_void_p]
+    handle = kernel.OpenProcess(0x101000, False, pid)
+    if not handle:
+        raise ctypes.WinError(ctypes.get_last_error())
+    try:
+        while kernel.WaitForSingleObject(handle, 1000) == 0x102:
+            pass
+        code = ctypes.c_uint32()
+        if not kernel.GetExitCodeProcess(handle, ctypes.byref(code)):
+            raise ctypes.WinError(ctypes.get_last_error())
+        return code.value
+    finally:
+        kernel.CloseHandle(handle)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--worktree", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--logical-cpus", type=int, default=16)
+    parser.add_argument("--plan", action="store_true")
+    parser.add_argument("--adopt-current", action="store_true")
+    parser.add_argument("--stop-after-current", action="store_true")
+    args = parser.parse_args()
+    worktree, output = args.worktree.resolve(), args.output.resolve()
+    runs = [
+        {"key": f"{name}_{mode}_s{seed:03d}_{variant}", "component": name, "mode": mode,
+         "seed": seed, "variant": variant,
+         "arguments": [name, mode, str(slit), "0", "2", "0", str(seed), "0"]}
+        for name, mode, slit, seed in CELLS for variant in ("avec", "sans")
+    ]
+    if args.plan:
+        for number, run in enumerate(runs, 1):
+            print(f"{number:02d}/24 {run['variant']:4s} python scripts/probe_blocs_vs_plantage.py {' '.join(run['arguments'])}")
+        return 0
+
+    resources = limit_resources(args.logical_cpus)
+    print("RESOURCES " + json.dumps(resources), flush=True)
+    output.mkdir(parents=True, exist_ok=True)
+    lock = output / ".running"
+    with lock.open("x", encoding="utf-8") as stream:
+        stream.write(str(os.getpid()))
+    status_path = output / "etat.json"
+    report_path = output.parent / f"{output.name}.md"
+    state = json.loads(status_path.read_text(encoding="utf-8")) if status_path.exists() else {"runs": []}
+    adopt_key = state.get("current") if args.adopt_current else None
+    if args.adopt_current and not (adopt_key and state.get("current_pid") and state.get("current_started")):
+        raise RuntimeError("No running measurement to adopt")
+    commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=worktree, encoding="utf-8").strip()
+    if state.get("commit", commit) != commit:
+        raise RuntimeError("The checkout differs from the campaign commit")
+    state.pop("error", None)
+    state.update(commit=commit, status="finishing_current" if args.stop_after_current else "running", pid=os.getpid(), resources=resources, updated=datetime.now().isoformat(timespec="seconds"))
+    save(status_path, state)
+
+    spec = importlib.util.spec_from_file_location("summary", worktree / "scripts/resumer_artefact_sonde.py")
+    summary = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(summary)
+
+    def report() -> None:
+        completed = {entry["key"]: entry for entry in state["runs"]}
+        lines = ["# ELITE déplace les couches Rate — autres composants et graines (2026-10-13)", "",
+                 f"Campagne A2 : **{len(completed)}/24 exécutions terminées** ; état : `{state['status']}`.", "",
+                 f"Commit figé : `{commit}`. Même interpréteur, même machine, une mesure à la fois ; cache Numba réutilisé.",
+                 f"Ressources : {resources['logical_cpus']} processeurs logiques autorisés par affinité Windows (`{resources['affinity_mask']}`), priorité normale, {resources['library_threads']} threads au maximum pour Numba/BLAS.",
+                 "Chaque cellule : défauts de production (avec), puis `CERTUS_PROBE_OVERRIDES=elite_rate_moves=false` et `CERTUS_PROBE_TAG=sans_mouvements` (sans).",
+                 "Les huit arguments et les durées sont consignés dans `etat.json` ; le journal et l'artefact de chaque exécution sont conservés.", "",
+                 "| composant | graine | sans, SEEL nm | avec, SEEL nm | écart avec/sans | déposables sans/avec | classe du meilleur sans/avec |",
+                 "|---|---:|---:|---:|---:|---:|---|" ]
+        issues = []
+        for name, mode, _, seed in CELLS:
+            prefix = f"{name}_{mode}_s{seed:03d}"
+            pair = [completed.get(prefix + "_" + variant) for variant in ("sans", "avec")]
+            if not all(pair):
+                lines.append(f"| {name} ({mode}) | {seed} | en attente | en attente | — | — | — |")
+                continue
+            without, with_moves = [entry["summary"] for entry in pair]
+            a, b = without["meilleur_seel"], with_moves["meilleur_seel"]
+            delta = (100 * (b / a - 1)) if a is not None and b is not None and a > 0 else None
+            classes = [summary.classe(item["meilleur"].get("rate_layers"), item["n_couches"]) if item["meilleur"] else "aucun" for item in (without, with_moves)]
+            def format_seel(value):
+                return "aucun" if value is None else f"{value:.4f}"
+            lines.append(f"| {name} ({mode}) | {seed} | {format_seel(a)} | {format_seel(b)} | {'—' if delta is None else f'{delta:+.1f} %'} | {without['deposables']}/{with_moves['deposables']} | {' / '.join(classes)} |")
+            if (delta is not None and delta > 8) or (without["deposables"] > 0 and with_moves["deposables"] == 0):
+                issues.append(f"{name}, graine {seed}")
+        lines += ["", "## Forme des meilleurs plans", ""]
+        for entry in state["runs"]:
+            data = entry["summary"]
+            shape = summary.forme_du_plan(data["meilleur"], data["n_couches"]) if data["meilleur"] else "aucun déposable"
+            lines.append(f"- `{entry['key']}` ({entry['seconds'] / 60:.1f} min) : {shape}. Artefact : [{entry['artifact']}]({output.name}/{entry['artifact']}).")
+        lines += ["", "## Limites et conclusion", "",
+                  "SEEL = 2·√score ; déposable = plantage < 5 % au pire des trois niveaux de bruit. Les SEEL ne se comparent qu'à composant fixé.",
+                  "Le modèle de Rate ne comporte ni dérive de la source ni bruit propre de la vitesse ; cette campagne n'est pas une validation externe.",
+                  "À 150 tirages, la dispersion d'un meilleur SEEL est de l'ordre de 6 % : un écart inférieur à 8 % ne permet pas de départager les exécutions."]
+        if len(completed) < 24:
+            lines.append("Campagne incomplète : aucune conclusion globale.")
+        elif issues:
+            lines.append("**À signaler à 👤** : dégradation supérieure à 8 % ou perte de tous les déposables dans " + ", ".join(issues) + ". Le défaut n'est pas changé.")
+        else:
+            lines.append("**Le défaut reste** : aucune cellule comparable ne dégrade le meilleur SEEL de plus de 8 % et aucune liste ne perd tous ses déposables ; une cellule sans déposable des deux côtés ne départage pas le SEEL.")
+        save_text(report_path, "\n".join(lines) + "\n")
+
+    env = os.environ.copy()
+    for key in ("CERTUS_PROBE_OVERRIDES", "CERTUS_PROBE_TAG", "CERTUS_CONSENSUS_SEEDS", "CERTUS_RATE_SETS", "CERTUS_TAIL_CUTS", "CERTUS_DESIGN_JSON", "CERTUS_CONFIG_DIR", "_CERTUS_NUMBA_CONFIGURED", "NUMBA_CACHE_DIR", "NUMBA_NUM_THREADS", "NUMBA_THREADING_LAYER", "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "VECLIB_MAXIMUM_THREADS", "NUMEXPR_NUM_THREADS"):
+        env.pop(key, None)
+    env.update(CERTUS_BENCH_TIMEOUT_S="21600", QT_QPA_PLATFORM="offscreen", PYTHONUTF8="1", PYTHONUNBUFFERED="1")
+    env["PYTHON_CPU_COUNT"] = str(args.logical_cpus)
+    for key in ("NUMBA_NUM_THREADS", "OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "VECLIB_MAXIMUM_THREADS", "NUMEXPR_NUM_THREADS"):
+        env[key] = str(resources["library_threads"])
+    preference_dir = worktree / "scratch/a2_preferences"
+    preference_dir.mkdir(parents=True, exist_ok=True)
+    (preference_dir / "certus_export.json").write_text('{"auto_export_enabled": false, "schema_version": 1}', encoding="utf-8")
+    env["CERTUS_CONFIG_DIR"] = str(preference_dir)
+    creationflags = subprocess.CREATE_NO_WINDOW | subprocess.NORMAL_PRIORITY_CLASS if os.name == "nt" else 0
+    if os.name == "nt":
+        ctypes.windll.kernel32.SetThreadExecutionState(0x80000001)
+    try:
+        done_keys = {entry["key"] for entry in state["runs"]}
+        report()
+        for number, run in enumerate(runs, 1):
+            if run["key"] in done_keys:
+                continue
+            subprocess.run(["git", "diff", "--quiet", "HEAD", "--"], cwd=worktree, check=True)
+            run_env = env.copy()
+            if run["variant"] == "sans":
+                run_env.update(CERTUS_PROBE_OVERRIDES="elite_rate_moves=false", CERTUS_PROBE_TAG="sans_mouvements")
+            log_path = output / f"{run['key']}.log"
+            before = {path.name for path in (worktree / "reports").glob("blocs_vs_plantage_*.json")}
+            if adopt_key:
+                if run["key"] != adopt_key:
+                    raise RuntimeError("The current measurement is not the next incomplete run")
+                original_start = datetime.fromisoformat(state["current_started"])
+                started = time.monotonic() - (datetime.now() - original_start).total_seconds()
+                prefix = f"blocs_vs_plantage_{run['component']}_{run['mode']}_s{run['seed']:03d}" + ("_sans_mouvements" if run["variant"] == "sans" else "")
+                print(f"ADOPT {number}/24 {run['key']} pid={state['current_pid']}", flush=True)
+                code = wait_for_existing_process(state["current_pid"])
+                fresh = [path for path in (worktree / "reports").glob(prefix + "*.json") if path.stat().st_mtime >= original_start.timestamp()]
+                adopt_key = None
+            else:
+                print(f"START {number}/24 {run['key']}", flush=True)
+                started = time.monotonic()
+                with log_path.open("ab") as log:
+                    process = subprocess.Popen([sys.executable, "scripts/probe_blocs_vs_plantage.py", *run["arguments"]], cwd=worktree, env=run_env, stdout=log, stderr=subprocess.STDOUT, creationflags=creationflags)
+                    state.update(current=run["key"], current_pid=process.pid, current_started=datetime.now().isoformat(timespec="seconds"))
+                    save(status_path, state)
+                    code = process.wait()
+                fresh = [path for path in (worktree / "reports").glob("blocs_vs_plantage_*.json") if path.name not in before]
+            if code != 0:
+                raise RuntimeError(f"{run['key']} exited {code}; see {log_path.name}")
+            if len(fresh) != 1:
+                raise RuntimeError(f"Expected one new artifact, got {len(fresh)}")
+            artifact = json.loads(fresh[0].read_text(encoding="utf-8"))
+            provenance = artifact.get("provenance") or {}
+            if artifact.get("verdict") != "OK" or provenance.get("git_commit") != commit or provenance.get("git_dirty") is not False or provenance.get("numba_cache_keyed") is not True:
+                raise RuntimeError(f"Invalid measurement provenance/verdict in {fresh[0].name}")
+            if (artifact.get("config") or {}).get("elite_rate_moves") is not (run["variant"] == "avec"):
+                raise RuntimeError("elite_rate_moves did not reach the computation")
+            target = output / f"{run['key']}_{commit[:8]}.json"
+            if target.exists():
+                raise FileExistsError(target)
+            shutil.copy2(fresh[0], target)
+            record = {**run, "artifact": target.name, "seconds": time.monotonic() - started, "resources": resources, "summary": summary.resumer(artifact)}
+            state["runs"].append(record)
+            state.update(updated=datetime.now().isoformat(timespec="seconds"))
+            save(status_path, state)
+            report()
+            print(f"DONE {number}/24 {run['key']} {record['seconds']:.1f}s SEEL={record['summary']['meilleur_seel']}", flush=True)
+            if args.stop_after_current:
+                state.update(status="paused", current=None, current_pid=None, pid=None, updated=datetime.now().isoformat(timespec="seconds"))
+                save(status_path, state)
+                report()
+                return 0
+        state.update(status="complete", current=None, current_pid=None, updated=datetime.now().isoformat(timespec="seconds"))
+        save(status_path, state)
+        report()
+        return 0
+    except BaseException as error:
+        state.update(status="failed", error=str(error), updated=datetime.now().isoformat(timespec="seconds"))
+        save(status_path, state)
+        report()
+        raise
+    finally:
+        if os.name == "nt":
+            ctypes.windll.kernel32.SetThreadExecutionState(0x80000000)
+        lock.unlink(missing_ok=True)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

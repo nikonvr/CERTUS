@@ -1,0 +1,23 @@
+{
+    "runtime":  "5.1.26100.9549",
+    "verdict":  "GO",
+    "functions":  [
+                      {
+                          "function":  "Save-RateState",
+                          "exact_normalized_source_equal":  true
+                      },
+                      {
+                          "function":  "Assert-RateDeadline",
+                          "exact_normalized_source_equal":  true
+                      },
+                      {
+                          "function":  "Invoke-RateChild",
+                          "exact_normalized_source_equal":  true
+                      },
+                      {
+                          "function":  "Quote-Rate",
+                          "exact_normalized_source_equal":  true
+                      }
+                  ],
+    "physical_evaluations":  0
+}

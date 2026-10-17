@@ -16,8 +16,6 @@ from certus.core.certus_lazy_imports import lazy_scipy
 
 scipy = lazy_scipy()
 from certus.core.certus_index_core import (
-    _SAPPHIRE_DATA_FILE,
-    _SAPPHIRE_FILE_HAS_K_COLUMN,
     OptimizationConfig,
     OptimizationResults,
     calculate_relative_R_normalization,
@@ -107,9 +105,7 @@ class IndexOptimizationStrategy:
         _subn = getattr(c, "substrate", "")
         if _subn == "Sapphire (Al2O3)":
             worker.logger.info(
-                "[FILE] Substrate Al2O3 n(lambda): Sellmeier equation (materials_v1.json, id=3) | k file: %s | k column in xlsx: %s",
-                Path(_SAPPHIRE_DATA_FILE).resolve(),
-                _SAPPHIRE_FILE_HAS_K_COLUMN,
+                "[FILE] Substrate Al2O3 n(lambda): Sellmeier equation (materials_v1.json, id=3) | transparent (k = 0)"
             )
         elif _subn == "Silicon (Si)":
             _clues = get_resource_path("clues.xlsx")

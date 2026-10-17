@@ -1,0 +1,38 @@
+{
+  "checked_local": "2026-10-14T08:47:52.7898822+02:00",
+  "completed": 7,
+  "status": "running",
+  "current": "r75x1.75_deep_s101_sans",
+  "current_pid": 28448,
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "processes": [
+    {
+      "pid": 23280,
+      "parent_pid": 22652,
+      "command": "\"C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\scratch\\campagne_a2_deadline_runner.py\" \"--worktree\" \"C:\\Users\\Lemarchand\\.codex\\worktrees\\campagne-a2\\certus0310\" \"--output\" \"D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_ELITE_couches_Rate_autres_composants_2026-10-13\" \"--logical-cpus\" \"16\"",
+      "affinity": 65535,
+      "priority": "Normal",
+      "cpu_seconds": 0.90625
+    },
+    {
+      "pid": 28448,
+      "parent_pid": 23280,
+      "command": "C:\\Users\\Lemarchand\\AppData\\Local\\Programs\\Python\\Python314\\python.exe scripts/probe_blocs_vs_plantage.py r75x1.75 deep 0 0 2 0 101 0",
+      "affinity": 65535,
+      "priority": "Normal",
+      "cpu_seconds": 7430.734375
+    }
+  ],
+  "log_tail": [
+    "08:47:50 | INFO | [ELITE] Round 2: no candidate beat nominal threshold.",
+    "08:47:50 | INFO | 🏆 Best Strategy ID: 901450249 (ELITE) - Score: 0.06221",
+    "08:47:50 | INFO | [Block 14] Best strategy ready: RMSE=0.06221 blocks=14",
+    "08:47:51 | INFO | Mining: n_blocks=13, CostMapThick Size=75, CostMapSq Size=75"
+  ],
+  "controller_errors": []
+}

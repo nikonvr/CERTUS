@@ -204,7 +204,7 @@ def _slit_bias_profiles(
         row = np.zeros(SLIT_PROFILE_NODES, dtype=np.float64)
         for iu, u in enumerate(us):
             RT = calculate_RT_normal_real(
-                wls, nH_id, nL_id, nSub_id, base + [u * d_nom], db_instance=db_local  # type: ignore[arg-type]
+                wls, nH_id, nL_id, nSub_id, [*base, u * d_nom], db_instance=db_local  # type: ignore[arg-type]
             )
             T = RT[:, 1]
             row[iu] = float(np.dot(_SLIT_GL_W, T[:3]) / 2.0 - T[3])

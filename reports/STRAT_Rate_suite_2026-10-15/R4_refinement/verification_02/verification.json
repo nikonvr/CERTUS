@@ -1,0 +1,41 @@
+{
+  "verdict": "GO",
+  "checks": [
+    "Instant immediately before morning cutoff accepted",
+    "Rejected: No new measurement or test after the authorized morning cutoff",
+    "Rejected: No new measurement or test after the authorized morning cutoff",
+    "Rejected: The requested deadline exceeds the authorized window",
+    "Rejected: The requested deadline exceeds the authorized window",
+    "check_sources AST identical to validated h02/R0 callback",
+    "record_task AST identical to validated h02/R0 callback",
+    "keep_fixed_plans AST identical to validated h02/R0 callback",
+    "evaluate_fixed AST identical to validated h02/R0 callback",
+    "All three anchors retain independently measured fixed points after branch initialization",
+    "Actual charged group, three strict anchors and nine proposals accepted",
+    "Rejected: R4 proposal quota exceeded",
+    "Rejected: Group index differs from the checkpoint",
+    "Rejected: R4 proposal quota exceeded",
+    "Rejected: Frozen group plans changed",
+    "Rejected: The offered group differs from the charged checkpoint queue",
+    "Rejected: The offered group differs from the charged checkpoint queue",
+    "Rejected: The offered group differs from the charged checkpoint queue",
+    "Rejected: R4 beam quota exceeded",
+    "Stable beam retains absolute best and deterministic mask/plan diversity",
+    "Rejected: Pending group has no complete artifact; inspect living child or failed attempt",
+    "Pending group without artifact is refused without rewriting the checkpoint",
+    "Actual PowerShell5.1: explicit atomic backup, retained handle, recorded exit0, no simulation"
+  ],
+  "verified_utc": "2026-10-15T13:22:32.284897+00:00",
+  "script_sha256": {
+    "rate_R4_candidates.py": "b7314f1f57b4f96622bc6db75bb4b9787d6e8e9783901b3d0bebb586d47a639b",
+    "rate_fixed_replay_R4.py": "404bf29eb51b58fd9bac13c089bb7aa9bfd4d4812740f63c1909dab61d9337f5",
+    "rate_R4_guard.py": "326c0614b8aeddc6faa7408793b0623a97932a42588dfc1e4301367143534491",
+    "rate_R4_planner.py": "14b1239f2af6fd95a5f6579671d5a68b5b772a68c63632fb79ab5743984a090d",
+    "run_rate_R4.ps1": "2c83ee0560dfecaab06a5b7036a9013df387f7c9d6c9bfe960fdb59f5abe59b3",
+    "campagne_a2_runner.py": "77e26f57341c198830e5ed8b19e072b94285eb24f5ed2cdd2e78dadf378f7e51"
+  },
+  "physics_measured": false,
+  "claims_consumed": 0,
+  "verification_directory": "D:\\drivefl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\reports\\STRAT_Rate_suite_2026-10-15\\R4_refinement\\verification_02",
+  "manual_review": "Exact callback ASTs, bounded queue, branch separation, checkpoint refusal, strict anchors"
+}

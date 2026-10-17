@@ -30,9 +30,7 @@ def test_no_toplevel_import_of_physics_impl_in_monoliths():
             if isinstance(node, ast.ImportFrom) and node.module == "_certus_physics_impl":
                 offenders.append(path_obj.name)
             elif isinstance(node, ast.Import):
-                for alias in node.names:
-                    if alias.name == "_certus_physics_impl":
-                        offenders.append(path_obj.name)
+                offenders.extend(path_obj.name for alias in node.names if alias.name == "_certus_physics_impl")
     if offenders:
         pytest.fail(
             "CERTUS_* monoliths must import through certus_physics facade. "

@@ -44,7 +44,7 @@ class _DummyTarget:
 def test_arange_inclusive_includes_stop_and_validates_step() -> None:
     arr = arange_inclusive(400.0, 500.0, 50.0, decimals=1)
     assert np.allclose(arr, np.array([400.0, 450.0, 500.0]))
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Step must be positive"):
         arange_inclusive(400.0, 500.0, 0.0)
 
 

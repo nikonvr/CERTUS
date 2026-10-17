@@ -1,0 +1,15 @@
+{
+  "phase": "R6_c02_s202_fresh_g02",
+  "case": "c02_s202",
+  "index": 2,
+  "setting": {
+    "robustness_seed": 17620011,
+    "consensus_seed_list": [
+      17620012,
+      17620013,
+      17620014
+    ]
+  },
+  "plans_sha256": "83e533da20c12b106b32bd18b5421e4d508df4323d8da5a453a7050d01bc12e1",
+  "protocol_sha256": "0c028b9d6cfc035d74f87dad28cda93f400a62caac1c840b04affec44a1a75b0"
+}

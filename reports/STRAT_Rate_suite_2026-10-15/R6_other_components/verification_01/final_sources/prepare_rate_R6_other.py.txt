@@ -1,0 +1,161 @@
+"""Prepare bounded copies for the three conditional R6 component pairs, without simulation."""
+
+from __future__ import annotations
+
+import ast
+import json
+import subprocess
+from datetime import UTC, datetime
+
+from rate_R4_planner_resume_v3 import save
+from rate_R5_guard import PROGRAM, REFERENCE, ROOT, check_deadline, read, sha
+
+
+def changed(source, old, new):
+    if old not in source:
+        raise RuntimeError("Source-copy transition not found: " + old[:100])
+    return source.replace(old, new)
+
+
+def write(name, source):
+    path = ROOT / "scratch" / name
+    with path.open("xb") as stream:
+        stream.write(source.encode("utf-8"))
+
+
+def main():
+    deadline = check_deadline()
+    initial = PROGRAM / "R6_generalization"
+    output = PROGRAM / "R6_other_components"
+    if output.exists() or (PROGRAM / "measurement.running").exists():
+        raise RuntimeError("Inspect an existing preparation or live measurement")
+    initial_results = {case: read(initial / case / "fresh_audit.json") for case in ("c01_s77", "c02_s202", "c03_s404")}
+    if not all(r["verdict"] == "GO" and r["scientific_case_pass"] for r in initial_results.values()):
+        raise RuntimeError("Conditional component gate not satisfied")
+    arguments = {
+        "c04_48c_s77": ["48c", "premium", "1", "0", "2", "0", "77", "0"],
+        "c05_r75x15_s42": ["r75x1.5", "deep", "0", "0", "2", "0", "42", "0"],
+        "c06_r75x2_s77": ["r75x2", "deep", "0", "0", "2", "0", "77", "0"],
+    }
+    tree = ast.parse((ROOT / "scratch/campagne_a2_runner.py").read_text(encoding="utf-8"))
+    cells = ast.literal_eval(next(n.value for n in tree.body if isinstance(n, ast.Assign) and n.targets[0].id == "CELLS"))
+    if any((a[0], a[1], int(a[2]), int(a[6])) not in cells for a in arguments.values()):
+        raise RuntimeError("Arguments do not reproduce an authorized A2 cell")
+    fresh = {case: [{"robustness_seed": 17_710_001 + index*10_000 + group*10,
+                     "consensus_seed_list": [17_710_002 + index*10_000 + group*10 + i for i in range(3)]}
+                    for group in range(3)] for index, case in enumerate(arguments)}
+    seeds = [str(n) for groups in fresh.values() for setting in groups for n in (setting["robustness_seed"], *setting["consensus_seed_list"])]
+    pattern = r'(^|[\s\[,:\"])(?:' + "|".join(seeds) + r')([\s\],}\"]|$)'
+    scan = subprocess.run(["rg", "-l", "--glob", "*.json", pattern, "reports"], cwd=ROOT,
+                          capture_output=True, text=True, encoding="utf-8", check=False)
+    if scan.returncode != 1:
+        raise RuntimeError("Unused-seed scan failed: " + scan.stdout + scan.stderr)
+    output.mkdir()
+    gate = {"verdict": "GO", "audited_utc": datetime.now(UTC).isoformat(), "favorable_cases": 3,
+            "cases": {case: {"audit_sha256": sha(initial / case / "fresh_audit.json"),
+                             "own_comparison": r["comparisons"]["control_complete"],
+                             "historical_best_local": r["comparisons"]["historical_best_local"]}
+                      for case, r in initial_results.items()},
+            "decision": "Proceed in the guide order; stop extension after the first case not meeting the same clear-gain rule",
+            "scope": "At most three additional pairs, six overall; three reserved groups per case; deadline has priority",
+            "no_new_global_best_or_confidence_interval": True}
+    save(output / "initial_gate.json", gate, immutable=True)
+    save(output / "fresh_seed_reservation.json", {"reserved_utc": datetime.now(UTC).isoformat(),
+         "before_case_search_and_holdout_inspection": True, "settings": fresh, "prior_json_scan_exit": scan.returncode,
+         "prior_json_scan_stdout": scan.stdout, "scope": "Three conditional component pairs only"}, immutable=True)
+    cases = {case: int(a[6]) for case, a in arguments.items()}
+    guard = (ROOT / "scratch/rate_R6_guard.py").read_text(encoding="utf-8")
+    guard = changed(guard, 'PROGRAM / "R6_generalization"', 'PROGRAM / "R6_other_components"')
+    guard = changed(guard, 'CASES = {"c01_s77": 77, "c02_s202": 202, "c03_s404": 404}',
+                    "CASES = " + repr(cases) + "\nCASE_ARGUMENTS = " + repr(arguments))
+    guard = changed(guard, '    protocol = read(PROTOCOL)', '''    protocol = read(PROTOCOL)
+    gate = read(EXPERIMENT / "initial_gate.json")
+    if gate["verdict"] != "GO" or protocol["initial_gate_sha256"] != sha(EXPERIMENT / "initial_gate.json"):
+        raise RuntimeError("Initial R6 gate changed")
+    for case, entry in gate["cases"].items():
+        if sha(PROGRAM / "R6_generalization" / case / "fresh_audit.json") != entry["audit_sha256"]:
+            raise RuntimeError("Initial independent proof changed")
+    if protocol["case_arguments"] != CASE_ARGUMENTS:
+        raise RuntimeError("Conditional component arguments changed")''')
+    guard = changed(guard, 'previous.get("decision_requires_more_data", False)',
+                    'previous.get("decision_requires_more_data", False) or not previous.get("scientific_case_pass", False)')
+    write("rate_R6_other_guard.py", guard)
+    native = (ROOT / "scratch/rate_R6_native.py").read_text(encoding="utf-8")
+    native = changed(native, 'choices=("c01_s77", "c02_s202", "c03_s404")', "choices=" + repr(tuple(cases)))
+    native = changed(native, "scratch/rate_R6_guard.py", "scratch/rate_R6_other_guard.py")
+    native = changed(native, '["r75x0.5", "deep", "0", "0", "2", "0", str(seed), "0"]', 'protocol["case_arguments"][args.case]')
+    native = changed(native, 'f"blocs_vs_plantage_r75x0.5_deep_s{seed:03d}_{tag}.json"',
+                     'f"blocs_vs_plantage_{native[\'arguments\'][0]}_{native[\'arguments\'][1]}_s{seed:03d}_{tag}{\'_fente\' if native[\'arguments\'][2] == \'1\' else \'\'}.json"')
+    write("rate_R6_other_native.py", native)
+    controller = (ROOT / "scratch/run_rate_R6_pair.ps1").read_text(encoding="utf-8")
+    controller = controller.replace("c01_s77", "c04_48c_s77").replace("R6_generalization", "R6_other_components").replace("rate_R6_native.py", "rate_R6_other_native.py")
+    write("run_rate_R6_other_pair.ps1", controller)
+    fresh_guard = (ROOT / "scratch/rate_R6_fresh_guard_v2.py").read_text(encoding="utf-8")
+    fresh_guard = fresh_guard.replace("from rate_R6_guard import", "from rate_R6_other_guard import")
+    fresh_guard = fresh_guard.replace('not 3 <= len(plans) <= 8', 'not 1 <= len(plans) <= 8')
+    write("rate_R6_other_fresh_guard.py", fresh_guard)
+    scorer = (ROOT / "scratch/rate_R6_fresh_scorer_v2.py").read_text(encoding="utf-8")
+    scorer = scorer.replace("rate_R6_fresh_guard_v2.py", "rate_R6_other_fresh_guard.py")
+    scorer = changed(scorer, 'from probe_blocs_vs_plantage import _rmse_par_bruit', 'from probe_blocs_vs_plantage import COMPOSANTS, _rmse_par_bruit')
+    scorer = changed(scorer, 'design = worktree / "reports/serie_echelle_r75/cfg_x0.5.json"',
+                     'component, mode = protocol["native_arguments"][:2]\n        design_relative, num_layers = COMPOSANTS[component]\n        design = worktree / design_relative')
+    scorer = scorer.replace('setCurrentText("deep")', 'setCurrentText(mode)').replace('execution_mode="deep"', 'execution_mode=mode')
+    scorer = scorer.replace('noise_total_layers=75', 'noise_total_layers=num_layers').replace('_contract(strategy, 75)', '_contract(strategy, num_layers)')
+    scorer = changed(scorer, '        for key, value in protocol["depths"].items():',
+                     '        params.update(protocol["depths"])  # Fixed plans only: homogeneous 300-draw rescoring.\n        for key, value in protocol["depths"].items():')
+    write("rate_R6_other_fresh_scorer.py", scorer)
+    fresh_controller = (ROOT / "scratch/run_rate_R6_fresh_v2.ps1").read_text(encoding="utf-8")
+    fresh_controller = fresh_controller.replace("c01_s77", "c04_48c_s77").replace("R6_generalization", "R6_other_components").replace("rate_R6_fresh_scorer_v2.py", "rate_R6_other_fresh_scorer.py")
+    write("run_rate_R6_other_fresh.ps1", fresh_controller)
+    prepare = (ROOT / "scratch/prepare_rate_R6_confirmation_v2.py").read_text(encoding="utf-8")
+    a, b = prepare.index("def prepare_sources():"), prepare.index("def main():")
+    prepare = prepare[:a] + "def prepare_sources():\n    return  # All copies are frozen before the native measurement.\n\n\n" + prepare[b:]
+    prepare = prepare.replace("from rate_R6_guard import", "from rate_R6_other_guard import")
+    prepare = changed(prepare, '    raw = copy.deepcopy(read(PROGRAM / "R3_h03_native_postrefinement/protocol.json")["anchors"])',
+                      '    raw = []  # No historical 75-layer/x0.5 anchors in another component.')
+    prepare = changed(prepare, 'any(e["num_runs"] != 300 for e in actual_post)',
+                      'any(e["num_runs"] not in (post["base_num_runs"], post["consensus_num_runs"]) for e in actual_post)')
+    prepare = changed(prepare, 'Counter(e["id"] for e in actual_post if e["seed"] == CASES[args.case]) != Counter(post_ids)',
+                      'not set(post_ids).issubset({e["id"] for e in actual_post if e["seed"] == CASES[args.case] and e["num_runs"] == post["base_num_runs"]})')
+    prepare = changed(prepare, 'if sorted(e["seed"] for e in actual_post if e["id"] == sid) != sorted([CASES[args.case], 41, 42, 43]):',
+                      'if Counter((e["seed"], e["num_runs"]) for e in actual_post if e["id"] == sid) != Counter([(CASES[args.case], post["base_num_runs"]), *((s, post["consensus_num_runs"]) for s in (41, 42, 43))]):')
+    for old, new in (("rate_R6_fresh_scorer_v2.py", "rate_R6_other_fresh_scorer.py"), ("rate_R6_fresh_guard_v2.py", "rate_R6_other_fresh_guard.py"),
+                     ("run_rate_R6_fresh_v2.ps1", "run_rate_R6_other_fresh.ps1"), ("rate_R6_guard.py", "rate_R6_other_guard.py")):
+        prepare = prepare.replace(old, new)
+    prepare = changed(prepare, '"case": args.case, "source_sha256": reference["source_sha256"]',
+                      '"case": args.case, "native_arguments": protocol["case_arguments"][args.case], "source_sha256": reference["source_sha256"]')
+    write("prepare_rate_R6_other_confirmation.py", prepare)
+    auditor = (ROOT / "scratch/audit_rate_R6_fresh.py").read_text(encoding="utf-8")
+    auditor = auditor.replace("from rate_R6_guard import", "from rate_R6_other_guard import")
+    auditor = changed(auditor, 'roles = {**frozen["roles"], "historical_reference": 900951015, "historical_best_local": 9900008}', 'roles = frozen["roles"]')
+    auditor = auditor.replace('("control_complete", "control_official", "historical_reference", "historical_best_local")', '("control_complete", "control_official")')
+    auditor = auditor.replace('stop = not_confirmed >= 2', 'stop = not_confirmed >= 1')
+    auditor = auditor.replace('two cases cannot meet the predeclared clear-gain rule', 'a conditional component case does not meet the predeclared clear-gain rule')
+    auditor = auditor.replace("rate_R6_fresh_scorer_v2.py", "rate_R6_other_fresh_scorer.py").replace("rate_R6_fresh_guard_v2.py", "rate_R6_other_fresh_guard.py")
+    write("audit_rate_R6_other_fresh.py", auditor)
+    verifier = (ROOT / "scratch/verify_rate_R6_fresh_v2.py").read_text(encoding="utf-8")
+    verifier = verifier.replace("rate_R6_fresh_guard_v2", "rate_R6_other_fresh_guard").replace("rate_R6_fresh_scorer_v2.py", "rate_R6_other_fresh_scorer.py")
+    write("verify_rate_R6_other_fresh.py", verifier)
+    old = read(initial / "native_protocol.json")
+    names = ["rate_R6_other_guard.py", "rate_R6_other_native.py", "run_rate_R6_other_pair.ps1", "rate_R5_guard.py",
+             "rate_H03_guard.py", "campagne_a2_runner.py", "rate_R4_planner_resume_v3.py", "rate_native_pipeline_trace.py"]
+    protocol = {**old, "cases": cases, "case_arguments": arguments, "initial_gate_sha256": sha(output / "initial_gate.json"),
+                "fresh_seed_reservation_sha256": sha(output / "fresh_seed_reservation.json"),
+                "script_sha256": {name: sha(ROOT / "scratch" / name) for name in names},
+                "limits": {**old["limits"], "initial_pairs": 3, "conditional_pairs": 3, "max_program_pairs": 6},
+                "fresh_plan": "Own official and complete finalists only, no historical cross-component anchors; three reserved300 groups",
+                "native_depth_policy": "Unchanged selected component/mode defaults; record actual post base/consensus depths; fresh fixed replay300",
+                "early_stop": "Stop extension after first conditional case not satisfying3/3 and median>=1%"}
+    save(output / "native_protocol.json", protocol, immutable=True)
+    for case in cases:
+        (output / case).mkdir()
+    snapshots = output / "prepared_sources"
+    snapshots.mkdir()
+    for name in (*names, "rate_R6_other_fresh_guard.py", "rate_R6_other_fresh_scorer.py", "run_rate_R6_other_fresh.ps1",
+                 "prepare_rate_R6_other_confirmation.py", "audit_rate_R6_other_fresh.py", "verify_rate_R6_other_fresh.py"):
+        (snapshots / (name + ".txt")).write_bytes((ROOT / "scratch" / name).read_bytes())
+    print(json.dumps({"status": "PREPARED_NOT_VERIFIED_NOT_MEASURED", "cases": cases, "fresh_seeds_reserved": len(seeds), "deadline": deadline}))
+
+
+if __name__ == "__main__":
+    main()

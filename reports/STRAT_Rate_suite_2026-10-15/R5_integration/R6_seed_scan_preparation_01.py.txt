@@ -1,0 +1,89 @@
+"""Prepare new R6 copies and reserve unused confirmation seeds before any case inspection."""
+
+from __future__ import annotations
+
+import json
+import subprocess
+from datetime import UTC, datetime
+from pathlib import Path
+
+from rate_R5_guard import EXPERIMENT as R5
+from rate_R5_guard import PROGRAM, REFERENCE, ROOT, check_deadline, read, sha
+
+
+def main():
+    deadline = check_deadline()
+    output = PROGRAM / "R6_generalization"
+    cases = {"c01_s77": 77, "c02_s202": 202, "c03_s404": 404}
+    fresh = {case: [{"robustness_seed": 17_610_001 + index*10_000 + group*10,
+                     "consensus_seed_list": [17_610_002 + index*10_000 + group*10 + i for i in range(3)]}
+                    for group in range(3)] for index, case in enumerate(cases)}
+    seeds = [str(n) for groups in fresh.values() for setting in groups for n in (setting["robustness_seed"], *setting["consensus_seed_list"])]
+    result = subprocess.run(["rg", "-l", "--glob", "*.json", "|".join(seeds), "reports"], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", check=False)
+    if result.returncode != 1:
+        raise RuntimeError("Proposed seeds appear in existing JSON or freshness scan failed: " + result.stdout + result.stderr)
+    output.mkdir(exist_ok=False)
+    (output / "fresh_seed_reservation.json").write_text(json.dumps({"reserved_utc": datetime.now(UTC).isoformat(),
+         "before_case_search_and_holdout_inspection": True, "settings": fresh, "prior_json_scan_exit": result.returncode,
+         "prior_json_scan_stdout": result.stdout, "scope": "Three initial R6 cases, three groups each; no enlargement of search quotas"}, ensure_ascii=False, indent=2), encoding="utf-8")
+    source = (ROOT / "scratch/rate_R5_native.py").read_text(encoding="utf-8")
+    source = source.replace('parser.add_argument("--deadline-utc", required=True)',
+                            'parser.add_argument("--deadline-utc", required=True)\n    parser.add_argument("--case", choices=("c01_s77", "c02_s202", "c03_s404"), required=True)\n    parser.add_argument("--arm", choices=("control", "variant"), required=True)')
+    source = source.replace('scratch/rate_R5_guard.py', 'scratch/rate_R6_guard.py')
+    source = source.replace('output = guard["SLOTS"]["R5_native"]', 'phase = "R6_" + args.case + "_" + args.arm\n    output = guard["SLOTS"][phase]')
+    source = source.replace('guard["check_ready"]("R5_native", output, sources', 'guard["check_ready"](phase, output, sources')
+    source = source.replace('native = protocol["native"]\n    tag = native["tag"]',
+                            '''seed = protocol["cases"][args.case]
+    native = {"arguments": ["r75x0.5", "deep", "0", "0", "2", "0", str(seed), "0"],
+              "overrides": protocol["common_overrides"] + ",rate_post_refinement=" + str(args.arm == "variant").lower()}
+    tag = "r6_" + args.case + "_" + args.arm + "_20261015_v1"''')
+    source = source.replace('f"blocs_vs_plantage_r75x0.5_deep_s101_{tag}.json"', 'f"blocs_vs_plantage_r75x0.5_deep_s{seed:03d}_{tag}.json"')
+    source = source.replace('"overrides": native["overrides"], "bounded_program": proof, "tag": tag,',
+                            '"overrides": native["overrides"], "bounded_program": proof, "tag": tag, "case": args.case, "arm": args.arm,')
+    source = source.replace('artifact["verdict"] != "OK" or artifact.get("rate_post_refinement", {}).get("status") != "complete"',
+                            'artifact["verdict"] != "OK" or (args.arm == "variant" and artifact.get("rate_post_refinement", {}).get("status") != "complete")')
+    with (ROOT / "scratch/rate_R6_native.py").open("x", encoding="utf-8") as stream:
+        stream.write(source)
+    old = (ROOT / "scratch/run_rate_R5.ps1").read_text(encoding="utf-8")
+    prefix = old[:old.index("Save-RateState\ntry {")]
+    prefix = prefix.replace("'reports\\STRAT_Rate_suite_2026-10-15\\R5_integration'", "('reports\\STRAT_Rate_suite_2026-10-15\\R6_generalization\\' + $RateCase)")
+    prefix = prefix.replace("'measurement_controller.json'", "'controller.json'").replace("'reference_context.json'", "'..\\..\\R5_integration\\reference_context.json'")
+    prefix = "param([string]$RateCase='c01_s77')\n" + prefix
+    tail = '''Save-RateState
+try {
+    foreach($rateArm in @('control','variant')) {
+        $rateState['status']='native_' + $rateArm
+        Save-RateState
+        Invoke-RateChild @('-X','utf8','-X','cpu_count=24',(Quote-Rate (Join-Path $rateRoot 'scratch\\rate_R6_native.py')),
+            '--case',$RateCase,'--arm',$rateArm,'--deadline-utc','2026-10-16T06:00:00+00:00') (Join-Path $rateDirectory ($rateArm + '\\logs'))
+    }
+    $rateState['status']='pair_complete_freeze_and_fresh_pending'
+} catch {
+    $rateState['status']='failed'
+    $rateState['error']=$_.Exception.Message
+    throw
+} finally { Save-RateState }
+'''
+    with (ROOT / "scratch/run_rate_R6_pair.ps1").open("x", encoding="utf-8") as stream:
+        stream.write(prefix + tail)
+    names = ["rate_R6_guard.py", "rate_R6_native.py", "run_rate_R6_pair.ps1", "rate_R5_guard.py", "rate_H03_guard.py",
+             "campagne_a2_runner.py", "rate_R4_planner_resume_v3.py", "rate_native_pipeline_trace.py"]
+    protocol = {"status": "FROZEN_BEFORE_SEARCH", "deadline_utc": deadline, "cases": cases,
+                "source_sha256": read(REFERENCE)["source_sha256"], "reference_sha256": sha(REFERENCE),
+                "r5_audit_sha256": sha(R5 / "post_numeric_audit_02.json"),
+                "fresh_seed_reservation_sha256": sha(output / "fresh_seed_reservation.json"),
+                "common_overrides": "elite_rate_balanced_moves=false,elite_rate_max_candidates=240,elite_rounds=6,elite_rate_joint_candidates=480",
+                "single_factor": "rate_post_refinement False vs True; same fine joint policy in both arms",
+                "script_sha256": {name: sha(ROOT / "scratch" / name) for name in names},
+                "limits": {"initial_pairs": 3, "max_program_pairs": 6, "post_passes": 2, "beam": 2, "proposals_per_pass": 300, "post_proposals": 600},
+                "fresh_plan": "Freeze official exported winner and best complete consensus per arm, deduplicate complete plans, then three reserved groups at300; historical anchors for scoring only, never parents",
+                "conservative_case_pass": "Three fresh positive groups against own best-complete control, median gain>=1%; also report official-winner comparison. Smaller/mixed effects remain unresolved; no other components without at least two clear case gains and third favorable/understood.",
+                "no_additional_pairs_or_groups_automatically": True}
+    (output / "native_protocol.json").write_text(json.dumps(protocol, ensure_ascii=False, indent=2), encoding="utf-8")
+    for case in cases:
+        (output / case).mkdir()
+    print(json.dumps({"status": "PREPARED_NOT_VERIFIED_NOT_MEASURED", "fresh_seeds_reserved": len(seeds), "cases": cases}))
+
+
+if __name__ == "__main__":
+    main()

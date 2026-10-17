@@ -90,7 +90,6 @@ SUBSTRATE_CHOICES = tuple(dict.fromkeys(
         "B270i",
         "Silicon (Si)",
         "Air",
-        "Sapphire Fresnel",
     ]
 ))
 
@@ -113,8 +112,9 @@ CANONICAL_SUBSTRATE_LABELS: dict[str, str] = {
     "air": "Air",
     "void": "Air",
     "vacuum": "Air",
-    "sapphire fresnel": "Sapphire Fresnel",
-    "sapphire (fr)": "Sapphire Fresnel",
+    # Legacy labels of a second, false sapphire index (removed): they resolve to the one sapphire.
+    "sapphire fresnel": "Sapphire (Al2O3)",
+    "sapphire (fr)": "Sapphire (Al2O3)",
 }
 
 

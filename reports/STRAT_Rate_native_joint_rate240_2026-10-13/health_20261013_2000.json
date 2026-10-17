@@ -1,0 +1,25 @@
+{
+  "checked_utc": "2026-10-13T18:01:12.424194+00:00",
+  "controller_pid": 46404,
+  "measurement_pid": 12568,
+  "status": "measurement",
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "prepared_sources_unchanged": true,
+  "scientific_sources_unchanged": true,
+  "log_tail": [
+    "19:59:10 | INFO | [RATE] 475 variants on 26 strategies, 40 at most each, DEEPEST boundaries first. 0 strategy(ies) skipped: no block boundary and no low-swing layer. [SWING] seuil 0.025, 282 evaluations TMM a lambda fixe, 0.1 s au total pour cette expansion.",
+    "19:59:10 | INFO | [SLIT] slit bias active, 501/501 strategies -- slit 2 nm, profile of 17 nodes, 0 NEW profiles in 0.1 s (cache: 13579)",
+    "19:59:10 | INFO | Running robustness tests on 501 strategies (ThreadPoolExecutor with 8 workers)...",
+    "20:00:45 | INFO | Running robustness tests on 240 strategies (ThreadPoolExecutor with 8 workers)...",
+    "20:01:04 | INFO | [RATE-RESCUE] 0 depositable plan(s) in the pass: 30 plan(s) x 8 cut(s) at most, 240 Rate tail(s) laid under the plans that gave way, 215 of them depositable; 0 plan(s) with Rate on the hard layers in at most 8 round(s), 0 of them depositable.",
+    "20:01:04 | WARNING | [ROBUSTNESS] 526 strategy(ies) dropped for a NON-FINITE score -- ids: 11800, 901200062, 901200073, 901200162, 901200011 ...",
+    "20:01:11 | INFO | [ABLATION] 20 strategies profiled in 6.4 s -- dominant source of the 1st: corridor d'indice (+14%)",
+    "20:01:11 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=300)"
+  ],
+  "action": "No restart, no test, no second measurement"
+}

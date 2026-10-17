@@ -1,0 +1,26 @@
+{
+  "status": "PREPARING_NOT_MEASURED",
+  "started_utc": "2026-10-15T12:52:42.032053+00:00",
+  "reason": "h02 target geometries are generated but promising admissible80-run candidates rank58/59 below keep42; a full-only quota cannot recover them",
+  "R3_pairs_consumed": 2,
+  "R3_pairs_remaining": 1,
+  "R4_max_passes": 2,
+  "R4_global_beam_width": 4,
+  "R4_max_new_proposals_total": 1200,
+  "branches": [
+    "local: starting only9900006/9900008",
+    "native: starting only immutable native control/variant finalists901054165/900754638"
+  ],
+  "origin_separation_required": true,
+  "planned_allocation": "At most300 new proposals per branch per pass; unused allocation not reassigned automatically; at most two retained plans per branch within global beam4",
+  "passes": [
+    "deepest internal optical window, coarse then fine",
+    "optical prefix, coarse then fine; branch stops after a pass with no improvement"
+  ],
+  "proposal_policy": "Generic bounded window/containing-block operations and legal native wavelength grid; no known target wavelength/layer injected",
+  "scoring": "Three fixed comparators per group plus at most9 proposals, all full-depth300 and consensus41/42/43 with base101; finite/consensus rejects preserved",
+  "deadline_utc": "2026-10-16T06:00:00Z",
+  "new_measurements_started": false,
+  "source_comparison_sha256": "89dcb2a3e3332e1a1c64d9bb19f8370e6e47e14247b43aea9c32b2da02ad5be6",
+  "stage_gate_diagnostic_sha256": "fd1b7f2a5c63273eb1f32193ef4a17eadce0aba8f568dcd5ee7c3523363311c2"
+}

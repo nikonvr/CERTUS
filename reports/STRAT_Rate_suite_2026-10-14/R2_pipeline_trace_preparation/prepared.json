@@ -1,0 +1,36 @@
+{
+  "status": "observer_prepared_not_wired_not_run",
+  "prepared_utc": "2026-10-14T07:43:38.798545+00:00",
+  "observer_sha256": "df28ee632f11e6dcde87e53c78ce4dc35869194b2b579107f6725e7416562dc3",
+  "checks": {
+    "ruff_targeted": "GO",
+    "ast_parse": "GO",
+    "runtime": "NOT_RUN_A2_ACTIVE"
+  },
+  "observations_prepared": [
+    "complete native wavelength grid",
+    "parent plan and inherited metadata",
+    "generation outputs and cursor",
+    "contract rejection reason",
+    "nominal threshold",
+    "actual task seed/runs/noise levels",
+    "consensus selection, configuration and cache hits",
+    "consensus metadata after application",
+    "finalized result rows"
+  ],
+  "unchanged": "Each original callable receives the original arguments; no physics implementation, budget or ranking changed",
+  "pending": [
+    "prepare a new trace adapter with functools.wraps on the candidate factory",
+    "observer delegation/restoration/serialization verification outside any measurement",
+    "add a new explicit deadline and unique tag; retain expired original launchers",
+    "serialize copied NumPy values with json_default before atomic helper save",
+    "reproduce R0 fixed points and perform at most one baseline trace after A2"
+  ],
+  "limitations": [
+    "No runtime equivalence has yet been verified",
+    "Private budget/dedup exits are not exhaustively observed",
+    "Threshold event precedes the authoritative parent round log; join by chronological scope",
+    "Retained draw count is not consensus physical depth",
+    "No new scientific measurement or default activation"
+  ]
+}

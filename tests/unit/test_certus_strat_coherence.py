@@ -3014,31 +3014,31 @@ class TestStratSymmetryContractAndStability:
         base_strats = []
 
 
-        for i in range(10):
+        base_strats.extend(
 
 
-            base_strats.append(
 
 
-                {
+            {
 
 
-                    "strategy_id": f"base{i}",
+                "strategy_id": f"base{i}",
 
 
-                    "n_blocks": 1,
+                "n_blocks": 1,
 
 
-                    "origin": "THICKNESS",
+                "origin": "THICKNESS",
 
 
-                    "blocks": [{"start": 0, "end": 2, "wavelength": 500.0, "num_layers": 2}],
+                "blocks": [{"start": 0, "end": 2, "wavelength": 500.0, "num_layers": 2}],
 
 
-                }
+            }
+            for i in range(10)
 
 
-            )
+        )
 
 
         opti = {
@@ -3187,55 +3187,55 @@ class TestStratSymmetryContractAndStability:
             out_results = []
 
 
-            for strat in context.get("all_strategies", []):
+            out_results.extend(
 
 
-                out_results.append(
 
 
-                    {
+                {
 
 
-                        "strategy_id": strat["strategy_id"],
+                    "strategy_id": strat["strategy_id"],
 
 
-                        "strategy": strat,
+                    "strategy": strat,
 
 
-                        "results_per_noise": [
+                    "results_per_noise": [
 
 
-                            {
+                        {
 
 
-                                "noise_level": 1.0,
+                            "noise_level": 1.0,
 
 
-                                "rmse_mean": 0.2,
+                            "rmse_mean": 0.2,
 
 
-                                "rmse_std": 0.0,
+                            "rmse_std": 0.0,
 
 
-                                "rmse_p95": 0.2,
+                            "rmse_p95": 0.2,
 
 
-                                "rmse_p99": 0.2,
+                            "rmse_p99": 0.2,
 
 
-                            }
+                        }
 
 
-                        ],
+                    ],
 
 
-                        "robustness_score": 0.2,
+                    "robustness_score": 0.2,
 
 
-                    }
+                }
+                for strat in context.get("all_strategies", [])
 
 
-                )
+            )
 
 
             return {"all_strategies_results": out_results}

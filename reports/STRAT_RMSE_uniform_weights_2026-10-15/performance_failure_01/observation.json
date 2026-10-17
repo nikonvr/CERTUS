@@ -1,0 +1,19 @@
+{
+  "observed_utc": "2026-10-15T06:32:08.611052+00:00",
+  "status": "failure_observed_traceback_pending",
+  "validation_parent_pid": 8272,
+  "pytest_child_pid": 18460,
+  "failing_file": "tests/performance/test_performance.py",
+  "suspected_test_pending_final_summary": "TestParallelPerformance::test_concurrent_calculationations",
+  "source_provenance": {
+    "tests/performance/test_performance.py": {
+      "sha256": "e920de666c9ef62a9709e161f487c549a20ecbb0f1b5c9af3901693f7d7c3f21",
+      "same_bytes_as_HEAD": false
+    },
+    "tools/bench_kernels.py": {
+      "sha256": "3f147b05f0747dc47bca36e43baeed2efb10be332257348bf8f0bfc6c3442e72",
+      "same_bytes_as_HEAD": false
+    }
+  },
+  "note": "One F in live pytest progress; wait for full traceback and process exit before any rerun. No assertion, baseline, source or resource limit changed. No R0/R2 launched. The source identity alone does not establish the cause of a timing failure."
+}

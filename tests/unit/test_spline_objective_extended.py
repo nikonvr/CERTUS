@@ -116,7 +116,7 @@ class TestInterpolateAlongSigma:
         assert result.shape == (20,)
 
     def test_too_few_nodes_raises(self) -> None:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="at least 2 nodes required"):
             _interpolate_along_sigma(np.array([0.001]), np.array([0.001]), np.array([1.5]), "pwl")
 
 

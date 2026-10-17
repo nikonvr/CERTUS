@@ -1,0 +1,40 @@
+{
+  "status": "failed",
+  "pid": 21248,
+  "resources": {
+    "logical_cpus": 16,
+    "affinity_mask": "0xffff",
+    "priority": "normal",
+    "library_threads": 15
+  },
+  "hashes": {
+    "replay": "dbcdd6e24103675db50d0f8e6948cb419d471c3a5cbaacbee0921e7e5aee0778",
+    "protocol": "09b7f40d016b9c516c23e5e30c968ae4a5a3d6b9cbd2b0d8dfe5415ed688dccf",
+    "fixed_plans": "c09d40815b34e17359b2394b02507b99b9eb18037b7bd78a8da407b80974153f",
+    "summarizer": "6c34d928727a6facd21b8ce72d2ca57c894fc612fb7bdf32d14ade947acc78f7"
+  },
+  "sequence": [
+    "control",
+    "holdout_1515",
+    "holdout_1616",
+    "holdout_1717",
+    "holdout_202",
+    "holdout_303",
+    "holdout_404",
+    "holdout_505",
+    "holdout_606",
+    "holdout_707",
+    "holdout_808",
+    "holdout_909",
+    "holdout_1010",
+    "holdout_1111",
+    "holdout_1212",
+    "holdout_1313",
+    "holdout_1414"
+  ],
+  "runs": [],
+  "current": null,
+  "current_pid": null,
+  "updated": "2026-10-14T00:08:07+00:00",
+  "error": "[Errno 17] File exists: 'D:\\\\drivefl\\\\01_Recherche_Enseignement\\\\02_Couches_Minces_Optique\\\\couches minces 2026\\\\CERTUS\\\\certus0310\\\\reports\\\\STRAT_Rate_confirmation_native_prefix_2026-10-14\\\\plans.json'"
+}

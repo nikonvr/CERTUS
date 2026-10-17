@@ -100,7 +100,7 @@ class TestReadCsvRobust:
             read_csv_robust("/nonexistent/path.csv")
 
     def test_invalid_path_raises(self) -> None:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Invalid filepath"):
             read_csv_robust("")
 
 
@@ -115,7 +115,7 @@ class TestReadDataFileRobust:
         assert isinstance(df, pd.DataFrame)
 
     def test_invalid_path_raises(self) -> None:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Invalid filepath"):
             read_data_file_robust("")
 
 
@@ -139,7 +139,7 @@ class TestToCsvRobust:
         assert ";" in content  # semicolon separator for EU format
 
     def test_empty_df_raises(self, tmp_path: Path) -> None:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Cannot save empty DataFrame"):
             to_csv_robust(pd.DataFrame(), str(tmp_path / "empty.csv"))
 
 

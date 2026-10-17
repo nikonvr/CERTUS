@@ -1,0 +1,8 @@
+{
+  "user_selected": "Archives locales, dépôt Git léger (recommandé)",
+  "archives_published_to_Git": false,
+  "archives_moved_outside_CERTUS": true,
+  "checkout_size_goal_bytes": 1000000000,
+  "verified_before_delivery_bytes": 508775166,
+  "scientific_defaults_activated": false
+}

@@ -1,0 +1,68 @@
+{
+  "recorded_date": "2026-10-17",
+  "recorded_at": "after the launch of the seed-42 chain (2026-10-17T00:28Z) and before any of its results is read",
+  "version": 1,
+  "kind": "exploratory REPLICATE, on a second search seed (101), of the lever isolation of seed 42 (reports/STRAT_99c_isolation_leviers_2026-10-17/protocol.json); NOT the A9 protocol",
+  "predeclared": "written while the seed-42 chain was still running; the design below does not depend on its results",
+  "amendments": [
+    {
+      "at": "2026-10-17, after reading the seed-42 results and before any launch of this chain",
+      "what": "launch rule only, not the design: an arm no longer aborts when a python process runs; it waits up to 90 minutes for two consecutive checks without any python, then starts. During the arm, one sample per minute of the python processes that are not the probe is written to foreign_python_<arm>.log",
+      "why": "the Codex application runs its own Python studies on this machine (a process of studies/bonne_mere/scripts/pglobal_blocks.py was alive from 03:17:46 local, i.e. during the last 24 minutes of arm C2 of seed 42, which lasted 44 minutes against 29 for C1). The search has no wall-clock budget (time.perf_counter only feeds log lines; the only timeout is a 600 s guard on a hung segment, not reached in any arm), so contention changes durations, not known results. The samples document the exposure instead of hiding it; durations are not compared"
+    }
+  ],
+  "user_requests_verbatim": [
+    "Répéter à la graine 101 (Recommandé), answer of 👤 on 2026-10-17 to « Après l'isolation de la graine 42 (en cours), que fais-je ensuite pendant votre sommeil ? »"
+  ],
+  "question": "Does the attribution found at seed 42 (which of the Rate budget 240, the six ELITE rounds and the 480 joint neighbours carries the gain of the widened profile over the production defaults) hold at search seed 101?",
+  "component": {"name": "99c", "config": "example/example_strat/JSON-strat-bandpass-5cav-99c.json", "layers": 99, "injected_strategies": "none in this file"},
+  "witness": "single witness glass for the whole 99-layer run (witness_reset_layers not set)",
+  "command_common": "python -X cpu_count=16 scripts/probe_blocs_vs_plantage.py 99c premium 0 0 2 0 101",
+  "positional_arguments": {"mode": "premium", "cherche_fente": 0, "min_tp": 0, "resolution_nm": 2, "elargi_profile": 0, "seed": 101, "par_swing": 0},
+  "arms": [
+    {"name": "C1_budget240_seul", "probe_overrides": {"elite_rate_max_candidates": 240}, "probe_tag": "rate_budget240_seul"},
+    {"name": "C2_budget240_six_tours", "probe_overrides": {"elite_rate_max_candidates": 240, "elite_rounds": 6}, "probe_tag": "rate_budget240_six_tours"}
+  ],
+  "already_measured_same_seed_same_consensus_seeds_41_42_43": {
+    "A_production_defaults": {
+      "artefact": "reports/blocs_vs_plantage_99c_premium_s101.json",
+      "strategies": 4470, "deposable": 4470,
+      "best_consensus_score": 0.125451, "best_seel_nm": 0.6559, "duration": "24 min 11 s"
+    },
+    "B_widened_plus_refinement": {
+      "artefact": "reports/blocs_vs_plantage_99c_premium_s101_rate_elargi_refinement_240_6_480.json",
+      "probe_overrides": {"elite_rate_max_candidates": 240, "elite_rounds": 6, "elite_rate_joint_candidates": 480, "rate_post_refinement": true},
+      "strategies": 5989, "deposable": 5989,
+      "best_consensus_score": 0.096388, "best_native_consensus_score_before_refinement": "0.096388 (the final refinement re-scored the same plan: no gain at this seed)",
+      "best_seel_nm": 0.6067, "duration": "31 min 56 s"
+    },
+    "source": "reports/STRAT_99c_rate_elargi_2026-10-16/bilan.md"
+  },
+  "reading": "the same decomposition as at seed 42 (A -> C1 -> C2 -> B native -> B), read side by side with it. The attribution is called consistent between the two seeds only if the same lever carries the largest step on the consensus score at both seeds and every step above the noise reference has the same sign; otherwise it is reported as seed dependent. No pooled statistic (two seeds).",
+  "noise_reference": "the same as at seed 42: best consensus score of B at two seeds, 0.092536 against 0.096388 (4.2 %); a step smaller than 4.2 % on the consensus score is not interpreted. A spread of two seeds, not a standard deviation.",
+  "what_is_read_in_each_arm": "strategies and depositable count; best consensus score with its origin, number of blocks and Rate layers; best SEEL by the project tool (scripts/resumer_artefact_sonde.py); ELITE rounds really run (the log); duration. An arm that crashes or times out is reported as such, with no number.",
+  "sources_frozen": {
+    "git_head": "7f3edea879ab150eb9bee50b3b9f5d1675bb3869",
+    "enforced_by": "the chain refuses to start an arm when tracked code under certus, certus_physics, scripts, tools, tests or example differs from that commit, committed or not, and when a python process is running",
+    "python": "3.14.8"
+  },
+  "resources": {"logical_cpus": 16, "library_threads": 15, "priority": "normal", "concurrent_scientific_measurements": 1, "bench_timeout_s": 36000, "env": "CERTUS_BENCH_TIMEOUT_S=36000 PYTHONUTF8=1 NUMBA_NUM_THREADS=15 OMP_NUM_THREADS=15 MKL_NUM_THREADS=15 OPENBLAS_NUM_THREADS=15"},
+  "gate_for_other_sessions": "when the chain ends or is interrupted it writes reports/STRAT_99c_isolation_leviers_2026-10-17/MESURES_TERMINEES.txt; the ALG-02 session may not run Python before that file exists",
+  "production_defaults_left_as_they_are": {"rate_rescue": true, "rate_rescue_few": 10, "elite_rate_moves": true, "rate_by_swing": true, "rate_rescue_hard": false, "elite_rate_balanced_moves": false, "rate_layer_sets": [], "rate_tail_keep_optical": 0},
+  "deliberately_not_in_this_run": [
+    "the 480 joint neighbours alone and the final refinement alone (read inside run B)",
+    "any other seed, any replicate of an arm, renotation on fresh groups, an optical-only arm"
+  ],
+  "limits": [
+    "one search seed (101), one run per arm, no confidence interval",
+    "the decomposition follows one path (A, C1, C2, B-native): levers interact, another order could attribute differently",
+    "no scientific default is changed by this measurement; it informs the owner's decision"
+  ],
+  "rules_during_the_run": "no test and no analysis Python during the measurement; the logs are read with tail/grep only.",
+  "outputs": [
+    "reports/STRAT_99c_isolation_leviers_graine101_2026-10-17/chain.log",
+    "reports/STRAT_99c_isolation_leviers_graine101_2026-10-17/run_C1_budget240_seul.log",
+    "reports/STRAT_99c_isolation_leviers_graine101_2026-10-17/run_C2_budget240_six_tours.log",
+    "the probe artefacts reports/blocs_vs_plantage_99c_premium_s101_rate_budget240_seul.json and ..._rate_budget240_six_tours.json (never overwritten, by scripts/_artefact.py)"
+  ]
+}

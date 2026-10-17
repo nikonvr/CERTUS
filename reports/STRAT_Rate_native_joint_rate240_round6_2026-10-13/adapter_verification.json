@@ -1,0 +1,19 @@
+{
+  "verdict": "GO",
+  "checks": [
+    "inactive output, order, identifiers and cursor identical: []",
+    "inactive output, order, identifiers and cursor identical: ['round_robin_seed']",
+    "inactive output, order, identifiers and cursor identical: ['rate_moves']",
+    "inactive output, order, identifiers and cursor identical: ['parent_results']",
+    "inactive output, order, identifiers and cursor identical: ['available_wls']",
+    "legacy prefix preserved when active",
+    "unique contiguous identifiers and full plan signatures",
+    "block contract, legal Rate layers, on-grid wavelengths, slit and witness metadata preserved",
+    "parents unchanged and temporary factory patches restored",
+    "verified joint geometry offered generically at budget 480",
+    "offered trace remains serializable after the native pipeline attaches a non-JSON slit profile"
+  ],
+  "legacy_count": 167,
+  "joint_count": 480,
+  "scope": "actual candidate factory and routing only; no Monte Carlo or numerical-kernel changes"
+}

@@ -1,0 +1,26 @@
+debut 2026-10-11T18:15:38 HEAD=782972bf python=C:\Python314\python.exe
+lancee r75x0.5_s042 2026-10-11T18:15:38 cmd=scripts/probe_blocs_vs_plantage.py r75x0.5 deep 0 0 2 0 42
+finie  r75x0.5_s042 rc=0 duree=25.8 min WAIT_TIMEOUT=0 RATE_lignes=16 SLIT_actif=46 HEAD=782972bf artefact=reports\blocs_vs_plantage_r75x0.5_deep_s042.json RESULT=-
+lancee r75x0.5_s101 2026-10-11T18:41:25 cmd=scripts/probe_blocs_vs_plantage.py r75x0.5 deep 0 0 2 0 101
+finie  r75x0.5_s101 rc=0 duree=27.4 min WAIT_TIMEOUT=0 RATE_lignes=16 SLIT_actif=46 HEAD=782972bf artefact=reports\blocs_vs_plantage_r75x0.5_deep_s101.json RESULT=-
+lancee r75x0.5_s202 2026-10-11T19:08:49 cmd=scripts/probe_blocs_vs_plantage.py r75x0.5 deep 0 0 2 0 202
+finie  r75x0.5_s202 rc=0 duree=20.8 min WAIT_TIMEOUT=0 RATE_lignes=16 SLIT_actif=46 HEAD=782972bf artefact=reports\blocs_vs_plantage_r75x0.5_deep_s202.json RESULT=-
+lancee juge_de_paix 2026-10-11T19:29:35 cmd=scripts/bench_examples.py strat --auto-yes --out reports/STRAT_bench_juge_de_paix_782972bf_D100_2026-10-11.txt
+finie  juge_de_paix rc=0 duree=6.9 min WAIT_TIMEOUT=0 RATE_lignes=10 SLIT_actif=28 HEAD=782972bf artefact=- RESULT=0.007917103726810235
+lancee 99c_s042 2026-10-11T19:36:27 cmd=scripts/probe_blocs_vs_plantage.py 99c premium 0 0 2 0 42
+finie  99c_s042 rc=0 duree=17.1 min WAIT_TIMEOUT=0 RATE_lignes=20 SLIT_actif=58 HEAD=782972bf artefact=reports\blocs_vs_plantage_99c_premium_s042_20261011_195331.json RESULT=-
+lancee r75x2_s042 2026-10-11T19:53:36 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 42
+finie  r75x2_s042 rc=1 duree=28.9 min WAIT_TIMEOUT=0 RATE_lignes=16 SLIT_actif=46 HEAD=782972bf artefact=reports\blocs_vs_plantage_r75x2_deep_s042_20261011_202227.json RESULT=-
+lancee r75x2_s077 2026-10-11T20:22:31 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 77
+finie  r75x2_s077 rc=0 duree=36.6 min WAIT_TIMEOUT=0 RATE_lignes=16 SLIT_actif=46 HEAD=782972bf artefact=reports\blocs_vs_plantage_r75x2_deep_s077_20261011_205857.json RESULT=-
+lancee r75x2_s101 2026-10-11T20:59:10 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 101
+finie  r75x2_s101 rc=0 duree=38.6 min WAIT_TIMEOUT=0 RATE_lignes=16 SLIT_actif=46 HEAD=782972bf artefact=reports\blocs_vs_plantage_r75x2_deep_s101_20261011_213733.json RESULT=-
+lancee r75x2_s202 2026-10-11T21:37:44 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 202
+finie  r75x2_s202 rc=0 duree=37.6 min WAIT_TIMEOUT=0 RATE_lignes=16 SLIT_actif=46 HEAD=782972bf artefact=reports\blocs_vs_plantage_r75x2_deep_s202_20261011_221509.json RESULT=-
+lancee r75x2_s303 2026-10-11T22:15:21 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 303
+finie  r75x2_s303 rc=0 duree=30.0 min WAIT_TIMEOUT=0 RATE_lignes=16 SLIT_actif=46 HEAD=782972bf artefact=reports\blocs_vs_plantage_r75x2_deep_s303_20261011_224513.json RESULT=-
+lancee r75x2_s404 2026-10-11T22:45:23 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 404
+finie  r75x2_s404 rc=1 duree=36.7 min WAIT_TIMEOUT=0 RATE_lignes=16 SLIT_actif=46 HEAD=782972bf artefact=reports\blocs_vs_plantage_r75x2_deep_s404_20261011_232157.json RESULT=-
+lancee r75x2_s505 2026-10-11T23:22:02 cmd=scripts/probe_blocs_vs_plantage.py r75x2 deep 0 0 2 0 505
+finie  r75x2_s505 rc=1 duree=33.3 min WAIT_TIMEOUT=0 RATE_lignes=16 SLIT_actif=46 HEAD=782972bf artefact=reports\blocs_vs_plantage_r75x2_deep_s505_20261011_235515.json RESULT=-
+fin 2026-10-11T23:55:20

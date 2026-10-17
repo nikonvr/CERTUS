@@ -1,0 +1,8 @@
+{
+  "status": "rejected_before_measurement",
+  "cause": "Ruff PT018 in copied verifier and audit script; split compound assertions without changing their conditions",
+  "old_protocol": "protocol.json",
+  "no_claim_consumed": true,
+  "no_measurement_started": true,
+  "new_protocol": "protocol_v2.json"
+}

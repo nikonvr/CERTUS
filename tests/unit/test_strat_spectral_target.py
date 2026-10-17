@@ -61,8 +61,12 @@ def test_omitting_weights_is_bit_identical_to_passing_none():
     assert np.array_equal(_rmse(flat), _rmse(flat, None))
 
 
+# Powers of two scale a float exactly, so 0.5, 1 and 2 cannot tell the weighted path from the
+# unweighted one: only the other weights can. Measured on the kernel before the fix (da1af082):
+# 0.5, 1 and 2 pass, 7.3 fails by 2.8e-16, and 11 of 15 uniform weights differ from the unweighted bits.
 @pytest.mark.unit
-def test_uniform_weights_reproduce_the_unweighted_functional():
+@pytest.mark.parametrize("weight", [0.5, 1.0, 2.0, 7.3, 0.1, 3.0, 1e-3, 1e3])
+def test_uniform_weights_reproduce_the_unweighted_functional(weight):
     """🔴 Des poids UNIFORMES doivent redonner exactement le RMSE non pondere.
 
     This is the condition which makes the weighting interpretable: if constant weights
@@ -71,7 +75,7 @@ def test_uniform_weights_reproduce_the_unweighted_functional():
     """
     flat = np.full(WL.size, 0.5)
     ref = _rmse(flat)
-    got = _rmse(flat, np.ones(WL.size))
+    got = _rmse(flat, np.full(WL.size, weight))
     assert float(np.max(np.abs(ref - got))) == 0.0
 
 

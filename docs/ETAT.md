@@ -5,13 +5,30 @@
 > [`CLAUDE.md`](../CLAUDE.md). Il se tient **en place** : un fait change, on corrige sa ligne,
 > on ne raconte pas la correction (`git log` s'en charge). Toute mesure porte sa date.
 > Le détail et l'historique sont dans `git`, sans autorité (CLAUDE.md, en-tête).
-> Mis à jour le 2026-10-16.
+> Mis à jour le 2026-10-17.
 
 ## 0. Reprise — à lire en premier, à tenir à jour
 
 > Mettre à jour cette section avec le travail : « en cours » dès le début, mesure et commit
 > à la fin. Les règles de validation sont dans les sections 2, 4 et 12 de
 > [CLAUDE.md](../CLAUDE.md) ; les décisions scientifiques appartiennent à 👤 (§5).
+
+**Reprise courante (2026-10-17).** 👤 valide les trois statuts du registre des leviers Rate (`rate_layer_sets` RESERVE,
+`rate_tail_keep_optical` NON_MESURE, `rate_rescue_hard` RESERVE ; commit `0c7c1e2e`, liste d'attente vide), puis demande d'essayer
+le 99c avec les dernières évolutions du Rate, sur un seul verre témoin. Quatre mesures exploratoires du 99c (`premium`, consensus 41/42/43),
+une graine de recherche par bras (42 et 101), hors protocole de campagne : chiffres au §2, bilan dans
+[`reports/STRAT_99c_rate_elargi_2026-10-16/bilan.md`](../reports/STRAT_99c_rate_elargi_2026-10-16/bilan.md). Le gain du profil élargi vient surtout
+de l'élargissement de la recherche, pas du raffinement final (−0,89 % à la graine 42, aucun à la 101) ; il n'est confirmé sur aucun groupe frais
+et suppose un Rate sans dérive de vitesse (A6). Isolation des leviers (budget 240 seul, puis budget 240 et six tours) aux graines 42 et 101 :
+protocoles figés dans `reports/STRAT_99c_isolation_leviers_2026-10-17/` et `reports/STRAT_99c_isolation_leviers_graine101_2026-10-17/` ;
+à la graine 42, sur le score de consensus, le budget 240 seul porte 62 % de l'écart entre les défauts et le profil élargi avant raffinement,
+les six tours 7 % (sous le bruit de 4,2 %), les 480 voisins conjoints 31 % ; une graine, un chemin de décomposition, C2 en partie sous charge étrangère ;
+la graine 101 est lancée. Détail dans le `bilan.md` de chaque dossier.
+Contre-audit de `designargon.md` et `UXargon.md` ([rapport](../reports/ARGON_contre_audit_Claude_2026-10-17.md)) : cinq défauts d'intégrité confirmés
+par un test rouge puis corrigés, un commit chacun (`868db8c9`, `8c6d951b`, `bdcae9ed`, `c25937b3`, `7f3edea8`) ; ALG-02, non corrigé, est D107 (§4).
+Validation de CLAUDE.md §2 sur `7f3edea8`, une étape à la fois, 0 échec : oracle 1146, unité 5504 (+7 ignorés), UI 1324 (+12 ignorés, 2 xfail),
+reste 359, trois contrôles documentaires à 0 ; `ruff check .` passe depuis que les deux scripts non suivis de Codex sont renommés en `.py.txt`
+(octets identiques, liens corrigés). Branche publiée à `7f3edea8` le 2026-10-17 sur l'accord de 👤 (« ok aussi pour les decisions »).
 
 **Reprise courante (2026-10-16).** Après le bilan clos, 👤 demande « continue la suite logique ».
 Le terminal est rétabli et le préflight estGO ; aucun calcul scientifique vivant au contrôle de reprise.
@@ -848,7 +865,10 @@ Après accord explicite de 👤, une action séparée l'édite puis lance `pytho
 | passe-bande 3 cavités, 35 couches | **0,482 nm** | 0 % | 6 blocs, mode `deep` |
 | aléatoire `JSON-strat-random75`, 75 couches | **0,272 nm** | 0 % | une campagne, 241 déposables sur 662 |
 | passe-bande 5 cavités, 99 couches | **0,81 nm** | 0 % par campagne | 4 verres témoins, partition 0-22 / 22-42 / 42-76 / 76-99 |
-| le même en une seule campagne | aucun score valide | 100 % | 487 stratégies, toutes plantent : non fabricable |
+| le même en une seule campagne, mesure d'avant le secours Rate | aucun score valide | 100 % | 487 stratégies, toutes plantent : non fabricable |
+| le même en une seule campagne, défauts de production du 2026-10-16 (`0c7c1e2e`) | **0,7026 nm** (graine 42), 0,6559 nm (graine 101) | 0 % | `premium`, un seul verre témoin, `scripts/probe_blocs_vs_plantage.py 99c premium 0 0 2 0 <graine>`, consensus 41/42/43 : toutes les stratégies déposables (4 761 et 4 470) ; meilleur plan de queue (Rate de L11 ou L10 à L99, optique avant). SEEL du meilleur plan d'une graine de recherche, non comparable à la moyenne de trois graines de la ligne 0,81 nm ; modèle de Rate sans dérive de vitesse (A6) ; sans groupe frais. `reports/STRAT_99c_rate_elargi_2026-10-16/bilan.md` |
+| le même, profil élargi (`elite_rate_max_candidates=240`, `elite_rounds=6`, `elite_rate_joint_candidates=480`, `rate_post_refinement=True`) | **0,6084 nm** (graine 42), 0,6067 nm (graine 101) | 0 % | 6 302 déposables sur 6 338 et 5 989 sur 5 989 ; score de consensus −26,2 % et −23,2 % contre les défauts, SEEL −13,4 % et −7,5 % ; le raffinement final n'y compte que pour −0,89 % (graine 42) et 0 (graine 101). Exploratoire, hors protocole de campagne, non confirmé |
+| le même, budget Rate 240 seul, puis avec six tours | **0,6495 nm**, puis 0,6426 nm (graine 42) | 0 % | scores de consensus −15,9 % et −17,7 % contre les défauts (le profil élargi avec raffinement : −26,2 %) ; 4 827 et 5 378 stratégies, toutes déposables ; une graine, un chemin de décomposition. `reports/STRAT_99c_isolation_leviers_2026-10-17/bilan.md` |
 | aléatoire ×2 `r75x2`, fente native 1 nm | **0,6248 nm** | 0 % | `deep`, pur optique, 277 déposables ; mesuré avant D106 : à refaire |
 | `r75x2` à 2 nm, configuration livrée | **0,5676 nm** | 1,67 % | avec `example/example_strat/rampes_r75x2-2nm.json` ; étendue 0,55 % sur 3 graines ; mesuré avant D106 : à refaire |
 | `r75x2` à 2 nm, sans rampes, défauts de production du 2026-10-12 | **0,5406 nm** (graine 101), 0,5678 nm (graine 42) | 0 % | `deep`, `dbf8025f` : tous les plans de la liste déposables (4 175 et 4 307), aucun optique pur, du Rate (61 et 23 couches) ; l'optique pur sans secours Rate : 0 déposable aux deux graines (D106 corrigé). Avec ELITE qui déplace les couches Rate (`cea0db66`, graine 101) : 0,5358 nm ; graine 42 (`5da02db9`) : 0,5477 nm. `reports/STRAT_r75x2_D106_secours_Rate_2026-10-12.md` |
@@ -1179,6 +1199,7 @@ Aucun. D96 à D98 (le modèle d'arrêt) sont décidés et actifs depuis le 2026-
 | D72 | **Taille du gel (S7.2) : objectif ≤ 300 Mo non atteint.** 411 Mo le 2026-10-06 (442 avant `5ccaa210`, qui laisse dehors les outils de développement). Le reste : llvmlite 115 Mo (Numba, indispensable), Qt 77 Mo (dont le rendu OpenGL logiciel), scipy 68 Mo avec ses bibliothèques, numpy 28, matplotlib 15, Pillow 13, pandas 13, lxml 7, OpenSSL 8. Étape suivante : mesurer ce que l'application charge vraiment (sous-modules de scipy, plugins Qt, ssl, lxml) avant d'autres exclusions. Un gel local embarque ce que porte l'interpréteur qui le construit : celui du 2026-10-06 contient aussi lxml, psutil, pywin32, PyYAML, certifi, charset_normalizer, MarkupSafe et cffi, absents de `requirements.lock`, d'où part le gel de la CI. Le spec embarque tout `example/`, base de dépôts comprise (11 Mo sur disque, 2026-10-11) |
 | D82 | **Thème sombre : logo et mesure de contraste à terminer.** Les textes et états vides suivent désormais le thème (R102). Le logo foncé reste peu visible en thème sombre, constat visuel sans mesure ; le harnais ne résout pas encore une encre de palette sur fond hérité. |
 | D84 | **Validation locale intermittente.** Des écarts au dernier bit sur des tests STRAT apparaissent au premier passage après un changement de clé du cache Numba, puis disparaissent à la relance (deux fois le 2026-10-03 ; le 2026-10-06, `test_neutral_parameters_are_bit_identical_to_the_legacy_call` dans la validation de `29240ee7`, après la modification de `certus_colorimetry.py` : rouge à froid, vert à la relance, 0 ulp mesuré entre les deux appels du noyau). Signature compatible avec D52 : compilation sur place contre lecture du cache, cause non prouvée. Si l'écart persiste à la relance, comparer les noyaux froids et chauds avant de modifier le calcul. |
+| D107 | **À instruire : l'élagage vers un nombre cible de couches ne peut pas évaluer ses candidats.** Dans `OptimizationManager._prune_to_target` (`certus/ui/certus_design_ui_optimization.py`), la sous-fonction `_evaluate_test_stack` lit `t.val` et `t.weight` sur les cibles, qui portent `tmin`, `tmax` et `w`, et un `except Exception` renvoie `inf` : sans coût fini, la sélection retombe sur le premier candidat, la couche la plus fine (lecture du code, 2026-10-17). L'audit `designargon.md` (non commité) y ajoute un dépaquetage de `optim_prepare_stack_nk_back` dans un ordre qui ne serait pas celui de son retour, et la sonde de Codex ne l'étaye que sur une fonction extraite : non reproduit en parcours complet. Un correctif change volontairement le résultat de l'élagage DESIGN ; une session dédiée le prépare sur sa propre branche, test rouge d'abord, et il attend 👤 |
 
 ## 5. Ce qui attend une décision de 👤
 

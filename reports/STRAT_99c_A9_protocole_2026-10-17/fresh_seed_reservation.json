@@ -1,0 +1,43 @@
+{
+  "reserved_utc": "2026-10-17T04:17:18Z",
+  "version": 1,
+  "kind": "A9 fresh slots of the 99c (docs/ETAT.md, task A9): native search seeds and independent confirmation groups",
+  "before_any_a9_measurement_or_inspection": true,
+  "statement": "Written before any A9 native run, any A9 score and any A9 artefact exists. Nothing of A9 has been measured when this file is written; the seeds below were chosen from a family that no text file of the checkout contains, not from a result.",
+  "search": {
+    "robustness_seed": {"S1": 17810001, "S2": 17810011, "S3": 17810021},
+    "reserve_not_opened_without_a_decision_of_the_owner": {"S4": 17810031, "S5": 17810041, "S6": 17810051},
+    "search_time_consensus_seeds": [41, 42, 43],
+    "search_time_consensus_note": "the JSON default (consensus_seed_list 41,42,43,44,45 cut to consensus_num_seeds 3); deliberately NOT overridden, so that every A9 arm and every earlier 99c measurement select with the same consensus. The consensus score of a given plan does not depend on the search seed (best consensus score of the production defaults: 0.125451 at seeds 42 and 101), so the search seeds diversify the search trajectory only; the independence of a score comes from the confirmation groups."
+  },
+  "confirmation_groups": {
+    "rule": "A group is four seeds: the base call (robustness_seed) and three consensus seeds. G1 to G3 are the primary groups. G4 to G6 are opened only together, only by the stop rule 'effect small or heterogeneous' of the protocol and only with the explicit go of the owner. No group is ever scored for a plan chosen after seeing it.",
+    "primary": {
+      "G1": {"robustness_seed": 17820001, "consensus_seed_list": [17820002, 17820003, 17820004]},
+      "G2": {"robustness_seed": 17820011, "consensus_seed_list": [17820012, 17820013, 17820014]},
+      "G3": {"robustness_seed": 17820021, "consensus_seed_list": [17820022, 17820023, 17820024]}
+    },
+    "reserve": {
+      "G4": {"robustness_seed": 17820031, "consensus_seed_list": [17820032, 17820033, 17820034]},
+      "G5": {"robustness_seed": 17820041, "consensus_seed_list": [17820042, 17820043, 17820044]},
+      "G6": {"robustness_seed": 17820051, "consensus_seed_list": [17820052, 17820053, 17820054]}
+    }
+  },
+  "fixed_point_control": "the control of the scorer re-scores the frozen plans under the SEARCH setting (robustness_seed Sk, consensus 41/42/43, premium depth 150) and must reproduce the native artefact: it consumes no fresh seed.",
+  "scan": {
+    "performed_utc_start": "2026-10-17T04:16:09Z",
+    "performed_utc_end": "2026-10-17T04:16:51Z",
+    "scope": "every text file of the checkout outside .git and .claude, ignored files included (scratch, reports, studies, docs, tests...); binary files skipped; whole-token match, decimals excluded",
+    "command_family": "grep -rIlE --exclude-dir=.git --exclude-dir=.claude --exclude-dir=__pycache__ --exclude-dir=node_modules -e '(^|[^0-9.])178[12][0-9]{4}([^0-9.]|$)' .",
+    "result_family": "no file matched (grep exit 1)",
+    "command_exact": "the same with the alternation of the 6 search/reserve seeds and the 24 confirmation seeds listed above",
+    "result_exact": "no file matched (grep exit 1)",
+    "prior_text_scan_exit": 1,
+    "not_scanned": "the compressed archives outside the repository (the folders Archives_CERTUS_20261016 and Archives_CERTUS_20261017, two levels above the checkout): heavy input/output while a measurement runs. Gate G5 of the protocol runs that scan before the first launch; one hit changes the whole family, in a new version of this file, never an edit in place."
+  },
+  "already_consumed_and_never_reused_here": [
+    "search seeds 42 and 101 and consensus seeds 41/42/43 (the exploratory 99c measurements of 2026-10-16 and 17, outside the A9 protocol)",
+    "groups 202 to 3535 (historical protocols), 17410001..04/11..14/21..24, 175100xx, 176100xx, 176200xx, 176300xx, 177100xx (R0-R6 program)",
+    "177200xx and 177300xx stay reserved and unconsumed by the closed R0-R6 program: untouched here"
+  ]
+}

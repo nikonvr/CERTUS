@@ -1,9 +1,10 @@
 #!/bin/bash
 # 99c, graine 101 : replique de l'isolation des leviers du Rate elargi (protocole fige avant la lecture des resultats de la graine 42).
 # Bras C1 (budget 240 seul) puis C2 (budget 240 + six tours), un seul run a la fois.
-# Amendement du 2026-10-17, avant tout lancement de cette chaine : un bras n'avorte plus quand un python etranger tourne ; il attend au plus
-# 90 minutes deux releves consecutifs sans aucun python, puis demarre ; pendant le bras, un releve par minute des python etrangers a la sonde
-# est ecrit dans foreign_python_<bras>.log (voir protocol.json, champ amendments).
+# Amendement 1 (2026-10-17, avant tout lancement) : un bras n'avorte plus quand un python etranger tourne ; un releve par minute des python
+# etrangers a la sonde est ecrit dans foreign_python_<bras>.log pendant le bras.
+# Amendement 2 (2026-10-17, apres l'abandon de 03:18:17Z) : l'attente d'une machine libre tombe a 10 minutes ; passe ce delai le bras demarre
+# sous la charge etrangere, dont la liste des processus est ecrite dans chain.log (voir protocol.json, champ amendments).
 cd "D:/drivfl/01_Recherche_Enseignement/02_Couches_Minces_Optique/couches minces 2026/CERTUS/certus0310" || exit 1
 D=reports/STRAT_99c_isolation_leviers_graine101_2026-10-17
 MARQUEUR=reports/STRAT_99c_isolation_leviers_2026-10-17/MESURES_TERMINEES.txt
@@ -12,6 +13,7 @@ export CERTUS_BENCH_TIMEOUT_S=36000 PYTHONUTF8=1 NUMBA_NUM_THREADS=15 OMP_NUM_TH
 
 py_count() { powershell.exe -NoProfile -Command "(Get-CimInstance Win32_Process | Where-Object { \$_.Name -match '^(python|pythonw)(\.exe)?\$' } | Measure-Object).Count" | tr -d '\r'; }
 foreign_py_count() { powershell.exe -NoProfile -Command "(Get-CimInstance Win32_Process | Where-Object { \$_.Name -match '^(python|pythonw)(\.exe)?\$' -and \$_.CommandLine -notmatch 'probe_blocs_vs_plantage' } | Measure-Object).Count" | tr -d '\r'; }
+foreign_py_list() { powershell.exe -NoProfile -Command "Get-CimInstance Win32_Process | Where-Object { \$_.Name -match '^(python|pythonw)(\.exe)?\$' -and \$_.CommandLine -notmatch 'probe_blocs_vs_plantage' } | ForEach-Object { \"pid=\$(\$_.ProcessId) \$(\$_.CommandLine)\" }" | tr -d '\r' | cut -c1-220; }
 code_clean() { [ -z "$(git -c core.longpaths=true status --porcelain -- certus certus_physics scripts tools tests example | grep -v '^??')" ]; }
 code_frozen() { git diff --quiet "$FIGE" HEAD -- certus certus_physics scripts tools tests example; }
 now() { date -u +%Y-%m-%dT%H:%M:%SZ; }
@@ -19,9 +21,9 @@ now() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 # la porte des autres sessions : ce fichier dit « plus aucune de mes mesures ne tourne » (fin normale, abandon ou erreur)
 trap 'echo "$(now) mesures terminees ou interrompues (chaine graine 101)" > "$MARQUEUR"' EXIT
 
-wait_free() {  # attend au plus 90 min deux releves consecutifs sans aucun python ; rend 0 des que la machine est libre
+wait_free() {  # attend au plus 10 min deux releves consecutifs sans aucun python ; rend 0 si la machine est libre, 1 sinon
   local clear=0 waited=0
-  while [ "$waited" -lt 5400 ]; do
+  while [ "$waited" -lt 600 ]; do
     if [ "$(py_count)" = "0" ]; then clear=$((clear+1)); else clear=0; fi
     [ "$clear" -ge 2 ] && return 0
     sleep 60; waited=$((waited+60))
@@ -35,8 +37,13 @@ sample_foreign() {  # $1 = fichier : un releve par minute du nombre de python et
 
 run_arm() {  # $1 = nom du bras, $2 = surcharges de sonde, $3 = etiquette
   local name="$1" over="$2" tag="$3"
-  echo "$(now) WAIT $name: attente d'une machine sans python (90 min au plus)" >> $D/chain.log
-  wait_free || { echo "$(now) ABORT $name: la machine n'est pas devenue libre en 90 minutes" >> $D/chain.log; return 3; }
+  echo "$(now) WAIT $name: attente d'une machine sans python (10 min au plus)" >> $D/chain.log
+  if wait_free; then
+    echo "$(now) FREE $name: machine libre" >> $D/chain.log
+  else
+    echo "$(now) CONTENTION $name: le bras demarre sous charge etrangere :" >> $D/chain.log
+    foreign_py_list >> $D/chain.log
+  fi
   code_clean || { echo "$(now) ABORT $name: du code suivi a change depuis le protocole" >> $D/chain.log; return 4; }
   code_frozen || { echo "$(now) ABORT $name: le code suivi differe du commit fige $FIGE" >> $D/chain.log; return 5; }
   echo "$(now) START $name HEAD=$(git rev-parse --short HEAD)" >> $D/chain.log

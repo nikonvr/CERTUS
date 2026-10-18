@@ -9,6 +9,11 @@
       "at": "2026-10-17, after reading the seed-42 results and before any launch of this chain",
       "what": "launch rule only, not the design: an arm no longer aborts when a python process runs; it waits up to 90 minutes for two consecutive checks without any python, then starts. During the arm, one sample per minute of the python processes that are not the probe is written to foreign_python_<arm>.log",
       "why": "the Codex application runs its own Python studies on this machine (a process of studies/bonne_mere/scripts/pglobal_blocks.py was alive from 03:17:46 local, i.e. during the last 24 minutes of arm C2 of seed 42, which lasted 44 minutes against 29 for C1). The search has no wall-clock budget (time.perf_counter only feeds log lines; the only timeout is a 600 s guard on a hung segment, not reached in any arm), so contention changes durations, not known results. The samples document the exposure instead of hiding it; durations are not compared"
+    },
+    {
+      "at": "2026-10-17T03:2xZ, after the first launch aborted and before the second",
+      "what": "the 90-minute wait expired at 03:18:17Z (ABORT C1 in chain.log: no arm ran, no artefact) and the chain is relaunched with a 10-minute wait, after which the arm starts under the foreign load, whose process list is written to chain.log",
+      "why": "the Codex application kept a python process alive without a gap for those 90 minutes and beyond (a pglobal search, then studies/bonne_mere/scripts/search.py started 04:30:03 local), so waiting for a free machine would never end tonight. The replicate is the owner's explicit choice and so is the long Codex search; both are left running. The search has no wall-clock budget (see the first amendment), so the load changes durations and no known result. The per-minute samples of foreign python processes document the exposure. The environment (15 library threads) is not lowered, to keep the arms comparable with seed 42 and with the earlier seed-101 runs"
     }
   ],
   "user_requests_verbatim": [

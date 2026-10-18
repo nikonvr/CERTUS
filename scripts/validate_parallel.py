@@ -194,7 +194,7 @@ def execute(
     *,
     confirm: bool = True,
     run: Callable[[Stage, Path], Result] = run_stage,
-    replay: Callable[[list[str], Path, str], list[str]] = replay_alone,
+    rerun: Callable[[list[str], Path, str], list[str]] = replay_alone,  # pas `replay` : tools/dead_symbol_audit.py apparie par nom nu et croirait EventBus.replay utilise
     show: Callable[[str], None] = print,
 ) -> list[Result]:
     results = []
@@ -204,7 +204,7 @@ def execute(
             result.status = "PASS"
         elif confirm and stage.kind == "pytest" and 0 < len(result.failed) <= MAX_REPLAY:
             show(f"  {stage.name} : {len(result.failed)} echec(s) en parallele, rejeu seul en serie...")
-            result.persistent = replay(result.failed, out_dir, stage.name)
+            result.persistent = rerun(result.failed, out_dir, stage.name)
             result.replayed = [i for i in result.failed if i not in result.persistent]
             result.status = "FAIL" if result.persistent else "ARTEFACT"
         else:

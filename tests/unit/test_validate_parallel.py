@@ -117,7 +117,7 @@ def _play(
         return [i for i in ids if i in (persistent or set())]
 
     played = vp.execute([r.stage for r in results], Path("."), confirm=confirm,
-                        run=lambda stage, _out: by_name[stage.name], replay=replay, show=lambda _line: None)  # fmt: skip
+                        run=lambda stage, _out: by_name[stage.name], rerun=replay, show=lambda _line: None)  # fmt: skip
     return played, replays
 
 
@@ -161,7 +161,7 @@ def test_a_document_check_is_judged_on_its_exit_code_and_never_replayed() -> Non
     """The report that carried a dead command made coherence_md.py exit 1 while its last line said "0 point a instruire"."""
     results = [_result("coherence_md", 1, kind="check")]
     played = vp.execute([r.stage for r in results], Path("."), run=lambda _s, _o: results[0],
-                        replay=lambda *_a: pytest.fail("a check has nothing to replay"), show=lambda _line: None)  # fmt: skip
+                        rerun=lambda *_a: pytest.fail("a check has nothing to replay"), show=lambda _line: None)  # fmt: skip
 
     assert played[0].status == "FAIL"
     assert not vp.verdict(played)

@@ -1,0 +1,200 @@
+"""Second counter-audit: imported production code, explicitly bounded substitutions."""
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import time
+import traceback
+from types import SimpleNamespace
+from unittest.mock import patch
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+sys.dont_write_bytecode = True
+os.environ["QT_QPA_PLATFORM"] = "offscreen"
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["NUMBA_NUM_THREADS"] = "1"
+os.environ["NUMBA_CACHE_DIR"] = str(Path(__file__).with_name("jit_pass02"))
+
+import numpy as np
+from PyQt6.QtCore import Qt
+from PyQt6.QtTest import QTest
+from PyQt6.QtWidgets import QApplication, QWidget
+
+APP = QApplication.instance() or QApplication([])
+RESULTS = []
+
+
+def observe(name, scope, fn):
+    try:
+        data = fn()
+        result = dict(id=name, scope=scope, status="observation_verified", data=data)
+    except Exception:
+        result = dict(id=name, scope=scope, status="probe_error", traceback=traceback.format_exc())
+    RESULTS.append(result)
+    print(json.dumps(result, ensure_ascii=False), flush=True)
+
+
+def index_export_guard():
+    from certus.ui import certus_index_ui_export as mod
+    class Owner:
+        @property
+        def latest_results(self):
+            raise AssertionError("Results reached while auto-export is off")
+    with patch.object(mod, "get_export_config", return_value=False):
+        mod.CertusIndexExportMixin.export_results(Owner())
+    return {"auto_export_off": "returns before reading results or writing files"}
+
+
+def onboarding_keyboard():
+    from certus.ui import certus_onboarding as mod
+    cls = mod._build_overlay_class()
+    parent = QWidget()
+    parent.resize(800, 600)
+    steps = [(mod.TourStep(title=f"Step {i}", body="Controlled test"), None) for i in range(3)]
+    overlay = cls(parent, "ARGON_PASS02", steps)
+    parent.show()
+    overlay.show()
+    APP.processEvents()
+    overlay._coach.btn_next.setFocus()
+    APP.processEvents()
+    QTest.keyClick(overlay._coach.btn_next, Qt.Key.Key_Space)
+    APP.processEvents()
+    after_space = overlay._index
+    QTest.keyClick(overlay, Qt.Key.Key_Escape)
+    APP.processEvents()
+    visible_after_esc = overlay.isVisible()
+    assert after_space == 1 and visible_after_esc
+    parent.hide()
+    parent.deleteLater()
+    return {"index_after_space_on_focused_next": after_space, "visible_after_escape": visible_after_esc}
+
+
+class Material:
+    def __init__(self, n):
+        self.n = n
+        self.n4 = n
+    def get_nk(self, wls):
+        return np.full(len(wls), self.n, dtype=np.complex128)
+
+
+def config(oblique=False, ep=3000.0, mode="global"):
+    from certus_physics.structures import Layer, Target, ObliqueTarget
+    return dict(mats={"H": Material(2.1), "Substrate": Material(1.52)},
+                stack=[Layer("H", 1.0, True)], ep0=np.array([ep]), ep_back=np.array([]),
+                wls=np.array([400., 700.]), tgts=[Target(400., 700., .9, .9)],
+                oblique_tgts=[ObliqueTarget(45., "S", 400., 700., .9, .9)],
+                oblique_mode=oblique, l0=550., back=False, mode=mode,
+                pre_polish=False, local_delta_nm=2.)
+
+
+def worker_grid(oblique):
+    from certus.workers import certus_design_workers as mod
+    from certus.core import certus_design_worker_utils as utils
+    from certus.utils.certus_index_utils import spectral_rmse_weights
+    worker = mod.OptimWorker(config(oblique))
+    emitted, errors, grids, gradient_grids, cost_grids = [], [], [], [], []
+    worker.signals.finished.connect(emitted.append)
+    worker.signals.error.connect(errors.append)
+    original_refine = mod.run_coord_descent_5cycles
+    original_gradient = worker._get_gradient_analytic
+    original_cost = worker._evaluate_thicknesses
+    def gradient(ep, **kwargs):
+        gradient_grids.append(len(worker._oblique_configs[0]["wls_config"]) if oblique else len(kwargs["wls"]))
+        return original_gradient(ep, **kwargs)
+    def cost(ep, **kwargs):
+        cost_grids.append(len(worker._oblique_configs[0]["wls_config"]) if oblique else len(kwargs["wls"]))
+        return original_cost(ep, **kwargs)
+    def refine(**kwargs):
+        grids.append({"local_wls": kwargs["wls"].copy(), "best_cost": float(kwargs["best_cost"]),
+                      "n_sub": kwargs["n_sub"].copy(), "n_layers_T": kwargs["n_layers_T"].copy(),
+                      "tgt_vals": kwargs["tgt_vals"], "tgt_weights": kwargs["tgt_weights"]})
+        return original_refine(**kwargs)
+    def candidate(**kwargs):
+        ep = worker.cfg["ep0"].copy()
+        y = worker._objective_wrapper(ep)
+        return SimpleNamespace(x=ep, y=y)
+    with patch.object(worker, "_run_pglobal_setup", return_value=(None, time.time())), \
+         patch.object(mod, "run_pglobal_restart_loop", side_effect=candidate), \
+         patch.object(mod, "run_coord_descent_5cycles", side_effect=refine), \
+         patch.object(worker, "_get_gradient_analytic", side_effect=gradient), \
+         patch.object(worker, "_evaluate_thicknesses", side_effect=cost):
+        worker.run()
+    assert not errors and len(emitted) == 1, errors
+    g = grids[0]
+    assert len(g["local_wls"]) > len(worker._wls)
+    ep = emitted[0]["ep"]
+    if oblique:
+        groups = utils.optim_oblique_group_targets_on_wavelengths(g["local_wls"], worker.cfg["oblique_tgts"])
+        dense_configs = utils.optim_oblique_configs_from_groups(groups, g["local_wls"], g["n_sub"], g["n_layers_T"])
+        utils.optim_oblique_attach_local_positions(dense_configs)
+        for c in dense_configs:
+            c["sw_cfg"] = spectral_rmse_weights(c["wls_config"])
+        with patch.object(worker, "_oblique_configs", dense_configs):
+            direct_cost = worker._compute_oblique_error(ep)
+        assert set(gradient_grids) == {2} and set(cost_grids) == {2}
+    else:
+        from certus.physics.gradient_utils import cost_numba_fast
+        direct_cost = cost_numba_fast(ep, g["n_layers_T"], g["n_sub"], g["local_wls"],
+                                     g["tgt_vals"], g["tgt_weights"], 0., False,
+                                     np.zeros((0, 0), dtype=np.complex128), np.array([]))
+        assert set(gradient_grids) == {len(g["local_wls"])}
+    return {"initial_points": 2, "helper_points": len(g["local_wls"]),
+            "worker_stored_points": len(worker._wls), "gradient_grid_sizes": sorted(set(gradient_grids)),
+            "cost_grid_sizes": sorted(set(cost_grids)), "initial_old_grid_cost": g["best_cost"],
+            "final_ep": ep.tolist(), "reported_rmse": emitted[0]["rmse"],
+            "direct_dense_rmse": float(np.sqrt(direct_cost)), "jit_enabled": True}
+
+
+def refinement_bounds_stop():
+    from certus.workers import certus_design_workers as mod
+    worker = mod.OptimWorker(config(ep=1., mode="local"))
+    emitted, errors, bounds_seen, evaluations = [], [], [], []
+    worker.signals.finished.connect(emitted.append)
+    worker.signals.error.connect(errors.append)
+    def objective(ep):
+        return float((ep[0] - 20.) ** 2)
+    def setup(mode, max_iter, dim, objective_wrapper, bounds, pg_conf, x0, gradient):
+        bounds_seen.append(bounds.copy())
+        return None, time.time()
+    def gradient(ep, **kwargs):
+        worker.request_stop()
+        evaluations.append(ep.tolist())
+        return objective(ep), np.array([2 * (ep[0] - 20.)])
+    with patch.object(worker, "_run_pglobal_setup", side_effect=setup), \
+         patch.object(mod, "run_pglobal_restart_loop", return_value=SimpleNamespace(x=np.array([1.]), y=361.)), \
+         patch.object(worker, "_get_gradient_analytic", side_effect=gradient), \
+         patch.object(worker, "_evaluate_thicknesses", side_effect=lambda ep, **kw: objective(ep)):
+        worker.run()
+    assert not errors and len(emitted) == 1, errors
+    assert emitted[0]["ep"][0] > bounds_seen[0][0, 1]
+    assert len(evaluations) > 1 and worker._stop_event.is_set()
+    return {"pglobal_bounds": bounds_seen[0].tolist(), "final_ep": emitted[0]["ep"].tolist(),
+            "gradient_calls_after_stop_requested_at_first_call": len(evaluations) - 1,
+            "finished_payload_ok": emitted[0]["ok"], "objective": "controlled quadratic (d-20)^2"}
+
+
+if __name__ == "__main__":
+    observe("R01_INDEX_export_guard", "Real imported export method; global export flag controlled false; no filesystem export.", index_export_guard)
+    observe("R02_onboarding_keyboard", "Real overlay and QTest key events offscreen; no final step or settings persistence.", onboarding_keyboard)
+    observe("R03_oblique_worker_grid", "Real OptimWorker.run and JIT optics/refinement; PGLOBAL setup/search replaced by a fixed initial candidate; no thread scheduling.", lambda: worker_grid(True))
+    observe("R04_normal_worker_grid", "Same controlled optimizer with real normal JIT optics and final refinement.", lambda: worker_grid(False))
+    observe("R05_refinement_bounds_stop", "Real OptimWorker.run/refinement with controlled PGLOBAL and quadratic cost/gradient; no scientific performance claim.", refinement_bounds_stop)
+    sources = {}
+    for module in tuple(sys.modules.values()):
+        path = getattr(module, "__file__", None)
+        if path and str(path).lower().startswith(str(ROOT).lower()):
+            p = Path(path).resolve()
+            if p.is_relative_to(ROOT) and p.is_file() and p.suffix == ".py":
+                sources[p.relative_to(ROOT).as_posix()] = hashlib.sha256(p.read_bytes()).hexdigest()
+    record = {"source_head": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
+              "python": sys.version, "observations": RESULTS, "source_sha256": sources,
+              "script_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+              "limitations": "Selected paths, controlled optimizer and data; no exhaustive UI, parallel solver, release or performance validation."}
+    Path(__file__).with_name("pass02.json").write_text(json.dumps(record, indent=2, ensure_ascii=False, allow_nan=False), encoding="utf-8")
+    raise SystemExit(any(r["status"] == "probe_error" for r in RESULTS))

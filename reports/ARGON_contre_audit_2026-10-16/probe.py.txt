@@ -1,0 +1,637 @@
+"""Reproducible counter-audit observations; no production fixes or JIT validation."""
+from __future__ import annotations
+
+import ast
+import copy
+import dataclasses
+import functools
+import hashlib
+import importlib.util
+import itertools
+import json
+import logging
+import math
+import os
+from pathlib import Path
+import sys
+import types
+from unittest.mock import patch
+
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+os.environ.setdefault("QT_QPA_FONTDIR", r"C:\Windows\Fonts")
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+sys.dont_write_bytecode = True
+
+import numpy as np
+from scipy.optimize import minimize
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QAction, QKeySequence, QShortcut
+from PyQt6.QtWidgets import QApplication, QWidget, QLineEdit, QTableWidget
+import pyqtgraph as pg
+
+ROOT = Path(__file__).resolve().parents[2]
+OUT = Path(__file__).with_name("evidence.json")
+SOURCES = {}
+RESULTS = []
+
+
+def source(path):
+    file = ROOT / path
+    raw = file.read_bytes()
+    SOURCES[path] = hashlib.sha256(raw).hexdigest()
+    return ast.parse(raw.decode("utf-8-sig"), filename=str(file))
+
+
+def extract(path, name, ns, *, decorators=False):
+    nodes = source(path).body
+    selected = None
+    for part in name.split("."):
+        selected = next(n for n in nodes if isinstance(n, (ast.FunctionDef, ast.ClassDef))
+                        and n.name == part)
+        nodes = selected.body
+    selected = copy.deepcopy(selected)
+    if not decorators:
+        selected.decorator_list = []
+    tree = ast.Module(body=[ast.ImportFrom(module="__future__",
+        names=[ast.alias(name="annotations")], level=0), selected], type_ignores=[])
+    ast.fix_missing_locations(tree)
+    ns.setdefault("__name__", "__main__")
+    exec(compile(tree, str(ROOT / path), "exec"), ns)
+    return ns[selected.name]
+
+
+def observe(name, fn):
+    try:
+        data = fn()
+        RESULTS.append({"id": name, "status": "observation_verified", "data": data})
+        print(name + ": observation_verified", flush=True)
+    except Exception as exc:
+        RESULTS.append({"id": name, "status": "probe_error",
+                        "exception": type(exc).__name__, "message": str(exc)})
+        print(name + ": probe_error " + repr(exc), flush=True)
+
+
+def fake_modules(values):
+    modules = {}
+    for full, attrs in values.items():
+        parts = full.split(".")
+        for i in range(1, len(parts) + 1):
+            name = ".".join(parts[:i])
+            if name not in modules:
+                mod = types.ModuleType(name)
+                mod.__path__ = []
+                modules[name] = mod
+        modules[full].__dict__.update(attrs)
+    return patch.dict(sys.modules, modules)
+
+
+REF = {"np": np}
+for name in ("characteristic_matrix", "stack_matrix", "rt_from_assembly", "rt_stack"):
+    extract("tests/oracle/tmm_reference.py", name, REF)
+NUM = {"np": np, "prange": range, "TWO_PI": 2 * np.pi, "SMALL_EPSILON": 1e-12}
+for name in ("_is_finite_scalar", "needle_scan_cached"):
+    extract("certus/physics/certus_opt_needle.py", name, NUM)
+extract("certus/physics/gradient_utils.py", "compute_mse_vectorized", NUM)
+MODELS = {"dataclass": dataclasses.dataclass}
+Target = extract("certus_physics/structures.py", "Target", MODELS, decorators=True)
+Layer = extract("certus_physics/structures.py", "Layer", MODELS, decorators=True)
+
+
+def normalization():
+    observations = []
+    for nk, weights in [
+        (2.1 + 0j, np.ones(12) / 12),
+        (2.1 + 0j, np.arange(1, 13, dtype=float) / 78),
+        (2.1 - 0.02j, np.ones(12) / 12),
+    ]:
+        wl = np.linspace(400., 700., 12)
+        ns = np.full(12, 1.52 + 0j)
+        layers = np.full((12, 1), nk)
+        needle = np.full((12, 1), 1.45 + 0j)
+        target = np.full(12, .9)
+        rows = []
+        for scale in (1., 7.):
+            k, depth, raw = NUM["needle_scan_cached"](
+                wl, layers, needle, ns, np.array([40.]), target, weights * scale,
+                10., .01, np.array([1]))
+            assert k == 0 and np.isfinite(raw)
+            ds = [depth, .01, 40. - depth]
+            ys = np.array([REF["rt_stack"](w, [nk, 1.45 + 0j, nk], ds)[1] for w in wl])
+            reference, count = NUM["compute_mse_vectorized"](ys, target, weights * scale)
+            expected = float((weights * scale).sum() / count)
+            ratio = float(raw / reference)
+            assert np.isclose(ratio, expected, rtol=1e-7, atol=1e-10), (ratio, expected)
+            rows.append({"scale": scale, "depth": float(depth), "scan_cost": float(raw),
+                         "reference_cost": float(reference), "ratio": ratio})
+        assert np.isclose(rows[1]["scan_cost"] / rows[0]["scan_cost"], 7.)
+        assert np.isclose(rows[0]["reference_cost"], rows[1]["reference_cost"])
+        observations.append({"n": str(nk), "weights": weights.tolist(), "results": rows})
+    return observations
+
+
+def prune_failure():
+    ns = {"np": np}
+    prepare = extract("certus/core/certus_design_worker_utils.py",
+                      "optim_prepare_stack_nk_back", ns)
+    wl = np.linspace(400., 700., 8)
+    mats = {key: types.SimpleNamespace(get_nk=lambda w, n=n: np.full(len(w), n + 0j))
+            for key, n in (("H", 2.1), ("L", 1.45), ("Substrate", 1.52))}
+    layers = [Layer("H", 1.), Layer("L", 1.)]
+    prepared = prepare(mats, layers, wl, stack_back=[], ep_back=np.array([]),
+                       has_back_stack=False, complex_dtype=np.complex128,
+                       float_dtype=np.float64)
+    ui = types.SimpleNamespace(_get_materials=lambda: mats, _get_optim_wls=lambda: wl,
+        _get_tgts=lambda: [Target(400., 700., .9, .9)], _get_back_stack=lambda: [],
+        ep_back_current=None, oblique_mode=False)
+    ns["self"] = types.SimpleNamespace(ui=ui)
+    evaluator = extract("certus/ui/certus_design_ui_optimization.py",
+        "OptimizationManager._prune_to_target._evaluate_test_stack", ns)
+    events = []
+    old_trace = sys.gettrace()
+    def trace(frame, event, arg):
+        if frame.f_code is evaluator.__code__ and event == "exception":
+            events.append({"type": arg[0].__name__, "message": str(arg[1])})
+        return trace
+    with fake_modules({
+        "certus.core.certus_core": {"get_complex_dtype": lambda: np.complex128,
+                                    "get_float_dtype": lambda: np.float64},
+        "certus.core.certus_design_worker_utils": {"optim_prepare_stack_nk_back": prepare},
+        "certus_physics": {"compute_gradient_all_layers_analytic": lambda *a: None},
+    }):
+        try:
+            sys.settrace(trace)
+            value = evaluator(np.array([30., 40.]), layers)
+        finally:
+            sys.settrace(old_trace)
+    assert np.isinf(value)
+    assert any(x["type"] == "AttributeError" and "val" in x["message"] for x in events)
+    tree = source("certus/ui/certus_design_ui_optimization.py")
+    nested = next(n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)
+                  and n.name == "_evaluate_test_stack")
+    minimize_calls = [n for n in ast.walk(nested) if isinstance(n, ast.Call)
+        and isinstance(n.func, ast.Attribute) and n.func.attr == "minimize"]
+    analytic = any(any(k.arg == "jac" and isinstance(k.value, ast.Constant)
+                       and k.value.value is True for k in n.keywords) for n in minimize_calls)
+    assert analytic
+    return {"returned": "inf", "caught_exceptions": events, "jac_true_already_present": analytic,
+            "preparation_types": [type(x).__name__ for x in prepared]}
+
+
+def grid_state():
+    old = np.array([400., 700.])
+    made = []
+    ns = {"np": np, "logging": logging, "NUMERICAL_FAULT_EXCEPTIONS": (Exception,)}
+    ns["optim_oblique_group_targets_on_wavelengths"] = lambda w, ts: {"w": w}
+    def configs(groups, w, sub, lay):
+        made.append(len(w))
+        return [{"wls_config": w.copy()}]
+    ns["optim_oblique_configs_from_groups"] = configs
+    ns["optim_oblique_attach_local_positions"] = lambda cfg: None
+    fn = extract("certus/core/certus_design_worker_utils.py",
+                 "maybe_upgrade_grid_tikhonravov", ns)
+    mats = {key: types.SimpleNamespace(get_nk=lambda w, n=n: np.full(len(w), n + 0j))
+            for key, n in (("H", 2.1), ("Substrate", 1.52))}
+    target = Target(400., 700., .9, .9)
+    worker = types.SimpleNamespace(_oblique_configs=[{"wls_config": old.copy()}])
+    out = fn(ep_current=np.array([2000.]), mats=mats, stack=[Layer("H", 1.)],
+        tgts=[], oblique_mode=True, oblique_tgts=[target], wls=old,
+        float_dtype=np.float64, complex_dtype=np.complex128, has_back_stack=False,
+        stack_back=[], ep_back=np.array([]), n_sub=np.full(2, 1.52+0j),
+        n_layers_T=np.full((2, 1), 2.1+0j), n_back_T=np.empty((2, 0)),
+        tgt_vals=None, tgt_weights=None)
+    assert made and len(out[0]) > 2 and len(out) == 6
+    assert len(worker._oblique_configs[0]["wls_config"]) == 2
+    return {"new_points": len(out[0]), "constructed_config_points": made,
+            "returned_items": len(out), "unchanged_worker_points": 2,
+            "scope": "actual helper, controlled grouping dependencies and caller state"}
+
+
+def snapshot_mutation():
+    ns = {"np": np, "logging": logging, "APP_SUITE_VERSION": "probe"}
+    cleanup = extract("certus/ui/certus_design_ui_optimization.py",
+                      "OptimizationManager.smart_cleanup", ns)
+    collect = extract("certus/ui/certus_design_ui_state.py", "StateManager._collect_config", ns)
+    pre = extract("certus/ui/certus_design_ui_state.py", "StateManager._pre_save_smart_cleanup", ns)
+    snap = extract("certus/ui/certus_base_app_config_mixin.py",
+                   "CertusAppConfigMixin._config_snapshot", ns)
+    class Table:
+        def __init__(self):
+            self.rows = [(Layer("H", .001, False), .1), (Layer("L", 1., True), 100.)]
+            self.removed_fixed = []
+        def rowCount(self):
+            return len(self.rows)
+        def removeRow(self, r):
+            layer, _ = self.rows.pop(r)
+            self.removed_fixed.append(not layer.var)
+    table = Table()
+    widget = types.SimpleNamespace(value=lambda: 1., isChecked=lambda: False)
+    ui = types.SimpleNamespace(front_table=table, ep_current=np.array([.1, 100.]),
+        _workflow_best_rmse=1., _cleanup_threshold_multiplier=150., mat_widgets={},
+        log=lambda *a: None, _merge_adjacent_layers=lambda: None, _update_layer_count=lambda: None,
+        _schedule_eval=lambda *a: None, orchestrator=types.SimpleNamespace(_target_layer_count=2),
+        _get_front_stack=lambda: [lyr for lyr, _ in table.rows], _get_back_stack=lambda: [],
+        _get_tgts=lambda: [Target(400., 700., .9, .9)], oblique_mode=False)
+    for key in ("l0_spin", "back_check", "back_coat_check", "points_per_target_spin",
+                "n100_spin", "max_clusters_spin", "global_cycles_spin", "mc_n_spin",
+                "mc_sigma_spin", "pre_polish_check", "allow_growth_check", "auto_scale_y_check"):
+        setattr(ui, key, widget)
+    ui._update_thickness_display = lambda: setattr(ui, "ep_current",
+        np.array([d for _, d in table.rows]))
+    ui.smart_cleanup = lambda: cleanup(types.SimpleNamespace(ui=ui))
+    manager = types.SimpleNamespace(ui=ui)
+    manager._pre_save_smart_cleanup = types.MethodType(pre, manager)
+    ui._collect_config = types.MethodType(collect, manager)
+    value = snap(ui)
+    assert isinstance(value, str) and table.rowCount() == 1
+    assert table.removed_fixed == [True]
+    return {"rows_before": 2, "rows_after": 1, "fixed_layer_removed": True,
+            "snapshot_produced": True, "scope": "actual methods; controlled table/widget dependencies"}
+
+
+def material_order():
+    ns = {"np": np}
+    fn = extract("certus/workers/certus_design_workers_needle_strat.py",
+                 "NeedleOptimizationStrategy._build_needle_scan_mask", ns)
+    found = []
+    for order in itertools.permutations(("H", "L", "M")):
+        names, mask = fn(types.SimpleNamespace(cfg={}),
+                        [Layer("H", 1.), Layer("L", 1.), Layer("M", 1.)],
+                        dict.fromkeys(order))
+        found.append({"dictionary_order": list(order), "needles": names})
+    assert len({tuple(row["needles"]) for row in found}) > 1
+    return found
+
+
+APP = QApplication.instance() or QApplication([])
+QT = {"np": np, "logging": logging, "Qt": Qt, "QAction": QAction,
+      "QKeySequence": QKeySequence, "QShortcut": QShortcut, "QWidget": QWidget}
+for name in ("normalized_shortcut", "shortcut_owner", "install_unique_shortcut",
+             "install_standard_shortcuts"):
+    extract("certus/ui/certus_ui_utils.py", name, QT)
+
+
+def shortcut_dedup():
+    win = QWidget()
+    counts = [0, 0]
+    first = lambda: counts.__setitem__(0, counts[0] + 1)
+    second = lambda: counts.__setitem__(1, counts[1] + 1)
+    QT["install_standard_shortcuts"](win, load=first)
+    QT["install_standard_shortcuts"](win, load=second)
+    shortcuts = win.findChildren(QShortcut)
+    assert len(shortcuts) == 1
+    shortcuts[0].activated.emit()
+    assert counts == [1, 0]
+    win.close()
+    return {"shortcuts_after_two_installations": 1, "callback_counts": counts,
+            "scope": "real Qt objects; signal emitted directly, not an OS keyboard gesture"}
+
+
+def palette_load():
+    ns = {}
+    fn = extract("certus/ui/mixins/certus_base_core_mixins.py",
+                 "CertusCommandPaletteMixin._default_commands", ns)
+    calls = []
+    owner = types.SimpleNamespace(load_config=lambda: calls.append("load"),
+                                  close=lambda: None)
+    with fake_modules({"certus.utils.certus_command_palette":
+                       {"CommandAction": lambda **kw: types.SimpleNamespace(**kw)}}):
+        commands = fn(owner)
+    command = next(c for c in commands if c.id == "file.load_config")
+    command.callback()
+    assert calls == ["load"]
+    return {"command_id": command.id, "callback": calls,
+            "scope": "actual command discovery; controlled action record and owner"}
+
+
+def tooltip_loss():
+    ns = dict(QT)
+    ns["CertusTheme"] = types.SimpleNamespace(DANGER="#ff0000",
+        tint=lambda *a: "rgba(255,0,0,.07)", current_sheet=lambda s: s)
+    fn = extract("certus/ui/certus_ui_utils.py", "attach_numeric_validator", ns)
+    edit = QLineEdit("1")
+    edit.setToolTip("Physical value in nm")
+    fn(edit, minimum=0., maximum=2.)
+    initial = edit.toolTip()
+    edit.setText("bad")
+    error = edit.toolTip()
+    edit.setText("1")
+    after = edit.toolTip()
+    assert initial == after == "" and "Invalid" in error
+    edit.close()
+    return {"after_attachment": initial, "after_error": error, "after_valid": after}
+
+
+def cached_palette():
+    ns = {"functools": functools}
+    fn = extract("certus/ui/certus_plot.py", "get_plot_theme_palette", ns, decorators=True)
+    theme = types.SimpleNamespace(DARK_MODE=False, PRIMARY="#123456", FONT_FAMILY="Segoe UI")
+    with fake_modules({"certus.ui.certus_ui": {"CertusTheme": theme}}):
+        before = fn()
+        theme.DARK_MODE = True
+        after = fn()
+        fn.cache_clear()
+        cleared = fn()
+    assert before == after and after != cleared
+    return {"light_bg": before[0], "dark_bg_from_cache": after[0], "after_clear": cleared[0],
+            "scope": "palette function, not global plot/background propagation"}
+
+
+def progress_snapshot():
+    from PyQt6 import QtWidgets, QtCore
+    ns = dict(vars(QtWidgets))
+    ns.update(vars(QtCore))
+    ns.update({"Any": object, "time": __import__("time"),
+        "set_certus_window_icon": lambda w: None,
+        "CertusTheme": types.SimpleNamespace(TEXT_MAIN="#111111", TEXT_SUB="#555555",
+            get_progress_bar_style=lambda: "", get_button_style=lambda *a: ""),
+        "Typography": types.SimpleNamespace(H2=14, H3=12, BODY_LG=11),
+        "_format_progress_status": lambda **kw: "status"})
+    cls = extract("certus/ui/certus_ui_widgets_progress.py", "ProgressDialog", ns)
+    obj = cls("Probe")
+    assert hasattr(obj, "status_label") and not hasattr(obj, "info_label")
+    try:
+        obj.apply_progress_snapshot(types.SimpleNamespace(message="tick"))
+    except AttributeError as exc:
+        assert "info_label" in str(exc)
+        detail = str(exc)
+    else:
+        raise AssertionError("Expected missing info_label was not reproduced")
+    obj.close()
+    return {"exception": "AttributeError", "message": detail,
+            "scope": "real QWidget and actual class, controlled theme/icon dependencies"}
+
+
+def clone_plot():
+    def factory(*a, **kw):
+        obj = pg.PlotWidget()
+        obj._tracked_curves = []
+        obj._certus_crosshair_label_fn = None
+        obj._certus_crosshair_vertical_only = False
+        return obj
+    ns = {"pg": pg, "CertusScientificPlot": factory}
+    fn = extract("certus/ui/certus_plot.py", "clone_plot_widget", ns)
+    original = pg.PlotWidget()
+    curve = original.plot([1., 2.], [3., 4.], name="measured")
+    original._tracked_curves = [(curve, "measured", "%")]
+    original._certus_crosshair_label_fn = lambda *args: "custom label"
+    original._certus_crosshair_vertical_only = True
+    clone = fn(original)
+    assert len(clone.listDataItems()) == 1
+    assert clone.listDataItems()[0].name() == "measured"
+    assert not clone._tracked_curves and clone._certus_crosshair_label_fn is None
+    assert clone._certus_crosshair_vertical_only is False
+    result = {"exception": None, "clone_created": True, "copied_curve_name": "measured",
+              "tracked_curves_after": len(clone._tracked_curves),
+              "custom_crosshair_copied": False, "vertical_only_copied": False,
+              "scope": "actual copier, real pyqtgraph; controlled factory initialized like constructor; no mouse gesture or full legend proof"}
+    clone.close()
+    original.close()
+    return result
+
+
+def empty_state_dispatch():
+    cls = extract("certus/ui/mixins/certus_base_core_mixins.py", "CertusEmptyStateMixin", {})
+    obj = cls()
+    obj.front_table, obj.target_table, obj.other_table = [QTableWidget() for _ in range(3)]
+    obj.add_layer = lambda: None
+    obj.add_target = lambda: None
+    obj._iter_persistable_tables = lambda: [(k, getattr(obj, k))
+        for k in ("front_table", "target_table", "other_table")]
+    calls = []
+    with fake_modules({"certus.ui.certus_empty_state": {
+        "attach_empty_state_to": lambda widget, **kw: calls.append((widget, kw))}}):
+        obj._auto_install_empty_states()
+    assert len(calls) == 3 and len({id(w) for w, _ in calls}) == 3
+    ctas = [kw.get("action_label") for _, kw in calls]
+    assert sum(bool(x) for x in ctas) == 2
+    for w, _ in calls:
+        w.close()
+    return {"attached_tables": 3, "cta_labels": ctas,
+            "scope": "actual automatic dispatch; real tables, controlled overlay attachment; no visual coverage claim"}
+
+
+def re_snapshot_api():
+    from PyQt6 import QtWidgets, QtCore
+    ns = dict(vars(QtWidgets))
+    ns.update(vars(QtCore))
+    core = source("certus/core/certus_core.py")
+    assignment = next(n for n in core.body if isinstance(n, ast.Assign)
+        and any(isinstance(t, ast.Name) and t.id == "NUMERICAL_FAULT_EXCEPTIONS" for t in n.targets))
+    exceptions = eval(compile(ast.Expression(assignment.value), "<exception tuple>", "eval"), {"np": np})
+    ns.update({"time": __import__("time"), "NUMERICAL_FAULT_EXCEPTIONS": exceptions,
+        "CertusTheme": types.SimpleNamespace(TEXT_MAIN="#111111", TEXT_SUB="#555555",
+            PRIMARY="#123456", INFO_TEXT="#123456", get_progress_bar_style=lambda: "",
+            get_button_style=lambda *a: ""),
+        "Typography": types.SimpleNamespace(BODY=10, BODY_LG=11),
+        "_format_progress_status": lambda **kw: "status"})
+    extract("certus/ui/certus_ui_widgets_progress.py", "DualStageProgressWidget", ns)
+    cls = extract("certus/ui/certus_ui_widgets_progress.py", "EnhancedProgressWidget", ns)
+    fn = extract("certus/ui/certus_re_workers_mixin.py",
+                 "CertusREWorkersMixin._on_re_worker_progress_snapshot", ns)
+    widget = cls()
+    owner = types.SimpleNamespace(progress_widget=widget, log=lambda *a: None)
+    assert not hasattr(widget, "apply_progress_snapshot")
+    try:
+        fn(owner, types.SimpleNamespace(message="tick"))
+    except AttributeError as exc:
+        assert "apply_progress_snapshot" in str(exc)
+        detail = str(exc)
+    else:
+        raise AssertionError("Expected missing snapshot method was not reproduced")
+    widget.close()
+    return {"exception": "AttributeError", "message": detail,
+            "caught_by_numerical_fault_exceptions": False,
+            "scope": "actual handler and real EnhancedProgressWidget; controlled theme/status dependencies; no full RE run"}
+
+
+def smoothing_precision():
+    import pandas as pd
+    df = pd.DataFrame({"wavelength": [500.0123, 500.0437, 501.0789], "T": [.8, .81, .82]})
+    ns = {"np": np, "pd": types.SimpleNamespace(
+        ExcelFile=lambda path: types.SimpleNamespace(sheet_names=["measurement"]),
+        read_excel=lambda *a, **kw: df.copy()),
+        "pick_measurement_sheet_name": lambda names, parent: names[0]}
+    fn = extract("certus/ui/certus_measurement_excel_ui.py", "read_measurement_excel", ns)
+    out = fn("controlled workbook", None, round_wavelength_decimals=1)
+    assert out.iloc[:, 0].nunique() < df.iloc[:, 0].nunique()
+    return {"input_lambda": df.iloc[:, 0].tolist(), "loaded_lambda": out.iloc[:, 0].tolist(),
+            "scope": "actual reader; controlled Excel provider, real DataFrame"}
+
+
+def solver():
+    ns = {"np": np, "os": os, "minimize": minimize}
+    extract("certus/physics/certus_optimizers.py", "get_lbfgsb_params", ns)
+    extract("certus/physics/certus_optimizers.py", "_SetulbIncompatible", ns)
+    cls = extract("certus/physics/certus_optimizers.py", "LBFGSBSearcher", ns)
+    obj = cls(lambda x: float((x[0] - 2.) ** 2), np.array([[0., 1.]]),
+              gradient_func=lambda x: np.array([2. * (x[0] - 2.)]))
+    x, value, calls = obj.search(np.array([.25]), max_feval=100)
+    assert np.isclose(x[0], 1.) and np.isclose(value, 1.)
+    return {"bounded_x": float(x[0]), "cost": value, "evaluations": calls,
+            "setulb_importable": obj._setulb is not None}
+
+
+def min_d_ignored():
+    ns = dict(NUM)
+    ns["tmm_core"] = types.SimpleNamespace(
+        calculate_RT_no_backside=lambda ep, n, sub, w: (np.zeros(len(w)), np.full(len(w), .8)))
+    fn = extract("certus/physics/gradient_utils.py", "cost_numba_fast", ns)
+    wl = np.linspace(400., 700., 8)
+    args = (np.array([.1]), np.full((8, 1), 2.1+0j), np.full(8, 1.52+0j),
+            wl, np.full(8, .9), np.ones(8))
+    values = [float(fn(*args, m, False, np.empty((8, 0)), np.array([]))) for m in (0., 5.)]
+    assert values[0] == values[1]
+    ns["_compute_gradient_analytic_kernel"] = lambda ep, *rest: (.01, np.zeros(len(ep)), 8)
+    analytic = extract("certus/physics/gradient_oblique.py", "compute_gradient_all_layers_analytic", ns)
+    def cost_grad(d):
+        a = (np.array([d]),) + args[1:]
+        return analytic(*a, 5., False, np.empty((8, 0)), np.array([]))
+    cost, grad = cost_grad(.1)
+    h = 1e-5
+    fd = (cost_grad(.1+h)[0] - cost_grad(.1-h)[0])/(2*h)
+    assert grad[0] == 0. and np.isclose(fd, -9.8e6)
+    return {"cost_min_d_0": values[0], "cost_min_d_5": values[1],
+            "analytic_returned_cost_min_d_5": cost, "analytic_returned_gradient": grad.tolist(),
+            "finite_difference_of_returned_cost": float(fd),
+            "scope": "actual scalar cost and front-only analytic wrapper; controlled constant physics isolates penalty contract"}
+
+
+def pglobal_control():
+    ns = {"math": math, "PI": np.pi}
+    radius = extract("certus/physics/certus_optimizers.py", "compute_critical_distance", ns)
+    rows = []
+    for n, dim, alpha in ((1, 1, .008), (16, 3, .04), (1000, 20, .008)):
+        nn = max(n, 2)
+        expected = min((math.gamma(1+dim/2)*alpha*math.log(nn)/nn)**(1/dim)/math.sqrt(np.pi),
+                       math.sqrt(dim)/2)
+        value = radius(n, dim, alpha)
+        assert np.isclose(value, expected)
+        rows.append({"n": n, "dim": dim, "alpha": alpha, "radius": value})
+    resolve = extract("certus/physics/certus_optimizers.py", "PGlobalOptimizer._resolve_worker_count",
+                      {"os": types.SimpleNamespace(cpu_count=lambda: 8)})
+    workers = resolve()
+    assert workers == 6
+    return {"critical_radius_cases": rows, "workers_with_controlled_cpu_count_8": workers,
+            "scope": "actual radius interpreted; controlled non-frozen worker resolver; no machine throughput or global-optimum proof"}
+
+
+def final_minimum_deletes_fixed():
+    fn = extract("certus/ui/certus_design_ui_optimization.py",
+                 "OptimizationManager._apply_5nm_minimum", {"np": np})
+    class Table:
+        def __init__(self):
+            self.rows = [(Layer("H", 1., False), 2.), (Layer("L", 1., True), 5.),
+                         (Layer("M", 1., True), 100.)]
+            self.fixed_removed = []
+        def removeRow(self, r):
+            lyr, _ = self.rows.pop(r)
+            self.fixed_removed.append(not lyr.var)
+        def rowCount(self):
+            return len(self.rows)
+    table = Table()
+    ui = types.SimpleNamespace(ep_current=np.array([2., 5., 100.]), front_table=table,
+        log=lambda *a: None, _merge_adjacent_layers=lambda: None, _update_layer_count=lambda: None,
+        orchestrator=types.SimpleNamespace(_target_layer_count=3), _workflow_best_rmse=.1)
+    ui._update_thickness_display = lambda: setattr(ui, "ep_current", np.array([d for _, d in table.rows]))
+    fn(types.SimpleNamespace(ui=ui))
+    assert table.fixed_removed == [True] and ui.ep_current.tolist() == [5., 100.]
+    assert np.isinf(ui._workflow_best_rmse)
+    return {"thicknesses_before": [2., 5., 100.], "thicknesses_after": ui.ep_current.tolist(),
+            "fixed_layer_removed": True, "previous_merit_invalidated": True,
+            "scope": "actual final filter; controlled table/update dependencies, no full workflow or optical-loss measurement"}
+
+
+def node_contrast():
+    ns = {}
+    for name in ("_parse_hex", "_srgb_to_linear", "_relative_luminance", "contrast_ratio"):
+        extract("certus/ui/certus_a11y.py", name, ns)
+    cls = extract("certus/ui/certus_manual_sigma_knot_dialog.py", "_AccentNoeud", {})
+    values = {color: ns["contrast_ratio"](color, "#f8f9fa")
+        for color in (cls.ETIQUETTE_PREEXISTANT, cls.LIGNE_PROPOSE)}
+    assert all(r < 4.5 for r in values.values())
+    return {"background_assumed": "#f8f9fa", "ratios": values,
+            "scope": "actual color constants and contrast helper; no rendered-background or full WCAG compliance proof"}
+
+
+def math_checks():
+    n, wl, h = 2.1 + 0j, 550., 1e-5
+    actual = (REF["characteristic_matrix"](n, h, wl) - np.eye(2)) / h
+    corrected = 2j*np.pi*n/wl * np.array([[0, 1/n], [n, 0]])
+    old = corrected / n
+    err = float(np.linalg.norm(actual - corrected))
+    assert err < 1e-7 and np.linalg.norm(actual - old) > 1e-3
+    ds = [42.75, 20., 42.75]
+    original = [REF["rt_stack"](w, [2.+0j], [100.])[1] for w in (450., 550., 700.)]
+    compensated = [REF["rt_stack"](w, [2.+0j, 1.45+0j, 2.+0j], ds)[1] for w in (450., 550., 700.)]
+    delta = float(np.max(np.abs(np.array(original) - compensated)))
+    assert np.isclose(2*100., 2*(ds[0]+ds[2]) + 1.45*ds[1]) and delta > 1e-3
+    # An optical quadratic can overpower the concave gap penalty.
+    total = lambda x: 2*(x-2.5)**2 + x*(5-x)
+    assert total(2.5) < total(2.4) and total(2.5) < total(2.6)
+    ts, tp, target = .8, .2, .5
+    avg_cost = ((ts + tp)/2 - target)**2
+    separate_cost = ((ts-target)**2 + (tp-target)**2)/2
+    assert np.isclose(separate_cost - avg_cost, (ts-tp)**2/4)
+    return {"needle_matrix_derivative_error": err,
+            "same_optical_thickness_max_T_difference": delta,
+            "gap_counterexample_local_min_nm": 2.5,
+            "avg_target_cost": avg_cost, "two_separate_target_cost": separate_cost}
+
+
+for name, fn in [
+    ("D01_normalization", normalization), ("D02_prune_caught_error", prune_failure),
+    ("D03_grid_state", grid_state), ("U01_snapshot_mutates_fixed_layer", snapshot_mutation),
+    ("D04_material_dictionary_order", material_order), ("U02_shortcuts_deduplicated", shortcut_dedup),
+    ("U03_palette_load_config", palette_load), ("U04_tooltip_erased", tooltip_loss),
+    ("U05_cached_palette", cached_palette), ("U06_progress_missing_attribute", progress_snapshot),
+    ("U07_clone_metadata", clone_plot), ("U08_smoother_rounding", smoothing_precision),
+    ("U09_empty_state_dispatch", empty_state_dispatch), ("U10_RE_snapshot_api", re_snapshot_api),
+    ("D05_real_LBFGSB", solver), ("D06_min_d_ignored", min_d_ignored),
+    ("D07_PGLOBAL_control", pglobal_control),
+    ("D08_final_5nm_filter", final_minimum_deletes_fixed),
+    ("U11_node_contrast", node_contrast),
+    ("M01_math_counterexamples", math_checks),
+]:
+    observe(name, fn)
+
+spec = importlib.util.spec_from_file_location("argon_gui_harness", ROOT / "scripts/audit_ux_certus.py")
+harness = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(harness)
+source("scripts/audit_ux_certus.py")
+evidence = json.loads(OUT.read_text(encoding="utf-8"))
+for run in evidence["gui_runs"]:
+    run["verdicts"] = harness._verdicts(run["metrics"]) if "metrics" in run else ["missing metrics"]
+help_modules = [r["metrics"]["app"] for r in evidence["gui_runs"]
+    if "QToolButton|Help" in r["metrics"].get("skeleton", [])]
+assert len(help_modules) == 22
+for path in ("certus/ui/certus_ui_widgets_factory.py", "certus/metal/certus_metal_common.py",
+             "certus/ui/certus_index_spline_ui.py", "certus/ui/certus_re_layout_mixin.py",
+             "certus/workers/certus_re_workers.py", "certus/utils/certus_curve_smoother.py",
+             "certus/ui/certus_substrate_ui.py"):
+    source(path)
+evidence["cross_checks"] = {"help_button_in_all_22_skeletons": True,
+    "tables_column": "tables_sortable / n_tables, not empty-state coverage",
+    "dark_toggle_cases": sum(r["metrics"].get("dark_stale") is not None for r in evidence["gui_runs"]),
+    "dark_toggle_absent_modules": sorted({r["metrics"]["app"] for r in evidence["gui_runs"]
+        if r["metrics"].get("dark_stale") is None})}
+evidence["gui_summary"] = {
+    "completed": len(evidence["gui_runs"]),
+    "worker_errors": sum(r["exit_code"] != 0 for r in evidence["gui_runs"]),
+    "cases_with_mechanical_issue": sum(bool(r["verdicts"]) for r in evidence["gui_runs"]),
+    "scope": "22 fresh offscreen starts, existing light/dark checks; no exhaustive interaction proof"}
+evidence["probe_mode"] = "Source AST extracted unchanged; Numba decorators removed; explicit controlled dependencies recorded per case. No JIT, throughput, full-app or release proof."
+import scipy
+from PyQt6.QtCore import QT_VERSION_STR, PYQT_VERSION_STR
+evidence["environment"] = {"python": sys.version, "numpy": np.__version__,
+    "scipy": scipy.__version__, "pyqtgraph": pg.__version__, "qt": QT_VERSION_STR,
+    "pyqt": PYQT_VERSION_STR, "QT_QPA_PLATFORM": os.environ.get("QT_QPA_PLATFORM")}
+evidence["probes"] = RESULTS
+evidence["source_sha256"] = SOURCES
+evidence["probe_script_sha256"] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+evidence["probe_errors"] = sum(r["status"] == "probe_error" for r in RESULTS)
+OUT.write_text(json.dumps(evidence, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+print(json.dumps({"gui_summary": evidence["gui_summary"], "probe_count": len(RESULTS),
+                  "probe_errors": evidence["probe_errors"]}, ensure_ascii=False), flush=True)
+raise SystemExit(1 if evidence["probe_errors"] else 0)
+

@@ -1,0 +1,194 @@
+{
+  "source_head": "0c7c1e2e032fbf17c6de64548318950819e1f07b",
+  "python": "3.14.8 (tags/v3.14.8:8e6e75d, Sep 30 2026, 18:19:33) [MSC v.1944 64 bit (AMD64)]",
+  "observations": [
+    {
+      "id": "R01_INDEX_export_guard",
+      "scope": "Real imported export method; global export flag controlled false; no filesystem export.",
+      "status": "observation_verified",
+      "data": {
+        "auto_export_off": "returns before reading results or writing files"
+      }
+    },
+    {
+      "id": "R02_onboarding_keyboard",
+      "scope": "Real overlay and QTest key events offscreen; no final step or settings persistence.",
+      "status": "observation_verified",
+      "data": {
+        "index_after_space_on_focused_next": 1,
+        "visible_after_escape": true
+      }
+    },
+    {
+      "id": "R03_oblique_worker_grid",
+      "scope": "Real OptimWorker.run and JIT optics/refinement; PGLOBAL setup/search replaced by a fixed initial candidate; no thread scheduling.",
+      "status": "observation_verified",
+      "data": {
+        "initial_points": 2,
+        "helper_points": 135,
+        "worker_stored_points": 2,
+        "gradient_grid_sizes": [
+          2
+        ],
+        "cost_grid_sizes": [
+          2
+        ],
+        "initial_old_grid_cost": 0.02475682810092035,
+        "final_ep": [
+          3026.23046875
+        ],
+        "reported_rmse": 0.026135103949905324,
+        "direct_dense_rmse": 0.17542014046296586,
+        "jit_enabled": true
+      }
+    },
+    {
+      "id": "R04_normal_worker_grid",
+      "scope": "Same controlled optimizer with real normal JIT optics and final refinement.",
+      "status": "observation_verified",
+      "data": {
+        "initial_points": 2,
+        "helper_points": 135,
+        "worker_stored_points": 2,
+        "gradient_grid_sizes": [
+          135
+        ],
+        "cost_grid_sizes": [
+          135
+        ],
+        "initial_old_grid_cost": 1000000000000.0,
+        "final_ep": [
+          2969.6875
+        ],
+        "reported_rmse": 0.08131082072987351,
+        "direct_dense_rmse": 0.08131082072987351,
+        "jit_enabled": true
+      }
+    },
+    {
+      "id": "R05_refinement_bounds_stop",
+      "scope": "Real OptimWorker.run/refinement with controlled PGLOBAL and quadratic cost/gradient; no scientific performance claim.",
+      "status": "observation_verified",
+      "data": {
+        "pglobal_bounds": [
+          [
+            0.0,
+            3.0
+          ]
+        ],
+        "final_ep": [
+          20.0
+        ],
+        "gradient_calls_after_stop_requested_at_first_call": 12,
+        "finished_payload_ok": true,
+        "objective": "controlled quadratic (d-20)^2"
+      }
+    }
+  ],
+  "source_sha256": {
+    "reports/ARGON_contre_audit_2026-10-16/pass02.py": "84a78fa84949af0fb71234bfeaa3737ad246ba4f0f3f8a9f93fcfe87faf33359",
+    "certus/core/certus_config.py": "611096eed2b50db09b465b5b13e9caa8390ed5d68d2efc05dce858ecc314991f",
+    "certus/utils/certus_logging.py": "d5bf849fa6eb9c2dfba96ea17acf5397831a8a642209b0ebadfb5cfd72350910",
+    "certus/core/certus_logging.py": "9799a665809fc00ea2a20216070bf1880c0fe55166cb95a72ed5c193c7fa55ab",
+    "certus/core/certus_performance.py": "3cc431c5784683cbfbf0945936b75b7a32b6e234ae90cedd4d734946e2949f01",
+    "certus/core/certus_runtime.py": "0a4b3d92d73d5ed78d5ab301a544c7af675b6ddbe7708ec809dcabd70c334e1f",
+    "certus/core/version.py": "f402be63887081db8447f7bbaf69fa737089c63da99acbc83cbc95cf16b72c50",
+    "certus/domain/__init__.py": "1f6207f09b6406bf6aad629596129ca11d6d2a171220afaf932382942a336cdc",
+    "certus/domain/constants.py": "57e0093faee0229a9d25f0fc260ae6805cce87805c31809a54cab3870cfeb15e",
+    "certus/core/certus_substrate_db.py": "b924b735ac07c47f959afafeb676cfcae671179765946de83fccec391786c6bb",
+    "certus/core/certus_core.py": "7d6aceb3ff88cbe2c57026b42b91bbf211487e8b3dfc81e7cdf8ad1e3ce1e5e2",
+    "certus/utils/errors.py": "ad99be9c5b9caa8e79de008835eee351d0c91271ac9240885928e66f3c6851f4",
+    "certus/utils/certus_db_helpers.py": "1e99f3e201e6500c78a10a691e0d817baf33996599b3a4185d61dcca5f939427",
+    "certus_physics/structures.py": "c64e5e18188d076ea8c021f7fd82e2ec9644e80b1d90a6291430f3a704983ba3",
+    "certus/physics/certus_colorimetry.py": "19d2c60f9a7e2fb69c6bc92eb8ff104976d5dfb60d292693e69764f9d66a9fbc",
+    "certus/physics/certus_material_db.py": "8cb00f459b50801cc4092953d94a859233d264173d4da8aeb8abae1a8fc582d9",
+    "certus/physics/certus_optical_models.py": "d6366c0b5fa5b4078cabc0e25150ebbeee9f8282cffee38399334b0660b757f4",
+    "certus/physics/certus_substrate_absorption.py": "40dcb95d7a4f809f393979f857328ce0b0ff3bc498385ab014ad8a1c712ab6b3",
+    "certus/physics/certus_opt_tmm.py": "d532cd45f940f8a9a93994323fc0fb899fb85973613fe1d1d2d196182276baab",
+    "certus/physics/certus_optimizers.py": "34c284c57d85995e746912e6160247f9861c7f7da458fc8e07a781f6b5d6e286",
+    "certus/physics/certus_tmm_backside.py": "6c1ff92c7ffac08a13843dc067ec111443a5da3880de45ac4adc66fd85fee550",
+    "certus/physics/certus_inputs.py": "d2ba2b090535e9c89c3b4d65db29dffd483bcf2b1d655fdb91dc08bdeb8e0732",
+    "certus/physics/certus_tmm_substrate.py": "2b8ec3d4ee74978e047dad503ec67b18b8eedef1f2ff3da0bd6e963170ab031c",
+    "certus/physics/certus_tmm_matrix.py": "36de6f0e5a23e354960cb33ee90d6b26eec800a0c3ff3a38e447171834e3b908",
+    "certus/physics/certus_tmm_hl.py": "44f49fb4952ad52c2312db37f3d42bae293fbf928f1dfe58065f7b7f5279fb90",
+    "certus/physics/certus_oblique_substrate.py": "1c0e269b55c890831f18d8c3671b7bf5ad9f482677b534dae630b4ca8db7a96b",
+    "certus/physics/certus_tmm_oblique.py": "959e1aa4784b1436b05aadbe22de332ed6d3975c9240b6001137fc4a4a130dca",
+    "certus/physics/certus_tmm_single_layer.py": "bb3016af33032d58eefa7ebd267a65736de64bd6d5c3eea187f5cba82bdadc8e",
+    "certus/physics/certus_tmm_core.py": "96ea6552fdbda7628d1a722ba85278ed5aa63bfb08bc7bb48041fbadb29ce0a0",
+    "certus/physics/gradient_utils.py": "781ca8de73c2396c7121222be274d09f86e103498e48c112216319761edbe2c6",
+    "certus/physics/gradient_analytic.py": "02b633d4b8f69b29e8787a4e6e23c160b24ed20be044f0458629e00a54ac3814",
+    "certus/physics/gradient_metal.py": "863709ff7eb7bae0dfa0d86ac2c6a1d58bc137111adad107d5a6a267e0860101",
+    "certus/physics/gradient_oblique.py": "4a91bbb60783a598f4318b2981a7de213dee71d944e96c367c4e6f1937b46830",
+    "certus/physics/certus_opt_kernels.py": "cd99e9197229eece2c1579e0d59497d659592c4146b17871ef8790b44c399e0e",
+    "certus/physics/certus_strat_math.py": "26afa0d2157a53f3501394e6c050ab78baa75285c88ae8cdf4f68a914b474714",
+    "certus/physics/certus_strat_readings.py": "f7d890d0d089eb32bfbd3111d2019e015ce946046c4855dfd85664f3596a4fba",
+    "certus/physics/certus_strat_growth.py": "ff34ffdec7d8f2ebe39170a29048937ef919c3c4c967526c3982008a955e4105",
+    "certus/physics/certus_strat_batch.py": "44bc530a2ef1f91eb1e3b6ddd59e1d8cc9e069e30d92ac52b0eae0c1e7960e91",
+    "certus/physics/certus_strat_dp.py": "b35e7e279875e81247eb9be8b797c91dcc886a4d87b585882d4ea6a854a103c6",
+    "certus/physics/certus_strat_machine.py": "0c35fc6742ad8a5ddfa2368e025d19e9db22918d9e6234b9fe5b015686584b49",
+    "certus/physics/certus_strat_nucleation.py": "cdad8f07ae00a37b68a37852976852cd78ff5b7912a83049c526e84a2fcd3713",
+    "certus/physics/certus_strat_kernels.py": "7d0b1ca3e831aa9032c6cef00d237738c7519f1aae9f99629c35509573884f66",
+    "certus/physics/certus_opt_needle.py": "4a65fd006af9bb2c39ad9ab314830b4e4f2fcbf12155c9fdaa869ab8b5096638",
+    "certus/core/_certus_physics_impl.py": "b7fc095058835a7fcabc8aabee8db057de567bf712d5472ea22aaf1f74010c8a",
+    "certus_physics/materials_data.py": "bc805322f17df370d02bf340007d9d729fe0bf74b558df24a3f70fe933e62154",
+    "certus_physics/__init__.py": "10c2b705a081f91600146ee7ad69d69ef066178fc311938531bd0936ca42a41e",
+    "certus/utils/certus_index_utils.py": "cf2b4ef83c22b11d76d75f4b6b0e58379c2f383bb71f58006f682032a20a8947",
+    "certus/core/certus_index_config.py": "3a9fc120a324c4bcc28b1c0af9fb3c804066194ad132b98871128c40dda67fc9",
+    "certus/core/certus_index_core.py": "ef2d1e0202ab72636bb5bd49518cdd05898e2b68da1bd3c7d6266fc26c836a13",
+    "certus/utils/certus_dto.py": "99edb1f0323cde8625fc0b35926a9961e163b0023dec8a421155f88e1d5df762",
+    "certus/ui/certus_qt_svg.py": "23538eb8590c1045480de99b8e2ccb85d4a2531c7b70872d72506666f8d12869",
+    "certus/utils/certus_atomic_io.py": "12c7a0439a28a694abb0e080740faa66de016e15a661648f497d3a2cedf32a2e",
+    "certus/utils/certus_ux.py": "84c49f9b3ebe152a076735747365929b2be3a0d31c9a2155ea9614e05c8cf45a",
+    "certus/ui/certus_plot.py": "34e0d46c793519163941ab4338c3651836778ea99247b761e05cbeee14bf2349",
+    "certus/utils/certus_qsettings.py": "de174022ef715ccc8a1b581df584bcdba302f29b9c9e20b9687c88bef1e2f4ef",
+    "certus/ui/certus_io_ui.py": "ad7261de25f2771aba33bd5f70b085d3e091bf57940a391443694bbf96bc82a6",
+    "certus/core/certus_hub_config.py": "0e5a44184dd7c4d7fea3ac60c0fe272dc8ffe009c54ebf5865b9515effd882ae",
+    "certus/ui/certus_a11y.py": "260156761aebe888e9fadd57a9906aefa8f257ac3ca43c5ce5ee6762d6198a2c",
+    "certus/ui/certus_qt_widgets.py": "b89833b675c86550273bbebba463f25720e5d9eefb3a82ca1ef4248103b7d12b",
+    "certus/ui/certus_theme.py": "ea9411726a2b25aa2ff72c218ff00b190f74df0c6b816657459aa0eec56b5970",
+    "certus/ui/certus_ui_utils.py": "f4db15922078f782b12dfda420f984eaf1c644e103dc234f313d3b4ee28fee7f",
+    "certus/ui/certus_ui_widgets_factory.py": "52d6cafc5b43306a7b025bc4e95aa081859d95318e04f2e262eb488d4f8044d7",
+    "certus/ui/certus_ui_widgets_utils.py": "8cdfd5a391a690382b056032edbdb409d3942f45a115cc4ba5b587eb5b35eae5",
+    "certus/ui/certus_base_app_config_mixin.py": "425809548f6c19287a319c45072c3f0a4bd20603ea57c879f2675837d4865c29",
+    "certus/ui/certus_base_app_engine_mixin.py": "d7c8b0d3fb85a9ce79b20f42758346042241bfe2b7de689a4f17bb1598f8bd84",
+    "certus/ui/certus_base_app_info_mixin.py": "aace8386eff04ef995fa6bc38936fe6b6c83aa4e03081a751813b6ebf07c9c8b",
+    "certus/ui/certus_base_app_plot_mixin.py": "395920c7389b7912318e06f7c8c5d35473254ae7aede12559766c03ff30bfd81",
+    "certus/ui/certus_base_app_run_mixin.py": "cc7c12232db0ad7a2dc7d208cb3e5c145454f081eaea362ce0a8766155b91ad1",
+    "certus/ui/certus_base_app_stack_mixin.py": "a47ca7ec6402bf491c6cee67d42ae83500a1c9e67256209b8a459686348ee802",
+    "certus/utils/certus_copy_utils.py": "be8d1f693c247a13adf53914ffd896f564ca2a30e23e188b38520c77dc717da0",
+    "certus/ui/certus_base_app_undo_mixin.py": "a0cad349c8f07a6b9d41aaa277a01b2fb3d90bd99cd9d8d9618ee53cade911e8",
+    "certus/ui/mixins/certus_base_core_mixins.py": "1a383e5eccd9360e01df9ec4864e3c73494bbaa24e959b8bc81bb2c7a079f72f",
+    "certus/ui/certus_base_app.py": "14f4e683a15851f07fe3a1ccf966f80e08eab97d361d6afa44e47ae38a1f9e67",
+    "certus/ui/certus_ui_widgets_cards.py": "89a9d2a4737e288576d0fc4efc10b12c2e604d4d2b4f96c34a54f2c6319d8ddd",
+    "certus/ui/certus_ui_widgets_layout.py": "a7183cdb9cc5a57197139ed5aeba6371f3f27f7f6ea8fdee1ec1b66b88090d4e",
+    "certus/ui/certus_ui_shared.py": "15818490b3c288319a47a95758868cc2bbf22458423f82329f3d61af45c0def8",
+    "certus/utils/certus_progress_tracker.py": "b977b695919837380bd8a2bd137a8bea07eda97ebb9b0a7a40343a908a63cc19",
+    "certus/ui/certus_ui_widgets_progress.py": "a9cec7c0a95b78c6204794ed25dd2dc6799e592c42bbed08d7966d0892599771",
+    "certus/ui/certus_ui_widgets_welcome.py": "85e64024c3f147c9f9d8769156b3120f66e5f5e6771834fe39c5c1b44f549944",
+    "certus/core/certus_array_utils.py": "c1c4eacad51b01e78370b0db133ec17b348c18573b1a27b073fdff54832992f2",
+    "certus/utils/certus_reports.py": "3620483c509391a9126b9323457f77b17a932cc257769f300b9fb0b3885c3d31",
+    "certus/utils/certus_data.py": "a260ecf828539c8ff9b575a06f2195b2b85ed5ad627e536ae88e85cde377bba0",
+    "certus/workers/certus_base_workers.py": "9e811957dec2ee4f9bb77dff2b9a5964b19e4f1397c4bccec1157b704292a5c3",
+    "certus/ui/certus_ui.py": "74517fd363d7b4585a5e65169d0021ab5a6f4eec90a9346645f599733e4a8e2e",
+    "certus/spline/certus_index_spline_io.py": "3bd889df63fceb23b0c61a391db0e6ecd08a997bfc6b35ef47c1565c3763b63f",
+    "certus/spline/certus_index_spline_config.py": "6d357bc8ea39999f035775fbdcc63d9978c3cc76b939259bd5fa16a73826df10",
+    "certus/spline/certus_index_spline_core.py": "e1b7f426c5d63181b3d5443e9630842abe8d40c6a5191afdd3db33eb8c6a9bfa",
+    "certus/ui/certus_index_ui_utils.py": "921d6904e761cf3a202242d6d4fbe0e0edcfaa4918569ac035ff7087971cd5ce",
+    "certus/core/certus_lazy_imports.py": "d83a31badaa0a758002e89dc319fe701ef91a50457b72b9dee477682eb402bbd",
+    "certus/core/certus_index_objectives.py": "9c7c06b03b6d2bb35333a1993f965489fda25d55174b8ac85619897164a0cfe2",
+    "certus/core/certus_index_solvers.py": "bc01adb957dd6d642236e255f8a8625e086ac2fe1c80dc6ec4330e855448a82e",
+    "certus/core/certus_metrology.py": "650ca2c167cdf5aab0a0586049af7990356a6c70e2ea7d38d10f807d95142f8e",
+    "certus/utils/certus_services.py": "f10353523c2b9ff41a5b2a8df27fc938f10923f73bbdc3356142ab4d0c6fe3dd",
+    "certus/workers/certus_index_workers.py": "790c1f64ce5c22f1c7821ebef6af932999a28aca45cf1d20f2d3927bbd63e9ad",
+    "certus/ui/certus_index_ui_export.py": "a9002457fcf2f871b54e8ffd852f5d1015071650023d5dfb653280e2b972ab8a",
+    "certus/ui/certus_onboarding.py": "aeb6773a3e5e3fc9d6ab48f8a4d268a0b8b782b8c51f902c5680b249cc7f168a",
+    "certus/core/certus_design_worker_utils.py": "9661ea257efe90a6f88e043e39e5601c0f9eab965945933afcdefde9ee573c7b",
+    "certus/core/certus_design_workers_dto.py": "a7a81f7a3bd9a84732fbe2034f423ce8807b4f3b7238d5a154935ea961aa3d7d",
+    "certus/core/certus_design_core.py": "8c0846d654a8ea069167f5001a7b39bf40c6869304b4a0629fbfe03d2fd1e403",
+    "certus/workers/certus_design_workers_needle_strat.py": "cf06bbd49ccfe3b35fbf9ef252e96167bbef9a25739a3ea38bba714e7c729245",
+    "certus/workers/certus_design_workers_strat.py": "c96a44189baa188c48a5a43ef6ca56974b4a8aba28457258ff2d823dacc6c020",
+    "certus/workers/certus_design_workers.py": "9b25524d791361f631a37943f8c82897203eb5cdf00286f0aa50ea5a2eb49eda"
+  },
+  "script_sha256": "84a78fa84949af0fb71234bfeaa3737ad246ba4f0f3f8a9f93fcfe87faf33359",
+  "limitations": "Selected paths, controlled optimizer and data; no exhaustive UI, parallel solver, release or performance validation."
+}

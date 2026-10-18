@@ -116,7 +116,7 @@ vide, avec trois processus : P1 sauvegarde seul l'appelé parallèle `calculate_
 l'appelant `calc_spectrum_front` pendant que l'appelé est **relu du disque** (P2 tourne correctement et sauvegarde
 l'appelant) ; P3 relit l'appelant : plantage, déterministe. Quand l'appelé est compilé dans le même processus que
 l'appelant (écriture puis relecture par le même script), tout va bien. Les deux caches réels de cette machine
-contiennent une entrée défectueuse : le cache à clé `%TEMP%\CERTUS_Numba_Cache8de25316185` (écrit le 16/10, celui
+contiennent une entrée défectueuse : le cache à clé `%TEMP%\CERTUS_Numba_Cache\38de25316185` (écrit le 16/10, celui
 que lit `tests/conftest.py`) et le cache par défaut `certus/physics/__pycache__`. Numba 0.67.0, Python 3.14.8,
 Windows.
 

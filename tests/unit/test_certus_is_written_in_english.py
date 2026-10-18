@@ -119,6 +119,50 @@ def test_certus_prose_is_english() -> None:
     assert found == [], "French prose in certus/ (rule 11):\n" + "\n".join(found)
 
 
+# =============================================================================
+# The accent rule: no word list, no function word needed
+# =============================================================================
+
+#: A letter that French carries and English prose does not. Å (angstrom), µ, ° and the Greek letters are physics, not
+#: French, and are not here. The detector above needs a function word next to the accent; this rule needs nothing. It was
+#: added on 2026-10-18, when four comments of one widget (Materiau, Epaisseur, Statut d'analyse, Nettoyage precedent)
+#: turned out to have slipped through the word list: the tree held no accented letter in its prose once they were
+#: translated, so the rule costs no false alarm today (a proper name with an accent goes into ALLOWED).
+_FRENCH_LETTER = re.compile("[éèêëàâùûïîôçœÉÈÊËÀÂÙÛÏÎÔÇŒ]")
+
+
+def accented_prose(rel: str, src: str) -> list[str]:
+    """Every line of comment, docstring or logging text of `src` that carries a French accented letter."""
+    return [
+        f"{rel}:{line}: {text.strip()[:100]}"
+        for line, text in _prose_lines(src)
+        if _FRENCH_LETTER.search(text) and not any(rel == f and frag in text for f, frag in ALLOWED)
+    ]
+
+
+@pytest.mark.unit
+def test_certus_prose_carries_no_accented_letter() -> None:
+    files = _certus_sources()
+    assert len(files) > 200, "the sweep must see the package"
+    found = []
+    for rel in files:
+        found += accented_prose(rel, (ROOT / rel).read_text(encoding="utf-8-sig"))
+    assert found == [], "an accented letter in the prose of certus/ (rule 11):\n" + "\n".join(found)
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("comment", ["# 2. Badge Matériau (H vs L)", "# 3. Épaisseur", "# Nettoyage précédent"])
+def test_the_accent_rule_sees_the_comments_the_word_list_missed(comment: str) -> None:
+    """The three lines of the widget that the word list let through (none holds a French function word)."""
+    assert not is_french(comment), "this line is one the word list misses: the control has lost its point"
+    assert accented_prose("widget.py", comment + "\nvalue = 1\n")
+
+
+@pytest.mark.unit
+def test_the_accent_rule_leaves_physics_alone() -> None:
+    assert accented_prose("physics.py", "# Å, µ, ° and λ are units and symbols, not French; Schrödinger is German\nx = 1\n") == []
+
+
 @pytest.mark.unit
 def test_the_detector_catches_french_in_all_three_places() -> None:
     src = (

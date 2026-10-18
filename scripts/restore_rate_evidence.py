@@ -7,7 +7,7 @@ import gzip
 import hashlib
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 PUBLICATION = Path("reports/STRAT_Rate_publication_2026-10-16")
 
@@ -25,6 +25,24 @@ def safe_path(root: Path, name: str) -> Path:
     if Path(name).is_absolute() or not candidate.resolve().is_relative_to((root / "reports").resolve()):
         raise ValueError(f"Evidence path must stay inside reports: {name}")
     return candidate
+
+
+def locate_archive_root(recorded: Path, root: Path) -> Path | None:
+    """The folder of the archive: where it was recorded, else the folder of the same name above the clone.
+
+    `archive_location.json` records an absolute path, and the parent folder it names can be renamed or moved (the one
+    of 2026-10-16 says `drivefl`, the folder is now `drivfl`). The archive is kept next to the clone, so the folder of
+    the same name is looked for in each parent of `root`. Nothing is trusted on its name: `restore_one` checks every
+    file of the archive against its SHA-256, and a wrong folder of that name fails there.
+    """
+    if recorded.is_dir():
+        return recorded
+    name = PureWindowsPath(str(recorded)).name
+    for parent in root.parents:
+        candidate = parent / name
+        if name and candidate.is_dir():
+            return candidate
+    return None
 
 
 def restore_one(root: Path, entry: dict, *, verify_only: bool = False, archive_root: Path | None = None) -> bool:
@@ -87,6 +105,14 @@ def main() -> None:
     location = root / PUBLICATION / "archive_location.json"
     if archive_root is None and location.exists():
         archive_root = Path(json.loads(location.read_text(encoding="utf-8"))["archive_root"])
+    if archive_root is not None:
+        found = locate_archive_root(archive_root, root)
+        if found is None:
+            parser.error(
+                f"archive root not found: {archive_root} (nor a folder of that name above {root}); "
+                "pass --archive-root with the folder that holds the archived evidence"
+            )
+        archive_root = found
     restored = sum(restore_one(root, entry, verify_only=args.verify_only, archive_root=archive_root) for entry in entries)
     print(f"EVIDENCE=GO files={len(entries)} restored={restored} verify_only={args.verify_only}")
 

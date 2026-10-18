@@ -4,10 +4,18 @@ from __future__ import annotations
 
 import gzip
 import hashlib
+import subprocess
+import sys
+from pathlib import Path
 
 import pytest
 
 from scripts.restore_rate_evidence import digest, restore_one, safe_path
+
+ROOT = Path(__file__).resolve().parents[2]
+SCRIPT = ROOT / "scripts" / "restore_rate_evidence.py"
+#: An evidence file that the tracked manifests really list (the example of the README of the publication).
+LISTED = "reports/STRAT_Rate_suite_2026-10-15/R5_integration/native/measurement/pipeline_trace.json"
 
 
 @pytest.fixture
@@ -76,3 +84,41 @@ def test_evidence_can_stay_in_an_explicit_external_archive(evidence, tmp_path):
     assert restore_one(checkout, entry, archive_root=archive_root)
     assert (checkout / entry["raw_path"]).read_bytes() == data
     assert (archive_root / entry["gzip_path"]).exists()
+
+
+def test_a_renamed_parent_folder_does_not_hide_the_archive(tmp_path):
+    """The path recorded on 2026-10-16 names a parent folder that has since been renamed (drivefl -> drivfl).
+
+    The archive is still next to the clone: the folder of the same name is found above it. Every file is checked
+    against its SHA-256 afterwards, so a wrong folder of that name is refused, not trusted.
+    """
+    from scripts.restore_rate_evidence import locate_archive_root
+
+    base = tmp_path / "couches"
+    archive = base / "Archives_CERTUS_20261016"
+    archive.mkdir(parents=True)
+    clone = base / "CERTUS" / "certus0310"
+    clone.mkdir(parents=True)
+    recorded = tmp_path / "former_name" / "couches" / "Archives_CERTUS_20261016"  # does not exist any more
+
+    assert locate_archive_root(recorded, clone) == archive
+    assert locate_archive_root(archive, clone) == archive  # the recorded folder, when it exists, is kept
+
+
+def test_an_archive_that_is_nowhere_is_reported_as_missing(tmp_path):
+    from scripts.restore_rate_evidence import locate_archive_root
+
+    clone = tmp_path / "CERTUS" / "certus0310"
+    clone.mkdir(parents=True)
+    assert locate_archive_root(tmp_path / "gone" / "Archives_CERTUS_20261016", clone) is None
+
+
+def test_a_missing_archive_root_stops_with_a_message_not_a_traceback(tmp_path):
+    run = subprocess.run(
+        [sys.executable, str(SCRIPT), "--verify-only", "--path", LISTED,
+         "--archive-root", str(tmp_path / "nowhere" / "Archive_that_exists_nowhere")],
+        cwd=ROOT, capture_output=True, text=True, timeout=120,
+    )
+    assert run.returncode == 2, run.stderr[-1500:]
+    assert "archive root not found" in run.stderr
+    assert "Traceback" not in run.stderr

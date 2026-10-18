@@ -1,5 +1,6 @@
 import logging
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -128,7 +129,6 @@ def open_file_explorer(path: str) -> None:
                 if resolved_path.is_dir():
                     os.startfile(path_str)
                 else:
-                    import subprocess
                     subprocess.Popen(
                         ["explorer", "/select,", path_str],
                         shell=False,
@@ -140,7 +140,6 @@ def open_file_explorer(path: str) -> None:
                 raise
         elif sys.platform == "darwin":
             try:
-                import subprocess
                 subprocess.Popen(
                     ["open", "-R", path_str],
                     stdout=subprocess.DEVNULL,
@@ -151,7 +150,6 @@ def open_file_explorer(path: str) -> None:
                 raise
         else:  # linux
             try:
-                import subprocess
                 subprocess.Popen(
                     ["xdg-open", str(resolved_path.parent)],
                     stdout=subprocess.DEVNULL,

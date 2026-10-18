@@ -59,16 +59,25 @@ import os
 # Removed at exit: without it every pytest session left one directory behind in the
 # temporary folder (65 in one day, measured 2026-09-26). Only the directory created here
 # is removed -- a CERTUS_CONFIG_DIR set by the caller is never touched.
+# The workers of pytest-xdist are children of the controller and inherit its environment: left alone,
+# they all shared the controller's directory, and one test rewrote the file another was reading
+# (tests/unit/test_the_xdist_workers_get_their_own_preferences.py). A worker therefore takes a directory
+# of its own inside the controller's, which goes with it at exit.
+_PRIVATE_PREFS = '{"auto_export_enabled": false, "schema_version": 1}'
 if "CERTUS_CONFIG_DIR" not in os.environ:
     import atexit
     import shutil
 
     _prefs_dir = Path(tempfile.mkdtemp(prefix="certus_test_prefs_"))
     atexit.register(shutil.rmtree, _prefs_dir, ignore_errors=True)
-    (_prefs_dir / "certus_export.json").write_text(
-        '{"auto_export_enabled": false, "schema_version": 1}', encoding="utf-8"
-    )
+    (_prefs_dir / "certus_export.json").write_text(_PRIVATE_PREFS, encoding="utf-8")
     os.environ["CERTUS_CONFIG_DIR"] = str(_prefs_dir)
+    os.environ["CERTUS_CONFIG_DIR_IS_PRIVATE"] = "1"
+elif os.environ.get("CERTUS_CONFIG_DIR_IS_PRIVATE") == "1" and os.environ.get("PYTEST_XDIST_WORKER"):
+    _worker_dir = Path(os.environ["CERTUS_CONFIG_DIR"]) / os.environ["PYTEST_XDIST_WORKER"]
+    _worker_dir.mkdir(exist_ok=True)
+    (_worker_dir / "certus_export.json").write_text(_PRIVATE_PREFS, encoding="utf-8")
+    os.environ["CERTUS_CONFIG_DIR"] = str(_worker_dir)
 
 # Numba's cache goes where the applications put it: one directory per version of the sources
 # (certus.core.certus_core.numba_cache_key). Left alone, Numba writes it next to the sources, in

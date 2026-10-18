@@ -3,6 +3,9 @@
 Lists the uncovered functions of a module, largest first, so that coverage work can
 start where it pays most.
 
+The default pytest options measure no coverage (pyproject.toml), so ask for it:
+    python -m pytest tests/unit -q --cov=certus --cov-report=xml --cov-report=term-missing
+
 Usage:
     python tools/coverage_function_audit.py \
         --target certus/core/_certus_physics_impl.py \

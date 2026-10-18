@@ -85,7 +85,12 @@ line-ending = "lf"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "--strict-markers --strict-config --verbose --tb=short --cov=certus --cov-report=html:htmlcov --cov-report=term-missing --cov-report=xml"
+# Quiet by default: one line of dots per test file, a short traceback per failure. A bare `pytest tests/oracle/` printed 150 KB with
+# `--verbose` (measured 2026-10-18), and an AI assistant pays for every byte it reads. Coverage is opt-in:
+# `pytest --cov=certus --cov-report=term-missing` (add `--cov-report=xml` for tools/coverage_function_audit.py).
+# Never put `-q` here: a caller that adds its own `-q` reaches `-qq`, which drops the final summary line that
+# scripts/validate_parallel.py and the CI read. tests/unit/test_the_default_pytest_run_is_quiet.py pins all of this.
+addopts = "--strict-markers --strict-config --tb=short"
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]

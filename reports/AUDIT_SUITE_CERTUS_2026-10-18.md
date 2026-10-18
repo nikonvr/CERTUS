@@ -382,8 +382,10 @@ rouge avant la correction). Les commits sont sur `claude/ecstatic-newton-3grmls`
   (80 Mo) sont ignorées par chemin exact, non commitées.
 - **Ménage des .md** : `docs/ETAT.md` 168 → 94 Ko (section 0 : 891 → 248 lignes), `docs/STRAT_Rate_suite_chantier.md` 81 → 24 Ko ; l'ancienne version reste
   dans `git show 9fc49269:<fichier>`. `CLAUDE.md` n'est pas touché.
-- **Taille du dossier** : 980 Mo mesurés par `du -sb .` (limite de 1 Go), après le retrait de 12 Mo de fichiers `tmp_obj_*` orphelins de `.git` ;
-  `.claude/worktrees/` pèse 381 Mo et porte du travail non commité d'autres sessions (non touché).
+- **Taille du dossier** : 980 Mo mesurés par `du -sb .` (limite de 1 Go), après le retrait de 12 Mo de fichiers `tmp_obj_*` orphelins de `.git`, puis
+  580 Mo après le retrait, à la demande de 👤, des deux worktrees de `.claude/worktrees/` (381 Mo). Leur travail non commité, d'autres sessions, est commité
+  sur deux branches locales non poussées : `claude/alg02-prune-evaluator-0d2a8d` (`46261901`) et `claude/dreamy-burnell-85397a` (`cc3fe134`). Seuls fichiers
+  non conservés : 38 petits journaux d'exécution (`*.log`, `*.jsonl`, ignorés par git) du premier worktree.
 - **Validation de l'arbre final** par `scripts/validate_parallel.py` : voir `docs/ETAT.md` §0, « Dernière validation complète ».
 - **Publication** : ordonnée par 👤 le 2026-10-18 (« push et commit tout ») ; `git status -sb` donne l'état du distant.
 

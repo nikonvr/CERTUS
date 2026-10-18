@@ -41,7 +41,7 @@ court prêt à copier à une autre IA figure en section 11.
 
 **TODO supplémentaire demandé par 👤 le16octobre :** tenter le99c en une seule campagne en injectant
 du Rate et en appliquant les derniers raffinements Rate intégrés. La tâche A9 de
-[ETAT, section0](ETAT.md) précise les comparaisons, limites et preuves attendues ; aucun essai99c
+[ETAT_actions.md](ETAT_actions.md) précise les comparaisons, limites et preuves attendues ; aucun essai99c
 n'est lancé par cet ajout documentaire.
 
 ## 1. Situation exacte à la passation

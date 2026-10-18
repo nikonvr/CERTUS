@@ -13,9 +13,9 @@
 > à la fin. Les règles de validation sont dans les sections 2, 4 et 12 de
 > [CLAUDE.md](../CLAUDE.md) ; les décisions scientifiques appartiennent à 👤 (§5).
 
-> **Lire peu.** Cette section va des reprises courantes aux décisions de 👤. Les récits des programmes terminés (A1, A2, R0–R6,
-> batchs Rate des 13 et 14 octobre) en ont été retirés le 2026-10-18 : leurs résultats tiennent dans « Acquis » ci-dessous, les
-> preuves dans `reports/` (ouvrir le `bilan.md` ou le `README.md` d'un dossier, ou chercher avec `grep`, jamais le dossier entier),
+> **Lire peu.** Cette section ne porte que la reprise courante, la validation et les décisions de 👤. Le reste se lit à la demande : les actions A3 à A9 et le protocole
+> de mesure dans [`ETAT_actions.md`](ETAT_actions.md) ; les acquis du Rate, les corrections qui invalident des mesures, les reprises antérieures et le vocabulaire
+> dans [`ETAT_acquis.md`](ETAT_acquis.md) ; les preuves dans `reports/` (ouvrir le `bilan.md` ou le `README.md` d'un dossier, ou chercher avec `grep`, jamais le dossier entier),
 > le récit dans Git : `git show 9fc49269:docs/ETAT.md` donne la version d'avant l'élagage. `UXargon.md` et `designargon.md`
 > (racine, 187 Ko) se lisent par identifiant (`grep -n "ALG-02" designargon.md`), jamais en entier.
 
@@ -27,106 +27,21 @@
 Les sources, protocoles, scripts, plans et audits restent dans une archive compacte **dans** Bonne Mère ; les preuves appariées 452 nm sont conservées sans perte. Les autres sorties brutes lourdes ont été supprimées explicitement pour la limite humaine de **1 Go pour certus0310 entier, Bonne Mère compris**. [Mesure du nettoyage](../studies/bonne_mere/dossier_final/rapport_nettoyage.json). Pas d’archive extérieure ; sources de production et travaux CERTUS préexistants préservés. Reprendre le codage de CERTUS à la demande suivante.
 
 **Reprise courante (2026-10-18).** Audit complet de la suite hors `studies/bonne_mere/` : [rapport](../reports/AUDIT_SUITE_CERTUS_2026-10-18.md)
-(constats C01–C19, plan A1–A22 avec leur statut et leurs mesures). Corrigés, un commit chacun : le worker de couleur de DESIGN levait une
-`TypeError` à chaque calcul depuis 2026-06-22 (C01) ; `open_file_explorer` masquait l'erreur du système (C08) ; les tests tiennent sous
-`pytest-xdist` (C02) ; `scripts/preflight.py` comptait faux sans chemins longs (C05) ; `restore_rate_evidence.py` retrouve l'archive voisine du
-clone (C04) ; la garde CI des `connect(lambda)` ne lisait que dix lanceurs et comptait 0 pour 44 sites (C19) ; la garde « pas de français »
-voit les lettres accentuées (C11, C17) ; **crash de Numba** (C18) : un appelant en série mis en cache, d'un noyau parallèle lui aussi en cache,
-fait planter l'interpréteur à la relecture du cache (code 139) ; parade `cache=False` sur `calc_spectrum_front`, `calc_spectrum_full` et
-`compute_batch_rmse`, C1 tenu au bit (9 092 tableaux), cas minimal de 20 lignes en annexe du rapport (D111). `python scripts\validate_parallel.py`
-rejoue CLAUDE.md §2 en ≈ 17 min sur 16 cœurs (`ui` à 6 workers : à 16, l'audit UX échoue sous charge ; `performance` en série).
-Même jour, sur ordre de 👤 : ménage de `reports/`. 215 entrées datées d'avant le 2026-10-04 et citées par rien (code, tests, scripts, docs, vitrine)
-sont retirées du dépôt (338 fichiers, 32 Mo) ; les caches que des scripts reconstruisent par leur nom (`intervalles_99c*`, `controle_*`, `plans`)
-restent. Rien n'est perdu : `git log --diff-filter=D --name-only -- reports/<nom>`, puis `git checkout <commit>^ -- reports/<nom>`. Quatre sorties
-brutes du 99c (`reports/blocs_vs_plantage_99c_premium_s101*.json`, 80 Mo) sont ignorées par chemin exact, comme les autres sorties brutes, et restent
-sur le disque. **Taille du dossier : 580 Mo le 2026-10-18 (`du -sb .`), pour une limite de 1 Go** : 965 Mo avant que les deux worktrees d'autres sessions de `.claude/worktrees/` (381 Mo) soient retirés. Leur travail non terminé est commité sur deux branches locales, jamais poussées ni fusionnées, non validées : `claude/alg02-prune-evaluator-0d2a8d` (`46261901`, correctif de D107 avec test, mesures et rapport) et `claude/dreamy-burnell-85397a` (`cc3fe134`, levier `rate_post_admissible_window` de la fenêtre admissible 48c). Pour reprendre : `git worktree add <chemin> <branche>`, puis fusionner la branche principale, dont elles retardent. Restent `reports/` 269 Mo, `.git` 199 Mo, `studies/` 39 Mo.
+(constats C01–C19, plan A1–A22 avec leur statut et leurs mesures), un commit par correction. À retenir : **crash de Numba** (C18), un appelant en série mis en cache,
+d'un noyau parallèle lui aussi en cache, fait planter l'interpréteur à la relecture du cache (code 139) ; parade `cache=False` sur `calc_spectrum_front`,
+`calc_spectrum_full` et `compute_batch_rmse`, C1 tenu au bit (9 092 tableaux), cas minimal de 20 lignes en annexe du rapport (D111).
+`python scripts\validate_parallel.py` rejoue CLAUDE.md §2 en ≈ 17 min sur 16 cœurs (`ui` à 6 workers : à 16, l'audit UX échoue sous charge ; `performance` en série).
+Sur ordre de 👤, ménage de `reports/` : 215 entrées datées d'avant le 2026-10-04 et citées par rien sont retirées du dépôt (338 fichiers, 32 Mo) ; les caches que des
+scripts reconstruisent par leur nom (`intervalles_99c*`, `controle_*`, `plans`) restent. Rien n'est perdu : `git log --diff-filter=D --name-only -- reports/<nom>`, puis
+`git checkout <commit>^ -- reports/<nom>`. Quatre sorties brutes du 99c (`reports/blocs_vs_plantage_99c_premium_s101*.json`, 80 Mo) sont ignorées par chemin exact, comme les
+autres sorties brutes, et restent sur le disque. **Taille du dossier : 580 Mo le 2026-10-18 (`du -sb .`), pour une limite de 1 Go** (`reports/` 269 Mo, `.git` 199 Mo,
+`studies/` 39 Mo). Le travail non terminé de deux worktrees retirés est commité sur deux branches locales, jamais poussées ni fusionnées, non validées :
+`claude/alg02-prune-evaluator-0d2a8d` (`46261901`, correctif de D107 avec test, mesures et rapport) et `claude/dreamy-burnell-85397a` (`cc3fe134`, levier
+`rate_post_admissible_window` de la fenêtre admissible 48c). Pour reprendre : `git worktree add <chemin> <branche>`, puis fusionner la branche principale, dont elles retardent.
 
 **Deuxième passe d'audit (2026-10-18, soir).** [Rapport](../reports/AUDIT_SUITE_CERTUS_2e_passe_2026-10-18.md) et son dossier de sondes `reports/AUDIT_2e_passe_2026-10-18/` ; aucun code modifié. Validation parallèle `GO` sur `4cdc3938`, CI distante verte sur la même tête (tests en série sous Ubuntu et Windows, gel, lint, sécurité), C1 tenu contre `6e546515` (9 092 tableaux au bit), TMM de production égal à l'oracle à 6·10⁻¹⁴ sur 63 000 cas aléatoires, historique entier de 1 575 commits sans secret. Nouveaux constats C20 à C32, dont : le noyau de gradient hérité est faux pour des couches absorbantes (D113, latent), des entrées invalides donnent du fini plausible (D114), quatre mutations de formules survivent à toute la suite (D115). Plan A23 à A35 au rapport.
 
-**Reprise du 2026-10-17.** 👤 valide les trois statuts du registre des leviers Rate (`rate_layer_sets` RESERVE, `rate_tail_keep_optical`
-NON_MESURE, `rate_rescue_hard` RESERVE ; `0c7c1e2e`, liste d'attente vide), puis demande d'essayer le 99c avec les dernières évolutions du Rate sur
-un seul verre témoin. Quatre mesures exploratoires (`premium`, consensus 41/42/43, graines de recherche 42 et 101, hors protocole de campagne) :
-chiffres au §2, bilan dans [`bilan.md`](../reports/STRAT_99c_rate_elargi_2026-10-16/bilan.md). Le gain du profil élargi vient surtout de l'élargissement
-de la recherche, pas du raffinement final (−0,89 % à la graine 42, aucun à la 101) ; il n'est confirmé sur aucun groupe frais et suppose un Rate sans
-dérive de vitesse (A6). Isolation des leviers (budget 240 seul, puis budget 240 et six tours), graines 42 et 101 : protocoles et bilan dans
-`reports/STRAT_99c_isolation_leviers_2026-10-17/` et `reports/STRAT_99c_isolation_leviers_graine101_2026-10-17/`. À la graine 42, sur le score de
-consensus, le budget 240 seul porte 62 % de l'écart entre les défauts et le profil élargi avant raffinement, les six tours 7 % (sous le bruit de 4,2 %),
-les 480 voisins conjoints 31 % : une graine, un chemin de décomposition, C2 en partie sous charge étrangère. La chaîne de la graine 101 s'est terminée
-ou a été interrompue le 2026-10-17 à 05:38 UTC (`MESURES_TERMINEES.txt`) ; son dossier n'a pas de `bilan.md` : lire `chain.log` avant d'en tirer un chiffre.
-Contre-audit de `designargon.md` et `UXargon.md` ([rapport](../reports/ARGON_contre_audit_Claude_2026-10-17.md)) : cinq défauts d'intégrité confirmés par
-un test rouge puis corrigés, un commit chacun (`868db8c9`, `8c6d951b`, `bdcae9ed`, `c25937b3`, `7f3edea8`) ; ALG-02, non corrigé, est D107 (§4).
-Branche publiée à `7f3edea8` le 2026-10-17 sur l'accord de 👤.
-
-**Reprise du 2026-10-16.** Après le bilan clos, 👤 demande une passation, « push et commit all », puis un ménage drastique sous 1 Go : archives
-locales et dépôt Git léger, 2 242 JSON volumineux conservés en archives avec empreintes SHA hors CERTUS, caches retirés. Publication faite après
-confirmation explicite de 👤 vers `https://github.com/nikonvr/CERTUS.git`, branche `claude/ecstatic-newton-3grmls` (`be3af69e` vérifié sur le distant),
-sans réécriture d'historique. [Ménage, emplacement des archives et restauration ciblée](../reports/STRAT_Rate_publication_2026-10-16/README.md) ;
-[diagnostic précis, commandes et limites](STRAT_Rate_reprise_20261016.md) ; [autorisation, périmètre et plafonds](../reports/STRAT_Rate_followup_2026-10-16/authorization_and_plan.json).
-Le programme borné R0–R6 est clos et son ancien suivi est PAUSED. **TODO de 👤 :** tenter le 99c en une seule campagne avec injection de Rate et les
-derniers raffinements (A9, ci-dessous).
-
-**Revue de HEAD du 2026-10-16.** Le groupe « reste » de CLAUDE.md §2 exige `pytest-benchmark` (11 benchmarks de noyaux) ; le projet ne le déclare
-nulle part (D110). Dette : les trois interrupteurs Rate lus par la recherche sont au registre des leviers (liste d'attente de
-`tests/unit/test_strat_leviers.py` vide) ; les textes `mesure` de `elite_rate_joint_candidates` et `rate_post_refinement` datent d'avant R5/R6 et
-attendent la décision de 👤.
-
-**Contre-audits ARGON** (`UXargon.md`, `designargon.md`, preuves dans `reports/ARGON_contre_audit_2026-10-16/`). Le premier contre-audit a corrigé et
-qualifié les deux audits par niveau de preuve : 22 démarrages GUI hors écran, 0 cas fautif selon le harnais ; 20 observations ciblées vérifiées,
-0 erreur de sonde ; corps extraits et décorateurs Numba retirés, donc aucune validation complète/JIT ni performance démontrée ([preuves, limites et
-empreintes](../reports/ARGON_contre_audit_2026-10-16/evidence.json), [reproduction](../reports/ARGON_contre_audit_2026-10-16/probe.py.txt)). Le second,
-interrompu le 2026-10-17 quand 👤 a ouvert le sujet « bonne mere », a conservé [cinq observations supplémentaires](../reports/ARGON_contre_audit_2026-10-16/pass02.json)
-(grille oblique non densifiée, bornes et arrêt ignorés au raffinement final), pas encore reportées dans les audits. Défauts prioritaires des audits :
-snapshot DESIGN et filtre final 5 nm supprimant des couches fixes (corrigé, `bdcae9ed`), précision lambda SMOOTHER, coûts Needle et évaluateur d'élagage
-(celui-ci : D107) ; progression RE incompatible, puis grille oblique à valider en worker. Descriptions fautives retirées : métrique de tri prise pour des états
-vides, accès JSON SPLINE absent, aide/F1 absents, solveur maison, `jac` absent et paramètres/formule PGLOBAL inexacts. Trois contrôles documentaires à 0 ;
-[contrôles complémentaires](../reports/ARGON_contre_audit_2026-10-16/documentation_checks.json).
-
-**Acquis du Rate (programme R0–R6, clos le 2026-10-16 par arrêt précoce R6).** Bilan final et limites :
-[`bilan_final.md`](../reports/STRAT_Rate_suite_2026-10-15/final_20261016/bilan_final.md), audit [`audit_final.json`](../reports/STRAT_Rate_suite_2026-10-15/final_20261016/audit_final.json) ;
-synthèse du 2026-10-14 : [`STRAT_Rate_bilan_2026-10-14.md`](../reports/STRAT_Rate_bilan_2026-10-14.md) ; guide : [`STRAT_Rate_suite_chantier.md`](STRAT_Rate_suite_chantier.md).
-- Correctif RMSE validé (les poids constants positifs vont à la spécialisation non pondérée ; 490 tableaux non concernés identiques au bit) ; intégration Rate
-  (R5) validée et **inactive par défaut** (`elite_rate_joint_candidates=0`, `rate_post_refinement=False`).
-- `r75x0.5` : gains propres confirmés sur les trois graines (moyennes 1,2541 % / 1,2888 % / 1,7562 % contre le contrôle complet, 3/3 victoires chacune) ;
-  **aucun gain au 48c** (même plan complet, 0 %) ; quatre paires R6 consommées sur six, `x1.5` et `x2` non lancés selon la règle fixée avant la mesure.
-- Chaîne de plans sur `r75x0.5 deep`, graine 101 (SEEL de recherche) : référence 0,3967 nm → natif conjoint (budget Rate 240, six tours, 480 voisins conjoints)
-  0,3600608863 nm (−9,24 %) → préfixe L1–L5 à 600 nm 0,3539592452 nm (−10,78 %) → fenêtre L35–L37 à 688 nm 0,3409240518 nm (−14,06 %, plan 9900006) → préfixe 613 nm
-  0,3345159946 nm (−15,68 %, plan 9900008, gagnant local : 13,23 à 15,87 % contre la référence sur neuf groupes frais, 8 victoires sur 9 contre son parent).
-  **Non confirmés sur groupes frais** : l'apport propre des voisins conjoints (4 groupes sur 10 favorables contre l'ablation), le préfixe fin à 598 nm, les couples de
-  fenêtres, les 720 voisins de préfixe ajoutés à la recherche native. R3 (largeurs seules, puis λ) : aucun gain. Le raffinement local alterné retrouve de lui-même
-  0,3431123800 nm (R4 : 3/3 contre le natif, moyenne 4,4772 %, 1/3 contre le meilleur local 9900008 ; R3_h03 : moyenne 5,2130 %, 0/3). La découverte native automatique
-  est étayée pour `r75x0.5` ; sa généralisation à d'autres composants reste non établie.
-- A2 (24 exécutions, 12 paires avec/sans `elite_rate_moves`, terminée le 2026-10-14 : [bilan](../reports/STRAT_A2_continuation_2026-10-14/final_bilan_A2_20261014.md)). Gains bruts avec/sans :
-  `r75x0.5` s77 11,7507 % ; `r75x2` s202 4,6980 %, s77 4,7770 % ; `r75x1.5` s42 3,25 %, s101 0,12 % ; `r75x1.75` s42 sous le repère de dispersion, s101 5,0439 % ; `35c` 1,0997 % ;
-  `75c` 0,0471 % ; 48c premium s77 −0,5893 % (régression), s101 0,1364 %, s202 0,3372 %. Aucune supériorité établie ni confirmation homogène indépendante.
-- Avant R0, le 2026-10-12 : `elite_rate_moves` actif par défaut depuis `978b8f04` ([rapport](../reports/STRAT_ELITE_couches_Rate_paquets_2026-10-12.md)) : `r75x0.5` (graines 42 / 101 / 202)
-  0,5031 / 0,4981 / 0,5000 → 0,4347 / 0,3967 / 0,3967 nm (le meilleur plan des graines 101 et 202 : trois paquets de Rate et deux fenêtres d'optique de deux couches, la première
-  à 451 nm) ; `r75x0.5` avec un seul verre témoin, que la recherche ne savait pas fabriquer (0 déposable sur 8 687 plans), rend 3 383, 3 701 et 3 279 plans déposables aux graines
-  42, 101 et 202. D96 à D98 sont le modèle d'arrêt par défaut (`8d9ced13`, §3) : l'attente sans fin retire 95 % des plans que l'ancien modèle jugeait fabricables ; le secours Rate
-  (`0fc7c5f2`, `40642146`) pose au temps la queue des plans dont le contrôle optique cède ; les enfants d'ELITE gardent les couches Rate de leur parent (`4a4e1f0d`)
-  ([rapport](../reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md)). ELITE « tour à tour », six graines : médiane +0,7 %, pas de gain net démontré (§5,
-  [rapport](../reports/STRAT_ELITE_tour_a_tour_six_graines_2026-10-12.md)). Tous ces SEEL sont ceux du modèle de Rate de STRAT, sans dérive de la source (§7).
-
-**Corrections qui invalident des mesures plus anciennes.**
-- D100 (`2cba90f4`, 2026-10-11) : du 2026-09-08 au 2026-10-11, tout résultat STRAT a tourné sans Rate, sans biais de fente et sans recherche de fente, sauf surcharge explicite
-  ([rapport](../reports/STRAT_D100_interrupteurs_non_charges_2026-10-11.md)).
-- D103 (`de9a2025`) : en `deep` et `extreme`, des identifiants de groupements en double mélangeaient les scores du consensus ; les résultats `deep` d'avant (campagnes d'août, repères
-  du §2 hors `r75x2` sans rampes) ont pu choisir leurs parents ELITE sur des scores mélangés ([rapport](../reports/STRAT_D103_identifiants_en_double_2026-10-11.md)).
-- D106 (`6fcdd56a`) : les enfants d'ELITE étaient notés sans biais de fente. À `r75x2` sans rampes (graine 101, ancien modèle d'arrêt, sans secours Rate) : 706 déposables sur 6 042
-  stratégies sans la correction, 0 sur 4 821 avec ; sans rampes, `r75x2` n'est pas fabricable en optique pure. Au juge de paix, le meilleur SEEL passe de 0,1776 à 0,1927 nm (+8,5 %) :
-  les repères d'avant la correction sont optimistes d'autant.
-
 **Dernière validation complète** (2026-10-18, Windows 11, Python 3.14.8, 16 cœurs, `python scripts\validate_parallel.py`, 16 min, sur `4cdc3938`) : ruff 0 ; trois contrôles documentaires 0 ; oracle 1 146 ; unité 5 545 réussis, 7 ignorés, 1 xfail ; ui 1 324 réussis, 12 ignorés, 2 xfail (6 workers) ; reste 319 ; performance 40 ; `VALIDATION=GO`, aucun artefact de charge. Même tête, CI distante en série : oracle 1 146 ; unité (Ubuntu) 5 542 réussis, 11 ignorés ; reste 348 réussis, 2 ignorés (les 11 tests de `pytest-benchmark` y sont sautés) ; UI (Windows) 1 324 réussis, 12 ignorés, 2 xfail. Mesures : [rapport d'audit](../reports/AUDIT_SUITE_CERTUS_2e_passe_2026-10-18.md).
-
-**Prochaines actions — à lancer avec une autre IA.** Lire dans l'ordre : [`CLAUDE.md`](../CLAUDE.md) (les règles et les onze interdits), ce §0, puis l'action choisie. Chaque action est
-**autonome** : pourquoi, quoi lancer (commandes exactes), quand elle est finie, ce qu'il ne faut pas faire. Les actions sont indépendantes les unes des autres, par priorité décroissante.
-Une action peut donner plusieurs commits, chacun d'une seule chose (C3). **Jamais de `git push` ni de fusion de PR sans l'ordre de 👤.**
-
-**Vocabulaire.**
-*Rate* : couche posée pour un temps, à la vitesse estimée sur les couches du même matériau contrôlées optiquement (ce n'est pas un quartz).
-*Paquet de Rate* : couches consécutives au Rate. *Fenêtre d'optique* : couches contrôlées optiquement entre deux paquets. *Queue* : le Rate va
-d'une coupure à la dernière couche. *Plan mixte* : de l'optique après du Rate. *Plan optique pur* : aucune couche au Rate. *Déposable* :
-plantage inférieur à 5 % au pire des trois niveaux de bruit (0,5×, 1×, 2×). *SEEL* = 2·√score, en nm, toujours rapporté avec la graine et le
-mode. Les indices de couche des artefacts commencent à 0 ; l'interface et les rapports numérotent à partir de 1 (« L18-L75 » = indices 17 à 74).
 
 **En vigueur au 2026-10-13** (ne pas le remettre en cause sans mesure) : D96, D97 et D98 (attente sans fin) ; le secours Rate (`rate_rescue`) ;
 `rate_by_swing` ; ELITE déplace les couches Rate de ses parents (`elite_rate_moves`) ; les enfants d'ELITE portent le biais de fente (D106) et
@@ -138,134 +53,22 @@ gardent les couches Rate de leur parent. Dernière validation complète : ci-des
 3. Lancer la validation de CLAUDE.md §2 **en entier** avant de committer du code : un sous-ensemble de tests a déjà laissé passer une régression
    (le garde-fou `tests/unit/test_the_architecture_debt_only_shrinks.py` ne tourne pas avec les tests voisins).
 
-**Mesurer, une fois pour toutes** (toutes les actions de mesure suivent ce protocole ; il a produit tous les rapports du 2026-10-12).
-```bat
-rem depuis la racine du dépôt ; l'arbre jetable pèse plusieurs Go : le supprimer en fin de mesure
-git worktree add --detach "%TEMP%\mesure_wt" HEAD
-cd /d "%TEMP%\mesure_wt"
-set CERTUS_BENCH_TIMEOUT_S=21600
-python scripts\probe_blocs_vs_plantage.py r75x0.5 deep 0 0 2 0 101 0
-python scripts\resumer_artefact_sonde.py reports\blocs_vs_plantage_r75x0.5_deep_s101.json
-```
-- Les 8 arguments : composant (`48c` juge de paix, `35c`, `75c`, `99c`, `r75x0.5`, `r75x1.5`, `r75x1.75`, `r75x2`, `r75x2-2nm`), mode (`fast`,
-  `premium`, `deep`), recherche de fente (1 pour le juge de paix, 0 ailleurs), `require_turning_point` (0), résolution du monochromateur en nm (2),
-  élargissement (0), graine, réglages de production (0 = rien n'est forcé). Les rapports du 2026-10-12 utilisent `48c premium 1 0 2 0 <graine> 0`,
-  `r75x0.5 deep 0 0 2 0 <graine> 0` et `r75x2 deep 0 0 2 0 <graine> 0`.
-- Pour changer un réglage sans toucher au code : `set CERTUS_PROBE_OVERRIDES=cle=valeur,cle2=valeur2` **et** `set CERTUS_PROBE_TAG=etiquette`
-  (l'étiquette est obligatoire avec une surcharge ; elle entre dans le nom de l'artefact). Les valeurs `true` et `false`, les entiers et les flottants
-  sont reconnus. Vider les deux variables après l'essai.
-- L'artefact est écrit dans `reports\` **de l'arbre jetable** : `blocs_vs_plantage_<composant>_<mode>_s<graine sur trois chiffres>[_<etiquette>][_fente].json`.
-  Si le nom existe déjà, un horodatage s'ajoute : prendre le plus récent par date de modification. Il porte le commit, `git_dirty` (doit être faux, sauf
-  A/B voulu), les surcharges et les réglages Rate effectifs (`config`).
-- **Une seule mesure à la fois sur la machine** (sinon `RESULT=None` ou dépassement du délai) ; pas de test lancé pendant une mesure. Ordres de grandeur,
-  machine seule (Ryzen 7 5700G, 16 threads) : juge de paix `premium` 9 min ; `r75x0.5 deep` 44 min ; `r75x2 deep` 44 à 52 min.
-- **Lire un écart avec prudence** : à 150 tirages la dispersion d'un meilleur SEEL est de l'ordre de 6 % (§2) ; deux exécutions à moins de 8 % ne se
-  distinguent pas. Le SEEL d'un gagnant est le minimum de plusieurs milliers de plans. Un résultat meilleur que prévu se vérifie avant de le croire
-  (rejeu de la graine de base, `rmse_par_bruit` dans l'artefact).
-- **Vérifier qu'un réglage arrive au calcul** avant de lui attribuer un effet : sa valeur dans `config` de l'artefact et sa ligne de journal
-  (`[ELITE-RATE]`, `[RATE-RESCUE]`, `[RATE]`).
-- Fin : copier les artefacts utiles dans un dossier de `reports\` (pour une exécution sans déposable, retirer `margin_by_layer`, `lambdas` et
-  `rmse_par_bruit` de chaque stratégie : voir `reports/STRAT_r75x2_D106_secours_Rate_2026-10-12/`), écrire un rapport en français dans `reports\` (protocole,
-  tableau, ce qui n'est pas mesuré), mettre à jour ce document, `git worktree remove --force "%TEMP%\mesure_wt"`. Aucun chemin personnel dans un
-  fichier versionné. Les entrées `.git/worktrees/*` que Drive refuse de supprimer sont normales.
-
-*Faits tirés de A1 et A2, terminées.* A1 (CI de la PR #9, contrôlée le 2026-10-13 sur la tête `bee0d3c5`) : tout vert sauf le contrôle des alertes CodeQL (SHA1 dans le suffixe de
-`scripts/probe_blocs_vs_plantage.py`, faux positif probable) ; SHA256 l'a remplacé ; l'alerte distante n'a pas été rejouée. A2 : voir « Acquis » plus haut.
-
-**A3 — Refaire les repères d'avant D106 et d'avant D96-D98** (§2 ; ≈ 6 h). *Pourquoi* : ces nombres datent d'avant D106 (qui coûte 8 % au juge de paix et retire tous les déposables optiques de `r75x2`)
-et d'avant le secours Rate : leur population n'est plus celle de la production. *Faire* : le juge de paix au banc officiel, aux défauts : `python scripts\bench_examples.py strat
---auto-yes --out reports\STRAT_bench_juge_de_paix_<commit>_defauts_<date>.txt` (33 min ; `RESULT` et `STRAT_RANK00..09` sont les chiffres à reporter) ;
-puis, avec la variable `CERTUS_DESIGN_JSON` pointant le fichier de `example/example_strat/` (`set CERTUS_DESIGN_JSON=example\example_strat\JSON-strat-bandpass-3cav-deep.json`,
-à changer à chaque composant) la même commande pour le passe-bande de 35 couches (`JSON-strat-bandpass-3cav-deep.json`), l'aléatoire de 75 couches (`JSON-strat-random75.json`),
-`r75x2` à fente native (`JSON-strat-random75-x2-fabricable.json`) et la configuration livrée avec rampes (`JSON-strat-random75-x2-fabricable-2nm.json`) ;
-le passe-bande de 99 couches à verres témoins multiples se refait par intervalles (`python scripts\campagne_intervalles.py --etat` puis ses vagues : lire sa
-docstring, c'est long). *Fini quand* : chaque ligne concernée de la table du §2 porte le nombre refait, sa condition (commit, mode, graine) et son
-rapport ; les anciens nombres sont retirés (un fait, un seul endroit). *Ne pas* : modifier `example/example_strat/JSON-strat-example.json` (interdit 4).
-
-**A4 — Le Rate évince-t-il l'optique pure ?** (conception 2 h, mesure 2 h). *Pourquoi* : au juge de paix, les plans optiques purs déposables sont passés de
-487 à 50 (ancien modèle d'arrêt), le meilleur plan optique pur de 0,178 à 0,193 nm ; l'hypothèse, non mesurée, est qu'ELITE, dont les parents sont
-maintenant en majorité des plans Rate, raffine moins la lignée optique pure (`reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md`, mesure 4). *Faire* : un
-levier `elite_optical_parents` (entier, `0` = le chemin d'avant, **bit pour bit** : le prouver comme `tests/unit/test_strat_elite_rate_moves.py` le fait
-pour `rate_moves=False`) qui garantit, parmi les parents d'ELITE, au moins M plans sans aucune couche Rate quand la liste en contient ; le mesurer au
-juge de paix (graine 42) avec M = 0, 2, 4, puis à `r75x0.5` (graine 101). *Fini quand* : pour chaque M, le meilleur SEEL optique pur, le meilleur SEEL
-global et le nombre de plans optiques purs déposables, dans un rapport. **Le contrat de taille** : `certus/core/certus_strat_consensus.py` est à 1 498
-lignes (plafond 1 500) et `_apply_elite_refinement_if_enabled` à 299 (plafond 300) : ne rien y ajouter qui ne soit pas compensé, mettre la logique dans
-`certus/core/certus_strat_robustness_rate.py` comme `_elite_rate_candidates`. *Ne pas* : l'armer par défaut (c'est à 👤).
-
-**A5 — ELITE : plus de tours, autre budget pour les mouvements sur les couches Rate** (≈ 4 h). *Pourquoi* : ELITE fait 3 tours en `deep` et s'arrête
-quand rien ne progresse ; la recherche des paquets est une escalade qui n'a peut-être pas fini. *Faire* (`r75x0.5`, graine 101, référence : 0,3967 nm) :
-`elite_rounds=6,elite_stop_on_no_gain=false`, puis `elite_rounds=10,elite_stop_on_no_gain=false` ; puis, à 3 tours, `elite_rate_max_candidates=40` et
-`elite_rate_max_candidates=360`. Une surcharge à la fois, avec son étiquette. *Fini quand* : un tableau tours et budget → meilleur SEEL, durée, nombre de
-paquets de Rate du meilleur plan. Si les largeurs de fenêtre (`ELITE_RATE_WINDOWS`) ou le pas (`ELITE_RATE_STEP`) méritent un balayage, en faire des
-paramètres **inactifs par défaut** (chemin d'avant identique) avant de les mesurer. *Ne pas* : changer un défaut sans 👤.
-
-**A6 — Le modèle de Rate sans dérive de la source** (le sujet scientifique central ; **ne pas commencer sans la valeur de 👤**). *Pourquoi* : tous les SEEL
-des plans Rate supposent une vitesse constante pendant le dépôt (`certus/physics/certus_strat_growth.py`, « RATE MODE ») ; 👤 observe en salle ±1 à 2 %
-(§6, A25) et de bons plans en paquets alternés. Le modèle ne peut ni confirmer ni infirmer ce qui vient de la salle. *Faire* : (1) **demander à 👤** la
-dérive ou l'instabilité de la vitesse pendant un dépôt (relative, par couche ou par run, et comment elle a été observée) ; ne pas l'inventer ; (2) ajouter un
-paramètre **inactif par défaut** qui perturbe l'épaisseur des couches Rate (tirage fonction pure de la graine, du tirage et de l'indice physique,
-`_seeded_noise_sample` de `certus/physics/certus_strat_math.py`, jamais de la stratégie : C2), sur le modèle de `stop_model_flags`
-(`certus/physics/certus_strat_readings.py`) et de `tests/unit/test_strat_stop_model_is_the_decided_one.py` ; `python scripts\c1_diff.py HEAD` doit rendre « C1 TENU »
-avant de committer ; (3) refaire `r75x0.5` (graine 101), le juge de paix et `r75x2` (graine 101) avec la dérive de 👤 divisée par 3, telle quelle et multipliée par 3,
-et comparer la forme du meilleur plan (queue, paquets alternés, optique pur). *Fini quand* : le tableau, le rapport, le §6 mis à jour. *Ne pas* : activer par
-défaut ; conclure sur une seule graine.
-
-**A7 — Proposer les corrections de la vitrine `pages/CERTUS_STRAT.html`, sans l'éditer** (2 h). *Pourquoi* : la vitrine suit un régime strict (CLAUDE.md §10) : 👤
-la relit avant qu'on la touche. Ses §10.18 et §10.19 citent les chiffres d'août ; ses déposables de `r75x2` sans rampes sont invalidés par D106 ; elle dit que le Rate
-est « offert mais jamais choisi » à ×1,5, ×1,75 et ×2 (« zero out of 1510 »), ce qui n'est plus vrai à `r75x2` aux défauts de production (tous les plans
-déposables portent du Rate ; ×1,5 et ×1,75 ne sont pas mesurés aux défauts). *Faire* : écrire un fichier
-« STRAT_vitrine_passages_a_relire » (date du jour) dans `reports\` : pour chaque passage, la ligne, le texte actuel, ce qui est faux, le texte proposé (en anglais,
-chaque nombre sourcé dans un rapport, la limite montrée : le modèle de Rate n'a pas de dérive). *Fini quand* : le fichier est écrit ; **la page n'est pas modifiée**.
-Après accord explicite de 👤, une action séparée l'édite puis lance `python scripts\verifier_html.py pages\CERTUS_STRAT.html` (0 point à instruire).
-
-**A8 — Dette technique** (§4 et §6) : un défaut par tâche, un commit par changement, jamais `ruff check --fix`, jamais agrandir `extend-ignore`.
-- *D25, lint* : mesure officielle `python -m ruff check . --isolated --select "E,F,I,B,UP,RUF,PT,PERF" --ignore E501 --line-length 120 --target-version py314 --statistics`
-  (1 416 violations le 2026-10-12 : F401 659, E402 555, RUF001 77, RUF003 59, RUF002 51, RUF100 10, RUF022 3, F811 2). Une règle ne quitte `extend-ignore`
-  qu'à zéro violation, dans le commit qui met à jour la liste de `tests/oracle/test_lint_debt_ratchet.py`. Commencer par E402, module par module, avec les trois
-  photos avant/après du §6 (`scripts/lint_ns_snapshot.py`). RUF001 touche des chaînes dont des libellés vus de l'utilisateur : ne pas les réécrire sans 👤.
-- *D26, imports montants* : 20 arêtes (§4) ; commencer par celles qui ne demandent qu'un symbole à descendre dans `certus/domain/` ou `certus/core/` ; après chaque
-  dette payée, `python scripts\metrics.py --dette tests\architecture_debt.json` réécrit le registre depuis les sources (il ne fait que rétrécir) ; **ne jamais le lancer
-  pour faire passer `tests/unit/test_the_architecture_debt_only_shrinks.py`** : il y inscrirait la régression au lieu de la signaler.
-- *D23 puis D11, D50, D72* : reproduire D23 avant tout (`scripts/sonde_retenants_fenetre.py`) ; ne pas toucher `WA_DeleteOnClose` avant (§4). D72 (taille du gel) après la
-  fiabilité du gel.
-- *D82* (logo du thème sombre) demande des yeux ; *D84* (écart au dernier bit au premier passage après un changement de clé du cache Numba) : relancer une fois avant de
-  conclure à une régression ; *D68* (silicium lu à l'import) est optionnel.
-
-**A9 — Tenter le99c en une seule campagne avec injection et derniers raffinements Rate** (demande de 👤 du2026-10-16 ; à préparer, non exécuté).
-*Objectif* : chercher un plan déposable pour le passe-bande5cavités/99couches, en injectant des couches
-ou paquets Rate et en appliquant les derniers raffinements intégrés : recherche conjointe fenêtres/λ
-(`elite_rate_joint_candidates=480`) et post-raffinement final (`rate_post_refinement=True`, faisceau2,
-au plus2passes/300propositions par passe/600au total, arrêt sans gain). Les parents doivent provenir
-de la recherche native propre au99c ; aucun gagnant historique75c injecté.
-*Faire* : préparer un protocole borné distinct, avec sources et paramètres physiques figés, puis
-comparer l'optique pure, l'injection de Rate sans ce post-raffinement, et le Rate avec les derniers
-raffinements. Garder les mêmes réglages dans chaque comparaison appariée et distinguer le gain
-de l'injection de celui du raffinement. Vérifier le raccordement réel au99c et aux99couches avant
-mesure ; utiliser de nouveaux slots et réserver les graines de confirmation avant inspection.
-*Fini quand* : un rapport donne, sur plusieurs graines, le nombre de plans déposables, les plantages,
-les SEEL de consensus homogènes des plans complets figés, leur confirmation indépendante et le coût réel.
-L'absence de plan déposable reste un échec explicite, sans SEEL valide. Le résultat historique à4verres
-témoins est un repère séparé, pas un succès en une seule campagne. Conserver plans, rejets, sources/SHA
-et paramètres ; aucun défaut activé ni ancienne campagne relancée par cette tâche.
-*État au 2026-10-18.* Protocole préparé dans `reports/STRAT_99c_A9_protocole_2026-10-17/` (chaîne `chain_A9.sh`, graines fraîches réservées avant toute mesure, SHA-256 de 428 sources) ;
-`chain_A9.sh` ne lance rien sans le GO écrit de 👤 (`GO_OWNER.txt`) et n'a jamais été lancé ; le `protocole_A9.md` qu'il cite n'est pas dans le dossier.
-
 **Décisions qui n'appartiennent qu'à 👤 — une IA ne les tranche pas, elle rapporte les mesures.**
 1. D98 : l'attente sans fin (défaut) ou l'arrêt tardif (`oms_arming=1`) — chiffres au §3 et dans `reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md`.
-2. `elite_rate_moves` : garder actif (défaut actuel) ou le désarmer (`False`, ou `git revert 978b8f04`) — les mesures de A2 sont résumées plus haut.
+2. `elite_rate_moves` : garder actif (défaut actuel) ou le désarmer (`False`, ou `git revert 978b8f04`) — les mesures de A2 sont résumées dans `ETAT_acquis.md` (« Acquis du Rate »).
 3. `rate_rescue_hard` : inactif, mesuré sans gain (35 plans déposables sur 410) — le garder ou le retirer.
-4. Le Rate et l'optique pure (§5, A4) ; la valeur de la dérive du Rate (A6) ; D71 (2) ; l'information D69 (changement de définition d'un indicateur).
+4. Le Rate et l'optique pure (§5, A4 de `ETAT_actions.md`) ; la valeur de la dérive du Rate (A6 de `ETAT_actions.md`) ; D71 (2) ; l'information D69 (changement de définition d'un indicateur).
 5. Toute poussée (`git push`), toute fusion de la PR #9, toute modification de la vitrine.
 
 ## 1. Où en sont les programmes
 
 | programme | état | prochaine action |
 |---|---|---|
-| **Calcul (STRAT)** | composant étalon : l'aléatoire ×2 (`r75x2`) à la fente de 2 nm. Sans rampes, aucun plan optique pur n'est déposable une fois D106 corrigé (graines 101 et 42, 2026-10-12) ; avec les défauts de production (secours Rate), tous les plans de la liste le sont, au modèle de Rate de STRAT (§2). La voie à rampes de la configuration livrée (mesurée avant D106) est à refaire | A3 à A6 (§0) |
+| **Calcul (STRAT)** | composant étalon : l'aléatoire ×2 (`r75x2`) à la fente de 2 nm. Sans rampes, aucun plan optique pur n'est déposable une fois D106 corrigé (graines 101 et 42, 2026-10-12) ; avec les défauts de production (secours Rate), tous les plans de la liste le sont, au modèle de Rate de STRAT (§2). La voie à rampes de la configuration livrée (mesurée avant D106) est à refaire | A3 à A6 ([`ETAT_actions.md`](ETAT_actions.md)) |
 | **RE** | indices tabulés lus en n − ik depuis R148 (2026-10-05) : tout RE antérieur fait sur des indices absorbants en incidence oblique est à refaire ; un indice demandé hors de sa table est prolongé par une constante, avec un avertissement (ex-D86, `dec73219`, 2026-10-05) | — |
 | **Base de dépôts** | 140 monocouches mesurées au Photon RT (`example/database_depots/`, importées le 2026-10-11 par `scripts\importer_base_depots.py`) ; la voie (T ou R) se lit dans la géométrie du détecteur, le mode manuel déclarant « Transmittance » quoi qu'il mesure. INDEX les charge par « Deposit database… ». Onze ajustements certifiés de l'application autonome, dont le spectre est un dépôt de la base, servent de références (`references_index.json`) ; `scripts\bench_base_depots.py` y confronte INDEX. Banc du 2026-10-12 (11 références × 3 exécutions, `reports/BASE_DEPOTS_banc_INDEX_2026-10-12.md`) : neuf références sur onze à moins de 2,0 % d'épaisseur de la référence, deux non retrouvées (`mesures-c1b-sio2`, −49 %, et `sb2s3-silice`, −3,85 %), cause non cherchée. RE ne la lit pas : il lui faut un classeur complet | instruire les deux échecs ; choix de 👤 (§5) |
-| **Exécutable gelé** | sur la couche OpenMP depuis `31745571` (D87), sans les outils de développement depuis `5ccaa210` (411 Mo) ; construit à `dbec2fc1` le 2026-10-06, hub et modules contrôlés au démarrage, et 👤 y a calculé : « l'exécutable fonctionne ». Les licences de ce qu'il embarque le suivent (`licenses/`) | A8 (D72, §0) |
-| **Interface** | plan clos le 2026-09-08 : 12 critères de fin sur 13 atteints et mesurés, le treizième démontré inatteignable (`xfail` strict) | A8 (§0) et choix de 👤 (§5) |
+| **Exécutable gelé** | sur la couche OpenMP depuis `31745571` (D87), sans les outils de développement depuis `5ccaa210` (411 Mo) ; construit à `dbec2fc1` le 2026-10-06, hub et modules contrôlés au démarrage, et 👤 y a calculé : « l'exécutable fonctionne ». Les licences de ce qu'il embarque le suivent (`licenses/`) | A8 (D72, [`ETAT_actions.md`](ETAT_actions.md)) |
+| **Interface** | plan clos le 2026-09-08 : 12 critères de fin sur 13 atteints et mesurés, le treizième démontré inatteignable (`xfail` strict) | A8 ([`ETAT_actions.md`](ETAT_actions.md)) et choix de 👤 (§5) |
 | **Qualité** | CI : calcul sous Linux, interface sous Windows, gel construit et démarré sous Windows, audit de sécurité (`pip-audit`, `gitleaks`) ; tests isolés des préférences de 👤 ; l'audit du code mort couvre tout `certus/`. Indicateurs du plan le 2026-10-06 (`scripts\metrics.py`) : tous dans leur cible, sauf la couverture et la taille du gel, non remesurées ce jour | rangs 5 et 6 |
 | **Documentation** | règles dans `CLAUDE.md`, état ici ; 15 rapports HTML, 34 schémas Mermaid et 2 SVG validés le 2026-10-03 ; anciens dossiers lisibles dans Git | tenir « un fait, un seul endroit » |
 | **Validation externe** | 🔴 **aucune** : STRAT n'est validé que contre lui-même, et c'est assumé (décision de 👤 du 2026-10-06 : les deux dépôts réels du dichroïque ne sont plus prévus) | — |
@@ -299,10 +102,10 @@ Le passe-bande de 99 couches est chiffré en moyenne de trois graines, jamais pa
   d'équivalence SEEL**. Sur `r75x2`, σ ≈ 1,8 % mesuré en changeant le triplet de graines de
   consensus : un bruit emprunté à un autre composant ne vaut rien.
 - Ces repères comprennent le **biais de fente** ; une mesure sans ce biais ne leur est pas comparable.
-- 🔴 Les repères où des enfants d'ELITE comptent, mesurés avant la correction de D106 (2026-10-12), les notent sans biais de fente : `r75x2` sans rampes perd tous ses déposables optiques à la correction (§0). Les repères du juge de paix en sont aussi touchés.
+- 🔴 Les repères où des enfants d'ELITE comptent, mesurés avant la correction de D106 (2026-10-12), les notent sans biais de fente : `r75x2` sans rampes perd tous ses déposables optiques à la correction ([`ETAT_acquis.md`](ETAT_acquis.md)). Les repères du juge de paix en sont aussi touchés.
 - 🔴 Les repères mesurés en `deep` avant la correction de D103 (passe-bande de 35 couches, `r75x2` à fente native de
   1 nm, `r75x2` avec rampes) ont pu choisir leurs parents ELITE sur des scores de consensus mélangés entre homonymes
-  (§0).
+  ([`ETAT_acquis.md`](ETAT_acquis.md)).
 - Le banc `scripts\bench_examples.py strat` lit sa configuration dans `CERTUS_DESIGN_JSON` ; par défaut le juge de
   paix standard (`JSON-strat-example.json`). Les mesures `fast` de D5, D73, D20, D70 et D17 prenaient
   `JSON-strat-example-fast.json` (194 stratégies), celles de D14 et D15 le standard (370) : les deux ne se comparent pas.
@@ -422,7 +225,7 @@ du dichroïque dont le plantage s'écarterait nettement du prédit rouvrirait ce
 
 🔴 Les mesures de cette sous-section (2026-10-04 et 2026-10-05) ont tourné sous D100 : sans biais de fente, sans Rate,
 sans recherche de fente. Leurs décisions tiennent jusqu'à leur remesure sous le modèle voulu : le juge de paix et `r75x2` l'ont été les 2026-10-11 et
-2026-10-12 (§0), pas ces mesures-là.
+2026-10-12 ([`ETAT_acquis.md`](ETAT_acquis.md)), pas ces mesures-là.
 
 - **D73, point tournant sous l'arrêt : corrigé.** La marge se mesure en
   transmission au sommet interpolé, même si la pente change de signe sur

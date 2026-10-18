@@ -1,6 +1,6 @@
 """`scripts/resumer_artefact_sonde.py` counts an artifact of the probe the way the reports of 2026-10-12 do.
 
-An AI that takes over the measurements of ETAT section 0 reads its artifacts with this script: a count that differs from the reports (the
+An AI that takes over the measurements of docs/ETAT_actions.md reads its artifacts with this script: a count that differs from the reports (the
 threshold of a depositable plan, the class of a plan, the numbering of the layers) would make its tables incomparable with theirs.
 """
 

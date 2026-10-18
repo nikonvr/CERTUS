@@ -188,6 +188,15 @@ du dichroïque dont le plantage s'écarterait nettement du prédit rouvrirait ce
 - **INDEX : les réglages d'absorption du substrat ne s'affichent que pour le silicium**, le seul
   substrat dont le calcul lit l'absorption ; pour tous les autres, le worker force k = 0 (D43).
 
+### Sobriété de lecture — décidé le 2026-10-18
+
+👤 : « minimiser la consommation de tokens quel que soit l'ia sur ce projet ». Mis en œuvre le même jour, un commit par levier : pytest silencieux
+par défaut (`pyproject.toml`), `.rgignore`, la section 0 de ce fichier réduite à l'état courant (le reste dans [`ETAT_actions.md`](ETAT_actions.md) et
+[`ETAT_acquis.md`](ETAT_acquis.md)), `CLAUDE.md` réduit aux règles qui annulent un travail (la référence dans [`REGLES_reference.md`](REGLES_reference.md)),
+`scripts/orient.py`, les consignes dans `AGENTS.md` (importé par `CLAUDE.md`). Lecture de départ (`CLAUDE.md`, `AGENTS.md` et section 0, dans l'état commité) :
+14 095 tokens avant, 6 120 après (`o200k_base`, mesure du 2026-10-18). Les plafonds sont dans `tests/unit/test_the_ai_entry_points_stay_small.py` : les
+baisser est libre, les relever demande une raison. Un paragraphe de reprise qui devient un historique va dans `ETAT_acquis.md`, une action dans `ETAT_actions.md`.
+
 ### Indice du saphir — décidé le 2026-10-12
 
 - **Un seul indice de saphir dans CERTUS** : le Sellmeier d'id 3, partout (noyaux, INDEX, INDEX SPLINE, STRAT, FIELD, METAL).

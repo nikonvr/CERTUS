@@ -242,7 +242,7 @@ check("ruff check .", out.strip().endswith("All checks passed!"), out.splitlines
 
 # 5. Sacred files untouched.
 print("\n5. FILES THAT MUST NOT BE MODIFIED")
-code, out = run("git", "status", "--porcelain")
+code, out = run("git", "-c", "core.longpaths=true", "status", "--porcelain")
 dirty = {line[3:].strip().strip('"') for line in out.splitlines() if line.strip()}
 for sacred in SACRED_FILES:
     check(f"{sacred} unmodified", sacred not in dirty, "clean" if sacred not in dirty else "MODIFIED")
@@ -255,7 +255,7 @@ check("tag depart-gemini exists", code == 0, out.splitlines()[0] if out else "un
 
 # 7. A dirty tree before starting means an unfinished action is in the way.
 print("\n7. WORKING TREE")
-code, out = run("git", "status", "--porcelain", "--untracked-files=no")
+code, out = run("git", "-c", "core.longpaths=true", "status", "--porcelain", "--untracked-files=no")
 n_dirty = len([ln for ln in out.splitlines() if ln.strip()])
 check(
     "no uncommitted change to tracked files",

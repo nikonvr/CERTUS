@@ -1,0 +1,12 @@
+# Lu par ripgrep, donc par la recherche de contenu de la plupart des outils d'IA, en plus de .gitignore.
+# Il cache ces chemins aux RECHERCHES PAR DEFAUT ; un chemin explicite les ouvre encore
+# (un Grep avec path=reports/STRAT_x/, ou rg motif reports/STRAT_x/). Ni git, ni ruff, ni pytest, ni les scripts du depot ne le lisent.
+# Ce n'est PAS un .ignore : ruff lit .ignore et cesserait de verifier reports/ et studies/ (mesure du 2026-10-18 : 1 491 violations
+# comptees avec .ignore absent, 1 421 avec). Seuls les fichiers de contenu sont filtres : un Glob ou un ls liste encore tout.
+# Raison : reports/ porte 84 % des fichiers suivis (campagnes, JSON de plusieurs Mo) et les trois audits de la racine
+# pesent 78 000 tokens a eux seuls. Ce qu'il faut lire est dans AGENTS.md.
+/reports/
+/studies/
+/UXargon.md
+/designargon.md
+/ideeargon.md

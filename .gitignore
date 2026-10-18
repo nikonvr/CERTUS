@@ -2402,3 +2402,9 @@ reports/CAMPAGNE_G_RESUME.md
 /reports/blocs_vs_plantage_r75x2_premium_s042.json
 /reports/blocs_vs_plantage_r75x2_premium_s042_fente.json
 /reports/blocs_vs_plantage_r75x2_premium_s042_tail52-58.json
+# 99c Rate measurements of 2026-10-16/17: four raw campaign outputs of 16 to 23 MB each, kept local and not versioned
+# (the summaries are versioned: reports/STRAT_99c_rate_elargi_2026-10-16/ and reports/STRAT_99c_isolation_leviers_2026-10-17/).
+/reports/blocs_vs_plantage_99c_premium_s101.json
+/reports/blocs_vs_plantage_99c_premium_s101_rate_budget240_seul.json
+/reports/blocs_vs_plantage_99c_premium_s101_rate_budget240_six_tours.json
+/reports/blocs_vs_plantage_99c_premium_s101_rate_elargi_refinement_240_6_480.json

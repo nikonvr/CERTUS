@@ -29,10 +29,22 @@ from pathlib import Path
 _SKIP_NAMES = frozenset({"CERTUS_STRAT_OLD.py"})
 _PATTERN = re.compile(r"\.connect\s*\(\s*lambda\b")
 
+# What the audit reads: the launchers of the root and the two packages. Not the tests, the scripts, or the copies of
+# the repository that live under .claude/. It read `root.glob("*.py")` alone for as long as the code lived at the root,
+# then went on doing so after the code moved into certus/: it answered "0" for 44 sites.
+_PACKAGES = ("certus", "certus_physics")
+
+
+def _sources(root: Path) -> list[Path]:
+    files = sorted(root.glob("*.py"))
+    for package in _PACKAGES:
+        files += sorted((root / package).rglob("*.py"))
+    return files
+
 
 def _scan(root: Path) -> list[tuple[str, int, str]]:
     hits: list[tuple[str, int, str]] = []
-    for py_file in sorted(root.glob("*.py")):
+    for py_file in _sources(root):
         if py_file.name in _SKIP_NAMES:
             continue
         try:
@@ -41,7 +53,7 @@ def _scan(root: Path) -> list[tuple[str, int, str]]:
             continue
         for lineno, line in enumerate(lines, 1):
             if _PATTERN.search(line):
-                hits.append((py_file.name, lineno, line.rstrip()))
+                hits.append((py_file.relative_to(root).as_posix(), lineno, line.rstrip()))
     return hits
 
 

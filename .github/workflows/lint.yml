@@ -50,6 +50,9 @@ jobs:
         if: matrix.python-version == '3.14.5'
         run: python tools/dead_symbol_audit.py --ci --whitelist tools/dead_symbol_whitelist.txt
 
-      - name: Lambda-connect audit (baseline=0)
+      # Until 2026-10-18 this audit read the ten launchers of the root only and answered "0" for 44 sites of certus/
+      # (reports/AUDIT_SUITE_CERTUS_2026-10-18.md, C19). It now reads the packages. The ceiling is the number it
+      # finds: it only goes down, and tests/unit/test_ci_lambda_connect_audit.py fails when it is above the count.
+      - name: Lambda-connect audit (ratchet, D11)
         if: matrix.python-version == '3.14.5'
-        run: python tools/lambda_connect_audit.py --ci --max-count 0
+        run: python tools/lambda_connect_audit.py --ci --max-count 44

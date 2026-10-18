@@ -1,0 +1,196 @@
+{
+  "utc": "2026-10-18T09:32:12.588378+00:00",
+  "source": "conserve 452nm sur les 4 couches comme la meilleure solution , en tout cas la plus prometteuse",
+  "status": "preferred_most_promising_candidate_user_choice_confirmation_only",
+  "decision": "User explicitly prefers common452nm for the2witness-onlyprecoats and the2first component layers after disclosure of the single observed stop; retain as current preferred candidate.",
+  "optical_component_count": 70,
+  "rate_count": 26,
+  "witness_count": 1,
+  "common_first4_physical_wavelength_nm": 452,
+  "physical_first4_wavelengths_nm": [
+    452,
+    452,
+    452,
+    452
+  ],
+  "first4_layer_roles": [
+    "witness_precoat1",
+    "witness_precoat2",
+    "component_layer1",
+    "component_layer2"
+  ],
+  "plan": "reports/strat70_lambda4_2026-10-18/attempt_01/case_000131/plan.json",
+  "plan_sha256": "5a65bfee817d66daea86032b3f3896e17bbf9367fa4decab41eabe7b58874a03",
+  "measurement": "reports/strat70_lambda4_2026-10-18/attempt_01/summary.json",
+  "measurement_sha256": "a40ace95fc311172fa5dca090a409d133907bfb10386621022e958ee20f848bb",
+  "validation_audit": "reports/autonomie_nuit_2026-10-17/final_audit_lambda4_20261018_1126.json",
+  "validation_stage": "CONFIRMATION3x1000/noise; no independent candidate holdout executed",
+  "seeds": [
+    20261012101,
+    20261012102,
+    20261012103
+  ],
+  "runs_per_noise_per_seed": 1000,
+  "confirmation_evaluations": [
+    131,
+    136,
+    141
+  ],
+  "reference_noise_result": {
+    "noise_pp": 0.05,
+    "runs": 3000,
+    "completed": 3000,
+    "failures": 0,
+    "target_rmse_mean_pp": 1.6678577539354829,
+    "target_rmse_p95_pp": 1.8701525866649462,
+    "seel_mean_nm": 0.5603702601235562,
+    "seel_p95_nm": 0.8337954280000373
+  },
+  "noise_results": [
+    {
+      "noise_pp": 0.025,
+      "runs": 3000,
+      "completed": 3000,
+      "failures": 0,
+      "target_rmse_mean_pp": 1.6457592230264402,
+      "target_rmse_p95_pp": 1.8370010431068673,
+      "seel_mean_nm": 0.5258508011931333,
+      "seel_p95_nm": 0.7932261655356142
+    },
+    {
+      "noise_pp": 0.05,
+      "runs": 3000,
+      "completed": 3000,
+      "failures": 0,
+      "target_rmse_mean_pp": 1.6678577539354829,
+      "target_rmse_p95_pp": 1.8701525866649462,
+      "seel_mean_nm": 0.5603702601235562,
+      "seel_p95_nm": 0.8337954280000373
+    },
+    {
+      "noise_pp": 0.1,
+      "runs": 3000,
+      "completed": 2999,
+      "failures": 1,
+      "target_rmse_mean_pp": 1.7541882579286305,
+      "target_rmse_p95_pp": 2.0108497930445703,
+      "seel_mean_nm": 0.6792529736319283,
+      "seel_p95_nm": 0.9848776364619902
+    }
+  ],
+  "paired_reference_optical_count": 70,
+  "paired_reference_mean_pp": 1.6915151483719795,
+  "paired_reference_noise_result": {
+    "noise_pp": 0.05,
+    "runs": 3000,
+    "completed": 3000,
+    "failures": 0,
+    "target_rmse_mean_pp": 1.6915151483719795,
+    "target_rmse_p95_pp": 1.9351706802329598,
+    "seel_mean_nm": 0.5919613627646835,
+    "seel_p95_nm": 0.9041707650000472
+  },
+  "mean_gain_pp": 0.023657394436496615,
+  "gain_each_seed_pp": [
+    0.02404362946364369,
+    0.024453786536341005,
+    0.022474767309505816
+  ],
+  "observed_failures_by_noise": {
+    "0.025": 0,
+    "0.05": 0,
+    "0.1": 1
+  },
+  "strict_zero_stop_requirement_met": false,
+  "independent_holdout_completed": false,
+  "most_promising_user_choice": true,
+  "global_optimality_proven": false,
+  "fabrication_qualified": false,
+  "component_recipe_unchanged": true,
+  "precoat_thicknesses_preserved": true,
+  "component3_to96_monitoring_preserved": true,
+  "prior_preference_plan_preserved": "reports/strat64_rate_epais_poem_2026-10-17/attempt_01/selected_native_plan.json",
+  "prior_independently_validated_reference": {
+    "utc": "2026-10-18T06:04:09.613552+00:00",
+    "source": "je veux que tu testes des variantes a partir de la 70 optique, j'iame cette configutztion",
+    "status": "preferred_candidate_independently_validated_simulation",
+    "optical_component_count": 70,
+    "rate_count": 26,
+    "witness_count": 1,
+    "plan": "reports/strat64_rate_epais_poem_2026-10-17/attempt_01/selected_native_plan.json",
+    "plan_sha256": "192576fb0cbe7eb001543416af7dcd8fdc7c3b1289da1329c8b4e36868d43067",
+    "measurement": "reports/strat64_rate_epais_poem_2026-10-17/attempt_01/summary.json",
+    "validation_audit": "reports/autonomie_nuit_2026-10-17/final_audit_poem_20261018_0546.json",
+    "validation_stage": "INDEPENDENT_HOLDOUT3x10000/noise, frozen_before_holdout",
+    "seeds": [
+      2026109801,
+      2026109802,
+      2026109803
+    ],
+    "runs_per_noise_per_seed": 10000,
+    "reference_noise_result": {
+      "noise_pp": 0.05,
+      "runs": 30000,
+      "completed": 30000,
+      "failures": 0,
+      "target_rmse_mean_pp": 1.6936705334301678,
+      "target_rmse_p95_pp": 1.93804638998624,
+      "seel_mean_nm": 0.5943911079970573,
+      "seel_p95_nm": 0.9078012413289782
+    },
+    "paired_reference_optical_count": 64,
+    "paired_reference_mean_pp": 1.697450615809724,
+    "independent_holdout_completed": true,
+    "tail_optical_blocks": [
+      {
+        "first_component_layer": 65,
+        "last_component_layer": 66,
+        "wavelength_nm": 519
+      },
+      {
+        "first_component_layer": 67,
+        "last_component_layer": 67,
+        "wavelength_nm": 465
+      },
+      {
+        "first_component_layer": 70,
+        "last_component_layer": 71,
+        "wavelength_nm": 530
+      },
+      {
+        "first_component_layer": 75,
+        "last_component_layer": 75,
+        "wavelength_nm": 535
+      },
+      {
+        "first_component_layer": 77,
+        "last_component_layer": 77,
+        "wavelength_nm": 544
+      },
+      {
+        "first_component_layer": 79,
+        "last_component_layer": 79,
+        "wavelength_nm": 535
+      },
+      {
+        "first_component_layer": 81,
+        "last_component_layer": 82,
+        "wavelength_nm": 544
+      },
+      {
+        "first_component_layer": 83,
+        "last_component_layer": 86,
+        "wavelength_nm": 535
+      },
+      {
+        "first_component_layer": 89,
+        "last_component_layer": 89,
+        "wavelength_nm": 540
+      }
+    ],
+    "next_search": "reports/strat70_variantes_2026-10-18",
+    "prior_preference_plan_preserved": "reports/strat60_vaste_2026-10-17/case_013146/plan.json",
+    "fabrication_qualified": false
+  },
+  "new_calculation_requested": false
+}

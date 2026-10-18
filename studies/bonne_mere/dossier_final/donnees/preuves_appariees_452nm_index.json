@@ -1,0 +1,401 @@
+{
+  "cases": [
+    {
+      "evaluation": 130,
+      "summary": {
+        "evaluation": 130,
+        "stage": "CONFIRMATION_REFERENCE",
+        "origin": "reference70",
+        "seed": 20261012101,
+        "runs_per_noise": 1000,
+        "common_wavelength_nm": null,
+        "optical_component_count": 70,
+        "rate_count": 26,
+        "mean_objective_pp": 1.6914050895156665,
+        "noise_results": [
+          {
+            "noise_pp": 0.025,
+            "runs": 1000,
+            "completed": 1000,
+            "target_rmse_mean_pp": 1.6770021748739308,
+            "target_rmse_p95_pp": 1.9072173361380762,
+            "seel_mean_nm": 0.5703775669295367,
+            "seel_p95_nm": 0.8738170935150401
+          },
+          {
+            "noise_pp": 0.05,
+            "runs": 1000,
+            "completed": 1000,
+            "target_rmse_mean_pp": 1.6914050895156665,
+            "target_rmse_p95_pp": 1.9509247857242682,
+            "seel_mean_nm": 0.5899316321445152,
+            "seel_p95_nm": 0.9225278464586825
+          },
+          {
+            "noise_pp": 0.1,
+            "runs": 1000,
+            "completed": 1000,
+            "target_rmse_mean_pp": 1.764356380148923,
+            "target_rmse_p95_pp": 2.047348467267059,
+            "seel_mean_nm": 0.6900456981471412,
+            "seel_p95_nm": 1.0206008270949019
+          }
+        ],
+        "crash_rate": 0.0,
+        "admissible": true,
+        "zero_observed_failures": true,
+        "monitoring_modes_preserved": true,
+        "component3_to96_monitoring_preserved": true,
+        "physical_first4_wavelengths": [
+          510.0,
+          440.0,
+          890.0,
+          480.0
+        ],
+        "first66_prefix_comparison_applicable": false,
+        "index_seeds_by_noise": [
+          8575525203186874,
+          8575525204037381,
+          8575525204887888
+        ],
+        "same_index_corridor_draws_in_growth_and_score": true,
+        "folder": "reports\\strat70_lambda4_2026-10-18\\attempt_01\\case_000130"
+      },
+      "original_npz_sha256": "4eedc230385dd8787f9b639a4e4c7d845751574ea076d2e0586f2f196aa83fbd",
+      "original_native_sha256": "2c8eedfd81757aa30478501477fb599aa3c40cc20890df4f1229b099bd9e8bc1"
+    },
+    {
+      "evaluation": 131,
+      "summary": {
+        "evaluation": 131,
+        "stage": "CONFIRMATION",
+        "origin": "lambda4_confirm",
+        "seed": 20261012101,
+        "runs_per_noise": 1000,
+        "common_wavelength_nm": 452,
+        "optical_component_count": 70,
+        "rate_count": 26,
+        "mean_objective_pp": 1.6673614600520228,
+        "noise_results": [
+          {
+            "noise_pp": 0.025,
+            "runs": 1000,
+            "completed": 1000,
+            "target_rmse_mean_pp": 1.6481675079442761,
+            "target_rmse_p95_pp": 1.851668635121008,
+            "seel_mean_nm": 0.529891694349882,
+            "seel_p95_nm": 0.8123774332115642
+          },
+          {
+            "noise_pp": 0.05,
+            "runs": 1000,
+            "completed": 1000,
+            "target_rmse_mean_pp": 1.6673614600520228,
+            "target_rmse_p95_pp": 1.8791300834024076,
+            "seel_mean_nm": 0.5583507732858727,
+            "seel_p95_nm": 0.8446838908394307
+          },
+          {
+            "noise_pp": 0.1,
+            "runs": 1000,
+            "completed": 1000,
+            "target_rmse_mean_pp": 1.7544837670877842,
+            "target_rmse_p95_pp": 2.01467185087455,
+            "seel_mean_nm": 0.679582492536163,
+            "seel_p95_nm": 0.9894942057847754
+          }
+        ],
+        "crash_rate": 0.0,
+        "admissible": true,
+        "zero_observed_failures": true,
+        "monitoring_modes_preserved": true,
+        "component3_to96_monitoring_preserved": true,
+        "physical_first4_wavelengths": [
+          452.0,
+          452.0,
+          452.0,
+          452.0
+        ],
+        "first66_prefix_comparison_applicable": false,
+        "index_seeds_by_noise": [
+          8575525203186874,
+          8575525204037381,
+          8575525204887888
+        ],
+        "same_index_corridor_draws_in_growth_and_score": true,
+        "paired_reference_mean_pp": 1.6914050895156665,
+        "mean_gain_pp": 0.02404362946364369,
+        "folder": "reports\\strat70_lambda4_2026-10-18\\attempt_01\\case_000131"
+      },
+      "original_npz_sha256": "ea162cb1938890b72630c1b432c58d1466236dd5bd09300518af4bf43b39be07",
+      "original_native_sha256": "0331b639607cac6a8873cb50b7b300e08810f5aa4c2776b75a42164b4a8ab671"
+    },
+    {
+      "evaluation": 135,
+      "summary": {
+        "evaluation": 135,
+        "stage": "CONFIRMATION_REFERENCE",
+        "origin": "reference70",
+        "seed": 20261012102,
+        "runs_per_noise": 1000,
+        "common_wavelength_nm": null,
+        "optical_component_count": 70,
+        "rate_count": 26,
+        "mean_objective_pp": 1.6923125676450748,
+        "noise_results": [
+          {
+            "noise_pp": 0.025,
+            "runs": 1000,
+            "completed": 1000,
+            "target_rmse_mean_pp": 1.6726362642857588,
+            "target_rmse_p95_pp": 1.9098457051525644,
+            "seel_mean_nm": 0.5626710076512511,
+            "seel_p95_nm": 0.8763507332076321
+          },
+          {
+            "noise_pp": 0.05,
+            "runs": 1000,
+            "completed": 1000,
+            "target_rmse_mean_pp": 1.6923125676450748,
+            "target_rmse_p95_pp": 1.9220499147349668,
+            "seel_mean_nm": 0.5939588653890425,
+            "seel_p95_nm": 0.8909319724248828
+          },
+          {
+            "noise_pp": 0.1,
+            "runs": 1000,
+            "completed": 1000,
+            "target_rmse_mean_pp": 1.7702439878627414,
+            "target_rmse_p95_pp": 2.052486403889131,
+            "seel_mean_nm": 0.6979638125082095,
+            "seel_p95_nm": 1.0281270747389888
+          }
+        ],
+        "crash_rate": 0.0,
+        "admissible": true,
+        "zero_observed_failures": true,
+        "monitoring_modes_preserved": true,
+        "component3_to96_monitoring_preserved": true,
+        "physical_first4_wavelengths": [
+          510.0,
+          440.0,
+          890.0,
+          480.0
+        ],
+        "first66_prefix_comparison_applicable": false,
+        "index_seeds_by_noise": [
+          8575527857622635,
+          8575527858473142,
+          8575527859323649
+        ],
+        "same_index_corridor_draws_in_growth_and_score": true,
+        "folder": "reports\\strat70_lambda4_2026-10-18\\attempt_01\\case_000135"
+      },
+      "original_npz_sha256": "2273e1081c536b4fc6bfc95a64e0b363d0507c28340048431121985de1109830",
+      "original_native_sha256": "7d89125056d0a21fecaabac9e6bc6af6d97787da5e1dd56b983199fd5f1ed455"
+    },
+    {
+      "evaluation": 136,
+      "summary": {
+        "evaluation": 136,
+        "stage": "CONFIRMATION",
+        "origin": "lambda4_confirm",
+        "seed": 20261012102,
+        "runs_per_noise": 1000,
+        "common_wavelength_nm": 452,
+        "optical_component_count": 70,
+        "rate_count": 26,
+        "mean_objective_pp": 1.6678587811087338,
+        "noise_results": [
+          {
+            "noise_pp": 0.025,
+            "runs": 1000,
+            "completed": 1000,
+            "target_rmse_mean_pp": 1.6437456791355383,
+            "target_rmse_p95_pp": 1.8296657754912877,
+            "seel_mean_nm": 0.5228506327883926,
+            "seel_p95_nm": 0.7856781888795549
+          },
+          {
+            "noise_pp": 0.05,
+            "runs": 1000,
+            "completed": 1000,
+            "target_rmse_mean_pp": 1.6678587811087338,
+            "target_rmse_p95_pp": 1.8648673165100424,
+            "seel_mean_nm": 0.5610531520637521,
+            "seel_p95_nm": 0.8262130759097632
+          },
+          {
+            "noise_pp": 0.1,
+            "runs": 1000,
+            "completed": 1000,
+            "target_rmse_mean_pp": 1.754855563021159,
+            "target_rmse_p95_pp": 2.0090170624054067,
+            "seel_mean_nm": 0.6806366333985654,
+            "seel_p95_nm": 0.9834492670105346
+          }
+        ],
+        "crash_rate": 0.0,
+        "admissible": true,
+        "zero_observed_failures": true,
+        "monitoring_modes_preserved": true,
+        "component3_to96_monitoring_preserved": true,
+        "physical_first4_wavelengths": [
+          452.0,
+          452.0,
+          452.0,
+          452.0
+        ],
+        "first66_prefix_comparison_applicable": false,
+        "index_seeds_by_noise": [
+          8575527857622635,
+          8575527858473142,
+          8575527859323649
+        ],
+        "same_index_corridor_draws_in_growth_and_score": true,
+        "paired_reference_mean_pp": 1.6923125676450748,
+        "mean_gain_pp": 0.024453786536341005,
+        "folder": "reports\\strat70_lambda4_2026-10-18\\attempt_01\\case_000136"
+      },
+      "original_npz_sha256": "a30773926c55799daba3205e338952d1f432e9faf97bf721b0df0049a792a3ec",
+      "original_native_sha256": "75d6395f52c2a73f0a7805c9d84627c08b0476342da6334d586a16dab90fdde6"
+    },
+    {
+      "evaluation": 140,
+      "summary": {
+        "evaluation": 140,
+        "stage": "CONFIRMATION_REFERENCE",
+        "origin": "reference70",
+        "seed": 20261012103,
+        "runs_per_noise": 1000,
+        "common_wavelength_nm": null,
+        "optical_component_count": 70,
+        "rate_count": 26,
+        "mean_objective_pp": 1.6908277879551974,
+        "noise_results": [
+          {
+            "noise_pp": 0.025,
+            "runs": 1000,
+            "completed": 1000,
+            "target_rmse_mean_pp": 1.6714845515153127,
+            "target_rmse_p95_pp": 1.9114420017661793,
+            "seel_mean_nm": 0.5610114978936529,
+            "seel_p95_nm": 0.8781939920839439
+          },
+          {
+            "noise_pp": 0.05,
+            "runs": 1000,
+            "completed": 1000,
+            "target_rmse_mean_pp": 1.6908277879551974,
+            "target_rmse_p95_pp": 1.929038740690654,
+            "seel_mean_nm": 0.5919935907604926,
+            "seel_p95_nm": 0.8984291788030185
+          },
+          {
+            "noise_pp": 0.1,
+            "runs": 1000,
+            "completed": 1000,
+            "target_rmse_mean_pp": 1.766926805418532,
+            "target_rmse_p95_pp": 2.0480521993942506,
+            "seel_mean_nm": 0.6943644631282806,
+            "seel_p95_nm": 1.022393130369298
+          }
+        ],
+        "crash_rate": 0.0,
+        "admissible": true,
+        "zero_observed_failures": true,
+        "monitoring_modes_preserved": true,
+        "component3_to96_monitoring_preserved": true,
+        "physical_first4_wavelengths": [
+          510.0,
+          440.0,
+          890.0,
+          480.0
+        ],
+        "first66_prefix_comparison_applicable": false,
+        "index_seeds_by_noise": [
+          8575530512058396,
+          8575530512908903,
+          8575530513759410
+        ],
+        "same_index_corridor_draws_in_growth_and_score": true,
+        "folder": "reports\\strat70_lambda4_2026-10-18\\attempt_01\\case_000140"
+      },
+      "original_npz_sha256": "68638b1e6f254a8db5390aac0f95e507c7c7c7807b078d44cadab385a4d2beea",
+      "original_native_sha256": "c6cc4ba22d0a1b8cf25b5354190aee8f681039a3b48e410db4409ba8ca8dfa62"
+    },
+    {
+      "evaluation": 141,
+      "summary": {
+        "evaluation": 141,
+        "stage": "CONFIRMATION",
+        "origin": "lambda4_confirm",
+        "seed": 20261012103,
+        "runs_per_noise": 1000,
+        "common_wavelength_nm": 452,
+        "optical_component_count": 70,
+        "rate_count": 26,
+        "mean_objective_pp": 1.6683530206456916,
+        "noise_results": [
+          {
+            "noise_pp": 0.025,
+            "runs": 1000,
+            "completed": 1000,
+            "target_rmse_mean_pp": 1.6453644819995061,
+            "target_rmse_p95_pp": 1.8273122103702217,
+            "seel_mean_nm": 0.5248100764411251,
+            "seel_p95_nm": 0.7825203999709115
+          },
+          {
+            "noise_pp": 0.05,
+            "runs": 1000,
+            "completed": 1000,
+            "target_rmse_mean_pp": 1.6683530206456916,
+            "target_rmse_p95_pp": 1.8693332336118613,
+            "seel_mean_nm": 0.561706855021044,
+            "seel_p95_nm": 0.8323330173627601
+          },
+          {
+            "noise_pp": 0.1,
+            "runs": 1000,
+            "completed": 999,
+            "target_rmse_mean_pp": 1.7532244798989174,
+            "target_rmse_p95_pp": 2.009580358740396,
+            "seel_mean_nm": 0.6775380800674917,
+            "seel_p95_nm": 0.9829518039847367
+          }
+        ],
+        "crash_rate": 0.001,
+        "admissible": true,
+        "zero_observed_failures": false,
+        "monitoring_modes_preserved": true,
+        "component3_to96_monitoring_preserved": true,
+        "physical_first4_wavelengths": [
+          452.0,
+          452.0,
+          452.0,
+          452.0
+        ],
+        "first66_prefix_comparison_applicable": false,
+        "index_seeds_by_noise": [
+          8575530512058396,
+          8575530512908903,
+          8575530513759410
+        ],
+        "same_index_corridor_draws_in_growth_and_score": true,
+        "paired_reference_mean_pp": 1.6908277879551974,
+        "mean_gain_pp": 0.022474767309505816,
+        "folder": "reports\\strat70_lambda4_2026-10-18\\attempt_01\\case_000141"
+      },
+      "original_npz_sha256": "f3210962d554f34fff5c5c2a0fd5c88f5e8eecb5987bb4b74865c9a0b0674f1b",
+      "original_native_sha256": "5620c31e609ba653ff41565897db8b09e97648e43042dbbc19588b16a8870c71"
+    }
+  ],
+  "noises_pp": [
+    0.025,
+    0.05,
+    0.1
+  ],
+  "representation": "Physical98 thicknesses stored once; component96=columns2:; original witness66=columns:66. Float64 bits checked before compaction.",
+  "original_native_pickle_not_retained_after_size_cleanup": true
+}

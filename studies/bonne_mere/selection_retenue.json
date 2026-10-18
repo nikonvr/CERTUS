@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-18",
+  "status": "closed_user_preferred_most_promising_confirmation_only",
+  "common_first4_physical_wavelength_nm": 452,
+  "component_optical_count": 70,
+  "rate_count": 26,
+  "plan": "dossier_final/donnees/strategie_retenue_452nm.json",
+  "design_initial": "dossier_final/donnees/design_initial_100_H800.json",
+  "design_retained": "dossier_final/donnees/design_retenu_96_saphir.json",
+  "target": "dossier_final/donnees/cible_retenue_601points.csv",
+  "monitoring": "dossier_final/donnees/monitoring_retenu_98operations.csv",
+  "results": "dossier_final/donnees/resultats_452nm.json",
+  "original_decision": "dossier_final/donnees/decision_retenue.json",
+  "independent_candidate_holdout_completed": false,
+  "strict_zero_stop_criterion_met": false,
+  "failures_per_noise_3000": [
+    0,
+    0,
+    1
+  ],
+  "automation": "paused",
+  "restart_only_on_explicit_user_request": true
+}

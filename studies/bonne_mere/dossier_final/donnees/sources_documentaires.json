@@ -1,0 +1,47 @@
+[
+  {
+    "id": "S1",
+    "title": "Documents et modèle",
+    "original_paths": "sources/BM.docx ; sources/BM.pptx ; sources/data.xlsx ; reports/inputs.json"
+  },
+  {
+    "id": "S2",
+    "title": "Cible adoptée",
+    "original_paths": "sources/target_retrouvee.txt ; target/target_historique.csv ; design/retenu_96_saphir/target.csv"
+  },
+  {
+    "id": "S3",
+    "title": "Design initial et recherches",
+    "original_paths": "design/initial_document_QWOT_H800.json ; reports/qwot_global_historique_01 ; reports/local_116_sans_sio2_2026-10-17 ; reports/local_96_sans_plancher_2026-10-17"
+  },
+  {
+    "id": "S4",
+    "title": "Design96saphir et contrôles",
+    "original_paths": "design/retenu_96_saphir/design.json ; selected_validation.json ; dense_validation.json"
+  },
+  {
+    "id": "S5",
+    "title": "Robustesse du design",
+    "original_paths": "reports/robustesse96_2026-10-17/summary.json"
+  },
+  {
+    "id": "S6",
+    "title": "Dépôt60 et64",
+    "original_paths": "reports/autonomie_nuit_2026-10-17/final_audit_strat60_20261018.json ; final_audit_poem_20261018_0546.json ; final_audit_paired64_20261018_0632.json"
+  },
+  {
+    "id": "S7",
+    "title": "Variantes du70",
+    "original_paths": "reports/autonomie_nuit_2026-10-17/final_audit_variants70_20261018_1111.json ; final_cost_variants70_20261018_1115.json"
+  },
+  {
+    "id": "S8",
+    "title": "Quatreλcommunes et décision",
+    "original_paths": "reports/strat70_lambda4_2026-10-18/attempt_01/summary.json ; reports/autonomie_nuit_2026-10-17/final_audit_lambda4_20261018_1126.json ; design/deposition_selection.json"
+  },
+  {
+    "id": "S9",
+    "title": "Classique arrêté et pistes80",
+    "original_paths": "reports/strat_classique_rate_elargi_2026-10-17/attempt_04/user_stop_summary_20261018.json ; reports/autonomie_nuit_2026-10-17/existing_80_optical_review_20261018.json"
+  }
+]

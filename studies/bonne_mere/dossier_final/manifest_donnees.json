@@ -1,0 +1,62 @@
+{
+  "donnees/calibration_SEEL_piece.json": {
+    "bytes": 1155,
+    "sha256": "93eda3381520dd4b4cfd51f40e417bb682fa02469e4080c05a5887cadb5c3bf5"
+  },
+  "donnees/cible_retenue_601points.csv": {
+    "bytes": 45712,
+    "sha256": "a6a758362b38d9b1f2ce03f049f4190f953dd70c3352779151115532a44487c8"
+  },
+  "donnees/decision_retenue.json": {
+    "bytes": 6570,
+    "sha256": "2fefecbcd085abc3ad9b4f17ffffd9606df108edf094e5439e1acf09143b45af"
+  },
+  "donnees/design_initial_100_H800.csv": {
+    "bytes": 4246,
+    "sha256": "5a590688415f5024eeffbb7aab8be45ebdb0308bc5ae6f484684127298672b95"
+  },
+  "donnees/design_initial_100_H800.json": {
+    "bytes": 5237,
+    "sha256": "0e0bc37cf0abced8657b430005f3629e9892dd58e3b20d93fe657c72db7cc2eb"
+  },
+  "donnees/design_retenu_96_saphir.json": {
+    "bytes": 6365,
+    "sha256": "21e6c203443b80ceea2b27318737dd06c2449b08f1134a33991b4a861f84e857"
+  },
+  "donnees/monitoring_retenu_98operations.csv": {
+    "bytes": 7295,
+    "sha256": "9dc7e798ff35cbcd0e88d21a0698515c975089b1bc5ceba5b69b1530661cc3c6"
+  },
+  "donnees/parametres_STRAT_effectifs.json": {
+    "bytes": 104690,
+    "sha256": "9259a295d1b0b6b57484a94dd899a2e17a327572312b57d3a18aab62a65ac190"
+  },
+  "donnees/preuves_appariees_452nm_3graines.npz": {
+    "bytes": 10442737,
+    "sha256": "e037584e9afe8e037638f81774aef6364414ffdabbab76ec9ecd4f35cf9335f0"
+  },
+  "donnees/preuves_appariees_452nm_index.json": {
+    "bytes": 14157,
+    "sha256": "879f08d75c361a5382d9cca1122c195a83624015e2709c07fc6f1ee34c07a780"
+  },
+  "donnees/recette_retenue_96couches.csv": {
+    "bytes": 5027,
+    "sha256": "bf0a2278a05208c46af5c696f491eed34915516f44701bf443e0920bdf8bd8dc"
+  },
+  "donnees/resultats_452nm.json": {
+    "bytes": 13107,
+    "sha256": "365eea0b91f059d6fd6b92f15bd970fd74585826b4239f1eb95096bff5e00101"
+  },
+  "donnees/resultats_variantes70.json": {
+    "bytes": 30271,
+    "sha256": "498d2d295a98401cee4bec6e34eb09013a2252de45ece0d4bae510fe75c44eb4"
+  },
+  "donnees/sources_documentaires.json": {
+    "bytes": 1909,
+    "sha256": "dd4cfda16043c4d8986205594508260fe0756935e09249fa66f43d05688c6f9f"
+  },
+  "donnees/strategie_retenue_452nm.json": {
+    "bytes": 5839,
+    "sha256": "776c0cf8b629c74c5671ff7011f03c664daff1e27ea0eb59e2a23a12bb2e48be"
+  }
+}

@@ -17,18 +17,28 @@ core.longpaths=true`), jamais sur `.claude/worktrees/`.
 **Machine** : Windows 11, 16 cœurs, 31,3 Go. Validation lancée sur 16 workers `pytest-xdist` : CPU moyen
 89 %, pic 100 %, RAM libre minimale 13,1 Go (le run a consommé environ 8 Go).
 
+**Commits produits par l'audit** (locaux, rien n'est poussé) : ce rapport `e52194a7` ; A1 `f32734a9` ; A2
+`8610e18d` ; A3 `f7edd4a6` ; A5 `f494b9e5` ; A6 `e1acab83` ; A19 `3a2b443f` ; A7 `36758165` ; correction de mon
+propre test de A5 `3d64d326`. A4 est un réglage Git local, sans commit. La mise à jour de ce rapport est dans le
+commit qui suit.
+
 ## 1. Verdict
 
 Le socle scientifique et l'ingénierie sont sains : lint, typage, audit de dépendances, oracle TMM, frontières
 d'architecture et indicateurs de `ETAT.md` se confirment à la mesure. Je n'ai trouvé ni secret, ni donnée
-personnelle d'un tiers, ni pièce de tiers dans l'index. Trois sujets demandent une action :
+personnelle d'un tiers, ni pièce de tiers dans l'index. Quatre sujets demandent une action :
 
-1. **Un défaut fonctionnel réel et reproduit** : l'analyse Monte-Carlo colorimétrique de DESIGN
-   (`ColorWorker`) échoue à chaque exécution (C01).
-2. **La suite de tests n'est pas sûre en parallèle** : une course sur un répertoire de préférences partagé et
-   un audit d'ergonomie sensible à la charge (C02, C03). En série, tout ce qui a échoué en parallèle passe.
+1. **Deux défauts de production reproduits** : l'analyse Monte-Carlo colorimétrique de DESIGN
+   (`ColorWorker`) échoue à chaque exécution (C01, corrigé) ; une entrée du cache Numba peut faire **planter
+   l'interpréteur** à sa relecture, et votre cache réel en contient une (C18, **à décider**).
+2. **La suite de tests n'est pas sûre en parallèle** : une course sur un répertoire de préférences partagé
+   (C02, corrigé) et un audit d'ergonomie sensible à la charge (C03). En série, tout ce qui a échoué en
+   parallèle passe.
 3. **Des pièges d'outillage qui produisent de fausses alertes ou une fausse sécurité** : chemins longs de
-   Windows (préflight, `git grep`), pointeur d'archive périmé (C04, C05).
+   Windows (préflight, `git grep`), pointeur d'archive périmé, et une porte de CI qui ne lisait pas le
+   paquet (C04, C05, C19 : corrigés).
+4. **Des choix qui ne sont pas les miens** : comportement sur NaN et épaisseurs négatives (C06, C07), octets de
+   référence des rapports, sort de `studies/bonne_mere` avant tout push (C09, C15).
 
 ## 2. Ce qui a été mesuré
 
@@ -52,6 +62,21 @@ le test de préférences passe ; `test_ux_button_min_height` 12/12, `test_ux_ske
 `test_ux_tab_order` 12 ignorés (« no promotional or no synthesis tab », comme la référence).
 **Non refait en série** : les suites `unit` et `ui` complètes (la référence de CLAUDE.md §2).
 
+### Après les correctifs (code au commit `3d64d326`)
+
+| contrôle | résultat | condition |
+|---|---|---|
+| `ruff check .`, `mypy` (95 fichiers) | All checks passed ; Success | |
+| trois contrôles documentaires | 0 point chacun | |
+| `tests/oracle/` | 1146 passed en 12,8 s | série |
+| `tests/unit/` | **5 513 passed, 7 skipped, 0 failed** en 5 min 09 (un premier passage avait relevé un échec de mon propre test de A5, corrigé en `3d64d326` et rejoué ici) | 16 workers, `loadfile` |
+| `tests/ui/` | 1324 passed, 12 skipped, 2 xfailed, **0 échec** (deux mesures : 289 s et 307 s) | **6 workers** |
+| reste de `tests/` | 319 passed (16 workers) + 40 passed (série) = **359** | |
+
+`unit` compte 5 513 tests au lieu de 5 504 : neuf tests ajoutés par les actions A1, A2, A5, A6, A7 (trois) et
+A19 (deux). Le statut Git est identique avant et après chaque passage : les tests ne laissent rien. Pendant la
+validation, CPU moyen 85 %, pic 100 %, RAM libre minimale 14,2 Go sur 31,3.
+
 ## 3. Constats
 
 ### Fonctionnels
@@ -66,6 +91,40 @@ jamais détecté : `tests/unit/test_certus_design_workers.py` ne teste que `__in
 `test_design_runs_carry_their_run_id.py` remplace le worker par un bouchon. Cause probable : copie du mot-clé
 de la ligne 244, où `run_context` alimente `get_structured_logger`. C'est **pylint** (`unexpected-keyword-arg`)
 qui l'a révélé ; le tri de ses autres messages est au §4.
+
+**C18 — Une entrée du cache Numba peut faire planter l'interpréteur à sa relecture** *(élevée ; reproduit,
+mécanisme isolé)*. Découvert en voulant tester la correction de C01 : relu depuis le disque, `calc_spectrum_front`
+(`certus_tmm_matrix.py`, appelé par le cœur de DESIGN, les workers spectraux et RE) termine en
+*Windows fatal exception: access violation* (code 139), alors que le même code **compilé à froid**, **sans JIT**
+(`NUMBA_DISABLE_JIT=1`) ou relu depuis un cache **neuf** fonctionne. Mécanisme isolé dans un répertoire de cache
+vide, avec trois processus : P1 sauvegarde seul l'appelé parallèle `calculate_RT_no_backside` ; P2 compile
+l'appelant `calc_spectrum_front` pendant que l'appelé est **relu du disque** (P2 tourne correctement et sauvegarde
+l'appelant) ; P3 relit l'appelant : plantage, déterministe. Quand l'appelé est compilé dans le même processus que
+l'appelant (écriture puis relecture par le même script), tout va bien. Les deux caches réels de cette machine
+contiennent une entrée défectueuse : le cache à clé `%TEMP%\CERTUS_Numba_Cache8de25316185` (écrit le 16/10, celui
+que lit `tests/conftest.py`) et le cache par défaut `certus/physics/__pycache__`. Numba 0.67.0, Python 3.14.8,
+Windows.
+
+*Ce n'est pas un défaut de CERTUS.* Un **cas minimal autonome de 20 lignes** (annexe : deux fonctions Numba, sans le
+code du projet) plante de la même façon à P3 avec Numba **0.65.1, 0.66.0, 0.67.0 et 0.68.0** (la dernière), sous
+Python **3.14.8 et 3.12.12**, avec la couche de threading `omp` (celle que force `configure_numba_env`) comme avec
+`workqueue`. Une mise à jour de Numba n'est donc pas une parade. Linux non testé. Deux parades tiennent sur le cas
+minimal : ne pas mettre l'**appelant** en cache (m1), ou ne pas mettre l'**appelé** parallèle en cache (m2).
+
+*Portée dans le projet* (analyse syntaxique par noms, appels directs et indirects, donc approximative : elle ne voit ni
+les alias ni les appels par attribut) : **7 fonctions en cache sur 148** appellent un noyau parallèle en cache, toutes
+dans `certus/physics/` : `calc_spectrum_front`, `calc_spectrum_full` et `compute_batch_rmse` (appelants non
+parallèles, le cas reproduit), puis `calc_spectrum_full_exact`, `_calculate_RT_HL_core`, `_compute_tlu_derivatives_kernel`
+et `cost_numba_fast` (appelants eux-mêmes parallèles). Une variante du cas minimal dont l'appelant est
+`parallel=True` et appelle `callee` dans une boucle `prange` **ne plante pas** à P3 : les **trois appelants non
+parallèles** sont la cible probable, les quatre autres ne sont pas exposés dans cette variante (les fonctions du
+projet n'ont pas été rejouées). Seul `calc_spectrum_front` a été vu planter avec le code du projet.
+
+C'est le cousin brutal de D52/D84 (`ETAT.md` : « compilation sur place contre lecture du cache, cause
+non prouvée » — là, des écarts au dernier bit). Une entrée défectueuse persiste tant que le cache n'est pas vidé
+ou que la clé des sources ne change pas. **Exposition du produit non mesurée** : elle dépend des signatures
+que l'application compile et de l'ordre dans lequel les noyaux se mettent en cache. Les runs parallèles de
+`unit` et `ui` se sont faits avec le cache à clé en place sans planter : aucun test ne relit cette entrée.
 
 **C06 — Un NaN dans les nœuds de spline devient `n = k = 0` sans alerte, sur le chemin par défaut**
 *(moyenne ; latent ; reproduit)*. `get_nk_from_spline(..., use_cache=True)` (`certus_optical_models.py`,
@@ -129,6 +188,15 @@ C'est l'**unique** copie de ces données hors Git ; elle n'a pas de seconde sauv
 modifiés » est en partie fausse, et `ETAT.md` §0 cite « 62 modifications suivies préexistantes ». `git grep`
 sans l'option rend 168 erreurs « Filename too long » et **ne scanne pas** ces fichiers : un scan de secrets
 lancé ainsi serait incomplet sans le dire.
+
+**C19 — La porte de CI « `connect(lambda)` » ne lisait que les 10 lanceurs de la racine** *(moyenne ; reproduit)*.
+`tools/lambda_connect_audit.py` appelait `root.glob("*.py")` : il annonçait « 0 site — clean » (et la CI le
+tolérait au plafond 0) pour un dépôt qui en contient **44** dans `certus/` (`git grep` : 44 ; l'outil corrigé : 44).
+Le risque gardé est D11 (une lambda qui capture `self` retient une fenêtre fermée) ; la ligne 984 de
+`certus_strat_ui_layout.py`, qui connecte le bouton « Open reports » à une lambda, en est un exemple. Même
+famille de défaut que C05 : un contrôle qui ne rejette rien parce qu'il ne regarde pas au bon endroit.
+`test_ci_lambda_connect_audit.py` exigeait « sortie 0 pour `--max-count 0` », ce qui n'était vrai qu'à cause du
+défaut.
 
 **C09 — 19 rapports `reports/STRAT_*` apparaissent modifiés sans l'être** *(faible)*. `git ls-files --eol` :
 `i/lf w/crlf attr/-text`. Le `.gitattributes` du 16/10 a ajouté `-text` sur `reports/STRAT_*` après un checkout
@@ -215,43 +283,59 @@ d'avertissements numériques (ui, utils, workers, dont 4 filtres pyqtgraph ident
 `nan_to_num` ; le contenu de `studies/` (exclu). Pour les 69 `.xls` sans flux d'auteur, il n'y a rien à lire. La physique n'a pas été
 éprouvée en polarisation mixte ni pour des milieux anisotropes.
 
+**Sur C18 (cache Numba)** : le défaut n'a pas été cherché sous Linux ; les quatre appelants eux-mêmes parallèles
+du projet (`calc_spectrum_full_exact`, `_calculate_RT_HL_core`, `_compute_tlu_derivatives_kernel`,
+`cost_numba_fast`) n'ont pas été rejoués (une seule variante minimale à appelant parallèle, qui ne plante pas) ;
+la parade m1 n'a été vérifiée que sur le cas minimal, pas sur le projet ; je ne sais pas si
+l'application, avec ses propres signatures d'appel, compile et relit un jour une entrée défectueuse. Pour
+l'étage `ui`, 8 à 12 workers ne sont pas essayés (6 est mesuré sûr, 16 ne l'est pas).
+
 **Environnement modifié sur demande de 👤** (interpréteur global, site utilisateur) : `pytest-xdist 3.8.0`
 (+ `execnet 2.1.2`), `olefile 0.47`, `pylint 4.1.2` (+ `astroid 4.3.3`), `mypy 2.4.0`, `pip-audit 2.10.1`
-(+ leurs dépendances). Aucun fichier du dépôt n'a été modifié par ces installations.
+(+ leurs dépendances). Aucun fichier du dépôt n'a été modifié par ces installations. Quatre environnements virtuels
+jetables ont servi à C18 (le 0.67.0 a été éprouvé dans l'interpréteur global) (Numba 0.65.1, 0.66.0, 0.68.0 sous Python 3.14.8, et 0.68.0 sous Python 3.12.12), hors du
+dépôt, dans le dossier temporaire.
+
+**Un défaut de ma propre main, relevé par la validation finale** : la première version du test de A5 perdait des
+enregistrements sous charge (écritures concurrentes dans un fichier unique, non atomiques sous Windows) et a échoué
+une fois sur 5 513 ; corrigée au commit `3d64d326`.
 
 ## 6. Plan d'actions, du plus simple au plus complexe
 
-Un commit par action (C3). Un test ajouté pour un correctif doit **échouer sur le code d'avant**. Rien n'est
-poussé.
+Un commit par action (C3). Un test ajouté pour un correctif doit **échouer sur le code d'avant** (chacun l'a fait, vu
+rouge avant la correction). Rien n'est poussé ; les commits sont locaux sur `claude/ecstatic-newton-3grmls`.
 
 ### N1 — immédiat : quelques lignes, sans décision scientifique
 
 | # | action | constat | état |
 |---|---|---|---|
-| A1 | `ColorWorker` : retirer `run_context=` de l'appel `success(...)` + test de bout en bout (échoue avant) | C01 | à faire |
-| A2 | `open_file_explorer` : un seul `import subprocess` en tête de module + test (échoue avant) | C08 | à faire |
-| A3 | Traduire les 4 commentaires français de `certus_strat_stack_progress_widget.py` | C11 | à faire |
-| A4 | `git config --local core.longpaths true` (réglage local, pas un commit) | C05 | à faire |
+| A1 | `ColorWorker` : retirer `run_context=` de l'appel `success(...)` + test de bout en bout | C01 | **fait** `f32734a9` |
+| A2 | `open_file_explorer` : un seul `import subprocess` en tête de module + test | C08 | **fait** `8610e18d` |
+| A3 | Traduire les 4 commentaires français de `certus_strat_stack_progress_widget.py` (arbre syntaxique identique) | C11 | **fait** `f7edd4a6` |
+| A4 | `git config --local core.longpaths true` (réglage local, pas un commit) | C05 | **fait** : `git status` nu rend 24 entrées, 0 avertissement |
 
 ### N2 — petit, avec test
 
 | # | action | constat | état |
 |---|---|---|---|
-| A5 | `tests/conftest.py` : un répertoire de préférences par worker xdist + test | C02 | à faire |
-| A6 | `scripts/preflight.py` : `git -c core.longpaths=true` ; corriger la phrase « 62 » d'`ETAT.md` | C05 | à faire |
-| A7 | `restore_rate_evidence.py` : message clair et repli sur l'archive voisine du dépôt + test (ne pas réécrire les pièces) | C04 | à faire |
-| A8 | Audit UX : sérialiser `tests/ui/test_ux_*` sous xdist (`xdist_group`) ou limiter les workers de l'étape `ui` | C03 | à faire |
+| A5 | `tests/conftest.py` : un répertoire de préférences par worker xdist + test (3 workers, 3 répertoires) | C02 | **fait** `f494b9e5` |
+| A6 | `scripts/preflight.py` : `git -c core.longpaths=true` (63 → 25 mesuré réglage retiré) ; la phrase « 62 » d'`ETAT.md` reste à corriger par 👤 | C05 | **fait** `e1acab83` (hors la phrase d'`ETAT.md`) |
+| A7 | `restore_rate_evidence.py` : repli sur l'archive voisine du clone + message clair ; la commande du README rend `EVIDENCE=GO` | C04 | **fait** `36758165` |
+| A8 | Audit UX : étage `ui` à nombre de workers borné | C03 | **mesuré, pas de code** : à 6 workers, `ui` rend 1 324 réussis, 12 ignorés, 2 xfail, **0 échec, 0 erreur** en 4 min 49 (à 16 workers : 2 échecs + 12 erreurs en 5 min 43). Consigne à formaliser par A21 ; 8 à 12 workers non essayés |
+| A19 | `lambda_connect_audit` lit `certus/` et `certus_physics/` ; plafond de la CI à 44 ; test qui le rend serré | C19 | **fait** `3a2b443f` |
 
 ### N3 — décisions de 👤 (changent un comportement ou touchent des fichiers gardés)
 
 | # | action | constat |
 |---|---|---|
+| A20 | **Cache Numba (C18).** (a) vider les deux caches qui contiennent l'entrée défectueuse (`%TEMP%\CERTUS_Numba_Cache\38de25316185` et `certus/physics/__pycache__`, régénérables, hors Git) : ils se reformeront défectueux tant que (b) n'est pas fait ; (b) parade durable : `cache=False` sur les 3 appelants non parallèles de C18, `calc_spectrum_front`, `calc_spectrum_full` et `compute_batch_rmse` (m1, vérifiée sur le cas minimal, **pas encore sur le projet**) ; changer de version de Numba ne sert à rien (testé 0.65.1 à 0.68.0) ; (c) un test `xfail` strict qui rejoue P1 → P2 → P3 sur le cas minimal et prévient le jour où Numba corrige ; (d) dire aux mainteneurs de Numba (le cas de l'annexe suffit). Toute parade touche des noyaux : `scripts\c1_diff.py HEAD` obligatoire (froid à froid) | C18 |
 | A9 | `get_nk_from_spline` : lever `ValueError` sur un nœud non fini, comme le chemin sans cache | C06 |
 | A10 | Valider épaisseur ≥ 0 aux entrées TMM (tolérance pour de minuscules négatifs numériques) | C07 |
 | A11 | Déclarer `pytest-benchmark` et `pytest-xdist` dans `dev` (`pyproject.toml`, `uv.lock`, `requirements.lock`, fichiers gardés) ; ajouter les trois contrôles documentaires à `lint.yml` | C10 |
 | A12 | Choisir les octets de référence des 19 rapports CRLF/LF, puis `git add` ou restaurer | C09 |
-| A13 | Déplacer `UXargon.md` et `designargon.md` hors de la racine ; décider du sort de `studies/bonne_mere` **avant tout push** | C14, C15 |
+| A13 | Déplacer `UXargon.md` et `designargon.md` hors de la racine ; décider du sort de `studies/bonne_mere` **avant tout push** (36 fichiers, un PDF et un DOCX, déjà commités par l'autre session) | C14, C15 |
 | A14 | Seconde copie de l'archive de 8,2 Go (disque externe ou stockage distant) | C04 |
+| A21 | Formaliser la validation parallèle (unit 16 workers `loadfile`, ui à nombre borné, performance en série, contrôles documentaires d'abord) dans un script ou dans CLAUDE.md §2 | C03 |
 
 ### N4 — chantiers
 
@@ -261,3 +345,49 @@ poussé.
 | A16 | Aucun test n'exécute `run()` d'un worker de bout en bout (C01 en est la preuve) : mesurer la couverture des workers et en tester les chemins de résultat | C01 |
 | A17 | `dk5 = 0.0` explicite dans le noyau, avec `scripts\c1_diff.py HEAD` | C13 |
 | A18 | Réduire `Any` ; resserrer le garde-fou « français » (accents dans les commentaires) | C17, C11 |
+| A22 | Convertir les 44 `connect(lambda)` en slots nommés ou `functools.partial` (D11), puis ramener le plafond de la CI à 0 | C19 |
+
+## Annexe — cas minimal du défaut de cache de Numba (C18)
+
+Aucune dépendance au projet. `NUMBA_CACHE_DIR` désigne un dossier vide, et les trois commandes sont trois
+processus distincts.
+
+```python
+# numba_cache_repro.py
+import sys
+
+import numpy as np
+from numba import njit, prange
+
+
+@njit(cache=True, parallel=True)
+def callee(x):
+    out = np.empty_like(x)
+    for i in prange(x.size):
+        out[i] = x[i] * 2.0
+    return out
+
+
+@njit(cache=True)
+def caller(x):
+    return callee(x).sum()
+
+
+x = np.arange(10.0)
+print(callee(x).sum() if sys.argv[1] == "callee" else caller(x))
+```
+
+| processus | commande | ce qui se passe |
+|---|---|---|
+| P1 | `python numba_cache_repro.py callee` | compile et écrit le cache de `callee` ; imprime 90.0 |
+| P2 | `python numba_cache_repro.py caller` | relit `callee` du disque, compile et écrit `caller` ; imprime 90.0 |
+| P3 | `python numba_cache_repro.py caller` | relit `caller` du disque : **Segmentation fault, code 139** |
+
+Mesuré le 2026-10-18, Windows 11 x64 : P3 plante pour Numba 0.65.1 (llvmlite 0.47.0, NumPy 2.4.6), 0.66.0
+(0.48.0, 2.4.6), 0.67.0 (0.49.0, 2.5.3) et 0.68.0 (0.50.0, 2.5.4) sous Python 3.14.8, et pour 0.68.0 sous
+Python 3.12.12 ; avec `NUMBA_THREADING_LAYER=omp` comme avec `workqueue`. P3 réussit si `caller` est déclaré
+`cache=False` (m1), ou si `callee` est déclaré `cache=False` (m2). Dans les deux cas P1 et P2 réussissent
+aussi, comme si `caller` est lui-même `parallel=True` et appelle `callee` dans une boucle `prange`. Si un seul
+processus compile `callee` et `caller` sur un cache vide (rien n'est relu du disque), les
+processus suivants relisent les deux sans plantage : seul l'ordre « appelé relu, appelant compilé et sauvegardé »
+produit l'entrée défectueuse.

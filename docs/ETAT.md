@@ -13,6 +13,13 @@
 > à la fin. Les règles de validation sont dans les sections 2, 4 et 12 de
 > [CLAUDE.md](../CLAUDE.md) ; les décisions scientifiques appartiennent à 👤 (§5).
 
+**Bonne Mère clos le 18 octobre 2026 sur demande de Fabien.** Aucun calcul vivant, suivi automatique suspendu ; ne pas relancer sans nouvelle demande. Le STRAT classique et ses validations sont annulés.
+
+**Choix retenu : 96 couches H800 sur saphir, un témoin, deux précoatings, 70 optiques / 26 Rate, 452 nm commun aux deux précoatings et aux deux premières couches pièce.** Confirmation 3 × 1 000 par bruit : au bruit 0,05, moyenne 1,667858 contre 1,691515 apparié ; P95 RMSE 1,870153 ; SEEL P95 0,833795 nm. Arrêts 0 / 0 / 1 sur 3 000 aux trois bruits. Choix humain comme piste la plus prometteuse, **sans holdout indépendant final du candidat**, sans qualification expérimentale ni optimum global.
+
+[Dossier PDF complet](../studies/bonne_mere/dossier_final/Bonne_Mere_Dossier_Complet.pdf) · [Word](../studies/bonne_mere/dossier_final/Bonne_Mere_Dossier_Complet.docx) · [Passation](../studies/bonne_mere/PASSATION.md) · [sélection courante](../studies/bonne_mere/selection_retenue.json).
+Les sources, protocoles, scripts, plans et audits restent dans une archive compacte **dans** Bonne Mère ; les preuves appariées 452 nm sont conservées sans perte. Les autres sorties brutes lourdes ont été supprimées explicitement pour la limite humaine de **1 Go pour certus0310 entier, Bonne Mère compris**. [Mesure du nettoyage](../studies/bonne_mere/dossier_final/rapport_nettoyage.json). Pas d’archive extérieure ; sources de production et travaux CERTUS préexistants préservés. Reprendre le codage de CERTUS à la demande suivante.
+
 **Reprise courante (2026-10-17).** 👤 valide les trois statuts du registre des leviers Rate (`rate_layer_sets` RESERVE,
 `rate_tail_keep_optical` NON_MESURE, `rate_rescue_hard` RESERVE ; commit `0c7c1e2e`, liste d'attente vide), puis demande d'essayer
 le 99c avec les dernières évolutions du Rate, sur un seul verre témoin. Quatre mesures exploratoires du 99c (`premium`, consensus 41/42/43),

@@ -42,7 +42,7 @@ class LayerCard(QFrame):
         self.lbl_num.setFixedWidth(34)
         layout.addWidget(self.lbl_num)
 
-        # 2. Badge Matériau (H vs L)
+        # 2. Material badge (H vs L)
         self.lbl_mat = QLabel(self.mat)
         self.lbl_mat.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.lbl_mat.setFont(QFont("Segoe UI", 8, QFont.Weight.Bold))
@@ -50,13 +50,13 @@ class LayerCard(QFrame):
         self._apply_mat_badge_style()
         layout.addWidget(self.lbl_mat)
 
-        # 3. Épaisseur
+        # 3. Thickness
         self.lbl_thick = QLabel(f"{self.mult:.3f} QWOT ({self.thickness_nm:.1f} nm)")
         self.lbl_thick.setFont(QFont("Segoe UI", 9))
         self.lbl_thick.setFixedWidth(160)
         layout.addWidget(self.lbl_thick)
 
-        # 4. Statut d'analyse
+        # 4. Analysis status
         self.lbl_status = QLabel("En attente")
         self.lbl_status.setFont(QFont("Segoe UI", 8))
         self.lbl_status.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
@@ -179,7 +179,7 @@ class CertusStratStackProgressWidget(QWidget):
 
     def init_stack_from_table(self, table: Any, l0: float = 550.0, h_mat: str = "H", l_mat: str = "L") -> None:
         """Initialise the list of layers from the cockpit table."""
-        # Nettoyage précédent
+        # Clear the previous cards
         for card in self.layer_cards:
             card.deleteLater()
         self.layer_cards.clear()

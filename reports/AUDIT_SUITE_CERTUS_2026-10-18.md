@@ -331,7 +331,7 @@ une fois sur 5 513 ; corrigée au commit `3d64d326`.
 ## 6. Plan d'actions, du plus simple au plus complexe
 
 Un commit par action (C3). Un test ajouté pour un correctif doit **échouer sur le code d'avant** (chacun l'a fait, vu
-rouge avant la correction). Rien n'est poussé ; les commits sont locaux sur `claude/ecstatic-newton-3grmls`.
+rouge avant la correction). Les commits sont sur `claude/ecstatic-newton-3grmls` ; la publication est consignée dans « Suites du 2026-10-18 ».
 
 ### N1 — immédiat : quelques lignes, sans décision scientifique
 
@@ -360,10 +360,10 @@ rouge avant la correction). Rien n'est poussé ; les commits sont locaux sur `cl
 | A9 | `get_nk_from_spline` : lever `ValueError` sur un nœud non fini, comme le chemin sans cache | C06 |
 | A10 | Valider épaisseur ≥ 0 aux entrées TMM (tolérance pour de minuscules négatifs numériques) | C07 |
 | A11 | Déclarer `pytest-benchmark` et `pytest-xdist` dans `dev` (`pyproject.toml`, `uv.lock`, `requirements.lock`, fichiers gardés) ; ajouter les trois contrôles documentaires à `lint.yml` | C10 |
-| A12 | Choisir les octets de référence des 19 rapports CRLF/LF, puis `git add` ou restaurer | C09 |
-| A13 | Déplacer `UXargon.md` et `designargon.md` hors de la racine ; décider du sort de `studies/bonne_mere` **avant tout push** (36 fichiers, un PDF et un DOCX, déjà commités par l'autre session) | C14, C15 |
+| A12 | Choisir les octets de référence des 19 rapports CRLF/LF, puis `git add` ou restaurer. **Fait tel que trouvé (CRLF), `178bdd36`** : identiques aux CR près, aucune empreinte citée ne tranche ; `git revert` restaure le LF | C09 |
+| A13 | Déplacer `UXargon.md` et `designargon.md` hors de la racine ; décider du sort de `studies/bonne_mere` **avant tout push** (36 fichiers, un PDF et un DOCX, déjà commités par l'autre session). **Audits laissés à la racine, commités tels quels (`10914d78`)** : leurs 299 liens relatifs sont écrits depuis la racine et `documentation_checks.json` y épingle les empreintes d'un état antérieur (elles ne correspondent déjà plus). `studies/bonne_mere` : la publication a été ordonnée par 👤 le 2026-10-18 | C14, C15 |
 | A14 | Seconde copie de l'archive de 8,2 Go (disque externe ou stockage distant) | C04 |
-| A21 | Formaliser la validation parallèle (unit 16 workers `loadfile`, ui à nombre borné, performance en série, contrôles documentaires d'abord) dans un script ou dans CLAUDE.md §2 | C03 |
+| A21 | Formaliser la validation parallèle (unit 16 workers `loadfile`, ui à nombre borné, performance en série, contrôles documentaires d'abord) dans un script ou dans CLAUDE.md §2. **Fait en script : `scripts/validate_parallel.py`, `f349576e`** (22 tests) ; sa première version a fait échouer `test_the_whitelist_carries_no_fossil_entry` (le nom nu `replay` démasquait `EventBus.replay`), corrigé en `rerun` ; CLAUDE.md §2 n'est pas modifié | C03 |
 
 ### N4 — chantiers
 
@@ -372,8 +372,20 @@ rouge avant la correction). Rien n'est poussé ; les commits sont locaux sur `cl
 | A15 | D107 : corriger l'évaluation des candidats d'élagage (session dédiée déjà prévue, attend 👤) | C12 |
 | A16 | Aucun test n'exécute `run()` d'un worker de bout en bout (C01 en est la preuve) : mesurer la couverture des workers et en tester les chemins de résultat | C01 |
 | A17 | `dk5 = 0.0` explicite dans le noyau, avec `scripts\c1_diff.py HEAD` | C13 |
-| A18 | Réduire `Any` ; resserrer le garde-fou « français » (accents dans les commentaires) | C17, C11 |
+| A18 | Réduire `Any` ; resserrer le garde-fou « français » (accents dans les commentaires). **Garde-fou fait, `bc09c35f`** (3 tests ; l'arbre ne compte aucune lettre accentuée dans sa prose) ; `Any` non traité | C17, C11 |
 | A22 | Convertir les 44 `connect(lambda)` en slots nommés ou `functools.partial` (D11), puis ramener le plafond de la CI à 0 | C19 |
+
+### Suites du 2026-10-18 : ménage et validation
+
+- **Ménage de `reports/`** (ordre de 👤) : 215 entrées datées d'avant le 2026-10-04 et citées par rien sont retirées (338 fichiers, 32 Mo) ; la règle et
+  la restauration sont dans le message du commit « chore(reports): remove 215 stale entries » ; les caches de scripts restent. Quatre sorties brutes du 99c
+  (80 Mo) sont ignorées par chemin exact, non commitées.
+- **Ménage des .md** : `docs/ETAT.md` 168 → 94 Ko (section 0 : 891 → 248 lignes), `docs/STRAT_Rate_suite_chantier.md` 81 → 24 Ko ; l'ancienne version reste
+  dans `git show 9fc49269:<fichier>`. `CLAUDE.md` n'est pas touché.
+- **Taille du dossier** : 980 Mo mesurés par `du -sb .` (limite de 1 Go), après le retrait de 12 Mo de fichiers `tmp_obj_*` orphelins de `.git` ;
+  `.claude/worktrees/` pèse 381 Mo et porte du travail non commité d'autres sessions (non touché).
+- **Validation de l'arbre final** par `scripts/validate_parallel.py` : voir `docs/ETAT.md` §0, « Dernière validation complète ».
+- **Publication** : ordonnée par 👤 le 2026-10-18 (« push et commit tout ») ; `git status -sb` donne l'état du distant.
 
 ## Annexe — cas minimal du défaut de cache de Numba (C18)
 

@@ -373,7 +373,6 @@ class ColorWorker(QObject):
             result_payload = ColorWorkerResult.success(
                 lab_nom=lab_nom,
                 labs=labs,
-                run_context=getattr(self.request, "run_context", None),
                 trace=self.request.trace,
             )
             self.signals.finished.emit(result_payload.to_legacy_dict())

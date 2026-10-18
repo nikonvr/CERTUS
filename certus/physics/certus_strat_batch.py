@@ -713,7 +713,10 @@ def _compute_batch_rmse_kernel(
     return rmse_arr
 
 
-@njit(cache=True, nogil=True)
+# cache=False ON PURPOSE: a cached serial function that is saved while the cached parallel kernel it calls is loaded from
+# disk crashes the interpreter when it is reloaded (Numba 0.65 to 0.68, reports/AUDIT_SUITE_CERTUS_2026-10-18.md, C18).
+# The kernel stays cached; this dispatcher is compiled at each start.
+@njit(cache=False, nogil=True)
 def compute_batch_rmse(
     sim_thick_batch: np.ndarray,
     wls: np.ndarray,

@@ -106,7 +106,7 @@ def test_the_default_corpus_reaches_the_strat_kernels_without_a_refusal() -> Non
     """A corpus whose calls are refused on the head compares nothing: a changed signature must be seen here, not as
     a harmless "both refuse alike" in a comparison. Measured 2026-09-30: 1 703 arrays, 0 refusals, 80.6 % of
     `certus_strat_growth.py` reached with the JIT off (this corpus is also what exercises `simulate_growth_kernel`)."""
-    assert c1.CORPUS_PAR_DEFAUT == ("normal", "oblique", "strat")
+    assert c1.CORPUS_PAR_DEFAUT == ("normal", "oblique", "strat", "appelants")
     rec = c1.Enregistreur()
 
     c1.corpus_strat(rec)
@@ -115,6 +115,21 @@ def test_the_default_corpus_reaches_the_strat_kernels_without_a_refusal() -> Non
     entries = {key.split("#")[0] for key in rec.tableaux}
     assert entries == {"strat.growth", "strat.states", "strat.turning", "strat.next", "strat.margins", "strat.scan", "strat.tprofile", "strat.detailed"}
     assert len(rec.tableaux) > 1500
+
+
+def test_the_default_corpus_reaches_the_cached_callers_without_a_refusal() -> None:
+    """`calc_spectrum_front`, `calc_spectrum_full` and `compute_batch_rmse` were called by no corpus until 2026-10-18, when
+    they went to `cache=False` (reports/AUDIT_SUITE_CERTUS_2026-10-18.md, C18). The proof of C1 for that change needs them
+    reached, with the four specializations of `compute_batch_rmse`, and none refused. Measured: 1 084 arrays, 0 refusals."""
+    rec = c1.Enregistreur()
+
+    c1.corpus_appelants(rec)
+
+    assert rec.erreurs == {}, rec.erreurs
+    entries = {key.split("#")[0] for key in rec.tableaux}
+    expected = {f"appelants.{name}{suffix}" for name in ("front", "full", "batch", "batchw", "batchu", "batchc") for suffix in ("", "_abs")}
+    assert entries == expected
+    assert len(rec.tableaux) > 1000
 
 
 # =============================================================================

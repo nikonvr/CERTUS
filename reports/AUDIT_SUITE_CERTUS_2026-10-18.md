@@ -19,8 +19,8 @@ core.longpaths=true`), jamais sur `.claude/worktrees/`.
 
 **Commits produits par l'audit** (locaux, rien n'est poussé) : ce rapport `e52194a7` ; A1 `f32734a9` ; A2
 `8610e18d` ; A3 `f7edd4a6` ; A5 `f494b9e5` ; A6 `e1acab83` ; A19 `3a2b443f` ; A7 `36758165` ; correction de mon
-propre test de A5 `3d64d326`. A4 est un réglage Git local, sans commit. La mise à jour de ce rapport est dans le
-commit qui suit.
+propre test de A5 `3d64d326` ; la mise à jour de ce rapport `9f1b8ccb` ; A20, demandé ensuite par 👤, dans un
+commit qui retrouve avec `git log -S"cache=False ON PURPOSE" --oneline`. A4 est un réglage Git local, sans commit.
 
 ## 1. Verdict
 
@@ -30,7 +30,7 @@ personnelle d'un tiers, ni pièce de tiers dans l'index. Quatre sujets demandent
 
 1. **Deux défauts de production reproduits** : l'analyse Monte-Carlo colorimétrique de DESIGN
    (`ColorWorker`) échoue à chaque exécution (C01, corrigé) ; une entrée du cache Numba peut faire **planter
-   l'interpréteur** à sa relecture, et votre cache réel en contient une (C18, **à décider**).
+   l'interpréteur** à sa relecture, et votre cache réel en contient une (C18, parade appliquée : A20).
 2. **La suite de tests n'est pas sûre en parallèle** : une course sur un répertoire de préférences partagé
    (C02, corrigé) et un audit d'ergonomie sensible à la charge (C03). En série, tout ce qui a échoué en
    parallèle passe.
@@ -76,6 +76,21 @@ le test de préférences passe ; `test_ux_button_min_height` 12/12, `test_ux_ske
 `unit` compte 5 513 tests au lieu de 5 504 : neuf tests ajoutés par les actions A1, A2, A5, A6, A7 (trois) et
 A19 (deux). Le statut Git est identique avant et après chaque passage : les tests ne laissent rien. Pendant la
 validation, CPU moyen 85 %, pic 100 %, RAM libre minimale 14,2 Go sur 31,3.
+
+### Après A20 (`cache=False` sur trois appelants, demandé par 👤)
+
+`scripts\c1_diff.py HEAD`, corpus complet, à froid contre à froid : **9 092 tableaux identiques au bit**
+(dont 1 084 du nouveau corpus `appelants`). Pas de nouveau paramètre : seul le drapeau `cache` de trois
+décorateurs change.
+
+| passage | résultat | ce que c'était |
+|---|---|---|
+| 1er, cache froid (la clé de cache a bougé) | oracle 1 146 passed ; `ui` (6 workers) 1 324 passed, 12 skipped, 2 xfailed ; `perf` 40 passed ; `unit` **1 échec**, `rest` **1 échec** | `unit` : `test_c1_diff_sees_one_ulp.py` épinglait le tuple du corpus par défaut, que A20 élargit : test mis à jour, plus un test qui exige que le corpus `appelants` n'ait aucun refus. `rest` : `test_bare_substrate_transmission_bounds` (Hypothesis, limite de 1 s) a payé la première compilation de `calculate_bare_substrate_RT` à froid, 2,2 s, puis 64 ms ; vert 3 fois de suite à chaud |
+| 2e, cache chaud | `rest` 319 passed ; `unit` **1 échec** | `test_the_real_kernels_run_and_a_real_slowdown_is_caught` (chronomètre un noyau à la microseconde) sous 16 workers ; vert 3 fois seul, et son fichier (29 tests) vert ; noyau non touché |
+| 3e, cache chaud | `unit` **5 516 passed, 7 skipped, 1 xfailed, 0 échec** en 4 min 49 | l'`xfailed` est la sentinelle sur Numba ; Git identique avant et après |
+
+`unit` compte 5 516 tests passés au lieu de 5 513 : les deux tests de `test_the_cached_callers_of_parallel_kernels_survive_a_reload.py`
+(balayage, rejeu) et le test de corpus ajouté à `test_c1_diff_sees_one_ulp.py`, plus la sentinelle en `xfail`.
 
 ## 3. Constats
 
@@ -125,6 +140,19 @@ non prouvée » — là, des écarts au dernier bit). Une entrée défectueuse p
 ou que la clé des sources ne change pas. **Exposition du produit non mesurée** : elle dépend des signatures
 que l'application compile et de l'ordre dans lequel les noyaux se mettent en cache. Les runs parallèles de
 `unit` et `ui` se sont faits avec le cache à clé en place sans planter : aucun test ne relit cette entrée.
+
+*Parade appliquée (A20)* : `cache=False` sur les trois appelants non parallèles, `calc_spectrum_front`,
+`calc_spectrum_full` et `compute_batch_rmse` ; trois décorateurs, seuls changements du code de production. Leur
+entrée de cache n'est plus lue : les deux caches défectueux ne sont plus dangereux pour ces fonctions, et il n'est pas
+nécessaire de les vider. **Coût mesuré** : ces enveloppeurs sont compilés à chaque lancement de processus, les noyaux
+parallèles étant relus du cache : 0,43 s, 0,22 s et 0,33 s au premier appel (environ 1 s au total), appel en régime
+établi inchangé (quelques dizaines de µs). **C1** : `scripts\c1_diff.py HEAD`, à froid contre à froid, **9 092 tableaux
+identiques au bit**. Le harnais n'appelait aucune de ces trois fonctions : un corpus `appelants` (1 084 tableaux) a
+été ajouté, `VERSION_CORPUS` est monté à 3, et ce corpus **rejette** un décalage d'un ulp posé dans les trois
+fonctions (691 différences sur 1 084 tableaux, 12 points d'entrée sur 12 dénoncés). **Trois tests** : un balayage des
+sources qui nommait exactement les trois fonctions avant la correction, le rejeu du défaut sur les vrais appelants en
+trois processus (code `0xC0000005` au troisième avant, 0 après, mêmes bits d'un processus à l'autre), et une
+sentinelle `xfail` strict sur Numba seul qui passera au rouge le jour où Numba corrige.
 
 **C06 — Un NaN dans les nœuds de spline devient `n = k = 0` sans alerte, sur le chemin par défaut**
 *(moyenne ; latent ; reproduit)*. `get_nk_from_spline(..., use_cache=True)` (`certus_optical_models.py`,
@@ -254,7 +282,7 @@ ne publie pas. **Pousser publierait ce dossier sur le dépôt public.**
   l'espace de recherche) ; n° 7 (oracle indépendant : `tmm_reference.py` n'importe que NumPy) ; n° 8
   (marqueurs `DO NOT SPLIT` présents) ; n° 3 (les JSON retirés de `reports/` l'ont été à la demande de 👤 et sont
   archivés, intègres : voir C04).
-- **Architecture §8** : aucun import de PyQt6 ni de `certus.ui` dans `core`, `physics`, `domain`.
+- **Architecture (CLAUDE.md §8)** : aucun import de PyQt6 ni de `certus.ui` dans `core`, `physics`, `domain`.
 - **Physique** : 28 scénarios de contrainte, production contre l'oracle indépendant `tests/oracle/tmm_reference.py`
   (et Fresnel pour les couches épaisses), tous à ≤ 2,3 × 10⁻¹⁴ : films métalliques k = 3,5, substrat absorbant,
   couches évanescentes (n = 0,5 à 60° et 75°), incidence rasante 89,9°, λ de 5 à 20 000 nm, épaisseur nulle, s et
@@ -286,14 +314,14 @@ d'avertissements numériques (ui, utils, workers, dont 4 filtres pyqtgraph ident
 **Sur C18 (cache Numba)** : le défaut n'a pas été cherché sous Linux ; les quatre appelants eux-mêmes parallèles
 du projet (`calc_spectrum_full_exact`, `_calculate_RT_HL_core`, `_compute_tlu_derivatives_kernel`,
 `cost_numba_fast`) n'ont pas été rejoués (une seule variante minimale à appelant parallèle, qui ne plante pas) ;
-la parade m1 n'a été vérifiée que sur le cas minimal, pas sur le projet ; je ne sais pas si
+la parade m1 est vérifiée sur le cas minimal et sur le rejeu des vrais appelants (A20), pas dans l'application entière ; je ne sais pas si
 l'application, avec ses propres signatures d'appel, compile et relit un jour une entrée défectueuse. Pour
 l'étage `ui`, 8 à 12 workers ne sont pas essayés (6 est mesuré sûr, 16 ne l'est pas).
 
 **Environnement modifié sur demande de 👤** (interpréteur global, site utilisateur) : `pytest-xdist 3.8.0`
 (+ `execnet 2.1.2`), `olefile 0.47`, `pylint 4.1.2` (+ `astroid 4.3.3`), `mypy 2.4.0`, `pip-audit 2.10.1`
 (+ leurs dépendances). Aucun fichier du dépôt n'a été modifié par ces installations. Quatre environnements virtuels
-jetables ont servi à C18 (le 0.67.0 a été éprouvé dans l'interpréteur global) (Numba 0.65.1, 0.66.0, 0.68.0 sous Python 3.14.8, et 0.68.0 sous Python 3.12.12), hors du
+jetables ont servi à C18 (Numba 0.65.1, 0.66.0, 0.68.0 sous Python 3.14.8, et 0.68.0 sous Python 3.12.12 ; le 0.67.0 a été éprouvé dans l'interpréteur global), hors du
 dépôt, dans le dossier temporaire.
 
 **Un défaut de ma propre main, relevé par la validation finale** : la première version du test de A5 perdait des
@@ -328,7 +356,7 @@ rouge avant la correction). Rien n'est poussé ; les commits sont locaux sur `cl
 
 | # | action | constat |
 |---|---|---|
-| A20 | **Cache Numba (C18).** (a) vider les deux caches qui contiennent l'entrée défectueuse (`%TEMP%\CERTUS_Numba_Cache\38de25316185` et `certus/physics/__pycache__`, régénérables, hors Git) : ils se reformeront défectueux tant que (b) n'est pas fait ; (b) parade durable : `cache=False` sur les 3 appelants non parallèles de C18, `calc_spectrum_front`, `calc_spectrum_full` et `compute_batch_rmse` (m1, vérifiée sur le cas minimal, **pas encore sur le projet**) ; changer de version de Numba ne sert à rien (testé 0.65.1 à 0.68.0) ; (c) un test `xfail` strict qui rejoue P1 → P2 → P3 sur le cas minimal et prévient le jour où Numba corrige ; (d) dire aux mainteneurs de Numba (le cas de l'annexe suffit). Toute parade touche des noyaux : `scripts\c1_diff.py HEAD` obligatoire (froid à froid) | C18 |
+| A20 | **Cache Numba (C18) : FAIT sur ordre de 👤.** (b) `cache=False` sur `calc_spectrum_front`, `calc_spectrum_full` et `compute_batch_rmse` (parade m1, vérifiée sur le cas minimal puis sur le rejeu des vrais appelants) ; (c) un test `xfail` strict sur Numba seul, un balayage des sources et un rejeu du défaut ; C1 tenu à froid contre à froid (9 092 tableaux au bit), avec un corpus `appelants` ajouté à `c1_diff`. (a) vider les caches n'est plus nécessaire pour ces fonctions. **Reste** : (d) dire aux mainteneurs de Numba (le cas de l'annexe suffit) ; rejouer les 4 appelants eux-mêmes parallèles du projet, que la variante minimale donne non exposés ; changer de version de Numba ne sert à rien (testé 0.65.1 à 0.68.0) | C18 |
 | A9 | `get_nk_from_spline` : lever `ValueError` sur un nœud non fini, comme le chemin sans cache | C06 |
 | A10 | Valider épaisseur ≥ 0 aux entrées TMM (tolérance pour de minuscules négatifs numériques) | C07 |
 | A11 | Déclarer `pytest-benchmark` et `pytest-xdist` dans `dev` (`pyproject.toml`, `uv.lock`, `requirements.lock`, fichiers gardés) ; ajouter les trois contrôles documentaires à `lint.yml` | C10 |
@@ -377,11 +405,11 @@ x = np.arange(10.0)
 print(callee(x).sum() if sys.argv[1] == "callee" else caller(x))
 ```
 
-| processus | commande | ce qui se passe |
+| processus | exécution du script, avec l'argument | ce qui se passe |
 |---|---|---|
-| P1 | `python numba_cache_repro.py callee` | compile et écrit le cache de `callee` ; imprime 90.0 |
-| P2 | `python numba_cache_repro.py caller` | relit `callee` du disque, compile et écrit `caller` ; imprime 90.0 |
-| P3 | `python numba_cache_repro.py caller` | relit `caller` du disque : **Segmentation fault, code 139** |
+| P1 | `callee` | compile et écrit le cache de `callee` ; imprime 90.0 |
+| P2 | `caller` | relit `callee` du disque, compile et écrit `caller` ; imprime 90.0 |
+| P3 | `caller` (de nouveau) | relit `caller` du disque : **Segmentation fault, code 139** |
 
 Mesuré le 2026-10-18, Windows 11 x64 : P3 plante pour Numba 0.65.1 (llvmlite 0.47.0, NumPy 2.4.6), 0.66.0
 (0.48.0, 2.4.6), 0.67.0 (0.49.0, 2.5.3) et 0.68.0 (0.50.0, 2.5.4) sous Python 3.14.8, et pour 0.68.0 sous

@@ -51,7 +51,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 
 #: A monter a chaque changement du corpus : il fait partie de la cle du cache de la base.
-VERSION_CORPUS = 2
+VERSION_CORPUS = 3
 
 #: Ce qu'on exporte d'une revision : le paquet de calcul et ses voisins, pas `reports/` (592 Mo).
 PAQUETS = ("certus", "certus_physics")
@@ -304,6 +304,40 @@ def corpus_strat(rec: Enregistreur) -> None:
     )  # fmt: skip
 
 
+def corpus_appelants(rec: Enregistreur) -> None:
+    """Les appelants non paralleles de noyaux paralleles en cache : `calc_spectrum_front`, `calc_spectrum_full`, `compute_batch_rmse`.
+
+    Passes a `cache=False` le 2026-10-18 : un appelant sauvegarde pendant que son appele parallele est relu du disque plante
+    a sa relecture (Numba 0.65 a 0.68, reports/AUDIT_SUITE_CERTUS_2026-10-18.md, C18). Le drapeau ne change pas le code
+    compile, mais aucun autre corpus n'appelait ces trois points d'entree : c'est celui-ci qui le prouve au bit.
+    """
+    tm = "certus.physics.certus_tmm_matrix"
+    f_front = rec.resoudre("appelants.front", f"{tm}:calc_spectrum_front")
+    f_full = rec.resoudre("appelants.full", f"{tm}:calc_spectrum_full")
+    f_batch = rec.resoudre("appelants.batch", "certus.physics.certus_strat_batch:compute_batch_rmse")
+
+    rng = np.random.default_rng(20261018)
+    vide = np.empty(0, dtype=np.complex128)
+    for cas in range(60):
+        for suffixe, dissipative in (("", False), ("_abs", True)):
+            nl, d, nb, db, wls, ns = _pile(rng, dissipative)
+            m, n_arriere = len(wls), len(db)
+            lot = d * (1.0 + rng.normal(0.0, 0.01, (5, len(d))))  # cinq tirages d'epaisseurs autour du nominal
+            cible, poids = rng.uniform(0, 1, m), rng.uniform(0.2, 1, m)
+            rec.appeler("appelants.front" + suffixe, cas, f_front, wls, d, nl, ns)
+            if n_arriere:
+                rec.appeler("appelants.full" + suffixe, cas, f_full, wls, d, nl, db, nb, ns)
+            # Les quatre specialisations de `compute_batch_rmse` : sans poids, poids quelconques, poids uniformes (ramenes
+            # a `None`), et le couloir d'indice.
+            rec.appeler("appelants.batch" + suffixe, cas, f_batch, lot, wls, vide, vide, ns, cible, nl)
+            rec.appeler("appelants.batchw" + suffixe, cas, f_batch, lot, wls, vide, vide, ns, cible, nl, poids)
+            rec.appeler("appelants.batchu" + suffixe, cas, f_batch, lot, wls, vide, vide, ns, cible, nl, np.full(m, 0.5))
+            rec.appeler(
+                "appelants.batchc" + suffixe, cas, f_batch, lot, wls, vide, vide, ns, cible, nl, None,
+                0.005, int(cas), float(wls[0]), float(wls[-1]),
+            )  # fmt: skip
+
+
 def corpus_selftest(rec: Enregistreur) -> None:
     """Un seul noyau, `compute_RT_from_matrix` : de quoi prouver que le harnais voit un ulp, en quelques secondes."""
     f = rec.resoudre("selftest", "certus.physics.certus_opt_tmm:compute_RT_from_matrix")
@@ -322,8 +356,14 @@ def corpus_selftest(rec: Enregistreur) -> None:
     rec.poser("selftest#000#1", np.array(transmissions))
 
 
-CORPUS = {"normal": corpus_normal, "oblique": corpus_oblique, "strat": corpus_strat, "selftest": corpus_selftest}
-CORPUS_PAR_DEFAUT = ("normal", "oblique", "strat")
+CORPUS = {
+    "normal": corpus_normal,
+    "oblique": corpus_oblique,
+    "strat": corpus_strat,
+    "appelants": corpus_appelants,
+    "selftest": corpus_selftest,
+}
+CORPUS_PAR_DEFAUT = ("normal", "oblique", "strat", "appelants")
 
 
 def ouvrier(arbre: Path, sortie: Path, noms: list[str]) -> int:

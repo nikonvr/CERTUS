@@ -394,7 +394,11 @@ def calculate_RT_no_backside(
 # Macleod convention (+1j). Front-only (no backside). DO NOT MODIFY without re-running the tests.
 
 
-@njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
+# cache=False ON PURPOSE. A cached serial function that is saved while the cached parallel kernel it calls is loaded from
+# disk crashes the interpreter when it is reloaded (Numba 0.65 to 0.68, reports/AUDIT_SUITE_CERTUS_2026-10-18.md, C18).
+# The kernel stays cached; this wrapper is compiled at each start. See
+# tests/unit/test_the_cached_callers_of_parallel_kernels_survive_a_reload.py before changing it back.
+@njit(cache=False, fastmath=True, nogil=True, error_model="numpy")
 def calc_spectrum_front(
     wls: np.ndarray, d_layers: np.ndarray, n_layers: np.ndarray, n_sub: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray]:
@@ -433,7 +437,8 @@ def calc_spectrum_front(
 # Macleod convention (+1j). Front+Back without backside (caller handles it). DO NOT MODIFY without re-running the tests.
 
 
-@njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
+# cache=False ON PURPOSE, like calc_spectrum_front above (a cached serial caller of a cached parallel kernel).
+@njit(cache=False, fastmath=True, nogil=True, error_model="numpy")
 def calc_spectrum_full(
     wls: np.ndarray,
     d_front: np.ndarray,

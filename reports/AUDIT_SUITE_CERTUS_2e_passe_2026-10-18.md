@@ -16,7 +16,7 @@ gradient hérité faux pour les couches absorbantes, des trous de tests.
 
 - **Validée** : `validate_parallel.py` rend `VALIDATION=GO` (16 min), la CI distante est verte sur la même tête (tests en série sur Ubuntu et Windows,
   gel construit, lint, sécurité), C1 tient au bit contre le commit d'avant ce jour (9 092 tableaux), 63 000 cas aléatoires de TMM s'accordent à l'oracle
-  indépendant à 6·10⁻¹⁴, aucun secret ni adresse personnelle dans les 1 575 commits.
+  indépendant à 6·10⁻¹⁴, aucun secret dans les 1 575 commits et aucune adresse personnelle dans le contenu des fichiers (4 commits portent l'identité civile de 👤, son choix : C32).
 - **Nouveaux constats (C20 à C32)** : un défaut numérique latent et mesuré (**C20**, gradient hérité faux de 340 % sur la configuration d'un test existant),
   deux familles d'entrées invalides qui rendent du fini plausible (**C21**, **C22**), quatre mutations de formules que toute la suite laisse passer (**C29**),
   et des faibles (caches modifiables, flux de bruit, reproductibilité, CI).
@@ -33,7 +33,7 @@ gradient hérité faux pour les couches absorbantes, des trous de tests.
 | Gradient normal contre le coût de production (`fuzz_grad2`, 400 cas, 16 configurations) | 350 cas sur 350 accordés ; **50 sur 50 faux** dans « sans pile arrière, couches absorbantes, substrat non absorbant » (C20) |
 | Mutation de 22 formules physiques, dans des copies hors dépôt (`mutate`) | **18 tuées, 4 survivantes** (C29) ; 16 par l'oracle, 2 par les tests unitaires |
 | C1 contre `6e546515` (tête distante avant le push de cet après-midi), cold contre cold | **C1 TENU : 9 092 tableaux identiques au bit** |
-| Historique entier (`scan_range --all`) : 1 575 commits, 29 763 objets, 17 539 blobs (1,9 Go bruts) | 0 secret, 0 adresse dans le contenu hors trailers ; 124 blobs de plus de 2 Mo (le plus gros : 36 Mo) |
+| Historique entier (`scan_range --all`) : 1 575 commits, 29 763 objets, 17 539 blobs (1,9 Go bruts) | 0 secret ; 3 motifs d'adresse dans le contenu, aucun personnel (`noreply@anthropic.com`, l'adresse `noreply` GitHub de 👤, une fausse correspondance de décorateur pytest) ; 124 blobs de plus de 2 Mo (le plus gros : 36 Mo) |
 | `bandit` 1.9.4, 425 fichiers de code livré | 78 constats : 1 HIGH (SHA1, C31), 1 MEDIUM (`xml.etree` sur un `coverage.xml` local), 76 LOW (`subprocess` sans shell) |
 | Balayage AST de risques (`hazards`) | aucun `eval`/`exec`/`pickle`/`yaml.load`/`shell=True`/`allow_pickle`/réseau ; 9 `except Exception` qui avalent (5 dans `certus/`, gardés par le cliquet) ; 12 `nan_to_num` inventoriés, le contexte de 8 relu (les 4 autres, au §6) |
 | Frontières de couches et signe de k (`layers_sign`) | 0 import de `core`/`physics`/`domain` vers PyQt6 ou `certus.ui` ; 15 lignes `±1j·k`, **toutes `-1j·k`** |
@@ -60,7 +60,8 @@ Sur la configuration du test existant `test_design_gradient_all_absorbing` (k = 
 **Pourquoi rien ne le voit** : ce test compare le gradient aux différences finies du coût *du même noyau* (auto-cohérence), donc les deux sont faux ensemble ;
 le correctif du 2026-09-30 n'a traité que le substrat absorbant (le commentaire attribue l'écart au « T vu du côté substrat », ce qui n'explique pas le cas des couches).
 **Portée** : DESIGN n'utilise que des matériaux de Cauchy réels (`Material.get_nk` rend n réel ; exemples `n4`/`n7`) : inaccessible aujourd'hui depuis DESIGN. La
-fonction est publique (`certus_physics`). Les 15 autres configurations (pile arrière, substrat absorbant) passent par les noyaux obliques, justes.
+fonction est publique (`certus_physics`). Les 15 autres configurations passent par les noyaux obliques (pile arrière ou substrat absorbant), justes, ou par le noyau hérité sur des
+couches sans perte, juste aussi.
 `probe_abs_grad`, `probe_c20_conj`, `fuzz_grad2`.
 
 **C21 — La validation des entrées diffère d'un point d'entrée à l'autre, et un NaN devient un spectre nul plausible** *(moyenne ; reproduit)*. NaN, +∞, −∞ injectés
@@ -205,7 +206,7 @@ l'oracle et la production partagent mes conventions d'appel (ordre des couches, 
 | A32 | Graine optionnelle (inactive par défaut = comportement actuel) pour le Monte-Carlo et les départs de FIELD | C25 | oui |
 | A33 | Dire dans la docstring de `_seeded_noise_sample` « graines brutes à ≥ 10 d'écart » ; mélanger `robustness_seed` à la nucléation changerait les tirages | C26 | **oui** |
 | A34 | Documenter C27 et C28 (nombre de fils ; plage 380–780 nm et ordre croissant, avec un refus dans `xyz_from_spectrum`) | C27, C28 | non |
-| A35 | Reprendre A9 à A14 du premier audit (NaN de spline, épaisseur négative, déclarations de développement, seconde copie de l'archive) | C06, C07, C10 | oui |
+| A35 | Reprendre A9, A10, A11 et A14 du premier audit (NaN de spline, épaisseur négative, déclarations de développement, seconde copie de l'archive) | C06, C07, C10 | oui |
 
 ## Annexe — reproduction
 

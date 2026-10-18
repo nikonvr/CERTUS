@@ -1,0 +1,13 @@
+--- Sellmeier du dépôt contre la littérature (valeurs que je connais avec certitude) ---
+silice fondue (id 0), 587,56 nm        calculé 1.45846  littérature 1.45846  écart +3.75e-06  OK
+N-BK7 (id 1), 587,56 nm                calculé 1.51680  littérature 1.51680  écart +1.10e-07  OK
+saphir ordinaire (id 3), 589,3 nm      calculé 1.76808  littérature 1.76820  écart -1.24e-04  OK
+silice fondue, 1550 nm                 calculé 1.44402  littérature 1.44402  écart +3.62e-06  OK
+silice fondue, 400 nm                  calculé 1.47012  littérature 1.47012  écart -3.88e-06  OK
+N-BK7, 1064 nm                         calculé 1.50663  littérature 1.50669  écart -5.52e-05  OK
+
+--- k négatif dans les tables livrées (example/database_index/indices.xlsx) ---
+feuilles : 17 | colonnes k contrôlées : 3 | colonnes avec k < 0 : 0 []
+
+--- epsilon_to_nk : n^2 - k^2 = eps1, 2nk = eps2, k >= 0 ---
+max |n^2 - k^2 - eps1| = 1.00e-12 | max |2nk - eps2| = 5.66e-06 | k min = 0.00e+00 | n min = 1.00e-06

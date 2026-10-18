@@ -1,0 +1,99 @@
+"""Balayage de risques de code, sur les fichiers SUIVIS hors tests (git ls-files). Sortie compacte."""
+import ast, collections, re, subprocess, sys
+
+sys.stdout.reconfigure(encoding='utf-8')
+G = ['git', '-c', 'core.longpaths=true']
+files = [f for f in subprocess.run(G + ['ls-files', '-z', '*.py'], capture_output=True).stdout.decode().split('\0') if f]
+code = [f for f in files if not f.startswith(('tests/', 'studies/', 'example/', 'reports/', '.claude/', 'docs/'))]
+print('fichiers .py suivis :', len(files), '| hors tests/études/exemples :', len(code))
+
+C = collections.defaultdict(list)  # catégorie -> [(fichier, ligne, extrait)]
+src = {}
+
+
+def add(cat, f, line, text=''):
+    C[cat].append((f, line, text.strip()[:110]))
+
+
+DANGER_CALLS = {'eval', 'exec', '__import__', 'input'}
+for f in code:
+    try:
+        t = open(f, encoding='utf-8-sig').read()
+        tree = ast.parse(t)
+    except (OSError, SyntaxError, UnicodeDecodeError) as e:
+        add('illisible', f, 0, str(e)[:60])
+        continue
+    src[f] = t.splitlines()
+    for n in ast.walk(tree):
+        ln = getattr(n, 'lineno', 0)
+        line = src[f][ln - 1] if 0 < ln <= len(src[f]) else ''
+        if isinstance(n, ast.ExceptHandler) and n.type is None:
+            add('except: nu', f, ln, line)
+        if isinstance(n, ast.ExceptHandler) and isinstance(n.type, ast.Name) and n.type.id in ('Exception', 'BaseException'):
+            body = n.body
+            if all(isinstance(b, (ast.Pass, ast.Continue)) or (isinstance(b, ast.Return) and (b.value is None or isinstance(b.value, ast.Constant))) for b in body):
+                add('except Exception qui avale (pass/continue/return const)', f, ln, line)
+        if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+            for d in list(n.args.defaults) + [d for d in n.args.kw_defaults if d is not None]:
+                if isinstance(d, (ast.List, ast.Dict, ast.Set)) or (isinstance(d, ast.Call) and isinstance(d.func, ast.Name) and d.func.id in ('list', 'dict', 'set')):
+                    add('argument par défaut mutable', f, ln, line)
+        if isinstance(n, ast.Assert):
+            add('assert hors tests', f, ln, line)
+        if isinstance(n, ast.Call):
+            fn = n.func
+            name = fn.id if isinstance(fn, ast.Name) else (fn.attr if isinstance(fn, ast.Attribute) else '')
+            full = ast.unparse(fn)[:60]
+            if isinstance(fn, ast.Name) and fn.id in DANGER_CALLS:
+                add('appel dangereux (eval/exec/__import__/input)', f, ln, line)
+            if full in ('pickle.load', 'pickle.loads', 'marshal.load', 'marshal.loads', 'shelve.open', 'os.system', 'os.popen', 'tempfile.mktemp'):
+                add('appel dangereux : ' + full, f, ln, line)
+            if full.endswith('yaml.load') and not any(k.arg == 'Loader' for k in n.keywords):
+                add('yaml.load sans Loader', f, ln, line)
+            if any(k.arg == 'shell' and isinstance(k.value, ast.Constant) and k.value.value is True for k in n.keywords):
+                add('subprocess shell=True', f, ln, line)
+            if any(k.arg == 'allow_pickle' and isinstance(k.value, ast.Constant) and k.value.value is True for k in n.keywords):
+                add('np.load allow_pickle=True', f, ln, line)
+            if name in ('urlopen', 'urlretrieve') or full.startswith('requests.'):
+                add('réseau (urlopen/requests)', f, ln, line)
+            if full in ('np.random.seed', 'numpy.random.seed', 'random.seed'):
+                add('graine globale (np.random.seed/random.seed)', f, ln, line)
+            if re.fullmatch(r'(np|numpy)\.random\.(rand|randn|random|normal|uniform|randint|choice|shuffle|permutation|standard_normal)', full):
+                add('RNG global hérité (np.random.<tirage>)', f, ln, line)
+            if full in ('warnings.filterwarnings', 'warnings.simplefilter') and n.args and isinstance(n.args[0], ast.Constant) and n.args[0].value == 'ignore':
+                add('warnings: ignore (global)', f, ln, line)
+            if full in ('np.seterr', 'numpy.seterr'):
+                add('np.seterr global', f, ln, line)
+            if name == 'nan_to_num':
+                add('nan_to_num', f, ln, line)
+            if name in ('lru_cache', 'cache') or full in ('functools.lru_cache', 'functools.cache'):
+                add('cache fonctionnel', f, ln, line)
+        if isinstance(n, ast.Global):
+            add('global (instruction)', f, ln, line)
+        if isinstance(n, (ast.Import, ast.ImportFrom)):
+            mods = [a.name for a in n.names] if isinstance(n, ast.Import) else [n.module or '']
+            for m in mods:
+                if m.split('.')[0] in ('xml', 'lxml') and ('etree' in m or 'minidom' in m or m.startswith('lxml')):
+                    add('import XML (XXE ?)', f, ln, line)
+                if m.split('.')[0] in ('pickle', 'marshal', 'shelve', 'dill', 'cloudpickle'):
+                    add('import sérialisation binaire : ' + m.split('.')[0], f, ln, line)
+
+# décorateurs @lru_cache (ast.Call dans decorator_list sont déjà vus par ast.walk) ; caches de module (dict nommés *cache*)
+for f, lines in src.items():
+    for i, l in enumerate(lines, 1):
+        if re.match(r'^_?[A-Za-z0-9_]*(CACHE|_cache|Cache)[A-Za-z0-9_]*\s*(:\s*[^=]+)?=\s*(\{\}|dict\(\)|\[\]|OrderedDict\(\))', l):
+            add('cache de module (dict/list)', f, i, l)
+        if re.search(r'#\s*type:\s*ignore', l):
+            add('type: ignore', f, i, '')
+        if re.search(r'#\s*noqa', l):
+            add('noqa', f, i, '')
+
+print()
+print('%-62s %6s  %s' % ('catégorie', 'nombre', 'premiers fichiers'))
+for cat in sorted(C, key=lambda c: -len(C[c])):
+    v = C[cat]
+    per = collections.Counter(f for f, _, _ in v)
+    top = ', '.join(f'{f.split("/")[-1]}({n})' for f, n in per.most_common(4))
+    print('%-62s %6d  %s' % (cat[:62], len(v), top[:110]))
+
+import json, os, tempfile
+json.dump({k: v for k, v in C.items()}, open(os.path.join(tempfile.gettempdir(), 'audit_certus', 'hazards.json'), 'w', encoding='utf-8'), ensure_ascii=False)

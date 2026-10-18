@@ -1,0 +1,42 @@
+"""Le nombre de fils Numba change-t-il les bits du coût, du gradient et des spectres ? (un processus par valeur de NUMBA_NUM_THREADS)"""
+import hashlib, json, os, subprocess, sys
+
+if len(sys.argv) > 1 and sys.argv[1] == 'child':
+    import numpy as np
+    sys.path.insert(0, os.getcwd())
+    from certus.physics.gradient_oblique import compute_gradient_all_layers_analytic
+    from certus.physics.gradient_utils import cost_numba_fast
+    from certus.physics.certus_tmm_matrix import calculate_RT_no_backside
+    from certus.physics.certus_tmm_oblique import calc_spectrum_oblique_vectorized
+    rng = np.random.default_rng(5)
+    nw, nl = 700, 24
+    wls = np.linspace(400.0, 1100.0, nw)
+    d = rng.uniform(30.0, 200.0, nl)
+    n = np.tile(rng.uniform(1.3, 2.4, nl)[None, :], (nw, 1)).astype(np.complex128)
+    ns = np.full(nw, 1.52 + 0j)
+    tg = rng.uniform(0.1, 0.95, nw)
+    wt = rng.uniform(0.2, 2.0, nw)
+    nb0, db0 = np.zeros((nw, 0), dtype=np.complex128), np.zeros(0)
+    var = np.arange(nl, dtype=np.int64)
+    c = cost_numba_fast(d, n, ns, wls, tg, wt, 0.01, False, nb0, db0)
+    v, g = compute_gradient_all_layers_analytic(d, n, ns, wls, tg, wt, 0.01, False, nb0, db0, var)
+    R, T = calculate_RT_no_backside(d, n, ns, wls)
+    Ro, To = calc_spectrum_oblique_vectorized(wls, n, d, ns, 40.0, 'p')
+    h = lambda a: hashlib.sha256(np.ascontiguousarray(a, dtype=np.float64).tobytes()).hexdigest()[:12]  # noqa: E731
+    print(json.dumps({'cost': float(c).hex(), 'grad_value': float(v).hex(), 'grad': h(g), 'R': h(R), 'T': h(T), 'R_obl': h(Ro), 'T_obl': h(To)}))
+else:
+    rows = {}
+    for nt in (1, 2, 4, 8, 16):
+        env = dict(os.environ, NUMBA_NUM_THREADS=str(nt), PYTHONIOENCODING='utf-8')
+        p = subprocess.run([sys.executable, '-X', 'utf8', os.path.abspath(__file__), 'child'], env=env, capture_output=True, cwd=os.getcwd())
+        line = [l for l in p.stdout.decode().splitlines() if l.startswith('{')]
+        rows[nt] = json.loads(line[-1]) if line else {'erreur': p.stderr.decode()[-300:]}
+    keys = ['cost', 'grad_value', 'grad', 'R', 'T', 'R_obl', 'T_obl']
+    base = rows[1]
+    print('quantité        ' + '  '.join(f'{nt:>2} fils' for nt in rows))
+    for k in keys:
+        same = ['=' if rows[nt].get(k) == base.get(k) else 'DIFF' for nt in rows]
+        print(f'{k:<15} ' + '  '.join(f'{s:>6}' for s in same))
+    if any(rows[nt].get('cost') != base.get('cost') for nt in rows):
+        for nt in rows:
+            print(nt, 'coût', float.fromhex(rows[nt]['cost']), 'écart/référence (1 fil) =', float.fromhex(rows[nt]['cost']) - float.fromhex(base['cost']))

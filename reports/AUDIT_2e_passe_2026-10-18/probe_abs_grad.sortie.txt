@@ -1,0 +1,30 @@
+une couche n=2.1, k=0.0001, 120 nm
+   coût  oracle=0.14251552  cost_numba_fast=0.14251552  valeur du gradient=0.14287902   (écart valeur/oracle 2.55e-03)
+   dérivée oracle (FD) = [0.00058]
+   dérivée analytique  = [0.00059]
+   erreur relative max de la dérivée = 6.05e-03
+une couche n=2.1, k=0.001, 120 nm
+   coût  oracle=0.14088865  cost_numba_fast=0.14088865  valeur du gradient=0.14452366   (écart valeur/oracle 2.58e-02)
+   dérivée oracle (FD) = [0.00057]
+   dérivée analytique  = [0.0006]
+   erreur relative max de la dérivée = 6.22e-02
+une couche n=2.1, k=0.01, 120 nm
+   coût  oracle=0.12539621  cost_numba_fast=0.12539621  valeur du gradient=0.16179443   (écart valeur/oracle 2.90e-01)
+   dérivée oracle (FD) = [0.00042]
+   dérivée analytique  = [0.00078]
+   erreur relative max de la dérivée = 8.39e-01
+une couche n=2.1, k=0.1, 120 nm
+   coût  oracle=0.03077939  cost_numba_fast=0.03077939  valeur du gradient=0.44510777   (écart valeur/oracle 1.35e+01)
+   dérivée oracle (FD) = [-0.00017]
+   dérivée analytique  = [0.00439]
+   erreur relative max de la dérivée = 2.73e+01
+argent 25 nm (n=0.06, k=3.4 constants)
+   coût  oracle=0.06430843  cost_numba_fast=0.06430843  valeur du gradient=0.05764199   (écart valeur/oracle 1.04e-01)
+   dérivée oracle (FD) = [0.0078]
+   dérivée analytique  = [0.00762]
+   erreur relative max de la dérivée = 2.31e-02
+empilement TiO2 légèrement absorbant (k=0.002) / SiO2, 4 couches
+   coût  oracle=0.01857466  cost_numba_fast=0.01857466  valeur du gradient=0.02030069   (écart valeur/oracle 9.29e-02)
+   dérivée oracle (FD) = [5.73255e-04 5.79154e-04 6.13047e-04 3.40554e-05]
+   dérivée analytique  = [6.21055e-04 6.09382e-04 6.61453e-04 3.96965e-05]
+   erreur relative max de la dérivée = 1.66e-01

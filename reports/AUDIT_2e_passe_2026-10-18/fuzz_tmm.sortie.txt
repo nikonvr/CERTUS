@@ -1,0 +1,39 @@
+<racine>\tests\oracle\tmm_reference.py:165: RuntimeWarning: overflow encountered in scalar power
+  transmittance = float(4.0 * n_inc.real * n_sub.real / (abs(y_sys) ** 2))
+<racine>\tests\oracle\tmm_reference.py:98: RuntimeWarning: invalid value encountered in scalar divide
+  [cos_d, 1j * sin_d / eta],
+<racine>\tests\oracle\tmm_reference.py:161: RuntimeWarning: invalid value encountered in scalar divide
+  r_amp = (n_inc * b_val - c_val) / y_sys
+production résolue dans : <racine>\certus\physics
+normal, face avant                 {'cas': 30000, 'max': 5.939693181744587e-14, '> 1e-12': 0, '> 1e-09': 0, '> 1e-06': 0, '> 0.001': 0, 'refusés': 0, 'énergie hors [0,1]': 0, 'pire cas': 4515}
+oblique s/p, face avant            {'cas': 24000, 'max': 5.206945985491984e-14, '> 1e-12': 0, '> 1e-09': 0, '> 1e-06': 0, '> 0.001': 0, 'refusés': 0, 'énergie hors [0,1]': 0, 'pire cas': (5201, 53.061, 's'), 'max s': 5.206945985491984e-14, 'max p': 4.39648317751562e-14}
+plaque incohérente + pile arrière  {'cas': 9000, 'max': 2.9254376698872875e-14, '> 1e-12': 0, '> 1e-09': 0, '> 1e-06': 0, '> 0.001': 0, 'refusés': 0, 'énergie hors [0,1]': 0, 'pire cas': (252, 73.563, 's', 22, 0)}
+durée : 13 s
+
+== entrées invalides (R, T, R+T) ==
+gain k=-0.01 (n=1.5+0.01j), d=500 nm | noyau vectorisé     R=0.038568 T=0.857606 R+T=0.896174
+gain k=-0.01 (n=1.5+0.01j), d=500 nm | compute_TMM_generic R=0.038568 T=0.857606 R+T=0.896174
+gain k=-0.01 (n=1.5+0.01j), d=500 nm | oracle              R=0.041151 T=1.075066 R+T=1.116216
+gain k=-0.01, d=20000 nm | noyau vectorisé                 R=0.040045 T=0.009947 R+T=0.049992
+gain k=-0.01, d=20000 nm | compute_TMM_generic             R=0.040045 T=0.009947 R+T=0.049992
+gain k=-0.01, d=20000 nm | oracle                          R=0.591512 T=79.213728 R+T=79.805239
+absorbant k=+0.01, d=500 nm (référence) | noyau vectorisé  R=0.038568 T=0.857606 R+T=0.896174
+absorbant k=+0.01, d=500 nm (référence) | compute_TMM_generic R=0.038568 T=0.857606 R+T=0.896174
+absorbant k=+0.01, d=500 nm (référence) | oracle           R=0.038568 T=0.857606 R+T=0.896174
+épaisseur négative -50 nm, k=0.5 | noyau vectorisé         R=0.357349 T=1.641311 R+T=1.998660
+épaisseur négative -50 nm, k=0.5 | compute_TMM_generic     R=0.357349 T=1.641311 R+T=1.998660
+épaisseur négative -50 nm, k=0.5 | oracle                  R=0.357349 T=1.641311 R+T=1.998660
+épaisseur nulle | noyau vectorisé                          R=0.042580 T=0.957420 R+T=1.000000
+épaisseur nulle | compute_TMM_generic                      R=0.042580 T=0.957420 R+T=1.000000
+épaisseur nulle | oracle                                   R=0.042580 T=0.957420 R+T=1.000000
+indice de couche 0 | noyau vectorisé                       R=0.042580 T=0.957420 R+T=1.000000
+indice de couche 0 | compute_TMM_generic                   R=0.042580 T=0.957420 R+T=1.000000
+indice de couche 0 | oracle                                R=nan T=nan R+T=nan
+λ = 0 | noyau vectorisé                                    R=0.000000 T=0.000000 R+T=0.000000
+λ < 0 | noyau vectorisé                                    R=0.037598 T=0.962402 R+T=1.000000
+λ = nan | noyau vectorisé                                  R=0.000000 T=0.000000 R+T=0.000000
+λ = inf | noyau vectorisé                                  R=0.042580 T=0.957420 R+T=1.000000
+substrat n=0 | noyau vectorisé                             R=1.000000 T=0.000000 R+T=1.000000
+substrat n=0 | oblique plaque                              R=1.000000 T=0.000000 R+T=1.000000
+substrat n réel<1e-12 (oblique) | noyau vectorisé          R=1.000000 T=0.000000 R+T=1.000000
+substrat n réel<1e-12 (oblique) | oblique plaque           R=1.000000 T=0.000000 R+T=1.000000

@@ -1,0 +1,161 @@
+"""Sonde différentielle : TMM de production contre l'oracle indépendant (tests/oracle/tmm_reference.py), cas aléatoires.
+
+À lancer depuis la racine du dépôt : python -X utf8 fuzz_tmm.py [N_normal N_oblique N_plaque]
+"""
+import json, os, sys, tempfile, time
+import numpy as np
+
+sys.stdout.reconfigure(encoding='utf-8')
+sys.path.insert(0, os.path.join(os.getcwd(), 'tests', 'oracle'))
+sys.path.insert(0, os.getcwd())
+from tmm_reference import rt_stack, rt_stack_oblique, rt_plate_incoherent  # noqa: E402
+import certus.physics.certus_tmm_matrix as tm  # noqa: E402
+from certus.physics.certus_tmm_matrix import calculate_RT_no_backside  # noqa: E402
+from certus.physics.certus_tmm_oblique import calc_spectrum_oblique_vectorized, calc_spectrum_full_oblique_exact  # noqa: E402
+from certus.physics.certus_substrate_absorption import DEFAULT_SUBSTRATE_THICKNESS_NM  # noqa: E402
+
+print('production résolue dans :', os.path.dirname(os.path.abspath(tm.__file__)))
+NN, NO, NP = (int(a) for a in (sys.argv[1:4] if len(sys.argv) >= 4 else (6000, 6000, 3000)))
+SEED = 20261018
+
+
+def rand_stack(rng, n_wls, metal_prob=0.12):
+    N = int(rng.integers(1, 31))
+    d = np.exp(rng.uniform(np.log(0.5), np.log(1500.0), N))
+    n_re = rng.uniform(1.0, 4.5, N)
+    k = np.where(rng.random(N) < 0.5, 0.0, 10 ** rng.uniform(-5, 0.3, N))
+    metal = rng.random(N) < metal_prob
+    n_re = np.where(metal, rng.uniform(0.05, 1.5, N), n_re)
+    k = np.where(metal, rng.uniform(1.0, 6.0, N), k)
+    wls = np.sort(rng.uniform(250.0, 2500.0, n_wls))
+    slope = rng.uniform(-0.08, 0.0, N)  # dispersion légère, décroissante
+    n_all = np.empty((n_wls, N), dtype=np.complex128)
+    for i, w in enumerate(wls):
+        re = np.maximum(0.05, n_re + slope * (w - 550.0) / 1000.0)
+        n_all[i] = re - 1j * k  # convention n - ik, k >= 0
+    sub_re = rng.uniform(1.0, 4.0, n_wls)
+    sub_k = np.zeros(n_wls) if rng.random() < 0.6 else 10 ** rng.uniform(-6, -1, n_wls)
+    n_sub = sub_re - 1j * sub_k
+    return wls, d, n_all, n_sub
+
+
+def tally(name, diffs, extra):
+    d = np.array(diffs)
+    out = {'cas': len(d), 'max': float(d.max()) if len(d) else 0.0}
+    for thr in (1e-12, 1e-9, 1e-6, 1e-3):
+        out[f'> {thr:g}'] = int((d > thr).sum())
+    out.update(extra)
+    print(f'{name:<34}', out)
+    return out
+
+
+rng = np.random.default_rng(SEED)
+res = {}
+t0 = time.time()
+
+# --- 1. incidence normale, face avant seule ---
+diffs, worst, refused, energy_bad = [], (0.0, None), 0, 0
+for c in range(NN):
+    wls, d, n_all, n_sub = rand_stack(rng, 5)
+    try:
+        R, T = calculate_RT_no_backside(d, n_all, n_sub, wls)
+    except ValueError:
+        refused += 1
+        continue
+    for i, w in enumerate(wls):
+        Rr, Tr = rt_stack(float(w), n_all[i], d, 1.0 + 0j, n_sub[i])
+        e = max(abs(R[i] - Rr), abs(T[i] - Tr))
+        diffs.append(e)
+        if e > worst[0]:
+            worst = (e, c)
+        if R[i] < -1e-12 or T[i] < -1e-12 or R[i] + T[i] > 1 + 1e-9:
+            energy_bad += 1
+res['normal'] = tally('normal, face avant', diffs, {'refusés': refused, 'énergie hors [0,1]': energy_bad, 'pire cas': worst[1]})
+
+# --- 2. incidence oblique, s et p, face avant seule ---
+diffs, worst, refused, energy_bad, by_pol = [], (0.0, None), 0, 0, {'s': [], 'p': []}
+for c in range(NO):
+    wls, d, n_all, n_sub = rand_stack(rng, 4)
+    ang = 0.0 if rng.random() < 0.05 else float(rng.uniform(0.0, 89.0))
+    pol = 's' if rng.random() < 0.5 else 'p'
+    try:
+        R, T = calc_spectrum_oblique_vectorized(wls, n_all, d, n_sub, ang, pol)
+    except ValueError:
+        refused += 1
+        continue
+    for i, w in enumerate(wls):
+        Rr, Tr = rt_stack_oblique(float(w), n_all[i], d, ang, pol == 's', n_inc=1.0 + 0j, n_sub=n_sub[i])
+        e = max(abs(R[i] - Rr), abs(T[i] - Tr))
+        diffs.append(e)
+        by_pol[pol].append(e)
+        if e > worst[0]:
+            worst = (e, (c, round(ang, 3), pol))
+        if R[i] < -1e-12 or T[i] < -1e-12 or R[i] + T[i] > 1 + 1e-9:
+            energy_bad += 1
+res['oblique'] = tally('oblique s/p, face avant', diffs, {'refusés': refused, 'énergie hors [0,1]': energy_bad, 'pire cas': worst[1],
+                                                          'max s': float(max(by_pol['s'] or [0])), 'max p': float(max(by_pol['p'] or [0]))})
+
+# --- 3. plaque (substrat épais, incohérent), pile avant et pile arrière ---
+diffs, worst, refused, energy_bad = [], (0.0, None), 0, 0
+for c in range(NP):
+    wls, d, n_all, n_sub = rand_stack(rng, 3)
+    _, d_b, n_b_all, _ = rand_stack(rng, 3)
+    n_b = np.empty((len(wls), len(d_b)), dtype=np.complex128)
+    n_b[:] = n_b_all[0]  # même pile arrière à chaque longueur d'onde
+    if rng.random() < 0.3:
+        d_b = np.zeros(0)
+        n_b = np.zeros((len(wls), 0), dtype=np.complex128)
+    ang = float(rng.uniform(0.0, 80.0))
+    pol = 's' if rng.random() < 0.5 else 'p'
+    try:
+        R, T = calc_spectrum_full_oblique_exact(wls, d, n_all, d_b, n_b, n_sub, ang, pol == 's')
+    except ValueError:
+        refused += 1
+        continue
+    for i, w in enumerate(wls):
+        Rr, Tr = rt_plate_incoherent(float(w), n_all[i], d, n_b[i], d_b, n_sub[i], ang, pol == 's', DEFAULT_SUBSTRATE_THICKNESS_NM)
+        e = max(abs(R[i] - Rr), abs(T[i] - Tr))
+        diffs.append(e)
+        if e > worst[0]:
+            worst = (e, (c, round(ang, 3), pol, len(d), len(d_b)))
+        if R[i] < -1e-12 or T[i] < -1e-12 or R[i] + T[i] > 1 + 1e-9:
+            energy_bad += 1
+res['plaque'] = tally('plaque incohérente + pile arrière', diffs, {'refusés': refused, 'énergie hors [0,1]': energy_bad, 'pire cas': worst[1]})
+print('durée : %.0f s' % (time.time() - t0))
+
+# --- 4. entrées invalides : que fait chaque chemin ? ---
+print('\n== entrées invalides (R, T, R+T) ==')
+from certus.physics.certus_opt_tmm import compute_TMM_generic  # noqa: E402
+
+TWO_PI = 2 * np.pi
+
+
+def show(label, fn):
+    try:
+        r = fn()
+        print(f'{label:<58} R={r[0]:.6f} T={r[1]:.6f} R+T={r[0] + r[1]:.6f}')
+    except Exception as e:  # noqa: BLE001
+        print(f'{label:<58} LÈVE {type(e).__name__}: {str(e)[:70]}')
+
+
+w = np.array([550.0])
+for label, nval, dval in (('gain k=-0.01 (n=1.5+0.01j), d=500 nm', 1.5 + 0.01j, 500.0),
+                          ('gain k=-0.01, d=20000 nm', 1.5 + 0.01j, 20000.0),
+                          ('absorbant k=+0.01, d=500 nm (référence)', 1.5 - 0.01j, 500.0),
+                          ('épaisseur négative -50 nm, k=0.5', 2.0 - 0.5j, -50.0),
+                          ('épaisseur nulle', 2.0 - 0.0j, 0.0),
+                          ('indice de couche 0', 0.0 + 0.0j, 100.0)):
+    nl = np.array([[nval]], dtype=np.complex128)
+    dd = np.array([dval])
+    ns = np.array([1.52 + 0j])
+    show(label + ' | noyau vectorisé', lambda: tuple(x[0] for x in calculate_RT_no_backside(dd, nl, ns, w)))
+    show(label + ' | compute_TMM_generic', lambda: compute_TMM_generic(TWO_PI / 550.0, dd, nl[0], 1.0 + 0j, 1.52 + 0j))
+    show(label + ' | oracle', lambda: rt_stack(550.0, nl[0], dd, 1.0 + 0j, 1.52 + 0j))
+for label, wl in (('λ = 0', 0.0), ('λ < 0', -550.0), ('λ = nan', float('nan')), ('λ = inf', float('inf'))):
+    nl = np.array([[1.5 + 0j]])
+    show(label + ' | noyau vectorisé', lambda: tuple(x[0] for x in calculate_RT_no_backside(np.array([100.0]), nl, np.array([1.52 + 0j]), np.array([wl]))))
+for label, nsub in (('substrat n=0', 0.0 + 0j), ('substrat n réel<1e-12 (oblique)', 1e-13 + 0j)):
+    show(label + ' | noyau vectorisé', lambda: tuple(x[0] for x in calculate_RT_no_backside(np.array([100.0]), np.array([[1.5 + 0j]]), np.array([nsub]), w)))
+    show(label + ' | oblique plaque', lambda: tuple(x[0] for x in calc_spectrum_full_oblique_exact(w, np.array([100.0]), np.array([[1.5 + 0j]]), np.zeros(0), np.zeros((1, 0), dtype=np.complex128), np.array([nsub]), 30.0, True)))
+
+json.dump(res, open(os.path.join(tempfile.gettempdir(), 'audit_certus', 'fuzz_tmm.json'), 'w'), indent=1, default=str)

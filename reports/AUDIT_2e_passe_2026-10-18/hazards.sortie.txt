@@ -1,0 +1,15 @@
+fichiers .py suivis : 1181 | hors tests/études/exemples : 425
+
+catégorie                                                      nombre  premiers fichiers
+noqa                                                               95  _saphir_modele.py(6), spline_pipeline_mesh_clean.py(5), assemble_testglass.py(4), probe_anchor_noise_pipeline.
+type: ignore                                                       35  orchestre_multigraine.py(4), certus_core.py(2), certus_design_orchestrator.py(2), certus_strat_robustness_slit
+assert hors tests                                                  32  run_examples_headless.py(18), certus_re_excel_mixin.py(6), certus_spectrum_eval_ui.py(3), spline_smart_init.py
+global (instruction)                                               29  certus_lazy_imports.py(7), certus_skeleton.py(3), certus_toast_stack.py(2), bench_examples.py(2)
+cache fonctionnel                                                  18  certus_core.py(6), constants.py(2), certus_optical_models.py(2), spline_objective.py(2)
+warnings: ignore (global)                                          14  certus_base_app.py(2), certus_ui.py(2), certus_ui_utils.py(2), certus_ui_widgets_factory.py(2)
+nan_to_num                                                         12  certus_optical_models.py(3), certus_index_workers.py(3), certus_index_workers_ir_strat.py(2), certus_index_cor
+appel dangereux (eval/exec/__import__/input)                       12  certus_index_spline_corridor_worker.py(5), certus_field_workers_mixin.py(2), certus_metrology.py(1), certus_me
+except Exception qui avale (pass/continue/return const)             9  orchestre_multigraine.py(3), certus_core.py(1), certus_logging.py(1), certus_metal_bilayer_app.py(1)
+cache de module (dict/list)                                         5  _certus_physics_impl.py(1), certus_lazy_imports.py(1), certus_strat_robustness_noise.py(1), certus_strat_robus
+RNG global hérité (np.random.<tirage>)                              3  certus_field_workers.py(2), benchmark_metal_gradient.py(1)
+import XML (XXE ?)                                                  1  coverage_function_audit.py(1)

@@ -1,0 +1,46 @@
+"""Cas réels : couches absorbantes sur substrat transparent, sans pile arrière. Qui a raison, le coût ou le gradient ?"""
+import os, sys
+import numpy as np
+
+sys.stdout.reconfigure(encoding='utf-8')
+sys.path.insert(0, os.path.join(os.getcwd(), 'tests', 'oracle'))
+sys.path.insert(0, os.getcwd())
+from tmm_reference import rt_stack  # noqa: E402
+from certus.physics.gradient_oblique import compute_gradient_all_layers_analytic  # noqa: E402
+from certus.physics.gradient_utils import cost_numba_fast  # noqa: E402
+
+wls = np.linspace(400.0, 800.0, 9)
+tg = np.full(len(wls), 0.5)
+wt = np.ones(len(wls))
+nb0, db0 = np.zeros((len(wls), 0), dtype=np.complex128), np.zeros(0)
+ns = np.full(len(wls), 1.52 + 0j)
+
+
+def oracle_cost(d, n_all):
+    T = np.array([rt_stack(float(w), n_all[i], d, 1.0 + 0j, 1.52 + 0j)[1] for i, w in enumerate(wls)])
+    return float(np.sum(wt * (T - tg) ** 2) / np.sum(wt))
+
+
+def run(label, n_layer_fn, d):
+    n_all = np.array([n_layer_fn(w) for w in wls], dtype=np.complex128)  # (n_wls, n_layers)
+    var = np.arange(len(d), dtype=np.int64)
+    c_or = oracle_cost(d, n_all)
+    c_prod = cost_numba_fast(d, n_all, ns, wls, tg, wt, 0.01, False, nb0, db0)
+    c_grad, g = compute_gradient_all_layers_analytic(d, n_all, ns, wls, tg, wt, 0.01, False, nb0, db0, var)
+    fd = np.zeros(len(d))
+    for j in range(len(d)):
+        up, dn = d.copy(), d.copy()
+        up[j] += 1e-3
+        dn[j] -= 1e-3
+        fd[j] = (oracle_cost(up, n_all) - oracle_cost(dn, n_all)) / 2e-3
+    print(f'{label}')
+    print(f'   coût  oracle={c_or:.8f}  cost_numba_fast={c_prod:.8f}  valeur du gradient={c_grad:.8f}   (écart valeur/oracle {abs(c_grad - c_or) / c_or:.2e})')
+    print(f'   dérivée oracle (FD) = {np.array2string(fd, precision=5)}')
+    print(f'   dérivée analytique  = {np.array2string(g, precision=5)}')
+    print(f'   erreur relative max de la dérivée = {np.max(np.abs(g - fd) / np.maximum(np.abs(fd), 1e-9)):.2e}')
+
+
+for k in (1e-4, 1e-3, 1e-2, 0.1):
+    run(f'une couche n=2.1, k={k:g}, 120 nm', lambda w, k=k: [2.1 - 1j * k], np.array([120.0]))
+run('argent 25 nm (n=0.06, k=3.4 constants)', lambda w: [0.06 - 3.4j], np.array([25.0]))
+run('empilement TiO2 légèrement absorbant (k=0.002) / SiO2, 4 couches', lambda w: [2.35 - 0.002j, 1.46 - 0j, 2.35 - 0.002j, 1.46 - 0j], np.array([60.0, 95.0, 60.0, 95.0]))

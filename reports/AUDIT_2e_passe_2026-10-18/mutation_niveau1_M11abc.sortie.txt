@@ -1,0 +1,7 @@
+niveau 1 : 3 mutants, 4 copies de travail
+base saine (copie w0) : rc = 0 | 1146 passed in 16.24s | 29 s
+  M11a TUÉ               74 s  oblique: admittance p = s (occurrence 1)                       | 1 failed, 443 passed in 67.47s (0:01:07)
+  M11b TUÉ               80 s  oblique: admittance p = s (occurrence 2)                       | 1 failed, 650 passed in 71.19s (0:01:11)
+  M11c TUÉ               80 s  oblique: admittance p = s (occurrence 3)                       | 1 failed, 683 passed in 71.64s (0:01:11)
+
+TUÉS 3/3 | SURVÉCUS 0 | autres 0 | total 110 s

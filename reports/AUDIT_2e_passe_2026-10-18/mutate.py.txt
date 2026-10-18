@@ -1,0 +1,155 @@
+"""Mutation ciblée des formules physiques, dans des COPIES de travail (jamais dans le dépôt).
+
+python -X utf8 mutate.py <niveau> [ids...]   niveau 1 = tests/oracle seul ; niveau 2 = oracle + unit -k physique
+"""
+import concurrent.futures as cf
+import json, os, re, shutil, subprocess, sys, tempfile, time
+
+sys.stdout.reconfigure(encoding='utf-8')
+REPO = os.getcwd()
+T = os.path.join(tempfile.gettempdir(), 'audit_certus')
+BASE = os.path.join(T, 'mut')
+LEVEL = int(sys.argv[1]) if len(sys.argv) > 1 else 1
+ONLY = set(sys.argv[2:])
+NW = 4
+
+OPT = 'certus/physics/certus_opt_tmm.py'
+MAT = 'certus/physics/certus_tmm_matrix.py'
+OBL = 'certus/physics/certus_tmm_oblique.py'
+BCK = 'certus/physics/certus_tmm_backside.py'
+SUB = 'certus/physics/certus_substrate_absorption.py'
+COL = 'certus/physics/certus_colorimetry.py'
+GRD = 'certus/physics/gradient_utils.py'
+INP = 'certus/physics/certus_inputs.py'
+
+MUTANTS = [
+    ('M01', OPT, 'r = (n_inc * B - C) / Y_sys', 'r = (n_inc * B + C) / Y_sys', 'R: signe de C dans le coefficient de réflexion'),
+    ('M02', OPT, 'Y_sys = n_inc * B + C', 'Y_sys = n_inc * B - C', 'admittance du système : signe de C'),
+    ('M03', OPT, 'T = (n_exit_real / n_inc_real) * abs_t_sq', 'T = (n_inc_real / n_exit_real) * abs_t_sq', 'T: rapport d\'admittances inversé'),
+    ('M04', OPT, 'B = M00 + M01 * n_exit', 'B = M00 - M01 * n_exit', 'B: signe de M01'),
+    ('M05', OPT, 'phi = k0 * n_c * thicknesses[i]', 'phi = k0 * n_c.real * thicknesses[i]', 'générique: phase sans la partie imaginaire (absorption)'),
+    ('M06', OPT, 'if n_c.imag > 0.0:', 'if n_c.imag > 1.0:', 'générique: garde-fou du signe de k désactivé jusqu\'à 1'),
+    ('M07', MAT, 'phi = k0 * n_c * thicknesses[i]', 'phi = k0 * n_c.real * thicknesses[i]', 'noyau vectorisé: phase sans absorption'),
+    ('M08', MAT, 'm10 = isp * n_c', 'm10 = -isp * n_c', 'noyau vectorisé: signe de m10'),
+    ('M09', MAT, 'if n_c.imag > 0.0:', 'if n_c.imag > 1.0:', 'noyau vectorisé: garde-fou du signe de k désactivé jusqu\'à 1'),
+    ('M10', MAT, 'k0_arr = TWO_PI / wls', 'k0_arr = TWO_PI / wls * 1.0001', 'noyau vectorisé: nombre d\'onde faussé de 1e-4 (1re occurrence)', 'first'),
+    ('M11a', OBL, 'eta_layer = n_layer / cos_theta_layer', 'eta_layer = n_layer * cos_theta_layer', 'oblique: admittance p = s (occurrence 1)', 0),
+    ('M11b', OBL, 'eta_layer = n_layer / cos_theta_layer', 'eta_layer = n_layer * cos_theta_layer', 'oblique: admittance p = s (occurrence 2)', 1),
+    ('M11c', OBL, 'eta_layer = n_layer / cos_theta_layer', 'eta_layer = n_layer * cos_theta_layer', 'oblique: admittance p = s (occurrence 3)', 2),
+    ('M12', OBL, 'phi = k * n_layer * d * cos_theta_layer', 'phi = k * n_layer * d', 'oblique: phase sans cos θ'),
+    ('M13', BCK, 'D = 1.0 - R_prime * R_sub', 'D = 1.0 + R_prime * R_sub', 'face arrière: dénominateur incohérent (signe)'),
+    ('M14', BCK, 'T_sub = 1.0 - R_sub', 'T_sub = 1.0 - 1.01 * R_sub', 'face arrière: T du dioptre arrière faussé de 1 %'),
+    ('M15', SUB, 'np.exp(-4.0 * np.pi * abs(k)', 'np.exp(-2.0 * np.pi * abs(k)', 'substrat absorbant: Beer-Lambert avec facteur 2 au lieu de 4'),
+    ('M16', COL, 'a = 500.0 * (fx - fy)', 'a = 200.0 * (fx - fy)', 'Lab: coefficient de a*'),
+    ('M17', COL, '25.0**7)))', '25.0**6)))', 'ΔE2000: constante 25^7 devenue 25^6'),
+    ('M18', GRD, 'sum_sq += diff * diff * weights[i]', 'sum_sq += diff * diff', 'coût: poids ignorés dans la somme des carrés'),
+    ('M19', GRD, 'if count < 5 or sum_w <= 1e-18:', 'if count < 1 or sum_w <= 1e-18:', 'coût: seuil de points valides 5 -> 1'),
+    ('M20', INP, 'if abs(angle) > 90.0:', 'if abs(angle) > 91.0:', 'garde d\'angle: 90 devenu 91'),
+]
+
+KEYWORDS = {
+    'M06': r'compute_TMM_generic|calculate_RT_no_backside|calculate_RT_vectorized_real|calc_spectrum_front',
+    'M09': r'compute_TMM_generic|calculate_RT_no_backside|calculate_RT_vectorized_real|calc_spectrum_front',
+    'M16': r'certus_colorimetry|xyz_to_lab|lab_to_xyz|delta_e_2000|xyz_from_spectrum',
+    'M17': r'certus_colorimetry|delta_e_2000',
+    'M19': r'compute_mse_vectorized|cost_numba_fast|gradient_utils',
+    'M20': r'check_incidence_angle|angle of incidence|certus_inputs',
+}
+COPY_DIRS = ['certus', 'certus_physics', 'tests', 'scripts', 'tools', 'data', 'example']
+
+
+def make_copy(dst):
+    if os.path.exists(dst):
+        shutil.rmtree(dst, ignore_errors=True)
+    os.makedirs(dst, exist_ok=True)
+    ign = shutil.ignore_patterns('__pycache__', '*.pyc', '*.nbi', '*.nbc', '.hypothesis', '.pytest_cache', '.ruff_cache')
+    for d in COPY_DIRS:
+        shutil.copytree(os.path.join(REPO, d), os.path.join(dst, d), ignore=ign, dirs_exist_ok=True)
+    for f in os.listdir(REPO):
+        if f.endswith('.py') or f in ('pyproject.toml',):
+            shutil.copy2(os.path.join(REPO, f), os.path.join(dst, f))
+
+
+def run_tests(cwd, level, mid=''):
+    env = dict(os.environ, PYTHONPATH=cwd, PYTHONIOENCODING='utf-8', QT_QPA_PLATFORM='offscreen')
+    cmds = [[sys.executable, '-X', 'utf8', '-m', 'pytest', 'tests/oracle', '-x', '-q', '--no-cov', '-p', 'no:cacheprovider', '--tb=line', '-o', 'addopts=']]
+    if level >= 2:
+        cmds = []  # l'oracle a déjà été passé au niveau 1 par les survivants
+        files = subprocess.run(['grep', '-rlE', KEYWORDS.get(mid.split('_')[0], 'zzzz_aucun_motif'), 'tests', '--include=test_*.py', '--exclude-dir=oracle', '--exclude-dir=ui'], cwd=cwd, capture_output=True).stdout.decode().split()
+        files = sorted(set(f.replace(chr(92), '/') for f in files))
+        if files:
+            cmds.append([sys.executable, '-X', 'utf8', '-m', 'pytest', *files, '-x', '-q', '--no-cov', '-p', 'no:cacheprovider', '--tb=line', '-o', 'addopts='])
+    out = ''
+    for c in cmds:
+        p = subprocess.run(c, cwd=cwd, env=env, capture_output=True, timeout=1500)
+        txt = (p.stdout + p.stderr).decode('utf-8', 'replace')
+        out += txt
+        if p.returncode != 0:
+            return p.returncode, txt
+    return 0, out
+
+
+def one(args):
+    wi, m = args
+    mid, f, old, new, why = m[:5]
+    mode = m[5] if len(m) > 5 else 'unique'
+    cwd = os.path.join(BASE, f'w{wi}')
+    path = os.path.join(cwd, f.replace('/', os.sep))
+    assert os.path.abspath(cwd) != os.path.abspath(REPO)
+    orig = open(path, encoding='utf-8', newline='').read()
+    n = orig.count(old)
+    if (mode == 'unique' and n != 1) or (mode == 'first' and n < 1) or (isinstance(mode, int) and n < 1):
+        return (mid, why, f, 'INAPPLICABLE', f'motif trouvé {n} fois', 0.0)
+    if isinstance(mode, int):
+        idxs = [m_.start() for m_ in re.finditer(re.escape(old), orig)]
+        if mode >= len(idxs):
+            return (mid, why, f, 'INAPPLICABLE', f'occurrence {mode} absente ({len(idxs)} trouvées)', 0.0)
+        mutated = orig[:idxs[mode]] + new + orig[idxs[mode] + len(old):]
+    else:
+        mutated = orig.replace(old, new, 1)
+    t0 = time.time()
+    try:
+        open(path, 'w', encoding='utf-8', newline='').write(mutated)
+        rc, txt = run_tests(cwd, LEVEL, mid)
+    except subprocess.TimeoutExpired:
+        rc, txt = 99, 'DÉLAI DÉPASSÉ'
+    finally:
+        open(path, 'w', encoding='utf-8', newline='').write(orig)
+    if rc == 0:
+        verdict, detail = 'SURVÉCU', (re.findall(r'(\d+ passed[^\n]*)', txt) or ['?'])[-1][:60]
+    elif rc == 1:
+        verdict = 'TUÉ'
+        m2 = re.search(r'FAILED ([^\n]+?)( - |$)', txt) or re.search(r'^(.*Error.*)$', txt, re.M)
+        detail = (m2.group(1) if m2 else (re.findall(r'(\d+ failed[^\n]*)', txt) or ['?'])[-1])[:90]
+    else:
+        verdict, detail = f'ERREUR rc={rc}', txt.strip().splitlines()[-1][:90] if txt.strip() else ''
+    return (mid, why, f, verdict, detail, time.time() - t0)
+
+
+if __name__ == '__main__':
+    todo = [m for m in MUTANTS if not ONLY or m[0] in ONLY]
+    t0 = time.time()
+    print(f'niveau {LEVEL} : {len(todo)} mutants, {NW} copies de travail')
+    for wi in range(NW):
+        make_copy(os.path.join(BASE, f'w{wi}'))
+    # base saine : les tests passent dans la copie
+    rc, txt = run_tests(os.path.join(BASE, 'w0'), LEVEL)
+    base_line = (re.findall(r'(\d+ passed[^\n]*)', txt) or [txt[-200:]])[-1]
+    print('base saine (copie w0) : rc =', rc, '|', base_line[:100], '| %.0f s' % (time.time() - t0))
+    if rc != 0:
+        print(txt[-1500:])
+        sys.exit(2)
+    results = []
+    # un mutant à la fois par copie : on répartit en vagues de NW mutants
+    for i in range(0, len(todo), NW):
+        wave = todo[i:i + NW]
+        with cf.ThreadPoolExecutor(max_workers=NW) as ex:
+            for r in ex.map(one, [(wi, m) for wi, m in enumerate(wave)]):
+                results.append(r)
+                print(f'  {r[0]} {r[3]:<14} {r[5]:5.0f} s  {r[1][:62]:<62} | {r[4]}', flush=True)
+    kill = sum(1 for r in results if r[3] == 'TUÉ')
+    surv = [r for r in results if r[3] == 'SURVÉCU']
+    print(f'\nTUÉS {kill}/{len(results)} | SURVÉCUS {len(surv)} | autres {len(results) - kill - len(surv)} | total %.0f s' % (time.time() - t0))
+    for r in surv:
+        print('   survivant :', r[0], r[2], '-', r[1])
+    json.dump(results, open(os.path.join(T, f'mutate_niveau{LEVEL}.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)

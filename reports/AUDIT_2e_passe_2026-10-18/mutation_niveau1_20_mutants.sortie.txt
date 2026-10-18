@@ -1,0 +1,30 @@
+niveau 1 : 20 mutants, 4 copies de travail
+base saine (copie w0) : rc = 0 | 1146 passed in 55.98s | 67 s
+  M01 TUÉ               41 s  R: signe de C dans le coefficient de réflexion                 | 1 failed, 347 passed in 34.87s
+  M02 TUÉ               38 s  admittance du système : signe de C                             | 1 failed, 346 passed in 29.86s
+  M03 TUÉ               13 s  T: rapport d'admittances inversé                               | E   AssertionError: Dichroic passband transmission @ 450nm too low: 0.4042
+  M04 TUÉ               37 s  B: signe de M01                                                | 1 failed, 346 passed in 29.30s
+  M05 TUÉ               76 s  générique: phase sans la partie imaginaire (absorption)        | 1 failed, 909 passed in 69.66s (0:01:09)
+  M06 SURVÉCU           82 s  générique: garde-fou du signe de k désactivé jusqu'à 1         | 1146 passed in 76.04s (0:01:16)
+  M07 TUÉ               76 s  noyau vectorisé: phase sans absorption                         | 1 failed, 909 passed in 69.44s (0:01:09)
+  M08 TUÉ               36 s  noyau vectorisé: signe de m10                                  | 1 failed, 346 passed in 30.05s
+  M09 SURVÉCU           79 s  noyau vectorisé: garde-fou du signe de k désactivé jusqu'à 1   | 1146 passed in 73.32s (0:01:13)
+  M10 TUÉ               52 s  noyau vectorisé: nombre d'onde faussé de 1e-4 (1re occurrence) | 1 failed, 364 passed in 46.24s
+  M11 INAPPLICABLE       0 s  oblique: admittance p confondue avec s (couche)                | motif trouvé 3 fois
+  M12 TUÉ               63 s  oblique: phase sans cos θ                                      | 1 failed, 440 passed in 57.29s
+  M13 TUÉ               54 s  face arrière: dénominateur incohérent (signe)                  | 1 failed, 390 passed in 47.95s
+  M14 TUÉ               54 s  face arrière: T du dioptre arrière faussé de 1 %               | 1 failed, 390 passed in 47.40s
+  M15 TUÉ               52 s  substrat absorbant: Beer-Lambert avec facteur 2 au lieu de 4   | 1 failed, 366 passed in 45.47s
+  M16 SURVÉCU           78 s  Lab: coefficient de a*                                         | 1146 passed in 71.78s (0:01:11)
+  M17 SURVÉCU           79 s  ΔE2000: constante 25^7 devenue 25^6                            | 1146 passed in 73.23s (0:01:13)
+  M18 TUÉ               34 s  coût: poids ignorés dans la somme des carrés                   | 1 failed, 346 passed in 28.09s
+  M19 SURVÉCU           79 s  coût: seuil de points valides 5 -> 1                           | 1146 passed in 73.19s (0:01:13)
+  M20 SURVÉCU           79 s  garde d'angle: 90 devenu 91                                    | 1146 passed in 72.94s (0:01:12)
+
+TUÉS 13/20 | SURVÉCUS 6 | autres 1 | total 427 s
+   survivant : M06 certus/physics/certus_opt_tmm.py - générique: garde-fou du signe de k désactivé jusqu'à 1
+   survivant : M09 certus/physics/certus_tmm_matrix.py - noyau vectorisé: garde-fou du signe de k désactivé jusqu'à 1
+   survivant : M16 certus/physics/certus_colorimetry.py - Lab: coefficient de a*
+   survivant : M17 certus/physics/certus_colorimetry.py - ΔE2000: constante 25^7 devenue 25^6
+   survivant : M19 certus/physics/gradient_utils.py - coût: seuil de points valides 5 -> 1
+   survivant : M20 certus/physics/certus_inputs.py - garde d'angle: 90 devenu 91

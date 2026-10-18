@@ -1,0 +1,29 @@
+== 1. réflecteur parfait (R = 1, 380-780 nm) ==
+XYZ = [ 95.043  100.     108.8801] | attendu D65/2° : [ 95.047 100.    108.883] | Lab = [ 1.0e+02 -7.1e-03  1.8e-03] (attendu 100, 0, 0)
+R = 0,5 : L* = 76.069 (attendu 76.069 pour Y = 50)
+
+== 2. tables CIE 1931 2° (valeurs tabulées connues) ==
+  380 nm : x̄ȳz̄ = (0.0014, 0.0000, 0.0065)  tabulé (0.001368, 3.9e-05, 0.00645)  écart max 1.0e-09
+  450 nm : x̄ȳz̄ = (0.3362, 0.0380, 1.7721)  tabulé (0.3362, 0.038, 1.7721)  écart max 1.0e-05
+  500 nm : x̄ȳz̄ = (0.0049, 0.3230, 0.2720)  tabulé (0.0049, 0.323, 0.272)  écart max 0.0e+00
+  555 nm : x̄ȳz̄ = (0.5121, 1.0000, 0.0057)  tabulé (0.5121, 1.0, 0.0057)  écart max 5.0e-05
+  600 nm : x̄ȳz̄ = (1.0622, 0.6310, 0.0008)  tabulé (1.0622, 0.631, 0.0008)  écart max 0.0e+00
+  700 nm : x̄ȳz̄ = (0.0114, 0.0041, 0.0000)  tabulé (0.0114, 0.0041, 0.0)  écart max 4.1e-05
+  pire écart des 6 longueurs d'onde : 5.0e-05
+
+== 3. ΔE2000, paires de test de Sharma, Wu et Dalal (2005) ==
+  (50.0, 2.6772, -79.7751) / (50.0, 0.0, -82.7485) : 2.0425  attendu 2.0425  écart -4.0e-05
+  (50.0, 3.1571, -77.2803) / (50.0, 0.0, -82.7485) : 2.8615  attendu 2.8615  écart +1.0e-05
+  (50.0, 2.8361, -74.02) / (50.0, 0.0, -82.7485) : 3.4412  attendu 3.4412  écart -9.4e-06
+  (50.0, 0.0, 0.0) / (50.0, -1.0, 2.0) : 2.3669  attendu 2.3669  écart -4.1e-05
+  (50.0, 2.5, 0.0) / (50.0, 0.0, -2.5) : 4.3065  attendu 4.3065  écart -1.8e-05
+  (50.0, 2.5, 0.0) / (73.0, 25.0, -18.0) : 27.1492  attendu 27.1492  écart +3.1e-05
+  (50.0, 2.5, 0.0) / (61.0, -5.0, 29.0) : 22.8977  attendu 22.8977  écart -7.5e-06
+  (50.0, 2.5, 0.0) / (56.0, -27.0, -3.0) : 31.9030  attendu 31.9030  écart +4.6e-06
+  (60.2574, -34.0099, 36.2677) / (60.4626, -34.1751, 39.4387) : 1.2644  attendu 1.2644  écart +2.0e-05
+  (63.0109, -31.0961, -5.8663) / (62.8187, -29.7946, -4.0864) : 1.2630  attendu 1.2630  écart -4.1e-05
+  pire écart : 4.1e-05
+
+== 4. spectre qui ne couvre pas 380-780 nm, ou en ordre décroissant ==
+R = 0,8 sur 450-650 nm seulement : Y = 80.0 | R = 0,8 sur 380-780 nm : Y = 80.0  -> hors plage, np.interp prolonge par la valeur du bord, sans avertissement
+rampe croissante en λ croissant : [45.005 45.356 27.352] | mêmes données en ordre décroissant : [ 9.507 10.    10.9  ]

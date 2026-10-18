@@ -1,0 +1,44 @@
+"""Corrélations entre les flux de bruit tels que la production les construit (graines dérivées, pas des entiers consécutifs)."""
+import itertools, os, sys
+import numpy as np
+
+sys.stdout.reconfigure(encoding='utf-8')
+sys.path.insert(0, os.getcwd())
+from certus.core.certus_strat_robustness_noise import _affine_stream_seed, _index_stream_seed, _signal_noise_stream_seed  # noqa: E402
+from certus.physics.certus_strat_math import _seeded_noise_sample as f  # noqa: E402
+from numba import njit  # noqa: E402
+
+
+@njit(cache=False)
+def grid(seed, group, n_runs, n_elems):
+    out = np.empty((n_runs, n_elems))
+    for r in range(n_runs):
+        for e in range(n_elems):
+            out[r, e] = f(seed, group, r, e, True)
+    return out
+
+
+N, M = 4000, 50
+tol = 4.0 / np.sqrt(N * M)
+streams = {'signal': _signal_noise_stream_seed, 'affine': _affine_stream_seed, 'index': _index_stream_seed}
+allg = {}
+for name, fn in streams.items():
+    for b in range(41, 46):
+        for k in range(3):
+            allg[(name, b, k)] = grid(fn(b, k), 0, N, M).ravel()
+keys = list(allg)
+worst, worst_pair, n_over = 0.0, None, 0
+M2 = np.corrcoef(np.array([allg[k] for k in keys]))
+for i, j in itertools.combinations(range(len(keys)), 2):
+    r = abs(M2[i, j])
+    if r > tol:
+        n_over += 1
+    if r > worst:
+        worst, worst_pair = r, (keys[i], keys[j])
+npairs = len(keys) * (len(keys) - 1) // 2
+print(f'flux : {len(keys)} (3 flux x 5 graines de base 41..45 x 3 niveaux) | paires : {npairs} | seuil 4σ = {tol:.4f}')
+print(f'pire |corrélation| = {worst:.4f} pour {worst_pair} | paires au-dessus du seuil : {n_over} (attendu par hasard : {npairs * 6.3e-5:.2f})')
+# avec des graines consécutives brutes, comme en nucléation (seed_base = robustness_seed non mélangé)
+a = grid(42, 0, N, M).ravel()
+for d in (1, 2, 3, 5, 10, 100, 1000, 10 ** 6, 2_246_822_519):
+    print(f'  graines brutes 42 et 42+{d}: corrélation {np.corrcoef(a, grid(42 + d, 0, N, M).ravel())[0, 1]:+.4f}')

@@ -1,0 +1,81 @@
+import re, subprocess, sys, collections
+
+sys.stdout.reconfigure(encoding='utf-8')
+RNG = sys.argv[1]
+ALL = (RNG == '--all')
+G = ['git', '-c', 'core.longpaths=true']
+
+
+def run(*a, **k):
+    return subprocess.run(G + list(a), capture_output=True, **k)
+
+
+# 1. identités des commits de la plage
+ids = run('log', '--format=%an <%ae> | %cn <%ce>', *( ['--all'] if ALL else [RNG] )).stdout.decode('utf-8', 'replace').splitlines()
+print('commits dans la plage :', len(ids))
+for k, v in collections.Counter(ids).most_common():
+    print(f'  {v:>3} x {k}')
+
+# 2. objets nouveaux (ce que le push enverra)
+lines = run('rev-list', '--objects', *( ['--all'] if ALL else [RNG] )).stdout.decode('utf-8', 'replace').splitlines()
+paths = collections.defaultdict(set)
+shas = []
+for l in lines:
+    p = l.split(' ', 1)
+    shas.append(p[0])
+    if len(p) > 1:
+        paths[p[0]].add(p[1])
+chk = subprocess.run(G + ['cat-file', '--batch-check=%(objecttype) %(objectname) %(objectsize)'], input='\n'.join(shas).encode(), capture_output=True).stdout.decode().splitlines()
+blobs = [(c.split()[1], int(c.split()[2])) for c in chk if c.startswith('blob ')]
+print('objets :', len(shas), '| blobs :', len(blobs), '| taille brute des blobs : %.1f Mo' % (sum(s for _, s in blobs) / 1e6))
+
+PAT = {
+    'cle privee': re.compile(r'-----BEGIN (?:RSA |EC |OPENSSH |DSA |PGP )?PRIVATE KEY'),
+    'jeton github': re.compile(r'\bgh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}'),
+    'cle aws': re.compile(r'\bAKIA[0-9A-Z]{16}\b'),
+    'cle google': re.compile(r'\bAIza[0-9A-Za-z_\-]{35}\b'),
+    'jeton slack': re.compile(r'\bxox[baprs]-[A-Za-z0-9-]{10,}'),
+    'cle sk-': re.compile(r'\bsk-[A-Za-z0-9_\-]{20,}'),
+    'affectation secrete': re.compile(r'(?i)\b(password|passwd|secret|api[_-]?key|token)\b["\']?\s*[:=]\s*["\'][^"\'\s]{12,}["\']'),
+}
+MAIL = re.compile(r'[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}')
+hits = collections.defaultdict(list)
+mails = collections.defaultdict(set)
+binaries = []
+big = []
+
+proc = subprocess.Popen(G + ['cat-file', '--batch'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+for sha, size in blobs:
+    proc.stdin.write((sha + '\n').encode()); proc.stdin.flush()
+    head = proc.stdout.readline().decode().split()
+    n = int(head[2])
+    data = proc.stdout.read(n); proc.stdout.read(1)
+    where = sorted(paths.get(sha, {'?'}))[0]
+    if size > 2_000_000:
+        big.append((size, where))
+    if b'\0' in data[:8192]:
+        binaries.append((size, where))
+        continue
+    t = data.decode('utf-8', 'replace')
+    for name, rx in PAT.items():
+        for m in rx.finditer(t):
+            hits[name].append((where, m.group(0)[:60]))
+    for m in MAIL.finditer(t):
+        mails[m.group(0).lower()].add(where)
+proc.stdin.close(); proc.wait()
+
+print('\nSECRETS PAR MOTIF :', {k: len(v) for k, v in hits.items()} or 'aucun')
+for k, v in hits.items():
+    for w, s in v[:6]:
+        print(f'   [{k}] {w[:80]} : {s!r}')
+print('\nADRESSES E-MAIL distinctes :', len(mails))
+for a, ws in sorted(mails.items(), key=lambda kv: -len(kv[1]))[:25]:
+    print(f'   {a:<44} {len(ws):>4} fichier(s)  ex. {sorted(ws)[0][:70]}')
+print('\nBLOBS BINAIRES nouveaux (%d) :' % len(binaries))
+by_ext = collections.Counter(w.rsplit('.', 1)[-1].lower() if '.' in w else '(aucune)' for _, w in binaries)
+print('  par extension :', dict(by_ext.most_common(10)))
+for s, w in sorted(binaries, reverse=True)[:8]:
+    print(f'   {s / 1e6:7.2f} Mo  {w[:100]}')
+print('\nBLOBS > 2 Mo (%d) :' % len(big))
+for s, w in sorted(big, reverse=True)[:10]:
+    print(f'   {s / 1e6:7.2f} Mo  {w[:100]}')

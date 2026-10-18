@@ -1,0 +1,11 @@
+flux : 45 (3 flux x 5 graines de base 41..45 x 3 niveaux) | paires : 990 | seuil 4σ = 0.0089
+pire |corrélation| = 0.0078 pour (('affine', 41, 0), ('index', 41, 2)) | paires au-dessus du seuil : 0 (attendu par hasard : 0.06)
+  graines brutes 42 et 42+1: corrélation +0.1956
+  graines brutes 42 et 42+2: corrélation +0.0984
+  graines brutes 42 et 42+3: corrélation +0.0913
+  graines brutes 42 et 42+5: corrélation +0.0789
+  graines brutes 42 et 42+10: corrélation -0.0012
+  graines brutes 42 et 42+100: corrélation -0.0010
+  graines brutes 42 et 42+1000: corrélation -0.0002
+  graines brutes 42 et 42+1000000: corrélation +0.0001
+  graines brutes 42 et 42+2246822519: corrélation -0.0003

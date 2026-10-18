@@ -1,0 +1,18 @@
+--- sentinelle : nombre de longueurs d'onde (cible 0,5, deux couches) ---
+  3 longueurs d'onde : coût = 1000000000000.0
+  4 longueurs d'onde : coût = 1000000000000.0
+  5 longueurs d'onde : coût = 0.18201079930674247
+  6 longueurs d'onde : coût = 0.18182804690581275
+  9 longueurs d'onde : coût = 0.18169636125080257
+
+--- entrées non finies (9 longueurs d'onde) ---
+coût de référence                              : 0.18169636125080257
+NaN dans une épaisseur                        : 0.25
+inf dans une épaisseur                        : 0.25
+NaN dans UNE cellule de l'indice de couche    : 0.1946657318282642
+NaN dans UNE cellule du substrat              : 0.1946657318282642
+NaN dans UNE valeur de lambda                 : 0.1946657318282642
+1 cellule(s) d'indice NaN sur 9 longueurs d'onde      : 0.1933807745456482
+4 cellule(s) d'indice NaN sur 9 longueurs d'onde      : 0.23019205646066443
+5 cellule(s) d'indice NaN sur 9 longueurs d'onde      : 0.23582933438948972
+6 cellule(s) d'indice NaN sur 9 longueurs d'onde      : 0.23912238767182892

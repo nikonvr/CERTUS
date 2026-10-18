@@ -1,0 +1,4 @@
+configuration du test existant (k = 0,03 / 0,01 / 0,05, 3 longueurs d'onde, substrat 1,52 réel, sans pile arrière)
+oracle         : coût 0.02772003  dérivée [0.000712 0.000679 0.000698]
+noyau, n - ik  : coût 0.12275329  dérivée [0.004387 0.005127 0.010196] | écart du coût à l'oracle : +342.8 %
+noyau, conj(n) : coût 0.02772003  dérivée [0.000712 0.000679 0.000698] | écart relatif max de la dérivée à l'oracle : 6.02e-09

@@ -1,0 +1,13 @@
+quantité         1 fils   2 fils   4 fils   8 fils  16 fils
+cost                 =    DIFF       =    DIFF    DIFF
+grad_value           =       =       =       =       =
+grad                 =       =       =       =       =
+R                    =       =       =       =       =
+T                    =       =       =       =       =
+R_obl                =       =       =       =       =
+T_obl                =       =       =       =       =
+1 coût 0.11459713964256443 écart/référence (1 fil) = 0.0
+2 coût 0.11459713964256447 écart/référence (1 fil) = 4.163336342344337e-17
+4 coût 0.11459713964256443 écart/référence (1 fil) = 0.0
+8 coût 0.11459713964256449 écart/référence (1 fil) = 5.551115123125783e-17
+16 coût 0.11459713964256445 écart/référence (1 fil) = 1.3877787807814457e-17

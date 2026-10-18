@@ -1,0 +1,41 @@
+import importlib.metadata as md
+import re
+import sys
+
+sys.stdout.reconfigure(encoding='utf-8')
+pins = {}
+for line in open('requirements.lock', encoding='utf-8'):
+    m = re.match(r'^([A-Za-z0-9_.-]+)==([0-9][^\s;]*)', line)
+    if m:
+        pins[m.group(1).lower().replace('_', '-')] = m.group(2).rstrip('\\')
+print('paquets épinglés dans requirements.lock :', len(pins))
+diff, missing = [], []
+for k, v in pins.items():
+    try:
+        iv = md.version(k)
+        if iv != v:
+            diff.append((k, v, iv))
+    except md.PackageNotFoundError:
+        missing.append(k)
+print('versions installées différentes du verrou :', len(diff), '| non installés :', len(missing))
+for k, v, iv in diff[:14]:
+    print(f'   {k:<24} verrou {v:<14} installé {iv}')
+print('   non installés (extrait) :', missing[:12])
+
+# uv.lock : mêmes versions que requirements.lock ?
+uv = {}
+cur = None
+for line in open('uv.lock', encoding='utf-8'):
+    m = re.match(r'^name = "([^"]+)"', line)
+    if m:
+        cur = m.group(1).lower().replace('_', '-')
+    m = re.match(r'^version = "([^"]+)"', line)
+    if m and cur:
+        uv.setdefault(cur, m.group(1))
+        cur = None
+common = set(pins) & set(uv)
+mism = [(k, pins[k], uv[k]) for k in sorted(common) if pins[k] != uv[k]]
+print(f'uv.lock : {len(uv)} paquets | communs avec requirements.lock : {len(common)} | versions différentes : {len(mism)}')
+for k, a, b in mism[:12]:
+    print(f'   {k:<24} requirements.lock {a:<14} uv.lock {b}')
+print('   dans requirements.lock seulement :', sorted(set(pins) - set(uv))[:8], '| dans uv.lock seulement :', sorted(set(uv) - set(pins))[:8])

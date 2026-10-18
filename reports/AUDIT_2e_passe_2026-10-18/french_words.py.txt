@@ -1,0 +1,28 @@
+"""Règle 11 (pas de français dans certus/) : mots français de CONTENU dans les commentaires, docstrings et journaux, que le détecteur du dépôt ne voit pas
+(il compte des mots-outils et des lettres accentuées)."""
+import importlib.util
+import os
+import re
+import subprocess
+import sys
+
+sys.stdout.reconfigure(encoding='utf-8')
+spec = importlib.util.spec_from_file_location('guard', os.path.join(os.getcwd(), 'tests', 'unit', 'test_certus_is_written_in_english.py'))
+guard = importlib.util.module_from_spec(spec)
+sys.modules['guard'] = guard
+spec.loader.exec_module(guard)
+FR = {'garde', 'fou', 'couche', 'couches', 'epaisseur', 'epaisseurs', 'longueur', 'onde', 'cible', 'cibles', 'fenetre', 'tirage', 'tirages', 'bruit',
+      'poids', 'calcul', 'calculs', 'valeur', 'valeurs', 'resultat', 'resultats', 'fichier', 'sortie', 'entree', 'defaut', 'ligne', 'lignes', 'mesure', 'mesures', 'ecart',
+      'seuil', 'borne', 'bornes', 'substrat', 'courbe', 'tableau', 'dessus', 'dessous', 'puis', 'ainsi', 'faut', 'peut', 'donne', 'rend', 'ici', 'chaque', 'plusieurs'}
+files = [f for f in subprocess.run(['git', '-c', 'core.longpaths=true', 'ls-files', '-z', 'certus/*.py'], capture_output=True).stdout.decode().split('\0') if f]
+hits = []
+for f in files:
+    src = open(f, encoding='utf-8-sig').read()
+    for line, text in guard._prose_lines(src):
+        words = {w.lower().strip("'") for w in re.findall(r"[A-Za-zÀ-ÿ]+", re.sub(r'`[^`]*`', ' ', text))}
+        got = sorted(words & FR)
+        if got:
+            hits.append((f, line, got, text.strip()[:90]))
+print('lignes de prose de certus/ contenant un mot français de contenu :', len(hits), 'dans', len({h[0] for h in hits}), 'fichiers')
+for f, l, g, t in hits[:25]:
+    print(f'  {f}:{l}: {g} | {t}')

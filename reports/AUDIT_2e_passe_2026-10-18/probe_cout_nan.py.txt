@@ -1,0 +1,49 @@
+"""C21 (suite) : le coût de production devant des entrées non finies, et la sentinelle 1e12 sous 5 points valides."""
+import os
+import sys
+
+import numpy as np
+
+sys.stdout.reconfigure(encoding='utf-8')
+sys.path.insert(0, os.getcwd())
+from certus.physics.gradient_utils import cost_numba_fast  # noqa: E402
+
+print('--- sentinelle : nombre de longueurs d\'onde (cible 0,5, deux couches) ---')
+for nw in (3, 4, 5, 6, 9):
+    w = np.linspace(400, 800, nw)
+    d = np.array([80.0, 120.0])
+    n = np.tile(np.array([2.1 - 0.001j, 1.46 + 0j]), (nw, 1))
+    c = cost_numba_fast(d, n, np.full(nw, 1.52 + 0j), w, np.full(nw, 0.5), np.ones(nw), 0.01, False, np.zeros((nw, 0), dtype=np.complex128), np.zeros(0))
+    print(f'  {nw} longueurs d\'onde : coût = {c!r}')
+
+print('\n--- entrées non finies (9 longueurs d\'onde) ---')
+w = np.linspace(400, 800, 9)
+d = np.array([80.0, 120.0])
+n = np.tile(np.array([2.1 - 0.001j, 1.46 + 0j]), (9, 1))
+ns = np.full(9, 1.52 + 0j)
+tg = np.full(9, 0.5)
+wt = np.ones(9)
+nb0, db0 = np.zeros((9, 0), dtype=np.complex128), np.zeros(0)
+
+
+def c(W, D, N, S):
+    return cost_numba_fast(D, N, S, W, tg, wt, 0.01, False, nb0, db0)
+
+
+print('coût de référence                              :', c(w, d, n, ns))
+n1 = n.copy()
+n1[2, 0] = np.nan
+s1 = ns.copy()
+s1[2] = np.nan
+w1 = w.copy()
+w1[2] = np.nan
+for lab, W, D, N, S in (('NaN dans une épaisseur', w, np.array([np.nan, 120.0]), n, ns),
+                        ('inf dans une épaisseur', w, np.array([np.inf, 120.0]), n, ns),
+                        ('NaN dans UNE cellule de l\'indice de couche', w, d, n1, ns),
+                        ('NaN dans UNE cellule du substrat', w, d, n, s1),
+                        ('NaN dans UNE valeur de lambda', w1, d, n, ns)):
+    print(f'{lab:<46}:', c(W, D, N, S))
+for k in (1, 4, 5, 6):
+    nn = n.copy()
+    nn[:k, 0] = np.nan
+    print(f'{k} cellule(s) d\'indice NaN sur 9 longueurs d\'onde      :', c(w, d, nn, ns))

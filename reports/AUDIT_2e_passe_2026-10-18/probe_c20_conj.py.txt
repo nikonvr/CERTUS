@@ -1,0 +1,39 @@
+"""C20 : configuration du test existant « all absorbing » (tests/unit/test_gradient_vs_fd.py), noyau hérité contre oracle, puis avec conj(n)."""
+import os
+import sys
+
+import numpy as np
+
+sys.stdout.reconfigure(encoding='utf-8')
+sys.path.insert(0, os.path.join(os.getcwd(), 'tests', 'oracle'))
+sys.path.insert(0, os.getcwd())
+from tmm_reference import rt_stack  # noqa: E402
+from certus.core._certus_physics_impl import _compute_gradient_analytic_kernel  # noqa: E402
+
+ep = np.array([60.0, 100.0, 80.0])
+wls = np.array([450.0, 550.0, 650.0])
+n = np.zeros((3, 3), dtype=np.complex128)
+for i, wl in enumerate(wls):
+    nH = 2.3 + 0.02 * (550.0 / wl - 1.0)
+    nL = 1.45 + 0.01 * (550.0 / wl - 1.0)
+    n[i, 0] = complex(nH, -0.03)
+    n[i, 1] = complex(nL, -0.01)
+    n[i, 2] = complex(nH, -0.05)
+ns = np.full(3, 1.52 + 0j)
+tg = np.array([0.6, 0.4, 0.6])
+wt = np.ones(3)
+var = np.arange(3, dtype=np.int64)
+
+
+def oracle_cost(e):
+    T = np.array([rt_stack(float(w), n[i], e, 1 + 0j, 1.52 + 0j)[1] for i, w in enumerate(wls)])
+    return float(np.sum(wt * (T - tg) ** 2) / np.sum(wt))
+
+
+fd = np.array([(oracle_cost(ep + 1e-3 * np.eye(3)[j]) - oracle_cost(ep - 1e-3 * np.eye(3)[j])) / 2e-3 for j in range(3)])
+c1, g1, _ = _compute_gradient_analytic_kernel(ep, n, ns, wls, tg, wt, var)
+c2, g2, _ = _compute_gradient_analytic_kernel(ep, np.conj(n), ns, wls, tg, wt, var)
+print('configuration du test existant (k = 0,03 / 0,01 / 0,05, 3 longueurs d\'onde, substrat 1,52 réel, sans pile arrière)')
+print('oracle         : coût %.8f  dérivée' % oracle_cost(ep), np.array2string(fd, precision=6))
+print('noyau, n - ik  : coût %.8f  dérivée' % c1, np.array2string(g1, precision=6), '| écart du coût à l\'oracle : %+.1f %%' % (100 * (c1 - oracle_cost(ep)) / oracle_cost(ep)))
+print('noyau, conj(n) : coût %.8f  dérivée' % c2, np.array2string(g2, precision=6), '| écart relatif max de la dérivée à l\'oracle : %.2e' % np.max(np.abs(g2 - fd) / np.abs(fd)))

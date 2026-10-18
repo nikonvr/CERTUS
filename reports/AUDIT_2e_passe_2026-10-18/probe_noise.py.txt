@@ -1,0 +1,49 @@
+"""Qualité statistique du bruit pur de STRAT (_seeded_noise_sample) : moyenne, écart type, corrélations entre voisins, entre graines, entre groupes."""
+import os, sys, time
+import numpy as np
+from scipy import stats
+
+sys.stdout.reconfigure(encoding='utf-8')
+sys.path.insert(0, os.getcwd())
+from certus.physics.certus_strat_math import _seeded_noise_sample as f  # noqa: E402
+from numba import njit  # noqa: E402
+
+
+@njit(cache=False)
+def grid(seed, group, n_runs, n_elems, gaussian):
+    out = np.empty((n_runs, n_elems))
+    for r in range(n_runs):
+        for e in range(n_elems):
+            out[r, e] = f(seed, group, r, e, gaussian)
+    return out
+
+
+N, M = 20000, 100
+t0 = time.time()
+U = grid(101, 0, N, M, False)
+G = grid(101, 0, N, M, True)
+print('grille %d x %d, %.1f s' % (N, M, time.time() - t0))
+for name, X, sd_ref in (('uniforme [-1,1]', U, 1 / np.sqrt(3)), ('gaussien (Irwin-Hall 12)', G, 1 / 3)):
+    flat = X.ravel()
+    print(f'\n== {name} ==')
+    print('  moyenne %.5f (attendu 0, tolérance 4σ = %.5f) | écart type %.5f (attendu %.5f) | kurtosis excès %.4f (attendu %s)' % (
+        flat.mean(), 4 * sd_ref / np.sqrt(flat.size), flat.std(), sd_ref, stats.kurtosis(flat), '-1.2' if 'uniforme' in name else '-0.1'))
+    tol = 4.0 / np.sqrt(flat.size)
+    worst = 0.0
+    for lag in (1, 2, 3, 7, 8):
+        r_e = np.corrcoef(X[:, :-lag].ravel(), X[:, lag:].ravel())[0, 1]       # entre couches voisines
+        r_r = np.corrcoef(X[:-lag, :].ravel(), X[lag:, :].ravel())[0, 1]       # entre tirages voisins
+        worst = max(worst, abs(r_e), abs(r_r))
+        print(f'  décalage {lag}: corrélation entre indices voisins de COUCHE {r_e:+.5f} | de TIRAGE {r_r:+.5f}   (seuil 4σ = {tol:.5f})')
+    print('  pire |corrélation| = %.5f %s' % (worst, '=> SUSPECT' if worst > tol else '=> compatible avec l\'indépendance'))
+    # tests croisés entre graines et groupes
+    for lab, Y in (('graine 102', grid(102, 0, N, M, 'gaussien' in name)), ('graine 101 + 2^32', grid(101 + 2 ** 32, 0, N, M, 'gaussien' in name)), ('groupe 1', grid(101, 1, N, M, 'gaussien' in name)), ('groupe 2', grid(101, 2, N, M, 'gaussien' in name))):
+        r = np.corrcoef(X.ravel(), Y.ravel())[0, 1]
+        same = float(np.mean(X == Y))
+        print(f'  corrélation avec {lab:<18}: {r:+.5f} (seuil {tol:.5f}) | part de valeurs identiques {same:.2e}')
+# uniformité (Kolmogorov-Smirnov) sur un sous-échantillon, et chi-deux sur 64 classes
+sub = U.ravel()[:: 7]
+ks = stats.kstest((sub + 1) / 2, 'uniform')
+cnt, _ = np.histogram(U.ravel(), bins=64, range=(-1, 1))
+chi = stats.chisquare(cnt)
+print('\nKS uniforme (n=%d) : D=%.5f p=%.3f | chi-deux 64 classes : p=%.3f' % (sub.size, ks.statistic, ks.pvalue, chi.pvalue))

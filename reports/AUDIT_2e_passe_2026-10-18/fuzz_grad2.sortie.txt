@@ -1,0 +1,21 @@
+colonnes : arrière / couches absorbantes / substrat absorbant / poids normalisés -> n, valeur ≠ coût, gradient ≠ différences finies
+  arrière=False couches_abs=False sub_abs=False poids_norm=False ->  25 cas | valeur≠coût   0 | gradient≠FD   0
+  arrière=False couches_abs=False sub_abs=False poids_norm=True  ->  25 cas | valeur≠coût   0 | gradient≠FD   0
+  arrière=False couches_abs=False sub_abs=True  poids_norm=False ->  25 cas | valeur≠coût   0 | gradient≠FD   0
+  arrière=False couches_abs=False sub_abs=True  poids_norm=True  ->  25 cas | valeur≠coût   0 | gradient≠FD   0
+  arrière=False couches_abs=True  sub_abs=False poids_norm=False ->  25 cas | valeur≠coût  25 | gradient≠FD  25
+  arrière=False couches_abs=True  sub_abs=False poids_norm=True  ->  25 cas | valeur≠coût  25 | gradient≠FD  25
+  arrière=False couches_abs=True  sub_abs=True  poids_norm=False ->  25 cas | valeur≠coût   0 | gradient≠FD   0
+  arrière=False couches_abs=True  sub_abs=True  poids_norm=True  ->  25 cas | valeur≠coût   0 | gradient≠FD   0
+  arrière=True  couches_abs=False sub_abs=False poids_norm=False ->  25 cas | valeur≠coût   0 | gradient≠FD   0
+  arrière=True  couches_abs=False sub_abs=False poids_norm=True  ->  25 cas | valeur≠coût   0 | gradient≠FD   0
+  arrière=True  couches_abs=False sub_abs=True  poids_norm=False ->  25 cas | valeur≠coût   0 | gradient≠FD   0
+  arrière=True  couches_abs=False sub_abs=True  poids_norm=True  ->  25 cas | valeur≠coût   0 | gradient≠FD   0
+  arrière=True  couches_abs=True  sub_abs=False poids_norm=False ->  25 cas | valeur≠coût   0 | gradient≠FD   0
+  arrière=True  couches_abs=True  sub_abs=False poids_norm=True  ->  25 cas | valeur≠coût   0 | gradient≠FD   0
+  arrière=True  couches_abs=True  sub_abs=True  poids_norm=False ->  25 cas | valeur≠coût   0 | gradient≠FD   0
+  arrière=True  couches_abs=True  sub_abs=True  poids_norm=True  ->  25 cas | valeur≠coût   0 | gradient≠FD   0
+TOTAL 400 cas | valeur≠coût 50 | gradient≠FD 50
+  exemple : val=0.33550455 coût=0.063621455 (False, True, False, False)
+  exemple : val=0.5030225 coût=0.072068966 (False, True, False, True)
+  exemple : val=0.14548997 coût=0.13499092 (False, True, False, False)

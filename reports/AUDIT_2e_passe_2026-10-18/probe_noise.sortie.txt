@@ -1,0 +1,29 @@
+grille 20000 x 100, 0.5 s
+
+== uniforme [-1,1] ==
+  moyenne 0.00077 (attendu 0, tolérance 4σ = 0.00163) | écart type 0.57716 (attendu 0.57735) | kurtosis excès -1.1996 (attendu -1.2)
+  décalage 1: corrélation entre indices voisins de COUCHE +0.00074 | de TIRAGE -0.00014   (seuil 4σ = 0.00283)
+  décalage 2: corrélation entre indices voisins de COUCHE +0.00037 | de TIRAGE -0.00027   (seuil 4σ = 0.00283)
+  décalage 3: corrélation entre indices voisins de COUCHE -0.00028 | de TIRAGE +0.00066   (seuil 4σ = 0.00283)
+  décalage 7: corrélation entre indices voisins de COUCHE -0.00073 | de TIRAGE -0.00171   (seuil 4σ = 0.00283)
+  décalage 8: corrélation entre indices voisins de COUCHE -0.00003 | de TIRAGE +0.00031   (seuil 4σ = 0.00283)
+  pire |corrélation| = 0.00171 => compatible avec l'indépendance
+  corrélation avec graine 102        : +0.19012 (seuil 0.00283) | part de valeurs identiques 0.00e+00
+  corrélation avec graine 101 + 2^32 : +0.00472 (seuil 0.00283) | part de valeurs identiques 0.00e+00
+  corrélation avec groupe 1          : -0.00072 (seuil 0.00283) | part de valeurs identiques 0.00e+00
+  corrélation avec groupe 2          : -0.00181 (seuil 0.00283) | part de valeurs identiques 0.00e+00
+
+== gaussien (Irwin-Hall 12) ==
+  moyenne -0.00072 (attendu 0, tolérance 4σ = 0.00094) | écart type 0.33278 (attendu 0.33333) | kurtosis excès -0.1464 (attendu -0.1)
+  décalage 1: corrélation entre indices voisins de COUCHE +0.00012 | de TIRAGE +0.00004   (seuil 4σ = 0.00283)
+  décalage 2: corrélation entre indices voisins de COUCHE +0.00039 | de TIRAGE -0.00058   (seuil 4σ = 0.00283)
+  décalage 3: corrélation entre indices voisins de COUCHE +0.00010 | de TIRAGE +0.00022   (seuil 4σ = 0.00283)
+  décalage 7: corrélation entre indices voisins de COUCHE +0.00107 | de TIRAGE +0.00007   (seuil 4σ = 0.00283)
+  décalage 8: corrélation entre indices voisins de COUCHE +0.00020 | de TIRAGE +0.00110   (seuil 4σ = 0.00283)
+  pire |corrélation| = 0.00110 => compatible avec l'indépendance
+  corrélation avec graine 102        : +0.19416 (seuil 0.00283) | part de valeurs identiques 1.10e-05
+  corrélation avec graine 101 + 2^32 : +0.00490 (seuil 0.00283) | part de valeurs identiques 2.50e-06
+  corrélation avec groupe 1          : -0.00055 (seuil 0.00283) | part de valeurs identiques 5.00e-07
+  corrélation avec groupe 2          : -0.00217 (seuil 0.00283) | part de valeurs identiques 2.50e-06
+
+KS uniforme (n=285715) : D=0.00259 p=0.043 | chi-deux 64 classes : p=0.332

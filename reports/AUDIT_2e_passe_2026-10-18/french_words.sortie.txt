@@ -1,0 +1,8 @@
+lignes de prose de certus/ contenant un mot français de contenu : 7 dans 5 fichiers
+  certus/core/certus_strat_consensus.py:1026: ['sortie'] | [ELITE] Round  : rejets -- halving=  full_rmse=  score_non_fini=  | retenues=  sur   engen
+  certus/core/certus_strat_consensus.py:945: ['sortie'] | [ELITE] Round  : rejets -- halving=  full_rmse=  score_non_fini=  | retenues=0 sur   engen
+  certus/physics/certus_tmm_matrix.py:93: ['fou', 'garde'] | # ── GARDE-FOU n-ik ──
+  certus/physics/certus_tmm_matrix.py:174: ['fou', 'garde'] | # ── GARDE-FOU n-ik ──
+  certus/spline/spline_pipeline_utils.py:543: ['substrat'] | PIPELINE [MODELE_SPECTRAL_SYNC] OK | reason=%s | T_theo (and R_theo if active) recalculate
+  certus/ui/certus_strat_multigraine_ui.py:397: ['tableau'] | # -- tableau vivant ---------------------------------------------------------------
+  certus/utils/certus_strat_service.py:841: ['seuil'] | [TP] Layer  : seuil   point(s) tournant(s) --   candidates ->   (  retirees)

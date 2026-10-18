@@ -1,0 +1,14 @@
+bandit 1.9.4, 425 fichiers suivis hors tests/études/exemples/reports/docs ; constats : 78
+{('LOW', 'HIGH'): 74, ('LOW', 'MEDIUM'): 2, ('HIGH', 'HIGH'): 1, ('MEDIUM', 'HIGH'): 1}
+  35  B603 subprocess_without_shell_equals_true
+  21  B404 blacklist
+  13  B607 start_process_with_partial_path
+   3  B110 try_except_pass
+   1  B606 start_process_with_no_shell
+   1  B324 hashlib
+   1  B105 hardcoded_password_string
+   1  B405 blacklist
+   1  B314 blacklist
+   1  B112 try_except_continue
+HIGH B324 scripts/lint_ns_snapshot.py:32 Use of weak SHA1 hash for security. Consider usedforsecurity=False
+MEDIUM B314 tools/coverage_function_audit.py:106 Using xml.etree.ElementTree.fromstring to parse untrusted XML data is known to be vulnerable to XML 

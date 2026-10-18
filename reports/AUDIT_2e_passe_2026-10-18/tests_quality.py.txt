@@ -1,0 +1,66 @@
+"""Qualité des tests par analyse statique : tests sans assertion, assertions toujours vraies ou très faibles, skips/xfail."""
+import ast, collections, re, subprocess, sys
+
+sys.stdout.reconfigure(encoding='utf-8')
+files = [f for f in subprocess.run(['git', '-c', 'core.longpaths=true', 'ls-files', '-z', 'tests/*.py'], capture_output=True).stdout.decode().split('\0') if f.endswith('.py') and '/test_' in f.replace('\\', '/')]
+n_tests = 0
+no_assert = []
+weak_only = []
+tautology = []
+skips = collections.Counter()
+xfails = 0
+for f in files:
+    try:
+        tree = ast.parse(open(f, encoding='utf-8-sig').read())
+    except (OSError, SyntaxError):
+        continue
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name.startswith('test'):
+            n_tests += 1
+            has_assert = False
+            strong = False
+            for sub in ast.walk(node):
+                if isinstance(sub, ast.Assert):
+                    has_assert = True
+                    t = sub.test
+                    if isinstance(t, ast.Constant) and t.value in (True, 1):
+                        tautology.append((f, node.lineno, node.name))
+                    weak = (isinstance(t, (ast.Name, ast.Attribute, ast.Call)) and not (isinstance(t, ast.Call) and ast.unparse(t.func).startswith(('np.allclose', 'math.isclose', 'np.array_equal', 'np.isclose')))) \
+                        or (isinstance(t, ast.Compare) and any(isinstance(op, (ast.IsNot,)) for op in t.ops) and any(isinstance(c, ast.Constant) and c.value is None for c in t.comparators)) \
+                        or (isinstance(t, ast.Call) and isinstance(t.func, ast.Name) and t.func.id == 'isinstance')
+                    if not weak:
+                        strong = True
+                elif isinstance(sub, ast.With):
+                    for it in sub.items:
+                        s = ast.unparse(it.context_expr)
+                        if re.search(r'pytest\.(raises|warns|deprecated_call)|assertRaises|assertWarns', s):
+                            has_assert = strong = True
+                elif isinstance(sub, ast.Call):
+                    s = ast.unparse(sub.func)
+                    if re.search(r'(^|\.)(assert\w*|fail)$', s) or s in ('pytest.fail',):
+                        has_assert = strong = True
+                    if s in ('pytest.skip', 'skip'):
+                        skips[f] += 1
+                    if re.search(r'pytest\.xfail', s):
+                        xfails += 1
+            for dec in node.decorator_list:
+                d = ast.unparse(dec)
+                if 'xfail' in d:
+                    xfails += 1
+                if 'skip' in d:
+                    skips[f] += 1
+            if not has_assert:
+                no_assert.append((f, node.lineno, node.name))
+            elif not strong:
+                weak_only.append((f, node.lineno, node.name))
+print(f'fichiers de tests : {len(files)} | fonctions test* : {n_tests}')
+print(f'sans AUCUNE assertion ni pytest.raises/fail/assert_* dans leur corps : {len(no_assert)} ({100 * len(no_assert) / n_tests:.1f} %)')
+print(f'dont toutes les assertions sont faibles (vérité d\'un appel, is not None, isinstance) : {len(weak_only)} ({100 * len(weak_only) / n_tests:.1f} %)')
+print(f'assert True / assert 1 : {len(tautology)}')
+print(f'skips (décorateurs ou appels) : {sum(skips.values())} dans {len(skips)} fichiers | xfail : {xfails}')
+per = collections.Counter(f for f, _, _ in no_assert)
+print('fichiers avec le plus de tests sans assertion :', [(k.split('/')[-1], v) for k, v in per.most_common(8)])
+for f, l, n in no_assert[:8]:
+    print(f'   sans assertion : {f}:{l}: {n}')
+for f, l, n in tautology[:5]:
+    print(f'   tautologie : {f}:{l}: {n}')

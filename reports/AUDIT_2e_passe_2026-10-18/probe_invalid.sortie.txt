@@ -1,0 +1,41 @@
+point d'entrée                           issues sur 12 entrées corrompues (4 entrées × NaN/+inf/-inf)
+calculate_RT_vectorized_real             {'LÈVE': 12}
+calculate_RT_vectorized_real+arrière     {'LÈVE': 12}
+oblique_vectorized 0°                    {'LÈVE': 9, 'FINI': 3}
+oblique_vectorized 30°                   {'LÈVE': 9, 'FINI': 3}
+oblique_backside_vectorized 30°          {'LÈVE': 9, 'FINI': 3}
+full_oblique_exact 30°                   {'FINI': 11, 'LÈVE': 1}
+calc_spectrum_full_exact                 {'FINI': 10, 'LÈVE': 2}
+cost_numba_fast                          {'FINI': 12}
+
+MAUVAIS (fini ou partiel malgré une entrée non finie) : 42
+   oblique_vectorized 0°                  n_layers  nan   -> FINI (0, 0.1478, 0.1332, 0.1131 ...)
+   oblique_vectorized 0°                  n_layers  inf   -> FINI (0, 0.1478, 0.1332, 0.1131 ...)
+   oblique_vectorized 0°                  n_layers  -inf  -> FINI (0, 0.1478, 0.1332, 0.1131 ...)
+   oblique_vectorized 30°                 n_layers  nan   -> FINI (1, 0.09857, 0.08474, 0.06934 ...)
+   oblique_vectorized 30°                 n_layers  inf   -> FINI (1, 0.09857, 0.08474, 0.06934 ...)
+   oblique_vectorized 30°                 n_layers  -inf  -> FINI (1, 0.09857, 0.08474, 0.06934 ...)
+   oblique_backside_vectorized 30°        n_layers  nan   -> FINI (1, 0.2041, 0.1805, 0.1543 ...)
+   oblique_backside_vectorized 30°        n_layers  inf   -> FINI (1, 0.2041, 0.1805, 0.1543 ...)
+   oblique_backside_vectorized 30°        n_layers  -inf  -> FINI (1, 0.2041, 0.1805, 0.1543 ...)
+   full_oblique_exact 30°                 wls       nan   -> FINI (1, 0.1755, 0.1496, 0.1213 ...)
+   full_oblique_exact 30°                 wls       inf   -> FINI (0.1154, 0.1755, 0.1496, 0.1213 ...)
+   full_oblique_exact 30°                 wls       -inf  -> FINI (0.1154, 0.1755, 0.1496, 0.1213 ...)
+   full_oblique_exact 30°                 d         nan   -> FINI (1, 1, 1, 1 ...)
+   full_oblique_exact 30°                 d         inf   -> FINI (1, 1, 1, 1 ...)
+   full_oblique_exact 30°                 d         -inf  -> FINI (1, 1, 1, 1 ...)
+   full_oblique_exact 30°                 n_layers  nan   -> FINI (1, 0.1755, 0.1496, 0.1213 ...)
+   full_oblique_exact 30°                 n_layers  inf   -> FINI (1, 0.1755, 0.1496, 0.1213 ...)
+   full_oblique_exact 30°                 n_layers  -inf  -> FINI (1, 0.1755, 0.1496, 0.1213 ...)
+   full_oblique_exact 30°                 n_sub     nan   -> FINI (1, 0.1755, 0.1496, 0.1213 ...)
+   full_oblique_exact 30°                 n_sub     -inf  -> FINI (1, 0.1755, 0.1496, 0.1213 ...)
+   calc_spectrum_full_exact               wls       nan   -> FINI (0, 0.1478, 0.1332, 0.1131 ...)
+   calc_spectrum_full_exact               wls       inf   -> FINI (0.04258, 0.1478, 0.1332, 0.1131 ...)
+   calc_spectrum_full_exact               wls       -inf  -> FINI (0.04258, 0.1478, 0.1332, 0.1131 ...)
+   calc_spectrum_full_exact               d         nan   -> FINI (0, 0, 0, 0 ...)
+   calc_spectrum_full_exact               d         inf   -> FINI (0, 0, 0, 0 ...)
+   calc_spectrum_full_exact               d         -inf  -> FINI (0, 0, 0, 0 ...)
+   calc_spectrum_full_exact               n_layers  nan   -> FINI (0, 0.1478, 0.1332, 0.1131 ...)
+   calc_spectrum_full_exact               n_layers  inf   -> FINI (0, 0.1478, 0.1332, 0.1131 ...)
+   calc_spectrum_full_exact               n_layers  -inf  -> FINI (0, 0.1478, 0.1332, 0.1131 ...)
+   calc_spectrum_full_exact               n_sub     nan   -> FINI (0, 0.1478, 0.1332, 0.1131 ...)

@@ -1,0 +1,11 @@
+paquets épinglés dans requirements.lock : 47
+versions installées différentes du verrou : 6 | non installés : 1
+   coverage                 verrou 7.16.1         installé 7.16.2
+   fonttools                verrou 4.66.0         installé 4.66.1
+   hypothesis               verrou 6.168.2        installé 6.168.3
+   pyinstaller-hooks-contrib verrou 2026.7         installé 2026.8
+   ruff                     verrou 0.16.9         installé 0.16.10
+   tzdata                   verrou 2026.4         installé 2026.5
+   non installés (extrait) : ['macholib']
+uv.lock : 48 paquets | communs avec requirements.lock : 47 | versions différentes : 0
+   dans requirements.lock seulement : [] | dans uv.lock seulement : ['certus-optical-suite']

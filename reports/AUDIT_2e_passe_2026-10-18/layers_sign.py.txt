@@ -1,0 +1,67 @@
+import ast, collections, re, subprocess, sys
+
+sys.stdout.reconfigure(encoding='utf-8')
+G = ['git', '-c', 'core.longpaths=true']
+files = [f for f in subprocess.run(G + ['ls-files', '-z', '*.py'], capture_output=True).stdout.decode().split('\0') if f]
+
+print('== 1. Frontières de couches (CLAUDE.md §8) : core / physics / domain n\'importent ni PyQt6 ni certus.ui ==')
+viol = []
+edges = collections.Counter()
+for f in files:
+    parts = f.split('/')
+    if len(parts) < 3 or parts[0] != 'certus':
+        continue
+    layer = parts[1]
+    try:
+        tree = ast.parse(open(f, encoding='utf-8-sig').read())
+    except (OSError, SyntaxError):
+        continue
+    for n in ast.walk(tree):
+        mods = []
+        if isinstance(n, ast.Import):
+            mods = [a.name for a in n.names]
+        elif isinstance(n, ast.ImportFrom):
+            mods = [('.' * n.level) + (n.module or '')]
+        for m in mods:
+            top = m.lstrip('.')
+            tgt = None
+            if top.startswith('certus.'):
+                tgt = top.split('.')[1]
+            elif m.startswith('..') and n.level == 2:
+                tgt = top.split('.')[0]
+            if tgt and tgt != layer:
+                edges[(layer, tgt)] += 1
+            if layer in ('core', 'physics', 'domain') and (top.startswith('PyQt6') or top.startswith('PySide') or top.startswith('certus.ui') or tgt == 'ui'):
+                viol.append((f, n.lineno, m))
+print('violations directes core/physics/domain -> PyQt6/ui :', len(viol))
+for f, l, m in viol[:12]:
+    print(f'   {f}:{l}: import {m}')
+print('arêtes montantes connues (layer -> layer) parmi utils/spline/metal/core/physics/domain/workers :')
+for (a, b), c in sorted(edges.items(), key=lambda kv: -kv[1]):
+    if (a, b) in {('utils', 'ui'), ('core', 'workers'), ('spline', 'ui'), ('metal', 'ui'), ('utils', 'spline'), ('physics', 'core'), ('core', 'physics'), ('domain', 'core'), ('domain', 'physics'), ('physics', 'workers'), ('domain', 'ui'), ('core', 'ui'), ('physics', 'ui')}:
+        print(f'   {a:>8} -> {b:<8} {c:>3} import(s)')
+
+print('\n== 2. Signe de k : lignes avec 1j près d\'un identifiant d\'extinction, hors tests ==')
+rows = []
+tot = collections.Counter()
+for f in files:
+    if f.startswith(('tests/', 'studies/', 'example/', 'reports/', '.claude/', 'docs/')):
+        continue
+    try:
+        lines = open(f, encoding='utf-8-sig').read().splitlines()
+    except OSError:
+        continue
+    for i, l in enumerate(lines, 1):
+        if '1j' not in l or l.strip().startswith('#'):
+            continue
+        tot[f] += 1
+        # n + 1j*k  (mauvaise convention)  ou  n - 1j*k (bonne)
+        m = re.search(r'([A-Za-z_][A-Za-z0-9_\.\[\]]*)\s*([+-])\s*1j\s*\*\s*([A-Za-z_][A-Za-z0-9_\.\[\]]*)', l)
+        if m and re.search(r'(^|_)(k|kk|kappa|ext|k_[a-z0-9]+|[a-z]+_k)$', m.group(3).split('.')[-1].split('[')[0], re.I):
+            rows.append((m.group(2), f, i, l.strip()[:120]))
+plus = [r for r in rows if r[0] == '+']
+minus = [r for r in rows if r[0] == '-']
+print(f'lignes avec "<x> ± 1j * <k>" : {len(rows)} | "- 1j*k" (convention n-ik) : {len(minus)} | "+ 1j*k" : {len(plus)}')
+for s, f, i, t in plus[:25]:
+    print(f'   + {f}:{i}: {t}')
+print('fichiers contenant le plus de "1j" :', dict(tot.most_common(6)))

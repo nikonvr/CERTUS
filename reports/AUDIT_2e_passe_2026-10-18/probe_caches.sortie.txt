@@ -1,0 +1,10 @@
+--- C23 : la valeur rendue est-elle partagée et modifiable ? ---
+substrat : même objet = True | modifiable = True
+substrat : après a[0] = 99, un nouvel appel rend n[0] = 99.0 (attendu 1.53085 ) -> CACHE CORROMPU
+spline : même objet = True | modifiable = True
+spline : après n[0] = 99, un nouvel appel rend n[0] = 99.0 (attendu 1.5 ) -> CACHE CORROMPU
+
+--- C24 : matrice de base de la spline RE, grille décalée de 0,4 nm ---
+B2 est le même objet que B1 (cache) : True
+écart max entre la matrice du cache et la matrice exacte : 6.718e-03
+effet sur n(lambda) : max |dS| = 3.000e-04 ; pente max de S = 7.500e-04 par nm

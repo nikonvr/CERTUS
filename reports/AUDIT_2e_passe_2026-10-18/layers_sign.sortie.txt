@@ -1,0 +1,13 @@
+== 1. Frontières de couches (CLAUDE.md §8) : core / physics / domain n'importent ni PyQt6 ni certus.ui ==
+violations directes core/physics/domain -> PyQt6/ui : 0
+arêtes montantes connues (layer -> layer) parmi utils/spline/metal/core/physics/domain/workers :
+       core -> physics   27 import(s)
+      utils -> ui        12 import(s)
+     spline -> ui        11 import(s)
+      metal -> ui         8 import(s)
+      utils -> spline     3 import(s)
+    physics -> core       2 import(s)
+
+== 2. Signe de k : lignes avec 1j près d'un identifiant d'extinction, hors tests ==
+lignes avec "<x> ± 1j * <k>" : 15 | "- 1j*k" (convention n-ik) : 15 | "+ 1j*k" : 0
+fichiers contenant le plus de "1j" : {'certus/physics/certus_strat_readings.py': 32, 'certus/physics/gradient_metal.py': 16, 'certus/physics/certus_strat_growth.py': 10, 'certus/physics/gradient_oblique.py': 8, 'certus/physics/certus_opt_tmm.py': 7, 'certus/core/certus_field_core.py': 6}

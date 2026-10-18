@@ -1,0 +1,54 @@
+"""Matériaux : Sellmeier livrés contre la littérature, k négatif dans les tables livrées, conversion permittivité -> (n, k)."""
+import json
+import os
+import re
+import sys
+import warnings
+
+import numpy as np
+
+sys.stdout.reconfigure(encoding='utf-8')
+sys.path.insert(0, os.getcwd())
+warnings.filterwarnings('ignore')
+from certus.physics.certus_optical_models import epsilon_to_nk, sellmeier_n_array  # noqa: E402
+
+s = json.load(open('data/materials_v1.json', encoding='utf-8'))['sellmeier_coeffs_by_id']
+
+
+def n_of(i, wl):
+    B1, C1, B2, C2, B3, C3 = s[str(i)]
+    return float(sellmeier_n_array(np.array([wl], dtype=np.float64), B1, C1, B2, C2, B3, C3, 0.0)[0])
+
+
+print('--- Sellmeier du dépôt contre la littérature (valeurs que je connais avec certitude) ---')
+checks = [('silice fondue (id 0), 587,56 nm', 0, 587.56, 1.45846, 5e-5), ('N-BK7 (id 1), 587,56 nm', 1, 587.56, 1.51680, 5e-5),
+          ('saphir ordinaire (id 3), 589,3 nm', 3, 589.3, 1.76820, 5e-4), ('silice fondue, 1550 nm', 0, 1550.0, 1.44402, 1e-4),
+          ('silice fondue, 400 nm', 0, 400.0, 1.47012, 1e-4), ('N-BK7, 1064 nm', 1, 1064.0, 1.50669, 1e-4)]
+for lab, i, wl, ref, tol in checks:
+    v = n_of(i, wl)
+    print(f'{lab:<38} calculé {v:.5f}  littérature {ref:.5f}  écart {v - ref:+.2e}  {"OK" if abs(v - ref) < tol else "A VOIR"}')
+
+print('\n--- k négatif dans les tables livrées (example/database_index/indices.xlsx) ---')
+import openpyxl  # noqa: E402
+
+wb = openpyxl.load_workbook('example/database_index/indices.xlsx', read_only=True, data_only=True)
+checked, neg = 0, []
+for ws in wb.worksheets:
+    rows = list(ws.iter_rows(values_only=True))
+    if not rows:
+        continue
+    hdr = [str(c).strip().lower() if c is not None else '' for c in rows[0]]
+    for i, h in enumerate(hdr):
+        if h in ('k', 'kappa', 'extinction') or re.fullmatch(r'k[\s_(\[].*', h):
+            nums = [float(r[i]) for r in rows[1:] if i < len(r) and isinstance(r[i], (int, float))]
+            checked += 1
+            if nums and min(nums) < 0:
+                neg.append((ws.title, h, min(nums)))
+print('feuilles :', len(wb.sheetnames), '| colonnes k contrôlées :', checked, '| colonnes avec k < 0 :', len(neg), neg[:4])
+
+print('\n--- epsilon_to_nk : n^2 - k^2 = eps1, 2nk = eps2, k >= 0 ---')
+rng = np.random.default_rng(3)
+e1 = rng.uniform(-8.0, 14.0, 20000)
+e2 = np.where(rng.random(20000) < 0.1, 0.0, 10 ** rng.uniform(-9, 1, 20000))
+n_, k_, _ = epsilon_to_nk(e1, e2, 0.0, 1e9, 1e9)
+print('max |n^2 - k^2 - eps1| = %.2e | max |2nk - eps2| = %.2e | k min = %.2e | n min = %.2e' % (np.max(np.abs(n_ ** 2 - k_ ** 2 - e1)), np.max(np.abs(2 * n_ * k_ - e2)), k_.min(), n_.min()))

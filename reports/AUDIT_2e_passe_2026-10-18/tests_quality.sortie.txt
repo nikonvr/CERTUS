@@ -1,0 +1,14 @@
+fichiers de tests : 577 | fonctions test* : 4808
+sans AUCUNE assertion ni pytest.raises/fail/assert_* dans leur corps : 32 (0.7 %)
+dont toutes les assertions sont faibles (vérité d'un appel, is not None, isinstance) : 354 (7.4 %)
+assert True / assert 1 : 0
+skips (décorateurs ou appels) : 48 dans 34 fichiers | xfail : 3
+fichiers avec le plus de tests sans assertion : [('test_gradient_vs_fd.py', 11), ('test_tmm_inline.py', 7), ('test_tmm_coherence.py', 5), ('test_needle_cached.py', 3), ('test_gradients_vs_finite_differences.py', 2), ('test_certus_re.py', 2), ('test_metal_gradient_vs_fd.py', 1), ('test_wl_coverage.py', 1)]
+   sans assertion : tests/oracle/test_gradients_vs_finite_differences.py:44: test_gradient_all_layers_matches_finite_differences
+   sans assertion : tests/oracle/test_gradients_vs_finite_differences.py:86: test_oblique_gradient_matches_finite_differences
+   sans assertion : tests/oracle/test_metal_gradient_vs_fd.py:73: test_gradient_metal_bilayer_coincide_avec_les_differences_finies
+   sans assertion : tests/unit/test_certus_re.py:332: test_phase4_spectrum_matches_subprocess
+   sans assertion : tests/unit/test_certus_re.py:446: test_rmse_oblique_phase4_consistency_subprocess
+   sans assertion : tests/unit/test_gradient_vs_fd.py:206: test_design_gradient
+   sans assertion : tests/unit/test_gradient_vs_fd.py:342: test_design_gradient_all_absorbing
+   sans assertion : tests/unit/test_gradient_vs_fd.py:444: test_metal_gradient

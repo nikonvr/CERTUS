@@ -21,24 +21,27 @@ pytest.importorskip("xdist")
 
 ROOT = Path(__file__).resolve().parents[2]
 
-#: A pytest plugin that notes, for every test that runs, which worker ran it and the directory it sees.
+#: A pytest plugin that notes, for every test that runs, the directory its worker sees. One file per worker: the three
+#: workers of `--dist each` run the test at the same instant, and an append to one shared file is not atomic between
+#: processes on Windows (a first version lost records under load).
 PROBE = '''
 import os
 
 
 def pytest_runtest_setup(item):
-    line = os.environ.get("PYTEST_XDIST_WORKER", "none") + "\\t" + os.environ.get("CERTUS_CONFIG_DIR", "") + "\\n"
-    with open(os.environ["PREFS_PROBE_OUT"], "a", encoding="utf-8") as out:
-        out.write(line)
+    path = os.path.join(os.environ["PREFS_PROBE_DIR"], os.environ.get("PYTEST_XDIST_WORKER", "none"))
+    with open(path, "w", encoding="utf-8") as out:
+        out.write(os.environ.get("CERTUS_CONFIG_DIR", ""))
 '''
 
 
 @pytest.mark.unit
 def test_every_xdist_worker_has_its_own_private_preferences_directory(tmp_path) -> None:
     (tmp_path / "prefs_probe.py").write_text(PROBE, encoding="utf-8")
-    out = tmp_path / "records.txt"
+    records_dir = tmp_path / "records"
+    records_dir.mkdir()
     env = {k: v for k, v in os.environ.items() if k != "CERTUS_CONFIG_DIR"}
-    env.update(PYTHONPATH=str(tmp_path), PREFS_PROBE_OUT=str(out))
+    env.update(PYTHONPATH=str(tmp_path), PREFS_PROBE_DIR=str(records_dir))
     for var in ("TMPDIR", "TEMP", "TMP"):  # the directory of the session lands here, as in the neighbouring test
         env[var] = str(tmp_path)
     target = "tests/unit/test_user_preferences_are_isolated.py::test_the_suite_runs_on_private_preferences"
@@ -49,6 +52,6 @@ def test_every_xdist_worker_has_its_own_private_preferences_directory(tmp_path) 
         cwd=ROOT, env=env, capture_output=True, text=True, timeout=300,
     )
     assert run.returncode == 0, run.stdout[-2000:] + run.stderr[-2000:]
-    records = dict(line.split("\t") for line in out.read_text(encoding="utf-8").splitlines())
+    records = {p.name: p.read_text(encoding="utf-8") for p in records_dir.iterdir()}
     assert sorted(records) == ["gw0", "gw1", "gw2"]
     assert len(set(records.values())) == 3, records

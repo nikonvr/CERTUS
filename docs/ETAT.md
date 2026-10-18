@@ -5,7 +5,7 @@
 > [`CLAUDE.md`](../CLAUDE.md). Il se tient **en place** : un fait change, on corrige sa ligne,
 > on ne raconte pas la correction (`git log` s'en charge). Toute mesure porte sa date.
 > Le détail et l'historique sont dans `git`, sans autorité (CLAUDE.md, en-tête).
-> Mis à jour le 2026-10-17.
+> Mis à jour le 2026-10-18.
 
 ## 0. Reprise — à lire en premier, à tenir à jour
 
@@ -54,6 +54,38 @@ réécriture d'historique ; archives brutes locales. Dernier relevé :490935336o
 [Diagnostic précis, commandes et limites pour l'IA suivante](STRAT_Rate_reprise_20261016.md).
 [Autorisation, périmètre et plafonds distincts](../reports/STRAT_Rate_followup_2026-10-16/authorization_and_plan.json).
 L'ancien programme et ses contextes restent figés, son suiviPAUSED. Aucune nouvelle mesure engagée.
+**TODO demandé par 👤 :** tenter le99c en une seule campagne avec injection de Rate et les derniers
+raffinements Rate intégrés ; voir A9 ci-dessous. Tâche ajoutée à la liste ; premières mesures exploratoires du 2026-10-16 et 17, hors protocole A9 (§2).
+
+**Revue et validation de HEAD (2026-10-16, après la livraison publique).** Validation complète de CLAUDE.md §2
+sur `8365c9ea`, une étape à la fois, 0 échec : ruff, oracle 1146, unité 5475 (+7 ignorés), UI 1324 (+12 ignorés,
+2 xfail), reste 359, trois contrôles documentaires à 0. Le groupe « reste » exige `pytest-benchmark` pour ses
+11 benchmarks de noyaux : le projet ne le déclare nulle part et il manquait à l'interpréteur de référence
+(348 réussis et 2 modules sautés avant l'installation de la version 5.3.0, avec `py-cpuinfo2` 10.1.1).
+Trois commits (poussés le 2026-10-17) : `e855b6ee` (le test RMSE à poids uniformes ajoute des poids qui ne sont pas des
+puissances de deux), `6f200d61` (le raffinement Rate final vérifie son consensus au démarrage du pipeline),
+`8365c9ea` (`elite_rate_balanced_moves` inscrit au registre, avec une garde noyau → registre). Dette : les trois
+interrupteurs Rate lus par la recherche sont au registre depuis `0c7c1e2e` (`rate_layer_sets`, `rate_tail_keep_optical`,
+`rate_rescue_hard`), la liste d'attente de `tests/unit/test_strat_leviers.py` est vide ; les textes `mesure` de
+`elite_rate_joint_candidates` et `rate_post_refinement` datent d'avant R5/R6 et attendent la décision de 👤.
+
+**Deuxième contre-audit interrompu le 2026-10-17 : 👤 ouvre le sujet distinct « bonne mere ».**
+[Cinq observations supplémentaires](../reports/ARGON_contre_audit_2026-10-16/pass02.json) conservées,
+dont grille oblique non densifiée, bornes et arrêt ignorés au raffinement final ; pas encore reportées dans les audits.
+Préflight STOP ; aucun correctif de production. Bilan du premier contre-audit ci-dessous.
+[UXargon](../UXargon.md) et [designargon](../designargon.md) corrigés et qualifiés par niveau de preuve :
+22 démarrages GUI hors écran, 0 cas fautif selon le harnais ; 20 observations ciblées vérifiées,
+0 erreur de sonde. Corps extraits, dépendances contrôlées et décorateurs Numba retirés : aucune
+validation complète/JIT ni performance démontrée. [Preuves, limites et empreintes](../reports/ARGON_contre_audit_2026-10-16/evidence.json),
+[reproduction](../reports/ARGON_contre_audit_2026-10-16/probe.py.txt).
+Défauts prioritaires : snapshot DESIGN et filtre final 5 nm supprimant des couches fixes, précision lambda SMOOTHER,
+coûts Needle et évaluateur d’élagage ; progression RE incompatible, puis grille oblique à valider en worker.
+Descriptions fautives retirées : métrique de tri prise pour des états vides, accès JSON SPLINE absent,
+aide/F1 absents, solveur maison, `jac` absent et paramètres/formule PGLOBAL inexacts.
+Préflight STOP (Ruff ne démarre pas via le Python de référence ; 60 fichiers suivis déjà modifiés).
+Trois contrôles documentaires : sortie 0 ; 299 liens des audits, UTF-8, blocs et empreintes vérifiés.
+[Contrôles complémentaires](../reports/ARGON_contre_audit_2026-10-16/documentation_checks.json).
+Sources de production inchangées ; documentation et preuves non committées.
 
 **Programme historique (décision du2026-10-15, terminé).** Corriger le noyau RMSE puis reprendre
 le Rate **jusqu’à la fin du programme borné R0–R6**, avec **24 processeurs logiques**, affinité0xffffff,
@@ -841,6 +873,23 @@ Après accord explicite de 👤, une action séparée l'édite puis lance `pytho
   fiabilité du gel.
 - *D82* (logo du thème sombre) demande des yeux ; *D84* (écart au dernier bit au premier passage après un changement de clé du cache Numba) : relancer une fois avant de
   conclure à une régression ; *D68* (silicium lu à l'import) est optionnel.
+
+**A9 — Tenter le99c en une seule campagne avec injection et derniers raffinements Rate** (demande de 👤 du2026-10-16 ; à préparer, non exécuté).
+*Objectif* : chercher un plan déposable pour le passe-bande5cavités/99couches, en injectant des couches
+ou paquets Rate et en appliquant les derniers raffinements intégrés : recherche conjointe fenêtres/λ
+(`elite_rate_joint_candidates=480`) et post-raffinement final (`rate_post_refinement=True`, faisceau2,
+au plus2passes/300propositions par passe/600au total, arrêt sans gain). Les parents doivent provenir
+de la recherche native propre au99c ; aucun gagnant historique75c injecté.
+*Faire* : préparer un protocole borné distinct, avec sources et paramètres physiques figés, puis
+comparer l'optique pure, l'injection de Rate sans ce post-raffinement, et le Rate avec les derniers
+raffinements. Garder les mêmes réglages dans chaque comparaison appariée et distinguer le gain
+de l'injection de celui du raffinement. Vérifier le raccordement réel au99c et aux99couches avant
+mesure ; utiliser de nouveaux slots et réserver les graines de confirmation avant inspection.
+*Fini quand* : un rapport donne, sur plusieurs graines, le nombre de plans déposables, les plantages,
+les SEEL de consensus homogènes des plans complets figés, leur confirmation indépendante et le coût réel.
+L'absence de plan déposable reste un échec explicite, sans SEEL valide. Le résultat historique à4verres
+témoins est un repère séparé, pas un succès en une seule campagne. Conserver plans, rejets, sources/SHA
+et paramètres ; aucun défaut activé ni ancienne campagne relancée par cette tâche.
 
 **Décisions qui n'appartiennent qu'à 👤 — une IA ne les tranche pas, elle rapporte les mesures.**
 1. D98 : l'attente sans fin (défaut) ou l'arrêt tardif (`oms_arming=1`) — chiffres au §3 et dans `reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md`.

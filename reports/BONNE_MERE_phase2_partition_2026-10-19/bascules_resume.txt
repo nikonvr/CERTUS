@@ -1,0 +1,15 @@
+base (SC76 + op25 570): SEEL rms 0.3272 nm, stops [0, 0, 0]
+96 flips: 18 with a stop; to Rate with a stop: 1
+best 12 without a stop (dSEEL2 nm2 at 0.05):
+   op 42 -> Rate    SiO2   OT  219.45 nm  dSEEL2 -0.0027   (breaks OT<=50)
+   op 89 -> Rate    Nb2O5  OT   60.28 nm  dSEEL2 -0.0020   (breaks OT<=50)
+   op 55 -> Rate    Nb2O5  OT  203.83 nm  dSEEL2 -0.0018   (breaks OT<=50)
+   op  4 -> Rate    SiO2   OT   31.18 nm  dSEEL2 -0.0015
+   op 98 -> Rate    SiO2   OT  107.32 nm  dSEEL2 -0.0010   (breaks OT<=50)
+   op 73 -> Rate    Nb2O5  OT  336.97 nm  dSEEL2 -0.0008   (breaks OT<=50)
+   op 97 -> Rate    Nb2O5  OT  196.70 nm  dSEEL2 -0.0007   (breaks OT<=50)
+   op 93 -> Rate    Nb2O5  OT  318.30 nm  dSEEL2 -0.0001   (breaks OT<=50)
+   op 96 -> Rate    SiO2   OT  232.00 nm  dSEEL2 -0.0000   (breaks OT<=50)
+   op 79 -> Rate    Nb2O5  OT  352.89 nm  dSEEL2 +0.0000   (breaks OT<=50)
+   op 75 -> Rate    Nb2O5  OT  836.22 nm  dSEEL2 +0.0001   (breaks OT<=50)
+   op 36 -> Rate    SiO2   OT  263.04 nm  dSEEL2 +0.0002   (breaks OT<=50)

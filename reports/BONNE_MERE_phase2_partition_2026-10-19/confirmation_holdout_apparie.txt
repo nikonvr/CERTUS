@@ -1,0 +1,6 @@
+confirmation noise 0.025: SEEL rms 0.2953 -> 0.2936, P95 0.4312 -> 0.4270; dSEEL2 -0.0010 +- 0.0001 (per seed -0.0012, -0.0008, -0.0009); dRMSE -0.00062; stops 0 -> 0
+confirmation noise 0.05: SEEL rms 0.3283 -> 0.3253, P95 0.4591 -> 0.4509; dSEEL2 -0.0019 +- 0.0002 (per seed -0.0022, -0.0015, -0.0021); dRMSE -0.00121; stops 0 -> 0
+confirmation noise 0.1: SEEL rms 0.4408 -> 0.4340, P95 0.5830 -> 0.5835; dSEEL2 -0.0060 +- 0.0003 (per seed -0.0063, -0.0068, -0.0048); dRMSE -0.00370; stops 0 -> 0
+final_holdout noise 0.025: SEEL rms 0.2941 -> 0.2925, P95 0.4290 -> 0.4253; dSEEL2 -0.0009 +- 0.0001 (per seed -0.0007, -0.0011, -0.0009); dRMSE -0.00056; stops 0 -> 0
+final_holdout noise 0.05: SEEL rms 0.3298 -> 0.3272, P95 0.4596 -> 0.4531; dSEEL2 -0.0017 +- 0.0002 (per seed -0.0018, -0.0017, -0.0017); dRMSE -0.00109; stops 0 -> 0
+final_holdout noise 0.1: SEEL rms 0.4408 -> 0.4337, P95 0.5849 -> 0.5759; dSEEL2 -0.0062 +- 0.0003 (per seed -0.0060, -0.0069, -0.0059); dRMSE -0.00386; stops 0 -> 0

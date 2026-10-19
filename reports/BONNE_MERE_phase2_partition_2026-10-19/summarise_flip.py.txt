@@ -1,0 +1,16 @@
+import json
+import sys
+
+rows = [json.loads(l) for l in open(sys.argv[1], encoding="utf-8")]
+base = next(r for r in rows if r["name"] == "pbase")
+b2 = base["noise_results"][1]["seel_rms_nm"] ** 2
+print(f"base (SC76 + op25 570): SEEL rms {base['noise_results'][1]['seel_rms_nm']:.4f} nm, stops {[x['failures'] for x in base['noise_results']]}")
+flips = [r for r in rows if r["name"] != "pbase"]
+stopped = [r for r in flips if any(x["failures"] for x in r["noise_results"])]
+ok = sorted((r for r in flips if r not in stopped), key=lambda r: r["noise_results"][1]["seel_rms_nm"])
+print(f"{len(flips)} flips: {len(stopped)} with a stop; to Rate with a stop: {sum(r['meta']['to'] == 'Rate' for r in stopped)}")
+print("best 12 without a stop (dSEEL2 nm2 at 0.05):")
+for r in ok[:12]:
+    m = r["meta"]
+    print(f"   op {m['op']:>2} -> {m['to']:<7} {m['mat']:<6} OT {m['ot']:>7.2f} nm  dSEEL2 {r['noise_results'][1]['seel_rms_nm'] ** 2 - b2:+.4f}"
+          f"{'   (breaks OT<=50)' if m['to'] == 'Rate' and m['ot'] > 50 else ''}")

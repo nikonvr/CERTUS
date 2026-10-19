@@ -1,0 +1,135 @@
+"""Evaluate many Bonne Mere monitoring plans in one process with the scoring path of rejeu_plan.py.
+
+Usage: python -X utf8 -X cpu_count=16 scan.py --repo REPO --study STUDY --jobs JOBS.json --out RESULTS.jsonl --cache DIR
+JOBS.json: list of {"name", "plan" (dict or path), "seed", "runs"}. One JSON line per job in RESULTS.jsonl;
+per-draw arrays in RESULTS_arrays/<name>.npz when the job sets "save": true.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import logging
+import os
+import sys
+import time
+from pathlib import Path
+
+ap = argparse.ArgumentParser()
+for k in ("--repo", "--study", "--jobs", "--out", "--cache"):
+    ap.add_argument(k, required=True)
+A = ap.parse_args()
+REPO, STUDY, OUT = Path(A.repo).resolve(), Path(A.study).resolve(), Path(A.out).resolve()
+os.environ["NUMBA_NUM_THREADS"] = "16"
+os.environ["NUMBA_CACHE_DIR"] = str(Path(A.cache).resolve())
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+for v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
+    os.environ.setdefault(v, "1")
+os.environ["CERTUS_CONFIG_DIR"] = str(OUT.parent / "strat_preferences")
+sys.path.insert(0, str(REPO))
+sys.path.insert(1, str(STUDY / "scripts"))
+NOISES = [.025, .05, .1]
+PLAN_KEYS = ("strategy_id", "origin", "blocks", "rate_layers", "witness_reset_layers", "monochromator_resolution_nm")
+
+
+def main():
+    from PyQt6.QtWidgets import QApplication
+    qapp = QApplication.instance() or QApplication(sys.argv[:1])
+    import numpy as np
+    from numba import set_num_threads
+    set_num_threads(16)
+    from local_comparisons import VariantModel  # sets 8 threads, as in the morning
+    import certus
+    import certus.core.certus_strat_robustness_task as task
+    from certus.core.certus_strat_config import precompute_clues_and_matrices
+    from certus.core.certus_strat_core import APP_CONTEXT, set_robust_material_db
+    from certus.core.certus_strat_robustness import _prepare_robustness_nominal_optics
+    from certus.core.certus_strat_robustness_slit import _slit_bias_profiles
+    from certus.physics.certus_material_db import MaterialDatabase
+
+    assert Path(list(certus.__path__)[0]).resolve() == REPO / "certus"
+    source = STUDY / "design/retenu_96_saphir/design.json"
+    assert hashlib.sha256(source.read_bytes()).hexdigest().startswith("c48a60c1")
+    design = json.loads(source.read_text(encoding="utf-8"))
+    precoat = json.loads((STUDY / "reports/strat_single_witness_optical_blocks_2026-10-17/attempt_02/trial_0519/summary.json").read_text(encoding="utf-8"))["precoat_nm"]
+    nominal = np.array(precoat + design["thickness_nm"])
+    logger = logging.getLogger("certus_strat")
+    logger.setLevel(logging.WARNING)
+    MaterialDatabase.get_refractive_index = lambda self, m, wl: self._db.get_refractive_index(m, wl)
+    MaterialDatabase.get_refractive_clues_vectorized = lambda self, m, wls: self._db.get_refractive_clues_vectorized(m, wls)
+    database = MaterialDatabase(str(REPO / "example/database_index/indices.xlsx"))
+    APP_CONTEXT["materials_db"] = database
+    set_robust_material_db(database._db)
+    params = json.loads((STUDY / "reports/strat_precoat2_compare_2026-10-17/effective_params.json").read_text(encoding="utf-8"))
+    params.update(materials_db=database, logger=logger, p_thick_nominal=nominal.tolist(),
+                  scan_wl_min=430., scan_wl_max=900., scan_wl_step=1., robustness_seed=20261012001)
+    cm = VariantModel(design["material_indices"], 3, design["target_upper_nm"])
+    _, nominal_t = cm.spectrum(nominal[2:])
+    clues, _, _ = precompute_clues_and_matrices(params, nominal.tolist(), logger)
+    optics = _prepare_robustness_nominal_optics(params, nominal.tolist(), dict(clues_at_wl=clues))
+    seel_k = json.loads((STUDY / "reports/strat_two_witnesses_2026-10-17/component_seel_calibration.json").read_text(encoding="utf-8"))["fit_k"]
+    native_compute, native_batch = task.compute_batch_rmse, task.simulate_stack_robustness_batch
+    empty = np.empty(0, dtype=np.complex128)
+
+    def evaluate(plan_in, seed_id, runs, override):
+        plan = {k: plan_in[k] for k in PLAN_KEYS}
+        cfg = dict(params, robustness_seed=seed_id)
+        cfg.update(override)
+        plan["slit_profile"] = _slit_bias_profiles(plan, nominal.tolist(), cfg, 2.)
+        scores, corridors = [], []
+
+        def batch(*args, **kw):
+            values = list(args)
+            assert values[24] is None
+            values[24] = np.zeros(98, dtype=np.bool_)
+            corridors.append(tuple(values[18:22]))
+            return native_batch(*values, **kw)
+
+        def score(*args, **kw):
+            value = native_compute(*args, **kw)
+            th = np.asarray(args[0])
+            valid = np.all(np.isfinite(th) & (th < 1e5), axis=1)
+            phys = np.ascontiguousarray(th[:, 2:])
+            corr = args[8:12]
+            assert tuple(corr) == corridors[len(scores)]
+            target = 100. * native_compute(phys, cm.wls, empty, empty, cm.substrate, cm.target, cm.layers, None, *corr)
+            seel = seel_k * native_compute(phys, cm.wls, empty, empty, cm.substrate, nominal_t, cm.layers, None, *corr)
+            scores.append(dict(valid=valid, target_rmse_pp=target, seel_nm=seel, thickness_nm=phys))
+            return value
+
+        task.compute_batch_rmse, task.simulate_stack_robustness_batch = score, batch
+        try:
+            task._test_strategy_robustness_task(plan, 0, NOISES, runs, nominal.tolist(), clues, cfg, *optics, {}, compute_layer_profile=False)
+        finally:
+            task.compute_batch_rmse, task.simulate_stack_robustness_batch = native_compute, native_batch
+        assert len(scores) == 3
+        return scores
+
+    jobs = json.loads(Path(A.jobs).read_text(encoding="utf-8"))
+    arrays = OUT.parent / (OUT.stem + "_arrays")
+    with OUT.open("a", encoding="utf-8") as stream:
+        for job in jobs:
+            plan = job["plan"] if isinstance(job["plan"], dict) else json.loads(Path(job["plan"]).read_text(encoding="utf-8"))
+            t0 = time.monotonic()
+            scores = evaluate(plan, job["seed"], job["runs"], job.get("override", {}))
+            rows = []
+            for noise, d in zip(NOISES, scores):
+                v = d["valid"]
+                s = d["seel_nm"][v]
+                rows.append(dict(noise_pp=noise, completed=int(v.sum()), failures=int((~v).sum()),
+                                 target_rmse_mean_pp=float(d["target_rmse_pp"][v].mean()) if v.any() else None,
+                                 seel_rms_nm=float(np.sqrt(np.mean(s ** 2))) if v.any() else None,
+                                 seel_p95_nm=float(np.percentile(s, 95)) if v.any() else None))
+            rec = dict(name=job["name"], seed=job["seed"], runs=job["runs"], meta=job.get("meta", {}), noise_results=rows,
+                       seconds=round(time.monotonic() - t0, 1))
+            stream.write(json.dumps(rec) + "\n")
+            stream.flush()
+            if job.get("save"):
+                arrays.mkdir(exist_ok=True)
+                np.savez_compressed(arrays / f"{job['name']}.npz", **{f"{k}_{i}": d[k] for i, d in enumerate(scores) for k in ("valid", "target_rmse_pp", "seel_nm")})
+            print("JOB", job["name"], rows[1]["seel_rms_nm"], rows[1]["failures"], rec["seconds"], flush=True)
+    qapp.quit()
+
+
+if __name__ == "__main__":
+    main()

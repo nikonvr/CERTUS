@@ -1,0 +1,18 @@
+import collections
+import json
+import sys
+
+rows = [json.loads(l) for l in open(sys.argv[1], encoding="utf-8")]
+base = next(r for r in rows if r["name"] == "base")
+b2 = base["noise_results"][1]["seel_rms_nm"] ** 2
+print(f"base: SEEL rms {base['noise_results'][1]['seel_rms_nm']:.4f} nm (SEEL2 {b2:.4f}), stops {[x['failures'] for x in base['noise_results']]}")
+by = collections.defaultdict(list)
+for r in rows:
+    if r["name"] != "base":
+        by[r["meta"]["op"]].append(r)
+for op, rs in by.items():
+    ok = [r for r in rs if all(x["failures"] == 0 for x in r["noise_results"])]
+    stop = len(rs) - len(ok)
+    best = sorted(ok, key=lambda r: r["noise_results"][1]["seel_rms_nm"])[:3]
+    txt = ", ".join(f"{r['meta']['lam']} nm {r['noise_results'][1]['seel_rms_nm'] ** 2 - b2:+.4f}" for r in best)
+    print(f"op {op:>2} (now {rs[0]['meta']['base_lam']:.0f} nm): {len(rs)} wavelengths, {stop} with a stop; best dSEEL2 (nm2): {txt}")

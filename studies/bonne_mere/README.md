@@ -1,6 +1,6 @@
 # Bonne Mère
 
-96 couches H800 (Nb₂O₅ / SiO₂) sur saphir, un témoin, deux précouches : `dossier_final/donnees/design_retenu_96_saphir.json`, cible `cible_retenue_601points.csv`, plancher nominal 1,459069 pp.
+96 couches H800 (Nb₂O₅ / SiO₂) sur saphir, un témoin, deux précouches : `dossier_final/donnees/design_retenu_96_saphir.json`, cible `cible_retenue_601points.csv`, plancher nominal 1,459069 pp (design adopté par 👤 : couche 1 du design de 100 couches supprimée, plafond 1,47 pp).
 
 ## Meilleur plan mesuré (2026-10-19)
 

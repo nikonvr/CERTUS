@@ -16,6 +16,8 @@
 
 **Bonne Mère (2026-10-19).** Meilleur plan mesuré et chemin vers l'optimum : [`studies/bonne_mere/README.md`](../studies/bonne_mere/README.md) (21 couches Rate, SEEL P95 0,446 nm au bruit 0,05, 0 arrêt). Dérive de la source non modélisée (A6). Défaut ouvert de STRAT : l'hystérésis du comptage des points tournants suit le bruit ; à bruit faible, la fente fabrique des extrema ([phase 1](../reports/BONNE_MERE_phase1_budget_SuperChamp76_2026-10-19/bilan.md)).
 
+**STRAT sur r75 (2026-10-20).** Un affinage apparié des λ, couche par couche, bat les gagnants de STRAT sur r75, r75x0.5 et r75x2 (SEEL −4 à −11 % au holdout) ; `tp_hysteresis_floor`, inactif, supprime les arrêts à bruit faible : sa valeur par défaut revient à 👤. [Rapport](../reports/STRAT_r75_budget_et_affinage_2026-10-20/bilan.md).
+
 **Branches locales en attente** (ni poussées, ni validées) : `claude/alg02-prune-evaluator-0d2a8d` (`46261901`,
 correctif de D107) et `claude/dreamy-burnell-85397a` (`cc3fe134`, fenêtre admissible 48c) ; reprendre par
 `git worktree add`. Dossier : 580 Mo pour une limite de 1 Go (2026-10-18).

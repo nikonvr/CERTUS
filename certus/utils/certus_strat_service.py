@@ -1117,7 +1117,7 @@ def _validate_candidates_phase_a(
     # AXIS 1.2 — the detection rule, expressed as a multiple of the noise amplitude.
     # It applies even when the signal is not noisy: a machine always has
     # a reading rule. Default 0.0 = historical rule.
-    tp_hysteresis = float(params.get("tp_hysteresis_factor", 0.0) or 0.0) * noise_val_pct
+    tp_hysteresis = max(float(params.get("tp_hysteresis_factor", 0.0) or 0.0) * noise_val_pct, float(params.get("tp_hysteresis_floor", 0.0) or 0.0))
     affine_scale_amp = float(params.get("affine_scale_amp", 0.0) or 0.0)
     affine_offset_amp = float(params.get("affine_offset_amp", 0.0) or 0.0)
     # 12.1bis: Phase A must see the SAME photometric distortion as Phase B.

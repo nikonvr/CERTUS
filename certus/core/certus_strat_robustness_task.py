@@ -67,6 +67,25 @@ def task_numba_threads() -> int:
     return max(1, min(wanted, int(numba.config.NUMBA_NUM_THREADS)))
 
 
+def reading_hysteresis(factor: float, floor: float, noise_val: float, is_absolute: bool, dT_dd: Any = None) -> float:
+    """Turning-point hysteresis of the machine's read rule, in units of T.
+
+    It follows the noise level (`tp_hysteresis_factor`, 0 = historical rule). `floor` (`tp_hysteresis_floor`, T units,
+    0 = inactive, so the path is unchanged) keeps it from vanishing with the noise: measured 2026-10-20, with the optical
+    noise divided by 100 the slit-bias ripple was counted as turning points and every deposition of the STRAT winners of
+    r75 and r75x2 stopped (TP_MISCOUNT, `reports/STRAT_r75_budget_et_affinage_2026-10-20/bilan.md`).
+    """
+    hysteresis = 0.0
+    if factor > 0.0:
+        if is_absolute:
+            hysteresis = factor * float(np.median(np.abs(np.asarray(dT_dd, dtype=np.float64)))) * noise_val
+        else:
+            hysteresis = factor * noise_val / 100.0
+    if floor > 0.0:
+        hysteresis = max(hysteresis, floor)
+    return hysteresis
+
+
 def _test_strategy_robustness_task(
     strategy: dict[str, Any],
     _strat_idx: int,
@@ -334,6 +353,7 @@ def _test_strategy_robustness_task(
     # Default 0.0 = historical rule, so unchanged path. The value is not set
     # here: it is swept and decided by measurement.
     tp_hysteresis_factor = float(params.get("tp_hysteresis_factor", 0.0) or 0.0)
+    tp_hysteresis_floor = float(params.get("tp_hysteresis_floor", 0.0) or 0.0)
     for noise_idx, noise_val in enumerate(noise_levels):
         # 🔴 THE READING NOISE IS ONE SINGLE CONTINUOUS PROCESS OVER THE WHOLE DEPOSITION,
         # and a campaign reads ONLY ITS SLICE of it.
@@ -391,14 +411,7 @@ def _test_strategy_robustness_task(
         # "nm tolerance" mode it depends on the layer via dT/dd, so we keep the
         # median — the kernel takes a scalar, and refining it makes no sense until
         # the value of the factor is decided.
-        tp_hysteresis = 0.0
-        if tp_hysteresis_factor > 0.0:
-            if is_absolute:
-                tp_hysteresis = tp_hysteresis_factor * float(
-                    np.median(np.abs(np.asarray(dT_dd, dtype=np.float64)))
-                ) * noise_val
-            else:
-                tp_hysteresis = tp_hysteresis_factor * noise_val / 100.0
+        tp_hysteresis = reading_hysteresis(tp_hysteresis_factor, tp_hysteresis_floor, noise_val, is_absolute, dT_dd)
 
         affine_scale_amp = float(params.get("affine_scale_amp", 0.0) or 0.0)
         # 👤 the affine gain/offset stay OFF by default: the machine re-references

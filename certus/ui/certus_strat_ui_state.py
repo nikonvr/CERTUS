@@ -1229,9 +1229,8 @@ class CertusStratStateMixin:
             #
             # The value is not set here: it is swept and decided by the
             # measurement. Default 0 = path unchanged.
-            "tp_hysteresis_factor": _config_float(
-                getattr(self, "_loaded_config", {}), "tp_hysteresis_factor"
-            ),
+            "tp_hysteresis_factor": _config_float(getattr(self, "_loaded_config", {}), "tp_hysteresis_factor"),
+            "tp_hysteresis_floor": _config_float(getattr(self, "_loaded_config", {}), "tp_hysteresis_floor"),  # T units, 0 = off
             # ── Safety margin at turning point, in noise multiples ──────
             #
             # > 0 : the stopping level must be separated from neighboring turning points

@@ -1,0 +1,136 @@
+"""Select, combine, confirm and hold out single-layer wavelength changes of a STRAT winner (Bonne Mere discipline).
+
+python -X utf8 refine.py COMP
+Reads val/scan_COMP.jsonl (search seed) and val/winner_COMP.json; writes val/refine_COMP.json and a log.
+Seeds: selection 20261020301-303, confirmation 20261020401-403, final holdout 20261020501-503 (1000 draws each).
+Criterion: paired mean RMSE^2 at the nominal noise over the draws both plans complete; a plan is admissible only with
+no stop at the three noise levels and a STRAT score (P95, max over levels) not above the reference's.
+"""
+import json
+import os
+import subprocess
+import sys
+
+import numpy as np
+
+COMP = sys.argv[1]
+HERE = os.path.join(os.environ["TEMP"], "r75")
+V = os.path.join(HERE, "val")
+REPO = r"D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310"
+SEL, CONF, HOLD = (20261020301, 20261020302, 20261020303), (20261020401, 20261020402, 20261020403), (20261020501, 20261020502, 20261020503)
+LOG = open(os.path.join(V, f"refine_{COMP}.log"), "a", encoding="utf-8")
+
+
+def say(*a):
+    msg = " ".join(str(x) for x in a)
+    print(msg, flush=True)
+    LOG.write(msg + "\n")
+    LOG.flush()
+
+
+def run(tag, plans, seeds):
+    """Evaluate {name: plan} on seeds; return {name: {seed: (rmse arrays, crashed arrays, score)}}."""
+    jobs = [dict(name=f"{n}__{s}", plan=p, seed=s, runs=1000, save=True) for n, p in plans.items() for s in seeds]
+    jf, out = os.path.join(V, f"rf_{COMP}_{tag}.json"), os.path.join(V, f"rf_{COMP}_{tag}.jsonl")
+    json.dump(jobs, open(jf, "w"))
+    if os.path.exists(out):
+        os.remove(out)
+    subprocess.run([sys.executable, "-X", "utf8", os.path.join(HERE, "r75_scan.py"), "--repo", REPO, "--jobs", jf, "--out", out,
+                    "--comp", COMP, "--mode", "deep"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    res = {}
+    for line in open(out, encoding="utf-8"):
+        r = json.loads(line)
+        n, s = r["name"].rsplit("__", 1)
+        z = np.load(os.path.join(V, f"rf_{COMP}_{tag}_arrays", r["name"] + ".npz"))
+        res.setdefault(n, {})[int(s)] = (z, r["robustness_score"])
+    return res
+
+
+def compare(res, ref, cand, seeds):
+    d, stops, stops_ref, sc_ref, sc_c = [], 0, 0, [], []
+    for s in seeds:
+        zr, scr = res[ref][s]
+        zc, scc = res[cand][s]
+        stops += sum(int(zc[f"crashed_{i}"].sum()) for i in range(3))
+        stops_ref += sum(int(zr[f"crashed_{i}"].sum()) for i in range(3))
+        both = ~zr["crashed_1"] & ~zc["crashed_1"]
+        d.append(zc["rmse_1"][both] ** 2 - zr["rmse_1"][both] ** 2)
+        sc_ref.append(scr)
+        sc_c.append(scc)
+    d = np.concatenate(d)
+    base = np.mean(np.concatenate([res[ref][s][0]["rmse_1"][~res[ref][s][0]["crashed_1"]] ** 2 for s in seeds]))
+    return dict(d=float(d.mean()), se=float(d.std(ddof=1) / np.sqrt(len(d))), rel=float(d.mean() / base), stops=stops, stops_ref=stops_ref,
+                score_ref=float(np.mean(sc_ref)), score=float(np.mean(sc_c)))
+
+
+def set_layer(plan, k, lam):
+    out = []
+    for b in plan["blocks"]:
+        s, e, w = b["start"], b["end"], float(b["wavelength"])
+        if s <= k < e:
+            if s < k:
+                out.append(dict(start=s, end=k, wavelength=w))
+            out.append(dict(start=k, end=k + 1, wavelength=float(lam)))
+            if k + 1 < e:
+                out.append(dict(start=k + 1, end=e, wavelength=w))
+        else:
+            out.append(dict(start=s, end=e, wavelength=w))
+    q = dict(plan)
+    q["blocks"] = out
+    return q
+
+
+winner = json.load(open(os.path.join(V, f"winner_{COMP}.json")))
+rows = [json.loads(line) for line in open(os.path.join(V, f"scan_{COMP}.jsonl"), encoding="utf-8")]
+b = next(r for r in rows if r["name"] == "base")["per_noise"][1]["rmse2_mean_done"]
+best = {}
+for r in rows:
+    if r["name"] == "base" or any(x["crashed"] for x in r["per_noise"]):
+        continue
+    k, d = r["meta"]["layer"], r["per_noise"][1]["rmse2_mean_done"] - b
+    if d < -0.02 * b and (k not in best or d < best[k][0]):
+        best[k] = (d, r["meta"]["lam"])
+cands = sorted(best.items(), key=lambda kv: kv[1][0])[:20]
+say(f"== {COMP}: {len(cands)} search candidates", [(k, lam, round(100 * d / b, 1)) for k, (d, lam) in cands])
+
+plans = {"ref": winner, **{f"L{k}_{lam}": set_layer(winner, k, lam) for k, (d, lam) in cands}}
+res = run("sel", plans, SEL)
+kept = []
+for name in plans:
+    if name == "ref":
+        continue
+    c = compare(res, "ref", name, SEL)
+    ok = c["stops"] <= c["stops_ref"] and c["d"] < -2 * c["se"] and c["score"] <= c["score_ref"]
+    say(f"   select {name}: dRMSE2 {100 * c['rel']:+.1f} % (+-{100 * c['se'] / abs(c['d'] / c['rel']) if c['rel'] else 0:.1f}), stops {c['stops']} vs {c['stops_ref']}, score {c['score']:.5f} vs {c['score_ref']:.5f} -> {'kept' if ok else 'dropped'}")
+    if ok:
+        kept.append((c["d"], name))
+kept.sort()
+
+current, current_name, chain = winner, "ref", []
+for _, name in kept:
+    k, lam = name[1:].split("_")
+    trial = set_layer(current, int(k), float(lam))
+    res2 = run(f"comb{len(chain)}", {"cur": current, "try": trial}, SEL)
+    c = compare(res2, "cur", "try", SEL)
+    ok = c["stops"] <= c["stops_ref"] and c["d"] < -2 * c["se"] and c["score"] <= c["score_ref"]
+    say(f"   combine +{name}: dRMSE2 {100 * c['rel']:+.1f} % vs current, stops {c['stops']} vs {c['stops_ref']}, score {c['score']:.5f} vs {c['score_ref']:.5f} -> {'added' if ok else 'skipped'}")
+    if ok:
+        current = trial
+        chain.append(name)
+current["origin"] = f"{winner['origin']} + local refinement {'+'.join(chain)}"
+json.dump(current, open(os.path.join(V, f"refined_{COMP}.json"), "w"), indent=1)
+say(f"   frozen: {len(chain)} changes {chain}")
+
+final = {}
+for tag, seeds in (("conf", CONF), ("hold", HOLD)):
+    r3 = run(tag, {"ref": winner, "fin": current}, seeds)
+    c = compare(r3, "ref", "fin", seeds)
+    p95 = {}
+    for nm in ("ref", "fin"):
+        allr = [np.concatenate([r3[nm][s][0][f"rmse_{i}"] for s in seeds]) for i in range(3)]
+        p95[nm] = max(float(np.percentile(a, 95)) for a in allr)
+    final[tag] = dict(c, p95_ref=p95["ref"], p95_fin=p95["fin"], seel_ref=2 * p95["ref"] ** 0.5, seel_fin=2 * p95["fin"] ** 0.5)
+    say(f"   {tag}: dRMSE2 {100 * c['rel']:+.1f} % (SE {100 * c['se'] / abs(c['d'] / c['rel']) if c['rel'] else 0:.1f} %), stops {c['stops']} vs {c['stops_ref']}, "
+        f"P95 max {p95['ref']:.5f} -> {p95['fin']:.5f}, SEEL_strat {2 * p95['ref'] ** 0.5:.4f} -> {2 * p95['fin'] ** 0.5:.4f} nm")
+json.dump(dict(comp=COMP, candidates=cands, kept=[n for _, n in kept], chain=chain, final=final), open(os.path.join(V, f"refine_{COMP}.json"), "w"), indent=1)
+say("done")

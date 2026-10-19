@@ -1,0 +1,31 @@
+"""Paired error budget of a STRAT winner from the ablation runs (r75_scan.py outputs)."""
+import json
+import os
+import sys
+
+import numpy as np
+
+V = os.path.join(os.environ["TEMP"], "r75", "val")
+SEEDS = (20261020101, 20261020102, 20261020103)
+CFGS = ("ref", "corr0", "slit0", "anch0", "n100", "all0")
+LABEL = dict(ref="reference", corr0="index corridor 0", slit0="slit bias off", anch0="POEM anchor noise off",
+             n100="optical noise /100", all0="all four off")
+for comp in sys.argv[1:]:
+    print(f"== {comp}")
+    arr = {(k, s): np.load(os.path.join(V, f"abl_{comp}_arrays", f"{comp}_{k}_s{s}.npz")) for k in CFGS for s in SEEDS}
+    for i, lvl in enumerate(("0.5x", "1x", "2x")):
+        print(f"-- noise level {lvl}")
+        for k in CFGS:
+            r2, d, st, rmse_all = [], [], 0, []
+            for s in SEEDS:
+                a, b = arr[(k, s)], arr[("ref", s)]
+                ok = ~a[f"crashed_{i}"]
+                both = ok & ~b[f"crashed_{i}"]
+                st += int(a[f"crashed_{i}"].sum())
+                r2.append(a[f"rmse_{i}"][ok] ** 2)
+                rmse_all.append(a[f"rmse_{i}"])
+                d.append(a[f"rmse_{i}"][both] ** 2 - b[f"rmse_{i}"][both] ** 2)
+            r2, d, ra = np.concatenate(r2), np.concatenate(d), np.concatenate(rmse_all)
+            p95 = np.percentile(ra, 95)
+            print(f"   {LABEL[k]:<22} stops {st:>4}/3000  rms {np.sqrt(r2.mean()):.5f}  P95(all) {p95:.5f}  SEEL_strat {2 * np.sqrt(p95):.4f} nm"
+                  f"  dRMSE2 {d.mean():+.3e} +- {d.std(ddof=1) / np.sqrt(len(d)):.1e} ({100 * d.mean() / np.mean(arr_ref_r2) if (arr_ref_r2 := np.concatenate([arr[('ref', s)][f'rmse_{i}'][~arr[('ref', s)][f'crashed_{i}']] ** 2 for s in SEEDS])).size else 0:+.0f} %)")

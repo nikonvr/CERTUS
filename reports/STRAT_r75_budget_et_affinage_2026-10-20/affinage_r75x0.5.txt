@@ -1,0 +1,24 @@
+== r75x0.5: 16 search candidates [(5, 490, -20.8), (0, 450, -14.9), (10, 460, -14.2), (6, 450, -13.6), (12, 450, -13.6), (8, 480, -11.1), (4, 470, -10.9), (7, 680, -8.6), (2, 450, -6.6), (3, 720, -6.2), (9, 670, -5.6), (11, 470, -5.0), (13, 585, -4.4), (14, 630, -4.2), (1, 450, -4.0), (16, 735, -3.7)]
+   select L5_490: dRMSE2 -16.5 % (+-1.1), stops 0 vs 0, score 0.04462 vs 0.04830 -> kept
+   select L0_450: dRMSE2 -13.6 % (+-0.8), stops 0 vs 0, score 0.04774 vs 0.04830 -> kept
+   select L10_460: dRMSE2 -7.4 % (+-1.1), stops 5 vs 0, score 0.04916 vs 0.04830 -> dropped
+   select L6_450: dRMSE2 +1.9 % (+-1.6), stops 11 vs 0, score 0.05242 vs 0.04830 -> dropped
+   select L12_450: dRMSE2 -9.2 % (+-1.4), stops 0 vs 0, score 0.05068 vs 0.04830 -> dropped
+   select L8_480: dRMSE2 -4.6 % (+-1.0), stops 5 vs 0, score 0.04968 vs 0.04830 -> dropped
+   select L4_470: dRMSE2 -5.8 % (+-1.0), stops 0 vs 0, score 0.04866 vs 0.04830 -> dropped
+   select L7_680: dRMSE2 +4.0 % (+-1.3), stops 0 vs 0, score 0.04943 vs 0.04830 -> dropped
+   select L2_450: dRMSE2 +0.0 % (+-1.6), stops 0 vs 0, score 0.05482 vs 0.04830 -> dropped
+   select L3_720: dRMSE2 -3.7 % (+-0.9), stops 0 vs 0, score 0.04828 vs 0.04830 -> kept
+   select L9_670: dRMSE2 -0.2 % (+-0.7), stops 0 vs 0, score 0.04812 vs 0.04830 -> dropped
+   select L11_470: dRMSE2 -3.1 % (+-1.1), stops 0 vs 0, score 0.04982 vs 0.04830 -> dropped
+   select L13_585: dRMSE2 +2.5 % (+-1.1), stops 0 vs 0, score 0.05181 vs 0.04830 -> dropped
+   select L14_630: dRMSE2 +4.5 % (+-0.9), stops 0 vs 0, score 0.04813 vs 0.04830 -> dropped
+   select L1_450: dRMSE2 +8.2 % (+-2.0), stops 0 vs 0, score 0.06683 vs 0.04830 -> dropped
+   select L16_735: dRMSE2 -0.2 % (+-0.6), stops 0 vs 0, score 0.04834 vs 0.04830 -> dropped
+   combine +L5_490: dRMSE2 -16.5 % vs current, stops 0 vs 0, score 0.04462 vs 0.04830 -> added
+   combine +L0_450: dRMSE2 -6.1 % vs current, stops 0 vs 0, score 0.04477 vs 0.04462 -> skipped
+   combine +L3_720: dRMSE2 +17.8 % vs current, stops 0 vs 0, score 0.05035 vs 0.04462 -> skipped
+   frozen: 1 changes ['L5_490']
+   conf: dRMSE2 -17.3 % (SE 1.1 %), stops 0 vs 0, P95 max 0.04860 -> 0.04611, SEEL_strat 0.4409 -> 0.4295 nm
+   hold: dRMSE2 -15.5 % (SE 1.1 %), stops 0 vs 0, P95 max 0.04759 -> 0.04406, SEEL_strat 0.4363 -> 0.4198 nm
+done

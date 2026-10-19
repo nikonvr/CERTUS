@@ -1,0 +1,78 @@
+C:\Users\Fabien\AppData\Local\Temp\r75\analyse_abl.py:30: RuntimeWarning: Mean of empty slice
+  print(f"   {LABEL[k]:<22} stops {st:>4}/3000  rms {np.sqrt(r2.mean()):.5f}  P95(all) {p95:.5f}  SEEL_strat {2 * np.sqrt(p95):.4f} nm"
+C:\Users\Fabien\AppData\Roaming\Python\Python314\site-packages\numpy\_core\_methods.py:142: RuntimeWarning: invalid value encountered in scalar divide
+  ret = ret.dtype.type(ret / rcount)
+C:\Users\Fabien\AppData\Local\Temp\r75\analyse_abl.py:31: RuntimeWarning: Mean of empty slice
+  f"  dRMSE2 {d.mean():+.3e} +- {d.std(ddof=1) / np.sqrt(len(d)):.1e} ({100 * d.mean() / np.mean(arr_ref_r2) if (arr_ref_r2 := np.concatenate([arr[('ref', s)][f'rmse_{i}'][~arr[('ref', s)][f'crashed_{i}']] ** 2 for s in SEEDS])).size else 0:+.0f} %)")
+C:\Users\Fabien\AppData\Roaming\Python\Python314\site-packages\numpy\_core\_methods.py:219: RuntimeWarning: Degrees of freedom <= 0 for slice
+  ret = _var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
+C:\Users\Fabien\AppData\Roaming\Python\Python314\site-packages\numpy\_core\_methods.py:178: RuntimeWarning: invalid value encountered in divide
+  arrmean = um.true_divide(arrmean, div, out=arrmean,
+C:\Users\Fabien\AppData\Roaming\Python\Python314\site-packages\numpy\_core\_methods.py:211: RuntimeWarning: invalid value encountered in scalar divide
+  ret = ret.dtype.type(ret / rcount)
+== 75c
+-- noise level 0.5x
+   reference              stops   10/3000  rms 0.00868  P95(all) 0.01311  SEEL_strat 0.2290 nm  dRMSE2 +0.000e+00 +- 0.0e+00 (+0 %)
+   index corridor 0       stops    0/3000  rms 0.00478  P95(all) 0.00607  SEEL_strat 0.1558 nm  dRMSE2 -5.253e-05 +- 9.3e-07 (-70 %)
+   slit bias off          stops    0/3000  rms 0.00767  P95(all) 0.01252  SEEL_strat 0.2238 nm  dRMSE2 -1.655e-05 +- 2.6e-07 (-22 %)
+   POEM anchor noise off  stops    7/3000  rms 0.00861  P95(all) 0.01299  SEEL_strat 0.2279 nm  dRMSE2 -1.123e-06 +- 1.5e-07 (-1 %)
+   optical noise /100     stops 3000/3000  rms nan  P95(all) 0.31795  SEEL_strat 1.1277 nm  dRMSE2 +nan +- nan (+nan %)
+   all four off           stops    0/3000  rms 0.00096  P95(all) 0.00134  SEEL_strat 0.0731 nm  dRMSE2 -7.441e-05 +- 9.3e-07 (-99 %)
+-- noise level 1x
+   reference              stops    0/3000  rms 0.00907  P95(all) 0.01336  SEEL_strat 0.2311 nm  dRMSE2 +0.000e+00 +- 0.0e+00 (+0 %)
+   index corridor 0       stops    0/3000  rms 0.00552  P95(all) 0.00773  SEEL_strat 0.1758 nm  dRMSE2 -5.169e-05 +- 9.6e-07 (-63 %)
+   slit bias off          stops    0/3000  rms 0.00815  P95(all) 0.01292  SEEL_strat 0.2274 nm  dRMSE2 -1.585e-05 +- 3.2e-07 (-19 %)
+   POEM anchor noise off  stops    0/3000  rms 0.00883  P95(all) 0.01300  SEEL_strat 0.2280 nm  dRMSE2 -4.320e-06 +- 2.6e-07 (-5 %)
+   optical noise /100     stops 3000/3000  rms nan  P95(all) 0.31738  SEEL_strat 1.1267 nm  dRMSE2 +nan +- nan (+nan %)
+   all four off           stops    0/3000  rms 0.00095  P95(all) 0.00133  SEEL_strat 0.0729 nm  dRMSE2 -8.132e-05 +- 9.8e-07 (-99 %)
+-- noise level 2x
+   reference              stops    0/3000  rms 0.01045  P95(all) 0.01532  SEEL_strat 0.2476 nm  dRMSE2 +0.000e+00 +- 0.0e+00 (+0 %)
+   index corridor 0       stops    0/3000  rms 0.00756  P95(all) 0.01106  SEEL_strat 0.2103 nm  dRMSE2 -5.190e-05 +- 1.0e-06 (-48 %)
+   slit bias off          stops    0/3000  rms 0.00980  P95(all) 0.01542  SEEL_strat 0.2483 nm  dRMSE2 -1.301e-05 +- 5.0e-07 (-12 %)
+   POEM anchor noise off  stops    0/3000  rms 0.00961  P95(all) 0.01426  SEEL_strat 0.2389 nm  dRMSE2 -1.666e-05 +- 5.8e-07 (-15 %)
+   optical noise /100     stops 3000/3000  rms nan  P95(all) 0.31705  SEEL_strat 1.1261 nm  dRMSE2 +nan +- nan (+nan %)
+   all four off           stops    0/3000  rms 0.00096  P95(all) 0.00134  SEEL_strat 0.0732 nm  dRMSE2 -1.082e-04 +- 1.2e-06 (-99 %)
+== r75x0.5
+-- noise level 0.5x
+   reference              stops    0/3000  rms 0.02383  P95(all) 0.03980  SEEL_strat 0.3990 nm  dRMSE2 +0.000e+00 +- 0.0e+00 (+0 %)
+   index corridor 0       stops    0/3000  rms 0.01701  P95(all) 0.02852  SEEL_strat 0.3378 nm  dRMSE2 -2.784e-04 +- 9.4e-06 (-49 %)
+   slit bias off          stops    0/3000  rms 0.02400  P95(all) 0.03989  SEEL_strat 0.3994 nm  dRMSE2 +8.213e-06 +- 1.1e-06 (+1 %)
+   POEM anchor noise off  stops    0/3000  rms 0.02344  P95(all) 0.03939  SEEL_strat 0.3969 nm  dRMSE2 -1.826e-05 +- 4.1e-06 (-3 %)
+   optical noise /100     stops    0/3000  rms 0.02334  P95(all) 0.03917  SEEL_strat 0.3958 nm  dRMSE2 -2.311e-05 +- 4.7e-06 (-4 %)
+   all four off           stops    0/3000  rms 0.01525  P95(all) 0.02402  SEEL_strat 0.3100 nm  dRMSE2 -3.352e-04 +- 9.2e-06 (-59 %)
+-- noise level 1x
+   reference              stops    0/3000  rms 0.02495  P95(all) 0.04081  SEEL_strat 0.4040 nm  dRMSE2 +0.000e+00 +- 0.0e+00 (+0 %)
+   index corridor 0       stops    0/3000  rms 0.01993  P95(all) 0.03397  SEEL_strat 0.3686 nm  dRMSE2 -2.253e-04 +- 1.0e-05 (-36 %)
+   slit bias off          stops    0/3000  rms 0.02509  P95(all) 0.04112  SEEL_strat 0.4055 nm  dRMSE2 +7.374e-06 +- 1.1e-06 (+1 %)
+   POEM anchor noise off  stops    0/3000  rms 0.02378  P95(all) 0.03992  SEEL_strat 0.3996 nm  dRMSE2 -5.685e-05 +- 5.7e-06 (-9 %)
+   optical noise /100     stops    0/3000  rms 0.02302  P95(all) 0.03922  SEEL_strat 0.3961 nm  dRMSE2 -9.233e-05 +- 6.6e-06 (-15 %)
+   all four off           stops    0/3000  rms 0.01545  P95(all) 0.02424  SEEL_strat 0.3114 nm  dRMSE2 -3.837e-04 +- 9.7e-06 (-62 %)
+-- noise level 2x
+   reference              stops    0/3000  rms 0.02956  P95(all) 0.04727  SEEL_strat 0.4348 nm  dRMSE2 +0.000e+00 +- 0.0e+00 (+0 %)
+   index corridor 0       stops    0/3000  rms 0.02616  P95(all) 0.04356  SEEL_strat 0.4174 nm  dRMSE2 -1.892e-04 +- 1.2e-05 (-22 %)
+   slit bias off          stops    0/3000  rms 0.02975  P95(all) 0.04734  SEEL_strat 0.4351 nm  dRMSE2 +1.156e-05 +- 1.3e-06 (+1 %)
+   POEM anchor noise off  stops    0/3000  rms 0.02614  P95(all) 0.04196  SEEL_strat 0.4097 nm  dRMSE2 -1.904e-04 +- 1.1e-05 (-22 %)
+   optical noise /100     stops    0/3000  rms 0.02318  P95(all) 0.03885  SEEL_strat 0.3942 nm  dRMSE2 -3.364e-04 +- 1.2e-05 (-39 %)
+   all four off           stops    0/3000  rms 0.01547  P95(all) 0.02405  SEEL_strat 0.3102 nm  dRMSE2 -6.343e-04 +- 1.4e-05 (-73 %)
+== r75x2
+-- noise level 0.5x
+   reference              stops    0/3000  rms 0.04552  P95(all) 0.07091  SEEL_strat 0.5326 nm  dRMSE2 +0.000e+00 +- 0.0e+00 (+0 %)
+   index corridor 0       stops    0/3000  rms 0.00954  P95(all) 0.01657  SEEL_strat 0.2574 nm  dRMSE2 -1.981e-03 +- 2.9e-05 (-96 %)
+   slit bias off          stops    0/3000  rms 0.04491  P95(all) 0.07005  SEEL_strat 0.5293 nm  dRMSE2 -5.573e-05 +- 6.3e-06 (-3 %)
+   POEM anchor noise off  stops    0/3000  rms 0.04542  P95(all) 0.07061  SEEL_strat 0.5314 nm  dRMSE2 -9.748e-06 +- 4.1e-06 (-0 %)
+   optical noise /100     stops 3000/3000  rms nan  P95(all) 0.30893  SEEL_strat 1.1116 nm  dRMSE2 +nan +- nan (+nan %)
+   all four off           stops    0/3000  rms 0.00447  P95(all) 0.00801  SEEL_strat 0.1790 nm  dRMSE2 -2.053e-03 +- 2.9e-05 (-99 %)
+-- noise level 1x
+   reference              stops    0/3000  rms 0.04578  P95(all) 0.07113  SEEL_strat 0.5334 nm  dRMSE2 +0.000e+00 +- 0.0e+00 (+0 %)
+   index corridor 0       stops    0/3000  rms 0.01456  P95(all) 0.02552  SEEL_strat 0.3195 nm  dRMSE2 -1.884e-03 +- 3.0e-05 (-90 %)
+   slit bias off          stops    0/3000  rms 0.04520  P95(all) 0.07002  SEEL_strat 0.5292 nm  dRMSE2 -5.221e-05 +- 6.4e-06 (-2 %)
+   POEM anchor noise off  stops    0/3000  rms 0.04545  P95(all) 0.07074  SEEL_strat 0.5319 nm  dRMSE2 -2.955e-05 +- 6.9e-06 (-1 %)
+   optical noise /100     stops 3000/3000  rms nan  P95(all) 0.30879  SEEL_strat 1.1114 nm  dRMSE2 +nan +- nan (+nan %)
+   all four off           stops    0/3000  rms 0.00450  P95(all) 0.00801  SEEL_strat 0.1790 nm  dRMSE2 -2.075e-03 +- 3.0e-05 (-99 %)
+-- noise level 2x
+   reference              stops    0/3000  rms 0.04689  P95(all) 0.07213  SEEL_strat 0.5371 nm  dRMSE2 +0.000e+00 +- 0.0e+00 (+0 %)
+   index corridor 0       stops    0/3000  rms 0.02318  P95(all) 0.03928  SEEL_strat 0.3964 nm  dRMSE2 -1.661e-03 +- 3.0e-05 (-76 %)
+   slit bias off          stops    0/3000  rms 0.04637  P95(all) 0.07117  SEEL_strat 0.5335 nm  dRMSE2 -4.866e-05 +- 6.9e-06 (-2 %)
+   POEM anchor noise off  stops    0/3000  rms 0.04599  P95(all) 0.07111  SEEL_strat 0.5333 nm  dRMSE2 -8.384e-05 +- 1.2e-05 (-4 %)
+   optical noise /100     stops 3000/3000  rms nan  P95(all) 0.30905  SEEL_strat 1.1118 nm  dRMSE2 +nan +- nan (+nan %)
+   all four off           stops    0/3000  rms 0.00450  P95(all) 0.00809  SEEL_strat 0.1798 nm  dRMSE2 -2.179e-03 +- 3.0e-05 (-99 %)

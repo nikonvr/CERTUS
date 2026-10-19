@@ -1,0 +1,26 @@
+== 75c: 20 search candidates [(62, 645, -13.9), (37, 565, -12.0), (60, 635, -11.4), (16, 535, -9.9), (57, 450, -8.4), (61, 560, -7.6), (13, 625, -7.3), (74, 560, -7.1), (35, 670, -6.1), (68, 610, -5.5), (54, 595, -5.5), (47, 605, -5.4), (39, 620, -5.2), (2, 450, -4.2), (66, 650, -4.2), (48, 670, -3.9), (49, 545, -3.8), (40, 505, -3.7), (1, 715, -3.7), (41, 555, -3.7)]
+   select L62_645: dRMSE2 -12.7 % (+-0.4), stops 7, score 0.01401 vs 0.01493 -> dropped
+   select L37_565: dRMSE2 -11.7 % (+-0.4), stops 7, score 0.01416 vs 0.01493 -> dropped
+   select L60_635: dRMSE2 -11.6 % (+-0.3), stops 7, score 0.01480 vs 0.01493 -> dropped
+   select L16_535: dRMSE2 -10.4 % (+-0.3), stops 9, score 0.01459 vs 0.01493 -> dropped
+   select L57_450: dRMSE2 -8.6 % (+-0.3), stops 7, score 0.01480 vs 0.01493 -> dropped
+   select L61_560: dRMSE2 -8.0 % (+-0.4), stops 7, score 0.01529 vs 0.01493 -> dropped
+   select L13_625: dRMSE2 -7.0 % (+-0.3), stops 6, score 0.01482 vs 0.01493 -> dropped
+   select L74_560: dRMSE2 -5.1 % (+-0.3), stops 7, score 0.01509 vs 0.01493 -> dropped
+   select L35_670: dRMSE2 -6.9 % (+-0.3), stops 0, score 0.01473 vs 0.01493 -> kept
+   select L68_610: dRMSE2 -5.8 % (+-0.1), stops 7, score 0.01479 vs 0.01493 -> dropped
+   select L54_595: dRMSE2 -6.2 % (+-0.2), stops 8, score 0.01470 vs 0.01493 -> dropped
+   select L47_605: dRMSE2 -4.9 % (+-0.2), stops 7, score 0.01474 vs 0.01493 -> dropped
+   select L39_620: dRMSE2 -5.4 % (+-0.2), stops 7, score 0.01451 vs 0.01493 -> dropped
+   select L2_450: dRMSE2 -4.4 % (+-0.2), stops 8, score 0.01469 vs 0.01493 -> dropped
+   select L66_650: dRMSE2 -4.8 % (+-0.2), stops 7, score 0.01486 vs 0.01493 -> dropped
+   select L48_670: dRMSE2 -3.8 % (+-0.2), stops 7, score 0.01472 vs 0.01493 -> dropped
+   select L49_545: dRMSE2 -3.4 % (+-0.2), stops 7, score 0.01489 vs 0.01493 -> dropped
+   select L40_505: dRMSE2 -4.0 % (+-0.2), stops 7, score 0.01472 vs 0.01493 -> dropped
+   select L1_715: dRMSE2 -4.6 % (+-0.3), stops 9, score 0.01497 vs 0.01493 -> dropped
+   select L41_555: dRMSE2 -3.9 % (+-0.1), stops 7, score 0.01488 vs 0.01493 -> dropped
+   combine +L35_670: dRMSE2 -6.9 % vs current, stops 0, score 0.01473 vs 0.01493 -> added
+   frozen: 1 changes ['L35_670']
+   conf: dRMSE2 -6.9 % (SE 0.3 %), stops 1, P95 max 0.01512 -> 0.01492, SEEL_strat 0.2459 -> 0.2443 nm
+   hold: dRMSE2 -6.9 % (SE 0.3 %), stops 1, P95 max 0.01505 -> 0.01492, SEEL_strat 0.2453 -> 0.2443 nm
+done

@@ -1,0 +1,38 @@
+"""Best single-layer wavelength change per layer, from scan_<comp>.jsonl (search seed, 300 draws)."""
+import collections
+import json
+import os
+import sys
+
+V = os.path.join(os.environ["TEMP"], "r75", "val")
+for comp in sys.argv[1:]:
+    rows = [json.loads(line) for line in open(os.path.join(V, f"scan_{comp}.jsonl"), encoding="utf-8")]
+    base = next(r for r in rows if r["name"] == "base")
+    b = base["per_noise"][1]["rmse2_mean_done"]
+    by = collections.defaultdict(list)
+    for r in rows:
+        if r["name"] != "base":
+            by[r["meta"]["layer"]].append(r)
+    ok_all, stopped = [], 0
+    for k, rs in by.items():
+        for r in rs:
+            if any(x["crashed"] for x in r["per_noise"]):
+                stopped += 1
+                continue
+            if False:
+                continue
+            ok_all.append(r)
+    ok_all.sort(key=lambda r: r["per_noise"][1]["rmse2_mean_done"])
+    print(f"== {comp}: base rmse2 {b:.4e} (score {base['robustness_score']:.5f}, stops {[x['crashed'] for x in base['per_noise']]}); "
+          f"{sum(len(v) for v in by.values())} plans, {stopped} with a stop")
+    seen = set()
+    for r in ok_all:
+        k = r["meta"]["layer"]
+        if k in seen:
+            continue
+        seen.add(k)
+        d = r["per_noise"][1]["rmse2_mean_done"] - b
+        if d >= 0:
+            break
+        print(f"   layer {k:>2} {r['meta']['base_lam']:.0f} -> {r['meta']['lam']} nm: dRMSE2 {d:+.3e} ({100 * d / b:+.1f} %), score {r['robustness_score']:.5f}, res_lim {r.get('res_lim')}")
+    print(f"   layers with an improving change: {len(seen) - (0 if not ok_all else 1)} (list above, best first)")

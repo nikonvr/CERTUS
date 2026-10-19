@@ -26,14 +26,14 @@ ROOT = Path(__file__).resolve().parents[2]
 #: bytes of the file as git stores it (LF), measured 2026-10-18; CLAUDE.md and the reference re-measured 2026-10-19
 CAPS = {
     "CLAUDE.md": 7_900,
-    "AGENTS.md": 2_600,
+    "AGENTS.md": 1_600,
     "docs/ETAT.md": 80_000,
     "docs/ETAT_actions.md": 16_000,
     "docs/ETAT_acquis.md": 12_500,
     "docs/REGLES_reference.md": 8_600,  # 2026-10-19: CLAUDE.md §1, §2, §5, §7 detail moved here, read on demand
 }
 #: section 0 of docs/ETAT.md alone: the part every session reads
-SECTION_ZERO_CAP = 12_000
+SECTION_ZERO_CAP = 4_000  # 2026-10-19: history moved to docs/ETAT_acquis.md
 #: a root document above this size has to be hidden from the default searches
 BIG_ROOT_DOCUMENT = 20_000
 

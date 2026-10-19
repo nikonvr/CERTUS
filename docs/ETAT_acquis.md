@@ -82,3 +82,16 @@ snapshot DESIGN et filtre final 5 nm supprimant des couches fixes (corrigé, `bd
 (celui-ci : D107) ; progression RE incompatible, puis grille oblique à valider en worker. Descriptions fautives retirées : métrique de tri prise pour des états
 vides, accès JSON SPLINE absent, aide/F1 absents, solveur maison, `jac` absent et paramètres/formule PGLOBAL inexacts. Trois contrôles documentaires à 0 ;
 [contrôles complémentaires](../reports/ARGON_contre_audit_2026-10-16/documentation_checks.json).
+
+**Reprises du 2026-10-18.** Audit complet ([rapport](../reports/AUDIT_SUITE_CERTUS_2026-10-18.md), constats C01–C19, plan
+A1–A22) : crash de Numba C18 (appelant en série en cache d'un noyau parallèle en cache : code 139), parade `cache=False` sur `calc_spectrum_front`, `calc_spectrum_full` et `compute_batch_rmse`, C1 tenu au bit. Ménage de `reports/` : 215 entrées retirées, restaurables par `git log --diff-filter=D --name-only -- reports/<nom>`
+puis `git checkout <commit>^ -- reports/<nom>`. Deuxième passe ([rapport](../reports/AUDIT_SUITE_CERTUS_2e_passe_2026-10-18.md)) :
+constats C20–C32 (D113 gradient hérité faux pour des couches absorbantes, D114 entrées invalides, D115 mutations qui survivent),
+plan A23–A35.
+
+**Dernière validation complète, comptes** (2026-10-18, sur `4cdc3938`) : ruff 0 ; oracle
+1 146 ; unité 5 545 réussis, 7 ignorés, 1 xfail ; ui 1 324 réussis, 12 ignorés, 2 xfail ; reste 319 ; performance 40.
+
+**En vigueur au 2026-10-13** (ne pas le remettre en cause sans mesure) : D96, D97 et D98 (attente sans fin) ; `rate_rescue` ;
+`rate_by_swing` ; ELITE déplace les couches Rate de ses parents (`elite_rate_moves`) ; ses enfants portent le biais de fente
+(D106) et gardent les couches Rate du parent. Preuves : `reports/STRAT_*_2026-10-12*`.

@@ -9,44 +9,22 @@
 
 ## 0. Reprise — à lire en premier, à tenir à jour
 
-> Mettre à jour cette section avec le travail : « en cours » dès le début, mesure et commit
-> à la fin. Les règles de validation sont dans les sections 2, 4 et 12 de
-> [CLAUDE.md](../CLAUDE.md) ; les décisions scientifiques appartiennent à 👤 (§5).
-
-> **Lire peu.** Cette section ne porte que la reprise courante, la validation et les décisions de 👤. Le reste se lit à la demande : les actions A3 à A9 et le protocole
-> de mesure dans [`ETAT_actions.md`](ETAT_actions.md) ; les acquis du Rate, les corrections qui invalident des mesures, les reprises antérieures et le vocabulaire
-> dans [`ETAT_acquis.md`](ETAT_acquis.md) ; les preuves dans `reports/` (ouvrir le `bilan.md` ou le `README.md` d'un dossier, ou chercher avec `grep`, jamais le dossier entier),
-> le récit dans Git : `git show 9fc49269:docs/ETAT.md` donne la version d'avant l'élagage. `UXargon.md` et `designargon.md`
-> (racine, 187 Ko) se lisent par identifiant (`grep -n "ALG-02" designargon.md`), jamais en entier.
+> Tenir cette section à jour avec le travail (« en cours » au début, mesure et commit à la fin). Le reste se lit à la
+> demande : actions et protocole du Rate dans [`ETAT_actions.md`](ETAT_actions.md) ; acquis, corrections et reprises
+> antérieures dans [`ETAT_acquis.md`](ETAT_acquis.md) ; preuves dans `reports/` (le `bilan.md` d'un dossier) ;
+> `UXargon.md` et `designargon.md` par identifiant (`grep -n "ALG-02" designargon.md`), jamais en entier.
 
 **Bonne Mère (2026-10-19).** Meilleur plan mesuré et chemin vers l'optimum : [`studies/bonne_mere/README.md`](../studies/bonne_mere/README.md) (21 couches Rate, SEEL P95 0,446 nm au bruit 0,05, 0 arrêt). Dérive de la source non modélisée (A6). Défaut ouvert de STRAT : l'hystérésis du comptage des points tournants suit le bruit ; à bruit faible, la fente fabrique des extrema ([phase 1](../reports/BONNE_MERE_phase1_budget_SuperChamp76_2026-10-19/bilan.md)).
 
-**Reprise courante (2026-10-18).** Audit complet de la suite hors `studies/bonne_mere/` : [rapport](../reports/AUDIT_SUITE_CERTUS_2026-10-18.md)
-(constats C01–C19, plan A1–A22 avec leur statut et leurs mesures), un commit par correction. À retenir : **crash de Numba** (C18), un appelant en série mis en cache,
-d'un noyau parallèle lui aussi en cache, fait planter l'interpréteur à la relecture du cache (code 139) ; parade `cache=False` sur `calc_spectrum_front`,
-`calc_spectrum_full` et `compute_batch_rmse`, C1 tenu au bit (9 092 tableaux), cas minimal de 20 lignes en annexe du rapport (D111).
-`python scripts\validate_parallel.py` rejoue CLAUDE.md §2 en ≈ 17 min sur 16 cœurs (`ui` à 6 workers : à 16, l'audit UX échoue sous charge ; `performance` en série).
-Sur ordre de 👤, ménage de `reports/` : 215 entrées datées d'avant le 2026-10-04 et citées par rien sont retirées du dépôt (338 fichiers, 32 Mo) ; les caches que des
-scripts reconstruisent par leur nom (`intervalles_99c*`, `controle_*`, `plans`) restent. Rien n'est perdu : `git log --diff-filter=D --name-only -- reports/<nom>`, puis
-`git checkout <commit>^ -- reports/<nom>`. Quatre sorties brutes du 99c (`reports/blocs_vs_plantage_99c_premium_s101*.json`, 80 Mo) sont ignorées par chemin exact, comme les
-autres sorties brutes, et restent sur le disque. **Taille du dossier : 580 Mo le 2026-10-18 (`du -sb .`), pour une limite de 1 Go** (`reports/` 269 Mo, `.git` 199 Mo,
-`studies/` 39 Mo). Le travail non terminé de deux worktrees retirés est commité sur deux branches locales, jamais poussées ni fusionnées, non validées :
-`claude/alg02-prune-evaluator-0d2a8d` (`46261901`, correctif de D107 avec test, mesures et rapport) et `claude/dreamy-burnell-85397a` (`cc3fe134`, levier
-`rate_post_admissible_window` de la fenêtre admissible 48c). Pour reprendre : `git worktree add <chemin> <branche>`, puis fusionner la branche principale, dont elles retardent.
+**Branches locales en attente** (ni poussées, ni validées) : `claude/alg02-prune-evaluator-0d2a8d` (`46261901`,
+correctif de D107) et `claude/dreamy-burnell-85397a` (`cc3fe134`, fenêtre admissible 48c) ; reprendre par
+`git worktree add`. Dossier : 580 Mo pour une limite de 1 Go (2026-10-18).
 
-**Deuxième passe d'audit (2026-10-18, soir).** [Rapport](../reports/AUDIT_SUITE_CERTUS_2e_passe_2026-10-18.md) et son dossier de sondes `reports/AUDIT_2e_passe_2026-10-18/` ; aucun code modifié. Validation parallèle `GO` sur `4cdc3938`, CI distante verte sur la même tête (tests en série sous Ubuntu et Windows, gel, lint, sécurité), C1 tenu contre `6e546515` (9 092 tableaux au bit), TMM de production égal à l'oracle à 6·10⁻¹⁴ sur 63 000 cas aléatoires, historique entier de 1 575 commits sans secret. Nouveaux constats C20 à C32, dont : le noyau de gradient hérité est faux pour des couches absorbantes (D113, latent), des entrées invalides donnent du fini plausible (D114), quatre mutations de formules survivent à toute la suite (D115). Plan A23 à A35 au rapport.
+**Dernière validation complète** (2026-10-18, `python scripts\validate_parallel.py`, 16 min, sur `4cdc3938`) :
+`VALIDATION=GO`, aucun échec ; comptes dans [`ETAT_acquis.md`](ETAT_acquis.md).
 
-**Dernière validation complète** (2026-10-18, Windows 11, Python 3.14.8, 16 cœurs, `python scripts\validate_parallel.py`, 16 min, sur `4cdc3938`) : ruff 0 ; trois contrôles documentaires 0 ; oracle 1 146 ; unité 5 545 réussis, 7 ignorés, 1 xfail ; ui 1 324 réussis, 12 ignorés, 2 xfail (6 workers) ; reste 319 ; performance 40 ; `VALIDATION=GO`, aucun artefact de charge. Même tête, CI distante en série : oracle 1 146 ; unité (Ubuntu) 5 542 réussis, 11 ignorés ; reste 348 réussis, 2 ignorés (les 11 tests de `pytest-benchmark` y sont sautés) ; UI (Windows) 1 324 réussis, 12 ignorés, 2 xfail. Mesures : [rapport d'audit](../reports/AUDIT_SUITE_CERTUS_2e_passe_2026-10-18.md).
-
-**En vigueur au 2026-10-13** (ne pas le remettre en cause sans mesure) : D96, D97 et D98 (attente sans fin) ; le secours Rate (`rate_rescue`) ;
-`rate_by_swing` ; ELITE déplace les couches Rate de ses parents (`elite_rate_moves`) ; les enfants d'ELITE portent le biais de fente (D106) et
-gardent les couches Rate de leur parent. Dernière validation complète : ci-dessus. Les preuves sont dans `reports/STRAT_*_2026-10-12*`.
-
-**Avant toute action.**
-1. `python scripts\preflight.py` doit finir par `PREFLIGHT=GO` (l'arbre où l'on édite est celui qu'`import certus` résout).
-2. `git status -sb` propre ; noter `git log -1` : c'est le point de départ de l'action.
-3. Lancer la validation de CLAUDE.md §2 **en entier** avant de committer du code : un sous-ensemble de tests a déjà laissé passer une régression
-   (le garde-fou `tests/unit/test_the_architecture_debt_only_shrinks.py` ne tourne pas avec les tests voisins).
+**Avant de committer du code** : la validation de CLAUDE.md §2 en entier ; un sous-ensemble a déjà laissé passer une
+régression (`tests/unit/test_the_architecture_debt_only_shrinks.py` ne tourne pas avec les tests voisins).
 
 **Décisions qui n'appartiennent qu'à 👤 — une IA ne les tranche pas, elle rapporte les mesures.**
 1. D98 : l'attente sans fin (défaut) ou l'arrêt tardif (`oms_arming=1`) — chiffres au §3 et dans `reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md`.

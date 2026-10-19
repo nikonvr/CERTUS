@@ -1,6 +1,7 @@
 """PREFLIGHT -- run this BEFORE touching anything, and paste the whole output.
 
-    python scripts\\preflight.py
+    python scripts\\preflight.py            (problems, HEAD and the verdict only)
+    python scripts\\preflight.py --verbose  (every check)
 
 Answers, in one command, the four questions of CLAUDE.md section 0, plus three
 more that have each cost a session on this project. It prints one verdict line:
@@ -16,7 +17,9 @@ Read-only: this script writes nothing and changes nothing.
 
 from __future__ import annotations
 
+import atexit
 import importlib.util
+import io
 import subprocess
 import sys
 from pathlib import Path
@@ -28,6 +31,21 @@ from pathlib import Path
 # refuse desormais tout nouveau script non protege.
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
+# Every session runs this first, and a passing check printed is reading paid for nothing: by default only what needs
+# attention reaches the reader. The full report is buffered and filtered at exit, so an early exit or a crash still
+# prints what was found.
+VERBOSE = "--verbose" in sys.argv
+KEEP = ("[BAD]", "[ ! ]", "WARNING", "BLOCKING", "PREFLIGHT=", "Do NOT modify", "[   ] HEAD:")
+if not VERBOSE:
+    _terminal, _report = sys.stdout, io.StringIO()
+    sys.stdout = _report
+
+    @atexit.register
+    def _print_what_needs_attention() -> None:
+        kept = [line for line in _report.getvalue().splitlines() if any(mark in line for mark in KEEP)]
+        _terminal.write("\n".join(kept) + "\n")
+        _terminal.flush()
 
 ROOT = Path(__file__).resolve().parents[1]
 # 🔴 There is NO hard-coded expected root, deliberately. A constant `C:\dev\gemini`

@@ -28,7 +28,7 @@ def _preflight_avec_pydantic(tmp_path: Path, source: str) -> subprocess.Complete
     chemin = os.pathsep.join(filter(None, (str(tmp_path), os.environ.get("PYTHONPATH"))))
     env = {**os.environ, "PYTHONPATH": chemin}
     return subprocess.run(
-        (sys.executable, str(PREFLIGHT)),
+        (sys.executable, str(PREFLIGHT), "--verbose"),
         capture_output=True,
         text=True,
         encoding="utf-8",

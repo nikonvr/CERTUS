@@ -1,0 +1,5 @@
+base: SEEL rms 0.3138 nm, stops [0, 0, 0]
+common: 95 wavelengths, 72 with a stop; best dSEEL2: 455 nm -0.0004, 450 nm -0.0002, 445 nm +0.0012, 440 nm +0.0087
+op1: 48 wavelengths, 48 with a stop; best dSEEL2: 
+op2: 48 wavelengths, 17 with a stop; best dSEEL2: 440 nm -0.0001, 430 nm +0.0000, 470 nm +0.0005, 820 nm +0.0010
+op3: 48 wavelengths, 33 with a stop; best dSEEL2: 450 nm -0.0002, 440 nm +0.0002, 900 nm +0.0005, 890 nm +0.0006

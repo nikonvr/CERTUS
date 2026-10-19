@@ -1,0 +1,3 @@
+common 455 nm, noise 0.025: dSEEL2 -0.0005 +- 0.0000 nm2 (per seed -0.0006, -0.0005, -0.0005), stops 0/3000
+common 455 nm, noise 0.05: dSEEL2 -0.0007 +- 0.0001 nm2 (per seed -0.0007, -0.0006, -0.0007), stops 0/3000
+common 455 nm, noise 0.1: dSEEL2 -0.0008 +- 0.0002 nm2 (per seed -0.0011, -0.0007, -0.0005), stops 0/3000

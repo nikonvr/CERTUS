@@ -1,0 +1,3 @@
+noise 0.025: SEEL rms 0.3000 -> 0.2936 nm, P95 0.4372 -> 0.4233, P99 0.5095 -> 0.4904; dSEEL2 -0.0038 +- 0.0002 nm2 (-4.3 %); RMSE mean 1.51824 -> 1.51584 pp; final better on 65.8 % of draws; stops 0 -> 0
+noise 0.05: SEEL rms 0.3315 -> 0.3234 nm, P95 0.4607 -> 0.4460, P99 0.5348 -> 0.5142; dSEEL2 -0.0052 +- 0.0002 nm2 (-4.8 %); RMSE mean 1.53107 -> 1.52778 pp; final better on 69.8 % of draws; stops 0 -> 0
+noise 0.1: SEEL rms 0.4479 -> 0.4356 nm, P95 0.5935 -> 0.5762, P99 0.6744 -> 0.6604; dSEEL2 -0.0109 +- 0.0004 nm2 (-5.4 %); RMSE mean 1.58807 -> 1.58146 pp; final better on 70.9 % of draws; stops 0 -> 0

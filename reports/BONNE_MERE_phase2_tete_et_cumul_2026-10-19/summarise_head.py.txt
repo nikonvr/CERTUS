@@ -1,0 +1,11 @@
+import collections, json, sys
+rows = [json.loads(l) for l in open(sys.argv[1], encoding="utf-8")]
+base = next(r for r in rows if r["name"] == "hbase"); b2 = base["noise_results"][1]["seel_rms_nm"] ** 2
+print(f"base: SEEL rms {base['noise_results'][1]['seel_rms_nm']:.4f} nm, stops {[x['failures'] for x in base['noise_results']]}")
+by = collections.defaultdict(list)
+for r in rows:
+    if r["name"] != "hbase": by[r["meta"]["kind"]].append(r)
+for kind, rs in by.items():
+    ok = [r for r in rs if all(x["failures"] == 0 for x in r["noise_results"])]
+    best = sorted(ok, key=lambda r: r["noise_results"][1]["seel_rms_nm"])[:4]
+    print(f"{kind}: {len(rs)} wavelengths, {len(rs) - len(ok)} with a stop; best dSEEL2: " + ", ".join(f"{r['meta']['lam']} nm {r['noise_results'][1]['seel_rms_nm'] ** 2 - b2:+.4f}" for r in best))

@@ -19,14 +19,7 @@
 > le récit dans Git : `git show 9fc49269:docs/ETAT.md` donne la version d'avant l'élagage. `UXargon.md` et `designargon.md`
 > (racine, 187 Ko) se lisent par identifiant (`grep -n "ALG-02" designargon.md`), jamais en entier.
 
-**Bonne Mère clos le 18 octobre 2026 sur demande de Fabien.** Aucun calcul vivant, suivi automatique suspendu ; ne pas relancer sans nouvelle demande. Le STRAT classique et ses validations sont annulés.
-
-**Choix retenu : 96 couches H800 sur saphir, un témoin, deux précoatings, 70 optiques / 26 Rate, 452 nm commun aux deux précoatings et aux deux premières couches pièce.** Confirmation 3 × 1 000 par bruit : au bruit 0,05, moyenne 1,667858 contre 1,691515 apparié ; P95 RMSE 1,870153 ; SEEL P95 0,833795 nm. Arrêts 0 / 0 / 1 sur 3 000 aux trois bruits. Choix humain comme piste la plus prometteuse, **sans holdout indépendant final du candidat**, sans qualification expérimentale ni optimum global.
-
-[Dossier PDF complet](../studies/bonne_mere/dossier_final/Bonne_Mere_Dossier_Complet.pdf) · [Word](../studies/bonne_mere/dossier_final/Bonne_Mere_Dossier_Complet.docx) · [Passation](../studies/bonne_mere/PASSATION.md) · [sélection courante](../studies/bonne_mere/selection_retenue.json).
-Les sources, protocoles, scripts, plans et audits restent dans une archive compacte **dans** Bonne Mère ; les preuves appariées 452 nm sont conservées sans perte. Les autres sorties brutes lourdes ont été supprimées explicitement pour la limite humaine de **1 Go pour certus0310 entier, Bonne Mère compris**. [Mesure du nettoyage](../studies/bonne_mere/dossier_final/rapport_nettoyage.json). Pas d’archive extérieure ; sources de production et travaux CERTUS préexistants préservés. Reprendre le codage de CERTUS à la demande suivante.
-
-**Rejeu de SuperChamp76 (2026-10-19).** Le plan 76 optiques / 20 Rate proposé le 18 au soir, non commité, rejoué avec le banc du matin : graine annoncée reproduite à tous les chiffres ; graine neuve 20261019401 au bruit 0,05 : 1,532729 pp, SEEL P95 0,472 nm, 0 arrêt ; gain sur le 452 nm 0,138 pp, non 0,152 (référence 452 nm du holdout 1 fausse). Dérive Rate non rejouée. [Rapport](../reports/BONNE_MERE_rejeu_SuperChamp76_2026-10-19/bilan.md).
+**Bonne Mère (2026-10-19).** Meilleur plan mesuré et chemin vers l'optimum : [`studies/bonne_mere/README.md`](../studies/bonne_mere/README.md) (21 couches Rate, SEEL P95 0,446 nm au bruit 0,05, 0 arrêt). Dérive de la source non modélisée (A6). Défaut ouvert de STRAT : l'hystérésis du comptage des points tournants suit le bruit ; à bruit faible, la fente fabrique des extrema ([phase 1](../reports/BONNE_MERE_phase1_budget_SuperChamp76_2026-10-19/bilan.md)).
 
 **Reprise courante (2026-10-18).** Audit complet de la suite hors `studies/bonne_mere/` : [rapport](../reports/AUDIT_SUITE_CERTUS_2026-10-18.md)
 (constats C01–C19, plan A1–A22 avec leur statut et leurs mesures), un commit par correction. À retenir : **crash de Numba** (C18), un appelant en série mis en cache,

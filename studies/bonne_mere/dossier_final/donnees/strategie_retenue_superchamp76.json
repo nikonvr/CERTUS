@@ -1,0 +1,450 @@
+{
+  "strategy_id": 760050,
+  "name": "SuperChamp76_StrictOT50_HybridMicroWin",
+  "origin": "strict_ot50_and_hybrid_microwindows_on_projected_target",
+  "blocks": [
+    {
+      "start": 0,
+      "end": 2,
+      "wavelength": 452.0
+    },
+    {
+      "start": 2,
+      "end": 3,
+      "wavelength": 444.0
+    },
+    {
+      "start": 3,
+      "end": 4,
+      "wavelength": 452.0
+    },
+    {
+      "start": 4,
+      "end": 5,
+      "wavelength": 471.0
+    },
+    {
+      "start": 5,
+      "end": 6,
+      "wavelength": 470.0
+    },
+    {
+      "start": 6,
+      "end": 7,
+      "wavelength": 509.0
+    },
+    {
+      "start": 7,
+      "end": 8,
+      "wavelength": 720.0
+    },
+    {
+      "start": 8,
+      "end": 9,
+      "wavelength": 500.0
+    },
+    {
+      "start": 9,
+      "end": 10,
+      "wavelength": 505.0
+    },
+    {
+      "start": 10,
+      "end": 11,
+      "wavelength": 515.0
+    },
+    {
+      "start": 11,
+      "end": 13,
+      "wavelength": 485.0
+    },
+    {
+      "start": 13,
+      "end": 14,
+      "wavelength": 464.0
+    },
+    {
+      "start": 14,
+      "end": 15,
+      "wavelength": 510.0
+    },
+    {
+      "start": 15,
+      "end": 16,
+      "wavelength": 900.0
+    },
+    {
+      "start": 16,
+      "end": 17,
+      "wavelength": 460.0
+    },
+    {
+      "start": 17,
+      "end": 18,
+      "wavelength": 900.0
+    },
+    {
+      "start": 18,
+      "end": 19,
+      "wavelength": 579.0
+    },
+    {
+      "start": 19,
+      "end": 20,
+      "wavelength": 699.0
+    },
+    {
+      "start": 20,
+      "end": 21,
+      "wavelength": 680.0
+    },
+    {
+      "start": 21,
+      "end": 22,
+      "wavelength": 900.0
+    },
+    {
+      "start": 22,
+      "end": 23,
+      "wavelength": 563.0
+    },
+    {
+      "start": 23,
+      "end": 24,
+      "wavelength": 900.0
+    },
+    {
+      "start": 24,
+      "end": 25,
+      "wavelength": 520.0
+    },
+    {
+      "start": 25,
+      "end": 26,
+      "wavelength": 900.0
+    },
+    {
+      "start": 26,
+      "end": 27,
+      "wavelength": 580.0
+    },
+    {
+      "start": 27,
+      "end": 28,
+      "wavelength": 512.0
+    },
+    {
+      "start": 28,
+      "end": 29,
+      "wavelength": 620.0
+    },
+    {
+      "start": 29,
+      "end": 30,
+      "wavelength": 509.0
+    },
+    {
+      "start": 30,
+      "end": 31,
+      "wavelength": 566.0
+    },
+    {
+      "start": 31,
+      "end": 32,
+      "wavelength": 511.0
+    },
+    {
+      "start": 32,
+      "end": 33,
+      "wavelength": 570.0
+    },
+    {
+      "start": 33,
+      "end": 34,
+      "wavelength": 590.0
+    },
+    {
+      "start": 34,
+      "end": 35,
+      "wavelength": 500.0
+    },
+    {
+      "start": 35,
+      "end": 36,
+      "wavelength": 495.0
+    },
+    {
+      "start": 36,
+      "end": 37,
+      "wavelength": 488.0
+    },
+    {
+      "start": 37,
+      "end": 38,
+      "wavelength": 584.0
+    },
+    {
+      "start": 38,
+      "end": 40,
+      "wavelength": 595.0
+    },
+    {
+      "start": 40,
+      "end": 42,
+      "wavelength": 625.0
+    },
+    {
+      "start": 42,
+      "end": 43,
+      "wavelength": 505.0
+    },
+    {
+      "start": 43,
+      "end": 44,
+      "wavelength": 499.0
+    },
+    {
+      "start": 44,
+      "end": 45,
+      "wavelength": 455.0
+    },
+    {
+      "start": 45,
+      "end": 46,
+      "wavelength": 900.0
+    },
+    {
+      "start": 46,
+      "end": 47,
+      "wavelength": 441.0
+    },
+    {
+      "start": 47,
+      "end": 49,
+      "wavelength": 500.0
+    },
+    {
+      "start": 49,
+      "end": 50,
+      "wavelength": 665.0
+    },
+    {
+      "start": 50,
+      "end": 51,
+      "wavelength": 660.0
+    },
+    {
+      "start": 51,
+      "end": 52,
+      "wavelength": 624.0
+    },
+    {
+      "start": 52,
+      "end": 54,
+      "wavelength": 655.0
+    },
+    {
+      "start": 54,
+      "end": 57,
+      "wavelength": 650.0
+    },
+    {
+      "start": 57,
+      "end": 58,
+      "wavelength": 465.0
+    },
+    {
+      "start": 58,
+      "end": 61,
+      "wavelength": 522.0
+    },
+    {
+      "start": 61,
+      "end": 62,
+      "wavelength": 900.0
+    },
+    {
+      "start": 62,
+      "end": 63,
+      "wavelength": 470.0
+    },
+    {
+      "start": 63,
+      "end": 64,
+      "wavelength": 560.0
+    },
+    {
+      "start": 64,
+      "end": 65,
+      "wavelength": 524.0
+    },
+    {
+      "start": 65,
+      "end": 66,
+      "wavelength": 900.0
+    },
+    {
+      "start": 66,
+      "end": 68,
+      "wavelength": 517.0
+    },
+    {
+      "start": 68,
+      "end": 69,
+      "wavelength": 511.0
+    },
+    {
+      "start": 69,
+      "end": 70,
+      "wavelength": 900.0
+    },
+    {
+      "start": 70,
+      "end": 71,
+      "wavelength": 511.0
+    },
+    {
+      "start": 71,
+      "end": 72,
+      "wavelength": 530.0
+    },
+    {
+      "start": 72,
+      "end": 73,
+      "wavelength": 540.0
+    },
+    {
+      "start": 73,
+      "end": 74,
+      "wavelength": 900.0
+    },
+    {
+      "start": 74,
+      "end": 75,
+      "wavelength": 528.0
+    },
+    {
+      "start": 75,
+      "end": 76,
+      "wavelength": 900.0
+    },
+    {
+      "start": 76,
+      "end": 77,
+      "wavelength": 535.0
+    },
+    {
+      "start": 77,
+      "end": 78,
+      "wavelength": 900.0
+    },
+    {
+      "start": 78,
+      "end": 79,
+      "wavelength": 547.0
+    },
+    {
+      "start": 79,
+      "end": 80,
+      "wavelength": 900.0
+    },
+    {
+      "start": 80,
+      "end": 82,
+      "wavelength": 535.0
+    },
+    {
+      "start": 82,
+      "end": 83,
+      "wavelength": 545.0
+    },
+    {
+      "start": 83,
+      "end": 84,
+      "wavelength": 543.0
+    },
+    {
+      "start": 84,
+      "end": 89,
+      "wavelength": 535.0
+    },
+    {
+      "start": 89,
+      "end": 90,
+      "wavelength": 900.0
+    },
+    {
+      "start": 90,
+      "end": 91,
+      "wavelength": 545.0
+    },
+    {
+      "start": 91,
+      "end": 92,
+      "wavelength": 900.0
+    },
+    {
+      "start": 92,
+      "end": 93,
+      "wavelength": 539.0
+    },
+    {
+      "start": 93,
+      "end": 94,
+      "wavelength": 900.0
+    },
+    {
+      "start": 94,
+      "end": 96,
+      "wavelength": 538.0
+    },
+    {
+      "start": 96,
+      "end": 97,
+      "wavelength": 533.0
+    },
+    {
+      "start": 97,
+      "end": 98,
+      "wavelength": 532.0
+    }
+  ],
+  "rate_layers": [
+    15,
+    17,
+    21,
+    23,
+    25,
+    28,
+    33,
+    45,
+    61,
+    65,
+    69,
+    73,
+    75,
+    77,
+    79,
+    81,
+    85,
+    89,
+    91,
+    93
+  ],
+  "witness_reset_layers": [],
+  "monochromator_resolution_nm": 2.0,
+  "rule_summary": {
+    "rule": "First 10 component layers (Op 3..12) in Optique; for Op >= 13, any layer with Optical Thickness OT = n(550nm)*d > 50 nm is monitored in Optique (plus phase-hinge Op 68), and thin SiO2 layers with OT < 50 nm (including Op 34 OT=46.55nm and Op 86 OT=30.25nm) are monitored in Rate.",
+    "n_550nm": {
+      "H800-Nb2O5": 2.357884,
+      "H800-SiO2": 1.486816
+    },
+    "component_optical_layers": 76,
+    "component_rate_layers": 20,
+    "max_rate_OT_nm": 47.53440624525237,
+    "max_rate_physical_thickness_nm": 31.310542211839852,
+    "total_rate_OT_nm": 598.6241986434501,
+    "total_rate_physical_thickness_nm": 390.8107428755753
+  },
+  "note": "Stratégie Bonne Mère retenue (SuperChamp76_StrictOT50_HybridMicroWin) : même empilement composant 96 couches Saphir (RMSE nominal 1.459069 pp) et mêmes 2 pré-couches témoin que 452nm, règle physique d'épaisseur optique OT = n*d <= 50 nm pour le suivi Rate (max OT_Rate = 47.53 nm : Op 71 OT=60.52 nm et Op 89 OT=60.28 nm passées en Optique ; Op 34 OT=46.55 nm et Op 86 OT=30.25 nm passées en Rate), et optimisation des longueurs d'onde par micro-fenêtres glissantes hybrides (ConstLayerCount N=8 puis HybridFine N_opt=3..5, Delta_OT=750..1200 nm) sur cible projetée adaptative (sans erreur aval au-delà du buffer d'auto-compensation)."
+}

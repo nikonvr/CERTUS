@@ -1,28 +1,26 @@
-# Bonne Mère — sujet clos le 18 octobre 2026
+# Bonne Mère
 
-## Stratégie conservée
+96 couches H800 (Nb₂O₅ / SiO₂) sur saphir, un témoin, deux précouches : `dossier_final/donnees/design_retenu_96_saphir.json`, cible `cible_retenue_601points.csv`, plancher nominal 1,459069 pp.
 
-**96 couches H800 sur saphir, un témoin, deux précoatings, 70 couches optiques et 26 Rate. Longueur d’onde commune de 452 nm sur les deux précoatings et les deux premières couches pièce.**
+## Meilleur plan mesuré (2026-10-19)
 
-Les épaisseurs et le monitoring des couches pièce 3 à 96 restent ceux du plan 70 POEM retenu. C’est le choix explicite de Fabien comme solution la plus prometteuse.
+`dossier_final/donnees/strategie_optimale.json`, table `monitoring_optimal_98operations.csv` : 21 couches pièce en Rate (toutes OT ≤ 50 nm), les autres en Optique, op 1 à 3 à 455 nm. Au bruit 0,05, graines neuves : SEEL P95 0,446 nm, RMSE 1,528 pp, 0 arrêt sur 3 000 ; dérive de la source non modélisée (valeur attendue de 👤, A6).
 
-## Documents à ouvrir
+| plan | SEEL P95 (nm) | RMSE (pp) | rapport |
+|---|---|---|---|
+| 452 nm (clôture du 18 au matin) | 0,832 | 1,669 | `reports/BONNE_MERE_rejeu_SuperChamp76_2026-10-19/` |
+| SuperChamp76 (18 au soir) | 0,461 | 1,531 | idem |
+| optimal | 0,446 | 1,528 | `reports/BONNE_MERE_phase2_tete_et_cumul_2026-10-19/` |
 
-- [Dossier complet de 25 pages en PDF](dossier_final/Bonne_Mere_Dossier_Complet.pdf)
-- [Version Word modifiable](dossier_final/Bonne_Mere_Dossier_Complet.docx)
-- [Passation pour une reprise ultérieure](PASSATION.md)
-- [Plan complet des 98 opérations](dossier_final/donnees/monitoring_retenu_98operations.csv)
-- [Sélection courante et chemins des données](selection_retenue.json)
-- [Bilan du nettoyage](dossier_final/rapport_nettoyage.json)
+## Comment on arrive à l'optimum
 
-## Résultat et limite à conserver
+1. **Mesurer avant de chercher** : le budget d'erreur (`reports/BONNE_MERE_phase1_budget_SuperChamp76_2026-10-19/`) montre où est la marge. Ici l'erreur d'indice porte 61 % du SEEL², le Rate 1 %, le bruit optique 10 %.
+2. **Le grand gain (452 → SC76, −45 % de SEEL P95)** accompagne le changement de partition (plus de couche Rate épaisse : 354 nm → 31 nm au plus) et des λ réoptimisés par fenêtres ; la part de chacun n'est pas mesurée, les étapes du soir n'étant pas rejouables (scripts absents).
+3. **Puis un affinage local, couche par couche, jugé sur le SEEL apparié** : λ d'une couche, bascule Optique / Rate d'une couche, tête. Trois leviers, −4,8 % de SEEL² ; l'optimum local est alors atteint (neuf couches sur dix déjà au mieux).
+4. **Discipline** : graines réservées par usage (recherche, sélection, confirmation, holdout ouvert une fois), comparaison tirage à tirage, zéro arrêt aux trois bruits.
 
-Confirmation sur trois graines indépendantes, 1 000 tirages par bruit et graine : au bruit 0,05, RMSE moyen **1,667858 point**, contre **1,691515** pour la référence 70 appariée ; P95 RMSE **1,870153**, SEEL P95 **0,833795 nm**. Arrêts aux bruits 0,025 / 0,05 / 0,10 : **0 / 0 / 1 sur 3 000**. Aucun holdout indépendant final du candidat 452 nm : le critère strict zéro arrêt n’était pas satisfait. Pas de qualification expérimentale ni de preuve d’optimum global.
+Prochaine marge : réduire la sensibilité à l'erreur d'indice (plusieurs couches à la fois) ou mieux connaître l'indice. Défaut du modèle d'arrêt : l'hystérésis suit le bruit, donc à bruit faible la fente fabrique des points tournants (op 88 échoue) ; à corriger dans STRAT.
 
-## Rangement
+## Rejouer
 
-Les sources, scripts, protocoles, journaux textuels, plans et audits sont conservés dans `archives/Bonne_Mere_sources_et_metadonnees.zip`. Une compression interne TAR/XZ déduplique les contenus ; `archive_index.json` conserve tous les chemins d’origine. Les six cohortes appariées du candidat 452 nm et de sa référence restent accessibles dans `dossier_final/donnees` sous forme de tableaux sans perte.
-
-Les autres sorties brutes volumineuses et les caches ont été supprimés sur demande, pour maintenir **CERTUS entier, Bonne Mère inclus, sous 1 000 000 000 octets**. Il n’existe pas d’archive extérieure. Les anciens audits ne sont pas tous rejouables sans recalculer les sorties éliminées.
-
-Aucun calcul actif ; suivi automatique suspendu. La reprise nécessite une nouvelle demande humaine.
+Banc `scan.py.txt` dans `reports/BONNE_MERE_phase2_balayage_lambda_2026-10-19/` ; ses entrées se restaurent de `archives/Bonne_Mere_sources_et_metadonnees.zip` (hors Git) par `dossier_final/outils/restaurer_archive.py` (liste dans `reports/BONNE_MERE_rejeu_SuperChamp76_2026-10-19/bilan.md`).

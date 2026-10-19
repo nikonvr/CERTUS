@@ -12,6 +12,8 @@
 | SuperChamp76 (18 au soir) | 0,461 | 1,531 | idem |
 | optimal | 0,446 | 1,528 | `reports/BONNE_MERE_phase2_tete_et_cumul_2026-10-19/` |
 
+Vue d'ensemble sur une page : `Bonne_Mere_profils.pdf` (cible, profil sans erreur, 5 dépôts simulés au bruit 0,05, empilement).
+
 ## Comment on arrive à l'optimum
 
 1. **Mesurer avant de chercher** : le budget d'erreur (`reports/BONNE_MERE_phase1_budget_SuperChamp76_2026-10-19/`) montre où est la marge. Ici l'erreur d'indice porte 61 % du SEEL², le Rate 1 %, le bruit optique 10 %.

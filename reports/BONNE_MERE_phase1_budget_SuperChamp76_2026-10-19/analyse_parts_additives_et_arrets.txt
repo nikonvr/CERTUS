@@ -1,0 +1,19 @@
+covariance shares (sum = R2 = 0.953 ): op 43 8.9%, op 58 7.0%, op 77 6.6%, op 87 6.6%, op 36 5.3%, op 25 4.5%, op 19 4.2%, op 32 4.1%, op 65 4.1%, op 23 3.8%
+most negative (compensating): op 68 -1.2%, op 31 -1.4%, op 4 -1.9%, op 60 -1.9%
+corr(e58, e59) = -0.433 | corr(e64, e65) = -0.78
+sd(e) of the top layers by config at 0.05:
+  ref    op65 0.325  op58 0.818  op64 0.440  op77 0.354  | mean bias op58 +0.304
+  corr0  op65 0.191  op58 0.146  op64 0.297  op77 0.128  | mean bias op58 +0.280
+  slit0  op65 0.322  op58 0.803  op64 0.436  op77 0.351  | mean bias op58 +0.075
+  anch0  op65 0.303  op58 0.818  op64 0.401  op77 0.347  | mean bias op58 +0.284
+  n100   op65 0.250  op58 0.776  op64 0.331  op77 0.266  | mean bias op58 +0.478
+  all0   op65 0.027  op58 0.015  op64 0.016  op77 0.084  | mean bias op58 +0.031
+stops by noise level, 3000 draws each:
+  ref    [0, 0, 0]
+  corr0  [0, 0, 0]
+  slit0  [0, 0, 0]
+  anch0  [0, 0, 0]
+  n100   [936, 787, 596]
+  all0   [0, 0, 0]
+n100 first failing op (count): op 88 [535.0 nm] 2318, op 61 [522.0 nm] 1
+n100corr0 first failing op (count): op 88 [535.0 nm] 87

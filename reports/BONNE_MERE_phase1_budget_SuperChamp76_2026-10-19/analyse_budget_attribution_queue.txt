@@ -1,0 +1,48 @@
+== A. Paired ablation (3 seeds x 1000 draws; noise level index 1 = nominal 0.05 times the config scale)
+-- noise level #0
+   reference                noise 0.025    stops 0/3000  SEEL rms 0.3000 nm  SEEL P95 0.4340  excess MSE 0.1773 pp2  dSEEL2 vs ref +0.0000 +- 0.0000 nm2
+   index corridor 0         noise 0.025    stops 0/3000  SEEL rms 0.1501 nm  SEEL P95 0.1849  excess MSE 0.0446 pp2  dSEEL2 vs ref -0.0675 +- 0.0009 nm2
+   slit bias off            noise 0.025    stops 0/3000  SEEL rms 0.2887 nm  SEEL P95 0.4227  excess MSE 0.1640 pp2  dSEEL2 vs ref -0.0067 +- 0.0002 nm2
+   POEM anchor noise off    noise 0.025    stops 0/3000  SEEL rms 0.2955 nm  SEEL P95 0.4305  excess MSE 0.1720 pp2  dSEEL2 vs ref -0.0027 +- 0.0001 nm2
+   optical noise /100       noise 0.00025  stops 936/3000  SEEL rms 0.3144 nm  SEEL P95 0.4619  excess MSE 0.1949 pp2  dSEEL2 vs ref +0.0110 +- 0.0011 nm2
+   all four off             noise 0.00025  stops 0/3000  SEEL rms 0.0840 nm  SEEL P95 0.1377  excess MSE 0.0139 pp2  dSEEL2 vs ref -0.0829 +- 0.0009 nm2
+-- noise level #1
+   reference                noise 0.05     stops 0/3000  SEEL rms 0.3358 nm  SEEL P95 0.4704  excess MSE 0.2221 pp2  dSEEL2 vs ref +0.0000 +- 0.0000 nm2
+   index corridor 0         noise 0.05     stops 0/3000  SEEL rms 0.2088 nm  SEEL P95 0.2710  excess MSE 0.0862 pp2  dSEEL2 vs ref -0.0691 +- 0.0010 nm2
+   slit bias off            noise 0.05     stops 0/3000  SEEL rms 0.3248 nm  SEEL P95 0.4598  excess MSE 0.2077 pp2  dSEEL2 vs ref -0.0073 +- 0.0002 nm2
+   POEM anchor noise off    noise 0.05     stops 0/3000  SEEL rms 0.3184 nm  SEEL P95 0.4543  excess MSE 0.1997 pp2  dSEEL2 vs ref -0.0114 +- 0.0003 nm2
+   optical noise /100       noise 0.0005   stops 787/3000  SEEL rms 0.3160 nm  SEEL P95 0.4684  excess MSE 0.1968 pp2  dSEEL2 vs ref -0.0110 +- 0.0010 nm2
+   all four off             noise 0.0005   stops 0/3000  SEEL rms 0.0844 nm  SEEL P95 0.1392  excess MSE 0.0141 pp2  dSEEL2 vs ref -0.1056 +- 0.0010 nm2
+-- noise level #2
+   reference                noise 0.1      stops 0/3000  SEEL rms 0.4457 nm  SEEL P95 0.5933  excess MSE 0.3916 pp2  dSEEL2 vs ref +0.0000 +- 0.0000 nm2
+   index corridor 0         noise 0.1      stops 0/3000  SEEL rms 0.3631 nm  SEEL P95 0.4917  excess MSE 0.2603 pp2  dSEEL2 vs ref -0.0668 +- 0.0011 nm2
+   slit bias off            noise 0.1      stops 0/3000  SEEL rms 0.4374 nm  SEEL P95 0.5855  excess MSE 0.3770 pp2  dSEEL2 vs ref -0.0073 +- 0.0003 nm2
+   POEM anchor noise off    noise 0.1      stops 0/3000  SEEL rms 0.3869 nm  SEEL P95 0.5191  excess MSE 0.2950 pp2  dSEEL2 vs ref -0.0490 +- 0.0009 nm2
+   optical noise /100       noise 0.001    stops 596/3000  SEEL rms 0.3090 nm  SEEL P95 0.4636  excess MSE 0.1881 pp2  dSEEL2 vs ref -0.0994 +- 0.0017 nm2
+   all four off             noise 0.001    stops 0/3000  SEEL rms 0.0835 nm  SEEL P95 0.1343  excess MSE 0.0138 pp2  dSEEL2 vs ref -0.1917 +- 0.0015 nm2
+
+== B. Per-layer attribution at 0.05 (reference config, 3000 draws)
+   thickness error: mean |e| 0.158 nm; largest mean bias 0.318 nm
+   regression SEEL^2 on (e_k, e_k^2): R2 cross-validated 0.945
+   op 65 (comp 63, Optique, Nb2O5, lambda 524 nm, d 137.5 nm): sd(e) 0.325 nm, share 23.9 %  (cum 23.9 %)
+   op 58 (comp 56, Optique, SiO2, lambda 465 nm, d 102.3 nm): sd(e) 0.818 nm, share 22.1 %  (cum 46.0 %)
+   op 64 (comp 62, Optique, SiO2, lambda 560 nm, d 45.0 nm): sd(e) 0.440 nm, share 11.0 %  (cum 56.9 %)
+   op 77 (comp 75, Optique, Nb2O5, lambda 535 nm, d 155.2 nm): sd(e) 0.354 nm, share 6.5 %  (cum 63.4 %)
+   op 31 (comp 29, Optique, Nb2O5, lambda 566 nm, d 281.2 nm): sd(e) 0.347 nm, share 5.8 %  (cum 69.2 %)
+   op 25 (comp 23, Optique, Nb2O5, lambda 520 nm, d 135.1 nm): sd(e) 0.212 nm, share 5.1 %  (cum 74.4 %)
+   op 50 (comp 48, Optique, SiO2, lambda 665 nm, d 128.2 nm): sd(e) 0.299 nm, share 4.3 %  (cum 78.6 %)
+   op 43 (comp 41, Optique, Nb2O5, lambda 505 nm, d 120.1 nm): sd(e) 0.240 nm, share 4.2 %  (cum 82.8 %)
+   op 28 (comp 26, Optique, SiO2, lambda 512 nm, d 155.4 nm): sd(e) 0.368 nm, share 3.9 %  (cum 86.7 %)
+   op 59 (comp 57, Optique, Nb2O5, lambda 522 nm, d 131.5 nm): sd(e) 0.220 nm, share 3.7 %  (cum 90.4 %)
+   op 60 (comp 58, Optique, SiO2, lambda 522 nm, d 36.8 nm): sd(e) 0.325 nm, share 3.7 %  (cum 94.1 %)
+   op 19 (comp 17, Optique, Nb2O5, lambda 579 nm, d 108.3 nm): sd(e) 0.276 nm, share 3.6 %  (cum 97.7 %)
+   20 Rate layers together: 1.0 %; 76 optical: 143.9 % (sum of shares 144.8 %)
+
+== C. Tail at 0.05 (reference, 3000 draws)
+   SEEL P50: 0.3163 nm
+   SEEL P90: 0.4324 nm
+   SEEL P95: 0.4704 nm
+   SEEL P99: 0.5464 nm
+   SEEL P99.9: 0.6232 nm
+   max 0.6613 nm; draws above 0.6 nm: 7, above 0.7 nm: 0
+   layers with the largest |e| in the 30 worst draws: op 58 (1.55 nm vs 0.71 overall), op 77 (0.71 nm vs 0.29 overall), op 32 (0.70 nm vs 0.33 overall), op 64 (0.70 nm vs 0.35 overall), op 36 (0.57 nm vs 0.25 overall)

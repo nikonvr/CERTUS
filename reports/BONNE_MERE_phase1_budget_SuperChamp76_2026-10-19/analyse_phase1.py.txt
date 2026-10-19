@@ -1,0 +1,86 @@
+"""Phase 1 analysis: paired ablation budget, per-layer attribution, tail of SuperChamp76 on the diagnostic seeds."""
+from __future__ import annotations
+
+import json
+import os
+import sys
+
+import numpy as np
+
+ABL = os.path.join(os.environ["TEMP"], "bm_harness", "abl")
+SEEDS = [20261019501, 20261019502, 20261019503]
+CONFIGS = ["ref", "corr0", "slit0", "anch0", "n100", "all0"]
+LABEL = dict(ref="reference", corr0="index corridor 0", slit0="slit bias off", anch0="POEM anchor noise off",
+             n100="optical noise /100", all0="all four off")
+FLOOR = 1.4590690198033798
+REPO = sys.argv[1]
+
+
+def load(cfg, seed):
+    d = os.path.join(ABL, f"{cfg}_s{seed}")
+    return np.load(os.path.join(d, "component_scores.npz")), json.load(open(os.path.join(d, "summary.json"), encoding="utf-8"))
+
+
+print("== A. Paired ablation (3 seeds x 1000 draws; noise level index 1 = nominal 0.05 times the config scale)")
+for i in range(3):
+    print(f"-- noise level #{i}")
+    ref = {s: load("ref", s)[0] for s in SEEDS}
+    for cfg in CONFIGS:
+        seel2, rm2, d_seel2, fails, n = [], [], [], 0, 0
+        for s in SEEDS:
+            z, summ = load(cfg, s)
+            v = z[f"valid_{i}"]; vr = ref[s][f"valid_{i}"]
+            fails += int((~v).sum()); n += len(v)
+            seel2.append(z[f"seel_nm_{i}"][v] ** 2); rm2.append(z[f"target_rmse_pp_{i}"][v] ** 2)
+            both = v & vr
+            d_seel2.append(z[f"seel_nm_{i}"][both] ** 2 - ref[s][f"seel_nm_{i}"][both] ** 2)
+        seel2, rm2, d = np.concatenate(seel2), np.concatenate(rm2), np.concatenate(d_seel2)
+        noise = summ["noises"][i]
+        print(f"   {LABEL[cfg]:<24} noise {noise:<8.5g} stops {fails}/{n}  SEEL rms {np.sqrt(seel2.mean()):.4f} nm  "
+              f"SEEL P95 {np.percentile(np.sqrt(seel2), 95):.4f}  excess MSE {rm2.mean() - FLOOR ** 2:.4f} pp2  "
+              f"dSEEL2 vs ref {d.mean():+.4f} +- {d.std(ddof=1) / np.sqrt(len(d)):.4f} nm2")
+
+print("\n== B. Per-layer attribution at 0.05 (reference config, 3000 draws)")
+z = [load("ref", s)[0] for s in SEEDS]
+v = np.concatenate([q["valid_1"] for q in z])
+th = np.concatenate([q["thickness_nm_1"] for q in z])[v]
+seel2 = np.concatenate([q["seel_nm_1"] for q in z])[v] ** 2
+plan = json.load(open(os.path.join(REPO, "studies/bonne_mere/dossier_final/donnees/strategie_retenue_superchamp76.json"), encoding="utf-8"))
+design = json.load(open(os.path.join(os.environ["TEMP"], "bm_replay/study/design/retenu_96_saphir/design.json"), encoding="utf-8"))
+nominal = np.array(design["thickness_nm"])
+e = th - nominal  # 96 component layers
+rate_comp = {i - 2 for i in plan["rate_layers"]}
+wl = np.empty(98)
+for b in plan["blocks"]:
+    wl[b["start"]:b["end"]] = b["wavelength"]
+print(f"   thickness error: mean |e| {np.abs(e).mean():.3f} nm; largest mean bias {np.abs(e.mean(0)).max():.3f} nm")
+X = np.hstack([e, e ** 2, np.ones((len(e), 1))])
+k = 5
+idx = np.arange(len(e)); rng = np.random.default_rng(0); rng.shuffle(idx)
+pred = np.empty(len(e))
+for f in range(k):
+    te = idx[f::k]; tr = np.setdiff1d(idx, te)
+    coef, *_ = np.linalg.lstsq(X[tr], seel2[tr], rcond=None)
+    pred[te] = X[te] @ coef
+r2cv = 1 - np.sum((seel2 - pred) ** 2) / np.sum((seel2 - seel2.mean()) ** 2)
+coef, *_ = np.linalg.lstsq(X, seel2, rcond=None)
+contrib = np.array([np.var(X[:, j] * coef[j] + X[:, 96 + j] * coef[96 + j]) for j in range(96)])
+share = contrib / np.var(seel2)
+print(f"   regression SEEL^2 on (e_k, e_k^2): R2 cross-validated {r2cv:.3f}")
+order = np.argsort(share)[::-1]
+cum = 0.0
+for j in order[:12]:
+    cum += share[j]
+    print(f"   op {j + 3:>2} (comp {j + 1:>2}, {'Rate' if j in rate_comp else 'Optique'}, {design['material_indices'][j] and 'SiO2' or 'Nb2O5'}, "
+          f"{'' if j in rate_comp else f'lambda {wl[j + 2]:.0f} nm, '}d {nominal[j]:.1f} nm): sd(e) {e[:, j].std():.3f} nm, share {100 * share[j]:.1f} %  (cum {100 * cum:.1f} %)")
+r_share = sum(share[j] for j in rate_comp)
+print(f"   20 Rate layers together: {100 * r_share:.1f} %; 76 optical: {100 * (share.sum() - r_share):.1f} % (sum of shares {100 * share.sum():.1f} %)")
+
+print("\n== C. Tail at 0.05 (reference, 3000 draws)")
+s = np.sqrt(seel2)
+for q in (50, 90, 95, 99, 99.9):
+    print(f"   SEEL P{q}: {np.percentile(s, q):.4f} nm")
+print(f"   max {s.max():.4f} nm; draws above 0.6 nm: {(s > .6).sum()}, above 0.7 nm: {(s > .7).sum()}")
+worst = np.argsort(s)[-30:]
+top = np.argsort(np.abs(e[worst]).mean(0))[::-1][:5]
+print("   layers with the largest |e| in the 30 worst draws: " + ", ".join(f"op {j + 3} ({np.abs(e[worst, j]).mean():.2f} nm vs {np.abs(e[:, j]).mean():.2f} overall)" for j in top))

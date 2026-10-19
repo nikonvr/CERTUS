@@ -1,0 +1,86 @@
+{
+  "override": {
+    "poem_anchor_noise": false
+  },
+  "noises": [
+    0.00025,
+    0.0005,
+    0.001
+  ],
+  "plan_file": "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\studies\\bonne_mere\\dossier_final\\donnees\\strategie_retenue_superchamp76.json",
+  "plan_sha256": "3547e8c1c926b82a279422b55e6be6cbdf5562d15041f920cfd12c4b1a2f2391",
+  "strategy_id": 760050,
+  "origin": "strict_ot50_and_hybrid_microwindows_on_projected_target",
+  "seed": 20261019501,
+  "runs_per_noise": 1000,
+  "noise_results": [
+    {
+      "noise_pp": 0.00025,
+      "runs": 1000,
+      "completed": 699,
+      "failures": 301,
+      "target_rmse_mean_pp": 1.5226857843105084,
+      "target_rmse_p95_pp": 1.5945963262252327,
+      "seel_mean_nm": 0.2977003650679126,
+      "seel_p95_nm": 0.45839653683719017
+    },
+    {
+      "noise_pp": 0.0005,
+      "runs": 1000,
+      "completed": 743,
+      "failures": 257,
+      "target_rmse_mean_pp": 1.5232684925764644,
+      "target_rmse_p95_pp": 1.596397354952352,
+      "seel_mean_nm": 0.2990411121085152,
+      "seel_p95_nm": 0.4603902901126577
+    },
+    {
+      "noise_pp": 0.001,
+      "runs": 1000,
+      "completed": 802,
+      "failures": 198,
+      "target_rmse_mean_pp": 1.518733775354347,
+      "target_rmse_p95_pp": 1.5859002968927853,
+      "seel_mean_nm": 0.28689159099042877,
+      "seel_p95_nm": 0.443720769862946
+    }
+  ],
+  "optical_component_count": 76,
+  "rate_count": 20,
+  "crash_rate": 0.301,
+  "index_seeds_by_noise": [
+    8595168027818274,
+    8595168028668781,
+    8595168029519288
+  ],
+  "engine": {
+    "certus_path": "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\certus",
+    "git_head": "3724238fd5a6995d84a46bb63d81afd3b9ff02db",
+    "certus_tree_clean": true,
+    "numba": "0.67.0",
+    "numpy": "2.5.3",
+    "python": "3.14.8",
+    "threads_before_model": {
+      "numba_maximum": 16,
+      "numba_active": 16,
+      "cpu_count": 16
+    },
+    "numba_active_threads_at_run": 4,
+    "numba_cache_dir": "C:\\Users\\Fabien\\AppData\\Local\\Temp\\bm_harness\\numba_cold_1",
+    "threading_layer": "omp"
+  },
+  "oracle": {
+    "component": {
+      "sample_count": 11,
+      "max_absolute_RT_error": 4.884981308350689e-15
+    },
+    "witness": {
+      "sample_count": 11,
+      "max_absolute_RT_error": 4.385380947269368e-15
+    }
+  },
+  "seconds": {
+    "setup": 5.5,
+    "run": 10.0
+  }
+}

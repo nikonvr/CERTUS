@@ -4,6 +4,34 @@
 > n'en garde qu'un renvoi par section, sous le même numéro. **Un fait, un seul endroit** : corrige ici, ne recopie pas ailleurs, mets un lien.
 > Les `§N` nus qui renvoient aux règles qui annulent un travail sont écrits `CLAUDE.md §N`. À lire en touchant le sujet, pas à chaque session.
 
+## 1. Démarrage et publication
+
+`preflight.py` vérifie aussi que l'interpréteur importe les dépendances ; aucun chemin d'interpréteur ni de racine n'est
+écrit en dur, délibérément : ils se périmaient à chaque déménagement.
+
+Committer ne publie **pas** par défaut : le hook `.githooks/post-commit` ne s'arme que par
+`git config core.hooksPath .githooks`, réglage local jamais hérité. Vérifie avec `git config --get core.hooksPath`
+et `git status -sb`, ne le suppose pas. Les données de 👤 lui-même sont son choix : il assume de tout publier.
+
+## 2. Valider — pièges
+
+- Un échec au premier run dans un arbre neuf peut venir du cache Numba : relancer une fois. Un échec persistant est réel.
+- Un test Qt qui meurt sans traceback peut signaler un worker encore actif : relancer avec
+  `QT_FORCE_STDERR_LOGGING=1` et `-s`. Un test isolé vert mais rouge en suite signale souvent un état partagé.
+- Un nouveau module typé dans `domain`, `physics` ou `core` suit le registre d'annotations `tests/architecture_debt.json`.
+- Après modification du gel ou d'un point d'entrée que STRAT importe : `powershell tools\build_frozen.ps1` et
+  `python tools\release_checks.py --check-frozen --check-frozen-run`. Le gel produit `dist/` et `build/` : les retirer
+  ensuite, sans toucher aux résultats scientifiques de `reports/`.
+
+## 5. C1 au bit — mode d'emploi de `c1_diff`
+
+C1 s'éprouve au bit, pas par le `RESULT` du banc : **une recompilation décale les derniers chiffres**.
+`python scripts\c1_diff.py HEAD` compare l'arbre de travail à un commit (corpus fixe, interpréteurs neufs, caches Numba
+vierges) ; il ne prouve que ce que son corpus appelle. Compare **froid à froid** : un noyau relu du cache n'a pas
+toujours les bits du noyau compilé à l'instant (`fastmath`). **Couper un noyau `fastmath` déplace ses derniers bits** ;
+`inline="always"` sur le morceau extrait, boucles fusionnées gardées fusionnées, les préserve. Un corpus se valide contre
+lui-même : `python scripts\c1_diff.py X --tete X --sans-cache` doit rendre 0.
+
 ## 6. Pièges d'exécution
 
 - `params` peut être un DTO Pydantic : `get` et `[]` marchent,
@@ -34,6 +62,13 @@
 - Le premier calcul compile Numba : chauffer avant un chronométrage.
   Ne pas citer dans le code le motif littéral qu'un garde-fou cherche
   (couleur, règle QSS), au risque de déclencher le garde-fou lui-même.
+
+## 7. QWOT et point tournant
+
+Le QWOT est l'épaisseur optique d'**une couche** (`m = 4nd/λ`) ; le point tournant est l'instant où l'admittance du
+**système entier** devient réelle, `tan 2δ = R/Q`. Leur période commune vaut un quart d'onde à λ_mon, mais le **départ**
+est décalé de `½·arctan(R/Q)`, fixé par l'empilement du dessous. Les deux ne coïncident que sur la couche 1 d'un substrat
+nu, ou sur un empilement tout en QWOT à λ_mon.
 
 ## 8. Architecture — le gel et les points d'entrée (suite de la section 8 de CLAUDE.md)
 

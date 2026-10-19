@@ -1,6 +1,6 @@
 # Passation de la suite Rate,16octobre2026
 
-Lire d'abord [le diagnostic complet](../../../docs/STRAT_Rate_reprise_20261016.md).
+Lire d'abord [le diagnostic complet](../../STRAT_Rate_reprise_20261016.md).
 Il distingue programme clos, suite autorisée, preuves, limites et prototype non vérifié.
 
 Les fichiers `sources/*.txt` sont des copies des bytes réellement présents dans `scratch/`.

@@ -51,7 +51,7 @@ a attendu le contrôleur nocturne sans interrompre sa mesure, puis lancé le con
 à9 h25. À9 h32 : **9/24 sauvegardées**, dixième `35c_deep_s042_sans` active. Son état reste dans
 [`STRAT_A2_continuation_2026-10-14/etat.json`](STRAT_A2_continuation_2026-10-14/etat.json).
 
-Le [guide complet de reprise et plan de chantier](../docs/STRAT_Rate_suite_chantier.md) consigne les
+Le [guide complet de reprise et plan de chantier](STRAT_Rate_suite_chantier.md) consigne les
 améliorations mesurées, les pistes non confirmées, les comparateurs et leurs identités, les artefacts,
 les profondeurs/graines/provenances, les pièges de rejeu et un programme borné R0–R7. A2 est prioritaire
 jusqu’à24/24 ; préparations statiques pendant son calcul, vérifications runtime et nouvelles mesures

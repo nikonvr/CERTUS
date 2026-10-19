@@ -69,4 +69,4 @@ les manifestes de graines conservés et, au besoin, parcourir aussi les archives
 
 Contrôles : `pre_commit_audit.json`, `restore_runtime_verification.json`,
 `validation_summary.json`. Le diagnostic et le prompt à donner à l'IA suivante sont dans
-[la passation](../../docs/STRAT_Rate_reprise_20261016.md).
+[la passation](../STRAT_Rate_reprise_20261016.md).

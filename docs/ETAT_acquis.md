@@ -13,7 +13,7 @@ mode. Les indices de couche des artefacts commencent à 0 ; l'interface et les r
 
 **Acquis du Rate (programme R0–R6, clos le 2026-10-16 par arrêt précoce R6).** Bilan final et limites :
 [`bilan_final.md`](../reports/STRAT_Rate_suite_2026-10-15/final_20261016/bilan_final.md), audit [`audit_final.json`](../reports/STRAT_Rate_suite_2026-10-15/final_20261016/audit_final.json) ;
-synthèse du 2026-10-14 : [`STRAT_Rate_bilan_2026-10-14.md`](../reports/STRAT_Rate_bilan_2026-10-14.md) ; guide : [`STRAT_Rate_suite_chantier.md`](STRAT_Rate_suite_chantier.md).
+synthèse du 2026-10-14 : [`STRAT_Rate_bilan_2026-10-14.md`](../reports/STRAT_Rate_bilan_2026-10-14.md) ; guide : [`STRAT_Rate_suite_chantier.md`](../reports/STRAT_Rate_suite_chantier.md).
 - Correctif RMSE validé (les poids constants positifs vont à la spécialisation non pondérée ; 490 tableaux non concernés identiques au bit) ; intégration Rate
   (R5) validée et **inactive par défaut** (`elite_rate_joint_candidates=0`, `rate_post_refinement=False`).
 - `r75x0.5` : gains propres confirmés sur les trois graines (moyennes 1,2541 % / 1,2888 % / 1,7562 % contre le contrôle complet, 3/3 victoires chacune) ;
@@ -63,7 +63,7 @@ Branche publiée à `7f3edea8` le 2026-10-17 sur l'accord de 👤.
 locales et dépôt Git léger, 2 242 JSON volumineux conservés en archives avec empreintes SHA hors CERTUS, caches retirés. Publication faite après
 confirmation explicite de 👤 vers `https://github.com/nikonvr/CERTUS.git`, branche `claude/ecstatic-newton-3grmls` (`be3af69e` vérifié sur le distant),
 sans réécriture d'historique. [Ménage, emplacement des archives et restauration ciblée](../reports/STRAT_Rate_publication_2026-10-16/README.md) ;
-[diagnostic précis, commandes et limites](STRAT_Rate_reprise_20261016.md) ; [autorisation, périmètre et plafonds](../reports/STRAT_Rate_followup_2026-10-16/authorization_and_plan.json).
+[diagnostic précis, commandes et limites](../reports/STRAT_Rate_reprise_20261016.md) ; [autorisation, périmètre et plafonds](../reports/STRAT_Rate_followup_2026-10-16/authorization_and_plan.json).
 Le programme borné R0–R6 est clos et son ancien suivi est PAUSED. **TODO de 👤 :** tenter le 99c en une seule campagne avec injection de Rate et les
 derniers raffinements (A9, dans `ETAT_actions.md`).
 

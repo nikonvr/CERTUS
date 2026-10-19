@@ -18,7 +18,7 @@ lignes, pour ne lire qu'une section (`Read` avec `offset` et `limit`).
 ## Lire peu
 
 1. **Lis** `CLAUDE.md`, puis la section 0 de `docs/ETAT.md`. **À la demande seulement** : `docs/ETAT_actions.md`, `docs/ETAT_acquis.md`, `docs/REGLES_reference.md`.
-2. **Jamais en entier** : `reports/` (84 % des fichiers suivis), `studies/`, `UXargon.md`, `designargon.md`, `ideeargon.md`. Cherche par identifiant
+2. **Jamais en entier** : `reports/` (84 % des fichiers suivis), `studies/`, `UXargon.md`, `designargon.md`. Cherche par identifiant
    (`grep -n "ALG-02" designargon.md`) ; dans `reports/`, ouvre le `bilan.md` ou le `README.md` d'un dossier. `.rgignore` les cache aux recherches de contenu
    fondées sur ripgrep ; un chemin explicite les rouvre.
 3. **Une sortie de commande est du texte que tu paies.** `pytest` est silencieux par défaut : n'ajoute pas `--verbose` ; ajoute `-q --no-cov`, et `-x` pour

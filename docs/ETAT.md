@@ -26,6 +26,8 @@
 [Dossier PDF complet](../studies/bonne_mere/dossier_final/Bonne_Mere_Dossier_Complet.pdf) · [Word](../studies/bonne_mere/dossier_final/Bonne_Mere_Dossier_Complet.docx) · [Passation](../studies/bonne_mere/PASSATION.md) · [sélection courante](../studies/bonne_mere/selection_retenue.json).
 Les sources, protocoles, scripts, plans et audits restent dans une archive compacte **dans** Bonne Mère ; les preuves appariées 452 nm sont conservées sans perte. Les autres sorties brutes lourdes ont été supprimées explicitement pour la limite humaine de **1 Go pour certus0310 entier, Bonne Mère compris**. [Mesure du nettoyage](../studies/bonne_mere/dossier_final/rapport_nettoyage.json). Pas d’archive extérieure ; sources de production et travaux CERTUS préexistants préservés. Reprendre le codage de CERTUS à la demande suivante.
 
+**Rejeu de SuperChamp76 (2026-10-19).** Le plan 76 optiques / 20 Rate proposé le 18 au soir, non commité, rejoué avec le banc du matin : graine annoncée reproduite à tous les chiffres ; graine neuve 20261019401 au bruit 0,05 : 1,532729 pp, SEEL P95 0,472 nm, 0 arrêt ; gain sur le 452 nm 0,138 pp, non 0,152 (référence 452 nm du holdout 1 fausse). Dérive Rate non rejouée. [Rapport](../reports/BONNE_MERE_rejeu_SuperChamp76_2026-10-19/bilan.md).
+
 **Reprise courante (2026-10-18).** Audit complet de la suite hors `studies/bonne_mere/` : [rapport](../reports/AUDIT_SUITE_CERTUS_2026-10-18.md)
 (constats C01–C19, plan A1–A22 avec leur statut et leurs mesures), un commit par correction. À retenir : **crash de Numba** (C18), un appelant en série mis en cache,
 d'un noyau parallèle lui aussi en cache, fait planter l'interpréteur à la relecture du cache (code 139) ; parade `cache=False` sur `calc_spectrum_front`,

@@ -1,0 +1,78 @@
+{
+  "plan_file": "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\studies\\bonne_mere\\dossier_final\\donnees\\strategie_retenue_452nm.json",
+  "plan_sha256": "776c0cf8b629c74c5671ff7011f03c664daff1e27ea0eb59e2a23a12bb2e48be",
+  "strategy_id": 700131,
+  "origin": "lambda4_confirm",
+  "seed": 20261012202,
+  "runs_per_noise": 1000,
+  "noise_results": [
+    {
+      "noise_pp": 0.025,
+      "runs": 1000,
+      "completed": 1000,
+      "failures": 0,
+      "target_rmse_mean_pp": 1.6539523750267895,
+      "target_rmse_p95_pp": 1.872739951551585,
+      "seel_mean_nm": 0.53632343337713,
+      "seel_p95_nm": 0.8359675831003415
+    },
+    {
+      "noise_pp": 0.05,
+      "runs": 1000,
+      "completed": 1000,
+      "failures": 0,
+      "target_rmse_mean_pp": 1.6744487166002768,
+      "target_rmse_p95_pp": 1.8885910725920159,
+      "seel_mean_nm": 0.5689414503267267,
+      "seel_p95_nm": 0.8527650804027803
+    },
+    {
+      "noise_pp": 0.1,
+      "runs": 1000,
+      "completed": 1000,
+      "failures": 0,
+      "target_rmse_mean_pp": 1.7536815711732956,
+      "target_rmse_p95_pp": 2.006492006629021,
+      "seel_mean_nm": 0.678642729559298,
+      "seel_p95_nm": 0.9805726719224248
+    }
+  ],
+  "optical_component_count": 70,
+  "rate_count": 26,
+  "crash_rate": 0.0,
+  "index_seeds_by_noise": [
+    8575793301198735,
+    8575793302049242,
+    8575793302899749
+  ],
+  "engine": {
+    "certus_path": "D:\\drivfl\\01_Recherche_Enseignement\\02_Couches_Minces_Optique\\couches minces 2026\\CERTUS\\certus0310\\certus",
+    "git_head": "fce2da341a253845856f32de94da4e31fbb8179c",
+    "certus_tree_clean": true,
+    "numba": "0.67.0",
+    "numpy": "2.5.3",
+    "python": "3.14.8",
+    "threads_before_model": {
+      "numba_maximum": 16,
+      "numba_active": 16,
+      "cpu_count": 16
+    },
+    "numba_active_threads_at_run": 4,
+    "numba_cache_dir": "C:\\Users\\Fabien\\AppData\\Local\\Temp\\bm_harness\\numba_cold_1",
+    "threading_layer": "omp"
+  },
+  "oracle": {
+    "component": {
+      "sample_count": 11,
+      "max_absolute_RT_error": 4.884981308350689e-15
+    },
+    "witness": {
+      "sample_count": 11,
+      "max_absolute_RT_error": 4.385380947269368e-15
+    }
+  },
+  "seconds": {
+    "setup": 5.4,
+    "run": 9.8
+  }
+}

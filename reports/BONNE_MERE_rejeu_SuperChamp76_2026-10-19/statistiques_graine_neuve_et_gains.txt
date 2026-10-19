@@ -1,0 +1,31 @@
+noise 0.025: announced per-seed means of SuperChamp76 (9 seeds): min 1.516137 max 1.520026 mean 1.518054 sd 0.001341
+   fresh seed 20261019401: SuperChamp76 mean 1.518337 (SE of a 1000-draw mean 0.001052), z vs the 9-seed mean +0.21 seed-sd; completed 1000/1000
+   paired 452 nm - SuperChamp76 on the same draws: mean gain 0.129336 pp (SE 0.002641), SuperChamp76 better on 1000/1000 draws; 452 nm mean 1.647673, completed 1000
+noise 0.05: announced per-seed means of SuperChamp76 (9 seeds): min 1.530051 max 1.533178 mean 1.531458 sd 0.000945
+   fresh seed 20261019401: SuperChamp76 mean 1.532729 (SE of a 1000-draw mean 0.001125), z vs the 9-seed mean +1.35 seed-sd; completed 1000/1000
+   paired 452 nm - SuperChamp76 on the same draws: mean gain 0.137679 pp (SE 0.002720), SuperChamp76 better on 997/1000 draws; 452 nm mean 1.670408, completed 1000
+noise 0.1: announced per-seed means of SuperChamp76 (9 seeds): min 1.585312 max 1.590321 mean 1.587973 sd 0.001529
+   fresh seed 20261019401: SuperChamp76 mean 1.586168 (SE of a 1000-draw mean 0.001571), z vs the 9-seed mean -1.18 seed-sd; completed 1000/1000
+   paired 452 nm - SuperChamp76 on the same draws: mean gain 0.165037 pp (SE 0.003894), SuperChamp76 better on 974/1000 draws; 452 nm mean 1.751205, completed 1000
+confirmation seed 20261012101: morning 452 nm 1.667361 - evening SuperChamp76 1.531709 = gain 0.135653 pp
+confirmation seed 20261012102: morning 452 nm 1.667859 - evening SuperChamp76 1.531772 = gain 0.136087 pp
+Traceback (most recent call last):
+  File "C:\Users\Fabien\AppData\Local\Temp\bm_harness\fresh_stats.py", line 37, in <module>
+    s = json.loads((morning_cases / f"case_{case:06d}" / "summary.json").read_text(encoding="utf-8"))
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\pathlib\__init__.py", line 787, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\pathlib\__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\Fabien\\AppData\\Local\\Temp\\bm_replay\\study\\reports\\strat70_lambda4_2026-10-18\\attempt_01\\case_000141\\summary.json'
+confirmation seed 20261012101 (case 131): morning 452 nm 1.667361 - evening SuperChamp76 1.531709 = gain 0.135653 pp
+confirmation seed 20261012102 (case 136): morning 452 nm 1.667859 - evening SuperChamp76 1.531772 = gain 0.136087 pp
+confirmation seed 20261012103 (case 141): morning 452 nm 1.668353 - evening SuperChamp76 1.530800 = gain 0.137553 pp
+announced per-seed SEEL P95 at 0.05 (9 seeds): min 0.455881 max 0.471982 mean 0.462528 sd 0.005046
+announced per-seed RMSE P95 at 0.05 (9 seeds): min 1.593638 max 1.602704 mean 1.597245 sd 0.002892
+452 nm holdout-1 replay noise 0.025: completed 3000/3000 mean 1.650169 P95 1.855245 SEEL P95 0.815823
+452 nm holdout-1 replay noise 0.05: completed 3000/3000 mean 1.669063 P95 1.868813 SEEL P95 0.831854
+452 nm holdout-1 replay noise 0.1: completed 3000/3000 mean 1.751648 P95 2.006217 SEEL P95 0.980493
+holdout-1 gain at 0.05 with the replayed 452 nm: mean 0.138143 pp (announced 1.682468 - 1.530920 = 0.151548); P95 0.273728; SEEL P95 0.372843 nm

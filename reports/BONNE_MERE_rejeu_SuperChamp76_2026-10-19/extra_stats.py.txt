@@ -1,0 +1,15 @@
+import json, sys
+import numpy as np
+D = sys.argv[1]
+ann = json.load(open(D + "/resultats_superchamp76.json", encoding="utf-8"))
+idx = json.load(open(D + "/preuves_appariees_452nm_index.json", encoding="utf-8"))
+conf = {row["seed"]: row["levels"][1] for row in ann["cohorts"]["CONFIRMATION_12101_103"]["per_seed"]}
+for c in idx["cases"]:
+    s = c["summary"]
+    if s["common_wavelength_nm"] == 452:
+        m = s["noise_results"][1]["target_rmse_mean_pp"]
+        print(f"confirmation seed {s['seed']} (case {s['evaluation']}): morning 452 nm {m:.6f} - evening SuperChamp76 {conf[s['seed']]['target_rmse_mean_pp']:.6f} = gain {m - conf[s['seed']]['target_rmse_mean_pp']:.6f} pp")
+seel = [(cohort, row["seed"], row["levels"][1]["seel_p95_nm"], row["levels"][1]["target_rmse_p95_pp"]) for cohort, d in ann["cohorts"].items() for row in d["per_seed"]]
+s = np.array([x[2] for x in seel]); p = np.array([x[3] for x in seel])
+print(f"announced per-seed SEEL P95 at 0.05 (9 seeds): min {s.min():.6f} max {s.max():.6f} mean {s.mean():.6f} sd {s.std(ddof=1):.6f}")
+print(f"announced per-seed RMSE P95 at 0.05 (9 seeds): min {p.min():.6f} max {p.max():.6f} mean {p.mean():.6f} sd {p.std(ddof=1):.6f}")

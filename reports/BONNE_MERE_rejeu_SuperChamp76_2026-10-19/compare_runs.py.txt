@@ -1,0 +1,50 @@
+"""Compare a replay (rejeu_plan.py output) with saved per-draw arrays and/or announced statistics.
+
+Usage: python -X utf8 compare_runs.py RUN_DIR [--proofs NPZ --case N] [--announced JSON --seed SEED]
+"""
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+
+import numpy as np
+
+ap = argparse.ArgumentParser()
+ap.add_argument("run")
+ap.add_argument("--proofs")
+ap.add_argument("--case", type=int)
+ap.add_argument("--announced")
+ap.add_argument("--seed", type=int)
+a = ap.parse_args()
+run = Path(a.run)
+mine = np.load(run / "component_scores.npz")
+summary = json.loads((run / "summary.json").read_text(encoding="utf-8"))
+print(f"run {run.name}: strategy {summary['strategy_id']} seed {summary['seed']} runs {summary['runs_per_noise']} "
+      f"threads {summary['engine']['numba_active_threads_at_run']} layer {summary['engine']['threading_layer']} "
+      f"head {summary['engine']['git_head'][:8]} clean {summary['engine']['certus_tree_clean']} seconds {summary['seconds']}")
+for r in summary["noise_results"]:
+    print(f"  mine  noise {r['noise_pp']:<5} done {r['completed']}/{r['runs']} fail {r['failures']}  mean {r['target_rmse_mean_pp']!r}  "
+          f"p95 {r['target_rmse_p95_pp']!r}  seelP95 {r['seel_p95_nm']!r}")
+
+if a.proofs:
+    ref = np.load(a.proofs)
+    for i in range(3):
+        v0, v1 = ref[f"case{a.case}_noise{i}_valid"], mine[f"valid_{i}"]
+        line = [f"  draws noise#{i}: valid equal {np.array_equal(v0, v1)}"]
+        for k_ref, k_mine in (("target_rmse_pp", "target_rmse_pp"), ("seel_nm", "seel_nm")):
+            x0, x1 = ref[f"case{a.case}_noise{i}_{k_ref}"], mine[f"{k_mine}_{i}"]
+            both = v0 & v1
+            same_bits = int(np.sum(x0[both].view(np.int64) == x1[both].view(np.int64)))
+            diff = float(np.max(np.abs(x0[both] - x1[both]))) if both.any() else float("nan")
+            line.append(f"{k_ref}: {same_bits}/{int(both.sum())} bit-identical, max |diff| {diff:.3e}")
+        print(" | ".join(line))
+
+if a.announced:
+    ann = json.loads(Path(a.announced).read_text(encoding="utf-8"))
+    for cohort, data in ann["cohorts"].items():
+        for row in data["per_seed"]:
+            if row["seed"] == a.seed:
+                for lv in row["levels"]:
+                    print(f"  announced {cohort} seed {a.seed} noise {lv['noise_pp']:<5} done {lv['completed']} fail {lv['failures']}  "
+                          f"mean {lv['target_rmse_mean_pp']!r}  p95 {lv['target_rmse_p95_pp']!r}  seelP95 {lv.get('seel_p95_nm')!r}")

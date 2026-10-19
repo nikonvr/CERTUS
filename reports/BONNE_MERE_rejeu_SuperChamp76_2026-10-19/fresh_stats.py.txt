@@ -1,0 +1,39 @@
+"""Place the fresh-seed replay among the announced seeds, and measure the paired gain over the 452 nm plan."""
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+import numpy as np
+
+runs, announced_path, morning_cases = Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3])
+ann = json.loads(announced_path.read_text(encoding="utf-8"))
+NOISE_INDEX = {0.025: 0, 0.05: 1, 0.1: 2}
+for noise, i in NOISE_INDEX.items():
+    per_seed = []
+    for cohort, data in ann["cohorts"].items():
+        for row in data["per_seed"]:
+            lv = row["levels"][i]
+            assert lv["noise_pp"] == noise
+            per_seed.append((cohort, row["seed"], lv["target_rmse_mean_pp"], lv["seel_p95_nm"], lv["failures"]))
+    means = np.array([p[2] for p in per_seed])
+    sc = np.load(runs / "sc76_s20261019401" / "component_scores.npz")
+    v4 = np.load(runs / "v452_s20261019401" / "component_scores.npz")
+    valid = sc[f"valid_{i}"] & v4[f"valid_{i}"]
+    x_sc, x_4 = sc[f"target_rmse_pp_{i}"][sc[f"valid_{i}"]], v4[f"target_rmse_pp_{i}"][v4[f"valid_{i}"]]
+    d = v4[f"target_rmse_pp_{i}"][valid] - sc[f"target_rmse_pp_{i}"][valid]
+    se_draw = x_sc.std(ddof=1) / np.sqrt(len(x_sc))
+    print(f"noise {noise}: announced per-seed means of SuperChamp76 (9 seeds): min {means.min():.6f} max {means.max():.6f} "
+          f"mean {means.mean():.6f} sd {means.std(ddof=1):.6f}")
+    print(f"   fresh seed 20261019401: SuperChamp76 mean {x_sc.mean():.6f} (SE of a 1000-draw mean {se_draw:.6f}), "
+          f"z vs the 9-seed mean {(x_sc.mean() - means.mean()) / means.std(ddof=1):+.2f} seed-sd; "
+          f"completed {int(sc[f'valid_{i}'].sum())}/{len(sc[f'valid_{i}'])}")
+    print(f"   paired 452 nm - SuperChamp76 on the same draws: mean gain {d.mean():.6f} pp (SE {d.std(ddof=1) / np.sqrt(len(d)):.6f}), "
+          f"SuperChamp76 better on {int((d > 0).sum())}/{len(d)} draws; 452 nm mean {x_4.mean():.6f}, completed {int(v4[f'valid_{i}'].sum())}")
+# announced paired gain on the confirmation seeds: morning 452 nm cases (131, 136, 141) vs evening SuperChamp76
+conf = {row["seed"]: row["levels"][1]["target_rmse_mean_pp"] for row in ann["cohorts"]["CONFIRMATION_12101_103"]["per_seed"]}
+for case in (131, 136, 141):
+    s = json.loads((morning_cases / f"case_{case:06d}" / "summary.json").read_text(encoding="utf-8"))
+    m452 = s["noise_results"][1]["target_rmse_mean_pp"]
+    print(f"confirmation seed {s['seed']}: morning 452 nm {m452:.6f} - evening SuperChamp76 {conf[s['seed']]:.6f} = gain {m452 - conf[s['seed']]:.6f} pp")

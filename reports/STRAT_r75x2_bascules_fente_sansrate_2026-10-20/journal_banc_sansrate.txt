@@ -1,0 +1,101 @@
+composant r75x2 | mode deep | graine 77 | require_turning_point=0 | fente 2 nm | elargi 0 | machine AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD | 16 threads
+dialogues: reponse automatique OUI
+  surcharges [sansrate] : {'allow_rate': False, 'elite_rate_moves': False, 'rate_rescue': False}
+WAIT_EXIT=finished
+
+consigne dans reports\blocs_vs_plantage_r75x2_deep_s077_sansrate.json
+
+444 strategies evaluees.
+
+ n_blocs  OFFERTES  plantage moy  plantage min  deposables  meilleur score
+--------------------------------------------------------------------------
+       1        13       100.00%       100.00%           0             nan
+       2        27       100.00%       100.00%           0             nan
+       3        27       100.00%       100.00%           0             nan
+       4        27       100.00%       100.00%           0             nan
+       5        26       100.00%       100.00%           0             nan
+       6        27       100.00%       100.00%           0             nan
+       7        26       100.00%       100.00%           0             nan
+       8        27       100.00%       100.00%           0             nan
+       9        26       100.00%       100.00%           0             nan
+      10        35       100.00%       100.00%           0             nan
+      11        40       100.00%       100.00%           0             nan
+      12        39       100.00%       100.00%           0             nan
+      13        44       100.00%       100.00%           0             nan
+      14        41       100.00%       100.00%           0             nan
+      15        18       100.00%       100.00%           0             nan
+      75         1       100.00%       100.00%           0             nan
+
+zone favorable 4-7 blocs (§24-44) : 106 strategies offertes sur 444 (23.9 %)
+  deposables dans la zone : 0 / 106
+
+==========================================================================
+LA FENTE CHANGE-T-ELLE L'ISSUE, ET A QUELLE LARGEUR ?
+==========================================================================
+
+  une seule fente presente : 2.0 nm -- la recherche de fente est INACTIVE.
+
+==========================================================================
+UNE COUCHE RESTE-T-ELLE CONTRAINTE POUR TOUTES LES STRATEGIES ?
+==========================================================================
+
+  cause « fabricated » : 75 couches contraintes au moins une fois, 40 contraintes par les 444 strategies
+     couche  MEILLEURE marge     pire   mediane
+         19           0.830A   0.006A    0.830A
+         21           0.830A   0.830A    0.830A
+         24           0.830A   0.830A    0.830A
+         27           0.830A   0.070A    0.830A
+         31           0.830A   0.124A    0.830A
+         33           0.830A   0.026A    0.830A
+         34           0.830A   0.036A    0.830A
+         35           0.830A   0.141A    0.830A
+         38           0.830A   0.043A    0.830A
+         40           0.830A   0.030A    0.830A
+         42           0.830A   0.032A    0.830A
+         46           0.830A   0.161A    0.830A
+    🔴 CONTRAINTE COMMUNE AUX 444 STRATEGIES : couche 19, plus grande sur les 444 strategies.
+       Aucune strategie ne la rend sereine, et toutes doivent la deposer.
+
+  cause « level » : 74 couches contraintes au moins une fois, 22 contraintes par les 444 strategies
+     couche  MEILLEURE marge     pire   mediane
+         63        -192.819A -1979.659A -1192.904A
+         69        -155.165A -2085.965A -1282.359A
+         73        -139.003A -1902.609A -1070.861A
+         47         -98.196A -1870.945A -1756.096A
+         45         -91.617A -2089.451A -949.210A
+         55         -86.820A -1904.562A -1898.022A
+         67         -84.806A -1894.059A -1623.015A
+         71         -83.827A -1979.410A -1185.031A
+         61         -82.158A -1848.233A -1199.590A
+         65         -74.370A -1904.523A -844.314A
+         49         -70.586A -1868.744A -1273.293A
+         68         -58.785A -1830.686A -680.118A
+    🔴 CONTRAINTE COMMUNE AUX 444 STRATEGIES : couche 63, plus grande sur les 444 strategies.
+       Aucune strategie ne la rend sereine, et toutes doivent la deposer.
+
+  cause « missed » : 73 couches contraintes au moins une fois, 29 contraintes par les 444 strategies
+     couche  MEILLEURE marge     pire   mediane
+         74           0.087A   0.000A    0.006A
+         67           0.088A   0.000A    0.009A
+         66           0.112A   0.000A    0.007A
+         63           0.113A   0.000A    0.017A
+         62           0.114A   0.000A    0.009A
+         69           0.121A   0.000A    0.006A
+         65           0.137A   0.000A    0.006A
+         71           0.150A   0.000A    0.006A
+         70           0.167A   0.000A    0.006A
+         61           0.174A   0.000A    0.009A
+         68           0.205A   0.000A    0.009A
+         73           0.214A   0.000A    0.007A
+    🔴 CONTRAINTE COMMUNE AUX 444 STRATEGIES : couche 74, plus grande sur les 444 strategies.
+       Aucune strategie ne la rend sereine, et toutes doivent la deposer.
+
+  couche CRITIQUE la plus fréquente sur 444 strategies :
+      225 fois ( 50.7 %)  couche 55 / niveau d'arret hors d'atteinte
+       40 fois (  9.0 %)  couche 35 / niveau d'arret hors d'atteinte
+       39 fois (  8.8 %)  couche 47 / niveau d'arret hors d'atteinte
+       22 fois (  5.0 %)  couche 41 / niveau d'arret hors d'atteinte
+       22 fois (  5.0 %)  couche 73 / niveau d'arret hors d'atteinte
+       15 fois (  3.4 %)  couche 69 / niveau d'arret hors d'atteinte
+       13 fois (  2.9 %)  couche 71 / niveau d'arret hors d'atteinte
+       12 fois (  2.7 %)  couche 67 / niveau d'arret hors d'atteinte

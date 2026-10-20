@@ -1,0 +1,13 @@
+import json, os
+V = os.path.join(os.environ["TEMP"], "r75", "val")
+plans = {"winner": json.load(open(os.path.join(V, "winner_flipx2.json")))}
+p = os.path.join(V, "refined_flipx2.json")
+if os.path.exists(p):
+    plans["flips"] = json.load(open(p))
+jobs = []
+for name, plan in plans.items():
+    for res in (2.0, 1.0, 0.5):
+        q = dict(plan, monochromator_resolution_nm=res)
+        for s in (20261020801, 20261020802, 20261020803):
+            jobs.append(dict(name=f"{name}_r{res}_s{s}", plan=q, seed=s, runs=1000, override={"monochromator_resolution_nm": res}, save=True))
+json.dump(jobs, open(os.path.join(V, "jobs_slit_x2.json"), "w")); print(len(jobs), "slit jobs")

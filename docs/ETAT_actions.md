@@ -69,17 +69,6 @@ quand rien ne progresse ; la recherche des paquets est une escalade qui n'a peut
 paquets de Rate du meilleur plan. Si les largeurs de fenêtre (`ELITE_RATE_WINDOWS`) ou le pas (`ELITE_RATE_STEP`) méritent un balayage, en faire des
 paramètres **inactifs par défaut** (chemin d'avant identique) avant de les mesurer. *Ne pas* : changer un défaut sans 👤.
 
-**A6 — Le modèle de Rate sans dérive de la source** (le sujet scientifique central ; **ne pas commencer sans la valeur de 👤**). *Pourquoi* : tous les SEEL
-des plans Rate supposent une vitesse constante pendant le dépôt (`certus/physics/certus_strat_growth.py`, « RATE MODE ») ; 👤 observe en salle ±1 à 2 %
-(§6, A25) et de bons plans en paquets alternés. Le modèle ne peut ni confirmer ni infirmer ce qui vient de la salle. *Faire* : (1) **demander à 👤** la
-dérive ou l'instabilité de la vitesse pendant un dépôt (relative, par couche ou par run, et comment elle a été observée) ; ne pas l'inventer ; (2) ajouter un
-paramètre **inactif par défaut** qui perturbe l'épaisseur des couches Rate (tirage fonction pure de la graine, du tirage et de l'indice physique,
-`_seeded_noise_sample` de `certus/physics/certus_strat_math.py`, jamais de la stratégie : C2), sur le modèle de `stop_model_flags`
-(`certus/physics/certus_strat_readings.py`) et de `tests/unit/test_strat_stop_model_is_the_decided_one.py` ; `python scripts\c1_diff.py HEAD` doit rendre « C1 TENU »
-avant de committer ; (3) refaire `r75x0.5` (graine 101), le juge de paix et `r75x2` (graine 101) avec la dérive de 👤 divisée par 3, telle quelle et multipliée par 3,
-et comparer la forme du meilleur plan (queue, paquets alternés, optique pur). *Fini quand* : le tableau, le rapport, le §6 mis à jour. *Ne pas* : activer par
-défaut ; conclure sur une seule graine.
-
 **A7 — Proposer les corrections de la vitrine `pages/CERTUS_STRAT.html`, sans l'éditer** (2 h). *Pourquoi* : la vitrine suit un régime strict (CLAUDE.md §10) : 👤
 la relit avant qu'on la touche. Ses §10.18 et §10.19 citent les chiffres d'août ; ses déposables de `r75x2` sans rampes sont invalidés par D106 ; elle dit que le Rate
 est « offert mais jamais choisi » à ×1,5, ×1,75 et ×2 (« zero out of 1510 »), ce qui n'est plus vrai à `r75x2` aux défauts de production (tous les plans

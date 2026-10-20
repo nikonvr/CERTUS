@@ -5,7 +5,7 @@
 > [`CLAUDE.md`](../CLAUDE.md). Il se tient **en place** : un fait change, on corrige sa ligne,
 > on ne raconte pas la correction (`git log` s'en charge). Toute mesure porte sa date.
 > Le détail et l'historique sont dans `git`, sans autorité (CLAUDE.md, en-tête).
-> Mis à jour le 2026-10-18.
+> Mis à jour le 2026-10-20.
 
 ## 0. Reprise — à lire en premier, à tenir à jour
 
@@ -14,7 +14,7 @@
 > antérieures dans [`ETAT_acquis.md`](ETAT_acquis.md) ; preuves dans `reports/` (le `bilan.md` d'un dossier) ;
 > registre des audits, un constat par ligne : [`AUDITS.md`](AUDITS.md) (`grep -n "ALG-02" docs/AUDITS.md`).
 
-**Bonne Mère (2026-10-19).** Meilleur plan mesuré et chemin vers l'optimum : [`studies/bonne_mere/README.md`](../studies/bonne_mere/README.md) (21 couches Rate, SEEL P95 0,446 nm au bruit 0,05, 0 arrêt). Dérive de la source non modélisée (A6). Défaut ouvert de STRAT : l'hystérésis du comptage des points tournants suit le bruit ; à bruit faible, la fente fabrique des extrema ([phase 1](../reports/BONNE_MERE_phase1_budget_SuperChamp76_2026-10-19/bilan.md)).
+**Bonne Mère (2026-10-19).** Meilleur plan mesuré et chemin vers l'optimum : [`studies/bonne_mere/README.md`](../studies/bonne_mere/README.md) (21 couches Rate, SEEL P95 0,446 nm au bruit 0,05, 0 arrêt). Dérive de la source non modélisée. Défaut ouvert de STRAT : l'hystérésis du comptage des points tournants suit le bruit ; à bruit faible, la fente fabrique des extrema ([phase 1](../reports/BONNE_MERE_phase1_budget_SuperChamp76_2026-10-19/bilan.md)).
 
 **STRAT sur r75 (2026-10-20).** `strat_local_search` (recherche locale appariée du mode et de la λ, cherchée à ±0,010 d'indice) est actif par défaut et `tp_hysteresis_floor` vaut 0,000415, sur décision de 👤 ; banc deep, graine 77 : 0,2515 → 0,2080, 0,4363 → 0,3561, 0,5441 → 0,5032 nm ([rapport](../reports/STRAT_r75_leviers_bonne_mere_2026-10-20/bilan.md)). Validation complète non refaite après la réexportation du plancher par la façade ; A10 à lancer.
 
@@ -32,14 +32,14 @@ régression (`tests/unit/test_the_architecture_debt_only_shrinks.py` ne tourne p
 1. D98 : l'attente sans fin (défaut) ou l'arrêt tardif (`oms_arming=1`) — chiffres au §3 et dans `reports/STRAT_modele_d_arret_D96_D98_2026-10-12.md`.
 2. `elite_rate_moves` : garder actif (défaut actuel) ou le désarmer (`False`, ou `git revert 978b8f04`) — les mesures de A2 sont résumées dans `ETAT_acquis.md` (« Acquis du Rate »).
 3. `rate_rescue_hard` : inactif, mesuré sans gain (35 plans déposables sur 410) — le garder ou le retirer.
-4. Le Rate et l'optique pure (§5, A4 de `ETAT_actions.md`) ; la valeur de la dérive du Rate (A6 de `ETAT_actions.md`) ; D71 (2) ; l'information D69 (changement de définition d'un indicateur).
+4. Le Rate et l'optique pure (§5, A4 de `ETAT_actions.md`) ; D71 (2) ; l'information D69 (changement de définition d'un indicateur).
 5. Toute poussée (`git push`), toute fusion de la PR #9, toute modification de la vitrine.
 
 ## 1. Où en sont les programmes
 
 | programme | état | prochaine action |
 |---|---|---|
-| **Calcul (STRAT)** | composant étalon : l'aléatoire ×2 (`r75x2`) à la fente de 2 nm. Sans rampes, aucun plan optique pur n'est déposable une fois D106 corrigé (graines 101 et 42, 2026-10-12) ; avec les défauts de production (secours Rate), tous les plans de la liste le sont, au modèle de Rate de STRAT (§2). La voie à rampes de la configuration livrée (mesurée avant D106) est à refaire | A3 à A6 ([`ETAT_actions.md`](ETAT_actions.md)) |
+| **Calcul (STRAT)** | composant étalon : l'aléatoire ×2 (`r75x2`) à la fente de 2 nm. Sans rampes, aucun plan optique pur n'est déposable une fois D106 corrigé (graines 101 et 42, 2026-10-12) ; avec les défauts de production (secours Rate), tous les plans de la liste le sont, au modèle de Rate de STRAT (§2). La voie à rampes de la configuration livrée (mesurée avant D106) est à refaire | A3 à A5 ([`ETAT_actions.md`](ETAT_actions.md)) |
 | **RE** | indices tabulés lus en n − ik depuis R148 (2026-10-05) : tout RE antérieur fait sur des indices absorbants en incidence oblique est à refaire ; un indice demandé hors de sa table est prolongé par une constante, avec un avertissement (ex-D86, `dec73219`, 2026-10-05) | — |
 | **Base de dépôts** | 140 monocouches mesurées au Photon RT (`example/database_depots/`, importées le 2026-10-11 par `scripts\importer_base_depots.py`) ; la voie (T ou R) se lit dans la géométrie du détecteur, le mode manuel déclarant « Transmittance » quoi qu'il mesure. INDEX les charge par « Deposit database… ». Onze ajustements certifiés de l'application autonome, dont le spectre est un dépôt de la base, servent de références (`references_index.json`) ; `scripts\bench_base_depots.py` y confronte INDEX. Banc du 2026-10-12 (11 références × 3 exécutions, `reports/BASE_DEPOTS_banc_INDEX_2026-10-12.md`) : neuf références sur onze à moins de 2,0 % d'épaisseur de la référence, deux non retrouvées (`mesures-c1b-sio2`, −49 %, et `sb2s3-silice`, −3,85 %), cause non cherchée. RE ne la lit pas : il lui faut un classeur complet | instruire les deux échecs ; choix de 👤 (§5) |
 | **Exécutable gelé** | sur la couche OpenMP depuis `31745571` (D87), sans les outils de développement depuis `5ccaa210` (411 Mo) ; construit à `dbec2fc1` le 2026-10-06, hub et modules contrôlés au démarrage, et 👤 y a calculé : « l'exécutable fonctionne ». Les licences de ce qu'il embarque le suivent (`licenses/`) | A8 (D72, [`ETAT_actions.md`](ETAT_actions.md)) |
@@ -59,7 +59,7 @@ régression (`tests/unit/test_the_architecture_debt_only_shrinks.py` ne tourne p
 | aléatoire `JSON-strat-random75`, 75 couches | **0,272 nm** | 0 % | une campagne, 241 déposables sur 662 |
 | passe-bande 5 cavités, 99 couches | **0,81 nm** | 0 % par campagne | 4 verres témoins, partition 0-22 / 22-42 / 42-76 / 76-99 |
 | le même en une seule campagne, mesure d'avant le secours Rate | aucun score valide | 100 % | 487 stratégies, toutes plantent : non fabricable |
-| le même en une seule campagne, défauts de production du 2026-10-16 (`0c7c1e2e`) | **0,7026 nm** (graine 42), 0,6559 nm (graine 101) | 0 % | `premium`, un seul verre témoin, `scripts/probe_blocs_vs_plantage.py 99c premium 0 0 2 0 <graine>`, consensus 41/42/43 : toutes les stratégies déposables (4 761 et 4 470) ; meilleur plan de queue (Rate de L11 ou L10 à L99, optique avant). SEEL du meilleur plan d'une graine de recherche, non comparable à la moyenne de trois graines de la ligne 0,81 nm ; modèle de Rate sans dérive de vitesse (A6) ; sans groupe frais. `reports/STRAT_99c_rate_elargi_2026-10-16/bilan.md` |
+| le même en une seule campagne, défauts de production du 2026-10-16 (`0c7c1e2e`) | **0,7026 nm** (graine 42), 0,6559 nm (graine 101) | 0 % | `premium`, un seul verre témoin, `scripts/probe_blocs_vs_plantage.py 99c premium 0 0 2 0 <graine>`, consensus 41/42/43 : toutes les stratégies déposables (4 761 et 4 470) ; meilleur plan de queue (Rate de L11 ou L10 à L99, optique avant). SEEL du meilleur plan d'une graine de recherche, non comparable à la moyenne de trois graines de la ligne 0,81 nm ; modèle de Rate sans dérive de vitesse ; sans groupe frais. `reports/STRAT_99c_rate_elargi_2026-10-16/bilan.md` |
 | le même, profil élargi (`elite_rate_max_candidates=240`, `elite_rounds=6`, `elite_rate_joint_candidates=480`, `rate_post_refinement=True`) | **0,6084 nm** (graine 42), 0,6067 nm (graine 101) | 0 % | 6 302 déposables sur 6 338 et 5 989 sur 5 989 ; score de consensus −26,2 % et −23,2 % contre les défauts, SEEL −13,4 % et −7,5 % ; le raffinement final n'y compte que pour −0,89 % (graine 42) et 0 (graine 101). Exploratoire, hors protocole de campagne, non confirmé |
 | le même, budget Rate 240 seul, puis avec six tours | **0,6495 nm**, puis 0,6426 nm (graine 42) | 0 % | scores de consensus −15,9 % et −17,7 % contre les défauts (le profil élargi avec raffinement : −26,2 %) ; 4 827 et 5 378 stratégies, toutes déposables ; une graine, un chemin de décomposition. `reports/STRAT_99c_isolation_leviers_2026-10-17/bilan.md` |
 | aléatoire ×2 `r75x2`, fente native 1 nm | **0,6248 nm** | 0 % | `deep`, pur optique, 277 déposables ; mesuré avant D106 : à refaire |

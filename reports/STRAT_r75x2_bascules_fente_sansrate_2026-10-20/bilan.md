@@ -42,11 +42,12 @@ Surcharges `allow_rate=false,elite_rate_moves=false,rate_rescue=false`, banc dee
 
 - **444 stratégies sur 444 éliminées** par les arrêts. La couche critique est la 55 dans 51 % des cas, avec la cause
   « niveau d'arrêt hors d'atteinte ».
-- Sur la meilleure stratégie, le taux d'arrêt vaut 100 % au bruit 0,025, 100 % à 0,05 et **77 % à 0,10**. Les arrêts
-  diminuent quand le bruit augmente : c'est la signature du défaut de comptage des points tournants à bruit faible,
-  pas une limite physique.
-- Conclusion provisoire : on n'a pas de plan tout-optique déposable **avec l'hystérésis actuelle**. Le banc qui
-  l'éprouve, avec `tp_hysteresis_floor=0.000415`, est en file.
+- Sur la meilleure stratégie, le taux d'arrêt vaut 100 % au bruit 0,025, 100 % à 0,05 et 77 % à 0,10.
+- Le même banc avec `tp_hysteresis_floor=0.000415` rend les 444 stratégies **identiques au bit** (scores et taux
+  d'arrêt ; journal `journal_banc_sansrate_plancher.txt`). Ce plancher vaut l'hystérésis du niveau le plus bas (1,66 × 0,025 / 100) : il n'agit pas aux niveaux
+  standard. La cause des arrêts est un niveau d'arrêt hors d'atteinte (couche 55, marge −1 557 Å), pas un mauvais
+  comptage des points tournants. Pourquoi les arrêts diminuent quand le bruit augmente : non instruit.
+- Conclusion : r75x2 n'a pas de plan tout-optique déposable dans le modèle.
 
 ## Ce qu'on en tire pour STRAT
 

@@ -1,0 +1,21 @@
+== r75x2: 8 search candidates [(0, 450, -9.9), (2, 450, -9.9), (1, 450, -9.5), (3, 450, -9.3), (10, 455, -6.1), (13, 455, -4.0), (5, 685, -2.4), (9, 715, -2.1)]
+   select L0_450: dRMSE2 -10.8 % (+-0.4), stops 0 vs 0, score 0.06576 vs 0.06984 -> kept
+   select L2_450: dRMSE2 -11.0 % (+-0.4), stops 0 vs 0, score 0.06533 vs 0.06984 -> kept
+   select L1_450: dRMSE2 -10.6 % (+-0.4), stops 0 vs 0, score 0.06534 vs 0.06984 -> kept
+   select L3_450: dRMSE2 -9.0 % (+-0.4), stops 0 vs 0, score 0.06621 vs 0.06984 -> kept
+   select L10_455: dRMSE2 -7.9 % (+-0.5), stops 0 vs 0, score 0.06945 vs 0.06984 -> kept
+   select L13_455: dRMSE2 -3.8 % (+-0.5), stops 0 vs 0, score 0.06812 vs 0.06984 -> kept
+   select L5_685: dRMSE2 -2.7 % (+-0.3), stops 0 vs 0, score 0.06842 vs 0.06984 -> kept
+   select L9_715: dRMSE2 -2.9 % (+-0.6), stops 0 vs 0, score 0.06902 vs 0.06984 -> kept
+   combine +L2_450: dRMSE2 -11.0 % vs current, stops 0 vs 0, score 0.06533 vs 0.06984 -> added
+   combine +L0_450: dRMSE2 +0.2 % vs current, stops 0 vs 0, score 0.06536 vs 0.06533 -> skipped
+   combine +L1_450: dRMSE2 +0.8 % vs current, stops 0 vs 0, score 0.06589 vs 0.06533 -> skipped
+   combine +L3_450: dRMSE2 +1.8 % vs current, stops 0 vs 0, score 0.06606 vs 0.06533 -> skipped
+   combine +L10_455: dRMSE2 +1.0 % vs current, stops 0 vs 0, score 0.06831 vs 0.06533 -> skipped
+   combine +L13_455: dRMSE2 +6.4 % vs current, stops 0 vs 0, score 0.06762 vs 0.06533 -> skipped
+   combine +L9_715: dRMSE2 -3.2 % vs current, stops 0 vs 0, score 0.06539 vs 0.06533 -> skipped
+   combine +L5_685: dRMSE2 -3.0 % vs current, stops 0 vs 0, score 0.06509 vs 0.06533 -> added
+   frozen: 2 changes ['L2_450', 'L5_685']
+   conf: dRMSE2 -13.3 % (SE 0.5 %), stops 0 vs 0, P95 max 0.07208 -> 0.06568, SEEL_strat 0.5370 -> 0.5126 nm
+   hold: dRMSE2 -13.1 % (SE 0.5 %), stops 0 vs 0, P95 max 0.07035 -> 0.06479, SEEL_strat 0.5305 -> 0.5091 nm
+done

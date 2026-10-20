@@ -1,0 +1,42 @@
+== 75c: 20 search candidates [(62, 645, -18.5), (16, 460, -18.4), (45, 575, -13.2), (44, 645, -11.8), (47, 565, -11.3), (39, 465, -10.2), (46, 450, -10.1), (5, 450, -9.5), (3, 450, -8.6), (54, 620, -7.9), (53, 675, -7.8), (4, 450, -7.5), (0, 450, -7.5), (2, 450, -7.4), (10, 450, -7.4), (1, 450, -7.3), (9, 450, -7.2), (6, 450, -6.3), (74, 655, -6.2), (7, 455, -6.2)]
+   select L62_645: dRMSE2 -16.6 % (+-0.6), stops 12 vs 12, score 0.01358 vs 0.01521 -> kept
+   select L16_460: dRMSE2 -16.8 % (+-0.5), stops 12 vs 12, score 0.01374 vs 0.01521 -> kept
+   select L45_575: dRMSE2 -12.9 % (+-0.5), stops 12 vs 12, score 0.01377 vs 0.01521 -> kept
+   select L44_645: dRMSE2 -11.9 % (+-0.5), stops 12 vs 12, score 0.01423 vs 0.01521 -> kept
+   select L47_565: dRMSE2 -11.5 % (+-0.4), stops 12 vs 12, score 0.01410 vs 0.01521 -> kept
+   select L39_465: dRMSE2 -10.6 % (+-0.4), stops 13 vs 12, score 0.01446 vs 0.01521 -> dropped
+   select L46_450: dRMSE2 -9.6 % (+-0.3), stops 12 vs 12, score 0.01435 vs 0.01521 -> kept
+   select L5_450: dRMSE2 -9.2 % (+-0.2), stops 15 vs 12, score 0.01448 vs 0.01521 -> dropped
+   select L3_450: dRMSE2 -8.2 % (+-0.2), stops 11 vs 12, score 0.01454 vs 0.01521 -> kept
+   select L54_620: dRMSE2 -7.6 % (+-0.3), stops 12 vs 12, score 0.01452 vs 0.01521 -> kept
+   select L53_675: dRMSE2 -7.4 % (+-0.3), stops 12 vs 12, score 0.01458 vs 0.01521 -> kept
+   select L4_450: dRMSE2 -7.5 % (+-0.2), stops 12 vs 12, score 0.01451 vs 0.01521 -> kept
+   select L0_450: dRMSE2 -6.9 % (+-0.2), stops 12 vs 12, score 0.01459 vs 0.01521 -> kept
+   select L2_450: dRMSE2 -7.1 % (+-0.2), stops 12 vs 12, score 0.01456 vs 0.01521 -> kept
+   select L10_450: dRMSE2 -6.8 % (+-0.2), stops 12 vs 12, score 0.01463 vs 0.01521 -> kept
+   select L1_450: dRMSE2 -6.9 % (+-0.2), stops 12 vs 12, score 0.01451 vs 0.01521 -> kept
+   select L9_450: dRMSE2 -6.7 % (+-0.2), stops 12 vs 12, score 0.01467 vs 0.01521 -> kept
+   select L6_450: dRMSE2 -6.8 % (+-0.2), stops 15 vs 12, score 0.01458 vs 0.01521 -> dropped
+   select L74_655: dRMSE2 -5.9 % (+-0.2), stops 12 vs 12, score 0.01489 vs 0.01521 -> kept
+   select L7_455: dRMSE2 -5.6 % (+-0.2), stops 11 vs 12, score 0.01461 vs 0.01521 -> kept
+   combine +L16_460: dRMSE2 -16.8 % vs current, stops 12 vs 12, score 0.01374 vs 0.01521 -> added
+   combine +L62_645: dRMSE2 -12.4 % vs current, stops 12 vs 12, score 0.01273 vs 0.01374 -> added
+   combine +L45_575: dRMSE2 -3.1 % vs current, stops 12 vs 12, score 0.01239 vs 0.01273 -> added
+   combine +L44_645: dRMSE2 -1.1 % vs current, stops 12 vs 12, score 0.01233 vs 0.01239 -> added
+   combine +L47_565: dRMSE2 +1.8 % vs current, stops 12 vs 12, score 0.01260 vs 0.01233 -> skipped
+   combine +L46_450: dRMSE2 +5.1 % vs current, stops 12 vs 12, score 0.01270 vs 0.01233 -> skipped
+   combine +L3_450: dRMSE2 -3.0 % vs current, stops 11 vs 12, score 0.01218 vs 0.01233 -> added
+   combine +L54_620: dRMSE2 +4.9 % vs current, stops 11 vs 11, score 0.01240 vs 0.01218 -> skipped
+   combine +L4_450: dRMSE2 -2.0 % vs current, stops 12 vs 11, score 0.01205 vs 0.01218 -> skipped
+   combine +L53_675: dRMSE2 +15.8 % vs current, stops 11 vs 11, score 0.01322 vs 0.01218 -> skipped
+   combine +L2_450: dRMSE2 +0.2 % vs current, stops 1804 vs 11, score inf vs 0.01218 -> skipped
+   combine +L0_450: dRMSE2 -0.1 % vs current, stops 12 vs 11, score 0.01216 vs 0.01218 -> skipped
+   combine +L1_450: dRMSE2 +0.5 % vs current, stops 11 vs 11, score 0.01217 vs 0.01218 -> skipped
+   combine +L10_450: dRMSE2 +0.4 % vs current, stops 12 vs 11, score 0.01216 vs 0.01218 -> skipped
+   combine +L9_450: dRMSE2 +0.2 % vs current, stops 11 vs 11, score 0.01218 vs 0.01218 -> skipped
+   combine +L74_655: dRMSE2 -5.4 % vs current, stops 11 vs 11, score 0.01195 vs 0.01218 -> added
+   combine +L7_455: dRMSE2 -1.3 % vs current, stops 10 vs 11, score 0.01181 vs 0.01195 -> added
+   frozen: 7 changes ['L16_460', 'L62_645', 'L45_575', 'L44_645', 'L3_450', 'L74_655', 'L7_455']
+   conf: dRMSE2 -36.4 % (SE 0.9 %), stops 4 vs 5, P95 max 0.01509 -> 0.01183, SEEL_strat 0.2457 -> 0.2175 nm
+   hold: dRMSE2 -36.1 % (SE 0.9 %), stops 12 vs 13, P95 max 0.01494 -> 0.01169, SEEL_strat 0.2444 -> 0.2163 nm
+done

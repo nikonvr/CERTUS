@@ -1,0 +1,50 @@
+{
+ "strategy_id": 900751401,
+ "origin": "ELITE",
+ "blocks": [
+  {
+   "start": 0,
+   "end": 9,
+   "wavelength": 453.0
+  },
+  {
+   "start": 9,
+   "end": 24,
+   "wavelength": 576.0
+  },
+  {
+   "start": 24,
+   "end": 36,
+   "wavelength": 663.0
+  },
+  {
+   "start": 36,
+   "end": 57,
+   "wavelength": 642.0
+  },
+  {
+   "start": 57,
+   "end": 62,
+   "wavelength": 552.0
+  },
+  {
+   "start": 62,
+   "end": 67,
+   "wavelength": 610.0
+  },
+  {
+   "start": 67,
+   "end": 75,
+   "wavelength": 648.0
+  }
+ ],
+ "rate_layers": [
+  8,
+  9,
+  10,
+  36,
+  37
+ ],
+ "witness_reset_layers": [],
+ "monochromator_resolution_nm": 2.0
+}

@@ -1,0 +1,11 @@
+== r75x0.5: 4 search candidates [(35, 695, -16.7), (34, 650, -8.2), (3, 655, -2.6), (4, 570, -2.2)]
+   select L35_695: dRMSE2 -16.7 % (+-1.4), stops 0 vs 0, score 0.03474 vs 0.03997 -> kept
+   select L34_650: dRMSE2 -7.7 % (+-1.1), stops 0 vs 0, score 0.03935 vs 0.03997 -> kept
+   select L3_655: dRMSE2 +6.0 % (+-1.5), stops 0 vs 0, score 0.04172 vs 0.03997 -> dropped
+   select L4_570: dRMSE2 +4.3 % (+-1.3), stops 0 vs 0, score 0.03997 vs 0.03997 -> dropped
+   combine +L35_695: dRMSE2 -16.7 % vs current, stops 0 vs 0, score 0.03474 vs 0.03997 -> added
+   combine +L34_650: dRMSE2 +8.3 % vs current, stops 0 vs 0, score 0.03693 vs 0.03474 -> skipped
+   frozen: 1 changes ['L35_695']
+   conf: dRMSE2 -19.3 % (SE 1.4 %), stops 0 vs 0, P95 max 0.03997 -> 0.03409, SEEL_strat 0.3999 -> 0.3693 nm
+   hold: dRMSE2 -17.5 % (SE 1.3 %), stops 0 vs 0, P95 max 0.03917 -> 0.03395, SEEL_strat 0.3958 -> 0.3685 nm
+done

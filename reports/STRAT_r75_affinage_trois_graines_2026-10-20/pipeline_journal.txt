@@ -1,0 +1,25 @@
+01:10:27 bench 75c_s101
+01:59:47 prep 75c_s101: winner score 0.014845 SEEL 0.2437 nm, blocs 8, Rate 2, scan jobs 4438
+02:41:05 scanned 75c_s101
+02:48:46 refined 75c_s101
+02:48:46 bench r75x0.5_s101
+03:24:28 prep r75x0.5_s101: winner score 0.039346 SEEL 0.3967 nm, blocs 9, Rate 65, scan jobs 605
+03:26:47 scanned r75x0.5_s101
+03:27:38 refined r75x0.5_s101
+03:27:38 bench r75x2_s101
+04:09:57 prep r75x2_s101: winner score 0.071778 SEEL 0.5358 nm, blocs 10, Rate 60, scan jobs 916
+04:13:44 scanned r75x2_s101
+04:16:13 refined r75x2_s101
+04:16:13 bench 75c_s202
+05:07:02 prep 75c_s202: winner score 0.014912 SEEL 0.2442 nm, blocs 7, Rate 5, scan jobs 4266
+05:44:33 scanned 75c_s202
+05:51:49 refined 75c_s202
+05:51:49 bench r75x0.5_s202
+06:27:03 prep r75x0.5_s202: winner score 0.039346 SEEL 0.3967 nm, blocs 10, Rate 65, scan jobs 605
+06:29:07 scanned r75x0.5_s202
+06:30:09 refined r75x0.5_s202
+06:30:09 bench r75x2_s202
+07:14:52 prep r75x2_s202: winner score 0.073213 SEEL 0.5412 nm, blocs 13, Rate 65, scan jobs 605
+07:17:02 scanned r75x2_s202
+07:17:50 refined r75x2_s202
+07:17:50 ALL DONE

@@ -1,0 +1,50 @@
+"""Extract the winner of a bench artefact and build its single-layer wavelength scan.
+
+python -X utf8 prep.py COMP BENCH_SEED TAG SEARCH_SEED
+"""
+import glob
+import json
+import os
+import sys
+
+COMP, BSEED, TAG, SSEED = sys.argv[1], int(sys.argv[2]), sys.argv[3], int(sys.argv[4])
+REPO = r"D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310"
+V = os.path.join(os.environ["TEMP"], "r75", "val")
+files = sorted(glob.glob(os.path.join(REPO, "reports", f"blocs_vs_plantage_{COMP}_deep_s{BSEED:03d}*.json")), key=os.path.getmtime)
+d = json.load(open(files[-1], encoding="utf-8"))
+assert d.get("verdict") == "OK", (files[-1], d.get("verdict"))
+w = sorted((x for x in d["strategies"] if not x.get("crash_eliminated")), key=lambda x: x["score"])[0]
+plan = dict(strategy_id=w["id"], origin=w["origine"], blocks=w["blocs"], rate_layers=w["rate_layers"],
+            witness_reset_layers=w.get("witness_reset_layers") or [], monochromator_resolution_nm=w.get("resolution_nm") or 2.0)
+json.dump(plan, open(os.path.join(V, f"winner_{TAG}.json"), "w"), indent=1)
+
+
+def set_layer(p, k, lam):
+    out = []
+    for b in p["blocks"]:
+        s, e, wl = b["start"], b["end"], float(b["wavelength"])
+        if s <= k < e:
+            if s < k:
+                out.append(dict(start=s, end=k, wavelength=wl))
+            out.append(dict(start=k, end=k + 1, wavelength=float(lam)))
+            if k + 1 < e:
+                out.append(dict(start=k + 1, end=e, wavelength=wl))
+        else:
+            out.append(dict(start=s, end=e, wavelength=wl))
+    q = dict(p)
+    q["blocks"] = out
+    return q
+
+
+n = max(b["end"] for b in plan["blocks"])
+wl = {k: float(b["wavelength"]) for b in plan["blocks"] for k in range(b["start"], b["end"])}
+rate = set(plan["rate_layers"])
+jobs = [dict(name="base", plan=plan, seed=SSEED, runs=300)]
+for k in range(n):
+    if k in rate:
+        continue
+    for lam in range(450, 751, 5):
+        if float(lam) != wl[k]:
+            jobs.append(dict(name=f"L{k}_{lam}", plan=set_layer(plan, k, lam), seed=SSEED, runs=300, meta=dict(layer=k, lam=lam, base_lam=wl[k])))
+json.dump(jobs, open(os.path.join(V, f"jobs_scan_{TAG}.json"), "w"))
+print(f"{TAG}: winner score {w['score']:.6f} SEEL {2 * w['score'] ** 0.5:.4f} nm, blocs {w['n_blocs']}, Rate {len(rate)}, scan jobs {len(jobs)}")

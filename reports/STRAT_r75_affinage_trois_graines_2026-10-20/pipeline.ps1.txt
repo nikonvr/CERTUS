@@ -1,0 +1,25 @@
+$repo = 'D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310'
+$dir = $PSScriptRoot
+$v = "$dir\val"
+$env:CERTUS_BENCH_TIMEOUT_S = '38400'
+$i = 0
+foreach ($seed in @(101, 202)) {
+    foreach ($comp in @('75c', 'r75x0.5', 'r75x2')) {
+        $i += 1
+        $tag = "${comp}_s$seed"
+        $off = 1000 * $i
+        "$(Get-Date -Format 'HH:mm:ss') bench $tag" | Add-Content "$dir\pipeline.log"
+        Start-Process -FilePath python -ArgumentList '-X', 'utf8', 'scripts/probe_blocs_vs_plantage.py', $comp, 'deep', '0', '0', '2', '0', "$seed" `
+            -WorkingDirectory $repo -WindowStyle Hidden -RedirectStandardOutput "$v\bench_$tag.out" -RedirectStandardError "$v\bench_$tag.err" -Wait
+        $prep = & python -X utf8 "$dir\prep.py" $comp $seed $tag (20261020201 + $off) 2>&1
+        "$(Get-Date -Format 'HH:mm:ss') prep $prep" | Add-Content "$dir\pipeline.log"
+        if ($LASTEXITCODE -ne 0) { continue }
+        Start-Process -FilePath python -ArgumentList '-X', 'utf8', "$dir\r75_scan.py", '--repo', "`"$repo`"", '--jobs', "$v\jobs_scan_$tag.json", '--out', "$v\scan_$tag.jsonl", '--comp', $comp, '--mode', 'deep' `
+            -WorkingDirectory $dir -WindowStyle Hidden -RedirectStandardOutput "$v\scan_$tag.out" -RedirectStandardError "$v\scan_$tag.err" -Wait
+        "$(Get-Date -Format 'HH:mm:ss') scanned $tag" | Add-Content "$dir\pipeline.log"
+        Start-Process -FilePath python -ArgumentList '-X', 'utf8', "$dir\refine.py", $comp, $tag, "$off" -WorkingDirectory $dir -WindowStyle Hidden `
+            -RedirectStandardOutput "$v\refine_$tag.out" -RedirectStandardError "$v\refine_$tag.err" -Wait
+        "$(Get-Date -Format 'HH:mm:ss') refined $tag" | Add-Content "$dir\pipeline.log"
+    }
+}
+"$(Get-Date -Format 'HH:mm:ss') ALL DONE" | Add-Content "$dir\pipeline.log"

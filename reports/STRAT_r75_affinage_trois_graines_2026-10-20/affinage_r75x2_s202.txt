@@ -1,0 +1,8 @@
+== r75x2: 2 search candidates [(22, 660, -13.1), (21, 450, -8.6)]
+   select L22_660: dRMSE2 -12.5 % (+-0.6), stops 0 vs 21, score 0.07039 vs 0.07218 -> kept
+   select L21_450: dRMSE2 -9.3 % (+-0.9), stops 0 vs 21, score 0.08088 vs 0.07218 -> dropped
+   combine +L22_660: dRMSE2 -12.5 % vs current, stops 0 vs 21, score 0.07039 vs 0.07218 -> added
+   frozen: 1 changes ['L22_660']
+   conf: dRMSE2 -11.7 % (SE 0.6 %), stops 0 vs 15, P95 max 0.07322 -> 0.06930, SEEL_strat 0.5412 -> 0.5265 nm
+   hold: dRMSE2 -11.5 % (SE 0.6 %), stops 0 vs 10, P95 max 0.07329 -> 0.07051, SEEL_strat 0.5414 -> 0.5311 nm
+done

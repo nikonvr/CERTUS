@@ -1,0 +1,9 @@
+== r75x0.5: 3 search candidates [(35, 700, -20.8), (34, 645, -12.7), (5, 635, -3.0)]
+   select L35_700: dRMSE2 -18.9 % (+-1.1), stops 0 vs 0, score 0.03502 vs 0.04019 -> kept
+   select L34_645: dRMSE2 -9.6 % (+-1.1), stops 1 vs 0, score 0.04006 vs 0.04019 -> dropped
+   select L5_635: dRMSE2 -0.5 % (+-1.1), stops 0 vs 0, score 0.03969 vs 0.04019 -> dropped
+   combine +L35_700: dRMSE2 -18.9 % vs current, stops 0 vs 0, score 0.03502 vs 0.04019 -> added
+   frozen: 1 changes ['L35_700']
+   conf: dRMSE2 -16.6 % (SE 1.1 %), stops 0 vs 0, P95 max 0.03868 -> 0.03457, SEEL_strat 0.3933 -> 0.3719 nm
+   hold: dRMSE2 -17.5 % (SE 1.1 %), stops 0 vs 0, P95 max 0.03933 -> 0.03498, SEEL_strat 0.3966 -> 0.3741 nm
+done

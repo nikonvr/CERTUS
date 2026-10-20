@@ -1,0 +1,140 @@
+{
+ "strategy_id": 901350975,
+ "origin": "ELITE",
+ "blocks": [
+  {
+   "start": 0,
+   "end": 4,
+   "wavelength": 482.0
+  },
+  {
+   "start": 4,
+   "end": 25,
+   "wavelength": 640.0
+  },
+  {
+   "start": 25,
+   "end": 33,
+   "wavelength": 490.0
+  },
+  {
+   "start": 33,
+   "end": 54,
+   "wavelength": 686.0
+  },
+  {
+   "start": 54,
+   "end": 56,
+   "wavelength": 511.0
+  },
+  {
+   "start": 56,
+   "end": 63,
+   "wavelength": 702.0
+  },
+  {
+   "start": 63,
+   "end": 64,
+   "wavelength": 647.0
+  },
+  {
+   "start": 64,
+   "end": 68,
+   "wavelength": 693.0
+  },
+  {
+   "start": 68,
+   "end": 70,
+   "wavelength": 689.0
+  },
+  {
+   "start": 70,
+   "end": 72,
+   "wavelength": 687.0
+  },
+  {
+   "start": 72,
+   "end": 73,
+   "wavelength": 697.0
+  },
+  {
+   "start": 73,
+   "end": 74,
+   "wavelength": 702.0
+  },
+  {
+   "start": 74,
+   "end": 75,
+   "wavelength": 698.0
+  }
+ ],
+ "rate_layers": [
+  8,
+  9,
+  10,
+  11,
+  12,
+  13,
+  14,
+  15,
+  16,
+  17,
+  18,
+  19,
+  20,
+  23,
+  24,
+  25,
+  26,
+  27,
+  28,
+  29,
+  30,
+  31,
+  32,
+  33,
+  34,
+  35,
+  36,
+  37,
+  38,
+  39,
+  40,
+  41,
+  42,
+  43,
+  44,
+  45,
+  46,
+  47,
+  48,
+  49,
+  50,
+  51,
+  52,
+  53,
+  54,
+  55,
+  56,
+  57,
+  58,
+  59,
+  60,
+  61,
+  62,
+  63,
+  64,
+  65,
+  66,
+  67,
+  68,
+  69,
+  70,
+  71,
+  72,
+  73,
+  74
+ ],
+ "witness_reset_layers": [],
+ "monochromator_resolution_nm": 2.0
+}

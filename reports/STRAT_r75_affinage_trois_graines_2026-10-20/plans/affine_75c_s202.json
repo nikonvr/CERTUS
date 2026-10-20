@@ -1,0 +1,120 @@
+{
+ "strategy_id": 900751401,
+ "origin": "ELITE + local refinement L60_635+L62_645+L54_620+L16_535+L74_655+L29_730+L41_555+L70_670",
+ "blocks": [
+  {
+   "start": 0,
+   "end": 9,
+   "wavelength": 453.0
+  },
+  {
+   "start": 9,
+   "end": 16,
+   "wavelength": 576.0
+  },
+  {
+   "start": 16,
+   "end": 17,
+   "wavelength": 535.0
+  },
+  {
+   "start": 17,
+   "end": 24,
+   "wavelength": 576.0
+  },
+  {
+   "start": 24,
+   "end": 29,
+   "wavelength": 663.0
+  },
+  {
+   "start": 29,
+   "end": 30,
+   "wavelength": 730.0
+  },
+  {
+   "start": 30,
+   "end": 36,
+   "wavelength": 663.0
+  },
+  {
+   "start": 36,
+   "end": 41,
+   "wavelength": 642.0
+  },
+  {
+   "start": 41,
+   "end": 42,
+   "wavelength": 555.0
+  },
+  {
+   "start": 42,
+   "end": 54,
+   "wavelength": 642.0
+  },
+  {
+   "start": 54,
+   "end": 55,
+   "wavelength": 620.0
+  },
+  {
+   "start": 55,
+   "end": 57,
+   "wavelength": 642.0
+  },
+  {
+   "start": 57,
+   "end": 60,
+   "wavelength": 552.0
+  },
+  {
+   "start": 60,
+   "end": 61,
+   "wavelength": 635.0
+  },
+  {
+   "start": 61,
+   "end": 62,
+   "wavelength": 552.0
+  },
+  {
+   "start": 62,
+   "end": 63,
+   "wavelength": 645.0
+  },
+  {
+   "start": 63,
+   "end": 67,
+   "wavelength": 610.0
+  },
+  {
+   "start": 67,
+   "end": 70,
+   "wavelength": 648.0
+  },
+  {
+   "start": 70,
+   "end": 71,
+   "wavelength": 670.0
+  },
+  {
+   "start": 71,
+   "end": 74,
+   "wavelength": 648.0
+  },
+  {
+   "start": 74,
+   "end": 75,
+   "wavelength": 655.0
+  }
+ ],
+ "rate_layers": [
+  8,
+  9,
+  10,
+  36,
+  37
+ ],
+ "witness_reset_layers": [],
+ "monochromator_resolution_nm": 2.0
+}

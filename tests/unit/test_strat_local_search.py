@@ -15,6 +15,7 @@ from certus.core.certus_strat_local_search import (
     LocalSearchConfig,
     candidates,
     joint_local_search,
+    search_params,
     stops,
     wavelength_of,
     with_wavelength,
@@ -113,3 +114,13 @@ def test_the_pipeline_runs_the_stage_only_when_armed() -> None:
     assert 'final_result_dict.final_results["strat_local_search"] = ls_report' in pipeline
     ui = (root / "certus" / "ui" / "certus_strat_ui_state.py").read_text(encoding="utf-8")
     assert '"strat_local_search": _config_flag(getattr(self, "_loaded_config", {}), "strat_local_search", False)' in ui
+
+
+def test_the_stage_searches_under_twice_the_nominal_index_uncertainty_never_less_than_configured() -> None:
+    """Decided 2026-10-20: searched at +-0.010, plans stop 0 and 10 times instead of 175 and 230 at +-0.010."""
+    assert search_params({"index_corridor": 0.005})["index_corridor"] == 0.010
+    assert search_params({"index_corridor": 0.02})["index_corridor"] == 0.02
+    assert search_params({"index_corridor": 0.005, "robustness_seed": 3})["robustness_seed"] == 3
+    root = Path(__file__).resolve().parents[2]
+    worker = (root / "certus" / "workers" / "certus_strat_workers_local_search.py").read_text(encoding="utf-8")
+    assert "native_evaluator(search_params(params)," in worker

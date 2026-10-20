@@ -331,7 +331,7 @@ LEVIERS: tuple[Levier, ...] = (
         statut=RESERVE,
         mesure="Banc deep graine 77, etage arme dans STRAT (reports/STRAT_r75_leviers_bonne_mere_2026-10-20) : SEEL 0,2515 -> 0,2080 nm "
                "(75c), 0,4363 -> 0,3561 nm (r75x0.5), 0,5441 -> 0,5032 nm (r75x2), 0 arret ; la part de l'erreur d'indice est divisee par 2,3 a 4,5.",
-        reserve="Une seule graine de banc ; cout environ 20 min de plus sur 16 coeurs (deux passes, 2 300 a 3 900 evaluations de 300 tirages). "
+        reserve="Cherche et controle sous une incertitude d'indice de +-0,010 (deux fois la nominale, decision du 2026-10-20 : les plans cherches a +-0,005 s'arretent a +-0,010). Une seule graine de banc ; cout environ 20 min de plus sur 16 coeurs (deux passes, 2 300 a 3 900 evaluations de 300 tirages). "
                 "Le plan n'est garde que s'il gagne sur deux graines fraiches de 1 000 tirages sans arret ajoute ; sinon le gagnant reste inchange.",
     ),
     # ---------------------------------------------------------------- RATE: the constants

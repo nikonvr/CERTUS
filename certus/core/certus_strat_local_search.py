@@ -36,6 +36,19 @@ import numpy as np
 SEARCH_SEED_OFFSET: int = 7_000_003
 CHECK_SEED_OFFSETS: tuple[int, ...] = (7_100_003, 7_100_011)
 
+#: Index uncertainty the stage searches and checks under: twice the nominal +-0.005 (decided 2026-10-20). Measured on
+#: 75c / r75x0.5 / r75x2: plans searched at +-0.005 stop at +-0.010 (175 and 230 stops in 9 000 on 75c and r75x2);
+#: searched at +-0.010 they stop 0 and 10 times, for a SEEL cost at +-0.005 of +1.0 %, +11.4 % and -3.5 %. Never below
+#: the configured corridor. The winner is still ranked and reported under the configured corridor.
+SEARCH_INDEX_CORRIDOR: float = 0.010
+
+
+def search_params(params: dict[str, Any]) -> dict[str, Any]:
+    """The parameters the stage searches and checks with: the configured ones under the search index uncertainty."""
+    out = dict(params)
+    out["index_corridor"] = max(SEARCH_INDEX_CORRIDOR, float(params.get("index_corridor", 0.0) or 0.0))
+    return out
+
 #: One evaluation: per noise level, (rmse per draw, stopped per draw).
 Evaluation = list[tuple[np.ndarray, np.ndarray]]
 

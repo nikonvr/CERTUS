@@ -17,6 +17,7 @@ from certus.core.certus_strat_local_search import (
     joint_local_search,
     native_evaluator,
     nominal_level_index,
+    search_params,
 )
 from certus.utils.certus_data import SharedIndicesWorker
 
@@ -47,10 +48,11 @@ def run_local_search(
             allow_rate=bool(params.get("allow_rate", True)),
             rate_min_layer=RATE_MIN_LAYER,
         )
-        evaluate = native_evaluator(params, nominal, clues, pre_calc_data.get("full_dynamics_grid", {}))
+        evaluate = native_evaluator(search_params(params), nominal, clues, pre_calc_data.get("full_dynamics_grid", {}))
         plan, report = joint_local_search(start, evaluate, len(nominal), cfg, base_seed + SEARCH_SEED_OFFSET,
                                           tuple(base_seed + o for o in CHECK_SEED_OFFSETS), logger.info)
         report["start_strategy_id"] = start.get("strategy_id")
+        report["search_index_corridor"] = search_params(params)["index_corridor"]
         if not report["accepted"]:
             return rows, report, ranker
         strategy = copy.deepcopy(plan)

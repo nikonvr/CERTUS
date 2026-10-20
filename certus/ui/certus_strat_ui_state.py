@@ -1229,7 +1229,7 @@ class CertusStratStateMixin:
             # The value is not set here: it is swept and decided by the
             # measurement. Default 0 = path unchanged.
             "tp_hysteresis_factor": _config_float(getattr(self, "_loaded_config", {}), "tp_hysteresis_factor"),
-            "tp_hysteresis_floor": _config_float(getattr(self, "_loaded_config", {}), "tp_hysteresis_floor"),  # T units, 0 = off
+            "tp_hysteresis_floor": _config_float(getattr(self, "_loaded_config", {}), "tp_hysteresis_floor", 0.000415),  # T, 0 = off
             "strat_local_search": _config_flag_default(getattr(self, "_loaded_config", {}), "strat_local_search", True),
             # ── Safety margin at turning point, in noise multiples ──────
             #

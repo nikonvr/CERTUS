@@ -1,4 +1,4 @@
-"""The turning-point hysteresis can be kept from vanishing with the noise (`tp_hysteresis_floor`, 0 = inactive).
+"""The turning-point hysteresis is kept from vanishing with the noise (`tp_hysteresis_floor`, 0.000415 by default, 0 = off).
 
 📏 2026-10-20: with the optical noise divided by 100, every deposition of the STRAT winners of r75 and r75x2 stopped
 (TP_MISCOUNT on one layer, only with the slit bias): the hysteresis `factor x noise` went to zero and the slit-bias ripple
@@ -10,7 +10,7 @@ from pathlib import Path
 
 import numpy as np
 
-from certus.core.certus_strat_robustness_task import reading_hysteresis
+from certus.core.certus_strat_robustness_task import TP_HYSTERESIS_FLOOR_DEFAULT, reading_hysteresis
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -38,3 +38,16 @@ def test_the_floor_reaches_the_task_and_is_loaded_from_the_configuration():
     assert "reading_hysteresis(tp_hysteresis_factor, tp_hysteresis_floor," in task
     assert 'params.get("tp_hysteresis_floor"' in service
     assert '"tp_hysteresis_floor": _config_float(' in ui
+
+
+def test_the_default_floor_is_the_hysteresis_of_the_lowest_standard_level_to_the_bit():
+    """Owner, 2026-10-20: on by default, and the three standard levels keep their bits."""
+    assert TP_HYSTERESIS_FLOOR_DEFAULT == 1.66 * (0.05 * 0.5) / 100.0
+    for noise in (0.05 * 0.5, 0.05 * 1.0, 0.05 * 2.0):
+        assert reading_hysteresis(1.66, TP_HYSTERESIS_FLOOR_DEFAULT, noise, False) == 1.66 * noise / 100.0
+    task = (ROOT / "certus/core/certus_strat_robustness_task.py").read_text(encoding="utf-8")
+    service = (ROOT / "certus/utils/certus_strat_service.py").read_text(encoding="utf-8")
+    ui = (ROOT / "certus/ui/certus_strat_ui_state.py").read_text(encoding="utf-8")
+    assert 'params.get("tp_hysteresis_floor", TP_HYSTERESIS_FLOOR_DEFAULT)' in task
+    assert 'params.get("tp_hysteresis_floor", 0.000415)' in service
+    assert '"tp_hysteresis_floor", 0.000415)' in ui

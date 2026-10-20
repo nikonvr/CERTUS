@@ -67,6 +67,12 @@ def task_numba_threads() -> int:
     return max(1, min(wanted, int(numba.config.NUMBA_NUM_THREADS)))
 
 
+#: Default floor of the reading hysteresis, T units (owner, 2026-10-20): the hysteresis of the lowest standard level,
+#: 1.66 x 0.025 / 100, equal to it to the bit, so the three standard levels keep their bits; below them it stops the
+#: miscount (3 000 stops in 3 000 at the noise / 100 on the r75 and r75x2 winners, 7 and 0 with the floor). 0 = off.
+TP_HYSTERESIS_FLOOR_DEFAULT: float = 0.000415
+
+
 def reading_hysteresis(factor: float, floor: float, noise_val: float, is_absolute: bool, dT_dd: Any = None) -> float:
     """Turning-point hysteresis of the machine's read rule, in units of T.
 
@@ -353,7 +359,7 @@ def _test_strategy_robustness_task(
     # Default 0.0 = historical rule, so unchanged path. The value is not set
     # here: it is swept and decided by measurement.
     tp_hysteresis_factor = float(params.get("tp_hysteresis_factor", 0.0) or 0.0)
-    tp_hysteresis_floor = float(params.get("tp_hysteresis_floor", 0.0) or 0.0)
+    tp_hysteresis_floor = float(params.get("tp_hysteresis_floor", TP_HYSTERESIS_FLOOR_DEFAULT) or 0.0)
     for noise_idx, noise_val in enumerate(noise_levels):
         # 🔴 THE READING NOISE IS ONE SINGLE CONTINUOUS PROCESS OVER THE WHOLE DEPOSITION,
         # and a campaign reads ONLY ITS SLICE of it.

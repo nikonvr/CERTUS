@@ -11,8 +11,8 @@ Bilan prévu le 21 octobre 2026 à 10 h, Europe/Paris ; reprise automatique dans
 | A1, A2 | déjà terminées dans la feuille de route |
 | A6 | retirée sur ordre du propriétaire ; `619d84eb` |
 | A7 | terminée : [neuf passages et propositions sourcées](../STRAT_vitrine_passages_a_relire_2026-10-20.md), page inchangée |
-| A8, corrections simples | premier correctif vérifié : imports de `certus_strat_ui_state`, trois photos identiques et toutes les suites passent ; dette restante ouverte |
-| A3 | ensuite : refaire les repères officiels |
+| A8, corrections simples | premier correctif terminé, `37f27cb0` : trois photos identiques, validation complète ; dette restante ouverte |
+| A3 | [protocole des six bancs figé](../STRAT_A3_reperes_2026-10-21/bilan.md), paramètres chargés vérifiés ; lancer après commit du protocole |
 | A5 | ensuite : mesurer tours et budgets Rate |
 | A4 | ensuite : parents optiques garantis, chemin nul identique au bit |
 | A10 | ensuite : comparer les corridors et confirmer sur graines neuves |
@@ -94,14 +94,8 @@ Validation du 21 octobre : Ruff passe ; oracle `1148 passed in 12.84s` ; unité 
 
 [Archive des 45 preuves](A8_imports_preuves.zip), SHA-256 `731e103757d958abb4cf4fc6a740aa3e8db7b2818ff89e7b47bce2e3167fa4ad` : trois photos, contrôle de lissage, copies des sources, outil, journaux et état final, premier échec inclus. Les chemins des journaux y sont neutralisés ; les originaux restent dans `scratch/A8_e402_ui_state_20261020/`. Contrôles documentaires : `coherence_md.py`, `check_claude_md.py`, `check_docs.py`. Après le commit local de ce correctif : `python scripts/preflight.py`, puis préparer A3 et vérifier ses paramètres chargés avant mesure. Le reste d'A8 n'est pas terminé.
 
-## A3 — Préparation statique, aucune mesure lancée
+## A3 — Protocole prêt, aucune recherche encore lancée
 
-Le fichier demandé `JSON-strat-bandpass-3cav-deep.json` contient 36 multiplicateurs non nuls, pas 35. `JSON-strat-bandpass-3cav.json` en contient 35, en `premium` ; seuls `stack_multipliers` et `execution_mode` diffèrent entre eux. Le chargeur insère une ligne par multiplicateur et le calcul nominal les conserve. Ne pas présenter le fichier livré à 36 couches comme le repère de 35 couches : identifier séparément le fichier livré et, pour le vrai 35 couches en deep, un profil temporaire dérivé du fichier 35 couches avec le seul changement de mode, sans modifier les exemples.
+Précontrôle après `37f27cb0` : `PREFLIGHT=GO`, arbre propre, aucun autre Python. Six profils préparés, tous vérifiés par le chargeur et `collect_params` (`A3_PARAMS=GO`), programme et sources figés : [protocole et preuves](../STRAT_A3_reperes_2026-10-21/bilan.md). Les différences 35/36 couches, le mode livré de random75 et les limites du cache 99 couches y sont consignés.
 
-`JSON-strat-random75.json` déclare `fast`, contrairement aux campagnes r75 deep : conserver et annoncer son mode livré pour le banc officiel. Les graines absentes des JSON se résolvent à 42 dans `collect_params` ; les variantes x2 le déclarent explicitement.
-
-Le cache de `campagne_intervalles.py` ne dépend pas du commit : `deja_mesure` teste seulement l'existence d'un fichier indexé par bornes et graine. Un rejeu post-D106 du 99 couches doit donc utiliser un nouveau répertoire de cache, sans effacer ni réutiliser aveuglément les anciens résultats. Surcharger `CACHE_BASE` seul ne suffit pas, car `get_cache` construit son chemin directement depuis `ROOT`.
-
-L'option `--limite` y est déclarée mais jamais consultée dans la boucle de lancement : la borne horaire doit être garantie par le pilote de reprise, avant chaque mesure.
-
-Deux brouillons locaux, encore non exécutés, préparent A3 : `scratch/run_A3_official_benches.py` (six bancs officiels séquentiels, tentatives conservées, refus de `RESULT=None` et des classements de repli, échéance contrôlée) et `scratch/verify_A3_loaded_params.py` (charger les profils dans l'interface et vérifier les paramètres collectés). Ils doivent être vérifiés, figés avec le protocole et committés avant les mesures ; `--prepare` seul ne lance aucun banc. L'état vivant d'A3 sera écrit hors des fichiers suivis, pour conserver la tête et les sources fixes pendant les mesures. Le 99 couches par intervalles reste à programmer après ces bancs ; aucune clôture d'A3 n'est acquise.
+Prochaine commande après le commit de ce protocole : `python reports/STRAT_A3_reperes_2026-10-21/run_A3_official_benches.py.txt`. Pendant la chaîne, consulter `reports/STRAT_A3_reperes_2026-10-21/etat.json` et les processus ; ne pas modifier les fichiers suivis ni committer, car le pilote vérifie la tête et la propreté avant chaque mesure. Il garde chaque tentative et refuse les faux succès. Après la chaîne, analyser les résultats et traiter le 99 couches par intervalles avant de prétendre A3 terminée.

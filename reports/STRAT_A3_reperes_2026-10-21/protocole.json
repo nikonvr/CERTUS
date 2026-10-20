@@ -1,0 +1,69 @@
+{
+  "prepared_utc": "2026-10-20T23:03:02.033146+00:00",
+  "code_commit_before_protocol": "37f27cb0f4a0ca44d6ae5d49a999ace21e42278e",
+  "measurement_head": "Recorded at launch in etat.json; no tracked modification or commit during this sequence",
+  "deadline_utc": "2026-10-21T08:00:00+00:00",
+  "timeout_s_per_bench": 21600,
+  "sequential": true,
+  "seed_bank": [
+    42
+  ],
+  "independent_confirmation": false,
+  "comparison_scope": "Official current-default reference per component; no cross-component or holdout inference",
+  "cases": [
+    {
+      "case": "48c_premium",
+      "config": "example/example_strat/JSON-strat-example.json",
+      "sha256": "9eeb74f8ca9155839ed494dc2c8bd5abdb1a675983560fc1b99d0d0a2d8ccbe7",
+      "layers": 48,
+      "mode": "premium",
+      "seed": 42
+    },
+    {
+      "case": "75c_fast",
+      "config": "example/example_strat/JSON-strat-random75.json",
+      "sha256": "03c7027d7778773a143675fc569ba233b91e59ac7e5c9a84764f283cec5313ba",
+      "layers": 75,
+      "mode": "fast",
+      "seed": 42
+    },
+    {
+      "case": "35c_deep",
+      "config": "reports/STRAT_A3_reperes_2026-10-21/config_35c_deep_A3.json",
+      "sha256": "49ac428bca89d4b396c73c55473eaee3c6ff7baaa2b102ceb6874e756500ac87",
+      "layers": 35,
+      "mode": "deep",
+      "seed": 42
+    },
+    {
+      "case": "3cav_livre_36c_deep",
+      "config": "example/example_strat/JSON-strat-bandpass-3cav-deep.json",
+      "sha256": "137689ff39c66c225ad1fc6db8630d154c135c863e81398e38a06160ef4100e9",
+      "layers": 36,
+      "mode": "deep",
+      "seed": 42
+    },
+    {
+      "case": "r75x2_native_1nm_deep",
+      "config": "example/example_strat/JSON-strat-random75-x2-fabricable.json",
+      "sha256": "1701f1ef5e9a2e597791f9885df7bcb6ffeaadd3d582ea1d94aad0f00296e373",
+      "layers": 75,
+      "mode": "deep",
+      "seed": 42
+    },
+    {
+      "case": "r75x2_rampes_2nm_deep",
+      "config": "example/example_strat/JSON-strat-random75-x2-fabricable-2nm.json",
+      "sha256": "2056a80a619800e3e93ffdc60b72d37169e541f26b6a2663164eb27d4f2011ed",
+      "layers": 75,
+      "mode": "deep",
+      "seed": 42
+    }
+  ],
+  "params_audit_sha256": "b0eb01f987efdfbe8eee0ac851b86f4fe75c2ffc353ccb353d61e5f2a4defd4d",
+  "driver_sha256": "525eebb7e80d78f210e062217f7c47f4127e839e585607e3a8ec0db03697bf73",
+  "parameter_audit_program_sha256": "9f4b6f84dc642bc787e327f7b5fb6c7318085f574db708490721a135bd756940",
+  "accepted": "Exit 0, finite positive RESULT, no WAIT_TIMEOUT, nonempty full top ranking, crash_eliminated 0, expected design identity",
+  "preservation": "Every attempt has unique output and raw log; errors stop the sequence; no prior artifact is reused",
+  "remaining_A3": "99-layer multi-witness reference by intervals requires a fresh cache and explicit per-launch deadline guard; not measured by this driver"
+}

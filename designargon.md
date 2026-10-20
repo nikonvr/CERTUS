@@ -5,6 +5,8 @@
 > **Objectif** : Identifier les défauts et les pistes d'amélioration ; la couverture de cet audit ne prouve pas l'absence d'autres défauts.
 > **Contre-audit Codex, 2026-10-16** : code de production inchangé à `0c7c1e2e` ; [20 observations ciblées et 22 démarrages GUI communs aux deux audits](reports/ARGON_contre_audit_2026-10-16/evidence.json), [script reproductible](reports/ARGON_contre_audit_2026-10-16/probe.py.txt). Aucun correctif algorithmique ni gain de performance mesuré. Préflight `STOP` (lancement Ruff défaillant et 60 fichiers suivis déjà modifiés) ; périmètre documentaire demandé par 👤.
 
+> **Recoupement avec le code, 2026-10-20** (`4c10ce44`) : ALG-01 à ALG-11 tiennent ; D08/U01 corrigés (`bdcae9ed`) ; amendements marqués `[CORRIGÉ]`/`[AMENDÉ]` ; [bilan](reports/AUDIT_UX_recoupement_2026-10-20.md).
+
 **Statut des propositions.** ALG-01 et ALG-02 sont reproduits sur fonctions extraites ; ALG-03 est étayé par le contrat du helper et une densification contrôlée, sans parcours complet du worker. ALG-04 à ALG-11 mélangent limites fonctionnelles, choix de conception et expériences. Les accélérations et améliorations de qualité sans campagne jointe sont des hypothèses. Les diagnostics de solveur « maison », d'absence de `jac` dans l'élagage et la formule initiale du rayon PGLOBAL étaient faux. Ordre et critères de fin en §9 ; intégrité de la pile et interface dans [UXargon.md](UXargon.md).
 
 **Portée des preuves.** Les sondes exécutent les corps de fonctions extraits à l'AST avec dépendances contrôlées ; les décorateurs Numba sont retirés. Elles ne valident ni compilation JIT, parallélisme, workflow complet, exécutable gelé ni performances. Leurs limites et les empreintes des sources figurent dans le JSON. « Observation vérifiée » inclut les défauts reproduits ; cela ne signifie pas « logiciel corrigé ».
@@ -18,7 +20,7 @@
 | D05 | Vrai `LBFGSBSearcher` + SciPy : minimum borné atteint à x=1 sur une quadratique dont le minimum libre est 2. | Repli d'API privée, autres bornes et budgets ; aucun débit mesuré. |
 | D06 | Coût scalaire inchangé pour `min_d=0/5`. Wrapper analytique avant seul : coût pénalisé mais gradient nul avec noyau optique constant contrôlé ; différence finie ≈ −9,8×10⁶. | Vérification avec vrais noyaux, face arrière et contraintes du worker. |
 | D07 | Rayon critique conforme à §4.1 sur trois cas ; résolveur non gelé : 8 CPU contrôlés → 6 workers. | Performances et arrêt bayésien en campagne ; aucune preuve d'optimum global. |
-| D08 | Filtre final réel : une couche fixe de 2 nm est supprimée, la couche de 5 nm conservée ; ancien mérite invalidé. | Workflow complet, couche supprimée optiquement utile, conséquences sur le cahier des charges. |
+| D08 | **[CORRIGÉ `bdcae9ed`]** Filtre final réel : une couche fixe de 2 nm est supprimée, la couche de 5 nm conservée ; ancien mérite invalidé. | Workflow complet, couche supprimée optiquement utile, conséquences sur le cahier des charges. |
 | M01 | Dérivée matricielle corrigée, différence de T ≈ 0,061 malgré même épaisseur optique, minimum interdit à 2,5 nm sous pénalité gap ; moyenne s/p différente de deux cibles. | Cas dispersifs, obliques et absorption ; validation des capacités proposées. |
 
 ---
@@ -142,7 +144,7 @@ Dans [compute_gradient_all_layers_analytic](certus/physics/gradient_oblique.py),
 
 Enfin, [cost_numba_fast](certus/physics/gradient_utils.py) reçoit `min_d` mais ne l'utilise pas. D06 isole les défauts avec une physique constante contrôlée : coût scalaire identique à `min_d=0/5`, coût retourné par le wrapper analytique différent et dérivée de ce coût incompatible avec le gradient retourné. Il faut donc aligner **coût scalaire, coût retourné avec gradient et gradient**, en plus des bornes du solveur. Un simple changement de signe dans un seul chemin serait insuffisant.
 
-`CFG.MIN_THICKNESS` vaut zéro par défaut : distinguer ce défaut latent des incohérences exposées dans le chemin nominal. Définir d'abord la contrainte voulue, borne simple ou choix extinction/consolidation (§7.2.A), puis tester coût et gradient par différences finies hors des raccords. Ne pas supprimer une contrainte ni ajouter une pénalité concave au seul motif d'aligner les signes. La précédente explication par un line-search Armijo « maison » ne décrivait pas le solveur courant (§5.2.B).
+**[AMENDÉ]** `CFG.MIN_THICKNESS` vaut `0.01` nm par défaut (`certus_core.py`), pas zéro : distinguer ce défaut latent des incohérences exposées dans le chemin nominal. Définir d'abord la contrainte voulue, borne simple ou choix extinction/consolidation (§7.2.A), puis tester coût et gradient par différences finies hors des raccords. Ne pas supprimer une contrainte ni ajouter une pénalité concave au seul motif d'aligner les signes. La précédente explication par un line-search Armijo « maison » ne décrivait pas le solveur courant (§5.2.B).
 
 #### B. Duplication des calculs en incidence oblique avec face arrière (`_design_compute_oblique_error_and_grad_analytic_common`)
 - **Constat dans le code** : Dans `_design_compute_oblique_error_and_grad_analytic_common` ([certus/core/certus_design_core.py](certus/core/certus_design_core.py)), la boucle itère d'abord sur `for config in app._oblique_configs:` (groupé par `(angle, pol)`), puis **à l'intérieur** sur `for tgt_data in config["targets"]:` et appelle `compute_oblique_rt_and_grads_analytic` séparément pour chaque sous-cible (`tgt_data`), y compris le recalcul de la face arrière fixe `Rb_prime, Tb` à chaque appel !
@@ -269,8 +271,8 @@ Tester H/L, H/M et trois matériaux ; observer tous les couples couche/matériau
   1. Elle dépaquette `n_layers_T, n_sub, has_back_calc, n_back_T, d_back = optim_prepare_stack_nk_back(...)`, alors que `optim_prepare_stack_nk_back` ([certus/core/certus_design_worker_utils.py](certus/core/certus_design_worker_utils.py)) retourne `(mats_nk, n_sub, n_layers_T, n_back_T, d_back)` ! La variable `n_layers_T` reçoit donc le dictionnaire `mats_nk` et `has_back_calc` reçoit le tableau `n_layers_T` !
   2. Trois lignes plus bas, elle écrit :
      ```python
-     tgt_vals = np.array([t.val for t in tgts], dtype=np.float64)
-     tgt_weights = np.array([t.weight for t in tgts], dtype=np.float64)
+     tgt_vals = np.array([t.val for t in tgts])
+     tgt_weights = np.array([t.weight for t in tgts])
      ```
      alors que les objets `Target` ([certus_physics/structures.py](certus_physics/structures.py)) ont pour attributs `(lmin, lmax, tmin, tmax, w, on)` (ni `.val` ni `.weight` n'existent, et `tgts` est une liste de bandes spectrales à interpoler sur `wls` via `prepare_targets_vectorized(wls, tgts)`, pas un tableau point par point !).
   3. Avec des cibles `Target` valides dans ce chemin, les accès sont fautifs et l'évaluation ne peut atteindre le polissage prévu. `except Exception: return float('inf')` absorbe l'erreur ; si aucun coût fini n'est retenu, `candidate_indices[0]` remplace la sélection optique. Reproduire et journaliser la cause exacte plutôt que déduire d'un échec absorbé un plantage de toute l'application.
@@ -296,9 +298,9 @@ Conserver `sum(n*d)` à une seule longueur d'onde ne conserve ni les interfaces,
 
 Dans [OptimizationManager](certus/ui/certus_design_ui_optimization.py) et [DesignOrchestrator](certus/core/certus_design_orchestrator.py) :
 
-1. **`smart_cleanup`** supprime les couches sous `max(0.05, min(1.0, current_rmse * multiplier))` nm, puis fusionne les matériaux adjacents identiques. La suppression ne vérifie pas `Layer.var` (U01). Ce n'est pas une suppression universelle sous 3 nm avec réoptimisation entre chaque couche.
+1. **`smart_cleanup`** supprime les couches sous `max(0.05, min(1.0, current_rmse * multiplier))` nm, puis fusionne les matériaux adjacents identiques. **[CORRIGÉ `bdcae9ed`]** La suppression épargne désormais les couches fixes (`_fixed_rows`). Ce n'est pas une suppression universelle sous 3 nm avec réoptimisation entre chaque couche.
 2. **`_handle_healing_workflow`** programme un PGLOBAL restreint `healing`, puis un mode `local`, après un retrait du cleanup hors cycle Needle. Les fonctions `_try_layer_healing`, les constantes `_MIN_LAYER_NM`/`_HEAL_RMSE_BUDGET` et le budget +10 % décrits initialement ne sont pas présents dans cet arbre ; aucune garantie de restauration fondée sur ce budget ne doit leur être attribuée.
-3. **`_apply_5nm_minimum`** supprime les lignes d'épaisseur **strictement inférieure à 5 nm**, fusionne les matériaux, actualise les épaisseurs et invalide `_workflow_best_rmse`. Elle n'impose pas une borne à 5 nm et ne consolide pas les couches fines par optimisation. D08 reproduit la suppression d'une **couche fixe** de 2 nm ; une couche de 5 nm reste. C'est un problème d'intégrité à traiter avant les expériences de pénalité. La méthode est appelée notamment par `_finalize_completed_optimization_workflow` et `_revert_to_checkpoint`.
+3. **`_apply_5nm_minimum`** supprime les lignes d'épaisseur **strictement inférieure à 5 nm**, fusionne les matériaux, actualise les épaisseurs et invalide `_workflow_best_rmse`. Elle n'impose pas une borne à 5 nm et ne consolide pas les couches fines par optimisation. D08 reproduisait la suppression d'une **couche fixe** de 2 nm ; **[CORRIGÉ `bdcae9ed`]** les couches fixes sont conservées et journalisées. La méthode est appelée notamment par `_finalize_completed_optimization_workflow` et `_revert_to_checkpoint`.
 4. **Décimation** : `_start_smart_pareto_decimation` dans [CertusDesignApp](certus/ui/certus_design_ui.py) prépare une réduction vers `max(4, int(N_start/2))`, puis `_smart_decimation_remove_and_optimize` pilote les retraits et polissages. L'autre chemin `_decimation_remove_and_polish` doit être distingué, de même que `_prune_to_target`. La présence d'un catalogue de points ne démontre pas que le front est globalement optimal.
 
 Les 5 nm sont un seuil logiciel de ce workflow, pas une limite universelle PVD/IBS/ALD. Préserver les couches fixes, rendre la politique de retrait explicite, renoter la pile finale et mesurer la dégradation ; un ancien mérite n'est plus celui de la pile après suppression.
@@ -369,7 +371,7 @@ Cette capacité est distincte de la réduction du coût d'une cible spectrale. L
 
 ## 9. Ordre corrigé, preuves attendues et limites
 
-Aucune certitude à 100 % n’est établie : restent les parcours complets, le JIT, les validations physiques et les campagnes comparatives. Les rangs décrivent des lots séparés ; aucun gain annoncé sans mesure ne sert de critère de succès. L’intégrité des configurations DESIGN, des couches fixes lors du filtre final (D08) et des données expérimentales traitées dans [UXargon.md](UXargon.md) passe avant les évolutions de solveur.
+Aucune certitude à 100 % n’est établie : restent les parcours complets, le JIT, les validations physiques et les campagnes comparatives. Les rangs décrivent des lots séparés ; aucun gain annoncé sans mesure ne sert de critère de succès. L’intégrité des données traitée dans [UXargon.md](UXargon.md) passe avant les évolutions de solveur ; configurations DESIGN, couches fixes (D08) et grille λ du SMOOTHER sont corrigées, l'export Excel DESIGN reste destructif.
 
 | Ordre | ID | Statut et action | Critère de fin |
 |---|---|---|---|

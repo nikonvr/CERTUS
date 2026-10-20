@@ -1,4 +1,4 @@
-# Recoupement des audits UX avec le code — 2026-10-20
+# Recoupement des audits avec le code — 2026-10-20
 
 Portée : [`UXargon.md`](../UXargon.md) (§1 à §13), [`ARGON_contre_audit_Claude_2026-10-17.md`](ARGON_contre_audit_Claude_2026-10-17.md)
 (volet UX) et l'outil [`scripts/audit_ux_certus.py`](../scripts/audit_ux_certus.py), contre `certus/ui/`, `certus/metal/`,
@@ -25,6 +25,18 @@ code modifié. Les tableaux du §1.1 (harnais du 2026-10-16) n'ont pas été rem
 
 Les autres constats se retrouvent tels quels dans le code. Le contre-audit du 2026-10-17 reçoit deux notes datées :
 `UXargon.md` et `designargon.md` sont suivis, et les sondes de Codex sont en `.py.txt` (`10914d78`).
+
+## Les autres audits, même recoupement
+
+Seuls STRAT (`1eb35535`, `4c10ce44`) et `pyproject.toml` ont changé dans le code depuis le 2026-10-18 au soir.
+
+| audit | amendement |
+|---|---|
+| [`designargon.md`](../designargon.md) | ALG-01 à ALG-11 tiennent. `[CORRIGÉ bdcae9ed]` sur D08 et la suppression de couches fixes (§7.1) ; `CFG.MIN_THICKNESS` vaut 0,01 nm, pas zéro (§3.2.A) ; citation d'ALG-02 rendue exacte. |
+| [`AUDIT_SUITE_CERTUS_2026-10-18.md`](AUDIT_SUITE_CERTUS_2026-10-18.md) | Note datée : l'état de chaque constat est le §4 de la deuxième passe ; audits de la racine et `studies/bonne_mere/` publiés sur `origin`. Numéros de ligne remplacés par des fonctions (REGLES §10). |
+| [`AUDIT_SUITE_CERTUS_2e_passe_2026-10-18.md`](AUDIT_SUITE_CERTUS_2e_passe_2026-10-18.md) | C20 à C32 et les ouverts tiennent (D107 à D109, C10, C13, C23 à C26, A23 à A35 non faits). Numéros de ligne remplacés par des fonctions. |
+| [`AUDIT_ARGON_code_2026-10-19.md`](AUDIT_ARGON_code_2026-10-19.md) | Note datée : rien des phases 1, 2, 4, 5 n'est fait ; P3.1 et P3.2 non codés ; P3.0 mesuré le 2026-10-20 (deux règles de Bonne Mère perdent sur les trois designs, la recherche locale gagne et entre comme `strat_local_search`, inactive). |
+| [`STRAT_audit_declenchement_OMS_2026-10-10.md`](STRAT_audit_declenchement_OMS_2026-10-10.md) | Note datée : D96 à D98 sont le modèle par défaut depuis `8d9ced13` (le rapport les dit options) ; D99 jugé non-défaut ; plancher `tp_hysteresis_floor` ajouté. |
 
 ## À savoir
 

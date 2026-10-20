@@ -7,6 +7,8 @@
 > [!WARNING]
 > **Contre-audit du 2026-10-19 (§7) : lire §7 avant d'agir sur ce document.** Il contient une formule fausse (borne de $E_g$ d'`INDEX`), un diagnostic présenté comme « cause exacte » qui ne suffit pas (`mesures-c1b-sio2`), des résultats d'une étude unique promus « lois physiques », des comparaisons non sourcées avec les logiciels commerciaux et des résultats annoncés avant la mesure. Les passages concernés portent la marque ⚠️ et un identifiant `XA-nn`.
 
+> **Recoupement 2026-10-20** (`4c10ce44`) : aucune action des phases 1, 2, 4 et 5 n'est faite ; `export_excel` appelle toujours `smart_cleanup`, 44 `connect(lambda)`, 6 `gc.collect()` STRAT. Phase 3 : P3.1 (dérive `Rate`) et P3.2 (seuil OT) ne sont pas codés ; le P3.0 du §7.4 est mesuré sur 75c, r75x0.5 et r75x2 ([rapport](STRAT_r75_leviers_bonne_mere_2026-10-20/bilan.md)) : « Rate pour les K couches les plus fines » et les fenêtres à cible projetée **perdent** sur les trois ; la recherche locale (mode, λ) gagne et entre dans STRAT comme `strat_local_search`, inactive par défaut (`4c10ce44`, voie intégrée non mesurée).
+
 ---
 
 ## 1. Synthèse Exécutive : Où se situe CERTUS aujourd'hui ?

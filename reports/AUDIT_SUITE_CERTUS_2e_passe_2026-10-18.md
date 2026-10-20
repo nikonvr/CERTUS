@@ -9,6 +9,9 @@ dossier [`AUDIT_2e_passe_2026-10-18/`](AUDIT_2e_passe_2026-10-18/) (scripts en `
 Le premier audit avait listé ce qu'il n'avait pas mesuré ; cette passe vise ces trous et ajoute des angles neufs : sonde aléatoire contre l'oracle,
 gradients, mutation des formules, scan de tout l'historique, `bandit`, CI distante.
 
+> **Recoupement 2026-10-20** (`4c10ce44`) : C20 à C32 et les ouverts du §4 se retrouvent tels quels dans le code (seuls STRAT, `tp_hysteresis_floor`
+> et `strat_local_search`, et `pyproject.toml` ont changé, sans toucher ces constats) ; A23 à A35 restent à faire. Numéros de ligne remplacés par des fonctions.
+
 ## 1. Verdict
 
 La suite est saine là où la physique s'exécute, et les défauts nouveaux sont dans ses **marges** : entrées invalides acceptées en silence, un noyau de
@@ -96,14 +99,14 @@ deuxième appel). Aucune écriture en place sur ces résultats n'a été trouvé
 λ à l'entier) rend la matrice d'une autre grille décalée de 0,4 nm : erreur d'un élément de la matrice 6,7·10⁻³, soit 3·10⁻⁴ sur un indice qui varie de 7,5·10⁻⁴/nm. Le commentaire
 (« tolérer le bruit des flottants ») est plus large que ce qu'il tolère. `probe_caches`.
 
-**C25 — Le Monte-Carlo de FIELD et ses départs multiples ne sont pas reproductibles** *(faible)*. `certus_field_workers.py:288` (`np.random.normal`) et `:740`
+**C25 — Le Monte-Carlo de FIELD et ses départs multiples ne sont pas reproductibles** *(faible)*. `certus_field_workers.py`, `_run_tolerate` (`np.random.normal`) et `_run_optimize`
 (`np.random.uniform`) utilisent le RNG global hérité, sans graine ni paramètre : deux exécutions des mêmes entrées donnent des statistiques différentes, et deux dessins ne se
 comparent pas à bruit commun. La règle C2 vise STRAT ; FIELD n'est pas couvert.
 
 **C26 — `_seeded_noise_sample` est un mauvais mélangeur pour des graines voisines** *(faible ; latent ; mesuré)*. Deux graines brutes consécutives (42 et 43) donnent des
 bruits corrélés à **+0,196** (distance 2 : 0,098 ; 3 : 0,091 ; 5 : 0,079 ; 10 et plus : < 0,002). Les trois flux de production (signal, affine, indice) dérivent leurs graines
 par un mélange multiplicatif : sur 45 flux et 990 paires, le pire |r| est 0,0078 pour un seuil de 0,0089 ; ils sont indépendants. Reste la **nucléation**, qui reçoit `robustness_seed`
-brut (`certus_strat_workers.py:191` et `:228`) : deux exécutions STRAT à graines consécutives y partagent un bruit corrélé. Dans une graine : moyenne, écart type, kurtosis et
+brut (`find_robust_nucleation_wavelength_adaptive`, `certus_strat_workers.py`, ses deux noyaux) : deux exécutions STRAT à graines consécutives y partagent un bruit corrélé. Dans une graine : moyenne, écart type, kurtosis et
 corrélations entre couches et entre tirages voisins sont conformes. Corriger change les tirages (donc les résultats) : décision de 👤. `probe_noise`, `probe_noise2`.
 
 **C27 — Le coût `cost_numba_fast` dépend du nombre de fils Numba au dernier bit** *(information ; mesuré)*. Pour 1, 2, 4, 8, 16 fils : coûts 0,11459713964256443 / …47 / …43 / …49 / …45
@@ -134,7 +137,7 @@ le sont (`success`) dans le run de `82e51021` (les autres steps du job aussi) ; 
 en local) ; l'étape `bench_kernels.py` les remplace. Aucun workflow ne lance `coherence_md`, `check_claude_md`, `check_docs` (C10a persiste). Les 4 workflows : `permissions: contents: read`,
 pas de `pull_request_target`, 0 action non épinglée par SHA, un seul secret (`GITHUB_TOKEN`).
 
-**C31 — Divers d'outillage** *(information)*. `scripts/lint_ns_snapshot.py:32` : `hashlib.sha1` (HIGH de `bandit`, même motif que l'alerte CodeQL déjà corrigée dans
+**C31 — Divers d'outillage** *(information)*. `scripts/lint_ns_snapshot.py`, `describe` : `hashlib.sha1` (HIGH de `bandit`, même motif que l'alerte CodeQL déjà corrigée dans
 `probe_blocs_vs_plantage.py`). Dette de lint officielle (D25) : **1 491** (1 416 le 2026-10-12), dont RUF001 147 contre 77 : 63 des +70 viennent de `.py` de campagne rangés dans `reports/`. Typage :
 75,4 % des fonctions entièrement annotées, 1 737 occurrences de `Any` (mesure par AST, non comparable à celle du premier audit). Local contre verrou : coverage 7.16.2/7.16.1,
 fonttools, hypothesis, pyinstaller-hooks-contrib, ruff 0.16.10/0.16.9, tzdata. 15 des 47 paquets du verrou ne sont pas nommés dans `THIRD_PARTY_NOTICES.md` (outils de test et de
@@ -142,8 +145,8 @@ construction : pytest, coverage, hypothesis, ruff, pluggy, pefile, altgraph, mac
 (`certus_*.log`, `*.jsonl`, ignorés). `.git/worktrees/` compte 11 entrées : 4 de Codex (`gitdir` présent, dossier absent) et **7 coquilles** (`buildwt`, `certus0310`, `jovial-mayer-391b05`,
 `profwt`, `ratewt`, `ratewt2`, `valwt` : un `ORIG_HEAD` de 41 octets ou rien, pas de `gitdir`) ; elles causent le bruit « failed to delete » et se retirent par `rm -rf`, que `git` refuse ici.
 Règle 11 : 7 lignes de prose de `certus/` portent un mot français de contenu que le détecteur ne voit pas (`french_words`) : 2 sont la ligne ELITE autorisée ; **2× `# ── GARDE-FOU n-ik ──`**
-(`certus_tmm_matrix.py:93` et `:174`), 1× `# -- tableau vivant` (`certus_strat_multigraine_ui.py:397`), 2 messages de journal (`certus_strat_service.py:841` : « seuil … retirees » ;
-`spline_pipeline_utils.py:543` : « substrat »). `epsilon_to_nk` borne n à 10⁻⁶ pour ε₁ ≪ 0 (2nk − ε₂ jusqu'à 5,7·10⁻⁶ en absolu) : sans effet physique.
+(`compute_TMM_single_point_k0` et `…_exact`, `certus_tmm_matrix.py`), 1× `# -- tableau vivant` (`_create_multigraine_tab`), 2 messages de journal (`_select_candidates_phase_a`, `certus_strat_service.py` : « seuil … retirees » ;
+`_sync_theoretical_tr_from_nk_dict`, `spline_pipeline_utils.py` : « substrat »). `epsilon_to_nk` borne n à 10⁻⁶ pour ε₁ ≪ 0 (2nk − ε₂ jusqu'à 5,7·10⁻⁶ en absolu) : sans effet physique.
 
 **C32 — Historique public** *(information)*. 124 blobs de plus de 2 Mo (36 Mo pour `blocs_vs_plantage_r75x2_deep_s101_rr.json`), 1 252 blobs binaires ; paquet de 185 Mio. Quatre commits
 portent l'identité civile de 👤 (déjà au premier audit, C16). Aucune réécriture n'est proposée.
@@ -183,8 +186,8 @@ flux de bruit de production indépendants entre eux ; spectres et gradients iden
 
 La suite complète **en série en local** (la CI la fait sur Ubuntu et pour l'UI sur Windows, sur la même tête) ; la couverture de tests ; l'exécution du gel autrement que par la CI ;
 les modèles directs d'INDEX, de RE et de METAL contre l'oracle (seuls leurs noyaux de gradient sont couverts par les tests existants, relus ici seulement pour DESIGN) ; la polarisation mixte
-et les milieux anisotropes ; Numba sous Linux (C18) ; 4 des 12 `nan_to_num` dont le contexte n'a pas été relu (`certus_metal_single_physics.py:448`, `certus_optical_models.py:423`, `certus_strat_heatmap_ui.py:80`,
-`certus_index_workers_opt_strat.py:371`) ; pour la normalisation IR d'INDEX (`certus_index_core.py:572`, `…ir_strat.py:690-692`, NaN → 0), je n'ai pas vérifié que le côté mesuré reçoit le même traitement que le côté calculé ;
+et les milieux anisotropes ; Numba sous Linux (C18) ; 4 des 12 `nan_to_num` dont le contexte n'a pas été relu (`gradient_function_fixed_eM` de `certus_metal_single_physics.py`, `get` de `certus_optical_models.py`, `__init__` de `certus_strat_heatmap_ui.py`,
+`_package_results` de `certus_index_workers_opt_strat.py`) ; pour la normalisation IR d'INDEX (`calculate_relative_R_normalization`, `_package_results` de `certus_index_workers_ir_strat.py`, NaN → 0), je n'ai pas vérifié que le côté mesuré reçoit le même traitement que le côté calculé ;
 l'optimisation DESIGN de bout en bout ; `studies/bonne_mere/` (exclu).
 **Mes sondes ont leurs limites** : l'analyse statique des tests ne voit pas une assertion portée par un assistant (32 faux positifs probables) ; la mutation ne couvre que 22 formules choisies par moi ;
 l'oracle et la production partagent mes conventions d'appel (ordre des couches, `n − ik`).

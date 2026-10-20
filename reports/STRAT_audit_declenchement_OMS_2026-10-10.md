@@ -4,6 +4,11 @@ Question de 👤 : *« identifier très sérieusement si l'arrêt trigger est in
 réalité d'un OMS »*. Ce rapport répond par la mesure. Chaque chiffre vient d'une commande donnée plus bas. Ce qui
 n'a pas été mesuré est dit tel.
 
+> **Recoupement 2026-10-20** : D96 à D98 ne sont plus des options, ils sont le modèle par défaut depuis le 2026-10-12
+> (`8d9ced13`, ETAT §3) ; D99 a été jugé non-défaut (la lecture d'arrêt est une lecture brute, ETAT §3). Les notes et
+> classements ci-dessous sont ceux de l'ancien modèle. L'hystérésis a reçu un plancher, `tp_hysteresis_floor`
+> (`1eb35535`, inactif par défaut).
+
 **Conditions.** Linux (conteneur, 4 cœurs), Python 3.14.6, NumPy 2.5.3, Numba 0.68.0 ; le banc de référence est sous
 Windows et Python 3.14.8 (ETAT, section 0), les derniers chiffres d'un `RESULT` ne se comparent donc pas d'une machine à
 l'autre. Code : branche `claude/ecstatic-newton-3grmls`, aux commits cités. Plans : la population du juge de paix

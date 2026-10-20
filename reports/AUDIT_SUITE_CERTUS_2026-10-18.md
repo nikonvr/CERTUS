@@ -3,6 +3,11 @@
 > Mesure datée, pas un document vivant : l'état courant est dans `docs/ETAT.md`, les règles dans
 > `CLAUDE.md`. Les défauts non corrigés ci-dessous sont à reporter dans `docs/ETAT.md` §4 par 👤
 > (ce fichier est édité en parallèle par une autre session, je n'y ai pas touché).
+>
+> **Recoupement 2026-10-20** (`4c10ce44`) : l'état de chaque constat est celui du §4 de la
+> [deuxième passe](AUDIT_SUITE_CERTUS_2e_passe_2026-10-18.md) ; aucun code de ces constats n'a changé depuis.
+> C14 et C15 : `UXargon.md`, `designargon.md` (suivis depuis `10914d78`) et `studies/bonne_mere/` sont publiés sur
+> `origin`. Numéros de ligne remplacés par des fonctions.
 
 **Code audité** : branche `claude/ecstatic-newton-3grmls`, HEAD `ccd67d59`. Entre le début et la fin de
 l'audit, deux commits d'une autre session (12:05 et 12:06) ont ajouté `studies/bonne_mere/` et 7 lignes à
@@ -97,14 +102,14 @@ décorateurs change.
 ### Fonctionnels
 
 **C01 — `ColorWorker.run()` lève `TypeError` à chaque exécution** *(élevée ; reproduit)*.
-`certus/workers/certus_design_workers.py:376` appelle `ColorWorkerResult.success(..., run_context=...)` ;
+`ColorWorker.run` (`certus/workers/certus_design_workers.py`) appelle `ColorWorkerResult.success(..., run_context=...)` ;
 `success(lab_nom, labs, trace=None)` n'a pas ce paramètre. L'exception arrive après tout le calcul Monte-Carlo,
 sort de `run()` (le tuple rattrapé `NUMERICAL_FAULT_EXCEPTIONS` ne contient pas `TypeError`) et n'émet ni
 `finished` ni `error`. Rejoué de bout en bout avec des matériaux factices : *« ColorWorkerResult.success() got
 an unexpected keyword argument 'run_context' »*, aucun signal reçu. Introduit le 2026-06-22 (`70507446`),
 jamais détecté : `tests/unit/test_certus_design_workers.py` ne teste que `__init__`, et
 `test_design_runs_carry_their_run_id.py` remplace le worker par un bouchon. Cause probable : copie du mot-clé
-de la ligne 244, où `run_context` alimente `get_structured_logger`. C'est **pylint** (`unexpected-keyword-arg`)
+d'`OptimWorker.run`, où `run_context` alimente `get_structured_logger`. C'est **pylint** (`unexpected-keyword-arg`)
 qui l'a révélé ; le tri de ses autres messages est au §4.
 
 **C18 — Une entrée du cache Numba peut faire planter l'interpréteur à sa relecture** *(élevée ; reproduit,
@@ -181,17 +186,17 @@ se comporte comme le simple repli « supprimer la couche la plus fine » ; l'év
 d'effet. Résultat raisonnable mais non optimisé, conforme à la description d'`ETAT.md`.
 
 **C13 — `dk5` non affecté quand `arg == 0`** *(information ; bénin aujourd'hui)*.
-`_njit_ir_global_gradient_fused` (`certus_index_objectives.py:160-169`) donne un défaut `0.0` à `dk6`, `dk7`
+`_njit_ir_global_gradient_fused` (`certus/core/certus_index_objectives.py`) donne un défaut `0.0` à `dk6`, `dk7`
 mais pas à `dk5`. Numba 0.67.0 initialise à 0,0 (mesuré, même avec une pile « salie »), et 0 est mathématiquement
 juste pour β > 1. Le comportement repose pourtant sur un détail non documenté de Numba. Une correction touche un
 noyau : vérification C1 (`scripts\c1_diff.py HEAD`) obligatoire.
 
 ### Tests et outillage
 
-**C02 — La suite n'est pas sûre sous `pytest-xdist`** *(moyenne ; cause mesurée)*. `tests/conftest.py:62` ne crée
+**C02 — La suite n'est pas sûre sous `pytest-xdist`** *(moyenne ; cause mesurée)*. `tests/conftest.py` (au niveau du module) ne crée
 un répertoire de préférences privé que si `CERTUS_CONFIG_DIR` est absent de l'environnement ; les workers
 xdist héritent la variable du contrôleur. Mesure : **un seul répertoire** pour le contrôleur et tous les workers.
-`test_certus_core.py::test_save_export_config` (et un second test, ligne ~484) écrit `auto_export_enabled = True`
+`test_certus_core.py::test_save_export_config` (et `test_full_configuration_workflow`) écrit `auto_export_enabled = True`
 dans ce fichier partagé ; `test_user_preferences_are_isolated.py::test_the_automatic_export_is_off_under_test`
 le lit au mauvais moment. Passe seul en série.
 
@@ -212,7 +217,7 @@ C'est l'**unique** copie de ces données hors Git ; elle n'a pas de seconde sauv
 **C05 — Le préflight et `git grep` comptent faux sous Windows** *(moyenne ; mesuré)*. Sans
 `core.longpaths`, `git status` rend 62 entrées suivies (39 « supprimées ») et 179 avertissements ; avec : **24**
 (1 suppression réelle), 0 avertissement. Les 38 suppressions fantômes sont des chemins > 260 caractères de
-`reports/`. `scripts/preflight.py` (l. 245 et 258) interroge git sans l'option : son alerte « 62 fichiers
+`reports/`. `scripts/preflight.py` (ses deux `git status --porcelain`) interroge git sans l'option : son alerte « 62 fichiers
 modifiés » est en partie fausse, et `ETAT.md` §0 cite « 62 modifications suivies préexistantes ». `git grep`
 sans l'option rend 168 erreurs « Filename too long » et **ne scanne pas** ces fichiers : un scan de secrets
 lancé ainsi serait incomplet sans le dire.
@@ -220,7 +225,7 @@ lancé ainsi serait incomplet sans le dire.
 **C19 — La porte de CI « `connect(lambda)` » ne lisait que les 10 lanceurs de la racine** *(moyenne ; reproduit)*.
 `tools/lambda_connect_audit.py` appelait `root.glob("*.py")` : il annonçait « 0 site — clean » (et la CI le
 tolérait au plafond 0) pour un dépôt qui en contient **44** dans `certus/` (`git grep` : 44 ; l'outil corrigé : 44).
-Le risque gardé est D11 (une lambda qui capture `self` retient une fenêtre fermée) ; la ligne 984 de
+Le risque gardé est D11 (une lambda qui capture `self` retient une fenêtre fermée) ; `_create_optimization_tab` de
 `certus_strat_ui_layout.py`, qui connecte le bouton « Open reports » à une lambda, en est un exemple. Même
 famille de défaut que C05 : un contrôle qui ne rejette rien parce qu'il ne regarde pas au bon endroit.
 `test_ci_lambda_connect_audit.py` exigeait « sortie 0 pour `--max-count 0` », ce qui n'était vrai qu'à cause du
@@ -241,8 +246,8 @@ saute (lecture du code, pas de journal de CI consulté), alors que l'en-tête de
 (d) La CI fait `uv sync --upgrade` (dernières versions à chaque run) : choix de 👤 documenté, non remis en cause.
 
 **C11 — Français dans `certus/`** *(faible)*. Règle n° 11 respectée à quatre lignes près sur 321 fichiers :
-`certus/ui/certus_strat_stack_progress_widget.py` L45 `Matériau`, L53 `Épaisseur`, L59 `Statut d'analyse`,
-L182 `Nettoyage précédent`. Le garde-fou les laisse passer (il exige un mot-outil de sa liste, et ne regarde que
+`certus/ui/certus_strat_stack_progress_widget.py` : `Matériau`, `Épaisseur`, `Statut d'analyse`,
+`Nettoyage précédent` (traduits, `f7edd4a6`). Le garde-fou les laisse passer (il exige un mot-outil de sa liste, et ne regarde que
 le premier docstring de chaque définition) ; il est volontairement indulgent.
 
 ### Dépôt et processus

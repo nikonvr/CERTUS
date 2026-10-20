@@ -10,8 +10,8 @@ Bilan prévu le 21 octobre 2026 à 10 h, Europe/Paris ; reprise automatique dans
 |---|---|
 | A1, A2 | déjà terminées dans la feuille de route |
 | A6 | retirée sur ordre du propriétaire ; `619d84eb` |
-| A7 | en cours : passages sourcés et propositions, sans modifier la vitrine |
-| A8, corrections simples | après A7 : un défaut isolé, preuves avant/après |
+| A7 | terminée : [neuf passages et propositions sourcées](../STRAT_vitrine_passages_a_relire_2026-10-20.md), page inchangée |
+| A8, corrections simples | prochaine action : un défaut isolé, preuves avant/après |
 | A3 | ensuite : refaire les repères officiels |
 | A5 | ensuite : mesurer tours et budgets Rate |
 | A4 | ensuite : parents optiques garantis, chemin nul identique au bit |

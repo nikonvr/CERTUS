@@ -69,13 +69,7 @@ quand rien ne progresse ; la recherche des paquets est une escalade qui n'a peut
 paquets de Rate du meilleur plan. Si les largeurs de fenêtre (`ELITE_RATE_WINDOWS`) ou le pas (`ELITE_RATE_STEP`) méritent un balayage, en faire des
 paramètres **inactifs par défaut** (chemin d'avant identique) avant de les mesurer. *Ne pas* : changer un défaut sans 👤.
 
-**A7 — Proposer les corrections de la vitrine `pages/CERTUS_STRAT.html`, sans l'éditer** (2 h). *Pourquoi* : la vitrine suit un régime strict (CLAUDE.md §10) : 👤
-la relit avant qu'on la touche. Ses §10.18 et §10.19 citent les chiffres d'août ; ses déposables de `r75x2` sans rampes sont invalidés par D106 ; elle dit que le Rate
-est « offert mais jamais choisi » à ×1,5, ×1,75 et ×2 (« zero out of 1510 »), ce qui n'est plus vrai à `r75x2` aux défauts de production (tous les plans
-déposables portent du Rate ; ×1,5 et ×1,75 ne sont pas mesurés aux défauts). *Faire* : écrire un fichier
-« STRAT_vitrine_passages_a_relire » (date du jour) dans `reports\` : pour chaque passage, la ligne, le texte actuel, ce qui est faux, le texte proposé (en anglais,
-chaque nombre sourcé dans un rapport, la limite montrée : le modèle de Rate n'a pas de dérive). *Fini quand* : le fichier est écrit ; **la page n'est pas modifiée**.
-Après accord explicite de 👤, une action séparée l'édite puis lance `python scripts\verifier_html.py pages\CERTUS_STRAT.html` (0 point à instruire).
+**A7 — Corrections de la vitrine : propositions remises (2026-10-20).** Neuf passages relus, textes proposés en anglais et nombres sourcés dans [`STRAT_vitrine_passages_a_relire`](../reports/STRAT_vitrine_passages_a_relire_2026-10-20.md). La page reste identique à `96128ba5`. Après accord explicite du propriétaire, une action séparée pourra intégrer les passages retenus et vérifier le HTML.
 
 **A8 — Dette technique** (§4 et §6) : un défaut par tâche, un commit par changement, jamais `ruff check --fix`, jamais agrandir `extend-ignore`.
 - *D25, lint* : mesure officielle `python -m ruff check . --isolated --select "E,F,I,B,UP,RUF,PT,PERF" --ignore E501 --line-length 120 --target-version py314 --statistics`

@@ -206,7 +206,9 @@ class FullPipelineStrategy:
                         accumulated_strategies_results, pre_calc_data, worker.params, shm_manager.get_context_info()
                     )
                     finalize_options = {"ranker": rank_complete_first, "post_report": post_report}
-                if worker.params.get("strat_local_search", False):
+                from certus.core.certus_strat_local_search import is_armed
+                ls_report = None
+                if is_armed(worker.params):
                     from certus.core.certus_strat_ranking import rank_final_results
                     from certus.workers.certus_strat_workers_local_search import run_local_search
                     worker.params["logger"].info("[LOCAL-SEARCH] Joint (mode, wavelength) local search on the winner.")
@@ -229,7 +231,7 @@ class FullPipelineStrategy:
                     timing_logger=worker.timing_logger,
                     **finalize_options,
                 )
-                if worker.params.get("strat_local_search", False):
+                if ls_report is not None:
                     final_result_dict.final_results["strat_local_search"] = ls_report  # where the probe and exports read
                 worker.signals.finished.emit(final_result_dict)
 

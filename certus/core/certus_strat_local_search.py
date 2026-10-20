@@ -19,7 +19,8 @@ showed 2 stops in 9 000 holdout draws for 0 at the search. So the frozen plan is
 `check_seeds` it never saw (check_runs draws each): it is kept only with no more stops, a paired gain beyond two
 standard errors and a P95 score (max over levels) not above the start's. Otherwise the start is returned unchanged.
 
-INACTIVE BY DEFAULT (`strat_local_search`, False): the pipeline does not call this module, former path to the bit (C1).
+ON BY DEFAULT since 2026-10-20 (`strat_local_search`, owner decision after the deep benches): a deliberate C1 break,
+like the slit bias; `strat_local_search: false` in the configuration gives the former path back.
 """
 
 from __future__ import annotations
@@ -30,6 +31,12 @@ from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
+
+
+def is_armed(params: dict[str, Any]) -> bool:
+    """Whether the pipeline runs the stage. On by default (owner, 2026-10-20)."""
+    return bool(params.get("strat_local_search", True))
+
 
 #: Seeds of the stage, offsets of `robustness_seed`: disjoint from the ranking seed, so the stage neither reuses nor
 #: biases the draws the winner was ranked on.

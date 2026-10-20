@@ -14,6 +14,7 @@ import numpy as np
 from certus.core.certus_strat_local_search import (
     LocalSearchConfig,
     candidates,
+    is_armed,
     joint_local_search,
     search_params,
     stops,
@@ -105,15 +106,17 @@ def test_changing_one_layer_leaves_its_neighbours_on_their_wavelength() -> None:
                               {"start": 3, "end": 6, "wavelength": 560.0}]
 
 
-def test_the_pipeline_runs_the_stage_only_when_armed() -> None:
-    """C1: off by default, the pipeline does not call the stage, so the former path is untouched."""
+def test_the_pipeline_runs_the_stage_by_default_and_a_configuration_can_turn_it_off() -> None:
+    """On by default since 2026-10-20 (owner); `strat_local_search: false` gives the former path back."""
+    assert is_armed({})
+    assert not is_armed({"strat_local_search": False})
     root = Path(__file__).resolve().parents[2]
     pipeline = (root / "certus" / "workers" / "certus_strat_workers_pipeline.py").read_text(encoding="utf-8")
-    assert 'if worker.params.get("strat_local_search", False):' in pipeline
+    assert "if is_armed(worker.params):" in pipeline
     # the report goes into `final_results`, the dict the probe and the exports read, not onto the result object
     assert 'final_result_dict.final_results["strat_local_search"] = ls_report' in pipeline
     ui = (root / "certus" / "ui" / "certus_strat_ui_state.py").read_text(encoding="utf-8")
-    assert '"strat_local_search": _config_flag(getattr(self, "_loaded_config", {}), "strat_local_search", False)' in ui
+    assert '"strat_local_search": _config_flag_default(getattr(self, "_loaded_config", {}), "strat_local_search", True)' in ui
 
 
 def test_the_stage_searches_under_twice_the_nominal_index_uncertainty_never_less_than_configured() -> None:

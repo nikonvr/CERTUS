@@ -326,7 +326,7 @@ LEVIERS: tuple[Levier, ...] = (
     Levier(
         cle="strat_local_search",
         libelle="Recherche locale finale conjointe (mode Rate/optique, longueur d'onde), couche par couche",
-        defaut=False,
+        defaut=True,
         genre="bool",
         statut=RESERVE,
         mesure="Banc deep graine 77, etage arme dans STRAT (reports/STRAT_r75_leviers_bonne_mere_2026-10-20) : SEEL 0,2515 -> 0,2080 nm "

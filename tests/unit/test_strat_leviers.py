@@ -41,7 +41,8 @@ NOYAU = Path(__file__).resolve().parents[2] / "certus" / "core" / "certus_strat_
 #: et les constantes se lisent dans le texte de tous), et le module d'ELITE, qui lit les deux reglages des couches Rate.
 SRC = "\n".join(
     p.read_text(encoding="utf-8")
-    for p in [*sorted(NOYAU.parent.glob("certus_strat_robustness*.py")), NOYAU.with_name("certus_strat_consensus.py")]
+    for p in [*sorted(NOYAU.parent.glob("certus_strat_robustness*.py")), NOYAU.with_name("certus_strat_consensus.py"),
+              NOYAU.with_name("certus_strat_local_search.py")]
 )
 
 

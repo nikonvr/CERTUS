@@ -60,6 +60,8 @@ def main():
     base = app.collect_params()
     base.update({"show_plots": False, "monochromator_resolution_nm": 2.0, "search_resolution": False, "noise_layer_offset": 0,
                  "noise_total_layers": n_layers, "require_turning_point": 0, **P._leviers_rate(0), "execution_mode": "deep"})
+    if os.environ.get("INDEX_CORRIDOR"):  # search under another index uncertainty (default: the configuration's)
+        base["index_corridor"] = float(os.environ["INDEX_CORRIDOR"])
     logger = logging.getLogger("certus_strat")
     logger.setLevel(logging.WARNING)
     nominal = json.loads((V / f"nominal_{COMP}.json").read_text(encoding="utf-8"))
@@ -123,7 +125,7 @@ def main():
     cur, cur_ev = start, evaluate(start, SS, SEARCH_RUNS)
     layers = list(range(n_layers)) if RUNS == 1000 else list(range(6))
     t0, n_eval, kept = time.monotonic(), 1, []
-    say(f"== {COMP} {OUT_TAG}: start {len(start['rate_layers'])} Rate, search stops {stops(cur_ev)}")
+    say(f"== {COMP} {OUT_TAG}: index corridor {base.get('index_corridor')}, start {len(start['rate_layers'])} Rate, search stops {stops(cur_ev)}")
     for pss in (1, 2):
         for k in layers:
             best = None

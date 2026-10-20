@@ -102,6 +102,28 @@ L'intégration reproduit le prototype (0,2132, 0,3467, 0,4729 nm au holdout). Le
 dans le JSON du banc (écrit sur l'objet résultat au lieu de `final_results`) : corrigé après ces bancs. Les JSON des
 bancs (3 Mo chacun) restent locaux, non commités : `reports/blocs_vs_plantage_<design>_deep_s077_localsearch.json`.
 
+## 7. Une erreur d'indice deux fois plus grande (±0,010)
+
+**Mesure 1** (`outils/index_x2.py.txt`, graines 20261022401 à 403) : mêmes plans, mêmes tirages, corridor ±0,005 puis
+±0,010. Le gagnant STRAT de 75c s'effondre (SEEL 0,2464 → 1,0170 nm, 436 arrêts sur 9 000), le plan conjoint tient
+(0,2151 → 0,2899 nm, 172 arrêts). r75x0.5 : 0,5063 contre 0,4035 nm, sans arrêt. r75x2 : 0,7211 contre 0,6295 nm,
+248 et 226 arrêts. Un plan cherché à ±0,005 n'est pas sûr à ±0,010 : il s'arrête.
+
+**Mesure 2** : la même recherche conjointe menée à ±0,010 (plan B) contre celle menée à ±0,005 (plan A), jugées à
+±0,005 et ±0,010 sur des graines neuves (`outils/judge_ic.py.txt`, 20261022601 à 603). Règle écrite avant la mesure :
+B préféré si, à ±0,010, il bat A au-delà de deux erreurs types, s'il ne coûte pas plus de 2 % de SEEL à ±0,005 et s'il
+n'ajoute aucun arrêt.
+
+| design | SEEL à ±0,005 : A / B | SEEL à ±0,010 : A / B | arrêts à ±0,010 : A / B | coût de B à ±0,005 | règle |
+|---|---|---|---|---|---|
+| 75c | 0,2146 / 0,2168 | 0,2997 / **0,2524** | 175 / **0** | +1,0 % | B |
+| r75x0.5 | **0,3447** / 0,3839 | 0,4020 / 0,3986 | 0 / 5 | **+11,4 %** | A |
+| r75x2 | 0,4774 / **0,4606** | 0,6227 / **0,5588** | 230 / **10** | −3,5 % (RMSE² moyen +14,5 %) | B |
+
+Sur 75c et r75x2, chercher à ±0,010 supprime presque tous les arrêts à ±0,010 pour un coût nul ou négatif à ±0,005. Sur
+r75x0.5, sans arrêt à aucune des deux amplitudes, l'assurance coûte 11 % de SEEL. Le gain vient des arrêts : chercher
+sous l'incertitude doublée protège là où l'indice fait s'arrêter le dépôt. Plans : `plan_recherche_conjointe_<design>_indice_x2.json`.
+
 Plans gelés : `plan_recherche_conjointe_<design>.json`. Non mesuré : graines de banc 101 et 202 pour les bascules et la recherche conjointe, dérive de la source (A6), rejeu
 des plans gelés dans le banc `scripts/probe_blocs_vs_plantage.py` (l'évaluateur en reste à 2e-5 relatif, mesuré le
 2026-10-20 sur les gagnants).

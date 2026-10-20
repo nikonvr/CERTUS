@@ -1,0 +1,7 @@
+== 75c 75c_ic010: index corridor 0.01, start 9 Rate, search stops 42
+   pass 1: 27 changes so far, Rate 12, search stops 0, mean RMSE2 1.1743e-04, 1126 evaluations, 574 s
+   pass 2: 42 changes so far, Rate 9, search stops 0, mean RMSE2 9.1693e-05, 2298 evaluations, 1132 s
+   frozen: 42 changes [(1, 1, 'lambda 469->450'), (1, 3, 'optical@550'), (1, 4, 'optical@460'), (1, 5, 'optical@530'), (1, 12, 'lambda 574->604'), (1, 13, 'lambda 574->624'), (1, 14, 'lambda 574->584'), (1, 15, 'lambda 574->564'), (1, 16, 'lambda 574->514'), (1, 30, 'lambda 662->652'), (1, 31, 'lambda 662->652'), (1, 34, 'lambda 662->672'), (1, 36, 'Rate'), (1, 41, 'Rate'), (1, 45, 'Rate'), (1, 46, 'lambda 643->603'), (1, 48, 'lambda 643->653'), (1, 49, 'lambda 643->603'), (1, 52, 'lambda 643->653'), (1, 54, 'Rate'), (1, 56, 'lambda 641->651'), (1, 60, 'Rate'), (1, 62, 'lambda 556->596'), (1, 65, 'Rate'), (1, 68, 'lambda 648->588'), (1, 71, 'lambda 648->658'), (1, 72, 'lambda 648->668'), (2, 0, 'lambda 469->450'), (2, 1, 'lambda 450->510'), (2, 2, 'lambda 469->500'), (2, 3, 'lambda 550->560'), (2, 6, 'optical@580'), (2, 9, 'optical@470'), (2, 13, 'lambda 624->674'), (2, 14, 'lambda 584->574'), (2, 19, 'lambda 574->594'), (2, 29, 'Rate'), (2, 31, 'lambda 652->642'), (2, 35, 'lambda 662->632'), (2, 40, 'lambda 643->633'), (2, 45, 'optical@570'), (2, 65, 'optical@570')]
+   conf: dRMSE2 -61.5 % (SE 1.1 %), stops 400 -> 1, SEEL_strat 1.0130 -> 0.2512 nm
+   hold: dRMSE2 -61.4 % (SE 1.0 %), stops 396 -> 2, SEEL_strat 1.0102 -> 0.2546 nm
+done

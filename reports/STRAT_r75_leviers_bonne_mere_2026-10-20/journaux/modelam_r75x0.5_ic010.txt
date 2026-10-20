@@ -1,0 +1,7 @@
+== r75x0.5 r75x0.5_ic010: index corridor 0.01, start 56 Rate, search stops 0
+   pass 1: 13 changes so far, Rate 50, search stops 0, mean RMSE2 7.4609e-04, 1984 evaluations, 439 s
+   pass 2: 25 changes so far, Rate 45, search stops 0, mean RMSE2 4.5386e-04, 3851 evaluations, 927 s
+   frozen: 25 changes [(1, 0, 'Rate'), (1, 3, 'lambda 631->681'), (1, 4, 'lambda 631->651'), (1, 8, 'lambda 675->705'), (1, 12, 'lambda 675->735'), (1, 16, 'lambda 675->695'), (1, 32, 'optical@610'), (1, 52, 'optical@620'), (1, 60, 'optical@620'), (1, 64, 'optical@680'), (1, 68, 'optical@620'), (1, 70, 'optical@690'), (1, 72, 'optical@680'), (2, 0, 'optical@450'), (2, 2, 'Rate'), (2, 4, 'lambda 651->591'), (2, 5, 'lambda 631->621'), (2, 8, 'lambda 705->695'), (2, 16, 'lambda 695->725'), (2, 31, 'optical@650'), (2, 36, 'optical@610'), (2, 52, 'lambda 620->680'), (2, 55, 'optical@620'), (2, 65, 'optical@730'), (2, 74, 'optical@710')]
+   conf: dRMSE2 -63.1 % (SE 1.6 %), stops 0 -> 3, SEEL_strat 0.5094 -> 0.4009 nm
+   hold: dRMSE2 -63.9 % (SE 1.6 %), stops 0 -> 2, SEEL_strat 0.5116 -> 0.4022 nm
+done

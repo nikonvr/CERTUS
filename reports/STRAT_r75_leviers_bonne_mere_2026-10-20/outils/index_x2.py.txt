@@ -1,0 +1,45 @@
+"""STRAT winner and joint-search plan under the nominal index uncertainty (+-0.005) and twice it (+-0.010).
+
+python -X utf8 index_x2.py COMP      same plans, same draws (seeds 20261022401-403, 1000 draws each), only index_corridor changes.
+Reports SEEL_strat = 2*sqrt(P95, max over noise levels), mean RMSE^2 at the nominal noise, and stops.
+"""
+import json
+import os
+import subprocess
+import sys
+
+import numpy as np
+
+COMP = sys.argv[1]
+HERE = os.path.join(os.environ["TEMP"], "r75")
+V = os.path.join(HERE, "val")
+REPO = r"D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310"
+SEEDS = (20261022401, 20261022402, 20261022403)
+CORRIDORS = (0.005, 0.010)
+plans = {"winner": json.load(open(os.path.join(V, f"winner_{COMP}.json"))),
+         "joint": json.load(open(os.path.join(V, f"modelam_{COMP}.json")))["plan"]}
+jobs = [dict(name=f"{n}__{ic}__{s}", plan=p, seed=s, runs=1000, save=True, override={"index_corridor": ic})
+        for n, p in plans.items() for ic in CORRIDORS for s in SEEDS]
+jf, out = os.path.join(V, f"ix2_{COMP}.json"), os.path.join(V, f"ix2_{COMP}.jsonl")
+json.dump(jobs, open(jf, "w"))
+if os.path.exists(out):
+    os.remove(out)
+subprocess.run([sys.executable, "-X", "utf8", os.path.join(HERE, "r75_scan.py"), "--repo", REPO, "--jobs", jf, "--out", out,
+                "--comp", COMP, "--mode", "deep"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+z = {}
+for line in open(out, encoding="utf-8"):
+    r = json.loads(line)
+    z[r["name"]] = np.load(os.path.join(V, f"ix2_{COMP}_arrays", r["name"] + ".npz"))
+res = {}
+for n in plans:
+    for ic in CORRIDORS:
+        arrs = [z[f"{n}__{ic}__{s}"] for s in SEEDS]
+        p95 = max(float(np.percentile(np.concatenate([a[f"rmse_{i}"] for a in arrs]), 95)) for i in range(3))
+        r2 = float(np.mean(np.concatenate([a["rmse_1"][~a["crashed_1"]] ** 2 for a in arrs])))
+        st = sum(int(a[f"crashed_{i}"].sum()) for a in arrs for i in range(3))
+        res[f"{n}@{ic}"] = dict(seel=2 * p95 ** 0.5, rmse2=r2, stops=st)
+        print(f"{COMP} {n} index +-{ic}: SEEL {2 * p95 ** 0.5:.4f} nm, mean RMSE2 {r2:.4e}, stops {st}/9000", flush=True)
+for n in plans:
+    a, b = res[f"{n}@0.005"], res[f"{n}@0.01"]
+    print(f"{COMP} {n}: doubling the index error multiplies the SEEL by {b['seel'] / a['seel']:.2f}", flush=True)
+json.dump(res, open(os.path.join(V, f"index_x2_{COMP}.json"), "w"), indent=1)

@@ -5,7 +5,7 @@
 > [`CLAUDE.md`](../CLAUDE.md). Il se tient **en place** : un fait change, on corrige sa ligne,
 > on ne raconte pas la correction (`git log` s'en charge). Toute mesure porte sa date.
 > Le détail et l'historique sont dans `git`, sans autorité (CLAUDE.md, en-tête).
-> Mis à jour le 2026-10-20.
+> Mis à jour le 2026-10-21.
 
 ## 0. Reprise — à lire en premier, à tenir à jour
 
@@ -24,7 +24,7 @@
 correctif de D107) et `claude/dreamy-burnell-85397a` (`cc3fe134`, fenêtre admissible 48c) ; reprendre par
 `git worktree add`. Dossier : 580 Mo pour une limite de 1 Go (2026-10-18).
 
-**Dernière validation complète** (2026-10-20, suites successives de CLAUDE.md §2, code `96128ba5`) : aucun échec inattendu ; sorties et limite documentaire dans le [`bilan`](../reports/ACTIONS_autonomes_2026-10-20/bilan.md#validation-initiale).
+**Dernière validation complète** (2026-10-21, suites successives de CLAUDE.md §2, correctif d'imports A8 sur `e369c324`) : 8 422 réussis, 19 ignorés, 3 échecs attendus, aucun échec inattendu ; sorties, preuves d'identité des imports et limite documentaire dans le [`bilan`](../reports/ACTIONS_autonomes_2026-10-20/bilan.md).
 
 **Avant de committer du code** : la validation de CLAUDE.md §2 en entier ; un sous-ensemble a déjà laissé passer une
 régression (`tests/unit/test_the_architecture_debt_only_shrinks.py` ne tourne pas avec les tests voisins).

@@ -22,18 +22,20 @@ from certus.core.certus_strat_core import (
     SYM_DEFAULT_TIE_EPS_REL,
     SYM_DEFAULT_WEIGHT,
 )
+from certus.core.certus_strat_robustness import INDEX_CORRIDOR_DEFAULT
 from certus.ui import certus_strat_witness as witness
 from certus.ui.certus_strat_defaults import default_settings
 from certus.ui.certus_strat_json_ui import JsonViewerWindow
 from certus.ui.certus_ui import get_certus_last_dir, safe_ui_action, set_certus_last_dir
 from certus.ui.certus_ui_widgets_factory import CertusBooleanField
+from certus.utils.certus_atomic_io import atomic_open
 from certus.utils.certus_dto import StratConfigDTO
 from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
 from certus.utils.certus_numeric_text import parse_decimal
 from certus.utils.certus_strat_context import _validate_strategy_blocks_contract
 from certus.utils.certus_strat_service import NOISE_DISTRIBUTION_GAUSSIAN, rebuild_visualization_context
 from certus.workers.certus_strat_workers import StratTask, WorkerThread
-from certus_physics import NON_MONOTONIC_MODE_ATTENUATE, NON_MONOTONIC_MODE_REJECT
+from certus_physics import NON_MONOTONIC_MODE_ATTENUATE, NON_MONOTONIC_MODE_REJECT, PHOTOMETRIC_CURVATURE_AMP
 
 #: String values recognized as TRUE in a config file.
 _CONFIG_TRUE = frozenset({"1", "true", "yes", "on", "oui", "vrai"})
@@ -58,11 +60,6 @@ def _config_flag(config: object, key: str, default: bool = False) -> bool:
     if isinstance(raw, (int, float)):
         return float(raw) > 0.5
     return str(raw).strip().lower() in _CONFIG_TRUE
-
-
-from certus.core.certus_strat_robustness import INDEX_CORRIDOR_DEFAULT  # noqa: E402
-from certus.utils.certus_atomic_io import atomic_open
-from certus_physics import PHOTOMETRIC_CURVATURE_AMP  # noqa: E402
 
 
 def _config_float(config: object, key: str, default: float = 0.0) -> float:

@@ -3,7 +3,7 @@
 `StateManager._collect_config` used to start with the pre-save cleanup, which removes the thin layers and merges the
 neighbours of the front table in place. `_config_snapshot` (base mixin) calls `_collect_config` to compare the window with
 the saved file at opening and at closing, so merely closing the window, or asking whether the project is saved, changed the
-stack (UXargon section 4.3, item 1). The cleanup stays an explicit step of the save flow (`save_config` runs it itself).
+stack (UX-01 in docs/AUDITS.md). The cleanup stays an explicit step of the save flow (`save_config` runs it itself).
 """
 
 from __future__ import annotations

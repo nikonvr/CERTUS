@@ -42,8 +42,8 @@ ON_DEMAND = (
     ("docs/ETAT_acquis.md", "acquis du Rate, corrections qui invalident des mesures, vocabulaire"),
     ("docs/REGLES_reference.md", "pieges d'execution, architecture du gel, vocabulaire, documentation, revue d'un autre agent"),
 )
-#: Gros fichiers de la racine : se lisent par identifiant (`grep -n "ALG-02" designargon.md`), jamais en entier.
-NEVER_WHOLE = ("UXargon.md", "designargon.md", "ideeargon.md")
+#: Gros fichiers de la racine : se lisent par identifiant (`grep -n "ID" fichier`), jamais en entier.
+NEVER_WHOLE = ("ideeargon.md",)
 #: Documents dont `--carte` donne les titres.
 MAP_DOCS = ("CLAUDE.md", "docs/ETAT.md", "docs/ETAT_actions.md", "docs/ETAT_acquis.md", "docs/REGLES_reference.md")
 
@@ -226,7 +226,8 @@ def brief(with_processes: bool = True) -> str:
 
     tracked = git("ls-files", "--", "reports").splitlines()
     heavy = ", ".join(f"{name} {tokens((ROOT / name).stat().st_size)}" for name in NEVER_WHOLE if (ROOT / name).exists())
-    lines.append(f"jamais en entier : reports/ ({len(tracked)} fichiers suivis), studies/, {heavy} ; chercher par identifiant (grep -n \"ID\" fichier)")
+    heavy = f", {heavy}" if heavy else ""
+    lines.append(f"jamais en entier : reports/ ({len(tracked)} fichiers suivis), studies/{heavy} ; chercher par identifiant (grep -n \"ID\" fichier)")
     lines.append("commandes : python scripts\\preflight.py ; python -m pytest tests/unit -q --no-cov -x ; python scripts\\validate_parallel.py")
     return "\n".join(lines)
 

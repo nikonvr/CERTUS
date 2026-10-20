@@ -89,7 +89,7 @@ def test_a_budget_already_under_the_cap_is_kept(design_app, monkeypatch) -> None
 
 
 def test_the_log_says_what_the_window_showed_and_what_was_applied(design_app, monkeypatch) -> None:
-    """The spin boxes keep showing 6000 / 50 / 40 while the capped global phase runs 1500 / 8 / 5 (UXargon section 4.3, item 4)."""
+    """The spin boxes keep showing 6000 / 50 / 40 while the capped global phase runs 1500 / 8 / 5 (UX-04 in docs/AUDITS.md)."""
     logs = []
     monkeypatch.setattr(design_app, "log", lambda message, level="INFO": logs.append(message))
 

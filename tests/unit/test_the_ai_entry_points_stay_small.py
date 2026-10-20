@@ -8,7 +8,7 @@ Nothing keeps that true by itself: each session appends a paragraph to the state
 
 * The caps below are a few percent above what was measured. Shrinking is free (lower the cap in the same commit). Raising one needs a reason that
   outweighs paying those bytes in every session; move reference text to the on-demand files first.
-* A big document at the root (`UXargon.md`, `designargon.md`, `ideeargon.md`) is read by identifier, never whole. `.rgignore` hides it from the
+* A big document at the root is read by identifier, never whole. `.rgignore` hides it from the
   default searches of the tools built on ripgrep, as it hides `reports/` (84 % of the tracked files) and `studies/`.
 * `.ignore` must not exist: ruff reads it too, and measured on 2026-10-18 it changed the scope of `ruff check .` (1 491 violations with it absent,
   1 421 with it). `.rgignore` is read by ripgrep only.

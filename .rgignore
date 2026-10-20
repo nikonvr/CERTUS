@@ -4,8 +4,6 @@
 # Ce n'est PAS un .ignore : ruff lit .ignore et cesserait de verifier reports/ et studies/ (mesure du 2026-10-18 : 1 491 violations
 # comptees avec .ignore absent, 1 421 avec). Seuls les fichiers de contenu sont filtres : un Glob ou un ls liste encore tout.
 # Raison : reports/ porte 84 % des fichiers suivis (campagnes, JSON de plusieurs Mo) et les trois audits de la racine
-# pesent 78 000 tokens a eux seuls. Ce qu'il faut lire est dans AGENTS.md.
+# pesaient 78 000 tokens (retires le 2026-10-20, registre court dans docs/AUDITS.md). Ce qu'il faut lire est dans AGENTS.md.
 /reports/
 /studies/
-/UXargon.md
-/designargon.md

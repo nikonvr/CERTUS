@@ -2,7 +2,7 @@
 
 `CurveSmootherGUI.load_file` reads the workbook with `round_wavelength_decimals=1`, which rounded the whole axis in the
 DataFrame; "Save Clean Data" then wrote that rounded axis, so a spectrum measured every 0.05 nm came back on a 0.1 nm grid
-with repeated wavelengths (UXargon section 11.2, item 1). The rounding now snaps the axis to the decimal grid only when it
+with repeated wavelengths (UX-55 in docs/AUDITS.md). The rounding now snaps the axis to the decimal grid only when it
 loses nothing (floating-point noise such as 400.0000000004); a real finer grid is kept as it was measured.
 """
 

@@ -1,7 +1,7 @@
 """The automatic cleanups of DESIGN never delete a layer whose thickness the operator fixed.
 
 `_apply_5nm_minimum` removed every layer under 5 nm, and `smart_cleanup` every layer under its adaptive threshold, whatever
-the `var` flag: a fixed 2 nm layer disappeared at the end of a workflow (D08 and U01, designargon section 7.1). A layer the
+the `var` flag: a fixed 2 nm layer disappeared at the end of a workflow (D08 and U01, UX-03 in docs/AUDITS.md). A layer the
 operator fixed is a constraint of the design, not an artefact of the optimisation.
 """
 

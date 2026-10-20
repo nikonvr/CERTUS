@@ -12,8 +12,8 @@ lancée pendant qu'une autre tourne rend `RESULT=None`), la dernière validation
 ajoute leurs titres et lignes.
 
 1. **À la demande seulement** : `docs/ETAT_actions.md`, `docs/ETAT_acquis.md`, `docs/REGLES_reference.md`.
-2. **Jamais en entier** : `reports/`, `studies/`, `UXargon.md`, `designargon.md` ; cherche par identifiant
-   (`grep -n "ALG-02" designargon.md`), ouvre le `bilan.md` ou le `README.md` d'un dossier. `.rgignore` les cache à ripgrep.
+2. **Jamais en entier** : `reports/`, `studies/` ; cherche par identifiant (`grep -n "ALG-02" docs/AUDITS.md`, registre des
+   audits), ouvre le `bilan.md` ou le `README.md` d'un dossier. `.rgignore` les cache à ripgrep.
 3. **Une sortie de commande se paie** : `pytest -q --no-cov` (`-x` pour s'arrêter au premier échec), jamais `--verbose` ;
    `git status -sb`, `git log --oneline -n 10`, `git diff --stat` avant `git diff` ; au-delà d'une page, un fichier dont tu
    lis la fin.

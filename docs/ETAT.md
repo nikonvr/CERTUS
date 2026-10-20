@@ -12,7 +12,7 @@
 > Tenir cette section à jour avec le travail (« en cours » au début, mesure et commit à la fin). Le reste se lit à la
 > demande : actions et protocole du Rate dans [`ETAT_actions.md`](ETAT_actions.md) ; acquis, corrections et reprises
 > antérieures dans [`ETAT_acquis.md`](ETAT_acquis.md) ; preuves dans `reports/` (le `bilan.md` d'un dossier) ;
-> `UXargon.md` et `designargon.md` par identifiant (`grep -n "ALG-02" designargon.md`), jamais en entier.
+> registre des audits, un constat par ligne : [`AUDITS.md`](AUDITS.md) (`grep -n "ALG-02" docs/AUDITS.md`).
 
 **Bonne Mère (2026-10-19).** Meilleur plan mesuré et chemin vers l'optimum : [`studies/bonne_mere/README.md`](../studies/bonne_mere/README.md) (21 couches Rate, SEEL P95 0,446 nm au bruit 0,05, 0 arrêt). Dérive de la source non modélisée (A6). Défaut ouvert de STRAT : l'hystérésis du comptage des points tournants suit le bruit ; à bruit faible, la fente fabrique des extrema ([phase 1](../reports/BONNE_MERE_phase1_budget_SuperChamp76_2026-10-19/bilan.md)).
 
@@ -429,7 +429,6 @@ Ces sujets demandent un jugement de physicien ou de propriétaire du produit. Le
 | **déclarations de développement** (D110) | déclarer `pytest-benchmark` et `pytest-xdist` dans l'extra `dev` (`pyproject.toml`, `uv.lock`, `requirements.lock`, tous gardés) et ajouter les trois contrôles documentaires à `lint.yml` |
 | **octets de référence de 19 rapports** | `reports/STRAT_*` est `-text` depuis le 2026-10-16 ; 19 rapports avaient l'index en LF et le disque en CRLF, identiques aux CR près, et aucune empreinte citée ne tranche. Commités tels que sur le disque (CRLF) le 2026-10-18, commit « line endings of 19 reports » : `git revert` restaure le LF |
 | **taille du dossier et archives** | 580 Mo le 2026-10-18 pour une limite de 1 Go (marge de 420 Mo). Faire une seconde copie de l'archive de 8,2 Go (`Archives_CERTUS_20261016`, une seule copie hors du dossier) ; archiver ou non les quatre sorties brutes du 99c (80 Mo) ; reprendre ou abandonner les deux branches de travail archivées (correctif de D107 et fenêtre admissible 48c, §0) |
-| **audits à la racine** | `UXargon.md` et `designargon.md` (187 Ko) y contreviennent à CLAUDE.md §3.10 : les déplacer sous `reports/ARGON_contre_audit_2026-10-16/` demande de refaire leurs 299 liens relatifs, et `documentation_checks.json` y épingle les empreintes d'un état antérieur |
 | **politique des entrées invalides** (D114) | refuser, ramener à 0 ou retourner un k négatif ? refuser l'indice nul et le substrat nul ? contrôler `isfinite` des indices une fois à la préparation ? (rapport, A28 et A29) |
 | **étapes de CI non bloquantes** | l'étape mypy et l'étape `bench_kernels` de `tests.yml` sont vertes sur la CI : les rendre bloquantes, et ajouter les trois contrôles documentaires à `lint.yml` (rapport, A23) |
 

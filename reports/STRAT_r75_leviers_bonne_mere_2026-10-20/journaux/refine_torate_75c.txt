@@ -1,0 +1,15 @@
+== 75c: 5 search candidates [(63, 0, -6.9), (54, 0, -5.4), (53, 0, -3.7), (62, 0, -2.3), (31, 0, -2.2)]
+   select R63_0: dRMSE2 -7.4 % (+-0.2), stops 8 vs 8, score 0.01502 vs 0.01520 -> kept
+   select R54_0: dRMSE2 -5.3 % (+-0.2), stops 8 vs 8, score 0.01496 vs 0.01520 -> kept
+   select R53_0: dRMSE2 -3.7 % (+-0.3), stops 8 vs 8, score 0.01508 vs 0.01520 -> kept
+   select R62_0: dRMSE2 -2.3 % (+-0.1), stops 8 vs 8, score 0.01504 vs 0.01520 -> kept
+   select R31_0: dRMSE2 -2.4 % (+-0.2), stops 7 vs 8, score 0.01504 vs 0.01520 -> kept
+   combine +R63_0: dRMSE2 -7.4 % vs current, stops 8 vs 8, score 0.01502 vs 0.01520 -> added
+   combine +R54_0: dRMSE2 -3.9 % vs current, stops 8 vs 8, score 0.01478 vs 0.01502 -> added
+   combine +R53_0: dRMSE2 +0.2 % vs current, stops 8 vs 8, score 0.01468 vs 0.01478 -> skipped
+   combine +R31_0: dRMSE2 -1.9 % vs current, stops 7 vs 8, score 0.01456 vs 0.01478 -> added
+   combine +R62_0: dRMSE2 -2.4 % vs current, stops 7 vs 7, score 0.01445 vs 0.01456 -> added
+   frozen: 4 changes ['R63_0', 'R54_0', 'R31_0', 'R62_0']
+   conf: dRMSE2 -14.9 % (SE 0.4 %), stops 7 vs 13, P95 max 0.01506 -> 0.01439, SEEL_strat 0.2454 -> 0.2399 nm
+   hold: dRMSE2 -13.8 % (SE 0.4 %), stops 1 vs 10, P95 max 0.01544 -> 0.01461, SEEL_strat 0.2485 -> 0.2418 nm
+done

@@ -1,0 +1,8 @@
+== head r75x0.5: 61 common wavelengths, 54 stop-free; best on search [('H450', 5.0), ('H640', 7.4), ('H635', 7.9), ('H625', 8.2), ('H615', 8.3)]
+   H450 (layers 0-2 at 450 nm, search +5.0 %): dRMSE2 +14.3 %, stops 0 vs 0, SEEL 0.4388 -> 0.4697 nm -> no
+   H640 (layers 0-2 at 640 nm, search +7.4 %): dRMSE2 +5.4 %, stops 0 vs 0, SEEL 0.4388 -> 0.4499 nm -> no
+   H635 (layers 0-2 at 635 nm, search +7.9 %): dRMSE2 +4.9 %, stops 0 vs 0, SEEL 0.4388 -> 0.4507 nm -> no
+   H625 (layers 0-2 at 625 nm, search +8.2 %): dRMSE2 +5.0 %, stops 0 vs 0, SEEL 0.4388 -> 0.4486 nm -> no
+   H615 (layers 0-2 at 615 nm, search +8.3 %): dRMSE2 +5.4 %, stops 0 vs 0, SEEL 0.4388 -> 0.4488 nm -> no
+   nothing admissible
+done

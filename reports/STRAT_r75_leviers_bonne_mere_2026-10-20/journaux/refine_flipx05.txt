@@ -1,0 +1,50 @@
+== r75x0.5: 25 search candidates [(32, 605, -25.5), (46, 685, -18.0), (33, 635, -15.8), (31, 650, -13.8), (40, 690, -12.7), (20, 490, -12.2), (60, 620, -10.7), (73, 655, -10.3), (35, 625, -10.3), (74, 685, -10.2), (34, 605, -9.4), (38, 680, -8.9), (18, 590, -8.8), (72, 675, -8.4), (28, 645, -8.3), (21, 745, -8.0), (56, 655, -7.6), (50, 640, -7.3), (68, 620, -6.6), (64, 680, -6.6), (65, 665, -5.8), (52, 675, -5.3), (70, 690, -3.5), (66, 680, -3.0), (54, 655, -2.2)]
+   select F32_605: dRMSE2 -21.3 % (+-1.0), stops 0 vs 0, score 0.03890 vs 0.04783 -> kept
+   select F46_685: dRMSE2 -8.9 % (+-1.2), stops 0 vs 0, score 0.04519 vs 0.04783 -> kept
+   select F33_635: dRMSE2 -10.9 % (+-0.8), stops 0 vs 0, score 0.04125 vs 0.04783 -> kept
+   select F31_650: dRMSE2 -9.2 % (+-0.9), stops 0 vs 0, score 0.04166 vs 0.04783 -> kept
+   select F40_690: dRMSE2 -3.7 % (+-1.2), stops 0 vs 0, score 0.04466 vs 0.04783 -> kept
+   select F20_490: dRMSE2 -14.0 % (+-1.3), stops 0 vs 0, score 0.04820 vs 0.04783 -> dropped
+   select F60_620: dRMSE2 -9.9 % (+-0.6), stops 0 vs 0, score 0.04268 vs 0.04783 -> kept
+   select F73_655: dRMSE2 -9.5 % (+-0.3), stops 0 vs 0, score 0.04421 vs 0.04783 -> kept
+   select F35_625: dRMSE2 -9.1 % (+-0.7), stops 0 vs 0, score 0.04195 vs 0.04783 -> kept
+   select F74_685: dRMSE2 -9.4 % (+-0.3), stops 0 vs 0, score 0.04435 vs 0.04783 -> kept
+   select F34_605: dRMSE2 -7.4 % (+-1.2), stops 0 vs 0, score 0.04181 vs 0.04783 -> kept
+   select F38_680: dRMSE2 -8.5 % (+-0.9), stops 0 vs 0, score 0.04306 vs 0.04783 -> kept
+   select F18_590: dRMSE2 -5.2 % (+-1.0), stops 0 vs 0, score 0.04871 vs 0.04783 -> dropped
+   select F72_675: dRMSE2 -8.3 % (+-0.3), stops 0 vs 0, score 0.04442 vs 0.04783 -> kept
+   select F28_645: dRMSE2 -4.1 % (+-1.0), stops 0 vs 0, score 0.04304 vs 0.04783 -> kept
+   select F21_745: dRMSE2 -5.5 % (+-0.8), stops 0 vs 0, score 0.04795 vs 0.04783 -> dropped
+   select F56_655: dRMSE2 -7.1 % (+-0.5), stops 0 vs 0, score 0.04377 vs 0.04783 -> kept
+   select F50_640: dRMSE2 -4.5 % (+-0.9), stops 0 vs 0, score 0.04457 vs 0.04783 -> kept
+   select F68_620: dRMSE2 -6.8 % (+-0.3), stops 0 vs 0, score 0.04366 vs 0.04783 -> kept
+   select F64_680: dRMSE2 -6.0 % (+-0.4), stops 0 vs 0, score 0.04425 vs 0.04783 -> kept
+   select F65_665: dRMSE2 -5.7 % (+-0.5), stops 0 vs 0, score 0.04322 vs 0.04783 -> kept
+   select F52_675: dRMSE2 -4.7 % (+-0.5), stops 0 vs 0, score 0.04410 vs 0.04783 -> kept
+   select F70_690: dRMSE2 -4.3 % (+-0.3), stops 0 vs 0, score 0.04463 vs 0.04783 -> kept
+   select F66_680: dRMSE2 +0.4 % (+-0.5), stops 0 vs 0, score 0.04525 vs 0.04783 -> dropped
+   select F54_655: dRMSE2 -0.9 % (+-0.5), stops 0 vs 0, score 0.04497 vs 0.04783 -> dropped
+   combine +F32_605: dRMSE2 -21.3 % vs current, stops 0 vs 0, score 0.03890 vs 0.04783 -> added
+   combine +F33_635: dRMSE2 +15.7 % vs current, stops 0 vs 0, score 0.04274 vs 0.03890 -> skipped
+   combine +F60_620: dRMSE2 -5.4 % vs current, stops 0 vs 0, score 0.03785 vs 0.03890 -> added
+   combine +F73_655: dRMSE2 -6.7 % vs current, stops 0 vs 0, score 0.03801 vs 0.03785 -> skipped
+   combine +F74_685: dRMSE2 -8.7 % vs current, stops 0 vs 0, score 0.03755 vs 0.03785 -> added
+   combine +F31_650: dRMSE2 +3.3 % vs current, stops 0 vs 0, score 0.03814 vs 0.03755 -> skipped
+   combine +F35_625: dRMSE2 +4.4 % vs current, stops 0 vs 0, score 0.03802 vs 0.03755 -> skipped
+   combine +F46_685: dRMSE2 -11.6 % vs current, stops 0 vs 0, score 0.03570 vs 0.03755 -> added
+   combine +F38_680: dRMSE2 -8.6 % vs current, stops 0 vs 0, score 0.03586 vs 0.03570 -> skipped
+   combine +F72_675: dRMSE2 -0.5 % vs current, stops 0 vs 0, score 0.03528 vs 0.03570 -> added
+   combine +F34_605: dRMSE2 +0.1 % vs current, stops 0 vs 0, score 0.03532 vs 0.03528 -> skipped
+   combine +F56_655: dRMSE2 -2.2 % vs current, stops 0 vs 0, score 0.03495 vs 0.03528 -> added
+   combine +F68_620: dRMSE2 +0.9 % vs current, stops 0 vs 0, score 0.03500 vs 0.03495 -> skipped
+   combine +F64_680: dRMSE2 +8.2 % vs current, stops 0 vs 0, score 0.03599 vs 0.03495 -> skipped
+   combine +F65_665: dRMSE2 +14.8 % vs current, stops 0 vs 0, score 0.03656 vs 0.03495 -> skipped
+   combine +F52_675: dRMSE2 +0.4 % vs current, stops 0 vs 0, score 0.03490 vs 0.03495 -> skipped
+   combine +F50_640: dRMSE2 +39.2 % vs current, stops 14 vs 0, score 0.04136 vs 0.03495 -> skipped
+   combine +F70_690: dRMSE2 +4.8 % vs current, stops 0 vs 0, score 0.03502 vs 0.03495 -> skipped
+   combine +F28_645: dRMSE2 +6.1 % vs current, stops 0 vs 0, score 0.03714 vs 0.03495 -> skipped
+   combine +F40_690: dRMSE2 -12.9 % vs current, stops 0 vs 0, score 0.03257 vs 0.03495 -> added
+   frozen: 7 changes ['F32_605', 'F60_620', 'F74_685', 'F46_685', 'F72_675', 'F56_655', 'F40_690']
+   conf: dRMSE2 -50.3 % (SE 1.4 %), stops 0 vs 0, P95 max 0.04827 -> 0.03272, SEEL_strat 0.4394 -> 0.3618 nm
+   hold: dRMSE2 -49.0 % (SE 1.4 %), stops 0 vs 0, P95 max 0.04775 -> 0.03290, SEEL_strat 0.4370 -> 0.3628 nm
+done

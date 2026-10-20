@@ -1,0 +1,222 @@
+"""Batch-of-layers ("micro-window") refinement of a STRAT plan, evaluated with STRAT's native task in one process.
+
+python -X utf8 windows.py COMP START_TAG OUT_TAG SEARCH_SEED OFFSET
+Windows of 8 optical layers, stride 4, from the substrate up; inside each window two coordinate-descent passes over its
+optical layers, wavelengths at +-60 nm around the current one by 10 nm, a change kept at once when it lowers the paired
+mean RMSE^2 at the nominal noise on the search seed (300 draws) without adding a stop. Then the plan is frozen and judged
+against START on confirmation (20261020401+OFFSET..) and final holdout (20261020501+OFFSET..) seeds, 1000 draws each.
+"""
+from __future__ import annotations
+
+import copy
+import json
+import logging
+import os
+import sys
+import time
+from pathlib import Path
+
+COMP, START, OUT_TAG, SSEED, OFF = sys.argv[1], sys.argv[2], sys.argv[3], int(sys.argv[4]), int(sys.argv[5])
+BUFFER = int(sys.argv[6]) if len(sys.argv) > 6 else -1  # >= 0: projected final target, errors set to zero past window end + BUFFER layers
+REPO = Path(r"D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310")
+V = Path(os.environ["TEMP"]) / "r75" / "val"
+sys.path.insert(0, str(REPO))
+sys.path.insert(1, str(REPO / "scripts"))
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+LOG = open(V / f"ablation_{OUT_TAG}.log", "a", encoding="utf-8")
+
+
+def say(*a):
+    m = " ".join(str(x) for x in a)
+    print(m, flush=True)
+    LOG.write(m + "\n")
+    LOG.flush()
+
+
+def main():
+    import numpy as np
+    import bench_examples as Bx
+    import probe_blocs_vs_plantage as P
+    from CERTUS_STRAT import CertusStratApp
+    from _composant import charger_configuration
+    from certus.core.certus_strat_config import precompute_clues_and_matrices
+    from certus.core.certus_strat_robustness import _attach_slit_profiles, _prepare_robustness_nominal_optics
+    from certus.core.certus_strat_robustness_noise import _resolve_robustness_noise_levels
+    import certus.core.certus_strat_robustness_task as task
+    from certus.utils.certus_exclusions import filter_params_for_gui
+    from certus_physics import CRASH_SENTINEL_MIN
+
+    cfg, n_layers = P.COMPOSANTS[COMP]
+    Bx.qapp()
+    Bx.autoanswer_dialogs(True)
+    app = CertusStratApp()
+    charger_configuration(app, REPO / cfg)
+    if "execution_mode" in getattr(app, "widgets", {}):
+        app.widgets["execution_mode"].setCurrentText("deep")
+    base = app.collect_params()
+    base.update({"show_plots": False, "monochromator_resolution_nm": 2.0, "search_resolution": False, "noise_layer_offset": 0,
+                 "noise_total_layers": n_layers, "require_turning_point": 0, **P._leviers_rate(0), "execution_mode": "deep"})
+    logger = logging.getLogger("certus_strat")
+    logger.setLevel(logging.WARNING)
+    nominal = base.get("p_thick_nominal")
+    if nominal is None:
+        from certus.core.certus_strat_pipeline import get_refractive_index
+        l0 = float(base["l0"])
+        mult = [float(e) for e in base["stack_string"].split(",") if e.strip()]
+        nH, nL = get_refractive_index(base["nH_id"], l0), get_refractive_index(base["nL_id"], l0)
+        nominal = [(m * l0) / (4.0 * np.real(nH if i % 2 == 0 else nL)) for i, m in enumerate(mult)]
+        base["p_thick_nominal"] = nominal
+    nominal = list(nominal)
+    clues, _, _ = precompute_clues_and_matrices(base, nominal, logger)
+    optics = _prepare_robustness_nominal_optics(base, nominal, {"clues_at_wl": clues})
+    levels = _resolve_robustness_noise_levels(base)
+    native_rmse = task.compute_batch_rmse
+    project = {"after": None}
+    nominal_arr = np.asarray(nominal, dtype=np.float64)
+
+    def projected_rmse(*args, **kw):
+        """Projected final target: layers past `after` deposited exactly, same draws (C2) for everything else."""
+        k = project["after"]
+        if k is not None:
+            th = np.array(args[0], dtype=np.float64, copy=True)
+            ok = np.all(th[:, :k + 1] < CRASH_SENTINEL_MIN, axis=1)
+            th[np.ix_(ok, np.arange(k + 1, th.shape[1]))] = nominal_arr[k + 1:]
+            args = (np.ascontiguousarray(th), *args[1:])
+        return native_rmse(*args, **kw)
+
+    task.compute_batch_rmse = projected_rmse
+
+    def evaluate(plan, seed, runs, after=None):
+        project["after"] = after
+        params = dict(base, robustness_seed=int(seed))
+        p = copy.deepcopy(plan)
+        _attach_slit_profiles([p], nominal, params, logger)
+        res = task._test_strategy_robustness_task(p, 0, levels, runs, nominal, clues, filter_params_for_gui(params), *optics, {},
+                                                  compute_layer_profile=False)
+        out = []
+        for lv in res["results_per_noise"]:
+            rmse = np.asarray(lv["rmse_all"], dtype=float)
+            th = np.asarray(lv["thicknesses_all"], dtype=float)
+            out.append((rmse, np.any((th if after is None else th[:, :after + 1]) > CRASH_SENTINEL_MIN, axis=1)))
+        project["after"] = None
+        return out
+
+    def paired(a, b):
+        """mean of rmse^2(b) - rmse^2(a) at the nominal level over draws both complete; stops of a and b over all levels."""
+        both = ~a[1][1] & ~b[1][1]
+        d = b[1][0][both] ** 2 - a[1][0][both] ** 2
+        return float(d.mean()), float(d.std(ddof=1) / np.sqrt(len(d))), sum(int(x[1].sum()) for x in a), sum(int(x[1].sum()) for x in b)
+
+    def set_layer(p, k, lam):
+        out = []
+        for b in p["blocks"]:
+            s, e, w = b["start"], b["end"], float(b["wavelength"])
+            if s <= k < e:
+                if s < k:
+                    out.append(dict(start=s, end=k, wavelength=w))
+                out.append(dict(start=k, end=k + 1, wavelength=float(lam)))
+                if k + 1 < e:
+                    out.append(dict(start=k + 1, end=e, wavelength=w))
+            else:
+                out.append(dict(start=s, end=e, wavelength=w))
+        q = dict(p)
+        q["blocks"] = out
+        return q
+
+    def wl_of(p, k):
+        return next(float(b["wavelength"]) for b in p["blocks"] if b["start"] <= k < b["end"])
+
+    start = json.loads((V / f"winner_{START}.json").read_text(encoding="utf-8"))
+    current = start
+    cur_eval = evaluate(current, SSEED, 300)
+    base_eval = cur_eval
+    t0, n_eval, kept = time.monotonic(), 1, []
+
+    def flip(p, k):
+        q = copy.deepcopy(p)
+        rate = set(q["rate_layers"])
+        if k in rate:
+            rate.discard(k)
+        else:
+            rate.add(k)
+        q["rate_layers"] = sorted(rate)
+        return q
+
+    say(f"== {COMP} {OUT_TAG}: frontier-layer ablation with neighbourhood re-optimisation")
+    for rnd in range(1, 11):
+        rate = set(current["rate_layers"])
+        mode = [k in rate for k in range(n_layers)]
+        frontier = [k for k in range(n_layers) if (k > 0 and mode[k] != mode[k - 1]) or (k < n_layers - 1 and mode[k] != mode[k + 1])]
+        best = None
+        if OUT_TAG == "smoke":
+            frontier = frontier[:1]
+        for k in frontier:
+            cand = flip(current, k)
+            if k in rate:  # Rate -> optical: choose its wavelength
+                opts = []
+                for lam in range(450, 751, 25):
+                    trial = set_layer(cand, k, lam)
+                    ev = evaluate(trial, SSEED, 300)
+                    n_eval += 1
+                    opts.append((paired(cur_eval, ev)[0], trial, ev))
+                d, cand, cev = min(opts, key=lambda x: x[0])
+            else:
+                cev = evaluate(cand, SSEED, 300)
+                n_eval += 1
+            # re-optimise the neighbourhood j-2..j+5 (optical layers), one coordinate-descent pass
+            crate = set(cand["rate_layers"])
+            for j in range(max(0, k - 2), min(n_layers, k + 6)):
+                if j in crate:
+                    continue
+                lam0 = wl_of(cand, j)
+                for lam in range(int(max(450, lam0 - 40)), int(min(750, lam0 + 40)) + 1, 10):
+                    if float(lam) == lam0:
+                        continue
+                    trial = set_layer(cand, j, lam)
+                    ev = evaluate(trial, SSEED, 300)
+                    n_eval += 1
+                    d2, _, s_c, s_t = paired(cev, ev)
+                    if d2 < 0 and s_t <= s_c:
+                        cand, cev = trial, ev
+            d, se, s_cur, s_new = paired(cur_eval, cev)
+            if s_new <= s_cur and d < -2 * se and (best is None or d < best[0]):
+                best = (d, k, cand, cev)
+        if best is None:
+            say(f"   round {rnd}: no frontier flip helps ({len(frontier)} tried, {n_eval} evaluations, {time.monotonic() - t0:.0f} s)")
+            break
+        current, cur_eval = best[2], best[3]
+        kept.append(best[1])
+        d, se, _, _ = paired(base_eval, cur_eval)
+        say(f"   round {rnd}: flipped layer {best[1]} ({'to optical' if best[1] in rate else 'to Rate'}), Rate layers now "
+            f"{len(current['rate_layers'])}, dRMSE2 vs start {d:+.3e}, {n_eval} evaluations, {time.monotonic() - t0:.0f} s")
+        if OUT_TAG == "smoke":
+            break
+    current["origin"] = f"{start['origin']} + frontier ablation {OUT_TAG}"
+    (V / f"ablated_{OUT_TAG}.json").write_text(json.dumps(current, indent=1), encoding="utf-8")
+    say(f"   frozen: flips {kept}, Rate layers {len(start['rate_layers'])} -> {len(current['rate_layers'])}")
+    if OUT_TAG == "smoke":
+        r0, r1 = set(start["rate_layers"]), set(current["rate_layers"])
+        ok = len(r0 ^ r1) in (0, 1) and all(b["start"] < b["end"] for b in current["blocks"]) and current["blocks"][-1]["end"] == n_layers
+        say(f"SMOKE flipped {sorted(r0 ^ r1)}, blocks contiguous and complete {ok}, evaluations {n_eval}")
+        say("SMOKE " + ("PASS" if ok else "FAIL"))
+        return
+    final = {}
+    for tag, first in (("conf", 20261020401), ("hold", 20261020501)):
+        seeds = [first + OFF + i for i in range(3)]
+        evs_s = [evaluate(start, s, 1000) for s in seeds]
+        evs_c = [evaluate(current, s, 1000) for s in seeds]
+        d = np.concatenate([b[1][0][~a[1][1] & ~b[1][1]] ** 2 - a[1][0][~a[1][1] & ~b[1][1]] ** 2 for a, b in zip(evs_s, evs_c)])
+        r0 = np.mean(np.concatenate([a[1][0][~a[1][1]] ** 2 for a in evs_s]))
+        p95 = {nm: max(float(np.percentile(np.concatenate([e[i][0] for e in evs]), 95)) for i in range(3))
+               for nm, evs in (("start", evs_s), ("win", evs_c))}
+        stops = {nm: sum(int(x[1].sum()) for e in evs for x in e) for nm, evs in (("start", evs_s), ("win", evs_c))}
+        final[tag] = dict(rel=float(d.mean() / r0), se=float(d.std(ddof=1) / np.sqrt(len(d)) / r0), stops=stops, p95=p95,
+                          seel_start=2 * p95["start"] ** 0.5, seel_win=2 * p95["win"] ** 0.5)
+        say(f"   {tag}: dRMSE2 {100 * d.mean() / r0:+.1f} % (SE {100 * final[tag]['se']:.1f} %), stops {stops['start']} -> {stops['win']}, "
+            f"SEEL_strat {final[tag]['seel_start']:.4f} -> {final[tag]['seel_win']:.4f} nm")
+    (V / f"ablation_{OUT_TAG}.json").write_text(json.dumps(dict(comp=COMP, start=START, kept=kept, final=final), indent=1), encoding="utf-8")
+    say("done")
+
+
+if __name__ == "__main__":
+    main()

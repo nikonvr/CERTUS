@@ -1,0 +1,11 @@
+== 75c abl_75c: frontier-layer ablation with neighbourhood re-optimisation
+   round 1: flipped layer 11 (to optical), Rate layers now 8, dRMSE2 vs start -9.539e-06, 149 evaluations, 75 s
+   round 2: flipped layer 3 (to optical), Rate layers now 7, dRMSE2 vs start -1.088e-05, 291 evaluations, 147 s
+   round 3: flipped layer 10 (to optical), Rate layers now 6, dRMSE2 vs start -1.364e-05, 430 evaluations, 224 s
+   round 4: flipped layer 4 (to optical), Rate layers now 5, dRMSE2 vs start -1.637e-05, 565 evaluations, 294 s
+   round 5: flipped layer 5 (to optical), Rate layers now 4, dRMSE2 vs start -1.724e-05, 713 evaluations, 370 s
+   round 6: no frontier flip helps (4 tried, 879 evaluations, 457 s)
+   frozen: flips [11, 3, 10, 4, 5], Rate layers 9 -> 4
+   conf: dRMSE2 -22.7 % (SE 0.5 %), stops 8 -> 5, SEEL_strat 0.2441 -> 0.2363 nm
+   hold: dRMSE2 -22.0 % (SE 0.5 %), stops 14 -> 10, SEEL_strat 0.2488 -> 0.2414 nm
+done

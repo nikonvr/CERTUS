@@ -1,0 +1,4 @@
+== head 75c: 61 common wavelengths, 1 stop-free; best on search [('H515', 32.8)]
+   H515 (layers 0-2 at 515 nm, search +32.8 %): dRMSE2 +36.3 %, stops 7 vs 15, SEEL 0.2469 -> 0.2844 nm -> no
+   nothing admissible
+done

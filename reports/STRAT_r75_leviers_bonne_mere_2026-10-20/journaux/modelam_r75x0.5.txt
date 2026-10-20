@@ -1,0 +1,7 @@
+== r75x0.5 r75x0.5: start 56 Rate, search stops 0
+   pass 1: 13 changes so far, Rate 49, search stops 0, mean RMSE2 3.7366e-04, 1984 evaluations, 443 s
+   pass 2: 26 changes so far, Rate 44, search stops 0, mean RMSE2 2.2098e-04, 3830 evaluations, 944 s
+   frozen: 26 changes [(1, 0, 'Rate'), (1, 3, 'lambda 631->691'), (1, 9, 'lambda 675->625'), (1, 12, 'lambda 675->725'), (1, 16, 'lambda 675->725'), (1, 28, 'optical@650'), (1, 31, 'optical@650'), (1, 32, 'optical@610'), (1, 52, 'optical@620'), (1, 60, 'optical@620'), (1, 70, 'optical@690'), (1, 72, 'optical@680'), (1, 74, 'optical@710'), (2, 0, 'optical@450'), (2, 1, 'lambda 631->661'), (2, 2, 'lambda 631->611'), (2, 4, 'lambda 631->611'), (2, 10, 'lambda 675->665'), (2, 54, 'optical@620'), (2, 55, 'optical@680'), (2, 56, 'optical@740'), (2, 60, 'lambda 620->670'), (2, 61, 'optical@670'), (2, 64, 'optical@610'), (2, 70, 'lambda 690->700'), (2, 74, 'Rate')]
+   conf: dRMSE2 -64.6 % (SE 1.5 %), stops 0 -> 0, SEEL_strat 0.4402 -> 0.3434 nm
+   hold: dRMSE2 -64.8 % (SE 1.5 %), stops 0 -> 0, SEEL_strat 0.4376 -> 0.3467 nm
+done

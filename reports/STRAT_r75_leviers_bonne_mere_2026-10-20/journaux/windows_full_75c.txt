@@ -1,0 +1,21 @@
+== 75c full_75c: 66 optical layers, 16 windows, projected buffer -1
+   window 1/16 layers 0-16: changes so far 11, dRMSE2 vs start -2.091e-05, 170 evaluations, 88 s
+   window 2/16 layers 13-20: changes so far 17, dRMSE2 vs start -2.239e-05, 355 evaluations, 183 s
+   window 3/16 layers 17-24: changes so far 17, dRMSE2 vs start -2.239e-05, 547 evaluations, 280 s
+   window 4/16 layers 21-28: changes so far 20, dRMSE2 vs start -2.382e-05, 739 evaluations, 375 s
+   window 5/16 layers 25-32: changes so far 21, dRMSE2 vs start -2.430e-05, 931 evaluations, 468 s
+   window 6/16 layers 29-36: changes so far 23, dRMSE2 vs start -2.648e-05, 1123 evaluations, 561 s
+   window 7/16 layers 33-40: changes so far 24, dRMSE2 vs start -2.800e-05, 1315 evaluations, 654 s
+   window 8/16 layers 37-44: changes so far 24, dRMSE2 vs start -2.800e-05, 1507 evaluations, 744 s
+   window 9/16 layers 41-48: changes so far 25, dRMSE2 vs start -2.952e-05, 1699 evaluations, 833 s
+   window 10/16 layers 45-52: changes so far 27, dRMSE2 vs start -3.161e-05, 1891 evaluations, 923 s
+   window 11/16 layers 49-56: changes so far 28, dRMSE2 vs start -3.214e-05, 2083 evaluations, 1016 s
+   window 12/16 layers 53-60: changes so far 28, dRMSE2 vs start -3.214e-05, 2275 evaluations, 1107 s
+   window 13/16 layers 57-64: changes so far 30, dRMSE2 vs start -3.581e-05, 2467 evaluations, 1198 s
+   window 14/16 layers 61-68: changes so far 32, dRMSE2 vs start -3.701e-05, 2659 evaluations, 1288 s
+   window 15/16 layers 65-72: changes so far 33, dRMSE2 vs start -3.807e-05, 2851 evaluations, 1378 s
+   window 16/16 layers 69-74: changes so far 33, dRMSE2 vs start -3.807e-05, 2995 evaluations, 1445 s
+   frozen: 33 changes [(0, 450), (1, 460), (2, 510), (12, 534), (13, 624), (15, 514), (16, 564), (1, 500), (12, 504), (14, 584), (15, 484), (15, 460), (19, 594), (14, 574), (16, 524), (17, 514), (19, 584), (28, 682), (24, 652), (27, 652), (31, 652), (34, 672), (31, 642), (38, 603), (48, 673), (49, 603), (45, 623), (54, 651), (62, 566), (62, 626), (62, 646), (68, 608), (72, 668)]
+   conf: dRMSE2 -43.6 % (SE 0.7 %), stops 10 -> 0, SEEL_strat 0.2460 -> 0.2204 nm
+   hold: dRMSE2 -43.4 % (SE 0.7 %), stops 13 -> 0, SEEL_strat 0.2460 -> 0.2200 nm
+done

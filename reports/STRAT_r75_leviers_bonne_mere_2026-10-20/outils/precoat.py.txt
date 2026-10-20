@@ -1,0 +1,280 @@
+"""Witness precoats (Bonne Mere) on a bench design, evaluated with STRAT's native task; certus/ untouched.
+
+python -X utf8 precoat.py COMP MODE      MODE = selftest | run
+Model, as in reports/BONNE_MERE_rejeu_SuperChamp76_2026-10-19/rejeu_plan.py.txt: the witness grows two precoats (H then
+L, so every part layer keeps its material, which the task assigns by parity) and then the part; growth, stops and
+monitoring run natively on the witness stack; the score is the part's RMSE, computed by the native compute_batch_rmse
+on the part's thicknesses (witness columns 2..) with the part's own target, wavelengths and index matrix, captured from
+a native run of the part, and with the index corridor arguments of the very witness call (same index realisation in
+growth and score, C2: the corridor draws depend on the material only). A draw that stops anywhere keeps the native
+witness value. Precoat ops are monitored optically at one wavelength.
+Caveat: monitoring-noise draws are keyed by physical layer index, so with precoats the part's layer k sees the draws of
+index k+2: pairing with the no-precoat plan is looser than between two plans of the same stack (wider SE, no bias).
+run: precoats are deposited by Rate (they exist on the witness only; monitored optically, thin ones stop). 30 (dH, dL)
+pairs with the winner's wavelengths on the search seed 20261021801 (300 draws); the winner's wavelengths stop on a
+precoated witness, so the part's optical wavelengths are re-optimised (two coordinate-descent passes, +-60 nm step 10)
+for the 3 pairs with fewest stops AND for the bare witness, the control that separates the precoat from the
+re-optimisation. Each precoat plan is judged against the re-optimised bare plan on selection 20261021811-813; the best
+admissible one on holdout 20261021821-823, next to the winner and the re-optimised bare plan (1000 draws each).
+Admissible: stops <= reference, gain > 2 SE, STRAT score not above the reference's. Self-test: no precoat == native, bit
+for bit; 5 nm precoats leave the part without stops.
+"""
+from __future__ import annotations
+
+import copy
+import json
+import logging
+import os
+import sys
+from pathlib import Path
+
+COMP, MODE = sys.argv[1], sys.argv[2]
+RUNS = int(os.environ.get("CAP_RUNS", "1000"))  # smoke tests only
+REPO = Path(r"D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310")
+V = Path(os.environ["TEMP"]) / "r75" / "val"
+sys.path.insert(0, str(REPO))
+sys.path.insert(1, str(REPO / "scripts"))
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+TAG = f"precoat_{COMP}" + ("" if RUNS == 1000 and MODE == "run" else f"_{MODE}{RUNS}")
+LOG = open(V / f"{TAG}.log", "a", encoding="utf-8")
+
+
+def say(*a):
+    m = " ".join(str(x) for x in a)
+    print(m, flush=True)
+    LOG.write(m + "\n")
+    LOG.flush()
+
+
+def main():
+    import numpy as np
+    import bench_examples as Bx
+    import probe_blocs_vs_plantage as P
+    from CERTUS_STRAT import CertusStratApp
+    from _composant import charger_configuration
+    from certus.core.certus_strat_config import precompute_clues_and_matrices
+    from certus.core.certus_strat_robustness import _attach_slit_profiles, _prepare_robustness_nominal_optics
+    from certus.core.certus_strat_robustness_noise import _resolve_robustness_noise_levels
+    import certus.core.certus_strat_robustness_task as task
+    from certus.utils.certus_exclusions import filter_params_for_gui
+    from certus_physics import CRASH_SENTINEL_MIN
+
+    cfg, n_layers = P.COMPOSANTS[COMP]
+    Bx.qapp()
+    Bx.autoanswer_dialogs(True)
+    app = CertusStratApp()
+    charger_configuration(app, REPO / cfg)
+    if "execution_mode" in getattr(app, "widgets", {}):
+        app.widgets["execution_mode"].setCurrentText("deep")
+    base = app.collect_params()
+    base.update({"show_plots": False, "monochromator_resolution_nm": 2.0, "search_resolution": False, "noise_layer_offset": 0,
+                 "noise_total_layers": n_layers, "require_turning_point": 0, **P._leviers_rate(0), "execution_mode": "deep"})
+    logger = logging.getLogger("certus_strat")
+    logger.setLevel(logging.WARNING)
+    nominal = json.loads((V / f"nominal_{COMP}.json").read_text(encoding="utf-8"))
+    assert len(nominal) == n_layers
+    base["p_thick_nominal"] = nominal
+    levels = _resolve_robustness_noise_levels(base)
+    native = task.compute_batch_rmse
+    ctx = {"n_pre": 0, "capture": None, "part_args": None}
+
+    def scored(*args, **kw):
+        if ctx["capture"] is not None:
+            ctx["capture"].append(args[1:8])
+        n = ctx["n_pre"]
+        if n == 0:
+            return native(*args, **kw)
+        th = np.asarray(args[0])
+        w = np.asarray(native(*args, **kw))
+        part = np.asarray(native(np.ascontiguousarray(th[:, n:]), *ctx["part_args"], *args[8:12]))
+        bad = np.any(th >= CRASH_SENTINEL_MIN, axis=1)
+        return np.where(bad, w, part)
+
+    task.compute_batch_rmse = scored
+    setups = {}
+
+    def setup(pre):
+        if pre not in setups:
+            nom = list(pre) + list(nominal)
+            params = dict(base, p_thick_nominal=nom, noise_total_layers=len(nom))
+            clues, _, _ = precompute_clues_and_matrices(params, nom, logger)
+            optics = _prepare_robustness_nominal_optics(params, nom, {"clues_at_wl": clues})
+            setups[pre] = (nom, params, clues, optics)
+        return setups[pre]
+
+    def shift(plan, pre, lam_p):
+        n = len(pre)
+        if n == 0:
+            return plan
+        q = copy.deepcopy(plan)
+        q["blocks"] = [dict(start=0, end=n, wavelength=float(lam_p if lam_p is not None else plan["blocks"][0]["wavelength"]))] + [
+            dict(start=b["start"] + n, end=b["end"] + n, wavelength=float(b["wavelength"])) for b in plan["blocks"]]
+        q["rate_layers"] = ([] if lam_p is not None else list(range(n))) + [r + n for r in plan["rate_layers"]]  # lam_p None: precoats by Rate
+        q["witness_reset_layers"] = [r + n for r in plan.get("witness_reset_layers", [])]
+        return q
+
+    def evaluate(plan, pre, lam_p, seed, runs):
+        nom, params, clues, optics = setup(pre)
+        p = copy.deepcopy(shift(plan, pre, lam_p))  # _attach_slit_profiles writes into the plan
+        params = dict(params, robustness_seed=int(seed))
+        _attach_slit_profiles([p], nom, params, logger)
+        ctx["n_pre"] = len(pre)
+        try:
+            res = task._test_strategy_robustness_task(p, 0, levels, runs, nom, clues, filter_params_for_gui(params), *optics, {},
+                                                      compute_layer_profile=False)
+        finally:
+            ctx["n_pre"] = 0
+        ctx["last"] = res
+        out = []
+        for lv in res["results_per_noise"]:
+            out.append((np.asarray(lv["rmse_all"], dtype=float),
+                        np.any(np.asarray(lv["thicknesses_all"], dtype=float) > CRASH_SENTINEL_MIN, axis=1)))
+        return out, float(res.get("robustness_score", max(np.percentile(r, 95) for r, _ in out)))
+
+    winner = json.loads((V / f"winner_{COMP}.json").read_text(encoding="utf-8"))
+    ctx["capture"] = []
+    evaluate(winner, (), 0.0, 20261021800, 4)
+    ctx["part_args"] = ctx["capture"][0]
+    assert all(all(np.array_equal(np.asarray(a), np.asarray(b)) if a is not None else b is None for a, b in zip(c, ctx["part_args"]))
+               for c in ctx["capture"]), "part arguments differ between noise levels"
+    ctx["capture"] = None
+    lam0 = float(winner["blocks"][0]["wavelength"])
+
+    def paired(a, b):
+        both = ~a[1][1] & ~b[1][1]
+        d = b[1][0][both] ** 2 - a[1][0][both] ** 2
+        return float(d.mean()), float(d.std(ddof=1) / np.sqrt(len(d))), sum(int(x[1].sum()) for x in a), sum(int(x[1].sum()) for x in b)
+
+    if MODE == "selftest":
+        ref, _ = evaluate(winner, (), 0.0, 20261021800, 200)
+        task.compute_batch_rmse = native
+        nat, _ = evaluate(winner, (), 0.0, 20261021800, 200)
+        task.compute_batch_rmse = scored
+        ok1 = all(np.array_equal(ref[i][0], nat[i][0]) and np.array_equal(ref[i][1], nat[i][1]) for i in range(3))
+        # the interceptor with zero-thickness precoats must give the part's RMSE where nothing stops
+        ctx["n_pre"] = 2
+        th = np.tile(np.array([0.0, 0.0] + nominal), (3, 1))
+        part_direct = np.asarray(native(np.ascontiguousarray(th[:, 2:]), *ctx["part_args"], 0.0, 0, 0.0, 0.0))
+        ctx["n_pre"] = 0
+        pc, _ = evaluate(winner, (60.0, 90.0), lam0, 20261021800, 200)
+        sane = all(np.all(np.isfinite(pc[i][0][~pc[i][1]])) for i in range(3))
+        for lam_try in (lam0,):
+            for pre_try in ((0.5, 0.5), (5.0, 5.0)):
+                pc_t, _ = evaluate(winner, pre_try, lam_try, 20261021800, 100)
+                th = np.asarray(ctx["last"]["results_per_noise"][1]["thicknesses_all"], dtype=float)
+                first = [int(np.argmax(r > CRASH_SENTINEL_MIN)) for r in th if np.any(r > CRASH_SENTINEL_MIN)]
+                say(f"DEBUG precoat {pre_try} at {lam_try:.0f} nm: stops {[int(x[1].sum()) for x in pc_t]}, first stopped witness layer "
+                    f"{sorted(set(first))[:8]}; keys {sorted(k for k in ctx['last'] if 'crash' in k)}")
+        say(f"SELFTEST no precoat == native bit for bit {ok1}; part RMSE at nominal {part_direct[0]:.3e} (expected ~0); "
+            f"precoat (60, 90) nm: stops {[int(x[1].sum()) for x in pc]}, mean RMSE2 at nominal "
+            f"{float(np.mean(pc[1][0][~pc[1][1]] ** 2)):.4e} vs no precoat {float(np.mean(ref[1][0][~ref[1][1]] ** 2)):.4e}, finite {sane}")
+        say("SELFTEST " + ("PASS" if ok1 and sane and part_direct[0] < 1e-6 else "FAIL"))
+        return
+
+    search_runs = 300 if RUNS == 1000 else RUNS
+    SS = 20261021801
+
+    def wl_of(p, k):
+        return next(float(b["wavelength"]) for b in p["blocks"] if b["start"] <= k < b["end"])
+
+    def set_lam(plan, k, lam):
+        out = []
+        for b in plan["blocks"]:
+            s, e, w = b["start"], b["end"], float(b["wavelength"])
+            if s <= k < e:
+                if s < k:
+                    out.append(dict(start=s, end=k, wavelength=w))
+                out.append(dict(start=k, end=k + 1, wavelength=float(lam)))
+                if k + 1 < e:
+                    out.append(dict(start=k + 1, end=e, wavelength=w))
+            else:
+                out.append(dict(start=s, end=e, wavelength=w))
+        q = dict(plan)
+        q["blocks"] = out
+        return q
+
+    def descend(pre, label):
+        """Two coordinate-descent passes over the part's optical wavelengths (+-60 nm, step 10) on the search seed;
+        a change is kept when it lowers the paired mean RMSE^2 at the nominal noise without adding a stop."""
+        cur = winner
+        cur_ev, _ = evaluate(cur, pre, None, SS, search_runs)
+        optical = [k for k in range(n_layers) if k not in set(winner["rate_layers"])]
+        if RUNS < 1000:
+            optical = optical[:2]  # smoke test
+        n_kept = 0
+        for _pass in (1, 2):
+            for k in optical:
+                lam0k, best = wl_of(cur, k), None
+                for lam in range(int(max(450, lam0k - 60)), int(min(750, lam0k + 60)) + 1, 10):
+                    if float(lam) == lam0k:
+                        continue
+                    trial = set_lam(cur, k, lam)
+                    ev, _ = evaluate(trial, pre, None, SS, search_runs)
+                    s_cur, s_try = sum(int(x[1].sum()) for x in cur_ev), sum(int(x[1].sum()) for x in ev)
+                    both = ~cur_ev[1][1] & ~ev[1][1]
+                    d = float(np.mean(ev[1][0][both] ** 2 - cur_ev[1][0][both] ** 2)) if both.any() else 0.0
+                    if s_try < s_cur or (s_try == s_cur and d < 0):
+                        key = (s_try, d)
+                        if best is None or key < best[0]:
+                            best = (key, trial, ev)
+                if best is not None:
+                    cur, cur_ev, n_kept = best[1], best[2], n_kept + 1
+        stops = sum(int(x[1].sum()) for x in cur_ev)
+        m = float(np.mean(cur_ev[1][0][~cur_ev[1][1]] ** 2)) if (~cur_ev[1][1]).any() else float("nan")
+        say(f"   descent {label}: {n_kept} changes, search stops {stops}, mean RMSE2 at nominal {m:.4e}")
+        return cur, stops, m
+
+    # 1. precoat pairs with the winner's wavelengths, precoats deposited by Rate (they exist on the witness only)
+    rows = []
+    for dh in (30.0, 60.0, 90.0, 120.0, 150.0):
+        for dl in (30.0, 60.0, 90.0, 120.0, 150.0, 180.0):
+            ev, _ = evaluate(winner, (dh, dl), None, SS, search_runs)
+            st = sum(int(x[1].sum()) for x in ev)
+            m = float(np.mean(ev[1][0][~ev[1][1]] ** 2)) if (~ev[1][1]).any() else float("inf")
+            rows.append((st, m, dh, dl))
+    rows.sort()
+    say(f"== precoat {COMP}: first layer {nominal[0]:.1f} nm; 30 pairs with the winner's wavelengths, fewest stops "
+        f"{[(r[2], r[3], r[0], f'{r[1]:.3e}') for r in rows[:6]]}")
+    # 2. wavelengths re-optimised for the 3 best pairs AND for the bare witness (control: the re-optimisation alone)
+    plans = {(): descend((), "no precoat")}
+    for st, m, dh, dl in rows[:3]:
+        plans[(dh, dl)] = descend((dh, dl), f"precoat ({dh:.0f}, {dl:.0f}) nm")
+    # 3. selection against the re-optimised bare plan, holdout of the best admissible precoat
+    sel = [20261021811 + i for i in range(3)]
+    ref_ev = {s: evaluate(plans[()][0], (), None, s, RUNS) for s in sel}
+    adm = []
+    for pre in [p for p in plans if p]:
+        evs = {s: evaluate(plans[pre][0], pre, None, s, RUNS) for s in sel}
+        ds = [paired(ref_ev[s][0], evs[s][0]) for s in sel]
+        d = float(np.mean([x[0] for x in ds]))
+        se = float(np.sqrt(np.sum([x[1] ** 2 for x in ds])) / len(ds))
+        st_ref, st = sum(x[2] for x in ds), sum(x[3] for x in ds)
+        sc_ref, sc = float(np.mean([ref_ev[s][1] for s in sel])), float(np.mean([evs[s][1] for s in sel]))
+        good = (st <= st_ref and d < -2 * se and sc <= sc_ref) or bool(os.environ.get("PRECOAT_FORCE"))  # FORCE: smoke only
+        say(f"   select precoat {pre}: dRMSE2 {d:+.3e} (SE {se:.1e}) vs re-optimised bare plan, stops {st} vs {st_ref}, "
+            f"score {sc:.5f} vs {sc_ref:.5f} -> {'admissible' if good else 'no'}")
+        if good:
+            adm.append((d, pre))
+    final = None
+    hold = [20261021821 + i for i in range(3)]
+    if adm:
+        pre = min(adm)[1]
+        trio = {"winner": (winner, ()), "bare_reopt": (plans[()][0], ()), "precoat": (plans[pre][0], pre)}
+        r = {nm: [evaluate(p, pr, None, s, RUNS)[0] for s in hold] for nm, (p, pr) in trio.items()}
+        final = {"precoat_nm": list(pre)}
+        for nm in trio:
+            p95 = max(float(np.percentile(np.concatenate([e[i][0] for e in r[nm]]), 95)) for i in range(3))
+            final[nm] = dict(seel=2 * p95 ** 0.5, stops=sum(int(x[1].sum()) for e in r[nm] for x in e),
+                             mean_rmse2=float(np.mean(np.concatenate([e[1][0][~e[1][1]] ** 2 for e in r[nm]]))))
+        say(f"   hold: SEEL winner {final['winner']['seel']:.4f}, bare re-optimised {final['bare_reopt']['seel']:.4f}, "
+            f"precoat {pre} {final['precoat']['seel']:.4f} nm; stops {final['winner']['stops']} / {final['bare_reopt']['stops']} / "
+            f"{final['precoat']['stops']}; mean RMSE2 {final['winner']['mean_rmse2']:.4e} / {final['bare_reopt']['mean_rmse2']:.4e} / "
+            f"{final['precoat']['mean_rmse2']:.4e}")
+    else:
+        say("   nothing admissible")
+    (V / f"{TAG}.json").write_text(json.dumps(dict(comp=COMP, search=rows, final=final, plans={str(k): v[0] for k, v in plans.items()}), indent=1), encoding="utf-8")
+    say("done")
+
+
+if __name__ == "__main__":
+    main()

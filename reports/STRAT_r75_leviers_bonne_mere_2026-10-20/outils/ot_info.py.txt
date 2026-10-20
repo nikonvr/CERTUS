@@ -1,0 +1,21 @@
+"""Optical thickness (OT = m * l0 / 4) per layer of each bench design; writes val/ot_COMP.json and prints a summary."""
+import json
+import os
+from pathlib import Path
+
+REPO = Path(r"D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310")
+V = Path(os.environ["TEMP"]) / "r75" / "val"
+CFG = {"75c": "example/example_strat/JSON-strat-random75.json", "r75x0.5": "reports/serie_echelle_r75/cfg_x0.5.json",
+       "r75x2": "reports/serie_echelle_r75/cfg_x2.json"}
+for comp, cfg in CFG.items():
+    d = json.loads((REPO / cfg).read_text(encoding="utf-8"))
+    raw = d["stack_multipliers"]
+    m = [float(x) for x in (raw if isinstance(raw, list) else str(raw).strip("[]").split(","))]
+    ot = [x * float(d["l0"]) / 4.0 for x in m]
+    (V / f"ot_{comp}.json").write_text(json.dumps(ot), encoding="utf-8")
+    t = json.loads((V / f"nominal_{comp}.json").read_text(encoding="utf-8"))
+    rate = sorted(json.loads((V / f"winner_{comp}.json").read_text(encoding="utf-8"))["rate_layers"])
+    ro = sorted(ot[k] for k in rate)
+    print(f"{comp}: {len(ot)} layers, d0 {t[0]:.0f} nm, OT0 {ot[0]:.0f} nm | OT<=50: {sum(o <= 50 for o in ot)}, <=100: "
+          f"{sum(o <= 100 for o in ot)}, <=150: {sum(o <= 150 for o in ot)} | STRAT Rate layers {len(rate)}, OT median "
+          f"{ro[len(ro) // 2]:.0f} max {ro[-1]:.0f} nm | OT min/median/max {min(ot):.0f}/{sorted(ot)[37]:.0f}/{max(ot):.0f}")

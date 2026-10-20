@@ -1,0 +1,17 @@
+== r75x2: 9 search candidates [(6, 505, -4.7), (7, 460, -4.4), (1, 740, -3.4), (4, 620, -3.0), (8, 485, -2.5), (0, 745, -2.3), (10, 695, -2.2), (12, 470, -2.0), (15, 570, -2.0)]
+   select L6_505: dRMSE2 -3.5 % (+-0.4), stops 9 vs 0, score 0.06826 vs 0.06772 -> dropped
+   select L7_460: dRMSE2 -2.0 % (+-0.4), stops 0 vs 0, score 0.06754 vs 0.06772 -> kept
+   select L1_740: dRMSE2 -2.1 % (+-0.2), stops 3 vs 0, score 0.06760 vs 0.06772 -> dropped
+   select L4_620: dRMSE2 -1.5 % (+-0.2), stops 0 vs 0, score 0.06736 vs 0.06772 -> kept
+   select L8_485: dRMSE2 -1.8 % (+-0.4), stops 1 vs 0, score 0.06878 vs 0.06772 -> dropped
+   select L0_745: dRMSE2 -1.0 % (+-0.2), stops 1 vs 0, score 0.06762 vs 0.06772 -> dropped
+   select L10_695: dRMSE2 -0.5 % (+-0.3), stops 0 vs 0, score 0.06812 vs 0.06772 -> dropped
+   select L12_470: dRMSE2 -1.0 % (+-0.2), stops 0 vs 0, score 0.06718 vs 0.06772 -> kept
+   select L15_570: dRMSE2 +0.5 % (+-0.4), stops 0 vs 0, score 0.06665 vs 0.06772 -> dropped
+   combine +L7_460: dRMSE2 -2.0 % vs current, stops 0 vs 0, score 0.06754 vs 0.06772 -> added
+   combine +L4_620: dRMSE2 -1.5 % vs current, stops 0 vs 0, score 0.06724 vs 0.06754 -> added
+   combine +L12_470: dRMSE2 -1.8 % vs current, stops 0 vs 0, score 0.06734 vs 0.06724 -> skipped
+   frozen: 2 changes ['L7_460', 'L4_620']
+   conf: dRMSE2 -4.0 % (SE 0.4 %), stops 0 vs 1, P95 max 0.06756 -> 0.06720, SEEL_strat 0.5198 -> 0.5184 nm
+   hold: dRMSE2 -4.7 % (SE 0.4 %), stops 0 vs 1, P95 max 0.06733 -> 0.06631, SEEL_strat 0.5190 -> 0.5150 nm
+done

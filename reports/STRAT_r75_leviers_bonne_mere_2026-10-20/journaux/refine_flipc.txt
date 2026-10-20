@@ -1,0 +1,5 @@
+== 75c: 0 search candidates []
+   frozen: 0 changes []
+   conf: dRMSE2 +0.0 % (SE 0.0 %), stops 7 vs 7, P95 max 0.01507 -> 0.01507, SEEL_strat 0.2455 -> 0.2455 nm
+   hold: dRMSE2 +0.0 % (SE 0.0 %), stops 11 vs 11, P95 max 0.01531 -> 0.01531, SEEL_strat 0.2475 -> 0.2475 nm
+done

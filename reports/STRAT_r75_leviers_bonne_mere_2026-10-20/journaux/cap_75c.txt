@@ -1,0 +1,6 @@
+== 75c: 9 Rate layers, 3 with a stop-free optical wavelength; kept in Rate for lack of one: [3, 4, 5, 6, 10, 11]
+   N1 (cap 123 nm): dRMSE2 +23.2 %, stops 9 vs 18, SEEL 0.2466 -> 0.2706 nm -> no
+   N2 (cap 117 nm): dRMSE2 +175.8 %, stops 66 vs 18, SEEL 0.2466 -> 0.3856 nm -> no
+   N3 (cap 91 nm): dRMSE2 +112.0 %, stops 34 vs 18, SEEL 0.2466 -> 0.3518 nm -> no
+   no admissible cap
+done

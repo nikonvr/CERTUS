@@ -1,0 +1,9 @@
+== r75x2 full_r75x2: 20 optical layers, 4 windows, projected buffer -1
+   window 1/4 layers 0-7: changes so far 10, dRMSE2 vs start -3.864e-04, 120 evaluations, 26 s
+   window 2/4 layers 4-11: changes so far 13, dRMSE2 vs start -4.693e-04, 304 evaluations, 68 s
+   window 3/4 layers 8-15: changes so far 19, dRMSE2 vs start -5.260e-04, 496 evaluations, 110 s
+   window 4/4 layers 12-44: changes so far 23, dRMSE2 vs start -5.859e-04, 682 evaluations, 151 s
+   frozen: 23 changes [(0, 510), (1, 500), (3, 460), (4, 490), (6, 500), (7, 470), (0, 540), (4, 550), (5, 510), (6, 540), (4, 610), (5, 520), (9, 599), (12, 599), (14, 649), (15, 549), (12, 629), (14, 689), (15, 609), (13, 669), (14, 749), (16, 549), (13, 719)]
+   conf: dRMSE2 -22.0 % (SE 0.7 %), stops 2 -> 0, SEEL_strat 0.5423 -> 0.5158 nm
+   hold: dRMSE2 -23.0 % (SE 0.8 %), stops 1 -> 0, SEEL_strat 0.5418 -> 0.5149 nm
+done

@@ -1,0 +1,6 @@
+== r75x0.5 abl_r75x0.5: frontier-layer ablation with neighbourhood re-optimisation
+   round 1: no frontier flip helps (6 tried, 145 evaluations, 32 s)
+   frozen: flips [], Rate layers 56 -> 56
+   conf: dRMSE2 +0.0 % (SE 0.0 %), stops 0 -> 0, SEEL_strat 0.4388 -> 0.4388 nm
+   hold: dRMSE2 +0.0 % (SE 0.0 %), stops 0 -> 0, SEEL_strat 0.4422 -> 0.4422 nm
+done

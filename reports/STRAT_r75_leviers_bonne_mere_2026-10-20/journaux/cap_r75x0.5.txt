@@ -1,0 +1,10 @@
+== r75x0.5: 56 Rate layers, 56 with a stop-free optical wavelength; kept in Rate for lack of one: []
+   N1 (cap 132 nm): dRMSE2 -6.4 %, stops 0 vs 0, SEEL 0.4424 -> 0.4153 nm -> admissible
+   N2 (cap 129 nm): dRMSE2 -8.1 %, stops 0 vs 0, SEEL 0.4424 -> 0.4153 nm -> admissible
+   N4 (cap 120 nm): dRMSE2 -9.3 %, stops 0 vs 0, SEEL 0.4424 -> 0.4036 nm -> admissible
+   N8 (cap 91 nm): dRMSE2 +48.4 %, stops 9 vs 0, SEEL 0.4424 -> 0.4709 nm -> no
+   N16 (cap 73 nm): dRMSE2 +1014.2 %, stops 3400 vs 0, SEEL 0.4424 -> 0.9998 nm -> no
+   N32 (cap 60 nm): dRMSE2 +872.2 %, stops 8455 vs 0, SEEL 0.4424 -> 1.0081 nm -> no
+   N56 (cap 17 nm): dRMSE2 +171.7 %, stops 3795 vs 0, SEEL 0.4424 -> 0.9704 nm -> no
+   hold N4: dRMSE2 -9.0 %, stops 0 vs 0, SEEL 0.4383 -> 0.4054 nm
+done

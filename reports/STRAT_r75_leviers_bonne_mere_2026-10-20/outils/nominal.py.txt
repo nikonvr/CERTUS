@@ -1,0 +1,36 @@
+"""Dump the nominal physical thickness (nm) of each layer of a bench design: python -X utf8 nominal.py COMP."""
+import json
+import os
+import sys
+from pathlib import Path
+
+COMP = sys.argv[1]
+REPO = Path(r"D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310")
+V = Path(os.environ["TEMP"]) / "r75" / "val"
+sys.path.insert(0, str(REPO))
+sys.path.insert(1, str(REPO / "scripts"))
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+import numpy as np  # noqa: E402
+import bench_examples as Bx  # noqa: E402
+import probe_blocs_vs_plantage as P  # noqa: E402
+from CERTUS_STRAT import CertusStratApp  # noqa: E402
+from _composant import charger_configuration  # noqa: E402
+
+cfg, n_layers = P.COMPOSANTS[COMP]
+Bx.qapp()
+Bx.autoanswer_dialogs(True)
+app = CertusStratApp()
+charger_configuration(app, REPO / cfg)
+base = app.collect_params()
+nominal = base.get("p_thick_nominal")
+if nominal is None:
+    from certus.core.certus_strat_pipeline import get_refractive_index
+    l0 = float(base["l0"])
+    mult = [float(e) for e in base["stack_string"].split(",") if e.strip()]
+    nH, nL = get_refractive_index(base["nH_id"], l0), get_refractive_index(base["nL_id"], l0)
+    nominal = [(m * l0) / (4.0 * np.real(nH if i % 2 == 0 else nL)) for i, m in enumerate(mult)]
+nominal = [float(x) for x in nominal]
+assert len(nominal) == n_layers, (len(nominal), n_layers)
+(V / f"nominal_{COMP}.json").write_text(json.dumps(nominal), encoding="utf-8")
+print(COMP, n_layers, "layers, thickness min/median/max", round(min(nominal), 1), round(float(np.median(nominal)), 1), round(max(nominal), 1))

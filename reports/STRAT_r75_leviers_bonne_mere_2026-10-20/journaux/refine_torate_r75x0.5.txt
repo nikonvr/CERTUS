@@ -1,0 +1,13 @@
+== r75x0.5: 5 search candidates [(4, 0, -4.8), (8, 0, -4.3), (9, 0, -2.9), (0, 0, -2.8), (12, 0, -2.5)]
+   select R4_0: dRMSE2 -2.8 % (+-0.8), stops 0 vs 0, score 0.04701 vs 0.04814 -> kept
+   select R8_0: dRMSE2 -3.2 % (+-0.7), stops 0 vs 0, score 0.04807 vs 0.04814 -> kept
+   select R9_0: dRMSE2 +1.8 % (+-1.0), stops 0 vs 0, score 0.04817 vs 0.04814 -> dropped
+   select R0_0: dRMSE2 -5.0 % (+-0.9), stops 0 vs 0, score 0.04780 vs 0.04814 -> kept
+   select R12_0: dRMSE2 +2.6 % (+-0.9), stops 0 vs 0, score 0.04946 vs 0.04814 -> dropped
+   combine +R0_0: dRMSE2 -5.0 % vs current, stops 0 vs 0, score 0.04780 vs 0.04814 -> added
+   combine +R8_0: dRMSE2 +2.0 % vs current, stops 0 vs 0, score 0.04761 vs 0.04780 -> skipped
+   combine +R4_0: dRMSE2 +2.3 % vs current, stops 0 vs 0, score 0.04728 vs 0.04780 -> skipped
+   frozen: 1 changes ['R0_0']
+   conf: dRMSE2 -4.3 % (SE 0.9 %), stops 0 vs 0, P95 max 0.04923 -> 0.04685, SEEL_strat 0.4438 -> 0.4329 nm
+   hold: dRMSE2 -3.6 % (SE 0.9 %), stops 0 vs 0, P95 max 0.04778 -> 0.04718, SEEL_strat 0.4372 -> 0.4344 nm
+done

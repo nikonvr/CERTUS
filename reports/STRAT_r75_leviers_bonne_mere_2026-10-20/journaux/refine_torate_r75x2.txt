@@ -1,0 +1,9 @@
+== r75x2: 2 search candidates [(7, 0, -4.3), (0, 0, -2.1)]
+   select R7_0: dRMSE2 -5.9 % (+-0.5), stops 0 vs 1, score 0.07140 vs 0.07355 -> kept
+   select R0_0: dRMSE2 -0.7 % (+-0.3), stops 1 vs 1, score 0.07306 vs 0.07355 -> kept
+   combine +R7_0: dRMSE2 -5.9 % vs current, stops 0 vs 1, score 0.07140 vs 0.07355 -> added
+   combine +R0_0: dRMSE2 -3.2 % vs current, stops 0 vs 0, score 0.07096 vs 0.07140 -> added
+   frozen: 2 changes ['R7_0', 'R0_0']
+   conf: dRMSE2 -9.0 % (SE 0.5 %), stops 0 vs 0, P95 max 0.07346 -> 0.07108, SEEL_strat 0.5421 -> 0.5332 nm
+   hold: dRMSE2 -8.3 % (SE 0.5 %), stops 0 vs 2, P95 max 0.07332 -> 0.06998, SEEL_strat 0.5416 -> 0.5291 nm
+done

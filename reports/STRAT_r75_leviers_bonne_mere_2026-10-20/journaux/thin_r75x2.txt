@@ -1,0 +1,12 @@
+== thin r75x2: winner 55 Rate; Rate layers with a flip wavelength 55
+   K0 (0 Rate, OT max 0 nm, kept in Rate 0): dRMSE2 +17.2 %, stops 6296 vs 0, SEEL 0.5366 -> 1.0338 nm -> no
+   K5 (5 Rate, OT max 278 nm, kept in Rate 0): dRMSE2 +11.1 %, stops 5940 vs 0, SEEL 0.5366 -> 1.0370 nm -> no
+   K10 (10 Rate, OT max 324 nm, kept in Rate 0): dRMSE2 -3.7 %, stops 5739 vs 0, SEEL 0.5366 -> 1.0384 nm -> no
+   K20 (20 Rate, OT max 389 nm, kept in Rate 0): dRMSE2 +8.7 %, stops 5131 vs 0, SEEL 0.5366 -> 1.0350 nm -> no
+   K30 (30 Rate, OT max 456 nm, kept in Rate 0): dRMSE2 -1.9 %, stops 5008 vs 0, SEEL 0.5366 -> 1.0279 nm -> no
+   K40 (40 Rate, OT max 523 nm, kept in Rate 0): dRMSE2 -5.7 %, stops 105 vs 0, SEEL 0.5366 -> 0.5393 nm -> no
+   K50 (50 Rate, OT max 620 nm, kept in Rate 0): dRMSE2 +10.4 %, stops 301 vs 0, SEEL 0.5366 -> 0.6374 nm -> no
+   K60 (60 Rate, OT max 731 nm, kept in Rate 0): dRMSE2 +11.0 %, stops 12 vs 0, SEEL 0.5366 -> 0.5468 nm -> no
+   K65 (65 Rate, OT max 785 nm, kept in Rate 0): dRMSE2 +88.6 %, stops 0 vs 0, SEEL 0.5366 -> 0.6520 nm -> no
+   nothing admissible
+done

@@ -1,0 +1,168 @@
+"""Two Bonne Mere levers as plan families, judged like cap.py (paired RMSE^2 at the nominal noise, selection then holdout).
+
+python -X utf8 family.py MODE COMP OFFSET      MODE = thin | head
+thin: Bonne Mere's partition rule, Rate only for the thinnest layers (BM: optical thickness <= 50 nm, first 10 layers
+      optical). The absolute 50 nm does not transfer (75c and r75x2 have no layer that thin), so the rule is swept by K,
+      the number of thinnest layers (by OT = m*l0/4, layers >= 10) monitored by Rate; every other layer is optical,
+      at the winner's wavelength when the winner already monitors it optically, else at its best single-flip
+      wavelength (val/scan_flip_COMP.jsonl). Selection seeds 20261021301+OFF, holdout 20261021401+OFF.
+head: one common wavelength for layers 0, 1, 2 (BM: ops 1 to 3 at 455 nm), 450..750 nm step 5 on a search seed
+      (20261021501, 300 draws), the 5 best stop-free ones then judged on selection 20261021601+OFF and the best
+      admissible one on holdout 20261021701+OFF.
+Admissible: no extra stop over the three noise levels, gain > 2 SE, STRAT score not above the winner's.
+"""
+import json
+import os
+import subprocess
+import sys
+
+import numpy as np
+
+MODE, COMP, OFF = sys.argv[1], sys.argv[2], int(sys.argv[3])
+RUNS = int(os.environ.get("CAP_RUNS", "1000"))  # smoke tests only
+TAG = f"{MODE}_{COMP}" + ("" if RUNS == 1000 else "_smoke")
+HERE = os.path.join(os.environ["TEMP"], "r75")
+V = os.path.join(HERE, "val")
+REPO = r"D:\drivfl\01_Recherche_Enseignement\02_Couches_Minces_Optique\couches minces 2026\CERTUS\certus0310"
+FIRST = {"thin": (20261021301, 20261021401), "head": (20261021601, 20261021701)}[MODE]
+SEL = tuple(FIRST[0] + OFF + i for i in range(3))
+HOLD = tuple(FIRST[1] + OFF + i for i in range(3))
+LOG = open(os.path.join(V, f"{TAG}.log"), "a", encoding="utf-8")
+
+
+def say(*a):
+    msg = " ".join(str(x) for x in a)
+    print(msg, flush=True)
+    LOG.write(msg + "\n")
+    LOG.flush()
+
+
+def run(tag, plans, seeds, runs=None):
+    jobs = [dict(name=f"{n}__{s}", plan=p, seed=s, runs=runs or RUNS, save=True) for n, p in plans.items() for s in seeds]
+    jf, out = os.path.join(V, f"rf_{TAG}_{tag}.json"), os.path.join(V, f"rf_{TAG}_{tag}.jsonl")
+    json.dump(jobs, open(jf, "w"))
+    if os.path.exists(out):
+        os.remove(out)
+    subprocess.run([sys.executable, "-X", "utf8", os.path.join(HERE, "r75_scan.py"), "--repo", REPO, "--jobs", jf, "--out", out,
+                    "--comp", COMP, "--mode", "deep"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    res = {}
+    for line in open(out, encoding="utf-8"):
+        r = json.loads(line)
+        n, s = r["name"].rsplit("__", 1)
+        z = np.load(os.path.join(V, f"rf_{TAG}_{tag}_arrays", r["name"] + ".npz"))
+        res.setdefault(n, {})[int(s)] = (z, r["robustness_score"])
+    return res
+
+
+def compare(res, ref, cand, seeds):
+    d, stops, stops_ref, sc_ref, sc_c = [], 0, 0, [], []
+    for s in seeds:
+        zr, scr = res[ref][s]
+        zc, scc = res[cand][s]
+        stops += sum(int(zc[f"crashed_{i}"].sum()) for i in range(3))
+        stops_ref += sum(int(zr[f"crashed_{i}"].sum()) for i in range(3))
+        both = ~zr["crashed_1"] & ~zc["crashed_1"]
+        d.append(zc["rmse_1"][both] ** 2 - zr["rmse_1"][both] ** 2)
+        sc_ref.append(scr)
+        sc_c.append(scc)
+    d = np.concatenate(d)
+    base = np.mean(np.concatenate([res[ref][s][0]["rmse_1"][~res[ref][s][0]["crashed_1"]] ** 2 for s in seeds]))
+    return dict(d=float(d.mean()), se=float(d.std(ddof=1) / np.sqrt(len(d))), rel=float(d.mean() / base), stops=stops,
+                stops_ref=stops_ref, score_ref=float(np.mean(sc_ref)), score=float(np.mean(sc_c)))
+
+
+def set_lam(plan, k, lam):
+    out = []
+    for b in plan["blocks"]:
+        s, e, w = b["start"], b["end"], float(b["wavelength"])
+        if s <= k < e:
+            if s < k:
+                out.append(dict(start=s, end=k, wavelength=w))
+            out.append(dict(start=k, end=k + 1, wavelength=float(lam)))
+            if k + 1 < e:
+                out.append(dict(start=k + 1, end=e, wavelength=w))
+        else:
+            out.append(dict(start=s, end=e, wavelength=w))
+    q = dict(plan)
+    q["blocks"] = out
+    return q
+
+
+def p95_seel(res, name, seeds):
+    p95 = max(float(np.percentile(np.concatenate([res[name][s][0][f"rmse_{i}"] for s in seeds]), 95)) for i in range(3))
+    return 2 * p95 ** 0.5
+
+
+def judge(plans, labels):
+    """Selection of every candidate against the winner, then holdout of the best admissible one."""
+    res = run("sel", plans, SEL)
+    adm = []
+    for name in plans:
+        if name == "ref":
+            continue
+        c = compare(res, "ref", name, SEL)
+        ok = c["stops"] <= c["stops_ref"] and c["d"] < -2 * c["se"] and c["score"] <= c["score_ref"]
+        say(f"   {name} ({labels[name]}): dRMSE2 {100 * c['rel']:+.1f} %, stops {c['stops']} vs {c['stops_ref']}, "
+            f"SEEL {p95_seel(res, 'ref', SEL):.4f} -> {p95_seel(res, name, SEL):.4f} nm -> {'admissible' if ok else 'no'}")
+        if ok:
+            adm.append((c["d"], name))
+    if not adm:
+        say("   nothing admissible")
+        return None
+    name = min(adm)[1]
+    r3 = run("hold", {"ref": plans["ref"], name: plans[name]}, HOLD)
+    c = compare(r3, "ref", name, HOLD)
+    final = dict(c, plan=name, label=labels[name], seel_ref=p95_seel(r3, "ref", HOLD), seel=p95_seel(r3, name, HOLD))
+    say(f"   hold {name} ({labels[name]}): dRMSE2 {100 * c['rel']:+.1f} %, stops {c['stops']} vs {c['stops_ref']}, "
+        f"SEEL {final['seel_ref']:.4f} -> {final['seel']:.4f} nm")
+    json.dump(plans[name], open(os.path.join(V, f"best_{TAG}.json"), "w"), indent=1)
+    return final
+
+
+winner = json.load(open(os.path.join(V, f"winner_{COMP}.json")))
+n_layers = len(json.load(open(os.path.join(V, f"nominal_{COMP}.json"))))
+rate0 = set(winner["rate_layers"])
+plans, labels = {"ref": winner}, {}
+if MODE == "thin":
+    ot = json.load(open(os.path.join(V, f"ot_{COMP}.json")))
+    flip_lam = {}
+    for line in open(os.path.join(V, f"scan_flip_{COMP}.jsonl"), encoding="utf-8"):
+        r = json.loads(line)
+        if r["name"] == "base" or any(x["crashed"] for x in r["per_noise"]):
+            continue
+        k, v = r["meta"]["layer"], r["per_noise"][1]["rmse2_mean_done"]
+        if k not in flip_lam or v < flip_lam[k][0]:
+            flip_lam[k] = (v, r["meta"]["lam"])
+    thin_first = sorted(range(10, n_layers), key=lambda k: ot[k])
+    for K in (0, 5, 10, 20, 30, 40, 50, 60, n_layers - 10):
+        rate = set(thin_first[:K])
+        stuck = sorted(k for k in rate0 - rate if k not in flip_lam)  # no stop-free optical wavelength: stays in Rate
+        rate |= set(stuck)
+        p = dict(winner, rate_layers=sorted(rate))
+        for k in sorted(rate0 - rate):
+            p = set_lam(p, k, flip_lam[k][1])
+        name = f"K{K}"
+        plans[name] = p
+        labels[name] = f"{len(rate)} Rate, OT max {max((ot[k] for k in rate), default=0):.0f} nm, kept in Rate {len(stuck)}"
+    say(f"== thin {COMP}: winner {len(rate0)} Rate; Rate layers with a flip wavelength {len(flip_lam)}")
+else:
+    cands = {f"H{lam}": set_lam(set_lam(set_lam(winner, 0, lam), 1, lam), 2, lam) for lam in range(450, 751, 5)}
+    jf, out = os.path.join(V, f"jobs_{TAG}_search.json"), os.path.join(V, f"{TAG}_search.jsonl")
+    json.dump([dict(name="base", plan=winner, seed=20261021501, runs=300 if RUNS == 1000 else RUNS, meta={})] +
+              [dict(name=n, plan=p, seed=20261021501, runs=300 if RUNS == 1000 else RUNS, meta={}) for n, p in cands.items()], open(jf, "w"))
+    if os.path.exists(out):
+        os.remove(out)
+    subprocess.run([sys.executable, "-X", "utf8", os.path.join(HERE, "r75_scan.py"), "--repo", REPO, "--jobs", jf, "--out", out,
+                    "--comp", COMP, "--mode", "deep"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    rows = [json.loads(line) for line in open(out, encoding="utf-8")]
+    base = next(r for r in rows if r["name"] == "base")["per_noise"][1]["rmse2_mean_done"]
+    ok = sorted((r["per_noise"][1]["rmse2_mean_done"], r["name"]) for r in rows
+                if r["name"] != "base" and not any(x["crashed"] for x in r["per_noise"]))
+    say(f"== head {COMP}: {len(cands)} common wavelengths, {len(ok)} stop-free; best on search "
+        f"{[(n, round(100 * (v - base) / base, 1)) for v, n in ok[:5]]}")
+    for v, n in ok[:5]:
+        plans[n] = cands[n]
+        labels[n] = f"layers 0-2 at {n[1:]} nm, search {100 * (v - base) / base:+.1f} %"
+final = judge(plans, labels)
+json.dump(dict(mode=MODE, comp=COMP, labels=labels, final=final), open(os.path.join(V, f"{TAG}.json"), "w"), indent=1)
+say("done")

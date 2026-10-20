@@ -1,0 +1,40 @@
+       9        93         0.41%         0.00%          93         0.01623
+      10        48         0.30%         0.00%          48         0.01658
+      11        62         0.88%         0.00%          62         0.01730
+      12       112        32.69%         0.00%          62         0.01864
+      13        48        79.67%        47.33%           0             nan
+      14        49        80.46%        18.00%           0             nan
+      15        23        94.16%        50.67%           0             nan
+      75         1        64.67%        64.67%           0             nan
+
+zone favorable 4-7 blocs (§24-44) : 103 strategies offertes sur 658 (15.7 %)
+  deposables dans la zone : 50 / 103
+
+==========================================================================
+LA FENTE CHANGE-T-ELLE L'ISSUE, ET A QUELLE LARGEUR ?
+==========================================================================
+
+  une seule fente presente : 2.0 nm -- la recherche de fente est INACTIVE.
+
+==========================================================================
+UNE COUCHE RESTE-T-ELLE CONTRAINTE POUR TOUTES LES STRATEGIES ?
+==========================================================================
+
+  cause « fabricated » : 74 couches contraintes au moins une fois, 0 contraintes par les 658 strategies
+    🟢 aucune couche contrainte par toutes les strategies, pour cette cause.
+
+  cause « level » : 75 couches contraintes au moins une fois, 0 contraintes par les 658 strategies
+    🟢 aucune couche contrainte par toutes les strategies, pour cette cause.
+
+  cause « missed » : 74 couches contraintes au moins une fois, 0 contraintes par les 658 strategies
+    🟢 aucune couche contrainte par toutes les strategies, pour cette cause.
+
+  couche CRITIQUE la plus fréquente sur 658 strategies :
+      136 fois ( 20.7 %)  couche 56 / niveau d'arret hors d'atteinte
+      115 fois ( 17.5 %)  couche 66 / niveau d'arret hors d'atteinte
+       53 fois (  8.1 %)  couche 69 / niveau d'arret hors d'atteinte
+       46 fois (  7.0 %)  couche 71 / niveau d'arret hors d'atteinte
+       40 fois (  6.1 %)  couche 67 / niveau d'arret hors d'atteinte
+       33 fois (  5.0 %)  couche 58 / niveau d'arret hors d'atteinte
+       29 fois (  4.4 %)  couche 63 / niveau d'arret hors d'atteinte
+       26 fois (  4.0 %)  couche 57 / niveau d'arret hors d'atteinte

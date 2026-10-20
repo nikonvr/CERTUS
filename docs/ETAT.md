@@ -16,7 +16,7 @@
 
 **Bonne Mère (2026-10-19).** Meilleur plan mesuré et chemin vers l'optimum : [`studies/bonne_mere/README.md`](../studies/bonne_mere/README.md) (21 couches Rate, SEEL P95 0,446 nm au bruit 0,05, 0 arrêt). Dérive de la source non modélisée (A6). Défaut ouvert de STRAT : l'hystérésis du comptage des points tournants suit le bruit ; à bruit faible, la fente fabrique des extrema ([phase 1](../reports/BONNE_MERE_phase1_budget_SuperChamp76_2026-10-19/bilan.md)).
 
-**STRAT sur r75 (2026-10-20).** L'affinage apparié des λ gagne 9 fois sur 9 (SEEL −2 à −12 % au holdout, [rapport](../reports/STRAT_r75_affinage_trois_graines_2026-10-20/bilan.md)) ; sur r75x2, 9 couches Rate passées en optique donnent 0,4981 nm (−8,4 %), la fente fermée perd, STRAT sans Rate s'arrête partout ([rapport](../reports/STRAT_r75x2_bascules_fente_sansrate_2026-10-20/bilan.md)). Défaut de `tp_hysteresis_floor` (inactif) : à 👤.
+**STRAT sur r75 (2026-10-20).** Une recherche locale appariée (mode, λ), couche par couche, bat le gagnant STRAT sur les trois designs (SEEL au holdout 0,2455 → 0,2132, 0,4376 → 0,3467, 0,5411 → 0,4729 nm) et chaque levier pris seul ; les règles globales de Bonne Mère perdent ([rapport](../reports/STRAT_r75_leviers_bonne_mere_2026-10-20/bilan.md)). Candidat : étage optionnel de STRAT. Défaut de `tp_hysteresis_floor` (inactif) : à 👤.
 
 **Branches locales en attente** (ni poussées, ni validées) : `claude/alg02-prune-evaluator-0d2a8d` (`46261901`,
 correctif de D107) et `claude/dreamy-burnell-85397a` (`cc3fe134`, fenêtre admissible 48c) ; reprendre par

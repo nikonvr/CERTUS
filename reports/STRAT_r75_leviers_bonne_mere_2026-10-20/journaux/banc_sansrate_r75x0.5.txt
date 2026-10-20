@@ -1,0 +1,40 @@
+         37        -403.842A -1845.003A -1465.418A
+         36        -302.472A -2278.644A -1790.622A
+         38        -244.753A -1877.101A -1791.288A
+         57        -227.257A -1871.451A -1758.042A
+         61        -207.855A -1854.015A -1678.387A
+         53        -197.069A -1851.792A -1847.825A
+         49        -192.213A -1858.939A -1169.677A
+         51        -187.878A -1874.217A -981.985A
+         47        -186.916A -1984.987A -1361.052A
+         55        -185.481A -1906.931A -1791.320A
+         54        -180.962A -1953.678A -920.281A
+    🔴 CONTRAINTE COMMUNE AUX 341 STRATEGIES : couche 39, plus grande sur les 341 strategies.
+       Aucune strategie ne la rend sereine, et toutes doivent la deposer.
+
+  cause « missed » : 70 couches contraintes au moins une fois, 42 contraintes par les 341 strategies
+     couche  MEILLEURE marge     pire   mediane
+         71           0.058A   0.000A    0.001A
+         70           0.104A   0.000A    0.002A
+         69           0.105A   0.000A    0.004A
+         73           0.107A   0.000A    0.001A
+         64           0.119A   0.000A    0.005A
+         61           0.127A   0.000A    0.010A
+         74           0.138A   0.000A    0.001A
+         51           0.157A   0.000A    0.012A
+         62           0.158A   0.000A    0.011A
+         72           0.158A   0.000A    0.001A
+         63           0.181A   0.000A    0.007A
+         57           0.184A   0.000A    0.011A
+    🔴 CONTRAINTE COMMUNE AUX 341 STRATEGIES : couche 71, plus grande sur les 341 strategies.
+       Aucune strategie ne la rend sereine, et toutes doivent la deposer.
+
+  couche CRITIQUE la plus fréquente sur 341 strategies :
+      122 fois ( 35.8 %)  couche 39 / niveau d'arret hors d'atteinte
+       67 fois ( 19.6 %)  couche 58 / niveau d'arret hors d'atteinte
+       30 fois (  8.8 %)  couche 41 / niveau d'arret hors d'atteinte
+       30 fois (  8.8 %)  couche 72 / niveau d'arret hors d'atteinte
+       22 fois (  6.5 %)  couche 47 / niveau d'arret hors d'atteinte
+        9 fois (  2.6 %)  couche 73 / niveau d'arret hors d'atteinte
+        9 fois (  2.6 %)  couche 36 / niveau d'arret hors d'atteinte
+        8 fois (  2.3 %)  couche 40 / niveau d'arret hors d'atteinte

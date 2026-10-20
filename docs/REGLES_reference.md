@@ -58,7 +58,8 @@ lui-même : `python scripts\c1_diff.py X --tete X --sans-cache` doit rendre 0.
   hexadécimal. Une feuille locale de `create_styled_button` prime sur celle de
   l'application. L'encre d'un bouton plein est `CertusTheme.label_on`, une transparence
   `CertusTheme.tint(couleur, 0.18)`, jamais une concaténation ; `refresh_widget_sheets()` actualise les feuilles
-  au changement de thème. Vérifier les pixels, pas la feuille déclarée (`scripts/audit_ux_certus.py`).
+  au changement de thème. Vérifier les pixels (`widget.grab()`), pas la feuille déclarée : `scripts/audit_ux_certus.py`
+  ne lit que les feuilles déclarées.
 - Le premier calcul compile Numba : chauffer avant un chronométrage.
   Ne pas citer dans le code le motif littéral qu'un garde-fou cherche
   (couleur, règle QSS), au risque de déclencher le garde-fou lui-même.

@@ -119,3 +119,13 @@ témoins est un repère séparé, pas un succès en une seule campagne. Conserve
 et paramètres ; aucun défaut activé ni ancienne campagne relancée par cette tâche.
 *État au 2026-10-18.* Protocole préparé dans `reports/STRAT_99c_A9_protocole_2026-10-17/` (chaîne `chain_A9.sh`, graines fraîches réservées avant toute mesure, SHA-256 de 428 sources) ;
 `chain_A9.sh` ne lance rien sans le GO écrit de 👤 (`GO_OWNER.txt`) et n'a jamais été lancé ; le `protocole_A9.md` qu'il cite n'est pas dans le dossier.
+
+**A10 — Chercher à ±0,010 ou à ±0,005 : trancher par le calcul** (demande de 👤 du 2026-10-20 ; ≈ 4 h). *Pourquoi* : l'étage
+`strat_local_search` cherche à ±0,010 d'incertitude d'indice (`SEARCH_INDEX_CORRIDOR`, `certus/core/certus_strat_local_search.py`),
+sur une règle écrite d'avance qui a préféré ±0,010 sur 2 designs de 3 (`reports/STRAT_r75_leviers_bonne_mere_2026-10-20/bilan.md`,
+section 7 : arrêts à ±0,010 de 175 à 0 sur 75c, coût à ±0,005 de +1,0 %, −3,5 % et +11,4 %). Une graine, trois designs : ce
+n'est pas tranché. *Faire* : sur 75c, r75x0.5, r75x2 et le juge de paix, graines de banc 77, 101 et 202, banc deep avec l'étage
+cherchant à ±0,010 puis à ±0,005 (constante surchargée), et un troisième essai jugé au pire des deux amplitudes ; juger les plans
+finaux à ±0,005 et ±0,010 sur graines neuves, même règle (gain à ±0,010 au-delà de deux erreurs types, coût à ±0,005 ≤ 2 %,
+aucun arrêt ajouté). *Fini quand* : un rapport dans `reports/` donne le choix par design et un défaut proposé à 👤. *Ne pas* :
+changer `index_corridor` de la configuration (la notation reste à ±0,005) ni le défaut sans l'accord de 👤.

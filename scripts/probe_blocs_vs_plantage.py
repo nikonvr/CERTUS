@@ -452,7 +452,8 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
         p.update(over)
         vus["n"] += 1
         for _k in ("allow_rate", "rate_by_swing", "rate_tail_sweep", "rate_layer_sets", "rate_tail_keep_optical", "rate_rescue",
-                   "rate_rescue_few", "elite_rate_moves", "elite_rate_max_candidates", "elite_rate_joint_candidates", "rate_post_refinement"):
+                   "rate_rescue_few", "elite_rate_moves", "elite_rate_max_candidates", "elite_rate_joint_candidates", "rate_post_refinement",
+                   "strat_local_search"):
             if _k in p:
                 leviers_rate[_k] = p[_k]
         for _k in ("robustness_num_runs", "n_screen_runs", "dp_top_k", "consensus_num_runs"):
@@ -547,7 +548,9 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
     return {"verdict": "OK", "n_strats": len(lignes), "strategies": lignes,
             "profondeur": dict(profondeur), "leviers_rate": dict(leviers_rate),
             **({"rate_post_refinement": deepcopy(res["final_results"]["rate_post_refinement"])}
-               if "rate_post_refinement" in res.get("final_results", {}) else {})}
+               if "rate_post_refinement" in res.get("final_results", {}) else {}),
+            **({"strat_local_search": deepcopy(res["final_results"]["strat_local_search"])}
+               if "strat_local_search" in res.get("final_results", {}) else {})}
 
 
 def par_fente(lignes: list[dict]) -> None:

@@ -1215,9 +1215,8 @@ class CertusStratStateMixin:
             ),
             # ── AXIS 1.2: Turning point detection rule ──────────────
             #
-            # Detector hysteresis, in MULTIPLE of the noise amplitude
-            # `trigger_tolerance`. 0 = historical rule (sign change beyond
-            # a numerical guard of 1e-12), which is not a physical rule.
+            # Detector hysteresis, in MULTIPLE of the noise amplitude `trigger_tolerance`. 0 = historical rule
+            # (sign change beyond a numerical guard of 1e-12), which is not a physical rule.
             #
             # 👤 "The 4%, for me, was a wild guess, to be certain that we will
             # get there" (2026-08-06). This threshold is NOT the 4% starting
@@ -1231,6 +1230,7 @@ class CertusStratStateMixin:
             # measurement. Default 0 = path unchanged.
             "tp_hysteresis_factor": _config_float(getattr(self, "_loaded_config", {}), "tp_hysteresis_factor"),
             "tp_hysteresis_floor": _config_float(getattr(self, "_loaded_config", {}), "tp_hysteresis_floor"),  # T units, 0 = off
+            "strat_local_search": _config_flag(getattr(self, "_loaded_config", {}), "strat_local_search", False),
             # ── Safety margin at turning point, in noise multiples ──────
             #
             # > 0 : the stopping level must be separated from neighboring turning points

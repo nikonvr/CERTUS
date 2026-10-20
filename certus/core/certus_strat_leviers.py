@@ -323,6 +323,17 @@ LEVIERS: tuple[Levier, ...] = (
                 "Les prerequis du consensus (actif, consensus_top_k >= 9, au moins 2 graines) sont verifies au demarrage : sinon la "
                 "campagne s'arrete avant la recherche.",
     ),
+    Levier(
+        cle="strat_local_search",
+        libelle="Recherche locale finale conjointe (mode Rate/optique, longueur d'onde), couche par couche",
+        defaut=False,
+        genre="bool",
+        statut=NON_MESURE,
+        mesure="Prototype hors STRAT (reports/STRAT_r75_leviers_bonne_mere_2026-10-20), holdout contre le gagnant de la graine 77 : "
+               "SEEL 0,2455 -> 0,2132 nm (75c), 0,4376 -> 0,3467 nm (r75x0.5), 0,5411 -> 0,4729 nm (r75x2). La voie integree reste a mesurer.",
+        reserve="Cout : deux passes, environ 2 300 a 3 900 evaluations de 300 tirages (20 min environ sur 16 coeurs). Le plan n'est garde "
+                "que s'il gagne sur deux graines fraiches de 1 000 tirages sans arret ajoute ; sinon le gagnant reste inchange.",
+    ),
     # ---------------------------------------------------------------- RATE: the constants
     Levier(
         cle="RATE_MIN_LAYER",

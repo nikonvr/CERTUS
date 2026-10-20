@@ -14,16 +14,17 @@
 > antérieures dans [`ETAT_acquis.md`](ETAT_acquis.md) ; preuves dans `reports/` (le `bilan.md` d'un dossier) ;
 > registre des audits, un constat par ligne : [`AUDITS.md`](AUDITS.md) (`grep -n "ALG-02" docs/AUDITS.md`).
 
+**Actions en cours (2026-10-20).** Exécution autonome par difficulté croissante ; A6 retirée sur ordre du propriétaire. État, preuves et prochaine action : [`bilan`](../reports/ACTIONS_autonomes_2026-10-20/bilan.md).
+
 **Bonne Mère (2026-10-19).** Meilleur plan mesuré et chemin vers l'optimum : [`studies/bonne_mere/README.md`](../studies/bonne_mere/README.md) (21 couches Rate, SEEL P95 0,446 nm au bruit 0,05, 0 arrêt). Dérive de la source non modélisée. Défaut ouvert de STRAT : l'hystérésis du comptage des points tournants suit le bruit ; à bruit faible, la fente fabrique des extrema ([phase 1](../reports/BONNE_MERE_phase1_budget_SuperChamp76_2026-10-19/bilan.md)).
 
-**STRAT sur r75 (2026-10-20).** `strat_local_search` (recherche locale appariée du mode et de la λ, cherchée à ±0,010 d'indice) est actif par défaut et `tp_hysteresis_floor` vaut 0,000415, sur décision de 👤 ; banc deep, graine 77 : 0,2515 → 0,2080, 0,4363 → 0,3561, 0,5441 → 0,5032 nm ([rapport](../reports/STRAT_r75_leviers_bonne_mere_2026-10-20/bilan.md)). Validation complète non refaite après la réexportation du plancher par la façade ; A10 à lancer.
+**STRAT sur r75 (2026-10-20).** `strat_local_search` (recherche locale appariée du mode et de la λ, cherchée à ±0,010 d'indice) est actif par défaut et `tp_hysteresis_floor` vaut 0,000415, sur décision de 👤 ; banc deep, graine 77 : 0,2515 → 0,2080, 0,4363 → 0,3561, 0,5441 → 0,5032 nm ([rapport](../reports/STRAT_r75_leviers_bonne_mere_2026-10-20/bilan.md)). Validation complète au paragraphe suivant ; A10 à lancer.
 
 **Branches locales en attente** (ni poussées, ni validées) : `claude/alg02-prune-evaluator-0d2a8d` (`46261901`,
 correctif de D107) et `claude/dreamy-burnell-85397a` (`cc3fe134`, fenêtre admissible 48c) ; reprendre par
 `git worktree add`. Dossier : 580 Mo pour une limite de 1 Go (2026-10-18).
 
-**Dernière validation complète** (2026-10-18, `python scripts\validate_parallel.py`, 16 min, sur `4cdc3938`) :
-`VALIDATION=GO`, aucun échec ; comptes dans [`ETAT_acquis.md`](ETAT_acquis.md).
+**Dernière validation complète** (2026-10-20, suites successives de CLAUDE.md §2, code `96128ba5`) : aucun échec inattendu ; sorties et limite documentaire dans le [`bilan`](../reports/ACTIONS_autonomes_2026-10-20/bilan.md#validation-initiale).
 
 **Avant de committer du code** : la validation de CLAUDE.md §2 en entier ; un sous-ensemble a déjà laissé passer une
 régression (`tests/unit/test_the_architecture_debt_only_shrinks.py` ne tourne pas avec les tests voisins).

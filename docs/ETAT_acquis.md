@@ -89,8 +89,7 @@ puis `git checkout <commit>^ -- reports/<nom>`. Deuxième passe ([rapport](../re
 constats C20–C32 (D113 gradient hérité faux pour des couches absorbantes, D114 entrées invalides, D115 mutations qui survivent),
 plan A23–A35.
 
-**Dernière validation complète, comptes** (2026-10-18, sur `4cdc3938`) : ruff 0 ; oracle
-1 146 ; unité 5 545 réussis, 7 ignorés, 1 xfail ; ui 1 324 réussis, 12 ignorés, 2 xfail ; reste 319 ; performance 40.
+**Dernière validation complète, comptes** : voir le [`bilan du 2026-10-20`](../reports/ACTIONS_autonomes_2026-10-20/bilan.md#validation-initiale), avec les sorties mesurées et la limite de reproductibilité documentaire.
 
 **En vigueur au 2026-10-13** (ne pas le remettre en cause sans mesure) : D96, D97 et D98 (attente sans fin) ; `rate_rescue` ;
 `rate_by_swing` ; ELITE déplace les couches Rate de ses parents (`elite_rate_moves`) ; ses enfants portent le biais de fente

@@ -230,7 +230,7 @@ class FullPipelineStrategy:
                     **finalize_options,
                 )
                 if worker.params.get("strat_local_search", False):
-                    final_result_dict["strat_local_search"] = ls_report
+                    final_result_dict.final_results["strat_local_search"] = ls_report  # where the probe and exports read
                 worker.signals.finished.emit(final_result_dict)
 
         finally:

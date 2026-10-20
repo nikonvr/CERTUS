@@ -109,5 +109,7 @@ def test_the_pipeline_runs_the_stage_only_when_armed() -> None:
     root = Path(__file__).resolve().parents[2]
     pipeline = (root / "certus" / "workers" / "certus_strat_workers_pipeline.py").read_text(encoding="utf-8")
     assert 'if worker.params.get("strat_local_search", False):' in pipeline
+    # the report goes into `final_results`, the dict the probe and the exports read, not onto the result object
+    assert 'final_result_dict.final_results["strat_local_search"] = ls_report' in pipeline
     ui = (root / "certus" / "ui" / "certus_strat_ui_state.py").read_text(encoding="utf-8")
     assert '"strat_local_search": _config_flag(getattr(self, "_loaded_config", {}), "strat_local_search", False)' in ui

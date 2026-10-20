@@ -328,11 +328,11 @@ LEVIERS: tuple[Levier, ...] = (
         libelle="Recherche locale finale conjointe (mode Rate/optique, longueur d'onde), couche par couche",
         defaut=False,
         genre="bool",
-        statut=NON_MESURE,
-        mesure="Prototype hors STRAT (reports/STRAT_r75_leviers_bonne_mere_2026-10-20), holdout contre le gagnant de la graine 77 : "
-               "SEEL 0,2455 -> 0,2132 nm (75c), 0,4376 -> 0,3467 nm (r75x0.5), 0,5411 -> 0,4729 nm (r75x2). La voie integree reste a mesurer.",
-        reserve="Cout : deux passes, environ 2 300 a 3 900 evaluations de 300 tirages (20 min environ sur 16 coeurs). Le plan n'est garde "
-                "que s'il gagne sur deux graines fraiches de 1 000 tirages sans arret ajoute ; sinon le gagnant reste inchange.",
+        statut=RESERVE,
+        mesure="Banc deep graine 77, etage arme dans STRAT (reports/STRAT_r75_leviers_bonne_mere_2026-10-20) : SEEL 0,2515 -> 0,2080 nm "
+               "(75c), 0,4363 -> 0,3561 nm (r75x0.5), 0,5441 -> 0,5032 nm (r75x2), 0 arret ; la part de l'erreur d'indice est divisee par 2,3 a 4,5.",
+        reserve="Une seule graine de banc ; cout environ 20 min de plus sur 16 coeurs (deux passes, 2 300 a 3 900 evaluations de 300 tirages). "
+                "Le plan n'est garde que s'il gagne sur deux graines fraiches de 1 000 tirages sans arret ajoute ; sinon le gagnant reste inchange.",
     ),
     # ---------------------------------------------------------------- RATE: the constants
     Levier(

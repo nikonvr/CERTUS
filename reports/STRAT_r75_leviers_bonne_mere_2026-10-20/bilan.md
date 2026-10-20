@@ -69,6 +69,39 @@ Proposition pour STRAT : un étage final optionnel, inactif par défaut (C1), qu
 graines de recherche distinctes de celles du classement ; critère d'arrêt durci (plus de tirages ou marge sur les
 arrêts) avant d'en faire un défaut.
 
+## 5. Ce que gagne la recherche conjointe : la sensibilité à l'indice
+
+Le but de STRAT est une stratégie peu sensible aux erreurs d'indice, incertitude qu'on ne peut pas réduire (👤). Même
+plan, mêmes tirages (graines 20261022301 à 303, 3 × 1 000), corridor d'indice ±0,005 actif puis coupé ; part de
+l'indice = RMSE²(avec) − RMSE²(sans), au bruit nominal (`outils/index_share.py.txt`).
+
+| design | part de l'indice, gagnant → conjointe | rapport | reste sans indice, rapport | part de l'indice dans le total |
+|---|---|---|---|---|
+| 75c | 5,32e-5 → 2,22e-5 | **× 0,42** | × 0,61 | 64 % → 54 % |
+| r75x0.5 | 2,50e-4 → 0,55e-4 | **× 0,22** | × 0,44 | 39 % → 24 % |
+| r75x2 | 1,93e-3 → 0,85e-3 | **× 0,44** | × 1,05 | 90 % → 79 % |
+
+La recherche conjointe divise par 2,3 à 4,5 la part de l'erreur d'indice. Sur r75x2, c'est tout son gain : le reste ne
+bouge pas. Les parts des gagnants retrouvent le budget d'erreur mesuré séparément (63 %, 36 %, 90 %). Mécanisme
+probable, non isolé : le contrôle optique s'arrête sur le signal de la couche réelle et compense en partie l'indice,
+ce que le Rate ne fait pas, et le choix de la λ règle cette compensation.
+
+## 6. L'étage intégré à STRAT (`strat_local_search`, `4c10ce44`)
+
+Banc `scripts/probe_blocs_vs_plantage.py <design> deep 0 0 2 0 77`, surcharge `strat_local_search=true` ; score de
+classement de STRAT sur la graine 77 (300 tirages par niveau), que la recherche ne voit jamais (graines de recherche et
+de contrôle décalées de `robustness_seed`). Le plan affiné passe le contrôle et sort premier sur les trois designs.
+
+| design | gagnant ELITE du même banc | plan de l'étage | P95 brut du plan | arrêts | couches Rate |
+|---|---|---|---|---|---|
+| 75c | 0,2515 nm | **0,2080 nm** | 0,2036 nm | 0 → 0 | 5 → 13 |
+| r75x0.5 | 0,4363 nm | **0,3561 nm** | 0,3359 nm | 0 → 0 | 56 → 37 |
+| r75x2 | 0,5441 nm | **0,5032 nm** | 0,4903 nm | 0,3 % → 0 | 55 → 33 |
+
+L'intégration reproduit le prototype (0,2132, 0,3467, 0,4729 nm au holdout). Le rapport de l'étage n'était pas recopié
+dans le JSON du banc (écrit sur l'objet résultat au lieu de `final_results`) : corrigé après ces bancs. Les JSON des
+bancs (3 Mo chacun) restent locaux, non commités : `reports/blocs_vs_plantage_<design>_deep_s077_localsearch.json`.
+
 Plans gelés : `plan_recherche_conjointe_<design>.json`. Non mesuré : graines de banc 101 et 202 pour les bascules et la recherche conjointe, dérive de la source (A6), rejeu
 des plans gelés dans le banc `scripts/probe_blocs_vs_plantage.py` (l'évaluateur en reste à 2e-5 relatif, mesuré le
 2026-10-20 sur les gagnants).

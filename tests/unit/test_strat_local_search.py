@@ -1,5 +1,5 @@
 """The final joint (mode, wavelength) local search keeps only what wins, never adds a stop, and gives the winner back
-when fresh draws do not confirm it (`certus/core/certus_strat_local_search.py`, `strat_local_search`, off by default).
+when fresh draws do not confirm it (`certus/core/certus_strat_local_search.py`, `strat_local_search`, on by default).
 
 The evaluator is synthetic and paired like STRAT's (draws a pure function of the seed, C2): each layer has a best
 wavelength, a few wavelengths make the draws stop, and Rate costs a fixed amount per layer.
@@ -8,8 +8,11 @@ wavelength, a few wavelengths make the draws stop, and Rate costs a fixed amount
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import MagicMock
 
 import numpy as np
+import pytest
 
 from certus.core.certus_strat_local_search import (
     LocalSearchConfig,
@@ -114,7 +117,6 @@ def test_the_pipeline_runs_the_stage_by_default_and_a_configuration_can_turn_it_
     pipeline = (root / "certus" / "workers" / "certus_strat_workers_pipeline.py").read_text(encoding="utf-8")
     assert "if is_armed(worker.params):" in pipeline
     # the report goes into `final_results`, the dict the probe and the exports read, not onto the result object
-    assert 'final_result_dict.final_results["strat_local_search"] = ls_report' in pipeline
     ui = (root / "certus" / "ui" / "certus_strat_ui_state.py").read_text(encoding="utf-8")
     assert '"strat_local_search": _config_flag_default(getattr(self, "_loaded_config", {}), "strat_local_search", True)' in ui
 
@@ -127,3 +129,57 @@ def test_the_stage_searches_under_twice_the_nominal_index_uncertainty_never_less
     root = Path(__file__).resolve().parents[2]
     worker = (root / "certus" / "workers" / "certus_strat_workers_local_search.py").read_text(encoding="utf-8")
     assert "native_evaluator(search_params(params)," in worker
+
+
+@pytest.mark.parametrize("outcome", ["disabled", "accepted", "refused"])
+def test_full_pipeline_emits_the_legacy_payload_with_the_local_search_report(monkeypatch, outcome):
+    """Exercise the real worker boundary without running the numerical search or Qt threads."""
+    from certus.core.certus_strat_workers_dto import WorkerThreadResult
+    from certus.workers import certus_strat_workers as workers
+    from certus.workers import certus_strat_workers_local_search as local_search
+    from certus.workers import certus_strat_workers_pipeline as pipeline
+
+    report = None if outcome == "disabled" else {"accepted": outcome == "accepted", "changes": []}
+    strategies = [{"robustness_score": 0.125, "crash_rate": 0.0}]
+    payload = WorkerThreadResult.for_step_23(
+        opti_results={}, final_results={"all_strategies_results": strategies},
+    ).to_legacy_dict()
+    final_results = payload["final_results"]
+    pre_calc = {
+        "num_layers": 2, "raw_results_sq": {}, "raw_results_thickness": {},
+        "p_thick_nominal": [10.0, 20.0], "clues_at_wl": {}, "nominal_matrix_cache": None, "all_wls": [],
+    }
+    worker = SimpleNamespace(
+        params={"logger": MagicMock(), "nH_id": "H", "nL_id": "L", "nSub_id": "S", "l0": 550.0,
+                "strat_local_search": outcome != "disabled"},
+        signals=MagicMock(), timing_logger=None,
+    )
+    monkeypatch.setattr(pipeline, "APP_CONTEXT", {})
+    monkeypatch.setattr(pipeline, "QThread", MagicMock)
+    monkeypatch.setattr(pipeline, "QMetaObject", MagicMock())
+    monkeypatch.setattr(pipeline, "SharedIndicesManager", MagicMock())
+    monkeypatch.setattr(pipeline, "SharedArrayManager", MagicMock())
+    monkeypatch.setattr(pipeline, "_init_stats_queue", MagicMock())
+    monkeypatch.setattr(pipeline, "_compute_blocks_range_for_params", lambda *_args, **_kw: [1])
+    monkeypatch.setattr(workers, "StatsConsumerWorker", MagicMock())
+    monkeypatch.setattr(workers, "LiveFeedMonitor", MagicMock())
+    monkeypatch.setattr(workers, "_execute_nucleation_and_cost_mapping", lambda **_kw: (pre_calc, [], {}, {}))
+    monkeypatch.setattr(workers, "_run_phaseB_parallel_execution", lambda **_kw: strategies)
+    finalize = MagicMock(return_value=payload)
+    monkeypatch.setattr(workers, "_finalize_and_export_pipeline_results", finalize)
+    search = MagicMock(return_value=(strategies, report, object()))
+    monkeypatch.setattr(local_search, "run_local_search", search)
+
+    pipeline.FullPipelineStrategy().execute(worker)
+
+    worker.signals.finished.emit.assert_called_once_with(payload)
+    assert worker.signals.finished.emit.call_args.args[0] is payload
+    assert payload["final_results"] is final_results
+    assert final_results["all_strategies_results"] is strategies
+    if outcome == "disabled":
+        search.assert_not_called()
+        assert "strat_local_search" not in final_results
+        assert "ranker" not in finalize.call_args.kwargs
+    else:
+        search.assert_called_once()
+        assert final_results["strat_local_search"] is report

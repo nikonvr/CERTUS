@@ -14,7 +14,7 @@
 > antérieures dans [`ETAT_acquis.md`](ETAT_acquis.md) ; preuves dans `reports/` (le `bilan.md` d'un dossier) ;
 > registre des audits, un constat par ligne : [`AUDITS.md`](AUDITS.md) (`grep -n "ALG-02" docs/AUDITS.md`).
 
-**Actions en cours (2026-10-20).** Exécution autonome par difficulté croissante ; A6 retirée sur ordre du propriétaire. État, preuves et prochaine action : [`bilan`](../reports/ACTIONS_autonomes_2026-10-20/bilan.md).
+**Actions en cours (2026-10-21).** A6 retirée, A7 et premier correctif A8 terminés. Le défaut de transmission découvert par le premier banc A3 est corrigé et entièrement validé ; nouveau protocole et reprise des mesures à suivre. État, preuves et prochaine action : [`bilan`](../reports/ACTIONS_autonomes_2026-10-20/bilan.md).
 
 **Bonne Mère (2026-10-19).** Meilleur plan mesuré et chemin vers l'optimum : [`studies/bonne_mere/README.md`](../studies/bonne_mere/README.md) (21 couches Rate, SEEL P95 0,446 nm au bruit 0,05, 0 arrêt). Dérive de la source non modélisée. Défaut ouvert de STRAT : l'hystérésis du comptage des points tournants suit le bruit ; à bruit faible, la fente fabrique des extrema ([phase 1](../reports/BONNE_MERE_phase1_budget_SuperChamp76_2026-10-19/bilan.md)).
 
@@ -24,7 +24,7 @@
 correctif de D107) et `claude/dreamy-burnell-85397a` (`cc3fe134`, fenêtre admissible 48c) ; reprendre par
 `git worktree add`. Dossier : 580 Mo pour une limite de 1 Go (2026-10-18).
 
-**Dernière validation complète** (2026-10-21, suites successives de CLAUDE.md §2, correctif d'imports A8 sur `e369c324`) : 8 422 réussis, 19 ignorés, 3 échecs attendus, aucun échec inattendu ; sorties, preuves d'identité des imports et limite documentaire dans le [`bilan`](../reports/ACTIONS_autonomes_2026-10-20/bilan.md).
+**Dernière validation complète** (2026-10-21, suites successives de CLAUDE.md §2, correctif de transmission A3 sur `58ff57c5`) : 8 425 réussis, 19 ignorés, 3 échecs attendus, aucun échec inattendu ; sorties, test rouge/vert et limite documentaire dans le [`bilan`](../reports/ACTIONS_autonomes_2026-10-20/bilan.md).
 
 **Avant de committer du code** : la validation de CLAUDE.md §2 en entier ; un sous-ensemble a déjà laissé passer une
 régression (`tests/unit/test_the_architecture_debt_only_shrinks.py` ne tourne pas avec les tests voisins).

@@ -232,7 +232,7 @@ class FullPipelineStrategy:
                     **finalize_options,
                 )
                 if ls_report is not None:
-                    final_result_dict.final_results["strat_local_search"] = ls_report  # where the probe and exports read
+                    final_result_dict["final_results"]["strat_local_search"] = ls_report  # where the probe and exports read
                 worker.signals.finished.emit(final_result_dict)
 
         finally:

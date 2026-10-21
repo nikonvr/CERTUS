@@ -8,7 +8,7 @@ Une seule mesure à la fois ; aucun défaut scientifique modifié, aucun exemple
 
 | ordre | profil | couches chargées | mode | graine | fente (nm) | résultat |
 |---|---|---:|---|---:|---:|---|
-| 1 | juge de paix | 48 | premium | 42 | 2 | non mesuré |
+| 1 | juge de paix | 48 | premium | 42 | 2 | échec : `RESULT=None` |
 | 2 | random75 livré | 75 | fast | 42 | 2 | non mesuré |
 | 3 | vrai 3 cavités, dérivé | 35 | deep | 42 | 2 | non mesuré |
 | 4 | 3 cavités deep livré | 36 | deep | 42 | 2 | non mesuré |
@@ -29,7 +29,7 @@ Le contrôle utilise le chargeur officiel et `collect_params`, sans lancer de re
 Commande de lancement, depuis la racine de l'arbre, après commit de ce protocole :
 
 ```text
-python reports/STRAT_A3_reperes_2026-10-21/run_A3_official_benches.py.txt
+python "reports/STRAT_A3_reperes_2026-10-21/run_A3_official_benches.py.txt"
 ```
 
 Le [pilote figé](run_A3_official_benches.py.txt) appelle, pour chaque profil, le banc officiel :
@@ -59,3 +59,33 @@ Son option `--limite` est déclarée mais n'est pas consultée dans la boucle : 
 chaque lancement lui-même. Aucun ancien cache ne doit être effacé ou traité comme une nouvelle mesure.
 
 Les six bancs ci-dessus ne clôturent donc pas A3. Le SEEL historique de 0,81 nm sur trois graines n'a pas été remesuré ici.
+
+## Échec réel et correction validée
+
+Premier essai au commit `58ff57c5`, du 21 octobre 01 h 04 à 01 h 24 Europe/Paris :
+`RUN_S=1208.810`, `WAIT_EXIT=error`, `RESULT=None`, malgré un code de sortie 0.
+Le pilote a refusé ce résultat et s'est arrêté ; aucun des cinq autres bancs n'a été lancé.
+État détaillé et SHA des sorties : `etat.json`. Les journaux, sorties et exports intermédiaires sont conservés.
+Aucun SEEL de cet essai n'est un nouveau repère validé.
+
+Cause reproduite : `_finalize_and_export_pipeline_results` renvoie le dictionnaire produit par
+`WorkerThreadResult.for_step_23(...).to_legacy_dict()`. Dans `FullPipelineStrategy.execute`, l'ajout du compte rendu
+de recherche locale utilisait l'attribut `.final_results`, d'où `AttributeError` avant l'émission de fin.
+Correction bornée : accès à la clé `['final_results']`, sans modifier calcul, plans, graines ou défauts.
+
+Le test de frontière exécute la vraie méthode avec les phases numériques et les fils Qt simulés,
+et un vrai dictionnaire du DTO. Sur le code initial : `1 failed, 9 passed in 3.16s`, sur l'`AttributeError` observée.
+Après correction : `11 passed in 1.27s`, dont les chemins désactivé, recherche acceptée et recherche refusée.
+Il remplace l'assertion textuelle qui exigeait précisément l'accès fautif.
+Validation complète : Ruff passe ; oracle `1148 passed in 10.48s` ; unité `5594 passed, 7 skipped, 1 xfailed in 949.02s (0:15:49)` ;
+interface `1324 passed, 12 skipped, 2 xfailed in 1461.37s (0:24:21)` ; reste `359 passed, 18 warnings in 612.97s (0:10:12)`.
+Total : 8 425 réussis, 19 ignorés, 3 échecs attendus, aucun échec inattendu. Les trois contrôles documentaires passent.
+Le premier contrôle de cohérence a tronqué le nom `.py.txt` en `.py` ; la commande a été mise entre guillemets,
+sans créer de fichier factice ni modifier le contrôleur. Cet échec et sa reprise sont conservés.
+
+[Archive des 24 preuves](correctif_transmission_preuves.zip), SHA-256
+`df159a8579a549b1db6bf2288b60354dfaf6acb00190833750290375bc4e46a0` : essai officiel échoué, journaux de validation,
+sources avant/après, diff et test rouge/vert. Le manifeste distingue les SHA originaux des fichiers normalisés pour les chemins.
+
+La reprise utilisera un nouveau dossier et une nouvelle tête, avec entrées et pilote à nouveau figés ;
+`--resume-interrupted` sur cet état ne convient pas après changement du code.

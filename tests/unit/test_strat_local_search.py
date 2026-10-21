@@ -183,3 +183,39 @@ def test_full_pipeline_emits_the_legacy_payload_with_the_local_search_report(mon
     else:
         search.assert_called_once()
         assert final_results["strat_local_search"] is report
+
+
+def test_when_the_final_plan_is_refused_an_intermediate_plan_confirmed_on_other_seeds_is_kept() -> None:
+    """A5, r75x0.5 seed 101: a late change made the check stop (19 in 6 000) and threw the whole search away."""
+    base = _evaluator()
+
+    def evaluate(plan, seed, runs):
+        ev = base(plan, seed, runs)
+        if seed >= 100 and wavelength_of(plan, 5) != 560.0:  # the change of the last layer stops rarely, unseen at search
+            ev = [(r, s.copy()) for r, s in ev]
+            ev[0][1][0] = True
+        return ev
+
+    start = _plan()
+    plan, report = joint_local_search(start, evaluate, 6, _cfg(passes=1), 11, (101, 102), confirm_seeds=(201, 202))
+    assert report["check_stops"][1] > report["check_stops"][0]  # the final plan is refused
+    assert report["accepted"]
+    assert report["fallback_changes"] < len(report["changes"])
+    assert wavelength_of(plan, 5) == 560.0
+    assert stops(evaluate(plan, 201, 400)) == 0
+
+
+def test_without_confirmation_seeds_a_refused_search_gives_the_winner_back() -> None:
+    base = _evaluator()
+
+    def evaluate(plan, seed, runs):
+        ev = base(plan, seed, runs)
+        if seed >= 100 and wavelength_of(plan, 5) != 560.0:
+            ev = [(r, s.copy()) for r, s in ev]
+            ev[0][1][0] = True
+        return ev
+
+    start = _plan()
+    plan, report = joint_local_search(start, evaluate, 6, _cfg(passes=1), 11, (101, 102))
+    assert not report["accepted"]
+    assert plan is start

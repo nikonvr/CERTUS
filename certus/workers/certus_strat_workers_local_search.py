@@ -12,6 +12,7 @@ from typing import Any
 
 from certus.core.certus_strat_local_search import (
     CHECK_SEED_OFFSETS,
+    CONFIRM_SEED_OFFSETS,
     SEARCH_SEED_OFFSET,
     LocalSearchConfig,
     joint_local_search,
@@ -50,7 +51,8 @@ def run_local_search(
         )
         evaluate = native_evaluator(search_params(params), nominal, clues, pre_calc_data.get("full_dynamics_grid", {}))
         plan, report = joint_local_search(start, evaluate, len(nominal), cfg, base_seed + SEARCH_SEED_OFFSET,
-                                          tuple(base_seed + o for o in CHECK_SEED_OFFSETS), logger.info)
+                                          tuple(base_seed + o for o in CHECK_SEED_OFFSETS), logger.info,
+                                          tuple(base_seed + o for o in CONFIRM_SEED_OFFSETS))
         report["start_strategy_id"] = start.get("strategy_id")
         report["search_index_corridor"] = search_params(params)["index_corridor"]
         if not report["accepted"]:

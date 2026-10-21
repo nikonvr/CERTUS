@@ -60,7 +60,7 @@ global et le nombre de plans optiques purs déposables, dans un rapport. **Le co
 lignes (plafond 1 500) et `_apply_elite_refinement_if_enabled` à 299 (plafond 300) : ne rien y ajouter qui ne soit pas compensé, mettre la logique dans
 `certus/core/certus_strat_robustness_rate.py` comme `_elite_rate_candidates`. *Ne pas* : l'armer par défaut (c'est à 👤).
 
-**A5 — ELITE : plus de tours, autre budget pour les mouvements sur les couches Rate** (≈ 4 h). *Pourquoi* : ELITE fait 3 tours en `deep` et s'arrête
+**A5 — ELITE : plus de tours, autre budget pour les mouvements sur les couches Rate** (≈ 4 h). *État au 21 octobre* : référence neuve terminée, SEEL 0,3967147882 nm ; six tours interrompus pour extinction du PC, dix tours et budgets 40/360 non lancés. [Résultats conservés et reprise](../reports/STRAT_A5_tours_budgets_2026-10-21/bilan.md). Action ouverte. *Pourquoi* : ELITE fait 3 tours en `deep` et s'arrête
 quand rien ne progresse ; la recherche des paquets est une escalade qui n'a peut-être pas fini. *Faire* (`r75x0.5`, graine 101, référence : 0,3967 nm) :
 `elite_rounds=6,elite_stop_on_no_gain=false`, puis `elite_rounds=10,elite_stop_on_no_gain=false` ; puis, à 3 tours, `elite_rate_max_candidates=40` et
 `elite_rate_max_candidates=360`. Une surcharge à la fois, avec son étiquette. *Fini quand* : un tableau tours et budget → meilleur SEEL, durée, nombre de

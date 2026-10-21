@@ -45,6 +45,8 @@ campagne bien spécifiés ; **Claude** : conception, piège de reproductibilité
 `strat_local_search` est actif par défaut (+ 20 min par banc) : le dire dans chaque rapport. Outils de jugement :
 `reports/STRAT_r75_leviers_bonne_mere_2026-10-20/outils/`.
 
+**Enchaînement** : Gemini, puis ChatGPT, puis Claude. Gemini travaille sur `gemini/<date>` et finit par `reports/RELAIS_gemini_<date>.md` ; ChatGPT part de cette branche (`chatgpt/<date>`), la relit d'abord (commandes rejouées, `config` des artefacts, tests) puis fait ses actions et finit par `reports/RELAIS_chatgpt_<date>.md` ; Claude relit les deux branches, interprète et propose la fusion à 👤. Un relais tient en une page : branche, tête, verdict de `python scriptsalidate_parallel.py`, ce qui est fait, ce qui a échoué, questions ouvertes, première commande de l'IA suivante. Celle-ci vérifie, elle ne croit pas.
+
 ### Gemini
 
 **A5 — ELITE : six et dix tours, budgets 40 et 360** (≈ 4 h). Référence faite par Codex : `r75x0.5` deep graine 101, 3 tours, arrêt actif, budget 120,
@@ -61,11 +63,9 @@ en tête sans rien changer d'autre, photos avant/après (`scripts/lint_ns_snapsh
 E402 avant/après et la ligne `VALIDATION=GO` de `python scripts\validate_parallel.py`. *Fini quand* : E402 baisse et la validation passe.
 *Ne pas* : `ruff check --fix`, agrandir `extend-ignore`, lancer `scripts\metrics.py --dette` pour faire passer un test.
 
-**A10 — Confirmer l'étage à ±0,010 sur d'autres graines** (≈ 7 h). 👤 a choisi ±0,010 ; il reste à le confirmer hors de la graine 77. *Faire* : bancs
-deep, réglages par défaut, `75c`, `r75x0.5`, `r75x2`, graines 101 et 202 ; juger chaque plan final contre le meilleur ELITE du même banc, à ±0,005 et
-±0,010, sur graines neuves (`judge_bench.py.txt`). *Livrable* : `reports/STRAT_etage_confirmation_<date>/bilan.md`, un tableau de six lignes (design,
-graine, SEEL ELITE, SEEL final, étage accepté ou repli, arrêts à ±0,005 et ±0,010, ΔRMSE²) et les sorties du juge. *Fini quand* : six lignes.
-*Ne pas* : changer `SEARCH_INDEX_CORRIDOR` ni `index_corridor`.
+**A14 — [Gemini] Valider l'étage sur tout le panel** (≈ 7 h ; à faire avant A10). Mesuré seulement sur 75c, `r75x0.5`, `r75x2`. *Faire* : `python -X utf8 reports/STRAT_etage_defauts_2026-10-21/run_etage_panel.py.txt A14` (`48c` premium avec recherche de fente, `35c`, `r75x1.5`, `r75x1.75`, `r75x2-2nm`, 75c graine 101). *Livrable* : `reports/STRAT_etage_A14_<date>/` tel qu'écrit, commité. *Critère*, pour l'interprétation par Claude, écrit d'avance : jamais de SEEL dégradé ni d'arrêt ajouté, gain sur la majorité des designs, tenue à ±0,010.
+
+**A10 — [Gemini] Confirmer l'étage à ±0,010 sur d'autres graines** (≈ 5 h). 👤 a choisi ±0,010. *Faire* : depuis la racine, arbre suivi propre, `python -X utf8 reports/STRAT_etage_defauts_2026-10-21/run_etage_panel.py.txt A10` (75c graine 202, `r75x0.5` 202, `r75x2` 101 et 202 ; reprend là où il s'est arrêté). *Livrable* : le dossier `reports/STRAT_etage_A10_<date>/` qu'il écrit (`bilan.md`, `cas.json`, artefacts), commité tel quel. *Fini quand* : quatre lignes. *Ne pas* : interpréter, changer `SEARCH_INDEX_CORRIDOR` ou `index_corridor`.
 
 ### ChatGPT
 
@@ -104,8 +104,3 @@ mesurée contre l'étage actuel sur les trois 75 couches × deux graines, règle
 300 tirages, environ 20 min par calcul. *Livrable* : un profil (`cProfile`) d'une évaluation qui sépare noyau compilé et préparation Python ; les
 gains qui gardent les bits (préparation hors boucle, réutilisation des tableaux) prouvés identiques par un test ; les gains qui changent la
 recherche (présélection à moins de tirages) mesurés contre l'étage actuel avec une règle écrite d'avance ; un rapport avec la durée avant/après.
-
-**A14 — Valider l'étage sur tout le panel.** Il n'est mesuré que sur 75c, `r75x0.5` et `r75x2`. *Faire* : bancs aux réglages par défaut
-(dans un arbre jetable) sur `48c` (premium, recherche de fente), `35c`, `r75x1.5`, `r75x1.75`, `r75x2-2nm` et `75c` graine 101 ; juger chaque plan
-final contre le meilleur ELITE à ±0,005 et ±0,010 (`judge_bench.py.txt`). *Critère écrit d'avance* : jamais de SEEL dégradé ni d'arrêt ajouté,
-gain sur la majorité des designs, tenue à ±0,010. *Livrable* : `reports/STRAT_etage_panel_<date>/bilan.md`, une ligne par design.

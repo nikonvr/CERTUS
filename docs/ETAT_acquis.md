@@ -50,7 +50,7 @@ NON_MESURE, `rate_rescue_hard` RESERVE ; `0c7c1e2e`, liste d'attente vide), puis
 un seul verre témoin. Quatre mesures exploratoires (`premium`, consensus 41/42/43, graines de recherche 42 et 101, hors protocole de campagne) :
 chiffres au §2, bilan dans [`bilan.md`](../reports/STRAT_99c_rate_elargi_2026-10-16/bilan.md). Le gain du profil élargi vient surtout de l'élargissement
 de la recherche, pas du raffinement final (−0,89 % à la graine 42, aucun à la 101) ; il n'est confirmé sur aucun groupe frais et suppose un Rate sans
-dérive de vitesse (A6). Isolation des leviers (budget 240 seul, puis budget 240 et six tours), graines 42 et 101 : protocoles et bilan dans
+dérive de vitesse. Isolation des leviers (budget 240 seul, puis budget 240 et six tours), graines 42 et 101 : protocoles et bilan dans
 `reports/STRAT_99c_isolation_leviers_2026-10-17/` et `reports/STRAT_99c_isolation_leviers_graine101_2026-10-17/`. À la graine 42, sur le score de
 consensus, le budget 240 seul porte 62 % de l'écart entre les défauts et le profil élargi avant raffinement, les six tours 7 % (sous le bruit de 4,2 %),
 les 480 voisins conjoints 31 % : une graine, un chemin de décomposition, C2 en partie sous charge étrangère. La chaîne de la graine 101 s'est terminée
@@ -89,8 +89,7 @@ puis `git checkout <commit>^ -- reports/<nom>`. Deuxième passe ([rapport](../re
 constats C20–C32 (D113 gradient hérité faux pour des couches absorbantes, D114 entrées invalides, D115 mutations qui survivent),
 plan A23–A35.
 
-**Dernière validation complète, comptes** (2026-10-18, sur `4cdc3938`) : ruff 0 ; oracle
-1 146 ; unité 5 545 réussis, 7 ignorés, 1 xfail ; ui 1 324 réussis, 12 ignorés, 2 xfail ; reste 319 ; performance 40.
+**Dernière validation complète, comptes** : voir le [`bilan du 2026-10-20`](../reports/ACTIONS_autonomes_2026-10-20/bilan.md#validation-initiale), avec les sorties mesurées et la limite de reproductibilité documentaire.
 
 **En vigueur au 2026-10-13** (ne pas le remettre en cause sans mesure) : D96, D97 et D98 (attente sans fin) ; `rate_rescue` ;
 `rate_by_swing` ; ELITE déplace les couches Rate de ses parents (`elite_rate_moves`) ; ses enfants portent le biais de fente

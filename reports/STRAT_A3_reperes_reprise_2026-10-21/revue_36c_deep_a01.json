@@ -1,0 +1,14 @@
+{
+  "independent_confirmation": false,
+  "official_sha256_verified": "2745b1edcea8523b6ce63d0e101d50f3b9a4ba573c9598a09baeb0f62cf5ed7d",
+  "raw_sha256_verified": "a0ddecfb0c73e4920c2613d8ff33623c8c62b98cbf58ba3cf1bbd49d28768da2",
+  "scope": "Delivered 36-layer deep file, seed 42, slit 2 nm; physically distinct from the true 35-layer derived profile",
+  "result": "0.026218616702447725",
+  "crash_eliminated": "0/1440",
+  "case": "3cav_livre_36c_deep",
+  "returned_population": "1440",
+  "seel_nm": 0.32384327507266675,
+  "rank00": "id=900751386 origin=LOCAL_SEARCH score=0.026219 crash=0.0000 elim=False nblocks=29 nwl=18 wl=[472,562,462,582,522,700,470,500,522,512,450,490,450,520,462,502,462,492,490,460,501,461,461,461,501,620,520,460,450]",
+  "head": "85a9e82f10140da08024451d921f9c2b6a4a74c3",
+  "reviewed_utc": "2026-10-21T02:02:17.4246179Z"
+}

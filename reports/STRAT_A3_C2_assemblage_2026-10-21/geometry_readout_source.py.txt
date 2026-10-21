@@ -1,0 +1,37 @@
+"""Check the saved selected plans and the growth/scoring normalization domains."""
+
+import json
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SOURCE = ROOT / "reports/STRAT_A3_intervalles_reprise_2026-10-21"
+DEST = ROOT / "reports/STRAT_A3_C2_assemblage_2026-10-21"
+state = json.loads((SOURCE / "intervalles_etat.json").read_text(encoding="utf-8"))
+rows = []
+for record in state["attempts"]:
+    if "_interval_" not in record["key"] or not record["valid"]:
+        continue
+    slot = ROOT / record["slot"]
+    params = json.loads((slot / "params_effectifs.json").read_text(encoding="utf-8"))[-1]
+    returned = json.loads((slot / "returned_plans_and_scores.json").read_text(encoding="utf-8"))
+    best = min((item for item in returned if float(item["crash_rate"]) < 0.05), key=lambda item: float(item["robustness_score"]))
+    assert best["robustness_score"] == record["result"]["row"]["score"]
+    waves = [float(block["wavelength"]) for block in best["strategy"]["blocks"]]
+    lower, upper = params["wl_range"]
+    print(record["key"], "spectral_range=", [lower, upper], "monitoring_range=", [min(waves), max(waves)], flush=True)
+    assert waves
+    assert params["noise_layer_offset"] % 2 == 0 and params["noise_total_layers"] == 99
+    assert params["index_corridor"] == 0.005 and params["monochromator_resolution_nm"] == 2.0
+    rows.append({"key": record["key"], "score_matches_saved_choice": True,
+                 "spectral_range": [lower, upper], "selected_monitoring_range": [min(waves), max(waves)],
+                 "growth_normalization_domain": [min(lower, min(waves)), max(upper, max(waves))],
+                 "matches_assembly_domain": lower <= min(waves) <= max(waves) <= upper,
+                 "noise_layer_offset": params["noise_layer_offset"], "index_corridor": params["index_corridor"],
+                 "strategy_id": best["strategy"].get("strategy_id")})
+assert len(rows) == 12 and len({tuple(row["spectral_range"]) for row in rows}) == 1
+with (DEST / "geometry_readout.json").open("x", encoding="utf-8") as output:
+    json.dump(rows, output, indent=2)
+    output.write("\n")
+print("A3_C2_NORMALIZATION_DOMAINS=" + json.dumps({str(seed): [row["growth_normalization_domain"] for row in rows if row["key"].startswith(f"s{seed:03d}_")] for seed in (42, 101, 202)}))
+assert all(row["matches_assembly_domain"] for row in rows), "C2 normalization mismatch; no corrected score may be accepted"
+print("A3_C2_GEOMETRY=GO")

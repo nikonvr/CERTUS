@@ -1,0 +1,253 @@
+"""Run the prescribed A5 controls sequentially, auditing the real worker boundary."""
+
+import argparse
+import hashlib
+import json
+import math
+import os
+import subprocess
+import sys
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
+ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "scripts/bench_examples.py").is_file())
+CONFIG = "reports/serie_echelle_r75/cfg_x0.5.json"
+CASES = (
+    ("baseline", "elite_rounds=3", 3, True, 120),
+    ("rounds6_no_stop", "elite_rounds=6,elite_stop_on_no_gain=false", 6, False, 120),
+    ("rounds10_no_stop", "elite_rounds=10,elite_stop_on_no_gain=false", 10, False, 120),
+    ("budget40", "elite_rate_max_candidates=40", 3, True, 40),
+    ("budget360", "elite_rate_max_candidates=360", 3, True, 360),
+)
+DEADLINE = datetime.fromisoformat("2026-10-21T08:00:00+00:00")
+
+
+def git(*args):
+    return subprocess.check_output(["git", *args], cwd=ROOT, text=True).strip()
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def write(path, payload):
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    os.replace(temporary, path)
+
+
+def run_child(args, folder):
+    os.chdir(ROOT)
+    sys.path.insert(0, str(ROOT))
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import bench_examples as bench
+
+    bench.qapp()
+    from certus.core import certus_strat_consensus as consensus
+    from certus.workers.certus_strat_workers_pipeline import FullPipelineStrategy
+
+    label, _overrides, rounds, stop, budget = next(row for row in CASES if row[0] == args.child)
+    original = FullPipelineStrategy.execute
+    audits = {"worker_boundary": [], "resolved_elite": [], "generated_elite": []}
+    original_resolve = consensus._resolve_elite_refinement_cfg
+    original_generate = consensus._generate_elite_candidate_strategies
+
+    def save_audit():
+        write(ROOT / args.audit, audits)
+
+    def resolve_audited(params, *, num_runs):
+        resolved = original_resolve(params, num_runs=num_runs)
+        assert (resolved[4], resolved[6]) == (rounds, stop), resolved
+        audits["resolved_elite"].append({"rounds": resolved[4], "stop_on_no_gain": resolved[6],
+                                        "robustness_num_runs": num_runs})
+        save_audit()
+        return resolved
+
+    def generate_audited(*values, **keywords):
+        assert keywords["max_rate_candidates"] == budget
+        assert keywords["rate_moves"] is True
+        generated = original_generate(*values, **keywords)
+        audits["generated_elite"].append({"budget_received": keywords["max_rate_candidates"],
+                                         "parents": len(keywords["parent_results"]),
+                                         "generated": len(generated[0])})
+        save_audit()
+        return generated
+
+    consensus._resolve_elite_refinement_cfg = resolve_audited
+    consensus._generate_elite_candidate_strategies = generate_audited
+
+    def audited(strategy, worker):
+        params = worker.params
+        effective = {
+            "elite_rounds": int(params.get("elite_rounds", 2)),
+            "elite_stop_on_no_gain": bool(params.get("elite_stop_on_no_gain", True)),
+            "elite_rate_max_candidates": int(params.get("elite_rate_max_candidates", 120)),
+        }
+        assert effective == {"elite_rounds": rounds, "elite_stop_on_no_gain": stop, "elite_rate_max_candidates": budget}
+        assert params["execution_mode"] == "deep" and params["robustness_seed"] == 101
+        assert params["monochromator_resolution_nm"] == 2.0 and params["search_resolution"] is False
+        assert params["index_corridor"] == 0.005
+        assert params["strat_local_search"] is True and params["tp_hysteresis_floor"] == 0.000415
+        assert params["consensus_score_mode"] == "mean_std" and params["consensus_std_weight"] == 0.35
+        assert params["consensus_num_runs"] == 300 and params["robustness_num_runs"] == 300
+        assert not params.get("injected_strategies")
+        assert len([value for value in params["stack_string"].split(",") if value.strip()]) == 75
+        seeds = consensus._resolve_consensus_seeds(params, consensus_num_seeds=int(params["consensus_num_seeds"]),
+                                                   consensus_seed_stride=int(params.get("consensus_seed_stride", 1)), base_seed=101)
+        assert seeds == [41, 42, 43], seeds
+        keys = ("execution_mode", "robustness_seed", "phase_a_seed", "monochromator_resolution_nm", "search_resolution",
+                "index_corridor", "strat_local_search", "tp_hysteresis_floor", "consensus_seed_list", "consensus_num_seeds",
+                "consensus_score_mode", "consensus_std_weight", "consensus_num_runs", "robustness_num_runs", "n_screen_runs",
+                "stack_string", "nH_id", "nL_id", "nSub_id", "l0", "wl_range", "wl_step")
+        audits["worker_boundary"].append({"effective_elite": effective, "effective_consensus_seeds": seeds,
+                                          "params": {key: params.get(key) for key in keys}})
+        save_audit()
+        print("A5_WORKER_PARAMS=GO " + label, flush=True)
+        return original(strategy, worker)
+
+    FullPipelineStrategy.execute = audited
+    import probe_blocs_vs_plantage as probe
+
+    sys.argv = ["probe_blocs_vs_plantage.py", "r75x0.5", "deep", "0", "0", "2", "0", "101", "0"]
+    code = probe.main()
+    assert audits["worker_boundary"], "The worker-boundary audit was not exercised"
+    assert audits["resolved_elite"] and audits["generated_elite"], "The ELITE coupling was not exercised"
+    return code
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--outdir", default="reports/STRAT_A5_tours_budgets_2026-10-21")
+    parser.add_argument("--prepare", action="store_true")
+    parser.add_argument("--resume-interrupted", action="store_true")
+    parser.add_argument("--child", choices=[case[0] for case in CASES])
+    parser.add_argument("--audit")
+    args = parser.parse_args()
+    folder = (ROOT / args.outdir).resolve()
+    assert folder.is_relative_to(ROOT / "reports")
+    if args.child:
+        assert (ROOT / args.audit).resolve().is_relative_to(folder)
+        return run_child(args, folder)
+    frozen = folder / "run_A5_tours_budgets.py.txt"
+    protocol_path = folder / "protocole.json"
+    if args.prepare:
+        folder.mkdir(parents=True, exist_ok=True)
+        assert not frozen.exists() and not protocol_path.exists()
+        frozen.write_bytes(Path(__file__).read_bytes())
+        write(protocol_path, {"prepared_utc": datetime.now(timezone.utc).isoformat(), "config": CONFIG,
+              "config_sha256": sha(ROOT / CONFIG), "probe_sha256": sha(ROOT / "scripts/probe_blocs_vs_plantage.py"),
+              "consensus_source_sha256": sha(ROOT / "certus/core/certus_strat_consensus.py"),
+              "ui_profiles_sha256": sha(ROOT / "certus/ui/certus_strat_ui_state.py"),
+              "driver_sha256": sha(frozen), "cases": CASES, "search_seed": 101, "consensus_seeds": [41, 42, 43],
+              "mode": "deep", "deadline_utc": DEADLINE.isoformat(), "independent_confirmation": False,
+              "primary_metric": "Best depositable non-fallback plan with finite positive consensus score, mean_std metadata, seeds exactly 41/42/43 and all three successful samples",
+              "secondary_metric": "Existing resumer_artefact_sonde global minimum, kept separate if score provenance differs",
+              "rate_packets": "Existing resumer_artefact_sonde.paquets on the selected plan's rate_layers",
+              "causal_scope": "rounds6 versus rounds10 isolates rounds; versus baseline changes rounds plus stopping rule; budgets each change one lever"})
+        print("A5_PROTOCOL=PREPARED five cases, no measurement launched", flush=True)
+        return 0
+    assert frozen.read_bytes() == Path(__file__).read_bytes()
+    fixed = json.loads(protocol_path.read_text(encoding="utf-8"))
+    assert sha(ROOT / CONFIG) == fixed["config_sha256"]
+    assert sha(ROOT / "scripts/probe_blocs_vs_plantage.py") == fixed["probe_sha256"]
+    assert sha(ROOT / "certus/core/certus_strat_consensus.py") == fixed["consensus_source_sha256"]
+    assert sha(ROOT / "certus/ui/certus_strat_ui_state.py") == fixed["ui_profiles_sha256"]
+    assert not git("status", "--porcelain", "--untracked-files=no")
+    head = git("rev-parse", "HEAD")
+    state_path = folder / "etat.json"
+    if state_path.exists():
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+        assert state["head"] == head
+        assert args.resume_interrupted or state["status"] == "complete", "Check all processes before resuming"
+        assert not any(old.get("measured") and old.get("readout_valid") is False for old in state["attempts"]), "Reanalyse the preserved artifact before any further launch"
+    else:
+        state = {"head": head, "attempts": [], "status": "prepared"}
+    state["controller_pid"] = os.getpid()
+    sys.path.insert(0, str(ROOT))
+    from scripts.resumer_artefact_sonde import SEUIL_PLANTAGE, paquets, resumer, seel
+
+    for label, overrides, _rounds, _stop, _budget in CASES:
+        if any(old["case"] == label and old.get("measured") for old in state["attempts"]):
+            continue
+        if datetime.now(timezone.utc) >= DEADLINE:
+            state["status"] = "deadline_reached"
+            write(state_path, state)
+            return 0
+        assert git("rev-parse", "HEAD") == head and not git("status", "--porcelain", "--untracked-files=no")
+        attempt = 1 + sum(old["case"] == label for old in state["attempts"])
+        tag = f"A5nuit20261021_{label}_a{attempt:02d}"
+        artifact = ROOT / "reports" / f"blocs_vs_plantage_r75x0.5_deep_s101_{tag}.json"
+        assert not artifact.exists(), "Preserve prior artifacts"
+        slot = folder / f"{label}_a{attempt:02d}"
+        slot.mkdir(exist_ok=False)
+        record = {"case": label, "attempt": attempt, "tag": tag, "overrides": overrides,
+                  "artifact": artifact.relative_to(ROOT).as_posix(), "slot": slot.relative_to(ROOT).as_posix(),
+                  "started_utc": datetime.now(timezone.utc).isoformat(), "measured": False}
+        state["attempts"].append(record)
+        state.update(status="running", current_case=label)
+        write(state_path, state)
+        environment = dict(os.environ, CERTUS_PROBE_OVERRIDES=overrides, CERTUS_PROBE_TAG=tag,
+                           CERTUS_BENCH_TIMEOUT_S="21600", QT_QPA_PLATFORM="offscreen", PYTHONIOENCODING="utf-8")
+        for key in ("CERTUS_CONSENSUS_SEEDS", "CERTUS_DESIGN_JSON"):
+            environment.pop(key, None)
+        command = [sys.executable, str(frozen), "--outdir", args.outdir, "--child", label,
+                   "--audit", (slot / "params_effectifs.json").relative_to(ROOT).as_posix()]
+        print("START", label, flush=True)
+        started = time.monotonic()
+        with (slot / "raw.log").open("xb") as output:
+            process = subprocess.Popen(command, cwd=ROOT, env=environment, stdout=output, stderr=subprocess.STDOUT,
+                                       creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
+            record["child_pid"] = process.pid
+            write(state_path, state)
+            code = process.wait()
+        try:
+            payload = json.loads(artifact.read_text(encoding="utf-8")) if artifact.exists() else {}
+        except (OSError, ValueError) as error:
+            payload = {}
+            record["artifact_parse_error"] = str(error)
+        measured = code == 0 and payload.get("verdict") == "OK" and (slot / "params_effectifs.json").is_file()
+        record.update(exit_code=code, measured=measured, wall_s=time.monotonic() - started,
+                      finished_utc=datetime.now(timezone.utc).isoformat(), verdict=payload.get("verdict"), raw_sha256=sha(slot / "raw.log"))
+        if artifact.exists():
+            record["artifact_sha256"] = sha(artifact)
+        if measured:
+            ordinary = resumer(payload)
+            deposable_unflagged = [plan for plan in payload.get("strategies", [])
+                                  if not plan.get("crash_eliminated", False)
+                                  and float(plan.get("crash_rate", 1.0)) < SEUIL_PLANTAGE]
+            candidates = []
+            for plan in deposable_unflagged:
+                meta = plan.get("robustness_consensus_meta") or {}
+                score = plan.get("robustness_score_consensus")
+                if (meta.get("seeds") == [41, 42, 43] and meta.get("mode") == "mean_std"
+                        and meta.get("n_samples") == 3 and score is not None
+                        and math.isfinite(float(score)) and float(score) > 0):
+                    candidates.append(plan)
+            best = min(candidates, key=lambda plan: float(plan["robustness_score_consensus"])) if candidates else None
+            primary = {"eligible_plans": len(candidates), "best_plan": best,
+                       "seel_nm": seel(float(best["robustness_score_consensus"])) if best else None,
+                       "rate_packets": len(paquets(best.get("rate_layers"))) if best else None}
+            write(slot / "summary.json", {"primary_homogeneous_consensus": primary, "existing_project_summary": ordinary})
+            record["primary_seel_nm"] = primary["seel_nm"]
+            record["primary_rate_packets"] = primary["rate_packets"]
+            record["readout_valid"] = bool(candidates) or not deposable_unflagged
+            if not record["readout_valid"]:
+                record["readout_error"] = "Depositable plans exist, but none has a finite positive homogeneous three-sample consensus score"
+        state["status"] = "case_complete" if measured else "failed"
+        if measured and not record["readout_valid"]:
+            state["status"] = "failed_readout"
+        write(state_path, state)
+        print("END", label, "measured=" + str(measured), "SEEL=" + str(record.get("primary_seel_nm")), flush=True)
+        if not measured or not record["readout_valid"]:
+            return 1
+    state["status"] = "complete"
+    write(state_path, state)
+    return 0
+
+
+if __name__ == "__main__":
+    code = main()
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(code)

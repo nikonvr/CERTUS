@@ -1,0 +1,14 @@
+{
+  "next": "Wait for the existing sequential suite; do not launch a duplicate",
+  "official_sha256_verified": "ee5139af086dbf4865cc216ee9e5fba85f68d4f750cceb394ecab7044f0bfbbd",
+  "scope": "Official search reference, seed 42, premium, slit 2 nm; no independent confirmation or pure-optical claim",
+  "head": "85a9e82f10140da08024451d921f9c2b6a4a74c3",
+  "returned_population": "2652",
+  "raw_sha256_verified": "98a8660596f407b2723967f94161c47de78224d2bfa5cacc847fcb228457aa70",
+  "crash_eliminated": "0/2652",
+  "seel_nm": 0.17207542670096582,
+  "result": "0.007402488118579864",
+  "case": "48c_premium",
+  "reviewed_utc": "2026-10-21T01:02:51.7588442Z",
+  "rank00": "id=900250409 origin=ELITE score=0.007402 crash=0.0000 elim=False nblocks=2 nwl=2 wl=[544,471]"
+}

@@ -1,0 +1,24 @@
+"""Unexecuted A4 draft, intended for certus_strat_robustness_rate after A5 ends."""
+
+
+def _select_elite_parent_results(results, parent_count, minimum_optical=0):
+    """Preserve the ranked prefix at zero; otherwise reserve the available optical quota."""
+    wanted = max(0, int(minimum_optical))
+    if wanted == 0:
+        return results[:parent_count]
+
+    def optical(item):
+        layers = item.get("strategy", {}).get("rate_layers")
+        return layers is None or len(layers) == 0
+
+    available = [index for index, item in enumerate(results) if optical(item)]
+    quota = min(wanted, len(available))
+    size = min(len(results), max(parent_count, quota))
+    selected = set(range(size))
+    missing = quota - sum(index in selected for index in available)
+    incoming = [index for index in available if index not in selected][:missing] if missing > 0 else []
+    outgoing = [index for index in reversed(range(size)) if not optical(results[index])][:len(incoming)]
+    for old, new in zip(outgoing, incoming, strict=True):
+        selected.remove(old)
+        selected.add(new)
+    return [results[index] for index in sorted(selected)]

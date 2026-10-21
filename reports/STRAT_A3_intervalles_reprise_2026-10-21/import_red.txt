@@ -1,0 +1,25 @@
+Traceback (most recent call last):
+  File "<WORKTREE>\reports\STRAT_A3_intervalles_reprise_2026-10-21\verify_console_import.py.txt", line 22, in <module>
+    importlib.import_module("CERTUS_STRAT")
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\importlib\__init__.py", line 88, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1406, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1371, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1342, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 938, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 763, in exec_module
+  File "<frozen importlib._bootstrap>", line 491, in _call_with_frames_removed
+  File "<WORKTREE>\CERTUS_STRAT.py", line 24, in <module>
+    import certus.ui.certus_strat_ui as certus_strat_ui
+  File "<WORKTREE>\certus\ui\certus_strat_ui.py", line 20, in <module>
+    from certus.ui.certus_strat_multigraine_ui import CertusStratMultigraineMixin
+  File "<WORKTREE>\certus\ui\certus_strat_multigraine_ui.py", line 44, in <module>
+    from orchestre_multigraine import (  # noqa: E402
+    ...<3 lines>...
+    )
+  File "<WORKTREE>\scripts\orchestre_multigraine.py", line 76, in <module>
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: '_io.StringIO' object has no attribute 'reconfigure'

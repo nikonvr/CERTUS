@@ -1,0 +1,10 @@
+{
+  "red": {
+    "original_sha256": "61fa8b2b02b6d4ef97ebb4187b58e3557fba6a5e611d204566eb77e6573c4902",
+    "normalized_sha256": "f488bf2854659181c28da8d110a2965f96521d5c66948a2f8fe5a8c652fdf8ef"
+  },
+  "green": {
+    "original_sha256": "25586660a59011ad158cf8c5378fc842223713e630f2aa17ae578e29c18fd4ec",
+    "normalized_sha256": "25586660a59011ad158cf8c5378fc842223713e630f2aa17ae578e29c18fd4ec"
+  }
+}

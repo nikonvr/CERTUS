@@ -1,0 +1,38 @@
+{
+  "prepared_utc": "2026-10-21T04:02:37.504949+00:00",
+  "source": "example/example_strat/JSON-strat-bandpass-5cav-99c.json",
+  "source_sha256": "8f44527bf7401fc416defd2b282907629aa38c9ddfee5fd54026ac79fea57509",
+  "parts": [
+    [
+      0,
+      22
+    ],
+    [
+      22,
+      42
+    ],
+    [
+      42,
+      76
+    ],
+    [
+      76,
+      99
+    ]
+  ],
+  "seeds": [
+    42,
+    101,
+    202
+  ],
+  "mode": "fast",
+  "campaign_tool_sha256": "72577162324d9ca5222e0147e92bab99596d1ed2bb50824158ef3e0b75980c66",
+  "assembly_tool_sha256": "78a56b51e61717ee4ab2d7bfc49d35f203baac1f9457a90caaa92715cc7337f8",
+  "slit_nm": 2.0,
+  "search_resolution": false,
+  "deadline_utc": "2026-10-21T08:00:00+00:00",
+  "independent_confirmation": false,
+  "scope": "Three searches of the same previously selected four-witness partition; no new partition optimization",
+  "assembly": "Existing classer_partitions, all four intervals share one seed and preserve physical read-noise offsets",
+  "script_sha256": "08717eda2b1d734c5e54f14aabc9a36a7a0283d6e59445e146ac496b41230619"
+}

@@ -1,0 +1,1 @@
+A3_CONSOLE_IMPORT=GO; import boundary only, no assembly or numerical measurement

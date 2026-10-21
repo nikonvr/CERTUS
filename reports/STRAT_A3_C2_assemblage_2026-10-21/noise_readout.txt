@@ -1,0 +1,2 @@
+dialogues: reponse automatique OUI
+A3_NOISE_READOUT={"scope": "Post-run reconstruction with unchanged loader/profile; no new draws", "thickness_tolerance_nm": null, "trigger_tolerance": 0.05, "levels": [0.025, 0.05, 0.1], "cache_selected_level": 0.1, "selection_rule": "Unchanged campagne_intervalles._epaisseurs: nearest noise_level to 1.0"}

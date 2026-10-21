@@ -1,0 +1,69 @@
+"""Audit the actual probe's five prepared workflows before any worker is launched."""
+
+import json
+import os
+import runpy
+import sys
+from pathlib import Path
+
+ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "scripts/bench_examples.py").is_file())
+FOLDER = ROOT / "reports/STRAT_A5_tours_budgets_2026-10-21"
+sys.path[:0] = [str(ROOT), str(ROOT / "scripts")]
+import bench_examples as bench
+
+bench.qapp()
+import certus_physics
+
+certus_physics.warmup_physics()
+from CERTUS_STRAT import CertusStratApp
+from certus.core.certus_strat_consensus import _resolve_consensus_seeds, _resolve_elite_refinement_cfg
+import probe_blocs_vs_plantage as probe
+
+cases = runpy.run_path(str(FOLDER / "run_A5_tours_budgets.py.txt"), run_name="a5_definitions")["CASES"]
+audits = []
+
+
+class BeforeWorker(Exception):
+    """The intended boundary: no worker or numerical campaign is created."""
+
+
+for label, overrides, rounds, stop, budget in cases:
+    os.environ.update(CERTUS_PROBE_OVERRIDES=overrides, CERTUS_PROBE_TAG="A5params_" + label)
+
+    def inspect(app, step):
+        assert step == 23
+        params = app.collect_params()
+        resolved = _resolve_elite_refinement_cfg(params, num_runs=params["robustness_num_runs"])
+        assert (resolved[4], resolved[6]) == (rounds, stop)
+        assert int(params.get("elite_rate_max_candidates", 120)) == budget
+        assert params["execution_mode"] == "deep" and params["robustness_seed"] == 101
+        assert params["consensus_num_runs"] == params["robustness_num_runs"] == 300
+        assert params["index_corridor"] == 0.005 and params["monochromator_resolution_nm"] == 2.0
+        assert params["search_resolution"] is False and params["strat_local_search"] is True
+        assert params["tp_hysteresis_floor"] == 0.000415
+        seeds = _resolve_consensus_seeds(params, consensus_num_seeds=int(params["consensus_num_seeds"]),
+                                         consensus_seed_stride=int(params["consensus_seed_stride"]), base_seed=101)
+        assert seeds == [41, 42, 43]
+        assert len([item for item in params["stack_string"].split(",") if item.strip()]) == 75
+        keys = ("execution_mode", "robustness_seed", "phase_a_seed", "robustness_num_runs", "consensus_num_runs",
+                "consensus_score_mode", "consensus_std_weight", "monochromator_resolution_nm", "search_resolution",
+                "index_corridor", "strat_local_search", "tp_hysteresis_floor", "allow_rate", "elite_rate_moves")
+        audits.append({"case": label, "overrides": overrides, "resolved_rounds": resolved[4],
+                       "resolved_stop": resolved[6], "rate_budget_parameter": budget, "consensus_seeds": seeds,
+                       "params": {key: params.get(key) for key in keys}, "numerical_worker_started": False})
+        raise BeforeWorker
+
+    CertusStratApp.run_workflow = inspect
+    try:
+        probe.mesurer("r75x0.5", "deep", False, 0, 2.0, 0, 101, 0)
+    except BeforeWorker:
+        pass
+    assert len(audits) == len([case for case in cases[:len(audits)]]), "Audit did not reach the probe boundary"
+assert len(audits) == 5
+with (FOLDER / "params_effectifs_preliminaires.json").open("x", encoding="utf-8") as output:
+    json.dump(audits, output, indent=2)
+    output.write("\n")
+print("A5_PARAMS=GO; five actual probe workflows audited before worker creation; no campaign launched", flush=True)
+sys.stdout.flush()
+sys.stderr.flush()
+os._exit(0)

@@ -1,0 +1,14 @@
+{
+  "independent_confirmation": false,
+  "scope": "Delivered native r75x2, 75 layers, deep, seed 42, slit 1 nm; distinct from the delivered injected ramps at 2 nm",
+  "head": "85a9e82f10140da08024451d921f9c2b6a4a74c3",
+  "case": "r75x2_native_1nm_deep",
+  "result": "0.085061538305979",
+  "seel_nm": 0.5833062259430427,
+  "returned_population": "3946",
+  "crash_eliminated": "0/3946",
+  "rank00": "id=901550752 origin=ELITE score=0.085062 crash=0.0000 elim=False nblocks=15 nwl=13 wl=[476,470,610,490,686,648,701,702,511,700,692,687,697,702,697]",
+  "official_sha256_verified": "b8ed10c0123b802d3a89a31ddea7d329965c12d9ba6ddec03b11f73c4d0fc796",
+  "raw_sha256_verified": "0c22e2f98c4f52d0a7eb4d3d60596f00cf113a31aae2946704206e709c58e694",
+  "reviewed_utc": "2026-10-21T02:48:28.0183007+00:00"
+}

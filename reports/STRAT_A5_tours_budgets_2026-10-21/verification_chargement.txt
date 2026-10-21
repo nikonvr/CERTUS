@@ -1,0 +1,11 @@
+dialogues: reponse automatique OUI
+  surcharges [A5params_baseline] : {'elite_rounds': 3}
+dialogues: reponse automatique OUI
+  surcharges [A5params_rounds6_no_stop] : {'elite_rounds': 6, 'elite_stop_on_no_gain': False}
+dialogues: reponse automatique OUI
+  surcharges [A5params_rounds10_no_stop] : {'elite_rounds': 10, 'elite_stop_on_no_gain': False}
+dialogues: reponse automatique OUI
+  surcharges [A5params_budget40] : {'elite_rate_max_candidates': 40}
+dialogues: reponse automatique OUI
+  surcharges [A5params_budget360] : {'elite_rate_max_candidates': 360}
+A5_PARAMS=GO; five actual probe workflows audited before worker creation; no campaign launched

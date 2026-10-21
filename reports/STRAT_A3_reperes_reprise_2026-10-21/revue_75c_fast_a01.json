@@ -1,0 +1,14 @@
+{
+  "reviewed_utc": "2026-10-21T01:31:10.4138497Z",
+  "official_sha256_verified": "7b83dd194a1c77b590b268f224da34060eb5df4675ba87200144787e26f27077",
+  "case": "75c_fast",
+  "head": "85a9e82f10140da08024451d921f9c2b6a4a74c3",
+  "returned_population": "2634",
+  "crash_eliminated": "0/2634",
+  "historical_comparison": "No causal gain attributed against pre-D106/pre-Rate reference",
+  "rank00": "id=901050690 origin=LOCAL_SEARCH score=0.012373 crash=0.0000 elim=False nblocks=51 nwl=30 wl=[450,496,516,450,450,486,560,460,575,450,575,645,575,595,575,595,565,575,653,663,653,663,643,663,673,663,644,604,644,634,674,644,634,644,564,644,674,644,642,556,636,557,597,610,648,608,648,628,668,638,648]",
+  "result": "0.012373053745766442",
+  "seel_nm": 0.2224684584004343,
+  "scope": "75 actual layers, delivered fast mode, seed 42, slit 2 nm; current-default search reference, no independent confirmation",
+  "raw_sha256_verified": "9b86669667d20105ba62c5796b001f5fb40ab7a2fb447de607964e91076a2ccf"
+}
